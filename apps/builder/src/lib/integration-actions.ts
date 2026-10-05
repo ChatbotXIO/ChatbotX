@@ -69,7 +69,6 @@ export function createDisconnectAction(
           } else {
             await service.disconnect(workspaceId)
           }
-          await afterDisconnect?.(workspaceId)
         } catch (error) {
           if (log) {
             logger.error(
@@ -78,6 +77,17 @@ export function createDisconnectAction(
             )
           }
           throw error
+        }
+        // Isolated from the disconnect's own try/catch above: a post-
+        // teardown side effect (e.g. AI cache invalidation) failing must
+        // never report an already-successful disconnect as failed.
+        try {
+          await afterDisconnect?.(workspaceId)
+        } catch (error) {
+          logger.error(
+            { err: normalizeError(error), workspaceId },
+            `${name} disconnected, but its afterDisconnect hook failed`,
+          )
         }
       },
     )

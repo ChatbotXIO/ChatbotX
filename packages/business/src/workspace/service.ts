@@ -98,6 +98,25 @@ class WorkspaceService extends BaseService {
     )
   }
 
+  /**
+   * The live workspace a user already owns — excludes a row mid soft-delete
+   * (`scheduledDeletionAt` set) so `createFirstWorkspace`'s idempotency
+   * check never hands back a workspace that's about to be purged, and
+   * orders by `id` (time-ordered) so a concurrent caller resolving "the"
+   * first workspace agrees deterministically even if the owner somehow
+   * ends up with more than one live row.
+   */
+  async findActiveByOwner(props: {
+    ownerId: string
+    tx?: DatabaseClient
+  }): Promise<WorkspaceModel | undefined> {
+    const { ownerId, tx = db } = props
+    return await tx.query.workspaceModel.findFirst({
+      where: { ownerId, scheduledDeletionAt: { isNull: true } },
+      orderBy: { id: "asc" },
+    })
+  }
+
   // Auth gate — membership must take effect immediately on removal, so this
   // intentionally skips withCache (unlike find() above), matching
   // WorkspaceMemberService.findMembership. Used to fetch the workspace for a

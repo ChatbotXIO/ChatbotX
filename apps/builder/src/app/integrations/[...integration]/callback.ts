@@ -339,9 +339,17 @@ const handleConnectSessionCallback = async (
     return notFound()
   }
 
+  // `session.returnUrl` is always application-relative now (`ConnectSession
+  // .returnUrl` is validated by `validateReturnUrl`, which rejects an
+  // absolute value) — resolve it against this callback's own public origin
+  // before handing it to `sanitizeReferer` (which only accepts absolute
+  // URLs). The callback always lands on the correct host for the session:
+  // `buildProviderCallbackUrl` built the registered `redirect_uri` on the
+  // tenant's custom domain for a tenant-owned credential, else the broker —
+  // the same origin the connect flow started on.
   const fallbackReturnUrl = `/connect/${session.id}`
   const returnUrl = session.returnUrl
-    ? await sanitizeReferer(session.returnUrl)
+    ? await sanitizeReferer(new URL(session.returnUrl, url.origin).toString())
     : fallbackReturnUrl
 
   // Facebook/Google/Zalo/TikTok all return ?error=... when the user cancels
@@ -761,8 +769,13 @@ export const handleCallback = async (
       // dispatched by `handleConnectSessionCallback` before this legacy
       // switch ever runs. Every remaining caller of this callback sets one
       // of `stateParams.flow` or `reconnectIntegrationId`, both handled
-      // above.
-      return notFound()
+      // above — this is a defensive fallback for a state that should be
+      // unreachable, not a case a real request is expected to hit.
+      logger.warn(
+        { workspaceId: workspace.id, integrationType },
+        "legacy messenger OAuth callback state matched no known flow",
+      )
+      return redirect("/channels/create?error=sessionExpired")
     }
 
     case "instagram": {
@@ -782,35 +795,41 @@ export const handleCallback = async (
         "/integrations/instagram/callback",
       )
 
+      // Checked before exchanging the single-use `code`: a plain connect
+      // never reaches here anymore (see the comment at the end of
+      // `case "messenger"`), so bail out before burning the code on a
+      // request that has no reconnect to apply it to.
+      if (!stateParams.reconnectIntegrationId) {
+        logger.warn(
+          { workspaceId: workspace.id, integrationType },
+          "legacy instagram OAuth callback state has no reconnectIntegrationId",
+        )
+        return redirect("/channels/create?error=sessionExpired")
+      }
+
       const { accessToken: userToken } = await exchangeInstagramCode(
         instagramCredential.config,
         code,
         callbackUrl,
       )
 
-      if (stateParams.reconnectIntegrationId) {
-        const result = await reconnectInstagramHandler({
-          credentialConfig: instagramCredential.config,
+      const result = await reconnectInstagramHandler({
+        credentialConfig: instagramCredential.config,
+        workspaceId: workspace.id,
+        integrationId: stateParams.reconnectIntegrationId,
+        userToken,
+      })
+      if (result.status === "success") {
+        await auditService.record({
+          userId,
           workspaceId: workspace.id,
-          integrationId: stateParams.reconnectIntegrationId,
-          userToken,
+          action: "update",
+          detail: "reconnected the Instagram channel",
+          ipAddress: getGuestClientIp(req.headers),
+          userAgent: req.headers.get("user-agent") ?? undefined,
         })
-        if (result.status === "success") {
-          await auditService.record({
-            userId,
-            workspaceId: workspace.id,
-            action: "update",
-            detail: "reconnected the Instagram channel",
-            ipAddress: getGuestClientIp(req.headers),
-            userAgent: req.headers.get("user-agent") ?? undefined,
-          })
-        }
-        return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
-
-      // A plain connect never reaches here anymore — see the comment at
-      // the end of `case "messenger"`.
-      return notFound()
+      return redirect(buildReconnectRedirectUrl(safeReferer, result))
     }
 
     case "instagramFacebook": {
@@ -830,34 +849,40 @@ export const handleCallback = async (
         "/integrations/instagram-facebook/callback",
       )
 
+      // Checked before exchanging the single-use `code`: a plain connect
+      // never reaches here anymore (see the comment at the end of
+      // `case "messenger"`), so bail out before burning the code on a
+      // request that has no reconnect to apply it to.
+      if (!stateParams.reconnectIntegrationId) {
+        logger.warn(
+          { workspaceId: workspace.id, integrationType },
+          "legacy instagramFacebook OAuth callback state has no reconnectIntegrationId",
+        )
+        return redirect("/channels/create?error=sessionExpired")
+      }
+
       const userToken = await exchangeInstagramFacebookCode(
         instagramFacebookCredential.config,
         code,
         callbackUrl,
       )
-      if (stateParams.reconnectIntegrationId) {
-        const result = await reconnectInstagramFacebookHandler({
-          credentialConfig: instagramFacebookCredential.config,
+      const result = await reconnectInstagramFacebookHandler({
+        credentialConfig: instagramFacebookCredential.config,
+        workspaceId: workspace.id,
+        integrationId: stateParams.reconnectIntegrationId,
+        userToken,
+      })
+      if (result.status === "success") {
+        await auditService.record({
+          userId,
           workspaceId: workspace.id,
-          integrationId: stateParams.reconnectIntegrationId,
-          userToken,
+          action: "update",
+          detail: "reconnected the Instagram channel",
+          ipAddress: getGuestClientIp(req.headers),
+          userAgent: req.headers.get("user-agent") ?? undefined,
         })
-        if (result.status === "success") {
-          await auditService.record({
-            userId,
-            workspaceId: workspace.id,
-            action: "update",
-            detail: "reconnected the Instagram channel",
-            ipAddress: getGuestClientIp(req.headers),
-            userAgent: req.headers.get("user-agent") ?? undefined,
-          })
-        }
-        return redirect(buildReconnectRedirectUrl(safeReferer, result))
       }
-
-      // A plain connect never reaches here anymore — see the comment at
-      // the end of `case "messenger"`.
-      return notFound()
+      return redirect(buildReconnectRedirectUrl(safeReferer, result))
     }
 
     case "threads": {

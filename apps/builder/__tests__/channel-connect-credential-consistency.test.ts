@@ -48,23 +48,10 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   workspaceMemberService: { isMember: mockIsMember },
   resolveTenantSettings: vi.fn(async () => ({ appUrl: "https://app.test" })),
-  updateInstagramIntegrationUserInfo: vi.fn(),
-  updateMessengerIntegrationUserInfo: vi.fn(),
-  messengerIntegrationService: {
-    findConnectedPageIds: vi.fn(async () => new Set<string>()),
-    connectPage: vi.fn(),
-    updateUserInfo: vi.fn(),
-    findByInboxId: vi.fn(),
-  },
-  instagramIntegrationService: {
-    findConnectedIgIds: vi.fn(async () => new Set<string>()),
-    connectAccount: vi.fn(),
-    updateUserInfo: vi.fn(),
-    findByInboxId: vi.fn(),
-  },
+  messengerIntegrationService: { findByInboxId: vi.fn() },
+  instagramIntegrationService: { findByInboxId: vi.fn() },
   tagSyncService: { enqueueChannelScan: vi.fn() },
   userQuotaService: { getAccessState: vi.fn(async () => ({ blocked: false })) },
-  connectChannelIntegration: vi.fn(),
   buildContext: vi.fn(async () => ({})),
 }))
 
@@ -151,14 +138,18 @@ const { connectInstagramAccountViaFacebook } = await import(
   "../src/features/integration-instagram/actions/connect-account-facebook"
 )
 
-const session = {
+const buildSession = (
+  provider: "messenger" | "instagram" | "instagramFacebook",
+) => ({
   id: "session-1",
   workspaceId: "ws-1",
   platformOwnerId: "owner-1",
-  provider: "messenger",
+  provider,
+  purpose: "connect",
   status: "awaiting_selection",
+  actorUserId: "user-1",
   targets: [{ id: "p1", name: "Page", selectable: true }],
-}
+})
 
 describe("channel connect completion legs never re-derive the credential owner from the host", () => {
   beforeEach(() => {
@@ -167,12 +158,12 @@ describe("channel connect completion legs never re-derive the credential owner f
     // resolver call — exactly the point this test needs to observe, without
     // running the rest of the (heavily mocked) connect transaction.
     mockResolveForOwner.mockResolvedValue(undefined)
-    mockFindById.mockResolvedValue(session)
     mockWorkspaceFind.mockResolvedValue({ id: "ws-1", ownerId: "owner-1" })
     mockIsMember.mockResolvedValue(true)
   })
 
   test("connectMessengerPage resolves the credential from the session's stored platformOwnerId", async () => {
+    mockFindById.mockResolvedValue(buildSession("messenger"))
     await connectMessengerPage({
       userId: "user-1",
       sessionId: "session-1",
@@ -186,6 +177,7 @@ describe("channel connect completion legs never re-derive the credential owner f
   })
 
   test("connectInstagramAccount resolves the credential from the session's stored platformOwnerId", async () => {
+    mockFindById.mockResolvedValue(buildSession("instagram"))
     await connectInstagramAccount({
       userId: "user-1",
       sessionId: "session-1",
@@ -199,6 +191,7 @@ describe("channel connect completion legs never re-derive the credential owner f
   })
 
   test("connectInstagramAccountViaFacebook resolves the credential from the session's stored platformOwnerId", async () => {
+    mockFindById.mockResolvedValue(buildSession("instagramFacebook"))
     await connectInstagramAccountViaFacebook({
       userId: "user-1",
       sessionId: "session-1",

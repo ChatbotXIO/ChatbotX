@@ -28,9 +28,10 @@ export async function buildFacebookAdsAuthRedirect({
 
   // Only the Messenger callback is registered as a redirect_uri with the
   // Facebook app, so Facebook Ads OAuth lands there too. `flow` flags the
-  // Ads token-storage dispatch in the callback handler; `referer` is the
-  // page the user returns to on completion or cancel. Mirrors
-  // `generateMessengerRedirectUri` in integration-messenger/libs/oauth.ts.
+  // Ads token-storage dispatch in the callback handler (`case "messenger"`'s
+  // `stateParams.flow === "facebookAds"` branch in
+  // `app/integrations/[...integration]/callback.ts`); `referer` is the page
+  // the user returns to on completion or cancel.
   const redirectUrl = await buildProviderCallbackUrl(
     messengerCredential,
     "/integrations/messenger/callback",

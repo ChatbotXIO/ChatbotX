@@ -1,19 +1,20 @@
 // @vitest-environment node
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { isValidElement } from "react"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockGetCurrentUserId,
   mockRedirect,
-  mockResolveConnectSession,
+  mockResolveConnectSessionForSelect,
   mockSelectPage,
 } = vi.hoisted(() => ({
   mockGetCurrentUserId: vi.fn(),
   mockRedirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`)
   }),
-  mockResolveConnectSession: vi.fn(),
+  mockResolveConnectSessionForSelect: vi.fn(),
   mockSelectPage: vi.fn(() => null),
 }))
 
@@ -31,11 +32,11 @@ vi.mock("@/lib/auth/utils", () => ({
 }))
 
 vi.mock("@/features/channel-connect/lib/resolve-connect-session", () => ({
-  resolveConnectSession: mockResolveConnectSession,
+  resolveConnectSessionForSelect: mockResolveConnectSessionForSelect,
 }))
 
 vi.mock("@/lib/log", () => ({
-  logger: { warn: vi.fn() },
+  logger: { warn: vi.fn(), error: vi.fn() },
 }))
 
 vi.mock("@/features/inboxes/components/inbox-icon", () => ({
@@ -51,11 +52,8 @@ const { default: MessengerSelectPage } = await import(
 )
 
 type SelectPageElementProps = {
-  bmLookupFailed: boolean
   items: Array<{
     id: string
-    isAlreadyConnected: boolean
-    isConnectable: boolean
     disabled?: boolean
     disabledReason?: string
     secondary?: string
@@ -85,7 +83,7 @@ describe("MessengerSelectPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetCurrentUserId.mockResolvedValue("user-1")
-    mockResolveConnectSession.mockResolvedValue({
+    mockResolveConnectSessionForSelect.mockResolvedValue({
       session: {
         targets: [alreadyConnectedTarget, connectableTarget],
       },
@@ -101,25 +99,20 @@ describe("MessengerSelectPage", () => {
       throw new Error("MessengerSelectPage did not return a valid element")
     }
 
-    expect(mockResolveConnectSession).toHaveBeenCalledWith({
+    expect(mockResolveConnectSessionForSelect).toHaveBeenCalledWith({
       userId: "user-1",
       sessionId: "session-1",
-      credentialType: "messenger",
-      brandingChannel: "messenger",
+      expectedProvider: "messenger",
     })
     expect(element.props.sessionId).toBe("session-1")
     expect(element.props.workspaceId).toBe("ws-1")
     expect(element.props.items).toEqual([
       expect.objectContaining({
         id: "page-connectable",
-        isConnectable: true,
-        isAlreadyConnected: false,
         disabled: false,
       }),
       expect.objectContaining({
         id: "page-connected",
-        isConnectable: true,
-        isAlreadyConnected: true,
         disabled: true,
         disabledReason: "messenger.selectPage.alreadyConnectedNote",
       }),
@@ -127,7 +120,7 @@ describe("MessengerSelectPage", () => {
   })
 
   test("renders an empty picker when the session has no targets", async () => {
-    mockResolveConnectSession.mockResolvedValue({
+    mockResolveConnectSessionForSelect.mockResolvedValue({
       session: { targets: [] },
       workspace: { id: "ws-1" },
     })
@@ -155,25 +148,13 @@ describe("MessengerSelectPage", () => {
     expect(connectable?.secondary).toBe("page-connectable")
   })
 
-  // Non-admin pages are filtered before session targets are created, so the
-  // old not-admin warning cannot structurally render in this picker anymore.
-  test("does not set the legacy Business Manager lookup warning", async () => {
-    const element = await MessengerSelectPage(pageArgs)
-
-    if (!isValidElement<SelectPageElementProps>(element)) {
-      throw new Error("MessengerSelectPage did not return a valid element")
-    }
-
-    expect(element.props.bmLookupFailed).toBe(false)
-  })
-
   test("redirects to channel creation when the session id is missing", async () => {
     await expect(
       MessengerSelectPage({ searchParams: Promise.resolve({}) }),
     ).rejects.toThrow("redirect:/channels/create")
 
     expect(mockGetCurrentUserId).not.toHaveBeenCalled()
-    expect(mockResolveConnectSession).not.toHaveBeenCalled()
+    expect(mockResolveConnectSessionForSelect).not.toHaveBeenCalled()
   })
 
   test("redirects to channel creation when the user is not authenticated", async () => {
@@ -183,16 +164,22 @@ describe("MessengerSelectPage", () => {
       "redirect:/channels/create",
     )
 
-    expect(mockResolveConnectSession).not.toHaveBeenCalled()
+    expect(mockResolveConnectSessionForSelect).not.toHaveBeenCalled()
   })
 
-  test("redirects to channel creation when resolveConnectSession throws (regression: an expired/invalid session previously 500'd this page instead of redirecting)", async () => {
-    mockResolveConnectSession.mockRejectedValue(
-      new Error("connect session expired"),
+  test("redirects to channel creation with the mapped error code when resolveConnectSessionForSelect throws a known session exception (regression: an expired/invalid session previously 500'd this page instead of redirecting)", async () => {
+    mockResolveConnectSessionForSelect.mockRejectedValue(
+      new ChatbotXException("expired", "connectSessionExpired"),
     )
 
     await expect(MessengerSelectPage(pageArgs)).rejects.toThrow(
-      "redirect:/channels/create",
+      "redirect:/channels/create?error=sessionExpired",
     )
+  })
+
+  test("rethrows an unexpected (non-session) error instead of redirecting", async () => {
+    mockResolveConnectSessionForSelect.mockRejectedValue(new Error("db blip"))
+
+    await expect(MessengerSelectPage(pageArgs)).rejects.toThrow("db blip")
   })
 })

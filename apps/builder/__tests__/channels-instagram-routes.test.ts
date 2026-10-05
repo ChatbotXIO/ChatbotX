@@ -14,6 +14,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 
 const {
+  mockFailSession,
   mockFindWorkspaceById,
   mockGetCurrentUserId,
   mockRedirect,
@@ -23,6 +24,7 @@ const {
   mockUpdateReturnUrl,
   mockWorkspaceCreate,
 } = vi.hoisted(() => ({
+  mockFailSession: vi.fn(),
   mockFindWorkspaceById: vi.fn(async () => ({
     id: "ws-1",
     ownerId: "owner-1",
@@ -50,7 +52,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
     findById: mockFindWorkspaceById,
-    find: vi.fn(async () => undefined),
+    findActiveByOwner: vi.fn(async () => undefined),
     create: mockWorkspaceCreate,
   },
 }))
@@ -63,6 +65,7 @@ vi.mock("@chatbotx.io/business/connect-session", () => ({
 
 vi.mock("@chatbotx.io/connections", () => ({
   connectionService: { startSession: mockStartSession },
+  failSession: mockFailSession,
 }))
 
 vi.mock("@/features/connections/lib/resolve-connect-credential", () => ({
@@ -144,7 +147,7 @@ describe.each([
     })
     expect(mockUpdateReturnUrl).toHaveBeenCalledWith({
       id: "session-1",
-      returnUrl: `http://localhost${selectPath}?session=session-1`,
+      returnUrl: `${selectPath}?session=session-1`,
     })
   })
 
@@ -165,14 +168,13 @@ describe.each([
     )
   })
 
-  test("404s when the owner has no credential configured for the provider", async () => {
+  test("404s when the owner has no credential configured for the provider, without ever creating a workspace", async () => {
     mockResolveOAuthCredential.mockResolvedValue(null)
     const { GET } = await import(routePath)
 
-    await expect(GET(requestWithWorkspaceId("ws-1"))).rejects.toThrow(
-      "not found",
-    )
+    await expect(GET(requestWithWorkspaceId(null))).rejects.toThrow("not found")
     expect(mockStartSession).not.toHaveBeenCalled()
+    expect(mockWorkspaceCreate).not.toHaveBeenCalled()
   })
 
   test("404s when the caller is not signed in", async () => {
@@ -185,7 +187,7 @@ describe.each([
     expect(mockResolveOAuthCredential).not.toHaveBeenCalled()
   })
 
-  test("throws when startSession returns a non-open_url next action", async () => {
+  test("fails the session and redirects to an error page when startSession returns a non-open_url next action, instead of an unhandled throw", async () => {
     mockStartSession.mockResolvedValue({
       session: { id: "session-1" },
       nextAction: { type: "show_qr", qr: "data:image/png;base64,..." },
@@ -193,18 +195,22 @@ describe.each([
     const { GET } = await import(routePath)
 
     await expect(GET(requestWithWorkspaceId("ws-1"))).rejects.toThrow(
-      `Unexpected connect next action for ${provider}`,
+      "redirect:/channels/create?error=sessionExpired",
+    )
+    expect(mockFailSession).toHaveBeenCalledWith(
+      { id: "session-1" },
+      "internal_error",
     )
   })
 
-  // Regression (C1): previously stored a *relative* returnUrl
-  // (`/channels/.../select?session=...`). `sanitizeReferer` — invoked for
-  // real when the OAuth callback reads `ConnectSession.returnUrl` back —
-  // does `new URL(referer)` first, which throws on a relative path and
-  // silently falls back to `/manage`, hiding the picker. This test does
-  // NOT mock `sanitizeReferer`/`isAllowedOrigin` so a regression here fails
-  // for real instead of being hidden by a mock.
-  test("the stored returnUrl survives a real (unmocked) sanitizeReferer round-trip instead of falling back to /manage", async () => {
+  // Regression (C1): the route used to store an *absolute* returnUrl built
+  // from the request's own origin — `connectSessionService.updateReturnUrl`
+  // (real `validateReturnUrl`) rejects an absolute value outright, so every
+  // non-SSO connect start 400'd. The route must store a *relative* path;
+  // the OAuth callback resolves it against its own public origin before
+  // handing it to `sanitizeReferer` (real, unmocked here), which only
+  // accepts absolute URLs.
+  test("stores a relative returnUrl that the callback can resolve to an absolute, allowed URL instead of an absolute value the service would reject", async () => {
     const { sanitizeReferer, FALLBACK_REDIRECT } = await import(
       "@/lib/oauth-referer"
     )
@@ -225,14 +231,15 @@ describe.each([
 
     const storedReturnUrl = mockUpdateReturnUrl.mock.calls.at(0)?.[0]
       .returnUrl as string
-    expect(storedReturnUrl).toBe(
-      `http://localhost:3123${selectPath}?session=session-1`,
-    )
-    await expect(sanitizeReferer(storedReturnUrl)).resolves.toBe(
+    expect(storedReturnUrl).toBe(`${selectPath}?session=session-1`)
+    expect(storedReturnUrl.startsWith("/")).toBe(true)
+
+    // Simulates the callback's own resolution step against its public origin.
+    const resolved = new URL(
       storedReturnUrl,
-    )
-    await expect(sanitizeReferer(storedReturnUrl)).resolves.not.toBe(
-      FALLBACK_REDIRECT,
-    )
+      "http://localhost:3123",
+    ).toString()
+    await expect(sanitizeReferer(resolved)).resolves.toBe(resolved)
+    await expect(sanitizeReferer(resolved)).resolves.not.toBe(FALLBACK_REDIRECT)
   })
 })

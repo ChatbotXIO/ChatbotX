@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { renderToStaticMarkup } from "react-dom/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -18,14 +19,14 @@ type SelectFacebookAccountsElementProps = {
 const {
   mockGetCurrentUserId,
   mockRedirect,
-  mockResolveConnectSession,
+  mockResolveConnectSessionForSelect,
   mockSelectFacebookAccounts,
 } = vi.hoisted(() => ({
   mockGetCurrentUserId: vi.fn(),
   mockRedirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`)
   }),
-  mockResolveConnectSession: vi.fn(),
+  mockResolveConnectSessionForSelect: vi.fn(),
   mockSelectFacebookAccounts: vi.fn(
     (_props: { items: unknown[]; sessionId: string; workspaceId: string }) =>
       null,
@@ -46,11 +47,11 @@ vi.mock("@/lib/auth/utils", () => ({
 }))
 
 vi.mock("@/features/channel-connect/lib/resolve-connect-session", () => ({
-  resolveConnectSession: mockResolveConnectSession,
+  resolveConnectSessionForSelect: mockResolveConnectSessionForSelect,
 }))
 
 vi.mock("@/lib/log", () => ({
-  logger: { warn: vi.fn() },
+  logger: { warn: vi.fn(), error: vi.fn() },
 }))
 
 vi.mock("@/features/inboxes/components/inbox-icon", () => ({
@@ -90,7 +91,7 @@ describe("InstagramFacebookSelectPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetCurrentUserId.mockResolvedValue("user-1")
-    mockResolveConnectSession.mockResolvedValue({
+    mockResolveConnectSessionForSelect.mockResolvedValue({
       session: {
         targets: [connectedTarget, connectableTarget],
       },
@@ -102,11 +103,10 @@ describe("InstagramFacebookSelectPage", () => {
     const element = await InstagramFacebookSelectPage(pageArgs)
     renderToStaticMarkup(element)
 
-    expect(mockResolveConnectSession).toHaveBeenCalledWith({
+    expect(mockResolveConnectSessionForSelect).toHaveBeenCalledWith({
       userId: "user-1",
       sessionId: "session-1",
-      credentialType: "instagramFacebook",
-      brandingChannel: "instagram",
+      expectedProvider: "instagramFacebook",
     })
     expect(mockSelectFacebookAccounts).toHaveBeenCalledTimes(1)
     const props = mockSelectFacebookAccounts.mock.calls[0]?.[0] as
@@ -138,7 +138,7 @@ describe("InstagramFacebookSelectPage", () => {
     ).rejects.toThrow("redirect:/channels/create")
 
     expect(mockGetCurrentUserId).not.toHaveBeenCalled()
-    expect(mockResolveConnectSession).not.toHaveBeenCalled()
+    expect(mockResolveConnectSessionForSelect).not.toHaveBeenCalled()
   })
 
   test("redirects to channel creation when the user is not authenticated", async () => {
@@ -148,11 +148,11 @@ describe("InstagramFacebookSelectPage", () => {
       "redirect:/channels/create",
     )
 
-    expect(mockResolveConnectSession).not.toHaveBeenCalled()
+    expect(mockResolveConnectSessionForSelect).not.toHaveBeenCalled()
   })
 
   test("renders with zero items when the session has no Instagram business accounts", async () => {
-    mockResolveConnectSession.mockResolvedValue({
+    mockResolveConnectSessionForSelect.mockResolvedValue({
       session: { targets: [] },
       workspace: { id: "ws-1" },
     })
@@ -167,13 +167,21 @@ describe("InstagramFacebookSelectPage", () => {
     expect(props?.items).toEqual([])
   })
 
-  test("redirects to channel creation when resolveConnectSession throws (regression: an expired/invalid session previously 500'd this page instead of redirecting)", async () => {
-    mockResolveConnectSession.mockRejectedValue(
-      new Error("connect session expired"),
+  test("redirects to channel creation with the mapped error code when resolveConnectSessionForSelect throws a known session exception (regression: an expired/invalid session previously 500'd this page instead of redirecting)", async () => {
+    mockResolveConnectSessionForSelect.mockRejectedValue(
+      new ChatbotXException("expired", "connectSessionExpired"),
     )
 
     await expect(InstagramFacebookSelectPage(pageArgs)).rejects.toThrow(
-      "redirect:/channels/create",
+      "redirect:/channels/create?error=sessionExpired",
+    )
+  })
+
+  test("rethrows an unexpected (non-session) error instead of redirecting", async () => {
+    mockResolveConnectSessionForSelect.mockRejectedValue(new Error("db blip"))
+
+    await expect(InstagramFacebookSelectPage(pageArgs)).rejects.toThrow(
+      "db blip",
     )
   })
 })

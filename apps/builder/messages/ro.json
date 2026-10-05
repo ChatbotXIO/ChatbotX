@@ -3612,13 +3612,7 @@
     "selectPage": {
       "noPagesTitle": "Nicio pagină de Facebook găsită",
       "noPagesDescription": "Paginile din interiorul unui Business Manager necesită acces Business Manager în timpul conectării. Reconectează Messenger și acordă toate permisiunile solicitate.",
-      "noConnectablePagesTitle": "Nicio pagină disponibilă pentru conectare",
-      "noConnectablePagesDescription": "Nu ești administrator al acestei Pagini",
-      "bmLookupFailedTitle": "Este posibil să lipsească paginile din Business Manager",
-      "bmLookupFailedDescription": "Reconectează Messenger și acordă acces la Business Manager pentru ca paginile gestionate printr-un Business Manager să poată fi listate.",
-      "loadFailed": "Nu s-au putut încărca Paginile tale de Facebook",
       "alreadyConnectedNote": "Această pagină este deja conectată",
-      "notAdminNote": "Nu ești administrator al acestei Pagini",
       "tryAgain": "Încearcă să te reconectezi"
     },
     "title": "Facebook Messenger",

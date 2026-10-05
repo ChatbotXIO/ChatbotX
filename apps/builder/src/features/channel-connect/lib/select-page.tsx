@@ -1,32 +1,41 @@
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type {
   ChannelType,
-  CredentialType,
+  IntegrationType,
 } from "@chatbotx.io/database/partials"
 import Image from "next/image"
 import { redirect } from "next/navigation"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { logger } from "@/lib/log"
+import {
+  type CreateChannelErrorCode,
+  isCreateChannelErrorCode,
+} from "@/lib/workspace/create-first-workspace"
 import type { ConnectPickerItem } from "./picker-items"
-import type { ResolvedConnectSession } from "./resolve-connect-session"
-import { resolveConnectSession } from "./resolve-connect-session"
+import type { ResolvedConnectSessionBinding } from "./resolve-connect-session"
+import { resolveConnectSessionForSelect } from "./resolve-connect-session"
+
+/** Every other session-level failure (expired, not-member, a session that already failed/cancelled/completed) reads as the generic "start again" code — only the plan-limit codes get their own copy. */
+const FALLBACK_ERROR_CODE: CreateChannelErrorCode = "sessionExpired"
 
 /**
  * Shared boilerplate the three `channels/<channel>/select/page.tsx` Server
  * Components each repeated byte-for-byte: pull `session` out of
  * `searchParams` (redirect to the picker if absent), require a signed-in
- * user, then resolve the `ConnectSession` row — an expired/invalid/no-
- * longer-accessible session previously 500'd the render, so any
- * `resolveConnectSession` failure redirects back to `/channels/create`
- * instead. Returns `never` (via `redirect`'s own `never` return type) on
- * every failure path, so a caller's `let resolved: ResolvedConnectSession<T>`
+ * user, then resolve the `ConnectSession` row — any known session-level
+ * failure (expired/not-member/a session already in a terminal status, or a
+ * known plan-limit denial) redirects to `/channels/create?error=<code>`
+ * instead of 500ing. A genuinely unexpected error (a DB blip, a bug) is
+ * logged at `error` and rethrown — it must not be swallowed into a silent
+ * redirect. Returns `never` (via `redirect`'s own `never` return type) on
+ * every failure path, so a caller's `let resolved: ResolvedConnectSessionBinding`
  * assignment type-checks without an extra `else` branch.
  */
-export async function resolveSelectSession<T extends CredentialType>(input: {
+export async function resolveSelectSession(input: {
   searchParams: Promise<{ session?: string }>
-  credentialType: T
-  brandingChannel: ChannelType
-}): Promise<{ sessionId: string; resolved: ResolvedConnectSession<T> }> {
+  expectedProvider: IntegrationType
+}): Promise<{ sessionId: string; resolved: ResolvedConnectSessionBinding }> {
   const { session: sessionId } = await input.searchParams
   if (!sessionId) {
     redirect("/channels/create")
@@ -38,16 +47,28 @@ export async function resolveSelectSession<T extends CredentialType>(input: {
   }
 
   try {
-    const resolved = await resolveConnectSession({
+    const resolved = await resolveConnectSessionForSelect({
       userId,
       sessionId,
-      credentialType: input.credentialType,
-      brandingChannel: input.brandingChannel,
+      expectedProvider: input.expectedProvider,
     })
     return { sessionId, resolved }
   } catch (err) {
-    logger.warn({ err, sessionId }, "resolveConnectSession failed")
-    redirect("/channels/create")
+    if (err instanceof ChatbotXException) {
+      const code = isCreateChannelErrorCode(err.code)
+        ? err.code
+        : FALLBACK_ERROR_CODE
+      logger.warn(
+        { err, sessionId, code },
+        "resolveConnectSession rejected the select page",
+      )
+      redirect(`/channels/create?error=${code}`)
+    }
+    logger.error(
+      { err, sessionId },
+      "resolveConnectSession failed unexpectedly",
+    )
+    throw err
   }
 }
 

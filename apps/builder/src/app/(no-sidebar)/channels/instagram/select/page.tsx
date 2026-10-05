@@ -16,8 +16,7 @@ export default async function InstagramSelectPage({
 }) {
   const { sessionId, resolved } = await resolveSelectSession({
     searchParams,
-    credentialType: "instagram",
-    brandingChannel: "instagram",
+    expectedProvider: "instagram",
   })
 
   const target = resolved.session.targets[0]

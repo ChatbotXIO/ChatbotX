@@ -1,13 +1,5 @@
 import type { EncryptedData } from "@chatbotx.io/encryption"
-import {
-  and,
-  type DatabaseClient,
-  db,
-  eq,
-  inArray,
-  isNull,
-  sql,
-} from "../../client"
+import { and, type DatabaseClient, db, eq, isNull, sql } from "../../client"
 import { integrationInstagramModel } from "../../schema"
 import type { IntegrationInstagramModel } from "../../types"
 
@@ -101,27 +93,6 @@ export const integrationInstagramRepository = {
       .returning()
 
     return row
-  },
-
-  /**
-   * Instagram ids from the given list that already have an integration.
-   * `IntegrationInstagram.igId` is unique platform-wide, so a match means the
-   * account cannot be connected again anywhere.
-   */
-  async findConnectedIgIds(
-    igIds: string[],
-    tx: DatabaseClient = db,
-  ): Promise<Set<string>> {
-    if (igIds.length === 0) {
-      return new Set()
-    }
-
-    const rows = await tx
-      .select({ igId: integrationInstagramModel.igId })
-      .from(integrationInstagramModel)
-      .where(inArray(integrationInstagramModel.igId, igIds))
-
-    return new Set(rows.map((row) => row.igId))
   },
 
   async findWorkspaceIntegration(

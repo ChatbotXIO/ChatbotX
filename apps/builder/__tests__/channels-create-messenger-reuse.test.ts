@@ -9,7 +9,6 @@ const {
   mockListAndAttachCandidates,
   mockRedirect,
   mockRequireWorkspacePermission,
-  mockResolveForOwner,
   mockResolveOAuthCredential,
   mockStartSession,
   mockTryReuseFacebookSsoToken,
@@ -27,7 +26,6 @@ const {
     throw new Error(`redirect:${path}`)
   }),
   mockRequireWorkspacePermission: vi.fn(async () => undefined),
-  mockResolveForOwner: vi.fn(),
   mockResolveOAuthCredential: vi.fn(),
   mockStartSession: vi.fn(),
   mockTryReuseFacebookSsoToken: vi.fn(),
@@ -43,10 +41,9 @@ vi.mock("next/navigation", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  platformCredentialService: { resolveForOwner: mockResolveForOwner },
   workspaceService: {
     findById: mockFindWorkspaceById,
-    find: vi.fn(async () => undefined),
+    findActiveByOwner: vi.fn(async () => undefined),
     create: mockWorkspaceCreate,
   },
 }))
@@ -63,6 +60,9 @@ vi.mock("@chatbotx.io/connections", () => ({
     listAndAttachCandidates: mockListAndAttachCandidates,
     startSession: mockStartSession,
   },
+  // `startChannelConnect`'s error paths call `failSession` — unused by these
+  // happy/plan-limit-only tests, but the module must export it.
+  failSession: vi.fn(),
 }))
 
 vi.mock("@/features/connections/lib/resolve-connect-credential", () => ({
@@ -85,13 +85,18 @@ vi.mock("@/features/integration-messenger/libs/sso-reuse", () => ({
   tryReuseFacebookSsoToken: mockTryReuseFacebookSsoToken,
 }))
 
+vi.mock("@/lib/log", () => ({
+  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+}))
+
 const { GET } = await import(
   "../src/app/(no-sidebar)/channels/create/messenger/route"
 )
 
 const messengerCredential = {
-  config: { clientId: "app-id", clientSecret: "app-secret", version: "v23.0" },
-  publicConfig: { clientId: "app-id", version: "v23.0" },
+  clientId: "app-id",
+  clientSecret: "app-secret",
+  version: "v23.0",
 }
 
 function requestWithWorkspaceId(workspaceId: string | null) {
@@ -102,17 +107,15 @@ function requestWithWorkspaceId(workspaceId: string | null) {
   return { nextUrl: url } as unknown as Parameters<typeof GET>[0]
 }
 
-function resolveOnlyMessenger() {
-  mockResolveForOwner.mockResolvedValue(messengerCredential)
-}
-
 describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetCurrentUserId.mockResolvedValue("user-1")
     mockConnectSessionCreate.mockResolvedValue({ session: { id: "session-1" } })
+    // One resolve, shared by the SSO pre-check and the OAuth fallback — no
+    // more duplicate `platformCredentialService.resolveForOwner("messenger")`.
     mockResolveOAuthCredential.mockResolvedValue({
-      credential: { clientId: "app-id", clientSecret: "app-secret" },
+      credential: messengerCredential,
       callbackUrl: "https://app.example.com/integrations/messenger/callback",
     })
     mockStartSession.mockResolvedValue({
@@ -123,7 +126,6 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
       },
     })
     mockUpdateReturnUrl.mockResolvedValue({ id: "session-2" })
-    resolveOnlyMessenger()
   })
 
   test("reuses a valid SSO token: attaches candidates and redirects to the Page picker session", async () => {
@@ -142,6 +144,10 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
     )
     expect(mockFindWorkspaceById).toHaveBeenCalledWith({ id: "ws-1" })
     expect(mockWorkspaceCreate).not.toHaveBeenCalled()
+    expect(mockTryReuseFacebookSsoToken).toHaveBeenCalledWith({
+      userId: "user-1",
+      messengerCredential,
+    })
     expect(mockConnectSessionCreate).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       provider: "messenger",
@@ -218,25 +224,27 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
       workspaceId: "ws-1",
       provider: "messenger",
       purpose: "connect",
-      credential: { clientId: "app-id", clientSecret: "app-secret" },
+      credential: messengerCredential,
       callbackUrl: "https://app.example.com/integrations/messenger/callback",
       actorUserId: "user-1",
       platformOwnerId: "owner-1",
     })
+    // Relative — `connectSessionService.updateReturnUrl`'s real
+    // `validateReturnUrl` rejects an absolute value outright (regression C1).
     expect(mockUpdateReturnUrl).toHaveBeenCalledWith({
       id: "session-2",
-      returnUrl: "http://localhost/channels/messenger/select?session=session-2",
+      returnUrl: "/channels/messenger/select?session=session-2",
     })
   })
 
-  // Regression (C1): previously stored a *relative* returnUrl
-  // (`/channels/messenger/select?session=...`). `sanitizeReferer` —
-  // invoked for real when the OAuth callback reads `ConnectSession
-  // .returnUrl` back — does `new URL(referer)` first, which throws on a
-  // relative path and silently falls back to `/manage`, hiding the picker.
-  // This test does NOT mock `sanitizeReferer`/`isAllowedOrigin` so a
-  // regression here fails for real instead of being hidden by a mock.
-  test("the stored returnUrl survives a real (unmocked) sanitizeReferer round-trip instead of falling back to /manage", async () => {
+  // Regression (C1): the route used to store an *absolute* returnUrl built
+  // from the request's own origin — `connectSessionService.updateReturnUrl`
+  // (real `validateReturnUrl`) rejects an absolute value outright, so every
+  // non-SSO connect start 400'd. The route must store a *relative* path;
+  // the OAuth callback resolves it against its own public origin before
+  // handing it to `sanitizeReferer` (real, unmocked here), which only
+  // accepts absolute URLs.
+  test("stores a relative returnUrl that the callback can resolve to an absolute, allowed URL instead of an absolute value the service would reject", async () => {
     mockTryReuseFacebookSsoToken.mockResolvedValue({ reusable: false })
     const { sanitizeReferer, FALLBACK_REDIRECT } = await import(
       "@/lib/oauth-referer"
@@ -257,19 +265,19 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
 
     const storedReturnUrl = mockUpdateReturnUrl.mock.calls.at(0)?.[0]
       .returnUrl as string
-    expect(storedReturnUrl).toBe(
-      "http://localhost:3123/channels/messenger/select?session=session-2",
-    )
-    await expect(sanitizeReferer(storedReturnUrl)).resolves.toBe(
+    expect(storedReturnUrl).toBe("/channels/messenger/select?session=session-2")
+    expect(storedReturnUrl.startsWith("/")).toBe(true)
+
+    const resolved = new URL(
       storedReturnUrl,
-    )
-    await expect(sanitizeReferer(storedReturnUrl)).resolves.not.toBe(
-      FALLBACK_REDIRECT,
-    )
+      "http://localhost:3123",
+    ).toString()
+    await expect(sanitizeReferer(resolved)).resolves.toBe(resolved)
+    await expect(sanitizeReferer(resolved)).resolves.not.toBe(FALLBACK_REDIRECT)
   })
 
   test("404s when the workspace has no messenger credential configured", async () => {
-    mockResolveForOwner.mockResolvedValue(undefined)
+    mockResolveOAuthCredential.mockResolvedValue(null)
 
     await expect(GET(requestWithWorkspaceId("ws-1"))).rejects.toThrow(
       "not found",

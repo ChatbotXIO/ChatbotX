@@ -43,7 +43,6 @@ const {
   mockCreateGoogleFromOAuthCallback,
   mockResolveOwnerForWorkspace,
   mockGetCurrentUser,
-  mockCookieSet,
   mockNotFound,
   mockRedirect,
   mockAuditRecord,
@@ -71,7 +70,6 @@ const {
   mockCreateGoogleFromOAuthCallback: vi.fn(),
   mockResolveOwnerForWorkspace: vi.fn(async () => "platform-owner-1"),
   mockGetCurrentUser: vi.fn(),
-  mockCookieSet: vi.fn(),
   mockNotFound: vi.fn(() => {
     throw new Error("not found")
   }),
@@ -173,11 +171,6 @@ vi.mock("@chatbotx.io/integration-messenger", () => ({
   getUserPages: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
-  exchangeLongLivedToken: vi.fn(),
-  subscribePageToAppWebhook: vi.fn(),
-}))
-
 vi.mock("@chatbotx.io/sdk", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@chatbotx.io/sdk")>()),
   AuthType: { oauth2: "oauth2", custom: "custom" },
@@ -191,10 +184,6 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
     getPublicUrlFromRequest: (request: { url: string }) => request.url,
   }
 })
-
-vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ set: mockCookieSet })),
-}))
 
 vi.mock("next/navigation", () => ({
   notFound: mockNotFound,

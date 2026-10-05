@@ -1,27 +1,93 @@
-import {
-  platformCredentialService,
-  workspaceService,
-} from "@chatbotx.io/business"
-import "@chatbotx.io/business/audit"
 import { connectSessionService } from "@chatbotx.io/business/connect-session"
-import { connectionService } from "@chatbotx.io/connections"
+import { connectionService, failSession } from "@chatbotx.io/connections"
+import type { MessengerCredential } from "@chatbotx.io/database/partials"
 import type { AuthValue } from "@chatbotx.io/sdk"
-import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
-import { resolveOAuthCredential } from "@/features/connections/lib/resolve-connect-credential"
+import type {
+  BeforeStartContext,
+  BeforeStartResult,
+} from "@/features/channel-connect/lib/start-channel-connect"
+import { startChannelConnect } from "@/features/channel-connect/lib/start-channel-connect"
 import { tryReuseFacebookSsoToken } from "@/features/integration-messenger/libs/sso-reuse"
-import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
-import { getCurrentUserId } from "@/lib/auth/utils"
-import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
-import { createFirstWorkspace } from "@/lib/workspace/create-first-workspace"
+import { logger } from "@/lib/log"
+
+const MESSENGER_SELECT_PATH = (sessionId: string) =>
+  `/channels/messenger/select?session=${sessionId}`
+
+/**
+ * The Facebook SSO token reuse check: on a hit, mints its own `ConnectSession`
+ * (no OAuth round trip, so no callback to build it in — the write can't
+ * happen from a Server Component's render) and attaches candidates straight
+ * away, then redirects to the picker. On a miss, or if `listAndAttachCandidates`
+ * itself throws after the session was created, this falls back to the normal
+ * OAuth start instead of showing a hard error — the SSO reuse is purely an
+ * optimization, never the only way to connect.
+ */
+async function tryMessengerSsoReuse({
+  userId,
+  platformOwnerId,
+  targetWorkspacePromise,
+  credential,
+}: BeforeStartContext): Promise<BeforeStartResult> {
+  const messengerCredential = credential as MessengerCredential
+  // Independent of each other — the SSO check needs only the credential,
+  // and workspace resolve-or-create needs only the request — so they run
+  // concurrently instead of waiting on the workspace first.
+  const [targetWorkspace, reuse] = await Promise.all([
+    targetWorkspacePromise,
+    tryReuseFacebookSsoToken({ userId, messengerCredential }),
+  ])
+  if (!reuse.reusable) {
+    return { type: "continue" }
+  }
+
+  let createdSessionId: string | undefined
+  try {
+    const { session } = await connectSessionService.create({
+      workspaceId: targetWorkspace.id,
+      provider: "messenger",
+      purpose: "connect",
+      actorUserId: userId,
+      platformOwnerId,
+    })
+    createdSessionId = session.id
+    const auth: AuthValue = {
+      authType: "oauth2",
+      clientId: messengerCredential.clientId,
+      clientSecret: messengerCredential.clientSecret,
+      redirectUrl: "",
+      version: messengerCredential.version,
+      tokens: { accessToken: reuse.userToken },
+    }
+    await connectionService.listAndAttachCandidates(session, auth)
+    return { type: "redirect", url: MESSENGER_SELECT_PATH(session.id) }
+  } catch (err) {
+    logger.error(
+      { err, workspaceId: targetWorkspace.id, sessionId: createdSessionId },
+      "Facebook SSO reuse failed for messenger connect; falling back to OAuth",
+    )
+    if (createdSessionId) {
+      await failSession(
+        {
+          id: createdSessionId,
+          workspaceId: targetWorkspace.id,
+          provider: "messenger",
+        },
+        "internal_error",
+      ).catch(() => undefined)
+    }
+    return { type: "continue" }
+  }
+}
 
 /**
  * Reached only via a redirect from `/channels/create?channel=messenger`
  * (never linked to directly). The Facebook SSO token reuse check needs to
  * mint a `ConnectSession` synchronously on a hit — no OAuth round-trip, so
  * there is no callback to build it in — and that write can't happen from a
- * Server Component's render. This route re-runs the auth/workspace guards
- * itself since it's a public GET endpoint, not just an internal helper.
+ * Server Component's render. `startChannelConnect` re-runs the auth/
+ * workspace guards itself since this is a public GET endpoint, not just an
+ * internal helper.
  *
  * Both branches resolve (or create) the target workspace up front, unlike
  * the legacy cookie-based flow which deferred that to the OAuth callback:
@@ -30,93 +96,9 @@ import { createFirstWorkspace } from "@/lib/workspace/create-first-workspace"
  * blob could carry an absent `workspaceId` and let the callback create one.
  */
 export async function GET(req: NextRequest) {
-  const workspaceId = req.nextUrl.searchParams.get("workspaceId") ?? undefined
-
-  if (workspaceId) {
-    await requireWorkspacePermission(workspaceId, "superAdmin")
-  }
-
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    return notFound()
-  }
-
-  const platformOwnerId = await resolvePlatformOwnerId({ userId, workspaceId })
-
-  const messenger = await platformCredentialService.resolveForOwner({
-    ownerId: platformOwnerId,
-    type: "messenger",
-  })
-  if (!messenger) {
-    return notFound()
-  }
-
-  const targetWorkspace = workspaceId
-    ? await workspaceService.findById({ id: workspaceId })
-    : await createFirstWorkspace(userId)
-
-  const reuse = await tryReuseFacebookSsoToken({
-    userId,
-    messengerCredential: messenger.config,
-  })
-
-  if (reuse.reusable) {
-    const { session } = await connectSessionService.create({
-      workspaceId: targetWorkspace.id,
-      provider: "messenger",
-      purpose: "connect",
-      actorUserId: userId,
-      platformOwnerId,
-    })
-    const auth: AuthValue = {
-      authType: "oauth2",
-      clientId: messenger.config.clientId,
-      clientSecret: messenger.config.clientSecret,
-      redirectUrl: "",
-      version: messenger.config.version,
-      tokens: { accessToken: reuse.userToken },
-    }
-    await connectionService.listAndAttachCandidates(session, auth)
-    redirect(`/channels/messenger/select?session=${session.id}`)
-  }
-
-  const resolved = await resolveOAuthCredential({
+  return await startChannelConnect(req, {
     provider: "messenger",
-    ownerId: platformOwnerId,
+    selectPath: MESSENGER_SELECT_PATH,
+    beforeStart: tryMessengerSsoReuse,
   })
-  if (!resolved) {
-    return notFound()
-  }
-
-  const { session, nextAction } = await connectionService.startSession({
-    workspaceId: targetWorkspace.id,
-    provider: "messenger",
-    purpose: "connect",
-    credential: resolved.credential,
-    callbackUrl: resolved.callbackUrl,
-    actorUserId: userId,
-    platformOwnerId,
-  })
-  // The session's own id isn't known until `startSession` returns, so the
-  // page-picker redirect target — which the select page needs to resolve
-  // this same session via `?session=` — is set in a follow-up call rather
-  // than passed into `startSession` itself.
-  // Absolute: `sanitizeReferer` (called when the callback reads this back)
-  // rejects a relative path outright (`new URL("/channels/...")` throws),
-  // which silently fell back to `/manage` and hid the picker. `req.nextUrl
-  // .origin` — not the platform's fixed builder URL — so a white-label
-  // custom-domain visitor lands back on their own host.
-  await connectSessionService.updateReturnUrl({
-    id: session.id,
-    returnUrl: new URL(
-      `/channels/messenger/select?session=${session.id}`,
-      req.nextUrl.origin,
-    ).toString(),
-  })
-  if (nextAction.type !== "open_url") {
-    throw new Error(
-      `Unexpected connect next action for messenger: ${nextAction.type}`,
-    )
-  }
-  redirect(nextAction.url)
 }

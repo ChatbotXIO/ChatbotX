@@ -10,7 +10,6 @@ import {
 import {
   channelTypes,
   type IntegrationUserInfo,
-  type MessengerPersistentMenu,
 } from "@chatbotx.io/database/partials"
 import { integrationMessengerRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -18,33 +17,11 @@ import {
   tagChannelModel,
 } from "@chatbotx.io/database/schema"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
-import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 import { flowService } from "../flow/service"
-import {
-  auditChannelConnected,
-  connectChannelIntegration,
-  runConnectTransaction,
-} from "../inbox/connect-channel"
 import { isWorkspaceAdminMember } from "../workspace-member/predicates"
 import { workspaceMemberService } from "../workspace-member/service"
-
-export type ConnectPageInput = {
-  actorUserId: string
-  ownerId: string
-  workspaceId: string
-  page: { pageId: string; pageName: string }
-  auth: unknown
-  persistentMenus: MessengerPersistentMenu[]
-}
-
-export type ConnectPageResult = {
-  workspaceId: string
-  integrationId: string
-  wasCreated: boolean
-  integration: IntegrationMessengerModel
-}
 
 class MessengerIntegrationService extends BaseService {
   findByInboxId(inboxId: string) {
@@ -138,100 +115,9 @@ class MessengerIntegrationService extends BaseService {
       .where(eq(integrationMessengerModel.id, id))
   }
 
-  /**
-   * Store the authorizing user's identity after a connect. Separate from the
-   * insert because the avatar upload is an external call that must stay outside
-   * the connect transaction.
-   */
-  async updateUserInfo(props: {
-    id: string
-    workspaceId: string
-    userInfo: IntegrationUserInfo
-  }): Promise<void> {
-    await db
-      .update(integrationMessengerModel)
-      .set({ userInfo: props.userInfo })
-      .where(
-        and(
-          eq(integrationMessengerModel.id, props.id),
-          eq(integrationMessengerModel.workspaceId, props.workspaceId),
-        ),
-      )
-  }
-
   findByWorkspaceId(workspaceId: string) {
     return db.query.integrationMessengerModel.findMany({
       where: { workspaceId },
-    })
-  }
-
-  /**
-   * Page ids from the given list that already have a Messenger integration.
-   * `IntegrationMessenger.pageId` is unique platform-wide, so a match means the
-   * page cannot be connected again anywhere.
-   */
-  findConnectedPageIds(pageIds: string[]): Promise<Set<string>> {
-    return integrationMessengerRepository.findConnectedPageIds(pageIds)
-  }
-
-  /**
-   * Persists a Messenger page connect: one `db.transaction` (via
-   * `connectChannelIntegration` → `integrationMessengerRepository.insert`)
-   * that settles with the write — nothing after it may reject, so a
-   * failing audit dispatch is logged, never thrown. Workspace is always
-   * required (the OAuth callback stores it in the cookie before this runs).
-   */
-  async connectPage(input: ConnectPageInput): Promise<ConnectPageResult> {
-    const { integration, wasCreated } = await this.insertPage(input)
-
-    if (wasCreated) {
-      await auditChannelConnected({
-        channel: "messenger",
-        actorUserId: input.actorUserId,
-        workspaceId: input.workspaceId,
-        integrationId: integration.id,
-      })
-    }
-
-    return {
-      workspaceId: input.workspaceId,
-      integrationId: integration.id,
-      wasCreated,
-      integration,
-    }
-  }
-
-  private insertPage(input: ConnectPageInput): Promise<{
-    integration: IntegrationMessengerModel
-    wasCreated: boolean
-  }> {
-    return runConnectTransaction("messenger", async (tx) => {
-      const { integration, wasCreated } = await connectChannelIntegration({
-        tx,
-        ownerId: input.ownerId,
-        inboxData: {
-          id: createId(),
-          workspaceId: input.workspaceId,
-          name: input.page.pageName,
-          channel: "messenger",
-          sourceId: input.page.pageId,
-        },
-        insertIntegration: (inboxId) =>
-          integrationMessengerRepository.insert(
-            {
-              id: createId(),
-              workspaceId: input.workspaceId,
-              inboxId,
-              pageId: input.page.pageId,
-              auth: input.auth,
-              name: input.page.pageName,
-              persistentMenus: input.persistentMenus,
-            },
-            tx,
-          ),
-      })
-
-      return { integration, wasCreated }
     })
   }
 

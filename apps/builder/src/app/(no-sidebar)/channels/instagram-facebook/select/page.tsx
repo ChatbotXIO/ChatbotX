@@ -26,13 +26,14 @@ export default async function InstagramFacebookSelectPage({
 }: {
   searchParams: Promise<{ session?: string }>
 }) {
-  const { sessionId, resolved } = await resolveSelectSession({
-    searchParams,
-    credentialType: "instagramFacebook",
-    brandingChannel: "instagram",
-  })
+  const [{ sessionId, resolved }, t] = await Promise.all([
+    resolveSelectSession({
+      searchParams,
+      expectedProvider: "instagramFacebook",
+    }),
+    getTranslations(),
+  ])
 
-  const t = await getTranslations()
   const items = resolved.session.targets
     .map((target) =>
       toConnectPickerItem({

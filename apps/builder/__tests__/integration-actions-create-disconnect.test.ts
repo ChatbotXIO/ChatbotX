@@ -92,6 +92,25 @@ describe("createDisconnectAction", () => {
     expect(afterDisconnect).toHaveBeenCalledWith("ws-1")
   })
 
+  test("isolates an afterDisconnect failure — the disconnect itself is not reported as failed", async () => {
+    mocks.findByProviderSourceId.mockResolvedValue({ id: "conn-1" })
+    const afterDisconnect = vi.fn().mockRejectedValue(new Error("cache boom"))
+    const action = createDisconnectAction(
+      { disconnect: vi.fn() },
+      { name: "Claude", provider: "claude", afterDisconnect },
+    ) as unknown as (props: { bindArgsParsedInputs: [string] }) => Promise<void>
+
+    await expect(
+      action({ bindArgsParsedInputs: ["ws-1"] }),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.connectionServiceDisconnect).toHaveBeenCalled()
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws-1" }),
+      "Claude disconnected, but its afterDisconnect hook failed",
+    )
+  })
+
   test("logs and rethrows when the underlying disconnect fails", async () => {
     mocks.findByProviderSourceId.mockResolvedValue({ id: "conn-1" })
     mocks.connectionServiceDisconnect.mockRejectedValue(new Error("boom"))

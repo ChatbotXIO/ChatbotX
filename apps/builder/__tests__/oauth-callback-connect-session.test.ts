@@ -563,8 +563,15 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     await handleCallback("zalo", buildRequest("123.abc-nonce"))
 
     expect(mockConnectTargets).not.toHaveBeenCalled()
+    // `returnUrl` is stored relative — resolved against this callback's own
+    // public origin (`url.origin`) before `sanitizeReferer`, which only
+    // accepts absolute URLs (see the `returnUrl` resolution comment in
+    // `handleConnectSessionCallback`).
+    expect(mockSanitizeReferer).toHaveBeenCalledWith(
+      "https://app.example.com/channels/instagram/select?session=123",
+    )
     expect(mockRedirect).toHaveBeenCalledWith(
-      "/channels/instagram/select?session=123",
+      "https://app.example.com/channels/instagram/select?session=123",
     )
   })
 

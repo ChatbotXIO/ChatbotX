@@ -21,6 +21,7 @@ import {
   isCreateChannelErrorCode,
 } from "@/lib/workspace/create-first-workspace"
 import { filterPreviewChannels } from "@/lib/workspace/preview-channels"
+import { withWorkspaceQuery } from "@/lib/workspace/settings-paths"
 
 export const dynamic = "force-dynamic"
 
@@ -133,13 +134,12 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
   }
 
   if (selectedChannel === "messenger" && messenger && isVisible("messenger")) {
-    // The Facebook SSO token reuse check needs to set a cookie on a hit, which
-    // a Server Component's render can't do — hand off to a Route Handler that
-    // re-checks reuse and either redirects to the Page picker (cookie set) or
-    // falls back to the full OAuth dialog. See that route's comment.
-    redirect(
-      `/channels/create/messenger${workspaceId ? `?workspaceId=${workspaceId}` : ""}`,
-    )
+    // The Facebook SSO token reuse check needs to mint a `ConnectSession`
+    // synchronously on a hit, which a Server Component's render can't do —
+    // hand off to a Route Handler that re-checks reuse and either redirects
+    // to the Page picker (session minted) or falls back to the full OAuth
+    // dialog. See that route's comment.
+    redirect(withWorkspaceQuery("/channels/create/messenger", workspaceId))
   }
 
   if (selectedChannel === "instagram" && instagram && isVisible("instagram")) {
@@ -151,9 +151,7 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
     instagram &&
     isVisible("instagram")
   ) {
-    redirect(
-      `/channels/instagram${workspaceId ? `?workspaceId=${workspaceId}` : ""}`,
-    )
+    redirect(withWorkspaceQuery("/channels/instagram", workspaceId))
   }
 
   // `instagram-facebook` is a login-flavor route discriminator, not its own
@@ -164,9 +162,7 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
     instagramFacebook &&
     isVisible("instagram")
   ) {
-    redirect(
-      `/channels/instagram-facebook${workspaceId ? `?workspaceId=${workspaceId}` : ""}`,
-    )
+    redirect(withWorkspaceQuery("/channels/instagram-facebook", workspaceId))
   }
 
   if (selectedChannel === "threads" && threads && isVisible("threads")) {

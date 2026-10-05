@@ -125,10 +125,6 @@ vi.mock(
   }),
 )
 
-vi.mock("@/features/integration-messenger/libs/oauth", () => ({
-  generateMessengerRedirectUri: vi.fn(async () => ""),
-}))
-
 vi.mock("@/features/integration-telegram/components/telegram-connect", () => ({
   TelegramConnect: () => null,
 }))
