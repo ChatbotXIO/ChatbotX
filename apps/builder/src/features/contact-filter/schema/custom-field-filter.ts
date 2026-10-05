@@ -113,17 +113,35 @@ const isIntervalOperator = (operator: OperatorType): boolean =>
  */
 export const customFieldConditionSchema = z
   .object({
-    field: z.literal("customField"),
-    customFieldId: z.string().min(1),
-    customFieldType: customFieldTypes.optional(),
-    valueType: formFieldTypes,
-    operator: operatorTypes,
+    field: z
+      .literal("customField")
+      .describe("Always `customField` for a workspace custom field condition."),
+    customFieldId: z
+      .string()
+      .min(1)
+      .describe(
+        "Custom field id from `contacts.listFilterFields` (`customFields[].id`).",
+      ),
+    customFieldType: customFieldTypes
+      .optional()
+      .describe(
+        "Exact type of the custom field (`type` in `contacts.listFilterFields`); `date`/`datetime` enable date semantics, `longText` limits operators to eq/ne/isEmpty/isNotEmpty.",
+      ),
+    valueType: formFieldTypes.describe(
+      "Value type of the field, from `valueType` in `contacts.listFilterFields`; decides how the value is cast and which operators are allowed.",
+    ),
+    operator: operatorTypes.describe(
+      "Comparison operator. Allowed operators depend on the field; see `contacts.listFilterFields` (`isEmpty`/`isNotEmpty` take no value; `isBetween`/`notBetween` take a two-item value).",
+    ),
     value: z
       .union([
         sampleStringSchema,
         z.tuple([sampleStringSchema, sampleStringSchema]),
       ])
-      .optional(),
+      .optional()
+      .describe(
+        "Value to compare against: a string, or a two-item `[from, to]` array for `isBetween`/`notBetween`. Omit for `isEmpty`/`isNotEmpty`.",
+      ),
   })
   .superRefine((condition, ctx) => {
     const enabledOperators = operatorsForCustomField(

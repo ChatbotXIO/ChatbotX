@@ -2056,12 +2056,13 @@
       "broadcasts": "Uitzendingen",
       "analytics": "Analyse",
       "ecommerce": "E-commerce",
-      "integrations": "Integraties",
       "channels": "Kanalen",
+      "integrations": "Integraties",
       "minigames": "Minigames",
       "appointments": "Afspraken",
       "media": "Media",
-      "ads": "Advertenties"
+      "ads": "Advertenties",
+      "settings": "Instellingen"
     },
     "adReferral": {
       "label": "Ads",
@@ -3314,6 +3315,7 @@
         "channelLimit": "Kanaallimiet bereikt.",
         "workspaceLimit": "Werkruimtelimiet bereikt.",
         "providerRejected": "De provider heeft dit verzoek geweigerd.",
+        "inProgress": "Verbinding is al bezig.",
         "unknown": "Er is iets misgegaan.",
         "followUpFailed": "Instellen niet voltooid — rond dit af via de kanaalinstellingen."
       },
@@ -5629,6 +5631,21 @@
     "invalidDescription": "Deze link is ongeldig of verlopen.",
     "unavailableTitle": "Afmelden niet beschikbaar.",
     "unavailableDescription": "Deze werkruimte is niet meer beschikbaar."
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "Deze link is niet meer beschikbaar.",

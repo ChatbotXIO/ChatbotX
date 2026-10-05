@@ -49,3 +49,17 @@ export const resolveFilterValueLabelsResponse = z.object({
 export type ResolveFilterValueLabelsResponse = z.infer<
   typeof resolveFilterValueLabelsResponse
 >
+
+/**
+ * Public twin, limited to `tags`: the one referenced type a `contacts`-scoped
+ * token can already list. Sequences, broadcasts, ref links, inboxes, members
+ * and teams belong to other scopes (or are people names), so their names stay
+ * behind those scopes' own list routes.
+ */
+export const resolveFilterValueLabelsPublicRequest = z.object({
+  tags: filterValueIdsSchema.describe("Tag ids from a `tag` condition."),
+})
+
+export const resolveFilterValueLabelsPublicResponse = z.object({
+  tags: resolveFilterValueLabelsResponse.shape.tags,
+})

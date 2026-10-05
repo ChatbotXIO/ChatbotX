@@ -176,7 +176,10 @@ describe("importService.startContactImport", () => {
 
     await expect(
       importService.startContactImport(BASE_INPUT),
-    ).rejects.toMatchObject({ code: "contactImportAlreadyRunning" })
+    ).rejects.toMatchObject({
+      code: "contactImportAlreadyRunning",
+      httpStatusCode: 409,
+    })
 
     expect(mocks.transaction).not.toHaveBeenCalled()
   })

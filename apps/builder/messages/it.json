@@ -1473,12 +1473,13 @@
       "broadcasts": "Trasmissioni",
       "analytics": "Analisi",
       "ecommerce": "E-commerce",
-      "integrations": "Integrazioni",
       "channels": "Canali",
+      "integrations": "Integrazioni",
       "minigames": "Minigiochi",
       "appointments": "Appuntamenti",
       "media": "Media",
-      "ads": "Annunci"
+      "ads": "Annunci",
+      "settings": "Impostazioni"
     },
     "adReferral": {
       "label": "Ads",
@@ -3314,6 +3315,7 @@
         "channelLimit": "Limite di canali raggiunto.",
         "workspaceLimit": "Limite dello spazio di lavoro raggiunto.",
         "providerRejected": "Il provider ha rifiutato questa richiesta.",
+        "inProgress": "Connessione già in corso.",
         "unknown": "Qualcosa è andato storto.",
         "followUpFailed": "Configurazione incompleta: completala dalle impostazioni del canale."
       },
@@ -5629,6 +5631,21 @@
     "invalidDescription": "Questo link non è valido o è scaduto.",
     "unavailableTitle": "Annullamento dell'iscrizione non disponibile.",
     "unavailableDescription": "Questa area di lavoro non è più disponibile."
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "Questo link non è più disponibile.",

@@ -2247,12 +2247,13 @@
       "broadcasts": "Udsendelser",
       "analytics": "Analyse",
       "ecommerce": "E-handel",
-      "integrations": "Integrationer",
       "channels": "Kanaler",
+      "integrations": "Integrationer",
       "minigames": "Minispil",
       "appointments": "Aftaler",
       "media": "Medier",
-      "ads": "Annoncer"
+      "ads": "Annoncer",
+      "settings": "Indstillinger"
     },
     "adReferral": {
       "label": "Ads",
@@ -3314,6 +3315,7 @@
         "channelLimit": "Kanalgrænsen er nået.",
         "workspaceLimit": "Workspace-grænsen er nået.",
         "providerRejected": "Udbyderen afviste denne anmodning.",
+        "inProgress": "Forbindelse er allerede i gang.",
         "unknown": "Noget gik galt.",
         "followUpFailed": "Opsætning ufuldstændig – afslut den fra kanalindstillingerne."
       },
@@ -5629,6 +5631,21 @@
     "invalidDescription": "Denne link er ugyldig eller har udløbet.",
     "unavailableTitle": "Afmeld unavailable.",
     "unavailableDescription": "Denne arbejdsområde er ingen longer tilgængelig."
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "Dette link er ikke længere tilgængeligt.",

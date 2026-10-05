@@ -1,14 +1,22 @@
 import {
   AuthException,
+  googleOAuthConnection,
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  isGoogleRevokedError,
+  probeVerify,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { getBusyEvents } from "./apis/busy-events"
 import { verifyCalendarAccess } from "./apis/calendars"
 import { cancelEvent, createEvent } from "./apis/events"
-import { generateAuthUrl, getClient, revokeToken } from "./client"
+import {
+  GOOGLE_CALENDAR_SCOPES,
+  generateAuthUrl,
+  getClient,
+  revokeToken,
+} from "./client"
 import { handleError } from "./error"
 import { callbackHandler } from "./handlers/callback"
 import type {
@@ -17,12 +25,70 @@ import type {
   GoogleCalendarConfig,
 } from "./schemas"
 
+const googleConnection = googleOAuthConnection<
+  GoogleCalendarConfig,
+  GoogleCalendarAuthValue
+>({
+  getClient,
+  scopes: GOOGLE_CALENDAR_SCOPES,
+  mapAuth: async (baseAuth) => {
+    const auth: GoogleCalendarAuthValue = {
+      ...baseAuth,
+      metadata: {
+        scope:
+          typeof baseAuth.metadata?.scope === "string"
+            ? baseAuth.metadata.scope
+            : undefined,
+      },
+    }
+    const calendar = await verifyCalendarAccess(auth, "primary")
+    return {
+      ...auth,
+      metadata: {
+        ...auth.metadata,
+        ...calendar,
+      },
+    } satisfies GoogleCalendarAuthValue
+  },
+})
+
 const config: IntegrationDefinition<
   GoogleCalendarConfig,
   GoogleCalendarAuthValue,
   GoogleCalendarActions
 > = {
   name: "googleCalendar",
+  connection: {
+    kind: "integration",
+    strategy: "oauth_redirect",
+    multiAccount: false,
+    configFields: [],
+    ...googleConnection,
+    describe: (auth) => {
+      if (!auth.metadata?.providerCalendarId) {
+        throw new Error("Google Calendar auth has no calendar identity")
+      }
+      return {
+        sourceId: auth.metadata.providerCalendarId,
+        displayName: auth.metadata.email ?? "Google Calendar",
+        authExpiresAt: auth.tokens.expiresAt,
+      }
+    },
+    verify: async ({ auth }) =>
+      await probeVerify(
+        async () =>
+          await verifyCalendarAccess(
+            auth,
+            auth.metadata?.providerCalendarId ?? "primary",
+          ),
+        {
+          label: "Google Calendar credentials",
+          isRevoked: isGoogleRevokedError,
+          expiresAt: auth.tokens.expiresAt,
+        },
+      ),
+    isRevokedTokenError: isGoogleRevokedError,
+  },
   actions: {
     verifyCalendar: async ({ ctx, props }) =>
       await verifyCalendarAccess(ctx.auth, props.calendarId),
@@ -98,6 +164,14 @@ const config: IntegrationDefinition<
         },
       }
     } catch (error) {
+      if (error instanceof AuthException) {
+        throw error
+      }
+      if (isGoogleRevokedError(error)) {
+        throw new AuthException(
+          "Google Calendar refresh token was revoked",
+        ).setOriginError(error)
+      }
       return handleError(error, "refreshAuth")
     }
   },

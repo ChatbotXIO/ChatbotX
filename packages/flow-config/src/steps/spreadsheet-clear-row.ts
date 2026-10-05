@@ -8,7 +8,9 @@ import {
 import { stepTypes } from "./step-action"
 
 export const spreadsheetClearRowSchema = spreadsheetSchema.extend({
-  stepType: z.literal(stepTypes.enum.spreadsheetClearRow),
+  stepType: z
+    .literal(stepTypes.enum.spreadsheetClearRow)
+    .describe('Step type discriminator: "spreadsheetClearRow".'),
   lookup: spreadsheetColumnFilterSchema,
 })
 export type SpreadsheetClearRowSchema = z.infer<

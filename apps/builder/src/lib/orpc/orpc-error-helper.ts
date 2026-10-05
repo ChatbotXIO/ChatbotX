@@ -152,6 +152,159 @@ export const possibleErrorsOnMutatingResource = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/** WhatsApp calling settings/hours: Meta or the local mirror failing is a 502. */
+export const possibleErrorsOnUpdatingWhatsappCalling = {
+  notFound,
+  businessError,
+  whatsappCallingUpstream: {
+    message: "Meta did not apply the calling change. Try again.",
+    status: 502,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Import upload: an unsupported or oversized file is a 400 the caller can fix. */
+export const possibleErrorsOnCreatingImportUpload = {
+  businessError,
+  importUnsupportedFileType: {
+    message: "Unsupported file type for this import. Use a CSV or XLSX file.",
+    status: 400,
+  },
+  importFileTooLarge: {
+    message: "The file exceeds the size limit for this import.",
+    status: 400,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Reading an uploaded import file's headers: all three failures are 400s. */
+export const possibleErrorsOnPeekingImportHeaders = {
+  notFound,
+  businessError,
+  importUnableToReadHeaders: {
+    message: "The file's headers could not be read.",
+    status: 400,
+  },
+  importUnsupportedFileType: {
+    message: "Unsupported file type for this import. Use a CSV or XLSX file.",
+    status: 400,
+  },
+  importFileTooLarge: {
+    message: "The file exceeds the size limit for this import.",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/** Starting a contact import: only one import may run per workspace (409). */
+export const possibleErrorsOnStartingContactImport = {
+  notFound,
+  businessError,
+  contactImportAlreadyRunning: {
+    message: "A contact import is already running for this workspace.",
+    status: 409,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** AI hand-over apply-to-all: every refusal is a 422 with its own code. */
+const aiHandoverRefusal = (message: string) => ({ message, status: 422 })
+
+export const possibleErrorsOnApplyingAiHandover = {
+  notFound,
+  businessError,
+  aiHandoverBulkConfirmCountExceeded: aiHandoverRefusal(
+    "More threads are eligible than `confirmCount` allows: run a dry run again and confirm the new count.",
+  ),
+  aiHandoverBulkRunNotStartable: aiHandoverRefusal(
+    "A previous run is still stopping on this Page: try again shortly.",
+  ),
+  aiHandoverBulkPageNotConnected: aiHandoverRefusal(
+    "The Page is not connected.",
+  ),
+  aiHandoverBulkAutomationNotActive: aiHandoverRefusal(
+    "Business AI automation must be enabled and running.",
+  ),
+  aiHandoverBulkNothingToRetry: aiHandoverRefusal(
+    "There is no failed run to retry.",
+  ),
+  aiHandoverBulkMessageRequired: aiHandoverRefusal(
+    "Turning it off needs the message sent to the customers it takes back.",
+  ),
+  aiHandoverBulkMessageTooLong: aiHandoverRefusal("The message is too long."),
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Conversation routing (thread control) refusals from the channel. */
+export const possibleErrorsOnThreadControl = {
+  ...possibleErrorsOnMutatingResource,
+  threadControlUnsupported: {
+    message: "This channel does not support that thread-control action.",
+    status: 400,
+  },
+  threadControlFailed: {
+    message: "The channel refused the thread-control change.",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/** Coexist toggle: invalid channel credentials (409) or Meta refusing the sync (502). */
+export const possibleErrorsOnSettingCoexist = {
+  ...possibleErrorsOnMutatingResource,
+  coexistInvalidAuth: {
+    message: "The channel's credentials are invalid: reconnect the channel.",
+    status: 409,
+  },
+  coexistSyncNotStarted: {
+    message: "Coexist is on, but Meta did not start the sync. Try again.",
+    status: 502,
+  },
+} satisfies ErrorMap
+
+/** Conversions API test event: Meta or the channel refused it (422). */
+export const possibleErrorsOnSendingCapiTestEvent = {
+  ...possibleErrorsOnMutatingResource,
+  capiTestEventRefused: {
+    message: "The test event could not be sent.",
+    status: 422,
+  },
+} satisfies ErrorMap
+
+/** Cursor-paged list: a cursor that does not decode is a 400. */
+export const possibleErrorsOnListingWithCursor = {
+  ...possibleErrorsOnListingResource,
+  invalidCursor: {
+    message: "The cursor is invalid. Start again without a cursor.",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/** Meta Catalog select/sync: a second run while one is active is a 409. */
+export const possibleErrorsOnStartingMetaCatalogRun = {
+  notFound,
+  businessError,
+  metaCatalogSyncAlreadyRunning: {
+    message: "A catalog sync or import is already running for this workspace.",
+    status: 409,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Ad creative image upload: the type and size checks are 400s. */
+export const possibleErrorsOnCreatingAdImageUpload = {
+  notFound,
+  businessError,
+  adsCreativeUnsupportedImage: {
+    message:
+      "Use a JPEG, PNG, GIF or WebP image whose extension matches its type",
+    status: 400,
+  },
+  adsCreativeImageTooLarge: {
+    message: "Ad images are limited to 10 MB",
+    status: 400,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
 export const possibleErrorsOnActivatingBroadcast = {
   notFound,
   businessError,
@@ -340,5 +493,131 @@ export const possibleErrorsOnMutatingEmailTopic = {
   notFound,
   businessError,
   nameTaken,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/**
+ * `refresh`/`verify` on a `Connection` whose status is not `connected`/
+ * `degraded` throws `connectionInactive` (409) — see `ConnectionService` in
+ * `@chatbotx.io/connections`.
+ */
+const connectionInactive = {
+  message: "This connection is not active",
+  status: 409,
+}
+
+/** `refresh`/`verify`/connect called against a provider with no `ConnectionAdapter`/store binding — an expected unsupported operation (e.g. a built-in connection with no satellite store), not a server failure. See `connectionNotConfiguredException` in `@chatbotx.io/business/errors`. */
+const connectionNotConfigured = {
+  message: "This connection provider is not configured",
+  status: 400,
+}
+
+/** The provider has no `refreshAuth` handler (e.g. a static API-key credential). */
+const connectionNotRefreshable = {
+  message: "This connection provider does not support refresh",
+  status: 400,
+}
+
+export const possibleErrorsOnDisconnectingConnection = {
+  notFound,
+  businessError,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnRefreshingConnection = {
+  notFound,
+  connectionInactive,
+  connectionNotConfigured,
+  connectionNotRefreshable,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnVerifyingConnection = {
+  notFound,
+  businessError,
+  connectionInactive,
+  connectionNotConfigured,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** `connectFromCredentials`'s config-validation/live-check failures — see `ConnectionService` in `@chatbotx.io/connections`. */
+const connectionWrongStrategy = {
+  message: "This connection provider does not accept direct credentials",
+  status: 400,
+}
+
+const connectionCredentialsRejected = {
+  message: "The provided credentials were rejected",
+  status: 400,
+}
+
+const connectionNotOAuth = {
+  message: "This connection provider does not support an OAuth connect flow",
+  status: 400,
+}
+
+/** The provider's OAuth code exchange or live credential-check failed with a transient upstream/transport error — see `connectionProviderUnavailableException` in `@chatbotx.io/business/errors`, thrown by `packages/connections`'s `credentials.ts` and `connect-session-flow.ts`. The exception itself carries either 502 or 503; this map documents the common 502 case. */
+const connectionProviderUnavailable = {
+  message: "The provider is temporarily unavailable. Please try again.",
+  status: 502,
+}
+
+/** The tenant's channel-visibility policy hides this channel from an unattended API caller — see `channelHiddenException`. */
+const channelHidden = {
+  message: "This channel is not available for this workspace",
+  status: 403,
+}
+
+export const possibleErrorsOnCreatingConnection = {
+  businessError,
+  connectionAlreadyConnected: {
+    message: "This provider is already connected in this workspace",
+    status: 409,
+  },
+  connectionWrongStrategy,
+  connectionCredentialsRejected,
+  connectionNotOAuth,
+  connectionNotConfigured,
+  connectionProviderUnavailable,
+  channelHidden,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnReconnectingConnection = {
+  notFound,
+  businessError,
+  connectionNotOAuth,
+  connectionNotConfigured,
+  connectionProviderUnavailable,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnUpdatingConnection = {
+  notFound,
+  businessError,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** The session's `updateWhereStatusIn` status+unexpired guard didn't match — already advanced, cancelled, or expired — see `ConnectSessionService.attachAuthorization`/`claimAuthorization`/etc. */
+const connectSessionExpired = {
+  message: "This connect session is no longer active",
+  status: 400,
+}
+
+export const possibleErrorsOnFindingConnectSession = {
+  notFound,
+  businessError,
+} satisfies ErrorMap
+
+export const possibleErrorsOnConnectingSessionTargets = {
+  notFound,
+  businessError,
+  connectSessionExpired,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnCancelingConnectSession = {
+  notFound,
+  businessError,
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap

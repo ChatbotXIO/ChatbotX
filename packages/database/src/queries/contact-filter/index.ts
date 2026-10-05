@@ -71,7 +71,11 @@ export {
   pruneContactFilterFields,
   pruneEmailPhoneFilterConditions,
 } from "./permission"
-export { contactInboxInteractedWithin24hSQL } from "./predicates"
+export {
+  buildContactInboxScopeWhere,
+  type ContactInboxScope,
+  contactInboxInteractedWithin24hSQL,
+} from "./predicates"
 export {
   DEFAULT_FILTER_TIMEZONE,
   filterValueToUtcDayEndIso,

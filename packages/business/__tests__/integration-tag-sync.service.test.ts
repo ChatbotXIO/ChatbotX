@@ -48,6 +48,14 @@ vi.mock("@chatbotx.io/database/partials", () => ({
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   integrationMessengerRepository: {},
+  connectionRepository: { findByInboxId: vi.fn() },
+}))
+
+// `zaloIntegrationService.disconnect`'s Connection-row integration (see
+// `disconnect-messenger.ts`) — mocked at the boundary, same reason as the
+// other service-module imports above.
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { transition: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({

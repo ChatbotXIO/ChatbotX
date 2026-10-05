@@ -2247,12 +2247,13 @@
       "broadcasts": "Joukkoviestit",
       "analytics": "Analytiikka",
       "ecommerce": "Verkkokauppa",
-      "integrations": "Integraatiot",
       "channels": "Kanavat",
+      "integrations": "Integraatiot",
       "minigames": "Minipelit",
       "appointments": "Tapaamiset",
       "media": "Media",
-      "ads": "Mainokset"
+      "ads": "Mainokset",
+      "settings": "Asetukset"
     },
     "adReferral": {
       "label": "Ads",
@@ -3314,6 +3315,7 @@
         "channelLimit": "Kanavaraja saavutettu.",
         "workspaceLimit": "Työtilan raja saavutettu.",
         "providerRejected": "Palveluntarjoaja hylkäsi pyynnön.",
+        "inProgress": "Yhteys on jo käynnissä.",
         "unknown": "Jotain meni pieleen.",
         "followUpFailed": "Asetus on kesken – viimeistele kanavan asetuksista."
       },
@@ -5629,6 +5631,21 @@
     "invalidDescription": "Tämä linkki on virheellinen tai vanhentunut.",
     "unavailableTitle": "Tilauksen peruuttaminen ei ole käytettävissä.",
     "unavailableDescription": "Tämä työtila ei ole enää käytettävissä."
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "Tämä linkki ei ole enää käytettävissä.",

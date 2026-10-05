@@ -15,6 +15,8 @@ export type GoogleSheetsConfig = Oauth2Config & {
 export type GoogleSheetsAuthValue = Oauth2AuthValue & {
   metadata: {
     scope?: string
+    accountId: string
+    email?: string
   }
 }
 

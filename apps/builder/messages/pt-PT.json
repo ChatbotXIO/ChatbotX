@@ -2247,12 +2247,13 @@
       "broadcasts": "Difusões",
       "analytics": "Análises",
       "ecommerce": "Comércio eletrónico",
-      "integrations": "Integrações",
       "channels": "Canais",
+      "integrations": "Integrações",
       "minigames": "Minijogos",
       "appointments": "Marcações",
       "media": "Multimédia",
-      "ads": "Anúncios"
+      "ads": "Anúncios",
+      "settings": "Definições"
     },
     "adReferral": {
       "label": "Ads",
@@ -3314,6 +3315,7 @@
         "channelLimit": "Limite de canais atingido.",
         "workspaceLimit": "Limite do espaço de trabalho atingido.",
         "providerRejected": "O fornecedor rejeitou este pedido.",
+        "inProgress": "A ligação já está em curso.",
         "unknown": "Algo correu mal.",
         "followUpFailed": "Configuração incompleta — conclua nas definições do canal."
       },
@@ -5629,6 +5631,21 @@
     "invalidDescription": "Esta ligação é inválida ou expirou.",
     "unavailableTitle": "Cancelamento de subscrição indisponível.",
     "unavailableDescription": "Este espaço de trabalho já não está disponível."
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "Esta ligação já não está disponível.",

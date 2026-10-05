@@ -121,7 +121,15 @@ const refLinkAnalyticsService = {
   getRefLinkContactStats: vi.fn(),
 }
 
+const commentAutomationAnalyticsService = {
+  getReplyStatsByDateRange: vi.fn(),
+  listUserComments: vi.fn(),
+  listBotReplies: vi.fn(),
+  listErrors: vi.fn(),
+}
+
 vi.mock("@chatbotx.io/analytics", () => ({
+  commentAutomationAnalyticsService,
   contactAnalyticsService,
   macAnalyticsService,
   messageAnalyticsService,
@@ -132,6 +140,13 @@ vi.mock("@chatbotx.io/analytics", () => ({
   flowAnalyticsService,
   magicLinkAnalyticsService,
   refLinkAnalyticsService,
+}))
+
+const flowServiceMock = { findById: vi.fn() }
+const smartDelayServiceMock = { countByFlowStep: vi.fn() }
+vi.mock("@chatbotx.io/business", () => ({
+  flowService: flowServiceMock,
+  smartDelayService: smartDelayServiceMock,
 }))
 
 const withCache = vi.fn((_key: string, loader: () => unknown) => loader())
@@ -512,5 +527,120 @@ describe("GET /v1/analytics/ref-links/contacts", () => {
     expect(result.data[0]).not.toHaveProperty("firstName")
     expect(result.data[0]).not.toHaveProperty("lastName")
     expect(result.data[0]).not.toHaveProperty("avatar")
+  })
+})
+
+describe("GET /v1/analytics/flows/{flowId}/smart-delay-stats", () => {
+  const procedure = findProcedure(
+    "GET",
+    "/v1/analytics/flows/{flowId}/smart-delay-stats",
+  )
+
+  test("maps wait and follow-up step counts onto the draft version's nodes", async () => {
+    flowServiceMock.findById.mockResolvedValue({
+      flowVersions: [
+        {
+          isDraft: true,
+          nodes: [
+            {
+              id: "node-1",
+              type: "wait",
+              data: { details: { steps: [{ id: "step-1" }] } },
+            },
+          ],
+        },
+      ],
+    })
+    smartDelayServiceMock.countByFlowStep.mockResolvedValue([
+      { stepId: "step-1", status: "pending", total: 3 },
+      { stepId: "step-1", status: "completed", total: 5 },
+    ])
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { flowId: "flow-1" },
+    })
+
+    expect(flowServiceMock.findById).toHaveBeenCalledWith({
+      id: "flow-1",
+      workspaceId: "workspace-1",
+    })
+    expect(smartDelayServiceMock.countByFlowStep).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      flowId: "flow-1",
+    })
+    expect(result).toEqual({ "node-1": { waiting: 3, sent: 5 } })
+  })
+
+  test("a flow without a draft version is not found", async () => {
+    flowServiceMock.findById.mockResolvedValue({ flowVersions: [] })
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { flowId: "flow-1" },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+  })
+})
+
+describe.each([
+  ["replies", "getReplyStatsByDateRange"],
+  ["user-comments", "listUserComments"],
+  ["bot-replies", "listBotReplies"],
+  ["errors", "listErrors"],
+] as const)("GET /v1/analytics/comment-automation/%s", (suffix, method) => {
+  const procedure = findProcedure(
+    "GET",
+    `/v1/analytics/comment-automation/${suffix}`,
+  )
+
+  test("maps from/to and injects the token's workspace, never a client one", async () => {
+    commentAutomationAnalyticsService[method].mockResolvedValue({
+      data: [],
+      pageCount: 1,
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        automationId: "auto-1",
+        from: "2026-10-01",
+        to: "2026-10-02",
+        timezone: "UTC",
+        workspaceId: "attacker",
+      },
+    })
+
+    expect(commentAutomationAnalyticsService[method]).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace-1",
+        automationId: "auto-1",
+        startDate: "2026-10-01",
+        endDate: "2026-10-02",
+      }),
+    )
+  })
+})
+
+describe("comment automation request validation", () => {
+  test("rejects a date-only or malformed range and an unknown timezone", async () => {
+    const { commentAutomationReplyStatsPublicRequest: schema } = await import(
+      "@/features/analytics/schema/public"
+    )
+    const ok = {
+      automationId: "12",
+      from: "2026-10-01T00:00:00+07:00",
+      to: "2026-10-02T23:59:59+07:00",
+      timezone: "Asia/Ho_Chi_Minh",
+    }
+
+    expect(schema.safeParse(ok).success).toBe(true)
+    expect(schema.safeParse({ ...ok, automationId: "abc" }).success).toBe(false)
+    expect(schema.safeParse({ ...ok, from: "2026-10-01" }).success).toBe(false)
+    expect(schema.safeParse({ ...ok, to: "garbage" }).success).toBe(false)
+    expect(schema.safeParse({ ...ok, timezone: "Asia/Hanoi" }).success).toBe(
+      false,
+    )
   })
 })

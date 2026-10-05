@@ -3,8 +3,12 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const setMessengerUserPersistentMenuStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.setMessengerUserPersistentMenu),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.setMessengerUserPersistentMenu)
+    .describe('Step type discriminator: "setMessengerUserPersistentMenu".'),
   // Empty/undefined means the page's persistent menu (Default).
   userPersistentMenuId: z.string().optional(),
 })

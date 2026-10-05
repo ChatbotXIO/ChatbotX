@@ -836,6 +836,7 @@
         "channelLimit": "Se alcanzó el límite de canales.",
         "workspaceLimit": "Se alcanzó el límite del espacio de trabajo.",
         "providerRejected": "El proveedor rechazó esta solicitud.",
+        "inProgress": "La conexión ya está en curso.",
         "unknown": "Algo salió mal.",
         "followUpFailed": "Configuración incompleta: complétala desde los ajustes del canal."
       },
@@ -2391,12 +2392,13 @@
       "broadcasts": "Difusiones",
       "analytics": "Analítica",
       "ecommerce": "Comercio electrónico",
-      "integrations": "Integraciones",
       "channels": "Canales",
+      "integrations": "Integraciones",
       "minigames": "Minijuegos",
       "appointments": "Citas",
       "media": "Medios",
-      "ads": "Anuncios"
+      "ads": "Anuncios",
+      "settings": "Ajustes"
     },
     "adReferral": {
       "label": "Ads",
@@ -5629,6 +5631,21 @@
     "invalidDescription": "This enlace es no válido o tiene expired.",
     "unavailableTitle": "Unsubscribe undisponible.",
     "unavailableDescription": "This workspace es no longer disponible."
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "Este enlace ya no está disponible.",

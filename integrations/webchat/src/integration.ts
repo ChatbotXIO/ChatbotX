@@ -4,6 +4,7 @@ import {
   Integration,
   type IntegrationDefinition,
   type Oauth2AuthValue,
+  selfServeConnection,
 } from "@chatbotx.io/sdk"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
@@ -22,6 +23,10 @@ const config: IntegrationDefinition<
     },
   },
   actions: {},
+  connection: selfServeConnection<WebchatAuthValue>({
+    displayName: "Webchat",
+    multiAccount: false,
+  }),
   handleRequest(
     _props: HandleRequestProps<BaseConfig>,
   ): Promise<string | number | Oauth2AuthValue> {

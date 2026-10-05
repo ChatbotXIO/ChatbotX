@@ -1,24 +1,17 @@
 "use server"
 
-import {
-  CapiTestEventError,
-  metaConversionsService,
-} from "@chatbotx.io/business"
+import { CapiTestEventError } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { metaCapiEventChannelSchema } from "@chatbotx.io/database/schema"
-import { sendConversionEvent } from "@chatbotx.io/integration-meta-conversions"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { CAPI_TEST_MESSAGING_ID_MAX_LENGTH } from "@chatbotx.io/utils/meta-capi"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { workspaceActionClient } from "@/lib/safe-action"
-import {
-  findCapiIntegration,
-  integrationNotFoundErrorKey,
-} from "../lib/find-capi-integration"
-import { capiDatasetProvisioner } from "../lib/provision-capi-dataset"
-import { surfaceCapiError } from "../lib/surface-capi-error"
+import { sendCapiTestEventFor } from "../lib/capi-operations"
+import { integrationNotFoundErrorKey } from "../lib/find-capi-integration"
+import { isNotFound } from "../lib/is-not-found"
 
 const inputSchema = z.object({
   channel: metaCapiEventChannelSchema,
@@ -50,30 +43,24 @@ export const sendCapiTestEventAction = workspaceActionClient
       const t = await getTranslations("metaConversions.errors")
       await assertWorkspaceSuperAdmin(workspaceId)
 
-      const integration = await findCapiIntegration(parsedInput.channel, {
-        id: integrationId,
-        workspaceId,
-      })
-      if (!integration) {
-        throw new ChatbotXException(
-          t(integrationNotFoundErrorKey[parsedInput.channel]),
-        )
-      }
-
       try {
-        await metaConversionsService.sendTestEvent({
+        await sendCapiTestEventFor({
           channel: parsedInput.channel,
-          integration,
+          workspaceId,
+          integrationId,
           messagingId: parsedInput.messagingId,
-          provisionDataset: capiDatasetProvisioner(parsedInput.channel),
-          send: sendConversionEvent,
         })
         return { success: true }
       } catch (error) {
         if (error instanceof CapiTestEventError) {
           throw new ChatbotXException(t(error.reason))
         }
-        surfaceCapiError(error)
+        if (isNotFound(error)) {
+          throw new ChatbotXException(
+            t(integrationNotFoundErrorKey[parsedInput.channel]),
+          )
+        }
+        throw error
       }
     },
   )

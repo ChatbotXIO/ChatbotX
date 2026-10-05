@@ -263,14 +263,20 @@ const downloadGraphMedia = (
   state: HydrationContext,
 ): Promise<DownloadedMedia> => {
   const auth = state.ctx.auth
-  if (!("tokens" in auth && "accessToken" in auth.tokens)) {
+  const tokens = "tokens" in auth ? auth.tokens : undefined
+  if (
+    typeof tokens !== "object" ||
+    tokens === null ||
+    !("accessToken" in tokens) ||
+    typeof tokens.accessToken !== "string"
+  ) {
     throw new SdkException(
       `[media-hydration] Missing access token for ${state.contactInbox.channel}`,
     )
   }
   return downloadBearerUrlMedia({
     url: media.url,
-    accessToken: auth.tokens.accessToken,
+    accessToken: tokens.accessToken,
     fallbackMime: media.mimeType ?? attachment.mimeType,
     label: state.contactInbox.channel,
   })

@@ -77,8 +77,11 @@ vi.mock(
   () => ({
     readMetaCallPermissions: readMetaCallPermissionsMock,
     canSendCallPermissionRequest: canSendCallPermissionRequestMock,
+    metaCallPermissionCacheKey: () => "permission-cache-key",
   }),
 )
+
+vi.mock("@chatbotx.io/redis", () => ({ invalidateCacheKeys: vi.fn() }))
 
 vi.mock("next-intl/server", () => ({
   getTranslations: async () => (key: string) => key,
@@ -87,6 +90,10 @@ vi.mock("next-intl/server", () => ({
 const { requestCallPermissionAction } = await import(
   "../src/features/integration-whatsapp/calling/actions/request-call-permission.action"
 )
+const { requestWhatsappCallPermission, ENGLISH_CALL_PERMISSION_MESSAGES } =
+  await import(
+    "../src/features/integration-whatsapp/calling/lib/request-call-permission"
+  )
 const action = requestCallPermissionAction as unknown as ActionHandler
 
 const ctx = { user: { id: "agent-1" } }
@@ -217,5 +224,34 @@ describe("requestCallPermissionAction", () => {
 
     expect(canSendCallPermissionRequestMock).not.toHaveBeenCalled()
     expect(createOutgoingMock).not.toHaveBeenCalled()
+  })
+
+  describe("an explicit inboxId", () => {
+    const run = (requireRequestedInbox?: boolean) =>
+      requestWhatsappCallPermission({
+        workspaceId: "workspace-1",
+        conversation: { id: "conversation-1", contactId: "contact-1" } as never,
+        text: "May we call you?",
+        inboxId: "inbox-other",
+        requireRequestedInbox,
+        messages: ENGLISH_CALL_PERMISSION_MESSAGES,
+      })
+
+    test("never falls back to another number when the caller requires it", async () => {
+      findInboxMock.mockResolvedValueOnce(null)
+
+      await expect(run(true)).rejects.toMatchObject({
+        httpStatusCode: 404,
+        message: expect.stringContaining("inboxId"),
+      })
+      expect(createOutgoingMock).not.toHaveBeenCalled()
+    })
+
+    test("still falls back for the builder, which does not require it", async () => {
+      findInboxMock.mockResolvedValueOnce(null)
+
+      await expect(run()).resolves.toBeUndefined()
+      expect(createOutgoingMock).toHaveBeenCalledTimes(1)
+    })
   })
 })

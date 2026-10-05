@@ -35,8 +35,12 @@ export const aiTextToSpeechVoiceTypes = z.enum([
 export type AITextToSpeechVoiceType = z.infer<typeof aiTextToSpeechVoiceTypes>
 
 export const aiTextToSpeechSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.aiTextToSpeech),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.aiTextToSpeech)
+    .describe('Step type discriminator: "aiTextToSpeech".'),
   provider: z.literal("openai"),
   model: aiTextToSpeechModelTypes,
   // Persisted flow versions predate OpenAI's 4,096-character input limit.

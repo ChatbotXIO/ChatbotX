@@ -297,3 +297,33 @@ describe("whatsappCallHistoryService.list — scope translation", () => {
     expect(result.data[0].kind).toBe("answeredInbound")
   })
 })
+
+describe("whatsappCallHistoryService.list for a workspace-level caller", () => {
+  test("a workspace token (no member) reads every call of the workspace", async () => {
+    await whatsappCallHistoryService.list({
+      workspaceId: WORKSPACE_ID,
+      member: "workspace",
+    })
+
+    expect(mocks.listForWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WORKSPACE_ID,
+        scope: { allCalls: true },
+      }),
+    )
+  })
+
+  test("the agent filter applies, as for an admin", async () => {
+    await whatsappCallHistoryService.list({
+      workspaceId: WORKSPACE_ID,
+      member: "workspace",
+      agentUserId: "agent-1",
+    })
+
+    expect(mocks.listForWorkspace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: expect.objectContaining({ agentUserId: "agent-1" }),
+      }),
+    )
+  })
+})

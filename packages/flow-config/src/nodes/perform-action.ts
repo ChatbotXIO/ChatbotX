@@ -9,7 +9,11 @@ import {
 } from "./base"
 
 export const performActionNodeSchema = baseNodeSchema.extend({
-  type: z.literal(nodeTypeSchema.enum.performAction),
+  type: z
+    .literal(nodeTypeSchema.enum.performAction)
+    .describe(
+      'Node type "performAction": runs action steps in order without sending a message. `data.details.steps` holds the action steps.',
+    ),
   data: baseNodeDataSchema.extend({
     details: z.object({
       steps: z.array(z.union(actionSteps)),

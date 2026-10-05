@@ -1,5 +1,7 @@
 import type * as schema from "./schema"
 
+export type ConnectionModel = typeof schema.connectionModel.$inferSelect
+export type ConnectSessionModel = typeof schema.connectSessionModel.$inferSelect
 export type IntegrationWebchatModel =
   typeof schema.integrationWebchatModel.$inferSelect
 export type IntegrationApiModel = typeof schema.integrationApiModel.$inferSelect

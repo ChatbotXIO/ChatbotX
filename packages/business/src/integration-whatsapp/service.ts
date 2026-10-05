@@ -28,9 +28,9 @@ import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import type { ChannelError } from "@chatbotx.io/sdk"
 import { z } from "zod"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { flowService } from "../flow/service"
-import { inboxService } from "../inbox/service"
 import { createDatasetWithFallback } from "../meta-conversions/dataset-fallback"
 import {
   metaConversionsService,
@@ -708,11 +708,10 @@ class IntegrationWhatsappService extends BaseService {
       tx,
     })
 
-    await inboxService.disconnect({
+    await connectionStateService.disconnectInbox({
       inboxId: integrationWhatsapp.inboxId,
-      ownerId,
       workspaceId,
-      reason: "manual",
+      ownerId,
       tx,
     })
   }

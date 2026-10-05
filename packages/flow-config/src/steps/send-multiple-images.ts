@@ -24,7 +24,9 @@ export const sendMultipleImagesItemDefaultFn =
   })
 
 export const sendMultipleImagesStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.sendMultipleImages),
+  stepType: z
+    .literal(stepTypes.enum.sendMultipleImages)
+    .describe('Step type discriminator: "sendMultipleImages".'),
   images: z.array(sendMultipleImagesItemSchema).min(2).max(10),
 })
 

@@ -7,7 +7,9 @@ import { stepTypes } from "./step-action"
 export const MAX_QUICK_REPLIES = 10
 
 export const sendQuickReplyStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.sendQuickReply),
+  stepType: z
+    .literal(stepTypes.enum.sendQuickReply)
+    .describe('Step type discriminator: "sendQuickReply".'),
   message: z.string().trim().min(1).max(1000),
   buttons: z.array(buttonStepSchema),
 })

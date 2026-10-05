@@ -2,6 +2,7 @@ import {
   aiHandoverBulkRunService,
   aiHandoverSettingsService,
 } from "@chatbotx.io/business"
+import { possibleErrorsOnFindingResource } from "@/lib/orpc/orpc-error-helper"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { toApplyToAllStatus, toBulkRunResource } from "../lib/bulk-run-resource"
@@ -22,6 +23,7 @@ export const aiHandoverAPIs = {
     })
     .input(getApplyToAllStatusRequest)
     .output(getApplyToAllStatusResponse)
+    .errors(possibleErrorsOnFindingResource)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
       const [state, activeSettings] = await Promise.all([
@@ -40,6 +42,7 @@ export const aiHandoverAPIs = {
     })
     .input(listAiHandoverBulkHistoryRequest)
     .output(listAiHandoverBulkHistoryResponse)
+    .errors(possibleErrorsOnFindingResource)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
       const { data, pageCount } = await aiHandoverBulkRunService.listHistory({

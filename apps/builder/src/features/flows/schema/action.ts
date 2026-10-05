@@ -12,7 +12,14 @@ export const createFlowSchema = z.object({
     .describe(
       "Folder id (numeric string) to create the flow in, or null for no folder.",
     ),
-  name: z.string().trim().min(1).max(255).describe("Flow name."),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(255)
+    .describe(
+      "Display name of the flow (1-255 characters), shown in the builder and when picking a flow in other resources.",
+    ),
 })
 export type CreateFlowSchema = z.infer<typeof createFlowSchema>
 

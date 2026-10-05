@@ -94,14 +94,28 @@ export const singleContactFilterConditionSchema = z.union([
 ]) as unknown as z.ZodType<ContactFilterCondition>
 
 export const contactFilterCriteriaSchema = z.object({
-  operator: z.enum(["and", "or"]),
-  conditions: z.array(singleContactFilterConditionSchema),
+  operator: z
+    .enum(["and", "or"])
+    .describe(
+      "How conditions combine: `and` = contact must match all, `or` = any.",
+    ),
+  conditions: z
+    .array(singleContactFilterConditionSchema)
+    .describe(
+      "Conditions to combine. Each has `field`, `operator` and usually `value`; dynamic fields use `field: customField|botField|couponTopic` with their id. See `contacts.listFilterFields`.",
+    ),
   /**
    * IANA timezone (the browser's local zone, captured at build/save time) used
    * to interpret naive date/datetime condition values. The backend defaults to
    * UTC when this is absent or unrecognized.
    */
-  timezone: z.string().max(64).optional(),
+  timezone: z
+    .string()
+    .max(64)
+    .optional()
+    .describe(
+      "IANA timezone (e.g. `Asia/Ho_Chi_Minh`) used to interpret date/datetime values without an offset. Defaults to UTC.",
+    ),
 })
 
 export type ContactFilterCriteria = z.infer<typeof contactFilterCriteriaSchema>

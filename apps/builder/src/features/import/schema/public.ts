@@ -1,5 +1,6 @@
 import { importStatuses } from "@chatbotx.io/database/partials"
 import { flowCapabilitySchema } from "@chatbotx.io/flow-config"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 
@@ -39,6 +40,12 @@ export const listContactImportsPublicRequest = publicListRequest.extend({
     .describe(
       "Case-insensitive substring match against the import's file name.",
     ),
+  sort: z
+    .array(z.object({ id: z.string(), desc: z.boolean() }))
+    .optional()
+    .describe(
+      "Sort order as [{ id, desc }] pairs, e.g. `createdAt`, `status`, `completedAt`, `totalCount`, `successCount`, `failedCount`. Defaults to newest first.",
+    ),
 })
 
 export const listContactImportsPublicResponse = publicListResponse(
@@ -47,4 +54,77 @@ export const listContactImportsPublicResponse = publicListResponse(
 
 export const getContactImportPublicRequest = z.object({
   id: z.string().describe("Import job id. Get it from `contacts.listImports`."),
+})
+
+export const importUploadUrlPublicRequest = z.object({
+  fileName: z
+    .string()
+    .min(1)
+    .max(255)
+    .describe("File name including its extension, e.g. `people.csv`."),
+  mimeType: z
+    .string()
+    .min(1)
+    .max(255)
+    .describe(
+      "MIME type of the file, e.g. `text/csv`. It must match the file extension.",
+    ),
+  fileSize: z
+    .number()
+    .int()
+    .positive()
+    .describe(
+      "File size in bytes. Rejected when it exceeds the import's size limit.",
+    ),
+})
+
+export const importUploadUrlPublicResponse = z.object({
+  fileId: z
+    .string()
+    .describe("Id to pass to the import route once the file is uploaded."),
+  presignedPostUrl: z
+    .string()
+    .describe(
+      "URL to upload the file bytes to with an HTTP PUT and the same Content-Type as `mimeType`.",
+    ),
+  publicUrl: z.string().describe("Public location of the file after upload."),
+  path: z.string().describe("Storage path of the file."),
+})
+
+export const importHeadersPublicRequest = z.object({
+  fileId: zodBigintAsString().describe(
+    "File id from the matching `createImportUpload` route, after the bytes were uploaded.",
+  ),
+})
+
+export const importHeadersPublicResponse = z.object({
+  headers: z
+    .array(z.string())
+    .describe("Column headers of the first row, in file order."),
+})
+
+export const importTemplateLanguages = z.enum(["en", "vi"])
+
+export const importTemplatePublicRequest = z.object({
+  language: importTemplateLanguages
+    .optional()
+    .describe(
+      "Language of the column headers. Defaults to the workspace language (en or vi).",
+    ),
+})
+
+export const contactImportTemplatePublicResponse = z.object({
+  fileName: z.string(),
+  mimeType: z.string(),
+  content: z
+    .string()
+    .describe("The CSV template as text: a header row and one example row."),
+})
+
+export const productImportTemplatePublicResponse = z.object({
+  fileName: z.string(),
+  mimeType: z.string(),
+  contentBase64: z
+    .string()
+    .describe("The XLSX template, base64-encoded: header row plus examples."),
 })

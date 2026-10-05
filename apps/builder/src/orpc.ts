@@ -164,17 +164,29 @@ const publicAPI = withErrorMapping.errors(commonApiErrors)
  * is an explicit allow-list denied for anything outside it, including a
  * scope that ships after the token was created (least privilege; see the
  * WorkspaceApiToken.scopes doc).
+ *
+ * `scope` accepts an array for a route that legitimately spans more than
+ * one resource area (e.g. the unified connections API, which covers both
+ * `channels`- and `integrations`-kind connections) — the check is OR'd, a
+ * token needs only one of the listed scopes, never all of them.
  */
-const requireTokenScope = (scope: WorkspaceApiTokenScope) =>
+const requireTokenScope = (
+  scope: WorkspaceApiTokenScope | WorkspaceApiTokenScope[],
+) =>
   base.middleware(async ({ context, next }) => {
     // apiToken is always set here in practice — this middleware is only ever
     // chained after workspaceTokenAuthMidddleware via
     // workspaceTokenAuthAPIForScope below — but the base context type marks
     // it optional (shared with authorizedAPI, which never sets it).
     const scopes = context.apiToken?.scopes
-    if (scopes !== null && scopes !== undefined && !scopes.includes(scope)) {
+    const required = Array.isArray(scope) ? scope : [scope]
+    if (
+      scopes !== null &&
+      scopes !== undefined &&
+      !required.some((candidate) => scopes.includes(candidate))
+    ) {
       throw new ORPCError("FORBIDDEN", {
-        message: `Token is not authorized for the '${scope}' scope`,
+        message: `Token is not authorized for the '${required.join("' or '")}' scope`,
       })
     }
     return await next()
@@ -193,7 +205,9 @@ const requireTokenScope = (scope: WorkspaceApiTokenScope) =>
  * `visibility` while `scope` always comes from this middleware — a route
  * can never spoof its own scope.
  */
-export const workspaceTokenAuthAPIForScope = (scope: WorkspaceApiTokenScope) =>
+export const workspaceTokenAuthAPIForScope = (
+  scope: WorkspaceApiTokenScope | WorkspaceApiTokenScope[],
+) =>
   publicAPI
     .use(workspaceTokenAuthMidddleware)
     .use(

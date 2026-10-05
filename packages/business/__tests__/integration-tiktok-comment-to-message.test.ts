@@ -42,6 +42,11 @@ vi.mock("../src/inbox/connect-channel", () => ({
 
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))
 
+// Pulled in by `connect`/`disconnect` (connection state tracking); unused here.
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: {},
+}))
+
 const { tiktokIntegrationService } = await import(
   "../src/integration-tiktok/service"
 )

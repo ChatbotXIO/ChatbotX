@@ -4,8 +4,12 @@ import { zodFieldReference } from "../field-reference"
 import { stepTypes } from "./step-action"
 
 export const countCharactersStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.countCharacters),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.countCharacters)
+    .describe('Step type discriminator: "countCharacters".'),
   inputFieldId: zodFieldReference(),
   outputFieldId: zodFieldReference(),
 })

@@ -28,10 +28,23 @@ export const FB_LEAD_STANDARD_FIELD_TARGET: Record<string, SystemFieldType> = {
  * Only used for specific-form automations; empty for "all forms".
  */
 export const facebookLeadFieldMappingSchema = z.object({
-  key: z.string(),
-  label: z.string(),
-  type: z.string(),
-  target: z.string().nullable(),
+  key: z
+    .string()
+    .describe(
+      "Lead form question key as returned by `facebookLeadAds.listForms`.",
+    ),
+  label: z.string().describe("Question label shown on the lead form."),
+  type: z
+    .string()
+    .describe(
+      "Lead form question type as returned by `facebookLeadAds.listForms`.",
+    ),
+  target: z
+    .string()
+    .nullable()
+    .describe(
+      'Where the answer is written: a system field key (e.g. "email", "phone", "full_name", "first_name", "last_name", "gender"), a custom field id (numeric string), or null to leave unmapped.',
+    ),
 })
 export type FacebookLeadFieldMapping = z.infer<
   typeof facebookLeadFieldMappingSchema

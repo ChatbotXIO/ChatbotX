@@ -1,6 +1,8 @@
 import {
+  apiKeyConnection,
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { z } from "zod"
@@ -34,24 +36,45 @@ const pageSearchParams = (props: { cursor?: string; size: number }) => {
 const extractNextCursor = (next: string | null | undefined) =>
   next ? new URL(next).searchParams.get("page[cursor]") : null
 
+const klaviyoFields = [
+  {
+    name: "apiKey",
+    type: "secret",
+    required: true,
+  },
+] as const
+
+const buildKlaviyoAuth = async (config: {
+  apiKey: string
+}): Promise<KlaviyoAuthValue> => createKlaviyoAuth(config.apiKey)
+
+const probeKlaviyo = async (auth: KlaviyoAuthValue) => {
+  await klaviyoRequest(
+    auth,
+    KLAVIYO_LISTS_PATH,
+    klaviyoListsResponseSchema,
+    { searchParams: pageSearchParams({ size: 1 }) },
+    [200],
+  )
+}
+
+const connection = apiKeyConnection({
+  displayName: "Klaviyo",
+  fields: klaviyoFields,
+  buildAuth: buildKlaviyoAuth,
+  probe: probeKlaviyo,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<
   KlaviyoConfig,
   KlaviyoAuthValue,
   KlaviyoActions
 > = {
   name: "klaviyo",
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = createKlaviyoAuth(props.apiKey)
-      await klaviyoRequest(
-        auth,
-        KLAVIYO_LISTS_PATH,
-        klaviyoListsResponseSchema,
-        { searchParams: pageSearchParams({ size: 1 }) },
-        [200],
-      )
-      return auth
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listLists: async ({ ctx, props }) => {
       const page = klaviyoListPageInputSchema.parse(props)
       const response = await klaviyoRequest(

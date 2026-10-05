@@ -106,6 +106,10 @@ vi.mock("../src/inbox/service", () => ({
   inboxService: { create: mockInboxCreate, disconnect: vi.fn() },
 }))
 
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { disconnectInbox: vi.fn() },
+}))
+
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))

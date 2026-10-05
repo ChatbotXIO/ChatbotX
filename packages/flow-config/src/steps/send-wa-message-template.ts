@@ -16,31 +16,73 @@ export const buttonSubTypes = z.enum([
 export type ButtonSubType = z.infer<typeof buttonSubTypes>
 
 export const waTemplateButtonParamSchema = z.object({
-  sub_type: buttonSubTypes.optional(),
-  index: z.number().optional(),
-  text: z.string().optional(),
-  coupon_code: z.string().optional(),
-  payload: z.string().optional(),
-  flow_token: z.string().optional(),
-  flow_action_data: z.record(z.string(), z.unknown()).optional(),
-  flowSourceId: z.string().optional(),
-  navigateScreenId: z.string().optional(),
-  fieldMappings: z.array(whatsappFlowFieldMappingSchema).optional(),
-  thumbnail_product_retailer_id: z.string().optional(),
+  sub_type: buttonSubTypes
+    .optional()
+    .describe(
+      "Button kind: url, quick_reply, copy_code, flow, catalog or mpm.",
+    ),
+  index: z
+    .number()
+    .optional()
+    .describe("Zero-based position of the button in the template."),
+  text: z
+    .string()
+    .optional()
+    .describe("Variable value for a `url` button (the dynamic URL suffix)."),
+  coupon_code: z
+    .string()
+    .optional()
+    .describe("Coupon code for a `copy_code` button."),
+  payload: z
+    .string()
+    .optional()
+    .describe("Payload returned when a `quick_reply` button is tapped."),
+  flow_token: z
+    .string()
+    .optional()
+    .describe(
+      "Token that identifies the WhatsApp Flow session (`flow` button).",
+    ),
+  flow_action_data: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe("Initial data passed to the first screen of the WhatsApp Flow."),
+  flowSourceId: z
+    .string()
+    .optional()
+    .describe("Meta id of the WhatsApp Flow, from `whatsappFlows.list`."),
+  navigateScreenId: z
+    .string()
+    .optional()
+    .describe("Screen id the Flow opens on, from `whatsappFlows.getScreens`."),
+  fieldMappings: z
+    .array(whatsappFlowFieldMappingSchema)
+    .optional()
+    .describe("Maps Flow response fields to custom fields."),
+  thumbnail_product_retailer_id: z
+    .string()
+    .optional()
+    .describe(
+      "Retailer id of the product shown as thumbnail (`catalog` button).",
+    ),
   sections: z
     .array(
       z.object({
-        title: z.string().optional(),
+        title: z.string().optional().describe("Section title (`mpm` button)."),
         product_items: z
           .array(
             z.object({
-              product_retailer_id: z.string(),
+              product_retailer_id: z
+                .string()
+                .describe("Retailer id of a catalog product."),
             }),
           )
-          .optional(),
+          .optional()
+          .describe("Products listed in the section."),
       }),
     )
-    .optional(),
+    .optional()
+    .describe("Product sections of a multi-product (`mpm`) button."),
 })
 export type WaTemplateButtonParam = z.infer<typeof waTemplateButtonParamSchema>
 
@@ -59,25 +101,41 @@ const waTemplateButtonParamListSchema = z
   )
 
 export const waTemplateCarouselCardSchema = z.object({
-  card_index: z.number(),
+  card_index: z
+    .number()
+    .describe("Zero-based position of the card in the carousel."),
   header: z
     .array(
       z.object({
-        type: z.enum(["image", "video"]),
-        image: z.object({ link: z.string() }).optional(),
-        video: z.object({ link: z.string() }).optional(),
+        type: z.enum(["image", "video"]).describe("Card media kind."),
+        image: z
+          .object({
+            link: z.string().describe("Public https URL of the card image."),
+          })
+          .optional()
+          .describe("Image for an `image` card header."),
+        video: z
+          .object({
+            link: z.string().describe("Public https URL of the card video."),
+          })
+          .optional()
+          .describe("Video for a `video` card header."),
       }),
     )
-    .optional(),
+    .optional()
+    .describe("Card header media."),
   body: z
     .array(
       z.object({
-        type: z.literal("text").optional(),
-        text: z.string(),
+        type: z.literal("text").optional().describe("Always `text`."),
+        text: z.string().describe("Value that replaces the card variable."),
       }),
     )
-    .optional(),
-  button: waTemplateButtonParamListSchema.optional(),
+    .optional()
+    .describe("Card body variables in order."),
+  button: waTemplateButtonParamListSchema
+    .optional()
+    .describe("Parameters for the card's dynamic buttons, by `index`."),
 })
 export type WaTemplateCarouselCard = z.infer<
   typeof waTemplateCarouselCardSchema
@@ -87,43 +145,96 @@ export const waTemplateParamsSchema = z.object({
   header: z
     .array(
       z.object({
-        type: z.enum(["text", "image", "video", "document", "location"]),
-        text: z.string().optional(),
+        type: z
+          .enum(["text", "image", "video", "document", "location"])
+          .describe("Header parameter kind; fill the matching field."),
+        text: z
+          .string()
+          .optional()
+          .describe("Value for a `text` header variable."),
         // NAMED-template placeholder name for a text header; see body note.
-        parameter_name: z.string().optional(),
-        image: z.object({ link: z.string() }).optional(),
-        video: z.object({ link: z.string() }).optional(),
-        document: z.object({ link: z.string() }).optional(),
+        parameter_name: z
+          .string()
+          .optional()
+          .describe(
+            "Placeholder name, only for NAMED templates ({{order_id}}).",
+          ),
+        image: z
+          .object({
+            link: z.string().describe("Public https URL of the image."),
+          })
+          .optional()
+          .describe("Media for an `image` header."),
+        video: z
+          .object({
+            link: z.string().describe("Public https URL of the video."),
+          })
+          .optional()
+          .describe("Media for a `video` header."),
+        document: z
+          .object({
+            link: z.string().describe("Public https URL of the document."),
+          })
+          .optional()
+          .describe("Media for a `document` header."),
         location: z
           .object({
-            latitude: z.string().optional(),
-            longitude: z.string().optional(),
-            name: z.string().optional(),
-            address: z.string().optional(),
+            latitude: z
+              .string()
+              .optional()
+              .describe("Latitude, e.g. `10.7769`."),
+            longitude: z
+              .string()
+              .optional()
+              .describe("Longitude, e.g. `106.7009`."),
+            name: z
+              .string()
+              .optional()
+              .describe("Place name shown to the customer."),
+            address: z.string().optional().describe("Street address."),
           })
-          .optional(),
+          .optional()
+          .describe("Place for a `location` header."),
       }),
     )
-    .optional(),
+    .optional()
+    .describe("Header parameters; one entry for a templated header."),
   body: z
     .array(
       z.object({
-        type: z.literal("text").optional(),
-        text: z.string(),
+        type: z
+          .literal("text")
+          .optional()
+          .describe("Always `text` for a body variable."),
+        text: z.string().describe("Value that replaces the variable."),
         // Present only for NAMED templates ({{order_id}}); Meta requires it to
         // be echoed back on every send-time parameter. Absent for positional
         // templates ({{1}}), which must omit it.
-        parameter_name: z.string().optional(),
+        parameter_name: z
+          .string()
+          .optional()
+          .describe(
+            "Placeholder name, only for NAMED templates; omit for positional `{{1}}`.",
+          ),
       }),
     )
-    .optional(),
-  button: waTemplateButtonParamListSchema.optional(),
-  carousel: z.array(waTemplateCarouselCardSchema).optional(),
+    .optional()
+    .describe("Body variables in order: {{1}}, {{2}}, ..."),
+  button: waTemplateButtonParamListSchema
+    .optional()
+    .describe("Parameters for the template's dynamic buttons, by `index`."),
+  carousel: z
+    .array(waTemplateCarouselCardSchema)
+    .optional()
+    .describe("Cards of a carousel template, by `card_index`."),
   limited_time_offer: z
     .object({
-      expiration_time_ms: z.number(),
+      expiration_time_ms: z
+        .number()
+        .describe("Offer expiry as a Unix timestamp in milliseconds."),
     })
-    .optional(),
+    .optional()
+    .describe("Only for a limited-time-offer template."),
 })
 
 export type WaTemplateParams = z.infer<typeof waTemplateParamsSchema>

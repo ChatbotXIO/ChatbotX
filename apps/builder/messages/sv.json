@@ -797,6 +797,7 @@
         "channelLimit": "Kanalgränsen har nåtts.",
         "workspaceLimit": "Arbetsytans gräns har nåtts.",
         "providerRejected": "Leverantören avvisade den här begäran.",
+        "inProgress": "Anslutningen pågår redan.",
         "unknown": "Något gick fel.",
         "followUpFailed": "Konfigurationen är inte klar – slutför den i kanalinställningarna."
       },
@@ -3148,12 +3149,13 @@
       "broadcasts": "Utskick",
       "analytics": "Analys",
       "ecommerce": "E-handel",
-      "integrations": "Integrationer",
       "channels": "Kanaler",
+      "integrations": "Integrationer",
       "minigames": "Minispel",
       "appointments": "Bokningar",
       "media": "Media",
-      "ads": "Annonser"
+      "ads": "Annonser",
+      "settings": "Inställningar"
     },
     "adReferral": {
       "label": "Ads",
@@ -5409,6 +5411,21 @@
     "title": "Du har avregistrerats.",
     "unavailableDescription": "Den här arbetsytan är inte längre tillgänglig.",
     "unavailableTitle": "Avregistrering är inte tillgänglig."
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "Den här länken är inte längre tillgänglig.",

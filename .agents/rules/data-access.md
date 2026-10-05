@@ -2,9 +2,8 @@
 name: data-access
 description: >-
   Enforces the action/API handler → service → repository → DB chain in
-  ChatbotX. Read before adding or reviewing code in apps/builder,
-  apps/worker, integrations/*, packages/business, or packages/database that
-  reads or writes data.
+  apps/builder, apps/worker, integrations/*, packages/business,
+  packages/connections, or packages/database that reads or writes data.
 globs:
   - apps/builder/**
   - apps/worker/**
@@ -12,6 +11,7 @@ globs:
   - integrations/**
   - packages/business/**
   - packages/database/**
+  - packages/connections/**
 ---
 
 # Data Access Layer Rule
@@ -28,12 +28,17 @@ The chain is: **action / API handler → service (`packages/business/`) → repo
 - **Consistency:** Multiple consumers (builder actions, worker handlers, oRPC endpoints, public API tokens) reuse the same data logic instead of duplicating it.
 - **Public API / MCP surfaces need the same guarantees as the UI.** A workspace-token caller and a signed-in member hitting the same resource must run the same validation, cache invalidation, and event emission — which only happens if both call the same service method.
 
+## Connections orchestration
+
+`packages/connections` is an allowed orchestration layer above business services and repositories. It may compose registry-specific provider calls with transactions and pass transaction handles into business services or repositories; it must not become a second app layer or bypass the repository boundary for raw queries.
+
 ## Per-layer responsibilities
 
 | Layer | May import `db`? | Owns |
 |-------|---|------|
 | `packages/database/src/repositories/*` | Yes | Raw where-builders, joins, pagination, shard routing. **Never** cache invalidation, event emission, or validation. |
 | `packages/business/src/*` | Yes | Validation, orchestration across repositories, cache invalidation, events, audit, quota checks, optional `tx?: DatabaseClient` passthrough. **Never** imports from `apps/` or `integrations/`. |
+| `packages/connections/src/*` | Imports `db` only for `db.transaction` — never issues raw queries | Provider orchestration, opening transactions, and passing the transaction handle into business services or repositories. |
 | `apps/builder/src/features/*/actions/` | **No** | Parse input → call a service method → map the result/error for the client. |
 | `apps/builder/src/features/*/queries/` | **No** | See the `.query.ts` contract below. |
 | `apps/builder/src/features/*/api/` | **No** | Resolve session context into plain params, call the same service method the private path uses. |

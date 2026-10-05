@@ -185,14 +185,34 @@ export const requireEventNameAllowedForActionSource = (
  * stored trigger action object.
  */
 export const metaCapiEventFieldsSchema = z.object({
-  eventName: metaCapiEventNameSchema.default("LeadSubmitted"),
-  actionSource: metaCapiActionSourceSchema.default(defaultMetaCapiActionSource),
-  contentType: metaCapiContentTypeSchema.optional(),
-  contentIds: metaCapiContentIdsSchema,
-  value: metaCapiValueFieldSchema,
-  currency: metaCapiCurrencyFieldSchema,
-  contentCategory: metaCapiContentTextSchema,
-  contentName: metaCapiContentTextSchema,
+  eventName: metaCapiEventNameSchema
+    .default("LeadSubmitted")
+    .describe(
+      "Meta event name. `business_messaging` allows only its documented events (e.g. LeadSubmitted, Purchase); other action sources allow Meta Pixel standard events or a custom name up to 50 characters.",
+    ),
+  actionSource: metaCapiActionSourceSchema
+    .default(defaultMetaCapiActionSource)
+    .describe(
+      "Where the conversion happened (e.g. `business_messaging`, `website`, `email`); it decides which event names are valid.",
+    ),
+  contentType: metaCapiContentTypeSchema
+    .optional()
+    .describe("Kind of the content ids: `product` or `product_group`."),
+  contentIds: metaCapiContentIdsSchema.describe(
+    "Product ids (retailer ids from the catalog) the event relates to.",
+  ),
+  value: metaCapiValueFieldSchema.describe(
+    "Monetary value of the conversion as a decimal string, e.g. `49.90`. Required for Purchase.",
+  ),
+  currency: metaCapiCurrencyFieldSchema.describe(
+    "ISO 4217 currency code, e.g. `USD`. Required for Purchase.",
+  ),
+  contentCategory: metaCapiContentTextSchema.describe(
+    "Category of the content, free text.",
+  ),
+  contentName: metaCapiContentTextSchema.describe(
+    "Name of the content, free text.",
+  ),
 })
 export type MetaCapiEventFieldsSchema = z.infer<
   typeof metaCapiEventFieldsSchema
@@ -215,8 +235,12 @@ export const withMetaCapiEventRefinements = <
 
 export const sendMetaCapiEventSchema = withMetaCapiEventRefinements(
   metaCapiEventFieldsSchema.extend({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.sendMetaCapiEvent),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.sendMetaCapiEvent)
+      .describe('Step type discriminator: "sendMetaCapiEvent".'),
     states: z.tuple([successStateSchema, errorStateSchema]),
   }),
 )

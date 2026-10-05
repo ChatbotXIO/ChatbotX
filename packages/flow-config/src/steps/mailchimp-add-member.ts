@@ -16,8 +16,12 @@ export const mailchimpMergeFieldMappingSchema = z.object({
 })
 
 export const mailchimpAddMemberSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.mailchimpAddMember),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.mailchimpAddMember)
+    .describe('Step type discriminator: "mailchimpAddMember".'),
   listId: z.string().min(1),
   email: z.string().min(1),
   doubleOptIn: z.boolean(),

@@ -3,7 +3,7 @@ import z from "zod"
 import { updateInstagramRequest } from "./action"
 
 export const instagramChannelIdSchema = zodBigintAsString().describe(
-  "Instagram channel (integration) id. Get it from `integrations.list`.",
+  "Instagram channel (integration) id. Get it from `instagramChannels.list`.",
 )
 
 const settingsShape = {

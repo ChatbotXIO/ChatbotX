@@ -397,6 +397,7 @@ class ContactScanService extends BaseService {
    */
   async listHistory(input: {
     workspaceId: string
+    integrationId?: string
     page?: number
     perPage?: number
     sort?: { id: string; desc: boolean }[]

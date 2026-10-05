@@ -1025,14 +1025,15 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
           source: "instagram",
           sourceId: suffix,
         }))()
+      const rejectedInsert = expect(insertContactInbox).rejects.toMatchObject({
+        cause: { code: "23503" },
+      })
       await waitForLock(client, writerPid)
       await purgeClient.query(`DELETE FROM "Contact" WHERE "id" = $1`, [
         fixture.contactId,
       ])
       await purgeClient.query("COMMIT")
-      await expect(insertContactInbox).rejects.toMatchObject({
-        cause: { code: "23503" },
-      })
+      await rejectedInsert
     } catch (error) {
       await purgeClient.query("ROLLBACK")
       throw error

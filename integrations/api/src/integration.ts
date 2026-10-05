@@ -4,6 +4,7 @@ import {
   Integration,
   type IntegrationDefinition,
   type Oauth2AuthValue,
+  selfServeConnection,
 } from "@chatbotx.io/sdk"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
@@ -18,6 +19,10 @@ const config: IntegrationDefinition<BaseConfig, ApiAuthValue, ApiActions> = {
     },
   },
   actions: {},
+  connection: selfServeConnection<ApiAuthValue>({
+    displayName: "API channel",
+    multiAccount: false,
+  }),
   handleRequest(
     _props: HandleRequestProps<BaseConfig>,
   ): Promise<string | number | Oauth2AuthValue> {

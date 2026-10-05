@@ -13,8 +13,12 @@ export const threadControlStepActions = z.enum(["release", "pass"])
 export type ThreadControlStepAction = z.infer<typeof threadControlStepActions>
 
 export const threadControlStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.threadControl),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.threadControl)
+    .describe('Step type discriminator: "threadControl".'),
   action: threadControlStepActions,
   states: z.tuple([successStateSchema, errorStateSchema]),
 })

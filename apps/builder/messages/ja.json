@@ -2247,12 +2247,13 @@
       "broadcasts": "配信",
       "analytics": "アナリティクス",
       "ecommerce": "eコマース",
-      "integrations": "連携",
       "channels": "チャネル",
+      "integrations": "統合",
       "minigames": "ミニゲーム",
       "appointments": "予約",
       "media": "メディア",
-      "ads": "広告"
+      "ads": "広告",
+      "settings": "設定"
     },
     "adReferral": {
       "label": "Ads",
@@ -3293,6 +3294,7 @@
         "channelLimit": "チャネルの上限に達しました。",
         "workspaceLimit": "ワークスペースの上限に達しました。",
         "providerRejected": "プロバイダーがこのリクエストを拒否しました。",
+        "inProgress": "接続は既に進行中です。",
         "unknown": "問題が発生しました。",
         "followUpFailed": "設定が未完了です。チャネル設定から完了してください。"
       },
@@ -5629,6 +5631,21 @@
     "invalidDescription": "このリンクは無効か、有効期限が切れています。",
     "unavailableTitle": "配信を停止できません。",
     "unavailableDescription": "このワークスペースは利用できなくなりました。"
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "このリンクはご利用いただけません。",

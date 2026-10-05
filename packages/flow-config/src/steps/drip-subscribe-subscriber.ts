@@ -15,8 +15,12 @@ export const dripMergeFieldMappingSchema = z.object({
 
 export const dripSubscribeSubscriberSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.dripSubscribeSubscriber),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.dripSubscribeSubscriber)
+      .describe('Step type discriminator: "dripSubscribeSubscriber".'),
     accountId: z.string().trim().min(1),
     emailField: z.string().trim().min(1),
     phoneField: z.string().trim().min(1).optional(),

@@ -7,9 +7,9 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { IntegrationZaloModel } from "@chatbotx.io/database/types"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { connectChannelIntegration } from "../inbox/connect-channel"
-import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { tagSyncService } from "../tag/sync.service"
 
@@ -233,11 +233,10 @@ class ZaloIntegrationService extends BaseService {
             eq(integrationZaloModel.workspaceId, workspaceId),
           ),
         )
-      await inboxService.disconnect({
+      await connectionStateService.disconnectInbox({
         inboxId,
-        ownerId,
         workspaceId,
-        reason: "manual",
+        ownerId,
         tx: client,
       })
     }

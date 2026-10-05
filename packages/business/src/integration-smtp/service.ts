@@ -9,9 +9,9 @@ import type {
 import { createId } from "@chatbotx.io/utils"
 import { isSameJsonValue } from "../audit/diff"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import { ChatbotXException } from "../errors"
 import { connectChannelIntegration } from "../inbox/connect-channel"
-import { inboxService } from "../inbox/service"
 import type { IntegrationSmtpResource } from "./schema"
 
 /**
@@ -208,11 +208,10 @@ class IntegrationSmtpService extends BaseService {
           ),
         )
 
-      await inboxService.disconnect({
+      await connectionStateService.disconnectInbox({
         inboxId,
         ownerId,
         workspaceId,
-        reason: "manual",
         tx: client,
       })
     }

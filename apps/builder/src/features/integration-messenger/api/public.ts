@@ -2,6 +2,12 @@ import { messengerIntegrationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
+  createCapiRoutes,
+  createChannelReadRoutes,
+  createCoexistRoute,
+  createHandoverResumeFlowRoute,
+} from "@/features/channel-integrations/api/public"
+import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
@@ -17,6 +23,10 @@ import {
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("channels")
 
 export const messengerChannelsPublicRouter = {
+  ...createChannelReadRoutes("messenger"),
+  ...createHandoverResumeFlowRoute("messenger"),
+  ...createCoexistRoute("messenger"),
+  ...createCapiRoutes("messenger"),
   updateTagSync: workspaceTokenAuthAPI
     .route({
       method: "PATCH",
@@ -29,7 +39,7 @@ export const messengerChannelsPublicRouter = {
     .input(
       z.object({
         id: zodBigintAsString().describe(
-          "Messenger channel (integration) id. Get it from `integrations.list`.",
+          "Messenger channel (integration) id. Get it from `messengerChannels.list`.",
         ),
         enabled: z.boolean().describe("Whether tag sync should be enabled."),
       }),

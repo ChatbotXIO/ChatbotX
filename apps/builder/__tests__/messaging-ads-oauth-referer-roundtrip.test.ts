@@ -130,6 +130,21 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: { transaction: vi.fn() },
 }))
 
+vi.mock("@chatbotx.io/business/connect-session", () => ({
+  connectSessionService: {
+    findByNonce: vi.fn(),
+    fail: vi.fn(),
+  },
+}))
+
+vi.mock("@chatbotx.io/connections", () => ({
+  connectionService: {
+    completeAuthorization: vi.fn(),
+    connectTargets: vi.fn(),
+  },
+  CONNECTION_REGISTRY: {},
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   integrationGoogleSheetsModel: {},
   integrationModel: {},

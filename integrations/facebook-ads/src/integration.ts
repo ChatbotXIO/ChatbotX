@@ -1,6 +1,9 @@
 import {
+  AuthType,
+  buildFacebookDialogUrl,
   Integration,
   type IntegrationDefinition,
+  probeVerify,
   SdkException,
 } from "@chatbotx.io/sdk"
 import {
@@ -20,7 +23,11 @@ import {
   getAudienceMarketingMessagesPage,
   mutateAudienceUsers,
 } from "./apis/audience-users"
-import { revokeToken } from "./apis/auth"
+import {
+  exchangeCodeForToken,
+  exchangeLongLivedToken,
+  revokeToken,
+} from "./apis/auth"
 import {
   createCampaign,
   getCampaign,
@@ -29,7 +36,8 @@ import {
 } from "./apis/campaigns"
 import { createCustomAudience } from "./apis/custom-audiences"
 import { getAdInsights, getMessagingAdsInsightsByAdIds } from "./apis/insights"
-import { FacebookAdsException } from "./exception"
+import { DEFAULT_API_VERSION, FACEBOOK_ADS_SCOPES } from "./constants"
+import { FacebookAdsException, getGraphErrorCode } from "./exception"
 import type {
   FacebookAdsActions,
   FacebookAdsAuthValue,
@@ -42,6 +50,55 @@ const config: IntegrationDefinition<
   FacebookAdsActions
 > = {
   name: "facebookAds",
+  connection: {
+    kind: "integration",
+    strategy: "oauth_redirect",
+    multiAccount: false,
+    configFields: [],
+    authorizeUrl: ({ credential, callbackUrl, state }) => {
+      const config = credential as FacebookAdsConfig
+      return buildFacebookDialogUrl({
+        clientId: config.clientId,
+        callbackUrl,
+        scopes: FACEBOOK_ADS_SCOPES,
+        state,
+        version: config.version ?? DEFAULT_API_VERSION,
+      })
+    },
+    exchangeCode: async ({ code, callbackUrl, credential }) => {
+      const config = credential as FacebookAdsConfig
+      const shortLivedToken = await exchangeCodeForToken(
+        config,
+        code,
+        callbackUrl,
+      )
+      const longLivedToken = await exchangeLongLivedToken(
+        config,
+        shortLivedToken,
+      )
+      return {
+        authType: AuthType.custom,
+        accessToken: longLivedToken.accessToken,
+        version: config.version,
+        expiresAt: longLivedToken.expiresIn
+          ? new Date(Date.now() + longLivedToken.expiresIn * 1000).toISOString()
+          : undefined,
+      } satisfies FacebookAdsAuthValue
+    },
+    describe: (auth) => ({
+      // Facebook Ads auth does not retain an ad-account identifier.
+      sourceId: "workspace",
+      displayName: "Facebook Ads",
+      authExpiresAt: auth.expiresAt,
+    }),
+    verify: async ({ auth }) =>
+      await probeVerify(() => getAdAccounts(auth.accessToken, auth.version), {
+        label: "Facebook Ads credentials",
+        expiresAt: auth.expiresAt,
+        isRevoked: (error) => getGraphErrorCode(error) === 190,
+      }),
+    isRevokedTokenError: (error) => getGraphErrorCode(error) === 190,
+  },
   actions: {
     getAdAccounts: ({ ctx }) =>
       getAdAccounts(ctx.auth.accessToken, ctx.auth.version),

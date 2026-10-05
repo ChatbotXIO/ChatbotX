@@ -70,12 +70,23 @@ export class IntegrationException extends SdkException {}
 
 export class AuthException extends SdkException {}
 
+/** A provider explicitly rejected supplied credentials or an OAuth request. */
+export class ConnectionProviderRejectedError extends SdkException {
+  constructor(message: string, originError?: Error | unknown) {
+    super(message, "connectionProviderRejected", 400)
+    if (originError) {
+      this.setOriginError(originError)
+    }
+  }
+}
+
 /**
- * Thrown when an OAuth2 token refresh has failed terminally — the refresh
- * token is revoked, the integration is misconfigured, or all retry attempts
- * have been exhausted. Callers should surface this as a "reconnect required"
- * state to the user; the SDK will also call `ctx.authStore.markOffline` when
- * available.
+ * Wraps an OAuth2 token-refresh failure after its refresh attempt finishes.
+ *
+ * When `originError` is an {@link AuthException}, the failure is terminal
+ * (for example, a revoked refresh token) and the SDK marks the connection
+ * offline. Other origins represent exhausted transient retries; callers may
+ * retry them later and must not require reconnection.
  */
 export class AuthRefreshException extends SdkException {
   constructor(message: string, originError?: Error | unknown) {
@@ -85,3 +96,18 @@ export class AuthRefreshException extends SdkException {
     }
   }
 }
+
+/**
+ * Duck-typed 401 check shared by every REST-based marketing-integration
+ * provider's `isRevokedTokenError`/`verify` catch (Mailchimp, Klaviyo,
+ * MailerLite, SendGrid, Drip, ActiveCampaign, GetResponse). Each provider's
+ * own API error class (`MailchimpApiError`, `DripApiError`, …) carries its
+ * own `statusCode` field rather than sharing one common base, so this checks
+ * the shape, not a specific class — `error instanceof X` would need one
+ * import per provider for the exact same two-line check.
+ */
+export const isUnauthorizedStatusError = (error: unknown): boolean =>
+  typeof error === "object" &&
+  error !== null &&
+  "statusCode" in error &&
+  error.statusCode === 401

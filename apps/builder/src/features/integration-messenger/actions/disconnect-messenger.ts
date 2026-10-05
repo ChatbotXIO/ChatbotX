@@ -1,11 +1,11 @@
 import {
   coexistService,
-  inboxService,
   instagramIntegrationService,
   messengerIntegrationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
+import { connectionStateService } from "@chatbotx.io/business/connection"
 import { db } from "@chatbotx.io/database/client"
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -102,11 +102,10 @@ export const disconnectMessenger = async (ctx: {
       tx,
     })
 
-    await inboxService.disconnect({
+    await connectionStateService.disconnectInbox({
       inboxId: integrationMessenger.inboxId,
       ownerId: workspace.ownerId,
       workspaceId: ctx.workspaceId,
-      reason: "manual",
       tx,
     })
   })

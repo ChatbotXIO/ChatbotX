@@ -17,6 +17,10 @@ const mocks = vi.hoisted(() => ({
   createTopic: vi.fn(),
   updateTopic: vi.fn(),
   getExportFile: vi.fn(),
+  getImportFile: vi.fn(),
+  markImportFileUploaded: vi.fn(),
+  createImport: vi.fn(),
+  headObject: vi.fn(),
   isUniqueViolationError: vi.fn(),
   listIssuedCouponsForContact: vi.fn(),
   contactFindByIdOrFail: vi.fn(),
@@ -62,6 +66,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findTopicByName: (...args: unknown[]) => mocks.findTopicByName(...args),
     updateTopic: (...args: unknown[]) => mocks.updateTopic(...args),
     getExportFile: (...args: unknown[]) => mocks.getExportFile(...args),
+    getImportFile: (...args: unknown[]) => mocks.getImportFile(...args),
+    markImportFileUploaded: (...args: unknown[]) =>
+      mocks.markImportFileUploaded(...args),
+    createImport: (...args: unknown[]) => mocks.createImport(...args),
     listIssuedCouponsForContact: (...args: unknown[]) =>
       mocks.listIssuedCouponsForContact(...args),
   },
@@ -73,6 +81,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/filesystem", () => ({
+  uploader: { headObject: (...args: unknown[]) => mocks.headObject(...args) },
 }))
 
 vi.mock("../src/contact/service", () => ({
@@ -118,6 +130,55 @@ describe("couponService.importBatch", () => {
       { workspaceId: "workspace-1", topicId: "topic-2", codes: ["NEW"] },
       "tx",
     )
+  })
+})
+
+describe("couponService.startImport", () => {
+  const input = {
+    workspaceId: "workspace-1",
+    userId: "owner-1",
+    fileId: "file-1",
+    topicId: "topic-1",
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.transaction.mockImplementation(
+      async (fn: (tx: unknown) => unknown) => await fn("tx"),
+    )
+    mocks.getImportFile.mockResolvedValue({
+      id: "file-1",
+      path: "workspaces/workspace-1/imports/coupons/import-1.csv",
+      fileName: "coupons.csv",
+      mimeType: "text/csv",
+    })
+    mocks.findTopic.mockResolvedValue({ id: "topic-1", status: "active" })
+    mocks.headObject.mockResolvedValue({ ContentLength: 1024 })
+    mocks.createImport.mockResolvedValue({ id: "import-1" })
+  })
+
+  test("verifies the uploaded object size before creating an import", async () => {
+    await expect(couponService.startImport(input)).resolves.toEqual({
+      id: "import-1",
+    })
+
+    expect(mocks.headObject).toHaveBeenCalledWith(
+      "workspaces/workspace-1/imports/coupons/import-1.csv",
+    )
+    expect(mocks.markImportFileUploaded).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", fileId: "file-1" },
+      "tx",
+    )
+  })
+
+  test("rejects an object exceeding the coupon import size limit", async () => {
+    mocks.headObject.mockResolvedValue({ ContentLength: 10 * 1024 * 1024 + 1 })
+
+    await expect(couponService.startImport(input)).rejects.toMatchObject({
+      code: "couponImportFileTooLarge",
+    })
+
+    expect(mocks.createImport).not.toHaveBeenCalled()
   })
 })
 

@@ -2247,12 +2247,13 @@
       "broadcasts": "Siaran",
       "analytics": "Analitik",
       "ecommerce": "E-commerce",
-      "integrations": "Integrasi",
       "channels": "Saluran",
+      "integrations": "Integrasi",
       "minigames": "Minigame",
       "appointments": "Janji Temu",
       "media": "Media",
-      "ads": "Iklan"
+      "ads": "Iklan",
+      "settings": "Pengaturan"
     },
     "adReferral": {
       "label": "Ads",
@@ -3314,6 +3315,7 @@
         "channelLimit": "Batas saluran tercapai.",
         "workspaceLimit": "Batas ruang kerja tercapai.",
         "providerRejected": "Penyedia menolak permintaan ini.",
+        "inProgress": "Koneksi sedang berlangsung.",
         "unknown": "Terjadi kesalahan.",
         "followUpFailed": "Penyiapan belum selesai — selesaikan dari pengaturan saluran."
       },
@@ -5629,6 +5631,21 @@
     "invalidDescription": "Tautan ini tidak valid atau sudah kedaluwarsa.",
     "unavailableTitle": "Berhenti berlangganan tidak tersedia.",
     "unavailableDescription": "Ruang kerja ini tidak lagi tersedia."
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "Tautan ini sudah tidak tersedia lagi.",

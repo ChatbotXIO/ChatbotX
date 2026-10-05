@@ -54,4 +54,41 @@ describe("resumableUploadImage", () => {
 
     expect(imageRequestHeaders?.get("authorization")).toBeNull()
   })
+
+  test("does not follow a redirect for an unauthenticated download", async () => {
+    server.use(
+      http.get(
+        "https://storage.test/redirect.png",
+        () =>
+          new HttpResponse(null, {
+            status: 302,
+            headers: { location: "http://169.254.169.254/latest/meta-data" },
+          }),
+      ),
+    )
+
+    await expect(
+      resumableUploadImage(AUTH, "https://storage.test/redirect.png", {
+        authenticatedDownload: false,
+      }),
+    ).rejects.toThrow()
+  })
+
+  test("rejects an image larger than the limit", async () => {
+    server.use(
+      http.get(
+        "https://storage.test/big.png",
+        () =>
+          new HttpResponse(new Uint8Array(6 * 1024 * 1024), {
+            headers: { "content-type": "image/png" },
+          }),
+      ),
+    )
+
+    await expect(
+      resumableUploadImage(AUTH, "https://storage.test/big.png", {
+        authenticatedDownload: false,
+      }),
+    ).rejects.toThrow("larger than")
+  })
 })

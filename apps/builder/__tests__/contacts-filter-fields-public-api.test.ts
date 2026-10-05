@@ -56,6 +56,11 @@ vi.mock(
   }),
 )
 
+const resolveLabels = vi.fn()
+vi.mock("@chatbotx.io/business", () => ({
+  resolveContactFilterValueLabels: resolveLabels,
+}))
+
 await import("@/features/contact-filter/api/public")
 
 const findProcedure = (method: string, path: string) => {
@@ -92,6 +97,32 @@ describe("GET /v1/contacts/filter-fields", () => {
 
     expect(listContactFilterFieldsForAPI).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
+    })
+  })
+})
+
+describe("POST /v1/contacts/filter-value-labels", () => {
+  const procedure = findProcedure("POST", "/v1/contacts/filter-value-labels")
+
+  test("resolves the ids in the token's workspace and passes only tag ids", async () => {
+    resolveLabels.mockResolvedValueOnce({
+      tags: [{ id: "1", name: "VIP" }],
+      sequences: [],
+      broadcasts: [],
+      reflinks: [],
+      inboxes: [],
+      members: [{ id: "9", name: "Ann" }],
+      inboxTeams: [],
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { tags: ["1"] },
+    })
+
+    expect(resolveLabels).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      ids: { tags: ["1"] },
     })
   })
 })

@@ -23,11 +23,40 @@ export const specialAdCategorySchema = z.enum(specialAdCategories)
 
 export const messagingAdTargetingSchema = z
   .object({
-    countries: z.array(z.string().trim().length(2)).min(1),
-    ageMin: z.coerce.number().int().min(13).max(65).optional(),
-    ageMax: z.coerce.number().int().min(13).max(65).optional(),
-    genders: z.array(z.union([z.literal(1), z.literal(2)])).optional(),
-    locales: z.array(z.coerce.number().int()).optional(),
+    countries: z
+      .array(z.string().trim().length(2))
+      .min(1)
+      .describe(
+        'ISO 3166-1 alpha-2 country codes to target, e.g. `["US", "VN"]`. At least one.',
+      ),
+    ageMin: z.coerce
+      .number()
+      .int()
+      .min(13)
+      .max(65)
+      .optional()
+      .describe(
+        "Minimum audience age, 13-65. Must be <= `ageMax`. Setting any of ageMin/ageMax/genders/locales turns off Advantage+ audience.",
+      ),
+    ageMax: z.coerce
+      .number()
+      .int()
+      .min(13)
+      .max(65)
+      .optional()
+      .describe("Maximum audience age, 13-65. Must be >= `ageMin`."),
+    genders: z
+      .array(z.union([z.literal(1), z.literal(2)]))
+      .optional()
+      .describe(
+        "Meta gender codes to target: 1 = male, 2 = female. Omit to target all genders.",
+      ),
+    locales: z
+      .array(z.coerce.number().int())
+      .optional()
+      .describe(
+        "Meta locale codes (numeric, e.g. 1033 = en_US) to target by language. Omit for all languages.",
+      ),
   })
   .refine(
     (t) =>
@@ -39,25 +68,67 @@ export const messagingAdTargetingSchema = z
   )
 
 export const welcomeMessageQuickReplySchema = z.object({
-  title: z.string().trim().min(1).max(20),
+  title: z
+    .string()
+    .trim()
+    .min(1)
+    .max(20)
+    .describe("Quick-reply button label, 1-20 characters."),
 })
 
 export const welcomeMessageTemplateSchema = z.object({
-  heading: z.string().trim().max(80).optional(),
-  message: z.string().trim().min(1).max(2000),
-  quickReplies: z.array(welcomeMessageQuickReplySchema).max(3).optional(),
+  heading: z
+    .string()
+    .trim()
+    .max(80)
+    .optional()
+    .describe("Optional heading above the message, up to 80 characters."),
+  message: z
+    .string()
+    .trim()
+    .min(1)
+    .max(2000)
+    .describe("Welcome message text, 1-2000 characters."),
+  quickReplies: z
+    .array(welcomeMessageQuickReplySchema)
+    .max(3)
+    .optional()
+    .describe("Up to 3 quick-reply buttons shown under the message."),
 })
 
 export const welcomeMessageSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("default") }),
   z.object({
-    type: z.literal("single"),
-    message: z.string().trim().min(1).max(2000),
-    quickReplies: z.array(welcomeMessageQuickReplySchema).max(3).optional(),
+    type: z
+      .literal("default")
+      .describe("Use Meta's default welcome text (no custom message sent)."),
   }),
   z.object({
-    type: z.literal("templates"),
-    templates: z.array(welcomeMessageTemplateSchema).min(1).max(5),
+    type: z
+      .literal("single")
+      .describe("One custom welcome message, with optional quick replies."),
+    message: z
+      .string()
+      .trim()
+      .min(1)
+      .max(2000)
+      .describe("Welcome message text, 1-2000 characters."),
+    quickReplies: z
+      .array(welcomeMessageQuickReplySchema)
+      .max(3)
+      .optional()
+      .describe("Up to 3 quick-reply buttons shown under the message."),
+  }),
+  z.object({
+    type: z
+      .literal("templates")
+      .describe(
+        "Several welcome message variants (1-5), each with its own text.",
+      ),
+    templates: z
+      .array(welcomeMessageTemplateSchema)
+      .min(1)
+      .max(5)
+      .describe("1-5 welcome message variants."),
   }),
 ])
 
@@ -72,24 +143,99 @@ export const welcomeMessageSchema = z.discriminatedUnion("type", [
  */
 export const creativeMediaSchema = z.discriminatedUnion("kind", [
   z.object({
-    kind: z.literal("image"),
-    imageKey: z.string().trim().min(1).max(1024),
-    fileId: z.string().trim().min(1),
-    imageMimeType: z.string().trim().max(255).optional(),
-    imageFileName: z.string().trim().max(255).optional(),
-    link: z.url(),
-    message: z.string().trim().max(500).optional(),
-    headline: z.string().trim().max(40).optional(),
-    description: z.string().trim().max(200).optional(),
-    caption: z.string().trim().max(30).optional(),
+    kind: z.literal("image").describe("Image creative."),
+    imageKey: z
+      .string()
+      .trim()
+      .min(1)
+      .max(1024)
+      .describe(
+        "Storage key of the uploaded image; must belong to this workspace. Returned as `imageKey` by `ads.createCampaignImageUpload`.",
+      ),
+    fileId: z
+      .string()
+      .trim()
+      .min(1)
+      .describe(
+        "File id of the uploaded image. Returned as `fileId` by `ads.createCampaignImageUpload`.",
+      ),
+    imageMimeType: z
+      .string()
+      .trim()
+      .max(255)
+      .optional()
+      .describe(
+        "Informational only: image MIME type you uploaded. The server detects the real type from the bytes.",
+      ),
+    imageFileName: z
+      .string()
+      .trim()
+      .max(255)
+      .optional()
+      .describe(
+        "Informational only: original file name. The server generates its own file name.",
+      ),
+    link: z
+      .url()
+      .describe("Destination URL the ad's link points to (absolute URL)."),
+    message: z
+      .string()
+      .trim()
+      .max(500)
+      .optional()
+      .describe("Primary text shown above the image, up to 500 characters."),
+    headline: z
+      .string()
+      .trim()
+      .max(40)
+      .optional()
+      .describe("Headline shown below the image, up to 40 characters."),
+    description: z
+      .string()
+      .trim()
+      .max(200)
+      .optional()
+      .describe("Link description text, up to 200 characters."),
+    caption: z
+      .string()
+      .trim()
+      .max(30)
+      .optional()
+      .describe("Display-link caption (e.g. a domain), up to 30 characters."),
   }),
   z.object({
-    kind: z.literal("video"),
-    videoId: z.string().trim().min(1),
-    thumbnailImageHash: z.string().trim().min(1).optional(),
-    title: z.string().trim().max(40).optional(),
-    message: z.string().trim().max(500).optional(),
-    linkDescription: z.string().trim().max(200).optional(),
+    kind: z.literal("video").describe("Video creative."),
+    videoId: z
+      .string()
+      .trim()
+      .min(1)
+      .describe(
+        "Meta video id returned by `ads.uploadCampaignVideo`; wait until `ads.getCampaignVideoStatus` reports it ready.",
+      ),
+    thumbnailImageHash: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe("Optional Meta ad image hash to use as the video thumbnail."),
+    title: z
+      .string()
+      .trim()
+      .max(40)
+      .optional()
+      .describe("Video title shown with the ad, up to 40 characters."),
+    message: z
+      .string()
+      .trim()
+      .max(500)
+      .optional()
+      .describe("Primary text shown above the video, up to 500 characters."),
+    linkDescription: z
+      .string()
+      .trim()
+      .max(200)
+      .optional()
+      .describe("Link description text, up to 200 characters."),
   }),
 ])
 

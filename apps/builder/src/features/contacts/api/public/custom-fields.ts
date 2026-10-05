@@ -12,6 +12,7 @@ import {
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
+import { ianaTimezoneSchema } from "@/lib/public-api/iana-timezone"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   findContactCustomField,
@@ -117,6 +118,11 @@ export const contactsCustomFieldsPublicRouter = {
             "Custom field id (numeric string) or field name. Get either from `customFields.list`.",
           ),
         value: z.string().trim().describe("New value for the custom field."),
+        clientTimezone: ianaTimezoneSchema
+          .optional()
+          .describe(
+            "IANA timezone of the caller, e.g. `Asia/Ho_Chi_Minh`. Anchors a date-only value to that calendar day; defaults to the contact's, then the workspace's zone.",
+          ),
       }),
     )
     .errors(possibleErrorsOnMutatingResource)
@@ -135,6 +141,7 @@ export const contactsCustomFieldsPublicRouter = {
         contactId,
         customFieldId: field.id,
         value: input.value,
+        sourceTimezone: input.clientTimezone,
       })
     }),
 
@@ -216,6 +223,7 @@ export const contactsCustomFieldsPublicRouter = {
         workspaceId,
         contactId,
         operations,
+        sourceTimezone: input.clientTimezone,
       })
     }),
 

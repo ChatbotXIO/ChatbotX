@@ -49,6 +49,16 @@ vi.mock("@chatbotx.io/business", () => ({
   messengerIntegrationService: { updateTagSync: vi.fn() },
 }))
 
+// The shared channel read/coexist/CAPI route factories are covered by
+// channel-integrations-public-api.test.ts; stub them so only this file's
+// routes register.
+vi.mock("@/features/channel-integrations/api/public", () => ({
+  createCapiRoutes: () => ({}),
+  createChannelReadRoutes: () => ({}),
+  createCoexistRoute: () => ({}),
+  createHandoverResumeFlowRoute: () => ({}),
+}))
+
 const updateMessenger = vi.fn()
 vi.mock(
   "@/features/integration-messenger/lib/update-messenger-settings",

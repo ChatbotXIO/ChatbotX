@@ -1,6 +1,7 @@
 import type { Oauth2AuthValue } from "@chatbotx.io/sdk"
 import { OAuth2Client } from "google-auth-library"
 import { google } from "googleapis"
+import { GOOGLE_SHEETS_SCOPES } from "./constants"
 import type { GoogleSheetsConfig } from "./schemas"
 
 export function getClient(props: GoogleSheetsConfig | Oauth2AuthValue) {
@@ -28,7 +29,7 @@ export function generateAuthUrl(props: GoogleSheetsConfig): string {
   return getClient(props).generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
-    scope: ["https://www.googleapis.com/auth/spreadsheets"],
+    scope: GOOGLE_SHEETS_SCOPES,
     state: btoa(JSON.stringify(props.stateParams)),
   })
 }

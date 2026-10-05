@@ -1,6 +1,8 @@
 import {
+  apiKeyConnection,
   Integration,
   type IntegrationDefinition,
+  isUnauthorizedStatusError,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { sendGridRequest } from "./client"
@@ -37,33 +39,54 @@ const getNextPageToken = (next?: string) => {
   return url.searchParams.get("page_token")?.trim() || undefined
 }
 
+const sendGridFields = [
+  {
+    name: "apiKey",
+    type: "secret",
+    required: true,
+  },
+] as const
+
+const buildSendGridAuth = async (config: {
+  apiKey: string
+}): Promise<SendGridAuthValue> => createSendGridAuth(config.apiKey)
+
+const probeSendGrid = async (auth: SendGridAuthValue) => {
+  const { scopes } = await sendGridRequest(
+    auth,
+    SENDGRID_SCOPES_PATH,
+    sendGridScopesResponseSchema,
+  )
+  // SendGrid API keys can report Marketing permissions under either the
+  // modern "marketing.*" scope names or the legacy "marketing_campaigns.*"
+  // names depending on key type. Full Access keys have implicit write
+  // access but do NOT enumerate "marketing.write" in the scopes endpoint
+  // even though write calls succeed (HTTP 202). Checking read is enough.
+  const hasRead =
+    scopes.includes("marketing.read") ||
+    scopes.includes("marketing_campaigns.read")
+  if (!hasRead) {
+    throw new SendGridMissingScopesError(["marketing.read"])
+  }
+}
+
+const connection = apiKeyConnection({
+  displayName: "SendGrid",
+  fields: sendGridFields,
+  buildAuth: buildSendGridAuth,
+  probe: probeSendGrid,
+  isRevoked: isUnauthorizedStatusError,
+})
+
 const config: IntegrationDefinition<
   SendGridConfig,
   SendGridAuthValue,
   SendGridActions
 > = {
   name: "sendGrid",
+  connection,
   actions: {
-    validateCredentials: async ({ props }) => {
-      const auth = createSendGridAuth(props.apiKey)
-      const { scopes } = await sendGridRequest(
-        auth,
-        SENDGRID_SCOPES_PATH,
-        sendGridScopesResponseSchema,
-      )
-      // SendGrid API keys can report Marketing permissions under either the
-      // modern "marketing.*" scope names or the legacy "marketing_campaigns.*"
-      // names depending on key type. Full Access keys have implicit write
-      // access but do NOT enumerate "marketing.write" in the scopes endpoint
-      // even though write calls succeed (HTTP 202). Checking read is enough.
-      const hasRead =
-        scopes.includes("marketing.read") ||
-        scopes.includes("marketing_campaigns.read")
-      if (!hasRead) {
-        throw new SendGridMissingScopesError(["marketing.read"])
-      }
-      return auth
-    },
+    validateCredentials: ({ props }) => connection.fromCredentials(props),
     listLists: async ({ ctx, props }) => {
       const searchParams = new URLSearchParams({
         page_size: String(props.pageSize),

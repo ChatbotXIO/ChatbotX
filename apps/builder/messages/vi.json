@@ -878,6 +878,7 @@
         "channelLimit": "Đã đạt giới hạn kênh.",
         "workspaceLimit": "Đã đạt giới hạn không gian làm việc.",
         "providerRejected": "Nhà cung cấp đã từ chối yêu cầu này.",
+        "inProgress": "Kết nối đang được thực hiện.",
         "unknown": "Đã xảy ra lỗi.",
         "followUpFailed": "Thiết lập chưa hoàn tất — hãy hoàn tất trong cài đặt kênh."
       },
@@ -2433,12 +2434,13 @@
       "broadcasts": "Phát sóng",
       "analytics": "Phân tích",
       "ecommerce": "Thương mại điện tử",
-      "integrations": "Tích hợp",
       "channels": "Kênh",
+      "integrations": "Tích hợp",
       "minigames": "Minigame",
       "appointments": "Lịch hẹn",
       "media": "Phương tiện",
-      "ads": "Quảng cáo"
+      "ads": "Quảng cáo",
+      "settings": "Cài đặt"
     },
     "adReferral": {
       "label": "Ads",
@@ -5858,6 +5860,21 @@
     "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn.",
     "unavailableTitle": "Không thể hủy đăng ký.",
     "unavailableDescription": "Không gian làm việc này không còn khả dụng."
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "Liên kết này không còn khả dụng.",

@@ -16,8 +16,12 @@ export const AutoAssignConversationRule = {
 } as const
 
 export const autoAssignConversationStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.autoAssignConversation),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.autoAssignConversation)
+    .describe('Step type discriminator: "autoAssignConversation".'),
   assignedIds: z.array(z.string()),
   rule: z.enum(AutoAssignConversationRule),
   states: z.tuple([successStateSchema, errorStateSchema]),

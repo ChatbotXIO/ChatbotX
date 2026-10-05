@@ -16,8 +16,8 @@ import { appointmentCalendarResource } from "./resource"
 // stable contract, so a new column added to the model does not leak until
 // deliberately added here. `deletedAt` is internal bookkeeping and
 // intentionally excluded.
-export const appointmentCalendarPublicResource =
-  appointmentCalendarResource.pick({
+export const appointmentCalendarPublicResource = appointmentCalendarResource
+  .pick({
     id: true,
     name: true,
     description: true,
@@ -41,6 +41,9 @@ export const appointmentCalendarPublicResource =
     publicLinkSlug: true,
     createdAt: true,
     updatedAt: true,
+  })
+  .extend({
+    publicUrl: z.string().url(),
   })
 export type AppointmentCalendarPublicResource = z.infer<
   typeof appointmentCalendarPublicResource

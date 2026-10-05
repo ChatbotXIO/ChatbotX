@@ -84,7 +84,12 @@ export const questionnaireQuestionRequest = z.object({
     .describe("System contact field to store the answer in, or null for none."),
   config: z
     .object({
-      options: z.array(questionnaireOptionRequest).default([]),
+      options: z
+        .array(questionnaireOptionRequest)
+        .default([])
+        .describe(
+          "Answer options for choice-type questions; each needs a stable `id`, a `label` and optional `points`.",
+        ),
     })
     .optional()
     .nullable()

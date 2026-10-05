@@ -15,6 +15,7 @@ const update = vi.fn(() => ({ set: setUpdate }))
 
 const findFirstUser = vi.fn(async () => ({ tenantId: "1" }))
 const findFirstWorkspace = vi.fn(async () => ({ name: "Old Name" }))
+const findFirstFlow = vi.fn(async () => ({ id: "11" }))
 const countWorkspaces = vi.fn(async () => 0)
 const db = {
   insert,
@@ -23,6 +24,7 @@ const db = {
   query: {
     userModel: { findFirst: findFirstUser },
     workspaceModel: { findFirst: findFirstWorkspace },
+    flowModel: { findFirst: findFirstFlow },
   },
 }
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -345,3 +347,85 @@ describe("WorkspaceService.update — member cache invalidation", () => {
 
 // Token-creation auditing moved with the write: see
 // workspace-api-token.service.test.ts (workspaceApiTokenService.createToken).
+
+describe("workspaceService.updateSettings", () => {
+  test("writes only the five settings columns, whatever else is passed", async () => {
+    setUpdate.mockClear()
+
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: {
+        defaultReply: "11",
+        defaultReplyFrequency: "oncePerDay",
+        smartResponseDelaySeconds: 10,
+        capiLimitedDataUse: true,
+        logo: "https://cdn.example.com/l.png",
+        // Not settings: must never reach the UPDATE.
+        status: "suspended",
+        ownerId: "attacker",
+        tenantId: "9",
+      } as never,
+    })
+
+    expect(setUpdate).toHaveBeenCalledWith({
+      defaultReply: "11",
+      defaultReplyFrequency: "oncePerDay",
+      smartResponseDelaySeconds: 10,
+      capiLimitedDataUse: true,
+      logo: "https://cdn.example.com/l.png",
+    })
+  })
+
+  test("a Default Reply flow of another workspace is refused and nothing is written", async () => {
+    setUpdate.mockClear()
+    findFirstFlow.mockResolvedValueOnce(undefined as never)
+
+    await expect(
+      workspaceService.updateSettings({
+        id: "ws-1",
+        data: { defaultReply: "99" },
+      }),
+    ).rejects.toThrow("Flow not found")
+    expect(setUpdate).not.toHaveBeenCalled()
+  })
+
+  test("clearing the Default Reply (null) needs no flow lookup", async () => {
+    setUpdate.mockClear()
+    findFirstFlow.mockClear()
+
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { defaultReply: null },
+    })
+
+    expect(findFirstFlow).not.toHaveBeenCalled()
+    expect(setUpdate).toHaveBeenCalledWith({ defaultReply: null })
+  })
+
+  test("an empty or all-undefined body writes nothing and returns the workspace", async () => {
+    setUpdate.mockClear()
+    findFirstWorkspace.mockResolvedValueOnce({
+      id: "ws-1",
+      name: "Old",
+    } as never)
+
+    const result = await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { logo: undefined },
+    })
+
+    expect(setUpdate).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ id: "ws-1" })
+  })
+
+  test("a field left out is not written (undefined is skipped)", async () => {
+    setUpdate.mockClear()
+
+    await workspaceService.updateSettings({
+      id: "ws-1",
+      data: { capiLimitedDataUse: false },
+    })
+
+    expect(setUpdate).toHaveBeenCalledWith({ capiLimitedDataUse: false })
+  })
+})

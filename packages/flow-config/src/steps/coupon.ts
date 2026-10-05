@@ -3,16 +3,24 @@ import { z } from "zod"
 import { stepTypes } from "./step-action"
 
 export const setUpCouponStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.setUpCoupon),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.setUpCoupon)
+    .describe('Step type discriminator: "setUpCoupon".'),
   topicId: zodBigintAsString(),
   states: z.preprocess(() => undefined, z.undefined()).optional(),
 })
 export type SetUpCouponStepSchema = z.infer<typeof setUpCouponStepSchema>
 
 export const markCouponUsedStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.markCouponUsed),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.markCouponUsed)
+    .describe('Step type discriminator: "markCouponUsed".'),
   topicId: zodBigintAsString(),
   states: z.preprocess(() => undefined, z.undefined()).optional(),
 })

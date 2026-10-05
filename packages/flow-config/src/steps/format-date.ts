@@ -9,8 +9,12 @@ export const FormatTimezone = {
 } as const
 
 export const formatDateStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.formatDate),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.formatDate)
+    .describe('Step type discriminator: "formatDate".'),
   inputFieldId: zodFieldReference(),
   format: z.string().trim().min(1),
   outputFieldId: zodFieldReference(),

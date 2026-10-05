@@ -10,8 +10,12 @@ export const questionnaireActionModes = z.enum([
 export type QuestionnaireActionMode = z.infer<typeof questionnaireActionModes>
 
 export const questionnairesStepSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.questionnaires),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.questionnaires)
+    .describe('Step type discriminator: "questionnaires".'),
   mode: questionnaireActionModes.default("start"),
   questionnaireId: zodBigintAsString(),
   states: z.preprocess(() => undefined, z.undefined()).optional(),

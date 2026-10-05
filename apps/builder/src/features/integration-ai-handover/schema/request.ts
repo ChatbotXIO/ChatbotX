@@ -15,13 +15,30 @@ export const AI_HANDOVER_MESSAGE_MAX_LENGTH = Math.max(
 
 export const saveAiHandoverSettingsRequest = z
   .object({
-    enabled: z.boolean(),
-    scheduleEnabled: z.boolean(),
-    timeRanges: aiHandoverTimeRangesSchema,
+    enabled: z
+      .boolean()
+      .describe("Master switch of the AI hand-off automation."),
+    scheduleEnabled: z
+      .boolean()
+      .describe("Whether `timeRanges` bound when the automation runs."),
+    timeRanges: aiHandoverTimeRangesSchema.describe(
+      "Hours of the workspace timezone when the automation runs; required when `scheduleEnabled`, otherwise an empty list.",
+    ),
     /** `null` clears the flow (the return message, if any, is sent instead). */
-    gotoFlowId: zodBigintAsString().nullable(),
-    returnMessage: z.string().max(AI_HANDOVER_MESSAGE_MAX_LENGTH),
-    pauseBotWaitingForStaff: z.boolean(),
+    gotoFlowId: zodBigintAsString()
+      .nullable()
+      .describe(
+        "Flow started when the AI hands the conversation back, or null to send `returnMessage` instead.",
+      ),
+    returnMessage: z
+      .string()
+      .max(AI_HANDOVER_MESSAGE_MAX_LENGTH)
+      .describe(
+        "Message sent when no flow is set or it is no longer active; empty for none.",
+      ),
+    pauseBotWaitingForStaff: z
+      .boolean()
+      .describe("Pause the bot for the contact after the hand-back."),
   })
   // A schedule without a window would never run: reject it at the form too.
   .refine((value) => !value.scheduleEnabled || value.timeRanges.length > 0, {

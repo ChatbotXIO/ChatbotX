@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { beforeEach, expect, test, vi } from "vitest"
 
 type RouteConfig = { method: string; path: string }
 
@@ -50,10 +50,6 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 const commentAutomationAnalyticsService = {
-  getReplyStatsByDateRange: vi.fn(),
-  listUserComments: vi.fn(),
-  listBotReplies: vi.fn(),
-  listErrors: vi.fn(),
   getContacts: vi.fn(),
 }
 vi.mock("@chatbotx.io/analytics", () => ({
@@ -66,8 +62,7 @@ const findProcedure = (path: string) => {
   const found = capturedProcedures.find(
     (procedure) =>
       procedure.route.method === "GET" &&
-      procedure.route.path ===
-        `/v1/analytics/comment-automations/{automationId}/${path}`,
+      procedure.route.path === `/v1/analytics/comment-automation/${path}`,
   )
   if (!found) {
     throw new Error(`No procedure registered for ${path}`)
@@ -77,12 +72,6 @@ const findProcedure = (path: string) => {
 
 const scopeArgAtImport = workspaceTokenAuthAPIForScope.mock.calls[0]?.[0]
 const context = { workspace: { id: "workspace-1" } }
-const range = {
-  automationId: "auto-1",
-  from: "2026-09-01",
-  to: "2026-10-01",
-  timezone: "UTC",
-}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -96,60 +85,21 @@ test("registers the routes under the analytics scope", () => {
   expect(scopeArgAtImport).toBe("analytics")
 })
 
-describe.each([
-  ["replies", "getReplyStatsByDateRange", []],
-  ["user-comments", "listUserComments", { data: [], total: 0 }],
-  ["bot-replies", "listBotReplies", { data: [], total: 0 }],
-  ["errors", "listErrors", { data: [], total: 0 }],
-] as const)("GET .../%s", (path, method, response) => {
-  test("maps from/to and injects the token workspace", async () => {
-    commentAutomationAnalyticsService[method].mockResolvedValueOnce(response)
+test("contacts 404s for an automation outside the workspace", async () => {
+  commentAutomationService.findOrFail.mockRejectedValueOnce(notFound)
 
-    await findProcedure(path).handler?.({
+  await expect(
+    findProcedure("contacts").handler?.({
       context,
-      input: { ...range, page: 1, perPage: 20 },
-    })
-
-    expect(commentAutomationAnalyticsService[method]).toHaveBeenCalledWith(
-      expect.objectContaining({
-        workspaceId: "workspace-1",
-        automationId: "auto-1",
-        startDate: "2026-09-01",
-        endDate: "2026-10-01",
-      }),
-    )
-  })
-
-  test("404s for an automation outside the workspace", async () => {
-    commentAutomationService.findOrFail.mockRejectedValueOnce(notFound)
-
-    await expect(
-      findProcedure(path).handler?.({ context, input: range }),
-    ).rejects.toBe(notFound)
-    expect(commentAutomationAnalyticsService[method]).not.toHaveBeenCalled()
-  })
-})
-
-test("errors drop the commenter's name and avatar", async () => {
-  commentAutomationAnalyticsService.listErrors.mockResolvedValueOnce({
-    data: [
-      {
-        id: "e-1",
-        errorDetail: "boom",
-        contact: { firstName: "A", lastName: "B", avatar: null },
+      input: {
+        automationId: "x",
+        eventType: "message:sent",
+        page: 1,
+        perPage: 20,
       },
-    ],
-    total: 1,
-    page: 1,
-    pageCount: 1,
-  })
-
-  const result = (await findProcedure("errors").handler?.({
-    context,
-    input: range,
-  })) as { data: Record<string, unknown>[] }
-
-  expect(result.data[0]).toEqual({ id: "e-1", errorDetail: "boom" })
+    }),
+  ).rejects.toBe(notFound)
+  expect(commentAutomationAnalyticsService.getContacts).not.toHaveBeenCalled()
 })
 
 test("contacts reads the total from the automation's counter and drops PII", async () => {

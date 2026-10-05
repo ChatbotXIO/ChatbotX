@@ -12,7 +12,9 @@ import {
 } from "./base"
 
 export const startFlowNodeSchema = baseNodeSchema.extend({
-  type: z.literal(nodeTypeSchema.enum.startFlow),
+  type: z
+    .literal(nodeTypeSchema.enum.startFlow)
+    .describe('Node type "startFlow": starts another flow for the contact.'),
   data: baseNodeDataSchema.extend({
     details: z.object({
       beforeStep: startExternalFlowStepSchema,

@@ -9,7 +9,11 @@ import {
 } from "./base"
 
 export const waitNodeSchema = baseNodeSchema.extend({
-  type: z.literal(nodeTypeSchema.enum.wait),
+  type: z
+    .literal(nodeTypeSchema.enum.wait)
+    .describe(
+      'Node type "wait": pauses the flow. `data.details.steps` holds exactly one wait step.',
+    ),
   data: baseNodeDataSchema.extend({
     details: z.object({
       steps: z.array(waitStepSchema).min(1).max(1),

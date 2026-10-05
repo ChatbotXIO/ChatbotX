@@ -11,9 +11,9 @@ import { integrationTelegramModel } from "@chatbotx.io/database/schema"
 import type { IntegrationTelegramModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import { ChatbotXException } from "../errors"
 import { connectChannelIntegration } from "../inbox/connect-channel"
-import { inboxService } from "../inbox/service"
 import { workspaceService } from "../workspace"
 
 const UNIQUE_VIOLATION_CODE = "23505"
@@ -156,11 +156,10 @@ class TelegramIntegrationService extends BaseService {
             eq(integrationTelegramModel.workspaceId, workspaceId),
           ),
         )
-      await inboxService.disconnect({
+      await connectionStateService.disconnectInbox({
         inboxId,
-        ownerId,
         workspaceId,
-        reason: "manual",
+        ownerId,
         tx: client,
       })
     }

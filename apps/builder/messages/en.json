@@ -878,6 +878,7 @@
         "channelLimit": "Channel limit reached.",
         "workspaceLimit": "Workspace limit reached.",
         "providerRejected": "The provider rejected this request.",
+        "inProgress": "Connection already in progress.",
         "unknown": "Something went wrong.",
         "followUpFailed": "Setup incomplete — finish from the channel settings."
       },
@@ -2433,12 +2434,13 @@
       "broadcasts": "Broadcasts",
       "analytics": "Analytics",
       "ecommerce": "Ecommerce",
-      "integrations": "Integrations",
       "channels": "Channels",
+      "integrations": "Integrations",
       "minigames": "Minigames",
       "appointments": "Appointments",
       "media": "Media",
-      "ads": "Ads"
+      "ads": "Ads",
+      "settings": "Settings"
     },
     "adReferral": {
       "label": "Ads",
@@ -6058,6 +6060,21 @@
     "invalidDescription": "This link is invalid or has expired.",
     "unavailableTitle": "Unsubscribe unavailable.",
     "unavailableDescription": "This workspace is no longer available."
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "This link is no longer available.",

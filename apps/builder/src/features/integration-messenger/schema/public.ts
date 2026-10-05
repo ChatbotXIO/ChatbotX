@@ -8,7 +8,7 @@ import z from "zod"
 import { updateMessengerRequest } from "./action"
 
 export const messengerChannelIdSchema = zodBigintAsString().describe(
-  "Messenger channel (integration) id. Get it from `integrations.list`.",
+  "Messenger channel (integration) id. Get it from `messengerChannels.list`.",
 )
 
 const settingsShape = {

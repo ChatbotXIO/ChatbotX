@@ -24,8 +24,12 @@ export type AIGenerateTextAgentProvider = z.infer<
 
 export const aiGenerateTextAgentSchema = z
   .object({
-    id: zodBigintAsString(),
-    stepType: z.literal(stepTypes.enum.aiGenerateTextAgent),
+    id: zodBigintAsString().describe(
+      "Step id (numeric string), unique within the flow.",
+    ),
+    stepType: z
+      .literal(stepTypes.enum.aiGenerateTextAgent)
+      .describe('Step type discriminator: "aiGenerateTextAgent".'),
     provider: aiGenerateTextAgentProvider.catch("openai"),
     integrationId: z.string().trim().optional(),
     model: z.string().trim().optional(),

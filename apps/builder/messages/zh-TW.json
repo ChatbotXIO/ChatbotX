@@ -1473,12 +1473,13 @@
       "broadcasts": "群發",
       "analytics": "分析",
       "ecommerce": "電子商務",
-      "integrations": "整合",
       "channels": "頻道",
+      "integrations": "整合",
       "minigames": "小遊戲",
       "appointments": "預約",
       "media": "媒體",
-      "ads": "廣告"
+      "ads": "廣告",
+      "settings": "設定"
     },
     "adReferral": {
       "label": "Ads",
@@ -2524,6 +2525,7 @@
         "channelLimit": "已達渠道上限。",
         "workspaceLimit": "已達工作區上限。",
         "providerRejected": "服務提供方拒絕了此請求。",
+        "inProgress": "連線正在進行中。",
         "unknown": "發生錯誤。",
         "followUpFailed": "設定尚未完成——請在渠道設定中完成。"
       },
@@ -5662,6 +5664,21 @@
     "invalidDescription": "此連結無效或已過期。",
     "unavailableTitle": "無法取消訂閱。",
     "unavailableDescription": "此工作區不再可用。"
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "此連結已不再可用。",

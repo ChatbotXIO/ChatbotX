@@ -48,9 +48,14 @@ export const broadcastTemplateDataSchema = z.union([
 /** Flow bindings for a Messenger template's buttons. */
 export const broadcastTemplateButtonsSchema = z.array(
   z.object({
-    id: z.string(),
-    label: z.string(),
-    flowId: z.string().optional(),
+    id: z.string().describe("Button id as defined in the template."),
+    label: z.string().describe("Button label shown to the recipient."),
+    flowId: z
+      .string()
+      .optional()
+      .describe(
+        "Flow id to run when the button is clicked (from `flows.list`).",
+      ),
   }),
 )
 
@@ -59,11 +64,25 @@ export const broadcastTemplateButtonsSchema = z.array(
  * that page. A flow broadcast leaves `templateId` unset.
  */
 export const broadcastTargetSchema = z.object({
-  inboxId: zodBigintAsString(),
-  flowId: zodBigintAsString().optional(),
-  templateId: zodBigintAsString().optional(),
-  templateData: broadcastTemplateDataSchema.optional(),
-  buttons: broadcastTemplateButtonsSchema.optional(),
+  inboxId: zodBigintAsString().describe(
+    "Inbox (page/number) id this target sends from, from `inboxes.list`.",
+  ),
+  flowId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Flow id (numeric string) to send from this inbox, from `flows.list`. Omit for a template send.",
+    ),
+  templateId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Template id (numeric string) to send from this inbox. Omit for a flow send.",
+    ),
+  templateData: broadcastTemplateDataSchema
+    .optional()
+    .describe("Parameters for this target's template."),
+  buttons: broadcastTemplateButtonsSchema
+    .optional()
+    .describe("Flow bindings for this target's Messenger template buttons."),
 })
 export type BroadcastTargetRequest = z.infer<typeof broadcastTargetSchema>
 

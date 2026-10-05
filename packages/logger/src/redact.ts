@@ -47,6 +47,7 @@ const SENSITIVE_QUERY_PARAMS = [
   "signature",
   "api_key",
   "apikey",
+  "key",
 ]
 const SENSITIVE_QUERY_RE = new RegExp(
   `([?&](?:${SENSITIVE_QUERY_PARAMS.join("|")})=)[^&#\\s"']+`,

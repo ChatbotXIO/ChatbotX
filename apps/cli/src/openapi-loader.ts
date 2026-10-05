@@ -109,9 +109,24 @@ const POST_VERB_OVERRIDES: Record<string, string> = {
 }
 
 // Sub-paths that are actions themselves (not nouns), collapse to group:action (2-level)
-const ACTION_SUBPATHS = new Set(["block", "unblock"])
+const ACTION_SUBPATHS = new Set(["block", "unblock", "reset"])
 // Singleton resources — GET on the collection returns a single object, use "get" not "list"
 const SINGLETON_RESOURCES = new Set(["workspaces"])
+// Two-segment singleton resources that have a read AND a write route on the
+// same path (`GET`/`PATCH /v1/workspace/settings`): the method picks the verb,
+// otherwise both would derive the same command name and one would be dropped.
+const METHOD_VERBED_SINGLETON_PATHS = new Set([
+  "workspace/settings",
+  "messenger/templates/{id}",
+  "products/meta-catalog",
+])
+const SINGLETON_VERBS: Record<string, string> = {
+  get: "get",
+  delete: "delete",
+  post: "create",
+  put: "update",
+  patch: "update",
+}
 const V1_PREFIX_RE = /^\/v1\//
 const LEADING_SLASH_RE = /^\//
 
@@ -179,6 +194,11 @@ export function pathAndMethodToCommandName(
   }
 
   const secondIsParam = segments[1].startsWith("{")
+
+  if (!secondIsParam && METHOD_VERBED_SINGLETON_PATHS.has(normalized)) {
+    const verb = segments[2] && m === "get" ? "get" : (SINGLETON_VERBS[m] ?? m)
+    return `${group}:${segments[1]}:${verb}`
+  }
 
   if (!secondIsParam) {
     // Filter/variant on collection: /v1/integrations/status/token-errors or /v1/tags/name/{name}

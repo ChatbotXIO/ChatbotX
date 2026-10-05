@@ -136,7 +136,9 @@ export const listQuestionnaireSubmissionsPublicRequest =
     sort: z
       .array(questionnaireSubmissionSort)
       .optional()
-      .describe("Sort order."),
+      .describe(
+        'Sort order as [{ id, desc }], where id is one of "name", "totalPoints", "status" or "completedAt" and desc=true sorts descending.',
+      ),
   })
 
 const questionnaireSubmissionContactResource = z.object({

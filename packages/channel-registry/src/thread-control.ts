@@ -1,4 +1,5 @@
 import {
+  contactInboxService,
   type RequestThreadControlActionInput,
   type SyncThreadOwnerInput,
   type ThreadControlChannelResult,
@@ -6,6 +7,7 @@ import {
   ThreadControlUnsupportedError,
   threadControlService,
 } from "@chatbotx.io/business"
+import { notFoundException } from "@chatbotx.io/business/errors"
 import type { ThreadControlAction } from "@chatbotx.io/database/partials"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import type {
@@ -73,6 +75,65 @@ export function requestThreadControlAction(
     ...input,
     applyOnChannel: (contactInbox) =>
       runOnChannel(input.workspaceId, contactInbox, targetRole, input.action),
+  })
+}
+
+/** The conversation whose contact owns the contact inbox being steered. */
+export type ThreadControlConversation = { id: string; contactId: string }
+
+const CONTACT_INBOX_NOT_FOUND = "Contact inbox not found for this conversation"
+
+/**
+ * `requestThreadControlAction` for a contact inbox of a conversation: refuses
+ * a contact inbox that is not one of the conversation's contact, so a caller
+ * cannot steer a thread of another contact. Callers (the inbox UI, the public
+ * API) resolve and authorize the conversation themselves.
+ *
+ * Throws a 404 `notFound` exception for a foreign contact inbox.
+ */
+export async function requestConversationThreadControl(
+  props: Omit<RequestThreadControlActionProps, "conversationId"> & {
+    conversation: ThreadControlConversation
+  },
+): Promise<ThreadControlSnapshot> {
+  const { conversation, ...request } = props
+  const contactInboxes = await contactInboxService.listByContactId({
+    workspaceId: request.workspaceId,
+    contactId: conversation.contactId,
+  })
+  if (!contactInboxes.some((row) => row.id === request.contactInboxId)) {
+    throw notFoundException(CONTACT_INBOX_NOT_FOUND)
+  }
+  return await requestThreadControlAction({
+    ...request,
+    conversationId: conversation.id,
+  })
+}
+
+/**
+ * On-demand owner check for a contact inbox of a conversation: reads a fresh
+ * (uncached) row of the conversation's own contact — the sync reconciles
+ * against the stored state — and runs `syncThreadOwner`. Throws a 404
+ * `notFound` exception for a foreign contact inbox.
+ */
+export async function syncConversationThreadOwner(props: {
+  workspaceId: string
+  conversation: ThreadControlConversation
+  contactInboxId: string
+}): Promise<ThreadControlSnapshot> {
+  const contactInbox = await contactInboxService.findByUncached({
+    where: {
+      id: props.contactInboxId,
+      contactId: props.conversation.contactId,
+    },
+  })
+  if (!contactInbox) {
+    throw notFoundException(CONTACT_INBOX_NOT_FOUND)
+  }
+  return await syncThreadOwner({
+    workspaceId: props.workspaceId,
+    contactInbox,
+    conversationId: props.conversation.id,
   })
 }
 

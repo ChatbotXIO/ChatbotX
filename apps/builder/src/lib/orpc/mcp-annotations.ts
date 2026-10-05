@@ -34,7 +34,7 @@ export type McpRouteMeta = {
  * declaration merging needs for a third-party namespaced interface).
  */
 export type OperationObjectWithMcp = OpenAPI.OperationObject & {
-  "x-mcp"?: McpRouteMeta & { scope?: string }
+  "x-mcp"?: McpRouteMeta & { scope?: string | string[] }
 }
 
 /**

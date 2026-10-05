@@ -10,7 +10,7 @@ import { workspaceTokenAuthAPIForScope } from "@/orpc"
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("channels")
 
 const tiktokChannelIdSchema = zodBigintAsString().describe(
-  "TikTok channel (integration) id. Get it from `integrations.list`.",
+  "TikTok channel (integration) id. Get it from `tiktokChannels.list`.",
 )
 
 const commentToMessageStatusSchema = z

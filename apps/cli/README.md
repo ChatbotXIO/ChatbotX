@@ -144,6 +144,8 @@ chatbotx bot-fields get <idOrName>                   # Get bot field
 # `bot-fields update <idOrName> --value <value>` (single field, PUT /v1/bot-fields/{idOrName}) is NOT
 # reachable — collides with `update` above under the same commandName; see Known command-name collisions.
 chatbotx bot-fields delete <idOrName>                # Unset bot field value
+chatbotx bot-fields reset <idOrName>                 # Clear one bot field value, keep the field
+chatbotx bot-fields bulk-reset --ids <ids>           # Clear up to 100 bot field values by id
 ```
 
 ---
@@ -178,7 +180,11 @@ chatbotx channel-posts list                           # [--limit --search --curs
 chatbotx channel-posts options-by-ids --ids <ids>     # Resolve saved-filter post labels
 
 # Imports & exports
-chatbotx contacts imports                            # [--page --perPage --status --keyword]
+chatbotx contacts import-template                    # CSV template as text [--language]
+chatbotx contacts imports-upload-url --fileName <name> --mimeType <mime> --fileSize <bytes>
+                                                     # Returns fileId + presigned PUT URL
+chatbotx contacts imports-files-headers <fileId>      # Column headers of the uploaded file
+chatbotx contacts imports                            # [--page --perPage --status --keyword --sort]
 chatbotx contacts find-by-imports <id>                # Get one import job
 chatbotx contacts export --fields <fields>            # [--contactIds --exportAll --filter]
 chatbotx contacts find-by-export-files <fileId>       # Poll export status/download URL
@@ -548,11 +554,11 @@ chatbotx analytics magic-links-contacts --linkId <linkId>
 chatbotx analytics ref-links-stats --linkId <linkId>
 chatbotx analytics ref-links-contacts --linkId <linkId>
 # Comment automation stats — any channel's automation id (fb/ig/threads/tiktok)
-chatbotx analytics comment-automations-replies <automationId>        # Replies sent per day
-chatbotx analytics comment-automations-user-comments <automationId>  # [--keyword] [--page --perPage]
-chatbotx analytics comment-automations-bot-replies <automationId>    # [--keyword] [--page --perPage]
-chatbotx analytics comment-automations-errors <automationId>         # Failed replies (kept 30 days)
-chatbotx analytics comment-automations-contacts <automationId> --eventType <eventType>  # No time range
+chatbotx analytics comment-automation-replies --automationId <id>        # Replies sent per day (--from --to: ISO with offset)
+chatbotx analytics comment-automation-user-comments --automationId <id>  # [--keyword] [--page --perPage]
+chatbotx analytics comment-automation-bot-replies --automationId <id>    # [--keyword] [--page --perPage]
+chatbotx analytics comment-automation-errors --automationId <id>         # Failed replies (kept 30 days)
+chatbotx analytics comment-automation-contacts --automationId <id> --eventType <eventType>  # No time range
 ```
 
 ---
@@ -657,12 +663,23 @@ chatbotx coupon-topics update <id>
 chatbotx coupon-topics archive add <id>
 chatbotx coupon-topics unarchive add <id>
 chatbotx coupon-topics delete <id>
-chatbotx coupons list                                 # List individual coupon codes [--page --perPage]
+chatbotx coupons list                                 # [--topicId --status --usage --keyword --page --perPage]
 chatbotx coupon-topics issue add <id> --contactId <contactId>       # Issue coupon to contact
 chatbotx coupon-topics mark-used add <id> --contactId <contactId>   # Mark issued coupon as used
+chatbotx coupon-topics bulk add <topicId> --codes <codes>  # Add coupon codes to a topic
+chatbotx coupon-imports upload-url --fileName <name> --mimeType text/csv --size <bytes>
+chatbotx coupon-imports create --topicId <id> --fileId <id>
+chatbotx coupon-exports create                         # [--topicId --issueStatus --usageStatus --search]
+chatbotx coupon-exports get <fileId>                   # Poll a CSV export and obtain its download URL
 ```
 
 Coupons issued to a specific contact are listed via `contacts coupons list <identifier>` (see `contacts` above).
+For CSV imports, use `coupon-imports upload-url`, upload the bytes directly to
+the returned URL, then call `coupon-imports create`. MCP clients that only
+support JSON tool calls should use `coupon-topics bulk add` instead.
+
+`coupons list` also accepts legacy flags `--issueStatus`, `--usageStatus`, and
+`--search`; do not send a legacy flag together with its corresponding PDF name.
 
 ---
 
@@ -772,6 +789,7 @@ chatbotx ig-stories instagram-stories --variant <instagram|facebook>  # List eli
 
 ```bash
 chatbotx inboxes list                                 # Connected inboxes; use `id` as `inboxId` elsewhere
+chatbotx inboxes update <id> --markReadOnOutbound <true|false>
 ```
 
 ---
@@ -779,6 +797,7 @@ chatbotx inboxes list                                 # Connected inboxes; use `
 ### `instagram-channels`
 
 ```bash
+chatbotx instagram-channels list|get <id>
 chatbotx instagram-channels settings list <id>         # Welcome flow, ice breakers, persistent menu
 chatbotx instagram-channels settings update <id>       # Full replace; pushes to Instagram
 ```
@@ -814,9 +833,60 @@ chatbotx media-library files-move --fileIds <fileIds>  # [--folderId]
 
 ---
 
+### `inboxes` AI hand-over (Meta Business AI, scope `integrations`)
+
+```bash
+chatbotx inboxes settings list <inboxId>                  # AI hand-over settings
+chatbotx inboxes settings update <inboxId> --enabled --scheduleEnabled --timeRanges --gotoFlowId --returnMessage --pauseBotWaitingForStaff
+chatbotx inboxes apply-to-all list <inboxId>              # Switch state + latest run
+chatbotx inboxes apply-to-all add <inboxId> --applyToAllCustomers --message <text> --dryRun        # Count only
+chatbotx inboxes apply-to-all add <inboxId> --applyToAllCustomers --message <text> --confirmCount <n>
+chatbotx inboxes retry add <inboxId>                      # Retry the latest apply-to-all
+chatbotx inboxes history list <inboxId>                   # [--page --perPage]
+```
+
+### Conversation thread control (scope `inbox`)
+
+```bash
+chatbotx conversations thread-control add <id> --contactInboxId <id> --action take|release|pass
+chatbotx conversations sync add <id> --contactInboxId <id>     # Sync the thread owner from the channel
+```
+
+### `workspace` settings (scope `settings`)
+
+```bash
+chatbotx workspace settings get                       # Get workspace settings
+chatbotx workspace settings update --defaultReply --defaultReplyFrequency --smartResponseDelaySeconds --capiLimitedDataUse --logo
+```
+
+### `whatsapp` calls (scope `integrations`)
+
+```bash
+chatbotx whatsapp calls                              # [--activity --inboxId --agentUserId --cursor]
+chatbotx whatsapp calls-recording <id>               # 15-minute signed playback URL
+chatbotx whatsapp calls-transcript <id>
+chatbotx whatsapp calls-summary <id>
+chatbotx whatsapp templates-catalog-products         # [--keyword] Meta Catalog product search
+chatbotx whatsapp-channels sync add <id>             # Sync WhatsApp templates from Meta
+chatbotx whatsapp-channels dataset update <id> --datasetId <id>      # CAPI dataset (also instagram/messenger)
+chatbotx whatsapp-channels test-event-code update <id> --testEventCode <code>         # "" clears it
+chatbotx whatsapp-channels test-event add <id> --messagingId <id>
+```
+
+### `channel-integrations`
+
+```bash
+chatbotx channel-integrations list                    # [--channel] Connected WhatsApp/Messenger/Instagram/Zalo/TikTok channels
+chatbotx whatsapp-channels list|get <id>              # Same data per channel; also instagram-channels, tiktok-channels
+chatbotx whatsapp-channels handover-resume-flow update <id> --handoverResumeFlowId <flowId|null>
+```
+
 ### `messenger-channels`
 
 ```bash
+chatbotx messenger-channels list
+chatbotx messenger-channels get <id>
+chatbotx messenger-channels handover-resume-flow update <id> --handoverResumeFlowId <flowId|null>
 chatbotx messenger-channels tag-sync update <id> --enabled <enabled>
 chatbotx messenger-channels settings list <id>         # Welcome flow, persistent menu, personas, ice breakers
 chatbotx messenger-channels settings update <id>       # Full replace; pushes to Facebook
@@ -869,6 +939,9 @@ chatbotx products update <id>                           # Full replace
 chatbotx products active update <id> --isActive <isActive>  # Show/hide without replacing
 chatbotx products delete <id>
 chatbotx products bulk-delete --ids <ids>
+chatbotx products import-template                       # XLSX template as base64 [--language]
+chatbotx products imports-upload-url --fileName <name> --mimeType <mime> --fileSize <bytes>
+chatbotx products imports-files-headers <fileId>
 ```
 
 ---
@@ -959,6 +1032,7 @@ chatbotx threads-comments threads-posts                # List eligible Threads p
 ### `tiktok-channels`
 
 ```bash
+chatbotx tiktok-channels list|get <id>
 chatbotx tiktok-channels comment-to-message list <id>  # Live state from TikTok
 chatbotx tiktok-channels comment-to-message update <id> --enabled <enabled>
 ```
@@ -1013,6 +1087,7 @@ chatbotx webchats delete <id>
 ### `zalo-channels`
 
 ```bash
+chatbotx zalo-channels list|get <id>
 chatbotx zalo-channels tag-sync update <id> --enabled <enabled>
 ```
 

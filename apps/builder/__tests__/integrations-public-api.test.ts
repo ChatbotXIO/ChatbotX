@@ -6,6 +6,7 @@ type RouteConfig = {
   summary: string
   tags: string[]
   successStatus?: number
+  deprecated?: boolean
 }
 
 type CapturedProcedure = {
@@ -81,11 +82,6 @@ vi.mock("@chatbotx.io/ai", () => ({
   },
 }))
 
-const verifyAiProviderApiKey = vi.fn(async () => true)
-vi.mock("@/features/integration-ai/lib/verify-api-key", () => ({
-  verifyAiProviderApiKey,
-}))
-
 const integrationService = {
   listByWorkspaceId: vi.fn(),
   findByIdForWorkspace: vi.fn(),
@@ -113,13 +109,22 @@ const integrationOpenAIService = {
   disconnect: vi.fn(),
 }
 
+const connectionStateService = { findByProviderSourceId: vi.fn() }
+
 vi.mock("@chatbotx.io/business", () => ({
   integrationService,
   integrationClaudeService,
   integrationDeepSeekService,
   integrationGeminiService,
   integrationOpenAIService,
+  connectionStateService,
 }))
+
+const connectionService = {
+  disconnect: vi.fn(),
+  connectFromCredentials: vi.fn(),
+}
+vi.mock("@chatbotx.io/connections", () => ({ connectionService }))
 
 await import("@/features/integrations/api/public/crud")
 await import("@/features/integrations/api/public/ai")
@@ -136,7 +141,6 @@ const findProcedure = (method: string, path: string) => {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  verifyAiProviderApiKey.mockResolvedValue(true)
 })
 
 describe("GET /v1/integrations", () => {
@@ -293,8 +297,10 @@ describe("GET /v1/integrations/ai/{provider}", () => {
 describe("PUT /v1/integrations/ai/{provider}", () => {
   const procedure = findProcedure("PUT", "/v1/integrations/ai/{provider}")
 
-  test("connects then returns the resource without the secret", async () => {
-    integrationGeminiService.connect.mockResolvedValueOnce(undefined)
+  test("connects via connectionService.connectFromCredentials with allowUpdate, then returns the resource without the secret", async () => {
+    connectionService.connectFromCredentials.mockResolvedValueOnce({
+      id: "conn-1",
+    })
     integrationGeminiService.findByWorkspaceId.mockResolvedValueOnce({
       id: "gemini-1",
       model: "gemini-3.5-flash",
@@ -315,18 +321,24 @@ describe("PUT /v1/integrations/ai/{provider}", () => {
       },
     })
 
-    expect(integrationGeminiService.connect).toHaveBeenCalledWith({
+    expect(connectionService.connectFromCredentials).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
-      apiKey: "sk-gemini-secret",
-      model: "gemini-3.5-flash",
-      temperature: 0.4,
-      maxOutputTokens: 1024,
+      provider: "gemini",
+      config: {
+        apiKey: "sk-gemini-secret",
+        model: "gemini-3.5-flash",
+        temperature: 0.4,
+        maxOutputTokens: 1024,
+      },
+      allowUpdate: true,
     })
     expect(JSON.stringify(result)).not.toContain("sk-gemini-secret")
   })
 
   test("invalidates the AI integration cache after connecting", async () => {
-    integrationGeminiService.connect.mockResolvedValueOnce(undefined)
+    connectionService.connectFromCredentials.mockResolvedValueOnce({
+      id: "conn-1",
+    })
     integrationGeminiService.findByWorkspaceId.mockResolvedValueOnce({
       id: "gemini-1",
       model: "gemini-3.5-flash",
@@ -353,8 +365,13 @@ describe("PUT /v1/integrations/ai/{provider}", () => {
     )
   })
 
-  test("rejects an invalid API key without persisting it", async () => {
-    verifyAiProviderApiKey.mockResolvedValueOnce(false)
+  test("propagates connectionCredentialsRejected without invalidating the cache", async () => {
+    connectionService.connectFromCredentials.mockRejectedValueOnce(
+      new MockChatbotXException(
+        "Invalid Gemini API key",
+        "connectionCredentialsRejected",
+      ),
+    )
 
     await expect(
       procedure.handler?.({
@@ -369,29 +386,74 @@ describe("PUT /v1/integrations/ai/{provider}", () => {
       }),
     ).rejects.toThrow()
 
-    expect(integrationGeminiService.connect).not.toHaveBeenCalled()
     expect(aiIntegrationService.invalidateCache).not.toHaveBeenCalled()
+  })
+
+  test("is marked deprecated", () => {
+    expect(procedure.route.deprecated).toBe(true)
   })
 })
 
 describe("DELETE /v1/integrations/ai/{provider}", () => {
   const procedure = findProcedure("DELETE", "/v1/integrations/ai/{provider}")
 
-  test("delegates to the provider's disconnect", async () => {
-    integrationDeepSeekService.disconnect.mockResolvedValueOnce(undefined)
+  test("resolves the Connection by (workspaceId, provider, 'workspace') and disconnects through connectionService", async () => {
+    connectionStateService.findByProviderSourceId.mockResolvedValueOnce({
+      id: "conn-1",
+    })
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: { provider: "deepseek" },
     })
 
+    expect(connectionStateService.findByProviderSourceId).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      provider: "deepseek",
+      sourceId: "workspace",
+    })
+    expect(connectionService.disconnect).toHaveBeenCalledWith({
+      connectionId: "conn-1",
+      workspaceId: "workspace-1",
+    })
+  })
+
+  test("no-ops the Connection-domain disconnect call (idempotent) and falls back to the legacy per-provider disconnect when no Connection row exists yet (regression: a stored API key previously survived a silent no-op disconnect)", async () => {
+    connectionStateService.findByProviderSourceId.mockResolvedValueOnce(
+      undefined,
+    )
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { provider: "deepseek" },
+    })
+
+    expect(connectionService.disconnect).not.toHaveBeenCalled()
     expect(integrationDeepSeekService.disconnect).toHaveBeenCalledWith(
       "workspace-1",
     )
   })
 
   test("invalidates the AI integration cache after disconnecting", async () => {
-    integrationDeepSeekService.disconnect.mockResolvedValueOnce(undefined)
+    connectionStateService.findByProviderSourceId.mockResolvedValueOnce({
+      id: "conn-1",
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { provider: "deepseek" },
+    })
+
+    expect(aiIntegrationService.invalidateCache).toHaveBeenCalledWith(
+      "workspace-1",
+      "deepseek",
+    )
+  })
+
+  test("invalidates the cache even when there was nothing to disconnect", async () => {
+    connectionStateService.findByProviderSourceId.mockResolvedValueOnce(
+      undefined,
+    )
 
     await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
@@ -406,5 +468,9 @@ describe("DELETE /v1/integrations/ai/{provider}", () => {
 
   test("responds with 204 (no body)", () => {
     expect(procedure.route.successStatus).toBe(204)
+  })
+
+  test("is marked deprecated", () => {
+    expect(procedure.route.deprecated).toBe(true)
   })
 })

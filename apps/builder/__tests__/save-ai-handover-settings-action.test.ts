@@ -4,15 +4,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   save: vi.fn(),
-  cancelLive: vi.fn(),
-  loggerError: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  aiHandoverSettingsService: { save: mocks.save },
-  aiHandoverBulkRunService: { cancelLiveForInbox: mocks.cancelLive },
+  aiHandoverBulkRunService: { saveSettings: mocks.save },
 }))
-vi.mock("@/lib/log", () => ({ logger: { error: mocks.loggerError } }))
 
 vi.mock("next-intl/server", () => ({
   getTranslations: async () => (key: string) => key,
@@ -70,7 +66,6 @@ const run = (overrides: { input?: Partial<Input>; ctx?: Partial<Ctx> } = {}) =>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.cancelLive.mockResolvedValue(undefined)
   mocks.save.mockImplementation(async (input) => ({
     ...input,
     returnMessage: input.returnMessage || null,
@@ -85,31 +80,6 @@ describe("saveAiHandoverSettingsAction", () => {
       workspaceId: "ws-1",
       inboxId: "inbox-1",
     })
-  })
-
-  test("saving the automation off stops the Page's running enable, and only an enable", async () => {
-    await run({ input: { enabled: false } })
-
-    expect(mocks.cancelLive).toHaveBeenCalledExactlyOnceWith({
-      workspaceId: "ws-1",
-      inboxId: "inbox-1",
-      action: "enable",
-    })
-  })
-
-  test("saving the automation on stops nothing", async () => {
-    await run({ input: { enabled: true } })
-
-    expect(mocks.cancelLive).not.toHaveBeenCalled()
-  })
-
-  test("a failed stop is logged and never fails the saved settings", async () => {
-    mocks.cancelLive.mockRejectedValue(new Error("db down"))
-
-    await expect(run({ input: { enabled: false } })).resolves.toMatchObject({
-      enabled: false,
-    })
-    expect(mocks.loggerError).toHaveBeenCalledTimes(1)
   })
 
   test("returns an empty string for a cleared return message", async () => {

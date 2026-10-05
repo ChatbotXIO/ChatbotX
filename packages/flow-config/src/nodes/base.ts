@@ -23,21 +23,38 @@ export type NewNodeProps = {
 }
 
 export const baseNodeSchema = z.object({
-  id: zodBigintAsString(),
-  position: z.object({
-    x: z.number(),
-    y: z.number(),
-  }),
-  measured: z.object({
-    width: z.number(),
-    height: z.number(),
-  }),
+  id: zodBigintAsString().describe(
+    "Node id (numeric string) that `edges[].source`/`target` refer to. Use a unique numeric string per node in the graph.",
+  ),
+  position: z
+    .object({
+      x: z.number().describe("Horizontal canvas position in pixels."),
+      y: z.number().describe("Vertical canvas position in pixels."),
+    })
+    .describe("Top-left position of the node on the builder canvas."),
+  measured: z
+    .object({
+      width: z.number().describe("Rendered node width in pixels."),
+      height: z.number().describe("Rendered node height in pixels."),
+    })
+    .describe(
+      "Rendered node size on the canvas, in pixels. Layout only; the builder default is 288x100.",
+    ),
 })
 export type BaseNodeSchema = z.infer<typeof baseNodeSchema>
 
 export const baseNodeDataSchema = z.object({
-  name: z.string().trim().min(1).max(255),
-  isStartNode: z.boolean(),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(255)
+    .describe("Node display name shown on the canvas (1-255 characters)."),
+  isStartNode: z
+    .boolean()
+    .describe(
+      "True for the node where the flow begins. Exactly one node should be the start node.",
+    ),
 })
 export type BaseNodeDataSchema = z.infer<typeof baseNodeDataSchema>
 

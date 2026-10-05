@@ -26,7 +26,9 @@ export const whatsappFlowDataSchema = z.object({
 export type WhatsappFlowData = z.infer<typeof whatsappFlowDataSchema>
 
 export const whatsappFlowStepSchema = baseStepSchema.extend({
-  stepType: z.literal(stepTypes.enum.whatsappFlow),
+  stepType: z
+    .literal(stepTypes.enum.whatsappFlow)
+    .describe('Step type discriminator: "whatsappFlow".'),
   text: z.string().trim().min(1).max(WHATSAPP_FLOW_BODY_MAX),
   buttons: z.array(buttonStepSchema).min(1).max(1),
   inboxId: zodBigintAsString().nullable(),

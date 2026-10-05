@@ -16,8 +16,20 @@ export const AI_HANDOVER_DAY_END_HOUR = 24
  */
 export const aiHandoverTimeRangeSchema = z
   .object({
-    from: z.number().int().min(0).max(AI_HANDOVER_DAY_END_HOUR),
-    to: z.number().int().min(0).max(AI_HANDOVER_DAY_END_HOUR),
+    from: z
+      .number()
+      .int()
+      .min(0)
+      .max(AI_HANDOVER_DAY_END_HOUR)
+      .describe("Start hour 0-24 in the workspace timezone (inclusive)."),
+    to: z
+      .number()
+      .int()
+      .min(0)
+      .max(AI_HANDOVER_DAY_END_HOUR)
+      .describe(
+        "End hour 0-24 in the workspace timezone (exclusive); less than `from` wraps past midnight.",
+      ),
   })
   // Equal bounds describe an empty window; reject it instead of storing a
   // range that can never match.

@@ -8,8 +8,12 @@ export type FacebookCustomAudienceOperation = z.infer<
 >
 
 export const facebookCustomAudienceSchema = z.object({
-  id: zodBigintAsString(),
-  stepType: z.literal(stepTypes.enum.facebookCustomAudience),
+  id: zodBigintAsString().describe(
+    "Step id (numeric string), unique within the flow.",
+  ),
+  stepType: z
+    .literal(stepTypes.enum.facebookCustomAudience)
+    .describe('Step type discriminator: "facebookCustomAudience".'),
   operation: facebookCustomAudienceOperations.default("add"),
   adAccountId: z.string().trim().min(1),
   customAudienceId: z.string().trim().min(1),

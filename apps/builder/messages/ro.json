@@ -3221,12 +3221,13 @@
       "broadcasts": "Difuzări",
       "analytics": "Analitice",
       "ecommerce": "Comerț electronic",
-      "integrations": "Integrări",
       "channels": "Canale",
+      "integrations": "Integrări",
       "minigames": "Minijocuri",
       "appointments": "Programări",
       "media": "Media",
-      "ads": "Reclame"
+      "ads": "Reclame",
+      "settings": "Setări"
     },
     "adReferral": {
       "label": "Ads",
@@ -3314,6 +3315,7 @@
         "channelLimit": "Limita de canale a fost atinsă.",
         "workspaceLimit": "Limita spațiului de lucru a fost atinsă.",
         "providerRejected": "Furnizorul a respins această solicitare.",
+        "inProgress": "Conexiunea este deja în curs.",
         "unknown": "Ceva nu a funcționat corect.",
         "followUpFailed": "Configurare incompletă — finalizeaz-o din setările canalului."
       },
@@ -6063,6 +6065,21 @@
     "title": "Ai fost dezabonat.",
     "unavailableDescription": "Acest spațiu de lucru nu mai este disponibil.",
     "unavailableTitle": "Dezabonare indisponibilă."
+  },
+  "connectSessionPage": {
+    "metadataTitle": "Connecting…",
+    "processingTitle": "Finishing up…",
+    "processingDescription": "You can close this window. The application that started this connection will finish setting things up shortly.",
+    "completedTitle": "Connected!",
+    "completedDescription": "You can close this window now.",
+    "failedTitle": "Connection failed.",
+    "failedDescription": "Something went wrong while connecting. Please try again from the application that started this.",
+    "cancelledTitle": "Connection cancelled.",
+    "cancelledDescription": "You can close this window.",
+    "expiredTitle": "This link has expired.",
+    "expiredDescription": "Please start the connection again from the application that started this.",
+    "invalidTitle": "This link is no longer valid.",
+    "invalidDescription": "This connection link is invalid or has already been used."
   },
   "templatesPublicPage": {
     "invalidTitle": "Acest link nu mai este disponibil.",

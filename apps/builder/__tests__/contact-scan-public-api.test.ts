@@ -194,6 +194,24 @@ describe("GET /v1/contact-scans", () => {
     })
   })
 
+  test("forwards the integration filter and sort", async () => {
+    listContactScanHistoryRows.mockResolvedValueOnce({ data: [], pageCount: 1 })
+    const sort = [{ id: "status", desc: false }]
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { page: 1, perPage: 10, integrationId: "int-1", sort },
+    })
+
+    expect(listContactScanHistoryRows).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      integrationId: "int-1",
+      page: 1,
+      perPage: 10,
+      sort,
+    })
+  })
+
   test("declares business errors from the shared history query", () => {
     expect(procedure.errors).toBe(possibleErrorsOnListingResource)
   })
