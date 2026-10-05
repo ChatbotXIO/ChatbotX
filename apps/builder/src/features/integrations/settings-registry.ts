@@ -37,6 +37,11 @@ export const INTEGRATION_SETTINGS_REGISTRY: readonly IntegrationSettingsEntry[] 
     { slug: "deepseek", titleKey: "deepseek.title", icon: BotIcon },
     { slug: "openrouter", titleKey: "openrouter.title", icon: BotIcon },
     {
+      slug: "decision-connections",
+      titleKey: "decision.title",
+      icon: BotIcon,
+    },
+    {
       slug: "openai-compatible",
       titleKey: "openaiCompatible.title",
       icon: BotIcon,

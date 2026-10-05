@@ -46,6 +46,7 @@ const stepExecutionKinds = {
   setUpCoupon: "worker",
   markCouponUsed: "worker",
   condition: "worker",
+  evaluateDecision: "worker",
   disableBot: "worker",
   enableBot: "worker",
   assignConversation: "worker",

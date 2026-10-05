@@ -1,4 +1,5 @@
 import type { TriggerEventType } from "@chatbotx.io/database/partials"
+import type { DecisionFlowOrigin } from "@chatbotx.io/events"
 import type {
   ConditionModel,
   TriggerModel,
@@ -41,6 +42,7 @@ export type ActionExecutionContext = {
    * which fall back by design.
    */
   contactInboxId?: string
+  decisionFlowOrigin?: DecisionFlowOrigin
 }
 
 /**
@@ -52,4 +54,5 @@ export type ActionExecutionContext = {
 export type TriggerExecutionInput = {
   contactId: string
   contactInboxId?: string
+  decisionFlowOrigin?: DecisionFlowOrigin
 }

@@ -22,6 +22,7 @@ import { deleteContactStepSchema } from "./steps/delete-contact"
 import { disableBotStepSchema } from "./steps/disable-bot"
 import { disableMessengerComposerStepSchema } from "./steps/disable-messenger-composer"
 import { dripSubscribeSubscriberSchema } from "./steps/drip-subscribe-subscriber"
+import { evaluateDecisionStepSchema } from "./steps/evaluate-decision"
 import { enableBotStepSchema } from "./steps/enable-bot"
 import { enableMessengerComposerStepSchema } from "./steps/enable-messenger-composer"
 import { executeJavascriptStepSchema } from "./steps/execute-javascript"
@@ -114,6 +115,7 @@ const toolSteps = [
   countCharactersStepSchema,
   externalRequestStepSchema,
   executeJavascriptStepSchema,
+  evaluateDecisionStepSchema,
 ]
 
 const triggerSteps = [makeStepSchema, triggerN8nStepSchema]

@@ -43,6 +43,9 @@ export type TagChannelModel = typeof schema.tagChannelModel.$inferSelect
 export type ContactToTagChannelModel =
   typeof schema.contactToTagChannelModel.$inferSelect
 export type FlowVersionModel = typeof schema.flowVersionModel.$inferSelect
+export type DecisionConnectionModel =
+  typeof schema.decisionConnectionModel.$inferSelect
+export type DecisionProfileModel = typeof schema.decisionProfileModel.$inferSelect
 export type InvitationModel = typeof schema.invitationModel.$inferSelect
 export type BroadcastModel = typeof schema.broadcastModel.$inferSelect
 export type BroadcastTargetModel =

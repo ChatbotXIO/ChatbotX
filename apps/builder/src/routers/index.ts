@@ -37,6 +37,11 @@ export const router = {
       default: m.aiAgentsAPI,
     })),
   ),
+  decisionProfilesAPI: lazy(() =>
+    import("@/features/decision-profiles/api").then((m) => ({
+      default: m.decisionProfilesAPI,
+    })),
+  ),
   broadcastAPIs: lazy(() =>
     import("@/features/broadcasts/api").then((m) => ({
       default: m.broadcastAPIs,

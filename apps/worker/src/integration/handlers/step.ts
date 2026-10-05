@@ -41,6 +41,7 @@ import {
 } from "./contact"
 import { markCouponUsed, setUpCoupon } from "./coupon"
 import { handleAIDeleteMessageHistory } from "./delete-message-history"
+import { evaluateDecision } from "./evaluate-decision"
 import { subscribeDripSubscriber } from "./drip-handler"
 import { handleAIExtractData } from "./extract-data/index"
 import { handleFacebookCustomAudience } from "./facebook-custom-audience-handler"
@@ -123,6 +124,8 @@ export async function sendFlowMessage(
     sendFrom,
     commentAnchor,
     appointmentId,
+    triggerMessageId,
+    triggerMessageCreatedAt,
   } = props
   await enqueueFlowStepMessage({
     conversationId: conversation.id,
@@ -154,6 +157,8 @@ async function splitTraffic({
   nodeVisits,
   commentAnchor,
   appointmentId,
+  triggerMessageId,
+  triggerMessageCreatedAt,
 }: ExecuteStepProps<SplitTrafficStepSchema>) {
   if (!(targetId && step.cases.length)) {
     return
@@ -192,6 +197,8 @@ async function splitTraffic({
         isBulkBroadcast,
         sendFrom,
         nodeVisits,
+        triggerMessageId,
+        triggerMessageCreatedAt,
         commentAnchor,
         appointmentId,
         origin: webhookChannelOrigin(),
@@ -311,6 +318,8 @@ async function startAnotherNode(
       appointmentId: props.appointmentId,
       sendFrom: props.sendFrom,
       nodeVisits: props.nodeVisits,
+      triggerMessageId: props.triggerMessageId,
+      triggerMessageCreatedAt: props.triggerMessageCreatedAt,
       commentAnchor: props.commentAnchor,
       origin: webhookChannelOrigin(),
     },
@@ -327,6 +336,8 @@ async function startExternalFlow({
   nodeVisits,
   commentAnchor,
   appointmentId,
+  triggerMessageId,
+  triggerMessageCreatedAt,
 }: ExecuteStepProps<StartExternalFlowStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -339,6 +350,8 @@ async function startExternalFlow({
       appointmentId,
       sendFrom,
       nodeVisits,
+      triggerMessageId,
+      triggerMessageCreatedAt,
       commentAnchor,
       origin: webhookChannelOrigin(),
     },
@@ -355,6 +368,8 @@ async function startExternalNode({
   nodeVisits,
   commentAnchor,
   appointmentId,
+  triggerMessageId,
+  triggerMessageCreatedAt,
 }: ExecuteStepProps<StartExternalNodeStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -368,6 +383,8 @@ async function startExternalNode({
       appointmentId,
       sendFrom,
       nodeVisits,
+      triggerMessageId,
+      triggerMessageCreatedAt,
       commentAnchor,
       origin: webhookChannelOrigin(),
     },
@@ -500,6 +517,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.setUpCoupon]: setUpCoupon,
   [stepTypes.enum.markCouponUsed]: markCouponUsed,
   [stepTypes.enum.condition]: handleCondition,
+  [stepTypes.enum.evaluateDecision]: evaluateDecision,
   [stepTypes.enum.subscribeBroadcast]: subscribeBroadcast,
   [stepTypes.enum.unsubscribeBroadcast]: unsubscribeBroadcast,
   [stepTypes.enum.splitTraffic]: splitTraffic,

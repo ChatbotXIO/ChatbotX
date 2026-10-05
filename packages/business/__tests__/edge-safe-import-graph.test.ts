@@ -176,6 +176,12 @@ const auditFrom = (entry: string): Violation[] => {
 }
 
 describe("@chatbotx.io/business barrel stays Edge-Runtime safe", () => {
+  test("does not re-export Node-only import header parsing", () => {
+    const barrel = readFileSync(join(BUSINESS_SRC, "index.ts"), "utf8")
+
+    expect(barrel).not.toContain('export * from "./import"')
+  })
+
   test("reaches no Node built-in through the sequence-scheduler boundary", () => {
     const violations = auditFrom(join(BUSINESS_SRC, "index.ts"))
 

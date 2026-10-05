@@ -1,5 +1,8 @@
 import { flushAllPendingWorkspaceBroadcasts } from "@chatbotx.io/business"
-import { extractContactInboxId } from "@chatbotx.io/events"
+import {
+  decisionFlowOriginSchema,
+  extractContactInboxId,
+} from "@chatbotx.io/events"
 import { runWithWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
@@ -64,6 +67,9 @@ async function startTriggerWorker() {
               )
 
               const contactInboxId = extractContactInboxId(eventData.eventData)
+              const decisionFlowOrigin = decisionFlowOriginSchema.safeParse(
+                eventData.eventData.decisionFlowOrigin,
+              )
 
               await runWithWebhookExecutionContext(
                 eventData.channelOriginated ? { source: "webhook" } : {},
@@ -73,6 +79,9 @@ async function startTriggerWorker() {
                       triggerExecutor.execute(trigger, {
                         contactId: eventData.contactId,
                         contactInboxId,
+                        decisionFlowOrigin: decisionFlowOrigin.success
+                          ? decisionFlowOrigin.data
+                          : undefined,
                       }),
                     ),
                   ),

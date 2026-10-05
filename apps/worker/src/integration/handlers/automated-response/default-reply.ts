@@ -34,6 +34,8 @@ export async function triggerDefaultReplyFlow(props: {
   defaultReplyFrequency: DefaultReplyFrequency
   conversation: ConversationModel
   contactInbox: ContactInboxModel
+  triggerMessageId?: string
+  triggerMessageCreatedAt?: Date
   trackingContext?: BotResponseTrackingContext
 }): Promise<DefaultReplyTriggerResult> {
   const {
@@ -42,6 +44,8 @@ export async function triggerDefaultReplyFlow(props: {
     defaultReplyFrequency,
     conversation,
     contactInbox,
+    triggerMessageId,
+    triggerMessageCreatedAt,
     trackingContext,
   } = props
 
@@ -82,6 +86,8 @@ export async function triggerDefaultReplyFlow(props: {
         conversationId: conversation.id,
         contactInboxId: contactInbox.id,
         flowId: flow.id,
+        triggerMessageId,
+        triggerMessageCreatedAt,
         origin: webhookChannelOrigin(),
         trackingContext,
       },

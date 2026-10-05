@@ -31,6 +31,7 @@ import { dripSubscribeSubscriberStep } from "./drip-subscribe-subscriber"
 import emailStep from "./email"
 import { enableBotStep } from "./enable-bot"
 import { enableMessengerComposerStep } from "./enable-messenger-composer"
+import { evaluateDecisionStep } from "./evaluate-decision"
 import { executeJavascriptStep } from "./execute-javascript"
 import { externalRequestStep } from "./external-request"
 import { facebookCustomAudienceStep } from "./facebook-custom-audience"
@@ -200,6 +201,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.disableMessengerComposer]: disableMessengerComposerStep,
   [stepTypes.enum.setMessengerPersona]: setMessengerPersonaStep,
   [stepTypes.enum.updateMessengerContactData]: updateMessengerContactDataStep,
+  [stepTypes.enum.evaluateDecision]: evaluateDecisionStep,
 }
 
 export const DynamicStepEditor = memo(

@@ -16,7 +16,7 @@ export class TriggerExecutorService {
     input: TriggerExecutionInput,
   ): Promise<void> {
     const { id: triggerId, workspaceId, actions } = trigger
-    const { contactId, contactInboxId } = input
+    const { contactId, contactInboxId, decisionFlowOrigin } = input
 
     try {
       setTriggerExecutionContext({ source: "worker" })
@@ -31,6 +31,7 @@ export class TriggerExecutorService {
             triggerId,
             workspaceId,
             contactInboxId,
+            decisionFlowOrigin,
           })
         } catch (err) {
           logger.error(

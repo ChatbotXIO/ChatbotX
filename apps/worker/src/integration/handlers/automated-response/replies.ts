@@ -76,6 +76,7 @@ export type ReplyByAIProps = {
   messages: ModelMessage[]
   aiAgent: AIAgentModel
   triggerMessageId?: string
+  triggerMessageCreatedAt?: Date
   fileOnlyTrigger: boolean
   allowedSystemFunctionIds?: string[]
   summary?: string
@@ -392,6 +393,8 @@ function createReplyToolset(options: {
             conversationId: conversation.id,
             contactInboxId: options.props.contactInbox.id,
             flowId,
+            triggerMessageId: options.props.triggerMessageId,
+            triggerMessageCreatedAt: options.props.triggerMessageCreatedAt,
             origin: webhookChannelOrigin(),
           },
         })
@@ -1039,6 +1042,8 @@ async function runAIReply(
         defaultReplyFrequency: props.defaultReplyFrequency,
         conversation,
         contactInbox: props.contactInbox,
+        triggerMessageId: props.triggerMessageId,
+        triggerMessageCreatedAt: props.triggerMessageCreatedAt,
         trackingContext: props.triggerMessageId
           ? {
               aiProvider: provider,

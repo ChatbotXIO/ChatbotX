@@ -222,6 +222,13 @@ export class ActionExecutor {
         }
 
         const flowId = action.flowId as string
+        if (context.decisionFlowOrigin?.flowId === flowId) {
+          baseLogger.info(
+            { flowId, triggerId },
+            "Skipping Decision-origin Flow self-loop",
+          )
+          break
+        }
         const flow = await flowService.findActiveById({
           workspaceId,
           id: flowId,

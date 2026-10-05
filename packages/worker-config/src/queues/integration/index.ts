@@ -248,6 +248,9 @@ export type IntegrationJobRunFlowNode = {
     startFromStepId?: string
     /** Stable logical execution identity for asynchronous flow continuations. */
     flowExecutionKey?: string
+    /** Immutable inbound source identity, forwarded across every continuation. */
+    triggerMessageId?: string
+    triggerMessageCreatedAt?: Date
     /**
      * Set when this job resumes a button/quickReply's own multi-step chain
      * (one step per job) rather than a node's. Without it, resolving by

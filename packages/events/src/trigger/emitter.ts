@@ -14,7 +14,10 @@ class TriggerEventEmitterImpl extends BaseEventEmitter {
     workspaceId: string,
     sourceId?: string,
   ): Promise<boolean> {
-    if (isWorkerContext()) {
+    if (
+      isWorkerContext() &&
+      eventType !== "customFieldValueChanged"
+    ) {
       console.log("Skipping emit from worker context to prevent loop")
       return false
     }

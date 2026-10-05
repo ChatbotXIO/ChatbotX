@@ -41,6 +41,7 @@ export const stepTypes = z.enum([
   "setUpCoupon",
   "markCouponUsed",
   "condition",
+  "evaluateDecision",
 
   // Inbox Operations (I_)
   "disableBot",

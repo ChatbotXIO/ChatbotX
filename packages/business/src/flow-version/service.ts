@@ -11,6 +11,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { conversationService } from "../conversation/service"
+import { decisionProfileService } from "../decision/profile-service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
 import { smartDelayService } from "../smart-delay/service"
@@ -386,6 +387,10 @@ class FlowVersionService extends BaseService {
     edges: FlowVersionModel["edges"]
   }): Promise<void> {
     assertFlowGraphPublishable({ nodes: input.nodes, edges: input.edges })
+    await decisionProfileService.assertFlowReferencesPublishable({
+      nodes: input.nodes,
+      workspaceId: input.workspaceId,
+    })
 
     const flow = await db.query.flowModel.findFirst({
       where: {

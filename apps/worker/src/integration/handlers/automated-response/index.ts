@@ -129,6 +129,8 @@ export async function processAutomatedResponse(
         defaultReplyFrequency,
         conversation,
         contactInbox,
+        triggerMessageId: messageId,
+        triggerMessageCreatedAt: triggerMessage?.createdAt,
         trackingContext: messageId
           ? {
               aiProvider: "none",
@@ -290,6 +292,7 @@ export async function processAutomatedResponse(
         messages,
         aiAgent,
         triggerMessageId: messageId,
+        triggerMessageCreatedAt: triggerMessage?.createdAt,
         fileOnlyTrigger: isFileOnlyTrigger,
         allowedSystemFunctionIds: isFileOnlyTrigger
           ? getFileOnlySystemFunctionIds({
@@ -350,6 +353,8 @@ export async function processAutomatedResponse(
       defaultReplyFrequency,
       conversation,
       contactInbox,
+      triggerMessageId: messageId,
+      triggerMessageCreatedAt: triggerMessage?.createdAt,
       trackingContext: messageId
         ? {
             aiProvider: "none",

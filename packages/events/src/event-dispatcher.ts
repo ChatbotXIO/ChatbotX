@@ -1,4 +1,5 @@
 import type { ContactInfoType } from "@chatbotx.io/database/partials"
+import type { DecisionFlowOrigin } from "./decision-flow-lineage"
 import type {
   BaseEventEmitter,
   CallEndedMetadata,
@@ -134,6 +135,7 @@ export const emitCustomFieldChanged = async (
   oldValue: unknown,
   newValue: unknown,
   contactInboxId?: string,
+  decisionFlowOrigin?: DecisionFlowOrigin,
 ) =>
   await emitToAllEmitters(
     "customFieldChanged",
@@ -144,6 +146,7 @@ export const emitCustomFieldChanged = async (
     oldValue,
     newValue,
     contactInboxId,
+    decisionFlowOrigin,
   )
 
 // Contact info events
