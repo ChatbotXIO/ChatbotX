@@ -39,12 +39,11 @@ import type { ConnectActionResultWire } from "@/features/channel-connect/schema"
  *page-level* token past `listCandidates`, so that identity isn't
  *   available here.
  * - `addBranding` pushes the persistent-menu entry straight to the Graph
- *   API (it reads/writes the page's *live* menu, never the DB), so the
- *   branding link still reaches end users — but `IntegrationMessenger
- *   .persistentMenus` (the DB's own local record, used by the persistent-
- *   menu settings UI) is left at its default `[]` instead of pre-seeded
- *   with this entry, unlike the old `connectPage({persistentMenus:
- *   [brandingMenuEntry]})` insert-time value.
+ *   API; `runMessengerFollowUps` now also seeds `IntegrationMessenger
+ *   .persistentMenus` with that same entry once the push succeeds (only
+ *   when the row has no menu yet — a fresh connect always does), matching
+ *   the old `connectPage({persistentMenus: [brandingMenuEntry]})`
+ *   insert-time value without needing it at insert time.
  */
 export async function connectMessengerPage({
   userId,
@@ -86,6 +85,13 @@ async function runMessengerFollowUps({
       integrationRow,
       integration: integrationMessenger,
       integrationType: "messenger",
+      persistBrandingMenu: messengerRow.persistentMenus.length
+        ? undefined
+        : (entry) =>
+            messengerIntegrationService.seedPersistentMenu({
+              id: messengerRow.id,
+              entry,
+            }),
     }),
     tagSyncService.enqueueChannelScan({
       workspaceId: session.workspace.id,

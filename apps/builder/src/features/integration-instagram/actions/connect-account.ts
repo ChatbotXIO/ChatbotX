@@ -17,9 +17,10 @@ import type { ConnectActionResultWire } from "@/features/channel-connect/schema"
  * `connectInstagramAccountViaFacebook` via `connectSessionCandidate`
  * (`channel-connect/lib/connect-session-candidate.ts`) — this file owns
  * only the Instagram-Business-Login-specific credential type and follow-up
- * (no `persistIntegrationUserInfo`; `addBranding` is a live Graph push, not
- * a DB write, so `IntegrationInstagram.persistentMenus` stays at its
- * default).
+ *   (no `persistIntegrationUserInfo`; `addBranding` is a live Graph push —
+ *   `runInstagramFollowUps` also seeds `IntegrationInstagram
+ *   .persistentMenus` with that same entry once the push succeeds, same as
+ *   Messenger's `connect-page.ts`).
  */
 export async function connectInstagramAccount(props: {
   userId: string
@@ -55,5 +56,12 @@ async function runInstagramFollowUps({
     integrationRow: { ...instagramRow, auth },
     integration: integrationInstagram,
     integrationType: "instagram",
+    persistBrandingMenu: instagramRow.persistentMenus.length
+      ? undefined
+      : (entry) =>
+          instagramIntegrationService.seedPersistentMenu({
+            id: instagramRow.id,
+            entry,
+          }),
   })
 }

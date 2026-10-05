@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import type * as ChatbotxUtilsModule from "@chatbotx.io/utils"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
@@ -48,6 +49,17 @@ vi.mock("next/navigation", () => ({
   }),
   redirect: mockRedirect,
 }))
+
+// The mock request objects below only carry `nextUrl`, not the real
+// `url`/`headers` a NextRequest would have — resolve the public URL (used
+// to pin the connect session's `originHost`) straight from `nextUrl`.
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof ChatbotxUtilsModule>()
+  return {
+    ...actual,
+    getPublicUrlFromRequest: (request: { nextUrl: URL }) => request.nextUrl,
+  }
+})
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
@@ -144,6 +156,7 @@ describe.each([
       callbackUrl: "https://app.example.com/integrations/instagram/callback",
       actorUserId: "user-1",
       platformOwnerId: "owner-1",
+      originHost: "localhost",
     })
     expect(mockUpdateReturnUrl).toHaveBeenCalledWith({
       id: "session-1",

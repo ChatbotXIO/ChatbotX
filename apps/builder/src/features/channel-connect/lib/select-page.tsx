@@ -55,6 +55,13 @@ export async function resolveSelectSession(input: {
     return { sessionId, resolved }
   } catch (err) {
     if (err instanceof ChatbotXException) {
+      if (err.code === "connectSessionCancelled") {
+        logger.info(
+          { sessionId },
+          "resolveConnectSession: user cancelled the OAuth dialog",
+        )
+        redirect("/channels/create")
+      }
       const code = isCreateChannelErrorCode(err.code)
         ? err.code
         : FALLBACK_ERROR_CODE

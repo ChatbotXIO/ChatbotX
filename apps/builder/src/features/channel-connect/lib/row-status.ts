@@ -241,6 +241,7 @@ export function connectFailureMessageKey(
 /** Amber note under a `connected` row carrying a warning (e.g. follow-up failed). */
 export const WARNING_MESSAGE_KEYS: Record<ConnectWarning, MessageKey> = {
   followUpFailed: "channels.connectMany.reason.followUpFailed",
+  webhookSubscribeFailed: "channels.connectMany.reason.webhookSubscribeFailed",
 }
 
 export type RowNote = {

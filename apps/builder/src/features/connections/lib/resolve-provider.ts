@@ -80,6 +80,13 @@ export const listConnectionProviderResources = async (input: {
 
   const resources = await Promise.all(
     integrationTypes.options
+      // `facebookAds` is registered with `credentialType: "messenger"` (reuses
+      // the Messenger OAuth app) but resolves its own `/integrations/
+      // facebook-ads/callback` redirect_uri (`resolve-connect-credential.ts`'s
+      // `OAUTH_CALLBACK_SLUG`), which has not been confirmed allow-listed with
+      // Meta. Excluded from the public catalog until that's verified or the
+      // callback is relayed through Messenger's already-registered redirect_uri.
+      .filter((provider) => provider !== "facebookAds")
       .filter(
         (provider) =>
           !input.kind ||

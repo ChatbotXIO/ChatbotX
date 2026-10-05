@@ -1,4 +1,5 @@
 import { inboxService, workspaceMemberService } from "@chatbotx.io/business"
+import { dispatchAuditRecordSafely } from "@chatbotx.io/business/audit"
 import {
   type ConnectionAdapter,
   type ConnectionQuotaConsumption,
@@ -508,7 +509,6 @@ export const upsertConnectionRow = async (input: {
           integrationId: integrationId ?? null,
           displayName: descriptor.displayName,
           lastError: null,
-          statusReason: null,
         },
       },
       tx,
@@ -535,6 +535,8 @@ export const upsertConnectionRow = async (input: {
         inboxId: inboxId ?? null,
         integrationId: integrationId ?? null,
         status: "disconnected",
+        statusReason: "manual",
+        disconnectedAt: new Date(),
         createdBy: actorUserId ?? null,
       },
       tx,
@@ -642,10 +644,31 @@ export const connectAndPersist = async (input: {
       }),
   )
 
-  return await subscribeWebhookBestEffort({
+  const final = await subscribeWebhookBestEffort({
     adapter,
     auth,
     connection,
     ownerId,
   })
+
+  // Restores the v1.11.0 "connected a new channel" audit record, dropped
+  // when messenger/instagram moved off their own `connectPage`/
+  // `connectAccount` services onto this shared engine path. Generalized to
+  // every provider the engine connects (not just the 3 legacy channels) and
+  // gated on `!existing` to match the old `wasCreated` guard — a revived/
+  // updated connection never re-audits. Skipped (not faked) when there's no
+  // interactive actor, e.g. a workspace-token-driven public API connect.
+  if (!existing && input.actorUserId) {
+    await dispatchAuditRecordSafely(
+      {
+        userId: input.actorUserId,
+        workspaceId: input.workspaceId,
+        action: "connect",
+        detail: `connected a new ${provider.kind === "channel" ? toChannelType(input.provider) : input.provider} connection (#${final.id})`,
+      },
+      `audit dispatch failed after ${input.provider} connect`,
+    )
+  }
+
+  return final
 }

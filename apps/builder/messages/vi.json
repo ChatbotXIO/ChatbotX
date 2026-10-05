@@ -880,7 +880,8 @@
         "providerRejected": "Nhà cung cấp đã từ chối yêu cầu này.",
         "inProgress": "Kết nối đang được thực hiện.",
         "unknown": "Đã xảy ra lỗi.",
-        "followUpFailed": "Thiết lập chưa hoàn tất — hãy hoàn tất trong cài đặt kênh."
+        "followUpFailed": "Thiết lập chưa hoàn tất — hãy hoàn tất trong cài đặt kênh.",
+        "webhookSubscribeFailed": "Đã kết nối, nhưng đăng ký webhook không thành công — hãy thử lại trong cài đặt kết nối."
       },
       "sessionError": {
         "sessionExpired": "Phiên của bạn đã hết hạn. Vui lòng kết nối lại.",

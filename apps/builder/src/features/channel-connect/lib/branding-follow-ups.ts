@@ -40,6 +40,21 @@ export async function runBrandingFollowUps<TAuth extends AuthValue>(input: {
   integrationRow: BuildContextIntegrationRow<TAuth>
   integration: BrandingIntegration<TAuth>
   integrationType: string
+  /**
+   * Persists the branding entry onto the satellite row's own local
+   * `persistentMenus` column after `addBranding`'s live Graph push
+   * succeeds — restores the v1.11.0 insert-time-seeded value (dropped when
+   * messenger/instagram moved onto the unified connect session, whose
+   * `candidateToConfig` has no app-layer `appUrl`/branding context to seed
+   * it at insert time). Only called on a successful push, and only the
+   * caller knows whether its row already has user-configured menu items to
+   * avoid clobbering — gate skips the call there.
+   */
+  persistBrandingMenu?: (entry: {
+    label: string
+    type: "url"
+    url: string
+  }) => Promise<void>
 }): Promise<void> {
   const { session, integrationRow, integration, integrationType } = input
   const { workspace, brandingMenuEntry } = session
@@ -50,12 +65,21 @@ export async function runBrandingFollowUps<TAuth extends AuthValue>(input: {
     integration: integrationRow,
   })
 
-  const results = await Promise.allSettled([
-    integration.runChannelHandler("bot", "addBranding", {
+  const pushBrandingAndPersist = async () => {
+    await integration.runChannelHandler("bot", "addBranding", {
       ctx: brandingCtx,
       title: BRANDING_TITLE,
       url: brandingMenuEntry.url,
-    }),
+    })
+    await input.persistBrandingMenu?.({
+      label: BRANDING_TITLE,
+      type: "url",
+      url: brandingMenuEntry.url,
+    })
+  }
+
+  const results = await Promise.allSettled([
+    pushBrandingAndPersist(),
     updateWorkspaceLogo({
       id: workspace.id,
       integration,

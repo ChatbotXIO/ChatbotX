@@ -986,7 +986,8 @@
         "providerRejected": "服务提供方拒绝了此请求。",
         "inProgress": "连接正在进行中。",
         "unknown": "出现问题。",
-        "followUpFailed": "设置未完成——请在渠道设置中完成。"
+        "followUpFailed": "设置未完成——请在渠道设置中完成。",
+        "webhookSubscribeFailed": "已连接，但 webhook 订阅失败——请在连接设置中重试。"
       },
       "sessionError": {
         "sessionExpired": "您的会话已过期，请重新连接。",

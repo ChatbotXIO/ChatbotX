@@ -45,6 +45,17 @@ describe("transitionConnection — quota edge invariant", () => {
     expect(result.quotaEdge).toBeNull()
   })
 
+  test("connect.completed from paused consumes quota and returns to connected (reconnecting a paused connection must not stay paused)", () => {
+    const result = transitionConnection({
+      from: "paused",
+      event: "connect.completed",
+    })
+
+    expect(result.to).toBe("connected")
+    expect(result.noop).toBe(false)
+    expect(result.quotaEdge).toBe("consume")
+  })
+
   test("user.disconnect from an ACTIVE status releases quota exactly once", () => {
     for (const from of ["connected", "degraded"] as const) {
       const result = transitionConnection({ from, event: "user.disconnect" })

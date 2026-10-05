@@ -302,6 +302,19 @@ export const connectSessionExpiredException = (
 ) => new ChatbotXException(message, code)
 
 /**
+ * The user cancelled the OAuth dialog (provider returned `?error=
+ * access_denied`) — not an actual session expiry. Kept distinct from
+ * {@link connectSessionExpiredException} so the `/select` page can redirect
+ * back quietly (no `?error=` toast) instead of surfacing the generic
+ * "Your session expired" message for a plain user cancel.
+ */
+export const connectSessionCancelledException = () =>
+  new ChatbotXException(
+    "The connect session was cancelled.",
+    "connectSessionCancelled",
+  )
+
+/**
  * The acting user resolved a workspace id that they are not a member of.
  * Kept distinct from the generic `notFoundException` so a connect flow can
  * map it to a specific, machine-readable session error instead of a vague

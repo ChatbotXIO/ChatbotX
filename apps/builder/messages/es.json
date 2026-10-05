@@ -838,7 +838,8 @@
         "providerRejected": "El proveedor rechazó esta solicitud.",
         "inProgress": "La conexión ya está en curso.",
         "unknown": "Algo salió mal.",
-        "followUpFailed": "Configuración incompleta: complétala desde los ajustes del canal."
+        "followUpFailed": "Configuración incompleta: complétala desde los ajustes del canal.",
+        "webhookSubscribeFailed": "Conectado, pero falló la suscripción al webhook. Vuelve a intentarlo desde la configuración de la conexión."
       },
       "sessionError": {
         "sessionExpired": "Tu sesión expiró. Vuelve a conectarte.",

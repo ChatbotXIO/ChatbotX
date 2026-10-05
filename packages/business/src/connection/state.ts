@@ -101,7 +101,7 @@ export const transitionConnection = (
 
   switch (event) {
     case "connect.completed": {
-      if (from === "connected" || from === "paused") {
+      if (from === "connected") {
         return result(from, from, null)
       }
       return result(from, "connected", null)

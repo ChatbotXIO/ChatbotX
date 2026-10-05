@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import type * as ChatbotxUtilsModule from "@chatbotx.io/utils"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
@@ -39,6 +40,17 @@ vi.mock("next/navigation", () => ({
   }),
   redirect: mockRedirect,
 }))
+
+// The mock request objects below only carry `nextUrl`, not the real
+// `url`/`headers` a NextRequest would have — resolve the public URL (used
+// to pin the connect session's `originHost`) straight from `nextUrl`.
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof ChatbotxUtilsModule>()
+  return {
+    ...actual,
+    getPublicUrlFromRequest: (request: { nextUrl: URL }) => request.nextUrl,
+  }
+})
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
@@ -228,6 +240,7 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
       callbackUrl: "https://app.example.com/integrations/messenger/callback",
       actorUserId: "user-1",
       platformOwnerId: "owner-1",
+      originHost: "localhost",
     })
     // Relative — `connectSessionService.updateReturnUrl`'s real
     // `validateReturnUrl` rejects an absolute value outright (regression C1).

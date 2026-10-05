@@ -880,7 +880,8 @@
         "providerRejected": "The provider rejected this request.",
         "inProgress": "Connection already in progress.",
         "unknown": "Something went wrong.",
-        "followUpFailed": "Setup incomplete — finish from the channel settings."
+        "followUpFailed": "Setup incomplete — finish from the channel settings.",
+        "webhookSubscribeFailed": "Connected, but the webhook subscription failed — retry from the connection settings."
       },
       "sessionError": {
         "sessionExpired": "Your session expired. Please reconnect.",

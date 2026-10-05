@@ -3317,7 +3317,8 @@
         "providerRejected": "Penyedia menolak permintaan ini.",
         "inProgress": "Koneksi sedang berlangsung.",
         "unknown": "Terjadi kesalahan.",
-        "followUpFailed": "Penyiapan belum selesai — selesaikan dari pengaturan saluran."
+        "followUpFailed": "Penyiapan belum selesai — selesaikan dari pengaturan saluran.",
+        "webhookSubscribeFailed": "Terhubung, tetapi langganan webhook gagal — coba lagi dari pengaturan koneksi."
       },
       "sessionError": {
         "sessionExpired": "Sesi Anda telah berakhir. Silakan hubungkan kembali.",

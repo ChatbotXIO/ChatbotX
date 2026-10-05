@@ -179,19 +179,32 @@ class ConnectionStateService extends BaseService {
           ...input.values,
           ...(result.reason ? { statusReason: result.reason } : {}),
         }
-        if (Object.keys(values).length === 0) {
-          return existing
-        }
-        const updated = await connectionRepository.update(
-          {
-            id: existing.id,
-            workspaceId: existing.workspaceId,
-            values,
-          },
-          client,
-        )
+        const updated =
+          Object.keys(values).length === 0
+            ? existing
+            : await connectionRepository.update(
+                {
+                  id: existing.id,
+                  workspaceId: existing.workspaceId,
+                  values,
+                },
+                client,
+              )
         if (!updated) {
           throw new ConnectionNotFoundException(input.connectionId)
+        }
+        // Even a no-op FSM event must re-assert the Inbox mirror: a row
+        // whose Inbox drifted from Connection (a write that bypassed the
+        // engine, or a bug fixed after the fact) self-heals the next time
+        // anything transitions it, instead of staying silently wrong.
+        if (existing.inboxId) {
+          await this.mirrorInboxStatus({
+            inboxId: existing.inboxId,
+            workspaceId: existing.workspaceId,
+            to: result.to,
+            reason: result.reason,
+            tx: client,
+          })
         }
         return updated
       }
@@ -239,9 +252,9 @@ class ConnectionStateService extends BaseService {
                 ? new Date()
                 : existing.connectedAt,
             disconnectedAt:
-              result.quotaEdge === "release"
-                ? new Date()
-                : existing.disconnectedAt,
+              result.to === "disconnected"
+                ? (existing.disconnectedAt ?? new Date())
+                : null,
           },
         },
         client,

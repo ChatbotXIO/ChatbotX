@@ -53,5 +53,12 @@ async function runInstagramFacebookFollowUps({
     integrationRow: { ...instagramRow, auth },
     integration: integrationInstagramFacebook,
     integrationType: "instagramFacebook",
+    persistBrandingMenu: instagramRow.persistentMenus.length
+      ? undefined
+      : (entry) =>
+          instagramIntegrationService.seedPersistentMenu({
+            id: instagramRow.id,
+            entry,
+          }),
   })
 }

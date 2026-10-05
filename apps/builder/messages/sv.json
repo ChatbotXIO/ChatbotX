@@ -799,7 +799,8 @@
         "providerRejected": "Leverantören avvisade den här begäran.",
         "inProgress": "Anslutningen pågår redan.",
         "unknown": "Något gick fel.",
-        "followUpFailed": "Konfigurationen är inte klar – slutför den i kanalinställningarna."
+        "followUpFailed": "Konfigurationen är inte klar – slutför den i kanalinställningarna.",
+        "webhookSubscribeFailed": "Ansluten, men webhook-prenumerationen misslyckades – försök igen från anslutningsinställningarna."
       },
       "sessionError": {
         "sessionExpired": "Din session har gått ut. Anslut igen.",

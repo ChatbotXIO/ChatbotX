@@ -378,7 +378,7 @@ describe("ConnectionStateService.markUnhealthy", () => {
     )
   })
 
-  test("does not overwrite an active connection's status reason or mirror Inbox for a no-op connect", async () => {
+  test("does not overwrite an active connection's status reason for a no-op connect, but still re-asserts the Inbox mirror", async () => {
     const active = baseConnection({
       status: "connected",
       statusReason: "verify_failed",
@@ -393,7 +393,13 @@ describe("ConnectionStateService.markUnhealthy", () => {
 
     expect(result).toBe(active)
     expect(mocks.update).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdateSet).not.toHaveBeenCalled()
+    expect(mocks.inboxUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "connected",
+        disconnectedAt: null,
+        disconnectReason: null,
+      }),
+    )
   })
 
   test("persists a new reason for a same-status transition", async () => {
@@ -420,7 +426,7 @@ describe("ConnectionStateService.markUnhealthy", () => {
     )
   })
 
-  test("is an idempotent no-op without overwriting the row or mirroring Inbox when the connection is already inactive", async () => {
+  test("is an idempotent no-op that still re-asserts the Inbox mirror when the connection is already inactive", async () => {
     mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
 
     await connectionStateService.markUnhealthy({
@@ -429,7 +435,12 @@ describe("ConnectionStateService.markUnhealthy", () => {
     })
 
     expect(mocks.update).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdateSet).not.toHaveBeenCalled()
+    expect(mocks.inboxUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "disconnected",
+        disconnectReason: "manual",
+      }),
+    )
     expect(mocks.release).not.toHaveBeenCalled()
     expect(mocks.tryConsume).not.toHaveBeenCalled()
   })

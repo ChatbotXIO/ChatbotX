@@ -151,9 +151,12 @@ export const disconnect = async (input: {
   const ownerId = await resolveOwnerId(connection)
   try {
     return await db.transaction(async (tx) => {
-      if (adapter.store && foreignKey) {
-        await adapter.store.deleteRowByForeignKey(foreignKey, tx)
-      }
+      const updated = await connectionStateService.transition({
+        connectionId: connection.id,
+        event: "user.disconnect",
+        ownerId,
+        tx,
+      })
       if (teardownErrors.length > 0) {
         await connectionRepository.update(
           {
@@ -164,12 +167,10 @@ export const disconnect = async (input: {
           tx,
         )
       }
-      return await connectionStateService.transition({
-        connectionId: connection.id,
-        event: "user.disconnect",
-        ownerId,
-        tx,
-      })
+      if (adapter.store && foreignKey) {
+        await adapter.store.deleteRowByForeignKey(foreignKey, tx)
+      }
+      return updated
     })
   } catch (err) {
     const lastError = [

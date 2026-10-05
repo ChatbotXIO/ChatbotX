@@ -3317,7 +3317,8 @@
         "providerRejected": "De provider heeft dit verzoek geweigerd.",
         "inProgress": "Verbinding is al bezig.",
         "unknown": "Er is iets misgegaan.",
-        "followUpFailed": "Instellen niet voltooid — rond dit af via de kanaalinstellingen."
+        "followUpFailed": "Instellen niet voltooid — rond dit af via de kanaalinstellingen.",
+        "webhookSubscribeFailed": "Verbonden, maar het webhook-abonnement is mislukt — probeer het opnieuw via de verbindingsinstellingen."
       },
       "sessionError": {
         "sessionExpired": "Je sessie is verlopen. Maak opnieuw verbinding.",
