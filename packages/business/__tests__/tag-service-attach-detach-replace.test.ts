@@ -22,12 +22,12 @@ mockInsertBuilder.returning.mockResolvedValue([])
 const mockDeleteBuilder = {
   where: vi.fn(),
 }
-mockDeleteBuilder.where.mockResolvedValue(undefined)
 
 const state = {
   txTagFindMany: [] as { id: string; name?: string; workspaceId?: string }[],
   txContactToTagsFindMany: [] as { tagId: string }[],
   contactFindMany: [] as { id: string }[],
+  removedPairs: undefined as { contactId: string; tagId: string }[] | undefined,
   tagFindMany: [] as { id: string; name?: string }[],
   findOrFailResult: null as Record<string, unknown> | null,
   findOrFailError: null as Error | null,
@@ -119,6 +119,8 @@ vi.mock("../src/contact", () => ({
 }))
 
 vi.mock("../src/folder/service", () => ({
+  toStoredFolderId: (folderId: string | null | undefined) =>
+    !folderId || folderId === "0" ? null : folderId,
   folderService: {},
 }))
 
@@ -151,6 +153,24 @@ vi.mock("../src/logger", () => ({
 
 const { tagService } = await import("../src/tag/service")
 
+// A DELETE resolves to nothing; with `.returning()` it reports every
+// contact x tag pair of the current state as removed, unless a test sets
+// `state.removedPairs`.
+function deleteWhereResult() {
+  return Object.assign(Promise.resolve(undefined), {
+    returning: vi.fn(
+      async () =>
+        state.removedPairs ??
+        state.contactFindMany.flatMap((contact) =>
+          state.tagFindMany.map((tag) => ({
+            contactId: contact.id,
+            tagId: tag.id,
+          })),
+        ),
+    ),
+  })
+}
+
 function resetState() {
   state.txTagFindMany = []
   state.txContactToTagsFindMany = []
@@ -158,6 +178,7 @@ function resetState() {
   state.tagFindMany = []
   state.findOrFailResult = null
   state.findOrFailError = null
+  state.removedPairs = undefined
   idCounter = 0
 }
 
@@ -169,7 +190,7 @@ function resetMocks() {
   mockInsertBuilder.values.mockReturnValue(mockInsertBuilder)
   mockInsertBuilder.onConflictDoNothing.mockReturnValue(mockInsertBuilder)
   mockInsertBuilder.returning.mockResolvedValue([])
-  mockDeleteBuilder.where.mockResolvedValue(undefined)
+  mockDeleteBuilder.where.mockImplementation(deleteWhereResult)
   createId.mockImplementation(() => `generated-id-${++idCounter}`)
   // vi.clearAllMocks() does not drain mockResolvedValueOnce queues — mockReset
   // drops them, then re-wire the base implementation.
@@ -541,19 +562,25 @@ describe("tagService.detachByNamesFromContacts", () => {
     expect(emitTagRemoved).not.toHaveBeenCalled()
   })
 
-  test("returns early when tag names not found in DB", async () => {
+  test("detaches nothing but still reports contacts when no tag name matches", async () => {
     state.tagFindMany = []
+    state.contactFindMany = [{ id: "c-1" }]
     const { db } = await import("@chatbotx.io/database/client")
 
-    await tagService.detachByNamesFromContacts({
+    const result = await tagService.detachByNamesFromContacts({
       workspaceId: "ws-1",
-      contactIds: ["c-1"],
+      contactIds: ["c-1", "c-missing"],
       names: ["ghost"],
     })
 
     expect(db.query.tagModel.findMany).toHaveBeenCalledOnce()
-    expect(contactFindManyByIds).not.toHaveBeenCalled()
+    expect(db.delete).not.toHaveBeenCalled()
     expect(enqueueDetach).not.toHaveBeenCalled()
+    expect(invalidateCacheByTags).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      processedContactIds: ["c-1"],
+      skippedContactIds: ["c-missing"],
+    })
   })
 
   test("skips chunk when no contacts found in chunk", async () => {
@@ -609,6 +636,59 @@ describe("tagService.detachByNamesFromContacts", () => {
     })
   })
 
+  test("cleans up every requested pair but fires tagRemoved only for removed ones", async () => {
+    state.tagFindMany = [{ id: "tag-1" }]
+    state.contactFindMany = [{ id: "c-1" }, { id: "c-2" }]
+    state.removedPairs = [{ contactId: "c-2", tagId: "tag-1" }]
+
+    const result = await tagService.detachByNamesFromContacts({
+      workspaceId: "ws-1",
+      contactIds: ["c-1", "c-2"],
+      names: ["tag-a"],
+    })
+
+    expect(enqueueDetach).toHaveBeenCalledTimes(2)
+    expect(emitTagRemoved).toHaveBeenCalledOnce()
+    expect(emitTagRemoved).toHaveBeenCalledWith(
+      "ws-1",
+      "c-2",
+      "tag-1",
+      undefined,
+    )
+    expect(result).toEqual({
+      processedContactIds: ["c-1", "c-2"],
+      skippedContactIds: [],
+    })
+  })
+
+  test("a retry after a failed enqueue still reaches the already-deleted pair", async () => {
+    state.tagFindMany = [{ id: "tag-1" }]
+    state.contactFindMany = [{ id: "c-1" }]
+    enqueueDetach.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(
+      tagService.detachByNamesFromContacts({
+        workspaceId: "ws-1",
+        contactIds: ["c-1"],
+        names: ["tag-a"],
+      }),
+    ).rejects.toThrow("redis down")
+
+    // The first attempt committed the DELETE, so nothing is removed now.
+    state.removedPairs = []
+    await tagService.detachByNamesFromContacts({
+      workspaceId: "ws-1",
+      contactIds: ["c-1"],
+      names: ["tag-a"],
+    })
+
+    expect(enqueueDetach).toHaveBeenLastCalledWith({
+      workspaceId: "ws-1",
+      contactId: "c-1",
+      tagId: "tag-1",
+    })
+  })
+
   test("forwards contactInboxId into the emitTagRemoved event scope", async () => {
     state.tagFindMany = [{ id: "tag-1" }]
     state.contactFindMany = [{ id: "c-1" }]
@@ -634,7 +714,7 @@ describe("tagService.detachByNamesFromContacts", () => {
         contactIds: ["c-1"],
         names: ["tag-a"],
       }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ processedContactIds: ["c-1"], skippedContactIds: [] })
 
     expect(enqueueDetach).toHaveBeenCalledOnce()
     expect(enqueueDetach).toHaveBeenCalledWith({

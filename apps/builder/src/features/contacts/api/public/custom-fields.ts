@@ -10,6 +10,7 @@ import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnWritingContactFields,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { ianaTimezoneSchema } from "@/lib/public-api/iana-timezone"
@@ -125,7 +126,7 @@ export const contactsCustomFieldsPublicRouter = {
           ),
       }),
     )
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnWritingContactFields)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({
@@ -193,7 +194,7 @@ export const contactsCustomFieldsPublicRouter = {
       tags: ["Contacts"],
     })
     .input(addContactCustomFieldOperationsPublicRequest)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnWritingContactFields)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const contactId = await contactService.resolveIdByIdentifier({

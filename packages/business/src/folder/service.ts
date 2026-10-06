@@ -142,7 +142,7 @@ class FolderService extends BaseService {
         },
       })
       if (!parentFolder) {
-        throw new ChatbotXException("Parent folder does not exist!")
+        throw notFoundException("Parent folder does not exist!")
       }
       paths = [...parentFolder.paths, parentFolder.id]
     }
@@ -236,8 +236,7 @@ class FolderService extends BaseService {
       throw new ChatbotXException("Resource not found")
     }
 
-    const resolvedFolderId =
-      !newFolderId || newFolderId === rootFolderId ? null : newFolderId
+    const resolvedFolderId = toStoredFolderId(newFolderId)
 
     if (resolvedFolderId) {
       await this.findOrFail({ id: resolvedFolderId, workspaceId, folderType })
@@ -280,3 +279,11 @@ class FolderService extends BaseService {
 }
 
 export const folderService = new FolderService()
+
+/**
+ * The stored `folderId` for a requested one: empty, null or `rootFolderId`
+ * ("0") all mean the root, stored as null.
+ */
+export const toStoredFolderId = (
+  folderId: string | null | undefined,
+): string | null => (!folderId || folderId === rootFolderId ? null : folderId)

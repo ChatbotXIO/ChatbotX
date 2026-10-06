@@ -200,4 +200,50 @@ describe("POST /v1/conversations/{id}/thread-control with action sync", () => {
 
     expect(mocks.syncConversationThreadOwner).not.toHaveBeenCalled()
   })
+
+  test("a channel failure during sync is mapped like the other actions", async () => {
+    mocks.syncConversationThreadOwner.mockRejectedValueOnce(
+      new ChannelError(
+        "(#10) Not the owner",
+        ChannelErrorCategory.PERMISSION_DENIED,
+        { code: 10 },
+      ),
+    )
+
+    await expect(
+      find("/v1/conversations/{id}/thread-control")?.({
+        context,
+        input: { id: "conv-1", contactInboxId: "ci-1", action: "sync" },
+      }),
+    ).rejects.toMatchObject({ code: "threadControlFailed" })
+  })
+
+  test("an unsupported channel during sync is the declared threadControlUnsupported", async () => {
+    const { ThreadControlUnsupportedError } = await import(
+      "@chatbotx.io/business"
+    )
+    mocks.syncConversationThreadOwner.mockRejectedValueOnce(
+      new ThreadControlUnsupportedError("unsupported"),
+    )
+
+    await expect(
+      find("/v1/conversations/{id}/thread-control")?.({
+        context,
+        input: { id: "conv-1", contactInboxId: "ci-1", action: "sync" },
+      }),
+    ).rejects.toMatchObject({ code: "threadControlUnsupported" })
+  })
+
+  test("a contact inbox of another contact stays a 404 during sync", async () => {
+    mocks.syncConversationThreadOwner.mockRejectedValueOnce(
+      new ChatbotXException("Not found", "notFound", 404),
+    )
+
+    await expect(
+      find("/v1/conversations/{id}/thread-control")?.({
+        context,
+        input: { id: "conv-1", contactInboxId: "ci-x", action: "sync" },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+  })
 })

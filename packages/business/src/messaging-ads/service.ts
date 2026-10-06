@@ -27,7 +27,11 @@ import {
 } from "@chatbotx.io/integration-facebook-ads"
 import { createId } from "@chatbotx.io/utils"
 import { perChannelIntegrationIdsOrNull } from "../ads-conversion/channel-fields"
-import { ChatbotXException, toPublicErrorMessage } from "../errors"
+import {
+  ChatbotXException,
+  notFoundException,
+  toPublicErrorMessage,
+} from "../errors"
 import type { IntegrationContext } from "../integration-context/build-context"
 import {
   buildMessagingAdsContext,
@@ -550,7 +554,7 @@ class MessagingAdCampaignService {
       workspaceId: input.workspaceId,
     })
     if (!record) {
-      throw new Error("Messaging ad operation not found")
+      throw notFoundException("Messaging ad operation not found")
     }
     return record
   }
@@ -567,8 +571,10 @@ class MessagingAdCampaignService {
   }): Promise<MessagingAdOperationModel> {
     const record = await this.getOrFail(input)
     if (!(record.metaCampaignId && record.metaAdSetId && record.metaAdId)) {
-      throw new Error(
+      throw new ChatbotXException(
         "Cannot publish before campaign/ad set/ad have all been created",
+        "messagingAdNotPublishable",
+        409,
       )
     }
     const channel = this.channelOf(record)

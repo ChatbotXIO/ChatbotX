@@ -19,3 +19,17 @@ export const publicCustomFieldResource = customFieldResource.pick({
   type: true,
   description: true,
 })
+
+/** Custom field definition as `customFields.*` returns it: adds its folder. */
+export const publicCustomFieldDefinitionResource =
+  publicCustomFieldResource.extend({
+    folderId: z
+      .string()
+      .nullable()
+      .describe("Folder the field is in, or null when it is at the root."),
+    showInInbox: z
+      .boolean()
+      .describe("Whether the inbox shows this field in the contact panel."),
+    createdAt: customFieldResource.shape.createdAt,
+    updatedAt: customFieldResource.shape.updatedAt,
+  })

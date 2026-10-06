@@ -725,7 +725,7 @@ export const analyticsPublicRouter = {
     })
     .input(commentAutomationReplyStatsPublicRequest)
     .output(commentAutomationReplyStatsPublicResponse)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { from, to, ...rest } = input
       return {
@@ -749,7 +749,7 @@ export const analyticsPublicRouter = {
     })
     .input(commentAutomationListPublicRequest)
     .output(commentAutomationTextTotalsPublicResponse)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { from, to, ...rest } = input
       return await commentAutomationAnalyticsService.listUserComments({
@@ -771,7 +771,7 @@ export const analyticsPublicRouter = {
     })
     .input(commentAutomationListPublicRequest)
     .output(commentAutomationTextTotalsPublicResponse)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { from, to, ...rest } = input
       return await commentAutomationAnalyticsService.listBotReplies({
@@ -793,7 +793,7 @@ export const analyticsPublicRouter = {
     })
     .input(commentAutomationListPublicRequest)
     .output(commentAutomationErrorsPublicResponse)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { from, to, ...rest } = input
       return await commentAutomationAnalyticsService.listErrors({
@@ -904,7 +904,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/flows/{flowId}/stats",
       summary: "Reset flow analytics",
       description:
-        "Clears the flow's recorded analytics sessions and counters and opens a new session; it does not delete or otherwise touch the flow itself. This cannot be undone. Unavailable to read_only tokens (DELETE is blocked for read_only permission).",
+        "Clears the flow's recorded analytics sessions and counters and opens a new session; it does not delete or otherwise touch the flow itself. This cannot be undone. A flow id that is not in this workspace is a no-op (still 204). Unavailable to read_only tokens (DELETE is blocked for read_only permission).",
       successStatus: 204,
       tags: ["Analytics"],
     })
