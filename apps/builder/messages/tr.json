@@ -4450,7 +4450,8 @@
       "channels": {
         "label": "Kanallar",
         "description": "Bir kanalı widget'ta gizlemek için kapatın.",
-        "empty": "Henüz sohbet bağlantısı olan bir kanal bağlanmadı."
+        "empty": "Henüz sohbet bağlantısı olan bir kanal bağlanmadı.",
+        "profileLinkOnly": "Profil sayfasını açar — ref bağlantısının akışı çalışmaz."
       },
       "preview": "Önizleme",
       "embedCodeDescription": "Bu kodu web sitenizdeki kapanış body etiketinden önce yapıştırın. Kaydedilen değişiklikler otomatik uygulanır, yeniden yapıştırmanız gerekmez.",

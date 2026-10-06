@@ -4450,7 +4450,8 @@
       "channels": {
         "label": "Kanäle",
         "description": "Schalte einen Kanal aus, um ihn im Widget auszublenden.",
-        "empty": "Noch kein Kanal mit Chat-Link verbunden."
+        "empty": "Noch kein Kanal mit Chat-Link verbunden.",
+        "profileLinkOnly": "Öffnet die Profilseite – der Flow des Ref-Links wird nicht ausgeführt."
       },
       "preview": "Vorschau",
       "embedCodeDescription": "Füge diesen Code vor dem schließenden body-Tag deiner Website ein. Gespeicherte Änderungen werden automatisch übernommen, ein erneutes Einfügen ist nicht nötig.",

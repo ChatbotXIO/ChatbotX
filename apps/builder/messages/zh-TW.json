@@ -4483,7 +4483,8 @@
       "channels": {
         "label": "頻道",
         "description": "關閉某個頻道即可在小工具中隱藏它。",
-        "empty": "尚未連接具有聊天連結的頻道。"
+        "empty": "尚未連接具有聊天連結的頻道。",
+        "profileLinkOnly": "開啟個人頁面 — 不會執行此 ref 連結的流程。"
       },
       "preview": "預覽",
       "embedCodeDescription": "將此程式碼貼到網站的 body 結束標籤之前。儲存的變更會自動套用，無須重新貼上。",

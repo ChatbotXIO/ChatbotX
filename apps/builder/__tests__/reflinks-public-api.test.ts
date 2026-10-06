@@ -236,7 +236,19 @@ describe("open-chat links", () => {
         inbox({}),
         inbox({ id: "inbox-2", channel: "zalo", sourceId: "oa-1", name: "OA" }),
         inbox({ id: "inbox-3", channel: "smtp", name: "Mail" }),
-        inbox({ id: "inbox-4", channel: "tiktok", name: "TT" }),
+        inbox({
+          id: "inbox-4",
+          channel: "tiktok",
+          sourceId: "acme.shop",
+          name: "TT",
+        }),
+        inbox({
+          id: "inbox-5",
+          channel: "threads",
+          sourceId: "1789",
+          name: "Threads",
+          integrationThreads: { username: "acme" },
+        }),
       ],
     })
 
@@ -263,6 +275,21 @@ describe("open-chat links", () => {
         inboxName: "OA",
         channel: "zalo",
         url: "https://zalo.me/oa-1?ref=welcome",
+        receivesRef: false,
+      },
+      // No chat deep link: the public profile, without a ref.
+      {
+        inboxId: "inbox-4",
+        inboxName: "TT",
+        channel: "tiktok",
+        url: "https://www.tiktok.com/@acme.shop",
+        receivesRef: false,
+      },
+      {
+        inboxId: "inbox-5",
+        inboxName: "Threads",
+        channel: "threads",
+        url: "https://www.threads.com/@acme",
         receivesRef: false,
       },
     ])

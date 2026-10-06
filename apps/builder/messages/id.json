@@ -4450,7 +4450,8 @@
       "channels": {
         "label": "Saluran",
         "description": "Matikan saluran untuk menyembunyikannya dari widget.",
-        "empty": "Belum ada saluran dengan link chat yang terhubung."
+        "empty": "Belum ada saluran dengan link chat yang terhubung.",
+        "profileLinkOnly": "Membuka halaman profil — flow ref link tidak berjalan."
       },
       "preview": "Pratinjau",
       "embedCodeDescription": "Tempel kode ini sebelum tag penutup body di situs web Anda. Perubahan yang disimpan berlaku otomatis, tidak perlu menempelkannya lagi.",

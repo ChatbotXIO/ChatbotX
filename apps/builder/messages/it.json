@@ -4450,7 +4450,8 @@
       "channels": {
         "label": "Canali",
         "description": "Disattiva un canale per nasconderlo dal widget.",
-        "empty": "Nessun canale con link di chat ancora collegato."
+        "empty": "Nessun canale con link di chat ancora collegato.",
+        "profileLinkOnly": "Apre la pagina del profilo: il flusso del ref link non viene eseguito."
       },
       "preview": "Anteprima",
       "embedCodeDescription": "Incolla questo codice prima del tag di chiusura body del tuo sito. Le modifiche salvate si applicano automaticamente, non serve incollarlo di nuovo.",

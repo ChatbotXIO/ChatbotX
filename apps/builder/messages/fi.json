@@ -4450,7 +4450,8 @@
       "channels": {
         "label": "Kanavat",
         "description": "Poista kanava käytöstä piilottaaksesi sen widgetistä.",
-        "empty": "Yhtään chat-linkin sisältävää kanavaa ei ole vielä yhdistetty."
+        "empty": "Yhtään chat-linkin sisältävää kanavaa ei ole vielä yhdistetty.",
+        "profileLinkOnly": "Avaa profiilisivun – ref-linkin työnkulku ei käynnisty."
       },
       "preview": "Esikatselu",
       "embedCodeDescription": "Liitä tämä koodi ennen sivustosi sulkevaa body-tagia. Tallennetut muutokset otetaan käyttöön automaattisesti, eikä koodia tarvitse liittää uudelleen.",

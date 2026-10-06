@@ -4692,7 +4692,8 @@
       "channels": {
         "label": "Kanallar",
         "description": "Kanalı vidcetdən gizlətmək üçün söndürün.",
-        "empty": "Hələ çat linki olan kanal qoşulmayıb."
+        "empty": "Hələ çat linki olan kanal qoşulmayıb.",
+        "profileLinkOnly": "Profil səhifəsini açır — ref linkin axını işə düşmür."
       },
       "preview": "Önizləmə",
       "embedCodeDescription": "Bu kodu saytınızda bağlayan body teqindən əvvəl yapışdırın. Yadda saxlanan dəyişikliklər avtomatik tətbiq olunur, yenidən yapışdırmağa ehtiyac yoxdur.",

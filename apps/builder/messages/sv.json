@@ -5113,7 +5113,8 @@
       "channels": {
         "label": "Kanaler",
         "description": "Stäng av en kanal för att dölja den i widgeten.",
-        "empty": "Ingen kanal med chattlänk är ansluten ännu."
+        "empty": "Ingen kanal med chattlänk är ansluten ännu.",
+        "profileLinkOnly": "Öppnar profilsidan – ref-länkens flöde körs inte."
       },
       "preview": "Förhandsgranskning",
       "embedCodeDescription": "Klistra in koden före den avslutande body-taggen på din webbplats. Sparade ändringar tillämpas automatiskt, du behöver inte klistra in den igen.",

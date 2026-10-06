@@ -1,8 +1,10 @@
 import { inboxService, resolveTenantSettings } from "@chatbotx.io/business"
 import {
+  buildInboxLink,
+  buildInboxProfileLink,
   canReceiveRef,
-  getInboxLinks,
   isLinkableChannel,
+  isProfileLinkChannel,
 } from "@chatbotx.io/business/utils"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
@@ -24,6 +26,8 @@ export type ReflinkChannelLink = {
  * not resolve it a second time.
  * Connected inboxes only — the same set the dashboard lists — so a
  * disconnected inbox never leaks a dead link into the API or chat widget.
+ * Threads and TikTok have no chat link, so they get their public profile
+ * (no ref) — unlike the dashboard's Get Link dialog, which leaves them out.
  */
 export async function createReflinkLinkBuilder(workspaceId: string) {
   const [tenant, { data: inboxes }] = await Promise.all([
@@ -35,20 +39,30 @@ export async function createReflinkLinkBuilder(workspaceId: string) {
   ])
   // The response schema widens enum columns to string; the rows are the
   // same `InboxWithIntegrations` the get-link dialog casts to on the client.
-  const linkable = (inboxes as InboxWithIntegrations[]).filter((inbox) =>
-    isLinkableChannel(inbox.channel as ChannelType),
+  const linkable = (inboxes as InboxWithIntegrations[]).filter(
+    (inbox) =>
+      isLinkableChannel(inbox.channel as ChannelType) ||
+      isProfileLinkChannel(inbox.channel as ChannelType),
   )
 
   const buildLinks = (name: string): ReflinkChannelLink[] =>
-    getInboxLinks(tenant.appUrl, linkable, { type: "reflink", name }).map(
-      ({ inbox, url }) => ({
-        inboxId: inbox.id,
-        inboxName: inbox.name,
-        channel: inbox.channel as ChannelType,
-        url,
-        receivesRef: canReceiveRef(inbox.channel as ChannelType),
-      }),
-    )
+    linkable.flatMap((inbox) => {
+      const url = isProfileLinkChannel(inbox.channel as ChannelType)
+        ? buildInboxProfileLink(inbox)
+        : buildInboxLink(tenant.appUrl, inbox, { type: "reflink", name })
+      if (!url) {
+        return []
+      }
+      return [
+        {
+          inboxId: inbox.id,
+          inboxName: inbox.name,
+          channel: inbox.channel as ChannelType,
+          url,
+          receivesRef: canReceiveRef(inbox.channel as ChannelType),
+        },
+      ]
+    })
 
   return { tenant, buildLinks }
 }

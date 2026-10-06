@@ -1,5 +1,6 @@
 "use client"
 
+import { isProfileLinkChannel } from "@chatbotx.io/business/utils"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -103,6 +104,7 @@ function ReflinkChatWidgetForm({
   const inboxLinks = useInboxLinks({
     enabled: true,
     refConfig: { type: "reflink", name: reflink.name },
+    includeProfileLinks: true,
   })
 
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -200,6 +202,11 @@ function ReflinkChatWidgetForm({
                         label={inbox.name}
                         size="large"
                       />
+                      {isProfileLinkChannel(inbox.channel as ChannelType) ? (
+                        <p className="mt-1 text-muted-foreground text-xs">
+                          {t("reflinks.chatWidget.channels.profileLinkOnly")}
+                        </p>
+                      ) : null}
                     </div>
                     <Switch
                       aria-label={inbox.name}

@@ -4722,7 +4722,8 @@
       "channels": {
         "label": "Kênh",
         "description": "Tắt một kênh để ẩn kênh đó khỏi widget.",
-        "empty": "Chưa kết nối kênh nào có link chat."
+        "empty": "Chưa kết nối kênh nào có link chat.",
+        "profileLinkOnly": "Mở trang cá nhân — không chạy flow của ref link."
       },
       "preview": "Xem trước",
       "embedCodeDescription": "Dán đoạn code này trước thẻ đóng body trên website của bạn. Thay đổi đã lưu sẽ tự áp dụng, không cần dán lại.",

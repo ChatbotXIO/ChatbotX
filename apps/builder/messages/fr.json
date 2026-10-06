@@ -4450,7 +4450,8 @@
       "channels": {
         "label": "Canaux",
         "description": "Désactivez un canal pour le masquer du widget.",
-        "empty": "Aucun canal avec un lien de chat n'est encore connecté."
+        "empty": "Aucun canal avec un lien de chat n'est encore connecté.",
+        "profileLinkOnly": "Ouvre la page de profil — le flux du lien ref ne s'exécute pas."
       },
       "preview": "Aperçu",
       "embedCodeDescription": "Collez ce code avant la balise de fermeture body de votre site. Les modifications enregistrées s'appliquent automatiquement, inutile de le recoller.",

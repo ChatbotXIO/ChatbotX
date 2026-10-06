@@ -4692,7 +4692,8 @@
       "channels": {
         "label": "Channels",
         "description": "Turn a channel off to hide it from the widget.",
-        "empty": "No channel with a chat link is connected yet."
+        "empty": "No channel with a chat link is connected yet.",
+        "profileLinkOnly": "Opens the profile page — the ref link's flow does not run."
       },
       "preview": "Preview",
       "embedCodeDescription": "Paste this code before the closing body tag of your website. Saved changes apply automatically, no need to paste it again.",

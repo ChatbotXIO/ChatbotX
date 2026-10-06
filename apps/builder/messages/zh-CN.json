@@ -5113,7 +5113,8 @@
       "channels": {
         "label": "渠道",
         "description": "关闭某个渠道即可在小部件中隐藏它。",
-        "empty": "尚未连接带有聊天链接的渠道。"
+        "empty": "尚未连接带有聊天链接的渠道。",
+        "profileLinkOnly": "打开个人主页 — 不会运行此 ref 链接的流程。"
       },
       "preview": "预览",
       "embedCodeDescription": "将此代码粘贴到网站的 body 结束标签之前。保存的更改会自动生效，无需重新粘贴。",

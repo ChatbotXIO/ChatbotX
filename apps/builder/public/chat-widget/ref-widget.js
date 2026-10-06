@@ -31,6 +31,8 @@
     "telegram",
     "zalo",
     "webchat",
+    "threads",
+    "tiktok",
   ]
 
   const iconUrl = (channel) =>

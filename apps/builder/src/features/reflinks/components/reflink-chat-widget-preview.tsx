@@ -14,6 +14,8 @@ const WIDGET_ICON_CHANNELS: ChannelType[] = [
   "telegram",
   "zalo",
   "webchat",
+  "threads",
+  "tiktok",
 ]
 
 export const getWidgetIconUrl = (channel: ChannelType | "chat") =>

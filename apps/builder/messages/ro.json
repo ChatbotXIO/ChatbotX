@@ -4450,7 +4450,8 @@
       "channels": {
         "label": "Canale",
         "description": "Dezactivează un canal pentru a-l ascunde din widget.",
-        "empty": "Niciun canal cu link de chat nu este conectat încă."
+        "empty": "Niciun canal cu link de chat nu este conectat încă.",
+        "profileLinkOnly": "Deschide pagina de profil — fluxul linkului ref nu rulează."
       },
       "preview": "Previzualizare",
       "embedCodeDescription": "Lipește acest cod înainte de eticheta de închidere body a site-ului. Modificările salvate se aplică automat, nu trebuie lipit din nou.",
