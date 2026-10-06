@@ -62,6 +62,7 @@ import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
+import { resolveOAuthCredential } from "@/features/connections/lib/resolve-connect-credential"
 import { exchangeAndVerifyGoogleCalendar } from "@/features/external-calendars/lib/google-calendar-provider"
 import { enableLeadgenForWorkspacePages } from "@/features/facebook-lead-ad-automation/lib/pages"
 import {
@@ -406,11 +407,16 @@ const handleConnectSessionCallback = async (
     return notFound()
   }
 
-  const credential = await platformCredentialService.resolveForOwner({
+  // Same helper the session's start route used, so the `redirect_uri` sent
+  // to the token exchange is rebuilt from the credential exactly as it was
+  // for `authorizeUrl` — never from this request's own origin, which is
+  // `originHost` (not the registered broker/custom-domain host) once the
+  // relay above has bounced the callback.
+  const resolved = await resolveOAuthCredential({
+    provider: session.provider,
     ownerId: session.platformOwnerId,
-    type: adapter.credentialType,
   })
-  if (!credential) {
+  if (!resolved) {
     logger.error(
       { sessionId: session.id, provider: session.provider },
       "connect session platform credential missing",
@@ -420,19 +426,14 @@ const handleConnectSessionCallback = async (
   }
 
   const code = url.searchParams.get("code") ?? ""
-  // Reconstructs the exact redirect_uri the provider was given at
-  // `authorizeUrl` time — `buildProviderCallbackUrl` resolved it once
-  // against this same credential, and the callback always lands on that
-  // registered host/path (no relay hop for this flow, see above).
-  const callbackUrl = `${url.origin}${url.pathname}`
 
   try {
     const completed = await connectionService.completeAuthorization({
       sessionId: session.id,
       nonce,
       code,
-      callbackUrl,
-      credential: credential.config,
+      callbackUrl: resolved.callbackUrl,
+      credential: resolved.credential,
     })
 
     // A non-multi-account provider's grant always resolves to exactly one

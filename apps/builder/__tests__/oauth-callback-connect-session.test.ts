@@ -80,6 +80,10 @@ vi.mock("@chatbotx.io/connections", () => ({
       credentialType: "zalo",
       provider: { multiAccount: false },
     },
+    instagramFacebook: {
+      credentialType: "instagramFacebook",
+      provider: { multiAccount: true },
+    },
     unconfigured: null,
   },
   // Mirrors the real `packages/connections` `failSession`'s exact contract
@@ -474,7 +478,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     ).rejects.toThrow("not found")
   })
 
-  test("calls completeAuthorization with the reconstructed callback URL and this exact credential config", async () => {
+  test("calls completeAuthorization with the credential's registered redirect_uri (broker origin), not the relayed request's own origin (regression: the code exchange ran on originHost with an app-host redirect_uri and Meta rejected it as exchange_failed)", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
       provider: "messenger",
@@ -498,9 +502,66 @@ describe("handleCallback — ConnectSession state dispatch", () => {
       sessionId: "123",
       nonce: "abc-nonce",
       code: "code-1",
-      callbackUrl: "https://app.example.com/integrations/messenger/callback",
+      callbackUrl: "https://broker.example.com/integrations/messenger/callback",
       credential: { clientId: "client-9", clientSecret: "secret-9" },
     })
+  })
+
+  test("uses the kebab-case registered callback path for a camelCase provider key", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "instagramFacebook",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    mockCompleteAuthorization.mockResolvedValueOnce({
+      id: "123",
+      workspaceId: "ws-1",
+      status: "awaiting_selection",
+      targets: [],
+    })
+
+    await handleCallback("instagramFacebook", {
+      headers: new Headers(),
+      url: "https://app.example.com/integrations/instagram-facebook/callback?code=code-1&state=123.abc-nonce",
+    } as unknown as NextRequest)
+
+    expect(mockCompleteAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callbackUrl:
+          "https://broker.example.com/integrations/instagram-facebook/callback",
+      }),
+    )
+  })
+
+  test("after the relay has landed the callback on originHost, the exchange still uses the broker redirect_uri (regression: production exchange_failed)", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+      originHost: "app.example.com",
+    })
+    mockCompleteAuthorization.mockResolvedValueOnce({
+      id: "123",
+      workspaceId: "ws-1",
+      status: "awaiting_selection",
+      targets: [],
+    })
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    // Already on originHost, so the relay is a no-op for this request.
+    expect(mockResolveRelayTarget).toHaveBeenCalledWith(
+      expect.any(URL),
+      "https://app.example.com",
+    )
+    expect(mockCompleteAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callbackUrl:
+          "https://broker.example.com/integrations/messenger/callback",
+      }),
+    )
   })
 
   test("auto-completes a non-multiAccount provider's single selectable target via connectTargets", async () => {
