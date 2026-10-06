@@ -3683,6 +3683,7 @@
     "cancelEdit": "Ləğv et",
     "replaceAttachment": "Qoşmanı əvəz et",
     "addAttachment": "Qoşma əlavə et",
+    "reloadAttachment": "Əlavəni yenidən yüklə",
     "failedToCopy": "Kopyalamaq mümkün olmadı",
     "failedToPreviewImage": "Şəklin önbaxışını göstərmək mümkün olmadı",
     "loadingData": "Məlumatlar yüklənir...",

@@ -4239,6 +4239,7 @@
     "cancelEdit": "取消",
     "replaceAttachment": "替换附件",
     "addAttachment": "添加附件",
+    "reloadAttachment": "重新加载附件",
     "changeDefault": "更改默认值",
     "changeDefaultDescription": "您确定要更改缺省 AI Agent 吗？",
     "changeHideState": "更改隐藏状态",

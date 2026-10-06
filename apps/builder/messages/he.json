@@ -1455,6 +1455,7 @@
     "cancelEdit": "ביטול",
     "replaceAttachment": "החלף קובץ מצורף",
     "addAttachment": "הוסף קובץ מצורף",
+    "reloadAttachment": "טען מחדש את הקובץ המצורף",
     "failedToCopy": "ההעתקה נכשלה",
     "failedToPreviewImage": "התצוגה המקדימה של התמונה נכשלה",
     "loadingData": "הנתונים נטענים...",

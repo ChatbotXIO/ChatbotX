@@ -3441,6 +3441,7 @@
     "cancelEdit": "Annuler",
     "replaceAttachment": "Remplacer la pièce jointe",
     "addAttachment": "Ajouter une pièce jointe",
+    "reloadAttachment": "Recharger la pièce jointe",
     "failedToCopy": "Échec de la copie",
     "failedToPreviewImage": "Échec de l’aperçu de l’image",
     "loadingData": "Chargement des données...",

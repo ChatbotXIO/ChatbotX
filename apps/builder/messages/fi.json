@@ -3441,6 +3441,7 @@
     "cancelEdit": "Peruuta",
     "replaceAttachment": "Korvaa liite",
     "addAttachment": "Lisää liite",
+    "reloadAttachment": "Lataa liite uudelleen",
     "failedToCopy": "Kopiointi epäonnistui",
     "failedToPreviewImage": "Kuvan esikatselu epäonnistui",
     "loadingData": "Ladataan tietoja...",

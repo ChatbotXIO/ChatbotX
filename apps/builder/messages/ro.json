@@ -3441,6 +3441,7 @@
     "cancelEdit": "Anulează",
     "replaceAttachment": "Înlocuiește atașamentul",
     "addAttachment": "Adaugă atașament",
+    "reloadAttachment": "Reîncarcă atașamentul",
     "failedToCopy": "Copierea a eșuat",
     "failedToPreviewImage": "Previzualizarea imaginii a eșuat",
     "loadingData": "Se încarcă datele...",

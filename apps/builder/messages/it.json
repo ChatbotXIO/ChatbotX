@@ -3441,6 +3441,7 @@
     "cancelEdit": "Annulla",
     "replaceAttachment": "Sostituisci allegato",
     "addAttachment": "Aggiungi allegato",
+    "reloadAttachment": "Ricarica allegato",
     "failedToCopy": "Impossibile copiare",
     "failedToPreviewImage": "Impossibile visualizzare l'anteprima dell'immagine",
     "loadingData": "Caricamento dati...",

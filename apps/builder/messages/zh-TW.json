@@ -1549,6 +1549,7 @@
     "cancelEdit": "取消",
     "replaceAttachment": "取代附件",
     "addAttachment": "新增附件",
+    "reloadAttachment": "重新載入附件",
     "failedToCopy": "複製失敗",
     "failedToPreviewImage": "預覽影像失敗",
     "loadingData": "正在載入資料...",

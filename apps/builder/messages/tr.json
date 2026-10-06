@@ -3441,6 +3441,7 @@
     "cancelEdit": "İptal",
     "replaceAttachment": "Eki değiştir",
     "addAttachment": "Ek ekle",
+    "reloadAttachment": "Eki yeniden yükle",
     "failedToCopy": "Kopyalanamadı",
     "failedToPreviewImage": "Görsel önizlenemedi",
     "loadingData": "Veriler yükleniyor...",

@@ -4239,6 +4239,7 @@
     "cancelEdit": "Avbryt",
     "replaceAttachment": "Ersätt bilaga",
     "addAttachment": "Lägg till bilaga",
+    "reloadAttachment": "Ladda om bilaga",
     "changeDefault": "Ändra standard",
     "changeDefaultDescription": "Är du säker på att du vill ändra standardagenten för AI?",
     "changeHideState": "Ändra dölj-status",
