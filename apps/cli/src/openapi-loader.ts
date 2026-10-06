@@ -174,10 +174,35 @@ function extractPathParamNames(pathTemplate: string): string[] {
   return matches ? matches.map((m) => m.slice(1, -1)) : []
 }
 
+/**
+ * Explicit names for operations the generic derivation below would collapse
+ * onto a sibling's command. A collision silently drops one operation, and for
+ * `DELETE .../custom-fields` it left `contacts custom-field delete` clearing
+ * every custom field instead of one — so each colliding operation gets its own
+ * unambiguous verb here. Keyed by `METHOD path`.
+ */
+const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
+  "DELETE /v1/contacts/{identifier}/custom-fields":
+    "contacts:clear-all-custom-fields",
+  "PUT /v1/contacts/{identifier}/custom-fields/{idOrName}":
+    "contacts:set-custom-field",
+  "PUT /v1/bot-fields/{idOrName}": "bot-fields:set",
+  "DELETE /v1/analytics/flows/{flowId}/stats": "analytics:reset-flow-stats",
+  "POST /v1/ads/campaigns": "ads:create-campaign",
+  "POST /v1/ads/conversion-rules": "ads:create-conversion-rule",
+  "PATCH /v1/ads/conversion-rules/{id}": "ads:update-conversion-rule",
+  "DELETE /v1/ads/conversion-rules/{id}": "ads:delete-conversion-rule",
+}
+
 export function pathAndMethodToCommandName(
   pathTemplate: string,
   method: string,
 ): string {
+  const override =
+    COMMAND_NAME_OVERRIDES[`${method.toUpperCase()} ${pathTemplate}`]
+  if (override) {
+    return override
+  }
   const normalized = pathTemplate
     .replace(V1_PREFIX_RE, "")
     .replace(LEADING_SLASH_RE, "")
@@ -323,7 +348,12 @@ export async function loadOpenApiSpecForCli(
   if (!forceRefresh) {
     const cached = readCache(specUrl)
     if (cached) {
-      return cached
+      // Names are re-derived on every load so a cache written by an older CLI
+      // picks up naming changes (e.g. COMMAND_NAME_OVERRIDES) immediately.
+      return cached.map((tool) => ({
+        ...tool,
+        commandName: pathAndMethodToCommandName(tool.pathTemplate, tool.method),
+      }))
     }
   }
 

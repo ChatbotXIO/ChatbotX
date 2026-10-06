@@ -213,7 +213,7 @@ export const contactsMessagesPublicRouter = {
       path: "/v1/contacts/{identifier}/flows",
       summary: "Send flow to contact",
       description:
-        "Starts a flow for a resolved contact and delivers its first message on an existing or new conversation. Call `flows.list` to find the flow first, or use `contacts.sendMessage` for one message.",
+        "Starts a flow for a resolved contact on the contact's existing conversation (the given `inboxId`, or the conversation's inbox) and returns as soon as it is queued. Returns 404 when the contact has no conversation yet or the flow is not in this workspace. Call `flows.list` to find the flow first, or use `contacts.sendMessage` for one message.",
       successStatus: 204,
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),

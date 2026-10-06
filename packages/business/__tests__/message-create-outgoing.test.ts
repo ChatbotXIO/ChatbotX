@@ -8,9 +8,12 @@ const mockCreateMessageRepository = vi.fn()
 const mockChatQueueAdd = vi.fn()
 const mockResolveTenantSettings = vi.fn()
 const mockBroadcastToWorkspaceParty = vi.fn()
+const mockIntegrationQueueAdd = vi.fn()
+const mockFlowExists = vi.fn()
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
+  flowRepository: { existsInWorkspace: mockFlowExists },
   mediaLibraryFileRepository: { findByPath: vi.fn(), findById: vi.fn() },
 }))
 
@@ -38,7 +41,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   },
   chatQueue: { add: mockChatQueueAdd },
   IntegrationJobAction: { sendFlow: "sendFlow" },
-  integrationQueue: { add: vi.fn() },
+  integrationQueue: { add: mockIntegrationQueueAdd },
 }))
 
 vi.mock("../src/contact-inbox/service", () => ({
@@ -204,5 +207,41 @@ describe("messageService.createOutgoing", () => {
       }),
     )
     expect(mockChatQueueAdd.mock.calls[0]).toHaveLength(2)
+  })
+})
+
+describe("messageService.createOutgoing with a flow", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("queues the flow when it belongs to the conversation's workspace", async () => {
+    mockFlowExists.mockResolvedValue(true)
+
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      input: { flowId: "flow-1" } as never,
+    })
+
+    expect(mockFlowExists).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "flow-1",
+    })
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledOnce()
+  })
+
+  test("rejects a flow of another workspace with 404 and queues nothing", async () => {
+    mockFlowExists.mockResolvedValue(false)
+
+    await expect(
+      createOutgoing({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        input: { flowId: "foreign-flow" } as never,
+      }),
+    ).rejects.toMatchObject({ code: "notFound", httpStatusCode: 404 })
+
+    expect(mockIntegrationQueueAdd).not.toHaveBeenCalled()
   })
 })

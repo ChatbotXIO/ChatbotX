@@ -141,8 +141,7 @@ chatbotx bot-fields create --name <name> --type <type> --value <value> --descrip
 chatbotx bot-fields update --fields <fields>         # Set multiple bot field values, by id or name
                                                      # fields: JSON array of {id,value} or {name,value}
 chatbotx bot-fields get <idOrName>                   # Get bot field
-# `bot-fields update <idOrName> --value <value>` (single field, PUT /v1/bot-fields/{idOrName}) is NOT
-# reachable — collides with `update` above under the same commandName; see Known command-name collisions.
+chatbotx bot-fields set <idOrName> --value <value>   # Set one bot field value (PUT /v1/bot-fields/{idOrName})
 chatbotx bot-fields delete <idOrName>                # Unset bot field value
 chatbotx bot-fields reset <idOrName>                 # Clear one bot field value, keep the field
 chatbotx bot-fields bulk-reset --ids <ids>           # Clear up to 100 bot field values by id
@@ -207,14 +206,10 @@ chatbotx contacts by-name add <identifier> --tags <tags>  # Add tags by name (cr
 chatbotx contacts custom-fields list <identifier>    # Get all custom fields from contact
 chatbotx contacts custom-fields update <identifier> --operations <operations>
                                                      # Batch set/append/prepend/increase/decrease
-                                                     # (applyCustomFieldOperations; wins a naming collision
-                                                     # with the single-field PUT below — see note)
 chatbotx contacts custom-field get <identifier> <idOrName>
-# `contacts custom-field update <identifier> <idOrName> --value <value>` (single field, PUT
-# .../custom-fields/{idOrName}) is NOT reachable — collides with `custom-fields update` above
-# under the same commandName; see Known command-name collisions.
-chatbotx contacts custom-field delete <identifier>   # Clear ALL custom fields (see collision note — the
-                                                     # per-field-id delete variant is unreachable)
+chatbotx contacts set-custom-field <identifier> <idOrName> --value <value>   # Set one custom field
+chatbotx contacts custom-field delete <identifier> <idOrName>                # Clear ONE custom field
+chatbotx contacts clear-all-custom-fields <identifier>                       # Clear EVERY custom field
 
 # Notes
 chatbotx contacts notes list <identifier>
@@ -452,10 +447,10 @@ chatbotx error-logs list                             # [--page --perPage --sort 
 
 ```bash
 chatbotx ads conversion-rules                        # List Ads conversion rules
-chatbotx ads conversion-rules --event <event> --conversionType <conversionType>
-                                                     # Create Ads conversion rule (name collides with list above, see note)
-chatbotx ads find-by-conversion-rules <id>           # Get/update/delete conversion rule (GET shown; PATCH/DELETE collide, see note)
-                                                     # PATCH body also enables/disables via `enabled` (no separate status command)
+chatbotx ads create-conversion-rule --event <event> --conversionType <conversionType>
+chatbotx ads find-by-conversion-rules <id>           # Get conversion rule
+chatbotx ads update-conversion-rule <id>             # Update; `enabled` also enables/disables the rule
+chatbotx ads delete-conversion-rule <id>
 chatbotx ads funnel                                  # Get ad conversion funnel
 chatbotx ads funnel-timeseries                       # Get daily ad conversion funnel
 chatbotx ads capi-delivery                           # Get Conversions API delivery status
@@ -468,7 +463,8 @@ chatbotx ads custom-audiences                        # List custom audiences [--
 chatbotx ads retarget-audiences                      # Sync retarget audience
 
 # Messaging ad campaigns
-chatbotx ads campaigns                               # List (GET) / create (POST) messaging ad (names collide, see note)
+chatbotx ads campaigns                               # List messaging ads
+chatbotx ads create-campaign                         # Create messaging ad
 chatbotx ads campaigns-retry <id>                    # Resume messaging ad creation
 chatbotx ads campaigns-publish <id>                  # Publish messaging ad
 chatbotx ads campaigns-pause <id>                    # Pause published messaging ad
@@ -550,7 +546,8 @@ chatbotx analytics messages-by-sender                  # [--granularity]
 chatbotx analytics broadcasts-stats <broadcastId>       # Get broadcast stats
 chatbotx analytics sequences-steps-stats <sequenceId> <stepId>  # Get sequence step stats
 chatbotx analytics mac-active-count                    # No time range — current billing period
-chatbotx analytics flows-stats <flowId>                # Get flow analytics (also DELETE resets stats, see note)
+chatbotx analytics flows-stats <flowId>                # Get flow analytics
+chatbotx analytics reset-flow-stats <flowId>           # Reset flow analytics
 chatbotx analytics magic-links-stats --linkId <linkId>
 chatbotx analytics magic-links-contacts --linkId <linkId>
 chatbotx analytics ref-links-stats --linkId <linkId>
@@ -1106,21 +1103,16 @@ Commands are named by `pathAndMethodToCommandName` (`apps/cli/src/openapi-loader
 
 | Command name | Colliding operations | What's reachable |
 |---|---|---|
-| `ads:conversion-rules` | `POST` (create) vs `GET` (list) `/v1/ads/conversion-rules` | Only `list` |
-| `ads:find-by-conversion-rules` | `PATCH` vs `DELETE` `/v1/ads/conversion-rules/{id}` | Only one (whichever registers first) |
-| `ads:campaigns` | `GET` (list) vs `POST` (create) `/v1/ads/campaigns` | Only `list` |
-| `analytics:flows-stats` | `GET` (get stats) vs `DELETE` (reset stats) `/v1/analytics/flows/{flowId}/stats` | Only `get` |
 | `media-library:folders` | `POST` (create) vs `GET` (list) `/v1/media-library/folders` | Only `list` |
 | `media-library:find-by-folders` | `PUT` (rename) vs `DELETE` (delete+contents) `/v1/media-library/folders/{folderId}` | Only one |
 | `media-library:files` | `POST` (register) vs `GET` (list) `/v1/media-library/files` | Only `list` |
 | `media-library:find-by-files` | `GET` vs `DELETE` `/v1/media-library/files/{fileId}` | Only `get` |
 | `minigames:update` | `PUT` (full) vs `PATCH` (partial) `/v1/minigames/{id}` | Only one |
-| `bot-fields:update` | `PUT /v1/bot-fields/{idOrName}` (`set`, single field) vs `PUT /v1/bot-fields` (`setMany`, several by name) | Only `setMany` — use `bot-fields update --fields <fields>` even for a single field |
-| `contacts:custom-fields:update` | `PATCH /v1/contacts/{identifier}/custom-fields` (`applyCustomFieldOperations`, batch) vs `PUT .../custom-fields/{idOrName}` (`setCustomField`, single field) | Only `applyCustomFieldOperations` — use `contacts custom-fields update <identifier> --operations '[{"customFieldId":"...","operation":"set","value":"..."}]'` for a single field too |
-| `contacts:custom-field:delete` | `DELETE .../custom-fields/{idOrName}` (`clearCustomField`, one field) vs `DELETE .../custom-fields` (`clearCustomFields`, every field) | Only `clearCustomFields` — `contacts custom-field delete <identifier>` clears **every** custom field, not one |
 | `integrations:find-by-ai` | `GET`/`PUT`/`DELETE /v1/integrations/ai/{provider}` (get/connect/disconnect) | Only `GET` — connecting or disconnecting an AI provider has no CLI command |
 
-Root cause for the `bot-fields`, `contacts:custom-field(s)`, and `integrations:find-by-ai` rows: `pathAndMethodToCommandName`'s remainder branch derives `${group}:${subResource}:update` (or its GET/DELETE equivalents) without folding the HTTP method into the name when a literal second path segment is followed by a param — unlike the sibling GET/DELETE branches, which already do this for the two-segment case.
+Resolved by explicit names in `COMMAND_NAME_OVERRIDES` (`apps/cli/src/openapi-loader.ts`): `bot-fields set`, `contacts set-custom-field`, `contacts clear-all-custom-fields` (the old `contacts custom-field delete <identifier>` cleared **every** field; it now clears one and needs `<idOrName>`), `ads create-campaign`, `ads create-conversion-rule` / `update-conversion-rule` / `delete-conversion-rule`, `analytics reset-flow-stats`.
+
+Root cause for the remaining `integrations:find-by-ai` row: `pathAndMethodToCommandName`'s remainder branch derives `${group}:${subResource}:update` (or its GET/DELETE equivalents) without folding the HTTP method into the name when a literal second path segment is followed by a param — unlike the sibling GET/DELETE branches, which already do this for the two-segment case.
 
 All of these operations remain reachable over HTTP directly; only the CLI's generated command for the losing operation is missing.
 

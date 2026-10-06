@@ -58,9 +58,12 @@ describe("deleteSequenceStepAction", () => {
       workspaceId: WS,
       sequenceId: SEQ_ID,
     })
+    // The parent sequence is passed so a step of another sequence in the
+    // same workspace cannot be deleted through a mismatched pair.
     expect(mockDeleteStep).toHaveBeenCalledWith({
       workspaceId: WS,
       stepId: STEP_ID,
+      sequenceId: SEQ_ID,
     })
     expect(result).toEqual({ success: true })
   })

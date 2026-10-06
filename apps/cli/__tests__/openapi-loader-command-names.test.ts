@@ -58,40 +58,67 @@ describe("pathAndMethodToCommandName — GET distinguishes a sub-resource's own 
   })
 })
 
-describe("pathAndMethodToCommandName — known collision: contacts custom-fields PUT/PATCH", () => {
-  // Documented in apps/cli/README.md under "Known command-name collisions".
-  // Unlike the GET branch above, PUT/PATCH do not fold in whether the last
-  // path segment is itself a param, so both routes below reduce to the same
-  // name — `applyCustomFieldOperations` (registered first, at the plural
-  // no-trailing-param path) wins; `setCustomField` (singular, trailing-param
-  // path) has no reachable CLI command.
-  test("PATCH on the plural collection path and PUT on the singular {idOrName} path collide", () => {
-    const patchName = pathAndMethodToCommandName(
-      "/v1/contacts/{identifier}/custom-fields",
-      "PATCH",
-    )
-    const putName = pathAndMethodToCommandName(
+describe("pathAndMethodToCommandName — operations that used to collide get distinct names", () => {
+  test("clearing ONE custom field and clearing ALL of them are different commands", () => {
+    const clearOne = pathAndMethodToCommandName(
       "/v1/contacts/{identifier}/custom-fields/{idOrName}",
-      "PUT",
+      "DELETE",
+    )
+    const clearAll = pathAndMethodToCommandName(
+      "/v1/contacts/{identifier}/custom-fields",
+      "DELETE",
     )
 
-    expect(patchName).toBe("contacts:custom-fields:update")
-    expect(putName).toBe("contacts:custom-fields:update")
-    expect(patchName).toBe(putName)
+    expect(clearOne).toBe("contacts:custom-field:delete")
+    expect(clearAll).toBe("contacts:clear-all-custom-fields")
   })
-})
 
-describe("pathAndMethodToCommandName — known collision: bot-fields PUT", () => {
-  test("PUT on the collection and PUT on {idOrName} collide the same way", () => {
-    const setManyName = pathAndMethodToCommandName("/v1/bot-fields", "PUT")
-    const setOneName = pathAndMethodToCommandName(
-      "/v1/bot-fields/{idOrName}",
-      "PUT",
+  test("setting one custom field no longer collides with the batch operations", () => {
+    expect(
+      pathAndMethodToCommandName(
+        "/v1/contacts/{identifier}/custom-fields",
+        "PATCH",
+      ),
+    ).toBe("contacts:custom-fields:update")
+    expect(
+      pathAndMethodToCommandName(
+        "/v1/contacts/{identifier}/custom-fields/{idOrName}",
+        "PUT",
+      ),
+    ).toBe("contacts:set-custom-field")
+  })
+
+  test("bot-fields: the batch keeps `update`, one field is `set`", () => {
+    expect(pathAndMethodToCommandName("/v1/bot-fields", "PUT")).toBe(
+      "bot-fields:update",
     )
+    expect(pathAndMethodToCommandName("/v1/bot-fields/{idOrName}", "PUT")).toBe(
+      "bot-fields:set",
+    )
+  })
 
-    expect(setManyName).toBe("bot-fields:update")
-    expect(setOneName).toBe("bot-fields:update")
-    expect(setManyName).toBe(setOneName)
+  test("ads and flow-stats operations each get their own command", () => {
+    const names = [
+      pathAndMethodToCommandName("/v1/ads/campaigns", "GET"),
+      pathAndMethodToCommandName("/v1/ads/campaigns", "POST"),
+      pathAndMethodToCommandName("/v1/ads/conversion-rules", "GET"),
+      pathAndMethodToCommandName("/v1/ads/conversion-rules", "POST"),
+      pathAndMethodToCommandName("/v1/ads/conversion-rules/{id}", "GET"),
+      pathAndMethodToCommandName("/v1/ads/conversion-rules/{id}", "PATCH"),
+      pathAndMethodToCommandName("/v1/ads/conversion-rules/{id}", "DELETE"),
+      pathAndMethodToCommandName("/v1/analytics/flows/{flowId}/stats", "GET"),
+      pathAndMethodToCommandName(
+        "/v1/analytics/flows/{flowId}/stats",
+        "DELETE",
+      ),
+    ]
+
+    expect(new Set(names).size).toBe(names.length)
+    expect(names).toContain("ads:create-campaign")
+    expect(names).toContain("ads:create-conversion-rule")
+    expect(names).toContain("ads:update-conversion-rule")
+    expect(names).toContain("ads:delete-conversion-rule")
+    expect(names).toContain("analytics:reset-flow-stats")
   })
 })
 
