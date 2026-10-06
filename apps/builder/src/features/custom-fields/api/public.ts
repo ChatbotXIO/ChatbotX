@@ -6,6 +6,7 @@ import {
   possibleErrorsOnCreatingInFolder,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
+  possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -43,7 +44,7 @@ export const customFieldsPublicRouter = {
     })
     .input(listCustomFieldsPublicRequest)
     .output(listPublicCustomFieldsResponse)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const result = await customFieldService.list({
         ...input,
@@ -112,7 +113,7 @@ export const customFieldsPublicRouter = {
       path: "/v1/custom-fields/{id}",
       summary: "Update custom field",
       description:
-        "Renames a custom field and updates its description; when `folderId` is given, moves it to that folder. Use `customFields.list` to find its id first.",
+        "Renames a custom field (`name` is required, send the current name to keep it) and updates its description; when `folderId` is given, moves it to that folder. The type cannot be changed. A name already used by another field returns 422. Use `customFields.list` to find its id first.",
       tags: ["Custom Fields"],
     })
     .input(

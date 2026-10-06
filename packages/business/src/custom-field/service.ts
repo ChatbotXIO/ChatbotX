@@ -347,11 +347,19 @@ class CustomFieldService extends BaseService {
       })
     }
 
-    const [updated] = await tx
-      .update(customFieldModel)
-      .set(data)
-      .where(eq(customFieldModel.id, existing.id))
-      .returning()
+    let updated: CustomFieldModel | undefined
+    try {
+      ;[updated] = await tx
+        .update(customFieldModel)
+        .set(data)
+        .where(eq(customFieldModel.id, existing.id))
+        .returning()
+    } catch (error) {
+      if (isDatabaseError(error) && error.cause.code === "23505") {
+        throw validationException("name", "Name is already taken")
+      }
+      throw error
+    }
 
     await this.invalidate({ workspaceId: ctx.workspaceId, ids: [existing.id] })
     return updated

@@ -168,7 +168,7 @@ export const botFieldsPublicRouter = {
       path: "/v1/bot-fields",
       summary: "Set multiple bot field values",
       description:
-        "Changes several bot field values in one call, each entry addressed by id or name. Use `botFields.list` to find valid ids or names first.",
+        "Changes several bot field values in one call, each entry addressed by id or name. Entries are applied independently, not as one transaction: if one fails (unknown field, value that does not fit its type) the request fails but entries already written stay changed. Use `botFields.list` to find valid ids or names first.",
       successStatus: 204,
       tags: ["Bot Fields"],
     })
