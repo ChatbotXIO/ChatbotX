@@ -110,7 +110,7 @@ export const sequencesPublicRouter = {
       path: "/v1/sequences/{id}",
       summary: "Update sequence name or active state",
       description:
-        "Changes a sequence name or active state without replacing its steps. Call `sequences.get` to inspect the current sequence, or use `sequences.list` to resolve its id.",
+        "Changes a sequence name, active state or folder (`folderId`, from `sequences.listFolders`) without replacing its steps. Call `sequences.get` to inspect the current sequence, or use `sequences.list` to resolve its id.",
       successStatus: 204,
       tags: ["Sequences"],
       spec: mcpSpec({ visibility: "default" }),

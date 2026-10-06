@@ -212,7 +212,7 @@ export const linkStatsPublicRequest = withLegacyDateRangeAliases(
     to: z
       .string()
       .describe(
-        "ISO 8601 end of the time range (exclusive). Accepts the deprecated `endDate` name too.",
+        "ISO 8601 end of the time range (inclusive). Accepts the deprecated `endDate` name too.",
       ),
     linkId: z.string().describe("Magic link or ref link id."),
     timezone: z
@@ -242,7 +242,7 @@ export const linkContactsPublicRequest = withLegacyDateRangeAliases(
         .string()
         .optional()
         .describe(
-          "ISO 8601 end of the time range (exclusive). Accepts the deprecated `endDate` name too.",
+          "ISO 8601 end of the time range (inclusive). Accepts the deprecated `endDate` name too. The range applies only when both `from` and `to` are given.",
         ),
       timezone: z
         .string()
@@ -288,7 +288,7 @@ export const linkContactsPublicResponse = z.object({
 
 const commentAutomationRangePublicRequest = z.object({
   automationId: zodBigintAsString().describe(
-    "Comment automation id. Get it from `fbComments.list` or `igComments.list`. An id that is not in this workspace returns an empty result.",
+    "Comment automation id, from any channel. Get it from `fbComments.list`, `igComments.list`, `threadsComments.list` or `tiktokComments.list`. An id that is not in this workspace returns an empty result.",
   ),
   from: z.iso
     .datetime({ offset: true })
