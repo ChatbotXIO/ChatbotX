@@ -1,6 +1,7 @@
 import {
   type Context,
   type FileType,
+  getMediaStoragePrefix,
   guessFileTypeFromMimeType,
   type IncomingAttachment,
 } from "@chatbotx.io/sdk"
@@ -67,7 +68,7 @@ export const getMessageAttachmentEntity = async ({
     )
   }
 
-  const originPath = `${ctx.storagePrefix}/${createId()}`
+  const originPath = `${getMediaStoragePrefix(ctx)}/${createId()}`
   const bytes = await response.arrayBuffer()
   const mimeType = response.headers.get("content-type") ?? "image/png"
   const fileType = guessFileTypeFromMimeType(mimeType)

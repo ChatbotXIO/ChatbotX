@@ -56,6 +56,16 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/database/client", () => ({ db: {} }))
 
+// Mirrored keys are channel-first: workspace/<channel>/<workspace>/<integration>/<date>/<id>.
+vi.mock("@chatbotx.io/filesystem", () => ({
+  getMirroredChannelMediaPrefix: (location: {
+    channel: string
+    workspaceId: string
+    integrationId: string
+  }) =>
+    `workspace/${location.channel}/${location.workspaceId}/${location.integrationId}/2026/10/06`,
+}))
+
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mocks.createMessageRepository,
 }))
@@ -643,7 +653,8 @@ describe("media hydration", () => {
         workspaceId,
       }),
     ).resolves.toEqual({
-      originPath: "workspace/workspace-1/storage-2.png",
+      originPath:
+        "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-2.png",
     })
 
     expect(mocks.runChannelHandler).toHaveBeenCalledTimes(1)
@@ -658,7 +669,8 @@ describe("media hydration", () => {
         expect.objectContaining({
           id: "101",
           fields: expect.objectContaining({
-            originPath: "workspace/workspace-1/storage-1.jpg",
+            originPath:
+              "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
           }),
         }),
       ],
@@ -666,7 +678,8 @@ describe("media hydration", () => {
         expect.objectContaining({
           id: "102",
           fields: expect.objectContaining({
-            originPath: "workspace/workspace-1/storage-2.png",
+            originPath:
+              "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-2.png",
           }),
         }),
       ],
@@ -674,7 +687,8 @@ describe("media hydration", () => {
         expect.objectContaining({
           id: "103",
           fields: expect.objectContaining({
-            originPath: "workspace/workspace-1/storage-3.jpg",
+            originPath:
+              "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-3.jpg",
           }),
         }),
       ],
@@ -761,7 +775,8 @@ describe("media hydration", () => {
         workspaceId,
       }),
     ).resolves.toEqual({
-      originPath: "workspace/workspace-1/storage-1.jpg",
+      originPath:
+        "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-1.jpg",
     })
 
     expect(mocks.retrieveMedia).toHaveBeenCalledWith("media-101")
@@ -817,7 +832,8 @@ describe("media hydration", () => {
         workspaceId,
       }),
     ).resolves.toEqual({
-      originPath: "workspace/workspace-1/storage-2.png",
+      originPath:
+        "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-2.png",
     })
 
     expect(mocks.retrieveMedia.mock.calls).toEqual([
@@ -829,7 +845,8 @@ describe("media hydration", () => {
         expect.objectContaining({
           id: "101",
           fields: expect.objectContaining({
-            originPath: "workspace/workspace-1/storage-1.jpg",
+            originPath:
+              "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-1.jpg",
           }),
         }),
       ],
@@ -837,7 +854,8 @@ describe("media hydration", () => {
         expect.objectContaining({
           id: "102",
           fields: expect.objectContaining({
-            originPath: "workspace/workspace-1/storage-2.png",
+            originPath:
+              "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-2.png",
           }),
         }),
       ],
@@ -868,7 +886,10 @@ describe("media hydration", () => {
 
     await expect(
       ensureAttachmentMirrored({ attachmentId: "101", workspaceId }),
-    ).resolves.toEqual({ originPath: "workspace/workspace-1/storage-1.jpg" })
+    ).resolves.toEqual({
+      originPath:
+        "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+    })
 
     // Identity matching mirrors only the requested/matched attachment; the
     // sibling with no fresh media stays pending instead of failing the request.
@@ -914,7 +935,10 @@ describe("media hydration", () => {
 
     await expect(
       ensureAttachmentMirrored({ attachmentId: "102", workspaceId }),
-    ).resolves.toEqual({ originPath: "workspace/workspace-1/storage-2.png" })
+    ).resolves.toEqual({
+      originPath:
+        "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-2.png",
+    })
   })
 
   test("keeps a row pending when Graph resolves no media", async () => {

@@ -1,5 +1,6 @@
 import {
   type Context,
+  getMediaStoragePrefix,
   guessFileTypeFromMimeType,
   type IncomingAttachment,
 } from "@chatbotx.io/sdk"
@@ -62,7 +63,7 @@ export const getMessageAttachmentEntity = ({
       throw new ZaloException("No response body received")
     }
 
-    const originPath = `${ctx.storagePrefix}/${createId()}`
+    const originPath = `${getMediaStoragePrefix(ctx)}/${createId()}`
     const bytes = await response.arrayBuffer()
     const mimeType = response.headers.get("content-type") ?? "image/png"
     const fileType = guessFileTypeFromMimeType(mimeType)

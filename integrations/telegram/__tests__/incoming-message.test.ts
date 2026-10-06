@@ -2,6 +2,9 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 import { getTelegramFileUrl } from "../src/apis/bot"
 import { receiveMessage } from "../src/handlers/message/incoming-message"
 
+// Channel-scoped storage key the received media must land under.
+const CHANNEL_MEDIA_KEY = /^public\/telegram\/ws-1\/int-1\/2026\/10\/06\//
+
 vi.mock("../src/apis/bot", () => ({
   getTelegramFileUrl: vi.fn(),
 }))
@@ -58,6 +61,7 @@ const samplePhoto = [
 const buildCtx = () => ({
   auth: { secretText: "telegram-token" },
   storagePrefix: "workspace-1",
+  mediaStoragePrefix: "public/telegram/ws-1/int-1/2026/10/06",
   uploader: { putObject: vi.fn().mockResolvedValue(undefined) },
 })
 
@@ -180,6 +184,9 @@ describe("receiveMessage", () => {
       }),
     ])
     expect(testCtx.uploader.putObject).toHaveBeenCalledTimes(1)
+    expect(testCtx.uploader.putObject.mock.calls[0]?.[0]).toMatch(
+      CHANNEL_MEDIA_KEY,
+    )
   })
 
   test("rejects instead of silently dropping the attachment when the download fails", async () => {
