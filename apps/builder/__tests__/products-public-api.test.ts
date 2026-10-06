@@ -54,7 +54,11 @@ const productService = {
   update: vi.fn(),
   delete: vi.fn(),
 }
-vi.mock("@chatbotx.io/business", () => ({ productService }))
+const integrationMetaCatalogService = { disconnect: vi.fn() }
+vi.mock("@chatbotx.io/business", () => ({
+  productService,
+  integrationMetaCatalogService,
+}))
 
 await import("@/features/products/api/public")
 
@@ -76,6 +80,31 @@ beforeEach(() => {
 
 test("registers the products public router under the ecommerce scope", () => {
   expect(scopeArgAtImport).toBe("ecommerce")
+})
+
+describe("DELETE /v1/products/meta-catalog", () => {
+  const procedure = findProcedure("DELETE", "/v1/products/meta-catalog")
+
+  test("disconnects the token workspace's catalog", async () => {
+    await procedure.handler?.({ context: { workspace: { id: "ws-1" } } })
+
+    expect(integrationMetaCatalogService.disconnect).toHaveBeenCalledWith(
+      "ws-1",
+    )
+  })
+
+  test("a running sync refusal is passed through for the declared 409", async () => {
+    integrationMetaCatalogService.disconnect.mockRejectedValueOnce(
+      Object.assign(new Error("busy"), {
+        code: "metaCatalogSyncAlreadyRunning",
+        httpStatusCode: 409,
+      }),
+    )
+
+    await expect(
+      procedure.handler?.({ context: { workspace: { id: "ws-1" } } }),
+    ).rejects.toMatchObject({ code: "metaCatalogSyncAlreadyRunning" })
+  })
 })
 
 describe("GET /v1/products", () => {

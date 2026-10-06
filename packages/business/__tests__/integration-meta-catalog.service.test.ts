@@ -288,7 +288,10 @@ describe("IntegrationMetaCatalogService", () => {
 
     await expect(
       integrationMetaCatalogService.disconnect("workspace-1"),
-    ).rejects.toMatchObject({ code: "metaCatalogSyncAlreadyRunning" })
+    ).rejects.toMatchObject({
+      code: "metaCatalogSyncAlreadyRunning",
+      httpStatusCode: 409,
+    })
 
     expect(mocks.updateSet).not.toHaveBeenCalled()
   })
@@ -303,7 +306,10 @@ describe("IntegrationMetaCatalogService", () => {
 
     await expect(
       integrationMetaCatalogService.disconnect("workspace-1"),
-    ).rejects.toMatchObject({ code: "metaCatalogSyncAlreadyRunning" })
+    ).rejects.toMatchObject({
+      code: "metaCatalogSyncAlreadyRunning",
+      httpStatusCode: 409,
+    })
 
     expect(mocks.updateSet).not.toHaveBeenCalled()
   })
