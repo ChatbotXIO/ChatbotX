@@ -279,7 +279,7 @@ chatbotx conversations attribute add <conversationId> <messageId> --createdAt <c
 chatbotx broadcasts list
 chatbotx broadcasts get <idOrName>                   # Get broadcast
 chatbotx broadcasts audience list <idOrName>         # Get broadcast audience (contacts) [--page --perPage]
-chatbotx broadcasts contacts list <id> --eventType <eventType>  # Recipients by event (message:sent, message:seen, ...)
+chatbotx broadcasts contacts list <id> --eventType <eventType>  # Recipients by event (message:sent, message:seen, ...); returns total and conversationId
 chatbotx broadcasts audience-preview                 # Count (total) and list a would-be audience before sending [--inboxIds --channels --contactFilter --page --perPage ...]
 chatbotx broadcasts create --channel <channel> --subaction <subaction> --schedulesType <schedulesType>
                                                      # Cloud trial Messenger broadcasts: max 60/min and one active at a time
@@ -799,6 +799,7 @@ chatbotx inboxes update <id> --markReadOnOutbound <true|false>
 chatbotx instagram-channels list|get <id>
 chatbotx instagram-channels settings list <id>         # Welcome flow, ice breakers, persistent menu
 chatbotx instagram-channels settings update <id>       # Full replace; pushes to Instagram
+chatbotx instagram-channels delete <id>                # Disconnect the account (works after the trial ends)
 ```
 
 ---
@@ -855,6 +856,7 @@ chatbotx conversations thread-control add <id> --contactInboxId <id> --action ta
 ```bash
 chatbotx workspace settings get                       # Get workspace settings
 chatbotx workspace settings update --defaultReply --defaultReplyFrequency --smartResponseDelaySeconds --capiLimitedDataUse --logo
+                                                    # also --targetCountry --language --timezone --brandColor --developmentMode
 ```
 
 ### `whatsapp` calls (scope `integrations`)
@@ -891,6 +893,7 @@ chatbotx messenger-channels handover-resume-flow update <id> --handoverResumeFlo
 chatbotx messenger-channels tag-sync update <id> --enabled <enabled>
 chatbotx messenger-channels settings list <id>         # Welcome flow, persistent menu, personas, ice breakers
 chatbotx messenger-channels settings update <id>       # Full replace; pushes to Facebook
+chatbotx messenger-channels delete <id>                # Disconnect the Page (works after the trial ends)
 ```
 
 ---
@@ -946,6 +949,7 @@ chatbotx products imports-files-headers <fileId>
 chatbotx products imports create --fileId <id> --format <csv|xlsx> --columnMap <json>  # Start the import; 409 while one runs
 chatbotx products imports list                          # [--page --perPage --status --keyword --sort]
 chatbotx products find-by-imports <id>                  # Get one product import job
+chatbotx products meta-catalog delete                   # Disconnect Meta Catalog; 409 while a sync runs
 ```
 
 ---

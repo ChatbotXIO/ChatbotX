@@ -178,6 +178,7 @@ describe("Messenger template routes", () => {
   test("create reports Meta's rejection instead of failing", async () => {
     mocks.createTemplate.mockResolvedValue({
       id: "meta-1",
+      templateId: "local-1",
       status: "REJECTED",
       rejectionReason: "INVALID_FORMAT",
     })
@@ -192,6 +193,7 @@ describe("Messenger template routes", () => {
 
     expect(result).toEqual({
       id: "meta-1",
+      templateId: "local-1",
       status: "REJECTED",
       rejectionReason: "INVALID_FORMAT",
       specificRejectionReason: null,

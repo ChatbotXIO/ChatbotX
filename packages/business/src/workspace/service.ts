@@ -58,6 +58,11 @@ const WORKSPACE_SETTINGS_KEYS = [
   "smartResponseDelaySeconds",
   "capiLimitedDataUse",
   "logo",
+  "targetCountry",
+  "language",
+  "timezone",
+  "brandColor",
+  "developmentMode",
 ] as const
 
 class WorkspaceService extends BaseService {
@@ -172,6 +177,11 @@ class WorkspaceService extends BaseService {
         | "smartResponseDelaySeconds"
         | "capiLimitedDataUse"
         | "logo"
+        | "targetCountry"
+        | "language"
+        | "timezone"
+        | "brandColor"
+        | "developmentMode"
       >
     >
   }): Promise<WorkspaceModel> {

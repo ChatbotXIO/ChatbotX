@@ -685,3 +685,10 @@ export const possibleErrorsOnCancelingConnectSession = {
   businessError,
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
+
+/** Meta Catalog disconnect: refused while a sync or import is running. */
+export const possibleErrorsOnDisconnectingMetaCatalog = {
+  ...possibleErrorsOnDeletingResource,
+  metaCatalogSyncAlreadyRunning:
+    possibleErrorsOnStartingMetaCatalogRun.metaCatalogSyncAlreadyRunning,
+} satisfies ErrorMap

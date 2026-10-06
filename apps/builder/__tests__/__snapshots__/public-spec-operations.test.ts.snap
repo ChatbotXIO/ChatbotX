@@ -1584,6 +1584,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "DELETE",
+    "operationId": "instagramChannels.disconnect",
+    "path": "/v1/instagram-channels/{id}",
+  },
+  {
+    "method": "DELETE",
     "operationId": "instagramChannels.disconnectCapi",
     "path": "/v1/instagram-channels/{id}/capi",
   },
@@ -1819,6 +1824,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "DELETE",
+    "operationId": "messengerChannels.disconnect",
+    "path": "/v1/messenger-channels/{id}",
+  },
+  {
+    "method": "DELETE",
     "operationId": "messengerChannels.disconnectCapi",
     "path": "/v1/messenger-channels/{id}/capi",
   },
@@ -2006,6 +2016,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "products.deleteMany",
     "path": "/v1/products/bulk-delete",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "products.disconnectMetaCatalog",
+    "path": "/v1/products/meta-catalog",
   },
   {
     "method": "GET",

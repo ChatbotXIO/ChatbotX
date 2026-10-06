@@ -557,7 +557,14 @@ an endpoint's scope.
   sync history), `GET .../meta-catalog/businesses`, `POST /v1/products/meta-catalog`
   (create an empty catalog and bind it), `POST .../select` (bind and import,
   202) and `POST .../sync` (push products, 202); a second run while one is
-  active returns 409. Connecting and disconnecting stay private (Meta OAuth).
+  active returns 409. `DELETE /v1/products/meta-catalog` disconnects (409
+  while a sync or import runs, allowed on a trial-expired workspace);
+  connecting stays private (Meta OAuth).
+- **Channel disconnect** — scope `channels`: `DELETE /v1/messenger-channels/{id}`
+  and `DELETE /v1/instagram-channels/{id}` run the builder's disconnect (Meta
+  unsubscribe, running history sync ended, CAPI events removed; contacts and
+  conversations kept). Like every DELETE they stay open on a trial-expired
+  workspace. Connecting stays private (Meta OAuth).
   Scope `ads`: `POST /v1/ads/campaigns/upload-image` returns `imageKey`,
   `fileId` and a presigned PUT URL inside the workspace's ads-creative prefix
   (same type/size checks as the builder; the create-time preflight still proves
