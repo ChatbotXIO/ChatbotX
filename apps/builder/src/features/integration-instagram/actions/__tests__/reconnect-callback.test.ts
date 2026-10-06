@@ -14,9 +14,7 @@ vi.mock("@/lib/log", () => ({
 const findByIdForWorkspace = vi.fn()
 const updateAuth = vi.fn()
 const seedPersistentMenu = vi.fn()
-const reconnectInbox = vi.fn()
-const findWorkspaceById = vi.fn()
-const resolveTenantSettingsMock = vi.fn()
+const commitReconnect = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   instagramIntegrationService: {
@@ -25,12 +23,8 @@ vi.mock("@chatbotx.io/business", () => ({
     seedPersistentMenu,
   },
   connectionStateService: {
-    reconnectInbox,
+    commitReconnect,
   },
-  workspaceService: {
-    findById: findWorkspaceById,
-  },
-  resolveTenantSettings: resolveTenantSettingsMock,
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
@@ -38,17 +32,12 @@ vi.mock("@chatbotx.io/business/connection", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock @chatbotx.io/database/client — `db.transaction` mimics Drizzle's real
-// semantics closely enough for this test: it runs the callback against one
-// shared `tx` handle and forwards whatever the callback does (resolve/reject).
+// `commitReconnect` owns opening the transaction internally (see
+// `ConnectionStateService.commitReconnect`'s own unit tests for that); this
+// mock models the one contract this handler relies on: it invokes the
+// supplied `writeAuth(tx)` exactly once with a shared tx handle.
 // ---------------------------------------------------------------------------
 const SENTINEL_TX = { __tx: true }
-const dbTransaction = vi.fn(
-  async (callback: (tx: unknown) => unknown) => await callback(SENTINEL_TX),
-)
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: dbTransaction },
-}))
 
 // ---------------------------------------------------------------------------
 // Mock @chatbotx.io/integration-instagram (direct Instagram Business Login)
@@ -83,16 +72,11 @@ vi.mock("@chatbotx.io/sdk", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock the branding follow-up + its URL builder
+// Mock the branding follow-up helper
 // ---------------------------------------------------------------------------
-const runBrandingFollowUps = vi.fn()
+const seedReconnectBranding = vi.fn()
 vi.mock("@/features/channel-connect/lib/branding-follow-ups", () => ({
-  runBrandingFollowUps,
-}))
-
-const getBrandingUrl = vi.fn(() => "https://branding.example/instagram")
-vi.mock("@/features/integration-webchat/lib", () => ({
-  getBrandingUrl,
+  seedReconnectBranding,
 }))
 
 const buildIntegrationUserInfo = vi.fn()
@@ -113,7 +97,6 @@ const { reconnectInstagramHandler, reconnectInstagramFacebookHandler } =
 
 const WORKSPACE_ID = "100"
 const INTEGRATION_ID = "200"
-const WORKSPACE = { id: WORKSPACE_ID, ownerId: "owner-1" }
 
 function directRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -171,16 +154,14 @@ function invokeFacebook() {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  dbTransaction.mockImplementation(
-    async (callback: (tx: unknown) => unknown) => await callback(SENTINEL_TX),
+  commitReconnect.mockImplementation(
+    async ({ writeAuth }: { writeAuth: (tx: unknown) => Promise<void> }) =>
+      await writeAuth(SENTINEL_TX),
   )
   updateAuth.mockResolvedValue(undefined)
-  reconnectInbox.mockResolvedValue(undefined)
-  findWorkspaceById.mockResolvedValue(WORKSPACE)
-  resolveTenantSettingsMock.mockResolvedValue({ appUrl: "https://app.example" })
+  seedReconnectBranding.mockResolvedValue({ appUrl: "https://app.example" })
   subscribePageToInstagramWebhook.mockResolvedValue(undefined)
   subscribeFacebookPageToInstagramWebhook.mockResolvedValue(undefined)
-  runBrandingFollowUps.mockResolvedValue(undefined)
 
   getInstagramAccount.mockResolvedValue({
     userId: "ig-1",
@@ -207,33 +188,39 @@ describe("reconnectInstagramHandler (direct login) — Part 1: transaction atomi
     findByIdForWorkspace.mockResolvedValue(directRow())
   })
 
-  test("wraps the auth write and reconnectInbox in one shared transaction", async () => {
+  test("calls commitReconnect with the inbox/workspace/auth and a writeAuth that persists the satellite row through the shared tx", async () => {
     await invokeDirect()
 
-    expect(dbTransaction).toHaveBeenCalledTimes(1)
-    expect(updateAuth).toHaveBeenCalledWith(
-      expect.objectContaining({ tx: SENTINEL_TX }),
+    expect(commitReconnect).toHaveBeenCalledTimes(1)
+    expect(commitReconnect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: WORKSPACE_ID,
+      }),
     )
-    expect(reconnectInbox).toHaveBeenCalledWith(
+    expect(updateAuth).toHaveBeenCalledWith(
       expect.objectContaining({ tx: SENTINEL_TX }),
     )
   })
 
-  test("rolls back the whole reconnect when reconnectInbox fails after the auth write (e.g. channelLimitReached)", async () => {
+  test("propagates a commitReconnect failure (e.g. channelLimitReached from the inbox re-check) as a failed reconnect", async () => {
     const channelLimitReached = Object.assign(
       new Error("Channel limit reached"),
       { code: "channelLimitReached" },
     )
-    reconnectInbox.mockRejectedValue(channelLimitReached)
+    commitReconnect.mockImplementation(async ({ writeAuth }) => {
+      await writeAuth(SENTINEL_TX)
+      throw channelLimitReached
+    })
 
     const result = await invokeDirect()
 
     expect(result).toEqual({ status: "error", reason: "failed" })
-    expect(dbTransaction).toHaveBeenCalledTimes(1)
+    expect(commitReconnect).toHaveBeenCalledTimes(1)
     expect(updateAuth).toHaveBeenCalledWith(
       expect.objectContaining({ tx: SENTINEL_TX }),
     )
-    expect(runBrandingFollowUps).not.toHaveBeenCalled()
+    expect(seedReconnectBranding).not.toHaveBeenCalled()
     expect(subscribePageToInstagramWebhook).not.toHaveBeenCalled()
   })
 })
@@ -247,19 +234,14 @@ describe("reconnectInstagramHandler (direct login) — Part 2: branding follow-u
     const result = await invokeDirect()
 
     expect(result).toEqual({ status: "success" })
-    expect(runBrandingFollowUps).toHaveBeenCalledTimes(1)
-    expect(getBrandingUrl).toHaveBeenCalledWith(
-      "instagram",
-      "https://app.example",
-    )
+    expect(seedReconnectBranding).toHaveBeenCalledTimes(1)
 
-    const call = runBrandingFollowUps.mock.calls[0][0]
+    const call = seedReconnectBranding.mock.calls[0][0]
+    expect(call.channel).toBe("instagram")
     expect(call.integration).toBe(instagramChannelIntegration)
     expect(call.integrationType).toBe("instagram")
-    expect(call.session.workspace).toEqual(WORKSPACE)
-    expect(call.session.brandingMenuEntry.url).toBe(
-      "https://branding.example/instagram",
-    )
+    expect(call.workspaceId).toBe(WORKSPACE_ID)
+    expect(call.integrationId).toBe(INTEGRATION_ID)
     expect(typeof call.persistBrandingMenu).toBe("function")
 
     const entry = {
@@ -281,7 +263,7 @@ describe("reconnectInstagramHandler (direct login) — Part 2: branding follow-u
 
     await invokeDirect()
 
-    const call = runBrandingFollowUps.mock.calls[0][0]
+    const call = seedReconnectBranding.mock.calls[0][0]
     expect(call.persistBrandingMenu).toBeUndefined()
   })
 })
@@ -291,29 +273,35 @@ describe("reconnectInstagramFacebookHandler — Part 1: transaction atomicity", 
     findByIdForWorkspace.mockResolvedValue(facebookRow())
   })
 
-  test("wraps the auth write and reconnectInbox in one shared transaction", async () => {
+  test("calls commitReconnect with the inbox/workspace/auth and a writeAuth that persists the satellite row through the shared tx", async () => {
     await invokeFacebook()
 
-    expect(dbTransaction).toHaveBeenCalledTimes(1)
-    expect(updateAuth).toHaveBeenCalledWith(
-      expect.objectContaining({ tx: SENTINEL_TX }),
+    expect(commitReconnect).toHaveBeenCalledTimes(1)
+    expect(commitReconnect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: WORKSPACE_ID,
+      }),
     )
-    expect(reconnectInbox).toHaveBeenCalledWith(
+    expect(updateAuth).toHaveBeenCalledWith(
       expect.objectContaining({ tx: SENTINEL_TX }),
     )
   })
 
-  test("rolls back the whole reconnect when reconnectInbox fails after the auth write", async () => {
+  test("propagates a commitReconnect failure (e.g. channelLimitReached from the inbox re-check) as a failed reconnect", async () => {
     const channelLimitReached = Object.assign(
       new Error("Channel limit reached"),
       { code: "channelLimitReached" },
     )
-    reconnectInbox.mockRejectedValue(channelLimitReached)
+    commitReconnect.mockImplementation(async ({ writeAuth }) => {
+      await writeAuth(SENTINEL_TX)
+      throw channelLimitReached
+    })
 
     const result = await invokeFacebook()
 
     expect(result).toEqual({ status: "error", reason: "failed" })
-    expect(runBrandingFollowUps).not.toHaveBeenCalled()
+    expect(seedReconnectBranding).not.toHaveBeenCalled()
     expect(subscribeFacebookPageToInstagramWebhook).not.toHaveBeenCalled()
   })
 })
@@ -327,12 +315,13 @@ describe("reconnectInstagramFacebookHandler — Part 2: branding follow-up", () 
     const result = await invokeFacebook()
 
     expect(result).toEqual({ status: "success" })
-    expect(runBrandingFollowUps).toHaveBeenCalledTimes(1)
+    expect(seedReconnectBranding).toHaveBeenCalledTimes(1)
 
-    const call = runBrandingFollowUps.mock.calls[0][0]
+    const call = seedReconnectBranding.mock.calls[0][0]
+    expect(call.channel).toBe("instagram")
     expect(call.integration).toBe(instagramFacebookChannelIntegration)
     expect(call.integrationType).toBe("instagramFacebook")
-    expect(call.session.workspace).toEqual(WORKSPACE)
+    expect(call.workspaceId).toBe(WORKSPACE_ID)
     expect(typeof call.persistBrandingMenu).toBe("function")
 
     const entry = {
@@ -354,7 +343,7 @@ describe("reconnectInstagramFacebookHandler — Part 2: branding follow-up", () 
 
     await invokeFacebook()
 
-    const call = runBrandingFollowUps.mock.calls[0][0]
+    const call = seedReconnectBranding.mock.calls[0][0]
     expect(call.persistBrandingMenu).toBeUndefined()
   })
 })

@@ -14,6 +14,7 @@ import {
 } from "@chatbotx.io/database/repositories"
 import type { connectionModel } from "@chatbotx.io/database/schema"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
+import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
 import { ChatbotXException, channelLimitReachedException } from "../errors"
 import { inboxService } from "../inbox/service"
@@ -21,6 +22,7 @@ import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceMemberService } from "../workspace-member/service"
 import { workspaceUsageService } from "../workspace-usage/service"
+import { authExpiresAtOf } from "./auth-expiry"
 import {
   type ConnectionEvent,
   isActiveConnectionStatus,
@@ -159,12 +161,86 @@ class ConnectionStateService extends BaseService {
     const ownerId = await workspaceMemberService.findOwnerUserIdByWorkspaceId({
       workspaceId: input.workspaceId,
     })
-    await this.transition({
-      connectionId: connection.id,
-      event: "connect.completed",
-      ownerId,
-      values: { authExpiresAt: input.authExpiresAt ?? null, lastError: null },
-      tx: input.tx,
+    // `connect.completed` may consume one `channels` quota unit reviving an
+    // inactive connection. The quota check itself lives in Redis, outside
+    // any SQL transaction, so a later rollback of a caller-owned `input.tx`
+    // would not undo it on its own — `transition`'s caller-tx guard requires
+    // this explicit tracking so it can be compensated below instead.
+    const quotaConsumption: ConnectionQuotaConsumption = {
+      consumed: false,
+      workspaceUsageIncremented: false,
+    }
+    try {
+      await this.transition({
+        connectionId: connection.id,
+        event: "connect.completed",
+        ownerId,
+        values: { authExpiresAt: input.authExpiresAt ?? null, lastError: null },
+        tx: input.tx,
+        quotaConsumption,
+      })
+    } catch (err) {
+      await this.compensateIfConsumed(ownerId, quotaConsumption, {
+        inboxId: input.inboxId,
+        workspaceId: input.workspaceId,
+      })
+      throw err
+    }
+  }
+
+  /**
+   * Releases a quota reservation `quotaConsumption` tracked after a
+   * caller-owned transaction failed. Takes `quotaConsumption` as a fresh
+   * parameter (not a closed-over local) so its discriminant narrows
+   * normally here — a `const` bound directly to an object literal at its
+   * declaration site keeps TypeScript's control-flow analysis pinned to
+   * that literal's branch for the rest of the declaring function, even
+   * after a callee mutates it by reference.
+   */
+  private async compensateIfConsumed(
+    ownerId: string | undefined,
+    quotaConsumption: ConnectionQuotaConsumption,
+    context: Record<string, unknown>,
+  ): Promise<void> {
+    if (!(quotaConsumption.consumed && ownerId)) {
+      return
+    }
+    try {
+      await this.compensateQuotaConsumption({
+        ownerId,
+        workspaceId: quotaConsumption.workspaceId,
+        workspaceUsageIncremented: quotaConsumption.workspaceUsageIncremented,
+      })
+    } catch (compensationErr) {
+      logger.error(
+        { err: compensationErr, ...context },
+        "reconnectInbox: quota compensation failed",
+      )
+    }
+  }
+
+  /**
+   * Writes re-authorized satellite auth (via the caller-supplied
+   * `writeAuth`) and restores the matching inbox connection in one
+   * transaction, so a failure inside `reconnectInbox` (e.g. a channel-limit
+   * re-check) rolls back the auth write too, instead of leaving the
+   * satellite row re-authorized while the Connection/Inbox state stays
+   * stale.
+   */
+  async commitReconnect(input: {
+    inboxId: string
+    workspaceId: string
+    auth: AuthValue
+    writeAuth: (tx: DatabaseClient) => Promise<void>
+  }): Promise<void> {
+    await db.transaction(async (tx) => {
+      await input.writeAuth(tx)
+      await this.reconnectInbox({
+        inboxId: input.inboxId,
+        workspaceId: input.workspaceId,
+        authExpiresAt: authExpiresAtOf(input.auth),
+        tx,
+      })
     })
   }
 
@@ -198,7 +274,7 @@ class ConnectionStateService extends BaseService {
      * has actually committed; otherwise a later statement in that same
      * transaction rolling back would under-count the release. Omitted →
      * this transition keeps releasing immediately once its own DB work
-     * resolves, same as before this handshake existed.
+     * resolves.
      */
     pendingRelease?: { current: PendingQuotaRelease | null }
   }): Promise<ConnectionModel> {
@@ -338,7 +414,7 @@ class ConnectionStateService extends BaseService {
         quotaConsumption.workspaceUsageIncremented = true
       } else if (releasesQuota) {
         if (input.ownerId) {
-          // Deferred (M-8): releasing here, inside the transaction, raced a
+          // Deferred: releasing here, inside the transaction, would race a
           // COMMIT failure (or, for a caller-owned `tx`, any later statement
           // in that same transaction) rolling back this very status write
           // after the release had already fired — under-counting quota on
@@ -376,7 +452,7 @@ class ConnectionStateService extends BaseService {
         // Either the self-managed path (`db.transaction(run)` has only just
         // resolved here because Postgres committed — safe to release now),
         // or a caller-owned `tx` that didn't opt into the handshake above —
-        // same immediate-release behavior as before this fix.
+        // same immediate-release behavior.
         await this.releaseQuotaEdge(
           pendingRelease.ownerId,
           pendingRelease.workspaceId,
@@ -646,7 +722,7 @@ class ConnectionStateService extends BaseService {
               status: "disconnected",
               // A no-op re-assertion (`reason === null`) must preserve
               // whatever `disconnectedAt`/`disconnectReason` is already
-              // stored (M-2) — only a real transition stamps fresh values.
+              // stored — only a real transition stamps fresh values.
               ...(input.reason
                 ? {
                     disconnectedAt: new Date(),

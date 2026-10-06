@@ -11,8 +11,11 @@ import type {
   IntegrationUserInfo,
 } from "@chatbotx.io/database/partials"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
+import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
+import { recordRefreshedAuth } from "../connection/record-refreshed-auth"
 import { connectionStateService } from "../connection/state-service"
+import { logger } from "../logger"
 
 class InstagramIntegrationService extends BaseService {
   findByInboxId(inboxId: string) {
@@ -91,6 +94,10 @@ class InstagramIntegrationService extends BaseService {
       })
 
     if (!row) {
+      logger.warn(
+        { integrationId: props.id, workspaceId: props.workspaceId },
+        "Unable to mark Instagram token refresh error: integration not found",
+      )
       return
     }
 
@@ -143,7 +150,7 @@ class InstagramIntegrationService extends BaseService {
     tx?: DatabaseClient
   }): Promise<void> {
     const client = props.tx ?? db
-    await client
+    const [row] = await client
       .update(integrationInstagramModel)
       .set({
         auth: props.auth,
@@ -159,14 +166,27 @@ class InstagramIntegrationService extends BaseService {
           eq(integrationInstagramModel.workspaceId, props.workspaceId),
         ),
       )
+      .returning({
+        igId: integrationInstagramModel.igId,
+        type: integrationInstagramModel.type,
+      })
+    if (!row) {
+      return
+    }
+    await recordRefreshedAuth({
+      workspaceId: props.workspaceId,
+      provider: row.type === "facebook" ? "instagramFacebook" : "instagram",
+      sourceId: row.igId,
+      auth: props.auth as AuthValue,
+      tx: props.tx,
+    })
   }
 
   /**
    * Seeds the row's own `persistentMenus` column with a single branding
-   * entry after the live Graph API push succeeds — restores the v1.11.0
-   * insert-time-seeded value, same as Messenger's `seedPersistentMenu`.
-   * Callers gate this to rows that don't already have user-configured menu
-   * items, so it never clobbers.
+   * entry after the live Graph API push succeeds, same as Messenger's
+   * `seedPersistentMenu`. Callers gate this to rows that don't already have
+   * user-configured menu items, so it never clobbers.
    */
   async seedPersistentMenu(props: {
     id: string

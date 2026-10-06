@@ -1,11 +1,7 @@
 import {
   connectionStateService,
   messengerIntegrationService,
-  resolveTenantSettings,
-  workspaceService,
 } from "@chatbotx.io/business"
-import { authExpiresAtOf } from "@chatbotx.io/business/connection"
-import { db } from "@chatbotx.io/database/client"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import {
   debugToken,
@@ -23,8 +19,7 @@ import {
 } from "@chatbotx.io/integration-messenger/apis/page"
 import { AuthType } from "@chatbotx.io/sdk"
 import { normalizeError } from "universal-error-normalizer"
-import { runBrandingFollowUps } from "@/features/channel-connect/lib/branding-follow-ups"
-import { getBrandingUrl } from "@/features/integration-webchat/lib"
+import { seedReconnectBranding } from "@/features/channel-connect/lib/branding-follow-ups"
 import type { ReconnectResult } from "@/lib/channel-reconnect"
 import { lookupIntegrationUserInfo } from "@/lib/integration-user-info"
 import { logger } from "@/lib/log"
@@ -113,43 +108,28 @@ export async function reconnectMessengerHandler(props: {
 
     // DB write before the webhook subscription (matching the connect flow) so
     // a failed write never leaves the webhook re-bound while the stored auth
-    // still holds the stale token. Both writes share one transaction so a
-    // failure inside `reconnectInbox` (e.g. a channel-limit re-check) rolls
-    // back the auth write too, instead of leaving the satellite row
-    // re-authorized while the Connection/Inbox state stays stale.
-    await db.transaction(async (tx) => {
-      await messengerIntegrationService.updateAuth({
-        id: integrationMessenger.id,
-        workspaceId: props.workspaceId,
-        auth,
-        name: page.name,
-        ...(userInfo ? { userInfo } : {}),
-        tx,
-      })
-
-      await connectionStateService.reconnectInbox({
-        inboxId: integrationMessenger.inboxId,
-        workspaceId: props.workspaceId,
-        authExpiresAt: authExpiresAtOf(auth),
-        tx,
-      })
+    // still holds the stale token (see `commitReconnect`'s doc for the
+    // transaction rationale).
+    await connectionStateService.commitReconnect({
+      inboxId: integrationMessenger.inboxId,
+      workspaceId: props.workspaceId,
+      auth,
+      writeAuth: async (tx) => {
+        await messengerIntegrationService.updateAuth({
+          id: integrationMessenger.id,
+          workspaceId: props.workspaceId,
+          auth,
+          name: page.name,
+          ...(userInfo ? { userInfo } : {}),
+          tx,
+        })
+      },
     })
 
-    const [workspace, { appUrl }] = await Promise.all([
-      workspaceService.findById({ id: props.workspaceId }),
-      resolveTenantSettings({ workspaceId: props.workspaceId }),
-    ])
-
-    // Best-effort: seeds the community branding menu entry onto the
-    // satellite row, matching the fresh-connect follow-up in
-    // `connect-page.ts` — a reconnect that reinserted a deleted row would
-    // otherwise never get it seeded. A failure here must never fail the
-    // whole reconnect.
-    await runBrandingFollowUps({
-      session: {
-        workspace,
-        brandingMenuEntry: { url: getBrandingUrl("messenger", appUrl) },
-      },
+    const { appUrl } = await seedReconnectBranding({
+      workspaceId: props.workspaceId,
+      integrationId: props.integrationId,
+      channel: "messenger",
       integrationRow: { ...integrationMessenger, auth },
       integration: messengerChannelIntegration,
       integrationType: "messenger",
@@ -160,15 +140,7 @@ export async function reconnectMessengerHandler(props: {
               id: integrationMessenger.id,
               entry,
             }),
-    }).catch((error) => {
-      logger.warn(
-        {
-          err: error,
-          workspaceId: props.workspaceId,
-          integrationId: props.integrationId,
-        },
-        "Messenger branding follow-up failed during reconnect",
-      )
+      logLabel: "Messenger",
     })
 
     // Re-subscribe the page to exactly the webhook fields its reconnected

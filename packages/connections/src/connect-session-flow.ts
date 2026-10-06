@@ -1,11 +1,19 @@
-import { connectSessionService } from "@chatbotx.io/business/connect-session"
+import {
+  type ConnectSessionActor,
+  connectSessionService,
+} from "@chatbotx.io/business/connect-session"
 import {
   authExpiresAtOf,
   type ConnectionQuotaConsumption,
   connectionStateService,
   isActiveConnectionStatus,
+  resolveForeignKey,
+  resolveOwnerId,
+  saveOrInsertSatellite,
+  withQuotaCompensation,
 } from "@chatbotx.io/business/connection"
 import {
+  connectionAlreadyConnectedException,
   connectionCredentialsRejectedException,
   connectionIdentityMismatchException,
   connectionNoCandidatesException,
@@ -44,12 +52,8 @@ import {
   encryptedAuthorizationSchema,
   providerFailureStatus,
   resolveAdapter,
-  resolveForeignKey,
-  resolveOwnerId,
-  saveOrInsertSatellite,
   subscribeWebhookBestEffort,
   toConnectionProviderError,
-  withQuotaCompensation,
 } from "./internal"
 import { logger } from "./logger"
 
@@ -63,30 +67,53 @@ import { logger } from "./logger"
  * and passed in — this package cannot resolve them itself without
  * depending on `apps/builder`.
  */
-export const startSession = async (input: {
-  workspaceId?: string
-  /**
-   * First-channel path only (mutually exclusive with `workspaceId`):
-   * resolves-or-creates the user's workspace and inserts this session in
-   * the SAME transaction. A failure anywhere in this call (session cap,
-   * DB error) then rolls the just-created workspace back with it, instead
-   * of leaving an empty orphan workspace behind when the connect attempt
-   * never even reaches the provider (M-7) — the app-layer caller supplies
-   * this instead of a plain `workspaceId` precisely so the insert it does
-   * (`workspaceService.create`) can run against this package's `tx`.
-   */
-  createWorkspace?: (tx: DatabaseClient) => Promise<{ id: string }>
-  provider: IntegrationType
-  purpose: ConnectSessionPurpose
-  credential: ConnectionCredential
-  callbackUrl: string
-  targetConnectionId?: string | null
-  actorUserId?: string | null
-  actorTokenId?: string | null
-  platformOwnerId?: string | null
-  originHost?: string | null
-  returnUrl?: string | null
-}): Promise<{
+type StartSessionTarget =
+  | { workspaceId: string; createWorkspace?: never }
+  | {
+      workspaceId?: never
+      /**
+       * First-channel path only (mutually exclusive with `workspaceId`):
+       * resolves-or-creates the user's workspace and inserts this session in
+       * the SAME transaction. A failure anywhere in this call (session cap,
+       * DB error) then rolls the just-created workspace back with it, instead
+       * of leaving an empty orphan workspace behind when the connect attempt
+       * never even reaches the provider — the app-layer caller supplies
+       * this instead of a plain `workspaceId` precisely so the insert it does
+       * (`workspaceService.create`) can run against this package's `tx`.
+       */
+      createWorkspace: (tx: DatabaseClient) => Promise<{ id: string }>
+    }
+
+/**
+ * Narrows the actor union to exactly the one field present. Neither
+ * truthiness (an empty-string `actorUserId` is still type-`string`) nor the
+ * `in` operator (both branches declare the `actorUserId` key — one as
+ * `string`, the other as `?: never` — so `in` can't tell them apart) narrows
+ * this union; a user-defined type guard does.
+ */
+const isUserActor = (
+  actor: ConnectSessionActor,
+): actor is { actorUserId: string; actorTokenId?: never } =>
+  actor.actorUserId !== undefined
+
+export const actorRefOf = (actor: ConnectSessionActor): ConnectSessionActor =>
+  isUserActor(actor)
+    ? { actorUserId: actor.actorUserId }
+    : { actorTokenId: actor.actorTokenId }
+
+export const startSession = async (
+  input: {
+    provider: IntegrationType
+    purpose: ConnectSessionPurpose
+    credential: ConnectionCredential
+    callbackUrl: string
+    targetConnectionId?: string | null
+    platformOwnerId?: string | null
+    originHost?: string | null
+    returnUrl?: string | null
+  } & StartSessionTarget &
+    ConnectSessionActor,
+): Promise<{
   session: ConnectSessionModel
   nextAction: ConnectSessionNextAction
 }> => {
@@ -94,12 +121,6 @@ export const startSession = async (input: {
   const authorizeUrl = adapter.provider.authorizeUrl
   if (!authorizeUrl) {
     throw connectionNotOAuthException(input.provider)
-  }
-  const { workspaceId, createWorkspace } = input
-  if (Boolean(workspaceId) === Boolean(createWorkspace)) {
-    throw new Error(
-      "startSession requires exactly one of workspaceId/createWorkspace",
-    )
   }
 
   const sessionId = createId()
@@ -117,11 +138,10 @@ export const startSession = async (input: {
       return { type: "open_url" as const, url }
     },
     targetConnectionId: input.targetConnectionId,
-    actorUserId: input.actorUserId,
-    actorTokenId: input.actorTokenId,
     platformOwnerId: input.platformOwnerId,
     originHost: input.originHost,
     returnUrl: input.returnUrl,
+    ...actorRefOf(input),
   })
 
   const verifyTargetOwnership = async (resolvedWorkspaceId: string) => {
@@ -138,7 +158,8 @@ export const startSession = async (input: {
   }
 
   let session: ConnectSessionModel
-  if (createWorkspace) {
+  if (input.createWorkspace) {
+    const { createWorkspace } = input
     session = await db.transaction(async (tx) => {
       const workspace = await createWorkspace(tx)
       await verifyTargetOwnership(workspace.id)
@@ -149,9 +170,9 @@ export const startSession = async (input: {
       return created.session
     })
   } else {
-    await verifyTargetOwnership(workspaceId as string)
+    await verifyTargetOwnership(input.workspaceId)
     const created = await connectSessionService.create(
-      buildSessionInsertInput(workspaceId as string),
+      buildSessionInsertInput(input.workspaceId),
     )
     session = created.session
   }
@@ -239,7 +260,10 @@ export const completeAuthorization = async (input: {
   }
 
   if (session.purpose === "reconnect" && session.targetConnectionId) {
-    return await completeReconnect({ session, auth })
+    return await completeReconnect({
+      session: session as ConnectSessionModel & { targetConnectionId: string },
+      auth,
+    })
   }
 
   let authorizedSession: ConnectSessionModel
@@ -413,16 +437,12 @@ export const listAndAttachCandidates = async (
  * auth and transitions the connection back to healthy.
  */
 const completeReconnect = async (input: {
-  session: ConnectSessionModel
+  session: ConnectSessionModel & { targetConnectionId: string }
   auth: AuthValue
 }): Promise<ConnectSessionModel> => {
   const { session, auth } = input
-  const targetConnectionId = session.targetConnectionId
-  if (!targetConnectionId) {
-    throw notFoundException("Connection not found")
-  }
   const connection = await connectionRepository.findByIdForWorkspace({
-    id: targetConnectionId,
+    id: session.targetConnectionId,
     workspaceId: session.workspaceId,
   })
   if (!connection) {
@@ -431,13 +451,29 @@ const completeReconnect = async (input: {
   }
 
   const adapter = resolveAdapter(connection.provider)
+  // A `legacy:`-prefixed `sourceId` marks a row `backfill-connections.ts`
+  // could not resolve a real sourceId for at migration time — it never
+  // equals any real candidate's `sourceId`, so a multi-account provider's
+  // exact-match lookup below would always report "no candidate" even when
+  // the user re-granted access to exactly the one account being
+  // reconnected. Accept that single candidate unambiguously; two or more
+  // candidates for a legacy row genuinely cannot be resolved to the one
+  // connection being reconnected, so that case still falls through to the
+  // identity-mismatch rejection below. The same bypass applies to the
+  // `describe()`-only (non-multi-account) path further down.
+  const isLegacySourceId = connection.sourceId.startsWith("legacy:")
   let candidate: ConnectionCandidate | undefined
   try {
-    candidate = adapter.provider.listCandidates
-      ? (await adapter.provider.listCandidates({ auth })).find(
+    if (adapter.provider.listCandidates) {
+      const candidates = await adapter.provider.listCandidates({ auth })
+      if (isLegacySourceId) {
+        candidate = candidates.length === 1 ? candidates[0] : undefined
+      } else {
+        candidate = candidates.find(
           ({ sourceId }) => sourceId === connection.sourceId,
         )
-      : undefined
+      }
+    }
   } catch (err) {
     await failSession(session, "internal_error", ["authorized"])
     throw err
@@ -454,14 +490,19 @@ const completeReconnect = async (input: {
     await failSession(session, "internal_error", ["authorized"])
     throw err
   }
-  // A `legacy:`-prefixed `sourceId` marks a row `backfill-connections.ts`
-  // could not resolve a real sourceId for at migration time — accept it as
-  // a match on this first reconnect and overwrite it with the descriptor's
-  // real sourceId below, instead of rejecting it as an identity mismatch.
-  const isLegacySourceId = connection.sourceId.startsWith("legacy:")
   if (descriptor.sourceId !== connection.sourceId && !isLegacySourceId) {
     await failSession(session, "provider_denied", ["authorized"])
     throw connectionIdentityMismatchException()
+  }
+  if (isLegacySourceId) {
+    const existing = await connectionRepository.findByProviderSourceId({
+      workspaceId: connection.workspaceId,
+      provider: connection.provider,
+      sourceId: descriptor.sourceId,
+    })
+    if (existing && existing.id !== connection.id) {
+      throw connectionAlreadyConnectedException()
+    }
   }
 
   const foreignKey = resolveForeignKey(connection)

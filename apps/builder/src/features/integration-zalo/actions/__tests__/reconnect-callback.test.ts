@@ -13,7 +13,7 @@ vi.mock("@/lib/log", () => ({
 // ---------------------------------------------------------------------------
 const findById = vi.fn()
 const updateAuth = vi.fn()
-const reconnectInbox = vi.fn()
+const commitReconnect = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   zaloIntegrationService: {
@@ -21,7 +21,7 @@ vi.mock("@chatbotx.io/business", () => ({
     updateAuth,
   },
   connectionStateService: {
-    reconnectInbox,
+    commitReconnect,
   },
 }))
 
@@ -30,18 +30,12 @@ vi.mock("@chatbotx.io/business/connection", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock @chatbotx.io/database/client — `db.transaction` mimics Drizzle's real
-// semantics closely enough for this test: it runs the callback against one
-// shared `tx` handle and forwards whatever the callback does (resolve/reject).
+// `commitReconnect` owns opening the transaction internally (see
+// `ConnectionStateService.commitReconnect`'s own unit tests for that); this
+// mock models the one contract this handler relies on: it invokes the
+// supplied `writeAuth(tx)` exactly once with a shared tx handle.
 // ---------------------------------------------------------------------------
 const SENTINEL_TX = { __tx: true }
-const dbTransaction = vi.fn(
-  async (callback: (tx: unknown) => unknown) => await callback(SENTINEL_TX),
-)
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: dbTransaction },
-}))
-
 // ---------------------------------------------------------------------------
 // Mock @/integration (the per-channel SDK registry `integrations.zalo`)
 // ---------------------------------------------------------------------------
@@ -78,8 +72,9 @@ function invoke() {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  dbTransaction.mockImplementation(
-    async (callback: (tx: unknown) => unknown) => await callback(SENTINEL_TX),
+  commitReconnect.mockImplementation(
+    async ({ writeAuth }: { writeAuth: (tx: unknown) => Promise<void> }) =>
+      await writeAuth(SENTINEL_TX),
   )
   findById.mockResolvedValue({
     id: INTEGRATION_ID,
@@ -88,7 +83,6 @@ beforeEach(() => {
     oaId: "oa-1",
   })
   updateAuth.mockResolvedValue(undefined)
-  reconnectInbox.mockResolvedValue(undefined)
   handleRequest.mockResolvedValue({
     oaId: "oa-1",
     metadata: { oaName: "My OA" },
@@ -96,10 +90,16 @@ beforeEach(() => {
 })
 
 describe("reconnectZaloHandler — Part 1: transaction atomicity", () => {
-  test("wraps the auth write and reconnectInbox in one shared transaction", async () => {
+  test("calls commitReconnect with the inbox/workspace/auth and a writeAuth that persists the satellite row through the shared tx", async () => {
     await invoke()
 
-    expect(dbTransaction).toHaveBeenCalledTimes(1)
+    expect(commitReconnect).toHaveBeenCalledTimes(1)
+    expect(commitReconnect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: WORKSPACE_ID,
+      }),
+    )
     // Positional call: (id, auth, name, tx) — the 4th positional arg is the tx.
     expect(updateAuth).toHaveBeenCalledWith(
       INTEGRATION_ID,
@@ -107,25 +107,22 @@ describe("reconnectZaloHandler — Part 1: transaction atomicity", () => {
       "My OA",
       SENTINEL_TX,
     )
-    expect(reconnectInbox).toHaveBeenCalledWith(
-      expect.objectContaining({ tx: SENTINEL_TX }),
-    )
   })
 
-  test("rolls back the whole reconnect when reconnectInbox fails after the auth write (e.g. channelLimitReached)", async () => {
+  test("propagates a commitReconnect failure (e.g. channelLimitReached from the inbox re-check) as a failed reconnect", async () => {
     const channelLimitReached = Object.assign(
       new Error("Channel limit reached"),
       { code: "channelLimitReached" },
     )
-    reconnectInbox.mockRejectedValue(channelLimitReached)
+    commitReconnect.mockImplementation(async ({ writeAuth }) => {
+      await writeAuth(SENTINEL_TX)
+      throw channelLimitReached
+    })
 
     const result = await invoke()
 
     expect(result).toEqual({ status: "error", reason: "failed" })
-    // Both writes ran through the SAME transaction boundary, so the thrown
-    // error aborts the whole thing — there is no "auth saved, inbox state
-    // stale" partial outcome for the real DB to commit.
-    expect(dbTransaction).toHaveBeenCalledTimes(1)
+    expect(commitReconnect).toHaveBeenCalledTimes(1)
     expect(updateAuth).toHaveBeenCalledWith(
       INTEGRATION_ID,
       expect.objectContaining({ oaId: "oa-1" }),

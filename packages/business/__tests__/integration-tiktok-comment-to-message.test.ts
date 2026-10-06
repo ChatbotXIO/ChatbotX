@@ -45,6 +45,7 @@ vi.mock("../src/audit/dispatcher", () => ({
 
 vi.mock("../src/connection", () => ({
   CONNECTION_STORE_BINDINGS: { tiktok: { duplicateConstraint: undefined } },
+  recordRefreshedAuth: vi.fn(),
   upsertConnectionRow: vi.fn(),
   withQuotaCompensation: vi.fn(
     async (_input: unknown, operation: () => Promise<unknown>) =>

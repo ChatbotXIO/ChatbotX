@@ -13,6 +13,7 @@ type ReconnectWhatsappActionHandler = (
   args: ReconnectWhatsappActionArgs,
 ) => Promise<unknown>
 
+const SENTINEL_TX = { __tx: true }
 const {
   exchangeAccessTokenMock,
   findWabaMock,
@@ -25,9 +26,8 @@ const {
   replaceAuthMock,
   subscribeWebhookMock,
   upsertCurrentCredentialMock,
-  reconnectInboxMock,
+  commitReconnectMock,
   authExpiresAtOfMock,
-  dbTransactionMock,
 } = vi.hoisted(() => ({
   exchangeAccessTokenMock: vi.fn(),
   findWabaMock: vi.fn(),
@@ -40,11 +40,8 @@ const {
   replaceAuthMock: vi.fn(),
   subscribeWebhookMock: vi.fn(),
   upsertCurrentCredentialMock: vi.fn(),
-  reconnectInboxMock: vi.fn(),
+  commitReconnectMock: vi.fn(),
   authExpiresAtOfMock: vi.fn(() => null),
-  dbTransactionMock: vi.fn(
-    async (callback: (tx: unknown) => unknown) => await callback({}),
-  ),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -84,17 +81,13 @@ vi.mock("@chatbotx.io/business", () => ({
     upsertCurrentCredential: upsertCurrentCredentialMock,
   },
   connectionStateService: {
-    reconnectInbox: reconnectInboxMock,
+    commitReconnect: commitReconnectMock,
   },
   WHATSAPP_CAPI_SCOPE: "whatsapp_business_manage_events",
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
   authExpiresAtOf: authExpiresAtOfMock,
-}))
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: dbTransactionMock },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -189,7 +182,10 @@ describe("reconnectWhatsappAction", () => {
       revision: 1,
     })
     subscribeWebhookMock.mockResolvedValue(undefined)
-    reconnectInboxMock.mockResolvedValue(undefined)
+    commitReconnectMock.mockImplementation(
+      async ({ writeAuth }: { writeAuth: (tx: unknown) => Promise<void> }) =>
+        await writeAuth(SENTINEL_TX),
+    )
   })
 
   test("rejects non-super-admin members before reconnecting WhatsApp auth", async () => {
@@ -278,11 +274,14 @@ describe("reconnectWhatsappAction", () => {
       parsedInput: { code: "oauth-code-1" },
     })
 
-    expect(reconnectInboxMock).toHaveBeenCalledWith({
-      inboxId: "inbox-1",
-      workspaceId: "ws-1",
-      authExpiresAt: null,
-      tx: expect.anything(),
-    })
+    expect(commitReconnectMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+      }),
+    )
+    expect(replaceAuthMock).toHaveBeenCalledWith(
+      expect.objectContaining({ tx: SENTINEL_TX }),
+    )
   })
 })

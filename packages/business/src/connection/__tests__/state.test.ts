@@ -211,7 +211,7 @@ describe("transitionConnection — quota edge invariant", () => {
   })
 })
 
-describe("transitionConnection — Phase 0 FSM edges", () => {
+describe("transitionConnection — FSM edges", () => {
   test("connect.completed revives from needs_reauth and from paused, consuming quota", () => {
     for (const from of ["needs_reauth", "paused"] as const) {
       const result = transitionConnection({ from, event: "connect.completed" })
@@ -268,7 +268,7 @@ describe("transitionConnection — Phase 0 FSM edges", () => {
     expect(result.quotaEdge).toBeNull()
   })
 
-  test("auth.revoked repeated on an already-inactive row is a no-op that discards any passed-in reason (M-2)", () => {
+  test("auth.revoked repeated on an already-inactive row is a no-op that discards any passed-in reason", () => {
     for (const from of ["needs_reauth", "paused", "disconnected"] as const) {
       const result = transitionConnection({
         from,
@@ -281,7 +281,7 @@ describe("transitionConnection — Phase 0 FSM edges", () => {
     }
   })
 
-  test("teardown.pause repeated on an already-inactive row is a no-op that discards any passed-in reason (M-2)", () => {
+  test("teardown.pause repeated on an already-inactive row is a no-op that discards any passed-in reason", () => {
     for (const from of ["needs_reauth", "paused", "disconnected"] as const) {
       const result = transitionConnection({
         from,
@@ -294,7 +294,7 @@ describe("transitionConnection — Phase 0 FSM edges", () => {
     }
   })
 
-  test("repeated user.disconnect on an already-disconnected row is a no-op that preserves the existing reason (M-2)", () => {
+  test("repeated user.disconnect on an already-disconnected row is a no-op that preserves the existing reason", () => {
     const result = transitionConnection({
       from: "disconnected",
       event: "user.disconnect",
@@ -306,7 +306,7 @@ describe("transitionConnection — Phase 0 FSM edges", () => {
     expect(result.quotaEdge).toBeNull()
   })
 
-  test("repeated teardown.disconnect on an already-disconnected row is a no-op that preserves the existing reason (M-2)", () => {
+  test("repeated teardown.disconnect on an already-disconnected row is a no-op that preserves the existing reason", () => {
     const result = transitionConnection({
       from: "disconnected",
       event: "teardown.disconnect",

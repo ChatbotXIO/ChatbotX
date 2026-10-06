@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   findByProviderSourceId: vi.fn(async () => undefined),
   connectionUpdate: vi.fn(),
   markDegradedByIdentifier: vi.fn(),
+  markUnhealthyByIdentifier: vi.fn(),
   inboxCreate: vi.fn(async () => ({ inbox: { id: "inbox-1" } })),
   upsertConnectionRow: vi.fn(async () => ({ id: "conn-1" })),
   withQuotaCompensation: vi.fn(
@@ -93,6 +94,7 @@ vi.mock("../src/connection/state-service", () => ({
   connectionStateService: {
     disconnectInbox: mocks.disconnectInbox,
     markDegradedByIdentifier: mocks.markDegradedByIdentifier,
+    markUnhealthyByIdentifier: mocks.markUnhealthyByIdentifier,
     transition: mocks.connectionTransition,
   },
 }))
@@ -492,10 +494,15 @@ describe("integrationThreadsService", () => {
 
   test("markTokenRefreshError degrades the Connection row when the update matches", async () => {
     mocks.updateReturning.mockResolvedValue([
-      { workspaceId: "workspace-1", threadsUserId: "threads-user-1" },
+      { threadsUserId: "threads-user-1" },
     ])
 
-    await integrationThreadsService.markTokenRefreshError("threads-1", "boom")
+    await integrationThreadsService.markTokenRefreshError({
+      id: "threads-1",
+      workspaceId: "workspace-1",
+      error: "boom",
+      isRevoked: false,
+    })
 
     expect(mocks.markDegradedByIdentifier).toHaveBeenCalledWith({
       provider: "threads",
@@ -503,16 +510,41 @@ describe("integrationThreadsService", () => {
       workspaceId: "workspace-1",
       reason: "refresh_failed",
     })
+    expect(mocks.markUnhealthyByIdentifier).not.toHaveBeenCalled()
+  })
+
+  test("marks the Connection unhealthy when the provider confirms the token was revoked", async () => {
+    mocks.updateReturning.mockResolvedValue([
+      { threadsUserId: "threads-user-1" },
+    ])
+
+    await integrationThreadsService.markTokenRefreshError({
+      id: "threads-1",
+      workspaceId: "workspace-1",
+      error: "revoked",
+      isRevoked: true,
+    })
+
+    expect(mocks.markUnhealthyByIdentifier).toHaveBeenCalledWith({
+      provider: "threads",
+      identifier: "threads-user-1",
+      workspaceId: "workspace-1",
+      reason: "token_revoked",
+    })
+    expect(mocks.markDegradedByIdentifier).not.toHaveBeenCalled()
   })
 
   test("markTokenRefreshError skips the degrade call when the update matches no row", async () => {
     mocks.updateReturning.mockResolvedValue([])
 
-    await integrationThreadsService.markTokenRefreshError(
-      "threads-missing",
-      "boom",
-    )
+    await integrationThreadsService.markTokenRefreshError({
+      id: "threads-missing",
+      workspaceId: "workspace-1",
+      error: "boom",
+      isRevoked: false,
+    })
 
     expect(mocks.markDegradedByIdentifier).not.toHaveBeenCalled()
+    expect(mocks.markUnhealthyByIdentifier).not.toHaveBeenCalled()
   })
 })

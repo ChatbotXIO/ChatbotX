@@ -39,9 +39,6 @@ vi.mock("@chatbotx.io/business/connection", () => ({
     _input: unknown,
     operation: () => Promise<unknown>,
   ) => await operation(),
-  // `internal.ts` re-exports these three unchanged from the same
-  // specifier — the re-export must resolve to something even though
-  // neither test below exercises them.
   resolveForeignKey: vi.fn(),
   resolveOwnerId: vi.fn(),
   saveOrInsertSatellite: vi.fn(),
@@ -82,7 +79,7 @@ beforeEach(() => {
 })
 
 describe("subscribeWebhookBestEffort", () => {
-  it("does not rethrow when the webhook subscribe fails and the degrade transition also fails (regression: this previously rethrew after connectAndPersist's own transaction had already committed, surfacing an already-successful connect as a failure)", async () => {
+  it("rethrows when the webhook subscribe fails and the degrade transition also fails, so the caller is not left believing the connect degraded cleanly", async () => {
     const connection = { id: "conn-1", provider: "messenger" }
     const adapter = {
       provider: {
@@ -100,7 +97,7 @@ describe("subscribeWebhookBestEffort", () => {
         connection: connection as never,
         ownerId: "owner-1",
       }),
-    ).resolves.toBe(connection)
+    ).rejects.toThrow("transition failed too")
 
     expect(mocks.transition).toHaveBeenCalledWith({
       connectionId: "conn-1",

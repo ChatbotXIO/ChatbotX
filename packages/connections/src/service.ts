@@ -14,10 +14,12 @@ import { disconnect, refresh, verify } from "./lifecycle"
  * credential-strategy connects. Split across sibling modules to stay under
  * the project's 800-line cap per file:
  *
- * - `internal.ts` — shared private helpers (`resolveAdapter`,
- *   `findOrThrow`, `resolveOwnerId`, `connectAndPersist`,
- *   `subscribeWebhookBestEffort`, `toChannelType`) plus `parseConfig`/
- *   `resolveForeignKey`/`encryptedCandidatesSchema`.
+ * - `internal.ts` — shared private helpers (`resolveAdapter`, `findOrThrow`,
+ *   `connectAndPersist`, `subscribeWebhookBestEffort`) plus `parseConfig`/
+ *   `encryptedCandidatesSchema`. `resolveOwnerId`/`resolveForeignKey`/
+ *   `saveOrInsertSatellite`/`withQuotaCompensation`/`toChannelType`/
+ *   `upsertConnectionRow` live in `@chatbotx.io/business/connection` and are
+ *   imported directly from there by every sibling module below.
  * - `lifecycle.ts` — `disconnect`/`refresh`/`verify`.
  * - `credentials.ts` — `connectFromCredentials`/`reconnect`.
  * - `connect-session-flow.ts` — `startSession`/`completeAuthorization`/

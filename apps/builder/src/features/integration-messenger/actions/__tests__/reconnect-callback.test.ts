@@ -14,9 +14,7 @@ vi.mock("@/lib/log", () => ({
 const findByIdForWorkspace = vi.fn()
 const updateAuth = vi.fn()
 const seedPersistentMenu = vi.fn()
-const reconnectInbox = vi.fn()
-const findWorkspaceById = vi.fn()
-const resolveTenantSettingsMock = vi.fn()
+const commitReconnect = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   messengerIntegrationService: {
@@ -25,12 +23,8 @@ vi.mock("@chatbotx.io/business", () => ({
     seedPersistentMenu,
   },
   connectionStateService: {
-    reconnectInbox,
+    commitReconnect,
   },
-  workspaceService: {
-    findById: findWorkspaceById,
-  },
-  resolveTenantSettings: resolveTenantSettingsMock,
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
@@ -38,17 +32,12 @@ vi.mock("@chatbotx.io/business/connection", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock @chatbotx.io/database/client — `db.transaction` mimics Drizzle's real
-// semantics closely enough for this test: it runs the callback against one
-// shared `tx` handle and forwards whatever the callback does (resolve/reject).
+// `commitReconnect` owns opening the transaction internally (see
+// `ConnectionStateService.commitReconnect`'s own unit tests for that); this
+// mock models the one contract this handler relies on: it invokes the
+// supplied `writeAuth(tx)` exactly once with a shared tx handle.
 // ---------------------------------------------------------------------------
 const SENTINEL_TX = { __tx: true }
-const dbTransaction = vi.fn(
-  async (callback: (tx: unknown) => unknown) => await callback(SENTINEL_TX),
-)
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: dbTransaction },
-}))
 
 // ---------------------------------------------------------------------------
 // Mock @chatbotx.io/integration-messenger
@@ -86,16 +75,11 @@ vi.mock("@chatbotx.io/sdk", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock the branding follow-up + its URL builder
+// Mock the branding follow-up helper
 // ---------------------------------------------------------------------------
-const runBrandingFollowUps = vi.fn()
+const seedReconnectBranding = vi.fn()
 vi.mock("@/features/channel-connect/lib/branding-follow-ups", () => ({
-  runBrandingFollowUps,
-}))
-
-const getBrandingUrl = vi.fn(() => "https://branding.example/messenger")
-vi.mock("@/features/integration-webchat/lib", () => ({
-  getBrandingUrl,
+  seedReconnectBranding,
 }))
 
 const lookupIntegrationUserInfo = vi.fn()
@@ -113,7 +97,6 @@ const { reconnectMessengerHandler } = await import("../reconnect-callback")
 
 const WORKSPACE_ID = "100"
 const INTEGRATION_ID = "200"
-const WORKSPACE = { id: WORKSPACE_ID, ownerId: "owner-1" }
 
 function baseRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -143,14 +126,13 @@ function invoke() {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  dbTransaction.mockImplementation(
-    async (callback: (tx: unknown) => unknown) => await callback(SENTINEL_TX),
+  commitReconnect.mockImplementation(
+    async ({ writeAuth }: { writeAuth: (tx: unknown) => Promise<void> }) =>
+      await writeAuth(SENTINEL_TX),
   )
   findByIdForWorkspace.mockResolvedValue(baseRow())
   updateAuth.mockResolvedValue(undefined)
-  reconnectInbox.mockResolvedValue(undefined)
-  findWorkspaceById.mockResolvedValue(WORKSPACE)
-  resolveTenantSettingsMock.mockResolvedValue({ appUrl: "https://app.example" })
+  seedReconnectBranding.mockResolvedValue({ appUrl: "https://app.example" })
   exchangeCodeForToken.mockResolvedValue("short-lived-token")
   exchangeLongLivedToken.mockImplementation(
     async (_config: unknown, token: string) => `long-${token}`,
@@ -164,44 +146,44 @@ beforeEach(() => {
   debugToken.mockResolvedValue({ scopes: ["pages_messaging"] })
   subscribePageToAppWebhook.mockResolvedValue(undefined)
   ensureMessengerWhitelistedDomain.mockResolvedValue(undefined)
-  runBrandingFollowUps.mockResolvedValue(undefined)
 })
 
 describe("reconnectMessengerHandler — Part 1: transaction atomicity", () => {
-  test("wraps the auth write and reconnectInbox in one shared transaction", async () => {
+  test("calls commitReconnect with the inbox/workspace/auth and a writeAuth that persists the satellite row through the shared tx", async () => {
     await invoke()
 
-    expect(dbTransaction).toHaveBeenCalledTimes(1)
-    expect(updateAuth).toHaveBeenCalledWith(
-      expect.objectContaining({ tx: SENTINEL_TX }),
+    expect(commitReconnect).toHaveBeenCalledTimes(1)
+    expect(commitReconnect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: WORKSPACE_ID,
+      }),
     )
-    expect(reconnectInbox).toHaveBeenCalledWith(
+    expect(updateAuth).toHaveBeenCalledWith(
       expect.objectContaining({ tx: SENTINEL_TX }),
     )
   })
 
-  test("rolls back the whole reconnect when reconnectInbox fails after the auth write (e.g. channelLimitReached)", async () => {
+  test("propagates a commitReconnect failure (e.g. channelLimitReached from the inbox re-check) as a failed reconnect", async () => {
     const channelLimitReached = Object.assign(
       new Error("Channel limit reached"),
-      {
-        code: "channelLimitReached",
-      },
+      { code: "channelLimitReached" },
     )
-    reconnectInbox.mockRejectedValue(channelLimitReached)
+    commitReconnect.mockImplementation(async ({ writeAuth }) => {
+      await writeAuth(SENTINEL_TX)
+      throw channelLimitReached
+    })
 
     const result = await invoke()
 
     expect(result).toEqual({ status: "error", reason: "failed" })
-    // Both writes ran through the SAME transaction boundary, so the thrown
-    // error aborts the whole thing — there is no "auth saved, inbox state
-    // stale" partial outcome for the real DB to commit.
-    expect(dbTransaction).toHaveBeenCalledTimes(1)
+    expect(commitReconnect).toHaveBeenCalledTimes(1)
     expect(updateAuth).toHaveBeenCalledWith(
       expect.objectContaining({ tx: SENTINEL_TX }),
     )
     // A failed transaction must abort the whole reconnect before any
     // post-commit follow-up (branding, webhook resubscribe) runs.
-    expect(runBrandingFollowUps).not.toHaveBeenCalled()
+    expect(seedReconnectBranding).not.toHaveBeenCalled()
     expect(subscribePageToAppWebhook).not.toHaveBeenCalled()
   })
 })
@@ -211,19 +193,14 @@ describe("reconnectMessengerHandler — Part 2: branding follow-up", () => {
     const result = await invoke()
 
     expect(result).toEqual({ status: "success" })
-    expect(runBrandingFollowUps).toHaveBeenCalledTimes(1)
-    expect(getBrandingUrl).toHaveBeenCalledWith(
-      "messenger",
-      "https://app.example",
-    )
+    expect(seedReconnectBranding).toHaveBeenCalledTimes(1)
 
-    const call = runBrandingFollowUps.mock.calls[0][0]
+    const call = seedReconnectBranding.mock.calls[0][0]
+    expect(call.channel).toBe("messenger")
     expect(call.integration).toBe(messengerIntegrationModule)
     expect(call.integrationType).toBe("messenger")
-    expect(call.session.workspace).toEqual(WORKSPACE)
-    expect(call.session.brandingMenuEntry.url).toBe(
-      "https://branding.example/messenger",
-    )
+    expect(call.workspaceId).toBe(WORKSPACE_ID)
+    expect(call.integrationId).toBe(INTEGRATION_ID)
     expect(typeof call.persistBrandingMenu).toBe("function")
 
     const entry = {
@@ -245,15 +222,7 @@ describe("reconnectMessengerHandler — Part 2: branding follow-up", () => {
 
     await invoke()
 
-    const call = runBrandingFollowUps.mock.calls[0][0]
+    const call = seedReconnectBranding.mock.calls[0][0]
     expect(call.persistBrandingMenu).toBeUndefined()
-  })
-
-  test("a branding follow-up failure never fails the reconnect", async () => {
-    runBrandingFollowUps.mockRejectedValue(new Error("Graph API down"))
-
-    const result = await invoke()
-
-    expect(result).toEqual({ status: "success" })
   })
 })

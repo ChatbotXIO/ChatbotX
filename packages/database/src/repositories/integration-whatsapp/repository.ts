@@ -214,11 +214,14 @@ class IntegrationWhatsappRepository {
   async updateAuth(
     input: WorkspaceIntegrationRef & { auth: Record<string, unknown> },
     tx: DatabaseClient = db,
-  ): Promise<void> {
-    await tx
+  ): Promise<{ phoneNumberId: string } | undefined> {
+    const [row] = await tx
       .update(integrationWhatsappModel)
       .set({ auth: input.auth, tokenRefreshError: null })
       .where(workspaceIntegrationFilter(input))
+      .returning({ phoneNumberId: integrationWhatsappModel.phoneNumberId })
+
+    return row
   }
 
   async markTokenRefreshError(

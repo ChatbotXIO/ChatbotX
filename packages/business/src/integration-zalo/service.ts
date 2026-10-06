@@ -12,6 +12,7 @@ import { BaseService } from "../base.service"
 import {
   CONNECTION_STORE_BINDINGS,
   type ConnectionQuotaConsumption,
+  recordRefreshedAuth,
   upsertConnectionRow,
   withQuotaCompensation,
 } from "../connection"
@@ -102,10 +103,24 @@ class ZaloIntegrationService extends BaseService {
     tx?: DatabaseClient,
   ): Promise<void> {
     const client = tx ?? db
-    await client
+    const [row] = await client
       .update(integrationZaloModel)
       .set({ auth, tokenRefreshError: null, ...(name ? { name } : {}) })
       .where(eq(integrationZaloModel.id, id))
+      .returning({
+        oaId: integrationZaloModel.oaId,
+        workspaceId: integrationZaloModel.workspaceId,
+      })
+    if (!row) {
+      return
+    }
+    await recordRefreshedAuth({
+      workspaceId: row.workspaceId,
+      provider: "zalo",
+      sourceId: row.oaId,
+      auth: auth as AuthValue,
+      tx,
+    })
   }
 
   async markTokenRefreshError(props: {
@@ -126,6 +141,10 @@ class ZaloIntegrationService extends BaseService {
       .returning({ oaId: integrationZaloModel.oaId })
 
     if (!row) {
+      logger.warn(
+        { integrationId: props.id, workspaceId: props.workspaceId },
+        "Unable to mark Zalo token refresh error: integration not found",
+      )
       return
     }
 
@@ -180,8 +199,8 @@ class ZaloIntegrationService extends BaseService {
 
     // A different workspace already holding a *connected* Inbox for this OA
     // blocks the connect outright. Zalo's store binding deliberately carries
-    // no `duplicateConstraint` (Phase 4's backfill reports cross-workspace
-    // duplicates for manual review instead of a DB unique index), so this
+    // no `duplicateConstraint` (cross-workspace duplicates get reported for
+    // manual review instead of enforced by a DB unique index), so this
     // `isConnected` check is the only thing standing in for one.
     if (
       await inboxService.isConnected({

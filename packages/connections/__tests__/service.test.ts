@@ -129,12 +129,19 @@ vi.mock("@chatbotx.io/business/connection", () => ({
     recordAuthSaved: mocks.recordAuthSaved,
   },
   InvalidConnectionTransitionException: Error,
-  // These six used to be real (unmocked) functions defined locally in
-  // `internal.ts`; they moved to `@chatbotx.io/business/connection`'s
-  // `upsert.ts` so business-layer services could call `upsertConnectionRow`
-  // directly inside their own transaction without a package cycle. Mirrors
-  // that module's real logic, wired to this file's own `mocks.*` stand-ins
-  // for the DB/quota primitives it calls.
+  // These six are real (unmocked) functions from `@chatbotx.io/business/
+  // connection`'s `upsert.ts` — this file mocks that whole package so
+  // `service.ts`'s other imports from it (`connectionStateService`, the
+  // exception classes) stay test doubles too, which means these six can't
+  // be individually un-mocked via `importOriginal` without pulling in
+  // `upsert.ts`'s real `@chatbotx.io/database/*` imports (schema, pool) for
+  // real. So they're hand-mirrored here, wired to this file's own
+  // `mocks.*` stand-ins for the DB/quota primitives they call.
+  // `withQuotaCompensation`'s actual logic has its own direct unit tests in
+  // `upsert.test.ts` — this copy exists only so the connections-layer
+  // assertions below (e.g. "compensates on transaction failure") have
+  // something to call through to, not as the source of truth for its
+  // correctness.
   resolveForeignKey: (connection: {
     inboxId?: string | null
     integrationId?: string | null
@@ -1306,7 +1313,7 @@ describe("ConnectionService.connectFromCredentials", () => {
     expect(result).toBeDefined()
   })
 
-  it("degrades the connect result best-effort only — returns the already-persisted connection instead of failing when both the webhook subscribe and the degrade transition fail (regression: this previously rethrew the degrade-transition failure and failed an already-successful connect)", async () => {
+  it("rethrows when both the webhook subscribe and the degrade transition fail, instead of silently returning a stale connected row", async () => {
     mockAdapter.provider.kind = "channel"
     mocks.subscribe.mockRejectedValueOnce(new Error("webhook endpoint down"))
     mocks.transition
@@ -1316,13 +1323,14 @@ describe("ConnectionService.connectFromCredentials", () => {
       }))
       .mockRejectedValueOnce(new Error("degradation transition unavailable"))
 
-    const result = await connectionService.connectFromCredentials({
-      workspaceId: "ws-1",
-      provider: "telegram",
-      config: { apiKey: "sk-live" },
-    })
+    await expect(
+      connectionService.connectFromCredentials({
+        workspaceId: "ws-1",
+        provider: "telegram",
+        config: { apiKey: "sk-live" },
+      }),
+    ).rejects.toThrow("degradation transition unavailable")
 
-    expect(result).toEqual({ id: "conn-new", status: "connected" })
     expect(mocks.transition).toHaveBeenLastCalledWith({
       connectionId: "conn-new",
       event: "verify.failed_non_auth",
@@ -1651,39 +1659,6 @@ describe("ConnectionService.startSession", () => {
       id: "conn-other-workspace",
       workspaceId: "ws-new",
     })
-    expect(mocks.createSession).not.toHaveBeenCalled()
-  })
-
-  it("throws when both workspaceId and createWorkspace are given", async () => {
-    const mockCreateWorkspace = vi.fn(() => Promise.resolve({ id: "ws-new" }))
-    await expect(
-      connectionService.startSession({
-        workspaceId: "ws-1",
-        createWorkspace: mockCreateWorkspace,
-        provider: "messenger",
-        purpose: "connect",
-        credential: {},
-        callbackUrl: "https://app.example.test/integrations/messenger/callback",
-        actorUserId: "user-1",
-      }),
-    ).rejects.toThrow(
-      "startSession requires exactly one of workspaceId/createWorkspace",
-    )
-    expect(mocks.createSession).not.toHaveBeenCalled()
-  })
-
-  it("throws when neither workspaceId nor createWorkspace is given", async () => {
-    await expect(
-      connectionService.startSession({
-        provider: "messenger",
-        purpose: "connect",
-        credential: {},
-        callbackUrl: "https://app.example.test/integrations/messenger/callback",
-        actorUserId: "user-1",
-      }),
-    ).rejects.toThrow(
-      "startSession requires exactly one of workspaceId/createWorkspace",
-    )
     expect(mocks.createSession).not.toHaveBeenCalled()
   })
 })
@@ -2329,6 +2304,142 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
       sourceId: "workspace",
       displayName: "Test Provider",
     })
+  })
+
+  it("throws connectionAlreadyConnected instead of rebinding a legacy sourceId onto another workspace's already-connected row", async () => {
+    mocks.findByNonce.mockResolvedValue(reconnectSession)
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "legacy:conn-1" }),
+    )
+    mockAdapter.provider.listCandidates = undefined as never
+    mockAdapter.provider.describe = () => ({
+      sourceId: "page-1",
+      displayName: "Page One",
+    })
+    mocks.findByProviderSourceId.mockResolvedValue({
+      id: "conn-other",
+      status: "connected",
+    })
+
+    await expect(
+      connectionService.completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      }),
+    ).rejects.toMatchObject({ code: "connectionAlreadyConnected" })
+    expect(mocks.saveAuthByForeignKey).not.toHaveBeenCalled()
+
+    mockAdapter.provider.listCandidates = mocks.listCandidates
+    mockAdapter.provider.describe = () => ({
+      sourceId: "workspace",
+      displayName: "Test Provider",
+    })
+  })
+
+  it("accepts the legacy sourceId rebind onto its OWN row via describe() when the provider has no listCandidates", async () => {
+    mocks.findByNonce.mockResolvedValue(reconnectSession)
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "legacy:conn-1" }),
+    )
+    mockAdapter.provider.listCandidates = undefined as never
+    mockAdapter.provider.describe = () => ({
+      sourceId: "page-1",
+      displayName: "Page One",
+    })
+    mocks.findByProviderSourceId.mockResolvedValue({
+      id: "conn-1",
+      status: "connected",
+    })
+
+    await connectionService.completeAuthorization({
+      sessionId: "session-1",
+      nonce: "nonce-abc",
+      code: "auth-code",
+      callbackUrl: "https://app.example.test/callback",
+      credential: {},
+    })
+
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "conn-1",
+        values: expect.objectContaining({ sourceId: "page-1" }),
+      }),
+      "tx",
+    )
+
+    mockAdapter.provider.listCandidates = mocks.listCandidates
+    mockAdapter.provider.describe = () => ({
+      sourceId: "workspace",
+      displayName: "Test Provider",
+    })
+  })
+
+  it("accepts the legacy sourceId rebind when the multi-account provider's listCandidates returns exactly one candidate", async () => {
+    mocks.findByNonce.mockResolvedValue(reconnectSession)
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "legacy:conn-1" }),
+    )
+    mocks.listCandidates.mockResolvedValue([
+      { sourceId: "page-1", displayName: "Page One" },
+    ])
+    mockAdapter.provider.describe = () => ({
+      sourceId: "page-1",
+      displayName: "Page One",
+    })
+    mocks.findByProviderSourceId.mockResolvedValue({
+      id: "conn-1",
+      status: "connected",
+    })
+
+    await connectionService.completeAuthorization({
+      sessionId: "session-1",
+      nonce: "nonce-abc",
+      code: "auth-code",
+      callbackUrl: "https://app.example.test/callback",
+      credential: {},
+    })
+
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "conn-1",
+        values: expect.objectContaining({ sourceId: "page-1" }),
+      }),
+      "tx",
+    )
+
+    mockAdapter.provider.describe = () => ({
+      sourceId: "workspace",
+      displayName: "Test Provider",
+    })
+  })
+
+  it("rejects a legacy sourceId rebind when the multi-account provider's listCandidates returns more than one candidate (ambiguous)", async () => {
+    mocks.findByNonce.mockResolvedValue(reconnectSession)
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "legacy:conn-1" }),
+    )
+    mocks.listCandidates.mockResolvedValue([
+      { sourceId: "page-1", displayName: "Page One" },
+      { sourceId: "page-2", displayName: "Page Two" },
+    ])
+
+    await expect(
+      connectionService.completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      }),
+    ).rejects.toMatchObject({ code: "connectionIdentityMismatch" })
+    expect(mocks.saveAuthByForeignKey).not.toHaveBeenCalled()
+
+    mocks.listCandidates.mockResolvedValue([
+      { sourceId: "page-1", displayName: "Page One" },
+    ])
   })
 })
 

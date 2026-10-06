@@ -13,6 +13,7 @@ export const ACTIVE_CONNECTION_STATUSES = [
   "connected",
   "degraded",
 ] as const satisfies readonly ConnectionStatus[]
+export type ActiveConnectionStatus = (typeof ACTIVE_CONNECTION_STATUSES)[number]
 export const INACTIVE_CONNECTION_STATUSES = [
   "needs_reauth",
   "paused",

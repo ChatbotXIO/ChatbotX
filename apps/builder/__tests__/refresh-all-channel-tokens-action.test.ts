@@ -1,9 +1,8 @@
 // @vitest-environment node
 
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { beforeEach, describe, expect, type Mock, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  emptyList: () => vi.fn().mockResolvedValue([]),
   auditRecord: vi.fn(),
   lock: { held: false },
   findMessengerByIdForWorkspace: vi.fn(),
@@ -12,15 +11,50 @@ const mocks = vi.hoisted(() => ({
   markMessengerTokenRefreshError: vi.fn(),
   refreshMessengerAuth: vi.fn(),
   updateMessengerAuth: vi.fn(),
+  isMessengerRevokedTokenError: vi.fn(() => false),
+  findInstagramByWorkspaceIds: vi.fn().mockResolvedValue([]),
+  findInstagramFacebookByWorkspaceIds: vi.fn().mockResolvedValue([]),
+  findInstagramByIdForWorkspace: vi.fn(),
+  updateInstagramAuth: vi.fn(),
+  markInstagramTokenRefreshError: vi.fn(),
+  refreshInstagramAuth: vi.fn(),
+  isInstagramRevokedTokenError: vi.fn(() => false),
+  refreshInstagramFacebookAuth: vi.fn(),
+  isInstagramFacebookRevokedTokenError: vi.fn(() => false),
+  findWhatsappByWorkspaceIds: vi.fn().mockResolvedValue([]),
+  findWhatsappByIdForWorkspace: vi.fn(),
+  updateWhatsappAuth: vi.fn(),
+  markWhatsappTokenRefreshError: vi.fn(),
+  refreshWhatsappAuth: vi.fn(),
+  isWhatsappRevokedTokenError: vi.fn(() => false),
+  findTiktokByWorkspaceIds: vi.fn().mockResolvedValue([]),
+  findTiktokById: vi.fn(),
+  updateTiktokAuth: vi.fn(),
+  markTiktokTokenRefreshError: vi.fn(),
+  refreshTiktokAccessToken: vi.fn(),
+  isTiktokRevokedTokenError: vi.fn(() => false),
+  findZaloByWorkspaceIds: vi.fn().mockResolvedValue([]),
+  findZaloById: vi.fn(),
+  updateZaloAuth: vi.fn(),
+  markZaloTokenRefreshError: vi.fn(),
+  refreshZaloAccessToken: vi.fn(),
+  isZaloRevokedTokenError: vi.fn(() => false),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   instagramIntegrationService: {
-    findForTokenRefreshByWorkspaceIds: mocks.emptyList(),
-    findFacebookForTokenRefreshByWorkspaceIds: mocks.emptyList(),
+    findForTokenRefreshByWorkspaceIds: mocks.findInstagramByWorkspaceIds,
+    findFacebookForTokenRefreshByWorkspaceIds:
+      mocks.findInstagramFacebookByWorkspaceIds,
+    findByIdForWorkspace: mocks.findInstagramByIdForWorkspace,
+    updateAuth: mocks.updateInstagramAuth,
+    markTokenRefreshError: mocks.markInstagramTokenRefreshError,
   },
   integrationWhatsappService: {
-    findForTokenRefreshByWorkspaceIds: mocks.emptyList(),
+    findForTokenRefreshByWorkspaceIds: mocks.findWhatsappByWorkspaceIds,
+    findByIdForWorkspace: mocks.findWhatsappByIdForWorkspace,
+    updateAuth: mocks.updateWhatsappAuth,
+    markTokenRefreshError: mocks.markWhatsappTokenRefreshError,
   },
   isWorkspaceScheduledForDeletion: vi.fn(() => false),
   messengerIntegrationService: {
@@ -29,8 +63,18 @@ vi.mock("@chatbotx.io/business", () => ({
     updateAuth: mocks.updateMessengerAuth,
     markTokenRefreshError: mocks.markMessengerTokenRefreshError,
   },
-  tiktokIntegrationService: { findAllByWorkspaceIds: mocks.emptyList() },
-  zaloIntegrationService: { findAllByWorkspaceIds: mocks.emptyList() },
+  tiktokIntegrationService: {
+    findAllByWorkspaceIds: mocks.findTiktokByWorkspaceIds,
+    findById: mocks.findTiktokById,
+    updateAuth: mocks.updateTiktokAuth,
+    markTokenRefreshError: mocks.markTiktokTokenRefreshError,
+  },
+  zaloIntegrationService: {
+    findAllByWorkspaceIds: mocks.findZaloByWorkspaceIds,
+    findById: mocks.findZaloById,
+    updateAuth: mocks.updateZaloAuth,
+    markTokenRefreshError: mocks.markZaloTokenRefreshError,
+  },
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
@@ -38,34 +82,42 @@ vi.mock("@chatbotx.io/business/audit", () => ({
 }))
 
 vi.mock("@chatbotx.io/integration-instagram", () => ({
-  integration: {},
+  integration: { refreshAuth: mocks.refreshInstagramAuth },
+  isRevokedTokenError: mocks.isInstagramRevokedTokenError,
 }))
 
 vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
-  integration: {},
+  integration: { refreshAuth: mocks.refreshInstagramFacebookAuth },
+  isRevokedTokenError: mocks.isInstagramFacebookRevokedTokenError,
 }))
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({
   integration: { refreshAuth: mocks.refreshMessengerAuth },
   logMessengerWelcomeProfile: mocks.logMessengerWelcomeProfile,
-  isRevokedTokenError: vi.fn(() => false),
+  isRevokedTokenError: mocks.isMessengerRevokedTokenError,
+}))
+
+vi.mock("@chatbotx.io/integration-tiktok", () => ({
+  isRevokedTokenError: mocks.isTiktokRevokedTokenError,
 }))
 
 vi.mock("@chatbotx.io/integration-tiktok/apis/auth", () => ({
-  refreshAccessToken: vi.fn(),
+  refreshAccessToken: mocks.refreshTiktokAccessToken,
 }))
 
 vi.mock("@chatbotx.io/integration-tiktok/lib/token-utils", () => ({
-  buildTokenTimestamps: vi.fn(),
+  buildTokenTimestamps: vi.fn(() => ({})),
 }))
 
 vi.mock("@chatbotx.io/integration-whatsapp", () => ({
-  integration: {},
+  integration: { refreshAuth: mocks.refreshWhatsappAuth },
+  isRevokedTokenError: mocks.isWhatsappRevokedTokenError,
 }))
 
 vi.mock("@chatbotx.io/integration-zalo", () => ({
-  calculateExpiresAt: vi.fn(),
-  refreshAccessToken: vi.fn(),
+  calculateExpiresAt: vi.fn(() => "2026-10-10T00:00:00.000Z"),
+  refreshAccessToken: mocks.refreshZaloAccessToken,
+  isRevokedTokenError: mocks.isZaloRevokedTokenError,
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
@@ -176,5 +228,152 @@ describe("refreshAllChannelTokensAction — Messenger", () => {
 
     expect(summary).toEqual({ refreshed: 0, failed: 0 })
     expect(mocks.logMessengerWelcomeProfile).not.toHaveBeenCalled()
+  })
+})
+
+type ProviderErrorCase = {
+  name: string
+  setup: () => void
+  fail: (error: Error) => void
+  markErrorMock: Mock
+  isRevokedMock: Mock
+}
+
+const resetAllProviderListsToEmpty = () => {
+  mocks.findZaloByWorkspaceIds.mockResolvedValue([])
+  mocks.findTiktokByWorkspaceIds.mockResolvedValue([])
+  mocks.findInstagramByWorkspaceIds.mockResolvedValue([])
+  mocks.findInstagramFacebookByWorkspaceIds.mockResolvedValue([])
+  mocks.findWhatsappByWorkspaceIds.mockResolvedValue([])
+  mocks.findMessengerForTokenRefresh.mockResolvedValue([])
+}
+
+const providerErrorCases: ProviderErrorCase[] = [
+  {
+    name: "Zalo",
+    setup: () => {
+      mocks.findZaloByWorkspaceIds.mockResolvedValue([
+        { id: "zalo-1", workspaceId: "ws-1" },
+      ])
+      mocks.findZaloById.mockResolvedValue({
+        auth: { tokens: { accessToken: "a", refreshToken: "r" } },
+      })
+    },
+    fail: (error) => mocks.refreshZaloAccessToken.mockRejectedValue(error),
+    markErrorMock: mocks.markZaloTokenRefreshError,
+    isRevokedMock: mocks.isZaloRevokedTokenError,
+  },
+  {
+    name: "TikTok",
+    setup: () => {
+      mocks.findTiktokByWorkspaceIds.mockResolvedValue([
+        { id: "tiktok-1", workspaceId: "ws-1" },
+      ])
+      mocks.findTiktokById.mockResolvedValue({
+        auth: {
+          clientId: "client-1",
+          clientSecret: "secret-1",
+          tokens: { accessToken: "a", refreshToken: "r" },
+        },
+      })
+    },
+    fail: (error) => mocks.refreshTiktokAccessToken.mockRejectedValue(error),
+    markErrorMock: mocks.markTiktokTokenRefreshError,
+    isRevokedMock: mocks.isTiktokRevokedTokenError,
+  },
+  {
+    name: "Instagram",
+    setup: () => {
+      mocks.findInstagramByWorkspaceIds.mockResolvedValue([
+        { id: "instagram-1", workspaceId: "ws-1" },
+      ])
+      mocks.findInstagramByIdForWorkspace.mockResolvedValue({ auth: {} })
+    },
+    fail: (error) => mocks.refreshInstagramAuth.mockRejectedValue(error),
+    markErrorMock: mocks.markInstagramTokenRefreshError,
+    isRevokedMock: mocks.isInstagramRevokedTokenError,
+  },
+  {
+    name: "Instagram (Facebook-linked)",
+    setup: () => {
+      mocks.findInstagramFacebookByWorkspaceIds.mockResolvedValue([
+        { id: "instagram-facebook-1", workspaceId: "ws-1" },
+      ])
+      mocks.findInstagramByIdForWorkspace.mockResolvedValue({ auth: {} })
+    },
+    fail: (error) =>
+      mocks.refreshInstagramFacebookAuth.mockRejectedValue(error),
+    markErrorMock: mocks.markInstagramTokenRefreshError,
+    isRevokedMock: mocks.isInstagramFacebookRevokedTokenError,
+  },
+  {
+    name: "WhatsApp",
+    setup: () => {
+      mocks.findWhatsappByWorkspaceIds.mockResolvedValue([
+        { id: "whatsapp-1", workspaceId: "ws-1" },
+      ])
+      mocks.findWhatsappByIdForWorkspace.mockResolvedValue({
+        auth: { metadata: { isManual: false } },
+      })
+    },
+    fail: (error) => mocks.refreshWhatsappAuth.mockRejectedValue(error),
+    markErrorMock: mocks.markWhatsappTokenRefreshError,
+    isRevokedMock: mocks.isWhatsappRevokedTokenError,
+  },
+  {
+    name: "Messenger",
+    setup: () => {
+      mocks.findMessengerForTokenRefresh.mockResolvedValue([
+        { id: "messenger-1", workspaceId: "ws-1" },
+      ])
+      mocks.findMessengerByIdForWorkspace.mockResolvedValue({ auth: {} })
+    },
+    fail: (error) => mocks.refreshMessengerAuth.mockRejectedValue(error),
+    markErrorMock: mocks.markMessengerTokenRefreshError,
+    isRevokedMock: mocks.isMessengerRevokedTokenError,
+  },
+]
+
+describe.each(
+  providerErrorCases,
+)("refreshAllChannelTokensAction — $name error branch", ({
+  name,
+  setup,
+  fail,
+  markErrorMock,
+  isRevokedMock,
+}) => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resetAllProviderListsToEmpty()
+    setup()
+  })
+
+  test(`reports a failure and records the ${name} token refresh error with the provider's isRevoked signal`, async () => {
+    const error = new Error(`${name} provider rejected the refresh`)
+    fail(error)
+    isRevokedMock.mockReturnValue(true)
+
+    const summary = await runRefresh()
+
+    expect(summary.failed).toBe(1)
+    expect(summary.refreshed).toBe(0)
+    expect(markErrorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: error.message,
+        isRevoked: true,
+      }),
+    )
+  })
+
+  test(`reports isRevoked: false when the provider's revocation check says so`, async () => {
+    fail(new Error("transient failure"))
+    isRevokedMock.mockReturnValue(false)
+
+    await runRefresh()
+
+    expect(markErrorMock).toHaveBeenCalledWith(
+      expect.objectContaining({ isRevoked: false }),
+    )
   })
 })

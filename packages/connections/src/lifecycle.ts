@@ -4,6 +4,8 @@ import {
   InvalidConnectionTransitionException,
   isActiveConnectionStatus,
   type PendingQuotaRelease,
+  resolveForeignKey,
+  resolveOwnerId,
 } from "@chatbotx.io/business/connection"
 import {
   connectionInactiveException,
@@ -17,12 +19,8 @@ import { connectionRepository } from "@chatbotx.io/database/repositories"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import { distributedLock } from "@chatbotx.io/redis"
 import type { AuthStore, AuthValue } from "@chatbotx.io/sdk"
-import {
-  findOrThrow,
-  resolveAdapter,
-  resolveForeignKey,
-  resolveOwnerId,
-} from "./internal"
+
+import { findOrThrow, resolveAdapter } from "./internal"
 import { logger } from "./logger"
 
 const REFRESH_LOCK_TIMEOUT_SECONDS = 10
@@ -49,10 +47,10 @@ const loadActiveConnectionStore = async (input: {
 /**
  * User-initiated teardown: local state ALWAYS finalizes (FSM transition +
  * satellite row delete) regardless of provider-side disconnect/webhook-
- * unsubscribe outcome — matching v1.11.0 (a flaky/down third-party API must
- * never trap a workspace into being unable to remove a channel it no longer
- * wants). Every provider-side failure is recorded on `Connection.lastError`
- * for observability instead.
+ * unsubscribe outcome — a flaky/down third-party API must never trap a
+ * workspace into being unable to remove a channel it no longer wants. Every
+ * provider-side failure is recorded on `Connection.lastError` for
+ * observability instead.
  *
  * This generic path does not port bespoke provider teardown side effects;
  * existing per-channel disconnect actions retain those responsibilities.
@@ -92,6 +90,7 @@ export const disconnect = async (input: {
           const result = await adapter.teardown({ connection, auth })
           withinTransactionTeardown = result.withinTransaction
           skipGenericRemoteTeardown = result.skipGenericRemoteTeardown
+          teardownErrors.push(...(result.remoteErrors ?? []))
         } catch (err) {
           teardownErrors.push(
             toPublicErrorMessage(err, "Provider-side teardown failed"),

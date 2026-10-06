@@ -21,6 +21,17 @@ import type { ConnectionStoreBinding } from "./store-bindings"
  * `CONNECTION_STORE_BINDINGS` — `null` for types with no connect lifecycle
  * yet (for example `metaCatalog`, `outlookCalendar`, and `threads`).
  */
+export type ConnectionTeardownResult = {
+  remoteErrors: string[]
+  skipGenericRemoteTeardown: boolean
+  withinTransaction: (tx: DatabaseClient) => Promise<void>
+}
+
+export type ConnectionTeardownHook = (input: {
+  connection: ConnectionModel
+  auth: AuthValue
+}) => Promise<ConnectionTeardownResult>
+
 export type ConnectionAdapter = {
   /**
    * Present for every provider backed by an `integrations/<name>` SDK
@@ -60,19 +71,7 @@ export type ConnectionAdapter = {
    * of unsubscribing it, tears down coexist mode, and cleans up
    * `MetaCapiEvent`/tag rows the generic store binding doesn't know about.
    */
-  teardown?: (input: {
-    connection: ConnectionModel
-    auth: AuthValue
-  }) => Promise<{
-    /**
-     * `true` to skip the generic `integration.disconnect` +
-     * `provider.webhook.unsubscribe` calls below — this hook already
-     * handled (or deliberately preserved) the remote side.
-     */
-    skipGenericRemoteTeardown: boolean
-    /** Runs inside the same transaction as the FSM transition + store row delete. */
-    withinTransaction: (tx: DatabaseClient) => Promise<void>
-  }>
+  teardown?: ConnectionTeardownHook
 }
 
 export type ConnectionRegistry = Record<

@@ -7,9 +7,7 @@ import {
   WHATSAPP_CAPI_SCOPE,
   whatsappBusinessAccountService,
 } from "@chatbotx.io/business"
-import { authExpiresAtOf } from "@chatbotx.io/business/connection"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
 import type { WhatsappCredential } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
@@ -204,24 +202,19 @@ export async function persistReconnectAuthAndResubscribe(input: {
   workspaceId: string
   inboxId: string
 }): Promise<boolean> {
-  // Both writes share one transaction so a failure inside `reconnectInbox`
-  // (e.g. a channel-limit re-check) rolls back the auth write too, instead of
-  // leaving the satellite row re-authorized while the Connection/Inbox state
-  // stays stale.
-  await db.transaction(async (tx) => {
-    await integrationWhatsappService.replaceAuth({
-      id: input.integrationWhatsappId,
-      workspaceId: input.workspaceId,
-      auth: input.auth,
-      hasCapiScope: input.hasCapiScope,
-      tx,
-    })
-    await connectionStateService.reconnectInbox({
-      inboxId: input.inboxId,
-      workspaceId: input.workspaceId,
-      authExpiresAt: authExpiresAtOf(input.auth),
-      tx,
-    })
+  await connectionStateService.commitReconnect({
+    inboxId: input.inboxId,
+    workspaceId: input.workspaceId,
+    auth: input.auth,
+    writeAuth: async (tx) => {
+      await integrationWhatsappService.replaceAuth({
+        id: input.integrationWhatsappId,
+        workspaceId: input.workspaceId,
+        auth: input.auth,
+        hasCapiScope: input.hasCapiScope,
+        tx,
+      })
+    },
   })
   try {
     await whatsappBusinessAccountService.upsertCurrentCredential({

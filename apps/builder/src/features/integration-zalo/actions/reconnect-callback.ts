@@ -2,8 +2,6 @@ import {
   connectionStateService,
   zaloIntegrationService,
 } from "@chatbotx.io/business"
-import { authExpiresAtOf } from "@chatbotx.io/business/connection"
-import { db } from "@chatbotx.io/database/client"
 import type { ZaloCredential } from "@chatbotx.io/database/partials"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo"
 import { integrations } from "@/integration"
@@ -48,24 +46,18 @@ export async function reconnectZaloHandler(props: {
       return { status: "error", reason: "accountNotFound" }
     }
 
-    // Both writes share one transaction so a failure inside `reconnectInbox`
-    // (e.g. a channel-limit re-check) rolls back the auth write too, instead
-    // of leaving the satellite row re-authorized while the Connection/Inbox
-    // state stays stale.
-    await db.transaction(async (tx) => {
-      await zaloIntegrationService.updateAuth(
-        integrationZalo.id,
-        authValue,
-        authValue.metadata.oaName,
-        tx,
-      )
-
-      await connectionStateService.reconnectInbox({
-        inboxId: integrationZalo.inboxId,
-        workspaceId: props.workspaceId,
-        authExpiresAt: authExpiresAtOf(authValue),
-        tx,
-      })
+    await connectionStateService.commitReconnect({
+      inboxId: integrationZalo.inboxId,
+      workspaceId: props.workspaceId,
+      auth: authValue,
+      writeAuth: async (tx) => {
+        await zaloIntegrationService.updateAuth(
+          integrationZalo.id,
+          authValue,
+          authValue.metadata.oaName,
+          tx,
+        )
+      },
     })
 
     return { status: "success" }

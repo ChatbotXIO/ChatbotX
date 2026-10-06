@@ -53,16 +53,14 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
    * workspace-integration satellite) row so state changes route through
    * `connectionStateService` instead of writing `Inbox` directly. Returns
    * `undefined` for a row not yet covered by `Connection` — either it
-   * predates PR #1411's `Connection` table and the one-time
-   * `packages/database/scripts/backfill-connections.ts` run (Phase 4 of
-   * the connection-lifecycle plan) hasn't reached it yet, or it's a
-   * provider the backfill/engine deliberately skips (e.g. `threads`, which
-   * has no `Connection` adapter at all — see `CONNECTION_REGISTRY`). Once
-   * backfill has run and `--verify` reports zero gaps on this environment,
-   * this `undefined` branch — and the matching "pre-backfill fallback"
-   * branches below and in `ConnectionStateService.disconnectInbox`
-   * (`../connection/state-service.ts`) — become dead code safe to delete
-   * (Phase 5).
+   * predates the `packages/database/scripts/backfill-connections.ts` one-time
+   * run and hasn't been backfilled yet, or it's a provider the
+   * backfill/engine deliberately skips (e.g. `metaCatalog`/`outlookCalendar`,
+   * which have no `Connection` adapter at all — see `CONNECTION_REGISTRY`).
+   * Once backfill has run and `--verify` reports zero gaps on this
+   * environment, this `undefined` branch — and the matching "pre-backfill
+   * fallback" branches below and in `ConnectionStateService.disconnectInbox`
+   * (`../connection/state-service.ts`) — become dead code safe to delete.
    */
   const resolveConnection = async () => {
     if (integration.inboxId) {

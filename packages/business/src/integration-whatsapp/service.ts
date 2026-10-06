@@ -25,12 +25,14 @@ import type {
   WhatsappSignupSessionModel,
 } from "@chatbotx.io/database/types"
 import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
-import type { ChannelError } from "@chatbotx.io/sdk"
+import type { AuthValue, ChannelError } from "@chatbotx.io/sdk"
 import { z } from "zod"
 import { BaseService } from "../base.service"
+import { recordRefreshedAuth } from "../connection/record-refreshed-auth"
 import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { flowService } from "../flow/service"
+import { logger } from "../logger"
 import { createDatasetWithFallback } from "../meta-conversions/dataset-fallback"
 import {
   metaConversionsService,
@@ -390,10 +392,23 @@ class IntegrationWhatsappService extends BaseService {
    * Replace the stored OAuth credentials after a token refresh. Scoped by
    * workspace so a forged integration id can never touch another tenant's row.
    */
-  updateAuth(
+  async updateAuth(
     input: FindWorkspaceIntegrationInput & { auth: Record<string, unknown> },
   ): Promise<void> {
-    return integrationWhatsappRepository.updateAuth(input)
+    const row = await integrationWhatsappRepository.updateAuth(input)
+    if (!row) {
+      logger.warn(
+        { integrationId: input.id, workspaceId: input.workspaceId },
+        "Unable to update WhatsApp auth: integration not found",
+      )
+      return
+    }
+    await recordRefreshedAuth({
+      workspaceId: input.workspaceId,
+      provider: "whatsapp",
+      sourceId: row.phoneNumberId,
+      auth: input.auth as AuthValue,
+    })
   }
 
   async markTokenRefreshError(props: {
@@ -409,6 +424,10 @@ class IntegrationWhatsappService extends BaseService {
     })
 
     if (!row) {
+      logger.warn(
+        { integrationId: props.id, workspaceId: props.workspaceId },
+        "Unable to mark WhatsApp token refresh error: integration not found",
+      )
       return
     }
 
@@ -492,6 +511,13 @@ class IntegrationWhatsappService extends BaseService {
     if (!updated) {
       throw new Error("WhatsApp integration not found")
     }
+    await recordRefreshedAuth({
+      workspaceId: input.workspaceId,
+      provider: "whatsapp",
+      sourceId: updated.phoneNumberId,
+      auth: input.auth as AuthValue,
+      tx: input.tx,
+    })
 
     await this.audit("update", "re-authorized the WhatsApp Business Account")
 

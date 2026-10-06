@@ -4,8 +4,10 @@ const mocks = vi.hoisted(() => ({
   deleteByIntegration: vi.fn(),
   disconnectInbox: vi.fn(),
   existsForPage: vi.fn(),
+  findByInboxId: vi.fn(),
   remoteDisconnect: vi.fn(),
   serviceDisconnect: vi.fn(),
+  subscribePageToAppWebhook: vi.fn(),
   tearDownForIntegration: vi.fn(),
   transaction: vi.fn(),
   tx: { marker: "tx" },
@@ -14,7 +16,10 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@chatbotx.io/business", () => ({
   coexistService: { tearDownForIntegration: mocks.tearDownForIntegration },
   instagramIntegrationService: { existsForPage: mocks.existsForPage },
-  messengerIntegrationService: { disconnect: mocks.serviceDisconnect },
+  messengerIntegrationService: {
+    disconnect: mocks.serviceDisconnect,
+    findByInboxId: mocks.findByInboxId,
+  },
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
@@ -35,7 +40,7 @@ vi.mock("@chatbotx.io/integration-messenger", () => ({
 }))
 
 vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
-  subscribePageToAppWebhook: vi.fn(),
+  subscribePageToAppWebhook: mocks.subscribePageToAppWebhook,
 }))
 
 vi.mock("../src/logger", () => ({
@@ -48,9 +53,8 @@ vi.mock("../src/logger", () => ({
 // must be loaded with `await import()` after they register, or it would pick
 // up the real, unmocked dependencies.
 // ---------------------------------------------------------------------------
-const { disconnectMessengerConnection } = await import(
-  "../src/messenger-teardown"
-)
+const { disconnectMessengerConnection, messengerConnectionTeardownHook } =
+  await import("../src/messenger-teardown")
 
 const BASE_INPUT = {
   workspaceId: "ws-1",
@@ -72,6 +76,7 @@ describe("disconnectMessengerConnection", () => {
     mocks.deleteByIntegration.mockResolvedValue(undefined)
     mocks.serviceDisconnect.mockResolvedValue(undefined)
     mocks.disconnectInbox.mockResolvedValue(undefined)
+    mocks.subscribePageToAppWebhook.mockResolvedValue(undefined)
     mocks.transaction.mockImplementation(
       async (callback: (tx: unknown) => Promise<unknown>) =>
         await callback(mocks.tx),
@@ -193,5 +198,57 @@ describe("disconnectMessengerConnection", () => {
       id: BASE_INPUT.integrationId,
       tx: mocks.tx,
     })
+  })
+
+  test("preserves the shared Facebook Page webhook subscription and skips the remote disconnect when an Instagram integration still shares the Page", async () => {
+    mocks.existsForPage.mockResolvedValue(true)
+
+    await disconnectMessengerConnection(BASE_INPUT)
+
+    expect(mocks.subscribePageToAppWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pageId: BASE_INPUT.auth.metadata.pageId,
+        accessToken: BASE_INPUT.auth.tokens.accessToken,
+      }),
+    )
+    expect(mocks.remoteDisconnect).not.toHaveBeenCalled()
+  })
+})
+
+describe("messengerConnectionTeardownHook", () => {
+  beforeEach(() => {
+    mocks.existsForPage.mockResolvedValue(false)
+    mocks.remoteDisconnect.mockResolvedValue(undefined)
+    mocks.findByInboxId.mockResolvedValue({ id: "integration-1" })
+  })
+
+  const HOOK_CONNECTION = {
+    id: "conn-1",
+    workspaceId: "ws-1",
+    inboxId: "inbox-1",
+  } as never
+
+  test("resolves the satellite row by inboxId, then delegates to the shared teardown", async () => {
+    const result = await messengerConnectionTeardownHook({
+      connection: HOOK_CONNECTION,
+      auth: BASE_INPUT.auth as never,
+    })
+
+    expect(mocks.findByInboxId).toHaveBeenCalledWith("inbox-1")
+    expect(mocks.remoteDisconnect).toHaveBeenCalledWith(BASE_INPUT.auth)
+    expect(result.skipGenericRemoteTeardown).toBe(true)
+    expect(result.remoteErrors).toEqual([])
+  })
+
+  test("surfaces the remote Graph API failure message in remoteErrors instead of throwing", async () => {
+    mocks.remoteDisconnect.mockRejectedValue(new Error("Graph API down"))
+
+    const result = await messengerConnectionTeardownHook({
+      connection: HOOK_CONNECTION,
+      auth: BASE_INPUT.auth as never,
+    })
+
+    expect(result.remoteErrors).toEqual(["Graph API down"])
+    expect(result.skipGenericRemoteTeardown).toBe(true)
   })
 })

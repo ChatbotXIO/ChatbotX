@@ -93,21 +93,10 @@ const validateReturnUrl = (
   return `${url.pathname}${url.search}${url.hash}`
 }
 
-/** Exactly one of `actorUserId`/`actorTokenId` is required at creation time, surfacing a clean error before the database's `ConnectSession_actor_at_most_one` CHECK, which only enforces `<= 1` because an actor FK may later become null through `ON DELETE SET NULL`. */
-const requireExactlyOneActor = (input: {
-  actorUserId?: string | null
-  actorTokenId?: string | null
-}): void => {
-  const hasUser = Boolean(input.actorUserId)
-  const hasToken = Boolean(input.actorTokenId)
-  if (hasUser === hasToken) {
-    throw new ChatbotXException(
-      "ConnectSession requires exactly one of actorUserId/actorTokenId",
-      "validation",
-      400,
-    )
-  }
-}
+/** A `ConnectSession` always runs as either a builder-session user or a workspace-token caller — never both, never neither. Enforced at the type level so a caller can no longer reach the database's `ConnectSession_actor_at_most_one` CHECK (which only enforces `<= 1`, since an actor FK may later become null through `ON DELETE SET NULL`) with an invalid pair. */
+export type ConnectSessionActor =
+  | { actorUserId: string; actorTokenId?: never }
+  | { actorTokenId: string; actorUserId?: never }
 
 /**
  * DB-backed reads/writes over the `ConnectSession` table — the multi-step
@@ -144,16 +133,12 @@ class ConnectSessionService extends BaseService {
       purpose: ConnectSessionPurpose
       nextAction?: (nonce: string) => ConnectSessionModel["nextAction"]
       targetConnectionId?: string | null
-      actorUserId?: string | null
-      actorTokenId?: string | null
       platformOwnerId?: string | null
       originHost?: string | null
       returnUrl?: string | null
-    },
+    } & ConnectSessionActor,
     tx: DatabaseClient = db,
   ): Promise<{ session: ConnectSessionModel; nonce: string }> {
-    requireExactlyOneActor(input)
-
     const activeCount = await connectSessionRepository.countActiveByWorkspaceId(
       { workspaceId: input.workspaceId },
       tx,

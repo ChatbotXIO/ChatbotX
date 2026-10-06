@@ -12,10 +12,14 @@ import {
 import { distributedLock } from "@chatbotx.io/redis"
 import { logger } from "../../lib/logger"
 import { runJobWithAuditContext } from "../../lib/run-job-with-audit-context"
+import {
+  REFRESH_SOURCE,
+  refreshWithErrorHandling,
+  runRefreshBatch,
+} from "./refresh-runner"
 
 const BATCH_SIZE = 50
 const REFRESH_LOCK_TIMEOUT_SECONDS = 10
-const REFRESH_SOURCE = "schedule:refreshChannelTokens"
 
 async function refreshOne(integration: {
   id: string
@@ -25,62 +29,46 @@ async function refreshOne(integration: {
     return
   }
 
-  await runJobWithAuditContext(
-    { workspaceId: integration.workspaceId, source: REFRESH_SOURCE },
-    () =>
-      distributedLock.runExclusive({
-        key: `auth:refresh:whatsapp:${integration.id}`,
-        timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
-        fn: async () => {
-          try {
-            const current =
-              await integrationWhatsappService.findByIdForWorkspace({
-                id: integration.id,
-                workspaceId: integration.workspaceId,
-              })
-            if (!current) {
-              return
-            }
+  await refreshWithErrorHandling<WhatsappAuthValue>({
+    id: integration.id,
+    workspaceId: integration.workspaceId,
+    provider: "whatsapp",
+    label: "refreshWhatsappTokens",
+    lockKey: `auth:refresh:whatsapp:${integration.id}`,
+    lockTimeout: REFRESH_LOCK_TIMEOUT_SECONDS,
+    refresh: async () => {
+      const current = await integrationWhatsappService.findByIdForWorkspace({
+        id: integration.id,
+        workspaceId: integration.workspaceId,
+      })
+      if (!current) {
+        return
+      }
 
-            const auth = current.auth as WhatsappAuthValue
-            if (auth.metadata.isManual) {
-              return
-            }
+      const auth = current.auth as WhatsappAuthValue
+      if (auth.metadata.isManual) {
+        return
+      }
 
-            const newAuth = await integrationWhatsapp.refreshAuth?.({ auth })
-
-            await integrationWhatsappService.updateAuth({
-              id: integration.id,
-              workspaceId: integration.workspaceId,
-              auth: newAuth as WhatsappAuthValue,
-            })
-
-            await auditService.record({
-              action: "refresh",
-              detail: "auto-refreshed the WhatsApp channel token",
-              workspaceId: integration.workspaceId,
-              source: REFRESH_SOURCE,
-            })
-          } catch (error) {
-            logger.error(
-              error,
-              `[refreshWhatsappTokens] id=${integration.id} failed`,
-            )
-            await integrationWhatsappService.markTokenRefreshError({
-              id: integration.id,
-              workspaceId: integration.workspaceId,
-              error: error instanceof Error ? error.message : String(error),
-              isRevoked: isRevokedTokenError(error),
-            })
-            await logProviderError({
-              provider: "whatsapp",
-              workspaceId: integration.workspaceId,
-              error,
-            })
-          }
-        },
+      return (await integrationWhatsapp.refreshAuth?.({
+        auth,
+      })) as WhatsappAuthValue
+    },
+    apply: (newAuth) =>
+      integrationWhatsappService.updateAuth({
+        id: integration.id,
+        workspaceId: integration.workspaceId,
+        auth: newAuth,
       }),
-  )
+    markError: (error) =>
+      integrationWhatsappService.markTokenRefreshError({
+        id: integration.id,
+        workspaceId: integration.workspaceId,
+        error: error instanceof Error ? error.message : String(error),
+        isRevoked: isRevokedTokenError(error),
+      }),
+    auditDetail: "auto-refreshed the WhatsApp channel token",
+  })
 }
 
 type RefreshableIntegration = {
@@ -213,14 +201,8 @@ export async function refreshWhatsappTokens(): Promise<void> {
     }
   }
 
-  for (let i = 0; i < integrations.length; i += BATCH_SIZE) {
-    const batch = integrations.slice(i, i + BATCH_SIZE)
-    await Promise.all(batch.map(refreshOne))
-  }
+  await runRefreshBatch(integrations, refreshOne, BATCH_SIZE)
 
   const wabaIntegrations = [...wabaRefreshes.values()]
-  for (let i = 0; i < wabaIntegrations.length; i += BATCH_SIZE) {
-    const batch = wabaIntegrations.slice(i, i + BATCH_SIZE)
-    await Promise.all(batch.map(refreshWabaCredential))
-  }
+  await runRefreshBatch(wabaIntegrations, refreshWabaCredential, BATCH_SIZE)
 }

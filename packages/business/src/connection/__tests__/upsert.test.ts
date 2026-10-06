@@ -15,7 +15,10 @@ import type { ConnectionStoreBinding } from "../store-bindings"
 const mocks = vi.hoisted(() => ({
   connectionRepositoryUpdate: vi.fn(),
   transition: vi.fn(),
+  compensateQuotaConsumption: vi.fn(async () => undefined),
+  findOwnerUserIdByWorkspaceId: vi.fn(async () => "owner-1"),
   isUniqueViolationError: vi.fn(() => false),
+  loggerError: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -26,22 +29,27 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   connectionRepository: { update: mocks.connectionRepositoryUpdate },
 }))
 
-vi.mock("../errors", () => ({
+vi.mock("../../errors", () => ({
   connectionAlreadyConnectedException: vi.fn(
     () => new Error("already connected"),
   ),
 }))
 
-vi.mock("../logger", () => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+vi.mock("../../logger", () => ({
+  logger: { warn: vi.fn(), error: mocks.loggerError, info: vi.fn() },
 }))
 
-vi.mock("../workspace-member/service", () => ({
-  workspaceMemberService: {},
+vi.mock("../../workspace-member/service", () => ({
+  workspaceMemberService: {
+    findOwnerUserIdByWorkspaceId: mocks.findOwnerUserIdByWorkspaceId,
+  },
 }))
 
 vi.mock("../state-service", () => ({
-  connectionStateService: { transition: mocks.transition },
+  connectionStateService: {
+    transition: mocks.transition,
+    compensateQuotaConsumption: mocks.compensateQuotaConsumption,
+  },
 }))
 
 // Dynamic `import()` is required here, not a static import: the mocks above
@@ -49,7 +57,13 @@ vi.mock("../state-service", () => ({
 // repositories`/`../workspace-member/service` dependencies) is evaluated,
 // which only a post-`vi.mock` dynamic import guarantees — same pattern as
 // `@chatbotx.io/connections`'s `internal.test.ts`.
-const { upsertConnectionRow } = await import("../upsert")
+const {
+  upsertConnectionRow,
+  withQuotaCompensation,
+  resolveOwnerId,
+  resolveForeignKey,
+  toChannelType,
+} = await import("../upsert")
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -105,5 +119,194 @@ describe("upsertConnectionRow — revive-in-place sourceId sync", () => {
     expect(mocks.connectionRepositoryUpdate).toHaveBeenCalledTimes(1)
     const [updateInput] = mocks.connectionRepositoryUpdate.mock.calls[0]
     expect(updateInput.values.sourceId).toBe("https://new.example.com")
+  })
+})
+
+describe("withQuotaCompensation", () => {
+  it("returns the operation's result and never compensates when it succeeds", async () => {
+    const result = await withQuotaCompensation(
+      {
+        ownerId: "owner-1",
+        quotaConsumption: {
+          consumed: true,
+          workspaceId: "ws-1",
+          workspaceUsageIncremented: true,
+        },
+        context: { connectionId: "conn-1" },
+      },
+      async () => "ok",
+    )
+
+    expect(result).toBe("ok")
+    expect(mocks.compensateQuotaConsumption).not.toHaveBeenCalled()
+  })
+
+  it("compensates the tracked quota consumption and rethrows the original error", async () => {
+    const operationError = new Error("transaction rolled back")
+
+    await expect(
+      withQuotaCompensation(
+        {
+          ownerId: "owner-1",
+          quotaConsumption: {
+            consumed: true,
+            workspaceId: "ws-1",
+            workspaceUsageIncremented: true,
+          },
+          context: { connectionId: "conn-1" },
+        },
+        () => {
+          throw operationError
+        },
+      ),
+    ).rejects.toBe(operationError)
+
+    expect(mocks.compensateQuotaConsumption).toHaveBeenCalledWith({
+      ownerId: "owner-1",
+      workspaceId: "ws-1",
+      workspaceUsageIncremented: true,
+    })
+  })
+
+  it("skips compensation when nothing was consumed, and still rethrows", async () => {
+    const operationError = new Error("transaction rolled back")
+
+    await expect(
+      withQuotaCompensation(
+        {
+          ownerId: "owner-1",
+          quotaConsumption: {
+            consumed: false,
+            workspaceUsageIncremented: false,
+          },
+          context: {},
+        },
+        () => {
+          throw operationError
+        },
+      ),
+    ).rejects.toBe(operationError)
+
+    expect(mocks.compensateQuotaConsumption).not.toHaveBeenCalled()
+  })
+
+  it("skips compensation when no ownerId is available, and still rethrows", async () => {
+    const operationError = new Error("transaction rolled back")
+
+    await expect(
+      withQuotaCompensation(
+        {
+          ownerId: undefined,
+          quotaConsumption: {
+            consumed: true,
+            workspaceId: "ws-1",
+            workspaceUsageIncremented: true,
+          },
+          context: {},
+        },
+        () => {
+          throw operationError
+        },
+      ),
+    ).rejects.toBe(operationError)
+
+    expect(mocks.compensateQuotaConsumption).not.toHaveBeenCalled()
+  })
+
+  it("logs (but does not throw) a compensation failure, surfacing the original operation error", async () => {
+    const operationError = new Error("transaction rolled back")
+    mocks.compensateQuotaConsumption.mockRejectedValueOnce(
+      new Error("redis unavailable"),
+    )
+
+    await expect(
+      withQuotaCompensation(
+        {
+          ownerId: "owner-1",
+          quotaConsumption: {
+            consumed: true,
+            workspaceId: "ws-1",
+            workspaceUsageIncremented: false,
+          },
+          context: { connectionId: "conn-1" },
+        },
+        () => {
+          throw operationError
+        },
+      ),
+    ).rejects.toBe(operationError)
+
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: expect.objectContaining({ message: "redis unavailable" }),
+        connectionId: "conn-1",
+        workspaceId: "ws-1",
+        ownerId: "owner-1",
+      }),
+      "connection: quota compensation failed",
+    )
+  })
+})
+
+describe("resolveOwnerId", () => {
+  it("resolves the workspace owner for a channel-kind connection", async () => {
+    const ownerId = await resolveOwnerId({
+      kind: "channel",
+      workspaceId: "workspace-1",
+    })
+
+    expect(ownerId).toBe("owner-1")
+    expect(mocks.findOwnerUserIdByWorkspaceId).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+    })
+  })
+
+  it("returns undefined for an integration-kind connection without looking up an owner", async () => {
+    const ownerId = await resolveOwnerId({
+      kind: "integration",
+      workspaceId: "workspace-1",
+    })
+
+    expect(ownerId).toBeUndefined()
+    expect(mocks.findOwnerUserIdByWorkspaceId).not.toHaveBeenCalled()
+  })
+})
+
+describe("resolveForeignKey", () => {
+  it("prefers inboxId when present", () => {
+    expect(
+      resolveForeignKey({
+        inboxId: "inbox-1",
+        integrationId: "integration-1",
+      } as ConnectionModel),
+    ).toBe("inbox-1")
+  })
+
+  it("falls back to integrationId when inboxId is null", () => {
+    expect(
+      resolveForeignKey({
+        inboxId: null,
+        integrationId: "integration-1",
+      } as ConnectionModel),
+    ).toBe("integration-1")
+  })
+
+  it("returns null when neither FK is set (chatbotx)", () => {
+    expect(
+      resolveForeignKey({
+        inboxId: null,
+        integrationId: null,
+      } as ConnectionModel),
+    ).toBeNull()
+  })
+})
+
+describe("toChannelType", () => {
+  it("maps instagramFacebook onto the shared instagram channel", () => {
+    expect(toChannelType("instagramFacebook")).toBe("instagram")
+  })
+
+  it("passes other channel providers through unchanged", () => {
+    expect(toChannelType("messenger")).toBe("messenger")
   })
 })

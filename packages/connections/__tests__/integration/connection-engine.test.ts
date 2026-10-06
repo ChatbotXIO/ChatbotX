@@ -37,6 +37,7 @@ import { connectSessionService } from "@chatbotx.io/business/connect-session"
 import {
   connectionStateService,
   toChannelType,
+  upsertConnectionRow,
 } from "@chatbotx.io/business/connection"
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import { db, eq } from "@chatbotx.io/database/client"
@@ -59,7 +60,6 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { describe, expect, test, vi } from "vitest"
 import { connectTargets } from "../../src/connect-targets"
-import { upsertConnectionRow } from "../../src/internal"
 import { disconnect } from "../../src/lifecycle"
 import { CONNECTION_REGISTRY } from "../../src/registry"
 

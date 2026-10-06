@@ -88,30 +88,6 @@ beforeEach(() => {
 })
 
 describe("connectSessionService.create", () => {
-  it.each([
-    {
-      actorTokenId: undefined,
-      actorUserId: undefined,
-    },
-    {
-      actorTokenId: "token-1",
-      actorUserId: "user-1",
-    },
-  ])("rejects invalid actor combinations with a typed validation error", async ({
-    actorTokenId,
-    actorUserId,
-  }) => {
-    await expect(
-      connectSessionService.create({
-        workspaceId: "ws-1",
-        provider: "messenger",
-        purpose: "connect",
-        actorUserId,
-        actorTokenId,
-      }),
-    ).rejects.toMatchObject({ code: "validation", httpStatusCode: 400 })
-  })
-
   it("throws connectSessionLimitReached at the per-workspace pending cap", async () => {
     mocks.countActiveByWorkspaceId.mockResolvedValue(20)
     await expect(
@@ -201,7 +177,7 @@ describe("connectSessionService.create", () => {
     ).resolves.toBeUndefined()
   })
 
-  it("forwards an optional tx to both the active-count check and the insert (M-7: a caller minting the session's workspace in the same breath can run both atomically)", async () => {
+  it("forwards an optional tx to both the active-count check and the insert (a caller minting the session's workspace in the same breath can run both atomically)", async () => {
     mocks.insert.mockImplementation(
       async (values: Record<string, unknown>) => ({
         ...baseSession(),

@@ -12,12 +12,12 @@ vi.mock("@/lib/log", () => ({
 // Mock @chatbotx.io/business
 // ---------------------------------------------------------------------------
 const replaceAuth = vi.fn()
-const reconnectInbox = vi.fn()
+const commitReconnect = vi.fn()
 const upsertCurrentCredential = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
   connectionStateService: {
-    reconnectInbox,
+    commitReconnect,
   },
   integrationWhatsappService: {
     replaceAuth,
@@ -38,17 +38,12 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock @chatbotx.io/database/client — `db.transaction` mimics Drizzle's real
-// semantics closely enough for this test: it runs the callback against one
-// shared `tx` handle and forwards whatever the callback does (resolve/reject).
+// `commitReconnect` owns opening the transaction internally (see
+// `ConnectionStateService.commitReconnect`'s own unit tests for that); this
+// mock models the one contract this module relies on: it invokes the
+// supplied `writeAuth(tx)` exactly once with a shared tx handle.
 // ---------------------------------------------------------------------------
 const SENTINEL_TX = { __tx: true }
-const dbTransaction = vi.fn(
-  async (callback: (tx: unknown) => unknown) => await callback(SENTINEL_TX),
-)
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: dbTransaction },
-}))
 
 // ---------------------------------------------------------------------------
 // Mock the rest of the WhatsApp API surface this module imports, none of
@@ -134,47 +129,50 @@ function baseInput() {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  dbTransaction.mockImplementation(
-    async (callback: (tx: unknown) => unknown) => await callback(SENTINEL_TX),
+  commitReconnect.mockImplementation(
+    async ({ writeAuth }: { writeAuth: (tx: unknown) => Promise<void> }) =>
+      await writeAuth(SENTINEL_TX),
   )
   replaceAuth.mockResolvedValue({ id: INTEGRATION_ID })
-  reconnectInbox.mockResolvedValue(undefined)
   upsertCurrentCredential.mockResolvedValue(undefined)
   subscribeWebhook.mockResolvedValue(undefined)
 })
 
 describe("persistReconnectAuthAndResubscribe — Part 1: transaction atomicity", () => {
-  test("wraps the auth write and reconnectInbox in one shared transaction", async () => {
+  test("calls commitReconnect with the inbox/workspace/auth and a writeAuth that persists the auth row through the shared tx", async () => {
     await persistReconnectAuthAndResubscribe(baseInput())
 
-    expect(dbTransaction).toHaveBeenCalledTimes(1)
-    expect(replaceAuth).toHaveBeenCalledWith(
-      expect.objectContaining({ tx: SENTINEL_TX }),
+    expect(commitReconnect).toHaveBeenCalledTimes(1)
+    expect(commitReconnect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: WORKSPACE_ID,
+      }),
     )
-    expect(reconnectInbox).toHaveBeenCalledWith(
+    expect(replaceAuth).toHaveBeenCalledWith(
       expect.objectContaining({ tx: SENTINEL_TX }),
     )
   })
 
-  test("rolls back the whole reconnect when reconnectInbox fails after the auth write (e.g. channelLimitReached)", async () => {
+  test("propagates a commitReconnect failure (e.g. channelLimitReached from the inbox re-check) as a rejected reconnect", async () => {
     const channelLimitReached = Object.assign(
       new Error("Channel limit reached"),
       { code: "channelLimitReached" },
     )
-    reconnectInbox.mockRejectedValue(channelLimitReached)
+    commitReconnect.mockImplementation(async ({ writeAuth }) => {
+      await writeAuth(SENTINEL_TX)
+      throw channelLimitReached
+    })
 
     await expect(
       persistReconnectAuthAndResubscribe(baseInput()),
     ).rejects.toThrow("Channel limit reached")
 
-    // Both writes ran through the SAME transaction boundary, so the thrown
-    // error aborts the whole thing — there is no "auth saved, inbox state
-    // stale" partial outcome for the real DB to commit.
-    expect(dbTransaction).toHaveBeenCalledTimes(1)
+    expect(commitReconnect).toHaveBeenCalledTimes(1)
     expect(replaceAuth).toHaveBeenCalledWith(
       expect.objectContaining({ tx: SENTINEL_TX }),
     )
-    // A failed transaction must abort before any post-commit follow-up
+    // A failed commitReconnect must abort before any post-commit follow-up
     // (WABA credential cache, webhook resubscribe) runs.
     expect(upsertCurrentCredential).not.toHaveBeenCalled()
     expect(subscribeWebhook).not.toHaveBeenCalled()

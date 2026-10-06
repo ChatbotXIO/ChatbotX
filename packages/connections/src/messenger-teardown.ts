@@ -5,9 +5,10 @@ import {
 } from "@chatbotx.io/business"
 import {
   type ConnectionAdapter,
+  type ConnectionTeardownResult,
   connectionStateService,
 } from "@chatbotx.io/business/connection"
-import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import { db } from "@chatbotx.io/database/client"
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import {
   isDisconnectSafeError,
@@ -17,11 +18,6 @@ import {
 import { subscribePageToAppWebhook } from "@chatbotx.io/integration-messenger/apis/page"
 import { logger } from "./logger"
 
-type MessengerTeardownResult = {
-  skipGenericRemoteTeardown: boolean
-  withinTransaction: (tx: DatabaseClient) => Promise<void>
-}
-
 /**
  * Messenger-only disconnect teardown, shared by the legacy
  * `disconnectMessenger` builder action
@@ -29,8 +25,7 @@ type MessengerTeardownResult = {
  * and the generic engine `DELETE /v1/connections/{id}` path
  * (`lifecycle.ts`'s `disconnect`, wired through
  * `CONNECTION_REGISTRY.messenger.teardown` — see
- * `messengerConnectionTeardownHook` below). The engine path used to skip
- * all of this (H-4):
+ * `messengerConnectionTeardownHook` below):
  *  - Preserves the Facebook Page webhook subscription when an Instagram
  *    integration still shares the same Page, instead of unsubscribing it.
  *  - Coexist-mode teardown for the integration.
@@ -41,12 +36,13 @@ type MessengerTeardownResult = {
  * Remote Graph API calls run OUTSIDE the transaction; only the returned
  * `withinTransaction` closure's DB writes use `tx`.
  */
-export const tearDownMessengerConnection = async (input: {
+const tearDownMessengerConnection = async (input: {
   workspaceId: string
   integrationId: string
   auth: MessengerAuthValue
-}): Promise<MessengerTeardownResult> => {
+}): Promise<ConnectionTeardownResult> => {
   const { workspaceId, integrationId, auth } = input
+  const remoteErrors: string[] = []
 
   try {
     const hasSharedInstagramIntegration =
@@ -64,9 +60,12 @@ export const tearDownMessengerConnection = async (input: {
           subscribedFields: "general_info",
         })
       } catch (error) {
+        remoteErrors.push(
+          error instanceof Error ? error.message : String(error),
+        )
         logger.warn(
           {
-            err: error instanceof Error ? error.message : String(error),
+            err: error,
             pageId: auth.metadata.pageId,
           },
           "Failed to preserve shared Messenger webhook subscription during disconnect",
@@ -91,9 +90,12 @@ export const tearDownMessengerConnection = async (input: {
         if (!isDisconnectSafeError(error)) {
           throw error
         }
+        remoteErrors.push(
+          error instanceof Error ? error.message : String(error),
+        )
         logger.warn(
           {
-            err: error instanceof Error ? error.message : String(error),
+            err: error,
             pageId: auth.metadata.pageId,
           },
           "Messenger page unsubscribe failed with a non-retryable Graph error — proceeding with local disconnect",
@@ -108,9 +110,10 @@ export const tearDownMessengerConnection = async (input: {
     // cleanup below. Skipping that cleanup is exactly what leaves orphaned
     // `coexist`/`MetaCapiEvent` rows behind, which this teardown exists to
     // prevent.
+    remoteErrors.push(error instanceof Error ? error.message : String(error))
     logger.error(
       {
-        err: error instanceof Error ? error.message : String(error),
+        err: error,
         pageId: auth.metadata.pageId,
         workspaceId,
         integrationId,
@@ -120,6 +123,7 @@ export const tearDownMessengerConnection = async (input: {
   }
 
   return {
+    remoteErrors,
     // This function already owns the whole remote teardown decision above —
     // the engine's generic `integration.disconnect` + `provider.webhook.unsubscribe`
     // calls would re-run (or clobber) the same Graph API work.

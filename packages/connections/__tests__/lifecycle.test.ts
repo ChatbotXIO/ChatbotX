@@ -33,6 +33,8 @@ vi.mock("@chatbotx.io/business/connection", () => ({
   },
   InvalidConnectionTransitionException: Error,
   isActiveConnectionStatus: vi.fn(() => true),
+  resolveForeignKey: mocks.resolveForeignKey,
+  resolveOwnerId: mocks.resolveOwnerId,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -62,8 +64,6 @@ vi.mock("@chatbotx.io/redis", () => ({
 vi.mock("../src/internal", () => ({
   findOrThrow: mocks.findOrThrow,
   resolveAdapter: mocks.resolveAdapter,
-  resolveForeignKey: mocks.resolveForeignKey,
-  resolveOwnerId: mocks.resolveOwnerId,
 }))
 
 vi.mock("../src/logger", () => ({
@@ -137,12 +137,12 @@ describe("disconnect", () => {
     })
   })
 
-  // H-4: the engine's generic `DELETE /v1/connections/{id}` path used to run
-  // only the generic `integration.disconnect` + `provider.webhook.unsubscribe`
-  // + store-row-delete sequence, ignoring any provider-specific teardown
-  // (Messenger's shared-Page-webhook preservation, coexist teardown,
-  // `MetaCapiEvent`/tag cleanup — see `messenger-teardown.ts`). This asserts
-  // the generic path now defers to the adapter's `teardown` hook instead.
+  // The engine's generic `DELETE /v1/connections/{id}` path defers to the
+  // adapter's `teardown` hook (Messenger's shared-Page-webhook preservation,
+  // coexist teardown, `MetaCapiEvent`/tag cleanup — see
+  // `messenger-teardown.ts`) instead of always running the generic
+  // `integration.disconnect` + `provider.webhook.unsubscribe` + store-row-
+  // delete sequence.
   test("messenger disconnect runs the adapter's teardown hook instead of the generic remote teardown", async () => {
     await disconnect({ connectionId: "conn-1", workspaceId: "ws-1" })
 
@@ -168,5 +168,37 @@ describe("disconnect", () => {
       auth: messengerAuth,
     })
     expect(mocks.withinTransaction).toHaveBeenCalledWith(mocks.tx)
+  })
+
+  test("persists a provider-side teardown failure to Connection.lastError instead of failing the disconnect", async () => {
+    mocks.teardown.mockRejectedValue(new Error("Graph API down"))
+
+    const result = await disconnect({
+      connectionId: "conn-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(result).toBe(connection)
+    // `toPublicErrorMessage` is mocked to the fixed "error" literal above;
+    // this only proves a teardown failure gets persisted as `lastError`
+    // rather than failing the disconnect, not the exact message text.
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "conn-1",
+        values: { lastError: "error" },
+      }),
+      mocks.tx,
+    )
+  })
+
+  test("never releases the pending quota when the transaction rolls back", async () => {
+    mocks.update.mockResolvedValue(connection)
+    mocks.withinTransaction.mockRejectedValue(new Error("constraint violation"))
+
+    await expect(
+      disconnect({ connectionId: "conn-1", workspaceId: "ws-1" }),
+    ).rejects.toThrow("constraint violation")
+
+    expect(mocks.releasePendingQuota).not.toHaveBeenCalled()
   })
 })

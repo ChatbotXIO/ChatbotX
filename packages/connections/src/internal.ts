@@ -32,24 +32,6 @@ import { z } from "zod"
 import { logger } from "./logger"
 import { CONNECTION_REGISTRY } from "./registry"
 
-// Re-exported for `connect-session-flow.ts`/`connect-targets.ts`/
-// `credentials.ts`/`lifecycle.ts`/the package's own `index.ts` — these now
-// live in `@chatbotx.io/business/connection` (see that package's
-// `upsert.ts`) since they only need business-layer primitives
-// (`connectionRepository`, `connectionStateService`, store bindings), which
-// lets business-layer services (api/smtp/webchat/tiktok/zalo/whatsapp
-// connect, all inside their own caller-owned transaction) call
-// `upsertConnectionRow` directly without a `business -> connections ->
-// business` package cycle.
-export {
-  resolveForeignKey,
-  resolveOwnerId,
-  saveOrInsertSatellite,
-  toChannelType,
-  upsertConnectionRow,
-  withQuotaCompensation,
-} from "@chatbotx.io/business/connection"
-
 /** Single source for which `ConnectionStrategy`s connect via direct credentials (vs. an OAuth round trip) — shared by `credentials.ts`'s strategy-branch check, `connect-flow.ts`'s `startConnect`, and `resolve-provider.ts`'s catalog availability check. */
 export const isCredentialStrategy = (strategy: ConnectionStrategy): boolean =>
   strategy === "token" || strategy === "api_key" || strategy === "self_serve"
@@ -85,15 +67,15 @@ type ProviderFailure = {
   statusCode?: unknown
 }
 
-const TRANSIENT_NETWORK_ERROR_CODES: Record<string, true> = {
-  ECONNABORTED: true,
-  ECONNREFUSED: true,
-  ECONNRESET: true,
-  EAI_AGAIN: true,
-  ENETUNREACH: true,
-  ENOTFOUND: true,
-  ETIMEDOUT: true,
-}
+const TRANSIENT_NETWORK_ERROR_CODES: ReadonlySet<string> = new Set([
+  "ECONNABORTED",
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "EAI_AGAIN",
+  "ENETUNREACH",
+  "ENOTFOUND",
+  "ETIMEDOUT",
+])
 
 /** Reads the HTTP status off whichever shape a provider SDK's thrown error uses. */
 const extractHttpStatus = (failure: ProviderFailure): number | undefined => {
@@ -164,7 +146,7 @@ export const providerFailureStatus = (
     failure.name === "AbortError" ||
     failure.name === "TimeoutError" ||
     (typeof failure.code === "string" &&
-      TRANSIENT_NETWORK_ERROR_CODES[failure.code])
+      TRANSIENT_NETWORK_ERROR_CODES.has(failure.code))
   ) {
     return 503
   }
@@ -268,13 +250,12 @@ export const findOrThrow = async (input: {
 /**
  * Best-effort `provider.webhook.subscribe` right after a fresh
  * `connect.completed`. Runs AFTER `connectAndPersist`'s own transaction has
- * already committed, so neither failure here can ever fail the connect
- * itself: a subscribe failure is tolerated by persisting
- * `verify.failed_non_auth` (degrading the connection); if that follow-up
- * transition ALSO fails, this logs and returns the original (still
- * `connected`-looking) row rather than rethrowing — the connect already
- * succeeded, and the next webhook-health check or reconcile pass gets
- * another chance to degrade it.
+ * already committed, so a subscribe failure can never fail the connect
+ * itself: it is tolerated by persisting `verify.failed_non_auth` (degrading
+ * the connection). If that follow-up transition ALSO fails, this rethrows —
+ * silently returning the stale (still `connected`-looking) row would hide a
+ * connection that is neither subscribed nor marked degraded from every
+ * caller and observability signal.
  */
 export const subscribeWebhookBestEffort = async (input: {
   adapter: ConnectionAdapter
@@ -313,7 +294,7 @@ export const subscribeWebhookBestEffort = async (input: {
         },
         "connect: failed to mark connection degraded after a webhook subscribe failure",
       )
-      return input.connection
+      throw transitionErr
     }
   }
 }
@@ -408,14 +389,12 @@ export const connectAndPersist = async (input: {
     ownerId,
   })
 
-  // Restores the v1.11.0 "connected a new channel" audit record, dropped
-  // when messenger/instagram moved off their own `connectPage`/
-  // `connectAccount` services onto this shared engine path. Generalized to
-  // every provider the engine connects (not just the 3 legacy channels).
-  // Also fires when reviving an inactive satellite row in place (`existing`
-  // truthy) — the operator still took a deliberate connect action and
-  // expects an audit entry, same as a brand-new row; only `!input.actorUserId`
-  // skips it (not faked), e.g. a workspace-token-driven public API connect.
+  // Restores the "connected a new channel" audit record for every provider
+  // the engine connects. Also fires when reviving an inactive satellite row
+  // in place (`existing` truthy) — the operator still took a deliberate
+  // connect action and expects an audit entry, same as a brand-new row;
+  // only `!input.actorUserId` skips it (not faked), e.g. a workspace-token-
+  // driven public API connect.
   if (input.actorUserId) {
     await dispatchAuditRecordSafely(
       {

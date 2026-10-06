@@ -29,6 +29,7 @@ import {
   type TiktokAuthValue,
 } from "@chatbotx.io/integration-tiktok"
 import { refreshAccessToken as refreshTiktokAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
+import { parseTiktokScopes } from "@chatbotx.io/integration-tiktok/lib/scopes"
 import { buildTokenTimestamps } from "@chatbotx.io/integration-tiktok/lib/token-utils"
 import {
   integration as integrationWhatsapp,
@@ -44,6 +45,7 @@ import {
 import { distributedLock } from "@chatbotx.io/redis"
 import { isCloud } from "@/env"
 import { getAllWorkspaceMembers } from "@/features/workspace-members/queries"
+import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { resolveWorkspaceBlockState } from "@/lib/workspace-quota"
 
@@ -130,12 +132,23 @@ async function refreshOneZalo(
         })
         return "refreshed"
       } catch (error) {
-        await zaloIntegrationService.markTokenRefreshError({
-          id,
-          workspaceId,
-          error: error instanceof Error ? error.message : String(error),
-          isRevoked: isZaloRevokedTokenError(error),
-        })
+        logger.error(
+          { err: error, integrationId: id, workspaceId },
+          "Failed to refresh Zalo channel token",
+        )
+        try {
+          await zaloIntegrationService.markTokenRefreshError({
+            id,
+            workspaceId,
+            error: error instanceof Error ? error.message : String(error),
+            isRevoked: isZaloRevokedTokenError(error),
+          })
+        } catch (markError) {
+          logger.error(
+            { err: markError, integrationId: id, workspaceId },
+            "Failed to record Zalo token refresh error",
+          )
+        }
         return "failed"
       }
     },
@@ -189,6 +202,10 @@ async function refreshOneTiktok(
                 newTokens.refresh_expires_in,
               ),
             },
+            metadata: {
+              ...auth.metadata,
+              scopes: parseTiktokScopes(newTokens.scope),
+            },
           },
         })
         await auditService.record({
@@ -198,12 +215,23 @@ async function refreshOneTiktok(
         })
         return "refreshed"
       } catch (error) {
-        await tiktokIntegrationService.markTokenRefreshError({
-          id,
-          workspaceId,
-          error: error instanceof Error ? error.message : String(error),
-          isRevoked: isTiktokRevokedTokenError(error),
-        })
+        logger.error(
+          { err: error, integrationId: id, workspaceId },
+          "Failed to refresh TikTok channel token",
+        )
+        try {
+          await tiktokIntegrationService.markTokenRefreshError({
+            id,
+            workspaceId,
+            error: error instanceof Error ? error.message : String(error),
+            isRevoked: isTiktokRevokedTokenError(error),
+          })
+        } catch (markError) {
+          logger.error(
+            { err: markError, integrationId: id, workspaceId },
+            "Failed to record TikTok token refresh error",
+          )
+        }
         return "failed"
       }
     },
@@ -257,12 +285,23 @@ async function refreshOneInstagram(
         })
         return "refreshed"
       } catch (error) {
-        await instagramIntegrationService.markTokenRefreshError({
-          id,
-          workspaceId,
-          error: error instanceof Error ? error.message : String(error),
-          isRevoked: isInstagramRevokedTokenError(error),
-        })
+        logger.error(
+          { err: error, integrationId: id, workspaceId },
+          "Failed to refresh Instagram channel token",
+        )
+        try {
+          await instagramIntegrationService.markTokenRefreshError({
+            id,
+            workspaceId,
+            error: error instanceof Error ? error.message : String(error),
+            isRevoked: isInstagramRevokedTokenError(error),
+          })
+        } catch (markError) {
+          logger.error(
+            { err: markError, integrationId: id, workspaceId },
+            "Failed to record Instagram token refresh error",
+          )
+        }
         return "failed"
       }
     },
@@ -320,12 +359,23 @@ async function refreshOneInstagramFacebook(
         })
         return "refreshed"
       } catch (error) {
-        await instagramIntegrationService.markTokenRefreshError({
-          id,
-          workspaceId,
-          error: error instanceof Error ? error.message : String(error),
-          isRevoked: isInstagramFacebookRevokedTokenError(error),
-        })
+        logger.error(
+          { err: error, integrationId: id, workspaceId },
+          "Failed to refresh Facebook-linked Instagram channel token",
+        )
+        try {
+          await instagramIntegrationService.markTokenRefreshError({
+            id,
+            workspaceId,
+            error: error instanceof Error ? error.message : String(error),
+            isRevoked: isInstagramFacebookRevokedTokenError(error),
+          })
+        } catch (markError) {
+          logger.error(
+            { err: markError, integrationId: id, workspaceId },
+            "Failed to record Facebook-linked Instagram token refresh error",
+          )
+        }
         return "failed"
       }
     },
@@ -389,12 +439,23 @@ async function refreshOneMessenger(
           })
           return { result: "refreshed", refreshedAuth: newAuth }
         } catch (error) {
-          await messengerIntegrationService.markTokenRefreshError({
-            id,
-            workspaceId,
-            error: error instanceof Error ? error.message : String(error),
-            isRevoked: isMessengerRevokedTokenError(error),
-          })
+          logger.error(
+            { err: error, integrationId: id, workspaceId },
+            "Failed to refresh Messenger channel token",
+          )
+          try {
+            await messengerIntegrationService.markTokenRefreshError({
+              id,
+              workspaceId,
+              error: error instanceof Error ? error.message : String(error),
+              isRevoked: isMessengerRevokedTokenError(error),
+            })
+          } catch (markError) {
+            logger.error(
+              { err: markError, integrationId: id, workspaceId },
+              "Failed to record Messenger token refresh error",
+            )
+          }
           return { result: "failed" }
         }
       },
@@ -465,12 +526,23 @@ async function refreshOneWhatsapp(
         })
         return "refreshed"
       } catch (error) {
-        await integrationWhatsappService.markTokenRefreshError({
-          id,
-          workspaceId,
-          error: error instanceof Error ? error.message : String(error),
-          isRevoked: isWhatsappRevokedTokenError(error),
-        })
+        logger.error(
+          { err: error, integrationId: id, workspaceId },
+          "Failed to refresh WhatsApp channel token",
+        )
+        try {
+          await integrationWhatsappService.markTokenRefreshError({
+            id,
+            workspaceId,
+            error: error instanceof Error ? error.message : String(error),
+            isRevoked: isWhatsappRevokedTokenError(error),
+          })
+        } catch (markError) {
+          logger.error(
+            { err: markError, integrationId: id, workspaceId },
+            "Failed to record WhatsApp token refresh error",
+          )
+        }
         return "failed"
       }
     },

@@ -34,6 +34,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
+vi.mock("../src/connection/record-refreshed-auth", () => ({
+  recordRefreshedAuth: vi.fn(),
+}))
+
 vi.mock("../src/connection/state-service", () => ({
   connectionStateService: {
     markDegradedByIdentifier: mockMarkDegradedByIdentifier,

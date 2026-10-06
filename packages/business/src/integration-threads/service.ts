@@ -24,6 +24,7 @@ import {
 import { connectionStateService } from "../connection/state-service"
 import { ChatbotXException, channelDuplicatedException } from "../errors"
 import { inboxService } from "../inbox/service"
+import { logger } from "../logger"
 import { workspaceService } from "../workspace"
 
 const threadsRefreshAuthSchema = z
@@ -102,30 +103,44 @@ class IntegrationThreadsService extends BaseService {
     return { data }
   }
 
-  async markTokenRefreshError(id: string, error: string): Promise<void> {
+  async markTokenRefreshError(props: {
+    id: string
+    workspaceId: string
+    error: string
+    isRevoked: boolean
+  }): Promise<void> {
     const [updated] = await db
       .update(integrationThreadsModel)
-      .set({ tokenRefreshError: error })
-      .where(eq(integrationThreadsModel.id, id))
-      .returning({
-        workspaceId: integrationThreadsModel.workspaceId,
-        threadsUserId: integrationThreadsModel.threadsUserId,
-      })
-
-    // `threads` now has a real `Connection` adapter/store binding
-    // (`CONNECTION_STORE_BINDINGS.threads`) once the row has been backfilled
-    // (`backfill-connections.ts`) — this degrades the matching `Connection`
-    // row's status alongside `IntegrationThreads.tokenRefreshError`. This
-    // cron path has no revoked/terminal signal, only a bare refresh
-    // failure, so `degraded` (not `markUnhealthyByIdentifier`) is correct.
-    if (updated) {
-      await connectionStateService.markDegradedByIdentifier({
+      .set({ tokenRefreshError: props.error })
+      .where(
+        and(
+          eq(integrationThreadsModel.id, props.id),
+          eq(integrationThreadsModel.workspaceId, props.workspaceId),
+        ),
+      )
+      .returning({ threadsUserId: integrationThreadsModel.threadsUserId })
+    if (!updated) {
+      logger.warn(
+        { integrationId: props.id, workspaceId: props.workspaceId },
+        "Unable to mark Threads token refresh error: integration not found",
+      )
+      return
+    }
+    if (props.isRevoked) {
+      await connectionStateService.markUnhealthyByIdentifier({
         provider: "threads",
         identifier: updated.threadsUserId,
-        workspaceId: updated.workspaceId,
-        reason: "refresh_failed",
+        workspaceId: props.workspaceId,
+        reason: "token_revoked",
       })
+      return
     }
+    await connectionStateService.markDegradedByIdentifier({
+      provider: "threads",
+      identifier: updated.threadsUserId,
+      workspaceId: props.workspaceId,
+      reason: "refresh_failed",
+    })
   }
 
   /**

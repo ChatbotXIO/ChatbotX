@@ -17,10 +17,10 @@ import { BaseService } from "../base.service"
 import {
   CONNECTION_STORE_BINDINGS,
   type ConnectionQuotaConsumption,
+  recordRefreshedAuth,
   upsertConnectionRow,
   withQuotaCompensation,
 } from "../connection"
-import { isActiveConnectionStatus } from "../connection/state"
 import { connectionStateService } from "../connection/state-service"
 import { ChatbotXException, channelDuplicatedException } from "../errors"
 import { inboxService } from "../inbox/service"
@@ -111,17 +111,12 @@ class TiktokIntegrationService extends BaseService {
       return
     }
 
-    const connection = await connectionStateService.findByProviderSourceId({
+    await recordRefreshedAuth({
       workspaceId: props.workspaceId,
       provider: "tiktok",
       sourceId: row.openId,
+      auth: props.auth as AuthValue,
     })
-
-    if (connection && isActiveConnectionStatus(connection.status)) {
-      await connectionStateService.recordAuthSaved({
-        connectionId: connection.id,
-      })
-    }
   }
 
   /**
@@ -265,6 +260,10 @@ class TiktokIntegrationService extends BaseService {
       })
 
     if (!row) {
+      logger.warn(
+        { integrationId: props.id, workspaceId: props.workspaceId },
+        "Unable to mark TikTok token refresh error: integration not found",
+      )
       return
     }
 

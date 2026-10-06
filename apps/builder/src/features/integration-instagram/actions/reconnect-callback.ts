@@ -1,11 +1,7 @@
 import {
   connectionStateService,
   instagramIntegrationService,
-  resolveTenantSettings,
-  workspaceService,
 } from "@chatbotx.io/business"
-import { authExpiresAtOf } from "@chatbotx.io/business/connection"
-import { db } from "@chatbotx.io/database/client"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import {
   getInstagramAccount,
@@ -19,8 +15,7 @@ import {
   subscribePageToInstagramWebhook as subscribeFacebookPageToInstagramWebhook,
 } from "@chatbotx.io/integration-instagram-facebook"
 import { AuthType } from "@chatbotx.io/sdk"
-import { runBrandingFollowUps } from "@/features/channel-connect/lib/branding-follow-ups"
-import { getBrandingUrl } from "@/features/integration-webchat/lib"
+import { seedReconnectBranding } from "@/features/channel-connect/lib/branding-follow-ups"
 import type { ReconnectResult } from "@/lib/channel-reconnect"
 import {
   buildIntegrationUserInfo,
@@ -86,44 +81,29 @@ export async function reconnectInstagramHandler(props: {
 
     // DB write before the webhook subscription (matching the connect flow) so
     // a failed write never leaves the webhook re-bound while the stored auth
-    // still holds the stale token. Both writes share one transaction so a
-    // failure inside `reconnectInbox` (e.g. a channel-limit re-check) rolls
-    // back the auth write too, instead of leaving the satellite row
-    // re-authorized while the Connection/Inbox state stays stale.
-    await db.transaction(async (tx) => {
-      await instagramIntegrationService.updateAuth({
-        id: integrationInstagram.id,
-        workspaceId: props.workspaceId,
-        auth,
-        name: account.name,
-        username: account.username,
-        ...(userInfo ? { userInfo } : {}),
-        tx,
-      })
-
-      await connectionStateService.reconnectInbox({
-        inboxId: integrationInstagram.inboxId,
-        workspaceId: props.workspaceId,
-        authExpiresAt: authExpiresAtOf(auth),
-        tx,
-      })
+    // still holds the stale token (see `commitReconnect`'s doc for the
+    // transaction rationale).
+    await connectionStateService.commitReconnect({
+      inboxId: integrationInstagram.inboxId,
+      workspaceId: props.workspaceId,
+      auth,
+      writeAuth: async (tx) => {
+        await instagramIntegrationService.updateAuth({
+          id: integrationInstagram.id,
+          workspaceId: props.workspaceId,
+          auth,
+          name: account.name,
+          username: account.username,
+          ...(userInfo ? { userInfo } : {}),
+          tx,
+        })
+      },
     })
 
-    const [workspace, { appUrl }] = await Promise.all([
-      workspaceService.findById({ id: props.workspaceId }),
-      resolveTenantSettings({ workspaceId: props.workspaceId }),
-    ])
-
-    // Best-effort: seeds the community branding menu entry onto the
-    // satellite row, matching the fresh-connect follow-up in
-    // `connect-account.ts` — a reconnect that reinserted a deleted row would
-    // otherwise never get it seeded. A failure here must never fail the
-    // whole reconnect.
-    await runBrandingFollowUps({
-      session: {
-        workspace,
-        brandingMenuEntry: { url: getBrandingUrl("instagram", appUrl) },
-      },
+    await seedReconnectBranding({
+      workspaceId: props.workspaceId,
+      integrationId: props.integrationId,
+      channel: "instagram",
       integrationRow: { ...integrationInstagram, auth },
       integration: instagramChannelIntegration,
       integrationType: "instagram",
@@ -134,15 +114,7 @@ export async function reconnectInstagramHandler(props: {
               id: integrationInstagram.id,
               entry,
             }),
-    }).catch((error) => {
-      logger.warn(
-        {
-          err: error,
-          workspaceId: props.workspaceId,
-          integrationId: props.integrationId,
-        },
-        "Instagram branding follow-up failed during reconnect",
-      )
+      logLabel: "Instagram",
     })
 
     await subscribePageToInstagramWebhook({
@@ -219,46 +191,30 @@ export async function reconnectInstagramFacebookHandler(props: {
 
     // DB write before the webhook subscription (matching the connect flow) so
     // a failed write never leaves the webhook bound to the new page while the
-    // stored row still points at the old one. Both writes share one
-    // transaction so a failure inside `reconnectInbox` (e.g. a channel-limit
-    // re-check) rolls back the auth write too, instead of leaving the
-    // satellite row re-authorized while the Connection/Inbox state stays
-    // stale.
-    await db.transaction(async (tx) => {
-      await instagramIntegrationService.updateAuth({
-        id: integrationInstagram.id,
-        workspaceId: props.workspaceId,
-        auth,
-        name: account.name,
-        username: account.username,
-        pageId: account.pageId,
-        ...(userInfo ? { userInfo } : {}),
-        tx,
-      })
-
-      await connectionStateService.reconnectInbox({
-        inboxId: integrationInstagram.inboxId,
-        workspaceId: props.workspaceId,
-        authExpiresAt: authExpiresAtOf(auth),
-        tx,
-      })
+    // stored row still points at the old one (see `commitReconnect`'s doc for
+    // the transaction rationale).
+    await connectionStateService.commitReconnect({
+      inboxId: integrationInstagram.inboxId,
+      workspaceId: props.workspaceId,
+      auth,
+      writeAuth: async (tx) => {
+        await instagramIntegrationService.updateAuth({
+          id: integrationInstagram.id,
+          workspaceId: props.workspaceId,
+          auth,
+          name: account.name,
+          username: account.username,
+          pageId: account.pageId,
+          ...(userInfo ? { userInfo } : {}),
+          tx,
+        })
+      },
     })
 
-    const [workspace, { appUrl }] = await Promise.all([
-      workspaceService.findById({ id: props.workspaceId }),
-      resolveTenantSettings({ workspaceId: props.workspaceId }),
-    ])
-
-    // Best-effort: seeds the community branding menu entry onto the
-    // satellite row, matching the fresh-connect follow-up in
-    // `connect-account-facebook.ts` — a reconnect that reinserted a deleted
-    // row would otherwise never get it seeded. A failure here must never
-    // fail the whole reconnect.
-    await runBrandingFollowUps({
-      session: {
-        workspace,
-        brandingMenuEntry: { url: getBrandingUrl("instagram", appUrl) },
-      },
+    await seedReconnectBranding({
+      workspaceId: props.workspaceId,
+      integrationId: props.integrationId,
+      channel: "instagram",
       integrationRow: { ...integrationInstagram, auth },
       integration: instagramFacebookChannelIntegration,
       integrationType: "instagramFacebook",
@@ -269,15 +225,7 @@ export async function reconnectInstagramFacebookHandler(props: {
               id: integrationInstagram.id,
               entry,
             }),
-    }).catch((error) => {
-      logger.warn(
-        {
-          err: error,
-          workspaceId: props.workspaceId,
-          integrationId: props.integrationId,
-        },
-        "Instagram (via Facebook) branding follow-up failed during reconnect",
-      )
+      logLabel: "Instagram (via Facebook)",
     })
 
     await subscribeFacebookPageToInstagramWebhook({

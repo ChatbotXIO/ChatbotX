@@ -16,7 +16,6 @@ const {
   mockEnsureMessengerWhitelistedDomain,
   mockSubscribePageToAppWebhook,
   mockScopesToPageSubscribeFields,
-  mockResolveTenantSettings,
   mockGetInstagramAccount,
   mockSubscribeInstagramWebhook,
   mockGetUserInstagramAccounts,
@@ -27,12 +26,9 @@ const {
   mockFindZaloIntegration,
   mockUpdateZaloIntegrationAuth,
   mockZaloHandleRequest,
-  mockReconnectInbox,
+  mockCommitReconnect,
   mockAuthExpiresAtOf,
-  mockDbTransaction,
-  mockWorkspaceFindById,
-  mockRunBrandingFollowUps,
-  mockGetBrandingUrl,
+  mockSeedReconnectBranding,
   mockSeedMessengerPersistentMenu,
   mockSeedInstagramPersistentMenu,
 } = vi.hoisted(() => ({
@@ -49,7 +45,6 @@ const {
   mockEnsureMessengerWhitelistedDomain: vi.fn(),
   mockSubscribePageToAppWebhook: vi.fn(),
   mockScopesToPageSubscribeFields: vi.fn(),
-  mockResolveTenantSettings: vi.fn(),
   mockGetInstagramAccount: vi.fn(),
   mockSubscribeInstagramWebhook: vi.fn(),
   mockGetUserInstagramAccounts: vi.fn(),
@@ -60,24 +55,19 @@ const {
   mockFindZaloIntegration: vi.fn(),
   mockUpdateZaloIntegrationAuth: vi.fn(),
   mockZaloHandleRequest: vi.fn(),
-  mockReconnectInbox: vi.fn(),
-  mockAuthExpiresAtOf: vi.fn(() => null),
-  mockDbTransaction: vi.fn(
-    async (callback: (tx: unknown) => unknown) => await callback({}),
+  mockCommitReconnect: vi.fn(
+    async ({ writeAuth }: { writeAuth: (tx: unknown) => Promise<void> }) =>
+      await writeAuth({}),
   ),
-  mockWorkspaceFindById: vi.fn(async () => ({
-    id: "ws-1",
-    ownerId: "owner-1",
+  mockAuthExpiresAtOf: vi.fn(() => null),
+  mockSeedReconnectBranding: vi.fn(async () => ({
+    appUrl: "https://app.example.test",
   })),
-  mockRunBrandingFollowUps: vi.fn(async () => undefined),
-  mockGetBrandingUrl: vi.fn(() => "https://app.example.test/branding"),
   mockSeedMessengerPersistentMenu: vi.fn(),
   mockSeedInstagramPersistentMenu: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  resolveTenantSettings: mockResolveTenantSettings,
-  workspaceService: { findById: mockWorkspaceFindById },
   messengerIntegrationService: {
     findByIdForWorkspace: mockFindMessengerIntegration,
     updateAuth: mockUpdateMessengerIntegrationAuth,
@@ -93,20 +83,12 @@ vi.mock("@chatbotx.io/business", () => ({
     updateAuth: mockUpdateZaloIntegrationAuth,
   },
   connectionStateService: {
-    reconnectInbox: mockReconnectInbox,
+    commitReconnect: mockCommitReconnect,
   },
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: { transaction: mockDbTransaction },
-}))
-
 vi.mock("@/features/channel-connect/lib/branding-follow-ups", () => ({
-  runBrandingFollowUps: mockRunBrandingFollowUps,
-}))
-
-vi.mock("@/features/integration-webchat/lib", () => ({
-  getBrandingUrl: mockGetBrandingUrl,
+  seedReconnectBranding: mockSeedReconnectBranding,
 }))
 
 vi.mock("@chatbotx.io/business/connection", () => ({
@@ -262,9 +244,6 @@ describe("reconnectMessengerHandler", () => {
       async (_config: unknown, token: string) => `long-${token}`,
     )
     mockToMessengerAppAccessToken.mockReturnValue("app-access-token")
-    mockResolveTenantSettings.mockResolvedValue({
-      appUrl: "https://app.example.test",
-    })
     mockDebugMessengerToken.mockResolvedValue({ scopes: ["pages_messaging"] })
     mockEnsureMessengerWhitelistedDomain.mockResolvedValue(undefined)
     mockScopesToPageSubscribeFields.mockReturnValue([
@@ -429,12 +408,12 @@ describe("reconnectMessengerHandler", () => {
   test("mirrors the Connection row's Inbox back to connected after a successful reconnect", async () => {
     await executeReconnect()
 
-    expect(mockReconnectInbox).toHaveBeenCalledWith({
-      inboxId: "inbox-1",
-      workspaceId: "ws-1",
-      authExpiresAt: null,
-      tx: expect.anything(),
-    })
+    expect(mockCommitReconnect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+      }),
+    )
   })
 })
 
@@ -458,9 +437,6 @@ describe("reconnectInstagramHandler", () => {
       profile_picture_url: "https://ig.example/avatar.jpg",
     })
     stubBuildIntegrationUserInfo()
-    mockResolveTenantSettings.mockResolvedValue({
-      appUrl: "https://app.example.test",
-    })
   })
 
   const executeReconnect = () =>
@@ -569,12 +545,12 @@ describe("reconnectInstagramHandler", () => {
   test("mirrors the Connection row's Inbox back to connected after a successful reconnect", async () => {
     await executeReconnect()
 
-    expect(mockReconnectInbox).toHaveBeenCalledWith({
-      inboxId: "inbox-1",
-      workspaceId: "ws-1",
-      authExpiresAt: null,
-      tx: expect.anything(),
-    })
+    expect(mockCommitReconnect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+      }),
+    )
   })
 })
 
@@ -604,9 +580,6 @@ describe("reconnectInstagramFacebookHandler", () => {
         pageAccessToken: "page-access-token",
       },
     ])
-    mockResolveTenantSettings.mockResolvedValue({
-      appUrl: "https://app.example.test",
-    })
   })
 
   const executeReconnect = () =>
@@ -717,12 +690,12 @@ describe("reconnectInstagramFacebookHandler", () => {
   test("mirrors the Connection row's Inbox back to connected after a successful reconnect", async () => {
     await executeReconnect()
 
-    expect(mockReconnectInbox).toHaveBeenCalledWith({
-      inboxId: "inbox-1",
-      workspaceId: "ws-1",
-      authExpiresAt: null,
-      tx: expect.anything(),
-    })
+    expect(mockCommitReconnect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+      }),
+    )
   })
 })
 
@@ -788,12 +761,12 @@ describe("reconnectZaloHandler", () => {
   test("mirrors the Connection row's Inbox back to connected after a successful reconnect", async () => {
     await executeReconnect()
 
-    expect(mockReconnectInbox).toHaveBeenCalledWith({
-      inboxId: "inbox-1",
-      workspaceId: "ws-1",
-      authExpiresAt: null,
-      tx: expect.anything(),
-    })
+    expect(mockCommitReconnect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+      }),
+    )
   })
 
   test("returns accountNotFound when a different OA was authorized", async () => {
