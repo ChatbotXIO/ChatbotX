@@ -122,8 +122,17 @@ vi.mock("../../workspace-lifecycle/service", () => ({
   workspaceLifecycleService: {
     freezeWorkspaceRuntime: vi.fn(async () => undefined),
     disconnectWorkspaceIntegrations: vi.fn(async () => undefined),
-    disconnectWorkspaceChannels: vi.fn(async () => undefined),
+    disconnectWorkspaceChannels: vi.fn(async () => ({
+      disconnected: 0,
+      pendingReleases: [],
+    })),
     purgeWorkspaceHeavyData: mocks.purgeWorkspaceHeavyData,
+  },
+}))
+
+vi.mock("../../connection/state-service", () => ({
+  connectionStateService: {
+    releasePendingQuota: vi.fn(async () => undefined),
   },
 }))
 

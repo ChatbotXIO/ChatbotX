@@ -4,6 +4,7 @@ const listDueForTokenRefresh = vi.fn()
 const updateAuthIfAccessTokenMatches = vi.fn()
 const markTokenRefreshError = vi.fn()
 const refreshAccessToken = vi.fn()
+const isRevokedTokenError = vi.fn(() => false)
 const runExclusive = vi.fn(async ({ fn }: { fn: () => Promise<unknown> }) =>
   fn(),
 )
@@ -20,6 +21,7 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 vi.mock("@chatbotx.io/integration-threads", () => ({
   refreshAccessToken,
+  isRevokedTokenError,
 }))
 vi.mock("@chatbotx.io/redis", () => ({ distributedLock: { runExclusive } }))
 vi.mock("@chatbotx.io/logger", () => ({
@@ -126,6 +128,7 @@ describe("refreshThreadsTokens", () => {
         url: "https://graph.threads.com/refresh_access_token?access_token=token-1",
       },
     })
+    isRevokedTokenError.mockReturnValueOnce(true)
     refreshAccessToken
       .mockRejectedValueOnce(refreshError)
       .mockResolvedValueOnce({
@@ -147,7 +150,12 @@ describe("refreshThreadsTokens", () => {
     )
     expect(JSON.stringify(error.mock.calls[0]?.[0])).not.toContain("token-1")
     expect(error.mock.calls[0]?.[0]).not.toHaveProperty("err")
-    expect(markTokenRefreshError).toHaveBeenCalledWith("threads-1", "revoked")
+    expect(markTokenRefreshError).toHaveBeenCalledWith({
+      id: "threads-1",
+      workspaceId: "workspace-1",
+      error: "revoked",
+      isRevoked: true,
+    })
     expect(updateAuthIfAccessTokenMatches).toHaveBeenCalledTimes(1)
     expect(updateAuthIfAccessTokenMatches).toHaveBeenCalledWith(
       expect.objectContaining({

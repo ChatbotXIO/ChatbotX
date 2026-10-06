@@ -3,13 +3,19 @@
 /**
  * Pins the plan's "single writer" invariant for `Inbox.status`: every
  * channel-active/inactive transition should flow through the `Connection`
- * FSM (`ConnectionStateService.transition`'s `mirrorInboxStatus`), not a
- * bespoke direct `.update(inboxModel)` — otherwise `Connection.status` and
- * `Inbox.status` silently drift (see the messenger/instagram disconnect
- * billing bug this guard exists to catch a repeat of).
+ * FSM (`ConnectionStateService.transition`'s `mirrorInboxStatus`) or the
+ * legacy inbox service, not a bespoke direct `.update(inboxModel)` —
+ * otherwise `Connection.status` and `Inbox.status` silently drift (see the
+ * messenger/instagram disconnect billing bug this guard exists to catch a
+ * repeat of).
+ *
+ * `connection/state-service.ts`'s `mirrorInboxStatus` no longer writes
+ * `inboxModel` directly: it calls `inboxRepository.updateConnectionMirror`
+ * (`packages/database/src/repositories/inbox/repository.ts`), the single
+ * remaining low-level writer, out of this guard's `packages/business/src`
+ * scope by construction (D10).
  *
  * Allow-listed exceptions, both pre-existing and intentional:
- *   - `connection/state-service.ts` — the one legitimate writer.
  *   - `inbox/service.ts` — the legacy `create`/`disconnect` API kept for
  *     every not-yet-migrated channel (telegram, zalo, whatsapp, tiktok,
  *     webchat, smtp, api); Phase 5 removes this exception.
@@ -29,7 +35,6 @@ import { describe, expect, test } from "vitest"
 const SRC_ROOT = resolve(import.meta.dirname, "../src")
 
 const ALLOWED_WRITERS = new Set([
-  "connection/state-service.ts",
   "inbox/service.ts",
   "integration-context/auth-store.ts",
 ])

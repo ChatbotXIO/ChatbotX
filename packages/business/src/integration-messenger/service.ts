@@ -18,9 +18,13 @@ import {
   tagChannelModel,
 } from "@chatbotx.io/database/schema"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
+import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
+import { recordRefreshedAuth } from "../connection/record-refreshed-auth"
+import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { flowService } from "../flow/service"
+import { logger } from "../logger"
 import { isWorkspaceAdminMember } from "../workspace-member/predicates"
 import { workspaceMemberService } from "../workspace-member/service"
 
@@ -58,8 +62,10 @@ class MessengerIntegrationService extends BaseService {
     auth: Record<string, unknown>
     name?: string
     userInfo?: IntegrationUserInfo
+    tx?: DatabaseClient
   }): Promise<void> {
-    await db
+    const client = props.tx ?? db
+    const [row] = await client
       .update(integrationMessengerModel)
       .set({
         auth: props.auth,
@@ -73,15 +79,24 @@ class MessengerIntegrationService extends BaseService {
           eq(integrationMessengerModel.workspaceId, props.workspaceId),
         ),
       )
+      .returning({ pageId: integrationMessengerModel.pageId })
+    if (!row) {
+      throw notFoundException("Messenger integration not found")
+    }
+    await recordRefreshedAuth({
+      workspaceId: props.workspaceId,
+      provider: "messenger",
+      sourceId: row.pageId,
+      auth: props.auth as AuthValue,
+      tx: props.tx,
+    })
   }
 
   /**
    * Seeds the row's own `persistentMenus` column with a single branding
-   * entry after the live Graph API push succeeds — restores the v1.11.0
-   * insert-time-seeded value (dropped when Messenger moved onto the unified
-   * connect session, whose `candidateToConfig` has no app-layer branding
-   * context to seed it at insert time). Callers gate this to rows that
-   * don't already have user-configured menu items, so it never clobbers.
+   * entry after the live Graph API push succeeds. Callers gate this to rows
+   * that don't already have user-configured menu items, so it never
+   * clobbers.
    */
   async seedPersistentMenu(props: {
     id: string
@@ -127,11 +142,47 @@ class MessengerIntegrationService extends BaseService {
       .where(inArray(integrationMessengerModel.workspaceId, workspaceIds))
   }
 
-  async markTokenRefreshError(id: string, error: string): Promise<void> {
-    await db
+  async markTokenRefreshError(props: {
+    id: string
+    workspaceId: string
+    error: string
+    isRevoked: boolean
+  }): Promise<void> {
+    const [row] = await db
       .update(integrationMessengerModel)
-      .set({ tokenRefreshError: error })
-      .where(eq(integrationMessengerModel.id, id))
+      .set({ tokenRefreshError: props.error })
+      .where(
+        and(
+          eq(integrationMessengerModel.id, props.id),
+          eq(integrationMessengerModel.workspaceId, props.workspaceId),
+        ),
+      )
+      .returning({ pageId: integrationMessengerModel.pageId })
+
+    if (!row) {
+      logger.warn(
+        { integrationId: props.id, workspaceId: props.workspaceId },
+        "Unable to mark Messenger token refresh error: integration not found",
+      )
+      return
+    }
+
+    if (props.isRevoked) {
+      await connectionStateService.markUnhealthyByIdentifier({
+        provider: "messenger",
+        identifier: row.pageId,
+        workspaceId: props.workspaceId,
+        reason: "token_revoked",
+      })
+      return
+    }
+
+    await connectionStateService.markDegradedByIdentifier({
+      provider: "messenger",
+      identifier: row.pageId,
+      workspaceId: props.workspaceId,
+      reason: "refresh_failed",
+    })
   }
 
   findByWorkspaceId(workspaceId: string) {

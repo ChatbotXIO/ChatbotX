@@ -58,6 +58,20 @@ vi.mock("../src/connection/state-service", () => ({
   connectionStateService: { transition: vi.fn() },
 }))
 
+// `zaloIntegrationService.connect`'s engine imports (`CONNECTION_STORE_BINDINGS`
+// et al, added by the Connection-engine migration) pull in `store-bindings.ts`,
+// which imports every provider's schema model — mocked at the boundary for
+// the same reason as the other service-module imports above; this test never
+// exercises `connect()` itself.
+vi.mock("../src/connection", () => ({
+  CONNECTION_STORE_BINDINGS: {},
+  upsertConnectionRow: vi.fn(),
+  withQuotaCompensation: vi.fn(
+    async (_input: unknown, operation: () => Promise<unknown>) =>
+      await operation(),
+  ),
+}))
+
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: mockInvalidateCacheByTags,
 }))
@@ -70,7 +84,6 @@ vi.mock("../src/flow/service", () => ({ flowService: {} }))
 
 vi.mock("../src/inbox/connect-channel", () => ({
   auditChannelConnected: vi.fn(),
-  connectChannelIntegration: vi.fn(),
   runConnectTransaction: vi.fn(),
 }))
 

@@ -1,14 +1,8 @@
 import {
   appointmentExternalCalendarService,
-  facebookMarketingMessagesService,
   hasWorkspaceAccess,
-  instagramIntegrationService,
   integrationFacebookAdsService,
-  integrationMetaCatalogService,
   integrationThreadsService,
-  integrationWhatsappService,
-  messagingAdsConnectionService,
-  messengerIntegrationService,
   platformCredentialService,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -23,36 +17,21 @@ import {
 import { db } from "@chatbotx.io/database/client"
 import {
   type IntegrationType,
-  type MessagingAdChannel,
   messagingAdChannelTypes,
 } from "@chatbotx.io/database/partials"
 import {
   integrationGoogleSheetsModel,
   integrationModel,
 } from "@chatbotx.io/database/schema"
-import {
-  exchangeCodeForToken as exchangeFacebookAdsCode,
-  exchangeLongLivedToken as exchangeFacebookAdsLongLivedToken,
-  type FacebookAdsAuthValue,
-} from "@chatbotx.io/integration-facebook-ads"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
 import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
-import {
-  type FacebookUser,
-  getFacebookUser as getMessengerFacebookUser,
-} from "@chatbotx.io/integration-messenger"
-import type { MetaCatalogAuthValue } from "@chatbotx.io/integration-meta-catalog/schemas"
 import {
   buildThreadsAuthValue,
   exchangeCodeForToken as exchangeThreadsCode,
   getThreadsProfile,
 } from "@chatbotx.io/integration-threads"
 import { TiktokMissingScopesError } from "@chatbotx.io/integration-tiktok"
-import {
-  AuthType,
-  type AuthValue,
-  type Oauth2AuthValue,
-} from "@chatbotx.io/sdk"
+import type { AuthValue, Oauth2AuthValue } from "@chatbotx.io/sdk"
 import {
   createId,
   getPublicUrlFromRequest,
@@ -62,6 +41,7 @@ import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
+import { resolveOAuthCredential } from "@/features/connections/lib/resolve-connect-credential"
 import { exchangeAndVerifyGoogleCalendar } from "@/features/external-calendars/lib/google-calendar-provider"
 import { enableLeadgenForWorkspacePages } from "@/features/facebook-lead-ad-automation/lib/pages"
 import {
@@ -86,6 +66,13 @@ import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 import { createFirstWorkspace } from "@/lib/workspace/create-first-workspace"
+import {
+  messagingAdsIntegrationBelongsToWorkspace,
+  storeFacebookAdsConnection,
+  storeMarketingMessagesConnection,
+  storeMessagingAdsConnection,
+  storeMetaCatalogConnection,
+} from "./callback-stores"
 
 const stateValidationSchema = z.object({
   workspaceId: zodBigintAsString().optional(),
@@ -115,192 +102,6 @@ const stateValidationSchema = z.object({
   messagingAdsIntegrationId: zodBigintAsString().optional(),
 })
 
-// Exchange the OAuth code for a long-lived Facebook Ads token and store it
-// (encrypted) for the workspace. Shared by the Messenger-callback dispatch and
-// the dedicated facebook-ads callback case.
-const storeFacebookAdsConnection = async (args: {
-  credentialConfig: { clientId: string; clientSecret: string; version?: string }
-  code: string
-  callbackUrl: string
-  workspaceId: string
-}): Promise<void> => {
-  const shortLivedToken = await exchangeFacebookAdsCode(
-    args.credentialConfig,
-    args.code,
-    args.callbackUrl,
-  )
-  const { accessToken, expiresIn } = await exchangeFacebookAdsLongLivedToken(
-    args.credentialConfig,
-    shortLivedToken,
-  )
-  const tokenExpiresAt = expiresIn
-    ? new Date(Date.now() + expiresIn * 1000)
-    : null
-
-  const facebookAdsAuth: FacebookAdsAuthValue = {
-    authType: AuthType.custom,
-    accessToken,
-    expiresAt: tokenExpiresAt?.toISOString(),
-    version: args.credentialConfig.version,
-  }
-  await integrationFacebookAdsService.upsert({
-    workspaceId: args.workspaceId,
-    auth: facebookAdsAuth,
-    tokenExpiresAt,
-  })
-}
-
-// Exchange the OAuth code for a long-lived token and store it (encrypted) as
-// the workspace's Marketing Messages grant. Deliberately does NOT reuse
-// `storeFacebookAdsConnection`: that writes `IntegrationFacebookAds`, the
-// workspace-wide Ads connection, whose token is granted with a different
-// permission set and must not be overwritten by a Marketing Messages grant.
-const storeMarketingMessagesConnection = async (args: {
-  credentialConfig: { clientId: string; clientSecret: string; version?: string }
-  code: string
-  callbackUrl: string
-  workspaceId: string
-}): Promise<void> => {
-  const shortLivedToken = await exchangeFacebookAdsCode(
-    args.credentialConfig,
-    args.code,
-    args.callbackUrl,
-  )
-  const { accessToken, expiresIn } = await exchangeFacebookAdsLongLivedToken(
-    args.credentialConfig,
-    shortLivedToken,
-  )
-  const tokenExpiresAt = expiresIn
-    ? new Date(Date.now() + expiresIn * 1000)
-    : null
-
-  // Best-effort: the grant must succeed even when the identity lookup fails,
-  // which is why `facebookUserId` is nullable on the row.
-  const fbUser = await lookupFacebookUser(() =>
-    getMessengerFacebookUser(accessToken, args.credentialConfig.version),
-  )
-
-  const auth: FacebookAdsAuthValue = {
-    authType: AuthType.custom,
-    accessToken,
-    expiresAt: tokenExpiresAt?.toISOString(),
-    version: args.credentialConfig.version,
-  }
-  await facebookMarketingMessagesService.upsertAuth({
-    workspaceId: args.workspaceId,
-    auth,
-    tokenExpiresAt,
-    facebookUserId: fbUser?.id,
-  })
-}
-
-/**
- * Verifies `messagingAdsIntegrationId` is a REAL channel integration that
- * belongs to `workspaceId` and matches `channel` before any token is stored
- * — the OAuth callback is an API boundary, so a forged/stale integration id
- * (or a channel mismatch) must never be trusted (v3 correction, "callback
- * ownership check"). Returns `false` on any mismatch; callers fall back to
- * `notFound()`.
- */
-const messagingAdsIntegrationBelongsToWorkspace = async (args: {
-  workspaceId: string
-  channel: MessagingAdChannel
-  integrationId: string
-}): Promise<boolean> => {
-  const ref = { id: args.integrationId, workspaceId: args.workspaceId }
-  if (args.channel === "whatsapp") {
-    return Boolean(await integrationWhatsappService.findByIdForWorkspace(ref))
-  }
-  if (args.channel === "messenger") {
-    return Boolean(await messengerIntegrationService.findByIdForWorkspace(ref))
-  }
-  return Boolean(await instagramIntegrationService.findByIdForWorkspace(ref))
-}
-
-// Exchange the OAuth code for a long-lived Facebook Ads token and store it
-// (encrypted) on the per-integration `MessagingAdsConnection` row — the
-// per-box counterpart to `storeFacebookAdsConnection` below. Deliberately
-// does NOT reuse `integrationFacebookAdsService`/`storeFacebookAdsConnection`
-// — those write the workspace-wide `IntegrationFacebookAds` table, which is
-// the WRONG table for a per-integration box connection (v3 correction #4).
-const storeMessagingAdsConnection = async (args: {
-  credentialConfig: { clientId: string; clientSecret: string; version?: string }
-  code: string
-  callbackUrl: string
-  workspaceId: string
-  channel: MessagingAdChannel
-  integrationId: string
-}): Promise<void> => {
-  const shortLivedToken = await exchangeFacebookAdsCode(
-    args.credentialConfig,
-    args.code,
-    args.callbackUrl,
-  )
-  const { accessToken, expiresIn } = await exchangeFacebookAdsLongLivedToken(
-    args.credentialConfig,
-    shortLivedToken,
-  )
-  const tokenExpiresAt = expiresIn
-    ? new Date(Date.now() + expiresIn * 1000)
-    : null
-
-  const facebookAdsAuth: FacebookAdsAuthValue = {
-    authType: AuthType.custom,
-    accessToken,
-    expiresAt: tokenExpiresAt?.toISOString(),
-    version: args.credentialConfig.version,
-  }
-  await messagingAdsConnectionService.upsertFromOAuth({
-    workspaceId: args.workspaceId,
-    channel: args.channel,
-    integrationId: args.integrationId,
-    auth: facebookAdsAuth,
-  })
-}
-
-const storeMetaCatalogConnection = async (args: {
-  credentialConfig: { clientId: string; clientSecret: string; version?: string }
-  code: string
-  callbackUrl: string
-  workspaceId: string
-}): Promise<void> => {
-  const shortLivedToken = await exchangeFacebookAdsCode(
-    args.credentialConfig,
-    args.code,
-    args.callbackUrl,
-  )
-  const { accessToken, expiresIn } = await exchangeFacebookAdsLongLivedToken(
-    args.credentialConfig,
-    shortLivedToken,
-  )
-  const tokenExpiresAt = expiresIn
-    ? new Date(Date.now() + expiresIn * 1000)
-    : null
-  const auth: MetaCatalogAuthValue = {
-    accessToken,
-    expiresAt: tokenExpiresAt?.toISOString(),
-    version: args.credentialConfig.version,
-  }
-  await integrationMetaCatalogService.upsert({
-    workspaceId: args.workspaceId,
-    auth,
-    tokenExpiresAt,
-  })
-}
-
-// Best-effort: the connect flow works without the user identity, so a failed
-// lookup only leaves `userInfo` unset on the integration row.
-const lookupFacebookUser = async (
-  fetchUser: () => Promise<FacebookUser>,
-): Promise<FacebookUser | undefined> => {
-  try {
-    return await fetchUser()
-  } catch (error) {
-    logger.info({ err: error }, "Failed to fetch Facebook user profile")
-    return
-  }
-}
-
 const CONNECT_SESSION_STATE_PATTERN = /^\d+\.[A-Za-z0-9_-]+$/
 
 /**
@@ -308,13 +109,18 @@ const CONNECT_SESSION_STATE_PATTERN = /^\d+\.[A-Za-z0-9_-]+$/
  * string — the Connection-domain `ConnectSession` flow (`POST
  * /v1/connections`, `POST /v1/connections/{id}/reconnect`, and the builder
  * pickers once converted). Unlike the legacy JSON-state flow below, this
- * path needs no builder session cookie and no host-relay hop: every fact it
- * needs (`workspaceId`, `provider`, `platformOwnerId`, `returnUrl`) lives on
- * the `ConnectSession` row itself — resolved once at `startSession` time —
- * not derived from the request's host or an authenticated user, so a
- * completion landing on the broker or a reseller's custom domain both
- * resolve identically with no relay needed. The completion page
- * (`/connect/{id}`) does not require a signed-in builder session either.
+ * path needs no builder session cookie and no authenticated user: every
+ * fact it needs (`workspaceId`, `provider`, `platformOwnerId`, `returnUrl`)
+ * lives on the `ConnectSession` row itself, resolved once at `startSession`
+ * time. It still relays back to `session.originHost` before touching the
+ * session (see below) — same as the legacy flow — because the nonce must
+ * only ever be consumed on the host where the person's browser session
+ * cookie lives. The provider's `redirect_uri`, however, is resolved from
+ * the credential (`buildProviderCallbackUrl`, see below), not from
+ * `originHost` or this request's host: an inherited platform credential
+ * still redirects to the broker even when `originHost` is a reseller's
+ * custom domain. The completion page (`/connect/{id}`) does not require a
+ * signed-in builder session either.
  */
 const handleConnectSessionCallback = async (
   url: URL,
@@ -406,11 +212,16 @@ const handleConnectSessionCallback = async (
     return notFound()
   }
 
-  const credential = await platformCredentialService.resolveForOwner({
+  // Same helper the session's start route used, so the `redirect_uri` sent
+  // to the token exchange is rebuilt from the credential exactly as it was
+  // for `authorizeUrl` — never from this request's own origin, which is
+  // `originHost` (not the registered broker/custom-domain host) once the
+  // relay above has bounced the callback.
+  const resolved = await resolveOAuthCredential({
+    provider: session.provider,
     ownerId: session.platformOwnerId,
-    type: adapter.credentialType,
   })
-  if (!credential) {
+  if (!resolved) {
     logger.error(
       { sessionId: session.id, provider: session.provider },
       "connect session platform credential missing",
@@ -420,19 +231,14 @@ const handleConnectSessionCallback = async (
   }
 
   const code = url.searchParams.get("code") ?? ""
-  // Reconstructs the exact redirect_uri the provider was given at
-  // `authorizeUrl` time — `buildProviderCallbackUrl` resolved it once
-  // against this same credential, and the callback always lands on that
-  // registered host/path (no relay hop for this flow, see above).
-  const callbackUrl = `${url.origin}${url.pathname}`
 
   try {
     const completed = await connectionService.completeAuthorization({
       sessionId: session.id,
       nonce,
       code,
-      callbackUrl,
-      credential: credential.config,
+      callbackUrl: resolved.callbackUrl,
+      credential: resolved.credential,
     })
 
     // A non-multi-account provider's grant always resolves to exactly one
@@ -471,10 +277,26 @@ const handleConnectSessionCallback = async (
       err instanceof ChatbotXException &&
       (err.code === "connectionStateMismatch" ||
         err.code === "connectSessionExpired")
+    // A transient upstream/provider failure (`exchangeCode` 502/503) is
+    // retryable — `completeAuthorization` already released the claim back
+    // to `pending` for it (or, for a candidate-listing failure, left the
+    // session at its still-active `authorized` status) before throwing
+    // `connectionProviderUnavailable`, specifically so a later retry can
+    // still complete the connect. Calling `fail()` here would terminalize
+    // that already-reopened session out from under the retry it was just
+    // reopened for.
+    const isRetryable =
+      err instanceof ChatbotXException &&
+      err.code === "connectionProviderUnavailable"
     if (isBenignReplay) {
       logger.debug(
         { err, sessionId: session.id, provider: session.provider },
         "connect session completeAuthorization replay ignored",
+      )
+    } else if (isRetryable) {
+      logger.warn(
+        { err, sessionId: session.id, provider: session.provider },
+        "connect session completeAuthorization failed with a retryable provider error — left active for retry",
       )
     } else {
       // Every other error reaching here is genuinely unexpected — most
@@ -515,9 +337,9 @@ export const handleCallback = async (
   // /v1/connections/{id}/reconnect`) carry a raw "{sessionId}.{nonce}"
   // state — never JSON/base64-encoded — dispatched here before the legacy
   // parse below, which would otherwise throw trying to atob/JSON.parse it.
-  // TODO(Phase 5): once every legacy JSON-state caller (builder pickers,
-  // ads/lead-ads/meta-catalog connect flows) moves onto sessions, this
-  // early branch becomes the only path and the switch below is deleted.
+  // Once every legacy JSON-state caller (builder pickers, ads/lead-ads/
+  // meta-catalog connect flows) moves onto sessions, this early branch
+  // becomes the only path and the switch below can be deleted.
   if (CONNECT_SESSION_STATE_PATTERN.test(rawStateParam)) {
     return await handleConnectSessionCallback(
       url,
@@ -1147,6 +969,27 @@ export const handleCallback = async (
           }),
       )
 
+      const facebookAdsIntegration =
+        await integrationFacebookAdsService.findByWorkspaceId(workspace.id)
+      if (facebookAdsIntegration) {
+        try {
+          await connectionService.attachIntegrationConnectionRow({
+            workspaceId: workspace.id,
+            provider: "facebookAds",
+            sourceId: "workspace",
+            displayName: "Facebook Ads",
+            integrationId: facebookAdsIntegration.integrationId,
+            ownerId: workspace.ownerId,
+            actorUserId: userId,
+          })
+        } catch (error) {
+          logger.error(
+            { err: normalizeError(error), workspaceId: workspace.id },
+            "Failed to attach Facebook Ads connection after OAuth callback",
+          )
+        }
+      }
+
       return redirect(safeReferer)
     }
 
@@ -1174,12 +1017,32 @@ export const handleCallback = async (
           workspaceId: workspace.id,
         })
 
-        await appointmentExternalCalendarService.createGoogleFromOAuthCallback({
-          workspaceId: workspace.id,
-          auth: connection.auth,
-          providerCalendarId: connection.providerCalendarId,
-          email: connection.email,
-        })
+        const integrationId =
+          await appointmentExternalCalendarService.createGoogleFromOAuthCallback(
+            {
+              workspaceId: workspace.id,
+              auth: connection.auth,
+              providerCalendarId: connection.providerCalendarId,
+              email: connection.email,
+            },
+          )
+
+        try {
+          await connectionService.attachIntegrationConnectionRow({
+            workspaceId: workspace.id,
+            provider: "googleCalendar",
+            sourceId: connection.providerCalendarId,
+            displayName: connection.email || "Google Calendar",
+            integrationId,
+            ownerId: workspace.ownerId,
+            actorUserId: userId,
+          })
+        } catch (error) {
+          logger.error(
+            { err: normalizeError(error), workspaceId: workspace.id },
+            "Failed to attach Google Calendar connection after OAuth callback",
+          )
+        }
       } catch (error) {
         logger.error(
           { err: normalizeError(error), workspaceId: workspace.id },

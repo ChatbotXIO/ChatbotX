@@ -1,9 +1,6 @@
-import {
-  flowService,
-  flowVersionService,
-  importService,
-} from "@chatbotx.io/business"
+import { flowService, flowVersionService } from "@chatbotx.io/business"
 import { validationException } from "@chatbotx.io/business/errors"
+import { importService } from "@chatbotx.io/business/import"
 import { stepTypes } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"

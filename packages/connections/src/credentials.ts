@@ -1,4 +1,8 @@
-import { isActiveConnectionStatus } from "@chatbotx.io/business/connection"
+import type { ConnectSessionActor } from "@chatbotx.io/business/connect-session"
+import {
+  isActiveConnectionStatus,
+  resolveOwnerId,
+} from "@chatbotx.io/business/connection"
 import {
   connectionAlreadyConnectedException,
   connectionCredentialsRejectedException,
@@ -18,7 +22,7 @@ import type {
   ConnectionCredential,
   ConnectSessionNextAction,
 } from "@chatbotx.io/sdk"
-import { startSession } from "./connect-session-flow"
+import { actorRefOf, startSession } from "./connect-session-flow"
 import {
   connectAndPersist,
   findOrThrow,
@@ -26,7 +30,6 @@ import {
   parseConfig,
   providerFailureStatus,
   resolveAdapter,
-  resolveOwnerId,
   toConnectionProviderError,
 } from "./internal"
 import { logger } from "./logger"
@@ -175,17 +178,17 @@ export const connectFromCredentials = async (input: {
  * verifies the re-granted account's identity matches this exact
  * connection instead.
  */
-export const reconnect = async (input: {
-  connectionId: string
-  workspaceId: string
-  credential: ConnectionCredential
-  callbackUrl: string
-  actorUserId?: string | null
-  actorTokenId?: string | null
-  platformOwnerId?: string | null
-  originHost?: string | null
-  returnUrl?: string | null
-}): Promise<{
+export const reconnect = async (
+  input: {
+    connectionId: string
+    workspaceId: string
+    credential: ConnectionCredential
+    callbackUrl: string
+    platformOwnerId?: string | null
+    originHost?: string | null
+    returnUrl?: string | null
+  } & ConnectSessionActor,
+): Promise<{
   session: ConnectSessionModel
   nextAction: ConnectSessionNextAction
 }> => {
@@ -193,6 +196,7 @@ export const reconnect = async (input: {
     connectionId: input.connectionId,
     workspaceId: input.workspaceId,
   })
+  const actor = actorRefOf(input)
   return await startSession({
     workspaceId: input.workspaceId,
     provider: connection.provider,
@@ -200,10 +204,9 @@ export const reconnect = async (input: {
     credential: input.credential,
     callbackUrl: input.callbackUrl,
     targetConnectionId: connection.id,
-    actorUserId: input.actorUserId,
-    actorTokenId: input.actorTokenId,
     platformOwnerId: input.platformOwnerId,
     originHost: input.originHost,
     returnUrl: input.returnUrl,
+    ...actor,
   })
 }

@@ -1,6 +1,7 @@
 import type { FileType } from "@chatbotx.io/sdk"
 import {
   type Context,
+  getMediaStoragePrefix,
   guessFileTypeFromMimeType,
   type IncomingAttachment,
 } from "@chatbotx.io/sdk"
@@ -84,7 +85,7 @@ export const getMessageAttachmentEntity = async ({
     )
   }
 
-  const originPath = `${ctx.storagePrefix}/${createId()}`
+  const originPath = `${getMediaStoragePrefix(ctx)}/${createId()}`
   const bytes = await response.arrayBuffer()
 
   await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {

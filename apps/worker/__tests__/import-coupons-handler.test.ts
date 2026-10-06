@@ -28,7 +28,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
+vi.mock("@chatbotx.io/business/import", () => ({
   importService: {
     markProcessing: vi.fn(() => {
       mocks.updateValues.push({ status: "processing" })

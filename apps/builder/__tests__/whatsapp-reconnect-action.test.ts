@@ -13,6 +13,7 @@ type ReconnectWhatsappActionHandler = (
   args: ReconnectWhatsappActionArgs,
 ) => Promise<unknown>
 
+const SENTINEL_TX = { __tx: true }
 const {
   exchangeAccessTokenMock,
   findWabaMock,
@@ -25,6 +26,8 @@ const {
   replaceAuthMock,
   subscribeWebhookMock,
   upsertCurrentCredentialMock,
+  commitReconnectMock,
+  authExpiresAtOfMock,
 } = vi.hoisted(() => ({
   exchangeAccessTokenMock: vi.fn(),
   findWabaMock: vi.fn(),
@@ -37,6 +40,8 @@ const {
   replaceAuthMock: vi.fn(),
   subscribeWebhookMock: vi.fn(),
   upsertCurrentCredentialMock: vi.fn(),
+  commitReconnectMock: vi.fn(),
+  authExpiresAtOfMock: vi.fn(() => null),
 }))
 
 vi.mock("@/lib/safe-action", () => {
@@ -75,7 +80,14 @@ vi.mock("@chatbotx.io/business", () => ({
   whatsappBusinessAccountService: {
     upsertCurrentCredential: upsertCurrentCredentialMock,
   },
+  connectionStateService: {
+    commitReconnect: commitReconnectMock,
+  },
   WHATSAPP_CAPI_SCOPE: "whatsapp_business_manage_events",
+}))
+
+vi.mock("@chatbotx.io/business/connection", () => ({
+  authExpiresAtOf: authExpiresAtOfMock,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -123,6 +135,7 @@ describe("reconnectWhatsappAction", () => {
     })
     findWorkspaceIntegrationMock.mockResolvedValue({
       id: "iw-1",
+      inboxId: "inbox-1",
       wabaId: "waba-1",
       phoneNumberId: "phone-number-1",
       businessId: "business-1",
@@ -169,6 +182,10 @@ describe("reconnectWhatsappAction", () => {
       revision: 1,
     })
     subscribeWebhookMock.mockResolvedValue(undefined)
+    commitReconnectMock.mockImplementation(
+      async ({ writeAuth }: { writeAuth: (tx: unknown) => Promise<void> }) =>
+        await writeAuth(SENTINEL_TX),
+    )
   })
 
   test("rejects non-super-admin members before reconnecting WhatsApp auth", async () => {
@@ -247,6 +264,24 @@ describe("reconnectWhatsappAction", () => {
         systemUserToken: "system-token-1",
         systemUserId: "system-user-1",
       }),
+    )
+  })
+
+  test("mirrors the Connection row's Inbox back to connected after a successful reconnect", async () => {
+    await callReconnectWhatsappAction({
+      bindArgsParsedInputs: ["ws-1", "iw-1"],
+      ctx: { workspace: { id: "ws-1", ownerId: "owner-1" } },
+      parsedInput: { code: "oauth-code-1" },
+    })
+
+    expect(commitReconnectMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+      }),
+    )
+    expect(replaceAuthMock).toHaveBeenCalledWith(
+      expect.objectContaining({ tx: SENTINEL_TX }),
     )
   })
 })

@@ -23,6 +23,7 @@ import type {
   ContactInboxModel,
   ContactModel,
 } from "@chatbotx.io/database/types"
+import { getMirroredChannelMediaPrefix } from "@chatbotx.io/filesystem"
 import {
   getWhatsappClient,
   type WhatsappAuthValue,
@@ -599,7 +600,12 @@ const mirrorAttachment = async (
   }
 
   const extension = getStorageExtension(mediaReference.url, media.mimeType)
-  const originPath = `workspace/${state.ctx.storagePrefix}/${createId()}${extension ? `.${extension}` : ""}`
+  const prefix = getMirroredChannelMediaPrefix({
+    channel: state.contactInbox.channel,
+    workspaceId: state.message.workspaceId,
+    integrationId: state.integrationRow.id,
+  })
+  const originPath = `${prefix}/${createId()}${extension ? `.${extension}` : ""}`
   await putMediaObject(state, originPath, media)
 
   let width: number | undefined

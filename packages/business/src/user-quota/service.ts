@@ -5,15 +5,19 @@ import {
   db,
   eq,
   gt,
+  inArray,
   lte,
   type SQL,
   sql,
   sum,
 } from "@chatbotx.io/database/client"
-import { planStatuses } from "@chatbotx.io/database/partials"
 import {
+  ACTIVE_CONNECTION_STATUSES,
+  planStatuses,
+} from "@chatbotx.io/database/partials"
+import {
+  connectionModel,
   contactModel,
-  inboxModel,
   ROOT_TENANT_ID,
   userQuotaModel,
   workspaceMacModel,
@@ -759,10 +763,16 @@ class UserQuotaService extends BaseService {
   }
 
   /**
-   * Shared `contacts ⋈ workspace` / `workspaces` / `inboxes ⋈ workspace`
+   * Shared `contacts ⋈ workspace` / `workspaces` / active-channel-`Connection`
    * count block behind both `reconcileOwnerPoolUsage` (tenant-scoped `where`)
    * and `reconcileUserSelfUsage` (owner-scoped `where`) — same three queries,
    * differing only in which workspace predicate is applied.
+   *
+   * `channelsUsed` counts distinct `Connection` rows (`kind = "channel"` AND
+   * `status IN` {@link ACTIVE_CONNECTION_STATUSES}) joined to `workspace`,
+   * NOT raw `Inbox` rows: an `Inbox` can exist with no backing `Connection`
+   * at all (orphaned) or with one that's paused/needs_reauth/disconnected,
+   * and neither case should hold a channel-quota slot.
    */
   private async countWorkspaceScopedUsage(where: SQL): Promise<{
     contactsUsed: number
@@ -783,13 +793,19 @@ class UserQuotaService extends BaseService {
         db.select({ count: count() }).from(workspaceModel).where(where),
 
         db
-          .select({ count: count() })
-          .from(inboxModel)
+          .select({ count: countDistinct(connectionModel.id) })
+          .from(connectionModel)
           .innerJoin(
             workspaceModel,
-            eq(inboxModel.workspaceId, workspaceModel.id),
+            eq(connectionModel.workspaceId, workspaceModel.id),
           )
-          .where(where),
+          .where(
+            and(
+              where,
+              eq(connectionModel.kind, "channel"),
+              inArray(connectionModel.status, ACTIVE_CONNECTION_STATUSES),
+            ),
+          ),
       ])
 
     return {

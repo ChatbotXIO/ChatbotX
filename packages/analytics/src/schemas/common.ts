@@ -16,7 +16,7 @@ export const timeRangeQuerySchema = z.object({
   to: z
     .string()
     .transform((val) => new Date(val))
-    .describe("ISO 8601 end of the time range (exclusive)."),
+    .describe("ISO 8601 end of the time range (inclusive)."),
   timezone: z
     .string()
     .default("UTC")

@@ -3,6 +3,7 @@ import {
   THREADS_TOKEN_REFRESH_THRESHOLD_DAYS,
 } from "@chatbotx.io/business"
 import {
+  isRevokedTokenError,
   refreshAccessToken,
   type ThreadsAuthValue,
 } from "@chatbotx.io/integration-threads"
@@ -110,10 +111,12 @@ export async function refreshThreadsTokens(): Promise<void> {
             },
             "refreshThreadsTokens: integration refresh failed",
           )
-          await integrationThreadsService.markTokenRefreshError(
-            integration.id,
-            error instanceof Error ? error.message : String(error),
-          )
+          await integrationThreadsService.markTokenRefreshError({
+            id: integration.id,
+            workspaceId: integration.workspaceId,
+            error: error instanceof Error ? error.message : String(error),
+            isRevoked: isRevokedTokenError(error),
+          })
         }
       }
     },

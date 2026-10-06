@@ -55,6 +55,10 @@ const productService = {
   delete: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({ productService }))
+vi.mock("@chatbotx.io/business/import", () => ({
+  createImportUpload: vi.fn(),
+  importService: { list: vi.fn(), find: vi.fn() },
+}))
 
 await import("@/features/products/api/public")
 

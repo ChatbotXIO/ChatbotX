@@ -39,6 +39,7 @@ import {
   PhoneIcon,
   PhoneOffIcon,
   ReplyIcon,
+  RotateCwIcon,
   ThumbsUp,
 } from "lucide-react"
 import Image from "next/image"
@@ -460,7 +461,7 @@ const RenderImageGridItem = (props: { attachment: AttachmentResource }) => {
   }
 
   return (
-    <Link href={attachmentUrl} target="_blank">
+    <Link href={attachmentUrl} prefetch={false} target="_blank">
       <div className="relative aspect-square overflow-hidden rounded-lg">
         <Image
           alt={attachmentLabel}
@@ -486,10 +487,13 @@ const RenderImageAttachment = (props: {
   const { attachment, attachmentUrl, attachmentLabel, onError } = props
 
   if (!(attachment.width && attachment.height)) {
+    // No stored dimensions (e.g. a media-library send): the bubble sizes to its
+    // content, so the frame needs an explicit width — max-width plus an aspect
+    // ratio alone collapses to 0×0 and the message looks missing.
     return (
-      <Link href={attachmentUrl} target="_blank">
+      <Link href={attachmentUrl} prefetch={false} target="_blank">
         <div
-          className="relative max-w-full overflow-hidden rounded-xl sm:max-w-80"
+          className="relative w-80 max-w-full overflow-hidden rounded-xl"
           style={{ aspectRatio: "4/3" }}
         >
           <Image
@@ -505,7 +509,7 @@ const RenderImageAttachment = (props: {
     )
   }
   return (
-    <Link href={attachmentUrl} target="_blank">
+    <Link href={attachmentUrl} prefetch={false} target="_blank">
       <Image
         alt={attachmentLabel}
         className="max-w-full rounded-xl sm:max-w-80"
@@ -521,10 +525,13 @@ const RenderImageAttachment = (props: {
 
 const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
   const { attachment } = props
+  const t = useTranslations("messages")
   const {
     url: attachmentUrl,
     onError,
     isRecovering,
+    fallbackUrl,
+    retryUrl,
   } = useAttachmentSource(attachment)
   const attachmentLabel =
     attachment.name || attachment.originPath || "Attachment"
@@ -623,11 +630,32 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
       )
     default:
       return (
+        // A download link fires no load error, so it can't walk the fallback
+        // chain on its own: it always goes through the re-signing fallback,
+        // and the reload action re-fetches a file gone from storage. Links that
+        // can reach the media proxy never prefetch — a prefetch would run it.
         <div className="flex items-center gap-2 overflow-hidden rounded-xl bg-secondary p-3 text-sm">
           <PaperclipIcon className="size-5 flex-none" />
-          <Link className="truncate" href={attachmentUrl}>
+          <Link
+            className="truncate"
+            href={fallbackUrl ?? attachmentUrl}
+            prefetch={false}
+          >
             {attachmentUrl}
           </Link>
+          {retryUrl ? (
+            <Link
+              aria-label={t("reloadAttachment")}
+              className="flex-none text-muted-foreground hover:text-foreground"
+              href={retryUrl}
+              prefetch={false}
+              rel="noopener noreferrer"
+              target="_blank"
+              title={t("reloadAttachment")}
+            >
+              <RotateCwIcon className="size-4" />
+            </Link>
+          ) : null}
         </div>
       )
   }

@@ -15,6 +15,7 @@
 
 import {
   ACTIVE_CONNECTION_STATUSES,
+  type ActiveConnectionStatus,
   type ConnectionStatus,
   type ConnectionStatusReason,
 } from "@chatbotx.io/database/partials"
@@ -47,9 +48,10 @@ type ConnectionTransitionResult = {
   /** Idempotent no-op: `to === from`, event carried no real state change. */
   noop: boolean
 }
-
-export const isActiveConnectionStatus = (status: ConnectionStatus): boolean =>
-  (ACTIVE_CONNECTION_STATUSES as readonly ConnectionStatus[]).includes(status)
+export const isActiveConnectionStatus = (
+  status: ConnectionStatus,
+): status is ActiveConnectionStatus =>
+  new Set<ConnectionStatus>(ACTIVE_CONNECTION_STATUSES).has(status)
 
 export class InvalidConnectionTransitionException extends ChatbotXException {
   constructor(from: ConnectionStatus | undefined, event: ConnectionEvent) {
@@ -135,6 +137,12 @@ export const transitionConnection = (
       if (from === undefined) {
         return result(from, "disconnected", "manual")
       }
+      // Already disconnected: a no-op re-assertion must preserve whatever
+      // reason/`disconnectedAt` is already stored, not overwrite it with
+      // `manual` just because this event fired again.
+      if (from === "disconnected") {
+        return result(from, from, null)
+      }
       return result(from, "disconnected", reason ?? "manual")
     }
     case "teardown.pause": {
@@ -150,6 +158,11 @@ export const transitionConnection = (
       return result(from, "connected", null)
     }
     case "teardown.disconnect": {
+      // Already disconnected: same preserve-on-no-op rule as `user.disconnect`
+      // above — repeated teardown must not stomp the stored reason.
+      if (from === "disconnected") {
+        return result(from, from, null)
+      }
       return result(from, "disconnected", reason ?? "workspace_purge")
     }
     default: {

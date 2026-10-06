@@ -1,4 +1,4 @@
-import { importService } from "@chatbotx.io/business"
+import { importService } from "@chatbotx.io/business/import"
 import { importFormats, importTypes } from "@chatbotx.io/database/partials"
 import type { JobRunImport } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"

@@ -3951,7 +3951,9 @@ describe("contact source taxonomy", () => {
 
     expect(mockDownloadCommentMediaAttachment).toHaveBeenCalledWith({
       url: "https://video.xx.fbcdn.test/comment-video.mp4",
+      channel: "messenger",
       workspaceId: "ws-1",
+      integrationId: "integration-1",
       commentId: "comment-video-1",
     })
     expect(mockCreateOrUpdateWithAttachments).toHaveBeenCalledTimes(1)
@@ -4337,7 +4339,9 @@ describe("contact source taxonomy", () => {
 
     expect(mockDownloadCommentMediaAttachment).toHaveBeenCalledWith({
       url: "https://p16.tiktokcdn.test/comment-image.jpeg",
+      channel: "tiktok",
       workspaceId: "ws-1",
+      integrationId: "integration-1",
       commentId: "comment-tiktok-image-1",
     })
     expect(mockCreateOrUpdateWithAttachments).toHaveBeenCalledTimes(1)

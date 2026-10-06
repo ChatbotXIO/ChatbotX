@@ -337,9 +337,9 @@ export const botFieldsPublicRouter = {
     .route({
       method: "DELETE",
       path: "/v1/bot-fields/{idOrName}",
-      summary: "Unset bot field value",
+      summary: "Delete bot field",
       description:
-        "Clears an existing bot field's value back to empty. Use `botFields.list` to find its id or name first.",
+        "Deletes the bot field itself (its definition and value), not just its value. To clear only the value and keep the field, use `botFields.reset`. Use `botFields.list` to find its id or name first.",
       successStatus: 204,
       tags: ["Bot Fields"],
     })

@@ -3444,6 +3444,7 @@
     "cancelEdit": "Abbrechen",
     "replaceAttachment": "Anhang ersetzen",
     "addAttachment": "Anhang hinzufügen",
+    "reloadAttachment": "Anhang neu laden",
     "failedToCopy": "Kopieren fehlgeschlagen",
     "failedToPreviewImage": "Bildvorschau fehlgeschlagen",
     "loadingData": "Daten werden geladen...",

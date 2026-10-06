@@ -1,13 +1,27 @@
+import type { DatabaseClient } from "@chatbotx.io/database/client"
 import type {
   CredentialType,
   IntegrationType,
 } from "@chatbotx.io/database/partials"
+import type { ConnectionModel } from "@chatbotx.io/database/types"
 import type {
+  AuthValue,
   ConnectionProvider,
   Integration,
   IntegrationDefinition,
 } from "@chatbotx.io/sdk"
 import type { ConnectionStoreBinding } from "./store-bindings"
+
+export type ConnectionTeardownResult = {
+  remoteErrors: string[]
+  skipGenericRemoteTeardown: boolean
+  withinTransaction: (tx: DatabaseClient) => Promise<void>
+}
+
+export type ConnectionTeardownHook = (input: {
+  connection: ConnectionModel
+  auth: AuthValue
+}) => Promise<ConnectionTeardownResult>
 
 /**
  * Everything the Connection domain needs for one `IntegrationType`: the
@@ -18,6 +32,7 @@ import type { ConnectionStoreBinding } from "./store-bindings"
  * `CONNECTION_STORE_BINDINGS` — `null` for types with no connect lifecycle
  * yet (for example `metaCatalog`, `outlookCalendar`, and `threads`).
  */
+
 export type ConnectionAdapter = {
   /**
    * Present for every provider backed by an `integrations/<name>` SDK
@@ -46,6 +61,18 @@ export type ConnectionAdapter = {
    */
   store?: ConnectionStoreBinding
   credentialType?: CredentialType
+  /**
+   * Provider-specific teardown beyond the generic remote
+   * disconnect/webhook-unsubscribe + store row delete the engine's
+   * `disconnect` (`packages/connections/src/lifecycle.ts`) already performs.
+   * Only Messenger defines one today (wired in
+   * `packages/connections/src/registry.ts` from
+   * `packages/connections/src/messenger-teardown.ts`): it preserves a
+   * Facebook Page webhook subscription still shared with Instagram instead
+   * of unsubscribing it, tears down coexist mode, and cleans up
+   * `MetaCapiEvent`/tag rows the generic store binding doesn't know about.
+   */
+  teardown?: ConnectionTeardownHook
 }
 
 export type ConnectionRegistry = Record<

@@ -1,6 +1,7 @@
 import {
   channelHiddenException,
   connectionNotConfiguredException,
+  connectionNotOAuthException,
 } from "@chatbotx.io/business/errors"
 import {
   CONNECTION_REGISTRY,
@@ -66,6 +67,18 @@ export const startConnect = async (input: {
   const adapter = CONNECTION_REGISTRY[input.provider]
   if (!adapter) {
     throw connectionNotConfiguredException(input.provider)
+  }
+
+  // `facebookAds` reconnects/connects by riding Messenger's existing OAuth
+  // grant — it only ever completes through the legacy case in
+  // `apps/builder/src/app/integrations/[...integration]/callback.ts`
+  // ("Facebook Ads OAuth is routed through this same Messenger callback"),
+  // never through this flow's own `ConnectSession`. Its registry entry
+  // still carries `strategy: "oauth_redirect"` + a `credentialType` (for
+  // that legacy callback's credential lookup), so without this explicit
+  // guard `startConnect` would mint a session nothing ever completes.
+  if (input.provider === "facebookAds") {
+    throw connectionNotOAuthException(input.provider)
   }
 
   await assertChannelCreatable(input.workspaceId, input.provider)

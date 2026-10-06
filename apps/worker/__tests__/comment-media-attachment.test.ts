@@ -1,11 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+// Channel-scoped storage key the received media must land under.
+const CHANNEL_MEDIA_KEY = /^public\/threads\/ws-1\/integration-1\/2026\//
+
 const mockUploadFileFromUrl = vi.fn()
 const mockAssertPublicUrl = vi.fn()
 const mockRunThreadsAction = vi.fn()
 
 vi.mock("@chatbotx.io/filesystem", () => ({
-  getStoragePrefix: (workspaceId: string) => `public/ws/${workspaceId}/2026`,
+  getChannelMediaPrefix: (location: {
+    channel: string
+    workspaceId: string
+    integrationId: string
+  }) =>
+    `public/${location.channel}/${location.workspaceId}/${location.integrationId}/2026`,
   uploadFileFromUrl: mockUploadFileFromUrl,
 }))
 
@@ -51,7 +59,9 @@ describe("downloadCommentMediaAttachment", () => {
 
     const attachment = await downloadCommentMediaAttachment({
       url: GIF_URL,
+      channel: "tiktok",
       workspaceId: "ws-1",
+      integrationId: "integration-1",
       commentId: "comment-1",
     })
 
@@ -67,7 +77,8 @@ describe("downloadCommentMediaAttachment", () => {
     const [url, path, acl, maxBytes, validateUrl] =
       mockUploadFileFromUrl.mock.calls[0]
     expect(url).toBe(GIF_URL)
-    expect(path.startsWith("public/ws/ws-1/2026/")).toBe(true)
+    // Stored under the channel-scoped prefix, like other received media.
+    expect(path.startsWith("public/tiktok/ws-1/integration-1/2026/")).toBe(true)
     expect(acl).toBe("public-read")
     expect(maxBytes).toBeGreaterThan(0)
     await validateUrl(GIF_URL)
@@ -83,7 +94,9 @@ describe("downloadCommentMediaAttachment", () => {
     await expect(
       downloadCommentMediaAttachment({
         url: GIF_URL,
+        channel: "tiktok",
         workspaceId: "ws-1",
+        integrationId: "integration-1",
         commentId: "comment-1",
       }),
     ).resolves.toBeUndefined()
@@ -99,7 +112,9 @@ describe("downloadCommentMediaAttachment", () => {
     await expect(
       downloadCommentMediaAttachment({
         url: GIF_URL,
+        channel: "tiktok",
         workspaceId: "ws-1",
+        integrationId: "integration-1",
         commentId: "comment-1",
       }),
     ).resolves.toBeUndefined()
@@ -128,6 +143,7 @@ describe("fetchThreadsCommentAttachments", () => {
     expect(attachments).toEqual([
       expect.objectContaining({ mimeType: "image/gif" }),
     ])
+    expect(mockUploadFileFromUrl.mock.calls[0]?.[1]).toMatch(CHANNEL_MEDIA_KEY)
   })
 
   test("returns no attachment for a reply without a GIF", async () => {

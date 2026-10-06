@@ -35,6 +35,7 @@ vi.mock("@chatbotx.io/business/error-log", () => ({
 }))
 vi.mock("@chatbotx.io/integration-whatsapp", () => ({
   integration: { refreshAuth: mocks.refreshAuth },
+  isRevokedTokenError: mocks.isRevokedTokenError,
 }))
 vi.mock("@chatbotx.io/redis", () => ({
   distributedLock: { runExclusive: mocks.runExclusive },

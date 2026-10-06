@@ -28,6 +28,8 @@ import { inboxRelations } from "../../database/src/relations/inbox"
 
 const listWithIntegrationsByWorkspaceMock = vi.fn()
 const disconnectInboxMock = vi.fn()
+const findByInboxIdMock = vi.fn()
+const connectionTransitionMock = vi.fn()
 
 vi.mock("@chatbotx.io/database/client", () => ({
   and: vi.fn((...args: unknown[]) => ({ and: args })),
@@ -38,6 +40,16 @@ vi.mock("@chatbotx.io/database/client", () => ({
   })),
   liftDecompressionLimit: vi.fn(),
   sql: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  connectionRepository: { findByInboxId: findByInboxIdMock },
+  LIVE_RUN_STATUSES: [],
+  PULL_CLAIMABLE_STATUSES: [],
+}))
+
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { transition: connectionTransitionMock },
 }))
 
 vi.mock("@chatbotx.io/sequence-scheduler/dispatch-cancel", () => ({
@@ -100,6 +112,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   listWithIntegrationsByWorkspaceMock.mockResolvedValue([])
   disconnectInboxMock.mockResolvedValue(undefined)
+  findByInboxIdMock.mockResolvedValue(undefined)
+  connectionTransitionMock.mockResolvedValue(undefined)
 })
 
 test("the derived channel matrix is non-empty and only contains real channels", () => {

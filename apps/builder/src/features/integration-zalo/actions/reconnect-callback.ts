@@ -1,4 +1,7 @@
-import { zaloIntegrationService } from "@chatbotx.io/business"
+import {
+  connectionStateService,
+  zaloIntegrationService,
+} from "@chatbotx.io/business"
 import type { ZaloCredential } from "@chatbotx.io/database/partials"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo"
 import { integrations } from "@/integration"
@@ -43,11 +46,19 @@ export async function reconnectZaloHandler(props: {
       return { status: "error", reason: "accountNotFound" }
     }
 
-    await zaloIntegrationService.updateAuth(
-      integrationZalo.id,
-      authValue,
-      authValue.metadata.oaName,
-    )
+    await connectionStateService.commitReconnect({
+      inboxId: integrationZalo.inboxId,
+      workspaceId: props.workspaceId,
+      auth: authValue,
+      writeAuth: async (tx) => {
+        await zaloIntegrationService.updateAuth(
+          integrationZalo.id,
+          authValue,
+          authValue.metadata.oaName,
+          tx,
+        )
+      },
+    })
 
     return { status: "success" }
   } catch (error) {
