@@ -234,7 +234,7 @@ export const botFieldsPublicRouter = {
       path: "/v1/bot-fields/bulk-update",
       summary: "Bulk update bot field values",
       description:
-        "Deprecated — `botFields.setMany` now accepts the same entries (by id or name) at `PUT /v1/bot-fields`; this dedicated `/bulk-update` path is kept only for callers that have not migrated.",
+        "Deprecated — `botFields.setMany` now accepts the same entries (by id or name) at `PUT /v1/bot-fields`; this dedicated `/bulk-update` path is kept only for callers that have not migrated. Entries are applied independently, not as one transaction.",
       successStatus: 204,
       deprecated: true,
       tags: ["Bot Fields"],

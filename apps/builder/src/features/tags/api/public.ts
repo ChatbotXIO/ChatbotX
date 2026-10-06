@@ -30,7 +30,7 @@ export const tagsPublicRouter = {
       path: "/v1/tags",
       summary: "Get all tags",
       description:
-        "Lists tags in the workspace, newest first unless `sort` is given. Filter by `name` (substring) or `folderId`. Use `tags.create` to add one, or `contacts.addTags` to attach existing ones to a contact.",
+        "Lists tags in the workspace with how many contacts have each, newest first unless `sort` is given. Filter by `name` (substring) or `folderId`. Use `tags.create` to add one, or `contacts.addTags` to attach existing ones to a contact.",
       tags: ["Tags"],
     })
     .input(listTagsPublicRequest)

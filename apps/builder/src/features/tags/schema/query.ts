@@ -53,7 +53,14 @@ export const listTagsPublicRequest = publicListRequest.extend({
 })
 
 export const publicListTagsResponse = z.object({
-  data: z.array(publicTagResource),
+  data: z.array(
+    publicTagResource.extend({
+      contactsCount: z
+        .number()
+        .int()
+        .describe("Number of contacts that have this tag."),
+    }),
+  ),
   pageCount: z.number().int(),
 })
 export type ListPublicTagResponse = z.infer<typeof publicListTagsResponse>
