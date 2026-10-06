@@ -54,7 +54,7 @@ const reflinkService = {
   deleteMany: vi.fn(),
 }
 const inboxService = {
-  listWithIntegrationsByWorkspace: vi.fn(async () => [] as unknown[]),
+  listAllConnectedByWorkspace: vi.fn(async () => ({ data: [] as unknown[] })),
 }
 const resolveTenantSettings = vi.fn(async () => ({
   appUrl: "https://app.tenant.test",
@@ -95,7 +95,7 @@ const scopeArgAtImport = workspaceTokenAuthAPIForScope.mock.calls[0]?.[0]
 
 beforeEach(() => {
   vi.clearAllMocks()
-  inboxService.listWithIntegrationsByWorkspace.mockResolvedValue([])
+  inboxService.listAllConnectedByWorkspace.mockResolvedValue({ data: [] })
 })
 
 test("registers the reflinks public router under the automation scope", () => {
@@ -208,21 +208,25 @@ describe("open-chat links", () => {
       id: "reflink-1",
       name: "welcome",
     })
-    inboxService.listWithIntegrationsByWorkspace.mockResolvedValueOnce([
-      inbox({}),
-      inbox({ id: "inbox-2", channel: "zalo", sourceId: "oa-1", name: "OA" }),
-      inbox({ id: "inbox-3", channel: "smtp", name: "Mail" }),
-      inbox({ id: "inbox-4", channel: "tiktok", name: "TT" }),
-    ])
+    inboxService.listAllConnectedByWorkspace.mockResolvedValueOnce({
+      data: [
+        inbox({}),
+        inbox({ id: "inbox-2", channel: "zalo", sourceId: "oa-1", name: "OA" }),
+        inbox({ id: "inbox-3", channel: "smtp", name: "Mail" }),
+        inbox({ id: "inbox-4", channel: "tiktok", name: "TT" }),
+      ],
+    })
 
     const result = (await findProcedure("GET", "/v1/ref-links/{id}").handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: { id: "reflink-1" },
     })) as { links: Record<string, unknown>[] }
 
-    expect(inboxService.listWithIntegrationsByWorkspace).toHaveBeenCalledWith(
-      "workspace-1",
-    )
+    // Connected inboxes only: a disconnected one would hand out a dead link.
+    expect(inboxService.listAllConnectedByWorkspace).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      includes: ["integration"],
+    })
     expect(result.links).toEqual([
       {
         inboxId: "inbox-1",
@@ -249,18 +253,16 @@ describe("open-chat links", () => {
       ],
       pageCount: 1,
     })
-    inboxService.listWithIntegrationsByWorkspace.mockResolvedValueOnce([
-      inbox({}),
-    ])
+    inboxService.listAllConnectedByWorkspace.mockResolvedValueOnce({
+      data: [inbox({})],
+    })
 
     const result = (await findProcedure("GET", "/v1/ref-links").handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: { page: 1, perPage: 50 },
     })) as { data: { links: { url: string }[] }[] }
 
-    expect(inboxService.listWithIntegrationsByWorkspace).toHaveBeenCalledTimes(
-      1,
-    )
+    expect(inboxService.listAllConnectedByWorkspace).toHaveBeenCalledTimes(1)
     expect(result.data.map((row) => row.links[0]?.url)).toEqual([
       "https://m.me/page-1?ref=a",
       "https://m.me/page-1?ref=b",

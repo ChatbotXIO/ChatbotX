@@ -1692,6 +1692,7 @@
     "retry": "重試",
     "copy": "複製",
     "copyUrl": "複製 URL",
+    "chatWidget": "聊天小工具",
     "actions": "操作",
     "add": "新增",
     "addVariable": "新增變數",
@@ -4473,7 +4474,26 @@
   },
   "reflinks": {
     "title": "入口點連結",
-    "description": "啟動流程並從頻道擷取引用 payload 的關鍵字連結。"
+    "description": "啟動流程並從頻道擷取引用 payload 的關鍵字連結。",
+    "chatWidget": {
+      "title": "聊天小工具",
+      "description": "在您的網站上顯示聊天頻道按鈕。訪客點擊任一按鈕即可開始聊天並執行此 ref 連結的流程。",
+      "authorizedDomains": {
+        "label": "授權網域",
+        "placeholder": "example.com",
+        "description": "只有這些網域及其子網域可以顯示小工具。留空則允許任何網站。",
+        "invalid": "這些網域無效：{domains}。請只輸入網域，例如 example.com。"
+      },
+      "channels": {
+        "label": "頻道",
+        "description": "關閉某個頻道即可在小工具中隱藏它。",
+        "empty": "尚未連接具有聊天連結的頻道。"
+      },
+      "preview": "預覽",
+      "embedCodeDescription": "將此程式碼貼到網站的 body 結束標籤之前。儲存的變更會自動套用，無須重新貼上。",
+      "savedSuccess": "聊天小工具設定已儲存",
+      "poweredBy": "由"
+    }
   },
   "qrCodes": {
     "title": "QR Code",

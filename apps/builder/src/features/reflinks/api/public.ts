@@ -20,7 +20,7 @@ const withLinks = async <T extends { name: string }>(
   workspaceId: string,
   reflink: T,
 ) => {
-  const buildLinks = await createReflinkLinkBuilder(workspaceId)
+  const { buildLinks } = await createReflinkLinkBuilder(workspaceId)
   return { ...reflink, links: buildLinks(reflink.name) }
 }
 
@@ -39,7 +39,7 @@ export const reflinksPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
-      const [{ data, pageCount }, buildLinks] = await Promise.all([
+      const [{ data, pageCount }, { buildLinks }] = await Promise.all([
         reflinkService.list({ ...input, workspaceId }),
         createReflinkLinkBuilder(workspaceId),
       ])

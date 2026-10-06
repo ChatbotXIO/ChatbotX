@@ -57,6 +57,20 @@ export function canShareMinigame(channel: ChannelType): boolean {
   return (MINIGAME_SHARE_CHANNELS as readonly string[]).includes(channel)
 }
 
+/**
+ * Channels every "open chat" link list leaves out (Get Link dialog, ref link
+ * API and chat widget): SMTP has no chat link and `tiktok.me` is not a real
+ * host.
+ */
+export const NON_LINKABLE_CHANNELS = [
+  "smtp",
+  "tiktok",
+] as const satisfies readonly ChannelType[]
+
+export function isLinkableChannel(channel: ChannelType): boolean {
+  return !(NON_LINKABLE_CHANNELS as readonly string[]).includes(channel)
+}
+
 export function buildInboxLink(
   appUrl: string,
   inbox: InboxWithIntegrations,

@@ -18,10 +18,13 @@ export const reflinkChannelLinkResource = z.object({
     ),
 })
 
-export const reflinkPublicResource = reflinkResource.extend({
-  links: z
-    .array(reflinkChannelLinkResource)
-    .describe(
-      "One open-chat link per connected channel (the dashboard's Copy URL). Empty when no linkable channel is connected.",
-    ),
-})
+// Chat widget settings are dashboard-only for now.
+export const reflinkPublicResource = reflinkResource
+  .omit({ widgetAuthorizedDomains: true, widgetHiddenInboxIds: true })
+  .extend({
+    links: z
+      .array(reflinkChannelLinkResource)
+      .describe(
+        "One open-chat link per connected channel (the dashboard's Copy URL). Empty when no linkable channel is connected.",
+      ),
+  })

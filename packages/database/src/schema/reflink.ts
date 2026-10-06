@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import { jsonb, pgEnum, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import type { QrStyles } from "../partials/qr-code"
 import { type ReflinkType, reflinkTypes } from "../partials/reflink"
@@ -34,6 +35,16 @@ export const reflinkModel = pgTable(
       onUpdate: "cascade",
     }),
     qrStyles: jsonb().$type<QrStyles>(),
+    // Chat widget embed settings. Empty domains = embeddable anywhere; the
+    // hidden list (not an enabled list) lets newly connected inboxes show up.
+    widgetAuthorizedDomains: text()
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
+    widgetHiddenInboxIds: text()
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
   },
   (table) => [
     uniqueIndex("Reflink_workspaceId_name_key").using(

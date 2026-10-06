@@ -24,3 +24,22 @@ export type CreateReflinkRequest = z.infer<typeof createReflinkRequest>
 
 export const updateReflinkRequest = createReflinkRequest.partial()
 export type UpdateReflinkRequest = z.infer<typeof updateReflinkRequest>
+
+export const MAX_WIDGET_AUTHORIZED_DOMAINS = 50
+// Only bounds the `IN (...)` list the service builds from it — far above any
+// real workspace's inbox count.
+const MAX_WIDGET_HIDDEN_INBOXES = 500
+
+export const updateReflinkWidgetRequest = z.object({
+  authorizedDomains: z
+    .array(z.hostname())
+    .max(MAX_WIDGET_AUTHORIZED_DOMAINS)
+    .describe("Domains allowed to embed the chat widget. Empty = any domain."),
+  hiddenInboxIds: z
+    .array(zodBigintAsString())
+    .max(MAX_WIDGET_HIDDEN_INBOXES)
+    .describe("Inboxes hidden from the chat widget."),
+})
+export type UpdateReflinkWidgetRequest = z.infer<
+  typeof updateReflinkWidgetRequest
+>

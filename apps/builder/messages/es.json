@@ -3,6 +3,7 @@
     "retry": "Reintentar",
     "copy": "Copiar",
     "copyUrl": "Copiar URL",
+    "chatWidget": "Widget de chat",
     "actions": "Acciones",
     "add": "Añadir",
     "addVariable": "Añadir variable",
@@ -4440,7 +4441,26 @@
   },
   "reflinks": {
     "title": "Entry Point Enlaces",
-    "description": "Claveword enlaces that start flows y capture ref payloads desde canales."
+    "description": "Claveword enlaces that start flows y capture ref payloads desde canales.",
+    "chatWidget": {
+      "title": "Widget de chat",
+      "description": "Muestra botones de tus canales de chat en tu sitio web. El visitante pulsa uno para iniciar un chat y ejecutar el flujo de este enlace ref.",
+      "authorizedDomains": {
+        "label": "Dominios autorizados",
+        "placeholder": "example.com",
+        "description": "Solo estos dominios y sus subdominios pueden mostrar el widget. Déjalo vacío para permitir cualquier sitio web.",
+        "invalid": "Estos dominios no son válidos: {domains}. Introduce solo un dominio, como example.com."
+      },
+      "channels": {
+        "label": "Canales",
+        "description": "Desactiva un canal para ocultarlo del widget.",
+        "empty": "Todavía no hay ningún canal con enlace de chat conectado."
+      },
+      "preview": "Vista previa",
+      "embedCodeDescription": "Pega este código antes de la etiqueta de cierre body de tu sitio web. Los cambios guardados se aplican automáticamente, no hace falta volver a pegarlo.",
+      "savedSuccess": "Configuración del widget de chat guardada",
+      "poweredBy": "por"
+    }
   },
   "qrCodes": {
     "title": "Códigos QR",

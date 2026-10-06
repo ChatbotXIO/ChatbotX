@@ -3,6 +3,7 @@
     "retry": "Réessayer",
     "copy": "Copier",
     "copyUrl": "Copier l’URL",
+    "chatWidget": "Widget de chat",
     "actions": "Actions",
     "add": "Ajouter",
     "addVariable": "Ajouter une variable",
@@ -4440,7 +4441,26 @@
   },
   "reflinks": {
     "title": "Liens de point d’entrée",
-    "description": "Liens par mot-clé qui démarrent des flux et capturent les charges utiles de référence des canaux."
+    "description": "Liens par mot-clé qui démarrent des flux et capturent les charges utiles de référence des canaux.",
+    "chatWidget": {
+      "title": "Widget de chat",
+      "description": "Affichez des boutons pour vos canaux de chat sur votre site. Le visiteur clique sur l'un d'eux pour démarrer une conversation et lancer le flow de ce lien ref.",
+      "authorizedDomains": {
+        "label": "Domaines autorisés",
+        "placeholder": "example.com",
+        "description": "Seuls ces domaines et leurs sous-domaines peuvent afficher le widget. Laissez vide pour autoriser tous les sites.",
+        "invalid": "Ces domaines ne sont pas valides : {domains}. Saisissez uniquement un domaine, par exemple example.com."
+      },
+      "channels": {
+        "label": "Canaux",
+        "description": "Désactivez un canal pour le masquer du widget.",
+        "empty": "Aucun canal avec un lien de chat n'est encore connecté."
+      },
+      "preview": "Aperçu",
+      "embedCodeDescription": "Collez ce code avant la balise de fermeture body de votre site. Les modifications enregistrées s'appliquent automatiquement, inutile de le recoller.",
+      "savedSuccess": "Paramètres du widget de chat enregistrés",
+      "poweredBy": "par"
+    }
   },
   "qrCodes": {
     "title": "Codes QR",

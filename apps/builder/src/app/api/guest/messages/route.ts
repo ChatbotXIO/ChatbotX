@@ -7,8 +7,8 @@ import {
 import { type NextRequest, NextResponse } from "next/server"
 import { getTranslations } from "next-intl/server"
 import {
+  isEmbedOriginAllowed,
   isFirstPartyOrigin,
-  isOriginAuthorized,
 } from "@/features/integration-webchat/lib/authorized-domain"
 import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
 import { findIntegrationWebchat } from "@/features/integration-webchat/queries"
@@ -41,9 +41,8 @@ const isAllowedGuestOrigin = async (
   parentOrigin: string | undefined,
   authorizedDomains: string[],
 ) =>
-  authorizedDomains.length === 0 ||
-  isFirstPartyOrigin(parentOrigin, await getDomainFromHeader()) ||
-  isOriginAuthorized(parentOrigin, authorizedDomains)
+  isEmbedOriginAllowed(parentOrigin, authorizedDomains) ||
+  isFirstPartyOrigin(parentOrigin, await getDomainFromHeader())
 
 const BEARER_TOKEN_SEPARATOR = /\s+/
 

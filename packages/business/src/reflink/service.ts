@@ -12,8 +12,10 @@ import type { ReflinkModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException, validationException } from "../errors"
+import { inboxService } from "../inbox/service"
 import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
 import { assertDeletable } from "../template/installed-resource.service"
+import { resolveWorkspaceFreezeReasonById } from "../workspace-lifecycle/with-blocked-owner-guard"
 
 type SelectOptionRow = { id: string; name: string }
 const OPTION_LIST_LIMIT = 500
@@ -25,6 +27,17 @@ type ReflinkCreateData = {
 }
 
 type ReflinkUpdateData = Partial<ReflinkCreateData>
+
+export type ReflinkWidgetSettings = {
+  authorizedDomains: string[]
+  hiddenInboxIds: string[]
+}
+
+// The request schema (`z.hostname()`) already rejects whitespace and stray
+// dots, so only case and duplicates are left to fold.
+const normalizeDomains = (domains: string[]) => [
+  ...new Set(domains.map((domain) => domain.toLowerCase())),
+]
 
 class ReflinkService extends BaseService {
   async list(input: {
@@ -118,6 +131,48 @@ class ReflinkService extends BaseService {
       }
       throw error
     }
+  }
+
+  async updateWidgetSettings(
+    ctx: { workspaceId: string; id: string },
+    settings: ReflinkWidgetSettings,
+  ): Promise<ReflinkModel> {
+    const reflink = await this.findOrFail(ctx)
+    const hiddenInboxes = await inboxService.listLabelsByIds({
+      workspaceId: ctx.workspaceId,
+      ids: [...new Set(settings.hiddenInboxIds)],
+    })
+
+    const [updated] = await db
+      .update(reflinkModel)
+      .set({
+        widgetAuthorizedDomains: normalizeDomains(settings.authorizedDomains),
+        widgetHiddenInboxIds: hiddenInboxes.map((inbox) => inbox.id),
+      })
+      .where(
+        and(
+          eq(reflinkModel.id, reflink.id),
+          eq(reflinkModel.workspaceId, ctx.workspaceId),
+          eq(reflinkModel.type, "refLink"),
+        ),
+      )
+      .returning()
+    return updated
+  }
+
+  /**
+   * Public chat widget lookup. Null when the ref link is gone or its
+   * workspace is frozen (pending deletion, purged, or owner blocked).
+   */
+  async findForWidget(id: string): Promise<ReflinkModel | null> {
+    const reflink = await reflinkRepository.findById(id)
+    if (!reflink) {
+      return null
+    }
+    const { freezeReason } = await resolveWorkspaceFreezeReasonById(
+      reflink.workspaceId,
+    )
+    return freezeReason ? null : reflink
   }
 
   async listOptions(input: {
