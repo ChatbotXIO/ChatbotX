@@ -110,7 +110,7 @@ const updateWorkspaceSettingsRequest = z.object({
     .nullable()
     .optional()
     .describe(
-      "Id of the Flow to run as the Default Reply (an active flow with a published version, from `flows.list`); null clears it.",
+      "Id of the Flow to run as the Default Reply (a flow of this workspace, from `flows.list`; it should be published to reply); null clears it.",
     ),
   defaultReplyFrequency: defaultReplyFrequencies
     .optional()

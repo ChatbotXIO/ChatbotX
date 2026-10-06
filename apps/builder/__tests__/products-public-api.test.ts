@@ -59,6 +59,10 @@ vi.mock("@chatbotx.io/business", () => ({
   productService,
   integrationMetaCatalogService,
 }))
+vi.mock("@chatbotx.io/business/import", () => ({
+  createImportUpload: vi.fn(),
+  importService: { list: vi.fn(), find: vi.fn() },
+}))
 
 await import("@/features/products/api/public")
 

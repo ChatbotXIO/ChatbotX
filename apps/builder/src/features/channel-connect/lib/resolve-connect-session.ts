@@ -26,6 +26,7 @@ import {
   BRANDING_TITLE,
   getBrandingUrl,
 } from "@/features/integration-webchat/lib"
+import { logger } from "@/lib/log"
 import {
   checkWorkspaceOwnerAccess,
   workspaceAccessDenialException,
@@ -87,17 +88,52 @@ async function resolveConnectSessionCore(props: {
       "Your connect session expired. Please start again.",
     )
   }
+
+  // The actor/provider binding is checked BEFORE the cancelled-session
+  // short-circuit below — otherwise someone who merely guesses another
+  // user's session id would learn, via the distinct "cancelled" exception,
+  // that THAT session specifically was cancelled (and get quietly
+  // redirected to its `returnUrl`) without ever passing the ownership
+  // check. A mismatch here reads identically to every other "not your
+  // session" case. The diagnostic (status/provider/errorCode) is logged
+  // server-side only — never embedded in a thrown message a caller could
+  // surface to the client.
+  if (
+    session.actorUserId !== props.userId ||
+    session.provider !== props.expectedProvider
+  ) {
+    logger.warn(
+      {
+        sessionId: props.sessionId,
+        expectedProvider: props.expectedProvider,
+        provider: session.provider,
+      },
+      "resolveConnectSession: session does not belong to this actor/provider",
+    )
+    throw connectSessionExpiredException(
+      "Your connect session expired. Please start again.",
+    )
+  }
+
   if (session.status === "failed" && session.errorCode === "provider_denied") {
     throw connectSessionCancelledException()
   }
+
   if (
-    session.actorUserId !== props.userId ||
     session.status !== "awaiting_selection" ||
-    session.purpose !== "connect" ||
-    session.provider !== props.expectedProvider
+    session.purpose !== "connect"
   ) {
+    logger.warn(
+      {
+        sessionId: props.sessionId,
+        status: session.status,
+        purpose: session.purpose,
+        errorCode: session.errorCode,
+      },
+      "resolveConnectSession: session not in a resolvable state",
+    )
     throw connectSessionExpiredException(
-      `Your connect session expired. Please start again. (status=${session.status}, provider=${session.provider}${session.errorCode ? `, errorCode=${session.errorCode}` : ""})`,
+      "Your connect session expired. Please start again.",
     )
   }
 

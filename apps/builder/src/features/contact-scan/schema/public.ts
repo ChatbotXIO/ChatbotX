@@ -17,7 +17,9 @@ export const scheduleContactScanPublicRequest = z.object({
   ),
   scanFromAt: z.coerce
     .date()
-    .describe("Only scan conversations started on or after this date."),
+    .describe(
+      "Only scan conversations whose last activity is after this date (a conversation updated exactly at this instant is not included).",
+    ),
 })
 
 export const scheduleContactScanPublicResponse = z.object({

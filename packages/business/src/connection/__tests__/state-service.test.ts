@@ -1,3 +1,4 @@
+import { db } from "@chatbotx.io/database/client"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { connectionStateService } from "../state-service"
 
@@ -14,15 +15,14 @@ const mocks = vi.hoisted(() => ({
   distinctProvidersByStatus: vi.fn(),
   update: vi.fn(),
   inboxDisconnect: vi.fn(),
-  inboxUpdate: vi.fn(),
-  inboxUpdateSet: vi.fn(),
-  inboxUpdateWhere: vi.fn(),
+  mirrorInbox: vi.fn(async () => undefined),
   lockExisting: vi.fn(),
   cancelLive: vi.fn(),
   tryConsume: vi.fn(),
   release: vi.fn(async () => undefined),
   increment: vi.fn(async () => undefined),
   decrement: vi.fn(async () => undefined),
+  findOwnerUserIdByWorkspaceId: vi.fn(async () => "owner-1"),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -30,7 +30,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findById: mocks.findById,
     findByIdForWorkspace: mocks.findByIdForWorkspace,
     findByInboxId: mocks.findByInboxId,
-    findByIdForUpdate: mocks.findById,
     findByIdForUpdateById: mocks.findById,
     findByProviderAndSourceIdAnyWorkspace:
       mocks.findByProviderAndSourceIdAnyWorkspace,
@@ -40,23 +39,18 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     list: mocks.list,
     count: mocks.count,
   },
+  inboxRepository: { updateConnectionMirror: mocks.mirrorInbox },
   aiHandoverSettingsRepository: { lockExisting: mocks.lockExisting },
   aiHandoverBulkRunRepository: { cancelLive: mocks.cancelLive },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
-    update: mocks.inboxUpdate,
-    transaction: vi.fn(async (fn: (tx: unknown) => unknown) =>
-      fn({ update: mocks.inboxUpdate }),
-    ),
+    transaction: vi.fn(async (fn: (tx: unknown) => unknown) => fn({})),
   },
-  and: vi.fn((...conditions) => conditions),
-  eq: vi.fn((column, value) => ({ column, value })),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  inboxModel: { id: "id", workspaceId: "workspaceId" },
   workspaceUsageModel: {},
 }))
 
@@ -76,6 +70,12 @@ vi.mock("../../workspace-usage/service", () => ({
 
 vi.mock("../../inbox/service", () => ({
   inboxService: { disconnect: mocks.inboxDisconnect },
+}))
+
+vi.mock("../../workspace-member/service", () => ({
+  workspaceMemberService: {
+    findOwnerUserIdByWorkspaceId: mocks.findOwnerUserIdByWorkspaceId,
+  },
 }))
 
 const baseConnection = (overrides: Partial<Record<string, unknown>> = {}) => ({
@@ -107,22 +107,22 @@ beforeEach(() => {
   mocks.inboxDisconnect.mockReset()
   mocks.findByProviderAndSourceIdAnyWorkspace.mockReset()
   mocks.update.mockReset()
-  mocks.inboxUpdate.mockReset()
-  mocks.inboxUpdateSet.mockReset()
-  mocks.inboxUpdateWhere.mockReset()
+  mocks.mirrorInbox.mockReset()
+  mocks.mirrorInbox.mockResolvedValue(undefined)
   mocks.lockExisting.mockResolvedValue(null)
   mocks.cancelLive.mockReset()
   mocks.tryConsume.mockReset()
   mocks.release.mockClear()
   mocks.increment.mockClear()
   mocks.decrement.mockClear()
+  mocks.findOwnerUserIdByWorkspaceId.mockReset()
+  mocks.findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
 
-  mocks.inboxUpdateSet.mockImplementation(() => ({
-    where: mocks.inboxUpdateWhere,
-  }))
-  mocks.inboxUpdate.mockImplementation(() => ({ set: mocks.inboxUpdateSet }))
-  mocks.inboxUpdateWhere.mockResolvedValue(undefined)
   mocks.tryConsume.mockResolvedValue({ ok: true })
+  vi.mocked(db.transaction).mockImplementation(
+    (async (fn: (tx: unknown) => unknown) =>
+      await fn({})) as typeof db.transaction,
+  )
 })
 
 describe("ConnectionStateService.transition", () => {
@@ -145,8 +145,11 @@ describe("ConnectionStateService.transition", () => {
     expect(mocks.release).not.toHaveBeenCalled()
     expect(mocks.increment).toHaveBeenCalledWith("ws-1", "channels")
     expect(mocks.decrement).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdateSet).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "connected" }),
+    expect(mocks.mirrorInbox).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: expect.objectContaining({ status: "connected" }),
+      }),
+      expect.anything(),
     )
   })
 
@@ -199,7 +202,7 @@ describe("ConnectionStateService.transition", () => {
     ).rejects.toMatchObject({ code: "channelLimitReached" })
 
     expect(mocks.update).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdateSet).not.toHaveBeenCalled()
+    expect(mocks.mirrorInbox).not.toHaveBeenCalled()
   })
 
   test("throws when a channel quota edge requires an owner", async () => {
@@ -272,6 +275,206 @@ describe("ConnectionStateService.transition", () => {
       metric: "channels",
     })
     expect(mocks.decrement).not.toHaveBeenCalled()
+  })
+
+  test("defers the channel quota release until after the owned transaction actually commits", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+
+    const callOrder: string[] = []
+    mocks.release.mockImplementationOnce(() => {
+      callOrder.push("release")
+      return Promise.resolve(undefined)
+    })
+    vi.mocked(db.transaction).mockImplementationOnce((async (
+      fn: (tx: unknown) => unknown,
+    ) => {
+      const settled = await fn({})
+      // The real `db.transaction` only resolves here once Postgres has
+      // committed — this marker stands in for that commit point.
+      callOrder.push("commit")
+      return settled
+    }) as typeof db.transaction)
+
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "auth.revoked",
+      ownerId: "owner-1",
+    })
+
+    expect(callOrder).toEqual(["commit", "release"])
+  })
+
+  test("stashes the pending release on the caller's handle instead of releasing immediately when a caller-owned tx opts into the handshake", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    const callerTx = { marker: "caller-tx" }
+    const handle: { current: unknown } = { current: "unset" }
+
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "auth.revoked",
+      ownerId: "owner-1",
+      tx: callerTx as never,
+      pendingRelease: handle as never,
+    })
+
+    expect(mocks.release).not.toHaveBeenCalled()
+    expect(handle.current).toEqual({
+      ownerId: "owner-1",
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("releases immediately on a caller-owned tx that did not opt into the pendingRelease handshake", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "auth.revoked",
+      ownerId: "owner-1",
+      tx: { marker: "caller-tx" } as never,
+    })
+
+    expect(mocks.release).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "channels",
+    })
+  })
+})
+
+describe("ConnectionStateService.releasePendingQuota", () => {
+  test("no-ops when nothing was deferred", async () => {
+    await expect(
+      connectionStateService.releasePendingQuota(null),
+    ).resolves.toBeUndefined()
+
+    expect(mocks.release).not.toHaveBeenCalled()
+    expect(mocks.decrement).not.toHaveBeenCalled()
+  })
+
+  test("releases the channels quota unit the handshake deferred", async () => {
+    await connectionStateService.releasePendingQuota({
+      ownerId: "owner-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.release).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "channels",
+    })
+    expect(mocks.decrement).toHaveBeenCalledWith("ws-1", "channels")
+  })
+})
+
+describe("ConnectionStateService.commitReconnect", () => {
+  const oauth2Auth = {
+    authType: "oauth2" as const,
+    clientId: "client-1",
+    clientSecret: "secret-1",
+    redirectUrl: "https://example.com",
+    tokens: {
+      accessToken: "token-1",
+      expiresAt: "2026-10-10T00:00:00.000Z",
+    },
+  }
+
+  test("writes auth then reconnects the inbox within the same transaction, computing authExpiresAt from the refreshed auth", async () => {
+    mocks.findByInboxId.mockResolvedValue(
+      baseConnection({ status: "needs_reauth" }),
+    )
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+    const writeAuth = vi.fn(async () => undefined)
+
+    await connectionStateService.commitReconnect({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      auth: oauth2Auth,
+      writeAuth,
+    })
+
+    expect(writeAuth).toHaveBeenCalledWith({})
+    expect(mocks.findByInboxId).toHaveBeenCalledWith({ inboxId: "inbox-1" }, {})
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "conn-1",
+        values: expect.objectContaining({
+          status: "connected",
+          authExpiresAt: new Date(oauth2Auth.tokens.expiresAt),
+        }),
+      }),
+      {},
+    )
+  })
+
+  test("still calls writeAuth even when no Connection row backs this inbox yet (pre-backfill fallback), but never touches the engine", async () => {
+    mocks.findByInboxId.mockResolvedValue(undefined)
+    const writeAuth = vi.fn(async () => undefined)
+
+    await connectionStateService.commitReconnect({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+      auth: oauth2Auth,
+      writeAuth,
+    })
+
+    expect(writeAuth).toHaveBeenCalledWith({})
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
+  test("propagates a reconnectInbox failure (e.g. a channel-limit re-check) so the caller's transaction rolls back the auth write too", async () => {
+    mocks.findByInboxId.mockResolvedValue(
+      baseConnection({ status: "needs_reauth" }),
+    )
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.tryConsume.mockResolvedValue({ ok: false })
+    const writeAuth = vi.fn(async () => undefined)
+
+    await expect(
+      connectionStateService.commitReconnect({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        auth: oauth2Auth,
+        writeAuth,
+      }),
+    ).rejects.toMatchObject({ code: "channelLimitReached" })
+
+    expect(writeAuth).toHaveBeenCalledWith({})
+  })
+
+  test("regression: compensates the Redis-side quota consumption when a later write in the same caller-owned transaction fails after connect.completed already consumed it", async () => {
+    mocks.findByInboxId.mockResolvedValue(
+      baseConnection({ status: "needs_reauth" }),
+    )
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    const writeFailure = new Error("constraint violation")
+    mocks.update.mockRejectedValue(writeFailure)
+    const writeAuth = vi.fn(async () => undefined)
+
+    await expect(
+      connectionStateService.commitReconnect({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        auth: oauth2Auth,
+        writeAuth,
+      }),
+    ).rejects.toThrow(writeFailure)
+
+    // `quotaEnforcementService.tryConsume` already succeeded (Redis-side,
+    // outside this SQL transaction) before `connectionRepository.update`
+    // rejected — without compensation this would leave the workspace
+    // permanently short one `channels` slot after the whole reconnect
+    // rolls back.
+    expect(mocks.tryConsume).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "channels",
+    })
+    expect(mocks.release).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "channels",
+    })
   })
 })
 
@@ -354,11 +557,14 @@ describe("ConnectionStateService.markUnhealthy", () => {
     expect(mocks.decrement).toHaveBeenCalledWith("ws-1", "channels")
     expect(mocks.increment).not.toHaveBeenCalled()
     expect(mocks.tryConsume).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdateSet).toHaveBeenCalledWith(
+    expect(mocks.mirrorInbox).toHaveBeenCalledWith(
       expect.objectContaining({
-        status: "disconnected",
-        disconnectReason: "token_revoked",
+        values: expect.objectContaining({
+          status: "disconnected",
+          disconnectReason: "token_revoked",
+        }),
       }),
+      expect.anything(),
     )
   })
 
@@ -393,12 +599,15 @@ describe("ConnectionStateService.markUnhealthy", () => {
 
     expect(result).toBe(active)
     expect(mocks.update).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdateSet).toHaveBeenCalledWith(
+    expect(mocks.mirrorInbox).toHaveBeenCalledWith(
       expect.objectContaining({
-        status: "connected",
-        disconnectedAt: null,
-        disconnectReason: null,
+        values: expect.objectContaining({
+          status: "connected",
+          disconnectedAt: null,
+          disconnectReason: null,
+        }),
       }),
+      expect.anything(),
     )
   })
 
@@ -435,11 +644,16 @@ describe("ConnectionStateService.markUnhealthy", () => {
     })
 
     expect(mocks.update).not.toHaveBeenCalled()
-    expect(mocks.inboxUpdateSet).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: "disconnected",
-        disconnectReason: "manual",
-      }),
+    // A no-op re-assertion must NOT stamp a fresh `disconnectReason`/
+    // `disconnectedAt` over whatever is already stored on the Inbox row —
+    // `values` carries only `status` here, nothing else.
+    expect(mocks.mirrorInbox).toHaveBeenCalledWith(
+      {
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        values: { status: "disconnected" },
+      },
+      expect.anything(),
     )
     expect(mocks.release).not.toHaveBeenCalled()
     expect(mocks.tryConsume).not.toHaveBeenCalled()

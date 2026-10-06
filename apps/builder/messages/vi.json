@@ -3486,6 +3486,7 @@
     "cancelEdit": "Hủy",
     "replaceAttachment": "Thay thế tệp đính kèm",
     "addAttachment": "Thêm tệp đính kèm",
+    "reloadAttachment": "Tải lại tệp đính kèm",
     "failedToCopy": "Sao chép thất bại",
     "failedToPreviewImage": "Không thể xem trước hình ảnh",
     "loadingData": "Đang tải dữ liệu...",

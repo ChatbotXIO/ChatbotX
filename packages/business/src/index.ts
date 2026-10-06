@@ -59,7 +59,11 @@ export * from "./flow"
 export * from "./flow-version"
 export * from "./folder"
 export * from "./ig-story-automation/service"
-export * from "./import"
+// Not barrel-exported: `peekImportHeaders` reaches `createByteLimitedStream`
+// (`@chatbotx.io/imports/stream-guard`), which imports Node's `stream`. This
+// barrel is traced into the builder's Edge Runtime bundle, where a Node
+// built-in is a hard compile error — same pattern as `smart-delay` above.
+// Import from `@chatbotx.io/business/import` instead.
 export * from "./inbox"
 export * from "./integration"
 export * from "./integration-active-campaign"

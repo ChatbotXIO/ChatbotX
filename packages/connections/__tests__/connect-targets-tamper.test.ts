@@ -39,6 +39,7 @@ vi.mock("@chatbotx.io/business/connect-session", () => ({
 vi.mock("@chatbotx.io/business/connection", () => ({
   connectionStateService: {},
   isActiveConnectionStatus: () => false,
+  resolveOwnerId: mocks.resolveOwnerId,
 }))
 
 class MockChatbotXException extends Error {
@@ -101,13 +102,10 @@ const encryptedCandidatesSchema = z.array(
 )
 
 vi.mock("../src/internal", () => ({
+  connectAndPersist: vi.fn(),
   encryptedCandidatesSchema,
   resolveAdapter: mocks.resolveAdapter,
-  resolveForeignKey: vi.fn(),
-  resolveOwnerId: mocks.resolveOwnerId,
-  subscribeWebhookBestEffort: vi.fn(),
-  toChannelType: vi.fn(),
-  upsertConnectionRow: vi.fn(),
+  toConnectionProviderError: (error: unknown) => error,
 }))
 
 vi.mock("../src/logger", () => ({

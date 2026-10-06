@@ -1,10 +1,9 @@
 import {
-  createImportUpload,
-  importService,
   integrationMetaCatalogService,
   productService,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
+import { createImportUpload, importService } from "@chatbotx.io/business/import"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { bulkUpdateIdsRequest } from "@/features/common/schema"

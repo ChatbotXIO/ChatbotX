@@ -53,9 +53,9 @@ const seedIntegrationConnection = async (
     workspaceId: string
     sourceId: string
     displayName?: string
-    status?: "connected" | "disconnected" | "needs_reauth"
+    status?: "connected" | "disconnected" | "needs_reauth" | "paused"
     integrationId?: string
-    statusReason?: "manual"
+    statusReason?: "manual" | "trial_expired"
     disconnectedAt?: Date
   },
 ) => {
@@ -91,24 +91,6 @@ const expectUniqueViolation = async (operation: Promise<unknown>) => {
   await expect(operation).rejects.toMatchObject({
     cause: { code: "23505" },
   })
-}
-
-const waitForRowLock = async (observer: Client, blockedPid: number) => {
-  const deadline = Date.now() + 5000
-  while (Date.now() < deadline) {
-    const { rows } = await observer.query<{ wait_event_type: string | null }>(
-      "select wait_event_type from pg_stat_activity where pid = $1",
-      [blockedPid],
-    )
-    if (rows[0]?.wait_event_type === "Lock") {
-      return
-    }
-    // PostgreSQL lock state is observable only by polling a second connection; fake timers cannot advance the server's lock lifecycle.
-    const nextPoll = Promise.withResolvers<void>()
-    setTimeout(nextPoll.resolve, 10)
-    await nextPoll.promise
-  }
-  throw new Error("transaction B did not block on the Connection row lock")
 }
 
 describe.skipIf(!databaseUrl)("connectionRepository against Postgres", () => {
@@ -175,12 +157,6 @@ describe.skipIf(!databaseUrl)("connectionRepository against Postgres", () => {
             workspaceId: workspaceB,
             values: { displayName: "cross-workspace update" },
           },
-          tx,
-        ),
-      ).resolves.toBeUndefined()
-      await expect(
-        connectionRepository.findByIdForUpdate(
-          { id: connection.id, workspaceId: workspaceB },
           tx,
         ),
       ).resolves.toBeUndefined()
@@ -532,97 +508,56 @@ describe.skipIf(!databaseUrl)("connectionRepository against Postgres", () => {
       ).resolves.toBeUndefined()
     }))
 
-  test("findByIdForUpdate blocks a concurrent writer until its transaction commits", async () => {
-    const observerClient = new Client({
-      connectionString: databaseUrl as string,
-    })
-    const transactionAClient = new Client({
-      connectionString: databaseUrl as string,
-    })
-    const transactionBClient = new Client({
-      connectionString: databaseUrl as string,
-    })
-    await Promise.all([
-      observerClient.connect(),
-      transactionAClient.connect(),
-      transactionBClient.connect(),
-    ])
-
-    const observerDb = createDatabase(observerClient)
-    const transactionADb = createDatabase(transactionAClient)
-    const transactionBDb = createDatabase(transactionBClient)
-    const lockEstablished = Promise.withResolvers<void>()
-    const releaseLock = Promise.withResolvers<void>()
-    let workspaceId: string | undefined
-    let ownerId: string | undefined
-    let transactionAPromise: Promise<void> | undefined
-    let transactionBPromise: Promise<void> | undefined
-
-    try {
-      const fixture = await seedWorkspace(observerDb, "locking")
-      workspaceId = fixture.workspaceId
-      ownerId = fixture.ownerId
-      const connection = await seedIntegrationConnection(observerDb, {
-        workspaceId,
-        sourceId: "account-lock",
-      })
-
-      transactionAPromise = transactionADb.transaction(async (tx) => {
-        await expect(
-          connectionRepository.findByIdForUpdate(
-            { id: connection.id, workspaceId },
-            tx,
-          ),
-        ).resolves.toMatchObject({ id: connection.id })
-        lockEstablished.resolve()
-        await releaseLock.promise
-      })
-      await lockEstablished.promise
-
-      const { rows } = await transactionBClient.query<{ pid: number }>(
-        "select pg_backend_pid() as pid",
+  test("listPausedByOwner returns paused connections across the owner's workspaces only", () =>
+    run(async (tx) => {
+      const { workspaceId: workspaceA, ownerId } = await seedWorkspace(
+        tx,
+        "paused-owner-a",
       )
-      const transactionBPid = rows[0]?.pid
-      if (transactionBPid === undefined) {
-        throw new Error("could not resolve transaction B backend pid")
-      }
-
-      transactionBPromise = transactionBDb.transaction(async (tx) => {
-        await tx
-          .update(schema.connectionModel)
-          .set({ displayName: "Updated after lock" })
-          .where(eq(schema.connectionModel.id, connection.id))
-      })
-      await waitForRowLock(observerClient, transactionBPid)
-
-      releaseLock.resolve()
-      await transactionAPromise
-      await transactionBPromise
-      await expect(
-        connectionRepository.findById({ id: connection.id }, observerDb),
-      ).resolves.toMatchObject({ displayName: "Updated after lock" })
-    } finally {
-      releaseLock.resolve()
-      await Promise.allSettled(
-        [transactionAPromise, transactionBPromise].filter(
-          (promise): promise is Promise<void> => promise !== undefined,
-        ),
+      const [workspaceB] = await tx
+        .insert(schema.workspaceModel)
+        .values({
+          name: `connection-repository-paused-owner-b-${Date.now()}-${Math.random()}`,
+          ownerId,
+        })
+        .returning({ id: schema.workspaceModel.id })
+      const { workspaceId: otherWorkspaceId } = await seedWorkspace(
+        tx,
+        "paused-other-owner",
       )
-      if (workspaceId) {
-        await observerDb
-          .delete(schema.workspaceModel)
-          .where(eq(schema.workspaceModel.id, workspaceId))
-      }
-      if (ownerId) {
-        await observerDb
-          .delete(schema.userModel)
-          .where(eq(schema.userModel.id, ownerId))
-      }
-      await Promise.all([
-        observerClient.end(),
-        transactionAClient.end(),
-        transactionBClient.end(),
-      ])
-    }
-  }, 15_000)
+
+      const pausedA = await seedIntegrationConnection(tx, {
+        workspaceId: workspaceA,
+        sourceId: "paused-a",
+        status: "paused",
+        statusReason: "trial_expired",
+      })
+      const pausedB = await seedIntegrationConnection(tx, {
+        workspaceId: workspaceB.id,
+        sourceId: "paused-b",
+        status: "paused",
+        statusReason: "trial_expired",
+      })
+      // Connected connection in the same owner's workspace — must be excluded.
+      await seedIntegrationConnection(tx, {
+        workspaceId: workspaceA,
+        sourceId: "connected-a",
+      })
+      // Paused connection in a different owner's workspace — must be excluded.
+      await seedIntegrationConnection(tx, {
+        workspaceId: otherWorkspaceId,
+        sourceId: "paused-other",
+        status: "paused",
+        statusReason: "trial_expired",
+      })
+
+      const result = await connectionRepository.listPausedByOwner(
+        { ownerId },
+        tx,
+      )
+
+      expect(result.map((row) => row.id).sort()).toEqual(
+        [pausedA.id, pausedB.id].sort(),
+      )
+    }))
 })

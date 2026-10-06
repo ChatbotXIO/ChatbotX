@@ -61,30 +61,45 @@ describe("CONNECTION_STORE_BINDINGS", () => {
     vi.clearAllMocks()
   })
 
-  it("loads, updates, and deletes a channel row by inbox foreign key", async () => {
+  it("loads, updates, and deletes a channel row by inbox foreign key, scoped by workspaceId", async () => {
     const binding = bindingOrThrow("messenger")
     const fixture = makeTx()
     fixture.loadLimit.mockResolvedValue([{ auth }])
 
     await expect(
-      binding.loadAuthByForeignKey("inbox-1", fixture.tx as never),
+      binding.loadAuthByForeignKey(
+        "inbox-1",
+        "workspace-1",
+        fixture.tx as never,
+      ),
     ).resolves.toEqual(auth)
     await expect(
       binding.saveAuthByForeignKey(
         "inbox-1",
+        "workspace-1",
         auth,
         { ignored: true },
         fixture.tx as never,
       ),
     ).resolves.toBe(true)
-    await binding.deleteRowByForeignKey("inbox-1", fixture.tx as never)
+    await binding.deleteRowByForeignKey(
+      "inbox-1",
+      "workspace-1",
+      fixture.tx as never,
+    )
 
     expect(fixture.updateSet).toHaveBeenCalledWith({ auth })
     expect(fixture.updateWhere).toHaveBeenCalledWith(
-      expect.objectContaining({ value: "inbox-1" }),
+      expect.arrayContaining([
+        expect.objectContaining({ value: "inbox-1" }),
+        expect.objectContaining({ value: "workspace-1" }),
+      ]),
     )
     expect(fixture.deleteWhere).toHaveBeenCalledWith(
-      expect.objectContaining({ value: "inbox-1" }),
+      expect.arrayContaining([
+        expect.objectContaining({ value: "inbox-1" }),
+        expect.objectContaining({ value: "workspace-1" }),
+      ]),
     )
   })
 
@@ -96,7 +111,11 @@ describe("CONNECTION_STORE_BINDINGS", () => {
     ])
 
     await expect(
-      binding.loadAuthByForeignKey("integration-1", fixture.tx as never),
+      binding.loadAuthByForeignKey(
+        "integration-1",
+        "workspace-1",
+        fixture.tx as never,
+      ),
     ).resolves.toEqual({
       ...auth,
       baseURL: "https://provider.example.com/",
@@ -105,29 +124,62 @@ describe("CONNECTION_STORE_BINDINGS", () => {
       expect.objectContaining({ baseURL: expect.anything() }),
     )
   })
+  it("scopes workspace-integration auth reads/writes by workspaceId in addition to the integrationId foreign key (D9 defence-in-depth)", async () => {
+    const binding = bindingOrThrow("claude")
+    const fixture = makeTx()
+    fixture.loadLimit.mockResolvedValue([{ auth }])
+
+    await binding.loadAuthByForeignKey(
+      "integration-1",
+      "workspace-1",
+      fixture.tx as never,
+    )
+    await binding.saveAuthByForeignKey(
+      "integration-1",
+      "workspace-1",
+      auth,
+      undefined,
+      fixture.tx as never,
+    )
+
+    expect(mocks.and).toHaveBeenCalledTimes(2)
+    expect(mocks.eq).toHaveBeenCalledWith(expect.anything(), "workspace-1")
+  })
   it("rejects malformed persisted auth instead of casting it to AuthValue", async () => {
     const binding = bindingOrThrow("messenger")
     const fixture = makeTx()
     fixture.loadLimit.mockResolvedValue([{ auth: undefined }])
 
     await expect(
-      binding.loadAuthByForeignKey("inbox-1", fixture.tx as never),
+      binding.loadAuthByForeignKey(
+        "inbox-1",
+        "workspace-1",
+        fixture.tx as never,
+      ),
     ).rejects.toThrow("Stored connection auth is invalid")
   })
-
   it("applies the shared-table discriminator to every Instagram binding query", async () => {
     const binding = bindingOrThrow("instagram")
     const fixture = makeTx()
     fixture.loadLimit.mockResolvedValue([{ auth }])
 
-    await binding.loadAuthByForeignKey("inbox-1", fixture.tx as never)
+    await binding.loadAuthByForeignKey(
+      "inbox-1",
+      "workspace-1",
+      fixture.tx as never,
+    )
     await binding.saveAuthByForeignKey(
       "inbox-1",
+      "workspace-1",
       auth,
       undefined,
       fixture.tx as never,
     )
-    await binding.deleteRowByForeignKey("inbox-1", fixture.tx as never)
+    await binding.deleteRowByForeignKey(
+      "inbox-1",
+      "workspace-1",
+      fixture.tx as never,
+    )
 
     expect(mocks.and).toHaveBeenCalledTimes(3)
     expect(mocks.eq).toHaveBeenCalledWith(expect.anything(), "instagram")
@@ -167,5 +219,10 @@ describe("CONNECTION_STORE_BINDINGS", () => {
     expect(fixture.insertValues).not.toHaveBeenLastCalledWith(
       expect.objectContaining({ integrationId: "attacker-integration" }),
     )
+  })
+
+  it("has no duplicateConstraint for Zalo — IntegrationZalo.oaId has no unique constraint in the DB today, unlike every other channel identity column (store-bindings.ts's zalo comment, backfill-connections.ts's duplicate_source_inbox report)", () => {
+    const binding = bindingOrThrow("zalo")
+    expect(binding.duplicateConstraint).toBeUndefined()
   })
 })

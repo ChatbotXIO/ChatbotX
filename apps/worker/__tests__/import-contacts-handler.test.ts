@@ -104,7 +104,7 @@ const botFieldUpdateByKey = vi.fn()
 const claimNewActiveContact = vi.fn()
 const claimNewActiveContacts = vi.fn()
 
-vi.mock("@chatbotx.io/business", () => ({
+vi.mock("@chatbotx.io/business/import", () => ({
   importService: {
     markProcessing: () => {
       updateSet({ status: "processing" })
@@ -155,6 +155,9 @@ vi.mock("@chatbotx.io/business", () => ({
       return Promise.resolve()
     },
   },
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
     find: (...args: unknown[]) => workspaceFind(...args),
   },

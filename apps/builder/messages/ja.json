@@ -3423,6 +3423,7 @@
     "cancelEdit": "キャンセル",
     "replaceAttachment": "添付ファイルを置き換える",
     "addAttachment": "添付ファイルを追加",
+    "reloadAttachment": "添付ファイルを再読み込み",
     "failedToCopy": "コピーに失敗しました",
     "failedToPreviewImage": "画像のプレビューに失敗しました",
     "loadingData": "データを読み込んでいます...",

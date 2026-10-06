@@ -7,6 +7,7 @@
 export {
   ACTIVE_CONNECT_SESSION_STATUSES,
   ACTIVE_CONNECTION_STATUSES,
+  type ActiveConnectionStatus,
   CONNECTION_TO_INBOX_DISCONNECT_REASON,
   type ConnectionKind,
   type ConnectionStatus,

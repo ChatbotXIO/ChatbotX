@@ -25,6 +25,10 @@ vi.mock("@chatbotx.io/business", () => ({
   quotaEnforcementService: { isAtLimit },
   productService,
 }))
+vi.mock("@chatbotx.io/business/import", () => ({
+  createImportUpload: vi.fn(),
+  importService: { list: vi.fn(), find: vi.fn() },
+}))
 
 vi.mock("@/lib/log", () => ({
   logger: { warn: vi.fn(), error: vi.fn() },

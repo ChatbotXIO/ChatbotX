@@ -1,15 +1,21 @@
-import { instagramIntegrationService } from "@chatbotx.io/business"
+import {
+  connectionStateService,
+  instagramIntegrationService,
+} from "@chatbotx.io/business"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import {
   getInstagramAccount,
+  integration as instagramChannelIntegration,
   subscribePageToInstagramWebhook,
 } from "@chatbotx.io/integration-instagram"
 import {
   getFacebookUser,
   getUserInstagramAccounts,
+  integration as instagramFacebookChannelIntegration,
   subscribePageToInstagramWebhook as subscribeFacebookPageToInstagramWebhook,
 } from "@chatbotx.io/integration-instagram-facebook"
 import { AuthType } from "@chatbotx.io/sdk"
+import { seedReconnectBranding } from "@/features/channel-connect/lib/branding-follow-ups"
 import type { ReconnectResult } from "@/lib/channel-reconnect"
 import {
   buildIntegrationUserInfo,
@@ -75,14 +81,40 @@ export async function reconnectInstagramHandler(props: {
 
     // DB write before the webhook subscription (matching the connect flow) so
     // a failed write never leaves the webhook re-bound while the stored auth
-    // still holds the stale token.
-    await instagramIntegrationService.updateAuth({
-      id: integrationInstagram.id,
+    // still holds the stale token (see `commitReconnect`'s doc for the
+    // transaction rationale).
+    await connectionStateService.commitReconnect({
+      inboxId: integrationInstagram.inboxId,
       workspaceId: props.workspaceId,
       auth,
-      name: account.name,
-      username: account.username,
-      ...(userInfo ? { userInfo } : {}),
+      writeAuth: async (tx) => {
+        await instagramIntegrationService.updateAuth({
+          id: integrationInstagram.id,
+          workspaceId: props.workspaceId,
+          auth,
+          name: account.name,
+          username: account.username,
+          ...(userInfo ? { userInfo } : {}),
+          tx,
+        })
+      },
+    })
+
+    await seedReconnectBranding({
+      workspaceId: props.workspaceId,
+      integrationId: props.integrationId,
+      channel: "instagram",
+      integrationRow: { ...integrationInstagram, auth },
+      integration: instagramChannelIntegration,
+      integrationType: "instagram",
+      persistBrandingMenu: integrationInstagram.persistentMenus.length
+        ? undefined
+        : (entry) =>
+            instagramIntegrationService.seedPersistentMenu({
+              id: integrationInstagram.id,
+              entry,
+            }),
+      logLabel: "Instagram",
     })
 
     await subscribePageToInstagramWebhook({
@@ -159,15 +191,41 @@ export async function reconnectInstagramFacebookHandler(props: {
 
     // DB write before the webhook subscription (matching the connect flow) so
     // a failed write never leaves the webhook bound to the new page while the
-    // stored row still points at the old one.
-    await instagramIntegrationService.updateAuth({
-      id: integrationInstagram.id,
+    // stored row still points at the old one (see `commitReconnect`'s doc for
+    // the transaction rationale).
+    await connectionStateService.commitReconnect({
+      inboxId: integrationInstagram.inboxId,
       workspaceId: props.workspaceId,
       auth,
-      name: account.name,
-      username: account.username,
-      pageId: account.pageId,
-      ...(userInfo ? { userInfo } : {}),
+      writeAuth: async (tx) => {
+        await instagramIntegrationService.updateAuth({
+          id: integrationInstagram.id,
+          workspaceId: props.workspaceId,
+          auth,
+          name: account.name,
+          username: account.username,
+          pageId: account.pageId,
+          ...(userInfo ? { userInfo } : {}),
+          tx,
+        })
+      },
+    })
+
+    await seedReconnectBranding({
+      workspaceId: props.workspaceId,
+      integrationId: props.integrationId,
+      channel: "instagram",
+      integrationRow: { ...integrationInstagram, auth },
+      integration: instagramFacebookChannelIntegration,
+      integrationType: "instagramFacebook",
+      persistBrandingMenu: integrationInstagram.persistentMenus.length
+        ? undefined
+        : (entry) =>
+            instagramIntegrationService.seedPersistentMenu({
+              id: integrationInstagram.id,
+              entry,
+            }),
+      logLabel: "Instagram (via Facebook)",
     })
 
     await subscribeFacebookPageToInstagramWebhook({

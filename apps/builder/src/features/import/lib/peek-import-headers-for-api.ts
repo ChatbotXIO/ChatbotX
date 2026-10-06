@@ -1,5 +1,5 @@
-import { peekImportHeaders } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { peekImportHeaders } from "@chatbotx.io/business/import"
 
 type PeekImportHeadersInput = Parameters<typeof peekImportHeaders>[0]
 

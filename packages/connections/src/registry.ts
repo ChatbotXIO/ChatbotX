@@ -27,11 +27,13 @@ import { integration as integrationMoosend } from "@chatbotx.io/integration-moos
 import { integration as integrationSendGrid } from "@chatbotx.io/integration-sendgrid"
 import { integration as integrationSmtp } from "@chatbotx.io/integration-smtp"
 import { integration as integrationTelegram } from "@chatbotx.io/integration-telegram"
+import { integration as integrationThreads } from "@chatbotx.io/integration-threads"
 import { integration as integrationTiktok } from "@chatbotx.io/integration-tiktok"
 import { integration as integrationWebchat } from "@chatbotx.io/integration-webchat"
 import { integration as integrationWhatsapp } from "@chatbotx.io/integration-whatsapp"
 import { integration as integrationZalo } from "@chatbotx.io/integration-zalo"
 import type { Integration, IntegrationDefinition } from "@chatbotx.io/sdk"
+import { messengerConnectionTeardownHook } from "./messenger-teardown"
 
 type StoreBindingKey = keyof typeof CONNECTION_STORE_BINDINGS
 
@@ -94,9 +96,9 @@ const fromCredentialProvider = <Key extends StoreBindingKey>(
 
 /**
  * Compile-time exhaustive `Record<IntegrationType, ConnectionAdapter | null>`.
- * `null` marks a type with no connect lifecycle yet: `metaCatalog`,
- * `outlookCalendar`, and `threads` have no live builder feature or supported
- * connection engine path. `chatbotx` DOES have a real adapter (its `store` is
+ * `null` marks a type with no connect lifecycle yet: `metaCatalog` and
+ * `outlookCalendar` have no live builder feature or supported connection
+ * engine path. `chatbotx` DOES have a real adapter (its `store` is
  * `undefined` — it has no satellite table; the `Inbox` row is the whole
  * connection).
  */
@@ -133,7 +135,10 @@ export const CONNECTION_REGISTRY: StoreBoundConnectionRegistry = {
   klaviyo: fromIntegration(integrationKlaviyo, "klaviyo"),
   mailchimp: fromIntegration(integrationMailchimp, "mailchimp"),
   mailerLite: fromIntegration(integrationMailerLite, "mailerLite"),
-  messenger: fromIntegration(integrationMessenger, "messenger", "messenger"),
+  messenger: {
+    ...fromIntegration(integrationMessenger, "messenger", "messenger"),
+    teardown: messengerConnectionTeardownHook,
+  },
   metaCatalog: null,
   moosend: fromIntegration(integrationMoosend, "moosend"),
   openai: fromCredentialProvider(openaiConnectionProvider, "openai"),
@@ -149,7 +154,7 @@ export const CONNECTION_REGISTRY: StoreBoundConnectionRegistry = {
   sendGrid: fromIntegration(integrationSendGrid, "sendGrid"),
   smtp: fromIntegration(integrationSmtp, "smtp"),
   telegram: fromIntegration(integrationTelegram, "telegram"),
-  threads: null,
+  threads: fromIntegration(integrationThreads, "threads", "threads"),
   tiktok: fromIntegration(integrationTiktok, "tiktok", "tiktok"),
   webchat: fromIntegration(integrationWebchat, "webchat"),
   whatsapp: fromIntegration(integrationWhatsapp, "whatsapp", "whatsapp"),

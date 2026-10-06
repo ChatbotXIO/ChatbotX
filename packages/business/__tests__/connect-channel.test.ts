@@ -17,26 +17,38 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   THREADS_USER_ID_UNIQUE_CONSTRAINT: "IntegrationThreads_threadsUserId_key",
   WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT:
     "IntegrationWhatsapp_phoneNumberId_key",
-  inboxModel: {},
 }))
 
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecordSafely: mocks.dispatchAuditRecordSafely,
 }))
 
-// `connectChannelIntegration` (untested here — covered by the three
-// per-channel service tests) is the only export that needs `inboxService`;
-// stubbing it keeps this file from pulling in the real service's
-// redis/quota dependency chain.
-vi.mock("../src/inbox/service", () => ({
-  inboxService: { create: vi.fn(), isConnected: vi.fn() },
-}))
+// Dynamic import, not static: must load AFTER the `vi.mock` calls above are
+// hoisted, or the mocked `@chatbotx.io/database/client`/`schema` wouldn't be
+// in place yet when this module's own top-level imports run.
+const { auditChannelConnected, runConnectTransaction } = await import(
+  "../src/inbox/connect-channel"
+)
 
-const {
-  CHANNEL_CONNECT_DESCRIPTORS,
-  auditChannelConnected,
-  runConnectTransaction,
-} = await import("../src/inbox/connect-channel")
+/**
+ * Mirrors `connect-channel.ts`'s own internal (unexported)
+ * `CHANNEL_CONNECT_DESCRIPTORS`; its `duplicateConstraint` values match the
+ * mocked schema constants above.
+ */
+const CHANNEL_CONNECT_DESCRIPTORS = {
+  messenger: {
+    duplicateConstraint: "IntegrationMessenger_pageId_key",
+    auditNoun: "Messenger",
+  },
+  instagram: {
+    duplicateConstraint: "IntegrationInstagram_igId_key",
+    auditNoun: "Instagram",
+  },
+  whatsapp: {
+    duplicateConstraint: "IntegrationWhatsapp_phoneNumberId_key",
+    auditNoun: "WhatsApp",
+  },
+} as const
 
 type ConnectDescriptorChannel = keyof typeof CHANNEL_CONNECT_DESCRIPTORS
 

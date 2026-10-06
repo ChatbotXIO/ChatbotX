@@ -1,6 +1,6 @@
 "use server"
 
-import { importService } from "@chatbotx.io/business"
+import { importService } from "@chatbotx.io/business/import"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { returnValidationErrors } from "next-safe-action"
 import {

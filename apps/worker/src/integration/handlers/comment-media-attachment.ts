@@ -1,5 +1,9 @@
 import { assertPublicUrl, buildContext } from "@chatbotx.io/business"
-import { getStoragePrefix, uploadFileFromUrl } from "@chatbotx.io/filesystem"
+import {
+  type ChannelMediaLocation,
+  getChannelMediaPrefix,
+  uploadFileFromUrl,
+} from "@chatbotx.io/filesystem"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { AuthValue, IncomingAttachment } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
@@ -14,16 +18,17 @@ const COMMENT_MEDIA_MAX_BYTES = 25 * 1024 * 1024
  * and behind the SSRF guard. Never throws: a comment without its media still
  * beats a comment that is not saved at all.
  */
-export async function downloadCommentMediaAttachment(props: {
-  url: string
-  workspaceId: string
-  commentId: string
-}): Promise<IncomingAttachment | undefined> {
-  const { url, workspaceId, commentId } = props
+export async function downloadCommentMediaAttachment(
+  props: ChannelMediaLocation & {
+    url: string
+    commentId: string
+  },
+): Promise<IncomingAttachment | undefined> {
+  const { url, commentId, ...location } = props
   try {
     const uploaded = await uploadFileFromUrl(
       url,
-      `${getStoragePrefix(workspaceId)}/${createId()}`,
+      `${getChannelMediaPrefix(location)}/${createId()}`,
       "public-read",
       COMMENT_MEDIA_MAX_BYTES,
       (candidateUrl) => assertPublicUrl(candidateUrl, "Comment media URL"),
@@ -86,7 +91,9 @@ export async function fetchThreadsCommentAttachments(props: {
   }
   const attachment = await downloadCommentMediaAttachment({
     url: gifUrl,
+    channel: "threads",
     workspaceId,
+    integrationId: integrationRow.id,
     commentId,
   })
   return attachment ? [attachment] : []

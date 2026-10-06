@@ -1,10 +1,12 @@
 // @vitest-environment node
 
 import {
+  connectionProviderUnavailableException,
   connectionStateMismatchException,
   connectSessionExpiredException,
 } from "@chatbotx.io/business/errors"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
+import type * as DatabaseSchema from "@chatbotx.io/database/schema"
 import type * as ChatbotxUtilsModule from "@chatbotx.io/utils"
 import type { NextRequest } from "next/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
@@ -21,7 +23,11 @@ const {
   mockRedirect,
   mockGetCurrentUser,
   mockLoggerDebug,
+  mockLoggerWarn,
   mockLoggerError,
+  mockFindActiveByTenantId,
+  mockFindByOwner,
+  mockIsCloud,
 } = vi.hoisted(() => ({
   mockFindByNonce: vi.fn(),
   mockFailSession: vi.fn(),
@@ -36,7 +42,11 @@ const {
   mockRedirect: vi.fn((target: string) => target),
   mockGetCurrentUser: vi.fn(),
   mockLoggerDebug: vi.fn(),
+  mockLoggerWarn: vi.fn(),
   mockLoggerError: vi.fn(),
+  mockFindActiveByTenantId: vi.fn(),
+  mockFindByOwner: vi.fn(),
+  mockIsCloud: vi.fn(() => false),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -51,6 +61,8 @@ vi.mock("@chatbotx.io/business", () => ({
   integrationFacebookAdsService: {},
   integrationMetaCatalogService: {},
   integrationThreadsService: {},
+  customDomainService: { findActiveByTenantId: mockFindActiveByTenantId },
+  tenantService: { findByOwner: mockFindByOwner },
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({
@@ -79,6 +91,10 @@ vi.mock("@chatbotx.io/connections", () => ({
     zalo: {
       credentialType: "zalo",
       provider: { multiAccount: false },
+    },
+    instagramFacebook: {
+      credentialType: "instagramFacebook",
+      provider: { multiAccount: true },
     },
     unconfigured: null,
   },
@@ -110,11 +126,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: { transaction: vi.fn() },
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationGoogleSheetsModel: {},
-  integrationModel: {},
-  ROOT_TENANT_ID: "1",
-}))
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
+  const actual = await importOriginal<typeof DatabaseSchema>()
+  return {
+    ...actual,
+    integrationGoogleSheetsModel: {},
+    integrationModel: {},
+    ROOT_TENANT_ID: "1",
+  }
+})
 
 vi.mock("@chatbotx.io/integration-facebook-ads", () => ({
   exchangeCodeForToken: vi.fn(),
@@ -214,10 +234,12 @@ vi.mock("@/lib/log", () => ({
   logger: {
     debug: mockLoggerDebug,
     info: vi.fn(),
-    warn: vi.fn(),
+    warn: mockLoggerWarn,
     error: mockLoggerError,
   },
 }))
+
+vi.mock("@/env", () => ({ isCloud: mockIsCloud }))
 
 vi.mock("@/lib/oauth-broker", () => ({
   buildBrokerCallbackUrl: (path: string) => `https://broker.example.com${path}`,
@@ -474,7 +496,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     ).rejects.toThrow("not found")
   })
 
-  test("calls completeAuthorization with the reconstructed callback URL and this exact credential config", async () => {
+  test("calls completeAuthorization with the callback URL resolved from the registered credential's origin, not this request's own host — a platform credential's redirect_uri is the broker even when the request lands on a different app host", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
       provider: "messenger",
@@ -492,15 +514,112 @@ describe("handleCallback — ConnectSession state dispatch", () => {
       targets: [{ id: "page-1", selectable: false }],
     })
 
+    // `buildRequest` lands on "https://app.example.com" — deliberately NOT
+    // the broker origin ("https://broker.example.com", mocked above) — so a
+    // `callbackUrl` built from `url.origin` instead of the credential would
+    // silently pass this assertion if they happened to match.
     await handleCallback("messenger", buildRequest("123.abc-nonce"))
 
     expect(mockCompleteAuthorization).toHaveBeenCalledWith({
       sessionId: "123",
       nonce: "abc-nonce",
       code: "code-1",
-      callbackUrl: "https://app.example.com/integrations/messenger/callback",
+      callbackUrl: "https://broker.example.com/integrations/messenger/callback",
       credential: { clientId: "client-9", clientSecret: "secret-9" },
     })
+  })
+
+  test("after a white-label relay, resolves the callback URL from a tenant-owned credential's custom domain, not the relayed-to originHost", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+      // Already on the target host (`resolveRelayTarget` no-ops, mocked to
+      // return `null`), as if this is the second request after the relay
+      // redirect — the scenario the bug reaches.
+      originHost: "app.example.com",
+    })
+    mockIsCloud.mockReturnValue(true)
+    mockResolveForOwner.mockResolvedValueOnce({
+      config: { clientId: "client-9", clientSecret: "secret-9" },
+      userId: "reseller-owner-1",
+    })
+    mockFindByOwner.mockResolvedValueOnce({ id: "t1", status: "active" })
+    mockFindActiveByTenantId.mockResolvedValueOnce({ domain: "chat.acme.com" })
+    mockCompleteAuthorization.mockResolvedValueOnce({
+      id: "123",
+      workspaceId: "ws-1",
+      status: "awaiting_selection",
+      targets: [{ id: "page-1", selectable: false }],
+    })
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockCompleteAuthorization).toHaveBeenCalledWith({
+      sessionId: "123",
+      nonce: "abc-nonce",
+      code: "code-1",
+      callbackUrl: "https://chat.acme.com/integrations/messenger/callback",
+      credential: { clientId: "client-9", clientSecret: "secret-9" },
+    })
+  })
+
+  test("uses the kebab-case registered callback path for a camelCase provider key", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "instagramFacebook",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    mockCompleteAuthorization.mockResolvedValueOnce({
+      id: "123",
+      workspaceId: "ws-1",
+      status: "awaiting_selection",
+      targets: [],
+    })
+
+    await handleCallback("instagramFacebook", {
+      headers: new Headers(),
+      url: "https://app.example.com/integrations/instagram-facebook/callback?code=code-1&state=123.abc-nonce",
+    } as unknown as NextRequest)
+
+    expect(mockCompleteAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callbackUrl:
+          "https://broker.example.com/integrations/instagram-facebook/callback",
+      }),
+    )
+  })
+
+  test("after the relay has landed the callback on originHost, the exchange still uses the broker redirect_uri (regression: production exchange_failed)", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+      originHost: "app.example.com",
+    })
+    mockCompleteAuthorization.mockResolvedValueOnce({
+      id: "123",
+      workspaceId: "ws-1",
+      status: "awaiting_selection",
+      targets: [],
+    })
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    // Already on originHost, so the relay is a no-op for this request.
+    expect(mockResolveRelayTarget).toHaveBeenCalledWith(
+      expect.any(URL),
+      "https://app.example.com",
+    )
+    expect(mockCompleteAuthorization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callbackUrl:
+          "https://broker.example.com/integrations/messenger/callback",
+      }),
+    )
   })
 
   test("auto-completes a non-multiAccount provider's single selectable target via connectTargets", async () => {
@@ -678,6 +797,31 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     expect(mockLoggerDebug).toHaveBeenCalledWith(
       expect.objectContaining({ sessionId: "123", provider: "messenger" }),
       "connect session completeAuthorization replay ignored",
+    )
+    expect(mockLoggerError).not.toHaveBeenCalled()
+  })
+
+  test("a retryable provider-unavailable error (session already released back to pending) does not fail the session, only the non-retryable case terminalizes it", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    // The exact exception `completeAuthorization` throws after a transient
+    // 502/503 from the provider, once it has already released the claim
+    // back to `pending` so a later retry can still complete the connect.
+    mockCompleteAuthorization.mockRejectedValueOnce(
+      connectionProviderUnavailableException(503),
+    )
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockFailSession).not.toHaveBeenCalled()
+    expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: "123", provider: "messenger" }),
+      "connect session completeAuthorization failed with a retryable provider error — left active for retry",
     )
     expect(mockLoggerError).not.toHaveBeenCalled()
   })

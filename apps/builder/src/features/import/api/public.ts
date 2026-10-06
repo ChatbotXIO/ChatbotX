@@ -1,5 +1,5 @@
-import { createImportUpload, importService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
+import { createImportUpload, importService } from "@chatbotx.io/business/import"
 import {
   buildContactsImportTemplateCsv,
   CONTACTS_IMPORT_TEMPLATE_FILENAME,

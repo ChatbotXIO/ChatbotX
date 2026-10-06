@@ -19,6 +19,14 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   integrationMessengerRepository: {},
 }))
 
+// `integration-messenger/service.ts` now pulls in `connectionStateService`
+// for `markTokenRefreshError`'s engine notification — unused by the clone-
+// targets paths this file exercises, stubbed so importing the service
+// doesn't drag in its real (heavy) dependency graph.
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: {},
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   integrationMessengerModel: {},
   tagChannelModel: {},
@@ -33,7 +41,6 @@ vi.mock("../src/conversation/service", () => ({ conversationService: {} }))
 vi.mock("../src/smart-delay/service", () => ({ smartDelayService: {} }))
 vi.mock("../src/inbox/connect-channel", () => ({
   auditChannelConnected: vi.fn(),
-  connectChannelIntegration: vi.fn(),
   runConnectTransaction: vi.fn(),
 }))
 

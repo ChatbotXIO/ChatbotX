@@ -3,11 +3,13 @@ import type {
   ChannelType,
   IntegrationType,
 } from "@chatbotx.io/database/partials"
+import { headers } from "next/headers"
 import Image from "next/image"
 import { redirect } from "next/navigation"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { logger } from "@/lib/log"
+import { sanitizeReferer } from "@/lib/oauth-referer"
 import {
   type CreateChannelErrorCode,
   isCreateChannelErrorCode,
@@ -56,11 +58,26 @@ export async function resolveSelectSession(input: {
   } catch (err) {
     if (err instanceof ChatbotXException) {
       if (err.code === "connectSessionCancelled") {
+        // Never follows `ConnectSession.returnUrl` (regression): that field
+        // is always this very `/select` page's own URL for a builder-UI
+        // session (`start-channel-connect.ts` sets it so a SUCCESSFUL
+        // connect's callback knows where to send the user to pick an
+        // account) — redirecting a cancelled session back to it instead
+        // re-resolves this same still-cancelled session and throws this
+        // same exception again, an infinite redirect loop on the ordinary
+        // "user clicked Cancel" path. Always falls back to the request's
+        // own `Referer` header — sanitized against the same allow-list as
+        // every other OAuth-adjacent redirect — and only then to the
+        // picker, for a direct hit on this page with no referer.
+        const referer = (await headers()).get("referer")
+        const target = referer
+          ? await sanitizeReferer(referer)
+          : "/channels/create"
         logger.info(
-          { sessionId },
+          { sessionId, target },
           "resolveConnectSession: user cancelled the OAuth dialog",
         )
-        redirect("/channels/create")
+        redirect(target)
       }
       const code = isCreateChannelErrorCode(err.code)
         ? err.code

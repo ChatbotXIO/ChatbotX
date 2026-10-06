@@ -1,4 +1,4 @@
-import { and, type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import {
   CONNECTION_TO_INBOX_DISCONNECT_REASON,
   type ConnectionStatus,
@@ -10,15 +10,19 @@ import {
   aiHandoverSettingsRepository,
   type ConnectionListInput,
   connectionRepository,
+  inboxRepository,
 } from "@chatbotx.io/database/repositories"
-import { type connectionModel, inboxModel } from "@chatbotx.io/database/schema"
+import type { connectionModel } from "@chatbotx.io/database/schema"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
+import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
 import { ChatbotXException, channelLimitReachedException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
+import { workspaceMemberService } from "../workspace-member/service"
 import { workspaceUsageService } from "../workspace-usage/service"
+import { authExpiresAtOf } from "./auth-expiry"
 import {
   type ConnectionEvent,
   isActiveConnectionStatus,
@@ -42,6 +46,9 @@ export type ConnectionQuotaConsumption =
       workspaceId: string
       workspaceUsageIncremented: boolean
     }
+
+/** A `channels` quota release a `transition` call decided on but has not yet executed — see `transition`'s `pendingRelease` handshake and `releasePendingQuota`. */
+export type PendingQuotaRelease = { ownerId: string; workspaceId: string }
 
 /**
  * DB-backed reads/writes over the `Connection` table plus its `Inbox`
@@ -126,6 +133,118 @@ class ConnectionStateService extends BaseService {
   }
 
   /**
+   * Reconnect counterpart of {@link disconnectInbox}: after a reconnect
+   * flow (OAuth re-authorize or re-pasted credential) saves fresh auth onto
+   * the satellite row, call this to re-consume `channels` quota (the
+   * `connect.completed` edge, same event a fresh connect uses) and mirror
+   * `Inbox.status` back to `connected` — the FSM handles reviving from
+   * `needs_reauth`/`disconnected`/`paused` alike. No-ops for a row not yet
+   * backfilled into `Connection` (nothing to mirror/consume through yet);
+   * the reconnect flow's own satellite write already restored its auth.
+   */
+  async reconnectInbox(input: {
+    inboxId: string
+    workspaceId: string
+    authExpiresAt?: Date | null
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const connection = await connectionRepository.findByInboxId(
+      { inboxId: input.inboxId },
+      input.tx,
+    )
+    if (!connection) {
+      return
+    }
+    if (connection.workspaceId !== input.workspaceId) {
+      throw new ConnectionNotFoundException(input.inboxId)
+    }
+    const ownerId = await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+      workspaceId: input.workspaceId,
+    })
+    // `connect.completed` may consume one `channels` quota unit reviving an
+    // inactive connection. The quota check itself lives in Redis, outside
+    // any SQL transaction, so a later rollback of a caller-owned `input.tx`
+    // would not undo it on its own — `transition`'s caller-tx guard requires
+    // this explicit tracking so it can be compensated below instead.
+    const quotaConsumption: ConnectionQuotaConsumption = {
+      consumed: false,
+      workspaceUsageIncremented: false,
+    }
+    try {
+      await this.transition({
+        connectionId: connection.id,
+        event: "connect.completed",
+        ownerId,
+        values: { authExpiresAt: input.authExpiresAt ?? null, lastError: null },
+        tx: input.tx,
+        quotaConsumption,
+      })
+    } catch (err) {
+      await this.compensateIfConsumed(ownerId, quotaConsumption, {
+        inboxId: input.inboxId,
+        workspaceId: input.workspaceId,
+      })
+      throw err
+    }
+  }
+
+  /**
+   * Releases a quota reservation `quotaConsumption` tracked after a
+   * caller-owned transaction failed. Takes `quotaConsumption` as a fresh
+   * parameter (not a closed-over local) so its discriminant narrows
+   * normally here — a `const` bound directly to an object literal at its
+   * declaration site keeps TypeScript's control-flow analysis pinned to
+   * that literal's branch for the rest of the declaring function, even
+   * after a callee mutates it by reference.
+   */
+  private async compensateIfConsumed(
+    ownerId: string | undefined,
+    quotaConsumption: ConnectionQuotaConsumption,
+    context: Record<string, unknown>,
+  ): Promise<void> {
+    if (!(quotaConsumption.consumed && ownerId)) {
+      return
+    }
+    try {
+      await this.compensateQuotaConsumption({
+        ownerId,
+        workspaceId: quotaConsumption.workspaceId,
+        workspaceUsageIncremented: quotaConsumption.workspaceUsageIncremented,
+      })
+    } catch (compensationErr) {
+      logger.error(
+        { err: compensationErr, ...context },
+        "reconnectInbox: quota compensation failed",
+      )
+    }
+  }
+
+  /**
+   * Writes re-authorized satellite auth (via the caller-supplied
+   * `writeAuth`) and restores the matching inbox connection in one
+   * transaction, so a failure inside `reconnectInbox` (e.g. a channel-limit
+   * re-check) rolls back the auth write too, instead of leaving the
+   * satellite row re-authorized while the Connection/Inbox state stays
+   * stale.
+   */
+  async commitReconnect(input: {
+    inboxId: string
+    workspaceId: string
+    auth: AuthValue
+    writeAuth: (tx: DatabaseClient) => Promise<void>
+  }): Promise<void> {
+    await db.transaction(async (tx) => {
+      await input.writeAuth(tx)
+      await this.reconnectInbox({
+        inboxId: input.inboxId,
+        workspaceId: input.workspaceId,
+        authExpiresAt: authExpiresAtOf(input.auth),
+        tx,
+      })
+    })
+  }
+
+  /**
    * Applies one FSM event to an existing `Connection` row: computes the next
    * status via the pure `transitionConnection` (`./state.ts`), writes it,
    * mirrors `Inbox.status`/`disconnectReason` when the connection is
@@ -147,13 +266,29 @@ class ConnectionStateService extends BaseService {
     tx?: DatabaseClient
     /** Required for a quota-consuming transition inside a caller-owned transaction. */
     quotaConsumption?: ConnectionQuotaConsumption
+    /**
+     * Caller-owned-transaction opt-in for a release-edge transition: when
+     * supplied alongside `tx`, a release this transition decides on is
+     * stashed here instead of firing immediately — `tx`'s owner must
+     * release it (via `releasePendingQuota`) only once ITS OWN transaction
+     * has actually committed; otherwise a later statement in that same
+     * transaction rolling back would under-count the release. Omitted →
+     * this transition keeps releasing immediately once its own DB work
+     * resolves.
+     */
+    pendingRelease?: { current: PendingQuotaRelease | null }
   }): Promise<ConnectionModel> {
     const quotaConsumption: ConnectionQuotaConsumption =
       input.quotaConsumption ?? {
         consumed: false,
         workspaceUsageIncremented: false,
       }
-    const run = async (client: DatabaseClient): Promise<ConnectionModel> => {
+    type RunResult = {
+      updated: ConnectionModel
+      /** A release this transition decided on but has not yet executed — see below. */
+      pendingRelease: PendingQuotaRelease | null
+    }
+    const run = async (client: DatabaseClient): Promise<RunResult> => {
       // Row-locked (not the relational `findById`): two concurrent
       // `transition` calls on the same connection must serialize here so
       // only one of them reads the pre-transition status and decides the
@@ -206,7 +341,7 @@ class ConnectionStateService extends BaseService {
             tx: client,
           })
         }
-        return updated
+        return { updated, pendingRelease: null }
       }
 
       const consumesQuota =
@@ -273,12 +408,22 @@ class ConnectionStateService extends BaseService {
         })
       }
 
+      let pendingRelease: RunResult["pendingRelease"] = null
       if (consumesQuota && input.ownerId) {
         await workspaceUsageService.increment(existing.workspaceId, "channels")
         quotaConsumption.workspaceUsageIncremented = true
       } else if (releasesQuota) {
         if (input.ownerId) {
-          await this.releaseQuotaEdge(input.ownerId, existing.workspaceId)
+          // Deferred: releasing here, inside the transaction, would race a
+          // COMMIT failure (or, for a caller-owned `tx`, any later statement
+          // in that same transaction) rolling back this very status write
+          // after the release had already fired — under-counting quota on
+          // rollback. The caller below only runs this once `run` has
+          // returned from an actually-committed transaction.
+          pendingRelease = {
+            ownerId: input.ownerId,
+            workspaceId: existing.workspaceId,
+          }
         } else {
           logger.warn(
             {
@@ -291,14 +436,29 @@ class ConnectionStateService extends BaseService {
         }
       }
 
-      return updated
+      return { updated, pendingRelease }
     }
 
     try {
-      if (input.tx) {
-        return await run(input.tx)
+      const { updated, pendingRelease } = input.tx
+        ? await run(input.tx)
+        : await db.transaction(run)
+      if (input.tx && input.pendingRelease) {
+        // Caller-owned transaction with a deferred-release handshake: only
+        // the caller knows when its own transaction actually commits, so it
+        // alone decides when to release — see `releasePendingQuota`.
+        input.pendingRelease.current = pendingRelease
+      } else if (pendingRelease) {
+        // Either the self-managed path (`db.transaction(run)` has only just
+        // resolved here because Postgres committed — safe to release now),
+        // or a caller-owned `tx` that didn't opt into the handshake above —
+        // same immediate-release behavior.
+        await this.releaseQuotaEdge(
+          pendingRelease.ownerId,
+          pendingRelease.workspaceId,
+        )
       }
-      return await db.transaction(run)
+      return updated
     } catch (err) {
       if (quotaConsumption.consumed && input.ownerId) {
         await this.releaseQuotaEdge(
@@ -350,24 +510,34 @@ class ConnectionStateService extends BaseService {
   }
 
   /**
-   * Same as `markUnhealthy`, resolved by `(provider, sourceId)` instead of a
-   * known `Connection.id` — the shape a provider webhook payload (TikTok
-   * `authorization.removed`'s `openId`, etc.) actually carries. Silently
-   * no-ops when no matching connection exists (an orphaned/duplicate webhook
-   * delivery, not a caller error).
-   *
-   * Pass `workspaceId` whenever the caller already knows it (e.g. TikTok's
-   * `authorization.removed`, which carries the integration row's
-   * `workspaceId`) — this resolves the exact `(workspaceId, provider,
-   * sourceId)` unique row instead of the any-workspace fallback below, so a
-   * different workspace's reconnected copy of the same external account can
-   * never be marked unhealthy by mistake.
+   * Releases a `channels` quota unit a `transition` call deferred via its
+   * `pendingRelease` handshake — call only after the caller-owned
+   * transaction that ran `transition` has actually committed (a later
+   * rollback must never release). No-ops when nothing was deferred (the
+   * transition didn't cross an active→inactive edge, or `pendingRelease`
+   * wasn't supplied to it in the first place).
    */
-  async markUnhealthyByIdentifier(input: {
+  async releasePendingQuota(
+    pendingRelease: PendingQuotaRelease | null,
+  ): Promise<void> {
+    if (!pendingRelease) {
+      return
+    }
+    await this.releaseQuotaEdge(
+      pendingRelease.ownerId,
+      pendingRelease.workspaceId,
+    )
+  }
+
+  /**
+   * Shared `(provider, sourceId)` lookup behind `markUnhealthyByIdentifier`
+   * and `markDegradedByIdentifier` — see the former's doc for the
+   * `workspaceId`-present-vs-absent resolution difference and the
+   * ambiguity warning on an any-workspace fallback.
+   */
+  private async findConnectionByIdentifier(input: {
     provider: IntegrationType
     identifier: string
-    reason?: ConnectionStatusReason
-    ownerId?: string
     workspaceId?: string
   }): Promise<ConnectionModel | null> {
     const existing = input.workspaceId
@@ -397,8 +567,36 @@ class ConnectionStateService extends BaseService {
           connectionId: existing.id,
           status: existing.status,
         },
-        "markUnhealthyByIdentifier: no ACTIVE connection matched; falling back to the most recent non-active row",
+        "findConnectionByIdentifier: no ACTIVE connection matched; falling back to the most recent non-active row",
       )
+    }
+    return existing
+  }
+
+  /**
+   * Same as `markUnhealthy`, resolved by `(provider, sourceId)` instead of a
+   * known `Connection.id` — the shape a provider webhook payload (TikTok
+   * `authorization.removed`'s `openId`, etc.) actually carries. Silently
+   * no-ops when no matching connection exists (an orphaned/duplicate webhook
+   * delivery, not a caller error).
+   *
+   * Pass `workspaceId` whenever the caller already knows it (e.g. TikTok's
+   * `authorization.removed`, which carries the integration row's
+   * `workspaceId`) — this resolves the exact `(workspaceId, provider,
+   * sourceId)` unique row instead of the any-workspace fallback below, so a
+   * different workspace's reconnected copy of the same external account can
+   * never be marked unhealthy by mistake.
+   */
+  async markUnhealthyByIdentifier(input: {
+    provider: IntegrationType
+    identifier: string
+    reason?: ConnectionStatusReason
+    ownerId?: string
+    workspaceId?: string
+  }): Promise<ConnectionModel | null> {
+    const existing = await this.findConnectionByIdentifier(input)
+    if (!existing) {
+      return null
     }
     return await this.markUnhealthy({
       connectionId: existing.id,
@@ -408,16 +606,49 @@ class ConnectionStateService extends BaseService {
   }
 
   /**
+   * The transient counterpart of `markUnhealthyByIdentifier`: a token
+   * refresh attempt failed without the provider confirming the token/
+   * account itself was revoked (an API outage, rate limit, etc.) —
+   * `refresh.transient_failure` moves an active connection to `degraded`
+   * (reason defaults to `refresh_failed`) instead of `needs_reauth`,
+   * leaving `channels` quota untouched (the quota edge only fires on an
+   * active/inactive boundary crossing, and `degraded` is still active — see
+   * `isActiveConnectionStatus`). A non-active connection is left alone (a
+   * no-op, not an error): a refresh failure on an already-disconnected row
+   * has nothing to degrade.
+   */
+  async markDegradedByIdentifier(input: {
+    provider: IntegrationType
+    identifier: string
+    reason?: ConnectionStatusReason
+    workspaceId?: string
+  }): Promise<ConnectionModel | null> {
+    const existing = await this.findConnectionByIdentifier(input)
+    if (!(existing && isActiveConnectionStatus(existing.status))) {
+      return null
+    }
+    return await this.transition({
+      connectionId: existing.id,
+      event: "refresh.transient_failure",
+      reason: input.reason ?? "refresh_failed",
+    })
+  }
+
+  /**
    * `markUnhealthyByIdentifier`'s counterpart for a provider whose `Inbox`
    * row predates its `Connection` backfill — no `Connection` row exists yet
    * to resolve `(provider, identifier)` against, so the caller (a webhook
    * handler that already has the legacy per-provider row, e.g.
    * `IntegrationTiktok`) passes `inboxId` directly. Mirrors `Inbox.status`
-   * to `disconnected` the same way `transition`'s `auth.revoked` edge does
+   * to `needs_reauth` the same way `transition`'s `auth.revoked` edge does
    * for a backfilled connection — deliberately NOT `inboxService.disconnect`,
-   * which also releases `channels` quota; an un-backfilled row was never
-   * counted against quota through the `Connection` domain, so releasing it
-   * here would double-release.
+   * which also releases `channels` quota: an un-backfilled row's channel
+   * was never consumed through this Connection-domain `tryConsume`/
+   * `release` pairing in the first place (it predates the engine), so this
+   * function has no tracked unit to pair a release against here. The
+   * resulting drift — the owner stays charged for a channel stuck in
+   * `needs_reauth` — is corrected once the row is backfilled and
+   * reconciled, not by a point release in this fallback.
    */
   async markLegacyInboxUnhealthy(input: {
     inboxId: string
@@ -477,10 +708,11 @@ class ConnectionStateService extends BaseService {
     tx: DatabaseClient
   }): Promise<void> {
     const isActive = isActiveConnectionStatus(input.to)
-    await input.tx
-      .update(inboxModel)
-      .set(
-        isActive
+    await inboxRepository.updateConnectionMirror(
+      {
+        inboxId: input.inboxId,
+        workspaceId: input.workspaceId,
+        values: isActive
           ? {
               status: "connected",
               disconnectedAt: null,
@@ -488,18 +720,20 @@ class ConnectionStateService extends BaseService {
             }
           : {
               status: "disconnected",
-              disconnectedAt: new Date(),
-              disconnectReason: input.reason
-                ? CONNECTION_TO_INBOX_DISCONNECT_REASON[input.reason]
-                : "manual",
+              // A no-op re-assertion (`reason === null`) must preserve
+              // whatever `disconnectedAt`/`disconnectReason` is already
+              // stored — only a real transition stamps fresh values.
+              ...(input.reason
+                ? {
+                    disconnectedAt: new Date(),
+                    disconnectReason:
+                      CONNECTION_TO_INBOX_DISCONNECT_REASON[input.reason],
+                  }
+                : {}),
             },
-      )
-      .where(
-        and(
-          eq(inboxModel.id, input.inboxId),
-          eq(inboxModel.workspaceId, input.workspaceId),
-        ),
-      )
+      },
+      input.tx,
+    )
     if (!isActive) {
       const ref = { workspaceId: input.workspaceId, inboxId: input.inboxId }
       if (await aiHandoverSettingsRepository.lockExisting(ref, input.tx)) {
