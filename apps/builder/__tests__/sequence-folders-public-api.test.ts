@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 type CapturedProcedure = {
-  route: { method: string; path: string }
+  route: { method: string; path: string; successStatus?: number }
   handler?: (...args: any[]) => any
 }
 
@@ -89,6 +89,14 @@ describe("sequence folder routes", () => {
       workspaceId: "ws-1",
       data: { name: "Promo", folderType: "sequence", parentId: null },
     })
+  })
+
+  test("create answers 201 like sequences.create", () => {
+    const route = capturedProcedures.find(
+      (p) =>
+        p.route.method === "POST" && p.route.path === "/v1/sequence-folders",
+    )?.route
+    expect(route?.successStatus).toBe(201)
   })
 
   test("rename and delete refuse a folder of another type as 404", async () => {

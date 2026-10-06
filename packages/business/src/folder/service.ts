@@ -142,7 +142,7 @@ class FolderService extends BaseService {
         },
       })
       if (!parentFolder) {
-        throw new ChatbotXException("Parent folder does not exist!")
+        throw notFoundException("Parent folder does not exist!")
       }
       paths = [...parentFolder.paths, parentFolder.id]
     }

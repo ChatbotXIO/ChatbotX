@@ -4,7 +4,7 @@ import { rootFolderId } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
-  possibleErrorsOnCreatingResource,
+  possibleErrorsOnCreatingInFolder,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
@@ -55,12 +55,12 @@ export const foldersPublicRouter = {
       path: "/v1/folders",
       summary: "Create folder",
       description:
-        "Adds a folder used to organize tags or custom fields. Use `folders.list` first to avoid duplicating an existing one.",
+        "Adds a folder used to organize tags or custom fields. Use `folders.list` first to avoid duplicating an existing one. A `parentId` that is not a folder of the same type in this workspace returns 404.",
       tags: ["Folders"],
     })
     .input(createFolderPublicRequest)
     .output(folderResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingInFolder)
     .handler(async ({ context, input }) => {
       const parentId =
         input.parentId && input.parentId !== rootFolderId
