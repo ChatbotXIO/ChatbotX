@@ -4,11 +4,14 @@ import { contactSources, genderTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
+  possibleErrorsOnCreatingContact,
   possibleErrorsOnCreatingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
   possibleErrorsOnStartingContactImport,
+  possibleErrorsOnUpsertingContact,
+  possibleErrorsOnWritingContactFields,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -178,7 +181,7 @@ export const contactsCrudPublicRouter = {
     })
     .input(createContactRequest)
     .output(contactResponse)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingContact)
     .handler(async ({ context, input }) => {
       const { contact } = await contactService.createWithInbox({
         workspaceId: context.workspace.id,
@@ -258,7 +261,7 @@ export const contactsCrudPublicRouter = {
         })
         .and(updateContactFieldRequest),
     )
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnWritingContactFields)
     .handler(async ({ context, input }) => {
       const { identifier, ...fields } = input
       const contactId = await contactService.resolveIdByIdentifier({
@@ -432,7 +435,7 @@ export const contactsCrudPublicRouter = {
       }),
     )
     .output(contactResponse)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnUpsertingContact)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const { identifier, avatar, ...fields } = input

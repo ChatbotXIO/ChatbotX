@@ -9,12 +9,14 @@ import { facebookAdAccountSchema } from "@chatbotx.io/integration-facebook-ads"
 import { ORPCError } from "@orpc/server"
 import { z } from "zod"
 import {
+  possibleErrorsOnChangingMessagingAd,
   possibleErrorsOnCreatingAdImageUpload,
-  possibleErrorsOnCreatingResource,
+  possibleErrorsOnCreatingMessagingAd,
+  possibleErrorsOnDeletingMessagingAd,
   possibleErrorsOnDeletingResource,
-  possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
-  possibleErrorsOnMutatingResource,
+  possibleErrorsOnReadingMessagingAds,
+  possibleErrorsOnRetryingMessagingAd,
   possibleIdempotencyErrors,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -107,7 +109,7 @@ export const adsCampaignPublicRouter = {
     })
     .input(createMessagingAdPublicRequest)
     .output(messagingAdOperationPublicResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingMessagingAd)
     .handler(async ({ context, input }) => {
       // Re-validated through the private `createMessagingAdRequest` (the
       // single source of truth for this schema's rules — CREDIT rejection,
@@ -144,7 +146,7 @@ export const adsCampaignPublicRouter = {
     })
     .input(operationIdPublicParams)
     .output(messagingAdOperationPublicResource)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnRetryingMessagingAd)
     .handler(async ({ context, input }) => {
       const record = await messagingAdCampaignService.retryDraft({
         operationId: input.id,
@@ -164,7 +166,7 @@ export const adsCampaignPublicRouter = {
     })
     .input(operationIdPublicParams)
     .output(messagingAdOperationPublicResource)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnChangingMessagingAd)
     .handler(async ({ context, input }) => {
       const record = await messagingAdCampaignService.publish({
         operationId: input.id,
@@ -184,7 +186,7 @@ export const adsCampaignPublicRouter = {
     })
     .input(operationIdPublicParams)
     .output(messagingAdOperationPublicResource)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnChangingMessagingAd)
     .handler(async ({ context, input }) => {
       const record = await messagingAdCampaignService.pause({
         operationId: input.id,
@@ -204,7 +206,7 @@ export const adsCampaignPublicRouter = {
     })
     .input(operationIdPublicParams)
     .output(messagingAdOperationPublicResource)
-    .errors(possibleErrorsOnDeletingResource)
+    .errors(possibleErrorsOnDeletingMessagingAd)
     .handler(async ({ context, input }) => {
       const record = await messagingAdCampaignService.deleteOperation({
         operationId: input.id,
@@ -224,7 +226,7 @@ export const adsCampaignPublicRouter = {
     })
     .input(listMessagingAdsPublicRequest)
     .output(z.object({ data: z.array(messagingAdOperationPublicResource) }))
-    .errors(possibleErrorsOnListingResource)
+    .errors(possibleErrorsOnReadingMessagingAds)
     .handler(async ({ context, input: { refresh, ...input } }) => {
       const rows = await messagingAdCampaignService.list({
         ...input,
@@ -253,7 +255,7 @@ export const adsCampaignPublicRouter = {
     .input(messagingAdsInsightsPublicRequest)
     .output(z.object({ data: z.array(messagingAdInsightResource) }))
     .errors({
-      ...possibleErrorsOnListingResource,
+      ...possibleErrorsOnReadingMessagingAds,
       ...possibleIdempotencyErrors,
     })
     .handler(async ({ context, input: { refresh, ...input } }) => ({
@@ -281,7 +283,7 @@ export const adsCampaignPublicRouter = {
     })
     .input(listAdAccountsPublicRequestParams.and(listAdAccountsPublicRequest))
     .output(z.object({ data: z.array(facebookAdAccountSchema) }))
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnReadingMessagingAds)
     .handler(async ({ context, input: { refresh, ...input } }) => ({
       data: await listCachedMessagingAdAccounts({
         ...input,
@@ -303,7 +305,7 @@ export const adsCampaignPublicRouter = {
       adAccountDetailsPublicRequestParams.and(adAccountDetailsPublicRequest),
     )
     .output(adAccountDetailsResource)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnReadingMessagingAds)
     .handler(({ context, input: { refresh, ...input } }) =>
       getCachedMessagingAdAccountDetails({
         ...input,
@@ -345,7 +347,7 @@ export const adsCampaignPublicRouter = {
     })
     .input(uploadAdVideoPublicRequest)
     .output(z.object({ videoId: z.string() }))
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingMessagingAd)
     .handler(async ({ context, input }) => {
       const { ctx, integration } = await getMessagingAdsContextForIntegration({
         ...input,
@@ -380,7 +382,7 @@ export const adsCampaignPublicRouter = {
         isError: z.boolean(),
       }),
     )
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnReadingMessagingAds)
     .handler(async ({ context, input }) => {
       const { ctx, integration } = await getMessagingAdsContextForIntegration({
         ...input,
@@ -409,7 +411,7 @@ export const adsCampaignPublicRouter = {
         ),
       }),
     )
-    .errors(possibleErrorsOnListingResource)
+    .errors(possibleErrorsOnReadingMessagingAds)
     .handler(async ({ context, input }) => {
       if (input.channel !== "whatsapp") {
         throw new ChatbotXException(
@@ -445,7 +447,7 @@ export const adsCampaignPublicRouter = {
           ),
       }),
     )
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnReadingMessagingAds)
     .handler(async ({ context, input }) => {
       const connection = await messagingAdsConnectionService.findForIntegration(
         { ...input, workspaceId: context.workspace.id },

@@ -1,10 +1,11 @@
 import { botFieldService } from "@chatbotx.io/business"
 import z from "zod"
 import {
-  possibleErrorsOnCreatingResource,
-  possibleErrorsOnDeletingResource,
+  possibleErrorsOnCreatingBotField,
+  possibleErrorsOnDeletingTemplateResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnSettingBotField,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
@@ -55,7 +56,7 @@ export const botFieldsPublicRouter = {
     })
     .input(createBotFieldRequest)
     .output(publicBotFieldResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingBotField)
     .handler(
       async ({ context, input }) =>
         await botFieldService.create({
@@ -110,7 +111,7 @@ export const botFieldsPublicRouter = {
       }),
     )
     .output(publicBotFieldResource)
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnSettingBotField)
     .handler(async ({ context, input }) => {
       const { idOrName, ...rest } = input
       return await botFieldService.updateByKey({
@@ -165,7 +166,7 @@ export const botFieldsPublicRouter = {
           .describe("Bot fields to update, each addressed by id or name."),
       }),
     )
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnSettingBotField)
     .handler(async ({ context, input }) => {
       const resolveKey = (field: (typeof input.fields)[number]): string => {
         if ("id" in field) {
@@ -228,7 +229,7 @@ export const botFieldsPublicRouter = {
           .describe("Bot fields to update, each addressed by id or name."),
       }),
     )
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnSettingBotField)
     .handler(async ({ context, input }) => {
       const resolveKey = (field: (typeof input.fields)[number]): string => {
         if ("id" in field) {
@@ -309,7 +310,7 @@ export const botFieldsPublicRouter = {
           .describe("Bot field id or name. Get it from `botFields.list`."),
       }),
     )
-    .errors(possibleErrorsOnDeletingResource)
+    .errors(possibleErrorsOnDeletingTemplateResource)
     .handler(
       async ({ context, input }) =>
         await botFieldService.deleteByKey({

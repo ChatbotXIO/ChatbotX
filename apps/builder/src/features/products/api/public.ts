@@ -28,6 +28,7 @@ import {
 } from "@/features/products/lib/product-import-template"
 import {
   possibleErrorsOnCreatingImportUpload,
+  possibleErrorsOnCreatingMetaCatalog,
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
@@ -107,13 +108,13 @@ export const productsPublicRouter = {
       path: "/v1/products/meta-catalog",
       summary: "Create Meta Catalog",
       description:
-        "Creates an empty catalog on Meta under the given Business Manager and binds it to the workspace. Nothing is imported; push products with `products.syncMetaCatalog`.",
+        "Creates an empty catalog on Meta under the given Business Manager and binds it to the workspace. Needs a Meta Catalog connection made in the builder (404 otherwise; check with `products.getMetaCatalog`). Nothing is imported; push products with `products.syncMetaCatalog`.",
       successStatus: 201,
       tags: ["Products"],
     })
     .input(createMetaCatalogPublicRequest)
     .output(metaCatalogConnectionPublicResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingMetaCatalog)
     .handler(async ({ context, input }) =>
       metaCatalogConnectionPublicResource.parse(
         await createAndBindMetaCatalog({

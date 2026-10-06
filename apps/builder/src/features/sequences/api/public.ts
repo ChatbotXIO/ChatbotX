@@ -6,6 +6,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
+  possibleErrorsOnCreatingInFolder,
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
@@ -95,7 +96,7 @@ export const sequencesPublicRouter = {
     })
     .input(createSequenceRequest)
     .output(z.object({ sequenceId: z.string() }))
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingInFolder)
     .handler(
       async ({ context, input }) =>
         await sequenceService.create({
