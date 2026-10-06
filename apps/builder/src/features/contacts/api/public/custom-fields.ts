@@ -64,7 +64,7 @@ export const contactsCustomFieldsPublicRouter = {
       path: "/v1/contacts/{identifier}/custom-fields/{idOrName}",
       summary: "Get contact custom field value",
       description:
-        "Returns one custom field's current value for the contact identified by `identifier`. Use `contacts.listCustomFields` to see every field at once.",
+        "Returns one custom field's current value for the contact identified by `identifier`. Returns 404 when the field exists but has no value on this contact. Use `contacts.listCustomFields` to see every field at once.",
       tags: ["Contacts"],
     })
     .input(
@@ -154,7 +154,7 @@ export const contactsCustomFieldsPublicRouter = {
       path: "/v1/contacts/{identifier}/custom-fields/{customFieldId}",
       summary: "Set contact custom field value",
       description:
-        "Deprecated — `contacts.setCustomField` now covers this at `PUT .../custom-fields/{idOrName}`, addressed by id or name; this POST route only ever accepted a numeric id.",
+        "Deprecated — `contacts.setCustomField` now covers this at `PUT .../custom-fields/{idOrName}`, addressed by id or name and with `clientTimezone` for date values; this POST route only ever accepted a numeric `customFieldId` and has no timezone input.",
       successStatus: 204,
       deprecated: true,
       tags: ["Contacts"],
@@ -188,7 +188,7 @@ export const contactsCustomFieldsPublicRouter = {
       path: "/v1/contacts/{identifier}/custom-fields",
       summary: "Apply arithmetic/append operations to custom field",
       description:
-        'Applies a batch of operations to one or more custom fields on the contact, in the given order, each addressed by id or name. Each operation is one of `set`, `append`, `prepend`, `increase`, `decrease`: `set` overwrites the current value, `append`/`prepend` concatenate onto it, and `increase`/`decrease` treat the current value as a number (no-op if it is not numeric). This is the batch equivalent of `contacts.setCustomField` for changing several fields in one call. Example: `{"operations":[{"customFieldId":"123","operation":"increase","value":"1"}]}` to increment a numeric field.',
+        'Applies a batch of operations to one or more custom fields on the contact, in the given order, each addressed by id or name. Each operation is one of `set`, `append`, `prepend`, `increase`, `decrease`: `set` overwrites the current value, `append`/`prepend` concatenate onto it, and `increase`/`decrease` treat the current value as a number (no-op if it is not numeric). On a field with no value yet, every operation stores `value` as given. This is the batch equivalent of `contacts.setCustomField` for changing several fields in one call. Example: `{"operations":[{"customFieldId":"123","operation":"increase","value":"1"}]}` to increment a numeric field.',
       successStatus: 204,
       tags: ["Contacts"],
     })

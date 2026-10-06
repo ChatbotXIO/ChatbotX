@@ -248,7 +248,7 @@ export const linkContactsPublicRequest = withLegacyDateRangeAliases(
         .string()
         .optional()
         .describe(
-          "IANA timezone used to bucket results, e.g. `America/New_York`.",
+          "Accepted for compatibility; the contact list does not use it.",
         ),
     }),
   ),

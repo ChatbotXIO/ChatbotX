@@ -744,7 +744,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/comment-automation/user-comments",
       summary: "List comment automation customer comments",
       description:
-        "Distinct customer comments the automation matched in a range, with how often each occurred. The texts are customer-written and returned verbatim.",
+        "Distinct customer comments the automation matched in a range, with how often each occurred, paged with `page`/`perPage` and filterable by `keyword`. The texts are customer-written and returned verbatim.",
       tags: ["Analytics"],
     })
     .input(commentAutomationListPublicRequest)
@@ -766,7 +766,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/comment-automation/bot-replies",
       summary: "List comment automation bot replies",
       description:
-        "Distinct replies the automation posted in a range, with how often each was sent.",
+        "Distinct replies the automation posted in a range, with how often each was sent, paged with `page`/`perPage` and filterable by `keyword`.",
       tags: ["Analytics"],
     })
     .input(commentAutomationListPublicRequest)
