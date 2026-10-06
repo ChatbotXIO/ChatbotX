@@ -89,6 +89,11 @@ export const contactsMessagesPublicRouter = {
           .describe(
             "Opaque pagination cursor from a previous response. Omit for the first page.",
           ),
+        contactInboxId: zodBigintAsString()
+          .optional()
+          .describe(
+            "Only messages of this contact inbox (one channel of the contact). Get it from `contactInboxes` in `contacts.get`; an id of another contact returns no messages.",
+          ),
       }),
     )
     .output(listMessagesResponse)
@@ -108,6 +113,7 @@ export const contactsMessagesPublicRouter = {
       return await listMessages({
         workspaceId: context.workspace.id,
         conversationId: conversation.id,
+        contactInboxId: input.contactInboxId,
         perPage: input.perPage,
         cursor: input.cursor,
       })

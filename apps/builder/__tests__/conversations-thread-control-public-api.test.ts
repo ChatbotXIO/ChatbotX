@@ -200,4 +200,21 @@ describe("POST /v1/conversations/{id}/thread-control with action sync", () => {
 
     expect(mocks.syncConversationThreadOwner).not.toHaveBeenCalled()
   })
+
+  test("a channel failure during sync is mapped like the other actions", async () => {
+    mocks.syncConversationThreadOwner.mockRejectedValueOnce(
+      new ChannelError(
+        "(#10) Not the owner",
+        ChannelErrorCategory.PERMISSION_DENIED,
+        { code: 10 },
+      ),
+    )
+
+    await expect(
+      find("/v1/conversations/{id}/thread-control")?.({
+        context,
+        input: { id: "conv-1", contactInboxId: "ci-1", action: "sync" },
+      }),
+    ).rejects.toMatchObject({ code: "threadControlFailed" })
+  })
 })

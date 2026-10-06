@@ -439,23 +439,22 @@ export const conversationsPublicRouter = {
       const conversation = await conversationService.findByOrFail({
         where: { id: input.id, workspaceId },
       })
-      if (input.action === "sync") {
-        return {
-          status: "applied" as const,
-          snapshot: await syncConversationThreadOwner({
-            workspaceId,
-            conversation,
-            contactInboxId: input.contactInboxId,
-          }),
-        }
-      }
       try {
-        const snapshot = await requestConversationThreadControl({
-          workspaceId,
-          conversation,
-          contactInboxId: input.contactInboxId,
-          action: input.action,
-        })
+        // `sync` goes through the same error mapping as the other actions,
+        // so an unsupported channel or a channel failure is a declared 400.
+        const snapshot =
+          input.action === "sync"
+            ? await syncConversationThreadOwner({
+                workspaceId,
+                conversation,
+                contactInboxId: input.contactInboxId,
+              })
+            : await requestConversationThreadControl({
+                workspaceId,
+                conversation,
+                contactInboxId: input.contactInboxId,
+                action: input.action,
+              })
         return { status: "applied" as const, snapshot }
       } catch (error) {
         if (error instanceof ChatbotXException && error.code === "notFound") {
