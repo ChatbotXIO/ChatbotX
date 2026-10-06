@@ -7,7 +7,6 @@ import z from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingInFolder,
-  possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
@@ -71,7 +70,9 @@ export const sequencesPublicRouter = {
     })
     .input(
       z.object({
-        id: z.string().describe("Sequence id. Get it from `sequences.list`."),
+        id: zodBigintAsString().describe(
+          "Sequence id. Get it from `sequences.list`.",
+        ),
       }),
     )
     .output(sequenceDetailResource)
@@ -289,12 +290,13 @@ export const sequencesPublicRouter = {
       path: "/v1/sequence-folders",
       summary: "Create sequence folder",
       description:
-        "Adds a folder for sequences. Use `sequences.listFolders` first to avoid duplicating an existing one.",
+        "Adds a folder for sequences. Use `sequences.listFolders` first to avoid duplicating an existing one. A `parentId` that is not a sequence folder of this workspace returns 404.",
+      successStatus: 201,
       tags: ["Sequences"],
     })
     .input(createSequenceFolderPublicRequest)
     .output(sequenceFolderResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingInFolder)
     .handler(
       async ({ context, input }) =>
         await folderService.create({
