@@ -48,7 +48,7 @@
     "eval:search": "tsx evals/search-audit.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "@t3-oss/env-core": "^0.13.11",
     "dotenv": "^17.4.2",
     "zod": "^4.3.6"
