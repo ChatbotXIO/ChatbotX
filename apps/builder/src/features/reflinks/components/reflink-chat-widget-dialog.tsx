@@ -52,7 +52,9 @@ export function ReflinkChatWidgetDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-5xl">
+      {/* Each enabled channel adds a 56px button to the preview, so many
+          channels outgrow the viewport — scroll instead of clipping. */}
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>{t("reflinks.chatWidget.title")}</DialogTitle>
           <DialogDescription>
