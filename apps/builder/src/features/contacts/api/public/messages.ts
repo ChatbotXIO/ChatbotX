@@ -33,7 +33,7 @@ export const contactsMessagesPublicRouter = {
       path: "/v1/contacts/{identifier}/messages",
       summary: "Send message to contact",
       description:
-        "Delivers a text or media message to a contact's conversation, creating one when needed. Use `contacts.get` to confirm the recipient first, and `contacts.listMessages` to inspect the conversation afterward.",
+        "Delivers a text or media message in the contact's existing conversation (404 when the contact has none, e.g. it was never reached on a channel). Use `contacts.get` to confirm the recipient first, and `contacts.listMessages` to inspect the conversation afterward.",
       successStatus: 204,
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
@@ -155,7 +155,7 @@ export const contactsMessagesPublicRouter = {
       path: "/v1/contacts/{identifier}/auto-replies",
       summary: "Trigger auto reply for contact",
       description:
-        "Simulates the contact sending `keyword` and delivers whichever automated response is configured to match it, as if it had arrived inbound. Use `contacts.sendMessage` to send arbitrary text instead.",
+        "Finds the inbound automated response whose keywords include `keyword` exactly and sends its flow or text to the contact's conversation. No inbound message is recorded and no other automation runs; 404 when no response matches. Use `contacts.sendMessage` to send arbitrary text instead.",
       successStatus: 204,
       tags: ["Contacts"],
     })

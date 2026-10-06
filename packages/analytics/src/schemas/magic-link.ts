@@ -5,7 +5,7 @@ export const magicLinkStatsSchema = z.object({
   startDate: z
     .string()
     .describe("ISO 8601 start of the time range (inclusive)."),
-  endDate: z.string().describe("ISO 8601 end of the time range (exclusive)."),
+  endDate: z.string().describe("ISO 8601 end of the time range (inclusive)."),
   linkId: z.string().describe("Magic link or ref link id."),
   timezone: z
     .string()
@@ -26,7 +26,7 @@ export const magicLinkContactStatsSchema = z.object({
   endDate: z
     .string()
     .optional()
-    .describe("ISO 8601 end of the time range (exclusive)."),
+    .describe("ISO 8601 end of the time range (inclusive)."),
   timezone: z
     .string()
     .optional()
