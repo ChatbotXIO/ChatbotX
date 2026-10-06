@@ -17,6 +17,7 @@ type RouteConfig = {
 
 type CapturedProcedure = {
   route: RouteConfig
+  inputSchema?: { safeParse: (value: unknown) => { success: boolean } }
   handler?: (...args: unknown[]) => unknown
 }
 
@@ -28,7 +29,10 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
     capturedProcedures.push(record)
 
     const chain = {
-      input: vi.fn(() => chain),
+      input: vi.fn((schema: CapturedProcedure["inputSchema"]) => {
+        record.inputSchema = schema
+        return chain
+      }),
       output: vi.fn(() => chain),
       errors: vi.fn(() => chain),
       handler: vi.fn((fn: (...args: unknown[]) => unknown) => {
@@ -247,5 +251,20 @@ describe("DELETE /v1/sequences/{id}/steps/{stepId}", () => {
       sequenceId: "seq-1",
       stepId: "step-1",
     })
+  })
+})
+
+describe("GET /v1/sequences/{id} input", () => {
+  const schema = () =>
+    capturedProcedures.find(
+      (p) => p.route.method === "GET" && p.route.path === "/v1/sequences/{id}",
+    )?.inputSchema
+
+  test("accepts a numeric id", () => {
+    expect(schema()?.safeParse({ id: "11714399357876729" }).success).toBe(true)
+  })
+
+  test("rejects a non-numeric id before the service is called", () => {
+    expect(schema()?.safeParse({ id: "abc" }).success).toBe(false)
   })
 })
