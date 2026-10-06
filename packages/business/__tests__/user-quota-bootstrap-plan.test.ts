@@ -6,6 +6,7 @@ const USER = "user-1"
 const {
   dbInsert,
   distributedStore,
+  hasEnterpriseFeatures,
   insertBuilder,
   isCloud,
   loggerWarn,
@@ -34,6 +35,7 @@ const {
       put: vi.fn(async () => undefined),
       delete: vi.fn(async () => undefined),
     },
+    hasEnterpriseFeatures: vi.fn(async () => true),
     insertBuilder,
     isCloud: vi.fn(() => true),
     loggerWarn: vi.fn(),
@@ -68,6 +70,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 vi.mock("../src/keys", () => ({ isCloud }))
+vi.mock("../src/user/entitlements", () => ({ hasEnterpriseFeatures }))
 vi.mock("../src/logger", () => ({ logger: { warn: loggerWarn } }))
 
 const { userQuotaService } = await import("../src/user-quota/service")
@@ -88,6 +91,7 @@ const snapshot = {
 beforeEach(() => {
   vi.clearAllMocks()
   isCloud.mockReturnValue(true)
+  hasEnterpriseFeatures.mockResolvedValue(true)
   distributedStore.get.mockResolvedValue(null)
   insertBuilder.values.mockClear().mockReturnValue(insertBuilder)
   insertBuilder.onConflictDoNothing.mockClear().mockReturnValue(insertBuilder)
@@ -219,14 +223,26 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
     expect(dbInsert).toHaveBeenCalledTimes(1)
   })
 
-  test("no-ops outside cloud edition", async () => {
-    isCloud.mockReturnValue(false)
+  test("no-ops without enterprise features (community, or enterprise with no valid license)", async () => {
+    hasEnterpriseFeatures.mockResolvedValue(false)
 
     await userQuotaService.ensureBootstrapPlan({ userId: USER })
 
     expect(distributedStore.get).not.toHaveBeenCalled()
     expect(dbInsert).not.toHaveBeenCalled()
     expect(distributedStore.delete).not.toHaveBeenCalled()
+  })
+
+  test("does not stamp the lockdown fallback on a licensed self-hosted install with no published plan", async () => {
+    // Licensed self-hosted enterprise (hasEnterpriseFeatures true, isCloud
+    // false) with no portal configured yet: must stay unlimited rather than
+    // locking the operator out with BOOTSTRAP_TRIAL_FALLBACK.
+    isCloud.mockReturnValue(false)
+
+    await userQuotaService.ensureBootstrapPlan({ userId: USER })
+
+    expect(distributedStore.get).toHaveBeenCalled()
+    expect(dbInsert).not.toHaveBeenCalled()
   })
 
   test("blocks the lockdown-fallback trial via the mac gate (macLimit 0 means 'cannot act')", async () => {

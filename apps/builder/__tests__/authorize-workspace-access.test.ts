@@ -10,6 +10,7 @@ const { getAccessState, isAtLimit, isCloud } = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  hasEnterpriseFeatures: () => Promise.resolve(isCloud()),
   quotaEnforcementService: { isAtLimit },
   userQuotaService: { getAccessState },
 }))

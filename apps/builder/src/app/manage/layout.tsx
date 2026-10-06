@@ -1,5 +1,6 @@
 import {
   customDomainService,
+  hasEnterpriseFeatures,
   tenantService,
   userQuotaService,
 } from "@chatbotx.io/business"
@@ -8,7 +9,6 @@ import type { PortalSaasFlags } from "@chatbotx.io/ui/config/portal-nav"
 import { buildResellerPricingUrl } from "@chatbotx.io/ui/lib/portal-pricing-url"
 import { notFound } from "next/navigation"
 import { PortalManageSidebar } from "@/enterprise/features/manage/components/portal-manage-sidebar"
-import { isCloud } from "@/env"
 import { ManageLayout } from "@/features/manage/manage-layout"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
@@ -36,10 +36,11 @@ export default async function ManageLayoutPage({
   enforcePasswordCurrent(user)
 
   /**
-   * Cloud edition: only the active tenant owner (reseller) may access manage,
-   * and they get the reseller `PortalManageSidebar`.
+   * Cloud or licensed self-hosted enterprise: only the active tenant owner
+   * (reseller) may access manage, and they get the reseller
+   * `PortalManageSidebar`.
    */
-  if (!isCloud()) {
+  if (!(await hasEnterpriseFeatures())) {
     return notFound()
   }
 

@@ -15,7 +15,7 @@ import { CrownIcon, PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
-import { isCloud, isCommunity } from "@/env"
+import { isCommunity, isSaasEdition } from "@/env"
 import { formatScheduleTime } from "../helpers"
 import type { WorkspaceResource } from "../schema/resource"
 import { WorkspaceStatusSwitch } from "./workspace-status-switch"
@@ -234,7 +234,7 @@ const WorkspacesList = async ({
         <span className="font-medium text-muted-foreground text-sm tabular-nums">
           {usedCount}
         </span>
-        {isAtLimit && isCloud() && (
+        {isAtLimit && isSaasEdition() && (
           <UpgradePlanButton className="ms-auto" size="sm" variant="outline">
             <CrownIcon aria-hidden className="size-3.5" />
             {t("actions.upgradePlan")}

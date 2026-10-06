@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   countActive: vi.fn(),
   getPlanIdentity: vi.fn(),
-  isCloud: vi.fn(),
+  hasEnterpriseFeatures: vi.fn(),
   workspaceFind: vi.fn(),
 }))
 
@@ -24,7 +24,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   broadcastRepository: { countActive: mocks.countActive },
 }))
 
-vi.mock("../src/keys", () => ({ isCloud: mocks.isCloud }))
+vi.mock("../src/user/entitlements", () => ({
+  hasEnterpriseFeatures: mocks.hasEnterpriseFeatures,
+}))
 vi.mock("../src/user-quota/service", () => ({
   userQuotaService: { getPlanIdentity: mocks.getPlanIdentity },
 }))
@@ -38,7 +40,7 @@ const { broadcastPlanPolicyService } = await import(
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.isCloud.mockReturnValue(true)
+  mocks.hasEnterpriseFeatures.mockResolvedValue(true)
   mocks.workspaceFind.mockResolvedValue({ ownerId: "owner-1" })
   mocks.getPlanIdentity.mockResolvedValue({
     isOnTrial: false,
@@ -49,7 +51,7 @@ beforeEach(() => {
 
 describe("broadcastPlanPolicyService.resolveForWorkspace", () => {
   test("returns unrestricted without reads outside cloud", async () => {
-    mocks.isCloud.mockReturnValue(false)
+    mocks.hasEnterpriseFeatures.mockResolvedValue(false)
 
     await expect(
       broadcastPlanPolicyService.resolveForWorkspace("ws-1"),

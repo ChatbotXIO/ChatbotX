@@ -9,14 +9,17 @@ import { Queue } from "bullmq"
 import { env } from "../../env"
 
 /**
- * Quota/billing schedulers only make sense on the cloud edition. The trial
- * teardown is the dangerous one: it disconnects every channel of an expired
- * trial owner, and off-cloud there is no billing path to recover from that.
+ * Trial teardown stays cloud-only: it disconnects every channel of an expired
+ * trial owner, and off-cloud there is no vendor billing path to recover from
+ * that. Quota sync and tenant reconcile also run on `enterprise`, where the
+ * operator's own portal publishes the plans those jobs enforce.
  */
 const CLOUD_ONLY_SCHEDULERS = [
+  ScheduleJobData.unsubscribeExpiredTrials,
+] as const
+const SAAS_SCHEDULERS = [
   ScheduleJobData.syncUserQuota,
   ScheduleJobData.reconcileTenants,
-  ScheduleJobData.unsubscribeExpiredTrials,
 ] as const
 
 export const registerSchedules = async () => {
@@ -25,10 +28,16 @@ export const registerSchedules = async () => {
   }
 
   const isCloud = env.NEXT_PUBLIC_EDITION === "cloud"
+  const isSaas = isCloud || env.NEXT_PUBLIC_EDITION === "enterprise"
+  // upsertJobScheduler persists in Redis: a scheduler registered by an
+  // earlier boot (or a shared Redis) keeps firing until removed.
   if (!isCloud) {
-    // upsertJobScheduler persists in Redis: a scheduler registered by an
-    // earlier cloud boot (or a shared Redis) keeps firing until removed.
     for (const name of CLOUD_ONLY_SCHEDULERS) {
+      await scheduleQueue.removeJobScheduler(name)
+    }
+  }
+  if (!isSaas) {
+    for (const name of SAAS_SCHEDULERS) {
       await scheduleQueue.removeJobScheduler(name)
     }
   }
@@ -178,7 +187,7 @@ export const registerSchedules = async () => {
     },
   )
 
-  if (isCloud) {
+  if (isSaas) {
     await scheduleQueue.upsertJobScheduler(
       ScheduleJobData.syncUserQuota,
       { every: env.QUOTA_SYNC_INTERVAL_SECONDS * 1000 },

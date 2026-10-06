@@ -1,5 +1,6 @@
-import { isCloud, keys } from "../../keys"
+import { keys } from "../../keys"
 import { logger } from "../../logger"
+import { hasEnterpriseFeatures } from "../../user/entitlements"
 
 /** How long to wait on the portal before giving up, so sign-up never hangs. */
 const PROVISION_TIMEOUT_MS = 5000
@@ -29,17 +30,18 @@ type ProvisionDefaultPlanInput = {
  */
 export const billingService = {
   /**
-   * Provision the default plan for a newly created user. Cloud-only and
-   * strictly best-effort: any failure (portal down, timeout, non-OK status) is
-   * logged and swallowed so it never blocks sign-up. The portal endpoint must
-   * be idempotent — this may be called again for the same user (hook retries,
-   * re-sign-up after deletion).
+   * Provision the default plan for a newly created user. Runs on cloud and
+   * licensed self-hosted enterprise only, and is strictly best-effort: any
+   * failure (portal down, timeout, non-OK status) is logged and swallowed so
+   * it never blocks sign-up. The portal endpoint must be idempotent — this
+   * may be called again for the same user (hook retries, re-sign-up after
+   * deletion).
    */
   async provisionDefaultPlan({
     userId,
     tenantId,
   }: ProvisionDefaultPlanInput): Promise<void> {
-    if (!isCloud()) {
+    if (!(await hasEnterpriseFeatures())) {
       return
     }
 

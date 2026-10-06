@@ -21,6 +21,7 @@ vi.mock("@chatbotx.io/business", () => ({
   isWorkspaceScheduledForDeletion,
   userQuotaService: { getAccessState },
   quotaEnforcementService: { isAtLimit },
+  hasEnterpriseFeatures: () => Promise.resolve(true),
   broadcastService: {
     list: vi.fn(),
     listAudience: vi.fn(),

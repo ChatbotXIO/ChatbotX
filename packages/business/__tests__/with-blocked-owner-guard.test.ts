@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockLoggerInfo, mockGetAccessState, mockWorkspaceFind, mockIsCloud } =
-  vi.hoisted(() => ({
-    mockLoggerInfo: vi.fn(),
-    mockGetAccessState: vi.fn(),
-    mockWorkspaceFind: vi.fn(),
-    mockIsCloud: vi.fn(),
-  }))
+const {
+  mockLoggerInfo,
+  mockGetAccessState,
+  mockWorkspaceFind,
+  mockHasEnterpriseFeatures,
+} = vi.hoisted(() => ({
+  mockLoggerInfo: vi.fn(),
+  mockGetAccessState: vi.fn(),
+  mockWorkspaceFind: vi.fn(),
+  mockHasEnterpriseFeatures: vi.fn(),
+}))
 
 vi.mock("../src/logger", () => ({
   logger: {
@@ -14,8 +18,8 @@ vi.mock("../src/logger", () => ({
   },
 }))
 
-vi.mock("../src/keys", () => ({
-  isCloud: mockIsCloud,
+vi.mock("../src/user/entitlements", () => ({
+  hasEnterpriseFeatures: mockHasEnterpriseFeatures,
 }))
 
 vi.mock("../src/user-quota/service", () => ({
@@ -55,7 +59,7 @@ const workspace = {
 describe("withBlockedOwnerGuard", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockIsCloud.mockReturnValue(true)
+    mockHasEnterpriseFeatures.mockResolvedValue(true)
     mockWorkspaceFind.mockResolvedValue(workspace)
     mockGetAccessState.mockResolvedValue(allowedAccessState)
   })
@@ -130,8 +134,8 @@ describe("withBlockedOwnerGuard", () => {
     )
   })
 
-  test("never reads owner quota on non-cloud editions, where no owner can be entitlement-blocked", async () => {
-    mockIsCloud.mockReturnValue(false)
+  test("never reads owner quota without enterprise features, where no owner can be entitlement-blocked", async () => {
+    mockHasEnterpriseFeatures.mockResolvedValue(false)
     const fn = vi.fn(async () => "ran")
 
     await expect(withBlockedOwnerGuard("workspace-1", fn)).resolves.toBe("ran")
@@ -140,8 +144,8 @@ describe("withBlockedOwnerGuard", () => {
     expect(mockGetAccessState).not.toHaveBeenCalled()
   })
 
-  test("still skips a workspace scheduled for deletion on non-cloud editions", async () => {
-    mockIsCloud.mockReturnValue(false)
+  test("still skips a workspace scheduled for deletion without enterprise features", async () => {
+    mockHasEnterpriseFeatures.mockResolvedValue(false)
     mockWorkspaceFind.mockResolvedValue({
       ...workspace,
       scheduledDeletionAt: new Date("2026-01-01T00:00:00Z"),
