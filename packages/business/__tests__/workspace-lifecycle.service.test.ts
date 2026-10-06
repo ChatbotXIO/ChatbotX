@@ -10,6 +10,8 @@ const cancelSmartDelaysForWorkspaceMock = vi.fn()
 const loggerWarnMock = vi.fn()
 const listWithIntegrationsByWorkspaceMock = vi.fn()
 const tearDownForIntegrationMock = vi.fn()
+const findByInboxIdMock = vi.fn()
+const connectionTransitionMock = vi.fn()
 
 vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn((column: unknown, value: unknown) => ({ eq: [column, value] })),
@@ -21,6 +23,16 @@ vi.mock("@chatbotx.io/database/client", () => ({
 vi.mock("@chatbotx.io/sequence-scheduler/dispatch-cancel", () => ({
   cancelPendingDispatchesForWorkspace: cancelPendingDispatchesForWorkspaceMock,
   removeDispatchesFromSchedule: removeDispatchesFromScheduleMock,
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  connectionRepository: { findByInboxId: findByInboxIdMock },
+  LIVE_RUN_STATUSES: [],
+  PULL_CLAIMABLE_STATUSES: [],
+}))
+
+vi.mock("../src/connection/state-service", () => ({
+  connectionStateService: { transition: connectionTransitionMock },
 }))
 
 vi.mock("../src/base.service", () => ({
@@ -91,6 +103,8 @@ beforeEach(() => {
   })
   listWithIntegrationsByWorkspaceMock.mockResolvedValue([])
   tearDownForIntegrationMock.mockResolvedValue(undefined)
+  findByInboxIdMock.mockResolvedValue(undefined)
+  connectionTransitionMock.mockResolvedValue(undefined)
 })
 
 test("freezeWorkspaceRuntime runs cleanup in one transaction and removes Redis entries after commit", {

@@ -2,37 +2,46 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  mockConnectChannelIntegration,
+  mockCreateInbox,
   mockDelete,
   mockDisconnect,
-  mockInsert,
+  mockFindByProviderSourceId,
+  mockFindOrFail,
+  mockQueryFindFirst,
   mockTransaction,
+  mockUpsertConnectionRow,
+  mockWithQuotaCompensation,
   mockWorkspaceCreate,
 } = vi.hoisted(() => {
   const mockDeleteWhere = vi.fn(async () => undefined)
   const mockDelete = vi.fn(() => ({ where: mockDeleteWhere }))
-  const mockInsertValues = vi.fn(async () => undefined)
-  const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
+  const mockQueryFindFirst = vi.fn(async () => ({ id: "integration-1" }))
+  const makeTx = () => ({
+    delete: mockDelete,
+    query: { integrationTelegramModel: { findFirst: mockQueryFindFirst } },
+  })
 
   return {
-    mockConnectChannelIntegration: vi.fn(),
+    mockCreateInbox: vi.fn(async () => ({
+      inbox: { id: "inbox-1" },
+      wasCreated: true,
+    })),
     mockDelete,
     mockDisconnect: vi.fn(async () => undefined),
-    mockInsert,
+    mockFindByProviderSourceId: vi.fn(async () => undefined),
+    mockFindOrFail: vi.fn(),
+    mockQueryFindFirst,
     mockTransaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
-      callback({ delete: mockDelete, insert: mockInsert }),
+      callback(makeTx()),
+    ),
+    mockUpsertConnectionRow: vi.fn(async () => ({ id: "conn-1" })),
+    mockWithQuotaCompensation: vi.fn(
+      async (_input: unknown, operation: () => Promise<unknown>) =>
+        await operation(),
     ),
     mockWorkspaceCreate: vi.fn(async () => ({ id: "ws-new" })),
   }
 })
-
-class DatabaseErrorStub extends Error {
-  cause: { code: string }
-  constructor(code: string) {
-    super("db error")
-    this.cause = { code }
-  }
-}
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -41,8 +50,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
-  findOrFail: vi.fn(),
-  isDatabaseError: (error: unknown) => error instanceof DatabaseErrorStub,
+  findOrFail: mockFindOrFail,
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({
@@ -53,33 +61,32 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   integrationTelegramModel: { id: "id", botId: "botId" },
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: () => "generated-id",
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  connectionRepository: { findByProviderSourceId: mockFindByProviderSourceId },
 }))
 
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  // Defaults to "no Connection row" so the existing disconnect test below
-  // (written before the Connection-row integration) keeps exercising the
-  // legacy `inboxService.disconnect` fallback unchanged.
-  connectionRepository: { findByInboxId: vi.fn(async () => undefined) },
+vi.mock("../src/connection", () => ({
+  CONNECTION_STORE_BINDINGS: {
+    telegram: { duplicateConstraint: "IntegrationTelegram_botId_key" },
+  },
+  upsertConnectionRow: mockUpsertConnectionRow,
+  withQuotaCompensation: mockWithQuotaCompensation,
 }))
 
 vi.mock("../src/connection/state-service", () => ({
   connectionStateService: { disconnectInbox: mockDisconnect },
 }))
 
-vi.mock("../src/inbox/connect-channel", () => ({
-  connectChannelIntegration: mockConnectChannelIntegration,
-}))
-
 vi.mock("../src/inbox/service", () => ({
-  inboxService: { disconnect: mockDisconnect },
+  inboxService: { create: mockCreateInbox },
 }))
 
 vi.mock("../src/workspace", () => ({
   workspaceService: { create: mockWorkspaceCreate },
 }))
 
+// Dynamic: `vi.mock` above is hoisted above static imports, so the module
+// under test must be imported afterward to pick up the mocked dependencies.
 const { telegramIntegrationService } = await import(
   "../src/integration-telegram/service"
 )
@@ -87,10 +94,25 @@ const { telegramIntegrationService } = await import(
 describe("telegramIntegrationService.connect", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockConnectChannelIntegration.mockResolvedValue({ wasCreated: true })
+    mockCreateInbox.mockResolvedValue({
+      inbox: { id: "inbox-1" },
+      wasCreated: true,
+    })
+    mockFindByProviderSourceId.mockResolvedValue(undefined)
+    mockUpsertConnectionRow.mockResolvedValue({ id: "conn-1" })
+    mockQueryFindFirst.mockResolvedValue({ id: "integration-1" })
+    mockWithQuotaCompensation.mockImplementation(
+      async (_input: unknown, operation: () => Promise<unknown>) =>
+        await operation(),
+    )
     mockTransaction.mockImplementation(
       async (callback: (tx: unknown) => unknown) =>
-        callback({ delete: mockDelete, insert: mockInsert }),
+        callback({
+          delete: mockDelete,
+          query: {
+            integrationTelegramModel: { findFirst: mockQueryFindFirst },
+          },
+        }),
     )
   })
 
@@ -101,7 +123,9 @@ describe("telegramIntegrationService.connect", () => {
         callOrder.push("transaction-start")
         const result = await callback({
           delete: mockDelete,
-          insert: mockInsert,
+          query: {
+            integrationTelegramModel: { findFirst: mockQueryFindFirst },
+          },
         })
         callOrder.push("transaction-end")
         return result
@@ -143,10 +167,25 @@ describe("telegramIntegrationService.connect", () => {
     expect(mockWorkspaceCreate).not.toHaveBeenCalled()
 
     vi.clearAllMocks()
-    mockConnectChannelIntegration.mockResolvedValue({ wasCreated: true })
+    mockCreateInbox.mockResolvedValue({
+      inbox: { id: "inbox-1" },
+      wasCreated: true,
+    })
+    mockFindByProviderSourceId.mockResolvedValue(undefined)
+    mockUpsertConnectionRow.mockResolvedValue({ id: "conn-1" })
+    mockQueryFindFirst.mockResolvedValue({ id: "integration-1" })
+    mockWithQuotaCompensation.mockImplementation(
+      async (_input: unknown, operation: () => Promise<unknown>) =>
+        await operation(),
+    )
     mockTransaction.mockImplementation(
       async (callback: (tx: unknown) => unknown) =>
-        callback({ delete: mockDelete, insert: mockInsert }),
+        callback({
+          delete: mockDelete,
+          query: {
+            integrationTelegramModel: { findFirst: mockQueryFindFirst },
+          },
+        }),
     )
 
     const result = await telegramIntegrationService.connect({
@@ -158,26 +197,68 @@ describe("telegramIntegrationService.connect", () => {
       onConnected: vi.fn(async () => undefined),
     })
     expect(mockWorkspaceCreate).toHaveBeenCalledTimes(1)
+    expect(mockWorkspaceCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ createdBy: "user-1" }),
+    )
     expect(result.createdWorkspace).toBe(true)
     expect(result.workspaceId).toBe("ws-new")
   })
 
-  test("a 23505 database error surfaces as ChatbotXException('Bot already connected')", async () => {
-    mockTransaction.mockImplementation(() => {
-      throw new DatabaseErrorStub("23505")
+  test("looks up the existing Connection by botId so a same-workspace reconnect revives in place", async () => {
+    mockFindByProviderSourceId.mockResolvedValue({
+      id: "conn-1",
+      inboxId: "inbox-1",
+    })
+    mockCreateInbox.mockResolvedValue({
+      inbox: { id: "inbox-1" },
+      wasCreated: false,
     })
 
-    await expect(
-      telegramIntegrationService.connect({
-        workspaceId: "ws-1",
-        ownerId: "owner-1",
-        createdBy: "user-1",
-        botId: "bot-1",
-        botUsername: "mybot",
-        botToken: "token-1",
-        onConnected: vi.fn(async () => undefined),
+    const result = await telegramIntegrationService.connect({
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+      createdBy: "user-1",
+      botId: "bot-1",
+      botUsername: "mybot",
+      botToken: "token-1",
+      onConnected: vi.fn(async () => undefined),
+    })
+
+    expect(mockFindByProviderSourceId).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", provider: "telegram", sourceId: "bot-1" },
+      expect.anything(),
+    )
+    expect(mockUpsertConnectionRow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        existing: { id: "conn-1", inboxId: "inbox-1" },
       }),
-    ).rejects.toMatchObject({ message: "Bot already connected" })
+    )
+    expect(result.wasCreated).toBe(false)
+  })
+
+  test("passes the bot's auth, descriptor and inbox through to upsertConnectionRow", async () => {
+    await telegramIntegrationService.connect({
+      workspaceId: "ws-1",
+      ownerId: "owner-1",
+      createdBy: "user-1",
+      botId: "bot-1",
+      botUsername: "mybot",
+      botToken: "token-1",
+      onConnected: vi.fn(async () => undefined),
+    })
+
+    expect(mockUpsertConnectionRow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        provider: "telegram",
+        kind: "channel",
+        descriptor: { sourceId: "bot-1", displayName: "mybot" },
+        auth: { authType: "secretText", secretText: "token-1" },
+        existing: undefined,
+        ownerId: "owner-1",
+        inboxId: "inbox-1",
+      }),
+    )
   })
 })
 

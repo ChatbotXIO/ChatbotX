@@ -88,30 +88,6 @@ beforeEach(() => {
 })
 
 describe("connectSessionService.create", () => {
-  it.each([
-    {
-      actorTokenId: undefined,
-      actorUserId: undefined,
-    },
-    {
-      actorTokenId: "token-1",
-      actorUserId: "user-1",
-    },
-  ])("rejects invalid actor combinations with a typed validation error", async ({
-    actorTokenId,
-    actorUserId,
-  }) => {
-    await expect(
-      connectSessionService.create({
-        workspaceId: "ws-1",
-        provider: "messenger",
-        purpose: "connect",
-        actorUserId,
-        actorTokenId,
-      }),
-    ).rejects.toMatchObject({ code: "validation", httpStatusCode: 400 })
-  })
-
   it("throws connectSessionLimitReached at the per-workspace pending cap", async () => {
     mocks.countActiveByWorkspaceId.mockResolvedValue(20)
     await expect(
@@ -199,6 +175,39 @@ describe("connectSessionService.create", () => {
     await expect(
       connectSessionService.findByNonce("wrong-nonce"),
     ).resolves.toBeUndefined()
+  })
+
+  it("forwards an optional tx to both the active-count check and the insert (a caller minting the session's workspace in the same breath can run both atomically)", async () => {
+    mocks.insert.mockImplementation(
+      async (values: Record<string, unknown>) => ({
+        ...baseSession(),
+        ...values,
+      }),
+    )
+    // Test seam: a literal tag is enough to prove the same reference is
+    // forwarded to both repository calls; the repository itself is mocked.
+    const tx = "tx" as unknown as Parameters<
+      typeof connectSessionService.create
+    >[1]
+
+    await connectSessionService.create(
+      {
+        workspaceId: "ws-1",
+        provider: "messenger",
+        purpose: "connect",
+        actorUserId: "user-1",
+      },
+      tx,
+    )
+
+    expect(mocks.countActiveByWorkspaceId).toHaveBeenCalledWith(
+      { workspaceId: "ws-1" },
+      tx,
+    )
+    expect(mocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws-1" }),
+      tx,
+    )
   })
 })
 

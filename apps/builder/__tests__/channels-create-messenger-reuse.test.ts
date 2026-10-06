@@ -24,7 +24,9 @@ const {
   mockGetCurrentUserId: vi.fn(async () => "user-1"),
   mockListAndAttachCandidates: vi.fn(),
   mockRedirect: vi.fn((path: string) => {
-    throw new Error(`redirect:${path}`)
+    const error = new Error(`redirect:${path}`)
+    Object.assign(error, { digest: `NEXT_REDIRECT;replace;${path};307;` })
+    throw error
   }),
   mockRequireWorkspacePermission: vi.fn(async () => undefined),
   mockResolveOAuthCredential: vi.fn(),
@@ -39,6 +41,16 @@ vi.mock("next/navigation", () => ({
     throw new Error("not found")
   }),
   redirect: mockRedirect,
+  unstable_rethrow: (error: unknown) => {
+    if (
+      error instanceof Error &&
+      "digest" in error &&
+      typeof error.digest === "string" &&
+      error.digest.startsWith("NEXT_REDIRECT")
+    ) {
+      throw error
+    }
+  },
 }))
 
 // The mock request objects below only carry `nextUrl`, not the real
@@ -243,20 +255,19 @@ describe("GET /channels/create/messenger — Facebook SSO token reuse", () => {
       originHost: "localhost",
     })
     // Relative — `connectSessionService.updateReturnUrl`'s real
-    // `validateReturnUrl` rejects an absolute value outright (regression C1).
+    // `validateReturnUrl` rejects an absolute value outright.
     expect(mockUpdateReturnUrl).toHaveBeenCalledWith({
       id: "session-2",
       returnUrl: "/channels/messenger/select?session=session-2",
     })
   })
 
-  // Regression (C1): the route used to store an *absolute* returnUrl built
-  // from the request's own origin — `connectSessionService.updateReturnUrl`
-  // (real `validateReturnUrl`) rejects an absolute value outright, so every
-  // non-SSO connect start 400'd. The route must store a *relative* path;
-  // the OAuth callback resolves it against its own public origin before
-  // handing it to `sanitizeReferer` (real, unmocked here), which only
-  // accepts absolute URLs.
+  // The route must store a *relative* returnUrl — `connectSessionService
+  // .updateReturnUrl`'s real `validateReturnUrl` rejects an absolute value
+  // outright, so every non-SSO connect start would 400 otherwise. The
+  // OAuth callback resolves the relative path against its own public origin
+  // before handing it to `sanitizeReferer` (real, unmocked here), which
+  // only accepts absolute URLs.
   test("stores a relative returnUrl that the callback can resolve to an absolute, allowed URL instead of an absolute value the service would reject", async () => {
     mockTryReuseFacebookSsoToken.mockResolvedValue({ reusable: false })
     const { sanitizeReferer, FALLBACK_REDIRECT } = await import(

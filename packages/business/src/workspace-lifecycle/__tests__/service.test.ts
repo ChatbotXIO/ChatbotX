@@ -10,6 +10,8 @@ const {
   mockLiftDecompressionLimit,
   mockListWithIntegrationsByWorkspace,
   mockInboxDisconnect,
+  mockFindByInboxId,
+  mockConnectionTransition,
   mockSql,
 } = vi.hoisted(() => {
   const sql = Object.assign(
@@ -34,6 +36,8 @@ const {
     mockLiftDecompressionLimit: vi.fn().mockResolvedValue(undefined),
     mockListWithIntegrationsByWorkspace: vi.fn(),
     mockInboxDisconnect: vi.fn().mockResolvedValue(undefined),
+    mockFindByInboxId: vi.fn().mockResolvedValue(undefined),
+    mockConnectionTransition: vi.fn(),
     mockSql: sql,
   }
 })
@@ -58,6 +62,16 @@ vi.mock("@chatbotx.io/database/client", () => ({
   liftDecompressionLimit: mockLiftDecompressionLimit,
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  connectionRepository: { findByInboxId: mockFindByInboxId },
+  LIVE_RUN_STATUSES: [],
+  PULL_CLAIMABLE_STATUSES: [],
+}))
+
+vi.mock("../../connection/state-service", () => ({
+  connectionStateService: { transition: mockConnectionTransition },
+}))
+
 vi.mock("../../inbox/service", () => ({
   inboxService: {
     listWithIntegrationsByWorkspace: mockListWithIntegrationsByWorkspace,
@@ -76,6 +90,8 @@ describe("workspaceLifecycleService", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInboxDisconnect.mockResolvedValue(undefined)
+    mockFindByInboxId.mockResolvedValue(undefined)
+    mockConnectionTransition.mockResolvedValue(undefined)
     // Default: no hypertable rows, so purgeWorkspaceHeavyData exercises only the
     // ctid loop unless a test opts in.
     mockSelectDistinctLimit.mockResolvedValue([])
@@ -208,7 +224,7 @@ describe("workspaceLifecycleService", () => {
         workspaceId: "workspace-1",
         ownerId: "owner-1",
       }),
-    ).resolves.toBe(1)
+    ).resolves.toEqual({ disconnected: 1, pendingReleases: [] })
 
     expect(disconnect).toHaveBeenCalledWith({ token: "secret" })
     expect(tx.update).toHaveBeenCalled()
@@ -257,5 +273,125 @@ describe("workspaceLifecycleService", () => {
     // No credentials → provider call is skipped, but the inbox is still retired.
     expect(disconnect).not.toHaveBeenCalled()
     expect(mockInboxDisconnect).toHaveBeenCalled()
+  })
+
+  test("disconnectWorkspaceChannels routes a connection-backed inbox through teardown.disconnect for a trial-expiry/purge reason", async () => {
+    mockListWithIntegrationsByWorkspace.mockResolvedValue([
+      {
+        id: "inbox-1",
+        workspaceId: "workspace-1",
+        channel: "webchat",
+      },
+    ])
+    mockFindByInboxId.mockResolvedValue({ id: "connection-1" })
+
+    const tx = {
+      update: vi.fn(() => ({
+        set: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
+      })),
+      delete: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
+    }
+
+    await workspaceLifecycleService.disconnectWorkspaceChannels({
+      teardownLevel: "disconnect",
+      reason: "trial_expired",
+      tx: tx as never,
+      workspaceId: "workspace-1",
+      ownerId: "owner-1",
+    })
+
+    expect(mockConnectionTransition).toHaveBeenCalledWith({
+      connectionId: "connection-1",
+      event: "teardown.disconnect",
+      reason: "trial_expired",
+      ownerId: "owner-1",
+      tx,
+      pendingRelease: { current: null },
+    })
+    expect(mockInboxDisconnect).not.toHaveBeenCalled()
+  })
+
+  test("disconnectWorkspaceChannels routes a connection-backed inbox through teardown.pause for a tenant-suspension reason", async () => {
+    mockListWithIntegrationsByWorkspace.mockResolvedValue([
+      {
+        id: "inbox-1",
+        workspaceId: "workspace-1",
+        channel: "webchat",
+      },
+    ])
+    mockFindByInboxId.mockResolvedValue({ id: "connection-1" })
+
+    const tx = {
+      update: vi.fn(() => ({
+        set: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
+      })),
+      delete: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
+    }
+
+    await workspaceLifecycleService.disconnectWorkspaceChannels({
+      teardownLevel: "pause",
+      reason: "tenant_suspended",
+      tx: tx as never,
+      workspaceId: "workspace-1",
+      ownerId: "owner-1",
+    })
+
+    expect(mockConnectionTransition).toHaveBeenCalledWith({
+      connectionId: "connection-1",
+      event: "teardown.pause",
+      reason: "tenant_suspended",
+      ownerId: "owner-1",
+      tx,
+      pendingRelease: { current: null },
+    })
+    expect(mockInboxDisconnect).not.toHaveBeenCalled()
+  })
+
+  test("disconnectWorkspaceChannels keeps teardown.pause with reason tenant_suspended even when the provider reports the auth as revoked", async () => {
+    mockListWithIntegrationsByWorkspace.mockResolvedValue([
+      {
+        id: "inbox-1",
+        workspaceId: "workspace-1",
+        channel: "webchat",
+        integrationWebchat: {
+          id: "integration-1",
+          auth: { token: "secret" },
+        },
+      },
+    ])
+    mockFindByInboxId.mockResolvedValue({ id: "connection-1" })
+
+    const disconnect = vi.fn().mockRejectedValue(new Error("revoked"))
+
+    const tx = {
+      update: vi.fn(() => ({
+        set: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
+      })),
+      delete: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
+    }
+
+    await workspaceLifecycleService.disconnectWorkspaceChannels({
+      integrations: {
+        webchat: {
+          disconnect,
+          isRevokedTokenError: () => true,
+        },
+      },
+      teardownLevel: "pause",
+      reason: "tenant_suspended",
+      tx: tx as never,
+      workspaceId: "workspace-1",
+      ownerId: "owner-1",
+    })
+
+    expect(mockConnectionTransition).toHaveBeenCalledWith({
+      connectionId: "connection-1",
+      event: "teardown.pause",
+      reason: "tenant_suspended",
+      ownerId: "owner-1",
+      tx,
+      pendingRelease: { current: null },
+    })
+    expect(mockInboxDisconnect).not.toHaveBeenCalled()
   })
 })

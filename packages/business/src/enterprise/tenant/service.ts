@@ -4,8 +4,15 @@ import {
   CREATABLE_CHANNELS,
   ROOT_TENANT_ID,
 } from "@chatbotx.io/database/partials"
+import {
+  connectionRepository,
+  inboxRepository,
+} from "@chatbotx.io/database/repositories"
 import { tenantModel } from "@chatbotx.io/database/schema"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
+import { connectionStateService } from "../../connection/state-service"
+import { inboxService } from "../../inbox/service"
+import { logger } from "../../logger"
 import type { EmailTemplate } from "../../platform/settings"
 import { userQuotaService } from "../../user-quota/service"
 import { workspaceLifecycleService } from "../../workspace-lifecycle/service"
@@ -236,9 +243,61 @@ export const tenantService = {
     return this.setStatusByOwner(ownerId, "suspended")
   },
 
-  /** Restore a suspended tenant to active, re-enabling its sub-accounts. */
-  reactivate(ownerId: string): Promise<void> {
-    return this.setStatusByOwner(ownerId, "active")
+  /**
+   * Restore a suspended tenant to active, re-enabling its sub-accounts, then
+   * resume every `Connection` its `suspend()` call paused — the
+   * `teardown.resume` edge mirrors `Inbox.status` back to `connected` and
+   * re-consumes the `channels` quota unit `teardown.pause` released. Each
+   * connection's resume is its own try/catch: a quota-exhausted owner (a
+   * `channelLimitReached` rejection from the engine) must not abort the rest
+   * of the sweep, it just leaves that one connection `paused` — logged, not
+   * thrown — so every other eligible connection still comes back.
+   *
+   * Also sweeps `Inbox` rows `suspend()` paused directly because no
+   * `Connection` row existed yet to route the pause through the engine (the
+   * pre-backfill fallback in `workspaceLifecycleService.disconnectWorkspaceInbox`).
+   * Temporary until the `Connection` backfill lands everywhere — remove this
+   * block alongside `inboxRepository.listTenantSuspendedWithoutConnectionByOwner`
+   * once the backfill's `--verify` is 0.
+   */
+  async reactivate(ownerId: string): Promise<void> {
+    await this.setStatusByOwner(ownerId, "active")
+    const pausedConnections = await connectionRepository.listPausedByOwner({
+      ownerId,
+    })
+    for (const connection of pausedConnections) {
+      try {
+        await connectionStateService.transition({
+          connectionId: connection.id,
+          event: "teardown.resume",
+          ownerId,
+        })
+      } catch (err) {
+        logger.error(
+          { err, connectionId: connection.id, ownerId },
+          "tenant reactivate: connection resume failed, left paused",
+        )
+      }
+    }
+
+    const pausedInboxesWithoutConnection =
+      await inboxRepository.listTenantSuspendedWithoutConnectionByOwner({
+        ownerId,
+      })
+    for (const inbox of pausedInboxesWithoutConnection) {
+      try {
+        await inboxService.resumeTenantSuspended({
+          inboxId: inbox.id,
+          workspaceId: inbox.workspaceId,
+          ownerId,
+        })
+      } catch (err) {
+        logger.error(
+          { err, inboxId: inbox.id, ownerId },
+          "tenant reactivate: inbox resume failed, left disconnected",
+        )
+      }
+    }
   },
 
   /**

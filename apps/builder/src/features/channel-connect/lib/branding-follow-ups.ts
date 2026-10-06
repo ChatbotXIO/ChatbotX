@@ -3,11 +3,18 @@ import "server-only"
 import {
   type BuildContextIntegrationRow,
   buildContext,
+  resolveTenantSettings,
+  workspaceService,
 } from "@chatbotx.io/business"
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import type { AuthValue, Context } from "@chatbotx.io/sdk"
-import { BRANDING_TITLE } from "@/features/integration-webchat/lib"
+import {
+  BRANDING_TITLE,
+  getBrandingUrl,
+} from "@/features/integration-webchat/lib"
 import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
+import { logger } from "@/lib/log"
 
 /** Shared shape every channel's `integration` export satisfies for these two calls. */
 type BrandingIntegration<TAuth extends AuthValue> = {
@@ -43,7 +50,7 @@ export async function runBrandingFollowUps<TAuth extends AuthValue>(input: {
   /**
    * Persists the branding entry onto the satellite row's own local
    * `persistentMenus` column after `addBranding`'s live Graph push
-   * succeeds — restores the v1.11.0 insert-time-seeded value (dropped when
+   * succeeds — restores the insert-time-seeded value (dropped when
    * messenger/instagram moved onto the unified connect session, whose
    * `candidateToConfig` has no app-layer `appUrl`/branding context to seed
    * it at insert time). Only called on a successful push, and only the
@@ -92,4 +99,58 @@ export async function runBrandingFollowUps<TAuth extends AuthValue>(input: {
   if (failed) {
     throw failed.reason
   }
+}
+
+/**
+ * The `workspace`/`appUrl` lookup plus best-effort `runBrandingFollowUps`
+ * call repeated identically across Messenger's, Instagram's, and
+ * Instagram-via-Facebook's reconnect handlers: seeds the community branding
+ * menu entry onto the satellite row, matching each channel's fresh-connect
+ * follow-up — a reconnect that reinserted a deleted row would otherwise
+ * never get it seeded. A failure here must never fail the whole reconnect,
+ * so it's logged and swallowed rather than propagated. Returns `appUrl`
+ * since some callers (e.g. Messenger's whitelist-domain refresh) need it
+ * for follow-up work after this.
+ */
+export async function seedReconnectBranding<TAuth extends AuthValue>(input: {
+  workspaceId: string
+  integrationId: string
+  channel: ChannelType
+  integrationRow: BuildContextIntegrationRow<TAuth>
+  integration: BrandingIntegration<TAuth>
+  integrationType: string
+  persistBrandingMenu?: (entry: {
+    label: string
+    type: "url"
+    url: string
+  }) => Promise<void>
+  /** Channel name used in the best-effort failure log, e.g. `"Messenger"`, `"Instagram (via Facebook)"`. */
+  logLabel: string
+}): Promise<{ appUrl: string }> {
+  const [workspace, { appUrl }] = await Promise.all([
+    workspaceService.findById({ id: input.workspaceId }),
+    resolveTenantSettings({ workspaceId: input.workspaceId }),
+  ])
+
+  await runBrandingFollowUps({
+    session: {
+      workspace,
+      brandingMenuEntry: { url: getBrandingUrl(input.channel, appUrl) },
+    },
+    integrationRow: input.integrationRow,
+    integration: input.integration,
+    integrationType: input.integrationType,
+    persistBrandingMenu: input.persistBrandingMenu,
+  }).catch((error) => {
+    logger.warn(
+      {
+        err: error,
+        workspaceId: input.workspaceId,
+        integrationId: input.integrationId,
+      },
+      `${input.logLabel} branding follow-up failed during reconnect`,
+    )
+  })
+
+  return { appUrl }
 }

@@ -13,6 +13,7 @@ export const ACTIVE_CONNECTION_STATUSES = [
   "connected",
   "degraded",
 ] as const satisfies readonly ConnectionStatus[]
+export type ActiveConnectionStatus = (typeof ACTIVE_CONNECTION_STATUSES)[number]
 export const INACTIVE_CONNECTION_STATUSES = [
   "needs_reauth",
   "paused",
@@ -46,20 +47,37 @@ export const connectionStatusReasons = z.enum([
 export type ConnectionStatusReason = z.infer<typeof connectionStatusReasons>
 
 /**
- * Legacy mirror for `Inbox.disconnectReason` — narrower than
- * `ConnectionStatusReason`. Kept in sync manually (not derived) because the
- * two enums serve different audiences: `Connection` reasons are precise for
- * the API/audit trail, `Inbox.disconnectReason` predates this domain and its
- * values are already load-bearing (UI copy, exports).
+ * `Inbox.disconnectReason` predates this `Connection` domain and is narrower
+ * than `ConnectionStatusReason`. Lives here (not `@chatbotx.io/database`) for
+ * the same reason `connectionStatusReasons` above does — re-exported from
+ * `@chatbotx.io/database/partials` for existing backend importers (mirrors
+ * the `inboxStatuses` precedent in `@chatbotx.io/utils/conversation`).
+ */
+export const inboxDisconnectReasons = z.enum([
+  "manual",
+  "workspace_purge",
+  "trial_expired",
+  "tenant_suspended",
+  "token_revoked",
+])
+export type InboxDisconnectReason = z.infer<typeof inboxDisconnectReasons>
+
+/**
+ * `workspace_purge`, `trial_expired`, and `tenant_suspended` map 1-1 onto
+ * their own `Inbox.disconnectReason` values (matching how disconnects were
+ * `disconnectReason` directly, before this `Connection` layer existed) —
+ * they must NOT collapse into the generic `manual` bucket. Reasons with no
+ * Inbox-native equivalent (`verify_failed`, `quota_exceeded`,
+ * `orphaned_webhook`) fall back to `manual`.
  */
 export const CONNECTION_TO_INBOX_DISCONNECT_REASON: Record<
   ConnectionStatusReason,
-  "manual" | "token_revoked"
+  InboxDisconnectReason
 > = {
   manual: "manual",
-  workspace_purge: "manual",
-  trial_expired: "manual",
-  tenant_suspended: "manual",
+  workspace_purge: "workspace_purge",
+  trial_expired: "trial_expired",
+  tenant_suspended: "tenant_suspended",
   token_revoked: "token_revoked",
   provider_revoked: "token_revoked",
   refresh_failed: "token_revoked",

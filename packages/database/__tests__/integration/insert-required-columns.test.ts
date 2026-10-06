@@ -36,13 +36,11 @@ import type { PgTable } from "drizzle-orm/pg-core"
 import { Client } from "pg"
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 import { connectSessionRepository } from "../../src/repositories/connect-session/repository"
-import { integrationInstagramRepository } from "../../src/repositories/integration-instagram/repository"
-import { integrationMessengerRepository } from "../../src/repositories/integration-messenger/repository"
-import { integrationWhatsappRepository } from "../../src/repositories/integration-whatsapp/repository"
 import { whatsappSignupSessionRepository } from "../../src/repositories/integration-whatsapp/signup-session"
 import {
   connectSessionModel,
   inboxModel,
+  integrationApiModel,
   integrationInstagramModel,
   integrationMessengerModel,
   integrationWhatsappModel,
@@ -62,6 +60,7 @@ type TableFacts = Map<string, ColumnFact>
 const AUDITED_TABLES = [
   connectSessionModel,
   inboxModel,
+  integrationApiModel,
   integrationInstagramModel,
   integrationMessengerModel,
   integrationWhatsappModel,
@@ -176,60 +175,6 @@ describe.skipIf(!databaseUrl)(
       run: (tx: never) => Promise<unknown>
     }[] = [
       {
-        name: "integrationMessengerRepository.insert",
-        table: integrationMessengerModel as unknown as PgTable,
-        run: (tx) =>
-          integrationMessengerRepository.insert(
-            {
-              id: "integration-1",
-              workspaceId: "workspace-1",
-              inboxId: "inbox-1",
-              pageId: "page-1",
-              auth: { tokens: { accessToken: "token" } },
-              name: "My Page",
-            },
-            tx,
-          ),
-      },
-      {
-        name: "integrationInstagramRepository.insert",
-        table: integrationInstagramModel as unknown as PgTable,
-        run: (tx) =>
-          integrationInstagramRepository.insert(
-            {
-              id: "integration-1",
-              workspaceId: "workspace-1",
-              inboxId: "inbox-1",
-              igId: "ig-1",
-              pageId: "page-1",
-              auth: { tokens: { accessToken: "token" } },
-              name: "My Account",
-              username: "my_account",
-            },
-            tx,
-          ),
-      },
-      {
-        name: "integrationWhatsappRepository.upsertByInbox",
-        table: integrationWhatsappModel as unknown as PgTable,
-        run: (tx) =>
-          integrationWhatsappRepository.upsertByInbox(
-            {
-              id: "integration-1",
-              workspaceId: "workspace-1",
-              inboxId: "inbox-1",
-              auth: { tokens: { accessToken: "token" } },
-              phoneNumberId: "phone-1",
-              wabaId: "waba-1",
-              businessId: "business-1",
-              name: "My Number",
-              isCoexist: false,
-              platformType: "CLOUD_API",
-            },
-            tx,
-          ),
-      },
-      {
         name: "whatsappSignupSessionRepository.createSignupSession",
         table: whatsappSignupSessionModel as unknown as PgTable,
         run: (tx) =>
@@ -310,6 +255,102 @@ describe.skipIf(!databaseUrl)(
         "channel",
         "name",
         "sourceId",
+        "workspaceId",
+      ])
+    })
+
+    /**
+     * `IntegrationWhatsapp` rows are written by the generic connection
+     * engine (`CONNECTION_STORE_BINDINGS.whatsapp`'s `insertRow`,
+     * `packages/business/src/connection/store-bindings.ts`), which this
+     * package cannot import — so pin the requirement instead, same as the
+     * `Inbox` case above. A new NOT NULL column without a database default
+     * fails here, and the fix is to write it from `connectPhoneNumber`
+     * (`packages/business/src/integration-whatsapp/connect.ts`)'s
+     * `extraConfig`, allow-listed in that binding's `configColumns`.
+     */
+    test("the IntegrationWhatsapp columns a connect must supply are still exactly these", () => {
+      expect(
+        requiredColumns(integrationWhatsappModel as unknown as PgTable),
+      ).toEqual([
+        "auth",
+        "businessId",
+        "inboxId",
+        "name",
+        "phoneNumberId",
+        "wabaId",
+        "workspaceId",
+      ])
+    })
+
+    /**
+     * `IntegrationMessenger` rows are written by the generic connection
+     * engine (`CONNECTION_STORE_BINDINGS.messenger`'s `insertRow`,
+     * `packages/business/src/connection/store-bindings.ts`), which this
+     * package cannot import — so pin the requirement instead, same as the
+     * `IntegrationWhatsapp` case above. `conversationStarters`/
+     * `persistentMenus`/`personas` come from that binding's
+     * `extraInsertValues`.
+     */
+    test("the IntegrationMessenger columns a connect must supply are still exactly these", () => {
+      expect(
+        requiredColumns(integrationMessengerModel as unknown as PgTable),
+      ).toEqual([
+        "auth",
+        "conversationStarters",
+        "inboxId",
+        "name",
+        "pageId",
+        "persistentMenus",
+        "personas",
+        "workspaceId",
+      ])
+    })
+
+    /**
+     * `IntegrationInstagram` rows are written by the generic connection
+     * engine (`CONNECTION_STORE_BINDINGS.instagram`/`.instagramFacebook`'s
+     * `insertRow`, `packages/business/src/connection/store-bindings.ts`),
+     * which this package cannot import — so pin the requirement instead,
+     * same as the `IntegrationWhatsapp` case above. `conversationStarters`/
+     * `persistentMenus` come from that binding's `extraInsertValues`;
+     * `pageId`/`username` from its `configColumns` (the connect adapter's
+     * `candidateToConfig`).
+     */
+    test("the IntegrationInstagram columns a connect must supply are still exactly these", () => {
+      expect(
+        requiredColumns(integrationInstagramModel as unknown as PgTable),
+      ).toEqual([
+        "auth",
+        "conversationStarters",
+        "igId",
+        "inboxId",
+        "name",
+        "pageId",
+        "persistentMenus",
+        "username",
+        "workspaceId",
+      ])
+    })
+
+    /**
+     * `IntegrationApi` rows are written by the generic connection engine
+     * (`CONNECTION_STORE_BINDINGS.api`'s `insertRow`,
+     * `packages/business/src/connection/store-bindings.ts`), which this
+     * package cannot import — so pin the requirement instead, same as the
+     * `IntegrationWhatsapp` case above. `tokenHash`/`tokenPrefix` come from
+     * that binding's `configColumns` — `integrationApiService.connect`'s
+     * `extraConfig` always supplies them.
+     */
+    test("the IntegrationApi columns a connect must supply are still exactly these", () => {
+      expect(
+        requiredColumns(integrationApiModel as unknown as PgTable),
+      ).toEqual([
+        "auth",
+        "inboxId",
+        "name",
+        "tokenHash",
+        "tokenPrefix",
         "workspaceId",
       ])
     })

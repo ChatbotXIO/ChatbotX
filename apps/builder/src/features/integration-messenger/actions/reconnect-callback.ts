@@ -1,6 +1,6 @@
 import {
+  connectionStateService,
   messengerIntegrationService,
-  resolveTenantSettings,
 } from "@chatbotx.io/business"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import {
@@ -8,6 +8,7 @@ import {
   exchangeCodeForToken,
   getFacebookUser,
   getUserPages,
+  integration as messengerChannelIntegration,
   toAppAccessToken,
 } from "@chatbotx.io/integration-messenger"
 import {
@@ -18,6 +19,7 @@ import {
 } from "@chatbotx.io/integration-messenger/apis/page"
 import { AuthType } from "@chatbotx.io/sdk"
 import { normalizeError } from "universal-error-normalizer"
+import { seedReconnectBranding } from "@/features/channel-connect/lib/branding-follow-ups"
 import type { ReconnectResult } from "@/lib/channel-reconnect"
 import { lookupIntegrationUserInfo } from "@/lib/integration-user-info"
 import { logger } from "@/lib/log"
@@ -106,13 +108,39 @@ export async function reconnectMessengerHandler(props: {
 
     // DB write before the webhook subscription (matching the connect flow) so
     // a failed write never leaves the webhook re-bound while the stored auth
-    // still holds the stale token.
-    await messengerIntegrationService.updateAuth({
-      id: integrationMessenger.id,
+    // still holds the stale token (see `commitReconnect`'s doc for the
+    // transaction rationale).
+    await connectionStateService.commitReconnect({
+      inboxId: integrationMessenger.inboxId,
       workspaceId: props.workspaceId,
       auth,
-      name: page.name,
-      ...(userInfo ? { userInfo } : {}),
+      writeAuth: async (tx) => {
+        await messengerIntegrationService.updateAuth({
+          id: integrationMessenger.id,
+          workspaceId: props.workspaceId,
+          auth,
+          name: page.name,
+          ...(userInfo ? { userInfo } : {}),
+          tx,
+        })
+      },
+    })
+
+    const { appUrl } = await seedReconnectBranding({
+      workspaceId: props.workspaceId,
+      integrationId: props.integrationId,
+      channel: "messenger",
+      integrationRow: { ...integrationMessenger, auth },
+      integration: messengerChannelIntegration,
+      integrationType: "messenger",
+      persistBrandingMenu: integrationMessenger.persistentMenus.length
+        ? undefined
+        : (entry) =>
+            messengerIntegrationService.seedPersistentMenu({
+              id: integrationMessenger.id,
+              entry,
+            }),
+      logLabel: "Messenger",
     })
 
     // Re-subscribe the page to exactly the webhook fields its reconnected
@@ -142,9 +170,6 @@ export async function reconnectMessengerHandler(props: {
       subscribedFields: scopesToPageSubscribeFields(debug?.scopes).join(","),
     })
 
-    const { appUrl } = await resolveTenantSettings({
-      workspaceId: props.workspaceId,
-    })
     await ensureMessengerWhitelistedDomain({
       appUrl,
       ctx: {

@@ -1,5 +1,8 @@
 import { connectSessionService } from "@chatbotx.io/business/connect-session"
-import { isActiveConnectionStatus } from "@chatbotx.io/business/connection"
+import {
+  isActiveConnectionStatus,
+  resolveOwnerId,
+} from "@chatbotx.io/business/connection"
 import {
   ChatbotXException,
   connectionAlreadyConnectedException,
@@ -25,7 +28,6 @@ import {
   connectAndPersist,
   encryptedCandidatesSchema,
   resolveAdapter,
-  resolveOwnerId,
   toConnectionProviderError,
 } from "./internal"
 import { logger } from "./logger"
@@ -51,7 +53,7 @@ export const failSession = async (
   }
 }
 
-export const toFailureOutcome = (input: {
+const toFailureOutcome = (input: {
   err: unknown
   provider: IntegrationType
   targetId: string

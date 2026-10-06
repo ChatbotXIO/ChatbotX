@@ -42,6 +42,10 @@ export const integrationOpenaiModel = pgTable(
     }),
   },
   (table) => [
+    uniqueIndex("IntegrationOpenAI_workspaceId_key").using(
+      "btree",
+      table.workspaceId.asc().nullsLast(),
+    ),
     uniqueIndex("IntegrationOpenAI_integrationId_key").using(
       "btree",
       table.integrationId.asc().nullsLast(),

@@ -42,10 +42,6 @@ vi.mock("@chatbotx.io/utils", () => ({
 // services) pull in real modules transitively — mock them at the boundary
 // so this narrow lookup test doesn't have to satisfy their own dependency
 // graphs (e.g. `@chatbotx.io/analytics`'s schema requirements).
-vi.mock("../src/inbox/connect-channel", () => ({
-  connectChannelIntegration: vi.fn(),
-}))
-
 vi.mock("../src/inbox/service", () => ({
   inboxService: { disconnect: vi.fn() },
 }))
@@ -70,6 +66,19 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("../src/connection/state-service", () => ({
   connectionStateService: { transition: vi.fn() },
+}))
+
+// `zaloIntegrationService.connect`'s engine imports (`CONNECTION_STORE_BINDINGS`
+// et al, added by the Connection-engine migration) pull in `store-bindings.ts`,
+// which imports every provider's schema model — mocked at the boundary for
+// the same reason as the imports above; this test never exercises `connect()`.
+vi.mock("../src/connection", () => ({
+  CONNECTION_STORE_BINDINGS: {},
+  upsertConnectionRow: vi.fn(),
+  withQuotaCompensation: vi.fn(
+    async (_input: unknown, operation: () => Promise<unknown>) =>
+      await operation(),
+  ),
 }))
 
 beforeEach(() => {

@@ -256,6 +256,7 @@
     "integration-whatsapp/prepare-connect-shared:createPhoneNumberSelectionResult": "private:no public surface yet (UI-only, not yet audited)",
     "integration-whatsapp/prepare-connect-shared:partitionDirectPhoneNumber": "private:no public surface yet (UI-only, not yet audited)",
     "integration-whatsapp/provision-capi-dataset.action:provisionWhatsappCapiDatasetAction": "private:no public surface yet (UI-only, not yet audited)",
+    "integration-whatsapp/reconnect.action:persistReconnectAuthAndResubscribe": "private:no public surface yet (UI-only, not yet audited)",
     "integration-whatsapp/reconnect.action:reconnectWhatsappAction": "private:no public surface yet (UI-only, not yet audited)",
     "integration-whatsapp/set-capi-dataset.action:setWhatsappCapiDatasetAction": "private:no public surface yet (UI-only, not yet audited)",
     "integration-whatsapp/update-handover-resume-flow.action:updateHandoverResumeFlowAction": "private:no public surface yet (UI-only, not yet audited)",

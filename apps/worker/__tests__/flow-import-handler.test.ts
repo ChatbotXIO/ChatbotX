@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   updateValues: [] as Record<string, unknown>[],
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
+vi.mock("@chatbotx.io/business/import", () => ({
   importService: {
     markProcessing: vi.fn(() => {
       mocks.updateValues.push({ status: "processing" })
@@ -53,6 +53,9 @@ vi.mock("@chatbotx.io/business", () => ({
       },
     ),
   },
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
   flowService: {
     importFlowExport: (...args: unknown[]) => mocks.importFlowExport(...args),
   },

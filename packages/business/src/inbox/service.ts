@@ -437,6 +437,10 @@ class InboxService extends BaseService {
 
     if (existing) {
       if (existing.status === inboxStatuses.enum.disconnected) {
+        if (!skipQuota) {
+          await this.consumeChannelQuota(ownerId)
+        }
+
         const [updated] = await tx
           .update(inboxModel)
           .set({
@@ -447,19 +451,18 @@ class InboxService extends BaseService {
           })
           .where(eq(inboxModel.id, existing.id))
           .returning()
+
+        if (!skipQuota) {
+          await this.creditChannelUsage(data.workspaceId)
+        }
+
         return { inbox: updated, wasCreated: true }
       }
       return { inbox: existing, wasCreated: false }
     }
 
     if (!skipQuota) {
-      const consumed = await quotaEnforcementService.tryConsume({
-        userId: ownerId,
-        metric: "channels",
-      })
-      if (!consumed.ok) {
-        throw channelLimitReachedException()
-      }
+      await this.consumeChannelQuota(ownerId)
     }
 
     const [inbox] = await tx
@@ -468,17 +471,33 @@ class InboxService extends BaseService {
       .returning()
 
     if (!skipQuota) {
-      await workspaceUsageService
-        .increment(data.workspaceId, "channels")
-        .catch((err) => {
-          logger.warn(
-            { err, workspaceId: data.workspaceId },
-            "workspace usage channel increment failed",
-          )
-        })
+      await this.creditChannelUsage(data.workspaceId)
     }
 
     return { inbox, wasCreated: true }
+  }
+
+  /** Authoritative `channels` quota gate shared by `create`'s fresh-insert and revive branches. */
+  private async consumeChannelQuota(ownerId: string): Promise<void> {
+    const consumed = await quotaEnforcementService.tryConsume({
+      userId: ownerId,
+      metric: "channels",
+    })
+    if (!consumed.ok) {
+      throw channelLimitReachedException()
+    }
+  }
+
+  /** Display-only breakdown credit mirroring `consumeChannelQuota`; never lets a failure undo the quota unit already consumed above. */
+  private async creditChannelUsage(workspaceId: string): Promise<void> {
+    await workspaceUsageService
+      .increment(workspaceId, "channels")
+      .catch((err) => {
+        logger.warn(
+          { err, workspaceId },
+          "workspace usage channel increment failed",
+        )
+      })
   }
 
   async disconnect(props: {
@@ -497,7 +516,12 @@ class InboxService extends BaseService {
         disconnectedAt: new Date(),
         disconnectReason: props.reason,
       })
-      .where(eq(inboxModel.id, props.inboxId))
+      .where(
+        and(
+          eq(inboxModel.id, props.inboxId),
+          eq(inboxModel.workspaceId, props.workspaceId),
+        ),
+      )
     // Whatever the channel, a disconnected Page must not keep a bulk AI
     // hand-over running: stop it in the same transaction as the disconnect.
     const ref = { workspaceId: props.workspaceId, inboxId: props.inboxId }
@@ -524,6 +548,62 @@ class InboxService extends BaseService {
         logger.warn(
           { err, inboxId: props.inboxId, workspaceId: props.workspaceId },
           "inbox disconnect: workspace usage channel decrement failed",
+        )
+      })
+  }
+
+  /**
+   * Temporary counterpart of `disconnect`'s pre-backfill fallback above:
+   * resumes an `Inbox` row `tenantService.suspend()` paused directly (no
+   * `Connection` row existed yet to route the pause through the engine) by
+   * re-consuming the `channels` quota unit that disconnect released, then
+   * mirroring the row back to `connected` — the same shape
+   * `connectionStateService.transition`'s `teardown.resume` edge produces
+   * for a backfilled connection. Throws `channelLimitReachedException` when
+   * the owner's quota is exhausted, same as `create` above; the caller
+   * (`tenantService.reactivate`) must catch it per-row so one exhausted
+   * owner doesn't abort the rest of the sweep. Remove alongside
+   * `inboxRepository.listTenantSuspendedWithoutConnectionByOwner` once the
+   * `Connection` backfill's `--verify` is 0.
+   */
+  async resumeTenantSuspended(props: {
+    inboxId: string
+    workspaceId: string
+    ownerId: string
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const client = props.tx ?? db
+
+    const consumed = await quotaEnforcementService.tryConsume({
+      userId: props.ownerId,
+      metric: "channels",
+    })
+    if (!consumed.ok) {
+      throw channelLimitReachedException()
+    }
+
+    await client
+      .update(inboxModel)
+      .set({
+        status: inboxStatuses.enum.connected,
+        disconnectedAt: null,
+        disconnectReason: null,
+      })
+      .where(
+        and(
+          eq(inboxModel.id, props.inboxId),
+          eq(inboxModel.workspaceId, props.workspaceId),
+        ),
+      )
+
+    // Display-only breakdown, mirroring `create`'s increment. Never let a
+    // failure here affect the authoritative quota unit already consumed above.
+    await workspaceUsageService
+      .increment(props.workspaceId, "channels")
+      .catch((err) => {
+        logger.warn(
+          { err, inboxId: props.inboxId, workspaceId: props.workspaceId },
+          "inbox resume: workspace usage channel increment failed",
         )
       })
   }

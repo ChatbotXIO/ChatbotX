@@ -18,6 +18,7 @@
  * builder origin" the task refers to.
  */
 
+import type * as DatabaseSchema from "@chatbotx.io/database/schema"
 import type { NextRequest } from "next/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -122,6 +123,10 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
+vi.mock("@chatbotx.io/business/connection", () => ({
+  authExpiresAtOf: vi.fn(() => null),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: { transaction: vi.fn() },
 }))
@@ -141,11 +146,15 @@ vi.mock("@chatbotx.io/connections", () => ({
   CONNECTION_REGISTRY: {},
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  integrationGoogleSheetsModel: {},
-  integrationModel: {},
-  ROOT_TENANT_ID: "1",
-}))
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => {
+  const actual = await importOriginal<typeof DatabaseSchema>()
+  return {
+    ...actual,
+    integrationGoogleSheetsModel: {},
+    integrationModel: {},
+    ROOT_TENANT_ID: "1",
+  }
+})
 
 vi.mock("@chatbotx.io/integration-facebook-ads", () => ({
   exchangeCodeForToken: mockExchangeFacebookAdsCode,

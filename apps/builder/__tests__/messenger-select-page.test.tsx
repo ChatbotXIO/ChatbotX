@@ -6,15 +6,19 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockGetCurrentUserId,
+  mockHeaders,
   mockRedirect,
   mockResolveConnectSessionForSelect,
+  mockSanitizeReferer,
   mockSelectPage,
 } = vi.hoisted(() => ({
   mockGetCurrentUserId: vi.fn(),
+  mockHeaders: vi.fn(async () => new Headers()),
   mockRedirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`)
   }),
   mockResolveConnectSessionForSelect: vi.fn(),
+  mockSanitizeReferer: vi.fn(async (referer: string) => referer),
   mockSelectPage: vi.fn(() => null),
 }))
 
@@ -36,7 +40,15 @@ vi.mock("@/features/channel-connect/lib/resolve-connect-session", () => ({
 }))
 
 vi.mock("@/lib/log", () => ({
-  logger: { warn: vi.fn(), error: vi.fn() },
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}))
+
+vi.mock("next/headers", () => ({
+  headers: mockHeaders,
+}))
+
+vi.mock("@/lib/oauth-referer", () => ({
+  sanitizeReferer: mockSanitizeReferer,
 }))
 
 vi.mock("@/features/inboxes/components/inbox-icon", () => ({
@@ -181,5 +193,50 @@ describe("MessengerSelectPage", () => {
     mockResolveConnectSessionForSelect.mockRejectedValue(new Error("db blip"))
 
     await expect(MessengerSelectPage(pageArgs)).rejects.toThrow("db blip")
+  })
+
+  test("never redirects back to the session's stored returnUrl when the user cancelled the OAuth dialog — falls back to the request's referer instead (regression: the stored returnUrl is always this select page's own URL, set by start-channel-connect.ts so a SUCCESSFUL connect's callback knows where to send the user; following it on cancellation instead bounced the request right back into this same cancelled-session check, an infinite redirect loop on the ordinary 'user clicked Cancel' path)", async () => {
+    const cancelled = new ChatbotXException(
+      "cancelled",
+      "connectSessionCancelled",
+    )
+    cancelled.data = {
+      returnUrl: "/channels/messenger/select?session=session-1",
+    }
+    mockResolveConnectSessionForSelect.mockRejectedValue(cancelled)
+    const referer = "https://app.test/space/ws-1/settings/channels"
+    mockHeaders.mockResolvedValue(new Headers({ referer }))
+    mockSanitizeReferer.mockResolvedValue(referer)
+
+    await expect(MessengerSelectPage(pageArgs)).rejects.toThrow(
+      `redirect:${referer}`,
+    )
+    expect(mockSanitizeReferer).toHaveBeenCalledWith(referer)
+  })
+
+  test("falls back to the request's (sanitized) referer when a cancelled session has no stored returnUrl", async () => {
+    mockResolveConnectSessionForSelect.mockRejectedValue(
+      new ChatbotXException("cancelled", "connectSessionCancelled"),
+    )
+    const referer = "https://app.test/channels/create?workspaceId=ws-1"
+    mockHeaders.mockResolvedValue(new Headers({ referer }))
+    mockSanitizeReferer.mockResolvedValue(referer)
+
+    await expect(MessengerSelectPage(pageArgs)).rejects.toThrow(
+      `redirect:${referer}`,
+    )
+    expect(mockSanitizeReferer).toHaveBeenCalledWith(referer)
+  })
+
+  test("falls back to channel creation when a cancelled session has no stored returnUrl and the request carries no referer", async () => {
+    mockResolveConnectSessionForSelect.mockRejectedValue(
+      new ChatbotXException("cancelled", "connectSessionCancelled"),
+    )
+    mockHeaders.mockResolvedValue(new Headers())
+
+    await expect(MessengerSelectPage(pageArgs)).rejects.toThrow(
+      "redirect:/channels/create",
+    )
+    expect(mockSanitizeReferer).not.toHaveBeenCalled()
   })
 })
