@@ -23,8 +23,10 @@ import type { ConnectionStoreBinding } from "./store-bindings"
 
 /**
  * The FK a `Connection` row actually carries to its satellite row —
- * `inboxId` for channels, `integrationId` for workspace integrations. `null`
- * only for `chatbotx` (no satellite table at all).
+ * `inboxId` for channels, `integrationId` for workspace integrations.
+ * `null` for providers with no satellite table at all (e.g. `chatbotx`,
+ * the internal built-in channel) or whose `Connection` row hasn't been
+ * linked to one yet.
  */
 export const resolveForeignKey = (connection: ConnectionModel): string | null =>
   connection.inboxId ?? connection.integrationId ?? null

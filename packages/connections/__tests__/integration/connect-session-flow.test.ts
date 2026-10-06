@@ -1,24 +1,23 @@
 // @vitest-environment node
 
 /**
- * Real-Postgres coverage for four `connect-session-flow.ts` fixes (plan
- * `~/.claude/plans/1-nh-gi-l-i-bubbly-pretzel.md`):
+ * Real-Postgres coverage for four `connect-session-flow.ts` fixes:
  *
- * - H-2 (`completeReconnect`, satellite reinsert): reconnecting a channel
- *   whose satellite row no longer exists (a prior full disconnect deletes
- *   it — `onDisconnect: "delete_row"`) must pass the provider's
+ * - `completeReconnect` satellite reinsert: reconnecting a channel whose
+ *   satellite row no longer exists (a prior full disconnect deletes it —
+ *   `onDisconnect: "delete_row"`) must pass the provider's
  *   `candidateToConfig(reconnectAuth)` as `extraConfig`, not `{}` — IG's
  *   `pageId`/`username` columns are NOT NULL with no database default.
- * - M-6 / D3 (`listAndAttachCandidates`, IG picker): a sibling-provider
- *   satellite row existing is not enough to grey out a candidate — only an
- *   ACTUALLY ACTIVE `Connection` row should. The raw cross-provider query
- *   now lives on `integrationInstagramRepository.findActiveWorkspacesByIgIds`.
- * - L-4 (`completeReconnect`, `connectionRepository.update` result): a
- *   no-match update must be treated as an error, not silently ignored.
- * - Phase 4 item 1 (`completeReconnect`, legacy sourceId): a
- *   `legacy:`-prefixed `Connection.sourceId` (a backfill-script marker for a
- *   row it could not resolve a real sourceId for) must be accepted as a
- *   match on reconnect and overwritten with the descriptor's real sourceId.
+ * - `listAndAttachCandidates` IG picker: a sibling-provider satellite row
+ *   existing is not enough to grey out a candidate — only an ACTUALLY
+ *   ACTIVE `Connection` row should. The raw cross-provider query now lives
+ *   on `integrationInstagramRepository.findActiveWorkspacesByIgIds`.
+ * - `completeReconnect`'s `connectionRepository.update` result: a no-match
+ *   update must be treated as an error, not silently ignored.
+ * - `completeReconnect`, legacy sourceId: a `legacy:`-prefixed
+ *   `Connection.sourceId` (a backfill-script marker for a row it could not
+ *   resolve a real sourceId for) must be accepted as a match on reconnect
+ *   and overwritten with the descriptor's real sourceId.
  *
  * Skipped unless `DATABASE_URL` points at a reachable database; run with
  * `pnpm --filter @chatbotx.io/connections test:db`.
@@ -251,7 +250,7 @@ const insertInstagramSatellite = async (input: {
 describe.skipIf(!databaseUrl)(
   "connect-session-flow fixes against Postgres",
   () => {
-    test("H-2: completeReconnect reinserts the deleted IG satellite row with pageId/username instead of violating NOT NULL", async () => {
+    test("completeReconnect reinserts the deleted IG satellite row with pageId/username instead of violating NOT NULL", async () => {
       const { workspaceId, ownerId } = await seedWorkspaceWithOwner()
       const igId = `ig-${createId()}`
       try {
@@ -308,7 +307,7 @@ describe.skipIf(!databaseUrl)(
       }
     })
 
-    test("M-6/D3: the IG picker keeps a candidate selectable when the sibling-provider satellite's Connection is needs_reauth, not just because the satellite row exists", async () => {
+    test("the IG picker keeps a candidate selectable when the sibling-provider satellite's Connection is needs_reauth, not just because the satellite row exists", async () => {
       const { workspaceId, ownerId } = await seedWorkspaceWithOwner()
       const igId = `ig-${createId()}`
       try {
@@ -364,7 +363,7 @@ describe.skipIf(!databaseUrl)(
       }
     })
 
-    test("L-4: completeReconnect throws instead of silently continuing when connectionRepository.update matches no row", async () => {
+    test("completeReconnect throws instead of silently continuing when connectionRepository.update matches no row", async () => {
       const { workspaceId, ownerId } = await seedWorkspaceWithOwner()
       const igId = `ig-${createId()}`
       try {

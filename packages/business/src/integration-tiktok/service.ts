@@ -22,7 +22,11 @@ import {
   withQuotaCompensation,
 } from "../connection"
 import { connectionStateService } from "../connection/state-service"
-import { ChatbotXException, channelDuplicatedException } from "../errors"
+import {
+  ChatbotXException,
+  channelDuplicatedException,
+  notFoundException,
+} from "../errors"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 
@@ -108,7 +112,7 @@ class TiktokIntegrationService extends BaseService {
       .returning({ openId: integrationTiktokModel.openId })
 
     if (!row) {
-      return
+      throw notFoundException("TikTok integration not found")
     }
 
     await recordRefreshedAuth({
@@ -419,10 +423,10 @@ class TiktokIntegrationService extends BaseService {
       },
       () =>
         db.transaction(async (tx) => {
-          // Preserves `connectChannelIntegration`'s cross-workspace guard:
-          // two different workspaces must never simultaneously claim the
-          // same TikTok account. `connect.action.ts` catches this specific
-          // `channelDuplicated` code to redirect with a friendly error.
+          // Guards against two different workspaces simultaneously claiming
+          // the same TikTok account. `connect.action.ts` catches this
+          // specific `channelDuplicated` code to redirect with a friendly
+          // error.
           if (
             await inboxService.isConnected({
               tx,

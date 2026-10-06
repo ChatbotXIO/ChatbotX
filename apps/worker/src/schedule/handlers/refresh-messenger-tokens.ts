@@ -35,9 +35,11 @@ async function refreshOne(integration: {
       }
 
       const auth = current.auth as MessengerAuthValue
-      return (await integrationMessenger.refreshAuth?.({
-        auth,
-      })) as MessengerAuthValue
+      const refreshedAuth = await integrationMessenger.refreshAuth?.({ auth })
+      if (!refreshedAuth) {
+        throw new Error("Messenger refreshAuth returned no auth")
+      }
+      return refreshedAuth
     },
     apply: (newAuth) =>
       messengerIntegrationService.updateAuth({

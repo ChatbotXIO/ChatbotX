@@ -8,10 +8,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // tri-state `verifyAiProviderApiKey`, then delegate to the Connection
 // domain's `connectionService.connectFromCredentials` (the same engine path
 // `integrations/api/public/ai.ts`'s deprecated `PUT` route uses) and
-// invalidate the AI cache. Each used to call its own provider-specific
-// legacy service (`integrationClaudeService.connect`, …) directly — a
-// second write path to the same rows the Connection engine also writes,
-// which caused 409 conflicts.
+// invalidate the AI cache. A second write path to the same rows the
+// Connection engine also writes (each provider's own legacy
+// `integrationClaudeService.connect`-style service, called directly) would
+// cause 409 conflicts, so these actions delegate to the engine instead.
 // ---------------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => ({

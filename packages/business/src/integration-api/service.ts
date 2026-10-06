@@ -75,10 +75,8 @@ class IntegrationApiService extends BaseService {
 
           // `id === inboxId === sourceId` — the API binding's
           // `identityColumn: "id"` (`store-bindings.ts`) sets `IntegrationApi
-          // .id` to this same `apiId` on insert, preserving the one-id-for-
-          // everything convention `connectChannelIntegration` used to encode
-          // via its own explicit `inboxData.id` + `insertIntegration({id:
-          // apiId, ...})` pair.
+          // .id` to this same `apiId` on insert, keeping one id for the
+          // inbox, the integration row, and the connection's sourceId.
           await upsertConnectionRow({
             tx,
             workspaceId,

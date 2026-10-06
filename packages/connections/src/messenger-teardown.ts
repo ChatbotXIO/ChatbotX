@@ -8,6 +8,7 @@ import {
   type ConnectionTeardownResult,
   connectionStateService,
 } from "@chatbotx.io/business/connection"
+import { toPublicErrorMessage } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -19,8 +20,8 @@ import { subscribePageToAppWebhook } from "@chatbotx.io/integration-messenger/ap
 import { logger } from "./logger"
 
 /**
- * Messenger-only disconnect teardown, shared by the legacy
- * `disconnectMessenger` builder action
+ * Messenger-only disconnect teardown, shared by the builder-action path
+ * `disconnectMessenger`
  * (`apps/builder/src/features/integration-messenger/actions/disconnect-messenger.ts`)
  * and the generic engine `DELETE /v1/connections/{id}` path
  * (`lifecycle.ts`'s `disconnect`, wired through
@@ -61,7 +62,7 @@ const tearDownMessengerConnection = async (input: {
         })
       } catch (error) {
         remoteErrors.push(
-          error instanceof Error ? error.message : String(error),
+          toPublicErrorMessage(error, "Provider-side teardown failed"),
         )
         logger.warn(
           {
@@ -90,9 +91,9 @@ const tearDownMessengerConnection = async (input: {
         if (!isDisconnectSafeError(error)) {
           throw error
         }
-        remoteErrors.push(
-          error instanceof Error ? error.message : String(error),
-        )
+        // A disconnect-safe Graph error (page gone, app uninstalled, token
+        // already revoked) reflects a provider-side state that already
+        // matches the local disconnect — it is not recorded as a failure.
         logger.warn(
           {
             err: error,
@@ -110,7 +111,9 @@ const tearDownMessengerConnection = async (input: {
     // cleanup below. Skipping that cleanup is exactly what leaves orphaned
     // `coexist`/`MetaCapiEvent` rows behind, which this teardown exists to
     // prevent.
-    remoteErrors.push(error instanceof Error ? error.message : String(error))
+    remoteErrors.push(
+      toPublicErrorMessage(error, "Provider-side teardown failed"),
+    )
     logger.error(
       {
         err: error,
@@ -190,14 +193,29 @@ export const disconnectMessengerConnection = async (input: {
  * `id` that coexist/MetaCapiEvent/tag cleanup key off — so this resolves it
  * first.
  */
-export const messengerConnectionTeardownHook: ConnectionAdapter["teardown"] =
-  async ({ connection, auth }) => {
-    const integrationRow = await messengerIntegrationService.findByInboxId(
-      connection.inboxId as string,
+export const messengerConnectionTeardownHook: NonNullable<
+  ConnectionAdapter["teardown"]
+> = async ({ connection, auth }) => {
+  if (!connection.inboxId) {
+    logger.warn(
+      { connectionId: connection.id },
+      "Messenger teardown hook: Connection has no inboxId, skipping provider-specific teardown",
     )
-    return tearDownMessengerConnection({
-      workspaceId: connection.workspaceId,
-      integrationId: integrationRow.id,
-      auth: auth as MessengerAuthValue,
-    })
+    return {
+      remoteErrors: [],
+      skipGenericRemoteTeardown: false,
+      withinTransaction: async () => {
+        // Intentional no-op: there's no satellite row to clean up when the
+        // Connection was never linked to one.
+      },
+    }
   }
+  const integrationRow = await messengerIntegrationService.findByInboxId(
+    connection.inboxId,
+  )
+  return tearDownMessengerConnection({
+    workspaceId: connection.workspaceId,
+    integrationId: integrationRow.id,
+    auth: auth as MessengerAuthValue,
+  })
+}

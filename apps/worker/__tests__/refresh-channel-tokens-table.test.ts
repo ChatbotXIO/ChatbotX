@@ -212,6 +212,7 @@ describe.each(providerCases)("$name token refresh", ({
   refreshMock,
   markErrorMock,
   isRevokedMock,
+  updateAuthMock,
 }) => {
   test(`marks the row unhealthy with isRevoked: true when ${name}'s provider confirms the token was revoked`, async () => {
     seedTwoRows()
@@ -257,5 +258,38 @@ describe.each(providerCases)("$name token refresh", ({
       }),
     )
     expect(markErrorMock).toHaveBeenCalledTimes(1)
+  })
+
+  test(`a markError throw on row 1 does not stop row 2 from refreshing in the same ${name} batch`, async () => {
+    seedTwoRows()
+    refreshMock.mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce(
+      name === "Zalo"
+        ? {
+            access_token: "new-token-2",
+            refresh_token: "new-refresh-2",
+            expires_in: 3600,
+          }
+        : { id: "refreshed-2" },
+    )
+    markErrorMock.mockRejectedValueOnce(new Error("markError failed"))
+
+    await expect(run()).resolves.toBeUndefined()
+
+    expect(mocks.logProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws-1" }),
+    )
+    expect(updateAuthMock).toHaveBeenCalledTimes(1)
+  })
+
+  test(`a lock-acquisition failure on row 1 does not stop row 2 from refreshing in the same ${name} batch`, async () => {
+    seedTwoRows()
+    mocks.runExclusive.mockImplementationOnce(() =>
+      Promise.reject(new Error("lock acquisition failed")),
+    )
+
+    await expect(run()).resolves.toBeUndefined()
+
+    expect(markErrorMock).not.toHaveBeenCalled()
+    expect(updateAuthMock).toHaveBeenCalledTimes(1)
   })
 })

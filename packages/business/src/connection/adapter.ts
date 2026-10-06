@@ -12,15 +12,6 @@ import type {
 } from "@chatbotx.io/sdk"
 import type { ConnectionStoreBinding } from "./store-bindings"
 
-/**
- * Everything the Connection domain needs for one `IntegrationType`: the
- * runtime `Integration` wrapper (refresh/disconnect), the provider's
- * connect/verify/webhook adapter, and its DB store binding.
- * `@chatbotx.io/connections` assembles `Record<IntegrationType, ConnectionAdapter | null>`
- * from each `integrations/<provider>`'s `connection` export plus
- * `CONNECTION_STORE_BINDINGS` — `null` for types with no connect lifecycle
- * yet (for example `metaCatalog`, `outlookCalendar`, and `threads`).
- */
 export type ConnectionTeardownResult = {
   remoteErrors: string[]
   skipGenericRemoteTeardown: boolean
@@ -31,6 +22,16 @@ export type ConnectionTeardownHook = (input: {
   connection: ConnectionModel
   auth: AuthValue
 }) => Promise<ConnectionTeardownResult>
+
+/**
+ * Everything the Connection domain needs for one `IntegrationType`: the
+ * runtime `Integration` wrapper (refresh/disconnect), the provider's
+ * connect/verify/webhook adapter, and its DB store binding.
+ * `@chatbotx.io/connections` assembles `Record<IntegrationType, ConnectionAdapter | null>`
+ * from each `integrations/<provider>`'s `connection` export plus
+ * `CONNECTION_STORE_BINDINGS` — `null` for types with no connect lifecycle
+ * yet (for example `metaCatalog`, `outlookCalendar`, and `threads`).
+ */
 
 export type ConnectionAdapter = {
   /**

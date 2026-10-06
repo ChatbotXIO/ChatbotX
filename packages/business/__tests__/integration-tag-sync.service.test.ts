@@ -84,7 +84,6 @@ vi.mock("../src/flow/service", () => ({ flowService: {} }))
 
 vi.mock("../src/inbox/connect-channel", () => ({
   auditChannelConnected: vi.fn(),
-  connectChannelIntegration: vi.fn(),
   runConnectTransaction: vi.fn(),
 }))
 

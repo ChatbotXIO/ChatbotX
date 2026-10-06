@@ -128,10 +128,8 @@ class IntegrationSmtpService extends BaseService {
 
           // `id === inboxId === sourceId` — the smtp binding's
           // `identityColumn: "id"` (`store-bindings.ts`) sets `IntegrationSmtp
-          // .id` to this same `smtpId` on insert, preserving the
-          // one-id-for-everything convention this service used to encode via
-          // an explicit `inboxData.id` + `insertIntegration({id: smtpId, ...})`
-          // pair through `connectChannelIntegration`.
+          // .id` to this same `smtpId` on insert, keeping one id for the
+          // inbox, the integration row, and the connection's sourceId.
           await upsertConnectionRow({
             tx,
             workspaceId,

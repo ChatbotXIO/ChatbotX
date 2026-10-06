@@ -116,12 +116,15 @@ describe("recordRefreshedAuth", () => {
     ).resolves.toBeUndefined()
 
     expect(mocks.loggerWarn).toHaveBeenCalledWith(
-      expect.objectContaining({ connectionId: "conn-1" }),
-      "recordRefreshedAuth could not transition an inactive connection; auth was still saved",
+      expect.objectContaining({
+        err: expect.any(InvalidConnectionTransitionException),
+        connectionId: "conn-1",
+      }),
+      "recordRefreshedAuth: projection sync failed; auth was still saved",
     )
   })
 
-  test("rethrows an unexpected error from recordAuthSaved", async () => {
+  test("swallows any other unexpected error from recordAuthSaved instead of rejecting", async () => {
     mocks.findByProviderSourceId.mockResolvedValue({
       id: "conn-1",
       status: "connected",
@@ -135,7 +138,15 @@ describe("recordRefreshedAuth", () => {
         sourceId: "page-1",
         auth: oauth2Auth,
       }),
-    ).rejects.toThrow("db write failed")
+    ).resolves.toBeUndefined()
+
+    expect(mocks.loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: expect.any(Error),
+        connectionId: "conn-1",
+      }),
+      "recordRefreshedAuth: projection sync failed; auth was still saved",
+    )
   })
 
   test("forwards the caller-supplied tx to both the lookup and the transition", async () => {

@@ -337,9 +337,9 @@ export const handleCallback = async (
   // /v1/connections/{id}/reconnect`) carry a raw "{sessionId}.{nonce}"
   // state — never JSON/base64-encoded — dispatched here before the legacy
   // parse below, which would otherwise throw trying to atob/JSON.parse it.
-  // TODO(Phase 5): once every legacy JSON-state caller (builder pickers,
-  // ads/lead-ads/meta-catalog connect flows) moves onto sessions, this
-  // early branch becomes the only path and the switch below is deleted.
+  // Once every legacy JSON-state caller (builder pickers, ads/lead-ads/
+  // meta-catalog connect flows) moves onto sessions, this early branch
+  // becomes the only path and the switch below can be deleted.
   if (CONNECT_SESSION_STATE_PATTERN.test(rawStateParam)) {
     return await handleConnectSessionCallback(
       url,

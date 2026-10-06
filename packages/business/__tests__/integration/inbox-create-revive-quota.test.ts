@@ -2,17 +2,18 @@
 
 /**
  * `InboxService.create`'s revive branch (an existing `disconnected` Inbox
- * row for the same `(workspaceId, channel, sourceId)`) used to flip the row
- * back to `connected` WITHOUT ever calling `quotaEnforcementService
- * .tryConsume` / `workspaceUsageService.increment` — unlike the fresh-insert
- * branch right below it, which gates and credits the `channels` quota unit
- * every time. A caller reconnecting a previously-disconnected channel (the
- * common case for every channel service's `connect()`, since `create` is
- * always invoked with `skipQuota: false` unless the caller owns its own
- * quota edge — see `create`'s doc comment) therefore got a channel back for
- * free: no quota check, no usage credit. This asserts the revive branch now
- * consumes/credits exactly like a fresh insert, respects `skipQuota` the
- * same way, and still performs the real `UPDATE` against Postgres.
+ * row for the same `(workspaceId, channel, sourceId)`) must flip the row
+ * back to `connected` while ALSO calling `quotaEnforcementService
+ * .tryConsume` / `workspaceUsageService.increment` — just like the
+ * fresh-insert branch right below it, which gates and credits the
+ * `channels` quota unit every time. A caller reconnecting a
+ * previously-disconnected channel (the common case for every channel
+ * service's `connect()`, since `create` is always invoked with
+ * `skipQuota: false` unless the caller owns its own quota edge — see
+ * `create`'s doc comment) must not get a channel back for free: this
+ * asserts the revive branch consumes/credits exactly like a fresh insert,
+ * respects `skipQuota` the same way, and still performs the real `UPDATE`
+ * against Postgres.
  *
  * Skipped unless `DATABASE_URL` points at a reachable database; run it with
  * `pnpm --filter @chatbotx.io/business test:db`.

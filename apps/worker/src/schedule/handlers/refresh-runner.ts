@@ -14,7 +14,7 @@ export async function runRefreshBatch<T>(
 ): Promise<void> {
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize)
-    await Promise.all(batch.map(refreshOne))
+    await Promise.allSettled(batch.map(refreshOne))
   }
 }
 
@@ -74,13 +74,38 @@ export async function refreshWithErrorHandling<TAuth>(
             source: REFRESH_SOURCE,
           })
         } catch (error) {
-          logger.error(error, `[${label}] id=${id} failed`)
-          await markError(error)
-          await logProviderError({ provider, workspaceId, error })
+          logger.error(
+            { err: error, id, workspaceId },
+            `[${label}] refresh failed`,
+          )
+          try {
+            await markError(error)
+          } catch (markErrorError) {
+            logger.error(
+              { err: markErrorError, id, workspaceId },
+              `[${label}] markError failed`,
+            )
+          }
+          try {
+            await logProviderError({ provider, workspaceId, error })
+          } catch (logProviderErrorError) {
+            logger.error(
+              { err: logProviderErrorError, id, workspaceId },
+              `[${label}] logProviderError failed`,
+            )
+          }
         }
       },
     })
 
-    return onLockError ? run.catch(onLockError) : run
+    return run.catch((error) => {
+      if (onLockError) {
+        return onLockError(error)
+      }
+      logger.error(
+        { err: error, id, workspaceId },
+        `[${label}] lock acquisition failed`,
+      )
+    })
   })
 }

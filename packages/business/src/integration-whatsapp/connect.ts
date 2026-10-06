@@ -136,13 +136,13 @@ function insertPhoneNumber(
           claim,
         )
 
-        // Mirrors the old `connectChannelIntegration`'s pre-check:
         // `IntegrationWhatsapp.phoneNumberId` is unique platform-wide, not
-        // per-workspace, so a cross-workspace duplicate would otherwise only
-        // surface as the generic engine's `connectionAlreadyConnectedException`
-        // from deep inside `upsertConnectionRow` — losing the specific
-        // "already connected to another workspace" outcome the connect UI's
-        // `channelDuplicated` mapping expects (`inbox/connect-outcome.ts`).
+        // per-workspace, so this pre-check catches a cross-workspace
+        // duplicate before it would otherwise only surface as the generic
+        // engine's `connectionAlreadyConnectedException` from deep inside
+        // `upsertConnectionRow` — losing the specific "already connected to
+        // another workspace" outcome the connect UI's `channelDuplicated`
+        // mapping expects (`inbox/connect-outcome.ts`).
         if (
           await inboxService.isConnected({
             tx,

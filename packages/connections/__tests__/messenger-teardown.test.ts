@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   disconnectInbox: vi.fn(),
   existsForPage: vi.fn(),
   findByInboxId: vi.fn(),
+  isDisconnectSafeError: vi.fn(),
   remoteDisconnect: vi.fn(),
   serviceDisconnect: vi.fn(),
   subscribePageToAppWebhook: vi.fn(),
@@ -35,7 +36,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 }))
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({
-  isDisconnectSafeError: vi.fn(() => false),
+  isDisconnectSafeError: mocks.isDisconnectSafeError,
   integration: { disconnect: mocks.remoteDisconnect },
 }))
 
@@ -71,6 +72,7 @@ const BASE_INPUT = {
 describe("disconnectMessengerConnection", () => {
   beforeEach(() => {
     mocks.existsForPage.mockResolvedValue(false)
+    mocks.isDisconnectSafeError.mockReturnValue(false)
     mocks.remoteDisconnect.mockResolvedValue(undefined)
     mocks.tearDownForIntegration.mockResolvedValue(undefined)
     mocks.deleteByIntegration.mockResolvedValue(undefined)
@@ -218,6 +220,7 @@ describe("disconnectMessengerConnection", () => {
 describe("messengerConnectionTeardownHook", () => {
   beforeEach(() => {
     mocks.existsForPage.mockResolvedValue(false)
+    mocks.isDisconnectSafeError.mockReturnValue(false)
     mocks.remoteDisconnect.mockResolvedValue(undefined)
     mocks.findByInboxId.mockResolvedValue({ id: "integration-1" })
   })
@@ -240,7 +243,11 @@ describe("messengerConnectionTeardownHook", () => {
     expect(result.remoteErrors).toEqual([])
   })
 
-  test("surfaces the remote Graph API failure message in remoteErrors instead of throwing", async () => {
+  test("surfaces a sanitized remote Graph API failure message in remoteErrors instead of throwing", async () => {
+    // `toPublicErrorMessage` is not mocked in this file, so this exercises
+    // the real implementation: a plain (non-`ChatbotXException`) `Error`
+    // always collapses to the call site's fallback instead of leaking its
+    // raw message.
     mocks.remoteDisconnect.mockRejectedValue(new Error("Graph API down"))
 
     const result = await messengerConnectionTeardownHook({
@@ -248,7 +255,43 @@ describe("messengerConnectionTeardownHook", () => {
       auth: BASE_INPUT.auth as never,
     })
 
-    expect(result.remoteErrors).toEqual(["Graph API down"])
+    expect(result.remoteErrors).toEqual(["Provider-side teardown failed"])
     expect(result.skipGenericRemoteTeardown).toBe(true)
+  })
+
+  test("does not record a disconnect-safe remote error in remoteErrors", async () => {
+    mocks.remoteDisconnect.mockRejectedValue(new Error("Page not found"))
+    mocks.isDisconnectSafeError.mockReturnValue(true)
+
+    const result = await messengerConnectionTeardownHook({
+      connection: HOOK_CONNECTION,
+      auth: BASE_INPUT.auth as never,
+    })
+
+    expect(result.remoteErrors).toEqual([])
+    expect(result.skipGenericRemoteTeardown).toBe(true)
+  })
+
+  test("skips provider-specific teardown and resolves a no-op when the connection has no inboxId", async () => {
+    const connectionWithoutInboxId = {
+      id: "conn-1",
+      workspaceId: "ws-1",
+      inboxId: null,
+    } as never
+
+    const result = await messengerConnectionTeardownHook({
+      connection: connectionWithoutInboxId,
+      auth: BASE_INPUT.auth as never,
+    })
+
+    expect(mocks.findByInboxId).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      remoteErrors: [],
+      skipGenericRemoteTeardown: false,
+      withinTransaction: expect.any(Function),
+    })
+    await expect(
+      result.withinTransaction(mocks.tx as never),
+    ).resolves.toBeUndefined()
   })
 })

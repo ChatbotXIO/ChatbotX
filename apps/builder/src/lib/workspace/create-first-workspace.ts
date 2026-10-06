@@ -68,7 +68,7 @@ function createChannelErrorPathFor(error: unknown): string | null {
  * soft-delete, so a user who deleted their only workspace gets a fresh one
  * instead of being handed back the one that's about to be purged.
  *
- * Accepts an optional `tx` (M-7): `startChannelConnect`'s plain OAuth-start
+ * Accepts an optional `tx`: `startChannelConnect`'s plain OAuth-start
  * path (no `beforeStart` hook) passes `connectionService.startSession`'s
  * own transaction through here instead of resolving a workspace up front,
  * so this insert and the `ConnectSession` it's starting commit or roll

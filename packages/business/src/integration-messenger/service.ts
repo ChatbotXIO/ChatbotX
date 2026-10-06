@@ -81,7 +81,7 @@ class MessengerIntegrationService extends BaseService {
       )
       .returning({ pageId: integrationMessengerModel.pageId })
     if (!row) {
-      return
+      throw notFoundException("Messenger integration not found")
     }
     await recordRefreshedAuth({
       workspaceId: props.workspaceId,

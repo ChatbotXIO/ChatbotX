@@ -112,7 +112,7 @@ class ZaloIntegrationService extends BaseService {
         workspaceId: integrationZaloModel.workspaceId,
       })
     if (!row) {
-      return
+      throw notFoundException("Zalo integration not found")
     }
     await recordRefreshedAuth({
       workspaceId: row.workspaceId,

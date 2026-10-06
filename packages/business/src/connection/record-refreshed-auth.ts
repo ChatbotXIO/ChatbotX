@@ -4,10 +4,7 @@ import { connectionRepository } from "@chatbotx.io/database/repositories"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { logger } from "../logger"
 import { authExpiresAtOf } from "./auth-expiry"
-import {
-  InvalidConnectionTransitionException,
-  isActiveConnectionStatus,
-} from "./state"
+import { isActiveConnectionStatus } from "./state"
 import { connectionStateService } from "./state-service"
 
 /** Mirrors refreshed satellite auth onto its active Connection row. */
@@ -40,13 +37,9 @@ export const recordRefreshedAuth = async (input: {
       tx: input.tx,
     })
   } catch (err) {
-    if (err instanceof InvalidConnectionTransitionException) {
-      logger.warn(
-        { err, connectionId: connection.id },
-        "recordRefreshedAuth could not transition an inactive connection; auth was still saved",
-      )
-      return
-    }
-    throw err
+    logger.warn(
+      { err, connectionId: connection.id },
+      "recordRefreshedAuth: projection sync failed; auth was still saved",
+    )
   }
 }

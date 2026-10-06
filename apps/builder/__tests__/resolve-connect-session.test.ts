@@ -322,7 +322,7 @@ describe("resolveConnectSession", () => {
     expect(findWorkspaceMock).not.toHaveBeenCalled()
   })
 
-  test("throws connectSessionCancelled — carrying no returnUrl (regression: it used to carry the session's own, select-page-shaped returnUrl, which the only caller followed straight back into an infinite redirect loop) — when the owning actor's own session was cancelled", async () => {
+  test("throws connectSessionCancelled — carrying no returnUrl, since the session's own select-page-shaped returnUrl would otherwise send the only caller straight back into an infinite redirect loop — when the owning actor's own session was cancelled", async () => {
     findByIdMock.mockResolvedValue({
       ...session,
       status: "failed",

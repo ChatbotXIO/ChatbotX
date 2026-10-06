@@ -15,6 +15,7 @@ import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
 import { recordRefreshedAuth } from "../connection/record-refreshed-auth"
 import { connectionStateService } from "../connection/state-service"
+import { notFoundException } from "../errors"
 import { logger } from "../logger"
 
 class InstagramIntegrationService extends BaseService {
@@ -171,7 +172,7 @@ class InstagramIntegrationService extends BaseService {
         type: integrationInstagramModel.type,
       })
     if (!row) {
-      return
+      throw notFoundException("Instagram integration not found")
     }
     await recordRefreshedAuth({
       workspaceId: props.workspaceId,

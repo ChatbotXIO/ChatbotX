@@ -50,9 +50,11 @@ async function refreshOne(integration: {
         return
       }
 
-      return (await integrationWhatsapp.refreshAuth?.({
-        auth,
-      })) as WhatsappAuthValue
+      const refreshedAuth = await integrationWhatsapp.refreshAuth?.({ auth })
+      if (!refreshedAuth) {
+        throw new Error("WhatsApp refreshAuth returned no auth")
+      }
+      return refreshedAuth
     },
     apply: (newAuth) =>
       integrationWhatsappService.updateAuth({

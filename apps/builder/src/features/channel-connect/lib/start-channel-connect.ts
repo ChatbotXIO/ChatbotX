@@ -107,7 +107,7 @@ export async function startChannelConnect(
   // creation is deferred into `startSession`'s own transaction instead
   // (`createWorkspace` below): a `startSession` failure then rolls the
   // workspace back with it, instead of leaving an empty orphan workspace
-  // behind when the connect attempt never even reaches the provider (M-7).
+  // behind when the connect attempt never even reaches the provider.
   let targetWorkspacePromise: Promise<WorkspaceModel> | undefined
   if (workspaceId) {
     targetWorkspacePromise = workspaceService.findById({ id: workspaceId })

@@ -254,14 +254,16 @@ describe("tiktokIntegrationService.updateAuth", () => {
     })
   })
 
-  test("no-ops when the satellite row no longer exists", async () => {
+  test("rejects with notFoundException when the update matches zero rows", async () => {
     mockUpdateReturning.mockResolvedValue([])
 
-    await tiktokIntegrationService.updateAuth({
-      id: "integration-1",
-      workspaceId: "ws-1",
-      auth: { token: "x" },
-    })
+    await expect(
+      tiktokIntegrationService.updateAuth({
+        id: "integration-1",
+        workspaceId: "ws-1",
+        auth: { token: "x" },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
 
     expect(mockRecordRefreshedAuth).not.toHaveBeenCalled()
   })

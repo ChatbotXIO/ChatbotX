@@ -37,13 +37,23 @@ vi.mock("@chatbotx.io/business/connection", () => ({
   resolveOwnerId: mocks.resolveOwnerId,
 }))
 
-vi.mock("@chatbotx.io/business/errors", () => ({
-  connectionInactiveException: vi.fn(() => new Error("inactive")),
-  connectionNotConfiguredException: vi.fn(() => new Error("not configured")),
-  connectionNotRefreshableException: vi.fn(() => new Error("not refreshable")),
-  notFoundException: vi.fn(() => new Error("not found")),
-  toPublicErrorMessage: vi.fn(() => "error"),
-}))
+vi.mock("@chatbotx.io/business/errors", async (importOriginal) => {
+  // `toPublicErrorMessage` is pulled from the real module (not stubbed) so
+  // these tests exercise its actual sanitization/fallback behavior instead
+  // of a fixed literal — see the "sanitizes a provider-side teardown
+  // failure" tests below.
+  const actual =
+    await importOriginal<typeof import("@chatbotx.io/business/errors")>()
+  return {
+    connectionInactiveException: vi.fn(() => new Error("inactive")),
+    connectionNotConfiguredException: vi.fn(() => new Error("not configured")),
+    connectionNotRefreshableException: vi.fn(
+      () => new Error("not refreshable"),
+    ),
+    notFoundException: vi.fn(() => new Error("not found")),
+    toPublicErrorMessage: actual.toPublicErrorMessage,
+  }
+})
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -179,16 +189,41 @@ describe("disconnect", () => {
     })
 
     expect(result).toBe(connection)
-    // `toPublicErrorMessage` is mocked to the fixed "error" literal above;
-    // this only proves a teardown failure gets persisted as `lastError`
-    // rather than failing the disconnect, not the exact message text.
+    // `toPublicErrorMessage` is the real implementation here (see the
+    // `@chatbotx.io/business/errors` mock above): a plain `Error` is not a
+    // `ChatbotXException`, so it always collapses to the call site's
+    // fallback string rather than leaking the thrown message verbatim.
     expect(mocks.update).toHaveBeenCalledWith(
       expect.objectContaining({
         id: "conn-1",
-        values: { lastError: "error" },
+        values: { lastError: "Provider-side teardown failed" },
       }),
       mocks.tx,
     )
+  })
+
+  test("sanitizes a provider-side teardown failure before persisting it as Connection.lastError", async () => {
+    // Exercises the generic `adapter.integration.disconnect` teardown step
+    // (needs `skipGenericRemoteTeardown: false` so it actually runs).
+    mocks.teardown.mockResolvedValue({
+      skipGenericRemoteTeardown: false,
+      withinTransaction: mocks.withinTransaction,
+    })
+    const sensitiveMessage =
+      "Postgres connection string: postgres://user:pass@host/db"
+    mocks.integrationDisconnect.mockRejectedValue(new Error(sensitiveMessage))
+
+    await disconnect({ connectionId: "conn-1", workspaceId: "ws-1" })
+
+    const [updateArgs] = mocks.update.mock.calls.at(-1) as [
+      { values: { lastError: string } },
+    ]
+    // Raw internal text never reaches the persisted `lastError` …
+    expect(updateArgs.values.lastError).not.toContain(sensitiveMessage)
+    expect(updateArgs.values.lastError).not.toContain("user:pass")
+    // … it is replaced by the real `toPublicErrorMessage` fallback for a
+    // plain (non-`ChatbotXException`) `Error`.
+    expect(updateArgs.values.lastError).toBe("Provider-side teardown failed")
   })
 
   test("never releases the pending quota when the transaction rolls back", async () => {

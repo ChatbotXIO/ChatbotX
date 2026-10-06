@@ -399,3 +399,16 @@ describe("zaloIntegrationService.markTokenRefreshError", () => {
     expect(mocks.mockMarkUnhealthyByIdentifier).not.toHaveBeenCalled()
   })
 })
+
+describe("zaloIntegrationService.updateAuth", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.mockUpdateReturning.mockResolvedValue([])
+  })
+
+  test("rejects with notFoundException when the update matches zero rows", async () => {
+    await expect(
+      zaloIntegrationService.updateAuth("integration-1", { token: "x" }),
+    ).rejects.toMatchObject({ code: "notFound" })
+  })
+})

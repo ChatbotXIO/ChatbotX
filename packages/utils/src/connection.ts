@@ -64,7 +64,7 @@ export type InboxDisconnectReason = z.infer<typeof inboxDisconnectReasons>
 
 /**
  * `workspace_purge`, `trial_expired`, and `tenant_suspended` map 1-1 onto
- * their own `Inbox.disconnectReason` values (matching how v1.11.0 set
+ * their own `Inbox.disconnectReason` values (matching how disconnects were
  * `disconnectReason` directly, before this `Connection` layer existed) —
  * they must NOT collapse into the generic `manual` bucket. Reasons with no
  * Inbox-native equivalent (`verify_failed`, `quota_exceeded`,

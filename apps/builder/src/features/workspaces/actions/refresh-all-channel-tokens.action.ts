@@ -94,473 +94,296 @@ async function runInBatches<T>(
   return results
 }
 
-async function refreshOneZalo(
+type RefreshGuardConfig<TIntegration, TAuth> = {
+  /** Used as the `auth:refresh:<channel>:<id>` distributed lock key segment. */
+  channel: string
+  /** Provider name used in the `Failed to refresh/record ... channel token` log messages. */
+  errorLabel: string
+  /** `auditService.record`'s `detail` text on a successful refresh. */
+  auditDetail: string
+  /**
+   * Static capability check (e.g. "does this channel support refreshAuth at
+   * all?") evaluated BEFORE the lock is acquired; `false` skips without ever
+   * touching Redis.
+   */
+  canAttempt?: () => boolean
+  fetchIntegration: (
+    id: string,
+    workspaceId: string,
+  ) => Promise<TIntegration | null | undefined>
+  getAuth: (integration: TIntegration) => TAuth
+  /** Post-fetch skip check (missing refresh token, manual-auth row, ...). */
+  shouldSkip?: (auth: TAuth) => boolean
+  refresh: (auth: TAuth) => Promise<TAuth>
+  updateAuth: (id: string, workspaceId: string, auth: TAuth) => Promise<unknown>
+  markTokenRefreshError: (params: {
+    id: string
+    workspaceId: string
+    error: string
+    isRevoked: boolean
+  }) => Promise<unknown>
+  isRevokedTokenError: (error: unknown) => boolean
+}
+
+/**
+ * Shared lock-acquire → fetch → refresh-or-skip → persist → audit backbone
+ * for every channel's per-row token refresh, with the same error handling
+ * (log, best-effort `markTokenRefreshError`, never let a `markTokenRefreshError`
+ * throw escape and abort the row). Returns the refreshed `auth` alongside the
+ * result so callers needing a post-lock side effect (Messenger's welcome
+ * profile read) can run it after the lock is released.
+ */
+async function refreshGuarded<TIntegration, TAuth>(
   id: string,
   workspaceId: string,
-): Promise<RefreshResult> {
-  return await distributedLock.runExclusive({
-    key: `auth:refresh:zalo:${id}`,
-    timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
-    fn: async () => {
-      try {
-        const integration = await zaloIntegrationService.findById({
-          id,
-          workspaceId,
-        })
-        const auth = integration.auth as ZaloAuthValue
-        if (!auth.tokens.refreshToken) {
-          return "skipped"
-        }
-
-        const newTokens = await refreshZaloAccessToken(
-          auth,
-          auth.tokens.refreshToken,
-        )
-        await zaloIntegrationService.updateAuth(id, {
-          ...auth,
-          tokens: {
-            ...auth.tokens,
-            accessToken: newTokens.access_token,
-            refreshToken: newTokens.refresh_token,
-            expiresAt: calculateExpiresAt(newTokens.expires_in),
-          },
-        })
-        await auditService.record({
-          workspaceId,
-          action: "refresh",
-          detail: "refreshed the Zalo channel permissions",
-        })
-        return "refreshed"
-      } catch (error) {
-        logger.error(
-          { err: error, integrationId: id, workspaceId },
-          "Failed to refresh Zalo channel token",
-        )
-        try {
-          await zaloIntegrationService.markTokenRefreshError({
-            id,
-            workspaceId,
-            error: error instanceof Error ? error.message : String(error),
-            isRevoked: isZaloRevokedTokenError(error),
-          })
-        } catch (markError) {
-          logger.error(
-            { err: markError, integrationId: id, workspaceId },
-            "Failed to record Zalo token refresh error",
-          )
-        }
-        return "failed"
-      }
-    },
-  })
-}
-
-async function refreshZaloIntegrations(
-  workspaceIds: string[],
-): Promise<RefreshSummary> {
-  const integrations =
-    await zaloIntegrationService.findAllByWorkspaceIds(workspaceIds)
-  const results = await runInBatches(integrations, (integration) =>
-    refreshOneZalo(integration.id, integration.workspaceId),
-  )
-  return toSummary(results)
-}
-
-async function refreshOneTiktok(
-  id: string,
-  workspaceId: string,
-): Promise<RefreshResult> {
-  return await distributedLock.runExclusive({
-    key: `auth:refresh:tiktok:${id}`,
-    timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
-    fn: async () => {
-      try {
-        const integration = await tiktokIntegrationService.findById({
-          id,
-          workspaceId,
-        })
-        const auth = integration.auth as TiktokAuthValue
-        if (!auth.tokens.refreshToken) {
-          return "skipped"
-        }
-
-        const newTokens = await refreshTiktokAccessToken(
-          { clientId: auth.clientId, clientSecret: auth.clientSecret },
-          auth.tokens.refreshToken,
-        )
-        await tiktokIntegrationService.updateAuth({
-          id,
-          workspaceId,
-          auth: {
-            ...auth,
-            tokens: {
-              ...auth.tokens,
-              accessToken: newTokens.access_token,
-              refreshToken: newTokens.refresh_token,
-              ...buildTokenTimestamps(
-                newTokens.expires_in,
-                newTokens.refresh_expires_in,
-              ),
-            },
-            metadata: {
-              ...auth.metadata,
-              scopes: parseTiktokScopes(newTokens.scope),
-            },
-          },
-        })
-        await auditService.record({
-          workspaceId,
-          action: "refresh",
-          detail: "refreshed the TikTok channel token",
-        })
-        return "refreshed"
-      } catch (error) {
-        logger.error(
-          { err: error, integrationId: id, workspaceId },
-          "Failed to refresh TikTok channel token",
-        )
-        try {
-          await tiktokIntegrationService.markTokenRefreshError({
-            id,
-            workspaceId,
-            error: error instanceof Error ? error.message : String(error),
-            isRevoked: isTiktokRevokedTokenError(error),
-          })
-        } catch (markError) {
-          logger.error(
-            { err: markError, integrationId: id, workspaceId },
-            "Failed to record TikTok token refresh error",
-          )
-        }
-        return "failed"
-      }
-    },
-  })
-}
-
-async function refreshTiktokIntegrations(
-  workspaceIds: string[],
-): Promise<RefreshSummary> {
-  const integrations =
-    await tiktokIntegrationService.findAllByWorkspaceIds(workspaceIds)
-  const results = await runInBatches(integrations, (integration) =>
-    refreshOneTiktok(integration.id, integration.workspaceId),
-  )
-  return toSummary(results)
-}
-
-async function refreshOneInstagram(
-  id: string,
-  workspaceId: string,
-): Promise<RefreshResult> {
-  if (!integrationInstagram.refreshAuth) {
-    return "skipped"
+  config: RefreshGuardConfig<TIntegration, TAuth>,
+): Promise<{ result: RefreshResult; auth?: TAuth }> {
+  if (config.canAttempt && !config.canAttempt()) {
+    return { result: "skipped" }
   }
 
   return await distributedLock.runExclusive({
-    key: `auth:refresh:instagram:${id}`,
+    key: `auth:refresh:${config.channel}:${id}`,
     timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
     fn: async () => {
       try {
-        const integration =
-          await instagramIntegrationService.findByIdForWorkspace({
-            id,
-            workspaceId,
-          })
+        const integration = await config.fetchIntegration(id, workspaceId)
         if (!integration) {
-          return "skipped"
+          return { result: "skipped" as const }
         }
 
-        const auth = integration.auth as InstagramAuthValue
-        const newAuth = await integrationInstagram.refreshAuth?.({ auth })
-        await instagramIntegrationService.updateAuth({
-          id,
-          workspaceId,
-          auth: newAuth as InstagramAuthValue,
-        })
+        const auth = config.getAuth(integration)
+        if (config.shouldSkip?.(auth)) {
+          return { result: "skipped" as const }
+        }
+
+        const newAuth = await config.refresh(auth)
+        await config.updateAuth(id, workspaceId, newAuth)
         await auditService.record({
           workspaceId,
           action: "refresh",
-          detail: "refreshed the Instagram channel token",
+          detail: config.auditDetail,
         })
-        return "refreshed"
+        return { result: "refreshed" as const, auth: newAuth }
       } catch (error) {
         logger.error(
           { err: error, integrationId: id, workspaceId },
-          "Failed to refresh Instagram channel token",
+          `Failed to refresh ${config.errorLabel} channel token`,
         )
         try {
-          await instagramIntegrationService.markTokenRefreshError({
+          await config.markTokenRefreshError({
             id,
             workspaceId,
             error: error instanceof Error ? error.message : String(error),
-            isRevoked: isInstagramRevokedTokenError(error),
+            isRevoked: config.isRevokedTokenError(error),
           })
         } catch (markError) {
           logger.error(
             { err: markError, integrationId: id, workspaceId },
-            "Failed to record Instagram token refresh error",
+            `Failed to record ${config.errorLabel} token refresh error`,
           )
         }
-        return "failed"
+        return { result: "failed" as const }
       }
     },
   })
 }
 
-async function refreshInstagramIntegrations(
+type ChannelRefreshConfig<TIntegration, TAuth> = RefreshGuardConfig<
+  TIntegration,
+  TAuth
+> & {
+  findWorkspaceIntegrations: (
+    workspaceIds: string[],
+  ) => Promise<Array<{ id: string; workspaceId: string }>>
+  /** Runs once the lock has been released on a successful refresh. */
+  afterRefresh?: (auth: TAuth) => Promise<void>
+}
+
+async function refreshChannel<TIntegration, TAuth>(
   workspaceIds: string[],
+  config: ChannelRefreshConfig<TIntegration, TAuth>,
 ): Promise<RefreshSummary> {
-  const integrations =
-    await instagramIntegrationService.findForTokenRefreshByWorkspaceIds(
-      workspaceIds,
+  const integrations = await config.findWorkspaceIntegrations(workspaceIds)
+  const results = await runInBatches(integrations, async (integration) => {
+    const { result, auth } = await refreshGuarded(
+      integration.id,
+      integration.workspaceId,
+      config,
     )
-  const results = await runInBatches(integrations, (integration) =>
-    refreshOneInstagram(integration.id, integration.workspaceId),
-  )
+    if (auth) {
+      await config.afterRefresh?.(auth)
+    }
+    return result
+  })
   return toSummary(results)
 }
 
-async function refreshOneInstagramFacebook(
-  id: string,
-  workspaceId: string,
-): Promise<RefreshResult> {
-  if (!integrationInstagramFacebook.refreshAuth) {
-    return "skipped"
-  }
-
-  return await distributedLock.runExclusive({
-    key: `auth:refresh:instagramFacebook:${id}`,
-    timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
-    fn: async () => {
-      try {
-        const integration =
-          await instagramIntegrationService.findByIdForWorkspace({
-            id,
-            workspaceId,
-          })
-        if (!integration) {
-          return "skipped"
-        }
-
-        const auth = integration.auth as InstagramAuthValue
-        const newAuth = await integrationInstagramFacebook.refreshAuth?.({
-          auth,
-        })
-        await instagramIntegrationService.updateAuth({
-          id,
-          workspaceId,
-          auth: newAuth as InstagramAuthValue,
-        })
-        await auditService.record({
-          workspaceId,
-          action: "refresh",
-          detail: "refreshed the Instagram channel token",
-        })
-        return "refreshed"
-      } catch (error) {
-        logger.error(
-          { err: error, integrationId: id, workspaceId },
-          "Failed to refresh Facebook-linked Instagram channel token",
-        )
-        try {
-          await instagramIntegrationService.markTokenRefreshError({
-            id,
-            workspaceId,
-            error: error instanceof Error ? error.message : String(error),
-            isRevoked: isInstagramFacebookRevokedTokenError(error),
-          })
-        } catch (markError) {
-          logger.error(
-            { err: markError, integrationId: id, workspaceId },
-            "Failed to record Facebook-linked Instagram token refresh error",
-          )
-        }
-        return "failed"
+const refreshZaloIntegrations = (workspaceIds: string[]) =>
+  refreshChannel(workspaceIds, {
+    channel: "zalo",
+    errorLabel: "Zalo",
+    auditDetail: "refreshed the Zalo channel permissions",
+    findWorkspaceIntegrations: (ids) =>
+      zaloIntegrationService.findAllByWorkspaceIds(ids),
+    fetchIntegration: (id, workspaceId) =>
+      zaloIntegrationService.findById({ id, workspaceId }),
+    getAuth: (integration) => integration.auth as ZaloAuthValue,
+    shouldSkip: (auth) => !auth.tokens.refreshToken,
+    refresh: async (auth) => {
+      const newTokens = await refreshZaloAccessToken(
+        auth,
+        auth.tokens.refreshToken as string,
+      )
+      return {
+        ...auth,
+        tokens: {
+          ...auth.tokens,
+          accessToken: newTokens.access_token,
+          refreshToken: newTokens.refresh_token,
+          expiresAt: calculateExpiresAt(newTokens.expires_in),
+        },
       }
     },
+    updateAuth: (id, _workspaceId, auth) =>
+      zaloIntegrationService.updateAuth(id, auth),
+    markTokenRefreshError: (params) =>
+      zaloIntegrationService.markTokenRefreshError(params),
+    isRevokedTokenError: isZaloRevokedTokenError,
   })
-}
 
-async function refreshInstagramFacebookIntegrations(
-  workspaceIds: string[],
-): Promise<RefreshSummary> {
-  const integrations =
-    await instagramIntegrationService.findFacebookForTokenRefreshByWorkspaceIds(
-      workspaceIds,
-    )
-  const results = await runInBatches(integrations, (integration) =>
-    refreshOneInstagramFacebook(integration.id, integration.workspaceId),
-  )
-  return toSummary(results)
-}
-
-type MessengerRefreshOutcome = {
-  result: RefreshResult
-  refreshedAuth?: MessengerAuthValue
-}
-
-async function refreshOneMessenger(
-  id: string,
-  workspaceId: string,
-): Promise<RefreshResult> {
-  if (!integrationMessenger.refreshAuth) {
-    return "skipped"
-  }
-
-  const { result, refreshedAuth } =
-    await distributedLock.runExclusive<MessengerRefreshOutcome>({
-      key: `auth:refresh:messenger:${id}`,
-      timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
-      fn: async () => {
-        try {
-          const integration =
-            await messengerIntegrationService.findByIdForWorkspace({
-              id,
-              workspaceId,
-            })
-          if (!integration) {
-            return { result: "skipped" }
-          }
-
-          const auth = integration.auth as MessengerAuthValue
-          const newAuth = (await integrationMessenger.refreshAuth?.({
-            auth,
-          })) as MessengerAuthValue
-          await messengerIntegrationService.updateAuth({
-            id,
-            workspaceId,
-            auth: newAuth,
-          })
-          await auditService.record({
-            workspaceId,
-            action: "refresh",
-            detail: "refreshed the Messenger channel token",
-          })
-          return { result: "refreshed", refreshedAuth: newAuth }
-        } catch (error) {
-          logger.error(
-            { err: error, integrationId: id, workspaceId },
-            "Failed to refresh Messenger channel token",
-          )
-          try {
-            await messengerIntegrationService.markTokenRefreshError({
-              id,
-              workspaceId,
-              error: error instanceof Error ? error.message : String(error),
-              isRevoked: isMessengerRevokedTokenError(error),
-            })
-          } catch (markError) {
-            logger.error(
-              { err: markError, integrationId: id, workspaceId },
-              "Failed to record Messenger token refresh error",
-            )
-          }
-          return { result: "failed" }
-        }
-      },
-    })
-
-  // Diagnostic Graph read kept outside the lock so it never extends the
-  // refresh critical section; it never rejects, so `result` stands.
-  if (refreshedAuth) {
-    await logMessengerWelcomeProfile({
-      ctx: { auth: refreshedAuth },
-      reason: "tokenRefreshed",
-    })
-  }
-
-  return result
-}
-
-async function refreshMessengerIntegrations(
-  workspaceIds: string[],
-): Promise<RefreshSummary> {
-  const integrations =
-    await messengerIntegrationService.findForTokenRefreshByWorkspaceIds(
-      workspaceIds,
-    )
-  const results = await runInBatches(integrations, (integration) =>
-    refreshOneMessenger(integration.id, integration.workspaceId),
-  )
-  return toSummary(results)
-}
-
-async function refreshOneWhatsapp(
-  id: string,
-  workspaceId: string,
-): Promise<RefreshResult> {
-  if (!integrationWhatsapp.refreshAuth) {
-    return "skipped"
-  }
-
-  return await distributedLock.runExclusive({
-    key: `auth:refresh:whatsapp:${id}`,
-    timeoutInSeconds: REFRESH_LOCK_TIMEOUT_SECONDS,
-    fn: async () => {
-      try {
-        const integration =
-          await integrationWhatsappService.findByIdForWorkspace({
-            id,
-            workspaceId,
-          })
-        if (!integration) {
-          return "skipped"
-        }
-
-        const auth = integration.auth as WhatsappAuthValue
-        if (auth.metadata.isManual) {
-          return "skipped"
-        }
-
-        const newAuth = await integrationWhatsapp.refreshAuth?.({ auth })
-        await integrationWhatsappService.updateAuth({
-          id,
-          workspaceId,
-          auth: newAuth as WhatsappAuthValue,
-        })
-        await auditService.record({
-          workspaceId,
-          action: "refresh",
-          detail: "refreshed the WhatsApp channel token",
-        })
-        return "refreshed"
-      } catch (error) {
-        logger.error(
-          { err: error, integrationId: id, workspaceId },
-          "Failed to refresh WhatsApp channel token",
-        )
-        try {
-          await integrationWhatsappService.markTokenRefreshError({
-            id,
-            workspaceId,
-            error: error instanceof Error ? error.message : String(error),
-            isRevoked: isWhatsappRevokedTokenError(error),
-          })
-        } catch (markError) {
-          logger.error(
-            { err: markError, integrationId: id, workspaceId },
-            "Failed to record WhatsApp token refresh error",
-          )
-        }
-        return "failed"
+const refreshTiktokIntegrations = (workspaceIds: string[]) =>
+  refreshChannel(workspaceIds, {
+    channel: "tiktok",
+    errorLabel: "TikTok",
+    auditDetail: "refreshed the TikTok channel token",
+    findWorkspaceIntegrations: (ids) =>
+      tiktokIntegrationService.findAllByWorkspaceIds(ids),
+    fetchIntegration: (id, workspaceId) =>
+      tiktokIntegrationService.findById({ id, workspaceId }),
+    getAuth: (integration) => integration.auth as TiktokAuthValue,
+    shouldSkip: (auth) => !auth.tokens.refreshToken,
+    refresh: async (auth) => {
+      const newTokens = await refreshTiktokAccessToken(
+        { clientId: auth.clientId, clientSecret: auth.clientSecret },
+        auth.tokens.refreshToken as string,
+      )
+      return {
+        ...auth,
+        tokens: {
+          ...auth.tokens,
+          accessToken: newTokens.access_token,
+          refreshToken: newTokens.refresh_token,
+          ...buildTokenTimestamps(
+            newTokens.expires_in,
+            newTokens.refresh_expires_in,
+          ),
+        },
+        metadata: {
+          ...auth.metadata,
+          scopes: parseTiktokScopes(newTokens.scope),
+        },
       }
     },
+    updateAuth: (id, workspaceId, auth) =>
+      tiktokIntegrationService.updateAuth({ id, workspaceId, auth }),
+    markTokenRefreshError: (params) =>
+      tiktokIntegrationService.markTokenRefreshError(params),
+    isRevokedTokenError: isTiktokRevokedTokenError,
   })
-}
 
-async function refreshWhatsappIntegrations(
-  workspaceIds: string[],
-): Promise<RefreshSummary> {
-  const integrations =
-    await integrationWhatsappService.findForTokenRefreshByWorkspaceIds(
-      workspaceIds,
-    )
-  const results = await runInBatches(integrations, (integration) =>
-    refreshOneWhatsapp(integration.id, integration.workspaceId),
-  )
-  return toSummary(results)
-}
+const refreshInstagramIntegrations = (workspaceIds: string[]) =>
+  refreshChannel(workspaceIds, {
+    channel: "instagram",
+    errorLabel: "Instagram",
+    auditDetail: "refreshed the Instagram channel token",
+    canAttempt: () => Boolean(integrationInstagram.refreshAuth),
+    findWorkspaceIntegrations: (ids) =>
+      instagramIntegrationService.findForTokenRefreshByWorkspaceIds(ids),
+    fetchIntegration: (id, workspaceId) =>
+      instagramIntegrationService.findByIdForWorkspace({ id, workspaceId }),
+    getAuth: (integration) => integration.auth as InstagramAuthValue,
+    refresh: async (auth) =>
+      (await integrationInstagram.refreshAuth?.({
+        auth,
+      })) as InstagramAuthValue,
+    updateAuth: (id, workspaceId, auth) =>
+      instagramIntegrationService.updateAuth({ id, workspaceId, auth }),
+    markTokenRefreshError: (params) =>
+      instagramIntegrationService.markTokenRefreshError(params),
+    isRevokedTokenError: isInstagramRevokedTokenError,
+  })
+
+const refreshInstagramFacebookIntegrations = (workspaceIds: string[]) =>
+  refreshChannel(workspaceIds, {
+    channel: "instagramFacebook",
+    errorLabel: "Facebook-linked Instagram",
+    auditDetail: "refreshed the Instagram channel token",
+    canAttempt: () => Boolean(integrationInstagramFacebook.refreshAuth),
+    findWorkspaceIntegrations: (ids) =>
+      instagramIntegrationService.findFacebookForTokenRefreshByWorkspaceIds(
+        ids,
+      ),
+    fetchIntegration: (id, workspaceId) =>
+      instagramIntegrationService.findByIdForWorkspace({ id, workspaceId }),
+    getAuth: (integration) => integration.auth as InstagramAuthValue,
+    refresh: async (auth) =>
+      (await integrationInstagramFacebook.refreshAuth?.({
+        auth,
+      })) as InstagramAuthValue,
+    updateAuth: (id, workspaceId, auth) =>
+      instagramIntegrationService.updateAuth({ id, workspaceId, auth }),
+    markTokenRefreshError: (params) =>
+      instagramIntegrationService.markTokenRefreshError(params),
+    isRevokedTokenError: isInstagramFacebookRevokedTokenError,
+  })
+
+const refreshMessengerIntegrations = (workspaceIds: string[]) =>
+  refreshChannel(workspaceIds, {
+    channel: "messenger",
+    errorLabel: "Messenger",
+    auditDetail: "refreshed the Messenger channel token",
+    canAttempt: () => Boolean(integrationMessenger.refreshAuth),
+    findWorkspaceIntegrations: (ids) =>
+      messengerIntegrationService.findForTokenRefreshByWorkspaceIds(ids),
+    fetchIntegration: (id, workspaceId) =>
+      messengerIntegrationService.findByIdForWorkspace({ id, workspaceId }),
+    getAuth: (integration) => integration.auth as MessengerAuthValue,
+    refresh: async (auth) =>
+      (await integrationMessenger.refreshAuth?.({
+        auth,
+      })) as MessengerAuthValue,
+    updateAuth: (id, workspaceId, auth) =>
+      messengerIntegrationService.updateAuth({ id, workspaceId, auth }),
+    markTokenRefreshError: (params) =>
+      messengerIntegrationService.markTokenRefreshError(params),
+    isRevokedTokenError: isMessengerRevokedTokenError,
+    // Diagnostic Graph read kept outside the lock so it never extends the
+    // refresh critical section; it never rejects, so the row's result stands.
+    afterRefresh: (auth) =>
+      logMessengerWelcomeProfile({ ctx: { auth }, reason: "tokenRefreshed" }),
+  })
+
+const refreshWhatsappIntegrations = (workspaceIds: string[]) =>
+  refreshChannel(workspaceIds, {
+    channel: "whatsapp",
+    errorLabel: "WhatsApp",
+    auditDetail: "refreshed the WhatsApp channel token",
+    canAttempt: () => Boolean(integrationWhatsapp.refreshAuth),
+    findWorkspaceIntegrations: (ids) =>
+      integrationWhatsappService.findForTokenRefreshByWorkspaceIds(ids),
+    fetchIntegration: (id, workspaceId) =>
+      integrationWhatsappService.findByIdForWorkspace({ id, workspaceId }),
+    getAuth: (integration) => integration.auth as WhatsappAuthValue,
+    shouldSkip: (auth) => Boolean(auth.metadata.isManual),
+    refresh: async (auth) =>
+      (await integrationWhatsapp.refreshAuth?.({ auth })) as WhatsappAuthValue,
+    updateAuth: (id, workspaceId, auth) =>
+      integrationWhatsappService.updateAuth({ id, workspaceId, auth }),
+    markTokenRefreshError: (params) =>
+      integrationWhatsappService.markTokenRefreshError(params),
+    isRevokedTokenError: isWhatsappRevokedTokenError,
+  })
 
 /**
  * Excludes workspaces mid-deletion-grace-window or blocked for trial/quota

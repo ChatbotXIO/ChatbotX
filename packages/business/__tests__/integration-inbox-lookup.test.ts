@@ -42,10 +42,6 @@ vi.mock("@chatbotx.io/utils", () => ({
 // services) pull in real modules transitively — mock them at the boundary
 // so this narrow lookup test doesn't have to satisfy their own dependency
 // graphs (e.g. `@chatbotx.io/analytics`'s schema requirements).
-vi.mock("../src/inbox/connect-channel", () => ({
-  connectChannelIntegration: vi.fn(),
-}))
-
 vi.mock("../src/inbox/service", () => ({
   inboxService: { disconnect: vi.fn() },
 }))

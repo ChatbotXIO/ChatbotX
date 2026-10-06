@@ -90,7 +90,7 @@ beforeEach(() => {
 })
 
 describe("tenantService.reactivate", () => {
-  test("a channelLimitReached error resuming one connection does not abort the sweep: the rest still resume and the failed one is logged, not thrown (M-4)", async () => {
+  test("a channelLimitReached error resuming one connection does not abort the sweep: the rest still resume and the failed one is logged, not thrown", async () => {
     mocks.listPausedByOwner.mockResolvedValue([
       pausedConnection("conn-1"),
       pausedConnection("conn-2"),

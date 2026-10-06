@@ -176,7 +176,7 @@ describe.each([
     })
   })
 
-  test("defers workspace creation into startSession's own transaction when there is no workspaceId yet (first channel ever) (M-7: a cancelled/failed start must not leave an empty orphan workspace behind)", async () => {
+  test("defers workspace creation into startSession's own transaction when there is no workspaceId yet (first channel ever) — a cancelled/failed start must not leave an empty orphan workspace behind", async () => {
     const { GET } = await import(routePath)
 
     await expect(GET(requestWithWorkspaceId(null))).rejects.toThrow(
@@ -208,7 +208,7 @@ describe.each([
     })
   })
 
-  test("never creates an orphan workspace when startSession fails before reaching the provider — simulated OAuth cancel (M-7)", async () => {
+  test("never creates an orphan workspace when startSession fails before reaching the provider — simulated OAuth cancel", async () => {
     mockStartSession.mockRejectedValueOnce(
       new Error("provider rejected the connect attempt"),
     )
@@ -218,10 +218,7 @@ describe.each([
       "redirect:/channels/create?error=sessionExpired",
     )
 
-    // Workspace creation now lives INSIDE `startSession`'s own transaction
-    // (`createWorkspace` below), so a failed/cancelled start — which never
-    // gets to invoke that callback for real here — never calls
-    // `workspaceService.create` directly from this route. Before M-7, the
+    // `workspaceService.create` directly from this route. Previously the
     // route called it eagerly regardless of whether `startSession`
     // succeeded, leaving an empty orphan workspace behind on every
     // cancelled/failed attempt.

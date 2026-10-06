@@ -41,7 +41,6 @@ vi.mock("../src/conversation/service", () => ({ conversationService: {} }))
 vi.mock("../src/smart-delay/service", () => ({ smartDelayService: {} }))
 vi.mock("../src/inbox/connect-channel", () => ({
   auditChannelConnected: vi.fn(),
-  connectChannelIntegration: vi.fn(),
   runConnectTransaction: vi.fn(),
 }))
 

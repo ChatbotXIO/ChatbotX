@@ -119,7 +119,7 @@ describe.skipIf(!databaseUrl)("inboxRepository against Postgres", () => {
   const run = (fn: (tx: DatabaseClient) => Promise<void>) =>
     withRolledBackTransaction(createDatabase(client), fn)
 
-  test("listTenantSuspendedWithoutConnectionByOwner returns only tenant_suspended Inbox rows with no Connection row, scoped to the owner (M-4)", () =>
+  test("listTenantSuspendedWithoutConnectionByOwner returns only tenant_suspended Inbox rows with no Connection row, scoped to the owner", () =>
     run(async (tx) => {
       const { workspaceId: workspaceA, ownerId } = await seedWorkspace(
         tx,

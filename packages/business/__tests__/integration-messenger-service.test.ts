@@ -118,3 +118,20 @@ describe("messengerIntegrationService.markTokenRefreshError", () => {
     expect(mockMarkUnhealthyByIdentifier).not.toHaveBeenCalled()
   })
 })
+
+describe("messengerIntegrationService.updateAuth", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUpdateReturning.mockResolvedValue([])
+  })
+
+  test("rejects with notFoundException when the update matches zero rows", async () => {
+    await expect(
+      messengerIntegrationService.updateAuth({
+        id: "integration-1",
+        workspaceId: "ws-1",
+        auth: { token: "x" },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+  })
+})

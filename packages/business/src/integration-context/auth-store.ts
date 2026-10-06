@@ -36,10 +36,9 @@ export type AuthStoreIntegrationRow = {
  * `makeAuthStore` derives (e.g. `MessagingAdsConnection`, which is keyed to a
  * channel integration but is not itself an `Integration<Channel>` row) —
  * see `buildMessagingAdsContext` in
- * `@chatbotx.io/business/messaging-ads-connection`, added per
- * out/plan/ctwa-ctm-ctid-box-merge.md v3 correction #4 ("Auth-store
- * coupling"): passing a `MessagingAdsConnection` row through `makeAuthStore`
- * would read/write the WRONG table (`channelToIntegrationTable` would derive
+ * `@chatbotx.io/business/messaging-ads-connection`: passing a
+ * `MessagingAdsConnection` row through `makeAuthStore` would read/write the
+ * WRONG table (`channelToIntegrationTable` would derive
  * `IntegrationMessagingAdsConnection`, which does not exist).
  */
 export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(

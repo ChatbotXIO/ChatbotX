@@ -31,11 +31,9 @@ const { auditChannelConnected, runConnectTransaction } = await import(
 )
 
 /**
- * Mirrors `connect-channel.ts`'s own (internal, no longer exported —
- * `connectChannelIntegration` was the only external caller that forced the
- * export, and it's gone now that every channel's insert goes through
- * `CONNECTION_STORE_BINDINGS`) `CHANNEL_CONNECT_DESCRIPTORS`; its
- * `duplicateConstraint` values match the mocked schema constants above.
+ * Mirrors `connect-channel.ts`'s own internal (unexported)
+ * `CHANNEL_CONNECT_DESCRIPTORS`; its `duplicateConstraint` values match the
+ * mocked schema constants above.
  */
 const CHANNEL_CONNECT_DESCRIPTORS = {
   messenger: {

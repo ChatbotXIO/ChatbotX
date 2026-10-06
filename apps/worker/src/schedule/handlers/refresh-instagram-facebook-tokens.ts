@@ -38,9 +38,13 @@ async function refreshOne(integration: {
       }
 
       const auth = current.auth as InstagramAuthValue
-      return (await integrationInstagramFacebook.refreshAuth?.({
+      const refreshedAuth = await integrationInstagramFacebook.refreshAuth?.({
         auth,
-      })) as InstagramAuthValue
+      })
+      if (!refreshedAuth) {
+        throw new Error("Instagram refreshAuth returned no auth")
+      }
+      return refreshedAuth
     },
     apply: (newAuth) =>
       instagramIntegrationService.updateAuth({

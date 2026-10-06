@@ -131,9 +131,10 @@ vi.mock("@chatbotx.io/business/connection", () => ({
   InvalidConnectionTransitionException: Error,
   // These six are real (unmocked) functions from `@chatbotx.io/business/
   // connection`'s `upsert.ts` — this file mocks that whole package so
-  // `service.ts`'s other imports from it (`connectionStateService`, the
-  // exception classes) stay test doubles too, which means these six can't
-  // be individually un-mocked via `importOriginal` without pulling in
+  // `connect-session-flow.ts`, `lifecycle.ts`, and `credentials.ts`'s
+  // other imports from it (`connectionStateService`, the exception
+  // classes) stay test doubles too, which means these six can't be
+  // individually un-mocked via `importOriginal` without pulling in
   // `upsert.ts`'s real `@chatbotx.io/database/*` imports (schema, pool) for
   // real. So they're hand-mirrored here, wired to this file's own
   // `mocks.*` stand-ins for the DB/quota primitives they call.
@@ -161,6 +162,7 @@ vi.mock("@chatbotx.io/business/connection", () => ({
         workspaceId?: string
         workspaceUsageIncremented: boolean
       }
+      context: Record<string, unknown>
     },
     operation: () => Promise<unknown>,
   ) => {
@@ -184,6 +186,7 @@ vi.mock("@chatbotx.io/business/connection", () => ({
           mocks.loggerError(
             {
               err: compensationErr,
+              ...input.context,
               workspaceId: quotaConsumption.workspaceId,
               ownerId,
             },
@@ -1494,7 +1497,7 @@ describe("ConnectionService.connectFromCredentials", () => {
     mockAdapter.store.onDisconnect = "delete_row"
   })
 
-  it("falls back to inserting a fresh satellite row when saveAuthByForeignKey matches zero rows (regression I2: a delete_row provider's stale integrationId used to either 409 or orphan a second Integration row)", async () => {
+  it("falls back to inserting a fresh satellite row when saveAuthByForeignKey matches zero rows: a delete_row provider's stale integrationId used to either 409 or orphan a second Integration row", async () => {
     mocks.findByProviderSourceId.mockResolvedValue({
       id: "conn-existing",
       status: "connected",
@@ -1589,7 +1592,7 @@ describe("ConnectionService.startSession", () => {
     })
   })
 
-  it("mints the workspace and the session inside one transaction when createWorkspace is given instead of workspaceId (M-7: a failed/cancelled start must not leave an empty orphan workspace behind)", async () => {
+  it("mints the workspace and the session inside one transaction when createWorkspace is given instead of workspaceId: a failed/cancelled start must not leave an empty orphan workspace behind", async () => {
     const mockCreateWorkspace = vi.fn((tx: unknown) => {
       expect(tx).toBe("tx")
       return Promise.resolve({ id: "ws-new" })
@@ -2169,7 +2172,7 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
     })
   })
 
-  it("falls back to inserting a fresh satellite row when the delete_row channel's satellite is already gone (regression I3: used to silently no-op the update, then still report connect.completed with no auth persisted)", async () => {
+  it("falls back to inserting a fresh satellite row when the delete_row channel's satellite is already gone: used to silently no-op the update, then still report connect.completed with no auth persisted", async () => {
     mocks.findByNonce.mockResolvedValue(reconnectSession)
     mocks.findByIdForWorkspace.mockResolvedValue(
       baseConnection({ sourceId: "page-1" }),
@@ -2330,6 +2333,12 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
         credential: {},
       }),
     ).rejects.toMatchObject({ code: "connectionAlreadyConnected" })
+    expect(mocks.failSession).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+      errorCode: "provider_denied",
+      statuses: ["authorized"],
+    })
     expect(mocks.saveAuthByForeignKey).not.toHaveBeenCalled()
 
     mockAdapter.provider.listCandidates = mocks.listCandidates

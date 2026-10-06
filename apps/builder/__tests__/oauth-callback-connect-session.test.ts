@@ -496,7 +496,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     ).rejects.toThrow("not found")
   })
 
-  test("calls completeAuthorization with the callback URL resolved from the registered credential's origin, not this request's own host (regression: H-1 — a platform credential's redirect_uri is the broker even when the request lands on a different app host)", async () => {
+  test("calls completeAuthorization with the callback URL resolved from the registered credential's origin, not this request's own host — a platform credential's redirect_uri is the broker even when the request lands on a different app host", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
       provider: "messenger",
@@ -529,7 +529,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     })
   })
 
-  test("after a white-label relay, resolves the callback URL from a tenant-owned credential's custom domain, not the relayed-to originHost (regression: H-1)", async () => {
+  test("after a white-label relay, resolves the callback URL from a tenant-owned credential's custom domain, not the relayed-to originHost", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
       provider: "messenger",
@@ -801,7 +801,7 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     expect(mockLoggerError).not.toHaveBeenCalled()
   })
 
-  test("a retryable provider-unavailable error (session already released back to pending) does not fail the session, only the non-retryable case terminalizes it (regression: M-1)", async () => {
+  test("a retryable provider-unavailable error (session already released back to pending) does not fail the session, only the non-retryable case terminalizes it", async () => {
     mockFindByNonce.mockResolvedValueOnce({
       id: "123",
       provider: "messenger",

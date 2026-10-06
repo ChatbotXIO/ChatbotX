@@ -50,7 +50,7 @@ export async function runBrandingFollowUps<TAuth extends AuthValue>(input: {
   /**
    * Persists the branding entry onto the satellite row's own local
    * `persistentMenus` column after `addBranding`'s live Graph push
-   * succeeds — restores the v1.11.0 insert-time-seeded value (dropped when
+   * succeeds — restores the insert-time-seeded value (dropped when
    * messenger/instagram moved onto the unified connect session, whose
    * `candidateToConfig` has no app-layer `appUrl`/branding context to seed
    * it at insert time). Only called on a successful push, and only the

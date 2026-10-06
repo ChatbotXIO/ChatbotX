@@ -123,3 +123,20 @@ describe("instagramIntegrationService.markTokenRefreshError", () => {
     expect(mockMarkUnhealthyByIdentifier).not.toHaveBeenCalled()
   })
 })
+
+describe("instagramIntegrationService.updateAuth", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUpdateReturning.mockResolvedValue([])
+  })
+
+  test("rejects with notFoundException when the update matches zero rows", async () => {
+    await expect(
+      instagramIntegrationService.updateAuth({
+        id: "integration-1",
+        workspaceId: "ws-1",
+        auth: { token: "x" },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+  })
+})

@@ -1,8 +1,6 @@
 /**
  * Backfills `Connection` rows for every pre-existing Inbox/Integration
- * satellite row that predates the `Connection` table (plan: Phase 4 of
- * "Rà soát Connection (v1.11.0 → origin/main) + chuyển lưu trữ sang bảng
- * `Connection`").
+ * satellite row that predates the `Connection` table.
  *
  * Mechanism: for each provider, pull candidate rows via a keyset-paginated
  * SELECT (Inbox x satellite for channels, Integration x satellite for

@@ -46,12 +46,9 @@ interface CreateDisconnectActionOptions {
 }
 
 /**
- * Scheduled for removal in Phase 5 of the connection-lifecycle plan, once
- * every adopter reads/writes the `Connection` domain directly instead of
- * going through a per-provider service. Until then this is the active,
- * correct implementation for the 13 workspace-integration disconnect
- * actions — it routes through `connectionService` itself (see `provider`
- * above), so adopters do not need any further change.
+ * The active, correct implementation for the 13 workspace-integration
+ * disconnect actions — it routes through `connectionService` itself (see
+ * `provider` above), so adopters do not need any further change.
  */
 export function createDisconnectAction(
   service: DisconnectService,
@@ -118,6 +115,17 @@ export function createDisconnectAction(
     )
 }
 
+/** The workspace-singleton credential-strategy integrations `createCredentialConnectAction` builds. */
+type CredentialConnectProvider =
+  | "activeCampaign"
+  | "drip"
+  | "getResponse"
+  | "klaviyo"
+  | "mailchimp"
+  | "mailerLite"
+  | "moosend"
+  | "sendGrid"
+
 interface CreateCredentialConnectActionOptions<
   TSchema extends z.ZodType<Record<string, unknown>>,
 > {
@@ -127,7 +135,7 @@ interface CreateCredentialConnectActionOptions<
    * The `Connection` registry key for this integration — see
    * `createDisconnectAction`'s `provider` doc for the full contract.
    */
-  provider: IntegrationType
+  provider: CredentialConnectProvider
   /** Validates the raw connect payload before it's persisted as `config`. */
   schema: TSchema
 }
@@ -216,6 +224,11 @@ export function createAiKeyConnectAction<
         (await verifyAiProviderApiKey(provider, parsedInput.apiKey)) ===
         "invalid"
       ) {
+        // `Schema`/`AS` in `returnValidationErrors`'s own signature default
+        // to the generic `TSchema` here unresolved — TS can't verify a
+        // literal against a mapped type over a still-abstract generic
+        // parameter, even though `TSchema`'s `AiKeyConnectConfig` bound
+        // guarantees `apiKey` exists on every concrete instantiation.
         return returnValidationErrors(schema, {
           apiKey: { _errors: [t("validation.invalidApiKey")] },
         } as ValidationErrors<TSchema>)

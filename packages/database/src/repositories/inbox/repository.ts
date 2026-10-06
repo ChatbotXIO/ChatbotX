@@ -80,7 +80,7 @@ export const inboxRepository = {
    * Those rows are invisible to `connectionRepository.listPausedByOwner`, so
    * `tenantService.reactivate` sweeps this list too. Temporary: remove
    * alongside the matching fallback in `tenantService.reactivate` once the
-   * `Connection` backfill's `--verify` is 0 (see the plan's decision log).
+   * `Connection` backfill's `--verify` is 0.
    */
   async listTenantSuspendedWithoutConnectionByOwner(
     input: { ownerId: string },

@@ -185,6 +185,15 @@ export const startSession = async (
 }
 
 /**
+ * Narrows a session to the reconnect shape `completeReconnect` requires —
+ * `targetConnectionId` is only set for `purpose: "reconnect"` sessions.
+ */
+const isReconnectSession = (
+  session: ConnectSessionModel,
+): session is ConnectSessionModel & { targetConnectionId: string } =>
+  session.purpose === "reconnect" && !!session.targetConnectionId
+
+/**
  * OAuth callback exchange: resolves the session by its `state` nonce,
  * exchanges `code` for `auth`, lists connectable candidates, and persists
  * them as session targets — `attachAuthorization` always lands on
@@ -259,11 +268,8 @@ export const completeAuthorization = async (input: {
     )
   }
 
-  if (session.purpose === "reconnect" && session.targetConnectionId) {
-    return await completeReconnect({
-      session: session as ConnectSessionModel & { targetConnectionId: string },
-      auth,
-    })
+  if (isReconnectSession(session)) {
+    return await completeReconnect({ session, auth })
   }
 
   let authorizedSession: ConnectSessionModel
@@ -501,6 +507,7 @@ const completeReconnect = async (input: {
       sourceId: descriptor.sourceId,
     })
     if (existing && existing.id !== connection.id) {
+      await failSession(session, "provider_denied", ["authorized"])
       throw connectionAlreadyConnectedException()
     }
   }

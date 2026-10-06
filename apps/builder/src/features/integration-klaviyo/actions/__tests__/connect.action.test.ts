@@ -3,11 +3,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
-// `connectKlaviyoAction` used to call `integrationKlaviyoService.upsert`
-// directly — a second write path to the same `IntegrationKlaviyo`/
-// `Connection` rows the Connection engine's `connectFromCredentials` also
-// writes, which caused 409 conflicts. It now delegates to
-// `connectionService.connectFromCredentials` instead, matching every other
+// `connectKlaviyoAction` delegates to `connectionService
+// .connectFromCredentials` instead of calling `integrationKlaviyoService
+// .upsert` directly — the latter would be a second write path to the same
+// `IntegrationKlaviyo`/`Connection` rows the Connection engine also writes,
+// which would cause 409 conflicts. This matches every other
 // credential-strategy connect (see `integrations/api/public/ai.ts`).
 // ---------------------------------------------------------------------------
 

@@ -258,7 +258,7 @@ export const tenantService = {
    * pre-backfill fallback in `workspaceLifecycleService.disconnectWorkspaceInbox`).
    * Temporary until the `Connection` backfill lands everywhere — remove this
    * block alongside `inboxRepository.listTenantSuspendedWithoutConnectionByOwner`
-   * once the backfill's `--verify` is 0 (see the plan's decision log).
+   * once the backfill's `--verify` is 0.
    */
   async reactivate(ownerId: string): Promise<void> {
     await this.setStatusByOwner(ownerId, "active")

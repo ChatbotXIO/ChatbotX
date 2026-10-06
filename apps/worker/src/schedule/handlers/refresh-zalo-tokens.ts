@@ -30,8 +30,12 @@ async function refreshOne(integration: {
       // redis hiccup) must not reject the whole batch and abort the
       // remaining integrations for the day.
       logger.error(
-        error,
-        `[refreshZaloTokens] id=${integration.id} lock failed`,
+        {
+          err: error,
+          id: integration.id,
+          workspaceId: integration.workspaceId,
+        },
+        "[refreshZaloTokens] lock acquisition failed",
       )
     },
     refresh: async () => {

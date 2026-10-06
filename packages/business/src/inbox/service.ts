@@ -564,7 +564,7 @@ class InboxService extends BaseService {
    * (`tenantService.reactivate`) must catch it per-row so one exhausted
    * owner doesn't abort the rest of the sweep. Remove alongside
    * `inboxRepository.listTenantSuspendedWithoutConnectionByOwner` once the
-   * `Connection` backfill's `--verify` is 0 (see the plan's decision log).
+   * `Connection` backfill's `--verify` is 0.
    */
   async resumeTenantSuspended(props: {
     inboxId: string
