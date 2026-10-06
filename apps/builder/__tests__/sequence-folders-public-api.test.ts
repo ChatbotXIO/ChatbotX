@@ -91,25 +91,6 @@ describe("sequence folder routes", () => {
     })
   })
 
-  test("list forwards isTrash and keeps the workspace, type and parent scope", async () => {
-    mocks.list.mockResolvedValue([])
-    for (const isTrash of [true, false, undefined]) {
-      await find(
-        "GET",
-        "/v1/sequence-folders",
-      )?.({
-        context,
-        input: { parentId: "7", isTrash },
-      })
-      expect(mocks.list).toHaveBeenLastCalledWith({
-        workspaceId: "ws-1",
-        folderType: "sequence",
-        parentId: "7",
-        isTrash,
-      })
-    }
-  })
-
   test("rename and delete refuse a folder of another type as 404", async () => {
     mocks.findOrFail.mockResolvedValue({ id: "9", folderType: "tag" })
 
@@ -163,5 +144,28 @@ describe("sequence folder routes", () => {
       workspaceId: "ws-1",
       ids: ["9"],
     })
+  })
+})
+
+describe("sequence folder list isTrash", () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  test("list forwards isTrash and keeps the workspace, type and parent scope", async () => {
+    mocks.list.mockResolvedValue([])
+    for (const isTrash of [true, false, undefined]) {
+      await find(
+        "GET",
+        "/v1/sequence-folders",
+      )?.({
+        context,
+        input: { parentId: "7", isTrash },
+      })
+      expect(mocks.list).toHaveBeenLastCalledWith({
+        workspaceId: "ws-1",
+        folderType: "sequence",
+        parentId: "7",
+        isTrash,
+      })
+    }
   })
 })
