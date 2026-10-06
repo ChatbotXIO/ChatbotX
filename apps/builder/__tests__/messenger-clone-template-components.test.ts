@@ -8,6 +8,7 @@ const findByIdForWorkspace = vi.fn()
 const listCloneTargetsForUser = vi.fn()
 const assertPublicUrl = vi.fn((..._args: unknown[]) => Promise.resolve())
 const findByIdForIntegration = vi.fn()
+const findIdBySourceId = vi.fn()
 
 // Captures the handler the safe-action chain wraps so the action's
 // authorization can be exercised directly.
@@ -28,6 +29,7 @@ vi.mock("@chatbotx.io/business", () => ({
   messengerMessageTemplateService: {
     findByIdForIntegration: (...args: unknown[]) =>
       findByIdForIntegration(...args),
+    findIdBySourceId: (...args: unknown[]) => findIdBySourceId(...args),
     syncFromMeta: vi.fn(),
   },
 }))
@@ -367,5 +369,53 @@ describe("createMessengerMessageTemplate header image", () => {
       message: expect.stringContaining("must be an image file"),
     })
     expect(createPageMessageTemplate).not.toHaveBeenCalled()
+  })
+})
+
+describe("createMessengerMessageTemplate local template id", () => {
+  const request = {
+    name: "promo",
+    language: "vi",
+    headerType: "none" as const,
+    headerText: "",
+    headerVariables: [],
+    body: "Body",
+    bodyVariables: [],
+    buttons: [],
+  }
+
+  beforeEach(() => {
+    createPageMessageTemplate
+      .mockReset()
+      .mockResolvedValue({ id: "meta-1", status: "APPROVED" })
+    findIdBySourceId.mockReset()
+  })
+
+  test("returns the id of the mirrored copy, looked up by page and Meta id", async () => {
+    findIdBySourceId.mockResolvedValue("local-1")
+
+    const created = await createMessengerMessageTemplate({
+      workspaceId: "ws-1",
+      integrationMessenger: { id: "im-1", auth: {} } as never,
+      request,
+    })
+
+    expect(findIdBySourceId).toHaveBeenCalledWith({
+      integrationMessengerId: "im-1",
+      sourceId: "meta-1",
+    })
+    expect(created).toMatchObject({ id: "meta-1", templateId: "local-1" })
+  })
+
+  test("returns null when Meta did not list the new template yet", async () => {
+    findIdBySourceId.mockResolvedValue(null)
+
+    const created = await createMessengerMessageTemplate({
+      workspaceId: "ws-1",
+      integrationMessenger: { id: "im-1", auth: {} } as never,
+      request,
+    })
+
+    expect(created.templateId).toBeNull()
   })
 })

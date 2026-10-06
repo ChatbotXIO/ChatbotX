@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { connectionStateService } from "@chatbotx.io/business/connection"
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import {
@@ -29,7 +30,7 @@ export const disconnectInstagram = async (ctx: {
   ])
 
   if (!integrationInstagram) {
-    throw new Error("Integration Instagram not found")
+    throw notFoundException("Instagram channel not found")
   }
 
   const authValue = integrationInstagram.auth as InstagramAuthValue

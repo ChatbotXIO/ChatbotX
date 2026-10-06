@@ -1,4 +1,7 @@
-import { productService } from "@chatbotx.io/business"
+import {
+  integrationMetaCatalogService,
+  productService,
+} from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { createImportUpload, importService } from "@chatbotx.io/business/import"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -28,6 +31,7 @@ import {
   possibleErrorsOnCreatingMetaCatalog,
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
+  possibleErrorsOnDisconnectingMetaCatalog,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
@@ -73,7 +77,7 @@ export const productsPublicRouter = {
       path: "/v1/products/meta-catalog",
       summary: "Get Meta Catalog connection",
       description:
-        "Returns the workspace's Meta Catalog connection (bound catalog, import progress, token status; never the credential) and the history of syncs and imports. `connection` is null until a catalog is connected in the builder. Connecting and disconnecting stay in the builder (they run Meta's OAuth).",
+        "Returns the workspace's Meta Catalog connection (bound catalog, import progress, token status; never the credential) and the history of syncs and imports. `connection` is null until a catalog is connected in the builder. Connecting stays in the builder (it runs Meta's OAuth); disconnect with `products.disconnectMetaCatalog`.",
       tags: ["Products"],
     })
     .output(metaCatalogStatePublicResponse)
@@ -81,6 +85,21 @@ export const productsPublicRouter = {
     .handler(async ({ context }) => {
       const state = await getMetaCatalogState(context.workspace.id)
       return metaCatalogStatePublicResponse.parse(state)
+    }),
+
+  disconnectMetaCatalog: workspaceTokenAuthAPI
+    .route({
+      method: "DELETE",
+      path: "/v1/products/meta-catalog",
+      summary: "Disconnect Meta Catalog",
+      description:
+        "Disconnects the workspace's Meta Catalog, as the Disconnect button in the builder does: the stored credential is dropped and products stop syncing to Meta. Products already in the workspace are kept. Returns 409 while a sync or import is running; a workspace without a connected catalog gets 204 too. Works on a trial-expired workspace.",
+      successStatus: 204,
+      tags: ["Products"],
+    })
+    .errors(possibleErrorsOnDisconnectingMetaCatalog)
+    .handler(async ({ context }) => {
+      await integrationMetaCatalogService.disconnect(context.workspace.id)
     }),
 
   listMetaCatalogBusinesses: workspaceTokenAuthAPI

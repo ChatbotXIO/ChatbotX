@@ -101,12 +101,16 @@ describe("disconnectMessenger", () => {
     expect(record).not.toHaveBeenCalled()
   })
 
-  test("throws before any teardown when the integration isn't found", async () => {
+  test("a page outside the workspace is a 404 before any teardown", async () => {
     findByIdForWorkspace.mockResolvedValue(null)
 
     await expect(
       disconnectMessenger({ workspaceId: WORKSPACE_ID, id: INTEGRATION_ID }),
-    ).rejects.toThrow("Integration Messenger not found")
+    ).rejects.toMatchObject({
+      message: "Messenger channel not found",
+      code: "notFound",
+      httpStatusCode: 404,
+    })
 
     expect(disconnectMessengerConnection).not.toHaveBeenCalled()
   })

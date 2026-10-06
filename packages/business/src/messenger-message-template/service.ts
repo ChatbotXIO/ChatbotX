@@ -165,6 +165,21 @@ class MessengerMessageTemplateService extends BaseService {
     })
   }
 
+  /** Local id of the mirrored copy of a Meta template, or null when absent. */
+  async findIdBySourceId(props: {
+    integrationMessengerId: string
+    sourceId: string
+  }): Promise<string | null> {
+    const template = await db.query.messengerMessageTemplateModel.findFirst({
+      where: {
+        integrationMessengerId: props.integrationMessengerId,
+        sourceId: props.sourceId,
+      },
+      columns: { id: true },
+    })
+    return template?.id ?? null
+  }
+
   findByIdForIntegration(props: {
     id: string
     integrationMessengerId: string

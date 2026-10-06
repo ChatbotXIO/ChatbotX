@@ -3,6 +3,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { disconnectMessengerConnection } from "@chatbotx.io/connections/messenger-teardown"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 
@@ -19,7 +20,7 @@ export const disconnectMessenger = async (ctx: {
   ])
 
   if (!integrationMessenger) {
-    throw new Error("Integration Messenger not found")
+    throw notFoundException("Messenger channel not found")
   }
 
   await disconnectMessengerConnection({

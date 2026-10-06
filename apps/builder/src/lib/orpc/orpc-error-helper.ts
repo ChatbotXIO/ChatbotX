@@ -414,6 +414,13 @@ export const possibleErrorsOnDeletingResource = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+/** Meta Catalog disconnect: refused while a sync or import is running. */
+export const possibleErrorsOnDisconnectingMetaCatalog = {
+  ...possibleErrorsOnDeletingResource,
+  metaCatalogSyncAlreadyRunning:
+    possibleErrorsOnStartingMetaCatalogRun.metaCatalogSyncAlreadyRunning,
+} satisfies ErrorMap
+
 /**
  * Booking/cancel/delete on appointments can throw five `ChatbotXException`
  * codes at status 409 that no other route set covers — `slotUnavailable`,

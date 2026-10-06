@@ -515,6 +515,7 @@ class IntegrationMetaCatalogService extends BaseService {
         throw new ChatbotXException(
           "Wait for the active Meta Catalog sync to finish before disconnecting",
           "metaCatalogSyncAlreadyRunning",
+          409,
         )
       }
       await tx

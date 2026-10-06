@@ -43,6 +43,12 @@ const channelIdParam = z.object({
 
 const createdTemplateResponse = z.object({
   id: z.string().describe("Meta's id of the new template."),
+  templateId: z
+    .string()
+    .nullable()
+    .describe(
+      "Local template id to use with `messengerTemplates.get` and when sending. Null when Meta did not list the new template yet: run `messengerTemplates.sync` later.",
+    ),
   status: z
     .string()
     .describe("`APPROVED`, `PENDING` or `REJECTED` as reported by Meta."),
@@ -156,6 +162,7 @@ export const messengerTemplatesPublicRouter = {
       })
       return {
         id: created.id,
+        templateId: created.templateId,
         status: created.status,
         rejectionReason: created.rejectionReason ?? null,
         specificRejectionReason: created.specificRejectionReason ?? null,

@@ -46,6 +46,39 @@ describe("messenger error-mapper USER_BLOCKED detection", () => {
 })
 
 describe("messenger error-mapper isDisconnectSafeError", () => {
+  test("code 190 'Error validating application' is safe to disconnect", () => {
+    const exc = new MessengerException(
+      "(#190) Error validating application. Invalid application ID.",
+      401,
+      190,
+      null,
+      "OAuthException",
+    )
+    expect(isDisconnectSafeError(exc)).toBe(true)
+  })
+
+  test("a wrong app secret ('Error validating client secret') is not", () => {
+    const exc = new MessengerException(
+      "(#190) Error validating client secret.",
+      401,
+      190,
+      null,
+      "OAuthException",
+    )
+    expect(isDisconnectSafeError(exc)).toBe(false)
+  })
+
+  test("other code 190 errors without a revoked subcode are not", () => {
+    const exc = new MessengerException(
+      "(#190) Invalid OAuth access token - Cannot parse access token",
+      401,
+      190,
+      null,
+      "OAuthException",
+    )
+    expect(isDisconnectSafeError(exc)).toBe(false)
+  })
+
   test("code 100 'App is not installed' (no subcode) is safe to disconnect", () => {
     const exc = new MessengerException(
       "(#100) App is not installed: 419370077795677",
