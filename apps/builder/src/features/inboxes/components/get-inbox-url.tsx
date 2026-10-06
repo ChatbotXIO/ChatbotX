@@ -1,7 +1,5 @@
-import type { ListInboxesResponse, RefConfig } from "@chatbotx.io/business"
-import { buildInboxLink } from "@chatbotx.io/business/utils"
+import type { RefConfig } from "@chatbotx.io/business"
 import type { ChannelType } from "@chatbotx.io/database/partials"
-import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -12,9 +10,11 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { useTranslations } from "next-intl"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
-import { useInboxList } from "@/features/inboxes/provider/inbox-hook"
+import {
+  type InboxLink,
+  useInboxLinks,
+} from "@/features/inboxes/provider/use-inbox-links"
 import { ScanQRCodeDialog } from "@/features/qr-codes/scan-qrcode"
-import { useTenantSettings } from "@/features/tenant"
 import { useClipboard } from "@/hooks/use-clipboard"
 
 type GetInboxUrlDialogProps = {
@@ -27,9 +27,7 @@ export function GetInboxUrlDialog({
   onOpenChange,
   refConfig,
 }: GetInboxUrlDialogProps) {
-  const inboxes = useInboxList({ enabled: open })
-  const { appUrl } = useTenantSettings()
-  const skipChannels: ChannelType[] = ["smtp", "tiktok"]
+  const inboxLinks = useInboxLinks({ enabled: open, refConfig })
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -40,47 +38,22 @@ export function GetInboxUrlDialog({
         </DialogHeader>
 
         <div className="flex max-h-[60vh] flex-col overflow-y-auto">
-          {inboxes
-            .filter(
-              (inbox) => !skipChannels.includes(inbox.channel as ChannelType),
-            )
-            .map((inbox) => (
-              <GetInboxUrlItem
-                appUrl={appUrl}
-                inbox={inbox}
-                key={inbox.id}
-                refConfig={refConfig}
-              />
-            ))}
+          {inboxLinks.map((inboxLink) => (
+            <GetInboxUrlItem inboxLink={inboxLink} key={inboxLink.inbox.id} />
+          ))}
         </div>
       </DialogContent>
     </Dialog>
   )
 }
 
-function GetInboxUrlItem({
-  appUrl,
-  inbox,
-  refConfig,
-}: {
-  appUrl: string
-  inbox: ListInboxesResponse["data"][number]
-  refConfig?: RefConfig
-}) {
+function GetInboxUrlItem({ inboxLink }: { inboxLink: InboxLink }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
-
-  const url = buildInboxLink(appUrl, inbox as InboxWithIntegrations, refConfig)
-
-  if (!url) {
-    return null
-  }
+  const { inbox, url } = inboxLink
 
   return (
-    <div
-      className="flex w-full items-center gap-3 border-t py-4 first:border-t-0"
-      key={inbox.id}
-    >
+    <div className="flex w-full items-center gap-3 border-t py-4 first:border-t-0">
       <div className="min-w-0 flex-1">
         <InboxIcon
           channel={inbox.channel as ChannelType}

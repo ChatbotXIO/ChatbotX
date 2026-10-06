@@ -977,6 +977,7 @@
     "retry": "Reîncearcă",
     "copy": "Copiază",
     "copyUrl": "Copiază adresa URL",
+    "chatWidget": "Widget de chat",
     "actions": "Acțiuni",
     "add": "Adaugă",
     "addVariable": "Adaugă variabilă",
@@ -4436,7 +4437,27 @@
   },
   "reflinks": {
     "title": "Linkuri de intrare",
-    "description": "Linkuri cu cuvinte cheie care pornesc fluxuri și capturează payload-uri de referință din canale."
+    "description": "Linkuri cu cuvinte cheie care pornesc fluxuri și capturează payload-uri de referință din canale.",
+    "chatWidget": {
+      "title": "Widget de chat",
+      "description": "Afișează pe site butoane pentru canalele tale de chat. Vizitatorul apasă pe unul pentru a începe o conversație și a rula fluxul acestui link ref.",
+      "authorizedDomains": {
+        "label": "Domenii autorizate",
+        "placeholder": "example.com",
+        "description": "Doar aceste domenii și subdomeniile lor pot afișa widgetul. Lasă gol pentru a permite orice site.",
+        "invalid": "Aceste domenii nu sunt valide: {domains}. Introdu doar un domeniu, de exemplu example.com."
+      },
+      "channels": {
+        "label": "Canale",
+        "description": "Dezactivează un canal pentru a-l ascunde din widget.",
+        "empty": "Niciun canal cu link de chat nu este conectat încă.",
+        "profileLinkOnly": "Deschide pagina de profil — fluxul linkului ref nu rulează."
+      },
+      "preview": "Previzualizare",
+      "embedCodeDescription": "Lipește acest cod înainte de eticheta de închidere body a site-ului. Modificările salvate se aplică automat, nu trebuie lipit din nou.",
+      "savedSuccess": "Setările widgetului de chat au fost salvate",
+      "poweredBy": "de"
+    }
   },
   "qrCodes": {
     "title": "Coduri QR",

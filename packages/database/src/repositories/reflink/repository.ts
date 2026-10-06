@@ -59,4 +59,11 @@ export const reflinkRepository = {
       where: { id: input.id, workspaceId: input.workspaceId, type: "refLink" },
     })
   },
+
+  /** Unscoped lookup for the public chat widget, which only knows the id. */
+  async findById(id: string, tx: DatabaseClient = db) {
+    return await tx.query.reflinkModel.findFirst({
+      where: { id, type: "refLink" },
+    })
+  },
 }

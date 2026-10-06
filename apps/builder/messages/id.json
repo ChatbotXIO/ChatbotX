@@ -3,6 +3,7 @@
     "retry": "Coba lagi",
     "copy": "Salin",
     "copyUrl": "Salin URL",
+    "chatWidget": "Widget Chat",
     "actions": "Tindakan",
     "add": "Tambah",
     "addVariable": "Tambah Variabel",
@@ -4436,7 +4437,27 @@
   },
   "reflinks": {
     "title": "Tautan Titik Masuk",
-    "description": "Tautan kata kunci yang memulai alur dan menangkap payload referensi dari saluran."
+    "description": "Tautan kata kunci yang memulai alur dan menangkap payload referensi dari saluran.",
+    "chatWidget": {
+      "title": "Widget Chat",
+      "description": "Tampilkan tombol saluran chat Anda di situs web. Pengunjung mengklik salah satunya untuk memulai chat dan menjalankan flow ref link ini.",
+      "authorizedDomains": {
+        "label": "Domain yang Diizinkan",
+        "placeholder": "example.com",
+        "description": "Hanya domain ini dan subdomainnya yang dapat menampilkan widget. Kosongkan untuk mengizinkan semua situs web.",
+        "invalid": "Domain ini tidak valid: {domains}. Masukkan domain saja, misalnya example.com."
+      },
+      "channels": {
+        "label": "Saluran",
+        "description": "Matikan saluran untuk menyembunyikannya dari widget.",
+        "empty": "Belum ada saluran dengan link chat yang terhubung.",
+        "profileLinkOnly": "Membuka halaman profil — flow ref link tidak berjalan."
+      },
+      "preview": "Pratinjau",
+      "embedCodeDescription": "Tempel kode ini sebelum tag penutup body di situs web Anda. Perubahan yang disimpan berlaku otomatis, tidak perlu menempelkannya lagi.",
+      "savedSuccess": "Pengaturan widget chat disimpan",
+      "poweredBy": "oleh"
+    }
   },
   "qrCodes": {
     "title": "Kode QR",

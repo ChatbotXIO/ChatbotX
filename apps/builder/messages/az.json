@@ -2,6 +2,7 @@
   "actions": {
     "copy": "Kopyala",
     "copyUrl": "URL-i kopyala",
+    "chatWidget": "Çat vidceti",
     "actions": "Əməliyyatlar",
     "add": "Əlavə et",
     "addVariable": "Dəyişən əlavə et",
@@ -4678,7 +4679,27 @@
   },
   "reflinks": {
     "title": "Giriş nöqtəsi keçidləri",
-    "description": "Axınları işə salan və kanallardan istinad məlumatlarını toplayan açar söz keçidləri."
+    "description": "Axınları işə salan və kanallardan istinad məlumatlarını toplayan açar söz keçidləri.",
+    "chatWidget": {
+      "title": "Çat vidceti",
+      "description": "Saytınızda çat kanallarınız üçün düymələr göstərin. Ziyarətçi birinə klikləyərək söhbətə başlayır və bu ref linkin axını işə düşür.",
+      "authorizedDomains": {
+        "label": "İcazəli domenlər",
+        "placeholder": "example.com",
+        "description": "Vidceti yalnız bu domenlər və onların subdomenləri göstərə bilər. Hər sayta icazə vermək üçün boş saxlayın.",
+        "invalid": "Bu domenlər etibarsızdır: {domains}. Yalnız domen daxil edin, məsələn example.com."
+      },
+      "channels": {
+        "label": "Kanallar",
+        "description": "Kanalı vidcetdən gizlətmək üçün söndürün.",
+        "empty": "Hələ çat linki olan kanal qoşulmayıb.",
+        "profileLinkOnly": "Profil səhifəsini açır — ref linkin axını işə düşmür."
+      },
+      "preview": "Önizləmə",
+      "embedCodeDescription": "Bu kodu saytınızda bağlayan body teqindən əvvəl yapışdırın. Yadda saxlanan dəyişikliklər avtomatik tətbiq olunur, yenidən yapışdırmağa ehtiyac yoxdur.",
+      "savedSuccess": "Çat vidceti ayarları yadda saxlanıldı",
+      "poweredBy": "tərəfindən"
+    }
   },
   "qrCodes": {
     "title": "QR kodları",

@@ -5,6 +5,7 @@ import { integrationInstagramResource } from "../integration-instagram/schema"
 import { integrationMessengerResource } from "../integration-messenger/schema"
 import { integrationSmtpResource } from "../integration-smtp/schema"
 import { integrationTelegramResource } from "../integration-telegram/schema"
+import { integrationThreadsResource } from "../integration-threads/schema"
 import { integrationWebchatResource } from "../integration-webchat/schema"
 import { integrationWhatsappResource } from "../integration-whatsapp/schema"
 import { integrationZaloResource } from "../integration-zalo/schema"
@@ -44,6 +45,7 @@ export const inboxWithIntegrationsResource = inboxResource.extend({
   integrationTelegram: integrationTelegramResource.nullish(),
   integrationInstagram: integrationInstagramResource.nullish(),
   integrationSmtp: integrationSmtpResource.nullish(),
+  integrationThreads: integrationThreadsResource.nullish(),
 })
 
 export const listInboxesResponse = z.object({

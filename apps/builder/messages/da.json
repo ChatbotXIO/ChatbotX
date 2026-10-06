@@ -3,6 +3,7 @@
     "retry": "Prøv igen",
     "copy": "Kopiér",
     "copyUrl": "Kopiér URL",
+    "chatWidget": "Chatwidget",
     "actions": "Handlinger",
     "add": "Tilføj",
     "addVariable": "Tilføj variabel",
@@ -4436,7 +4437,27 @@
   },
   "reflinks": {
     "title": "Entry Point Links",
-    "description": "Keyword links at start flows og capture ref payloads fra kanaler."
+    "description": "Keyword links at start flows og capture ref payloads fra kanaler.",
+    "chatWidget": {
+      "title": "Chatwidget",
+      "description": "Vis knapper til dine chatkanaler på dit website. En besøgende klikker på en for at starte en chat og køre dette ref-links flow.",
+      "authorizedDomains": {
+        "label": "Godkendte domæner",
+        "placeholder": "example.com",
+        "description": "Kun disse domæner og deres underdomæner kan vise widgetten. Lad feltet stå tomt for at tillade alle websites.",
+        "invalid": "Disse domæner er ugyldige: {domains}. Indtast kun et domæne, f.eks. example.com."
+      },
+      "channels": {
+        "label": "Kanaler",
+        "description": "Slå en kanal fra for at skjule den i widgetten.",
+        "empty": "Ingen kanal med et chatlink er forbundet endnu.",
+        "profileLinkOnly": "Åbner profilsiden — ref-linkets flow kører ikke."
+      },
+      "preview": "Forhåndsvisning",
+      "embedCodeDescription": "Indsæt denne kode før det afsluttende body-tag på dit website. Gemte ændringer anvendes automatisk, så du behøver ikke indsætte den igen.",
+      "savedSuccess": "Indstillinger for chatwidget gemt",
+      "poweredBy": "af"
+    }
   },
   "qrCodes": {
     "title": "QR-koder",

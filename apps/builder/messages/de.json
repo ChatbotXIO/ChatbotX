@@ -3,6 +3,7 @@
     "retry": "Erneut versuchen",
     "copy": "Kopieren",
     "copyUrl": "URL kopieren",
+    "chatWidget": "Chat-Widget",
     "actions": "Aktionen",
     "add": "Hinzufügen",
     "addVariable": "Variable hinzufügen",
@@ -4436,7 +4437,27 @@
   },
   "reflinks": {
     "title": "Einstiegspunkt-Links",
-    "description": "Schlüsselwort-Links, die Flows starten und Ref-Nutzdaten aus Kanälen erfassen."
+    "description": "Schlüsselwort-Links, die Flows starten und Ref-Nutzdaten aus Kanälen erfassen.",
+    "chatWidget": {
+      "title": "Chat-Widget",
+      "description": "Zeige Schaltflächen für deine Chat-Kanäle auf deiner Website. Ein Besucher klickt darauf, um einen Chat zu starten und den Flow dieses Ref-Links auszuführen.",
+      "authorizedDomains": {
+        "label": "Autorisierte Domains",
+        "placeholder": "example.com",
+        "description": "Nur diese Domains und ihre Subdomains können das Widget anzeigen. Leer lassen, um jede Website zu erlauben.",
+        "invalid": "Diese Domains sind ungültig: {domains}. Gib nur eine Domain ein, z. B. example.com."
+      },
+      "channels": {
+        "label": "Kanäle",
+        "description": "Schalte einen Kanal aus, um ihn im Widget auszublenden.",
+        "empty": "Noch kein Kanal mit Chat-Link verbunden.",
+        "profileLinkOnly": "Öffnet die Profilseite – der Flow des Ref-Links wird nicht ausgeführt."
+      },
+      "preview": "Vorschau",
+      "embedCodeDescription": "Füge diesen Code vor dem schließenden body-Tag deiner Website ein. Gespeicherte Änderungen werden automatisch übernommen, ein erneutes Einfügen ist nicht nötig.",
+      "savedSuccess": "Chat-Widget-Einstellungen gespeichert",
+      "poweredBy": "von"
+    }
   },
   "qrCodes": {
     "title": "QR-Codes",

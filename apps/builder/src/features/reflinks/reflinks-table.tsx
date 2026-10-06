@@ -28,6 +28,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import {
   ChartLineIcon,
   LinkIcon,
+  MessageCircleIcon,
   MoreHorizontalIcon,
   PencilIcon,
   Trash2Icon,
@@ -36,6 +37,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
 import { GetInboxUrlDialog } from "../inboxes/components/get-inbox-url"
+import { ReflinkChatWidgetDialog } from "./components/reflink-chat-widget-dialog"
 import { DeleteReflinksDialog } from "./delete-reflinks"
 import { ReflinksTableToolbarActions } from "./reflinks-table-toolbar-actions"
 import type { ListReflinkItem, ListReflinksResponse } from "./schema/query"
@@ -164,6 +166,13 @@ export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
               </DropdownMenuItem>
 
               <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "chatWidget" })}
+              >
+                <MessageCircleIcon />
+                {t("actions.chatWidget")}
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
                 onClick={() => {
                   router.push(
                     `/space/${workspaceId}/reflinks/${row.original.id}/analytics`,
@@ -235,6 +244,13 @@ export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
             type: "reflink",
             name: rowAction?.row.original?.name ?? "",
           }}
+        />
+
+        <ReflinkChatWidgetDialog
+          onOpenChange={() => setRowAction(null)}
+          open={rowAction?.variant === "chatWidget"}
+          reflink={rowAction?.row.original ?? null}
+          workspaceId={workspaceId}
         />
 
         <UpdateReflinkDialog

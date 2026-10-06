@@ -3,6 +3,7 @@
     "retry": "Yritä uudelleen",
     "copy": "Kopioi",
     "copyUrl": "Kopioi URL",
+    "chatWidget": "Chat-widget",
     "actions": "Toiminnot",
     "add": "Lisää",
     "addVariable": "Lisää muuttuja",
@@ -4436,7 +4437,27 @@
   },
   "reflinks": {
     "title": "Aloituspisteiden linkit",
-    "description": "Avainsanalinkit, jotka käynnistävät flow'n ja tallentavat kanavien viitetietosisällöt."
+    "description": "Avainsanalinkit, jotka käynnistävät flow'n ja tallentavat kanavien viitetietosisällöt.",
+    "chatWidget": {
+      "title": "Chat-widget",
+      "description": "Näytä chat-kanaviesi painikkeet verkkosivustollasi. Kävijä aloittaa chatin painiketta napsauttamalla, ja tämän ref-linkin flow käynnistyy.",
+      "authorizedDomains": {
+        "label": "Sallitut verkkotunnukset",
+        "placeholder": "example.com",
+        "description": "Vain nämä verkkotunnukset ja niiden aliverkkotunnukset voivat näyttää widgetin. Jätä tyhjäksi salliaksesi kaikki sivustot.",
+        "invalid": "Nämä verkkotunnukset ovat virheellisiä: {domains}. Syötä vain verkkotunnus, esim. example.com."
+      },
+      "channels": {
+        "label": "Kanavat",
+        "description": "Poista kanava käytöstä piilottaaksesi sen widgetistä.",
+        "empty": "Yhtään chat-linkin sisältävää kanavaa ei ole vielä yhdistetty.",
+        "profileLinkOnly": "Avaa profiilisivun – ref-linkin työnkulku ei käynnisty."
+      },
+      "preview": "Esikatselu",
+      "embedCodeDescription": "Liitä tämä koodi ennen sivustosi sulkevaa body-tagia. Tallennetut muutokset otetaan käyttöön automaattisesti, eikä koodia tarvitse liittää uudelleen.",
+      "savedSuccess": "Chat-widgetin asetukset tallennettu",
+      "poweredBy": "tekijä"
+    }
   },
   "qrCodes": {
     "title": "QR-koodit",

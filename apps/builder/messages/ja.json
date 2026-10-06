@@ -3,6 +3,7 @@
     "retry": "再試行",
     "copy": "コピー",
     "copyUrl": "URLをコピー",
+    "chatWidget": "チャットウィジェット",
     "actions": "操作",
     "add": "追加",
     "addVariable": "変数を追加",
@@ -4415,7 +4416,27 @@
   },
   "reflinks": {
     "title": "エントリーポイントリンク",
-    "description": "フローを開始し、チャネルから参照ペイロードを取得するキーワードリンクです。"
+    "description": "フローを開始し、チャネルから参照ペイロードを取得するキーワードリンクです。",
+    "chatWidget": {
+      "title": "チャットウィジェット",
+      "description": "Webサイトにチャットチャネルのボタンを表示します。訪問者がボタンをクリックするとチャットが始まり、このrefリンクのフローが実行されます。",
+      "authorizedDomains": {
+        "label": "許可ドメイン",
+        "placeholder": "example.com",
+        "description": "これらのドメインとそのサブドメインでのみウィジェットを表示できます。空欄にするとすべてのWebサイトで表示できます。",
+        "invalid": "次のドメインは無効です: {domains}。example.com のようにドメインのみを入力してください。"
+      },
+      "channels": {
+        "label": "チャネル",
+        "description": "チャネルをオフにするとウィジェットに表示されなくなります。",
+        "empty": "チャットリンクのあるチャネルはまだ接続されていません。",
+        "profileLinkOnly": "プロフィールページを開きます。このrefリンクのフローは実行されません。"
+      },
+      "preview": "プレビュー",
+      "embedCodeDescription": "このコードをWebサイトの終了タグ body の前に貼り付けてください。保存した変更は自動で反映されるため、貼り直す必要はありません。",
+      "savedSuccess": "チャットウィジェットの設定を保存しました",
+      "poweredBy": "提供"
+    }
   },
   "qrCodes": {
     "title": "QRコード",

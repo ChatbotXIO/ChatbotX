@@ -3,6 +3,7 @@
     "retry": "Yeniden dene",
     "copy": "Kopyala",
     "copyUrl": "URL'yi Kopyala",
+    "chatWidget": "Sohbet Widget'ı",
     "actions": "Eylemler",
     "add": "Ekle",
     "addVariable": "Değişken Ekle",
@@ -4436,7 +4437,27 @@
   },
   "reflinks": {
     "title": "Giriş Noktası Bağlantıları",
-    "description": "Akışları başlatan ve kanallardan referans yüklerini yakalayan anahtar kelime bağlantıları."
+    "description": "Akışları başlatan ve kanallardan referans yüklerini yakalayan anahtar kelime bağlantıları.",
+    "chatWidget": {
+      "title": "Sohbet Widget'ı",
+      "description": "Web sitenizde sohbet kanallarınız için düğmeler gösterin. Ziyaretçi birine tıklayarak sohbet başlatır ve bu ref bağlantısının akışı çalışır.",
+      "authorizedDomains": {
+        "label": "Yetkili Alan Adları",
+        "placeholder": "example.com",
+        "description": "Widget'ı yalnızca bu alan adları ve alt alan adları gösterebilir. Tüm web sitelerine izin vermek için boş bırakın.",
+        "invalid": "Bu alan adları geçersiz: {domains}. Yalnızca alan adı girin, örneğin example.com."
+      },
+      "channels": {
+        "label": "Kanallar",
+        "description": "Bir kanalı widget'ta gizlemek için kapatın.",
+        "empty": "Henüz sohbet bağlantısı olan bir kanal bağlanmadı.",
+        "profileLinkOnly": "Profil sayfasını açar — ref bağlantısının akışı çalışmaz."
+      },
+      "preview": "Önizleme",
+      "embedCodeDescription": "Bu kodu web sitenizdeki kapanış body etiketinden önce yapıştırın. Kaydedilen değişiklikler otomatik uygulanır, yeniden yapıştırmanız gerekmez.",
+      "savedSuccess": "Sohbet widget'ı ayarları kaydedildi",
+      "poweredBy": "sağlayan"
+    }
   },
   "qrCodes": {
     "title": "QR Kodları",

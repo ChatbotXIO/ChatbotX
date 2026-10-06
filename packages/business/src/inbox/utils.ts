@@ -57,6 +57,57 @@ export function canShareMinigame(channel: ChannelType): boolean {
   return (MINIGAME_SHARE_CHANNELS as readonly string[]).includes(channel)
 }
 
+/**
+ * Channels every "open chat" link list leaves out (Get Link dialog, ref link
+ * API and chat widget): SMTP has no chat link and `tiktok.me` is not a real
+ * host.
+ */
+export const NON_LINKABLE_CHANNELS = [
+  "smtp",
+  "tiktok",
+] as const satisfies readonly ChannelType[]
+
+export function isLinkableChannel(channel: ChannelType): boolean {
+  return !(NON_LINKABLE_CHANNELS as readonly string[]).includes(channel)
+}
+
+/**
+ * Channels with no "open chat" deep link that the ref link chat widget still
+ * lists by linking to the account's public profile instead. Neither channel
+ * passes a ref through, so the profile link never carries one — and it stays
+ * out of `buildInboxLink`, whose callers (flow Get Link, email buttons) need
+ * a link that actually starts a flow.
+ */
+export const PROFILE_LINK_CHANNELS = [
+  "threads",
+  "tiktok",
+] as const satisfies readonly ChannelType[]
+
+export function isProfileLinkChannel(channel: ChannelType): boolean {
+  return (PROFILE_LINK_CHANNELS as readonly string[]).includes(channel)
+}
+
+/**
+ * Public profile URL of a Threads or TikTok inbox, e.g.
+ * `https://www.threads.com/@shop`. TikTok's handle is the inbox `sourceId`
+ * (stamped at connect) rather than `integrationTiktok.auth`, which also holds
+ * the OAuth tokens. Undefined for other channels or a missing handle.
+ */
+export function buildInboxProfileLink(
+  inbox: InboxWithIntegrations,
+): string | undefined {
+  if (inbox.channel === "threads") {
+    return toProfileUrl("www.threads.com", inbox.integrationThreads?.username)
+  }
+  if (inbox.channel === "tiktok") {
+    return toProfileUrl("www.tiktok.com", inbox.sourceId)
+  }
+}
+
+function toProfileUrl(host: string, handle: string | null | undefined) {
+  return handle ? `https://${host}/@${encodeURIComponent(handle)}` : undefined
+}
+
 export function buildInboxLink(
   appUrl: string,
   inbox: InboxWithIntegrations,

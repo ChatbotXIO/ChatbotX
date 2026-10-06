@@ -14,6 +14,9 @@ const {
   mockListPaginated,
   mockCount,
   mockFindByIdAndWorkspace,
+  mockFindById,
+  mockListInboxLabelsByIds,
+  mockResolveFreezeReason,
   mockIsUniqueViolationError,
 } = vi.hoisted(() => {
   const mockInsertValues = vi.fn()
@@ -32,6 +35,11 @@ const {
     mockListPaginated: vi.fn(),
     mockCount: vi.fn(),
     mockFindByIdAndWorkspace: vi.fn(),
+    mockFindById: vi.fn(),
+    mockListInboxLabelsByIds: vi.fn(),
+    mockResolveFreezeReason: vi.fn(async () => ({
+      freezeReason: null as string | null,
+    })),
     mockIsUniqueViolationError: vi.fn(() => false),
   }
 })
@@ -50,7 +58,16 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     listPaginated: mockListPaginated,
     count: mockCount,
     findByIdAndWorkspace: mockFindByIdAndWorkspace,
+    findById: mockFindById,
   },
+}))
+
+vi.mock("../src/inbox/service", () => ({
+  inboxService: { listLabelsByIds: mockListInboxLabelsByIds },
+}))
+
+vi.mock("../src/workspace-lifecycle/with-blocked-owner-guard", () => ({
+  resolveWorkspaceFreezeReasonById: mockResolveFreezeReason,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -202,5 +219,69 @@ describe("reflinkService.update", () => {
         { name: "Taken name" },
       ),
     ).rejects.toThrow("Name is already taken")
+  })
+})
+
+describe("reflinkService.updateWidgetSettings", () => {
+  test("folds domain case and duplicates and keeps only this workspace's inboxes", async () => {
+    mockFindByIdAndWorkspace.mockResolvedValueOnce({ id: "reflink-1" })
+    mockListInboxLabelsByIds.mockResolvedValueOnce([
+      { id: "inbox-1", name: "Page" },
+    ])
+    mockUpdateWhere.mockReturnValueOnce({
+      returning: vi.fn().mockResolvedValue([{ id: "reflink-1" }]),
+    })
+
+    await reflinkService.updateWidgetSettings(
+      { workspaceId: WS, id: "reflink-1" },
+      {
+        authorizedDomains: ["Example.COM", "example.com", "shop.test"],
+        hiddenInboxIds: ["inbox-1", "inbox-1", "foreign-inbox"],
+      },
+    )
+
+    expect(mockListInboxLabelsByIds).toHaveBeenCalledWith({
+      workspaceId: WS,
+      ids: ["inbox-1", "foreign-inbox"],
+    })
+    expect(mockUpdateSet).toHaveBeenCalledWith({
+      widgetAuthorizedDomains: ["example.com", "shop.test"],
+      widgetHiddenInboxIds: ["inbox-1"],
+    })
+  })
+
+  test("throws not found for a ref link outside the workspace", async () => {
+    mockFindByIdAndWorkspace.mockResolvedValueOnce(undefined)
+
+    await expect(
+      reflinkService.updateWidgetSettings(
+        { workspaceId: WS, id: "missing" },
+        { authorizedDomains: [], hiddenInboxIds: [] },
+      ),
+    ).rejects.toThrow("Reflink not found")
+    expect(mockUpdate).not.toHaveBeenCalled()
+  })
+})
+
+describe("reflinkService.findForWidget", () => {
+  test("returns the ref link when its workspace is active", async () => {
+    mockFindById.mockResolvedValueOnce({ id: "reflink-1", workspaceId: WS })
+
+    await expect(reflinkService.findForWidget("reflink-1")).resolves.toEqual({
+      id: "reflink-1",
+      workspaceId: WS,
+    })
+    expect(mockResolveFreezeReason).toHaveBeenCalledWith(WS)
+  })
+
+  test("returns null when the workspace is frozen or the link is gone", async () => {
+    mockFindById.mockResolvedValueOnce({ id: "reflink-1", workspaceId: WS })
+    mockResolveFreezeReason.mockResolvedValueOnce({
+      freezeReason: "ownerBlocked",
+    })
+    await expect(reflinkService.findForWidget("reflink-1")).resolves.toBeNull()
+
+    mockFindById.mockResolvedValueOnce(undefined)
+    await expect(reflinkService.findForWidget("missing")).resolves.toBeNull()
   })
 })
