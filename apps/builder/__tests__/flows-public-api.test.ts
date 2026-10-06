@@ -69,21 +69,16 @@ const flowVersionService = {
 const importService = {
   startFlowImport: vi.fn(),
 }
-const integrationWhatsappService = { findByIdForWorkspace: vi.fn() }
-
 vi.mock("@chatbotx.io/business", () => ({
   flowService,
   flowVersionService,
   importService,
-  integrationWhatsappService,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
   BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
   validationException: (field: string, message: string) =>
     new Error(`${field}: ${message}`),
-  notFoundException: (message: string) =>
-    Object.assign(new Error(message), { code: "notFound" }),
 }))
 
 const getFlowAuthoringContext = vi.fn(async () => ({
@@ -183,40 +178,10 @@ describe("GET /v1/flows", () => {
     })
   })
 
-  test("rejects a WhatsApp channel id outside the workspace with 404", async () => {
-    integrationWhatsappService.findByIdForWorkspace.mockResolvedValueOnce(null)
+  test("passes startType and integrationWhatsappId to the service with the page", async () => {
+    flowService.list.mockResolvedValueOnce({ data: [], pageCount: 0 })
 
-    await expect(
-      procedure.handler?.({
-        context: { workspace: { id: "workspace-1" } },
-        input: {
-          page: 1,
-          perPage: 50,
-          active: true,
-          startType: "sendWaTemplateMessage",
-          integrationWhatsappId: "99",
-        },
-      }),
-    ).rejects.toMatchObject({ code: "notFound" })
-    expect(
-      integrationWhatsappService.findByIdForWorkspace,
-    ).toHaveBeenCalledWith({ id: "99", workspaceId: "workspace-1" })
-    expect(flowService.list).not.toHaveBeenCalled()
-  })
-
-  test("pages startType results in memory so pageCount matches the filter", async () => {
-    const flows = Array.from({ length: 3 }, (_, index) => ({
-      id: `flow-${index + 1}`,
-      name: `Flow ${index + 1}`,
-      folderId: null,
-      active: true,
-    }))
-    flowService.list.mockResolvedValueOnce({ data: flows, pageCount: 1 })
-    integrationWhatsappService.findByIdForWorkspace.mockResolvedValueOnce({
-      id: "42",
-    })
-
-    const result = await procedure.handler?.({
+    await procedure.handler?.({
       context: { workspace: { id: "workspace-1" } },
       input: {
         page: 2,
@@ -228,13 +193,14 @@ describe("GET /v1/flows", () => {
     })
 
     expect(flowService.list).toHaveBeenCalledWith({
+      page: 2,
+      perPage: 2,
       active: true,
       startType: "sendWaTemplateMessage",
       integrationWhatsappId: "42",
       workspaceId: "workspace-1",
       sort: [{ id: "createdAt", desc: true }],
     })
-    expect(result).toEqual({ data: [flows[2]], pageCount: 2 })
   })
 
   test("returns id, name, folderId and active per flow, not the full resource", async () => {

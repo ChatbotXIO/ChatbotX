@@ -34,7 +34,7 @@ import { adsConversionService } from "../ads-conversion/service"
 import { BaseService } from "../base.service"
 import { type ContactAccessScope, contactService } from "../contact"
 import { notFoundException, validationException } from "../errors"
-import { folderService } from "../folder/service"
+import { folderService, toStoredFolderId } from "../folder/service"
 import { logger } from "../logger"
 import { tagSyncService } from "./sync.service"
 
@@ -52,9 +52,6 @@ const tagCacheTags = (workspaceId: string): string[] => [
 // every tag attach/detach — those paths don't invalidate this list cache
 // (only create/update/delete do), so a short expiry bounds the staleness.
 const TAG_LIST_CACHE_TTL_SECONDS = 60
-
-const resolveTagFolderId = (folderId: string | null | undefined) =>
-  !folderId || folderId === rootFolderId ? null : folderId
 
 class TagService extends BaseService {
   async list(input: {
@@ -135,7 +132,7 @@ class TagService extends BaseService {
       throw validationException("name", "Name is already taken.")
     }
 
-    const folderId = resolveTagFolderId(parsedInput.folderId)
+    const folderId = toStoredFolderId(parsedInput.folderId)
     if (folderId) {
       await folderService.ensureExists({
         id: folderId,
@@ -200,7 +197,7 @@ class TagService extends BaseService {
     const folderId =
       parsedInput.folderId === undefined
         ? undefined
-        : resolveTagFolderId(parsedInput.folderId)
+        : toStoredFolderId(parsedInput.folderId)
     if (folderId) {
       await folderService.ensureExists({
         id: folderId,
@@ -594,9 +591,7 @@ class TagService extends BaseService {
         continue
       }
 
-      // One DELETE per chunk instead of one per contact. Only the pairs it
-      // actually removed get the channel cleanup and the tagRemoved event, so
-      // removing a tag a contact does not have fires no automation.
+      // One DELETE per chunk instead of one per contact.
       const removed = await db
         .delete(contactsToTagsModel)
         .where(
@@ -610,15 +605,22 @@ class TagService extends BaseService {
           tagId: contactsToTagsModel.tagId,
         })
 
-      // Channel cleanup (unassign + delete ContactToTagChannel) runs in the queue.
-      for (const pair of removed) {
-        await tagSyncService.enqueueDetach({
-          workspaceId,
-          contactId: pair.contactId,
-          tagId: pair.tagId,
-        })
+      // Channel cleanup (unassign + delete ContactToTagChannel) runs in the
+      // queue for every requested pair, as before: it is idempotent, and a
+      // retry after a failed enqueue must still reach the pairs the first
+      // attempt already deleted.
+      for (const contact of contacts) {
+        for (const tagId of allTagIds) {
+          await tagSyncService.enqueueDetach({
+            workspaceId,
+            contactId: contact.id,
+            tagId,
+          })
+        }
       }
 
+      // tagRemoved only for pairs the DELETE actually removed, so removing a
+      // tag a contact does not have fires no automation.
       for (const pair of removed) {
         try {
           await emitTagRemoved(

@@ -1,5 +1,4 @@
 import { customFieldService } from "@chatbotx.io/business"
-import { rootFolderId } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import {
@@ -28,9 +27,6 @@ const publicCustomFieldFolderId = zodBigintAsString()
   .describe(
     'Folder id from `folders.list` (folderType "customField"). Pass null or "0" for the root.',
   )
-
-const resolveFolderId = (folderId: string | null | undefined) =>
-  !folderId || folderId === rootFolderId ? null : folderId
 
 export const customFieldsPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -75,7 +71,7 @@ export const customFieldsPublicRouter = {
       async ({ context, input }) =>
         await customFieldService.create({
           workspaceId: context.workspace.id,
-          data: { ...input, folderId: resolveFolderId(input.folderId) },
+          data: input,
         }),
     ),
 
@@ -127,15 +123,10 @@ export const customFieldsPublicRouter = {
     .output(publicCustomFieldDefinitionResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const { id, folderId, ...rest } = input
+      const { id, ...rest } = input
       return await customFieldService.update(
         { workspaceId: context.workspace.id, id },
-        {
-          ...rest,
-          ...(folderId === undefined
-            ? {}
-            : { folderId: resolveFolderId(folderId) }),
-        },
+        rest,
       )
     }),
 

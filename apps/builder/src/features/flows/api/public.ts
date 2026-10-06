@@ -2,12 +2,8 @@ import {
   flowService,
   flowVersionService,
   importService,
-  integrationWhatsappService,
 } from "@chatbotx.io/business"
-import {
-  notFoundException,
-  validationException,
-} from "@chatbotx.io/business/errors"
+import { validationException } from "@chatbotx.io/business/errors"
 import { stepTypes } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
@@ -102,37 +98,10 @@ export const flowsPublicRouter = {
     )
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const { page, perPage, ...filters } = input
-      const query = {
-        ...filters,
+      const { data, pageCount } = await flowService.list({
+        ...input,
         workspaceId: context.workspace.id,
         sort: input.sort ?? [{ id: "createdAt", desc: true }],
-      }
-      if (input.integrationWhatsappId) {
-        const integration =
-          await integrationWhatsappService.findByIdForWorkspace({
-            id: input.integrationWhatsappId,
-            workspaceId: context.workspace.id,
-          })
-        if (!integration) {
-          throw notFoundException("WhatsApp channel not found")
-        }
-      }
-      // `startType` is filtered in memory after the query, so page here
-      // rather than in SQL to keep `pageCount` right.
-      if (input.startType) {
-        const { data } = await flowService.list(query)
-        return {
-          data: data
-            .slice((page - 1) * perPage, page * perPage)
-            .map(toPublicFlowListItem),
-          pageCount: Math.ceil(data.length / perPage),
-        }
-      }
-      const { data, pageCount } = await flowService.list({
-        ...query,
-        page,
-        perPage,
       })
       return { data: data.map(toPublicFlowListItem), pageCount }
     }),

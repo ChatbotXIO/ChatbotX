@@ -119,6 +119,8 @@ vi.mock("../src/contact", () => ({
 }))
 
 vi.mock("../src/folder/service", () => ({
+  toStoredFolderId: (folderId: string | null | undefined) =>
+    !folderId || folderId === "0" ? null : folderId,
   folderService: {},
 }))
 
@@ -634,7 +636,7 @@ describe("tagService.detachByNamesFromContacts", () => {
     })
   })
 
-  test("fires cleanup and tagRemoved only for pairs the DELETE removed", async () => {
+  test("cleans up every requested pair but fires tagRemoved only for removed ones", async () => {
     state.tagFindMany = [{ id: "tag-1" }]
     state.contactFindMany = [{ id: "c-1" }, { id: "c-2" }]
     state.removedPairs = [{ contactId: "c-2", tagId: "tag-1" }]
@@ -645,12 +647,7 @@ describe("tagService.detachByNamesFromContacts", () => {
       names: ["tag-a"],
     })
 
-    expect(enqueueDetach).toHaveBeenCalledOnce()
-    expect(enqueueDetach).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      contactId: "c-2",
-      tagId: "tag-1",
-    })
+    expect(enqueueDetach).toHaveBeenCalledTimes(2)
     expect(emitTagRemoved).toHaveBeenCalledOnce()
     expect(emitTagRemoved).toHaveBeenCalledWith(
       "ws-1",
@@ -661,6 +658,34 @@ describe("tagService.detachByNamesFromContacts", () => {
     expect(result).toEqual({
       processedContactIds: ["c-1", "c-2"],
       skippedContactIds: [],
+    })
+  })
+
+  test("a retry after a failed enqueue still reaches the already-deleted pair", async () => {
+    state.tagFindMany = [{ id: "tag-1" }]
+    state.contactFindMany = [{ id: "c-1" }]
+    enqueueDetach.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(
+      tagService.detachByNamesFromContacts({
+        workspaceId: "ws-1",
+        contactIds: ["c-1"],
+        names: ["tag-a"],
+      }),
+    ).rejects.toThrow("redis down")
+
+    // The first attempt committed the DELETE, so nothing is removed now.
+    state.removedPairs = []
+    await tagService.detachByNamesFromContacts({
+      workspaceId: "ws-1",
+      contactIds: ["c-1"],
+      names: ["tag-a"],
+    })
+
+    expect(enqueueDetach).toHaveBeenLastCalledWith({
+      workspaceId: "ws-1",
+      contactId: "c-1",
+      tagId: "tag-1",
     })
   })
 

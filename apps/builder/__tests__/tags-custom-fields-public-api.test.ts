@@ -190,7 +190,7 @@ describe("GET /v1/custom-fields", () => {
 describe("POST /v1/custom-fields", () => {
   const procedure = findProcedure("POST", "/v1/custom-fields")
 
-  test("accepts description and maps the root folder to null", async () => {
+  test("passes description and folderId to the service", async () => {
     customFieldService.create.mockResolvedValueOnce({ id: "1" })
 
     await procedure.handler?.({
@@ -200,7 +200,7 @@ describe("POST /v1/custom-fields", () => {
 
     expect(customFieldService.create).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
-      data: { name: "city", type: "text", description: "Home", folderId: null },
+      data: { name: "city", type: "text", description: "Home", folderId: "0" },
     })
   })
 })
@@ -243,7 +243,7 @@ describe("PUT /v1/custom-fields/{id}", () => {
     )
   })
 
-  test("maps null to the root folder", async () => {
+  test("passes a null folderId to the service", async () => {
     customFieldService.update.mockResolvedValueOnce({ id: "1" })
 
     await procedure.handler?.({

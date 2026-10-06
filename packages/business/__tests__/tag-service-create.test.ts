@@ -60,6 +60,8 @@ vi.mock("@chatbotx.io/events", () => ({
 }))
 
 vi.mock("../src/folder/service", () => ({
+  toStoredFolderId: (folderId: string | null | undefined) =>
+    !folderId || folderId === "0" ? null : folderId,
   folderService: {
     ensureExists: (...args: unknown[]) => ensureExists(...args),
   },
