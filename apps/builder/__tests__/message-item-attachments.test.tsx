@@ -207,6 +207,24 @@ describe("MessageItem attachment rendering — multiple images", () => {
     ).toEqual([first.url, second.url])
   })
 
+  test("a single image without stored dimensions gets an explicit width instead of collapsing", () => {
+    // Media-library sends store no width/height. A chat bubble sizes to its
+    // content, so a box with only max-width and an aspect ratio resolves to 0×0.
+    const attachment = {
+      ...makeImageAttachment("unsized"),
+      width: null,
+      height: null,
+    } as unknown as AttachmentResource
+
+    const el = renderComponent(
+      <MessageItem message={makeMessage({ attachments: [attachment] })} />,
+    )
+
+    const frame = el.querySelector("img")?.parentElement
+    expect(frame?.className.split(" ")).toContain("w-80")
+    expect(frame?.className.split(" ")).toContain("max-w-full")
+  })
+
   test("a single image renders without the grid wrapper", () => {
     const el = renderComponent(
       <MessageItem

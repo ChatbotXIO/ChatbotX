@@ -487,10 +487,13 @@ const RenderImageAttachment = (props: {
   const { attachment, attachmentUrl, attachmentLabel, onError } = props
 
   if (!(attachment.width && attachment.height)) {
+    // No stored dimensions (e.g. a media-library send): the bubble sizes to its
+    // content, so the frame needs an explicit width — max-width plus an aspect
+    // ratio alone collapses to 0×0 and the message looks missing.
     return (
       <Link href={attachmentUrl} prefetch={false} target="_blank">
         <div
-          className="relative max-w-full overflow-hidden rounded-xl sm:max-w-80"
+          className="relative w-80 max-w-full overflow-hidden rounded-xl"
           style={{ aspectRatio: "4/3" }}
         >
           <Image
