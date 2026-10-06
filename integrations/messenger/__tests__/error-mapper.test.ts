@@ -57,6 +57,17 @@ describe("messenger error-mapper isDisconnectSafeError", () => {
     expect(isDisconnectSafeError(exc)).toBe(true)
   })
 
+  test("a wrong app secret ('Error validating client secret') is not", () => {
+    const exc = new MessengerException(
+      "(#190) Error validating client secret.",
+      401,
+      190,
+      null,
+      "OAuthException",
+    )
+    expect(isDisconnectSafeError(exc)).toBe(false)
+  })
+
   test("other code 190 errors without a revoked subcode are not", () => {
     const exc = new MessengerException(
       "(#190) Invalid OAuth access token - Cannot parse access token",

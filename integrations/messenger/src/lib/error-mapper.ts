@@ -227,18 +227,20 @@ const PERMISSION_LOST_CODES = new Set([
 
 const INVALID_PARAMETER_CODE = 100
 
-// "(#190) Error validating application. Invalid application ID." — the app the
-// page was connected with no longer validates (deleted, or its id/secret are
-// not the ones this deployment holds). Only reconnecting through the current
-// app can fix it, so like PERMISSION_LOST_CODES the unsubscribe is abandoned.
+// "(#190) Error validating application. Invalid application ID." — the app id
+// stored on the page does not exist at Meta any more, so no request made for
+// that app can ever succeed and only reconnecting through a live app helps;
+// like PERMISSION_LOST_CODES the unsubscribe is abandoned. Only the "Invalid
+// application ID" wording counts: a wrong app secret on this deployment
+// ("Error validating client secret") is fixable config and must surface.
 const OAUTH_EXCEPTION_CODE = 190
-const INVALID_APPLICATION_PATTERN = /error validating application/i
+const INVALID_APPLICATION_ID_PATTERN = /invalid application id/i
 
 /**
  * True when the remote unsubscribe can never succeed by retrying, so the
  * caller should drop the local integration anyway. Covers a revoked page
  * token, an already-uninstalled app, a deleted/unreachable page, lost
- * page permissions, and an app that no longer validates. Everything else (transient, unknown, non-Messenger)
+ * page permissions, and an app id that no longer exists. Everything else (transient, unknown, non-Messenger)
  * returns false and must surface to the user.
  */
 export function isDisconnectSafeError(error: unknown): boolean {
@@ -261,7 +263,7 @@ export function isDisconnectSafeError(error: unknown): boolean {
 
   if (
     code === OAUTH_EXCEPTION_CODE &&
-    INVALID_APPLICATION_PATTERN.test(error.message)
+    INVALID_APPLICATION_ID_PATTERN.test(error.message)
   ) {
     return true
   }
