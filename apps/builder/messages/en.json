@@ -3686,6 +3686,7 @@
     "cancelEdit": "Cancel",
     "replaceAttachment": "Replace attachment",
     "addAttachment": "Add attachment",
+    "reloadAttachment": "Reload attachment",
     "failedToCopy": "Failed to copy",
     "failedToPreviewImage": "Failed to preview image",
     "loadingData": "Loading data...",

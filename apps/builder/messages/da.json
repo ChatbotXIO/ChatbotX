@@ -3444,6 +3444,7 @@
     "cancelEdit": "Annullér",
     "replaceAttachment": "Udskift vedhæftning",
     "addAttachment": "Tilføj vedhæftning",
+    "reloadAttachment": "Genindlæs vedhæftning",
     "failedToCopy": "Mislykkedes til kopiér",
     "failedToPreviewImage": "Mislykkedes til preview billede",
     "loadingData": "Indlæser data...",

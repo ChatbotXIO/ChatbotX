@@ -3444,6 +3444,7 @@
     "cancelEdit": "إلغاء",
     "replaceAttachment": "استبدال المرفق",
     "addAttachment": "إضافة مرفق",
+    "reloadAttachment": "إعادة تحميل المرفق",
     "failedToCopy": "تعذّر النسخ",
     "failedToPreviewImage": "تعذّرت معاينة الصورة",
     "loadingData": "جارٍ تحميل البيانات...",

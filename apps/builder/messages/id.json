@@ -3444,6 +3444,7 @@
     "cancelEdit": "Batal",
     "replaceAttachment": "Ganti lampiran",
     "addAttachment": "Tambah lampiran",
+    "reloadAttachment": "Muat ulang lampiran",
     "failedToCopy": "Gagal menyalin",
     "failedToPreviewImage": "Gagal melihat pratinjau gambar",
     "loadingData": "Memuat data...",
