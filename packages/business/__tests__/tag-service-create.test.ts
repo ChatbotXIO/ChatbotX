@@ -6,6 +6,8 @@ const insertReturning = vi.fn()
 const enqueueCreate = vi.fn()
 const invalidateCacheByTags = vi.fn()
 const ensureExists = vi.fn()
+const findOrFail = vi.fn()
+const updateSet = vi.fn()
 
 const insertBuilder = {
   values: (values: unknown) => {
@@ -20,12 +22,20 @@ vi.mock("@chatbotx.io/database/client", () => ({
       tagModel: { findFirst: (...args: unknown[]) => findFirst(...args) },
     },
     insert: () => insertBuilder,
+    update: () => ({
+      set: (values: unknown) => {
+        updateSet(values)
+        return {
+          where: () => ({ returning: async () => [{ id: "tag-1" }] }),
+        }
+      },
+    }),
   },
   and: (...args: unknown[]) => ({ and: args }),
   eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
   inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
   isNull: (col: unknown) => ({ isNull: col }),
-  findOrFail: vi.fn(),
+  findOrFail: (...args: unknown[]) => findOrFail(...args),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -80,6 +90,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   findFirst.mockResolvedValue(undefined)
   insertReturning.mockResolvedValue([])
+  findOrFail.mockResolvedValue({ id: "tag-1" })
 })
 
 describe("tagService.create", () => {
@@ -176,5 +187,58 @@ describe("tagService.create", () => {
 
     const valuesArg = insertValues.mock.calls[0]?.[0] as Record<string, unknown>
     expect(valuesArg.id).toBe("generated-id")
+  })
+})
+
+describe("tagService root folder handling", () => {
+  test('create treats folderId "0" as the root', async () => {
+    insertReturning.mockResolvedValue([{ id: "tag-4", workspaceId: WS }])
+
+    await tagService.create({
+      workspaceId: WS,
+      data: { name: "Root Tag", folderId: "0" },
+    })
+
+    expect(ensureExists).not.toHaveBeenCalled()
+    const valuesArg = insertValues.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(valuesArg.folderId).toBeNull()
+  })
+})
+
+describe("tagService.update", () => {
+  test("keeps the folder when folderId is omitted", async () => {
+    await tagService.update({ workspaceId: WS, id: "tag-1" }, { name: "A" })
+
+    expect(ensureExists).not.toHaveBeenCalled()
+    expect(updateSet).toHaveBeenCalledWith({ name: "A" })
+  })
+
+  test("validates and moves the tag to the given folder", async () => {
+    await tagService.update(
+      { workspaceId: WS, id: "tag-1" },
+      { name: "A", folderId: "42" },
+    )
+
+    expect(ensureExists).toHaveBeenCalledWith({
+      id: "42",
+      workspaceId: WS,
+      folderType: "tag",
+    })
+    expect(updateSet).toHaveBeenCalledWith({ name: "A", folderId: "42" })
+  })
+
+  test('moves the tag to the root for null or "0"', async () => {
+    await tagService.update(
+      { workspaceId: WS, id: "tag-1" },
+      { name: "A", folderId: "0" },
+    )
+    await tagService.update(
+      { workspaceId: WS, id: "tag-1" },
+      { name: "A", folderId: null },
+    )
+
+    expect(ensureExists).not.toHaveBeenCalled()
+    expect(updateSet).toHaveBeenNthCalledWith(1, { name: "A", folderId: null })
+    expect(updateSet).toHaveBeenNthCalledWith(2, { name: "A", folderId: null })
   })
 })

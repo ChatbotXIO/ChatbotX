@@ -8,10 +8,11 @@ import {
 import z from "zod"
 import { parseAsBigInt } from "@/lib/nuqs"
 import { basePaginationRequest } from "@/lib/pagination"
+import { publicListRequest, publicSortRequest } from "@/lib/public-api/list"
 import {
   type CustomFieldResource,
   customFieldResource,
-  publicCustomFieldResource,
+  publicCustomFieldDefinitionResource,
 } from "./resource"
 
 export const listCustomFieldsSearchParams = createSearchParamsCache({
@@ -55,8 +56,21 @@ export type FindCustomFieldByKeyRequest = z.infer<
   typeof findCustomFieldByKeyRequest
 >
 
+export const listCustomFieldsPublicRequest = publicListRequest.extend({
+  name: z
+    .string()
+    .nullish()
+    .describe("Case-insensitive substring match on the custom field name."),
+  folderId: zodBigintAsString()
+    .nullish()
+    .describe(
+      'Folder id to filter by. Pass "0" for fields in no folder. Omit for all folders.',
+    ),
+  sort: publicSortRequest(["name", "createdAt", "updatedAt"]),
+})
+
 export const listPublicCustomFieldsResponse = z.object({
-  data: z.array(publicCustomFieldResource),
+  data: z.array(publicCustomFieldDefinitionResource),
   pageCount: z.number().int(),
 })
 export type ListPublicCustomFieldsResponse = z.infer<

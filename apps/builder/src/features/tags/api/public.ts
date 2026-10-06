@@ -2,17 +2,24 @@ import { tagService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import {
-  possibleErrorsOnCreatingResource,
+  possibleErrorsOnCreatingInFolder,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { createTagRequest } from "../schema/action"
-import { publicListTagsResponse } from "../schema/query"
-import { publicTagResource, tagResource } from "../schema/resource"
+import { listTagsPublicRequest, publicListTagsResponse } from "../schema/query"
+import { publicTagResource } from "../schema/resource"
+
+const createTagPublicRequest = createTagRequest.pick({ name: true }).extend({
+  folderId: zodBigintAsString()
+    .nullish()
+    .describe(
+      'Folder id from `folders.list` (folderType "tag"). Pass null or "0" for the root.',
+    ),
+})
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
 
@@ -23,10 +30,10 @@ export const tagsPublicRouter = {
       path: "/v1/tags",
       summary: "Get all tags",
       description:
-        "Lists every tag in the workspace. Use `tags.create` to add one, or `contacts.addTags` to attach existing ones to a contact.",
+        "Lists tags in the workspace, newest first unless `sort` is given. Filter by `name` (substring) or `folderId`. Use `tags.create` to add one, or `contacts.addTags` to attach existing ones to a contact.",
       tags: ["Tags"],
     })
-    .input(publicListRequest)
+    .input(listTagsPublicRequest)
     .output(publicListTagsResponse)
     .errors(possibleErrorsOnListingResource)
     .handler(
@@ -34,7 +41,7 @@ export const tagsPublicRouter = {
         await tagService.list({
           ...input,
           workspaceId: context.workspace.id,
-          sort: [{ id: "createdAt", desc: true }],
+          sort: input.sort ?? [{ id: "createdAt", desc: true }],
         }),
     ),
 
@@ -48,9 +55,9 @@ export const tagsPublicRouter = {
       successStatus: 201,
       tags: ["Tags"],
     })
-    .input(createTagRequest.pick({ name: true }))
+    .input(createTagPublicRequest)
     .output(publicTagResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingInFolder)
     .handler(async ({ context, input }) => {
       const { data } = await tagService.create({
         data: input,
@@ -66,7 +73,7 @@ export const tagsPublicRouter = {
       path: "/v1/tags/{idOrName}",
       summary: "Get tag",
       description:
-        "Returns one tag's id and name. Use `tags.list` to find its id or name first.",
+        "Returns one tag's id, name and folder. Use `tags.list` to find its id or name first.",
       tags: ["Tags"],
     })
     .input(
@@ -76,7 +83,7 @@ export const tagsPublicRouter = {
           .describe("Tag id or name. Get it from `tags.list`."),
       }),
     )
-    .output(tagResource.pick({ id: true, name: true }))
+    .output(publicTagResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(
       async ({ context, input }) =>
@@ -92,15 +99,13 @@ export const tagsPublicRouter = {
       path: "/v1/tags/{id}",
       summary: "Update tag",
       description:
-        "Renames an existing tag. Use `tags.list` to find its id first.",
+        "Renames a tag and, when `folderId` is given, moves it to that folder. Use `tags.list` to find its id first.",
       tags: ["Tags"],
     })
     .input(
-      createTagRequest.pick({ name: true }).and(
-        z.object({
-          id: zodBigintAsString().describe("Tag id. Get it from `tags.list`."),
-        }),
-      ),
+      createTagPublicRequest.extend({
+        id: zodBigintAsString().describe("Tag id. Get it from `tags.list`."),
+      }),
     )
     .output(publicTagResource)
     .errors(possibleErrorsOnMutatingResource)

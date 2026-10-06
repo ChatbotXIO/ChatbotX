@@ -9,6 +9,7 @@ import {
 import z from "zod"
 import { parseAsBigInt } from "@/lib/nuqs"
 import { basePaginationRequest } from "@/lib/pagination"
+import { publicListRequest, publicSortRequest } from "@/lib/public-api/list"
 import { publicTagResource, tagResource } from "./resource"
 
 export const listTagsSearchParams = {
@@ -37,6 +38,19 @@ export const listTagsResponse = z.object({
   pageCount: z.number().int(),
 })
 export type ListTagsResponse = z.infer<typeof listTagsResponse>
+
+export const listTagsPublicRequest = publicListRequest.extend({
+  name: z
+    .string()
+    .nullish()
+    .describe("Case-insensitive substring match on the tag name."),
+  folderId: zodBigintAsString()
+    .nullish()
+    .describe(
+      'Folder id to filter by. Pass "0" for tags in no folder. Omit for all folders.',
+    ),
+  sort: publicSortRequest(["name", "createdAt", "updatedAt"]),
+})
 
 export const publicListTagsResponse = z.object({
   data: z.array(publicTagResource),

@@ -593,6 +593,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/bot-fields",
   },
   {
+    "method": "PATCH",
+    "operationId": "botFields.update",
+    "path": "/v1/bot-fields/{idOrName}",
+  },
+  {
     "method": "GET",
     "operationId": "botSimulator.getLink",
     "path": "/v1/bot-simulator/link",
@@ -821,6 +826,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "contacts.bulkDelete",
     "path": "/v1/contacts/bulk/delete",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.bulkRemoveTags",
+    "path": "/v1/contacts/bulk/tags/remove",
   },
   {
     "method": "POST",

@@ -1,23 +1,35 @@
 import { customFieldService } from "@chatbotx.io/business"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import {
-  possibleErrorsOnCreatingResource,
+  possibleErrorsOnCreatingInFolder,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import { publicListRequest } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 
 import {
   createCustomFieldRequest,
   updateCustomFieldRequest,
 } from "../schema/action"
-import { listPublicCustomFieldsResponse } from "../schema/query"
-import { publicCustomFieldResource } from "../schema/resource"
+import {
+  listCustomFieldsPublicRequest,
+  listPublicCustomFieldsResponse,
+} from "../schema/query"
+import { publicCustomFieldDefinitionResource } from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("contacts")
+
+const publicCustomFieldFolderId = zodBigintAsString()
+  .nullish()
+  .describe(
+    'Folder id from `folders.list` (folderType "customField"). Pass null or "0" for the root.',
+  )
+
+const resolveFolderId = (folderId: string | null | undefined) =>
+  !folderId || folderId === rootFolderId ? null : folderId
 
 export const customFieldsPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -26,16 +38,17 @@ export const customFieldsPublicRouter = {
       path: "/v1/custom-fields",
       summary: "Get all custom fields",
       description:
-        "Lists every custom field defined in the workspace, with its id and type. Use `contacts.setCustomField` to set values on a contact.",
+        "Lists custom fields defined in the workspace with their id, type and folder, newest first unless `sort` is given. Filter by `name` (substring) or `folderId`. Use `contacts.setCustomField` to set values on a contact.",
       tags: ["Custom Fields"],
     })
-    .input(publicListRequest)
+    .input(listCustomFieldsPublicRequest)
     .output(listPublicCustomFieldsResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const result = await customFieldService.list({
-        workspaceId: context.workspace.id,
         ...input,
+        workspaceId: context.workspace.id,
+        sort: input.sort ?? [{ id: "createdAt", desc: true }],
       })
       return result
     }),
@@ -46,18 +59,22 @@ export const customFieldsPublicRouter = {
       path: "/v1/custom-fields",
       summary: "Create custom field",
       description:
-        "Defines a new custom field on the workspace with the given name and value type.",
+        "Defines a new custom field on the workspace with the given name and value type, optionally with a description and a folder.",
       successStatus: 201,
       tags: ["Custom Fields"],
     })
-    .input(createCustomFieldRequest.pick({ name: true, type: true }))
-    .output(publicCustomFieldResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .input(
+      createCustomFieldRequest.extend({
+        folderId: publicCustomFieldFolderId,
+      }),
+    )
+    .output(publicCustomFieldDefinitionResource)
+    .errors(possibleErrorsOnCreatingInFolder)
     .handler(
       async ({ context, input }) =>
         await customFieldService.create({
           workspaceId: context.workspace.id,
-          data: input,
+          data: { ...input, folderId: resolveFolderId(input.folderId) },
         }),
     ),
 
@@ -79,18 +96,15 @@ export const customFieldsPublicRouter = {
           ),
       }),
     )
-    .output(publicCustomFieldResource)
+    .output(publicCustomFieldDefinitionResource)
     .errors(possibleErrorsOnFindingResource)
-    .handler(async ({ context, input }) => {
-      const customField = await customFieldService.findByKey({
-        key: input.idOrName,
-        workspaceId: context.workspace.id,
-      })
-      if (!customField) {
-        throw new Error("Custom field not found")
-      }
-      return customField
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await customFieldService.findByKeyOrFail({
+          key: input.idOrName,
+          workspaceId: context.workspace.id,
+        }),
+    ),
 
   update: workspaceTokenAuthAPI
     .route({
@@ -98,25 +112,29 @@ export const customFieldsPublicRouter = {
       path: "/v1/custom-fields/{id}",
       summary: "Update custom field",
       description:
-        "Changes an existing custom field's settings. Use `customFields.list` to find its id first.",
+        "Renames a custom field and updates its description; when `folderId` is given, moves it to that folder. Use `customFields.list` to find its id first.",
       tags: ["Custom Fields"],
     })
     .input(
-      updateCustomFieldRequest.and(
-        z.object({
-          id: zodBigintAsString().describe(
-            "Custom field id. Get it from `customFields.list`.",
-          ),
-        }),
-      ),
+      updateCustomFieldRequest.extend({
+        folderId: publicCustomFieldFolderId,
+        id: zodBigintAsString().describe(
+          "Custom field id. Get it from `customFields.list`.",
+        ),
+      }),
     )
-    .output(publicCustomFieldResource)
+    .output(publicCustomFieldDefinitionResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const { id, ...rest } = input
+      const { id, folderId, ...rest } = input
       return await customFieldService.update(
         { workspaceId: context.workspace.id, id },
-        rest,
+        {
+          ...rest,
+          ...(folderId === undefined
+            ? {}
+            : { folderId: resolveFolderId(folderId) }),
+        },
       )
     }),
 

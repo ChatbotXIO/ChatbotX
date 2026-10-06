@@ -13,6 +13,7 @@ import {
   createBotFieldRequest,
   publicBotFieldIdSchema,
   resetBotFieldsRequest,
+  updateBotFieldRequest,
 } from "../schema/action"
 import {
   listBotFieldsPublicRequest,
@@ -54,7 +55,12 @@ export const botFieldsPublicRouter = {
       successStatus: 201,
       tags: ["Bot Fields"],
     })
-    .input(createBotFieldRequest)
+    .input(
+      createBotFieldRequest.extend({
+        value: createBotFieldRequest.shape.value.default(null),
+        description: createBotFieldRequest.shape.description.default(null),
+      }),
+    )
     .output(publicBotFieldResource)
     .errors(possibleErrorsOnCreatingBotField)
     .handler(
@@ -107,7 +113,7 @@ export const botFieldsPublicRouter = {
           .string()
           .max(255)
           .describe("Bot field id or name. Get it from `botFields.list`."),
-        value: z.string().max(255).describe("New value for the bot field."),
+        value: z.string().max(1000).describe("New value for the bot field."),
       }),
     )
     .output(publicBotFieldResource)
@@ -118,6 +124,41 @@ export const botFieldsPublicRouter = {
         workspaceId: context.workspace.id,
         key: idOrName,
         data: rest,
+      })
+    }),
+
+  update: workspaceTokenAuthAPI
+    .route({
+      method: "PATCH",
+      path: "/v1/bot-fields/{idOrName}",
+      summary: "Update bot field",
+      description:
+        "Changes a bot field's name, type, description, folder or value; fields you omit are left unchanged. `folderId` is a `customField` folder (`folders.list`), null moves it to the root. A new value must fit the field's (new) type. Renaming to a name already used by a field of the same type returns 422. Use `botFields.set` when you only change the value.",
+      tags: ["Bot Fields"],
+    })
+    .input(
+      updateBotFieldRequest.extend({
+        idOrName: z
+          .string()
+          .max(255)
+          .describe("Bot field id or name. Get it from `botFields.list`."),
+      }),
+    )
+    .output(publicBotFieldResource)
+    .errors(possibleErrorsOnSettingBotField)
+    .handler(async ({ context, input }) => {
+      const { idOrName, ...data } = input
+      // Nothing to change: answer with the field as it is.
+      if (Object.keys(data).length === 0) {
+        return await botFieldService.findByKeyOrFail({
+          workspaceId: context.workspace.id,
+          key: idOrName,
+        })
+      }
+      return await botFieldService.updateByKey({
+        workspaceId: context.workspace.id,
+        key: idOrName,
+        data,
       })
     }),
 

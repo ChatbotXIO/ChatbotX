@@ -111,10 +111,10 @@ chatbotx teams member delete <id> --userIds <userIds> # Remove members from team
 ### `tags`
 
 ```bash
-chatbotx tags list                                   # Get all tags
-chatbotx tags create --name <name>                   # Create tag
+chatbotx tags list                                   # Get all tags [--name --folderId --sort]
+chatbotx tags create --name <name>                   # Create tag [--folderId]
 chatbotx tags get <idOrName>                         # Get tag
-chatbotx tags update <id> --name <name>              # Update tag
+chatbotx tags update <id> --name <name>              # Rename tag [--folderId to move it]
 chatbotx tags delete <id>                            # Delete tag
 ```
 
@@ -123,8 +123,8 @@ chatbotx tags delete <id>                            # Delete tag
 ### `custom-fields`
 
 ```bash
-chatbotx custom-fields list                          # Get all custom fields
-chatbotx custom-fields create --name <name> --type <type>
+chatbotx custom-fields list                          # Get all custom fields [--name --folderId --sort]
+chatbotx custom-fields create --name <name> --type <type>  # [--description --folderId]
 chatbotx custom-fields get <idOrName>                # Get custom field
 chatbotx custom-fields update <id> --name <name>     # [--description --folderId]
 chatbotx custom-fields delete <id>
@@ -142,6 +142,7 @@ chatbotx bot-fields update --fields <fields>         # Set multiple bot field va
                                                      # fields: JSON array of {id,value} or {name,value}
 chatbotx bot-fields get <idOrName>                   # Get bot field
 chatbotx bot-fields set <idOrName> --value <value>   # Set one bot field value (PUT /v1/bot-fields/{idOrName})
+chatbotx bot-fields edit <idOrName>                  # [--name --type --description --folderId --value]  PATCH: omitted fields stay
 chatbotx bot-fields delete <idOrName>                # Unset bot field value
 chatbotx bot-fields reset <idOrName>                 # Clear one bot field value, keep the field
 chatbotx bot-fields bulk-reset --ids <ids>           # Clear up to 100 bot field values by id
@@ -190,6 +191,7 @@ chatbotx contacts find-by-export-files <fileId>       # Poll export status/downl
 
 # Bulk
 chatbotx contacts bulk-tags --contactIds <contactIds> --tags <tags>
+chatbotx contacts bulk-tags-remove --contactIds <contactIds> --tags <tags>
 chatbotx contacts bulk-delete --contactIds <contactIds>
 chatbotx contacts bulk-sequences --contactIds <contactIds> --sequenceIds <sequenceIds>
 chatbotx contacts bulk-sequences-remove --contactIds <contactIds> --sequenceIds <sequenceIds>
@@ -305,7 +307,7 @@ chatbotx broadcasts delete <id>                      # Soft-delete (fails while 
 ### `flows`
 
 ```bash
-chatbotx flows list                                  # [--page --perPage --active]  active defaults to true
+chatbotx flows list                                  # [--page --perPage --active --name --folderId --startType --integrationWhatsappId --sort]  active defaults to true
 chatbotx flows get <id>                              # Includes its versions
 chatbotx flows create --name <name>                  # [--folderId --spec --nodes --edges --publish]
                                                      # spec: flow-spec DSL (see `schemas flow-spec`); nodes/edges: raw
@@ -983,7 +985,7 @@ chatbotx questionnaires stats list <id>                 # Submission/completion 
 ### `ref-links`
 
 ```bash
-chatbotx ref-links list
+chatbotx ref-links list                              # [--keyword --sort]
 chatbotx ref-links get <id>
 chatbotx ref-links create --name <name>
 chatbotx ref-links update <id>
@@ -1110,7 +1112,7 @@ Commands are named by `pathAndMethodToCommandName` (`apps/cli/src/openapi-loader
 | `minigames:update` | `PUT` (full) vs `PATCH` (partial) `/v1/minigames/{id}` | Only one |
 | `integrations:find-by-ai` | `GET`/`PUT`/`DELETE /v1/integrations/ai/{provider}` (get/connect/disconnect) | Only `GET` — connecting or disconnecting an AI provider has no CLI command |
 
-Resolved by explicit names in `COMMAND_NAME_OVERRIDES` (`apps/cli/src/openapi-loader.ts`): `bot-fields set`, `contacts set-custom-field`, `contacts clear-all-custom-fields` (the old `contacts custom-field delete <identifier>` cleared **every** field; it now clears one and needs `<idOrName>`), `ads create-campaign`, `ads create-conversion-rule` / `update-conversion-rule` / `delete-conversion-rule`, `analytics reset-flow-stats`.
+Resolved by explicit names in `COMMAND_NAME_OVERRIDES` (`apps/cli/src/openapi-loader.ts`): `bot-fields set`, `bot-fields edit`, `contacts set-custom-field`, `contacts clear-all-custom-fields` (the old `contacts custom-field delete <identifier>` cleared **every** field; it now clears one and needs `<idOrName>`), `ads create-campaign`, `ads create-conversion-rule` / `update-conversion-rule` / `delete-conversion-rule`, `analytics reset-flow-stats`.
 
 Root cause for the remaining `integrations:find-by-ai` row: `pathAndMethodToCommandName`'s remainder branch derives `${group}:${subResource}:update` (or its GET/DELETE equivalents) without folding the HTTP method into the name when a literal second path segment is followed by a param — unlike the sibling GET/DELETE branches, which already do this for the two-segment case.
 

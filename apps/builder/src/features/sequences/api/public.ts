@@ -280,6 +280,7 @@ export const sequencesPublicRouter = {
         workspaceId: context.workspace.id,
         folderType: folderTypes.enum.sequence,
         parentId: input.parentId ?? rootFolderId,
+        isTrash: input.isTrash,
       }),
     })),
 

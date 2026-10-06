@@ -53,6 +53,9 @@ const tagCacheTags = (workspaceId: string): string[] => [
 // (only create/update/delete do), so a short expiry bounds the staleness.
 const TAG_LIST_CACHE_TTL_SECONDS = 60
 
+const resolveTagFolderId = (folderId: string | null | undefined) =>
+  !folderId || folderId === rootFolderId ? null : folderId
+
 class TagService extends BaseService {
   async list(input: {
     workspaceId: string
@@ -132,9 +135,10 @@ class TagService extends BaseService {
       throw validationException("name", "Name is already taken.")
     }
 
-    if (parsedInput.folderId) {
+    const folderId = resolveTagFolderId(parsedInput.folderId)
+    if (folderId) {
       await folderService.ensureExists({
-        id: parsedInput.folderId,
+        id: folderId,
         workspaceId: parsedInput.workspaceId,
         folderType: "tag",
       })
@@ -144,7 +148,7 @@ class TagService extends BaseService {
       .insert(tagModel)
       .values({
         ...parsedInput,
-        folderId: parsedInput.folderId ?? null,
+        folderId,
         id: createId(),
       })
       .returning()
@@ -165,7 +169,7 @@ class TagService extends BaseService {
 
   async update(
     ctx: { workspaceId: string; id: string },
-    parsedInput: { name: string },
+    parsedInput: { name: string; folderId?: string | null },
   ) {
     const { workspaceId, id } = ctx
     const existingTag = await db.query.tagModel.findFirst({
@@ -191,10 +195,25 @@ class TagService extends BaseService {
       message: "Tag not found",
     })
 
+    // `folderId` omitted keeps the current folder; null or rootFolderId moves
+    // the tag to the root.
+    const folderId =
+      parsedInput.folderId === undefined
+        ? undefined
+        : resolveTagFolderId(parsedInput.folderId)
+    if (folderId) {
+      await folderService.ensureExists({
+        id: folderId,
+        workspaceId,
+        folderType: "tag",
+      })
+    }
+
     const updatedTag = await db
       .update(tagModel)
       .set({
         name: parsedInput.name,
+        ...(folderId === undefined ? {} : { folderId }),
       })
       .where(eq(tagModel.id, tag.id))
       .returning()
@@ -531,9 +550,9 @@ class TagService extends BaseService {
     names: string[]
     accessScope?: ContactAccessScope
     contactInboxId?: string
-  }) {
+  }): Promise<{ processedContactIds: string[]; skippedContactIds: string[] }> {
     if (contactIds.length === 0 || names.length === 0) {
-      return
+      return { processedContactIds: [], skippedContactIds: [...contactIds] }
     }
 
     // contactIds are contact ids; names are tag NAMES (the dialog
@@ -549,9 +568,6 @@ class TagService extends BaseService {
       },
     })
     const allTagIds = allTags.map((tag) => tag.id)
-    if (allTagIds.length === 0) {
-      return
-    }
 
     const affectedContactIds: string[] = []
 
@@ -572,9 +588,16 @@ class TagService extends BaseService {
       }
       const contactIdsInChunk = contacts.map((contact) => contact.id)
       affectedContactIds.push(...contactIdsInChunk)
+      // No tag matched a name: nothing to detach, but the contacts still
+      // count as processed.
+      if (allTagIds.length === 0) {
+        continue
+      }
 
-      // One DELETE per chunk instead of one per contact.
-      await db
+      // One DELETE per chunk instead of one per contact. Only the pairs it
+      // actually removed get the channel cleanup and the tagRemoved event, so
+      // removing a tag a contact does not have fires no automation.
+      const removed = await db
         .delete(contactsToTagsModel)
         .where(
           and(
@@ -582,38 +605,48 @@ class TagService extends BaseService {
             inArray(contactsToTagsModel.tagId, allTagIds),
           ),
         )
+        .returning({
+          contactId: contactsToTagsModel.contactId,
+          tagId: contactsToTagsModel.tagId,
+        })
 
       // Channel cleanup (unassign + delete ContactToTagChannel) runs in the queue.
-      for (const contact of contacts) {
-        for (const tagId of allTagIds) {
-          await tagSyncService.enqueueDetach({
-            workspaceId,
-            contactId: contact.id,
-            tagId,
-          })
-        }
+      for (const pair of removed) {
+        await tagSyncService.enqueueDetach({
+          workspaceId,
+          contactId: pair.contactId,
+          tagId: pair.tagId,
+        })
       }
 
-      // Emit tag removed events per chunk.
-      for (const contact of contacts) {
-        for (const tag of allTags) {
-          try {
-            await emitTagRemoved(
-              workspaceId,
-              contact.id,
-              tag.id,
-              contactInboxId,
-            )
-          } catch (error) {
-            logger.error({ err: error }, "Failed to emit tagRemoved event:")
-          }
+      for (const pair of removed) {
+        try {
+          await emitTagRemoved(
+            workspaceId,
+            pair.contactId,
+            pair.tagId,
+            contactInboxId,
+          )
+        } catch (error) {
+          logger.error({ err: error }, "Failed to emit tagRemoved event:")
         }
       }
     }
 
-    await this.invalidateCacheTags(tagCacheTags(workspaceId))
-    if (affectedContactIds.length > 0) {
-      await contactService.invalidate({ workspaceId, ids: affectedContactIds })
+    if (allTagIds.length > 0) {
+      await this.invalidateCacheTags(tagCacheTags(workspaceId))
+      if (affectedContactIds.length > 0) {
+        await contactService.invalidate({
+          workspaceId,
+          ids: affectedContactIds,
+        })
+      }
+    }
+
+    const processed = new Set(affectedContactIds)
+    return {
+      processedContactIds: affectedContactIds,
+      skippedContactIds: contactIds.filter((id) => !processed.has(id)),
     }
   }
 

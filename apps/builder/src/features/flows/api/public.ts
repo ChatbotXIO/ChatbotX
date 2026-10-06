@@ -2,8 +2,13 @@ import {
   flowService,
   flowVersionService,
   importService,
+  integrationWhatsappService,
 } from "@chatbotx.io/business"
-import { validationException } from "@chatbotx.io/business/errors"
+import {
+  notFoundException,
+  validationException,
+} from "@chatbotx.io/business/errors"
+import { stepTypes } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { z } from "zod"
@@ -13,10 +18,13 @@ import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
-  possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
+import {
+  publicListRequest,
+  publicListResponse,
+  publicSortRequest,
+} from "@/lib/public-api/list"
 import { publicIdParam } from "@/lib/public-api/params"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
@@ -43,7 +51,7 @@ export const flowsPublicRouter = {
       path: "/v1/flows",
       summary: "List flows",
       description:
-        "Use this to find flow ids and names before fetching one with `flows.get` or publishing a draft with `flows.publish`. Returns active flows in the workspace.",
+        "Use this to find flow ids and names before fetching one with `flows.get` or publishing a draft with `flows.publish`. Returns active flows in the workspace, newest first unless `sort` is given. Filter by `name` (substring), `folderId`, or `startType` to pick a flow for a template broadcast.",
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -56,19 +64,77 @@ export const flowsPublicRouter = {
           .describe(
             "Restrict to active flows. Set to false to include inactive ones too.",
           ),
+        name: z
+          .string()
+          .nullish()
+          .describe("Case-insensitive substring match on the flow name."),
+        folderId: zodBigintAsString()
+          .nullish()
+          .describe(
+            'Folder id to filter by. Pass "0" for flows in no folder. Omit for all folders.',
+          ),
+        startType: z
+          .enum([
+            stepTypes.enum.sendWaTemplateMessage,
+            stepTypes.enum.sendMessengerTemplateMessage,
+          ])
+          .optional()
+          .describe(
+            "Only flows whose start node, in the draft or the published version, has a step that sends this kind of template message. `sendWaTemplateMessage` also needs `integrationWhatsappId`, otherwise nothing matches.",
+          ),
+        integrationWhatsappId: zodBigintAsString()
+          .optional()
+          .describe(
+            "With `startType` `sendWaTemplateMessage`: only flows whose template belongs to this WhatsApp channel id. Get it from `whatsappChannels.list`; an id that is not in this workspace returns 404.",
+          ),
+        sort: publicSortRequest(["name", "createdAt", "updatedAt"]),
       }),
     )
-    .output(publicListResponse(flowResource.pick({ id: true, name: true })))
-    .errors(possibleErrorsOnListingResource)
+    .output(
+      publicListResponse(
+        flowResource.pick({
+          id: true,
+          name: true,
+          folderId: true,
+          active: true,
+        }),
+      ),
+    )
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const { data, pageCount } = await flowService.list({
-        ...input,
+      const { page, perPage, ...filters } = input
+      const query = {
+        ...filters,
         workspaceId: context.workspace.id,
-      })
-      return {
-        data: data.map((flow) => ({ id: flow.id, name: flow.name })),
-        pageCount,
+        sort: input.sort ?? [{ id: "createdAt", desc: true }],
       }
+      if (input.integrationWhatsappId) {
+        const integration =
+          await integrationWhatsappService.findByIdForWorkspace({
+            id: input.integrationWhatsappId,
+            workspaceId: context.workspace.id,
+          })
+        if (!integration) {
+          throw notFoundException("WhatsApp channel not found")
+        }
+      }
+      // `startType` is filtered in memory after the query, so page here
+      // rather than in SQL to keep `pageCount` right.
+      if (input.startType) {
+        const { data } = await flowService.list(query)
+        return {
+          data: data
+            .slice((page - 1) * perPage, page * perPage)
+            .map(toPublicFlowListItem),
+          pageCount: Math.ceil(data.length / perPage),
+        }
+      }
+      const { data, pageCount } = await flowService.list({
+        ...query,
+        page,
+        perPage,
+      })
+      return { data: data.map(toPublicFlowListItem), pageCount }
     }),
 
   get: workspaceTokenAuthAPI
@@ -341,3 +407,15 @@ export const flowsPublicRouter = {
       return { importId: result.importId }
     }),
 }
+
+const toPublicFlowListItem = (flow: {
+  id: string
+  name: string
+  folderId: string | null
+  active: boolean
+}) => ({
+  id: flow.id,
+  name: flow.name,
+  folderId: flow.folderId,
+  active: flow.active,
+})

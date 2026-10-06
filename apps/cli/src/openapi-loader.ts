@@ -187,6 +187,7 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "PUT /v1/contacts/{identifier}/custom-fields/{idOrName}":
     "contacts:set-custom-field",
   "PUT /v1/bot-fields/{idOrName}": "bot-fields:set",
+  "PATCH /v1/bot-fields/{idOrName}": "bot-fields:edit",
   "DELETE /v1/analytics/flows/{flowId}/stats": "analytics:reset-flow-stats",
   "POST /v1/ads/campaigns": "ads:create-campaign",
   "POST /v1/ads/conversion-rules": "ads:create-conversion-rule",
