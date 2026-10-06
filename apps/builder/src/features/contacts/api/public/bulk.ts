@@ -14,6 +14,7 @@ import { enqueueBulkTagStatsContacts } from "../../lib/enqueue-bulk-tag-stats"
 import {
   bulkAddTagsPublicRequest,
   bulkContactIdsPublicRequest,
+  bulkRemoveTagsPublicRequest,
   bulkResultPublicResponse,
   bulkSubscribeSequencesPublicRequest,
   bulkTagByStatsPublicRequest,
@@ -39,6 +40,28 @@ export const contactsBulkPublicRouter = {
     .handler(async ({ context, input }) => {
       const { processedContactIds, skippedContactIds } =
         await tagService.attachByNamesToContacts({
+          workspaceId: context.workspace.id,
+          contactIds: input.contactIds,
+          names: input.tags,
+        })
+      return { processed: processedContactIds.length, skippedContactIds }
+    }),
+
+  bulkRemoveTags: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/contacts/bulk/tags/remove",
+      summary: "Remove tags from multiple contacts by name",
+      description:
+        'Removes the given tags (by name) from every contact in `contactIds`, in chunks — safe to call with up to 1000 ids in one request. A contact that does not have a tag is left as is, and names that match no tag are ignored. Contact ids that don\'t resolve in this workspace are skipped and reported back in `skippedContactIds` rather than failing the whole request. Example: `{"contactIds":["1","2"],"tags":["VIP"]}`.',
+      tags: ["Contacts"],
+    })
+    .input(bulkRemoveTagsPublicRequest)
+    .output(bulkResultPublicResponse)
+    .errors(possibleErrorsOnCreatingResource)
+    .handler(async ({ context, input }) => {
+      const { processedContactIds, skippedContactIds } =
+        await tagService.detachByNamesFromContacts({
           workspaceId: context.workspace.id,
           contactIds: input.contactIds,
           names: input.tags,

@@ -88,13 +88,22 @@ describe("pathAndMethodToCommandName — operations that used to collide get dis
     ).toBe("contacts:set-custom-field")
   })
 
-  test("bot-fields: the batch keeps `update`, one field is `set`", () => {
+  test("bot-fields: the batch keeps `update`, one field is `set`, PATCH is `edit`", () => {
     expect(pathAndMethodToCommandName("/v1/bot-fields", "PUT")).toBe(
       "bot-fields:update",
     )
     expect(pathAndMethodToCommandName("/v1/bot-fields/{idOrName}", "PUT")).toBe(
       "bot-fields:set",
     )
+    expect(
+      pathAndMethodToCommandName("/v1/bot-fields/{idOrName}", "PATCH"),
+    ).toBe("bot-fields:edit")
+  })
+
+  test("bulk tag removal has its own command", () => {
+    expect(
+      pathAndMethodToCommandName("/v1/contacts/bulk/tags/remove", "POST"),
+    ).toBe("contacts:bulk-tags-remove")
   })
 
   test("ads and flow-stats operations each get their own command", () => {

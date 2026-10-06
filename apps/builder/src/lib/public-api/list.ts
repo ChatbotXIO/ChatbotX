@@ -82,3 +82,19 @@ export function paginateInMemory<T>(
     pageCount: Math.max(1, Math.ceil(items.length / perPage)),
   }
 }
+
+/**
+ * `sort` input for a public list: `[{ id, desc }]` pairs restricted to the
+ * given columns, so an unknown column is a 400 instead of a silent no-op.
+ */
+export function publicSortRequest<
+  const Columns extends readonly [string, ...string[]],
+>(columns: Columns) {
+  const list = columns.map((column) => `\`${column}\``).join(", ")
+  return z
+    .array(z.object({ id: z.enum(columns), desc: z.boolean() }))
+    .optional()
+    .describe(
+      `Sort order as [{ id, desc }] pairs on ${list}. Defaults to newest first.`,
+    )
+}

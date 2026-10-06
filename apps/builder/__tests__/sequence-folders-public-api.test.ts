@@ -154,3 +154,26 @@ describe("sequence folder routes", () => {
     })
   })
 })
+
+describe("sequence folder list isTrash", () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  test("list forwards isTrash and keeps the workspace, type and parent scope", async () => {
+    mocks.list.mockResolvedValue([])
+    for (const isTrash of [true, false, undefined]) {
+      await find(
+        "GET",
+        "/v1/sequence-folders",
+      )?.({
+        context,
+        input: { parentId: "7", isTrash },
+      })
+      expect(mocks.list).toHaveBeenLastCalledWith({
+        workspaceId: "ws-1",
+        folderType: "sequence",
+        parentId: "7",
+        isTrash,
+      })
+    }
+  })
+})
