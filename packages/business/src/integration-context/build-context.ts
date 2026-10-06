@@ -1,5 +1,7 @@
 import {
+  type ChannelMediaLocation,
   uploader as defaultUploader,
+  getChannelMediaPrefix,
   getStoragePrefix,
 } from "@chatbotx.io/filesystem"
 import { buildBroadcastAuthHeader } from "@chatbotx.io/partysocket-config"
@@ -42,6 +44,7 @@ const resolvePlatformData = async (
 
 export type IntegrationContext<TAuth extends AuthValue = AuthValue> = {
   storagePrefix: string
+  mediaStoragePrefix?: string
   auth: TAuth
   authStore: AuthStore<TAuth>
   integrationDetail: Record<string, unknown>
@@ -71,11 +74,21 @@ export async function buildContextWithAuthStore<TAuth extends AuthValue>(args: {
   auth: TAuth
   authStore: AuthStore<TAuth>
   integrationDetail: Record<string, unknown>
+  // The channel integration whose received media this context will store.
+  media?: Omit<ChannelMediaLocation, "workspaceId">
 }): Promise<IntegrationContext<TAuth>> {
   const platformData = await resolvePlatformData(args.workspaceId)
 
   return {
     storagePrefix: getStoragePrefix(args.workspaceId),
+    ...(args.media
+      ? {
+          mediaStoragePrefix: getChannelMediaPrefix({
+            ...args.media,
+            workspaceId: args.workspaceId,
+          }),
+        }
+      : {}),
     auth: args.auth,
     authStore: args.authStore,
     integrationDetail: args.integrationDetail,
@@ -105,5 +118,9 @@ export function buildContext<TAuth extends AuthValue>(args: {
     auth: args.integration.auth,
     authStore: makeAuthStore<TAuth>(args.integrationType, args.integration),
     integrationDetail: args.integration,
+    media: {
+      channel: args.integrationType,
+      integrationId: args.integration.id,
+    },
   })
 }

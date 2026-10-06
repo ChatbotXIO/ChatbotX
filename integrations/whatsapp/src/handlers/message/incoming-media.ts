@@ -2,6 +2,7 @@ import {
   type Context,
   type ExternalMediaResult,
   type FileType,
+  getMediaStoragePrefix,
   type IncomingAttachment,
   SdkException,
 } from "@chatbotx.io/sdk"
@@ -34,7 +35,7 @@ const fetchMedia = async (
       })
       if (response.ok && response.body) {
         const result: ExternalMediaResult = {
-          originPath: `${ctx.storagePrefix}/${createId()}`,
+          originPath: `${getMediaStoragePrefix(ctx)}/${createId()}`,
           size: Number.parseInt(
             response.headers.get("content-length") ?? "0",
             10,

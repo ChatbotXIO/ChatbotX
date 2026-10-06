@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 import { receiveMessage } from "../src/handlers/message/incoming-message"
 import type { MessengerWebhookEvent } from "../src/schema"
 
+// Channel-scoped storage key the received media must land under.
+const CHANNEL_MEDIA_KEY = /^public\/messenger\/ws-1\/int-1\/2026\/10\/06\//
+
 const AUTH = {
   clientId: "app-123",
   tokens: { accessToken: "page-token" },
@@ -15,6 +18,7 @@ const AUTH = {
 function buildCtx() {
   return {
     storagePrefix: "workspace-1",
+    mediaStoragePrefix: "public/messenger/ws-1/int-1/2026/10/06",
     uploader: { putObject: vi.fn(async () => undefined) },
     auth: AUTH,
   } as never
@@ -108,6 +112,8 @@ describe("messenger incoming sticker/image attachments", () => {
     )
     expect(attachment).not.toHaveProperty("width")
     expect(attachment).not.toHaveProperty("height")
+    // Received media is stored under the channel-scoped prefix.
+    expect(attachment?.originPath).toMatch(CHANNEL_MEDIA_KEY)
   })
 
   test("dedupes attachments sharing the same url instead of storing the sticker twice", async () => {

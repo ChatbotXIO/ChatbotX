@@ -1,6 +1,7 @@
 import {
   type Context,
   contentTypes,
+  getMediaStoragePrefix,
   guessFileTypeFromMimeType,
   type IncomingAttachment,
   type IncomingContact,
@@ -257,7 +258,7 @@ const downloadAndUploadFile = async (
     }
 
     const bytes = await response.arrayBuffer()
-    const originPath = `${ctx.storagePrefix}/${createId()}`
+    const originPath = `${getMediaStoragePrefix(ctx)}/${createId()}`
 
     await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
       ACL: "public-read",
