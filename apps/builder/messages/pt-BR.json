@@ -3423,6 +3423,7 @@
     "cancelEdit": "Cancelar",
     "replaceAttachment": "Substituir anexo",
     "addAttachment": "Adicionar anexo",
+    "reloadAttachment": "Recarregar anexo",
     "failedToCopy": "Falha ao copiar",
     "failedToPreviewImage": "Falha ao visualizar a imagem",
     "loadingData": "Carregando dados...",

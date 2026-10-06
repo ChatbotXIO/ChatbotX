@@ -49,6 +49,10 @@ type AttachmentSource = {
   onError: () => void
   /** True once the stored URL has failed and a fallback is being tried. */
   isRecovering: boolean
+  /** Proxy URL that re-signs the stored key; set only when recovery exists. */
+  fallbackUrl: string | undefined
+  /** Proxy URL that re-fetches the media from its channel. */
+  retryUrl: string | undefined
 }
 
 /**
@@ -61,19 +65,17 @@ export function useAttachmentSource(
   attachment?: AttachmentResource | null,
 ): AttachmentSource {
   const primaryUrl = useAttachmentUrl(attachment)
-  const fallbackUrl = attachment?.fallbackUrl ?? undefined
+  const fallbackUrl = primaryUrl
+    ? (attachment?.fallbackUrl ?? undefined)
+    : undefined
+  const retryUrl = fallbackUrl ? toRetryUrl(fallbackUrl) : undefined
   // Failures are counted against the URL they happened on, so a re-resolved
   // attachment (new `url`) starts its chain over.
   const [failed, setFailed] = useState({ url: primaryUrl, count: 0 })
 
-  const candidates = [
-    primaryUrl,
-    ...(primaryUrl && fallbackUrl
-      ? [fallbackUrl, toRetryUrl(fallbackUrl)].filter(
-          (url): url is string => url !== undefined,
-        )
-      : []),
-  ]
+  const candidates = [primaryUrl, fallbackUrl, retryUrl].filter(
+    (url, index) => index === 0 || url !== undefined,
+  )
   const failures = failed.url === primaryUrl ? failed.count : 0
   const lastIndex = candidates.length - 1
 
@@ -87,5 +89,7 @@ export function useAttachmentSource(
       }
     },
     isRecovering: failures > 0,
+    fallbackUrl,
+    retryUrl,
   }
 }

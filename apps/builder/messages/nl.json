@@ -3444,6 +3444,7 @@
     "cancelEdit": "Annuleren",
     "replaceAttachment": "Bijlage vervangen",
     "addAttachment": "Bijlage toevoegen",
+    "reloadAttachment": "Bijlage opnieuw laden",
     "failedToCopy": "Kopiëren is mislukt",
     "failedToPreviewImage": "Voorbeeld van afbeelding laden is mislukt",
     "loadingData": "Gegevens laden...",

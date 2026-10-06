@@ -28,6 +28,22 @@ vi.mock("next/image", () => ({
   ),
 }))
 
+// Exposes the `prefetch` prop: in production Next prefetches a visible <Link>,
+// which would execute the media proxy for every attachment on screen.
+vi.mock("next/link", () => ({
+  default: ({
+    children,
+    prefetch,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    prefetch?: boolean | null
+  }) => (
+    <a data-prefetch={String(prefetch)} {...props}>
+      {children}
+    </a>
+  ),
+}))
+
 // MediaLibraryTrigger imports "use server" query modules at module scope
 // that drag in a live pg Pool under vitest; stub it to keep this test about
 // attachment rendering.
@@ -399,6 +415,74 @@ describe("MessageItem attachment rendering — fallback on load failure", () => 
 
     expect(el.querySelector("video")?.getAttribute("preload")).toBe("auto")
     expect(el.querySelector("video")?.hasAttribute("autoplay")).toBe(true)
+  })
+
+  test("a file link downloads through the fallback URL and offers a reload from the channel", () => {
+    const attachment = {
+      ...makeFileAttachment("file-1"),
+      fallbackUrl,
+    } as unknown as AttachmentResource
+    const el = renderComponent(
+      <MessageItem message={makeMessage({ attachments: [attachment] })} />,
+    )
+
+    // The fallback re-signs the stored key on every click, so a link kept open
+    // past the presign lifetime still downloads.
+    expect(el.querySelector(`a[href="${fallbackUrl}"]`)?.textContent).toBe(
+      attachment.url,
+    )
+    const reload = el.querySelector(`a[href="${retryUrl}"]`)
+    expect(reload?.getAttribute("aria-label")).toBe("reloadAttachment")
+    expect(reload?.getAttribute("target")).toBe("_blank")
+    // Neither link may be prefetched: the reload would call the channel API
+    // and queue a restore just because the message scrolled into view.
+    expect(
+      el
+        .querySelector(`a[href="${fallbackUrl}"]`)
+        ?.getAttribute("data-prefetch"),
+    ).toBe("false")
+    expect(reload?.getAttribute("data-prefetch")).toBe("false")
+  })
+
+  test("image links never prefetch, since they can point at the media proxy", () => {
+    const single = { ...makeImageAttachment("img-1"), fallbackUrl }
+    const unsized = {
+      ...makeImageAttachment("img-2"),
+      width: null,
+      height: null,
+      fallbackUrl,
+    }
+    const grid = [makeImageAttachment("img-3"), makeImageAttachment("img-4")]
+
+    for (const attachments of [[single], [unsized], grid]) {
+      const el = renderComponent(
+        <MessageItem
+          message={makeMessage({
+            attachments: attachments as unknown as AttachmentResource[],
+          })}
+        />,
+      )
+      const links = Array.from(el.querySelectorAll("a")).filter((link) =>
+        link.querySelector("img"),
+      )
+      expect(links.length).toBeGreaterThan(0)
+      for (const link of links) {
+        expect(link.getAttribute("data-prefetch")).toBe("false")
+      }
+      act(() => root?.unmount())
+      root = null
+      container?.remove()
+    }
+  })
+
+  test("a file link without a fallback URL keeps its stored URL and no reload action", () => {
+    const attachment = makeFileAttachment("file-1")
+    const el = renderComponent(
+      <MessageItem message={makeMessage({ attachments: [attachment] })} />,
+    )
+
+    expect(el.querySelector(`a[href="${attachment.url}"]`)).not.toBeNull()
+    expect(el.querySelector('a[aria-label="reloadAttachment"]')).toBeNull()
   })
 
   test("an attachment without a fallback URL keeps its URL when loading fails", () => {
