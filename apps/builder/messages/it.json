@@ -3318,7 +3318,8 @@
         "providerRejected": "Il provider ha rifiutato questa richiesta.",
         "inProgress": "Connessione già in corso.",
         "unknown": "Qualcosa è andato storto.",
-        "followUpFailed": "Configurazione incompleta: completala dalle impostazioni del canale."
+        "followUpFailed": "Configurazione incompleta: completala dalle impostazioni del canale.",
+        "webhookSubscribeFailed": "Connesso, ma l'iscrizione al webhook non è riuscita: riprova dalle impostazioni della connessione."
       },
       "sessionError": {
         "sessionExpired": "La sessione è scaduta. Riconnettiti.",
@@ -3444,6 +3445,7 @@
     "cancelEdit": "Annulla",
     "replaceAttachment": "Sostituisci allegato",
     "addAttachment": "Aggiungi allegato",
+    "reloadAttachment": "Ricarica allegato",
     "failedToCopy": "Impossibile copiare",
     "failedToPreviewImage": "Impossibile visualizzare l'anteprima dell'immagine",
     "loadingData": "Caricamento dati...",
@@ -3613,13 +3615,7 @@
     "selectPage": {
       "noPagesTitle": "Nessuna Pagina Facebook trovata",
       "noPagesDescription": "Le Pagine in un Business Manager richiedono l'accesso a Business Manager durante la connessione. Ricollega Messenger e concedi tutte le autorizzazioni richieste.",
-      "noConnectablePagesTitle": "Nessuna Pagina disponibile da collegare",
-      "noConnectablePagesDescription": "Non sei amministratore di questa Pagina",
-      "bmLookupFailedTitle": "Alcune Pagine di Business Manager potrebbero non essere disponibili",
-      "bmLookupFailedDescription": "Ricollega Messenger e concedi l'accesso a Business Manager affinché possano essere elencate le Pagine gestite tramite Business Manager.",
-      "loadFailed": "Impossibile caricare le tue Pagine Facebook",
       "alreadyConnectedNote": "Questa Pagina è già collegata",
-      "notAdminNote": "Non sei amministratore di questa Pagina",
       "tryAgain": "Prova a ricollegarti"
     },
     "title": "Facebook Messenger",

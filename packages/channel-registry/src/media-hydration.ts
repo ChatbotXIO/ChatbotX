@@ -23,6 +23,7 @@ import type {
   ContactInboxModel,
   ContactModel,
 } from "@chatbotx.io/database/types"
+import { getMirroredChannelMediaPrefix } from "@chatbotx.io/filesystem"
 import {
   getWhatsappClient,
   type WhatsappAuthValue,
@@ -314,11 +315,17 @@ const channelMediaStrategies: Partial<Record<string, ChannelMediaStrategy>> = {
 const loadAttachment = async (input: {
   attachmentId: string
   workspaceId: string
+  // Parent message createdAt: routes a sharded lookup straight to the window
+  // holding the row instead of only the recent shards.
+  messageCreatedAt?: Date
 }): Promise<Pick<AttachmentGraph, "attachment" | "repository"> | null> => {
   const repository = await createMessageRepository(db)
   const attachment = await repository.findAttachmentById({
     id: input.attachmentId,
     workspaceId: input.workspaceId,
+    ...(input.messageCreatedAt
+      ? { messageCreatedAt: input.messageCreatedAt }
+      : {}),
   })
   if (!attachment) {
     return null
@@ -386,6 +393,9 @@ export async function resolveIntegrationForAttachment(input: {
   return { channel: graph.contactInbox.channel, integrationRow }
 }
 
+const isMirroredOriginPath = (originPath: string): boolean =>
+  !(isFailedOriginPath(originPath) || isPendingOriginPath(originPath))
+
 const throwIfTerminal = (originPath: string, attachmentId: string): void => {
   if (isFailedOriginPath(originPath)) {
     throw new TerminalMediaError(
@@ -395,19 +405,19 @@ const throwIfTerminal = (originPath: string, attachmentId: string): void => {
   }
 }
 
-export async function resolveFreshMediaUrl(input: {
-  attachmentId: string
-  workspaceId: string
-}): Promise<ResolvedFreshMedia | null> {
-  const lookup = await loadAttachment(input)
-  if (!lookup) {
-    return null
-  }
-  throwIfTerminal(lookup.attachment.originPath, input.attachmentId)
-  if (!isPendingOriginPath(lookup.attachment.originPath)) {
-    return null
-  }
+type FreshMediaMatch = {
+  attachment: AttachmentModel
+  media: FreshMedia
+  state: HydrationContext
+  strategy: ChannelMediaStrategy
+}
 
+// Re-derive the requested attachment's fresh media from its channel. Null when
+// the channel cannot expose a fresh URL or the provider no longer returns it.
+const matchFreshMedia = async (
+  lookup: Pick<AttachmentGraph, "attachment" | "repository">,
+  input: { attachmentId: string; workspaceId: string },
+): Promise<FreshMediaMatch | null> => {
   const graph = await loadAttachmentGraphFromLookup(lookup, input.workspaceId)
   if (!graph) {
     return null
@@ -431,16 +441,54 @@ export async function resolveFreshMediaUrl(input: {
     return null
   }
   const media = await strategy.resolveMedia(state)
+  const position = attachments.indexOf(requested)
   // Match the requested attachment to its fresh media by provider id, not by
   // array position; fall back to positional only for legacy rows with no id.
-  const resolved = requested.sourceId
+  let resolved = requested.sourceId
     ? (media.find((item) => item.sourceId === requested.sourceId) ?? null)
-    : (media[attachments.indexOf(requested)] ?? null)
+    : (media[position] ?? null)
+  // Realtime-received attachments are stored with a generated sourceId, never
+  // the provider's attachment id, so identity can't pair them. For a mirrored
+  // row (re-deriving an evicted object) pair by position instead — but only
+  // when the provider returned exactly the stored attachments, so a gap can't
+  // shift one attachment onto another's media.
+  if (
+    !resolved &&
+    isMirroredOriginPath(requested.originPath) &&
+    media.length === attachments.length
+  ) {
+    resolved = media[position] ?? null
+  }
   return resolved
+    ? { attachment: requested, media: resolved, state, strategy }
+    : null
+}
+
+export async function resolveFreshMediaUrl(input: {
+  attachmentId: string
+  workspaceId: string
+  // Also re-derive media for a row that is already mirrored — used when its
+  // stored object is gone and the caller wants the channel's copy instead.
+  allowMirrored?: boolean
+  messageCreatedAt?: Date
+}): Promise<ResolvedFreshMedia | null> {
+  const lookup = await loadAttachment(input)
+  if (!lookup) {
+    return null
+  }
+  throwIfTerminal(lookup.attachment.originPath, input.attachmentId)
+  if (
+    !(input.allowMirrored || isPendingOriginPath(lookup.attachment.originPath))
+  ) {
+    return null
+  }
+
+  const match = await matchFreshMedia(lookup, input)
+  return match
     ? {
-        ...resolved,
-        channel: state.contactInbox.channel,
-        integrationId: state.integrationRow.id,
+        ...match.media,
+        channel: match.state.contactInbox.channel,
+        integrationId: match.state.integrationRow.id,
       }
     : null
 }
@@ -485,6 +533,51 @@ export async function markAttachmentUnresolvable(input: {
   )
 }
 
+// Download through the channel strategy, surfacing an over-cap body as a
+// terminal failure. Whether that failure is persisted is the caller's call.
+const downloadMedia = async (
+  state: HydrationContext,
+  strategy: ChannelMediaStrategy,
+  attachment: AttachmentModel,
+  mediaReference: FreshMedia,
+): Promise<DownloadedMedia> => {
+  try {
+    return await strategy.download(mediaReference, attachment, state)
+  } catch (err) {
+    if (err instanceof AttachmentTooLargeError) {
+      throw new TerminalMediaError(
+        "too-large",
+        `Attachment ${attachment.id} exceeds the media size limit`,
+      )
+    }
+    throw err
+  }
+}
+
+// Keys under the shared `public/` storage prefix are uploaded `public-read` by
+// the realtime receive paths; mirrored copies (`workspace/...`) stay private.
+const PUBLIC_STORAGE_PREFIX = "public/"
+
+const putMediaObject = async (
+  state: HydrationContext,
+  key: string,
+  media: DownloadedMedia,
+  options: { preserveAcl?: boolean } = {},
+): Promise<void> => {
+  if (!state.ctx.uploader) {
+    throw new SdkException("[media-hydration] Object storage is unavailable")
+  }
+  // Overwriting an existing key must keep its access level, or the public URLs
+  // already handed out for it would start returning 403.
+  const isPublicKey =
+    options.preserveAcl && key.startsWith(PUBLIC_STORAGE_PREFIX)
+  await state.ctx.uploader.putObject(key, Buffer.from(media.bytes), {
+    ...(isPublicKey ? { ACL: "public-read" } : {}),
+    ContentLength: media.size,
+    ContentType: media.mimeType,
+  })
+}
+
 const mirrorAttachment = async (
   state: HydrationContext,
   strategy: ChannelMediaStrategy,
@@ -493,32 +586,27 @@ const mirrorAttachment = async (
 ): Promise<string> => {
   let media: DownloadedMedia
   try {
-    media = await strategy.download(mediaReference, attachment, state)
+    media = await downloadMedia(state, strategy, attachment, mediaReference)
   } catch (err) {
-    if (err instanceof AttachmentTooLargeError) {
+    if (err instanceof TerminalMediaError && err.reason === "too-large") {
       await markAttachmentFailed(
         state.repository,
         state.message.workspaceId,
         attachment,
         "too-large",
       )
-      throw new TerminalMediaError(
-        "too-large",
-        `Attachment ${attachment.id} exceeds the media size limit`,
-      )
     }
     throw err
   }
 
   const extension = getStorageExtension(mediaReference.url, media.mimeType)
-  const originPath = `workspace/${state.ctx.storagePrefix}/${createId()}${extension ? `.${extension}` : ""}`
-  if (!state.ctx.uploader) {
-    throw new SdkException("[media-hydration] Object storage is unavailable")
-  }
-  await state.ctx.uploader.putObject(originPath, Buffer.from(media.bytes), {
-    ContentLength: media.size,
-    ContentType: media.mimeType,
+  const prefix = getMirroredChannelMediaPrefix({
+    channel: state.contactInbox.channel,
+    workspaceId: state.message.workspaceId,
+    integrationId: state.integrationRow.id,
   })
+  const originPath = `${prefix}/${createId()}${extension ? `.${extension}` : ""}`
+  await putMediaObject(state, originPath, media)
 
   let width: number | undefined
   let height: number | undefined
@@ -689,6 +777,47 @@ export async function ensureAttachmentMirrored(input: {
         )
       }
       return { originPath: requestedOriginPath }
+    },
+  })
+}
+
+/**
+ * Re-upload a mirrored attachment's bytes into the storage key its row already
+ * points at, for when that object was evicted from storage. The row is never
+ * written: writing the same key back makes the existing `originPath` valid
+ * again, and a restore triggered for an object that still exists just
+ * overwrites it with the same bytes. Channels that cannot re-derive their
+ * media (WhatsApp) are left untouched.
+ */
+export async function restoreMirroredAttachment(input: {
+  attachmentId: string
+  workspaceId: string
+  messageCreatedAt?: Date
+}): Promise<{ restored: boolean }> {
+  const lookup = await loadAttachment(input)
+  if (!(lookup && isMirroredOriginPath(lookup.attachment.originPath))) {
+    return { restored: false }
+  }
+
+  return await distributedLock.runExclusive({
+    key: `media-hydration:${input.workspaceId}:${lookup.attachment.messageId}`,
+    timeoutInSeconds: MEDIA_LOCK_TTL_SECONDS,
+    fn: async () => {
+      const match = await matchFreshMedia(lookup, input)
+      if (!(match && isMirroredOriginPath(match.attachment.originPath))) {
+        return { restored: false }
+      }
+      const { attachment, state, strategy } = match
+      const media = await downloadMedia(
+        state,
+        strategy,
+        attachment,
+        match.media,
+      )
+      await putMediaObject(state, attachment.originPath, media, {
+        preserveAcl: true,
+      })
+      return { restored: true }
     },
   })
 }

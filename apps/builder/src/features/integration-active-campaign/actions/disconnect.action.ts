@@ -5,5 +5,5 @@ import { createDisconnectAction } from "@/lib/integration-actions"
 
 export const disconnectActiveCampaignAction = createDisconnectAction(
   integrationActiveCampaignService,
-  { name: "ActiveCampaign" },
+  { name: "ActiveCampaign", provider: "activeCampaign" },
 )

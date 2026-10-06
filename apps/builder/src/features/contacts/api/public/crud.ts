@@ -1,14 +1,18 @@
-import { contactService, importService, UNSCOPED } from "@chatbotx.io/business"
+import { contactService, UNSCOPED } from "@chatbotx.io/business"
 import { getAuditActor } from "@chatbotx.io/business/audit"
+import { importService } from "@chatbotx.io/business/import"
 import { contactSources, genderTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
+  possibleErrorsOnCreatingContact,
   possibleErrorsOnCreatingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
   possibleErrorsOnStartingContactImport,
+  possibleErrorsOnUpsertingContact,
+  possibleErrorsOnWritingContactFields,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -172,13 +176,13 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts",
       summary: "Create contact",
       description:
-        "Adds a workspace contact outside a channel conversation, with contact details for later messaging. Use `contacts.list` to check for an existing contact and `contacts.sendMessage` after creating one.",
+        "Adds a contact to the inbox given by `inboxId` and opens its conversation, so `contacts.sendMessage` works right after. Use `contacts.list` to check for an existing contact first.",
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
     })
     .input(createContactRequest)
     .output(contactResponse)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingContact)
     .handler(async ({ context, input }) => {
       const { contact } = await contactService.createWithInbox({
         workspaceId: context.workspace.id,
@@ -247,7 +251,7 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts/{identifier}",
       summary: "Update contact fields",
       description:
-        "Overwrites the given standard and/or custom fields on the contact identified by `identifier`; fields omitted from the body are left unchanged.",
+        "Overwrites the given standard and/or custom fields on the contact identified by `identifier`; fields omitted from the body are left unchanged. Keys that are not a standard field or a custom field id of this workspace are ignored.",
       successStatus: 204,
       tags: ["Contacts"],
     })
@@ -258,7 +262,7 @@ export const contactsCrudPublicRouter = {
         })
         .and(updateContactFieldRequest),
     )
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnWritingContactFields)
     .handler(async ({ context, input }) => {
       const { identifier, ...fields } = input
       const contactId = await contactService.resolveIdByIdentifier({
@@ -339,7 +343,7 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts/{identifier}/block",
       summary: "Block contact",
       description:
-        "Marks the contact identified by `identifier` as blocked, preventing further inbound messages from reaching the workspace. Use `contacts.unblock` to reverse this.",
+        "Marks the contact identified by `identifier` as blocked (sets `blockedAt`). It does not reject inbound messages: the next message the contact sends unblocks it automatically. Use `contacts.unblock` to clear it yourself.",
       successStatus: 204,
       tags: ["Contacts"],
     })
@@ -366,7 +370,7 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts/{identifier}/unblock",
       summary: "Unblock contact",
       description:
-        "Reverses `contacts.block` for the contact identified by `identifier`, allowing inbound messages again.",
+        "Clears the blocked mark (`blockedAt`) that `contacts.block` set on the contact identified by `identifier`.",
       successStatus: 204,
       tags: ["Contacts"],
     })
@@ -393,7 +397,7 @@ export const contactsCrudPublicRouter = {
       path: "/v1/contacts/{identifier}/upsert",
       summary: "Upsert contact",
       description:
-        "Creates the contact identified by `identifier` if it doesn't exist yet, otherwise updates the given fields on the existing one.",
+        "Updates the given fields on the contact identified by `identifier`, or creates it when no contact matches. Only `email:` and `phone:` identifiers can create (an unknown `id:` returns 404), and a new contact is added to the workspace's webchat inbox (404 when there is none).",
       tags: ["Contacts"],
     })
     .input(
@@ -432,7 +436,7 @@ export const contactsCrudPublicRouter = {
       }),
     )
     .output(contactResponse)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnUpsertingContact)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const { identifier, avatar, ...fields } = input

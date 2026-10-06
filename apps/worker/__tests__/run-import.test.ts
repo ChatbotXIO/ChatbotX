@@ -24,6 +24,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  flowService: { importFlowExport: vi.fn() },
+  customFieldService: { invalidate: vi.fn() },
+  botFieldService: { invalidate: vi.fn() },
+}))
+
+vi.mock("@chatbotx.io/business/import", () => ({
   importService: {
     findForWorker: (...args: unknown[]) => findFirst(...args),
     fail: (_importId: string, errorMessage: string) => {

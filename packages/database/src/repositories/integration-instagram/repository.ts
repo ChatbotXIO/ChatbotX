@@ -8,32 +8,14 @@ import {
   isNull,
   sql,
 } from "../../client"
-import { integrationInstagramModel } from "../../schema"
+import { ACTIVE_CONNECTION_STATUSES } from "../../partials/connection"
+import { connectionModel, integrationInstagramModel } from "../../schema"
 import type { IntegrationInstagramModel } from "../../types"
 
 type WorkspaceIntegrationRef = {
   id: string
   workspaceId: string
 }
-
-type InsertInstagramIntegrationInput = Pick<
-  typeof integrationInstagramModel.$inferInsert,
-  | "id"
-  | "workspaceId"
-  | "inboxId"
-  | "igId"
-  | "pageId"
-  | "auth"
-  | "name"
-  | "username"
-  | "persistentMenus"
-> &
-  Partial<
-    Pick<
-      typeof integrationInstagramModel.$inferInsert,
-      "type" | "conversationStarters"
-    >
-  >
 
 type UpdateInstagramCapiScopeCacheInput = WorkspaceIntegrationRef & {
   hasCapiScope: boolean
@@ -73,57 +55,6 @@ const capiScopeCasFilter = (
   )
 
 export const integrationInstagramRepository = {
-  /**
-   * Inserts a new Instagram integration row. Callers pass the already-
-   * resolved `inboxId` from `connectChannelIntegration`'s
-   * `insertIntegration` callback. `type` defaults to the column default
-   * ("instagram") when omitted — pass `"facebook"` for the Facebook-linked
-   * login variant.
-   */
-  async insert(
-    input: InsertInstagramIntegrationInput,
-    tx: DatabaseClient = db,
-  ): Promise<IntegrationInstagramModel> {
-    // `conversationStarters`/`persistentMenus` are NOT NULL columns with no
-    // database default (drizzle-kit drops a jsonb `sql` default when it
-    // serializes the snapshot, so the schema-level `.default(sql`[]`)` was never
-    // migrated) while `$inferInsert` still marks them optional, so both must be
-    // written explicitly or the insert fails — pinned by
-    // `__tests__/integration/insert-required-columns.test.ts`. `type` does have
-    // a database default ("instagram") and is left to the column.
-    const [row] = await tx
-      .insert(integrationInstagramModel)
-      .values({
-        ...input,
-        conversationStarters: input.conversationStarters ?? [],
-        persistentMenus: input.persistentMenus ?? [],
-      })
-      .returning()
-
-    return row
-  },
-
-  /**
-   * Instagram ids from the given list that already have an integration.
-   * `IntegrationInstagram.igId` is unique platform-wide, so a match means the
-   * account cannot be connected again anywhere.
-   */
-  async findConnectedIgIds(
-    igIds: string[],
-    tx: DatabaseClient = db,
-  ): Promise<Set<string>> {
-    if (igIds.length === 0) {
-      return new Set()
-    }
-
-    const rows = await tx
-      .select({ igId: integrationInstagramModel.igId })
-      .from(integrationInstagramModel)
-      .where(inArray(integrationInstagramModel.igId, igIds))
-
-    return new Set(rows.map((row) => row.igId))
-  },
-
   async findWorkspaceIntegration(
     input: WorkspaceIntegrationRef,
     tx: DatabaseClient = db,
@@ -161,6 +92,45 @@ export const integrationInstagramRepository = {
       .limit(1)
 
     return row ?? null
+  },
+
+  /**
+   * Cross-provider check for the `instagram`/`instagramFacebook` picker
+   * (`connect-session-flow.ts`'s `listAndAttachCandidates`): both providers
+   * share one physical `igId` identity under this satellite table but are
+   * stored under distinct `Connection.provider` values, so a provider-scoped
+   * `Connection.sourceId` lookup can never see an account already connected
+   * under the sibling provider. The satellite row's mere existence is NOT
+   * enough to tell, though — it survives a `needs_reauth`/`paused`
+   * connection (only an actual disconnect deletes it, per
+   * `onDisconnect: "delete_row"`), so join through to the real `Connection`
+   * row by `inboxId` and only report an `igId` whose connection is still in
+   * an ACTIVE status. A `needs_reauth`/`paused` connection must stay
+   * selectable for reconnect, not grey out as "already connected".
+   */
+  async findActiveWorkspacesByIgIds(
+    input: { igIds: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<{ igId: string; workspaceId: string }[]> {
+    if (input.igIds.length === 0) {
+      return []
+    }
+    return await tx
+      .select({
+        igId: integrationInstagramModel.igId,
+        workspaceId: integrationInstagramModel.workspaceId,
+      })
+      .from(integrationInstagramModel)
+      .innerJoin(
+        connectionModel,
+        eq(connectionModel.inboxId, integrationInstagramModel.inboxId),
+      )
+      .where(
+        and(
+          inArray(integrationInstagramModel.igId, input.igIds),
+          inArray(connectionModel.status, ACTIVE_CONNECTION_STATUSES),
+        ),
+      )
   },
 
   async findByInboxIdForWorkspace(

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-type RouteConfig = { method: string; path: string }
+type RouteConfig = { method: string; path: string; successStatus?: number }
 
 type CapturedProcedure = {
   route: RouteConfig
@@ -82,6 +82,21 @@ vi.mock("@/features/integration-instagram/queries", () => ({
   findIntegrationInstagram,
 }))
 
+const disconnectMessenger = vi.fn()
+vi.mock(
+  "@/features/integration-messenger/actions/disconnect-messenger",
+  () => ({
+    disconnectMessenger,
+  }),
+)
+const disconnectInstagram = vi.fn()
+vi.mock(
+  "@/features/integration-instagram/actions/disconnect-instagram",
+  () => ({
+    disconnectInstagram,
+  }),
+)
+
 await import("@/features/integration-messenger/api/public")
 await import("@/features/integration-instagram/api/public")
 await import("@/features/integration-tiktok/api/public")
@@ -155,6 +170,32 @@ describe.each([
       { workspaceId: "workspace-1", id: "ch-1" },
       { ...settings, ...extra },
     )
+  })
+})
+
+describe("DELETE /v1/{messenger,instagram}-channels/{id}", () => {
+  test("Messenger disconnect runs the builder's disconnect in the token workspace", async () => {
+    const procedure = findProcedure("DELETE", "/v1/messenger-channels/{id}")
+    expect(procedure.route.successStatus).toBe(204)
+
+    await procedure.handler?.({ context, input: { id: "ch-1" } })
+
+    expect(disconnectMessenger).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "ch-1",
+    })
+  })
+
+  test("Instagram disconnect runs the builder's disconnect in the token workspace", async () => {
+    const procedure = findProcedure("DELETE", "/v1/instagram-channels/{id}")
+    expect(procedure.route.successStatus).toBe(204)
+
+    await procedure.handler?.({ context, input: { id: "ig-1" } })
+
+    expect(disconnectInstagram).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      integrationInstagramId: "ig-1",
+    })
   })
 })
 

@@ -3318,7 +3318,8 @@
         "providerRejected": "Furnizorul a respins această solicitare.",
         "inProgress": "Conexiunea este deja în curs.",
         "unknown": "Ceva nu a funcționat corect.",
-        "followUpFailed": "Configurare incompletă — finalizeaz-o din setările canalului."
+        "followUpFailed": "Configurare incompletă — finalizeaz-o din setările canalului.",
+        "webhookSubscribeFailed": "Conectat, dar abonarea la webhook a eșuat — încearcă din nou din setările conexiunii."
       },
       "sessionError": {
         "sessionExpired": "Sesiunea ta a expirat. Te rugăm să te reconectezi.",
@@ -3444,6 +3445,7 @@
     "cancelEdit": "Anulează",
     "replaceAttachment": "Înlocuiește atașamentul",
     "addAttachment": "Adaugă atașament",
+    "reloadAttachment": "Reîncarcă atașamentul",
     "failedToCopy": "Copierea a eșuat",
     "failedToPreviewImage": "Previzualizarea imaginii a eșuat",
     "loadingData": "Se încarcă datele...",
@@ -3613,13 +3615,7 @@
     "selectPage": {
       "noPagesTitle": "Nicio pagină de Facebook găsită",
       "noPagesDescription": "Paginile din interiorul unui Business Manager necesită acces Business Manager în timpul conectării. Reconectează Messenger și acordă toate permisiunile solicitate.",
-      "noConnectablePagesTitle": "Nicio pagină disponibilă pentru conectare",
-      "noConnectablePagesDescription": "Nu ești administrator al acestei Pagini",
-      "bmLookupFailedTitle": "Este posibil să lipsească paginile din Business Manager",
-      "bmLookupFailedDescription": "Reconectează Messenger și acordă acces la Business Manager pentru ca paginile gestionate printr-un Business Manager să poată fi listate.",
-      "loadFailed": "Nu s-au putut încărca Paginile tale de Facebook",
       "alreadyConnectedNote": "Această pagină este deja conectată",
-      "notAdminNote": "Nu ești administrator al acestei Pagini",
       "tryAgain": "Încearcă să te reconectezi"
     },
     "title": "Facebook Messenger",

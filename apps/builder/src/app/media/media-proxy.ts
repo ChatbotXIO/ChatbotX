@@ -125,6 +125,36 @@ export const enqueueAttachmentMirror = (input: {
     })
 }
 
+const ATTACHMENT_JOB_RETRY_BACKOFF = {
+  type: "exponential",
+  delay: 30_000,
+} as const
+
+// How long one evicted attachment's restore stays deduplicated, so repeated
+// `?retry=1` hits re-upload it at most once per window.
+const RESTORE_DEDUP_TTL_MS = 60 * 60 * 1000
+
+type AttachmentJobData = LowJobCoexistAttachmentDownload["data"]
+type AttachmentJobOptions = NonNullable<Parameters<typeof lowQueue.add>[2]>
+
+const addAttachmentJob = (
+  data: AttachmentJobData,
+  options: AttachmentJobOptions,
+): void => {
+  lowQueue
+    .add(
+      LowJobAction.coexistAttachmentDownload,
+      { type: LowJobAction.coexistAttachmentDownload, data },
+      options,
+    )
+    .catch((err: unknown) => {
+      httpLogger.error(
+        { err, attachmentId: data.attachmentId, restore: data.restore },
+        "Failed to enqueue attachment media job",
+      )
+    })
+}
+
 function enqueueResolvedAttachmentMirror(input: {
   attachmentId: string
   channel: AttachmentChannel
@@ -132,32 +162,59 @@ function enqueueResolvedAttachmentMirror(input: {
   messageId: string
   workspaceId: string
 }): void {
-  lowQueue
-    .add(
-      LowJobAction.coexistAttachmentDownload,
-      {
-        type: LowJobAction.coexistAttachmentDownload,
-        data: {
-          attachmentId: input.attachmentId,
-          workspaceId: input.workspaceId,
-          channel: input.channel,
-          integrationId: input.integrationId,
-        },
+  addAttachmentJob(
+    {
+      attachmentId: input.attachmentId,
+      workspaceId: input.workspaceId,
+      channel: input.channel,
+      integrationId: input.integrationId,
+    },
+    {
+      jobId: `media-message-${input.messageId}`,
+      attempts: 5,
+      backoff: ATTACHMENT_JOB_RETRY_BACKOFF,
+      removeOnComplete: true,
+      removeOnFail: { count: 100 },
+    },
+  )
+}
+
+// Re-upload an evicted mirrored attachment into its existing storage key.
+// Throttle-mode deduplication holds the id for its TTL whether the restore
+// succeeds or fails, so repeated views cannot fan out repeated downloads —
+// and, unlike a retained jobId, the hold expires on its own.
+export const enqueueAttachmentRestore = (input: {
+  attachmentId: string
+  channel: string
+  integrationId: string
+  workspaceId: string
+  messageCreatedAt?: Date
+}): void => {
+  if (!isAttachmentChannel(input.channel)) {
+    return
+  }
+  addAttachmentJob(
+    {
+      attachmentId: input.attachmentId,
+      workspaceId: input.workspaceId,
+      channel: input.channel,
+      integrationId: input.integrationId,
+      restore: true,
+      ...(input.messageCreatedAt
+        ? { messageCreatedAt: input.messageCreatedAt.getTime() }
+        : {}),
+    },
+    {
+      deduplication: {
+        id: `media-restore-${input.attachmentId}`,
+        ttl: RESTORE_DEDUP_TTL_MS,
       },
-      {
-        jobId: `media-message-${input.messageId}`,
-        attempts: 5,
-        backoff: { type: "exponential", delay: 30_000 },
-        removeOnComplete: true,
-        removeOnFail: { count: 100 },
-      },
-    )
-    .catch((err: unknown) => {
-      httpLogger.error(
-        { err, attachmentId: input.attachmentId },
-        "Failed to enqueue attachment media mirror",
-      )
-    })
+      attempts: 3,
+      backoff: ATTACHMENT_JOB_RETRY_BACKOFF,
+      removeOnComplete: true,
+      removeOnFail: true,
+    },
+  )
 }
 
 export const enqueueAvatarMirror = (input: {

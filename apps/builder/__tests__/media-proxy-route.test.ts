@@ -206,6 +206,112 @@ describe("attachment media proxy", () => {
     expect(mocks.lowQueueAdd).not.toHaveBeenCalled()
   })
 
+  test("retry on mirrored media redirects to fresh media and enqueues a restore job", async () => {
+    const messageCreatedAt = Date.parse("2026-09-18T00:00:00.000Z")
+    mocks.verifyMediaToken.mockResolvedValue({
+      workspaceId: "workspace-1",
+      kind: "attachment",
+      refId: "attachment-1",
+      messageCreatedAt,
+      expiresAt: Date.now() + 60_000,
+    })
+    mocks.findAttachmentById.mockResolvedValue(
+      attachment("workspace/workspace-1/media.jpg"),
+    )
+    mocks.resolveFreshMediaUrl.mockResolvedValue({
+      channel: "messenger",
+      integrationId: "integration-1",
+      url: "https://cdn.example/fresh.jpg",
+      mimeType: "image/jpeg",
+    })
+
+    const response = await getAttachment(
+      new Request(
+        "http://localhost/media/attachment/signed-token?retry=1",
+      ) as never,
+      tokenContext(),
+    )
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get("location")).toBe(
+      "https://cdn.example/fresh.jpg",
+    )
+    expect(mocks.resolveFreshMediaUrl).toHaveBeenCalledWith({
+      attachmentId: "attachment-1",
+      workspaceId: "workspace-1",
+      allowMirrored: true,
+      messageCreatedAt: new Date(messageCreatedAt),
+    })
+    expect(mocks.getPresignedDownload).not.toHaveBeenCalled()
+    expect(mocks.lowQueueAdd).toHaveBeenCalledTimes(1)
+    expect(mocks.lowQueueAdd).toHaveBeenCalledWith(
+      "coexistAttachmentDownload",
+      {
+        type: "coexistAttachmentDownload",
+        data: {
+          attachmentId: "attachment-1",
+          workspaceId: "workspace-1",
+          channel: "messenger",
+          integrationId: "integration-1",
+          restore: true,
+          messageCreatedAt,
+        },
+      },
+      {
+        // Throttle-mode dedup: the id stays reserved for the TTL whether the
+        // restore succeeds or fails, then expires on its own.
+        deduplication: {
+          id: "media-restore-attachment-1",
+          ttl: 60 * 60 * 1000,
+        },
+        attempts: 3,
+        backoff: { type: "exponential", delay: 30_000 },
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    )
+  })
+
+  test("retry on mirrored media without re-derivable media redirects to unavailable and enqueues nothing", async () => {
+    mocks.findAttachmentById.mockResolvedValue(
+      attachment("workspace/workspace-1/media.jpg"),
+    )
+    mocks.resolveFreshMediaUrl.mockResolvedValue(null)
+
+    const response = await getAttachment(
+      new Request(
+        "http://localhost/media/attachment/signed-token?retry=1",
+      ) as never,
+      tokenContext(),
+    )
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3123/media/unavailable.svg",
+    )
+    expect(mocks.lowQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("retry on mirrored media degrades a Graph failure to unavailable without enqueueing", async () => {
+    mocks.findAttachmentById.mockResolvedValue(
+      attachment("workspace/workspace-1/media.jpg"),
+    )
+    mocks.resolveFreshMediaUrl.mockRejectedValue(new Error("Graph down"))
+
+    const response = await getAttachment(
+      new Request(
+        "http://localhost/media/attachment/signed-token?retry=1",
+      ) as never,
+      tokenContext(),
+    )
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3123/media/unavailable.svg",
+    )
+    expect(mocks.lowQueueAdd).not.toHaveBeenCalled()
+  })
+
   test("degrades to the unavailable placeholder when mirrored presigning fails", async () => {
     mocks.findAttachmentById.mockResolvedValue(
       attachment("workspace/workspace-1/media.jpg"),

@@ -1625,7 +1625,9 @@ export const receiveComment = async (
       // comment's file arrives solely as the webhook's `video` URL.
       const attachment = await downloadCommentMediaAttachment({
         url: commentData.videoUrl,
+        channel: integrationType,
         workspaceId: inbox.workspaceId,
+        integrationId: integrationRow.id,
         commentId: commentData.commentId,
       })
       attachments = attachment ? [attachment] : []
@@ -1644,7 +1646,9 @@ export const receiveComment = async (
     )
     const attachment = await downloadCommentMediaAttachment({
       url: tiktokIdentity.imageUrl,
+      channel: integrationType,
       workspaceId: inbox.workspaceId,
+      integrationId: integrationRow.id,
       commentId: commentData.commentId,
     })
     attachments = attachment ? [attachment] : []

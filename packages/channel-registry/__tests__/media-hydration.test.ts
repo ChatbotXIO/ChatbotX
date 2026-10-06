@@ -56,6 +56,16 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/database/client", () => ({ db: {} }))
 
+// Mirrored keys are channel-first: workspace/<channel>/<workspace>/<integration>/<date>/<id>.
+vi.mock("@chatbotx.io/filesystem", () => ({
+  getMirroredChannelMediaPrefix: (location: {
+    channel: string
+    workspaceId: string
+    integrationId: string
+  }) =>
+    `workspace/${location.channel}/${location.workspaceId}/${location.integrationId}/2026/10/06`,
+}))
+
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mocks.createMessageRepository,
 }))
@@ -112,6 +122,7 @@ const {
   readBodyWithCap,
   resolveFreshContactAvatarUrl,
   resolveFreshMediaUrl,
+  restoreMirroredAttachment,
   TerminalMediaError,
 } = await import("../src/media-hydration")
 
@@ -237,6 +248,252 @@ describe("media hydration", () => {
     expect(mocks.findById).not.toHaveBeenCalled()
     expect(mocks.resolveIntegrationContext).not.toHaveBeenCalled()
     expect(mocks.runExclusive).not.toHaveBeenCalled()
+  })
+
+  test("resolves fresh media for a mirrored attachment when allowMirrored is set", async () => {
+    const mirrored = attachment("101", "workspace/workspace-1/media/image.jpg")
+    arrangeAttachmentGraph([mirrored])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101",
+        mimeType: "image/jpeg",
+      },
+    ])
+
+    await expect(
+      resolveFreshMediaUrl({
+        attachmentId: mirrored.id,
+        workspaceId,
+        allowMirrored: true,
+        messageCreatedAt,
+      }),
+    ).resolves.toEqual({
+      channel: "messenger",
+      integrationId: "integration-1",
+      sourceId: "source-101",
+      url: "https://fresh.example/101",
+      mimeType: "image/jpeg",
+    })
+
+    expect(mocks.findAttachmentById).toHaveBeenCalledWith({
+      id: mirrored.id,
+      workspaceId,
+      messageCreatedAt,
+    })
+    expect(mocks.updateAttachment).not.toHaveBeenCalled()
+  })
+
+  test("pairs a mirrored attachment with an internal sourceId by position when counts match", async () => {
+    // Realtime-received Messenger attachments carry a generated id, not the
+    // Graph attachment id, so identity matching can never succeed for them.
+    const mirrored = attachment(
+      "101",
+      "public/ws/workspace-1/2026/10/05/image",
+      "11724778331053711",
+    )
+    arrangeAttachmentGraph([mirrored])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "graph-attachment-1",
+        url: "https://fresh.example/101",
+        mimeType: "image/jpeg",
+      },
+    ])
+
+    await expect(
+      resolveFreshMediaUrl({
+        attachmentId: mirrored.id,
+        workspaceId,
+        allowMirrored: true,
+      }),
+    ).resolves.toMatchObject({ url: "https://fresh.example/101" })
+  })
+
+  test("does not pair a mirrored attachment by position when the counts differ", async () => {
+    const attachments = [
+      attachment("101", "public/ws/workspace-1/a", "internal-1"),
+      attachment("102", "public/ws/workspace-1/b", "internal-2"),
+    ]
+    arrangeAttachmentGraph(attachments)
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "graph-attachment-1",
+        url: "https://fresh.example/only-one",
+        mimeType: "image/jpeg",
+      },
+    ])
+
+    await expect(
+      resolveFreshMediaUrl({
+        attachmentId: "102",
+        workspaceId,
+        allowMirrored: true,
+      }),
+    ).resolves.toBeNull()
+  })
+
+  test("keeps identity-only matching for a pending attachment", async () => {
+    const pending = attachment("101", "https://cdn.example/101", "internal-1")
+    arrangeAttachmentGraph([pending])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "graph-attachment-1",
+        url: "https://fresh.example/101",
+        mimeType: "image/jpeg",
+      },
+    ])
+
+    await expect(
+      resolveFreshMediaUrl({ attachmentId: pending.id, workspaceId }),
+    ).resolves.toBeNull()
+  })
+
+  test("restores a mirrored attachment into its existing storage key without touching the row", async () => {
+    const mirrored = attachment("101", "workspace/workspace-1/media/image.jpg")
+    arrangeAttachmentGraph([mirrored])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101",
+        mimeType: "image/jpeg",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      ),
+    )
+
+    await expect(
+      restoreMirroredAttachment({
+        attachmentId: mirrored.id,
+        workspaceId,
+        messageCreatedAt,
+      }),
+    ).resolves.toEqual({ restored: true })
+
+    expect(mocks.findAttachmentById).toHaveBeenCalledWith({
+      id: mirrored.id,
+      workspaceId,
+      messageCreatedAt,
+    })
+    expect(mocks.putObject).toHaveBeenCalledTimes(1)
+    expect(mocks.putObject).toHaveBeenCalledWith(
+      "workspace/workspace-1/media/image.jpg",
+      expect.any(Buffer),
+      { ContentLength: 3, ContentType: "image/jpeg" },
+    )
+    expect(mocks.createId).not.toHaveBeenCalled()
+    expect(mocks.updateAttachment).not.toHaveBeenCalled()
+  })
+
+  test("restores a publicly uploaded attachment with its public-read ACL", async () => {
+    const realtime = attachment(
+      "101",
+      "public/ws/workspace-1/2026/10/05/image",
+      "11724778331053711",
+    )
+    arrangeAttachmentGraph([realtime])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "graph-attachment-1",
+        url: "https://fresh.example/101",
+        mimeType: "image/jpeg",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      ),
+    )
+
+    await expect(
+      restoreMirroredAttachment({ attachmentId: realtime.id, workspaceId }),
+    ).resolves.toEqual({ restored: true })
+
+    expect(mocks.putObject).toHaveBeenCalledWith(
+      "public/ws/workspace-1/2026/10/05/image",
+      expect.any(Buffer),
+      { ACL: "public-read", ContentLength: 3, ContentType: "image/jpeg" },
+    )
+  })
+
+  test.each([
+    ["pending", "https://cdn.example/101"],
+    ["permanently failed", "failed:unresolvable"],
+  ])("does not restore a %s attachment", async (_label, originPath) => {
+    const row = attachment("101", originPath)
+    arrangeAttachmentGraph([row])
+
+    await expect(
+      restoreMirroredAttachment({ attachmentId: row.id, workspaceId }),
+    ).resolves.toEqual({ restored: false })
+
+    expect(mocks.runChannelHandler).not.toHaveBeenCalled()
+    expect(mocks.putObject).not.toHaveBeenCalled()
+  })
+
+  test("does not restore a channel that cannot re-derive its media", async () => {
+    const mirrored = attachment("101", "workspace/workspace-1/media/image.jpg")
+    arrangeAttachmentGraph([mirrored])
+    mocks.findContactInbox.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      channel: "whatsapp",
+      inboxId: "inbox-1",
+      sourceId: "phone-1",
+    })
+
+    await expect(
+      restoreMirroredAttachment({ attachmentId: mirrored.id, workspaceId }),
+    ).resolves.toEqual({ restored: false })
+
+    expect(mocks.retrieveMedia).not.toHaveBeenCalled()
+    expect(mocks.putObject).not.toHaveBeenCalled()
+    expect(mocks.updateAttachment).not.toHaveBeenCalled()
+  })
+
+  test("throws terminally for an oversized restore without marking the row failed", async () => {
+    const mirrored = attachment("101", "workspace/workspace-1/media/video.mp4")
+    arrangeAttachmentGraph([mirrored])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/huge",
+        mimeType: "video/mp4",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1]), {
+            headers: {
+              "content-length": String(MAX_ATTACHMENT_BYTES + 1),
+              "content-type": "video/mp4",
+            },
+          }),
+        ),
+      ),
+    )
+
+    await expect(
+      restoreMirroredAttachment({ attachmentId: mirrored.id, workspaceId }),
+    ).rejects.toBeInstanceOf(TerminalMediaError)
+
+    expect(mocks.putObject).not.toHaveBeenCalled()
+    expect(mocks.updateAttachment).not.toHaveBeenCalled()
   })
 
   test("throws for failed media without resolving it again", async () => {
@@ -396,7 +653,8 @@ describe("media hydration", () => {
         workspaceId,
       }),
     ).resolves.toEqual({
-      originPath: "workspace/workspace-1/storage-2.png",
+      originPath:
+        "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-2.png",
     })
 
     expect(mocks.runChannelHandler).toHaveBeenCalledTimes(1)
@@ -411,7 +669,8 @@ describe("media hydration", () => {
         expect.objectContaining({
           id: "101",
           fields: expect.objectContaining({
-            originPath: "workspace/workspace-1/storage-1.jpg",
+            originPath:
+              "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
           }),
         }),
       ],
@@ -419,7 +678,8 @@ describe("media hydration", () => {
         expect.objectContaining({
           id: "102",
           fields: expect.objectContaining({
-            originPath: "workspace/workspace-1/storage-2.png",
+            originPath:
+              "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-2.png",
           }),
         }),
       ],
@@ -427,7 +687,8 @@ describe("media hydration", () => {
         expect.objectContaining({
           id: "103",
           fields: expect.objectContaining({
-            originPath: "workspace/workspace-1/storage-3.jpg",
+            originPath:
+              "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-3.jpg",
           }),
         }),
       ],
@@ -514,7 +775,8 @@ describe("media hydration", () => {
         workspaceId,
       }),
     ).resolves.toEqual({
-      originPath: "workspace/workspace-1/storage-1.jpg",
+      originPath:
+        "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-1.jpg",
     })
 
     expect(mocks.retrieveMedia).toHaveBeenCalledWith("media-101")
@@ -570,7 +832,8 @@ describe("media hydration", () => {
         workspaceId,
       }),
     ).resolves.toEqual({
-      originPath: "workspace/workspace-1/storage-2.png",
+      originPath:
+        "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-2.png",
     })
 
     expect(mocks.retrieveMedia.mock.calls).toEqual([
@@ -582,7 +845,8 @@ describe("media hydration", () => {
         expect.objectContaining({
           id: "101",
           fields: expect.objectContaining({
-            originPath: "workspace/workspace-1/storage-1.jpg",
+            originPath:
+              "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-1.jpg",
           }),
         }),
       ],
@@ -590,7 +854,8 @@ describe("media hydration", () => {
         expect.objectContaining({
           id: "102",
           fields: expect.objectContaining({
-            originPath: "workspace/workspace-1/storage-2.png",
+            originPath:
+              "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-2.png",
           }),
         }),
       ],
@@ -621,7 +886,10 @@ describe("media hydration", () => {
 
     await expect(
       ensureAttachmentMirrored({ attachmentId: "101", workspaceId }),
-    ).resolves.toEqual({ originPath: "workspace/workspace-1/storage-1.jpg" })
+    ).resolves.toEqual({
+      originPath:
+        "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+    })
 
     // Identity matching mirrors only the requested/matched attachment; the
     // sibling with no fresh media stays pending instead of failing the request.
@@ -667,7 +935,10 @@ describe("media hydration", () => {
 
     await expect(
       ensureAttachmentMirrored({ attachmentId: "102", workspaceId }),
-    ).resolves.toEqual({ originPath: "workspace/workspace-1/storage-2.png" })
+    ).resolves.toEqual({
+      originPath:
+        "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-2.png",
+    })
   })
 
   test("keeps a row pending when Graph resolves no media", async () => {

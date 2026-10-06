@@ -3318,7 +3318,8 @@
         "providerRejected": "Palveluntarjoaja hylkäsi pyynnön.",
         "inProgress": "Yhteys on jo käynnissä.",
         "unknown": "Jotain meni pieleen.",
-        "followUpFailed": "Asetus on kesken – viimeistele kanavan asetuksista."
+        "followUpFailed": "Asetus on kesken – viimeistele kanavan asetuksista.",
+        "webhookSubscribeFailed": "Yhdistetty, mutta webhook-tilaus epäonnistui – yritä uudelleen yhteysasetuksista."
       },
       "sessionError": {
         "sessionExpired": "Istuntosi vanheni. Yhdistä uudelleen.",
@@ -3444,6 +3445,7 @@
     "cancelEdit": "Peruuta",
     "replaceAttachment": "Korvaa liite",
     "addAttachment": "Lisää liite",
+    "reloadAttachment": "Lataa liite uudelleen",
     "failedToCopy": "Kopiointi epäonnistui",
     "failedToPreviewImage": "Kuvan esikatselu epäonnistui",
     "loadingData": "Ladataan tietoja...",
@@ -3613,13 +3615,7 @@
     "selectPage": {
       "noPagesTitle": "Facebook-sivuja ei löytynyt",
       "noPagesDescription": "Business Managerin sivut edellyttävät Business Manager -käyttöoikeutta yhdistämisen aikana. Yhdistä Messenger uudelleen ja myönnä kaikki pyydetyt oikeudet.",
-      "noConnectablePagesTitle": "Ei yhdistettävissä olevia sivuja",
-      "noConnectablePagesDescription": "Et ole tämän sivun ylläpitäjä",
-      "bmLookupFailedTitle": "Business Manager -sivuja saattaa puuttua",
-      "bmLookupFailedDescription": "Yhdistä Messenger uudelleen ja myönnä Business Manager -käyttöoikeus, jotta Business Managerin kautta hallinnoidut sivut voidaan näyttää.",
-      "loadFailed": "Facebook-sivujesi lataaminen epäonnistui",
       "alreadyConnectedNote": "Tämä sivu on jo yhdistetty",
-      "notAdminNote": "Et ole tämän sivun ylläpitäjä",
       "tryAgain": "Yritä yhdistää uudelleen"
     },
     "title": "Facebook Messenger",

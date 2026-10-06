@@ -17,7 +17,7 @@ export const aiHandoverSettingsResource = z.object({
     .boolean()
     .describe("Whether `timeRanges` bound when the automation runs."),
   timeRanges: aiHandoverTimeRangesSchema.describe(
-    "Hours of the workspace timezone when the automation runs; required when `scheduleEnabled`, otherwise an empty list.",
+    "Hours of the workspace timezone when the automation runs; required when `scheduleEnabled`. Saved ranges are kept when `scheduleEnabled` is false and only apply while it is true.",
   ),
   gotoFlowId: zodBigintAsString()
     .nullable()

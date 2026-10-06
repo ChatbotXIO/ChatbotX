@@ -881,7 +881,8 @@
         "providerRejected": "Nhà cung cấp đã từ chối yêu cầu này.",
         "inProgress": "Kết nối đang được thực hiện.",
         "unknown": "Đã xảy ra lỗi.",
-        "followUpFailed": "Thiết lập chưa hoàn tất — hãy hoàn tất trong cài đặt kênh."
+        "followUpFailed": "Thiết lập chưa hoàn tất — hãy hoàn tất trong cài đặt kênh.",
+        "webhookSubscribeFailed": "Đã kết nối, nhưng đăng ký webhook không thành công — hãy thử lại trong cài đặt kết nối."
       },
       "sessionError": {
         "sessionExpired": "Phiên của bạn đã hết hạn. Vui lòng kết nối lại.",
@@ -3486,6 +3487,7 @@
     "cancelEdit": "Hủy",
     "replaceAttachment": "Thay thế tệp đính kèm",
     "addAttachment": "Thêm tệp đính kèm",
+    "reloadAttachment": "Tải lại tệp đính kèm",
     "failedToCopy": "Sao chép thất bại",
     "failedToPreviewImage": "Không thể xem trước hình ảnh",
     "loadingData": "Đang tải dữ liệu...",
@@ -3655,13 +3657,7 @@
     "selectPage": {
       "noPagesTitle": "Không tìm thấy trang Facebook",
       "noPagesDescription": "Các trang nằm trong Business Manager cần được cấp quyền Business Manager khi kết nối. Hãy kết nối lại Messenger và cấp tất cả quyền được yêu cầu.",
-      "noConnectablePagesTitle": "Không có trang nào khả dụng để kết nối",
-      "noConnectablePagesDescription": "Bạn không phải là Admin của Page này",
-      "bmLookupFailedTitle": "Có thể thiếu trang trong Business Manager",
-      "bmLookupFailedDescription": "Hãy kết nối lại Messenger và cấp quyền Business Manager để liệt kê các trang được quản lý qua Business Manager.",
-      "loadFailed": "Không tải được danh sách Trang Facebook",
       "alreadyConnectedNote": "Trang này đã được kết nối",
-      "notAdminNote": "Bạn không phải là Admin của Page này",
       "tryAgain": "Kết nối lại"
     },
     "title": "Facebook Messenger",

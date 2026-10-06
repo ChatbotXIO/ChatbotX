@@ -18,29 +18,6 @@ import {
 } from "../../schema"
 import type { IntegrationWhatsappModel } from "../../types"
 
-// `isCoexist`/`platformType` have column defaults (both `$inferInsert`
-// makes optional), but a connect must always state them explicitly — the
-// only caller (`connectPhoneNumber`) always passes both, and `Required`
-// keeps that invariant enforced by the type instead of just convention.
-type UpsertWhatsappIntegrationInput = Pick<
-  typeof integrationWhatsappModel.$inferInsert,
-  | "id"
-  | "workspaceId"
-  | "inboxId"
-  | "auth"
-  | "phoneNumberId"
-  | "wabaId"
-  | "businessId"
-  | "name"
-  | "displayPhoneNumber"
-> &
-  Required<
-    Pick<
-      typeof integrationWhatsappModel.$inferInsert,
-      "isCoexist" | "platformType"
-    >
-  >
-
 type WorkspaceIntegrationRef = {
   id: string
   workspaceId: string
@@ -237,22 +214,27 @@ class IntegrationWhatsappRepository {
   async updateAuth(
     input: WorkspaceIntegrationRef & { auth: Record<string, unknown> },
     tx: DatabaseClient = db,
-  ): Promise<void> {
-    await tx
+  ): Promise<{ phoneNumberId: string } | undefined> {
+    const [row] = await tx
       .update(integrationWhatsappModel)
       .set({ auth: input.auth, tokenRefreshError: null })
       .where(workspaceIntegrationFilter(input))
+      .returning({ phoneNumberId: integrationWhatsappModel.phoneNumberId })
+
+    return row
   }
 
   async markTokenRefreshError(
-    id: string,
-    error: string,
+    input: WorkspaceIntegrationRef & { error: string },
     tx: DatabaseClient = db,
-  ): Promise<void> {
-    await tx
+  ): Promise<{ phoneNumberId: string } | undefined> {
+    const [row] = await tx
       .update(integrationWhatsappModel)
-      .set({ tokenRefreshError: error })
-      .where(eq(integrationWhatsappModel.id, id))
+      .set({ tokenRefreshError: input.error })
+      .where(workspaceIntegrationFilter(input))
+      .returning({ phoneNumberId: integrationWhatsappModel.phoneNumberId })
+
+    return row
   }
 
   /**
@@ -672,36 +654,6 @@ class IntegrationWhatsappRepository {
       )
   }
 
-  /**
-   * Upserts a WhatsApp integration keyed by `inboxId` (today's
-   * `onConflictDoUpdate`, moved verbatim): a retry after a lost response
-   * re-writes the same row instead of colliding on `IntegrationWhatsapp_
-   * inboxId_key`.
-   */
-  async upsertByInbox(
-    input: UpsertWhatsappIntegrationInput,
-    tx: DatabaseClient = db,
-  ): Promise<IntegrationWhatsappModel> {
-    const [row] = await tx
-      .insert(integrationWhatsappModel)
-      .values({
-        ...input,
-        registrationStatus: "pending_verification",
-      })
-      .onConflictDoUpdate({
-        target: [integrationWhatsappModel.inboxId],
-        set: {
-          name: input.name,
-          displayPhoneNumber: input.displayPhoneNumber,
-          isCoexist: input.isCoexist,
-          platformType: input.platformType,
-          updatedAt: new Date(),
-        },
-      })
-      .returning()
-
-    return row
-  }
   /** Whether the number backing this inbox auto-records in-app calls. */
   async isCallRecordingEnabledForInbox(
     input: { workspaceId: string; inboxId: string },

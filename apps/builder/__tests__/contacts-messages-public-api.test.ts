@@ -157,10 +157,28 @@ describe("GET /v1/contacts/{identifier}/messages", () => {
     expect(mocks.listMessages).toHaveBeenCalledWith({
       workspaceId: WORKSPACE_ID,
       conversationId: "conv-1",
+      contactInboxId: undefined,
       perPage: 20,
       cursor: undefined,
     })
     expect(result).toEqual({ data: [], pageCount: 1 })
+  })
+
+  test("forwards contactInboxId to narrow the list to one channel", async () => {
+    mocks.findByContactWithInboxes.mockResolvedValueOnce({ id: "conv-1" })
+    mocks.listMessages.mockResolvedValueOnce({ data: [], pageCount: 1 })
+
+    await procedure.handler?.({
+      context: { workspace: { id: WORKSPACE_ID } },
+      input: { identifier: "id:1", perPage: 20, contactInboxId: "ci-9" },
+    })
+
+    expect(mocks.listMessages).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: "conv-1",
+        contactInboxId: "ci-9",
+      }),
+    )
   })
 
   test("404s when the contact has no conversation", async () => {

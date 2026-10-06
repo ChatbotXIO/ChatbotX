@@ -9,6 +9,7 @@ export const disconnectClaudeAction = createDisconnectAction(
   integrationClaudeService,
   {
     name: "Claude",
+    provider: "claude",
     log: false,
     afterDisconnect: async (workspaceId) => {
       await aiIntegrationService.invalidateCache(

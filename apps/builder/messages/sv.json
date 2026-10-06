@@ -800,7 +800,8 @@
         "providerRejected": "Leverantören avvisade den här begäran.",
         "inProgress": "Anslutningen pågår redan.",
         "unknown": "Något gick fel.",
-        "followUpFailed": "Konfigurationen är inte klar – slutför den i kanalinställningarna."
+        "followUpFailed": "Konfigurationen är inte klar – slutför den i kanalinställningarna.",
+        "webhookSubscribeFailed": "Ansluten, men webhook-prenumerationen misslyckades – försök igen från anslutningsinställningarna."
       },
       "sessionError": {
         "sessionExpired": "Din session har gått ut. Anslut igen.",
@@ -4242,6 +4243,7 @@
     "cancelEdit": "Avbryt",
     "replaceAttachment": "Ersätt bilaga",
     "addAttachment": "Lägg till bilaga",
+    "reloadAttachment": "Ladda om bilaga",
     "changeDefault": "Ändra standard",
     "changeDefaultDescription": "Är du säker på att du vill ändra standardagenten för AI?",
     "changeHideState": "Ändra dölj-status",
@@ -4443,14 +4445,8 @@
     "reconnectDescription": "Återanslut alltid boten om din Messenger-bot inte svarar eller om du ser behörighetsfel i felloggen.",
     "selectPage": {
       "alreadyConnectedNote": "Den här sidan är redan ansluten",
-      "bmLookupFailedDescription": "Återanslut Messenger och bevilja åtkomst till Business Manager så att sidor som hanteras där kan visas.",
-      "loadFailed": "Det gick inte att läsa in dina Facebook-sidor",
-      "bmLookupFailedTitle": "Business Manager-sidor kan saknas",
-      "noConnectablePagesDescription": "Du är inte administratör för den här sidan",
-      "noConnectablePagesTitle": "Inga sidor tillgängliga att ansluta",
       "noPagesDescription": "Sidor i Business Manager kräver åtkomst till Business Manager under anslutningen. Återanslut Messenger och bevilja alla begärda behörigheter.",
       "noPagesTitle": "Inga Facebook-sidor hittades",
-      "notAdminNote": "Du är inte administratör för den här sidan",
       "tryAgain": "Försök återansluta"
     },
     "tabs": {

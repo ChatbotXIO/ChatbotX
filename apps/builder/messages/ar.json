@@ -839,7 +839,8 @@
         "providerRejected": "رفض المزوّد هذا الطلب.",
         "inProgress": "الاتصال قيد التقدم بالفعل.",
         "unknown": "حدث خطأ ما.",
-        "followUpFailed": "الإعداد غير مكتمل — أكمله من إعدادات القناة."
+        "followUpFailed": "الإعداد غير مكتمل — أكمله من إعدادات القناة.",
+        "webhookSubscribeFailed": "متصل، لكن فشل الاشتراك في webhook — أعد المحاولة من إعدادات الاتصال."
       },
       "sessionError": {
         "sessionExpired": "انتهت صلاحية جلستك. يرجى إعادة الاتصال.",
@@ -3444,6 +3445,7 @@
     "cancelEdit": "إلغاء",
     "replaceAttachment": "استبدال المرفق",
     "addAttachment": "إضافة مرفق",
+    "reloadAttachment": "إعادة تحميل المرفق",
     "failedToCopy": "تعذّر النسخ",
     "failedToPreviewImage": "تعذّرت معاينة الصورة",
     "loadingData": "جارٍ تحميل البيانات...",
@@ -3613,13 +3615,7 @@
     "selectPage": {
       "noPagesTitle": "لم يتم العثور على صفحات Facebook",
       "noPagesDescription": "تتطلب الصفحات الموجودة داخل مدير الأعمال منح صلاحية الوصول إليه أثناء الاتصال. أعد ربط Messenger وامنح جميع الأذونات المطلوبة.",
-      "noConnectablePagesTitle": "لا توجد صفحات متاحة للربط",
-      "noConnectablePagesDescription": "أنت لست مسؤولاً عن هذه الصفحة",
-      "bmLookupFailedTitle": "قد تكون بعض صفحات مدير الأعمال غير ظاهرة",
-      "bmLookupFailedDescription": "أعد ربط Messenger وامنح صلاحية الوصول إلى مدير الأعمال حتى يمكن عرض الصفحات المُدارة من خلاله.",
-      "loadFailed": "تعذّر تحميل صفحات فيسبوك الخاصة بك",
       "alreadyConnectedNote": "هذه الصفحة مرتبطة بالفعل",
-      "notAdminNote": "أنت لست مسؤولاً عن هذه الصفحة",
       "tryAgain": "محاولة إعادة الاتصال"
     },
     "title": "Facebook Messenger",

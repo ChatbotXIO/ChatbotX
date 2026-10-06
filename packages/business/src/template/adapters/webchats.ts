@@ -34,12 +34,15 @@ const isChannelLimitReached = (error: unknown): boolean =>
   error instanceof ChatbotXException && error.code === "channelLimitReached"
 
 /**
- * Webchats provision a brand-new Inbox per row, which consumes channel
- * quota (`inboxService.create` -> `quotaEnforcementService.tryConsume`).
- * Unlike every other adapter, a single quota-exhausted webchat must NOT
- * abort the whole install — this is the one place a per-resource DB error
- * is caught and downgraded to a warning rather than left to propagate and
- * roll back the install transaction. Any other error still propagates.
+ * Webchats provision a brand-new Inbox + Connection row per row, gated by
+ * `integrationWebchatService.create`'s upfront
+ * `quotaEnforcementService.isAtLimit` channel-quota check, which throws
+ * `channelLimitReachedException` before inserting anything once the owner's
+ * channel quota is exhausted. Unlike every other adapter, a single
+ * quota-exhausted webchat must NOT abort the whole install — this is the one
+ * place a per-resource DB error is caught and downgraded to a warning rather
+ * than left to propagate and roll back the install transaction. Any other
+ * error still propagates.
  *
  * `welcomeFlowId` is always deferred (webchats insert before flows in Phase
  * 1) and patched once `idMaps.flow` is complete.

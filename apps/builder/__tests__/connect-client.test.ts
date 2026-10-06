@@ -67,7 +67,7 @@ const unknownFailure = {
 function connectMessenger() {
   return connectViaApi({
     route: messengerRoute,
-    body: { pageId: "page-1" },
+    body: { sessionId: "session-1", pageId: "page-1" },
     parse,
     item,
   })
@@ -129,7 +129,10 @@ describe("connectViaApi", () => {
     await expect(connectMessenger()).resolves.toEqual(connected)
 
     expect(connectMessengerPageAPI).toHaveBeenCalledTimes(1)
-    expect(connectMessengerPageAPI).toHaveBeenCalledWith({ pageId: "page-1" })
+    expect(connectMessengerPageAPI).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      pageId: "page-1",
+    })
     // No client-side timeout option is passed: `useConnectBatch`'s own
     // CONNECT_REQUEST_TIMEOUT_MS is the single timeout authority.
     expect(connectMessengerPageAPI.mock.calls[0]).toHaveLength(1)
@@ -192,10 +195,14 @@ describe("the connect routes call their own channel's procedure", () => {
     connectMessengerPageAPI.mockResolvedValue(connected)
 
     await CONNECT_CHANNEL_REGISTRY.messenger.connectRoute.call({
+      sessionId: "session-1",
       pageId: "page-1",
     })
 
-    expect(connectMessengerPageAPI).toHaveBeenCalledWith({ pageId: "page-1" })
+    expect(connectMessengerPageAPI).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      pageId: "page-1",
+    })
     expect(connectInstagramFacebookAccountAPI).not.toHaveBeenCalled()
   })
 
@@ -203,10 +210,12 @@ describe("the connect routes call their own channel's procedure", () => {
     connectInstagramFacebookAccountAPI.mockResolvedValue(connected)
 
     await CONNECT_CHANNEL_REGISTRY.instagram.connectRoute.call({
+      sessionId: "session-1",
       igId: "ig-1",
     })
 
     expect(connectInstagramFacebookAccountAPI).toHaveBeenCalledWith({
+      sessionId: "session-1",
       igId: "ig-1",
     })
     // The other Instagram login has its own procedure — never this one.
@@ -216,9 +225,15 @@ describe("the connect routes call their own channel's procedure", () => {
   test("Instagram direct login", async () => {
     connectInstagramAccountAPI.mockResolvedValue(connected)
 
-    await INSTAGRAM_DIRECT_CONNECT_ROUTE.call({ igId: "ig-1" })
+    await INSTAGRAM_DIRECT_CONNECT_ROUTE.call({
+      sessionId: "session-1",
+      igId: "ig-1",
+    })
 
-    expect(connectInstagramAccountAPI).toHaveBeenCalledWith({ igId: "ig-1" })
+    expect(connectInstagramAccountAPI).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      igId: "ig-1",
+    })
     expect(connectInstagramFacebookAccountAPI).not.toHaveBeenCalled()
   })
 

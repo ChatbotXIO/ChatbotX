@@ -2,12 +2,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => {
-  const updateWhere = vi.fn(async () => undefined)
+  const updateReturning = vi.fn(async () => [{ openId: "open-1" }])
+  const updateWhere = vi.fn(() => ({ returning: updateReturning }))
   const updateSet = vi.fn(() => ({ where: updateWhere }))
   return {
     findOrFail: vi.fn(),
     update: vi.fn(() => ({ set: updateSet })),
     updateSet,
+    updateReturning,
+    connectionFindByProviderSourceId: vi.fn(async () => undefined),
     updateTiktokDirectReplyStatus: vi.fn(),
     getTiktokDirectReplyStatus: vi.fn(),
     auditRecord: vi.fn(),
@@ -20,6 +23,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn(),
   findOrFail: mocks.findOrFail,
   inArray: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  connectionRepository: { findByProviderSourceId: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -36,15 +43,27 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mocks.auditRecord,
 }))
 
-vi.mock("../src/inbox/connect-channel", () => ({
-  connectChannelIntegration: vi.fn(),
+vi.mock("../src/connection", () => ({
+  CONNECTION_STORE_BINDINGS: { tiktok: { duplicateConstraint: undefined } },
+  recordRefreshedAuth: vi.fn(),
+  upsertConnectionRow: vi.fn(),
+  withQuotaCompensation: vi.fn(
+    async (_input: unknown, operation: () => Promise<unknown>) =>
+      await operation(),
+  ),
 }))
 
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))
 
-// Pulled in by `connect`/`disconnect` (connection state tracking); unused here.
+// Pulled in by `connect`/`disconnect` (connection state tracking);
+// `findByProviderSourceId` is also what `updateAuth` uses to decide whether
+// to report a recovered connection — defaults to "no Connection row" so
+// that check no-ops here, same as the other engine methods this stub never
+// exercises.
 vi.mock("../src/connection/state-service", () => ({
-  connectionStateService: {},
+  connectionStateService: {
+    findByProviderSourceId: mocks.connectionFindByProviderSourceId,
+  },
 }))
 
 const { tiktokIntegrationService } = await import(

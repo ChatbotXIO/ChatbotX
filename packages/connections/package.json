@@ -25,6 +25,7 @@
     "@chatbotx.io/integration-sendgrid": "workspace:*",
     "@chatbotx.io/integration-smtp": "workspace:*",
     "@chatbotx.io/integration-telegram": "workspace:*",
+    "@chatbotx.io/integration-threads": "workspace:*",
     "@chatbotx.io/integration-tiktok": "workspace:*",
     "@chatbotx.io/integration-webchat": "workspace:*",
     "@chatbotx.io/integration-whatsapp": "workspace:*",
@@ -39,15 +40,18 @@
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
+    "dotenv-cli": "^11.0.0",
     "typescript": "^5",
     "vitest": "^4.1.0"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./messenger-teardown": "./src/messenger-teardown.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
+    "test:db": "dotenv -e ../../.env -- vitest run --dir __tests__/integration",
     "test:watch": "vitest"
   }
 }

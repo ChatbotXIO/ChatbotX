@@ -30,7 +30,7 @@ export const deleteSequenceStepAction = workspaceActionClient
       const { stepId, sequenceId } = parsedInput
 
       await sequenceService.assertOwned({ workspaceId, sequenceId })
-      await sequenceService.deleteStep({ workspaceId, stepId })
+      await sequenceService.deleteStep({ workspaceId, stepId, sequenceId })
 
       return { success: true }
     },

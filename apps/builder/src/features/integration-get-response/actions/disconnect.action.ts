@@ -5,5 +5,5 @@ import { createDisconnectAction } from "@/lib/integration-actions"
 
 export const disconnectGetResponseAction = createDisconnectAction(
   integrationGetResponseService,
-  { name: "GetResponse" },
+  { name: "GetResponse", provider: "getResponse" },
 )

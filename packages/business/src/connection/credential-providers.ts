@@ -160,8 +160,32 @@ export const openaiCompatibleConnectionProvider: ConnectionProvider<
     }
   },
   verify: async ({ auth }) => {
+    // Re-run the same SSRF guard `fromCredentials` used at connect time:
+    // `auth.baseURL` is attacker-influenced and this runs on every health
+    // check/reconnect, so a host that later re-resolves to an internal/
+    // metadata address (DNS rebind, infra change) must be blocked again
+    // here rather than trusting the one-time validation from connect.
+    let validatedBaseUrl: string
+    try {
+      validatedBaseUrl = await validateOpenaiCompatibleBaseUrlForEnvironment(
+        auth.baseURL,
+      )
+    } catch (err) {
+      logger.warn(
+        { err: toLogSafeError(err) },
+        "OpenAI-compatible endpoint verification blocked by SSRF guard",
+      )
+      return {
+        ok: false,
+        revoked: false,
+        error:
+          err instanceof Error
+            ? err.message
+            : "OpenAI-compatible base URL is not allowed.",
+      }
+    }
     const health = await verifyOpenaiCompatibleEndpoint(
-      auth.baseURL,
+      validatedBaseUrl,
       auth.secretText,
     )
     if (health.ok) {

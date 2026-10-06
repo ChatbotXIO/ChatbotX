@@ -15,7 +15,7 @@ import {
   type ConnectionStatus,
 } from "../../partials/connection"
 import type { IntegrationType } from "../../partials/integration"
-import { connectionModel } from "../../schema"
+import { connectionModel, workspaceModel } from "../../schema"
 import type { ConnectionModel } from "../../types"
 import { getPaginationWithDefaults } from "../../utils"
 
@@ -141,24 +141,6 @@ export const connectionRepository = {
     })
   },
 
-  /** Locks one connection row; callers must pass an open transaction. */
-  async findByIdForUpdate(
-    input: { id: string; workspaceId: string },
-    tx: DatabaseClient,
-  ): Promise<ConnectionModel | undefined> {
-    const [row] = await tx
-      .select()
-      .from(connectionModel)
-      .where(
-        and(
-          eq(connectionModel.id, input.id),
-          eq(connectionModel.workspaceId, input.workspaceId),
-        ),
-      )
-      .for("update")
-    return row
-  },
-
   /** Locks one connection row by globally-unique id; callers must pass an open transaction. */
   async findByIdForUpdateById(
     input: { id: string },
@@ -234,5 +216,31 @@ export const connectionRepository = {
         ),
       )
     return rows.map((row) => row.provider)
+  },
+
+  /**
+   * Every `paused` Connection across the owner's workspaces — resolves
+   * workspace ownership via a join since `Connection` only carries
+   * `workspaceId`, not `ownerId`. Backs `tenantService.reactivate`'s
+   * per-connection `teardown.resume` sweep.
+   */
+  async listPausedByOwner(
+    input: { ownerId: string },
+    tx: DatabaseClient = db,
+  ): Promise<ConnectionModel[]> {
+    const rows = await tx
+      .select({ connection: connectionModel })
+      .from(connectionModel)
+      .innerJoin(
+        workspaceModel,
+        eq(connectionModel.workspaceId, workspaceModel.id),
+      )
+      .where(
+        and(
+          eq(workspaceModel.ownerId, input.ownerId),
+          eq(connectionModel.status, "paused"),
+        ),
+      )
+    return rows.map((row) => row.connection)
   },
 }

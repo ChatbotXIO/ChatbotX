@@ -117,6 +117,29 @@ describe("GET /v1/ref-links", () => {
       page: 1,
       perPage: 50,
       workspaceId: "workspace-1",
+      sort: [{ id: "createdAt", desc: true }],
+    })
+  })
+
+  test("forwards keyword and sort", async () => {
+    reflinkService.list.mockResolvedValueOnce({ data: [], pageCount: 1 })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        page: 1,
+        perPage: 50,
+        keyword: "promo",
+        sort: [{ id: "name", desc: false }],
+      },
+    })
+
+    expect(reflinkService.list).toHaveBeenCalledWith({
+      page: 1,
+      perPage: 50,
+      keyword: "promo",
+      workspaceId: "workspace-1",
+      sort: [{ id: "name", desc: false }],
     })
   })
 })

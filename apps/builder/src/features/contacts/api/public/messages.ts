@@ -33,7 +33,7 @@ export const contactsMessagesPublicRouter = {
       path: "/v1/contacts/{identifier}/messages",
       summary: "Send message to contact",
       description:
-        "Delivers a text or media message to a contact's conversation, creating one when needed. Use `contacts.get` to confirm the recipient first, and `contacts.listMessages` to inspect the conversation afterward.",
+        "Delivers a text or media message in the contact's existing conversation (404 when the contact has none, e.g. it was never reached on a channel). Use `contacts.get` to confirm the recipient first, and `contacts.listMessages` to inspect the conversation afterward.",
       successStatus: 204,
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
@@ -89,6 +89,11 @@ export const contactsMessagesPublicRouter = {
           .describe(
             "Opaque pagination cursor from a previous response. Omit for the first page.",
           ),
+        contactInboxId: zodBigintAsString()
+          .optional()
+          .describe(
+            "Only messages of this contact inbox (one channel of the contact). Get it from `contactInboxes` in `contacts.get`; an id of another contact returns no messages.",
+          ),
       }),
     )
     .output(listMessagesResponse)
@@ -108,6 +113,7 @@ export const contactsMessagesPublicRouter = {
       return await listMessages({
         workspaceId: context.workspace.id,
         conversationId: conversation.id,
+        contactInboxId: input.contactInboxId,
         perPage: input.perPage,
         cursor: input.cursor,
       })
@@ -155,7 +161,7 @@ export const contactsMessagesPublicRouter = {
       path: "/v1/contacts/{identifier}/auto-replies",
       summary: "Trigger auto reply for contact",
       description:
-        "Simulates the contact sending `keyword` and delivers whichever automated response is configured to match it, as if it had arrived inbound. Use `contacts.sendMessage` to send arbitrary text instead.",
+        "Finds the inbound automated response whose keywords include `keyword` exactly and sends its flow or text to the contact's conversation. No inbound message is recorded and no other automation runs; 404 when no response matches. Use `contacts.sendMessage` to send arbitrary text instead.",
       successStatus: 204,
       tags: ["Contacts"],
     })
@@ -213,7 +219,7 @@ export const contactsMessagesPublicRouter = {
       path: "/v1/contacts/{identifier}/flows",
       summary: "Send flow to contact",
       description:
-        "Starts a flow for a resolved contact and delivers its first message on an existing or new conversation. Call `flows.list` to find the flow first, or use `contacts.sendMessage` for one message.",
+        "Starts a flow for a resolved contact on the contact's existing conversation (the given `inboxId`, or the conversation's inbox) and returns as soon as it is queued. Returns 404 when the contact has no conversation yet or the flow is not in this workspace. Call `flows.list` to find the flow first, or use `contacts.sendMessage` for one message.",
       successStatus: 204,
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),

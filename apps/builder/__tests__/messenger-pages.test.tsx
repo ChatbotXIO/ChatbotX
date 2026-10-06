@@ -1,8 +1,8 @@
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import type { ConnectPickerItem } from "@/features/channel-connect/lib/picker-items"
 import { CONNECT_CHANNEL_REGISTRY } from "@/features/channel-connect/lib/registry"
-import type { MessengerPickerItem } from "@/features/integration-messenger/components/messenger-pages"
 
 /** Echoes the key back so assertions never depend on the English copy. */
 vi.mock("next-intl", () => ({
@@ -68,42 +68,22 @@ const { MessengerPages } = await import(
   "@/features/integration-messenger/components/messenger-pages"
 )
 
-const selectableItem: MessengerPickerItem = {
+const selectableItem: ConnectPickerItem = {
   id: "page-selectable",
   name: "Selectable Page",
   secondary: "page-selectable",
-  isConnectable: true,
-  isAlreadyConnected: false,
 }
 
-const notAdminItem: MessengerPickerItem = {
-  id: "page-not-admin",
-  name: "Not Admin Page",
-  secondary: "page-not-admin",
-  disabled: true,
-  disabledReason: "messenger.selectPage.notAdminNote",
-  isConnectable: false,
-  isAlreadyConnected: false,
-}
-
-const connectedItem: MessengerPickerItem = {
-  id: "page-connected",
-  name: "Connected Page",
-  secondary: "page-connected",
+// A generic disabled row — Messenger's `listCandidates` drops non-admin
+// pages before they ever become a session target, so this stands in for any
+// disabled row (e.g. already connected elsewhere), not a not-admin-specific
+// case the UI no longer renders.
+const disabledItem: ConnectPickerItem = {
+  id: "page-disabled",
+  name: "Disabled Page",
+  secondary: "page-disabled",
   disabled: true,
   disabledReason: "messenger.selectPage.alreadyConnectedNote",
-  isConnectable: false,
-  isAlreadyConnected: true,
-}
-
-const connectableButConnectedItem: MessengerPickerItem = {
-  id: "page-connectable-but-connected",
-  name: "Connectable But Connected Page",
-  secondary: "page-connectable-but-connected",
-  disabled: true,
-  disabledReason: "messenger.selectPage.alreadyConnectedNote",
-  isConnectable: true,
-  isAlreadyConnected: true,
 }
 
 describe("MessengerPages", () => {
@@ -125,9 +105,15 @@ describe("MessengerPages", () => {
     container.remove()
   })
 
-  function renderPages(items: MessengerPickerItem[]) {
+  function renderPages(items: ConnectPickerItem[]) {
     act(() => {
-      root.render(<MessengerPages items={items} workspaceId="ws-1" />)
+      root.render(
+        <MessengerPages
+          items={items}
+          sessionId="session-1"
+          workspaceId="ws-1"
+        />,
+      )
     })
   }
 
@@ -143,8 +129,8 @@ describe("MessengerPages", () => {
       (link) => link.textContent === "messenger.selectPage.tryAgain",
     )
 
-  test("renders a disabled checkbox with the notAdminNote description for a non-admin page", () => {
-    renderPages([selectableItem, notAdminItem])
+  test("renders a disabled checkbox for a disabled row alongside an enabled one", () => {
+    renderPages([selectableItem, disabledItem])
 
     // First checkbox is the shared select-all header; row checkboxes follow.
     const rows = checkboxes().slice(1)
@@ -154,21 +140,8 @@ describe("MessengerPages", () => {
       element?.getAttribute("aria-disabled") === "true"
     expect(isDisabled(rows[0])).toBe(false)
     expect(isDisabled(rows[1])).toBe(true)
-    expect(container.textContent).toContain("messenger.selectPage.notAdminNote")
-  })
-
-  test("shows the no-connectable-pages warning when nothing is selectable due to a not-admin page", () => {
-    renderPages([notAdminItem, connectedItem])
-
     expect(container.textContent).toContain(
-      "messenger.selectPage.noConnectablePagesTitle",
-    )
-    expect(container.textContent).toContain(
-      "messenger.selectPage.noConnectablePagesDescription",
-    )
-    const retryLink = tryAgainLink()
-    expect(retryLink?.getAttribute("href")).toBe(
-      "/channels/create?workspaceId=ws-1",
+      "messenger.selectPage.alreadyConnectedNote",
     )
   })
 
@@ -181,22 +154,6 @@ describe("MessengerPages", () => {
     )
   })
 
-  test("does not show the not-admin warning when every page is merely already connected", () => {
-    renderPages([connectedItem, connectableButConnectedItem])
-
-    expect(container.textContent).not.toContain(
-      "messenger.selectPage.noConnectablePagesTitle",
-    )
-  })
-
-  test("does not show the no-connectable-pages warning when at least one page is selectable", () => {
-    renderPages([selectableItem, notAdminItem])
-
-    expect(container.textContent).not.toContain(
-      "messenger.selectPage.noConnectablePagesTitle",
-    )
-  })
-
   test("renders the no-pages alert with no checkboxes when there are zero items", () => {
     renderPages([])
 
@@ -204,7 +161,7 @@ describe("MessengerPages", () => {
     expect(checkboxes()).toHaveLength(0)
   })
 
-  test("submitting a single selected item posts only { pageId } to the messenger connect route — no token, no workspaceId", async () => {
+  test("submitting a single selected item posts only { sessionId, pageId } to the messenger connect route — no token, no workspaceId", async () => {
     mockConnectViaApi.mockResolvedValue({
       kind: "outcome",
       outcome: {
@@ -214,7 +171,7 @@ describe("MessengerPages", () => {
         coexistEligible: false,
       },
     })
-    renderPages([selectableItem, notAdminItem])
+    renderPages([selectableItem, disabledItem])
 
     const [, firstRow] = checkboxes()
     await act(async () => {
@@ -230,16 +187,16 @@ describe("MessengerPages", () => {
     })
 
     expect(mockConnectViaApi).toHaveBeenCalledTimes(1)
-    // Ids only, and the channel's own route — no token, no workspaceId.
+    // Session and page IDs only, and the channel's own route — no token or workspaceId.
     expect(mockConnectViaApi.mock.calls[0]?.[0]).toMatchObject({
       // The registry entry itself — it now carries the typed oRPC procedure,
       // so identity is what pins the channel, not a URL string.
       route: CONNECT_CHANNEL_REGISTRY.messenger.connectRoute,
-      body: { pageId: "page-selectable" },
+      body: { sessionId: "session-1", pageId: "page-selectable" },
     })
     expect(
       Object.keys(mockConnectViaApi.mock.calls[0]?.[0]?.body ?? {}),
-    ).toEqual(["pageId"])
+    ).toEqual(["sessionId", "pageId"])
 
     await act(async () => {
       await Promise.resolve()
@@ -249,8 +206,8 @@ describe("MessengerPages", () => {
     )
   })
 
-  test("a not-admin or already-connected page renders no coexist switch, only the selectable one does", () => {
-    renderPages([selectableItem, notAdminItem, connectedItem])
+  test("a disabled page renders no coexist switch, only the selectable one does", () => {
+    renderPages([selectableItem, disabledItem])
 
     const switches = Array.from(
       container.querySelectorAll<HTMLElement>('[role="switch"]'),
@@ -273,7 +230,7 @@ describe("MessengerPages", () => {
       },
     })
     mockSetCoexist.mockResolvedValue({ ok: true })
-    renderPages([selectableItem, notAdminItem])
+    renderPages([selectableItem, disabledItem])
 
     const [, firstRow] = checkboxes()
     await act(async () => {
@@ -321,7 +278,7 @@ describe("MessengerPages", () => {
         integrationId: "int-1",
       },
     })
-    renderPages([selectableItem, notAdminItem])
+    renderPages([selectableItem, disabledItem])
 
     const [, firstRow] = checkboxes()
     await act(async () => {
@@ -350,7 +307,7 @@ describe("MessengerPages", () => {
       kind: "sessionError",
       code: "sessionExpired",
     })
-    renderPages([selectableItem, notAdminItem])
+    renderPages([selectableItem, disabledItem])
 
     const [, firstRow] = checkboxes()
     await act(async () => {
@@ -379,12 +336,12 @@ describe("MessengerPages", () => {
   })
 
   test("submitting 2+ selected items opens the batch dialog with exactly the selected items (as a set, no duplicates)", async () => {
-    const secondSelectable: MessengerPickerItem = {
+    const secondSelectable: ConnectPickerItem = {
       ...selectableItem,
       id: "page-selectable-2",
       name: "Selectable Page 2",
     }
-    renderPages([selectableItem, secondSelectable, notAdminItem])
+    renderPages([selectableItem, secondSelectable, disabledItem])
 
     const [, first, second] = checkboxes()
     await act(async () => {
@@ -403,7 +360,7 @@ describe("MessengerPages", () => {
     expect(mockConnectViaApi).not.toHaveBeenCalled()
     expect(mockConnectManyDialog).toHaveBeenCalled()
     const dialogProps = mockConnectManyDialog.mock.calls.at(-1)?.[0] as {
-      items: MessengerPickerItem[]
+      items: ConnectPickerItem[]
     }
     expect(dialogProps.items.map((item) => item.id)).toEqual([
       "page-selectable",

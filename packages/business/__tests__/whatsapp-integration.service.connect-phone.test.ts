@@ -4,15 +4,22 @@ const mocks = vi.hoisted(() => ({
   auditChannelConnected: vi.fn().mockResolvedValue(undefined),
   bindSignupSessionWorkspace: vi.fn(),
   claimSignupSessionPhoneNumber: vi.fn(),
-  connectChannelIntegration: vi.fn(),
   createId: vi.fn(() => "generated-id"),
   createRun: vi.fn(),
   createWorkspace: vi.fn(),
   dispatchAuditRecordSafely: vi.fn().mockResolvedValue(undefined),
+  findByInboxIdForWorkspace: vi.fn(),
+  findByProviderSourceId: vi.fn(),
+  inboxCreate: vi.fn(),
+  isConnected: vi.fn(),
   markFailed: vi.fn(),
   runConnectTransaction: vi.fn(),
   transaction: vi.fn(),
-  upsertByInbox: vi.fn(),
+  upsertConnectionRow: vi.fn(),
+  withQuotaCompensation: vi.fn(
+    async (_input: unknown, operation: () => Promise<unknown>) =>
+      await operation(),
+  ),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -20,8 +27,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  connectionRepository: {
+    findByProviderSourceId: mocks.findByProviderSourceId,
+  },
   integrationWhatsappRepository: {
-    upsertByInbox: mocks.upsertByInbox,
+    findByInboxIdForWorkspace: mocks.findByInboxIdForWorkspace,
   },
   whatsappSignupSessionRepository: {
     bindSignupSessionWorkspace: mocks.bindSignupSessionWorkspace,
@@ -40,13 +50,28 @@ vi.mock("../src/audit/dispatcher", () => ({
 
 vi.mock("../src/inbox/connect-channel", () => ({
   auditChannelConnected: mocks.auditChannelConnected,
-  connectChannelIntegration: mocks.connectChannelIntegration,
   runConnectTransaction: mocks.runConnectTransaction,
+}))
+
+vi.mock("../src/inbox/service", () => ({
+  inboxService: { create: mocks.inboxCreate, isConnected: mocks.isConnected },
+}))
+
+vi.mock("../src/connection", () => ({
+  CONNECTION_STORE_BINDINGS: { whatsapp: { duplicateConstraint: undefined } },
+  upsertConnectionRow: mocks.upsertConnectionRow,
+  withQuotaCompensation: mocks.withQuotaCompensation,
 }))
 
 vi.mock("../src/coexist/service", () => ({
   coexistService: { createRun: mocks.createRun, markFailed: mocks.markFailed },
 }))
+
+// `await import` (not a static import) is required here: the modules above
+// must register with `vi.mock` before this file's own imports resolve, and
+// vitest only hoists `vi.mock` calls above STATIC imports, not above a
+// `const x = await import(...)` — matches every other rewritten
+// `*.service.test.ts` in this package (e.g. `integration-api.service.test.ts`).
 
 const { integrationWhatsappService } = await import(
   "../src/integration-whatsapp/service"
@@ -54,22 +79,6 @@ const { integrationWhatsappService } = await import(
 const { workspaceService } = await import("../src/workspace/service")
 
 const tx = { tx: true }
-
-function mockConnectChannelIntegration(wasCreated: boolean) {
-  mocks.connectChannelIntegration.mockImplementation(
-    async ({
-      insertIntegration,
-    }: {
-      insertIntegration: (
-        inboxId: string,
-        wasCreated: boolean,
-      ) => Promise<unknown>
-    }) => {
-      const integration = await insertIntegration("inbox-1", wasCreated)
-      return { inbox: { id: "inbox-1" }, wasCreated, integration }
-    },
-  )
-}
 
 const basePhoneNumberInput = {
   actorUserId: "user-1",
@@ -87,16 +96,14 @@ describe("integrationWhatsappService.connectPhoneNumber", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.dispatchAuditRecordSafely.mockResolvedValue(undefined)
+    mocks.withQuotaCompensation.mockImplementation(
+      async (_input: unknown, operation: () => Promise<unknown>) =>
+        await operation(),
+    )
     mocks.transaction.mockImplementation(
       async (callback: (client: unknown) => Promise<unknown>) =>
         await callback(tx),
     )
-    mocks.upsertByInbox.mockResolvedValue({
-      id: "integration-1",
-      workspaceId: "workspace-1",
-      phoneNumberId: "pn-1",
-    })
-    mockConnectChannelIntegration(true)
     // Pass-through — the constraint→channelDuplicatedException mapping is
     // runConnectTransaction's own job, covered by connect-channel.test.ts.
     // `auditChannelConnected` keeps its default resolved-undefined mock —
@@ -107,6 +114,19 @@ describe("integrationWhatsappService.connectPhoneNumber", () => {
       (_channel: string, body: (tx: unknown) => Promise<unknown>) =>
         mocks.transaction(body),
     )
+    mocks.isConnected.mockResolvedValue(false)
+    // No prior `Connection` row — a fresh connect (`wasCreated: true`).
+    mocks.findByProviderSourceId.mockResolvedValue(undefined)
+    mocks.inboxCreate.mockResolvedValue({
+      inbox: { id: "inbox-1" },
+      wasCreated: true,
+    })
+    mocks.upsertConnectionRow.mockResolvedValue({ id: "conn-1" })
+    mocks.findByInboxIdForWorkspace.mockResolvedValue({
+      id: "integration-1",
+      workspaceId: "workspace-1",
+      phoneNumberId: "pn-1",
+    })
   })
 
   test("claims the phone number from the signup session inside the transaction", async () => {
@@ -145,7 +165,7 @@ describe("integrationWhatsappService.connectPhoneNumber", () => {
       }),
     ).rejects.toMatchObject({ code: "signupSessionExpired" })
 
-    expect(mocks.upsertByInbox).not.toHaveBeenCalled()
+    expect(mocks.upsertConnectionRow).not.toHaveBeenCalled()
   })
 
   test("a failure inside the transaction after a successful claim propagates, and a retry claims again and succeeds", async () => {
@@ -158,7 +178,7 @@ describe("integrationWhatsappService.connectPhoneNumber", () => {
       id: "session-1",
       workspaceId: "workspace-1",
     })
-    mocks.upsertByInbox.mockRejectedValueOnce(new Error("db exploded"))
+    mocks.upsertConnectionRow.mockRejectedValueOnce(new Error("db exploded"))
     mocks.transaction.mockImplementationOnce(
       async (callback: (client: unknown) => Promise<unknown>) =>
         await callback(tx),
@@ -185,11 +205,7 @@ describe("integrationWhatsappService.connectPhoneNumber", () => {
       id: "session-1",
       workspaceId: "workspace-1",
     })
-    mocks.upsertByInbox.mockResolvedValueOnce({
-      id: "integration-1",
-      workspaceId: "workspace-1",
-      phoneNumberId: "pn-1",
-    })
+    mocks.upsertConnectionRow.mockResolvedValueOnce({ id: "conn-1" })
     mocks.transaction.mockImplementationOnce(
       async (callback: (client: unknown) => Promise<unknown>) =>
         await callback(tx),
@@ -290,7 +306,9 @@ describe("integrationWhatsappService.connectPhoneNumber", () => {
   })
 
   test("dispatches a connect audit only when wasCreated is true", async () => {
-    mockConnectChannelIntegration(false)
+    // A `Connection` row already exists for this (workspace, phoneNumberId)
+    // — a revive, not a first-ever connect.
+    mocks.findByProviderSourceId.mockResolvedValue({ id: "conn-1" })
 
     await integrationWhatsappService.connectPhoneNumber({
       ...basePhoneNumberInput,
@@ -359,23 +377,64 @@ describe("integrationWhatsappService.connectPhoneNumber", () => {
     ).rejects.toThrow("connection reset")
   })
 
-  test("upserts the integration row by inboxId", async () => {
+  test("raises a channelDuplicated error when the number is already actively connected to another workspace, without attempting an insert", async () => {
+    mocks.isConnected.mockResolvedValue(true)
+
+    await expect(
+      integrationWhatsappService.connectPhoneNumber({
+        ...basePhoneNumberInput,
+        workspaceId: "workspace-1",
+      }),
+    ).rejects.toMatchObject({ code: "channelDuplicated" })
+
+    expect(mocks.upsertConnectionRow).not.toHaveBeenCalled()
+  })
+
+  test("upserts the connection row by inboxId, setting a fresh satellite id only on a first-ever connect", async () => {
+    // First call is the pre-insert `satelliteExists` check — no row yet.
+    // The default mock (truthy) takes over for the post-upsert final fetch.
+    mocks.findByInboxIdForWorkspace.mockResolvedValueOnce(null)
+
     await integrationWhatsappService.connectPhoneNumber({
       ...basePhoneNumberInput,
       workspaceId: "workspace-1",
     })
 
-    expect(mocks.upsertByInbox).toHaveBeenCalledWith(
+    expect(mocks.upsertConnectionRow).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: "integration-1",
         workspaceId: "workspace-1",
+        provider: "whatsapp",
+        kind: "channel",
+        descriptor: { sourceId: "pn-1", displayName: "Acme" },
+        extraConfig: expect.objectContaining({
+          wabaId: "waba-1",
+          businessId: "business-1",
+          displayPhoneNumber: "+1 555",
+          isCoexist: false,
+          platformType: "",
+          id: "integration-1",
+        }),
+        existing: undefined,
+        ownerId: "owner-1",
+        actorUserId: "user-1",
         inboxId: "inbox-1",
-        phoneNumberId: "pn-1",
-        wabaId: "waba-1",
-        businessId: "business-1",
-        displayPhoneNumber: "+1 555",
       }),
-      tx,
+    )
+  })
+
+  test("omits the satellite id from extraConfig on a revive, so the existing row's PK is never touched", async () => {
+    mocks.findByProviderSourceId.mockResolvedValue({ id: "conn-1" })
+
+    await integrationWhatsappService.connectPhoneNumber({
+      ...basePhoneNumberInput,
+      workspaceId: "workspace-1",
+    })
+
+    expect(mocks.upsertConnectionRow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        existing: { id: "conn-1" },
+        extraConfig: expect.not.objectContaining({ id: expect.anything() }),
+      }),
     )
   })
 })

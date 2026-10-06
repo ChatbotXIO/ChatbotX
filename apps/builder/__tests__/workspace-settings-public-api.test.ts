@@ -89,6 +89,11 @@ const row = {
   smartResponseDelaySeconds: 10,
   capiLimitedDataUse: false,
   logo: null,
+  targetCountry: "VN",
+  language: "vi",
+  timezone: "Asia/Ho_Chi_Minh",
+  brandColor: "#016DFF",
+  developmentMode: false,
 }
 
 describe("/v1/workspace/settings", () => {
@@ -108,6 +113,11 @@ describe("/v1/workspace/settings", () => {
       smartResponseDelaySeconds: 10,
       capiLimitedDataUse: false,
       logo: null,
+      targetCountry: "VN",
+      language: "vi",
+      timezone: "Asia/Ho_Chi_Minh",
+      brandColor: "#016DFF",
+      developmentMode: false,
     })
   })
 
@@ -163,5 +173,23 @@ describe("/v1/workspace/settings", () => {
     expect(
       schema?.safeParse({ logo: "https://cdn.example.com/l.png" }).success,
     ).toBe(true)
+  })
+
+  test("the request accepts only the builder's country, language and timezone values", () => {
+    const schema = find("PATCH")?.schema
+    expect(
+      schema?.safeParse({
+        targetCountry: "VN",
+        language: "vi",
+        timezone: "Asia/Ho_Chi_Minh",
+        brandColor: "#112233",
+        developmentMode: true,
+      }).success,
+    ).toBe(true)
+    expect(schema?.safeParse({ targetCountry: "unknown" }).success).toBe(true)
+    expect(schema?.safeParse({ targetCountry: "XX" }).success).toBe(false)
+    expect(schema?.safeParse({ timezone: "Mars/Base" }).success).toBe(false)
+    expect(schema?.safeParse({ language: "xx" }).success).toBe(false)
+    expect(schema?.safeParse({ brandColor: "red" }).success).toBe(false)
   })
 })

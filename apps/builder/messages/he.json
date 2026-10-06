@@ -1331,7 +1331,8 @@
         "providerRejected": "הספק דחה את הבקשה הזו.",
         "inProgress": "חיבור כבר מתבצע.",
         "unknown": "משהו השתבש.",
-        "followUpFailed": "ההגדרה לא הושלמה — סיים אותה מהגדרות הערוץ."
+        "followUpFailed": "ההגדרה לא הושלמה — סיים אותה מהגדרות הערוץ.",
+        "webhookSubscribeFailed": "מחובר, אך ההרשמה ל-webhook נכשלה — נסה שוב מהגדרות החיבור."
       },
       "sessionError": {
         "sessionExpired": "פג תוקף ההפעלה שלך. יש להתחבר שוב.",
@@ -1457,6 +1458,7 @@
     "cancelEdit": "ביטול",
     "replaceAttachment": "החלף קובץ מצורף",
     "addAttachment": "הוסף קובץ מצורף",
+    "reloadAttachment": "טען מחדש את הקובץ המצורף",
     "failedToCopy": "ההעתקה נכשלה",
     "failedToPreviewImage": "התצוגה המקדימה של התמונה נכשלה",
     "loadingData": "הנתונים נטענים...",
@@ -1600,13 +1602,7 @@
     "selectPage": {
       "noPagesTitle": "לא נמצאו דפי Facebook",
       "noPagesDescription": "דפים בתוך Business Manager דורשים גישה ל-Business Manager במהלך החיבור. חברו מחדש את Messenger והעניקו את כל ההרשאות המבוקשות.",
-      "noConnectablePagesTitle": "אין דפים זמינים לחיבור",
-      "noConnectablePagesDescription": "אינך מנהל של דף זה",
-      "bmLookupFailedTitle": "ייתכן שחסרים דפי Business Manager",
-      "bmLookupFailedDescription": "חברו מחדש את Messenger והעניקו גישה ל-Business Manager כדי שניתן יהיה להציג דפים המנוהלים דרכו.",
-      "loadFailed": "לא ניתן לטעון את דפי הפייסבוק שלך",
       "alreadyConnectedNote": "דף זה כבר מחובר",
-      "notAdminNote": "אינך מנהל של דף זה",
       "tryAgain": "ניסיון חיבור מחדש"
     },
     "title": "Facebook Messenger",

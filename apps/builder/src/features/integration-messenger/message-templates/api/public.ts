@@ -43,6 +43,12 @@ const channelIdParam = z.object({
 
 const createdTemplateResponse = z.object({
   id: z.string().describe("Meta's id of the new template."),
+  templateId: z
+    .string()
+    .nullable()
+    .describe(
+      "Local template id to use with `messengerTemplates.get` and when sending. Null when Meta did not list the new template yet: run `messengerTemplates.sync` later.",
+    ),
   status: z
     .string()
     .describe("`APPROVED`, `PENDING` or `REJECTED` as reported by Meta."),
@@ -131,7 +137,7 @@ export const messengerTemplatesPublicRouter = {
       path: "/v1/messenger-channels/{id}/templates",
       summary: "Create Messenger template",
       description:
-        "Creates a utility message template on a Messenger Page (it is submitted to Meta for approval) and mirrors it locally. A template Meta rejects is still created: check `status` and `rejectionReason`. A `text_and_image` header downloads `headerImageUrl` from a public address. Check the outcome later with `messengerTemplates.get`.",
+        "Creates a utility message template on a Messenger Page (it is submitted to Meta for approval) and mirrors it locally. A template Meta rejects is still created: check `status` and `rejectionReason`. A `text_and_image` header downloads `headerImageUrl` from a public address. The returned `id` is Meta's template id, not the local one: find the local template (for `messengerTemplates.get`) in `messengerTemplates.list` by name.",
       successStatus: 201,
       tags: ["Messenger Templates"],
     })
@@ -156,6 +162,7 @@ export const messengerTemplatesPublicRouter = {
       })
       return {
         id: created.id,
+        templateId: created.templateId,
         status: created.status,
         rejectionReason: created.rejectionReason ?? null,
         specificRejectionReason: created.specificRejectionReason ?? null,

@@ -546,6 +546,6 @@ describe("GET /v1/broadcasts/{id}/contacts", () => {
       page: 1,
       perPage: 20,
     })
-    expect(result).toEqual({ data: [row], pageCount: 1 })
+    expect(result).toEqual({ data: [row], total: 1, pageCount: 1 })
   })
 })

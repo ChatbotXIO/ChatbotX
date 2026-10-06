@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   add: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
+vi.mock("@chatbotx.io/business/import", () => ({
   importService: {
     startProductImport: mocks.startProductImport,
     fail: mocks.fail,

@@ -227,6 +227,8 @@ export async function syncMessengerMessageTemplatesForIntegration({
 
 export type CreatedMessengerTemplate = {
   id: string
+  /** Local id of the mirrored template, or null when Meta did not list it. */
+  templateId: string | null
   status: string
   rejectionReason?: string
   specificRejectionReason?: string
@@ -269,6 +271,10 @@ export async function createMessengerMessageTemplate(props: {
 
   return {
     id: resp.id,
+    templateId: await messengerMessageTemplateService.findIdBySourceId({
+      integrationMessengerId: integrationMessenger.id,
+      sourceId: resp.id,
+    }),
     status: resp.status,
     rejectionReason: resp.rejection_reason,
     specificRejectionReason: resp.specific_rejection_reason,

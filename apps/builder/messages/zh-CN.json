@@ -987,7 +987,8 @@
         "providerRejected": "服务提供方拒绝了此请求。",
         "inProgress": "连接正在进行中。",
         "unknown": "出现问题。",
-        "followUpFailed": "设置未完成——请在渠道设置中完成。"
+        "followUpFailed": "设置未完成——请在渠道设置中完成。",
+        "webhookSubscribeFailed": "已连接，但 webhook 订阅失败——请在连接设置中重试。"
       },
       "sessionError": {
         "sessionExpired": "您的会话已过期，请重新连接。",
@@ -4242,6 +4243,7 @@
     "cancelEdit": "取消",
     "replaceAttachment": "替换附件",
     "addAttachment": "添加附件",
+    "reloadAttachment": "重新加载附件",
     "changeDefault": "更改默认值",
     "changeDefaultDescription": "您确定要更改缺省 AI Agent 吗？",
     "changeHideState": "更改隐藏状态",
@@ -4443,14 +4445,8 @@
     "reconnectDescription": "请务必重新连接您的机器人。",
     "selectPage": {
       "alreadyConnectedNote": "该页面已连接",
-      "bmLookupFailedDescription": "重新连接Messenger 并授予商务管理平台访问权限，以便可以列出通过商务管理平台管理的页面。",
-      "loadFailed": "无法加载你的 Facebook 主页",
-      "bmLookupFailedTitle": "业务管理平台页面可能遗失",
-      "noConnectablePagesDescription": "您不是此页面的管理员",
-      "noConnectablePagesTitle": "没有可连接的页面",
       "noPagesDescription": "商务管理平台内的页面需要在连接期间访问商务管理平台。重新连接Messenger并授予所有请求的权限。",
       "noPagesTitle": "找不到Facebook 页面",
-      "notAdminNote": "您不是此页面的管理员",
       "tryAgain": "尝试重新连接"
     },
     "tabs": {

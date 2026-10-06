@@ -36,10 +36,9 @@ export type AuthStoreIntegrationRow = {
  * `makeAuthStore` derives (e.g. `MessagingAdsConnection`, which is keyed to a
  * channel integration but is not itself an `Integration<Channel>` row) —
  * see `buildMessagingAdsContext` in
- * `@chatbotx.io/business/messaging-ads-connection`, added per
- * out/plan/ctwa-ctm-ctid-box-merge.md v3 correction #4 ("Auth-store
- * coupling"): passing a `MessagingAdsConnection` row through `makeAuthStore`
- * would read/write the WRONG table (`channelToIntegrationTable` would derive
+ * `@chatbotx.io/business/messaging-ads-connection`: passing a
+ * `MessagingAdsConnection` row through `makeAuthStore` would read/write the
+ * WRONG table (`channelToIntegrationTable` would derive
  * `IntegrationMessagingAdsConnection`, which does not exist).
  */
 export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
@@ -52,15 +51,15 @@ export const makeAuthStoreForTable = <TAuth extends AuthValue = AuthValue>(
    * Resolves the `Connection` row mirroring this `Integration<Channel>` (or
    * workspace-integration satellite) row so state changes route through
    * `connectionStateService` instead of writing `Inbox` directly. Returns
-   * `undefined` for a row predating PR #1411's `Connection` table — no
-   * backfill migration has populated `Connection` for pre-existing
-   * `Integration`/`Inbox` rows yet (no `packages/database/scripts/
-   * backfill-connection*.ts` exists in this repo). Once that one-time
-   * backfill ships and every `Integration`/`Inbox` row has a mirrored
-   * `Connection` row, this `undefined` branch — and the matching
-   * "pre-backfill fallback" branches below and in
-   * `ConnectionStateService.disconnectInbox` (`../connection/state-service.ts`)
-   * — become dead code safe to delete.
+   * `undefined` for a row not yet covered by `Connection` — either it
+   * predates the `packages/database/scripts/backfill-connections.ts` one-time
+   * run and hasn't been backfilled yet, or it's a provider the
+   * backfill/engine deliberately skips (e.g. `metaCatalog`/`outlookCalendar`,
+   * which have no `Connection` adapter at all — see `CONNECTION_REGISTRY`).
+   * Once backfill has run and `--verify` reports zero gaps on this
+   * environment, this `undefined` branch — and the matching "pre-backfill
+   * fallback" branches below and in `ConnectionStateService.disconnectInbox`
+   * (`../connection/state-service.ts`) — become dead code safe to delete.
    */
   const resolveConnection = async () => {
     if (integration.inboxId) {

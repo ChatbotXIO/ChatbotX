@@ -6,16 +6,25 @@ import {
   findOrFail,
   sql,
 } from "@chatbotx.io/database/client"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { integrationThreadsModel } from "@chatbotx.io/database/schema"
 import type { IntegrationThreadsModel } from "@chatbotx.io/database/types"
-import { createId } from "@chatbotx.io/utils"
+import type { AuthValue } from "@chatbotx.io/sdk"
 import { z } from "zod"
 import { BaseService } from "../base.service"
-import { connectionStateService } from "../connection/state-service"
 import {
-  connectChannelIntegration,
-  runConnectTransaction,
-} from "../inbox/connect-channel"
+  authExpiresAtOf,
+  CONNECTION_STORE_BINDINGS,
+  type ConnectionQuotaConsumption,
+  resolveOwnerId,
+  saveOrInsertSatellite,
+  upsertConnectionRow,
+  withQuotaCompensation,
+} from "../connection"
+import { connectionStateService } from "../connection/state-service"
+import { ChatbotXException, channelDuplicatedException } from "../errors"
+import { inboxService } from "../inbox/service"
+import { logger } from "../logger"
 import { workspaceService } from "../workspace"
 
 const threadsRefreshAuthSchema = z
@@ -94,20 +103,57 @@ class IntegrationThreadsService extends BaseService {
     return { data }
   }
 
-  async markTokenRefreshError(id: string, error: string): Promise<void> {
-    await db
+  async markTokenRefreshError(props: {
+    id: string
+    workspaceId: string
+    error: string
+    isRevoked: boolean
+  }): Promise<void> {
+    const [updated] = await db
       .update(integrationThreadsModel)
-      .set({ tokenRefreshError: error })
-      .where(eq(integrationThreadsModel.id, id))
+      .set({ tokenRefreshError: props.error })
+      .where(
+        and(
+          eq(integrationThreadsModel.id, props.id),
+          eq(integrationThreadsModel.workspaceId, props.workspaceId),
+        ),
+      )
+      .returning({ threadsUserId: integrationThreadsModel.threadsUserId })
+    if (!updated) {
+      logger.warn(
+        { integrationId: props.id, workspaceId: props.workspaceId },
+        "Unable to mark Threads token refresh error: integration not found",
+      )
+      return
+    }
+    if (props.isRevoked) {
+      await connectionStateService.markUnhealthyByIdentifier({
+        provider: "threads",
+        identifier: updated.threadsUserId,
+        workspaceId: props.workspaceId,
+        reason: "token_revoked",
+      })
+      return
+    }
+    await connectionStateService.markDegradedByIdentifier({
+      provider: "threads",
+      identifier: updated.threadsUserId,
+      workspaceId: props.workspaceId,
+      reason: "refresh_failed",
+    })
   }
 
   /**
-   * Persists a Threads connect atomically. `IntegrationThreads.threadsUserId`
-   * is unique *globally* while `connectChannelIntegration`'s duplicate check is
-   * workspace-scoped, so a second workspace connecting the same account only
-   * collides on the insert — without one transaction around both writes the
-   * `Inbox` row would already be committed and left orphaned. Passing `tx`
-   * joins a caller's transaction instead, which then owns the error mapping.
+   * Persists a Threads connect atomically: creates the `Inbox` row, then
+   * writes the `Connection` + `IntegrationThreads` rows through the generic
+   * engine (`upsertConnectionRow`/`CONNECTION_STORE_BINDINGS.threads`) — the
+   * same path `tiktokIntegrationService.connect` uses.
+   * `IntegrationThreads.threadsUserId` is unique *globally*, unlike the
+   * `(workspaceId, provider, sourceId)` key `upsertConnectionRow` itself
+   * guards against, so a second workspace connecting the same account only
+   * collides on the satellite insert — `upsertConnectionRow` maps that to
+   * `connectionAlreadyConnected`, translated back below to the
+   * `channelDuplicated` code the (pre-engine) caller already expects.
    */
   async connect(props: {
     workspaceId: string
@@ -116,49 +162,93 @@ class IntegrationThreadsService extends BaseService {
     threadsUserId: string
     username: string
     name: string
-    tx?: DatabaseClient
   }): Promise<IntegrationThreadsModel> {
-    const insert = async (tx: DatabaseClient) => {
-      const { integration } = await connectChannelIntegration({
-        tx,
+    const quotaConsumption: ConnectionQuotaConsumption = {
+      consumed: false,
+      workspaceUsageIncremented: false,
+    }
+
+    return await withQuotaCompensation(
+      {
         ownerId: props.ownerId,
-        inboxData: {
-          id: createId(),
-          workspaceId: props.workspaceId,
-          name: props.name,
-          channel: "threads",
-          sourceId: props.threadsUserId,
-        },
-        insertIntegration: async (inboxId) =>
-          tx
-            .insert(integrationThreadsModel)
-            .values({
-              id: createId(),
-              inboxId,
+        quotaConsumption,
+        context: { provider: "threads", workspaceId: props.workspaceId },
+      },
+      () =>
+        db.transaction(async (tx) => {
+          const { inbox } = await inboxService.create({
+            tx,
+            ownerId: props.ownerId,
+            data: {
               workspaceId: props.workspaceId,
-              auth: props.auth,
-              threadsUserId: props.threadsUserId,
-              username: props.username,
               name: props.name,
+              channel: "threads",
+              sourceId: props.threadsUserId,
+            },
+            skipQuota: true,
+          })
+
+          const existing = await connectionRepository.findByProviderSourceId(
+            {
+              workspaceId: props.workspaceId,
+              provider: "threads",
+              sourceId: props.threadsUserId,
+            },
+            tx,
+          )
+
+          try {
+            await upsertConnectionRow({
+              tx,
+              workspaceId: props.workspaceId,
+              provider: "threads",
+              kind: "channel",
+              descriptor: {
+                sourceId: props.threadsUserId,
+                displayName: props.name,
+              },
+              auth: props.auth as AuthValue,
+              extraConfig: { username: props.username },
+              existing,
+              store: CONNECTION_STORE_BINDINGS.threads as NonNullable<
+                (typeof CONNECTION_STORE_BINDINGS)["threads"]
+              >,
+              ownerId: props.ownerId,
+              quotaConsumption,
+              inboxId: inbox.id,
             })
-            .returning()
-            .then((rows) => rows[0]),
-      })
+          } catch (err) {
+            if (
+              err instanceof ChatbotXException &&
+              err.code === "connectionAlreadyConnected"
+            ) {
+              throw channelDuplicatedException()
+            }
+            throw err
+          }
 
-      return integration
-    }
-
-    if (props.tx) {
-      return await insert(props.tx)
-    }
-
-    return await runConnectTransaction("threads", insert)
+          return await findOrFail({
+            table: integrationThreadsModel,
+            where: { inboxId: inbox.id },
+            client: tx,
+            message: "Threads integration not found",
+          })
+        }),
+    )
   }
 
   /**
    * Returns whether a row actually matched, so the caller can tell a real
    * reconnect from an UPDATE that hit nothing (wrong id, wrong workspace, row
-   * already disconnected) instead of reporting success either way.
+   * already disconnected) instead of reporting success either way. Goes
+   * through the generic engine for a row already backfilled into
+   * `Connection`: revives the satellite auth via
+   * `CONNECTION_STORE_BINDINGS.threads` and runs the FSM's
+   * `connect.completed` transition (consumes `channels` quota when reviving
+   * from `needs_reauth`/`disconnected`, stamps `authExpiresAt`). Falls back
+   * to the legacy satellite-only update for a row backfill hasn't reached
+   * yet — mirrors `ConnectionStateService.reconnectInbox`'s own no-op
+   * fallback for the same case.
    */
   async reconnect(props: {
     workspaceId: string
@@ -167,25 +257,108 @@ class IntegrationThreadsService extends BaseService {
     username: string
     name: string
   }): Promise<boolean> {
-    const rows = await db
-      .update(integrationThreadsModel)
-      .set({
-        auth: props.auth,
-        username: props.username,
-        name: props.name,
-        // A fresh token clears whatever the refresh cron last recorded —
-        // otherwise the error icon and workspace banner stick forever.
-        tokenRefreshError: null,
-      })
-      .where(
-        and(
-          eq(integrationThreadsModel.id, props.id),
-          eq(integrationThreadsModel.workspaceId, props.workspaceId),
-        ),
-      )
-      .returning({ id: integrationThreadsModel.id })
+    const integrationThreads = await db.query.integrationThreadsModel.findFirst(
+      {
+        where: { id: props.id, workspaceId: props.workspaceId },
+      },
+    )
+    if (!integrationThreads) {
+      return false
+    }
 
-    return rows.length > 0
+    const auth = props.auth as AuthValue
+    const connection = await connectionRepository.findByInboxId({
+      inboxId: integrationThreads.inboxId,
+    })
+
+    if (!connection) {
+      const rows = await db
+        .update(integrationThreadsModel)
+        .set({
+          auth: props.auth,
+          username: props.username,
+          name: props.name,
+          // A fresh token clears whatever the refresh cron last recorded —
+          // otherwise the error icon and workspace banner stick forever.
+          tokenRefreshError: null,
+        })
+        .where(
+          and(
+            eq(integrationThreadsModel.id, props.id),
+            eq(integrationThreadsModel.workspaceId, props.workspaceId),
+          ),
+        )
+        .returning({ id: integrationThreadsModel.id })
+
+      return rows.length > 0
+    }
+
+    const store = CONNECTION_STORE_BINDINGS.threads
+    if (!store) {
+      throw new Error("threads has no store binding registered")
+    }
+    const descriptor = {
+      sourceId: integrationThreads.threadsUserId,
+      displayName: props.name,
+    }
+    const ownerId = await resolveOwnerId(connection)
+    const quotaConsumption: ConnectionQuotaConsumption = {
+      consumed: false,
+      workspaceUsageIncremented: false,
+    }
+
+    await withQuotaCompensation(
+      {
+        ownerId,
+        quotaConsumption,
+        context: { provider: "threads", id: props.id },
+      },
+      () =>
+        db.transaction(async (tx) => {
+          await saveOrInsertSatellite({
+            tx,
+            workspaceId: props.workspaceId,
+            kind: "channel",
+            inboxId: connection.inboxId,
+            auth,
+            descriptor,
+            extraConfig: {
+              username: props.username,
+              name: props.name,
+              // A fresh token clears whatever the refresh cron last recorded
+              // — otherwise the error icon and workspace banner stick
+              // forever. Mirrors the legacy fallback branch above; requires
+              // `tokenRefreshError` in the threads store binding's
+              // `configColumns` (`store-bindings.ts`) since this write goes
+              // through `saveAuthByForeignKey`, not a raw UPDATE.
+              tokenRefreshError: null,
+            },
+            existing: connection,
+            store,
+          })
+          await connectionRepository.update(
+            {
+              id: connection.id,
+              workspaceId: connection.workspaceId,
+              values: {
+                displayName: descriptor.displayName,
+                lastError: null,
+              },
+            },
+            tx,
+          )
+          await connectionStateService.transition({
+            connectionId: connection.id,
+            event: "connect.completed",
+            ownerId,
+            tx,
+            quotaConsumption,
+            values: { authExpiresAt: authExpiresAtOf(auth), lastError: null },
+          })
+        }),
+    )
+
+    return true
   }
 
   async listDueForTokenRefresh(props?: {

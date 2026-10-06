@@ -5,6 +5,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { httpLogger } from "@/lib/log"
 import {
   enqueueAttachmentMirror,
+  enqueueAttachmentRestore,
   isFailedOriginPath,
   isPendingOriginPath,
   isTerminalMediaError,
@@ -14,8 +15,36 @@ import {
 
 type RouteContext = { params: Promise<{ token: string }> }
 
+// Set by the client once a freshly re-signed storage URL has also failed to
+// load, i.e. the mirrored object is gone from storage.
+const RETRY_PARAM = "retry"
+
 const redirectMirrored = async (originPath: string): Promise<NextResponse> =>
   NextResponse.redirect(await uploader.getPresignedDownload(originPath), 302)
+
+// Serve an evicted mirrored attachment straight from the channel and restore
+// its object in the background. Storage is never probed and the row is never
+// written, so a spurious retry costs one overwrite and nothing else. Returns
+// null when the channel has no copy to serve (e.g. WhatsApp).
+const redirectEvicted = async (input: {
+  attachmentId: string
+  workspaceId: string
+  messageCreatedAt: Date | undefined
+}): Promise<NextResponse | null> => {
+  const freshMedia = await resolveFreshMediaUrl({
+    ...input,
+    allowMirrored: true,
+  })
+  if (!freshMedia) {
+    return null
+  }
+  enqueueAttachmentRestore({
+    ...input,
+    channel: freshMedia.channel,
+    integrationId: freshMedia.integrationId,
+  })
+  return NextResponse.redirect(freshMedia.url, 302)
+}
 
 export const GET = async (request: NextRequest, context: RouteContext) => {
   const { token } = await context.params
@@ -60,6 +89,24 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
     return unavailable()
   }
   if (!isPendingOriginPath(lookup.originPath)) {
+    if (new URL(request.url).searchParams.get(RETRY_PARAM) === "1") {
+      try {
+        const evicted = await redirectEvicted({
+          attachmentId: lookup.id,
+          workspaceId: resolvedRequest.workspaceId,
+          messageCreatedAt,
+        })
+        return evicted ?? unavailable()
+      } catch (err) {
+        if (!isTerminalMediaError(err)) {
+          httpLogger.error(
+            { err, attachmentId: lookup.id },
+            "Failed to resolve fresh media for an evicted attachment",
+          )
+        }
+        return unavailable()
+      }
+    }
     try {
       return await redirectMirrored(lookup.originPath)
     } catch (err) {
@@ -77,6 +124,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
     const freshMedia = await resolveFreshMediaUrl({
       attachmentId: lookup.id,
       workspaceId: resolvedRequest.workspaceId,
+      messageCreatedAt,
     })
     if (freshMedia) {
       enqueueAttachmentMirror({

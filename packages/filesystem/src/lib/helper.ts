@@ -56,3 +56,23 @@ const getDatePrefix = (): string => {
 
 export const getStoragePrefix = (workspaceId: string): string =>
   `public/ws/${workspaceId}/${getDatePrefix()}`
+
+export type ChannelMediaLocation = {
+  channel: string
+  workspaceId: string
+  integrationId: string
+}
+
+// Channel first, so a storage lifecycle rule can target one channel across
+// every workspace with a single prefix (rules match a key prefix, no wildcard).
+const getChannelMediaPath = (location: ChannelMediaLocation): string =>
+  `${location.channel}/${location.workspaceId}/${location.integrationId}/${getDatePrefix()}`
+
+/** Media received from a channel, uploaded `public-read`. */
+export const getChannelMediaPrefix = (location: ChannelMediaLocation): string =>
+  `public/${getChannelMediaPath(location)}`
+
+/** Private mirrored copies of channel media (history sync, on-demand). */
+export const getMirroredChannelMediaPrefix = (
+  location: ChannelMediaLocation,
+): string => `workspace/${getChannelMediaPath(location)}`

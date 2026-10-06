@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 type CapturedProcedure = {
-  route: { method: string; path: string }
+  route: { method: string; path: string; successStatus?: number }
   handler?: (...args: any[]) => any
 }
 
@@ -91,6 +91,14 @@ describe("sequence folder routes", () => {
     })
   })
 
+  test("create answers 201 like sequences.create", () => {
+    const route = capturedProcedures.find(
+      (p) =>
+        p.route.method === "POST" && p.route.path === "/v1/sequence-folders",
+    )?.route
+    expect(route?.successStatus).toBe(201)
+  })
+
   test("rename and delete refuse a folder of another type as 404", async () => {
     mocks.findOrFail.mockResolvedValue({ id: "9", folderType: "tag" })
 
@@ -144,5 +152,28 @@ describe("sequence folder routes", () => {
       workspaceId: "ws-1",
       ids: ["9"],
     })
+  })
+})
+
+describe("sequence folder list isTrash", () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  test("list forwards isTrash and keeps the workspace, type and parent scope", async () => {
+    mocks.list.mockResolvedValue([])
+    for (const isTrash of [true, false, undefined]) {
+      await find(
+        "GET",
+        "/v1/sequence-folders",
+      )?.({
+        context,
+        input: { parentId: "7", isTrash },
+      })
+      expect(mocks.list).toHaveBeenLastCalledWith({
+        workspaceId: "ws-1",
+        folderType: "sequence",
+        parentId: "7",
+        isTrash,
+      })
+    }
   })
 })

@@ -42,38 +42,3 @@ export type ConnectTarget = Pick<
   ConnectPickerItem,
   "id" | "name" | "coexist" | "aiReadsSyncedHistory"
 >
-
-/**
- * Marks every provider item already connected elsewhere. Channel pickers map
- * their provider list down to `{ ...item, isAlreadyConnected }` with this
- * before deciding disabled/selectable state — shared so Messenger/Instagram
- * (and WhatsApp's own equivalent) never re-implement the same
- * `connectedIds.has(id)` check.
- */
-export function markAlreadyConnected<TItem extends { id: string }>(
-  items: readonly TItem[],
-  connectedIds: ReadonlySet<string>,
-  getId: (item: TItem) => string = (item) => item.id,
-): (TItem & { isAlreadyConnected: boolean })[] {
-  return items.map((item) => ({
-    ...item,
-    isAlreadyConnected: connectedIds.has(getId(item)),
-  }))
-}
-
-/**
- * Picker ordering shared by every channel: selectable items first, then
- * not-connectable ones (e.g. missing admin permission), then items already
- * connected elsewhere. Nothing is hidden — a disabled row still renders with
- * its reason — so every item needs a rank. `Array.prototype.sort` is stable,
- * so the provider's own order survives within a rank.
- */
-export function rankPickerItem(item: {
-  isConnectable: boolean
-  isAlreadyConnected: boolean
-}): number {
-  if (item.isAlreadyConnected) {
-    return 2
-  }
-  return item.isConnectable ? 0 : 1
-}

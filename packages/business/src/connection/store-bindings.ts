@@ -1,38 +1,11 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
-import {
-  integrationActiveCampaignModel,
-  integrationApiModel,
-  integrationClaudeModel,
-  integrationDeepseekModel,
-  integrationDripModel,
-  integrationFacebookAdsModel,
-  integrationGeminiModel,
-  integrationGetResponseModel,
-  integrationGoogleCalendarModel,
-  integrationGoogleSheetsModel,
-  integrationInstagramModel,
-  integrationKlaviyoModel,
-  integrationMailchimpModel,
-  integrationMailerLiteModel,
-  integrationMessengerModel,
-  integrationModel,
-  integrationMoosendModel,
-  integrationOpenaiCompatibleModel,
-  integrationOpenaiModel,
-  integrationOpenrouterModel,
-  integrationSendGridModel,
-  integrationSmtpModel,
-  integrationTelegramModel,
-  integrationTiktokModel,
-  integrationWebchatModel,
-  integrationWhatsappModel,
-  integrationZaloModel,
-} from "@chatbotx.io/database/schema"
+import { integrationModel } from "@chatbotx.io/database/schema"
 import { type AuthValue, authValueSchema, SdkException } from "@chatbotx.io/sdk"
 import type { InferInsertModel, SQL } from "drizzle-orm"
 import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core"
+import { buildConnectionStoreBindings } from "./store-bindings-channels"
 
 type ConnectionStoreInsertInput =
   | {
@@ -62,10 +35,14 @@ export type ConnectionStoreBinding<TConfigColumn extends string = string> = {
    * carries (`inboxId` for channels, `integrationId` for workspace
    * integrations) — `Connection` has no column pointing at the satellite
    * row's own primary key, so this is what `ConnectionService` (disconnect/
-   * refresh/verify) uses to reach the row.
+   * refresh/verify) uses to reach the row. `workspaceId` is an additional
+   * required equality condition (defence-in-depth against cross-tenant
+   * parameter confusion) — every call site already has the owning
+   * `Connection` row's `workspaceId` in hand.
    */
   loadAuthByForeignKey: (
     foreignKey: string,
+    workspaceId: string,
     tx?: DatabaseClient,
   ) => Promise<AuthValue>
   /**
@@ -86,6 +63,7 @@ export type ConnectionStoreBinding<TConfigColumn extends string = string> = {
    */
   saveAuthByForeignKey: (
     foreignKey: string,
+    workspaceId: string,
     auth: AuthValue,
     config?: Record<string, unknown>,
     tx?: DatabaseClient,
@@ -104,6 +82,7 @@ export type ConnectionStoreBinding<TConfigColumn extends string = string> = {
   ) => Promise<{ id: string; integrationId?: string }>
   deleteRowByForeignKey: (
     foreignKey: string,
+    workspaceId: string,
     tx?: DatabaseClient,
   ) => Promise<void>
   /** Unique-constraint name a duplicate insert violates — lets callers map it to `alreadyConnected` instead of a raw DB error. */
@@ -121,15 +100,24 @@ export type ConnectionStoreBinding<TConfigColumn extends string = string> = {
   configColumns?: readonly TConfigColumn[]
 }
 
+/**
+ * `id` is excluded for every other channel binding (its PK rides
+ * `identityColumn`/the table's own default instead), but WhatsApp's binding
+ * deliberately allow-lists it — see its `CONNECTION_STORE_BINDINGS` entry
+ * in `store-bindings-channels.ts` for why. `name` is likewise excluded by
+ * default (`insertRow` always derives it from `descriptor.displayName`,
+ * spread in after `safeConfig` so a client-supplied value there can never
+ * win on insert), but Threads' binding deliberately allow-lists it so a
+ * reconnect's `extraConfig` can refresh a stale display name through
+ * `saveAuthByForeignKey`'s UPDATE path the same way it clears
+ * `tokenRefreshError` — see its `CONNECTION_STORE_BINDINGS` entry in
+ * `store-bindings-channels.ts`. Safe to widen here: `pickAllowed` still
+ * gates on each binding's own `configColumns` array, so no other table is
+ * affected unless it opts in the same way.
+ */
 type ConfigColumn<TTable extends PgTable> = Exclude<
   Extract<keyof InferInsertModel<TTable>, string>,
-  | "auth"
-  | "encryptedAuth"
-  | "id"
-  | "inboxId"
-  | "integrationId"
-  | "name"
-  | "workspaceId"
+  "auth" | "encryptedAuth" | "inboxId" | "integrationId" | "workspaceId"
 >
 
 type WorkspaceConfigColumn<TTable extends PgTable> = Exclude<
@@ -170,7 +158,7 @@ type ChannelSatelliteTable = PgTable & {
   inboxId: AnyPgColumn
 }
 
-const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
+export const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
   table: TTable
   tableName: string
   identityColumn: (Extract<keyof TTable, string> & string) | null
@@ -203,17 +191,19 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
     Object.entries(opts.extraWhere ?? {}).map(([column, value]) =>
       eq(table[column as keyof TTable] as unknown as AnyPgColumn, value),
     )
-  const withExtraWhere = (condition: SQL): SQL => {
-    const extras = extraConditions()
-    return extras.length > 0 ? (and(condition, ...extras) as SQL) : condition
-  }
+  const withExtraWhere = (condition: SQL, workspaceId: string): SQL =>
+    and(
+      condition,
+      eq(table.workspaceId, workspaceId),
+      ...extraConditions(),
+    ) as SQL
 
   return {
-    loadAuthByForeignKey: async (inboxId, tx = db) => {
+    loadAuthByForeignKey: async (inboxId, workspaceId, tx = db) => {
       const [row] = await tx
         .select({ auth: table.auth })
         .from(rawTable)
-        .where(withExtraWhere(eq(table.inboxId, inboxId)))
+        .where(withExtraWhere(eq(table.inboxId, inboxId), workspaceId))
         .limit(1)
       if (!row) {
         throw new Error(
@@ -222,7 +212,13 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       }
       return asAuthValue(row.auth)
     },
-    saveAuthByForeignKey: async (inboxId, auth, config, tx = db) => {
+    saveAuthByForeignKey: async (
+      inboxId,
+      workspaceId,
+      auth,
+      config,
+      tx = db,
+    ) => {
       const safeConfig = pickAllowed<ConfigColumn<TTable>>(
         config,
         opts.configColumns,
@@ -230,7 +226,7 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
       const updated = await tx
         .update(table)
         .set({ ...safeConfig, auth } as InferInsertModel<TTable>)
-        .where(withExtraWhere(eq(table.inboxId, inboxId)))
+        .where(withExtraWhere(eq(table.inboxId, inboxId), workspaceId))
         .returning({ id: table.id })
       return updated.length > 0
     },
@@ -265,13 +261,13 @@ const makeChannelBinding = <TTable extends ChannelSatelliteTable>(opts: {
         .returning({ id: table.id })
       return { id: row.id as string }
     },
-    deleteRowByForeignKey: async (inboxId, tx = db) => {
+    deleteRowByForeignKey: async (inboxId, workspaceId, tx = db) => {
       if (opts.onDisconnect === "keep_row") {
         return
       }
       await tx
         .delete(rawTable)
-        .where(withExtraWhere(eq(table.inboxId, inboxId)))
+        .where(withExtraWhere(eq(table.inboxId, inboxId), workspaceId))
     },
     duplicateConstraint: opts.duplicateConstraint,
     configColumns: opts.configColumns,
@@ -291,7 +287,7 @@ type WorkspaceSatelliteTable = PgTable & {
   integrationId: AnyPgColumn
 }
 
-const makeWorkspaceIntegrationBinding = <
+export const makeWorkspaceIntegrationBinding = <
   TTable extends WorkspaceSatelliteTable,
 >(opts: {
   table: TTable
@@ -329,7 +325,7 @@ const makeWorkspaceIntegrationBinding = <
   ] as unknown as AnyPgColumn
 
   return {
-    loadAuthByForeignKey: async (integrationId, tx = db) => {
+    loadAuthByForeignKey: async (integrationId, workspaceId, tx = db) => {
       const [row] = await tx
         .select(
           opts.baseUrlColumn
@@ -337,7 +333,12 @@ const makeWorkspaceIntegrationBinding = <
             : { auth: authColumn },
         )
         .from(rawTable)
-        .where(eq(table.integrationId, integrationId))
+        .where(
+          and(
+            eq(table.integrationId, integrationId),
+            eq(table.workspaceId, workspaceId),
+          ),
+        )
         .limit(1)
       if (!row) {
         throw new Error(
@@ -350,7 +351,13 @@ const makeWorkspaceIntegrationBinding = <
       }
       return { ...auth, baseURL: row.baseURL }
     },
-    saveAuthByForeignKey: async (integrationId, auth, config, tx = db) => {
+    saveAuthByForeignKey: async (
+      integrationId,
+      workspaceId,
+      auth,
+      config,
+      tx = db,
+    ) => {
       const safeConfig = pickAllowed<WorkspaceConfigColumn<TTable>>(
         config,
         opts.configColumns,
@@ -361,7 +368,12 @@ const makeWorkspaceIntegrationBinding = <
           ...safeConfig,
           [authColumnName]: auth,
         } as InferInsertModel<TTable>)
-        .where(eq(table.integrationId, integrationId))
+        .where(
+          and(
+            eq(table.integrationId, integrationId),
+            eq(table.workspaceId, workspaceId),
+          ),
+        )
         .returning({ id: table.id })
       return updated.length > 0
     },
@@ -399,7 +411,7 @@ const makeWorkspaceIntegrationBinding = <
       }
       return tx ? await run(tx) : await db.transaction((trx) => run(trx))
     },
-    deleteRowByForeignKey: async (integrationId, tx = db) => {
+    deleteRowByForeignKey: async (integrationId, workspaceId, tx = db) => {
       // Deletes the parent `Integration` row (not the satellite) so the
       // `onDelete: "cascade"` FK from every workspace-satellite table back
       // to `integrationModel.id` removes the satellite row too — mirrors
@@ -410,270 +422,21 @@ const makeWorkspaceIntegrationBinding = <
       // `listByWorkspaceId` and for every future reconnect.
       await tx
         .delete(integrationModel)
-        .where(eq(integrationModel.id, integrationId))
+        .where(
+          and(
+            eq(integrationModel.id, integrationId),
+            eq(integrationModel.workspaceId, workspaceId),
+          ),
+        )
     },
     duplicateConstraint: opts.duplicateConstraint,
     configColumns: opts.configColumns,
   }
 }
 
-/**
- * `model`/`maxOutputTokens` NOT NULL defaults for the five AI-key providers
- * whose credential-strategy `configFields` only declare `apiKey` (see
- * `credential-providers.ts`'s `makeAiKeyProvider`) — without these,
- * `connectFromCredentials({ apiKey })` hits the satellite table's NOT NULL
- * constraint on `model`/`maxOutputTokens` and surfaces as a raw 500. Model
- * ids mirror `packages/ai/src/models/registry.ts`'s `aiChatProviders[...]
- * .defaultModel` (that file's own comment calls it the single source of
- * truth the AI agent model picker and legacy connect dialogs already use)
- * — duplicated as literals rather than imported because `@chatbotx.io/ai`
- * depends on `@chatbotx.io/business`, so importing it back here would be
- * circular. `maxOutputTokens: 1024` matches the `.default(1024)` on the
- * legacy claude/deepseek/gemini/openrouter connect schemas
- * (`apps/builder/src/features/integration-{claude,deepseek,gemini,
- * openrouter}/schema/request.ts`); openai's legacy schema has no default,
- * so 1024 is reused here for consistency across all five providers.
- */
-const AI_KEY_PROVIDER_DEFAULTS = {
-  claude: { model: "claude-sonnet-4-6", maxOutputTokens: 1024 },
-  deepseek: { model: "deepseek-flash", maxOutputTokens: 1024 },
-  gemini: { model: "gemini-3.5-flash", maxOutputTokens: 1024 },
-  openai: { model: "gpt-5.4-mini", maxOutputTokens: 1024 },
-  openrouter: { model: "openai/gpt-5.4-mini", maxOutputTokens: 1024 },
-} as const satisfies Record<
-  "claude" | "deepseek" | "gemini" | "openai" | "openrouter",
-  { model: string; maxOutputTokens: number }
->
-
-const AI_KEY_PROVIDER_CONFIG_COLUMNS = [
-  "model",
-  "maxOutputTokens",
-  "prompt",
-  "temperature",
-  "autoReply",
-] as const
-
-/**
- * `defaultModel`/`preset` NOT NULL defaults for `openaiCompatible`'s
- * credential-strategy connect (`configFields` only declare `apiKey`/
- * `baseURL` — see `credential-providers.ts`'s
- * `openaiCompatibleConnectionProvider`). Values mirror
- * `packages/ai/src/openai-compatible/presets.ts`'s `custom` preset config
- * (`defaultModel: "gpt-4o-mini"`) — the catch-all preset the unique index
- * `IntegrationOpenaiCompatible_workspaceId_preset_key` exempts so a
- * workspace can connect more than one — duplicated as a literal for the
- * same circular-dependency reason as `AI_KEY_PROVIDER_DEFAULTS` above.
- * `name` isn't included here: it falls back to the connection
- * descriptor's `displayName` at the call site, the same pattern
- * `makeChannelBinding.insertRow` already uses for its own `name` column.
- */
-const OPENAI_COMPATIBLE_DEFAULTS = {
-  defaultModel: "gpt-4o-mini",
-  preset: "custom",
-} as const
-
 export const CONNECTION_STORE_BINDINGS: Partial<
   Record<IntegrationType, ConnectionStoreBinding | null>
-> = {
-  activeCampaign: makeWorkspaceIntegrationBinding({
-    table: integrationActiveCampaignModel,
-    tableName: "IntegrationActiveCampaign",
-    integrationType: "activeCampaign",
-    duplicateConstraint: "IntegrationActiveCampaign_workspaceId_key",
-  }),
-  api: makeChannelBinding({
-    table: integrationApiModel,
-    tableName: "IntegrationApi",
-    identityColumn: null,
-    onDisconnect: "keep_row",
-  }),
-  chatbotx: null,
-  claude: makeWorkspaceIntegrationBinding({
-    table: integrationClaudeModel,
-    tableName: "IntegrationClaude",
-    integrationType: "claude",
-    duplicateConstraint: "IntegrationClaude_workspaceId_key",
-    configColumns: AI_KEY_PROVIDER_CONFIG_COLUMNS,
-    defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.claude,
-  }),
-  deepseek: makeWorkspaceIntegrationBinding({
-    table: integrationDeepseekModel,
-    tableName: "IntegrationDeepseek",
-    integrationType: "deepseek",
-    duplicateConstraint: "IntegrationDeepseek_workspaceId_key",
-    configColumns: AI_KEY_PROVIDER_CONFIG_COLUMNS,
-    defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.deepseek,
-  }),
-  drip: makeWorkspaceIntegrationBinding({
-    table: integrationDripModel,
-    tableName: "IntegrationDrip",
-    integrationType: "drip",
-    duplicateConstraint: "IntegrationDrip_workspaceId_key",
-  }),
-  facebookAds: makeWorkspaceIntegrationBinding({
-    table: integrationFacebookAdsModel,
-    tableName: "IntegrationFacebookAds",
-    integrationType: "facebookAds",
-    duplicateConstraint: "IntegrationFacebookAds_workspaceId_key",
-  }),
-  gemini: makeWorkspaceIntegrationBinding({
-    table: integrationGeminiModel,
-    tableName: "IntegrationGemini",
-    integrationType: "gemini",
-    duplicateConstraint: "IntegrationGemini_workspaceId_key",
-    configColumns: AI_KEY_PROVIDER_CONFIG_COLUMNS,
-    defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.gemini,
-  }),
-  getResponse: makeWorkspaceIntegrationBinding({
-    table: integrationGetResponseModel,
-    tableName: "IntegrationGetResponse",
-    integrationType: "getResponse",
-    duplicateConstraint: "IntegrationGetResponse_workspaceId_key",
-  }),
-  googleCalendar: makeWorkspaceIntegrationBinding({
-    table: integrationGoogleCalendarModel,
-    tableName: "IntegrationGoogleCalendar",
-    integrationType: "googleCalendar",
-  }),
-  googleSheets: makeWorkspaceIntegrationBinding({
-    table: integrationGoogleSheetsModel,
-    tableName: "IntegrationGoogleSheet",
-    integrationType: "googleSheets",
-  }),
-  instagram: makeChannelBinding({
-    table: integrationInstagramModel,
-    tableName: "IntegrationInstagram",
-    identityColumn: "igId",
-    onDisconnect: "delete_row",
-    duplicateConstraint: "IntegrationInstagram_igId_key",
-    extraInsertValues: { type: "instagram" },
-    extraWhere: { type: "instagram" },
-    // OAuth-only (no `fromCredentials`): `candidateToConfig` is
-    // developer-derived from `auth`, never client input — see
-    // `integrations/instagram/src/integration.ts`.
-    configColumns: ["pageId", "username"],
-  }),
-  instagramFacebook: makeChannelBinding({
-    table: integrationInstagramModel,
-    tableName: "IntegrationInstagram",
-    identityColumn: "igId",
-    onDisconnect: "delete_row",
-    duplicateConstraint: "IntegrationInstagram_igId_key",
-    extraInsertValues: { type: "facebook" },
-    extraWhere: { type: "facebook" },
-    // OAuth-only — see `integrations/instagram-facebook/src/integration.ts`.
-    configColumns: ["pageId", "username"],
-  }),
-  klaviyo: makeWorkspaceIntegrationBinding({
-    table: integrationKlaviyoModel,
-    tableName: "IntegrationKlaviyo",
-    integrationType: "klaviyo",
-    duplicateConstraint: "IntegrationKlaviyo_workspaceId_key",
-  }),
-  mailchimp: makeWorkspaceIntegrationBinding({
-    table: integrationMailchimpModel,
-    tableName: "IntegrationMailchimp",
-    integrationType: "mailchimp",
-  }),
-  mailerLite: makeWorkspaceIntegrationBinding({
-    table: integrationMailerLiteModel,
-    tableName: "IntegrationMailerLite",
-    integrationType: "mailerLite",
-    duplicateConstraint: "IntegrationMailerLite_workspaceId_key",
-  }),
-  messenger: makeChannelBinding({
-    table: integrationMessengerModel,
-    tableName: "IntegrationMessenger",
-    identityColumn: "pageId",
-    onDisconnect: "delete_row",
-    duplicateConstraint: "IntegrationMessenger_pageId_key",
-  }),
-  moosend: makeWorkspaceIntegrationBinding({
-    table: integrationMoosendModel,
-    tableName: "IntegrationMoosend",
-    integrationType: "moosend",
-    duplicateConstraint: "IntegrationMoosend_workspaceId_key",
-  }),
-  openai: makeWorkspaceIntegrationBinding({
-    table: integrationOpenaiModel,
-    tableName: "IntegrationOpenai",
-    integrationType: "openai",
-    configColumns: [
-      ...AI_KEY_PROVIDER_CONFIG_COLUMNS,
-      "autoReplyVoice",
-      "voice",
-    ],
-    defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.openai,
-  }),
-  openaiCompatible: makeWorkspaceIntegrationBinding({
-    table: integrationOpenaiCompatibleModel,
-    tableName: "IntegrationOpenaiCompatible",
-    integrationType: "openaiCompatible",
-    baseUrlColumn: integrationOpenaiCompatibleModel.baseURL,
-    configColumns: [
-      "baseURL",
-      "defaultModel",
-      "preset",
-      "name",
-      "autoReply",
-      "enabled",
-    ],
-    defaultConfigValues: (input) => ({
-      ...OPENAI_COMPATIBLE_DEFAULTS,
-      name: input.descriptor.displayName,
-    }),
-  }),
-  openrouter: makeWorkspaceIntegrationBinding({
-    table: integrationOpenrouterModel,
-    tableName: "IntegrationOpenrouter",
-    integrationType: "openrouter",
-    duplicateConstraint: "IntegrationOpenrouter_workspaceId_key",
-    configColumns: AI_KEY_PROVIDER_CONFIG_COLUMNS,
-    defaultConfigValues: () => AI_KEY_PROVIDER_DEFAULTS.openrouter,
-  }),
-  sendGrid: makeWorkspaceIntegrationBinding({
-    table: integrationSendGridModel,
-    tableName: "IntegrationSendGrid",
-    integrationType: "sendGrid",
-    duplicateConstraint: "IntegrationSendGrid_workspaceId_key",
-  }),
-  smtp: makeChannelBinding({
-    table: integrationSmtpModel,
-    tableName: "IntegrationSmtp",
-    identityColumn: null,
-    onDisconnect: "keep_row",
-  }),
-  telegram: makeChannelBinding({
-    table: integrationTelegramModel,
-    tableName: "IntegrationTelegram",
-    identityColumn: "botId",
-    onDisconnect: "keep_row",
-    duplicateConstraint: "IntegrationTelegram_botId_key",
-  }),
-  tiktok: makeChannelBinding({
-    table: integrationTiktokModel,
-    tableName: "IntegrationTiktok",
-    identityColumn: "openId",
-    onDisconnect: "keep_row",
-    duplicateConstraint: "IntegrationTiktok_openId_key",
-  }),
-  webchat: makeChannelBinding({
-    table: integrationWebchatModel,
-    tableName: "IntegrationWebchat",
-    identityColumn: null,
-    onDisconnect: "keep_row",
-  }),
-  whatsapp: makeChannelBinding({
-    table: integrationWhatsappModel,
-    tableName: "IntegrationWhatsapp",
-    identityColumn: "phoneNumberId",
-    onDisconnect: "keep_row",
-    duplicateConstraint: "IntegrationWhatsapp_phoneNumberId_key",
-  }),
-  zalo: makeChannelBinding({
-    table: integrationZaloModel,
-    tableName: "IntegrationZalo",
-    identityColumn: "oaId",
-    onDisconnect: "keep_row",
-  }),
-}
+> = buildConnectionStoreBindings(
+  makeChannelBinding,
+  makeWorkspaceIntegrationBinding,
+)

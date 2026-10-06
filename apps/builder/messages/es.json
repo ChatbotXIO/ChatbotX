@@ -839,7 +839,8 @@
         "providerRejected": "El proveedor rechazó esta solicitud.",
         "inProgress": "La conexión ya está en curso.",
         "unknown": "Algo salió mal.",
-        "followUpFailed": "Configuración incompleta: complétala desde los ajustes del canal."
+        "followUpFailed": "Configuración incompleta: complétala desde los ajustes del canal.",
+        "webhookSubscribeFailed": "Conectado, pero falló la suscripción al webhook. Vuelve a intentarlo desde la configuración de la conexión."
       },
       "sessionError": {
         "sessionExpired": "Tu sesión expiró. Vuelve a conectarte.",
@@ -3444,6 +3445,7 @@
     "cancelEdit": "Cancelar",
     "replaceAttachment": "Reemplazar archivo adjunto",
     "addAttachment": "Agregar archivo adjunto",
+    "reloadAttachment": "Volver a cargar el adjunto",
     "failedToCopy": "Failed un copy",
     "failedToPreviewImage": "Failed un preview imagen",
     "loadingData": "Cargando datos...",
@@ -3613,13 +3615,7 @@
     "selectPage": {
       "noPagesTitle": "No Facebook Páginas found",
       "noPagesDescription": "Páginas inside un Empresa Manager require Empresa Manager access during connection. ReConectar Messenger y grant todos requested permisos.",
-      "noConnectablePagesTitle": "No hay páginas disponibles para conectar",
-      "noConnectablePagesDescription": "No eres administrador de esta página",
-      "bmLookupFailedTitle": "Empresa Manager páginas may be missing",
-      "bmLookupFailedDescription": "ReConectar Messenger y grant Empresa Manager access so páginas managed through un Empresa Manager puede be listed.",
-      "loadFailed": "No se pudieron cargar tus páginas de Facebook",
       "alreadyConnectedNote": "This página es already connected",
-      "notAdminNote": "No eres administrador de esta página",
       "tryAgain": "Intenta volver a conectar"
     },
     "title": "Facebook Messenger",

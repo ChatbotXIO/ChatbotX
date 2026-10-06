@@ -839,7 +839,8 @@
         "providerRejected": "Sağlayıcı bu isteği reddetti.",
         "inProgress": "Bağlantı zaten devam ediyor.",
         "unknown": "Bir şeyler ters gitti.",
-        "followUpFailed": "Kurulum tamamlanmadı — kanal ayarlarından tamamlayın."
+        "followUpFailed": "Kurulum tamamlanmadı — kanal ayarlarından tamamlayın.",
+        "webhookSubscribeFailed": "Bağlandı, ancak webhook aboneliği başarısız oldu — bağlantı ayarlarından tekrar deneyin."
       },
       "sessionError": {
         "sessionExpired": "Oturumunuzun süresi doldu. Lütfen yeniden bağlanın.",
@@ -3444,6 +3445,7 @@
     "cancelEdit": "İptal",
     "replaceAttachment": "Eki değiştir",
     "addAttachment": "Ek ekle",
+    "reloadAttachment": "Eki yeniden yükle",
     "failedToCopy": "Kopyalanamadı",
     "failedToPreviewImage": "Görsel önizlenemedi",
     "loadingData": "Veriler yükleniyor...",
@@ -3613,13 +3615,7 @@
     "selectPage": {
       "noPagesTitle": "Facebook Sayfası bulunamadı",
       "noPagesDescription": "Bir İşletme Yöneticisi içindeki sayfalar, bağlantı sırasında İşletme Yöneticisi erişimi gerektirir. Messenger'ı yeniden bağlayın ve istenen tüm izinleri verin.",
-      "noConnectablePagesTitle": "Bağlanabilecek Sayfa yok",
-      "noConnectablePagesDescription": "Bu Sayfanın yöneticisi değilsiniz",
-      "bmLookupFailedTitle": "İşletme Yöneticisi sayfaları eksik olabilir",
-      "bmLookupFailedDescription": "Bir İşletme Yöneticisi üzerinden yönetilen sayfaların listelenebilmesi için Messenger'ı yeniden bağlayın ve İşletme Yöneticisi erişimi verin.",
-      "loadFailed": "Facebook Sayfaların yüklenemedi",
       "alreadyConnectedNote": "Bu sayfa zaten bağlı",
-      "notAdminNote": "Bu Sayfanın yöneticisi değilsiniz",
       "tryAgain": "Yeniden bağlanmayı dene"
     },
     "title": "Facebook Messenger",

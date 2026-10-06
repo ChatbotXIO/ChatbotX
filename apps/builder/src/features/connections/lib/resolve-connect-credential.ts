@@ -16,7 +16,7 @@ import { buildProviderCallbackUrl } from "@/lib/provider-origin"
  * so this map — not a generic `camelCase -> kebab-case` transform — is the
  * source of truth).
  */
-const OAUTH_CALLBACK_SLUG: Partial<Record<IntegrationType, string>> = {
+export const OAUTH_CALLBACK_SLUG: Partial<Record<IntegrationType, string>> = {
   instagramFacebook: "instagram-facebook",
   facebookAds: "facebook-ads",
   googleCalendar: "google-calendar",

@@ -18,33 +18,15 @@ import {
   tagChannelModel,
 } from "@chatbotx.io/database/schema"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
-import { createId } from "@chatbotx.io/utils"
+import type { AuthValue } from "@chatbotx.io/sdk"
 import { BaseService } from "../base.service"
+import { recordRefreshedAuth } from "../connection/record-refreshed-auth"
+import { connectionStateService } from "../connection/state-service"
 import { notFoundException } from "../errors"
 import { flowService } from "../flow/service"
-import {
-  auditChannelConnected,
-  connectChannelIntegration,
-  runConnectTransaction,
-} from "../inbox/connect-channel"
+import { logger } from "../logger"
 import { isWorkspaceAdminMember } from "../workspace-member/predicates"
 import { workspaceMemberService } from "../workspace-member/service"
-
-export type ConnectPageInput = {
-  actorUserId: string
-  ownerId: string
-  workspaceId: string
-  page: { pageId: string; pageName: string }
-  auth: unknown
-  persistentMenus: MessengerPersistentMenu[]
-}
-
-export type ConnectPageResult = {
-  workspaceId: string
-  integrationId: string
-  wasCreated: boolean
-  integration: IntegrationMessengerModel
-}
 
 class MessengerIntegrationService extends BaseService {
   findByInboxId(inboxId: string) {
@@ -80,8 +62,10 @@ class MessengerIntegrationService extends BaseService {
     auth: Record<string, unknown>
     name?: string
     userInfo?: IntegrationUserInfo
+    tx?: DatabaseClient
   }): Promise<void> {
-    await db
+    const client = props.tx ?? db
+    const [row] = await client
       .update(integrationMessengerModel)
       .set({
         auth: props.auth,
@@ -95,6 +79,33 @@ class MessengerIntegrationService extends BaseService {
           eq(integrationMessengerModel.workspaceId, props.workspaceId),
         ),
       )
+      .returning({ pageId: integrationMessengerModel.pageId })
+    if (!row) {
+      throw notFoundException("Messenger integration not found")
+    }
+    await recordRefreshedAuth({
+      workspaceId: props.workspaceId,
+      provider: "messenger",
+      sourceId: row.pageId,
+      auth: props.auth as AuthValue,
+      tx: props.tx,
+    })
+  }
+
+  /**
+   * Seeds the row's own `persistentMenus` column with a single branding
+   * entry after the live Graph API push succeeds. Callers gate this to rows
+   * that don't already have user-configured menu items, so it never
+   * clobbers.
+   */
+  async seedPersistentMenu(props: {
+    id: string
+    entry: MessengerPersistentMenu
+  }): Promise<void> {
+    await db
+      .update(integrationMessengerModel)
+      .set({ persistentMenus: [props.entry] })
+      .where(eq(integrationMessengerModel.id, props.id))
   }
 
   findAllForTokenRefresh() {
@@ -131,107 +142,52 @@ class MessengerIntegrationService extends BaseService {
       .where(inArray(integrationMessengerModel.workspaceId, workspaceIds))
   }
 
-  async markTokenRefreshError(id: string, error: string): Promise<void> {
-    await db
-      .update(integrationMessengerModel)
-      .set({ tokenRefreshError: error })
-      .where(eq(integrationMessengerModel.id, id))
-  }
-
-  /**
-   * Store the authorizing user's identity after a connect. Separate from the
-   * insert because the avatar upload is an external call that must stay outside
-   * the connect transaction.
-   */
-  async updateUserInfo(props: {
+  async markTokenRefreshError(props: {
     id: string
     workspaceId: string
-    userInfo: IntegrationUserInfo
+    error: string
+    isRevoked: boolean
   }): Promise<void> {
-    await db
+    const [row] = await db
       .update(integrationMessengerModel)
-      .set({ userInfo: props.userInfo })
+      .set({ tokenRefreshError: props.error })
       .where(
         and(
           eq(integrationMessengerModel.id, props.id),
           eq(integrationMessengerModel.workspaceId, props.workspaceId),
         ),
       )
+      .returning({ pageId: integrationMessengerModel.pageId })
+
+    if (!row) {
+      logger.warn(
+        { integrationId: props.id, workspaceId: props.workspaceId },
+        "Unable to mark Messenger token refresh error: integration not found",
+      )
+      return
+    }
+
+    if (props.isRevoked) {
+      await connectionStateService.markUnhealthyByIdentifier({
+        provider: "messenger",
+        identifier: row.pageId,
+        workspaceId: props.workspaceId,
+        reason: "token_revoked",
+      })
+      return
+    }
+
+    await connectionStateService.markDegradedByIdentifier({
+      provider: "messenger",
+      identifier: row.pageId,
+      workspaceId: props.workspaceId,
+      reason: "refresh_failed",
+    })
   }
 
   findByWorkspaceId(workspaceId: string) {
     return db.query.integrationMessengerModel.findMany({
       where: { workspaceId },
-    })
-  }
-
-  /**
-   * Page ids from the given list that already have a Messenger integration.
-   * `IntegrationMessenger.pageId` is unique platform-wide, so a match means the
-   * page cannot be connected again anywhere.
-   */
-  findConnectedPageIds(pageIds: string[]): Promise<Set<string>> {
-    return integrationMessengerRepository.findConnectedPageIds(pageIds)
-  }
-
-  /**
-   * Persists a Messenger page connect: one `db.transaction` (via
-   * `connectChannelIntegration` → `integrationMessengerRepository.insert`)
-   * that settles with the write — nothing after it may reject, so a
-   * failing audit dispatch is logged, never thrown. Workspace is always
-   * required (the OAuth callback stores it in the cookie before this runs).
-   */
-  async connectPage(input: ConnectPageInput): Promise<ConnectPageResult> {
-    const { integration, wasCreated } = await this.insertPage(input)
-
-    if (wasCreated) {
-      await auditChannelConnected({
-        channel: "messenger",
-        actorUserId: input.actorUserId,
-        workspaceId: input.workspaceId,
-        integrationId: integration.id,
-      })
-    }
-
-    return {
-      workspaceId: input.workspaceId,
-      integrationId: integration.id,
-      wasCreated,
-      integration,
-    }
-  }
-
-  private insertPage(input: ConnectPageInput): Promise<{
-    integration: IntegrationMessengerModel
-    wasCreated: boolean
-  }> {
-    return runConnectTransaction("messenger", async (tx) => {
-      const { integration, wasCreated } = await connectChannelIntegration({
-        tx,
-        ownerId: input.ownerId,
-        inboxData: {
-          id: createId(),
-          workspaceId: input.workspaceId,
-          name: input.page.pageName,
-          channel: "messenger",
-          sourceId: input.page.pageId,
-        },
-        insertIntegration: (inboxId) =>
-          integrationMessengerRepository.insert(
-            {
-              id: createId(),
-              workspaceId: input.workspaceId,
-              inboxId,
-              pageId: input.page.pageId,
-              auth: input.auth,
-              name: input.page.pageName,
-              persistentMenus: input.persistentMenus,
-            },
-            tx,
-          ),
-      })
-
-      return { integration, wasCreated }
     })
   }
 

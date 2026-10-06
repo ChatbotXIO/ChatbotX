@@ -8,10 +8,12 @@ import {
   createHandoverResumeFlowRoute,
 } from "@/features/channel-integrations/api/public"
 import {
+  possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { disconnectMessenger } from "../actions/disconnect-messenger"
 import { updateMessenger } from "../lib/update-messenger-settings"
 import { findIntegrationMessenger } from "../queries"
 import {
@@ -91,5 +93,24 @@ export const messengerChannelsPublicRouter = {
     .handler(async ({ context, input }) => {
       const { id, ...settings } = input
       await updateMessenger({ workspaceId: context.workspace.id, id }, settings)
+    }),
+
+  disconnect: workspaceTokenAuthAPI
+    .route({
+      method: "DELETE",
+      path: "/v1/messenger-channels/{id}",
+      summary: "Disconnect Messenger channel",
+      description:
+        "Disconnects a Facebook Page from this workspace, as the Disconnect button in Settings → Channels does: unsubscribes the Page from the app, ends its running history sync and removes its Conversions API events; a running contact scan stops at its next page. Contacts and conversations are kept. Works on a trial-expired workspace. A transient Meta error while unsubscribing fails the request; retry it. When an Instagram account of the same Page is still connected, the Page keeps the subscription Instagram needs and a Meta error while narrowing it is only logged. Find its id with `messengerChannels.list`.",
+      successStatus: 204,
+      tags: ["Channels"],
+    })
+    .input(z.object({ id: messengerChannelIdSchema }))
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      await disconnectMessenger({
+        workspaceId: context.workspace.id,
+        id: input.id,
+      })
     }),
 }

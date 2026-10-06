@@ -3,6 +3,9 @@ import {
   connectionStateService,
   InvalidConnectionTransitionException,
   isActiveConnectionStatus,
+  type PendingQuotaRelease,
+  resolveForeignKey,
+  resolveOwnerId,
 } from "@chatbotx.io/business/connection"
 import {
   connectionInactiveException,
@@ -11,17 +14,13 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { connectionRepository } from "@chatbotx.io/database/repositories"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import { distributedLock } from "@chatbotx.io/redis"
 import type { AuthStore, AuthValue } from "@chatbotx.io/sdk"
-import {
-  findOrThrow,
-  resolveAdapter,
-  resolveForeignKey,
-  resolveOwnerId,
-} from "./internal"
+
+import { findOrThrow, resolveAdapter } from "./internal"
 import { logger } from "./logger"
 
 const REFRESH_LOCK_TIMEOUT_SECONDS = 10
@@ -46,9 +45,12 @@ const loadActiveConnectionStore = async (input: {
 }
 
 /**
- * User-initiated teardown: provider-side disconnect and webhook unsubscribe
- * must both succeed before local auth is deleted and the FSM transitions.
- * Retaining the satellite row on an upstream failure keeps teardown retryable.
+ * User-initiated teardown: local state ALWAYS finalizes (FSM transition +
+ * satellite row delete) regardless of provider-side disconnect/webhook-
+ * unsubscribe outcome — a flaky/down third-party API must never trap a
+ * workspace into being unable to remove a channel it no longer wants. Every
+ * provider-side failure is recorded on `Connection.lastError` for
+ * observability instead.
  *
  * This generic path does not port bespoke provider teardown side effects;
  * existing per-channel disconnect actions retain those responsibilities.
@@ -61,55 +63,78 @@ export const disconnect = async (input: {
   const adapter = resolveAdapter(connection.provider)
   const foreignKey = resolveForeignKey(connection)
   const teardownErrors: string[] = []
-  let teardownFailure: unknown
+  let withinTransactionTeardown:
+    | ((tx: DatabaseClient) => Promise<void>)
+    | null = null
 
   if (adapter.store && foreignKey) {
     let auth: AuthValue | null = null
     try {
-      auth = await adapter.store.loadAuthByForeignKey(foreignKey)
+      auth = await adapter.store.loadAuthByForeignKey(
+        foreignKey,
+        connection.workspaceId,
+      )
     } catch (err) {
       teardownErrors.push(
         toPublicErrorMessage(err, "Provider-side teardown failed"),
       )
-      if (!adapter.provider.isRevokedTokenError?.(err)) {
-        teardownFailure = err
-      }
       logger.error(
         { err, connectionId: connection.id, provider: connection.provider },
         "connection disconnect: failed to load auth for provider-side teardown",
       )
     }
     if (auth) {
-      if (adapter.integration) {
+      let skipGenericRemoteTeardown = false
+      if (adapter.teardown) {
         try {
-          await adapter.integration.disconnect(auth)
+          const result = await adapter.teardown({ connection, auth })
+          withinTransactionTeardown = result.withinTransaction
+          skipGenericRemoteTeardown = result.skipGenericRemoteTeardown
+          teardownErrors.push(...(result.remoteErrors ?? []))
         } catch (err) {
           teardownErrors.push(
             toPublicErrorMessage(err, "Provider-side teardown failed"),
           )
-          if (!adapter.provider.isRevokedTokenError?.(err)) {
-            teardownFailure ??= err
-          }
           logger.error(
             { err, connectionId: connection.id, provider: connection.provider },
-            "connection disconnect: provider-side disconnect failed",
+            "connection disconnect: provider-specific teardown failed",
           )
         }
       }
-      if (adapter.provider.webhook) {
-        try {
-          await adapter.provider.webhook.unsubscribe({ auth })
-        } catch (err) {
-          teardownErrors.push(
-            toPublicErrorMessage(err, "Webhook unsubscribe failed"),
-          )
-          if (!adapter.provider.isRevokedTokenError?.(err)) {
-            teardownFailure ??= err
+      if (!skipGenericRemoteTeardown) {
+        if (adapter.integration) {
+          try {
+            await adapter.integration.disconnect(auth)
+          } catch (err) {
+            teardownErrors.push(
+              toPublicErrorMessage(err, "Provider-side teardown failed"),
+            )
+            logger.error(
+              {
+                err,
+                connectionId: connection.id,
+                provider: connection.provider,
+              },
+              "connection disconnect: provider-side disconnect failed",
+            )
           }
-          logger.error(
-            { err, connectionId: connection.id, provider: connection.provider },
-            "connection disconnect: webhook unsubscribe failed",
-          )
+        }
+        if (adapter.provider.webhook) {
+          try {
+            await adapter.provider.webhook.unsubscribe({ auth })
+          } catch (err) {
+            teardownErrors.push(
+              toPublicErrorMessage(err, "Webhook unsubscribe failed"),
+            )
+            logger.error(
+              {
+                err,
+                connectionId: connection.id,
+                provider: connection.provider,
+              },
+              "connection disconnect: webhook unsubscribe failed",
+            )
+          }
         }
       }
     } else {
@@ -128,31 +153,27 @@ export const disconnect = async (input: {
     }
   }
 
-  if (teardownFailure) {
-    await connectionRepository
-      .update({
-        id: connection.id,
-        workspaceId: connection.workspaceId,
-        values: { lastError: teardownErrors.join("; ") },
-      })
-      .catch((persistErr) => {
-        logger.error(
-          {
-            err: persistErr,
-            connectionId: connection.id,
-            provider: connection.provider,
-          },
-          "connection disconnect: failed to persist teardown error",
-        )
-      })
-    throw teardownFailure
-  }
-
   const ownerId = await resolveOwnerId(connection)
+  // `transition`'s "user.disconnect" edge may decide to release one unit of
+  // `channels` quota — deferred here (instead of released inline by
+  // `transition`) because this function's own `db.transaction` below does
+  // more work (teardown, satellite-row delete) after the transition call;
+  // releasing before that transaction actually commits would under-count
+  // the release if a later statement in it rolled the whole thing back.
+  const pendingRelease: { current: PendingQuotaRelease | null } = {
+    current: null,
+  }
   try {
-    return await db.transaction(async (tx) => {
-      if (adapter.store && foreignKey) {
-        await adapter.store.deleteRowByForeignKey(foreignKey, tx)
+    const updated = await db.transaction(async (tx) => {
+      const result = await connectionStateService.transition({
+        connectionId: connection.id,
+        event: "user.disconnect",
+        ownerId,
+        tx,
+        pendingRelease,
+      })
+      if (withinTransactionTeardown) {
+        await withinTransactionTeardown(tx)
       }
       if (teardownErrors.length > 0) {
         await connectionRepository.update(
@@ -164,13 +185,18 @@ export const disconnect = async (input: {
           tx,
         )
       }
-      return await connectionStateService.transition({
-        connectionId: connection.id,
-        event: "user.disconnect",
-        ownerId,
-        tx,
-      })
+      if (adapter.store && foreignKey) {
+        await adapter.store.deleteRowByForeignKey(
+          foreignKey,
+          connection.workspaceId,
+          tx,
+        )
+      }
+      return result
     })
+    // The transaction above just committed — safe to release now.
+    await connectionStateService.releasePendingQuota(pendingRelease.current)
+    return updated
   } catch (err) {
     const lastError = [
       ...teardownErrors,
@@ -207,11 +233,19 @@ export const refresh = async (input: {
     throw connectionNotRefreshableException(connection.provider)
   }
 
-  const auth = await store.loadAuthByForeignKey(foreignKey)
+  const auth = await store.loadAuthByForeignKey(
+    foreignKey,
+    connection.workspaceId,
+  )
   const authStore: AuthStore<AuthValue> = {
-    load: async () => await store.loadAuthByForeignKey(foreignKey),
+    load: async () =>
+      await store.loadAuthByForeignKey(foreignKey, connection.workspaceId),
     save: async (newAuth) => {
-      const saved = await store.saveAuthByForeignKey(foreignKey, newAuth)
+      const saved = await store.saveAuthByForeignKey(
+        foreignKey,
+        connection.workspaceId,
+        newAuth,
+      )
       if (!saved) {
         throw new Error(
           `Connection ${connection.id} auth persistence did not match a satellite row`,
@@ -287,7 +321,7 @@ export const verify = async (input: {
   const [ownerId, health] = await Promise.all([
     resolveOwnerId(connection),
     store
-      .loadAuthByForeignKey(foreignKey)
+      .loadAuthByForeignKey(foreignKey, connection.workspaceId)
       .then(async (auth) => await adapter.provider.verify({ auth })),
   ])
 

@@ -3,7 +3,10 @@
 import { tiktokIntegrationService } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
+import {
+  isRevokedTokenError,
+  type TiktokAuthValue,
+} from "@chatbotx.io/integration-tiktok"
 import { refreshAccessToken } from "@chatbotx.io/integration-tiktok/apis/auth"
 import { buildTokenTimestamps } from "@chatbotx.io/integration-tiktok/lib/token-utils"
 import { distributedLock } from "@chatbotx.io/redis"
@@ -63,7 +66,11 @@ const refreshTiktokToken = async (ctx: { workspaceId: string; id: string }) => {
           },
         }
 
-        await tiktokIntegrationService.updateAuth(ctx.id, updatedAuth)
+        await tiktokIntegrationService.updateAuth({
+          id: ctx.id,
+          workspaceId: ctx.workspaceId,
+          auth: updatedAuth,
+        })
 
         await auditService.record({
           workspaceId: ctx.workspaceId,
@@ -72,10 +79,12 @@ const refreshTiktokToken = async (ctx: { workspaceId: string; id: string }) => {
         })
       } catch (error) {
         logger.error(error, "Failed to refresh TikTok token")
-        await tiktokIntegrationService.markTokenRefreshError(
-          ctx.id,
-          error instanceof Error ? error.message : String(error),
-        )
+        await tiktokIntegrationService.markTokenRefreshError({
+          id: ctx.id,
+          workspaceId: ctx.workspaceId,
+          error: error instanceof Error ? error.message : String(error),
+          isRevoked: isRevokedTokenError(error),
+        })
         throw new ChatbotXException("Failed to refresh TikTok token")
       }
     },

@@ -17,6 +17,12 @@ export const listSequenceFoldersPublicRequest = z.object({
     .describe(
       "Restrict to sub-folders of this parent. Omit for top-level folders.",
     ),
+  isTrash: z
+    .boolean()
+    .optional()
+    .describe(
+      "true for trash folders only, false to leave them out. Omit for both.",
+    ),
 })
 
 export const createSequenceFolderPublicRequest = z.object({

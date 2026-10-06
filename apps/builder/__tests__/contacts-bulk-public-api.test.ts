@@ -47,6 +47,7 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 const addContactTags = vi.fn()
+const removeContactTags = vi.fn()
 
 const deleteContact = vi.fn()
 
@@ -59,7 +60,10 @@ const enqueueBulkTagStats = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
   broadcastService: { findByIdOrName: findBroadcast },
   contactService: { deleteAndRecord: deleteContact },
-  tagService: { attachByNamesToContacts: addContactTags },
+  tagService: {
+    attachByNamesToContacts: addContactTags,
+    detachByNamesFromContacts: removeContactTags,
+  },
 }))
 vi.mock("@chatbotx.io/business/sequence", () => ({
   sequenceService: { assertOwned: assertSequenceOwned },
@@ -110,6 +114,29 @@ describe("POST /v1/contacts/bulk/tags", () => {
       names: ["VIP"],
     })
     expect(result).toEqual({ processed: 3, skippedContactIds: [] })
+  })
+})
+
+describe("POST /v1/contacts/bulk/tags/remove", () => {
+  const procedure = findProcedure("POST", "/v1/contacts/bulk/tags/remove")
+
+  test("detaches the named tags and reports skipped contact ids", async () => {
+    removeContactTags.mockResolvedValueOnce({
+      processedContactIds: ["1", "2"],
+      skippedContactIds: ["9"],
+    })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { contactIds: ["1", "2", "9"], tags: ["VIP", "Lead"] },
+    })
+
+    expect(removeContactTags).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactIds: ["1", "2", "9"],
+      names: ["VIP", "Lead"],
+    })
+    expect(result).toEqual({ processed: 2, skippedContactIds: ["9"] })
   })
 })
 

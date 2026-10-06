@@ -71,7 +71,12 @@ export function duplicatedOutcome({
   }
 }
 
-/** Step 8: persisted successfully — `warning` carries a follow-up failure, if any. */
+/**
+ * Step 8: persisted successfully — `warning` carries a follow-up failure, if
+ * any. `integrationId` is `undefined` only in the rare case the post-connect
+ * row lookup itself failed (see `connectSessionCandidate`) — the channel is
+ * still live, it just can't be offered for coexist without that id.
+ */
 export function connectedOutcome({
   sourceId,
   name,
@@ -79,7 +84,7 @@ export function connectedOutcome({
   warning,
   coexistEligible,
 }: OutcomeIdentity & {
-  integrationId: string
+  integrationId: string | undefined
   warning: ConnectWarning | undefined
   coexistEligible: boolean
 }): ConnectActionResultWire {

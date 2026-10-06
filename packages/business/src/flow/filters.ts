@@ -21,7 +21,7 @@ type FlowNodeLike = {
   }
 }
 
-type FlowWithNodeVersions = {
+export type FlowWithNodeVersions = {
   flowVersions: Array<{ nodes: unknown }>
 }
 

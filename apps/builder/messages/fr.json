@@ -3318,7 +3318,8 @@
         "providerRejected": "Le fournisseur a rejeté cette demande.",
         "inProgress": "Une connexion est déjà en cours.",
         "unknown": "Une erreur s'est produite.",
-        "followUpFailed": "Configuration incomplète — terminez-la depuis les paramètres du canal."
+        "followUpFailed": "Configuration incomplète — terminez-la depuis les paramètres du canal.",
+        "webhookSubscribeFailed": "Connecté, mais l'abonnement au webhook a échoué — réessayez depuis les paramètres de connexion."
       },
       "sessionError": {
         "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
@@ -3444,6 +3445,7 @@
     "cancelEdit": "Annuler",
     "replaceAttachment": "Remplacer la pièce jointe",
     "addAttachment": "Ajouter une pièce jointe",
+    "reloadAttachment": "Recharger la pièce jointe",
     "failedToCopy": "Échec de la copie",
     "failedToPreviewImage": "Échec de l’aperçu de l’image",
     "loadingData": "Chargement des données...",
@@ -3613,13 +3615,7 @@
     "selectPage": {
       "noPagesTitle": "Aucune Page Facebook trouvée",
       "noPagesDescription": "Les Pages d’un Business Manager nécessitent un accès à celui-ci pendant la connexion. Reconnectez Messenger et accordez toutes les autorisations demandées.",
-      "noConnectablePagesTitle": "Aucune Page disponible à connecter",
-      "noConnectablePagesDescription": "Vous n’êtes pas administrateur de cette Page",
-      "bmLookupFailedTitle": "Certaines Pages du Business Manager peuvent manquer",
-      "bmLookupFailedDescription": "Reconnectez Messenger et accordez l’accès au Business Manager afin de répertorier les Pages qu’il gère.",
-      "loadFailed": "Impossible de charger vos Pages Facebook",
       "alreadyConnectedNote": "Cette Page est déjà connectée",
-      "notAdminNote": "Vous n’êtes pas administrateur de cette Page",
       "tryAgain": "Réessayer la connexion"
     },
     "title": "Facebook Messenger",

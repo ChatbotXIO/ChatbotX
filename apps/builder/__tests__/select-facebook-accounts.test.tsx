@@ -102,7 +102,13 @@ describe("SelectFacebookAccounts", () => {
 
   function renderAccounts(items: ConnectPickerItem[]) {
     act(() => {
-      root.render(<SelectFacebookAccounts items={items} workspaceId="ws-1" />)
+      root.render(
+        <SelectFacebookAccounts
+          items={items}
+          sessionId="session-1"
+          workspaceId="ws-1"
+        />,
+      )
     })
   }
 
@@ -138,7 +144,7 @@ describe("SelectFacebookAccounts", () => {
     )
   })
 
-  test("submitting a single selected item posts only { igId } to the instagram-via-facebook connect route — no token, no workspaceId", async () => {
+  test("submitting a single selected item posts only { sessionId, igId } to the instagram-via-facebook connect route — no token, no workspaceId", async () => {
     mockConnectViaApi.mockResolvedValue({
       kind: "outcome",
       outcome: {
@@ -164,16 +170,16 @@ describe("SelectFacebookAccounts", () => {
     })
 
     expect(mockConnectViaApi).toHaveBeenCalledTimes(1)
-    // Ids only, and the channel's own route — no token, no workspaceId.
+    // Session and account IDs only, and the channel's own route — no token or workspaceId.
     expect(mockConnectViaApi.mock.calls[0]?.[0]).toMatchObject({
       // The registry entry itself — it now carries the typed oRPC procedure,
       // so identity is what pins the channel, not a URL string.
       route: CONNECT_CHANNEL_REGISTRY.instagram.connectRoute,
-      body: { igId: "ig-selectable" },
+      body: { sessionId: "session-1", igId: "ig-selectable" },
     })
     expect(
       Object.keys(mockConnectViaApi.mock.calls[0]?.[0]?.body ?? {}),
-    ).toEqual(["igId"])
+    ).toEqual(["sessionId", "igId"])
 
     await act(async () => {
       await Promise.resolve()

@@ -45,7 +45,11 @@ export type ConnectFailureReason =
   (typeof CONNECT_FAILURE_REASONS)[keyof typeof CONNECT_FAILURE_REASONS]
 
 /** Follow-up after commit failed; the row exists. */
-export const CONNECT_WARNINGS = { followUpFailed: "followUpFailed" } as const
+export const CONNECT_WARNINGS = {
+  followUpFailed: "followUpFailed",
+  /** Connected, but the provider's webhook subscription failed — the FSM marked the connection `degraded`. */
+  webhookSubscribeFailed: "webhookSubscribeFailed",
+} as const
 export type ConnectWarning =
   (typeof CONNECT_WARNINGS)[keyof typeof CONNECT_WARNINGS]
 

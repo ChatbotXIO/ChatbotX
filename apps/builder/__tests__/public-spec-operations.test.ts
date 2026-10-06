@@ -894,6 +894,8 @@ describe("public API spec — declared codes match what the mapper throws", () =
     "invalidRequestData",
     // Thrown by `validationException` in @chatbotx.io/business.
     "validation",
+    // Default code of a `ChatbotXException` thrown without one.
+    "systemError",
     "tooManyRequests",
     "INTERNAL_SERVER_ERROR",
   ]
@@ -903,6 +905,7 @@ describe("public API spec — declared codes match what the mapper throws", () =
     routePath: string
     method: string
     codes: string[]
+    statuses: Record<string, number | undefined>
   }
 
   function collectErrorMaps(
@@ -925,6 +928,11 @@ describe("public API spec — declared codes match what the mapper throws", () =
         routePath: def.route?.path ?? "",
         method: (def.route?.method ?? "POST").toUpperCase(),
         codes: Object.keys(def.errorMap),
+        statuses: Object.fromEntries(
+          Object.entries(
+            def.errorMap as Record<string, { status?: number }>,
+          ).map(([code, entry]) => [code, entry?.status]),
+        ),
       })
       return
     }
@@ -1005,5 +1013,100 @@ describe("public API spec — declared codes match what the mapper throws", () =
       (proc) => new Set(proc.codes).size !== proc.codes.length,
     )
     expect(duplicated).toEqual([])
+  })
+
+  // Each case pins a code the handler (or the service it calls) really throws,
+  // so a refactor that drops it from the route's map is caught here.
+  // Each case pins a code AND the status the handler (or the service it calls)
+  // really throws: oRPC treats a declared code with a different status as
+  // undefined too, so both have to match.
+  test("routes declare the specific codes their services throw, with the thrown status", () => {
+    const creationCodes = {
+      messagingAdPageMissing: 400,
+      messagingAdInstagramActorMissing: 400,
+      messagingAdWhatsappPageRequired: 400,
+      messagingAdWhatsappPhoneMissing: 400,
+      invalidRequest: 400,
+    }
+    const expected: Record<string, Record<string, number>> = {
+      "ads.createCampaign": {
+        notFound: 404,
+        messagingAdsReconnectRequired: 409,
+        ...creationCodes,
+      },
+      "ads.retryCampaign": {
+        notFound: 404,
+        messagingAdNotRetryable: 409,
+        messagingAdsReconnectRequired: 409,
+        ...creationCodes,
+      },
+      "ads.publishCampaign": { notFound: 404, messagingAdNotPublishable: 409 },
+      "ads.pauseCampaign": {
+        notFound: 404,
+        messagingAdsReconnectRequired: 409,
+      },
+      "ads.deleteCampaign": {
+        notFound: 404,
+        messagingAdsReconnectRequired: 409,
+      },
+      "ads.listCampaignAdAccounts": { messagingAdsReconnectRequired: 409 },
+      "ads.uploadCampaignVideo": { messagingAdsReconnectRequired: 409 },
+      "ads.listCampaignMessengerPages": { invalidRequest: 400 },
+      "products.createMetaCatalog": {
+        notFound: 404,
+        metaCatalogReconnectRequired: 400,
+      },
+      "products.selectMetaCatalog": { metaCatalogReconnectRequired: 400 },
+      "products.syncMetaCatalog": { metaCatalogReconnectRequired: 400 },
+      "contacts.create": { notFound: 404, invalidCustomFieldValue: 400 },
+      "contacts.upsert": { notFound: 404, phoneExists: 422 },
+      "contacts.update": { invalidCustomFieldValue: 400 },
+      "contacts.setCustomField": { invalidCustomFieldValue: 400 },
+      "contacts.applyCustomFieldOperations": { invalidCustomFieldValue: 400 },
+      "sequences.create": { notFound: 404 },
+      "botFields.create": {
+        notFound: 404,
+        invalidFieldOperation: 400,
+        invalidCustomFieldValue: 400,
+      },
+      "botFields.set": {
+        invalidFieldOperation: 400,
+        invalidCustomFieldValue: 400,
+      },
+      "botFields.setMany": { invalidFieldOperation: 400 },
+      "botFields.delete": { templateAllowDeleteViolation: 400 },
+    }
+    const byPath = new Map(procedures.map((proc) => [proc.path, proc]))
+    const wrong = Object.entries(expected).flatMap(([path, codes]) => {
+      const proc = byPath.get(path)
+      if (!proc) {
+        return [{ path, code: "<operation not found>" }]
+      }
+      return Object.entries(codes)
+        .filter(([code, status]) => proc.statuses[code] !== status)
+        .map(([code, status]) => ({
+          path,
+          code,
+          expected: status,
+          declared: proc.statuses[code],
+        }))
+    })
+
+    expect(wrong).toEqual([])
+  })
+
+  test("no-op routes do not promise a 404 they never return", () => {
+    // `analytics.resetFlowStats` keeps `notFound`: the spec guard above requires
+    // it on every DELETE; its description states that an unknown id is a no-op.
+    const noOp = [
+      "analytics.commentAutomationReplyStats",
+      "analytics.commentAutomationUserComments",
+      "analytics.commentAutomationBotReplies",
+      "analytics.commentAutomationErrors",
+    ]
+    const byPath = new Map(procedures.map((proc) => [proc.path, proc]))
+    expect(
+      noOp.filter((path) => byPath.get(path)?.codes.includes("notFound")),
+    ).toEqual([])
   })
 })

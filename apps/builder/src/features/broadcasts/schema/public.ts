@@ -38,10 +38,19 @@ export const publicBroadcastContactResource = z.object({
   channel: channelTypes,
   errorContent: z.string().nullable(),
   occurredAt: z.string(),
+  conversationId: z
+    .string()
+    .describe(
+      "Conversation of this contact inbox. Use it with `messages.create` to reply.",
+    ),
 })
 
 export const publicListBroadcastContactsResponse = z.object({
   data: z.array(publicBroadcastContactResource),
+  total: z
+    .number()
+    .int()
+    .describe("Number of recipients that reached this event, across pages."),
   pageCount: z.number().int(),
 })
 

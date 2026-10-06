@@ -881,7 +881,8 @@
         "providerRejected": "Provayder bu sorğunu rədd etdi.",
         "inProgress": "Qoşulma artıq davam edir.",
         "unknown": "Xəta baş verdi.",
-        "followUpFailed": "Quraşdırma tamamlanmayıb. Kanal parametrlərində quraşdırmanı tamamlayın."
+        "followUpFailed": "Quraşdırma tamamlanmayıb. Kanal parametrlərində quraşdırmanı tamamlayın.",
+        "webhookSubscribeFailed": "Qoşuldu, lakin webhook abunəliyi uğursuz oldu — qoşulma parametrlərindən yenidən cəhd edin."
       },
       "sessionError": {
         "sessionExpired": "Sessiyanızın vaxtı bitib. Yenidən qoşulun.",
@@ -3686,6 +3687,7 @@
     "cancelEdit": "Ləğv et",
     "replaceAttachment": "Qoşmanı əvəz et",
     "addAttachment": "Qoşma əlavə et",
+    "reloadAttachment": "Əlavəni yenidən yüklə",
     "failedToCopy": "Kopyalamaq mümkün olmadı",
     "failedToPreviewImage": "Şəklin önbaxışını göstərmək mümkün olmadı",
     "loadingData": "Məlumatlar yüklənir...",
@@ -3855,13 +3857,7 @@
     "selectPage": {
       "noPagesTitle": "Facebook səhifəsi tapılmadı",
       "noPagesDescription": "Business Manager daxilindəki səhifələr üçün qoşulma zamanı Business Manager-ə giriş icazəsi tələb olunur. Messenger-i yenidən qoşun və tələb olunan bütün icazələri verin.",
-      "noConnectablePagesTitle": "Qoşmaq üçün əlçatan səhifə yoxdur",
-      "noConnectablePagesDescription": "Siz bu səhifənin administratoru deyilsiniz",
-      "bmLookupFailedTitle": "Business Manager səhifələri çatışmaya bilər",
-      "bmLookupFailedDescription": "Business Manager vasitəsilə idarə olunan səhifələrin siyahıda görünməsi üçün Messenger-i yenidən qoşun və Business Manager-ə giriş icazəsi verin.",
-      "loadFailed": "Facebook səhifələrinizi yükləmək mümkün olmadı",
       "alreadyConnectedNote": "Bu səhifə artıq qoşulub",
-      "notAdminNote": "Siz bu səhifənin administratoru deyilsiniz",
       "tryAgain": "Yenidən qoşmağa cəhd et"
     },
     "title": "Facebook Messenger",

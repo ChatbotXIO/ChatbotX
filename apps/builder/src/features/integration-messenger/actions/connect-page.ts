@@ -1,208 +1,108 @@
 import "server-only"
 
 import {
-  buildContext,
   messengerIntegrationService,
   tagSyncService,
 } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
+import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
-import {
-  getUserPages,
-  integration as integrationMessenger,
-  logMessengerWelcomeProfile,
-} from "@chatbotx.io/integration-messenger"
-import {
-  exchangeLongLivedToken,
-  subscribePageToAppWebhook,
-} from "@chatbotx.io/integration-messenger/apis/page"
-import { AuthType } from "@chatbotx.io/sdk"
+import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
+import { runBrandingFollowUps } from "@/features/channel-connect/lib/branding-follow-ups"
+import { connectSessionCandidate } from "@/features/channel-connect/lib/connect-session-candidate"
 import type { ResolvedConnectSession } from "@/features/channel-connect/lib/resolve-connect-session"
-import {
-  type ConnectCandidateLookup,
-  runConnectSequence,
-  selectableCandidate,
-  unselectableCandidate,
-} from "@/features/channel-connect/lib/run-connect-sequence"
 import type { ConnectActionResultWire } from "@/features/channel-connect/schema"
-import { BRANDING_TITLE } from "@/features/integration-webchat/lib"
-import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
-import { FB_MESSENGER_PENDING_AUTH_COOKIE } from "@/lib/facebook-pending-auth"
-import { persistIntegrationUserInfo } from "@/lib/integration-user-info"
-
-type MessengerSession = ResolvedConnectSession<"messenger">
-
-type MessengerPageCandidate = {
-  pageId: string
-  name: string
-  pageAccessToken: string
-}
 
 /**
- * One Graph call per request, no cache — provider lists carry page access
- * tokens (plan §4.9).
+ * Connects one Facebook page from a `ConnectSession` in `awaiting_selection`,
+ * as a plain server function so both transports can call it: the oRPC route
+ * the batch picker posts to (`api/connect.ts`, `CONNECT_CONCURRENCY` at a
+ * time) and the server action kept for any non-picker caller.
+ *
+ * Replaces the pending-auth-cookie skeleton (`runConnectSequence` + `getUserPages`
+ * re-fetch + `messengerIntegrationService.connectPage` — all three names
+ * removed by this migration, kept here only as historical context) with
+ * the unified `ConnectionService.connectTargets`, which already does the
+ * lookup/duplicate/quota/FSM/webhook-subscribe work generically. This
+ * function's own job shrinks to: resolve session context (workspace,
+ * branding) via `connectSessionCandidate`, then run Messenger's own
+ * post-connect follow-ups (persistent-menu branding, workspace-logo push,
+ * tag-sync enqueue) that `connectTargets` deliberately does not — those are
+ * product features layered on top of the generic connect, not part of it.
+ *
+ * Two deliberate, minor, display-only scope reductions versus the old flow
+ * (both accepted rather than adding more plumbing to a generic connect
+ * path for a legacy-only need):
+ * - No `persistIntegrationUserInfo` call: that recorded the connecting
+ *   Facebook user's own identity (name/avatar) from the *user-level* OAuth
+ *   token. The unified session model only retains each candidate's own
+ *page-level* token past `listCandidates`, so that identity isn't
+ *   available here.
+ * - `addBranding` pushes the persistent-menu entry straight to the Graph
+ *   API; `runMessengerFollowUps` now also seeds `IntegrationMessenger
+ *   .persistentMenus` with that same entry once the push succeeds (only
+ *   when the row has no menu yet — a fresh connect always does), matching
+ *   the old `connectPage({persistentMenus: [brandingMenuEntry]})`
+ *   insert-time value without needing it at insert time.
  */
-async function findConnectablePage({
-  session,
-  sourceId,
-}: {
-  session: MessengerSession
-  sourceId: string
-}): Promise<ConnectCandidateLookup<MessengerPageCandidate>> {
-  const { pages } = await getUserPages(
-    session.pendingAuth.userToken,
-    session.pendingAuth.version,
-  )
-  const page = pages.find((candidate) => candidate.id === sourceId)
-
-  if (!(page?.isConnectable && page.access_token)) {
-    return unselectableCandidate(page?.name)
-  }
-
-  return selectableCandidate({
-    pageId: page.id,
-    name: page.name,
-    pageAccessToken: page.access_token,
-  })
-}
-
-async function isPageConnected(pageId: string): Promise<boolean> {
-  const connectedPageIds =
-    await messengerIntegrationService.findConnectedPageIds([pageId])
-  return connectedPageIds.has(pageId)
-}
-
-async function subscribeAndPersistPage({
-  session,
-  candidate,
-  actorUserId,
-}: {
-  session: MessengerSession
-  candidate: MessengerPageCandidate
-  actorUserId: string
-}) {
-  const { pendingAuth, workspace, platformOwnerId, brandingMenuEntry } = session
-  const messengerSettings = session.credential.config
-  const { pageId, name: pageName } = candidate
-
-  const longLivedToken = await exchangeLongLivedToken(
-    messengerSettings,
-    candidate.pageAccessToken,
-  )
-  await subscribePageToAppWebhook({
-    pageId,
-    accessToken: longLivedToken,
-    version: messengerSettings.version,
-  })
-
-  const auth: MessengerAuthValue = {
-    authType: AuthType.oauth2,
-    clientId: messengerSettings.clientId,
-    clientSecret: messengerSettings.clientSecret,
-    redirectUrl: "",
-    version: messengerSettings.version,
-    tokens: {
-      accessToken: longLivedToken,
-    },
-    metadata: {
-      pageId,
-      pageName,
-      version: messengerSettings.version,
-    },
-  }
-
-  const { integrationId, integration } =
-    await messengerIntegrationService.connectPage({
-      actorUserId,
-      ownerId: platformOwnerId,
-      workspaceId: workspace.id,
-      page: { pageId, pageName },
-      auth,
-      persistentMenus: [brandingMenuEntry],
-    })
-
-  return {
-    integrationId,
-    runFollowUps: async () => {
-      const brandingCtx = await buildContext({
-        workspaceId: workspace.id,
-        integrationType: "messenger",
-        integration: { ...integration, auth },
-      })
-
-      await integrationMessenger.runChannelHandler("bot", "addBranding", {
-        ctx: brandingCtx,
-        title: BRANDING_TITLE,
-        url: brandingMenuEntry.url,
-      })
-
-      await logMessengerWelcomeProfile({
-        ctx: brandingCtx,
-        reason: "pageConnected",
-      })
-
-      await updateWorkspaceLogo({
-        id: workspace.id,
-        integration: integrationMessenger,
-        ctx: brandingCtx,
-      })
-
-      await persistIntegrationUserInfo({
-        workspaceId: workspace.id,
-        userId: pendingAuth.userId,
-        userName: pendingAuth.userName,
-        userAccessToken: pendingAuth.userToken,
-        avatarUrl: pendingAuth.userAvatarUrl,
-        persist: (userInfo) =>
-          messengerIntegrationService.updateUserInfo({
-            id: integrationId,
-            workspaceId: workspace.id,
-            userInfo,
-          }),
-      })
-
-      await tagSyncService.enqueueChannelScan({
-        workspaceId: workspace.id,
-        channelType: channelTypes.enum.messenger,
-        integrationId,
-      })
-    },
-  }
-}
-
-/**
- * Connects a single Facebook page, as a plain server function so both
- * transports can call it: the oRPC route the picker posts to in parallel
- * (`api/connect.ts`) and the server action kept for any non-picker caller.
- * The pending-auth cookie is the only source of the user token / workspace,
- * the id arrives on the wire alone, and every failure — session-level or
- * item-level — comes back as a typed `ConnectActionResult` instead of a
- * thrown exception. The skeleton around the Messenger-specific steps is
- * shared with both Instagram cores via `runConnectSequence`.
- */
-export function connectMessengerPage({
+export async function connectMessengerPage({
   userId,
+  sessionId,
   pageId,
 }: {
   userId: string
+  sessionId: string
   pageId: string
 }): Promise<ConnectActionResultWire> {
-  return runConnectSequence({
-    sourceId: pageId,
-    session: {
-      userId,
-      cookieName: FB_MESSENGER_PENDING_AUTH_COOKIE,
-      credentialType: "messenger",
-      brandingChannel: "messenger",
-    },
-    lookUpCandidate: findConnectablePage,
-    isAlreadyConnected: isPageConnected,
-    connect: ({ session, candidate }) =>
-      subscribeAndPersistPage({ session, candidate, actorUserId: userId }),
-    logMessages: {
-      followUpFailed:
-        "Messenger connect follow-up failed after the page was connected",
-      failed: "Failed to connect a Messenger page",
-    },
+  return await connectSessionCandidate({
+    userId,
+    sessionId,
+    targetId: pageId,
+    provider: "messenger",
+    credentialType: "messenger",
+    brandingChannel: "messenger",
+    findRow: (inboxId) => messengerIntegrationService.findByInboxId(inboxId),
+    runFollowUps: runMessengerFollowUps,
+    followUpFailureMessage:
+      "Messenger connect follow-up failed after the page was connected",
+    connectFailureLog: "Failed to connect a Messenger page",
   })
+}
+
+async function runMessengerFollowUps({
+  session,
+  row: messengerRow,
+}: {
+  session: ResolvedConnectSession
+  row: IntegrationMessengerModel
+}): Promise<void> {
+  const auth = messengerRow.auth as MessengerAuthValue
+  const integrationRow = { ...messengerRow, auth }
+
+  const results = await Promise.allSettled([
+    runBrandingFollowUps({
+      session,
+      integrationRow,
+      integration: integrationMessenger,
+      integrationType: "messenger",
+      persistBrandingMenu: messengerRow.persistentMenus.length
+        ? undefined
+        : (entry) =>
+            messengerIntegrationService.seedPersistentMenu({
+              id: messengerRow.id,
+              entry,
+            }),
+    }),
+    tagSyncService.enqueueChannelScan({
+      workspaceId: session.workspace.id,
+      channelType: channelTypes.enum.messenger,
+      integrationId: messengerRow.id,
+    }),
+  ])
+  const failed = results.find(
+    (result): result is PromiseRejectedResult => result.status === "rejected",
+  )
+  if (failed) {
+    throw failed.reason
+  }
 }

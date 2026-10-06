@@ -13,9 +13,11 @@ import { connectActionResultSchemaDefault } from "@/features/channel-connect/sch
  * "not an admin" state, only selectable vs. already-connected.
  */
 export function SelectFacebookAccounts({
+  sessionId,
   workspaceId,
   items,
 }: {
+  sessionId: string
   workspaceId: string
   items: ConnectPickerItem[]
 }) {
@@ -23,7 +25,7 @@ export function SelectFacebookAccounts({
   const connectOne = (item: ConnectPickerItem) =>
     connectViaApi({
       route: CONNECT_CHANNEL_REGISTRY.instagram.connectRoute,
-      body: { igId: item.id },
+      body: { sessionId, igId: item.id },
       parse: (data) => connectActionResultSchemaDefault.parse(data),
       item,
     })

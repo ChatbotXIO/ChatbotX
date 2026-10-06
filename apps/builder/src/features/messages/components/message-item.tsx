@@ -39,6 +39,7 @@ import {
   PhoneIcon,
   PhoneOffIcon,
   ReplyIcon,
+  RotateCwIcon,
   ThumbsUp,
 } from "lucide-react"
 import Image from "next/image"
@@ -46,7 +47,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
-import { useAttachmentUrl } from "@/features/attachments/utils"
+import { useAttachmentSource } from "@/features/attachments/utils"
 import {
   getThreadControlActivity,
   getThreadControlContextCard,
@@ -444,7 +445,7 @@ const RenderAttachments = (props: {
 
 const RenderImageGridItem = (props: { attachment: AttachmentResource }) => {
   const { attachment } = props
-  const attachmentUrl = useAttachmentUrl(attachment)
+  const { url: attachmentUrl, onError } = useAttachmentSource(attachment)
   const attachmentLabel =
     attachment.name || attachment.originPath || "Attachment"
 
@@ -460,12 +461,13 @@ const RenderImageGridItem = (props: { attachment: AttachmentResource }) => {
   }
 
   return (
-    <Link href={attachmentUrl} target="_blank">
+    <Link href={attachmentUrl} prefetch={false} target="_blank">
       <div className="relative aspect-square overflow-hidden rounded-lg">
         <Image
           alt={attachmentLabel}
           className="h-full w-full object-cover"
           height={120}
+          onError={onError}
           src={attachmentUrl}
           unoptimized
           width={120}
@@ -480,20 +482,25 @@ const RenderImageAttachment = (props: {
   attachment: AttachmentResource
   attachmentUrl: string
   attachmentLabel: string
+  onError: () => void
 }) => {
-  const { attachment, attachmentUrl, attachmentLabel } = props
+  const { attachment, attachmentUrl, attachmentLabel, onError } = props
 
   if (!(attachment.width && attachment.height)) {
+    // No stored dimensions (e.g. a media-library send): the bubble sizes to its
+    // content, so the frame needs an explicit width — max-width plus an aspect
+    // ratio alone collapses to 0×0 and the message looks missing.
     return (
-      <Link href={attachmentUrl} target="_blank">
+      <Link href={attachmentUrl} prefetch={false} target="_blank">
         <div
-          className="relative max-w-full overflow-hidden rounded-xl sm:max-w-80"
+          className="relative w-80 max-w-full overflow-hidden rounded-xl"
           style={{ aspectRatio: "4/3" }}
         >
           <Image
             alt={attachmentLabel}
             className="object-contain"
             fill
+            onError={onError}
             src={attachmentUrl}
             unoptimized
           />
@@ -502,11 +509,12 @@ const RenderImageAttachment = (props: {
     )
   }
   return (
-    <Link href={attachmentUrl} target="_blank">
+    <Link href={attachmentUrl} prefetch={false} target="_blank">
       <Image
         alt={attachmentLabel}
         className="max-w-full rounded-xl sm:max-w-80"
         height={attachment.height}
+        onError={onError}
         src={attachmentUrl}
         unoptimized
         width={attachment.width}
@@ -517,7 +525,14 @@ const RenderImageAttachment = (props: {
 
 const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
   const { attachment } = props
-  const attachmentUrl = useAttachmentUrl(attachment)
+  const t = useTranslations("messages")
+  const {
+    url: attachmentUrl,
+    onError,
+    isRecovering,
+    fallbackUrl,
+    retryUrl,
+  } = useAttachmentSource(attachment)
   const attachmentLabel =
     attachment.name || attachment.originPath || "Attachment"
 
@@ -537,6 +552,7 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
           attachment={attachment}
           attachmentLabel={attachmentLabel}
           attachmentUrl={attachmentUrl}
+          onError={onError}
         />
       )
     case "gif":
@@ -547,12 +563,18 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
           <video
             autoPlay
             className="max-w-full rounded-xl sm:max-w-80"
+            key={attachmentUrl}
             loop
             muted
+            onError={onError}
             playsInline
           >
             <track default kind="captions" />
-            <source src={attachmentUrl} type={attachment.mimeType} />
+            <source
+              onError={onError}
+              src={attachmentUrl}
+              type={attachment.mimeType}
+            />
           </video>
         )
       }
@@ -561,31 +583,79 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
           attachment={attachment}
           attachmentLabel={attachmentLabel}
           attachmentUrl={attachmentUrl}
+          onError={onError}
         />
       )
     case "video":
       return (
-        <video controls height="240" preload="none" width="320">
+        // Keyed by URL: a media element ignores a swapped <source>, so the
+        // fallback URL only takes effect on a fresh element. With
+        // `preload="none"` a load failure only surfaces after the user pressed
+        // Play, so the recovering element loads and plays on its own rather
+        // than waiting for another click.
+        <video
+          autoPlay={isRecovering}
+          controls
+          height="240"
+          key={attachmentUrl}
+          onError={onError}
+          preload={isRecovering ? "auto" : "none"}
+          width="320"
+        >
           <track default kind="captions" />
-          <source src={attachmentUrl} type={attachment.mimeType} />
+          <source
+            onError={onError}
+            src={attachmentUrl}
+            type={attachment.mimeType}
+          />
         </video>
       )
     case "audio":
       return (
         // `preload="metadata"` (not "none") so the player shows the clip's
         // total duration at rest instead of 0:00 / 0:00.
-        <audio controls preload="metadata">
+        <audio
+          controls
+          key={attachmentUrl}
+          onError={onError}
+          preload="metadata"
+        >
           <track default kind="captions" />
-          <source src={attachmentUrl} type={attachment.mimeType} />
+          <source
+            onError={onError}
+            src={attachmentUrl}
+            type={attachment.mimeType}
+          />
         </audio>
       )
     default:
       return (
+        // A download link fires no load error, so it can't walk the fallback
+        // chain on its own: it always goes through the re-signing fallback,
+        // and the reload action re-fetches a file gone from storage. Links that
+        // can reach the media proxy never prefetch — a prefetch would run it.
         <div className="flex items-center gap-2 overflow-hidden rounded-xl bg-secondary p-3 text-sm">
           <PaperclipIcon className="size-5 flex-none" />
-          <Link className="truncate" href={attachmentUrl}>
+          <Link
+            className="truncate"
+            href={fallbackUrl ?? attachmentUrl}
+            prefetch={false}
+          >
             {attachmentUrl}
           </Link>
+          {retryUrl ? (
+            <Link
+              aria-label={t("reloadAttachment")}
+              className="flex-none text-muted-foreground hover:text-foreground"
+              href={retryUrl}
+              prefetch={false}
+              rel="noopener noreferrer"
+              target="_blank"
+              title={t("reloadAttachment")}
+            >
+              <RotateCwIcon className="size-4" />
+            </Link>
+          ) : null}
         </div>
       )
   }

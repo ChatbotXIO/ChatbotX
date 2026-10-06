@@ -227,7 +227,7 @@ export const connectionsPublicRouter = {
       path: "/v1/connections/{id}",
       summary: "Disconnect connection",
       description:
-        "Best-effort provider-side teardown (revoke/unsubscribe), then marks the connection disconnected. Never fails the local disconnect on an upstream API error.",
+        "Best-effort provider-side teardown (revoke/unsubscribe) that never fails the local disconnect on an upstream API error, then marks the connection disconnected — a failure to persist that locally still rejects the request.",
       tags: ["Connections"],
     })
     .input(getConnectionRequest)
@@ -332,7 +332,7 @@ export const connectSessionsPublicRouter = {
       path: "/v1/connect-sessions/{id}/targets",
       summary: "Connect selected targets of awaiting_selection session",
       description:
-        "Finishes a multi-account OAuth connect: claims and connects each requested target, one outcome per target (`connected`/`duplicated`/`limitReached`/`failed` — never throws for a single target's failure). 400 if the session is not `awaiting_selection`.",
+        "Finishes a multi-account OAuth connect: claims and connects each requested target, one outcome per target (`connected`/`duplicated`/`limitReached`/`failed` — never throws for a single target's failure). A `connected` outcome whose matching `connections[]` entry has `status: \"degraded\"` means the connection was created but the provider's webhook subscription failed (see `detail`); retry via the connection's `/verify` or `/refresh` endpoint. 400 if the session is not `awaiting_selection`.",
       tags: ["Connections"],
     })
     .input(connectSessionTargetsRequest)

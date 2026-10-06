@@ -9,13 +9,20 @@ import {
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import { parsePagination } from "@chatbotx.io/database/utils"
+import type { AuthValue } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
+import {
+  CONNECTION_STORE_BINDINGS,
+  type ConnectionQuotaConsumption,
+  upsertConnectionRow,
+} from "../connection"
 import { connectionStateService } from "../connection/state-service"
-import { notFoundException } from "../errors"
+import { channelLimitReachedException, notFoundException } from "../errors"
 import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
+import { quotaEnforcementService } from "../quota-enforcement/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import { workspaceService } from "../workspace"
 
@@ -95,10 +102,17 @@ class IntegrationWebchatService extends BaseService {
    * `(workspaceId, channel, sourceId)` unique constraint satisfied.
    *
    * Callers installing from a template MUST catch
-   * `channelLimitReachedException` specifically (thrown by
-   * `inboxService.create` when the target workspace's channel quota is
-   * exhausted) and degrade to a per-webchat warn+skip — never let it abort
-   * the whole install transaction.
+   * `channelLimitReachedException` specifically — thrown either by the
+   * upfront `quotaEnforcementService.isAtLimit` guard below (the common
+   * case: quota already exhausted before any row is touched) or, on a rare
+   * race, by `upsertConnectionRow`'s `connectionStateService.transition`
+   * call once the target workspace's channel quota is exhausted — and
+   * degrade to a per-webchat warn+skip, never letting it abort the whole
+   * install transaction. This is why `create` does NOT wrap itself in
+   * `withQuotaCompensation`'s own `db.transaction`: it runs inside a
+   * CALLER-SUPPLIED `tx` (the bulk install loop shares one transaction
+   * across many webchats), so the exception must propagate to that
+   * caller's existing per-item catch untouched.
    */
   async create(
     props: {
@@ -109,6 +123,23 @@ class IntegrationWebchatService extends BaseService {
     tx: DatabaseClient,
   ): Promise<IntegrationWebchatModel> {
     const { workspaceId, ownerId, data } = props
+
+    // Guard against inserting an Inbox + IntegrationWebchat + disconnected
+    // Connection row for a webchat the owner can never actually use: without
+    // this pre-check, a quota-exhausted `connect.completed` transition (see
+    // `upsertConnectionRow` below) still throws AFTER those rows already
+    // landed in this caller-owned `tx`, and the template bulk-install loop's
+    // per-item catch (`webchatsAdapter.insert`) swallows that error to keep
+    // installing the rest — leaving an orphaned, never-counted webchat
+    // behind instead of rolling it back.
+    if (
+      await quotaEnforcementService.isAtLimit({
+        userId: ownerId,
+        metric: "channels",
+      })
+    ) {
+      throw channelLimitReachedException()
+    }
     const webchatId = createId()
     const welcomeFlowId = await this.resolveWelcomeFlowId(
       data.welcomeFlowId ?? null,
@@ -126,28 +157,53 @@ class IntegrationWebchatService extends BaseService {
         name: data.name,
         sourceId: webchatId,
       },
+      skipQuota: true,
     })
 
-    const [created] = await tx
-      .insert(integrationWebchatModel)
-      .values({
-        id: webchatId,
-        workspaceId,
-        inboxId: inbox.id,
-        auth: data.auth,
-        name: data.name,
+    const quotaConsumption: ConnectionQuotaConsumption = {
+      consumed: false,
+      workspaceUsageIncremented: false,
+    }
+
+    // `id === inboxId === sourceId` — the webchat binding's
+    // `identityColumn: "id"` (`store-bindings.ts`) sets `IntegrationWebchat
+    // .id` to this same `webchatId` on insert.
+    await upsertConnectionRow({
+      tx,
+      workspaceId,
+      provider: "webchat",
+      kind: "channel",
+      descriptor: { sourceId: webchatId, displayName: data.name },
+      auth: data.auth as unknown as AuthValue,
+      extraConfig: {
         enable: data.enable,
         authorizedDomains: data.authorizedDomains,
-        conversationStarters: data.conversationStarters as never,
-        persistentMenus: data.persistentMenus as never,
+        conversationStarters: data.conversationStarters,
+        persistentMenus: data.persistentMenus,
         brandColor: data.brandColor,
         hideHeader: data.hideHeader,
         showLogo: data.showLogo,
         hideMessageInput: data.hideMessageInput,
         customCss: data.customCss,
         welcomeFlowId: welcomeFlowId ?? null,
-      })
-      .returning()
+      },
+      existing: undefined,
+      store: CONNECTION_STORE_BINDINGS.webchat as NonNullable<
+        (typeof CONNECTION_STORE_BINDINGS)["webchat"]
+      >,
+      ownerId,
+      quotaConsumption,
+      inboxId: inbox.id,
+    })
+
+    const created = await tx.query.integrationWebchatModel.findFirst({
+      where: { inboxId: inbox.id },
+    })
+    if (!created) {
+      throw new Error(
+        `integrationWebchatService.create: IntegrationWebchat row missing for inbox ${inbox.id}`,
+      )
+    }
 
     return created
   }

@@ -149,7 +149,7 @@ export const whatsappCallsPublicRouter = {
       path: "/v1/whatsapp/calls/{id}/transcript",
       summary: "Get WhatsApp call transcript",
       description:
-        "Returns the call transcript as timestamped segments with speaker names. `segments` is empty when the call was not transcribed.",
+        "Returns the call transcript as timestamped segments (`start`/`end` in seconds). `segment.speaker` is a diarization label; map it to a name with `speakerNames`. `hasSpeakers` is false when the transcript has no diarization. `segments` is empty when the call has no segmented transcript.",
       tags: ["WhatsApp Calls"],
     })
     .input(callIdParam)

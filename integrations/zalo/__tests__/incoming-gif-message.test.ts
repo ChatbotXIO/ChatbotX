@@ -2,6 +2,9 @@ import { HttpResponse, http, server } from "@chatbotx.io/vitest-config/msw"
 import { describe, expect, test, vi } from "vitest"
 import { receiveMessage } from "../src/handlers/message/incoming-message"
 
+// Channel-scoped storage key the received media must land under.
+const CHANNEL_MEDIA_KEY = /^public\/zalo\/ws-1\/int-1\/2026\/10\/06\//
+
 const GIF_URL = "https://zgif-v2.zdn.vn/833031e40aa1e3ffbab0.gif"
 
 // Captured from production — Zalo does not document `user_send_gif`.
@@ -28,6 +31,7 @@ const USER_SEND_GIF_EVENT = {
 function buildCtx() {
   return {
     storagePrefix: "workspace-1",
+    mediaStoragePrefix: "public/zalo/ws-1/int-1/2026/10/06",
     uploader: { putObject: vi.fn(async () => undefined) },
     auth: { tokens: { accessToken: "oa-token" } },
   } as never
@@ -59,7 +63,11 @@ describe("zalo incoming GIF messages", () => {
 
     expect(result?.contact.sourceId).toBe("3234151001898787112")
     expect(result?.message.attachments).toEqual([
-      expect.objectContaining({ fileType: "image", mimeType: "image/gif" }),
+      expect.objectContaining({
+        fileType: "image",
+        mimeType: "image/gif",
+        originPath: expect.stringMatching(CHANNEL_MEDIA_KEY),
+      }),
     ])
   })
 

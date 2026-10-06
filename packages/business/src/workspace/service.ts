@@ -20,6 +20,7 @@ import { distributedLock, withCache } from "@chatbotx.io/redis"
 import { formatInTimeZone } from "date-fns-tz"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
+import { connectionStateService } from "../connection/state-service"
 import { contactInboxPostService } from "../contact-inbox-post/service"
 import { tenantService } from "../enterprise/tenant/service"
 import {
@@ -58,6 +59,11 @@ const WORKSPACE_SETTINGS_KEYS = [
   "smartResponseDelaySeconds",
   "capiLimitedDataUse",
   "logo",
+  "targetCountry",
+  "language",
+  "timezone",
+  "brandColor",
+  "developmentMode",
 ] as const
 
 class WorkspaceService extends BaseService {
@@ -96,6 +102,25 @@ class WorkspaceService extends BaseService {
           result ? [`workspaces:${result.id}`] : undefined,
       },
     )
+  }
+
+  /**
+   * The live workspace a user already owns — excludes a row mid soft-delete
+   * (`scheduledDeletionAt` set) so `createFirstWorkspace`'s idempotency
+   * check never hands back a workspace that's about to be purged, and
+   * orders by `id` (time-ordered) so a concurrent caller resolving "the"
+   * first workspace agrees deterministically even if the owner somehow
+   * ends up with more than one live row.
+   */
+  async findActiveByOwner(props: {
+    ownerId: string
+    tx?: DatabaseClient
+  }): Promise<WorkspaceModel | undefined> {
+    const { ownerId, tx = db } = props
+    return await tx.query.workspaceModel.findFirst({
+      where: { ownerId, scheduledDeletionAt: { isNull: true } },
+      orderBy: { id: "asc" },
+    })
   }
 
   // Auth gate — membership must take effect immediately on removal, so this
@@ -153,6 +178,11 @@ class WorkspaceService extends BaseService {
         | "smartResponseDelaySeconds"
         | "capiLimitedDataUse"
         | "logo"
+        | "targetCountry"
+        | "language"
+        | "timezone"
+        | "brandColor"
+        | "developmentMode"
       >
     >
   }): Promise<WorkspaceModel> {
@@ -430,13 +460,20 @@ class WorkspaceService extends BaseService {
           )
         })
 
-      await workspaceLifecycleService.disconnectWorkspaceChannels({
-        integrations,
-        teardownLevel: "disconnect",
-        reason: "workspace_purge",
-        workspaceId: fencedWorkspace.id,
-        ownerId: fencedWorkspace.ownerId,
-      })
+      const { pendingReleases } =
+        await workspaceLifecycleService.disconnectWorkspaceChannels({
+          integrations,
+          teardownLevel: "disconnect",
+          reason: "workspace_purge",
+          workspaceId: fencedWorkspace.id,
+          ownerId: fencedWorkspace.ownerId,
+        })
+      // No enclosing transaction owns this call — nothing to wait on, so
+      // release each deferred `channels` quota unit right away (same timing
+      // `transition` used before the `pendingRelease` handshake existed).
+      for (const pendingRelease of pendingReleases) {
+        await connectionStateService.releasePendingQuota(pendingRelease)
+      }
 
       // Drain high-volume child tables in small self-committing batches before
       // the FK cascade, so no single statement deletes millions of rows under lock.

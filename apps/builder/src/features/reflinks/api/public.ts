@@ -8,7 +8,11 @@ import {
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
-import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
+import {
+  publicListRequest,
+  publicListResponse,
+  publicSortRequest,
+} from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { createReflinkLinkBuilder } from "../lib/reflink-links"
 import { createReflinkRequest, updateReflinkRequest } from "../schema/action"
@@ -31,16 +35,28 @@ export const reflinksPublicRouter = {
       path: "/v1/ref-links",
       summary: "List ref links",
       description:
-        "Use this to find ref link ids before inspecting one with `reflinks.get` or changing one with `reflinks.update`. Returns ref links in this workspace.",
+        "Use this to find ref link ids before inspecting one with `reflinks.get` or changing one with `reflinks.update`. Returns ref links in this workspace, newest first unless `sort` is given. Filter by `keyword` (substring of the name).",
       tags: ["Ref Links"],
     })
-    .input(publicListRequest)
+    .input(
+      publicListRequest.extend({
+        keyword: z
+          .string()
+          .nullish()
+          .describe("Case-insensitive substring match on the ref link name."),
+        sort: publicSortRequest(["name", "createdAt", "updatedAt"]),
+      }),
+    )
     .output(publicListResponse(reflinkPublicResource))
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
       const [{ data, pageCount }, { buildLinks }] = await Promise.all([
-        reflinkService.list({ ...input, workspaceId }),
+        reflinkService.list({
+          ...input,
+          workspaceId,
+          sort: input.sort ?? [{ id: "createdAt", desc: true }],
+        }),
         createReflinkLinkBuilder(workspaceId),
       ])
       return {

@@ -3297,7 +3297,8 @@
         "providerRejected": "プロバイダーがこのリクエストを拒否しました。",
         "inProgress": "接続は既に進行中です。",
         "unknown": "問題が発生しました。",
-        "followUpFailed": "設定が未完了です。チャネル設定から完了してください。"
+        "followUpFailed": "設定が未完了です。チャネル設定から完了してください。",
+        "webhookSubscribeFailed": "接続しましたが、Webhookの登録に失敗しました。接続設定から再試行してください。"
       },
       "sessionError": {
         "sessionExpired": "セッションの有効期限が切れました。再接続してください。",
@@ -3423,6 +3424,7 @@
     "cancelEdit": "キャンセル",
     "replaceAttachment": "添付ファイルを置き換える",
     "addAttachment": "添付ファイルを追加",
+    "reloadAttachment": "添付ファイルを再読み込み",
     "failedToCopy": "コピーに失敗しました",
     "failedToPreviewImage": "画像のプレビューに失敗しました",
     "loadingData": "データを読み込んでいます...",
@@ -3592,13 +3594,7 @@
     "selectPage": {
       "noPagesTitle": "Facebookページが見つかりません",
       "noPagesDescription": "ビジネスマネージャ内のページに接続するには、ビジネスマネージャへのアクセス権が必要です。Messengerを再接続し、要求されたすべての権限を許可してください。",
-      "noConnectablePagesTitle": "接続できるページがありません",
-      "noConnectablePagesDescription": "あなたはこのページの管理者ではありません",
-      "bmLookupFailedTitle": "ビジネスマネージャのページが一部表示されていない可能性があります",
-      "bmLookupFailedDescription": "Messengerを再接続し、ビジネスマネージャへのアクセスを許可すると、ビジネスマネージャで管理されているページを一覧表示できます。",
-      "loadFailed": "Facebookページを読み込めませんでした",
       "alreadyConnectedNote": "このページはすでに接続されています",
-      "notAdminNote": "あなたはこのページの管理者ではありません",
       "tryAgain": "再接続を試す"
     },
     "title": "Facebook Messenger",

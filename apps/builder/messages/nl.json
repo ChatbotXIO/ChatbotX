@@ -3318,7 +3318,8 @@
         "providerRejected": "De provider heeft dit verzoek geweigerd.",
         "inProgress": "Verbinding is al bezig.",
         "unknown": "Er is iets misgegaan.",
-        "followUpFailed": "Instellen niet voltooid — rond dit af via de kanaalinstellingen."
+        "followUpFailed": "Instellen niet voltooid — rond dit af via de kanaalinstellingen.",
+        "webhookSubscribeFailed": "Verbonden, maar het webhook-abonnement is mislukt — probeer het opnieuw via de verbindingsinstellingen."
       },
       "sessionError": {
         "sessionExpired": "Je sessie is verlopen. Maak opnieuw verbinding.",
@@ -3444,6 +3445,7 @@
     "cancelEdit": "Annuleren",
     "replaceAttachment": "Bijlage vervangen",
     "addAttachment": "Bijlage toevoegen",
+    "reloadAttachment": "Bijlage opnieuw laden",
     "failedToCopy": "Kopiëren is mislukt",
     "failedToPreviewImage": "Voorbeeld van afbeelding laden is mislukt",
     "loadingData": "Gegevens laden...",
@@ -3613,13 +3615,7 @@
     "selectPage": {
       "noPagesTitle": "Geen Facebook-pagina's gevonden",
       "noPagesDescription": "Voor pagina's in Bedrijfsmanager is tijdens het koppelen toegang tot Bedrijfsmanager vereist. Koppel Messenger opnieuw en verleen alle gevraagde machtigingen.",
-      "noConnectablePagesTitle": "Geen pagina's beschikbaar om te koppelen",
-      "noConnectablePagesDescription": "U bent geen beheerder van deze pagina",
-      "bmLookupFailedTitle": "Pagina's uit Bedrijfsmanager ontbreken mogelijk",
-      "bmLookupFailedDescription": "Koppel Messenger opnieuw en verleen toegang tot Bedrijfsmanager zodat pagina's die via Bedrijfsmanager worden beheerd kunnen worden vermeld.",
-      "loadFailed": "Je Facebook-pagina's konden niet worden geladen",
       "alreadyConnectedNote": "Deze pagina is al gekoppeld",
-      "notAdminNote": "U bent geen beheerder van deze pagina",
       "tryAgain": "Probeer opnieuw te koppelen"
     },
     "title": "Facebook Messenger",

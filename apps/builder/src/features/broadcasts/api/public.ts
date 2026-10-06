@@ -219,17 +219,13 @@ export const broadcastsPublicRouter = {
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const { id, eventType, page, perPage } = input
-      const { data, pageCount } = await broadcastService.listContactsPage({
+      return await broadcastService.listContactsPage({
         workspaceId: context.workspace.id,
         broadcastId: id,
         eventType,
         page,
         perPage,
       })
-
-      // `conversationId` is a superset the public response schema doesn't
-      // declare — zod strips it silently, so returning it here is harmless.
-      return { data, pageCount }
     }),
 
   create: workspaceTokenAuthAPI

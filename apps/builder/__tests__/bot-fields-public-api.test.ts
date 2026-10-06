@@ -77,6 +77,45 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
+describe("PATCH /v1/bot-fields/{idOrName}", () => {
+  const procedure = findProcedure("PATCH", "/v1/bot-fields/{idOrName}")
+
+  test("passes only the given fields to updateByKey", async () => {
+    botFieldService.updateByKey.mockResolvedValueOnce({ id: "1" })
+
+    await procedure.handler?.({
+      context: tokenContext,
+      input: { idOrName: "score", name: "lead_score", folderId: null },
+    })
+
+    expect(botFieldService.updateByKey).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      key: "score",
+      data: { name: "lead_score", folderId: null },
+    })
+  })
+})
+
+describe("PATCH /v1/bot-fields/{idOrName} with an empty body", () => {
+  const procedure = findProcedure("PATCH", "/v1/bot-fields/{idOrName}")
+
+  test("returns the field unchanged instead of writing", async () => {
+    botFieldService.findByKeyOrFail.mockResolvedValueOnce({ id: "1" })
+
+    const result = await procedure.handler?.({
+      context: tokenContext,
+      input: { idOrName: "score" },
+    })
+
+    expect(botFieldService.updateByKey).not.toHaveBeenCalled()
+    expect(botFieldService.findByKeyOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      key: "score",
+    })
+    expect(result).toEqual({ id: "1" })
+  })
+})
+
 describe("PUT /v1/bot-fields", () => {
   const procedure = findProcedure("PUT", "/v1/bot-fields")
 

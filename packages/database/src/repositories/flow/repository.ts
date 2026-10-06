@@ -30,6 +30,18 @@ const buildWhere = (input: FlowListInput) => ({
 })
 
 export const flowRepository = {
+  /** Whether a flow with this id exists in the workspace (id-only read). */
+  async existsInWorkspace(
+    input: { workspaceId: string; id: string },
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const row = await tx.query.flowModel.findFirst({
+      where: { id: input.id, workspaceId: input.workspaceId },
+      columns: { id: true },
+    })
+    return Boolean(row)
+  },
+
   /** Minimal published, active flow projection for action target pickers. */
   async listPublishedOptions(
     input: { workspaceId: string },

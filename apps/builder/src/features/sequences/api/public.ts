@@ -6,7 +6,7 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
-  possibleErrorsOnCreatingResource,
+  possibleErrorsOnCreatingInFolder,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
@@ -70,7 +70,9 @@ export const sequencesPublicRouter = {
     })
     .input(
       z.object({
-        id: z.string().describe("Sequence id. Get it from `sequences.list`."),
+        id: zodBigintAsString().describe(
+          "Sequence id. Get it from `sequences.list`.",
+        ),
       }),
     )
     .output(sequenceDetailResource)
@@ -95,7 +97,7 @@ export const sequencesPublicRouter = {
     })
     .input(createSequenceRequest)
     .output(z.object({ sequenceId: z.string() }))
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingInFolder)
     .handler(
       async ({ context, input }) =>
         await sequenceService.create({
@@ -110,7 +112,7 @@ export const sequencesPublicRouter = {
       path: "/v1/sequences/{id}",
       summary: "Update sequence name or active state",
       description:
-        "Changes a sequence name or active state without replacing its steps. Call `sequences.get` to inspect the current sequence, or use `sequences.list` to resolve its id.",
+        "Changes a sequence name, active state or folder (`folderId`, from `sequences.listFolders`) without replacing its steps. Call `sequences.get` to inspect the current sequence, or use `sequences.list` to resolve its id.",
       successStatus: 204,
       tags: ["Sequences"],
       spec: mcpSpec({ visibility: "default" }),
@@ -279,6 +281,7 @@ export const sequencesPublicRouter = {
         workspaceId: context.workspace.id,
         folderType: folderTypes.enum.sequence,
         parentId: input.parentId ?? rootFolderId,
+        isTrash: input.isTrash,
       }),
     })),
 
@@ -288,12 +291,13 @@ export const sequencesPublicRouter = {
       path: "/v1/sequence-folders",
       summary: "Create sequence folder",
       description:
-        "Adds a folder for sequences. Use `sequences.listFolders` first to avoid duplicating an existing one.",
+        "Adds a folder for sequences. Use `sequences.listFolders` first to avoid duplicating an existing one. A `parentId` that is not a sequence folder of this workspace returns 404.",
+      successStatus: 201,
       tags: ["Sequences"],
     })
     .input(createSequenceFolderPublicRequest)
     .output(sequenceFolderResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingInFolder)
     .handler(
       async ({ context, input }) =>
         await folderService.create({
