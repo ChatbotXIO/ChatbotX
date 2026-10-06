@@ -141,9 +141,9 @@ chatbotx bot-fields create --name <name> --type <type> --value <value> --descrip
 chatbotx bot-fields update --fields <fields>         # Set multiple bot field values, by id or name
                                                      # fields: JSON array of {id,value} or {name,value}
 chatbotx bot-fields get <idOrName>                   # Get bot field
-chatbotx bot-fields set <idOrName> --value <value>   # Set one bot field value (PUT /v1/bot-fields/{idOrName})
 chatbotx bot-fields edit <idOrName>                  # [--name --type --description --folderId --value]  PATCH: omitted fields stay
-chatbotx bot-fields delete <idOrName>                # Unset bot field value
+chatbotx bot-fields set <idOrName> --value <value>   # Set one bot field value (PUT /v1/bot-fields/{idOrName})
+chatbotx bot-fields delete <idOrName>                # Delete the bot field (definition and value)
 chatbotx bot-fields reset <idOrName>                 # Clear one bot field value, keep the field
 chatbotx bot-fields bulk-reset --ids <ids>           # Clear up to 100 bot field values by id
 ```
