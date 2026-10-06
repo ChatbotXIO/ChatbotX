@@ -472,6 +472,16 @@ const OPENAI_COMPATIBLE_DEFAULTS = {
   preset: "custom",
 } as const
 
+/**
+ * `jsonb().default(sql`[]`).notNull()` columns have no database default
+ * (drizzle-kit drops it — pinned in `schema-default-parity.test.ts`), so an
+ * insert that omits them is a NOT NULL violation.
+ */
+const messagingProfileDefaults = () => ({
+  conversationStarters: [],
+  persistentMenus: [],
+})
+
 export const CONNECTION_STORE_BINDINGS: Partial<
   Record<IntegrationType, ConnectionStoreBinding | null>
 > = {
@@ -546,7 +556,7 @@ export const CONNECTION_STORE_BINDINGS: Partial<
     identityColumn: "igId",
     onDisconnect: "delete_row",
     duplicateConstraint: "IntegrationInstagram_igId_key",
-    extraInsertValues: { type: "instagram" },
+    extraInsertValues: { ...messagingProfileDefaults(), type: "instagram" },
     extraWhere: { type: "instagram" },
     // OAuth-only (no `fromCredentials`): `candidateToConfig` is
     // developer-derived from `auth`, never client input — see
@@ -559,7 +569,7 @@ export const CONNECTION_STORE_BINDINGS: Partial<
     identityColumn: "igId",
     onDisconnect: "delete_row",
     duplicateConstraint: "IntegrationInstagram_igId_key",
-    extraInsertValues: { type: "facebook" },
+    extraInsertValues: { ...messagingProfileDefaults(), type: "facebook" },
     extraWhere: { type: "facebook" },
     // OAuth-only — see `integrations/instagram-facebook/src/integration.ts`.
     configColumns: ["pageId", "username"],
@@ -587,6 +597,7 @@ export const CONNECTION_STORE_BINDINGS: Partial<
     identityColumn: "pageId",
     onDisconnect: "delete_row",
     duplicateConstraint: "IntegrationMessenger_pageId_key",
+    extraInsertValues: { ...messagingProfileDefaults(), personas: [] },
   }),
   moosend: makeWorkspaceIntegrationBinding({
     table: integrationMoosendModel,
@@ -662,6 +673,7 @@ export const CONNECTION_STORE_BINDINGS: Partial<
     tableName: "IntegrationWebchat",
     identityColumn: null,
     onDisconnect: "keep_row",
+    extraInsertValues: { ...messagingProfileDefaults(), authorizedDomains: [] },
   }),
   whatsapp: makeChannelBinding({
     table: integrationWhatsappModel,
