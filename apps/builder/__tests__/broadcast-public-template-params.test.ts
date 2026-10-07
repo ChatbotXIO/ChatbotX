@@ -2,11 +2,11 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { resolveBroadcastTemplateParams } = vi.hoisted(() => ({
-  resolveBroadcastTemplateParams: vi.fn(),
+const { resolveTemplateParams } = vi.hoisted(() => ({
+  resolveTemplateParams: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/business", () => ({ resolveBroadcastTemplateParams }))
+vi.mock("@chatbotx.io/business", () => ({ resolveTemplateParams }))
 vi.mock("@chatbotx.io/business/errors", () => ({
   validationException: (field: string, message: string) =>
     Object.assign(new Error(message), { code: "validation", field }),
@@ -30,7 +30,7 @@ const base = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  resolveBroadcastTemplateParams.mockResolvedValue({ body: [{ text: "Ann" }] })
+  resolveTemplateParams.mockResolvedValue({ body: [{ text: "Ann" }] })
 })
 
 describe("resolvePublicBroadcastTemplateParams", () => {
@@ -44,7 +44,7 @@ describe("resolvePublicBroadcastTemplateParams", () => {
       },
     })
 
-    expect(resolveBroadcastTemplateParams).toHaveBeenCalledWith({
+    expect(resolveTemplateParams).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       channel: "whatsapp",
       templateId: "t-1",
@@ -71,8 +71,8 @@ describe("resolvePublicBroadcastTemplateParams", () => {
       },
     })
 
-    expect(resolveBroadcastTemplateParams).toHaveBeenCalledOnce()
-    expect(resolveBroadcastTemplateParams).toHaveBeenCalledWith(
+    expect(resolveTemplateParams).toHaveBeenCalledOnce()
+    expect(resolveTemplateParams).toHaveBeenCalledWith(
       expect.objectContaining({
         templateId: "t-1",
         field: "targets.0.templateParams",
@@ -104,7 +104,7 @@ describe("resolvePublicBroadcastTemplateParams", () => {
       request: { ...base, templateId: "t-1", templateData },
     })
 
-    expect(resolveBroadcastTemplateParams).not.toHaveBeenCalled()
+    expect(resolveTemplateParams).not.toHaveBeenCalled()
     expect(result.templateData).toBe(templateData)
   })
 })

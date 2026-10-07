@@ -16,9 +16,7 @@ vi.mock("../src/messenger-message-template/service", () => ({
   },
 }))
 
-const { resolveBroadcastTemplateParams } = await import(
-  "../src/broadcast/template-params"
-)
+const { resolveTemplateParams } = await import("../src/template-params/service")
 
 const waComponents = [
   { type: "HEADER", format: "IMAGE" },
@@ -29,11 +27,11 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-describe("resolveBroadcastTemplateParams", () => {
+describe("resolveTemplateParams", () => {
   test("builds WhatsApp params for a template of the workspace", async () => {
     mocks.findWa.mockResolvedValue({ components: waComponents })
 
-    const params = await resolveBroadcastTemplateParams({
+    const params = await resolveTemplateParams({
       workspaceId: "ws-1",
       channel: "whatsapp",
       templateId: "t-1",
@@ -55,7 +53,7 @@ describe("resolveBroadcastTemplateParams", () => {
     mocks.findWa.mockResolvedValue(undefined)
 
     await expect(
-      resolveBroadcastTemplateParams({
+      resolveTemplateParams({
         workspaceId: "ws-1",
         channel: "whatsapp",
         templateId: "t-x",
@@ -69,7 +67,7 @@ describe("resolveBroadcastTemplateParams", () => {
     mocks.findWa.mockResolvedValue({ components: waComponents })
 
     await expect(
-      resolveBroadcastTemplateParams({
+      resolveTemplateParams({
         workspaceId: "ws-1",
         channel: "whatsapp",
         templateId: "t-1",
@@ -92,7 +90,7 @@ describe("resolveBroadcastTemplateParams", () => {
     })
 
     await expect(
-      resolveBroadcastTemplateParams({
+      resolveTemplateParams({
         workspaceId: "ws-1",
         channel: "whatsapp",
         templateId: "t-1",
@@ -111,7 +109,7 @@ describe("resolveBroadcastTemplateParams", () => {
       parameterFormat: "NAMED",
     })
 
-    const params = await resolveBroadcastTemplateParams({
+    const params = await resolveTemplateParams({
       workspaceId: "ws-1",
       channel: "messenger",
       templateId: "m-1",
@@ -124,7 +122,7 @@ describe("resolveBroadcastTemplateParams", () => {
 
   test("other channels have no templates", async () => {
     await expect(
-      resolveBroadcastTemplateParams({
+      resolveTemplateParams({
         workspaceId: "ws-1",
         channel: "telegram",
         templateId: "t-1",

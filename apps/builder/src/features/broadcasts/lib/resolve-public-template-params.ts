@@ -1,4 +1,4 @@
-import { resolveBroadcastTemplateParams } from "@chatbotx.io/business"
+import { resolveTemplateParams } from "@chatbotx.io/business"
 import { validationException } from "@chatbotx.io/business/errors"
 import type { CreateBroadcastRequest } from "../schema/action"
 import type { CreateBroadcastPublicRequest } from "../schema/public"
@@ -24,7 +24,7 @@ export async function resolvePublicBroadcastTemplateParams(input: {
         "templateParams needs a templateId",
       )
     }
-    return await resolveBroadcastTemplateParams({
+    return await resolveTemplateParams({
       workspaceId: input.workspaceId,
       channel: rest.channel,
       templateId: props.templateId,
