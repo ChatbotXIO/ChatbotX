@@ -15,6 +15,7 @@ import {
   aiHandoverSettingsResource,
   aiHandoverSettingsWithStatusResource,
   listAiHandoverHistoryPublicRequest,
+  patchAiHandoverSettingsPublicRequest,
   saveAiHandoverSettingsPublicRequest,
   setApplyToAllPublicRequest,
   setApplyToAllPublicResponse,
@@ -82,6 +83,29 @@ export const aiHandoverPublicRouter = {
           ...settings,
           workspaceId: context.workspace.id,
           inboxId,
+        }),
+      )
+    }),
+
+  patchSettings: workspaceTokenAuthAPI
+    .route({
+      method: "PATCH",
+      path: "/v1/inboxes/{inboxId}/ai-handover/settings",
+      summary: "Update AI hand-over settings",
+      description:
+        'Changes only the AI hand-over settings you send and keeps the others as saved, e.g. `{"enabled": false}`. Same rules as `aiHandover.saveSettings`: saving `enabled: false` also stops a running apply-to-all enable, `gotoFlowId` must be an active flow of this workspace and a schedule needs at least one time range.',
+      tags: ["Integrations"],
+    })
+    .input(patchAiHandoverSettingsPublicRequest)
+    .output(aiHandoverSettingsResource)
+    .errors(possibleErrorsOnApplyingAiHandover)
+    .handler(async ({ context, input }) => {
+      const { inboxId, ...changes } = input
+      return toSettingsResource(
+        await aiHandoverBulkRunService.patchSettings({
+          workspaceId: context.workspace.id,
+          inboxId,
+          changes,
         }),
       )
     }),

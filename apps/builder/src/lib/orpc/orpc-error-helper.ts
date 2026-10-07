@@ -233,6 +233,12 @@ export const possibleErrorsOnReadingWithBody = {
 export const possibleErrorsOnStartingProductImport = {
   notFound,
   businessError,
+  // Reading the file's headers when `columnMap` is omitted.
+  importUnableToReadHeaders:
+    possibleErrorsOnPeekingImportHeaders.importUnableToReadHeaders,
+  importUnsupportedFileType:
+    possibleErrorsOnPeekingImportHeaders.importUnsupportedFileType,
+  importFileTooLarge: possibleErrorsOnPeekingImportHeaders.importFileTooLarge,
   productImportFileNotFound: {
     message: "The uploaded product import file was not found.",
     status: 404,

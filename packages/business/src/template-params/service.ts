@@ -18,7 +18,7 @@ import { notFoundException, validationException } from "../errors"
 import { messengerMessageTemplateService } from "../messenger-message-template/service"
 import { whatsappMessageTemplateService } from "../whatsapp-message-template/service"
 
-export type BroadcastTemplateParams = WaTemplateParams | MessengerTemplateParams
+export type TemplateSendParams = WaTemplateParams | MessengerTemplateParams
 
 type MessengerParameterFormat = Parameters<
   typeof applyMessengerTemplateParameterValues
@@ -31,7 +31,7 @@ const waSendParamsSchema = waTemplateParamsSchema.superRefine((params, ctx) =>
 )
 
 const describeProblems = (
-  applied: AppliedTemplateParameters<BroadcastTemplateParams>,
+  applied: AppliedTemplateParameters<TemplateSendParams>,
 ): string[] =>
   [
     applied.missing.length > 0 && `missing: ${applied.missing.join(", ")}`,
@@ -46,7 +46,7 @@ async function applyForChannel(input: {
   channel: ChannelType
   templateId: string
   values: TemplateParameterValues
-}): Promise<AppliedTemplateParameters<BroadcastTemplateParams>> {
+}): Promise<AppliedTemplateParameters<TemplateSendParams>> {
   if (input.channel === "whatsapp") {
     const template = await whatsappMessageTemplateService.findByIdForWorkspace({
       id: input.templateId,
@@ -79,20 +79,31 @@ async function applyForChannel(input: {
   )
 }
 
-/**
- * Turns a caller's flat `{ key: value }` template parameters into the nested
- * params a broadcast stores, for a template of the caller's workspace. Any
- * missing, unknown or invalid key is a 422 naming the keys, so the caller can
- * fix the request without reading Meta's component format.
- */
-export async function resolveBroadcastTemplateParams(input: {
+type ResolveTemplateParamsInput = {
   workspaceId: string
   channel: ChannelType
   templateId: string
   values: TemplateParameterValues
   /** Request path of the values, for the error, e.g. `targets.0.templateParams`. */
   field: string
-}): Promise<BroadcastTemplateParams> {
+}
+
+/**
+ * Turns a caller's flat `{ key: value }` template parameters into the nested
+ * params a template send needs (a broadcast, or a template sent into a
+ * conversation), for a template of the caller's workspace. Any
+ * missing, unknown or invalid key is a 422 naming the keys, so the caller can
+ * fix the request without reading Meta's component format.
+ */
+export async function resolveTemplateParams(
+  input: ResolveTemplateParamsInput & { channel: "whatsapp" },
+): Promise<WaTemplateParams>
+export async function resolveTemplateParams(
+  input: ResolveTemplateParamsInput,
+): Promise<TemplateSendParams>
+export async function resolveTemplateParams(
+  input: ResolveTemplateParamsInput,
+): Promise<TemplateSendParams> {
   const applied = await applyForChannel(input)
   const problems = describeProblems(applied)
   if (problems.length > 0) {

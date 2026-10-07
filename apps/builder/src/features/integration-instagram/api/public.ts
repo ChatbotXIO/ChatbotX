@@ -6,11 +6,15 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { disconnectInstagram } from "../actions/disconnect-instagram"
-import { updateInstagram } from "../lib/update-instagram-settings"
+import {
+  patchInstagramSettings,
+  updateInstagram,
+} from "../lib/update-instagram-settings"
 import { findIntegrationInstagram } from "../queries"
 import {
   instagramChannelIdSchema,
   instagramSettingsPublicResource,
+  patchInstagramSettingsPublicRequest,
   updateInstagramSettingsPublicRequest,
 } from "../schema/public"
 
@@ -23,7 +27,7 @@ export const instagramChannelsPublicRouter = {
       path: "/v1/instagram-channels/{id}/settings",
       summary: "Get Instagram channel settings",
       description:
-        "Returns an Instagram account's welcome flow, ice breakers and persistent menu. Call this before `instagramChannels.updateSettings`, which replaces all of them.",
+        "Returns an Instagram account's welcome flow, ice breakers and persistent menu. Use `instagramChannels.patchSettings` to change some of them, or `instagramChannels.updateSettings` to replace all of them.",
       tags: ["Channels"],
     })
     .input(z.object({ id: instagramChannelIdSchema }))
@@ -44,7 +48,7 @@ export const instagramChannelsPublicRouter = {
       path: "/v1/instagram-channels/{id}/settings",
       summary: "Replace Instagram channel settings",
       description:
-        "Saves an Instagram account's welcome flow, ice breakers and persistent menu, and pushes them to Instagram. Replaces every field, so read them with `instagramChannels.getSettings` first.",
+        "Saves an Instagram account's welcome flow, ice breakers and persistent menu, and pushes them to Instagram. Replaces every field, so read them with `instagramChannels.getSettings` first, or use `instagramChannels.patchSettings` to change only some.",
       successStatus: 204,
       tags: ["Channels"],
     })
@@ -53,6 +57,26 @@ export const instagramChannelsPublicRouter = {
     .handler(async ({ context, input }) => {
       const { id, ...settings } = input
       await updateInstagram({ workspaceId: context.workspace.id, id }, settings)
+    }),
+
+  patchSettings: workspaceTokenAuthAPI
+    .route({
+      method: "PATCH",
+      path: "/v1/instagram-channels/{id}/settings",
+      summary: "Update Instagram channel settings",
+      description:
+        "Changes only the settings you send (welcome flow, ice breakers, persistent menu, mark-read) and keeps the others as saved, then pushes them to Instagram. Use `instagramChannels.updateSettings` to replace everything at once.",
+      successStatus: 204,
+      tags: ["Channels"],
+    })
+    .input(patchInstagramSettingsPublicRequest)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const { id, ...changes } = input
+      await patchInstagramSettings(
+        { workspaceId: context.workspace.id, id },
+        changes,
+      )
     }),
 
   disconnect: workspaceTokenAuthAPI

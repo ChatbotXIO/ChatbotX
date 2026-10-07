@@ -31,23 +31,29 @@ export const aiHandoverSettingsResource = z.object({
     .describe("Pause the bot for the contact after the hand-back."),
 })
 
+const returnMessageInput = z
+  .string()
+  .max(AI_HANDOVER_MESSAGE_MAX_LENGTH)
+  .nullable()
+  .describe(
+    "Message sent when no flow is set or it is no longer active; null or empty for none.",
+  )
+
 // Own object (not the UI form schema) so a GET result can be sent back to PUT
 // (`returnMessage` is null there) and `message` can be omitted for an ON.
 export const saveAiHandoverSettingsPublicRequest = aiHandoverSettingsResource
-  .extend({
-    returnMessage: z
-      .string()
-      .max(AI_HANDOVER_MESSAGE_MAX_LENGTH)
-      .nullable()
-      .describe(
-        "Message sent when no flow is set or it is no longer active; null or empty for none.",
-      ),
-  })
+  .extend({ returnMessage: returnMessageInput })
   .and(aiHandoverInboxIdParam)
   .refine((value) => !value.scheduleEnabled || value.timeRanges.length > 0, {
     path: ["timeRanges"],
     message: "A schedule needs at least one time range",
   })
+
+/** Only the fields to change; the others keep their saved value. */
+export const patchAiHandoverSettingsPublicRequest = aiHandoverSettingsResource
+  .extend({ returnMessage: returnMessageInput })
+  .partial()
+  .and(aiHandoverInboxIdParam)
 
 export const setApplyToAllPublicRequest = z
   .object({

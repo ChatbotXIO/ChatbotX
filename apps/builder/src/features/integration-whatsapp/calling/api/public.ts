@@ -11,6 +11,10 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
+  buildCallHoursFormValues,
+  fromCallHoursSnapshot,
+} from "../lib/call-hours"
+import {
   ENGLISH_CALLING_MESSAGES,
   updateWhatsappCallHours,
   updateWhatsappCallingSettings,
@@ -55,6 +59,9 @@ const callingSettingsResource = z.object({
   callHours: z
     .unknown()
     .describe("The weekly call-hours schedule mirrored from Meta, or null."),
+  callHoursInput: callHoursFormSchema.describe(
+    "The same schedule in the exact shape `whatsappChannels.updateCallHours` takes (7 days, minutes since midnight); a number with no schedule yet gets the builder default (weekdays 09:00-17:00, off). Change what you need and send it back.",
+  ),
 })
 
 const updateCallingSettingsRequest = channelIdParam.extend({
@@ -136,7 +143,7 @@ export const whatsappCallingPublicRouter = {
       path: "/v1/whatsapp-channels/{id}/calling",
       summary: "Get WhatsApp calling settings",
       description:
-        "Returns the number's calling settings as stored here: calling and inbound switches, recording and transcription, retention and the weekly call hours. No call is made to Meta. Change them with `whatsappChannels.updateCallingSettings` and `whatsappChannels.updateCallHours`.",
+        "Returns the number's calling settings as stored here: calling and inbound switches, recording and transcription, retention and the weekly call hours. No call is made to Meta. Change them with `whatsappChannels.updateCallingSettings`, and the hours by sending `callHoursInput` (edited) to `whatsappChannels.updateCallHours`.",
       tags: ["Channels"],
     })
     .input(channelIdParam)
@@ -147,7 +154,15 @@ export const whatsappCallingPublicRouter = {
         context.workspace.id,
         input.id,
       )
-      return callingSettingsResource.parse(integration)
+      return callingSettingsResource.parse({
+        ...integration,
+        callHoursInput: buildCallHoursFormValues(
+          integration.callHours
+            ? fromCallHoursSnapshot(integration.callHours)
+            : undefined,
+          context.workspace.timezone,
+        ),
+      })
     }),
 
   updateCallingSettings: workspaceTokenAuthAPI

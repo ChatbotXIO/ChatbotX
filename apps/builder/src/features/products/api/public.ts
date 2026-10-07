@@ -3,7 +3,12 @@ import {
   productService,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { createImportUpload, importService } from "@chatbotx.io/business/import"
+import {
+  createImportUpload,
+  importService,
+  resolveProductImportColumnMap,
+  suggestProductImportColumnMap,
+} from "@chatbotx.io/business/import"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { bulkUpdateIdsRequest } from "@/features/common/schema"
@@ -11,12 +16,12 @@ import { peekImportHeadersForApi } from "@/features/import/lib/peek-import-heade
 import {
   getProductImportPublicRequest,
   importHeadersPublicRequest,
-  importHeadersPublicResponse,
   importTemplatePublicRequest,
   importUploadUrlPublicRequest,
   importUploadUrlPublicResponse,
   listContactImportsPublicRequest,
   listProductImportsPublicResponse,
+  productImportHeadersPublicResponse,
   productImportPublicResource,
   productImportTemplatePublicResponse,
 } from "@/features/import/schema/public"
@@ -216,19 +221,23 @@ export const productsPublicRouter = {
       path: "/v1/products/imports/files/{fileId}/headers",
       summary: "Read product import file headers",
       description:
-        "Returns the column headers of an uploaded product import file so you can map columns before importing. Call `products.createImportUpload` and upload the file first.",
+        "Returns the column headers of an uploaded product import file and `suggestedColumnMap`, the columns recognised by name. Optional: `products.startImport` applies the same suggestion when `columnMap` is omitted. Call `products.createImportUpload` and upload the file first.",
       tags: ["Products"],
     })
     .input(importHeadersPublicRequest)
-    .output(importHeadersPublicResponse)
+    .output(productImportHeadersPublicResponse)
     .errors(possibleErrorsOnPeekingImportHeaders)
-    .handler(async ({ context, input }) => ({
-      headers: await peekImportHeadersForApi({
+    .handler(async ({ context, input }) => {
+      const headers = await peekImportHeadersForApi({
         workspaceId: context.workspace.id,
         fileId: input.fileId,
         type: "products",
-      }),
-    })),
+      })
+      return {
+        headers,
+        suggestedColumnMap: suggestProductImportColumnMap(headers),
+      }
+    }),
 
   createImportUpload: workspaceTokenAuthAPI
     .route({
@@ -259,7 +268,7 @@ export const productsPublicRouter = {
       path: "/v1/products/imports",
       summary: "Import products from file",
       description:
-        "Starts an asynchronous bulk import of products from an uploaded CSV or XLSX file. Flow: `products.getImportTemplate` for the format, `products.createImportUpload` to get a `fileId` and upload URL, upload the file, `products.peekImportHeaders` to read its columns, then call this with `fileId`, `format` and `columnMap` (product field to file column header; only `name` is required). Every row is inserted as a new product (importing the same file twice creates duplicates; use `products.update` to change existing products). A category named in the file that does not exist is created unless `createMissingCategories` is false, in which case that row fails. Failed rows are listed in `errorSample` of `products.getImport`. Returns an `importId` immediately; track it with `products.getImport`. Only one product import can run per workspace: while one is pending or processing this returns 409.",
+        "Starts an asynchronous bulk import of products from an uploaded CSV or XLSX file. Flow: `products.getImportTemplate` for the format, `products.createImportUpload` to get a `fileId` and upload URL, upload the file, then call this with `fileId`. `columnMap` (product field to file column header; only `name` is required) is optional: without it the columns are recognised by header name like the builder does (see `products.peekImportHeaders` `suggestedColumnMap`), and a file whose name column is not recognised is a 422 listing its headers. `format` is optional too and taken from the file. Every row is inserted as a new product (importing the same file twice creates duplicates; use `products.update` to change existing products). A category named in the file that does not exist is created unless `createMissingCategories` is false, in which case that row fails. Failed rows are listed in `errorSample` of `products.getImport`. Returns an `importId` immediately; track it with `products.getImport`. Only one product import can run per workspace: while one is pending or processing this returns 409.",
       successStatus: 201,
       tags: ["Products"],
     })
@@ -274,7 +283,11 @@ export const productsPublicRouter = {
           fileId: input.fileId,
           format: input.format,
           meta: {
-            columnMap: input.columnMap,
+            columnMap: await resolveProductImportColumnMap({
+              workspaceId: context.workspace.id,
+              fileId: input.fileId,
+              columnMap: input.columnMap,
+            }),
             createMissingCategories: input.createMissingCategories,
           },
         }),

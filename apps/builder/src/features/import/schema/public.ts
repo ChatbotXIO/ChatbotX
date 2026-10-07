@@ -117,6 +117,45 @@ export const importHeadersPublicResponse = z.object({
     .describe("Column headers of the first row, in file order."),
 })
 
+const suggestedColumn = (field: string) =>
+  z.string().optional().describe(`File column recognised as the ${field}.`)
+
+export const contactImportHeadersPublicResponse =
+  importHeadersPublicResponse.extend({
+    suggestedColumnMap: z
+      .object({
+        phoneNumber: suggestedColumn("phone number"),
+        contactId: suggestedColumn("channel user id"),
+        email: suggestedColumn("email"),
+        firstName: suggestedColumn("first name"),
+        lastName: suggestedColumn("last name"),
+        sourceUserId: suggestedColumn("WhatsApp user id (BSUID)"),
+      })
+      .describe(
+        "Columns recognised by header name, the way the builder pre-fills its import dialog. Spread it into `contacts.import` and adjust what is wrong; unrecognised fields are absent.",
+      ),
+  })
+
+export const productImportHeadersPublicResponse =
+  importHeadersPublicResponse.extend({
+    suggestedColumnMap: z
+      .object({
+        name: suggestedColumn("product name"),
+        sku: suggestedColumn("SKU"),
+        price: suggestedColumn("price"),
+        discount: suggestedColumn("discount"),
+        shortDescription: suggestedColumn("short description"),
+        category: suggestedColumn("category name"),
+        vendor: suggestedColumn("vendor"),
+        inventoryQuantity: suggestedColumn("inventory quantity"),
+        imageUrl: suggestedColumn("image URL"),
+        productUrl: suggestedColumn("product page URL"),
+      })
+      .describe(
+        "Columns recognised by header name, the way the builder pre-fills its import dialog. `products.startImport` uses it when `columnMap` is omitted.",
+      ),
+  })
+
 export const importTemplateLanguages = z.enum(["en", "vi"])
 
 export const importTemplatePublicRequest = z.object({

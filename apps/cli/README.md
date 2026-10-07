@@ -183,7 +183,7 @@ chatbotx channel-posts options-by-ids --ids <ids>     # Resolve saved-filter pos
 chatbotx contacts import-template                    # CSV template as text [--language]
 chatbotx contacts imports-upload-url --fileName <name> --mimeType <mime> --fileSize <bytes>
                                                      # Returns fileId + presigned PUT URL
-chatbotx contacts imports-files-headers <fileId>      # Column headers of the uploaded file
+chatbotx contacts imports-files-headers <fileId>      # Column headers + suggestedColumnMap (spread into contacts import)
 chatbotx contacts imports                            # [--page --perPage --status --keyword --sort]
 chatbotx contacts find-by-imports <id>                # Get one import job
 chatbotx contacts export --fields <fields>            # [--contactIds --exportAll --filter]
@@ -803,6 +803,7 @@ chatbotx inboxes update <id> --markReadOnOutbound <true|false>
 chatbotx instagram-channels list|get <id>
 chatbotx instagram-channels settings list <id>         # Welcome flow, ice breakers, persistent menu
 chatbotx instagram-channels settings update <id>       # Full replace; pushes to Instagram
+chatbotx instagram-channels settings edit <id>         # PATCH: only the fields you send
 chatbotx instagram-channels delete <id>                # Disconnect the account (works after the trial ends)
 ```
 
@@ -842,6 +843,7 @@ chatbotx media-library files-move --fileIds <fileIds>  # [--folderId]
 ```bash
 chatbotx inboxes settings list <inboxId>                  # AI hand-over settings + apply-to-all status (applyToAll)
 chatbotx inboxes settings update <inboxId> --enabled --scheduleEnabled --timeRanges --gotoFlowId --returnMessage --pauseBotWaitingForStaff
+chatbotx inboxes settings edit <inboxId>               # PATCH AI hand-over: only the fields you send, e.g. --enabled false
 chatbotx inboxes apply-to-all add <inboxId> --applyToAllCustomers --message <text> --dryRun        # Count only
 chatbotx inboxes apply-to-all add <inboxId> --applyToAllCustomers --message <text> --confirmCount <n>
 chatbotx inboxes retry add <inboxId>                      # Retry the latest apply-to-all
@@ -897,6 +899,7 @@ chatbotx messenger-channels handover-resume-flow update <id> --handoverResumeFlo
 chatbotx messenger-channels tag-sync update <id> --enabled <enabled>
 chatbotx messenger-channels settings list <id>         # Welcome flow, persistent menu, personas, ice breakers
 chatbotx messenger-channels settings update <id>       # Full replace; pushes to Facebook
+chatbotx messenger-channels settings edit <id>         # PATCH: only the fields you send; personas take {name, profilePictureUrl}
 chatbotx messenger-channels delete <id>                # Disconnect the Page (works after the trial ends)
 ```
 
@@ -949,8 +952,8 @@ chatbotx products delete <id>
 chatbotx products bulk-delete --ids <ids>
 chatbotx products import-template                       # XLSX template as base64 [--language]
 chatbotx products imports-upload-url --fileName <name> --mimeType <mime> --fileSize <bytes>
-chatbotx products imports-files-headers <fileId>
-chatbotx products imports create --fileId <id> --format <csv|xlsx> --columnMap <json>  # Start the import; 409 while one runs
+chatbotx products imports-files-headers <fileId>        # Column headers + suggestedColumnMap
+chatbotx products imports create --fileId <id>          # [--columnMap <json> --format <csv|xlsx>] columns recognised by name when omitted; 409 while one runs
 chatbotx products imports list                          # [--page --perPage --status --keyword --sort]
 chatbotx products find-by-imports <id>                  # Get one product import job
 chatbotx products meta-catalog delete                   # Disconnect Meta Catalog; 409 while a sync runs

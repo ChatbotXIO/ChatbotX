@@ -248,6 +248,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/inboxes/{inboxId}/ai-handover/history",
   },
   {
+    "method": "PATCH",
+    "operationId": "aiHandover.patchSettings",
+    "path": "/v1/inboxes/{inboxId}/ai-handover/settings",
+  },
+  {
     "method": "POST",
     "operationId": "aiHandover.retryApplyToAll",
     "path": "/v1/inboxes/{inboxId}/ai-handover/apply-to-all/retry",
@@ -1623,6 +1628,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/instagram-channels",
   },
   {
+    "method": "PATCH",
+    "operationId": "instagramChannels.patchSettings",
+    "path": "/v1/instagram-channels/{id}/settings",
+  },
+  {
     "method": "POST",
     "operationId": "instagramChannels.sendCapiTestEvent",
     "path": "/v1/instagram-channels/{id}/capi/test-event",
@@ -1861,6 +1871,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "messengerChannels.list",
     "path": "/v1/messenger-channels",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "messengerChannels.patchSettings",
+    "path": "/v1/messenger-channels/{id}/settings",
   },
   {
     "method": "POST",

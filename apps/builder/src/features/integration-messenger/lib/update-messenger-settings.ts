@@ -6,7 +6,10 @@ import {
   messengerIntegrationService,
 } from "@chatbotx.io/business"
 import { moveBrandingMenuLast } from "@chatbotx.io/business/branding"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
+import {
+  ChatbotXException,
+  validationException,
+} from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import type { MessengerPersona } from "@chatbotx.io/database/partials"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
@@ -20,7 +23,7 @@ import {
   messengerMenusToCallToActions,
 } from "@chatbotx.io/integration-messenger"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
-import { distributedStore } from "@chatbotx.io/redis"
+import { distributedLock, distributedStore } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { normalizeError } from "universal-error-normalizer"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
@@ -39,17 +42,73 @@ const collectFlowIds = (input: UpdateMessengerRequest): string[] => [
   ]),
 ]
 
+type MessengerSettingsRef = { workspaceId: string; id: string }
+
+const SETTINGS_LOCK_SECONDS = 60
+
+/**
+ * Serializes every settings write of one page (builder save, API replace and
+ * API partial update): a partial update merges onto the latest saved settings
+ * and personas are reconciled with Facebook one save at a time.
+ */
+const withMessengerSettingsLock = <T>(id: string, fn: () => Promise<T>) =>
+  distributedLock.runExclusive({
+    key: `messenger-settings:${id}`,
+    timeoutInSeconds: SETTINGS_LOCK_SECONDS,
+    fn,
+  })
+
 /**
  * Saves a Messenger page's settings and pushes them to Facebook. Plain
  * function (no session) so the builder action and the public API share it.
  */
-export const updateMessenger = async (
-  ctx: {
-    workspaceId: string
-    id: string
-  },
+export const updateMessenger = (
+  ctx: MessengerSettingsRef,
+  parsedInput: UpdateMessengerRequest,
+) =>
+  withMessengerSettingsLock(ctx.id, () =>
+    writeMessengerSettings(ctx, parsedInput),
+  )
+
+/**
+ * Changes only the given settings; the others keep their saved value.
+ * `personas`, when given, is the full list (one left out is deleted).
+ */
+export const patchMessengerSettings = (
+  ctx: MessengerSettingsRef,
+  changes: Partial<UpdateMessengerRequest>,
+) =>
+  withMessengerSettingsLock(ctx.id, async () =>
+    writeMessengerSettings(
+      ctx,
+      mergeMessengerSettings(await findIntegrationMessenger(ctx), changes),
+    ),
+  )
+
+/** The saved settings with the given (defined) changes applied. */
+export const mergeMessengerSettings = (
+  saved: Pick<
+    IntegrationMessengerModel,
+    "welcomeFlowId" | "persistentMenus" | "personas" | "conversationStarters"
+  >,
+  changes: Partial<UpdateMessengerRequest>,
+): UpdateMessengerRequest => ({
+  welcomeFlowId: saved.welcomeFlowId,
+  persistentMenus: saved.persistentMenus,
+  personas: saved.personas,
+  conversationStarters: saved.conversationStarters,
+  ...(Object.fromEntries(
+    Object.entries(changes).filter(([, value]) => value !== undefined),
+  ) as Partial<UpdateMessengerRequest>),
+})
+
+const writeMessengerSettings = async (
+  ctx: MessengerSettingsRef,
   parsedInput: UpdateMessengerRequest,
 ) => {
+  if (parsedInput.personas.filter((persona) => persona.isDefault).length > 1) {
+    throw validationException("personas", "Only one persona can be the default")
+  }
   await flowService.assertAllExist({
     workspaceId: ctx.workspaceId,
     flowIds: collectFlowIds(parsedInput),

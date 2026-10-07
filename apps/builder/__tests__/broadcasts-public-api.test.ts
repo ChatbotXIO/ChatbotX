@@ -84,10 +84,10 @@ const broadcastService = {
   softDeleteBroadcasts: vi.fn(),
 }
 
-const resolveBroadcastTemplateParams = vi.fn()
+const resolveTemplateParams = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
   broadcastService,
-  resolveBroadcastTemplateParams,
+  resolveTemplateParams,
 }))
 
 await import("@/features/broadcasts/api/public")
@@ -205,7 +205,7 @@ describe("templateParams on create and updateDraft", () => {
   const nested = { body: [{ type: "text", text: "Ann" }] }
 
   test("create stores the templateData built from templateParams", async () => {
-    resolveBroadcastTemplateParams.mockResolvedValueOnce(nested)
+    resolveTemplateParams.mockResolvedValueOnce(nested)
     broadcastService.create.mockResolvedValueOnce({ id: "b-1" })
 
     await findProcedure("POST", "/v1/broadcasts").handler?.({
@@ -217,7 +217,7 @@ describe("templateParams on create and updateDraft", () => {
       },
     })
 
-    expect(resolveBroadcastTemplateParams).toHaveBeenCalledWith({
+    expect(resolveTemplateParams).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       channel: "whatsapp",
       templateId: "t-1",
@@ -230,7 +230,7 @@ describe("templateParams on create and updateDraft", () => {
   })
 
   test("updateDraft resolves per-target templateParams", async () => {
-    resolveBroadcastTemplateParams.mockResolvedValueOnce(nested)
+    resolveTemplateParams.mockResolvedValueOnce(nested)
     broadcastService.updateDraft.mockResolvedValueOnce({
       id: "b-1",
       status: "draft",
@@ -251,7 +251,7 @@ describe("templateParams on create and updateDraft", () => {
       },
     })
 
-    expect(resolveBroadcastTemplateParams).toHaveBeenCalledWith(
+    expect(resolveTemplateParams).toHaveBeenCalledWith(
       expect.objectContaining({ field: "targets.0.templateParams" }),
     )
     expect(
@@ -260,7 +260,7 @@ describe("templateParams on create and updateDraft", () => {
   })
 
   test("a template outside the workspace stops the create (declared 404)", async () => {
-    resolveBroadcastTemplateParams.mockRejectedValueOnce(
+    resolveTemplateParams.mockRejectedValueOnce(
       Object.assign(new Error("Template not found"), { code: "notFound" }),
     )
 

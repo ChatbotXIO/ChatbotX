@@ -3,7 +3,10 @@ import {
   metaCatalogOperationService,
   metaCatalogSyncRunService,
 } from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
+import {
+  ChatbotXException,
+  validationException,
+} from "@chatbotx.io/business/errors"
 import type { MetaCatalogSyncScope } from "@chatbotx.io/database/partials"
 import {
   createCatalog,
@@ -155,8 +158,11 @@ export async function createAndBindMetaCatalog(input: {
 
 export type MetaCatalogSyncInput = {
   scope: MetaCatalogSyncScope
-  /** Destination catalog; rebinds the connection when it differs from the stored one. */
-  catalogId: string
+  /**
+   * Destination catalog; rebinds the connection when it differs from the
+   * stored one. Omitted: the catalog the connection is bound to.
+   */
+  catalogId?: string
   categoryId?: string
   selectedProductIds?: string[]
 }
@@ -184,7 +190,14 @@ export async function syncProductsToMetaCatalog(input: {
   const { workspaceId, reasons } = input
   const connection =
     await integrationMetaCatalogService.findByWorkspaceIdOrFail(workspaceId)
-  const { catalogId, ...runInput } = input.sync
+  const { catalogId: requestedCatalogId, ...runInput } = input.sync
+  const catalogId = requestedCatalogId ?? connection.catalogId
+  if (!catalogId) {
+    throw validationException(
+      "catalogId",
+      "No catalog is bound yet: send catalogId",
+    )
+  }
   // The destination catalog is the only connection-level prerequisite left.
   // Verify it against Graph only when it changes.
   let catalogName: string | undefined
