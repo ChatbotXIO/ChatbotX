@@ -4456,7 +4456,23 @@
       "preview": "Önizleme",
       "embedCodeDescription": "Bu kodu web sitenizdeki kapanış body etiketinden önce yapıştırın. Kaydedilen değişiklikler otomatik uygulanır, yeniden yapıştırmanız gerekmez.",
       "savedSuccess": "Sohbet widget'ı ayarları kaydedildi",
-      "poweredBy": "sağlayan"
+      "poweredBy": "sağlayan",
+      "toggleLabel": "Bizimle sohbet edin",
+      "logo": {
+        "description": "Ziyaretçilerin widget'ı açmak için tıkladığı yuvarlak düğme. Kare bir görsel seçin veya uygulama logosunu kullanmak için boş bırakın.",
+        "choose": "Medya Kitaplığından seç",
+        "notImage": "Logo bir görsel olmalıdır."
+      },
+      "brandUrl": {
+        "label": "Yönlendirme URL'si",
+        "placeholder": "https://example.com",
+        "description": "Widget'ın \"tarafından\" satırındaki marka adınızın bağlantı verdiği yer. Marka adı girildiğinde zorunludur.",
+        "requiredWithName": "Bu marka adı için bir yönlendirme URL'si girin."
+      },
+      "brandName": {
+        "description": "Widget'ın \"tarafından\" satırında gösterilir. Yönlendirme URL'si girildiğinde zorunludur. Bu satırı gizlemek için ikisini de boş bırakın.",
+        "requiredWithUrl": "Bu yönlendirme URL'si için bir marka adı girin."
+      }
     }
   },
   "qrCodes": {

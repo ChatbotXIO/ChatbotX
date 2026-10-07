@@ -4489,7 +4489,23 @@
       "preview": "預覽",
       "embedCodeDescription": "將此程式碼貼到網站的 body 結束標籤之前。儲存的變更會自動套用，無須重新貼上。",
       "savedSuccess": "聊天小工具設定已儲存",
-      "poweredBy": "由"
+      "poweredBy": "由",
+      "toggleLabel": "與我們聊天",
+      "logo": {
+        "description": "訪客點擊以開啟小工具的圓形按鈕。請選擇一張方形圖片，或留空以使用應用程式標誌。",
+        "choose": "從媒體庫選擇",
+        "notImage": "標誌必須是圖片。"
+      },
+      "brandUrl": {
+        "label": "跳轉連結",
+        "placeholder": "https://example.com",
+        "description": "小工具「由」行中品牌名稱連結到的位址。設定品牌名稱時必填。",
+        "requiredWithName": "請為此品牌名稱輸入跳轉 URL。"
+      },
+      "brandName": {
+        "description": "顯示在小工具的「由」行中。設定跳轉 URL 時必填。兩者都留空則隱藏該行。",
+        "requiredWithUrl": "請為此跳轉 URL 輸入品牌名稱。"
+      }
     }
   },
   "qrCodes": {

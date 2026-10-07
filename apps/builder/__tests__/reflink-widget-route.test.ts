@@ -10,6 +10,7 @@ const getGuestClientIp = vi.fn()
 const TENANT = {
   name: "AcmeChat",
   appUrl: "https://chat.acme.test",
+  storageUrl: "https://files.acme.test",
   faviconUrl: "https://cdn.acme.test/icon.png",
 }
 
@@ -40,6 +41,9 @@ const REFLINK = {
   workspaceId: "ws-1",
   widgetAuthorizedDomains: [] as string[],
   widgetHiddenInboxIds: [] as string[],
+  widgetLogoFile: null as { path: string } | null,
+  widgetBrandName: null as string | null,
+  widgetBrandUrl: null as string | null,
 }
 
 const LINKS = [
@@ -79,7 +83,7 @@ beforeEach(() => {
 })
 
 describe("GET /api/reflink-widget/[reflinkId]", () => {
-  test("allows any origin when no domain is authorized and brands by tenant", async () => {
+  test("allows any origin, with the app logo and no powered-by by default", async () => {
     const res = await callGet("https://shop.example.com")
 
     expect(res.status).toBe(200)
@@ -100,12 +104,47 @@ describe("GET /api/reflink-widget/[reflinkId]", () => {
         },
       ],
       brand: {
-        name: "AcmeChat",
-        url: "https://chat.acme.test",
+        name: null,
+        url: null,
         logoUrl: "https://cdn.acme.test/icon.png",
         poweredByLabel: "by",
+        toggleLabel: "Chat with us",
       },
     })
+  })
+
+  test("brands by the ref link's own logo, name and URL once saved", async () => {
+    findForWidget.mockResolvedValue({
+      ...REFLINK,
+      widgetLogoFile: { path: "public/space/ws-1/media-library/logo123" },
+      widgetBrandName: "Shop",
+      widgetBrandUrl: "https://shop.test/landing?sig=abc",
+    })
+
+    const res = await callGet("https://shop.example.com")
+
+    expect((await res.json()).brand).toEqual({
+      name: "Shop",
+      url: "https://shop.test/landing?sig=abc",
+      logoUrl:
+        "https://files.acme.test/public/space/ws-1/media-library/logo123",
+      poweredByLabel: "by",
+      toggleLabel: "Chat with us",
+    })
+  })
+
+  test.each([
+    ["only a brand name", { widgetBrandName: "Shop", widgetBrandUrl: null }],
+    [
+      "only a redirect URL",
+      { widgetBrandName: null, widgetBrandUrl: "https://shop.test" },
+    ],
+  ])("hides powered-by with %s", async (_case, branding) => {
+    findForWidget.mockResolvedValue({ ...REFLINK, ...branding })
+
+    const { brand } = await (await callGet("https://shop.example.com")).json()
+
+    expect(brand).toMatchObject({ name: null, url: null })
   })
 
   test("allows an authorized domain and its subdomains", async () => {

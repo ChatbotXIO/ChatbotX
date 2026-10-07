@@ -5119,7 +5119,23 @@
       "preview": "Förhandsgranskning",
       "embedCodeDescription": "Klistra in koden före den avslutande body-taggen på din webbplats. Sparade ändringar tillämpas automatiskt, du behöver inte klistra in den igen.",
       "savedSuccess": "Inställningar för chattwidget sparade",
-      "poweredBy": "av"
+      "poweredBy": "av",
+      "toggleLabel": "Chatta med oss",
+      "logo": {
+        "description": "Den runda knappen som besökare klickar på för att öppna widgeten. Välj en kvadratisk bild, eller lämna tomt för att använda appens logotyp.",
+        "choose": "Välj från mediebiblioteket",
+        "notImage": "Logotypen måste vara en bild."
+      },
+      "brandUrl": {
+        "label": "Omdirigerings-URL",
+        "placeholder": "https://example.com",
+        "description": "Vart ditt varumärkesnamn på widgetens \"av\"-rad länkar. Krävs när ett varumärkesnamn är angivet.",
+        "requiredWithName": "Ange en omdirigerings-URL för det här varumärkesnamnet."
+      },
+      "brandName": {
+        "description": "Visas på widgetens \"av\"-rad. Krävs när en omdirigerings-URL är angiven. Lämna båda tomma för att dölja raden.",
+        "requiredWithUrl": "Ange ett varumärkesnamn för den här omdirigerings-URL:en."
+      }
     }
   },
   "sendGrid": {

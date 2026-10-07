@@ -4456,7 +4456,23 @@
       "preview": "Forhåndsvisning",
       "embedCodeDescription": "Indsæt denne kode før det afsluttende body-tag på dit website. Gemte ændringer anvendes automatisk, så du behøver ikke indsætte den igen.",
       "savedSuccess": "Indstillinger for chatwidget gemt",
-      "poweredBy": "af"
+      "poweredBy": "af",
+      "toggleLabel": "Chat med os",
+      "logo": {
+        "description": "Den runde knap, besøgende klikker på for at åbne widgetten. Vælg et kvadratisk billede, eller lad feltet være tomt for at bruge appens logo.",
+        "choose": "Vælg fra mediebiblioteket",
+        "notImage": "Logoet skal være et billede."
+      },
+      "brandUrl": {
+        "label": "Omdirigerings-URL",
+        "placeholder": "https://example.com",
+        "description": "Hvor dit brandnavn i widgettens \"af\"-linje linker til. Påkrævet, når et brandnavn er angivet.",
+        "requiredWithName": "Angiv en omdirigerings-URL til dette brandnavn."
+      },
+      "brandName": {
+        "description": "Vises i widgettens \"af\"-linje. Påkrævet, når en omdirigerings-URL er angivet. Lad begge være tomme for at skjule linjen.",
+        "requiredWithUrl": "Angiv et brandnavn til denne omdirigerings-URL."
+      }
     }
   },
   "qrCodes": {

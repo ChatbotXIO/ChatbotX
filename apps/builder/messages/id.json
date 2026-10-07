@@ -4456,7 +4456,23 @@
       "preview": "Pratinjau",
       "embedCodeDescription": "Tempel kode ini sebelum tag penutup body di situs web Anda. Perubahan yang disimpan berlaku otomatis, tidak perlu menempelkannya lagi.",
       "savedSuccess": "Pengaturan widget chat disimpan",
-      "poweredBy": "oleh"
+      "poweredBy": "oleh",
+      "toggleLabel": "Chat dengan kami",
+      "logo": {
+        "description": "Tombol bulat yang diklik pengunjung untuk membuka widget. Pilih gambar persegi, atau kosongkan untuk memakai logo aplikasi.",
+        "choose": "Pilih dari Pustaka Media",
+        "notImage": "Logo harus berupa gambar."
+      },
+      "brandUrl": {
+        "label": "URL pengalihan",
+        "placeholder": "https://example.com",
+        "description": "Tujuan tautan nama merek Anda di baris \"oleh\" pada widget. Wajib jika nama merek diisi.",
+        "requiredWithName": "Masukkan URL pengalihan untuk nama merek ini."
+      },
+      "brandName": {
+        "description": "Ditampilkan di baris \"oleh\" pada widget. Wajib jika URL pengalihan diisi. Kosongkan keduanya untuk menyembunyikan baris itu.",
+        "requiredWithUrl": "Masukkan nama merek untuk URL pengalihan ini."
+      }
     }
   },
   "qrCodes": {

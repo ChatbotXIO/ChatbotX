@@ -36,6 +36,7 @@ export const reflinkRepository = {
       with: {
         flow: true,
         customField: true,
+        widgetLogoFile: { columns: { path: true } },
       },
     })
   },
@@ -64,6 +65,7 @@ export const reflinkRepository = {
   async findById(id: string, tx: DatabaseClient = db) {
     return await tx.query.reflinkModel.findFirst({
       where: { id, type: "refLink" },
+      with: { widgetLogoFile: { columns: { path: true } } },
     })
   },
 }

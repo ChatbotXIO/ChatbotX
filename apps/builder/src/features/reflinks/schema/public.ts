@@ -20,7 +20,13 @@ export const reflinkChannelLinkResource = z.object({
 
 // Chat widget settings are dashboard-only for now.
 export const reflinkPublicResource = reflinkResource
-  .omit({ widgetAuthorizedDomains: true, widgetHiddenInboxIds: true })
+  .omit({
+    widgetAuthorizedDomains: true,
+    widgetHiddenInboxIds: true,
+    widgetLogoFileId: true,
+    widgetBrandName: true,
+    widgetBrandUrl: true,
+  })
   .extend({
     links: z
       .array(reflinkChannelLinkResource)

@@ -50,6 +50,8 @@
          that empty area reach the page underneath. */
       pointer-events: none;
     }
+    /* No powered-by line: keep the toggle where it would sit above one. */
+    .container.no-powered-by { bottom: 22px; }
     .button, .powered-by { pointer-events: auto; }
     .button {
       display: block; width: 56px; height: 56px; padding: 0; border: 0;
@@ -156,17 +158,6 @@
     return image
   }
 
-  const buildPoweredByUrl = (brandUrl) => {
-    try {
-      const url = new URL(brandUrl)
-      url.searchParams.set("utm_source", window.location.hostname)
-      url.searchParams.set("utm_medium", "web-widget")
-      return url.toString()
-    } catch {
-      return brandUrl
-    }
-  }
-
   const render = ({ channels, brand }) => {
     const host = createElement("div", "", {
       "data-chatbotx-ref-widget": reflinkId,
@@ -210,14 +201,16 @@
 
     const toggle = createElement("button", "button toggle", {
       type: "button",
-      title: brand.name,
-      "aria-label": brand.name,
+      "aria-label": brand.name || brand.toggleLabel,
       "aria-expanded": "false",
     })
+    if (brand.name) {
+      toggle.title = brand.name
+    }
     const fallbackLogo = iconUrl("chat")
     const logo = createImage(
       brand.logoUrl || fallbackLogo,
-      brand.name,
+      brand.name || "",
       fallbackLogo,
     )
     toggle.appendChild(logo)
@@ -229,19 +222,25 @@
       toggle.setAttribute("aria-expanded", String(open))
     })
 
-    const poweredBy = createElement("small", "powered-by")
-    poweredBy.innerHTML = POWERED_BY_ICON
-    const byLabel = document.createElement("span")
-    byLabel.textContent = brand.poweredByLabel || "by"
-    const brandLink = createElement("a", "", {
-      href: buildPoweredByUrl(brand.url),
-      target: "_blank",
-      rel: "noopener",
-    })
-    brandLink.textContent = brand.name
-    poweredBy.append(byLabel, brandLink)
-
-    container.append(list, toggle, poweredBy)
+    container.append(list, toggle)
+    // Shown only with both a brand name and a redirect URL.
+    if (brand.name && brand.url) {
+      const poweredBy = createElement("small", "powered-by")
+      poweredBy.innerHTML = POWERED_BY_ICON
+      const byLabel = document.createElement("span")
+      byLabel.textContent = brand.poweredByLabel || "by"
+      const brandLink = createElement("a", "", {
+        // Exactly as entered: no tracking params on the brand's own link.
+        href: brand.url,
+        target: "_blank",
+        rel: "noopener",
+      })
+      brandLink.textContent = brand.name
+      poweredBy.append(byLabel, brandLink)
+      container.appendChild(poweredBy)
+    } else {
+      container.classList.add("no-powered-by")
+    }
     root.appendChild(container)
     if (document.body) {
       document.body.appendChild(host)

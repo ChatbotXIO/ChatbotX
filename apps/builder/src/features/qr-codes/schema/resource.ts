@@ -10,5 +10,11 @@ export const qrCodeResource = createSelectSchema(reflinkModel, {
   workspaceId: z.string(),
   type: reflinkTypes,
   qrStyles: qrStyles.nullable(),
-}).omit({ widgetAuthorizedDomains: true, widgetHiddenInboxIds: true })
+}).omit({
+  widgetAuthorizedDomains: true,
+  widgetHiddenInboxIds: true,
+  widgetLogoFileId: true,
+  widgetBrandName: true,
+  widgetBrandUrl: true,
+})
 export type QrCodeResource = z.infer<typeof qrCodeResource>

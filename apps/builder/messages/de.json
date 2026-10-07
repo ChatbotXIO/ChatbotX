@@ -4456,7 +4456,23 @@
       "preview": "Vorschau",
       "embedCodeDescription": "Füge diesen Code vor dem schließenden body-Tag deiner Website ein. Gespeicherte Änderungen werden automatisch übernommen, ein erneutes Einfügen ist nicht nötig.",
       "savedSuccess": "Chat-Widget-Einstellungen gespeichert",
-      "poweredBy": "von"
+      "poweredBy": "von",
+      "toggleLabel": "Chatte mit uns",
+      "logo": {
+        "description": "Die runde Schaltfläche, mit der Besucher das Widget öffnen. Wähle ein quadratisches Bild oder lass das Feld leer, um das App-Logo zu verwenden.",
+        "choose": "Aus der Mediathek auswählen",
+        "notImage": "Das Logo muss ein Bild sein."
+      },
+      "brandUrl": {
+        "label": "Weiterleitungs-URL",
+        "placeholder": "https://example.com",
+        "description": "Wohin dein Markenname in der „von“-Zeile des Widgets verlinkt. Erforderlich, wenn ein Markenname gesetzt ist.",
+        "requiredWithName": "Gib eine Weiterleitungs-URL für diesen Markennamen ein."
+      },
+      "brandName": {
+        "description": "Wird in der „von“-Zeile des Widgets angezeigt. Erforderlich, wenn eine Weiterleitungs-URL gesetzt ist. Beide leer lassen, um diese Zeile auszublenden.",
+        "requiredWithUrl": "Gib einen Markennamen für diese Weiterleitungs-URL ein."
+      }
     }
   },
   "qrCodes": {

@@ -4728,7 +4728,23 @@
       "preview": "Xem trước",
       "embedCodeDescription": "Dán đoạn code này trước thẻ đóng body trên website của bạn. Thay đổi đã lưu sẽ tự áp dụng, không cần dán lại.",
       "savedSuccess": "Đã lưu cài đặt chat widget",
-      "poweredBy": "bởi"
+      "poweredBy": "bởi",
+      "toggleLabel": "Trò chuyện với chúng tôi",
+      "logo": {
+        "description": "Nút tròn khách bấm để mở widget. Nên chọn ảnh vuông, hoặc để trống để dùng logo của app.",
+        "choose": "Chọn từ Thư viện media",
+        "notImage": "Logo phải là file ảnh."
+      },
+      "brandUrl": {
+        "label": "URL chuyển hướng",
+        "placeholder": "https://example.com",
+        "description": "Trang sẽ mở khi khách bấm vào tên thương hiệu ở dòng \"bởi\" của widget. Bắt buộc khi có tên thương hiệu.",
+        "requiredWithName": "Nhập URL chuyển hướng cho tên thương hiệu này."
+      },
+      "brandName": {
+        "description": "Hiện ở dòng \"bởi\" của widget. Bắt buộc khi có URL chuyển hướng. Để trống cả hai thì ẩn dòng này.",
+        "requiredWithUrl": "Nhập tên thương hiệu cho URL chuyển hướng này."
+      }
     }
   },
   "qrCodes": {

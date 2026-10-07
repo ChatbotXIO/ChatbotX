@@ -5119,7 +5119,23 @@
       "preview": "预览",
       "embedCodeDescription": "将此代码粘贴到网站的 body 结束标签之前。保存的更改会自动生效，无需重新粘贴。",
       "savedSuccess": "聊天小部件设置已保存",
-      "poweredBy": "由"
+      "poweredBy": "由",
+      "toggleLabel": "与我们聊天",
+      "logo": {
+        "description": "访客点击以打开小部件的圆形按钮。请选择一张方形图片，或留空以使用应用标志。",
+        "choose": "从媒体库选择",
+        "notImage": "标志必须是图片。"
+      },
+      "brandUrl": {
+        "label": "跳转链接",
+        "placeholder": "https://example.com",
+        "description": "小部件“由”行中品牌名称链接到的地址。设置品牌名称时必填。",
+        "requiredWithName": "请为此品牌名称输入跳转 URL。"
+      },
+      "brandName": {
+        "description": "显示在小部件的“由”行中。设置跳转 URL 时必填。两者都留空则隐藏该行。",
+        "requiredWithUrl": "请为此跳转 URL 输入品牌名称。"
+      }
     }
   },
   "sendGrid": {

@@ -4456,7 +4456,23 @@
       "preview": "Pré-visualização",
       "embedCodeDescription": "Cole este código antes da etiqueta de fecho body do seu site. As alterações guardadas aplicam-se automaticamente, não é preciso colar de novo.",
       "savedSuccess": "Definições do widget de chat guardadas",
-      "poweredBy": "por"
+      "poweredBy": "por",
+      "toggleLabel": "Fale connosco",
+      "logo": {
+        "description": "O botão redondo em que os visitantes clicam para abrir o widget. Escolha uma imagem quadrada ou deixe vazio para usar o logótipo da aplicação.",
+        "choose": "Escolher da Biblioteca de multimédia",
+        "notImage": "O logótipo tem de ser uma imagem."
+      },
+      "brandUrl": {
+        "label": "URL de redirecionamento",
+        "placeholder": "https://example.com",
+        "description": "Para onde o nome da sua marca na linha \"por\" do widget aponta. Obrigatório quando existe um nome de marca.",
+        "requiredWithName": "Introduza um URL de redirecionamento para este nome de marca."
+      },
+      "brandName": {
+        "description": "Apresentado na linha \"por\" do widget. Obrigatório quando existe um URL de redirecionamento. Deixe ambos vazios para ocultar essa linha.",
+        "requiredWithUrl": "Introduza um nome de marca para este URL de redirecionamento."
+      }
     }
   },
   "qrCodes": {

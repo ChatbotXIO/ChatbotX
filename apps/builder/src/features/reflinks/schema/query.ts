@@ -30,6 +30,7 @@ export const listReflinkItem = reflinkResource.and(
   z.object({
     flow: flowResource,
     customField: customFieldResource.nullable(),
+    widgetLogoFile: z.object({ path: z.string() }).nullish(),
   }),
 )
 export type ListReflinkItem = z.infer<typeof listReflinkItem>

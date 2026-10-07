@@ -4435,7 +4435,23 @@
       "preview": "プレビュー",
       "embedCodeDescription": "このコードをWebサイトの終了タグ body の前に貼り付けてください。保存した変更は自動で反映されるため、貼り直す必要はありません。",
       "savedSuccess": "チャットウィジェットの設定を保存しました",
-      "poweredBy": "提供"
+      "poweredBy": "提供",
+      "toggleLabel": "チャットで相談",
+      "logo": {
+        "description": "訪問者がウィジェットを開くためにクリックする丸いボタンです。正方形の画像を選ぶか、空欄のままにするとアプリのロゴを使用します。",
+        "choose": "メディアライブラリから選択",
+        "notImage": "ロゴは画像である必要があります。"
+      },
+      "brandUrl": {
+        "label": "リダイレクトURL",
+        "placeholder": "https://example.com",
+        "description": "ウィジェットの「by」行にあるブランド名のリンク先です。ブランド名を設定した場合は必須です。",
+        "requiredWithName": "このブランド名のリダイレクトURLを入力してください。"
+      },
+      "brandName": {
+        "description": "ウィジェットの「by」行に表示されます。リダイレクトURLを設定した場合は必須です。両方を空欄にするとこの行を非表示にします。",
+        "requiredWithUrl": "このリダイレクトURLのブランド名を入力してください。"
+      }
     }
   },
   "qrCodes": {

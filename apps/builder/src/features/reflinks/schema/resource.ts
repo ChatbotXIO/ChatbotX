@@ -6,6 +6,7 @@ export const reflinkResource = createSelectSchema(reflinkModel, {
   id: z.string(),
   flowId: z.string(),
   customFieldId: z.string().nullable(),
+  widgetLogoFileId: z.string().nullable(),
   workspaceId: z.string(),
   type: reflinkTypes,
 })
