@@ -1,4 +1,9 @@
-import { count as countFn, db, sql } from "@chatbotx.io/database/client"
+import {
+  count as countFn,
+  type DatabaseClient,
+  db,
+  sql,
+} from "@chatbotx.io/database/client"
 import {
   contactModel,
   inboxModel,
@@ -71,8 +76,9 @@ class WorkspaceUsageService {
     workspaceId: string,
     metric: WorkspaceUsageMetric,
     count = 1,
+    tx?: DatabaseClient,
   ): Promise<void> {
-    await this.store.consume(workspaceId, metric, count)
+    await this.store.consume(workspaceId, metric, count, tx)
   }
 
   async decrement(

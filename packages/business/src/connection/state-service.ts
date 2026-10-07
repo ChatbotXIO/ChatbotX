@@ -410,7 +410,15 @@ class ConnectionStateService extends BaseService {
 
       let pendingRelease: RunResult["pendingRelease"] = null
       if (consumesQuota && input.ownerId) {
-        await workspaceUsageService.increment(existing.workspaceId, "channels")
+        // Same transaction as the status write: when the workspace itself was
+        // created earlier in this still-open `tx`, a write on another
+        // connection cannot see it and trips the WorkspaceUsage FK.
+        await workspaceUsageService.increment(
+          existing.workspaceId,
+          "channels",
+          1,
+          client,
+        )
         quotaConsumption.workspaceUsageIncremented = true
       } else if (releasesQuota) {
         if (input.ownerId) {

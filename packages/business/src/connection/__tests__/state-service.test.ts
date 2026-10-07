@@ -143,13 +143,43 @@ describe("ConnectionStateService.transition", () => {
       metric: "channels",
     })
     expect(mocks.release).not.toHaveBeenCalled()
-    expect(mocks.increment).toHaveBeenCalledWith("ws-1", "channels")
+    expect(mocks.increment).toHaveBeenCalledWith(
+      "ws-1",
+      "channels",
+      1,
+      expect.anything(),
+    )
     expect(mocks.decrement).not.toHaveBeenCalled()
     expect(mocks.mirrorInbox).toHaveBeenCalledWith(
       expect.objectContaining({
         values: expect.objectContaining({ status: "connected" }),
       }),
       expect.anything(),
+    )
+  })
+
+  // Regression: `integrationWebchatService.createWithWorkspace` runs this
+  // transition inside a transaction that also created the Workspace. The
+  // WorkspaceUsage upsert must ride that same `tx`; on any other connection the
+  // uncommitted Workspace row is invisible and the FK check fails.
+  test("connect.completed on a caller-owned tx writes WorkspaceUsage through that same tx", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+    const callerTx = { marker: "caller-tx" }
+
+    await connectionStateService.transition({
+      connectionId: "conn-1",
+      event: "connect.completed",
+      ownerId: "owner-1",
+      tx: callerTx as never,
+      quotaConsumption: { consumed: false, workspaceUsageIncremented: false },
+    })
+
+    expect(mocks.increment).toHaveBeenCalledWith(
+      "ws-1",
+      "channels",
+      1,
+      callerTx,
     )
   })
 
