@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => ({
   cancelLive: vi.fn(),
   tryConsume: vi.fn(),
   release: vi.fn(async () => undefined),
-  increment: vi.fn(async () => undefined),
+  increment: vi.fn(async () => true),
   decrement: vi.fn(async () => undefined),
   rollbackLiveIncrement: vi.fn(async () => undefined),
   findOwnerUserIdByWorkspaceId: vi.fn(async () => "owner-1"),
@@ -408,6 +408,33 @@ describe("ConnectionStateService rollback of the workspace usage increment", () 
     expect(mocks.decrement).not.toHaveBeenCalled()
   })
 
+  test("does not touch Redis on rollback when the live usage increment never landed", async () => {
+    // Redis was down for the +1 (best-effort, swallowed), the durable row was
+    // written on the tx, then COMMIT failed. The row is gone with the
+    // transaction and Redis never moved, so a -1 here would under-count.
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+    mocks.increment.mockResolvedValueOnce(false)
+    vi.mocked(db.transaction).mockImplementationOnce((async (
+      fn: (tx: unknown) => unknown,
+    ) => {
+      await fn({})
+      throw new Error("commit failed")
+    }) as typeof db.transaction)
+
+    await expect(
+      connectionStateService.transition({
+        connectionId: "conn-1",
+        event: "connect.completed",
+        ownerId: "owner-1",
+      }),
+    ).rejects.toThrow("commit failed")
+
+    expect(mocks.release).toHaveBeenCalledTimes(1)
+    expect(mocks.rollbackLiveIncrement).not.toHaveBeenCalled()
+    expect(mocks.decrement).not.toHaveBeenCalled()
+  })
+
   test("compensateQuotaConsumption rolls back Redis only when the usage increment ran", async () => {
     await connectionStateService.compensateQuotaConsumption({
       ownerId: "owner-1",
@@ -563,6 +590,84 @@ describe("ConnectionStateService.commitReconnect", () => {
       userId: "owner-1",
       metric: "channels",
     })
+    expect(mocks.release).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "channels",
+    })
+  })
+})
+
+describe("ConnectionStateService.commitReconnect — commit failure", () => {
+  const oauth2Auth = {
+    authType: "oauth2" as const,
+    clientId: "client-1",
+    clientSecret: "secret-1",
+    redirectUrl: "https://example.com",
+    tokens: { accessToken: "token-1", expiresAt: "2026-10-10T00:00:00.000Z" },
+  }
+
+  // `reconnectInbox` returns successfully (quota consumed, usage incremented
+  // on the tx), then the transaction's COMMIT fails. Nothing inside
+  // `reconnectInbox` can see that, so `commitReconnect` itself must release
+  // the user quota and undo the Redis usage increment (the DB row rolled back
+  // with the transaction).
+  test("releases the consumed channel quota and rolls back the live usage counter when COMMIT fails after reconnectInbox", async () => {
+    mocks.findByInboxId.mockResolvedValue(
+      baseConnection({ status: "needs_reauth" }),
+    )
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+    vi.mocked(db.transaction).mockImplementationOnce((async (
+      fn: (tx: unknown) => unknown,
+    ) => {
+      await fn({})
+      throw new Error("commit failed")
+    }) as typeof db.transaction)
+
+    await expect(
+      connectionStateService.commitReconnect({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        auth: oauth2Auth,
+        writeAuth: vi.fn(async () => undefined),
+      }),
+    ).rejects.toThrow("commit failed")
+
+    expect(mocks.tryConsume).toHaveBeenCalledTimes(1)
+    expect(mocks.release).toHaveBeenCalledTimes(1)
+    expect(mocks.release).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "channels",
+    })
+    expect(mocks.rollbackLiveIncrement).toHaveBeenCalledWith("ws-1", "channels")
+    expect(mocks.decrement).not.toHaveBeenCalled()
+  })
+
+  // The compensation must not depend on a second lookup that could itself
+  // fail and leave the slot held: the owner is resolved once, up front.
+  test("resolves the quota owner once before the transaction and reuses it for the compensation", async () => {
+    mocks.findByInboxId.mockResolvedValue(
+      baseConnection({ status: "needs_reauth" }),
+    )
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+    vi.mocked(db.transaction).mockImplementationOnce((async (
+      fn: (tx: unknown) => unknown,
+    ) => {
+      await fn({})
+      throw new Error("commit failed")
+    }) as typeof db.transaction)
+
+    await expect(
+      connectionStateService.commitReconnect({
+        inboxId: "inbox-1",
+        workspaceId: "ws-1",
+        auth: oauth2Auth,
+        writeAuth: vi.fn(async () => undefined),
+      }),
+    ).rejects.toThrow("commit failed")
+
+    expect(mocks.findOwnerUserIdByWorkspaceId).toHaveBeenCalledTimes(1)
     expect(mocks.release).toHaveBeenCalledWith({
       userId: "owner-1",
       metric: "channels",

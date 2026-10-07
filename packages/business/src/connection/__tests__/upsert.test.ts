@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   connectionRepositoryUpdate: vi.fn(),
   transition: vi.fn(),
   compensateQuotaConsumption: vi.fn(async () => undefined),
+  compensateWorkspaceQuota: vi.fn(async () => undefined),
   findOwnerUserIdByWorkspaceId: vi.fn(async () => "owner-1"),
   isUniqueViolationError: vi.fn(() => false),
   loggerError: vi.fn(),
@@ -37,6 +38,10 @@ vi.mock("../../errors", () => ({
 
 vi.mock("../../logger", () => ({
   logger: { warn: vi.fn(), error: mocks.loggerError, info: vi.fn() },
+}))
+
+vi.mock("../../workspace/quota-consumption", () => ({
+  compensateWorkspaceQuotaConsumption: mocks.compensateWorkspaceQuota,
 }))
 
 vi.mock("../../workspace-member/service", () => ({
@@ -245,6 +250,58 @@ describe("withQuotaCompensation", () => {
       }),
       "connection: quota compensation failed",
     )
+  })
+})
+
+describe("withQuotaCompensation — workspace seat", () => {
+  it("also hands back a workspace seat consumed inside the failed transaction", async () => {
+    const operationError = new Error("transaction rolled back")
+    const workspaceQuotaConsumption = {
+      consumed: true as const,
+      userId: "user-1",
+      workspaceId: "ws-new",
+      teamMembersLiveIncremented: true,
+    }
+
+    await expect(
+      withQuotaCompensation(
+        {
+          ownerId: "owner-1",
+          quotaConsumption: {
+            consumed: false,
+            workspaceUsageIncremented: false,
+          },
+          workspaceQuotaConsumption,
+          context: { provider: "telegram" },
+        },
+        () => {
+          throw operationError
+        },
+      ),
+    ).rejects.toBe(operationError)
+
+    expect(mocks.compensateWorkspaceQuota).toHaveBeenCalledWith(
+      workspaceQuotaConsumption,
+    )
+  })
+
+  it("never touches the workspace seat when the operation succeeds", async () => {
+    await withQuotaCompensation(
+      {
+        ownerId: "owner-1",
+        quotaConsumption: { consumed: false, workspaceUsageIncremented: false },
+        workspaceQuotaConsumption: {
+          consumed: true,
+          userId: "user-1",
+          workspaceId: "ws-new",
+          teamMembersLiveIncremented: true,
+        },
+        context: { provider: "telegram" },
+      },
+      async () => "ok",
+    )
+
+    expect(mocks.compensateWorkspaceQuota).not.toHaveBeenCalled()
   })
 })
 

@@ -44,6 +44,7 @@ const mocks = vi.hoisted(() => ({
   })),
   isUniqueViolationError: vi.fn(() => false),
   transaction: vi.fn(async (fn: (tx: unknown) => unknown) => await fn("tx")),
+  compensateWorkspaceQuota: vi.fn(async () => undefined),
   createSession: vi.fn(),
   findByNonce: vi.fn(),
   submitInput: vi.fn(),
@@ -113,6 +114,10 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   inboxService: { create: mocks.inboxCreate },
 }))
+vi.mock("@chatbotx.io/business/workspace", () => ({
+  compensateWorkspaceQuotaConsumption: mocks.compensateWorkspaceQuota,
+}))
+
 vi.mock("@chatbotx.io/business/connection", () => ({
   authExpiresAtOf: (auth: {
     authType: string
@@ -1608,7 +1613,11 @@ describe("ConnectionService.startSession", () => {
     })
 
     expect(mocks.transaction).toHaveBeenCalledOnce()
-    expect(mockCreateWorkspace).toHaveBeenCalledWith("tx")
+    expect(mockCreateWorkspace).toHaveBeenCalledWith(
+      "tx",
+      expect.objectContaining({ consumed: false }),
+    )
+    expect(mocks.compensateWorkspaceQuota).not.toHaveBeenCalled()
     expect(mocks.createSession).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId: "ws-new",
@@ -1621,6 +1630,32 @@ describe("ConnectionService.startSession", () => {
       type: "open_url",
       url: "https://provider.example.com/authorize",
     })
+  })
+
+  it("hands the workspace seat back when the session insert fails after createWorkspace already consumed it", async () => {
+    const mockCreateWorkspace = vi.fn(
+      (_tx: unknown, quotaConsumption: { consumed: boolean }) => {
+        Object.assign(quotaConsumption, { consumed: true, userId: "user-1" })
+        return Promise.resolve({ id: "ws-new" })
+      },
+    )
+    const sessionError = new Error("pending session cap reached")
+    mocks.createSession.mockRejectedValueOnce(sessionError)
+
+    await expect(
+      connectionService.startSession({
+        createWorkspace: mockCreateWorkspace,
+        provider: "messenger",
+        purpose: "connect",
+        credential: { clientId: "app-1" },
+        callbackUrl: "https://app.example.test/integrations/messenger/callback",
+        actorUserId: "user-1",
+      }),
+    ).rejects.toBe(sessionError)
+
+    expect(mocks.compensateWorkspaceQuota).toHaveBeenCalledWith(
+      expect.objectContaining({ consumed: true, userId: "user-1" }),
+    )
   })
 
   it("never creates a session when createWorkspace itself fails (the real transaction rolls both back together)", async () => {

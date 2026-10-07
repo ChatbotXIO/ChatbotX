@@ -23,6 +23,7 @@ import {
   runConnectTransaction,
 } from "../inbox/connect-channel"
 import { inboxService } from "../inbox/service"
+import type { WorkspaceQuotaConsumption } from "../workspace/quota-consumption"
 import { workspaceService } from "../workspace/service"
 
 /** Signup-session identity threaded through `connectPhoneNumber`'s per-number claim. */
@@ -120,10 +121,14 @@ function insertPhoneNumber(
     workspaceUsageIncremented: false,
   }
 
+  const workspaceQuotaConsumption: WorkspaceQuotaConsumption = {
+    consumed: false,
+  }
   return withQuotaCompensation(
     {
       ownerId: input.ownerId,
       quotaConsumption,
+      workspaceQuotaConsumption,
       context: { provider: "whatsapp", actorUserId: input.actorUserId },
     },
     () =>
@@ -134,6 +139,7 @@ function insertPhoneNumber(
           input,
           tx,
           claim,
+          workspaceQuotaConsumption,
         )
 
         // `IntegrationWhatsapp.phoneNumberId` is unique platform-wide, not
@@ -285,6 +291,7 @@ async function resolveConnectWorkspace(
   input: ConnectPhoneNumberInput,
   tx: DatabaseClient,
   claim: ClaimOutcome,
+  quotaConsumption: WorkspaceQuotaConsumption,
 ): Promise<{ workspaceId: string; createdWorkspace: boolean }> {
   const trustedWorkspaceId =
     claim.kind === "claimed" ? claim.workspaceId : input.workspaceId
@@ -301,6 +308,7 @@ async function resolveConnectWorkspace(
       timezone: "UTC",
       ownerId: input.actorUserId,
     },
+    quotaConsumption,
   })
 
   if (input.signupSession) {

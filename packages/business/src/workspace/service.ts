@@ -42,8 +42,18 @@ import {
   workspaceMemberService,
 } from "../workspace-member/service"
 import { nextScheduledDeletionAt } from "./deletion-schedule"
+import {
+  compensateWorkspaceQuotaConsumption,
+  releaseWorkspaceSeat,
+  type WorkspaceQuotaConsumption,
+} from "./quota-consumption"
 
 type WorkspaceWhere = Partial<{ id: string; ownerId: string }>
+/** What `writeWorkspace` has already done, for `insertWorkspace`'s rollback. */
+type WriteProgress = {
+  workspaceId?: string
+  teamMemberUsage: { liveIncremented: boolean }
+}
 type DueWorkspace = Pick<WorkspaceModel, "id" | "ownerId" | "tenantId">
 
 const stableKey = (where: WorkspaceWhere) =>
@@ -591,10 +601,19 @@ class WorkspaceService extends BaseService {
     return owned?.id ?? ROOT_TENANT_ID
   }
 
+  /**
+   * `quotaConsumption`: pass it when `tx` is a caller-owned transaction. The
+   * `workspaces` seat is consumed outside SQL, so if that transaction later
+   * rolls back the caller must hand the seat back itself via
+   * `compensateWorkspaceQuotaConsumption` (or `withQuotaCompensation`, which
+   * calls it). The tracker is marked only once the workspace rows are
+   * written — a failure before that is released inside this call.
+   */
   async create(props: {
     data: typeof workspaceModel.$inferInsert
     createdBy: string
     tx?: DatabaseClient
+    quotaConsumption?: WorkspaceQuotaConsumption
   }): Promise<WorkspaceModel> {
     if (isCommunity()) {
       // Community edition allows exactly one workspace per owner. Serialize
@@ -624,13 +643,13 @@ class WorkspaceService extends BaseService {
     data: typeof workspaceModel.$inferInsert
     createdBy: string
     tx?: DatabaseClient
+    quotaConsumption?: WorkspaceQuotaConsumption
   }): Promise<WorkspaceModel> {
-    const { data, tx = db } = props
-
     // This consume runs against `db`, not `tx`: if a caller wraps `create` in
     // its own transaction that later rolls back (e.g. a channel connect action),
-    // the workspace seat is not released with it. Scheduled reconcile is the
-    // backstop that re-grounds counts in that case.
+    // the workspace seat is not released with it — that caller tracks it via
+    // `props.quotaConsumption` and compensates from its own catch. A failure
+    // inside `writeWorkspace` below is released right here instead.
     const consumed = await quotaEnforcementService.tryConsume({
       userId: props.createdBy,
       metric: "workspaces",
@@ -638,6 +657,81 @@ class WorkspaceService extends BaseService {
     if (!consumed.ok) {
       throw workspaceLimitReachedException()
     }
+
+    // Filled by `writeWorkspace` as it goes, so the catch below knows which
+    // live counters actually moved.
+    const progress: WriteProgress = {
+      teamMemberUsage: { liveIncremented: false },
+    }
+    let newWorkspace: WorkspaceModel
+    try {
+      // Without a caller-owned `tx`, own one: the writes must be atomic so a
+      // late failure (member insert, cache) cannot leave the Workspace row
+      // behind while the seat below is handed back — that under-count would
+      // let the owner exceed the plan limit until reconcile.
+      newWorkspace = props.tx
+        ? await this.writeWorkspace({ ...props, tx: props.tx, progress })
+        : await db.transaction((tx) =>
+            this.writeWorkspace({ ...props, tx, progress }),
+          )
+    } catch (err) {
+      // Row written, then something later failed: the owner-member insert
+      // also bumped the live `teamMembers` counter, so undo both. Row never
+      // written: only the seat moved.
+      await (progress.workspaceId
+        ? compensateWorkspaceQuotaConsumption({
+            consumed: true,
+            userId: props.createdBy,
+            workspaceId: progress.workspaceId,
+            teamMembersLiveIncremented:
+              progress.teamMemberUsage.liveIncremented,
+          })
+        : releaseWorkspaceSeat(props.createdBy))
+      throw err
+    }
+
+    // Only meaningful with a caller-owned `tx`: with the owned transaction
+    // above already committed there is nothing left for the caller to undo.
+    // Marked before the cache bust so a failure there stays compensable.
+    if (props.quotaConsumption && props.tx) {
+      Object.assign(props.quotaConsumption, {
+        consumed: true,
+        userId: props.createdBy,
+        workspaceId: newWorkspace.id,
+        teamMembersLiveIncremented: progress.teamMemberUsage.liveIncremented,
+      })
+    }
+
+    // After the owned transaction commits: busting earlier would let a
+    // concurrent read re-cache the owner's membership list without the new
+    // workspace until the TTL.
+    await this.invalidateCacheTags([workspaceMemberCacheTag(props.createdBy)])
+
+    // Sanctioned exception: no workspaceId exists in the ALS actor yet at
+    // this point, so this bypasses this.audit() with an explicit override.
+    // Only fires when the caller didn't supply its own open transaction —
+    // emitting while nested in one could log a workspace that later rolls
+    // back. Here the owned transaction above has already committed.
+    if (!props.tx) {
+      await dispatchAuditRecord({
+        userId: props.createdBy,
+        workspaceId: newWorkspace.id,
+        action: "create",
+        detail: `created the workspace (#${newWorkspace.id})`,
+      })
+    }
+
+    return newWorkspace
+  }
+
+  /** The row writes behind `insertWorkspace`, after the seat is consumed. Always runs on a transaction. */
+  private async writeWorkspace(props: {
+    data: typeof workspaceModel.$inferInsert
+    createdBy: string
+    tx: DatabaseClient
+    progress: WriteProgress
+  }): Promise<WorkspaceModel> {
+    const { data, tx } = props
 
     const tenantId =
       data.tenantId ?? (await this.resolveTenantForOwner(props.createdBy))
@@ -648,9 +742,11 @@ class WorkspaceService extends BaseService {
         tenantId,
       })
       .returning()
+    props.progress.workspaceId = newWorkspace.id
 
     await workspaceMemberService.create({
       tx,
+      teamMemberUsage: props.progress.teamMemberUsage,
       data: {
         userId: props.createdBy,
         workspaceId: newWorkspace.id,
@@ -685,23 +781,6 @@ class WorkspaceService extends BaseService {
       tx,
     })
 
-    await this.invalidateCacheTags([workspaceMemberCacheTag(props.createdBy)])
-
-    // Sanctioned exception: no workspaceId exists in the ALS actor yet at
-    // this point, so this bypasses this.audit() with an explicit override.
-    // Only fires when the caller didn't supply its own open transaction (see
-    // the comment above on `consumed` for why channel-connect callers do) —
-    // emitting here while nested in one could log a workspace that later
-    // rolls back.
-    if (!props.tx) {
-      await dispatchAuditRecord({
-        userId: props.createdBy,
-        workspaceId: newWorkspace.id,
-        action: "create",
-        detail: `created the workspace (#${newWorkspace.id})`,
-      })
-    }
-
     return newWorkspace
   }
 
@@ -718,15 +797,23 @@ class WorkspaceService extends BaseService {
 
       const { start, end } = anchoredPeriod(new Date(), quota.periodStart)
 
-      await macRepository.ensureWorkspaceMac(
-        [
-          {
-            workspaceId: props.workspaceId,
-            periodStart: start,
-            periodEnd: end,
-          },
-        ],
-        props.tx,
+      // Behind a SAVEPOINT (nested `tx.transaction`, as in
+      // `template/adapters/naming.ts`): this write is optional and its error
+      // is swallowed below, but a failed statement on the owning transaction
+      // would leave Postgres' transaction aborted — the caller's COMMIT then
+      // silently becomes ROLLBACK while `create` reports success. The
+      // savepoint confines the failure to this one statement.
+      await props.tx.transaction((savepointTx) =>
+        macRepository.ensureWorkspaceMac(
+          [
+            {
+              workspaceId: props.workspaceId,
+              periodStart: start,
+              periodEnd: end,
+            },
+          ],
+          savepointTx,
+        ),
       )
     } catch (error) {
       logger.error(

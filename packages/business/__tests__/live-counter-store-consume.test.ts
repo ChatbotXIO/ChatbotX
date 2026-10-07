@@ -248,6 +248,43 @@ describe("userQuotaService write-through", () => {
     expect(distributedStore.delete).toHaveBeenCalledWith(`user-quota:${USER}`)
   })
 
+  test("rolls the Redis increment back and rethrows when the durable upsert fails", async () => {
+    const dbError = new Error("db down")
+    onConflictDoUpdate.mockRejectedValueOnce(dbError)
+
+    await expect(userQuotaService.consume(USER, "workspaces")).rejects.toBe(
+      dbError,
+    )
+
+    // Redis went +1 first, so it must go back -1: otherwise the admission
+    // gate over-counts by one until the scheduled reconcile.
+    expect(redisClient.hincrby).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "workspaces",
+      1,
+    )
+    expect(distributedStore.decrementFloor).toHaveBeenCalledWith(
+      `user-quota-live:${USER}`,
+      "workspaces",
+      1,
+    )
+  })
+
+  test("does not roll Redis back when the live increment itself had already failed", async () => {
+    // Redis was down for the +1 (swallowed, counter unchanged); the durable
+    // upsert then fails too. A blind -1 here would drop an existing count by
+    // one for a consume that never landed anywhere.
+    redisClient.hincrby.mockRejectedValueOnce(new Error("redis down"))
+    const dbError = new Error("db down")
+    onConflictDoUpdate.mockRejectedValueOnce(dbError)
+
+    await expect(userQuotaService.consume(USER, "workspaces")).rejects.toBe(
+      dbError,
+    )
+
+    expect(distributedStore.decrementFloor).not.toHaveBeenCalled()
+  })
+
   test("a non-positive count is a no-op on both stores", async () => {
     await userQuotaService.incrementBy(USER, "contacts", 0)
 
