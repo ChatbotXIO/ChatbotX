@@ -118,6 +118,8 @@ type GetOptions = {
   headers?: Record<string, string>
   searchParams?: Record<string, string>
   retry?: number
+  /** Overrides the client's timeout for this call (ms). */
+  timeout?: number
 }
 
 type PostOptions = {

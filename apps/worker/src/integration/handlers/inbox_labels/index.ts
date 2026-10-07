@@ -1,6 +1,7 @@
 import { logger } from "../../../lib/logger"
 import { messengerChannel } from "./channels/messenger"
 import { zaloChannel } from "./channels/zalo"
+import { createLabelledContact } from "./create-contact"
 import { applyEvent } from "./sync"
 import type { Channel, ChannelLabelWebhookData, ChannelType } from "./types"
 
@@ -32,11 +33,22 @@ export async function handleChannelLabelWebhook(
     return
   }
 
-  // null → integration not found OR tag sync disabled
-  const ctx = await channel.loadContext(data.integrationIdentifier)
-  if (!ctx) {
+  // null → integration not found OR tag sync disabled (the channel logs why)
+  const loaded = await channel.loadContext(data.integrationIdentifier)
+  if (!loaded) {
     return
   }
+  const ctx = channel.createsMissingContacts
+    ? {
+        ...loaded,
+        createMissingContact: (sourceId: string) =>
+          createLabelledContact({
+            integrationType: data.integrationType,
+            integrationIdentifier: data.integrationIdentifier,
+            sourceId,
+          }),
+      }
+    : loaded
 
   const events = channel.toEvents(data.payload)
   if (events === null) {

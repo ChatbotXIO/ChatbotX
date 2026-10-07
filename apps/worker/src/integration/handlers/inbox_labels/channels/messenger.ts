@@ -1,6 +1,7 @@
 import { messengerIntegrationService } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { messengerWebhookEventSchema } from "@chatbotx.io/integration-messenger/schema"
+import { logger } from "../../../../lib/logger"
 import type { Channel } from "../types"
 
 /**
@@ -11,11 +12,28 @@ import type { Channel } from "../types"
  *   tag can be created locally on the fly.
  */
 export const messengerChannel: Channel = {
+  createsMissingContacts: true,
+
   async loadContext(pageId) {
     const integration = await messengerIntegrationService.findByPageIdUnscoped({
       pageId,
     })
-    if (!integration?.syncTagEnabledAt) {
+    if (!integration) {
+      logger.info(
+        { channel: channelTypes.enum.messenger, pageId },
+        "inbox labels: page not connected, label event skipped",
+      )
+      return null
+    }
+    if (!integration.syncTagEnabledAt) {
+      logger.info(
+        {
+          channel: channelTypes.enum.messenger,
+          workspaceId: integration.workspaceId,
+          integrationId: integration.id,
+        },
+        "inbox labels: tag sync off for page, label event skipped",
+      )
       return null
     }
     return {
@@ -53,6 +71,10 @@ export const messengerChannel: Channel = {
     if (action === "remove" && user) {
       return [{ type: "unassign", labelId: label.id, userIds: [user.id] }]
     }
+    logger.info(
+      { channel: channelTypes.enum.messenger, action, hasUser: Boolean(user) },
+      "inbox labels: unsupported label event skipped",
+    )
     return []
   },
 }

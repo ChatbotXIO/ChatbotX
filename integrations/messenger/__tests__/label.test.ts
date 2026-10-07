@@ -518,7 +518,7 @@ describe("getUserLabels", () => {
     expect(url.pathname).toBe(`/${VERSION}/${PSID}/custom_labels`)
   })
 
-  test("sends fields=page_label_name as search param", async () => {
+  test("sends fields=id,page_label_name as search param", async () => {
     // Arrange
     let captured: Request | null = null
     server.use(
@@ -533,7 +533,112 @@ describe("getUserLabels", () => {
 
     // Assert
     const url = new URL((captured as Request).url)
-    expect(url.searchParams.get("fields")).toBe("page_label_name")
+    expect(url.searchParams.get("fields")).toBe("id,page_label_name")
+  })
+
+  test("fails fast without retries when requestTimeoutMs is set", async () => {
+    // Arrange — a retryable 503; the default client would retry it
+    let calls = 0
+    server.use(
+      http.get(`${BASE}/${VERSION}/${PSID}/custom_labels`, () => {
+        calls++
+        return HttpResponse.json(
+          { error: { message: "busy" } },
+          { status: 503 },
+        )
+      }),
+    )
+
+    // Act / Assert
+    await expect(
+      getUserLabels({
+        ctx: makeCtx(VERSION),
+        psid: PSID,
+        requestTimeoutMs: 5000,
+      }),
+    ).rejects.toThrow()
+    expect(calls).toBe(1)
+  })
+
+  test("keeps the client's default retries when requestTimeoutMs is omitted", async () => {
+    // Arrange — fail once with a retryable 503, then succeed
+    let calls = 0
+    server.use(
+      http.get(`${BASE}/${VERSION}/${PSID}/custom_labels`, () => {
+        calls++
+        return calls === 1
+          ? HttpResponse.json({ error: { message: "busy" } }, { status: 503 })
+          : HttpResponse.json({ data: [] })
+      }),
+    )
+
+    // Act
+    await getUserLabels({ ctx: makeCtx(VERSION), psid: PSID })
+
+    // Assert
+    expect(calls).toBe(2)
+  })
+
+  test("stops at the page limit instead of following cursors forever", async () => {
+    // Arrange — every page claims there is another one
+    let calls = 0
+    server.use(
+      http.get(`${BASE}/${VERSION}/${PSID}/custom_labels`, () => {
+        calls++
+        return HttpResponse.json({
+          data: [{ id: String(calls), page_label_name: `label-${calls}` }],
+          paging: {
+            cursors: { after: `CURSOR-${calls + 1}` },
+            next: `${BASE}/${VERSION}/${PSID}/custom_labels?after=x`,
+          },
+        })
+      }),
+    )
+
+    // Act
+    const labels = await getUserLabels({ ctx: makeCtx(VERSION), psid: PSID })
+
+    // Assert
+    expect(calls).toBe(5)
+    expect(labels).toHaveLength(5)
+  })
+
+  test("follows paging cursors and concatenates every page", async () => {
+    // Arrange — Meta returns a second page via paging.next + cursors.after
+    const seenAfter: (string | null)[] = []
+    server.use(
+      http.get(`${BASE}/${VERSION}/${PSID}/custom_labels`, ({ request }) => {
+        const after = new URL(request.url).searchParams.get("after")
+        seenAfter.push(after)
+        if (after === "CURSOR-2") {
+          return HttpResponse.json({
+            data: [{ id: "3", page_label_name: "ad_id.1111111111" }],
+            paging: { cursors: { before: "x", after: "CURSOR-3" } },
+          })
+        }
+        return HttpResponse.json({
+          data: [
+            { id: "1", page_label_name: "Intake" },
+            { id: "2", page_label_name: "messenger_ads" },
+          ],
+          paging: {
+            cursors: { before: "x", after: "CURSOR-2" },
+            next: `${BASE}/${VERSION}/${PSID}/custom_labels?after=CURSOR-2`,
+          },
+        })
+      }),
+    )
+
+    // Act
+    const labels = await getUserLabels({ ctx: makeCtx(VERSION), psid: PSID })
+
+    // Assert
+    expect(seenAfter).toEqual([null, "CURSOR-2"])
+    expect(labels.map((label) => label.page_label_name)).toEqual([
+      "Intake",
+      "messenger_ads",
+      "ad_id.1111111111",
+    ])
   })
 
   test("sends Authorization: Bearer header", async () => {

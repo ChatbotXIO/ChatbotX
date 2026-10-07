@@ -1411,6 +1411,11 @@ class TagService extends BaseService {
   /**
    * Get-or-create a tag's channel mapping — moved VERBATIM from
    * `inbox_labels/sync.ts` `ensureChannel`, including the read-back retry.
+   *
+   * A label deleted and re-created on the channel keeps its name but gets a
+   * new external id, so an existing mapping for the tag is repointed to the
+   * new id (as `tagChannelRepository.upsertLabelMapping` does); otherwise the
+   * channel's later "remove label" event could not find the mapping.
    */
   async ensureTagChannel(props: {
     workspaceId: string
@@ -1438,12 +1443,13 @@ class TagService extends BaseService {
         integrationId,
         externalLabelId,
       })
-      .onConflictDoNothing({
+      .onConflictDoUpdate({
         target: [
           tagChannelModel.tagId,
           tagChannelModel.channelType,
           tagChannelModel.integrationId,
         ],
+        set: { externalLabelId: sql`EXCLUDED."externalLabelId"` },
       })
       .returning({ id: tagChannelModel.id })
     if (created) {

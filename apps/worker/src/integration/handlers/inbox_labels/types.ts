@@ -10,6 +10,12 @@ export type LabelContext = {
   workspaceId: string
   integrationId: string
   inboxId: string
+  /**
+   * Creates the contact for a channel user the inbox has never seen, so a
+   * label assigned to them is not dropped. Absent for channels that do not
+   * create contacts from label events.
+   */
+  createMissingContact?: (sourceId: string) => Promise<void>
 }
 
 /** Channel-agnostic meaning of an inbox-label webhook. */
@@ -26,6 +32,8 @@ export type LabelEvent =
  *   return null for an invalid payload.
  */
 export type Channel = {
+  /** Assigning a label to an unknown user creates their contact first. */
+  createsMissingContacts: boolean
   loadContext: (identifier: string) => Promise<LabelContext | null>
   toEvents: (payload: unknown) => LabelEvent[] | null
 }
