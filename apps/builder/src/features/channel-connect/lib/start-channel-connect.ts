@@ -1,6 +1,9 @@
 import "server-only"
 
-import { workspaceService } from "@chatbotx.io/business"
+import {
+  type WorkspaceQuotaConsumption,
+  workspaceService,
+} from "@chatbotx.io/business"
 import "@chatbotx.io/business/audit"
 import { connectSessionService } from "@chatbotx.io/business/connect-session"
 import { connectionService, failSession } from "@chatbotx.io/connections"
@@ -155,8 +158,10 @@ export async function startChannelConnect(
           }
         : {
             ...sessionStartBase,
-            createWorkspace: (tx: DatabaseClient) =>
-              createFirstWorkspace(userId, tx),
+            createWorkspace: (
+              tx: DatabaseClient,
+              quotaConsumption: WorkspaceQuotaConsumption,
+            ) => createFirstWorkspace(userId, tx, quotaConsumption),
           },
     )
     session = started.session

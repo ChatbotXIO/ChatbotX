@@ -72,13 +72,19 @@ class WorkspaceUsageService {
         .then((row) => row ?? null),
   })
 
+  /**
+   * Resolves whether the live (Redis) counter took the increment; the durable
+   * row is always written (on `tx` when given). A caller whose `tx` later
+   * rolls back passes that flag on to decide whether `rollbackLiveIncrement`
+   * has anything to undo.
+   */
   async increment(
     workspaceId: string,
     metric: WorkspaceUsageMetric,
     count = 1,
     tx?: DatabaseClient,
-  ): Promise<void> {
-    await this.store.consume(workspaceId, metric, count, tx)
+  ): Promise<boolean> {
+    return await this.store.consume(workspaceId, metric, count, tx)
   }
 
   /**

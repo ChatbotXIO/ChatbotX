@@ -22,6 +22,15 @@ vi.mock("@chatbotx.io/analytics", () => ({
   macRepository: { ensureWorkspaceMac: vi.fn(async () => undefined) },
 }))
 
+// `workspace/service.ts` now imports the usage service for the rollback of the
+// live team-member counter; mock it so this file's narrow schema mock does not
+// have to carry `workspaceUsageModel`.
+vi.mock("../../workspace-usage/service", () => ({
+  workspaceUsageService: {
+    rollbackLiveIncrement: vi.fn(async () => undefined),
+  },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: { userModel: { findFirst: vi.fn(async () => undefined) } },
@@ -170,6 +179,19 @@ beforeEach(() => {
   mocks.getForUser.mockResolvedValue(undefined)
   mocks.invalidateCacheByTags.mockReset()
   mocks.dbTransaction.mockReset()
+  // `create` without a caller `tx` now owns a transaction around the row
+  // writes; by default run the callback against a client that shares the
+  // insert mock. Tests that need a specific `tx` still override this.
+  mocks.dbTransaction.mockImplementation(
+    (callback: (transaction: unknown) => unknown) => {
+      // Self-referential so a nested `tx.transaction` (the MAC savepoint)
+      // hands back the same client.
+      const client: Record<string, unknown> = { insert: mocks.workspaceInsert }
+      client.transaction = (nested: (transaction: unknown) => unknown) =>
+        nested(client)
+      return callback(client)
+    },
+  )
   mocks.purgeWorkspaceHeavyData.mockReset()
   mocks.purgeWorkspaceHeavyData.mockResolvedValue(0)
   mocks.purgeWorkspacePosts.mockReset()
@@ -246,12 +268,13 @@ describe("WorkspaceService.create", () => {
         .fn()
         .mockResolvedValue([{ id: "new-workspace", name: "Acme" }]),
     })
-    const tx = { insert: mocks.workspaceInsert } as never
+    const tx: Record<string, unknown> = { insert: mocks.workspaceInsert }
+    tx.transaction = (nested: (transaction: unknown) => unknown) => nested(tx)
 
     await workspaceService.create({
       data: { name: "Acme", tenantId: "1" } as never,
       createdBy: "owner-1",
-      tx,
+      tx: tx as never,
     })
 
     expect(mocks.dispatchAuditRecord).not.toHaveBeenCalled()

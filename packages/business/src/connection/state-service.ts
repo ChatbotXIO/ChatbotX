@@ -155,6 +155,15 @@ class ConnectionStateService extends BaseService {
     workspaceId: string
     authExpiresAt?: Date | null
     tx?: DatabaseClient
+    /**
+     * Supplied by a caller that owns `tx` and may still fail AFTER this
+     * returns (e.g. at COMMIT) — it compensates from its own catch via
+     * `compensateQuotaConsumption`. Omitted: tracked locally, where only a
+     * failure inside `transition` itself can be compensated.
+     */
+    quotaConsumption?: ConnectionQuotaConsumption
+    /** Quota owner already resolved by the caller (skips the lookup here). */
+    ownerId?: string
   }): Promise<void> {
     const connection = await connectionRepository.findByInboxId(
       { inboxId: input.inboxId },
@@ -166,18 +175,21 @@ class ConnectionStateService extends BaseService {
     if (connection.workspaceId !== input.workspaceId) {
       throw new ConnectionNotFoundException(input.inboxId)
     }
-    const ownerId = await workspaceMemberService.findOwnerUserIdByWorkspaceId({
-      workspaceId: input.workspaceId,
-    })
+    const ownerId =
+      input.ownerId ??
+      (await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+        workspaceId: input.workspaceId,
+      }))
     // `connect.completed` may consume one `channels` quota unit reviving an
     // inactive connection. The quota check itself lives in Redis, outside
     // any SQL transaction, so a later rollback of a caller-owned `input.tx`
     // would not undo it on its own — `transition`'s caller-tx guard requires
     // this explicit tracking so it can be compensated below instead.
-    const quotaConsumption: ConnectionQuotaConsumption = {
-      consumed: false,
-      workspaceUsageIncremented: false,
-    }
+    const quotaConsumption: ConnectionQuotaConsumption =
+      input.quotaConsumption ?? {
+        consumed: false,
+        workspaceUsageIncremented: false,
+      }
     try {
       await this.transition({
         connectionId: connection.id,
@@ -219,6 +231,12 @@ class ConnectionStateService extends BaseService {
         workspaceId: quotaConsumption.workspaceId,
         workspaceUsageIncremented: quotaConsumption.workspaceUsageIncremented,
       })
+      // Reset so an outer catch holding the same tracker cannot release twice.
+      Object.assign(quotaConsumption, {
+        consumed: false,
+        workspaceId: undefined,
+        workspaceUsageIncremented: false,
+      })
     } catch (compensationErr) {
       logger.error(
         { err: compensationErr, ...context },
@@ -241,15 +259,38 @@ class ConnectionStateService extends BaseService {
     auth: AuthValue
     writeAuth: (tx: DatabaseClient) => Promise<void>
   }): Promise<void> {
-    await db.transaction(async (tx) => {
-      await input.writeAuth(tx)
-      await this.reconnectInbox({
+    // Owned here, not inside `reconnectInbox`: a COMMIT failure happens after
+    // `reconnectInbox` has already returned with the quota consumed, so only
+    // this frame can still see the tracker and hand the slot back. The owner
+    // is resolved once up front so that hand-back never depends on a second
+    // lookup succeeding.
+    const ownerId = await workspaceMemberService.findOwnerUserIdByWorkspaceId({
+      workspaceId: input.workspaceId,
+    })
+    const quotaConsumption: ConnectionQuotaConsumption = {
+      consumed: false,
+      workspaceUsageIncremented: false,
+    }
+    try {
+      await db.transaction(async (tx) => {
+        await input.writeAuth(tx)
+        await this.reconnectInbox({
+          inboxId: input.inboxId,
+          workspaceId: input.workspaceId,
+          authExpiresAt: authExpiresAtOf(input.auth),
+          tx,
+          quotaConsumption,
+          ownerId,
+        })
+      })
+    } catch (err) {
+      await this.compensateIfConsumed(ownerId, quotaConsumption, {
         inboxId: input.inboxId,
         workspaceId: input.workspaceId,
-        authExpiresAt: authExpiresAtOf(input.auth),
-        tx,
+        stage: "commitReconnect",
       })
-    })
+      throw err
+    }
   }
 
   /**
@@ -421,13 +462,16 @@ class ConnectionStateService extends BaseService {
         // Same transaction as the status write: when the workspace itself was
         // created earlier in this still-open `tx`, a write on another
         // connection cannot see it and trips the WorkspaceUsage FK.
-        await workspaceUsageService.increment(
-          existing.workspaceId,
-          "channels",
-          1,
-          client,
-        )
-        quotaConsumption.workspaceUsageIncremented = true
+        // `true` only when Redis took the +1; the rollback path then knows
+        // whether there is a live increment left to undo (the durable row
+        // goes with the transaction either way).
+        quotaConsumption.workspaceUsageIncremented =
+          await workspaceUsageService.increment(
+            existing.workspaceId,
+            "channels",
+            1,
+            client,
+          )
       } else if (releasesQuota) {
         if (input.ownerId) {
           // Deferred: releasing here, inside the transaction, would race a

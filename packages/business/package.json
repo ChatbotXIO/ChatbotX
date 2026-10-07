@@ -45,6 +45,7 @@
     "./sequence": "./src/sequence/index.ts",
     "./system-field": "./src/system-field/index.ts",
     "./utils": "./src/utils.ts",
+    "./workspace": "./src/workspace/index.ts",
     "./workspace-api-token/credentials": "./src/workspace-api-token/credentials.ts",
     "./workspace-lifecycle/predicates": "./src/workspace-lifecycle/predicates.ts",
     "./workspace-member/predicates": "./src/workspace-member/predicates.ts",

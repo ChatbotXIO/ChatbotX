@@ -17,6 +17,7 @@ import {
   CONNECTION_STORE_BINDINGS,
   type ConnectionQuotaConsumption,
   upsertConnectionRow,
+  withQuotaCompensation,
 } from "../connection"
 import { connectionStateService } from "../connection/state-service"
 import { channelLimitReachedException, notFoundException } from "../errors"
@@ -24,7 +25,7 @@ import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { assertDeletable } from "../template/installed-resource.service"
-import { workspaceService } from "../workspace"
+import { type WorkspaceQuotaConsumption, workspaceService } from "../workspace"
 
 export type UpdateWebchatData = Partial<{
   name: string
@@ -119,6 +120,12 @@ class IntegrationWebchatService extends BaseService {
       workspaceId: string
       ownerId: string
       data: CreateWebchatRequest
+      /**
+       * Supplied by a caller that owns `tx` and may still fail after this
+       * returns (read-back, COMMIT) — it compensates the channel slot from
+       * its own catch (`withQuotaCompensation`). Omitted: tracked locally.
+       */
+      quotaConsumption?: ConnectionQuotaConsumption
     },
     tx: DatabaseClient,
   ): Promise<IntegrationWebchatModel> {
@@ -160,10 +167,11 @@ class IntegrationWebchatService extends BaseService {
       skipQuota: true,
     })
 
-    const quotaConsumption: ConnectionQuotaConsumption = {
-      consumed: false,
-      workspaceUsageIncremented: false,
-    }
+    const quotaConsumption: ConnectionQuotaConsumption =
+      props.quotaConsumption ?? {
+        consumed: false,
+        workspaceUsageIncremented: false,
+      }
 
     // `id === inboxId === sourceId` — the webchat binding's
     // `identityColumn: "id"` (`store-bindings.ts`) sets `IntegrationWebchat
@@ -258,35 +266,61 @@ class IntegrationWebchatService extends BaseService {
     webchatId: string
   }> {
     const { createdBy, workspaceName, data } = input
-    let ownerId = createdBy
+    // Resolved up front: `withQuotaCompensation` needs the quota owner to
+    // hand the channel slot back if the transaction below rolls back.
+    const ownerId = input.workspaceId
+      ? (
+          await workspaceService.findOrFail({
+            where: { id: input.workspaceId },
+          })
+        ).ownerId
+      : createdBy
 
-    const result = await db.transaction(async (tx) => {
-      let workspaceId = input.workspaceId
-      let createdWorkspace = false
+    // Both seats are taken outside SQL (Redis + UserQuota), so a rollback of
+    // the transaction cannot hand them back on its own — same pattern as the
+    // other first-channel connects (telegram, whatsapp, api).
+    const quotaConsumption: ConnectionQuotaConsumption = {
+      consumed: false,
+      workspaceUsageIncremented: false,
+    }
+    const workspaceQuotaConsumption: WorkspaceQuotaConsumption = {
+      consumed: false,
+    }
+    const result = await withQuotaCompensation(
+      {
+        ownerId,
+        quotaConsumption,
+        workspaceQuotaConsumption,
+        context: { provider: "webchat", createdBy },
+      },
+      () =>
+        db.transaction(async (tx) => {
+          let workspaceId = input.workspaceId
+          let createdWorkspace = false
 
-      if (workspaceId) {
-        const workspace = await workspaceService.findOrFail({
-          where: { id: workspaceId },
-        })
-        ownerId = workspace.ownerId
-      } else {
-        const newWorkspace = await workspaceService.create({
-          tx,
-          createdBy,
-          data: {
-            name: workspaceName,
-            timezone: "UTC",
-            ownerId,
-          },
-        })
-        workspaceId = newWorkspace.id
-        createdWorkspace = true
-      }
+          if (!workspaceId) {
+            const newWorkspace = await workspaceService.create({
+              tx,
+              createdBy,
+              data: {
+                name: workspaceName,
+                timezone: "UTC",
+                ownerId,
+              },
+              quotaConsumption: workspaceQuotaConsumption,
+            })
+            workspaceId = newWorkspace.id
+            createdWorkspace = true
+          }
 
-      const created = await this.create({ workspaceId, ownerId, data }, tx)
+          const created = await this.create(
+            { workspaceId, ownerId, data, quotaConsumption },
+            tx,
+          )
 
-      return { workspaceId, createdWorkspace, webchatId: created.id }
-    })
+          return { workspaceId, createdWorkspace, webchatId: created.id }
+        }),
+    )
 
     // Sanctioned exception: `createWithWorkspace` is reachable from
     // `authActionClient` (create-webchat.action.ts), which never puts

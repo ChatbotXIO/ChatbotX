@@ -17,9 +17,13 @@ const findFirstUser = vi.fn(async () => ({ tenantId: "1" }))
 const findFirstWorkspace = vi.fn(async () => ({ name: "Old Name" }))
 const findFirstFlow = vi.fn(async () => ({ id: "11" }))
 const countWorkspaces = vi.fn(async () => 0)
-const db = {
+const transaction = vi.fn(
+  async (fn: (tx: unknown) => unknown): Promise<unknown> => await fn(db),
+)
+const db: Record<string, unknown> = {
   insert,
   update,
+  transaction,
   $count: countWorkspaces,
   query: {
     userModel: { findFirst: findFirstUser },
@@ -90,6 +94,11 @@ const workspaceMemberService = {
   create: vi.fn(async () => undefined),
   listUserIdsByWorkspaceId: vi.fn(async () => [] as string[]),
 }
+const workspaceUsageService = {
+  rollbackLiveIncrement: vi.fn(async () => undefined),
+}
+vi.mock("../src/workspace-usage/service", () => ({ workspaceUsageService }))
+
 vi.mock("../src/workspace-member/service", () => ({
   workspaceMemberService,
   workspaceMemberCacheTag: (userId: string) =>
@@ -112,6 +121,9 @@ const dispatchAuditRecord = vi.fn()
 vi.mock("../src/audit/dispatcher", () => ({ dispatchAuditRecord }))
 
 const { workspaceService } = await import("../src/workspace/service")
+const { compensateWorkspaceQuotaConsumption } = await import(
+  "../src/workspace/quota-consumption"
+)
 
 function createInput() {
   return {
@@ -142,6 +154,8 @@ beforeEach(() => {
   anchoredPeriod.mockClear()
   logger.error.mockClear()
   dispatchAuditRecord.mockClear()
+  transaction.mockClear()
+  workspaceUsageService.rollbackLiveIncrement.mockClear()
   returningUpdatedWorkspace
     .mockReset()
     .mockResolvedValue([{ id: "ws-1", name: "New Name" }])
@@ -251,6 +265,241 @@ describe("WorkspaceService.create — happy path", () => {
       userId: "user-1",
       metric: "workspaces",
     })
+    expect(quotaEnforcementService.release).not.toHaveBeenCalled()
+  })
+})
+
+describe("WorkspaceService.create — workspace seat compensation", () => {
+  test("releases the consumed seat when the row insert fails", async () => {
+    const insertError = new Error("insert failed")
+    returningWorkspace.mockRejectedValueOnce(insertError)
+
+    await expect(workspaceService.create(createInput())).rejects.toBe(
+      insertError,
+    )
+
+    expect(quotaEnforcementService.tryConsume).toHaveBeenCalledOnce()
+    expect(quotaEnforcementService.release).toHaveBeenCalledWith({
+      userId: "user-1",
+      metric: "workspaces",
+    })
+  })
+
+  // Codex review (PR #1442): without a caller `tx` the row writes used to be
+  // autocommitted, so a late failure (member insert) released the seat while
+  // the Workspace row stayed behind — an under-count that lets the owner
+  // exceed the plan limit. The writes must run in an owned transaction so the
+  // row is gone before the seat is handed back.
+  test("without a caller tx, a late failure rolls the row back in an owned transaction before releasing the seat", async () => {
+    workspaceMemberService.create.mockRejectedValueOnce(
+      new Error("member insert failed"),
+    )
+
+    await expect(workspaceService.create(createInput())).rejects.toThrow(
+      "member insert failed",
+    )
+
+    expect(transaction).toHaveBeenCalledTimes(1)
+    expect(quotaEnforcementService.release).toHaveBeenCalledWith({
+      userId: "user-1",
+      metric: "workspaces",
+    })
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  const memberIncrementLanded = () =>
+    workspaceMemberService.create.mockImplementationOnce((props: unknown) => {
+      const { teamMemberUsage } = props as {
+        teamMemberUsage?: { liveIncremented: boolean }
+      }
+      if (teamMemberUsage) {
+        teamMemberUsage.liveIncremented = true
+      }
+      return Promise.resolve(undefined)
+    })
+
+  test("leaves the live team-member counter alone on rollback when its increment never landed", async () => {
+    // Default member mock: Redis did not take the +1 (or the member insert
+    // never ran). A -1 here would release something never consumed.
+    transaction.mockImplementationOnce(async (fn) => {
+      await fn(db)
+      throw new Error("commit failed")
+    })
+
+    await expect(workspaceService.create(createInput())).rejects.toThrow(
+      "commit failed",
+    )
+
+    expect(quotaEnforcementService.release).toHaveBeenCalledWith({
+      userId: "user-1",
+      metric: "workspaces",
+    })
+    expect(workspaceUsageService.rollbackLiveIncrement).not.toHaveBeenCalled()
+  })
+
+  test("undoes the live team-member counter when the workspace rolls back after its owner member was written", async () => {
+    // The member insert bumped the Redis `teamMembers` counter for ws-1 and
+    // wrote the usage row on the same tx; COMMIT then fails, so only the
+    // Redis half is left to correct.
+    memberIncrementLanded()
+    transaction.mockImplementationOnce(async (fn) => {
+      await fn(db)
+      throw new Error("commit failed")
+    })
+
+    await expect(workspaceService.create(createInput())).rejects.toThrow(
+      "commit failed",
+    )
+
+    expect(workspaceUsageService.rollbackLiveIncrement).toHaveBeenCalledWith(
+      "ws-1",
+      "teamMembers",
+    )
+  })
+
+  // A concurrent read between the cache bust and COMMIT would re-cache the
+  // owner's membership list without the new workspace until the TTL.
+  test("busts the owner's membership cache only after the owned transaction commits", async () => {
+    const events: string[] = []
+    transaction.mockImplementationOnce(async (fn) => {
+      const result = await fn(db)
+      events.push("commit")
+      return result
+    })
+    invalidateCacheByTags.mockImplementationOnce(() => {
+      events.push("invalidate")
+      return Promise.resolve()
+    })
+
+    await workspaceService.create(createInput())
+
+    expect(events).toEqual(["commit", "invalidate"])
+  })
+
+  test("leaves the live team-member counter alone when the create succeeds", async () => {
+    await workspaceService.create(createInput())
+
+    expect(workspaceUsageService.rollbackLiveIncrement).not.toHaveBeenCalled()
+  })
+
+  test("with a caller tx, never opens its own transaction", async () => {
+    // No MAC period on the quota row, so the MAC savepoint is skipped too.
+    await workspaceService.create({ ...createInput(), tx: db as never })
+
+    expect(transaction).not.toHaveBeenCalled()
+  })
+
+  // Codex review (PR #1442): `ensureMacRollup` swallows its error on purpose
+  // (MAC pre-provisioning must never block creation), but a failed statement
+  // on the owning transaction leaves Postgres' transaction aborted — COMMIT
+  // then silently becomes ROLLBACK while `create` reports success. Run the
+  // optional write behind a SAVEPOINT so only it rolls back.
+  test("runs the MAC pre-provisioning behind a savepoint so its SQL failure leaves the owning transaction usable", async () => {
+    userQuotaService.getForUser.mockResolvedValue({
+      id: "q-1",
+      userId: "user-1",
+      periodStart: new Date("2026-05-01T00:00:00.000Z"),
+    })
+    macRepository.ensureWorkspaceMac.mockRejectedValueOnce(
+      new Error("mac insert failed"),
+    )
+
+    const result = await workspaceService.create(createInput())
+
+    expect(result).toEqual({ id: "ws-1", organizationId: "org-1" })
+    // Owned transaction + the MAC savepoint.
+    expect(transaction).toHaveBeenCalledTimes(2)
+    expect(logger.error).toHaveBeenCalledTimes(1)
+    expect(quotaEnforcementService.release).not.toHaveBeenCalled()
+    expect(dispatchAuditRecord).toHaveBeenCalledTimes(1)
+  })
+
+  test("marks the caller's tracker consumed only once the row is written", async () => {
+    const quotaConsumption = { consumed: false as const }
+
+    await workspaceService.create({
+      ...createInput(),
+      tx: db as never,
+      quotaConsumption,
+    })
+
+    expect(quotaConsumption).toEqual({
+      consumed: true,
+      userId: "user-1",
+      workspaceId: "ws-1",
+      teamMembersLiveIncremented: false,
+    })
+  })
+
+  test("marks the caller's tracker before the cache bust, so a cache failure stays compensable", async () => {
+    const quotaConsumption = { consumed: false as const }
+    invalidateCacheByTags.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(
+      workspaceService.create({
+        ...createInput(),
+        tx: db as never,
+        quotaConsumption,
+      }),
+    ).rejects.toThrow("redis down")
+
+    expect(quotaConsumption).toMatchObject({
+      consumed: true,
+      userId: "user-1",
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("leaves the tracker untouched when create owned the transaction (nothing is left for the caller to undo)", async () => {
+    const quotaConsumption = { consumed: false as const }
+
+    await workspaceService.create({ ...createInput(), quotaConsumption })
+
+    expect(quotaConsumption).toEqual({ consumed: false })
+  })
+
+  test("leaves the caller's tracker untouched when the insert fails (the seat was already released here)", async () => {
+    returningWorkspace.mockRejectedValueOnce(new Error("insert failed"))
+    const quotaConsumption = { consumed: false as const }
+
+    await expect(
+      workspaceService.create({ ...createInput(), quotaConsumption }),
+    ).rejects.toThrow("insert failed")
+
+    expect(quotaConsumption).toEqual({ consumed: false })
+  })
+
+  test("compensateWorkspaceQuotaConsumption releases the seat and the live owner-member counter once, then resets the tracker", async () => {
+    const quotaConsumption = {
+      consumed: true as const,
+      userId: "user-1",
+      workspaceId: "ws-1",
+      teamMembersLiveIncremented: true,
+    }
+
+    await compensateWorkspaceQuotaConsumption(quotaConsumption)
+    await compensateWorkspaceQuotaConsumption(quotaConsumption)
+
+    expect(quotaEnforcementService.release).toHaveBeenCalledTimes(1)
+    expect(quotaEnforcementService.release).toHaveBeenCalledWith({
+      userId: "user-1",
+      metric: "workspaces",
+    })
+    // Codex review (PR #1442): the owner-member insert bumped the live
+    // `teamMembers` counter inside the caller's transaction; when that
+    // transaction rolls back after `create` returned, only this compensation
+    // can still undo the Redis half (the durable row went with the tx).
+    expect(workspaceUsageService.rollbackLiveIncrement).toHaveBeenCalledTimes(1)
+    expect(workspaceUsageService.rollbackLiveIncrement).toHaveBeenCalledWith(
+      "ws-1",
+      "teamMembers",
+    )
+    expect(quotaConsumption).toEqual({ consumed: false })
+  })
+
+  test("compensateWorkspaceQuotaConsumption is a no-op for an unconsumed tracker", async () => {
+    await compensateWorkspaceQuotaConsumption({ consumed: false })
+
     expect(quotaEnforcementService.release).not.toHaveBeenCalled()
   })
 })

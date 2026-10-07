@@ -281,24 +281,31 @@ export class LiveCounterStore<TRow> {
     return valueByStatus[result.status]
   }
 
-  /** Increment the live counter (cold-seeding first so it starts from the DB base). */
+  /**
+   * Increment the live counter (cold-seeding first so it starts from the DB
+   * base). Resolves `true` when Redis took the increment, `false` when the
+   * best-effort write was swallowed — so a caller that later has to undo it
+   * knows whether there is anything to undo.
+   */
   async incrementBy(
     id: string,
     metric: QuotaMetric,
     count: number,
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (count <= 0) {
-      return
+      return false
     }
     try {
       const client = await cacheConnections.useExisting()
       await this.getLiveCount(id, metric)
       await client.hincrby(this.liveKey(id), metric, count)
+      return true
     } catch (err) {
       logger.warn(
         { err },
         `${this.config.label}: Redis increment failed for ${metric}, counter will reconcile on next sync`,
       )
+      return false
     }
   }
 
@@ -429,20 +436,34 @@ export class LiveCounterStore<TRow> {
    * double-count a cold counter. The live step is best-effort (swallowed on a
    * Redis error, re-grounded on the next reconcile); the DB upsert is
    * authoritative and a real failure throws and surfaces to the caller — so a
-   * Redis outage can never lose a durable count.
+   * Redis outage can never lose a durable count. When the durable write is the
+   * one that fails, the live `+count` is taken back first so the two stores
+   * do not drift until the next reconcile. Resolves whether the live counter
+   * took the increment, so a caller whose `tx` later rolls back knows whether
+   * {@link rollbackLive} has anything to undo.
    */
   async consume(
     id: string,
     metric: QuotaMetric,
     count = 1,
     tx?: DatabaseClient,
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (count <= 0) {
-      return
+      return false
     }
-    await this.incrementBy(id, metric, count)
-    await this.upsertMetricBy(id, metric, count, tx)
+    const liveIncremented = await this.incrementBy(id, metric, count)
+    try {
+      await this.upsertMetricBy(id, metric, count, tx)
+    } catch (err) {
+      // Only undo a live +count that actually landed; without this the
+      // counter would sit one above the durable row until the reconcile.
+      if (liveIncremented) {
+        await this.decrementBy(id, metric, count)
+      }
+      throw err
+    }
     await this.invalidate(id)
+    return liveIncremented
   }
 
   /**
