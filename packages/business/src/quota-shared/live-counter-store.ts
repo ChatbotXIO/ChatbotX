@@ -1,4 +1,10 @@
-import { db, eq, type PgTable, sql } from "@chatbotx.io/database/client"
+import {
+  type DatabaseClient,
+  db,
+  eq,
+  type PgTable,
+  sql,
+} from "@chatbotx.io/database/client"
 import { cacheConnections, distributedStore } from "@chatbotx.io/redis"
 import { cacheKeyFor, liveKeyFor } from "@chatbotx.io/utils"
 import type { PgColumn } from "drizzle-orm/pg-core"
@@ -340,11 +346,17 @@ export class LiveCounterStore<TRow> {
    * (insert-or-update), targeting the single `${metric}Used` column. Throws on
    * an unmapped metric rather than silently incrementing the wrong column, and
    * on a non-positive `count` rather than writing a no-op / negative seed.
+   *
+   * `tx` defaults to the global `db`. Pass the caller's transaction when the
+   * row's parent (e.g. a `Workspace` created earlier in the same uncommitted
+   * transaction) is invisible to any other connection — the FK check on this
+   * insert would otherwise fail.
    */
   async upsertMetricBy(
     id: string,
     metric: QuotaMetric,
     count: number,
+    tx: DatabaseClient = db,
   ): Promise<void> {
     if (count <= 0) {
       return
@@ -365,7 +377,7 @@ export class LiveCounterStore<TRow> {
       syncedAt: new Date(),
     } as Record<string, unknown>
 
-    await db
+    await tx
       .insert(this.config.table)
       .values(values as never)
       .onConflictDoUpdate({
@@ -419,12 +431,35 @@ export class LiveCounterStore<TRow> {
    * authoritative and a real failure throws and surfaces to the caller — so a
    * Redis outage can never lose a durable count.
    */
-  async consume(id: string, metric: QuotaMetric, count = 1): Promise<void> {
+  async consume(
+    id: string,
+    metric: QuotaMetric,
+    count = 1,
+    tx?: DatabaseClient,
+  ): Promise<void> {
     if (count <= 0) {
       return
     }
     await this.incrementBy(id, metric, count)
-    await this.upsertMetricBy(id, metric, count)
+    await this.upsertMetricBy(id, metric, count, tx)
+    await this.invalidate(id)
+  }
+
+  /**
+   * Undo only the Redis half of a {@link consume} whose durable write was made
+   * on a transaction that has since rolled back. The row is already gone with
+   * the transaction, so decrementing it again would leave the DB one below the
+   * live counter.
+   */
+  async rollbackLive(
+    id: string,
+    metric: QuotaMetric,
+    count = 1,
+  ): Promise<void> {
+    if (count <= 0) {
+      return
+    }
+    await this.decrementBy(id, metric, count)
     await this.invalidate(id)
   }
 

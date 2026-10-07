@@ -100,6 +100,38 @@ describe("workspaceUsageService.increment (mac)", () => {
   })
 })
 
+describe("workspaceUsageService.increment (caller-owned transaction)", () => {
+  // Regression: a workspace created earlier in the SAME uncommitted transaction
+  // (`integrationWebchatService.createWithWorkspace`) is invisible to a second
+  // connection, so writing the WorkspaceUsage row through the global `db` hit
+  // `WorkspaceUsage_workspaceId_Workspace_id_fkey`. The durable write must
+  // run on the caller's `tx`.
+  test("writes the durable row through the supplied tx, never the global db", async () => {
+    const txBuilder = {
+      values: vi.fn(),
+      onConflictDoUpdate: vi.fn(),
+    }
+    txBuilder.values.mockReturnValue(txBuilder)
+    txBuilder.onConflictDoUpdate.mockResolvedValue(undefined)
+    const txInsert = vi.fn(() => txBuilder)
+    const tx = { insert: txInsert } as never
+
+    await workspaceUsageService.increment(WORKSPACE, "channels", 1, tx)
+
+    expect(txInsert).toHaveBeenCalledTimes(1)
+    expect(txBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: WORKSPACE, channelsUsed: 1 }),
+    )
+    expect(dbInsert).not.toHaveBeenCalled()
+  })
+
+  test("still writes through the global db when no tx is supplied", async () => {
+    await workspaceUsageService.increment(WORKSPACE, "channels", 1)
+
+    expect(dbInsert).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe("workspaceUsageService.getUsage", () => {
   test("surfaces macUsed from the live counters alongside the other metrics", async () => {
     redisClient.hmget.mockResolvedValue(["1", "2", "3", "4", "5"])

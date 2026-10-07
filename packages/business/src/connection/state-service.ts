@@ -51,6 +51,14 @@ export type ConnectionQuotaConsumption =
 export type PendingQuotaRelease = { ownerId: string; workspaceId: string }
 
 /**
+ * How `releaseQuotaEdge` treats the display-only `WorkspaceUsage` counter:
+ * `decrement` - a real release (Redis + durable row); `rollback` - the row was
+ * written on a transaction that rolled back, so only Redis is undone; `skip` -
+ * the usage increment never ran.
+ */
+type WorkspaceUsageRelease = "decrement" | "rollback" | "skip"
+
+/**
  * DB-backed reads/writes over the `Connection` table plus its `Inbox`
  * legacy-status mirror. Deliberately **registry-free** — it never imports
  * `@chatbotx.io/connections` — so it stays safe to call from `markOffline`
@@ -410,7 +418,15 @@ class ConnectionStateService extends BaseService {
 
       let pendingRelease: RunResult["pendingRelease"] = null
       if (consumesQuota && input.ownerId) {
-        await workspaceUsageService.increment(existing.workspaceId, "channels")
+        // Same transaction as the status write: when the workspace itself was
+        // created earlier in this still-open `tx`, a write on another
+        // connection cannot see it and trips the WorkspaceUsage FK.
+        await workspaceUsageService.increment(
+          existing.workspaceId,
+          "channels",
+          1,
+          client,
+        )
         quotaConsumption.workspaceUsageIncremented = true
       } else if (releasesQuota) {
         if (input.ownerId) {
@@ -464,7 +480,7 @@ class ConnectionStateService extends BaseService {
         await this.releaseQuotaEdge(
           input.ownerId,
           quotaConsumption.workspaceId,
-          quotaConsumption.workspaceUsageIncremented,
+          quotaConsumption.workspaceUsageIncremented ? "rollback" : "skip",
         )
         Object.assign(quotaConsumption, {
           consumed: false,
@@ -505,7 +521,7 @@ class ConnectionStateService extends BaseService {
     await this.releaseQuotaEdge(
       input.ownerId,
       input.workspaceId,
-      input.workspaceUsageIncremented,
+      input.workspaceUsageIncremented ? "rollback" : "skip",
     )
   }
 
@@ -754,7 +770,7 @@ class ConnectionStateService extends BaseService {
   private async releaseQuotaEdge(
     ownerId: string,
     workspaceId: string,
-    decrementWorkspaceUsage = true,
+    workspaceUsage: WorkspaceUsageRelease = "decrement",
   ): Promise<void> {
     // Best-effort: never block/roll back the status transition if release
     // fails — the nightly reconcile self-heals. A real Redis/DB error here
@@ -769,7 +785,20 @@ class ConnectionStateService extends BaseService {
           "connection disconnect: channel quota release failed",
         )
       })
-    if (!decrementWorkspaceUsage) {
+    if (workspaceUsage === "skip") {
+      return
+    }
+    if (workspaceUsage === "rollback") {
+      // The usage row was written on the transaction that just rolled back, so
+      // only the live counter is out of step.
+      await workspaceUsageService
+        .rollbackLiveIncrement(workspaceId, "channels")
+        .catch((err) => {
+          logger.warn(
+            { err, workspaceId, ownerId },
+            "connection rollback: workspace usage live counter rollback failed",
+          )
+        })
       return
     }
     await workspaceUsageService

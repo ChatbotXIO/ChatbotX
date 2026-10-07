@@ -1,4 +1,9 @@
-import { count as countFn, db, sql } from "@chatbotx.io/database/client"
+import {
+  count as countFn,
+  type DatabaseClient,
+  db,
+  sql,
+} from "@chatbotx.io/database/client"
 import {
   contactModel,
   inboxModel,
@@ -71,8 +76,22 @@ class WorkspaceUsageService {
     workspaceId: string,
     metric: WorkspaceUsageMetric,
     count = 1,
+    tx?: DatabaseClient,
   ): Promise<void> {
-    await this.store.consume(workspaceId, metric, count)
+    await this.store.consume(workspaceId, metric, count, tx)
+  }
+
+  /**
+   * Redis-only counterpart of `increment(..., tx)` for a rolled-back
+   * transaction: the durable row was written on that `tx` and is already
+   * undone, so only the live counter needs correcting.
+   */
+  async rollbackLiveIncrement(
+    workspaceId: string,
+    metric: WorkspaceUsageMetric,
+    count = 1,
+  ): Promise<void> {
+    await this.store.rollbackLive(workspaceId, metric, count)
   }
 
   async decrement(
