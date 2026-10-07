@@ -5344,7 +5344,7 @@
       "poweredBy": "por",
       "toggleLabel": "Converse com a gente",
       "logo": {
-        "description": "O botão redondo que os visitantes clicam para abrir o widget. Escolha uma imagem quadrada ou deixe vazio para usar o logo do app.",
+        "description": "O botão redondo que os visitantes clicam para abrir o widget. Escolha uma imagem quadrada ou deixe vazio para usar o ícone de chat padrão.",
         "choose": "Escolher da Biblioteca de mídia",
         "notImage": "O logo precisa ser uma imagem."
       },
@@ -5357,6 +5357,10 @@
       "brandName": {
         "description": "Exibido na linha \"por\" do widget. Obrigatório quando há uma URL de redirecionamento. Deixe ambos vazios para ocultar essa linha.",
         "requiredWithUrl": "Informe um nome de marca para esta URL de redirecionamento."
+      },
+      "logoBackgroundColor": {
+        "label": "Cor de fundo do ícone",
+        "description": "Fundo do ícone de chat padrão. O ícone fica branco ou preto para continuar legível."
       }
     }
   },

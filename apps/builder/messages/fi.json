@@ -4459,7 +4459,7 @@
       "poweredBy": "tekijä",
       "toggleLabel": "Keskustele kanssamme",
       "logo": {
-        "description": "Pyöreä painike, jota kävijät napsauttavat avatakseen widgetin. Valitse neliön muotoinen kuva tai jätä tyhjäksi käyttääksesi sovelluksen logoa.",
+        "description": "Pyöreä painike, jota kävijät klikkaavat avatakseen widgetin. Valitse neliön muotoinen kuva tai jätä tyhjäksi käyttääksesi oletuskeskustelukuvaketta.",
         "choose": "Valitse mediakirjastosta",
         "notImage": "Logon on oltava kuva."
       },
@@ -4472,6 +4472,10 @@
       "brandName": {
         "description": "Näytetään widgetin \"tekijä\"-rivillä. Pakollinen, kun uudelleenohjauksen URL on asetettu. Jätä molemmat tyhjiksi piilottaaksesi rivin.",
         "requiredWithUrl": "Anna brändinimi tälle uudelleenohjauksen URL-osoitteelle."
+      },
+      "logoBackgroundColor": {
+        "label": "Kuvakkeen taustaväri",
+        "description": "Oletuskeskustelukuvakkeen tausta. Kuvake muuttuu valkoiseksi tai mustaksi, jotta se erottuu."
       }
     }
   },

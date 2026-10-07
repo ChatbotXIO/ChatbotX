@@ -36,6 +36,8 @@ export type ReflinkWidgetSettings = {
   logoFileId: string
   brandName: string
   brandUrl: string
+  /** Hex background of the default chat icon. */
+  logoBackgroundColor: string
 }
 
 // The request schema (`z.hostname()`) already rejects whitespace and stray
@@ -161,6 +163,7 @@ class ReflinkService extends BaseService {
         // powered-by line.
         widgetBrandName: settings.brandName || null,
         widgetBrandUrl: settings.brandUrl || null,
+        widgetLogoBackgroundColor: settings.logoBackgroundColor,
       })
       .where(
         and(

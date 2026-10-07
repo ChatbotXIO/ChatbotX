@@ -4731,7 +4731,7 @@
       "poweredBy": "bởi",
       "toggleLabel": "Trò chuyện với chúng tôi",
       "logo": {
-        "description": "Nút tròn khách bấm để mở widget. Nên chọn ảnh vuông, hoặc để trống để dùng logo của app.",
+        "description": "Nút tròn khách bấm để mở widget. Nên chọn ảnh vuông, hoặc để trống để dùng icon chat mặc định.",
         "choose": "Chọn từ Thư viện media",
         "notImage": "Logo phải là file ảnh."
       },
@@ -4744,6 +4744,10 @@
       "brandName": {
         "description": "Hiện ở dòng \"bởi\" của widget. Bắt buộc khi có URL chuyển hướng. Để trống cả hai thì ẩn dòng này.",
         "requiredWithUrl": "Nhập tên thương hiệu cho URL chuyển hướng này."
+      },
+      "logoBackgroundColor": {
+        "label": "Màu nền icon",
+        "description": "Màu nền của icon chat mặc định. Icon tự đổi sang trắng hoặc đen để dễ nhìn."
       }
     }
   },

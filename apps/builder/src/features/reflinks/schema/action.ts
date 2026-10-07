@@ -31,6 +31,7 @@ export const MAX_WIDGET_AUTHORIZED_DOMAINS = 50
 const MAX_WIDGET_HIDDEN_INBOXES = 500
 const MAX_WIDGET_BRAND_NAME_LENGTH = 100
 const MAX_WIDGET_URL_LENGTH = 2048
+const HEX_COLOR_REGEX = /^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
 
 /**
  * Why the brand name and URL were rejected together. Passed as the issue's
@@ -57,7 +58,14 @@ export const updateReflinkWidgetRequest = z
     logoFileId: z
       .union([z.literal(""), zodBigintAsString()])
       .describe(
-        "Media library file shown on the widget's toggle button. Empty = the app logo.",
+        "Media library file shown on the widget's toggle button. Empty = the default chat icon.",
+      ),
+    // The color picker emits #RRGGBB, or #RRGGBBAA when alpha is lowered.
+    logoBackgroundColor: z
+      .string()
+      .regex(HEX_COLOR_REGEX)
+      .describe(
+        "Background of the default chat icon, as a #RRGGBB or #RRGGBBAA hex code.",
       ),
     brandName: z
       .string()

@@ -17,6 +17,54 @@ const WIDGET_ICON_CHANNELS: ChannelType[] = [
   "tiktok",
 ]
 
+/**
+ * lucide's `messages-circle` (added in lucide 1.45.0, ISC). Copied in because
+ * the installed lucide-react predates it — swap for `MessagesCircleIcon` once
+ * lucide-react is upgraded. Same paths as `DEFAULT_LOGO_ICON` in the embed
+ * script.
+ */
+function MessagesCircleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M19.95 10.05a7 7 0 011.412 7.872 1 1 0 00-.058.787l.675 2.089a1 1 0 01-1.236 1.168l-2.155-.631a1 1 0 00-.745.06 7 7 0 01-7.793-1.445" />
+      <path d="M2.696 12.708a1 1 0 00-.058-.785 7 7 0 113.518 3.473 1 1 0 00-.744-.061l-2.155.63a1 1 0 01-1.236-1.167z" />
+    </svg>
+  )
+}
+
+/**
+ * The toggle's look when no logo is picked. Keep in sync with
+ * `DEFAULT_LOGO_ICON` in `public/chat-widget/ref-widget.js`.
+ */
+export function DefaultWidgetLogo({
+  backgroundColor,
+  color,
+  className,
+}: {
+  backgroundColor: string
+  color: string
+  className?: string
+}) {
+  return (
+    <span
+      className={cn("flex size-full items-center justify-center", className)}
+      style={{ backgroundColor, color }}
+    >
+      <MessagesCircleIcon className="size-7" />
+    </span>
+  )
+}
+
 export const getWidgetIconUrl = (channel: ChannelType | "chat") =>
   `/chat-widget/icons/${
     channel !== "chat" && WIDGET_ICON_CHANNELS.includes(channel)
@@ -45,7 +93,12 @@ const slideTransition = (delayMs: number) =>
 type ReflinkChatWidgetPreviewProps = {
   channels: { id: string; channel: ChannelType; name: string }[]
   /** From `resolveWidgetBrand`, the same brand the embed route sends. */
-  brand: { name: string | null; logoUrl: string | null }
+  brand: {
+    name: string | null
+    logoUrl: string | null
+    logoBackgroundColor: string
+    logoForegroundColor: string
+  }
 }
 
 /**
@@ -58,7 +111,6 @@ export function ReflinkChatWidgetPreview({
 }: ReflinkChatWidgetPreviewProps) {
   const t = useTranslations()
   const [expanded, setExpanded] = useState(true)
-  const fallbackLogoUrl = getWidgetIconUrl("chat")
 
   return (
     // Same corner spacing as the embed script: 16px from the left, the
@@ -118,14 +170,21 @@ export function ReflinkChatWidgetPreview({
           onClick={() => setExpanded((value) => !value)}
           type="button"
         >
-          {/* biome-ignore lint/performance/noImgElement: storage or tenant icon URL, same image the embed script shows */}
-          <img
-            alt={brand.name ?? ""}
-            className="size-full object-cover"
-            height={56}
-            src={brand.logoUrl || fallbackLogoUrl}
-            width={56}
-          />
+          {brand.logoUrl ? (
+            // biome-ignore lint/performance/noImgElement: storage URL, same image the embed script shows
+            <img
+              alt={brand.name ?? ""}
+              className="size-full object-cover"
+              height={56}
+              src={brand.logoUrl}
+              width={56}
+            />
+          ) : (
+            <DefaultWidgetLogo
+              backgroundColor={brand.logoBackgroundColor}
+              color={brand.logoForegroundColor}
+            />
+          )}
         </button>
 
         {/* Shown only while the channels are open; keeps its room when hidden

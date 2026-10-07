@@ -4459,7 +4459,7 @@
       "poweredBy": "da",
       "toggleLabel": "Chatta con noi",
       "logo": {
-        "description": "Il pulsante rotondo che i visitatori cliccano per aprire il widget. Scegli un'immagine quadrata o lascia vuoto per usare il logo dell'app.",
+        "description": "Il pulsante rotondo che i visitatori cliccano per aprire il widget. Scegli un'immagine quadrata o lascia vuoto per usare l'icona chat predefinita.",
         "choose": "Scegli dalla libreria multimediale",
         "notImage": "Il logo deve essere un'immagine."
       },
@@ -4472,6 +4472,10 @@
       "brandName": {
         "description": "Mostrato nella riga \"di\" del widget. Obbligatorio se è impostato un URL di reindirizzamento. Lascia entrambi vuoti per nascondere la riga.",
         "requiredWithUrl": "Inserisci un nome del brand per questo URL di reindirizzamento."
+      },
+      "logoBackgroundColor": {
+        "label": "Colore di sfondo dell'icona",
+        "description": "Sfondo dell'icona chat predefinita. L'icona diventa bianca o nera per restare leggibile."
       }
     }
   },

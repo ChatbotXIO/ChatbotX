@@ -233,6 +233,7 @@ describe("reflinkService.updateWidgetSettings", () => {
     logoFileId: "file-1",
     brandName: "Shop",
     brandUrl: "https://shop.test",
+    logoBackgroundColor: "#2563eb",
   }
 
   beforeEach(() => {
@@ -271,6 +272,7 @@ describe("reflinkService.updateWidgetSettings", () => {
       widgetLogoFileId: BRANDING.logoFileId,
       widgetBrandName: BRANDING.brandName,
       widgetBrandUrl: BRANDING.brandUrl,
+      widgetLogoBackgroundColor: BRANDING.logoBackgroundColor,
     })
   })
 
@@ -289,6 +291,7 @@ describe("reflinkService.updateWidgetSettings", () => {
         logoFileId: "",
         brandName: "",
         brandUrl: "",
+        logoBackgroundColor: "#111827",
       },
     )
 

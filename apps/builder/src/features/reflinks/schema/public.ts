@@ -26,6 +26,7 @@ export const reflinkPublicResource = reflinkResource
     widgetLogoFileId: true,
     widgetBrandName: true,
     widgetBrandUrl: true,
+    widgetLogoBackgroundColor: true,
   })
   .extend({
     links: z

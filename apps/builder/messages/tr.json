@@ -4459,7 +4459,7 @@
       "poweredBy": "sağlayan",
       "toggleLabel": "Bizimle sohbet edin",
       "logo": {
-        "description": "Ziyaretçilerin widget'ı açmak için tıkladığı yuvarlak düğme. Kare bir görsel seçin veya uygulama logosunu kullanmak için boş bırakın.",
+        "description": "Ziyaretçilerin widget'ı açmak için tıkladığı yuvarlak düğme. Kare bir görsel seçin veya varsayılan sohbet simgesini kullanmak için boş bırakın.",
         "choose": "Medya Kitaplığından seç",
         "notImage": "Logo bir görsel olmalıdır."
       },
@@ -4472,6 +4472,10 @@
       "brandName": {
         "description": "Widget'ın \"tarafından\" satırında gösterilir. Yönlendirme URL'si girildiğinde zorunludur. Bu satırı gizlemek için ikisini de boş bırakın.",
         "requiredWithUrl": "Bu yönlendirme URL'si için bir marka adı girin."
+      },
+      "logoBackgroundColor": {
+        "label": "Simge arka plan rengi",
+        "description": "Varsayılan sohbet simgesinin arka planı. Simge okunaklı kalması için beyaz ya da siyah olur."
       }
     }
   },

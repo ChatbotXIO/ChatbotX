@@ -4459,7 +4459,7 @@
       "poweredBy": "af",
       "toggleLabel": "Chat med os",
       "logo": {
-        "description": "Den runde knap, besøgende klikker på for at åbne widgetten. Vælg et kvadratisk billede, eller lad feltet være tomt for at bruge appens logo.",
+        "description": "Den runde knap, besøgende klikker på for at åbne widgetten. Vælg et kvadratisk billede, eller lad feltet stå tomt for at bruge standard-chatikonet.",
         "choose": "Vælg fra mediebiblioteket",
         "notImage": "Logoet skal være et billede."
       },
@@ -4472,6 +4472,10 @@
       "brandName": {
         "description": "Vises i widgettens \"af\"-linje. Påkrævet, når en omdirigerings-URL er angivet. Lad begge være tomme for at skjule linjen.",
         "requiredWithUrl": "Angiv et brandnavn til denne omdirigerings-URL."
+      },
+      "logoBackgroundColor": {
+        "label": "Ikonets baggrundsfarve",
+        "description": "Baggrund for standard-chatikonet. Ikonet bliver hvidt eller sort, så det er let at se."
       }
     }
   },

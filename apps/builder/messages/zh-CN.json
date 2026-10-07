@@ -5122,7 +5122,7 @@
       "poweredBy": "由",
       "toggleLabel": "与我们聊天",
       "logo": {
-        "description": "访客点击以打开小部件的圆形按钮。请选择一张方形图片，或留空以使用应用标志。",
+        "description": "访客点击以打开小部件的圆形按钮。请选择正方形图片，或留空以使用默认聊天图标。",
         "choose": "从媒体库选择",
         "notImage": "标志必须是图片。"
       },
@@ -5135,6 +5135,10 @@
       "brandName": {
         "description": "显示在小部件的“由”行中。设置跳转 URL 时必填。两者都留空则隐藏该行。",
         "requiredWithUrl": "请为此跳转 URL 输入品牌名称。"
+      },
+      "logoBackgroundColor": {
+        "label": "图标背景色",
+        "description": "默认聊天图标的背景色。图标会自动变为白色或黑色以保持清晰。"
       }
     }
   },

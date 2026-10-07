@@ -5122,7 +5122,7 @@
       "poweredBy": "av",
       "toggleLabel": "Chatta med oss",
       "logo": {
-        "description": "Den runda knappen som besökare klickar på för att öppna widgeten. Välj en kvadratisk bild, eller lämna tomt för att använda appens logotyp.",
+        "description": "Den runda knappen besökare klickar på för att öppna widgeten. Välj en kvadratisk bild, eller lämna tomt för att använda standardchattikonen.",
         "choose": "Välj från mediebiblioteket",
         "notImage": "Logotypen måste vara en bild."
       },
@@ -5135,6 +5135,10 @@
       "brandName": {
         "description": "Visas på widgetens \"av\"-rad. Krävs när en omdirigerings-URL är angiven. Lämna båda tomma för att dölja raden.",
         "requiredWithUrl": "Ange ett varumärkesnamn för den här omdirigerings-URL:en."
+      },
+      "logoBackgroundColor": {
+        "label": "Ikonens bakgrundsfärg",
+        "description": "Bakgrund för standardchattikonen. Ikonen blir vit eller svart så att den syns tydligt."
       }
     }
   },

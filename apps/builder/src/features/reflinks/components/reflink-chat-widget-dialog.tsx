@@ -2,6 +2,7 @@
 
 import { isProfileLinkChannel } from "@chatbotx.io/business/utils"
 import type { ChannelType } from "@chatbotx.io/database/partials"
+import { ColorPickerField } from "@chatbotx.io/ui/components/form/color-picker-field"
 import { FormFieldWrapper } from "@chatbotx.io/ui/components/form/field-wrapper"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -31,7 +32,10 @@ import { MediaLibraryTrigger } from "@/features/media-library/components/media-l
 import { useTenantSettings } from "@/features/tenant"
 import { useClipboard } from "@/hooks/use-clipboard"
 import { updateReflinkWidgetAction } from "../actions/update-reflink-widget.action"
-import { resolveWidgetBrand } from "../lib/widget-brand"
+import {
+  DEFAULT_WIDGET_LOGO_BACKGROUND_COLOR,
+  resolveWidgetBrand,
+} from "../lib/widget-brand"
 import {
   MAX_WIDGET_AUTHORIZED_DOMAINS,
   type UpdateReflinkWidgetRequest,
@@ -41,7 +45,7 @@ import {
 } from "../schema/action"
 import type { ListReflinkItem } from "../schema/query"
 import {
-  getWidgetIconUrl,
+  DefaultWidgetLogo,
   ReflinkChatWidgetPreview,
 } from "./reflink-chat-widget-preview"
 
@@ -169,6 +173,9 @@ function ReflinkChatWidgetForm({
           authorizedDomains: reflink.widgetAuthorizedDomains,
           hiddenInboxIds: reflink.widgetHiddenInboxIds,
           logoFileId: reflink.widgetLogoFileId ?? "",
+          logoBackgroundColor:
+            reflink.widgetLogoBackgroundColor ??
+            DEFAULT_WIDGET_LOGO_BACKGROUND_COLOR,
           brandName: reflink.widgetBrandName ?? "",
           brandUrl: reflink.widgetBrandUrl ?? "",
         } satisfies UpdateReflinkWidgetRequest,
@@ -182,11 +189,13 @@ function ReflinkChatWidgetForm({
   const logoFileId = form.watch("logoFileId")
   const brandName = form.watch("brandName")
   const brandUrl = form.watch("brandUrl")
+  const logoBackgroundColor = form.watch("logoBackgroundColor")
   const brand = resolveWidgetBrand(
     {
       widgetLogoPath: logoFileId ? logoPath : null,
       widgetBrandName: brandName.trim(),
       widgetBrandUrl: brandUrl,
+      widgetLogoBackgroundColor: logoBackgroundColor,
     },
     tenant,
   )
@@ -217,6 +226,14 @@ function ReflinkChatWidgetForm({
     }))
   const embedCode = buildReflinkWidgetEmbedCode(tenant.appUrl, reflink.id)
 
+  const clearLogo = () => {
+    setLogoPath(null)
+    form.setValue("logoFileId", "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
+  }
+
   const setLogo = (file: { id: string; path: string }) => {
     setLogoPath(file.path)
     form.setValue("logoFileId", file.id, {
@@ -245,14 +262,22 @@ function ReflinkChatWidgetForm({
             >
               {() => (
                 <div className="flex items-center gap-4">
-                  {/* biome-ignore lint/performance/noImgElement: storage or tenant icon URL, same image the embed script shows */}
-                  <img
-                    alt={t("fields.logo.label")}
-                    className="size-14 rounded-full border object-cover"
-                    height={56}
-                    src={brand.logoUrl ?? getWidgetIconUrl("chat")}
-                    width={56}
-                  />
+                  {brand.logoUrl ? (
+                    // biome-ignore lint/performance/noImgElement: storage URL, same image the embed script shows
+                    <img
+                      alt={t("fields.logo.label")}
+                      className="size-14 shrink-0 rounded-full border object-cover"
+                      height={56}
+                      src={brand.logoUrl}
+                      width={56}
+                    />
+                  ) : (
+                    <DefaultWidgetLogo
+                      backgroundColor={brand.logoBackgroundColor}
+                      className="size-14 shrink-0 rounded-full"
+                      color={brand.logoForegroundColor}
+                    />
+                  )}
                   <MediaLibraryTrigger
                     onSelect={(file) => {
                       if (!file.mimeType.startsWith("image/")) {
@@ -268,9 +293,26 @@ function ReflinkChatWidgetForm({
                       {t("reflinks.chatWidget.logo.choose")}
                     </Button>
                   </MediaLibraryTrigger>
+                  {logoFileId ? (
+                    <Button onClick={clearLogo} type="button" variant="ghost">
+                      {t("actions.remove")}
+                    </Button>
+                  ) : null}
                 </div>
               )}
             </FormFieldWrapper>
+
+            {/* Only the default chat icon uses it; a picked logo covers it. */}
+            {logoFileId ? null : (
+              <ColorPickerField
+                description={t(
+                  "reflinks.chatWidget.logoBackgroundColor.description",
+                )}
+                label={t("reflinks.chatWidget.logoBackgroundColor.label")}
+                name="logoBackgroundColor"
+                required
+              />
+            )}
 
             <InputField<UpdateReflinkWidgetRequest>
               description={t("reflinks.chatWidget.brandName.description")}

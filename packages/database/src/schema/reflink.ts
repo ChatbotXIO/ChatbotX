@@ -48,13 +48,15 @@ export const reflinkModel = pgTable(
       .default(sql`ARRAY[]::text[]`),
     // Widget branding. The powered-by line shows only with both a brand name
     // and URL. The logo is a media library file; none (or a deleted file)
-    // falls back to the app logo.
+    // falls back to the default chat icon, drawn on `widgetLogoBackgroundColor`
+    // (null = the default dark gray).
     widgetLogoFileId: bigintAsString().references(
       () => mediaLibraryFileModel.id,
       { onDelete: "set null", onUpdate: "cascade" },
     ),
     widgetBrandName: text(),
     widgetBrandUrl: text(),
+    widgetLogoBackgroundColor: text(),
   },
   (table) => [
     uniqueIndex("Reflink_workspaceId_name_key").using(

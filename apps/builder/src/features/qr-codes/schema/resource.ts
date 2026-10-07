@@ -16,5 +16,6 @@ export const qrCodeResource = createSelectSchema(reflinkModel, {
   widgetLogoFileId: true,
   widgetBrandName: true,
   widgetBrandUrl: true,
+  widgetLogoBackgroundColor: true,
 })
 export type QrCodeResource = z.infer<typeof qrCodeResource>

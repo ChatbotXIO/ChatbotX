@@ -4701,7 +4701,7 @@
       "poweredBy": "tərəfindən",
       "toggleLabel": "Bizimlə söhbət edin",
       "logo": {
-        "description": "Ziyarətçilərin vidceti açmaq üçün kliklədiyi dairəvi düymə. Kvadrat şəkil seçin və ya tətbiq loqosundan istifadə etmək üçün boş buraxın.",
+        "description": "Ziyarətçilərin vidceti açmaq üçün kliklədiyi dairəvi düymə. Kvadrat şəkil seçin və ya standart söhbət ikonu üçün boş buraxın.",
         "choose": "Media kitabxanasından seçin",
         "notImage": "Loqo şəkil olmalıdır."
       },
@@ -4714,6 +4714,10 @@
       "brandName": {
         "description": "Vidcetin \"tərəfindən\" sətrində göstərilir. Yönləndirmə URL-i təyin edildikdə tələb olunur. Bu sətri gizlətmək üçün hər ikisini boş buraxın.",
         "requiredWithUrl": "Bu yönləndirmə URL-i üçün brend adı daxil edin."
+      },
+      "logoBackgroundColor": {
+        "label": "İkonun fon rəngi",
+        "description": "Standart söhbət ikonunun fonu. İkon oxunaqlı qalması üçün ağ və ya qara olur."
       }
     }
   },

@@ -4459,7 +4459,7 @@
       "poweredBy": "por",
       "toggleLabel": "Fale connosco",
       "logo": {
-        "description": "O botão redondo em que os visitantes clicam para abrir o widget. Escolha uma imagem quadrada ou deixe vazio para usar o logótipo da aplicação.",
+        "description": "O botão redondo em que os visitantes clicam para abrir o widget. Escolha uma imagem quadrada ou deixe vazio para usar o ícone de chat predefinido.",
         "choose": "Escolher da Biblioteca de multimédia",
         "notImage": "O logótipo tem de ser uma imagem."
       },
@@ -4472,6 +4472,10 @@
       "brandName": {
         "description": "Apresentado na linha \"por\" do widget. Obrigatório quando existe um URL de redirecionamento. Deixe ambos vazios para ocultar essa linha.",
         "requiredWithUrl": "Introduza um nome de marca para este URL de redirecionamento."
+      },
+      "logoBackgroundColor": {
+        "label": "Cor de fundo do ícone",
+        "description": "Fundo do ícone de chat predefinido. O ícone fica branco ou preto para se manter legível."
       }
     }
   },

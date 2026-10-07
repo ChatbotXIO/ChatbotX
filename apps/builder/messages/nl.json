@@ -4459,7 +4459,7 @@
       "poweredBy": "door",
       "toggleLabel": "Chat met ons",
       "logo": {
-        "description": "De ronde knop waarop bezoekers klikken om de widget te openen. Kies een vierkante afbeelding, of laat leeg om het app-logo te gebruiken.",
+        "description": "De ronde knop waarop bezoekers klikken om de widget te openen. Kies een vierkante afbeelding, of laat leeg voor het standaard chatpictogram.",
         "choose": "Kiezen uit mediabibliotheek",
         "notImage": "Het logo moet een afbeelding zijn."
       },
@@ -4472,6 +4472,10 @@
       "brandName": {
         "description": "Getoond in de \"door\"-regel van de widget. Verplicht als er een doorverwijs-URL is ingesteld. Laat beide leeg om die regel te verbergen.",
         "requiredWithUrl": "Voer een merknaam in voor deze doorverwijs-URL."
+      },
+      "logoBackgroundColor": {
+        "label": "Achtergrondkleur pictogram",
+        "description": "Achtergrond van het standaard chatpictogram. Het pictogram wordt wit of zwart zodat het leesbaar blijft."
       }
     }
   },

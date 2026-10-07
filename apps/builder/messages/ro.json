@@ -4459,7 +4459,7 @@
       "poweredBy": "de",
       "toggleLabel": "Discută cu noi",
       "logo": {
-        "description": "Butonul rotund pe care vizitatorii îl apasă pentru a deschide widgetul. Alege o imagine pătrată sau lasă gol pentru a folosi logo-ul aplicației.",
+        "description": "Butonul rotund pe care vizitatorii îl apasă pentru a deschide widgetul. Alege o imagine pătrată sau lasă gol pentru a folosi pictograma de chat implicită.",
         "choose": "Alege din biblioteca media",
         "notImage": "Logo-ul trebuie să fie o imagine."
       },
@@ -4472,6 +4472,10 @@
       "brandName": {
         "description": "Afișat în linia „de” a widgetului. Obligatoriu când este setat un URL de redirecționare. Lasă ambele goale pentru a ascunde linia.",
         "requiredWithUrl": "Introdu un nume de brand pentru acest URL de redirecționare."
+      },
+      "logoBackgroundColor": {
+        "label": "Culoarea de fundal a pictogramei",
+        "description": "Fundalul pictogramei de chat implicite. Pictograma devine albă sau neagră ca să rămână lizibilă."
       }
     }
   },

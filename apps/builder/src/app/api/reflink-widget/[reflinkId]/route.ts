@@ -119,6 +119,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
               widgetLogoPath: reflink.widgetLogoFile?.path ?? null,
               widgetBrandName: reflink.widgetBrandName,
               widgetBrandUrl: reflink.widgetBrandUrl,
+              widgetLogoBackgroundColor: reflink.widgetLogoBackgroundColor,
             },
             tenant,
           ),

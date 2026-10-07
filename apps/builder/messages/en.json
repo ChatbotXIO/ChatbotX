@@ -4701,7 +4701,7 @@
       "poweredBy": "by",
       "toggleLabel": "Chat with us",
       "logo": {
-        "description": "The round button visitors click to open the widget. Pick a square image, or leave empty to use the app logo.",
+        "description": "The round button visitors click to open the widget. Pick a square image, or leave empty to use the default chat icon.",
         "choose": "Choose from Media Library",
         "notImage": "The logo must be an image."
       },
@@ -4714,6 +4714,10 @@
       "brandName": {
         "description": "Shown in the widget's \"by\" line. Required when a redirect URL is set. Leave both empty to hide that line.",
         "requiredWithUrl": "Enter a brand name for this redirect URL."
+      },
+      "logoBackgroundColor": {
+        "label": "Icon Background Color",
+        "description": "Background of the default chat icon. The icon turns white or black to stay readable."
       }
     }
   },

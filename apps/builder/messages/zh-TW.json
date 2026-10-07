@@ -4492,7 +4492,7 @@
       "poweredBy": "由",
       "toggleLabel": "與我們聊天",
       "logo": {
-        "description": "訪客點擊以開啟小工具的圓形按鈕。請選擇一張方形圖片，或留空以使用應用程式標誌。",
+        "description": "訪客點擊以開啟小工具的圓形按鈕。請選擇正方形圖片，或留空以使用預設聊天圖示。",
         "choose": "從媒體庫選擇",
         "notImage": "標誌必須是圖片。"
       },
@@ -4505,6 +4505,10 @@
       "brandName": {
         "description": "顯示在小工具的「由」行中。設定跳轉 URL 時必填。兩者都留空則隱藏該行。",
         "requiredWithUrl": "請為此跳轉 URL 輸入品牌名稱。"
+      },
+      "logoBackgroundColor": {
+        "label": "圖示背景色",
+        "description": "預設聊天圖示的背景色。圖示會自動變為白色或黑色以保持清晰。"
       }
     }
   },

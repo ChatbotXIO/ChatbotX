@@ -11,7 +11,6 @@ const TENANT = {
   name: "AcmeChat",
   appUrl: "https://chat.acme.test",
   storageUrl: "https://files.acme.test",
-  faviconUrl: "https://cdn.acme.test/icon.png",
 }
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -44,6 +43,7 @@ const REFLINK = {
   widgetLogoFile: null as { path: string } | null,
   widgetBrandName: null as string | null,
   widgetBrandUrl: null as string | null,
+  widgetLogoBackgroundColor: null as string | null,
 }
 
 const LINKS = [
@@ -83,7 +83,7 @@ beforeEach(() => {
 })
 
 describe("GET /api/reflink-widget/[reflinkId]", () => {
-  test("allows any origin, with the app logo and no powered-by by default", async () => {
+  test("allows any origin, with the default icon and no powered-by by default", async () => {
     const res = await callGet("https://shop.example.com")
 
     expect(res.status).toBe(200)
@@ -106,7 +106,9 @@ describe("GET /api/reflink-widget/[reflinkId]", () => {
       brand: {
         name: null,
         url: null,
-        logoUrl: "https://cdn.acme.test/icon.png",
+        logoUrl: null,
+        logoBackgroundColor: "#111827",
+        logoForegroundColor: "#ffffff",
         poweredByLabel: "by",
         toggleLabel: "Chat with us",
       },
@@ -128,8 +130,25 @@ describe("GET /api/reflink-widget/[reflinkId]", () => {
       url: "https://shop.test/landing?sig=abc",
       logoUrl:
         "https://files.acme.test/public/space/ws-1/media-library/logo123",
+      logoBackgroundColor: "#111827",
+      logoForegroundColor: "#ffffff",
       poweredByLabel: "by",
       toggleLabel: "Chat with us",
+    })
+  })
+
+  test("draws the default icon on the saved background, in a readable color", async () => {
+    findForWidget.mockResolvedValue({
+      ...REFLINK,
+      widgetLogoBackgroundColor: "#fde047",
+    })
+
+    const { brand } = await (await callGet("https://shop.example.com")).json()
+
+    expect(brand).toMatchObject({
+      logoUrl: null,
+      logoBackgroundColor: "#fde047",
+      logoForegroundColor: "#0a0a0a",
     })
   })
 
