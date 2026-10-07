@@ -441,8 +441,10 @@ function applySlots<TParams>(input: {
   const missing: string[] = []
   const invalid: string[] = []
   for (const slot of slots) {
-    const value = values[slot.key]?.trim()
-    if (!value) {
+    // Blank only counts as missing; the value itself is sent as given, like
+    // the builder's fields and a caller-built `templateData`.
+    const value = values[slot.key]
+    if (!value?.trim()) {
       if (slot.required) {
         missing.push(slot.key)
       }

@@ -152,6 +152,8 @@ export const possibleErrorsOnCreatingResource = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnCreatingBroadcast = {
+  // A `templateParams` template that is not in the workspace.
+  notFound,
   businessError,
   broadcastPlanLimit,
   ...possibleIdempotencyErrors,
