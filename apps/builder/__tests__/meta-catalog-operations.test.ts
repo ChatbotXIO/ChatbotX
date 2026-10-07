@@ -138,6 +138,35 @@ describe("syncProductsToMetaCatalog", () => {
     expect(mocks.getCatalog).toHaveBeenCalledTimes(1)
   })
 
+  test("without catalogId, pushes to the bound catalog", async () => {
+    await syncProductsToMetaCatalog({
+      workspaceId: "ws-1",
+      sync: { scope: "all" },
+      reasons: ENGLISH_META_CATALOG_REASONS,
+    })
+
+    expect(mocks.getCatalog).not.toHaveBeenCalled()
+    expect(mocks.startPush).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws-1", catalogId: "9" }),
+    )
+  })
+
+  test("without catalogId and no bound catalog, asks for one (422)", async () => {
+    mocks.findByWorkspaceIdOrFail.mockResolvedValueOnce({
+      id: "c1",
+      catalogId: null,
+    })
+
+    await expect(
+      syncProductsToMetaCatalog({
+        workspaceId: "ws-1",
+        sync: { scope: "all" },
+        reasons: ENGLISH_META_CATALOG_REASONS,
+      }),
+    ).rejects.toMatchObject({ code: "validation", field: "catalogId" })
+    expect(mocks.startPush).not.toHaveBeenCalled()
+  })
+
   test("a queue failure marks the run failed", async () => {
     mocks.queueAdd.mockRejectedValue(new Error("redis down"))
 

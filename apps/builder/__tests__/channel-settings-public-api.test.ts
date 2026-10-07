@@ -173,6 +173,101 @@ describe.each([
   })
 })
 
+describe("PATCH /v1/{messenger,instagram}-channels/{id}/settings", () => {
+  const saved = {
+    welcomeFlowId: "10",
+    persistentMenus: [{ type: "url", label: "Site", url: "https://x.io" }],
+    conversationStarters: [{ question: "Hi?", flowId: "11" }],
+  }
+
+  test.each([
+    [
+      "messenger-channels",
+      findIntegrationMessenger,
+      updateMessenger,
+      { personas: [] },
+    ],
+    ["instagram-channels", findIntegrationInstagram, updateInstagram, {}],
+  ] as const)("%s keeps every field that is not sent", async (resource, find, update, extra) => {
+    find.mockResolvedValueOnce({ ...saved, ...extra, auth: { secret: "x" } })
+
+    await findProcedure("PATCH", `/v1/${resource}/{id}/settings`).handler?.({
+      context,
+      input: { id: "ch-1", welcomeFlowId: null },
+    })
+
+    expect(find).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "ch-1",
+    })
+    expect(update).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", id: "ch-1" },
+      { ...saved, ...extra, welcomeFlowId: null },
+    )
+  })
+
+  test("a Messenger persona needs only a name and a picture URL", async () => {
+    findIntegrationMessenger.mockResolvedValueOnce({ ...saved, personas: [] })
+
+    await findProcedure(
+      "PATCH",
+      "/v1/messenger-channels/{id}/settings",
+    ).handler?.({
+      context,
+      input: {
+        id: "ch-1",
+        personas: [
+          {
+            name: "Ann",
+            profilePictureUrl: "https://x.io/a.png",
+            isDefault: true,
+          },
+        ],
+      },
+    })
+
+    const [{ personas }] = updateMessenger.mock.calls[0]?.slice(1) ?? [{}]
+    expect(personas).toEqual([
+      {
+        id: "",
+        name: "Ann",
+        isDefault: true,
+        profilePicture: {
+          id: expect.any(String),
+          url: "https://x.io/a.png",
+          mode: "url",
+        },
+      },
+    ])
+  })
+
+  test("PUT also accepts profilePictureUrl personas", async () => {
+    await findProcedure(
+      "PUT",
+      "/v1/messenger-channels/{id}/settings",
+    ).handler?.({
+      context,
+      input: {
+        id: "ch-1",
+        ...settings,
+        personas: [
+          {
+            id: "p-1",
+            name: "Ann",
+            profilePictureUrl: "https://x.io/a.png",
+            isDefault: false,
+          },
+        ],
+      },
+    })
+
+    expect(updateMessenger.mock.calls[0]?.[1].personas[0]).toMatchObject({
+      id: "p-1",
+      profilePicture: { url: "https://x.io/a.png", mode: "url" },
+    })
+  })
+})
+
 describe("DELETE /v1/{messenger,instagram}-channels/{id}", () => {
   test("Messenger disconnect runs the builder's disconnect in the token workspace", async () => {
     const procedure = findProcedure("DELETE", "/v1/messenger-channels/{id}")

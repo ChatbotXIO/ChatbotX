@@ -125,6 +125,68 @@ describe("WhatsApp calling routes", () => {
     expect(result.callRecordingRetentionDays).toBe(90)
   })
 
+  test("get returns the stored hours in the shape updateCallHours takes", async () => {
+    mocks.findWorkspaceIntegration.mockResolvedValue({
+      id: "3",
+      callingEnabled: true,
+      inboundCallsEnabled: true,
+      callRecordingEnabled: false,
+      callRecordingRetentionDays: 90,
+      callTranscriptionEnabled: false,
+      callHours: {
+        status: "ENABLED",
+        timezoneId: "Asia/Ho_Chi_Minh",
+        weeklyOperatingHours: [
+          { dayOfWeek: "MONDAY", openTime: "0800", closeTime: "1200" },
+        ],
+      },
+    })
+
+    const result = await find(
+      "GET",
+      "/v1/whatsapp-channels/{id}/calling",
+    )?.({
+      context: { workspace: { id: "ws-1", timezone: "Etc/UTC" } },
+      input: { id: "3" },
+    })
+
+    expect(result.callHoursInput.enabled).toBe(true)
+    expect(result.callHoursInput.timezoneId).toBe("Asia/Ho_Chi_Minh")
+    expect(result.callHoursInput.days).toHaveLength(7)
+    expect(result.callHoursInput.days[0]).toEqual({
+      dayOfWeek: "MONDAY",
+      ranges: [{ openMinute: 480, closeMinute: 720 }],
+    })
+  })
+
+  test("a number without stored hours gets the builder default, off", async () => {
+    mocks.findWorkspaceIntegration.mockResolvedValue({
+      id: "3",
+      callingEnabled: null,
+      inboundCallsEnabled: true,
+      callRecordingEnabled: false,
+      callRecordingRetentionDays: 90,
+      callTranscriptionEnabled: false,
+      callHours: null,
+    })
+
+    const result = await find(
+      "GET",
+      "/v1/whatsapp-channels/{id}/calling",
+    )?.({
+      context: { workspace: { id: "ws-1", timezone: "Asia/Ho_Chi_Minh" } },
+      input: { id: "3" },
+    })
+
+    expect(result.callHoursInput).toMatchObject({
+      enabled: false,
+      timezoneId: "Asia/Ho_Chi_Minh",
+    })
+    expect(result.callHoursInput.days[0].ranges).toEqual([
+      { openMinute: 540, closeMinute: 1020 },
+    ])
+  })
+
   test("get on a channel of another workspace is a 404", async () => {
     mocks.findWorkspaceIntegration.mockResolvedValue(undefined)
 

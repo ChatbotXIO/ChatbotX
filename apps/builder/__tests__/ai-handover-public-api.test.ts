@@ -178,6 +178,54 @@ describe("ai-handover public routes", () => {
     )
   })
 
+  test("patchSettings changes only the sent fields", async () => {
+    const saved = {
+      enabled: true,
+      scheduleEnabled: true,
+      timeRanges: [{ day: 1, start: "08:00", end: "17:00" }],
+      gotoFlowId: "7",
+      returnMessage: "Back",
+      pauseBotWaitingForStaff: true,
+    }
+    mocks.find.mockResolvedValue(saved)
+    mocks.saveSettings.mockResolvedValue({ ...saved, enabled: false })
+
+    const result = await find(
+      "PATCH",
+      `${BASE}/settings`,
+    )?.({
+      context,
+      input: { inboxId: "5", enabled: false },
+    })
+
+    expect(mocks.requireInbox).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      inboxId: "5",
+    })
+    expect(mocks.saveSettings).toHaveBeenCalledWith({
+      ...saved,
+      enabled: false,
+      workspaceId: "ws-1",
+      inboxId: "5",
+    })
+    expect(result).toMatchObject({ enabled: false, gotoFlowId: "7" })
+  })
+
+  test("patchSettings refuses a schedule left without time ranges", async () => {
+    mocks.find.mockResolvedValue(null)
+
+    await expect(
+      find(
+        "PATCH",
+        `${BASE}/settings`,
+      )?.({
+        context,
+        input: { inboxId: "5", scheduleEnabled: true },
+      }),
+    ).rejects.toMatchObject({ code: "validation", field: "timeRanges" })
+    expect(mocks.saveSettings).not.toHaveBeenCalled()
+  })
+
   test("setApplyToAll dryRun only counts and never changes anything", async () => {
     mocks.previewApplyToAll.mockResolvedValue({
       isChanged: true,

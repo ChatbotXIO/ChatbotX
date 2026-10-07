@@ -2,6 +2,7 @@ import {
   aiHandoverBulkRunService,
   aiHandoverSettingsService,
 } from "@chatbotx.io/business"
+import { validationException } from "@chatbotx.io/business/errors"
 import {
   possibleErrorsOnApplyingAiHandover,
   possibleErrorsOnFindingResource,
@@ -15,6 +16,7 @@ import {
   aiHandoverSettingsResource,
   aiHandoverSettingsWithStatusResource,
   listAiHandoverHistoryPublicRequest,
+  patchAiHandoverSettingsPublicRequest,
   saveAiHandoverSettingsPublicRequest,
   setApplyToAllPublicRequest,
   setApplyToAllPublicResponse,
@@ -83,6 +85,39 @@ export const aiHandoverPublicRouter = {
           workspaceId: context.workspace.id,
           inboxId,
         }),
+      )
+    }),
+
+  patchSettings: workspaceTokenAuthAPI
+    .route({
+      method: "PATCH",
+      path: "/v1/inboxes/{inboxId}/ai-handover/settings",
+      summary: "Update AI hand-over settings",
+      description:
+        'Changes only the AI hand-over settings you send and keeps the others as saved, e.g. `{"enabled": false}`. Same rules as `aiHandover.saveSettings`: saving `enabled: false` also stops a running apply-to-all enable, `gotoFlowId` must be an active flow of this workspace and a schedule needs at least one time range.',
+      tags: ["Integrations"],
+    })
+    .input(patchAiHandoverSettingsPublicRequest)
+    .output(aiHandoverSettingsResource)
+    .errors(possibleErrorsOnApplyingAiHandover)
+    .handler(async ({ context, input }) => {
+      const { inboxId, ...changes } = input
+      const ref = { workspaceId: context.workspace.id, inboxId }
+      await aiHandoverSettingsService.requireInbox(ref)
+      const merged = {
+        ...toSettingsResource(await aiHandoverSettingsService.find(ref)),
+        ...Object.fromEntries(
+          Object.entries(changes).filter(([, value]) => value !== undefined),
+        ),
+      }
+      if (merged.scheduleEnabled && merged.timeRanges.length === 0) {
+        throw validationException(
+          "timeRanges",
+          "A schedule needs at least one time range",
+        )
+      }
+      return toSettingsResource(
+        await aiHandoverBulkRunService.saveSettings({ ...merged, ...ref }),
       )
     }),
 

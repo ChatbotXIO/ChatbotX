@@ -707,6 +707,18 @@ approved as UI-only.
   allow-listed for `read_only` tokens and trial-expired workspaces. Only tags:
   sequence, broadcast, ref-link, inbox, member and team names belong to other
   scopes and come from their own list routes.
+- Simpler inputs (all additive, the previous shapes still work):
+  `POST /v1/conversations/{conversationId}/whatsapp-template` takes the same
+  flat `templateParams` as broadcasts; the import header routes return
+  `suggestedColumnMap` (the builder's header matching), and
+  `POST /v1/products/imports` recognises columns and the file format itself
+  when `columnMap`/`format` are omitted; `PATCH` on
+  `/v1/messenger-channels/{id}/settings`, `/v1/instagram-channels/{id}/settings`
+  and `/v1/inboxes/{inboxId}/ai-handover/settings` changes only the sent
+  fields, and Messenger personas take `{name, profilePictureUrl}`;
+  `GET /v1/whatsapp-channels/{id}/calling` returns `callHoursInput`, ready to
+  edit and send to `PUT .../calling/hours`; `POST /v1/products/meta-catalog/sync`
+  defaults `catalogId` to the bound catalog.
 - Template broadcasts take flat `templateParams` (`{"body.1": "Ann",
   "header": "https://.../a.jpg"}`, also per `targets[]` entry) instead of
   Meta's nested `templateData`; the keys are the `parameters` that

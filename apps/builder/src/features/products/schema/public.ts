@@ -156,8 +156,9 @@ export const syncMetaCatalogPublicRequest = z
       .string()
       .trim()
       .regex(/^\d+$/)
+      .optional()
       .describe(
-        "Destination Meta catalog id; rebinds the connection if it differs.",
+        "Destination Meta catalog id; rebinds the connection if it differs. Omit to push to the bound catalog (`products.getMetaCatalog`).",
       ),
     categoryId: zodBigintAsString()
       .optional()
