@@ -32,12 +32,23 @@ async function assignLabel(
   event: Extract<LabelEvent, { type: "assign" }>,
 ): Promise<void> {
   const mapping = await ensureTagChannel(ctx, event.labelId, event.labelName)
-  if (!mapping || event.userIds.length === 0) {
+  if (!mapping) {
+    logger.info(
+      { ...logContext(ctx), labelId: event.labelId },
+      "inbox labels: no tag for label (unknown label without a name), assign skipped",
+    )
+    return
+  }
+  if (event.userIds.length === 0) {
     return
   }
 
-  const inboxes = await findInboxes(ctx.inboxId, event.userIds)
+  const inboxes = await findOrCreateInboxes(ctx, event.userIds)
   if (inboxes.length === 0) {
+    logger.info(
+      { ...logContext(ctx), labelId: event.labelId, userIds: event.userIds },
+      "inbox labels: no contact for labelled user, assign skipped",
+    )
     return
   }
 
@@ -84,11 +95,19 @@ async function unassignLabel(
 
   const tagChannel = await findTagChannel(ctx, event.labelId)
   if (!tagChannel) {
+    logger.info(
+      { ...logContext(ctx), labelId: event.labelId },
+      "inbox labels: label not mapped to a tag, unassign skipped",
+    )
     return
   }
 
   const inboxes = await findInboxes(ctx.inboxId, event.userIds)
   if (inboxes.length === 0) {
+    logger.info(
+      { ...logContext(ctx), labelId: event.labelId, userIds: event.userIds },
+      "inbox labels: no contact for labelled user, unassign skipped",
+    )
     return
   }
 
@@ -144,6 +163,10 @@ async function removeLabel(
   // Map the external label back to the local tag.
   const tagChannel = await findTagChannel(ctx, event.labelId)
   if (!tagChannel) {
+    logger.info(
+      { ...logContext(ctx), labelId: event.labelId },
+      "inbox labels: deleted label not mapped to a tag, skipped",
+    )
     return
   }
 
@@ -156,6 +179,34 @@ async function removeLabel(
     channelType: ctx.channelType,
     integrationId: ctx.integrationId,
   })
+}
+
+const logContext = (ctx: LabelContext) => ({
+  channel: ctx.channelType,
+  workspaceId: ctx.workspaceId,
+  integrationId: ctx.integrationId,
+})
+
+/**
+ * The contact inboxes for the labelled users. When the channel creates
+ * contacts from label events, users the inbox has never seen get a contact
+ * first, so the label is not silently dropped.
+ */
+async function findOrCreateInboxes(ctx: LabelContext, sourceIds: string[]) {
+  const found = await findInboxes(ctx.inboxId, sourceIds)
+  const { createMissingContact } = ctx
+  if (!createMissingContact) {
+    return found
+  }
+  const foundSourceIds = new Set(found.map((inbox) => inbox.sourceId))
+  const missing = sourceIds.filter((id) => !foundSourceIds.has(id))
+  if (missing.length === 0) {
+    return found
+  }
+  for (const sourceId of missing) {
+    await createMissingContact(sourceId)
+  }
+  return findInboxes(ctx.inboxId, sourceIds)
 }
 
 // ── DB helpers ──────────────────────────────────────────

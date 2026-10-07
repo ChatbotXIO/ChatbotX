@@ -678,10 +678,10 @@ export const contactInboxRepository = {
   listIdsByInboxAndSourceIds(
     props: { inboxId: string; sourceIds: string[] },
     tx: DatabaseClient = db,
-  ): Promise<Pick<ContactInboxModel, "id" | "contactId">[]> {
+  ): Promise<Pick<ContactInboxModel, "id" | "contactId" | "sourceId">[]> {
     return tx.query.contactInboxModel.findMany({
       where: { inboxId: props.inboxId, sourceId: { in: props.sourceIds } },
-      columns: { id: true, contactId: true },
+      columns: { id: true, contactId: true, sourceId: true },
     })
   },
 

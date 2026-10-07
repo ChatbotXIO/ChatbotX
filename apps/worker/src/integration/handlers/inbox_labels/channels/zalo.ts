@@ -21,6 +21,8 @@ const zaloTagEventSchema = z.object({
 })
 
 export const zaloChannel: Channel = {
+  createsMissingContacts: false,
+
   async loadContext(oaId) {
     const integration = await zaloIntegrationService.findByOaId({ oaId })
     if (!integration?.syncTagEnabledAt) {

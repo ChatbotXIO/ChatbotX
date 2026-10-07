@@ -28,7 +28,11 @@ export const botHandlers: BotHandlers<MessengerAuthValue> = {
     return { id, name: data.name }
   },
   listLabels: async ({ ctx, data }) => {
-    const labels = await getUserLabels({ ctx, psid: data.sourceId })
+    const labels = await getUserLabels({
+      ctx,
+      psid: data.sourceId,
+      requestTimeoutMs: data.requestTimeoutMs,
+    })
     return labels.map((label) => ({
       id: label.id,
       name: label.page_label_name,

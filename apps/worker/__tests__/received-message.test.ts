@@ -562,6 +562,12 @@ vi.mock("../src/integration/handlers/comment-media-attachment", () => ({
   fetchThreadsCommentAttachments: mockFetchThreadsCommentAttachments,
 }))
 
+const mockSyncAdLabelsIfAdReferred = vi.fn().mockResolvedValue(undefined)
+vi.mock("../src/integration/handlers/sync-ad-labels", () => ({
+  syncAdLabelsIfAdReferred: (...args: unknown[]) =>
+    mockSyncAdLabelsIfAdReferred(...args),
+}))
+
 const mockProcessCommentAutomation = vi.fn().mockResolvedValue(undefined)
 vi.mock("../src/integration/handlers/comment-automation", () => ({
   processCommentAutomation: mockProcessCommentAutomation,
@@ -2700,6 +2706,127 @@ describe("receiveMessage — referral-only events", () => {
 // pipeline: eligibility, fetcher selection per channel, and the never-throws
 // guarantee.
 // ---------------------------------------------------------------------------
+
+describe("receiveMessage — ad label sync (Meta auto labels on CTM referrals)", () => {
+  const adsReferral = { source: "ADS", type: "OPEN_THREAD", adId: "ad-9" }
+
+  const parsed = (overrides: Record<string, unknown> = {}) => ({
+    message: baseIncomingMessage,
+    contact: { sourceId: "psid-123" },
+    postbackAction: null,
+    quickReplyAction: null,
+    ref: null,
+    referralSource: "ADS",
+    referral: adsReferral,
+    ...overrides,
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: fakeInbox,
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      contact: fakeContact,
+    })
+    mockConversationFindOrCreate.mockResolvedValue(fakeConversation)
+    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockresolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://files.example.test",
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      createOrUpdate: mockCreateOrUpdate,
+      createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,
+      findLastByConversation: mockFindLastByConversation,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: true,
+    })
+    mockEmit.mockResolvedValue(undefined)
+    mockIntegrationQueueAdd.mockResolvedValue(undefined)
+    mockWorkspaceIsActiveNow.mockReturnValue(true)
+  })
+
+  test("hands the newly stored message to the ad label sync, inline (no queue job)", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed())
+
+    await receiveMessage(baseProps)
+
+    expect(mockSyncAdLabelsIfAdReferred).toHaveBeenCalledTimes(1)
+    expect(mockSyncAdLabelsIfAdReferred).toHaveBeenCalledWith({
+      canAutomate: true,
+      inbox: fakeInbox,
+      integrationRow: fakeIntegrationRow,
+      referral: adsReferral,
+      newMessageType: "incoming",
+      sourceId: "psid-123",
+      listLabels: expect.any(Function),
+    })
+    const queuedJobNames = mockIntegrationQueueAdd.mock.calls.map(
+      (call) => call[0],
+    )
+    expect(queuedJobNames).not.toContain("syncAdLabels")
+  })
+
+  test("passes no new message for a redelivered (already stored) message", async () => {
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: false,
+    })
+    mockRunChannelHandler.mockResolvedValue(parsed())
+
+    await receiveMessage(baseProps)
+
+    expect(mockSyncAdLabelsIfAdReferred).toHaveBeenCalledWith(
+      expect.objectContaining({ newMessageType: undefined }),
+    )
+  })
+
+  test("passes no new message for the referral-only webhook", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed({ message: null }))
+
+    await receiveMessage(baseProps)
+
+    expect(mockSyncAdLabelsIfAdReferred).toHaveBeenCalledWith(
+      expect.objectContaining({ newMessageType: undefined }),
+    )
+  })
+
+  test("passes canAutomate false for an expired workspace", async () => {
+    mockWorkspaceIsActiveNow.mockReturnValue(false)
+    mockRunChannelHandler.mockResolvedValue(parsed())
+
+    await receiveMessage(baseProps)
+
+    expect(mockSyncAdLabelsIfAdReferred).toHaveBeenCalledWith(
+      expect.objectContaining({ canAutomate: false }),
+    )
+  })
+
+  test("listLabels reads the person's labels through the channel handler with the given deadline", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed())
+
+    await receiveMessage(baseProps)
+
+    const { listLabels } = mockSyncAdLabelsIfAdReferred.mock.calls[0][0] as {
+      listLabels: (requestTimeoutMs: number) => Promise<unknown>
+    }
+    mockRunChannelHandler.mockResolvedValueOnce([])
+    await listLabels(5000)
+    expect(mockRunChannelHandler).toHaveBeenLastCalledWith(
+      "bot",
+      "listLabels",
+      expect.objectContaining({
+        data: { sourceId: "psid-123", requestTimeoutMs: 5000 },
+      }),
+    )
+  })
+})
 
 describe("receiveMessage — existing contact profile refresh (post-save)", () => {
   beforeEach(() => {

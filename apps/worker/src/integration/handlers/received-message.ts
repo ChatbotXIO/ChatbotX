@@ -131,6 +131,7 @@ import {
   refreshExistingContactProfile,
 } from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
+import { syncAdLabelsIfAdReferred } from "./sync-ad-labels"
 import { recordInboundThreadControl } from "./thread-control-inbound"
 import { resolveTiktokCommenterIdentity } from "./tiktok-comment-identity"
 
@@ -726,6 +727,22 @@ export const receiveMessage = async (
       },
     })
   }
+
+  // Per-ad labels some channels auto-assign never arrive by webhook, so a newly
+  // stored ad-referred message reads them once the message is fully handled.
+  await syncAdLabelsIfAdReferred({
+    canAutomate,
+    inbox,
+    integrationRow,
+    referral: parsedMessage.referral,
+    newMessageType: createdMessage?.messageType,
+    sourceId: incomingContact.sourceId,
+    listLabels: (requestTimeoutMs) =>
+      integration.runChannelHandler("bot", "listLabels", {
+        ctx,
+        data: { sourceId: incomingContact.sourceId, requestTimeoutMs },
+      }),
+  })
 
   return {
     message: createdMessage,
