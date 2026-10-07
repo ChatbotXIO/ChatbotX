@@ -287,7 +287,9 @@ chatbotx broadcasts create --channel <channel> --subaction <subaction> --schedul
                                                      # Cloud trial Messenger broadcasts: max 60/min and one active at a time
                                                      #   --schedulesAt <schedulesAt> --contactFilter <contactFilter>
                                                      #   [--flowId --templateId --integrationWhatsappId --integrationMessengerId
-                                                     #    --templateData --buttons --targets --inboxIds --saveAsDraft]
+                                                     #    --templateParams --templateData --buttons --targets --inboxIds --saveAsDraft]
+                                                     # templateParams: {"body.1":"Ann","header":"https://..."}; keys come
+                                                     #   from `parameters` of the template's get route
                                                      # Either flowId or templateId required (not both); schedulesAt required
                                                      # when schedulesType is "future" and saveAsDraft is not true
 chatbotx broadcasts update <id> --name <name>        # Rename only — use `draft update` to change the payload
