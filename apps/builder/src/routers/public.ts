@@ -65,6 +65,7 @@ import { integrationsPublicRouter } from "@/features/integrations/api/public"
 import { magicLinksPublicRouter } from "@/features/magic-links/api/public"
 import { mediaLibraryPublicRouter } from "@/features/media-library/api/public"
 import { messagesPublicRouter } from "@/features/messages/api/public"
+import { miniAppsPublicRouter } from "@/features/mini-apps/api/public"
 import { minigamesPublicRouter } from "@/features/minigames/api/public"
 import { messengerPersonasPublicRouter } from "@/features/personas/api/public"
 import { productCategoriesPublicRouter } from "@/features/product-categories/api/public"
@@ -141,6 +142,7 @@ export const publicRouter = {
   messengerChannels: messengerChannelsPublicRouter,
   messengerPersonas: messengerPersonasPublicRouter,
   messengerTemplates: messengerTemplatesPublicRouter,
+  miniApps: miniAppsPublicRouter,
   minigames: minigamesPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,

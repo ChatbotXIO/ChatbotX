@@ -1,11 +1,12 @@
 import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
-import { WhatsappException } from "../exception"
+import { rescue, WhatsappException } from "../exception"
 import { logger } from "../lib/logger"
 import type {
   FlowAssetsResponse,
   ListFlowsResponse,
   WhatsappAuthValue,
+  WhatsappFlow,
   WhatsappFlowScreen,
 } from "../schema"
 
@@ -247,4 +248,168 @@ export async function listFlows({
     logger.error({ err }, "Failed to list flows")
     throw new WhatsappException("Failed to list flows").setOriginError(err)
   }
+}
+
+const FLOW_FIELDS = "id,name,status,categories,validation_errors"
+
+/** Flows that can still take a new Flow JSON in place. */
+const EDITABLE_FLOW_STATUSES = new Set(["DRAFT", "PUBLISHED"])
+
+export type WhatsappFlowCategory =
+  | "SIGN_UP"
+  | "SIGN_IN"
+  | "APPOINTMENT_BOOKING"
+  | "LEAD_GENERATION"
+  | "CONTACT_US"
+  | "CUSTOMER_SUPPORT"
+  | "SURVEY"
+  | "OTHER"
+
+export type PublishFlowJsonParams = {
+  name: string
+  flowJson: string
+  categories?: WhatsappFlowCategory[]
+  /** Meta id of a Flow created by an earlier publish of the same Mini App. */
+  existingFlowId?: string | null
+}
+
+export type PublishFlowJsonResult = {
+  flow: WhatsappFlow
+  /** False when Meta kept the Flow as a draft because of validation errors. */
+  published: boolean
+}
+
+type FlowWriteResponse = {
+  id?: string
+  success?: boolean
+  validation_errors?: unknown[]
+}
+
+const getFlow = (auth: WhatsappAuthValue, flowId: string) => {
+  const { version = DEFAULT_API_VERSION } = auth
+  return ky
+    .get<WhatsappFlow>(`${API_URL}/${version}/${flowId}`, {
+      headers: buildAuthHeaders(auth),
+      searchParams: { fields: FLOW_FIELDS },
+    })
+    .json()
+}
+
+const createFlow = (
+  auth: WhatsappAuthValue,
+  params: PublishFlowJsonParams,
+): Promise<FlowWriteResponse> => {
+  const { version = DEFAULT_API_VERSION } = auth
+  return ky
+    .post<FlowWriteResponse>(
+      `${API_URL}/${version}/${auth.metadata.wabaId}/flows`,
+      {
+        headers: buildAuthHeaders(auth),
+        json: {
+          name: params.name,
+          categories: params.categories?.length ? params.categories : ["OTHER"],
+          flow_json: params.flowJson,
+          publish: true,
+        },
+      },
+    )
+    .json()
+}
+
+const updateFlowJson = (
+  auth: WhatsappAuthValue,
+  flowId: string,
+  flowJson: string,
+): Promise<FlowWriteResponse> => {
+  const { version = DEFAULT_API_VERSION } = auth
+  const body = new FormData()
+  body.append(
+    "file",
+    new Blob([flowJson], { type: "application/json" }),
+    "flow.json",
+  )
+  body.append("name", "flow.json")
+  body.append("asset_type", "FLOW_JSON")
+  return ky
+    .post<FlowWriteResponse>(`${API_URL}/${version}/${flowId}/assets`, {
+      headers: buildAuthHeaders(auth),
+      body,
+    })
+    .json()
+}
+
+const publishFlow = (auth: WhatsappAuthValue, flowId: string) => {
+  const { version = DEFAULT_API_VERSION } = auth
+  return ky
+    .post<{ success?: boolean }>(`${API_URL}/${version}/${flowId}/publish`, {
+      headers: buildAuthHeaders(auth),
+    })
+    .json()
+}
+
+const hasErrors = (response: FlowWriteResponse) =>
+  (response.validation_errors?.length ?? 0) > 0
+
+/** Updates an editable Flow in place; returns undefined when it cannot be reused. */
+const tryUpdateExisting = async (
+  auth: WhatsappAuthValue,
+  flowId: string,
+  flowJson: string,
+): Promise<PublishFlowJsonResult | undefined> => {
+  const current = await getFlow(auth, flowId).catch(() => undefined)
+  if (!(current && EDITABLE_FLOW_STATUSES.has(current.status))) {
+    return
+  }
+  try {
+    const update = await updateFlowJson(auth, flowId, flowJson)
+    if (hasErrors(update)) {
+      return { flow: await getFlow(auth, flowId), published: false }
+    }
+  } catch (err) {
+    // Older published Flows are immutable: fall back to a fresh Flow.
+    logger.warn(
+      { err, flowId },
+      "Flow JSON update rejected, creating a new Flow",
+    )
+    return
+  }
+  if (current.status === "DRAFT") {
+    await publishFlow(auth, flowId)
+  }
+  return { flow: await getFlow(auth, flowId), published: true }
+}
+
+/**
+ * Creates (or updates) a WhatsApp Flow from a Flow JSON and publishes it.
+ * Reuses `existingFlowId` while Meta still allows editing it; otherwise
+ * creates a new Flow. Meta's validation errors keep the Flow as a draft and
+ * come back on `flow.validation_errors`.
+ */
+export function publishFlowJson({
+  auth,
+  params,
+}: {
+  auth: WhatsappAuthValue
+  params: PublishFlowJsonParams
+}): Promise<PublishFlowJsonResult> {
+  return rescue(async () => {
+    if (params.existingFlowId) {
+      const updated = await tryUpdateExisting(
+        auth,
+        params.existingFlowId,
+        params.flowJson,
+      )
+      if (updated) {
+        return updated
+      }
+    }
+    const created = await createFlow(auth, params)
+    if (!created.id) {
+      throw new WhatsappException("Meta did not return a Flow id")
+    }
+    return {
+      flow: await getFlow(auth, created.id),
+      published: !hasErrors(created),
+    }
+  })
 }

@@ -193,6 +193,7 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "POST /v1/ads/conversion-rules": "ads:create-conversion-rule",
   "PATCH /v1/ads/conversion-rules/{id}": "ads:update-conversion-rule",
   "DELETE /v1/ads/conversion-rules/{id}": "ads:delete-conversion-rule",
+  "POST /v1/mini-apps/{id}/publish-whatsapp": "mini-apps:publish-whatsapp",
 }
 
 export function pathAndMethodToCommandName(

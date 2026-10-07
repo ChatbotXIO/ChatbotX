@@ -197,6 +197,9 @@ importers:
       '@chatbotx.io/mail':
         specifier: workspace:*
         version: link:../../packages/mail
+      '@chatbotx.io/mini-app':
+        specifier: workspace:*
+        version: link:../../packages/mini-app
       '@chatbotx.io/minigame-ui':
         specifier: workspace:*
         version: link:../../packages/minigame-ui
@@ -233,6 +236,18 @@ importers:
       '@codemirror/lang-javascript':
         specifier: ^6.2.5
         version: 6.2.5
+      '@codemirror/lang-json':
+        specifier: ^6.0.2
+        version: 6.0.2
+      '@dnd-kit/core':
+        specifier: ^6.3.1
+        version: 6.3.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@dnd-kit/sortable':
+        specifier: ^10.0.0
+        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
+      '@dnd-kit/utilities':
+        specifier: ^3.2.2
+        version: 3.2.2(react@19.2.5)
       '@floating-ui/dom':
         specifier: ^1.7.6
         version: 1.7.6
@@ -2259,6 +2274,9 @@ importers:
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger
+      '@chatbotx.io/mini-app':
+        specifier: workspace:*
+        version: link:../mini-app
       '@chatbotx.io/partysocket-config':
         specifier: workspace:*
         version: link:../partysocket-config
@@ -2586,6 +2604,9 @@ importers:
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger
+      '@chatbotx.io/mini-app':
+        specifier: workspace:*
+        version: link:../mini-app
       '@chatbotx.io/redis':
         specifier: workspace:*
         version: link:../redis
@@ -2929,6 +2950,28 @@ importers:
       '@types/nodemailer':
         specifier: ^8.0.0
         version: 8.0.0
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.0
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@24.13.1)(@vitest/coverage-v8@4.1.8)(jsdom@25.0.1)(msw@2.14.6(@types/node@24.13.1)(typescript@5.9.3))(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0)(yaml@2.9.0))
+
+  packages/mini-app:
+    dependencies:
+      zod:
+        specifier: ^4.3.6
+        version: 4.6.5
+    devDependencies:
+      '@chatbotx.io/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@chatbotx.io/vitest-config':
+        specifier: workspace:*
+        version: link:../vitest-config
+      '@types/node':
+        specifier: 24.x
+        version: 24.13.1
       typescript:
         specifier: ^5
         version: 5.9.3
@@ -4007,6 +4050,9 @@ packages:
 
   '@codemirror/lang-javascript@6.2.5':
     resolution: {integrity: sha512-zD4e5mS+50htS7F+TYjBPsiIFGanfVqg4HyUz6WNFikgOPf2BgKlx+TQedI1w6n/IqRBVBbBWmGFdLB/7uxO4A==}
+
+  '@codemirror/lang-json@6.0.2':
+    resolution: {integrity: sha512-x2OtO+AvwEHrEwR0FyyPtfDUiloG3rnVTSZV1W8UteaLL8/MajQd8DpvUb2YVzC+/T18aSDv0H9mu+xw0EStoQ==}
 
   '@codemirror/language@6.12.3':
     resolution: {integrity: sha512-QwCZW6Tt1siP37Jet9Tb02Zs81TQt6qQrZR2H+eGMcFsL1zMrk2/b9CLC7/9ieP1fjIUMgviLWMmgiHoJrj+ZA==}
@@ -5228,6 +5274,9 @@ packages:
 
   '@lezer/javascript@1.5.4':
     resolution: {integrity: sha512-vvYx3MhWqeZtGPwDStM2dwgljd5smolYD2lR2UyFcHfxbBQebqx8yjmFmxtJ/E6nN6u1D9srOiVWm3Rb4tmcUA==}
+
+  '@lezer/json@1.0.3':
+    resolution: {integrity: sha512-BP9KzdF9Y35PDpv04r0VeSTKDeox5vVr3efE7eBbx3r4s3oNLfunchejZhjArmeieBH+nVOpgIiBJpEAv8ilqQ==}
 
   '@lezer/lr@1.4.10':
     resolution: {integrity: sha512-rnCpTIBafOx4mRp43xOxDJbFipJm/c0cia/V5TiGlhmMa+wsSdoGmUN3w5Bqrks/09Q/D4tNAmWaT8p6NRi77A==}
@@ -12374,6 +12423,11 @@ snapshots:
       '@lezer/common': 1.5.3
       '@lezer/javascript': 1.5.4
 
+  '@codemirror/lang-json@6.0.2':
+    dependencies:
+      '@codemirror/language': 6.12.3
+      '@lezer/json': 1.0.3
+
   '@codemirror/language@6.12.3':
     dependencies:
       '@codemirror/state': 6.7.0
@@ -13269,6 +13323,12 @@ snapshots:
       '@lezer/lr': 1.4.10
 
   '@lezer/javascript@1.5.4':
+    dependencies:
+      '@lezer/common': 1.5.3
+      '@lezer/highlight': 1.2.5
+      '@lezer/lr': 1.4.10
+
+  '@lezer/json@1.0.3':
     dependencies:
       '@lezer/common': 1.5.3
       '@lezer/highlight': 1.2.5

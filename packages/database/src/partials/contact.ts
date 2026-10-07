@@ -90,6 +90,7 @@ export const systemFieldTypes = z.enum([
   "user_channel",
   "user_hash",
   "minigame_play_token",
+  "mini_app_token",
   "user_tags",
   "user_external_id",
   "user_source",

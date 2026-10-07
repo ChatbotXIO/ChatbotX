@@ -18,6 +18,7 @@ import {
   CopyIcon,
   Gamepad2Icon,
   ImagesIcon,
+  LayoutTemplateIcon,
   LinkIcon,
   MapIcon,
   MegaphoneIcon,
@@ -164,6 +165,13 @@ export const TOOLS_CONFIG = [
     descriptionKey: "minigames.description",
     icon: Gamepad2Icon,
     getLink: (id: string) => `/space/${id}/minigames`,
+  },
+  {
+    id: "mini-apps",
+    labelKey: "miniApps.title",
+    descriptionKey: "miniApps.description",
+    icon: LayoutTemplateIcon,
+    getLink: (id: string) => `/space/${id}/mini-apps`,
   },
   // {
   //   id: "webhooks",

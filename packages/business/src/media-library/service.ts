@@ -11,7 +11,11 @@ import type {
 import { uploader } from "@chatbotx.io/filesystem"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { ChatbotXException, notFoundException } from "../errors"
+import {
+  ChatbotXException,
+  notFoundException,
+  validationException,
+} from "../errors"
 import { fileService } from "../file/service"
 import { logger } from "../logger"
 import { resolveTenantSettings } from "../platform/settings"
@@ -29,6 +33,13 @@ type CreateFileInput = {
 type FolderWithFileCount = MediaLibraryFolderModel & { fileCount: number }
 
 export type MediaLibraryFileWithUrl = MediaLibraryFileModel & { url: string }
+
+const READABLE_IMAGE_TYPES: ReadonlySet<string> = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+])
 
 class MediaLibraryService extends BaseService {
   /**
@@ -222,6 +233,36 @@ class MediaLibraryService extends BaseService {
     })
 
     return { ...file, url: getPublicFileUrl(file.path, storageUrl) }
+  }
+
+  /**
+   * Reads a raster image from the workspace's library as base64, for callers
+   * that must inline it (Mini App / WhatsApp Flow images). Only JPEG, PNG,
+   * WebP and GIF files up to `maxBytes` are read.
+   */
+  async readImage(input: {
+    workspaceId: string
+    fileId: string
+    maxBytes: number
+  }): Promise<{ mimeType: string; base64: string }> {
+    const file = await mediaLibraryFileRepository.findById({
+      id: input.fileId,
+      workspaceId: input.workspaceId,
+    })
+    if (!file) {
+      throw notFoundException(`MediaLibraryFile ${input.fileId} not found`)
+    }
+    if (!READABLE_IMAGE_TYPES.has(file.mimeType)) {
+      throw validationException(
+        "fileId",
+        "Only JPEG, PNG, WebP or GIF images can be used",
+      )
+    }
+    if (file.size > input.maxBytes) {
+      throw validationException("fileId", "The image is too large")
+    }
+    const bytes = await uploader.getObject(file.path)
+    return { mimeType: file.mimeType, base64: bytes.toString("base64") }
   }
 
   async deleteFile(input: {

@@ -7,6 +7,7 @@ import type {
 import type { ServerMessage } from "whatsapp-api-js/types"
 import z from "zod"
 import type { WhatsappCallingSettings } from "./api/calling"
+import type { PublishFlowJsonParams, PublishFlowJsonResult } from "./api/flow"
 import type {
   ConversationalAutomation,
   WhatsappPhoneNumber,
@@ -330,6 +331,13 @@ export type WhatsappActions = {
       params: { flowSourceId: string }
     },
     WhatsappFlowScreen[]
+  >
+  publishFlowJson: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      params: PublishFlowJsonParams
+    },
+    PublishFlowJsonResult
   >
   findConversationalAutomation: Handler<
     {

@@ -117,6 +117,7 @@ import { messagingAdsConnectionRelations } from "./messaging-ads-connection"
 import { messengerMessageTemplateRelations } from "./messenger-message-template"
 import { metaCapiEventRelations } from "./meta-capi-event"
 import { metaCatalogRelations } from "./meta-catalog"
+import { miniAppRelations } from "./mini-app"
 import { minigameRelations } from "./minigame"
 import { minigameContactRelations } from "./minigame-contact"
 import { minigamePlayRelations } from "./minigame-play"
@@ -305,6 +306,7 @@ export const relations = {
   ...userDeviceTokenRelations,
   ...whatsappSignupSessionRelations,
   ...automationThrottleRelations,
+  ...miniAppRelations,
   ...minigameRelations,
   ...minigameContactRelations,
   ...minigamePlayRelations,

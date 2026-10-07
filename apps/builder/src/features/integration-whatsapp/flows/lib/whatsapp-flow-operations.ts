@@ -13,7 +13,7 @@ import { integrations } from "@/integration"
 
 const FLOW_NOT_FOUND = "WhatsApp Flow not found"
 
-const buildWhatsappContext = (
+export const buildWhatsappContext = (
   workspaceId: string,
   integrationWhatsapp: IntegrationWhatsappModel,
 ) =>
