@@ -445,6 +445,24 @@ export class LiveCounterStore<TRow> {
     await this.invalidate(id)
   }
 
+  /**
+   * Undo only the Redis half of a {@link consume} whose durable write was made
+   * on a transaction that has since rolled back. The row is already gone with
+   * the transaction, so decrementing it again would leave the DB one below the
+   * live counter.
+   */
+  async rollbackLive(
+    id: string,
+    metric: QuotaMetric,
+    count = 1,
+  ): Promise<void> {
+    if (count <= 0) {
+      return
+    }
+    await this.decrementBy(id, metric, count)
+    await this.invalidate(id)
+  }
+
   /** Write-through a `-count` release to Redis and the durable quota row. */
   async release(id: string, metric: QuotaMetric, count = 1): Promise<void> {
     if (count <= 0) {

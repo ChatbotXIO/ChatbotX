@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   release: vi.fn(async () => undefined),
   increment: vi.fn(async () => undefined),
   decrement: vi.fn(async () => undefined),
+  rollbackLiveIncrement: vi.fn(async () => undefined),
   findOwnerUserIdByWorkspaceId: vi.fn(async () => "owner-1"),
 }))
 
@@ -65,6 +66,7 @@ vi.mock("../../workspace-usage/service", () => ({
   workspaceUsageService: {
     increment: mocks.increment,
     decrement: mocks.decrement,
+    rollbackLiveIncrement: mocks.rollbackLiveIncrement,
   },
 }))
 
@@ -115,6 +117,7 @@ beforeEach(() => {
   mocks.release.mockClear()
   mocks.increment.mockClear()
   mocks.decrement.mockClear()
+  mocks.rollbackLiveIncrement.mockClear()
   mocks.findOwnerUserIdByWorkspaceId.mockReset()
   mocks.findOwnerUserIdByWorkspaceId.mockResolvedValue("owner-1")
 
@@ -371,6 +374,65 @@ describe("ConnectionStateService.transition", () => {
       userId: "owner-1",
       metric: "channels",
     })
+  })
+})
+
+describe("ConnectionStateService rollback of the workspace usage increment", () => {
+  // The WorkspaceUsage upsert now rides the transition's own transaction, so a
+  // rollback already undoes the durable row. Compensation must therefore undo
+  // only the Redis half; a DB decrement would hit the committed row and leave
+  // `channelsUsed` one below the live counter until the nightly reconcile.
+  test("a commit failure after the usage increment rolls back Redis only, never the DB row", async () => {
+    mocks.findById.mockResolvedValue(baseConnection({ status: "needs_reauth" }))
+    mocks.update.mockResolvedValue(baseConnection({ status: "connected" }))
+    vi.mocked(db.transaction).mockImplementationOnce((async (
+      fn: (tx: unknown) => unknown,
+    ) => {
+      await fn({})
+      throw new Error("commit failed")
+    }) as typeof db.transaction)
+
+    await expect(
+      connectionStateService.transition({
+        connectionId: "conn-1",
+        event: "connect.completed",
+        ownerId: "owner-1",
+      }),
+    ).rejects.toThrow("commit failed")
+
+    expect(mocks.release).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "channels",
+    })
+    expect(mocks.rollbackLiveIncrement).toHaveBeenCalledWith("ws-1", "channels")
+    expect(mocks.decrement).not.toHaveBeenCalled()
+  })
+
+  test("compensateQuotaConsumption rolls back Redis only when the usage increment ran", async () => {
+    await connectionStateService.compensateQuotaConsumption({
+      ownerId: "owner-1",
+      workspaceId: "ws-1",
+      workspaceUsageIncremented: true,
+    })
+
+    expect(mocks.release).toHaveBeenCalledWith({
+      userId: "owner-1",
+      metric: "channels",
+    })
+    expect(mocks.rollbackLiveIncrement).toHaveBeenCalledWith("ws-1", "channels")
+    expect(mocks.decrement).not.toHaveBeenCalled()
+  })
+
+  test("compensateQuotaConsumption leaves workspace usage alone when the increment never ran", async () => {
+    await connectionStateService.compensateQuotaConsumption({
+      ownerId: "owner-1",
+      workspaceId: "ws-1",
+      workspaceUsageIncremented: false,
+    })
+
+    expect(mocks.release).toHaveBeenCalledTimes(1)
+    expect(mocks.rollbackLiveIncrement).not.toHaveBeenCalled()
+    expect(mocks.decrement).not.toHaveBeenCalled()
   })
 })
 
