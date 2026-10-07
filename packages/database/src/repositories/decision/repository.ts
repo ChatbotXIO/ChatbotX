@@ -13,6 +13,7 @@ import type {
   DecisionConnectionStatus,
   DecisionProfileContractJson,
   DecisionProfileStatus,
+  DecisionProfileThresholdConfigJson,
   DecisionProviderKind,
 } from "../../partials/decision"
 import { decisionConnectionModel, decisionProfileModel } from "../../schema"
@@ -44,7 +45,8 @@ export type CreateDecisionProfileInput = {
   description?: string | null
   model: string
   name: string
-  providerKind: DecisionProviderKind
+  status?: DecisionProfileStatus
+  thresholdConfig?: DecisionProfileThresholdConfigJson | null
   workspaceId: string
 }
 

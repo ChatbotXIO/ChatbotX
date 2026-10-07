@@ -1,7 +1,7 @@
 import { decisionEvaluationService } from "@chatbotx.io/business"
 import type { EvaluateDecisionStepSchema } from "@chatbotx.io/flow-config"
-import type { ExecuteStepResult } from "./step"
 import type { ExecuteStepProps } from "./flow-utils"
+import type { ExecuteStepResult } from "./step"
 
 export async function evaluateDecision(
   props: ExecuteStepProps<EvaluateDecisionStepSchema>,

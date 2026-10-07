@@ -7,7 +7,10 @@ import { z } from "zod"
 import { contactCustomFieldService } from "../contact-custom-field/service"
 import { logger } from "../logger"
 import { messageService } from "../message/service"
-import { normalizeDecisionProviderResponse } from "./adapters"
+import {
+  compileDecisionProfileRequest,
+  normalizeDecisionProviderResponse,
+} from "./adapters"
 import { decisionConnectionService } from "./connection-service"
 import {
   type DecisionAnswer,
@@ -116,9 +119,7 @@ class DecisionEvaluationService {
             authorization: credential.apiKey,
             body: {
               model: profile.model,
-              questions: Object.fromEntries(
-                contract.questions.map((question) => [question.key, question]),
-              ),
+              ...compileDecisionProfileRequest(contract),
               state: { currentMessage: source.text },
             },
             endpoint: connection.endpoint,

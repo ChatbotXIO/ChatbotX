@@ -43,6 +43,10 @@ vi.mock("../src/logger", () => ({
   logger: { warn: loggerWarnMock },
 }))
 
+vi.mock("../src/connection/record-refreshed-auth", () => ({
+  recordRefreshedAuth: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/encryption", async () => {
   const actual = await vi.importActual<
     typeof import("@chatbotx.io/encryption")

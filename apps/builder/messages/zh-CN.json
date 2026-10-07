@@ -43,6 +43,7 @@
     "continue": "继续",
     "copy": "拷贝",
     "copyUrl": "拷贝 URL",
+    "chatWidget": "聊天小部件",
     "create": "创建",
     "createFeature": "创建{feature}",
     "deactivate": "停用",
@@ -4242,6 +4243,7 @@
     "cancelEdit": "取消",
     "replaceAttachment": "替换附件",
     "addAttachment": "添加附件",
+    "reloadAttachment": "重新加载附件",
     "changeDefault": "更改默认值",
     "changeDefaultDescription": "您确定要更改缺省 AI Agent 吗？",
     "changeHideState": "更改隐藏状态",
@@ -5158,7 +5160,27 @@
   },
   "reflinks": {
     "description": "启动流程并从频道截取引用 payload 的关键字链接。",
-    "title": "入口点链接"
+    "title": "入口点链接",
+    "chatWidget": {
+      "title": "聊天小部件",
+      "description": "在您的网站上显示聊天渠道按钮。访客点击任一按钮即可开始聊天并运行此 ref 链接的流程。",
+      "authorizedDomains": {
+        "label": "授权域名",
+        "placeholder": "example.com",
+        "description": "只有这些域名及其子域名可以显示小部件。留空则允许任何网站。",
+        "invalid": "这些域名无效：{domains}。请只输入域名，例如 example.com。"
+      },
+      "channels": {
+        "label": "渠道",
+        "description": "关闭某个渠道即可在小部件中隐藏它。",
+        "empty": "尚未连接带有聊天链接的渠道。",
+        "profileLinkOnly": "打开个人主页 — 不会运行此 ref 链接的流程。"
+      },
+      "preview": "预览",
+      "embedCodeDescription": "将此代码粘贴到网站的 body 结束标签之前。保存的更改会自动生效，无需重新粘贴。",
+      "savedSuccess": "聊天小部件设置已保存",
+      "poweredBy": "由"
+    }
   },
   "sendGrid": {
     "acceptedLimitation": "SendGrid 会接受联系人更新并以异步方式处理；已接受的更新之后仍可能失败。",

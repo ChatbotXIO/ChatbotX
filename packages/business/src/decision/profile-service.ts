@@ -8,30 +8,92 @@ import { z } from "zod"
 import { ChatbotXException, notFoundException } from "../errors"
 import { decisionConnectionService } from "./connection-service"
 import {
+  compileNoulInstructions,
   type DecisionProfileContract,
+  type DecisionProfileForm,
   decisionProfileContractSchema,
+  decisionProfileFormSchema,
 } from "./contracts"
 
-export type SaveDecisionProfileInput = {
-  connectionId: string
-  contract: DecisionProfileContract
-  description?: string | null
-  model: string
-  name: string
-  workspaceId: string
+type SaveDecisionProfileInput = DecisionProfileForm & { workspaceId: string }
+const FIRST_CHARACTER = /^./
+
+const humanize = (value: string) =>
+  value
+    .replaceAll("_", " ")
+    .replace(FIRST_CHARACTER, (character) => character.toUpperCase())
+
+const compileContract = (
+  input: DecisionProfileForm,
+): DecisionProfileContract => {
+  const base = {
+    inputs: [{ key: "currentMessage" as const, required: true as const }],
+  }
+  const decision = input.decision
+  if (decision.type === "choice") {
+    return decisionProfileContractSchema.parse({
+      ...base,
+      questions: [
+        {
+          instructions: decision.instructions,
+          key: "result",
+          label: input.name,
+          options: decision.options.map((option) => ({
+            ...option,
+            label: humanize(option.value),
+          })),
+          type: "choice",
+        },
+      ],
+    })
+  }
+  if (decision.type === "score") {
+    return decisionProfileContractSchema.parse({
+      ...base,
+      questions: [
+        {
+          instructions: decision.instructions,
+          key: "result",
+          label: input.name,
+          levels: decision.levels.map((level, index) => ({
+            ...level,
+            label: String(index + 1),
+            value: index + 1,
+          })),
+          type: "score",
+        },
+      ],
+    })
+  }
+  const instructions = compileNoulInstructions(decision)
+  if (instructions.length > 1000) {
+    throw new ChatbotXException(
+      "Noul instructions exceed the 1,000-character provider limit",
+      "invalidDecisionContract",
+    )
+  }
+  return decisionProfileContractSchema.parse({
+    ...base,
+    questions: [{ ...decision, key: "result", label: input.name }],
+  })
 }
 
 class DecisionProfileService {
   async create(input: SaveDecisionProfileInput): Promise<DecisionProfileModel> {
-    const contract = decisionProfileContractSchema.parse(input.contract)
-    const connection = await this.requireConnection(input)
-
+    const parsed = decisionProfileFormSchema.parse(input)
+    const connection = await this.requireConnection({
+      ...parsed,
+      workspaceId: input.workspaceId,
+    })
     return await decisionRepository.createProfile({
-      ...input,
       connectionId: connection.id,
-      contract,
-      name: input.name.trim(),
-      providerKind: connection.providerKind,
+      contract: compileContract(parsed),
+      description: parsed.description?.trim() || null,
+      model: parsed.model.trim(),
+      name: parsed.name.trim(),
+      status: parsed.status,
+      thresholdConfig: parsed.thresholdConfig,
+      workspaceId: input.workspaceId,
     })
   }
 
@@ -45,24 +107,37 @@ class DecisionProfileService {
     if (!existing) {
       throw notFoundException("Decision profile not found")
     }
-
-    const contract = decisionProfileContractSchema.parse(input.contract)
-    const connection = await this.requireConnection(input)
+    const parsed = decisionProfileFormSchema.parse(input)
+    const connection = await this.requireConnection({
+      ...parsed,
+      workspaceId: input.workspaceId,
+    })
     const updated = await decisionRepository.updateProfileForWorkspace({
       connectionId: connection.id,
-      contract,
-      description: input.description?.trim() || null,
+      contract: compileContract(parsed),
+      description: parsed.description?.trim() || null,
       id: input.id,
-      model: input.model.trim(),
-      name: input.name.trim(),
-      providerKind: connection.providerKind,
+      model: parsed.model.trim(),
+      name: parsed.name.trim(),
+      status: parsed.status,
+      thresholdConfig: parsed.thresholdConfig,
       workspaceId: input.workspaceId,
     })
     if (!updated) {
       throw notFoundException("Decision profile not found")
     }
-
     return updated
+  }
+
+  async getForEdit(input: {
+    id: string
+    workspaceId: string
+  }): Promise<DecisionProfileModel> {
+    const profile = await decisionRepository.findProfileByIdForWorkspace(input)
+    if (!profile) {
+      throw notFoundException("Decision profile not found")
+    }
+    return profile
   }
 
   async list(workspaceId: string): Promise<DecisionProfileModel[]> {
@@ -79,12 +154,24 @@ class DecisionProfileService {
     return await decisionRepository.listProfilesForSettings(input)
   }
 
-  async listActiveForFlow(
-    workspaceId: string,
-  ): Promise<DecisionProfileModel[]> {
+  async listForFlow(workspaceId: string) {
     const profiles = await this.list(workspaceId)
-
-    return profiles.filter((profile) => profile.status === "enabled")
+    return await Promise.all(
+      profiles.map(async (profile) => {
+        const connection =
+          await decisionRepository.findConnectionByIdForWorkspace({
+            id: profile.connectionId,
+            workspaceId,
+          })
+        return {
+          connectionAvailable:
+            connection?.status === "enabled" &&
+            connection.modelCatalog.includes(profile.model),
+          profile,
+          profileEnabled: profile.status === "enabled",
+        }
+      }),
+    )
   }
 
   async setEnabled(input: {
@@ -100,7 +187,6 @@ class DecisionProfileService {
     if (!profile) {
       throw notFoundException("Decision profile not found")
     }
-
     return profile
   }
 
@@ -134,13 +220,11 @@ class DecisionProfileService {
           .passthrough(),
       )
       .parse(input.nodes)
-
     for (const node of nodes) {
       for (const step of node.data?.details?.steps ?? []) {
         if (step.stepType !== "evaluateDecision") {
           continue
         }
-
         const parsed = evaluateDecisionStepSchema.safeParse(step)
         if (!parsed.success) {
           throw new ChatbotXException(
@@ -148,7 +232,6 @@ class DecisionProfileService {
             "invalidDecisionReference",
           )
         }
-
         await this.assertStepMapping({
           step: parsed.data,
           workspaceId: input.workspaceId,
@@ -160,18 +243,11 @@ class DecisionProfileService {
   private async assertStepMapping(input: {
     step: z.infer<typeof evaluateDecisionStepSchema>
     workspaceId: string
-  }): Promise<void> {
-    const profile = await decisionRepository.findProfileByIdForWorkspace({
+  }) {
+    const profile = await this.getForEdit({
       id: input.step.profileId,
       workspaceId: input.workspaceId,
     })
-    if (profile?.status !== "enabled") {
-      throw new ChatbotXException(
-        "Evaluate Decision profile is not active in this workspace",
-        "invalidDecisionReference",
-      )
-    }
-
     const connection = await decisionRepository.findConnectionByIdForWorkspace({
       id: profile.connectionId,
       workspaceId: input.workspaceId,
@@ -181,11 +257,8 @@ class DecisionProfileService {
       profile,
       workspaceId: input.workspaceId,
     })
-
-    const contract = decisionProfileContractSchema.parse(profile.contract)
-    const questions = new Map(
-      contract.questions.map((question) => [question.key, question] as const),
-    )
+    const question = decisionProfileContractSchema.parse(profile.contract)
+      .questions[0]
     const fields = await decisionRepository.listCustomFieldTypesByIds({
       ids: input.step.fieldMappings.map((mapping) => mapping.customFieldId),
       workspaceId: input.workspaceId,
@@ -193,18 +266,18 @@ class DecisionProfileService {
     const fieldTypes = new Map(
       fields.map((field) => [field.id, field.type] as const),
     )
-
     for (const mapping of input.step.fieldMappings) {
-      const question = questions.get(mapping.questionKey)
-      const mappingMatchesQuestion =
+      const correctValue =
         (mapping.value === "choice" && question?.type === "choice") ||
         (mapping.value === "score" && question?.type === "score") ||
         (mapping.value === "noul" && question?.type === "noul") ||
-        (mapping.value === "confidence" && question) ||
+        mapping.value === "confidence" ||
         (mapping.value === "probability" && question?.type === "choice")
       if (
-        !(question && mappingMatchesQuestion) ||
-        fieldTypes.get(mapping.customFieldId) !== mapping.customFieldType
+        !(
+          correctValue &&
+          fieldTypes.get(mapping.customFieldId) === mapping.customFieldType
+        )
       ) {
         throw new ChatbotXException(
           "Evaluate Decision mapping is invalid for its Profile or custom field",
@@ -232,7 +305,6 @@ class DecisionProfileService {
         "invalidDecisionModel",
       )
     }
-
     return connection
   }
 }

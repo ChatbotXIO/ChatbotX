@@ -2,8 +2,15 @@
 
 import type { DecisionConnectionSafe } from "@chatbotx.io/business"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@chatbotx.io/ui/components/ui/dialog"
 import type { Table } from "@tanstack/react-table"
-import { Trash2Icon } from "lucide-react"
+import { PlusIcon, Trash2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import type { DecisionProfileListItem } from "../schema/resource"
@@ -22,6 +29,7 @@ export function DecisionProfilesTableToolbarActions({
   workspaceId,
 }: Props) {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
   const t = useTranslations()
   const selectedRows = table.getFilteredSelectedRowModel().rows
 
@@ -46,7 +54,25 @@ export function DecisionProfilesTableToolbarActions({
           />
         </>
       ) : null}
-      <ProfileEditor connections={connections} />
+      <Dialog onOpenChange={setCreateOpen} open={createOpen}>
+        <DialogTrigger
+          render={
+            <Button disabled={connections.length === 0} size="sm" type="button">
+              <PlusIcon />
+              {t("decision.addProfile")}
+            </Button>
+          }
+        />
+        <DialogContent className="max-h-screen overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("decision.addProfile")}</DialogTitle>
+          </DialogHeader>
+          <ProfileEditor
+            connections={connections}
+            onClose={() => setCreateOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

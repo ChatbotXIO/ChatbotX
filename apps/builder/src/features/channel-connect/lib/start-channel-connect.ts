@@ -4,6 +4,7 @@ import { workspaceService } from "@chatbotx.io/business"
 import "@chatbotx.io/business/audit"
 import { connectSessionService } from "@chatbotx.io/business/connect-session"
 import { connectionService, failSession } from "@chatbotx.io/connections"
+import type { DatabaseClient } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import type {
   ConnectSessionModel,
@@ -11,7 +12,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import type { ConnectSessionNextAction } from "@chatbotx.io/sdk"
 import { getPublicUrlFromRequest } from "@chatbotx.io/utils"
-import { notFound, redirect } from "next/navigation"
+import { notFound, redirect, unstable_rethrow } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { resolveOAuthCredential } from "@/features/connections/lib/resolve-connect-credential"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
@@ -83,8 +84,8 @@ export async function startChannelConnect(
 
   const platformOwnerId = await resolvePlatformOwnerId({ userId, workspaceId })
 
-  // Resolved BEFORE `createFirstWorkspace`: a missing credential must 404
-  // without ever minting a workspace for the user's first channel attempt —
+  // Resolved BEFORE the workspace: a missing credential must 404 without
+  // ever minting a workspace for the user's first channel attempt —
   // otherwise a credential-less retry leaves an orphan empty workspace
   // behind every time.
   const resolved = await resolveOAuthCredential({
@@ -95,11 +96,33 @@ export async function startChannelConnect(
     notFound()
   }
 
-  const targetWorkspacePromise = workspaceId
-    ? workspaceService.findById({ id: workspaceId })
-    : createFirstWorkspace(userId)
+  // A `beforeStart` hook (Messenger's SSO-token reuse check) needs a
+  // materialized workspace to run concurrently with its own lookup and, on
+  // a hit, to mint its own session outside the normal OAuth round trip — so
+  // with a hook present (or an existing `workspaceId` targeted), the
+  // workspace is still resolved/created eagerly here.
+  //
+  // Without a hook (Instagram, Instagram-via-Facebook's first-channel
+  // path), nothing needs the workspace before `startSession` itself, so its
+  // creation is deferred into `startSession`'s own transaction instead
+  // (`createWorkspace` below): a `startSession` failure then rolls the
+  // workspace back with it, instead of leaving an empty orphan workspace
+  // behind when the connect attempt never even reaches the provider.
+  let targetWorkspacePromise: Promise<WorkspaceModel> | undefined
+  if (workspaceId) {
+    targetWorkspacePromise = workspaceService.findById({ id: workspaceId })
+  } else if (options.beforeStart) {
+    targetWorkspacePromise = createFirstWorkspace(userId)
+  }
 
   if (options.beforeStart) {
+    if (!targetWorkspacePromise) {
+      // Unreachable: `options.beforeStart` truthy forces the ternary's
+      // middle branch above to run.
+      throw new Error(
+        "startChannelConnect: workspace must be resolved for beforeStart",
+      )
+    }
     const before = await options.beforeStart({
       userId,
       platformOwnerId,
@@ -111,26 +134,47 @@ export async function startChannelConnect(
     }
   }
 
-  const targetWorkspace = await targetWorkspacePromise
+  const sessionStartBase = {
+    provider: options.provider,
+    purpose: "connect" as const,
+    credential: resolved.credential,
+    callbackUrl: resolved.callbackUrl,
+    actorUserId: userId,
+    platformOwnerId,
+    originHost: new URL(getPublicUrlFromRequest(req)).host,
+  }
 
   let session: ConnectSessionModel
   let nextAction: ConnectSessionNextAction
   try {
-    const started = await connectionService.startSession({
-      workspaceId: targetWorkspace.id,
-      provider: options.provider,
-      purpose: "connect",
-      credential: resolved.credential,
-      callbackUrl: resolved.callbackUrl,
-      actorUserId: userId,
-      platformOwnerId,
-      originHost: new URL(getPublicUrlFromRequest(req)).host,
-    })
+    const started = await connectionService.startSession(
+      targetWorkspacePromise
+        ? {
+            ...sessionStartBase,
+            workspaceId: (await targetWorkspacePromise).id,
+          }
+        : {
+            ...sessionStartBase,
+            createWorkspace: (tx: DatabaseClient) =>
+              createFirstWorkspace(userId, tx),
+          },
+    )
     session = started.session
     nextAction = started.nextAction
   } catch (err) {
+    // `createFirstWorkspace` (either awaited eagerly above via
+    // `targetWorkspacePromise`, or run as `startSession`'s own
+    // `createWorkspace` callback inside its transaction) redirects straight
+    // to a plan-limit error page itself on a known `ChatbotXException`
+    // (`workspaceLimitReached`/`trialExpired`/`macLimitReached`) — that
+    // `redirect()` throws a `NEXT_REDIRECT` control-flow error, which
+    // reaches this `catch` same as a real failure. `unstable_rethrow` lets
+    // it keep propagating instead of being logged and replaced with the
+    // generic `START_FAILURE_REDIRECT` here, which would otherwise mask the
+    // specific plan-limit message with a misleading "session expired" one.
+    unstable_rethrow(err)
     logger.error(
-      { err, provider: options.provider, workspaceId: targetWorkspace.id },
+      { err, provider: options.provider, workspaceId },
       "Failed to start a channel connect session",
     )
     redirect(START_FAILURE_REDIRECT)

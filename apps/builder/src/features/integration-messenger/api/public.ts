@@ -8,15 +8,22 @@ import {
   createHandoverResumeFlowRoute,
 } from "@/features/channel-integrations/api/public"
 import {
+  possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { updateMessenger } from "../lib/update-messenger-settings"
+import { disconnectMessenger } from "../actions/disconnect-messenger"
+import { toStoredMessengerPersona } from "../lib/public-settings-input"
+import {
+  patchMessengerSettings,
+  updateMessenger,
+} from "../lib/update-messenger-settings"
 import { findIntegrationMessenger } from "../queries"
 import {
   messengerChannelIdSchema,
   messengerSettingsPublicResource,
+  patchMessengerSettingsPublicRequest,
   updateMessengerSettingsPublicRequest,
 } from "../schema/public"
 
@@ -61,7 +68,7 @@ export const messengerChannelsPublicRouter = {
       path: "/v1/messenger-channels/{id}/settings",
       summary: "Get Messenger channel settings",
       description:
-        "Returns a Messenger page's welcome flow, persistent menu, personas and ice breakers. Call this before `messengerChannels.updateSettings`, which replaces all of them.",
+        "Returns a Messenger page's welcome flow, persistent menu, personas and ice breakers. Use `messengerChannels.patchSettings` to change some of them, or `messengerChannels.updateSettings` to replace all of them.",
       tags: ["Channels"],
     })
     .input(z.object({ id: messengerChannelIdSchema }))
@@ -82,14 +89,56 @@ export const messengerChannelsPublicRouter = {
       path: "/v1/messenger-channels/{id}/settings",
       summary: "Replace Messenger channel settings",
       description:
-        "Saves a Messenger page's welcome flow, persistent menu, personas and ice breakers, and pushes them to Facebook. Replaces every field, so read them with `messengerChannels.getSettings` first.",
+        "Saves a Messenger page's welcome flow, persistent menu, personas and ice breakers, and pushes them to Facebook. Replaces every field, so read them with `messengerChannels.getSettings` first, or use `messengerChannels.patchSettings` to change only some.",
       successStatus: 204,
       tags: ["Channels"],
     })
     .input(updateMessengerSettingsPublicRequest)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const { id, ...settings } = input
-      await updateMessenger({ workspaceId: context.workspace.id, id }, settings)
+      const { id, personas, ...settings } = input
+      await updateMessenger(
+        { workspaceId: context.workspace.id, id },
+        { ...settings, personas: personas.map(toStoredMessengerPersona) },
+      )
+    }),
+
+  patchSettings: workspaceTokenAuthAPI
+    .route({
+      method: "PATCH",
+      path: "/v1/messenger-channels/{id}/settings",
+      summary: "Update Messenger channel settings",
+      description:
+        "Changes only the settings you send (welcome flow, persistent menu, personas, ice breakers, mark-read) and keeps the others as saved, then pushes them to Facebook. `personas`, when sent, is the full list: a persona left out is deleted. Use `messengerChannels.updateSettings` to replace everything at once.",
+      successStatus: 204,
+      tags: ["Channels"],
+    })
+    .input(patchMessengerSettingsPublicRequest)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) => {
+      const { id, personas, ...changes } = input
+      await patchMessengerSettings(
+        { workspaceId: context.workspace.id, id },
+        { ...changes, personas: personas?.map(toStoredMessengerPersona) },
+      )
+    }),
+
+  disconnect: workspaceTokenAuthAPI
+    .route({
+      method: "DELETE",
+      path: "/v1/messenger-channels/{id}",
+      summary: "Disconnect Messenger channel",
+      description:
+        "Disconnects a Facebook Page from this workspace, as the Disconnect button in Settings → Channels does: unsubscribes the Page from the app, ends its running history sync and removes its Conversions API events; a running contact scan stops at its next page. Contacts and conversations are kept. Works on a trial-expired workspace. A transient Meta error while unsubscribing fails the request; retry it. When an Instagram account of the same Page is still connected, the Page keeps the subscription Instagram needs and a Meta error while narrowing it is only logged. Find its id with `messengerChannels.list`.",
+      successStatus: 204,
+      tags: ["Channels"],
+    })
+    .input(z.object({ id: messengerChannelIdSchema }))
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      await disconnectMessenger({
+        workspaceId: context.workspace.id,
+        id: input.id,
+      })
     }),
 }

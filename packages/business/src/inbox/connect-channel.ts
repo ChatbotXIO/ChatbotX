@@ -6,49 +6,14 @@ import {
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import {
   INSTAGRAM_IG_ID_UNIQUE_CONSTRAINT,
-  type inboxModel,
   MESSENGER_PAGE_ID_UNIQUE_CONSTRAINT,
-  THREADS_USER_ID_UNIQUE_CONSTRAINT,
   WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT,
 } from "@chatbotx.io/database/schema"
-import type { InboxModel } from "@chatbotx.io/database/types"
 import { dispatchAuditRecordSafely } from "../audit/dispatcher"
 import { channelDuplicatedException } from "../errors"
-import { inboxService } from "./service"
-
-export async function connectChannelIntegration<T>(props: {
-  tx: DatabaseClient
-  ownerId: string
-  inboxData: Omit<typeof inboxModel.$inferInsert, "id"> & { id?: string }
-  insertIntegration: (inboxId: string, wasCreated: boolean) => Promise<T>
-}): Promise<{ inbox: InboxModel; wasCreated: boolean; integration: T }> {
-  const { tx, ownerId, inboxData, insertIntegration } = props
-
-  if (
-    inboxData.sourceId &&
-    (await inboxService.isConnected({
-      tx,
-      channel: inboxData.channel,
-      sourceId: inboxData.sourceId,
-      workspaceId: inboxData.workspaceId ?? "",
-    }))
-  ) {
-    throw channelDuplicatedException()
-  }
-
-  const { inbox, wasCreated } = await inboxService.create({
-    tx,
-    ownerId,
-    data: inboxData,
-  })
-
-  const integration = await insertIntegration(inbox.id, wasCreated)
-
-  return { inbox, wasCreated, integration }
-}
 
 /** Per-channel data the shared connect helpers need; a new channel adds a row, not a function. */
-export const CHANNEL_CONNECT_DESCRIPTORS = {
+const CHANNEL_CONNECT_DESCRIPTORS = {
   messenger: {
     duplicateConstraint: MESSENGER_PAGE_ID_UNIQUE_CONSTRAINT,
     auditNoun: "Messenger",
@@ -61,15 +26,11 @@ export const CHANNEL_CONNECT_DESCRIPTORS = {
     duplicateConstraint: WHATSAPP_PHONE_NUMBER_UNIQUE_CONSTRAINT,
     auditNoun: "WhatsApp",
   },
-  threads: {
-    duplicateConstraint: THREADS_USER_ID_UNIQUE_CONSTRAINT,
-    auditNoun: "Threads",
-  },
 } as const satisfies Partial<
   Record<ChannelType, { duplicateConstraint: string; auditNoun: string }>
 >
 
-export type ConnectDescriptorChannel = keyof typeof CHANNEL_CONNECT_DESCRIPTORS
+type ConnectDescriptorChannel = keyof typeof CHANNEL_CONNECT_DESCRIPTORS
 
 /**
  * `db.transaction` + "the channel's identity constraint fired →

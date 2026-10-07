@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import type {
   ConnectSessionErrorCode,
   ConnectSessionOutcome,
@@ -93,21 +93,10 @@ const validateReturnUrl = (
   return `${url.pathname}${url.search}${url.hash}`
 }
 
-/** Exactly one of `actorUserId`/`actorTokenId` is required at creation time, surfacing a clean error before the database's `ConnectSession_actor_at_most_one` CHECK, which only enforces `<= 1` because an actor FK may later become null through `ON DELETE SET NULL`. */
-const requireExactlyOneActor = (input: {
-  actorUserId?: string | null
-  actorTokenId?: string | null
-}): void => {
-  const hasUser = Boolean(input.actorUserId)
-  const hasToken = Boolean(input.actorTokenId)
-  if (hasUser === hasToken) {
-    throw new ChatbotXException(
-      "ConnectSession requires exactly one of actorUserId/actorTokenId",
-      "validation",
-      400,
-    )
-  }
-}
+/** A `ConnectSession` always runs as either a builder-session user or a workspace-token caller — never both, never neither. Enforced at the type level so a caller can no longer reach the database's `ConnectSession_actor_at_most_one` CHECK (which only enforces `<= 1`, since an actor FK may later become null through `ON DELETE SET NULL`) with an invalid pair. */
+export type ConnectSessionActor =
+  | { actorUserId: string; actorTokenId?: never }
+  | { actorTokenId: string; actorUserId?: never }
 
 /**
  * DB-backed reads/writes over the `ConnectSession` table — the multi-step
@@ -125,24 +114,34 @@ const requireExactlyOneActor = (input: {
  * every state read/write.
  */
 class ConnectSessionService extends BaseService {
-  /** Mints a new session and its one-time plaintext nonce (never persisted — only its hash is). Throws `connectSessionLimitReached` past the per-workspace pending cap. */
-  async create(input: {
-    id?: string
-    workspaceId: string
-    provider: IntegrationType
-    purpose: ConnectSessionPurpose
-    nextAction?: (nonce: string) => ConnectSessionModel["nextAction"]
-    targetConnectionId?: string | null
-    actorUserId?: string | null
-    actorTokenId?: string | null
-    platformOwnerId?: string | null
-    originHost?: string | null
-    returnUrl?: string | null
-  }): Promise<{ session: ConnectSessionModel; nonce: string }> {
-    requireExactlyOneActor(input)
-
+  /**
+   * Mints a new session and its one-time plaintext nonce (never persisted —
+   * only its hash is). Throws `connectSessionLimitReached` past the
+   * per-workspace pending cap.
+   *
+   * Accepts an optional `tx` so a caller that must mint the session's
+   * workspace in the same breath (`startSession`'s `createWorkspace` path —
+   * a cancelled/failed first-channel connect must not leave an empty
+   * workspace behind) can run both inserts atomically: either the whole
+   * transaction commits, or neither row exists.
+   */
+  async create(
+    input: {
+      id?: string
+      workspaceId: string
+      provider: IntegrationType
+      purpose: ConnectSessionPurpose
+      nextAction?: (nonce: string) => ConnectSessionModel["nextAction"]
+      targetConnectionId?: string | null
+      platformOwnerId?: string | null
+      originHost?: string | null
+      returnUrl?: string | null
+    } & ConnectSessionActor,
+    tx: DatabaseClient = db,
+  ): Promise<{ session: ConnectSessionModel; nonce: string }> {
     const activeCount = await connectSessionRepository.countActiveByWorkspaceId(
       { workspaceId: input.workspaceId },
+      tx,
     )
     if (activeCount >= MAX_PENDING_SESSIONS_PER_WORKSPACE) {
       throw sessionLimitReachedException()
@@ -153,33 +152,36 @@ class ConnectSessionService extends BaseService {
     const nextAction = input.nextAction?.(nonce) ?? null
     const returnUrl = validateReturnUrl(input.returnUrl)
 
-    const session = await connectSessionRepository.insert({
-      id: input.id ?? createId(),
-      workspaceId: input.workspaceId,
-      provider: input.provider,
-      purpose: input.purpose,
-      nextAction,
-      targetConnectionId: input.targetConnectionId ?? null,
-      actorUserId: input.actorUserId ?? null,
-      actorTokenId: input.actorTokenId ?? null,
-      platformOwnerId: input.platformOwnerId ?? null,
-      originHost: input.originHost ?? null,
-      returnUrl,
-      stateNonceHash,
-      status: "pending",
-      step: "authorize",
-      // The schema declares `.default(sql\`[]\`)` for these four columns, but
-      // drizzle-kit never inlines a `sql` default into the generated
-      // migration (see `schema-default-parity.test.ts`) — the physical
-      // columns have NO database default, so omitting any of these turns
-      // into a bare `DEFAULT` keyword and a NOT NULL violation. Every insert
-      // must write them explicitly.
-      targets: [],
-      targetClaims: {},
-      resultConnectionIds: [],
-      results: [],
-      expiresAt: new Date(Date.now() + PENDING_TTL_MS),
-    })
+    const session = await connectSessionRepository.insert(
+      {
+        id: input.id ?? createId(),
+        workspaceId: input.workspaceId,
+        provider: input.provider,
+        purpose: input.purpose,
+        nextAction,
+        targetConnectionId: input.targetConnectionId ?? null,
+        actorUserId: input.actorUserId ?? null,
+        actorTokenId: input.actorTokenId ?? null,
+        platformOwnerId: input.platformOwnerId ?? null,
+        originHost: input.originHost ?? null,
+        returnUrl,
+        stateNonceHash,
+        status: "pending",
+        step: "authorize",
+        // The schema declares `.default(sql\`[]\`)` for these four columns, but
+        // drizzle-kit never inlines a `sql` default into the generated
+        // migration (see `schema-default-parity.test.ts`) — the physical
+        // columns have NO database default, so omitting any of these turns
+        // into a bare `DEFAULT` keyword and a NOT NULL violation. Every insert
+        // must write them explicitly.
+        targets: [],
+        targetClaims: {},
+        resultConnectionIds: [],
+        results: [],
+        expiresAt: new Date(Date.now() + PENDING_TTL_MS),
+      },
+      tx,
+    )
 
     return { session, nonce }
   }

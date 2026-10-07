@@ -104,7 +104,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/contact-counts-per-day",
       summary: "Get contact counts per day",
       description:
-        "Use this to chart total contacts over a requested time range. Compare it with `analytics.newContactCountsPerDay` to isolate acquisition from the running total.",
+        "Charts the running total of contacts (created minus deleted, counted from the start of the workspace) at each day in the range. When `to` is more than 60 full days after `from`, the series uses monthly buckets (first day of the month) instead of daily ones. Compare it with `analytics.newContactCountsPerDay` to isolate acquisition from the running total.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -124,7 +124,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/new-contact-counts-per-day",
       summary: "Get new contact counts per day",
       description:
-        "Use this to chart newly created contacts over a requested time range. Compare it with `analytics.blockedContactsPerDay` to separate acquisition trends from blocked contacts.",
+        "Charts newly created contacts per day in the range. When `to` is more than 60 full days after `from`, the series uses monthly buckets (first day of the month) instead of daily ones. Compare it with `analytics.blockedContactsPerDay` to separate acquisition trends from blocked contacts.",
       tags: ["Analytics"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -145,7 +145,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/blocked-contacts-per-day",
       summary: "Get blocked contacts per day",
       description:
-        "Use this to chart contacts blocked during a requested time range. Compare it with `analytics.newContactCountsPerDay` to distinguish blocking trends from new contacts.",
+        "Charts contacts blocked per day in the range. When `to` is more than 60 full days after `from`, the series uses monthly buckets (first day of the month) instead of daily ones. Compare it with `analytics.newContactCountsPerDay` to distinguish blocking trends from new contacts.",
       tags: ["Analytics"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -232,7 +232,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/contacts-count",
       summary: "Get contacts count",
       description:
-        "Use this for total contacts over a time range. Counts all contacts that existed at any point within the given `from`/`to` time range.",
+        "Returns the current total number of contacts across the workspace's inboxes. `from`, `to` and `timezone` are accepted for consistency with the other analytics routes but do not narrow this count; use `analytics.contactCountsPerDay` or `analytics.newContactsCount` for counts over a range.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -352,7 +352,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/human-agent-stats",
       summary: "Get human agent statistics",
       description:
-        "Returns response-time and volume statistics for human agents over a requested time range.",
+        "Returns volume statistics per human agent over a requested time range: messages sent, unique contacts messaged and conversations assigned. It has no response-time metric.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -372,7 +372,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/conversation-handoffs",
       summary: "Get conversation handoffs",
       description:
-        "Counts conversations handed off from the bot to a human agent, by day, over a requested time range.",
+        "Counts conversation transfers by day over a requested time range, in both directions: bot to human agent and human agent back to bot. Each row carries its `direction` (`to_human` or `to_bot`).",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -452,7 +452,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/conversation-assigned-by-admin",
       summary: "Get assigned conversations by admin",
       description:
-        "Counts conversations assigned, broken down by the admin who assigned them, over a requested time range.",
+        "Counts conversation assignments over a requested time range, broken down by the member the conversation was assigned to (`toAssignee`, with that member's name and email).",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -472,7 +472,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/unique-conversations-by-admin",
       summary: "Get unique conversations by admin",
       description:
-        "Counts distinct conversations each admin handled, over a requested time range. Use `analytics.conversationAssignedByAdmin` for assignment counts instead.",
+        "Counts the distinct conversations assigned to each member over a requested time range (a conversation assigned to the same member twice counts once). Use `analytics.conversationAssignedByAdmin` for the number of assignment events.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -493,7 +493,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/bot-messages-by-result",
       summary: "Get bot messages by result",
       description:
-        "Counts bot messages grouped by their outcome (e.g. answered, fallback), over a requested time range with `granularity` bucketing.",
+        "Counts bot messages grouped by their outcome, `success` or `fallback`, over a requested time range with `granularity` bucketing.",
       tags: ["Analytics"],
     })
     .input(timeRangeWithGranularityMHDPublicRequest)
@@ -513,7 +513,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/bot-messages-with-response",
       summary: "Get bot messages with response",
       description:
-        "Counts bot messages that received a follow-up reply, over a requested time range with `granularity` bucketing.",
+        "Counts bot-received message events flagged as answered, i.e. the bot started an automated response, flow or AI agent for the inbound message, over a requested time range with `granularity` bucketing. It counts events, and does not measure whether the contact replied afterwards.",
       tags: ["Analytics"],
     })
     .input(timeRangeWithGranularityMHDPublicRequest)
@@ -533,7 +533,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/bot-messages-no-response",
       summary: "Get bot messages with no response",
       description:
-        "Counts bot messages that did not receive a follow-up reply, over a requested time range with `granularity` bucketing.",
+        "Counts bot-received message events for which the bot started no automated response, flow or AI agent, over a requested time range with `granularity` bucketing.",
       tags: ["Analytics"],
     })
     .input(timeRangeWithGranularityMHDPublicRequest)
@@ -553,7 +553,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/bot-messages-ai-providers",
       summary: "Get bot messages AI providers",
       description:
-        "Counts bot messages grouped by the AI provider that generated them, over a requested time range.",
+        "Counts AI-agent replies grouped by the AI provider that generated them, with each provider's share (`percentage`), over a requested time range. Replies that did not come from an AI agent are not counted.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -573,7 +573,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/messages-by-sender",
       summary: "Get messages by sender",
       description:
-        "Counts messages grouped by sender (bot vs human agent), over a requested time range with `granularity` bucketing.",
+        "Counts messages grouped by sender type (bot vs human agent) and channel, over a requested time range. `granularity` sets the bucket size, but when `to` is more than 60 full days after `from` monthly buckets are always used. Messages without a channel or sender type are not counted.",
       tags: ["Analytics"],
     })
     .input(timeRangeWithGranularityDMPublicRequest)
@@ -665,7 +665,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/flows/{flowId}/stats",
       summary: "Get flow analytics",
       description:
-        "Use this after resolving a flow with `flows.get` to inspect its session and completion counts. Call `analytics.newContactCountsPerDay` instead for workspace contact trends.",
+        "Returns per-node statistics for a flow, keyed by send-message node id: `message:sent`, `message:delivered`, `message:seen`, `message:failed`, `flow:clicked` (`clicked`, and `totalUsers`, which is the delivered count) and per-button clicks, for the current analytics session (`analytics.resetFlowStats` starts a new one). Resolve the flow with `flows.get` first. Call `analytics.newContactCountsPerDay` instead for workspace contact trends.",
       tags: ["Analytics"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -720,12 +720,12 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/comment-automation/replies",
       summary: "Get comment automation reply counts",
       description:
-        "Replies the comment automation sent per day in a range. Use `analytics.commentAutomationUserComments` and `analytics.commentAutomationBotReplies` for the texts behind the counts.",
+        "Replies the comment automation sent per day in a range. When `to` is more than 60 full days after `from`, the series uses monthly buckets (first day of the month) instead of daily ones. Use `analytics.commentAutomationUserComments` and `analytics.commentAutomationBotReplies` for the texts behind the counts.",
       tags: ["Analytics"],
     })
     .input(commentAutomationReplyStatsPublicRequest)
     .output(commentAutomationReplyStatsPublicResponse)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { from, to, ...rest } = input
       return {
@@ -744,12 +744,12 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/comment-automation/user-comments",
       summary: "List comment automation customer comments",
       description:
-        "Distinct customer comments the automation matched in a range, with how often each occurred. The texts are customer-written and returned verbatim.",
+        "Distinct customer comments the automation matched in a range, with how often each occurred, paged with `page`/`perPage` and filterable by `keyword`. The texts are customer-written and returned verbatim.",
       tags: ["Analytics"],
     })
     .input(commentAutomationListPublicRequest)
     .output(commentAutomationTextTotalsPublicResponse)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { from, to, ...rest } = input
       return await commentAutomationAnalyticsService.listUserComments({
@@ -766,12 +766,12 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/comment-automation/bot-replies",
       summary: "List comment automation bot replies",
       description:
-        "Distinct replies the automation posted in a range, with how often each was sent.",
+        "Distinct replies the automation posted in a range, with how often each was sent, paged with `page`/`perPage` and filterable by `keyword`.",
       tags: ["Analytics"],
     })
     .input(commentAutomationListPublicRequest)
     .output(commentAutomationTextTotalsPublicResponse)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { from, to, ...rest } = input
       return await commentAutomationAnalyticsService.listBotReplies({
@@ -793,7 +793,7 @@ export const analyticsPublicRouter = {
     })
     .input(commentAutomationListPublicRequest)
     .output(commentAutomationErrorsPublicResponse)
-    .errors(possibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const { from, to, ...rest } = input
       return await commentAutomationAnalyticsService.listErrors({
@@ -810,7 +810,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/magic-links/stats",
       summary: "Get magic link stats",
       description:
-        "Returns click/conversion counts for one magic link over a time range. Use `analytics.magicLinkContacts` to list the contacts behind those counts.",
+        "Returns the number of recorded openings of one magic link per day over a time range (`dateReport`, `count`); repeat opens from the same contact inbox within the same second count once. There is no conversion metric. Use `analytics.magicLinkContacts` to list the contacts behind those counts.",
       tags: ["Analytics"],
     })
     .input(linkStatsPublicRequest)
@@ -858,7 +858,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/ref-links/stats",
       summary: "Get ref link stats",
       description:
-        "Returns click/conversion counts for one ref link over a time range. Use `analytics.refLinkContacts` to list the contacts behind those counts.",
+        "Returns the number of processed referral events of one ref link per day over a time range (`dateReport`, `count`). There is no conversion metric. Use `analytics.refLinkContacts` to list the contacts behind those counts.",
       tags: ["Analytics"],
     })
     .input(linkStatsPublicRequest)
@@ -904,7 +904,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/flows/{flowId}/stats",
       summary: "Reset flow analytics",
       description:
-        "Clears the flow's recorded analytics sessions and counters and opens a new session; it does not delete or otherwise touch the flow itself. This cannot be undone. Unavailable to read_only tokens (DELETE is blocked for read_only permission).",
+        "Clears the flow's recorded analytics sessions and counters and opens a new session; it does not delete or otherwise touch the flow itself. This cannot be undone. A flow id that is not in this workspace is a no-op (still 204). Unavailable to read_only tokens (DELETE is blocked for read_only permission).",
       successStatus: 204,
       tags: ["Analytics"],
     })

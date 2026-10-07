@@ -301,6 +301,68 @@ describe("resolveConnectSession", () => {
       where: { id: "ws-1" },
     })
   })
+
+  test("throws connectSessionExpired — not connectSessionCancelled — for a cancelled session belonging to a different actor (regression: the ownership check ran AFTER the cancelled short-circuit, so guessing another user's cancelled session id leaked that it was cancelled)", async () => {
+    findByIdMock.mockResolvedValue({
+      ...session,
+      actorUserId: "someone-else",
+      status: "failed",
+      errorCode: "provider_denied",
+    })
+
+    await expect(
+      resolveConnectSession({
+        userId: "user-1",
+        sessionId: "session-1",
+        credentialType: "messenger",
+        expectedProvider: "messenger",
+        brandingChannel: "messenger",
+      }),
+    ).rejects.toMatchObject({ code: "connectSessionExpired" })
+    expect(findWorkspaceMock).not.toHaveBeenCalled()
+  })
+
+  test("throws connectSessionCancelled — carrying no returnUrl, since the session's own select-page-shaped returnUrl would otherwise send the only caller straight back into an infinite redirect loop — when the owning actor's own session was cancelled", async () => {
+    findByIdMock.mockResolvedValue({
+      ...session,
+      status: "failed",
+      errorCode: "provider_denied",
+      returnUrl: "/channels/messenger/select?session=session-1",
+    })
+
+    await expect(
+      resolveConnectSession({
+        userId: "user-1",
+        sessionId: "session-1",
+        credentialType: "messenger",
+        expectedProvider: "messenger",
+        brandingChannel: "messenger",
+      }),
+    ).rejects.toMatchObject({
+      code: "connectSessionCancelled",
+      data: undefined,
+    })
+  })
+
+  test("never puts the session's internal errorCode in a thrown exception's message (regression: the combined expired message embedded `errorCode=...`, which a caller could surface to the client)", async () => {
+    findByIdMock.mockResolvedValue({
+      ...session,
+      status: "failed",
+      errorCode: "internal_error",
+    })
+
+    const failure: unknown = await resolveConnectSession({
+      userId: "user-1",
+      sessionId: "session-1",
+      credentialType: "messenger",
+      expectedProvider: "messenger",
+      brandingChannel: "messenger",
+    }).catch((error: unknown) => error)
+
+    expect(failure).toMatchObject({ code: "connectSessionExpired" })
+    expect((failure as Error).message).not.toContain("errorCode")
+    expect((failure as Error).message).not.toContain("internal_error")
+  })
 })
 
 describe("resolveConnectSessionForSelect", () => {

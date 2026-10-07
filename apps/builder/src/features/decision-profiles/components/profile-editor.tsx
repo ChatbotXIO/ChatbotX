@@ -3,240 +3,431 @@
 import type { DecisionConnectionSafe } from "@chatbotx.io/business"
 import type { DecisionProfileModel } from "@chatbotx.io/database/types"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
+import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
+import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2Icon, PencilIcon, PlusIcon } from "lucide-react"
+import { Loader2Icon, MinusIcon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useState } from "react"
-import { useForm, useWatch } from "react-hook-form"
+import { useEffect, useRef } from "react"
+import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
-import { z } from "zod"
 import { createDecisionProfileAction } from "@/features/decision-profiles/actions/create-decision-profile.action"
 import { updateDecisionProfileAction } from "@/features/decision-profiles/actions/update-decision-profile.action"
 import { useWorkspaceId } from "@/hooks/routing"
+import { useInvalidateDecisionProfiles } from "../hooks/use-decision-profiles"
+import {
+  type DecisionProfileForm,
+  decisionProfileFormSchema,
+  decisionProfileStoredContractSchema,
+} from "../schema/form"
 
-const profileFormSchema = z.object({
-  connectionId: z.string().regex(/^\d+$/),
-  contractJson: z.string().trim().min(1).max(24_000),
-  description: z.string().trim().max(2000),
-  model: z.string().trim().min(1).max(256),
-  name: z.string().trim().min(1).max(160),
+const defaults = (): DecisionProfileForm => ({
+  connectionId: "",
+  decision: {
+    instructions: "",
+    options: [
+      { description: "", value: "option" },
+      { description: "", value: "other" },
+    ],
+    type: "choice",
+  },
+  description: null,
+  model: "",
+  name: "",
+  status: "enabled",
+  thresholdConfig: null,
 })
 
-type ProfileFormValues = z.infer<typeof profileFormSchema>
-
-const createInitialContract = () =>
-  JSON.stringify(
-    {
-      inputs: [{ key: "currentMessage", required: true }],
-      questions: [
-        {
-          instructions: "Classify the current message.",
-          key: "intent",
-          label: "Intent",
-          options: [
-            { label: "Positive", value: "positive" },
-            { label: "Negative", value: "negative" },
-          ],
-          type: "choice",
-        },
-      ],
+const fromProfile = (profile: DecisionProfileModel): DecisionProfileForm => {
+  const question = decisionProfileStoredContractSchema.parse(profile.contract)
+    .questions[0]
+  if (!question) {
+    return defaults()
+  }
+  const common = {
+    connectionId: profile.connectionId,
+    description: profile.description,
+    model: profile.model,
+    name: profile.name,
+    status: profile.status,
+    thresholdConfig: profile.thresholdConfig ?? null,
+  } as const
+  if (question.type === "choice") {
+    return {
+      ...common,
+      decision: {
+        instructions: question.instructions,
+        options: question.options.map(({ description, value }) => ({
+          description,
+          value,
+        })),
+        type: "choice",
+      },
+    }
+  }
+  if (question.type === "score") {
+    return {
+      ...common,
+      decision: {
+        instructions: question.instructions,
+        levels: question.levels.map(({ description }) => ({ description })),
+        type: "score",
+      },
+    }
+  }
+  return {
+    ...common,
+    decision: {
+      falseCriteria: question.falseCriteria,
+      instructions: question.instructions,
+      trueCriteria: question.trueCriteria,
+      type: "noul",
     },
-    null,
-    2,
-  )
-
-type ProfileEditorProps = {
-  connections: DecisionConnectionSafe[]
-  onOpenChange?: (open: boolean) => void
-  open?: boolean
-  profile?: DecisionProfileModel
-  showTrigger?: boolean
+  }
 }
 
-export function ProfileEditor({
-  connections,
-  onOpenChange,
-  open: controlledOpen,
-  profile,
-  showTrigger = true,
-}: ProfileEditorProps) {
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+type Props = {
+  connections: DecisionConnectionSafe[]
+  onClose: () => void
+  profile?: DecisionProfileModel
+}
+
+export function ProfileEditor({ connections, onClose, profile }: Props) {
   const workspaceId = useWorkspaceId()
   const router = useRouter()
+  const invalidateDecisionProfiles = useInvalidateDecisionProfiles()
   const t = useTranslations()
-  const isEditing = Boolean(profile)
-  const form = useForm<ProfileFormValues>({
-    defaultValues: {
-      connectionId: profile?.connectionId ?? connections[0]?.id ?? "",
-      contractJson: profile
-        ? JSON.stringify(profile.contract, null, 2)
-        : createInitialContract(),
-      description: profile?.description ?? "",
-      model: profile?.model ?? connections[0]?.defaultModel ?? "",
-      name: profile?.name ?? "",
-    },
+  const form = useForm<DecisionProfileForm>({
+    defaultValues: profile
+      ? fromProfile(profile)
+      : {
+          ...defaults(),
+          connectionId: connections[0]?.id ?? "",
+          model: connections[0]?.defaultModel ?? "",
+        },
     mode: "onChange",
-    resolver: zodResolver(profileFormSchema),
+    resolver: zodResolver(decisionProfileFormSchema),
   })
-  const connectionId = useWatch({
-    control: form.control,
-    name: "connectionId",
-  })
+  const decision = useWatch({ control: form.control, name: "decision" })
+  const connectionId = useWatch({ control: form.control, name: "connectionId" })
   const selectedConnection = connections.find(
     (connection) => connection.id === connectionId,
   )
-  const open = controlledOpen ?? uncontrolledOpen
-  const handleOpenChange = (nextOpen: boolean) => {
-    setUncontrolledOpen(nextOpen)
-    onOpenChange?.(nextOpen)
-  }
+  const choiceFields = useFieldArray({
+    control: form.control,
+    name: "decision.options" as never,
+  })
+  const scoreFields = useFieldArray({
+    control: form.control,
+    name: "decision.levels" as never,
+  })
+  const isEditing = Boolean(profile)
+  const previousDecisionType = useRef(decision.type)
 
-  const onSuccess = () => {
-    toast.success(
-      t(isEditing ? "messages.updatedSuccess" : "messages.createdSuccess", {
-        feature: t("decision.profiles"),
-      }),
-    )
-    handleOpenChange(false)
-    router.refresh()
-  }
-  const onError = ({ error }: { error: { serverError?: string } }) => {
-    if (error.serverError) {
-      toast.error(error.serverError)
-    }
-  }
-  const { execute: create, isPending: isCreating } = useAction(
-    createDecisionProfileAction.bind(null, workspaceId),
-    { onError, onSuccess },
-  )
-  const { execute: update, isPending: isUpdating } = useAction(
-    updateDecisionProfileAction.bind(null, workspaceId),
-    { onError, onSuccess },
-  )
-  const isPending = isCreating || isUpdating
-
-  const submit = (values: ProfileFormValues) => {
-    let contract: unknown
-    try {
-      contract = JSON.parse(values.contractJson)
-    } catch {
-      form.setError("contractJson", { message: t("decision.invalidContract") })
+  useEffect(() => {
+    if (!selectedConnection) {
       return
     }
+    const current = form.getValues("model")
+    if (!selectedConnection.modelCatalog.includes(current)) {
+      form.setValue(
+        "model",
+        selectedConnection.defaultModel ??
+          (selectedConnection.modelCatalog.length === 1
+            ? (selectedConnection.modelCatalog[0] ?? "")
+            : ""),
+      )
+    }
+  }, [form, selectedConnection])
 
-    const payload = {
-      connectionId: values.connectionId,
-      contract,
-      description: values.description || null,
-      model: values.model,
-      name: values.name,
+  useEffect(() => {
+    if (previousDecisionType.current === decision.type) {
+      return
     }
-    if (profile) {
-      update({ ...payload, id: profile.id })
+    previousDecisionType.current = decision.type
+    if (decision.type === "choice") {
+      form.setValue("decision", {
+        instructions: "",
+        options: [
+          { description: "", value: "option" },
+          { description: "", value: "other" },
+        ],
+        type: "choice",
+      })
+    } else if (decision.type === "score") {
+      form.setValue("decision", {
+        instructions: "",
+        levels: Array.from({ length: 5 }, () => ({ description: "" })),
+        type: "score",
+      })
     } else {
-      create(payload)
+      form.setValue("decision", {
+        falseCriteria: "",
+        instructions: "",
+        trueCriteria: "",
+        type: "noul",
+      })
     }
+    form.setValue("thresholdConfig", null)
+  }, [decision.type, form])
+
+  const success = () => {
+    toast.success(
+      t(isEditing ? "messages.updatedSuccess" : "messages.createdSuccess", {
+        feature: t("decision.profile"),
+      }),
+    )
+    invalidateDecisionProfiles()
+    onClose()
+    router.refresh()
   }
+  const error = ({ error }: { error: { serverError?: string } }) =>
+    error.serverError && toast.error(error.serverError)
+  const { execute: create, isPending: creating } = useAction(
+    createDecisionProfileAction.bind(null, workspaceId),
+    { onError: error, onSuccess: success },
+  )
+  const { execute: update, isPending: updating } = useAction(
+    updateDecisionProfileAction.bind(null, workspaceId),
+    { onError: error, onSuccess: success },
+  )
 
   return (
-    <Dialog onOpenChange={handleOpenChange} open={open}>
-      {showTrigger ? (
-        <DialogTrigger
-          render={
-            profile ? (
-              <Button size="sm" type="button" variant="outline">
-                <PencilIcon className="size-4" />
-                {t("actions.edit")}
-              </Button>
-            ) : (
-              <Button
-                disabled={connections.length === 0}
-                size="sm"
-                type="button"
-              >
-                <PlusIcon />
-                {t("decision.addProfile")}
-              </Button>
-            )
-          }
-        />
-      ) : null}
-      <DialogContent className="max-h-screen overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {t(isEditing ? "decision.editProfile" : "decision.addProfile")}
-          </DialogTitle>
-          <DialogDescription>
-            {t("decision.profileDescription")}
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form className="space-y-4" onSubmit={form.handleSubmit(submit)}>
-            <InputField label={t("fields.name.label")} name="name" required />
-            <TextareaField
-              label={t("fields.description.label")}
-              name="description"
-              rows={2}
-            />
-            <SelectField
-              label={t("decision.connection")}
-              name="connectionId"
-              options={connections.map((connection) => ({
-                label: connection.name,
-                value: connection.id,
-              }))}
-              required
-            />
-            <SelectField
-              label={t("decision.model")}
-              name="model"
-              options={(selectedConnection?.modelCatalog ?? []).map(
-                (model) => ({
-                  label: model,
-                  value: model,
-                }),
-              )}
-              required
-            />
-            <TextareaField
-              description={t("decision.contractDescription")}
-              label={t("decision.contract")}
-              name="contractJson"
-              required
-              rows={16}
-            />
-            <DialogFooter>
-              <DialogClose
-                render={
-                  <Button type="button" variant="secondary">
-                    {t("actions.cancel")}
-                  </Button>
-                }
+    <Form {...form}>
+      <form
+        className="space-y-6"
+        onSubmit={form.handleSubmit((value) =>
+          profile ? update({ ...value, id: profile.id }) : create(value),
+        )}
+      >
+        <section className="space-y-4">
+          <h3 className="font-semibold">{t("decision.profiles")}</h3>
+          <InputField label={t("fields.name.label")} name="name" required />
+          <TextareaField
+            label={t("fields.description.label")}
+            name="description"
+            rows={2}
+          />
+          <SelectField
+            label={t("decision.connection")}
+            name="connectionId"
+            options={connections.map((connection) => ({
+              disabled:
+                connection.status !== "enabled" &&
+                connection.id !== profile?.connectionId,
+              label: connection.name,
+              value: connection.id,
+            }))}
+            required
+          />
+          <SelectField
+            label={t("decision.model")}
+            name="model"
+            options={(selectedConnection?.modelCatalog ?? []).map((model) => ({
+              label: model,
+              value: model,
+            }))}
+            required
+          />
+          <RadioGroupField
+            label={t("decision.status.label")}
+            name="status"
+            options={[
+              { label: t("decision.status.enabled"), value: "enabled" },
+              { label: t("decision.status.disabled"), value: "disabled" },
+            ]}
+            orientation="horizontal"
+          />
+        </section>
+        <section className="space-y-4 border-t pt-5">
+          <h3 className="font-semibold">{t("decision.question")}</h3>
+          <RadioGroupField
+            name="decision.type"
+            options={[
+              { label: t("decision.resultValues.choice"), value: "choice" },
+              { label: t("decision.resultValues.score"), value: "score" },
+              { label: t("decision.resultValues.noul"), value: "noul" },
+            ]}
+            orientation="horizontal"
+          />
+          <TextareaField
+            label={t("decision.question")}
+            name="decision.instructions"
+            required
+            rows={3}
+          />
+        </section>
+        <section className="space-y-3 border-t pt-5">
+          <h3 className="font-semibold">{t("decision.result")}</h3>
+          {decision.type === "choice" &&
+            choiceFields.fields.map((field, index) => (
+              <div className="flex items-end gap-2" key={field.id}>
+                <InputField
+                  label={t("decision.resultValues.choice")}
+                  name={`decision.options.${index}.value` as never}
+                />
+                <TextareaField
+                  label={t("fields.description.label")}
+                  name={`decision.options.${index}.description` as never}
+                  rows={1}
+                />
+                <Button
+                  aria-label={t("actions.delete")}
+                  disabled={choiceFields.fields.length <= 2}
+                  onClick={() => choiceFields.remove(index)}
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
+                  <MinusIcon />
+                </Button>
+              </div>
+            ))}
+          {decision.type === "choice" && (
+            <Button
+              disabled={choiceFields.fields.length >= 24}
+              onClick={() =>
+                choiceFields.append({ description: "", value: "" } as never)
+              }
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <PlusIcon />
+              {t("actions.addMore")}
+            </Button>
+          )}
+          {decision.type === "score" &&
+            scoreFields.fields.map((field, index) => (
+              <div className="flex items-end gap-2" key={field.id}>
+                <Label className="mb-2 w-8">{index + 1}</Label>
+                <TextareaField
+                  label={t("fields.description.label")}
+                  name={`decision.levels.${index}.description` as never}
+                  rows={1}
+                />
+                <Button
+                  aria-label={t("actions.delete")}
+                  disabled={scoreFields.fields.length <= 2}
+                  onClick={() => scoreFields.remove(index)}
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
+                  <MinusIcon />
+                </Button>
+              </div>
+            ))}
+          {decision.type === "score" && (
+            <Button
+              disabled={scoreFields.fields.length >= 10}
+              onClick={() => scoreFields.append({ description: "" } as never)}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <PlusIcon />
+              {t("actions.addMore")}
+            </Button>
+          )}
+          {decision.type === "noul" && (
+            <>
+              <TextareaField
+                label={t("decision.resultValues.noul")}
+                name="decision.trueCriteria"
+                required
+                rows={2}
               />
-              <Button disabled={isPending} type="submit">
-                {isPending && <Loader2Icon className="animate-spin" />}
-                {t("actions.save")}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+              <TextareaField
+                label={t("decision.resultValues.noul")}
+                name="decision.falseCriteria"
+                required
+                rows={2}
+              />
+            </>
+          )}
+        </section>
+        <section className="space-y-2 border-t pt-5">
+          <h3 className="font-semibold">{t("decision.currentMessageOnly")}</h3>
+          <p className="text-muted-foreground text-sm">
+            {t("decision.currentMessageOnly")}
+          </p>
+        </section>
+        <section className="space-y-2 border-t pt-5">
+          <h3 className="font-semibold">{t("decision.status.label")}</h3>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={Boolean(form.watch("thresholdConfig"))}
+              onCheckedChange={(enabled) => {
+                if (!enabled) {
+                  form.setValue("thresholdConfig", null)
+                } else if (decision.type === "score") {
+                  form.setValue("thresholdConfig", {
+                    operator: "gte",
+                    type: "score",
+                    value: 3,
+                  })
+                } else if (decision.type === "noul") {
+                  form.setValue("thresholdConfig", {
+                    minimum: 0.7,
+                    type: "noul_true_probability",
+                  })
+                } else {
+                  form.setValue("thresholdConfig", {
+                    minimum: 0.8,
+                    type: "choice_confidence",
+                  })
+                }
+              }}
+            />
+            <span className="text-sm">{t("decision.result")}</span>
+          </div>
+          {form.watch("thresholdConfig")?.type === "choice_confidence" && (
+            <InputNumberField
+              max={1}
+              min={0}
+              name="thresholdConfig.minimum"
+              step={0.01}
+            />
+          )}
+          {form.watch("thresholdConfig")?.type === "noul_true_probability" && (
+            <InputNumberField
+              max={1}
+              min={0}
+              name="thresholdConfig.minimum"
+              step={0.01}
+            />
+          )}
+          {form.watch("thresholdConfig")?.type === "score" && (
+            <InputNumberField
+              max={decision.type === "score" ? decision.levels.length : 10}
+              min={1}
+              name="thresholdConfig.value"
+              step={0.1}
+            />
+          )}
+        </section>
+        <section className="rounded-md border bg-muted/30 p-3 text-muted-foreground text-sm">
+          {t("decision.profileDescription")}
+        </section>
+        <div className="flex justify-end gap-2 border-t pt-5">
+          <Button onClick={onClose} type="button" variant="secondary">
+            {t("actions.cancel")}
+          </Button>
+          <Button disabled={creating || updating} type="submit">
+            {(creating || updating) && <Loader2Icon className="animate-spin" />}
+            {t("actions.save")}
+          </Button>
+        </div>
+      </form>
+    </Form>
   )
 }

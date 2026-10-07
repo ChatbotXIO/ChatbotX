@@ -3,6 +3,7 @@
     "retry": "Thử lại",
     "copy": "Sao chép",
     "copyUrl": "Sao chép URL",
+    "chatWidget": "Chat Widget",
     "actions": "Hành động",
     "clear": "Xóa",
     "add": "Thêm",
@@ -3486,6 +3487,7 @@
     "cancelEdit": "Hủy",
     "replaceAttachment": "Thay thế tệp đính kèm",
     "addAttachment": "Thêm tệp đính kèm",
+    "reloadAttachment": "Tải lại tệp đính kèm",
     "failedToCopy": "Sao chép thất bại",
     "failedToPreviewImage": "Không thể xem trước hình ảnh",
     "loadingData": "Đang tải dữ liệu...",
@@ -4767,7 +4769,27 @@
   },
   "reflinks": {
     "title": "Liên kết giới thiệu",
-    "description": "Liên kết từ khóa để mở kịch bản và nhận ref từ kênh."
+    "description": "Liên kết từ khóa để mở kịch bản và nhận ref từ kênh.",
+    "chatWidget": {
+      "title": "Chat Widget",
+      "description": "Hiển thị các nút kênh chat trên website của bạn. Khách bấm vào một nút để bắt đầu chat và chạy flow của ref link này.",
+      "authorizedDomains": {
+        "label": "Tên miền được phép",
+        "placeholder": "example.com",
+        "description": "Chỉ các tên miền này và tên miền con của chúng mới hiển thị được widget. Để trống để cho phép mọi website.",
+        "invalid": "Các tên miền này không hợp lệ: {domains}. Chỉ nhập tên miền, ví dụ example.com."
+      },
+      "channels": {
+        "label": "Kênh",
+        "description": "Tắt một kênh để ẩn kênh đó khỏi widget.",
+        "empty": "Chưa kết nối kênh nào có link chat.",
+        "profileLinkOnly": "Mở trang cá nhân — không chạy flow của ref link."
+      },
+      "preview": "Xem trước",
+      "embedCodeDescription": "Dán đoạn code này trước thẻ đóng body trên website của bạn. Thay đổi đã lưu sẽ tự áp dụng, không cần dán lại.",
+      "savedSuccess": "Đã lưu cài đặt chat widget",
+      "poweredBy": "bởi"
+    }
   },
   "qrCodes": {
     "title": "Mã QR",

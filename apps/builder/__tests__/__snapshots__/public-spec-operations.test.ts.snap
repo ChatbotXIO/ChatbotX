@@ -248,6 +248,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/inboxes/{inboxId}/ai-handover/history",
   },
   {
+    "method": "PATCH",
+    "operationId": "aiHandover.patchSettings",
+    "path": "/v1/inboxes/{inboxId}/ai-handover/settings",
+  },
+  {
     "method": "POST",
     "operationId": "aiHandover.retryApplyToAll",
     "path": "/v1/inboxes/{inboxId}/ai-handover/apply-to-all/retry",
@@ -593,6 +598,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/bot-fields",
   },
   {
+    "method": "PATCH",
+    "operationId": "botFields.update",
+    "path": "/v1/bot-fields/{idOrName}",
+  },
+  {
     "method": "GET",
     "operationId": "botSimulator.getLink",
     "path": "/v1/bot-simulator/link",
@@ -821,6 +831,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "contacts.bulkDelete",
     "path": "/v1/contacts/bulk/delete",
+  },
+  {
+    "method": "POST",
+    "operationId": "contacts.bulkRemoveTags",
+    "path": "/v1/contacts/bulk/tags/remove",
   },
   {
     "method": "POST",
@@ -1584,6 +1599,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "DELETE",
+    "operationId": "instagramChannels.disconnect",
+    "path": "/v1/instagram-channels/{id}",
+  },
+  {
+    "method": "DELETE",
     "operationId": "instagramChannels.disconnectCapi",
     "path": "/v1/instagram-channels/{id}/capi",
   },
@@ -1606,6 +1626,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "instagramChannels.list",
     "path": "/v1/instagram-channels",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "instagramChannels.patchSettings",
+    "path": "/v1/instagram-channels/{id}/settings",
   },
   {
     "method": "POST",
@@ -1819,6 +1844,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "DELETE",
+    "operationId": "messengerChannels.disconnect",
+    "path": "/v1/messenger-channels/{id}",
+  },
+  {
+    "method": "DELETE",
     "operationId": "messengerChannels.disconnectCapi",
     "path": "/v1/messenger-channels/{id}/capi",
   },
@@ -1841,6 +1871,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "GET",
     "operationId": "messengerChannels.list",
     "path": "/v1/messenger-channels",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "messengerChannels.patchSettings",
+    "path": "/v1/messenger-channels/{id}/settings",
   },
   {
     "method": "POST",
@@ -2006,6 +2041,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "POST",
     "operationId": "products.deleteMany",
     "path": "/v1/products/bulk-delete",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "products.disconnectMetaCatalog",
+    "path": "/v1/products/meta-catalog",
   },
   {
     "method": "GET",

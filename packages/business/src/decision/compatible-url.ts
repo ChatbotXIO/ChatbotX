@@ -1,5 +1,7 @@
-import { checkSsrfSafety } from "../net/ssrf-guard"
 import { ChatbotXException } from "../errors"
+import { checkSsrfSafety } from "../net/ssrf-guard"
+
+const trailingSlashesPattern = /\/+$/
 
 /** Canonical Compatible endpoint: HTTPS, no query/fragment/userinfo. */
 export const normalizeCompatibleEndpoint = async (
@@ -28,7 +30,8 @@ export const normalizeCompatibleEndpoint = async (
     )
   }
 
-  endpoint.pathname = endpoint.pathname.replace(/\/+$/, "") || "/"
+  endpoint.pathname =
+    endpoint.pathname.replace(trailingSlashesPattern, "") || "/"
   const normalized = endpoint.toString()
   const safety = await checkSsrfSafety(normalized)
   if (safety.unsafe) {

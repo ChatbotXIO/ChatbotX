@@ -56,6 +56,18 @@ vi.mock(
     updateInstagram: vi.fn(),
   }),
 )
+vi.mock(
+  "@/features/integration-messenger/actions/disconnect-messenger",
+  () => ({
+    disconnectMessenger: vi.fn(),
+  }),
+)
+vi.mock(
+  "@/features/integration-instagram/actions/disconnect-instagram",
+  () => ({
+    disconnectInstagram: vi.fn(),
+  }),
+)
 
 const workspaceTokenAuthAPIForScope = vi.hoisted(() =>
   vi.fn((_scope: string) => {

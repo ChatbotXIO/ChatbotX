@@ -1,4 +1,5 @@
 import {
+  describeTemplateParameters,
   messengerIntegrationService,
   messengerMessageTemplateService,
 } from "@chatbotx.io/business"
@@ -11,6 +12,7 @@ import {
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
+import { templateParametersField } from "@/lib/public-api/template-parameters"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   cloneMessengerMessageTemplate,
@@ -43,6 +45,12 @@ const channelIdParam = z.object({
 
 const createdTemplateResponse = z.object({
   id: z.string().describe("Meta's id of the new template."),
+  templateId: z
+    .string()
+    .nullable()
+    .describe(
+      "Local template id to use with `messengerTemplates.get` and when sending. Null when Meta did not list the new template yet: run `messengerTemplates.sync` later.",
+    ),
   status: z
     .string()
     .describe("`APPROVED`, `PENDING` or `REJECTED` as reported by Meta."),
@@ -107,11 +115,15 @@ export const messengerTemplatesPublicRouter = {
       path: "/v1/messenger/templates/{id}",
       summary: "Get Messenger template",
       description:
-        "Returns one Messenger message template with its components and status. Find its id with `messengerTemplates.list`.",
+        "Returns one Messenger message template with its components, status and `parameters`: the keys to fill in `templateParams` when sending it. Find its id with `messengerTemplates.list`.",
       tags: ["Messenger Templates"],
     })
     .input(templateIdParam)
-    .output(messengerMessageTemplateResource)
+    .output(
+      messengerMessageTemplateResource.extend({
+        parameters: templateParametersField,
+      }),
+    )
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const template =
@@ -122,7 +134,13 @@ export const messengerTemplatesPublicRouter = {
       if (!template) {
         throw notFoundException("Template not found")
       }
-      return template
+      return {
+        ...template,
+        parameters: describeTemplateParameters({
+          channel: "messenger",
+          components: template.components,
+        }),
+      }
     }),
 
   create: workspaceTokenAuthAPI
@@ -131,7 +149,7 @@ export const messengerTemplatesPublicRouter = {
       path: "/v1/messenger-channels/{id}/templates",
       summary: "Create Messenger template",
       description:
-        "Creates a utility message template on a Messenger Page (it is submitted to Meta for approval) and mirrors it locally. A template Meta rejects is still created: check `status` and `rejectionReason`. A `text_and_image` header downloads `headerImageUrl` from a public address. Check the outcome later with `messengerTemplates.get`.",
+        "Creates a utility message template on a Messenger Page (it is submitted to Meta for approval) and mirrors it locally. A template Meta rejects is still created: check `status` and `rejectionReason`. A `text_and_image` header downloads `headerImageUrl` from a public address. The returned `id` is Meta's template id, not the local one: find the local template (for `messengerTemplates.get`) in `messengerTemplates.list` by name.",
       successStatus: 201,
       tags: ["Messenger Templates"],
     })
@@ -156,6 +174,7 @@ export const messengerTemplatesPublicRouter = {
       })
       return {
         id: created.id,
+        templateId: created.templateId,
         status: created.status,
         rejectionReason: created.rejectionReason ?? null,
         specificRejectionReason: created.specificRejectionReason ?? null,

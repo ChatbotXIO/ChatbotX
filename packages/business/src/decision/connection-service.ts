@@ -1,22 +1,22 @@
-import { encryptUtils } from "@chatbotx.io/encryption"
-import { distributedStore } from "@chatbotx.io/redis"
-import { createId } from "@chatbotx.io/utils"
 import { decisionRepository } from "@chatbotx.io/database/repositories"
 import type {
   DecisionConnectionModel,
   DecisionProfileModel,
 } from "@chatbotx.io/database/types"
+import { encryptUtils } from "@chatbotx.io/encryption"
+import { distributedStore } from "@chatbotx.io/redis"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
+import { normalizeDecisionProviderResponse } from "./adapters"
 import { normalizeCompatibleEndpoint } from "./compatible-url"
 import {
-  decisionConnectionSafeSchema,
-  decisionCredentialSchema,
   type DecisionConnectionSafe,
   type DecisionCredential,
+  decisionConnectionSafeSchema,
+  decisionCredentialSchema,
 } from "./contracts"
-import { normalizeDecisionProviderResponse } from "./adapters"
 import { postDecisionRequest } from "./transport"
 
 const encryptedCredentialSchema = z.object({ apiKey: z.string() }).strict()
@@ -25,8 +25,9 @@ const CONNECTION_TEST_THROTTLE_SECONDS = 30
 const aadForConnection = (workspaceId: string, connectionId: string): string =>
   `decision-connection:${workspaceId}:${connectionId}`
 
-const uniqueModels = (models: string[]): string[] =>
-  [...new Set(models.map((model) => model.trim()).filter(Boolean))]
+const uniqueModels = (models: string[]): string[] => [
+  ...new Set(models.map((model) => model.trim()).filter(Boolean)),
+]
 
 const toSafeConnection = (
   connection: DecisionConnectionModel,
@@ -63,13 +64,17 @@ class DecisionConnectionService extends BaseService {
       .then((connections) => connections.map(toSafeConnection))
   }
 
-  async create(input: SaveDecisionConnectionInput): Promise<DecisionConnectionSafe> {
+  async create(
+    input: SaveDecisionConnectionInput,
+  ): Promise<DecisionConnectionSafe> {
     const modelCatalog = uniqueModels(input.modelCatalog)
     this.assertModelConfig({
       defaultModel: input.defaultModel,
       modelCatalog,
     })
-    const credential = decisionCredentialSchema.parse({ apiKey: input.credential })
+    const credential = decisionCredentialSchema.parse({
+      apiKey: input.credential,
+    })
     const endpoint = await this.resolveEndpoint(input)
     const id = createId()
     const encryptedCredential = await encryptUtils.encryptObject(
@@ -152,7 +157,8 @@ class DecisionConnectionService extends BaseService {
     model: string
     status: "failed" | "passed"
   }> {
-    const connection = await decisionRepository.findConnectionByIdForWorkspace(input)
+    const connection =
+      await decisionRepository.findConnectionByIdForWorkspace(input)
     if (!connection) {
       throw notFoundException("Decision connection not found")
     }
@@ -170,21 +176,28 @@ class DecisionConnectionService extends BaseService {
     }
     const model = connection.defaultModel ?? connection.modelCatalog[0]
     if (!model) {
-      throw new ChatbotXException("Decision connection has no model", "invalidDecisionModel")
+      throw new ChatbotXException(
+        "Decision connection has no model",
+        "invalidDecisionModel",
+      )
     }
     const startedAt = Date.now()
     try {
       const credential = await this.decryptCredential({ connection })
       const contract = {
-        inputs: [{ key: "currentMessage" as const, required: true }],
+        inputs: [{ key: "currentMessage" as const, required: true as const }],
         questions: [
           {
             instructions: "Classify the test input.",
             key: "choice_test",
             label: "Choice",
             options: [
-              { label: "One", value: "one" },
-              { label: "Two", value: "two" },
+              { description: "First test choice.", label: "One", value: "one" },
+              {
+                description: "Second test choice.",
+                label: "Two",
+                value: "two",
+              },
             ],
             type: "choice" as const,
           },
@@ -193,8 +206,8 @@ class DecisionConnectionService extends BaseService {
             key: "score_test",
             label: "Score",
             levels: [
-              { label: "Low", value: 0 },
-              { label: "High", value: 1 },
+              { description: "Low test score.", label: "1", value: 1 },
+              { description: "High test score.", label: "2", value: 2 },
             ],
             type: "score" as const,
           },
@@ -212,7 +225,9 @@ class DecisionConnectionService extends BaseService {
         authorization: credential.apiKey,
         body: {
           model,
-          questions: Object.fromEntries(contract.questions.map((question) => [question.key, question])),
+          questions: Object.fromEntries(
+            contract.questions.map((question) => [question.key, question]),
+          ),
           state: { currentMessage: "Decision connection conformance test" },
         },
         endpoint: connection.endpoint,
@@ -276,7 +291,6 @@ class DecisionConnectionService extends BaseService {
       connection.workspaceId !== workspaceId ||
       connection.id !== profile.connectionId ||
       connection.status !== "enabled" ||
-      connection.providerKind !== profile.providerKind ||
       !connection.modelCatalog.includes(profile.model)
     ) {
       throw new ChatbotXException(

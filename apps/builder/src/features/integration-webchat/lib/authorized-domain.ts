@@ -56,6 +56,27 @@ export const isOriginAuthorized = (
   )
 }
 
+const WILDCARD_PREFIX_REGEX = /^\*\./
+
+/**
+ * Turns what a user pastes into an allowlist entry into a bare host:
+ * `https://*.Shop.com:8080/page` → `shop.com`. Subdomains already match an
+ * entry, so a `*.` wildcard prefix is dropped rather than rejected.
+ */
+export const toAuthorizedDomain = (value: string) =>
+  getHostFromOrigin(value)?.replace(WILDCARD_PREFIX_REGEX, "") ?? ""
+
+/**
+ * Embed allowlist check: an empty allowlist means "embeddable anywhere",
+ * otherwise the origin must match one of the domains (or a subdomain).
+ */
+export const isEmbedOriginAllowed = (
+  origin: string | null | undefined,
+  authorizedDomains: string[],
+) =>
+  authorizedDomains.length === 0 ||
+  isOriginAuthorized(origin, authorizedDomains)
+
 /**
  * A request coming from the app's own host (or with no origin at all, i.e.
  * the webchat opened directly) is first-party: the allowlist only guards

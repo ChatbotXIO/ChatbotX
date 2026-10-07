@@ -93,6 +93,9 @@ vi.mock("@/lib/log", () => ({
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: {
+    runExclusive: ({ fn }: { fn: () => Promise<unknown> }) => fn(),
+  },
   distributedStore: { setNumberIfNotExists: mocks.setNumberIfNotExists },
 }))
 

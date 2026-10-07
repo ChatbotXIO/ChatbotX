@@ -11,10 +11,12 @@ import { authorizedAPI } from "@/orpc"
 
 const activeDecisionProfileSchema = z
   .object({
+    connectionAvailable: z.boolean(),
     contract: decisionProfileContractSchema,
     id: z.string(),
     model: z.string(),
     name: z.string(),
+    profileEnabled: z.boolean(),
   })
   .strict()
 
@@ -35,15 +37,19 @@ export const decisionProfilesAuthenticatedAPI = {
       ) {
         throw new ORPCError("FORBIDDEN")
       }
-      const profiles = await decisionProfileService.listActiveForFlow(
+      const profiles = await decisionProfileService.listForFlow(
         input.workspaceId,
       )
 
-      return profiles.map((profile) => ({
-        contract: decisionProfileContractSchema.parse(profile.contract),
-        id: profile.id,
-        model: profile.model,
-        name: profile.name,
-      }))
+      return profiles.map(
+        ({ connectionAvailable, profile, profileEnabled }) => ({
+          connectionAvailable,
+          contract: decisionProfileContractSchema.parse(profile.contract),
+          id: profile.id,
+          model: profile.model,
+          name: profile.name,
+          profileEnabled,
+        }),
+      )
     }),
 }

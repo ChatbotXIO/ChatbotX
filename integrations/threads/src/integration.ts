@@ -3,17 +3,22 @@ import {
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
+  oauth2Auth,
+  probeVerify,
 } from "@chatbotx.io/sdk"
 import {
+  exchangeCodeForToken,
   getThreadsProfile,
   refreshAccessToken,
   type ThreadsOAuthProfile,
 } from "./apis/auth"
 import { getReplyGifUrl } from "./apis/comment"
 import { getPostDetails } from "./apis/post"
+import { THREADS_OAUTH_URL, THREADS_SCOPES } from "./constants"
 import { ThreadsException } from "./exception"
 import { commentHandlers } from "./handlers/comment"
 import { webhookHandler } from "./handlers/webhook"
+import { isRevokedTokenError } from "./lib/error-mapper"
 import type { ThreadsActions, ThreadsAuthValue, ThreadsConfig } from "./schema"
 
 const config: IntegrationDefinition<
@@ -22,6 +27,67 @@ const config: IntegrationDefinition<
   ThreadsActions
 > = {
   name: "threads",
+  connection: {
+    kind: "channel",
+    strategy: "oauth_redirect",
+    multiAccount: false,
+    configFields: [],
+    authorizeUrl: ({ credential, callbackUrl, state }) => {
+      const config = credential as ThreadsConfig
+      const params = new URLSearchParams({
+        client_id: config.clientId,
+        redirect_uri: callbackUrl,
+        response_type: "code",
+        scope: THREADS_SCOPES.join(","),
+        state,
+      })
+      return `${THREADS_OAUTH_URL}/oauth/authorize?${params.toString()}`
+    },
+    exchangeCode: async ({ code, callbackUrl, credential }) => {
+      const config = credential as ThreadsConfig
+      const { accessToken, expiresAt } = await exchangeCodeForToken(
+        config,
+        code,
+        callbackUrl,
+      )
+      const profile = await getThreadsProfile(accessToken, config.version)
+      return oauth2Auth(
+        config,
+        callbackUrl,
+        { accessToken, expiresAt },
+        {
+          threadsUserId: profile.id,
+          username: profile.username,
+          version: config.version,
+        },
+      ) satisfies ThreadsAuthValue
+    },
+    candidateToConfig: (auth) => ({
+      username: auth.metadata.username,
+    }),
+    describe: (auth) => ({
+      sourceId: auth.metadata.threadsUserId,
+      displayName: auth.metadata.username,
+    }),
+    verify: async ({ auth }) =>
+      await probeVerify(
+        async () => {
+          const profile = await getThreadsProfile(
+            auth.tokens.accessToken,
+            auth.metadata.version,
+          )
+          if (profile.id !== auth.metadata.threadsUserId) {
+            throw new Error("Threads account could not be verified")
+          }
+        },
+        {
+          label: "Threads connection",
+          expiresAt: auth.tokens.expiresAt,
+          isRevoked: isRevokedTokenError,
+        },
+      ),
+    isRevokedTokenError,
+  },
   channels: {
     channel: {
       comment: commentHandlers,

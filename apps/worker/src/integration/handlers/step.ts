@@ -41,8 +41,8 @@ import {
 } from "./contact"
 import { markCouponUsed, setUpCoupon } from "./coupon"
 import { handleAIDeleteMessageHistory } from "./delete-message-history"
-import { evaluateDecision } from "./evaluate-decision"
 import { subscribeDripSubscriber } from "./drip-handler"
+import { evaluateDecision } from "./evaluate-decision"
 import { handleAIExtractData } from "./extract-data/index"
 import { handleFacebookCustomAudience } from "./facebook-custom-audience-handler"
 import {
@@ -124,8 +124,6 @@ export async function sendFlowMessage(
     sendFrom,
     commentAnchor,
     appointmentId,
-    triggerMessageId,
-    triggerMessageCreatedAt,
   } = props
   await enqueueFlowStepMessage({
     conversationId: conversation.id,

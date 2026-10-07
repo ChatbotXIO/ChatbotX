@@ -72,8 +72,8 @@ const importService = {
 vi.mock("@chatbotx.io/business", () => ({
   flowService,
   flowVersionService,
-  importService,
 }))
+vi.mock("@chatbotx.io/business/import", () => ({ importService }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
   BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
@@ -148,16 +148,69 @@ describe("GET /v1/flows", () => {
       perPage: 50,
       active: true,
       workspaceId: "workspace-1",
+      sort: [{ id: "createdAt", desc: true }],
     })
   })
 
-  test("returns only id and name per flow, not the full resource", async () => {
+  test("forwards name, folderId and sort filters", async () => {
+    flowService.list.mockResolvedValueOnce({ data: [], pageCount: 1 })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        page: 2,
+        perPage: 10,
+        active: true,
+        name: "welcome",
+        folderId: "0",
+        sort: [{ id: "name", desc: false }],
+      },
+    })
+
+    expect(flowService.list).toHaveBeenCalledWith({
+      page: 2,
+      perPage: 10,
+      active: true,
+      name: "welcome",
+      folderId: "0",
+      workspaceId: "workspace-1",
+      sort: [{ id: "name", desc: false }],
+    })
+  })
+
+  test("passes startType and integrationWhatsappId to the service with the page", async () => {
+    flowService.list.mockResolvedValueOnce({ data: [], pageCount: 0 })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        page: 2,
+        perPage: 2,
+        active: true,
+        startType: "sendWaTemplateMessage",
+        integrationWhatsappId: "42",
+      },
+    })
+
+    expect(flowService.list).toHaveBeenCalledWith({
+      page: 2,
+      perPage: 2,
+      active: true,
+      startType: "sendWaTemplateMessage",
+      integrationWhatsappId: "42",
+      workspaceId: "workspace-1",
+      sort: [{ id: "createdAt", desc: true }],
+    })
+  })
+
+  test("returns id, name, folderId and active per flow, not the full resource", async () => {
     flowService.list.mockResolvedValueOnce({
       data: [
         {
           id: "flow-1",
           name: "Flow 1",
           workspaceId: "workspace-1",
+          folderId: "folder-1",
           active: true,
           flowVersions: [{ id: "version-1" }],
         },
@@ -171,7 +224,9 @@ describe("GET /v1/flows", () => {
     })
 
     expect(result).toEqual({
-      data: [{ id: "flow-1", name: "Flow 1" }],
+      data: [
+        { id: "flow-1", name: "Flow 1", folderId: "folder-1", active: true },
+      ],
       pageCount: 1,
     })
   })

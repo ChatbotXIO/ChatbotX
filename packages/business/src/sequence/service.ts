@@ -331,11 +331,36 @@ class SequenceService extends BaseService {
     }
   }
 
+  /**
+   * A step stores a bare `flowId`; the worker only resolves it inside the
+   * step's workspace, so a flow of another workspace (or a deleted one) would
+   * be accepted here and only fail when the step is due. Reject it on write.
+   */
+  private async assertStepFlowInWorkspace(input: {
+    workspaceId: string
+    flowId: string | null | undefined
+  }): Promise<void> {
+    if (!input.flowId) {
+      return
+    }
+    const flow = await db.query.flowModel.findFirst({
+      where: { id: input.flowId, workspaceId: input.workspaceId },
+      columns: { id: true },
+    })
+    if (!flow) {
+      throw notFoundException("Flow not found")
+    }
+  }
+
   async createStep(input: {
     workspaceId: string
     sequenceId: string
     data: SequenceStepPayloadInput
   }): Promise<SequenceStepModel> {
+    await this.assertStepFlowInWorkspace({
+      workspaceId: input.workspaceId,
+      flowId: input.data.flowId,
+    })
     const createData = buildCreateData(input.data, input.sequenceId, createId())
     const [created] = await db
       .insert(sequenceStepModel)
@@ -373,6 +398,11 @@ class SequenceService extends BaseService {
       throw notFoundException("Step not found")
     }
 
+    await this.assertStepFlowInWorkspace({
+      workspaceId: input.workspaceId,
+      flowId: input.data.flowId,
+    })
+
     const updateData = buildUpdateData(input.data)
 
     const [updated] = await db
@@ -392,9 +422,8 @@ class SequenceService extends BaseService {
      * parent (`DELETE /v1/sequences/{id}/steps/{stepId}`) must pass it, or
      * the `{id}` segment is decorative: the step resolves by `stepId` alone,
      * so a step belonging to a *different* sequence in the same workspace
-     * would be deleted while the URL claims otherwise. Omitted by callers
-     * that legitimately address a step without naming its parent (the
-     * builder's `deleteSequenceStepAction`).
+     * would be deleted while the URL claims otherwise. Omit it only when the
+     * caller does not know the parent sequence.
      */
     sequenceId?: string
   }): Promise<void> {

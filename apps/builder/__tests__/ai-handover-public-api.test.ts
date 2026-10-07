@@ -42,6 +42,7 @@ const mocks = vi.hoisted(() => ({
   find: vi.fn(),
   findActive: vi.fn(),
   saveSettings: vi.fn(),
+  patchSettings: vi.fn(),
   findStatus: vi.fn(),
   setApplyToAll: vi.fn(),
   previewApplyToAll: vi.fn(),
@@ -57,6 +58,7 @@ vi.mock("@chatbotx.io/business", async (importOriginal) => ({
   },
   aiHandoverBulkRunService: {
     saveSettings: mocks.saveSettings,
+    patchSettings: mocks.patchSettings,
     findStatus: mocks.findStatus,
     setApplyToAll: mocks.setApplyToAll,
     previewApplyToAll: mocks.previewApplyToAll,
@@ -176,6 +178,32 @@ describe("ai-handover public routes", () => {
     expect(mocks.saveSettings).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: "ws-1", inboxId: "5" }),
     )
+  })
+
+  test("patchSettings hands only the sent fields to the service", async () => {
+    mocks.patchSettings.mockResolvedValue({
+      enabled: false,
+      scheduleEnabled: false,
+      timeRanges: [],
+      gotoFlowId: "7",
+      returnMessage: null,
+      pauseBotWaitingForStaff: true,
+    })
+
+    const result = await find(
+      "PATCH",
+      `${BASE}/settings`,
+    )?.({
+      context,
+      input: { inboxId: "5", enabled: false },
+    })
+
+    expect(mocks.patchSettings).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      inboxId: "5",
+      changes: { enabled: false },
+    })
+    expect(result).toMatchObject({ enabled: false, gotoFlowId: "7" })
   })
 
   test("setApplyToAll dryRun only counts and never changes anything", async () => {

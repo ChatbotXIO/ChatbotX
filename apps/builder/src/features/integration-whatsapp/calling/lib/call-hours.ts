@@ -2,6 +2,7 @@ import type { WhatsappCallHoursSnapshot } from "@chatbotx.io/database/partials"
 import type {
   WhatsappCallHours,
   WhatsappCallingHolidaySchedule,
+  WhatsappCallingWeeklyHours,
 } from "@chatbotx.io/integration-whatsapp/api/calling"
 import {
   CALL_HOURS_DAYS,
@@ -167,5 +168,18 @@ export const toCallHoursSnapshot = (
     date: holiday.date,
     startTime: holiday.start_time,
     endTime: holiday.end_time,
+  })),
+})
+
+/** The inverse of `toCallHoursSnapshot`: Meta's shape for a stored schedule. */
+export const fromCallHoursSnapshot = (
+  snapshot: WhatsappCallHoursSnapshot,
+): WhatsappCallHours => ({
+  status: snapshot.status,
+  timezone_id: snapshot.timezoneId,
+  weekly_operating_hours: snapshot.weeklyOperatingHours.map((window) => ({
+    day_of_week: window.dayOfWeek as WhatsappCallingWeeklyHours["day_of_week"],
+    open_time: window.openTime,
+    close_time: window.closeTime,
   })),
 })

@@ -90,6 +90,17 @@ export const commonApiErrors = {
     message: "Validation error",
     status: 422,
   },
+  /**
+   * The default code of a `ChatbotXException` thrown without one (status 400).
+   * `toKnownOrpcError` forwards that code as-is, so without this entry every
+   * such rejection on a public route was returned as an undeclared error
+   * (`defined: false`). Routes with an expected, specific failure still throw
+   * and declare their own code.
+   */
+  systemError: {
+    message: "The request could not be processed",
+    status: 400,
+  },
   tooManyRequests: {
     message: "Too many requests",
     status: 429,
@@ -141,6 +152,8 @@ export const possibleErrorsOnCreatingResource = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnCreatingBroadcast = {
+  // A `templateParams` template that is not in the workspace.
+  notFound,
   businessError,
   broadcastPlanLimit,
   ...possibleIdempotencyErrors,
@@ -220,6 +233,12 @@ export const possibleErrorsOnReadingWithBody = {
 export const possibleErrorsOnStartingProductImport = {
   notFound,
   businessError,
+  // Reading the file's headers when `columnMap` is omitted.
+  importUnableToReadHeaders:
+    possibleErrorsOnPeekingImportHeaders.importUnableToReadHeaders,
+  importUnsupportedFileType:
+    possibleErrorsOnPeekingImportHeaders.importUnsupportedFileType,
+  importFileTooLarge: possibleErrorsOnPeekingImportHeaders.importFileTooLarge,
   productImportFileNotFound: {
     message: "The uploaded product import file was not found.",
     status: 404,
@@ -343,6 +362,13 @@ export const possibleErrorsOnListingWithCursor = {
 } satisfies ErrorMap
 
 /** Meta Catalog select/sync: a second run while one is active is a 409. */
+/** The stored Meta Catalog credential is missing or no longer valid. */
+const metaCatalogReconnectRequired = {
+  message:
+    "The Meta Catalog connection needs to be reconnected in the builder.",
+  status: 400,
+}
+
 export const possibleErrorsOnStartingMetaCatalogRun = {
   notFound,
   businessError,
@@ -350,6 +376,15 @@ export const possibleErrorsOnStartingMetaCatalogRun = {
     message: "A catalog sync or import is already running for this workspace.",
     status: 409,
   },
+  metaCatalogReconnectRequired,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Creating a Meta catalog: needs a connected Meta Catalog (404 otherwise). */
+export const possibleErrorsOnCreatingMetaCatalog = {
+  notFound,
+  businessError,
+  metaCatalogReconnectRequired,
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
@@ -366,6 +401,11 @@ export const possibleErrorsOnCreatingAdImageUpload = {
     message: "Ad images are limited to 10 MB",
     status: 400,
   },
+  messagingAdsReconnectRequired: {
+    message:
+      "The messaging-ads connection for this integration is missing or invalid: reconnect it in the builder.",
+    status: 409,
+  },
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
@@ -380,6 +420,13 @@ export const possibleErrorsOnDeletingResource = {
   notFound,
   businessError,
   ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Meta Catalog disconnect: refused while a sync or import is running. */
+export const possibleErrorsOnDisconnectingMetaCatalog = {
+  ...possibleErrorsOnDeletingResource,
+  metaCatalogSyncAlreadyRunning:
+    possibleErrorsOnStartingMetaCatalogRun.metaCatalogSyncAlreadyRunning,
 } satisfies ErrorMap
 
 /**
@@ -684,4 +731,146 @@ export const possibleErrorsOnCancelingConnectSession = {
   notFound,
   businessError,
   ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/**
+ * Messaging ads: every route that reads or writes through the Meta Graph API
+ * resolves the integration's messaging-ads connection first and refuses with
+ * 409 when it is missing or no longer valid (reconnect in the builder).
+ */
+const messagingAdsReconnectRequired = {
+  message:
+    "The messaging-ads connection for this integration is missing or invalid: reconnect it in the builder.",
+  status: 409,
+}
+
+const messagingAdInvalidRequest = {
+  message: "The request is not valid for this channel or media.",
+  status: 400,
+}
+
+export const possibleErrorsOnReadingMessagingAds = {
+  ...possibleErrorsOnFindingResource,
+  messagingAdsReconnectRequired,
+  invalidRequest: messagingAdInvalidRequest,
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingMessagingAd = {
+  ...possibleErrorsOnCreatingResource,
+  notFound,
+  messagingAdsReconnectRequired,
+  invalidRequest: messagingAdInvalidRequest,
+  messagingAdPageMissing: {
+    message: "The Facebook Page for this ad is missing or not fully connected.",
+    status: 400,
+  },
+  messagingAdInstagramActorMissing: {
+    message: "The Instagram account for this ad is missing.",
+    status: 400,
+  },
+  messagingAdWhatsappPageRequired: {
+    message:
+      "A connected Messenger Page must be selected for a WhatsApp messaging ad.",
+    status: 400,
+  },
+  messagingAdWhatsappPhoneMissing: {
+    message: "The WhatsApp phone number for this ad is missing.",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnChangingMessagingAd = {
+  ...possibleErrorsOnMutatingResource,
+  messagingAdsReconnectRequired,
+  messagingAdNotRetryable: {
+    message: "This ad is already being retried or is not in a retryable state.",
+    status: 409,
+  },
+  messagingAdNotPublishable: {
+    message:
+      "The campaign, ad set and ad must all be created before publishing.",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/** Retry re-runs channel-asset resolution and media preflight, so it can fail like create. */
+export const possibleErrorsOnRetryingMessagingAd = {
+  ...possibleErrorsOnChangingMessagingAd,
+  invalidRequest: messagingAdInvalidRequest,
+  messagingAdPageMissing:
+    possibleErrorsOnCreatingMessagingAd.messagingAdPageMissing,
+  messagingAdInstagramActorMissing:
+    possibleErrorsOnCreatingMessagingAd.messagingAdInstagramActorMissing,
+  messagingAdWhatsappPageRequired:
+    possibleErrorsOnCreatingMessagingAd.messagingAdWhatsappPageRequired,
+  messagingAdWhatsappPhoneMissing:
+    possibleErrorsOnCreatingMessagingAd.messagingAdWhatsappPhoneMissing,
+} satisfies ErrorMap
+
+export const possibleErrorsOnDeletingMessagingAd = {
+  ...possibleErrorsOnDeletingResource,
+  messagingAdsReconnectRequired,
+} satisfies ErrorMap
+
+/** A contact custom-field value that cannot be stored for the field's type. */
+const invalidCustomFieldValue = {
+  message: "The value is not valid for this custom field's type.",
+  status: 400,
+}
+
+export const possibleErrorsOnWritingContactFields = {
+  ...possibleErrorsOnMutatingResource,
+  invalidCustomFieldValue,
+} satisfies ErrorMap
+
+/** Create-or-update by identifier: unknown `id:` contact (404), phone taken (422). */
+export const possibleErrorsOnUpsertingContact = {
+  ...possibleErrorsOnCreatingResource,
+  notFound,
+  invalidCustomFieldValue,
+  phoneExists: {
+    message: "Phone number already exists",
+    status: 422,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingContact = {
+  ...possibleErrorsOnCreatingResource,
+  notFound,
+  invalidCustomFieldValue,
+} satisfies ErrorMap
+
+/** A bot-field value that does not fit the field's type. */
+const invalidFieldOperation = {
+  message: "The value does not fit this bot field's type.",
+  status: 400,
+}
+
+export const possibleErrorsOnCreatingBotField = {
+  ...possibleErrorsOnCreatingResource,
+  notFound,
+  invalidFieldOperation,
+  // The shared number normalizer throws the custom-field code for both.
+  invalidCustomFieldValue,
+} satisfies ErrorMap
+
+export const possibleErrorsOnSettingBotField = {
+  ...possibleErrorsOnMutatingResource,
+  invalidFieldOperation,
+  invalidCustomFieldValue,
+} satisfies ErrorMap
+
+/** Deleting a resource installed from a template that forbids deletion. */
+export const possibleErrorsOnDeletingTemplateResource = {
+  ...possibleErrorsOnDeletingResource,
+  templateAllowDeleteViolation: {
+    message:
+      "This resource was installed from a template that disallows deletion.",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingInFolder = {
+  ...possibleErrorsOnCreatingResource,
+  notFound,
 } satisfies ErrorMap

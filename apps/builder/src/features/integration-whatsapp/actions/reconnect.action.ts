@@ -1,6 +1,7 @@
 "use server"
 
 import {
+  connectionStateService,
   integrationWhatsappService,
   platformCredentialService,
   WHATSAPP_CAPI_SCOPE,
@@ -9,6 +10,7 @@ import {
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WhatsappCredential } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   appAccessToken,
   exchangeAccessToken,
@@ -182,8 +184,14 @@ async function buildReconnectAuth(input: {
   }
 }
 
-async function persistReconnectAuthAndResubscribe(input: {
-  auth: Awaited<ReturnType<typeof buildAuthValue>>
+/**
+ * Exported (used only by this module otherwise) so the transaction-atomicity
+ * fix — the auth write and `reconnectInbox` sharing one `db.transaction` —
+ * can be unit-tested directly without re-driving the whole OAuth exchange
+ * chain `reconnectWhatsapp` performs first.
+ */
+export async function persistReconnectAuthAndResubscribe(input: {
+  auth: WhatsappAuthValue
   hasCapiScope: boolean
   grantedScopes: string[]
   businessId: string
@@ -192,12 +200,21 @@ async function persistReconnectAuthAndResubscribe(input: {
   wabaId: string
   integrationWhatsappId: string
   workspaceId: string
+  inboxId: string
 }): Promise<boolean> {
-  await integrationWhatsappService.replaceAuth({
-    id: input.integrationWhatsappId,
+  await connectionStateService.commitReconnect({
+    inboxId: input.inboxId,
     workspaceId: input.workspaceId,
     auth: input.auth,
-    hasCapiScope: input.hasCapiScope,
+    writeAuth: async (tx) => {
+      await integrationWhatsappService.replaceAuth({
+        id: input.integrationWhatsappId,
+        workspaceId: input.workspaceId,
+        auth: input.auth,
+        hasCapiScope: input.hasCapiScope,
+        tx,
+      })
+    },
   })
   try {
     await whatsappBusinessAccountService.upsertCurrentCredential({
@@ -288,6 +305,7 @@ async function reconnectWhatsapp(input: {
     apiVersion: whatsappSettings.version,
     wabaId,
     integrationWhatsappId: input.integrationWhatsappId,
+    inboxId: existing.inboxId,
     workspaceId: input.workspaceId,
   })
 

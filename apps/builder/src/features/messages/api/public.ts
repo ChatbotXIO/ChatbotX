@@ -1,4 +1,8 @@
-import { conversationService, messageService } from "@chatbotx.io/business"
+import {
+  conversationService,
+  messageService,
+  resolveTemplateParams,
+} from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { z } from "zod"
 import {
@@ -88,7 +92,7 @@ export const messagesPublicRouter = {
       path: "/v1/conversations/{conversationId}/whatsapp-template",
       summary: "Send WhatsApp template to conversation",
       description:
-        "Queues one approved WhatsApp template into the conversation, bypassing the 24-hour window, so you can reach a customer who has not written recently. Pick the template with `whatsappTemplates.list` (status APPROVED, on the number you send from) and pass `templateData` for its parameters (omit for a template with none). `inboxId` chooses which WhatsApp number of the contact to send from; omit it to use the most recent. Delivery is asynchronous: a template that is not approved or belongs to another number fails in the worker and is not sent. This messages a real customer and may be billed by Meta.",
+        "Queues one approved WhatsApp template into the conversation, bypassing the 24-hour window, so you can reach a customer who has not written recently. Pick the template with `whatsappTemplates.list` (status APPROVED, on the number you send from) and fill its parameters with `templateParams` (keys from `whatsappTemplates.get` `parameters`; omit for a template with none). `inboxId` chooses which WhatsApp number of the contact to send from; omit it to use the most recent. Delivery is asynchronous: a template that is not approved or belongs to another number fails in the worker and is not sent. This messages a real customer and may be billed by Meta.",
       successStatus: 202,
       tags: ["Messages"],
     })
@@ -96,11 +100,20 @@ export const messagesPublicRouter = {
     .output(z.object({ queued: z.literal(true) }))
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const { conversationId, ...request } = input
+      const { conversationId, templateParams, ...request } = input
+      const templateData = templateParams
+        ? await resolveTemplateParams({
+            workspaceId: context.workspace.id,
+            channel: "whatsapp",
+            templateId: request.templateId,
+            values: templateParams,
+            field: "templateParams",
+          })
+        : request.templateData
       await sendWhatsappTemplateToConversation({
         workspaceId: context.workspace.id,
         conversationId,
-        request,
+        request: { ...request, templateData },
       })
       return { queued: true as const }
     }),

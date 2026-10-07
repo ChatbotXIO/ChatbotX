@@ -5,6 +5,34 @@ import { workspaceService } from "../workspace/service"
 import { resolveWorkspaceFreezeReason } from "./predicates"
 
 /**
+ * Why a workspace is frozen (owner entitlement expired, deletion scheduled, or
+ * the row already purged) — `freezeReason` is null when it is active.
+ * Side-effect free, so request-path callers can gate on it without the
+ * job-skip log `withBlockedOwnerGuard` writes.
+ */
+export async function resolveWorkspaceFreezeReasonById(workspaceId: string) {
+  const workspace = await workspaceService.find({ where: { id: workspaceId } })
+
+  // Resolved in two passes on purpose. The Workspace row ALONE decides
+  // `missingWorkspace` and `scheduledForDeletion`, so those verdicts never
+  // depend on — and can never be broken by — an owner quota read. Only
+  // `ownerBlocked` needs entitlements, and only the cloud edition can produce
+  // it, so self-hosted installs skip the lookup entirely.
+  const rowReason = resolveWorkspaceFreezeReason({ workspace })
+  const ownerReason =
+    rowReason || !isCloud() || !workspace
+      ? null
+      : resolveWorkspaceFreezeReason({
+          accessState: await userQuotaService.getAccessState(workspace.ownerId),
+          workspace,
+        })
+  return {
+    freezeReason: rowReason ?? ownerReason,
+    ownerId: workspace?.ownerId,
+  }
+}
+
+/**
  * No-op workspace work for frozen workspaces (owner entitlement expired,
  * deletion scheduled, or the workspace row already purged).
  *
@@ -22,28 +50,14 @@ export async function withBlockedOwnerGuard<T>(
     return await fn()
   }
 
-  const workspace = await workspaceService.find({ where: { id: workspaceId } })
-
-  // Resolved in two passes on purpose. The Workspace row ALONE decides
-  // `missingWorkspace` and `scheduledForDeletion`, so those verdicts never
-  // depend on — and can never be broken by — an owner quota read. Only
-  // `ownerBlocked` needs entitlements, and only the cloud edition can produce
-  // it, so self-hosted installs skip the lookup entirely.
-  const rowReason = resolveWorkspaceFreezeReason({ workspace })
-  const ownerReason =
-    rowReason || !isCloud() || !workspace
-      ? null
-      : resolveWorkspaceFreezeReason({
-          accessState: await userQuotaService.getAccessState(workspace.ownerId),
-          workspace,
-        })
-  const freezeReason = rowReason ?? ownerReason
+  const { freezeReason, ownerId } =
+    await resolveWorkspaceFreezeReasonById(workspaceId)
 
   if (freezeReason) {
     logger.info(
       {
         freezeReason,
-        ownerId: workspace?.ownerId,
+        ownerId,
         workspaceId,
       },
       "Skipping workspace job for frozen workspace",

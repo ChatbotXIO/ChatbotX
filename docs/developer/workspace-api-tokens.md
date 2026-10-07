@@ -557,7 +557,14 @@ an endpoint's scope.
   sync history), `GET .../meta-catalog/businesses`, `POST /v1/products/meta-catalog`
   (create an empty catalog and bind it), `POST .../select` (bind and import,
   202) and `POST .../sync` (push products, 202); a second run while one is
-  active returns 409. Connecting and disconnecting stay private (Meta OAuth).
+  active returns 409. `DELETE /v1/products/meta-catalog` disconnects (409
+  while a sync or import runs, allowed on a trial-expired workspace);
+  connecting stays private (Meta OAuth).
+- **Channel disconnect** — scope `channels`: `DELETE /v1/messenger-channels/{id}`
+  and `DELETE /v1/instagram-channels/{id}` run the builder's disconnect (Meta
+  unsubscribe, running history sync ended, CAPI events removed; contacts and
+  conversations kept). Like every DELETE they stay open on a trial-expired
+  workspace. Connecting stays private (Meta OAuth).
   Scope `ads`: `POST /v1/ads/campaigns/upload-image` returns `imageKey`,
   `fileId` and a presigned PUT URL inside the workspace's ads-creative prefix
   (same type/size checks as the builder; the create-time preflight still proves
@@ -700,6 +707,26 @@ approved as UI-only.
   allow-listed for `read_only` tokens and trial-expired workspaces. Only tags:
   sequence, broadcast, ref-link, inbox, member and team names belong to other
   scopes and come from their own list routes.
+- Simpler inputs (all additive, the previous shapes still work):
+  `POST /v1/conversations/{conversationId}/whatsapp-template` takes the same
+  flat `templateParams` as broadcasts; the import header routes return
+  `suggestedColumnMap` (the builder's header matching), and
+  `POST /v1/products/imports` recognises columns and the file format itself
+  when `columnMap`/`format` are omitted; `PATCH` on
+  `/v1/messenger-channels/{id}/settings`, `/v1/instagram-channels/{id}/settings`
+  and `/v1/inboxes/{inboxId}/ai-handover/settings` changes only the sent
+  fields, and Messenger personas take `{name, profilePictureUrl}`;
+  `GET /v1/whatsapp-channels/{id}/calling` returns `callHoursInput`, ready to
+  edit and send to `PUT .../calling/hours`; `POST /v1/products/meta-catalog/sync`
+  defaults `catalogId` to the bound catalog.
+- Template broadcasts take flat `templateParams` (`{"body.1": "Ann",
+  "header": "https://.../a.jpg"}`, also per `targets[]` entry) instead of
+  Meta's nested `templateData`; the keys are the `parameters` that
+  `GET /v1/whatsapp/templates/{id}` and `GET /v1/messenger/templates/{id}`
+  now return. The server builds `templateData` with the builder's own template
+  helpers; a missing, unknown or invalid key is a 422 naming the keys, and a
+  multi-product (MPM) button still needs `templateData`. `templateData` keeps
+  working, but not together with `templateParams`.
 - `POST /v1/broadcasts/audience/preview` counts (`total`) and lists the
   contact inboxes a broadcast *would* reach (same selectors as
   `broadcasts.create`, the audience window applied) before anything exists. It

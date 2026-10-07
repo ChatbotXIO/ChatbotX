@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { deleteDecisionProfilesAction } from "../actions/delete-decision-profiles.action"
+import { useInvalidateDecisionProfiles } from "../hooks/use-decision-profiles"
 import type { DecisionProfileListItem } from "../schema/resource"
 
 type Props = {
@@ -33,6 +34,7 @@ export function DeleteDecisionProfilesDialog({
   workspaceId,
 }: Props) {
   const router = useRouter()
+  const invalidateDecisionProfiles = useInvalidateDecisionProfiles()
   const t = useTranslations()
   const { execute, isPending } = useAction(
     deleteDecisionProfilesAction.bind(null, workspaceId),
@@ -43,6 +45,7 @@ export function DeleteDecisionProfilesDialog({
         }
       },
       onSuccess: () => {
+        invalidateDecisionProfiles()
         toast.success(
           t("messages.deletedSuccess", { feature: t("decision.profile") }),
         )

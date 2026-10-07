@@ -58,6 +58,12 @@ vi.mock("@/features/integration-webchat/lib", () => ({
   getBrandingUrl: vi.fn(),
 }))
 
+vi.mock("@chatbotx.io/redis", () => ({
+  distributedLock: {
+    runExclusive: ({ fn }: { fn: () => Promise<unknown> }) => fn(),
+  },
+}))
+
 vi.mock("@/lib/log", () => ({
   logger: { error: vi.fn() },
 }))

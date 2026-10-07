@@ -940,3 +940,36 @@ describe("deleteOperation — stored-image cleanup", () => {
     expect(mocks.deleteObject).not.toHaveBeenCalled()
   })
 })
+
+describe("error contract", () => {
+  test("an operation that is not in the workspace is a 404, not a plain error", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(undefined)
+
+    await expect(
+      messagingAdCampaignService.publish({
+        workspaceId: "ws-1",
+        operationId: "foreign",
+      }),
+    ).rejects.toMatchObject({ code: "notFound", httpStatusCode: 404 })
+  })
+
+  test("publishing before every Meta object exists is a 409 state error", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue({
+      id: "op-1",
+      workspaceId: "ws-1",
+      metaCampaignId: "c1",
+      metaAdSetId: null,
+      metaAdId: null,
+    })
+
+    await expect(
+      messagingAdCampaignService.publish({
+        workspaceId: "ws-1",
+        operationId: "op-1",
+      }),
+    ).rejects.toMatchObject({
+      code: "messagingAdNotPublishable",
+      httpStatusCode: 409,
+    })
+  })
+})

@@ -1,9 +1,6 @@
 "use server"
 
-import {
-  decisionProfileContractSchema,
-  decisionProfileService,
-} from "@chatbotx.io/business"
+import { decisionProfileService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -27,7 +24,6 @@ export const createDecisionProfileAction = workspaceActionClient
 
       return await decisionProfileService.create({
         ...parsedInput,
-        contract: decisionProfileContractSchema.parse(parsedInput.contract),
         workspaceId,
       })
     },

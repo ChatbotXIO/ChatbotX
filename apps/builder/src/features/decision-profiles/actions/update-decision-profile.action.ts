@@ -1,9 +1,6 @@
 "use server"
 
-import {
-  decisionProfileContractSchema,
-  decisionProfileService,
-} from "@chatbotx.io/business"
+import { decisionProfileService } from "@chatbotx.io/business"
 import { z } from "zod"
 import {
   type WorkspaceIdRequestParams,
@@ -32,7 +29,6 @@ export const updateDecisionProfileAction = workspaceActionClient
 
       return await decisionProfileService.update({
         ...parsedInput,
-        contract: decisionProfileContractSchema.parse(parsedInput.contract),
         workspaceId,
       })
     },

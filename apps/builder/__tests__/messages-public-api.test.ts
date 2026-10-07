@@ -54,9 +54,11 @@ const messageService = {
   findByIdWithUrls: vi.fn(),
   createOutgoing: vi.fn(),
 }
+const resolveTemplateParams = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
   conversationService,
   messageService,
+  resolveTemplateParams,
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -367,6 +369,52 @@ describe("POST /v1/conversations/{conversationId}/whatsapp-template", () => {
 
   test("answers 202 because delivery is asynchronous", () => {
     expect(procedure.route.successStatus).toBe(202)
+  })
+
+  test("builds templateData from flat templateParams", async () => {
+    const nested = { body: [{ type: "text", text: "Ada" }] }
+    resolveTemplateParams.mockResolvedValueOnce(nested)
+    sendTemplate.mockResolvedValue(undefined)
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        conversationId: "9",
+        templateId: "5",
+        templateParams: { "body.1": "Ada" },
+      },
+    })
+
+    expect(resolveTemplateParams).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      channel: "whatsapp",
+      templateId: "5",
+      values: { "body.1": "Ada" },
+      field: "templateParams",
+    })
+    expect(sendTemplate).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      conversationId: "9",
+      request: { templateId: "5", templateData: nested },
+    })
+  })
+
+  test("a template outside the workspace is not queued", async () => {
+    resolveTemplateParams.mockRejectedValueOnce(
+      Object.assign(new Error("Template not found"), { code: "notFound" }),
+    )
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: {
+          conversationId: "9",
+          templateId: "x",
+          templateParams: { "body.1": "Ada" },
+        },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+    expect(sendTemplate).not.toHaveBeenCalled()
   })
 })
 

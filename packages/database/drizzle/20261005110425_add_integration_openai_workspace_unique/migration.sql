@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "IntegrationOpenAI_workspaceId_key" ON "IntegrationOpenai" ("workspaceId");

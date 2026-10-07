@@ -1,9 +1,56 @@
 import { z } from "zod"
 import {
+  compileNoulInstructions,
   type DecisionProfileContract,
+  type DecisionProviderContract,
   type DecisionResult,
   decisionResultSchema,
 } from "./contracts"
+
+/** Compiles profile-domain storage into the minimal Jev wire representation. */
+export const compileDecisionProfileRequest = (
+  contract: DecisionProfileContract,
+): { questions: Record<string, object> } => {
+  const question = contract.questions[0]
+  if (!question) {
+    throw new Error("Decision Profile has no result question")
+  }
+  if (question.type === "choice") {
+    return {
+      questions: {
+        result: {
+          criteria: Object.fromEntries(
+            question.options.map((option) => [
+              option.value,
+              option.description,
+            ]),
+          ),
+          instructions: question.instructions,
+          type: question.type,
+        },
+      },
+    }
+  }
+  if (question.type === "score") {
+    return {
+      questions: {
+        result: {
+          criteria: question.levels.map((level) => level.description),
+          instructions: question.instructions,
+          type: question.type,
+        },
+      },
+    }
+  }
+  return {
+    questions: {
+      result: {
+        instructions: compileNoulInstructions(question),
+        type: question.type,
+      },
+    },
+  }
+}
 
 const nativeAnswerSchema = z.discriminatedUnion("type", [
   z
@@ -133,7 +180,7 @@ const normalizeNativeAnswer = (answer: z.infer<typeof nativeAnswerSchema>) => {
 
 const validateAgainstContract = (
   result: DecisionResult,
-  contract: DecisionProfileContract,
+  contract: DecisionProviderContract,
 ): DecisionResult => {
   const questionByKey = new Map(
     contract.questions.map((question) => [question.key, question] as const),
@@ -145,6 +192,7 @@ const validateAgainstContract = (
   ) {
     throw new Error("Decision provider returned a missing or unknown answer")
   }
+  const answers: DecisionResult["answers"] = {}
   for (const [key, answer] of Object.entries(result.answers)) {
     const question = questionByKey.get(key)
     if (!question || question.type !== answer.type) {
@@ -158,25 +206,29 @@ const validateAgainstContract = (
       throw new Error("Decision provider returned an invalid choice")
     }
     if (answer.type === "score" && question.type === "score") {
+      const normalizedScore = answer.score + 1
       const min = question.levels[0]?.value
       const max = question.levels.at(-1)?.value
       if (
         min === undefined ||
         max === undefined ||
-        answer.score < min ||
-        answer.score > max
+        normalizedScore < min ||
+        normalizedScore > max
       ) {
         throw new Error(
           "Decision provider returned a score outside the Profile range",
         )
       }
+      answers[key] = { ...answer, score: normalizedScore }
+      continue
     }
+    answers[key] = answer
   }
-  return result
+  return { ...result, answers }
 }
 
 export const normalizeDecisionProviderResponse = (input: {
-  contract: DecisionProfileContract
+  contract: DecisionProviderContract
   raw: unknown
 }): DecisionResult => {
   const rawResult = z

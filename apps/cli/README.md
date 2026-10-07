@@ -111,10 +111,10 @@ chatbotx teams member delete <id> --userIds <userIds> # Remove members from team
 ### `tags`
 
 ```bash
-chatbotx tags list                                   # Get all tags
-chatbotx tags create --name <name>                   # Create tag
+chatbotx tags list                                   # Get all tags [--name --folderId --sort]
+chatbotx tags create --name <name>                   # Create tag [--folderId]
 chatbotx tags get <idOrName>                         # Get tag
-chatbotx tags update <id> --name <name>              # Update tag
+chatbotx tags update <id> --name <name>              # Rename tag [--folderId to move it]
 chatbotx tags delete <id>                            # Delete tag
 ```
 
@@ -123,8 +123,8 @@ chatbotx tags delete <id>                            # Delete tag
 ### `custom-fields`
 
 ```bash
-chatbotx custom-fields list                          # Get all custom fields
-chatbotx custom-fields create --name <name> --type <type>
+chatbotx custom-fields list                          # Get all custom fields [--name --folderId --sort]
+chatbotx custom-fields create --name <name> --type <type>  # [--description --folderId]
 chatbotx custom-fields get <idOrName>                # Get custom field
 chatbotx custom-fields update <id> --name <name>     # [--description --folderId]
 chatbotx custom-fields delete <id>
@@ -141,9 +141,9 @@ chatbotx bot-fields create --name <name> --type <type> --value <value> --descrip
 chatbotx bot-fields update --fields <fields>         # Set multiple bot field values, by id or name
                                                      # fields: JSON array of {id,value} or {name,value}
 chatbotx bot-fields get <idOrName>                   # Get bot field
-# `bot-fields update <idOrName> --value <value>` (single field, PUT /v1/bot-fields/{idOrName}) is NOT
-# reachable — collides with `update` above under the same commandName; see Known command-name collisions.
-chatbotx bot-fields delete <idOrName>                # Unset bot field value
+chatbotx bot-fields edit <idOrName>                  # [--name --type --description --folderId --value]  PATCH: omitted fields stay
+chatbotx bot-fields set <idOrName> --value <value>   # Set one bot field value (PUT /v1/bot-fields/{idOrName})
+chatbotx bot-fields delete <idOrName>                # Delete the bot field (definition and value)
 chatbotx bot-fields reset <idOrName>                 # Clear one bot field value, keep the field
 chatbotx bot-fields bulk-reset --ids <ids>           # Clear up to 100 bot field values by id
 ```
@@ -183,7 +183,7 @@ chatbotx channel-posts options-by-ids --ids <ids>     # Resolve saved-filter pos
 chatbotx contacts import-template                    # CSV template as text [--language]
 chatbotx contacts imports-upload-url --fileName <name> --mimeType <mime> --fileSize <bytes>
                                                      # Returns fileId + presigned PUT URL
-chatbotx contacts imports-files-headers <fileId>      # Column headers of the uploaded file
+chatbotx contacts imports-files-headers <fileId>      # Column headers + suggestedColumnMap (spread into contacts import)
 chatbotx contacts imports                            # [--page --perPage --status --keyword --sort]
 chatbotx contacts find-by-imports <id>                # Get one import job
 chatbotx contacts export --fields <fields>            # [--contactIds --exportAll --filter]
@@ -191,6 +191,7 @@ chatbotx contacts find-by-export-files <fileId>       # Poll export status/downl
 
 # Bulk
 chatbotx contacts bulk-tags --contactIds <contactIds> --tags <tags>
+chatbotx contacts bulk-tags-remove --contactIds <contactIds> --tags <tags>
 chatbotx contacts bulk-delete --contactIds <contactIds>
 chatbotx contacts bulk-sequences --contactIds <contactIds> --sequenceIds <sequenceIds>
 chatbotx contacts bulk-sequences-remove --contactIds <contactIds> --sequenceIds <sequenceIds>
@@ -207,14 +208,10 @@ chatbotx contacts by-name add <identifier> --tags <tags>  # Add tags by name (cr
 chatbotx contacts custom-fields list <identifier>    # Get all custom fields from contact
 chatbotx contacts custom-fields update <identifier> --operations <operations>
                                                      # Batch set/append/prepend/increase/decrease
-                                                     # (applyCustomFieldOperations; wins a naming collision
-                                                     # with the single-field PUT below — see note)
 chatbotx contacts custom-field get <identifier> <idOrName>
-# `contacts custom-field update <identifier> <idOrName> --value <value>` (single field, PUT
-# .../custom-fields/{idOrName}) is NOT reachable — collides with `custom-fields update` above
-# under the same commandName; see Known command-name collisions.
-chatbotx contacts custom-field delete <identifier>   # Clear ALL custom fields (see collision note — the
-                                                     # per-field-id delete variant is unreachable)
+chatbotx contacts set-custom-field <identifier> <idOrName> --value <value>   # Set one custom field
+chatbotx contacts custom-field delete <identifier> <idOrName>                # Clear ONE custom field
+chatbotx contacts clear-all-custom-fields <identifier>                       # Clear EVERY custom field
 
 # Notes
 chatbotx contacts notes list <identifier>
@@ -284,13 +281,15 @@ chatbotx conversations attribute add <conversationId> <messageId> --createdAt <c
 chatbotx broadcasts list
 chatbotx broadcasts get <idOrName>                   # Get broadcast
 chatbotx broadcasts audience list <idOrName>         # Get broadcast audience (contacts) [--page --perPage]
-chatbotx broadcasts contacts list <id> --eventType <eventType>  # Recipients by event (message:sent, message:seen, ...)
+chatbotx broadcasts contacts list <id> --eventType <eventType>  # Recipients by event (message:sent, message:seen, ...); returns total and conversationId
 chatbotx broadcasts audience-preview                 # Count (total) and list a would-be audience before sending [--inboxIds --channels --contactFilter --page --perPage ...]
 chatbotx broadcasts create --channel <channel> --subaction <subaction> --schedulesType <schedulesType>
                                                      # Cloud trial Messenger broadcasts: max 60/min and one active at a time
                                                      #   --schedulesAt <schedulesAt> --contactFilter <contactFilter>
                                                      #   [--flowId --templateId --integrationWhatsappId --integrationMessengerId
-                                                     #    --templateData --buttons --targets --inboxIds --saveAsDraft]
+                                                     #    --templateParams --templateData --buttons --targets --inboxIds --saveAsDraft]
+                                                     # templateParams: {"body.1":"Ann","header":"https://..."}; keys come
+                                                     #   from `parameters` of the template's get route
                                                      # Either flowId or templateId required (not both); schedulesAt required
                                                      # when schedulesType is "future" and saveAsDraft is not true
 chatbotx broadcasts update <id> --name <name>        # Rename only — use `draft update` to change the payload
@@ -310,7 +309,7 @@ chatbotx broadcasts delete <id>                      # Soft-delete (fails while 
 ### `flows`
 
 ```bash
-chatbotx flows list                                  # [--page --perPage --active]  active defaults to true
+chatbotx flows list                                  # [--page --perPage --active --name --folderId --startType --integrationWhatsappId --sort]  active defaults to true
 chatbotx flows get <id>                              # Includes its versions
 chatbotx flows create --name <name>                  # [--folderId --spec --nodes --edges --publish]
                                                      # spec: flow-spec DSL (see `schemas flow-spec`); nodes/edges: raw
@@ -452,10 +451,10 @@ chatbotx error-logs list                             # [--page --perPage --sort 
 
 ```bash
 chatbotx ads conversion-rules                        # List Ads conversion rules
-chatbotx ads conversion-rules --event <event> --conversionType <conversionType>
-                                                     # Create Ads conversion rule (name collides with list above, see note)
-chatbotx ads find-by-conversion-rules <id>           # Get/update/delete conversion rule (GET shown; PATCH/DELETE collide, see note)
-                                                     # PATCH body also enables/disables via `enabled` (no separate status command)
+chatbotx ads create-conversion-rule --event <event> --conversionType <conversionType>
+chatbotx ads find-by-conversion-rules <id>           # Get conversion rule
+chatbotx ads update-conversion-rule <id>             # Update; `enabled` also enables/disables the rule
+chatbotx ads delete-conversion-rule <id>
 chatbotx ads funnel                                  # Get ad conversion funnel
 chatbotx ads funnel-timeseries                       # Get daily ad conversion funnel
 chatbotx ads capi-delivery                           # Get Conversions API delivery status
@@ -468,7 +467,8 @@ chatbotx ads custom-audiences                        # List custom audiences [--
 chatbotx ads retarget-audiences                      # Sync retarget audience
 
 # Messaging ad campaigns
-chatbotx ads campaigns                               # List (GET) / create (POST) messaging ad (names collide, see note)
+chatbotx ads campaigns                               # List messaging ads
+chatbotx ads create-campaign                         # Create messaging ad
 chatbotx ads campaigns-retry <id>                    # Resume messaging ad creation
 chatbotx ads campaigns-publish <id>                  # Publish messaging ad
 chatbotx ads campaigns-pause <id>                    # Pause published messaging ad
@@ -550,7 +550,8 @@ chatbotx analytics messages-by-sender                  # [--granularity]
 chatbotx analytics broadcasts-stats <broadcastId>       # Get broadcast stats
 chatbotx analytics sequences-steps-stats <sequenceId> <stepId>  # Get sequence step stats
 chatbotx analytics mac-active-count                    # No time range — current billing period
-chatbotx analytics flows-stats <flowId>                # Get flow analytics (also DELETE resets stats, see note)
+chatbotx analytics flows-stats <flowId>                # Get flow analytics
+chatbotx analytics reset-flow-stats <flowId>           # Reset flow analytics
 chatbotx analytics magic-links-stats --linkId <linkId>
 chatbotx analytics magic-links-contacts --linkId <linkId>
 chatbotx analytics ref-links-stats --linkId <linkId>
@@ -802,6 +803,8 @@ chatbotx inboxes update <id> --markReadOnOutbound <true|false>
 chatbotx instagram-channels list|get <id>
 chatbotx instagram-channels settings list <id>         # Welcome flow, ice breakers, persistent menu
 chatbotx instagram-channels settings update <id>       # Full replace; pushes to Instagram
+chatbotx instagram-channels settings edit <id>         # PATCH: only the fields you send
+chatbotx instagram-channels delete <id>                # Disconnect the account (works after the trial ends)
 ```
 
 ---
@@ -840,6 +843,7 @@ chatbotx media-library files-move --fileIds <fileIds>  # [--folderId]
 ```bash
 chatbotx inboxes settings list <inboxId>                  # AI hand-over settings + apply-to-all status (applyToAll)
 chatbotx inboxes settings update <inboxId> --enabled --scheduleEnabled --timeRanges --gotoFlowId --returnMessage --pauseBotWaitingForStaff
+chatbotx inboxes settings edit <inboxId>               # PATCH AI hand-over: only the fields you send, e.g. --enabled false
 chatbotx inboxes apply-to-all add <inboxId> --applyToAllCustomers --message <text> --dryRun        # Count only
 chatbotx inboxes apply-to-all add <inboxId> --applyToAllCustomers --message <text> --confirmCount <n>
 chatbotx inboxes retry add <inboxId>                      # Retry the latest apply-to-all
@@ -858,6 +862,7 @@ chatbotx conversations thread-control add <id> --contactInboxId <id> --action ta
 ```bash
 chatbotx workspace settings get                       # Get workspace settings
 chatbotx workspace settings update --defaultReply --defaultReplyFrequency --smartResponseDelaySeconds --capiLimitedDataUse --logo
+                                                    # also --targetCountry --language --timezone --brandColor --developmentMode
 ```
 
 ### `whatsapp` calls (scope `integrations`)
@@ -894,6 +899,8 @@ chatbotx messenger-channels handover-resume-flow update <id> --handoverResumeFlo
 chatbotx messenger-channels tag-sync update <id> --enabled <enabled>
 chatbotx messenger-channels settings list <id>         # Welcome flow, persistent menu, personas, ice breakers
 chatbotx messenger-channels settings update <id>       # Full replace; pushes to Facebook
+chatbotx messenger-channels settings edit <id>         # PATCH: only the fields you send; personas take {name, profilePictureUrl}
+chatbotx messenger-channels delete <id>                # Disconnect the Page (works after the trial ends)
 ```
 
 ---
@@ -945,10 +952,11 @@ chatbotx products delete <id>
 chatbotx products bulk-delete --ids <ids>
 chatbotx products import-template                       # XLSX template as base64 [--language]
 chatbotx products imports-upload-url --fileName <name> --mimeType <mime> --fileSize <bytes>
-chatbotx products imports-files-headers <fileId>
-chatbotx products imports create --fileId <id> --format <csv|xlsx> --columnMap <json>  # Start the import; 409 while one runs
+chatbotx products imports-files-headers <fileId>        # Column headers + suggestedColumnMap
+chatbotx products imports create --fileId <id>          # [--columnMap <json> --format <csv|xlsx>] columns recognised by name when omitted; 409 while one runs
 chatbotx products imports list                          # [--page --perPage --status --keyword --sort]
 chatbotx products find-by-imports <id>                  # Get one product import job
+chatbotx products meta-catalog delete                   # Disconnect Meta Catalog; 409 while a sync runs
 ```
 
 ---
@@ -986,7 +994,7 @@ chatbotx questionnaires stats list <id>                 # Submission/completion 
 ### `ref-links`
 
 ```bash
-chatbotx ref-links list
+chatbotx ref-links list                              # [--keyword --sort]
 chatbotx ref-links get <id>
 chatbotx ref-links create --name <name>
 chatbotx ref-links update <id>
@@ -1106,21 +1114,16 @@ Commands are named by `pathAndMethodToCommandName` (`apps/cli/src/openapi-loader
 
 | Command name | Colliding operations | What's reachable |
 |---|---|---|
-| `ads:conversion-rules` | `POST` (create) vs `GET` (list) `/v1/ads/conversion-rules` | Only `list` |
-| `ads:find-by-conversion-rules` | `PATCH` vs `DELETE` `/v1/ads/conversion-rules/{id}` | Only one (whichever registers first) |
-| `ads:campaigns` | `GET` (list) vs `POST` (create) `/v1/ads/campaigns` | Only `list` |
-| `analytics:flows-stats` | `GET` (get stats) vs `DELETE` (reset stats) `/v1/analytics/flows/{flowId}/stats` | Only `get` |
 | `media-library:folders` | `POST` (create) vs `GET` (list) `/v1/media-library/folders` | Only `list` |
 | `media-library:find-by-folders` | `PUT` (rename) vs `DELETE` (delete+contents) `/v1/media-library/folders/{folderId}` | Only one |
 | `media-library:files` | `POST` (register) vs `GET` (list) `/v1/media-library/files` | Only `list` |
 | `media-library:find-by-files` | `GET` vs `DELETE` `/v1/media-library/files/{fileId}` | Only `get` |
 | `minigames:update` | `PUT` (full) vs `PATCH` (partial) `/v1/minigames/{id}` | Only one |
-| `bot-fields:update` | `PUT /v1/bot-fields/{idOrName}` (`set`, single field) vs `PUT /v1/bot-fields` (`setMany`, several by name) | Only `setMany` — use `bot-fields update --fields <fields>` even for a single field |
-| `contacts:custom-fields:update` | `PATCH /v1/contacts/{identifier}/custom-fields` (`applyCustomFieldOperations`, batch) vs `PUT .../custom-fields/{idOrName}` (`setCustomField`, single field) | Only `applyCustomFieldOperations` — use `contacts custom-fields update <identifier> --operations '[{"customFieldId":"...","operation":"set","value":"..."}]'` for a single field too |
-| `contacts:custom-field:delete` | `DELETE .../custom-fields/{idOrName}` (`clearCustomField`, one field) vs `DELETE .../custom-fields` (`clearCustomFields`, every field) | Only `clearCustomFields` — `contacts custom-field delete <identifier>` clears **every** custom field, not one |
 | `integrations:find-by-ai` | `GET`/`PUT`/`DELETE /v1/integrations/ai/{provider}` (get/connect/disconnect) | Only `GET` — connecting or disconnecting an AI provider has no CLI command |
 
-Root cause for the `bot-fields`, `contacts:custom-field(s)`, and `integrations:find-by-ai` rows: `pathAndMethodToCommandName`'s remainder branch derives `${group}:${subResource}:update` (or its GET/DELETE equivalents) without folding the HTTP method into the name when a literal second path segment is followed by a param — unlike the sibling GET/DELETE branches, which already do this for the two-segment case.
+Resolved by explicit names in `COMMAND_NAME_OVERRIDES` (`apps/cli/src/openapi-loader.ts`): `bot-fields set`, `bot-fields edit`, `contacts set-custom-field`, `contacts clear-all-custom-fields` (the old `contacts custom-field delete <identifier>` cleared **every** field; it now clears one and needs `<idOrName>`), `ads create-campaign`, `ads create-conversion-rule` / `update-conversion-rule` / `delete-conversion-rule`, `analytics reset-flow-stats`.
+
+Root cause for the remaining `integrations:find-by-ai` row: `pathAndMethodToCommandName`'s remainder branch derives `${group}:${subResource}:update` (or its GET/DELETE equivalents) without folding the HTTP method into the name when a literal second path segment is followed by a param — unlike the sibling GET/DELETE branches, which already do this for the two-segment case.
 
 All of these operations remain reachable over HTTP directly; only the CLI's generated command for the losing operation is missing.
 

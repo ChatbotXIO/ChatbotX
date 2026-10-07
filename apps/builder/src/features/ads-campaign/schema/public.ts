@@ -239,11 +239,13 @@ export const videoStatusPublicRequest = z.object({
 
 export const listMessengerPagesPublicRequest = z.object({
   channel: messagingAdChannelSchema.describe(
-    "Channel the integration belongs to.",
+    "Channel the integration belongs to. Only `whatsapp` is supported.",
   ),
-  integrationId: zodBigintAsString().describe(
-    "Channel integration id (numeric string).",
-  ),
+  integrationId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Not used: the Pages listed are every Messenger Page connected to this workspace. Still accepted for older callers.",
+    ),
 })
 
 export const checkPrerequisitesPublicRequest = z.object({

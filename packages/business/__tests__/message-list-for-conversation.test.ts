@@ -192,6 +192,66 @@ describe("message list-for-conversation", () => {
       expect(call.pagination.cursor.createdAt.getMinutes()).toBe(59)
     })
 
+    test("a contactInboxId narrows the repository query and is looked up within the conversation's contact", async () => {
+      mocks.conversationService.findBy.mockResolvedValue({
+        id: "conv-1",
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+      })
+      mocks.contactInboxService.findByUncached.mockResolvedValue({
+        lastMessageAt: new Date("2026-06-10T15:42:00Z"),
+      })
+      mocks.repo.listByConversation.mockResolvedValue({
+        data: [],
+        nextCursor: null,
+      })
+
+      await listForConversation({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-2",
+        limit: 20,
+      })
+
+      expect(mocks.contactInboxService.findByUncached).toHaveBeenCalledWith({
+        where: { contactId: "contact-1", id: "ci-2" },
+      })
+      expect(mocks.repo.listByConversation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactInboxId: "ci-2",
+        }),
+      )
+    })
+
+    test("a contactInboxId of another contact still filters the query (empty result)", async () => {
+      mocks.conversationService.findBy.mockResolvedValue({
+        id: "conv-1",
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+      })
+      mocks.contactInboxService.findByUncached.mockResolvedValue(null)
+      mocks.repo.listByConversation.mockResolvedValue({
+        data: [],
+        nextCursor: null,
+      })
+
+      const result = await listForConversation({
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-foreign",
+        limit: 20,
+      })
+
+      expect(mocks.repo.listByConversation).toHaveBeenCalledWith(
+        expect.objectContaining({ contactInboxId: "ci-foreign" }),
+      )
+      expect(result).toEqual({ data: [], nextCursor: null })
+    })
+
     test.each([
       "messenger",
       "instagram",

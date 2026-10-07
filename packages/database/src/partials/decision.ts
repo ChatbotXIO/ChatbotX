@@ -31,3 +31,8 @@ export type DecisionProfileContractJsonValue =
 export type DecisionProfileContractJson = {
   [key: string]: DecisionProfileContractJsonValue
 }
+
+export type DecisionProfileThresholdConfigJson =
+  | { minimum: number; type: "choice_confidence" }
+  | { operator: "gt" | "gte" | "lt" | "lte"; type: "score"; value: number }
+  | { minimum: number; type: "noul_true_probability" }

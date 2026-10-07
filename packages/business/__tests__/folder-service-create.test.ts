@@ -66,6 +66,9 @@ describe("folderService.create parent lookup", () => {
         workspaceId: "ws-1",
         data: { name: "Child", parentId: "foreign", folderType: "tag" },
       }),
-    ).rejects.toThrow("Parent folder does not exist!")
+    ).rejects.toMatchObject({
+      message: "Parent folder does not exist!",
+      code: "notFound",
+    })
   })
 })

@@ -1,13 +1,13 @@
 import { inboxService, resolveTenantSettings } from "@chatbotx.io/business"
-import { canReceiveRef, getInboxLinks } from "@chatbotx.io/business/utils"
+import {
+  buildInboxLink,
+  buildInboxProfileLink,
+  canReceiveRef,
+  isLinkableChannel,
+  isProfileLinkChannel,
+} from "@chatbotx.io/business/utils"
 import type { ChannelType } from "@chatbotx.io/database/partials"
-
-/**
- * Channels the dashboard's "Get Link" dialog leaves out
- * (`features/inboxes/components/get-inbox-url.tsx`): SMTP has no chat link
- * and `tiktok.me` is not a real host.
- */
-const SKIPPED_CHANNELS: ChannelType[] = ["smtp", "tiktok"]
+import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
 
 export type ReflinkChannelLink = {
   inboxId: string
@@ -20,26 +20,49 @@ export type ReflinkChannelLink = {
 /**
  * The per-channel "open chat" links the dashboard's Copy URL dialog shows
  * for a ref link, e.g. `https://m.me/<pageId>?ref=<name>`. Loads the
- * workspace's inboxes and tenant app URL once, then returns a builder to
+ * workspace's inboxes and tenant settings once, then returns a builder to
  * apply per ref link, so a list page costs two queries, not two per row.
+ * The loaded tenant comes back too, so callers that also need branding do
+ * not resolve it a second time.
+ * Connected inboxes only — the same set the dashboard lists — so a
+ * disconnected inbox never leaks a dead link into the API or chat widget.
+ * Threads and TikTok have no chat link, so they get their public profile
+ * (no ref) — unlike the dashboard's Get Link dialog, which leaves them out.
  */
 export async function createReflinkLinkBuilder(workspaceId: string) {
-  const [{ appUrl }, inboxes] = await Promise.all([
+  const [tenant, { data: inboxes }] = await Promise.all([
     resolveTenantSettings({ workspaceId }),
-    inboxService.listWithIntegrationsByWorkspace(workspaceId),
+    inboxService.listAllConnectedByWorkspace({
+      workspaceId,
+      includes: ["integration"],
+    }),
   ])
-  const linkable = inboxes.filter(
-    (inbox) => !SKIPPED_CHANNELS.includes(inbox.channel as ChannelType),
+  // The response schema widens enum columns to string; the rows are the
+  // same `InboxWithIntegrations` the get-link dialog casts to on the client.
+  const linkable = (inboxes as InboxWithIntegrations[]).filter(
+    (inbox) =>
+      isLinkableChannel(inbox.channel as ChannelType) ||
+      isProfileLinkChannel(inbox.channel as ChannelType),
   )
 
-  return (name: string): ReflinkChannelLink[] =>
-    getInboxLinks(appUrl, linkable, { type: "reflink", name }).map(
-      ({ inbox, url }) => ({
-        inboxId: inbox.id,
-        inboxName: inbox.name,
-        channel: inbox.channel as ChannelType,
-        url,
-        receivesRef: canReceiveRef(inbox.channel as ChannelType),
-      }),
-    )
+  const buildLinks = (name: string): ReflinkChannelLink[] =>
+    linkable.flatMap((inbox) => {
+      const url = isProfileLinkChannel(inbox.channel as ChannelType)
+        ? buildInboxProfileLink(inbox)
+        : buildInboxLink(tenant.appUrl, inbox, { type: "reflink", name })
+      if (!url) {
+        return []
+      }
+      return [
+        {
+          inboxId: inbox.id,
+          inboxName: inbox.name,
+          channel: inbox.channel as ChannelType,
+          url,
+          receivesRef: canReceiveRef(inbox.channel as ChannelType),
+        },
+      ]
+    })
+
+  return { tenant, buildLinks }
 }

@@ -306,7 +306,10 @@ export const connectSessionExpiredException = (
  * access_denied`) — not an actual session expiry. Kept distinct from
  * {@link connectSessionExpiredException} so the `/select` page can redirect
  * back quietly (no `?error=` toast) instead of surfacing the generic
- * "Your session expired" message for a plain user cancel.
+ * "Your session expired" message for a plain user cancel. See
+ * `apps/builder/src/features/channel-connect/lib/select-page.tsx`'s
+ * `connectSessionCancelled` branch for why it never follows
+ * `ConnectSession.returnUrl` on this path.
  */
 export const connectSessionCancelledException = () =>
   new ChatbotXException(

@@ -29,6 +29,7 @@
     "./error-log": "./src/error-log/index.ts",
     "./error-log-columns": "./src/error-log/columns.ts",
     "./get-user-data": "./src/get-user-data/index.ts",
+    "./import": "./src/import/index.ts",
     "./inbox/connect-outcome": "./src/inbox/connect-outcome.ts",
     "./inbox/connect-outcome-types": "./src/inbox/connect-outcome-types.ts",
     "./inbox/schema": "./src/inbox/schema.ts",

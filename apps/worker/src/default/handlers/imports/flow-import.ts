@@ -2,9 +2,9 @@ import {
   botFieldService,
   customFieldService,
   flowService,
-  importService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { importService } from "@chatbotx.io/business/import"
 import { flowImportMetaSchema } from "@chatbotx.io/database/partials"
 import { uploader } from "@chatbotx.io/filesystem"
 import {

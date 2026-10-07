@@ -8,8 +8,15 @@ export const tagResource = createSelectSchema(tagModel, {
 })
 export type TagResource = z.infer<typeof tagResource>
 
-export const publicTagResource = tagResource.pick({
-  id: true,
-  name: true,
-})
+export const publicTagResource = tagResource
+  .pick({
+    id: true,
+    name: true,
+  })
+  .extend({
+    folderId: z
+      .string()
+      .nullable()
+      .describe("Folder the tag is in, or null when it is at the root."),
+  })
 export type PublicTagResource = z.infer<typeof publicTagResource>

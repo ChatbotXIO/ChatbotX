@@ -154,6 +154,18 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // The ref link embed code points at this one unversioned URL, so an
+      // update must reach visitors on their next page view. Browsers
+      // revalidate every load (a cheap 304 via ETag) instead of keeping the
+      // 4-hour copy a CDN would otherwise hand out; the CDN itself holds it
+      // only briefly.
+      {
+        source: "/chat-widget/ref-widget.js",
+        headers: [
+          { key: "Cache-Control", value: "public, no-cache" },
+          { key: "CDN-Cache-Control", value: "public, max-age=60" },
+        ],
+      },
     ]
   },
   allowedDevOrigins: [

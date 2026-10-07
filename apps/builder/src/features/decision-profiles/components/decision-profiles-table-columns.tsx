@@ -19,8 +19,15 @@ import type { ColumnDef, Row } from "@tanstack/react-table"
 import { EllipsisVerticalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
+import { decisionProfileStoredContractSchema } from "../schema/form"
 import type { DecisionProfileListItem } from "../schema/resource"
 import { DecisionProfileStatusSwitch } from "./decision-profile-status-switch"
+
+const decisionTypeLabelKey = {
+  choice: "decision.resultValues.choice",
+  noul: "decision.resultValues.noul",
+  score: "decision.resultValues.score",
+} as const
 
 export type DecisionProfileDataTableRowAction = {
   row: Row<DecisionProfileListItem>
@@ -95,6 +102,20 @@ export function getDecisionProfileColumns({
       enableColumnFilter: true,
       enableHiding: false,
       enableSorting: true,
+    },
+    {
+      id: "type",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t("decision.result")} />
+      ),
+      cell: ({ row }) => {
+        const question = decisionProfileStoredContractSchema.parse(
+          row.original.contract,
+        ).questions[0]
+        return question ? t(decisionTypeLabelKey[question.type]) : ""
+      },
+      enableHiding: false,
+      enableSorting: false,
     },
     {
       accessorKey: "status",

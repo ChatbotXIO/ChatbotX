@@ -7,17 +7,6 @@ type WorkspaceIntegrationRef = {
   workspaceId: string
 }
 
-type InsertIntegrationApiInput = {
-  id: string
-  inboxId: string
-  workspaceId: string
-  name: string
-  auth: typeof integrationApiModel.$inferInsert.auth
-  tokenHash: string
-  tokenPrefix: string
-  callbackUrl: string | null
-}
-
 type UpdateIntegrationApiSettingsInput = WorkspaceIntegrationRef & {
   name?: string
   callbackUrl?: string | null
@@ -77,28 +66,6 @@ export const integrationApiRepository = {
       where: { workspaceId },
       orderBy: { createdAt: "desc" },
     })
-  },
-
-  async insert(
-    input: InsertIntegrationApiInput,
-    tx: DatabaseClient = db,
-  ): Promise<IntegrationApiModel> {
-    const [row] = await tx
-      .insert(integrationApiModel)
-      .values({
-        id: input.id,
-        inboxId: input.inboxId,
-        workspaceId: input.workspaceId,
-        name: input.name,
-        auth: input.auth,
-        tokenHash: input.tokenHash,
-        tokenPrefix: input.tokenPrefix,
-        callbackUrl: input.callbackUrl,
-        enabled: true,
-      })
-      .returning()
-
-    return row
   },
 
   async updateSettings(

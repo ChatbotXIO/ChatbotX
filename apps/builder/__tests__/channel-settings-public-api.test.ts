@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-type RouteConfig = { method: string; path: string }
+type RouteConfig = { method: string; path: string; successStatus?: number }
 
 type CapturedProcedure = {
   route: RouteConfig
@@ -60,10 +60,12 @@ vi.mock("@/features/channel-integrations/api/public", () => ({
 }))
 
 const updateMessenger = vi.fn()
+const patchMessengerSettings = vi.fn()
 vi.mock(
   "@/features/integration-messenger/lib/update-messenger-settings",
   () => ({
     updateMessenger,
+    patchMessengerSettings,
   }),
 )
 const findIntegrationMessenger = vi.fn()
@@ -71,16 +73,33 @@ vi.mock("@/features/integration-messenger/queries", () => ({
   findIntegrationMessenger,
 }))
 const updateInstagram = vi.fn()
+const patchInstagramSettings = vi.fn()
 vi.mock(
   "@/features/integration-instagram/lib/update-instagram-settings",
   () => ({
     updateInstagram,
+    patchInstagramSettings,
   }),
 )
 const findIntegrationInstagram = vi.fn()
 vi.mock("@/features/integration-instagram/queries", () => ({
   findIntegrationInstagram,
 }))
+
+const disconnectMessenger = vi.fn()
+vi.mock(
+  "@/features/integration-messenger/actions/disconnect-messenger",
+  () => ({
+    disconnectMessenger,
+  }),
+)
+const disconnectInstagram = vi.fn()
+vi.mock(
+  "@/features/integration-instagram/actions/disconnect-instagram",
+  () => ({
+    disconnectInstagram,
+  }),
+)
 
 await import("@/features/integration-messenger/api/public")
 await import("@/features/integration-instagram/api/public")
@@ -155,6 +174,107 @@ describe.each([
       { workspaceId: "workspace-1", id: "ch-1" },
       { ...settings, ...extra },
     )
+  })
+})
+
+describe("PATCH /v1/{messenger,instagram}-channels/{id}/settings", () => {
+  test.each([
+    ["messenger-channels", patchMessengerSettings],
+    ["instagram-channels", patchInstagramSettings],
+  ] as const)("%s sends only the given fields to the locked partial writer", async (resource, patch) => {
+    await findProcedure("PATCH", `/v1/${resource}/{id}/settings`).handler?.({
+      context,
+      input: { id: "ch-1", welcomeFlowId: null },
+    })
+
+    expect(patch).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", id: "ch-1" },
+      expect.objectContaining({ welcomeFlowId: null }),
+    )
+  })
+
+  test("a Messenger persona needs only a name and a picture URL", async () => {
+    await findProcedure(
+      "PATCH",
+      "/v1/messenger-channels/{id}/settings",
+    ).handler?.({
+      context,
+      input: {
+        id: "ch-1",
+        personas: [
+          {
+            name: "Ann",
+            profilePictureUrl: "https://x.io/a.png",
+            isDefault: true,
+          },
+        ],
+      },
+    })
+
+    expect(patchMessengerSettings.mock.calls[0]?.[1].personas).toEqual([
+      {
+        id: "",
+        name: "Ann",
+        isDefault: true,
+        profilePicture: {
+          id: expect.any(String),
+          url: "https://x.io/a.png",
+          mode: "url",
+        },
+      },
+    ])
+  })
+
+  test("PUT also accepts profilePictureUrl personas", async () => {
+    await findProcedure(
+      "PUT",
+      "/v1/messenger-channels/{id}/settings",
+    ).handler?.({
+      context,
+      input: {
+        id: "ch-1",
+        ...settings,
+        personas: [
+          {
+            id: "p-1",
+            name: "Ann",
+            profilePictureUrl: "https://x.io/a.png",
+            isDefault: false,
+          },
+        ],
+      },
+    })
+
+    expect(updateMessenger.mock.calls[0]?.[1].personas[0]).toMatchObject({
+      id: "p-1",
+      profilePicture: { url: "https://x.io/a.png", mode: "url" },
+    })
+  })
+})
+
+describe("DELETE /v1/{messenger,instagram}-channels/{id}", () => {
+  test("Messenger disconnect runs the builder's disconnect in the token workspace", async () => {
+    const procedure = findProcedure("DELETE", "/v1/messenger-channels/{id}")
+    expect(procedure.route.successStatus).toBe(204)
+
+    await procedure.handler?.({ context, input: { id: "ch-1" } })
+
+    expect(disconnectMessenger).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "ch-1",
+    })
+  })
+
+  test("Instagram disconnect runs the builder's disconnect in the token workspace", async () => {
+    const procedure = findProcedure("DELETE", "/v1/instagram-channels/{id}")
+    expect(procedure.route.successStatus).toBe(204)
+
+    await procedure.handler?.({ context, input: { id: "ig-1" } })
+
+    expect(disconnectInstagram).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      integrationInstagramId: "ig-1",
+    })
   })
 })
 

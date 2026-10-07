@@ -2,6 +2,7 @@
   "actions": {
     "copy": "Copy",
     "copyUrl": "Copy URL",
+    "chatWidget": "Chat Widget",
     "actions": "Actions",
     "add": "Add",
     "addVariable": "Add Variable",
@@ -3686,6 +3687,7 @@
     "cancelEdit": "Cancel",
     "replaceAttachment": "Replace attachment",
     "addAttachment": "Add attachment",
+    "reloadAttachment": "Reload attachment",
     "failedToCopy": "Failed to copy",
     "failedToPreviewImage": "Failed to preview image",
     "loadingData": "Loading data...",
@@ -4737,7 +4739,27 @@
   },
   "reflinks": {
     "title": "Entry Point Links",
-    "description": "Keyword links that start flows and capture ref payloads from channels."
+    "description": "Keyword links that start flows and capture ref payloads from channels.",
+    "chatWidget": {
+      "title": "Chat Widget",
+      "description": "Show buttons for your chat channels on your website. A visitor clicks one to start a chat and run this ref link's flow.",
+      "authorizedDomains": {
+        "label": "Authorized Domains",
+        "placeholder": "example.com",
+        "description": "Only these domains and their subdomains can show the widget. Leave empty to allow any website.",
+        "invalid": "These are not valid domains: {domains}. Enter a domain only, like example.com."
+      },
+      "channels": {
+        "label": "Channels",
+        "description": "Turn a channel off to hide it from the widget.",
+        "empty": "No channel with a chat link is connected yet.",
+        "profileLinkOnly": "Opens the profile page — the ref link's flow does not run."
+      },
+      "preview": "Preview",
+      "embedCodeDescription": "Paste this code before the closing body tag of your website. Saved changes apply automatically, no need to paste it again.",
+      "savedSuccess": "Chat widget settings saved",
+      "poweredBy": "by"
+    }
   },
   "qrCodes": {
     "title": "QR Codes",

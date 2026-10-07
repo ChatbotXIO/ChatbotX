@@ -28,7 +28,8 @@ type Translate = (
  */
 export function mapThreadControlError(
   error: unknown,
-  action: ThreadControlAction,
+  // `sync` only reads the owner, so it is never a refused take.
+  action: ThreadControlAction | "sync",
   t: Translate,
 ): ThreadControlRefusal {
   if (error instanceof ThreadControlUnsupportedError) {

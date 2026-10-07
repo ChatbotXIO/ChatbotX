@@ -13115,19 +13115,6 @@
       "table": "DecisionProfile"
     },
     {
-      "type": "DecisionProviderKind",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "providerKind",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "DecisionProfile"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -13140,8 +13127,8 @@
       "schema": "public",
       "table": "DecisionProfile"
     },
-    {
-      "type": "jsonb",
+  {
+    "type": "jsonb",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -13151,8 +13138,21 @@
       "name": "contract",
       "entityType": "columns",
       "schema": "public",
-      "table": "DecisionProfile"
-    },
+    "table": "DecisionProfile"
+  },
+  {
+    "type": "jsonb",
+    "typeSchema": null,
+    "notNull": false,
+    "dimensions": 0,
+    "default": null,
+    "generated": null,
+    "identity": null,
+    "name": "thresholdConfig",
+    "entityType": "columns",
+    "schema": "public",
+    "table": "DecisionProfile"
+  },
     {
       "type": "bigint",
       "typeSchema": null,
@@ -30173,11 +30173,11 @@
       "schema": "public",
       "table": "ShardTimeRange"
     },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "workspaceId",
+  {
+    "nameExplicit": true,
+    "columns": [
+      {
+        "value": "workspaceId",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -35057,9 +35057,30 @@
       "concurrently": false,
       "name": "DecisionProfile_workspaceId_idx",
       "entityType": "indexes",
-      "schema": "public",
-      "table": "DecisionProfile"
-    },
+    "schema": "public",
+    "table": "DecisionProfile"
+  },
+  {
+    "nameExplicit": true,
+    "columns": [
+      {
+        "value": "connectionId",
+        "isExpression": false,
+        "asc": true,
+        "nullsFirst": false,
+        "opclass": null
+      }
+    ],
+    "isUnique": false,
+    "where": null,
+    "with": "",
+    "method": "btree",
+    "concurrently": false,
+    "name": "DecisionProfile_connectionId_idx",
+    "entityType": "indexes",
+    "schema": "public",
+    "table": "DecisionProfile"
+  },
     {
       "nameExplicit": true,
       "columns": [

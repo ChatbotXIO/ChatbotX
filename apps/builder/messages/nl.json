@@ -3,6 +3,7 @@
     "retry": "Opnieuw proberen",
     "copy": "Kopiëren",
     "copyUrl": "URL kopiëren",
+    "chatWidget": "Chatwidget",
     "actions": "Acties",
     "add": "Toevoegen",
     "addVariable": "Variabele toevoegen",
@@ -3444,6 +3445,7 @@
     "cancelEdit": "Annuleren",
     "replaceAttachment": "Bijlage vervangen",
     "addAttachment": "Bijlage toevoegen",
+    "reloadAttachment": "Bijlage opnieuw laden",
     "failedToCopy": "Kopiëren is mislukt",
     "failedToPreviewImage": "Voorbeeld van afbeelding laden is mislukt",
     "loadingData": "Gegevens laden...",
@@ -4495,7 +4497,27 @@
   },
   "reflinks": {
     "title": "Toegangspuntlinks",
-    "description": "Trefwoordlinks die flows starten en ref-payloads van kanalen vastleggen."
+    "description": "Trefwoordlinks die flows starten en ref-payloads van kanalen vastleggen.",
+    "chatWidget": {
+      "title": "Chatwidget",
+      "description": "Toon knoppen voor je chatkanalen op je website. Een bezoeker klikt erop om een chat te starten en de flow van deze ref-link uit te voeren.",
+      "authorizedDomains": {
+        "label": "Toegestane domeinen",
+        "placeholder": "example.com",
+        "description": "Alleen deze domeinen en hun subdomeinen kunnen de widget tonen. Laat leeg om elke website toe te staan.",
+        "invalid": "Deze domeinen zijn ongeldig: {domains}. Voer alleen een domein in, zoals example.com."
+      },
+      "channels": {
+        "label": "Kanalen",
+        "description": "Zet een kanaal uit om het in de widget te verbergen.",
+        "empty": "Er is nog geen kanaal met een chatlink gekoppeld.",
+        "profileLinkOnly": "Opent de profielpagina — de flow van de ref-link wordt niet uitgevoerd."
+      },
+      "preview": "Voorbeeld",
+      "embedCodeDescription": "Plak deze code vóór de afsluitende body-tag van je website. Opgeslagen wijzigingen worden automatisch toegepast, opnieuw plakken is niet nodig.",
+      "savedSuccess": "Instellingen van chatwidget opgeslagen",
+      "poweredBy": "door"
+    }
   },
   "qrCodes": {
     "title": "QR-codes",

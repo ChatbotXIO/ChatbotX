@@ -7,8 +7,10 @@ import {
 } from "@chatbotx.io/database/client"
 import { contactCustomFieldRepository } from "@chatbotx.io/database/repositories"
 import { contactCustomFieldModel } from "@chatbotx.io/database/schema"
-import { emitCustomFieldChanged } from "@chatbotx.io/events"
-import type { DecisionFlowOrigin } from "@chatbotx.io/events"
+import {
+  type DecisionFlowOrigin,
+  emitCustomFieldChanged,
+} from "@chatbotx.io/events"
 import {
   FieldOperationType,
   FieldReferenceKind,
@@ -356,11 +358,10 @@ class ContactCustomFieldService extends BaseService {
       operation: FieldOperationType
       value: string
     }>
-    /** Caller's IANA zone, anchoring naive `date` values to its calendar day. */
     sourceTimezone?: string
     accessScope?: ContactAccessScope
   }): Promise<void> {
-    const { workspaceId, contactId, operations, accessScope, sourceTimezone } =
+    const { workspaceId, contactId, operations, sourceTimezone, accessScope } =
       input
 
     const persistedByContact = await db.transaction(async (tx) => {
@@ -402,7 +403,6 @@ class ContactCustomFieldService extends BaseService {
     contactId: string
     customFieldId: string
     value: string
-    /** Caller's IANA zone, anchoring a naive `date` to its calendar day. */
     sourceTimezone?: string
     accessScope?: ContactAccessScope
   }) {
@@ -652,7 +652,13 @@ class ContactCustomFieldService extends BaseService {
   async emitCustomFieldChanges(
     input: EmitCustomFieldChangesInput,
   ): Promise<void> {
-    const { workspaceId, contactId, changes, contactInboxId, decisionFlowOrigin } = input
+    const {
+      workspaceId,
+      contactId,
+      changes,
+      contactInboxId,
+      decisionFlowOrigin,
+    } = input
 
     for (const change of changes) {
       emitCustomFieldChanged(

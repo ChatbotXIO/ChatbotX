@@ -1,7 +1,5 @@
 import type * as schema from "./schema"
 
-export type ConnectionModel = typeof schema.connectionModel.$inferSelect
-export type ConnectSessionModel = typeof schema.connectSessionModel.$inferSelect
 export type IntegrationWebchatModel =
   typeof schema.integrationWebchatModel.$inferSelect
 export type IntegrationApiModel = typeof schema.integrationApiModel.$inferSelect
@@ -43,9 +41,6 @@ export type TagChannelModel = typeof schema.tagChannelModel.$inferSelect
 export type ContactToTagChannelModel =
   typeof schema.contactToTagChannelModel.$inferSelect
 export type FlowVersionModel = typeof schema.flowVersionModel.$inferSelect
-export type DecisionConnectionModel =
-  typeof schema.decisionConnectionModel.$inferSelect
-export type DecisionProfileModel = typeof schema.decisionProfileModel.$inferSelect
 export type InvitationModel = typeof schema.invitationModel.$inferSelect
 export type BroadcastModel = typeof schema.broadcastModel.$inferSelect
 export type BroadcastTargetModel =
@@ -57,6 +52,8 @@ export type WorkspaceApiTokenModel =
 export type UserQuotaModel = typeof schema.userQuotaModel.$inferSelect
 export type WorkspaceUsageModel = typeof schema.workspaceUsageModel.$inferSelect
 export type ContactModel = typeof schema.contactModel.$inferSelect
+export type ConnectionModel = typeof schema.connectionModel.$inferSelect
+export type ConnectSessionModel = typeof schema.connectSessionModel.$inferSelect
 export type ConversationModel = typeof schema.conversationModel.$inferSelect
 export type CouponTopicModel = typeof schema.couponTopicModel.$inferSelect
 export type CouponModel = typeof schema.couponModel.$inferSelect
@@ -123,6 +120,10 @@ export type ContactCustomFieldModel =
   typeof schema.contactCustomFieldModel.$inferSelect
 export type WorkspaceModel = typeof schema.workspaceModel.$inferSelect
 export type CustomDomainModel = typeof schema.customDomainModel.$inferSelect
+export type DecisionConnectionModel =
+  typeof schema.decisionConnectionModel.$inferSelect
+export type DecisionProfileModel =
+  typeof schema.decisionProfileModel.$inferSelect
 export type TenantModel = typeof schema.tenantModel.$inferSelect
 export type TenantHelpItemModel = typeof schema.tenantHelpItemModel.$inferSelect
 export type PlatformCredentialModel =

@@ -1,4 +1,4 @@
-import { importService } from "@chatbotx.io/business"
+import { importService } from "@chatbotx.io/business/import"
 import type { ProductImportMeta } from "@chatbotx.io/database/partials"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 
@@ -11,7 +11,8 @@ export const startProductImportJob = async (input: {
   workspaceId: string
   userId: string | null
   fileId: string
-  format: "csv" | "xlsx"
+  /** Omitted: taken from the uploaded file. */
+  format?: "csv" | "xlsx"
   meta: ProductImportMeta
 }): Promise<{ importId: string }> => {
   const row = await importService.startProductImport(input)

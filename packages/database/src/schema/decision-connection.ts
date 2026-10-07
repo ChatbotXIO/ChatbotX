@@ -9,12 +9,12 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 import {
-  decisionConnectionStatuses,
-  decisionConnectionTestStatuses,
-  decisionProviderKinds,
   type DecisionConnectionStatus,
   type DecisionConnectionTestStatus,
   type DecisionProviderKind,
+  decisionConnectionStatuses,
+  decisionConnectionTestStatuses,
+  decisionProviderKinds,
 } from "../partials/decision"
 import {
   bigintAsString,
@@ -25,7 +25,10 @@ import { workspaceModel } from "./workspace"
 
 export const decisionProviderKind = pgEnum(
   "DecisionProviderKind",
-  decisionProviderKinds.options as [DecisionProviderKind, ...DecisionProviderKind[]],
+  decisionProviderKinds.options as [
+    DecisionProviderKind,
+    ...DecisionProviderKind[],
+  ],
 )
 
 export const decisionConnectionStatus = pgEnum(

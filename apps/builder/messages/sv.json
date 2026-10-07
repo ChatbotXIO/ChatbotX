@@ -44,6 +44,7 @@
     "continue": "Fortsätt",
     "copy": "Kopiera",
     "copyUrl": "Kopiera URL",
+    "chatWidget": "Chattwidget",
     "create": "Skapa",
     "createFeature": "Skapa {feature}",
     "deactivate": "Inaktivera",
@@ -4242,6 +4243,7 @@
     "cancelEdit": "Avbryt",
     "replaceAttachment": "Ersätt bilaga",
     "addAttachment": "Lägg till bilaga",
+    "reloadAttachment": "Ladda om bilaga",
     "changeDefault": "Ändra standard",
     "changeDefaultDescription": "Är du säker på att du vill ändra standardagenten för AI?",
     "changeHideState": "Ändra dölj-status",
@@ -5158,7 +5160,27 @@
   },
   "reflinks": {
     "description": "Nyckelordslänkar som startar flöden och samlar in referensnyttolaster från kanaler.",
-    "title": "Länkar till startpunkter"
+    "title": "Länkar till startpunkter",
+    "chatWidget": {
+      "title": "Chattwidget",
+      "description": "Visa knappar för dina chattkanaler på din webbplats. En besökare klickar på en för att starta en chatt och köra den här ref-länkens flöde.",
+      "authorizedDomains": {
+        "label": "Godkända domäner",
+        "placeholder": "example.com",
+        "description": "Endast dessa domäner och deras underdomäner kan visa widgeten. Lämna tomt för att tillåta alla webbplatser.",
+        "invalid": "Dessa domäner är ogiltiga: {domains}. Ange bara en domän, t.ex. example.com."
+      },
+      "channels": {
+        "label": "Kanaler",
+        "description": "Stäng av en kanal för att dölja den i widgeten.",
+        "empty": "Ingen kanal med chattlänk är ansluten ännu.",
+        "profileLinkOnly": "Öppnar profilsidan – ref-länkens flöde körs inte."
+      },
+      "preview": "Förhandsgranskning",
+      "embedCodeDescription": "Klistra in koden före den avslutande body-taggen på din webbplats. Sparade ändringar tillämpas automatiskt, du behöver inte klistra in den igen.",
+      "savedSuccess": "Inställningar för chattwidget sparade",
+      "poweredBy": "av"
+    }
   },
   "sendGrid": {
     "acceptedLimitation": "SendGrid tar emot kontaktuppdateringar för asynkron bearbetning. Godkända uppdateringar kan fortfarande misslyckas senare.",

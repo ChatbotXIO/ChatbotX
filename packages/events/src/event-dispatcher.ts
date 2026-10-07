@@ -1,5 +1,4 @@
 import type { ContactInfoType } from "@chatbotx.io/database/partials"
-import type { DecisionFlowOrigin } from "./decision-flow-lineage"
 import type {
   BaseEventEmitter,
   CallEndedMetadata,
@@ -7,6 +6,7 @@ import type {
   CallTranscribedMetadata,
   IncomingCallMetadata,
 } from "./base-emitter"
+import type { DecisionFlowOrigin } from "./decision-flow-lineage"
 import { logger } from "./logger"
 import { TriggerEventEmitter } from "./trigger/emitter"
 import { WebhookEventEmitter } from "./webhook/emitter"

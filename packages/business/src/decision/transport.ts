@@ -124,10 +124,7 @@ export const postDecisionRequest = async (input: {
     })
     const response = await client.post(endpoint, {
       headers: { authorization: `Bearer ${input.authorization}` },
-      json:
-        input.providerKind === "openrouterDecision"
-          ? toOpenRouterDecisionRequest(input.body)
-          : input.body,
+      json: formatDecisionRequestBody(input),
     })
 
     if (response.status >= 300 && response.status < 400) {
@@ -144,7 +141,15 @@ export const postDecisionRequest = async (input: {
   }
 }
 
-const toOpenRouterDecisionRequest = (body: object): object => {
+export const formatDecisionRequestBody = (input: {
+  body: object
+  providerKind: "systemOneCompatible" | "typesafe" | "openrouterDecision"
+}): object =>
+  input.providerKind === "systemOneCompatible"
+    ? input.body
+    : toCriteriaDecisionRequest(input.body)
+
+const toCriteriaDecisionRequest = (body: object): object => {
   const request = body as {
     questions?: Record<string, Record<string, unknown>>
   }

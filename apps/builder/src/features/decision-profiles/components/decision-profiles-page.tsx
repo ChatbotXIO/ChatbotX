@@ -8,6 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@chatbotx.io/ui/components/ui/dialog"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
@@ -71,14 +77,24 @@ export function DecisionProfilesPage({ promises, workspaceId }: Props) {
             />
           </DataTableToolbar>
         </DataTable>
-        <ProfileEditor
-          connections={connections}
-          key={rowAction?.row.original.id ?? "new"}
-          onOpenChange={() => setRowAction(null)}
+        <Dialog
+          onOpenChange={(open) => !open && setRowAction(null)}
           open={rowAction?.variant === "update"}
-          profile={rowAction?.row.original}
-          showTrigger={false}
-        />
+        >
+          <DialogContent className="max-h-screen overflow-y-auto sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{t("decision.editProfile")}</DialogTitle>
+            </DialogHeader>
+            {rowAction?.row.original && (
+              <ProfileEditor
+                connections={connections}
+                key={rowAction.row.original.id}
+                onClose={() => setRowAction(null)}
+                profile={rowAction.row.original}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
         <DeleteDecisionProfilesDialog
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => rowAction?.row.toggleSelected(false)}

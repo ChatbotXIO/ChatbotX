@@ -117,7 +117,12 @@ export const listContactInboxesAudiencePreviewResponse = z.object({
 
 export const contactResponse = contactResource.and(
   z.object({
-    contactCustomFields: z.array(contactCustomFieldResource).optional(),
+    contactCustomFields: z
+      .array(contactCustomFieldResource)
+      .optional()
+      .describe(
+        "Stored values keyed by `customFieldId`, without field names or types. Use `contacts.listCustomFields` for each value with its field's name and type.",
+      ),
     tags: z.array(tagResource).optional(),
     contactNotes: z.array(contactNoteResource).optional(),
     contactInboxes: z

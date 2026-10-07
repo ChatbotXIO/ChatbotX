@@ -9,13 +9,11 @@ import {
 import {
   type DecisionProfileContractJson,
   type DecisionProfileStatus,
+  type DecisionProfileThresholdConfigJson,
   decisionProfileStatuses,
 } from "../partials/decision"
 import { bigintAsString, sharedColumns } from "../partials/shared"
-import {
-  decisionConnectionModel,
-  decisionProviderKind,
-} from "./decision-connection"
+import { decisionConnectionModel } from "./decision-connection"
 import { workspaceModel } from "./workspace"
 
 export const decisionProfileStatus = pgEnum(
@@ -46,12 +44,13 @@ export const decisionProfileModel = pgTable(
         onDelete: "restrict",
         onUpdate: "cascade",
       }),
-    providerKind: decisionProviderKind().notNull(),
     model: text().notNull(),
     contract: jsonb().$type<DecisionProfileContractJson>().notNull(),
+    thresholdConfig: jsonb().$type<DecisionProfileThresholdConfigJson>(),
   },
   (table) => [
     index("DecisionProfile_workspaceId_idx").on(table.workspaceId),
+    index("DecisionProfile_connectionId_idx").on(table.connectionId),
     uniqueIndex("DecisionProfile_workspaceId_name_key").on(
       table.workspaceId,
       table.name,

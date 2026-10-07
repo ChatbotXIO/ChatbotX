@@ -36,7 +36,8 @@ export const evaluateDecisionFieldMappingSchema = z
     ) {
       ctx.addIssue({
         code: "custom",
-        message: "Decision mapping value is incompatible with custom field type",
+        message:
+          "Decision mapping value is incompatible with custom field type",
         path: ["customFieldType"],
       })
     }
@@ -59,15 +60,16 @@ export type EvaluateDecisionStepSchema = z.infer<
   typeof evaluateDecisionStepSchema
 >
 
-export const evaluateDecisionStepDefaultFn = (): EvaluateDecisionStepSchema => ({
-  fieldMappings: [],
-  id: createId(),
-  input: "currentMessage",
-  profileId: "",
-  states: [
-    successStateDefaultFn(),
-    skipStateDefaultFn(),
-    errorStateDefaultFn(),
-  ],
-  stepType: stepTypes.enum.evaluateDecision,
-})
+export const evaluateDecisionStepDefaultFn =
+  (): EvaluateDecisionStepSchema => ({
+    fieldMappings: [],
+    id: createId(),
+    input: "currentMessage",
+    profileId: "",
+    states: [
+      successStateDefaultFn(),
+      skipStateDefaultFn(),
+      errorStateDefaultFn(),
+    ],
+    stepType: stepTypes.enum.evaluateDecision,
+  })

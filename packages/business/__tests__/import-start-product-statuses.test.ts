@@ -37,4 +37,18 @@ describe("importService.startProductImport error statuses", () => {
       { code: "productImportFileTypeInvalid", httpStatusCode: 422 },
     )
   })
+
+  test("a format that does not match the file is a 422", async () => {
+    vi.spyOn(importService, "findFile").mockResolvedValue({
+      id: "f1",
+      subType: "products",
+      fileName: "items.xlsx",
+      mimeType:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    } as never)
+
+    await expect(importService.startProductImport(input)).rejects.toMatchObject(
+      { code: "productImportFormatMismatch", httpStatusCode: 422 },
+    )
+  })
 })

@@ -23,6 +23,7 @@ import {
   integration as integrationInstagram,
 } from "@chatbotx.io/integration-instagram"
 import { integration as integrationInstagramFacebook } from "@chatbotx.io/integration-instagram-facebook"
+import { distributedLock } from "@chatbotx.io/redis"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { logger } from "@/lib/log"
 import { findIntegrationInstagram } from "../queries"
@@ -39,13 +40,63 @@ const collectFlowIds = (input: UpdateInstagramRequest): string[] => [
   ]),
 ]
 
+type InstagramSettingsRef = { workspaceId: string; id: string }
+
+const SETTINGS_LOCK_SECONDS = 60
+
+/**
+ * Serializes every settings write of one account (builder save, API replace
+ * and API partial update), so a partial update merges onto the latest saved
+ * settings.
+ */
+const withInstagramSettingsLock = <T>(id: string, fn: () => Promise<T>) =>
+  distributedLock.runExclusive({
+    key: `instagram-settings:${id}`,
+    timeoutInSeconds: SETTINGS_LOCK_SECONDS,
+    fn,
+  })
+
 /**
  * Saves an Instagram account's settings and pushes ice breakers / persistent
  * menu to Instagram. Plain function (no session) so the builder action and the
  * public API share it.
  */
-export const updateInstagram = async (
-  ctx: { workspaceId: string; id: string },
+export const updateInstagram = (
+  ctx: InstagramSettingsRef,
+  input: UpdateInstagramRequest,
+): Promise<void> =>
+  withInstagramSettingsLock(ctx.id, () => writeInstagramSettings(ctx, input))
+
+/** Changes only the given settings; the others keep their saved value. */
+export const patchInstagramSettings = (
+  ctx: InstagramSettingsRef,
+  changes: Partial<UpdateInstagramRequest>,
+): Promise<void> =>
+  withInstagramSettingsLock(ctx.id, async () =>
+    writeInstagramSettings(
+      ctx,
+      mergeInstagramSettings(await findIntegrationInstagram(ctx), changes),
+    ),
+  )
+
+/** The saved settings with the given (defined) changes applied. */
+export const mergeInstagramSettings = (
+  saved: Pick<
+    IntegrationInstagramModel,
+    "welcomeFlowId" | "conversationStarters" | "persistentMenus"
+  >,
+  changes: Partial<UpdateInstagramRequest>,
+): UpdateInstagramRequest => ({
+  welcomeFlowId: saved.welcomeFlowId,
+  conversationStarters: saved.conversationStarters,
+  persistentMenus: saved.persistentMenus,
+  ...(Object.fromEntries(
+    Object.entries(changes).filter(([, value]) => value !== undefined),
+  ) as Partial<UpdateInstagramRequest>),
+})
+
+const writeInstagramSettings = async (
+  ctx: InstagramSettingsRef,
   input: UpdateInstagramRequest,
 ): Promise<void> => {
   // Before the try: its catch collapses every error into a generic message,

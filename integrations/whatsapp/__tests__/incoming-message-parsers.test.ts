@@ -10,6 +10,9 @@ import {
 } from "../src/handlers/message/message-limits"
 import { logger } from "../src/lib/logger"
 
+// Channel-scoped storage key the received media must land under.
+const CHANNEL_MEDIA_KEY = /^public\/whatsapp\/ws-1\/int-1\/2026\/10\/06\//
+
 vi.mock("../src/lib/logger", () => ({
   logger: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
@@ -41,6 +44,7 @@ const buildProps = (message: Record<string, unknown>) =>
     ctx: {
       auth: { tokens: { accessToken: "test-token" } },
       storagePrefix: "workspace-1",
+      mediaStoragePrefix: "public/whatsapp/ws-1/int-1/2026/10/06",
     },
     data: {
       integrationType: "whatsapp",
@@ -129,7 +133,11 @@ describe("WhatsApp receiveMessage — media", () => {
     )
 
     expect(result.message?.attachments).toEqual([
-      expect.objectContaining({ fileType: "image", mimeType: "image/jpeg" }),
+      expect.objectContaining({
+        fileType: "image",
+        mimeType: "image/jpeg",
+        originPath: expect.stringMatching(CHANNEL_MEDIA_KEY),
+      }),
     ])
     expect(result.message?.text).toBe("Nice view")
   })

@@ -26,6 +26,16 @@ export const bulkAddTagsPublicRequest = bulkContactIdsPublicRequest.extend({
 })
 export type BulkAddTagsPublicRequest = z.infer<typeof bulkAddTagsPublicRequest>
 
+export const bulkRemoveTagsPublicRequest = bulkContactIdsPublicRequest.extend({
+  tags: z
+    .array(z.string().trim().min(1))
+    .min(1)
+    .max(20)
+    .describe(
+      "Tag names — not ids. Names that match no tag in this workspace are ignored.",
+    ),
+})
+
 export const bulkSubscribeSequencesPublicRequest =
   bulkContactIdsPublicRequest.extend({
     sequenceIds: z

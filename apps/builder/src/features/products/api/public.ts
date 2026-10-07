@@ -1,9 +1,14 @@
 import {
-  createImportUpload,
-  importService,
+  integrationMetaCatalogService,
   productService,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
+import {
+  createImportUpload,
+  importService,
+  resolveProductImportColumnMap,
+  suggestProductImportColumnMap,
+} from "@chatbotx.io/business/import"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { bulkUpdateIdsRequest } from "@/features/common/schema"
@@ -11,12 +16,12 @@ import { peekImportHeadersForApi } from "@/features/import/lib/peek-import-heade
 import {
   getProductImportPublicRequest,
   importHeadersPublicRequest,
-  importHeadersPublicResponse,
   importTemplatePublicRequest,
   importUploadUrlPublicRequest,
   importUploadUrlPublicResponse,
   listContactImportsPublicRequest,
   listProductImportsPublicResponse,
+  productImportHeadersPublicResponse,
   productImportPublicResource,
   productImportTemplatePublicResponse,
 } from "@/features/import/schema/public"
@@ -28,8 +33,10 @@ import {
 } from "@/features/products/lib/product-import-template"
 import {
   possibleErrorsOnCreatingImportUpload,
+  possibleErrorsOnCreatingMetaCatalog,
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
+  possibleErrorsOnDisconnectingMetaCatalog,
   possibleErrorsOnFindingResource,
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
@@ -75,7 +82,7 @@ export const productsPublicRouter = {
       path: "/v1/products/meta-catalog",
       summary: "Get Meta Catalog connection",
       description:
-        "Returns the workspace's Meta Catalog connection (bound catalog, import progress, token status; never the credential) and the history of syncs and imports. `connection` is null until a catalog is connected in the builder. Connecting and disconnecting stay in the builder (they run Meta's OAuth).",
+        "Returns the workspace's Meta Catalog connection (bound catalog, import progress, token status; never the credential) and the history of syncs and imports. `connection` is null until a catalog is connected in the builder. Connecting stays in the builder (it runs Meta's OAuth); disconnect with `products.disconnectMetaCatalog`.",
       tags: ["Products"],
     })
     .output(metaCatalogStatePublicResponse)
@@ -83,6 +90,21 @@ export const productsPublicRouter = {
     .handler(async ({ context }) => {
       const state = await getMetaCatalogState(context.workspace.id)
       return metaCatalogStatePublicResponse.parse(state)
+    }),
+
+  disconnectMetaCatalog: workspaceTokenAuthAPI
+    .route({
+      method: "DELETE",
+      path: "/v1/products/meta-catalog",
+      summary: "Disconnect Meta Catalog",
+      description:
+        "Disconnects the workspace's Meta Catalog, as the Disconnect button in the builder does: the stored credential is dropped and products stop syncing to Meta. Products already in the workspace are kept. Returns 409 while a sync or import is running; a workspace without a connected catalog gets 204 too. Works on a trial-expired workspace.",
+      successStatus: 204,
+      tags: ["Products"],
+    })
+    .errors(possibleErrorsOnDisconnectingMetaCatalog)
+    .handler(async ({ context }) => {
+      await integrationMetaCatalogService.disconnect(context.workspace.id)
     }),
 
   listMetaCatalogBusinesses: workspaceTokenAuthAPI
@@ -107,13 +129,13 @@ export const productsPublicRouter = {
       path: "/v1/products/meta-catalog",
       summary: "Create Meta Catalog",
       description:
-        "Creates an empty catalog on Meta under the given Business Manager and binds it to the workspace. Nothing is imported; push products with `products.syncMetaCatalog`.",
+        "Creates an empty catalog on Meta under the given Business Manager and binds it to the workspace. Needs a Meta Catalog connection made in the builder (404 otherwise; check with `products.getMetaCatalog`). Nothing is imported; push products with `products.syncMetaCatalog`.",
       successStatus: 201,
       tags: ["Products"],
     })
     .input(createMetaCatalogPublicRequest)
     .output(metaCatalogConnectionPublicResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingMetaCatalog)
     .handler(async ({ context, input }) =>
       metaCatalogConnectionPublicResource.parse(
         await createAndBindMetaCatalog({
@@ -199,19 +221,23 @@ export const productsPublicRouter = {
       path: "/v1/products/imports/files/{fileId}/headers",
       summary: "Read product import file headers",
       description:
-        "Returns the column headers of an uploaded product import file so you can map columns before importing. Call `products.createImportUpload` and upload the file first.",
+        "Returns the column headers of an uploaded product import file and `suggestedColumnMap`, the columns recognised by name. Optional: `products.startImport` applies the same suggestion when `columnMap` is omitted. Call `products.createImportUpload` and upload the file first.",
       tags: ["Products"],
     })
     .input(importHeadersPublicRequest)
-    .output(importHeadersPublicResponse)
+    .output(productImportHeadersPublicResponse)
     .errors(possibleErrorsOnPeekingImportHeaders)
-    .handler(async ({ context, input }) => ({
-      headers: await peekImportHeadersForApi({
+    .handler(async ({ context, input }) => {
+      const headers = await peekImportHeadersForApi({
         workspaceId: context.workspace.id,
         fileId: input.fileId,
         type: "products",
-      }),
-    })),
+      })
+      return {
+        headers,
+        suggestedColumnMap: suggestProductImportColumnMap(headers),
+      }
+    }),
 
   createImportUpload: workspaceTokenAuthAPI
     .route({
@@ -242,7 +268,7 @@ export const productsPublicRouter = {
       path: "/v1/products/imports",
       summary: "Import products from file",
       description:
-        "Starts an asynchronous bulk import of products from an uploaded CSV or XLSX file. Flow: `products.getImportTemplate` for the format, `products.createImportUpload` to get a `fileId` and upload URL, upload the file, `products.peekImportHeaders` to read its columns, then call this with `fileId`, `format` and `columnMap` (product field to file column header; only `name` is required). Every row is inserted as a new product (importing the same file twice creates duplicates; use `products.update` to change existing products). A category named in the file that does not exist is created unless `createMissingCategories` is false, in which case that row fails. Failed rows are listed in `errorSample` of `products.getImport`. Returns an `importId` immediately; track it with `products.getImport`. Only one product import can run per workspace: while one is pending or processing this returns 409.",
+        "Starts an asynchronous bulk import of products from an uploaded CSV or XLSX file. Flow: `products.getImportTemplate` for the format, `products.createImportUpload` to get a `fileId` and upload URL, upload the file, then call this with `fileId`. `columnMap` (product field to file column header; only `name` is required) is optional: without it the columns are recognised by header name like the builder does (see `products.peekImportHeaders` `suggestedColumnMap`), and a file whose name column is not recognised is a 422 listing its headers. `format` is optional too and taken from the file. Every row is inserted as a new product (importing the same file twice creates duplicates; use `products.update` to change existing products). A category named in the file that does not exist is created unless `createMissingCategories` is false, in which case that row fails. Failed rows are listed in `errorSample` of `products.getImport`. Returns an `importId` immediately; track it with `products.getImport`. Only one product import can run per workspace: while one is pending or processing this returns 409.",
       successStatus: 201,
       tags: ["Products"],
     })
@@ -257,7 +283,11 @@ export const productsPublicRouter = {
           fileId: input.fileId,
           format: input.format,
           meta: {
-            columnMap: input.columnMap,
+            columnMap: await resolveProductImportColumnMap({
+              workspaceId: context.workspace.id,
+              fileId: input.fileId,
+              columnMap: input.columnMap,
+            }),
             createMissingCategories: input.createMissingCategories,
           },
         }),

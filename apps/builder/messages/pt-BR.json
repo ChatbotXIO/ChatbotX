@@ -3,6 +3,7 @@
     "retry": "Tentar novamente",
     "copy": "Copiar",
     "copyUrl": "Copiar URL",
+    "chatWidget": "Widget de chat",
     "actions": "Ações",
     "add": "Adicionar",
     "addVariable": "Adicionar variável",
@@ -3423,6 +3424,7 @@
     "cancelEdit": "Cancelar",
     "replaceAttachment": "Substituir anexo",
     "addAttachment": "Adicionar anexo",
+    "reloadAttachment": "Recarregar anexo",
     "failedToCopy": "Falha ao copiar",
     "failedToPreviewImage": "Falha ao visualizar a imagem",
     "loadingData": "Carregando dados...",
@@ -5380,7 +5382,27 @@
   },
   "reflinks": {
     "title": "Links de ponto de entrada",
-    "description": "Links de palavras-chave que iniciam fluxos e capturam cargas úteis de referência dos canais."
+    "description": "Links de palavras-chave que iniciam fluxos e capturam cargas úteis de referência dos canais.",
+    "chatWidget": {
+      "title": "Widget de chat",
+      "description": "Mostre botões dos seus canais de chat no seu site. O visitante clica em um para iniciar uma conversa e executar o fluxo deste link ref.",
+      "authorizedDomains": {
+        "label": "Domínios autorizados",
+        "placeholder": "example.com",
+        "description": "Somente estes domínios e seus subdomínios podem exibir o widget. Deixe vazio para permitir qualquer site.",
+        "invalid": "Estes domínios não são válidos: {domains}. Digite apenas o domínio, como example.com."
+      },
+      "channels": {
+        "label": "Canais",
+        "description": "Desative um canal para ocultá-lo do widget.",
+        "empty": "Nenhum canal com link de chat conectado ainda.",
+        "profileLinkOnly": "Abre a página de perfil — o fluxo do link ref não é executado."
+      },
+      "preview": "Pré-visualização",
+      "embedCodeDescription": "Cole este código antes da tag de fechamento body do seu site. As alterações salvas são aplicadas automaticamente, não é preciso colar de novo.",
+      "savedSuccess": "Configurações do widget de chat salvas",
+      "poweredBy": "por"
+    }
   },
   "qrCodes": {
     "title": "Códigos QR",

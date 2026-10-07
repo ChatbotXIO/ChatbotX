@@ -84,8 +84,10 @@ const broadcastService = {
   softDeleteBroadcasts: vi.fn(),
 }
 
+const resolveTemplateParams = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
   broadcastService,
+  resolveTemplateParams,
 }))
 
 await import("@/features/broadcasts/api/public")
@@ -196,6 +198,84 @@ describe("POST /v1/broadcasts", () => {
     expect(broadcastService.create).toHaveBeenCalledWith(
       expect.objectContaining({ saveAsDraft: true }),
     )
+  })
+})
+
+describe("templateParams on create and updateDraft", () => {
+  const nested = { body: [{ type: "text", text: "Ann" }] }
+
+  test("create stores the templateData built from templateParams", async () => {
+    resolveTemplateParams.mockResolvedValueOnce(nested)
+    broadcastService.create.mockResolvedValueOnce({ id: "b-1" })
+
+    await findProcedure("POST", "/v1/broadcasts").handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: {
+        channel: "whatsapp",
+        templateId: "t-1",
+        templateParams: { "body.1": "Ann" },
+      },
+    })
+
+    expect(resolveTemplateParams).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      templateId: "t-1",
+      values: { "body.1": "Ann" },
+      field: "templateParams",
+    })
+    const payload = broadcastService.create.mock.calls[0]?.[0]
+    expect(payload.templateData).toEqual(nested)
+    expect(payload).not.toHaveProperty("templateParams")
+  })
+
+  test("updateDraft resolves per-target templateParams", async () => {
+    resolveTemplateParams.mockResolvedValueOnce(nested)
+    broadcastService.updateDraft.mockResolvedValueOnce({
+      id: "b-1",
+      status: "draft",
+    })
+
+    await findProcedure("PUT", "/v1/broadcasts/{id}/draft").handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: {
+        id: "b-1",
+        channel: "whatsapp",
+        targets: [
+          {
+            inboxId: "1",
+            templateId: "t-1",
+            templateParams: { "body.1": "Ann" },
+          },
+        ],
+      },
+    })
+
+    expect(resolveTemplateParams).toHaveBeenCalledWith(
+      expect.objectContaining({ field: "targets.0.templateParams" }),
+    )
+    expect(
+      broadcastService.updateDraft.mock.calls[0]?.[0].data.targets,
+    ).toEqual([{ inboxId: "1", templateId: "t-1", templateData: nested }])
+  })
+
+  test("a template outside the workspace stops the create (declared 404)", async () => {
+    resolveTemplateParams.mockRejectedValueOnce(
+      Object.assign(new Error("Template not found"), { code: "notFound" }),
+    )
+
+    await expect(
+      findProcedure("POST", "/v1/broadcasts").handler?.({
+        context: { workspace: { id: "ws-1" } },
+        input: {
+          channel: "whatsapp",
+          templateId: "t-x",
+          templateParams: { "body.1": "Ann" },
+        },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+    expect(broadcastService.create).not.toHaveBeenCalled()
+    expect(possibleErrorsOnCreatingBroadcast).toHaveProperty("notFound")
   })
 })
 
@@ -546,6 +626,6 @@ describe("GET /v1/broadcasts/{id}/contacts", () => {
       page: 1,
       perPage: 20,
     })
-    expect(result).toEqual({ data: [row], pageCount: 1 })
+    expect(result).toEqual({ data: [row], total: 1, pageCount: 1 })
   })
 })

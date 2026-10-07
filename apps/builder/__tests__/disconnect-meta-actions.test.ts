@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => {
     instagramExists: vi.fn().mockResolvedValue(false),
     metaCapiDeleteByIntegration: vi.fn().mockResolvedValue(undefined),
     loggerWarn: vi.fn(),
+    loggerError: vi.fn(),
     messengerDisconnect: vi.fn().mockResolvedValue(undefined),
     messengerDisconnectSafe: vi.fn(() => false),
     messengerExists: vi.fn().mockResolvedValue(false),
@@ -106,6 +107,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/integration-messenger", () => ({
+  integration: { disconnect: mocks.messengerDisconnect },
   isDisconnectSafeError: mocks.messengerDisconnectSafe,
   isRevokedTokenError: vi.fn(() => false),
 }))
@@ -130,8 +132,11 @@ vi.mock("@/integration", () => ({
   integrations: {
     instagram: { disconnect: mocks.instagramDisconnect },
     instagramFacebook: { disconnect: mocks.instagramFacebookDisconnect },
-    messenger: { disconnect: mocks.messengerDisconnect },
   },
+}))
+
+vi.mock("@chatbotx.io/logger", () => ({
+  getChildLogger: () => ({ warn: mocks.loggerWarn, error: mocks.loggerError }),
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -297,19 +302,27 @@ describe("Meta disconnect actions", () => {
     expect(mocks.auditRecord).toHaveBeenCalled()
   })
 
-  test("messenger disconnect rethrows and skips teardown when the Graph error is not disconnect-safe", async () => {
+  test("messenger disconnect proceeds with local teardown and logs an error when the Graph error is not disconnect-safe", async () => {
     mocks.findOrFail.mockResolvedValueOnce(messengerRow)
     const graphError = new Error("(#4) Application request limit reached")
     mocks.messengerDisconnect.mockRejectedValueOnce(graphError)
     mocks.messengerDisconnectSafe.mockReturnValueOnce(false)
 
-    await expect(
-      disconnectMessenger({ workspaceId: "workspace-1", id: "messenger-1" }),
-    ).rejects.toBe(graphError)
+    await disconnectMessenger({ workspaceId: "workspace-1", id: "messenger-1" })
 
-    expect(mocks.dbTransaction).not.toHaveBeenCalled()
-    expect(mocks.connectionStateDisconnect).not.toHaveBeenCalled()
-    expect(mocks.auditRecord).not.toHaveBeenCalled()
+    expect(mocks.messengerDisconnectSafe).toHaveBeenCalledWith(graphError)
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ pageId: "page-1" }),
+      expect.stringContaining("proceeding with local database cleanup"),
+    )
+    expect(mocks.tx.delete).toHaveBeenCalled()
+    expect(mocks.connectionStateDisconnect).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      ownerId: "owner-1",
+      workspaceId: "workspace-1",
+      tx: mocks.tx,
+    })
+    expect(mocks.auditRecord).toHaveBeenCalled()
   })
 
   test("messenger disconnect records a disconnect audit event after the transaction resolves", async () => {

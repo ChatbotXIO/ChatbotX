@@ -10,6 +10,11 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { strictContactFilter } from "@/features/contacts/schema/public/crud"
 import { publicListRequest } from "@/lib/public-api/list"
+import {
+  broadcastTargetSchema,
+  createBroadcastFields,
+  withBroadcastRules,
+} from "./action"
 
 // `listBroadcastContactsRequest`/`Response` in `@chatbotx.io/analytics/schemas`
 // carry `workspaceId` (injected from the token's resolved workspace, never
@@ -38,10 +43,19 @@ export const publicBroadcastContactResource = z.object({
   channel: channelTypes,
   errorContent: z.string().nullable(),
   occurredAt: z.string(),
+  conversationId: z
+    .string()
+    .describe(
+      "Conversation of this contact inbox. Use it with `messages.create` to reply.",
+    ),
 })
 
 export const publicListBroadcastContactsResponse = z.object({
   data: z.array(publicBroadcastContactResource),
+  total: z
+    .number()
+    .int()
+    .describe("Number of recipients that reached this event, across pages."),
   pageCount: z.number().int(),
 })
 
@@ -170,3 +184,44 @@ export const previewBroadcastAudiencePublicResponse = z.object({
     }),
   ),
 })
+
+const templateParamsField = z
+  .record(z.string(), z.string())
+  .optional()
+  .describe(
+    'Template values by key, e.g. `{"body.1": "Ann", "header": "https://.../a.jpg"}`. The keys are the `parameters` of `whatsappTemplates.get` / `messengerTemplates.get`. Use this or `templateData`, not both; a missing, unknown or invalid key is a 422 that lists the keys.',
+  )
+
+const hasParamsAndData = (entry: {
+  templateParams?: Record<string, string>
+  templateData?: unknown
+}) => Boolean(entry.templateParams && entry.templateData)
+
+/**
+ * `createBroadcastRequest` plus flat `templateParams` (top level and per
+ * target), so an API caller can fill a template by key instead of building
+ * Meta's nested `templateData`. Same rules as the builder's request.
+ */
+export const createBroadcastPublicRequest = withBroadcastRules(
+  createBroadcastFields.extend({
+    templateParams: templateParamsField,
+    targets: z
+      .array(
+        broadcastTargetSchema.extend({ templateParams: templateParamsField }),
+      )
+      .optional()
+      .describe(
+        "Per-page targets for a multi-page broadcast, each with its own template/flow.",
+      ),
+  }),
+).refine(
+  (data) =>
+    !(hasParamsAndData(data) || (data.targets ?? []).some(hasParamsAndData)),
+  {
+    message: "Send templateParams or templateData, not both",
+    path: ["templateParams"],
+  },
+)
+export type CreateBroadcastPublicRequest = z.infer<
+  typeof createBroadcastPublicRequest
+>

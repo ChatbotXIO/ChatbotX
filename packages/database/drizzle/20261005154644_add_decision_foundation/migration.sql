@@ -27,14 +27,15 @@ CREATE TABLE "DecisionProfile" (
 	"description" text,
 	"status" "DecisionProfileStatus" DEFAULT 'enabled'::"DecisionProfileStatus" NOT NULL,
 	"connectionId" bigint NOT NULL,
-	"providerKind" "DecisionProviderKind" NOT NULL,
 	"model" text NOT NULL,
-	"contract" jsonb NOT NULL
+	"contract" jsonb NOT NULL,
+	"thresholdConfig" jsonb
 );
 --> statement-breakpoint
 CREATE INDEX "DecisionConnection_workspaceId_idx" ON "DecisionConnection" ("workspaceId");--> statement-breakpoint
 CREATE UNIQUE INDEX "DecisionConnection_workspaceId_name_key" ON "DecisionConnection" ("workspaceId","name");--> statement-breakpoint
 CREATE INDEX "DecisionProfile_workspaceId_idx" ON "DecisionProfile" ("workspaceId");--> statement-breakpoint
+CREATE INDEX "DecisionProfile_connectionId_idx" ON "DecisionProfile" ("connectionId");--> statement-breakpoint
 CREATE UNIQUE INDEX "DecisionProfile_workspaceId_name_key" ON "DecisionProfile" ("workspaceId","name");--> statement-breakpoint
 ALTER TABLE "DecisionConnection" ADD CONSTRAINT "DecisionConnection_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "DecisionProfile" ADD CONSTRAINT "DecisionProfile_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
