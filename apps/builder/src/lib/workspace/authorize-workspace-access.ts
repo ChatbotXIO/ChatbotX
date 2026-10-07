@@ -1,11 +1,11 @@
 import {
+  hasEnterpriseFeatures,
   quotaEnforcementService,
   userQuotaService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { HTTPMethod } from "@orpc/server"
 import { ORPCError } from "@orpc/server"
-import { isCloud } from "@/env"
 import { ADS_CAMPAIGNS_INSIGHTS_PATH } from "@/features/ads-campaign/lib/api-paths"
 import { BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH } from "@/features/broadcasts/lib/api-paths"
 import {
@@ -134,16 +134,16 @@ async function getWorkspaceOwnerAccessState(ownerId: string) {
  * Owner-quota/trial gate shared by every workspace-scoped entry point: server
  * actions (`workspaceActionClient` in safe-action.ts), oRPC workspace-token
  * auth, and oRPC session auth (`workspaceAuthorizedMidddleware`) all wire
- * this in. Cloud-only — the self-hosted edition has no quota row and stays
- * unrestricted. Deletion is checked separately by each caller via
- * `isWorkspaceScheduledForDeletion` because it's a distinct, terminal concern
- * that must be evaluated even when quota lookups are skipped (self-hosted, or
- * "allow expired" call sites).
+ * this in. Runs only on cloud and licensed self-hosted enterprise — the
+ * community edition has no quota row and stays unrestricted. Deletion is
+ * checked separately by each caller via `isWorkspaceScheduledForDeletion`
+ * because it's a distinct, terminal concern that must be evaluated even when
+ * quota lookups are skipped (self-hosted, or "allow expired" call sites).
  */
 export async function checkWorkspaceOwnerAccess(props: {
   ownerId: string
 }): Promise<WorkspaceAccessDenialReason | null> {
-  if (!isCloud()) {
+  if (!(await hasEnterpriseFeatures())) {
     return null
   }
 

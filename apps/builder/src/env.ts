@@ -72,3 +72,11 @@ export const env = createEnv({
 export const isEnterprise = () => env.NEXT_PUBLIC_EDITION === "enterprise"
 export const isCloud = () => env.NEXT_PUBLIC_EDITION === "cloud"
 export const isCommunity = () => env.NEXT_PUBLIC_EDITION === "community"
+
+/**
+ * Edition-only, cosmetic gate for the SaaS/billing surfaces (upgrade dialog,
+ * `/portal/*` links, `/manage` entry). A client can neither read `LICENSE_KEY`
+ * nor run the signature check, so real enforcement always stays server-side in
+ * `hasEnterpriseFeatures()`.
+ */
+export const isSaasEdition = () => isCloud() || isEnterprise()

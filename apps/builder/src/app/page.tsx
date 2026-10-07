@@ -1,5 +1,6 @@
 import { resolveTenantByDomain } from "@chatbotx.io/auth/tenant"
 import {
+  hasEnterpriseFeatures,
   isPlatformAdmin,
   isSuperAdmin,
   quotaEnforcementService,
@@ -9,7 +10,6 @@ import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { notFound } from "next/navigation"
 import { ExpiredBanner } from "@/components/expired-banner"
 import { WorkspaceDeletionPendingToast } from "@/components/workspace-deletion-pending-toast"
-import { isCloud } from "@/env"
 import { AccountRail } from "@/features/workspaces/components/account-rail"
 import WorkspacesList from "@/features/workspaces/components/workspaces-list"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
@@ -34,15 +34,15 @@ export default async function MainPage() {
   // else. Enforced in every protected layout/page, not just here.
   enforcePasswordCurrent(user)
 
-  // Plan + usage limits only apply to the hosted cloud edition. Self-hosted
-  // community/enterprise installs use every feature freely — no quota gating.
-  const cloud = isCloud()
+  // Plan + usage limits only apply to cloud and licensed self-hosted
+  // enterprise. Community installs use every feature freely — no quota gating.
+  const saas = await hasEnterpriseFeatures()
   const domain = await getDomainFromHeader()
   const [usageSummary, atLimit, quota, platformAdmin, tenantId] =
     await Promise.all([
-      cloud ? quotaEnforcementService.getUsageSummary(user.id) : null,
-      cloud ? quotaEnforcementService.getAtLimitMap(user.id) : null,
-      cloud ? userQuotaService.getForUser(user.id) : null,
+      saas ? quotaEnforcementService.getUsageSummary(user.id) : null,
+      saas ? quotaEnforcementService.getAtLimitMap(user.id) : null,
+      saas ? userQuotaService.getForUser(user.id) : null,
       isPlatformAdmin(user),
       resolveTenantByDomain(domain),
     ])
@@ -73,7 +73,7 @@ export default async function MainPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-6">
       <WorkspaceDeletionPendingToast />
-      <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
+      <ExpiredBanner blocked={saas && blocked} reason={blockReason} />
       <div className="flex flex-col gap-8 py-8 md:flex-row md:items-start">
         <AccountRail
           isPlatformAdmin={platformAdmin}
@@ -87,7 +87,7 @@ export default async function MainPage() {
         />
 
         <WorkspacesList
-          blocked={cloud && blocked}
+          blocked={saas && blocked}
           isAtLimit={atLimit?.workspaces ?? false}
           ownerWorkspaceIds={ownerWorkspaceIds}
           reason={blockReason}

@@ -53,11 +53,8 @@ const { registerSchedules } = await import(
   "../src/schedule/handlers/register-schedules"
 )
 
-const CLOUD_ONLY = [
-  "syncUserQuota",
-  "reconcileTenants",
-  "unsubscribeExpiredTrials",
-]
+const CLOUD_ONLY = ["unsubscribeExpiredTrials"]
+const SAAS_ONLY = ["syncUserQuota", "reconcileTenants"]
 
 const upsertedNames = () =>
   mockUpsertJobScheduler.mock.calls.map((call) => call[0] as string)
@@ -78,26 +75,43 @@ describe("registerSchedules — edition gating", () => {
     await registerSchedules()
 
     const names = upsertedNames()
-    for (const name of CLOUD_ONLY) {
+    for (const name of [...CLOUD_ONLY, ...SAAS_ONLY]) {
       expect(names).toContain(name)
     }
     expect(mockRemoveJobScheduler).not.toHaveBeenCalled()
   })
 
-  test.each([
-    "community",
-    "enterprise",
-  ])("%s skips the cloud-only schedulers and removes persisted ones", async (edition) => {
-    envState.NEXT_PUBLIC_EDITION = edition
+  test("enterprise registers the SaaS schedulers but removes the cloud-only trial teardown", async () => {
+    envState.NEXT_PUBLIC_EDITION = "enterprise"
 
     await registerSchedules()
 
     const names = upsertedNames()
+    for (const name of SAAS_ONLY) {
+      expect(names).toContain(name)
+    }
     for (const name of CLOUD_ONLY) {
       expect(names).not.toContain(name)
     }
     expect(mockRemoveJobScheduler).toHaveBeenCalledTimes(CLOUD_ONLY.length)
     for (const name of CLOUD_ONLY) {
+      expect(mockRemoveJobScheduler).toHaveBeenCalledWith(name)
+    }
+  })
+
+  test("community skips every quota/trial scheduler and removes all persisted ones", async () => {
+    envState.NEXT_PUBLIC_EDITION = "community"
+
+    await registerSchedules()
+
+    const names = upsertedNames()
+    for (const name of [...CLOUD_ONLY, ...SAAS_ONLY]) {
+      expect(names).not.toContain(name)
+    }
+    expect(mockRemoveJobScheduler).toHaveBeenCalledTimes(
+      CLOUD_ONLY.length + SAAS_ONLY.length,
+    )
+    for (const name of [...CLOUD_ONLY, ...SAAS_ONLY]) {
       expect(mockRemoveJobScheduler).toHaveBeenCalledWith(name)
     }
   })

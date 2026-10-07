@@ -13,6 +13,7 @@ const { ensureBootstrapPlan, isCloud, loggerWarn, quotaQueueAdd } = vi.hoisted(
 )
 
 vi.mock("@chatbotx.io/business", () => ({
+  hasEnterpriseFeatures: () => Promise.resolve(isCloud()),
   userQuotaService: { ensureBootstrapPlan },
 }))
 

@@ -9,6 +9,7 @@ import viMessages from "../messages/vi.json"
 const mockSetCoexist = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
   integrationWhatsappService: { setCoexist: mockSetCoexist },
+  hasEnterpriseFeatures: () => Promise.resolve(true),
   isWorkspaceScheduledForDeletion: vi.fn(() => false),
   workspaceMemberService: {
     findMembership: vi.fn(async () => ({
@@ -27,6 +28,12 @@ vi.mock("@chatbotx.io/business", () => ({
       isSupportSession: false,
     }
   }),
+  userQuotaService: {
+    getAccessState: vi.fn(async () => ({ blocked: false })),
+  },
+  quotaEnforcementService: {
+    isAtLimit: vi.fn(async () => false),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({

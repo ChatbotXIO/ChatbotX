@@ -1,4 +1,5 @@
 import {
+  hasEnterpriseFeatures,
   inboxService,
   integrationService,
   isPlatformAdmin,
@@ -25,7 +26,6 @@ import { SupportAccessBanner } from "@/components/support-access-banner"
 import { TokenRefreshErrorDialog } from "@/components/token-refresh-error-dialog"
 import { WorkspaceDeletionTabSync } from "@/components/workspace-deletion-tab-sync"
 import { WorkspaceRealtimeShell } from "@/components/workspace-realtime-shell"
-import { isCloud } from "@/env"
 import { AnalyticsApiProvider } from "@/features/analytics/components/analytics-api-provider"
 import { CouponTopicStoreProvider } from "@/features/coupons/provider/coupon-topic-store-context"
 import { getTenantSettings } from "@/features/tenant/utils"
@@ -71,9 +71,9 @@ export default async function WorkspaceLayout({
     allWorkspaces: memberWorkspaces,
   } = userAndWorkspace
 
-  // Plan + usage limits only apply to the hosted cloud edition. Self-hosted
-  // community/enterprise installs use every feature freely — no quota gating.
-  const cloud = isCloud()
+  // Plan + usage limits only apply to cloud and licensed self-hosted
+  // enterprise. Community installs use every feature freely — no quota gating.
+  const saas = await hasEnterpriseFeatures()
 
   const [{ storageUrl }, platformAdmin] = await Promise.all([
     getTenantSettings(),
@@ -87,7 +87,7 @@ export default async function WorkspaceLayout({
     hasCallCapableChannel,
   ] = await Promise.all([
     getWorkspaceBlockStateForRender(targetWorkspace.ownerId),
-    cloud
+    saas
       ? quotaEnforcementService.getWorkspaceUsageSummary({
           userId: targetWorkspace.ownerId,
           workspaceId,
@@ -139,7 +139,7 @@ export default async function WorkspaceLayout({
     permissions: targetWorkspaceMember.permissions,
     isSupportSession,
     scheduledForDeletion,
-    cloud,
+    cloud: saas,
     blocked,
     hasCallCapableChannel,
   })
@@ -186,7 +186,7 @@ export default async function WorkspaceLayout({
           {!scheduledForDeletion && (
             <RefreshOnNavigation workspaceId={workspaceId} />
           )}
-          <ExpiredBanner blocked={cloud && blocked} reason={blockReason} />
+          <ExpiredBanner blocked={saas && blocked} reason={blockReason} />
           <TokenRefreshErrorDialog
             errors={tokenRefreshErrors}
             workspaceId={workspaceId}

@@ -1,11 +1,11 @@
 import {
+  hasEnterpriseFeatures,
   quotaEnforcementService,
   userQuotaService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { UserQuotaModel } from "@chatbotx.io/database/types"
 import { cache } from "react"
-import { isCloud } from "@/env"
 import { resolveBlockReason, resolveTrialEndsAt } from "./quota-metrics"
 
 export interface WorkspaceBlockState {
@@ -23,7 +23,7 @@ export interface WorkspaceBlockState {
 export async function resolveWorkspaceBlockState(
   ownerId: string,
 ): Promise<WorkspaceBlockState> {
-  if (!isCloud()) {
+  if (!(await hasEnterpriseFeatures())) {
     return {
       blocked: false,
       blockReason: null,
