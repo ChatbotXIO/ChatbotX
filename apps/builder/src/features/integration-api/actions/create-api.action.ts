@@ -52,7 +52,7 @@ export const createApiAction = authActionClient
       tokenHash,
       tokenPrefix,
       callbackUrl: parsedInput.callbackUrl ?? null,
-      createWorkspace: async (tx) => {
+      createWorkspace: async (tx, quotaConsumption) => {
         const workspace = await workspaceService.create({
           tx,
           createdBy: ownerId,
@@ -61,6 +61,7 @@ export const createApiAction = authActionClient
             timezone: "UTC",
             ownerId,
           },
+          quotaConsumption,
         })
         return workspace.id
       },

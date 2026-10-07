@@ -58,14 +58,31 @@ export class WorkspaceMemberService extends BaseService {
       .values(data)
       .returning()
 
-    await workspaceUsageService
-      .increment(data.workspaceId, "teamMembers")
-      .catch((err) => {
-        logger.warn(
-          { err, workspaceId: data.workspaceId },
-          "workspace usage team member increment failed",
-        )
-      })
+    // Same transaction as the member insert: `workspaceService.create` wraps
+    // its writes in one, and a global-db write here cannot see the new
+    // Workspace row (WorkspaceUsage FK). On a supplied tx the error must
+    // propagate — a failed statement leaves that Postgres transaction
+    // aborted, so swallowing it would only move the failure to the next
+    // statement or COMMIT while this call reports success; the owner rolls
+    // back and compensates. Without a tx (autocommit) the display-only
+    // counter stays best-effort and the nightly reconcile re-grounds it.
+    if (props.tx) {
+      await workspaceUsageService.increment(
+        data.workspaceId,
+        "teamMembers",
+        1,
+        props.tx,
+      )
+    } else {
+      await workspaceUsageService
+        .increment(data.workspaceId, "teamMembers")
+        .catch((err) => {
+          logger.warn(
+            { err, workspaceId: data.workspaceId },
+            "workspace usage team member increment failed",
+          )
+        })
+    }
 
     return workspaceMember
   }

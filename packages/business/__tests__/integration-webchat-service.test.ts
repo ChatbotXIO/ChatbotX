@@ -105,9 +105,24 @@ vi.mock("@chatbotx.io/utils", () => ({
   createId: mockCreateId,
 }))
 
+// Records the trackers handed to `withQuotaCompensation` on the failure
+// path and rethrows, like the real helper (whose own compensation is covered
+// in src/connection/__tests__/upsert.test.ts).
+const compensationInputs = vi.hoisted(() => [] as unknown[])
+const mockWithQuotaCompensation = vi.hoisted(() =>
+  vi.fn(async (input: unknown, operation: () => Promise<unknown>) => {
+    try {
+      return await operation()
+    } catch (err) {
+      compensationInputs.push(input)
+      throw err
+    }
+  }),
+)
 vi.mock("../src/connection", () => ({
   CONNECTION_STORE_BINDINGS: { webchat: { duplicateConstraint: undefined } },
   upsertConnectionRow: mockUpsertConnectionRow,
+  withQuotaCompensation: mockWithQuotaCompensation,
 }))
 
 vi.mock("../src/inbox/service", () => ({
@@ -163,6 +178,7 @@ const baseData = {
 describe("integrationWebchatService.createWithWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    compensationInputs.length = 0
     mockTransaction.mockImplementation(
       async (callback: (tx: unknown) => unknown) =>
         callback({
@@ -183,6 +199,76 @@ describe("integrationWebchatService.createWithWorkspace", () => {
     } as never)
     mockUpsertConnectionRow.mockResolvedValue({ id: "conn-1" } as never)
     mockFindFirst.mockResolvedValue({ id: "webchat-1" } as never)
+  })
+
+  test("releases the new workspace's seat when the transaction fails after the workspace was created", async () => {
+    // `workspaceService.create` consumed the seat (Redis, outside the tx) and
+    // marked the tracker; the webchat insert then fails and the tx rolls
+    // back the Workspace row — the seat must be handed back too.
+    mockWorkspaceCreate.mockImplementation((props: unknown) => {
+      const { quotaConsumption } = props as {
+        quotaConsumption?: { consumed: boolean; userId?: string }
+      }
+      if (quotaConsumption) {
+        Object.assign(quotaConsumption, { consumed: true, userId: "user-1" })
+      }
+      return Promise.resolve({ id: "ws-new", ownerId: "user-1" } as never)
+    })
+    const failure = new Error("webchat insert failed")
+    mockUpsertConnectionRow.mockRejectedValueOnce(failure)
+
+    await expect(
+      integrationWebchatService.createWithWorkspace({
+        createdBy: "user-1",
+        workspaceName: "My Chatbot",
+        data: baseData,
+      }),
+    ).rejects.toBe(failure)
+
+    expect(compensationInputs).toHaveLength(1)
+    expect(compensationInputs[0]).toMatchObject({
+      ownerId: "user-1",
+      workspaceQuotaConsumption: { consumed: true, userId: "user-1" },
+    })
+    expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("hands the channel quota back when the transaction fails after connect.completed already consumed it", async () => {
+    // `upsertConnectionRow` consumed the channel slot (tracker mutated by
+    // reference, as the real transition does); the read-back of the webchat
+    // row then fails and the whole transaction rolls back.
+    mockUpsertConnectionRow.mockImplementation((props: unknown) => {
+      const { quotaConsumption } = props as {
+        quotaConsumption: Record<string, unknown>
+      }
+      Object.assign(quotaConsumption, {
+        consumed: true,
+        workspaceId: "ws-1",
+        workspaceUsageIncremented: true,
+      })
+      return Promise.resolve({ id: "conn-1" } as never)
+    })
+    mockFindFirst.mockResolvedValue(undefined as never)
+
+    await expect(
+      integrationWebchatService.createWithWorkspace({
+        workspaceId: "ws-1",
+        createdBy: "user-1",
+        workspaceName: "My Chatbot",
+        data: baseData,
+      }),
+    ).rejects.toThrow("IntegrationWebchat row missing")
+
+    expect(compensationInputs).toHaveLength(1)
+    expect(compensationInputs[0]).toMatchObject({
+      ownerId: "owner-1",
+      quotaConsumption: {
+        consumed: true,
+        workspaceId: "ws-1",
+        workspaceUsageIncremented: true,
+      },
+      workspaceQuotaConsumption: { consumed: false },
+    })
   })
 
   test("creates a workspace only when workspaceId is absent and reports createdWorkspace correctly", async () => {

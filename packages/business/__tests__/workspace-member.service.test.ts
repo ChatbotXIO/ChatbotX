@@ -4,6 +4,8 @@ const mocks = vi.hoisted(() => {
   const deleteWhere = vi.fn()
   return {
     decrement: vi.fn(),
+    increment: vi.fn(async () => undefined),
+    insertReturning: vi.fn(async () => [{ id: "member-1" }]),
     deleteWhere,
     dispatchAuditRecord: vi.fn(),
     findFirst: vi.fn(),
@@ -16,6 +18,9 @@ const makeClient = () => ({
   query: {
     workspaceMemberModel: { findFirst: mocks.findFirst },
   },
+  insert: vi.fn(() => ({
+    values: vi.fn(() => ({ returning: mocks.insertReturning })),
+  })),
   delete: vi.fn(() => ({ where: mocks.deleteWhere })),
 })
 
@@ -24,7 +29,10 @@ vi.mock("../src/audit/dispatcher", () => ({
 }))
 
 vi.mock("../src/workspace-usage/service", () => ({
-  workspaceUsageService: { decrement: mocks.decrement },
+  workspaceUsageService: {
+    decrement: mocks.decrement,
+    increment: mocks.increment,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -58,6 +66,63 @@ vi.mock("@chatbotx.io/redis", () => ({
 const { workspaceMemberService } = await import(
   "../src/workspace-member/service"
 )
+
+describe("workspaceMemberService.create", () => {
+  beforeEach(() => {
+    mocks.increment.mockClear()
+  })
+
+  // Codex review (PR #1442): the team-member usage row must ride the same
+  // transaction as the member insert. `workspaceService.create` now wraps its
+  // writes in a transaction, so a global-db write here cannot see the new
+  // Workspace row and trips the WorkspaceUsage FK — swallowed, leaving a
+  // brand-new workspace reporting zero members.
+  test("writes the team-member usage increment through the caller's tx", async () => {
+    const tx = makeClient()
+
+    await workspaceMemberService.create({
+      tx: tx as never,
+      data: { userId: "user-1", workspaceId: "ws-1", role: "owner" } as never,
+    })
+
+    expect(mocks.increment).toHaveBeenCalledWith("ws-1", "teamMembers", 1, tx)
+  })
+
+  // Codex review (PR #1442): a failed statement on a supplied Postgres tx
+  // leaves that transaction aborted; swallowing the error would let the next
+  // statement (or COMMIT) fail while this call reports success. Let the
+  // transaction owner see it, roll back and compensate.
+  test("propagates a usage-increment failure when writing on the caller's tx", async () => {
+    const tx = makeClient()
+    const failure = new Error("usage upsert failed")
+    mocks.increment.mockRejectedValueOnce(failure)
+
+    await expect(
+      workspaceMemberService.create({
+        tx: tx as never,
+        data: { userId: "user-1", workspaceId: "ws-1", role: "owner" } as never,
+      }),
+    ).rejects.toBe(failure)
+  })
+
+  test("stays best-effort for the usage increment when no tx is given", async () => {
+    mocks.increment.mockRejectedValueOnce(new Error("usage upsert failed"))
+
+    await expect(
+      workspaceMemberService.create({
+        data: { userId: "user-1", workspaceId: "ws-1", role: "owner" } as never,
+      }),
+    ).resolves.toEqual({ id: "member-1" })
+  })
+
+  test("falls back to the global db for the usage increment when no tx is given", async () => {
+    await workspaceMemberService.create({
+      data: { userId: "user-1", workspaceId: "ws-1", role: "owner" } as never,
+    })
+
+    expect(mocks.increment).toHaveBeenCalledWith("ws-1", "teamMembers")
+  })
+})
 
 describe("workspaceMemberService.delete", () => {
   beforeEach(() => {

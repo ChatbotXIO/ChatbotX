@@ -25,6 +25,10 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "@chatbotx.io/business/errors"
+import {
+  compensateWorkspaceQuotaConsumption,
+  type WorkspaceQuotaConsumption,
+} from "@chatbotx.io/business/workspace"
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import type {
   ConnectSessionPurpose,
@@ -81,7 +85,10 @@ type StartSessionTarget =
        * this instead of a plain `workspaceId` precisely so the insert it does
        * (`workspaceService.create`) can run against this package's `tx`.
        */
-      createWorkspace: (tx: DatabaseClient) => Promise<{ id: string }>
+      createWorkspace: (
+        tx: DatabaseClient,
+        quotaConsumption: WorkspaceQuotaConsumption,
+      ) => Promise<{ id: string }>
     }
 
 /**
@@ -160,15 +167,25 @@ export const startSession = async (
   let session: ConnectSessionModel
   if (input.createWorkspace) {
     const { createWorkspace } = input
-    session = await db.transaction(async (tx) => {
-      const workspace = await createWorkspace(tx)
-      await verifyTargetOwnership(workspace.id)
-      const created = await connectSessionService.create(
-        buildSessionInsertInput(workspace.id),
-        tx,
-      )
-      return created.session
-    })
+    // The `workspaces` seat is consumed outside SQL; a rollback below (session
+    // cap, ownership check, DB error) must hand it back from this catch.
+    const workspaceQuotaConsumption: WorkspaceQuotaConsumption = {
+      consumed: false,
+    }
+    try {
+      session = await db.transaction(async (tx) => {
+        const workspace = await createWorkspace(tx, workspaceQuotaConsumption)
+        await verifyTargetOwnership(workspace.id)
+        const created = await connectSessionService.create(
+          buildSessionInsertInput(workspace.id),
+          tx,
+        )
+        return created.session
+      })
+    } catch (err) {
+      await compensateWorkspaceQuotaConsumption(workspaceQuotaConsumption)
+      throw err
+    }
   } else {
     await verifyTargetOwnership(input.workspaceId)
     const created = await connectSessionService.create(

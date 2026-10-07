@@ -125,6 +125,17 @@ describe("workspaceUsageService.increment (caller-owned transaction)", () => {
     expect(dbInsert).not.toHaveBeenCalled()
   })
 
+  test("reports whether the live counter took the increment", async () => {
+    await expect(
+      workspaceUsageService.increment(WORKSPACE, "channels", 1),
+    ).resolves.toBe(true)
+
+    redisClient.hincrby.mockRejectedValueOnce(new Error("redis down"))
+    await expect(
+      workspaceUsageService.increment(WORKSPACE, "channels", 1),
+    ).resolves.toBe(false)
+  })
+
   test("still writes through the global db when no tx is supplied", async () => {
     await workspaceUsageService.increment(WORKSPACE, "channels", 1)
 
