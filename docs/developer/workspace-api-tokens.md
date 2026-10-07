@@ -707,6 +707,14 @@ approved as UI-only.
   allow-listed for `read_only` tokens and trial-expired workspaces. Only tags:
   sequence, broadcast, ref-link, inbox, member and team names belong to other
   scopes and come from their own list routes.
+- Template broadcasts take flat `templateParams` (`{"body.1": "Ann",
+  "header": "https://.../a.jpg"}`, also per `targets[]` entry) instead of
+  Meta's nested `templateData`; the keys are the `parameters` that
+  `GET /v1/whatsapp/templates/{id}` and `GET /v1/messenger/templates/{id}`
+  now return. The server builds `templateData` with the builder's own template
+  helpers; a missing, unknown or invalid key is a 422 naming the keys, and a
+  multi-product (MPM) button still needs `templateData`. `templateData` keeps
+  working, but not together with `templateParams`.
 - `POST /v1/broadcasts/audience/preview` counts (`total`) and lists the
   contact inboxes a broadcast *would* reach (same selectors as
   `broadcasts.create`, the audience window applied) before anything exists. It

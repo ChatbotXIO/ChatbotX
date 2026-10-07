@@ -93,6 +93,35 @@ describe("WhatsApp template extras", () => {
     })
   })
 
+  test("get lists the keys to fill as parameters", async () => {
+    mocks.findTemplate.mockResolvedValueOnce({
+      id: "9",
+      components: [
+        { type: "HEADER", format: "IMAGE" },
+        { type: "BODY", text: "Hi {{1}}" },
+      ],
+    })
+
+    const result = await find(
+      "GET",
+      "/v1/whatsapp/templates/{id}",
+    )?.({
+      context,
+      input: { id: "9" },
+    })
+
+    expect(result.parameters).toEqual([
+      { key: "header", component: "header", kind: "image", required: true },
+      {
+        key: "body.1",
+        component: "body",
+        kind: "text",
+        required: true,
+        placeholder: "{{1}}",
+      },
+    ])
+  })
+
   test("sync pulls from Meta for a number of this workspace, else 404", async () => {
     mocks.findIntegration.mockResolvedValueOnce({ id: "3" })
     await find(

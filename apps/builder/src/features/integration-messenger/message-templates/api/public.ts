@@ -1,4 +1,5 @@
 import {
+  describeTemplateParameters,
   messengerIntegrationService,
   messengerMessageTemplateService,
 } from "@chatbotx.io/business"
@@ -11,6 +12,7 @@ import {
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
+import { templateParametersField } from "@/lib/public-api/template-parameters"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
   cloneMessengerMessageTemplate,
@@ -113,11 +115,15 @@ export const messengerTemplatesPublicRouter = {
       path: "/v1/messenger/templates/{id}",
       summary: "Get Messenger template",
       description:
-        "Returns one Messenger message template with its components and status. Find its id with `messengerTemplates.list`.",
+        "Returns one Messenger message template with its components, status and `parameters`: the keys to fill in `templateParams` when sending it. Find its id with `messengerTemplates.list`.",
       tags: ["Messenger Templates"],
     })
     .input(templateIdParam)
-    .output(messengerMessageTemplateResource)
+    .output(
+      messengerMessageTemplateResource.extend({
+        parameters: templateParametersField,
+      }),
+    )
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const template =
@@ -128,7 +134,13 @@ export const messengerTemplatesPublicRouter = {
       if (!template) {
         throw notFoundException("Template not found")
       }
-      return template
+      return {
+        ...template,
+        parameters: describeTemplateParameters({
+          channel: "messenger",
+          components: template.components,
+        }),
+      }
     }),
 
   create: workspaceTokenAuthAPI

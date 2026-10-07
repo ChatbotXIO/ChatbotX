@@ -20,14 +20,15 @@ import {
 import { BROADCAST_STOP_TOKEN_PATH } from "@/lib/workspace/authorize-workspace-access"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH } from "../lib/api-paths"
+import { resolvePublicBroadcastTemplateParams } from "../lib/resolve-public-template-params"
 import {
-  createBroadcastRequest,
   resolveScheduleTime,
   resumeBroadcastSchema,
   scheduleBroadcastSchema,
   updateBroadcastSchema,
 } from "../schema/action"
 import {
+  createBroadcastPublicRequest,
   listBroadcastsPublicRequest,
   previewBroadcastAudiencePublicRequest,
   previewBroadcastAudiencePublicResponse,
@@ -234,20 +235,22 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts",
       summary: "Create broadcast",
       description:
-        "Starts a broadcast as a draft or scheduled send for the supplied audience. Use `broadcasts.list` to avoid duplicates, then use `broadcasts.schedule` to control its send time.",
+        "Starts a broadcast as a draft or scheduled send for the supplied audience. For a template broadcast, fill the template with `templateParams` (keys from the template's `parameters`) instead of building `templateData`. Use `broadcasts.list` to avoid duplicates, then use `broadcasts.schedule` to control its send time.",
       successStatus: 201,
       tags: ["Broadcasts"],
     })
-    .input(createBroadcastRequest)
+    .input(createBroadcastPublicRequest)
     .output(publicBroadcastResource)
     .errors(possibleErrorsOnCreatingBroadcast)
-    .handler(
-      async ({ context, input }) =>
-        await broadcastService.create({
-          ...input,
+    .handler(async ({ context, input }) =>
+      broadcastService.create({
+        ...(await resolvePublicBroadcastTemplateParams({
           workspaceId: context.workspace.id,
-          canViewEmailAndPhone: TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE,
-        }),
+          request: input,
+        })),
+        workspaceId: context.workspace.id,
+        canViewEmailAndPhone: TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE,
+      }),
     ),
 
   update: workspaceTokenAuthAPI
@@ -292,7 +295,7 @@ export const broadcastsPublicRouter = {
       tags: ["Broadcasts"],
     })
     .input(
-      createBroadcastRequest.and(
+      createBroadcastPublicRequest.and(
         z.object({
           id: zodBigintAsString().describe(
             "Broadcast id. Get it from `broadcasts.list`.",
@@ -307,12 +310,15 @@ export const broadcastsPublicRouter = {
     .output(z.object({ id: z.string(), status: broadcastStatuses }))
     .errors(possibleErrorsOnActivatingBroadcast)
     .handler(async ({ context, input }) => {
-      const { id, ...data } = input
+      const { id, ...request } = input
       return await broadcastService.updateDraft({
         workspaceId: context.workspace.id,
         broadcastId: id,
         canViewEmailAndPhone: TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE,
-        data,
+        data: await resolvePublicBroadcastTemplateParams({
+          workspaceId: context.workspace.id,
+          request,
+        }),
       })
     }),
 
