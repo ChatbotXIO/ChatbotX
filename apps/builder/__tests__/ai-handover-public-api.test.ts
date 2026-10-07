@@ -42,6 +42,7 @@ const mocks = vi.hoisted(() => ({
   find: vi.fn(),
   findActive: vi.fn(),
   saveSettings: vi.fn(),
+  patchSettings: vi.fn(),
   findStatus: vi.fn(),
   setApplyToAll: vi.fn(),
   previewApplyToAll: vi.fn(),
@@ -57,6 +58,7 @@ vi.mock("@chatbotx.io/business", async (importOriginal) => ({
   },
   aiHandoverBulkRunService: {
     saveSettings: mocks.saveSettings,
+    patchSettings: mocks.patchSettings,
     findStatus: mocks.findStatus,
     setApplyToAll: mocks.setApplyToAll,
     previewApplyToAll: mocks.previewApplyToAll,
@@ -178,17 +180,15 @@ describe("ai-handover public routes", () => {
     )
   })
 
-  test("patchSettings changes only the sent fields", async () => {
-    const saved = {
-      enabled: true,
-      scheduleEnabled: true,
-      timeRanges: [{ day: 1, start: "08:00", end: "17:00" }],
+  test("patchSettings hands only the sent fields to the service", async () => {
+    mocks.patchSettings.mockResolvedValue({
+      enabled: false,
+      scheduleEnabled: false,
+      timeRanges: [],
       gotoFlowId: "7",
-      returnMessage: "Back",
+      returnMessage: null,
       pauseBotWaitingForStaff: true,
-    }
-    mocks.find.mockResolvedValue(saved)
-    mocks.saveSettings.mockResolvedValue({ ...saved, enabled: false })
+    })
 
     const result = await find(
       "PATCH",
@@ -198,32 +198,12 @@ describe("ai-handover public routes", () => {
       input: { inboxId: "5", enabled: false },
     })
 
-    expect(mocks.requireInbox).toHaveBeenCalledWith({
+    expect(mocks.patchSettings).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       inboxId: "5",
-    })
-    expect(mocks.saveSettings).toHaveBeenCalledWith({
-      ...saved,
-      enabled: false,
-      workspaceId: "ws-1",
-      inboxId: "5",
+      changes: { enabled: false },
     })
     expect(result).toMatchObject({ enabled: false, gotoFlowId: "7" })
-  })
-
-  test("patchSettings refuses a schedule left without time ranges", async () => {
-    mocks.find.mockResolvedValue(null)
-
-    await expect(
-      find(
-        "PATCH",
-        `${BASE}/settings`,
-      )?.({
-        context,
-        input: { inboxId: "5", scheduleEnabled: true },
-      }),
-    ).rejects.toMatchObject({ code: "validation", field: "timeRanges" })
-    expect(mocks.saveSettings).not.toHaveBeenCalled()
   })
 
   test("setApplyToAll dryRun only counts and never changes anything", async () => {

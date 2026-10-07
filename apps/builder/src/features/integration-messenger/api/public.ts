@@ -15,7 +15,10 @@ import {
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { disconnectMessenger } from "../actions/disconnect-messenger"
 import { toStoredMessengerPersona } from "../lib/public-settings-input"
-import { updateMessenger } from "../lib/update-messenger-settings"
+import {
+  patchMessengerSettings,
+  updateMessenger,
+} from "../lib/update-messenger-settings"
 import { findIntegrationMessenger } from "../queries"
 import {
   messengerChannelIdSchema,
@@ -114,21 +117,9 @@ export const messengerChannelsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, personas, ...changes } = input
-      const workspaceId = context.workspace.id
-      const saved = messengerSettingsPublicResource.parse(
-        await findIntegrationMessenger({ workspaceId, id }),
-      )
-      await updateMessenger(
-        { workspaceId, id },
-        {
-          ...saved,
-          ...Object.fromEntries(
-            Object.entries(changes).filter(([, value]) => value !== undefined),
-          ),
-          personas: personas
-            ? personas.map(toStoredMessengerPersona)
-            : saved.personas,
-        },
+      await patchMessengerSettings(
+        { workspaceId: context.workspace.id, id },
+        { ...changes, personas: personas?.map(toStoredMessengerPersona) },
       )
     }),
 

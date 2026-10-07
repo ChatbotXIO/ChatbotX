@@ -22,6 +22,7 @@ import type {
   InboxModel,
 } from "@chatbotx.io/database/types"
 import { getChildLogger } from "@chatbotx.io/logger"
+import { distributedLock } from "@chatbotx.io/redis"
 import { AI_HANDOVER_CHANNEL_POLICIES } from "@chatbotx.io/utils/channel"
 import {
   buildAiHandoverBulkJobId,
@@ -131,6 +132,32 @@ const QUEUED_JOB_STATES: string[] = [
 
 const bulkException = (code: string, message: string) =>
   new ChatbotXException(message, code, 422)
+
+type AiHandoverSettingsFields = Omit<
+  SaveAiHandoverSettingsInput,
+  "workspaceId" | "inboxId"
+>
+
+/** The saved fields, or everything off for a Page that never saved any. */
+const toAiHandoverSettingsFields = (
+  saved: Pick<AiHandoverSettingsModel, keyof AiHandoverSettingsFields> | null,
+): AiHandoverSettingsFields => ({
+  enabled: saved?.enabled ?? false,
+  scheduleEnabled: saved?.scheduleEnabled ?? false,
+  timeRanges: saved?.timeRanges ?? [],
+  gotoFlowId: saved?.gotoFlowId ?? null,
+  returnMessage: saved?.returnMessage ?? null,
+  pauseBotWaitingForStaff: saved?.pauseBotWaitingForStaff ?? false,
+})
+
+const SETTINGS_LOCK_SECONDS = 30
+
+const withSettingsLock = <T>(inboxId: string, fn: () => Promise<T>) =>
+  distributedLock.runExclusive({
+    key: `ai-handover-settings:${inboxId}`,
+    timeoutInSeconds: SETTINGS_LOCK_SECONDS,
+    fn,
+  })
 
 class AiHandoverBulkRunService extends BaseService {
   /**
@@ -337,7 +364,48 @@ class AiHandoverBulkRunService extends BaseService {
    * disable is meant to finish. The engine's cached check already stops it at
    * the next batch, so a failure to stop it is logged, never fatal to the save.
    */
+  /**
+   * Saves the Page's settings. Serialized per Page with `patchSettings`, so a
+   * partial update always merges onto the latest saved settings.
+   */
   async saveSettings(
+    input: SaveAiHandoverSettingsInput,
+  ): Promise<AiHandoverSettingsModel> {
+    return await withSettingsLock(input.inboxId, () =>
+      this.saveSettingsUnlocked(input),
+    )
+  }
+
+  /**
+   * Changes only the given fields: the others keep their saved value (a Page
+   * that never saved settings starts from everything off). Read fresh under
+   * the Page's lock, so two partial updates never overwrite each other.
+   */
+  async patchSettings(
+    input: AiHandoverBulkRunInboxRef & {
+      changes: Partial<AiHandoverSettingsFields>
+    },
+  ): Promise<AiHandoverSettingsModel> {
+    const { workspaceId, inboxId, changes } = input
+    return await withSettingsLock(inboxId, async () => {
+      await aiHandoverSettingsService.requireInbox({ workspaceId, inboxId })
+      const saved = await aiHandoverSettingsRepository.findByInbox({
+        workspaceId,
+        inboxId,
+      })
+      const definedChanges = Object.fromEntries(
+        Object.entries(changes).filter(([, value]) => value !== undefined),
+      ) as Partial<AiHandoverSettingsFields>
+      return await this.saveSettingsUnlocked({
+        ...toAiHandoverSettingsFields(saved),
+        ...definedChanges,
+        workspaceId,
+        inboxId,
+      })
+    })
+  }
+
+  private async saveSettingsUnlocked(
     input: SaveAiHandoverSettingsInput,
   ): Promise<AiHandoverSettingsModel> {
     const saved = await aiHandoverSettingsService.save(input)

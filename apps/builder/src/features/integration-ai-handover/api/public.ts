@@ -2,7 +2,6 @@ import {
   aiHandoverBulkRunService,
   aiHandoverSettingsService,
 } from "@chatbotx.io/business"
-import { validationException } from "@chatbotx.io/business/errors"
 import {
   possibleErrorsOnApplyingAiHandover,
   possibleErrorsOnFindingResource,
@@ -102,22 +101,12 @@ export const aiHandoverPublicRouter = {
     .errors(possibleErrorsOnApplyingAiHandover)
     .handler(async ({ context, input }) => {
       const { inboxId, ...changes } = input
-      const ref = { workspaceId: context.workspace.id, inboxId }
-      await aiHandoverSettingsService.requireInbox(ref)
-      const merged = {
-        ...toSettingsResource(await aiHandoverSettingsService.find(ref)),
-        ...Object.fromEntries(
-          Object.entries(changes).filter(([, value]) => value !== undefined),
-        ),
-      }
-      if (merged.scheduleEnabled && merged.timeRanges.length === 0) {
-        throw validationException(
-          "timeRanges",
-          "A schedule needs at least one time range",
-        )
-      }
       return toSettingsResource(
-        await aiHandoverBulkRunService.saveSettings({ ...merged, ...ref }),
+        await aiHandoverBulkRunService.patchSettings({
+          workspaceId: context.workspace.id,
+          inboxId,
+          changes,
+        }),
       )
     }),
 

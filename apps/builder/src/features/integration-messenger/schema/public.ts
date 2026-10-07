@@ -76,6 +76,10 @@ export const messengerSettingsPublicResource = z.object(settingsShape)
 
 const personasInput = z
   .array(messengerPersonaPublicInput)
+  .refine(
+    (personas) => personas.filter((persona) => persona.isDefault).length <= 1,
+    { message: "Only one persona can be the default" },
+  )
   .describe(
     "Personas the page can reply as: `{name, profilePictureUrl, isDefault}`. Keep a persona's `id` to update it; one without an `id` is created, one left out is deleted from Facebook. At most one may be `isDefault`.",
   )

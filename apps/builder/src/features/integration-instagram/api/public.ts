@@ -6,7 +6,10 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { disconnectInstagram } from "../actions/disconnect-instagram"
-import { updateInstagram } from "../lib/update-instagram-settings"
+import {
+  patchInstagramSettings,
+  updateInstagram,
+} from "../lib/update-instagram-settings"
 import { findIntegrationInstagram } from "../queries"
 import {
   instagramChannelIdSchema,
@@ -70,18 +73,9 @@ export const instagramChannelsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...changes } = input
-      const workspaceId = context.workspace.id
-      const saved = instagramSettingsPublicResource.parse(
-        await findIntegrationInstagram({ workspaceId, id }),
-      )
-      await updateInstagram(
-        { workspaceId, id },
-        {
-          ...saved,
-          ...Object.fromEntries(
-            Object.entries(changes).filter(([, value]) => value !== undefined),
-          ),
-        },
+      await patchInstagramSettings(
+        { workspaceId: context.workspace.id, id },
+        changes,
       )
     }),
 

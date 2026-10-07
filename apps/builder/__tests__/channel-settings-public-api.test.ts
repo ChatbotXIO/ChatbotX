@@ -60,10 +60,12 @@ vi.mock("@/features/channel-integrations/api/public", () => ({
 }))
 
 const updateMessenger = vi.fn()
+const patchMessengerSettings = vi.fn()
 vi.mock(
   "@/features/integration-messenger/lib/update-messenger-settings",
   () => ({
     updateMessenger,
+    patchMessengerSettings,
   }),
 )
 const findIntegrationMessenger = vi.fn()
@@ -71,10 +73,12 @@ vi.mock("@/features/integration-messenger/queries", () => ({
   findIntegrationMessenger,
 }))
 const updateInstagram = vi.fn()
+const patchInstagramSettings = vi.fn()
 vi.mock(
   "@/features/integration-instagram/lib/update-instagram-settings",
   () => ({
     updateInstagram,
+    patchInstagramSettings,
   }),
 )
 const findIntegrationInstagram = vi.fn()
@@ -174,41 +178,22 @@ describe.each([
 })
 
 describe("PATCH /v1/{messenger,instagram}-channels/{id}/settings", () => {
-  const saved = {
-    welcomeFlowId: "10",
-    persistentMenus: [{ type: "url", label: "Site", url: "https://x.io" }],
-    conversationStarters: [{ question: "Hi?", flowId: "11" }],
-  }
-
   test.each([
-    [
-      "messenger-channels",
-      findIntegrationMessenger,
-      updateMessenger,
-      { personas: [] },
-    ],
-    ["instagram-channels", findIntegrationInstagram, updateInstagram, {}],
-  ] as const)("%s keeps every field that is not sent", async (resource, find, update, extra) => {
-    find.mockResolvedValueOnce({ ...saved, ...extra, auth: { secret: "x" } })
-
+    ["messenger-channels", patchMessengerSettings],
+    ["instagram-channels", patchInstagramSettings],
+  ] as const)("%s sends only the given fields to the locked partial writer", async (resource, patch) => {
     await findProcedure("PATCH", `/v1/${resource}/{id}/settings`).handler?.({
       context,
       input: { id: "ch-1", welcomeFlowId: null },
     })
 
-    expect(find).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
-      id: "ch-1",
-    })
-    expect(update).toHaveBeenCalledWith(
+    expect(patch).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", id: "ch-1" },
-      { ...saved, ...extra, welcomeFlowId: null },
+      expect.objectContaining({ welcomeFlowId: null }),
     )
   })
 
   test("a Messenger persona needs only a name and a picture URL", async () => {
-    findIntegrationMessenger.mockResolvedValueOnce({ ...saved, personas: [] })
-
     await findProcedure(
       "PATCH",
       "/v1/messenger-channels/{id}/settings",
@@ -226,8 +211,7 @@ describe("PATCH /v1/{messenger,instagram}-channels/{id}/settings", () => {
       },
     })
 
-    const [{ personas }] = updateMessenger.mock.calls[0]?.slice(1) ?? [{}]
-    expect(personas).toEqual([
+    expect(patchMessengerSettings.mock.calls[0]?.[1].personas).toEqual([
       {
         id: "",
         name: "Ann",

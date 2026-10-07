@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({
   pickDue: vi.fn(),
   markMaxAttemptsFailed: vi.fn(),
   transaction: vi.fn(),
+  lockKeys: [] as string[],
 }))
 
 const TX = { tx: true }
@@ -85,7 +86,21 @@ vi.mock("@chatbotx.io/logger", () => ({
     warn: mocks.loggerWarn,
   }),
 }))
-vi.mock("@chatbotx.io/redis", () => ({ invalidateCacheByTags: vi.fn() }))
+vi.mock("@chatbotx.io/redis", () => ({
+  invalidateCacheByTags: vi.fn(),
+  distributedLock: {
+    runExclusive: async ({
+      key,
+      fn,
+    }: {
+      key: string
+      fn: () => Promise<unknown>
+    }) => {
+      mocks.lockKeys.push(key)
+      return await fn()
+    },
+  },
+}))
 
 const { aiHandoverBulkRunService } = await import(
   "../src/ai-handover-bulk-run/service"
@@ -1254,5 +1269,75 @@ describe("saveSettings", () => {
       aiHandoverBulkRunService.saveSettings(input),
     ).resolves.toMatchObject({ enabled: false })
     expect(mocks.loggerError).toHaveBeenCalled()
+  })
+})
+
+describe("aiHandoverBulkRunService.patchSettings", () => {
+  const saved = {
+    enabled: true,
+    scheduleEnabled: false,
+    timeRanges: [],
+    gotoFlowId: "7",
+    returnMessage: "Back",
+    pauseBotWaitingForStaff: true,
+  }
+
+  beforeEach(() => {
+    mocks.lockKeys.length = 0
+    mocks.requireInbox.mockResolvedValue({ id: "5" })
+    mocks.saveSettings.mockImplementation(async (input) => input)
+  })
+
+  test("merges the sent fields onto a fresh read, under the Page's lock", async () => {
+    mocks.findSettings.mockResolvedValue(saved)
+
+    await aiHandoverBulkRunService.patchSettings({
+      workspaceId: "ws-1",
+      inboxId: "5",
+      changes: { pauseBotWaitingForStaff: false, gotoFlowId: undefined },
+    })
+
+    expect(mocks.lockKeys).toEqual(["ai-handover-settings:5"])
+    expect(mocks.findSettings).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      inboxId: "5",
+    })
+    expect(mocks.saveSettings).toHaveBeenCalledWith({
+      ...saved,
+      pauseBotWaitingForStaff: false,
+      workspaceId: "ws-1",
+      inboxId: "5",
+    })
+  })
+
+  test("a Page without saved settings starts from everything off", async () => {
+    mocks.findSettings.mockResolvedValue(null)
+
+    await aiHandoverBulkRunService.patchSettings({
+      workspaceId: "ws-1",
+      inboxId: "5",
+      changes: { enabled: true },
+    })
+
+    expect(mocks.saveSettings).toHaveBeenCalledWith({
+      enabled: true,
+      scheduleEnabled: false,
+      timeRanges: [],
+      gotoFlowId: null,
+      returnMessage: null,
+      pauseBotWaitingForStaff: false,
+      workspaceId: "ws-1",
+      inboxId: "5",
+    })
+  })
+
+  test("the full save takes the same lock", async () => {
+    await aiHandoverBulkRunService.saveSettings({
+      ...saved,
+      workspaceId: "ws-1",
+      inboxId: "5",
+    })
+
+    expect(mocks.lockKeys).toEqual(["ai-handover-settings:5"])
   })
 })
