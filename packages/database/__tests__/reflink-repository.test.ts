@@ -51,7 +51,7 @@ describe("reflinkRepository.listPaginated", () => {
     )
   })
 
-  test("includes flow and customField relations", async () => {
+  test("includes flow, customField and widget logo file relations", async () => {
     mocks.findMany.mockResolvedValueOnce([])
 
     await reflinkRepository.listPaginated({
@@ -61,7 +61,13 @@ describe("reflinkRepository.listPaginated", () => {
     })
 
     expect(mocks.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ with: { flow: true, customField: true } }),
+      expect.objectContaining({
+        with: {
+          flow: true,
+          customField: true,
+          widgetLogoFile: { columns: { path: true } },
+        },
+      }),
     )
   })
 

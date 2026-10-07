@@ -4456,7 +4456,27 @@
       "preview": "Previzualizare",
       "embedCodeDescription": "Lipește acest cod înainte de eticheta de închidere body a site-ului. Modificările salvate se aplică automat, nu trebuie lipit din nou.",
       "savedSuccess": "Setările widgetului de chat au fost salvate",
-      "poweredBy": "de"
+      "poweredBy": "de",
+      "toggleLabel": "Discută cu noi",
+      "logo": {
+        "description": "Butonul rotund pe care vizitatorii îl apasă pentru a deschide widgetul. Alege o imagine pătrată sau lasă gol pentru a folosi pictograma de chat implicită.",
+        "choose": "Alege din biblioteca media",
+        "notImage": "Logo-ul trebuie să fie o imagine."
+      },
+      "brandUrl": {
+        "label": "URL de redirecționare",
+        "placeholder": "https://example.com",
+        "description": "Unde duce numele brandului tău din linia „de” a widgetului. Obligatoriu când este setat un nume de brand.",
+        "requiredWithName": "Introdu un URL de redirecționare pentru acest nume de brand."
+      },
+      "brandName": {
+        "description": "Afișat în linia „de” a widgetului. Obligatoriu când este setat un URL de redirecționare. Lasă ambele goale pentru a ascunde linia.",
+        "requiredWithUrl": "Introdu un nume de brand pentru acest URL de redirecționare."
+      },
+      "logoBackgroundColor": {
+        "label": "Culoarea de fundal a pictogramei",
+        "description": "Fundalul pictogramei de chat implicite. Pictograma devine albă sau neagră ca să rămână lizibilă."
+      }
     }
   },
   "qrCodes": {

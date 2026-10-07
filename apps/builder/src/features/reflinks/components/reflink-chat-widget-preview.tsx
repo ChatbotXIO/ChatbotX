@@ -4,7 +4,6 @@ import type { ChannelType } from "@chatbotx.io/database/partials"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
-import { useTenantSettings } from "@/features/tenant"
 
 /** Channels with an icon under `public/chat-widget/icons/` (others use `chat`). */
 const WIDGET_ICON_CHANNELS: ChannelType[] = [
@@ -17,6 +16,54 @@ const WIDGET_ICON_CHANNELS: ChannelType[] = [
   "threads",
   "tiktok",
 ]
+
+/**
+ * lucide's `messages-circle` (added in lucide 1.45.0, ISC). Copied in because
+ * the installed lucide-react predates it — swap for `MessagesCircleIcon` once
+ * lucide-react is upgraded. Same paths as `DEFAULT_LOGO_ICON` in the embed
+ * script.
+ */
+function MessagesCircleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M19.95 10.05a7 7 0 011.412 7.872 1 1 0 00-.058.787l.675 2.089a1 1 0 01-1.236 1.168l-2.155-.631a1 1 0 00-.745.06 7 7 0 01-7.793-1.445" />
+      <path d="M2.696 12.708a1 1 0 00-.058-.785 7 7 0 113.518 3.473 1 1 0 00-.744-.061l-2.155.63a1 1 0 01-1.236-1.167z" />
+    </svg>
+  )
+}
+
+/**
+ * The toggle's look when no logo is picked. Keep in sync with
+ * `DEFAULT_LOGO_ICON` in `public/chat-widget/ref-widget.js`.
+ */
+export function DefaultWidgetLogo({
+  backgroundColor,
+  color,
+  className,
+}: {
+  backgroundColor: string
+  color: string
+  className?: string
+}) {
+  return (
+    <span
+      className={cn("flex size-full items-center justify-center", className)}
+      style={{ backgroundColor, color }}
+    >
+      <MessagesCircleIcon className="size-7" />
+    </span>
+  )
+}
 
 export const getWidgetIconUrl = (channel: ChannelType | "chat") =>
   `/chat-widget/icons/${
@@ -45,6 +92,13 @@ const slideTransition = (delayMs: number) =>
 
 type ReflinkChatWidgetPreviewProps = {
   channels: { id: string; channel: ChannelType; name: string }[]
+  /** From `resolveWidgetBrand`, the same brand the embed route sends. */
+  brand: {
+    name: string | null
+    logoUrl: string | null
+    logoBackgroundColor: string
+    logoForegroundColor: string
+  }
 }
 
 /**
@@ -53,11 +107,10 @@ type ReflinkChatWidgetPreviewProps = {
  */
 export function ReflinkChatWidgetPreview({
   channels,
+  brand,
 }: ReflinkChatWidgetPreviewProps) {
   const t = useTranslations()
-  const { name, faviconUrl } = useTenantSettings()
   const [expanded, setExpanded] = useState(true)
-  const fallbackLogoUrl = getWidgetIconUrl("chat")
 
   return (
     // Same corner spacing as the embed script: 16px from the left, the
@@ -112,51 +165,63 @@ export function ReflinkChatWidgetPreview({
 
         <button
           aria-expanded={expanded}
-          aria-label={name}
+          aria-label={brand.name || t("reflinks.chatWidget.toggleLabel")}
           className={cn(BUTTON_CLASS_NAME, "cursor-pointer active:scale-95")}
           onClick={() => setExpanded((value) => !value)}
           type="button"
         >
-          {/* biome-ignore lint/performance/noImgElement: tenant icon URL from storage, same image the embed script shows */}
-          <img
-            alt={name}
-            className="size-full object-cover"
-            height={56}
-            src={faviconUrl || fallbackLogoUrl}
-            width={56}
-          />
+          {brand.logoUrl ? (
+            // biome-ignore lint/performance/noImgElement: storage URL, same image the embed script shows
+            <img
+              alt={brand.name ?? ""}
+              className="size-full object-cover"
+              height={56}
+              src={brand.logoUrl}
+              width={56}
+            />
+          ) : (
+            <DefaultWidgetLogo
+              backgroundColor={brand.logoBackgroundColor}
+              color={brand.logoForegroundColor}
+            />
+          )}
         </button>
 
         {/* Shown only while the channels are open; keeps its room when hidden
-            so the toggle never shifts. */}
-        <small
-          aria-hidden={!expanded}
-          className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-slate-500 leading-none motion-reduce:transition-none!"
-          style={{
-            opacity: expanded ? 1 : 0,
-            visibility: expanded ? "visible" : "hidden",
-            transform: expanded ? "none" : "translateY(5px)",
-            transition: expanded
-              ? slideTransition(POWERED_BY_DELAY_MS)
-              : `${slideTransition(POWERED_BY_DELAY_MS)}, visibility 0s linear 650ms`,
-          }}
-        >
-          <svg
-            aria-hidden="true"
-            fill="#ecc94b"
-            height="8"
-            stroke="#ecc94b"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-            width="8"
+            so the toggle never shifts. No brand name and URL hides it for good, still
+            keeping its room like the embed script does. */}
+        {brand.name ? (
+          <small
+            aria-hidden={!expanded}
+            className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-slate-500 leading-none motion-reduce:transition-none!"
+            style={{
+              opacity: expanded ? 1 : 0,
+              visibility: expanded ? "visible" : "hidden",
+              transform: expanded ? "none" : "translateY(5px)",
+              transition: expanded
+                ? slideTransition(POWERED_BY_DELAY_MS)
+                : `${slideTransition(POWERED_BY_DELAY_MS)}, visibility 0s linear 650ms`,
+            }}
           >
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-          </svg>
-          <span>{t("reflinks.chatWidget.poweredBy")}</span>
-          <span className="text-blue-500 underline">{name}</span>
-        </small>
+            <svg
+              aria-hidden="true"
+              fill="#ecc94b"
+              height="8"
+              stroke="#ecc94b"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              width="8"
+            >
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            <span>{t("reflinks.chatWidget.poweredBy")}</span>
+            <span className="text-blue-500 underline">{brand.name}</span>
+          </small>
+        ) : (
+          <span aria-hidden="true" className="mt-1.5 h-2.5" />
+        )}
       </div>
     </div>
   )

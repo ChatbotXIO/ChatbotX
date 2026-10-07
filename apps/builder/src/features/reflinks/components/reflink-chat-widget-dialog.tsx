@@ -2,6 +2,9 @@
 
 import { isProfileLinkChannel } from "@chatbotx.io/business/utils"
 import type { ChannelType } from "@chatbotx.io/database/partials"
+import { ColorPickerField } from "@chatbotx.io/ui/components/form/color-picker-field"
+import { FormFieldWrapper } from "@chatbotx.io/ui/components/form/field-wrapper"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -17,27 +20,38 @@ import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { CopyIcon, Loader2Icon } from "lucide-react"
+import { CopyIcon, ImageIcon, Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { useInboxLinks } from "@/features/inboxes/provider/use-inbox-links"
 import { toAuthorizedDomain } from "@/features/integration-webchat/lib/authorized-domain"
+import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 import { useTenantSettings } from "@/features/tenant"
 import { useClipboard } from "@/hooks/use-clipboard"
 import { updateReflinkWidgetAction } from "../actions/update-reflink-widget.action"
 import {
+  DEFAULT_WIDGET_LOGO_BACKGROUND_COLOR,
+  resolveWidgetBrand,
+} from "../lib/widget-brand"
+import {
   MAX_WIDGET_AUTHORIZED_DOMAINS,
   type UpdateReflinkWidgetRequest,
   updateReflinkWidgetRequest,
+  type WidgetBrandIssueReason,
+  widgetBrandIssueReasons,
 } from "../schema/action"
-import type { ReflinkResource } from "../schema/resource"
-import { ReflinkChatWidgetPreview } from "./reflink-chat-widget-preview"
+import type { ListReflinkItem } from "../schema/query"
+import {
+  DefaultWidgetLogo,
+  ReflinkChatWidgetPreview,
+} from "./reflink-chat-widget-preview"
 
 type ReflinkChatWidgetDialogProps = {
   workspaceId: string
-  reflink: ReflinkResource | null
+  reflink: ListReflinkItem | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -90,19 +104,43 @@ function findInvalidDomains(domains: string[], domainErrors: unknown) {
   return domains.filter((_, index) => domainErrors[index])
 }
 
+const WIDGET_BRAND_ISSUE_KEYS = {
+  brandUrlRequiredWithName: "reflinks.chatWidget.brandUrl.requiredWithName",
+  brandNameRequiredWithUrl: "reflinks.chatWidget.brandName.requiredWithUrl",
+} as const satisfies Record<WidgetBrandIssueReason, string>
+
+/** The reason the schema tags a brand name/URL pairing issue with, if any. */
+function widgetBrandIssueReason(issue: {
+  code?: string
+  params?: Record<string, unknown>
+}): WidgetBrandIssueReason | null {
+  const reason = issue.code === "custom" ? issue.params?.reason : undefined
+  return widgetBrandIssueReasons.find((known) => known === reason) ?? null
+}
+
+function pairedBrandField(name: string | undefined) {
+  if (name === "brandName") {
+    return "brandUrl"
+  }
+  if (name === "brandUrl") {
+    return "brandName"
+  }
+  return null
+}
+
 function ReflinkChatWidgetForm({
   workspaceId,
   reflink,
   onClose,
 }: {
   workspaceId: string
-  reflink: ReflinkResource
+  reflink: ListReflinkItem
   onClose: () => void
 }) {
   const t = useTranslations()
   const router = useRouter()
   const { handleCopy } = useClipboard()
-  const { appUrl } = useTenantSettings()
+  const tenant = useTenantSettings()
   const inboxLinks = useInboxLinks({
     enabled: true,
     refConfig: { type: "reflink", name: reflink.name },
@@ -111,7 +149,12 @@ function ReflinkChatWidgetForm({
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     updateReflinkWidgetAction.bind(null, workspaceId, reflink.id),
-    zodResolver(updateReflinkWidgetRequest),
+    zodResolver(updateReflinkWidgetRequest, {
+      error: (issue) => {
+        const reason = widgetBrandIssueReason(issue)
+        return reason ? t(WIDGET_BRAND_ISSUE_KEYS[reason]) : undefined
+      },
+    }),
     {
       actionProps: {
         onSuccess: () => {
@@ -129,12 +172,47 @@ function ReflinkChatWidgetForm({
         defaultValues: {
           authorizedDomains: reflink.widgetAuthorizedDomains,
           hiddenInboxIds: reflink.widgetHiddenInboxIds,
+          logoFileId: reflink.widgetLogoFileId ?? "",
+          logoBackgroundColor:
+            reflink.widgetLogoBackgroundColor ??
+            DEFAULT_WIDGET_LOGO_BACKGROUND_COLOR,
+          brandName: reflink.widgetBrandName ?? "",
+          brandUrl: reflink.widgetBrandUrl ?? "",
         } satisfies UpdateReflinkWidgetRequest,
       },
     },
   )
 
   const hiddenInboxIds = form.watch("hiddenInboxIds")
+  // The form holds the file id; the preview needs its storage path.
+  const [logoPath, setLogoPath] = useState(reflink.widgetLogoFile?.path ?? null)
+  const logoFileId = form.watch("logoFileId")
+  const brandName = form.watch("brandName")
+  const brandUrl = form.watch("brandUrl")
+  const logoBackgroundColor = form.watch("logoBackgroundColor")
+  const brand = resolveWidgetBrand(
+    {
+      widgetLogoPath: logoFileId ? logoPath : null,
+      widgetBrandName: brandName.trim(),
+      widgetBrandUrl: brandUrl,
+      widgetLogoBackgroundColor: logoBackgroundColor,
+    },
+    tenant,
+  )
+  const hasBrandName = brandName.trim().length > 0
+  const hasBrandUrl = brandUrl.length > 0
+
+  // Brand name and URL are required together, so editing one re-checks the
+  // other — RHF otherwise only validates the field being edited.
+  useEffect(() => {
+    const subscription = form.watch((_values, { name }) => {
+      const pairedField = pairedBrandField(name)
+      if (pairedField && form.getFieldState(pairedField).isDirty) {
+        form.trigger(pairedField)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [form])
   const invalidDomains = findInvalidDomains(
     form.watch("authorizedDomains"),
     form.formState.errors.authorizedDomains,
@@ -146,7 +224,23 @@ function ReflinkChatWidgetForm({
       channel: inbox.channel as ChannelType,
       name: inbox.name,
     }))
-  const embedCode = buildReflinkWidgetEmbedCode(appUrl, reflink.id)
+  const embedCode = buildReflinkWidgetEmbedCode(tenant.appUrl, reflink.id)
+
+  const clearLogo = () => {
+    setLogoPath(null)
+    form.setValue("logoFileId", "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
+  }
+
+  const setLogo = (file: { id: string; path: string }) => {
+    setLogoPath(file.path)
+    form.setValue("logoFileId", file.id, {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
+  }
 
   const toggleInbox = (inboxId: string, visible: boolean) => {
     const others = hiddenInboxIds.filter((id) => id !== inboxId)
@@ -161,6 +255,82 @@ function ReflinkChatWidgetForm({
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
         <div className="grid gap-6 md:grid-cols-2">
           <div className="min-w-0 space-y-6">
+            <FormFieldWrapper<UpdateReflinkWidgetRequest>
+              description={t("reflinks.chatWidget.logo.description")}
+              label={t("fields.logo.label")}
+              name="logoFileId"
+            >
+              {() => (
+                <div className="flex items-center gap-4">
+                  {brand.logoUrl ? (
+                    // biome-ignore lint/performance/noImgElement: storage URL, same image the embed script shows
+                    <img
+                      alt={t("fields.logo.label")}
+                      className="size-14 shrink-0 rounded-full border object-cover"
+                      height={56}
+                      src={brand.logoUrl}
+                      width={56}
+                    />
+                  ) : (
+                    <DefaultWidgetLogo
+                      backgroundColor={brand.logoBackgroundColor}
+                      className="size-14 shrink-0 rounded-full"
+                      color={brand.logoForegroundColor}
+                    />
+                  )}
+                  <MediaLibraryTrigger
+                    onSelect={(file) => {
+                      if (!file.mimeType.startsWith("image/")) {
+                        toast.error(t("reflinks.chatWidget.logo.notImage"))
+                        return
+                      }
+                      setLogo(file)
+                    }}
+                    workspaceId={workspaceId}
+                  >
+                    <Button type="button" variant="outline">
+                      <ImageIcon className="size-4" />
+                      {t("reflinks.chatWidget.logo.choose")}
+                    </Button>
+                  </MediaLibraryTrigger>
+                  {logoFileId ? (
+                    <Button onClick={clearLogo} type="button" variant="ghost">
+                      {t("actions.remove")}
+                    </Button>
+                  ) : null}
+                </div>
+              )}
+            </FormFieldWrapper>
+
+            {/* Only the default chat icon uses it; a picked logo covers it. */}
+            {logoFileId ? null : (
+              <ColorPickerField
+                description={t(
+                  "reflinks.chatWidget.logoBackgroundColor.description",
+                )}
+                label={t("reflinks.chatWidget.logoBackgroundColor.label")}
+                name="logoBackgroundColor"
+                required
+              />
+            )}
+
+            <InputField<UpdateReflinkWidgetRequest>
+              description={t("reflinks.chatWidget.brandName.description")}
+              label={t("fields.brandName.label")}
+              name="brandName"
+              placeholder={t("fields.brandName.placeholder")}
+              required={hasBrandUrl}
+            />
+
+            <InputField<UpdateReflinkWidgetRequest>
+              description={t("reflinks.chatWidget.brandUrl.description")}
+              label={t("reflinks.chatWidget.brandUrl.label")}
+              name="brandUrl"
+              placeholder={t("reflinks.chatWidget.brandUrl.placeholder")}
+              required={hasBrandName}
+              type="url"
+            />
+
             <TagsInputField<UpdateReflinkWidgetRequest>
               description={t(
                 "reflinks.chatWidget.authorizedDomains.description",
@@ -226,7 +396,10 @@ function ReflinkChatWidgetForm({
           <div className="min-w-0 space-y-6">
             <div className="space-y-2">
               <Label>{t("reflinks.chatWidget.preview")}</Label>
-              <ReflinkChatWidgetPreview channels={visibleChannels} />
+              <ReflinkChatWidgetPreview
+                brand={brand}
+                channels={visibleChannels}
+              />
             </div>
 
             <div className="space-y-2">

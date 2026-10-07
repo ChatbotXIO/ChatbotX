@@ -4456,7 +4456,27 @@
       "preview": "Esikatselu",
       "embedCodeDescription": "Liitä tämä koodi ennen sivustosi sulkevaa body-tagia. Tallennetut muutokset otetaan käyttöön automaattisesti, eikä koodia tarvitse liittää uudelleen.",
       "savedSuccess": "Chat-widgetin asetukset tallennettu",
-      "poweredBy": "tekijä"
+      "poweredBy": "tekijä",
+      "toggleLabel": "Keskustele kanssamme",
+      "logo": {
+        "description": "Pyöreä painike, jota kävijät klikkaavat avatakseen widgetin. Valitse neliön muotoinen kuva tai jätä tyhjäksi käyttääksesi oletuskeskustelukuvaketta.",
+        "choose": "Valitse mediakirjastosta",
+        "notImage": "Logon on oltava kuva."
+      },
+      "brandUrl": {
+        "label": "Uudelleenohjauksen URL",
+        "placeholder": "https://example.com",
+        "description": "Mihin brändinimesi widgetin \"tekijä\"-rivillä linkittää. Pakollinen, kun brändinimi on asetettu.",
+        "requiredWithName": "Anna uudelleenohjauksen URL tälle brändinimelle."
+      },
+      "brandName": {
+        "description": "Näytetään widgetin \"tekijä\"-rivillä. Pakollinen, kun uudelleenohjauksen URL on asetettu. Jätä molemmat tyhjiksi piilottaaksesi rivin.",
+        "requiredWithUrl": "Anna brändinimi tälle uudelleenohjauksen URL-osoitteelle."
+      },
+      "logoBackgroundColor": {
+        "label": "Kuvakkeen taustaväri",
+        "description": "Oletuskeskustelukuvakkeen tausta. Kuvake muuttuu valkoiseksi tai mustaksi, jotta se erottuu."
+      }
     }
   },
   "qrCodes": {

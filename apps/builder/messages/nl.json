@@ -4456,7 +4456,27 @@
       "preview": "Voorbeeld",
       "embedCodeDescription": "Plak deze code vóór de afsluitende body-tag van je website. Opgeslagen wijzigingen worden automatisch toegepast, opnieuw plakken is niet nodig.",
       "savedSuccess": "Instellingen van chatwidget opgeslagen",
-      "poweredBy": "door"
+      "poweredBy": "door",
+      "toggleLabel": "Chat met ons",
+      "logo": {
+        "description": "De ronde knop waarop bezoekers klikken om de widget te openen. Kies een vierkante afbeelding, of laat leeg voor het standaard chatpictogram.",
+        "choose": "Kiezen uit mediabibliotheek",
+        "notImage": "Het logo moet een afbeelding zijn."
+      },
+      "brandUrl": {
+        "label": "Doorverwijs-URL",
+        "placeholder": "https://example.com",
+        "description": "Waar je merknaam in de \"door\"-regel van de widget naartoe linkt. Verplicht als er een merknaam is ingesteld.",
+        "requiredWithName": "Voer een doorverwijs-URL in voor deze merknaam."
+      },
+      "brandName": {
+        "description": "Getoond in de \"door\"-regel van de widget. Verplicht als er een doorverwijs-URL is ingesteld. Laat beide leeg om die regel te verbergen.",
+        "requiredWithUrl": "Voer een merknaam in voor deze doorverwijs-URL."
+      },
+      "logoBackgroundColor": {
+        "label": "Achtergrondkleur pictogram",
+        "description": "Achtergrond van het standaard chatpictogram. Het pictogram wordt wit of zwart zodat het leesbaar blijft."
+      }
     }
   },
   "qrCodes": {

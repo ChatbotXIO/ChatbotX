@@ -4698,7 +4698,27 @@
       "preview": "Preview",
       "embedCodeDescription": "Paste this code before the closing body tag of your website. Saved changes apply automatically, no need to paste it again.",
       "savedSuccess": "Chat widget settings saved",
-      "poweredBy": "by"
+      "poweredBy": "by",
+      "toggleLabel": "Chat with us",
+      "logo": {
+        "description": "The round button visitors click to open the widget. Pick a square image, or leave empty to use the default chat icon.",
+        "choose": "Choose from Media Library",
+        "notImage": "The logo must be an image."
+      },
+      "brandUrl": {
+        "label": "Redirect URL",
+        "placeholder": "https://example.com",
+        "description": "Where your brand name in the widget's \"by\" line links to. Required when a brand name is set.",
+        "requiredWithName": "Enter a redirect URL for this brand name."
+      },
+      "brandName": {
+        "description": "Shown in the widget's \"by\" line. Required when a redirect URL is set. Leave both empty to hide that line.",
+        "requiredWithUrl": "Enter a brand name for this redirect URL."
+      },
+      "logoBackgroundColor": {
+        "label": "Icon Background Color",
+        "description": "Background of the default chat icon. The icon turns white or black to stay readable."
+      }
     }
   },
   "qrCodes": {

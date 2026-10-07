@@ -4698,7 +4698,27 @@
       "preview": "Önizləmə",
       "embedCodeDescription": "Bu kodu saytınızda bağlayan body teqindən əvvəl yapışdırın. Yadda saxlanan dəyişikliklər avtomatik tətbiq olunur, yenidən yapışdırmağa ehtiyac yoxdur.",
       "savedSuccess": "Çat vidceti ayarları yadda saxlanıldı",
-      "poweredBy": "tərəfindən"
+      "poweredBy": "tərəfindən",
+      "toggleLabel": "Bizimlə söhbət edin",
+      "logo": {
+        "description": "Ziyarətçilərin vidceti açmaq üçün kliklədiyi dairəvi düymə. Kvadrat şəkil seçin və ya standart söhbət ikonu üçün boş buraxın.",
+        "choose": "Media kitabxanasından seçin",
+        "notImage": "Loqo şəkil olmalıdır."
+      },
+      "brandUrl": {
+        "label": "Yönləndirmə URL-i",
+        "placeholder": "https://example.com",
+        "description": "Vidcetin \"tərəfindən\" sətrindəki brend adınızın keçid verdiyi ünvan. Brend adı təyin edildikdə tələb olunur.",
+        "requiredWithName": "Bu brend adı üçün yönləndirmə URL-i daxil edin."
+      },
+      "brandName": {
+        "description": "Vidcetin \"tərəfindən\" sətrində göstərilir. Yönləndirmə URL-i təyin edildikdə tələb olunur. Bu sətri gizlətmək üçün hər ikisini boş buraxın.",
+        "requiredWithUrl": "Bu yönləndirmə URL-i üçün brend adı daxil edin."
+      },
+      "logoBackgroundColor": {
+        "label": "İkonun fon rəngi",
+        "description": "Standart söhbət ikonunun fonu. İkon oxunaqlı qalması üçün ağ və ya qara olur."
+      }
     }
   },
   "qrCodes": {

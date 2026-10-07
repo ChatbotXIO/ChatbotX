@@ -4456,7 +4456,27 @@
       "preview": "Vista previa",
       "embedCodeDescription": "Pega este código antes de la etiqueta de cierre body de tu sitio web. Los cambios guardados se aplican automáticamente, no hace falta volver a pegarlo.",
       "savedSuccess": "Configuración del widget de chat guardada",
-      "poweredBy": "por"
+      "poweredBy": "por",
+      "toggleLabel": "Chatea con nosotros",
+      "logo": {
+        "description": "El botón redondo que los visitantes pulsan para abrir el widget. Elige una imagen cuadrada o déjalo vacío para usar el icono de chat predeterminado.",
+        "choose": "Elegir de la biblioteca de medios",
+        "notImage": "El logo debe ser una imagen."
+      },
+      "brandUrl": {
+        "label": "URL de redirección",
+        "placeholder": "https://example.com",
+        "description": "Adónde enlaza tu nombre de marca en la línea \"por\" del widget. Obligatorio si hay un nombre de marca.",
+        "requiredWithName": "Introduce una URL de redirección para este nombre de marca."
+      },
+      "brandName": {
+        "description": "Se muestra en la línea \"por\" del widget. Obligatorio si hay una URL de redirección. Deja ambos vacíos para ocultar esa línea.",
+        "requiredWithUrl": "Introduce un nombre de marca para esta URL de redirección."
+      },
+      "logoBackgroundColor": {
+        "label": "Color de fondo del icono",
+        "description": "Fondo del icono de chat predeterminado. El icono se vuelve blanco o negro para que se vea bien."
+      }
     }
   },
   "qrCodes": {

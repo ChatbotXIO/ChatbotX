@@ -4456,7 +4456,27 @@
       "preview": "Aperçu",
       "embedCodeDescription": "Collez ce code avant la balise de fermeture body de votre site. Les modifications enregistrées s'appliquent automatiquement, inutile de le recoller.",
       "savedSuccess": "Paramètres du widget de chat enregistrés",
-      "poweredBy": "par"
+      "poweredBy": "par",
+      "toggleLabel": "Discutez avec nous",
+      "logo": {
+        "description": "Le bouton rond sur lequel les visiteurs cliquent pour ouvrir le widget. Choisissez une image carrée, ou laissez vide pour utiliser l'icône de chat par défaut.",
+        "choose": "Choisir dans la médiathèque",
+        "notImage": "Le logo doit être une image."
+      },
+      "brandUrl": {
+        "label": "URL de redirection",
+        "placeholder": "https://example.com",
+        "description": "La page vers laquelle renvoie votre nom de marque dans la ligne « par » du widget. Obligatoire si un nom de marque est défini.",
+        "requiredWithName": "Saisissez une URL de redirection pour ce nom de marque."
+      },
+      "brandName": {
+        "description": "Affiché dans la ligne « par » du widget. Obligatoire si une URL de redirection est définie. Laissez les deux vides pour masquer cette ligne.",
+        "requiredWithUrl": "Saisissez un nom de marque pour cette URL de redirection."
+      },
+      "logoBackgroundColor": {
+        "label": "Couleur de fond de l'icône",
+        "description": "Fond de l'icône de chat par défaut. L'icône devient blanche ou noire pour rester lisible."
+      }
     }
   },
   "qrCodes": {
