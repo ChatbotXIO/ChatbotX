@@ -34,14 +34,27 @@ vi.mock("@/orpc", () => orpcMock)
 const createImportUpload = vi.hoisted(() => vi.fn())
 const peekImportHeaders = vi.hoisted(() => vi.fn())
 const importServiceList = vi.hoisted(() => vi.fn())
+const resolveProductImportColumnMap = vi.hoisted(() => vi.fn())
+const startProductImportJob = vi.hoisted(() => vi.fn())
+vi.mock("@/features/products/lib/start-product-import", () => ({
+  startProductImportJob,
+}))
 vi.mock("@chatbotx.io/business", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
 }))
-vi.mock("@chatbotx.io/business/import", () => ({
-  createImportUpload,
-  peekImportHeaders,
-  importService: { list: importServiceList },
-}))
+vi.mock("@chatbotx.io/business/import", async () => {
+  const { matchContactImportHeaders, matchProductImportHeaders } = await import(
+    "@chatbotx.io/imports"
+  )
+  return {
+    createImportUpload,
+    peekImportHeaders,
+    importService: { list: importServiceList },
+    suggestContactImportColumnMap: matchContactImportHeaders,
+    suggestProductImportColumnMap: matchProductImportHeaders,
+    resolveProductImportColumnMap,
+  }
+})
 vi.mock("@/features/products/lib/product-import-template", () => ({
   buildProductImportTemplate: vi.fn(async (locale: string) =>
     Buffer.from(`xlsx-${locale}`),
@@ -113,7 +126,7 @@ describe.each([
   "/v1/contacts/imports/files/{fileId}/headers",
   "/v1/products/imports/files/{fileId}/headers",
 ])("GET %s", (path) => {
-  test("reads the headers of a file in the token's workspace", async () => {
+  test("reads the headers of a file in the token's workspace and suggests a column map", async () => {
     peekImportHeaders.mockResolvedValueOnce(["Phone", "Name"])
     const procedure = capturedProcedures.find(
       (p) => p.route.method === "GET" && p.route.path === path,
@@ -129,7 +142,12 @@ describe.each([
       fileId: "9",
       type: path.includes("/contacts/") ? "contacts" : "products",
     })
-    expect(result).toEqual({ headers: ["Phone", "Name"] })
+    expect(result).toEqual({
+      headers: ["Phone", "Name"],
+      suggestedColumnMap: path.includes("/contacts/")
+        ? { phoneNumber: "Phone" }
+        : { name: "Name" },
+    })
   })
 })
 
@@ -208,5 +226,31 @@ describe("GET /v1/contacts/imports", () => {
         sort,
       }),
     )
+  })
+})
+
+describe("POST /v1/products/imports", () => {
+  test("without columnMap or format, imports with the recognised columns and the file's format", async () => {
+    resolveProductImportColumnMap.mockResolvedValueOnce({ name: "Name" })
+    startProductImportJob.mockResolvedValueOnce({ importId: "i-1" })
+
+    const result = await find("/v1/products/imports")?.handler?.({
+      context: { workspace: { id: "ws-1" } },
+      input: { fileId: "9", createMissingCategories: true },
+    })
+
+    expect(resolveProductImportColumnMap).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      fileId: "9",
+      columnMap: undefined,
+    })
+    expect(startProductImportJob).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      userId: null,
+      fileId: "9",
+      format: undefined,
+      meta: { columnMap: { name: "Name" }, createMissingCategories: true },
+    })
+    expect(result).toEqual({ importId: "i-1" })
   })
 })

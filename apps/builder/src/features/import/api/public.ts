@@ -1,5 +1,9 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
-import { createImportUpload, importService } from "@chatbotx.io/business/import"
+import {
+  createImportUpload,
+  importService,
+  suggestContactImportColumnMap,
+} from "@chatbotx.io/business/import"
 import {
   buildContactsImportTemplateCsv,
   CONTACTS_IMPORT_TEMPLATE_FILENAME,
@@ -14,11 +18,11 @@ import { withListPagingNote } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { peekImportHeadersForApi } from "../lib/peek-import-headers-for-api"
 import {
+  contactImportHeadersPublicResponse,
   contactImportPublicResource,
   contactImportTemplatePublicResponse,
   getContactImportPublicRequest,
   importHeadersPublicRequest,
-  importHeadersPublicResponse,
   importTemplatePublicRequest,
   importUploadUrlPublicRequest,
   importUploadUrlPublicResponse,
@@ -78,19 +82,23 @@ export const importPublicRouter = {
       path: "/v1/contacts/imports/files/{fileId}/headers",
       summary: "Read contact import file headers",
       description:
-        "Returns the column headers of an uploaded contact import file so you can name the matching columns (`phoneNumber`, `contactId`, `email`, `firstName`, `lastName`, `sourceUserId`, `fieldMapping`) in `contacts.import`. Call `contacts.createImportUpload` and upload the file first.",
+        "Returns the column headers of an uploaded contact import file and `suggestedColumnMap`, the columns recognised by name (`phoneNumber`, `contactId`, `email`, `firstName`, `lastName`, `sourceUserId`), ready to spread into `contacts.import`. Call `contacts.createImportUpload` and upload the file first.",
       tags: ["Contacts"],
     })
     .input(importHeadersPublicRequest)
-    .output(importHeadersPublicResponse)
+    .output(contactImportHeadersPublicResponse)
     .errors(possibleErrorsOnPeekingImportHeaders)
-    .handler(async ({ context, input }) => ({
-      headers: await peekImportHeadersForApi({
+    .handler(async ({ context, input }) => {
+      const headers = await peekImportHeadersForApi({
         workspaceId: context.workspace.id,
         fileId: input.fileId,
         type: "contacts",
-      }),
-    })),
+      })
+      return {
+        headers,
+        suggestedColumnMap: suggestContactImportColumnMap(headers),
+      }
+    }),
 
   listImports: workspaceTokenAuthAPI
     .route({

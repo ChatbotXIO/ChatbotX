@@ -195,8 +195,9 @@ export const startProductImportPublicRequest = z.object({
   ),
   format: z
     .enum(["csv", "xlsx"])
+    .optional()
     .describe(
-      "Format of the uploaded file. It must match the file's extension and MIME type, otherwise the request is rejected with 422.",
+      "Format of the uploaded file; omit to take it from the file. When sent it must match the file's extension and MIME type, otherwise the request is rejected with 422.",
     ),
   columnMap: z
     .object({
@@ -211,8 +212,9 @@ export const startProductImportPublicRequest = z.object({
       imageUrl: optionalProductImportColumn("image URL"),
       productUrl: optionalProductImportColumn("product page URL"),
     })
+    .optional()
     .describe(
-      "Maps product fields to file column headers. Only `name` is required; omitted fields are not imported.",
+      "Maps product fields to file column headers. Only `name` is required; omitted fields are not imported. Omit the whole map to recognise columns by header name (`suggestedColumnMap` of `products.peekImportHeaders`).",
     ),
   createMissingCategories: z
     .boolean()
