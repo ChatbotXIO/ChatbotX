@@ -1,79 +1,15 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const updateReturning: { current: unknown[] } = { current: [] }
-const workspaceMembers: { current: { userId: string }[] } = { current: [] }
-const workspace: { current: { logo: string | null } | undefined } = {
-  current: { logo: null },
-}
-
-const updateBuilder = {
-  set: vi.fn(),
-  where: vi.fn(),
-  returning: vi.fn(),
-}
-
-function wireUpdateBuilder() {
-  updateBuilder.set.mockImplementation(() => updateBuilder)
-  updateBuilder.where.mockImplementation(() => updateBuilder)
-  updateBuilder.returning.mockImplementation(() =>
-    Promise.resolve(updateReturning.current),
-  )
-}
-wireUpdateBuilder()
-
-const selectBuilder = {
-  from: vi.fn(),
-  where: vi.fn(),
-}
-
-function wireSelectBuilder() {
-  selectBuilder.from.mockImplementation(() => selectBuilder)
-  selectBuilder.where.mockImplementation(() =>
-    Promise.resolve(workspaceMembers.current),
-  )
-}
-wireSelectBuilder()
-
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    update: vi.fn(() => updateBuilder),
-    select: vi.fn(() => selectBuilder),
-    query: {
-      workspaceModel: {
-        findFirst: vi.fn(() => Promise.resolve(workspace.current)),
-      },
-    },
-  },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (col: unknown, val: unknown) => ({ eq: [col, val] }),
-  isNull: (col: unknown) => ({ isNull: col }),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  workspaceModel: {
-    id: "workspace.id",
-    logo: "workspace.logo",
-  },
-  workspaceMemberModel: {
-    userId: "workspaceMember.userId",
-    workspaceId: "workspaceMember.workspaceId",
-  },
+const findLogo = vi.fn()
+const setLogoIfEmpty = vi.fn()
+vi.mock("@chatbotx.io/business", () => ({
+  workspaceService: { findLogo, setLogoIfEmpty },
 }))
 
 const uploadFileFromUrl = vi.fn()
 vi.mock("@chatbotx.io/filesystem", () => ({
   uploadFileFromUrl,
-}))
-
-const invalidateCacheByTags = vi.fn()
-vi.mock("@chatbotx.io/redis", () => ({
-  invalidateCacheByTags,
-}))
-
-const auditRecord = vi.fn()
-vi.mock("@chatbotx.io/business/audit", () => ({
-  auditService: { record: auditRecord },
 }))
 
 const createId = vi.fn(() => "logo-id")
@@ -88,7 +24,6 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
 const { updateWorkspaceLogo } = await import(
   "../src/features/workspaces/actions/upload-logo"
 )
-const { db } = await import("@chatbotx.io/database/client")
 
 function createIntegration(profilePictureUrl?: string) {
   return {
@@ -118,35 +53,14 @@ function createCtx() {
   }
 }
 
-function createTx() {
-  return {
-    query: {
-      workspaceModel: {
-        findFirst: vi.fn(() => Promise.resolve(workspace.current)),
-      },
-    },
-    update: vi.fn(() => updateBuilder),
-    select: vi.fn(() => selectBuilder),
-  }
-}
-
 function resetMocks() {
   vi.clearAllMocks()
-  wireUpdateBuilder()
-  wireSelectBuilder()
-  vi.mocked(db.update).mockImplementation(
-    () => updateBuilder as unknown as ReturnType<typeof db.update>,
-  )
-  vi.mocked(db.select).mockImplementation(
-    () => selectBuilder as unknown as ReturnType<typeof db.select>,
-  )
   createId.mockReturnValue("logo-id")
   uploadFileFromUrl.mockResolvedValue({
     originPath: "public/space/ws-1/logos/logo-id.jpg",
   })
-  workspace.current = { logo: null }
-  updateReturning.current = [{ id: "ws-1" }]
-  workspaceMembers.current = [{ userId: "user-1" }, { userId: "user-2" }]
+  findLogo.mockResolvedValue(null)
+  setLogoIfEmpty.mockResolvedValue(true)
 }
 
 describe("updateWorkspaceLogo", () => {
@@ -162,6 +76,7 @@ describe("updateWorkspaceLogo", () => {
       ctx,
     })
 
+    expect(findLogo).toHaveBeenCalledWith({ id: "ws-1", tx: undefined })
     expect(integration.runChannelHandler).toHaveBeenCalledWith(
       "bot",
       "getProfilePictureUrl",
@@ -171,24 +86,10 @@ describe("updateWorkspaceLogo", () => {
       "https://example.com/logo.jpg",
       "public/space/ws-1/logos/logo-id.jpg",
     )
-    expect(updateBuilder.set).toHaveBeenCalledWith({
+    expect(setLogoIfEmpty).toHaveBeenCalledWith({
+      id: "ws-1",
       logo: "public/space/ws-1/logos/logo-id.jpg",
-    })
-    expect(updateBuilder.where).toHaveBeenCalledWith({
-      and: [{ eq: ["workspace.id", "ws-1"] }, { isNull: "workspace.logo" }],
-    })
-    expect(selectBuilder.where).toHaveBeenCalledWith({
-      eq: ["workspaceMember.workspaceId", "ws-1"],
-    })
-    expect(invalidateCacheByTags).toHaveBeenCalledWith([
-      "workspaces:ws-1",
-      "users:user-1:workspace-members",
-      "users:user-2:workspace-members",
-    ])
-    expect(auditRecord).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      action: "update",
-      detail: "changed the workspace logo",
+      tx: undefined,
     })
   })
 
@@ -202,9 +103,7 @@ describe("updateWorkspaceLogo", () => {
     })
 
     expect(uploadFileFromUrl).not.toHaveBeenCalled()
-    expect(db.update).not.toHaveBeenCalled()
-    expect(invalidateCacheByTags).not.toHaveBeenCalled()
-    expect(auditRecord).not.toHaveBeenCalled()
+    expect(setLogoIfEmpty).not.toHaveBeenCalled()
   })
 
   test("does not update workspace when profile picture lookup fails", async () => {
@@ -217,9 +116,7 @@ describe("updateWorkspaceLogo", () => {
     })
 
     expect(uploadFileFromUrl).not.toHaveBeenCalled()
-    expect(db.update).not.toHaveBeenCalled()
-    expect(invalidateCacheByTags).not.toHaveBeenCalled()
-    expect(auditRecord).not.toHaveBeenCalled()
+    expect(setLogoIfEmpty).not.toHaveBeenCalled()
   })
 
   test("does not update workspace when profile picture upload fails", async () => {
@@ -232,13 +129,11 @@ describe("updateWorkspaceLogo", () => {
       ctx: createCtx(),
     })
 
-    expect(db.update).not.toHaveBeenCalled()
-    expect(invalidateCacheByTags).not.toHaveBeenCalled()
-    expect(auditRecord).not.toHaveBeenCalled()
+    expect(setLogoIfEmpty).not.toHaveBeenCalled()
   })
 
   test("does not fetch or upload profile picture when workspace already has a logo", async () => {
-    workspace.current = { logo: "public/space/ws-1/logos/existing.jpg" }
+    findLogo.mockResolvedValue("public/space/ws-1/logos/existing.jpg")
     const integration = createIntegration("https://example.com/logo.jpg")
 
     await updateWorkspaceLogo({
@@ -249,15 +144,26 @@ describe("updateWorkspaceLogo", () => {
 
     expect(integration.runChannelHandler).not.toHaveBeenCalled()
     expect(uploadFileFromUrl).not.toHaveBeenCalled()
-    expect(db.update).not.toHaveBeenCalled()
-    expect(db.select).not.toHaveBeenCalled()
-    expect(invalidateCacheByTags).not.toHaveBeenCalled()
-    expect(auditRecord).not.toHaveBeenCalled()
+    expect(setLogoIfEmpty).not.toHaveBeenCalled()
   })
 
-  test("updates and invalidates but skips audit with a caller-owned transaction", async () => {
+  test("does nothing when the workspace does not exist", async () => {
+    findLogo.mockResolvedValue(undefined)
     const integration = createIntegration("https://example.com/logo.jpg")
-    const tx = createTx()
+
+    await updateWorkspaceLogo({
+      id: "ws-1",
+      integration,
+      ctx: createCtx(),
+    })
+
+    expect(integration.runChannelHandler).not.toHaveBeenCalled()
+    expect(setLogoIfEmpty).not.toHaveBeenCalled()
+  })
+
+  test("passes a caller-owned transaction through to the service", async () => {
+    const integration = createIntegration("https://example.com/logo.jpg")
+    const tx = { marker: "tx" }
 
     await updateWorkspaceLogo({
       id: "ws-1",
@@ -266,13 +172,11 @@ describe("updateWorkspaceLogo", () => {
       tx: tx as never,
     })
 
-    expect(tx.update).toHaveBeenCalled()
-    expect(tx.select).toHaveBeenCalled()
-    expect(invalidateCacheByTags).toHaveBeenCalledWith([
-      "workspaces:ws-1",
-      "users:user-1:workspace-members",
-      "users:user-2:workspace-members",
-    ])
-    expect(auditRecord).not.toHaveBeenCalled()
+    expect(findLogo).toHaveBeenCalledWith({ id: "ws-1", tx })
+    expect(setLogoIfEmpty).toHaveBeenCalledWith({
+      id: "ws-1",
+      logo: "public/space/ws-1/logos/logo-id.jpg",
+      tx,
+    })
   })
 })
