@@ -7,6 +7,7 @@ import { connectTargets } from "./connect-targets"
 import { connectFromCredentials, reconnect } from "./credentials"
 import { attachIntegrationConnectionRow } from "./internal"
 import { disconnect, refresh, verify } from "./lifecycle"
+import { connectSelfServeChannel } from "./self-serve"
 
 /**
  * Registry-aware orchestration over the `Connection` domain: provider-side
@@ -37,6 +38,7 @@ export const connectionService = {
   verify,
   connectFromCredentials,
   reconnect,
+  connectSelfServeChannel,
   startSession,
   completeAuthorization,
   listAndAttachCandidates,

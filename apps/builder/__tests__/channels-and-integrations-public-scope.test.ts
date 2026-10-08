@@ -2,6 +2,7 @@
 
 import { call } from "@orpc/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { z } from "zod"
 import { webchatsPublicRouter } from "../src/features/integration-webchat/api/public"
 import { integrationsCrudPublicRouter } from "../src/features/integrations/api/public/crud"
 
@@ -31,6 +32,16 @@ vi.mock("@chatbotx.io/business", () => ({
   integrationService,
   integrationWebchatService,
   resolveTenantSettings: vi.fn(),
+  webchatConnectConfigSchema: z.object({
+    hideHeader: z.boolean().default(false),
+    showLogo: z.boolean().default(true),
+    hideMessageInput: z.boolean().default(false),
+    enable: z.boolean().default(true),
+  }),
+}))
+
+vi.mock("@chatbotx.io/connections", () => ({
+  connectionService: { connectSelfServeChannel: vi.fn() },
 }))
 
 vi.mock("@/lib/log", () => ({

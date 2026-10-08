@@ -810,6 +810,11 @@ const channelHidden = {
 export const possibleErrorsOnCreatingConnection = {
   connectionProviderDedicatedOnly,
   businessError,
+  notFound,
+  channelLimitReached: {
+    message: "Channel limit reached for this plan",
+    status: 400,
+  },
   connectionAlreadyConnected: {
     message: "This provider is already connected in this workspace",
     status: 409,

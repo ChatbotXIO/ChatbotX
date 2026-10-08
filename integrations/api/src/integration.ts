@@ -22,6 +22,20 @@ const config: IntegrationDefinition<BaseConfig, ApiAuthValue, ApiActions> = {
   connection: selfServeConnection<ApiAuthValue>({
     displayName: "API channel",
     multiAccount: false,
+    configFields: [
+      {
+        name: "name",
+        type: "string",
+        required: true,
+        description: "API channel display name.",
+      },
+      {
+        name: "callbackUrl",
+        type: "url",
+        required: false,
+        description: "Where inbound messages are delivered.",
+      },
+    ],
   }),
   handleRequest(
     _props: HandleRequestProps<BaseConfig>,

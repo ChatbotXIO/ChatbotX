@@ -158,6 +158,7 @@ vi.mock("@chatbotx.io/connections", () => ({
     strategy === "token" || strategy === "api_key" || strategy === "self_serve",
   toChannelType: (provider: string) =>
     provider === "instagramFacebook" ? "instagram" : provider,
+  selfServeConnectorFor: () => undefined,
   CONNECTION_REGISTRY: {
     claude: { provider: { strategy: "api_key", kind: "integration" } },
     messenger: { provider: { strategy: "oauth_redirect", kind: "channel" } },
@@ -239,6 +240,7 @@ describe("private connectionsAPI.createConnectionAPI", () => {
     expect(result).toEqual({
       connection: { id: "conn-1", resource: true },
       session: null,
+      secret: null,
     })
   })
 
@@ -309,6 +311,7 @@ describe("private connectionsAPI.createConnectionAPI", () => {
     expect(result).toEqual({
       connection: null,
       session: { id: "session-1", sessionResource: true },
+      secret: null,
     })
   })
 

@@ -6,6 +6,8 @@ import type { FixtureSnapshot, HttpTrace } from "../evals/sandbox"
 const snapshot = (): FixtureSnapshot => ({
   appointments: [],
   broadcasts: [],
+  connectSessions: [],
+  connections: [],
   contacts: [],
   flows: [],
   journal: [],
@@ -220,6 +222,91 @@ describe("evaluator grading", () => {
       "Unresolved binding for contacts_add_tags.identifier.",
     )
     expect(result.status).toBe("fail")
+  })
+  test("accepts a Messenger page selected from its connect session", () => {
+    const afterState = snapshot()
+    afterState.connectSessions.push({
+      connectionIds: ["connection-1"],
+      id: "connect-session-messenger",
+      nextAction: null,
+      provider: "messenger",
+      status: "completed",
+      step: "done",
+      targets: [
+        {
+          id: "messenger-page-sales",
+          name: "Sales Messenger Page",
+          selectable: true,
+        },
+      ],
+    })
+    afterState.connections.push({
+      channel: "messenger",
+      displayName: "Sales Messenger Page",
+      id: "connection-1",
+      kind: "channel",
+      provider: "messenger",
+      sourceId: "messenger-page-sales",
+      strategy: "oauth_redirect",
+    })
+    afterState.journal.push({
+      after: {},
+      before: {},
+      operation: "connectSessions.connectTargets",
+      targetId: "connect-session-messenger",
+    })
+
+    expect(
+      grade(
+        [
+          trace({
+            method: "GET",
+            operationId: "connectSessions.get",
+            path: "/api/v1/connect-sessions/connect-session-messenger",
+            readOnly: true,
+            responseBody: {
+              targets: [{ id: "messenger-page-sales" }],
+            },
+          }),
+          trace({
+            arguments: {
+              id: "connect-session-messenger",
+              targetIds: ["messenger-page-sales"],
+            },
+            operationId: "connectSessions.connectTargets",
+          }),
+        ],
+        {
+          allowedWriteTools: ["connect_sessions_connect_targets"],
+          bindings: [
+            {
+              argument: "targetIds",
+              sourcePointer: "/targets/0/id",
+              sourceTools: ["connect_sessions_get"],
+              tool: "connect_sessions_connect_targets",
+            },
+          ],
+          expectedTools: ["connect_sessions_connect_targets"],
+          sequence: [
+            ["connect_sessions_get"],
+            ["connect_sessions_connect_targets"],
+          ],
+          stateAssertions: [
+            { equals: "completed", pointer: "/connectSessions/0/status" },
+            { equals: "messenger", pointer: "/connections/0/provider" },
+          ],
+          writeAssertions: [
+            {
+              count: 1,
+              operations: ["connect_sessions_connect_targets"],
+              targetId: "connect-session-messenger",
+            },
+          ],
+        },
+        "Done",
+        afterState,
+      ).status,
+    ).toBe("pass")
   })
 
   test("allows schema-error recovery followed by exactly one applied write", () => {
