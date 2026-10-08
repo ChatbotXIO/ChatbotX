@@ -99,6 +99,7 @@ const connectionServiceMocks = vi.hoisted(() => ({
   refresh: vi.fn(),
   verify: vi.fn(),
   connectFromCredentials: vi.fn(),
+  connectSelfServeChannel: vi.fn(),
   startSession: vi.fn(),
   reconnect: vi.fn(),
   connectTargets: vi.fn(),
@@ -114,7 +115,13 @@ vi.mock("@chatbotx.io/connections", () => ({
     claude: { provider: { strategy: "api_key", kind: "integration" } },
     messenger: { provider: { strategy: "oauth_redirect", kind: "channel" } },
     zalo: { provider: { strategy: "oauth_redirect", kind: "channel" } },
+    webchat: { provider: { strategy: "self_serve", kind: "channel" } },
+    api: { provider: { strategy: "self_serve", kind: "channel" } },
   },
+  selfServeConnectorFor: (provider: string) =>
+    provider === "webchat" || provider === "api"
+      ? { multiInstance: true }
+      : undefined,
 }))
 
 class MockChatbotXException extends Error {
@@ -390,8 +397,53 @@ describe("POST /v1/connections", () => {
     expect(result).toEqual({
       connection: { id: "conn-1", resource: true },
       session: null,
+      secret: null,
     })
     expect(connectionServiceMocks.startSession).not.toHaveBeenCalled()
+  })
+
+  test("creates a webchat immediately through the self-serve connector", async () => {
+    connectionServiceMocks.connectSelfServeChannel.mockResolvedValueOnce({
+      connection: { id: "conn-webchat" },
+      secret: null,
+    })
+
+    const result = await procedure.handler?.({
+      context,
+      input: { provider: "webchat", config: { name: "Support" } },
+    })
+
+    expect(connectionServiceMocks.connectSelfServeChannel).toHaveBeenCalledWith(
+      {
+        workspaceId: "workspace-1",
+        provider: "webchat",
+        config: { name: "Support" },
+        actorUserId: undefined,
+      },
+    )
+    expect(result).toEqual({
+      connection: { id: "conn-webchat", resource: true },
+      session: null,
+      secret: null,
+    })
+  })
+
+  test("returns the API channel token exactly once in the connect envelope", async () => {
+    connectionServiceMocks.connectSelfServeChannel.mockResolvedValueOnce({
+      connection: { id: "conn-api" },
+      secret: { kind: "api_channel_token", token: "cbx_api_token" },
+    })
+
+    const result = await procedure.handler?.({
+      context,
+      input: { provider: "api", config: { name: "Orders" } },
+    })
+
+    expect(result).toEqual({
+      connection: { id: "conn-api", resource: true },
+      session: null,
+      secret: { kind: "api_channel_token", token: "cbx_api_token" },
+    })
   })
 
   test("starts an OAuth session and returns connection: null, session", async () => {
@@ -425,6 +477,7 @@ describe("POST /v1/connections", () => {
     expect(result).toEqual({
       connection: null,
       session: { id: "session-1", sessionResource: true },
+      secret: null,
     })
   })
 
@@ -463,6 +516,7 @@ describe("POST /v1/connections", () => {
     expect(result).toEqual({
       connection: null,
       session: { id: "session-1", sessionResource: true },
+      secret: null,
     })
   })
 })
@@ -506,6 +560,7 @@ describe("POST /v1/connections/{id}/reconnect", () => {
     expect(result).toEqual({
       connection: null,
       session: { id: "session-2", sessionResource: true },
+      secret: null,
     })
   })
 })

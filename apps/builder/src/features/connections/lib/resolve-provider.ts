@@ -5,6 +5,7 @@ import {
 import {
   CONNECTION_REGISTRY,
   isCredentialStrategy,
+  selfServeConnectorFor,
   toChannelType,
 } from "@chatbotx.io/connections"
 import type {
@@ -177,23 +178,24 @@ const resolveUnavailableReason = async (input: {
     return "notImplemented"
   }
 
-  // A credential-strategy provider with no live `fromCredentials` validator
-  // cannot complete `POST /v1/connections` — advertising it as `available`
-  // would 500 on `connectionWrongStrategyException`. Webchat/SMTP/the API
-  // channel are `self_serve` with no external account to validate against
-  // AND no stable per-instance identity to derive `Connection.sourceId`
-  // from (`describe()` only receives `auth`, which for these providers is
-  // minted before any satellite row exists) — deferred to a follow-up that
-  // resolves that identity gap rather than shipping a second "workspace"-
-  // literal `sourceId` collision class.
+  // Only credential-strategy providers with neither a live credential
+  // validator nor a self-serve connector are unavailable. SMTP and
+  // ChatbotX remain deferred; webchat and API create their own satellite row.
   if (
     isCredentialStrategy(adapter.provider.strategy) &&
-    !adapter.provider.fromCredentials
+    !adapter.provider.fromCredentials &&
+    !selfServeConnectorFor(input.provider)
   ) {
     return "notImplemented"
   }
 
-  if (!(adapter.provider.multiAccount || !input.alreadyConnected)) {
+  if (
+    !(
+      adapter.provider.multiAccount ||
+      selfServeConnectorFor(input.provider)?.multiInstance ||
+      !input.alreadyConnected
+    )
+  ) {
     return "alreadyConnected"
   }
 

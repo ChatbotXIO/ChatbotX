@@ -107,6 +107,12 @@ export type ConnectSessionResource = z.infer<typeof connectSessionResource>
 export const connectEnvelope = z.object({
   connection: connectionResource.nullable(),
   session: connectSessionResource.nullable(),
+  secret: z
+    .object({ kind: z.literal("api_channel_token"), token: z.string() })
+    .nullable()
+    .describe(
+      "One-time credential returned only in this response and never retrievable again — the API channel bearer token. Store it before the response is discarded.",
+    ),
 })
 
 export const connectSessionTargetsResource = z.object({

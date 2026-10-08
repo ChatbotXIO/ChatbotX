@@ -31,6 +31,7 @@ vi.mock("@chatbotx.io/connections", () => ({
     strategy === "token" || strategy === "api_key" || strategy === "self_serve",
   toChannelType: (provider: string) =>
     provider === "instagramFacebook" ? "instagram" : provider,
+  selfServeConnectorFor: () => undefined,
   CONNECTION_REGISTRY: {
     zalo: {
       credentialType: "zalo",

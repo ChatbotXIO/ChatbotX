@@ -6,6 +6,7 @@ import {
   findOrFail,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
+import type { WebchatPersistentMenu } from "@chatbotx.io/database/partials"
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import { parsePagination } from "@chatbotx.io/database/utils"
@@ -23,9 +24,11 @@ import { connectionStateService } from "../connection/state-service"
 import { channelLimitReachedException, notFoundException } from "../errors"
 import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
+import { resolveTenantSettings } from "../platform/settings"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import { type WorkspaceQuotaConsumption, workspaceService } from "../workspace"
+import { applyWebchatBranding } from "./branding"
 
 export type UpdateWebchatData = Partial<{
   name: string
@@ -176,6 +179,8 @@ class IntegrationWebchatService extends BaseService {
     // `id === inboxId === sourceId` — the webchat binding's
     // `identityColumn: "id"` (`store-bindings.ts`) sets `IntegrationWebchat
     // .id` to this same `webchatId` on insert.
+
+    const { appUrl } = await resolveTenantSettings({ workspaceId, tx })
     await upsertConnectionRow({
       tx,
       workspaceId,
@@ -187,7 +192,10 @@ class IntegrationWebchatService extends BaseService {
         enable: data.enable,
         authorizedDomains: data.authorizedDomains,
         conversationStarters: data.conversationStarters,
-        persistentMenus: data.persistentMenus,
+        persistentMenus: applyWebchatBranding(
+          data.persistentMenus as WebchatPersistentMenu[],
+          appUrl,
+        ),
         brandColor: data.brandColor,
         hideHeader: data.hideHeader,
         showLogo: data.showLogo,
@@ -409,6 +417,14 @@ class IntegrationWebchatService extends BaseService {
         ? await this.resolveWelcomeFlowId(data.welcomeFlowId, workspaceId, tx)
         : undefined
 
+    const persistentMenus =
+      "persistentMenus" in data
+        ? applyWebchatBranding(
+            data.persistentMenus as WebchatPersistentMenu[] | undefined,
+            (await resolveTenantSettings({ workspaceId, tx })).appUrl,
+          )
+        : undefined
+
     // `workspaceId` scopes the row, it is never written: assigning it in `set`
     // would silently move the webchat to another workspace on a mismatched
     // (id, workspaceId) pair. Callers pre-check via `findByIdForWorkspace`, but
@@ -418,7 +434,7 @@ class IntegrationWebchatService extends BaseService {
       .set({
         ...data,
         conversationStarters: data.conversationStarters as never,
-        persistentMenus: data.persistentMenus as never,
+        persistentMenus: persistentMenus as never,
         ...("welcomeFlowId" in data ? { welcomeFlowId } : {}),
       })
       .where(

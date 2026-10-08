@@ -3,6 +3,7 @@ import { connectSessionService } from "@chatbotx.io/business/connect-session"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { connectionService } from "@chatbotx.io/connections"
 import type { WorkspaceApiTokenScope } from "@chatbotx.io/database/partials"
+import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCancelingConnectSession,
   possibleErrorsOnConnectingSessionTargets,
@@ -107,8 +108,9 @@ export const connectionsPublicRouter = {
       path: "/v1/connections",
       summary: "List connections",
       description:
-        "Every channel and integration connection in the workspace — the unified successor to /v1/integrations and the channel-specific list endpoints. Ordered by kind, then provider, then display name.",
+        "Every channel and integration connection in the workspace — the unified successor to /v1/integrations and the channel-specific list endpoints. Ordered by kind, then provider, then display name. Call `connectionProviders.list` to see what can still be connected, or `connections.create` to connect one.",
       tags: ["Connections"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(withPublicPaging(listConnectionsRequest))
     .output(publicListResponse(connectionResource))
@@ -150,8 +152,9 @@ export const connectionsPublicRouter = {
       successStatus: 201,
       summary: "Connect channel or integration",
       description:
-        'Credential-strategy providers (`token`/`api_key`/`self_serve`) connect immediately and return `connection` (`session: null`). OAuth providers (`oauth_redirect`/`oauth_popup`) return `connection: null` and a `session` whose `nextAction` is `{type:"open_url", url}` — show that URL to the person connecting, then poll `GET /v1/connect-sessions/{id}` until `awaiting_selection` (a multi-account provider) or `completed` (a single-account provider), then call `POST /v1/connect-sessions/{id}/targets` to finish a multi-account connect. The person opening the URL must have admin rights on the account being connected: the resulting token belongs to them, so hand each person their own link — a leaked URL can only connect the opener\'s account into this workspace…',
+        'Credential-strategy providers (`token`/`api_key`/`self_serve`) connect immediately and return `connection` (`session: null`). `webchat` and `api` are self-serve channels; API returns its bearer token once in `secret.token`, and webchat accepts its branding and behavior fields in `config` using the `POST /v1/webchats` shape. OAuth providers (`oauth_redirect`/`oauth_popup`) return `connection: null` and a `session` whose `nextAction` is `{type:"open_url", url}` — show that URL to the person connecting, then poll `connectSessions.get` until `awaiting_selection` (a multi-account provider) or `completed` (a single-account provider), then call `connectSessions.connectTargets` to finish a multi-account connect. Call `connectionProviders.list` first to find the provider key and required `config` fields. The person opening the URL must have admin rights on the account being connected: the resulting token belongs to them, so hand each person their own link — a leaked URL can only connect the opener\'s account into this workspace…',
       tags: ["Connections"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(createConnectionRequest)
     .output(connectEnvelope)
@@ -177,7 +180,7 @@ export const connectionsPublicRouter = {
       successStatus: 201,
       summary: "Re-authorize existing connection",
       description:
-        "Starts a new OAuth authorization for this exact connection (typically after it went `needs_reauth`). The re-granted account must match the one being reconnected, or the attempt fails once the browser round trip completes. Same envelope as `POST /v1/connections`; `connection` is always `null` here — a reconnect never resolves without the round trip.",
+        "Starts a new OAuth authorization for this exact connection (typically after it went `needs_reauth`). The re-granted account must match the one being reconnected, or the attempt fails once the browser round trip completes. Same envelope as `connections.create`; `connection` is always `null` here — a reconnect never resolves without the round trip.",
       tags: ["Connections"],
     })
     .input(reconnectConnectionRequest)
@@ -292,8 +295,9 @@ export const connectionProvidersPublicRouter = {
       path: "/v1/connection-providers",
       summary: "List connection providers",
       description:
-        "The full connect catalog — every provider's strategy, config fields, and whether this workspace can connect it right now. Use `configFields` to build the `config` object for `POST /v1/connections`.",
+        "The full connect catalog — every provider's strategy, config fields, and whether this workspace can connect it right now. Use `configFields` to build the `config` object for `connections.create`.",
       tags: ["Connections"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(listConnectionProvidersRequest)
     .output(publicListResponse(connectionProviderResource))
@@ -315,8 +319,9 @@ export const connectSessionsPublicRouter = {
       path: "/v1/connect-sessions/{id}",
       summary: "Get connect session",
       description:
-        "Poll this after `POST /v1/connections`/`POST /v1/connections/{id}/reconnect` returns a `session`. `status` moves `pending` -> `awaiting_selection` (multi-account) or straight to `completed` (single-account) once the OAuth round trip finishes, or `failed`/`expired`/`cancelled`. Clients must tolerate unknown future values in `status`/`nextAction.type`.",
+        "Poll this after `connections.create` or `connections.reconnect` returns a `session`. `status` moves `pending` -> `awaiting_selection` (multi-account) or straight to `completed` (single-account) once the OAuth round trip finishes, or `failed`/`expired`/`cancelled`. Call `connectSessions.connectTargets` once `awaiting_selection`. Clients must tolerate unknown future values in `status`/`nextAction.type`.",
       tags: ["Connections"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(getConnectSessionRequest)
     .output(connectSessionResource)
@@ -332,8 +337,9 @@ export const connectSessionsPublicRouter = {
       path: "/v1/connect-sessions/{id}/targets",
       summary: "Connect selected targets of awaiting_selection session",
       description:
-        "Finishes a multi-account OAuth connect: claims and connects each requested target, one outcome per target (`connected`/`duplicated`/`limitReached`/`failed` — never throws for a single target's failure). A `connected` outcome whose matching `connections[]` entry has `status: \"degraded\"` means the connection was created but the provider's webhook subscription failed (see `detail`); retry via the connection's `/verify` or `/refresh` endpoint. 400 if the session is not `awaiting_selection`.",
+        "Finishes a multi-account OAuth connect: claims and connects each requested target, one outcome per target (`connected`/`duplicated`/`limitReached`/`failed` — never throws for a single target's failure). A `connected` outcome whose matching `connections[]` entry has `status: \"degraded\"` means the connection was created but the provider's webhook subscription failed (see `detail`); retry via `connections.verify` or `connections.refresh`. 400 if the session is not `awaiting_selection`.",
       tags: ["Connections"],
+      spec: mcpSpec({ visibility: "default" }),
     })
     .input(connectSessionTargetsRequest)
     .output(connectSessionTargetsResource)

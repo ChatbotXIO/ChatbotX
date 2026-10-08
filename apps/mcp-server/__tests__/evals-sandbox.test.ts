@@ -98,6 +98,81 @@ const sandboxSpec = {
         },
       },
     },
+    "/v1/connection-providers": {
+      get: {
+        ...jsonResponse("200"),
+        operationId: "connectionProviders.list",
+      },
+    },
+    "/v1/connections": {
+      get: {
+        ...jsonResponse("200"),
+        operationId: "connections.list",
+      },
+      post: {
+        ...jsonResponse("201"),
+        operationId: "connections.create",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                properties: {
+                  config: { type: "object" },
+                  provider: { type: "string" },
+                },
+                required: ["provider"],
+                type: "object",
+              },
+            },
+          },
+        },
+      },
+    },
+    "/v1/connect-sessions/{id}": {
+      get: {
+        ...jsonResponse("200"),
+        operationId: "connectSessions.get",
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+      },
+    },
+    "/v1/connect-sessions/{id}/targets": {
+      post: {
+        ...jsonResponse("200"),
+        operationId: "connectSessions.connectTargets",
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                properties: {
+                  targetIds: {
+                    items: { type: "string" },
+                    minItems: 1,
+                    type: "array",
+                  },
+                },
+                required: ["targetIds"],
+                type: "object",
+              },
+            },
+          },
+        },
+      },
+    },
     "/v1/contacts": {
       get: {
         ...jsonResponse("200"),
@@ -368,6 +443,129 @@ describe("evaluation sandbox", () => {
     expect(response.status).toBe(422)
     expect(sandbox.snapshot().appointments).toHaveLength(1)
     expect(sandbox.snapshot().journal).toHaveLength(0)
+  })
+
+  test("lists Messenger and starts its OAuth channel connection", async () => {
+    const sandbox = await createSandbox(sandboxSpec)
+    closeSandbox = sandbox.close
+
+    const providers = await fetch(`${sandbox.baseUrl}/v1/connection-providers`)
+    expect(providers.status).toBe(200)
+    const providerCatalog = (await providers.json()) as {
+      data: Record<string, unknown>[]
+    }
+    expect(providerCatalog.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          provider: "messenger",
+          strategy: "oauth_redirect",
+        }),
+      ]),
+    )
+
+    const response = await fetch(`${sandbox.baseUrl}/v1/connections`, {
+      body: JSON.stringify({ provider: "messenger" }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    })
+
+    expect(response.status).toBe(201)
+    await expect(response.json()).resolves.toMatchObject({
+      connection: null,
+      session: {
+        id: "connect-session-1",
+        nextAction: {
+          type: "open_url",
+          url: "https://connect.example.test/messenger",
+        },
+        status: "pending",
+      },
+    })
+    expect(sandbox.snapshot().journal).toEqual([
+      expect.objectContaining({
+        operation: "connections.create",
+        targetId: "connect-session-1",
+      }),
+    ])
+  })
+
+  test("connects selected pages from an authorized Messenger session", async () => {
+    const sandbox = await createSandbox(sandboxSpec, {
+      scenario: "connection-messenger-finish",
+    })
+    closeSandbox = sandbox.close
+
+    const session = await fetch(
+      `${sandbox.baseUrl}/v1/connect-sessions/connect-session-messenger`,
+    )
+    expect(session.status).toBe(200)
+    await expect(session.json()).resolves.toMatchObject({
+      status: "awaiting_selection",
+      targets: [
+        {
+          id: "messenger-page-sales",
+          selectable: true,
+        },
+      ],
+    })
+
+    const response = await fetch(
+      `${sandbox.baseUrl}/v1/connect-sessions/connect-session-messenger/targets`,
+      {
+        body: JSON.stringify({ targetIds: ["messenger-page-sales"] }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      },
+    )
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      connections: [{ provider: "messenger", status: "connected" }],
+      outcomes: [
+        {
+          status: "connected",
+          targetId: "messenger-page-sales",
+        },
+      ],
+      session: { status: "completed" },
+    })
+    expect(sandbox.snapshot()).toMatchObject({
+      connectSessions: [{ status: "completed" }],
+      connections: [{ provider: "messenger" }],
+      journal: [
+        expect.objectContaining({
+          operation: "connectSessions.connectTargets",
+          targetId: "connect-session-messenger",
+        }),
+      ],
+    })
+  })
+
+  test("connects an API-key integration immediately", async () => {
+    const sandbox = await createSandbox(sandboxSpec)
+    closeSandbox = sandbox.close
+
+    const response = await fetch(`${sandbox.baseUrl}/v1/connections`, {
+      body: JSON.stringify({
+        config: { apiKey: "sk-eval-claude-key" },
+        provider: "claude",
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    })
+
+    expect(response.status).toBe(201)
+    await expect(response.json()).resolves.toMatchObject({
+      connection: {
+        provider: "claude",
+        status: "connected",
+        strategy: "api_key",
+      },
+      session: null,
+    })
+    expect(sandbox.snapshot().connections).toEqual([
+      expect.objectContaining({ provider: "claude" }),
+    ])
   })
 
   test("reports unsupported fixture infrastructure instead of a false not-found", async () => {

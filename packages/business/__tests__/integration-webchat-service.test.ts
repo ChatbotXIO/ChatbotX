@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { z } from "zod"
 import { webchatsAdapter } from "../src/template/adapters/webchats"
 
 // The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
@@ -8,6 +9,7 @@ vi.mock("../src/broadcast/plan-policy.service", () => ({
 }))
 
 const {
+  mockApplyWebchatBranding,
   mockCount,
   mockCreateId,
   mockDispatchAuditRecord,
@@ -18,6 +20,7 @@ const {
   mockIsAtLimit,
   mockParsePagination,
   mockRelationsFilterToSQL,
+  mockResolveTenantSettings,
   mockTransaction,
   mockUpdate,
   mockUpdateSet,
@@ -36,6 +39,9 @@ const {
     mockUpdate,
     mockUpdateSet,
     mockUpdateWhere,
+    mockApplyWebchatBranding: vi.fn(
+      (persistentMenus: unknown) => persistentMenus,
+    ),
     mockCount: vi.fn(async () => 25),
     mockCreateId: vi.fn(() => `id-${++createIdCallCount}`),
     mockDispatchAuditRecord: vi.fn(),
@@ -52,6 +58,9 @@ const {
     mockIsAtLimit: vi.fn(async () => false),
     mockParsePagination: vi.fn(),
     mockRelationsFilterToSQL: vi.fn(),
+    mockResolveTenantSettings: vi.fn(async () => ({
+      appUrl: "https://app.example.com",
+    })),
     mockTransaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
       callback({
         query: { integrationWebchatModel: { findFirst: mockFindFirst } },
@@ -103,6 +112,15 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 
 vi.mock("@chatbotx.io/utils", () => ({
   createId: mockCreateId,
+  zodBigintAsString: () => z.string(),
+}))
+
+vi.mock("../src/integration-webchat/branding", () => ({
+  applyWebchatBranding: mockApplyWebchatBranding,
+}))
+
+vi.mock("../src/platform/settings", () => ({
+  resolveTenantSettings: mockResolveTenantSettings,
 }))
 
 // Records the trackers handed to `withQuotaCompensation` on the failure
@@ -365,6 +383,14 @@ describe("integrationWebchatService.create — quota gate", () => {
     expect(created).toEqual({ id: "webchat-1" })
     expect(mockInboxCreate).toHaveBeenCalledTimes(1)
     expect(mockUpsertConnectionRow).toHaveBeenCalledTimes(1)
+    expect(mockResolveTenantSettings).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      tx,
+    })
+    expect(mockApplyWebchatBranding).toHaveBeenCalledWith(
+      baseData.persistentMenus,
+      "https://app.example.com",
+    )
   })
 })
 

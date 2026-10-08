@@ -40,6 +40,16 @@ vi.mock("@chatbotx.io/business", () => ({
     "zalo",
     "tiktok",
   ]),
+  webchatConnectConfigSchema: z.object({
+    hideHeader: z.boolean().default(false),
+    showLogo: z.boolean().default(true),
+    hideMessageInput: z.boolean().default(false),
+    enable: z.boolean().default(true),
+  }),
+}))
+
+vi.mock("@chatbotx.io/connections", () => ({
+  connectionService: { connectSelfServeChannel: vi.fn() },
 }))
 
 // The settings writers reach Facebook/Instagram; only the scope wiring is

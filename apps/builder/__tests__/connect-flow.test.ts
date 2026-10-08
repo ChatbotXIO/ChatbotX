@@ -31,6 +31,7 @@ vi.mock("@chatbotx.io/connections", () => ({
   isCredentialStrategy: (strategy: string) =>
     strategy === "token" || strategy === "api_key" || strategy === "self_serve",
   toChannelType: (provider: string) => provider,
+  selfServeConnectorFor: () => undefined,
   CONNECTION_REGISTRY: {
     facebookAds: {
       credentialType: "facebookAds",
@@ -123,7 +124,11 @@ describe("startConnect — facebookAds", () => {
       actor: { actorUserId: "user-1" },
     })
 
-    expect(result).toEqual({ connection: null, session: { id: "session-1" } })
+    expect(result).toEqual({
+      connection: null,
+      session: { id: "session-1" },
+      secret: null,
+    })
     expect(mocks.startSession).toHaveBeenCalled()
   })
 })

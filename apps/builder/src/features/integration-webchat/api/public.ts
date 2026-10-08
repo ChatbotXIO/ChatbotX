@@ -1,7 +1,5 @@
-import {
-  integrationWebchatService,
-  resolveTenantSettings,
-} from "@chatbotx.io/business"
+import { integrationWebchatService } from "@chatbotx.io/business"
+import { connectionService } from "@chatbotx.io/connections"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
@@ -13,7 +11,6 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
-import { applyWebchatBranding } from "../lib"
 import {
   createWebchatPublicRequest,
   updateWebchatPublicRequest,
@@ -93,28 +90,13 @@ export const webchatsPublicRouter = {
     .output(webchatPublicResource)
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
-      const { appUrl } = await resolveTenantSettings({
+      const { connection } = await connectionService.connectSelfServeChannel({
         workspaceId: context.workspace.id,
+        provider: "webchat",
+        config: input,
       })
-      const persistentMenus = applyWebchatBranding(
-        input.persistentMenus,
-        appUrl,
-      )
-
-      const result = await integrationWebchatService.createWithWorkspace({
-        workspaceId: context.workspace.id,
-        createdBy: context.workspace.ownerId,
-        workspaceName: input.name,
-        data: {
-          ...input,
-          persistentMenus,
-          auth: {},
-          customCss: input.customCss ?? null,
-        },
-      })
-
       return await integrationWebchatService.findByIdForWorkspace({
-        id: result.webchatId,
+        id: connection.sourceId,
         workspaceId: context.workspace.id,
       })
     }),
@@ -146,18 +128,10 @@ export const webchatsPublicRouter = {
         workspaceId: context.workspace.id,
       })
 
-      let persistentMenus = rest.persistentMenus
-      if (persistentMenus) {
-        const { appUrl } = await resolveTenantSettings({
-          workspaceId: context.workspace.id,
-        })
-        persistentMenus = applyWebchatBranding(persistentMenus, appUrl)
-      }
-
       await integrationWebchatService.update({
         workspaceId: context.workspace.id,
         id,
-        data: { ...rest, persistentMenus },
+        data: rest,
       })
 
       return await integrationWebchatService.findByIdForWorkspace({

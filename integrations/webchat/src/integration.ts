@@ -26,6 +26,14 @@ const config: IntegrationDefinition<
   connection: selfServeConnection<WebchatAuthValue>({
     displayName: "Webchat",
     multiAccount: false,
+    configFields: [
+      {
+        name: "name",
+        type: "string",
+        required: true,
+        description: "Webchat display name.",
+      },
+    ],
   }),
   handleRequest(
     _props: HandleRequestProps<BaseConfig>,

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { z } from "zod"
 
 type RouteConfig = {
   method: string
@@ -51,18 +52,23 @@ vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 const integrationWebchatService = {
   list: vi.fn(),
   findByIdForWorkspace: vi.fn(),
-  createWithWorkspace: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
 }
-const resolveTenantSettings = vi.fn()
+const webchatConnectConfigSchema = z.object({
+  name: z.string(),
+  hideHeader: z.boolean().default(false),
+  showLogo: z.boolean().default(true),
+  hideMessageInput: z.boolean().default(false),
+  enable: z.boolean().default(true),
+})
 vi.mock("@chatbotx.io/business", () => ({
   integrationWebchatService,
-  resolveTenantSettings,
+  webchatConnectConfigSchema,
 }))
 
-const isCommunity = vi.fn(() => false)
-vi.mock("@/env", () => ({ isCommunity: () => isCommunity() }))
+const connectionService = { connectSelfServeChannel: vi.fn() }
+vi.mock("@chatbotx.io/connections", () => ({ connectionService }))
 
 vi.mock("@chatbotx.io/database/partials", async () => {
   const { z } = await import("zod")
@@ -113,7 +119,6 @@ const context = { workspace: { id: "workspace-1", ownerId: "owner-1" } }
 
 beforeEach(() => {
   vi.clearAllMocks()
-  isCommunity.mockReturnValue(false)
 })
 
 test("registers the webchats public router under the channels scope", () => {
@@ -143,67 +148,12 @@ describe("POST /v1/webchats", () => {
     welcomeFlowId: undefined,
   }
 
-  test("adds the branding menu entry when isCommunity() is true", async () => {
-    isCommunity.mockReturnValue(true)
-    resolveTenantSettings.mockResolvedValueOnce({ appUrl: "https://app.test" })
-    integrationWebchatService.createWithWorkspace.mockResolvedValueOnce({
-      webchatId: "wc-1",
-    })
-    integrationWebchatService.findByIdForWorkspace.mockResolvedValueOnce({
-      id: "wc-1",
-    })
-
-    await procedure.handler?.({ context, input: baseInput })
-
-    expect(integrationWebchatService.createWithWorkspace).toHaveBeenCalledWith(
-      expect.objectContaining({
-        workspaceId: "workspace-1",
-        createdBy: "owner-1",
-        data: expect.objectContaining({
-          persistentMenus: [
-            expect.objectContaining({
-              label: "⚡ Built with chatbotx.io",
-              type: "url",
-            }),
-          ],
-          authorizedDomains: ["example.com"],
-          auth: {},
-        }),
-      }),
-    )
-  })
-
-  test("leaves persistentMenus untouched when isCommunity() is false", async () => {
-    isCommunity.mockReturnValue(false)
-    resolveTenantSettings.mockResolvedValueOnce({ appUrl: "https://app.test" })
-    integrationWebchatService.createWithWorkspace.mockResolvedValueOnce({
-      webchatId: "wc-1",
-    })
-    integrationWebchatService.findByIdForWorkspace.mockResolvedValueOnce({
-      id: "wc-1",
-    })
-    const persistentMenus = [
-      { label: "Support", type: "url", url: "https://example.com" },
-    ]
-
-    await procedure.handler?.({
-      context,
-      input: { ...baseInput, persistentMenus },
-    })
-
-    expect(integrationWebchatService.createWithWorkspace).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ persistentMenus }),
-      }),
-    )
-  })
-
-  test("reads the created webchat back by the minted id", async () => {
-    resolveTenantSettings.mockResolvedValueOnce({ appUrl: "https://app.test" })
-    integrationWebchatService.createWithWorkspace.mockResolvedValueOnce({
-      webchatId: "wc-1",
-    })
+  test("creates through the connections engine and resolves the returned source id", async () => {
     const created = { id: "wc-1" }
+    connectionService.connectSelfServeChannel.mockResolvedValueOnce({
+      connection: { sourceId: "wc-1" },
+      secret: null,
+    })
     integrationWebchatService.findByIdForWorkspace.mockResolvedValueOnce(
       created,
     )
@@ -212,6 +162,11 @@ describe("POST /v1/webchats", () => {
       procedure.handler?.({ context, input: baseInput }),
     ).resolves.toEqual(created)
 
+    expect(connectionService.connectSelfServeChannel).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      provider: "webchat",
+      config: baseInput,
+    })
     expect(integrationWebchatService.findByIdForWorkspace).toHaveBeenCalledWith(
       { id: "wc-1", workspaceId: "workspace-1" },
     )
@@ -221,12 +176,10 @@ describe("POST /v1/webchats", () => {
 describe("PATCH /v1/webchats/{id}", () => {
   const procedure = findProcedure("PATCH", "/v1/webchats/{id}")
 
-  test("re-applies branding when persistentMenus is supplied", async () => {
-    isCommunity.mockReturnValue(true)
+  test("delegates supplied menus to the service for branding and persistence", async () => {
     integrationWebchatService.findByIdForWorkspace.mockResolvedValue({
       id: "wc-1",
     })
-    resolveTenantSettings.mockResolvedValueOnce({ appUrl: "https://app.test" })
     integrationWebchatService.update.mockResolvedValueOnce(undefined)
 
     await procedure.handler?.({
@@ -234,21 +187,14 @@ describe("PATCH /v1/webchats/{id}", () => {
       input: { id: "wc-1", persistentMenus: [] },
     })
 
-    expect(resolveTenantSettings).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
-    })
     expect(integrationWebchatService.update).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "wc-1",
-      data: expect.objectContaining({
-        persistentMenus: [
-          expect.objectContaining({ label: "⚡ Built with chatbotx.io" }),
-        ],
-      }),
+      data: { persistentMenus: [] },
     })
   })
 
-  test("skips branding resolution entirely when persistentMenus is absent", async () => {
+  test("leaves omitted menus absent from the service update", async () => {
     integrationWebchatService.findByIdForWorkspace.mockResolvedValue({
       id: "wc-1",
     })
@@ -259,11 +205,10 @@ describe("PATCH /v1/webchats/{id}", () => {
       input: { id: "wc-1", name: "Renamed" },
     })
 
-    expect(resolveTenantSettings).not.toHaveBeenCalled()
     expect(integrationWebchatService.update).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "wc-1",
-      data: { name: "Renamed", persistentMenus: undefined },
+      data: { name: "Renamed" },
     })
   })
 })

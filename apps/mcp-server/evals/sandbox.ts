@@ -104,6 +104,29 @@ type FixtureAppointment = {
   id: string
   startAt: string
 }
+type FixtureConnection = {
+  channel: "messenger" | null
+  displayName: string
+  id: string
+  kind: "channel" | "integration"
+  provider: "claude" | "messenger"
+  sourceId: string
+  strategy: "api_key" | "oauth_redirect"
+}
+type FixtureConnectSessionTarget = {
+  id: string
+  name: string
+  selectable: boolean
+}
+type FixtureConnectSession = {
+  connectionIds: string[]
+  id: string
+  nextAction: { type: "open_url"; url: string } | null
+  provider: "messenger"
+  status: "awaiting_selection" | "completed" | "pending"
+  step: "authorize" | "done" | "select"
+  targets: FixtureConnectSessionTarget[]
+}
 type WriteJournalEntry = {
   after: unknown
   before: unknown
@@ -114,13 +137,23 @@ type FixtureState = {
   appointments: FixtureAppointment[]
   availabilityRead: boolean
   broadcasts: FixtureBroadcast[]
+  connectSessions: FixtureConnectSession[]
+  connections: FixtureConnection[]
   contacts: Contact[]
   conversations: Conversation[]
   flows: FixtureFlow[]
   issuedCouponUsed: boolean
   journal: WriteJournalEntry[]
   messages: FixtureMessage[]
-  nextIds: Record<"appointment" | "broadcast" | "flow" | "message", number>
+  nextIds: Record<
+    | "appointment"
+    | "broadcast"
+    | "connectSession"
+    | "connection"
+    | "flow"
+    | "message",
+    number
+  >
   product: { addons: unknown[]; id: number; name: string; variants: unknown[] }
   subscriptions: Record<string, string[]>
   tags: Record<string, string>
@@ -129,6 +162,8 @@ export type FixtureSnapshot = Pick<
   FixtureState,
   | "appointments"
   | "broadcasts"
+  | "connectSessions"
+  | "connections"
   | "contacts"
   | "flows"
   | "journal"
@@ -149,7 +184,7 @@ type FixtureHandler = (
 
 const apiPathPrefix = /^\/api/
 
-const initialState = (): FixtureState => ({
+const initialState = (scenario?: string): FixtureState => ({
   appointments: [
     {
       calendarId: "1",
@@ -160,6 +195,27 @@ const initialState = (): FixtureState => ({
   ],
   availabilityRead: false,
   broadcasts: [],
+  connectSessions:
+    scenario === "connection-messenger-finish"
+      ? [
+          {
+            connectionIds: [],
+            id: "connect-session-messenger",
+            nextAction: null,
+            provider: "messenger",
+            status: "awaiting_selection",
+            step: "select",
+            targets: [
+              {
+                id: "messenger-page-sales",
+                name: "Sales Messenger Page",
+                selectable: true,
+              },
+            ],
+          },
+        ]
+      : [],
+  connections: [],
   contacts: [
     {
       email: "ada@example.com",
@@ -191,7 +247,14 @@ const initialState = (): FixtureState => ({
   issuedCouponUsed: false,
   journal: [],
   messages: [],
-  nextIds: { appointment: 100, broadcast: 12, flow: 16, message: 1 },
+  nextIds: {
+    appointment: 100,
+    broadcast: 12,
+    connectSession: 1,
+    connection: 1,
+    flow: 16,
+    message: 1,
+  },
   product: {
     addons: [{ id: 2, name: "Gift" }],
     id: 4,
@@ -207,6 +270,10 @@ const created = (value: unknown): FixtureResult => ({ status: 201, value })
 const noContent = (): FixtureResult => ({ status: 204 })
 const invalid = (error: string): FixtureResult => ({
   status: 422,
+  value: { error },
+})
+const badRequest = (error: string): FixtureResult => ({
+  status: 400,
   value: { error },
 })
 const notFound = (error: string): FixtureResult => ({
@@ -380,6 +447,98 @@ const page = <T>(items: T[], query: Record<string, string | string[]>) => {
     totalCountCapped: false,
   }
 }
+const connectionProviderCatalog = [
+  {
+    available: true,
+    channel: "messenger",
+    configFields: [],
+    kind: "channel",
+    multiAccount: true,
+    provider: "messenger",
+    strategy: "oauth_redirect",
+    unavailableReason: null,
+  },
+  {
+    available: true,
+    channel: null,
+    configFields: [
+      {
+        label: "API key",
+        name: "apiKey",
+        required: true,
+        type: "secret",
+      },
+    ],
+    kind: "integration",
+    multiAccount: false,
+    provider: "claude",
+    strategy: "api_key",
+    unavailableReason: null,
+  },
+] as const
+const connectionResource = (
+  connection: FixtureConnection,
+): Record<string, unknown> => ({
+  authExpiresAt: null,
+  capabilities: {
+    multiAccount: connection.provider === "messenger",
+    refreshable: connection.provider === "messenger",
+    verifiable: true,
+  },
+  channel: connection.channel,
+  connectedAt: "2026-09-23T00:00:00.000Z",
+  createdAt: "2026-09-23T00:00:00.000Z",
+  disconnectedAt: null,
+  displayName: connection.displayName,
+  id: connection.id,
+  inboxId: connection.kind === "channel" ? `inbox-${connection.id}` : null,
+  integrationId:
+    connection.kind === "integration" ? `integration-${connection.id}` : null,
+  kind: connection.kind,
+  lastError: null,
+  provider: connection.provider,
+  sourceId: connection.sourceId,
+  status: "connected",
+  statusReason: null,
+  strategy: connection.strategy,
+  updatedAt: "2026-09-23T00:00:00.000Z",
+})
+const connectSessionResource = (
+  session: FixtureConnectSession,
+): Record<string, unknown> => ({
+  connectionIds: session.connectionIds,
+  errorCode: null,
+  expiresAt: "2026-09-23T10:00:00.000Z",
+  id: session.id,
+  nextAction: session.nextAction,
+  provider: session.provider,
+  purpose: "connect",
+  status: session.status,
+  step: session.step,
+  targets: session.targets,
+})
+const providerByName = (
+  provider: unknown,
+): (typeof connectionProviderCatalog)[number] | undefined =>
+  typeof provider === "string"
+    ? connectionProviderCatalog.find(
+        (candidate) => candidate.provider === provider,
+      )
+    : undefined
+const createFixtureConnection = (
+  state: FixtureState,
+  provider: (typeof connectionProviderCatalog)[number],
+  sourceId: string,
+  displayName: string,
+): FixtureConnection => ({
+  channel: provider.channel,
+  displayName,
+  id: `connection-${state.nextIds.connection++}`,
+  kind: provider.kind,
+  provider: provider.provider,
+  sourceId,
+  strategy: provider.strategy,
+})
 const contactMatches = (contact: Contact, keyword: string): boolean => {
   const candidate = `${contact.firstName} ${contact.email} ${contact.phoneNumber ?? ""}`
   return candidate.toLocaleLowerCase().includes(keyword.toLocaleLowerCase())
@@ -437,6 +596,149 @@ const compileSpec = (value: unknown, state: FixtureState) => {
 }
 
 const fixtures = (scenario?: string): Record<string, FixtureHandler> => ({
+  "connectionProviders.list": (_state, request) => {
+    const kind = request.query.kind
+    const providers = connectionProviderCatalog.filter(
+      (provider) => kind === undefined || provider.kind === kind,
+    )
+    return ok({ data: providers, pageCount: 1 })
+  },
+  "connections.list": (state, request) => {
+    const connections = state.connections.filter(
+      (connection) =>
+        (request.query.kind === undefined ||
+          connection.kind === request.query.kind) &&
+        (request.query.provider === undefined ||
+          connection.provider === request.query.provider) &&
+        (request.query.channel === undefined ||
+          connection.channel === request.query.channel) &&
+        (request.query.status === undefined ||
+          request.query.status === "connected"),
+    )
+    return ok(page(connections.map(connectionResource), request.query))
+  },
+  "connections.create": (state, request) => {
+    const provider = providerByName(request.body.provider)
+    if (!provider) {
+      return invalid("connectionProviderRequired")
+    }
+
+    if (provider.strategy === "api_key") {
+      const config =
+        request.body.config &&
+        typeof request.body.config === "object" &&
+        !Array.isArray(request.body.config)
+          ? (request.body.config as Record<string, unknown>)
+          : undefined
+      if (!(config && typeof config.apiKey === "string")) {
+        return invalid("connectionApiKeyRequired")
+      }
+
+      const connection = createFixtureConnection(
+        state,
+        provider,
+        "claude-workspace",
+        "Claude",
+      )
+      state.connections.push(connection)
+      recordWrite(state, "connections.create", connection.id, null, connection)
+      return created({
+        connection: connectionResource(connection),
+        session: null,
+      })
+    }
+
+    const session: FixtureConnectSession = {
+      connectionIds: [],
+      id: `connect-session-${state.nextIds.connectSession++}`,
+      nextAction: {
+        type: "open_url",
+        url: "https://connect.example.test/messenger",
+      },
+      provider: "messenger",
+      status: "pending",
+      step: "authorize",
+      targets: [],
+    }
+    state.connectSessions.push(session)
+    recordWrite(state, "connections.create", session.id, null, session)
+    return created({
+      connection: null,
+      session: connectSessionResource(session),
+    })
+  },
+  "connectSessions.get": (state, request) => {
+    const session = state.connectSessions.find(
+      (candidate) =>
+        candidate.id === pathSegmentAfter(request.path, "connect-sessions"),
+    )
+    return session
+      ? ok(connectSessionResource(session))
+      : notFound("connectSessionNotFound")
+  },
+  "connectSessions.connectTargets": (state, request) => {
+    const session = state.connectSessions.find(
+      (candidate) =>
+        candidate.id === pathSegmentAfter(request.path, "connect-sessions"),
+    )
+    if (!session) {
+      return notFound("connectSessionNotFound")
+    }
+    if (session.status !== "awaiting_selection") {
+      return badRequest("connectSessionNotAwaitingSelection")
+    }
+    if (
+      !(
+        Array.isArray(request.body.targetIds) &&
+        request.body.targetIds.length > 0 &&
+        request.body.targetIds.every((targetId) => typeof targetId === "string")
+      )
+    ) {
+      return invalid("connectSessionTargetIdsRequired")
+    }
+
+    const targetIds = [...new Set(request.body.targetIds)]
+    const targets = session.targets.filter((target) =>
+      targetIds.includes(target.id),
+    )
+    if (
+      targets.length !== targetIds.length ||
+      targets.some((target) => !target.selectable)
+    ) {
+      return badRequest("connectSessionTargetNotSelectable")
+    }
+
+    const before = structuredClone({
+      connections: state.connections,
+      session,
+    })
+    const provider = providerByName(session.provider)
+    if (!provider) {
+      return invalid("connectionProviderRequired")
+    }
+    const connections = targets.map((target) =>
+      createFixtureConnection(state, provider, target.id, target.name),
+    )
+    state.connections.push(...connections)
+    session.connectionIds = connections.map((connection) => connection.id)
+    session.nextAction = null
+    session.status = "completed"
+    session.step = "done"
+    const outcomes = connections.map((connection, index) => ({
+      connectionId: connection.id,
+      status: "connected",
+      targetId: targets[index]?.id,
+    }))
+    recordWrite(state, "connectSessions.connectTargets", session.id, before, {
+      connections: state.connections,
+      session,
+    })
+    return ok({
+      connections: connections.map(connectionResource),
+      outcomes,
+      session: connectSessionResource(session),
+    })
+  },
   "contacts.list": (state, request) => {
     const keyword = request.query.keyword
     const candidates =
@@ -1207,7 +1509,7 @@ export const createSandbox = async (
   spec: OpenApiSpec,
   options: SandboxOptions = {},
 ): Promise<Sandbox> => {
-  const state = initialState()
+  const state = initialState(options.scenario)
   const operations = operationsFrom(spec)
   const traces: HttpTrace[] = []
   const handlers = fixtures(options.scenario)
@@ -1309,6 +1611,8 @@ export const createSandbox = async (
       structuredClone({
         appointments: state.appointments,
         broadcasts: state.broadcasts,
+        connectSessions: state.connectSessions,
+        connections: state.connections,
         contacts: state.contacts,
         flows: state.flows,
         journal: state.journal,
