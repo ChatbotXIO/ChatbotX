@@ -214,10 +214,16 @@ export const parseConfig = (
         }
         parsed[field.name] = value
         break
-      default:
+      case "array":
         throw new Error(
           `Connection config field type "${field.type}" is not supported by credential providers`,
         )
+      default: {
+        const exhaustive: never = field.type
+        throw new Error(
+          `Connection config field type "${exhaustive}" is not supported by credential providers`,
+        )
+      }
     }
   }
   return parsed

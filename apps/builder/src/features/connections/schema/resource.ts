@@ -110,7 +110,7 @@ export const connectEnvelope = z.object({
   secret: selfServeSecretSchema
     .nullable()
     .describe(
-      "One-time credential returned only in this response and never retrievable again — the API channel bearer token. Store it before the response is discarded.",
+      "One-time credential returned only in this response and never retrievable again — the API channel bearer token. Store it before the response is discarded. An idempotency replay returns null; rotate the token before retrying.",
     ),
 })
 

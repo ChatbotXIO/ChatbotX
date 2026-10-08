@@ -1,0 +1,157 @@
+{
+  "api": [
+    {
+      "name": "name",
+      "required": true,
+      "type": "string"
+    },
+    {
+      "format": "uri",
+      "name": "callbackUrl",
+      "required": false,
+      "type": "url"
+    }
+  ],
+  "webchat": [
+    {
+      "description": "Webchat display name.",
+      "name": "name",
+      "required": true,
+      "type": "string"
+    },
+    {
+      "description": "Flow to trigger when a visitor opens the widget, or null for none.",
+      "format": "bigint-string",
+      "name": "welcomeFlowId",
+      "pattern": "^\\d+$",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "description": "Domains allowed to embed this webchat widget.",
+      "items": {
+        "format": "hostname",
+        "pattern": "^(?=.{1,253}\\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\\.?$",
+        "type": "string"
+      },
+      "name": "authorizedDomains",
+      "required": false,
+      "type": "array"
+    },
+    {
+      "description": "Suggested opening messages shown to visitors.",
+      "items": {
+        "fields": [
+          {
+            "description": "Text of the suggestion button shown to the visitor.",
+            "name": "label",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Runs a flow when the visitor taps the suggestion.",
+            "enumValues": ["flow", "message", "url"],
+            "name": "type",
+            "required": true,
+            "type": "enum"
+          },
+          {
+            "description": "Flow to run. Get it from `flows.list`.",
+            "format": "bigint-string",
+            "name": "flowId",
+            "pattern": "^\\d+$",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "description": "Absolute URL to open, including https://.",
+            "format": "uri",
+            "name": "url",
+            "required": false,
+            "type": "url"
+          }
+        ],
+        "type": "object"
+      },
+      "name": "conversationStarters",
+      "required": false,
+      "type": "array"
+    },
+    {
+      "description": "Quick-access menu items shown in the widget.",
+      "items": {
+        "fields": [
+          {
+            "description": "Menu item text shown in the widget.",
+            "name": "label",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Runs a flow when the visitor selects the menu item.",
+            "enumValues": ["flow", "url"],
+            "name": "type",
+            "required": true,
+            "type": "enum"
+          },
+          {
+            "description": "Flow to run. Get it from `flows.list`.",
+            "format": "bigint-string",
+            "name": "flowId",
+            "pattern": "^\\d+$",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "description": "Absolute URL to open, including https://.",
+            "format": "uri",
+            "name": "url",
+            "required": false,
+            "type": "url"
+          }
+        ],
+        "type": "object"
+      },
+      "name": "persistentMenus",
+      "required": false,
+      "type": "array"
+    },
+    {
+      "description": "Widget accent color as a 6-digit hex code.",
+      "name": "brandColor",
+      "pattern": "^#[0-9A-Fa-f]{6}$",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "description": "Whether to hide the widget's header bar.",
+      "name": "hideHeader",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "description": "Whether to show the brand logo in the widget.",
+      "name": "showLogo",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "description": "Whether to hide the message input box.",
+      "name": "hideMessageInput",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "description": "Custom CSS applied to the widget.",
+      "name": "customCss",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "description": "Whether the webchat widget is active.",
+      "name": "enable",
+      "required": false,
+      "type": "boolean"
+    }
+  ]
+}

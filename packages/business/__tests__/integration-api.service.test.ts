@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { ChatbotXException } from "../src/errors"
 
 const mocks = vi.hoisted(() => ({
   assertPublicUrl: vi.fn(),
@@ -161,18 +162,22 @@ describe("integrationApiService.connect", () => {
     })
   })
 
-  test("rejects a private callback URL before minting a token or writing rows", async () => {
+  test("returns invalidRequestData when the callback URL is rejected", async () => {
     mocks.assertPublicUrl.mockRejectedValueOnce(new Error("private address"))
 
-    await expect(
-      integrationApiService.createWithToken({
-        ownerId: "owner-1",
-        workspaceId: "workspace-1",
-        name: "Support API",
-        callbackUrl: "http://10.0.0.1/hook",
-      }),
-    ).rejects.toThrow("private address")
+    const result = integrationApiService.createWithToken({
+      ownerId: "owner-1",
+      workspaceId: "workspace-1",
+      name: "Support API",
+      callbackUrl: "http://10.0.0.1/hook",
+    })
 
+    await expect(result).rejects.toBeInstanceOf(ChatbotXException)
+    await expect(result).rejects.toMatchObject({
+      code: "invalidRequestData",
+      httpStatusCode: 422,
+      message: "private address",
+    })
     expect(mocks.generateApiChannelToken).not.toHaveBeenCalled()
     expect(mocks.transaction).not.toHaveBeenCalled()
     expect(mocks.upsertConnectionRow).not.toHaveBeenCalled()

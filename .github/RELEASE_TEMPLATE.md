@@ -40,6 +40,8 @@
 ghcr.io/chatbotxio/chatbotx-builder:VERSION
 ghcr.io/chatbotxio/chatbotx-worker:VERSION
 ghcr.io/chatbotxio/chatbotx-realtime:VERSION
+ghcr.io/chatbotxio/chatbotx-mcp:VERSION
+ghcr.io/chatbotxio/chatbotx-javascript-executor:VERSION
 ```
 
 ## Upgrade Notes
