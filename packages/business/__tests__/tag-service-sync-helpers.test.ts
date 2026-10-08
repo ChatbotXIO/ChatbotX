@@ -8,8 +8,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 
 const findFirstTag = vi.fn()
-const findFirstTagChannel = vi.fn()
 const findManyTag = vi.fn()
+
 const insertValues = vi.fn()
 const insertReturning = vi.fn()
 const deleteWhere = vi.fn()
@@ -21,9 +21,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
       tagModel: {
         findFirst: (...args: unknown[]) => findFirstTag(...args),
         findMany: (...args: unknown[]) => findManyTag(...args),
-      },
-      tagChannelModel: {
-        findFirst: (...args: unknown[]) => findFirstTagChannel(...args),
       },
     },
     insert: () => ({
@@ -83,20 +80,12 @@ vi.mock("../src/ads-conversion/service", () => ({
   },
 }))
 
-const loggerWarn = vi.fn()
-vi.mock("../src/logger", () => ({
-  logger: {
-    warn: (...args: unknown[]) => loggerWarn(...args),
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-  },
-}))
-
+const withCache = vi.fn(
+  async (_key: string, callback: () => Promise<unknown>) => await callback(),
+)
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: (...args: unknown[]) => invalidateCacheByTags(...args),
-  withCache: async (_key: string, callback: () => Promise<unknown>) =>
-    await callback(),
+  withCache: (...args: Parameters<typeof withCache>) => withCache(...args),
 }))
 
 vi.mock("../src/contact", () => ({
@@ -274,45 +263,8 @@ describe("detachFromContactForTrigger", () => {
   })
 })
 
-describe("findTagChannelByTag", () => {
-  test("looks the mapping up by the tag/integration unique key, scoped to the workspace", async () => {
-    findFirstTagChannel.mockResolvedValue({ id: "tc-1" })
-
-    const result = await tagService.findTagChannelByTag({
-      workspaceId: "ws-1",
-      tagId: "tag-1",
-      channelType: "messenger",
-      integrationId: "intg-1",
-    })
-
-    expect(findFirstTagChannel).toHaveBeenCalledWith({
-      where: {
-        workspaceId: "ws-1",
-        tagId: "tag-1",
-        channelType: "messenger",
-        integrationId: "intg-1",
-      },
-      columns: { id: true },
-    })
-    expect(result).toEqual({ id: "tc-1" })
-  })
-
-  test("returns undefined when the tag has no mapping on this integration", async () => {
-    findFirstTagChannel.mockResolvedValue(undefined)
-
-    await expect(
-      tagService.findTagChannelByTag({
-        workspaceId: "ws-1",
-        tagId: "tag-1",
-        channelType: "messenger",
-        integrationId: "intg-1",
-      }),
-    ).resolves.toBeUndefined()
-  })
-})
-
 describe("linkTagToContactsReturningNewUnscoped", () => {
-  test("invalidates the cache of each newly linked contact", async () => {
+  test("returns only the newly linked contacts and touches no cache", async () => {
     insertReturning.mockResolvedValue([
       { contactId: "c1" },
       { contactId: "c2" },
@@ -324,37 +276,11 @@ describe("linkTagToContactsReturningNewUnscoped", () => {
     })
 
     expect(linked).toEqual([{ contactId: "c1" }, { contactId: "c2" }])
-    expect(invalidateCacheByTags).toHaveBeenCalledWith([
-      "contacts:c1",
-      "contacts:c2",
+    expect(insertValues).toHaveBeenCalledWith([
+      { contactId: "c1", tagId: "tag-1" },
+      { contactId: "c2", tagId: "tag-1" },
+      { contactId: "c3", tagId: "tag-1" },
     ])
-  })
-
-  test("still returns the new links when the cache invalidation fails", async () => {
-    insertReturning.mockResolvedValue([{ contactId: "c1" }])
-    const failure = new Error("redis down")
-    invalidateCacheByTags.mockRejectedValueOnce(failure)
-
-    const linked = await tagService.linkTagToContactsReturningNewUnscoped({
-      tagId: "tag-1",
-      contactIds: ["c1"],
-    })
-
-    expect(linked).toEqual([{ contactId: "c1" }])
-    expect(loggerWarn).toHaveBeenCalledWith(
-      expect.objectContaining({ err: failure, tagId: "tag-1" }),
-      "Failed to invalidate contact tag cache after linking",
-    )
-  })
-
-  test("invalidates nothing when every contact already had the tag", async () => {
-    insertReturning.mockResolvedValue([])
-
-    await tagService.linkTagToContactsReturningNewUnscoped({
-      tagId: "tag-1",
-      contactIds: ["c1"],
-    })
-
     expect(invalidateCacheByTags).not.toHaveBeenCalled()
   })
 
@@ -366,5 +292,24 @@ describe("linkTagToContactsReturningNewUnscoped", () => {
 
     expect(linked).toEqual([])
     expect(insertValues).not.toHaveBeenCalled()
+  })
+})
+
+describe("listByContactId", () => {
+  test("reads the contact's live tags straight from the database, never a cache", async () => {
+    const tags = [{ id: "t1", name: "ad_id.1" }]
+    findManyTag.mockResolvedValue(tags)
+
+    const result = await tagService.listByContactId({ contactId: "c1" })
+
+    expect(result).toEqual(tags)
+    expect(findManyTag).toHaveBeenCalledWith({
+      where: {
+        deletedAt: { isNull: true },
+        contactsToTags: { contactId: "c1" },
+      },
+      orderBy: { name: "asc" },
+    })
+    expect(withCache).not.toHaveBeenCalled()
   })
 })

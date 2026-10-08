@@ -1,5 +1,6 @@
 import { adsConversionService, tagService } from "@chatbotx.io/business"
 import { channelTypes, messageTypes } from "@chatbotx.io/database/partials"
+import { tagChannelRepository } from "@chatbotx.io/database/repositories"
 import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
 import { emitTagApplied } from "@chatbotx.io/events"
 import type { ChannelLabel, MessageReferral } from "@chatbotx.io/sdk"
@@ -162,7 +163,8 @@ const recordAdTagChannelAssignment = async (
 ): Promise<void> => {
   const { inbox, integrationRow, contactInbox, referral } = props
   try {
-    const tagChannel = await tagService.findTagChannelByTag({
+    // Pure read, so the repository is called directly (see data-access rule).
+    const tagChannel = await tagChannelRepository.findByTagAndIntegration({
       workspaceId: inbox.workspaceId,
       tagId,
       channelType: source.labelChannel,

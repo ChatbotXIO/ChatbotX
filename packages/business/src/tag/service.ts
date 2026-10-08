@@ -676,22 +676,16 @@ class TagService extends BaseService {
     contactId: string
   }): Promise<TagModel[]> {
     const { tx = db, contactId } = props
-    const key = `contacts:${contactId}:tags`
-
-    return await withCache(
-      key,
-      async () =>
-        await tx.query.tagModel.findMany({
-          where: {
-            deletedAt: { isNull: true as const },
-            contactsToTags: { contactId },
-          },
-          orderBy: { name: "asc" },
-        }),
-      {
-        tags: [`contacts:${contactId}`],
+    // Deliberately uncached: a contact's tags are small and change on every
+    // attach/detach path (manual, flow step, label webhook, ad referral), so
+    // a cached copy went stale for a day whenever one path forgot to clear it.
+    return await tx.query.tagModel.findMany({
+      where: {
+        deletedAt: { isNull: true as const },
+        contactsToTags: { contactId },
       },
-    )
+      orderBy: { name: "asc" },
+    })
   }
 
   async findByKey(props: {
@@ -1281,29 +1275,11 @@ class TagService extends BaseService {
     if (contactIds.length === 0) {
       return []
     }
-    const linked = await tx
+    return await tx
       .insert(contactsToTagsModel)
       .values(contactIds.map((contactId) => ({ contactId, tagId })))
       .onConflictDoNothing()
       .returning({ contactId: contactsToTagsModel.contactId })
-    // `listByContactId` caches a contact's tags under `contacts:<id>`; drop
-    // it for the contacts that just gained the tag so n8n/Make payloads and
-    // flow context read the new tag instead of a day-old list. The links are
-    // already committed, so a cache failure must not hide them from the
-    // caller (it would lose the tag events for good).
-    if (linked.length > 0) {
-      try {
-        await this.invalidateCacheTags(
-          linked.map((row) => `contacts:${row.contactId}`),
-        )
-      } catch (error) {
-        logger.warn(
-          { err: error, tagId, contactIds: linked.map((row) => row.contactId) },
-          "Failed to invalidate contact tag cache after linking",
-        )
-      }
-    }
-    return linked
   }
 
   /**
@@ -1380,25 +1356,6 @@ class TagService extends BaseService {
     return await tx.query.tagChannelModel.findFirst({
       where: { workspaceId, channelType, integrationId, externalLabelId },
       columns: { id: true, tagId: true },
-    })
-  }
-
-  /**
-   * Find a tag's channel mapping on one integration (the
-   * `TagChannel_tag_integration_key` unique key), so a caller that already
-   * holds the tag can attach a contact to the channel's label id.
-   */
-  async findTagChannelByTag(props: {
-    workspaceId: string
-    tagId: string
-    channelType: TagChannelModel["channelType"]
-    integrationId: string
-    tx?: DatabaseClient
-  }): Promise<Pick<TagChannelModel, "id"> | undefined> {
-    const { workspaceId, tagId, channelType, integrationId, tx = db } = props
-    return await tx.query.tagChannelModel.findFirst({
-      where: { workspaceId, tagId, channelType, integrationId },
-      columns: { id: true },
     })
   }
 

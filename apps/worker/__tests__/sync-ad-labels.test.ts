@@ -8,9 +8,15 @@ const ensureTagByName = vi.fn(async () => "tag-ad" as string | undefined)
 const linkTagToContactsReturningNewUnscoped = vi.fn(async () => [
   { contactId: "contact-1" },
 ])
-const findTagChannelByTag = vi.fn(
+const findByTagAndIntegration = vi.fn(
   async (): Promise<{ id: string } | undefined> => undefined,
 )
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  tagChannelRepository: {
+    findByTagAndIntegration: (...args: unknown[]) =>
+      findByTagAndIntegration(...args),
+  },
+}))
 const recordTagChannelAssignmentsUnscoped = vi.fn(async () => undefined)
 const enqueueTagAppliedEvaluationsForInbox = vi.fn(async () => undefined)
 vi.mock("@chatbotx.io/business", () => ({
@@ -18,7 +24,6 @@ vi.mock("@chatbotx.io/business", () => ({
     ensureTagByName: (...args: unknown[]) => ensureTagByName(...args),
     linkTagToContactsReturningNewUnscoped: (...args: unknown[]) =>
       linkTagToContactsReturningNewUnscoped(...args),
-    findTagChannelByTag: (...args: unknown[]) => findTagChannelByTag(...args),
     recordTagChannelAssignmentsUnscoped: (...args: unknown[]) =>
       recordTagChannelAssignmentsUnscoped(...args),
   },
@@ -76,7 +81,7 @@ beforeEach(() => {
   linkTagToContactsReturningNewUnscoped.mockResolvedValue([
     { contactId: "contact-1" },
   ])
-  findTagChannelByTag.mockResolvedValue(undefined)
+  findByTagAndIntegration.mockResolvedValue(undefined)
 })
 
 describe("syncAdLabelsIfAdReferred — storing", () => {
@@ -221,11 +226,11 @@ describe("tagAdReferralOnlyContact — tagging", () => {
   })
 
   test("records the channel assignment when the tag already has this page's label id", async () => {
-    findTagChannelByTag.mockResolvedValue({ id: "tc-ad" })
+    findByTagAndIntegration.mockResolvedValue({ id: "tc-ad" })
 
     await tagAdReferralOnlyContact(adReferralOnly())
 
-    expect(findTagChannelByTag).toHaveBeenCalledWith({
+    expect(findByTagAndIntegration).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       tagId: "tag-ad",
       channelType: "messenger",
@@ -240,7 +245,7 @@ describe("tagAdReferralOnlyContact — tagging", () => {
 
   test("records the channel assignment even when the contact already had the tag", async () => {
     linkTagToContactsReturningNewUnscoped.mockResolvedValue([])
-    findTagChannelByTag.mockResolvedValue({ id: "tc-ad" })
+    findByTagAndIntegration.mockResolvedValue({ id: "tc-ad" })
 
     await tagAdReferralOnlyContact(adReferralOnly())
 
@@ -248,7 +253,7 @@ describe("tagAdReferralOnlyContact — tagging", () => {
   })
 
   test("still records the channel assignment when the tag-applied event fails", async () => {
-    findTagChannelByTag.mockResolvedValue({ id: "tc-ad" })
+    findByTagAndIntegration.mockResolvedValue({ id: "tc-ad" })
     emitTagApplied.mockRejectedValueOnce(new Error("emitter down"))
 
     await tagAdReferralOnlyContact(adReferralOnly())
@@ -288,7 +293,7 @@ describe("tagAdReferralOnlyContact — tagging", () => {
 
   test("still emits tag applied when the channel mapping lookup fails", async () => {
     const failure = new Error("db down")
-    findTagChannelByTag.mockRejectedValueOnce(failure)
+    findByTagAndIntegration.mockRejectedValueOnce(failure)
 
     await tagAdReferralOnlyContact(adReferralOnly())
 
