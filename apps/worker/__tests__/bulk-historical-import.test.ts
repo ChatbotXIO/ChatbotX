@@ -26,6 +26,7 @@ const {
   mockBulkImportChannelContacts,
   mockEnrichIfNull,
   mockBulkAdvanceActivityAndAiContextMarker,
+  mockBackdateCreatedAt,
 } = vi.hoisted(() => {
   const mockBulkCreate = vi.fn().mockResolvedValue([])
   const mockBulkCreateAttachments = vi.fn().mockResolvedValue([])
@@ -44,6 +45,7 @@ const {
     mockBulkAdvanceActivityAndAiContextMarker: vi
       .fn()
       .mockResolvedValue(undefined),
+    mockBackdateCreatedAt: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -62,6 +64,9 @@ vi.mock("@chatbotx.io/business", () => ({
   bulkImportChannelContacts: mockBulkImportChannelContacts,
   contactInboxService: {
     bulkUpdateTracking: mockBulkUpdateTracking,
+  },
+  contactService: {
+    backdateCreatedAt: mockBackdateCreatedAt,
   },
   conversationService: {
     bulkAdvanceActivityAndAiContextMarker:
@@ -300,6 +305,7 @@ describe("bulkImportHistorical", () => {
           firstInteractionAt: firstMessageAt,
           lastMessageAt: firstMessageAt,
           lastIncomingMessageAt: firstMessageAt,
+          createdAt: firstMessageAt,
         },
         {
           contactInboxId: "ci-2",
@@ -308,7 +314,17 @@ describe("bulkImportHistorical", () => {
           firstInteractionAt: secondMessageAt,
           lastMessageAt: secondMessageAt,
           lastIncomingMessageAt: secondMessageAt,
+          createdAt: secondMessageAt,
         },
+      ]),
+    })
+    // Contacts are dated from their first synced message in one bulk call.
+    expect(mockBackdateCreatedAt).toHaveBeenCalledTimes(1)
+    expect(mockBackdateCreatedAt).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      rows: expect.arrayContaining([
+        { contactId: "contact-1", createdAt: firstMessageAt },
+        { contactId: "contact-2", createdAt: secondMessageAt },
       ]),
     })
   })

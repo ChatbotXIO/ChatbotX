@@ -988,6 +988,31 @@ class ContactService extends BaseService {
     return uploaded.originPath
   }
 
+  /**
+   * Coexist history sync: date each contact from the oldest message the sync
+   * found for them (the first time they chatted with the page) instead of
+   * from the moment the sync created the row. Backdate-only; see
+   * `contactRepository.backdateCreatedAt`.
+   */
+  async backdateCreatedAt(props: {
+    workspaceId: string
+    rows: { contactId: string; createdAt: Date }[]
+  }): Promise<void> {
+    const { workspaceId, rows } = props
+    if (rows.length === 0) {
+      return
+    }
+    // Only contacts the statement really moved get a cache round trip: a
+    // replayed coexist chunk changes nothing and must cost nothing in Redis.
+    const changedIds = await contactRepository.backdateCreatedAt(
+      rows.map((row) => ({ ...row, workspaceId })),
+    )
+    if (changedIds.length === 0) {
+      return
+    }
+    await this.invalidate({ workspaceId, ids: [...new Set(changedIds)] })
+  }
+
   async unsubscribeEmail(cid: string) {
     await db
       .update(contactModel)

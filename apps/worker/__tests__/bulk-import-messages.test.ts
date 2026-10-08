@@ -14,6 +14,7 @@ const {
   mockDbUpdate,
   mockDbExecute,
   mockDbTransaction,
+  mockBackdateCreatedAt,
 } = vi.hoisted(() => {
   const txChain = {
     values: vi.fn(),
@@ -62,6 +63,7 @@ const {
     mockDbUpdate,
     mockDbExecute: vi.fn().mockResolvedValue(undefined),
     mockDbTransaction,
+    mockBackdateCreatedAt: vi.fn().mockResolvedValue([]),
   }
 })
 
@@ -71,6 +73,9 @@ const {
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
+  contactRepository: {
+    backdateCreatedAt: mockBackdateCreatedAt,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -631,7 +636,11 @@ describe("applyCoexistActivityUpdates", () => {
     expect(contactInboxSql?.strings?.join("")).toContain(
       '"lastIncomingMessageAt"',
     )
-    expect(contactInboxSql?.strings?.join("")).not.toContain('"createdAt"')
+    // A synced contact inbox is dated from the first message, never from the
+    // sync's wall clock — and only ever moved back.
+    expect(contactInboxSql?.strings?.join("")).toContain(
+      '"createdAt" = LEAST(t."createdAt", u.created_ts)',
+    )
     expect(contactInboxSql?.strings?.join("")).toContain("VALUES")
     expect(contactInboxSql?.strings?.join("")).not.toContain("unnest")
 
@@ -645,6 +654,13 @@ describe("applyCoexistActivityUpdates", () => {
       latestAt,
       firstAt,
       incomingAt,
+      firstAt,
+    ])
+
+    // The owning Contact is dated from the same first message.
+    expect(mockBackdateCreatedAt).toHaveBeenCalledTimes(1)
+    expect(mockBackdateCreatedAt).toHaveBeenCalledWith([
+      { contactId: "contact-1", workspaceId: "ws-1", createdAt: firstAt },
     ])
 
     const conversationSql = mockDbExecute.mock.calls[1]?.[0] as
@@ -689,6 +705,7 @@ describe("applyCoexistActivityUpdates", () => {
       outgoingAt,
       outgoingAt,
       null,
+      outgoingAt,
     ])
   })
 
@@ -737,6 +754,10 @@ describe("applyCoexistActivityUpdates", () => {
       newerMessage,
       oldestMessage,
       newerIncoming,
+      oldestMessage,
+    ])
+    expect(mockBackdateCreatedAt).toHaveBeenCalledWith([
+      { contactId: "contact-1", workspaceId: "ws-1", createdAt: oldestMessage },
     ])
 
     const conversationSql = mockDbExecute.mock.calls[1]?.[0] as
@@ -753,6 +774,40 @@ describe("applyCoexistActivityUpdates", () => {
       "conv-1",
       newerMessage,
       "200000000000002",
+    ])
+  })
+
+  test("dates a contact from the oldest message across all of its contact inboxes in the batch", async () => {
+    const olderThread = new Date("2026-06-10T08:00:00.000Z")
+    const newerThread = new Date("2026-06-15T08:00:00.000Z")
+    await applyCoexistActivityUpdates(
+      [
+        {
+          contactInboxId: "ci-1",
+          contactId: "contact-1",
+          conversationId: "conv-1",
+          newestMessageAt: new Date("2026-06-16T08:00:00.000Z"),
+          oldestMessageAt: newerThread,
+          newestIncomingMessageAt: null,
+          aiMarkerMessageId: null,
+        },
+        {
+          contactInboxId: "ci-2",
+          contactId: "contact-1",
+          conversationId: "conv-2",
+          newestMessageAt: new Date("2026-06-11T08:00:00.000Z"),
+          oldestMessageAt: olderThread,
+          newestIncomingMessageAt: null,
+          aiMarkerMessageId: null,
+        },
+      ],
+      { workspaceId: "ws-1" },
+    )
+
+    // One row per contact, carrying the minimum across both threads.
+    expect(mockBackdateCreatedAt).toHaveBeenCalledTimes(1)
+    expect(mockBackdateCreatedAt).toHaveBeenCalledWith([
+      { contactId: "contact-1", workspaceId: "ws-1", createdAt: olderThread },
     ])
   })
 

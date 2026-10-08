@@ -130,6 +130,13 @@ export type ContactInboxBulkTrackingRow = {
   firstInteractionAt: Date
   lastMessageAt: Date
   lastIncomingMessageAt: Date | null
+  /**
+   * Coexist history sync only: moves `createdAt` back to the oldest synced
+   * message so a contact inbox is dated from the first time the customer
+   * chatted with the page, not from when the sync ran. Backdate-only
+   * (LEAST); null leaves the column alone.
+   */
+  createdAt?: Date | null
 }
 
 export const PROFILE_SNAPSHOT_MAX_ATTEMPTS = 5
@@ -1225,20 +1232,23 @@ class ContactInboxService extends BaseService {
         ${row.workspaceId}::int8,
         ${row.lastMessageAt}::timestamptz,
         ${row.firstInteractionAt}::timestamptz,
-        ${row.lastIncomingMessageAt}::timestamptz
+        ${row.lastIncomingMessageAt}::timestamptz,
+        ${row.createdAt ?? null}::timestamptz
       )`,
     )
 
     // Postgres GREATEST/LEAST ignore NULL operands, so each column keeps its
-    // existing value when the incoming one is NULL and vice versa.
+    // existing value when the incoming one is NULL and vice versa. The same
+    // rule makes `createdAt` a no-op for every caller that leaves it unset.
     await tx.execute(sql`
       UPDATE "ContactInbox" AS t
       SET
         "firstInteractionAt" = LEAST(t."firstInteractionAt", u.first_ts),
         "lastMessageAt" = GREATEST(t."lastMessageAt", u.message_ts),
-        "lastIncomingMessageAt" = GREATEST(t."lastIncomingMessageAt", u.incoming_ts)
+        "lastIncomingMessageAt" = GREATEST(t."lastIncomingMessageAt", u.incoming_ts),
+        "createdAt" = LEAST(t."createdAt", u.created_ts)
       FROM (VALUES ${sql.join(valueRows, sql`, `)})
-        AS u(id, contact_id, workspace_id, message_ts, first_ts, incoming_ts)
+        AS u(id, contact_id, workspace_id, message_ts, first_ts, incoming_ts, created_ts)
       WHERE
         t."id" = u.id
         AND t."contactId" = u.contact_id
