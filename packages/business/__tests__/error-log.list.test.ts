@@ -33,6 +33,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   errorLogModel: { _: "ErrorLog" },
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  deleteErrorLogsByIds: vi.fn(),
+}))
+
 const { listErrorLogs } = await import("../src/error-log/service")
 
 /** The `where` the query handed to drizzle. */

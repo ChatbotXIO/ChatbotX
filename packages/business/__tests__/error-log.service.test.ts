@@ -24,6 +24,11 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   errorLogModel: {},
 }))
 
+const deleteErrorLogsByIds = vi.fn()
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  deleteErrorLogsByIds: (...args: unknown[]) => deleteErrorLogsByIds(...args),
+}))
+
 vi.mock("@chatbotx.io/database/utils", () => ({
   getPaginationWithDefaults: vi.fn(() => ({ limit: 10, offset: 0 })),
   likeContains: (value: string) => `%${value}%`,
@@ -547,5 +552,31 @@ describe("logProviderErrors", () => {
 
     await expect(logProviderErrors([])).resolves.toEqual({ failedIndexes: [] })
     expect(emit).not.toHaveBeenCalled()
+  })
+})
+
+describe("deleteErrorLogs", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.resetModules()
+  })
+
+  it("deletes the given ids scoped to the workspace", async () => {
+    const { deleteErrorLogs } = await loadBatch()
+
+    await deleteErrorLogs({ workspaceId: "ws-1", ids: ["a", "b"] })
+
+    expect(deleteErrorLogsByIds).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["a", "b"],
+    })
+  })
+
+  it("skips the query when no ids are given", async () => {
+    const { deleteErrorLogs } = await loadBatch()
+
+    await deleteErrorLogs({ workspaceId: "ws-1", ids: [] })
+
+    expect(deleteErrorLogsByIds).not.toHaveBeenCalled()
   })
 })
