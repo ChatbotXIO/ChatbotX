@@ -15,16 +15,20 @@ import type { Row } from "@tanstack/react-table"
 import { Loader, Trash } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import type { ComponentPropsWithoutRef } from "react"
+import { type ComponentPropsWithoutRef, useState } from "react"
 import { toast } from "sonner"
 import { deleteErrorLogAction } from "./actions/delete-error-log-action"
 import type { ErrorLogResource } from "./schema"
 
-type DeleteErrorLogsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
+type DeleteErrorLogsDialogProps = Omit<
+  ComponentPropsWithoutRef<typeof Dialog>,
+  "onOpenChange"
+> & {
   workspaceId: string
   errorLogs: Row<ErrorLogResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
+  onOpenChange?: (open: boolean) => void
 }
 
 export function DeleteErrorLogsDialog({
@@ -32,9 +36,18 @@ export function DeleteErrorLogsDialog({
   errorLogs,
   showTrigger = true,
   onSuccess,
+  open,
+  onOpenChange,
   ...props
 }: DeleteErrorLogsDialogProps) {
   const t = useTranslations()
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isOpen = open ?? internalOpen
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setInternalOpen(nextOpen)
+    onOpenChange?.(nextOpen)
+  }
 
   const { execute, isPending } = useAction(
     deleteErrorLogAction.bind(null, workspaceId),
@@ -45,6 +58,7 @@ export function DeleteErrorLogsDialog({
             feature: t("fields.errorLog.label"),
           }),
         )
+        handleOpenChange(false)
         onSuccess?.()
       },
       onError: ({ error }) => {
@@ -56,7 +70,7 @@ export function DeleteErrorLogsDialog({
   )
 
   return (
-    <Dialog {...props}>
+    <Dialog {...props} onOpenChange={handleOpenChange} open={isOpen}>
       {showTrigger ? (
         <DialogTrigger
           render={
