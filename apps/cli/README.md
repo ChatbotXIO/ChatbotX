@@ -999,6 +999,8 @@ chatbotx ref-links get <id>
 chatbotx ref-links create --name <name>
 chatbotx ref-links update <id>
 chatbotx ref-links delete <id>
+chatbotx ref-links chat-widget list <id>             # Chat widget settings + embedCode (<script> tag)
+chatbotx ref-links chat-widget update <id>           # Replace all widget settings (--authorizedDomains --hiddenInboxIds --logoFileId --logoBackgroundColor --brandName --brandUrl)
 ```
 
 ---

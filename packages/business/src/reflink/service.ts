@@ -78,6 +78,15 @@ class ReflinkService extends BaseService {
     return reflink
   }
 
+  /** The ref link with its chat widget logo path, for the widget settings API. */
+  async findWidgetOrFail(input: { workspaceId: string; id: string }) {
+    const reflink = await reflinkRepository.findWidgetByIdAndWorkspace(input)
+    if (!reflink) {
+      throw notFoundException("Reflink not found")
+    }
+    return reflink
+  }
+
   async find(input: {
     workspaceId: string
     id: string
