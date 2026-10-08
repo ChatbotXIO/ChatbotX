@@ -148,6 +148,12 @@ const resolveOneProvider = async (input: {
           ? input.t(field.labelKey)
           : field.name,
       enumValues: field.enumValues ? [...field.enumValues] : undefined,
+      items: field.items
+        ? {
+            ...field.items,
+            fields: field.items.fields ? [...field.items.fields] : undefined,
+          }
+        : undefined,
       description: field.description,
     }),
   )
@@ -162,6 +168,7 @@ const resolveOneProvider = async (input: {
       : null) as ChannelType | null,
     strategy: adapter.provider.strategy,
     multiAccount: adapter.provider.multiAccount,
+    multiInstance: adapter.provider.multiInstance ?? false,
     configFields,
     available: unavailableReason === null,
     unavailableReason,
@@ -192,7 +199,7 @@ const resolveUnavailableReason = async (input: {
   if (
     !(
       adapter.provider.multiAccount ||
-      selfServeConnectorFor(input.provider)?.multiInstance ||
+      adapter.provider.multiInstance ||
       !input.alreadyConnected
     )
   ) {

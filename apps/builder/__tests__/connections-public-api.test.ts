@@ -410,14 +410,17 @@ describe("POST /v1/connections", () => {
 
     const result = await procedure.handler?.({
       context,
-      input: { provider: "webchat", config: { name: "Support" } },
+      input: {
+        provider: "webchat",
+        config: { name: "Support", authorizedDomains: ["example.com"] },
+      },
     })
 
     expect(connectionServiceMocks.connectSelfServeChannel).toHaveBeenCalledWith(
       {
         workspaceId: "workspace-1",
         provider: "webchat",
-        config: { name: "Support" },
+        config: { name: "Support", authorizedDomains: ["example.com"] },
         actorUserId: undefined,
       },
     )

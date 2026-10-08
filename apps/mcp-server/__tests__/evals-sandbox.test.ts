@@ -568,6 +568,31 @@ describe("evaluation sandbox", () => {
     ])
   })
 
+  test("creates an API channel and returns its token exactly once", async () => {
+    const sandbox = await createSandbox(sandboxSpec)
+    closeSandbox = sandbox.close
+
+    const response = await fetch(`${sandbox.baseUrl}/v1/connections`, {
+      body: JSON.stringify({
+        config: { name: "Orders API" },
+        provider: "api",
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    })
+
+    expect(response.status).toBe(201)
+    await expect(response.json()).resolves.toMatchObject({
+      connection: {
+        provider: "api",
+        status: "connected",
+        strategy: "self_serve",
+      },
+      secret: { kind: "api_channel_token", token: "cbx_api_eval-token" },
+      session: null,
+    })
+  })
+
   test("reports unsupported fixture infrastructure instead of a false not-found", async () => {
     const unsupportedSpec = {
       paths: { "/v1/tags": { post: { operationId: "tags.create" } } },

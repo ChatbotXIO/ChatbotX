@@ -12,6 +12,7 @@ import {
   integrationTypes,
 } from "@chatbotx.io/database/partials"
 import type { ConnectionStrategy } from "@chatbotx.io/sdk"
+import { connectionConfigFieldSchema } from "@chatbotx.io/utils/connection"
 import { z } from "zod"
 
 /** Single source for the `strategy` enum shared by `connectionResource` and `connectionProviderResource` — kept in lockstep with the SDK's `ConnectionStrategy` via `satisfies`. */
@@ -54,14 +55,9 @@ export const connectionResource = z.object({
 })
 export type ConnectionResource = z.infer<typeof connectionResource>
 
-const connectionProviderConfigField = z.object({
-  name: z.string(),
-  type: z.enum(["string", "secret", "number", "boolean", "enum", "url"]),
-  required: z.boolean(),
-  label: z.string(),
-  enumValues: z.array(z.string()).optional(),
-  description: z.string().optional(),
-})
+const connectionProviderConfigField = connectionConfigFieldSchema
+  .omit({ labelKey: true })
+  .extend({ label: z.string() })
 
 export const connectionProviderResource = z.object({
   provider: integrationTypes,
@@ -69,6 +65,7 @@ export const connectionProviderResource = z.object({
   channel: channelTypes.nullable(),
   strategy: connectionStrategies,
   multiAccount: z.boolean(),
+  multiInstance: z.boolean(),
   configFields: z.array(connectionProviderConfigField),
   available: z.boolean(),
   unavailableReason: z

@@ -1,7 +1,10 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { integrationTypes } from "@chatbotx.io/database/partials"
 import { integrationApiRepository } from "@chatbotx.io/database/repositories"
-import type { IntegrationApiModel } from "@chatbotx.io/database/types"
+import type {
+  ConnectionModel,
+  IntegrationApiModel,
+} from "@chatbotx.io/database/types"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { dispatchAuditRecord } from "../audit/dispatcher"
@@ -14,7 +17,12 @@ import {
 } from "../connection"
 import { connectionStateService } from "../connection/state-service"
 import { inboxService } from "../inbox/service"
+import { assertPublicUrl } from "../net/ssrf-guard"
 import type { WorkspaceQuotaConsumption } from "../workspace/quota-consumption"
+import {
+  generateApiChannelToken,
+  generateSigningSecret,
+} from "../workspace-api-token/credentials"
 
 type ConnectIntegrationApiInput = {
   ownerId: string
@@ -32,6 +40,17 @@ type ConnectIntegrationApiInput = {
   ) => Promise<string>
 }
 
+export { apiConnectConfigSchema } from "./schema"
+
+type CreateApiWithTokenInput = {
+  ownerId: string
+  actorUserId: string
+  workspaceId?: string
+  name: string
+  callbackUrl?: string | null
+  createWorkspace?: ConnectIntegrationApiInput["createWorkspace"]
+}
+
 type DisconnectIntegrationApiInput = {
   id: string
   inboxId: string
@@ -40,9 +59,11 @@ type DisconnectIntegrationApiInput = {
 }
 
 class IntegrationApiService extends BaseService {
-  async connect(
-    input: ConnectIntegrationApiInput,
-  ): Promise<{ workspaceId: string; inbox: IntegrationApiModel }> {
+  async connect(input: ConnectIntegrationApiInput): Promise<{
+    workspaceId: string
+    inbox: IntegrationApiModel
+    connection: ConnectionModel
+  }> {
     const quotaConsumption: ConnectionQuotaConsumption = {
       consumed: false,
       workspaceUsageIncremented: false,
@@ -87,7 +108,7 @@ class IntegrationApiService extends BaseService {
           // `identityColumn: "id"` (`store-bindings.ts`) sets `IntegrationApi
           // .id` to this same `apiId` on insert, keeping one id for the
           // inbox, the integration row, and the connection's sourceId.
-          await upsertConnectionRow({
+          const connection = await upsertConnectionRow({
             tx,
             workspaceId,
             provider: "api",
@@ -119,7 +140,12 @@ class IntegrationApiService extends BaseService {
             )
           }
 
-          return { workspaceId, inbox: integration, workspaceCreated }
+          return {
+            workspaceId,
+            inbox: integration,
+            connection,
+            workspaceCreated,
+          }
         }),
     )
 
@@ -146,6 +172,38 @@ class IntegrationApiService extends BaseService {
     })
 
     return result
+  }
+
+  async createWithToken(input: CreateApiWithTokenInput): Promise<{
+    workspaceId: string
+    inboxId: string
+    token: string
+    connection: ConnectionModel
+  }> {
+    const callbackUrl = input.callbackUrl ?? null
+    if (callbackUrl) {
+      await assertPublicUrl(callbackUrl, "API channel callback URL")
+    }
+
+    const { token, tokenHash, tokenPrefix } = await generateApiChannelToken()
+    const result = await this.connect({
+      ...input,
+      auth: {
+        authType: "custom",
+        callbackUrl,
+        signingSecret: generateSigningSecret(),
+      },
+      tokenHash,
+      tokenPrefix,
+      callbackUrl,
+    })
+
+    return {
+      workspaceId: result.workspaceId,
+      inboxId: result.inbox.id,
+      token,
+      connection: result.connection,
+    }
   }
 
   async disconnect(input: DisconnectIntegrationApiInput): Promise<void> {

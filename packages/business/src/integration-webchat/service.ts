@@ -8,7 +8,10 @@ import {
 } from "@chatbotx.io/database/client"
 import type { WebchatPersistentMenu } from "@chatbotx.io/database/partials"
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
-import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
+import type {
+  ConnectionModel,
+  IntegrationWebchatModel,
+} from "@chatbotx.io/database/types"
 import { parsePagination } from "@chatbotx.io/database/utils"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
@@ -24,18 +27,16 @@ import { connectionStateService } from "../connection/state-service"
 import { channelLimitReachedException, notFoundException } from "../errors"
 import { flowService } from "../flow/service"
 import { inboxService } from "../inbox/service"
-import { resolveTenantSettings } from "../platform/settings"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import { type WorkspaceQuotaConsumption, workspaceService } from "../workspace"
-import { applyWebchatBranding } from "./branding"
-
+import { brandWebchatMenus } from "./branding"
 export type UpdateWebchatData = Partial<{
   name: string
   enable: boolean
   authorizedDomains: string[]
   conversationStarters: unknown[]
-  persistentMenus: unknown[]
+  persistentMenus: WebchatPersistentMenu[]
   brandColor: string
   hideHeader: boolean
   showLogo: boolean
@@ -50,7 +51,7 @@ export type CreateWebchatRequest = {
   enable: boolean
   authorizedDomains: string[]
   conversationStarters: unknown[]
-  persistentMenus: unknown[]
+  persistentMenus: WebchatPersistentMenu[]
   brandColor: string
   hideHeader: boolean
   showLogo: boolean
@@ -131,7 +132,10 @@ class IntegrationWebchatService extends BaseService {
       quotaConsumption?: ConnectionQuotaConsumption
     },
     tx: DatabaseClient,
-  ): Promise<IntegrationWebchatModel> {
+  ): Promise<{
+    integration: IntegrationWebchatModel
+    connection: ConnectionModel
+  }> {
     const { workspaceId, ownerId, data } = props
 
     // Guard against inserting an Inbox + IntegrationWebchat + disconnected
@@ -180,8 +184,12 @@ class IntegrationWebchatService extends BaseService {
     // `identityColumn: "id"` (`store-bindings.ts`) sets `IntegrationWebchat
     // .id` to this same `webchatId` on insert.
 
-    const { appUrl } = await resolveTenantSettings({ workspaceId, tx })
-    await upsertConnectionRow({
+    const persistentMenus = await brandWebchatMenus({
+      persistentMenus: data.persistentMenus,
+      workspaceId,
+      tx,
+    })
+    const connection = await upsertConnectionRow({
       tx,
       workspaceId,
       provider: "webchat",
@@ -192,10 +200,7 @@ class IntegrationWebchatService extends BaseService {
         enable: data.enable,
         authorizedDomains: data.authorizedDomains,
         conversationStarters: data.conversationStarters,
-        persistentMenus: applyWebchatBranding(
-          data.persistentMenus as WebchatPersistentMenu[],
-          appUrl,
-        ),
+        persistentMenus,
         brandColor: data.brandColor,
         hideHeader: data.hideHeader,
         showLogo: data.showLogo,
@@ -221,7 +226,7 @@ class IntegrationWebchatService extends BaseService {
       )
     }
 
-    return created
+    return { integration: created, connection }
   }
 
   async delete(input: { workspaceId: string; id: string }): Promise<void> {
@@ -265,6 +270,7 @@ class IntegrationWebchatService extends BaseService {
    */
   async createWithWorkspace(input: {
     workspaceId?: string
+    ownerId?: string
     createdBy: string
     workspaceName: string
     data: CreateWebchatRequest
@@ -272,17 +278,20 @@ class IntegrationWebchatService extends BaseService {
     workspaceId: string
     createdWorkspace: boolean
     webchatId: string
+    connection: ConnectionModel
   }> {
     const { createdBy, workspaceName, data } = input
     // Resolved up front: `withQuotaCompensation` needs the quota owner to
     // hand the channel slot back if the transaction below rolls back.
-    const ownerId = input.workspaceId
-      ? (
-          await workspaceService.findOrFail({
-            where: { id: input.workspaceId },
-          })
-        ).ownerId
-      : createdBy
+    const ownerId =
+      input.ownerId ??
+      (input.workspaceId
+        ? (
+            await workspaceService.findOrFail({
+              where: { id: input.workspaceId },
+            })
+          ).ownerId
+        : createdBy)
 
     // Both seats are taken outside SQL (Redis + UserQuota), so a rollback of
     // the transaction cannot hand them back on its own — same pattern as the
@@ -326,7 +335,12 @@ class IntegrationWebchatService extends BaseService {
             tx,
           )
 
-          return { workspaceId, createdWorkspace, webchatId: created.id }
+          return {
+            workspaceId,
+            createdWorkspace,
+            webchatId: created.integration.id,
+            connection: created.connection,
+          }
         }),
     )
 
@@ -419,10 +433,11 @@ class IntegrationWebchatService extends BaseService {
 
     const persistentMenus =
       "persistentMenus" in data
-        ? applyWebchatBranding(
-            data.persistentMenus as WebchatPersistentMenu[] | undefined,
-            (await resolveTenantSettings({ workspaceId, tx })).appUrl,
-          )
+        ? await brandWebchatMenus({
+            persistentMenus: data.persistentMenus,
+            workspaceId,
+            tx,
+          })
         : undefined
 
     // `workspaceId` scopes the row, it is never written: assigning it in `set`

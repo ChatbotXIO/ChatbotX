@@ -339,6 +339,16 @@ export const gradeEpisode = (options: GradeEpisodeOptions): EpisodeGrading => {
   ) {
     reasons.push("Final answer omitted an exact required number.")
   }
+  if (
+    evalCase.finalAssertions?.occurrences?.some(
+      ({ count, value }) =>
+        value.length === 0 || final.split(value).length - 1 !== count,
+    )
+  ) {
+    reasons.push(
+      "Final answer repeated or omitted required literal information.",
+    )
+  }
   if (stepExhausted) {
     reasons.push("Step budget exhausted.")
   }

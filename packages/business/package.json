@@ -34,6 +34,8 @@
     "./inbox/connect-outcome-types": "./src/inbox/connect-outcome-types.ts",
     "./inbox/schema": "./src/inbox/schema.ts",
     "./integration-ai-provider/verify": "./src/integration-ai-provider/verify.ts",
+    "./integration-api/schema": "./src/integration-api/schema.ts",
+    "./integration-webchat/schema": "./src/integration-webchat/schema.ts",
     "./integration-whatsapp/auth-schema": "./src/integration-whatsapp/auth-schema.ts",
     "./license-startup": "./src/enterprise/license/startup.ts",
     "./javascript-execution": "./src/javascript-execution/index.ts",

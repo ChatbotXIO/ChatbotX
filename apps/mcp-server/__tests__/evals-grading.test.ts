@@ -351,6 +351,25 @@ describe("evaluator grading", () => {
     expect(result.status).toBe("fail")
   })
 
+  test("requires a one-time API channel token disclosure", () => {
+    const evaluation = {
+      allowedWriteTools: [],
+      argumentPredicates: [],
+      expectedOutcome: "clarify" as const,
+      expectedTools: [],
+      finalAssertions: {
+        occurrences: [{ count: 1, value: "cbx_api_eval-token" }],
+      },
+      forbiddenTools: [],
+      writeAssertions: [],
+    }
+
+    expect(grade([], evaluation, "cbx_api_eval-token").status).toBe("pass")
+    expect(
+      grade([], evaluation, "cbx_api_eval-token cbx_api_eval-token").status,
+    ).toBe("fail")
+  })
+
   test("normalizes ranked dotted aliases", () => {
     expect(
       firstSearchRank(

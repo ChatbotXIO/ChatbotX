@@ -22,6 +22,7 @@ const config: IntegrationDefinition<BaseConfig, ApiAuthValue, ApiActions> = {
   connection: selfServeConnection<ApiAuthValue>({
     displayName: "API channel",
     multiAccount: false,
+    multiInstance: true,
     configFields: [
       {
         name: "name",

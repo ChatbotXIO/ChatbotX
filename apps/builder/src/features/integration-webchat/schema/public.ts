@@ -1,4 +1,4 @@
-import { webchatConnectConfigSchema } from "@chatbotx.io/business"
+import { webchatConnectConfigSchema } from "@chatbotx.io/business/integration-webchat/schema"
 import {
   webchatConversationStarter,
   webchatPersistentMenu,
@@ -21,17 +21,10 @@ export const webchatPublicResource = createSelectSchema(
 ).omit({ workspaceId: true, auth: true })
 export type WebchatPublicResource = z.infer<typeof webchatPublicResource>
 
-export const createWebchatPublicRequest = webchatConnectConfigSchema.extend({
-  conversationStarters: z
-    .array(webchatConversationStarter)
-    .describe("Suggested opening messages shown to visitors."),
-  persistentMenus: z
-    .array(webchatPersistentMenu)
-    .describe("Quick-access menu items shown in the widget."),
-  brandColor: z
-    .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format")
-    .describe("Widget accent color as a 6-digit hex code."),
+export const createWebchatPublicRequest = webchatConnectConfigSchema.required({
+  brandColor: true,
+  conversationStarters: true,
+  persistentMenus: true,
 })
 export type CreateWebchatPublicRequest = z.infer<
   typeof createWebchatPublicRequest

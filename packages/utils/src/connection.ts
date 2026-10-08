@@ -95,12 +95,38 @@ export const CONNECTION_TO_INBOX_DISCONNECT_REASON: Record<
 export const connectionKinds = z.enum(["channel", "integration"])
 export type ConnectionKind = z.infer<typeof connectionKinds>
 
+const connectionConfigFieldTypes = z.enum([
+  "string",
+  "secret",
+  "number",
+  "boolean",
+  "enum",
+  "url",
+])
+
+const connectionConfigItemSchema = z.object({
+  type: z.enum([...connectionConfigFieldTypes.options, "object"]),
+  enumValues: z.array(z.string()).optional(),
+  fields: z
+    .array(
+      z.object({
+        name: z.string(),
+        type: connectionConfigFieldTypes,
+        required: z.boolean(),
+        enumValues: z.array(z.string()).optional(),
+        description: z.string().optional(),
+      }),
+    )
+    .optional(),
+})
+
 export const connectionConfigFieldSchema = z.object({
   name: z.string(),
-  type: z.enum(["string", "secret", "number", "boolean", "enum", "url"]),
+  type: z.enum([...connectionConfigFieldTypes.options, "array"]),
   required: z.boolean(),
   labelKey: z.string().optional(),
   enumValues: z.array(z.string()).optional(),
+  items: connectionConfigItemSchema.optional(),
   description: z.string().optional(),
 })
 export type ConnectionConfigField = z.infer<typeof connectionConfigFieldSchema>

@@ -9,7 +9,7 @@ vi.mock("../src/broadcast/plan-policy.service", () => ({
 }))
 
 const {
-  mockApplyWebchatBranding,
+  mockIsCommunity,
   mockCount,
   mockCreateId,
   mockDispatchAuditRecord,
@@ -39,9 +39,7 @@ const {
     mockUpdate,
     mockUpdateSet,
     mockUpdateWhere,
-    mockApplyWebchatBranding: vi.fn(
-      (persistentMenus: unknown) => persistentMenus,
-    ),
+    mockIsCommunity: vi.fn(() => true),
     mockCount: vi.fn(async () => 25),
     mockCreateId: vi.fn(() => `id-${++createIdCallCount}`),
     mockDispatchAuditRecord: vi.fn(),
@@ -115,8 +113,8 @@ vi.mock("@chatbotx.io/utils", () => ({
   zodBigintAsString: () => z.string(),
 }))
 
-vi.mock("../src/integration-webchat/branding", () => ({
-  applyWebchatBranding: mockApplyWebchatBranding,
+vi.mock("../src/keys", () => ({
+  isCommunity: mockIsCommunity,
 }))
 
 vi.mock("../src/platform/settings", () => ({
@@ -356,6 +354,7 @@ describe("integrationWebchatService.create — quota gate", () => {
     } as never)
     mockUpsertConnectionRow.mockResolvedValue({ id: "conn-1" } as never)
     mockFindFirst.mockResolvedValue({ id: "webchat-1" } as never)
+    mockIsCommunity.mockReturnValue(true)
   })
 
   test("throws channelLimitReached and creates no Inbox/Connection row when the owner's channel quota is already full", async () => {
@@ -372,7 +371,7 @@ describe("integrationWebchatService.create — quota gate", () => {
     expect(mockUpsertConnectionRow).not.toHaveBeenCalled()
   })
 
-  test("proceeds to create the Inbox + Connection row when quota has capacity", async () => {
+  test("creates the Inbox + Connection row when quota has capacity", async () => {
     mockIsAtLimit.mockResolvedValue(false)
 
     const created = await integrationWebchatService.create(
@@ -380,17 +379,75 @@ describe("integrationWebchatService.create — quota gate", () => {
       tx,
     )
 
-    expect(created).toEqual({ id: "webchat-1" })
+    expect(created).toEqual({
+      integration: { id: "webchat-1" },
+      connection: { id: "conn-1" },
+    })
     expect(mockInboxCreate).toHaveBeenCalledTimes(1)
-    expect(mockUpsertConnectionRow).toHaveBeenCalledTimes(1)
+    expect(mockUpsertConnectionRow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extraConfig: expect.objectContaining({
+          persistentMenus: [
+            {
+              label: "⚡ Built with chatbotx.io",
+              type: "url",
+              url: "https://app.example.com/?ref=selfhosted&channel=webchat",
+            },
+          ],
+        }),
+      }),
+    )
     expect(mockResolveTenantSettings).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       tx,
     })
-    expect(mockApplyWebchatBranding).toHaveBeenCalledWith(
-      baseData.persistentMenus,
-      "https://app.example.com",
+  })
+
+  test("replaces a foreign-host branding entry instead of duplicating it", async () => {
+    await integrationWebchatService.create(
+      {
+        workspaceId: "ws-1",
+        ownerId: "owner-1",
+        data: {
+          ...baseData,
+          persistentMenus: [
+            {
+              label: "⚡ Built with chatbotx.io",
+              type: "url",
+              url: "https://old.example.com/?ref=selfhosted&channel=webchat",
+            },
+            { label: "Docs", type: "url", url: "https://docs.example.com" },
+          ],
+        },
+      },
+      tx,
     )
+
+    expect(mockUpsertConnectionRow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extraConfig: expect.objectContaining({
+          persistentMenus: [
+            { label: "Docs", type: "url", url: "https://docs.example.com" },
+            {
+              label: "⚡ Built with chatbotx.io",
+              type: "url",
+              url: "https://app.example.com/?ref=selfhosted&channel=webchat",
+            },
+          ],
+        }),
+      }),
+    )
+  })
+
+  test("does not resolve tenant settings when community branding is disabled", async () => {
+    mockIsCommunity.mockReturnValue(false)
+
+    await integrationWebchatService.create(
+      { workspaceId: "ws-1", ownerId: "owner-1", data: baseData },
+      tx,
+    )
+
+    expect(mockResolveTenantSettings).not.toHaveBeenCalled()
   })
 })
 
