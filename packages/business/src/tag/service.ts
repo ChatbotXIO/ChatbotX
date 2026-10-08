@@ -676,22 +676,16 @@ class TagService extends BaseService {
     contactId: string
   }): Promise<TagModel[]> {
     const { tx = db, contactId } = props
-    const key = `contacts:${contactId}:tags`
-
-    return await withCache(
-      key,
-      async () =>
-        await tx.query.tagModel.findMany({
-          where: {
-            deletedAt: { isNull: true as const },
-            contactsToTags: { contactId },
-          },
-          orderBy: { name: "asc" },
-        }),
-      {
-        tags: [`contacts:${contactId}`],
+    // Deliberately uncached: a contact's tags are small and change on every
+    // attach/detach path (manual, flow step, label webhook, ad referral), so
+    // a cached copy went stale for a day whenever one path forgot to clear it.
+    return await tx.query.tagModel.findMany({
+      where: {
+        deletedAt: { isNull: true as const },
+        contactsToTags: { contactId },
       },
-    )
+      orderBy: { name: "asc" },
+    })
   }
 
   async findByKey(props: {

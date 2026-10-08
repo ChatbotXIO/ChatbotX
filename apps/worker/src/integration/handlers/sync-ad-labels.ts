@@ -1,4 +1,8 @@
+import { adsConversionService, tagService } from "@chatbotx.io/business"
 import { channelTypes, messageTypes } from "@chatbotx.io/database/partials"
+import { tagChannelRepository } from "@chatbotx.io/database/repositories"
+import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
+import { emitTagApplied } from "@chatbotx.io/events"
 import type { ChannelLabel, MessageReferral } from "@chatbotx.io/sdk"
 import { PAID_AD_REFERRAL_SOURCE } from "@chatbotx.io/utils/referral"
 import { logger } from "../../lib/logger"
@@ -12,10 +16,16 @@ import type { ChannelType as LabelChannelType } from "./inbox_labels/types"
  * `receiveMessage` reads the person's labels and stores the ad ones through the
  * same `applyEvent` path the label webhook uses, so a later webhook for the
  * same label is a no-op.
+ *
+ * A referral-only webhook (ad tap on an existing thread, no message) stores no
+ * message, so it gets the same-named tag locally instead; a later label sync
+ * finds that tag by name and attaches the channel's label id to it.
  */
 
 type AdLabelSource = {
   labelChannel: LabelChannelType
+  /** The channel's ads-conversion identity, for "tag applied" rules. */
+  conversionChannel: AdsConversionChannel
   /** `MessageReferral.source` of a paid-ad referral on this channel. */
   referralSource: string
   /** Name prefix of the auto-assigned per-ad label. */
@@ -26,6 +36,7 @@ type AdLabelSource = {
 const AD_LABEL_SOURCES: Partial<Record<string, AdLabelSource>> = {
   [channelTypes.enum.messenger]: {
     labelChannel: channelTypes.enum.messenger,
+    conversionChannel: channelTypes.enum.messenger,
     referralSource: PAID_AD_REFERRAL_SOURCE.meta,
     labelPrefix: "ad_id.",
   },
@@ -110,6 +121,133 @@ export async function syncAdLabelsIfAdReferred(
         adId: referral?.adId,
       },
       "Ad label sync failed",
+    )
+  }
+}
+
+type TagAdReferralOnlyProps = Pick<
+  SyncAdLabelsProps,
+  "canAutomate" | "inbox" | "integrationRow" | "referral"
+> & {
+  /** True when the delivery carried no message or postback. */
+  isReferralOnly: boolean
+  contactInbox: { id: string; contactId: string }
+}
+
+/** The per-ad tag to apply for an ad referral-only delivery, else null. */
+const resolveReferralOnlyAdTag = (
+  props: TagAdReferralOnlyProps,
+): { source: AdLabelSource; tagName: string } | null => {
+  const source = AD_LABEL_SOURCES[props.inbox.channel]
+  const adId = props.referral?.adId
+  const isAdReferralOnly =
+    props.canAutomate &&
+    props.isReferralOnly &&
+    props.referral?.source === source?.referralSource &&
+    Boolean(props.integrationRow.syncTagEnabledAt)
+  return source && adId && isAdReferralOnly
+    ? { source, tagName: `${source.labelPrefix}${adId}` }
+    : null
+}
+
+/**
+ * Record the contact inbox under the tag's existing mapping to this page's
+ * label id (from an earlier label lookup), so the page's later "remove label"
+ * webhook can find it. Skipped while the tag has no mapping yet. Best-effort
+ * and isolated: a failure here must not stop the tag's events.
+ */
+const recordAdTagChannelAssignment = async (
+  props: TagAdReferralOnlyProps,
+  source: AdLabelSource,
+  tagId: string,
+): Promise<void> => {
+  const { inbox, integrationRow, contactInbox, referral } = props
+  try {
+    // Pure read, so the repository is called directly (see data-access rule).
+    const tagChannel = await tagChannelRepository.findByTagAndIntegration({
+      workspaceId: inbox.workspaceId,
+      tagId,
+      channelType: source.labelChannel,
+      integrationId: integrationRow.id,
+    })
+    if (tagChannel) {
+      await tagService.recordTagChannelAssignmentsUnscoped({
+        tagId,
+        tagChannelId: tagChannel.id,
+        contactInboxIds: [contactInbox.id],
+      })
+    }
+  } catch (error) {
+    logger.warn(
+      {
+        err: error,
+        workspaceId: inbox.workspaceId,
+        integrationId: integrationRow.id,
+        contactInboxId: contactInbox.id,
+        adId: referral?.adId,
+      },
+      "Ad referral label mapping failed",
+    )
+  }
+}
+
+/**
+ * Apply the per-ad tag (`ad_id.<AD_ID>`) to the contact of a referral-only
+ * ad delivery. The tag is found by name or created, so repeated referrals for
+ * the same ad reuse one tag; "tag applied" and the ads-conversion evaluation
+ * run only on the first link. Best-effort: a failure is logged and never
+ * fails the message job.
+ */
+export async function tagAdReferralOnlyContact(
+  props: TagAdReferralOnlyProps,
+): Promise<void> {
+  const resolved = resolveReferralOnlyAdTag(props)
+  if (!resolved) {
+    return
+  }
+  const { source, tagName } = resolved
+  const { inbox, integrationRow, contactInbox, referral } = props
+  try {
+    const tagId = await tagService.ensureTagByName({
+      workspaceId: inbox.workspaceId,
+      name: tagName,
+    })
+    if (!tagId) {
+      return
+    }
+    const linked = await tagService.linkTagToContactsReturningNewUnscoped({
+      tagId,
+      contactIds: [contactInbox.contactId],
+    })
+    await recordAdTagChannelAssignment(props, source, tagId)
+    if (linked.length === 0) {
+      return
+    }
+    // The evaluation enqueue never throws (`safeEnqueue`); the event goes
+    // last so its failure cannot lose a conversion for a link that exists.
+    await adsConversionService.enqueueTagAppliedEvaluationsForInbox({
+      workspaceId: inbox.workspaceId,
+      channel: source.conversionChannel,
+      inboxId: inbox.id,
+      contactInboxId: contactInbox.id,
+      tagIds: [tagId],
+    })
+    await emitTagApplied(
+      inbox.workspaceId,
+      contactInbox.contactId,
+      tagId,
+      contactInbox.id,
+    )
+  } catch (error) {
+    logger.warn(
+      {
+        err: error,
+        workspaceId: inbox.workspaceId,
+        integrationId: integrationRow.id,
+        contactInboxId: contactInbox.id,
+        adId: referral?.adId,
+      },
+      "Ad referral tag failed",
     )
   }
 }

@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const findFirstTag = vi.fn()
 const findManyTag = vi.fn()
+
 const insertValues = vi.fn()
 const insertReturning = vi.fn()
 const deleteWhere = vi.fn()
@@ -79,10 +80,12 @@ vi.mock("../src/ads-conversion/service", () => ({
   },
 }))
 
+const withCache = vi.fn(
+  async (_key: string, callback: () => Promise<unknown>) => await callback(),
+)
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: (...args: unknown[]) => invalidateCacheByTags(...args),
-  withCache: async (_key: string, callback: () => Promise<unknown>) =>
-    await callback(),
+  withCache: (...args: Parameters<typeof withCache>) => withCache(...args),
 }))
 
 vi.mock("../src/contact", () => ({
@@ -257,5 +260,56 @@ describe("detachFromContactForTrigger", () => {
     expect(flat).toContain("ContactToTag.tagId")
     expect(flat).toContain('"t-1"')
     expect(flat).toContain('"t-2"')
+  })
+})
+
+describe("linkTagToContactsReturningNewUnscoped", () => {
+  test("returns only the newly linked contacts and touches no cache", async () => {
+    insertReturning.mockResolvedValue([
+      { contactId: "c1" },
+      { contactId: "c2" },
+    ])
+
+    const linked = await tagService.linkTagToContactsReturningNewUnscoped({
+      tagId: "tag-1",
+      contactIds: ["c1", "c2", "c3"],
+    })
+
+    expect(linked).toEqual([{ contactId: "c1" }, { contactId: "c2" }])
+    expect(insertValues).toHaveBeenCalledWith([
+      { contactId: "c1", tagId: "tag-1" },
+      { contactId: "c2", tagId: "tag-1" },
+      { contactId: "c3", tagId: "tag-1" },
+    ])
+    expect(invalidateCacheByTags).not.toHaveBeenCalled()
+  })
+
+  test("returns [] without inserting when contactIds is empty", async () => {
+    const linked = await tagService.linkTagToContactsReturningNewUnscoped({
+      tagId: "tag-1",
+      contactIds: [],
+    })
+
+    expect(linked).toEqual([])
+    expect(insertValues).not.toHaveBeenCalled()
+  })
+})
+
+describe("listByContactId", () => {
+  test("reads the contact's live tags straight from the database, never a cache", async () => {
+    const tags = [{ id: "t1", name: "ad_id.1" }]
+    findManyTag.mockResolvedValue(tags)
+
+    const result = await tagService.listByContactId({ contactId: "c1" })
+
+    expect(result).toEqual(tags)
+    expect(findManyTag).toHaveBeenCalledWith({
+      where: {
+        deletedAt: { isNull: true },
+        contactsToTags: { contactId: "c1" },
+      },
+      orderBy: { name: "asc" },
+    })
+    expect(withCache).not.toHaveBeenCalled()
   })
 })

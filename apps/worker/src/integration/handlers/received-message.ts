@@ -131,7 +131,10 @@ import {
   refreshExistingContactProfile,
 } from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
-import { syncAdLabelsIfAdReferred } from "./sync-ad-labels"
+import {
+  syncAdLabelsIfAdReferred,
+  tagAdReferralOnlyContact,
+} from "./sync-ad-labels"
 import { recordInboundThreadControl } from "./thread-control-inbound"
 import { resolveTiktokCommenterIdentity } from "./tiktok-comment-identity"
 
@@ -714,6 +717,18 @@ export const receiveMessage = async (
       data: { referral: parsedMessage.referral },
     })
   }
+
+  // A referral-only ad delivery stores no message, so the label lookup further
+  // down skips it; tag the contact with the ad locally instead. Runs before
+  // the ref job is enqueued so a ref flow can already see the tag.
+  await tagAdReferralOnlyContact({
+    canAutomate,
+    inbox,
+    integrationRow,
+    referral: parsedMessage.referral,
+    isReferralOnly: !incomingMessage,
+    contactInbox: { id: contactInbox.id, contactId: contactInbox.contactId },
+  })
 
   if (ref && canAutomate) {
     await integrationQueue.add(IntegrationJobAction.runRef, {
