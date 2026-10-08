@@ -4,7 +4,7 @@ vi.mock("../src/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }))
 
-import { envInt } from "../src/sharding/shared/env"
+import { envBool, envInt } from "../src/sharding/shared/env"
 import { isConnectionError } from "../src/sharding/shared/errors"
 
 function errWithCode(code: string): Error {
@@ -53,6 +53,37 @@ describe("envInt", () => {
   test("accepts values at or above min", () => {
     vi.stubEnv("TEST_SHARD_ENV", "25")
     expect(envInt("TEST_SHARD_ENV", 10, { min: 1 })).toBe(25)
+  })
+})
+
+describe("envBool", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test("accepts true/1 as true", () => {
+    vi.stubEnv("TEST_SHARD_BOOL", "true")
+    expect(envBool("TEST_SHARD_BOOL", false)).toBe(true)
+    vi.stubEnv("TEST_SHARD_BOOL", "1")
+    expect(envBool("TEST_SHARD_BOOL", false)).toBe(true)
+  })
+
+  test("accepts false/0 as false", () => {
+    vi.stubEnv("TEST_SHARD_BOOL", "false")
+    expect(envBool("TEST_SHARD_BOOL", true)).toBe(false)
+    vi.stubEnv("TEST_SHARD_BOOL", "0")
+    expect(envBool("TEST_SHARD_BOOL", true)).toBe(false)
+  })
+
+  test("returns the fallback when the variable is unset or empty", () => {
+    expect(envBool("TEST_SHARD_BOOL_UNSET", true)).toBe(true)
+    vi.stubEnv("TEST_SHARD_BOOL", "")
+    expect(envBool("TEST_SHARD_BOOL", true)).toBe(true)
+  })
+
+  test("returns the fallback and warns for an invalid value", () => {
+    vi.stubEnv("TEST_SHARD_BOOL", "yes")
+    expect(envBool("TEST_SHARD_BOOL", false)).toBe(false)
   })
 })
 
