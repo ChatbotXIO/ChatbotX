@@ -41,7 +41,15 @@ vi.mock("@chatbotx.io/connections", () => ({
         kind: "channel",
         strategy: "self_serve",
         multiAccount: false,
-        configFields: [],
+        multiInstance: true,
+        configFields: [
+          {
+            name: "authorizedDomains",
+            type: "array",
+            required: false,
+            items: { type: "string" },
+          },
+        ],
       },
     },
     api: {
@@ -49,6 +57,7 @@ vi.mock("@chatbotx.io/connections", () => ({
         kind: "channel",
         strategy: "self_serve",
         multiAccount: false,
+        multiInstance: true,
         configFields: [],
       },
     },
@@ -64,9 +73,7 @@ vi.mock("@chatbotx.io/connections", () => ({
   isCredentialStrategy: (strategy: string) =>
     strategy === "token" || strategy === "api_key" || strategy === "self_serve",
   selfServeConnectorFor: (provider: string) =>
-    provider === "webchat" || provider === "api"
-      ? { multiInstance: true }
-      : undefined,
+    provider === "webchat" || provider === "api" ? {} : undefined,
   toChannelType: (provider: string) => provider,
 }))
 
@@ -174,10 +181,19 @@ describe("listConnectionProviderResources", () => {
     expect(byProvider.get("webchat")).toMatchObject({
       available: true,
       unavailableReason: null,
+      multiInstance: true,
+      configFields: [
+        {
+          name: "authorizedDomains",
+          type: "array",
+          items: { type: "string" },
+        },
+      ],
     })
     expect(byProvider.get("api")).toMatchObject({
       available: true,
       unavailableReason: null,
+      multiInstance: true,
     })
     expect(byProvider.get("smtp")).toMatchObject({
       available: false,

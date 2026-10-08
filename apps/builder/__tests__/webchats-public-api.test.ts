@@ -57,9 +57,15 @@ const integrationWebchatService = {
 }
 const webchatConnectConfigSchema = z.object({
   name: z.string(),
+  welcomeFlowId: z.string().nullish(),
+  authorizedDomains: z.array(z.string()).default([]),
+  conversationStarters: z.array(z.object({})).default([]),
+  persistentMenus: z.array(z.object({})).default([]),
+  brandColor: z.string().default("#007bff"),
   hideHeader: z.boolean().default(false),
   showLogo: z.boolean().default(true),
   hideMessageInput: z.boolean().default(false),
+  customCss: z.string().optional(),
   enable: z.boolean().default(true),
 })
 vi.mock("@chatbotx.io/business", () => ({

@@ -47,6 +47,7 @@ export type EvalCase = {
     includesAll?: string[]
     includesAny?: string[]
     numbers?: number[]
+    occurrences?: Array<{ count: number; value: string }>
   }
   forbiddenTools: string[]
   family: string
@@ -885,6 +886,30 @@ const families: CaseFamily[] = [
       colloquial: "connect Claude key sk-eval-claude-key",
       en: "Connect the Claude integration with API key sk-eval-claude-key.",
       mixed: "connect integration Claude với key sk-eval-claude-key",
+    },
+  }),
+  complete({
+    allowedWriteTools: ["connections_create"],
+    argumentPredicates: [
+      { key: "provider", value: "api" },
+      { includes: "Orders API", key: "config" },
+    ],
+    domain: "connections",
+    family: "connection-api-channel-connect",
+    expectedTools: ["connections_create"],
+    finalAssertions: {
+      occurrences: [{ count: 1, value: "cbx_api_eval-token" }],
+    },
+    forbiddenTools: [],
+    sequence: ["connection_providers_list", "connections_create"],
+    stateAssertions: [{ equals: "api", pointer: "/connections/0/provider" }],
+    writeAssertions: [{ count: 1, operations: ["connections_create"] }],
+    prompts: {
+      vi: "Tạo API channel tên Orders API và cho tôi token.",
+      "vi-unaccented": "Tao API channel ten Orders API va cho toi token.",
+      colloquial: "tạo API channel Orders API, đưa token nhé",
+      en: "Create an API channel named Orders API and show me its token.",
+      mixed: "create API channel Orders API và show token",
     },
   }),
   complete({

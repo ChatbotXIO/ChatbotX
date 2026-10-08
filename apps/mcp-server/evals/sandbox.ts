@@ -105,13 +105,13 @@ type FixtureAppointment = {
   startAt: string
 }
 type FixtureConnection = {
-  channel: "messenger" | null
+  channel: "api" | "messenger" | "webchat" | null
   displayName: string
   id: string
   kind: "channel" | "integration"
-  provider: "claude" | "messenger"
+  provider: "api" | "claude" | "messenger" | "webchat"
   sourceId: string
-  strategy: "api_key" | "oauth_redirect"
+  strategy: "api_key" | "oauth_redirect" | "self_serve"
 }
 type FixtureConnectSessionTarget = {
   id: string
@@ -454,6 +454,7 @@ const connectionProviderCatalog = [
     configFields: [],
     kind: "channel",
     multiAccount: true,
+    multiInstance: false,
     provider: "messenger",
     strategy: "oauth_redirect",
     unavailableReason: null,
@@ -471,8 +472,38 @@ const connectionProviderCatalog = [
     ],
     kind: "integration",
     multiAccount: false,
+    multiInstance: false,
     provider: "claude",
     strategy: "api_key",
+    unavailableReason: null,
+  },
+  {
+    available: true,
+    channel: "webchat",
+    configFields: [],
+    kind: "channel",
+    multiAccount: false,
+    multiInstance: true,
+    provider: "webchat",
+    strategy: "self_serve",
+    unavailableReason: null,
+  },
+  {
+    available: true,
+    channel: "api",
+    configFields: [
+      {
+        label: "API channel display name.",
+        name: "name",
+        required: true,
+        type: "string",
+      },
+    ],
+    kind: "channel",
+    multiAccount: false,
+    multiInstance: true,
+    provider: "api",
+    strategy: "self_serve",
     unavailableReason: null,
   },
 ] as const
@@ -623,13 +654,14 @@ const fixtures = (scenario?: string): Record<string, FixtureHandler> => ({
       return invalid("connectionProviderRequired")
     }
 
+    const config =
+      request.body.config &&
+      typeof request.body.config === "object" &&
+      !Array.isArray(request.body.config)
+        ? (request.body.config as Record<string, unknown>)
+        : undefined
+
     if (provider.strategy === "api_key") {
-      const config =
-        request.body.config &&
-        typeof request.body.config === "object" &&
-        !Array.isArray(request.body.config)
-          ? (request.body.config as Record<string, unknown>)
-          : undefined
       if (!(config && typeof config.apiKey === "string")) {
         return invalid("connectionApiKeyRequired")
       }
@@ -645,6 +677,29 @@ const fixtures = (scenario?: string): Record<string, FixtureHandler> => ({
       return created({
         connection: connectionResource(connection),
         session: null,
+        secret: null,
+      })
+    }
+
+    if (provider.strategy === "self_serve") {
+      if (!(config && typeof config.name === "string")) {
+        return invalid("connectionNameRequired")
+      }
+      const connection = createFixtureConnection(
+        state,
+        provider,
+        `${provider.provider}-${state.nextIds.connection}`,
+        config.name,
+      )
+      state.connections.push(connection)
+      recordWrite(state, "connections.create", connection.id, null, connection)
+      return created({
+        connection: connectionResource(connection),
+        session: null,
+        secret:
+          provider.provider === "api"
+            ? { kind: "api_channel_token", token: "cbx_api_eval-token" }
+            : null,
       })
     }
 

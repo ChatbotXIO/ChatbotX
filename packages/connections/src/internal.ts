@@ -153,6 +153,53 @@ export const providerFailureStatus = (
   return 502
 }
 
+const parseConfigItem = (
+  value: unknown,
+  fieldName: string,
+  item: NonNullable<ConnectionConfigField["items"]>,
+): unknown => {
+  switch (item.type) {
+    case "string":
+    case "secret":
+    case "url":
+      if (typeof value !== "string") {
+        throw validationException(fieldName, `${fieldName} must be a string`)
+      }
+      return value
+    case "number": {
+      const numberValue = typeof value === "number" ? value : Number(value)
+      if (Number.isNaN(numberValue)) {
+        throw validationException(fieldName, `${fieldName} must be a number`)
+      }
+      return numberValue
+    }
+    case "boolean":
+      if (typeof value !== "boolean") {
+        throw validationException(fieldName, `${fieldName} must be a boolean`)
+      }
+      return value
+    case "enum":
+      if (typeof value !== "string" || !item.enumValues?.includes(value)) {
+        throw validationException(
+          fieldName,
+          `${fieldName} must be one of ${(item.enumValues ?? []).join(", ")}`,
+        )
+      }
+      return value
+    case "object":
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        throw validationException(fieldName, `${fieldName} must be an object`)
+      }
+      return item.fields
+        ? parseConfig(item.fields, value as Record<string, unknown>)
+        : value
+    default: {
+      const exhaustive: never = item.type
+      throw new Error(`Unhandled connection config item type: ${exhaustive}`)
+    }
+  }
+}
+
 /**
  * Validates a raw `config` object (a credential-strategy `connect` request
  * body) against a provider's `configFields` declaration, coercing each
@@ -214,6 +261,21 @@ export const parseConfig = (
         }
         parsed[field.name] = value
         break
+      case "array": {
+        if (!Array.isArray(value)) {
+          throw validationException(
+            field.name,
+            `${field.name} must be an array`,
+          )
+        }
+        const items = field.items
+        parsed[field.name] = items
+          ? value.map((item, index) =>
+              parseConfigItem(item, `${field.name}[${index}]`, items),
+            )
+          : value
+        break
+      }
       default: {
         const exhaustive: never = field.type
         throw new Error(`Unhandled connection config field type: ${exhaustive}`)

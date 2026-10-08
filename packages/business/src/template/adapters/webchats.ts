@@ -1,4 +1,5 @@
 import { db, eq } from "@chatbotx.io/database/client"
+import type { WebchatPersistentMenu } from "@chatbotx.io/database/partials"
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import { ChatbotXException } from "../../errors"
 import {
@@ -79,7 +80,7 @@ export const webchatsAdapter: ResourceAdapter = {
         enable: entry.enable,
         authorizedDomains: entry.authorizedDomains,
         conversationStarters: entry.conversationStarters,
-        persistentMenus: entry.persistentMenus,
+        persistentMenus: entry.persistentMenus as WebchatPersistentMenu[],
         brandColor: entry.brandColor,
         hideHeader: entry.hideHeader,
         showLogo: entry.showLogo,
@@ -108,12 +109,15 @@ export const webchatsAdapter: ResourceAdapter = {
       }
 
       if (entry.welcomeFlowId) {
-        pendingWelcomeFlowBySourceId.set(created.id, entry.welcomeFlowId)
+        pendingWelcomeFlowBySourceId.set(
+          created.integration.id,
+          entry.welcomeFlowId,
+        )
       }
       ctx.track({
         category: "webchats",
         resourceKind: "integrationWebchat",
-        resourceId: created.id,
+        resourceId: created.integration.id,
         sourceResourceId: entry.sourceId,
         wasExisting: false,
       })

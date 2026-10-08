@@ -70,9 +70,8 @@ vi.mock("../src/logger", () => ({
 // must be registered before `internal.ts` (and its `@chatbotx.io/business`/
 // `@chatbotx.io/database` dependencies) are evaluated, which only a
 // post-`vi.mock` dynamic import guarantees.
-const { subscribeWebhookBestEffort, connectAndPersist } = await import(
-  "../src/internal"
-)
+const { connectAndPersist, parseConfig, subscribeWebhookBestEffort } =
+  await import("../src/internal")
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -168,5 +167,54 @@ describe("connectAndPersist — audit on revive", () => {
     })
 
     expect(mocks.dispatchAuditRecordSafely).not.toHaveBeenCalled()
+  })
+})
+
+describe("parseConfig", () => {
+  it("accepts collection values described by the self-serve provider metadata", () => {
+    const config = parseConfig(
+      [
+        {
+          name: "authorizedDomains",
+          type: "array",
+          required: false,
+          items: { type: "string" },
+        },
+        {
+          name: "conversationStarters",
+          type: "array",
+          required: false,
+          items: {
+            type: "object",
+            fields: [
+              { name: "label", type: "string", required: true },
+              {
+                name: "type",
+                type: "enum",
+                required: true,
+                enumValues: ["flow", "message", "url"],
+              },
+              { name: "flowId", type: "string", required: false },
+              { name: "url", type: "url", required: false },
+            ],
+          },
+        },
+      ],
+      {
+        authorizedDomains: ["example.com"],
+        conversationStarters: [
+          { label: "Start", type: "flow", flowId: "123" },
+          { label: "Visit", type: "url", url: "https://example.com" },
+        ],
+      },
+    )
+
+    expect(config).toEqual({
+      authorizedDomains: ["example.com"],
+      conversationStarters: [
+        { label: "Start", type: "flow", flowId: "123" },
+        { label: "Visit", type: "url", url: "https://example.com" },
+      ],
+    })
   })
 })

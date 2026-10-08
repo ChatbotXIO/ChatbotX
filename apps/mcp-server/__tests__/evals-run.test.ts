@@ -104,7 +104,7 @@ describe("evaluation runner contracts", () => {
       "connect_sessions_connect_targets",
     ])
 
-    expect(connectionCases).toHaveLength(25)
+    expect(connectionCases).toHaveLength(30)
     expect(
       validateCaseCoverage(
         connectionCases,
