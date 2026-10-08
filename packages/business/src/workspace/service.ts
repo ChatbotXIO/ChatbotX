@@ -280,6 +280,61 @@ class WorkspaceService extends BaseService {
     return updated
   }
 
+  /** The stored logo path: `null` when unset, `undefined` when there is no such workspace. */
+  async findLogo(props: {
+    id: string
+    tx?: DatabaseClient
+  }): Promise<string | null | undefined> {
+    const { id, tx = db } = props
+    const workspace = await tx.query.workspaceModel.findFirst({
+      where: { id },
+      columns: { logo: true },
+    })
+    return workspace?.logo
+  }
+
+  /**
+   * Stores `logo` only while the workspace still has none, so a logo picked in
+   * the meantime is never overwritten. Returns whether the row was written.
+   */
+  async setLogoIfEmpty(props: {
+    id: string
+    logo: string
+    tx?: DatabaseClient
+  }): Promise<boolean> {
+    const { id, logo, tx = db } = props
+
+    const updated = await tx
+      .update(workspaceModel)
+      .set({ logo })
+      .where(and(eq(workspaceModel.id, id), isNull(workspaceModel.logo)))
+      .returning({ id: workspaceModel.id })
+
+    if (updated.length === 0) {
+      return false
+    }
+
+    const memberUserIds = await workspaceMemberService.listUserIdsByWorkspaceId(
+      { tx, workspaceId: id },
+    )
+    await this.invalidateCacheTags([
+      `workspaces:${id}`,
+      ...memberUserIds.map((userId) => workspaceMemberCacheTag(userId)),
+    ])
+
+    // Same rule as `update`: never audit a write a caller-owned transaction
+    // might still roll back.
+    if (!props.tx) {
+      await dispatchAuditRecord({
+        workspaceId: id,
+        action: "update",
+        detail: "changed the workspace logo",
+      })
+    }
+
+    return true
+  }
+
   async scheduleDeletion(props: {
     id: string
     tx?: DatabaseClient

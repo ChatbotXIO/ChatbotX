@@ -702,3 +702,57 @@ describe("workspaceService.updateSettings", () => {
     expect(setUpdate).toHaveBeenCalledWith({ capiLimitedDataUse: false })
   })
 })
+
+describe("WorkspaceService.setLogoIfEmpty", () => {
+  test("stores the logo, invalidates member caches and audits", async () => {
+    returningUpdatedWorkspace.mockResolvedValueOnce([{ id: "ws-1" }] as never)
+    workspaceMemberService.listUserIdsByWorkspaceId.mockResolvedValue([
+      "user-1",
+    ])
+
+    const written = await workspaceService.setLogoIfEmpty({
+      id: "ws-1",
+      logo: "public/space/ws-1/logos/logo.jpg",
+    })
+
+    expect(written).toBe(true)
+    expect(setUpdate).toHaveBeenCalledWith({
+      logo: "public/space/ws-1/logos/logo.jpg",
+    })
+    expect(invalidateCacheByTags).toHaveBeenCalledWith([
+      "workspaces:ws-1",
+      "users:user-1:workspace-members",
+    ])
+    expect(dispatchAuditRecord).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      action: "update",
+      detail: "changed the workspace logo",
+    })
+  })
+
+  test("writes nothing else when the workspace already got a logo", async () => {
+    returningUpdatedWorkspace.mockResolvedValueOnce([])
+
+    const written = await workspaceService.setLogoIfEmpty({
+      id: "ws-1",
+      logo: "public/space/ws-1/logos/logo.jpg",
+    })
+
+    expect(written).toBe(false)
+    expect(invalidateCacheByTags).not.toHaveBeenCalled()
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+
+  test("skips the audit inside a caller-owned transaction", async () => {
+    returningUpdatedWorkspace.mockResolvedValueOnce([{ id: "ws-1" }] as never)
+
+    await workspaceService.setLogoIfEmpty({
+      id: "ws-1",
+      logo: "public/space/ws-1/logos/logo.jpg",
+      tx: db as never,
+    })
+
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+    expect(dispatchAuditRecord).not.toHaveBeenCalled()
+  })
+})
