@@ -33,8 +33,6 @@ vi.mock("@chatbotx.io/connections", () => ({
   isCredentialStrategy: (strategy: string) =>
     strategy === "token" || strategy === "api_key" || strategy === "self_serve",
   toChannelType: (provider: string) => provider,
-  selfServeConnectorFor: (provider: string) =>
-    provider === "webchat" ? {} : undefined,
   CONNECTION_REGISTRY: {
     facebookAds: {
       credentialType: "facebookAds",
@@ -46,6 +44,7 @@ vi.mock("@chatbotx.io/connections", () => ({
     },
     webchat: {
       provider: { strategy: "self_serve", kind: "channel" },
+      connect: vi.fn(),
     },
   },
 }))
@@ -167,7 +166,7 @@ describe("startConnect — self serve", () => {
       workspaceId: "ws-1",
       provider: "webchat",
       config: { name: "Support" },
-      actorUserId: "user-1",
+      actor: { actorUserId: "user-1" },
     })
   })
 })

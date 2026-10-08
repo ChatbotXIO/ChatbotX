@@ -6,28 +6,12 @@ import {
   buildBrandingUrl,
   ensureBrandingMenuEntry,
 } from "../platform/branding"
-import { resolveTenantSettings } from "../platform/settings"
-
-const isWebchatBrandingUrl = (url: string | undefined): boolean => {
-  if (!url) {
-    return false
-  }
-
-  try {
-    const parsedUrl = new URL(url)
-    return (
-      parsedUrl.searchParams.get("channel") === "webchat" &&
-      ["selfhosted", "cloud"].includes(parsedUrl.searchParams.get("ref") ?? "")
-    )
-  } catch {
-    return false
-  }
-}
+import { resolveWorkspaceAppUrl } from "../platform/settings"
 
 /**
  * Community deployments keep exactly one "Built with" entry on every
- * webchat persistent menu. Resolving tenant settings is deferred until the
- * community branding write is actually required.
+ * webchat persistent menu. Resolving the workspace app URL is deferred until
+ * the community branding write is actually required.
  */
 export const brandWebchatMenus = async ({
   persistentMenus,
@@ -42,15 +26,33 @@ export const brandWebchatMenus = async ({
     return persistentMenus
   }
 
-  const { appUrl } = await resolveTenantSettings({ workspaceId, tx })
+  const brandingUrl = buildBrandingUrl(
+    await resolveWorkspaceAppUrl({ workspaceId, tx }),
+    "webchat",
+    true,
+  )
+  const brandingMenuCount = persistentMenus.filter(
+    (menu) =>
+      menu.type === "url" &&
+      (menu.label === BRANDING_TITLE || menu.url === brandingUrl),
+  ).length
+  const lastMenu = persistentMenus.at(-1)
+  if (
+    brandingMenuCount === 1 &&
+    lastMenu?.type === "url" &&
+    lastMenu.label === BRANDING_TITLE &&
+    lastMenu.url === brandingUrl
+  ) {
+    return persistentMenus
+  }
+
   const menus = persistentMenus.filter(
     (menu) =>
       menu.type !== "url" ||
-      (menu.label !== BRANDING_TITLE && !isWebchatBrandingUrl(menu.url)),
+      (menu.label !== BRANDING_TITLE && menu.url !== brandingUrl),
   )
-
   return ensureBrandingMenuEntry(menus, {
     label: BRANDING_TITLE,
-    url: buildBrandingUrl(appUrl, "webchat", true),
+    url: brandingUrl,
   })
 }

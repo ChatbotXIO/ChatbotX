@@ -1,5 +1,4 @@
 import { integrationWebchatService } from "@chatbotx.io/business"
-import { connectionService } from "@chatbotx.io/connections"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
@@ -90,11 +89,17 @@ export const webchatsPublicRouter = {
     .output(webchatPublicResource)
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
-      const { connection } = await connectionService.connectSelfServeChannel({
-        workspaceId: context.workspace.id,
-        provider: "webchat",
-        config: input,
-      })
+      const { connection } =
+        await integrationWebchatService.createWithWorkspace({
+          workspaceId: context.workspace.id,
+          createdBy: context.workspace.ownerId,
+          workspaceName: input.name,
+          data: {
+            ...input,
+            auth: {},
+            customCss: input.customCss ?? null,
+          },
+        })
       return await integrationWebchatService.findByIdForWorkspace({
         id: connection.sourceId,
         workspaceId: context.workspace.id,

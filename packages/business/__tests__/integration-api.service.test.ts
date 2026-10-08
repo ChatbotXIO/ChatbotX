@@ -116,6 +116,24 @@ describe("integrationApiService.connect", () => {
     })
   })
 
+  test("defers API channel audit attribution to workspace-token context", async () => {
+    await integrationApiService.connect({
+      ownerId: "owner-1",
+      workspaceId: "workspace-1",
+      name: "Support API",
+      auth: { authType: "custom", signingSecret: "secret" },
+      tokenHash: "hash",
+      tokenPrefix: "prefix",
+      callbackUrl: null,
+    })
+
+    expect(mocks.dispatchAuditRecord).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      action: "create",
+      detail: "created a new API key (#api-1)",
+    })
+  })
+
   test("uses actorUserId for both workspace and API key audit rows", async () => {
     await integrationApiService.connect({
       ownerId: "owner-1",

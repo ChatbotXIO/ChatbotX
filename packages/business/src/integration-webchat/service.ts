@@ -272,6 +272,7 @@ class IntegrationWebchatService extends BaseService {
     workspaceId?: string
     ownerId?: string
     createdBy: string
+    actorUserId?: string
     workspaceName: string
     data: CreateWebchatRequest
   }): Promise<{
@@ -347,11 +348,11 @@ class IntegrationWebchatService extends BaseService {
     // Sanctioned exception: `createWithWorkspace` is reachable from
     // `authActionClient` (create-webchat.action.ts), which never puts
     // `workspaceId` into the ALS actor — only workspace-scoped action
-    // clients do. `this.audit()` would silently no-op here, so bypass it
-    // with an explicit override, same pattern as
-    // `integrationApiService.connect`.
+    // clients do. A session caller supplies its user explicitly; a
+    // workspace-token caller leaves it unset so the middleware's audit context
+    // preserves the token source instead of claiming the workspace owner acted.
     await dispatchAuditRecord({
-      userId: createdBy,
+      ...(input.actorUserId ? { userId: input.actorUserId } : {}),
       workspaceId: result.workspaceId,
       action: "connect",
       detail: `connected a new Webchat channel (#${result.webchatId})`,

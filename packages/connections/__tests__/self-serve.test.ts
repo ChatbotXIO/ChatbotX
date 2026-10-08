@@ -2,26 +2,17 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 import { connectSelfServeChannel } from "../src/self-serve"
 
 const mocks = vi.hoisted(() => ({
-  apiConfigParse: vi.fn(),
-  createApiChannel: vi.fn(),
-  createWebchat: vi.fn(),
+  connect: vi.fn(),
   resolveAdapter: vi.fn(),
-  resolveOwnerId: vi.fn(),
-  webchatConfigParse: vi.fn(),
+  workspaceFindOrFail: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  apiConnectConfigSchema: { parse: mocks.apiConfigParse },
-  integrationApiService: { createWithToken: mocks.createApiChannel },
-  integrationWebchatService: { createWithWorkspace: mocks.createWebchat },
-  webchatConnectConfigSchema: { parse: mocks.webchatConfigParse },
-}))
-
-vi.mock("@chatbotx.io/business/connection", () => ({
-  resolveOwnerId: mocks.resolveOwnerId,
+  workspaceService: { findOrFail: mocks.workspaceFindOrFail },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
+  ChatbotXException: class ChatbotXException extends Error {},
   connectionWrongStrategyException: (provider: string) =>
     Object.assign(
       new Error(`${provider} cannot use this connection strategy`),
@@ -29,140 +20,79 @@ vi.mock("@chatbotx.io/business/errors", () => ({
         code: "connectionWrongStrategy",
       },
     ),
-  notFoundException: (message: string) =>
-    Object.assign(new Error(message), { code: "notFound" }),
 }))
 
 vi.mock("../src/internal", () => ({
   resolveAdapter: mocks.resolveAdapter,
 }))
 
-const webchatData = {
-  name: "Support",
-  welcomeFlowId: undefined,
-  authorizedDomains: [],
-  conversationStarters: [],
-  persistentMenus: [],
-  brandColor: "#007bff",
-  hideHeader: false,
-  showLogo: true,
-  hideMessageInput: false,
-  customCss: undefined,
-  enable: true,
-}
-
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.resolveAdapter.mockImplementation((provider: string) => ({
-    provider: { kind: "channel", name: provider },
-  }))
-  mocks.resolveOwnerId.mockResolvedValue("owner-1")
+  mocks.workspaceFindOrFail.mockResolvedValue({
+    id: "workspace-1",
+    ownerId: "owner-1",
+  })
+  mocks.resolveAdapter.mockReturnValue({
+    provider: { strategy: "self_serve" },
+    connect: mocks.connect,
+  })
 })
 
 describe("connectSelfServeChannel", () => {
-  test("creates a webchat and returns its matching Connection row", async () => {
+  test("uses the workspace row owner when no owner member exists", async () => {
     const connection = { id: "conn-1", sourceId: "webchat-1" }
-    mocks.webchatConfigParse.mockReturnValue(webchatData)
-    mocks.createWebchat.mockResolvedValue({
-      connection,
-      webchatId: "webchat-1",
-    })
+    mocks.connect.mockResolvedValue({ connection })
 
     const result = await connectSelfServeChannel({
       workspaceId: "workspace-1",
       provider: "webchat",
       config: { name: "Support" },
+      actor: { actorTokenId: "token-1" },
     })
 
     expect(result).toEqual({ connection, secret: null })
-    expect(mocks.resolveOwnerId).toHaveBeenCalledWith({
-      kind: "channel",
-      workspaceId: "workspace-1",
+    expect(mocks.workspaceFindOrFail).toHaveBeenCalledWith({
+      where: { id: "workspace-1" },
     })
-    expect(mocks.createWebchat).toHaveBeenCalledWith({
+    expect(mocks.connect).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       ownerId: "owner-1",
-      createdBy: "owner-1",
-      workspaceName: "Support",
-      data: { ...webchatData, auth: {}, customCss: null },
+      actor: { actorTokenId: "token-1" },
+      config: { name: "Support" },
     })
   })
 
-  test("returns an API token once and never forwards caller token fields", async () => {
-    const token = "cbx_api_generated-token"
+  test("returns a self-serve secret unchanged", async () => {
     const connection = { id: "conn-2", sourceId: "api-1" }
-    mocks.apiConfigParse.mockReturnValue({
-      callbackUrl: null,
-      name: "Orders",
-    })
-    mocks.createApiChannel.mockResolvedValue({ connection, token })
-
-    const result = await connectSelfServeChannel({
-      workspaceId: "workspace-1",
-      provider: "api",
-      config: { name: "Orders", tokenHash: "attacker" },
-    })
-
-    expect(result).toEqual({
+    mocks.connect.mockResolvedValue({
       connection,
-      secret: { kind: "api_channel_token", token },
+      secret: { kind: "api_channel_token", token: "cbx_api_generated-token" },
     })
-    expect(mocks.createApiChannel).toHaveBeenCalledWith({
-      ownerId: "owner-1",
-      actorUserId: "owner-1",
-      workspaceId: "workspace-1",
-      name: "Orders",
-      callbackUrl: null,
-    })
-  })
-
-  test("uses the workspace owner for quota and persistence", async () => {
-    mocks.resolveOwnerId.mockResolvedValue("workspace-owner")
-    mocks.apiConfigParse.mockReturnValue({
-      callbackUrl: null,
-      name: "Orders",
-    })
-    mocks.createApiChannel.mockResolvedValue({
-      connection: { id: "conn-2", sourceId: "api-1" },
-      token: "cbx_api_generated-token",
-    })
-
-    await connectSelfServeChannel({
-      workspaceId: "workspace-1",
-      provider: "api",
-      actorUserId: "workspace-member",
-      config: { name: "Orders" },
-    })
-
-    expect(mocks.createApiChannel).toHaveBeenCalledWith({
-      ownerId: "workspace-owner",
-      actorUserId: "workspace-member",
-      workspaceId: "workspace-1",
-      name: "Orders",
-      callbackUrl: null,
-    })
-  })
-
-  test("returns a mapped notFound exception before calling a connector without an owner", async () => {
-    mocks.resolveOwnerId.mockResolvedValue(undefined)
 
     await expect(
       connectSelfServeChannel({
         workspaceId: "workspace-1",
-        provider: "webchat",
-        config: { name: "Support" },
+        provider: "api",
+        config: { name: "Orders" },
+        actor: { actorUserId: "workspace-member" },
       }),
-    ).rejects.toMatchObject({ code: "notFound" })
-
-    expect(mocks.createWebchat).not.toHaveBeenCalled()
+    ).resolves.toEqual({
+      connection,
+      secret: { kind: "api_channel_token", token: "cbx_api_generated-token" },
+    })
   })
 
-  test("rejects a provider without a self-serve connector", async () => {
+  test("rejects an adapter without a self-serve handler", async () => {
+    mocks.resolveAdapter.mockReturnValue({
+      provider: { strategy: "self_serve" },
+    })
+
     await expect(
       connectSelfServeChannel({
         workspaceId: "workspace-1",
         provider: "smtp",
         config: {},
+        actor: { actorUserId: "user-1" },
       }),
     ).rejects.toMatchObject({ code: "connectionWrongStrategy" })
   })

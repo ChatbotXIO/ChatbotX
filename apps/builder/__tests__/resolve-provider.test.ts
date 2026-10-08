@@ -51,6 +51,7 @@ vi.mock("@chatbotx.io/connections", () => ({
           },
         ],
       },
+      connect: vi.fn(),
     },
     api: {
       provider: {
@@ -60,6 +61,7 @@ vi.mock("@chatbotx.io/connections", () => ({
         multiInstance: true,
         configFields: [],
       },
+      connect: vi.fn(),
     },
     smtp: {
       provider: {
@@ -72,8 +74,6 @@ vi.mock("@chatbotx.io/connections", () => ({
   },
   isCredentialStrategy: (strategy: string) =>
     strategy === "token" || strategy === "api_key" || strategy === "self_serve",
-  selfServeConnectorFor: (provider: string) =>
-    provider === "webchat" || provider === "api" ? {} : undefined,
   toChannelType: (provider: string) => provider,
 }))
 

@@ -5,7 +5,6 @@ import {
 import {
   CONNECTION_REGISTRY,
   isCredentialStrategy,
-  selfServeConnectorFor,
   toChannelType,
 } from "@chatbotx.io/connections"
 import type {
@@ -186,12 +185,12 @@ const resolveUnavailableReason = async (input: {
   }
 
   // Only credential-strategy providers with neither a live credential
-  // validator nor a self-serve connector are unavailable. SMTP and
+  // validator nor a self-serve adapter handler are unavailable. SMTP and
   // ChatbotX remain deferred; webchat and API create their own satellite row.
   if (
     isCredentialStrategy(adapter.provider.strategy) &&
     !adapter.provider.fromCredentials &&
-    !selfServeConnectorFor(input.provider)
+    !adapter.connect
   ) {
     return "notImplemented"
   }

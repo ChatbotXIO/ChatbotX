@@ -20,7 +20,7 @@ const {
   mockIsAtLimit,
   mockParsePagination,
   mockRelationsFilterToSQL,
-  mockResolveTenantSettings,
+  mockResolveWorkspaceAppUrl,
   mockTransaction,
   mockUpdate,
   mockUpdateSet,
@@ -56,9 +56,7 @@ const {
     mockIsAtLimit: vi.fn(async () => false),
     mockParsePagination: vi.fn(),
     mockRelationsFilterToSQL: vi.fn(),
-    mockResolveTenantSettings: vi.fn(async () => ({
-      appUrl: "https://app.example.com",
-    })),
+    mockResolveWorkspaceAppUrl: vi.fn(async () => "https://app.example.com"),
     mockTransaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
       callback({
         query: { integrationWebchatModel: { findFirst: mockFindFirst } },
@@ -118,7 +116,7 @@ vi.mock("../src/keys", () => ({
 }))
 
 vi.mock("../src/platform/settings", () => ({
-  resolveTenantSettings: mockResolveTenantSettings,
+  resolveWorkspaceAppUrl: mockResolveWorkspaceAppUrl,
 }))
 
 // Records the trackers handed to `withQuotaCompensation` on the failure
@@ -291,6 +289,7 @@ describe("integrationWebchatService.createWithWorkspace", () => {
     const withWorkspace = await integrationWebchatService.createWithWorkspace({
       workspaceId: "ws-1",
       createdBy: "user-1",
+      actorUserId: "user-1",
       workspaceName: "My Chatbot",
       data: baseData,
     })
@@ -325,6 +324,7 @@ describe("integrationWebchatService.createWithWorkspace", () => {
     const withoutWorkspace =
       await integrationWebchatService.createWithWorkspace({
         createdBy: "user-1",
+        actorUserId: "user-1",
         workspaceName: "My Chatbot",
         data: baseData,
       })
@@ -334,6 +334,21 @@ describe("integrationWebchatService.createWithWorkspace", () => {
     expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
       userId: "user-1",
       workspaceId: "ws-new",
+      action: "connect",
+      detail: "connected a new Webchat channel (#webchat-1)",
+    })
+  })
+
+  test("lets workspace-token audit context identify a token-created webchat", async () => {
+    await integrationWebchatService.createWithWorkspace({
+      workspaceId: "ws-1",
+      createdBy: "owner-1",
+      workspaceName: "My Chatbot",
+      data: baseData,
+    })
+
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
       action: "connect",
       detail: "connected a new Webchat channel (#webchat-1)",
     })
@@ -397,7 +412,7 @@ describe("integrationWebchatService.create — quota gate", () => {
         }),
       }),
     )
-    expect(mockResolveTenantSettings).toHaveBeenCalledWith({
+    expect(mockResolveWorkspaceAppUrl).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       tx,
     })
@@ -439,7 +454,7 @@ describe("integrationWebchatService.create — quota gate", () => {
     )
   })
 
-  test("does not resolve tenant settings when community branding is disabled", async () => {
+  test("does not resolve the workspace app URL when community branding is disabled", async () => {
     mockIsCommunity.mockReturnValue(false)
 
     await integrationWebchatService.create(
@@ -447,7 +462,7 @@ describe("integrationWebchatService.create — quota gate", () => {
       tx,
     )
 
-    expect(mockResolveTenantSettings).not.toHaveBeenCalled()
+    expect(mockResolveWorkspaceAppUrl).not.toHaveBeenCalled()
   })
 })
 
