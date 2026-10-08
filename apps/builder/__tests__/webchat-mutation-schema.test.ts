@@ -17,6 +17,8 @@ describe("webchat mutation schemas", () => {
   test("does not add create defaults to a partial update", () => {
     const result = updateWebchatRequest.parse({ name: "Website chat" })
 
-    expect(result).not.toHaveProperty("enable")
+    // Every defaulted create field must stay absent so a PATCH never
+    // clobbers stored values with defaults.
+    expect(result).toEqual({ name: "Website chat" })
   })
 })

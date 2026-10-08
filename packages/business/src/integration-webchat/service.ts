@@ -31,6 +31,7 @@ import { quotaEnforcementService } from "../quota-enforcement/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import { type WorkspaceQuotaConsumption, workspaceService } from "../workspace"
 import { brandWebchatMenus } from "./branding"
+
 export type UpdateWebchatData = Partial<{
   name: string
   enable: boolean
@@ -180,15 +181,14 @@ class IntegrationWebchatService extends BaseService {
         workspaceUsageIncremented: false,
       }
 
-    // `id === inboxId === sourceId` — the webchat binding's
-    // `identityColumn: "id"` (`store-bindings.ts`) sets `IntegrationWebchat
-    // .id` to this same `webchatId` on insert.
-
     const persistentMenus = await brandWebchatMenus({
       persistentMenus: data.persistentMenus,
       workspaceId,
       tx,
     })
+    // `id === inboxId === sourceId` — the webchat binding's
+    // `identityColumn: "id"` (`store-bindings.ts`) sets `IntegrationWebchat
+    // .id` to this same `webchatId` on insert.
     const connection = await upsertConnectionRow({
       tx,
       workspaceId,
@@ -347,12 +347,13 @@ class IntegrationWebchatService extends BaseService {
 
     // Sanctioned exception: `createWithWorkspace` is reachable from
     // `authActionClient` (create-webchat.action.ts), which never puts
-    // `workspaceId` into the ALS actor — only workspace-scoped action
-    // clients do. A session caller supplies its user explicitly; a
-    // workspace-token caller leaves it unset so the middleware's audit context
-    // preserves the token source instead of claiming the workspace owner acted.
+    // `workspaceId` into the ALS actor, so `this.audit()` would no-op. That
+    // session caller passes its user explicitly; workspace-token callers
+    // (`POST /v1/webchats`, `connections.create`) omit it so
+    // `auditService.record` falls back to the token middleware's audit actor
+    // instead of claiming the workspace owner acted.
     await dispatchAuditRecord({
-      ...(input.actorUserId ? { userId: input.actorUserId } : {}),
+      userId: input.actorUserId,
       workspaceId: result.workspaceId,
       action: "connect",
       detail: `connected a new Webchat channel (#${result.webchatId})`,
@@ -450,7 +451,7 @@ class IntegrationWebchatService extends BaseService {
       .set({
         ...data,
         conversationStarters: data.conversationStarters as never,
-        persistentMenus: persistentMenus as never,
+        persistentMenus,
         ...("welcomeFlowId" in data ? { welcomeFlowId } : {}),
       })
       .where(

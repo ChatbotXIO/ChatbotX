@@ -8,11 +8,6 @@ import type { IntegrationType } from "@chatbotx.io/database/partials"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import { resolveAdapter } from "./internal"
 
-export type {
-  SelfServeConnectActor,
-  SelfServeSecret,
-} from "@chatbotx.io/business/connection"
-
 export const connectSelfServeChannel = async (input: {
   workspaceId: string
   provider: IntegrationType

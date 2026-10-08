@@ -13,7 +13,6 @@ export const createApiAction = authActionClient
   .inputSchema(createApiRequest)
   .action(async ({ parsedInput, ctx }) => {
     const workspaceId = parsedInput.workspaceId ?? undefined
-
     let ownerId = ctx.user.id
 
     if (workspaceId) {

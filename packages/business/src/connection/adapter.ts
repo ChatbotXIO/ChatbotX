@@ -10,6 +10,7 @@ import type {
   Integration,
   IntegrationDefinition,
 } from "@chatbotx.io/sdk"
+import type { SelfServeSecret } from "@chatbotx.io/utils/connection"
 import type { ConnectionStoreBinding } from "./store-bindings"
 
 export type ConnectionTeardownResult = {
@@ -23,7 +24,7 @@ export type ConnectionTeardownHook = (input: {
   auth: AuthValue
 }) => Promise<ConnectionTeardownResult>
 
-export type SelfServeSecret = { kind: "api_channel_token"; token: string }
+export type { SelfServeSecret } from "@chatbotx.io/utils/connection"
 
 export type SelfServeConnectActor =
   | { actorUserId: string; actorTokenId?: never }
@@ -87,9 +88,8 @@ export type ConnectionAdapter = {
    */
   teardown?: ConnectionTeardownHook
   /**
-   * Direct channel provisioning owned by a self-serve provider. Keeping this
-   * on the registry adapter makes provider metadata and its implementation one
-   * source of truth.
+   * Provisions the channel rows for a `self_serve` provider from its parsed
+   * `config`, returning a one-time `secret` when the channel mints one.
    */
   connect?: SelfServeConnectHandler
 }

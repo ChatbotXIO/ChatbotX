@@ -184,9 +184,9 @@ const resolveUnavailableReason = async (input: {
     return "notImplemented"
   }
 
-  // Only credential-strategy providers with neither a live credential
-  // validator nor a self-serve adapter handler are unavailable. SMTP and
-  // ChatbotX remain deferred; webchat and API create their own satellite row.
+  // A credential-strategy provider with neither a `fromCredentials`
+  // validator nor an adapter `connect` handler (currently SMTP and ChatbotX)
+  // cannot complete `connections.create` — advertising it would 500.
   if (
     isCredentialStrategy(adapter.provider.strategy) &&
     !adapter.provider.fromCredentials &&

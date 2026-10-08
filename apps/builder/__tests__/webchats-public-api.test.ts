@@ -167,6 +167,7 @@ describe("POST /v1/webchats", () => {
 
     expect(integrationWebchatService.createWithWorkspace).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
+      ownerId: "owner-1",
       createdBy: "owner-1",
       workspaceName: "My Webchat",
       data: {

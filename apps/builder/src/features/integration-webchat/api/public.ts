@@ -92,6 +92,7 @@ export const webchatsPublicRouter = {
       const { connection } =
         await integrationWebchatService.createWithWorkspace({
           workspaceId: context.workspace.id,
+          ownerId: context.workspace.ownerId,
           createdBy: context.workspace.ownerId,
           workspaceName: input.name,
           data: {

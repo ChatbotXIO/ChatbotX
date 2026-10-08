@@ -138,6 +138,13 @@ export const connectionConfigFieldSchema = z.object({
 })
 export type ConnectionConfigField = z.infer<typeof connectionConfigFieldSchema>
 
+/** One-time credential a self-serve connect returns exactly once (`connections.create`). */
+export const selfServeSecretSchema = z.object({
+  kind: z.literal("api_channel_token"),
+  token: z.string(),
+})
+export type SelfServeSecret = z.infer<typeof selfServeSecretSchema>
+
 type JsonSchema = {
   type?: string
   anyOf?: JsonSchema[]
@@ -178,6 +185,7 @@ const mergeSchemas = (schemas: JsonSchema[]): JsonSchema => {
   const types = [
     ...new Set(schemas.map((schema) => schema.type).filter(Boolean)),
   ]
+  const description = schemas.find((schema) => schema.description)?.description
 
   return {
     ...(types.length === 1 ? { type: types[0] } : {}),
@@ -197,12 +205,7 @@ const mergeSchemas = (schemas: JsonSchema[]): JsonSchema => {
         }
       : {}),
     ...(required.size > 0 ? { required: [...required] } : {}),
-    ...(schemas.find((schema) => schema.description)?.description
-      ? {
-          description: schemas.find((schema) => schema.description)
-            ?.description,
-        }
-      : {}),
+    ...(description ? { description } : {}),
   }
 }
 
@@ -242,6 +245,10 @@ const configTypeForSchema = (
 const formatForSchema = (schema: JsonSchema): string | undefined =>
   schema.pattern === "^\\d+$" ? "bigint-string" : schema.format
 
+/** A field with a zod `.default()` is optional to the caller even when listed as required. */
+const isRequired = (schema: JsonSchema, required: boolean): boolean =>
+  required && !("default" in schema)
+
 const configItemForSchema = (rawSchema: JsonSchema): ConnectionConfigItem => {
   const schema = resolveNonNullSchema(rawSchema)
   const type = configTypeForSchema(schema)
@@ -263,6 +270,7 @@ const configItemForSchema = (rawSchema: JsonSchema): ConnectionConfigItem => {
     }
   }
 
+  const format = formatForSchema(schema)
   return {
     type,
     ...(schema.enum
@@ -272,7 +280,7 @@ const configItemForSchema = (rawSchema: JsonSchema): ConnectionConfigItem => {
           ),
         }
       : {}),
-    ...(formatForSchema(schema) ? { format: formatForSchema(schema) } : {}),
+    ...(format ? { format } : {}),
     ...(schema.pattern ? { pattern: schema.pattern } : {}),
     ...(schema.description ? { description: schema.description } : {}),
   }
@@ -291,7 +299,7 @@ const configItemFieldForSchema = (
   return {
     name,
     ...item,
-    required: required && !("default" in schema),
+    required: isRequired(schema, required),
   } as NonNullable<ConnectionConfigItem["fields"]>[number]
 }
 
@@ -306,16 +314,20 @@ const configFieldForSchema = (
     return {
       name,
       type,
-      required: required && !("default" in schema),
+      required: isRequired(schema, required),
       ...(schema.items ? { items: configItemForSchema(schema.items) } : {}),
       ...(schema.description ? { description: schema.description } : {}),
     }
   }
 
+  const item = configItemForSchema(schema)
+  if (item.type === "object") {
+    throw new Error("Top-level object config fields are not supported")
+  }
   return {
     name,
-    ...configItemForSchema(schema),
-    required: required && !("default" in schema),
+    ...item,
+    required: isRequired(schema, required),
   } as ConnectionConfigField
 }
 
