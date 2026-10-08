@@ -1281,11 +1281,29 @@ class TagService extends BaseService {
     if (contactIds.length === 0) {
       return []
     }
-    return await tx
+    const linked = await tx
       .insert(contactsToTagsModel)
       .values(contactIds.map((contactId) => ({ contactId, tagId })))
       .onConflictDoNothing()
       .returning({ contactId: contactsToTagsModel.contactId })
+    // `listByContactId` caches a contact's tags under `contacts:<id>`; drop
+    // it for the contacts that just gained the tag so n8n/Make payloads and
+    // flow context read the new tag instead of a day-old list. The links are
+    // already committed, so a cache failure must not hide them from the
+    // caller (it would lose the tag events for good).
+    if (linked.length > 0) {
+      try {
+        await this.invalidateCacheTags(
+          linked.map((row) => `contacts:${row.contactId}`),
+        )
+      } catch (error) {
+        logger.warn(
+          { err: error, tagId, contactIds: linked.map((row) => row.contactId) },
+          "Failed to invalidate contact tag cache after linking",
+        )
+      }
+    }
+    return linked
   }
 
   /**

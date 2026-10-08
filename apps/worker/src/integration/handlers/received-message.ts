@@ -718,6 +718,18 @@ export const receiveMessage = async (
     })
   }
 
+  // A referral-only ad delivery stores no message, so the label lookup further
+  // down skips it; tag the contact with the ad locally instead. Runs before
+  // the ref job is enqueued so a ref flow can already see the tag.
+  await tagAdReferralOnlyContact({
+    canAutomate,
+    inbox,
+    integrationRow,
+    referral: parsedMessage.referral,
+    isReferralOnly: !incomingMessage,
+    contactInbox: { id: contactInbox.id, contactId: contactInbox.contactId },
+  })
+
   if (ref && canAutomate) {
     await integrationQueue.add(IntegrationJobAction.runRef, {
       type: IntegrationJobAction.runRef,
@@ -730,17 +742,6 @@ export const receiveMessage = async (
       },
     })
   }
-
-  // A referral-only ad delivery stores no message, so the label lookup below
-  // skips it; tag the contact with the ad locally instead.
-  await tagAdReferralOnlyContact({
-    canAutomate,
-    inbox,
-    integrationRow,
-    referral: parsedMessage.referral,
-    isReferralOnly: !incomingMessage,
-    contactInbox: { id: contactInbox.id, contactId: contactInbox.contactId },
-  })
 
   // Per-ad labels some channels auto-assign never arrive by webhook, so a newly
   // stored ad-referred message reads them once the message is fully handled.

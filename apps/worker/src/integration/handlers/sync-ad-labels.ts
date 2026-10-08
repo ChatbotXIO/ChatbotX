@@ -1,5 +1,6 @@
-import { tagService } from "@chatbotx.io/business"
+import { adsConversionService, tagService } from "@chatbotx.io/business"
 import { channelTypes, messageTypes } from "@chatbotx.io/database/partials"
+import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
 import { emitTagApplied } from "@chatbotx.io/events"
 import type { ChannelLabel, MessageReferral } from "@chatbotx.io/sdk"
 import { PAID_AD_REFERRAL_SOURCE } from "@chatbotx.io/utils/referral"
@@ -22,6 +23,8 @@ import type { ChannelType as LabelChannelType } from "./inbox_labels/types"
 
 type AdLabelSource = {
   labelChannel: LabelChannelType
+  /** The channel's ads-conversion identity, for "tag applied" rules. */
+  conversionChannel: AdsConversionChannel
   /** `MessageReferral.source` of a paid-ad referral on this channel. */
   referralSource: string
   /** Name prefix of the auto-assigned per-ad label. */
@@ -32,6 +35,7 @@ type AdLabelSource = {
 const AD_LABEL_SOURCES: Partial<Record<string, AdLabelSource>> = {
   [channelTypes.enum.messenger]: {
     labelChannel: channelTypes.enum.messenger,
+    conversionChannel: channelTypes.enum.messenger,
     referralSource: PAID_AD_REFERRAL_SOURCE.meta,
     labelPrefix: "ad_id.",
   },
@@ -146,13 +150,51 @@ const resolveReferralOnlyAdTag = (
 }
 
 /**
+ * Record the contact inbox under the tag's existing mapping to this page's
+ * label id (from an earlier label lookup), so the page's later "remove label"
+ * webhook can find it. Skipped while the tag has no mapping yet. Best-effort
+ * and isolated: a failure here must not stop the tag's events.
+ */
+const recordAdTagChannelAssignment = async (
+  props: TagAdReferralOnlyProps,
+  source: AdLabelSource,
+  tagId: string,
+): Promise<void> => {
+  const { inbox, integrationRow, contactInbox, referral } = props
+  try {
+    const tagChannel = await tagService.findTagChannelByTag({
+      workspaceId: inbox.workspaceId,
+      tagId,
+      channelType: source.labelChannel,
+      integrationId: integrationRow.id,
+    })
+    if (tagChannel) {
+      await tagService.recordTagChannelAssignmentsUnscoped({
+        tagId,
+        tagChannelId: tagChannel.id,
+        contactInboxIds: [contactInbox.id],
+      })
+    }
+  } catch (error) {
+    logger.warn(
+      {
+        err: error,
+        workspaceId: inbox.workspaceId,
+        integrationId: integrationRow.id,
+        contactInboxId: contactInbox.id,
+        adId: referral?.adId,
+      },
+      "Ad referral label mapping failed",
+    )
+  }
+}
+
+/**
  * Apply the per-ad tag (`ad_id.<AD_ID>`) to the contact of a referral-only
  * ad delivery. The tag is found by name or created, so repeated referrals for
- * the same ad reuse one tag and emit "tag applied" only on the first link.
- * When an earlier label lookup already mapped the tag to this page's label
- * id, the contact inbox is recorded under that mapping too, so the page's
- * later "remove label" webhook can find it. Best-effort: a failure is logged
- * and never fails the message job.
+ * the same ad reuse one tag; "tag applied" and the ads-conversion evaluation
+ * run only on the first link. Best-effort: a failure is logged and never
+ * fails the message job.
  */
 export async function tagAdReferralOnlyContact(
   props: TagAdReferralOnlyProps,
@@ -175,29 +217,25 @@ export async function tagAdReferralOnlyContact(
       tagId,
       contactIds: [contactInbox.contactId],
     })
-    const tagChannel = await tagService.findTagChannelByTag({
+    await recordAdTagChannelAssignment(props, source, tagId)
+    if (linked.length === 0) {
+      return
+    }
+    // The evaluation enqueue never throws (`safeEnqueue`); the event goes
+    // last so its failure cannot lose a conversion for a link that exists.
+    await adsConversionService.enqueueTagAppliedEvaluationsForInbox({
       workspaceId: inbox.workspaceId,
-      tagId,
-      channelType: source.labelChannel,
-      integrationId: integrationRow.id,
+      channel: source.conversionChannel,
+      inboxId: inbox.id,
+      contactInboxId: contactInbox.id,
+      tagIds: [tagId],
     })
-    if (tagChannel) {
-      await tagService.recordTagChannelAssignmentsUnscoped({
-        tagId,
-        tagChannelId: tagChannel.id,
-        contactInboxIds: [contactInbox.id],
-      })
-    }
-    // Event last, after every write, as in `assignLabel`: a failed emit must
-    // not leave the channel assignment unrecorded.
-    if (linked.length > 0) {
-      await emitTagApplied(
-        inbox.workspaceId,
-        contactInbox.contactId,
-        tagId,
-        contactInbox.id,
-      )
-    }
+    await emitTagApplied(
+      inbox.workspaceId,
+      contactInbox.contactId,
+      tagId,
+      contactInbox.id,
+    )
   } catch (error) {
     logger.warn(
       {

@@ -2818,6 +2818,22 @@ describe("receiveMessage — ad label sync (Meta auto labels on CTM referrals)",
     })
   })
 
+  test("tags the contact before the ref job is enqueued", async () => {
+    mockRunChannelHandler.mockResolvedValue(
+      parsed({ message: null, ref: "promo" }),
+    )
+
+    await receiveMessage(baseProps)
+
+    const runRefCall = mockIntegrationQueueAdd.mock.calls.findIndex(
+      (call) => call[0] === "runRef",
+    )
+    expect(runRefCall).toBeGreaterThanOrEqual(0)
+    expect(
+      mockTagAdReferralOnlyContact.mock.invocationCallOrder[0],
+    ).toBeLessThan(mockIntegrationQueueAdd.mock.invocationCallOrder[runRefCall])
+  })
+
   test("marks a delivery with a message as not referral-only", async () => {
     mockRunChannelHandler.mockResolvedValue(parsed())
 

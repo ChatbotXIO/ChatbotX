@@ -83,6 +83,16 @@ vi.mock("../src/ads-conversion/service", () => ({
   },
 }))
 
+const loggerWarn = vi.fn()
+vi.mock("../src/logger", () => ({
+  logger: {
+    warn: (...args: unknown[]) => loggerWarn(...args),
+    info: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
+}))
+
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: (...args: unknown[]) => invalidateCacheByTags(...args),
   withCache: async (_key: string, callback: () => Promise<unknown>) =>
@@ -298,5 +308,63 @@ describe("findTagChannelByTag", () => {
         integrationId: "intg-1",
       }),
     ).resolves.toBeUndefined()
+  })
+})
+
+describe("linkTagToContactsReturningNewUnscoped", () => {
+  test("invalidates the cache of each newly linked contact", async () => {
+    insertReturning.mockResolvedValue([
+      { contactId: "c1" },
+      { contactId: "c2" },
+    ])
+
+    const linked = await tagService.linkTagToContactsReturningNewUnscoped({
+      tagId: "tag-1",
+      contactIds: ["c1", "c2", "c3"],
+    })
+
+    expect(linked).toEqual([{ contactId: "c1" }, { contactId: "c2" }])
+    expect(invalidateCacheByTags).toHaveBeenCalledWith([
+      "contacts:c1",
+      "contacts:c2",
+    ])
+  })
+
+  test("still returns the new links when the cache invalidation fails", async () => {
+    insertReturning.mockResolvedValue([{ contactId: "c1" }])
+    const failure = new Error("redis down")
+    invalidateCacheByTags.mockRejectedValueOnce(failure)
+
+    const linked = await tagService.linkTagToContactsReturningNewUnscoped({
+      tagId: "tag-1",
+      contactIds: ["c1"],
+    })
+
+    expect(linked).toEqual([{ contactId: "c1" }])
+    expect(loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ err: failure, tagId: "tag-1" }),
+      "Failed to invalidate contact tag cache after linking",
+    )
+  })
+
+  test("invalidates nothing when every contact already had the tag", async () => {
+    insertReturning.mockResolvedValue([])
+
+    await tagService.linkTagToContactsReturningNewUnscoped({
+      tagId: "tag-1",
+      contactIds: ["c1"],
+    })
+
+    expect(invalidateCacheByTags).not.toHaveBeenCalled()
+  })
+
+  test("returns [] without inserting when contactIds is empty", async () => {
+    const linked = await tagService.linkTagToContactsReturningNewUnscoped({
+      tagId: "tag-1",
+      contactIds: [],
+    })
+
+    expect(linked).toEqual([])
+    expect(insertValues).not.toHaveBeenCalled()
   })
 })

@@ -12,6 +12,7 @@ const findTagChannelByTag = vi.fn(
   async (): Promise<{ id: string } | undefined> => undefined,
 )
 const recordTagChannelAssignmentsUnscoped = vi.fn(async () => undefined)
+const enqueueTagAppliedEvaluationsForInbox = vi.fn(async () => undefined)
 vi.mock("@chatbotx.io/business", () => ({
   tagService: {
     ensureTagByName: (...args: unknown[]) => ensureTagByName(...args),
@@ -20,6 +21,10 @@ vi.mock("@chatbotx.io/business", () => ({
     findTagChannelByTag: (...args: unknown[]) => findTagChannelByTag(...args),
     recordTagChannelAssignmentsUnscoped: (...args: unknown[]) =>
       recordTagChannelAssignmentsUnscoped(...args),
+  },
+  adsConversionService: {
+    enqueueTagAppliedEvaluationsForInbox: (...args: unknown[]) =>
+      enqueueTagAppliedEvaluationsForInbox(...args),
   },
 }))
 const emitTagApplied = vi.fn(async () => undefined)
@@ -249,6 +254,7 @@ describe("tagAdReferralOnlyContact — tagging", () => {
     await tagAdReferralOnlyContact(adReferralOnly())
 
     expect(recordTagChannelAssignmentsUnscoped).toHaveBeenCalledTimes(1)
+    expect(enqueueTagAppliedEvaluationsForInbox).toHaveBeenCalledTimes(1)
     expect(logger.warn).toHaveBeenCalledTimes(1)
   })
 
@@ -265,6 +271,33 @@ describe("tagAdReferralOnlyContact — tagging", () => {
 
     expect(linkTagToContactsReturningNewUnscoped).toHaveBeenCalledTimes(1)
     expect(emitTagApplied).not.toHaveBeenCalled()
+    expect(enqueueTagAppliedEvaluationsForInbox).not.toHaveBeenCalled()
+  })
+
+  test("evaluates ads-conversion tag rules for the originating inbox on a new link", async () => {
+    await tagAdReferralOnlyContact(adReferralOnly())
+
+    expect(enqueueTagAppliedEvaluationsForInbox).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      channel: "messenger",
+      inboxId: "inbox-1",
+      contactInboxId: "ci-1",
+      tagIds: ["tag-ad"],
+    })
+  })
+
+  test("still emits tag applied when the channel mapping lookup fails", async () => {
+    const failure = new Error("db down")
+    findTagChannelByTag.mockRejectedValueOnce(failure)
+
+    await tagAdReferralOnlyContact(adReferralOnly())
+
+    expect(emitTagApplied).toHaveBeenCalledTimes(1)
+    expect(enqueueTagAppliedEvaluationsForInbox).toHaveBeenCalledTimes(1)
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ err: failure, adId: AD_ID }),
+      "Ad referral label mapping failed",
+    )
   })
 
   test("never calls the Graph API", async () => {
