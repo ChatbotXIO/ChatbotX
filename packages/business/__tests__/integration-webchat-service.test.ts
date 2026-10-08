@@ -518,6 +518,7 @@ describe("integrationWebchatService.findByIdForWorkspaceOrNull", () => {
 describe("integrationWebchatService.update", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockIsCommunity.mockReturnValue(true)
   })
 
   // The action layer pre-checks ownership, but the method takes a
@@ -619,6 +620,57 @@ describe("integrationWebchatService.update", () => {
     ).rejects.toThrow("Welcome flow not found")
 
     expect(mockUpdateSet).not.toHaveBeenCalled()
+  })
+
+  test("adds branding to updated persistent menus in community deployments", async () => {
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { persistentMenus: [] },
+    })
+
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        persistentMenus: [
+          {
+            label: "⚡ Built with chatbotx.io",
+            type: "url",
+            url: "https://app.example.com/?ref=selfhosted&channel=webchat",
+          },
+        ],
+      }),
+    )
+  })
+
+  test("leaves updated persistent menus unchanged outside community deployments", async () => {
+    mockIsCommunity.mockReturnValue(false)
+    const persistentMenus = [
+      { label: "Docs", type: "url" as const, url: "https://docs.example.com" },
+    ]
+
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { persistentMenus },
+    })
+
+    expect(mockResolveWorkspaceAppUrl).not.toHaveBeenCalled()
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ persistentMenus }),
+    )
+  })
+
+  test("leaves persistent menus untouched when absent from an update", async () => {
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { name: "Support" },
+    })
+
+    expect(mockResolveWorkspaceAppUrl).not.toHaveBeenCalled()
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ persistentMenus: undefined }),
+    )
   })
 })
 

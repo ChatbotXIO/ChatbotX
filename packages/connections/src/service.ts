@@ -23,14 +23,14 @@ import { connectSelfServeChannel } from "./self-serve"
  *   imported directly from there by every sibling module below.
  * - `lifecycle.ts` — `disconnect`/`refresh`/`verify`.
  * - `credentials.ts` — `connectFromCredentials`/`reconnect`.
+ * - `self-serve.ts` — `connectSelfServeChannel`.
  * - `connect-session-flow.ts` — `startSession`/`completeAuthorization`/
  *   `listAndAttachCandidates` plus the private `completeReconnect` helper.
  * - `connect-targets.ts` — `connectTargets` plus its private
  *   `connectCandidate`/`failSession`/`toFailureOutcome` helpers.
  *
  * This object is the one public surface (`connectionService`) every caller
- * imports; the split above is purely a file-organization concern; behavior
- * is unchanged.
+ * imports; the split above is purely a file-organization concern.
  */
 export const connectionService = {
   disconnect,

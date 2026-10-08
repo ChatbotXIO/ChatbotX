@@ -16,6 +16,7 @@ import {
   withQuotaCompensation,
 } from "../connection"
 import { connectionStateService } from "../connection/state-service"
+import { ChatbotXException } from "../errors"
 import { inboxService } from "../inbox/service"
 import { assertPublicUrl } from "../net/ssrf-guard"
 import type { WorkspaceQuotaConsumption } from "../workspace/quota-consumption"
@@ -182,7 +183,17 @@ class IntegrationApiService extends BaseService {
   }> {
     const callbackUrl = input.callbackUrl ?? null
     if (callbackUrl) {
-      await assertPublicUrl(callbackUrl, "API channel callback URL")
+      try {
+        await assertPublicUrl(callbackUrl, "API channel callback URL")
+      } catch (error) {
+        throw new ChatbotXException(
+          error instanceof Error
+            ? error.message
+            : "Invalid API channel callback URL",
+          "invalidRequestData",
+          422,
+        )
+      }
     }
 
     const { token, tokenHash, tokenPrefix } = await generateApiChannelToken()

@@ -3,6 +3,7 @@ import {
   createWebchatRequest,
   updateWebchatRequest,
 } from "../src/features/integration-webchat/schema/mutation"
+import { updateWebchatPublicRequest } from "../src/features/integration-webchat/schema/public"
 
 describe("webchat mutation schemas", () => {
   test("applies create defaults when a minimal webchat is submitted", () => {
@@ -21,4 +22,8 @@ describe("webchat mutation schemas", () => {
     // clobbers stored values with defaults.
     expect(result).toEqual({ name: "Website chat" })
   })
+})
+
+test("does not add defaults to an empty public API PATCH", () => {
+  expect(updateWebchatPublicRequest.parse({})).toEqual({})
 })

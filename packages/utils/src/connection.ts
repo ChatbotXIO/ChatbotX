@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { DIGITS_REGEX } from "./zod"
 
 export const connectionStatuses = z.enum([
   "connected",
@@ -243,7 +244,7 @@ const configTypeForSchema = (
 }
 
 const formatForSchema = (schema: JsonSchema): string | undefined =>
-  schema.pattern === "^\\d+$" ? "bigint-string" : schema.format
+  schema.pattern === DIGITS_REGEX.source ? "bigint-string" : schema.format
 
 /** A field with a zod `.default()` is optional to the caller even when listed as required. */
 const isRequired = (schema: JsonSchema, required: boolean): boolean =>
