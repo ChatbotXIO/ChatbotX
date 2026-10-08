@@ -33,7 +33,6 @@ import {
   SdkException,
   type Variables,
 } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
 import {
   type BotResponseTrackingContext,
   IntegrationJobAction,
@@ -48,6 +47,10 @@ import {
   detectFlowVersion,
 } from "../../lib/db"
 import { logger } from "../../lib/logger"
+import {
+  isDurableFlowExecutionKey,
+  mintRandomFlowExecutionKey,
+} from "../flow-execution-key"
 import {
   type ExecuteMultipleStepsProps,
   MESSAGE_PRODUCING_STEP_TYPES,
@@ -151,7 +154,7 @@ function resolveFlowExecutionKey(
     return options.flowExecutionKey
   }
 
-  const flowExecutionKey = `flow-inline-${createId()}`
+  const flowExecutionKey = mintRandomFlowExecutionKey("flow-inline-")
   logger.warn(
     { ...context, flowExecutionKey },
     "Flow execution is missing parent job id; generated fallback key",
@@ -518,6 +521,12 @@ export async function runStepsAndQuickReplies(
           sendFrom: props.sendFrom,
           nodeVisits,
           commentAnchor: remainingAnchor,
+          // The continuation keeps the parent's key: a retried parent enqueues a
+          // second continuation with another job id, and the conversion step
+          // derives its event-mode occurrence from this key.
+          flowExecutionKey: isDurableFlowExecutionKey(props.flowExecutionKey)
+            ? props.flowExecutionKey
+            : undefined,
           origin: webhookChannelOrigin(),
         },
       })

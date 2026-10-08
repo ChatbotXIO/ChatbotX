@@ -697,6 +697,7 @@
       "noAdminReply": "Yönetici yanıtı yok",
       "contactCreatedAt": "Kişinin oluşturulma zamanı",
       "fromCtwaAd": "Reklamdan",
+      "fromGoogleAd": "Google Ads'ten",
       "ctwaConversion": "Reklam dönüşümü",
       "lastUserInputTypes": {
         "text": "Metin",
@@ -2077,7 +2078,10 @@
       "label": "İstemci Kimliği"
     },
     "clientSecret": {
-      "label": "İstemci Gizli Anahtarı"
+      "label": "İstemci Gizli Anahtarı",
+      "keepHint": "Kayıtlı istemci gizli anahtarını korumak için boş bırakın.",
+      "isSet": "İstemci gizli anahtarı ayarlandı.",
+      "isNotSet": "İstemci gizli anahtarı ayarlanmadı."
     },
     "verifyToken": {
       "label": "Webhook Doğrulama Jetonu"
@@ -2197,6 +2201,17 @@
     "signInCallbackUrl": {
       "label": "Oturum Açma Geri Çağırma URL'si",
       "hint": "Google ile oturum açmayı etkinleştirmek için bunu Google uygulamanızın yetkili yönlendirme URI'lerine ekleyin."
+    },
+    "adsDeveloperToken": {
+      "label": "Google Ads developer token",
+      "hint": "İsteğe bağlı: Google artık developer token istemiyor. Kayıtlı token'ı korumak için boş bırakın.",
+      "isSet": "Developer token ayarlandı.",
+      "isNotSet": "Developer token ayarlanmadı.",
+      "clear": "Temizle",
+      "cleared": "Geliştirici belirteci temizlendi."
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "Google Ads için Google uygulamanızdan ayrı, özel bir Google OAuth uygulaması kullanın ve adwords ile datamanager kapsamlarını etkinleştirin. Bu uygulamanın kendi Google OAuth doğrulamasına ihtiyacı vardır."
     },
     "webhookUrl": {
       "label": "Webhook URL",
@@ -2406,7 +2421,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -2423,6 +2441,12 @@
     },
     "sendRatePerMinute": {
       "label": "Dakikadaki mesaj sayısı"
+    },
+    "adsUploadMethod": {
+      "label": "Yükleme yöntemi",
+      "hint": "Data Manager önerilir. Eski yükleme API'si yalnızca Google'ın hâlâ izin verdiği Google Cloud projelerinde çalışır ve Data Manager iznini kullanmaz. Değişiklik yalnızca yeni bağlantılara uygulanır: mevcut çalışma alanlarını yeniden bağlayın.",
+      "dataManager": "Data Manager API (önerilir)",
+      "legacy": "Eski yükleme API'si"
     }
   },
   "flows": {
@@ -2591,7 +2615,8 @@
       "importJsonOnly": "Yalnızca JSON dosyaları",
       "whatsappCallButton": "WhatsApp'ta ara",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "Konuşma kontrolü"
+      "threadControl": "Konuşma kontrolü",
+      "sendGoogleAdsConversion": "Google Ads dönüşümü gönder"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -2799,7 +2824,8 @@
     "dashboardNav": {
       "whatsapp": "Click-to-WhatsApp Reklamları",
       "messenger": "Click-to-Messenger Reklamları",
-      "instagram": "Click-to-Instagram Reklamları"
+      "instagram": "Click-to-Instagram Reklamları",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "Reklam Hesabı Bağla",
@@ -4603,7 +4629,8 @@
       "startAnotherFlow": "Başka Bir Akış Başlat",
       "notifyAdmins": "Yöneticileri Bilgilendir",
       "transferConversationToHuman": "Görüşmeyi İnsana Aktar",
-      "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder"
+      "sendMetaCapiEvent": "Meta CAPI Etkinliği Gönder",
+      "sendGoogleAdsConversion": "Google Ads dönüşümü gönder"
     },
     "triggerGoesOff": "Tetikleyici devreye girer",
     "before": "Önce",
@@ -6616,6 +6643,447 @@
       "messagingIdHint": "Yalnızca harf, rakam, tire ve alt çizgi (en fazla 512).",
       "cancel": "İptal",
       "confirmSend": "Gönder"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "Bir Google reklam tıklamasıyla gelen kişiler için Google Ads'e çevrimdışı dönüşümler gönderin.",
+    "notAvailable": {
+      "description": "Platformun Google Ads kimlik bilgileri (OAuth istemci kimliği ve gizli anahtarı) yapılandırılmamış. Platform yöneticisinden bunları platformun Google Ads ayarlarına eklemesini isteyin."
+    },
+    "connect": {
+      "scopes": "Google Ads hesaplarınızı ve dönüşüm eylemlerinizi okumak ve sizin adınıza dönüşüm göndermek için izin istiyoruz.",
+      "button": "Google Ads'i bağla",
+      "reconnect": "Yeniden bağlan",
+      "unnamedAccount": "Google Ads hesabı",
+      "viaManager": "{manager} yöneticisi üzerinden",
+      "statusLabel": "Bağlantı durumu",
+      "needsReauthDescription": "Google erişimi iptal edildi veya süresi doldu. Dönüşüm göndermeye devam etmek için yeniden bağlanın.",
+      "pausedDescription": "Bu bağlantı duraklatıldı, bu nedenle dönüşümler gönderilmiyor.",
+      "degradedDescription": "Google Ads hata döndürüyor. Dönüşümler otomatik olarak yeniden denenecek.",
+      "howItWorks": "Nasıl çalışır",
+      "steps": {
+        "signIn": "Reklamlarınızı yöneten Google hesabıyla oturum açın.",
+        "chooseAccount": "Google Ads hesabını seçin.",
+        "pickAction": "Akışlarınızda dönüşüm eylemini seçin."
+      },
+      "uploadMethod": "Yükleme yöntemi: {method}"
+    },
+    "status": {
+      "connected": "Bağlı",
+      "degraded": "Sorunlu",
+      "needsReauth": "Yeniden bağlanmalı",
+      "paused": "Duraklatıldı",
+      "disconnected": "Bağlantı kesildi"
+    },
+    "picker": {
+      "title": "Bir Google Ads hesabı seçin",
+      "legend": "Google Ads hesapları",
+      "loading": "Google Ads bağlantısı yükleniyor",
+      "loadError": "Google Ads bağlantı denemesi yüklenemedi.",
+      "waiting": "Google'ın oturum açmayı onaylaması bekleniyor…",
+      "noTargets": "Bu Google hesabı için Google Ads hesabı bulunamadı.",
+      "alreadyThisWorkspace": "Bu çalışma alanına zaten bağlı",
+      "alreadyOtherWorkspace": "Başka bir çalışma alanına zaten bağlı",
+      "notSelectable": "Bu hesap seçilemez",
+      "connectSelected": "Hesabı bağla",
+      "sessionExpired": "Bağlantı denemesinin süresi doldu. Devam etmek için yeniden bağlanın.",
+      "sessionCancelled": "Bağlantı denemesi iptal edildi.",
+      "stalled": "Oturum açma tamamlanmadı. Tekrar denemek için «Google Ads'i bağla» düğmesini kullanın.",
+      "dismiss": "Kapat",
+      "cancelFailed": "Bağlantı denemesi iptal edilemedi. Tekrar deneyin.",
+      "connectErrorTitle": "Google Ads bağlanamadı",
+      "errors": {
+        "stateMismatch": "Oturum açma doğrulanamadı. Devam etmek için yeniden bağlanın.",
+        "expired": "Bağlantı denemesinin süresi doldu. Devam etmek için yeniden bağlanın.",
+        "providerDenied": "Google erişimi verilmedi. Yeniden bağlanın ve istenen izinlere izin verin.",
+        "exchangeFailed": "Google ile oturum açma tamamlanamadı. Devam etmek için yeniden bağlanın.",
+        "providerError": "Google bir hata döndürdü. Biraz sonra yeniden bağlanmayı deneyin.",
+        "noCandidates": "Bu Google kullanıcısı için etkin bir Google Ads hesabı bulunamadı. İptal edilmiş, askıya alınmış veya tam olarak kurulmamış hesaplar kullanılamaz. Etkin bir Google Ads hesabını yöneten bir Google hesabıyla oturum açın.",
+        "alreadyConnected": "Bu Google Ads hesabı zaten bağlı.",
+        "quotaExceeded": "Planınızın bağlantı sınırına ulaşıldı.",
+        "trialExpired": "Deneme süreniz sona erdi, bu nedenle yeni bağlantı eklenemiyor.",
+        "internalError": "Bağlanırken bir sorun oluştu. Lütfen tekrar deneyin.",
+        "providerUnavailable": "Google Ads geçici olarak kullanılamıyor, bu yüzden bağlantı tamamlanamadı. Biraz sonra tekrar deneyin.",
+        "developerTokenMissing": "Google Ads tam olarak kurulmadı: platformun Google kimlik bilgileri eksik. Yöneticinizden Google Ads kimlik bilgilerini kontrol etmesini isteyin.",
+        "developerTokenNotApproved": "Google, Google Ads kimlik bilgilerinde kayıtlı geliştirici jetonunu (developer token) reddetti. Jeton isteğe bağlıdır: yöneticinizden onu kaldırmasını veya geçerli bir jetonla değiştirmesini isteyin.",
+        "projectNotApproved": "Google Cloud projeniz henüz canlı Google Ads hesapları için onaylanmadı. Google Cloud Console'da (Google Ads API → Overview) proje için Explorer veya Basic erişimi başvurusu yapın, ardından tekrar bağlanın.",
+        "permissionDenied": "Bu Google kullanıcısının Google Ads hesaplarına erişim izni yok. Bir Google Ads hesabına erişimi olan Google kullanıcısıyla oturum açın.",
+        "apiNotEnabled": "Google Ads API, Google Cloud projesi için etkin değil. Yöneticinizden etkinleştirmesini isteyin, ardından tekrar deneyin.",
+        "credentialsInvalid": "Google oturum açma kimlik bilgilerini reddetti. Devam etmek için yeniden bağlanın.",
+        "scopeMissing": "Tüm izinler verilmedi. Google Ads'in Google Ads hesabınıza erişmesi ve dönüşüm göndermesi için izne ihtiyacı var. Yeniden bağlanın ve tüm izinleri işaretleyin.",
+        "legacyUploadNotAllowed": "Google bu hesap için eski yükleme API'sine izin vermiyor. Kimlik bilgisini Data Manager'a geçirin ve bu çalışma alanını yeniden bağlayın."
+      }
+    },
+    "setup": {
+      "conversionCustomer": "Dönüşüm hesabı",
+      "notResolved": "Henüz çözümlenmedi",
+      "retry": "Kurulumu yeniden dene",
+      "dataTermsWarning": "Bu hesap için müşteri verisi şartları kabul edilmedi. Bunları Google Ads'te kabul edin, ardından kurulumu yeniden deneyin.",
+      "errors": {
+        "conversionCustomerInaccessible": "Dönüşüm hesabına bu Google oturumuyla erişilemiyor. Google Ads'teki erişiminizi kontrol edip yeniden deneyin.",
+        "customerDataTermsNotAccepted": "Bu hesap için müşteri verisi şartları kabul edilmedi. Bunları Google Ads'te kabul edin, ardından kurulumu yeniden deneyin.",
+        "syncFailed": "Dönüşüm eylemleri Google Ads'ten okunamadı. Biraz sonra kurulumu yeniden deneyin.",
+        "developerTokenMissing": "Platformun Google Ads kimlik bilgileri (OAuth istemci kimliği ve gizli anahtarı) yapılandırılmamış."
+      }
+    },
+    "conversionActions": {
+      "title": "Dönüşüm eylemleri",
+      "description": "Yalnızca tıklamalardan dönüşüm içe aktaran etkin eylemler dönüşüm alabilir.",
+      "helpLink": "Google Ads Yardım",
+      "sync": "Dönüşüm eylemlerini senkronize et",
+      "syncedAt": "Son senkronizasyon: {date}",
+      "neverSynced": "Henüz senkronize edilmedi",
+      "empty": "Dönüşüm eylemi bulunamadı. Google Ads'te çevrimdışı içe aktarma türünde bir dönüşüm eylemi oluşturun, ardından senkronize edin.",
+      "name": "Ad",
+      "category": "Kategori",
+      "counting": "Sayım",
+      "status": "Durum",
+      "onePerClickNote": "iOS tıklamaları (gbraid) bu eyleme gönderilemez. Bunları almak için \"Her biri\" sayımını kullanın.",
+      "externalNote": "Desteklenmiyor: bu eylem, Google Data Manager aracılığıyla gönderilemeyen harici ilişkilendirme kullanıyor.",
+      "count": "{count, plural, one {# dönüşüm eylemi} other {# dönüşüm eylemi}}"
+    },
+    "events": {
+      "title": "Dönüşüm geçmişi",
+      "description": "Google Ads'e gönderilen son dönüşümler. Tıklama kimlikleri maskelenir.",
+      "empty": "Bir akış veya tetikleyici dönüşüm gönderdiğinde dönüşümler burada görünür.",
+      "emptyFiltered": "Bu durumla eşleşen dönüşüm yok.",
+      "loadError": "Dönüşüm geçmişi yüklenemedi.",
+      "page": "Sayfa {page} / {pages}",
+      "filter": {
+        "label": "Durum",
+        "all": "Tüm durumlar"
+      },
+      "columns": {
+        "status": "Durum",
+        "action": "Dönüşüm eylemi",
+        "channel": "Kanal",
+        "clickId": "Tıklama kimliği",
+        "occurredAt": "Gerçekleşme",
+        "actions": "İşlemler",
+        "dedup": "Tekrar önleme",
+        "consent": "Onay anlık görüntüsü",
+        "matching": "Eşleştirme",
+        "properties": "Özellikler"
+      },
+      "status": {
+        "pending": "Beklemede",
+        "sending": "Gönderiliyor",
+        "sent": "Gönderildi",
+        "processed": "İşlendi",
+        "failed": "Başarısız",
+        "skippedNoAccount": "Atlandı: hesap yok",
+        "skippedExpired": "Atlandı: süresi doldu"
+      },
+      "processing": {
+        "processing": "Google işliyor",
+        "success": "Kabul edildi",
+        "partialSuccess": "Kısmen kabul edildi",
+        "failed": "Reddedildi",
+        "unknown": "Sonuç bilinmiyor",
+        "timedOut": "Zaman aşımı"
+      },
+      "stage": {
+        "delivery": "Teslimat başarısız",
+        "processing": "İşleme başarısız",
+        "timeout": "Zaman aşımı"
+      },
+      "consent": {
+        "adUserDataFull": "Reklam kullanıcı verileri: {status}",
+        "adPersonalizationFull": "Reklam kişiselleştirme: {status}",
+        "status": {
+          "granted": "Verildi",
+          "denied": "Reddedildi",
+          "notProvided": "Belirtilmedi",
+          "notSupported": "Desteklenmiyor (eski yükleme)"
+        },
+        "adUserDataShort": "Veri: {status}",
+        "adPersonalizationShort": "Kişis.: {status}",
+        "delivery": {
+          "toSend": "Gönderilecek",
+          "notSent": "Gönderilmedi",
+          "unknown": "Doğrulanmadı"
+        }
+      },
+      "dedup": {
+        "click": "Tıklama başına",
+        "id": "ID: {id}",
+        "event": "Her çalıştırma"
+      },
+      "matching": {
+        "enabled": "Yapılandırıldı: {fields}",
+        "withheldConsent": "Bekletildi (izin yok): {fields}",
+        "unsupportedTransport": "Gönderilmedi (eski): {fields}"
+      },
+      "timeProvided": "Belirtilen zaman",
+      "timeProvidedTooltip": "Bu dönüşüm zamanı adımdan geldi, adımın çalıştığı andan değil."
+    },
+    "validate": {
+      "open": "İsteği doğrula",
+      "title": "İsteği doğrula",
+      "description": "Bir yapılandırma kontrolü: Google, dönüşüm kaydetmeden isteği doğrular.",
+      "conversionAction": "Dönüşüm eylemi",
+      "clickIdType": "Tıklama kimliği türü",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "Tıklama kimliği",
+      "submit": "Kontrolü çalıştır",
+      "ok": "Google bu yapılandırmayı kabul etti. Hiçbir şey kaydedilmedi.",
+      "reasons": {
+        "accountNotReady": "Google Ads henüz hazır değil. Hesabınızın bağlanmasını ve kurulumunu tamamlayın, ardından tekrar deneyin.",
+        "needsReauth": "Google Ads bağlantısının yeniden kurulması gerekiyor.",
+        "rejected": "Google bu isteği reddetti",
+        "legacyUploadNotAllowed": "Google bu hesap için eski yükleme API'sine izin vermiyor. Kimlik bilgisini Data Manager'a geçirin ve bu çalışma alanını yeniden bağlayın."
+      },
+      "invalid": "Bir dönüşüm eylemi seçin ve geçerli bir tıklama kimliği girin.",
+      "consentIncluded": "İzni içerir: {values}.",
+      "consentNone": "Bu testte hiçbir izin yer almıyor.",
+      "consentVariableSkipped": "Kişi alanından gelen izin test edilemez ve dışarıda bırakılır.",
+      "consentNotSentLegacy": "Reklam kişiselleştirme ({status}) eski yükleme yöntemiyle gönderilmez."
+    },
+    "conversionFields": {
+      "conversionAction": "Dönüşüm eylemi",
+      "unavailableOption": "{id} (kullanılamıyor)",
+      "unavailableWarning": "Seçilen dönüşüm eylemi artık kullanılamıyor veya etkin değil. Yayınlamadan önce başka birini seçin.",
+      "externalOption": "{name} (harici ilişkilendirme, desteklenmiyor)",
+      "loading": "Dönüşüm eylemleri yükleniyor",
+      "loadError": "Google Ads dönüşüm eylemleriniz yüklenemedi.",
+      "notConnected": "Dönüşüm göndermek için Google Ads'i bağlayın.",
+      "noActions": "Etkin dönüşüm eylemi bulunamadı. Bunları Google Ads ayarlarında senkronize edin.",
+      "openSettings": "Google Ads ayarlarını aç",
+      "needsReauth": "Google Ads bağlantısının yeniden kurulması gerekiyor.",
+      "dedupModeClick": "Reklam tıklaması başına bir kez",
+      "dedupModeClickHelp": "Bu dönüşüm eylemini her reklam tıklaması için bir kez sayar.",
+      "dedupModeIdHelp": "Her farklı kimlik için bir kez sayılır.",
+      "dedupModeId": "Sipariş veya etkinlik kimliği başına bir kez",
+      "dedupModeEvent": "Her çalıştığında",
+      "dedupModeEventHelp": "Aynı reklam tıklaması için bile her çalıştığında yeni bir dönüşüm kaydeder. Aynı çalıştırmanın yeniden denemesi iki kez sayılmaz.",
+      "dedupId": "Sipariş veya etkinlik kimliği",
+      "dedupIdPlaceholder": "örn. '{{order_number}}'",
+      "dedupIdHelp": "Yeniden denemelerde ve içe aktarmalarda aynı kimliği kullanın. Her satın alma veya etkinlik için farklı bir kimlik kullanın.",
+      "dedupIdExample": "Sohbet satışlarında sipariş kimliği yok mu? Kişiyi, her satışta belirlediğiniz bir alanla birleştirin, örn. {example}. Geçerli saati kullanmayın: her çalıştırmada değişir.",
+      "dedupIdInfoLabel": "Sipariş veya etkinlik kimliği hakkında",
+      "dedupLeadIdNote": "Her farklı kimlik, aynı tıklamadan gelen yeni bir potansiyel müşteri olarak sayılır.",
+      "dedupClickNote": "Aynı tıklamadan gelen tekrarlı satın almalar sayılmaz.",
+      "dedupLegacyNote": "Eski yükleme: Google karıştırılmış kimliği alır.",
+      "additionalOptions": "Ek seçenekler",
+      "additionalOptionsCount": "{count} ayarlandı",
+      "customerMatching": "Müşteri eşleştirme",
+      "customerMatchingCount": "{count} açık",
+      "customerMatchingLegacy": "Eski yükleme yöntemi desteklemiyor. Kullanmak için bağlantıyı Data Manager API'ye geçirin.",
+      "customerMatchingTermsNotAccepted": "Müşteri verileri şartları Google Ads dönüşüm ayarlarında kabul edilene kadar gönderilmez.",
+      "learnMore": "Daha fazla bilgi",
+      "matchEmailLabel": "E-posta",
+      "matchPhoneLabel": "Telefon numarası",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "Müşteri türü",
+      "customerValueBucketLabel": "Müşteri değeri",
+      "customerPropertiesLegacy": "Eski yükleme yöntemi desteklemiyor. Kullanmak için bağlantıyı Data Manager API'ye geçirin.",
+      "conversionTime": "Dönüşüm zamanı",
+      "conversionTimePlaceholder": "Bu adımın çalıştığı zamanı kullanmak için boş bırakın",
+      "valuePlaceholder": "İsteğe bağlı, örn. 250",
+      "currencyPlaceholder": "İsteğe bağlı, USD",
+      "validation": {
+        "dedupIdRequired": "Bir kimlik girin veya Reklam tıklaması başına bir kez seçin.",
+        "dedupIdTooLong": "En fazla 64 karakter kullanın.",
+        "matchTemplateInvalid": "Yalnızca tek bir değişken kullanın, örneğin '{{email}}'. Sabit değer kullanılamaz.",
+        "customerTypeInvalid": "NEW veya RETURNING ya da '{{customer_type}}' gibi bir değişken kullanın.",
+        "customerValueBucketInvalid": "LOW, MEDIUM veya HIGH ya da '{{customer_value}}' gibi bir değişken kullanın.",
+        "timeFormat": "Saat dilimli bir tarih kullanın, örn. 2026-10-08T14:30:00+07:00.",
+        "timeInvalidDate": "Bu tarih mevcut değil.",
+        "currencyRequired": "Bir değer belirlediğinizde para birimi ekleyin.",
+        "valueRequired": "Bir para birimi belirlediğinizde değer ekleyin.",
+        "conversionActionRequired": "Bir dönüşüm eylemi seçin.",
+        "valueInvalid": "Düz bir sayı kullanın, örn. 19.99.",
+        "valueTooLarge": "Bu değer çok büyük.",
+        "currencyInvalid": "3 harfli bir para birimi kodu kullanın, örn. USD."
+      },
+      "consentInvalid": "İzin ayarları okunamıyor, bu nedenle bu adım başarısız olacak.",
+      "consentFixLink": "Ayarlarda düzeltin",
+      "dedupModeLabel": "Yinelenen dönüşümleri önle"
+    },
+    "summary": {
+      "conversionAction": "Dönüşüm eylemi {id}",
+      "notConfigured": "Bir dönüşüm eylemi seçin",
+      "dedupClick": "Reklam tıklaması başına bir kez",
+      "dedupId": "Kimlik: {id}",
+      "dedupEvent": "Her çalıştığında"
+    },
+    "consent": {
+      "title": "Dönüşüm verileri izni",
+      "description": "Müşterilerin verilerini reklamlar için paylaşmayı kabul edip etmediği. Bu çalışma alanının gönderdiği her dönüşüm için geçerlidir.",
+      "learnMore": "Daha fazla bilgi",
+      "notConnected": "Bir Google Ads hesabı bağlandığında dönüşümler için geçerli olur.",
+      "adUserData": {
+        "label": "Reklam kullanıcı verileri"
+      },
+      "adPersonalization": {
+        "label": "Reklam kişiselleştirme"
+      },
+      "source": {
+        "notProvided": "Belirtilmedi",
+        "granted": "Her zaman verildi",
+        "denied": "Her zaman reddedildi",
+        "variable": "Bir kişi alanından"
+      },
+      "help": {
+        "notProvided": "Atlandı. Google hesabınızın varsayılan iznini kullanır.",
+        "granted": "Her dönüşüm müşterinin kabul ettiğini bildirir.",
+        "denied": "Her dönüşüm müşterinin reddettiğini bildirir.",
+        "variable": "\"{granted}\" veya \"{denied}\" kullanın. Boş değer atlanır; başka her değer adımı başarısız kılar."
+      },
+      "templatePlaceholder": "ör. '{{gdpr_consent}}'",
+      "templateLabel": "{setting} için kişi alanı",
+      "validation": {
+        "templateRequired": "Bir kişi alanı ekleyin, ör. '{{gdpr_consent}}'.",
+        "templateTooLong": "En fazla 200 karakter kullanın."
+      },
+      "legacy": {
+        "title": "Eski yükleme ile gönderilmez",
+        "body": "Eski yükleme yalnızca reklam kullanıcı verisi iznini kabul eder. Göndermek için Data Manager ile yeniden bağlanın."
+      },
+      "save": "Kaydet",
+      "saved": "İzin ayarları kaydedildi",
+      "invalidStored": "Kayıtlı izin ayarları okunamadı. Yeni ayarları kaydedene kadar dönüşüm gönderen adımlar başarısız olur."
+    },
+    "errors": {
+      "supportSession": "Platform destek oturumları Google Ads bağlantısını değiştiremez veya dönüşüm gönderemez.",
+      "developerTokenMissing": "Google Ads henüz kullanılamıyor: platformun Google Ads kimlik bilgileri (OAuth istemci kimliği ve gizli anahtarı) yapılandırılmamış.",
+      "notConnected": "Google Ads bu çalışma alanı için bağlı değil.",
+      "sessionNotFound": "Bu Google Ads bağlantı denemesi bulunamadı veya süresi doldu. Baştan başlayın.",
+      "pickFailed": "Bu Google Ads hesabı bağlanamadı. Başka bir yerde zaten bağlı olabilir veya deneme süresi dolmuş olabilir.",
+      "notRetryable": "Bu dönüşüm yeniden denenemez: yalnızca başarısız dönüşümler yeniden denenebilir.",
+      "authorizationUnavailable": "Google ile oturum açma başlatılamadı. Biraz sonra tekrar deneyin.",
+      "credentialSecretsRequired": "İstemci sırrını girin. Henüz kaydedilmedi."
+    },
+    "enums": {
+      "category": {
+        "default": "Varsayılan",
+        "purchase": "Satın alma",
+        "addToCart": "Sepete ekleme",
+        "beginCheckout": "Ödemeyi başlatma",
+        "subscribePaid": "Ücretli abonelik",
+        "phoneCallLead": "Telefon araması potansiyel müşterisi",
+        "importedLead": "İçe aktarılan potansiyel müşteri",
+        "submitLeadForm": "Potansiyel müşteri formu gönderme",
+        "bookAppointment": "Randevu alma",
+        "signup": "Kayıt",
+        "requestQuote": "Teklif isteme",
+        "getDirections": "Yol tarifi alma",
+        "outboundClick": "Giden tıklama",
+        "contact": "İletişim",
+        "engagement": "Etkileşim",
+        "storeVisit": "Mağaza ziyareti",
+        "storeSale": "Mağaza satışı",
+        "qualifiedLead": "Nitelikli potansiyel müşteri",
+        "convertedLead": "Dönüştürülmüş potansiyel müşteri",
+        "pageView": "Sayfa görüntüleme",
+        "download": "İndirme",
+        "lead": "Potansiyel müşteri"
+      },
+      "countingType": {
+        "onePerClick": "Tıklama başına bir",
+        "manyPerClick": "Tıklama başına birden fazla"
+      },
+      "actionStatus": {
+        "enabled": "Etkin",
+        "removed": "Kaldırıldı",
+        "hidden": "Gizli"
+      },
+      "unknown": "Diğer ({value})"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "Eski yükleme"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "Bu kişinin kanalı Google Ads dönüşümleri gönderemez.",
+      "google_ads_no_click": "Kişi bir Google reklam tıklamasından gelmedi.",
+      "google_ads_no_account": "Hazır bir Google Ads hesabı bağlı değil.",
+      "google_ads_unknown_conversion_action": "Dönüşüm eylemi artık yok. Senkronize edip başka birini seçin.",
+      "google_ads_action_disabled": "Dönüşüm eylemi Google Ads'de etkin değil.",
+      "google_ads_incompatible_action": "Bu eylem tıklama başına bir dönüşüm sayar; Google bu iOS tıklaması için buna izin vermez.",
+      "google_ads_unsupported_action": "Bu eylem harici atıf kullanır ve bu dönüşümleri alamaz.",
+      "google_ads_invalid_value": "Değer veya para birimi geçerli değildi.",
+      "google_ads_invalid_input": "Adımın ayarları geçerli değildi.",
+      "google_ads_record_failed": "Dönüşüm kaydedilemedi.",
+      "google_ads_missing_dedup_id": "Sipariş veya etkinlik kimliği boştu.",
+      "google_ads_invalid_dedup_id": "Sipariş veya etkinlik kimliği 64 karakterden uzundu.",
+      "google_ads_missing_occurrence_key": "Bu çalıştırmanın kararlı bir tanımlayıcısı olmadığından dönüşüm kaydedilmedi.",
+      "google_ads_invalid_customer_property": "Müşteri türü veya değeri izin verilen bir değer değildi.",
+      "google_ads_invalid_consent_config": "Kayıtlı onay ayarları okunamadı.",
+      "google_ads_invalid_consent_value": "Bir onay alanı \"granted\" veya \"denied\" dışında bir değer içeriyordu.",
+      "google_ads_invalid_conversion_time": "Dönüşüm zamanı saat dilimli geçerli bir tarih değildi veya gelecekteydi."
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "Tüm kanallar",
+        "allActions": "Tüm eylemler",
+        "channelLabel": "Kanal",
+        "actionLabel": "Dönüşüm eylemi"
+      },
+      "tiles": {
+        "confirmed": "Onaylandı",
+        "awaitingGoogle": "Google bekleniyor",
+        "queued": "Sırada",
+        "failed": "Başarısız",
+        "skipped": "Atlandı",
+        "deliveryRate": "Teslim oranı",
+        "confirmedHelp": "Google bu dönüşümleri kaydettiğini onayladı.",
+        "awaitingGoogleHelp": "Google'a gönderildi, Google'ın işlemeyi bitirmesi bekleniyor.",
+        "queuedHelp": "Gönderilmeyi bekliyor.",
+        "failedHelp": "Google tarafından kabul edilmedi veya işlenmedi.",
+        "skippedHelp": "Gönderilmedi: hazır hesap yok veya Google için çok eski.",
+        "deliveryRateHelp": "Onaylanan ÷ (onaylanan + başarısız). Sıradaki, bekleyen ve atlanan dönüşümler sayılmaz."
+      },
+      "confirmedValue": "Onaylanan değer",
+      "confirmedValueItem": "{value} ({count, plural, one {# dönüşüm} other {# dönüşüm}})",
+      "moreCurrencies": "+{count} tane daha",
+      "chart": {
+        "title": "Günlük dönüşümler",
+        "viewAsTable": "Tablo olarak göster",
+        "tableCaption": "Günlük dönüşümler",
+        "dateColumn": "Tarih"
+      },
+      "byAction": {
+        "title": "Dönüşüm eylemine göre",
+        "truncated": "En çok dönüşümü olan 50 eylem gösteriliyor."
+      },
+      "byChannel": {
+        "title": "Kanala göre",
+        "confirmedCount": "{count, plural, one {# onaylandı} other {# onaylandı}}"
+      },
+      "failures": {
+        "title": "Aşamaya göre hatalar",
+        "unknown": "Bilinmiyor"
+      },
+      "empty": {
+        "title": "Bu dönemde dönüşüm yok",
+        "description": "Bir akış adımı veya tetikleyici dönüşüm gönderdiğinde burada görünür."
+      },
+      "error": {
+        "title": "İstatistikler yüklenemedi",
+        "retry": "Tekrar dene"
+      },
+      "viewStatistics": "İstatistikleri görüntüle",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "Bu dönemde onaylanmış veya başarısız dönüşüm yok.",
+      "actionFallback": "Eylem {id}",
+      "openSettings": "Google Ads ayarlarını aç",
+      "outcome": {
+        "title": "Sonuç dağılımı"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
     }
   },
   "minigames": {

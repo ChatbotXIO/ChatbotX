@@ -40,6 +40,17 @@ describe("perform action Meta CAPI menu", () => {
   })
 })
 
+describe("perform action Google Ads conversion menu", () => {
+  test("exposes sendGoogleAdsConversion as a top-level entry", () => {
+    expect(performActionMenus(t)).toContainEqual(
+      expect.objectContaining({
+        label: "flows.actions.sendGoogleAdsConversion",
+        stepType: stepTypes.enum.sendGoogleAdsConversion,
+      }),
+    )
+  })
+})
+
 describe("perform action coupon menu", () => {
   test("exposes topic coupon under tools as the create path", () => {
     const tools = performActionMenus(t).find(

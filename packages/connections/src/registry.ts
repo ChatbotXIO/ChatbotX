@@ -15,6 +15,7 @@ import { integration as integrationChatbotx } from "@chatbotx.io/integration-cha
 import { integration as integrationDrip } from "@chatbotx.io/integration-drip"
 import { integration as integrationFacebookAds } from "@chatbotx.io/integration-facebook-ads"
 import { integration as integrationGetResponse } from "@chatbotx.io/integration-get-response"
+import { integration as integrationGoogleAds } from "@chatbotx.io/integration-google-ads"
 import { integration as integrationGoogleCalendar } from "@chatbotx.io/integration-google-calendar"
 import { integration as integrationGoogleSheets } from "@chatbotx.io/integration-google-sheets"
 import { integration as integrationInstagram } from "@chatbotx.io/integration-instagram"
@@ -116,6 +117,7 @@ export const CONNECTION_REGISTRY: StoreBoundConnectionRegistry = {
   ),
   gemini: fromCredentialProvider(geminiConnectionProvider, "gemini"),
   getResponse: fromIntegration(integrationGetResponse, "getResponse"),
+  googleAds: fromIntegration(integrationGoogleAds, "googleAds", "googleAds"),
   googleCalendar: fromIntegration(
     integrationGoogleCalendar,
     "googleCalendar",

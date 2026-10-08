@@ -132,6 +132,11 @@ vi.mock("@chatbotx.io/business/errors", () => ({
     new MockChatbotXException(message, "notFound"),
   channelHiddenException: (channel: string) =>
     new MockChatbotXException(`${channel} hidden`, "channelHidden"),
+  connectionProviderDedicatedOnlyException: (provider: string) =>
+    new MockChatbotXException(
+      `${provider} is dedicated-only`,
+      "connectionProviderDedicatedOnly",
+    ),
   connectionNotConfiguredException: (provider: string) =>
     new MockChatbotXException(
       `${provider} not configured`,
@@ -641,5 +646,104 @@ describe("DELETE /v1/connect-sessions/{id}", () => {
       workspaceId: "workspace-1",
     })
     expect(result).toEqual({ id: "session-1", sessionResource: true })
+  })
+})
+
+describe("public connections API rejects the dedicated-only googleAds provider", () => {
+  const rejected = { code: "connectionProviderDedicatedOnly" }
+
+  test("POST /v1/connections rejects googleAds before any connect work", async () => {
+    await expect(
+      findProcedure("POST", "/v1/connections").handler?.({
+        context,
+        input: { provider: "googleAds", config: {} },
+      }),
+    ).rejects.toMatchObject(rejected)
+    expect(connectionServiceMocks.startSession).not.toHaveBeenCalled()
+    expect(connectionServiceMocks.connectFromCredentials).not.toHaveBeenCalled()
+  })
+
+  test("POST /v1/connections/{id}/reconnect rejects a googleAds connection", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "googleAds",
+    })
+    await expect(
+      findProcedure("POST", "/v1/connections/{id}/reconnect").handler?.({
+        context,
+        input: { id: "conn-1" },
+      }),
+    ).rejects.toMatchObject(rejected)
+    expect(connectionServiceMocks.reconnect).not.toHaveBeenCalled()
+  })
+
+  test("PUT /v1/connections/{id} rejects a googleAds connection", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "googleAds",
+    })
+    await expect(
+      findProcedure("PUT", "/v1/connections/{id}").handler?.({
+        context,
+        input: { id: "conn-1", displayName: "x" },
+      }),
+    ).rejects.toMatchObject(rejected)
+    expect(mocks.updateDisplayName).not.toHaveBeenCalled()
+  })
+
+  test("POST /v1/connections/{id}/refresh rejects a googleAds connection", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "googleAds",
+    })
+    await expect(
+      findProcedure("POST", "/v1/connections/{id}/refresh").handler?.({
+        context,
+        input: { id: "conn-1" },
+      }),
+    ).rejects.toMatchObject(rejected)
+    expect(connectionServiceMocks.refresh).not.toHaveBeenCalled()
+  })
+
+  test("DELETE /v1/connections/{id} rejects a googleAds connection", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "googleAds",
+    })
+    await expect(
+      findProcedure("DELETE", "/v1/connections/{id}").handler?.({
+        context,
+        input: { id: "conn-1" },
+      }),
+    ).rejects.toMatchObject(rejected)
+    expect(connectionServiceMocks.disconnect).not.toHaveBeenCalled()
+  })
+
+  test("POST /v1/connect-sessions/{id}/targets rejects a googleAds session", async () => {
+    mocks.findSessionByIdForWorkspace.mockResolvedValueOnce({
+      id: "session-1",
+      provider: "googleAds",
+    })
+    await expect(
+      findProcedure("POST", "/v1/connect-sessions/{id}/targets").handler?.({
+        context,
+        input: { id: "session-1", targetIds: ["t"] },
+      }),
+    ).rejects.toMatchObject(rejected)
+    expect(connectionServiceMocks.connectTargets).not.toHaveBeenCalled()
+  })
+
+  test("DELETE /v1/connect-sessions/{id} rejects a googleAds session", async () => {
+    mocks.findSessionByIdForWorkspace.mockResolvedValueOnce({
+      id: "session-1",
+      provider: "googleAds",
+    })
+    await expect(
+      findProcedure("DELETE", "/v1/connect-sessions/{id}").handler?.({
+        context,
+        input: { id: "session-1" },
+      }),
+    ).rejects.toMatchObject(rejected)
+    expect(mocks.cancelSession).not.toHaveBeenCalled()
   })
 })

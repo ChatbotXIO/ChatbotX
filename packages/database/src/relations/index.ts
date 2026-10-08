@@ -73,6 +73,8 @@ import { flowNodeStatRelations } from "./flow-node-stat"
 import { flowRunRelations } from "./flow-run"
 import { flowVersionRelations } from "./flow-version"
 import { folderRelations } from "./folder"
+import { googleAdsConversionEventRelations } from "./google-ads-conversion-event"
+import { googleAdsSettingsRelations } from "./google-ads-settings"
 import { igStoryAutomationRelations } from "./ig-story-automation"
 import { importRelations } from "./import"
 import { inboxRelations } from "./inbox"
@@ -88,6 +90,7 @@ import { integrationDripRelations } from "./integration-drip"
 import { integrationFacebookAdsRelations } from "./integration-facebook-ads"
 import { integrationGeminiRelations } from "./integration-gemini"
 import { integrationGetResponseRelations } from "./integration-get-response"
+import { integrationGoogleAdsRelations } from "./integration-google-ads"
 import { integrationGoogleCalendarRelations } from "./integration-google-calendar"
 import { integrationGoogleSheetsRelations } from "./integration-google-sheets"
 import { integrationInstagramRelations } from "./integration-instagram"
@@ -240,6 +243,9 @@ export const relations = {
   ...workspaceMemberRelations,
   ...contactNoteRelations,
   ...aiEmbeddingRelations,
+  ...integrationGoogleAdsRelations,
+  ...googleAdsConversionEventRelations,
+  ...googleAdsSettingsRelations,
   ...integrationGoogleCalendarRelations,
   ...integrationGoogleSheetsRelations,
   ...integrationFacebookAdsRelations,

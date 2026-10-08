@@ -27,6 +27,7 @@
     "./custom-field": "./src/custom-field.ts",
     "./datetime": "./src/datetime.ts",
     "./error-log": "./src/error-log.ts",
+    "./google-click": "./src/google-click.ts",
     "./graph-error": "./src/graph-error.ts",
     "./id": "./src/id.ts",
     "./media-download": "./src/media-download.ts",

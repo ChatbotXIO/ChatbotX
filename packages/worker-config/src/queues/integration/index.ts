@@ -78,6 +78,7 @@ export const IntegrationJobAction = {
   evaluateConversionTrigger: "evaluateConversionTrigger",
   sendConversionEvent: "sendConversionEvent",
   sendMetaCapiEvent: "sendMetaCapiEvent",
+  sendGoogleAdsConversion: "sendGoogleAdsConversion",
   syncRetargetAudience: "syncRetargetAudience",
   contactScan: "contactScan",
   // Conversation routing (thread control).
@@ -746,6 +747,20 @@ export type AdsConversionJobSendConversionEvent = {
   }
 }
 
+/**
+ * `attempt` is the event's redrive generation (distinct from BullMQ's
+ * `attemptsMade`): a job only claims the event while it is still that
+ * generation, so a stale job can never double-send.
+ */
+export type IntegrationJobSendGoogleAdsConversion = {
+  type: typeof IntegrationJobAction.sendGoogleAdsConversion
+  data: {
+    googleAdsConversionEventId: string
+    workspaceId: string
+    attempt: number
+  }
+}
+
 export type IntegrationJobSendMetaCapiEvent = {
   type: typeof IntegrationJobAction.sendMetaCapiEvent
   data: {
@@ -1138,6 +1153,7 @@ export type IntegrationJobData =
   | IntegrationJobCaptureTemplateFlowResponse
   | AdsConversionJobSendConversionEvent
   | IntegrationJobSendMetaCapiEvent
+  | IntegrationJobSendGoogleAdsConversion
   | AdsConversionJobEvaluateTemplateSent
   | AdsConversionJobEvaluateConversionTrigger
   | AdsConversionJobSyncRetargetAudience
@@ -1194,6 +1210,7 @@ const jobOptionsByAction: Partial<
     priority: CAPI_EVENT_PRIORITY,
   },
   [IntegrationJobAction.sendMetaCapiEvent]: adsConversionRetryOptions,
+  [IntegrationJobAction.sendGoogleAdsConversion]: adsConversionRetryOptions,
   [IntegrationJobAction.syncRetargetAudience]: adsConversionRetryOptions,
   [IntegrationJobAction.whatsappCallNativeRecordingFetch]:
     NATIVE_CALL_CAPTURE_RETRY_OPTIONS,

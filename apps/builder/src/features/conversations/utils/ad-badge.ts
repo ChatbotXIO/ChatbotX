@@ -2,6 +2,7 @@ import {
   type AdsEligibleChannel,
   isAdsEligibleChannel,
 } from "@chatbotx.io/business/ads-conversion/channel-fields"
+import type { GoogleAdsChannel } from "@chatbotx.io/utils/google-click"
 
 // Minimal structural shape this helper needs — deliberately NOT the full
 // `ConversationContactInboxResource`, so extending `adReferral` with more
@@ -35,6 +36,19 @@ export function adBadgeLabelKey(channel: string): string {
   return isAdsEligibleChannel(channel)
     ? AD_BADGE_LABEL_KEY_BY_CHANNEL[channel]
     : GENERIC_AD_BADGE_LABEL_KEY
+}
+
+const GOOGLE_ADS_BADGE_LABEL_KEY_BY_CHANNEL = {
+  whatsapp: "fields.adReferral.googleAdsWhatsapp",
+  messenger: "fields.adReferral.googleAdsMessenger",
+} as const satisfies Record<GoogleAdsChannel, string>
+const GENERIC_GOOGLE_ADS_BADGE_LABEL_KEY = "fields.adReferral.googleAds"
+
+/** Google click-to-message pill label per channel (GA CCWA / GA CCTM); unknown channels keep the generic one. */
+export function googleAdsBadgeLabelKey(channel: string): string {
+  const byChannel: Readonly<Record<string, string | undefined>> =
+    GOOGLE_ADS_BADGE_LABEL_KEY_BY_CHANNEL
+  return byChannel[channel] ?? GENERIC_GOOGLE_ADS_BADGE_LABEL_KEY
 }
 
 export type AdBadge = {
@@ -79,3 +93,10 @@ export function selectAdBadge(
         ?.adReferral?.adTitle ?? null,
   }
 }
+
+/**
+ * Google Ads badge for a conversation (first inbox carrying a gclid/gbraid
+ * click). Independent of `selectAdBadge`, which stays Meta-only, so a Meta
+ * ad badge and a Google badge can render side by side.
+ */
+export { selectGoogleAdsBadge } from "@chatbotx.io/business/google-ads/click-fields"

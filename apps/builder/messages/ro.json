@@ -165,7 +165,8 @@
       "importJsonOnly": "Doar fișiere JSON",
       "whatsappCallButton": "Sună pe WhatsApp",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "Controlul conversației"
+      "threadControl": "Controlul conversației",
+      "sendGoogleAdsConversion": "Trimite conversie Google Ads"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -373,7 +374,8 @@
     "dashboardNav": {
       "whatsapp": "Reclame Click-to-WhatsApp",
       "messenger": "Reclame Click-to-Messenger",
-      "instagram": "Reclame Click-to-Instagram"
+      "instagram": "Reclame Click-to-Instagram",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "Conectează cont de anunțuri",
@@ -1671,6 +1673,7 @@
       "noAdminReply": "Niciun răspuns de la administrator",
       "contactCreatedAt": "Contact creat la",
       "fromCtwaAd": "Din anunț",
+      "fromGoogleAd": "Din Google Ads",
       "ctwaConversion": "Conversie anunț",
       "lastUserInputTypes": {
         "text": "Text",
@@ -2905,7 +2908,10 @@
       "label": "ID client"
     },
     "clientSecret": {
-      "label": "Secret client"
+      "label": "Secret client",
+      "keepHint": "Lasă gol pentru a păstra secretul client salvat.",
+      "isSet": "Un secret client este setat.",
+      "isNotSet": "Niciun secret client setat."
     },
     "verifyToken": {
       "label": "Token de verificare webhook"
@@ -3025,6 +3031,17 @@
     "signInCallbackUrl": {
       "label": "URL de revenire pentru conectare",
       "hint": "Adăugați-l la URI-urile de redirecționare autorizate ale aplicației Google pentru a activa conectarea cu Google."
+    },
+    "adsDeveloperToken": {
+      "label": "Developer token Google Ads",
+      "hint": "Opțional: Google nu mai cere un developer token. Lasă gol pentru a păstra tokenul salvat.",
+      "isSet": "Un developer token este setat.",
+      "isNotSet": "Niciun developer token setat.",
+      "clear": "Șterge",
+      "cleared": "Developer token șters."
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "Folosește o aplicație Google OAuth dedicată pentru Google Ads, separată de aplicația ta Google, cu scopurile adwords și datamanager activate. Are nevoie de propria verificare OAuth Google."
     },
     "webhookUrl": {
       "label": "URL webhook",
@@ -3234,7 +3251,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -3251,6 +3271,12 @@
     },
     "sendRatePerMinute": {
       "label": "Mesaje pe minut"
+    },
+    "adsUploadMethod": {
+      "label": "Metodă de încărcare",
+      "hint": "Se recomandă Data Manager. API-ul de încărcare vechi funcționează doar pentru proiectele Google Cloud pe care Google le permite încă și nu folosește permisiunea Data Manager. Modificarea se aplică doar conexiunilor noi: reconectează spațiile de lucru existente.",
+      "dataManager": "API Data Manager (recomandat)",
+      "legacy": "API de încărcare vechi"
     }
   },
   "channels": {
@@ -4603,7 +4629,8 @@
       "startAnotherFlow": "Pornește alt flux",
       "notifyAdmins": "Notifică administratorii",
       "transferConversationToHuman": "Transferă conversația către un operator",
-      "sendMetaCapiEvent": "Trimite eveniment Meta CAPI"
+      "sendMetaCapiEvent": "Trimite eveniment Meta CAPI",
+      "sendGoogleAdsConversion": "Trimite conversie Google Ads"
     },
     "triggerGoesOff": "Declanșatorul se activează",
     "before": "Înainte de",
@@ -6616,6 +6643,447 @@
       "messagingIdHint": "Doar litere, cifre, cratime și liniuțe de subliniere (max. 512).",
       "cancel": "Anulează",
       "confirmSend": "Trimite"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "Trimiteți conversii offline către Google Ads pentru contactele care au ajuns printr-un clic pe o reclamă Google.",
+    "notAvailable": {
+      "description": "Datele de autentificare Google Ads ale platformei (ID client și secret OAuth) nu sunt configurate. Cereți administratorului platformei să le adauge în setările Google Ads ale platformei."
+    },
+    "connect": {
+      "scopes": "Solicităm permisiunea de a citi conturile și acțiunile de conversie Google Ads și de a trimite conversii în numele dvs.",
+      "button": "Conectează Google Ads",
+      "reconnect": "Reconectează",
+      "unnamedAccount": "Cont Google Ads",
+      "viaManager": "prin managerul {manager}",
+      "statusLabel": "Starea conexiunii",
+      "needsReauthDescription": "Accesul Google a fost revocat sau a expirat. Reconectați-vă pentru a continua trimiterea conversiilor.",
+      "pausedDescription": "Această conexiune este în pauză, deci conversiile nu sunt trimise.",
+      "degradedDescription": "Google Ads răspunde cu erori. Conversiile vor fi retrimise automat.",
+      "howItWorks": "Cum funcționează",
+      "steps": {
+        "signIn": "Conectează-te cu contul Google care îți administrează anunțurile.",
+        "chooseAccount": "Alege contul Google Ads.",
+        "pickAction": "Alege acțiunea de conversie în fluxurile tale."
+      },
+      "uploadMethod": "Metodă de încărcare: {method}"
+    },
+    "status": {
+      "connected": "Conectat",
+      "degraded": "Degradat",
+      "needsReauth": "Necesită reconectare",
+      "paused": "În pauză",
+      "disconnected": "Deconectat"
+    },
+    "picker": {
+      "title": "Alegeți un cont Google Ads",
+      "legend": "Conturi Google Ads",
+      "loading": "Se încarcă conexiunea Google Ads",
+      "loadError": "Nu s-a putut încărca încercarea de conectare Google Ads.",
+      "waiting": "Se așteaptă confirmarea autentificării de către Google…",
+      "noTargets": "Nu s-au găsit conturi Google Ads pentru acest cont Google.",
+      "alreadyThisWorkspace": "Deja conectat la acest spațiu de lucru",
+      "alreadyOtherWorkspace": "Deja conectat la alt spațiu de lucru",
+      "notSelectable": "Acest cont nu poate fi selectat",
+      "connectSelected": "Conectează contul",
+      "sessionExpired": "Încercarea de conectare a expirat. Conectați-vă din nou pentru a continua.",
+      "sessionCancelled": "Încercarea de conectare a fost anulată.",
+      "stalled": "Autentificarea nu s-a finalizat. Folosește «Conectează Google Ads» pentru a încerca din nou.",
+      "dismiss": "Închide",
+      "cancelFailed": "Nu s-a putut anula încercarea de conectare. Încearcă din nou.",
+      "connectErrorTitle": "Google Ads nu a putut fi conectat",
+      "errors": {
+        "stateMismatch": "Autentificarea nu a putut fi verificată. Conectați-vă din nou pentru a continua.",
+        "expired": "Încercarea de conectare a expirat. Conectați-vă din nou pentru a continua.",
+        "providerDenied": "Accesul Google nu a fost acordat. Conectați-vă din nou și permiteți permisiunile solicitate.",
+        "exchangeFailed": "Autentificarea Google nu a putut fi finalizată. Conectați-vă din nou pentru a continua.",
+        "providerError": "Google a returnat o eroare. Încercați să vă conectați din nou peste puțin timp.",
+        "noCandidates": "Nu a fost găsit niciun cont Google Ads activ pentru acest utilizator Google. Conturile anulate, suspendate sau configurate incomplet nu pot fi folosite. Autentifică-te cu un cont Google care administrează un cont Google Ads activ.",
+        "alreadyConnected": "Acest cont Google Ads este deja conectat.",
+        "quotaExceeded": "Limita de conexiuni a planului dvs. a fost atinsă.",
+        "trialExpired": "Perioada de probă s-a încheiat, deci nu se pot adăuga conexiuni noi.",
+        "internalError": "A apărut o problemă la conectare. Încercați din nou.",
+        "providerUnavailable": "Google Ads este temporar indisponibil, așa că conectarea nu a putut fi finalizată. Încercați din nou peste puțin timp.",
+        "developerTokenMissing": "Google Ads nu este configurat complet: datele de autentificare Google ale platformei sunt incomplete. Cereți administratorului să verifice datele de autentificare Google Ads.",
+        "developerTokenNotApproved": "Google a respins developer token-ul salvat în datele de autentificare Google Ads. Token-ul este opțional: cereți administratorului să îl elimine sau să îl înlocuiască cu unul valid.",
+        "projectNotApproved": "Proiectul tău Google Cloud nu este încă aprobat pentru conturi Google Ads de producție. Solicită acces Explorer sau Basic pentru proiect în Google Cloud Console (Google Ads API → Overview), apoi conectează-te din nou.",
+        "permissionDenied": "Acest utilizator Google nu are permisiunea de a accesa conturi Google Ads. Conectați-vă cu un utilizator Google care are acces la un cont Google Ads.",
+        "apiNotEnabled": "API-ul Google Ads nu este activat pentru proiectul Google Cloud. Rugați administratorul să îl activeze, apoi încercați din nou.",
+        "credentialsInvalid": "Google a respins datele de autentificare. Conectați-vă din nou pentru a continua.",
+        "scopeMissing": "Nu au fost acordate toate permisiunile. Google Ads are nevoie de acces la contul tău Google Ads și de permisiunea de a trimite conversii. Conectează-te din nou și bifează toate permisiunile.",
+        "legacyUploadNotAllowed": "Google nu permite API-ul de încărcare vechi pentru acest cont. Schimbă credențialele pe Data Manager și reconectează acest spațiu de lucru."
+      }
+    },
+    "setup": {
+      "conversionCustomer": "Cont de conversii",
+      "notResolved": "Nerezolvat încă",
+      "retry": "Reîncearcă configurarea",
+      "dataTermsWarning": "Termenii privind datele clienților nu au fost acceptați pentru acest cont. Acceptați-i în Google Ads, apoi reîncercați configurarea.",
+      "errors": {
+        "conversionCustomerInaccessible": "Contul de conversii nu poate fi accesat cu această autentificare Google. Verificați accesul în Google Ads și reîncercați.",
+        "customerDataTermsNotAccepted": "Termenii privind datele clienților nu au fost acceptați pentru acest cont. Acceptați-i în Google Ads, apoi reîncercați configurarea.",
+        "syncFailed": "Nu s-au putut citi acțiunile de conversie din Google Ads. Reîncercați configurarea peste puțin timp.",
+        "developerTokenMissing": "Datele de autentificare Google Ads ale platformei (ID client și secret OAuth) nu sunt configurate."
+      }
+    },
+    "conversionActions": {
+      "title": "Acțiuni de conversie",
+      "description": "Doar acțiunile activate care importă conversii din clicuri pot primi conversii.",
+      "helpLink": "Ajutor Google Ads",
+      "sync": "Sincronizează acțiunile de conversie",
+      "syncedAt": "Ultima sincronizare: {date}",
+      "neverSynced": "Nesincronizat încă",
+      "empty": "Nu s-au găsit acțiuni de conversie. Creați în Google Ads o acțiune de conversie cu import offline, apoi sincronizați.",
+      "name": "Nume",
+      "category": "Categorie",
+      "counting": "Contorizare",
+      "status": "Stare",
+      "onePerClickNote": "Clicurile iOS (gbraid) nu pot fi trimise către această acțiune. Folosește numărarea „Fiecare” pentru a le primi.",
+      "externalNote": "Neacceptat: această acțiune folosește atribuire externă, care nu poate fi trimisă prin Google Data Manager.",
+      "count": "{count, plural, one {# acțiune de conversie} other {# acțiuni de conversie}}"
+    },
+    "events": {
+      "title": "Istoric conversii",
+      "description": "Conversii recente trimise către Google Ads. ID-urile de clic sunt mascate.",
+      "empty": "Conversiile apar aici după ce un flux sau un trigger trimite una.",
+      "emptyFiltered": "Nicio conversie nu corespunde acestei stări.",
+      "loadError": "Istoricul conversiilor nu a putut fi încărcat.",
+      "page": "Pagina {page} din {pages}",
+      "filter": {
+        "label": "Stare",
+        "all": "Toate stările"
+      },
+      "columns": {
+        "status": "Stare",
+        "action": "Acțiune de conversie",
+        "channel": "Canal",
+        "clickId": "ID clic",
+        "occurredAt": "Produsă la",
+        "actions": "Acțiuni",
+        "dedup": "Deduplicare",
+        "consent": "Instantaneu consimțământ",
+        "matching": "Potrivire",
+        "properties": "Proprietăți"
+      },
+      "status": {
+        "pending": "În așteptare",
+        "sending": "Se trimite",
+        "sent": "Trimisă",
+        "processed": "Procesată",
+        "failed": "Eșuată",
+        "skippedNoAccount": "Omisă: fără cont",
+        "skippedExpired": "Omisă: expirată"
+      },
+      "processing": {
+        "processing": "Google procesează",
+        "success": "Acceptată",
+        "partialSuccess": "Acceptată parțial",
+        "failed": "Respinsă",
+        "unknown": "Rezultat necunoscut",
+        "timedOut": "Timp expirat"
+      },
+      "stage": {
+        "delivery": "Livrare eșuată",
+        "processing": "Procesare eșuată",
+        "timeout": "Timp expirat"
+      },
+      "consent": {
+        "adUserDataFull": "Date de utilizator pentru anunțuri: {status}",
+        "adPersonalizationFull": "Personalizarea anunțurilor: {status}",
+        "status": {
+          "granted": "Acordat",
+          "denied": "Refuzat",
+          "notProvided": "Nefurnizat",
+          "notSupported": "Neacceptat (încărcare veche)"
+        },
+        "adUserDataShort": "Date: {status}",
+        "adPersonalizationShort": "Pers.: {status}",
+        "delivery": {
+          "toSend": "De trimis",
+          "notSent": "Netrimis",
+          "unknown": "Neconfirmat"
+        }
+      },
+      "dedup": {
+        "click": "Per clic",
+        "id": "ID: {id}",
+        "event": "Fiecare rulare"
+      },
+      "matching": {
+        "enabled": "Configurat: {fields}",
+        "withheldConsent": "Reținut (fără consimțământ): {fields}",
+        "unsupportedTransport": "Netrimis (vechi): {fields}"
+      },
+      "timeProvided": "Oră furnizată",
+      "timeProvidedTooltip": "Această oră a conversiei provine din pas, nu din momentul rulării."
+    },
+    "validate": {
+      "open": "Validează cererea",
+      "title": "Validează cererea",
+      "description": "O verificare a configurației: Google validează cererea fără a înregistra o conversie.",
+      "conversionAction": "Acțiune de conversie",
+      "clickIdType": "Tip ID clic",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "ID clic",
+      "submit": "Rulează verificarea",
+      "ok": "Google a acceptat această configurație. Nu s-a înregistrat nimic.",
+      "reasons": {
+        "accountNotReady": "Google Ads nu este încă pregătit. Finalizează conectarea și configurarea contului, apoi încearcă din nou.",
+        "needsReauth": "Conexiunea Google Ads trebuie reconectată.",
+        "rejected": "Google a respins această cerere",
+        "legacyUploadNotAllowed": "Google nu permite API-ul de încărcare vechi pentru acest cont. Schimbă credențialele pe Data Manager și reconectează acest spațiu de lucru."
+      },
+      "invalid": "Alegeți o acțiune de conversie și introduceți un ID de clic valid.",
+      "consentIncluded": "Include consimțământul: {values}.",
+      "consentNone": "Acest test nu include niciun consimțământ.",
+      "consentVariableSkipped": "Consimțământul dintr-un câmp de contact nu poate fi testat și este omis.",
+      "consentNotSentLegacy": "Personalizarea anunțurilor ({status}) nu este trimisă cu metoda de încărcare veche."
+    },
+    "conversionFields": {
+      "conversionAction": "Acțiune de conversie",
+      "unavailableOption": "{id} (indisponibilă)",
+      "unavailableWarning": "Acțiunea de conversie selectată nu mai este disponibilă sau nu este activată. Alege alta înainte de publicare.",
+      "externalOption": "{name} (atribuire externă, neacceptată)",
+      "loading": "Se încarcă acțiunile de conversie",
+      "loadError": "Nu s-au putut încărca acțiunile de conversie Google Ads.",
+      "notConnected": "Conectează Google Ads pentru a trimite conversii.",
+      "noActions": "Nu s-a găsit nicio acțiune de conversie activată. Sincronizeaz-o în setările Google Ads.",
+      "openSettings": "Deschide setările Google Ads",
+      "needsReauth": "Conexiunea Google Ads trebuie reconectată.",
+      "dedupModeClick": "O dată pe clic pe reclamă",
+      "dedupModeClickHelp": "Numără această acțiune de conversie o dată pentru fiecare clic pe reclamă.",
+      "dedupModeIdHelp": "Se numără o dată pentru fiecare ID diferit.",
+      "dedupModeId": "O dată pe ID de comandă sau eveniment",
+      "dedupModeEvent": "La fiecare rulare",
+      "dedupModeEventHelp": "Înregistrează o conversie nouă la fiecare rulare, chiar și pentru același clic pe anunț. O reîncercare a aceleiași rulări nu este numărată de două ori.",
+      "dedupId": "ID de comandă sau eveniment",
+      "dedupIdPlaceholder": "ex. '{{order_number}}'",
+      "dedupIdHelp": "Reutilizează același ID la reîncercări și importuri. Folosește un ID diferit pentru fiecare achiziție sau eveniment.",
+      "dedupIdExample": "Nu ai ID de comandă la vânzările din chat? Combină contactul cu un câmp pe care îl setezi la fiecare vânzare, ex. {example}. Nu folosi ora curentă: se schimbă la fiecare rulare.",
+      "dedupIdInfoLabel": "Despre ID-ul comenzii sau al evenimentului",
+      "dedupLeadIdNote": "Fiecare ID diferit contează ca un lead nou de la același clic.",
+      "dedupClickNote": "Achizițiile repetate de la același clic nu vor fi numărate.",
+      "dedupLegacyNote": "Încărcare veche: Google primește un ID amestecat.",
+      "additionalOptions": "Opțiuni suplimentare",
+      "additionalOptionsCount": "{count} setată",
+      "customerMatching": "Potrivirea clienților",
+      "customerMatchingCount": "{count} activ",
+      "customerMatchingLegacy": "Nu este acceptat de metoda veche de încărcare. Treceți conexiunea la Data Manager API pentru a-l folosi.",
+      "customerMatchingTermsNotAccepted": "Nu se trimite până când termenii privind datele clienților nu sunt acceptați în setările de conversie din Google Ads.",
+      "learnMore": "Află mai multe",
+      "matchEmailLabel": "E-mail",
+      "matchPhoneLabel": "Număr de telefon",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "Tip de client",
+      "customerValueBucketLabel": "Valoarea clientului",
+      "customerPropertiesLegacy": "Nu este acceptat de metoda veche de încărcare. Treceți conexiunea la Data Manager API pentru a-l folosi.",
+      "conversionTime": "Ora conversiei",
+      "conversionTimePlaceholder": "Lasă gol pentru a folosi ora la care rulează acest pas",
+      "valuePlaceholder": "Opțional, de ex. 250",
+      "currencyPlaceholder": "Opțional, USD",
+      "validation": {
+        "dedupIdRequired": "Introdu un ID sau alege O dată pe clic pe reclamă.",
+        "dedupIdTooLong": "Folosește cel mult 64 de caractere.",
+        "matchTemplateInvalid": "Folosiți o singură variabilă, de exemplu '{{email}}'. O valoare fixă nu este permisă.",
+        "customerTypeInvalid": "Folosiți NEW sau RETURNING, sau o variabilă precum '{{customer_type}}'.",
+        "customerValueBucketInvalid": "Folosiți LOW, MEDIUM sau HIGH, sau o variabilă precum '{{customer_value}}'.",
+        "timeFormat": "Folosește o dată cu fus orar, ex. 2026-10-08T14:30:00+07:00.",
+        "timeInvalidDate": "Această dată nu există.",
+        "currencyRequired": "Adaugă o monedă când setezi o valoare.",
+        "valueRequired": "Adaugă o valoare când setezi o monedă.",
+        "conversionActionRequired": "Alege o acțiune de conversie.",
+        "valueInvalid": "Folosește un număr simplu, de ex. 19.99.",
+        "valueTooLarge": "Această valoare este prea mare.",
+        "currencyInvalid": "Folosește un cod de monedă din 3 litere, de ex. USD."
+      },
+      "consentInvalid": "Setările de consimțământ nu pot fi citite, deci acest pas va eșua.",
+      "consentFixLink": "Remediază-le în setări",
+      "dedupModeLabel": "Evită conversiile duplicate"
+    },
+    "summary": {
+      "conversionAction": "Acțiune de conversie {id}",
+      "notConfigured": "Alege o acțiune de conversie",
+      "dedupClick": "O dată pe clic pe reclamă",
+      "dedupId": "ID: {id}",
+      "dedupEvent": "La fiecare rulare"
+    },
+    "consent": {
+      "title": "Consimțământ pentru datele de conversie",
+      "description": "Dacă clienții au fost de acord să-și partajeze datele pentru reclame. Se aplică fiecărei conversii trimise de acest workspace.",
+      "learnMore": "Află mai multe",
+      "notConnected": "Se aplică conversiilor după conectarea unui cont Google Ads.",
+      "adUserData": {
+        "label": "Date de utilizator pentru anunțuri"
+      },
+      "adPersonalization": {
+        "label": "Personalizarea anunțurilor"
+      },
+      "source": {
+        "notProvided": "Nefurnizat",
+        "granted": "Acordat întotdeauna",
+        "denied": "Refuzat întotdeauna",
+        "variable": "Dintr-un câmp de contact"
+      },
+      "help": {
+        "notProvided": "Omis. Google folosește consimțământul implicit al contului tău.",
+        "granted": "Fiecare conversie indică faptul că clientul a fost de acord.",
+        "denied": "Fiecare conversie indică faptul că clientul a refuzat.",
+        "variable": "Folosește \"{granted}\" sau \"{denied}\". Gol este ignorat; orice altceva face pasul să eșueze."
+      },
+      "templatePlaceholder": "de ex. '{{gdpr_consent}}'",
+      "templateLabel": "Câmp de contact pentru {setting}",
+      "validation": {
+        "templateRequired": "Inserează un câmp de contact, de ex. '{{gdpr_consent}}'.",
+        "templateTooLong": "Folosește cel mult 200 de caractere."
+      },
+      "legacy": {
+        "title": "Nu se trimite cu încărcarea veche",
+        "body": "Încărcarea veche acceptă doar consimțământul pentru datele utilizatorilor de reclame. Reconectează-te prin Data Manager pentru a-l trimite."
+      },
+      "save": "Salvează",
+      "saved": "Setările de consimțământ au fost salvate",
+      "invalidStored": "Setările de consimțământ salvate nu au putut fi citite. Pașii care trimit conversii eșuează până când salvezi setări noi."
+    },
+    "errors": {
+      "supportSession": "Sesiunile de asistență ale platformei nu pot modifica conexiunea Google Ads și nici nu pot trimite conversii.",
+      "developerTokenMissing": "Google Ads nu este încă disponibil: datele de autentificare Google Ads ale platformei (ID client și secret OAuth) nu sunt configurate.",
+      "notConnected": "Google Ads nu este conectat pentru acest spațiu de lucru.",
+      "sessionNotFound": "Această încercare de conectare Google Ads nu a fost găsită sau a expirat. Reluați procesul.",
+      "pickFailed": "Contul Google Ads nu a putut fi conectat. Este posibil să fie deja conectat în altă parte sau încercarea a expirat.",
+      "notRetryable": "Această conversie nu poate fi reîncercată: doar conversiile eșuate pot fi reîncercate.",
+      "authorizationUnavailable": "Autentificarea Google nu a putut fi pornită. Încercați din nou peste puțin timp.",
+      "credentialSecretsRequired": "Introdu secretul clientului. Nu este salvat încă."
+    },
+    "enums": {
+      "category": {
+        "default": "Implicită",
+        "purchase": "Achiziție",
+        "addToCart": "Adăugare în coș",
+        "beginCheckout": "Începere finalizare comandă",
+        "subscribePaid": "Abonament plătit",
+        "phoneCallLead": "Lead prin apel telefonic",
+        "importedLead": "Lead importat",
+        "submitLeadForm": "Trimitere formular de lead",
+        "bookAppointment": "Programare",
+        "signup": "Înscriere",
+        "requestQuote": "Solicitare de ofertă",
+        "getDirections": "Obținere indicații",
+        "outboundClick": "Clic extern",
+        "contact": "Contact",
+        "engagement": "Interacțiune",
+        "storeVisit": "Vizită în magazin",
+        "storeSale": "Vânzare în magazin",
+        "qualifiedLead": "Lead calificat",
+        "convertedLead": "Lead convertit",
+        "pageView": "Vizualizare de pagină",
+        "download": "Descărcare",
+        "lead": "Lead"
+      },
+      "countingType": {
+        "onePerClick": "Una per clic",
+        "manyPerClick": "Mai multe per clic"
+      },
+      "actionStatus": {
+        "enabled": "Activată",
+        "removed": "Eliminată",
+        "hidden": "Ascunsă"
+      },
+      "unknown": "Altele ({value})"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "Încărcare veche"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "Canalul acestui contact nu poate trimite conversii Google Ads.",
+      "google_ads_no_click": "Contactul nu a venit dintr-un clic pe un anunț Google.",
+      "google_ads_no_account": "Nu este conectat niciun cont Google Ads pregătit.",
+      "google_ads_unknown_conversion_action": "Acțiunea de conversie nu mai există. Sincronizează și alege alta.",
+      "google_ads_action_disabled": "Acțiunea de conversie nu este activată în Google Ads.",
+      "google_ads_incompatible_action": "Această acțiune numără o conversie per clic, ceea ce Google nu permite pentru acest clic iOS.",
+      "google_ads_unsupported_action": "Această acțiune folosește atribuire externă și nu poate primi aceste conversii.",
+      "google_ads_invalid_value": "Valoarea sau moneda nu era validă.",
+      "google_ads_invalid_input": "Setările pasului nu erau valide.",
+      "google_ads_record_failed": "Conversia nu a putut fi salvată.",
+      "google_ads_missing_dedup_id": "ID-ul comenzii sau al evenimentului era gol.",
+      "google_ads_invalid_dedup_id": "ID-ul comenzii sau al evenimentului avea peste 64 de caractere.",
+      "google_ads_missing_occurrence_key": "Această rulare nu a avut un identificator stabil, deci conversia nu a fost înregistrată.",
+      "google_ads_invalid_customer_property": "Tipul sau valoarea clientului nu era o valoare permisă.",
+      "google_ads_invalid_consent_config": "Setările de consimțământ salvate nu au putut fi citite.",
+      "google_ads_invalid_consent_value": "Un câmp de consimțământ avea altă valoare decât \"granted\" sau \"denied\".",
+      "google_ads_invalid_conversion_time": "Ora conversiei nu era o dată validă cu fus orar sau era în viitor."
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "Toate canalele",
+        "allActions": "Toate acțiunile",
+        "channelLabel": "Canal",
+        "actionLabel": "Acțiune de conversie"
+      },
+      "tiles": {
+        "confirmed": "Confirmate",
+        "awaitingGoogle": "În așteptarea Google",
+        "queued": "În coadă",
+        "failed": "Eșuate",
+        "skipped": "Omise",
+        "deliveryRate": "Rata de livrare",
+        "confirmedHelp": "Google a confirmat că a înregistrat aceste conversii.",
+        "awaitingGoogleHelp": "Trimise către Google, se așteaptă ca Google să termine procesarea.",
+        "queuedHelp": "Se așteaptă trimiterea.",
+        "failedHelp": "Neacceptate sau neprocesate de Google.",
+        "skippedHelp": "Netrimise: niciun cont pregătit sau prea vechi pentru Google.",
+        "deliveryRateHelp": "Confirmate ÷ (confirmate + eșuate). Cele în coadă, în așteptare și omise nu sunt numărate."
+      },
+      "confirmedValue": "Valoare confirmată",
+      "confirmedValueItem": "{value} ({count, plural, one {# conversie} other {# conversii}})",
+      "moreCurrencies": "+{count} în plus",
+      "chart": {
+        "title": "Conversii pe zi",
+        "viewAsTable": "Vezi ca tabel",
+        "tableCaption": "Conversii pe zi",
+        "dateColumn": "Data"
+      },
+      "byAction": {
+        "title": "După acțiunea de conversie",
+        "truncated": "Se afișează cele 50 de acțiuni cu cele mai multe conversii."
+      },
+      "byChannel": {
+        "title": "După canal",
+        "confirmedCount": "{count, plural, one {# confirmate} other {# confirmate}}"
+      },
+      "failures": {
+        "title": "Erori pe etape",
+        "unknown": "Necunoscut"
+      },
+      "empty": {
+        "title": "Nicio conversie în această perioadă",
+        "description": "Conversiile apar aici după ce un pas de flux sau un declanșator trimite una."
+      },
+      "error": {
+        "title": "Nu s-au putut încărca statisticile",
+        "retry": "Încearcă din nou"
+      },
+      "viewStatistics": "Vezi statisticile",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "Nicio conversie confirmată sau eșuată în această perioadă.",
+      "actionFallback": "Acțiunea {id}",
+      "openSettings": "Deschide setările Google Ads",
+      "outcome": {
+        "title": "Distribuția rezultatelor"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
     }
   },
   "minigames": {

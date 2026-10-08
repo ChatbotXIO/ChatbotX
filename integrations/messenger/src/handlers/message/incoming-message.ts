@@ -13,6 +13,7 @@ import {
   type ThreadControlReceiveInfo,
   threadControlRoles,
 } from "@chatbotx.io/sdk"
+import { consumeGoogleClickRef } from "@chatbotx.io/utils/google-click"
 import {
   metaReferralTypes,
   PAID_AD_REFERRAL_SOURCE,
@@ -354,6 +355,24 @@ const getMessageEntity = async (
     // keep it out of the stored referral so persisted tracking is unchanged.
     const { text: _referralText, ...storedReferral } = rawReferral
     referral = normalizeMetaAdReferral(storedReferral)
+
+    // A Google Click-to-Message ref (`gclid:<id>,...`) is attribution, not a
+    // ChatbotX reflink: consume it so the ref router never looks it up.
+    const captured = consumeGoogleClickRef(
+      rawReferral.ref,
+      messengerTimestampToOccurredAt(messaging.timestamp),
+    )
+    if (captured.googleReferral) {
+      ref = captured.ref
+      // `raw` would keep the click id verbatim in `ref`; drop it.
+      const { ref: _googleRef, ...rawWithoutRef } = storedReferral
+      referral = {
+        ...referral,
+        ref: null,
+        raw: rawWithoutRef,
+        ...captured.googleReferral,
+      }
+    }
   }
 
   return {

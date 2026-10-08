@@ -20,12 +20,17 @@ type AnalyticsNavLink = {
  * Click-to-Messenger / Click-to-Instagram), each opening
  * `/dashboard/ads/<channel>` scoped to that channel. Callers resolve which
  * channels a workspace actually has integrated (see
- * `resolveAdsDashboardChannels`) — an empty array renders no Ads entries.
+ * `resolveAdsDashboardChannels`) — an empty array renders no Ads entries. The
+ * Google Ads statistics entry (`ads/google`) is separate: it is not a Meta
+ * ads-eligible channel and appears only when `showGoogleAds` is set.
  */
 export function AnalyticsNav({
   adsChannels,
+  showGoogleAds = false,
 }: {
   adsChannels: readonly AdsEligibleChannelType[]
+  /** Adds the Google Ads statistics entry (see `resolveGoogleAdsDashboardEntry`). */
+  showGoogleAds?: boolean
 }) {
   const t = useTranslations()
   const pathname = usePathname()
@@ -40,6 +45,9 @@ export function AnalyticsNav({
       label: t(`ads.dashboardNav.${channel}`),
       segment: `ads/${channel}`,
     })),
+    ...(showGoogleAds
+      ? [{ label: t("ads.dashboardNav.google"), segment: "ads/google" }]
+      : []),
   ]
 
   return (

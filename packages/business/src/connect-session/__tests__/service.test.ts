@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   appendResults: vi.fn(),
   completeReconnect: vi.fn(),
   updateWhereStatusIn: vi.fn(),
+  cancelPendingByProvider: vi.fn(async () => 0),
   expireDue: vi.fn(async () => 0),
   purgeOldTerminal: vi.fn(
     async (): Promise<{
@@ -37,6 +38,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     appendResults: mocks.appendResults,
     completeReconnect: mocks.completeReconnect,
     updateWhereStatusIn: mocks.updateWhereStatusIn,
+    cancelPendingByProvider: mocks.cancelPendingByProvider,
     expireDue: mocks.expireDue,
     purgeOldTerminal: mocks.purgeOldTerminal,
   },
@@ -142,6 +144,65 @@ describe("connectSessionService.create", () => {
       }),
     ).rejects.toMatchObject({ code: "validation" })
     expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    "/..//evil.example",
+    "/.//evil.example",
+    "/%2e%2e//evil.example",
+    "/a\\b",
+    "/x\u0000y",
+  ])("rejects %j, including inputs that normalize to a protocol-relative URL", async (returnUrl) => {
+    await expect(
+      connectSessionService.create({
+        workspaceId: "ws-1",
+        provider: "messenger",
+        purpose: "connect",
+        actorUserId: "user-1",
+        returnUrl,
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+    expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ["/space/1/settings?a=1&b=2#frag", "/space/1/settings?a=1&b=2#frag"],
+    ["/a/../b", "/b"],
+    ["/", "/"],
+  ])("accepts and normalizes the legitimate path %s", async (input, expected) => {
+    mocks.insert.mockImplementation(
+      async (values: Record<string, unknown>) => ({
+        ...baseSession(),
+        ...values,
+      }),
+    )
+    const { session } = await connectSessionService.create({
+      workspaceId: "ws-1",
+      provider: "messenger",
+      purpose: "connect",
+      actorUserId: "user-1",
+      returnUrl: input,
+    })
+    expect(session.returnUrl).toBe(expected)
+  })
+
+  it("persists originHost", async () => {
+    mocks.insert.mockImplementation(
+      async (values: Record<string, unknown>) => ({
+        ...baseSession(),
+        ...values,
+      }),
+    )
+    await connectSessionService.create({
+      workspaceId: "ws-1",
+      provider: "messenger",
+      purpose: "connect",
+      actorUserId: "user-1",
+      originHost: "tenant.example.org",
+    })
+    expect(mocks.insert.mock.calls[0]?.[0]).toMatchObject({
+      originHost: "tenant.example.org",
+    })
   })
 
   it("mints a nonce whose hash resolves back to the inserted session via findByNonce", async () => {
@@ -465,6 +526,42 @@ describe("connectSessionService.recordResults", () => {
   })
 })
 
+describe("connectSessionService.completeSelection", () => {
+  it("completes an awaiting_selection session and clears the remaining candidates' encrypted auth", async () => {
+    const result = await connectSessionService.completeSelection({
+      id: "session-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.updateWhereStatusIn).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+      statuses: ["awaiting_selection"],
+      values: {
+        status: "completed",
+        step: "done",
+        consumedAt: expect.any(Date),
+        encryptedAuth: null,
+      },
+    })
+    expect(result.status).toBe("completed")
+  })
+
+  it("returns the current row when the session is no longer awaiting selection", async () => {
+    mocks.updateWhereStatusIn.mockResolvedValue(undefined)
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseSession({ status: "cancelled" }),
+    )
+
+    const result = await connectSessionService.completeSelection({
+      id: "session-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(result.status).toBe("cancelled")
+  })
+})
+
 describe("connectSessionService.completeReconnect", () => {
   it("completes a pending reconnect session with its connected result", async () => {
     const result = await connectSessionService.completeReconnect({
@@ -703,5 +800,26 @@ describe("connectSessionService.submitInput", () => {
         nextAction: { type: "wait" } as never,
       }),
     ).rejects.toMatchObject({ code: "connectSessionExpired" })
+  })
+})
+
+describe("connectSessionService.cancelPendingByProvider", () => {
+  beforeEach(() => {
+    mocks.cancelPendingByProvider.mockReset()
+  })
+
+  it("delegates with the workspace and provider scope and returns the count", async () => {
+    mocks.cancelPendingByProvider.mockResolvedValueOnce(3)
+
+    const count = await connectSessionService.cancelPendingByProvider({
+      workspaceId: "ws-1",
+      provider: "googleAds",
+    })
+
+    expect(count).toBe(3)
+    expect(mocks.cancelPendingByProvider).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      provider: "googleAds",
+    })
   })
 })

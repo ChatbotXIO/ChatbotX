@@ -380,6 +380,19 @@ export const connectionNotConfiguredException = (provider: string) =>
     400,
   )
 
+/**
+ * A provider whose connect lifecycle is owned by a dedicated, permission-gated
+ * entry point (e.g. Google Ads: super admin only, never a support session) was
+ * addressed through the generic connections API, which only checks workspace
+ * membership.
+ */
+export const connectionProviderDedicatedOnlyException = (provider: string) =>
+  new ChatbotXException(
+    `Connection provider "${provider}" can only be managed from its dedicated settings page.`,
+    "connectionProviderDedicatedOnly",
+    403,
+  )
+
 export const connectionNotRefreshableException = (provider: string) =>
   new ChatbotXException(
     `Connection provider "${provider}" does not support refresh.`,

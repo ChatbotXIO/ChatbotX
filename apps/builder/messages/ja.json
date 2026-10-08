@@ -697,6 +697,7 @@
       "noAdminReply": "管理者からの返信なし",
       "contactCreatedAt": "連絡先の作成日時",
       "fromCtwaAd": "広告経由",
+      "fromGoogleAd": "Google 広告経由",
       "ctwaConversion": "広告コンバージョン",
       "lastUserInputTypes": {
         "text": "テキスト",
@@ -1931,7 +1932,10 @@
       "label": "クライアントID"
     },
     "clientSecret": {
-      "label": "クライアントシークレット"
+      "label": "クライアントシークレット",
+      "keepHint": "空欄のままにすると保存済みのクライアントシークレットが保持されます。",
+      "isSet": "クライアントシークレットは設定済みです。",
+      "isNotSet": "クライアントシークレットは未設定です。"
     },
     "verifyToken": {
       "label": "Webhook検証トークン"
@@ -2051,6 +2055,17 @@
     "signInCallbackUrl": {
       "label": "サインインコールバックURL",
       "hint": "Googleログインを有効にするには、これをGoogleアプリの承認済みリダイレクトURIに追加してください。"
+    },
+    "adsDeveloperToken": {
+      "label": "Google Ads デベロッパートークン",
+      "hint": "任意：Google はデベロッパートークンを必須としなくなりました。保存済みのトークンを維持するには空欄のままにしてください。",
+      "isSet": "デベロッパートークンが設定されています。",
+      "isNotSet": "デベロッパートークンは設定されていません。",
+      "clear": "クリア",
+      "cleared": "デベロッパートークンをクリアしました。"
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "Google広告には、既存のGoogleアプリとは別の専用Google OAuthアプリを使用し、adwordsとdatamanagerのスコープを有効にしてください。このアプリには独自のGoogle OAuth審査が必要です。"
     },
     "webhookUrl": {
       "label": "Webhook URL",
@@ -2260,7 +2275,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -2277,6 +2295,12 @@
     },
     "sendRatePerMinute": {
       "label": "1分あたりの送信数"
+    },
+    "adsUploadMethod": {
+      "label": "アップロード方法",
+      "hint": "Data Manager を推奨します。従来のアップロード API は Google が現在も許可している Google Cloud プロジェクトでのみ動作し、Data Manager の権限は使用しません。変更は新しい接続にのみ適用されます。既存のワークスペースは再接続してください。",
+      "dataManager": "Data Manager API（推奨）",
+      "legacy": "従来のアップロード API"
     }
   },
   "flows": {
@@ -2445,7 +2469,8 @@
       "importJsonOnly": "JSONファイルのみ",
       "whatsappCallButton": "WhatsAppで通話",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "スレッド制御"
+      "threadControl": "スレッド制御",
+      "sendGoogleAdsConversion": "Google 広告コンバージョンを送信"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2653,7 +2678,8 @@
     "dashboardNav": {
       "whatsapp": "Click-to-WhatsApp広告",
       "messenger": "Click-to-Messenger広告",
-      "instagram": "Click-to-Instagram広告"
+      "instagram": "Click-to-Instagram広告",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "広告アカウントを接続",
@@ -4582,7 +4608,8 @@
       "startAnotherFlow": "別のフローを開始",
       "notifyAdmins": "管理者に通知",
       "transferConversationToHuman": "会話を担当者に転送",
-      "sendMetaCapiEvent": "Meta CAPI イベントを送信"
+      "sendMetaCapiEvent": "Meta CAPI イベントを送信",
+      "sendGoogleAdsConversion": "Google 広告コンバージョンを送信"
     },
     "triggerGoesOff": "トリガーが実行される",
     "before": "前",
@@ -6616,6 +6643,447 @@
       "messagingIdHint": "英字、数字、ハイフン、アンダースコアのみ（最大512文字）。",
       "cancel": "キャンセル",
       "confirmSend": "送信"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "Google 広告のクリックから訪れたコンタクトについて、オフラインコンバージョンを Google Ads に送信します。",
+    "notAvailable": {
+      "description": "プラットフォームのGoogle広告認証情報(OAuthクライアントIDとシークレット)が設定されていません。プラットフォーム管理者にGoogle広告のプラットフォーム設定で追加するよう依頼してください。"
+    },
+    "connect": {
+      "scopes": "Google Ads アカウントとコンバージョンアクションの読み取り、およびお客様に代わってコンバージョンを送信する権限をリクエストします。",
+      "button": "Google Ads を接続",
+      "reconnect": "再接続",
+      "unnamedAccount": "Google Ads アカウント",
+      "viaManager": "マネージャー {manager} 経由",
+      "statusLabel": "接続ステータス",
+      "needsReauthDescription": "Google のアクセス権が取り消されたか、有効期限が切れました。コンバージョンの送信を続けるには再接続してください。",
+      "pausedDescription": "この接続は一時停止中のため、コンバージョンは送信されません。",
+      "degradedDescription": "Google Ads がエラーを返しています。コンバージョンは自動的に再試行されます。",
+      "howItWorks": "仕組み",
+      "steps": {
+        "signIn": "広告を管理している Google アカウントでログインします。",
+        "chooseAccount": "Google 広告アカウントを選択します。",
+        "pickAction": "フローでコンバージョンアクションを選択します。"
+      },
+      "uploadMethod": "アップロード方式: {method}"
+    },
+    "status": {
+      "connected": "接続済み",
+      "degraded": "一部障害あり",
+      "needsReauth": "再接続が必要",
+      "paused": "一時停止中",
+      "disconnected": "未接続"
+    },
+    "picker": {
+      "title": "Google Ads アカウントを選択",
+      "legend": "Google Ads アカウント",
+      "loading": "Google Ads の接続を読み込んでいます",
+      "loadError": "Google Ads の接続試行を読み込めませんでした。",
+      "waiting": "Google によるログインの確認を待っています…",
+      "noTargets": "この Google アカウントでは Google Ads アカウントが見つかりませんでした。",
+      "alreadyThisWorkspace": "このワークスペースに接続済み",
+      "alreadyOtherWorkspace": "別のワークスペースに接続済み",
+      "notSelectable": "このアカウントは選択できません",
+      "connectSelected": "アカウントを接続",
+      "sessionExpired": "接続試行の有効期限が切れました。続行するには再度接続してください。",
+      "sessionCancelled": "接続試行がキャンセルされました。",
+      "stalled": "サインインが完了しませんでした。「Google Ads を接続」からもう一度お試しください。",
+      "dismiss": "閉じる",
+      "cancelFailed": "接続の試行をキャンセルできませんでした。もう一度お試しください。",
+      "connectErrorTitle": "Google 広告に接続できませんでした",
+      "errors": {
+        "stateMismatch": "ログインを確認できませんでした。続行するには再度接続してください。",
+        "expired": "接続試行の有効期限が切れました。続行するには再度接続してください。",
+        "providerDenied": "Google のアクセスが許可されませんでした。再度接続し、要求された権限を許可してください。",
+        "exchangeFailed": "Google へのログインを完了できませんでした。続行するには再度接続してください。",
+        "providerError": "Google からエラーが返されました。しばらくしてからもう一度接続してください。",
+        "noCandidates": "この Google ユーザーには有効な Google Ads アカウントが見つかりませんでした。キャンセル済み、停止中、または設定が完了していないアカウントは使用できません。有効な Google Ads アカウントを管理している Google アカウントでログインしてください。",
+        "alreadyConnected": "その Google Ads アカウントは既に接続されています。",
+        "quotaExceeded": "ご利用のプランの接続数の上限に達しました。",
+        "trialExpired": "トライアルが終了したため、新しい接続を追加できません。",
+        "internalError": "接続中に問題が発生しました。もう一度お試しください。",
+        "providerUnavailable": "Google 広告が一時的に利用できないため、接続を完了できませんでした。しばらくしてからもう一度お試しください。",
+        "developerTokenMissing": "Google 広告のセットアップが完了していません。プラットフォームのGoogle認証情報が不完全です。管理者にGoogle広告の認証情報を確認するよう依頼してください。",
+        "developerTokenNotApproved": "GoogleがGoogle広告の認証情報に保存されているデベロッパー トークンを拒否しました。トークンは任意です。管理者に削除するか、有効なトークンに置き換えるよう依頼してください。",
+        "projectNotApproved": "お使いの Google Cloud プロジェクトは、本番の Google Ads アカウントでの利用がまだ承認されていません。Google Cloud Console(Google Ads API → Overview)でプロジェクトの Explorer または Basic アクセスを申請してから、もう一度接続してください。",
+        "permissionDenied": "この Google ユーザーには Google 広告アカウントへのアクセス権限がありません。Google 広告アカウントにアクセスできる Google ユーザーでログインしてください。",
+        "apiNotEnabled": "Google Cloud プロジェクトで Google Ads API が有効になっていません。管理者に有効化を依頼してから、もう一度お試しください。",
+        "credentialsInvalid": "Google がログイン認証情報を拒否しました。もう一度接続して続行してください。",
+        "scopeMissing": "すべての権限が許可されていません。Google 広告には、Google 広告アカウントへのアクセスとコンバージョンを送信する権限が必要です。もう一度接続し、すべての権限にチェックを入れてください。",
+        "legacyUploadNotAllowed": "Google はこのアカウントで従来のアップロード API を許可していません。認証情報を Data Manager に切り替え、このワークスペースを再接続してください。"
+      }
+    },
+    "setup": {
+      "conversionCustomer": "コンバージョンアカウント",
+      "notResolved": "未解決",
+      "retry": "設定を再試行",
+      "dataTermsWarning": "このアカウントでは顧客データに関する規約が承認されていません。Google Ads で承認してから、設定を再試行してください。",
+      "errors": {
+        "conversionCustomerInaccessible": "この Google ログインではコンバージョンアカウントにアクセスできません。Google Ads でアクセス権を確認してから再試行してください。",
+        "customerDataTermsNotAccepted": "このアカウントでは顧客データに関する規約が承認されていません。Google Ads で承認してから、設定を再試行してください。",
+        "syncFailed": "Google Ads からコンバージョンアクションを読み取れませんでした。しばらくしてから設定を再試行してください。",
+        "developerTokenMissing": "プラットフォームのGoogle広告認証情報(OAuthクライアントIDとシークレット)が設定されていません。"
+      }
+    },
+    "conversionActions": {
+      "title": "コンバージョンアクション",
+      "description": "クリックからコンバージョンをインポートする有効なアクションのみがコンバージョンを受け取れます。",
+      "helpLink": "Google Ads ヘルプ",
+      "sync": "コンバージョンアクションを同期",
+      "syncedAt": "最終同期: {date}",
+      "neverSynced": "未同期",
+      "empty": "コンバージョンアクションが見つかりません。Google Ads でオフラインインポートのコンバージョンアクションを作成してから同期してください。",
+      "name": "名前",
+      "category": "カテゴリ",
+      "counting": "カウント方法",
+      "status": "ステータス",
+      "onePerClickNote": "iOS のクリック(gbraid)はこのアクションには送信できません。受け取るには、カウント方法を「すべて」にしてください。",
+      "externalNote": "非対応: このアクションは外部アトリビューションを使用しており、Google Data Manager 経由では送信できません。",
+      "count": "{count, plural, one {コンバージョンアクション #件} other {コンバージョンアクション #件}}"
+    },
+    "events": {
+      "title": "コンバージョン履歴",
+      "description": "Google Ads に送信された最近のコンバージョンです。クリック ID はマスクされています。",
+      "empty": "フローまたはトリガーがコンバージョンを送信すると、ここに表示されます。",
+      "emptyFiltered": "このステータスに一致するコンバージョンはありません。",
+      "loadError": "コンバージョン履歴を読み込めませんでした。",
+      "page": "{page} / {pages} ページ",
+      "filter": {
+        "label": "ステータス",
+        "all": "すべてのステータス"
+      },
+      "columns": {
+        "status": "ステータス",
+        "action": "コンバージョンアクション",
+        "channel": "チャネル",
+        "clickId": "クリック ID",
+        "occurredAt": "発生日時",
+        "actions": "操作",
+        "dedup": "重複排除",
+        "consent": "同意のスナップショット",
+        "matching": "マッチング",
+        "properties": "プロパティ"
+      },
+      "status": {
+        "pending": "保留中",
+        "sending": "送信中",
+        "sent": "送信済み",
+        "processed": "処理済み",
+        "failed": "失敗",
+        "skippedNoAccount": "スキップ: アカウントなし",
+        "skippedExpired": "スキップ: 期限切れ"
+      },
+      "processing": {
+        "processing": "Google が処理中",
+        "success": "承認済み",
+        "partialSuccess": "一部承認",
+        "failed": "拒否",
+        "unknown": "結果不明",
+        "timedOut": "タイムアウト"
+      },
+      "stage": {
+        "delivery": "配信に失敗しました",
+        "processing": "処理に失敗しました",
+        "timeout": "タイムアウト"
+      },
+      "consent": {
+        "adUserDataFull": "広告ユーザーデータ: {status}",
+        "adPersonalizationFull": "広告のパーソナライズ: {status}",
+        "status": {
+          "granted": "付与",
+          "denied": "拒否",
+          "notProvided": "未提供",
+          "notSupported": "非対応（旧方式のアップロード）"
+        },
+        "adUserDataShort": "データ: {status}",
+        "adPersonalizationShort": "パーソナライズ: {status}",
+        "delivery": {
+          "toSend": "送信予定",
+          "notSent": "未送信",
+          "unknown": "未確認"
+        }
+      },
+      "dedup": {
+        "click": "クリックごと",
+        "id": "ID: {id}",
+        "event": "実行ごと"
+      },
+      "matching": {
+        "enabled": "設定済み: {fields}",
+        "withheldConsent": "保留（同意なし）: {fields}",
+        "unsupportedTransport": "未送信（旧方式）: {fields}"
+      },
+      "timeProvided": "指定された時刻",
+      "timeProvidedTooltip": "このコンバージョン時刻は、実行時刻ではなくステップで指定されたものです。"
+    },
+    "validate": {
+      "open": "リクエストを検証",
+      "title": "リクエストを検証",
+      "description": "設定の確認です。Google はコンバージョンを記録せずにリクエストを検証します。",
+      "conversionAction": "コンバージョンアクション",
+      "clickIdType": "クリック ID の種類",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "クリック ID",
+      "submit": "確認を実行",
+      "ok": "Google がこの設定を承認しました。何も記録されていません。",
+      "reasons": {
+        "accountNotReady": "Google 広告の準備がまだ整っていません。アカウントの接続と設定を完了してから、もう一度お試しください。",
+        "needsReauth": "Google 広告の接続を再接続する必要があります。",
+        "rejected": "Google がこのリクエストを拒否しました",
+        "legacyUploadNotAllowed": "Google はこのアカウントで従来のアップロード API を許可していません。認証情報を Data Manager に切り替え、このワークスペースを再接続してください。"
+      },
+      "invalid": "コンバージョンアクションを選択し、有効なクリック ID を入力してください。",
+      "consentIncluded": "同意を含む: {values}。",
+      "consentNone": "このテストには同意が含まれていません。",
+      "consentVariableSkipped": "連絡先フィールドからの同意はテストできないため、除外されます。",
+      "consentNotSentLegacy": "広告のパーソナライズ ({status}) は、レガシーアップロード方式では送信されません。"
+    },
+    "conversionFields": {
+      "conversionAction": "コンバージョン アクション",
+      "unavailableOption": "{id}（利用不可）",
+      "unavailableWarning": "選択したコンバージョン アクションは利用できないか、有効ではありません。公開する前に別のアクションを選択してください。",
+      "externalOption": "{name}(外部アトリビューション、非対応)",
+      "loading": "コンバージョン アクションを読み込み中",
+      "loadError": "Google 広告のコンバージョン アクションを読み込めませんでした。",
+      "notConnected": "コンバージョンを送信するには Google 広告を接続してください。",
+      "noActions": "有効なコンバージョン アクションが見つかりません。Google 広告の設定で同期してください。",
+      "openSettings": "Google 広告の設定を開く",
+      "needsReauth": "Google 広告の接続を再接続する必要があります。",
+      "dedupModeClick": "広告クリックごとに 1 回",
+      "dedupModeClickHelp": "このコンバージョン アクションを広告クリックごとに 1 回カウントします。",
+      "dedupModeIdHelp": "異なる ID ごとに 1 回カウントされます。",
+      "dedupModeId": "注文 ID またはイベント ID ごとに 1 回",
+      "dedupModeEvent": "実行のたびに",
+      "dedupModeEventHelp": "同じ広告クリックでも、実行のたびに新しいコンバージョンを記録します。同じ実行の再試行は二重にカウントされません。",
+      "dedupId": "注文 ID またはイベント ID",
+      "dedupIdPlaceholder": "例: '{{order_number}}'",
+      "dedupIdHelp": "再試行やインポートでは同じ ID を再利用してください。購入やイベントごとに異なる ID を使用してください。",
+      "dedupIdExample": "チャット販売に注文 ID がない場合は、販売ごとに設定するフィールドとコンタクトを組み合わせます（例: {example}）。現在時刻は実行のたびに変わるため使用しないでください。",
+      "dedupIdInfoLabel": "注文 ID／イベント ID について",
+      "dedupLeadIdNote": "異なる ID はそれぞれ、同じクリックからの新しいリードとしてカウントされます。",
+      "dedupClickNote": "同じクリックからの繰り返しの購入はカウントされません。",
+      "dedupLegacyNote": "従来のアップロード: Google にはスクランブルされた ID が送られます。",
+      "additionalOptions": "追加オプション",
+      "additionalOptionsCount": "{count} 件設定済み",
+      "customerMatching": "顧客マッチング",
+      "customerMatchingCount": "{count} 件オン",
+      "customerMatchingLegacy": "旧アップロード方式では利用できません。利用するには接続を Data Manager API に切り替えてください。",
+      "customerMatchingTermsNotAccepted": "Google 広告のコンバージョン設定で顧客データの規約を承認するまで送信されません。",
+      "learnMore": "詳細",
+      "matchEmailLabel": "メールアドレス",
+      "matchPhoneLabel": "電話番号",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "顧客タイプ",
+      "customerValueBucketLabel": "顧客価値",
+      "customerPropertiesLegacy": "旧アップロード方式では利用できません。利用するには接続を Data Manager API に切り替えてください。",
+      "conversionTime": "コンバージョン時刻",
+      "conversionTimePlaceholder": "空欄にすると、このステップの実行時刻が使用されます",
+      "valuePlaceholder": "任意（例: 250）",
+      "currencyPlaceholder": "任意（USD）",
+      "validation": {
+        "dedupIdRequired": "ID を入力するか、「広告クリックごとに 1 回」を選択。",
+        "dedupIdTooLong": "64 文字以内で入力してください。",
+        "matchTemplateInvalid": "変数を1つだけ使用してください（例: '{{email}}'）。固定値は使用できません。",
+        "customerTypeInvalid": "NEW または RETURNING、もしくは '{{customer_type}}' のような変数を使用してください。",
+        "customerValueBucketInvalid": "LOW、MEDIUM または HIGH、もしくは '{{customer_value}}' のような変数を使用してください。",
+        "timeFormat": "タイムゾーン付きの日付を入力してください（例: 2026-10-08T14:30:00+07:00）。",
+        "timeInvalidDate": "この日付は存在しません。",
+        "currencyRequired": "値を設定する場合は通貨を追加してください。",
+        "valueRequired": "通貨を設定する場合は値を追加してください。",
+        "conversionActionRequired": "コンバージョンアクションを選択してください。",
+        "valueInvalid": "19.99 のように、数字のみで入力してください。",
+        "valueTooLarge": "この値は大きすぎます。",
+        "currencyInvalid": "USD のように、3文字の通貨コードを入力してください。"
+      },
+      "consentInvalid": "同意設定を読み取れないため、このステップは失敗します。",
+      "consentFixLink": "設定で修正",
+      "dedupModeLabel": "重複コンバージョンを防ぐ"
+    },
+    "summary": {
+      "conversionAction": "コンバージョン アクション {id}",
+      "notConfigured": "コンバージョン アクションを選択",
+      "dedupClick": "広告クリックごとに 1 回",
+      "dedupId": "ID: {id}",
+      "dedupEvent": "実行のたびに"
+    },
+    "consent": {
+      "title": "コンバージョンデータの同意",
+      "description": "顧客が広告のためのデータ共有に同意したかどうかです。このワークスペースが送信するすべてのコンバージョンに適用されます。",
+      "learnMore": "詳細",
+      "notConnected": "Google 広告アカウントを接続すると、コンバージョンに適用されます。",
+      "adUserData": {
+        "label": "広告ユーザーデータ"
+      },
+      "adPersonalization": {
+        "label": "広告のパーソナライズ"
+      },
+      "source": {
+        "notProvided": "未提供",
+        "granted": "常に許可",
+        "denied": "常に拒否",
+        "variable": "連絡先フィールドから"
+      },
+      "help": {
+        "notProvided": "送信しません。Google はアカウントの既定の同意を使用します。",
+        "granted": "すべてのコンバージョンで、顧客が同意したと伝えます。",
+        "denied": "すべてのコンバージョンで、顧客が拒否したと伝えます。",
+        "variable": "\"{granted}\" または \"{denied}\" を使用してください。空の場合はスキップされ、それ以外はステップが失敗します。"
+      },
+      "templatePlaceholder": "例: '{{gdpr_consent}}'",
+      "templateLabel": "{setting}の連絡先フィールド",
+      "validation": {
+        "templateRequired": "連絡先フィールドを挿入してください(例: '{{gdpr_consent}}')。",
+        "templateTooLong": "200 文字以内で入力してください。"
+      },
+      "legacy": {
+        "title": "従来のアップロードでは送信されません",
+        "body": "従来のアップロードは広告ユーザーデータの同意のみ受け付けます。送信するには Data Manager で再接続してください。"
+      },
+      "save": "保存",
+      "saved": "同意設定を保存しました",
+      "invalidStored": "保存された同意設定を読み取れませんでした。新しい設定を保存するまで、コンバージョンを送信するステップは失敗します。"
+    },
+    "errors": {
+      "supportSession": "プラットフォームのサポートセッションでは、Google Ads の接続の変更やコンバージョンの送信はできません。",
+      "developerTokenMissing": "Google Ads はまだ利用できません。プラットフォームのGoogle広告認証情報(OAuthクライアントIDとシークレット)が設定されていません。",
+      "notConnected": "このワークスペースでは Google Ads が接続されていません。",
+      "sessionNotFound": "この Google Ads の接続試行が見つからないか、有効期限が切れています。最初からやり直してください。",
+      "pickFailed": "その Google Ads アカウントを接続できませんでした。別の場所で既に接続されているか、試行の有効期限が切れた可能性があります。",
+      "notRetryable": "このコンバージョンは再試行できません。再試行できるのは失敗したコンバージョンのみです。",
+      "authorizationUnavailable": "Google ログインを開始できませんでした。しばらくしてからもう一度お試しください。",
+      "credentialSecretsRequired": "クライアントシークレットを入力してください。まだ保存されていません。"
+    },
+    "enums": {
+      "category": {
+        "default": "デフォルト",
+        "purchase": "購入",
+        "addToCart": "カートに追加",
+        "beginCheckout": "購入手続きの開始",
+        "subscribePaid": "有料定期購入",
+        "phoneCallLead": "電話によるリード",
+        "importedLead": "インポートされたリード",
+        "submitLeadForm": "リードフォームの送信",
+        "bookAppointment": "予約",
+        "signup": "登録",
+        "requestQuote": "見積もりのリクエスト",
+        "getDirections": "道順の取得",
+        "outboundClick": "外部リンクのクリック",
+        "contact": "お問い合わせ",
+        "engagement": "エンゲージメント",
+        "storeVisit": "店舗来店",
+        "storeSale": "店舗販売",
+        "qualifiedLead": "有望リード",
+        "convertedLead": "コンバージョン済みリード",
+        "pageView": "ページビュー",
+        "download": "ダウンロード",
+        "lead": "リード"
+      },
+      "countingType": {
+        "onePerClick": "クリックごとに1回",
+        "manyPerClick": "クリックごとに複数回"
+      },
+      "actionStatus": {
+        "enabled": "有効",
+        "removed": "削除済み",
+        "hidden": "非表示"
+      },
+      "unknown": "その他（{value}）"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "従来のアップロード"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "この連絡先のチャネルでは Google 広告のコンバージョンを送信できません。",
+      "google_ads_no_click": "この連絡先は Google 広告のクリック経由ではありません。",
+      "google_ads_no_account": "利用可能な Google 広告アカウントが接続されていません。",
+      "google_ads_unknown_conversion_action": "コンバージョン アクションが存在しません。同期して別のものを選択してください。",
+      "google_ads_action_disabled": "コンバージョン アクションが Google 広告で有効になっていません。",
+      "google_ads_incompatible_action": "このアクションはクリックごとに 1 件のコンバージョンを数えますが、この iOS クリックでは Google が許可していません。",
+      "google_ads_unsupported_action": "このアクションは外部アトリビューションを使用しているため、これらのコンバージョンを受け取れません。",
+      "google_ads_invalid_value": "値または通貨が無効でした。",
+      "google_ads_invalid_input": "ステップの設定が無効でした。",
+      "google_ads_record_failed": "コンバージョンを保存できませんでした。",
+      "google_ads_missing_dedup_id": "注文 ID またはイベント ID が空でした。",
+      "google_ads_invalid_dedup_id": "注文 ID またはイベント ID が 64 文字を超えていました。",
+      "google_ads_missing_occurrence_key": "この実行には安定した識別子がなかったため、コンバージョンは記録されませんでした。",
+      "google_ads_invalid_customer_property": "顧客タイプまたは顧客価値が許可された値ではありませんでした。",
+      "google_ads_invalid_consent_config": "保存された同意設定を読み取れませんでした。",
+      "google_ads_invalid_consent_value": "同意フィールドに \"granted\" または \"denied\" 以外の値が入っていました。",
+      "google_ads_invalid_conversion_time": "コンバージョン時刻がタイムゾーン付きの有効な日時ではないか、未来の時刻でした。"
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "すべてのチャネル",
+        "allActions": "すべてのアクション",
+        "channelLabel": "チャネル",
+        "actionLabel": "コンバージョンアクション"
+      },
+      "tiles": {
+        "confirmed": "確認済み",
+        "awaitingGoogle": "Google 待ち",
+        "queued": "キュー待ち",
+        "failed": "失敗",
+        "skipped": "スキップ",
+        "deliveryRate": "配信率",
+        "confirmedHelp": "Google がこれらのコンバージョンを記録したことを確認しました。",
+        "awaitingGoogleHelp": "Google に送信済みで、Google の処理完了を待っています。",
+        "queuedHelp": "送信待ちです。",
+        "failedHelp": "Google に受け付けられなかった、または処理されなかったコンバージョンです。",
+        "skippedHelp": "未送信：準備完了のアカウントがない、または Google に送るには古すぎます。",
+        "deliveryRateHelp": "確認済み ÷（確認済み + 失敗）。キュー待ち、Google 待ち、スキップは含まれません。"
+      },
+      "confirmedValue": "確認済みの価値",
+      "confirmedValueItem": "{value} ({count, plural, one {#件のコンバージョン} other {#件のコンバージョン}})",
+      "moreCurrencies": "他 {count} 件",
+      "chart": {
+        "title": "日別のコンバージョン",
+        "viewAsTable": "表で表示",
+        "tableCaption": "日別のコンバージョン",
+        "dateColumn": "日付"
+      },
+      "byAction": {
+        "title": "コンバージョンアクション別",
+        "truncated": "コンバージョン数の多い上位 50 件のアクションを表示しています。"
+      },
+      "byChannel": {
+        "title": "チャネル別",
+        "confirmedCount": "{count, plural, one {確認済み #件} other {確認済み #件}}"
+      },
+      "failures": {
+        "title": "段階別の失敗",
+        "unknown": "不明"
+      },
+      "empty": {
+        "title": "この期間のコンバージョンはありません",
+        "description": "フローのステップまたはトリガーがコンバージョンを送信すると、ここに表示されます。"
+      },
+      "error": {
+        "title": "統計を読み込めませんでした",
+        "retry": "もう一度試す"
+      },
+      "viewStatistics": "統計を見る",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "この期間に確認済みまたは失敗のコンバージョンはありません。",
+      "actionFallback": "アクション {id}",
+      "openSettings": "Google Ads の設定を開く",
+      "outcome": {
+        "title": "結果の内訳"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
     }
   },
   "minigames": {

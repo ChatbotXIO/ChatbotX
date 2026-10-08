@@ -228,6 +228,7 @@ export const STEP_PRODUCES_MESSAGE: Record<StepType, boolean> = {
   // Messenger Operations (N_)
   facebookCustomAudience: false,
   sendMetaCapiEvent: false,
+  sendGoogleAdsConversion: false,
   setMessengerUserPersistentMenu: false,
   enableMessengerComposer: false,
   disableMessengerComposer: false,

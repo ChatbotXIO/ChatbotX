@@ -1136,6 +1136,24 @@ describe("runStepsAndQuickReplies — per-step re-dispatch", () => {
     expect(job.data.nodeId).toBe("node-1")
   })
 
+  test("hands the parent's execution key to the next step so a retried parent cannot fork it", async () => {
+    const step1 = { ...makeStep("sendText"), id: "step-1" }
+    const step2 = { ...makeStep("sendText"), id: "step-2" }
+
+    await runStepsAndQuickReplies({
+      ...makeBaseProps(),
+      details: { steps: [step1, step2] },
+      triggerNextNode: false,
+      flowExecutionKey: "job-parent-1",
+    })
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { flowExecutionKey?: string } },
+    ]
+    expect(job.data.flowExecutionKey).toBe("job-parent-1")
+  })
+
   test("preserves bulk outbound state for the next step in an initial broadcast flow", async () => {
     const step1 = { ...makeStep("sendText"), id: "step-1" }
     const step2 = { ...makeStep("sendText"), id: "step-2" }

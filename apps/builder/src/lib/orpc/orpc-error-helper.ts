@@ -623,6 +623,12 @@ const connectionNotConfigured = {
   status: 400,
 }
 
+/** The provider's connect lifecycle is owned by a dedicated, permission-gated entry point (see `connectionProviderDedicatedOnlyException`). */
+const connectionProviderDedicatedOnly = {
+  message: "This provider can only be managed from its dedicated settings page",
+  status: 403,
+}
+
 /** The provider has no `refreshAuth` handler (e.g. a static API-key credential). */
 const connectionNotRefreshable = {
   message: "This connection provider does not support refresh",
@@ -630,12 +636,14 @@ const connectionNotRefreshable = {
 }
 
 export const possibleErrorsOnDisconnectingConnection = {
+  connectionProviderDedicatedOnly,
   notFound,
   businessError,
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
 export const possibleErrorsOnRefreshingConnection = {
+  connectionProviderDedicatedOnly,
   notFound,
   connectionInactive,
   connectionNotConfigured,
@@ -680,6 +688,7 @@ const channelHidden = {
 }
 
 export const possibleErrorsOnCreatingConnection = {
+  connectionProviderDedicatedOnly,
   businessError,
   connectionAlreadyConnected: {
     message: "This provider is already connected in this workspace",
@@ -695,6 +704,7 @@ export const possibleErrorsOnCreatingConnection = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnReconnectingConnection = {
+  connectionProviderDedicatedOnly,
   notFound,
   businessError,
   connectionNotOAuth,
@@ -704,6 +714,7 @@ export const possibleErrorsOnReconnectingConnection = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnUpdatingConnection = {
+  connectionProviderDedicatedOnly,
   notFound,
   businessError,
   ...possibleIdempotencyErrors,
@@ -721,6 +732,7 @@ export const possibleErrorsOnFindingConnectSession = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnConnectingSessionTargets = {
+  connectionProviderDedicatedOnly,
   notFound,
   businessError,
   connectSessionExpired,
@@ -728,6 +740,7 @@ export const possibleErrorsOnConnectingSessionTargets = {
 } satisfies ErrorMap
 
 export const possibleErrorsOnCancelingConnectSession = {
+  connectionProviderDedicatedOnly,
   notFound,
   businessError,
   ...possibleIdempotencyErrors,

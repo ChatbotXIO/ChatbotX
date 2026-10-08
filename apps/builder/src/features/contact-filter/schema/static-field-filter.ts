@@ -115,6 +115,7 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   emailWasVerified: NON_NULLABLE_BOOLEAN_OPERATORS,
   optedInForEmail: NON_NULLABLE_BOOLEAN_OPERATORS,
   fromCtwaAd: BOOLEAN_OPERATORS,
+  fromGoogleAd: BOOLEAN_OPERATORS,
   followsBusinessOnInstagram: BOOLEAN_OPERATORS,
   businessFollowsUserOnInstagram: BOOLEAN_OPERATORS,
   verifiedAccountOnInstagram: BOOLEAN_OPERATORS,

@@ -331,6 +331,11 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     optionSource: "none",
   },
   {
+    field: contactFilterFields.enum.fromGoogleAd,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
     field: contactFilterFields.enum.ctwaConversion,
     schemaKind: "multiSelect",
     optionSource: "ctwaConversionTypes",

@@ -354,7 +354,7 @@ const CONTACT_FILTER_GROUP_FIELDS = {
     "emailOpened",
     "emailClicked",
   ],
-  ctwaAds: ["fromCtwaAd", "ctwaConversion"],
+  ctwaAds: ["fromCtwaAd", "fromGoogleAd", "ctwaConversion"],
   systemTime: [
     "isWithinWorkingHours",
     "currentDate",

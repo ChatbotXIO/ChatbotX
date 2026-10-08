@@ -73,7 +73,11 @@ import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { toLogSafeError } from "@chatbotx.io/logger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { distributedLock, isLockAcquisitionError } from "@chatbotx.io/redis"
-import type { ChannelPostDetails, IncomingAttachment } from "@chatbotx.io/sdk"
+import type {
+  ChannelPostDetails,
+  IncomingAttachment,
+  MessageReferral,
+} from "@chatbotx.io/sdk"
 import {
   type AuthValue,
   contentTypes,
@@ -93,6 +97,7 @@ import {
   type SourceScopedIdentityMatchedBy,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { hasGoogleClick } from "@chatbotx.io/utils/google-click"
 import {
   ChatJobAction,
   chatQueue,
@@ -217,6 +222,19 @@ export const metaReferralToContactSource = (
       return
   }
 }
+
+/**
+ * A Google click is checked first: an m.me `?ref=` carrying it also arrives as
+ * a Meta `SHORTLINK` referral, which would otherwise map to `botLink`.
+ */
+const resolveContactSource = (
+  referral: MessageReferral | null | undefined,
+  referralSource: string | null | undefined,
+): ContactSource =>
+  hasGoogleClick(referral)
+    ? contactSources.enum.ads
+    : (metaReferralToContactSource(referralSource) ??
+      contactSources.enum.inboundMessage)
 
 /**
  * A third-party echo (another app's send mirrored back by the channel, as
@@ -368,9 +386,7 @@ export const receiveMessage = async (
       incomingContact,
       inbox,
       integrationRow,
-      source:
-        metaReferralToContactSource(referralSource) ??
-        contactSources.enum.inboundMessage,
+      source: resolveContactSource(parsedMessage.referral, referralSource),
       existingContactMatch,
     }),
     resolvePostbackButtonLabel({

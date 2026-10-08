@@ -279,6 +279,7 @@ export const contactFilterFields = z.enum([
   "locale",
   "language",
   "fromCtwaAd",
+  "fromGoogleAd",
   "ctwaConversion",
   "ctwaRetarget",
 ])

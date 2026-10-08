@@ -111,6 +111,7 @@ const stepExecutionKinds = {
   sendMessengerTemplateMessage: "channel",
   facebookCustomAudience: "worker",
   sendMetaCapiEvent: "worker",
+  sendGoogleAdsConversion: "worker",
   setMessengerUserPersistentMenu: "worker",
   enableMessengerComposer: "worker",
   disableMessengerComposer: "worker",

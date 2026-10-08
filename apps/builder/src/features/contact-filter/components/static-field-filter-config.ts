@@ -197,6 +197,7 @@ export const staticFieldRules: Record<string, StaticFieldRule> = {
   shoppingCartIsEmpty: booleanRule,
   lastSentMessageFailed: booleanRule,
   fromCtwaAd: booleanRule,
+  fromGoogleAd: booleanRule,
 
   fullName: textFreeRule,
   lastComment: textFreeRule,

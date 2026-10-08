@@ -223,6 +223,27 @@ describe("writeErrorLogs", () => {
     expect(written()).toEqual([expect.objectContaining({ detail: "msg only" })])
   })
 
+  it("keeps a Google Ads code line in detail and the provider in action (the builder translates it)", async () => {
+    const writeErrorLogs = await load()
+
+    await writeErrorLogs([
+      payload({
+        provider: "google-ads",
+        error: {
+          message: 'google_ads_missing_dedup_id\nResolved: value="1"',
+          httpCode: null,
+        },
+      }),
+    ])
+
+    expect(written()).toEqual([
+      expect.objectContaining({
+        action: "google-ads",
+        detail: 'google_ads_missing_dedup_id\nResolved: value="1"',
+      }),
+    ])
+  })
+
   it("writes a batch as one insert, not one per payload", async () => {
     const writeErrorLogs = await load()
 

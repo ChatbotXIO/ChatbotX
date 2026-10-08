@@ -133,4 +133,47 @@ describe("AnalyticsNav", () => {
     expect(messengerLink?.className).toContain("font-medium")
     expect(whatsappLink?.className).not.toContain("font-medium")
   })
+
+  test("hides the Google Ads entry by default", async () => {
+    await act(async () => {
+      root.render(<AnalyticsNav adsChannels={["whatsapp"]} />)
+      await Promise.resolve()
+    })
+
+    const hrefs = Array.from(container.querySelectorAll("a")).map((link) =>
+      link.getAttribute("href"),
+    )
+    expect(hrefs).not.toContain("/space/ws-1/dashboard/ads/google")
+  })
+
+  test("showGoogleAds adds one Google Ads link after the Meta channels", async () => {
+    await act(async () => {
+      root.render(
+        <AnalyticsNav adsChannels={["whatsapp", "messenger"]} showGoogleAds />,
+      )
+      await Promise.resolve()
+    })
+
+    const adsLinks = Array.from(container.querySelectorAll("a")).filter(
+      (link) => link.getAttribute("href")?.includes("/dashboard/ads/"),
+    )
+    expect(adsLinks.map((link) => link.getAttribute("href"))).toEqual([
+      "/space/ws-1/dashboard/ads/whatsapp",
+      "/space/ws-1/dashboard/ads/messenger",
+      "/space/ws-1/dashboard/ads/google",
+    ])
+    expect(adsLinks.at(-1)?.textContent).toBe("ads.dashboardNav.google")
+  })
+
+  test("the Google Ads entry works without any Meta channel", async () => {
+    await act(async () => {
+      root.render(<AnalyticsNav adsChannels={[]} showGoogleAds />)
+      await Promise.resolve()
+    })
+
+    const hrefs = Array.from(container.querySelectorAll("a")).map((link) =>
+      link.getAttribute("href"),
+    )
+    expect(hrefs).toContain("/space/ws-1/dashboard/ads/google")
+  })
 })

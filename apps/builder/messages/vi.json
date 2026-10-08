@@ -739,6 +739,7 @@
       "noAdminReply": "Không có phản hồi quản trị viên",
       "contactCreatedAt": "Ngày tạo liên hệ",
       "fromCtwaAd": "Đến từ quảng cáo",
+      "fromGoogleAd": "Đến từ Google Ads",
       "ctwaConversion": "Chuyển đổi quảng cáo",
       "lastUserInputTypes": {
         "text": "Văn bản",
@@ -2119,7 +2120,10 @@
       "label": "Client ID"
     },
     "clientSecret": {
-      "label": "Client Secret"
+      "label": "Client Secret",
+      "keepHint": "Để trống để giữ client secret đã lưu.",
+      "isSet": "Đã đặt client secret.",
+      "isNotSet": "Chưa đặt client secret."
     },
     "configId": {
       "label": "App Config ID"
@@ -2242,6 +2246,17 @@
     "signInCallbackUrl": {
       "label": "URL callback đăng nhập",
       "hint": "Thêm URL này vào danh sách URI chuyển hướng được phép trong ứng dụng Google của bạn để bật đăng nhập bằng Google."
+    },
+    "adsDeveloperToken": {
+      "label": "Developer token Google Ads",
+      "hint": "Tùy chọn: Google không còn yêu cầu developer token. Để trống để giữ token đã lưu.",
+      "isSet": "Đã đặt developer token.",
+      "isNotSet": "Chưa đặt developer token.",
+      "clear": "Xóa",
+      "cleared": "Đã xóa developer token."
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "Hãy dùng một ứng dụng Google OAuth riêng cho Google Ads, tách biệt với ứng dụng Google của bạn, và bật các scope adwords và datamanager. Ứng dụng này cần được Google xác minh OAuth riêng."
     },
     "webhookUrl": {
       "label": "URL webhook",
@@ -2448,7 +2463,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -2465,6 +2483,12 @@
     },
     "sendRatePerMinute": {
       "label": "Số tin nhắn mỗi phút"
+    },
+    "adsUploadMethod": {
+      "label": "Phương thức tải lên",
+      "hint": "Nên dùng Data Manager. API tải lên cũ chỉ hoạt động với các dự án Google Cloud mà Google vẫn cho phép và không dùng quyền Data Manager. Thay đổi chỉ áp dụng cho kết nối mới: hãy kết nối lại các không gian làm việc hiện có.",
+      "dataManager": "API Data Manager (khuyến nghị)",
+      "legacy": "API tải lên cũ"
     }
   },
   "flows": {
@@ -2633,7 +2657,8 @@
       "importJsonOnly": "Chỉ tệp JSON",
       "whatsappCallButton": "Gọi qua WhatsApp",
       "metaConversions": "API Chuyển đổi Meta",
-      "threadControl": "Điều khiển luồng"
+      "threadControl": "Điều khiển luồng",
+      "sendGoogleAdsConversion": "Gửi chuyển đổi Google Ads"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2841,7 +2866,8 @@
     "dashboardNav": {
       "whatsapp": "Quảng cáo Click-to-WhatsApp",
       "messenger": "Quảng cáo Click-to-Messenger",
-      "instagram": "Quảng cáo Click-to-Instagram"
+      "instagram": "Quảng cáo Click-to-Instagram",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "Kết nối tài khoản quảng cáo",
@@ -4522,7 +4548,8 @@
       "startAnotherFlow": "Bắt đầu luồng khác",
       "notifyAdmins": "Thông báo quản trị viên",
       "transferConversationToHuman": "Chuyển cuộc trò chuyện cho người",
-      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI"
+      "sendMetaCapiEvent": "Gửi sự kiện Meta CAPI",
+      "sendGoogleAdsConversion": "Gửi chuyển đổi Google Ads"
     },
     "triggerGoesOff": "Trigger kích hoạt",
     "before": "Trước",
@@ -6658,6 +6685,447 @@
       "messagingIdHint": "Chỉ gồm chữ, số, gạch ngang và gạch dưới (tối đa 512 ký tự).",
       "cancel": "Huỷ",
       "confirmSend": "Gửi"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "Gửi chuyển đổi ngoại tuyến đến Google Ads cho những liên hệ đến từ lượt nhấp quảng cáo Google.",
+    "notAvailable": {
+      "description": "Thông tin xác thực Google Ads của nền tảng (OAuth client ID và secret) chưa được cấu hình. Hãy nhờ quản trị viên nền tảng thêm chúng trong phần cài đặt nền tảng Google Ads."
+    },
+    "connect": {
+      "scopes": "Chúng tôi yêu cầu quyền đọc tài khoản Google Ads và hành động chuyển đổi của bạn, cũng như gửi chuyển đổi thay mặt bạn.",
+      "button": "Kết nối Google Ads",
+      "reconnect": "Kết nối lại",
+      "unnamedAccount": "Tài khoản Google Ads",
+      "viaManager": "qua tài khoản quản lý {manager}",
+      "statusLabel": "Trạng thái kết nối",
+      "needsReauthDescription": "Quyền truy cập Google đã bị thu hồi hoặc hết hạn. Hãy kết nối lại để tiếp tục gửi chuyển đổi.",
+      "pausedDescription": "Kết nối này đang tạm dừng nên chuyển đổi không được gửi.",
+      "degradedDescription": "Google Ads đang phản hồi lỗi. Chuyển đổi sẽ được tự động thử lại.",
+      "howItWorks": "Cách hoạt động",
+      "steps": {
+        "signIn": "Đăng nhập bằng tài khoản Google đang quản lý quảng cáo của bạn.",
+        "chooseAccount": "Chọn tài khoản Google Ads.",
+        "pickAction": "Chọn hành động chuyển đổi trong các luồng của bạn."
+      },
+      "uploadMethod": "Phương thức tải lên: {method}"
+    },
+    "status": {
+      "connected": "Đã kết nối",
+      "degraded": "Suy giảm",
+      "needsReauth": "Cần kết nối lại",
+      "paused": "Tạm dừng",
+      "disconnected": "Đã ngắt kết nối"
+    },
+    "picker": {
+      "title": "Chọn tài khoản Google Ads",
+      "legend": "Tài khoản Google Ads",
+      "loading": "Đang tải kết nối Google Ads",
+      "loadError": "Không thể tải phiên kết nối Google Ads.",
+      "waiting": "Đang chờ Google xác nhận đăng nhập…",
+      "noTargets": "Không tìm thấy tài khoản Google Ads nào cho tài khoản Google này.",
+      "alreadyThisWorkspace": "Đã kết nối với không gian làm việc này",
+      "alreadyOtherWorkspace": "Đã kết nối với không gian làm việc khác",
+      "notSelectable": "Không thể chọn tài khoản này",
+      "connectSelected": "Kết nối tài khoản",
+      "sessionExpired": "Phiên kết nối đã hết hạn. Hãy kết nối lại để tiếp tục.",
+      "sessionCancelled": "Phiên kết nối đã bị hủy.",
+      "stalled": "Đăng nhập chưa hoàn tất. Hãy dùng nút Kết nối Google Ads để thử lại.",
+      "dismiss": "Bỏ qua",
+      "cancelFailed": "Không thể hủy lần kết nối này. Hãy thử lại.",
+      "connectErrorTitle": "Không thể kết nối Google Ads",
+      "errors": {
+        "stateMismatch": "Không thể xác minh lần đăng nhập. Hãy kết nối lại để tiếp tục.",
+        "expired": "Phiên kết nối đã hết hạn. Hãy kết nối lại để tiếp tục.",
+        "providerDenied": "Quyền truy cập Google chưa được cấp. Hãy kết nối lại và cho phép các quyền được yêu cầu.",
+        "exchangeFailed": "Không thể hoàn tất đăng nhập Google. Hãy kết nối lại để tiếp tục.",
+        "providerError": "Google trả về lỗi. Hãy thử kết nối lại sau ít phút.",
+        "noCandidates": "Không tìm thấy tài khoản Google Ads đang hoạt động nào cho người dùng Google này. Các tài khoản đã hủy, bị tạm ngưng hoặc chưa thiết lập đầy đủ không thể sử dụng. Hãy đăng nhập bằng tài khoản Google đang quản lý một tài khoản Google Ads đang hoạt động.",
+        "alreadyConnected": "Tài khoản Google Ads đó đã được kết nối.",
+        "quotaExceeded": "Đã đạt giới hạn kết nối của gói của bạn.",
+        "trialExpired": "Bản dùng thử của bạn đã kết thúc nên không thể thêm kết nối mới.",
+        "internalError": "Đã xảy ra lỗi khi kết nối. Hãy thử lại.",
+        "providerUnavailable": "Google Ads tạm thời không khả dụng nên chưa thể hoàn tất kết nối. Hãy thử lại sau ít phút.",
+        "developerTokenMissing": "Google Ads chưa được thiết lập đầy đủ: thông tin xác thực Google của nền tảng chưa hoàn chỉnh. Hãy nhờ quản trị viên kiểm tra thông tin xác thực Google Ads.",
+        "developerTokenNotApproved": "Google đã từ chối developer token lưu trong thông tin xác thực Google Ads. Token này là tùy chọn: hãy nhờ quản trị viên xóa nó hoặc thay bằng token hợp lệ.",
+        "projectNotApproved": "Dự án Google Cloud của bạn chưa được duyệt để dùng với tài khoản Google Ads thực tế. Hãy đăng ký quyền truy cập Explorer hoặc Basic cho dự án trong Google Cloud Console (Google Ads API → Overview), rồi kết nối lại.",
+        "permissionDenied": "Tài khoản Google này không có quyền truy cập các tài khoản Google Ads. Hãy đăng nhập bằng tài khoản Google có quyền truy cập một tài khoản Google Ads.",
+        "apiNotEnabled": "Google Ads API chưa được bật cho dự án Google Cloud. Hãy nhờ quản trị viên bật API này rồi thử lại.",
+        "credentialsInvalid": "Google đã từ chối thông tin đăng nhập. Hãy kết nối lại để tiếp tục.",
+        "scopeMissing": "Chưa cấp đủ quyền. Google Ads cần quyền truy cập tài khoản Google Ads của bạn và quyền gửi chuyển đổi. Hãy kết nối lại và chọn tất cả các quyền.",
+        "legacyUploadNotAllowed": "Google không cho phép API tải lên cũ với tài khoản này. Hãy chuyển thông tin xác thực sang Data Manager và kết nối lại không gian làm việc này."
+      }
+    },
+    "setup": {
+      "conversionCustomer": "Tài khoản chuyển đổi",
+      "notResolved": "Chưa xác định",
+      "retry": "Thử lại thiết lập",
+      "dataTermsWarning": "Chưa chấp nhận điều khoản dữ liệu khách hàng cho tài khoản này. Hãy chấp nhận trong Google Ads, sau đó thử lại thiết lập.",
+      "errors": {
+        "conversionCustomerInaccessible": "Không thể truy cập tài khoản chuyển đổi bằng đăng nhập Google này. Hãy kiểm tra quyền truy cập trong Google Ads và thử lại.",
+        "customerDataTermsNotAccepted": "Chưa chấp nhận điều khoản dữ liệu khách hàng cho tài khoản này. Hãy chấp nhận trong Google Ads, sau đó thử lại thiết lập.",
+        "syncFailed": "Không thể đọc các hành động chuyển đổi từ Google Ads. Hãy thử lại thiết lập sau ít phút.",
+        "developerTokenMissing": "Thông tin xác thực Google Ads của nền tảng (OAuth client ID và secret) chưa được cấu hình."
+      }
+    },
+    "conversionActions": {
+      "title": "Hành động chuyển đổi",
+      "description": "Chỉ các hành động đã bật và nhập chuyển đổi từ lượt nhấp mới có thể nhận chuyển đổi.",
+      "helpLink": "Trợ giúp Google Ads",
+      "sync": "Đồng bộ hành động chuyển đổi",
+      "syncedAt": "Đồng bộ lần cuối {date}",
+      "neverSynced": "Chưa đồng bộ",
+      "empty": "Không tìm thấy hành động chuyển đổi nào. Hãy tạo hành động chuyển đổi nhập ngoại tuyến trong Google Ads, sau đó đồng bộ.",
+      "name": "Tên",
+      "category": "Danh mục",
+      "counting": "Cách tính",
+      "status": "Trạng thái",
+      "onePerClickNote": "Lượt nhấp iOS (gbraid) không thể gửi đến hành động này. Hãy dùng cách đếm \"Mọi lượt\" để nhận chúng.",
+      "externalNote": "Không được hỗ trợ: hành động này dùng ghi nhận chuyển đổi bên ngoài, không thể gửi qua Google Data Manager.",
+      "count": "{count, plural, one {# hành động chuyển đổi} other {# hành động chuyển đổi}}"
+    },
+    "events": {
+      "title": "Lịch sử chuyển đổi",
+      "description": "Các chuyển đổi gần đây đã gửi đến Google Ads. ID lượt nhấp được che một phần.",
+      "empty": "Chuyển đổi sẽ xuất hiện ở đây khi một luồng hoặc trigger gửi đi.",
+      "emptyFiltered": "Không có chuyển đổi nào khớp với trạng thái này.",
+      "loadError": "Không thể tải lịch sử chuyển đổi.",
+      "page": "Trang {page} / {pages}",
+      "filter": {
+        "label": "Trạng thái",
+        "all": "Tất cả trạng thái"
+      },
+      "columns": {
+        "status": "Trạng thái",
+        "action": "Hành động chuyển đổi",
+        "channel": "Kênh",
+        "clickId": "ID lượt nhấp",
+        "occurredAt": "Thời điểm xảy ra",
+        "actions": "Thao tác",
+        "dedup": "Chống trùng",
+        "consent": "Ảnh chụp đồng ý",
+        "matching": "Đối sánh",
+        "properties": "Thuộc tính"
+      },
+      "status": {
+        "pending": "Đang chờ",
+        "sending": "Đang gửi",
+        "sent": "Đã gửi",
+        "processed": "Đã xử lý",
+        "failed": "Thất bại",
+        "skippedNoAccount": "Bỏ qua: không có tài khoản",
+        "skippedExpired": "Bỏ qua: đã hết hạn"
+      },
+      "processing": {
+        "processing": "Google đang xử lý",
+        "success": "Đã chấp nhận",
+        "partialSuccess": "Chấp nhận một phần",
+        "failed": "Bị từ chối",
+        "unknown": "Chưa rõ kết quả",
+        "timedOut": "Hết thời gian chờ"
+      },
+      "stage": {
+        "delivery": "Gửi thất bại",
+        "processing": "Xử lý thất bại",
+        "timeout": "Hết thời gian chờ"
+      },
+      "consent": {
+        "adUserDataFull": "Dữ liệu người dùng cho quảng cáo: {status}",
+        "adPersonalizationFull": "Cá nhân hóa quảng cáo: {status}",
+        "status": {
+          "granted": "Đã đồng ý",
+          "denied": "Đã từ chối",
+          "notProvided": "Không cung cấp",
+          "notSupported": "Không hỗ trợ (tải lên kiểu cũ)"
+        },
+        "adUserDataShort": "Dữ liệu: {status}",
+        "adPersonalizationShort": "Cá nhân hóa: {status}",
+        "delivery": {
+          "toSend": "Sẽ gửi",
+          "notSent": "Không gửi",
+          "unknown": "Chưa xác nhận"
+        }
+      },
+      "dedup": {
+        "click": "Theo lượt nhấp",
+        "id": "ID: {id}",
+        "event": "Mỗi lần chạy"
+      },
+      "matching": {
+        "enabled": "Đã cấu hình: {fields}",
+        "withheldConsent": "Bị giữ lại (chưa đồng ý): {fields}",
+        "unsupportedTransport": "Chưa gửi (legacy): {fields}"
+      },
+      "timeProvided": "Thời gian chỉ định",
+      "timeProvidedTooltip": "Thời gian chuyển đổi này lấy từ bước trong luồng, không phải thời điểm bước chạy."
+    },
+    "validate": {
+      "open": "Xác thực yêu cầu",
+      "title": "Xác thực yêu cầu",
+      "description": "Kiểm tra cấu hình: Google xác thực yêu cầu mà không ghi nhận chuyển đổi.",
+      "conversionAction": "Hành động chuyển đổi",
+      "clickIdType": "Loại ID lượt nhấp",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "ID lượt nhấp",
+      "submit": "Chạy kiểm tra",
+      "ok": "Google đã chấp nhận cấu hình này. Không có gì được ghi nhận.",
+      "reasons": {
+        "accountNotReady": "Google Ads chưa sẵn sàng. Hãy hoàn tất việc kết nối và thiết lập tài khoản, rồi thử lại.",
+        "needsReauth": "Kết nối Google Ads cần được kết nối lại.",
+        "rejected": "Google đã từ chối yêu cầu này",
+        "legacyUploadNotAllowed": "Google không cho phép API tải lên cũ với tài khoản này. Hãy chuyển thông tin xác thực sang Data Manager và kết nối lại không gian làm việc này."
+      },
+      "invalid": "Hãy chọn hành động chuyển đổi và nhập ID lượt nhấp hợp lệ.",
+      "consentIncluded": "Có kèm sự đồng ý: {values}.",
+      "consentNone": "Lần kiểm tra này không kèm sự đồng ý nào.",
+      "consentVariableSkipped": "Sự đồng ý lấy từ trường liên hệ không thể kiểm tra nên được bỏ qua.",
+      "consentNotSentLegacy": "Cá nhân hóa quảng cáo ({status}) không được gửi với phương thức tải lên cũ."
+    },
+    "conversionFields": {
+      "conversionAction": "Hành động chuyển đổi",
+      "unavailableOption": "{id} (không khả dụng)",
+      "unavailableWarning": "Hành động chuyển đổi đã chọn không còn khả dụng hoặc chưa được bật. Hãy chọn hành động khác trước khi xuất bản.",
+      "externalOption": "{name} (ghi nhận chuyển đổi bên ngoài, không được hỗ trợ)",
+      "loading": "Đang tải hành động chuyển đổi",
+      "loadError": "Không thể tải các hành động chuyển đổi Google Ads của bạn.",
+      "notConnected": "Kết nối Google Ads để gửi chuyển đổi.",
+      "noActions": "Không tìm thấy hành động chuyển đổi nào đang bật. Hãy đồng bộ trong cài đặt Google Ads.",
+      "openSettings": "Mở cài đặt Google Ads",
+      "needsReauth": "Kết nối Google Ads cần được kết nối lại.",
+      "dedupModeClick": "Mỗi lượt nhấp một lần",
+      "dedupModeClickHelp": "Tính hành động chuyển đổi này một lần cho mỗi lượt nhấp quảng cáo.",
+      "dedupModeIdHelp": "Tính một lần cho mỗi mã khác nhau.",
+      "dedupModeId": "Mỗi mã đơn hàng một lần",
+      "dedupModeEvent": "Mỗi lần chạy",
+      "dedupModeEventHelp": "Ghi nhận một chuyển đổi mới mỗi lần chạy, kể cả với cùng một lượt bấm quảng cáo. Thử lại cùng một lần chạy không bị tính hai lần.",
+      "dedupId": "Mã đơn hàng hoặc sự kiện",
+      "dedupIdPlaceholder": "vd: '{{order_number}}'",
+      "dedupIdHelp": "Dùng lại cùng một mã khi thử lại và khi nhập dữ liệu. Dùng mã khác nhau cho mỗi lượt mua hoặc sự kiện.",
+      "dedupIdExample": "Không có mã đơn hàng trong bán hàng qua chat? Hãy kết hợp khách hàng với một trường bạn đặt cho mỗi lần bán, ví dụ {example}. Đừng dùng thời gian hiện tại vì nó thay đổi ở mỗi lần chạy.",
+      "dedupIdInfoLabel": "Về mã đơn hàng hoặc sự kiện",
+      "dedupLeadIdNote": "Mỗi mã khác nhau được tính là một khách hàng tiềm năng mới từ cùng một lượt nhấp.",
+      "dedupClickNote": "Các lượt mua lặp lại từ cùng một lượt nhấp sẽ không được tính.",
+      "dedupLegacyNote": "Tải lên cũ: Google nhận mã đã xáo trộn.",
+      "additionalOptions": "Tùy chọn bổ sung",
+      "additionalOptionsCount": "đã đặt {count}",
+      "customerMatching": "Đối sánh khách hàng",
+      "customerMatchingCount": "{count} đang bật",
+      "customerMatchingLegacy": "Phương thức tải lên legacy không hỗ trợ. Hãy chuyển kết nối sang Data Manager API để dùng.",
+      "customerMatchingTermsNotAccepted": "Chưa được gửi cho đến khi bạn chấp nhận điều khoản dữ liệu khách hàng trong cài đặt chuyển đổi của Google Ads.",
+      "learnMore": "Tìm hiểu thêm",
+      "matchEmailLabel": "E-mail",
+      "matchPhoneLabel": "Số điện thoại",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "Loại khách hàng",
+      "customerValueBucketLabel": "Giá trị khách hàng",
+      "customerPropertiesLegacy": "Phương thức tải lên legacy không hỗ trợ. Hãy chuyển kết nối sang Data Manager API để dùng.",
+      "conversionTime": "Thời gian chuyển đổi",
+      "conversionTimePlaceholder": "Để trống để dùng thời điểm bước này chạy",
+      "valuePlaceholder": "Không bắt buộc, vd 250",
+      "currencyPlaceholder": "Không bắt buộc, USD",
+      "validation": {
+        "dedupIdRequired": "Nhập mã, hoặc chọn Một lần cho mỗi lượt nhấp.",
+        "dedupIdTooLong": "Dùng tối đa 64 ký tự.",
+        "matchTemplateInvalid": "Chỉ dùng một biến, ví dụ '{{email}}'. Không được nhập giá trị cố định.",
+        "customerTypeInvalid": "Dùng NEW hoặc RETURNING, hoặc một biến như '{{customer_type}}'.",
+        "customerValueBucketInvalid": "Dùng LOW, MEDIUM hoặc HIGH, hoặc một biến như '{{customer_value}}'.",
+        "timeFormat": "Dùng ngày kèm múi giờ, ví dụ 2026-10-08T14:30:00+07:00.",
+        "timeInvalidDate": "Ngày này không tồn tại.",
+        "currencyRequired": "Hãy thêm đơn vị tiền tệ khi bạn đặt giá trị.",
+        "valueRequired": "Hãy thêm giá trị khi bạn đặt đơn vị tiền tệ.",
+        "conversionActionRequired": "Hãy chọn một hành động chuyển đổi.",
+        "valueInvalid": "Dùng số thường, ví dụ 19.99.",
+        "valueTooLarge": "Giá trị này quá lớn.",
+        "currencyInvalid": "Dùng mã tiền tệ 3 chữ cái, ví dụ USD."
+      },
+      "consentInvalid": "Không đọc được cài đặt đồng ý nên bước này sẽ thất bại.",
+      "consentFixLink": "Sửa trong cài đặt",
+      "dedupModeLabel": "Tránh chuyển đổi trùng lặp"
+    },
+    "summary": {
+      "conversionAction": "Hành động chuyển đổi {id}",
+      "notConfigured": "Chọn hành động chuyển đổi",
+      "dedupClick": "Một lần cho mỗi lượt nhấp quảng cáo",
+      "dedupId": "Mã: {id}",
+      "dedupEvent": "Mỗi lần chạy"
+    },
+    "consent": {
+      "title": "Sự đồng ý về dữ liệu chuyển đổi",
+      "description": "Khách hàng có đồng ý chia sẻ dữ liệu cho quảng cáo hay không. Áp dụng cho mọi chuyển đổi của không gian làm việc này.",
+      "learnMore": "Tìm hiểu thêm",
+      "notConnected": "Áp dụng cho các chuyển đổi sau khi một tài khoản Google Ads được kết nối.",
+      "adUserData": {
+        "label": "Dữ liệu người dùng cho quảng cáo"
+      },
+      "adPersonalization": {
+        "label": "Cá nhân hóa quảng cáo"
+      },
+      "source": {
+        "notProvided": "Không cung cấp",
+        "granted": "Luôn đồng ý",
+        "denied": "Luôn từ chối",
+        "variable": "Từ trường của khách hàng"
+      },
+      "help": {
+        "notProvided": "Bỏ qua. Google dùng cài đặt đồng ý mặc định của tài khoản.",
+        "granted": "Mọi chuyển đổi báo khách hàng đã đồng ý.",
+        "denied": "Mọi chuyển đổi báo khách hàng từ chối.",
+        "variable": "Dùng \"{granted}\" hoặc \"{denied}\". Trống sẽ bị bỏ qua; giá trị khác làm bước thất bại."
+      },
+      "templatePlaceholder": "vd: '{{gdpr_consent}}'",
+      "templateLabel": "Trường của khách hàng cho {setting}",
+      "validation": {
+        "templateRequired": "Hãy chèn một trường của khách hàng, vd: '{{gdpr_consent}}'.",
+        "templateTooLong": "Dùng tối đa 200 ký tự."
+      },
+      "legacy": {
+        "title": "Không gửi với phương thức tải lên cũ",
+        "body": "Phương thức cũ chỉ nhận đồng ý về dữ liệu người dùng. Hãy kết nối lại bằng Data Manager để gửi."
+      },
+      "save": "Lưu",
+      "saved": "Đã lưu cài đặt đồng ý",
+      "invalidStored": "Không đọc được cài đặt đồng ý đã lưu. Các bước gửi chuyển đổi sẽ thất bại cho đến khi bạn lưu cài đặt mới."
+    },
+    "errors": {
+      "supportSession": "Phiên hỗ trợ của nền tảng không thể thay đổi kết nối Google Ads hoặc gửi chuyển đổi.",
+      "developerTokenMissing": "Google Ads chưa khả dụng: thông tin xác thực Google Ads của nền tảng (OAuth client ID và secret) chưa được cấu hình.",
+      "notConnected": "Google Ads chưa được kết nối cho không gian làm việc này.",
+      "sessionNotFound": "Không tìm thấy phiên kết nối Google Ads này hoặc phiên đã hết hạn. Hãy bắt đầu lại.",
+      "pickFailed": "Không thể kết nối tài khoản Google Ads đó. Có thể tài khoản đã được kết nối ở nơi khác hoặc phiên đã hết hạn.",
+      "notRetryable": "Không thể thử lại chuyển đổi này: chỉ chuyển đổi thất bại mới có thể thử lại.",
+      "authorizationUnavailable": "Không thể bắt đầu đăng nhập Google. Hãy thử lại sau ít phút.",
+      "credentialSecretsRequired": "Nhập client secret. Hiện chưa được lưu."
+    },
+    "enums": {
+      "category": {
+        "default": "Mặc định",
+        "purchase": "Mua hàng",
+        "addToCart": "Thêm vào giỏ hàng",
+        "beginCheckout": "Bắt đầu thanh toán",
+        "subscribePaid": "Đăng ký trả phí",
+        "phoneCallLead": "Khách hàng tiềm năng qua cuộc gọi",
+        "importedLead": "Khách hàng tiềm năng được nhập",
+        "submitLeadForm": "Gửi biểu mẫu khách hàng tiềm năng",
+        "bookAppointment": "Đặt lịch hẹn",
+        "signup": "Đăng ký",
+        "requestQuote": "Yêu cầu báo giá",
+        "getDirections": "Chỉ đường",
+        "outboundClick": "Nhấp chuột ra ngoài",
+        "contact": "Liên hệ",
+        "engagement": "Tương tác",
+        "storeVisit": "Lượt ghé cửa hàng",
+        "storeSale": "Bán hàng tại cửa hàng",
+        "qualifiedLead": "Khách hàng tiềm năng đủ điều kiện",
+        "convertedLead": "Khách hàng tiềm năng đã chuyển đổi",
+        "pageView": "Xem trang",
+        "download": "Tải xuống",
+        "lead": "Khách hàng tiềm năng"
+      },
+      "countingType": {
+        "onePerClick": "Một lần mỗi lượt nhấp",
+        "manyPerClick": "Nhiều lần mỗi lượt nhấp"
+      },
+      "actionStatus": {
+        "enabled": "Đang bật",
+        "removed": "Đã xóa",
+        "hidden": "Đã ẩn"
+      },
+      "unknown": "Khác ({value})"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "Tải lên kiểu cũ"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "Kênh của liên hệ này không thể gửi chuyển đổi Google Ads.",
+      "google_ads_no_click": "Liên hệ không đến từ lượt nhấp quảng cáo Google.",
+      "google_ads_no_account": "Chưa kết nối tài khoản Google Ads nào ở trạng thái sẵn sàng.",
+      "google_ads_unknown_conversion_action": "Hành động chuyển đổi không còn tồn tại. Hãy đồng bộ và chọn hành động khác.",
+      "google_ads_action_disabled": "Hành động chuyển đổi chưa được bật trong Google Ads.",
+      "google_ads_incompatible_action": "Hành động này chỉ tính một chuyển đổi cho mỗi lượt nhấp, điều mà Google không cho phép với lượt nhấp iOS này.",
+      "google_ads_unsupported_action": "Hành động này dùng phân bổ bên ngoài nên không nhận được các chuyển đổi này.",
+      "google_ads_invalid_value": "Giá trị hoặc đơn vị tiền tệ không hợp lệ.",
+      "google_ads_invalid_input": "Cài đặt của bước không hợp lệ.",
+      "google_ads_record_failed": "Không thể lưu chuyển đổi.",
+      "google_ads_missing_dedup_id": "ID đơn hàng hoặc sự kiện bị trống.",
+      "google_ads_invalid_dedup_id": "ID đơn hàng hoặc sự kiện dài hơn 64 ký tự.",
+      "google_ads_missing_occurrence_key": "Lần chạy này không có mã định danh ổn định nên chuyển đổi chưa được ghi nhận.",
+      "google_ads_invalid_customer_property": "Loại khách hàng hoặc giá trị khách hàng không phải là giá trị được phép.",
+      "google_ads_invalid_consent_config": "Không đọc được cài đặt đồng ý đã lưu.",
+      "google_ads_invalid_consent_value": "Một trường đồng ý có giá trị khác \"granted\" hoặc \"denied\".",
+      "google_ads_invalid_conversion_time": "Thời gian chuyển đổi không phải ngày hợp lệ kèm múi giờ, hoặc nằm trong tương lai."
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "Tất cả kênh",
+        "allActions": "Tất cả hành động",
+        "channelLabel": "Kênh",
+        "actionLabel": "Hành động chuyển đổi"
+      },
+      "tiles": {
+        "confirmed": "Đã xác nhận",
+        "awaitingGoogle": "Chờ Google",
+        "queued": "Trong hàng đợi",
+        "failed": "Thất bại",
+        "skipped": "Bỏ qua",
+        "deliveryRate": "Tỷ lệ gửi thành công",
+        "confirmedHelp": "Google đã xác nhận ghi nhận các chuyển đổi này.",
+        "awaitingGoogleHelp": "Đã gửi tới Google, đang chờ Google xử lý xong.",
+        "queuedHelp": "Đang chờ được gửi.",
+        "failedHelp": "Google không chấp nhận hoặc không xử lý được.",
+        "skippedHelp": "Chưa gửi: không có tài khoản sẵn sàng hoặc quá cũ đối với Google.",
+        "deliveryRateHelp": "Đã xác nhận ÷ (đã xác nhận + thất bại). Không tính các chuyển đổi trong hàng đợi, đang chờ và bị bỏ qua."
+      },
+      "confirmedValue": "Giá trị đã xác nhận",
+      "confirmedValueItem": "{value} ({count, plural, one {# chuyển đổi} other {# chuyển đổi}})",
+      "moreCurrencies": "+{count} mục khác",
+      "chart": {
+        "title": "Chuyển đổi theo ngày",
+        "viewAsTable": "Xem dạng bảng",
+        "tableCaption": "Chuyển đổi theo ngày",
+        "dateColumn": "Ngày"
+      },
+      "byAction": {
+        "title": "Theo hành động chuyển đổi",
+        "truncated": "Hiển thị 50 hành động có nhiều chuyển đổi nhất."
+      },
+      "byChannel": {
+        "title": "Theo kênh",
+        "confirmedCount": "{count, plural, one {# đã xác nhận} other {# đã xác nhận}}"
+      },
+      "failures": {
+        "title": "Lỗi theo giai đoạn",
+        "unknown": "Không xác định"
+      },
+      "empty": {
+        "title": "Không có chuyển đổi trong khoảng thời gian này",
+        "description": "Chuyển đổi sẽ xuất hiện ở đây khi một bước luồng hoặc trigger gửi chuyển đổi."
+      },
+      "error": {
+        "title": "Không thể tải thống kê",
+        "retry": "Thử lại"
+      },
+      "viewStatistics": "Xem thống kê",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "Không có chuyển đổi đã xác nhận hoặc thất bại trong khoảng thời gian này.",
+      "actionFallback": "Hành động {id}",
+      "openSettings": "Mở cài đặt Google Ads",
+      "outcome": {
+        "title": "Tỷ lệ kết quả"
+      },
+      "googleReport": {
+        "title": "Google Ads báo cáo",
+        "description": "Số conversion mà chính Google Ads ghi nhận trong các ngày này, cạnh số ChatbotX đã gửi và Google đã xác nhận.",
+        "sent": "ChatbotX đã xác nhận",
+        "reported": "Google báo cáo",
+        "note": "Google có thể mất vài giờ để cập nhật báo cáo và cách đếm theo cài đặt của từng action, nên chênh lệch nhỏ là bình thường.",
+        "unavailable": "Hiện chưa lấy được báo cáo từ Google Ads."
+      }
     }
   },
   "minigames": {

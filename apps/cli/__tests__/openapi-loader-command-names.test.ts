@@ -152,6 +152,31 @@ describe("pathAndMethodToCommandName — operations that used to collide get dis
   })
 })
 
+describe("pathAndMethodToCommandName — Google Ads reads", () => {
+  test("stats, events and connection get distinct google-ads commands", () => {
+    const names = [
+      pathAndMethodToCommandName("/v1/google-ads/stats", "GET"),
+      pathAndMethodToCommandName("/v1/google-ads/events", "GET"),
+      pathAndMethodToCommandName("/v1/google-ads/connection", "GET"),
+    ]
+
+    expect(names).toEqual([
+      "google-ads:stats",
+      "google-ads:events",
+      "google-ads:connection",
+    ])
+    expect(new Set(names)).toHaveLength(names.length)
+  })
+
+  test("do not collide with the Meta ads commands", () => {
+    expect(
+      pathAndMethodToCommandName("/v1/google-ads/stats", "GET").startsWith(
+        "ads:",
+      ),
+    ).toBe(false)
+  })
+})
+
 describe("pathAndMethodToCommandName — filter/variant on a collection", () => {
   test("a literal second segment with no trailing param joins as a hyphenated action", () => {
     expect(
