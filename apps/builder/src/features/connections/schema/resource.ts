@@ -12,7 +12,10 @@ import {
   integrationTypes,
 } from "@chatbotx.io/database/partials"
 import type { ConnectionStrategy } from "@chatbotx.io/sdk"
-import { connectionConfigFieldSchema } from "@chatbotx.io/utils/connection"
+import {
+  connectionConfigFieldSchema,
+  selfServeSecretSchema,
+} from "@chatbotx.io/utils/connection"
 import { z } from "zod"
 
 /** Single source for the `strategy` enum shared by `connectionResource` and `connectionProviderResource` — kept in lockstep with the SDK's `ConnectionStrategy` via `satisfies`. */
@@ -104,8 +107,7 @@ export type ConnectSessionResource = z.infer<typeof connectSessionResource>
 export const connectEnvelope = z.object({
   connection: connectionResource.nullable(),
   session: connectSessionResource.nullable(),
-  secret: z
-    .object({ kind: z.literal("api_channel_token"), token: z.string() })
+  secret: selfServeSecretSchema
     .nullable()
     .describe(
       "One-time credential returned only in this response and never retrievable again — the API channel bearer token. Store it before the response is discarded.",

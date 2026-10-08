@@ -131,6 +131,20 @@ export const claimIdempotencyKey = async ({
   }
 }
 
+/**
+ * A one-time credential (`connections.create` → `secret.token` for the API
+ * channel) is promised to be "never retrievable again", so it must not sit in
+ * Redis for 24h nor come back on a replay. The replay still returns the same
+ * `connection`, so a retry cannot create a duplicate channel.
+ */
+export const redactOneTimeSecret = (output: unknown): unknown =>
+  output !== null &&
+  typeof output === "object" &&
+  "secret" in output &&
+  output.secret != null
+    ? { ...output, secret: null }
+    : output
+
 export const completeIdempotencyKey = async ({
   claimId,
   fingerprint,
@@ -148,8 +162,9 @@ export const completeIdempotencyKey = async ({
 
   if (output !== undefined) {
     try {
-      encodedOutput = JSON.stringify(output, (_key, value) =>
-        typeof value === "bigint" ? value.toString() : value,
+      encodedOutput = JSON.stringify(
+        redactOneTimeSecret(output),
+        (_key, value) => (typeof value === "bigint" ? value.toString() : value),
       )
     } catch (err) {
       logger.warn({ err }, "Idempotency output could not be stored")

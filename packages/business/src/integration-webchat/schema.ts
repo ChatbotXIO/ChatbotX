@@ -56,7 +56,6 @@ export const webchatConnectConfigSchema = z.object({
     .default(true)
     .describe("Whether the webchat widget is active."),
 })
-export type WebchatConnectConfig = z.infer<typeof webchatConnectConfigSchema>
 
 export const integrationWebchatResource = createSelectSchema(
   integrationWebchatModel,

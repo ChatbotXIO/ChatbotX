@@ -161,6 +161,39 @@ describe("integrationApiService.connect", () => {
     })
   })
 
+  test("rejects a private callback URL before minting a token or writing rows", async () => {
+    mocks.assertPublicUrl.mockRejectedValueOnce(new Error("private address"))
+
+    await expect(
+      integrationApiService.createWithToken({
+        ownerId: "owner-1",
+        workspaceId: "workspace-1",
+        name: "Support API",
+        callbackUrl: "http://10.0.0.1/hook",
+      }),
+    ).rejects.toThrow("private address")
+
+    expect(mocks.generateApiChannelToken).not.toHaveBeenCalled()
+    expect(mocks.transaction).not.toHaveBeenCalled()
+    expect(mocks.upsertConnectionRow).not.toHaveBeenCalled()
+  })
+
+  test("skips the SSRF check when no callback URL is given", async () => {
+    await integrationApiService.createWithToken({
+      ownerId: "owner-1",
+      workspaceId: "workspace-1",
+      name: "Support API",
+      callbackUrl: null,
+    })
+
+    expect(mocks.assertPublicUrl).not.toHaveBeenCalled()
+    expect(mocks.upsertConnectionRow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        auth: expect.objectContaining({ callbackUrl: null }),
+      }),
+    )
+  })
+
   test("mints a token, validates the callback URL, and returns the upserted connection", async () => {
     const connection = { id: "conn-1" }
     mocks.upsertConnectionRow.mockResolvedValue(connection)

@@ -39,7 +39,7 @@ beforeEach(() => {
 })
 
 describe("connectSelfServeChannel", () => {
-  test("uses the workspace row owner when no owner member exists", async () => {
+  test("passes the workspace owner and actor through to the adapter", async () => {
     const connection = { id: "conn-1", sourceId: "webchat-1" }
     mocks.connect.mockResolvedValue({ connection })
 

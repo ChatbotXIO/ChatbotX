@@ -40,8 +40,6 @@ type ConnectIntegrationApiInput = {
   ) => Promise<string>
 }
 
-export { apiConnectConfigSchema } from "./schema"
-
 type CreateApiWithTokenInput = {
   ownerId: string
   actorUserId?: string
@@ -151,22 +149,23 @@ class IntegrationApiService extends BaseService {
 
     // Sanctioned exception: `connect()` is reachable from `authActionClient`
     // (create-api.action.ts), which never puts `workspaceId` into the ALS
-    // actor — only workspace-scoped action clients do. A session caller
-    // supplies its user explicitly; a workspace-token caller leaves it unset
-    // so the middleware's audit context preserves the token source.
+    // actor, so `this.audit()` would no-op. That session caller passes its
+    // user explicitly; the workspace-token caller (`connections.create` via
+    // `createWithToken`) omits it so `auditService.record` falls back to the
+    // token middleware's audit actor and keeps the token source.
     if (result.workspaceCreated) {
       // Matches the other 5 "connect channel creates a new workspace" flows
       // (WhatsApp/Instagram x2/Messenger/Telegram/Webchat) — API channel is
       // the 6th entry point that can create a workspace on connect.
       await dispatchAuditRecord({
-        ...(input.actorUserId ? { userId: input.actorUserId } : {}),
+        userId: input.actorUserId,
         workspaceId: result.workspaceId,
         action: "create",
         detail: `created the workspace (#${result.workspaceId})`,
       })
     }
     await dispatchAuditRecord({
-      ...(input.actorUserId ? { userId: input.actorUserId } : {}),
+      userId: input.actorUserId,
       workspaceId: result.workspaceId,
       action: "create",
       detail: `created a new API key (#${result.inbox.id})`,

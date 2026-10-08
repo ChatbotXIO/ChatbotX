@@ -9,9 +9,9 @@ import {
 import { resolveWorkspaceAppUrl } from "../platform/settings"
 
 /**
- * Community deployments keep exactly one "Built with" entry on every
- * webchat persistent menu. Resolving the workspace app URL is deferred until
- * the community branding write is actually required.
+ * Community deployments keep exactly one "Built with" entry, last, on every
+ * webchat persistent menu. The workspace app URL is only resolved on a
+ * community deployment with a menu payload.
  */
 export const brandWebchatMenus = async ({
   persistentMenus,

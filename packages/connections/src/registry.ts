@@ -105,11 +105,12 @@ const connectWebchat: NonNullable<ConnectionAdapter["connect"]> = async (
   input,
 ) => {
   const data = webchatConnectConfigSchema.parse(input.config)
-  const actorUserId = input.actor.actorUserId
+  const { actorUserId } = input.actor
   const result = await integrationWebchatService.createWithWorkspace({
     workspaceId: input.workspaceId,
+    ownerId: input.ownerId,
     createdBy: actorUserId ?? input.ownerId,
-    ...(actorUserId ? { actorUserId } : {}),
+    actorUserId,
     workspaceName: data.name,
     data: {
       ...data,
@@ -122,10 +123,9 @@ const connectWebchat: NonNullable<ConnectionAdapter["connect"]> = async (
 
 const connectApi: NonNullable<ConnectionAdapter["connect"]> = async (input) => {
   const { callbackUrl, name } = apiConnectConfigSchema.parse(input.config)
-  const actorUserId = input.actor.actorUserId
   const result = await integrationApiService.createWithToken({
     ownerId: input.ownerId,
-    ...(actorUserId ? { actorUserId } : {}),
+    actorUserId: input.actor.actorUserId,
     workspaceId: input.workspaceId,
     name,
     callbackUrl,
