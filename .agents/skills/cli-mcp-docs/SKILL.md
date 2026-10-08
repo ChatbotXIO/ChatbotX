@@ -1,6 +1,6 @@
 ---
 name: cli-mcp-docs
-description: Use after adding, renaming, or removing a public oRPC procedure, or after changing an operation's MCP visibility. The CLI and MCP server generate their surface at runtime from the live OpenAPI spec, but repo-local docs still drift. This skill lists what to check and update, plus how to catch a silent CLI command-name collision before it ships.
+description: Use as the last step of every new feature or new operation (every one ships a public procedure — AGENTS.md invariant 23), and after adding, renaming, or removing a public oRPC procedure or changing an operation's MCP visibility. The CLI and MCP server generate their surface at runtime from the live OpenAPI spec, but repo-local docs still drift. This skill lists what to check and update, plus how to catch a silent CLI command-name collision before it ships.
 ---
 
 # CLI & MCP docs sync (ChatbotX)
@@ -31,6 +31,12 @@ Check:
   route sets `spec: mcpSpec({ visibility: "default" })` (see `orpc-api`
   skill) — otherwise it's reachable only via the `search_tools`/`call_tool`
   meta-tools.
+- An agent could use it cold: every input id names the operation that supplies
+  it, and the response is data the agent can act on (a result-returning
+  operation returns the link/preview/stats itself — see `orpc-api`,
+  "Result-returning operations").
+- Nothing in the feature's UI is left without a matching operation, unless it is
+  on the invariant 23 exempt list.
 
 ## 2. Check for a silent CLI command-name collision
 

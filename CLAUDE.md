@@ -5,6 +5,7 @@
 ### Preferred workflow
 
 1. Read the relevant skill file in `.agents/skills/` before writing code for a new feature, API, database table, worker, or integration.
+   - New feature or new operation: build and test the public API procedure (`api/public.ts`) **before** the UI — AI agents are the primary users (AGENTS.md invariant 23).
 2. When touching `packages/database`, always run `pnpm --filter @chatbotx.io/database db:migrate` after schema changes.
 3. After any code change, run `pnpm lint` and `pnpm --filter <app> check-types` before reporting done.
 4. Use `pnpm fix` (Biome auto-fix) instead of manually formatting code.
@@ -14,10 +15,11 @@
 | Task | Skill to read first |
 |------|---------------------|
 | Broad/ambiguous request, onboarding, "where does X live" | `chatbotx-basecode` |
-| New feature / page | `feature-scaffold` |
+| New feature / page (then `orpc-api` for the public API first, `cli-mcp-docs` last) | `feature-scaffold` |
 | Builder UI component, form, table, dialog, or any user-facing string | `builder-ui-i18n` |
 | New API endpoint | `orpc-api` |
-| New public API endpoint that should surface in the CLI/MCP, or CLI/MCP docs/skill drift | `cli-mcp-docs` |
+| Result-returning operation (link, preview, test run/test send, stats, export, AI generation) — see "Result-returning operations" | `orpc-api` |
+| After any public API change (every one surfaces in the CLI/MCP), or CLI/MCP docs/skill drift | `cli-mcp-docs` |
 | Business logic, new service method, any DB read/write from app code | `business-data-access` |
 | New DB table or migration | `drizzle-database` |
 | New background job or queue | `worker-development` |
@@ -60,5 +62,6 @@ Default to the cheapest tier that fits the task; reserve the top tier for judgme
 - Do not commit `.env` files or secrets.
 - Do not skip `pnpm lint` — the CI will fail.
 - Do not hardcode user-facing strings — use `useTranslations()`.
+- Do not ship a UI-only feature or UI-only button — every operation, including result-returning ones like the bot simulator link, needs a public API procedure unless it is on the exempt list in AGENTS.md invariant 23.
 - Do not import `db` directly in `apps/` or `integrations/` — the chain is `action | API handler → service (@chatbotx.io/business) → repository (@chatbotx.io/database/repositories) → DB`; app code calls a service, never a repository directly (the one exception is a pure read with zero business logic). See `.agents/rules/data-access.md`.
 - Do not use dynamic `import()` in tsdown-built code (`packages/*`, `integrations/*`, `apps/worker`, `apps/cli`, `apps/mcp-server`, `apps/javascript-executor`) — it breaks the tsdown build. In `apps/builder/src` dynamic imports and `next/dynamic` are allowed (and preferred for heavy client islands). See `.agents/rules/no-dynamic-import.md`.
