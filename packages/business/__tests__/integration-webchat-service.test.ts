@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { z } from "zod"
 import { webchatsAdapter } from "../src/template/adapters/webchats"
 
 // The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
@@ -8,6 +9,7 @@ vi.mock("../src/broadcast/plan-policy.service", () => ({
 }))
 
 const {
+  mockIsCommunity,
   mockCount,
   mockCreateId,
   mockDispatchAuditRecord,
@@ -18,6 +20,7 @@ const {
   mockIsAtLimit,
   mockParsePagination,
   mockRelationsFilterToSQL,
+  mockResolveWorkspaceAppUrl,
   mockTransaction,
   mockUpdate,
   mockUpdateSet,
@@ -36,6 +39,7 @@ const {
     mockUpdate,
     mockUpdateSet,
     mockUpdateWhere,
+    mockIsCommunity: vi.fn(() => true),
     mockCount: vi.fn(async () => 25),
     mockCreateId: vi.fn(() => `id-${++createIdCallCount}`),
     mockDispatchAuditRecord: vi.fn(),
@@ -52,6 +56,7 @@ const {
     mockIsAtLimit: vi.fn(async () => false),
     mockParsePagination: vi.fn(),
     mockRelationsFilterToSQL: vi.fn(),
+    mockResolveWorkspaceAppUrl: vi.fn(async () => "https://app.example.com"),
     mockTransaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
       callback({
         query: { integrationWebchatModel: { findFirst: mockFindFirst } },
@@ -103,6 +108,15 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 
 vi.mock("@chatbotx.io/utils", () => ({
   createId: mockCreateId,
+  zodBigintAsString: () => z.string(),
+}))
+
+vi.mock("../src/keys", () => ({
+  isCommunity: mockIsCommunity,
+}))
+
+vi.mock("../src/platform/settings", () => ({
+  resolveWorkspaceAppUrl: mockResolveWorkspaceAppUrl,
 }))
 
 // Records the trackers handed to `withQuotaCompensation` on the failure
@@ -275,6 +289,7 @@ describe("integrationWebchatService.createWithWorkspace", () => {
     const withWorkspace = await integrationWebchatService.createWithWorkspace({
       workspaceId: "ws-1",
       createdBy: "user-1",
+      actorUserId: "user-1",
       workspaceName: "My Chatbot",
       data: baseData,
     })
@@ -309,6 +324,7 @@ describe("integrationWebchatService.createWithWorkspace", () => {
     const withoutWorkspace =
       await integrationWebchatService.createWithWorkspace({
         createdBy: "user-1",
+        actorUserId: "user-1",
         workspaceName: "My Chatbot",
         data: baseData,
       })
@@ -318,6 +334,21 @@ describe("integrationWebchatService.createWithWorkspace", () => {
     expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
       userId: "user-1",
       workspaceId: "ws-new",
+      action: "connect",
+      detail: "connected a new Webchat channel (#webchat-1)",
+    })
+  })
+
+  test("lets workspace-token audit context identify a token-created webchat", async () => {
+    await integrationWebchatService.createWithWorkspace({
+      workspaceId: "ws-1",
+      createdBy: "owner-1",
+      workspaceName: "My Chatbot",
+      data: baseData,
+    })
+
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
       action: "connect",
       detail: "connected a new Webchat channel (#webchat-1)",
     })
@@ -338,6 +369,7 @@ describe("integrationWebchatService.create — quota gate", () => {
     } as never)
     mockUpsertConnectionRow.mockResolvedValue({ id: "conn-1" } as never)
     mockFindFirst.mockResolvedValue({ id: "webchat-1" } as never)
+    mockIsCommunity.mockReturnValue(true)
   })
 
   test("throws channelLimitReached and creates no Inbox/Connection row when the owner's channel quota is already full", async () => {
@@ -354,7 +386,7 @@ describe("integrationWebchatService.create — quota gate", () => {
     expect(mockUpsertConnectionRow).not.toHaveBeenCalled()
   })
 
-  test("proceeds to create the Inbox + Connection row when quota has capacity", async () => {
+  test("creates the Inbox + Connection row when quota has capacity", async () => {
     mockIsAtLimit.mockResolvedValue(false)
 
     const created = await integrationWebchatService.create(
@@ -362,9 +394,75 @@ describe("integrationWebchatService.create — quota gate", () => {
       tx,
     )
 
-    expect(created).toEqual({ id: "webchat-1" })
+    expect(created).toEqual({
+      integration: { id: "webchat-1" },
+      connection: { id: "conn-1" },
+    })
     expect(mockInboxCreate).toHaveBeenCalledTimes(1)
-    expect(mockUpsertConnectionRow).toHaveBeenCalledTimes(1)
+    expect(mockUpsertConnectionRow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extraConfig: expect.objectContaining({
+          persistentMenus: [
+            {
+              label: "⚡ Built with chatbotx.io",
+              type: "url",
+              url: "https://app.example.com/?ref=selfhosted&channel=webchat",
+            },
+          ],
+        }),
+      }),
+    )
+    expect(mockResolveWorkspaceAppUrl).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      tx,
+    })
+  })
+
+  test("replaces a foreign-host branding entry instead of duplicating it", async () => {
+    await integrationWebchatService.create(
+      {
+        workspaceId: "ws-1",
+        ownerId: "owner-1",
+        data: {
+          ...baseData,
+          persistentMenus: [
+            {
+              label: "⚡ Built with chatbotx.io",
+              type: "url",
+              url: "https://old.example.com/?ref=selfhosted&channel=webchat",
+            },
+            { label: "Docs", type: "url", url: "https://docs.example.com" },
+          ],
+        },
+      },
+      tx,
+    )
+
+    expect(mockUpsertConnectionRow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extraConfig: expect.objectContaining({
+          persistentMenus: [
+            { label: "Docs", type: "url", url: "https://docs.example.com" },
+            {
+              label: "⚡ Built with chatbotx.io",
+              type: "url",
+              url: "https://app.example.com/?ref=selfhosted&channel=webchat",
+            },
+          ],
+        }),
+      }),
+    )
+  })
+
+  test("does not resolve the workspace app URL when community branding is disabled", async () => {
+    mockIsCommunity.mockReturnValue(false)
+
+    await integrationWebchatService.create(
+      { workspaceId: "ws-1", ownerId: "owner-1", data: baseData },
+      tx,
+    )
+
+    expect(mockResolveWorkspaceAppUrl).not.toHaveBeenCalled()
   })
 })
 
@@ -420,6 +518,7 @@ describe("integrationWebchatService.findByIdForWorkspaceOrNull", () => {
 describe("integrationWebchatService.update", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockIsCommunity.mockReturnValue(true)
   })
 
   // The action layer pre-checks ownership, but the method takes a
@@ -521,6 +620,57 @@ describe("integrationWebchatService.update", () => {
     ).rejects.toThrow("Welcome flow not found")
 
     expect(mockUpdateSet).not.toHaveBeenCalled()
+  })
+
+  test("adds branding to updated persistent menus in community deployments", async () => {
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { persistentMenus: [] },
+    })
+
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        persistentMenus: [
+          {
+            label: "⚡ Built with chatbotx.io",
+            type: "url",
+            url: "https://app.example.com/?ref=selfhosted&channel=webchat",
+          },
+        ],
+      }),
+    )
+  })
+
+  test("leaves updated persistent menus unchanged outside community deployments", async () => {
+    mockIsCommunity.mockReturnValue(false)
+    const persistentMenus = [
+      { label: "Docs", type: "url" as const, url: "https://docs.example.com" },
+    ]
+
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { persistentMenus },
+    })
+
+    expect(mockResolveWorkspaceAppUrl).not.toHaveBeenCalled()
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ persistentMenus }),
+    )
+  })
+
+  test("leaves persistent menus untouched when absent from an update", async () => {
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { name: "Support" },
+    })
+
+    expect(mockResolveWorkspaceAppUrl).not.toHaveBeenCalled()
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ persistentMenus: undefined }),
+    )
   })
 })
 

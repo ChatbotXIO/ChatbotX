@@ -12,6 +12,10 @@ import {
   integrationTypes,
 } from "@chatbotx.io/database/partials"
 import type { ConnectionStrategy } from "@chatbotx.io/sdk"
+import {
+  connectionConfigFieldSchema,
+  selfServeSecretSchema,
+} from "@chatbotx.io/utils/connection"
 import { z } from "zod"
 
 /** Single source for the `strategy` enum shared by `connectionResource` and `connectionProviderResource` — kept in lockstep with the SDK's `ConnectionStrategy` via `satisfies`. */
@@ -54,14 +58,9 @@ export const connectionResource = z.object({
 })
 export type ConnectionResource = z.infer<typeof connectionResource>
 
-const connectionProviderConfigField = z.object({
-  name: z.string(),
-  type: z.enum(["string", "secret", "number", "boolean", "enum", "url"]),
-  required: z.boolean(),
-  label: z.string(),
-  enumValues: z.array(z.string()).optional(),
-  description: z.string().optional(),
-})
+const connectionProviderConfigField = connectionConfigFieldSchema
+  .omit({ labelKey: true })
+  .extend({ label: z.string() })
 
 export const connectionProviderResource = z.object({
   provider: integrationTypes,
@@ -69,6 +68,7 @@ export const connectionProviderResource = z.object({
   channel: channelTypes.nullable(),
   strategy: connectionStrategies,
   multiAccount: z.boolean(),
+  multiInstance: z.boolean(),
   configFields: z.array(connectionProviderConfigField),
   available: z.boolean(),
   unavailableReason: z
@@ -107,6 +107,11 @@ export type ConnectSessionResource = z.infer<typeof connectSessionResource>
 export const connectEnvelope = z.object({
   connection: connectionResource.nullable(),
   session: connectSessionResource.nullable(),
+  secret: selfServeSecretSchema
+    .nullable()
+    .describe(
+      "One-time credential returned only in this response and never retrievable again — the API channel bearer token. Store it before the response is discarded. An idempotency replay returns null; rotate the token before retrying.",
+    ),
 })
 
 export const connectSessionTargetsResource = z.object({

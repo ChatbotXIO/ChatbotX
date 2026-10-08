@@ -49,6 +49,7 @@ export type ConnectionCredential = unknown
 type ConnectionProviderCommon<IAuth extends AuthValue> = {
   kind: ConnectionKind
   configFields: readonly ConnectionConfigField[]
+  multiInstance?: boolean
   describe: (auth: IAuth) => ConnectionDescriptor
   candidateToConfig?: (auth: IAuth) => Record<string, unknown>
   verify: Handler<{ auth: IAuth }, ConnectionHealth>

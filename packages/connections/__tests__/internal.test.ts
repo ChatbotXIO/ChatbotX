@@ -70,7 +70,7 @@ vi.mock("../src/logger", () => ({
 // must be registered before `internal.ts` (and its `@chatbotx.io/business`/
 // `@chatbotx.io/database` dependencies) are evaluated, which only a
 // post-`vi.mock` dynamic import guarantees.
-const { subscribeWebhookBestEffort, connectAndPersist } = await import(
+const { connectAndPersist, subscribeWebhookBestEffort } = await import(
   "../src/internal"
 )
 

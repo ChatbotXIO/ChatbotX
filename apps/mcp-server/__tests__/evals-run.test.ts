@@ -1,10 +1,11 @@
 import { describe, expect, test } from "vitest"
-import type { EvalCase } from "../evals/cases"
+import { type EvalCase, materializeCases } from "../evals/cases"
 import {
   assertComparableManifests,
   type EvalManifest,
   validateCaseCoverage,
 } from "../evals/run-contract"
+import { fixtureOperationIds } from "../evals/sandbox"
 
 const manifest = (): EvalManifest => ({
   corpusHash: "corpus",
@@ -88,6 +89,50 @@ describe("evaluation runner contracts", () => {
     expect(failures).toContain("tag-en: missing catalog tool sequences_list")
     expect(failures).toContain(
       "tag-en: missing fixture operation sequences_list",
+    )
+  })
+
+  test("defines fixture-backed channel and integration connection workflows", () => {
+    const connectionCases = materializeCases().filter(
+      (evalCase) => evalCase.domain === "connections",
+    )
+    const catalogOperations = new Set([
+      "connection_providers_list",
+      "connections_list",
+      "connections_create",
+      "connect_sessions_get",
+      "connect_sessions_connect_targets",
+    ])
+
+    expect(connectionCases).toHaveLength(30)
+    expect(
+      validateCaseCoverage(
+        connectionCases,
+        catalogOperations,
+        fixtureOperationIds(),
+      ),
+    ).toEqual([])
+    expect(
+      connectionCases.filter(
+        (evalCase) => evalCase.family === "connection-messenger-finish",
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          bindings: [
+            expect.objectContaining({
+              argument: "targetIds",
+              sourcePointer: "/targets/0/id",
+              sourceTools: ["connect_sessions_get"],
+              tool: "connect_sessions_connect_targets",
+            }),
+          ],
+          sequence: [
+            ["connect_sessions_get"],
+            ["connect_sessions_connect_targets"],
+          ],
+        }),
+      ]),
     )
   })
 })

@@ -1,4 +1,5 @@
 import { connectionStateService } from "@chatbotx.io/business"
+import type { SelfServeSecret } from "@chatbotx.io/connections"
 import type {
   ChannelType,
   ConnectionKind,
@@ -53,11 +54,13 @@ export const listConnectionResources = async (input: {
 export const toConnectEnvelope = (result: {
   connection: ConnectionModel | null
   session: ConnectSessionModel | null
+  secret?: SelfServeSecret | null
 }) => ({
   connection: result.connection
     ? toConnectionResource(result.connection)
     : null,
   session: result.session ? toConnectSessionResource(result.session) : null,
+  secret: result.secret ?? null,
 })
 
 /** Shared `POST /v1/connect-sessions/{id}/targets` response mapper. */

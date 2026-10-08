@@ -45,7 +45,7 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 
 ## Available tools
 
-Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 43 tools:
+Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 48 tools:
 
 ### Capabilities
 
@@ -82,6 +82,18 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 | `broadcasts_list` | List broadcasts |
 | `broadcasts_get` | Get broadcast |
 | `broadcasts_stop` | Stop broadcast |
+
+### Connections
+
+| Tool | Description |
+|---|---|
+| `connections_list` | List connections |
+| `connections_create` | Connect channel or integration |
+| `connection_providers_list` | List connection providers |
+| `connect_sessions_get` | Get connect session |
+| `connect_sessions_connect_targets` | Connect selected targets of awaiting_selection session |
+
+For `connections_create` with `provider: "api"`, the response includes a one-time `secret.token`. Store it before discarding the response; it is never retrievable again.
 
 ### Contacts
 
@@ -145,7 +157,7 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 | `sequences_get` | Get sequence |
 | `sequences_update` | Update sequence name or active state |
 
-Everything else — deletes, less-common resources (coupons, products, webhooks, saved replies, tags/triggers/inboxes/custom-fields management, integrations, workspace members, etc.), and channel-token-only or deprecated operations — is reachable via `search_tools` → `call_tool`, not `tools/list`.
+Everything else — deletes, less-common resources (coupons, products, webhooks, saved replies, tags/triggers/inboxes/custom-fields management, workspace members, etc.), connection lifecycle management beyond the initial connect (disconnect, reconnect, refresh, verify, rename), and channel-token-only or deprecated operations — is reachable via `search_tools` → `call_tool`, not `tools/list`.
 
 ## Prerequisites
 

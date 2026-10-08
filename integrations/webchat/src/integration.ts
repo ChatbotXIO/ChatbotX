@@ -1,3 +1,4 @@
+import { webchatConnectConfigSchema } from "@chatbotx.io/business/integration-webchat/schema"
 import {
   type BaseConfig,
   type HandleRequestProps,
@@ -6,6 +7,7 @@ import {
   type Oauth2AuthValue,
   selfServeConnection,
 } from "@chatbotx.io/sdk"
+import { zodToConfigFields } from "@chatbotx.io/utils/connection"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
 import type { WebchatActions, WebchatAuthValue } from "./schema"
@@ -26,6 +28,8 @@ const config: IntegrationDefinition<
   connection: selfServeConnection<WebchatAuthValue>({
     displayName: "Webchat",
     multiAccount: false,
+    multiInstance: true,
+    configFields: zodToConfigFields(webchatConnectConfigSchema),
   }),
   handleRequest(
     _props: HandleRequestProps<BaseConfig>,

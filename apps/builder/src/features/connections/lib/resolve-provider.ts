@@ -147,6 +147,12 @@ const resolveOneProvider = async (input: {
           ? input.t(field.labelKey)
           : field.name,
       enumValues: field.enumValues ? [...field.enumValues] : undefined,
+      items: field.items
+        ? {
+            ...field.items,
+            fields: field.items.fields ? [...field.items.fields] : undefined,
+          }
+        : undefined,
       description: field.description,
     }),
   )
@@ -161,6 +167,7 @@ const resolveOneProvider = async (input: {
       : null) as ChannelType | null,
     strategy: adapter.provider.strategy,
     multiAccount: adapter.provider.multiAccount,
+    multiInstance: adapter.provider.multiInstance ?? false,
     configFields,
     available: unavailableReason === null,
     unavailableReason,
@@ -177,23 +184,24 @@ const resolveUnavailableReason = async (input: {
     return "notImplemented"
   }
 
-  // A credential-strategy provider with no live `fromCredentials` validator
-  // cannot complete `POST /v1/connections` — advertising it as `available`
-  // would 500 on `connectionWrongStrategyException`. Webchat/SMTP/the API
-  // channel are `self_serve` with no external account to validate against
-  // AND no stable per-instance identity to derive `Connection.sourceId`
-  // from (`describe()` only receives `auth`, which for these providers is
-  // minted before any satellite row exists) — deferred to a follow-up that
-  // resolves that identity gap rather than shipping a second "workspace"-
-  // literal `sourceId` collision class.
+  // A credential-strategy provider with neither a `fromCredentials`
+  // validator nor an adapter `connect` handler (currently SMTP and ChatbotX)
+  // cannot complete `connections.create` — advertising it would 500.
   if (
     isCredentialStrategy(adapter.provider.strategy) &&
-    !adapter.provider.fromCredentials
+    !adapter.provider.fromCredentials &&
+    !adapter.connect
   ) {
     return "notImplemented"
   }
 
-  if (!(adapter.provider.multiAccount || !input.alreadyConnected)) {
+  if (
+    !(
+      adapter.provider.multiAccount ||
+      adapter.provider.multiInstance ||
+      !input.alreadyConnected
+    )
+  ) {
     return "alreadyConnected"
   }
 

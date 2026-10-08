@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@chatbotx.io/business": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
+    "@chatbotx.io/utils": "workspace:*",
     "ky": "^2.0.2"
   },
   "devDependencies": {
