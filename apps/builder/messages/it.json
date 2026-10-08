@@ -3400,6 +3400,14 @@
     "deleteConfirmation": "Sei assolutamente sicuro?\nQuesta azione non può essere annullata.\nIl tuo {feature} verrà eliminato definitivamente dai nostri server."
   },
   "messages": {
+    "timeAgo": {
+      "now": "adesso",
+      "minutes": "{count} min",
+      "hours": "{count} h",
+      "days": "{count} g",
+      "months": "{count} mesi",
+      "years": "{count} a"
+    },
     "moveFeature": "Sposta {feature}",
     "poweredBy": "Offerto da {name}",
     "noGiphyApiKey": "Nessuna chiave API GIPHY trovata. Aggiungine una nelle Impostazioni della piattaforma.",

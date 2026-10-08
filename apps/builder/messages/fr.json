@@ -3400,6 +3400,14 @@
     "deleteConfirmation": "Êtes-vous absolument sûr ?\nCette action est irréversible.\nVotre {feature} sera définitivement supprimé de nos serveurs."
   },
   "messages": {
+    "timeAgo": {
+      "now": "à l’instant",
+      "minutes": "{count} min",
+      "hours": "{count} h",
+      "days": "{count} j",
+      "months": "{count} mois",
+      "years": "{count} an"
+    },
     "moveFeature": "Déplacer {feature}",
     "poweredBy": "Propulsé par {name}",
     "noGiphyApiKey": "Aucune clé API GIPHY trouvée. Ajoutez-en une dans les paramètres de la plateforme.",

@@ -3400,6 +3400,14 @@
     "title": "Profili Düzenle"
   },
   "messages": {
+    "timeAgo": {
+      "now": "şimdi",
+      "minutes": "{count} dk",
+      "hours": "{count} sa",
+      "days": "{count} g",
+      "months": "{count} ay",
+      "years": "{count} yıl"
+    },
     "moveFeature": "{feature} Taşı",
     "poweredBy": "{name} tarafından desteklenmektedir",
     "noGiphyApiKey": "GIPHY API anahtarı bulunamadı. Lütfen Platform Ayarları'na bir tane ekleyin.",

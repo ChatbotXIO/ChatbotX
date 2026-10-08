@@ -43,16 +43,7 @@ vi.mock("next/navigation", () => ({
 }))
 
 vi.mock("@/features/chat/chat-panes", () => ({
-  ConversationListPane: ({
-    autoSelectFirstConversation,
-  }: {
-    autoSelectFirstConversation?: boolean
-  }) => (
-    <div
-      data-auto-select={String(autoSelectFirstConversation)}
-      data-testid="list-pane"
-    />
-  ),
+  ConversationListPane: () => <div data-testid="list-pane" />,
   MessageThreadPane: ({
     onBack,
     onOpenContact,
@@ -86,7 +77,6 @@ const storeState = {
   isLoadingConversation: false,
   isBootstrappingUrlConversation: false,
   activeConversationId: null as string | null,
-  activeConversationAutoSelected: false,
   setActiveConversationId: vi.fn((id: string | null) => {
     storeState.activeConversationId = id
   }),
@@ -130,7 +120,6 @@ describe("ChatLayout", () => {
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     storeState.activeConversationId = null
-    storeState.activeConversationAutoSelected = false
     storeState.setActiveConversationId.mockClear()
     mockMobileState.isOverridden = false
     container = document.createElement("div")
@@ -170,26 +159,11 @@ describe("ChatLayout", () => {
     expect(pane?.className).not.toMatch(HEIGHT_CLASS)
   })
 
-  test("does not auto-select a conversation on mobile", () => {
-    setViewportWidth(375)
-    render()
-
-    expect(find("list-pane")?.getAttribute("data-auto-select")).toBe("false")
-  })
-
-  test("suppresses an auto-selected conversation on mobile so the list shows first", () => {
+  // The layout never touches the selection on its own: with no auto-select
+  // left in the store there is nothing to suppress, and a mid-session resize
+  // across the breakpoint must not close the thread the agent is reading.
+  test("never clears the selection on its own, including across a resize to mobile", () => {
     storeState.activeConversationId = "c1"
-    storeState.activeConversationAutoSelected = true
-    setViewportWidth(375)
-    render()
-
-    expect(find("list-pane")).not.toBeNull()
-    expect(storeState.setActiveConversationId).toHaveBeenCalledWith(null)
-  })
-
-  test("does not clear an auto-selected conversation on a later resize to mobile", () => {
-    storeState.activeConversationId = "c1"
-    storeState.activeConversationAutoSelected = true
     setViewportWidth(1440)
     render()
 
@@ -199,45 +173,11 @@ describe("ChatLayout", () => {
     render()
 
     expect(storeState.setActiveConversationId).not.toHaveBeenCalled()
-
-    act(() => {
-      root.unmount()
-    })
-    root = createRoot(container)
-    storeState.activeConversationId = "c1"
-    storeState.setActiveConversationId.mockClear()
-    setViewportWidth(375)
-    render()
-
-    expect(storeState.setActiveConversationId).toHaveBeenCalledTimes(1)
-
-    act(() => {
-      setViewportWidth(1440)
-      setViewportWidth(375)
-    })
-    render()
-
-    expect(storeState.setActiveConversationId).toHaveBeenCalledTimes(1)
-  })
-
-  test("waits for the first mobile measurement before suppressing selection", () => {
-    storeState.activeConversationId = "c1"
-    storeState.activeConversationAutoSelected = true
-    mockMobileState.isOverridden = true
-    mockMobileState.value = undefined
-    render()
-
-    expect(storeState.setActiveConversationId).not.toHaveBeenCalled()
-
-    mockMobileState.value = true
-    render()
-
-    expect(storeState.setActiveConversationId).toHaveBeenCalledTimes(1)
+    expect(find("thread-pane")).not.toBeNull()
   })
 
   test("keeps a deep-linked conversation open on mobile", () => {
     storeState.activeConversationId = "c1"
-    storeState.activeConversationAutoSelected = false
     setViewportWidth(375)
     render()
 

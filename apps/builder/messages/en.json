@@ -3642,6 +3642,14 @@
     "title": "Edit Profile"
   },
   "messages": {
+    "timeAgo": {
+      "now": "now",
+      "minutes": "{count}m",
+      "hours": "{count}h",
+      "days": "{count}d",
+      "months": "{count}mo",
+      "years": "{count}y"
+    },
     "moveFeature": "Move {feature}",
     "poweredBy": "Powered by {name}",
     "noGiphyApiKey": "No GIPHY API key found. Please add one in Platform Settings.",

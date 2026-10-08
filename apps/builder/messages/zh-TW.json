@@ -1505,6 +1505,14 @@
     }
   },
   "messages": {
+    "timeAgo": {
+      "now": "剛剛",
+      "minutes": "{count}分鐘",
+      "hours": "{count}小時",
+      "days": "{count}天",
+      "months": "{count}個月",
+      "years": "{count}年"
+    },
     "sentAttachments": "已傳送 {count, plural, one {1 個附件} other {# 個附件}}",
     "moveFeature": "移動 {feature}",
     "poweredBy": "由 {name} 提供技術支援",

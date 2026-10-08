@@ -3642,6 +3642,14 @@
     "title": "Profili redaktə et"
   },
   "messages": {
+    "timeAgo": {
+      "now": "indi",
+      "minutes": "{count} dəq",
+      "hours": "{count} saat",
+      "days": "{count} gün",
+      "months": "{count} ay",
+      "years": "{count} il"
+    },
     "moveFeature": "Köçür: {feature}",
     "poweredBy": "{name} tərəfindən təmin edilir",
     "noGiphyApiKey": "GIPHY API açarı tapılmadı. Platforma parametrlərində açar əlavə edin.",

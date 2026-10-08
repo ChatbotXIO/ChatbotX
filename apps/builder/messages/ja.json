@@ -3379,6 +3379,14 @@
     "deleteConfirmation": "本当によろしいですか？\nこの操作は元に戻せません。\n{feature}はサーバーから完全に削除されます。"
   },
   "messages": {
+    "timeAgo": {
+      "now": "今",
+      "minutes": "{count}分",
+      "hours": "{count}時間",
+      "days": "{count}日",
+      "months": "{count}か月",
+      "years": "{count}年"
+    },
     "moveFeature": "{feature}を移動",
     "poweredBy": "{name}を利用",
     "noGiphyApiKey": "GIPHY APIキーが見つかりません。プラットフォーム設定で追加してください。",

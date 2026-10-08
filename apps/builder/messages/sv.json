@@ -4236,6 +4236,14 @@
     "toolsGroup": "Verktyg"
   },
   "messages": {
+    "timeAgo": {
+      "now": "nu",
+      "minutes": "{count} min",
+      "hours": "{count} tim",
+      "days": "{count} d",
+      "months": "{count} mån",
+      "years": "{count} år"
+    },
     "addFeature": "Lägg till {feature}",
     "archiveFeature": "Arkivera {feature}",
     "archiveFeatureDescription": "Är du säker på att du vill arkivera {feature}?",
