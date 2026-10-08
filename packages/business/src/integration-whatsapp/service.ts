@@ -450,14 +450,29 @@ class IntegrationWhatsappService extends BaseService {
   }
 
   /**
+   * No workspace scope — for the inbound manual-webhook handler, which only
+   * knows the integration id from the URL.
+   */
+  findByIdUnscoped(id: string): Promise<IntegrationWhatsappModel | null> {
+    return integrationWhatsappRepository.findByIdUnscoped(id)
+  }
+
+  /**
    * No workspace scope — for the inbound webhook-verification handler, which
    * has not yet resolved a workspace when it stamps `webhookVerifiedAt`.
+   * `auth` is the row's current value; its other keys are kept as-is.
    */
   markWebhookVerified(
     id: string,
-    auth: Record<string, unknown>,
+    auth: { metadata?: Record<string, unknown> } & Record<string, unknown>,
   ): Promise<void> {
-    return integrationWhatsappRepository.updateAuthUnscoped(id, auth)
+    return integrationWhatsappRepository.updateAuthUnscoped(id, {
+      ...auth,
+      metadata: {
+        ...auth.metadata,
+        webhookVerifiedAt: new Date().toISOString(),
+      },
+    })
   }
 
   async refreshCapiScopeCache(
