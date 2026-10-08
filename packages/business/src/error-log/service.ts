@@ -1,4 +1,5 @@
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { deleteErrorLogsByIds } from "@chatbotx.io/database/repositories"
 import { errorLogModel } from "@chatbotx.io/database/schema"
 import type { ContactModel, ErrorLogModel } from "@chatbotx.io/database/types"
 import {
@@ -425,4 +426,15 @@ export const listErrorLogs = async (
   const pageCount = Math.ceil(totalRows / pagination.limit)
 
   return { data, pageCount }
+}
+
+/** Deletes the given error logs from one workspace. No-op for an empty list. */
+export const deleteErrorLogs = async (input: {
+  workspaceId: string
+  ids: string[]
+}): Promise<void> => {
+  if (input.ids.length === 0) {
+    return
+  }
+  await deleteErrorLogsByIds(input)
 }

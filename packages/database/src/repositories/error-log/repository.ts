@@ -1,4 +1,4 @@
-import { db, sql } from "../../client"
+import { and, db, eq, inArray, sql } from "../../client"
 import { errorLogModel } from "../../schema"
 import { type ChunkedPurgeStopReason, chunkedPurge } from "../chunked-purge"
 
@@ -54,6 +54,21 @@ type _ErrorLogInsertCoversTable = AssertNever<
  */
 export function insertErrorLogs(rows: ErrorLogInsert[]) {
   return db.insert(errorLogModel).values(rows).onConflictDoNothing()
+}
+
+/** Deletes the given `ErrorLog` rows, scoped to one workspace. */
+export function deleteErrorLogsByIds(props: {
+  workspaceId: string
+  ids: string[]
+}) {
+  return db
+    .delete(errorLogModel)
+    .where(
+      and(
+        eq(errorLogModel.workspaceId, props.workspaceId),
+        inArray(errorLogModel.id, props.ids),
+      ),
+    )
 }
 
 export type PurgeErrorLogsOptions = {
