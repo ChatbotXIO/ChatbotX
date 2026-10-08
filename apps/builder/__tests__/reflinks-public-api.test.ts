@@ -52,12 +52,15 @@ const reflinkService = {
   create: vi.fn(),
   update: vi.fn(),
   deleteMany: vi.fn(),
+  findWidgetOrFail: vi.fn(),
+  updateWidgetSettings: vi.fn(),
 }
 const inboxService = {
   listAllConnectedByWorkspace: vi.fn(async () => ({ data: [] as unknown[] })),
 }
 const resolveTenantSettings = vi.fn(async () => ({
   appUrl: "https://app.tenant.test",
+  storageUrl: "https://storage.tenant.test",
 }))
 vi.mock("@chatbotx.io/business", () => ({
   reflinkService,
@@ -317,5 +320,115 @@ describe("open-chat links", () => {
       "https://m.me/page-1?ref=a",
       "https://m.me/page-1?ref=b",
     ])
+  })
+})
+
+describe("chat widget", () => {
+  const widgetReflink = {
+    id: "reflink-1",
+    name: "welcome",
+    widgetAuthorizedDomains: ["example.com"],
+    widgetHiddenInboxIds: ["inbox-2"],
+    widgetLogoFileId: "file-1",
+    widgetLogoFile: { path: "logos/acme.png" },
+    widgetBrandName: "Acme",
+    widgetBrandUrl: "https://acme.test",
+    widgetLogoBackgroundColor: null,
+  }
+  const connectedInboxes = [
+    {
+      id: "inbox-1",
+      name: "My Page",
+      workspaceId: "workspace-1",
+      sourceId: "page-1",
+      channel: "messenger",
+    },
+    {
+      id: "inbox-2",
+      name: "OA",
+      workspaceId: "workspace-1",
+      sourceId: "oa-1",
+      channel: "zalo",
+    },
+  ]
+
+  test("GET returns settings, embed code on the tenant domain, and visible channels", async () => {
+    reflinkService.findWidgetOrFail.mockResolvedValueOnce(widgetReflink)
+    inboxService.listAllConnectedByWorkspace.mockResolvedValueOnce({
+      data: connectedInboxes,
+    })
+
+    const result = await findProcedure(
+      "GET",
+      "/v1/ref-links/{id}/chat-widget",
+    ).handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "reflink-1" },
+    })
+
+    expect(reflinkService.findWidgetOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "reflink-1",
+    })
+    expect(result).toMatchObject({
+      reflinkId: "reflink-1",
+      authorizedDomains: ["example.com"],
+      hiddenInboxIds: ["inbox-2"],
+      logoFileId: "file-1",
+      logoBackgroundColor: "#111827",
+      brandName: "Acme",
+      brandUrl: "https://acme.test",
+      scriptUrl: "https://app.tenant.test/chat-widget/ref-widget.js",
+      embedCode:
+        '<script async src="https://app.tenant.test/chat-widget/ref-widget.js" data-reflink-id="reflink-1"></script>',
+    })
+    expect(result.logoUrl).toContain("logos/acme.png")
+    // The hidden Zalo inbox is left out, as on the live widget.
+    expect(
+      result.channels.map((link: { inboxId: string }) => link.inboxId),
+    ).toEqual(["inbox-1"])
+  })
+
+  test("PUT saves the settings, then returns the reloaded widget", async () => {
+    reflinkService.updateWidgetSettings.mockResolvedValueOnce(widgetReflink)
+    reflinkService.findWidgetOrFail.mockResolvedValueOnce(widgetReflink)
+    const settings = {
+      authorizedDomains: ["example.com"],
+      hiddenInboxIds: ["inbox-2"],
+      logoFileId: "file-1",
+      logoBackgroundColor: "#111827",
+      brandName: "Acme",
+      brandUrl: "https://acme.test",
+    }
+
+    const result = await findProcedure(
+      "PUT",
+      "/v1/ref-links/{id}/chat-widget",
+    ).handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "reflink-1", ...settings },
+    })
+
+    expect(reflinkService.updateWidgetSettings).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", id: "reflink-1" },
+      settings,
+    )
+    expect(reflinkService.findWidgetOrFail).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      id: "reflink-1",
+    })
+    expect(result.embedCode).toContain('data-reflink-id="reflink-1"')
+  })
+
+  test("a ref link outside the workspace surfaces the service's not-found", async () => {
+    const notFound = new Error("Reflink not found")
+    reflinkService.findWidgetOrFail.mockRejectedValueOnce(notFound)
+
+    await expect(
+      findProcedure("GET", "/v1/ref-links/{id}/chat-widget").handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { id: "other-workspace-reflink" },
+      }),
+    ).rejects.toBe(notFound)
   })
 })

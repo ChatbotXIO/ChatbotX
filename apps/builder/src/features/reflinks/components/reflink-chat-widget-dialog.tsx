@@ -36,6 +36,7 @@ import {
   DEFAULT_WIDGET_LOGO_BACKGROUND_COLOR,
   resolveWidgetBrand,
 } from "../lib/widget-brand"
+import { buildReflinkWidgetEmbedCode } from "../lib/widget-embed"
 import {
   MAX_WIDGET_AUTHORIZED_DOMAINS,
   type UpdateReflinkWidgetRequest,
@@ -87,10 +88,6 @@ export function ReflinkChatWidgetDialog({
       </DialogContent>
     </Dialog>
   )
-}
-
-function buildReflinkWidgetEmbedCode(appUrl: string, reflinkId: string) {
-  return `<script async src="${appUrl}/chat-widget/ref-widget.js" data-reflink-id="${reflinkId}"></script>`
 }
 
 /**

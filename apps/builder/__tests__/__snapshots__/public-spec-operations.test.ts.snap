@@ -2209,6 +2209,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "reflinks.getChatWidget",
+    "path": "/v1/ref-links/{id}/chat-widget",
+  },
+  {
+    "method": "GET",
     "operationId": "reflinks.list",
     "path": "/v1/ref-links",
   },
@@ -2216,6 +2221,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "reflinks.update",
     "path": "/v1/ref-links/{id}",
+  },
+  {
+    "method": "PUT",
+    "operationId": "reflinks.updateChatWidget",
+    "path": "/v1/ref-links/{id}/chat-widget",
   },
   {
     "method": "POST",

@@ -335,7 +335,7 @@
     "questionnaires/update-questionnaire.action:updateQuestionnaireAction": "covered:questionnaires",
     "reflinks/create-reflink.action:createReflinkAction": "covered:reflinks",
     "reflinks/delete-reflinks.action:deleteReflinksAction": "covered:reflinks",
-    "reflinks/update-reflink-widget.action:updateReflinkWidgetAction": "private:chat widget appearance is configured in the builder UI only",
+    "reflinks/update-reflink-widget.action:updateReflinkWidgetAction": "covered:reflinks",
     "reflinks/update-reflink.action:updateReflinkAction": "covered:reflinks",
     "reseller-accounts/provision-reseller-account:provisionResellerAccountAction": "private:no public surface yet (UI-only, not yet audited)",
     "saved-replies/create-saved-reply.action:createSavedReplyAction": "covered:saved-replies",
