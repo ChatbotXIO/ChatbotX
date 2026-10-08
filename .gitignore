@@ -69,3 +69,4 @@ apps/mcp-server/evals/out/
 # Reference PDFs (vendor guides, spec exports) dropped alongside plan docs are
 # local working material — never commit them to source.
 docs/**/*.pdf
+docs/plans/
