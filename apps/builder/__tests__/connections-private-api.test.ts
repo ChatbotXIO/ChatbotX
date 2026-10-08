@@ -153,7 +153,6 @@ vi.mock("@chatbotx.io/connections", () => ({
     strategy === "token" || strategy === "api_key" || strategy === "self_serve",
   toChannelType: (provider: string) =>
     provider === "instagramFacebook" ? "instagram" : provider,
-  selfServeConnectorFor: () => undefined,
   CONNECTION_REGISTRY: {
     claude: { provider: { strategy: "api_key", kind: "integration" } },
     messenger: { provider: { strategy: "oauth_redirect", kind: "channel" } },

@@ -27,6 +27,7 @@ export const createWebchatAction = authActionClient
     const result = await integrationWebchatService.createWithWorkspace({
       workspaceId: parsedInput.workspaceId ?? undefined,
       createdBy: ctx.user.id,
+      actorUserId: ctx.user.id,
       workspaceName: parsedInput.name,
       data: {
         ...rest,

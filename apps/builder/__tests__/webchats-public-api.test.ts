@@ -50,6 +50,7 @@ const { workspaceTokenAuthAPIForScope, capturedProcedures } = vi.hoisted(() => {
 vi.mock("@/orpc", () => ({ workspaceTokenAuthAPIForScope }))
 
 const integrationWebchatService = {
+  createWithWorkspace: vi.fn(),
   list: vi.fn(),
   findByIdForWorkspace: vi.fn(),
   update: vi.fn(),
@@ -72,9 +73,6 @@ vi.mock("@chatbotx.io/business", () => ({
   integrationWebchatService,
   webchatConnectConfigSchema,
 }))
-
-const connectionService = { connectSelfServeChannel: vi.fn() }
-vi.mock("@chatbotx.io/connections", () => ({ connectionService }))
 
 vi.mock("@chatbotx.io/database/partials", async () => {
   const { z } = await import("zod")
@@ -154,11 +152,10 @@ describe("POST /v1/webchats", () => {
     welcomeFlowId: undefined,
   }
 
-  test("creates through the connections engine and resolves the returned source id", async () => {
+  test("creates from the already-parsed request without revalidating it", async () => {
     const created = { id: "wc-1" }
-    connectionService.connectSelfServeChannel.mockResolvedValueOnce({
+    integrationWebchatService.createWithWorkspace.mockResolvedValueOnce({
       connection: { sourceId: "wc-1" },
-      secret: null,
     })
     integrationWebchatService.findByIdForWorkspace.mockResolvedValueOnce(
       created,
@@ -168,10 +165,15 @@ describe("POST /v1/webchats", () => {
       procedure.handler?.({ context, input: baseInput }),
     ).resolves.toEqual(created)
 
-    expect(connectionService.connectSelfServeChannel).toHaveBeenCalledWith({
+    expect(integrationWebchatService.createWithWorkspace).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
-      provider: "webchat",
-      config: baseInput,
+      createdBy: "owner-1",
+      workspaceName: "My Webchat",
+      data: {
+        ...baseInput,
+        auth: {},
+        customCss: null,
+      },
     })
     expect(integrationWebchatService.findByIdForWorkspace).toHaveBeenCalledWith(
       { id: "wc-1", workspaceId: "workspace-1" },

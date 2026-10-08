@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest"
+import { z } from "zod"
 import {
   ACTIVE_CONNECT_SESSION_STATUSES,
   ACTIVE_CONNECTION_STATUSES,
@@ -10,7 +11,11 @@ import {
   INACTIVE_CONNECTION_STATUSES,
   inboxDisconnectReasons,
   TERMINAL_CONNECT_SESSION_STATUSES,
+  zodToConfigFields,
 } from "../src/connection"
+
+const brandColorPattern = /^#[0-9A-Fa-f]{6}$/
+const bigintStringPattern = /^\d+$/
 
 describe("CONNECTION_TO_INBOX_DISCONNECT_REASON", () => {
   test("maps every connection status reason", () => {
@@ -72,5 +77,45 @@ describe("connectSessionNextActionSchema", () => {
     expect(
       connectSessionNextActionSchema.safeParse({ type: "redirect" }).success,
     ).toBe(false)
+  })
+})
+
+describe("zodToConfigFields", () => {
+  test("preserves descriptions, optional defaults, patterns, and bigint-string format", () => {
+    const fields = zodToConfigFields(
+      z.object({
+        name: z.string().describe("Display name."),
+        brandColor: z
+          .string()
+          .regex(brandColorPattern)
+          .default("#007bff")
+          .describe("Brand color."),
+        flowId: z.string().regex(bigintStringPattern).describe("Flow ID."),
+      }),
+    )
+
+    expect(fields).toEqual([
+      {
+        name: "name",
+        type: "string",
+        required: true,
+        description: "Display name.",
+      },
+      {
+        name: "brandColor",
+        type: "string",
+        required: false,
+        pattern: "^#[0-9A-Fa-f]{6}$",
+        description: "Brand color.",
+      },
+      {
+        name: "flowId",
+        type: "string",
+        required: true,
+        format: "bigint-string",
+        pattern: "^\\d+$",
+        description: "Flow ID.",
+      },
+    ])
   })
 })

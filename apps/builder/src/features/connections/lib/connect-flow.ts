@@ -8,7 +8,6 @@ import {
   connectionService,
   isCredentialStrategy,
   type SelfServeSecret,
-  selfServeConnectorFor,
   toChannelType,
 } from "@chatbotx.io/connections"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
@@ -86,13 +85,13 @@ export const startConnect = async (input: {
 
   await assertChannelCreatable(input.workspaceId, input.provider)
 
-  if (selfServeConnectorFor(input.provider)) {
+  if (adapter.provider.strategy === "self_serve" && adapter.connect) {
     const { connection, secret } =
       await connectionService.connectSelfServeChannel({
         workspaceId: input.workspaceId,
         provider: input.provider,
         config: input.config ?? {},
-        actorUserId: input.actor.actorUserId,
+        actor: input.actor,
       })
     return { connection, session: null, secret }
   }

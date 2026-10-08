@@ -1,4 +1,10 @@
 import {
+  apiConnectConfigSchema,
+  integrationApiService,
+  integrationWebchatService,
+  webchatConnectConfigSchema,
+} from "@chatbotx.io/business"
+import {
   CONNECTION_STORE_BINDINGS,
   type ConnectionAdapter,
   type ConnectionRegistry,
@@ -94,6 +100,41 @@ const fromCredentialProvider = <Key extends StoreBindingKey>(
   return { provider, store, storeKey }
 }
 
+const connectWebchat: NonNullable<ConnectionAdapter["connect"]> = async (
+  input,
+) => {
+  const data = webchatConnectConfigSchema.parse(input.config)
+  const actorUserId = input.actor.actorUserId
+  const result = await integrationWebchatService.createWithWorkspace({
+    workspaceId: input.workspaceId,
+    createdBy: actorUserId ?? input.ownerId,
+    ...(actorUserId ? { actorUserId } : {}),
+    workspaceName: data.name,
+    data: {
+      ...data,
+      auth: {},
+      customCss: data.customCss ?? null,
+    },
+  })
+  return { connection: result.connection }
+}
+
+const connectApi: NonNullable<ConnectionAdapter["connect"]> = async (input) => {
+  const { callbackUrl, name } = apiConnectConfigSchema.parse(input.config)
+  const actorUserId = input.actor.actorUserId
+  const result = await integrationApiService.createWithToken({
+    ownerId: input.ownerId,
+    ...(actorUserId ? { actorUserId } : {}),
+    workspaceId: input.workspaceId,
+    name,
+    callbackUrl,
+  })
+  return {
+    connection: result.connection,
+    secret: { kind: "api_channel_token", token: result.token },
+  }
+}
+
 /**
  * Compile-time exhaustive `Record<IntegrationType, ConnectionAdapter | null>`.
  * `null` marks a type with no connect lifecycle yet: `metaCatalog` and
@@ -104,7 +145,10 @@ const fromCredentialProvider = <Key extends StoreBindingKey>(
  */
 export const CONNECTION_REGISTRY: StoreBoundConnectionRegistry = {
   activeCampaign: fromIntegration(integrationActiveCampaign, "activeCampaign"),
-  api: fromIntegration(integrationApi, "api"),
+  api: {
+    ...fromIntegration(integrationApi, "api"),
+    connect: connectApi,
+  },
   chatbotx: fromIntegration(integrationChatbotx, "chatbotx"),
   claude: fromCredentialProvider(claudeConnectionProvider, "claude"),
   deepseek: fromCredentialProvider(deepseekConnectionProvider, "deepseek"),
@@ -156,7 +200,10 @@ export const CONNECTION_REGISTRY: StoreBoundConnectionRegistry = {
   telegram: fromIntegration(integrationTelegram, "telegram"),
   threads: fromIntegration(integrationThreads, "threads", "threads"),
   tiktok: fromIntegration(integrationTiktok, "tiktok", "tiktok"),
-  webchat: fromIntegration(integrationWebchat, "webchat"),
+  webchat: {
+    ...fromIntegration(integrationWebchat, "webchat"),
+    connect: connectWebchat,
+  },
   whatsapp: fromIntegration(integrationWhatsapp, "whatsapp", "whatsapp"),
   zalo: fromIntegration(integrationZalo, "zalo", "zalo"),
 }

@@ -115,13 +115,15 @@ vi.mock("@chatbotx.io/connections", () => ({
     claude: { provider: { strategy: "api_key", kind: "integration" } },
     messenger: { provider: { strategy: "oauth_redirect", kind: "channel" } },
     zalo: { provider: { strategy: "oauth_redirect", kind: "channel" } },
-    webchat: { provider: { strategy: "self_serve", kind: "channel" } },
-    api: { provider: { strategy: "self_serve", kind: "channel" } },
+    webchat: {
+      provider: { strategy: "self_serve", kind: "channel" },
+      connect: vi.fn(),
+    },
+    api: {
+      provider: { strategy: "self_serve", kind: "channel" },
+      connect: vi.fn(),
+    },
   },
-  selfServeConnectorFor: (provider: string) =>
-    provider === "webchat" || provider === "api"
-      ? { multiInstance: true }
-      : undefined,
 }))
 
 class MockChatbotXException extends Error {
@@ -421,7 +423,7 @@ describe("POST /v1/connections", () => {
         workspaceId: "workspace-1",
         provider: "webchat",
         config: { name: "Support", authorizedDomains: ["example.com"] },
-        actorUserId: undefined,
+        actor: { actorTokenId: "token-1" },
       },
     )
     expect(result).toEqual({

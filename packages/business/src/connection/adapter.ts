@@ -23,6 +23,19 @@ export type ConnectionTeardownHook = (input: {
   auth: AuthValue
 }) => Promise<ConnectionTeardownResult>
 
+export type SelfServeSecret = { kind: "api_channel_token"; token: string }
+
+export type SelfServeConnectActor =
+  | { actorUserId: string; actorTokenId?: never }
+  | { actorTokenId: string; actorUserId?: never }
+
+export type SelfServeConnectHandler = (input: {
+  workspaceId: string
+  ownerId: string
+  actor: SelfServeConnectActor
+  config: Record<string, unknown>
+}) => Promise<{ connection: ConnectionModel; secret?: SelfServeSecret }>
+
 /**
  * Everything the Connection domain needs for one `IntegrationType`: the
  * runtime `Integration` wrapper (refresh/disconnect), the provider's
@@ -73,6 +86,12 @@ export type ConnectionAdapter = {
    * `MetaCapiEvent`/tag rows the generic store binding doesn't know about.
    */
   teardown?: ConnectionTeardownHook
+  /**
+   * Direct channel provisioning owned by a self-serve provider. Keeping this
+   * on the registry adapter makes provider metadata and its implementation one
+   * source of truth.
+   */
+  connect?: SelfServeConnectHandler
 }
 
 export type ConnectionRegistry = Record<
