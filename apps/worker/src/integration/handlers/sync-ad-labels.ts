@@ -1,4 +1,6 @@
+import { tagService } from "@chatbotx.io/business"
 import { channelTypes, messageTypes } from "@chatbotx.io/database/partials"
+import { emitTagApplied } from "@chatbotx.io/events"
 import type { ChannelLabel, MessageReferral } from "@chatbotx.io/sdk"
 import { PAID_AD_REFERRAL_SOURCE } from "@chatbotx.io/utils/referral"
 import { logger } from "../../lib/logger"
@@ -12,6 +14,10 @@ import type { ChannelType as LabelChannelType } from "./inbox_labels/types"
  * `receiveMessage` reads the person's labels and stores the ad ones through the
  * same `applyEvent` path the label webhook uses, so a later webhook for the
  * same label is a no-op.
+ *
+ * A referral-only webhook (ad tap on an existing thread, no message) stores no
+ * message, so it gets the same-named tag locally instead; a later label sync
+ * finds that tag by name and attaches the channel's label id to it.
  */
 
 type AdLabelSource = {
@@ -110,6 +116,98 @@ export async function syncAdLabelsIfAdReferred(
         adId: referral?.adId,
       },
       "Ad label sync failed",
+    )
+  }
+}
+
+type TagAdReferralOnlyProps = Pick<
+  SyncAdLabelsProps,
+  "canAutomate" | "inbox" | "integrationRow" | "referral"
+> & {
+  /** True when the delivery carried no message or postback. */
+  isReferralOnly: boolean
+  contactInbox: { id: string; contactId: string }
+}
+
+/** The per-ad tag to apply for an ad referral-only delivery, else null. */
+const resolveReferralOnlyAdTag = (
+  props: TagAdReferralOnlyProps,
+): { source: AdLabelSource; tagName: string } | null => {
+  const source = AD_LABEL_SOURCES[props.inbox.channel]
+  const adId = props.referral?.adId
+  const isAdReferralOnly =
+    props.canAutomate &&
+    props.isReferralOnly &&
+    props.referral?.source === source?.referralSource &&
+    Boolean(props.integrationRow.syncTagEnabledAt)
+  return source && adId && isAdReferralOnly
+    ? { source, tagName: `${source.labelPrefix}${adId}` }
+    : null
+}
+
+/**
+ * Apply the per-ad tag (`ad_id.<AD_ID>`) to the contact of a referral-only
+ * ad delivery. The tag is found by name or created, so repeated referrals for
+ * the same ad reuse one tag and emit "tag applied" only on the first link.
+ * When an earlier label lookup already mapped the tag to this page's label
+ * id, the contact inbox is recorded under that mapping too, so the page's
+ * later "remove label" webhook can find it. Best-effort: a failure is logged
+ * and never fails the message job.
+ */
+export async function tagAdReferralOnlyContact(
+  props: TagAdReferralOnlyProps,
+): Promise<void> {
+  const resolved = resolveReferralOnlyAdTag(props)
+  if (!resolved) {
+    return
+  }
+  const { source, tagName } = resolved
+  const { inbox, integrationRow, contactInbox, referral } = props
+  try {
+    const tagId = await tagService.ensureTagByName({
+      workspaceId: inbox.workspaceId,
+      name: tagName,
+    })
+    if (!tagId) {
+      return
+    }
+    const linked = await tagService.linkTagToContactsReturningNewUnscoped({
+      tagId,
+      contactIds: [contactInbox.contactId],
+    })
+    const tagChannel = await tagService.findTagChannelByTag({
+      workspaceId: inbox.workspaceId,
+      tagId,
+      channelType: source.labelChannel,
+      integrationId: integrationRow.id,
+    })
+    if (tagChannel) {
+      await tagService.recordTagChannelAssignmentsUnscoped({
+        tagId,
+        tagChannelId: tagChannel.id,
+        contactInboxIds: [contactInbox.id],
+      })
+    }
+    // Event last, after every write, as in `assignLabel`: a failed emit must
+    // not leave the channel assignment unrecorded.
+    if (linked.length > 0) {
+      await emitTagApplied(
+        inbox.workspaceId,
+        contactInbox.contactId,
+        tagId,
+        contactInbox.id,
+      )
+    }
+  } catch (error) {
+    logger.warn(
+      {
+        err: error,
+        workspaceId: inbox.workspaceId,
+        integrationId: integrationRow.id,
+        contactInboxId: contactInbox.id,
+        adId: referral?.adId,
+      },
+      "Ad referral tag failed",
     )
   }
 }

@@ -1366,6 +1366,25 @@ class TagService extends BaseService {
   }
 
   /**
+   * Find a tag's channel mapping on one integration (the
+   * `TagChannel_tag_integration_key` unique key), so a caller that already
+   * holds the tag can attach a contact to the channel's label id.
+   */
+  async findTagChannelByTag(props: {
+    workspaceId: string
+    tagId: string
+    channelType: TagChannelModel["channelType"]
+    integrationId: string
+    tx?: DatabaseClient
+  }): Promise<Pick<TagChannelModel, "id"> | undefined> {
+    const { workspaceId, tagId, channelType, integrationId, tx = db } = props
+    return await tx.query.tagChannelModel.findFirst({
+      where: { workspaceId, tagId, channelType, integrationId },
+      columns: { id: true },
+    })
+  }
+
+  /**
    * Get-or-create a tag by name — moved VERBATIM from `inbox_labels/sync.ts`
    * `ensureTag`, including the three-step race handling (find → insert with
    * the partial-unique `onConflictDoNothing` → read-back retry on a lost

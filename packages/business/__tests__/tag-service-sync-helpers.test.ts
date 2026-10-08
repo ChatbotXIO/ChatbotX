@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ---------------------------------------------------------------------------
 
 const findFirstTag = vi.fn()
+const findFirstTagChannel = vi.fn()
 const findManyTag = vi.fn()
 const insertValues = vi.fn()
 const insertReturning = vi.fn()
@@ -20,6 +21,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
       tagModel: {
         findFirst: (...args: unknown[]) => findFirstTag(...args),
         findMany: (...args: unknown[]) => findManyTag(...args),
+      },
+      tagChannelModel: {
+        findFirst: (...args: unknown[]) => findFirstTagChannel(...args),
       },
     },
     insert: () => ({
@@ -257,5 +261,42 @@ describe("detachFromContactForTrigger", () => {
     expect(flat).toContain("ContactToTag.tagId")
     expect(flat).toContain('"t-1"')
     expect(flat).toContain('"t-2"')
+  })
+})
+
+describe("findTagChannelByTag", () => {
+  test("looks the mapping up by the tag/integration unique key, scoped to the workspace", async () => {
+    findFirstTagChannel.mockResolvedValue({ id: "tc-1" })
+
+    const result = await tagService.findTagChannelByTag({
+      workspaceId: "ws-1",
+      tagId: "tag-1",
+      channelType: "messenger",
+      integrationId: "intg-1",
+    })
+
+    expect(findFirstTagChannel).toHaveBeenCalledWith({
+      where: {
+        workspaceId: "ws-1",
+        tagId: "tag-1",
+        channelType: "messenger",
+        integrationId: "intg-1",
+      },
+      columns: { id: true },
+    })
+    expect(result).toEqual({ id: "tc-1" })
+  })
+
+  test("returns undefined when the tag has no mapping on this integration", async () => {
+    findFirstTagChannel.mockResolvedValue(undefined)
+
+    await expect(
+      tagService.findTagChannelByTag({
+        workspaceId: "ws-1",
+        tagId: "tag-1",
+        channelType: "messenger",
+        integrationId: "intg-1",
+      }),
+    ).resolves.toBeUndefined()
   })
 })

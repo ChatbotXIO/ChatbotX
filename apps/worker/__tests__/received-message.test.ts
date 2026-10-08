@@ -563,9 +563,12 @@ vi.mock("../src/integration/handlers/comment-media-attachment", () => ({
 }))
 
 const mockSyncAdLabelsIfAdReferred = vi.fn().mockResolvedValue(undefined)
+const mockTagAdReferralOnlyContact = vi.fn().mockResolvedValue(undefined)
 vi.mock("../src/integration/handlers/sync-ad-labels", () => ({
   syncAdLabelsIfAdReferred: (...args: unknown[]) =>
     mockSyncAdLabelsIfAdReferred(...args),
+  tagAdReferralOnlyContact: (...args: unknown[]) =>
+    mockTagAdReferralOnlyContact(...args),
 }))
 
 const mockProcessCommentAutomation = vi.fn().mockResolvedValue(undefined)
@@ -2794,6 +2797,34 @@ describe("receiveMessage — ad label sync (Meta auto labels on CTM referrals)",
 
     expect(mockSyncAdLabelsIfAdReferred).toHaveBeenCalledWith(
       expect.objectContaining({ newMessageType: undefined }),
+    )
+  })
+
+  test("tags the contact with the ad for the referral-only webhook", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed({ message: null }))
+
+    await receiveMessage(baseProps)
+
+    expect(mockTagAdReferralOnlyContact).toHaveBeenCalledWith({
+      canAutomate: true,
+      inbox: fakeInbox,
+      integrationRow: fakeIntegrationRow,
+      referral: adsReferral,
+      isReferralOnly: true,
+      contactInbox: {
+        id: fakeContactInbox.id,
+        contactId: fakeContactInbox.contactId,
+      },
+    })
+  })
+
+  test("marks a delivery with a message as not referral-only", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed())
+
+    await receiveMessage(baseProps)
+
+    expect(mockTagAdReferralOnlyContact).toHaveBeenCalledWith(
+      expect.objectContaining({ isReferralOnly: false }),
     )
   })
 

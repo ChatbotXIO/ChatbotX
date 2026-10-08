@@ -131,7 +131,10 @@ import {
   refreshExistingContactProfile,
 } from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
-import { syncAdLabelsIfAdReferred } from "./sync-ad-labels"
+import {
+  syncAdLabelsIfAdReferred,
+  tagAdReferralOnlyContact,
+} from "./sync-ad-labels"
 import { recordInboundThreadControl } from "./thread-control-inbound"
 import { resolveTiktokCommenterIdentity } from "./tiktok-comment-identity"
 
@@ -727,6 +730,17 @@ export const receiveMessage = async (
       },
     })
   }
+
+  // A referral-only ad delivery stores no message, so the label lookup below
+  // skips it; tag the contact with the ad locally instead.
+  await tagAdReferralOnlyContact({
+    canAutomate,
+    inbox,
+    integrationRow,
+    referral: parsedMessage.referral,
+    isReferralOnly: !incomingMessage,
+    contactInbox: { id: contactInbox.id, contactId: contactInbox.contactId },
+  })
 
   // Per-ad labels some channels auto-assign never arrive by webhook, so a newly
   // stored ad-referred message reads them once the message is fully handled.
