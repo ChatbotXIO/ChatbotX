@@ -19,6 +19,7 @@ import {
 import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 import { toImageSrc } from "../lib/image-src"
+import { ChoiceControl } from "./choice-control"
 import { DropdownField } from "./dropdown-field"
 import { FileUploadField } from "./file-upload-field"
 import { ImageCarouselView } from "./image-carousel-view"
@@ -236,12 +237,12 @@ export function NodeView({
         >
           <div className="flex flex-col divide-y divide-[#e9edef]">
             {options.map((option) => (
+              // biome-ignore lint/a11y/noLabelWithoutControl: ChoiceControl renders the input inside the label
               <label className="flex items-center gap-3 py-2" key={option.id}>
                 <OptionImage option={option} />
                 <OptionText option={option} />
-                <input
+                <ChoiceControl
                   checked={interactive && value === option.id}
-                  className="size-5 accent-[#008069]"
                   disabled={disabled || option.enabled === false}
                   name={readString(props.name)}
                   onChange={() => onChange?.(option.id)}
@@ -262,12 +263,12 @@ export function NodeView({
         >
           <div className="flex flex-col divide-y divide-[#e9edef]">
             {options.map((option) => (
+              // biome-ignore lint/a11y/noLabelWithoutControl: ChoiceControl renders the input inside the label
               <label className="flex items-center gap-3 py-2" key={option.id}>
                 <OptionImage option={option} />
                 <OptionText option={option} />
-                <input
+                <ChoiceControl
                   checked={interactive && selected.includes(option.id)}
-                  className="size-5 accent-[#008069]"
                   disabled={disabled || option.enabled === false}
                   onChange={(event) =>
                     onChange?.(
@@ -384,10 +385,11 @@ export function NodeView({
       const action = readAction(props["on-click-action"])
       return (
         <div className="flex flex-col gap-1">
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: ChoiceControl renders the input inside the label */}
           <label className="flex items-start gap-3">
-            <input
+            <ChoiceControl
               checked={interactive && value === true}
-              className="mt-0.5 size-5 accent-[#008069]"
+              className="mt-0.5"
               disabled={disabled}
               onChange={(event) => onChange?.(event.target.checked)}
               type="checkbox"
