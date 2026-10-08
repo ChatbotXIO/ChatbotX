@@ -9,9 +9,11 @@ const handleRequest = vi.fn()
 const logWebhookRequestBody = vi.fn()
 const loggerWarn = vi.fn()
 
-vi.mock("@/features/integration-whatsapp/queries", () => ({
-  findIntegrationWhatsappById,
-  markWhatsappWebhookVerified,
+vi.mock("@chatbotx.io/business", () => ({
+  integrationWhatsappService: {
+    findByIdUnscoped: findIntegrationWhatsappById,
+    markWebhookVerified: markWhatsappWebhookVerified,
+  },
 }))
 
 vi.mock("@/integration", () => ({
