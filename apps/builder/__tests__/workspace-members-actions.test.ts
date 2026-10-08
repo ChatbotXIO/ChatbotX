@@ -4,13 +4,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockAuditRecord,
-  mockDbInsert,
   mockFindOrFail,
   mockFindByIdOrFail,
   mockFindNameAndEmail,
   mockGetCurrentUserAndTargetWorkspace,
-  mockInsertReturning,
-  mockInsertValues,
+  mockInvitationCreate,
   mockInvalidateCacheByTags,
   mockIsCommunity,
   mockQuotaHasReachedLimit,
@@ -18,29 +16,21 @@ const {
   mockUpdateMember,
   mockWorkspaceFindById,
   mockWorkspaceMemberServiceDelete,
-} = vi.hoisted(() => {
-  const mockInsertReturning = vi.fn()
-  const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
-  const mockDbInsert = vi.fn(() => ({ values: mockInsertValues }))
-
-  return {
-    mockAuditRecord: vi.fn(),
-    mockDbInsert,
-    mockFindOrFail: vi.fn(),
-    mockFindByIdOrFail: vi.fn(),
-    mockFindNameAndEmail: vi.fn(),
-    mockGetCurrentUserAndTargetWorkspace: vi.fn(),
-    mockInsertReturning,
-    mockWorkspaceMemberServiceDelete: vi.fn(),
-    mockInsertValues,
-    mockInvalidateCacheByTags: vi.fn(),
-    mockIsCommunity: vi.fn(),
-    mockQuotaHasReachedLimit: vi.fn(),
-    mockRevokeWorkspaceMemberConnections: vi.fn(),
-    mockUpdateMember: vi.fn(),
-    mockWorkspaceFindById: vi.fn(),
-  }
-})
+} = vi.hoisted(() => ({
+  mockAuditRecord: vi.fn(),
+  mockFindOrFail: vi.fn(),
+  mockFindByIdOrFail: vi.fn(),
+  mockFindNameAndEmail: vi.fn(),
+  mockGetCurrentUserAndTargetWorkspace: vi.fn(),
+  mockInvitationCreate: vi.fn(),
+  mockWorkspaceMemberServiceDelete: vi.fn(),
+  mockInvalidateCacheByTags: vi.fn(),
+  mockIsCommunity: vi.fn(),
+  mockQuotaHasReachedLimit: vi.fn(),
+  mockRevokeWorkspaceMemberConnections: vi.fn(),
+  mockUpdateMember: vi.fn(),
+  mockWorkspaceFindById: vi.fn(),
+}))
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -64,6 +54,9 @@ vi.mock("@/lib/auth/utils", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   workspaceMemberCacheTag: (userId: string) =>
     `users:${userId}:workspace-members`,
+  invitationService: {
+    create: mockInvitationCreate,
+  },
   quotaEnforcementService: {
     hasReachedLimit: mockQuotaHasReachedLimit,
   },
@@ -82,9 +75,6 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    insert: mockDbInsert,
-  },
   eq: (col: unknown, val: unknown) => ({ eq: [col, val] }),
   findOrFail: mockFindOrFail,
 }))
@@ -185,7 +175,7 @@ function updateActionCtx(permissions = granularPermissions) {
 
 function getInsertedValues() {
   return (
-    mockInsertValues.mock.calls as unknown as [[{ permissions: unknown }]]
+    mockInvitationCreate.mock.calls as unknown as [[{ permissions: unknown }]]
   )[0][0]
 }
 
@@ -218,9 +208,10 @@ describe("inviteWorkspaceMemberAction", () => {
       ownerId: "owner-1",
     })
     mockQuotaHasReachedLimit.mockResolvedValue(false)
-    mockInsertReturning.mockResolvedValue([
-      { id: "invitation-id", code: "invite-code" },
-    ])
+    mockInvitationCreate.mockResolvedValue({
+      id: "invitation-id",
+      code: "invite-code",
+    })
     mockIsCommunity.mockReturnValue(false)
   })
 
@@ -236,7 +227,7 @@ describe("inviteWorkspaceMemberAction", () => {
     )
 
     expect(mockQuotaHasReachedLimit).not.toHaveBeenCalled()
-    expect(mockDbInsert).not.toHaveBeenCalled()
+    expect(mockInvitationCreate).not.toHaveBeenCalled()
   })
 
   test("forces full super-admin permissions for community invitations", async () => {

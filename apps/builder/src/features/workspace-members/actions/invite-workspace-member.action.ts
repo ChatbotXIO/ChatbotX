@@ -1,15 +1,12 @@
 "use server"
 
 import {
+  invitationService,
   quotaEnforcementService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db } from "@chatbotx.io/database/client"
-import { invitationModel } from "@chatbotx.io/database/schema"
-import { createId, SymbolicSnowflakeIDs } from "@chatbotx.io/utils"
-import { addDays } from "date-fns"
 import { isCommunity } from "@/env"
 import { workspaceIdrequestParams } from "@/features/common/schema"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
@@ -58,18 +55,11 @@ export const inviteWorkspaceMemberAction = workspaceActionClient
       ? getSuperAdminPermissions()
       : normalizeContactsPermissions(parsedInput.permissions)
 
-    const invitation = await db
-      .insert(invitationModel)
-      .values({
-        id: createId(),
-        code: SymbolicSnowflakeIDs.generate(),
-        permissions,
-        expiresAt: addDays(new Date(), 1),
-        workspaceId,
-        invitedBy: ctx.user.id,
-      })
-      .returning()
-      .then((result) => result[0])
+    const invitation = await invitationService.create({
+      workspaceId,
+      invitedBy: ctx.user.id,
+      permissions,
+    })
 
     // No email/name is captured at invite time (invite is a shareable
     // code/link, not addressed to a specific person), so the detail can only
