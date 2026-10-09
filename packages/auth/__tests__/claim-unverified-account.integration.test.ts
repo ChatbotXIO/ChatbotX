@@ -212,24 +212,35 @@ describe("claimUnverifiedAccountBeforeLink through the real internal adapter", (
     expect(store.account.map((a) => a.providerId)).toEqual(["credential"])
   })
 
-  test("linking Facebook into the same placeholder is refused and writes nothing", async () => {
+  test("linking Facebook into the placeholder claims it: credential gone, sessions gone", async () => {
     const { internal, store } = await setup({
       user: [placeholder],
       account: [credentialRow],
+      session: [sessionRow("s1")],
     })
-    await expect(internal.linkAccount(social("facebook"))).rejects.toThrow(
+    await internal.linkAccount(social("facebook"))
+    expect(store.account.map((a) => a.providerId)).toEqual(["facebook"])
+    expect(store.session).toHaveLength(0)
+  })
+
+  test("linking Facebook into an old placeholder with zero accounts claims it", async () => {
+    const { internal, store } = await setup({ user: [placeholder] })
+    await internal.linkAccount(social("facebook"))
+    expect(store.account.map((a) => a.providerId)).toEqual(["facebook"])
+    expect(store.user).toHaveLength(1)
+  })
+
+  test("linking an unknown provider into the placeholder is refused and writes nothing", async () => {
+    const { internal, store } = await setup({
+      user: [placeholder],
+      account: [credentialRow],
+      session: [sessionRow("s1")],
+    })
+    await expect(internal.linkAccount(social("github"))).rejects.toThrow(
       EMAIL_ATTESTING_ERROR,
     )
     expect(store.account.map((a) => a.providerId)).toEqual(["credential"])
-  })
-
-  test("linking Facebook into an old placeholder with zero accounts is refused", async () => {
-    const { internal, store } = await setup({ user: [placeholder] })
-    await expect(internal.linkAccount(social("facebook"))).rejects.toThrow(
-      EMAIL_ATTESTING_ERROR,
-    )
-    expect(store.account).toHaveLength(0)
-    expect(store.user).toHaveLength(1)
+    expect(store.session).toHaveLength(1)
   })
 
   test("a brand-new unverified Facebook sign-up still creates its user and account", async () => {
