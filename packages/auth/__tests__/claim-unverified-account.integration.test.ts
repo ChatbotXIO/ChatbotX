@@ -81,6 +81,7 @@ type Row = Record<string, unknown>
 type BeforeHook = (account: Row, context: unknown) => Promise<unknown>
 
 const now = () => new Date()
+const TEN_MINUTES_MS = 600_000
 const EMAIL_ATTESTING_ERROR = /email-attesting/
 
 /**
@@ -90,14 +91,16 @@ const EMAIL_ATTESTING_ERROR = /email-attesting/
  * endpoint context (normally supplied by an HTTP request's AsyncLocalStorage),
  * which we hand the hook so it can reach the same internal adapter.
  */
-const setup = async (seed: { user?: Row[]; account?: Row[] } = {}) => {
+const setup = async (
+  seed: { user?: Row[]; account?: Row[]; session?: Row[] } = {},
+) => {
   const { createAuth } = await import("../src/server")
   createAuth({})
   const config = betterAuthMock.mock.calls.at(-1)?.[0] as BetterAuthOptions
   const store = {
     user: seed.user ?? [],
     account: seed.account ?? [],
-    session: [] as Row[],
+    session: seed.session ?? [],
     verification: [] as Row[],
   }
   const adapter = memoryAdapter(store)(config as never)
@@ -115,7 +118,7 @@ const setup = async (seed: { user?: Row[]; account?: Row[] } = {}) => {
             create: {
               before: (account: Row) =>
                 realBefore(account, {
-                  context: { internalAdapter: holder.internal },
+                  context: { internalAdapter: holder.internal, adapter },
                 }),
             },
           },
@@ -132,9 +135,17 @@ const placeholder = {
   email: "victim@example.test",
   name: "victim",
   emailVerified: false,
-  createdAt: now(),
+  createdAt: new Date(Date.now() - TEN_MINUTES_MS),
   updatedAt: now(),
 }
+const sessionRow = (id: string) => ({
+  id,
+  userId: "u1",
+  token: `tok-${id}`,
+  expiresAt: new Date(Date.now() + TEN_MINUTES_MS),
+  createdAt: now(),
+  updatedAt: now(),
+})
 const credentialRow = {
   id: "acc-pwd",
   userId: "u1",
@@ -176,6 +187,18 @@ describe("claimUnverifiedAccountBeforeLink through the real internal adapter", (
     expect(store.account.map((a) => a.providerId)).toEqual(["google"])
   })
 
+  test("a Google claim revokes every session of the placeholder", async () => {
+    const { internal, store } = await setup({
+      user: [placeholder],
+      account: [credentialRow],
+      session: [sessionRow("s1"), sessionRow("s2")],
+    })
+    await internal.linkAccount(
+      social("google", idTokenWith({ email_verified: true })),
+    )
+    expect(store.session).toHaveLength(0)
+  })
+
   test("linking Google whose token is not email_verified is refused and writes nothing", async () => {
     const { internal, store } = await setup({
       user: [placeholder],
@@ -198,6 +221,15 @@ describe("claimUnverifiedAccountBeforeLink through the real internal adapter", (
       EMAIL_ATTESTING_ERROR,
     )
     expect(store.account.map((a) => a.providerId)).toEqual(["credential"])
+  })
+
+  test("linking Facebook into an old placeholder with zero accounts is refused", async () => {
+    const { internal, store } = await setup({ user: [placeholder] })
+    await expect(internal.linkAccount(social("facebook"))).rejects.toThrow(
+      EMAIL_ATTESTING_ERROR,
+    )
+    expect(store.account).toHaveLength(0)
+    expect(store.user).toHaveLength(1)
   })
 
   test("a brand-new unverified Facebook sign-up still creates its user and account", async () => {

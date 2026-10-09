@@ -20,9 +20,31 @@ const CREDENTIAL_PROVIDER = "credential"
 const EMAIL_ATTESTING_PROVIDERS: ReadonlySet<string> = new Set(["google"])
 
 /**
- * Reads the `email_verified` claim from an id token (a JWT string). better-auth
- * has already verified the token's signature before the hook runs; this only
- * reads a claim, so it decodes the payload locally. Anything other than an
+ * `createOAuthUser` inserts the user and its first account in the same request,
+ * so a user created more than a minute ago with no accounts is a placeholder
+ * (for example one whose accounts a concurrent claim just deleted), not a
+ * sign-up.
+ */
+const FRESH_SIGN_UP_WINDOW_MS = 60_000
+
+/** Fails closed: a missing or unparseable `createdAt` is never fresh. */
+const isFreshSignUp = (createdAt: unknown): boolean => {
+  if (!(typeof createdAt === "string" || createdAt instanceof Date)) {
+    return false
+  }
+  const created = new Date(createdAt).getTime()
+  return (
+    Number.isFinite(created) && Date.now() - created <= FRESH_SIGN_UP_WINDOW_MS
+  )
+}
+
+/**
+ * Reads the `email_verified` claim from an id token (a JWT string). on the
+ * redirect/code flow better-auth received the id_token straight from the
+ * provider's token endpoint over TLS (and only decodes it); on the
+ * client-supplied id-token sign-in path it verifies the signature. Either way
+ * the hook reads the same token better-auth used for the user's profile. This
+ * only reads a claim, so it decodes the payload locally. Anything other than an
  * exact `email_verified === true` (missing or malformed token, missing or
  * false claim) is treated as not attested.
  */
@@ -60,16 +82,17 @@ const isEmailAttestedByIdToken = (idToken: unknown): boolean => {
  * With `requireLocalEmailVerified: false` a trusted provider may link into an
  * unverified local user (a placeholder that never proved the mailbox), but only
  * an email-attesting provider whose id token asserts `email_verified: true` may
- * claim it (better-auth has already verified the token signature; the hook only
- * reads the claim). The attesting sign-in is the first
+ * claim it (the hook only reads the claim). The attesting sign-in is the first
  * proof of ownership, so every earlier login method (password or social) and
  * every session on that placeholder is untrusted and removed before the link —
  * otherwise a pre-registered login would keep working once the real owner's
  * sign-in marks the user verified.
  *
- * A user with no accounts yet is a brand-new OAuth sign-up (`createOAuthUser`
- * inserts the user, then its first account) or a legacy row with nothing to
- * revoke, so it is left alone.
+ * A user with no accounts that was created within `FRESH_SIGN_UP_WINDOW_MS` is a
+ * brand-new OAuth sign-up and is left alone. An older user with no accounts is a
+ * placeholder (possibly mid-claim by a concurrent request) and goes through the
+ * normal checks: a non-attesting provider is refused, an attesting one still
+ * revokes sessions.
  *
  * Fails closed: no endpoint context, a missing user, a non-attesting provider,
  * a token without `email_verified: true` or a cleanup failure all throw and the
@@ -96,7 +119,7 @@ export const claimUnverifiedAccountBeforeLink: AccountCreateBeforeHook = async (
   }
 
   const others = await internalAdapter.findAccounts(userId)
-  if (others.length === 0) {
+  if (others.length === 0 && isFreshSignUp(user.createdAt)) {
     return
   }
   if (!EMAIL_ATTESTING_PROVIDERS.has(account.providerId)) {
@@ -112,17 +135,20 @@ export const claimUnverifiedAccountBeforeLink: AccountCreateBeforeHook = async (
     await internalAdapter.deleteAccount(row.id)
   }
 
-  const sessions = await internalAdapter.listSessions(userId)
-  if (sessions.length > 0) {
-    await internalAdapter.deleteSessions(sessions.map((s) => s.token))
-  }
+  // This repo configures no `secondaryStorage`, so database rows are the only
+  // session store. `internalAdapter.listSessions` is capped by the core
+  // adapter's default findMany limit, so delete by userId on the raw adapter.
+  const revokedSessions = await context.context.adapter.deleteMany({
+    model: "session",
+    where: [{ field: "userId", value: userId }],
+  })
 
   logger.info(
     {
       userId,
       providerId: account.providerId,
       removedAccounts: others.length,
-      revokedSessions: sessions.length,
+      revokedSessions,
     },
     "Unverified placeholder account claimed by a trusted social sign-in",
   )
