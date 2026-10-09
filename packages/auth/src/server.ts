@@ -240,6 +240,19 @@ export function createTenantScopedAdapter(
   return (options) => wrapAdapter(base(options))
 }
 
+/**
+ * Repo ids are 64-bit snowflakes (`createId`) that passed 2^53 in 2021. Never
+ * use `generateId: "serial"` here: that flag makes better-auth's adapter
+ * factory wrap every id and id reference (`Account.userId`, `Session.userId`)
+ * in `Number()`, which rounds every odd id to its even neighbour — sessions and
+ * linked accounts then land on the wrong user, or fail the FK when the
+ * neighbour does not exist. A function generator keeps ids as the strings
+ * `bigintAsString` already models.
+ */
+export const AUTH_DATABASE_OPTIONS = {
+  generateId: () => createId(),
+} as const
+
 /** A social provider better-auth can sign users in with (white-label per tenant). */
 export const SOCIAL_PROVIDERS = ["google", "facebook"] as const
 export type SocialProvider = (typeof SOCIAL_PROVIDERS)[number]
@@ -727,9 +740,7 @@ export function createAuth(config: AuthConfig) {
       },
     },
     advanced: {
-      database: {
-        generateId: "serial",
-      },
+      database: AUTH_DATABASE_OPTIONS,
     },
     trustedOrigins: async () => {
       // better-auth resolves the function form of `trustedOrigins` once at
