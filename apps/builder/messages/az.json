@@ -4508,7 +4508,14 @@
     "signUpTitle": "{name} üçün qeydiyyatdan keç",
     "changePasswordTitle": "Parolunu dəyiş",
     "changePasswordDescription": "Davam etməzdən əvvəl yeni parol təyin edin.",
-    "passwordChangeSuccess": "Parol dəyişdirildi"
+    "passwordChangeSuccess": "Parol dəyişdirildi",
+    "oauthError": {
+      "accountNotLinked": "Bu e-poçtla hesab artıq mövcuddur və əlaqələndirilə bilmədi. Əvvəl necə daxil olmusunuzsa, o üsulla daxil olun və ya dəstəklə əlaqə saxlayın.",
+      "unableToLinkAccount": "Bu girişi hesabınızla əlaqələndirə bilmədik. Zəhmət olmasa yenidən cəhd edin və ya dəstəklə əlaqə saxlayın.",
+      "sessionExpired": "Giriş cəhdinin vaxtı bitdi. Zəhmət olmasa yenidən cəhd edin.",
+      "accessDenied": "Giriş ləğv edildi.",
+      "generic": "Giriş uğursuz oldu. Zəhmət olmasa yenidən cəhd edin."
+    }
   },
   "emailTopics": {
     "title": "E-poçt mövzuları"

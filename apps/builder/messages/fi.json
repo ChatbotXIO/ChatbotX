@@ -3825,7 +3825,14 @@
     "signUpTitle": "Rekisteröidy palveluun {name}",
     "changePasswordTitle": "Vaihda salasanasi",
     "changePasswordDescription": "Aseta uusi salasana ennen jatkamista.",
-    "passwordChangeSuccess": "Salasana vaihdettu"
+    "passwordChangeSuccess": "Salasana vaihdettu",
+    "oauthError": {
+      "accountNotLinked": "Tällä sähköpostiosoitteella on jo tili, eikä sitä voitu yhdistää. Kirjaudu sisään samalla tavalla kuin aiemmin tai ota yhteyttä tukeen.",
+      "unableToLinkAccount": "Tätä kirjautumista ei voitu yhdistää tiliisi. Yritä uudelleen tai ota yhteyttä tukeen.",
+      "sessionExpired": "Kirjautumisyritys vanheni. Yritä uudelleen.",
+      "accessDenied": "Kirjautuminen peruutettiin.",
+      "generic": "Kirjautuminen epäonnistui. Yritä uudelleen."
+    }
   },
   "emailTopics": {
     "title": "Sähköpostiaiheet"

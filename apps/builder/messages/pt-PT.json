@@ -3825,7 +3825,14 @@
     "signUpTitle": "Registar-se em {name}",
     "changePasswordTitle": "Alterar a palavra-passe",
     "changePasswordDescription": "Defina uma nova palavra-passe antes de continuar.",
-    "passwordChangeSuccess": "Palavra-passe alterada"
+    "passwordChangeSuccess": "Palavra-passe alterada",
+    "oauthError": {
+      "accountNotLinked": "Já existe uma conta com este e-mail e não foi possível associá-la. Inicie sessão da mesma forma que antes ou contacte o suporte.",
+      "unableToLinkAccount": "Não foi possível associar este início de sessão à sua conta. Tente novamente ou contacte o suporte.",
+      "sessionExpired": "A tentativa de início de sessão expirou. Tente novamente.",
+      "accessDenied": "O início de sessão foi cancelado.",
+      "generic": "Falha ao iniciar sessão. Tente novamente."
+    }
   },
   "emailTopics": {
     "title": "Tópicos de e-mail"

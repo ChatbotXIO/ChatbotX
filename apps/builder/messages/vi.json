@@ -3867,7 +3867,14 @@
     "signUpTitle": "Đăng ký vào {name}",
     "changePasswordTitle": "Đổi mật khẩu",
     "changePasswordDescription": "Đặt mật khẩu mới trước khi tiếp tục.",
-    "passwordChangeSuccess": "Đã đổi mật khẩu"
+    "passwordChangeSuccess": "Đã đổi mật khẩu",
+    "oauthError": {
+      "accountNotLinked": "Đã có tài khoản dùng email này và không thể liên kết. Hãy đăng nhập theo cách bạn đã dùng trước đây, hoặc liên hệ hỗ trợ.",
+      "unableToLinkAccount": "Không thể liên kết lần đăng nhập này với tài khoản của bạn. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
+      "sessionExpired": "Phiên đăng nhập đã hết hạn. Vui lòng thử lại.",
+      "accessDenied": "Bạn đã huỷ đăng nhập.",
+      "generic": "Đăng nhập thất bại. Vui lòng thử lại."
+    }
   },
   "emailTopics": {
     "title": "Chủ đề Email"

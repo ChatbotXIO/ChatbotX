@@ -3825,7 +3825,14 @@
     "signUpTitle": "Sign up un {name}",
     "changePasswordTitle": "Change tu password",
     "changePasswordDescription": "Establecer un nuevo password antes continuing.",
-    "passwordChangeSuccess": "Contraseña cambiada"
+    "passwordChangeSuccess": "Contraseña cambiada",
+    "oauthError": {
+      "accountNotLinked": "Ya existe una cuenta con este correo electrónico y no se pudo vincular. Inicia sesión como lo hacías antes o contacta con soporte.",
+      "unableToLinkAccount": "No pudimos vincular este inicio de sesión a tu cuenta. Inténtalo de nuevo o contacta con soporte.",
+      "sessionExpired": "El intento de inicio de sesión ha caducado. Inténtalo de nuevo.",
+      "accessDenied": "Se canceló el inicio de sesión.",
+      "generic": "Error al iniciar sesión. Inténtalo de nuevo."
+    }
   },
   "emailTopics": {
     "title": "Correo Topics"

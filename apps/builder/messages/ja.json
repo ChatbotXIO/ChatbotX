@@ -3804,7 +3804,14 @@
     "signUpTitle": "{name}に新規登録",
     "changePasswordTitle": "パスワードを変更",
     "changePasswordDescription": "続行する前に新しいパスワードを設定してください。",
-    "passwordChangeSuccess": "パスワードを変更しました"
+    "passwordChangeSuccess": "パスワードを変更しました",
+    "oauthError": {
+      "accountNotLinked": "このメールアドレスのアカウントは既に存在し、連携できませんでした。以前と同じ方法でログインするか、サポートにお問い合わせください。",
+      "unableToLinkAccount": "このログインをアカウントに連携できませんでした。もう一度お試しいただくか、サポートにお問い合わせください。",
+      "sessionExpired": "ログインの試行の有効期限が切れました。もう一度お試しください。",
+      "accessDenied": "ログインがキャンセルされました。",
+      "generic": "ログインに失敗しました。もう一度お試しください。"
+    }
   },
   "emailTopics": {
     "title": "メールトピック"

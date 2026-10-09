@@ -3825,7 +3825,14 @@
     "signUpTitle": "Înregistrează-te la {name}",
     "changePasswordTitle": "Schimbă-ți parola",
     "changePasswordDescription": "Setează o parolă nouă înainte de a continua.",
-    "passwordChangeSuccess": "Parolă schimbată"
+    "passwordChangeSuccess": "Parolă schimbată",
+    "oauthError": {
+      "accountNotLinked": "Există deja un cont cu acest e-mail și nu a putut fi asociat. Autentifică-te la fel ca înainte sau contactează asistența.",
+      "unableToLinkAccount": "Nu am putut asocia această autentificare cu contul tău. Încearcă din nou sau contactează asistența.",
+      "sessionExpired": "Încercarea de autentificare a expirat. Încearcă din nou.",
+      "accessDenied": "Autentificarea a fost anulată.",
+      "generic": "Autentificarea a eșuat. Încearcă din nou."
+    }
   },
   "emailTopics": {
     "title": "Subiecte de e-mail"

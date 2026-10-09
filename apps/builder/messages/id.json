@@ -3825,7 +3825,14 @@
     "signUpTitle": "Daftar ke {name}",
     "changePasswordTitle": "Ubah kata sandi Anda",
     "changePasswordDescription": "Tetapkan kata sandi baru sebelum melanjutkan.",
-    "passwordChangeSuccess": "Kata sandi diubah"
+    "passwordChangeSuccess": "Kata sandi diubah",
+    "oauthError": {
+      "accountNotLinked": "Akun dengan email ini sudah ada dan tidak dapat ditautkan. Masuk dengan cara yang Anda gunakan sebelumnya, atau hubungi dukungan.",
+      "unableToLinkAccount": "Kami tidak dapat menautkan login ini ke akun Anda. Silakan coba lagi atau hubungi dukungan.",
+      "sessionExpired": "Percobaan login telah kedaluwarsa. Silakan coba lagi.",
+      "accessDenied": "Login dibatalkan.",
+      "generic": "Login gagal. Silakan coba lagi."
+    }
   },
   "emailTopics": {
     "title": "Topik Email"

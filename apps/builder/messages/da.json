@@ -3825,7 +3825,14 @@
     "signUpTitle": "Log up til {name}",
     "changePasswordTitle": "Change din adgangskode",
     "changePasswordDescription": "Set a ny adgangskode før continuing.",
-    "passwordChangeSuccess": "Adgangskode changed"
+    "passwordChangeSuccess": "Adgangskode changed",
+    "oauthError": {
+      "accountNotLinked": "Der findes allerede en konto med denne e-mailadresse, og den kunne ikke kobles. Log ind på samme måde som tidligere, eller kontakt support.",
+      "unableToLinkAccount": "Vi kunne ikke koble dette login til din konto. Prøv igen, eller kontakt support.",
+      "sessionExpired": "Loginforsøget er udløbet. Prøv igen.",
+      "accessDenied": "Login blev annulleret.",
+      "generic": "Login mislykkedes. Prøv igen."
+    }
   },
   "emailTopics": {
     "title": "E-mail Topics"

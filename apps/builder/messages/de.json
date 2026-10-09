@@ -3825,7 +3825,14 @@
     "signUpTitle": "Bei {name} registrieren",
     "changePasswordTitle": "Passwort ändern",
     "changePasswordDescription": "Legen Sie ein neues Passwort fest, bevor Sie fortfahren.",
-    "passwordChangeSuccess": "Passwort geändert"
+    "passwordChangeSuccess": "Passwort geändert",
+    "oauthError": {
+      "accountNotLinked": "Ein Konto mit dieser E-Mail-Adresse existiert bereits und konnte nicht verknüpft werden. Melde dich wie zuvor an oder kontaktiere den Support.",
+      "unableToLinkAccount": "Wir konnten diese Anmeldung nicht mit deinem Konto verknüpfen. Bitte versuche es erneut oder kontaktiere den Support.",
+      "sessionExpired": "Der Anmeldeversuch ist abgelaufen. Bitte versuche es erneut.",
+      "accessDenied": "Die Anmeldung wurde abgebrochen.",
+      "generic": "Anmeldung fehlgeschlagen. Bitte versuche es erneut."
+    }
   },
   "emailTopics": {
     "title": "E-Mail-Themen"

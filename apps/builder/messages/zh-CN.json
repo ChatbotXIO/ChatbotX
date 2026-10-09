@@ -607,7 +607,14 @@
     "signUpSuccess": "注册成功。请检查您的电子邮件以进行验证。",
     "signUpTitle": "注册 {name}",
     "termsOfService": "服务条款",
-    "trySigningInAgain": "您也可以尝试改用其他电子邮件再次登录。"
+    "trySigningInAgain": "您也可以尝试改用其他电子邮件再次登录。",
+    "oauthError": {
+      "accountNotLinked": "使用此邮箱的账户已存在，无法关联。请使用之前的方式登录，或联系支持人员。",
+      "unableToLinkAccount": "我们无法将此次登录关联到您的账户。请重试或联系支持人员。",
+      "sessionExpired": "登录尝试已过期。请重试。",
+      "accessDenied": "登录已取消。",
+      "generic": "登录失败。请重试。"
+    }
   },
   "autoAssignConversation": {
     "rule": {

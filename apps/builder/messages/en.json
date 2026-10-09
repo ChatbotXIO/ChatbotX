@@ -4508,7 +4508,14 @@
     "signUpTitle": "Sign up to {name}",
     "changePasswordTitle": "Change your password",
     "changePasswordDescription": "Set a new password before continuing.",
-    "passwordChangeSuccess": "Password changed"
+    "passwordChangeSuccess": "Password changed",
+    "oauthError": {
+      "accountNotLinked": "An account with this email already exists and could not be linked. Sign in the way you did before, or contact support.",
+      "unableToLinkAccount": "We could not link this sign-in to your account. Please try again or contact support.",
+      "sessionExpired": "The sign-in attempt expired. Please try again.",
+      "accessDenied": "Sign-in was cancelled.",
+      "generic": "Sign-in failed. Please try again."
+    }
   },
   "emailTopics": {
     "title": "Email Topics"
