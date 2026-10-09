@@ -2,16 +2,14 @@ import {
   integrationWhatsappService,
   metaConversionsService,
   platformCredentialService,
-  resolveCapiScopeStateForChannel,
   workspaceService,
 } from "@chatbotx.io/business"
+import { isCapiScopeRequired } from "@chatbotx.io/business/meta-conversions/capi-scope-policy"
 import { notFound } from "next/navigation"
 import { WhatsappCapiTab } from "@/features/integration-whatsapp/components/whatsapp-capi-tab"
 import { hasWhatsappCapiScope } from "@/features/integration-whatsapp/libs/capi-scope"
-import { WHATSAPP_OAUTH_CALLBACK_PATH } from "@/features/integration-whatsapp/libs/embedded-signup"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
-import { resolveProviderOriginForCredential } from "@/lib/provider-origin"
 
 export default async function WhatsappAdsPage(props: {
   params: Promise<{ workspaceId: string; id: string }>
@@ -35,15 +33,17 @@ export default async function WhatsappAdsPage(props: {
     type: "whatsapp",
   })
 
-  // A manual access token + dataset is ready without the OAuth scope, and a
-  // user-disconnected integration must stay disconnected — both skip the scope
-  // refresh (which can throw CapiScopeRefreshError on an expired OAuth token).
+  // The channel's scope policy decides whether the refresh runs; a manual
+  // token + dataset or a user-disconnected integration also skips it (the
+  // refresh can throw CapiScopeRefreshError on an expired OAuth token).
   const usesManualToken = Boolean(
     integrationWhatsapp.capiAccessToken && integrationWhatsapp.datasetId,
   )
   const capiDisconnected = Boolean(integrationWhatsapp.capiDisconnectedAt)
   const refreshed =
-    whatsappCredential && !(usesManualToken || capiDisconnected)
+    isCapiScopeRequired("whatsapp") &&
+    whatsappCredential &&
+    !(usesManualToken || capiDisconnected)
       ? await metaConversionsService
           .refreshCapiScopeCache({
             channel: "whatsapp",
@@ -59,9 +59,6 @@ export default async function WhatsappAdsPage(props: {
       : integrationWhatsapp
 
   const resolved = refreshed ?? integrationWhatsapp
-  const scopeState = await resolveCapiScopeStateForChannel("whatsapp", resolved)
-  const oauthCallbackOrigin =
-    await resolveProviderOriginForCredential(whatsappCredential)
 
   return (
     <WhatsappCapiTab
@@ -70,19 +67,10 @@ export default async function WhatsappAdsPage(props: {
       hasManualCapiAccessToken={Boolean(resolved.capiAccessToken)}
       integrationWhatsapp={{
         id: resolved.id,
-        name: resolved.name,
-        displayPhoneNumber: resolved.displayPhoneNumber,
-        wabaId: resolved.wabaId,
-        hasCapiScope: scopeState.hasCapiScope,
-        isCoexist: resolved.isCoexist,
+        hasCapiScope: resolved.hasCapiScope,
         datasetId: resolved.datasetId,
         capiTestEventCode: resolved.capiTestEventCode,
       }}
-      oauthCallbackUrl={new URL(
-        WHATSAPP_OAUTH_CALLBACK_PATH,
-        oauthCallbackOrigin,
-      ).toString()}
-      whatsappCredentialPublic={whatsappCredential?.publicConfig ?? null}
     />
   )
 }

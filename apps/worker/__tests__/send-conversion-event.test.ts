@@ -281,7 +281,12 @@ describe("handleSendConversionEvent", () => {
     await handleSendConversionEvent(jobData)
 
     expect(mocks.resolveCapiScopeState).not.toHaveBeenCalled()
-    expect(mocks.sendConversionEvent).toHaveBeenCalled()
+    expect(mocks.sendConversionEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        datasetId: "dataset-1",
+        accessToken: "token-1",
+      }),
+    )
     expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
       id: "ace-1",
       workspaceId: "ws-1",
@@ -289,6 +294,21 @@ describe("handleSendConversionEvent", () => {
       to: "sent",
       capiSentAt: expect.any(Date),
     })
+  })
+
+  test("marks a user-disconnected whatsapp integration failed without resolving a token or sending", async () => {
+    mocks.findWorkspaceIntegration.mockResolvedValue({
+      ...integration,
+      capiDisconnectedAt: new Date("2026-08-01T00:00:00.000Z"),
+    })
+
+    await handleSendConversionEvent(jobData)
+
+    expect(mocks.updateCapiStatus).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "ace-1", to: "failed" }),
+    )
+    expect(mocks.resolveCapiAccessToken).not.toHaveBeenCalled()
+    expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
   })
 
   test("marks terminal failures failed and logs them", async () => {

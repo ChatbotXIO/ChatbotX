@@ -1,7 +1,6 @@
 "use client"
 
 import { isCapiScopeRequired } from "@chatbotx.io/business/meta-conversions/capi-scope-policy"
-import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
 import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import {
@@ -34,20 +33,11 @@ import { setWhatsappCapiDatasetAction } from "../actions/set-capi-dataset.action
 type WhatsappCapiTabProps = {
   integrationWhatsapp: Pick<
     IntegrationWhatsappModel,
-    | "id"
-    | "name"
-    | "displayPhoneNumber"
-    | "wabaId"
-    | "hasCapiScope"
-    | "isCoexist"
-    | "datasetId"
-    | "capiTestEventCode"
+    "id" | "hasCapiScope" | "datasetId" | "capiTestEventCode"
   >
   hasManualCapiAccessToken: boolean
   capiDisconnected: boolean
   credentialAvailable: boolean
-  whatsappCredentialPublic: WhatsappCredentialPublic | null
-  oauthCallbackUrl: string
 }
 
 const statusDescriptionKey = {

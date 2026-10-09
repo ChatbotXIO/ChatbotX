@@ -815,7 +815,12 @@ describe("handleSendMetaCapiEvent", () => {
       await handleSendMetaCapiEvent(jobData)
 
       expect(mocks.refreshCapiScopeCache).not.toHaveBeenCalled()
-      expect(mocks.sendConversionEvent).toHaveBeenCalled()
+      expect(mocks.sendConversionEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          datasetId: "dataset-1",
+          accessToken: "token-1",
+        }),
+      )
       expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
         id: "mce-1",
         workspaceId: "ws-1",

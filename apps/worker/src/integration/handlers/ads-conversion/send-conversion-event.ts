@@ -289,10 +289,17 @@ async function handleSendWhatsappConversionEvent(
     return
   }
 
+  // A user-intent CAPI disconnect blocks the send, same gate as
+  // `send-meta-capi-event.ts`.
+  if (isCapiDisconnected(integration)) {
+    await markEventFailed(event)
+    return
+  }
+
   const oauth = whatsappAuthForCapiScopeSchema.parse(integration.auth)
   const auth = await resolveCapiAccessTokenForChannel("whatsapp", integration)
   // Per-channel policy: when the channel is exempt from the scope
-  // requirement, skip the scope resolution (no Graph call) and the gate.
+  // requirement, skip the scope lookup and the gate.
   const scopeRequired = isCapiScopeRequired("whatsapp")
   const scopeState = scopeRequired
     ? await resolveCapiScopeStateForChannel("whatsapp", integration)
@@ -605,7 +612,7 @@ export async function handleSendConversionEvent(
 
     // whatsapp (the only remaining channel a real AdsConversionEvent row can
     // carry — the DB CHECK constraint rejects any other channel/integration
-    // combination) — existing native WhatsApp path, unchanged.
+    // combination) — the native WhatsApp path.
     await handleSendWhatsappConversionEvent(event)
   })
 }
