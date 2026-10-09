@@ -14,6 +14,7 @@ const buildApi = (): AnalyticsApi =>
     botMessagesByResultAnalyticsAPI: vi.fn(),
     messagesBySenderAnalyticsAPI: vi.fn(),
     contactsByDimensionAnalyticsAPI: vi.fn(),
+    allContactsByChannelAnalyticsAPI: vi.fn(),
     conversationHandoffsAnalyticsAPI: vi.fn(),
     conversationFollowUpsAnalyticsAPI: vi.fn(),
     conversationArchivedAnalyticsAPI: vi.fn(),
@@ -376,6 +377,7 @@ describe("analysis store", () => {
       "newContactsCountAnalyticsAPI",
       "activeContactsCountAnalyticsAPI",
       "contactsByDimensionAnalyticsAPI",
+      "allContactsByChannelAnalyticsAPI",
     ] as const
 
     const selectedConversationApiKeys = [
@@ -423,6 +425,11 @@ describe("analysis store", () => {
           data: [{ dimension, uniqueContacts: 7 }],
         }),
       )
+      ;(
+        api.allContactsByChannelAnalyticsAPI as ReturnType<typeof vi.fn>
+      ).mockResolvedValue({
+        data: [{ dimension: "channel", uniqueContacts: 8 }],
+      })
     }
 
     const stubConversationsApi = () => {
@@ -433,7 +440,7 @@ describe("analysis store", () => {
       }
     }
 
-    test("loads only the nine visible contact datasets and leaves conversation endpoints untouched", async () => {
+    test("loads visible contact datasets and leaves conversation endpoints untouched", async () => {
       stubContactsApi()
       for (const key of selectedConversationApiKeys) {
         ;(api[key] as ReturnType<typeof vi.fn>).mockRejectedValue(
@@ -459,6 +466,7 @@ describe("analysis store", () => {
         inboxNewContacts: 5,
         inboxActiveContacts: 6,
         contactsByChannel: [{ dimension: "channel", uniqueContacts: 7 }],
+        allContactsByChannel: [{ dimension: "channel", uniqueContacts: 8 }],
         contactsByCountry: [{ dimension: "country", uniqueContacts: 7 }],
         contactsBySource: [{ dimension: "source", uniqueContacts: 7 }],
         loading: false,
@@ -471,6 +479,44 @@ describe("analysis store", () => {
       for (const key of selectedConversationApiKeys) {
         expect(api[key]).not.toHaveBeenCalled()
       }
+    })
+
+    test("keeps new and all contacts by channel in separate state fields", async () => {
+      stubContactsApi()
+      ;(
+        api.contactsByDimensionAnalyticsAPI as ReturnType<typeof vi.fn>
+      ).mockResolvedValue({
+        data: [{ dimension: "channel", uniqueContacts: 7 }],
+      })
+      ;(
+        api.allContactsByChannelAnalyticsAPI as ReturnType<typeof vi.fn>
+      ).mockResolvedValue({
+        data: [{ dimension: "channel", uniqueContacts: 8 }],
+      })
+
+      const store = createAnalysisStore({
+        api,
+        type: "contacts",
+        defaultSearchParams: baseSearchParams,
+        from,
+        to,
+      })
+
+      await store.getState().getContactsByChannel()
+      await store.getState().getAllContactsByChannel()
+
+      expect(store.getState().contactsByChannel).toEqual([
+        { dimension: "channel", uniqueContacts: 7 },
+      ])
+      expect(store.getState().allContactsByChannel).toEqual([
+        { dimension: "channel", uniqueContacts: 8 },
+      ])
+      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledWith(
+        expect.objectContaining({ dimension: "channel" }),
+      )
+      expect(api.allContactsByChannelAnalyticsAPI).toHaveBeenCalledWith(
+        expect.not.objectContaining({ dimension: expect.anything() }),
+      )
     })
 
     test("loads only the ten visible conversation datasets until their required work settles", async () => {
@@ -634,10 +680,12 @@ describe("analysis store", () => {
         getInboxActiveContacts: "loading",
         getContactCounts: "loading",
         getContactsByChannel: "loading",
+        getAllContactsByChannel: "loading",
         getBlockedContactCounts: "loading",
       })
       expect(api.contactCountsPerDayAnalyticsAPI).toHaveBeenCalledTimes(1)
       expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(3)
+      expect(api.allContactsByChannelAnalyticsAPI).toHaveBeenCalledTimes(1)
       expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({ dimension: "channel" }),
