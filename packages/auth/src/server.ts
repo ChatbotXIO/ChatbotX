@@ -554,10 +554,9 @@ export function createAuth(config: AuthConfig) {
         // so it runs before the link is written), and only a provider that
         // attests the email may claim one — Google through the id_token's
         // `email_verified`, Facebook because the Graph API returns only confirmed
-        // emails. That is
-        // what keeps this from being a pre-registration takeover. Emails must
-        // still match: the implicit sign-in path looks the user up by the
-        // provider email, and the explicit link route keeps
+        // emails. That is what keeps this from being a pre-registration
+        // takeover. Emails must still match: the implicit sign-in path looks the
+        // user up by the provider email, and the explicit link route keeps
         // `allowDifferentEmails` off.
         requireLocalEmailVerified: false,
       },

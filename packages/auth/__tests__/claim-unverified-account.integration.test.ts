@@ -224,10 +224,14 @@ describe("claimUnverifiedAccountBeforeLink through the real internal adapter", (
   })
 
   test("linking Facebook into an old placeholder with zero accounts claims it", async () => {
-    const { internal, store } = await setup({ user: [placeholder] })
+    const { internal, store } = await setup({
+      user: [placeholder],
+      session: [sessionRow("s1")],
+    })
     await internal.linkAccount(social("facebook"))
     expect(store.account.map((a) => a.providerId)).toEqual(["facebook"])
     expect(store.user).toHaveLength(1)
+    expect(store.session).toHaveLength(0)
   })
 
   test("linking an unknown provider into the placeholder is refused and writes nothing", async () => {

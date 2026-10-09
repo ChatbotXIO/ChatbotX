@@ -68,9 +68,12 @@ type EmailAttestation = (account: { idToken?: unknown }) => boolean
  * How each provider proves the person owns the mailbox. A provider missing
  * here cannot claim an unverified placeholder.
  * - google: the id_token carries `email_verified`; only `true` counts.
- * - facebook: the Graph API only returns an email the Facebook account has
- *   confirmed, so its presence in the profile is the attestation (better-auth
- *   exposes no flag for it and marks the user unverified).
+ * - facebook: better-auth's Facebook provider reads `profile.email_verified ??
+ *   false`, and the default Graph request (`id,name,email,picture`) carries no
+ *   verification field (the id-token / Limited Login path reads the `email`
+ *   claim from the JWT), so such users are marked unverified. This strategy
+ *   relies on the accepted policy that Facebook only exposes an email the
+ *   account has confirmed, whichever path supplied it.
  */
 const EMAIL_ATTESTATION_BY_PROVIDER: Record<string, EmailAttestation> = {
   google: (account) => isEmailAttestedByIdToken(account.idToken),
@@ -90,12 +93,19 @@ const EMAIL_ATTESTATION_BY_PROVIDER: Record<string, EmailAttestation> = {
  * unverified local user (a placeholder that never proved the mailbox), but only
  * a provider with an entry in `EMAIL_ATTESTATION_BY_PROVIDER` whose attestation
  * passes may claim it: Google through the id token's `email_verified: true`
- * (the hook only reads the claim), Facebook because the Graph API only returns
- * an email the Facebook account has confirmed. The attesting sign-in is the first
+ * (the hook only reads the claim), Facebook under the accepted policy that it
+ * only exposes an email the Facebook account has confirmed (better-auth itself
+ * marks such a user unverified). The attesting sign-in is the first
  * proof of ownership, so every earlier login method (password or social) and
  * every session on that placeholder is untrusted and removed before the link —
  * otherwise a pre-registered login would keep working once the real owner's
  * sign-in marks the user verified.
+ *
+ * After a Facebook claim the user still has `emailVerified: false` (better-auth
+ * only marks a user verified from a provider that says so), so a later Google
+ * sign-in with a verified claim will claim the account again and remove the
+ * Facebook row and sessions; that is accepted and recovers on the next
+ * Facebook sign-in.
  *
  * A user with no accounts that was created within `FRESH_SIGN_UP_WINDOW_MS` is a
  * brand-new OAuth sign-up and is left alone. An older user with no accounts is a
