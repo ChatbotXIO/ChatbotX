@@ -7132,6 +7132,10 @@
     "description": "Crea moduli WhatsApp Flow e condividili come link su qualsiasi canale.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "I Flow già pubblicati su WhatsApp restano su Meta.",
+    "publicUrl": {
+      "label": "URL pubblico",
+      "hint": "Copia e incolla l'URL nel tuo flusso, broadcast o sequenza. Inviata così, ogni risposta viene collegata al contatto che l'ha aperta."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "Non pubblicato",
@@ -7171,8 +7175,6 @@
       "drag": "Trascina per spostare",
       "duplicate": "Duplica",
       "remove": "Rimuovi",
-      "progress": "{current} di {total}",
-      "managedBy": "Gestito dall'azienda",
       "cannotDropHere": "Questo componente non può essere inserito qui",
       "previewSubmitted": "Anteprima inviata: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "Predefinito",
       "commaSeparated": "Separa i valori con virgole.",
-      "uploadImage": "Carica immagine",
+      "uploadImage": "Seleziona immagine",
       "imageTooLarge": "L'immagine è troppo grande anche dopo la compressione. Provane una più piccola.",
       "moveUp": "Sposta su",
       "moveDown": "Sposta giù",
@@ -7209,18 +7211,22 @@
       "addCase": "Aggiungi caso",
       "casesHint": "Il nome di ogni caso viene confrontato con il valore sopra.",
       "nameHint": "Chiave del campo nelle risposte. Lettere, numeri e trattini bassi.",
-      "bindingHint": "Puoi mostrare le risposte con {formExample} o {screenExample}.",
       "markdownHint": "Supporta # titoli, **grassetto**, *corsivo*, ~~barrato~~, elenchi e [link](https://…).",
       "patternHint": "Espressione regolare facoltativa a cui la risposta deve corrispondere.",
       "saveToCustomField": "Salva nel campo personalizzato",
       "chooseCustomField": "Scegli un campo personalizzato",
       "customFieldHint": "Quando un contatto invia il link della Mini App, la risposta viene salvata in questo campo.",
-      "imageLoadFailed": "Impossibile caricare questa immagine. Scegli un’immagine JPEG, PNG, WebP o GIF."
+      "imageLoadFailed": "Impossibile caricare questa immagine. Scegli un’immagine JPEG, PNG, WebP o GIF.",
+      "answerReference": "Riferimento alla risposta",
+      "answerReferenceHint": "Incollalo in un testo o in una condizione per usare questa risposta.",
+      "copyReference": "Copia",
+      "variablesHint": "Digita {open} o fai clic su {button} per inserire un campo personalizzato. I valori appaiono solo nel link web per un contatto noto."
     },
     "json": {
       "title": "Flow JSON",
       "description": "Flow JSON di WhatsApp (versione 7.3). Incollalo in WhatsApp Manager o nel Flows Playground.",
-      "copy": "Copia JSON"
+      "copy": "Copia JSON",
+      "contactVariablesWarning": "Questo JSON contiene ancora campi personalizzati come '{{first_name}}'. WhatsApp li mostra esattamente come sono scritti, quindi rimuovili prima di incollarlo in WhatsApp."
     },
     "publish": {
       "open": "Pubblica su WhatsApp",
@@ -7232,7 +7238,8 @@
       "submit": "Pubblica",
       "success": "Pubblicato su WhatsApp",
       "draftOnly": "Meta ha mantenuto il Flow come bozza a causa di errori",
-      "failed": "Impossibile pubblicare su WhatsApp"
+      "failed": "Impossibile pubblicare su WhatsApp",
+      "contactVariables": "Questa Mini App mostra campi personalizzati nei suoi testi. Per ora funzionano solo sul link web: rimuovili prima di pubblicare su WhatsApp."
     },
     "runner": {
       "back": "Indietro",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "“Completa il flow” si può usare solo nell’ultima schermata.",
       "footer_captions_invalid": "Usa una didascalia centrale, oppure una sinistra e una destra insieme.",
       "options_with_images_limit": "Con immagini, un menu a tendina può avere al massimo {max} opzioni.",
-      "navigation_badge_multiple": "Solo un elemento di un elenco di navigazione può avere un badge."
+      "navigation_badge_multiple": "Solo un elemento di un elenco di navigazione può avere un badge.",
+      "contact_variable_whatsapp": "I campi personalizzati appaiono solo nel link web; WhatsApp non li supporta ancora. Rimuovili prima di pubblicare su WhatsApp."
     },
     "upload": {
       "choosePhotos": "Scegli o scatta foto",

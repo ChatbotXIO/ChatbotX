@@ -40,6 +40,7 @@ import { imageFileToBase64 } from "../../lib/image-to-base64"
 import { actionLabelKey, type MiniAppPropertyKey } from "../../lib/labels"
 import { useMiniAppEditor } from "../editor-context"
 import { FieldRow, useInspector } from "./fields"
+import { VariableTextEditor } from "./variable-text-editor"
 
 const moveItem = <T,>(items: T[], from: number, to: number): T[] => {
   if (to < 0 || to >= items.length) {
@@ -248,11 +249,8 @@ export function OptionsProp({ withImages = false }: { withImages?: boolean }) {
             key={index}
           >
             <div className="flex items-center gap-1">
-              <Input
-                className="h-8"
-                onChange={(event) =>
-                  patch(index, { title: event.target.value })
-                }
+              <VariableTextEditor
+                onChange={(text) => patch(index, { title: text })}
                 placeholder={t("optionTitle")}
                 value={option.title}
               />
@@ -272,10 +270,9 @@ export function OptionsProp({ withImages = false }: { withImages?: boolean }) {
                 placeholder={t("optionId")}
                 value={option.id}
               />
-              <Input
-                className="h-8"
-                onChange={(event) =>
-                  patch(index, { description: event.target.value || undefined })
+              <VariableTextEditor
+                onChange={(text) =>
+                  patch(index, { description: text || undefined })
                 }
                 placeholder={tRoot("miniApps.properties.description")}
                 value={option.description ?? ""}
@@ -533,13 +530,12 @@ export function NavigationItemsProp({ screenKey }: { screenKey: string }) {
             key={index}
           >
             <div className="flex items-center gap-1">
-              <Input
-                className="h-8"
-                onChange={(event) =>
+              <VariableTextEditor
+                onChange={(text) =>
                   patch(index, {
                     "main-content": {
                       ...item["main-content"],
-                      title: event.target.value,
+                      title: text,
                     },
                   })
                 }
@@ -556,34 +552,29 @@ export function NavigationItemsProp({ screenKey }: { screenKey: string }) {
               />
             </div>
             <div className="grid grid-cols-2 gap-1.5">
-              <Input
-                className="h-8"
-                onChange={(event) =>
+              <VariableTextEditor
+                onChange={(text) =>
                   patch(index, {
                     "main-content": {
                       ...item["main-content"],
-                      description: event.target.value || undefined,
+                      description: text || undefined,
                     },
                   })
                 }
                 placeholder={tRoot("miniApps.properties.description")}
                 value={item["main-content"]?.description ?? ""}
               />
-              <Input
-                className="h-8"
-                onChange={(event) =>
+              <VariableTextEditor
+                onChange={(text) =>
                   patch(index, {
-                    end: { title: event.target.value || undefined },
+                    end: { title: text || undefined },
                   })
                 }
                 placeholder={t("endText")}
                 value={item.end?.title ?? ""}
               />
-              <Input
-                className="h-8"
-                onChange={(event) =>
-                  patch(index, { badge: event.target.value || undefined })
-                }
+              <VariableTextEditor
+                onChange={(text) => patch(index, { badge: text || undefined })}
                 placeholder={t("badge")}
                 value={item.badge ?? ""}
               />

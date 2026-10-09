@@ -7132,6 +7132,10 @@
     "description": "创建 WhatsApp Flow 表单，并通过链接在任意渠道分享。",
     "feature": "迷你应用",
     "deleteKeepsWhatsapp": "已发布到 WhatsApp 的 Flow 会保留在 Meta 上。",
+    "publicUrl": {
+      "label": "公开链接",
+      "hint": "复制此 URL 并粘贴到你的流程、群发或序列中。通过这种方式发送时，每条回答都会关联到打开它的联系人。"
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "未发布",
@@ -7171,8 +7175,6 @@
       "drag": "拖动以移动",
       "duplicate": "复制",
       "remove": "移除",
-      "progress": "第 {current} / {total}",
-      "managedBy": "由商家管理",
       "cannotDropHere": "此组件不能放在这里",
       "previewSubmitted": "预览已提交：{answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "默认值",
       "commaSeparated": "用逗号分隔多个值。",
-      "uploadImage": "上传图片",
+      "uploadImage": "选择图片",
       "imageTooLarge": "图片压缩后仍然过大，请换一张更小的。",
       "moveUp": "上移",
       "moveDown": "下移",
@@ -7209,18 +7211,22 @@
       "addCase": "添加情况",
       "casesHint": "每个情况名称都会与上方的值进行匹配。",
       "nameHint": "回答中的字段键。可用字母、数字和下划线。",
-      "bindingHint": "可使用 {formExample} 或 {screenExample} 显示回答。",
       "markdownHint": "支持 # 标题、**粗体**、*斜体*、~~删除线~~、列表和 [链接](https://…)。",
       "patternHint": "回答必须匹配的正则表达式（可选）。",
       "saveToCustomField": "保存到自定义字段",
       "chooseCustomField": "选择自定义字段",
       "customFieldHint": "联系人通过 Mini App 链接提交时，答案会保存到此字段。",
-      "imageLoadFailed": "无法加载此图片。请选择 JPEG、PNG、WebP 或 GIF 图片。"
+      "imageLoadFailed": "无法加载此图片。请选择 JPEG、PNG、WebP 或 GIF 图片。",
+      "answerReference": "答案引用",
+      "answerReferenceHint": "粘贴到文本或条件中即可使用此答案。",
+      "copyReference": "复制",
+      "variablesHint": "输入 {open} 或点击 {button} 插入自定义字段。仅在已识别联系人的网页链接中显示字段值。"
     },
     "json": {
       "title": "Flow JSON",
       "description": "WhatsApp Flow JSON（版本 7.3）。粘贴到 WhatsApp Manager 或 Flows Playground 中。",
-      "copy": "复制 JSON"
+      "copy": "复制 JSON",
+      "contactVariablesWarning": "此 JSON 仍包含 '{{first_name}}' 等自定义字段。WhatsApp 会按原样显示它们，请在粘贴到 WhatsApp 之前将其移除。"
     },
     "publish": {
       "open": "发布到 WhatsApp",
@@ -7232,7 +7238,8 @@
       "submit": "发布",
       "success": "已发布到 WhatsApp",
       "draftOnly": "由于出现错误，Meta 将此 Flow 保留为草稿",
-      "failed": "无法发布到 WhatsApp"
+      "failed": "无法发布到 WhatsApp",
+      "contactVariables": "此小程序的文本中包含自定义字段。目前它们仅在网页链接中生效——发布到 WhatsApp 前请先移除。"
     },
     "runner": {
       "back": "返回",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "“完成流程”只能用于最后一个屏幕。",
       "footer_captions_invalid": "请只使用中间说明，或同时使用左侧和右侧说明。",
       "options_with_images_limit": "含图片时，下拉列表最多 {max} 个选项。",
-      "navigation_badge_multiple": "导航列表中只能有一个项目带徽章。"
+      "navigation_badge_multiple": "导航列表中只能有一个项目带徽章。",
+      "contact_variable_whatsapp": "自定义字段只在网页链接中显示，WhatsApp 暂不支持。发布到 WhatsApp 前请先删除。"
     },
     "upload": {
       "choosePhotos": "选择或拍摄照片",

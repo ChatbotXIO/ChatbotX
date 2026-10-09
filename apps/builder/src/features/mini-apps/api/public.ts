@@ -28,10 +28,12 @@ import { buildMiniAppPublicUrl } from "../lib/public-url"
 import { publishMiniAppToWhatsapp } from "../lib/publish-to-whatsapp"
 import {
   createMiniAppPublicRequest,
+  deleteMiniAppsPublicRequest,
   listMiniAppSubmissionsPublicRequest,
   listMiniAppSubmissionsPublicResponse,
   listMiniAppsPublicRequest,
   listMiniAppsPublicResponse,
+  miniAppFlowJsonPublicResponse,
   miniAppIdPublicRequest,
   miniAppPublicResource,
   miniAppValidationPublicResponse,
@@ -224,7 +226,7 @@ export const miniAppsPublicRouter = {
       path: "/v1/mini-apps/{id}",
       summary: "Delete Mini App",
       description:
-        "Permanently deletes a Mini App and its answers. Flows already published to WhatsApp stay on Meta. Find the id with `miniApps.list`.",
+        "Permanently deletes a Mini App and its answers. Files visitors uploaded stay in storage, and Flows already published to WhatsApp stay on Meta. Find the id with `miniApps.list`.",
       successStatus: 204,
       tags,
     })
@@ -239,6 +241,46 @@ export const miniAppsPublicRouter = {
         workspaceId: context.workspace.id,
         ids: [input.id],
       })
+    }),
+
+  deleteMany: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/mini-apps/bulk-delete",
+      summary: "Delete multiple Mini Apps",
+      description:
+        "Permanently deletes up to 100 Mini Apps and their answers in one call; ids outside this workspace are ignored. Files visitors uploaded stay in storage, and Flows already published to WhatsApp stay on Meta. Use `miniApps.list` to find the ids first.",
+      successStatus: 204,
+      tags,
+    })
+    .input(deleteMiniAppsPublicRequest)
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(async ({ context, input }) => {
+      await miniAppService.deleteMany({
+        workspaceId: context.workspace.id,
+        ids: input.ids,
+      })
+    }),
+
+  getFlowJson: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/mini-apps/{id}/flow-json",
+      summary: "Get Mini App Flow JSON",
+      description:
+        "Returns only the Mini App's WhatsApp Flow JSON 7.3 — what the dashboard's Copy JSON copies — ready to paste into WhatsApp Manager, the Flows Playground or Meta's Flows API. Custom fields (`{{first_name}}`) are kept as written, and WhatsApp would show them literally: `miniApps.get` flags each one with a `contact_variable_whatsapp` warning. Use `miniApps.get` for validation issues and publications.",
+      tags,
+      spec: mcpSpec({ readOnlyHint: true }),
+    })
+    .input(miniAppIdPublicRequest)
+    .output(miniAppFlowJsonPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => {
+      const miniApp = await miniAppService.findOrFail({
+        workspaceId: context.workspace.id,
+        id: input.id,
+      })
+      return miniApp.flowJson as unknown as Record<string, unknown>
     }),
 
   publishWhatsapp: workspaceTokenAuthAPI

@@ -7132,6 +7132,10 @@
     "description": "Buat formulir WhatsApp Flow dan bagikan sebagai tautan di channel mana pun.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "Flow yang sudah dipublikasikan ke WhatsApp tetap ada di Meta.",
+    "publicUrl": {
+      "label": "URL Publik",
+      "hint": "Salin dan tempel URL ke flow, broadcast, atau sequence Anda. Jika dikirim dengan cara itu, setiap jawaban terhubung ke kontak yang membukanya."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "Belum dipublikasikan",
@@ -7171,8 +7175,6 @@
       "drag": "Seret untuk memindahkan",
       "duplicate": "Duplikat",
       "remove": "Hapus",
-      "progress": "{current} dari {total}",
-      "managedBy": "Dikelola oleh bisnis",
       "cannotDropHere": "Komponen ini tidak dapat diletakkan di sini",
       "previewSubmitted": "Pratinjau terkirim: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "Default",
       "commaSeparated": "Pisahkan nilai dengan koma.",
-      "uploadImage": "Unggah gambar",
+      "uploadImage": "Pilih gambar",
       "imageTooLarge": "Gambar terlalu besar bahkan setelah dikompresi. Coba gambar yang lebih kecil.",
       "moveUp": "Naikkan",
       "moveDown": "Turunkan",
@@ -7209,18 +7211,22 @@
       "addCase": "Tambah kasus",
       "casesHint": "Setiap nama kasus dicocokkan dengan nilai di atas.",
       "nameHint": "Kunci kolom dalam jawaban. Huruf, angka, dan garis bawah.",
-      "bindingHint": "Anda dapat menampilkan jawaban dengan {formExample} atau {screenExample}.",
       "markdownHint": "Mendukung # judul, **tebal**, *miring*, ~~coret~~, daftar, dan [tautan](https://…).",
       "patternHint": "Ekspresi reguler opsional yang harus cocok dengan jawaban.",
       "saveToCustomField": "Simpan ke kolom kustom",
       "chooseCustomField": "Pilih kolom kustom",
       "customFieldHint": "Saat kontak mengirim tautan Mini App, jawaban disimpan ke kolom ini.",
-      "imageLoadFailed": "Gambar ini tidak dapat dimuat. Pilih gambar JPEG, PNG, WebP, atau GIF."
+      "imageLoadFailed": "Gambar ini tidak dapat dimuat. Pilih gambar JPEG, PNG, WebP, atau GIF.",
+      "answerReference": "Referensi jawaban",
+      "answerReferenceHint": "Tempel ke teks atau kondisi untuk memakai jawaban ini.",
+      "copyReference": "Salin",
+      "variablesHint": "Ketik {open} atau klik {button} untuk menyisipkan kolom kustom. Nilai hanya tampil di tautan web untuk kontak yang dikenal."
     },
     "json": {
       "title": "Flow JSON",
       "description": "WhatsApp Flow JSON (versi 7.3). Tempelkan ke WhatsApp Manager atau Flows Playground.",
-      "copy": "Salin JSON"
+      "copy": "Salin JSON",
+      "contactVariablesWarning": "JSON ini masih berisi bidang kustom seperti '{{first_name}}'. WhatsApp menampilkannya persis seperti yang ditulis, jadi hapus sebelum menempelkannya ke WhatsApp."
     },
     "publish": {
       "open": "Publikasikan ke WhatsApp",
@@ -7232,7 +7238,8 @@
       "submit": "Publikasikan",
       "success": "Dipublikasikan ke WhatsApp",
       "draftOnly": "Meta menyimpan Flow sebagai draf karena ada kesalahan",
-      "failed": "Tidak dapat mempublikasikan ke WhatsApp"
+      "failed": "Tidak dapat mempublikasikan ke WhatsApp",
+      "contactVariables": "Mini App ini menampilkan bidang kustom di teksnya. Untuk saat ini bidang tersebut hanya berfungsi di tautan web — hapus sebelum memublikasikan ke WhatsApp."
     },
     "runner": {
       "back": "Kembali",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "“Selesaikan flow” hanya bisa dipakai di layar terakhir.",
       "footer_captions_invalid": "Gunakan keterangan tengah saja, atau keterangan kiri dan kanan bersamaan.",
       "options_with_images_limit": "Dengan gambar, dropdown maksimal {max} opsi.",
-      "navigation_badge_multiple": "Hanya satu item di daftar navigasi yang boleh punya lencana."
+      "navigation_badge_multiple": "Hanya satu item di daftar navigasi yang boleh punya lencana.",
+      "contact_variable_whatsapp": "Kolom kustom hanya tampil di tautan web; WhatsApp belum mendukungnya. Hapus sebelum menerbitkan ke WhatsApp."
     },
     "upload": {
       "choosePhotos": "Pilih atau ambil foto",

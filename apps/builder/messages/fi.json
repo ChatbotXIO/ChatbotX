@@ -7132,6 +7132,10 @@
     "description": "Luo WhatsApp Flow -lomakkeita ja jaa ne linkkinä millä tahansa kanavalla.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "WhatsAppiin jo julkaistut Flowt säilyvät Metalla.",
+    "publicUrl": {
+      "label": "Julkinen URL",
+      "hint": "Kopioi URL ja liitä se kulkuun, lähetykseen tai sarjaan. Näin lähetettynä jokainen vastaus liitetään yhteystietoon, joka avasi sen."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "Ei julkaistu",
@@ -7171,8 +7175,6 @@
       "drag": "Siirrä vetämällä",
       "duplicate": "Monista",
       "remove": "Poista",
-      "progress": "{current} / {total}",
-      "managedBy": "Yrityksen hallinnoima",
       "cannotDropHere": "Tätä komponenttia ei voi sijoittaa tähän",
       "previewSubmitted": "Esikatselu lähetetty: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "Oletus",
       "commaSeparated": "Erota arvot pilkuilla.",
-      "uploadImage": "Lataa kuva",
+      "uploadImage": "Valitse kuva",
       "imageTooLarge": "Kuva on liian suuri pakkauksenkin jälkeen. Kokeile pienempää.",
       "moveUp": "Siirrä ylös",
       "moveDown": "Siirrä alas",
@@ -7209,18 +7211,22 @@
       "addCase": "Lisää tapaus",
       "casesHint": "Jokaisen tapauksen nimeä verrataan yllä olevaan arvoon.",
       "nameHint": "Kentän avain vastauksissa. Kirjaimia, numeroita ja alaviivoja.",
-      "bindingHint": "Voit näyttää vastauksia muodoilla {formExample} tai {screenExample}.",
       "markdownHint": "Tukee # otsikoita, **lihavointia**, *kursivointia*, ~~yliviivausta~~, luetteloita ja [linkkejä](https://…).",
       "patternHint": "Valinnainen säännöllinen lauseke, jota vastauksen on vastattava.",
       "saveToCustomField": "Tallenna mukautettuun kenttään",
       "chooseCustomField": "Valitse mukautettu kenttä",
       "customFieldHint": "Kun yhteystieto lähettää Mini App -linkin, vastaus tallennetaan tähän kenttään.",
-      "imageLoadFailed": "Kuvaa ei voitu ladata. Valitse JPEG-, PNG-, WebP- tai GIF-kuva."
+      "imageLoadFailed": "Kuvaa ei voitu ladata. Valitse JPEG-, PNG-, WebP- tai GIF-kuva.",
+      "answerReference": "Vastausviittaus",
+      "answerReferenceHint": "Liitä se tekstiin tai ehtoon käyttääksesi tätä vastausta.",
+      "copyReference": "Kopioi",
+      "variablesHint": "Kirjoita {open} tai napsauta {button} lisätäksesi mukautetun kentän. Arvot näkyvät vain verkkolinkissä tunnetulle yhteystiedolle."
     },
     "json": {
       "title": "Flow JSON",
       "description": "WhatsApp Flow JSON (versio 7.3). Liitä se WhatsApp Manageriin tai Flows Playgroundiin.",
-      "copy": "Kopioi JSON"
+      "copy": "Kopioi JSON",
+      "contactVariablesWarning": "Tämä JSON sisältää yhä mukautettuja kenttiä, kuten '{{first_name}}'. WhatsApp näyttää ne juuri sellaisinaan, joten poista ne ennen kuin liität sen WhatsAppiin."
     },
     "publish": {
       "open": "Julkaise WhatsAppissa",
@@ -7232,7 +7238,8 @@
       "submit": "Julkaise",
       "success": "Julkaistu WhatsAppissa",
       "draftOnly": "Meta piti Flow'n luonnoksena virheiden vuoksi",
-      "failed": "Julkaiseminen WhatsAppissa epäonnistui"
+      "failed": "Julkaiseminen WhatsAppissa epäonnistui",
+      "contactVariables": "Tämä Mini App näyttää mukautettuja kenttiä teksteissään. Ne toimivat toistaiseksi vain verkkolinkissä – poista ne ennen julkaisua WhatsAppiin."
     },
     "runner": {
       "back": "Takaisin",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "”Viimeistele kulku” on sallittu vain viimeisellä näytöllä.",
       "footer_captions_invalid": "Käytä joko keskitekstiä tai vasenta ja oikeaa tekstiä yhdessä.",
       "options_with_images_limit": "Kuvien kanssa pudotusvalikossa voi olla enintään {max} vaihtoehtoa.",
-      "navigation_badge_multiple": "Vain yhdellä navigointiluettelon kohteella voi olla merkki."
+      "navigation_badge_multiple": "Vain yhdellä navigointiluettelon kohteella voi olla merkki.",
+      "contact_variable_whatsapp": "Mukautetut kentät näkyvät vain verkkolinkissä; WhatsApp ei vielä tue niitä. Poista ne ennen julkaisua WhatsAppiin."
     },
     "upload": {
       "choosePhotos": "Valitse tai ota kuvia",

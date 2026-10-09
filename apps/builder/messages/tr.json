@@ -7132,6 +7132,10 @@
     "description": "WhatsApp Flow formları oluşturun ve herhangi bir kanalda bağlantı olarak paylaşın.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "WhatsApp üzerinde yayınlanmış Flow lar Meta tarafında kalır.",
+    "publicUrl": {
+      "label": "Genel URL",
+      "hint": "URL'yi kopyalayıp akışınıza, yayınınıza veya dizinize yapıştırın. Bu şekilde gönderildiğinde her yanıt, onu açan kişiyle ilişkilendirilir."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "Yayınlanmadı",
@@ -7171,8 +7175,6 @@
       "drag": "Taşımak için sürükleyin",
       "duplicate": "Çoğalt",
       "remove": "Kaldır",
-      "progress": "{current} / {total}",
-      "managedBy": "İşletme tarafından yönetilir",
       "cannotDropHere": "Bu bileşen buraya yerleştirilemez",
       "previewSubmitted": "Önizleme gönderildi: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "Varsayılan",
       "commaSeparated": "Değerleri virgülle ayırın.",
-      "uploadImage": "Görsel yükle",
+      "uploadImage": "Görsel seç",
       "imageTooLarge": "Sıkıştırmadan sonra bile görsel çok büyük. Daha küçük bir görsel deneyin.",
       "moveUp": "Yukarı taşı",
       "moveDown": "Aşağı taşı",
@@ -7209,18 +7211,22 @@
       "addCase": "Durum ekle",
       "casesHint": "Her durum adı yukarıdaki değerle eşleştirilir.",
       "nameHint": "Yanıtlardaki alan anahtarı. Harf, rakam ve alt çizgi.",
-      "bindingHint": "Yanıtları {formExample} veya {screenExample} ile gösterebilirsiniz.",
       "markdownHint": "# başlıkları, **kalın**, *italik*, ~~üstü çizili~~, listeleri ve [bağlantıları](https://…) destekler.",
       "patternHint": "Yanıtın eşleşmesi gereken isteğe bağlı düzenli ifade.",
       "saveToCustomField": "Özel alana kaydet",
       "chooseCustomField": "Özel alan seçin",
       "customFieldHint": "Bir kişi Mini App bağlantısını gönderdiğinde yanıt bu alana kaydedilir.",
-      "imageLoadFailed": "Bu görsel yüklenemedi. JPEG, PNG, WebP veya GIF görseli seçin."
+      "imageLoadFailed": "Bu görsel yüklenemedi. JPEG, PNG, WebP veya GIF görseli seçin.",
+      "answerReference": "Yanıt referansı",
+      "answerReferenceHint": "Bu yanıtı kullanmak için metne veya koşula yapıştırın.",
+      "copyReference": "Kopyala",
+      "variablesHint": "Özel alan eklemek için {open} yazın veya {button} düğmesine tıklayın. Değerler yalnızca tanınan bir kişi için web bağlantısında görünür."
     },
     "json": {
       "title": "Flow JSON",
       "description": "WhatsApp Flow JSON (sürüm 7.3). WhatsApp Manager veya Flows Playground içine yapıştırın.",
-      "copy": "JSON kopyala"
+      "copy": "JSON kopyala",
+      "contactVariablesWarning": "Bu JSON hâlâ '{{first_name}}' gibi özel alanlar içeriyor. WhatsApp bunları yazıldığı gibi gösterir, bu yüzden WhatsApp'a yapıştırmadan önce kaldırın."
     },
     "publish": {
       "open": "WhatsApp'ta yayınla",
@@ -7232,7 +7238,8 @@
       "submit": "Yayınla",
       "success": "WhatsApp'ta yayınlandı",
       "draftOnly": "Meta hatalar nedeniyle Flow'u taslak olarak tuttu",
-      "failed": "WhatsApp'ta yayınlanamadı"
+      "failed": "WhatsApp'ta yayınlanamadı",
+      "contactVariables": "Bu Mini App metinlerinde özel alanlar gösteriyor. Şimdilik yalnızca web bağlantısında çalışırlar — WhatsApp'ta yayınlamadan önce kaldırın."
     },
     "runner": {
       "back": "Geri",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "“Akışı tamamla” yalnızca son ekranda kullanılabilir.",
       "footer_captions_invalid": "Ya yalnızca orta açıklama ya da sol ve sağ açıklamayı birlikte kullanın.",
       "options_with_images_limit": "Görsellerle bir açılır listede en fazla {max} seçenek olabilir.",
-      "navigation_badge_multiple": "Bir gezinme listesinde yalnızca bir öğe rozet taşıyabilir."
+      "navigation_badge_multiple": "Bir gezinme listesinde yalnızca bir öğe rozet taşıyabilir.",
+      "contact_variable_whatsapp": "Özel alanlar yalnızca web bağlantısında görünür; WhatsApp henüz desteklemiyor. WhatsApp'ta yayınlamadan önce kaldırın."
     },
     "upload": {
       "choosePhotos": "Fotoğraf seçin veya çekin",

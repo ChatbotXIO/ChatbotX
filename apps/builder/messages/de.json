@@ -7132,6 +7132,10 @@
     "description": "Erstelle WhatsApp-Flow-Formulare und teile sie als Link über jeden Kanal.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "Bereits auf WhatsApp veröffentlichte Flows bleiben bei Meta bestehen.",
+    "publicUrl": {
+      "label": "Öffentliche URL",
+      "hint": "Kopiere die URL und füge sie in deinen Flow, Broadcast oder deine Sequenz ein. So versendet, wird jede Antwort dem Kontakt zugeordnet, der sie geöffnet hat."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "Nicht veröffentlicht",
@@ -7171,8 +7175,6 @@
       "drag": "Zum Verschieben ziehen",
       "duplicate": "Duplizieren",
       "remove": "Entfernen",
-      "progress": "{current} von {total}",
-      "managedBy": "Vom Unternehmen verwaltet",
       "cannotDropHere": "Diese Komponente kann hier nicht platziert werden",
       "previewSubmitted": "Vorschau gesendet: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "Standard",
       "commaSeparated": "Werte durch Kommas trennen.",
-      "uploadImage": "Bild hochladen",
+      "uploadImage": "Bild auswählen",
       "imageTooLarge": "Das Bild ist auch nach der Komprimierung zu groß. Versuche ein kleineres.",
       "moveUp": "Nach oben",
       "moveDown": "Nach unten",
@@ -7209,18 +7211,22 @@
       "addCase": "Fall hinzufügen",
       "casesHint": "Jeder Fallname wird mit dem Wert oben verglichen.",
       "nameHint": "Feldschlüssel in den Antworten. Buchstaben, Zahlen und Unterstriche.",
-      "bindingHint": "Du kannst Antworten mit {formExample} oder {screenExample} anzeigen.",
       "markdownHint": "Unterstützt # Überschriften, **fett**, *kursiv*, ~~durchgestrichen~~, Listen und [Links](https://…).",
       "patternHint": "Optionaler regulärer Ausdruck, dem die Antwort entsprechen muss.",
       "saveToCustomField": "In benutzerdefiniertem Feld speichern",
       "chooseCustomField": "Benutzerdefiniertes Feld wählen",
       "customFieldHint": "Wenn ein Kontakt den Mini-App-Link absendet, wird die Antwort in diesem Feld gespeichert.",
-      "imageLoadFailed": "Dieses Bild konnte nicht geladen werden. Wähle ein JPEG-, PNG-, WebP- oder GIF-Bild."
+      "imageLoadFailed": "Dieses Bild konnte nicht geladen werden. Wähle ein JPEG-, PNG-, WebP- oder GIF-Bild.",
+      "answerReference": "Antwortreferenz",
+      "answerReferenceHint": "Füge sie in Text oder eine Bedingung ein, um diese Antwort zu verwenden.",
+      "copyReference": "Kopieren",
+      "variablesHint": "Tippe {open} oder klicke auf {button}, um ein benutzerdefiniertes Feld einzufügen. Werte erscheinen nur im Weblink für einen bekannten Kontakt."
     },
     "json": {
       "title": "Flow JSON",
       "description": "WhatsApp Flow JSON (Version 7.3). Füge es in WhatsApp Manager oder den Flows Playground ein.",
-      "copy": "JSON kopieren"
+      "copy": "JSON kopieren",
+      "contactVariablesWarning": "Dieses JSON enthält noch benutzerdefinierte Felder wie '{{first_name}}'. WhatsApp zeigt sie genau so an, wie sie geschrieben sind. Entferne sie daher, bevor du es in WhatsApp einfügst."
     },
     "publish": {
       "open": "Auf WhatsApp veröffentlichen",
@@ -7232,7 +7238,8 @@
       "submit": "Veröffentlichen",
       "success": "Auf WhatsApp veröffentlicht",
       "draftOnly": "Meta hat den Flow wegen Fehlern als Entwurf belassen",
-      "failed": "Veröffentlichung auf WhatsApp fehlgeschlagen"
+      "failed": "Veröffentlichung auf WhatsApp fehlgeschlagen",
+      "contactVariables": "Diese Mini App zeigt benutzerdefinierte Felder in ihren Texten. Sie funktionieren vorerst nur im Weblink – entferne sie vor dem Veröffentlichen auf WhatsApp."
     },
     "runner": {
       "back": "Zurück",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "„Flow abschließen“ ist nur auf dem letzten Bildschirm erlaubt.",
       "footer_captions_invalid": "Verwende entweder eine mittlere Beschriftung oder eine linke und rechte zusammen.",
       "options_with_images_limit": "Mit Bildern darf ein Dropdown höchstens {max} Optionen haben.",
-      "navigation_badge_multiple": "Nur ein Eintrag einer Navigationsliste darf ein Badge haben."
+      "navigation_badge_multiple": "Nur ein Eintrag einer Navigationsliste darf ein Badge haben.",
+      "contact_variable_whatsapp": "Benutzerdefinierte Felder erscheinen nur im Weblink; WhatsApp unterstützt sie noch nicht. Entferne sie vor der Veröffentlichung in WhatsApp."
     },
     "upload": {
       "choosePhotos": "Fotos auswählen oder aufnehmen",

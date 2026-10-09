@@ -7132,6 +7132,10 @@
     "description": "Crie formulários do WhatsApp Flow e compartilhe-os como link em qualquer canal.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "Flows já publicados no WhatsApp permanecem na Meta.",
+    "publicUrl": {
+      "label": "URL Pública",
+      "hint": "Copie e cole a URL no seu fluxo, transmissão ou sequência. Enviada assim, cada resposta fica vinculada ao contato que a abriu."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "Não publicado",
@@ -7171,8 +7175,6 @@
       "drag": "Arraste para mover",
       "duplicate": "Duplicar",
       "remove": "Remover",
-      "progress": "{current} de {total}",
-      "managedBy": "Gerenciado pela empresa",
       "cannotDropHere": "Este componente não pode ser colocado aqui",
       "previewSubmitted": "Pré-visualização enviada: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "Padrão",
       "commaSeparated": "Separe os valores com vírgulas.",
-      "uploadImage": "Enviar imagem",
+      "uploadImage": "Selecionar imagem",
       "imageTooLarge": "A imagem é grande demais, mesmo após a compressão. Tente uma menor.",
       "moveUp": "Mover para cima",
       "moveDown": "Mover para baixo",
@@ -7209,18 +7211,22 @@
       "addCase": "Adicionar caso",
       "casesHint": "O nome de cada caso é comparado com o valor acima.",
       "nameHint": "Chave do campo nas respostas. Letras, números e sublinhados.",
-      "bindingHint": "Você pode mostrar respostas com {formExample} ou {screenExample}.",
       "markdownHint": "Suporta # títulos, **negrito**, *itálico*, ~~tachado~~, listas e [links](https://…).",
       "patternHint": "Expressão regular opcional que a resposta deve seguir.",
       "saveToCustomField": "Salvar em campo personalizado",
       "chooseCustomField": "Escolha um campo personalizado",
       "customFieldHint": "Quando um contato envia o link do Mini App, a resposta é salva neste campo.",
-      "imageLoadFailed": "Não foi possível carregar esta imagem. Escolha uma imagem JPEG, PNG, WebP ou GIF."
+      "imageLoadFailed": "Não foi possível carregar esta imagem. Escolha uma imagem JPEG, PNG, WebP ou GIF.",
+      "answerReference": "Referência da resposta",
+      "answerReferenceHint": "Cole em um texto ou condição para usar esta resposta.",
+      "copyReference": "Copiar",
+      "variablesHint": "Digite {open} ou clique em {button} para inserir um campo personalizado. Os valores só aparecem no link web para um contato conhecido."
     },
     "json": {
       "title": "Flow JSON",
       "description": "Flow JSON do WhatsApp (versão 7.3). Cole no WhatsApp Manager ou no Flows Playground.",
-      "copy": "Copiar JSON"
+      "copy": "Copiar JSON",
+      "contactVariablesWarning": "Este JSON ainda contém campos personalizados como '{{first_name}}'. O WhatsApp os exibe exatamente como foram escritos, então remova-os antes de colar no WhatsApp."
     },
     "publish": {
       "open": "Publicar no WhatsApp",
@@ -7232,7 +7238,8 @@
       "submit": "Publicar",
       "success": "Publicado no WhatsApp",
       "draftOnly": "A Meta manteve o Flow como rascunho por causa de erros",
-      "failed": "Não foi possível publicar no WhatsApp"
+      "failed": "Não foi possível publicar no WhatsApp",
+      "contactVariables": "Este Mini App mostra campos personalizados nos textos. Por enquanto eles só funcionam no link web — remova-os antes de publicar no WhatsApp."
     },
     "runner": {
       "back": "Voltar",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "“Concluir o fluxo” só pode ser usado na última tela.",
       "footer_captions_invalid": "Use uma legenda central, ou uma legenda esquerda e uma direita juntas.",
       "options_with_images_limit": "Com imagens, um menu suspenso pode ter no máximo {max} opções.",
-      "navigation_badge_multiple": "Apenas um item de uma lista de navegação pode ter selo."
+      "navigation_badge_multiple": "Apenas um item de uma lista de navegação pode ter selo.",
+      "contact_variable_whatsapp": "Campos personalizados só aparecem no link web; o WhatsApp ainda não os suporta. Remova-os antes de publicar no WhatsApp."
     },
     "upload": {
       "choosePhotos": "Escolha ou tire fotos",

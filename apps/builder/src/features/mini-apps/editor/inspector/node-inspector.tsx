@@ -1,6 +1,7 @@
 // biome-ignore-all lint/suspicious/noTemplateCurlyInString: Flow JSON bindings are literally written as ${...}
 "use client"
 import {
+  DISPLAY_TEXT_PROPS,
   findNode,
   MINI_APP_COMPONENTS,
   type MiniAppNode,
@@ -13,6 +14,7 @@ import { componentLabelKey } from "../../lib/labels"
 import { useIssueMessage } from "../../lib/use-issue-message"
 import { useMiniAppEditor } from "../editor-context"
 import { componentIcon } from "../palette"
+import { AnswerReferenceField } from "./answer-reference-field"
 import {
   ActionProp,
   CarouselImagesProp,
@@ -34,20 +36,26 @@ import {
   TextProp,
 } from "./fields"
 
-const BINDING_EXAMPLES = {
-  formExample: "${form.field}",
-  screenExample: "${screen.SCREEN_ID.form.field}",
-}
+const VARIABLE_HINT_PARAMS = { open: "{{", button: "</>" }
 
 function NodeFields({
   node,
   screenKey,
+  screenId,
 }: {
+  screenId: string
   node: MiniAppNode
   screenKey: string
 }) {
   const t = useTranslations("miniApps.inspector")
-  const nameField = <TextProp hint={t("nameHint")} mono propKey="name" />
+  const nameField = (
+    <>
+      <TextProp hint={t("nameHint")} mono propKey="name" />
+      {MINI_APP_COMPONENTS[node.type].isInput ? (
+        <AnswerReferenceField fieldKey={node.props.name} screenId={screenId} />
+      ) : null}
+    </>
+  )
   const action = MINI_APP_COMPONENTS[node.type].actions
 
   const fieldsByType: Record<MiniAppNode["type"], () => ReactNode> = {
@@ -56,7 +64,7 @@ function NodeFields({
     TextBody: () => (
       <>
         <TextProp
-          hint={t("bindingHint", BINDING_EXAMPLES)}
+          hint={t("variablesHint", VARIABLE_HINT_PARAMS)}
           maxLength={4096}
           multiline
           propKey="text"
@@ -69,7 +77,7 @@ function NodeFields({
     TextCaption: () => (
       <>
         <TextProp
-          hint={t("bindingHint", BINDING_EXAMPLES)}
+          hint={t("variablesHint", VARIABLE_HINT_PARAMS)}
           maxLength={409}
           multiline
           propKey="text"
@@ -308,6 +316,7 @@ export function NodeInspector({
   const Icon = componentIcon[node.type]
   const context = {
     props: node.props,
+    displayKeys: new Set(DISPLAY_TEXT_PROPS[node.type]),
     issues: nodeIssues,
     setProp: (key: string, value: unknown) => {
       const next = { ...node.props }
@@ -331,7 +340,12 @@ export function NodeInspector({
         </div>
         <GeneralIssues issues={nodeIssues} />
         <Separator />
-        <NodeFields node={node} screenKey={location.screen.key} />
+        <NodeFields
+          key={node.id}
+          node={node}
+          screenId={location.screen.id}
+          screenKey={location.screen.key}
+        />
         <CustomFieldMapping
           key={`${node.id}:${node.customFieldId ?? ""}`}
           node={node}

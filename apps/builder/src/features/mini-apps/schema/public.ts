@@ -137,6 +137,22 @@ export const updateMiniAppPublicRequest = z.object({
 
 export const miniAppIdPublicRequest = z.object({ id: miniAppId })
 
+export const MINI_APP_BULK_DELETE_MAX_IDS = 100
+
+export const deleteMiniAppsPublicRequest = z.object({
+  ids: z
+    .array(miniAppId)
+    .min(1)
+    .max(MINI_APP_BULK_DELETE_MAX_IDS)
+    .describe(
+      `Ids of the Mini Apps to delete, at most ${MINI_APP_BULK_DELETE_MAX_IDS} per call.`,
+    ),
+})
+
+export const miniAppFlowJsonPublicResponse = z
+  .record(z.string(), z.unknown())
+  .describe("WhatsApp Flow JSON 7.3: `{ version, screens: [...] }`.")
+
 export const validateMiniAppPublicRequest = z.object({
   flowJson: flowJsonInput,
 })
@@ -144,7 +160,7 @@ export const validateMiniAppPublicRequest = z.object({
 export const publishMiniAppPublicRequest = z.object({
   id: miniAppId,
   integrationWhatsappId: zodBigintAsString().describe(
-    "WhatsApp number to publish to (the WhatsApp integration id). Get it from `inboxes.list`.",
+    "WhatsApp number to publish to (the WhatsApp channel id). Get it from `whatsappChannels.list`.",
   ),
 })
 

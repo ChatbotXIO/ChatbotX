@@ -260,9 +260,6 @@ export function ScreenCanvas() {
   const screen = definition.screens.find(
     (candidate) => candidate.key === selectedScreenKey,
   )
-  const screenIndex = definition.screens.findIndex(
-    (candidate) => candidate.key === selectedScreenKey,
-  )
 
   if (!screen) {
     return null
@@ -282,14 +279,6 @@ export function ScreenCanvas() {
           <span className="flex-1 truncate font-medium text-[#111b21] text-[16px]">
             {screen.title || screen.id}
           </span>
-          {definition.screens.length > 1 ? (
-            <span className="text-[#667781] text-[12px]">
-              {t("progress", {
-                current: screenIndex + 1,
-                total: definition.screens.length,
-              })}
-            </span>
-          ) : null}
         </div>
         <div className="flex flex-1 flex-col gap-3 p-4">
           <SlotList
@@ -301,9 +290,6 @@ export function ScreenCanvas() {
               {t("emptyScreen")}
             </div>
           ) : null}
-        </div>
-        <div className="border-t px-4 py-2 text-center text-[#667781] text-[11px]">
-          {t("managedBy")}
         </div>
       </div>
     </div>

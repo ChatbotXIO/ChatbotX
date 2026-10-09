@@ -1,6 +1,7 @@
 export * from "./answers"
 export * from "./components"
 export * from "./custom-fields"
+export * from "./display-text"
 export * from "./expression"
 export * from "./issue-location"
 export * from "./serialize"

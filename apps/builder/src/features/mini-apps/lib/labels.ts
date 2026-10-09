@@ -119,6 +119,7 @@ export const issueLabelKey = {
   footer_captions_invalid: "miniApps.issues.footer_captions_invalid",
   options_with_images_limit: "miniApps.issues.options_with_images_limit",
   navigation_badge_multiple: "miniApps.issues.navigation_badge_multiple",
+  contact_variable_whatsapp: "miniApps.issues.contact_variable_whatsapp",
 } as const satisfies Record<MiniAppIssueCode, string>
 
 /** Inspector labels per Flow JSON property name. */

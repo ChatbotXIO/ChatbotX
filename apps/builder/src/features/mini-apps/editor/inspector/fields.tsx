@@ -1,6 +1,9 @@
 "use client"
 
-import type { MiniAppValidationIssue } from "@chatbotx.io/mini-app"
+import {
+  displayTextLength,
+  type MiniAppValidationIssue,
+} from "@chatbotx.io/mini-app"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
 import {
@@ -22,10 +25,13 @@ import {
   propertyLabelKey,
 } from "../../lib/labels"
 import { useIssueMessage } from "../../lib/use-issue-message"
+import { VariableTextEditor } from "./variable-text-editor"
 
 /** Props + issues of the node being edited, shared by every field. */
 export type InspectorContextValue = {
   props: Record<string, unknown>
+  /** Visitor-facing properties of the node: they get the custom field picker. */
+  displayKeys?: ReadonlySet<string>
   issues: MiniAppValidationIssue[]
   setProp: (key: string, value: unknown) => void
 }
@@ -95,6 +101,29 @@ export function FieldRow({
 
 const readString = (value: unknown) => (typeof value === "string" ? value : "")
 
+/** `length/max` under a text field; a `{{custom field}}` counts as one character. */
+export function DisplayTextCounter({
+  value,
+  maxLength,
+}: {
+  value: string
+  maxLength: number
+}) {
+  const length = displayTextLength(value)
+  return (
+    <div className="flex justify-end">
+      <span
+        className={cn(
+          "text-xs",
+          length > maxLength ? "text-destructive" : "text-muted-foreground",
+        )}
+      >
+        {length}/{maxLength}
+      </span>
+    </div>
+  )
+}
+
 export function TextProp({
   propKey,
   maxLength,
@@ -111,24 +140,23 @@ export function TextProp({
   mono?: boolean
 }) {
   const id = useId()
-  const { props, setProp } = useInspector()
+  const { props, setProp, displayKeys } = useInspector()
   const value = readString(props[propKey])
-  const counter = maxLength ? (
-    <span
-      className={cn(
-        "text-xs",
-        value.length > maxLength ? "text-destructive" : "text-muted-foreground",
-      )}
-    >
-      {value.length}/{maxLength}
-    </span>
-  ) : null
+  const withVariables = displayKeys?.has(propKey) === true
   const onChange = (next: string) =>
     setProp(propKey, next === "" ? undefined : next)
   return (
     <FieldRow hint={hint} htmlFor={id} propKey={propKey}>
       <div className="flex flex-col gap-1">
-        {multiline ? (
+        {withVariables ? (
+          <VariableTextEditor
+            multiline={multiline}
+            onChange={onChange}
+            placeholder={placeholder}
+            value={value}
+          />
+        ) : null}
+        {!withVariables && multiline ? (
           <Textarea
             className={cn("min-h-20", mono && "font-mono text-xs")}
             id={id}
@@ -136,7 +164,8 @@ export function TextProp({
             placeholder={placeholder}
             value={value}
           />
-        ) : (
+        ) : null}
+        {withVariables || multiline ? null : (
           <Input
             className={cn(mono && "font-mono text-xs")}
             id={id}
@@ -145,7 +174,9 @@ export function TextProp({
             value={value}
           />
         )}
-        {counter ? <div className="flex justify-end">{counter}</div> : null}
+        {maxLength ? (
+          <DisplayTextCounter maxLength={maxLength} value={value} />
+        ) : null}
       </div>
     </FieldRow>
   )

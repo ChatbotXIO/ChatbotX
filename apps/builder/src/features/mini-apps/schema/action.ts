@@ -31,7 +31,7 @@ export type UpdateMiniAppRequest = z.infer<typeof updateMiniAppRequest>
 
 export const publishMiniAppWhatsappRequest = z.object({
   integrationWhatsappId: zodBigintAsString().describe(
-    "WhatsApp number to publish to. Get it from `inboxes.list` (the WhatsApp integration id).",
+    "WhatsApp number to publish to (the WhatsApp channel id). Get it from `whatsappChannels.list`.",
   ),
 })
 export type PublishMiniAppWhatsappRequest = z.infer<

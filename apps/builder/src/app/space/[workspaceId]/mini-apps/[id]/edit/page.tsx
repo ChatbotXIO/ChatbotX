@@ -1,6 +1,7 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { MiniAppEditor } from "@/features/mini-apps/editor/mini-app-editor"
+import { buildMiniAppPublicUrl } from "@/features/mini-apps/lib/public-url"
 import {
   findMiniApp,
   listWhatsappPublishTargets,
@@ -32,6 +33,7 @@ export default async function EditMiniAppPage({
       // Remount after a save so the editor starts from the stored version.
       key={miniApp.updatedAt.toISOString()}
       miniAppId={miniApp.id}
+      publicUrl={buildMiniAppPublicUrl(miniApp.id)}
       publishTargets={publishTargets}
       workspaceId={workspaceId}
     />

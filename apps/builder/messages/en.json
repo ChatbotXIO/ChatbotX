@@ -7132,6 +7132,10 @@
     "description": "Build WhatsApp Flow forms and share them as a link on any channel.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "Flows already published to WhatsApp stay on Meta.",
+    "publicUrl": {
+      "label": "Public URL",
+      "hint": "Copy and paste the URL into your flow, broadcast, or sequence. Sent that way, each answer is linked to the contact who opened it."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "Not published",
@@ -7171,8 +7175,6 @@
       "drag": "Drag to move",
       "duplicate": "Duplicate",
       "remove": "Remove",
-      "progress": "{current} of {total}",
-      "managedBy": "Managed by the business",
       "cannotDropHere": "This component cannot be placed here",
       "previewSubmitted": "Preview submitted: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "Default",
       "commaSeparated": "Separate values with commas.",
-      "uploadImage": "Upload image",
+      "uploadImage": "Select image",
       "imageTooLarge": "The image is too large even after compression. Try a smaller one.",
       "moveUp": "Move up",
       "moveDown": "Move down",
@@ -7209,18 +7211,22 @@
       "addCase": "Add case",
       "casesHint": "Each case name is matched against the value above.",
       "nameHint": "Field key in the answers. Letters, numbers and underscores.",
-      "bindingHint": "You can show answers with {formExample} or {screenExample}.",
       "markdownHint": "Supports # headings, **bold**, *italic*, ~~strike~~, lists and [links](https://…).",
       "patternHint": "Optional regular expression the answer must match.",
       "saveToCustomField": "Save to custom field",
       "chooseCustomField": "Choose a custom field",
       "customFieldHint": "When a contact submits the Mini App link, the answer is saved to this field.",
-      "imageLoadFailed": "Could not load this image. Choose a JPEG, PNG, WebP or GIF image."
+      "imageLoadFailed": "Could not load this image. Choose a JPEG, PNG, WebP or GIF image.",
+      "answerReference": "Answer reference",
+      "answerReferenceHint": "Paste it into text or a condition to use this answer.",
+      "copyReference": "Copy",
+      "variablesHint": "Type {open} or click {button} to insert a custom field. Values only show on the web link for a known contact."
     },
     "json": {
       "title": "Flow JSON",
       "description": "WhatsApp Flow JSON (version 7.3). Paste it into WhatsApp Manager or the Flows Playground.",
-      "copy": "Copy JSON"
+      "copy": "Copy JSON",
+      "contactVariablesWarning": "This JSON still holds custom fields like '{{first_name}}'. WhatsApp shows them exactly as written, so remove them before pasting it into WhatsApp."
     },
     "publish": {
       "open": "Publish to WhatsApp",
@@ -7232,7 +7238,8 @@
       "submit": "Publish",
       "success": "Published to WhatsApp",
       "draftOnly": "Meta kept the Flow as a draft because of errors",
-      "failed": "Could not publish to WhatsApp"
+      "failed": "Could not publish to WhatsApp",
+      "contactVariables": "This Mini App shows custom fields in its texts. They only work on the web link for now — remove them before publishing to WhatsApp."
     },
     "runner": {
       "back": "Back",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "“Complete the flow” can only be used on the last screen.",
       "footer_captions_invalid": "Use either a center caption, or a left and a right caption together.",
       "options_with_images_limit": "With images, a dropdown can have at most {max} options.",
-      "navigation_badge_multiple": "Only one item in a navigation list can have a badge."
+      "navigation_badge_multiple": "Only one item in a navigation list can have a badge.",
+      "contact_variable_whatsapp": "Custom fields only show on the web link; WhatsApp does not support them yet. Remove them before publishing to WhatsApp."
     },
     "upload": {
       "choosePhotos": "Choose or take photos",

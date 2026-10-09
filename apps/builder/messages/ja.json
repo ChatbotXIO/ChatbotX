@@ -7132,6 +7132,10 @@
     "description": "WhatsApp Flowのフォームを作成し、あらゆるチャネルでリンクとして共有できます。",
     "feature": "ミニアプリ",
     "deleteKeepsWhatsapp": "WhatsAppに公開済みのFlowはMetaに残ります。",
+    "publicUrl": {
+      "label": "公開URL",
+      "hint": "この URL をコピーして、フロー、ブロードキャスト、シーケンスに貼り付けてください。その方法で送信すると、各回答は開いたコンタクトに紐付けられます。"
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "未公開",
@@ -7171,8 +7175,6 @@
       "drag": "ドラッグして移動",
       "duplicate": "複製",
       "remove": "削除",
-      "progress": "{current} / {total}",
-      "managedBy": "ビジネス側で管理",
       "cannotDropHere": "このコンポーネントはここに配置できません",
       "previewSubmitted": "送信プレビュー: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "デフォルト",
       "commaSeparated": "値はカンマで区切ります。",
-      "uploadImage": "画像をアップロード",
+      "uploadImage": "画像を選択",
       "imageTooLarge": "圧縮しても画像が大きすぎます。より小さい画像をお試しください。",
       "moveUp": "上へ移動",
       "moveDown": "下へ移動",
@@ -7209,18 +7211,22 @@
       "addCase": "ケースを追加",
       "casesHint": "各ケース名は上の値と照合されます。",
       "nameHint": "回答内のフィールドキー。英数字とアンダースコア。",
-      "bindingHint": "{formExample} または {screenExample} で回答を表示できます。",
       "markdownHint": "# 見出し、**太字**、*斜体*、~~取り消し線~~、リスト、[リンク](https://…)に対応しています。",
       "patternHint": "回答が一致すべき正規表現（任意）。",
       "saveToCustomField": "カスタムフィールドに保存",
       "chooseCustomField": "カスタムフィールドを選択",
       "customFieldHint": "連絡先が Mini App のリンクから送信すると、回答がこのフィールドに保存されます。",
-      "imageLoadFailed": "この画像を読み込めませんでした。JPEG、PNG、WebP、GIF 画像を選択してください。"
+      "imageLoadFailed": "この画像を読み込めませんでした。JPEG、PNG、WebP、GIF 画像を選択してください。",
+      "answerReference": "回答の参照",
+      "answerReferenceHint": "テキストや条件に貼り付けると、この回答を使用できます。",
+      "copyReference": "コピー",
+      "variablesHint": "{open} と入力するか {button} をクリックしてカスタムフィールドを挿入します。値は連絡先が特定できるときに Web リンクでのみ表示されます。"
     },
     "json": {
       "title": "Flow JSON",
       "description": "WhatsApp Flow JSON（バージョン7.3）。WhatsApp ManagerまたはFlows Playgroundに貼り付けてください。",
-      "copy": "JSONをコピー"
+      "copy": "JSONをコピー",
+      "contactVariablesWarning": "この JSON には '{{first_name}}' などのカスタムフィールドが残っています。WhatsApp ではそのまま表示されるため、WhatsApp に貼り付ける前に削除してください。"
     },
     "publish": {
       "open": "WhatsAppに公開",
@@ -7232,7 +7238,8 @@
       "submit": "公開",
       "success": "WhatsAppに公開しました",
       "draftOnly": "エラーのため、MetaはこのFlowを下書きのままにしました",
-      "failed": "WhatsAppに公開できませんでした"
+      "failed": "WhatsAppに公開できませんでした",
+      "contactVariables": "このミニアプリのテキストにはカスタムフィールドが含まれています。現在は Web リンクでのみ機能します。WhatsApp に公開する前に削除してください。"
     },
     "runner": {
       "back": "戻る",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "「フローを完了」は最後の画面でのみ使用できます。",
       "footer_captions_invalid": "中央キャプションのみ、または左右のキャプションを一緒に使用してください。",
       "options_with_images_limit": "画像がある場合、ドロップダウンの選択肢は最大 {max} 件です。",
-      "navigation_badge_multiple": "ナビゲーションリストでバッジを付けられる項目は 1 つだけです。"
+      "navigation_badge_multiple": "ナビゲーションリストでバッジを付けられる項目は 1 つだけです。",
+      "contact_variable_whatsapp": "カスタムフィールドは Web リンクでのみ表示され、WhatsApp ではまだサポートされていません。WhatsApp に公開する前に削除してください。"
     },
     "upload": {
       "choosePhotos": "写真を選択または撮影",

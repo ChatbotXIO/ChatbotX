@@ -7132,6 +7132,10 @@
     "description": "Crea formularios de WhatsApp Flow y compártelos como enlace en cualquier canal.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "Los Flows ya publicados en WhatsApp permanecen en Meta.",
+    "publicUrl": {
+      "label": "URL pública",
+      "hint": "Copia y pega la URL en tu flujo, difusión o secuencia. Enviada así, cada respuesta queda vinculada al contacto que la abrió."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "Sin publicar",
@@ -7171,8 +7175,6 @@
       "drag": "Arrastrar para mover",
       "duplicate": "Duplicar",
       "remove": "Quitar",
-      "progress": "{current} de {total}",
-      "managedBy": "Gestionado por la empresa",
       "cannotDropHere": "Este componente no se puede colocar aquí",
       "previewSubmitted": "Vista previa enviada: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "Predeterminado",
       "commaSeparated": "Separa los valores con comas.",
-      "uploadImage": "Subir imagen",
+      "uploadImage": "Seleccionar imagen",
       "imageTooLarge": "La imagen es demasiado grande incluso tras comprimirla. Prueba con una más pequeña.",
       "moveUp": "Subir",
       "moveDown": "Bajar",
@@ -7209,18 +7211,22 @@
       "addCase": "Añadir caso",
       "casesHint": "El nombre de cada caso se compara con el valor anterior.",
       "nameHint": "Clave del campo en las respuestas. Letras, números y guiones bajos.",
-      "bindingHint": "Puedes mostrar respuestas con {formExample} o {screenExample}.",
       "markdownHint": "Admite # títulos, **negrita**, *cursiva*, ~~tachado~~, listas y [enlaces](https://…).",
       "patternHint": "Expresión regular opcional que debe cumplir la respuesta.",
       "saveToCustomField": "Guardar en campo personalizado",
       "chooseCustomField": "Elige un campo personalizado",
       "customFieldHint": "Cuando un contacto envía el enlace de la Mini App, la respuesta se guarda en este campo.",
-      "imageLoadFailed": "No se pudo cargar esta imagen. Elige una imagen JPEG, PNG, WebP o GIF."
+      "imageLoadFailed": "No se pudo cargar esta imagen. Elige una imagen JPEG, PNG, WebP o GIF.",
+      "answerReference": "Referencia de respuesta",
+      "answerReferenceHint": "Pégala en un texto o una condición para usar esta respuesta.",
+      "copyReference": "Copiar",
+      "variablesHint": "Escribe {open} o pulsa {button} para insertar un campo personalizado. Los valores solo se muestran en el enlace web para un contacto conocido."
     },
     "json": {
       "title": "Flow JSON",
       "description": "Flow JSON de WhatsApp (versión 7.3). Pégalo en WhatsApp Manager o en Flows Playground.",
-      "copy": "Copiar JSON"
+      "copy": "Copiar JSON",
+      "contactVariablesWarning": "Este JSON aún contiene campos personalizados como '{{first_name}}'. WhatsApp los muestra tal como están escritos, así que elimínalos antes de pegarlo en WhatsApp."
     },
     "publish": {
       "open": "Publicar en WhatsApp",
@@ -7232,7 +7238,8 @@
       "submit": "Publicar",
       "success": "Publicado en WhatsApp",
       "draftOnly": "Meta dejó el Flow como borrador por errores",
-      "failed": "No se pudo publicar en WhatsApp"
+      "failed": "No se pudo publicar en WhatsApp",
+      "contactVariables": "Esta Mini App muestra campos personalizados en sus textos. Por ahora solo funcionan en el enlace web: quítalos antes de publicar en WhatsApp."
     },
     "runner": {
       "back": "Atrás",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "“Completar el flujo” solo se puede usar en la última pantalla.",
       "footer_captions_invalid": "Usa un texto central, o un texto izquierdo y uno derecho juntos.",
       "options_with_images_limit": "Con imágenes, un desplegable puede tener como máximo {max} opciones.",
-      "navigation_badge_multiple": "Solo un elemento de una lista de navegación puede tener insignia."
+      "navigation_badge_multiple": "Solo un elemento de una lista de navegación puede tener insignia.",
+      "contact_variable_whatsapp": "Los campos personalizados solo se muestran en el enlace web; WhatsApp aún no los admite. Quítalos antes de publicar en WhatsApp."
     },
     "upload": {
       "choosePhotos": "Elige o toma fotos",

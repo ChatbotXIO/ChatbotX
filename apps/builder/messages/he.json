@@ -7132,6 +7132,10 @@
     "description": "בנו טפסי WhatsApp Flow ושתפו אותם כקישור בכל ערוץ.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "Flows שכבר פורסמו ב-WhatsApp נשארים ב-Meta.",
+    "publicUrl": {
+      "label": "קישור ציבורי",
+      "hint": "העתיקו את הכתובת והדביקו אותה בזרימה, בשידור או ברצף. כשהיא נשלחת כך, כל תשובה משויכת לאיש הקשר שפתח אותה."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "לא פורסם",
@@ -7171,8 +7175,6 @@
       "drag": "גרירה להזזה",
       "duplicate": "שכפול",
       "remove": "הסרה",
-      "progress": "{current} מתוך {total}",
-      "managedBy": "מנוהל על ידי העסק",
       "cannotDropHere": "אי אפשר למקם כאן את הרכיב הזה",
       "previewSubmitted": "התצוגה המקדימה נשלחה: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "ברירת מחדל",
       "commaSeparated": "הפרידו ערכים בפסיקים.",
-      "uploadImage": "העלאת תמונה",
+      "uploadImage": "בחירת תמונה",
       "imageTooLarge": "התמונה גדולה מדי גם לאחר דחיסה. נסו תמונה קטנה יותר.",
       "moveUp": "העברה למעלה",
       "moveDown": "העברה למטה",
@@ -7209,18 +7211,22 @@
       "addCase": "הוספת מקרה",
       "casesHint": "שם כל מקרה מושווה לערך שלמעלה.",
       "nameHint": "מפתח השדה בתשובות. אותיות, ספרות וקווים תחתונים.",
-      "bindingHint": "אפשר להציג תשובות עם {formExample} או {screenExample}.",
       "markdownHint": "תומך בכותרות #, **מודגש**, *נטוי*, ~~קו חוצה~~, רשימות ו[קישורים](https://…).",
       "patternHint": "ביטוי רגולרי אופציונלי שהתשובה חייבת להתאים לו.",
       "saveToCustomField": "שמירה בשדה מותאם",
       "chooseCustomField": "בחירת שדה מותאם",
       "customFieldHint": "כשאיש קשר שולח את קישור ה-Mini App, התשובה נשמרת בשדה זה.",
-      "imageLoadFailed": "לא ניתן לטעון את התמונה. בחרו תמונת JPEG,‏ PNG,‏ WebP או GIF."
+      "imageLoadFailed": "לא ניתן לטעון את התמונה. בחרו תמונת JPEG,‏ PNG,‏ WebP או GIF.",
+      "answerReference": "הפניה לתשובה",
+      "answerReferenceHint": "הדביקו בטקסט או בתנאי כדי להשתמש בתשובה זו.",
+      "copyReference": "העתקה",
+      "variablesHint": "הקלידו {open} או לחצו על {button} כדי להוסיף שדה מותאם. הערכים מוצגים רק בקישור האינטרנט לאיש קשר מזוהה."
     },
     "json": {
       "title": "Flow JSON",
       "description": "Flow JSON של WhatsApp (גרסה 7.3). הדביקו אותו ב-WhatsApp Manager או ב-Flows Playground.",
-      "copy": "העתקת JSON"
+      "copy": "העתקת JSON",
+      "contactVariablesWarning": "ה-JSON הזה עדיין מכיל שדות מותאמים אישית כמו '{{first_name}}'. WhatsApp מציג אותם בדיוק כפי שנכתבו, לכן יש להסיר אותם לפני ההדבקה ב-WhatsApp."
     },
     "publish": {
       "open": "פרסום ב-WhatsApp",
@@ -7232,7 +7238,8 @@
       "submit": "פרסום",
       "success": "פורסם ב-WhatsApp",
       "draftOnly": "Meta השאירה את ה-Flow כטיוטה בגלל שגיאות",
-      "failed": "לא ניתן היה לפרסם ב-WhatsApp"
+      "failed": "לא ניתן היה לפרסם ב-WhatsApp",
+      "contactVariables": "המיני־אפליקציה הזו מציגה שדות מותאמים אישית בטקסטים שלה. כרגע הם פועלים רק בקישור האינטרנט — הסירו אותם לפני הפרסום ב־WhatsApp."
     },
     "runner": {
       "back": "חזרה",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "“השלמת התהליך” זמינה רק במסך האחרון.",
       "footer_captions_invalid": "השתמשו בכיתוב מרכזי בלבד, או בכיתוב שמאלי וימני יחד.",
       "options_with_images_limit": "עם תמונות, לרשימה נפתחת יכולות להיות עד {max} אפשרויות.",
-      "navigation_badge_multiple": "רק פריט אחד ברשימת ניווט יכול לשאת תג."
+      "navigation_badge_multiple": "רק פריט אחד ברשימת ניווט יכול לשאת תג.",
+      "contact_variable_whatsapp": "שדות מותאמים מוצגים רק בקישור האינטרנט; WhatsApp עדיין לא תומך בהם. הסירו אותם לפני פרסום ב-WhatsApp."
     },
     "upload": {
       "choosePhotos": "בחרו או צלמו תמונות",

@@ -1,11 +1,29 @@
+import { MARKDOWN_ESCAPE_PATTERN } from "@chatbotx.io/mini-app"
 import { Fragment, type ReactNode } from "react"
 
 /**
  * The markdown subset WhatsApp Flows render in RichText / `markdown: true`
  * text: `#`/`##` headings, paragraphs, single-level lists, **bold**,
  *italic* / _italic_, ~~strike~~ and [links](https://…). Built as React
- * elements — no raw HTML is ever injected.
+ * elements — no raw HTML is ever injected. A backslash shows the next
+ * markdown character as is (`\*` → `*`), which is how contact values are
+ * kept from being read as markdown.
  */
+
+// Escaped characters are parked on private-use code points while the
+// markdown is parsed, then put back in every piece of rendered text.
+const ESCAPE_BASE = 0xe0_00
+const ESCAPED_PLACEHOLDER = /[\uE000-\uE07F]/g
+
+const protectEscapes = (source: string): string =>
+  source.replace(MARKDOWN_ESCAPE_PATTERN, (_match, char: string) =>
+    String.fromCharCode(ESCAPE_BASE + char.charCodeAt(0)),
+  )
+
+const restoreEscapes = (text: string): string =>
+  text.replace(ESCAPED_PLACEHOLDER, (char) =>
+    String.fromCharCode(char.charCodeAt(0) - ESCAPE_BASE),
+  )
 
 const INLINE_PATTERN =
   /(\*\*[^*]+\*\*|~~[^~]+~~|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\(https?:\/\/[^\s)]+\))/g
@@ -17,33 +35,33 @@ const renderInline = (text: string): ReactNode[] =>
   text.split(INLINE_PATTERN).map((part, index) => {
     const key = `${index}-${part}`
     if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
-      return <strong key={key}>{part.slice(2, -2)}</strong>
+      return <strong key={key}>{restoreEscapes(part.slice(2, -2))}</strong>
     }
     if (part.startsWith("~~") && part.endsWith("~~") && part.length > 4) {
-      return <s key={key}>{part.slice(2, -2)}</s>
+      return <s key={key}>{restoreEscapes(part.slice(2, -2))}</s>
     }
     if (
       part.length > 2 &&
       ((part.startsWith("*") && part.endsWith("*")) ||
         (part.startsWith("_") && part.endsWith("_")))
     ) {
-      return <em key={key}>{part.slice(1, -1)}</em>
+      return <em key={key}>{restoreEscapes(part.slice(1, -1))}</em>
     }
     const link = LINK_PATTERN.exec(part)
     if (link) {
       return (
         <a
           className="text-[#027eb5] underline"
-          href={link[2]}
+          href={restoreEscapes(link[2] ?? "")}
           key={key}
           rel="noopener noreferrer"
           target="_blank"
         >
-          {link[1]}
+          {restoreEscapes(link[1] ?? "")}
         </a>
       )
     }
-    return <Fragment key={key}>{part}</Fragment>
+    return <Fragment key={key}>{restoreEscapes(part)}</Fragment>
   })
 
 type Block =
@@ -90,7 +108,7 @@ const parseBlocks = (source: string): Block[] => {
 export function SimpleMarkdown({ source }: { source: string }) {
   return (
     <div className="flex flex-col gap-2">
-      {parseBlocks(source).map((block, index) => {
+      {parseBlocks(protectEscapes(source)).map((block, index) => {
         const key = `${block.kind}-${index}`
         if (block.kind === "heading") {
           return block.level === 1 ? (

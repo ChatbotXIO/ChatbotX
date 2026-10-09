@@ -1943,9 +1943,19 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/mini-apps/{id}",
   },
   {
+    "method": "POST",
+    "operationId": "miniApps.deleteMany",
+    "path": "/v1/mini-apps/bulk-delete",
+  },
+  {
     "method": "GET",
     "operationId": "miniApps.get",
     "path": "/v1/mini-apps/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "miniApps.getFlowJson",
+    "path": "/v1/mini-apps/{id}/flow-json",
   },
   {
     "method": "GET",

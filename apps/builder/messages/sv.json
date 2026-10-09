@@ -7132,6 +7132,10 @@
     "description": "Skapa formulär för WhatsApp Flows och dela dem som en länk i valfri kanal.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "Flows som redan publicerats på WhatsApp finns kvar hos Meta.",
+    "publicUrl": {
+      "label": "Offentlig URL",
+      "hint": "Kopiera URL:en och klistra in den i ditt flöde, din broadcast eller sekvens. Skickad så kopplas varje svar till kontakten som öppnade den."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "Inte publicerad",
@@ -7171,8 +7175,6 @@
       "drag": "Dra för att flytta",
       "duplicate": "Duplicera",
       "remove": "Ta bort",
-      "progress": "{current} av {total}",
-      "managedBy": "Hanteras av företaget",
       "cannotDropHere": "Den här komponenten kan inte placeras här",
       "previewSubmitted": "Förhandsvisning skickad: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "Standard",
       "commaSeparated": "Separera värden med kommatecken.",
-      "uploadImage": "Ladda upp bild",
+      "uploadImage": "Välj bild",
       "imageTooLarge": "Bilden är för stor även efter komprimering. Försök med en mindre.",
       "moveUp": "Flytta upp",
       "moveDown": "Flytta ned",
@@ -7209,18 +7211,22 @@
       "addCase": "Lägg till fall",
       "casesHint": "Varje fallnamn matchas mot värdet ovan.",
       "nameHint": "Fältnyckel i svaren. Bokstäver, siffror och understreck.",
-      "bindingHint": "Du kan visa svar med {formExample} eller {screenExample}.",
       "markdownHint": "Stöder # rubriker, **fetstil**, *kursiv*, ~~genomstruken~~, listor och [länkar](https://…).",
       "patternHint": "Valfritt reguljärt uttryck som svaret måste matcha.",
       "saveToCustomField": "Spara i anpassat fält",
       "chooseCustomField": "Välj ett anpassat fält",
       "customFieldHint": "När en kontakt skickar Mini App-länken sparas svaret i det här fältet.",
-      "imageLoadFailed": "Bilden kunde inte läsas in. Välj en JPEG-, PNG-, WebP- eller GIF-bild."
+      "imageLoadFailed": "Bilden kunde inte läsas in. Välj en JPEG-, PNG-, WebP- eller GIF-bild.",
+      "answerReference": "Svarsreferens",
+      "answerReferenceHint": "Klistra in den i text eller ett villkor för att använda svaret.",
+      "copyReference": "Kopiera",
+      "variablesHint": "Skriv {open} eller klicka på {button} för att infoga ett anpassat fält. Värden visas bara i webblänken för en känd kontakt."
     },
     "json": {
       "title": "Flow JSON",
       "description": "WhatsApp Flow JSON (version 7.3). Klistra in den i WhatsApp Manager eller Flows Playground.",
-      "copy": "Kopiera JSON"
+      "copy": "Kopiera JSON",
+      "contactVariablesWarning": "Den här JSON-koden innehåller fortfarande anpassade fält som '{{first_name}}'. WhatsApp visar dem precis som de är skrivna, så ta bort dem innan du klistrar in den i WhatsApp."
     },
     "publish": {
       "open": "Publicera på WhatsApp",
@@ -7232,7 +7238,8 @@
       "submit": "Publicera",
       "success": "Publicerad på WhatsApp",
       "draftOnly": "Meta behöll Flowet som utkast på grund av fel",
-      "failed": "Det gick inte att publicera på WhatsApp"
+      "failed": "Det gick inte att publicera på WhatsApp",
+      "contactVariables": "Den här Mini App visar anpassade fält i sina texter. De fungerar än så länge bara på webblänken – ta bort dem innan du publicerar till WhatsApp."
     },
     "runner": {
       "back": "Tillbaka",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "”Slutför flödet” kan bara användas på den sista skärmen.",
       "footer_captions_invalid": "Använd antingen en mittentext eller en vänster- och högertext tillsammans.",
       "options_with_images_limit": "Med bilder kan en rullgardinsmeny ha högst {max} alternativ.",
-      "navigation_badge_multiple": "Bara ett objekt i en navigeringslista kan ha en etikett."
+      "navigation_badge_multiple": "Bara ett objekt i en navigeringslista kan ha en etikett.",
+      "contact_variable_whatsapp": "Anpassade fält visas bara i webblänken; WhatsApp stöder dem inte än. Ta bort dem innan du publicerar till WhatsApp."
     },
     "upload": {
       "choosePhotos": "Välj eller ta bilder",

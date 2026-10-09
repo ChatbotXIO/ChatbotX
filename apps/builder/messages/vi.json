@@ -7132,6 +7132,10 @@
     "description": "Tạo form theo chuẩn WhatsApp Flows và chia sẻ bằng link trên mọi kênh.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "Các Flow đã đẩy lên WhatsApp vẫn còn trên Meta.",
+    "publicUrl": {
+      "label": "URL công khai",
+      "hint": "Sao chép URL này và dán vào flow, broadcast hoặc sequence. Gửi theo cách đó, mỗi câu trả lời sẽ gắn với contact đã mở link."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "Chưa đẩy lên",
@@ -7171,8 +7175,6 @@
       "drag": "Kéo để di chuyển",
       "duplicate": "Nhân bản",
       "remove": "Xoá",
-      "progress": "{current}/{total}",
-      "managedBy": "Do doanh nghiệp quản lý",
       "cannotDropHere": "Không thể đặt thành phần này ở đây",
       "previewSubmitted": "Đã gửi thử: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "Mặc định",
       "commaSeparated": "Các giá trị cách nhau bằng dấu phẩy.",
-      "uploadImage": "Tải ảnh lên",
+      "uploadImage": "Chọn ảnh",
       "imageTooLarge": "Ảnh vẫn quá lớn sau khi nén. Hãy thử ảnh nhỏ hơn.",
       "moveUp": "Lên trên",
       "moveDown": "Xuống dưới",
@@ -7209,18 +7211,22 @@
       "addCase": "Thêm trường hợp",
       "casesHint": "Tên mỗi trường hợp được so với giá trị ở trên.",
       "nameHint": "Khoá của ô trong câu trả lời. Dùng chữ, số và dấu gạch dưới.",
-      "bindingHint": "Có thể hiện câu trả lời bằng {formExample} hoặc {screenExample}.",
       "markdownHint": "Hỗ trợ # tiêu đề, **đậm**, *nghiêng*, ~~gạch~~, danh sách và [link](https://…).",
       "patternHint": "Biểu thức chính quy (regex) mà câu trả lời phải khớp, không bắt buộc.",
       "saveToCustomField": "Lưu vào custom field",
       "chooseCustomField": "Chọn custom field",
       "customFieldHint": "Khi liên hệ gửi Mini App qua link, câu trả lời được lưu vào field này.",
-      "imageLoadFailed": "Không tải được ảnh này. Hãy chọn ảnh JPEG, PNG, WebP hoặc GIF."
+      "imageLoadFailed": "Không tải được ảnh này. Hãy chọn ảnh JPEG, PNG, WebP hoặc GIF.",
+      "answerReference": "Cú pháp lấy dữ liệu",
+      "answerReferenceHint": "Dán vào chữ hoặc điều kiện để dùng câu trả lời của ô này.",
+      "copyReference": "Sao chép",
+      "variablesHint": "Gõ {open} hoặc bấm {button} để chèn custom field. Giá trị chỉ hiện trên link web khi biết khách là ai."
     },
     "json": {
       "title": "Flow JSON",
       "description": "WhatsApp Flow JSON (phiên bản 7.3). Có thể dán vào WhatsApp Manager hoặc Flows Playground.",
-      "copy": "Copy JSON"
+      "copy": "Copy JSON",
+      "contactVariablesWarning": "JSON này vẫn còn custom field như '{{first_name}}'. WhatsApp sẽ hiện nguyên văn, nên hãy xóa chúng trước khi dán vào WhatsApp."
     },
     "publish": {
       "open": "Đẩy lên WhatsApp",
@@ -7232,7 +7238,8 @@
       "submit": "Đẩy lên",
       "success": "Đã đẩy lên WhatsApp",
       "draftOnly": "Meta giữ Flow ở trạng thái nháp vì còn lỗi",
-      "failed": "Không đẩy lên WhatsApp được"
+      "failed": "Không đẩy lên WhatsApp được",
+      "contactVariables": "Mini App này đang chèn custom field vào chữ. Hiện custom field chỉ chạy trên link web — hãy bỏ chúng trước khi đẩy lên WhatsApp."
     },
     "runner": {
       "back": "Quay lại",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "“Hoàn tất flow” chỉ dùng được ở màn hình cuối.",
       "footer_captions_invalid": "Chỉ dùng chú thích giữa, hoặc dùng cả chú thích trái và phải.",
       "options_with_images_limit": "Khi có ảnh, danh sách thả xuống chỉ được tối đa {max} lựa chọn.",
-      "navigation_badge_multiple": "Trong danh sách điều hướng chỉ một mục được có nhãn."
+      "navigation_badge_multiple": "Trong danh sách điều hướng chỉ một mục được có nhãn.",
+      "contact_variable_whatsapp": "Custom field chỉ hiện trên link web, WhatsApp chưa hỗ trợ. Hãy bỏ custom field trước khi đẩy lên WhatsApp."
     },
     "upload": {
       "choosePhotos": "Chọn hoặc chụp ảnh",

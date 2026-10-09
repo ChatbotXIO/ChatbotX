@@ -10,6 +10,8 @@ import {
   miniAppPublicationService,
   miniAppService,
 } from "@chatbotx.io/business/mini-app"
+import { hasContactVariables } from "@chatbotx.io/mini-app"
+import { getTranslations } from "next-intl/server"
 import { buildWhatsappContext } from "@/features/integration-whatsapp/flows/lib/whatsapp-flow-operations"
 import { integrations } from "@/integration"
 
@@ -37,6 +39,13 @@ export async function publishMiniAppToWhatsapp(props: {
           .length,
       },
     )
+  }
+
+  // Custom field values only render on the web link for now; WhatsApp would
+  // show the raw `{{first_name}}` tokens to every recipient.
+  if (hasContactVariables(miniApp.definition)) {
+    const t = await getTranslations("miniApps.publish")
+    throw validationException("definition", t("contactVariables"))
   }
 
   const integrationWhatsapp =

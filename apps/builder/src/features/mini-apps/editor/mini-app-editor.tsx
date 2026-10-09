@@ -54,6 +54,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
+import { PublicUrlSection } from "@/components/public-url-section"
 import { createMiniAppAction } from "../actions/create-mini-app.action"
 import { updateMiniAppAction } from "../actions/update-mini-app.action"
 import { FlowJsonDialog } from "../components/flow-json-dialog"
@@ -78,6 +79,8 @@ import { componentIcon, Palette } from "./palette"
 export type MiniAppEditorProps = {
   workspaceId: string
   miniAppId?: string
+  /** The shareable link, shown once the Mini App exists (edit page only). */
+  publicUrl?: string
   initialName: string
   initialDefinition: MiniAppDefinition
   publishTargets: WhatsappPublishTarget[]
@@ -220,6 +223,7 @@ function ScreensBar() {
 function EditorBody({
   workspaceId,
   miniAppId,
+  publicUrl,
   publishTargets,
 }: Omit<MiniAppEditorProps, "initialName" | "initialDefinition">) {
   const t = useTranslations()
@@ -464,16 +468,6 @@ function EditorBody({
             <BracesIcon className="size-4" />
             {t("miniApps.editor.viewJson")}
           </Button>
-          {miniAppId ? (
-            <Button
-              onClick={() => setPublishOpen(true)}
-              size="sm"
-              variant="outline"
-            >
-              <SendIcon className="size-4" />
-              {t("miniApps.publish.open")}
-            </Button>
-          ) : null}
           <Button disabled={isSaving || !name.trim()} onClick={save} size="sm">
             {isSaving ? (
               <Loader2Icon className="size-4 animate-spin" />
@@ -531,6 +525,28 @@ function EditorBody({
             </ScrollArea>
           </div>
         </CanvasContext.Provider>
+        {miniAppId ? (
+          <div className="flex items-center gap-3 border-t px-3 py-2">
+            <div className="min-w-0 flex-1">
+              {publicUrl ? (
+                <PublicUrlSection
+                  hint={t("miniApps.publicUrl.hint")}
+                  label={t("miniApps.publicUrl.label")}
+                  publicUrl={publicUrl}
+                />
+              ) : null}
+            </div>
+            <Button
+              className="flex-none"
+              onClick={() => setPublishOpen(true)}
+              size="sm"
+              variant="outline"
+            >
+              <SendIcon className="size-4" />
+              {t("miniApps.publish.open")}
+            </Button>
+          </div>
+        ) : null}
         <DragOverlay dropAnimation={null}>
           {dragSource && DragIcon ? (
             <div className="flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm shadow-lg">
@@ -589,6 +605,7 @@ export function MiniAppEditor(props: MiniAppEditorProps) {
     >
       <EditorBody
         miniAppId={props.miniAppId}
+        publicUrl={props.publicUrl}
         publishTargets={props.publishTargets}
         workspaceId={props.workspaceId}
       />

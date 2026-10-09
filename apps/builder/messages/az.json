@@ -7132,6 +7132,10 @@
     "description": "WhatsApp Flow formaları yaradın və istənilən kanalda link kimi paylaşın.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "WhatsApp-da dərc olunmuş Flow-lar Meta-da qalır.",
+    "publicUrl": {
+      "label": "İctimai URL",
+      "hint": "URL-i kopyalayıb axına, yayıma və ya ardıcıllığa yapışdırın. Bu yolla göndərildikdə hər cavab onu açan kontakta bağlanır."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "Dərc olunmayıb",
@@ -7171,8 +7175,6 @@
       "drag": "Daşımaq üçün sürüşdürün",
       "duplicate": "Dublikat et",
       "remove": "Sil",
-      "progress": "{current} / {total}",
-      "managedBy": "Biznes tərəfindən idarə olunur",
       "cannotDropHere": "Bu komponent bura yerləşdirilə bilməz",
       "previewSubmitted": "Önizləmə göndərildi: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "Defolt",
       "commaSeparated": "Dəyərləri vergüllə ayırın.",
-      "uploadImage": "Şəkil yüklə",
+      "uploadImage": "Şəkil seçin",
       "imageTooLarge": "Sıxışdırmadan sonra belə şəkil çox böyükdür. Daha kiçik şəkil sınayın.",
       "moveUp": "Yuxarı apar",
       "moveDown": "Aşağı apar",
@@ -7209,18 +7211,22 @@
       "addCase": "Hal əlavə et",
       "casesHint": "Hər halın adı yuxarıdakı dəyərlə müqayisə olunur.",
       "nameHint": "Cavablarda sahə açarı. Hərflər, rəqəmlər və alt xətt.",
-      "bindingHint": "Cavabları {formExample} və ya {screenExample} ilə göstərə bilərsiniz.",
       "markdownHint": "# başlıqları, **qalın**, *kursiv*, ~~üstündən xətt~~, siyahıları və [linkləri](https://…) dəstəkləyir.",
       "patternHint": "Cavabın uyğun gəlməli olduğu könüllü requlyar ifadə.",
       "saveToCustomField": "Fərdi sahədə saxla",
       "chooseCustomField": "Fərdi sahə seçin",
       "customFieldHint": "Kontakt Mini App linkini göndərdikdə cavab bu sahədə saxlanılır.",
-      "imageLoadFailed": "Bu şəkil yüklənmədi. JPEG, PNG, WebP və ya GIF şəkli seçin."
+      "imageLoadFailed": "Bu şəkil yüklənmədi. JPEG, PNG, WebP və ya GIF şəkli seçin.",
+      "answerReference": "Cavab istinadı",
+      "answerReferenceHint": "Bu cavabı istifadə etmək üçün mətnə və ya şərtə yapışdırın.",
+      "copyReference": "Kopyala",
+      "variablesHint": "Fərdi sahə əlavə etmək üçün {open} yazın və ya {button} düyməsinə basın. Dəyərlər yalnız tanınan kontakt üçün veb linkdə görünür."
     },
     "json": {
       "title": "Flow JSON",
       "description": "WhatsApp Flow JSON (versiya 7.3). Onu WhatsApp Manager və ya Flows Playground-a yapışdırın.",
-      "copy": "JSON kopyala"
+      "copy": "JSON kopyala",
+      "contactVariablesWarning": "Bu JSON hələ də '{{first_name}}' kimi xüsusi sahələr saxlayır. WhatsApp onları yazıldığı kimi göstərir, ona görə WhatsApp-a yapışdırmazdan əvvəl onları silin."
     },
     "publish": {
       "open": "WhatsApp-da dərc et",
@@ -7232,7 +7238,8 @@
       "submit": "Dərc et",
       "success": "WhatsApp-da dərc olundu",
       "draftOnly": "Meta xətalara görə Flow-u qaralama kimi saxladı",
-      "failed": "WhatsApp-da dərc etmək alınmadı"
+      "failed": "WhatsApp-da dərc etmək alınmadı",
+      "contactVariables": "Bu Mini App mətnlərində xüsusi sahələr göstərir. Hələlik onlar yalnız veb linkdə işləyir — WhatsApp-da dərc etməzdən əvvəl onları silin."
     },
     "runner": {
       "back": "Geri",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "“Axını tamamla” yalnız son ekranda istifadə oluna bilər.",
       "footer_captions_invalid": "Ya yalnız orta başlıq, ya da sol və sağ başlıqları birlikdə istifadə edin.",
       "options_with_images_limit": "Şəkillərlə açılan siyahıda ən çox {max} seçim ola bilər.",
-      "navigation_badge_multiple": "Naviqasiya siyahısında yalnız bir elementin nişanı ola bilər."
+      "navigation_badge_multiple": "Naviqasiya siyahısında yalnız bir elementin nişanı ola bilər.",
+      "contact_variable_whatsapp": "Fərdi sahələr yalnız veb linkdə görünür; WhatsApp hələ dəstəkləmir. WhatsApp-a dərc etməzdən əvvəl onları silin."
     },
     "upload": {
       "choosePhotos": "Şəkil seçin və ya çəkin",

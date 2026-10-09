@@ -7132,6 +7132,10 @@
     "description": "建立 WhatsApp Flow 表單，並透過連結在任何管道分享。",
     "feature": "迷你應用程式",
     "deleteKeepsWhatsapp": "已發佈到 WhatsApp 的 Flow 會保留在 Meta 上。",
+    "publicUrl": {
+      "label": "公開連結",
+      "hint": "複製此 URL 並貼到你的流程、廣播或序列中。透過這種方式傳送時，每則回答都會連結到開啟它的聯絡人。"
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "未發佈",
@@ -7171,8 +7175,6 @@
       "drag": "拖曳以移動",
       "duplicate": "複製",
       "remove": "移除",
-      "progress": "第 {current} / {total}",
-      "managedBy": "由商家管理",
       "cannotDropHere": "此元件無法放在這裡",
       "previewSubmitted": "預覽已提交：{answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "預設值",
       "commaSeparated": "以逗號分隔多個值。",
-      "uploadImage": "上傳圖片",
+      "uploadImage": "選擇圖片",
       "imageTooLarge": "圖片壓縮後仍然過大，請換一張較小的。",
       "moveUp": "上移",
       "moveDown": "下移",
@@ -7209,18 +7211,22 @@
       "addCase": "新增情況",
       "casesHint": "每個情況名稱都會與上方的值進行比對。",
       "nameHint": "回答中的欄位鍵。可使用英文字母、數字和底線。",
-      "bindingHint": "可使用 {formExample} 或 {screenExample} 顯示回答。",
       "markdownHint": "支援 # 標題、**粗體**、*斜體*、~~刪除線~~、清單和 [連結](https://…)。",
       "patternHint": "回答必須符合的規則運算式（選填）。",
       "saveToCustomField": "儲存到自訂欄位",
       "chooseCustomField": "選擇自訂欄位",
       "customFieldHint": "聯絡人透過 Mini App 連結提交時，答案會儲存到此欄位。",
-      "imageLoadFailed": "無法載入此圖片。請選擇 JPEG、PNG、WebP 或 GIF 圖片。"
+      "imageLoadFailed": "無法載入此圖片。請選擇 JPEG、PNG、WebP 或 GIF 圖片。",
+      "answerReference": "答案引用",
+      "answerReferenceHint": "貼到文字或條件中即可使用此答案。",
+      "copyReference": "複製",
+      "variablesHint": "輸入 {open} 或點擊 {button} 插入自訂欄位。僅在已識別聯絡人的網頁連結中顯示欄位值。"
     },
     "json": {
       "title": "Flow JSON",
       "description": "WhatsApp Flow JSON（版本 7.3）。貼到 WhatsApp Manager 或 Flows Playground 中。",
-      "copy": "複製 JSON"
+      "copy": "複製 JSON",
+      "contactVariablesWarning": "此 JSON 仍包含 '{{first_name}}' 等自訂欄位。WhatsApp 會按原樣顯示它們，請在貼到 WhatsApp 之前將其移除。"
     },
     "publish": {
       "open": "發佈到 WhatsApp",
@@ -7232,7 +7238,8 @@
       "submit": "發佈",
       "success": "已發佈到 WhatsApp",
       "draftOnly": "由於發生錯誤，Meta 將此 Flow 保留為草稿",
-      "failed": "無法發佈到 WhatsApp"
+      "failed": "無法發佈到 WhatsApp",
+      "contactVariables": "此小程式的文字中包含自訂欄位。目前僅在網頁連結中有效——發布到 WhatsApp 前請先移除。"
     },
     "runner": {
       "back": "返回",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "「完成流程」只能用於最後一個畫面。",
       "footer_captions_invalid": "請只使用中間說明，或同時使用左側和右側說明。",
       "options_with_images_limit": "含圖片時，下拉選單最多 {max} 個選項。",
-      "navigation_badge_multiple": "導覽清單中只能有一個項目帶徽章。"
+      "navigation_badge_multiple": "導覽清單中只能有一個項目帶徽章。",
+      "contact_variable_whatsapp": "自訂欄位只在網頁連結中顯示，WhatsApp 尚不支援。發布到 WhatsApp 前請先移除。"
     },
     "upload": {
       "choosePhotos": "選擇或拍攝照片",

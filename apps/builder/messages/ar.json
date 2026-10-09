@@ -7132,6 +7132,10 @@
     "description": "أنشئ نماذج WhatsApp Flow وشاركها كرابط على أي قناة.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "تبقى الـ Flows المنشورة على WhatsApp لدى Meta.",
+    "publicUrl": {
+      "label": "الرابط العام",
+      "hint": "انسخ الرابط والصقه في التدفق أو البث أو التسلسل. عند إرساله بهذه الطريقة، تُربط كل إجابة بجهة الاتصال التي فتحته."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "غير منشور",
@@ -7171,8 +7175,6 @@
       "drag": "اسحب للنقل",
       "duplicate": "تكرار",
       "remove": "إزالة",
-      "progress": "{current} من {total}",
-      "managedBy": "تديره الشركة",
       "cannotDropHere": "لا يمكن وضع هذا المكون هنا",
       "previewSubmitted": "تم إرسال المعاينة: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "افتراضي",
       "commaSeparated": "افصل القيم بفواصل.",
-      "uploadImage": "رفع صورة",
+      "uploadImage": "اختر صورة",
       "imageTooLarge": "الصورة كبيرة جدًا حتى بعد الضغط. جرّب صورة أصغر.",
       "moveUp": "نقل لأعلى",
       "moveDown": "نقل لأسفل",
@@ -7209,18 +7211,22 @@
       "addCase": "إضافة حالة",
       "casesHint": "تتم مطابقة اسم كل حالة مع القيمة أعلاه.",
       "nameHint": "مفتاح الحقل في الإجابات. أحرف وأرقام وشرطات سفلية.",
-      "bindingHint": "يمكنك عرض الإجابات باستخدام {formExample} أو {screenExample}.",
       "markdownHint": "يدعم عناوين # و**الخط العريض** و*المائل* و~~الشطب~~ والقوائم و[الروابط](https://…).",
       "patternHint": "تعبير نمطي اختياري يجب أن تطابقه الإجابة.",
       "saveToCustomField": "الحفظ في حقل مخصص",
       "chooseCustomField": "اختر حقلاً مخصصاً",
       "customFieldHint": "عندما ترسل جهة الاتصال رابط Mini App، تُحفظ الإجابة في هذا الحقل.",
-      "imageLoadFailed": "تعذّر تحميل هذه الصورة. اختر صورة JPEG أو PNG أو WebP أو GIF."
+      "imageLoadFailed": "تعذّر تحميل هذه الصورة. اختر صورة JPEG أو PNG أو WebP أو GIF.",
+      "answerReference": "مرجع الإجابة",
+      "answerReferenceHint": "الصقه في نص أو شرط لاستخدام هذه الإجابة.",
+      "copyReference": "نسخ",
+      "variablesHint": "اكتب {open} أو انقر {button} لإدراج حقل مخصص. تظهر القيم فقط في رابط الويب لجهة اتصال معروفة."
     },
     "json": {
       "title": "Flow JSON",
       "description": "Flow JSON الخاص بـ WhatsApp (الإصدار 7.3). الصقه في WhatsApp Manager أو Flows Playground.",
-      "copy": "نسخ JSON"
+      "copy": "نسخ JSON",
+      "contactVariablesWarning": "لا يزال هذا JSON يحتوي على حقول مخصّصة مثل '{{first_name}}'. يعرضها WhatsApp كما هي مكتوبة، لذا احذفها قبل لصقه في WhatsApp."
     },
     "publish": {
       "open": "النشر على WhatsApp",
@@ -7232,7 +7238,8 @@
       "submit": "نشر",
       "success": "تم النشر على WhatsApp",
       "draftOnly": "أبقت Meta الـ Flow كمسودة بسبب وجود أخطاء",
-      "failed": "تعذر النشر على WhatsApp"
+      "failed": "تعذر النشر على WhatsApp",
+      "contactVariables": "يعرض هذا التطبيق المصغّر حقولًا مخصّصة في نصوصه. وهي تعمل حاليًا على رابط الويب فقط — أزلها قبل النشر على واتساب."
     },
     "runner": {
       "back": "رجوع",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "لا يمكن استخدام “إكمال التدفق” إلا في الشاشة الأخيرة.",
       "footer_captions_invalid": "استخدم تعليقًا في الوسط فقط، أو تعليقين أيمن وأيسر معًا.",
       "options_with_images_limit": "مع الصور، يمكن أن تحتوي القائمة المنسدلة على {max} خيارًا كحد أقصى.",
-      "navigation_badge_multiple": "يمكن لعنصر واحد فقط في قائمة التنقل أن يحمل شارة."
+      "navigation_badge_multiple": "يمكن لعنصر واحد فقط في قائمة التنقل أن يحمل شارة.",
+      "contact_variable_whatsapp": "تظهر الحقول المخصصة في رابط الويب فقط ولا يدعمها WhatsApp بعد. أزلها قبل النشر على WhatsApp."
     },
     "upload": {
       "choosePhotos": "اختر صورًا أو التقطها",

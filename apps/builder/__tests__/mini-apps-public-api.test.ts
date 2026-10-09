@@ -229,6 +229,38 @@ describe("Mini Apps public API", () => {
     })
   })
 
+  test("flow-json returns only the stored Flow JSON of the token's workspace", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(
+      authResult(["mini-apps"], "read_only"),
+    )
+    miniAppService.findOrFail.mockResolvedValue(storedMiniApp({ screens: [] }))
+    await expect(
+      invoke(miniAppsPublicRouter.getFlowJson, { id: "10" }),
+    ).resolves.toEqual(flowJson)
+    expect(miniAppService.findOrFail).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "10",
+    })
+  })
+
+  test("bulk delete is scoped to the token's workspace and denied to read-only tokens", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(["mini-apps"]))
+    await invoke(miniAppsPublicRouter.deleteMany, { ids: ["10", "11"] })
+    expect(miniAppService.deleteMany).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["10", "11"],
+    })
+
+    vi.clearAllMocks()
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(null, "read_only"))
+    await expect(
+      invoke(miniAppsPublicRouter.deleteMany, { ids: ["10"] }),
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    })
+    expect(miniAppService.deleteMany).not.toHaveBeenCalled()
+  })
+
   test("submissions check the Mini App belongs to the token's workspace first", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(null))
     miniAppService.findOrFail.mockRejectedValue(new Error("not found"))

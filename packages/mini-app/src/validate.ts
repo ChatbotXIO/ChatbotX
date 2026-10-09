@@ -6,10 +6,18 @@ import {
   MINI_APP_MAX_IF_DEPTH,
   NAMED_COMPONENT_TYPES,
 } from "./components"
+import {
+  CONTACT_VARIABLE_PATTERN,
+  displayTextLength,
+  hasContactVariable,
+  mapNodeDisplayText,
+  nodeHasContactVariables,
+} from "./display-text"
 import { extractReferences, isValidExpression } from "./expression"
 import { cleanObject, collectInputNames, collectPathScreens } from "./serialize"
 import { walkNodes } from "./tree"
 import {
+  MINI_APP_SCREEN_TITLE_MAX_LENGTH,
   type MiniAppAction,
   type MiniAppDefinition,
   type MiniAppNode,
@@ -61,6 +69,7 @@ export type MiniAppIssueCode =
   | "footer_captions_invalid"
   | "options_with_images_limit"
   | "navigation_badge_multiple"
+  | "contact_variable_whatsapp"
 
 export interface MiniAppValidationIssue {
   code: MiniAppIssueCode
@@ -133,6 +142,9 @@ const zodIssueToCode = (
       return { code: "property_invalid" }
   }
 }
+
+const collapseContactVariables = (text: string) =>
+  text.replace(CONTACT_VARIABLE_PATTERN, "x")
 
 const DROPDOWN_MAX_OPTIONS_WITH_IMAGES = 100
 
@@ -289,7 +301,13 @@ const checkNodeProps = (node: MiniAppNode, context: ScreenContext) => {
   const definition = MINI_APP_COMPONENTS[node.type]
   const { collector, screen } = context
   const { [ACTION_KEY]: action, ...props } = node.props
-  const parsed = definition.propsSchema.safeParse(cleanObject(props))
+  // A `{{custom_field}}` only gets its value on the web link, so for length
+  // limits it counts as one character.
+  const { [ACTION_KEY]: _action, ...measuredProps } = mapNodeDisplayText(
+    node,
+    collapseContactVariables,
+  )
+  const parsed = definition.propsSchema.safeParse(cleanObject(measuredProps))
   if (!parsed.success) {
     for (const issue of parsed.error.issues) {
       collector.add({
@@ -339,6 +357,15 @@ const checkNodeProps = (node: MiniAppNode, context: ScreenContext) => {
   )
 
   checkComponentRules(node, context)
+
+  if (nodeHasContactVariables(node)) {
+    collector.add({
+      screenKey: screen.key,
+      nodeId: node.id,
+      code: "contact_variable_whatsapp",
+      severity: "warning",
+    })
+  }
 
   const items = node.props["list-items"]
   if (node.type === "NavigationList" && Array.isArray(items)) {
@@ -590,6 +617,22 @@ const checkScreens = (
 ) => {
   const seenIds = new Set<string>()
   for (const screen of definition.screens) {
+    if (hasContactVariable(screen.title)) {
+      collector.add({
+        screenKey: screen.key,
+        property: "title",
+        code: "contact_variable_whatsapp",
+        severity: "warning",
+      })
+    }
+    if (displayTextLength(screen.title) > MINI_APP_SCREEN_TITLE_MAX_LENGTH) {
+      collector.add({
+        screenKey: screen.key,
+        property: "title",
+        code: "property_too_long",
+        params: { max: MINI_APP_SCREEN_TITLE_MAX_LENGTH },
+      })
+    }
     if (RESERVED_SCREEN_IDS.has(screen.id)) {
       collector.add({
         screenKey: screen.key,

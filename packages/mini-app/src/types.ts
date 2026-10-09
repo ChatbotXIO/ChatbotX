@@ -80,13 +80,19 @@ export const miniAppScreenSchema = z.object({
   key: z.string().min(1).max(64),
   /** Flow JSON screen id. */
   id: z.string().min(1).max(64),
-  title: z.string().max(80).default(""),
+  /**
+   * At most `MINI_APP_SCREEN_TITLE_MAX_LENGTH` once each `{{variable}}`
+   * counts as one character — checked by `validateMiniApp`, so the raw text
+   * here only gets a storage cap.
+   */
+  title: z.string().max(1000).default(""),
   terminal: z.boolean().default(false),
   children: z.array(miniAppNodeSchema),
 })
 export type MiniAppScreen = z.infer<typeof miniAppScreenSchema>
 
 export const MINI_APP_MAX_SCREENS = 100
+export const MINI_APP_SCREEN_TITLE_MAX_LENGTH = 80
 
 export const miniAppDefinitionSchema = z.object({
   screens: z.array(miniAppScreenSchema).min(1).max(MINI_APP_MAX_SCREENS),

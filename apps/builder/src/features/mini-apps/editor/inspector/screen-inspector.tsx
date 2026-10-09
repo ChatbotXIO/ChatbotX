@@ -1,6 +1,9 @@
 "use client"
 
-import type { MiniAppValidationIssue } from "@chatbotx.io/mini-app"
+import {
+  MINI_APP_SCREEN_TITLE_MAX_LENGTH,
+  type MiniAppValidationIssue,
+} from "@chatbotx.io/mini-app"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
@@ -11,6 +14,8 @@ import { useTranslations } from "next-intl"
 import { useId } from "react"
 import { useIssueMessage } from "../../lib/use-issue-message"
 import { useMiniAppEditor } from "../editor-context"
+import { DisplayTextCounter } from "./fields"
+import { VariableTextEditor } from "./variable-text-editor"
 
 const SCREEN_ID_SANITIZE = /[^A-Za-z_]/g
 
@@ -22,7 +27,6 @@ export function ScreenInspector({
   const t = useTranslations("miniApps.screen")
   const message = useIssueMessage()
   const idInput = useId()
-  const titleInput = useId()
   const terminalInput = useId()
   const definition = useMiniAppEditor((state) => state.definition)
   const selectedScreenKey = useMiniAppEditor((state) => state.selectedScreenKey)
@@ -63,13 +67,13 @@ export function ScreenInspector({
       ) : null}
       <Separator />
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor={titleInput}>{t("screenTitle")}</Label>
-        <Input
-          id={titleInput}
-          maxLength={80}
-          onChange={(event) =>
-            updateScreen(screen.key, { title: event.target.value })
-          }
+        <Label>{t("screenTitle")}</Label>
+        <VariableTextEditor
+          onChange={(title) => updateScreen(screen.key, { title })}
+          value={screen.title}
+        />
+        <DisplayTextCounter
+          maxLength={MINI_APP_SCREEN_TITLE_MAX_LENGTH}
           value={screen.title}
         />
       </div>

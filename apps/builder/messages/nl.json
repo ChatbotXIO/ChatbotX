@@ -7132,6 +7132,10 @@
     "description": "Maak WhatsApp Flow-formulieren en deel ze als link via elk kanaal.",
     "feature": "Mini App",
     "deleteKeepsWhatsapp": "Flows die al op WhatsApp zijn gepubliceerd blijven bij Meta staan.",
+    "publicUrl": {
+      "label": "Openbare URL",
+      "hint": "Kopieer de URL en plak hem in je flow, broadcast of reeks. Zo verstuurd wordt elk antwoord gekoppeld aan het contact dat hem opende."
+    },
     "table": {
       "whatsapp": "WhatsApp",
       "notPublished": "Niet gepubliceerd",
@@ -7171,8 +7175,6 @@
       "drag": "Slepen om te verplaatsen",
       "duplicate": "Dupliceren",
       "remove": "Verwijderen",
-      "progress": "{current} van {total}",
-      "managedBy": "Beheerd door het bedrijf",
       "cannotDropHere": "Dit component kan hier niet worden geplaatst",
       "previewSubmitted": "Voorbeeld verzonden: {answers}"
     },
@@ -7188,7 +7190,7 @@
     "inspector": {
       "default": "Standaard",
       "commaSeparated": "Scheid waarden met komma's.",
-      "uploadImage": "Afbeelding uploaden",
+      "uploadImage": "Afbeelding selecteren",
       "imageTooLarge": "De afbeelding is zelfs na compressie te groot. Probeer een kleinere.",
       "moveUp": "Omhoog",
       "moveDown": "Omlaag",
@@ -7209,18 +7211,22 @@
       "addCase": "Geval toevoegen",
       "casesHint": "Elke gevalnaam wordt vergeleken met de waarde hierboven.",
       "nameHint": "Veldsleutel in de antwoorden. Letters, cijfers en underscores.",
-      "bindingHint": "Je kunt antwoorden tonen met {formExample} of {screenExample}.",
       "markdownHint": "Ondersteunt # koppen, **vet**, *cursief*, ~~doorgehaald~~, lijsten en [links](https://…).",
       "patternHint": "Optionele reguliere expressie waaraan het antwoord moet voldoen.",
       "saveToCustomField": "Opslaan in aangepast veld",
       "chooseCustomField": "Kies een aangepast veld",
       "customFieldHint": "Wanneer een contact de Mini App-link verzendt, wordt het antwoord in dit veld opgeslagen.",
-      "imageLoadFailed": "Deze afbeelding kon niet worden geladen. Kies een JPEG-, PNG-, WebP- of GIF-afbeelding."
+      "imageLoadFailed": "Deze afbeelding kon niet worden geladen. Kies een JPEG-, PNG-, WebP- of GIF-afbeelding.",
+      "answerReference": "Antwoordverwijzing",
+      "answerReferenceHint": "Plak deze in tekst of een voorwaarde om dit antwoord te gebruiken.",
+      "copyReference": "Kopiëren",
+      "variablesHint": "Typ {open} of klik op {button} om een aangepast veld in te voegen. Waarden verschijnen alleen in de weblink voor een bekend contact."
     },
     "json": {
       "title": "Flow JSON",
       "description": "WhatsApp Flow JSON (versie 7.3). Plak het in WhatsApp Manager of de Flows Playground.",
-      "copy": "JSON kopiëren"
+      "copy": "JSON kopiëren",
+      "contactVariablesWarning": "Deze JSON bevat nog aangepaste velden zoals '{{first_name}}'. WhatsApp toont ze precies zoals ze geschreven zijn, dus verwijder ze voordat je de JSON in WhatsApp plakt."
     },
     "publish": {
       "open": "Publiceren op WhatsApp",
@@ -7232,7 +7238,8 @@
       "submit": "Publiceren",
       "success": "Gepubliceerd op WhatsApp",
       "draftOnly": "Meta heeft de Flow vanwege fouten als concept bewaard",
-      "failed": "Publiceren op WhatsApp mislukt"
+      "failed": "Publiceren op WhatsApp mislukt",
+      "contactVariables": "Deze Mini App toont aangepaste velden in de teksten. Die werken voorlopig alleen via de weblink — verwijder ze voordat je naar WhatsApp publiceert."
     },
     "runner": {
       "back": "Terug",
@@ -7464,7 +7471,8 @@
       "complete_on_non_terminal": "“Flow voltooien” kan alleen op het laatste scherm.",
       "footer_captions_invalid": "Gebruik alleen een middentekst, of een linker- en rechtertekst samen.",
       "options_with_images_limit": "Met afbeeldingen mag een dropdown hoogstens {max} opties hebben.",
-      "navigation_badge_multiple": "Slechts één item in een navigatielijst mag een badge hebben."
+      "navigation_badge_multiple": "Slechts één item in een navigatielijst mag een badge hebben.",
+      "contact_variable_whatsapp": "Aangepaste velden verschijnen alleen in de weblink; WhatsApp ondersteunt ze nog niet. Verwijder ze voordat je publiceert naar WhatsApp."
     },
     "upload": {
       "choosePhotos": "Kies of maak foto’s",
