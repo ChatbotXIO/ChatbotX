@@ -104,4 +104,49 @@ describe("getCapiStatus", () => {
       }),
     ).toBe("notConnected")
   })
+
+  describe("capiScopeRequired: false", () => {
+    const base = {
+      hasCapiScope: false,
+      hasManualCapiAccessToken: false,
+      credentialAvailable: true,
+    }
+
+    test("dataset without scope is ready", () => {
+      expect(
+        getCapiStatus({
+          ...base,
+          hasDatasetId: true,
+          capiScopeRequired: false,
+        }),
+      ).toBe("ready")
+    })
+
+    test("no dataset is notConnected", () => {
+      expect(
+        getCapiStatus({
+          ...base,
+          hasDatasetId: false,
+          capiScopeRequired: false,
+        }),
+      ).toBe("notConnected")
+    })
+
+    test("user disconnect still wins", () => {
+      expect(
+        getCapiStatus({
+          ...base,
+          hasDatasetId: true,
+          capiDisconnected: true,
+          capiScopeRequired: false,
+        }),
+      ).toBe("notConnected")
+    })
+
+    test("omitted keeps missingPermission", () => {
+      expect(getCapiStatus({ ...base, hasDatasetId: true })).toBe(
+        "missingPermission",
+      )
+    })
+  })
 })

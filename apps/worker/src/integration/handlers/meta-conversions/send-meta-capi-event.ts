@@ -15,6 +15,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { logProviderError } from "@chatbotx.io/business/error-log"
+import { isCapiScopeRequired } from "@chatbotx.io/business/meta-conversions/capi-scope-policy"
 import type { MetaCapiEventModel } from "@chatbotx.io/database/types"
 import {
   buildDatasetName,
@@ -322,8 +323,12 @@ export async function handleSendMetaCapiEvent(
         event.channel,
         integration,
       )
+      // Per-channel policy: a channel exempt from the scope requirement
+      // (WhatsApp) skips the scope refresh and the no-scope gate — Meta
+      // answers a send that truly lacks the permission.
+      const scopeRequired = isCapiScopeRequired(event.channel)
       const integrationForSend =
-        auth.source === "manual"
+        auth.source === "manual" || !scopeRequired
           ? integration
           : await refreshScopeCache(event.channel, integration)
 
@@ -336,7 +341,11 @@ export async function handleSendMetaCapiEvent(
         return
       }
 
-      if (auth.source !== "manual" && !integrationForSend.hasCapiScope) {
+      if (
+        auth.source !== "manual" &&
+        scopeRequired &&
+        !integrationForSend.hasCapiScope
+      ) {
         await metaConversionsService.updateCapiStatus({
           id: event.id,
           workspaceId: event.workspaceId,

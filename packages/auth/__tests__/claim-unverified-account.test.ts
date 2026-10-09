@@ -76,9 +76,27 @@ describe("claimUnverifiedAccountBeforeLink", () => {
     expect(deleteMany).not.toHaveBeenCalled()
   })
 
-  test("Facebook into an unverified user with existing accounts is refused", async () => {
+  test("Facebook into an unverified placeholder claims it", async () => {
+    internalAdapter.findAccounts.mockResolvedValue([
+      { id: "acc-pwd", providerId: "credential" },
+      { id: "acc-g", providerId: "google" },
+    ])
     await expect(
-      claimUnverifiedAccountBeforeLink(account("facebook"), context),
+      claimUnverifiedAccountBeforeLink(
+        { ...(account("facebook") as object), id: "acc-new" } as never,
+        context,
+      ),
+    ).resolves.toBeUndefined()
+    expect(internalAdapter.deleteAccount).toHaveBeenCalledTimes(2)
+    expect(internalAdapter.deleteAccount).toHaveBeenCalledWith("acc-pwd")
+    expect(internalAdapter.deleteAccount).toHaveBeenCalledWith("acc-g")
+    expect(internalAdapter.deleteAccount).not.toHaveBeenCalledWith("acc-new")
+    expect(deleteMany).toHaveBeenCalledWith(SESSION_DELETE)
+  })
+
+  test("an unknown provider into an unverified placeholder is refused", async () => {
+    await expect(
+      claimUnverifiedAccountBeforeLink(account("github"), context),
     ).rejects.toThrow(EMAIL_ATTESTING_ERROR)
     expect(internalAdapter.deleteAccount).not.toHaveBeenCalled()
     expect(deleteMany).not.toHaveBeenCalled()
@@ -96,10 +114,10 @@ describe("claimUnverifiedAccountBeforeLink", () => {
     expect(deleteMany).not.toHaveBeenCalled()
   })
 
-  test("refuses Facebook into an old user with no accounts (placeholder)", async () => {
+  test("refuses an unknown provider into an old user with no accounts (placeholder)", async () => {
     internalAdapter.findAccounts.mockResolvedValue([])
     await expect(
-      claimUnverifiedAccountBeforeLink(account("facebook"), context),
+      claimUnverifiedAccountBeforeLink(account("github"), context),
     ).rejects.toThrow(EMAIL_ATTESTING_ERROR)
     expect(deleteMany).not.toHaveBeenCalled()
   })
@@ -123,7 +141,7 @@ describe("claimUnverifiedAccountBeforeLink", () => {
       emailVerified: false,
     })
     await expect(
-      claimUnverifiedAccountBeforeLink(account("facebook"), context),
+      claimUnverifiedAccountBeforeLink(account("github"), context),
     ).rejects.toThrow(EMAIL_ATTESTING_ERROR)
   })
 

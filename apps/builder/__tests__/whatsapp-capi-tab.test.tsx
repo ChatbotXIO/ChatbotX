@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
@@ -51,36 +50,13 @@ vi.mock("@/features/meta-conversions/components/capi-connected-card", () => ({
 vi.mock("@/features/meta-conversions/components/capi-test-event-card", () => ({
   CapiTestEventCard: () => <div>test-event-card</div>,
 }))
-vi.mock(
-  "@/features/integration-whatsapp/components/whatsapp-reconnect-button",
-  () => ({
-    WhatsappReconnectButton: () => (
-      <button type="button">reconnect-button</button>
-    ),
-  }),
-)
-
 type TabProps = Parameters<typeof WhatsappCapiTab>[0]
 
 const baseIntegration: TabProps["integrationWhatsapp"] = {
   id: "iw-1",
-  name: "Store",
-  displayPhoneNumber: "84339426550",
-  wabaId: "1303031825154214",
   hasCapiScope: true,
-  isCoexist: false,
   datasetId: "ds-1",
   capiTestEventCode: null,
-}
-
-const whatsappCredentialPublic: WhatsappCredentialPublic = {
-  clientId: "client-1",
-  version: "v23.0",
-  configId: "config-1",
-  systemUserId: "su-1",
-  businessId: "biz-1",
-  businessName: "Biz",
-  verifyToken: "verify",
 }
 
 describe("WhatsappCapiTab", () => {
@@ -107,8 +83,6 @@ describe("WhatsappCapiTab", () => {
       hasManualCapiAccessToken: false,
       capiDisconnected: false,
       credentialAvailable: true,
-      whatsappCredentialPublic,
-      oauthCallbackUrl: "https://broker.test/integrations/whatsapp/callback",
       ...overrides,
     }
     act(() => {
@@ -124,14 +98,17 @@ describe("WhatsappCapiTab", () => {
     expect(container.textContent).not.toContain("test-event-card")
   })
 
-  test("offers reconnect instead of the test card while awaiting the Meta scope", () => {
+  test("shows the connected card and the test card, never reconnect, when the scope is missing (WhatsApp is exempt)", () => {
     renderTab({
       integrationWhatsapp: { ...baseIntegration, hasCapiScope: false },
     })
 
     expect(container.textContent).toContain("connected-card")
-    expect(container.textContent).toContain("reconnect-button")
-    expect(container.textContent).not.toContain("test-event-card")
+    expect(container.textContent).toContain("test-event-card")
+    expect(container.textContent).not.toContain("reconnect-button")
+    expect(container.textContent).not.toContain(
+      "metaConversions.statusDescriptions.missingPermission",
+    )
   })
 
   test("shows the test card and no reconnect once the scope is granted", () => {

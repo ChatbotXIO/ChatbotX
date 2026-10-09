@@ -8,15 +8,20 @@ export type CapiConnectionState =
  * A dataset already provisioned but with neither a manual token nor the
  * Meta scope needed to send events: one reconnect-and-grant away from
  * working, and the dataset id must stay visible meanwhile.
+ *
+ * `capiScopeRequired: false` (a channel exempt from the scope, see
+ * `capi-scope-policy`) means a missing scope never matters, so this is
+ * always false. Omitted, it defaults to `true`.
  */
 export const isAwaitingCapiScope = (input: {
   hasDatasetId?: boolean
   hasManualCapiAccessToken?: boolean
   hasCapiScope: boolean
+  capiScopeRequired?: boolean
 }): boolean =>
   Boolean(input.hasDatasetId) &&
   !input.hasManualCapiAccessToken &&
-  !input.hasCapiScope
+  !(input.hasCapiScope || input.capiScopeRequired === false)
 
 /**
  * Derives the connection state shown by the CAPI tab. A user-intent
@@ -34,23 +39,29 @@ export const isAwaitingCapiScope = (input: {
  * the user is nudged to reconnect and grant the missing permission, rather
  * than falling back to the method chooser and losing that dataset id from
  * view.
+ *
+ * `capiScopeRequired: false` treats the scope as satisfied for every
+ * decision (channels exempt per `capi-scope-policy`); omitted it defaults to
+ * `true`.
  */
 export function getCapiConnectionState(input: {
   capiDisconnected: boolean
   hasManualCapiAccessToken: boolean
   hasCapiScope: boolean
   hasDatasetId: boolean
+  capiScopeRequired?: boolean
 }): CapiConnectionState {
+  const hasCapiScope = input.hasCapiScope || input.capiScopeRequired === false
   if (input.capiDisconnected) {
     return "disconnected"
   }
   if (input.hasManualCapiAccessToken && input.hasDatasetId) {
     return "connectedCustom"
   }
-  if (input.hasCapiScope && input.hasDatasetId) {
+  if (hasCapiScope && input.hasDatasetId) {
     return "connectedOauth"
   }
-  if (isAwaitingCapiScope(input)) {
+  if (isAwaitingCapiScope({ ...input, hasCapiScope })) {
     return "awaitingScope"
   }
   return "disconnected"
