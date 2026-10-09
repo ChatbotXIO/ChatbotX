@@ -8,6 +8,25 @@ description: >-
 
 # Feature Scaffold
 
+## Agent-first: the public API is the feature, the UI is a client of it
+
+ChatbotX is built for **AI agents** first. They reach the product only through the
+public API, which the CLI and MCP server read from `/api/public-spec.json` — a
+capability with no public procedure does not exist for them. So every feature, and
+every new operation on an existing feature, ships a procedure in
+`api/public.ts` (AGENTS.md invariant 23). Mechanics live in the **`orpc-api`** skill.
+
+That includes **result-returning operations**, not only CRUD: if a button in the UI
+gives the user something back — a link, a preview, a test run or test send, stats, an
+export, AI-generated text, a status check — an agent must be able to call one operation
+and get the same result as data. `botSimulator.getLink`
+(`features/bot-simulator/api/public.ts`) is the reference: the UI opens a preview, the
+API returns the `url`, and both go through `createBotSimulatorLink` in the feature's `lib/`.
+
+Exemptions are narrow (auth/account, platform admin, end-customer webviews, the OAuth
+redirect step, UI-only plumbing, token minting) — see invariant 23 for the list, and
+state the reason in the PR when you use one.
+
 ## Feature Directory Structure
 
 Features live in `apps/builder/src/features/<feature-name>/`. Standard layout:
@@ -18,9 +37,9 @@ features/<feature-name>/
     create-item-action.ts
     delete-item-action.ts
   api/                  → oRPC route handlers
-    index.ts
-    private.ts
-    workspace-token.ts
+    public.ts           → REQUIRED: workspace-token procedures for agents/CLI/MCP
+    index.ts            → optional: private (session) router for the UI
+    private.ts          → optional: session-based procedures
   queries/              → Request adapters over business services
     index.ts
   schema/               → Zod schemas
@@ -501,14 +520,20 @@ public vs private paths: **`business-data-access`** skill and `.agents/rules/dat
 
 ## Checklist for New Feature
 
+Public API first, UI last:
+
 1. Create feature directory under `src/features/<name>/`
 2. Define Zod schemas in `schema/`
-3. Add or extend the service method in `packages/business` first — the query/action file only adapts to it
-4. Create request adapters in `queries/` (only where session context needs adapting — see "Queries (Server-Side)" above)
-5. Add server actions in `actions/` (if mutations needed)
-6. Create oRPC API in `api/` (if API access needed)
-7. Register router in `src/routers/index.ts` as a `lazy()` branch (see the orpc-api skill — every feature router there is lazy so the route handler stays small)
-8. Create page(s) under `src/app/space/[workspaceId]/...`
-9. Build UI components (server page → client table/form)
-10. **Add i18n translations** to `apps/builder/messages/en.json` — reuse `fields.*` for form labels, add feature-specific text under `<featureName>.*`
-11. **Verify no hardcoded strings** — all user-facing text uses `useTranslations()` + `t()`
+3. Add or extend the service method in `packages/business` first (or a `lib/` function for a result-returning operation with no DB access) — every caller below only adapts to it
+4. **Create the public API in `api/public.ts`** — one procedure per operation, including result-returning ones (see the orpc-api skill, "Result-returning operations"). Not optional unless the feature is on the invariant 23 exempt list
+5. **Register it in `src/routers/public.ts`**, nested under the resource name
+6. **Test it** — spec/MCP tests and scope enforcement (see the testing-workflow skill)
+7. Create request adapters in `queries/` (only where session context needs adapting — see "Queries (Server-Side)" above)
+8. Add server actions in `actions/` (if the UI mutates) — they call the same service/`lib/` function as step 4
+9. If the UI needs session-authed procedures, add `api/private.ts` + `api/index.ts` and register the router in `src/routers/index.ts` as a `lazy()` branch (see the orpc-api skill — every feature router there is lazy so the route handler stays small)
+10. Create page(s) under `src/app/space/[workspaceId]/...`
+11. Build UI components (server page → client table/form)
+12. **Add i18n translations** to every locale file in `apps/builder/messages/` — reuse `fields.*` for form labels, add feature-specific text under `<featureName>.*`
+13. **Verify no hardcoded strings** — all user-facing text uses `useTranslations()` + `t()`
+14. **Parity check** — list every button in the feature's UI that creates, changes, or *returns* something. Each must map to a public procedure; any that doesn't is a gap to close or an exemption to justify in the PR
+15. Run the **`cli-mcp-docs`** skill so the CLI/MCP docs match the new surface

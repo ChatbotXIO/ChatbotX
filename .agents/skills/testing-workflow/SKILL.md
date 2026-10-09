@@ -39,6 +39,8 @@ error surfacing without throwing, and invalidation triggering a refetch.
 ## What to test first (highest signal in this repo)
 
 - New oRPC route / server action → its happy path + auth-scoping + one failure path.
+- New public procedure (required for every feature/operation — AGENTS.md invariant 23) → it appears in the generated spec with a sane `operationId`/`summary` (`public-spec-operations.test.ts`, `public-spec-mcp.test.ts`), and a token without its scope is rejected (add it to the area's `apps/builder/__tests__/<area>-public-scope.test.ts`, or create one following `workspace-token-scope-enforcement.test.ts`).
+- Result-returning public procedure (link, preview, test run, stats, export, AI generation) → assert the response is the machine-usable result (the `url`, ids, JSON fields) and that it equals what the UI path gets from the same shared function; if it has side effects (sends, runs, spends quota), assert it is `POST` so a `read_only` token cannot call it.
 - New service method → unit test in `packages/business/__tests__`, mocking the repositories/services it calls — this is the layer that carries validation, cache invalidation, and events, so it's the highest-signal place to test new business logic (see `.agents/rules/data-access.md`).
 - New repository method → query correctness incl. `workspaceId` scoping.
 - New worker consumer → success / error / retry / idempotency on re-run.

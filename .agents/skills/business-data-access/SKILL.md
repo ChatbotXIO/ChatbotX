@@ -197,6 +197,13 @@ Never write a second implementation of the list/count/filter logic for the
 public path — both callers must converge on the same service method so a bug
 fix or a new filter only has to happen once.
 
+The public path is required, not "if there is one": every operation —
+including result-returning ones like links, previews, test runs, stats, and
+exports — ships a public procedure unless it is on the AGENTS.md invariant 23
+exempt list. A result-returning operation with no DB access keeps its one
+implementation in `features/<x>/lib/` instead of a service (the bot simulator's
+`createBotSimulatorLink` is the example); the same convergence rule applies.
+
 Workers and integrations follow the same boundary.
 
 ## Verification

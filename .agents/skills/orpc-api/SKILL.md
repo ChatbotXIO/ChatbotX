@@ -128,9 +128,92 @@ authorizedAPI
   .handler(async ({ input, context }) => {})→ business logic
 ```
 
+## When a public procedure is required
+
+Always, by default. ChatbotX is agent-first: the CLI and MCP server build their
+entire command/tool surface from `publicRouter` (`/api/public-spec.json`), so an
+operation without a public procedure is invisible to every AI agent
+(AGENTS.md invariant 23). Every feature — and every new operation on an existing
+feature — adds its procedure to `api/public.ts` before (or with) the UI.
+
+"Operation" means anything a user can do from the UI, not just CRUD. In particular
+the **result-returning operations** below are easy to forget because they store
+nothing, yet an agent needs them just as much.
+
+Exempt only (and say why in the PR): sign-in/sign-up and personal account
+settings; platform administration (super admin, reseller, tenant, platform
+credentials); end-customer public pages (webviews, short links, booking pages); the
+browser-redirect step of a channel OAuth connect (post-connect read, settings and
+disconnect still need procedures); UI-only plumbing (device push tokens, realtime,
+help items); and anything a workspace token must never do (minting/revoking API
+tokens).
+
+## Result-returning operations
+
+An operation whose point is to **give the caller something back** rather than to
+change a stored resource:
+
+| Kind | Examples | Already in `publicRouter` |
+|---|---|---|
+| Link / code | shareable preview link, embed snippet | `botSimulator.getLink` |
+| Preview / render | render a template or message with variables | — |
+| Test run | test send, run a flow for one contact, test an integration connection | — |
+| Stats / report | counts, time series, breakdowns | `analytics.*`, `ads.analytics.overview` |
+| Export | CSV/JSON export | `ads.conversions.export`, contacts export |
+| AI generation | generate a reply, summarize, suggest | — |
+| Status / sync / scan | check a connection, trigger a sync or scan | — |
+
+Rule of thumb: **if a button in the UI produces a result, an agent must be able to
+call one operation and receive the same result.**
+
+`botSimulator.getLink` (`features/bot-simulator/api/public.ts`) is the reference:
+
+```typescript
+const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("channels")
+
+export const botSimulatorPublicRouter = {
+  getLink: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/bot-simulator/link",
+      summary: "Get bot simulator link",
+      description:
+        "Returns a shareable link that opens the given website with a webchat widget on top, to preview the bot on a real page. The webchat must be enabled and the website on its allowed domains. Get webchat ids from `webchats.list`.",
+      tags: ["Bot Simulator"],
+    })
+    .input(z.object({ webchatId: zodBigintAsString().describe("… Get it from `webchats.list`."), websiteUrl: … }))
+    .output(z.object({ url: z.string().describe("Bot simulator link; anyone with it can open the preview.") }))
+    .errors(possibleErrorsOnFindingResource)
+    .handler(async ({ context, input }) => ({
+      url: await createBotSimulatorLink({ workspaceId: context.workspace.id, ...input }),
+    })),
+}
+```
+
+What to copy from it:
+
+- **Return data, not a screen.** The UI shows a preview; the API returns the `url`.
+  Results are ids, URLs, or JSON an agent can act on — never HTML meant for display.
+- **One implementation.** The handler calls `createBotSimulatorLink` in the feature's
+  `lib/` (or a service method when it touches the DB); the UI path calls the same
+  function. Never re-derive the result inside the handler.
+- **Point at the source of every input id** in `description`/`.describe()`
+  ("Get webchat ids from `webchats.list`") so an agent can chain calls without guessing.
+- **Key = verb + noun**: `getLink`, `preview`, `testSend`, `run`, `export`, `getStats`,
+  `generate`, `sync` (see "Public procedures" below for the naming rules).
+- **Pick the method by side effect.** `GET` when it only reads or computes (link,
+  preview, stats). `POST` when it sends something real, runs automation, calls a paid
+  AI model, or spends quota — `read_only` tokens are limited to GET/HEAD, and a test
+  send must not slip through one.
+- **Set MCP hints when the method misleads.** A `POST` preview/generate with no side
+  effect gets `mcpSpec({ readOnlyHint: true })`; a `GET` that is not safe to repeat
+  is a design smell — make it `POST`.
+
 ## Feature API Structure
 
-Each feature has `api/` directory with optional split:
+Each feature has an `api/` directory. `public.ts` is required (see "When a public
+procedure is required"); the private files exist only when the UI needs
+session-authed procedures:
 
 ```
 features/my-feature/
@@ -139,7 +222,7 @@ features/my-feature/
                   spread in here; they're mounted separately in
                   routers/public.ts (see below)
     private.ts  → session-based procedures (private naming: see below)
-    public.ts   → token-based procedures (for public API)
+    public.ts   → REQUIRED — token-based procedures (public API → CLI/MCP)
 ```
 
 If a feature has no private procedures at all, it has no `api/index.ts` and
