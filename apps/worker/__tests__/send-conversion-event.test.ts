@@ -268,7 +268,7 @@ describe("handleSendConversionEvent", () => {
     })
   })
 
-  test("skips when the integration lacks CAPI scope", async () => {
+  test("sends a whatsapp event without CAPI scope and never resolves it (Meta is the arbiter)", async () => {
     mocks.findWorkspaceIntegration.mockResolvedValue({
       ...integration,
       hasCapiScope: false,
@@ -280,14 +280,15 @@ describe("handleSendConversionEvent", () => {
 
     await handleSendConversionEvent(jobData)
 
+    expect(mocks.resolveCapiScopeState).not.toHaveBeenCalled()
+    expect(mocks.sendConversionEvent).toHaveBeenCalled()
     expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
       id: "ace-1",
       workspaceId: "ws-1",
       from: "pending",
-      to: "skipped_no_scope",
+      to: "sent",
+      capiSentAt: expect.any(Date),
     })
-    expect(mocks.ensureDatasetId).not.toHaveBeenCalled()
-    expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
   })
 
   test("marks terminal failures failed and logs them", async () => {
@@ -636,6 +637,32 @@ describe("handleSendConversionEvent — messenger/instagram (Phase 3)", () => {
     expect(mocks.updateCapiStatus).not.toHaveBeenCalledWith(
       expect.objectContaining({ to: "failed" }),
     )
+  })
+
+  test("still skips a messenger event without CAPI scope on an oauth token", async () => {
+    mocks.findWorkspaceEvent.mockResolvedValue(messengerEvent)
+    mocks.resolveCapiAccessToken.mockResolvedValue({
+      accessToken: "oauth-token-1",
+      source: "oauth",
+    })
+    mocks.refreshCapiScopeCache.mockResolvedValue({
+      ...messengerIntegration,
+      hasCapiScope: false,
+    })
+
+    await handleSendConversionEvent({
+      adsConversionEventId: "ace-2",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.refreshCapiScopeCache).toHaveBeenCalled()
+    expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
+      id: "ace-2",
+      workspaceId: "ws-1",
+      from: "pending",
+      to: "skipped_no_scope",
+    })
+    expect(mocks.metaSendConversionEvent).not.toHaveBeenCalled()
   })
 
   test("sends a messenger conversion event using page identity + contact PSID", async () => {

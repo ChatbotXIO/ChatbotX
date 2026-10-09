@@ -52,6 +52,9 @@ export const capiStatusConfig = {
  * dataset, token and scope may all still be present, but the integration
  * must read as "notConnected" — the same precedence `getCapiConnectionState`
  * applies when it falls back to the method chooser.
+ *
+ * `capiScopeRequired: false` treats the scope as satisfied (channels exempt
+ * per `capi-scope-policy`); omitted it defaults to `true`.
  */
 export function getCapiStatus(input: {
   hasCapiScope: boolean
@@ -60,7 +63,9 @@ export function getCapiStatus(input: {
   credentialAvailable: boolean
   supported?: boolean
   capiDisconnected?: boolean
+  capiScopeRequired?: boolean
 }): CapiStatus {
+  const hasCapiScope = input.hasCapiScope || input.capiScopeRequired === false
   if (input.supported === false) {
     return "unsupported"
   }
@@ -70,13 +75,13 @@ export function getCapiStatus(input: {
   if (input.hasManualCapiAccessToken && input.hasDatasetId) {
     return "ready"
   }
-  if (input.hasCapiScope && input.hasDatasetId) {
+  if (hasCapiScope && input.hasDatasetId) {
     return "ready"
   }
   if (!input.credentialAvailable) {
     return "unverified"
   }
-  if (isAwaitingCapiScope(input)) {
+  if (isAwaitingCapiScope({ ...input, hasCapiScope })) {
     return "missingPermission"
   }
   return "notConnected"

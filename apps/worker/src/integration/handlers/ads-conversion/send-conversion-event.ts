@@ -18,6 +18,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { logProviderError } from "@chatbotx.io/business/error-log"
+import { isCapiScopeRequired } from "@chatbotx.io/business/meta-conversions/capi-scope-policy"
 import type { AdsConversionEventModel } from "@chatbotx.io/database/types"
 import {
   buildDatasetName,
@@ -290,11 +291,13 @@ async function handleSendWhatsappConversionEvent(
 
   const oauth = whatsappAuthForCapiScopeSchema.parse(integration.auth)
   const auth = await resolveCapiAccessTokenForChannel("whatsapp", integration)
-  const scopeState = await resolveCapiScopeStateForChannel(
-    "whatsapp",
-    integration,
-  )
-  if (auth.source !== "manual" && !scopeState.hasCapiScope) {
+  // Per-channel policy: when the channel is exempt from the scope
+  // requirement, skip the scope resolution (no Graph call) and the gate.
+  const scopeRequired = isCapiScopeRequired("whatsapp")
+  const scopeState = scopeRequired
+    ? await resolveCapiScopeStateForChannel("whatsapp", integration)
+    : undefined
+  if (auth.source !== "manual" && scopeState && !scopeState.hasCapiScope) {
     await adsConversionService.updateCapiStatus({
       id: event.id,
       workspaceId: event.workspaceId,
@@ -489,8 +492,9 @@ async function handleSendMetaChannelConversionEvent(
 
   try {
     const auth = await resolveCapiAccessTokenForChannel(channel, integration)
+    const scopeRequired = isCapiScopeRequired(channel)
     const integrationForSend =
-      auth.source === "manual"
+      auth.source === "manual" || !scopeRequired
         ? integration
         : await refreshScopeCache(channel, integration)
 
@@ -503,7 +507,11 @@ async function handleSendMetaChannelConversionEvent(
       return
     }
 
-    if (auth.source !== "manual" && !integrationForSend.hasCapiScope) {
+    if (
+      auth.source !== "manual" &&
+      scopeRequired &&
+      !integrationForSend.hasCapiScope
+    ) {
       await adsConversionService.updateCapiStatus({
         id: event.id,
         workspaceId: event.workspaceId,
