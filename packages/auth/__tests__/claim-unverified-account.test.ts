@@ -8,6 +8,7 @@ const { claimUnverifiedAccountAfterLink } = await import(
   "../src/claim-unverified-account"
 )
 
+const EMAIL_ATTESTING_ERROR = /email-attesting/
 const USER_ID = "11728999944477963"
 const internalAdapter = {
   findUserById: vi.fn(),
@@ -28,6 +29,7 @@ beforeEach(() => {
   })
   internalAdapter.findAccounts.mockResolvedValue([
     { id: "acc-pwd", providerId: "credential" },
+    { id: "acc-fb", providerId: "facebook" },
     { id: "acc-new", providerId: "google" },
   ])
   internalAdapter.listSessions.mockResolvedValue([
@@ -37,17 +39,21 @@ beforeEach(() => {
 })
 
 describe("claimUnverifiedAccountAfterLink", () => {
-  test("verified Google link into an unverified user drops its password and sessions", async () => {
+  test("verified Google link into an unverified user drops every other login method and its sessions", async () => {
     await claimUnverifiedAccountAfterLink(account("google"), context)
 
-    expect(internalAdapter.deleteAccount).toHaveBeenCalledTimes(1)
+    expect(internalAdapter.deleteAccount).toHaveBeenCalledTimes(2)
     expect(internalAdapter.deleteAccount).toHaveBeenCalledWith("acc-pwd")
+    expect(internalAdapter.deleteAccount).toHaveBeenCalledWith("acc-fb")
     expect(internalAdapter.deleteSessions).toHaveBeenCalledWith(["s1", "s2"])
   })
 
-  test("Facebook (no email_verified) into an unverified user is cleaned the same way", async () => {
-    await claimUnverifiedAccountAfterLink(account("facebook"), context)
-    expect(internalAdapter.deleteAccount).toHaveBeenCalledWith("acc-pwd")
+  test("Facebook into an unverified user is refused", async () => {
+    await expect(
+      claimUnverifiedAccountAfterLink(account("facebook"), context),
+    ).rejects.toThrow(EMAIL_ATTESTING_ERROR)
+    expect(internalAdapter.deleteAccount).not.toHaveBeenCalled()
+    expect(internalAdapter.deleteSessions).not.toHaveBeenCalled()
   })
 
   test("never deletes the social account that was just created", async () => {

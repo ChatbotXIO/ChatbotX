@@ -541,9 +541,11 @@ export function createAuth(config: AuthConfig) {
         // its verification link, or a Facebook-first user (Facebook never
         // returns `email_verified`). A trusted provider has proven the mailbox,
         // so the local flag must not block the link. The placeholder's own
-        // password and sessions are removed by `claimUnverifiedAccountAfterLink`
-        // before the link completes, which is what keeps this from being a
-        // pre-registration takeover. Emails must still match: the implicit
+        // other login methods and sessions are removed by
+        // `claimUnverifiedAccountAfterLink` before the link completes, and only
+        // an email-attesting provider (Google) may claim one — Facebook stays
+        // refused. That is what keeps this from being a pre-registration
+        // takeover. Emails must still match: the implicit
         // sign-in path looks the user up by the provider email, and the
         // explicit link route keeps `allowDifferentEmails` off.
         requireLocalEmailVerified: false,
