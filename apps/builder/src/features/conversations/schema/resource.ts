@@ -34,6 +34,14 @@ export const adReferralResource = z.object({
   sourceUrl: z.string().nullish(),
 })
 
+// Google Ads click summary derived server-side from `ContactInbox.referral`
+// (see `resolveGoogleAdsClick`). Carries the click-id TYPE only — never the
+// `gclid`/`gbraid` value, which is a conversion-attribution secret.
+export const googleAdsClickResource = z.object({
+  clickIdType: z.enum(["gclid", "gbraid"]),
+  receivedAt: z.string().nullable(),
+})
+
 // Conversation-only extension of the shared `contactInboxResource` — kept out
 // of the base resource so contact APIs (including public/workspace-token
 // routes that nest `contactInboxResource`) are unaffected. Both conversation
@@ -54,6 +62,8 @@ export const adReferralResource = z.object({
 // existed; `null` everywhere means routing was never observed.
 export const conversationContactInboxResource = contactInboxResource.extend({
   adReferral: adReferralResource.nullable(),
+  // Nullish for the same version-skew reason as `adReferral.sourceUrl`.
+  googleAdsClick: googleAdsClickResource.nullish(),
   lastMessageAt: z.date().nullable(),
   threadControlState: threadControlStates.nullish(),
   threadOwnerRole: z.string().nullish(),

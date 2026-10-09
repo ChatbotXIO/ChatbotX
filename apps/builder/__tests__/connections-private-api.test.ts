@@ -129,6 +129,11 @@ vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: MockChatbotXException,
   channelHiddenException: (channel: string) =>
     new MockChatbotXException(`${channel} is hidden`, "channelHidden"),
+  connectionProviderDedicatedOnlyException: (provider: string) =>
+    new MockChatbotXException(
+      `${provider} is dedicated-only`,
+      "connectionProviderDedicatedOnly",
+    ),
   connectionNotConfiguredException: (provider: string) =>
     new MockChatbotXException(`${provider} not configured`, "notConfigured"),
   connectSessionExpiredException: (message: string) =>
@@ -399,6 +404,10 @@ describe("private connectionsAPI.reconnectConnectionAPI", () => {
 
 describe("private connectionsAPI.updateConnectionAPI", () => {
   test("passes workspaceId through to connectionStateService.updateDisplayName", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "claude",
+    })
     mocks.updateDisplayName.mockResolvedValueOnce({
       id: "conn-1",
       provider: "claude",
@@ -423,6 +432,10 @@ describe("private connectionsAPI.updateConnectionAPI", () => {
 
 describe("private connectionsAPI.disconnectConnectionAPI", () => {
   test("passes workspaceId through to connectionService.disconnect", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "claude",
+    })
     mocks.disconnect.mockResolvedValueOnce({ id: "conn-1", provider: "claude" })
 
     const handler = getHandler(
@@ -443,6 +456,10 @@ describe("private connectionsAPI.disconnectConnectionAPI", () => {
 
 describe("private connectionsAPI.refreshConnectionAPI", () => {
   test("passes workspaceId through to connectionService.refresh", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "claude",
+    })
     mocks.refresh.mockResolvedValueOnce({ id: "conn-1", provider: "claude" })
 
     const handler = getHandler(
@@ -523,6 +540,10 @@ describe("private connectSessionsAPI.getConnectSessionAPI", () => {
 
 describe("private connectSessionsAPI.connectSessionTargetsAPI", () => {
   test("passes workspaceId and actorUserId through to connectionService.connectTargets", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValueOnce({
+      id: "session-1",
+      provider: "messenger",
+    })
     mocks.connectTargets.mockResolvedValueOnce({
       session: { id: "session-1" },
       connections: [],
@@ -549,6 +570,10 @@ describe("private connectSessionsAPI.connectSessionTargetsAPI", () => {
 
 describe("private connectSessionsAPI.cancelConnectSessionAPI", () => {
   test("passes workspaceId through to connectSessionService.cancel", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValueOnce({
+      id: "session-1",
+      provider: "messenger",
+    })
     mocks.cancel.mockResolvedValueOnce({ id: "session-1" })
 
     const handler = getHandler(
@@ -564,5 +589,184 @@ describe("private connectSessionsAPI.cancelConnectSessionAPI", () => {
       id: "session-1",
       workspaceId: "ws-1",
     })
+  })
+})
+
+describe("generic connections API rejects the dedicated-only googleAds provider", () => {
+  const rejected = { code: "connectionProviderDedicatedOnly" }
+
+  test("createConnectionAPI rejects googleAds before any connect work", async () => {
+    await expect(
+      getCreateHandler()({
+        context,
+        input: { workspaceId: "ws-1", provider: "googleAds", config: {} },
+      }),
+    ).rejects.toMatchObject(rejected)
+
+    expect(mocks.resolveOAuthCredential).not.toHaveBeenCalled()
+    expect(mocks.startSession).not.toHaveBeenCalled()
+    expect(mocks.connectFromCredentials).not.toHaveBeenCalled()
+  })
+
+  test("reconnectConnectionAPI rejects a googleAds connection resolved by id", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "googleAds",
+    })
+
+    await expect(
+      getHandler(
+        "POST",
+        "/workspaces/{workspaceId}/connections/{id}/reconnect",
+      )({ context, input: { workspaceId: "ws-1", id: "conn-1" } }),
+    ).rejects.toMatchObject(rejected)
+
+    expect(mocks.reconnect).not.toHaveBeenCalled()
+  })
+
+  test("disconnectConnectionAPI rejects a googleAds connection resolved by id", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "googleAds",
+    })
+
+    await expect(
+      getHandler(
+        "DELETE",
+        "/workspaces/{workspaceId}/connections/{id}",
+      )({ context, input: { workspaceId: "ws-1", id: "conn-1" } }),
+    ).rejects.toMatchObject(rejected)
+
+    expect(mocks.disconnect).not.toHaveBeenCalled()
+    expect(mocks.getForWorkspace).toHaveBeenCalledWith({
+      id: "conn-1",
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("updateConnectionAPI rejects a googleAds connection and does not rename it", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "googleAds",
+    })
+
+    await expect(
+      getHandler(
+        "PUT",
+        "/workspaces/{workspaceId}/connections/{id}",
+      )({
+        context,
+        input: { workspaceId: "ws-1", id: "conn-1", displayName: "x" },
+      }),
+    ).rejects.toMatchObject(rejected)
+
+    expect(mocks.updateDisplayName).not.toHaveBeenCalled()
+  })
+
+  test("refreshConnectionAPI rejects a googleAds connection and does not refresh it", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce({
+      id: "conn-1",
+      provider: "googleAds",
+    })
+
+    await expect(
+      getHandler(
+        "POST",
+        "/workspaces/{workspaceId}/connections/{id}/refresh",
+      )({ context, input: { workspaceId: "ws-1", id: "conn-1" } }),
+    ).rejects.toMatchObject(rejected)
+
+    expect(mocks.refresh).not.toHaveBeenCalled()
+  })
+
+  test("disconnectConnectionAPI answers notFound for an unknown connection", async () => {
+    mocks.getForWorkspace.mockResolvedValueOnce(undefined)
+
+    await expect(
+      getHandler(
+        "DELETE",
+        "/workspaces/{workspaceId}/connections/{id}",
+      )({ context, input: { workspaceId: "ws-1", id: "missing" } }),
+    ).rejects.toMatchObject({ code: "notFound" })
+
+    expect(mocks.disconnect).not.toHaveBeenCalled()
+  })
+
+  test("connectSessionTargetsAPI rejects a googleAds session, looked up workspace-scoped", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValueOnce({
+      id: "session-1",
+      provider: "googleAds",
+    })
+
+    await expect(
+      getHandler(
+        "POST",
+        "/workspaces/{workspaceId}/connect-sessions/{id}/targets",
+      )({
+        context,
+        input: { workspaceId: "ws-1", id: "session-1", targetIds: ["t-1"] },
+      }),
+    ).rejects.toMatchObject(rejected)
+
+    expect(mocks.findByIdForWorkspace).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+    })
+    expect(mocks.connectTargets).not.toHaveBeenCalled()
+  })
+
+  test("cancelConnectSessionAPI rejects a googleAds session", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValueOnce({
+      id: "session-1",
+      provider: "googleAds",
+    })
+
+    await expect(
+      getHandler(
+        "DELETE",
+        "/workspaces/{workspaceId}/connect-sessions/{id}",
+      )({ context, input: { workspaceId: "ws-1", id: "session-1" } }),
+    ).rejects.toMatchObject(rejected)
+
+    expect(mocks.cancel).not.toHaveBeenCalled()
+  })
+
+  test("connectSessionTargetsAPI and cancelConnectSessionAPI answer notFound for a foreign session", async () => {
+    mocks.findByIdForWorkspace
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+
+    await expect(
+      getHandler(
+        "POST",
+        "/workspaces/{workspaceId}/connect-sessions/{id}/targets",
+      )({
+        context,
+        input: { workspaceId: "ws-1", id: "other", targetIds: [] },
+      }),
+    ).rejects.toMatchObject({ code: "notFound" })
+    await expect(
+      getHandler(
+        "DELETE",
+        "/workspaces/{workspaceId}/connect-sessions/{id}",
+      )({ context, input: { workspaceId: "ws-1", id: "other" } }),
+    ).rejects.toMatchObject({ code: "notFound" })
+
+    expect(mocks.connectTargets).not.toHaveBeenCalled()
+    expect(mocks.cancel).not.toHaveBeenCalled()
+  })
+
+  test("read-only getConnectSessionAPI still serves a googleAds session (the picker needs it)", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValueOnce({
+      id: "session-1",
+      provider: "googleAds",
+    })
+
+    await expect(
+      getHandler(
+        "GET",
+        "/workspaces/{workspaceId}/connect-sessions/{id}",
+      )({ context, input: { workspaceId: "ws-1", id: "session-1" } }),
+    ).resolves.toEqual({ id: "session-1", sessionResource: true })
   })
 })

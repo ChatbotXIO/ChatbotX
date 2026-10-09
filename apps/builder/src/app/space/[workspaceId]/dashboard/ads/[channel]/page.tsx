@@ -16,6 +16,7 @@ import { getAdsSwitcherData } from "@/features/ads/queries/switcher"
 import { adsAnalyticsSearchParamsCache } from "@/features/ads/schema/analytics"
 import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
 import { resolveAdsDashboardChannels } from "@/features/analytics/lib/ads-dashboard-channels"
+import { resolveGoogleAdsDashboardEntry } from "@/features/analytics/lib/google-ads-dashboard-entry"
 import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permission"
 
 /** Validates the `[channel]` route segment against the canonical ads-eligible
@@ -44,9 +45,10 @@ export default async function AdsChannelAnalyticsPage(props: {
   const range = { ...search, channel }
   // Guarded by `resolveGuardedWorkspaceId(..., "superAdmin")` above, so
   // isSuperAdmin is always true here.
-  const [switcherData, adsChannels] = await Promise.all([
+  const [switcherData, adsChannels, showGoogleAds] = await Promise.all([
     getAdsSwitcherData(workspaceId),
     resolveAdsDashboardChannels({ workspaceId, isSuperAdmin: true }),
+    resolveGoogleAdsDashboardEntry({ workspaceId, isSuperAdmin: true }),
   ])
 
   // One unified integration select for this channel: an empty
@@ -99,7 +101,7 @@ export default async function AdsChannelAnalyticsPage(props: {
       {/* Nav filtering only — a deep link to a channel not in `adsChannels`
           (e.g. historical data for a since-disconnected channel) still
           renders below; it just won't have its own nav entry. */}
-      <AnalyticsNav adsChannels={adsChannels} />
+      <AnalyticsNav adsChannels={adsChannels} showGoogleAds={showGoogleAds} />
       <div className="flex min-w-0 flex-1 flex-col gap-5">
         <Suspense>
           <AdsAnalyticsView

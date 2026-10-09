@@ -34,6 +34,8 @@ export const ScheduleJobData = {
   purgeExpiredConnectSessions: "purgeExpiredConnectSessions",
   purgeWorkspaces: "purgeWorkspaces",
   clearExpiredSupportAccess: "clearExpiredSupportAccess",
+  googleAdsHousekeeping: "googleAdsHousekeeping",
+  googleAdsSyncSetups: "googleAdsSyncSetups",
   purgeBroadcasts: "purgeBroadcasts",
   purgeAutomationThrottle: "purgeAutomationThrottle",
   purgeErrorLogs: "purgeErrorLogs",
@@ -210,6 +212,16 @@ export type ScheduleJobClearExpiredSupportAccess = {
   data: Record<string, never>
 }
 
+export type ScheduleJobGoogleAdsHousekeeping = {
+  type: typeof ScheduleJobData.googleAdsHousekeeping
+  data: Record<string, never>
+}
+
+export type ScheduleJobGoogleAdsSyncSetups = {
+  type: typeof ScheduleJobData.googleAdsSyncSetups
+  data: Record<string, never>
+}
+
 export type ScheduleJobDispatchProfileSnapshots = {
   type: typeof ScheduleJobData.dispatchProfileSnapshots
   data: Record<string, never>
@@ -289,6 +301,8 @@ export type ScheduleJobData =
   | ScheduleJobPurgeExpiredConnectSessions
   | ScheduleJobPurgeWorkspaces
   | ScheduleJobClearExpiredSupportAccess
+  | ScheduleJobGoogleAdsHousekeeping
+  | ScheduleJobGoogleAdsSyncSetups
   | ScheduleJobDispatchProfileSnapshots
   | ScheduleJobPurgeBroadcasts
   | ScheduleJobPurgeAutomationThrottle

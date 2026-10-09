@@ -2612,6 +2612,38 @@ describe("applyContactFilter — CTWA fields", () => {
     expect(empty.sql).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
   })
 
+  test("renders fromGoogleAd as EXISTS / NOT EXISTS on the gclid/gbraid click, not the Meta predicate", () => {
+    const render = (condition: Record<string, unknown>) =>
+      renderContactWhere(
+        applyContactFilter({
+          operator: "and",
+          conditions: [{ field: "fromGoogleAd", ...condition }],
+        } as Parameters<typeof applyContactFilter>[0]),
+      )
+
+    const positive = render({
+      operator: operatorTypes.enum.eq,
+      value: "true",
+    })
+    expect(positive.sql).toContain('EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(positive.sql).not.toContain("NOT EXISTS")
+    expect(positive.sql).toContain(
+      `"ContactInbox"."referral"->>'gclid' IS NOT NULL`,
+    )
+    expect(positive.sql).toContain(
+      `"ContactInbox"."referral"->>'gbraid' IS NOT NULL`,
+    )
+    expect(positive.sql).not.toContain("ctwaClid")
+    expect(positive.sql).not.toContain("'adId'")
+
+    expect(
+      render({ operator: operatorTypes.enum.eq, value: "false" }).sql,
+    ).toContain('NOT EXISTS (SELECT 1 FROM "ContactInbox"')
+    expect(render({ operator: operatorTypes.enum.isEmpty }).sql).toContain(
+      'NOT EXISTS (SELECT 1 FROM "ContactInbox"',
+    )
+  })
+
   test("renders ctwaConversion in/notIn as EXISTS/NOT EXISTS joining AdsConversionEvent through ContactInbox", () => {
     const inQuery = renderContactWhere(
       applyContactFilter({

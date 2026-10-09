@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto"
 import { triggerService } from "@chatbotx.io/business"
 import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import {
@@ -144,20 +145,42 @@ async function releaseExecutionLock(
   await redis.del(lockKey)
 }
 
+/**
+ * What was scheduled, not when it was swept: a digest of the contact's values
+ * for the trigger's date fields. A re-sweep after a crash (even past UTC
+ * midnight) matches the same values and reuses the key; editing the date is a
+ * new occurrence.
+ */
+function scheduledOccurrence(
+  triggerInfo: TriggerSweepInfo,
+  customFieldValues: Map<string, unknown>,
+): string {
+  const parts = [...new Set(triggerInfo.conditions.map((c) => c.customFieldId))]
+    .sort()
+    .map((id) => {
+      const value = customFieldValues.get(id)
+      const text = value instanceof Date ? value.toISOString() : String(value)
+      return `${id}=${text}`
+    })
+  return createHash("sha256").update(parts.join("|")).digest("hex").slice(0, 24)
+}
+
 async function executeActions(
   triggerInfo: TriggerSweepInfo,
   contactId: string,
+  occurrence: string,
 ): Promise<void> {
   const actions = Array.isArray(triggerInfo.actions) ? triggerInfo.actions : []
   const executor = new ActionExecutor()
 
-  for (const action of actions) {
+  for (const [index, action] of actions.entries()) {
     try {
       await executor.execute({
         action,
         contactId,
         workspaceId: triggerInfo.workspaceId,
         triggerId: triggerInfo.triggerId,
+        occurrenceKey: `datetime:${triggerInfo.triggerId}:${contactId}:${index}:${occurrence}`,
       })
     } catch (error) {
       logger.error(
@@ -186,6 +209,7 @@ async function markTriggerExecuted(
 async function executeAndMarkTrigger(
   triggerInfo: TriggerSweepInfo,
   contactId: string,
+  occurrence: string,
 ): Promise<DateTimeTriggerResult> {
   const notExecutedResult = {
     triggerId: triggerInfo.triggerId,
@@ -211,7 +235,7 @@ async function executeAndMarkTrigger(
         return notExecutedResult
       }
 
-      await executeActions(triggerInfo, contactId)
+      await executeActions(triggerInfo, contactId, occurrence)
       await markTriggerExecuted(redis, triggerInfo, contactId)
 
       return {
@@ -329,7 +353,11 @@ async function processContactBatch(
       )
 
       if (allConditionsMatch) {
-        const result = await executeAndMarkTrigger(triggerInfo, contactId)
+        const result = await executeAndMarkTrigger(
+          triggerInfo,
+          contactId,
+          scheduledOccurrence(triggerInfo, customFieldValues),
+        )
         results.push(result)
         executedKeys.add(executionKey)
       }

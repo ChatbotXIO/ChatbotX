@@ -8,6 +8,7 @@ import {
   integrationFacebookAdsModel,
   integrationGeminiModel,
   integrationGetResponseModel,
+  integrationGoogleAdsModel,
   integrationGoogleCalendarModel,
   integrationGoogleSheetsModel,
   integrationInstagramModel,
@@ -169,6 +170,19 @@ export const buildConnectionStoreBindings = (
     tableName: "IntegrationGetResponse",
     integrationType: "getResponse",
     duplicateConstraint: "IntegrationGetResponse_workspaceId_key",
+  }),
+  googleAds: makeWorkspaceIntegrationBinding({
+    table: integrationGoogleAdsModel,
+    tableName: "IntegrationGoogleAds",
+    integrationType: "googleAds",
+    duplicateConstraint: "IntegrationGoogleAds_workspaceId_key",
+    // Written from `candidateToConfig` on connect (and on reconnect).
+    configColumns: [
+      "customerId",
+      "loginCustomerId",
+      "descriptiveName",
+      "currencyCode",
+    ],
   }),
   googleCalendar: makeWorkspaceIntegrationBinding({
     table: integrationGoogleCalendarModel,

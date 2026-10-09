@@ -17,6 +17,11 @@ export const router = {
       default: m.adsCampaignAPI,
     })),
   ),
+  googleAdsAPI: lazy(() =>
+    import("@/features/integration-google-ads/api").then((m) => ({
+      default: m.googleAdsAPI,
+    })),
+  ),
   appointmentCalendarsAPI: lazy(() =>
     import("@/features/appointment-calendars/api").then((m) => ({
       default: m.appointmentCalendarsAPI,

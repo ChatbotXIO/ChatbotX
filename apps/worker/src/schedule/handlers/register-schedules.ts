@@ -372,6 +372,30 @@ export const registerSchedules = async () => {
     },
   )
 
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.googleAdsHousekeeping,
+    { pattern: "*/10 * * * *" },
+    {
+      name: ScheduleJobData.googleAdsHousekeeping,
+      data: {
+        type: ScheduleJobData.googleAdsHousekeeping,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.googleAdsSyncSetups,
+    { pattern: "30 3 * * *" },
+    {
+      name: ScheduleJobData.googleAdsSyncSetups,
+      data: {
+        type: ScheduleJobData.googleAdsSyncSetups,
+        data: {},
+      },
+    },
+  )
+
   // Deliberately NOT in CLOUD_ONLY_SCHEDULERS — recipient-row retention
   // applies to every edition.
   await scheduleQueue.upsertJobScheduler(

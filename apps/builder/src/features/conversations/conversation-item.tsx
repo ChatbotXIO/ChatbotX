@@ -44,7 +44,12 @@ import {
   resolveLastMessagePreview,
 } from "./queries/resolve-last-message-preview"
 import type { ListConversationItemResource } from "./schema/resource"
-import { adBadgeLabelKey, selectAdBadge } from "./utils/ad-badge"
+import {
+  adBadgeLabelKey,
+  googleAdsBadgeLabelKey,
+  selectAdBadge,
+  selectGoogleAdsBadge,
+} from "./utils/ad-badge"
 
 // Icon shown next to a call preview snippet. Mirrors whatsapp-call-card.tsx's
 // icon choices so the preview and the card agree per call outcome.
@@ -213,6 +218,14 @@ export default function ConversationItem({
   // (see `resolveAdReferral`); `selectAdBadge` picks the first non-empty
   // adTitle for the tooltip independently of which inbox triggered the badge.
   const adBadge = selectAdBadge(conversation.contactInboxes)
+  // Google Ads click-to-message badge (gclid/gbraid on the contact inbox) —
+  // a separate, Meta-independent pill; carries no click id, only the type.
+  const googleAdsBadge = selectGoogleAdsBadge(
+    conversation.contactInboxes?.map(({ channel, googleAdsClick }) => ({
+      channel,
+      googleAdsClick: googleAdsClick ?? null,
+    })),
+  )
 
   const contactAvatar = useMemo(
     () => (
@@ -343,6 +356,12 @@ export default function ConversationItem({
                 <AdBadgePill
                   adTitle={adBadge.adTitle}
                   label={t(adBadgeLabelKey(adBadge.channel))}
+                />
+              )}
+              {googleAdsBadge && (
+                <AdBadgePill
+                  adTitle={null}
+                  label={t(googleAdsBadgeLabelKey(googleAdsBadge.channel))}
                 />
               )}
               <ThreadControlPill conversation={conversation} />

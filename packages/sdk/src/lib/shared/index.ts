@@ -49,6 +49,12 @@ export type MessageReferral = {
   videoUrl?: string | null
   productId?: string | null
   flowId?: string | null
+  gclid?: string | null
+  gbraid?: string | null
+  googleCampaignId?: string | null
+  googleAdGroupId?: string | null
+  googleAdId?: string | null
+  googleClickReceivedAt?: string | null
   raw?: Record<string, unknown>
 }
 

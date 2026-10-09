@@ -23,6 +23,7 @@ import { EllipsisIcon } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
 import { ContactNameCell } from "@/features/contacts/components/contact-name-cell"
+import { resolveErrorLogDetail } from "./google-ads-error-detail"
 import type { ErrorLogResource } from "./schema"
 
 type GetColumnsProps = {
@@ -93,20 +94,23 @@ export function getColumns({
           title={t("fields.description.label")}
         />
       ),
-      cell: ({ row }) => (
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <div className="max-w-[400px] truncate">
-                {row.original.detail}
-              </div>
-            }
-          />
-          <TooltipContent>
-            <p>{row.original.detail}</p>
-          </TooltipContent>
-        </Tooltip>
-      ),
+      cell: ({ row }) => {
+        const detail = resolveErrorLogDetail(
+          t,
+          row.original.action,
+          row.original.detail,
+        )
+        return (
+          <Tooltip>
+            <TooltipTrigger
+              render={<div className="max-w-[400px] truncate">{detail}</div>}
+            />
+            <TooltipContent>
+              <p className="whitespace-pre-line">{detail}</p>
+            </TooltipContent>
+          </Tooltip>
+        )
+      },
       meta: {
         label: t("fields.description.label"),
       },

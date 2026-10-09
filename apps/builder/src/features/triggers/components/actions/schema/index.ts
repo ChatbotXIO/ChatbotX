@@ -2,6 +2,7 @@ import { addTags } from "./add-tags"
 import { clearCustomField } from "./clear-custom-field"
 import { removeTags } from "./remove-tags"
 import { runGoogleSheet } from "./run-google-sheet"
+import { sendGoogleAdsConversion } from "./send-google-ads-conversion"
 import { sendMetaCapiEvent } from "./send-meta-capi-event"
 import { setCustomField } from "./set-custom-field"
 import { startFlow } from "./start-flow"
@@ -15,5 +16,6 @@ export const allActions = {
   startFlow,
   transferConversationToHuman,
   sendMetaCapiEvent,
+  sendGoogleAdsConversion,
   runGoogleSheet,
 }

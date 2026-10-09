@@ -21,6 +21,10 @@ import { clearExpiredSupportAccess } from "./handlers/clear-expired-support-acce
 import { dispatchProfileSnapshots } from "./handlers/dispatch-profile-snapshots"
 import { enqueueBroadcast } from "./handlers/enqueue-broadcast"
 import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
+import {
+  googleAdsHousekeeping,
+  googleAdsSyncSetups,
+} from "./handlers/google-ads-housekeeping"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
 import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
@@ -164,6 +168,14 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.clearExpiredSupportAccess:
               await clearExpiredSupportAccess()
+              return
+
+            case ScheduleJobData.googleAdsHousekeeping:
+              await googleAdsHousekeeping()
+              return
+
+            case ScheduleJobData.googleAdsSyncSetups:
+              await googleAdsSyncSetups()
               return
 
             case ScheduleJobData.dispatchProfileSnapshots:

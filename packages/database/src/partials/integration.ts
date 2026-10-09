@@ -11,6 +11,7 @@ export const integrationTypes = z.enum([
   "gemini",
   "getResponse",
   "klaviyo",
+  "googleAds",
   "googleCalendar",
   "googleSheets",
   "instagram",

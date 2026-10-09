@@ -19,7 +19,7 @@ import {
   type ChannelAdAccount,
   resolveChannelAdAccountSources,
 } from "./channel-ad-accounts"
-import { parseAnalyticsDateRange } from "./date-range"
+import { enumerateDateKeys, parseAnalyticsDateRange } from "./date-range"
 import {
   type AdsAnalyticsData,
   type InsightSpendRow,
@@ -332,17 +332,6 @@ export type AdsAnalyticsTimeseriesRow = {
   leads: number
   purchases: number
   spend: number | null
-}
-
-function enumerateDateKeys(from: string, to: string): string[] {
-  const dates: string[] = []
-  const cursor = new Date(`${from}T00:00:00.000Z`)
-  const end = new Date(`${to}T00:00:00.000Z`)
-  while (cursor.getTime() <= end.getTime()) {
-    dates.push(cursor.toISOString().slice(0, 10))
-    cursor.setUTCDate(cursor.getUTCDate() + 1)
-  }
-  return dates
 }
 
 class AdsAnalyticsService {

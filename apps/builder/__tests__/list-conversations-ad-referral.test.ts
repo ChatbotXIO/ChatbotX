@@ -245,3 +245,55 @@ describe("listConversations / findConversation adReferral mapping", () => {
     ).toEqual(Object.keys(findResult.data.contactInboxes[0] ?? {}).sort())
   })
 })
+
+const googleClickContactInbox = {
+  ...organicContactInbox,
+  id: "ci-google",
+  channel: "whatsapp",
+  referral: {
+    gclid: "SECRET-GCLID-VALUE",
+    googleClickReceivedAt: "2026-10-05T01:00:00.000Z",
+  },
+}
+
+describe("listConversations / findConversation googleAdsClick mapping", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.createMessageRepository.mockResolvedValue(mocks.repo)
+    mocks.repo.findLastByConversation.mockResolvedValue([])
+    mocks.buildConversationWhere.mockReturnValue({})
+  })
+
+  test("maps the click type and time on both paths and never leaks the click id", async () => {
+    const conversation = {
+      id: "conv-1",
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      lastActivityAt: new Date("2026-01-01T00:00:00Z"),
+      contactInboxes: [googleClickContactInbox, organicContactInbox],
+      contact: null,
+      assignedUser: null,
+      assignedInboxTeam: null,
+    }
+    mocks.findManyQuery.mockResolvedValue([conversation])
+    mocks.findWithFullRelations.mockResolvedValue(conversation)
+
+    const listed = await listConversations(
+      { workspaceId: "ws-1" },
+      { includeEmailAndPhone: true },
+    )
+    const found = await findConversation({ id: "conv-1", workspaceId: "ws-1" })
+
+    for (const inboxes of [
+      listed.data[0]?.contactInboxes ?? [],
+      found.data.contactInboxes,
+    ]) {
+      expect(inboxes[0]?.googleAdsClick).toEqual({
+        clickIdType: "gclid",
+        receivedAt: "2026-10-05T01:00:00.000Z",
+      })
+      expect(inboxes[1]?.googleAdsClick).toBeNull()
+      expect(JSON.stringify(inboxes)).not.toContain("SECRET-GCLID-VALUE")
+    }
+  })
+})

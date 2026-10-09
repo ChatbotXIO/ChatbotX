@@ -697,6 +697,7 @@
       "noAdminReply": "Sem resposta do administrador",
       "contactCreatedAt": "Contacto criado em",
       "fromCtwaAd": "De anúncio",
+      "fromGoogleAd": "Do Google Ads",
       "ctwaConversion": "Conversão de anúncio",
       "lastUserInputTypes": {
         "text": "Texto",
@@ -1931,7 +1932,10 @@
       "label": "ID do cliente"
     },
     "clientSecret": {
-      "label": "Segredo do cliente"
+      "label": "Segredo do cliente",
+      "keepHint": "Deixe em branco para manter o segredo do cliente guardado.",
+      "isSet": "Um segredo do cliente está definido.",
+      "isNotSet": "Nenhum segredo do cliente definido."
     },
     "verifyToken": {
       "label": "Token de verificação do webhook"
@@ -2051,6 +2055,17 @@
     "signInCallbackUrl": {
       "label": "URL de retorno de início de sessão",
       "hint": "Adicione-o aos URI de redirecionamento autorizados da sua aplicação Google para ativar o início de sessão com o Google."
+    },
+    "adsDeveloperToken": {
+      "label": "Developer token do Google Ads",
+      "hint": "Opcional: a Google já não exige um developer token. Deixe em branco para manter o token guardado.",
+      "isSet": "Está definido um developer token.",
+      "isNotSet": "Não está definido nenhum developer token.",
+      "clear": "Limpar",
+      "cleared": "Developer token limpo."
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "Utilize uma aplicação OAuth da Google dedicada ao Google Ads, separada da sua aplicação Google, com os âmbitos adwords e datamanager ativados. Precisa da sua própria verificação OAuth da Google."
     },
     "webhookUrl": {
       "label": "URL do webhook",
@@ -2260,7 +2275,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -2277,6 +2295,12 @@
     },
     "sendRatePerMinute": {
       "label": "Mensagens por minuto"
+    },
+    "adsUploadMethod": {
+      "label": "Método de envio",
+      "hint": "O Data Manager é recomendado. A API de envio legada só funciona para projetos do Google Cloud que a Google ainda permite e não usa a permissão do Data Manager. A alteração aplica-se apenas a novas ligações: volte a ligar os espaços de trabalho existentes.",
+      "dataManager": "API do Data Manager (recomendada)",
+      "legacy": "API de envio legada"
     }
   },
   "flows": {
@@ -2445,7 +2469,8 @@
       "importJsonOnly": "Apenas ficheiros JSON",
       "whatsappCallButton": "Ligar no WhatsApp",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "Controlo da conversa"
+      "threadControl": "Controlo da conversa",
+      "sendGoogleAdsConversion": "Enviar conversão do Google Ads"
     },
     "splitTraffic": {
       "balanceHint": "A soma total deve ser igual a 100%.",
@@ -2653,7 +2678,8 @@
     "dashboardNav": {
       "whatsapp": "Anúncios Click-to-WhatsApp",
       "messenger": "Anúncios Click-to-Messenger",
-      "instagram": "Anúncios Click-to-Instagram"
+      "instagram": "Anúncios Click-to-Instagram",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "Ligar conta de anúncios",
@@ -4599,7 +4625,8 @@
       "startAnotherFlow": "Iniciar outro fluxo",
       "notifyAdmins": "Notificar administradores",
       "transferConversationToHuman": "Transferir conversa para um humano",
-      "sendMetaCapiEvent": "Enviar evento Meta CAPI"
+      "sendMetaCapiEvent": "Enviar evento Meta CAPI",
+      "sendGoogleAdsConversion": "Enviar conversão do Google Ads"
     },
     "triggerGoesOff": "O acionador é ativado",
     "before": "Antes",
@@ -6616,6 +6643,447 @@
       "messagingIdHint": "Apenas letras, dígitos, hífenes e sublinhados (máx. 512).",
       "cancel": "Cancelar",
       "confirmSend": "Enviar"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "Envie conversões offline para o Google Ads relativas a contactos que chegaram através de um clique num anúncio do Google.",
+    "notAvailable": {
+      "description": "As credenciais do Google Ads da plataforma (ID de cliente e segredo OAuth) não estão configuradas. Peça ao administrador da plataforma que as adicione nas definições do Google Ads da plataforma."
+    },
+    "connect": {
+      "scopes": "Pedimos autorização para ler as suas contas e ações de conversão do Google Ads e para enviar conversões em seu nome.",
+      "button": "Ligar o Google Ads",
+      "reconnect": "Voltar a ligar",
+      "unnamedAccount": "Conta do Google Ads",
+      "viaManager": "através do gestor {manager}",
+      "statusLabel": "Estado da ligação",
+      "needsReauthDescription": "O acesso ao Google foi revogado ou expirou. Volte a ligar para continuar a enviar conversões.",
+      "pausedDescription": "Esta ligação está em pausa, pelo que as conversões não estão a ser enviadas.",
+      "degradedDescription": "O Google Ads está a responder com erros. As conversões serão reenviadas automaticamente.",
+      "howItWorks": "Como funciona",
+      "steps": {
+        "signIn": "Inicie sessão com a conta Google que gere os seus anúncios.",
+        "chooseAccount": "Escolha a conta do Google Ads.",
+        "pickAction": "Escolha a ação de conversão nos seus fluxos."
+      },
+      "uploadMethod": "Método de envio: {method}"
+    },
+    "status": {
+      "connected": "Ligado",
+      "degraded": "Degradado",
+      "needsReauth": "Requer nova ligação",
+      "paused": "Em pausa",
+      "disconnected": "Desligado"
+    },
+    "picker": {
+      "title": "Escolha uma conta do Google Ads",
+      "legend": "Contas do Google Ads",
+      "loading": "A carregar a ligação do Google Ads",
+      "loadError": "Não foi possível carregar a tentativa de ligação do Google Ads.",
+      "waiting": "A aguardar que o Google confirme o início de sessão…",
+      "noTargets": "Não foram encontradas contas do Google Ads para esta conta Google.",
+      "alreadyThisWorkspace": "Já ligada a este espaço de trabalho",
+      "alreadyOtherWorkspace": "Já ligada a outro espaço de trabalho",
+      "notSelectable": "Esta conta não pode ser selecionada",
+      "connectSelected": "Ligar conta",
+      "sessionExpired": "A tentativa de ligação expirou. Ligue novamente para continuar.",
+      "sessionCancelled": "A tentativa de ligação foi cancelada.",
+      "stalled": "O início de sessão não foi concluído. Use «Ligar o Google Ads» para tentar novamente.",
+      "dismiss": "Dispensar",
+      "cancelFailed": "Não foi possível cancelar a tentativa de ligação. Tente novamente.",
+      "connectErrorTitle": "Não foi possível ligar o Google Ads",
+      "errors": {
+        "stateMismatch": "Não foi possível verificar o início de sessão. Ligue novamente para continuar.",
+        "expired": "A tentativa de ligação expirou. Ligue novamente para continuar.",
+        "providerDenied": "O acesso ao Google não foi concedido. Ligue novamente e permita as permissões solicitadas.",
+        "exchangeFailed": "Não foi possível concluir o início de sessão no Google. Ligue novamente para continuar.",
+        "providerError": "O Google devolveu um erro. Tente ligar novamente dentro de instantes.",
+        "noCandidates": "Não foi encontrada nenhuma conta ativa do Google Ads para este utilizador do Google. As contas canceladas, suspensas ou não totalmente configuradas não podem ser utilizadas. Inicie sessão com uma conta Google que gira uma conta ativa do Google Ads.",
+        "alreadyConnected": "Essa conta do Google Ads já está ligada.",
+        "quotaExceeded": "O limite de ligações do seu plano foi atingido.",
+        "trialExpired": "O seu período de avaliação terminou, pelo que não é possível adicionar novas ligações.",
+        "internalError": "Ocorreu um erro ao ligar. Tente novamente.",
+        "providerUnavailable": "O Google Ads está temporariamente indisponível, pelo que a ligação não pôde ser concluída. Tente novamente dentro de instantes.",
+        "developerTokenMissing": "O Google Ads não está totalmente configurado: a credencial Google da plataforma está incompleta. Peça ao administrador que verifique a credencial do Google Ads.",
+        "developerTokenNotApproved": "O Google rejeitou o token de programador guardado na credencial do Google Ads. O token é opcional: peça ao administrador que o remova ou o substitua por um válido.",
+        "projectNotApproved": "O seu projeto do Google Cloud ainda não foi aprovado para contas de produção do Google Ads. Peça acesso Explorer ou Basic para o projeto na Google Cloud Console (Google Ads API → Overview) e ligue novamente.",
+        "permissionDenied": "Este utilizador do Google não tem permissão para aceder a contas do Google Ads. Inicie sessão com um utilizador do Google que tenha acesso a uma conta do Google Ads.",
+        "apiNotEnabled": "A API do Google Ads não está ativada no projeto do Google Cloud. Peça ao administrador que a ative e tente novamente.",
+        "credentialsInvalid": "O Google rejeitou as credenciais de início de sessão. Ligue novamente para continuar.",
+        "scopeMissing": "Nem todas as permissões foram concedidas. O Google Ads precisa de acesso à sua conta do Google Ads e de autorização para enviar conversões. Ligue novamente e selecione todas as permissões.",
+        "legacyUploadNotAllowed": "A Google não permite a API de envio legada para esta conta. Mude a credencial para o Data Manager e volte a ligar este espaço de trabalho."
+      }
+    },
+    "setup": {
+      "conversionCustomer": "Conta de conversão",
+      "notResolved": "Ainda não resolvido",
+      "retry": "Repetir configuração",
+      "dataTermsWarning": "Os termos de dados do cliente não foram aceites para esta conta. Aceite-os no Google Ads e repita a configuração.",
+      "errors": {
+        "conversionCustomerInaccessible": "Não é possível aceder à conta de conversão com este início de sessão Google. Verifique o seu acesso no Google Ads e tente novamente.",
+        "customerDataTermsNotAccepted": "Os termos de dados do cliente não foram aceites para esta conta. Aceite-os no Google Ads e repita a configuração.",
+        "syncFailed": "Não foi possível ler as ações de conversão do Google Ads. Repita a configuração dentro de instantes.",
+        "developerTokenMissing": "As credenciais do Google Ads da plataforma (ID de cliente e segredo OAuth) não estão configuradas."
+      }
+    },
+    "conversionActions": {
+      "title": "Ações de conversão",
+      "description": "Apenas as ações ativadas que importam conversões de cliques podem receber conversões.",
+      "helpLink": "Ajuda do Google Ads",
+      "sync": "Sincronizar ações de conversão",
+      "syncedAt": "Última sincronização: {date}",
+      "neverSynced": "Ainda não sincronizado",
+      "empty": "Não foram encontradas ações de conversão. Crie uma ação de conversão de importação offline no Google Ads e sincronize.",
+      "name": "Nome",
+      "category": "Categoria",
+      "counting": "Contagem",
+      "status": "Estado",
+      "onePerClickNote": "Os cliques do iOS (gbraid) não podem ser enviados para esta ação. Utilize a contagem \"Todas\" para os receber.",
+      "externalNote": "Não suportada: esta ação utiliza atribuição externa, que não pode ser enviada através do Google Data Manager.",
+      "count": "{count, plural, one {# ação de conversão} other {# ações de conversão}}"
+    },
+    "events": {
+      "title": "Histórico de conversões",
+      "description": "Conversões recentes enviadas para o Google Ads. Os IDs de clique estão mascarados.",
+      "empty": "As conversões aparecem aqui quando um fluxo ou acionador enviar uma.",
+      "emptyFiltered": "Nenhuma conversão corresponde a este estado.",
+      "loadError": "Não foi possível carregar o histórico de conversões.",
+      "page": "Página {page} de {pages}",
+      "filter": {
+        "label": "Estado",
+        "all": "Todos os estados"
+      },
+      "columns": {
+        "status": "Estado",
+        "action": "Ação de conversão",
+        "channel": "Canal",
+        "clickId": "ID de clique",
+        "occurredAt": "Ocorrida em",
+        "actions": "Ações",
+        "dedup": "Deduplicação",
+        "consent": "Instantâneo do consentimento",
+        "matching": "Correspondência",
+        "properties": "Propriedades"
+      },
+      "status": {
+        "pending": "Pendente",
+        "sending": "A enviar",
+        "sent": "Enviada",
+        "processed": "Processada",
+        "failed": "Falhou",
+        "skippedNoAccount": "Ignorada: sem conta",
+        "skippedExpired": "Ignorada: expirada"
+      },
+      "processing": {
+        "processing": "O Google está a processar",
+        "success": "Aceite",
+        "partialSuccess": "Parcialmente aceite",
+        "failed": "Rejeitada",
+        "unknown": "Resultado desconhecido",
+        "timedOut": "Tempo esgotado"
+      },
+      "stage": {
+        "delivery": "Falha na entrega",
+        "processing": "Falha no processamento",
+        "timeout": "Tempo esgotado"
+      },
+      "consent": {
+        "adUserDataFull": "Dados do utilizador para anúncios: {status}",
+        "adPersonalizationFull": "Personalização de anúncios: {status}",
+        "status": {
+          "granted": "Concedido",
+          "denied": "Recusado",
+          "notProvided": "Não fornecido",
+          "notSupported": "Não suportado (envio legado)"
+        },
+        "adUserDataShort": "Dados: {status}",
+        "adPersonalizationShort": "Pers.: {status}",
+        "delivery": {
+          "toSend": "A enviar",
+          "notSent": "Não enviado",
+          "unknown": "Não confirmado"
+        }
+      },
+      "dedup": {
+        "click": "Por clique",
+        "id": "ID: {id}",
+        "event": "Cada execução"
+      },
+      "matching": {
+        "enabled": "Configurado: {fields}",
+        "withheldConsent": "Retido (sem consentimento): {fields}",
+        "unsupportedTransport": "Não enviado (legado): {fields}"
+      },
+      "timeProvided": "Hora indicada",
+      "timeProvidedTooltip": "Esta hora de conversão veio do passo, não do momento em que foi executado."
+    },
+    "validate": {
+      "open": "Validar pedido",
+      "title": "Validar pedido",
+      "description": "Uma verificação de configuração: o Google valida o pedido sem registar uma conversão.",
+      "conversionAction": "Ação de conversão",
+      "clickIdType": "Tipo de ID de clique",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "ID de clique",
+      "submit": "Executar verificação",
+      "ok": "O Google aceitou esta configuração. Nada foi registado.",
+      "reasons": {
+        "accountNotReady": "O Google Ads ainda não está pronto. Conclua a ligação e a configuração da sua conta e tente novamente.",
+        "needsReauth": "A ligação ao Google Ads tem de ser refeita.",
+        "rejected": "O Google rejeitou este pedido",
+        "legacyUploadNotAllowed": "A Google não permite a API de envio legada para esta conta. Mude a credencial para o Data Manager e volte a ligar este espaço de trabalho."
+      },
+      "invalid": "Escolha uma ação de conversão e introduza um ID de clique válido.",
+      "consentIncluded": "Inclui consentimento: {values}.",
+      "consentNone": "Nenhum consentimento está incluído neste teste.",
+      "consentVariableSkipped": "O consentimento de um campo de contacto não pode ser testado e é omitido.",
+      "consentNotSentLegacy": "A personalização de anúncios ({status}) não é enviada com o método de carregamento antigo."
+    },
+    "conversionFields": {
+      "conversionAction": "Ação de conversão",
+      "unavailableOption": "{id} (indisponível)",
+      "unavailableWarning": "A ação de conversão selecionada já não está disponível ou não está ativada. Escolha outra antes de publicar.",
+      "externalOption": "{name} (atribuição externa, não suportada)",
+      "loading": "A carregar ações de conversão",
+      "loadError": "Não foi possível carregar as suas ações de conversão do Google Ads.",
+      "notConnected": "Ligue o Google Ads para enviar conversões.",
+      "noActions": "Não foram encontradas ações de conversão ativadas. Sincronize-as nas definições do Google Ads.",
+      "openSettings": "Abrir definições do Google Ads",
+      "needsReauth": "A ligação ao Google Ads tem de ser refeita.",
+      "dedupModeClick": "Uma vez por clique no anúncio",
+      "dedupModeClickHelp": "Conta esta ação de conversão uma vez por cada clique no anúncio.",
+      "dedupModeIdHelp": "Conta uma vez por cada ID diferente.",
+      "dedupModeId": "Uma vez por ID de encomenda ou evento",
+      "dedupModeEvent": "Em cada execução",
+      "dedupModeEventHelp": "Regista uma nova conversão em cada execução, mesmo para o mesmo clique no anúncio. Uma nova tentativa da mesma execução não é contada duas vezes.",
+      "dedupId": "ID da encomenda ou evento",
+      "dedupIdPlaceholder": "p. ex. '{{order_number}}'",
+      "dedupIdHelp": "Reutilize o mesmo ID em novas tentativas e importações. Use um ID diferente para cada compra ou evento.",
+      "dedupIdExample": "Sem ID de encomenda nas vendas por chat? Combine o contacto com um campo que define em cada venda, p. ex. {example}. Não use a hora atual: muda a cada execução.",
+      "dedupIdInfoLabel": "Sobre o ID da encomenda ou evento",
+      "dedupLeadIdNote": "Cada ID diferente conta como um novo lead do mesmo clique.",
+      "dedupClickNote": "As compras repetidas do mesmo clique não serão contadas.",
+      "dedupLegacyNote": "Envio legado: a Google recebe um ID baralhado.",
+      "additionalOptions": "Opções adicionais",
+      "additionalOptionsCount": "{count} definida",
+      "customerMatching": "Correspondência de clientes",
+      "customerMatchingCount": "{count} ativado",
+      "customerMatchingLegacy": "Não suportado pelo método de envio legado. Mude a ligação para a Data Manager API para o usar.",
+      "customerMatchingTermsNotAccepted": "Não é enviado até que os termos de dados do cliente sejam aceites nas definições de conversão do Google Ads.",
+      "learnMore": "Saber mais",
+      "matchEmailLabel": "E-mail",
+      "matchPhoneLabel": "Telefone",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "Tipo de cliente",
+      "customerValueBucketLabel": "Valor do cliente",
+      "customerPropertiesLegacy": "Não suportado pelo método de envio legado. Mude a ligação para a Data Manager API para o usar.",
+      "conversionTime": "Hora da conversão",
+      "conversionTimePlaceholder": "Deixe em branco para usar a hora a que este passo é executado",
+      "valuePlaceholder": "Opcional, p. ex. 250",
+      "currencyPlaceholder": "Opcional, USD",
+      "validation": {
+        "dedupIdRequired": "Introduza um ID ou escolha Uma vez por clique no anúncio.",
+        "dedupIdTooLong": "Use 64 carateres ou menos.",
+        "matchTemplateInvalid": "Use apenas uma variável, como '{{email}}'. Um valor fixo não é permitido.",
+        "customerTypeInvalid": "Use NEW ou RETURNING, ou uma variável como '{{customer_type}}'.",
+        "customerValueBucketInvalid": "Use LOW, MEDIUM ou HIGH, ou uma variável como '{{customer_value}}'.",
+        "timeFormat": "Use uma data com fuso horário, p. ex. 2026-10-08T14:30:00+07:00.",
+        "timeInvalidDate": "Esta data não existe.",
+        "currencyRequired": "Adicione uma moeda ao definir um valor.",
+        "valueRequired": "Adicione um valor ao definir uma moeda.",
+        "conversionActionRequired": "Escolha uma ação de conversão.",
+        "valueInvalid": "Utilize um número simples, p. ex. 19.99.",
+        "valueTooLarge": "Este valor é demasiado grande.",
+        "currencyInvalid": "Utilize um código de moeda de 3 letras, p. ex. USD."
+      },
+      "consentInvalid": "Não foi possível ler as definições de consentimento, pelo que este passo vai falhar.",
+      "consentFixLink": "Corrija-as nas definições",
+      "dedupModeLabel": "Evitar conversões duplicadas"
+    },
+    "summary": {
+      "conversionAction": "Ação de conversão {id}",
+      "notConfigured": "Escolha uma ação de conversão",
+      "dedupClick": "Uma vez por clique no anúncio",
+      "dedupId": "ID: {id}",
+      "dedupEvent": "Em cada execução"
+    },
+    "consent": {
+      "title": "Consentimento para dados de conversão",
+      "description": "Se os clientes aceitaram partilhar os seus dados para anúncios. Aplica-se a todas as conversões enviadas por este workspace.",
+      "learnMore": "Saber mais",
+      "notConnected": "Aplica-se às conversões depois de ligar uma conta do Google Ads.",
+      "adUserData": {
+        "label": "Dados do utilizador para anúncios"
+      },
+      "adPersonalization": {
+        "label": "Personalização de anúncios"
+      },
+      "source": {
+        "notProvided": "Não indicado",
+        "granted": "Sempre concedido",
+        "denied": "Sempre recusado",
+        "variable": "A partir de um campo do contacto"
+      },
+      "help": {
+        "notProvided": "Omitido. A Google usa o consentimento predefinido da sua conta.",
+        "granted": "Todas as conversões indicam que o cliente aceitou.",
+        "denied": "Todas as conversões indicam que o cliente recusou.",
+        "variable": "Use \"{granted}\" ou \"{denied}\". Vazio é ignorado; qualquer outro valor faz o passo falhar."
+      },
+      "templatePlaceholder": "ex.: '{{gdpr_consent}}'",
+      "templateLabel": "Campo do contacto para {setting}",
+      "validation": {
+        "templateRequired": "Insira um campo do contacto, ex.: '{{gdpr_consent}}'.",
+        "templateTooLong": "Utilize no máximo 200 carateres."
+      },
+      "legacy": {
+        "title": "Não enviado com o carregamento legado",
+        "body": "O carregamento legado só aceita o consentimento de dados de utilizador para anúncios. Volte a ligar com o Data Manager para o enviar."
+      },
+      "save": "Guardar",
+      "saved": "Definições de consentimento guardadas",
+      "invalidStored": "Não foi possível ler as definições de consentimento guardadas. Os passos que enviam conversões falham até guardar novas definições."
+    },
+    "errors": {
+      "supportSession": "As sessões de suporte da plataforma não podem alterar a ligação do Google Ads nem enviar conversões.",
+      "developerTokenMissing": "O Google Ads ainda não está disponível: as credenciais do Google Ads da plataforma (ID de cliente e segredo OAuth) não estão configuradas.",
+      "notConnected": "O Google Ads não está ligado a este espaço de trabalho.",
+      "sessionNotFound": "Esta tentativa de ligação do Google Ads não foi encontrada ou expirou. Comece novamente.",
+      "pickFailed": "Não foi possível ligar essa conta do Google Ads. Pode já estar ligada noutro local ou a tentativa expirou.",
+      "notRetryable": "Esta conversão não pode ser repetida: apenas as conversões falhadas podem ser repetidas.",
+      "authorizationUnavailable": "Não foi possível iniciar o início de sessão no Google. Tente novamente dentro de instantes.",
+      "credentialSecretsRequired": "Introduza o segredo do cliente. Ainda não está guardado."
+    },
+    "enums": {
+      "category": {
+        "default": "Predefinição",
+        "purchase": "Compra",
+        "addToCart": "Adicionar ao carrinho",
+        "beginCheckout": "Início do checkout",
+        "subscribePaid": "Subscrição paga",
+        "phoneCallLead": "Lead por chamada telefónica",
+        "importedLead": "Lead importado",
+        "submitLeadForm": "Envio de formulário de lead",
+        "bookAppointment": "Marcação de consulta",
+        "signup": "Registo",
+        "requestQuote": "Pedido de orçamento",
+        "getDirections": "Obter indicações",
+        "outboundClick": "Clique de saída",
+        "contact": "Contacto",
+        "engagement": "Envolvimento",
+        "storeVisit": "Visita à loja",
+        "storeSale": "Venda na loja",
+        "qualifiedLead": "Lead qualificado",
+        "convertedLead": "Lead convertido",
+        "pageView": "Visualização de página",
+        "download": "Transferência",
+        "lead": "Lead"
+      },
+      "countingType": {
+        "onePerClick": "Uma por clique",
+        "manyPerClick": "Várias por clique"
+      },
+      "actionStatus": {
+        "enabled": "Ativada",
+        "removed": "Removida",
+        "hidden": "Oculta"
+      },
+      "unknown": "Outro ({value})"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "Envio legado"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "O canal deste contacto não pode enviar conversões do Google Ads.",
+      "google_ads_no_click": "O contacto não chegou através de um clique num anúncio do Google.",
+      "google_ads_no_account": "Não existe nenhuma conta do Google Ads pronta ligada.",
+      "google_ads_unknown_conversion_action": "A ação de conversão já não existe. Sincronize e escolha outra.",
+      "google_ads_action_disabled": "A ação de conversão não está ativada no Google Ads.",
+      "google_ads_incompatible_action": "Esta ação conta uma conversão por clique, o que o Google não permite para este clique do iOS.",
+      "google_ads_unsupported_action": "Esta ação usa atribuição externa e não pode receber estas conversões.",
+      "google_ads_invalid_value": "O valor ou a moeda não era válido.",
+      "google_ads_invalid_input": "As definições do passo não eram válidas.",
+      "google_ads_record_failed": "Não foi possível guardar a conversão.",
+      "google_ads_missing_dedup_id": "O ID da encomenda ou do evento estava vazio.",
+      "google_ads_invalid_dedup_id": "O ID da encomenda ou do evento tinha mais de 64 carateres.",
+      "google_ads_missing_occurrence_key": "Esta execução não tinha um identificador estável, por isso a conversão não foi registada.",
+      "google_ads_invalid_customer_property": "O tipo ou o valor do cliente não era um valor permitido.",
+      "google_ads_invalid_consent_config": "Não foi possível ler as definições de consentimento guardadas.",
+      "google_ads_invalid_consent_value": "Um campo de consentimento tinha um valor diferente de \"granted\" ou \"denied\".",
+      "google_ads_invalid_conversion_time": "A hora da conversão não era uma data válida com fuso horário, ou estava no futuro."
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "Todos os canais",
+        "allActions": "Todas as ações",
+        "channelLabel": "Canal",
+        "actionLabel": "Ação de conversão"
+      },
+      "tiles": {
+        "confirmed": "Confirmadas",
+        "awaitingGoogle": "A aguardar o Google",
+        "queued": "Em fila",
+        "failed": "Falhadas",
+        "skipped": "Ignoradas",
+        "deliveryRate": "Taxa de entrega",
+        "confirmedHelp": "O Google confirmou que registou estas conversões.",
+        "awaitingGoogleHelp": "Enviadas ao Google, a aguardar que o Google conclua o processamento.",
+        "queuedHelp": "A aguardar envio.",
+        "failedHelp": "Não aceites ou não processadas pelo Google.",
+        "skippedHelp": "Não enviadas: sem conta pronta, ou demasiado antigas para o Google.",
+        "deliveryRateHelp": "Confirmadas ÷ (confirmadas + falhadas). As que estão em fila, a aguardar e as ignoradas não são contadas."
+      },
+      "confirmedValue": "Valor confirmado",
+      "confirmedValueItem": "{value} ({count, plural, one {# conversão} other {# conversões}})",
+      "moreCurrencies": "+{count} mais",
+      "chart": {
+        "title": "Conversões por dia",
+        "viewAsTable": "Ver como tabela",
+        "tableCaption": "Conversões por dia",
+        "dateColumn": "Data"
+      },
+      "byAction": {
+        "title": "Por ação de conversão",
+        "truncated": "A mostrar as 50 ações com mais conversões."
+      },
+      "byChannel": {
+        "title": "Por canal",
+        "confirmedCount": "{count, plural, one {# confirmadas} other {# confirmadas}}"
+      },
+      "failures": {
+        "title": "Falhas por fase",
+        "unknown": "Desconhecido"
+      },
+      "empty": {
+        "title": "Sem conversões neste período",
+        "description": "As conversões aparecem aqui quando um passo do fluxo ou um acionador envia uma."
+      },
+      "error": {
+        "title": "Não foi possível carregar as estatísticas",
+        "retry": "Tentar novamente"
+      },
+      "viewStatistics": "Ver estatísticas",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "Sem conversões confirmadas ou falhadas neste período.",
+      "actionFallback": "Ação {id}",
+      "openSettings": "Abrir as definições do Google Ads",
+      "outcome": {
+        "title": "Distribuição dos resultados"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
     }
   },
   "minigames": {

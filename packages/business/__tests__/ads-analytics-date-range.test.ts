@@ -1,5 +1,7 @@
-import { describe, expect, test } from "vitest"
+import { timezoneCandidates } from "@chatbotx.io/utils/timezone"
+import { afterEach, describe, expect, test, vi } from "vitest"
 import {
+  enumerateDateKeys,
   getDefaultAdsAnalyticsRange,
   parseAnalyticsDateRange,
   resolveTimezone,
@@ -190,5 +192,201 @@ describe("resolveTimezone", () => {
     expect(resolveTimezone("not-a-tz")).toBe("UTC")
     expect(resolveTimezone("")).toBe("UTC")
     expect(resolveTimezone("A".repeat(65))).toBe("UTC")
+  })
+
+  test("canonicalises the case so PostgreSQL's exact-text match agrees", () => {
+    expect(resolveTimezone("america/new_york")).toBe("America/New_York")
+    expect(resolveTimezone("AMERICA/NEW_YORK")).toBe("America/New_York")
+    expect(resolveTimezone("America/new_York")).toBe("America/New_York")
+    expect(resolveTimezone("utc")).toBe("UTC")
+    // A known alias pair keeps the caller's spelling, correctly cased.
+    expect(resolveTimezone("asia/ho_chi_minh")).toBe("Asia/Ho_Chi_Minh")
+    expect(resolveTimezone("Asia/Ho_Chi_Minh")).toBe("Asia/Ho_Chi_Minh")
+    expect(resolveTimezone("ASIA/SAIGON")).toBe("Asia/Saigon")
+    expect(resolveTimezone("asia/calcutta")).toBe("Asia/Calcutta")
+    expect(resolveTimezone("europe/kiev")).toBe("Europe/Kiev")
+  })
+
+  test.each([
+    "Asia/Saigon",
+    "Asia/Ho_Chi_Minh",
+    "Asia/Calcutta",
+    "Asia/Kolkata",
+    "Europe/Kiev",
+    "Europe/Kyiv",
+    "UTC",
+    "Etc/UTC",
+    "GMT",
+  ])("%s resolves to a name the SQL candidate list can match", (name) => {
+    const resolved = resolveTimezone(name)
+    const sqlNames = [name, ...timezoneCandidates(name)]
+
+    // Same zone, whichever spelling ICU prefers; "UTC" aliases land on UTC.
+    expect(
+      sqlNames.includes(resolved) ||
+        timezoneCandidates(resolved).some((c) => sqlNames.includes(c)) ||
+        resolved === "UTC",
+    ).toBe(true)
+    expect(resolved.length).toBeGreaterThan(0)
+  })
+
+  test("rejects offset zones that PostgreSQL cannot resolve", () => {
+    expect(resolveTimezone("+07:00")).toBe("UTC")
+    expect(resolveTimezone("-05:00")).toBe("UTC")
+    expect(
+      parseAnalyticsDateRange({
+        from: "2026-10-01",
+        to: "2026-10-01",
+        tz: "+07:00",
+      }),
+    ).toMatchObject({
+      timezone: "UTC",
+      since: new Date("2026-10-01T00:00:00.000Z"),
+    })
+  })
+})
+
+describe("getDefaultAdsAnalyticsRange with a timezone", () => {
+  // 2026-08-11T17:00:01Z is already 2026-08-12 00:00:01 in UTC+7.
+  const justAfterLocalMidnight = new Date("2026-08-11T17:00:01.000Z")
+
+  test("uses the local day in the zone just after local midnight", () => {
+    expect(
+      getDefaultAdsAnalyticsRange(justAfterLocalMidnight, "Asia/Ho_Chi_Minh"),
+    ).toEqual({ from: "2026-08-06", to: "2026-08-12" })
+  })
+
+  test("an empty or omitted tz still means UTC", () => {
+    const utc = { from: "2026-08-05", to: "2026-08-11" }
+
+    expect(getDefaultAdsAnalyticsRange(justAfterLocalMidnight)).toEqual(utc)
+    expect(getDefaultAdsAnalyticsRange(justAfterLocalMidnight, "")).toEqual(utc)
+    expect(getDefaultAdsAnalyticsRange(justAfterLocalMidnight, "UTC")).toEqual(
+      utc,
+    )
+  })
+
+  test("a zone behind UTC is still on the previous local day", () => {
+    expect(
+      getDefaultAdsAnalyticsRange(
+        new Date("2026-08-11T03:00:00.000Z"),
+        "America/New_York",
+      ),
+    ).toEqual({ from: "2026-08-04", to: "2026-08-10" })
+  })
+
+  test("the window ends on the local day across a DST change", () => {
+    // US spring forward: 2026-03-08. 08:30Z is 03:30 EDT on the 8th.
+    expect(
+      getDefaultAdsAnalyticsRange(
+        new Date("2026-03-08T08:30:00.000Z"),
+        "America/New_York",
+      ),
+    ).toEqual({ from: "2026-03-02", to: "2026-03-08" })
+  })
+})
+
+describe("parseAnalyticsDateRange default range uses the resolved zone", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test("a Meta-style call with a tz and an invalid from falls back to the local today", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-08-11T17:00:01.000Z"))
+
+    const result = parseAnalyticsDateRange({
+      from: "not-a-date",
+      to: "2026-08-12",
+      tz: "Asia/Ho_Chi_Minh",
+    })
+
+    expect(result.from).toBe("2026-08-06")
+    expect(result.to).toBe("2026-08-12")
+    expect(result.timezone).toBe("Asia/Ho_Chi_Minh")
+  })
+
+  test("empty endpoints and tz resolve to the UTC default", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-08-11T17:00:01.000Z"))
+
+    const result = parseAnalyticsDateRange({ from: "", to: "", tz: "" })
+
+    expect(result).toMatchObject({
+      from: "2026-08-05",
+      to: "2026-08-11",
+      timezone: "UTC",
+    })
+  })
+
+  test("an unknown tz falls back to the UTC today", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-08-11T17:00:01.000Z"))
+
+    expect(
+      parseAnalyticsDateRange({ from: "", to: "", tz: "Mars/Olympus" }),
+    ).toMatchObject({ to: "2026-08-11", timezone: "UTC" })
+  })
+
+  test("an invalid to alone keeps a valid from and takes the local today", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-08-11T17:00:01.000Z"))
+
+    const result = parseAnalyticsDateRange({
+      from: "2026-08-10",
+      to: "2026-13-40",
+      tz: "Asia/Ho_Chi_Minh",
+    })
+
+    expect(result.from).toBe("2026-08-10")
+    expect(result.to).toBe("2026-08-12")
+  })
+
+  test("an invalid from alone keeps a valid to", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-08-11T17:00:01.000Z"))
+
+    const result = parseAnalyticsDateRange({
+      from: "2026-02-30",
+      to: "2026-08-10",
+      tz: "Asia/Ho_Chi_Minh",
+    })
+
+    expect(result.from).toBe("2026-08-06")
+    expect(result.to).toBe("2026-08-10")
+  })
+
+  test("the day boundaries across a DST change are local midnight and 23:59:59.999", () => {
+    const result = parseAnalyticsDateRange({
+      from: "2026-03-08",
+      to: "2026-03-08",
+      tz: "America/New_York",
+    })
+
+    // The 8th is a 23-hour day: EST midnight to EDT 23:59:59.999.
+    expect(result.since.toISOString()).toBe("2026-03-08T05:00:00.000Z")
+    expect(result.until.toISOString()).toBe("2026-03-09T03:59:59.999Z")
+  })
+})
+
+describe("enumerateDateKeys", () => {
+  test("lists every day inclusively", () => {
+    expect(enumerateDateKeys("2026-08-30", "2026-09-02")).toEqual([
+      "2026-08-30",
+      "2026-08-31",
+      "2026-09-01",
+      "2026-09-02",
+    ])
+  })
+
+  test("a single day yields one key and an inverted range none", () => {
+    expect(enumerateDateKeys("2026-08-11", "2026-08-11")).toEqual([
+      "2026-08-11",
+    ])
+    expect(enumerateDateKeys("2026-08-12", "2026-08-11")).toEqual([])
+  })
+
+  test("crosses a leap day", () => {
+    expect(enumerateDateKeys("2028-02-28", "2028-03-01")).toHaveLength(3)
   })
 })

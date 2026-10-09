@@ -583,6 +583,31 @@ describe("CTWA fields", () => {
     ).toBe(false)
   })
 
+  test("accepts fromGoogleAd boolean conditions only", () => {
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "fromGoogleAd",
+        operator: operatorTypes.enum.eq,
+        value: "true",
+      }).success,
+    ).toBe(true)
+
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "fromGoogleAd",
+        operator: operatorTypes.enum.isEmpty,
+      }).success,
+    ).toBe(true)
+
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "fromGoogleAd",
+        operator: operatorTypes.enum.contains,
+        value: "true",
+      }).success,
+    ).toBe(false)
+  })
+
   test("accepts ctwaConversion in/notIn/isEmpty conditions", () => {
     expect(
       singleContactFilterConditionSchema.safeParse({

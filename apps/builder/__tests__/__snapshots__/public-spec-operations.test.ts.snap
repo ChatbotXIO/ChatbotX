@@ -1478,6 +1478,21 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/folders/{id}",
   },
   {
+    "method": "GET",
+    "operationId": "googleAds.getConnection",
+    "path": "/v1/google-ads/connection",
+  },
+  {
+    "method": "GET",
+    "operationId": "googleAds.getStats",
+    "path": "/v1/google-ads/stats",
+  },
+  {
+    "method": "GET",
+    "operationId": "googleAds.listEvents",
+    "path": "/v1/google-ads/events",
+  },
+  {
     "method": "POST",
     "operationId": "igComments.create",
     "path": "/v1/ig-comments",

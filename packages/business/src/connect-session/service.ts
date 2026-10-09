@@ -64,18 +64,24 @@ const containsControlCharacter = (value: string): boolean =>
     return code <= 31 || code === 127
   })
 
+/**
+ * True for an application-relative path that cannot be re-interpreted as an
+ * absolute or protocol-relative URL: a single leading `/`, no backslash, no
+ * control characters. Applied to the input and to the normalized result.
+ */
+const isSafeRelativePath = (value: string): boolean =>
+  value.startsWith("/") &&
+  !value.startsWith("//") &&
+  !value.includes("\\") &&
+  !containsControlCharacter(value)
+
 const validateReturnUrl = (
   returnUrl: string | null | undefined,
 ): string | null => {
   if (!returnUrl) {
     return null
   }
-  if (
-    !returnUrl.startsWith("/") ||
-    returnUrl.startsWith("//") ||
-    containsControlCharacter(returnUrl) ||
-    returnUrl.includes("\\")
-  ) {
+  if (!isSafeRelativePath(returnUrl)) {
     throw new ChatbotXException(
       "Connect session return URL must be an application-relative path.",
       "validation",
@@ -90,7 +96,16 @@ const validateReturnUrl = (
       400,
     )
   }
-  return `${url.pathname}${url.search}${url.hash}`
+  const normalized = `${url.pathname}${url.search}${url.hash}`
+  // Dot-segment collapsing can turn `/..//evil.com` into `//evil.com`.
+  if (!isSafeRelativePath(normalized)) {
+    throw new ChatbotXException(
+      "Connect session return URL must be an application-relative path.",
+      "validation",
+      400,
+    )
+  }
+  return normalized
 }
 
 /** A `ConnectSession` always runs as either a builder-session user or a workspace-token caller — never both, never neither. Enforced at the type level so a caller can no longer reach the database's `ConnectSession_actor_at_most_one` CHECK (which only enforces `<= 1`, since an actor FK may later become null through `ON DELETE SET NULL`) with an invalid pair. */
@@ -201,6 +216,14 @@ class ConnectSessionService extends BaseService {
   }): Promise<ConnectSessionModel | undefined> {
     const session = await connectSessionRepository.findByIdForWorkspace(input)
     return await this.applyExpiryRule(session)
+  }
+
+  /** The workspace's newest unexpired in-flight session of a provider — lets a settings page resume a connect after the OAuth round-trip. */
+  async findLatestInFlightByProvider(input: {
+    workspaceId: string
+    provider: IntegrationType
+  }): Promise<ConnectSessionModel | undefined> {
+    return await connectSessionRepository.findLatestInFlightByProvider(input)
   }
 
   /**
@@ -370,6 +393,37 @@ class ConnectSessionService extends BaseService {
     return current
   }
 
+  /**
+   * Finishes an `awaiting_selection` session once the caller has connected
+   * everything it wants, even though other selectable targets are unresolved.
+   * `recordResults` only completes when EVERY selectable target resolves, which
+   * never happens for a provider limited to one connection per workspace (a
+   * second pick would fail), so such a caller closes the session here. Clears
+   * `encryptedAuth` so the remaining candidates' tokens do not linger. Guarded
+   * to `awaiting_selection` in the same statement; an already-terminal session
+   * is returned unchanged.
+   */
+  async completeSelection(input: {
+    id: string
+    workspaceId: string
+  }): Promise<ConnectSessionModel> {
+    const updated = await connectSessionRepository.updateWhereStatusIn({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      statuses: ["awaiting_selection"],
+      values: {
+        status: "completed",
+        step: "done",
+        consumedAt: new Date(),
+        encryptedAuth: null,
+      },
+    })
+    if (updated) {
+      return updated
+    }
+    return await this.requireByIdForWorkspace(input)
+  }
+
   /** Releases only this attempt's target lease after a failed connection. */
   async releaseTarget(input: {
     id: string
@@ -517,6 +571,19 @@ class ConnectSessionService extends BaseService {
       },
     })
     return updated ?? existing
+  }
+
+  /**
+   * Cancels the workspace's abandoned `pending` sessions of a provider (an
+   * OAuth attempt that never reached the callback) so they stop counting
+   * toward the per-workspace cap. Leaves `authorized` / `awaiting_selection`
+   * sessions untouched. Returns how many were cancelled.
+   */
+  async cancelPendingByProvider(input: {
+    workspaceId: string
+    provider: IntegrationType
+  }): Promise<number> {
+    return await connectSessionRepository.cancelPendingByProvider(input)
   }
 
   /**

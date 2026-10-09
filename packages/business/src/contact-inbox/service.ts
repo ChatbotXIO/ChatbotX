@@ -17,12 +17,14 @@ import {
   type ProfileSnapshotState,
   profileSnapshotChannels,
 } from "@chatbotx.io/database/partials"
+import { newestGoogleClickReferralMerge } from "@chatbotx.io/database/queries/google-click"
 import {
   type ContactInboxIdentityFields,
   type ContactInboxIdentityGuard,
   contactInboxOperationalColumns,
   contactInboxPostRepository,
   contactInboxRepository,
+  type GoogleClickInboxRow,
 } from "@chatbotx.io/database/repositories"
 import type {
   ContactInboxIdentityChangeReason,
@@ -49,6 +51,7 @@ import type {
   IncomingContact,
   SourceScopedIdentityMatchedBy,
 } from "@chatbotx.io/sdk"
+import { GOOGLE_CLICK_REFERRAL_KEYS } from "@chatbotx.io/utils/google-click"
 import { BaseService } from "../base.service"
 import { PROFILE_NAME_BLANK_CHARACTERS } from "../contact/profile-refresh/rules"
 import { logger } from "../logger"
@@ -185,12 +188,22 @@ type FindByProps = {
   sourceId: string
 }
 
+const GOOGLE_CLICK_KEYS: ReadonlySet<string> = new Set(
+  GOOGLE_CLICK_REFERRAL_KEYS,
+)
+
 const compactReferral = (
   referral: ContactInboxReferral,
 ): Partial<ContactInboxReferral> => {
   const nextReferral: Partial<ContactInboxReferral> = {}
 
   for (const [key, value] of Object.entries(referral)) {
+    // A newer Google click carries an explicit `null` for the click id it does
+    // not use (gbraid clears gclid and vice-versa); every other null is noise.
+    if (value === null && GOOGLE_CLICK_KEYS.has(key)) {
+      Object.assign(nextReferral, { [key]: null })
+      continue
+    }
     if (value == null) {
       continue
     }
@@ -672,6 +685,30 @@ class ContactInboxService extends BaseService {
     return rows[0]
   }
 
+  /**
+   * The Google Ads click recorded on one contact inbox, workspace-scoped.
+   * `null` when the inbox is not in the workspace or carries no click.
+   */
+  async findGoogleClickAttribution(props: {
+    workspaceId: string
+    contactInboxId: string
+  }): Promise<GoogleClickInboxRow | null> {
+    return await contactInboxRepository.findGoogleClickAttribution(props)
+  }
+
+  /**
+   * The contact's most recently clicked Google Ads inbox, workspace-scoped.
+   * Used by trigger actions that have no inbox carrying a click in scope.
+   */
+  async findLatestGoogleClickInboxByContact(props: {
+    workspaceId: string
+    contactId: string
+  }): Promise<GoogleClickInboxRow | null> {
+    return await contactInboxRepository.findLatestGoogleClickInboxByContact(
+      props,
+    )
+  }
+
   async findBy(props: {
     tx?: DatabaseClient
     where: Partial<FindByProps>
@@ -1048,8 +1085,11 @@ class ContactInboxService extends BaseService {
     if (referral) {
       const nextReferral = compactReferral(referral)
       if (Object.keys(nextReferral).length > 0) {
+        // Newest Google click wins, decided atomically inside the UPDATE.
         Object.assign(updateData, {
-          referral: sql`COALESCE(${contactInboxModel.referral}, '{}'::jsonb) || ${JSON.stringify(nextReferral)}::jsonb`,
+          referral:
+            newestGoogleClickReferralMerge(nextReferral) ??
+            sql`COALESCE(${contactInboxModel.referral}, '{}'::jsonb) || ${JSON.stringify(nextReferral)}::jsonb`,
         })
       }
     }

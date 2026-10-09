@@ -51,6 +51,7 @@ export const errorLogProviders = z.enum([
   // productivity
   "google-sheets",
   "google-calendar",
+  "google-ads",
   // AI vendors. Hand-listed rather than derived: the source of truth
   // (`aiProviders` in `packages/ai`, `aiAgentProviders` in
   // `packages/database`) sits *above* this package, so importing either would
@@ -115,6 +116,7 @@ export const errorLogProviderLabels = {
   // productivity
   "google-sheets": "Google sheets",
   "google-calendar": "Google calendar",
+  "google-ads": "Google Ads",
   // AI vendors — the same names the builder's provider picker shows
   // (`aiProviders.*` in `apps/builder/messages/en.json`).
   openai: "OpenAI",

@@ -44,6 +44,7 @@ import { optInEmailStepSchema } from "./steps/opt-in-email"
 import { optOutEmailStepSchema } from "./steps/opt-out-email"
 import { questionnairesStepSchema } from "./steps/questionnaires"
 import { removeContactTagStepSchema } from "./steps/remove-contact-tag"
+import { sendGoogleAdsConversionSchema } from "./steps/send-google-ads-conversion"
 import { sendMetaCapiEventSchema } from "./steps/send-meta-capi-event"
 import { sendGridAddContactSchema } from "./steps/sendgrid-add-contact"
 import { setCustomFieldStepSchema } from "./steps/set-custom-field"
@@ -160,6 +161,8 @@ const messengerSteps = [
   updateMessengerContactDataStepSchema,
 ]
 
+const googleAdsSteps = [sendGoogleAdsConversionSchema]
+
 const googleSheetStep = [
   spreadsheetGetRowSchema,
   spreadsheetClearRowSchema,
@@ -179,5 +182,6 @@ export const actionSteps = [
   ...aiSteps,
   ...googleSheetStep,
   ...messengerSteps,
+  ...googleAdsSteps,
   ...triggerSteps,
 ]

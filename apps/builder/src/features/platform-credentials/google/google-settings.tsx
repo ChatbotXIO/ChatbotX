@@ -51,9 +51,10 @@ export function GoogleSettings({
   const { handleCopy } = useClipboard()
 
   // Google Sheets and Google Calendar are separate registered redirect_uris
-  // (each integration owns its own callback route), and Google sign-in (SSO)
-  // is a third. Resellers using their own Google app must whitelist all three
-  // exact URIs in their own Google console.
+  // (each integration owns its own callback route), and Google sign-in (SSO) a
+  // third. Resellers using their own Google app must whitelist all three exact
+  // URIs in their own Google console. Google Ads has its own OAuth app and
+  // card (`googleAds` credential).
   const sheetsCallbackUrl = `${callbackOrigin}/integrations/google-sheets/callback`
   const calendarCallbackUrl = `${callbackOrigin}/integrations/google-calendar/callback`
   const signInCallbackUrl = `${callbackOrigin}/api/auth/callback/google`

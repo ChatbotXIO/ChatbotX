@@ -3,6 +3,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
 import { resolveAdsDashboardChannels } from "@/features/analytics/lib/ads-dashboard-channels"
+import { resolveGoogleAdsDashboardEntry } from "@/features/analytics/lib/google-ads-dashboard-entry"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
@@ -35,15 +36,17 @@ export default async function ContactsAnalyticsPage({
     userAndWorkspace.targetWorkspaceMember.permissions,
     "superAdmin",
   )
-  const adsChannels = await resolveAdsDashboardChannels({
-    workspaceId,
-    isSuperAdmin,
-  })
+  const [adsChannels, showGoogleAds] = await Promise.all([
+    resolveAdsDashboardChannels({ workspaceId, isSuperAdmin }),
+    resolveGoogleAdsDashboardEntry({ workspaceId, isSuperAdmin }),
+  ])
 
   return (
     <ContactsDashboard
       defaultSearchParams={{ workspaceId, timezone }}
-      nav={<AnalyticsNav adsChannels={adsChannels} />}
+      nav={
+        <AnalyticsNav adsChannels={adsChannels} showGoogleAds={showGoogleAds} />
+      }
       workspaceCreatedAt={targetWorkspace.createdAt}
     />
   )

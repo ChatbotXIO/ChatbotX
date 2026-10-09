@@ -25,6 +25,13 @@ type FieldValuePickerPopoverProps = {
    */
   withSeconds?: boolean
   /**
+   * date-fns pattern the picked value is written and re-read with, replacing
+   * the default `yyyy-MM-dd` / `yyyy-MM-dd HH:mm[:ss]`. For hosts whose value
+   * must carry a zone, e.g. `yyyy-MM-dd'T'HH:mm:ssXXX` (RFC 3339, the picker's
+   * local offset). Keep `withSeconds` in step with the pattern.
+   */
+  valueFormat?: string
+  /**
    * Renders the wrapped free-text input. The `inputKey` MUST be passed as the
    * input's `key`: the tiptap editor only reads the form value on mount, so a
    * picked value would otherwise leave the visible text stale.
@@ -44,6 +51,7 @@ export function FieldValuePickerPopover({
   kind,
   name,
   withSeconds = true,
+  valueFormat: customValueFormat,
   children,
 }: FieldValuePickerPopoverProps) {
   const t = useTranslations()
@@ -54,10 +62,11 @@ export function FieldValuePickerPopover({
   const [inputKey, setInputKey] = useState(0)
   const isClickInInputRef = useRef(false)
 
-  const valueFormat =
+  const defaultValueFormat =
     kind === "date"
       ? "yyyy-MM-dd"
       : `yyyy-MM-dd HH:mm${withSeconds ? ":ss" : ""}`
+  const valueFormat = customValueFormat ?? defaultValueFormat
   const watchedValue = form.watch(name)
   const pickedDate = useMemo(() => {
     if (kind === "boolean" || typeof watchedValue !== "string") {

@@ -760,6 +760,18 @@ chatbotx folders delete <id>
 
 ---
 
+### `google-ads`
+
+Read-only (scope `ads`); recording conversions, retrying and connecting stay in the Google Ads settings UI.
+
+```bash
+chatbotx google-ads stats --from <YYYY-MM-DD> --to <YYYY-MM-DD>  # Conversion statistics [--tz --channel --conversionActionId]
+chatbotx google-ads events                            # List conversion events [--status --channel --conversionActionId --since --until --page --perPage]
+chatbotx google-ads connection                        # Connection status, consent and synced conversion actions
+```
+
+---
+
 ### `ig-comments`
 
 ```bash

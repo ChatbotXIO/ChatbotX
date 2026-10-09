@@ -697,6 +697,7 @@
       "noAdminReply": "Intet svar fra administrator",
       "contactCreatedAt": "Kontakt oprettet den",
       "fromCtwaAd": "Fra annonce",
+      "fromGoogleAd": "Fra Google Ads",
       "ctwaConversion": "Annoncekonvertering",
       "lastUserInputTypes": {
         "text": "Tekst",
@@ -1931,7 +1932,10 @@
       "label": "Client Id"
     },
     "clientSecret": {
-      "label": "Client Secret"
+      "label": "Client Secret",
+      "keepHint": "Lad feltet stå tomt for at beholde den gemte Client Secret.",
+      "isSet": "En Client Secret er angivet.",
+      "isNotSet": "Ingen Client Secret er angivet."
     },
     "verifyToken": {
       "label": "Webhook Verify Token"
@@ -2051,6 +2055,17 @@
     "signInCallbackUrl": {
       "label": "Sign-in Callback URL",
       "hint": "Tilføj denne til din Google app's autoriseret redirect URIs til aktivér Google sign-in."
+    },
+    "adsDeveloperToken": {
+      "label": "Google Ads developer token",
+      "hint": "Valgfrit: Google kræver ikke længere et developer token. Lad feltet stå tomt for at beholde det gemte token.",
+      "isSet": "Et developer token er angivet.",
+      "isNotSet": "Der er ikke angivet noget developer token.",
+      "clear": "Ryd",
+      "cleared": "Developer token ryddet."
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "Brug en dedikeret Google OAuth-app til Google Ads, adskilt fra din Google-app, med scopes adwords og datamanager aktiveret. Den skal have sin egen Google OAuth-verificering."
     },
     "webhookUrl": {
       "label": "Webhook URL",
@@ -2260,7 +2275,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -2277,6 +2295,12 @@
     },
     "sendRatePerMinute": {
       "label": "Beskeder pr. minut"
+    },
+    "adsUploadMethod": {
+      "label": "Uploadmetode",
+      "hint": "Data Manager anbefales. Det gamle upload-API fungerer kun for Google Cloud-projekter, som Google stadig tillader, og bruger ikke Data Manager-tilladelsen. En ændring gælder kun nye forbindelser: genopret forbindelsen for eksisterende arbejdsområder.",
+      "dataManager": "Data Manager API (anbefalet)",
+      "legacy": "Gammelt upload-API"
     }
   },
   "flows": {
@@ -2445,7 +2469,8 @@
       "importJsonOnly": "Kun JSON-filer",
       "whatsappCallButton": "Ring på WhatsApp",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "Trådkontrol"
+      "threadControl": "Trådkontrol",
+      "sendGoogleAdsConversion": "Send Google Ads-konvertering"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2653,7 +2678,8 @@
     "dashboardNav": {
       "whatsapp": "Click-to-WhatsApp-annoncer",
       "messenger": "Click-to-Messenger-annoncer",
-      "instagram": "Click-to-Instagram-annoncer"
+      "instagram": "Click-to-Instagram-annoncer",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "Forbind annoncekonto",
@@ -4603,7 +4629,8 @@
       "startAnotherFlow": "Start Another Flow",
       "notifyAdmins": "Notify Administratorer",
       "transferConversationToHuman": "Transfer Samtale til Menneskelig",
-      "sendMetaCapiEvent": "Send Meta CAPI Event"
+      "sendMetaCapiEvent": "Send Meta CAPI Event",
+      "sendGoogleAdsConversion": "Send Google Ads-konvertering"
     },
     "triggerGoesOff": "Udløser goes off",
     "before": "Før",
@@ -6616,6 +6643,447 @@
       "messagingIdHint": "Kun bogstaver, tal, bindestreger og understregninger (maks. 512).",
       "cancel": "Annuller",
       "confirmSend": "Send"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "Send offline-konverteringer til Google Ads for kontakter, der er kommet fra et klik på en Google-annonce.",
+    "notAvailable": {
+      "description": "Platformens Google Ads-legitimationsoplysninger (OAuth-klient-ID og hemmelighed) er ikke konfigureret. Bed din platformadministrator tilføje dem i platformens Google Ads-indstillinger."
+    },
+    "connect": {
+      "scopes": "Vi anmoder om tilladelse til at læse dine Google Ads-konti og konverteringshandlinger og til at sende konverteringer på dine vegne.",
+      "button": "Forbind Google Ads",
+      "reconnect": "Forbind igen",
+      "unnamedAccount": "Google Ads-konto",
+      "viaManager": "via manager {manager}",
+      "statusLabel": "Forbindelsesstatus",
+      "needsReauthDescription": "Google-adgangen er tilbagekaldt eller udløbet. Forbind igen for at fortsætte med at sende konverteringer.",
+      "pausedDescription": "Denne forbindelse er sat på pause, så der sendes ingen konverteringer.",
+      "degradedDescription": "Google Ads svarer med fejl. Konverteringer forsøges sendt igen automatisk.",
+      "howItWorks": "Sådan fungerer det",
+      "steps": {
+        "signIn": "Log ind med den Google-konto, der administrerer dine annoncer.",
+        "chooseAccount": "Vælg Google Ads-kontoen.",
+        "pickAction": "Vælg konverteringshandlingen i dine flows."
+      },
+      "uploadMethod": "Uploadmetode: {method}"
+    },
+    "status": {
+      "connected": "Forbundet",
+      "degraded": "Forringet",
+      "needsReauth": "Skal forbindes igen",
+      "paused": "På pause",
+      "disconnected": "Afbrudt"
+    },
+    "picker": {
+      "title": "Vælg en Google Ads-konto",
+      "legend": "Google Ads-konti",
+      "loading": "Indlæser Google Ads-forbindelsen",
+      "loadError": "Forsøget på at forbinde Google Ads kunne ikke indlæses.",
+      "waiting": "Venter på, at Google bekræfter login…",
+      "noTargets": "Der blev ikke fundet nogen Google Ads-konti for denne Google-konto.",
+      "alreadyThisWorkspace": "Allerede forbundet til dette workspace",
+      "alreadyOtherWorkspace": "Allerede forbundet til et andet workspace",
+      "notSelectable": "Denne konto kan ikke vælges",
+      "connectSelected": "Forbind konto",
+      "sessionExpired": "Forbindelsesforsøget er udløbet. Forbind igen for at fortsætte.",
+      "sessionCancelled": "Forbindelsesforsøget blev annulleret.",
+      "stalled": "Login blev ikke gennemført. Brug «Forbind Google Ads» for at prøve igen.",
+      "dismiss": "Afvis",
+      "cancelFailed": "Forbindelsesforsøget kunne ikke annulleres. Prøv igen.",
+      "connectErrorTitle": "Google Ads kunne ikke forbindes",
+      "errors": {
+        "stateMismatch": "Loginnet kunne ikke verificeres. Forbind igen for at fortsætte.",
+        "expired": "Forbindelsesforsøget er udløbet. Forbind igen for at fortsætte.",
+        "providerDenied": "Google-adgang blev ikke givet. Forbind igen, og tillad de ønskede tilladelser.",
+        "exchangeFailed": "Google-login kunne ikke gennemføres. Forbind igen for at fortsætte.",
+        "providerError": "Google returnerede en fejl. Prøv at forbinde igen om lidt.",
+        "noCandidates": "Der blev ikke fundet nogen aktiv Google Ads-konto for denne Google-bruger. Konti, der er annulleret, suspenderet eller ikke fuldt opsat, kan ikke bruges. Log ind med en Google-konto, der administrerer en aktiv Google Ads-konto.",
+        "alreadyConnected": "Den Google Ads-konto er allerede forbundet.",
+        "quotaExceeded": "Din plans forbindelsesgrænse er nået.",
+        "trialExpired": "Din prøveperiode er slut, så der kan ikke tilføjes nye forbindelser.",
+        "internalError": "Der opstod en fejl under forbindelsen. Prøv igen.",
+        "providerUnavailable": "Google Ads er midlertidigt utilgængelig, så forbindelsen kunne ikke gennemføres. Prøv igen om lidt.",
+        "developerTokenMissing": "Google Ads er ikke fuldt konfigureret: platformens Google-legitimationsoplysninger er ufuldstændige. Bed din administrator kontrollere Google Ads-legitimationsoplysningerne.",
+        "developerTokenNotApproved": "Google afviste det udviklertoken, der er gemt i Google Ads-legitimationsoplysningerne. Tokenet er valgfrit: bed din administrator fjerne det eller erstatte det med et gyldigt.",
+        "projectNotApproved": "Dit Google Cloud-projekt er endnu ikke godkendt til rigtige Google Ads-konti. Ansøg om Explorer- eller Basic-adgang til projektet i Google Cloud Console (Google Ads API → Overview), og forbind derefter igen.",
+        "permissionDenied": "Denne Google-bruger har ikke tilladelse til at få adgang til Google Ads-konti. Log ind med en Google-bruger, der har adgang til en Google Ads-konto.",
+        "apiNotEnabled": "Google Ads API er ikke aktiveret for Google Cloud-projektet. Bed din administrator om at aktivere den, og prøv derefter igen.",
+        "credentialsInvalid": "Google afviste loginoplysningerne. Forbind igen for at fortsætte.",
+        "scopeMissing": "Ikke alle tilladelser blev givet. Google Ads har brug for adgang til din Google Ads-konto og tilladelse til at sende konverteringer. Opret forbindelse igen, og markér alle tilladelser.",
+        "legacyUploadNotAllowed": "Google tillader ikke det gamle upload-API for denne konto. Skift legitimationsoplysningerne til Data Manager, og opret forbindelse til dette arbejdsområde igen."
+      }
+    },
+    "setup": {
+      "conversionCustomer": "Konverteringskonto",
+      "notResolved": "Ikke fastlagt endnu",
+      "retry": "Prøv opsætning igen",
+      "dataTermsWarning": "Vilkårene for kundedata er ikke accepteret for denne konto. Accepter dem i Google Ads, og prøv derefter opsætningen igen.",
+      "errors": {
+        "conversionCustomerInaccessible": "Der er ikke adgang til konverteringskontoen med dette Google-login. Tjek din adgang i Google Ads, og prøv igen.",
+        "customerDataTermsNotAccepted": "Vilkårene for kundedata er ikke accepteret for denne konto. Accepter dem i Google Ads, og prøv derefter opsætningen igen.",
+        "syncFailed": "Konverteringshandlingerne kunne ikke læses fra Google Ads. Prøv opsætningen igen om lidt.",
+        "developerTokenMissing": "Platformens Google Ads-legitimationsoplysninger (OAuth-klient-ID og hemmelighed) er ikke konfigureret."
+      }
+    },
+    "conversionActions": {
+      "title": "Konverteringshandlinger",
+      "description": "Kun aktiverede handlinger, der importerer konverteringer fra klik, kan modtage konverteringer.",
+      "helpLink": "Google Ads Hjælp",
+      "sync": "Synkroniser konverteringshandlinger",
+      "syncedAt": "Sidst synkroniseret {date}",
+      "neverSynced": "Ikke synkroniseret endnu",
+      "empty": "Der blev ikke fundet nogen konverteringshandlinger. Opret en konverteringshandling til offline-import i Google Ads, og synkroniser derefter.",
+      "name": "Navn",
+      "category": "Kategori",
+      "counting": "Optælling",
+      "status": "Status",
+      "onePerClickNote": "iOS-klik (gbraid) kan ikke sendes til denne handling. Brug optællingen \"Hver\" for at modtage dem.",
+      "externalNote": "Understøttes ikke: Denne handling bruger ekstern attribuering, som ikke kan sendes via Google Data Manager.",
+      "count": "{count, plural, one {# konverteringshandling} other {# konverteringshandlinger}}"
+    },
+    "events": {
+      "title": "Konverteringshistorik",
+      "description": "Seneste konverteringer sendt til Google Ads. Click ID'er er maskeret.",
+      "empty": "Konverteringer vises her, når et flow eller en trigger sender en.",
+      "emptyFiltered": "Ingen konverteringer matcher denne status.",
+      "loadError": "Konverteringshistorikken kunne ikke indlæses.",
+      "page": "Side {page} af {pages}",
+      "filter": {
+        "label": "Status",
+        "all": "Alle statusser"
+      },
+      "columns": {
+        "status": "Status",
+        "action": "Konverteringshandling",
+        "channel": "Kanal",
+        "clickId": "Click ID",
+        "occurredAt": "Opstod",
+        "actions": "Handlinger",
+        "dedup": "Dubletkontrol",
+        "consent": "Samtykke-øjebliksbillede",
+        "matching": "Matchning",
+        "properties": "Egenskaber"
+      },
+      "status": {
+        "pending": "Afventer",
+        "sending": "Sender",
+        "sent": "Sendt",
+        "processed": "Behandlet",
+        "failed": "Mislykkedes",
+        "skippedNoAccount": "Sprunget over: ingen konto",
+        "skippedExpired": "Sprunget over: udløbet"
+      },
+      "processing": {
+        "processing": "Google behandler",
+        "success": "Accepteret",
+        "partialSuccess": "Delvist accepteret",
+        "failed": "Afvist",
+        "unknown": "Resultat ukendt",
+        "timedOut": "Timeout"
+      },
+      "stage": {
+        "delivery": "Levering mislykkedes",
+        "processing": "Behandling mislykkedes",
+        "timeout": "Timeout"
+      },
+      "consent": {
+        "adUserDataFull": "Annoncebrugerdata: {status}",
+        "adPersonalizationFull": "Annoncepersonalisering: {status}",
+        "status": {
+          "granted": "Givet",
+          "denied": "Afvist",
+          "notProvided": "Ikke angivet",
+          "notSupported": "Understøttes ikke (ældre upload)"
+        },
+        "adUserDataShort": "Data: {status}",
+        "adPersonalizationShort": "Pers.: {status}",
+        "delivery": {
+          "toSend": "Skal sendes",
+          "notSent": "Ikke sendt",
+          "unknown": "Ikke bekræftet"
+        }
+      },
+      "dedup": {
+        "click": "Pr. klik",
+        "id": "ID: {id}",
+        "event": "Hver kørsel"
+      },
+      "matching": {
+        "enabled": "Konfigureret: {fields}",
+        "withheldConsent": "Tilbageholdt (intet samtykke): {fields}",
+        "unsupportedTransport": "Ikke sendt (gammel): {fields}"
+      },
+      "timeProvided": "Angivet tidspunkt",
+      "timeProvidedTooltip": "Dette konverteringstidspunkt kom fra trinnet, ikke fra hvornår det kørte."
+    },
+    "validate": {
+      "open": "Valider anmodning",
+      "title": "Valider anmodning",
+      "description": "En konfigurationskontrol: Google validerer anmodningen uden at registrere en konvertering.",
+      "conversionAction": "Konverteringshandling",
+      "clickIdType": "Click ID-type",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "Click ID",
+      "submit": "Kør kontrol",
+      "ok": "Google accepterede denne konfiguration. Intet blev registreret.",
+      "reasons": {
+        "accountNotReady": "Google Ads er ikke klar endnu. Færdiggør forbindelsen og opsætningen af din konto, og prøv igen.",
+        "needsReauth": "Google Ads-forbindelsen skal genforbindes.",
+        "rejected": "Google afviste denne anmodning",
+        "legacyUploadNotAllowed": "Google tillader ikke det gamle upload-API for denne konto. Skift legitimationsoplysningerne til Data Manager, og opret forbindelse til dette arbejdsområde igen."
+      },
+      "invalid": "Vælg en konverteringshandling, og angiv et gyldigt Click ID.",
+      "consentIncluded": "Inkluderer samtykke: {values}.",
+      "consentNone": "Der er ikke inkluderet noget samtykke i denne test.",
+      "consentVariableSkipped": "Samtykke fra et kontaktfelt kan ikke testes og er udeladt.",
+      "consentNotSentLegacy": "Annoncepersonalisering ({status}) sendes ikke med den ældre uploadmetode."
+    },
+    "conversionFields": {
+      "conversionAction": "Konverteringshandling",
+      "unavailableOption": "{id} (ikke tilgængelig)",
+      "unavailableWarning": "Den valgte konverteringshandling er ikke længere tilgængelig eller er ikke aktiveret. Vælg en anden, før du udgiver.",
+      "externalOption": "{name} (ekstern attribuering, understøttes ikke)",
+      "loading": "Indlæser konverteringshandlinger",
+      "loadError": "Kunne ikke indlæse dine Google Ads-konverteringshandlinger.",
+      "notConnected": "Forbind Google Ads for at sende konverteringer.",
+      "noActions": "Ingen aktiverede konverteringshandlinger fundet. Synkroniser dem i dine Google Ads-indstillinger.",
+      "openSettings": "Åbn Google Ads-indstillinger",
+      "needsReauth": "Google Ads-forbindelsen skal genforbindes.",
+      "dedupModeClick": "Én gang pr. annonceklik",
+      "dedupModeClickHelp": "Tæller denne konverteringshandling én gang for hvert annonceklik.",
+      "dedupModeIdHelp": "Tælles én gang for hvert forskelligt id.",
+      "dedupModeId": "Én gang pr. ordre- eller hændelses-id",
+      "dedupModeEvent": "Hver gang den kører",
+      "dedupModeEventHelp": "Registrerer en ny konvertering hver gang den kører, også for det samme annonceklik. Et nyt forsøg af samme kørsel tælles ikke to gange.",
+      "dedupId": "Ordre- eller hændelses-id",
+      "dedupIdPlaceholder": "f.eks. '{{order_number}}'",
+      "dedupIdHelp": "Genbrug det samme id ved genforsøg og importer. Brug et forskelligt id for hvert køb eller hver hændelse.",
+      "dedupIdExample": "Intet ordre-id ved salg i chat? Kombinér kontakten med et felt, du sætter for hvert salg, f.eks. {example}. Brug ikke det aktuelle tidspunkt: det ændrer sig ved hver kørsel.",
+      "dedupIdInfoLabel": "Om ordre- eller hændelses-id",
+      "dedupLeadIdNote": "Hvert forskelligt id tæller som en ny lead fra det samme klik.",
+      "dedupClickNote": "Gentagne køb fra det samme klik bliver ikke talt med.",
+      "dedupLegacyNote": "Gammel upload: Google får et sløret id.",
+      "additionalOptions": "Yderligere indstillinger",
+      "additionalOptionsCount": "{count} angivet",
+      "customerMatching": "Kundematch",
+      "customerMatchingCount": "{count} aktiv",
+      "customerMatchingLegacy": "Understøttes ikke af den gamle uploadmetode. Skift forbindelsen til Data Manager API for at bruge det.",
+      "customerMatchingTermsNotAccepted": "Sendes ikke, før kundedatavilkårene er accepteret i konverteringsindstillingerne i Google Ads.",
+      "learnMore": "Få mere at vide",
+      "matchEmailLabel": "E-mail",
+      "matchPhoneLabel": "Telefonnummer",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "Kundetype",
+      "customerValueBucketLabel": "Kundeværdi",
+      "customerPropertiesLegacy": "Understøttes ikke af den gamle uploadmetode. Skift forbindelsen til Data Manager API for at bruge det.",
+      "conversionTime": "Konverteringstidspunkt",
+      "conversionTimePlaceholder": "Lad stå tomt for at bruge tidspunktet, hvor dette trin kører",
+      "valuePlaceholder": "Valgfrit, f.eks. 250",
+      "currencyPlaceholder": "Valgfrit, USD",
+      "validation": {
+        "dedupIdRequired": "Angiv et id, eller vælg Én gang pr. annonceklik.",
+        "dedupIdTooLong": "Brug højst 64 tegn.",
+        "matchTemplateInvalid": "Brug kun én variabel, f.eks. '{{email}}'. En fast værdi er ikke tilladt.",
+        "customerTypeInvalid": "Brug NEW eller RETURNING, eller en variabel som '{{customer_type}}'.",
+        "customerValueBucketInvalid": "Brug LOW, MEDIUM eller HIGH, eller en variabel som '{{customer_value}}'.",
+        "timeFormat": "Brug en dato med tidszone, f.eks. 2026-10-08T14:30:00+07:00.",
+        "timeInvalidDate": "Denne dato findes ikke.",
+        "currencyRequired": "Tilføj en valuta, når du angiver en værdi.",
+        "valueRequired": "Tilføj en værdi, når du angiver en valuta.",
+        "conversionActionRequired": "Vælg en konverteringshandling.",
+        "valueInvalid": "Brug et almindeligt tal, f.eks. 19.99.",
+        "valueTooLarge": "Værdien er for stor.",
+        "currencyInvalid": "Brug en valutakode på 3 bogstaver, f.eks. USD."
+      },
+      "consentInvalid": "Samtykkeindstillingerne kan ikke læses, så dette trin vil fejle.",
+      "consentFixLink": "Ret dem i indstillinger",
+      "dedupModeLabel": "Undgå dublerede konverteringer"
+    },
+    "summary": {
+      "conversionAction": "Konverteringshandling {id}",
+      "notConfigured": "Vælg en konverteringshandling",
+      "dedupClick": "Én gang pr. annonceklik",
+      "dedupId": "Id: {id}",
+      "dedupEvent": "Hver gang den kører"
+    },
+    "consent": {
+      "title": "Samtykke til konverteringsdata",
+      "description": "Om kunderne har accepteret at dele deres data til annoncer. Gælder for alle konverteringer, dette workspace sender.",
+      "learnMore": "Få mere at vide",
+      "notConnected": "Gælder for konverteringer, når en Google Ads-konto er tilsluttet.",
+      "adUserData": {
+        "label": "Annoncebrugerdata"
+      },
+      "adPersonalization": {
+        "label": "Annoncepersonalisering"
+      },
+      "source": {
+        "notProvided": "Ikke angivet",
+        "granted": "Altid givet",
+        "denied": "Altid afvist",
+        "variable": "Fra et kontaktfelt"
+      },
+      "help": {
+        "notProvided": "Udeladt. Google bruger din kontos standardsamtykke.",
+        "granted": "Hver konvertering angiver, at kunden har accepteret.",
+        "denied": "Hver konvertering angiver, at kunden har afvist.",
+        "variable": "Brug \"{granted}\" eller \"{denied}\". Tom springes over; alt andet får trinnet til at fejle."
+      },
+      "templatePlaceholder": "fx '{{gdpr_consent}}'",
+      "templateLabel": "Kontaktfelt til {setting}",
+      "validation": {
+        "templateRequired": "Indsæt et kontaktfelt, fx '{{gdpr_consent}}'.",
+        "templateTooLong": "Brug højst 200 tegn."
+      },
+      "legacy": {
+        "title": "Sendes ikke med ældre upload",
+        "body": "Ældre upload accepterer kun samtykke til annoncebrugerdata. Opret forbindelse igen med Data Manager for at sende det."
+      },
+      "save": "Gem",
+      "saved": "Samtykkeindstillinger gemt",
+      "invalidStored": "De gemte samtykkeindstillinger kunne ikke læses. Trin, der sender konverteringer, fejler, indtil du gemmer nye indstillinger."
+    },
+    "errors": {
+      "supportSession": "Supportsessioner på platformen kan ikke ændre Google Ads-forbindelsen eller sende konverteringer.",
+      "developerTokenMissing": "Google Ads er ikke tilgængelig endnu: platformens Google Ads-legitimationsoplysninger (OAuth-klient-ID og hemmelighed) er ikke konfigureret.",
+      "notConnected": "Google Ads er ikke forbundet til dette workspace.",
+      "sessionNotFound": "Dette forsøg på at forbinde Google Ads blev ikke fundet eller er udløbet. Start forfra.",
+      "pickFailed": "Den Google Ads-konto kunne ikke forbindes. Den er muligvis allerede forbundet et andet sted, eller forsøget er udløbet.",
+      "notRetryable": "Denne konvertering kan ikke forsøges igen: kun mislykkede konverteringer kan forsøges igen.",
+      "authorizationUnavailable": "Google-login kunne ikke startes. Prøv igen om lidt.",
+      "credentialSecretsRequired": "Angiv klienthemmeligheden. Den er ikke gemt endnu."
+    },
+    "enums": {
+      "category": {
+        "default": "Standard",
+        "purchase": "Køb",
+        "addToCart": "Tilføj til kurv",
+        "beginCheckout": "Start betaling",
+        "subscribePaid": "Betalt abonnement",
+        "phoneCallLead": "Lead via telefonopkald",
+        "importedLead": "Importeret lead",
+        "submitLeadForm": "Indsendelse af leadformular",
+        "bookAppointment": "Book aftale",
+        "signup": "Tilmelding",
+        "requestQuote": "Anmod om tilbud",
+        "getDirections": "Find vej",
+        "outboundClick": "Udgående klik",
+        "contact": "Kontakt",
+        "engagement": "Engagement",
+        "storeVisit": "Butiksbesøg",
+        "storeSale": "Butikssalg",
+        "qualifiedLead": "Kvalificeret lead",
+        "convertedLead": "Konverteret lead",
+        "pageView": "Sidevisning",
+        "download": "Download",
+        "lead": "Lead"
+      },
+      "countingType": {
+        "onePerClick": "Én pr. klik",
+        "manyPerClick": "Flere pr. klik"
+      },
+      "actionStatus": {
+        "enabled": "Aktiveret",
+        "removed": "Fjernet",
+        "hidden": "Skjult"
+      },
+      "unknown": "Andet ({value})"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "Ældre upload"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "Denne kontakts kanal kan ikke sende Google Ads-konverteringer.",
+      "google_ads_no_click": "Kontakten kom ikke fra et klik på en Google-annonce.",
+      "google_ads_no_account": "Der er ikke forbundet nogen klar Google Ads-konto.",
+      "google_ads_unknown_conversion_action": "Konverteringshandlingen findes ikke længere. Synkroniser og vælg en anden.",
+      "google_ads_action_disabled": "Konverteringshandlingen er ikke aktiveret i Google Ads.",
+      "google_ads_incompatible_action": "Denne handling tæller én konvertering pr. klik, hvilket Google ikke tillader for dette iOS-klik.",
+      "google_ads_unsupported_action": "Denne handling bruger ekstern attribuering og kan ikke modtage disse konverteringer.",
+      "google_ads_invalid_value": "Værdien eller valutaen var ugyldig.",
+      "google_ads_invalid_input": "Trinnets indstillinger var ugyldige.",
+      "google_ads_record_failed": "Konverteringen kunne ikke gemmes.",
+      "google_ads_missing_dedup_id": "Ordre- eller hændelses-ID'et var tomt.",
+      "google_ads_invalid_dedup_id": "Ordre- eller hændelses-ID'et var længere end 64 tegn.",
+      "google_ads_missing_occurrence_key": "Denne kørsel havde ingen stabil identifikator, så konverteringen blev ikke registreret.",
+      "google_ads_invalid_customer_property": "Kundetypen eller kundeværdien var ikke en tilladt værdi.",
+      "google_ads_invalid_consent_config": "De gemte samtykkeindstillinger kunne ikke læses.",
+      "google_ads_invalid_consent_value": "Et samtykkefelt indeholdt en anden værdi end \"granted\" eller \"denied\".",
+      "google_ads_invalid_conversion_time": "Konverteringstidspunktet var ikke en gyldig dato med tidszone, eller lå i fremtiden."
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "Alle kanaler",
+        "allActions": "Alle handlinger",
+        "channelLabel": "Kanal",
+        "actionLabel": "Konverteringshandling"
+      },
+      "tiles": {
+        "confirmed": "Bekræftet",
+        "awaitingGoogle": "Afventer Google",
+        "queued": "I kø",
+        "failed": "Mislykket",
+        "skipped": "Sprunget over",
+        "deliveryRate": "Leveringsrate",
+        "confirmedHelp": "Google har bekræftet, at disse konverteringer er registreret.",
+        "awaitingGoogleHelp": "Sendt til Google, venter på at Google bliver færdig med behandlingen.",
+        "queuedHelp": "Venter på at blive sendt.",
+        "failedHelp": "Ikke accepteret eller ikke behandlet af Google.",
+        "skippedHelp": "Ikke sendt: ingen klar konto, eller for gammel til Google.",
+        "deliveryRateHelp": "Bekræftet ÷ (bekræftet + mislykket). I kø, afventende og oversprungne tælles ikke med."
+      },
+      "confirmedValue": "Bekræftet værdi",
+      "confirmedValueItem": "{value} ({count, plural, one {# konvertering} other {# konverteringer}})",
+      "moreCurrencies": "+{count} mere",
+      "chart": {
+        "title": "Konverteringer pr. dag",
+        "viewAsTable": "Vis som tabel",
+        "tableCaption": "Konverteringer pr. dag",
+        "dateColumn": "Dato"
+      },
+      "byAction": {
+        "title": "Efter konverteringshandling",
+        "truncated": "Viser de 50 handlinger med flest konverteringer."
+      },
+      "byChannel": {
+        "title": "Efter kanal",
+        "confirmedCount": "{count, plural, one {# bekræftet} other {# bekræftet}}"
+      },
+      "failures": {
+        "title": "Fejl efter fase",
+        "unknown": "Ukendt"
+      },
+      "empty": {
+        "title": "Ingen konverteringer i denne periode",
+        "description": "Konverteringer vises her, når et flowtrin eller en trigger sender en."
+      },
+      "error": {
+        "title": "Statistikken kunne ikke indlæses",
+        "retry": "Prøv igen"
+      },
+      "viewStatistics": "Se statistik",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "Ingen bekræftede eller mislykkede konverteringer i denne periode.",
+      "actionFallback": "Handling {id}",
+      "openSettings": "Åbn indstillinger for Google Ads",
+      "outcome": {
+        "title": "Fordeling af resultater"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
     }
   },
   "minigames": {

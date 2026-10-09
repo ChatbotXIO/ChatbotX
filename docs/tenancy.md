@@ -167,6 +167,7 @@ custom domain:
 | Facebook SSO | `{origin}/api/auth/callback/facebook` |
 | Google Sheets | `{origin}/integrations/google-sheets/callback` |
 | Google Calendar | `{origin}/integrations/google-calendar/callback` |
+| Google Ads (own `googleAds` credential / OAuth app, not the `google` one) | `{origin}/integrations/google-ads/callback` |
 | TikTok | `{origin}/integrations/tiktok/callback` |
 | Threads | `{origin}/integrations/threads/callback` |
 | Messenger | `{origin}/integrations/messenger/callback` |
@@ -189,6 +190,22 @@ host either way. Webhook *receive* routing itself still dispatches by request ho
 (`app/integrations/[...integration]/webhook.ts`): the broker host resolves the
 platform credential, any other (now correctly-registered) host resolves the tenant
 credential for that domain.
+
+### Worker-safe credential owner (`resolveCredentialOwnerIdForWorkspace`)
+
+`resolvePlatformOwnerId` / `resolveOwnerForWorkspace` are request-scoped: the host
+(custom domain) wins, so they cannot run in a worker. Code that has only a
+`workspaceId` and needs the same tenant-aware platform credential owner (for
+example the Google Ads developer token (from the `googleAds` platform credential) resolved by
+`integrationGoogleAdsService.resolveDeveloperToken` while refreshing the setup:
+connect, the manual sync and the daily sync) uses `resolveCredentialOwnerIdForWorkspace`
+(`packages/business/src/google-ads/owner.ts`). It is derived from the workspace
+only: the tenant's `Tenant.ownerId` when `workspace.tenantId` is not
+`ROOT_TENANT_ID`, otherwise `workspace.ownerId`. Because the builder resolves the
+owner host-first and this helper workspace-first, they agree for a workspace
+reached on its own tenant's domain; they can differ if a workspace is opened on
+another host. It lives under `google-ads/` today; move it to a shared location
+before reusing it for another provider.
 
 ## Branding
 

@@ -158,6 +158,21 @@ describe("default tool set", () => {
     )
   })
 
+  test("the read-only Google Ads operations are hidden, not default", () => {
+    const googleAds = operations.filter((op) =>
+      op.operationId.startsWith("googleAds."),
+    )
+
+    expect(googleAds.map((op) => op.operationId).sort()).toEqual([
+      "googleAds.getConnection",
+      "googleAds.getStats",
+      "googleAds.listEvents",
+    ])
+    expect(googleAds.map((op) => op["x-mcp"]?.visibility)).not.toContain(
+      "default",
+    )
+  })
+
   test("contains no DELETE operation", () => {
     const deleteDefaults = defaultOperations()
       .filter((op) => op.method === "DELETE")

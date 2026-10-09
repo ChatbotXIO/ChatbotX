@@ -18,6 +18,28 @@ import { sanitizeOptionalReturnUrl } from "@/lib/oauth-referer"
 import { resolveChannelPolicy } from "@/lib/workspace/resolve-visible-channels"
 import { resolveOAuthCredential } from "./resolve-connect-credential"
 
+/**
+ * The allow-listed absolute `redirectUrl` as the application-relative path the
+ * connect-session store accepts (`validateReturnUrl` rejects an absolute URL).
+ * The origin was already checked by `sanitizeOptionalReturnUrl`; its host is
+ * returned as `originHost` so the OAuth callback (which may land on the broker
+ * host) redirects back to the host the caller started on, re-checking the
+ * allow-list at redirect time.
+ */
+const toSessionReturn = async (
+  redirectUrl: string | undefined,
+): Promise<{ returnUrl?: string; originHost?: string }> => {
+  const allowed = await sanitizeOptionalReturnUrl(redirectUrl)
+  if (!allowed) {
+    return {}
+  }
+  const url = new URL(allowed)
+  return {
+    returnUrl: `${url.pathname}${url.search}${url.hash}`,
+    originHost: url.host,
+  }
+}
+
 /** A connect/reconnect always runs as either a builder-session user or a workspace-token caller — never both, never neither. */
 type ConnectFlowActor =
   | { actorUserId: string; actorTokenId?: never }
@@ -100,7 +122,7 @@ export const startConnect = async (input: {
   if (!resolved) {
     throw connectionNotConfiguredException(input.provider)
   }
-  const returnUrl = await sanitizeOptionalReturnUrl(input.redirectUrl)
+  const sessionReturn = await toSessionReturn(input.redirectUrl)
   const { session } = await connectionService.startSession({
     workspaceId: input.workspaceId,
     provider: input.provider,
@@ -108,7 +130,7 @@ export const startConnect = async (input: {
     credential: resolved.credential,
     callbackUrl: resolved.callbackUrl,
     platformOwnerId: input.ownerId,
-    returnUrl,
+    ...sessionReturn,
     ...input.actor,
   })
   return { connection: null, session }
@@ -129,14 +151,14 @@ export const startReconnect = async (input: {
   if (!resolved) {
     throw connectionNotConfiguredException(input.connection.provider)
   }
-  const returnUrl = await sanitizeOptionalReturnUrl(input.redirectUrl)
+  const sessionReturn = await toSessionReturn(input.redirectUrl)
   const { session } = await connectionService.reconnect({
     connectionId: input.connection.id,
     workspaceId: input.workspaceId,
     credential: resolved.credential,
     callbackUrl: resolved.callbackUrl,
     platformOwnerId: input.ownerId,
-    returnUrl,
+    ...sessionReturn,
     ...input.actor,
   })
   return { session }

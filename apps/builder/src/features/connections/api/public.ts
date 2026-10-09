@@ -19,6 +19,7 @@ import {
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { publicListResponse, withPublicPaging } from "@/lib/public-api/list"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { assertGenericProviderAllowed } from "../lib/assert-generic-provider-allowed"
 import { startConnect, startReconnect } from "../lib/connect-flow"
 import { toConnectSessionResource } from "../lib/connect-session-resource"
 import {
@@ -158,6 +159,7 @@ export const connectionsPublicRouter = {
     .errors(possibleErrorsOnCreatingConnection)
     .handler(async ({ context, input }) => {
       assertTokenScopeForProvider(context.apiToken.scopes, input.provider)
+      assertGenericProviderAllowed(input.provider)
       const ownerId = await resolveOwnerForWorkspace(context.workspace)
       const result = await startConnect({
         workspaceId: context.workspace.id,
@@ -185,6 +187,7 @@ export const connectionsPublicRouter = {
     .errors(possibleErrorsOnReconnectingConnection)
     .handler(async ({ context, input }) => {
       const connection = await loadScopedConnection(context, input.id)
+      assertGenericProviderAllowed(connection.provider)
       const ownerId = await resolveOwnerForWorkspace(context.workspace)
       const { session } = await startReconnect({
         connection,
@@ -210,6 +213,7 @@ export const connectionsPublicRouter = {
     .errors(possibleErrorsOnUpdatingConnection)
     .handler(async ({ context, input }) => {
       const existing = await loadScopedConnection(context, input.id)
+      assertGenericProviderAllowed(existing.provider)
       const connection = await connectionStateService.updateDisplayName({
         id: existing.id,
         workspaceId: context.workspace.id,
@@ -234,7 +238,8 @@ export const connectionsPublicRouter = {
     .output(connectionResource)
     .errors(possibleErrorsOnDisconnectingConnection)
     .handler(async ({ context, input }) => {
-      await loadScopedConnection(context, input.id)
+      const existing = await loadScopedConnection(context, input.id)
+      assertGenericProviderAllowed(existing.provider)
       const connection = await connectionService.disconnect({
         connectionId: input.id,
         workspaceId: context.workspace.id,
@@ -255,7 +260,8 @@ export const connectionsPublicRouter = {
     .output(connectionResource)
     .errors(possibleErrorsOnRefreshingConnection)
     .handler(async ({ context, input }) => {
-      await loadScopedConnection(context, input.id)
+      const existing = await loadScopedConnection(context, input.id)
+      assertGenericProviderAllowed(existing.provider)
       const connection = await connectionService.refresh({
         connectionId: input.id,
         workspaceId: context.workspace.id,
@@ -339,7 +345,8 @@ export const connectSessionsPublicRouter = {
     .output(connectSessionTargetsResource)
     .errors(possibleErrorsOnConnectingSessionTargets)
     .handler(async ({ context, input }) => {
-      await loadScopedSession(context, input.id)
+      const existing = await loadScopedSession(context, input.id)
+      assertGenericProviderAllowed(existing.provider)
       const result = await connectionService.connectTargets({
         sessionId: input.id,
         workspaceId: context.workspace.id,
@@ -361,7 +368,8 @@ export const connectSessionsPublicRouter = {
     .output(connectSessionResource)
     .errors(possibleErrorsOnCancelingConnectSession)
     .handler(async ({ context, input }) => {
-      await loadScopedSession(context, input.id)
+      const existing = await loadScopedSession(context, input.id)
+      assertGenericProviderAllowed(existing.provider)
       const session = await connectSessionService.cancel({
         id: input.id,
         workspaceId: context.workspace.id,

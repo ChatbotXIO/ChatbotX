@@ -129,6 +129,8 @@ export const BaseEditor = ({
         return t("trigger.actions.transferConversationToHuman")
       case triggerActions.enum.sendMetaCapiEvent:
         return t("trigger.actions.sendMetaCapiEvent")
+      case triggerActions.enum.sendGoogleAdsConversion:
+        return t("trigger.actions.sendGoogleAdsConversion")
       case triggerActions.enum.runGoogleSheet:
         return "Google Sheets"
       default:

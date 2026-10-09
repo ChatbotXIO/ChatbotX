@@ -11,7 +11,11 @@ const {
   mockGetCapiDeliveryData,
   mockGetAdsAnalyticsTimeseries,
   mockAdsAnalyticsView,
+  mockResolveGoogleAdsDashboardEntry,
+  mockAnalyticsNav,
 } = vi.hoisted(() => ({
+  mockResolveGoogleAdsDashboardEntry: vi.fn(async () => true),
+  mockAnalyticsNav: vi.fn(() => null),
   mockResolveGuardedWorkspaceId: vi.fn(async () => "ws-1"),
   mockNotFound: vi.fn(() => {
     throw new Error("not found")
@@ -97,7 +101,11 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@/features/analytics/components/analytics-nav", () => ({
-  AnalyticsNav: () => null,
+  AnalyticsNav: mockAnalyticsNav,
+}))
+
+vi.mock("@/features/analytics/lib/google-ads-dashboard-entry", () => ({
+  resolveGoogleAdsDashboardEntry: mockResolveGoogleAdsDashboardEntry,
 }))
 
 vi.mock("@/features/ads/components/ads-analytics-view", () => ({
@@ -175,6 +183,35 @@ describe("Ads dashboard [channel] page", () => {
     ).rejects.toThrow("not found")
 
     expect(mockNotFound).toHaveBeenCalled()
+  })
+
+  test("404s for google: it is a sibling static route, never a Meta channel", async () => {
+    await expect(
+      AdsChannelAnalyticsPage({
+        params: Promise.resolve({ workspaceId: "ws-1", channel: "google" }),
+        searchParams: Promise.resolve({}),
+      }),
+    ).rejects.toThrow("not found")
+
+    expect(mockNotFound).toHaveBeenCalled()
+    expect(mockAdsAnalyticsView).not.toHaveBeenCalled()
+  })
+
+  test("passes the resolved Google Ads entry flag to the nav", async () => {
+    const element = await AdsChannelAnalyticsPage({
+      params: Promise.resolve({ workspaceId: "ws-1", channel: "messenger" }),
+      searchParams: Promise.resolve({}),
+    })
+    renderToStaticMarkup(element)
+
+    expect(mockResolveGoogleAdsDashboardEntry).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      isSuperAdmin: true,
+    })
+    expect(mockAnalyticsNav).toHaveBeenCalledWith(
+      expect.objectContaining({ showGoogleAds: true }),
+      undefined,
+    )
   })
 
   test("404s for a nonsense channel segment", async () => {

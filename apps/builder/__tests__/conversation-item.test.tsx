@@ -38,7 +38,9 @@ vi.mock(
 
 vi.mock("@/features/conversations/utils/ad-badge", () => ({
   selectAdBadge: () => null,
+  selectGoogleAdsBadge: () => null,
   adBadgeLabelKey: () => "whatsapp.calls.ringingBadge",
+  googleAdsBadgeLabelKey: () => "fields.adReferral.googleAds",
 }))
 
 const storeState = {

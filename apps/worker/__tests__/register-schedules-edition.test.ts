@@ -43,6 +43,8 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     purgeAutomationThrottle: "purgeAutomationThrottle",
     refreshChannelTokens: "refreshChannelTokens",
     unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
+    googleAdsHousekeeping: "googleAdsHousekeeping",
+    googleAdsSyncSetups: "googleAdsSyncSetups",
   },
   scheduleQueue: new FakeQueue(),
 }))
@@ -113,6 +115,28 @@ describe("registerSchedules — edition gating", () => {
     expect(names).toContain("maintainMacPartitions")
     expect(names).toContain("enqueueBroadcast")
     expect(names).toContain("purgeExpiredConnectSessions")
+    expect(names).toContain("googleAdsHousekeeping")
+    expect(names).toContain("googleAdsSyncSetups")
+  })
+
+  test("google ads crons run every 10 minutes and daily at 03:30", async () => {
+    envState.NEXT_PUBLIC_EDITION = "community"
+
+    await registerSchedules()
+
+    expect(upsertedRepeatOptionsFor("googleAdsHousekeeping")?.pattern).toBe(
+      "*/10 * * * *",
+    )
+    expect(upsertedRepeatOptionsFor("googleAdsSyncSetups")?.pattern).toBe(
+      "30 3 * * *",
+    )
+    const call = mockUpsertJobScheduler.mock.calls.find(
+      (c) => c[0] === "googleAdsHousekeeping",
+    )
+    expect(call?.[2]).toEqual({
+      name: "googleAdsHousekeeping",
+      data: { type: "googleAdsHousekeeping", data: {} },
+    })
   })
 
   // Derived-const typo protection: the cron pattern must actually track

@@ -157,6 +157,13 @@ vi.mock("../src/integration/handlers/ads-conversion/registry", () => ({
 vi.mock("../src/integration/handlers/automated-response", () => ({
   processAutomatedResponse: vi.fn(),
 }))
+// Pulls the variable engine (and with it modules this test's partial worker-config mock cannot serve).
+vi.mock(
+  "../src/integration/handlers/google-ads/resolve-matching-templates",
+  () => ({
+    resolveMatchingTemplates: vi.fn(),
+  }),
+)
 vi.mock("../src/integration/handlers/challenge", () => ({
   runChallenge: vi.fn(),
 }))

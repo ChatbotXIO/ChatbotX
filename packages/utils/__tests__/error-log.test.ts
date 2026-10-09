@@ -59,6 +59,7 @@ describe("errorLogProviders", () => {
       "openai",
       "google-sheets",
       "google-calendar",
+      "google-ads",
       "meta-catalog",
     ]) {
       expect(errorLogProviders.safeParse(provider).success).toBe(true)
@@ -79,6 +80,7 @@ describe("errorLogProviderLabel", () => {
     expect(errorLogProviderLabel("webchat")).toBe("Webchat")
     expect(errorLogProviderLabel("facebook-ads")).toBe("Facebook ads")
     expect(errorLogProviderLabel("google-calendar")).toBe("Google calendar")
+    expect(errorLogProviderLabel("google-ads")).toBe("Google Ads")
     expect(errorLogProviderLabel("smtp")).toBe("Email")
   })
 

@@ -1,3 +1,5 @@
+import type { SQL } from "drizzle-orm"
+import { PgDialect } from "drizzle-orm/pg-core"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const STORED_FIRST_COALESCE_RE = /COALESCE\(\s*,/
@@ -187,6 +189,12 @@ vi.mock("../src/logger", () => ({
     warn: mockLoggerWarn,
   },
 }))
+
+/** Full-referral JSON param of the guarded (newest-click-wins) merge SQL. */
+const guardedFullPayload = (query: SQL): string => {
+  const { params } = new PgDialect().sqlToQuery(query)
+  return params.at(-1) as string
+}
 
 const { contactInboxService } = await import("../src/contact-inbox/service")
 
@@ -433,6 +441,50 @@ describe("contactInboxService timestamp helpers", () => {
         ],
       },
     })
+  })
+
+  test("updateTracking keeps explicit null only for the Google click keys", async () => {
+    await contactInboxService.updateTracking({
+      contactInboxId: "contact-inbox-1",
+      contactId: "contact-1",
+      workspaceId: "workspace-1",
+      data: {
+        referral: {
+          gclid: null,
+          gbraid: "gb-1",
+          googleCampaignId: null,
+          googleAdGroupId: null,
+          googleAdId: null,
+          googleClickReceivedAt: "2026-10-01T00:00:00.000Z",
+          adTitle: null,
+          ctwaClid: null,
+          raw: {},
+        },
+      },
+    })
+
+    const payload = guardedFullPayload(mockDbSet.mock.calls[0][0].referral)
+    expect(JSON.parse(payload)).toEqual({
+      gclid: null,
+      gbraid: "gb-1",
+      googleCampaignId: null,
+      googleAdGroupId: null,
+      googleAdId: null,
+      googleClickReceivedAt: "2026-10-01T00:00:00.000Z",
+    })
+  })
+
+  test("updateTracking still writes a referral made only of Google nulls", async () => {
+    await contactInboxService.updateTracking({
+      contactInboxId: "contact-inbox-1",
+      contactId: "contact-1",
+      workspaceId: "workspace-1",
+      data: { referral: { gclid: null, adTitle: null } },
+    })
+
+    expect(mockDbSet).toHaveBeenCalledTimes(1)
+    const payload = mockDbSet.mock.calls[0][0].referral.values[1] as string
+    expect(JSON.parse(payload)).toEqual({ gclid: null })
   })
 
   test("updateTracking returns post-commit invalidation without purging inside a transaction", async () => {

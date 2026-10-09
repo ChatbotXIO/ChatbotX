@@ -627,6 +627,24 @@ upload). Every handler below calls the same `packages/business` service
 method the corresponding UI action/oRPC procedure calls
 (`.agents/rules/data-access.md`).
 
+The scope also covers three **read-only Google Ads** operations
+(`googleAds.getStats`, `googleAds.listEvents`, `googleAds.getConnection`;
+`apps/builder/src/features/integration-google-ads/api/public.ts`). They are
+GETs, so `read_only` tokens work, and they are hidden MCP tools (reachable
+through `search_tools`/`call_tool`). Writes (recording a conversion, retry,
+connect, consent) stay UI-only. Two call-outs, following the questionnaires and
+minigames precedents:
+
+- *`GET /v1/google-ads/events` returns `identity.id` and Google's error text.*
+  `identity.id` is the order or event ID the flow chose to send and can contain
+  contact data; `error` is Google's sanitized failure text. Click IDs are
+  masked and the row's click, transaction and request IDs are redacted from
+  `error`; no workspace, contact-inbox or claim data is returned. Minting a
+  token already requires a workspace super admin, who sees the same data in the
+  settings history.
+- *`GET /v1/google-ads/connection` never returns credentials*, only status, the
+  conversion consent view and the synced conversion actions.
+
 Two invariants specific to this scope:
 
 - **The campaign-lifecycle mutations deliberately omit
@@ -777,6 +795,9 @@ approved as UI-only.
   asserts a campaign mutation succeeds with no session user in context (the
   `assertWorkspaceSuperAdmin` regression guard) and that `createdBy` is never
   set from one
+- `apps/builder/__tests__/google-ads-public-api.test.ts` — real-router `ads`
+  scope wiring and the field redaction for the three read-only `googleAds.*`
+  operations in `features/integration-google-ads/api/public.ts`
 - `apps/builder/__tests__/create-workspace-token-action.test.ts`
 - `apps/builder/__tests__/delete-workspace-token-action.test.ts`
 - `apps/builder/__tests__/integration-api-token-hash.test.ts`

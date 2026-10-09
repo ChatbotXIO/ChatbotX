@@ -4,6 +4,7 @@ import {
   and,
   type DatabaseClient,
   db,
+  desc,
   eq,
   gt,
   inArray,
@@ -21,6 +22,7 @@ import {
   ACTIVE_CONNECT_SESSION_STATUSES,
   type ConnectSessionStatus,
 } from "../../partials/connection"
+import type { IntegrationType } from "../../partials/integration"
 import { connectSessionModel } from "../../schema"
 import type { ConnectSessionModel } from "../../types"
 import { type ChunkedPurgeStopReason, chunkedPurge } from "../chunked-purge"
@@ -69,6 +71,27 @@ export const connectSessionRepository = {
     const session = await tx.query.connectSessionModel.findFirst({
       where: { stateNonceHash: input.stateNonceHash },
     })
+    return session ? parseConnectSession(session) : undefined
+  },
+
+  /** The newest unexpired, in-flight session of a provider — how a settings page resumes after the OAuth round-trip. */
+  async findLatestInFlightByProvider(
+    input: { workspaceId: string; provider: IntegrationType },
+    tx: DatabaseClient = db,
+  ): Promise<ConnectSessionModel | undefined> {
+    const [session] = await tx
+      .select()
+      .from(connectSessionModel)
+      .where(
+        and(
+          eq(connectSessionModel.workspaceId, input.workspaceId),
+          eq(connectSessionModel.provider, input.provider),
+          inArray(connectSessionModel.status, ACTIVE_CONNECT_SESSION_STATUSES),
+          sql`${connectSessionModel.expiresAt} > now()`,
+        ),
+      )
+      .orderBy(desc(connectSessionModel.createdAt))
+      .limit(1)
     return session ? parseConnectSession(session) : undefined
   },
 
@@ -159,6 +182,35 @@ export const connectSessionRepository = {
       )
       .returning()
     return row ? parseConnectSession(row) : undefined
+  },
+
+  /**
+   * Cancels a workspace's abandoned `pending` sessions of one provider — a
+   * session still `pending` never got an OAuth callback (closed tab, failed
+   * callback), so it only occupies the per-workspace cap. `authorized` and
+   * `awaiting_selection` sessions are deliberately left alone: they hold a
+   * user's in-progress authorization.
+   */
+  async cancelPendingByProvider(
+    input: { workspaceId: string; provider: IntegrationType },
+    tx: DatabaseClient = db,
+  ): Promise<number> {
+    const rows = await tx
+      .update(connectSessionModel)
+      .set({
+        status: "cancelled",
+        consumedAt: sql`now()`,
+        encryptedAuth: null,
+      })
+      .where(
+        and(
+          eq(connectSessionModel.workspaceId, input.workspaceId),
+          eq(connectSessionModel.provider, input.provider),
+          eq(connectSessionModel.status, "pending"),
+        ),
+      )
+      .returning({ id: connectSessionModel.id })
+    return rows.length
   },
 
   /** Expires due active sessions and clears authorization ciphertext in one update. */

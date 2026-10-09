@@ -59,7 +59,7 @@ const metaCapiContentIdsStaticSchema = z.string().trim().min(1)
  * a blank string as unset, otherwise accept either a `{{variable}}`
  * placeholder or a value matching `staticSchema`.
  */
-const optionalTemplateOrStatic = <TOutput>(
+export const optionalTemplateOrStatic = <TOutput>(
   staticSchema: z.ZodType<TOutput, string>,
 ) => z.preprocess(blankToUndefined, templateOrStatic(staticSchema).optional())
 

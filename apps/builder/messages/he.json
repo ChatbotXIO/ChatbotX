@@ -458,7 +458,8 @@
       "importJsonOnly": "קבצי JSON בלבד",
       "whatsappCallButton": "התקשרות בוואטסאפ",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "שליטה בשרשור"
+      "threadControl": "שליטה בשרשור",
+      "sendGoogleAdsConversion": "שליחת המרה של Google Ads"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -666,7 +667,8 @@
     "dashboardNav": {
       "whatsapp": "מודעות Click-to-WhatsApp",
       "messenger": "מודעות Click-to-Messenger",
-      "instagram": "מודעות Click-to-Instagram"
+      "instagram": "מודעות Click-to-Instagram",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "חיבור חשבון מודעות",
@@ -2616,7 +2618,8 @@
       "startAnotherFlow": "הפעלת תהליך אחר",
       "notifyAdmins": "יידוע מנהלי מערכת",
       "transferConversationToHuman": "העברת השיחה לנציג אנושי",
-      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI"
+      "sendMetaCapiEvent": "שליחת אירוע Meta CAPI",
+      "sendGoogleAdsConversion": "שליחת המרה של Google Ads"
     },
     "triggerGoesOff": "הגורם המפעיל מופעל",
     "before": "לפני",
@@ -5319,7 +5322,10 @@
       "label": "מזהה לקוח"
     },
     "clientSecret": {
-      "label": "סוד לקוח"
+      "label": "סוד לקוח",
+      "keepHint": "השאירו ריק כדי לשמור את סוד הלקוח השמור.",
+      "isSet": "סוד לקוח הוגדר.",
+      "isNotSet": "סוד לקוח לא הוגדר."
     },
     "verifyToken": {
       "label": "אסימון אימות Webhook"
@@ -5439,6 +5445,17 @@
     "signInCallbackUrl": {
       "label": "כתובת URL לחזרה מכניסה",
       "hint": "הוסיפו כתובת זו לכתובות ה-URI המורשות להפניה באפליקציית Google שלכם כדי לאפשר כניסה באמצעות Google."
+    },
+    "adsDeveloperToken": {
+      "label": "טוקן מפתח של Google Ads",
+      "hint": "אופציונלי: Google כבר לא דורשת טוקן מפתח. השאירו ריק כדי לשמור על הטוקן השמור.",
+      "isSet": "טוקן מפתח הוגדר.",
+      "isNotSet": "לא הוגדר טוקן מפתח.",
+      "clear": "נקה",
+      "cleared": "טוקן המפתח נוקה."
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "השתמשו באפליקציית Google OAuth ייעודית ל-Google Ads, נפרדת מאפליקציית Google שלכם, כשההרשאות adwords ו-datamanager מופעלות. היא דורשת אימות OAuth משלה מ-Google."
     },
     "webhookUrl": {
       "label": "כתובת URL של Webhook",
@@ -5648,7 +5665,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -5665,6 +5685,12 @@
     },
     "sendRatePerMinute": {
       "label": "הודעות לדקה"
+    },
+    "adsUploadMethod": {
+      "label": "שיטת העלאה",
+      "hint": "מומלץ להשתמש ב-Data Manager. ממשק ההעלאה הישן פועל רק עבור פרויקטים של Google Cloud ש-Google עדיין מתירה, ואינו משתמש בהרשאת Data Manager. שינוי חל על חיבורים חדשים בלבד: חברו מחדש סביבות עבודה קיימות.",
+      "dataManager": "Data Manager API (מומלץ)",
+      "legacy": "ממשק העלאה ישן"
     }
   },
   "billing": {
@@ -6054,6 +6080,7 @@
       "noAdminReply": "אין תשובה ממנהל מערכת",
       "contactCreatedAt": "איש הקשר נוצר בתאריך",
       "fromCtwaAd": "ממודעה",
+      "fromGoogleAd": "מ-Google Ads",
       "ctwaConversion": "המרת מודעה",
       "lastUserInputTypes": {
         "text": "טקסט",
@@ -6616,6 +6643,447 @@
       "messagingIdHint": "אותיות, ספרות, מקפים וקווים תחתונים בלבד (עד 512).",
       "cancel": "ביטול",
       "confirmSend": "שליחה"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "שלחו המרות אופליין ל-Google Ads עבור אנשי קשר שהגיעו מקליק על מודעת Google.",
+    "notAvailable": {
+      "description": "פרטי הגישה של Google Ads בפלטפורמה (מזהה לקוח וסוד של OAuth) לא הוגדרו. בקשו ממנהל הפלטפורמה להוסיף אותם בהגדרות Google Ads של הפלטפורמה."
+    },
+    "connect": {
+      "scopes": "אנו מבקשים הרשאה לקרוא את חשבונות Google Ads ופעולות ההמרה שלכם, ולשלוח המרות בשמכם.",
+      "button": "חיבור Google Ads",
+      "reconnect": "חיבור מחדש",
+      "unnamedAccount": "חשבון Google Ads",
+      "viaManager": "דרך המנהל {manager}",
+      "statusLabel": "סטטוס החיבור",
+      "needsReauthDescription": "הגישה ל-Google בוטלה או שפגה. התחברו מחדש כדי להמשיך לשלוח המרות.",
+      "pausedDescription": "החיבור הזה מושהה, ולכן המרות לא נשלחות.",
+      "degradedDescription": "Google Ads מחזירה שגיאות. ההמרות יישלחו מחדש באופן אוטומטי.",
+      "howItWorks": "איך זה עובד",
+      "steps": {
+        "signIn": "היכנסו עם חשבון Google שמנהל את המודעות שלכם.",
+        "chooseAccount": "בחרו את חשבון Google Ads.",
+        "pickAction": "בחרו את פעולת ההמרה בתהליכים שלכם."
+      },
+      "uploadMethod": "שיטת העלאה: {method}"
+    },
+    "status": {
+      "connected": "מחובר",
+      "degraded": "פגום",
+      "needsReauth": "נדרש חיבור מחדש",
+      "paused": "מושהה",
+      "disconnected": "מנותק"
+    },
+    "picker": {
+      "title": "בחירת חשבון Google Ads",
+      "legend": "חשבונות Google Ads",
+      "loading": "טוען את החיבור ל-Google Ads",
+      "loadError": "לא ניתן לטעון את ניסיון החיבור ל-Google Ads.",
+      "waiting": "ממתין לאישור ההתחברות מ-Google…",
+      "noTargets": "לא נמצאו חשבונות Google Ads עבור חשבון Google זה.",
+      "alreadyThisWorkspace": "כבר מחובר לסביבת העבודה הזו",
+      "alreadyOtherWorkspace": "כבר מחובר לסביבת עבודה אחרת",
+      "notSelectable": "לא ניתן לבחור חשבון זה",
+      "connectSelected": "חיבור החשבון",
+      "sessionExpired": "ניסיון החיבור פג. התחברו מחדש כדי להמשיך.",
+      "sessionCancelled": "ניסיון החיבור בוטל.",
+      "stalled": "ההתחברות לא הושלמה. השתמשו ב״חיבור Google Ads״ כדי לנסות שוב.",
+      "dismiss": "סגירה",
+      "cancelFailed": "לא ניתן היה לבטל את ניסיון החיבור. נסו שוב.",
+      "connectErrorTitle": "לא ניתן היה לחבר את Google Ads",
+      "errors": {
+        "stateMismatch": "לא ניתן היה לאמת את ההתחברות. התחברו מחדש כדי להמשיך.",
+        "expired": "ניסיון החיבור פג. התחברו מחדש כדי להמשיך.",
+        "providerDenied": "הגישה ל-Google לא ניתנה. התחברו מחדש ואשרו את ההרשאות המבוקשות.",
+        "exchangeFailed": "לא ניתן היה להשלים את ההתחברות ל-Google. התחברו מחדש כדי להמשיך.",
+        "providerError": "Google החזירה שגיאה. נסו להתחבר שוב בעוד רגע.",
+        "noCandidates": "לא נמצא חשבון Google Ads פעיל עבור משתמש Google זה. לא ניתן להשתמש בחשבונות שבוטלו, הושעו או שלא הוגדרו במלואם. היכנסו עם חשבון Google שמנהל חשבון Google Ads פעיל.",
+        "alreadyConnected": "חשבון Google Ads זה כבר מחובר.",
+        "quotaExceeded": "הגעתם למגבלת החיבורים של התוכנית שלכם.",
+        "trialExpired": "תקופת הניסיון שלכם הסתיימה, ולכן לא ניתן להוסיף חיבורים חדשים.",
+        "internalError": "משהו השתבש במהלך החיבור. נסו שוב.",
+        "providerUnavailable": "Google Ads אינו זמין זמנית, ולכן לא ניתן היה להשלים את החיבור. נסו שוב בעוד רגע.",
+        "developerTokenMissing": "Google Ads לא הוגדר במלואו: פרטי הגישה של Google בפלטפורמה חלקיים. בקשו מהמנהל לבדוק את פרטי הגישה של Google Ads.",
+        "developerTokenNotApproved": "Google דחתה את אסימון המפתח (developer token) ששמור בפרטי הגישה של Google Ads. האסימון אופציונלי: בקשו מהמנהל להסיר אותו או להחליפו באסימון תקין.",
+        "projectNotApproved": "פרויקט Google Cloud שלך עדיין לא אושר לחשבונות Google Ads בסביבת ייצור. הגש בקשה לגישת Explorer או Basic עבור הפרויקט ב-Google Cloud Console (Google Ads API ← Overview), ואז התחבר שוב.",
+        "permissionDenied": "למשתמש Google זה אין הרשאה לגשת לחשבונות Google Ads. היכנסו עם משתמש Google שיש לו גישה לחשבון Google Ads.",
+        "apiNotEnabled": "ממשק ה-API של Google Ads אינו מופעל עבור פרויקט Google Cloud. בקשו ממנהל המערכת להפעיל אותו ונסו שוב.",
+        "credentialsInvalid": "Google דחתה את פרטי הכניסה. התחברו שוב כדי להמשיך.",
+        "scopeMissing": "לא ניתנו כל ההרשאות. Google Ads זקוק לגישה לחשבון Google Ads שלך ולהרשאה לשלוח המרות. התחבר שוב וסמן את כל ההרשאות.",
+        "legacyUploadNotAllowed": "Google אינה מתירה את ממשק ההעלאה הישן עבור חשבון זה. העבירו את פרטי הגישה ל-Data Manager וחברו מחדש את סביבת העבודה הזו."
+      }
+    },
+    "setup": {
+      "conversionCustomer": "חשבון המרות",
+      "notResolved": "עדיין לא נפתר",
+      "retry": "ניסיון חוזר להגדרה",
+      "dataTermsWarning": "תנאי נתוני הלקוחות לא אושרו עבור חשבון זה. אשרו אותם ב-Google Ads ואז נסו שוב את ההגדרה.",
+      "errors": {
+        "conversionCustomerInaccessible": "אין גישה לחשבון ההמרות עם ההתחברות הזו ל-Google. בדקו את ההרשאות שלכם ב-Google Ads ונסו שוב.",
+        "customerDataTermsNotAccepted": "תנאי נתוני הלקוחות לא אושרו עבור חשבון זה. אשרו אותם ב-Google Ads ואז נסו שוב את ההגדרה.",
+        "syncFailed": "לא ניתן היה לקרוא את פעולות ההמרה מ-Google Ads. נסו שוב את ההגדרה בעוד רגע.",
+        "developerTokenMissing": "פרטי הגישה של Google Ads בפלטפורמה (מזהה לקוח וסוד של OAuth) לא הוגדרו."
+      }
+    },
+    "conversionActions": {
+      "title": "פעולות המרה",
+      "description": "רק פעולות פעילות שמייבאות המרות מקליקים יכולות לקבל המרות.",
+      "helpLink": "עזרה של Google Ads",
+      "sync": "סנכרון פעולות המרה",
+      "syncedAt": "סונכרן לאחרונה: {date}",
+      "neverSynced": "עדיין לא סונכרן",
+      "empty": "לא נמצאו פעולות המרה. צרו ב-Google Ads פעולת המרה של ייבוא אופליין ואז בצעו סנכרון.",
+      "name": "שם",
+      "category": "קטגוריה",
+      "counting": "ספירה",
+      "status": "סטטוס",
+      "onePerClickNote": "לא ניתן לשלוח קליקים של iOS ‏(gbraid) לפעולה זו. השתמש בספירה \"כל אחת\" כדי לקבל אותם.",
+      "externalNote": "לא נתמך: פעולה זו משתמשת בייחוס חיצוני, שלא ניתן לשלוח דרך Google Data Manager.",
+      "count": "{count, plural, one {# פעולת המרה} other {# פעולות המרה}}"
+    },
+    "events": {
+      "title": "היסטוריית המרות",
+      "description": "המרות אחרונות שנשלחו ל-Google Ads. מזהי הקליקים מוסתרים.",
+      "empty": "המרות יופיעו כאן ברגע שתהליך או טריגר ישלחו אחת.",
+      "emptyFiltered": "אין המרות שתואמות לסטטוס זה.",
+      "loadError": "לא ניתן לטעון את היסטוריית ההמרות.",
+      "page": "עמוד {page} מתוך {pages}",
+      "filter": {
+        "label": "סטטוס",
+        "all": "כל הסטטוסים"
+      },
+      "columns": {
+        "status": "סטטוס",
+        "action": "פעולת המרה",
+        "channel": "ערוץ",
+        "clickId": "מזהה קליק",
+        "occurredAt": "זמן התרחשות",
+        "actions": "פעולות",
+        "dedup": "מניעת כפילויות",
+        "consent": "תמונת מצב של הסכמה",
+        "matching": "התאמה",
+        "properties": "מאפיינים"
+      },
+      "status": {
+        "pending": "ממתין",
+        "sending": "שולח",
+        "sent": "נשלח",
+        "processed": "עובד",
+        "failed": "נכשל",
+        "skippedNoAccount": "דולג: אין חשבון",
+        "skippedExpired": "דולג: פג תוקף"
+      },
+      "processing": {
+        "processing": "Google מעבדת",
+        "success": "התקבל",
+        "partialSuccess": "התקבל חלקית",
+        "failed": "נדחה",
+        "unknown": "התוצאה לא ידועה",
+        "timedOut": "תם הזמן הקצוב"
+      },
+      "stage": {
+        "delivery": "המשלוח נכשל",
+        "processing": "העיבוד נכשל",
+        "timeout": "תם הזמן הקצוב"
+      },
+      "consent": {
+        "adUserDataFull": "נתוני משתמש למודעות: {status}",
+        "adPersonalizationFull": "התאמה אישית של מודעות: {status}",
+        "status": {
+          "granted": "ניתנה",
+          "denied": "נדחתה",
+          "notProvided": "לא סופק",
+          "notSupported": "לא נתמך (העלאה מדור קודם)"
+        },
+        "adUserDataShort": "נתונים: {status}",
+        "adPersonalizationShort": "התאמה אישית: {status}",
+        "delivery": {
+          "toSend": "לשליחה",
+          "notSent": "לא נשלח",
+          "unknown": "לא אושר"
+        }
+      },
+      "dedup": {
+        "click": "לכל הקלקה",
+        "id": "מזהה: {id}",
+        "event": "כל הפעלה"
+      },
+      "matching": {
+        "enabled": "מוגדר: {fields}",
+        "withheldConsent": "מוחזק (אין הסכמה): {fields}",
+        "unsupportedTransport": "לא נשלח (ישן): {fields}"
+      },
+      "timeProvided": "זמן שסופק",
+      "timeProvidedTooltip": "זמן ההמרה הזה הגיע מהשלב, ולא מזמן ההרצה שלו."
+    },
+    "validate": {
+      "open": "אימות בקשה",
+      "title": "אימות בקשה",
+      "description": "בדיקת תצורה: Google מאמתת את הבקשה בלי לתעד המרה.",
+      "conversionAction": "פעולת המרה",
+      "clickIdType": "סוג מזהה קליק",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "מזהה קליק",
+      "submit": "הרצת בדיקה",
+      "ok": "Google אישרה את התצורה הזו. דבר לא תועד.",
+      "reasons": {
+        "accountNotReady": "Google Ads עדיין לא מוכן. סיימו לחבר ולהגדיר את החשבון ונסו שוב.",
+        "needsReauth": "יש לחבר מחדש את החיבור ל-Google Ads.",
+        "rejected": "Google דחתה את הבקשה הזו",
+        "legacyUploadNotAllowed": "Google אינה מתירה את ממשק ההעלאה הישן עבור חשבון זה. העבירו את פרטי הגישה ל-Data Manager וחברו מחדש את סביבת העבודה הזו."
+      },
+      "invalid": "בחרו פעולת המרה והזינו מזהה קליק תקין.",
+      "consentIncluded": "כולל הסכמה: {values}.",
+      "consentNone": "אין הסכמה כלולה בבדיקה זו.",
+      "consentVariableSkipped": "לא ניתן לבדוק הסכמה משדה איש קשר, ולכן היא מושמטת.",
+      "consentNotSentLegacy": "התאמה אישית של מודעות ({status}) לא נשלחת בשיטת ההעלאה הישנה."
+    },
+    "conversionFields": {
+      "conversionAction": "פעולת המרה",
+      "unavailableOption": "{id} (לא זמין)",
+      "unavailableWarning": "פעולת ההמרה שנבחרה אינה זמינה עוד או שאינה פעילה. בחרו פעולה אחרת לפני הפרסום.",
+      "externalOption": "{name} (ייחוס חיצוני, לא נתמך)",
+      "loading": "טוען פעולות המרה",
+      "loadError": "לא ניתן היה לטעון את פעולות ההמרה של Google Ads.",
+      "notConnected": "חברו את Google Ads כדי לשלוח המרות.",
+      "noActions": "לא נמצאו פעולות המרה פעילות. סנכרנו אותן בהגדרות Google Ads.",
+      "openSettings": "פתיחת הגדרות Google Ads",
+      "needsReauth": "יש לחבר מחדש את החיבור ל-Google Ads.",
+      "dedupModeClick": "פעם אחת לכל קליק על מודעה",
+      "dedupModeClickHelp": "סופר את פעולת ההמרה הזו פעם אחת לכל קליק על מודעה.",
+      "dedupModeIdHelp": "נספר פעם אחת לכל מזהה שונה.",
+      "dedupModeId": "פעם אחת לכל מזהה הזמנה או אירוע",
+      "dedupModeEvent": "בכל הפעלה",
+      "dedupModeEventHelp": "רושם המרה חדשה בכל הפעלה, גם עבור אותה הקלקה על מודעה. ניסיון חוזר של אותה הפעלה לא נספר פעמיים.",
+      "dedupId": "מזהה הזמנה או אירוע",
+      "dedupIdPlaceholder": "לדוגמה: '{{order_number}}'",
+      "dedupIdHelp": "השתמש באותו מזהה בניסיונות חוזרים ובייבוא. השתמש במזהה שונה לכל רכישה או אירוע.",
+      "dedupIdExample": "אין מזהה הזמנה במכירות בצ'אט? שלב את איש הקשר עם שדה שאתה מגדיר בכל מכירה, לדוגמה {example}. אל תשתמש בשעה הנוכחית: היא משתנה בכל הרצה.",
+      "dedupIdInfoLabel": "על מזהה הזמנה או אירוע",
+      "dedupLeadIdNote": "כל מזהה שונה נחשב לליד חדש מאותו קליק.",
+      "dedupClickNote": "רכישות חוזרות מאותו קליק לא ייספרו.",
+      "dedupLegacyNote": "העלאה ישנה: Google מקבלת מזהה מעורבל.",
+      "additionalOptions": "אפשרויות נוספות",
+      "additionalOptionsCount": "הוגדרו {count}",
+      "customerMatching": "התאמת לקוחות",
+      "customerMatchingCount": "{count} פעיל",
+      "customerMatchingLegacy": "לא נתמך בשיטת ההעלאה הישנה. העבירו את החיבור ל-Data Manager API כדי להשתמש בו.",
+      "customerMatchingTermsNotAccepted": "לא נשלח עד שתנאי נתוני הלקוחות יאושרו בהגדרות ההמרות של Google Ads.",
+      "learnMore": "מידע נוסף",
+      "matchEmailLabel": "אימייל",
+      "matchPhoneLabel": "מספר טלפון",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "סוג לקוח",
+      "customerValueBucketLabel": "ערך לקוח",
+      "customerPropertiesLegacy": "לא נתמך בשיטת ההעלאה הישנה. העבירו את החיבור ל-Data Manager API כדי להשתמש בו.",
+      "conversionTime": "זמן ההמרה",
+      "conversionTimePlaceholder": "השאר ריק כדי להשתמש בזמן שבו השלב הזה רץ",
+      "valuePlaceholder": "אופציונלי, למשל 250",
+      "currencyPlaceholder": "אופציונלי, USD",
+      "validation": {
+        "dedupIdRequired": "הזינו מזהה, או בחרו פעם אחת לכל קליק על מודעה.",
+        "dedupIdTooLong": "השתמש ב-64 תווים לכל היותר.",
+        "matchTemplateInvalid": "השתמשו במשתנה אחד בלבד, למשל '{{email}}'. ערך קבוע אינו מותר.",
+        "customerTypeInvalid": "השתמשו ב-NEW או RETURNING, או במשתנה כמו '{{customer_type}}'.",
+        "customerValueBucketInvalid": "השתמשו ב-LOW, MEDIUM או HIGH, או במשתנה כמו '{{customer_value}}'.",
+        "timeFormat": "השתמש בתאריך עם אזור זמן, לדוגמה 2026-10-08T14:30:00+07:00.",
+        "timeInvalidDate": "התאריך הזה לא קיים.",
+        "currencyRequired": "הוסף מטבע כשאתה מגדיר ערך.",
+        "valueRequired": "הוסף ערך כשאתה מגדיר מטבע.",
+        "conversionActionRequired": "בחר פעולת המרה.",
+        "valueInvalid": "השתמש במספר פשוט, לדוגמה 19.99.",
+        "valueTooLarge": "הערך הזה גדול מדי.",
+        "currencyInvalid": "השתמש בקוד מטבע בן 3 אותיות, לדוגמה USD."
+      },
+      "consentInvalid": "לא ניתן לקרוא את הגדרות ההסכמה, ולכן השלב הזה ייכשל.",
+      "consentFixLink": "תקן בהגדרות",
+      "dedupModeLabel": "הימנע מהמרות כפולות"
+    },
+    "summary": {
+      "conversionAction": "פעולת המרה {id}",
+      "notConfigured": "בחרו פעולת המרה",
+      "dedupClick": "פעם אחת לכל קליק על מודעה",
+      "dedupId": "מזהה: {id}",
+      "dedupEvent": "בכל הפעלה"
+    },
+    "consent": {
+      "title": "הסכמה לנתוני המרות",
+      "description": "האם הלקוחות הסכימו לשתף את הנתונים שלהם לצורכי פרסום. חל על כל המרה שסביבת העבודה הזו שולחת.",
+      "learnMore": "מידע נוסף",
+      "notConnected": "חל על המרות לאחר חיבור חשבון Google Ads.",
+      "adUserData": {
+        "label": "נתוני משתמש למודעות"
+      },
+      "adPersonalization": {
+        "label": "התאמה אישית של מודעות"
+      },
+      "source": {
+        "notProvided": "לא סופק",
+        "granted": "תמיד ניתנה הסכמה",
+        "denied": "תמיד נדחתה",
+        "variable": "משדה של איש קשר"
+      },
+      "help": {
+        "notProvided": "לא נשלח. Google משתמשת בהסכמת ברירת המחדל של החשבון שלך.",
+        "granted": "כל המרה מציינת שהלקוח הסכים.",
+        "denied": "כל המרה מציינת שהלקוח סירב.",
+        "variable": "השתמשו ב-\"{granted}\" או ב-\"{denied}\". ערך ריק מדולג; כל ערך אחר גורם לשלב להיכשל."
+      },
+      "templatePlaceholder": "לדוגמה '{{gdpr_consent}}'",
+      "templateLabel": "שדה איש קשר עבור {setting}",
+      "validation": {
+        "templateRequired": "הוסיפו שדה של איש קשר, לדוגמה '{{gdpr_consent}}'.",
+        "templateTooLong": "השתמשו ב-200 תווים לכל היותר."
+      },
+      "legacy": {
+        "title": "לא נשלח בהעלאה הישנה",
+        "body": "ההעלאה הישנה מקבלת רק הסכמה לנתוני משתמש לפרסום. התחברו מחדש דרך Data Manager כדי לשלוח אותה."
+      },
+      "save": "שמירה",
+      "saved": "הגדרות ההסכמה נשמרו",
+      "invalidStored": "לא ניתן היה לקרוא את הגדרות ההסכמה שנשמרו. שלבים ששולחים המרות ייכשלו עד שתשמור הגדרות חדשות."
+    },
+    "errors": {
+      "supportSession": "סשנים של תמיכת הפלטפורמה אינם יכולים לשנות את החיבור ל-Google Ads או לשלוח המרות.",
+      "developerTokenMissing": "Google Ads עדיין לא זמין: פרטי הגישה של Google Ads בפלטפורמה (מזהה לקוח וסוד של OAuth) לא הוגדרו.",
+      "notConnected": "Google Ads אינו מחובר לסביבת העבודה הזו.",
+      "sessionNotFound": "ניסיון החיבור ל-Google Ads לא נמצא או שפג. התחילו מחדש.",
+      "pickFailed": "לא ניתן היה לחבר את חשבון Google Ads הזה. ייתכן שהוא כבר מחובר במקום אחר או שהניסיון פג.",
+      "notRetryable": "לא ניתן לנסות שוב את ההמרה הזו: ניתן לנסות שוב רק המרות שנכשלו.",
+      "authorizationUnavailable": "לא ניתן היה להתחיל את ההתחברות ל-Google. נסו שוב בעוד רגע.",
+      "credentialSecretsRequired": "הזינו את סוד הלקוח. הוא עדיין לא נשמר."
+    },
+    "enums": {
+      "category": {
+        "default": "ברירת מחדל",
+        "purchase": "רכישה",
+        "addToCart": "הוספה לסל",
+        "beginCheckout": "תחילת תשלום",
+        "subscribePaid": "מנוי בתשלום",
+        "phoneCallLead": "ליד משיחת טלפון",
+        "importedLead": "ליד מיובא",
+        "submitLeadForm": "שליחת טופס לידים",
+        "bookAppointment": "קביעת פגישה",
+        "signup": "הרשמה",
+        "requestQuote": "בקשת הצעת מחיר",
+        "getDirections": "קבלת הוראות הגעה",
+        "outboundClick": "קליק יוצא",
+        "contact": "יצירת קשר",
+        "engagement": "מעורבות",
+        "storeVisit": "ביקור בחנות",
+        "storeSale": "מכירה בחנות",
+        "qualifiedLead": "ליד מוסמך",
+        "convertedLead": "ליד שהומר",
+        "pageView": "צפייה בדף",
+        "download": "הורדה",
+        "lead": "ליד"
+      },
+      "countingType": {
+        "onePerClick": "פעם אחת לכל קליק",
+        "manyPerClick": "מספר פעמים לכל קליק"
+      },
+      "actionStatus": {
+        "enabled": "מופעל",
+        "removed": "הוסר",
+        "hidden": "מוסתר"
+      },
+      "unknown": "אחר ({value})"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "העלאה ישנה"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "הערוץ של איש הקשר הזה אינו יכול לשלוח המרות של Google Ads.",
+      "google_ads_no_click": "איש הקשר לא הגיע מהקלקה על מודעת Google.",
+      "google_ads_no_account": "לא מחובר חשבון Google Ads מוכן.",
+      "google_ads_unknown_conversion_action": "פעולת ההמרה כבר לא קיימת. סנכרנו ובחרו פעולה אחרת.",
+      "google_ads_action_disabled": "פעולת ההמרה אינה מופעלת ב-Google Ads.",
+      "google_ads_incompatible_action": "הפעולה הזו סופרת המרה אחת לכל הקלקה, ו-Google אינה מאפשרת זאת עבור הקלקת iOS זו.",
+      "google_ads_unsupported_action": "הפעולה הזו משתמשת בייחוס חיצוני ולכן אינה יכולה לקבל המרות אלה.",
+      "google_ads_invalid_value": "הערך או המטבע לא היו תקינים.",
+      "google_ads_invalid_input": "הגדרות השלב לא היו תקינות.",
+      "google_ads_record_failed": "לא ניתן היה לשמור את ההמרה.",
+      "google_ads_missing_dedup_id": "מזהה ההזמנה או האירוע היה ריק.",
+      "google_ads_invalid_dedup_id": "מזהה ההזמנה או האירוע היה ארוך מ-64 תווים.",
+      "google_ads_missing_occurrence_key": "להפעלה זו לא היה מזהה יציב, ולכן ההמרה לא נרשמה.",
+      "google_ads_invalid_customer_property": "סוג הלקוח או ערך הלקוח אינם ערך מותר.",
+      "google_ads_invalid_consent_config": "לא ניתן היה לקרוא את הגדרות ההסכמה שנשמרו.",
+      "google_ads_invalid_consent_value": "שדה הסכמה הכיל ערך שאינו \"granted\" או \"denied\".",
+      "google_ads_invalid_conversion_time": "זמן ההמרה אינו תאריך תקין עם אזור זמן, או שהוא בעתיד."
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "כל הערוצים",
+        "allActions": "כל הפעולות",
+        "channelLabel": "ערוץ",
+        "actionLabel": "פעולת המרה"
+      },
+      "tiles": {
+        "confirmed": "אושרו",
+        "awaitingGoogle": "ממתינות ל-Google",
+        "queued": "בתור",
+        "failed": "נכשלו",
+        "skipped": "דולגו",
+        "deliveryRate": "שיעור מסירה",
+        "confirmedHelp": "Google אישרה שרשמה את ההמרות האלה.",
+        "awaitingGoogleHelp": "נשלחו ל-Google, ממתינות לסיום העיבוד אצל Google.",
+        "queuedHelp": "ממתינות לשליחה.",
+        "failedHelp": "לא התקבלו או לא עובדו על ידי Google.",
+        "skippedHelp": "לא נשלחו: אין חשבון מוכן, או שהן ישנות מדי עבור Google.",
+        "deliveryRateHelp": "אושרו ÷ (אושרו + נכשלו). המרות בתור, ממתינות ודולגו אינן נספרות."
+      },
+      "confirmedValue": "ערך מאושר",
+      "confirmedValueItem": "{value} ({count, plural, one {# המרה} other {# המרות}})",
+      "moreCurrencies": "+{count} נוספים",
+      "chart": {
+        "title": "המרות לפי יום",
+        "viewAsTable": "הצג כטבלה",
+        "tableCaption": "המרות לפי יום",
+        "dateColumn": "תאריך"
+      },
+      "byAction": {
+        "title": "לפי פעולת המרה",
+        "truncated": "מוצגות 50 הפעולות עם מספר ההמרות הגבוה ביותר."
+      },
+      "byChannel": {
+        "title": "לפי ערוץ",
+        "confirmedCount": "{count, plural, one {# אושרו} other {# אושרו}}"
+      },
+      "failures": {
+        "title": "כשלים לפי שלב",
+        "unknown": "לא ידוע"
+      },
+      "empty": {
+        "title": "אין המרות בתקופה זו",
+        "description": "המרות יופיעו כאן כששלב בזרימה או טריגר ישלחו המרה."
+      },
+      "error": {
+        "title": "לא ניתן לטעון את הסטטיסטיקה",
+        "retry": "נסו שוב"
+      },
+      "viewStatistics": "הצג סטטיסטיקה",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "אין המרות מאושרות או כושלות בתקופה זו.",
+      "actionFallback": "פעולה {id}",
+      "openSettings": "פתח את הגדרות Google Ads",
+      "outcome": {
+        "title": "התפלגות התוצאות"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
     }
   },
   "minigames": {

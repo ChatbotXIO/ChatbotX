@@ -20,6 +20,11 @@ import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
 import { publicListResponse, withPublicPaging } from "@/lib/public-api/list"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import {
+  assertConnectionProviderAllowed,
+  assertGenericProviderAllowed,
+  assertSessionProviderAllowed,
+} from "../lib/assert-generic-provider-allowed"
 import { startConnect, startReconnect } from "../lib/connect-flow"
 import { toConnectSessionResource } from "../lib/connect-session-resource"
 import {
@@ -106,6 +111,7 @@ const createConnectionAPI = authorizedAPI
   .errors(possibleErrorsOnCreatingConnection)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ context, input }) => {
+    assertGenericProviderAllowed(input.provider)
     const ownerId = await resolvePlatformOwnerId({
       userId: context.user.id,
       workspaceId: input.workspaceId,
@@ -140,6 +146,7 @@ const reconnectConnectionAPI = authorizedAPI
     if (!connection) {
       throw notFoundException("Connection not found")
     }
+    assertGenericProviderAllowed(connection.provider)
     const ownerId = await resolvePlatformOwnerId({
       userId: context.user.id,
       workspaceId: input.workspaceId,
@@ -166,6 +173,10 @@ const updateConnectionAPI = authorizedAPI
   .errors(possibleErrorsOnUpdatingConnection)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
+    await assertConnectionProviderAllowed({
+      connectionId: input.id,
+      workspaceId: input.workspaceId,
+    })
     const connection = await connectionStateService.updateDisplayName({
       id: input.id,
       workspaceId: input.workspaceId,
@@ -189,6 +200,10 @@ const disconnectConnectionAPI = authorizedAPI
   .errors(possibleErrorsOnDisconnectingConnection)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
+    await assertConnectionProviderAllowed({
+      connectionId: input.id,
+      workspaceId: input.workspaceId,
+    })
     const connection = await connectionService.disconnect({
       connectionId: input.id,
       workspaceId: input.workspaceId,
@@ -208,6 +223,10 @@ const refreshConnectionAPI = authorizedAPI
   .errors(possibleErrorsOnRefreshingConnection)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
+    await assertConnectionProviderAllowed({
+      connectionId: input.id,
+      workspaceId: input.workspaceId,
+    })
     const connection = await connectionService.refresh({
       connectionId: input.id,
       workspaceId: input.workspaceId,
@@ -287,6 +306,10 @@ const connectSessionTargetsAPI = authorizedAPI
   .errors(possibleErrorsOnConnectingSessionTargets)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ context, input }) => {
+    await assertSessionProviderAllowed({
+      sessionId: input.id,
+      workspaceId: input.workspaceId,
+    })
     const result = await connectionService.connectTargets({
       sessionId: input.id,
       workspaceId: input.workspaceId,
@@ -308,6 +331,10 @@ const cancelConnectSessionAPI = authorizedAPI
   .errors(possibleErrorsOnCancelingConnectSession)
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .handler(async ({ input }) => {
+    await assertSessionProviderAllowed({
+      sessionId: input.id,
+      workspaceId: input.workspaceId,
+    })
     const session = await connectSessionService.cancel({
       id: input.id,
       workspaceId: input.workspaceId,

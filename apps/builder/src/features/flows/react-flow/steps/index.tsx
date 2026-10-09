@@ -58,6 +58,7 @@ import sendAudioStep from "./send-audio"
 import { sendCarouselStep } from "./send-carousel"
 import sendFileStep from "./send-file"
 import sendGifStep from "./send-gif"
+import { sendGoogleAdsConversionStep } from "./send-google-ads-conversion"
 import sendImageStep from "./send-image"
 import sendMessengerTemplateMessageStep from "./send-messenger-template-message"
 import { sendMetaCapiEventStep } from "./send-meta-capi-event"
@@ -137,6 +138,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.activeCampaignSyncContact]: activeCampaignSyncContactStep,
   [stepTypes.enum.facebookCustomAudience]: facebookCustomAudienceStep,
   [stepTypes.enum.sendMetaCapiEvent]: sendMetaCapiEventStep,
+  [stepTypes.enum.sendGoogleAdsConversion]: sendGoogleAdsConversionStep,
   [stepTypes.enum.getResponseAddContact]: getResponseAddContactStep,
   [stepTypes.enum.dripSubscribeSubscriber]: dripSubscribeSubscriberStep,
   [stepTypes.enum.mailchimpAddMember]: mailchimpAddMemberStep,

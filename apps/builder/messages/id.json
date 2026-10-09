@@ -697,6 +697,7 @@
       "noAdminReply": "Tidak ada balasan admin",
       "contactCreatedAt": "Kontak dibuat pada",
       "fromCtwaAd": "Dari iklan",
+      "fromGoogleAd": "Dari Google Ads",
       "ctwaConversion": "Konversi iklan",
       "lastUserInputTypes": {
         "text": "Teks",
@@ -1931,7 +1932,10 @@
       "label": "ID Klien"
     },
     "clientSecret": {
-      "label": "Rahasia Klien"
+      "label": "Rahasia Klien",
+      "keepHint": "Kosongkan untuk mempertahankan rahasia klien yang tersimpan.",
+      "isSet": "Rahasia klien sudah diatur.",
+      "isNotSet": "Rahasia klien belum diatur."
     },
     "verifyToken": {
       "label": "Token Verifikasi Webhook"
@@ -2051,6 +2055,17 @@
     "signInCallbackUrl": {
       "label": "URL Callback Masuk",
       "hint": "Tambahkan ini ke URI pengalihan resmi aplikasi Google Anda untuk mengaktifkan proses masuk dengan Google."
+    },
+    "adsDeveloperToken": {
+      "label": "Developer token Google Ads",
+      "hint": "Opsional: Google tidak lagi mewajibkan developer token. Biarkan kosong untuk mempertahankan token yang tersimpan.",
+      "isSet": "Developer token sudah diatur.",
+      "isNotSet": "Developer token belum diatur.",
+      "clear": "Hapus",
+      "cleared": "Developer token dihapus."
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "Gunakan aplikasi Google OAuth khusus untuk Google Ads, terpisah dari aplikasi Google Anda, dengan scope adwords dan datamanager diaktifkan. Aplikasi ini memerlukan verifikasi OAuth Google tersendiri."
     },
     "webhookUrl": {
       "label": "URL Webhook",
@@ -2260,7 +2275,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -2277,6 +2295,12 @@
     },
     "sendRatePerMinute": {
       "label": "Pesan per menit"
+    },
+    "adsUploadMethod": {
+      "label": "Metode unggah",
+      "hint": "Data Manager direkomendasikan. API unggah lama hanya berfungsi untuk proyek Google Cloud yang masih diizinkan Google dan tidak memakai izin Data Manager. Perubahan hanya berlaku untuk koneksi baru: hubungkan ulang ruang kerja yang ada.",
+      "dataManager": "API Data Manager (direkomendasikan)",
+      "legacy": "API unggah lama"
     }
   },
   "flows": {
@@ -2445,7 +2469,8 @@
       "importJsonOnly": "Hanya file JSON",
       "whatsappCallButton": "Telepon di WhatsApp",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "Kontrol thread"
+      "threadControl": "Kontrol thread",
+      "sendGoogleAdsConversion": "Kirim konversi Google Ads"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -2653,7 +2678,8 @@
     "dashboardNav": {
       "whatsapp": "Iklan Click-to-WhatsApp",
       "messenger": "Iklan Click-to-Messenger",
-      "instagram": "Iklan Click-to-Instagram"
+      "instagram": "Iklan Click-to-Instagram",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "Hubungkan Akun Iklan",
@@ -4603,7 +4629,8 @@
       "startAnotherFlow": "Mulai Alur Lain",
       "notifyAdmins": "Beri Tahu Admin",
       "transferConversationToHuman": "Alihkan Percakapan ke Manusia",
-      "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI"
+      "sendMetaCapiEvent": "Kirim Peristiwa Meta CAPI",
+      "sendGoogleAdsConversion": "Kirim konversi Google Ads"
     },
     "triggerGoesOff": "Pemicu dijalankan",
     "before": "Sebelum",
@@ -6616,6 +6643,447 @@
       "messagingIdHint": "Hanya huruf, angka, tanda hubung, dan garis bawah (maks. 512).",
       "cancel": "Batal",
       "confirmSend": "Kirim"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "Kirim konversi offline ke Google Ads untuk kontak yang datang dari klik iklan Google.",
+    "notAvailable": {
+      "description": "Kredensial Google Ads platform (ID klien dan secret OAuth) belum dikonfigurasi. Minta administrator platform menambahkannya di pengaturan platform Google Ads."
+    },
+    "connect": {
+      "scopes": "Kami meminta izin untuk membaca akun Google Ads dan tindakan konversi Anda, serta mengirim konversi atas nama Anda.",
+      "button": "Hubungkan Google Ads",
+      "reconnect": "Hubungkan ulang",
+      "unnamedAccount": "Akun Google Ads",
+      "viaManager": "melalui manajer {manager}",
+      "statusLabel": "Status koneksi",
+      "needsReauthDescription": "Akses Google telah dicabut atau kedaluwarsa. Hubungkan ulang agar konversi tetap terkirim.",
+      "pausedDescription": "Koneksi ini dijeda, sehingga konversi tidak dikirim.",
+      "degradedDescription": "Google Ads merespons dengan error. Konversi akan dicoba ulang secara otomatis.",
+      "howItWorks": "Cara kerjanya",
+      "steps": {
+        "signIn": "Masuk dengan akun Google yang mengelola iklan Anda.",
+        "chooseAccount": "Pilih akun Google Ads.",
+        "pickAction": "Pilih tindakan konversi di flow Anda."
+      },
+      "uploadMethod": "Metode unggah: {method}"
+    },
+    "status": {
+      "connected": "Terhubung",
+      "degraded": "Terganggu",
+      "needsReauth": "Perlu dihubungkan ulang",
+      "paused": "Dijeda",
+      "disconnected": "Terputus"
+    },
+    "picker": {
+      "title": "Pilih akun Google Ads",
+      "legend": "Akun Google Ads",
+      "loading": "Memuat koneksi Google Ads",
+      "loadError": "Tidak dapat memuat percobaan koneksi Google Ads.",
+      "waiting": "Menunggu Google mengonfirmasi proses masuk…",
+      "noTargets": "Tidak ada akun Google Ads yang ditemukan untuk akun Google ini.",
+      "alreadyThisWorkspace": "Sudah terhubung ke workspace ini",
+      "alreadyOtherWorkspace": "Sudah terhubung ke workspace lain",
+      "notSelectable": "Akun ini tidak dapat dipilih",
+      "connectSelected": "Hubungkan akun",
+      "sessionExpired": "Percobaan koneksi telah kedaluwarsa. Hubungkan lagi untuk melanjutkan.",
+      "sessionCancelled": "Percobaan koneksi dibatalkan.",
+      "stalled": "Proses masuk tidak selesai. Gunakan «Hubungkan Google Ads» untuk mencoba lagi.",
+      "dismiss": "Tutup",
+      "cancelFailed": "Tidak dapat membatalkan percobaan koneksi. Coba lagi.",
+      "connectErrorTitle": "Tidak dapat menghubungkan Google Ads",
+      "errors": {
+        "stateMismatch": "Proses masuk tidak dapat diverifikasi. Hubungkan lagi untuk melanjutkan.",
+        "expired": "Percobaan koneksi telah kedaluwarsa. Hubungkan lagi untuk melanjutkan.",
+        "providerDenied": "Akses Google tidak diberikan. Hubungkan lagi dan izinkan izin yang diminta.",
+        "exchangeFailed": "Tidak dapat menyelesaikan proses masuk Google. Hubungkan lagi untuk melanjutkan.",
+        "providerError": "Google mengembalikan error. Coba hubungkan lagi sesaat lagi.",
+        "noCandidates": "Tidak ada akun Google Ads aktif yang ditemukan untuk pengguna Google ini. Akun yang dibatalkan, ditangguhkan, atau belum disiapkan sepenuhnya tidak dapat digunakan. Masuk dengan akun Google yang mengelola akun Google Ads aktif.",
+        "alreadyConnected": "Akun Google Ads tersebut sudah terhubung.",
+        "quotaExceeded": "Batas koneksi paket Anda telah tercapai.",
+        "trialExpired": "Masa uji coba Anda telah berakhir, sehingga koneksi baru tidak dapat ditambahkan.",
+        "internalError": "Terjadi kesalahan saat menghubungkan. Coba lagi.",
+        "providerUnavailable": "Google Ads sedang tidak tersedia sementara, sehingga koneksi tidak dapat diselesaikan. Coba lagi sesaat lagi.",
+        "developerTokenMissing": "Google Ads belum disiapkan sepenuhnya: kredensial Google platform belum lengkap. Minta administrator Anda memeriksa kredensial Google Ads.",
+        "developerTokenNotApproved": "Google menolak developer token yang tersimpan di kredensial Google Ads. Token ini opsional: minta administrator Anda menghapusnya atau menggantinya dengan token yang valid.",
+        "projectNotApproved": "Proyek Google Cloud Anda belum disetujui untuk akun Google Ads produksi. Ajukan akses Explorer atau Basic untuk proyek di Google Cloud Console (Google Ads API → Overview), lalu hubungkan lagi.",
+        "permissionDenied": "Pengguna Google ini tidak memiliki izin untuk mengakses akun Google Ads. Masuk dengan pengguna Google yang memiliki akses ke akun Google Ads.",
+        "apiNotEnabled": "Google Ads API belum diaktifkan untuk proyek Google Cloud. Minta administrator Anda mengaktifkannya, lalu coba lagi.",
+        "credentialsInvalid": "Google menolak kredensial masuk. Hubungkan lagi untuk melanjutkan.",
+        "scopeMissing": "Tidak semua izin diberikan. Google Ads memerlukan akses ke akun Google Ads Anda dan izin untuk mengirim konversi. Hubungkan lagi dan centang semua izin.",
+        "legacyUploadNotAllowed": "Google tidak mengizinkan API unggah lama untuk akun ini. Alihkan kredensial ke Data Manager dan hubungkan ulang ruang kerja ini."
+      }
+    },
+    "setup": {
+      "conversionCustomer": "Akun konversi",
+      "notResolved": "Belum ditentukan",
+      "retry": "Coba ulang penyiapan",
+      "dataTermsWarning": "Ketentuan data pelanggan belum diterima untuk akun ini. Terima di Google Ads, lalu coba ulang penyiapan.",
+      "errors": {
+        "conversionCustomerInaccessible": "Akun konversi tidak dapat diakses dengan akun Google ini. Periksa akses Anda di Google Ads lalu coba lagi.",
+        "customerDataTermsNotAccepted": "Ketentuan data pelanggan belum diterima untuk akun ini. Terima di Google Ads, lalu coba ulang penyiapan.",
+        "syncFailed": "Tidak dapat membaca tindakan konversi dari Google Ads. Coba ulang penyiapan sesaat lagi.",
+        "developerTokenMissing": "Kredensial Google Ads platform (ID klien dan secret OAuth) belum dikonfigurasi."
+      }
+    },
+    "conversionActions": {
+      "title": "Tindakan konversi",
+      "description": "Hanya tindakan aktif yang mengimpor konversi dari klik yang dapat menerima konversi.",
+      "helpLink": "Bantuan Google Ads",
+      "sync": "Sinkronkan tindakan konversi",
+      "syncedAt": "Terakhir disinkronkan {date}",
+      "neverSynced": "Belum disinkronkan",
+      "empty": "Tidak ada tindakan konversi. Buat tindakan konversi impor offline di Google Ads, lalu sinkronkan.",
+      "name": "Nama",
+      "category": "Kategori",
+      "counting": "Penghitungan",
+      "status": "Status",
+      "onePerClickNote": "Klik iOS (gbraid) tidak dapat dikirim ke tindakan ini. Gunakan penghitungan \"Setiap\" untuk menerimanya.",
+      "externalNote": "Tidak didukung: tindakan ini menggunakan atribusi eksternal yang tidak dapat dikirim melalui Google Data Manager.",
+      "count": "{count, plural, one {# tindakan konversi} other {# tindakan konversi}}"
+    },
+    "events": {
+      "title": "Riwayat konversi",
+      "description": "Konversi terbaru yang dikirim ke Google Ads. ID klik disamarkan.",
+      "empty": "Konversi muncul di sini setelah flow atau trigger mengirimnya.",
+      "emptyFiltered": "Tidak ada konversi yang cocok dengan status ini.",
+      "loadError": "Tidak dapat memuat riwayat konversi.",
+      "page": "Halaman {page} dari {pages}",
+      "filter": {
+        "label": "Status",
+        "all": "Semua status"
+      },
+      "columns": {
+        "status": "Status",
+        "action": "Tindakan konversi",
+        "channel": "Kanal",
+        "clickId": "ID klik",
+        "occurredAt": "Terjadi",
+        "actions": "Aksi",
+        "dedup": "Pencegahan duplikat",
+        "consent": "Cuplikan persetujuan",
+        "matching": "Pencocokan",
+        "properties": "Properti"
+      },
+      "status": {
+        "pending": "Menunggu",
+        "sending": "Mengirim",
+        "sent": "Terkirim",
+        "processed": "Diproses",
+        "failed": "Gagal",
+        "skippedNoAccount": "Dilewati: tanpa akun",
+        "skippedExpired": "Dilewati: kedaluwarsa"
+      },
+      "processing": {
+        "processing": "Google sedang memproses",
+        "success": "Diterima",
+        "partialSuccess": "Diterima sebagian",
+        "failed": "Ditolak",
+        "unknown": "Hasil tidak diketahui",
+        "timedOut": "Waktu habis"
+      },
+      "stage": {
+        "delivery": "Pengiriman gagal",
+        "processing": "Pemrosesan gagal",
+        "timeout": "Waktu habis"
+      },
+      "consent": {
+        "adUserDataFull": "Data pengguna iklan: {status}",
+        "adPersonalizationFull": "Personalisasi iklan: {status}",
+        "status": {
+          "granted": "Diberikan",
+          "denied": "Ditolak",
+          "notProvided": "Tidak diberikan",
+          "notSupported": "Tidak didukung (unggahan lama)"
+        },
+        "adUserDataShort": "Data: {status}",
+        "adPersonalizationShort": "Pers.: {status}",
+        "delivery": {
+          "toSend": "Akan dikirim",
+          "notSent": "Tidak dikirim",
+          "unknown": "Belum dikonfirmasi"
+        }
+      },
+      "dedup": {
+        "click": "Per klik",
+        "id": "ID: {id}",
+        "event": "Setiap proses"
+      },
+      "matching": {
+        "enabled": "Dikonfigurasi: {fields}",
+        "withheldConsent": "Ditahan (tanpa persetujuan): {fields}",
+        "unsupportedTransport": "Tidak dikirim (lama): {fields}"
+      },
+      "timeProvided": "Waktu yang ditentukan",
+      "timeProvidedTooltip": "Waktu konversi ini berasal dari langkah, bukan dari saat langkah dijalankan."
+    },
+    "validate": {
+      "open": "Validasi permintaan",
+      "title": "Validasi permintaan",
+      "description": "Pemeriksaan konfigurasi: Google memvalidasi permintaan tanpa mencatat konversi.",
+      "conversionAction": "Tindakan konversi",
+      "clickIdType": "Jenis ID klik",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "ID klik",
+      "submit": "Jalankan pemeriksaan",
+      "ok": "Google menerima konfigurasi ini. Tidak ada yang dicatat.",
+      "reasons": {
+        "accountNotReady": "Google Ads belum siap. Selesaikan penyambungan dan penyiapan akun Anda, lalu coba lagi.",
+        "needsReauth": "Koneksi Google Ads perlu dihubungkan ulang.",
+        "rejected": "Google menolak permintaan ini",
+        "legacyUploadNotAllowed": "Google tidak mengizinkan API unggah lama untuk akun ini. Alihkan kredensial ke Data Manager dan hubungkan ulang ruang kerja ini."
+      },
+      "invalid": "Pilih tindakan konversi dan masukkan ID klik yang valid.",
+      "consentIncluded": "Menyertakan persetujuan: {values}.",
+      "consentNone": "Tidak ada persetujuan yang disertakan dalam pengujian ini.",
+      "consentVariableSkipped": "Persetujuan dari kolom kontak tidak dapat diuji dan dilewati.",
+      "consentNotSentLegacy": "Personalisasi iklan ({status}) tidak dikirim dengan metode unggah lama."
+    },
+    "conversionFields": {
+      "conversionAction": "Aksi konversi",
+      "unavailableOption": "{id} (tidak tersedia)",
+      "unavailableWarning": "Aksi konversi yang dipilih tidak lagi tersedia atau tidak aktif. Pilih yang lain sebelum memublikasikan.",
+      "externalOption": "{name} (atribusi eksternal, tidak didukung)",
+      "loading": "Memuat aksi konversi",
+      "loadError": "Tidak dapat memuat aksi konversi Google Ads Anda.",
+      "notConnected": "Hubungkan Google Ads untuk mengirim konversi.",
+      "noActions": "Tidak ada aksi konversi aktif. Sinkronkan di pengaturan Google Ads.",
+      "openSettings": "Buka pengaturan Google Ads",
+      "needsReauth": "Koneksi Google Ads perlu dihubungkan ulang.",
+      "dedupModeClick": "Sekali per klik iklan",
+      "dedupModeClickHelp": "Menghitung aksi konversi ini sekali untuk setiap klik iklan.",
+      "dedupModeIdHelp": "Dihitung sekali untuk setiap ID berbeda.",
+      "dedupModeId": "Sekali per ID pesanan atau peristiwa",
+      "dedupModeEvent": "Setiap kali dijalankan",
+      "dedupModeEventHelp": "Mencatat konversi baru setiap kali dijalankan, bahkan untuk klik iklan yang sama. Percobaan ulang dari proses yang sama tidak dihitung dua kali.",
+      "dedupId": "ID pesanan atau peristiwa",
+      "dedupIdPlaceholder": "mis. '{{order_number}}'",
+      "dedupIdHelp": "Gunakan ID yang sama untuk percobaan ulang dan impor. Gunakan ID berbeda untuk setiap pembelian atau peristiwa.",
+      "dedupIdExample": "Tidak ada ID pesanan di penjualan lewat chat? Gabungkan kontak dengan kolom yang Anda atur per penjualan, mis. {example}. Jangan gunakan waktu saat ini: nilainya berubah di setiap proses.",
+      "dedupIdInfoLabel": "Tentang ID pesanan atau peristiwa",
+      "dedupLeadIdNote": "Setiap ID yang berbeda dihitung sebagai prospek baru dari klik yang sama.",
+      "dedupClickNote": "Pembelian berulang dari klik yang sama tidak akan dihitung.",
+      "dedupLegacyNote": "Unggah lama: Google menerima ID yang diacak.",
+      "additionalOptions": "Opsi tambahan",
+      "additionalOptionsCount": "{count} diatur",
+      "customerMatching": "Pencocokan pelanggan",
+      "customerMatchingCount": "{count} aktif",
+      "customerMatchingLegacy": "Tidak didukung metode unggah lama. Pindahkan koneksi ke Data Manager API untuk memakainya.",
+      "customerMatchingTermsNotAccepted": "Tidak dikirim sampai ketentuan data pelanggan diterima di pengaturan konversi Google Ads.",
+      "learnMore": "Pelajari lebih lanjut",
+      "matchEmailLabel": "E-mail",
+      "matchPhoneLabel": "Nomor telepon",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "Jenis pelanggan",
+      "customerValueBucketLabel": "Nilai pelanggan",
+      "customerPropertiesLegacy": "Tidak didukung metode unggah lama. Pindahkan koneksi ke Data Manager API untuk memakainya.",
+      "conversionTime": "Waktu konversi",
+      "conversionTimePlaceholder": "Biarkan kosong untuk memakai waktu langkah ini dijalankan",
+      "valuePlaceholder": "Opsional, mis. 250",
+      "currencyPlaceholder": "Opsional, USD",
+      "validation": {
+        "dedupIdRequired": "Masukkan ID, atau pilih Sekali per klik iklan.",
+        "dedupIdTooLong": "Gunakan maksimal 64 karakter.",
+        "matchTemplateInvalid": "Gunakan satu variabel saja, misalnya '{{email}}'. Nilai tetap tidak diizinkan.",
+        "customerTypeInvalid": "Gunakan NEW atau RETURNING, atau variabel seperti '{{customer_type}}'.",
+        "customerValueBucketInvalid": "Gunakan LOW, MEDIUM atau HIGH, atau variabel seperti '{{customer_value}}'.",
+        "timeFormat": "Gunakan tanggal dengan zona waktu, mis. 2026-10-08T14:30:00+07:00.",
+        "timeInvalidDate": "Tanggal ini tidak ada.",
+        "currencyRequired": "Tambahkan mata uang saat Anda mengatur nilai.",
+        "valueRequired": "Tambahkan nilai saat Anda mengatur mata uang.",
+        "conversionActionRequired": "Pilih tindakan konversi.",
+        "valueInvalid": "Gunakan angka biasa, mis. 19.99.",
+        "valueTooLarge": "Nilai ini terlalu besar.",
+        "currencyInvalid": "Gunakan kode mata uang 3 huruf, mis. USD."
+      },
+      "consentInvalid": "Pengaturan persetujuan tidak dapat dibaca, sehingga langkah ini akan gagal.",
+      "consentFixLink": "Perbaiki di pengaturan",
+      "dedupModeLabel": "Hindari konversi duplikat"
+    },
+    "summary": {
+      "conversionAction": "Aksi konversi {id}",
+      "notConfigured": "Pilih aksi konversi",
+      "dedupClick": "Sekali per klik iklan",
+      "dedupId": "ID: {id}",
+      "dedupEvent": "Setiap kali dijalankan"
+    },
+    "consent": {
+      "title": "Persetujuan data konversi",
+      "description": "Apakah pelanggan setuju membagikan data mereka untuk iklan. Berlaku untuk setiap konversi yang dikirim workspace ini.",
+      "learnMore": "Pelajari lebih lanjut",
+      "notConnected": "Berlaku untuk konversi setelah akun Google Ads terhubung.",
+      "adUserData": {
+        "label": "Data pengguna iklan"
+      },
+      "adPersonalization": {
+        "label": "Personalisasi iklan"
+      },
+      "source": {
+        "notProvided": "Tidak disediakan",
+        "granted": "Selalu diberikan",
+        "denied": "Selalu ditolak",
+        "variable": "Dari kolom kontak"
+      },
+      "help": {
+        "notProvided": "Dilewati. Google memakai persetujuan default akun Anda.",
+        "granted": "Setiap konversi menyatakan pelanggan setuju.",
+        "denied": "Setiap konversi menyatakan pelanggan menolak.",
+        "variable": "Gunakan \"{granted}\" atau \"{denied}\". Kosong dilewati; nilai lain membuat langkah gagal."
+      },
+      "templatePlaceholder": "mis. '{{gdpr_consent}}'",
+      "templateLabel": "Kolom kontak untuk {setting}",
+      "validation": {
+        "templateRequired": "Sisipkan kolom kontak, mis. '{{gdpr_consent}}'.",
+        "templateTooLong": "Gunakan maksimal 200 karakter."
+      },
+      "legacy": {
+        "title": "Tidak dikirim dengan unggahan lama",
+        "body": "Unggahan lama hanya menerima persetujuan data pengguna iklan. Hubungkan ulang dengan Data Manager untuk mengirimnya."
+      },
+      "save": "Simpan",
+      "saved": "Pengaturan persetujuan disimpan",
+      "invalidStored": "Pengaturan persetujuan yang tersimpan tidak dapat dibaca. Langkah yang mengirim konversi akan gagal sampai Anda menyimpan pengaturan baru."
+    },
+    "errors": {
+      "supportSession": "Sesi dukungan platform tidak dapat mengubah koneksi Google Ads atau mengirim konversi.",
+      "developerTokenMissing": "Google Ads belum tersedia: kredensial Google Ads platform (ID klien dan secret OAuth) belum dikonfigurasi.",
+      "notConnected": "Google Ads belum terhubung untuk workspace ini.",
+      "sessionNotFound": "Percobaan koneksi Google Ads ini tidak ditemukan atau telah kedaluwarsa. Mulai lagi.",
+      "pickFailed": "Tidak dapat menghubungkan akun Google Ads tersebut. Mungkin sudah terhubung di tempat lain atau percobaan telah kedaluwarsa.",
+      "notRetryable": "Konversi ini tidak dapat dicoba ulang: hanya konversi yang gagal yang dapat dicoba ulang.",
+      "authorizationUnavailable": "Tidak dapat memulai proses masuk Google. Coba lagi sesaat lagi.",
+      "credentialSecretsRequired": "Masukkan client secret. Belum tersimpan."
+    },
+    "enums": {
+      "category": {
+        "default": "Default",
+        "purchase": "Pembelian",
+        "addToCart": "Tambah ke keranjang",
+        "beginCheckout": "Mulai checkout",
+        "subscribePaid": "Langganan berbayar",
+        "phoneCallLead": "Prospek melalui telepon",
+        "importedLead": "Prospek yang diimpor",
+        "submitLeadForm": "Pengiriman formulir prospek",
+        "bookAppointment": "Buat janji",
+        "signup": "Pendaftaran",
+        "requestQuote": "Minta penawaran",
+        "getDirections": "Dapatkan petunjuk arah",
+        "outboundClick": "Klik keluar",
+        "contact": "Kontak",
+        "engagement": "Interaksi",
+        "storeVisit": "Kunjungan toko",
+        "storeSale": "Penjualan di toko",
+        "qualifiedLead": "Prospek berkualitas",
+        "convertedLead": "Prospek terkonversi",
+        "pageView": "Tampilan halaman",
+        "download": "Unduhan",
+        "lead": "Prospek"
+      },
+      "countingType": {
+        "onePerClick": "Satu per klik",
+        "manyPerClick": "Banyak per klik"
+      },
+      "actionStatus": {
+        "enabled": "Diaktifkan",
+        "removed": "Dihapus",
+        "hidden": "Disembunyikan"
+      },
+      "unknown": "Lainnya ({value})"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "Unggah lama"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "Kanal kontak ini tidak dapat mengirim konversi Google Ads.",
+      "google_ads_no_click": "Kontak tidak datang dari klik iklan Google.",
+      "google_ads_no_account": "Tidak ada akun Google Ads siap pakai yang terhubung.",
+      "google_ads_unknown_conversion_action": "Tindakan konversi sudah tidak ada. Sinkronkan lalu pilih yang lain.",
+      "google_ads_action_disabled": "Tindakan konversi tidak diaktifkan di Google Ads.",
+      "google_ads_incompatible_action": "Tindakan ini menghitung satu konversi per klik, yang tidak diizinkan Google untuk klik iOS ini.",
+      "google_ads_unsupported_action": "Tindakan ini memakai atribusi eksternal sehingga tidak dapat menerima konversi ini.",
+      "google_ads_invalid_value": "Nilai atau mata uang tidak valid.",
+      "google_ads_invalid_input": "Pengaturan langkah tidak valid.",
+      "google_ads_record_failed": "Konversi tidak dapat disimpan.",
+      "google_ads_missing_dedup_id": "ID pesanan atau peristiwa kosong.",
+      "google_ads_invalid_dedup_id": "ID pesanan atau peristiwa lebih dari 64 karakter.",
+      "google_ads_missing_occurrence_key": "Proses ini tidak memiliki pengenal yang stabil, jadi konversi tidak dicatat.",
+      "google_ads_invalid_customer_property": "Jenis atau nilai pelanggan bukan nilai yang diizinkan.",
+      "google_ads_invalid_consent_config": "Pengaturan persetujuan yang tersimpan tidak dapat dibaca.",
+      "google_ads_invalid_consent_value": "Kolom persetujuan berisi nilai selain \"granted\" atau \"denied\".",
+      "google_ads_invalid_conversion_time": "Waktu konversi bukan tanggal valid dengan zona waktu, atau berada di masa depan."
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "Semua saluran",
+        "allActions": "Semua tindakan",
+        "channelLabel": "Saluran",
+        "actionLabel": "Tindakan konversi"
+      },
+      "tiles": {
+        "confirmed": "Terkonfirmasi",
+        "awaitingGoogle": "Menunggu Google",
+        "queued": "Dalam antrean",
+        "failed": "Gagal",
+        "skipped": "Dilewati",
+        "deliveryRate": "Tingkat pengiriman",
+        "confirmedHelp": "Google mengonfirmasi telah mencatat konversi ini.",
+        "awaitingGoogleHelp": "Sudah dikirim ke Google, menunggu Google selesai memproses.",
+        "queuedHelp": "Menunggu dikirim.",
+        "failedHelp": "Tidak diterima atau tidak diproses oleh Google.",
+        "skippedHelp": "Tidak dikirim: tidak ada akun siap, atau terlalu lama untuk Google.",
+        "deliveryRateHelp": "Terkonfirmasi ÷ (terkonfirmasi + gagal). Yang dalam antrean, menunggu, dan dilewati tidak dihitung."
+      },
+      "confirmedValue": "Nilai terkonfirmasi",
+      "confirmedValueItem": "{value} ({count, plural, one {# konversi} other {# konversi}})",
+      "moreCurrencies": "+{count} lagi",
+      "chart": {
+        "title": "Konversi per hari",
+        "viewAsTable": "Lihat sebagai tabel",
+        "tableCaption": "Konversi per hari",
+        "dateColumn": "Tanggal"
+      },
+      "byAction": {
+        "title": "Menurut tindakan konversi",
+        "truncated": "Menampilkan 50 tindakan dengan konversi terbanyak."
+      },
+      "byChannel": {
+        "title": "Menurut saluran",
+        "confirmedCount": "{count, plural, one {# terkonfirmasi} other {# terkonfirmasi}}"
+      },
+      "failures": {
+        "title": "Kegagalan menurut tahap",
+        "unknown": "Tidak diketahui"
+      },
+      "empty": {
+        "title": "Tidak ada konversi pada periode ini",
+        "description": "Konversi muncul di sini setelah langkah alur atau pemicu mengirimkannya."
+      },
+      "error": {
+        "title": "Statistik tidak dapat dimuat",
+        "retry": "Coba lagi"
+      },
+      "viewStatistics": "Lihat statistik",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "Tidak ada konversi terkonfirmasi atau gagal pada periode ini.",
+      "actionFallback": "Tindakan {id}",
+      "openSettings": "Buka pengaturan Google Ads",
+      "outcome": {
+        "title": "Proporsi hasil"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
     }
   },
   "minigames": {

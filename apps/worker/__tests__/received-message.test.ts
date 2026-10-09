@@ -784,6 +784,75 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
   })
 
+  describe("Google click referral persistence", () => {
+    const googleReferral = {
+      gclid: "ABCDEFGHIJ1234567890",
+      gbraid: null,
+      googleCampaignId: "123",
+      googleAdGroupId: "456",
+      googleAdId: "789",
+      googleClickReceivedAt: "2026-06-21T00:00:00.000Z",
+    }
+
+    test("passes the six Google keys in tracking.referral to recordInboundActivity", async () => {
+      mockRunChannelHandler.mockResolvedValue({
+        message: { ...baseIncomingMessage, attachments: [] },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        referral: googleReferral,
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockRecordInboundActivity).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tracking: expect.objectContaining({
+            referral: expect.objectContaining(googleReferral),
+          }),
+        }),
+      )
+    })
+
+    test("persists the Google keys via updateTracking when message is null", async () => {
+      mockRunChannelHandler.mockResolvedValue({
+        message: null,
+        contact: { sourceId: "psid-123" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        referral: googleReferral,
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockUpdateTracking).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { referral: expect.objectContaining(googleReferral) },
+        }),
+      )
+    })
+
+    test("does not enqueue runRef when ref is null for a Google referral", async () => {
+      mockRunChannelHandler.mockResolvedValue({
+        message: { ...baseIncomingMessage, attachments: [] },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        referral: googleReferral,
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+        "runRef",
+        expect.anything(),
+      )
+    })
+  })
+
   test("auto-unblocks on inbound messages using the loaded contact", async () => {
     mockRunChannelHandler.mockResolvedValue({
       message: { ...baseIncomingMessage, attachments: [] },
@@ -2313,6 +2382,90 @@ describe("receiveMessage — new contact MAC gate", () => {
 
     const rows = await runCapturedNewContactCreate()
     expect(rows).toContainEqual(expect.objectContaining({ source: "botLink" }))
+  })
+
+  describe("contact source with a Google click", () => {
+    const runWith = async (extra: Record<string, unknown>) => {
+      mockRunChannelHandler.mockResolvedValue({
+        message: { ...baseIncomingMessage, attachments: [] },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        ...extra,
+      })
+      mockCreateNewContactWithMac.mockResolvedValue({
+        ok: true,
+        value: {
+          newContact: {
+            id: "contact-new",
+            workspaceId: "ws-1",
+            firstName: "Test",
+            phoneNumber: null,
+            email: null,
+            blockedAt: null,
+            createdAt: new Date("2026-06-21T00:00:00Z"),
+          },
+          contactInbox: {
+            ...fakeContactInbox,
+            id: "ci-new",
+            contactId: "contact-new",
+          },
+          conversation: fakeConversation,
+        },
+      })
+      await receiveMessage(baseProps)
+      return runCapturedNewContactCreate()
+    }
+
+    test("uses ads for a gclid referral even when referralSource is SHORTLINK", async () => {
+      const rows = await runWith({
+        referralSource: "SHORTLINK",
+        referral: { gclid: "ABCDEFGHIJ1234567890", gbraid: null },
+      })
+      expect(rows).toContainEqual(expect.objectContaining({ source: "ads" }))
+    })
+
+    test("uses ads for a gbraid referral even when referralSource is SHORTLINK", async () => {
+      const rows = await runWith({
+        referralSource: "SHORTLINK",
+        referral: { gclid: null, gbraid: "ABCDEFGHIJ1234567890" },
+      })
+      expect(rows).toContainEqual(expect.objectContaining({ source: "ads" }))
+    })
+
+    test("uses ads for a Google click with no Meta referralSource", async () => {
+      const rows = await runWith({
+        referralSource: null,
+        referral: { gclid: "ABCDEFGHIJ1234567890" },
+      })
+      expect(rows).toContainEqual(expect.objectContaining({ source: "ads" }))
+    })
+
+    test("keeps botLink for SHORTLINK without a Google click", async () => {
+      const rows = await runWith({
+        referralSource: "SHORTLINK",
+        referral: { gclid: null, gbraid: null },
+      })
+      expect(rows).toContainEqual(
+        expect.objectContaining({ source: "botLink" }),
+      )
+    })
+
+    test("keeps ads for ADS without a Google click", async () => {
+      const rows = await runWith({
+        referralSource: "ADS",
+        referral: { adId: "ad-1" },
+      })
+      expect(rows).toContainEqual(expect.objectContaining({ source: "ads" }))
+    })
+
+    test("defaults to inboundMessage with no referral at all", async () => {
+      const rows = await runWith({ referralSource: null, referral: null })
+      expect(rows).toContainEqual(
+        expect.objectContaining({ source: "inboundMessage" }),
+      )
+    })
   })
 
   test("derives WhatsApp locale, timezone, and language from the wa_id phone country", async () => {

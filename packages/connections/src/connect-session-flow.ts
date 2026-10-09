@@ -51,6 +51,7 @@ import type {
   ConnectSessionNextAction,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { connectFailureCauseOf } from "@chatbotx.io/utils/connection"
 import { failSession } from "./connect-targets"
 import {
   encryptedAuthorizationSchema,
@@ -277,12 +278,19 @@ export const completeAuthorization = async (input: {
       throw connectionProviderUnavailableException(retryStatus)
     }
     await failSession(session, "exchange_failed", ["authorized"])
-    throw connectionCredentialsRejectedException(
+    const rejection = connectionCredentialsRejectedException(
       toPublicErrorMessage(
         providerError,
         "The provider rejected the authorization.",
       ),
     )
+    // Same channel as the listing failure: a provider-specific reason (e.g. a
+    // partial OAuth consent) rides on the exception into the redirect.
+    const cause = connectFailureCauseOf(providerError)
+    if (cause) {
+      rejection.data = { cause }
+    }
+    throw rejection
   }
 
   if (isReconnectSession(session)) {
@@ -341,9 +349,16 @@ export const listAndAttachCandidates = async (
       throw connectionProviderUnavailableException(retryStatus)
     }
     await failSession(session, "provider_error")
-    throw connectionCredentialsRejectedException(
+    const rejection = connectionCredentialsRejectedException(
       toPublicErrorMessage(providerError, "Failed to list accounts."),
     )
+    // The stored error code is a fixed enum; the specific reason rides on the
+    // exception so the callback can put it in the redirect.
+    const cause = connectFailureCauseOf(providerError)
+    if (cause) {
+      rejection.data = { cause }
+    }
+    throw rejection
   }
 
   if (candidates.length === 0) {
