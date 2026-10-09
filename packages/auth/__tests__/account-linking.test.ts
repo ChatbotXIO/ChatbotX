@@ -109,21 +109,19 @@ describe("createAuth account linking", () => {
     expect(linking.allowDifferentEmails).toBeUndefined()
   })
 
-  test("registers the placeholder-claim hook on account.create.after, even with no other hooks configured", async () => {
+  test("registers the placeholder-claim hook on account.create.before only, even with no other hooks configured", async () => {
     const { createAuth } = await import("../src/server")
-    const { claimUnverifiedAccountAfterLink } = await import(
-      "../src/claim-unverified-account"
-    )
     createAuth({})
     const config = betterAuthMock.mock.calls.at(-1)?.[0] as {
       databaseHooks?: { account?: { create?: HookSlot } }
     }
-    expect(config.databaseHooks?.account?.create?.after).toBe(
-      claimUnverifiedAccountAfterLink,
+    expect(typeof config.databaseHooks?.account?.create?.before).toBe(
+      "function",
     )
+    expect(config.databaseHooks?.account?.create?.after).toBeUndefined()
   })
 
-  test("keeps the token-upgrade before hook alongside the after hook", async () => {
+  test("keeps the token-upgrade update hook alongside the claim hook", async () => {
     const { createAuth } = await import("../src/server")
     createAuth({ upgradeOAuthAccount: async () => null })
     const config = betterAuthMock.mock.calls.at(-1)?.[0] as {
@@ -134,7 +132,7 @@ describe("createAuth account linking", () => {
     expect(typeof config.databaseHooks?.account?.create?.before).toBe(
       "function",
     )
-    expect(typeof config.databaseHooks?.account?.create?.after).toBe("function")
+    expect(config.databaseHooks?.account?.create?.after).toBeUndefined()
     expect(typeof config.databaseHooks?.account?.update?.before).toBe(
       "function",
     )

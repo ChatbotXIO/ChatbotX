@@ -26,7 +26,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { nextCookies } from "better-auth/next-js"
 import { anonymous, bearer, magicLink, oneTimeToken } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
-import { claimUnverifiedAccountAfterLink } from "./claim-unverified-account"
+import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { env, getBrokerUrl } from "./keys"
 import { logger } from "./logger"
 import { getTenantId, resolveTenantOwnerId } from "./tenant-context"
@@ -403,10 +403,11 @@ function buildSocialProviders(
  * fire `config.upgradeOAuthAccount` right before an OAuth account row is
  * persisted (e.g. Facebook short-lived → long-lived token exchange, run on
  * every social sign-in — a returning user hits `update`, not `create`).
- * `account.create.after` always runs `claimUnverifiedAccountAfterLink`, which
- * fails closed. The user/token-upgrade hooks are best-effort: a throwing hook
- * never blocks sign-up/sign-in, and on failure the original data is persisted
- * unmodified.
+ * `account.create.before` always runs `claimUnverifiedAccountBeforeLink` first
+ * (before the insert, and before better-auth marks the user verified), then the
+ * token upgrade; the claim hook fails closed. The user/token-upgrade hooks are
+ * best-effort: a throwing hook never blocks sign-up/sign-in, and on failure the
+ * original data is persisted unmodified.
  */
 function buildDatabaseHooks({
   onUserCreated,
@@ -461,8 +462,15 @@ function buildDatabaseHooks({
     ...(userHooks && { user: userHooks }),
     account: {
       create: {
-        ...(upgradeAccountBeforeHook && { before: upgradeAccountBeforeHook }),
-        after: claimUnverifiedAccountAfterLink,
+        before: async (
+          account: Parameters<typeof claimUnverifiedAccountBeforeLink>[0],
+          context: Parameters<typeof claimUnverifiedAccountBeforeLink>[1],
+        ) => {
+          await claimUnverifiedAccountBeforeLink(account, context)
+          return upgradeAccountBeforeHook
+            ? await upgradeAccountBeforeHook(account)
+            : undefined
+        },
       },
       ...(upgradeAccountBeforeHook && {
         update: { before: upgradeAccountBeforeHook },
@@ -542,12 +550,13 @@ export function createAuth(config: AuthConfig) {
         // returns `email_verified`). A trusted provider has proven the mailbox,
         // so the local flag must not block the link. The placeholder's own
         // other login methods and sessions are removed by
-        // `claimUnverifiedAccountAfterLink` before the link completes, and only
-        // an email-attesting provider (Google) may claim one — Facebook stays
-        // refused. That is what keeps this from being a pre-registration
-        // takeover. Emails must still match: the implicit
-        // sign-in path looks the user up by the provider email, and the
-        // explicit link route keeps `allowDifferentEmails` off.
+        // `claimUnverifiedAccountBeforeLink` (an `account.create.before` hook,
+        // so it runs before the link is written), and only an email-attesting
+        // provider (Google) may claim one — Facebook stays refused. That is
+        // what keeps this from being a pre-registration takeover. Emails must
+        // still match: the implicit sign-in path looks the user up by the
+        // provider email, and the explicit link route keeps
+        // `allowDifferentEmails` off.
         requireLocalEmailVerified: false,
       },
       additionalFields: {

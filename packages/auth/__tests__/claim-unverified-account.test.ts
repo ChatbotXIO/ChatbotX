@@ -4,7 +4,7 @@ vi.mock("../src/logger", () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
-const { claimUnverifiedAccountAfterLink } = await import(
+const { claimUnverifiedAccountBeforeLink } = await import(
   "../src/claim-unverified-account"
 )
 
@@ -19,7 +19,7 @@ const internalAdapter = {
 }
 const context = { context: { internalAdapter } } as never
 const account = (providerId: string) =>
-  ({ id: "acc-new", userId: USER_ID, providerId, accountId: "sub" }) as never
+  ({ userId: USER_ID, providerId, accountId: "sub" }) as never
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -30,7 +30,6 @@ beforeEach(() => {
   internalAdapter.findAccounts.mockResolvedValue([
     { id: "acc-pwd", providerId: "credential" },
     { id: "acc-fb", providerId: "facebook" },
-    { id: "acc-new", providerId: "google" },
   ])
   internalAdapter.listSessions.mockResolvedValue([
     { token: "s1" },
@@ -38,27 +37,33 @@ beforeEach(() => {
   ])
 })
 
-describe("claimUnverifiedAccountAfterLink", () => {
-  test("verified Google link into an unverified user drops every other login method and its sessions", async () => {
-    await claimUnverifiedAccountAfterLink(account("google"), context)
+describe("claimUnverifiedAccountBeforeLink", () => {
+  test("Google into an unverified user drops every other login method and its sessions", async () => {
+    const result = await claimUnverifiedAccountBeforeLink(
+      account("google"),
+      context,
+    )
 
+    expect(result).toBeUndefined()
     expect(internalAdapter.deleteAccount).toHaveBeenCalledTimes(2)
     expect(internalAdapter.deleteAccount).toHaveBeenCalledWith("acc-pwd")
     expect(internalAdapter.deleteAccount).toHaveBeenCalledWith("acc-fb")
     expect(internalAdapter.deleteSessions).toHaveBeenCalledWith(["s1", "s2"])
   })
 
-  test("Facebook into an unverified user is refused", async () => {
+  test("Facebook into an unverified user with existing accounts is refused", async () => {
     await expect(
-      claimUnverifiedAccountAfterLink(account("facebook"), context),
+      claimUnverifiedAccountBeforeLink(account("facebook"), context),
     ).rejects.toThrow(EMAIL_ATTESTING_ERROR)
     expect(internalAdapter.deleteAccount).not.toHaveBeenCalled()
     expect(internalAdapter.deleteSessions).not.toHaveBeenCalled()
   })
 
-  test("never deletes the social account that was just created", async () => {
-    await claimUnverifiedAccountAfterLink(account("google"), context)
-    expect(internalAdapter.deleteAccount).not.toHaveBeenCalledWith("acc-new")
+  test("is a no-op for a user with no accounts yet (fresh sign-up)", async () => {
+    internalAdapter.findAccounts.mockResolvedValue([])
+    await claimUnverifiedAccountBeforeLink(account("facebook"), context)
+    expect(internalAdapter.deleteAccount).not.toHaveBeenCalled()
+    expect(internalAdapter.listSessions).not.toHaveBeenCalled()
   })
 
   test("is a no-op for an already verified user", async () => {
@@ -66,31 +71,41 @@ describe("claimUnverifiedAccountAfterLink", () => {
       id: USER_ID,
       emailVerified: true,
     })
-    await claimUnverifiedAccountAfterLink(account("google"), context)
+    await claimUnverifiedAccountBeforeLink(account("google"), context)
     expect(internalAdapter.findAccounts).not.toHaveBeenCalled()
     expect(internalAdapter.deleteSessions).not.toHaveBeenCalled()
   })
 
-  test("is a no-op when the created account is the credential provider itself", async () => {
-    await claimUnverifiedAccountAfterLink(account("credential"), context)
+  test("is a no-op for the credential provider itself", async () => {
+    await claimUnverifiedAccountBeforeLink(account("credential"), null)
     expect(internalAdapter.findUserById).not.toHaveBeenCalled()
   })
 
-  test("is a no-op without an endpoint context", async () => {
-    await claimUnverifiedAccountAfterLink(account("google"), null)
+  test("fails closed without an endpoint context", async () => {
+    await expect(
+      claimUnverifiedAccountBeforeLink(account("google"), null),
+    ).rejects.toThrow()
     expect(internalAdapter.findUserById).not.toHaveBeenCalled()
+  })
+
+  test("fails closed when the user does not exist", async () => {
+    internalAdapter.findUserById.mockResolvedValue(null)
+    await expect(
+      claimUnverifiedAccountBeforeLink(account("google"), context),
+    ).rejects.toThrow()
+    expect(internalAdapter.deleteAccount).not.toHaveBeenCalled()
   })
 
   test("skips the session call when there are no sessions", async () => {
     internalAdapter.listSessions.mockResolvedValue([])
-    await claimUnverifiedAccountAfterLink(account("google"), context)
+    await claimUnverifiedAccountBeforeLink(account("google"), context)
     expect(internalAdapter.deleteSessions).not.toHaveBeenCalled()
   })
 
   test("fails closed: a cleanup failure propagates so the link is refused", async () => {
     internalAdapter.deleteAccount.mockRejectedValueOnce(new Error("db down"))
     await expect(
-      claimUnverifiedAccountAfterLink(account("google"), context),
+      claimUnverifiedAccountBeforeLink(account("google"), context),
     ).rejects.toThrow("db down")
   })
 })
