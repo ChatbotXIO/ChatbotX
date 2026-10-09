@@ -12,8 +12,9 @@ const { betterAuthMock } = vi.hoisted(() => ({
 }))
 
 // Mirrors trusted-origins-build-phase.test.ts's approach: stub `betterAuth` to
-// just hand back its config object so we can inspect the `plugins` array
-// without booting a real better-auth instance (which needs a live DB).
+// just hand back its config object so we can inspect `advanced.database` /
+// `databaseHooks` without booting a real better-auth instance (which needs a
+// live DB).
 vi.mock("better-auth", async () => {
   const actual =
     await vi.importActual<typeof import("better-auth")>("better-auth")
@@ -143,10 +144,14 @@ const credentialRow = {
   createdAt: now(),
   updatedAt: now(),
 }
-const social = (providerId: string) => ({
+const DID_NOT_ATTEST_ERROR = /did not attest/
+const idTokenWith = (claims: Record<string, unknown>) =>
+  `h.${Buffer.from(JSON.stringify(claims)).toString("base64url")}.s`
+const social = (providerId: string, idToken?: string) => ({
   userId: "u1",
   providerId,
   accountId: "sub-1",
+  ...(idToken !== undefined && { idToken }),
 })
 
 describe("claimUnverifiedAccountBeforeLink through the real internal adapter", () => {
@@ -165,8 +170,23 @@ describe("claimUnverifiedAccountBeforeLink through the real internal adapter", (
       user: [placeholder],
       account: [credentialRow],
     })
-    await internal.linkAccount(social("google"))
+    await internal.linkAccount(
+      social("google", idTokenWith({ email_verified: true })),
+    )
     expect(store.account.map((a) => a.providerId)).toEqual(["google"])
+  })
+
+  test("linking Google whose token is not email_verified is refused and writes nothing", async () => {
+    const { internal, store } = await setup({
+      user: [placeholder],
+      account: [credentialRow],
+    })
+    await expect(
+      internal.linkAccount(
+        social("google", idTokenWith({ email_verified: false })),
+      ),
+    ).rejects.toThrow(DID_NOT_ATTEST_ERROR)
+    expect(store.account.map((a) => a.providerId)).toEqual(["credential"])
   })
 
   test("linking Facebook into the same placeholder is refused and writes nothing", async () => {

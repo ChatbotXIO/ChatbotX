@@ -3828,7 +3828,7 @@
     "passwordChangeSuccess": "Şifre değiştirildi",
     "oauthError": {
       "accountNotLinked": "Bu e-postaya sahip bir hesap zaten var ve bağlanamadı. Daha önce kullandığınız yöntemle giriş yapın veya destekle iletişime geçin.",
-      "unableToLinkAccount": "Bu girişi hesabınıza bağlayamadık. Lütfen tekrar deneyin veya destekle iletişime geçin.",
+      "unableToLinkAccount": "Bu girişi mevcut hesapla bağlayamadık. Daha önce kullandığınız yöntemle giriş yapın veya destekle iletişime geçin.",
       "sessionExpired": "Giriş denemesinin süresi doldu. Lütfen tekrar deneyin.",
       "accessDenied": "Giriş iptal edildi.",
       "generic": "Giriş başarısız oldu. Lütfen tekrar deneyin."

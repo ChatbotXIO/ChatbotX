@@ -11,7 +11,7 @@ const { betterAuthMock } = vi.hoisted(() => ({
 }))
 
 // Mirrors trusted-origins-build-phase.test.ts's approach: stub `betterAuth` to
-// just hand back its config object so we can inspect the `plugins` array
+// just hand back its config object so we can inspect `advanced.database`
 // without booting a real better-auth instance (which needs a live DB).
 vi.mock("better-auth", async () => {
   const actual =

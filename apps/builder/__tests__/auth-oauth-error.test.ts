@@ -16,6 +16,15 @@ describe("resolveOAuthErrorKey", () => {
     ).toBe("accountNotLinked")
   })
 
+  test("maps account_already_linked_to_different_user to unableToLinkAccount", () => {
+    expect(
+      resolveOAuthErrorKey(
+        params("error=account_already_linked_to_different_user"),
+        origin,
+      ),
+    ).toBe("unableToLinkAccount")
+  })
+
   test("reads the code the proxy hid inside an absolute same-origin callbackURL", () => {
     expect(
       resolveOAuthErrorKey(

@@ -3807,7 +3807,7 @@
     "passwordChangeSuccess": "Senha alterada",
     "oauthError": {
       "accountNotLinked": "Já existe uma conta com este e-mail e ela não pôde ser vinculada. Entre da mesma forma que antes ou fale com o suporte.",
-      "unableToLinkAccount": "Não foi possível vincular este login à sua conta. Tente novamente ou fale com o suporte.",
+      "unableToLinkAccount": "Não foi possível vincular este login à conta existente. Entre da mesma forma que antes ou fale com o suporte.",
       "sessionExpired": "A tentativa de login expirou. Tente novamente.",
       "accessDenied": "O login foi cancelado.",
       "generic": "Falha no login. Tente novamente."

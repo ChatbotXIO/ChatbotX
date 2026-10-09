@@ -3828,7 +3828,7 @@
     "passwordChangeSuccess": "Mot de passe modifié",
     "oauthError": {
       "accountNotLinked": "Un compte avec cette adresse e-mail existe déjà et n'a pas pu être associé. Connectez-vous comme auparavant ou contactez le support.",
-      "unableToLinkAccount": "Nous n'avons pas pu associer cette connexion à votre compte. Veuillez réessayer ou contacter le support.",
+      "unableToLinkAccount": "Nous n'avons pas pu associer cette connexion au compte existant. Connectez-vous de la manière dont vous l'avez fait auparavant, ou contactez le support.",
       "sessionExpired": "La tentative de connexion a expiré. Veuillez réessayer.",
       "accessDenied": "La connexion a été annulée.",
       "generic": "Échec de la connexion. Veuillez réessayer."

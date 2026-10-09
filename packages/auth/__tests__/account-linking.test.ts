@@ -137,4 +137,68 @@ describe("createAuth account linking", () => {
       "function",
     )
   })
+
+  describe("composed account.create.before", () => {
+    type ComposedBefore = (
+      account: Record<string, unknown>,
+      context: unknown,
+    ) => Promise<unknown>
+
+    const compose = async (
+      upgradeOAuthAccount: (input: unknown) => Promise<unknown>,
+    ) => {
+      const { createAuth } = await import("../src/server")
+      createAuth({ upgradeOAuthAccount: upgradeOAuthAccount as never })
+      const config = betterAuthMock.mock.calls.at(-1)?.[0] as {
+        databaseHooks: { account: { create: { before: ComposedBefore } } }
+      }
+      return config.databaseHooks.account.create.before
+    }
+    const contextFor = (
+      user: { emailVerified: boolean },
+      accounts: unknown[] = [],
+    ) => ({
+      context: {
+        internalAdapter: {
+          findUserById: vi.fn().mockResolvedValue(user),
+          findAccounts: vi.fn().mockResolvedValue(accounts),
+          deleteAccount: vi.fn(),
+          listSessions: vi.fn().mockResolvedValue([]),
+          deleteSessions: vi.fn(),
+        },
+      },
+    })
+
+    test("keeps the token-upgrade patch when the claim is a no-op", async () => {
+      const upgrade = vi.fn(async () => ({ accessToken: "upgraded" }))
+      const composed = await compose(upgrade)
+      const account = {
+        userId: "u1",
+        providerId: "google",
+        accountId: "sub",
+        accessToken: "short",
+      }
+
+      const result = await composed(
+        account,
+        contextFor({ emailVerified: true }),
+      )
+
+      expect(result).toEqual({ data: { ...account, accessToken: "upgraded" } })
+      expect(upgrade).toHaveBeenCalledTimes(1)
+    })
+
+    test("rejects without upgrading when the claim throws", async () => {
+      const upgrade = vi.fn(async () => ({ accessToken: "upgraded" }))
+      const composed = await compose(upgrade)
+
+      await expect(
+        composed(
+          { userId: "u1", providerId: "facebook", accountId: "sub" },
+          contextFor({ emailVerified: false }, [{ id: "acc-pwd" }]),
+        ),
+      ).rejects.toThrow()
+      expect(upgrade).not.toHaveBeenCalled()
+    })
+  })
 })

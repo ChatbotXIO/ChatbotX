@@ -3828,7 +3828,7 @@
     "passwordChangeSuccess": "Password modificata",
     "oauthError": {
       "accountNotLinked": "Esiste già un account con questa email e non è stato possibile collegarlo. Accedi come hai fatto in precedenza oppure contatta il supporto.",
-      "unableToLinkAccount": "Non è stato possibile collegare questo accesso al tuo account. Riprova o contatta il supporto.",
+      "unableToLinkAccount": "Non è stato possibile collegare questo accesso all'account esistente. Accedi come hai fatto in precedenza oppure contatta il supporto.",
       "sessionExpired": "Il tentativo di accesso è scaduto. Riprova.",
       "accessDenied": "L'accesso è stato annullato.",
       "generic": "Accesso non riuscito. Riprova."

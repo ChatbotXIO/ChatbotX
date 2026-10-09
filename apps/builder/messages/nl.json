@@ -3828,7 +3828,7 @@
     "passwordChangeSuccess": "Wachtwoord gewijzigd",
     "oauthError": {
       "accountNotLinked": "Er bestaat al een account met dit e-mailadres en het kon niet worden gekoppeld. Log in zoals je eerder deed of neem contact op met support.",
-      "unableToLinkAccount": "We konden deze aanmelding niet aan je account koppelen. Probeer het opnieuw of neem contact op met support.",
+      "unableToLinkAccount": "We konden deze aanmelding niet aan het bestaande account koppelen. Meld je aan zoals je eerder deed, of neem contact op met support.",
       "sessionExpired": "De aanmeldpoging is verlopen. Probeer het opnieuw.",
       "accessDenied": "Aanmelden is geannuleerd.",
       "generic": "Aanmelden mislukt. Probeer het opnieuw."

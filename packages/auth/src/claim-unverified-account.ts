@@ -12,13 +12,41 @@ type AccountCreateBeforeHook = NonNullable<
 const CREDENTIAL_PROVIDER = "credential"
 
 /**
- * Providers whose sign-in proves the person owns the mailbox. `google` is here
- * because Google requires mailbox verification before an account can sign in,
- * and better-auth marks the user verified only when the token's
- * `email_verified` is true. Facebook never returns that claim, so it cannot
- * claim a placeholder.
+ * Providers that can attest mailbox ownership. `google` is here because it
+ * returns an id token carrying `email_verified`. Facebook never returns that
+ * claim, so it cannot claim a placeholder. Being listed is necessary but not
+ * sufficient: the token must also assert `email_verified: true`.
  */
 const EMAIL_ATTESTING_PROVIDERS: ReadonlySet<string> = new Set(["google"])
+
+/**
+ * Reads the `email_verified` claim from an id token (a JWT string). better-auth
+ * has already verified the token's signature before the hook runs; this only
+ * reads a claim, so it decodes the payload locally. Anything other than an
+ * exact `email_verified === true` (missing or malformed token, missing or
+ * false claim) is treated as not attested.
+ */
+const isEmailAttestedByIdToken = (idToken: unknown): boolean => {
+  if (typeof idToken !== "string") {
+    return false
+  }
+  try {
+    const segment = idToken.split(".")[1]
+    if (!segment) {
+      return false
+    }
+    const payload: unknown = JSON.parse(
+      Buffer.from(segment, "base64url").toString("utf8"),
+    )
+    return (
+      typeof payload === "object" &&
+      payload !== null &&
+      (payload as { email_verified?: unknown }).email_verified === true
+    )
+  } catch {
+    return false
+  }
+}
 
 /**
  * Runs BEFORE better-auth inserts a social `Account` row. It must be a before
@@ -31,7 +59,9 @@ const EMAIL_ATTESTING_PROVIDERS: ReadonlySet<string> = new Set(["google"])
  *
  * With `requireLocalEmailVerified: false` a trusted provider may link into an
  * unverified local user (a placeholder that never proved the mailbox), but only
- * an email-attesting provider may claim it. The attesting sign-in is the first
+ * an email-attesting provider whose id token asserts `email_verified: true` may
+ * claim it (better-auth has already verified the token signature; the hook only
+ * reads the claim). The attesting sign-in is the first
  * proof of ownership, so every earlier login method (password or social) and
  * every session on that placeholder is untrusted and removed before the link —
  * otherwise a pre-registered login would keep working once the real owner's
@@ -41,8 +71,9 @@ const EMAIL_ATTESTING_PROVIDERS: ReadonlySet<string> = new Set(["google"])
  * inserts the user, then its first account) or a legacy row with nothing to
  * revoke, so it is left alone.
  *
- * Fails closed: no endpoint context, a missing user, a non-attesting provider
- * or a cleanup failure all throw and the link is refused.
+ * Fails closed: no endpoint context, a missing user, a non-attesting provider,
+ * a token without `email_verified: true` or a cleanup failure all throw and the
+ * link is refused.
  */
 export const claimUnverifiedAccountBeforeLink: AccountCreateBeforeHook = async (
   account,
@@ -72,6 +103,9 @@ export const claimUnverifiedAccountBeforeLink: AccountCreateBeforeHook = async (
     throw new Error(
       "Only an email-attesting provider can claim an unverified account",
     )
+  }
+  if (!isEmailAttestedByIdToken((account as { idToken?: unknown }).idToken)) {
+    throw new Error("The provider did not attest the email address")
   }
 
   for (const row of others) {
