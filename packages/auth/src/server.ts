@@ -26,6 +26,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { nextCookies } from "better-auth/next-js"
 import { anonymous, bearer, magicLink, oneTimeToken } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
+import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { env, getBrokerUrl } from "./keys"
 import { logger } from "./logger"
 import { getTenantId, resolveTenantOwnerId } from "./tenant-context"
@@ -240,6 +241,19 @@ export function createTenantScopedAdapter(
   return (options) => wrapAdapter(base(options))
 }
 
+/**
+ * Repo ids are 64-bit snowflakes (`createId`) that passed 2^53 in 2021. Never
+ * use `generateId: "serial"` here: that flag makes better-auth's adapter
+ * factory wrap every id and id reference (`Account.userId`, `Session.userId`)
+ * in `Number()`, which rounds every odd id to its even neighbour — sessions and
+ * linked accounts then land on the wrong user, or fail the FK when the
+ * neighbour does not exist. A function generator keeps ids as the strings
+ * `bigintAsString` already models.
+ */
+export const AUTH_DATABASE_OPTIONS = {
+  generateId: () => createId(),
+} as const
+
 /** A social provider better-auth can sign users in with (white-label per tenant). */
 export const SOCIAL_PROVIDERS = ["google", "facebook"] as const
 export type SocialProvider = (typeof SOCIAL_PROVIDERS)[number]
@@ -389,18 +403,16 @@ function buildSocialProviders(
  * fire `config.upgradeOAuthAccount` right before an OAuth account row is
  * persisted (e.g. Facebook short-lived → long-lived token exchange, run on
  * every social sign-in — a returning user hits `update`, not `create`).
- * Returns `undefined` when neither is configured so better-auth keeps its
- * default behavior. Both hooks are best-effort: a throwing hook never blocks
- * sign-up/sign-in, and on failure the original data is persisted unmodified.
+ * `account.create.before` always runs `claimUnverifiedAccountBeforeLink` first
+ * (before the insert, and before better-auth marks the user verified), then the
+ * token upgrade; the claim hook fails closed. The user/token-upgrade hooks are
+ * best-effort: a throwing hook never blocks sign-up/sign-in, and on failure the
+ * original data is persisted unmodified.
  */
 function buildDatabaseHooks({
   onUserCreated,
   upgradeOAuthAccount,
 }: Pick<AuthConfig, "onUserCreated" | "upgradeOAuthAccount">) {
-  if (!(onUserCreated || upgradeOAuthAccount)) {
-    return
-  }
-
   const userHooks = onUserCreated
     ? {
         create: {
@@ -448,12 +460,22 @@ function buildDatabaseHooks({
 
   return {
     ...(userHooks && { user: userHooks }),
-    ...(upgradeAccountBeforeHook && {
-      account: {
-        create: { before: upgradeAccountBeforeHook },
-        update: { before: upgradeAccountBeforeHook },
+    account: {
+      create: {
+        before: async (
+          account: Parameters<typeof claimUnverifiedAccountBeforeLink>[0],
+          context: Parameters<typeof claimUnverifiedAccountBeforeLink>[1],
+        ) => {
+          await claimUnverifiedAccountBeforeLink(account, context)
+          return upgradeAccountBeforeHook
+            ? await upgradeAccountBeforeHook(account)
+            : undefined
+        },
       },
-    }),
+      ...(upgradeAccountBeforeHook && {
+        update: { before: upgradeAccountBeforeHook },
+      }),
+    },
   }
 }
 
@@ -520,12 +542,22 @@ export function createAuth(config: AuthConfig) {
         // link, so ANY existing account (password, magic link, or the other
         // social provider) sharing that email hits "account not linked" on
         // every Facebook sign-in. Both providers gate signup on owning the
-        // mailbox, so trusting them here is safe; `requireLocalEmailVerified`
-        // (default true, left untouched below) still requires the *local*
-        // side of the match to be a verified account before linking, which is
-        // what keeps this from being an account-takeover vector via an
-        // unverified placeholder signup.
+        // mailbox, so trusting them here is safe. See `requireLocalEmailVerified`
+        // below for how an unverified local placeholder is handled.
         trustedProviders: [...SOCIAL_PROVIDERS],
+        // The local side may be an email/password sign-up that never clicked
+        // its verification link, or a Facebook-first user (Facebook never
+        // returns `email_verified`). A trusted provider has proven the mailbox,
+        // so the local flag must not block the link. The placeholder's own
+        // other login methods and sessions are removed by
+        // `claimUnverifiedAccountBeforeLink` (an `account.create.before` hook,
+        // so it runs before the link is written), and only an email-attesting
+        // provider (Google) may claim one — Facebook stays refused. That is
+        // what keeps this from being a pre-registration takeover. Emails must
+        // still match: the implicit sign-in path looks the user up by the
+        // provider email, and the explicit link route keeps
+        // `allowDifferentEmails` off.
+        requireLocalEmailVerified: false,
       },
       additionalFields: {
         tenantId: {
@@ -727,9 +759,7 @@ export function createAuth(config: AuthConfig) {
       },
     },
     advanced: {
-      database: {
-        generateId: "serial",
-      },
+      database: AUTH_DATABASE_OPTIONS,
     },
     trustedOrigins: async () => {
       // better-auth resolves the function form of `trustedOrigins` once at

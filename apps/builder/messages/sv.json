@@ -419,7 +419,14 @@
     "signUpSuccess": "Registreringen lyckades. Kontrollera din e-post för verifiering.",
     "signUpTitle": "Registrera dig på {name}",
     "termsOfService": "Användarvillkor",
-    "trySigningInAgain": "Du kan också försöka logga in igen med en annan e-postadress."
+    "trySigningInAgain": "Du kan också försöka logga in igen med en annan e-postadress.",
+    "oauthError": {
+      "accountNotLinked": "Det finns redan ett konto med den här e-postadressen och det kunde inte kopplas. Logga in på samma sätt som tidigare eller kontakta supporten.",
+      "unableToLinkAccount": "Vi kunde inte koppla den här inloggningen till det befintliga kontot. Logga in på samma sätt som tidigare eller kontakta supporten.",
+      "sessionExpired": "Inloggningsförsöket har gått ut. Försök igen.",
+      "accessDenied": "Inloggningen avbröts.",
+      "generic": "Inloggningen misslyckades. Försök igen."
+    }
   },
   "autoAssignConversation": {
     "rule": {

@@ -18,6 +18,7 @@ import { withCallbackUrlParam } from "@/lib/safe-callback-url"
 import { useTenantSettings } from "../tenant"
 import { EmailPasswordSignIn } from "./components/email-password-sign-in"
 import { MagicLinkSignIn } from "./components/magic-link-signin"
+import { OAuthErrorAlert } from "./components/oauth-error-alert"
 import {
   AcceptTermsAndPolicy,
   AuthHeader,
@@ -53,6 +54,7 @@ export const SignInForm = ({
 
         <CardContent>
           <div className="grid gap-6">
+            <OAuthErrorAlert />
             {activeMethod ? (
               <>
                 {activeMethod === "email" ? (

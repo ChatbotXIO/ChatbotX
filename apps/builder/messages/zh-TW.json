@@ -3858,7 +3858,14 @@
     "signUpTitle": "註冊 {name}",
     "changePasswordTitle": "更改密碼",
     "changePasswordDescription": "在繼續之前設定新密碼。",
-    "passwordChangeSuccess": "密碼已更改"
+    "passwordChangeSuccess": "密碼已更改",
+    "oauthError": {
+      "accountNotLinked": "使用此電子郵件的帳戶已存在，無法連結。請使用之前的方式登入，或聯絡支援人員。",
+      "unableToLinkAccount": "我們無法將此次登入連結到現有帳戶。請使用您之前的方式登入，或聯絡支援人員。",
+      "sessionExpired": "登入嘗試已逾時。請重試。",
+      "accessDenied": "登入已取消。",
+      "generic": "登入失敗。請重試。"
+    }
   },
   "emailTopics": {
     "title": "電子郵件主題"

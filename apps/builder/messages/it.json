@@ -3825,7 +3825,14 @@
     "signUpTitle": "Registrati su {name}",
     "changePasswordTitle": "Cambia la password",
     "changePasswordDescription": "Imposta una nuova password prima di continuare.",
-    "passwordChangeSuccess": "Password modificata"
+    "passwordChangeSuccess": "Password modificata",
+    "oauthError": {
+      "accountNotLinked": "Esiste già un account con questa email e non è stato possibile collegarlo. Accedi come hai fatto in precedenza oppure contatta il supporto.",
+      "unableToLinkAccount": "Non è stato possibile collegare questo accesso all'account esistente. Accedi come hai fatto in precedenza oppure contatta il supporto.",
+      "sessionExpired": "Il tentativo di accesso è scaduto. Riprova.",
+      "accessDenied": "L'accesso è stato annullato.",
+      "generic": "Accesso non riuscito. Riprova."
+    }
   },
   "emailTopics": {
     "title": "Argomenti email"
