@@ -111,4 +111,49 @@ describe("getCapiConnectionState", () => {
       }),
     ).toBe("connectedCustom")
   })
+
+  describe("capiScopeRequired: false", () => {
+    const base = {
+      capiDisconnected: false,
+      hasManualCapiAccessToken: false,
+      hasCapiScope: false,
+    }
+
+    test("dataset without scope is connectedOauth", () => {
+      expect(
+        getCapiConnectionState({
+          ...base,
+          hasDatasetId: true,
+          capiScopeRequired: false,
+        }),
+      ).toBe("connectedOauth")
+    })
+
+    test("no dataset stays disconnected", () => {
+      expect(
+        getCapiConnectionState({
+          ...base,
+          hasDatasetId: false,
+          capiScopeRequired: false,
+        }),
+      ).toBe("disconnected")
+    })
+
+    test("user disconnect still wins", () => {
+      expect(
+        getCapiConnectionState({
+          ...base,
+          capiDisconnected: true,
+          hasDatasetId: true,
+          capiScopeRequired: false,
+        }),
+      ).toBe("disconnected")
+    })
+
+    test("omitted keeps awaitingScope", () => {
+      expect(getCapiConnectionState({ ...base, hasDatasetId: true })).toBe(
+        "awaitingScope",
+      )
+    })
+  })
 })

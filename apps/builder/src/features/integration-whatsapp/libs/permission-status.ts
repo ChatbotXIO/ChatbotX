@@ -1,3 +1,4 @@
+import { isCapiScopeRequired } from "@chatbotx.io/business/meta-conversions/capi-scope-policy"
 import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
 
 export type PermissionStatus = "ready" | "missingPermission" | "unverified"
@@ -47,10 +48,15 @@ export function getPermissionStatus(
   integration: { hasCapiScope: boolean },
   whatsappCredentialPublic: WhatsappCredentialPublic | null,
 ): PermissionStatus {
+  // A channel exempt from the scope requirement treats the scope as satisfied
+  // once a credential exists; without one the status stays unverified.
+  const hasCapiScope =
+    integration.hasCapiScope ||
+    (!isCapiScopeRequired("whatsapp") && whatsappCredentialPublic !== null)
   return (
     permissionStatusOrder.find((status) =>
       permissionStatusResolvers[status]({
-        integration,
+        integration: { hasCapiScope },
         whatsappCredentialPublic,
       }),
     ) ?? "unverified"

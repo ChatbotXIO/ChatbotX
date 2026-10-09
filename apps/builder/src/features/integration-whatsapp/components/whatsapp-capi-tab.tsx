@@ -1,6 +1,6 @@
 "use client"
 
-import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
+import { isCapiScopeRequired } from "@chatbotx.io/business/meta-conversions/capi-scope-policy"
 import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import {
@@ -29,25 +29,15 @@ import { connectWhatsappCustomCapiAction } from "../actions/connect-custom-capi.
 import { disconnectWhatsappCapiAction } from "../actions/disconnect-capi.action"
 import { provisionWhatsappCapiDatasetAction } from "../actions/provision-capi-dataset.action"
 import { setWhatsappCapiDatasetAction } from "../actions/set-capi-dataset.action"
-import { WhatsappReconnectButton } from "./whatsapp-reconnect-button"
 
 type WhatsappCapiTabProps = {
   integrationWhatsapp: Pick<
     IntegrationWhatsappModel,
-    | "id"
-    | "name"
-    | "displayPhoneNumber"
-    | "wabaId"
-    | "hasCapiScope"
-    | "isCoexist"
-    | "datasetId"
-    | "capiTestEventCode"
+    "id" | "hasCapiScope" | "datasetId" | "capiTestEventCode"
   >
   hasManualCapiAccessToken: boolean
   capiDisconnected: boolean
   credentialAvailable: boolean
-  whatsappCredentialPublic: WhatsappCredentialPublic | null
-  oauthCallbackUrl: string
 }
 
 const statusDescriptionKey = {
@@ -62,16 +52,10 @@ function renderConnectionContent({
   connectionState,
   integrationWhatsapp,
   workspaceId,
-  notice,
-  whatsappCredentialPublic,
-  oauthCallbackUrl,
 }: {
   connectionState: CapiConnectionState
   integrationWhatsapp: WhatsappCapiTabProps["integrationWhatsapp"]
   workspaceId: string
-  notice: string
-  whatsappCredentialPublic: WhatsappCredentialPublic | null
-  oauthCallbackUrl: string
 }) {
   if (connectionState === "disconnected") {
     return (
@@ -94,32 +78,15 @@ function renderConnectionContent({
         datasetId={integrationWhatsapp.datasetId}
         disconnectAction={disconnectWhatsappCapiAction}
         integrationId={integrationWhatsapp.id}
-        notice={connectionState === "awaitingScope" ? notice : undefined}
         workspaceId={workspaceId}
       />
-      {/* Sending needs the Meta scope or a manual token. While the scope is
-          still missing, a test would only be skipped — so instead of the test
-          card, offer the reconnect that re-requests
-          `whatsapp_business_manage_events` (the scope CAPI sending needs). */}
-      {connectionState === "awaitingScope" ? (
-        <div>
-          <WhatsappReconnectButton
-            integrationWhatsappId={integrationWhatsapp.id}
-            isCoexist={integrationWhatsapp.isCoexist}
-            oauthCallbackUrl={oauthCallbackUrl}
-            settings={whatsappCredentialPublic}
-            workspaceId={workspaceId}
-          />
-        </div>
-      ) : (
-        <CapiTestEventCard
-          channel="whatsapp"
-          datasetId={integrationWhatsapp.datasetId}
-          integrationId={integrationWhatsapp.id}
-          testEventCode={integrationWhatsapp.capiTestEventCode}
-          workspaceId={workspaceId}
-        />
-      )}
+      <CapiTestEventCard
+        channel="whatsapp"
+        datasetId={integrationWhatsapp.datasetId}
+        integrationId={integrationWhatsapp.id}
+        testEventCode={integrationWhatsapp.capiTestEventCode}
+        workspaceId={workspaceId}
+      />
     </>
   )
 }
@@ -129,16 +96,16 @@ export function WhatsappCapiTab({
   hasManualCapiAccessToken,
   capiDisconnected,
   credentialAvailable,
-  whatsappCredentialPublic,
-  oauthCallbackUrl,
 }: WhatsappCapiTabProps) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
+  const capiScopeRequired = isCapiScopeRequired("whatsapp")
   const connectionState = getCapiConnectionState({
     capiDisconnected,
     hasManualCapiAccessToken,
     hasCapiScope: integrationWhatsapp.hasCapiScope,
     hasDatasetId: Boolean(integrationWhatsapp.datasetId),
+    capiScopeRequired,
   })
   const status = getCapiStatus({
     hasCapiScope: integrationWhatsapp.hasCapiScope,
@@ -146,6 +113,7 @@ export function WhatsappCapiTab({
     hasManualCapiAccessToken,
     hasDatasetId: Boolean(integrationWhatsapp.datasetId),
     credentialAvailable,
+    capiScopeRequired,
   })
   const statusConfig = capiStatusConfig[status]
 
@@ -173,9 +141,6 @@ export function WhatsappCapiTab({
             connectionState,
             integrationWhatsapp,
             workspaceId,
-            notice: t("metaConversions.statusDescriptions.missingPermission"),
-            whatsappCredentialPublic,
-            oauthCallbackUrl,
           })}
           <p className="text-muted-foreground text-xs">
             {t("metaConversions.flowStep.whatsappNote")}
