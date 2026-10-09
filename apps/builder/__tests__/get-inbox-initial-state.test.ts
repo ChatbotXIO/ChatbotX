@@ -37,6 +37,9 @@ const { getInboxInitialState } = await import(
 const makeConversation = (id: string, contactId = `contact-${id}`) =>
   ({ id, contact: { id: contactId } }) as never
 
+// Numeric so it survives `zodBigintAsString` and counts as a valid deep link.
+const DEEP_LINK_ID = "1"
+
 const makeMessage = (id: string) => ({ id }) as never
 
 const contactPermissionScope = { canViewEmailAndPhone: true }
@@ -62,6 +65,22 @@ const mockSeedRequests = () => {
   })
 }
 
+// A deep link to a conversation that is also first in the list.
+const mockDeepLinkSeedRequests = () => {
+  mockListConversations.mockResolvedValue({
+    data: [makeConversation(DEEP_LINK_ID)],
+    nextCursor: null,
+  })
+  mockFindConversation.mockResolvedValue({
+    data: makeConversation(DEEP_LINK_ID),
+  })
+  mockListMessages.mockResolvedValue({
+    data: [makeMessage("message-new"), makeMessage("message-old")],
+    nextCursor: null,
+  })
+  mockGetContact.mockResolvedValue({ id: `contact-${DEEP_LINK_ID}` })
+}
+
 describe("getInboxInitialState", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -72,23 +91,44 @@ describe("getInboxInitialState", () => {
     vi.useRealTimers()
   })
 
-  test("selects the first conversation, reverses messages, and seeds its contact without a URL id", async () => {
+  // Opening a thread marks it read, so without a deep link the seed selects
+  // nothing and the inbox opens on the empty state.
+  test("selects nothing and seeds no thread or contact without a URL id", async () => {
     mockSeedRequests()
 
     const state = await getInitialState({ workspaceId: "workspace-1" })
 
+    expect(mockFindConversation).not.toHaveBeenCalled()
+    expect(mockListMessages).not.toHaveBeenCalled()
+    expect(mockGetContact).not.toHaveBeenCalled()
     expect(state).toMatchObject({
-      activeConversationAutoSelected: true,
-      activeConversationId: "conversation-1",
+      activeConversationId: null,
+      conversations: [makeConversation("conversation-1")],
+    })
+    expect(state).not.toHaveProperty("activeConversationAutoSelected")
+    expect(state?.messagesSeed).toBeUndefined()
+    expect(state?.seededContact).toBeUndefined()
+  })
+
+  test("selects a deep-linked conversation, reverses its messages, and seeds its contact", async () => {
+    mockDeepLinkSeedRequests()
+
+    const state = await getInitialState({
+      workspaceId: "workspace-1",
+      conversationId: DEEP_LINK_ID,
+    })
+
+    expect(state).toMatchObject({
+      activeConversationId: DEEP_LINK_ID,
       messagesSeed: {
         messages: [makeMessage("message-old"), makeMessage("message-new")],
-        messagesConversationId: "conversation-1",
+        messagesConversationId: DEEP_LINK_ID,
       },
-      seededContact: { id: "contact-conversation-1" },
+      seededContact: { id: `contact-${DEEP_LINK_ID}` },
     })
   })
 
-  test("moves a found URL conversation to the top without marking it auto-selected", async () => {
+  test("moves a found URL conversation to the top", async () => {
     const target = makeConversation("2")
     mockListConversations.mockResolvedValue({
       data: [makeConversation("1"), target],
@@ -107,7 +147,6 @@ describe("getInboxInitialState", () => {
     })
 
     expect(state).toMatchObject({
-      activeConversationAutoSelected: false,
       activeConversationId: "2",
       conversations: [target, makeConversation("1")],
     })
@@ -123,7 +162,6 @@ describe("getInboxInitialState", () => {
     })
 
     expect(state).toMatchObject({
-      activeConversationAutoSelected: false,
       activeConversationId: null,
       conversations: [makeConversation("conversation-1")],
     })
@@ -146,7 +184,6 @@ describe("getInboxInitialState", () => {
     expect(mockListMessages).not.toHaveBeenCalled()
     expect(mockGetContact).not.toHaveBeenCalled()
     expect(state).toMatchObject({
-      activeConversationAutoSelected: false,
       activeConversationId: null,
       conversations: [makeConversation("conversation-1")],
     })
@@ -155,21 +192,24 @@ describe("getInboxInitialState", () => {
   })
 
   test("returns the remaining seed when loading messages rejects", async () => {
-    mockSeedRequests()
+    mockDeepLinkSeedRequests()
     mockListMessages.mockRejectedValue(new Error("messages failed"))
 
-    const state = await getInitialState({ workspaceId: "workspace-1" })
+    const state = await getInitialState({
+      workspaceId: "workspace-1",
+      conversationId: DEEP_LINK_ID,
+    })
 
     expect(state).toMatchObject({
-      activeConversationId: "conversation-1",
-      seededContact: { id: "contact-conversation-1" },
+      activeConversationId: DEEP_LINK_ID,
+      seededContact: { id: `contact-${DEEP_LINK_ID}` },
     })
     expect(state).not.toHaveProperty("messagesSeed")
     expect(loggerWarnMock).toHaveBeenCalledWith(
       expect.objectContaining({
         err: expect.any(Error),
         workspaceId: "workspace-1",
-        conversationId: "conversation-1",
+        conversationId: DEEP_LINK_ID,
       }),
       "getInboxInitialState: failed to seed messages state",
     )
@@ -190,12 +230,15 @@ describe("getInboxInitialState", () => {
   })
 
   test("passes the contact permission scope to the contact seed", async () => {
-    mockSeedRequests()
+    mockDeepLinkSeedRequests()
 
-    await getInitialState({ workspaceId: "workspace-1" })
+    await getInitialState({
+      workspaceId: "workspace-1",
+      conversationId: DEEP_LINK_ID,
+    })
 
     expect(mockGetContact).toHaveBeenCalledWith(
-      { contactId: "contact-conversation-1", workspaceId: "workspace-1" },
+      { contactId: `contact-${DEEP_LINK_ID}`, workspaceId: "workspace-1" },
       contactPermissionScope,
     )
   })
@@ -205,15 +248,16 @@ describe("getInboxInitialState", () => {
       canViewEmailAndPhone: false,
       restrictToAssignedUserId: "user-1",
     }
-    mockSeedRequests()
+    mockDeepLinkSeedRequests()
 
     await getInboxInitialState({
       workspaceId: "workspace-1",
+      conversationId: DEEP_LINK_ID,
       contactPermissionScope: restrictedScope,
     })
 
     expect(mockGetContact).toHaveBeenCalledWith(
-      { contactId: "contact-conversation-1", workspaceId: "workspace-1" },
+      { contactId: `contact-${DEEP_LINK_ID}`, workspaceId: "workspace-1" },
       restrictedScope,
     )
   })

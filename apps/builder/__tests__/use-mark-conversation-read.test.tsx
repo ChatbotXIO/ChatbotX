@@ -25,6 +25,9 @@ vi.mock("@/features/chat/store/chat-store-provider", () => ({
 const { useMarkConversationRead } = await import(
   "@/features/conversations/hooks/use-mark-conversation-read"
 )
+const { registerPendingUnread } = await import(
+  "@/features/conversations/lib/pending-reads"
+)
 
 const target = {
   id: "conversation-1",
@@ -95,6 +98,55 @@ describe("useMarkConversationRead", () => {
       ["conversation-1"],
       new Date(persistedAt),
     )
+  })
+
+  // Reopening right after "Mark as Unread": the read must queue behind the
+  // unread write, or it could commit first and leave the thread unread.
+  test("queues the read behind a pending unread write for the same conversation", async () => {
+    const write = deferred()
+    registerPendingUnread(
+      "conversation-1",
+      write.promise.then(() => undefined),
+    )
+
+    const read = markReadFromRow(target)
+    await Promise.resolve()
+    expect(readConversationActionMock).not.toHaveBeenCalled()
+
+    write.resolve(undefined)
+    await read
+
+    expect(readConversationActionMock).toHaveBeenCalledTimes(1)
+    expect(storeState.applyAgentLastReadAt).toHaveBeenCalledWith(
+      ["conversation-1"],
+      new Date(persistedAt),
+    )
+  })
+
+  // The unread write registers before it waits for the in-flight read. A
+  // reopen during that wait must get a fresh read behind the write, not the
+  // older in-flight read that the write itself is waiting for.
+  test("does not reuse an in-flight read for a reopen issued after an unread write registered", async () => {
+    const first = deferred()
+    readConversationActionMock.mockReturnValueOnce(first.promise)
+    const earlier = markReadFromRow(target)
+    expect(readConversationActionMock).toHaveBeenCalledTimes(1)
+
+    const write = deferred()
+    registerPendingUnread(
+      "conversation-1",
+      write.promise.then(() => undefined),
+    )
+    const reopen = markReadFromPane(target)
+    expect(reopen).not.toBe(earlier)
+
+    first.resolve({ data: { agentLastReadAt: persistedAt } })
+    await earlier
+    expect(readConversationActionMock).toHaveBeenCalledTimes(1)
+
+    write.resolve(undefined)
+    await reopen
+    expect(readConversationActionMock).toHaveBeenCalledTimes(2)
   })
 
   test("surfaces a server error as a toast and leaves the store untouched", async () => {

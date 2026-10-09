@@ -1415,6 +1415,14 @@
     "deleteConfirmation": "האם אתם בטוחים לחלוטין?\nלא ניתן לבטל פעולה זו.\nפעולה זו תמחק לצמיתות את {feature} מהשרתים שלנו."
   },
   "messages": {
+    "timeAgo": {
+      "now": "עכשיו",
+      "minutes": "{count} דק׳",
+      "hours": "{count} שע׳",
+      "days": "{count} ימ׳",
+      "months": "{count} חוד׳",
+      "years": "{count} שנ׳"
+    },
     "moveFeature": "העברת {feature}",
     "poweredBy": "מופעל על ידי {name}",
     "noGiphyApiKey": "לא נמצא מפתח API של GIPHY. הוסיפו מפתח בהגדרות הפלטפורמה.",

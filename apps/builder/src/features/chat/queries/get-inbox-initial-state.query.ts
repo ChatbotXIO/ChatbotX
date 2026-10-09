@@ -34,9 +34,11 @@ const INBOX_SEED_TIMEOUT_MS = 3000
  * union — rather than the `conversationId?: string` + `hasUrlConversationId:
  * boolean` pair this replaces — because that pair could represent a fourth,
  * impossible combination (`hasUrlConversationId: false` with a `conversationId`
- * set): the seed would then seed messages/contact for that id but mark
- * `activeConversationAutoSelected: true` as if no deep link had been
- * requested, mislabeling a genuine deep link as an auto-selection.
+ * set): the seed would then seed messages/contact for an id nothing asked for.
+ *
+ * Only a valid deep link selects a conversation. Without one the inbox opens
+ * on the empty state — never on the newest conversation, since opening a
+ * thread marks it read and that must stay the agent's own decision.
  */
 type UrlConversation =
   | { kind: "none" }
@@ -119,36 +121,29 @@ const shapeInitialState = ({
   listedConversations,
   nextCursor,
   activeConversation,
-  urlConversation,
   messagesResult,
   contactResult,
 }: {
   listedConversations: ListConversationItemResource[]
   nextCursor: string | null
   activeConversation: ListConversationItemResource | null
-  urlConversation: UrlConversation
   messagesResult: PromiseSettledResult<ChatStoreInitialState>
   contactResult: PromiseSettledResult<ChatStoreInitialState>
 }): ChatStoreInitialState => {
-  const isUrlConversation = urlConversation.kind !== "none"
-  const conversations =
-    isUrlConversation && activeConversation
-      ? [
-          activeConversation,
-          ...listedConversations.filter(
-            (conversation) => conversation.id !== activeConversation.id,
-          ),
-        ]
-      : listedConversations
+  const conversations = activeConversation
+    ? [
+        activeConversation,
+        ...listedConversations.filter(
+          (conversation) => conversation.id !== activeConversation.id,
+        ),
+      ]
+    : listedConversations
 
   return {
     conversations,
     nextCursorConversation: nextCursor,
     isFirstLoadConversation: false,
     activeConversationId: activeConversation?.id ?? null,
-    activeConversationAutoSelected: isUrlConversation
-      ? false
-      : Boolean(activeConversation),
     ...(messagesResult.status === "fulfilled" && activeConversation
       ? messagesResult.value
       : {}),
@@ -181,18 +176,10 @@ const loadInitialState = async ({
     ? findConversation({ workspaceId, id: conversationId })
     : null
 
-  let activeConversationPromise: Promise<ListConversationItemResource | null>
-  if (findConversationPromise) {
-    activeConversationPromise = findConversationPromise.then(
-      (result) => result.data,
-    )
-  } else if (urlConversation.kind === "invalid") {
-    activeConversationPromise = Promise.resolve(null)
-  } else {
-    activeConversationPromise = conversationsPromise.then(
-      ({ data }) => data[0] ?? null,
-    )
-  }
+  const activeConversationPromise: Promise<ListConversationItemResource | null> =
+    findConversationPromise
+      ? findConversationPromise.then((result) => result.data)
+      : Promise.resolve(null)
 
   const logSeedFailure =
     (message: string, seedConversationId: string | null) => (err: unknown) => {
@@ -281,15 +268,12 @@ const loadInitialState = async ({
     } else {
       activeConversation = conversationResult.value?.data ?? null
     }
-  } else if (urlConversation.kind === "none") {
-    activeConversation = listedConversations[0] ?? null
   }
 
   return shapeInitialState({
     listedConversations,
     nextCursor,
     activeConversation,
-    urlConversation,
     messagesResult,
     contactResult,
   })

@@ -31,19 +31,9 @@ import { useConversationIdParam } from "./hooks/use-conversation-id-param"
 export default function ConversationList({
   canViewEmailAndPhone = true,
   workspaceId,
-  autoSelectFirstConversation = true,
 }: {
   canViewEmailAndPhone?: boolean
   workspaceId: string
-  /**
-   * Whether an empty selection may be filled in with the first conversation
-   * once the list loads.
-   *
-   * The mobile inbox passes `false`: there the list remounts every time the
-   * user returns from the thread via the back control, and auto-selecting
-   * would immediately reopen a thread instead of showing the list.
-   */
-  autoSelectFirstConversation?: boolean
 }) {
   const t = useTranslations()
   const conversationIdParam = useConversationIdParam()
@@ -82,9 +72,7 @@ export default function ConversationList({
     if (!isFirstLoadConversation) {
       return
     }
-    loadMoreConversations(workspaceId, {
-      autoSelectFirst: autoSelectFirstConversation,
-    }).catch(() => {
+    loadMoreConversations(workspaceId).catch(() => {
       toast.error(t("messages.errorLoadingData"))
     })
   }, [])
@@ -97,9 +85,7 @@ export default function ConversationList({
   // Load more items when reaching the end of the list
   const loadMoreItems = () => {
     if (!isLoadingConversation && hasNextPage) {
-      loadMoreConversations(workspaceId, {
-        autoSelectFirst: autoSelectFirstConversation,
-      }).catch(() => {
+      loadMoreConversations(workspaceId).catch(() => {
         toast.error(t("messages.errorLoadingData"))
       })
     }
@@ -108,10 +94,7 @@ export default function ConversationList({
   const handleChange = useDebouncedCallback(() => {
     conversationIdParam.clear()
     resetState()
-    loadMoreConversations(workspaceId, {
-      respectUrlConversationId: false,
-      autoSelectFirst: autoSelectFirstConversation,
-    }).catch(() => {
+    loadMoreConversations(workspaceId).catch(() => {
       toast.error(t("messages.errorLoadingData"))
     })
   }, 300)

@@ -3468,6 +3468,14 @@
     "title": "Chỉnh sửa hồ sơ"
   },
   "messages": {
+    "timeAgo": {
+      "now": "Vừa xong",
+      "minutes": "{count} phút",
+      "hours": "{count} giờ",
+      "days": "{count} ngày",
+      "months": "{count} tháng",
+      "years": "{count} năm"
+    },
     "moveFeature": "Di chuyển {feature}",
     "poweredBy": "Được cung cấp bởi {name}",
     "noGiphyApiKey": "Không tìm thấy khóa API GIPHY. Vui lòng thêm vào Cài đặt Nền tảng.",

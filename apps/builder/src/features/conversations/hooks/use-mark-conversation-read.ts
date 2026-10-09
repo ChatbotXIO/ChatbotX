@@ -4,6 +4,11 @@ import { useCallback } from "react"
 import { toast } from "sonner"
 import { useChatStore } from "@/features/chat/store/chat-store-provider"
 import { readConversationAction } from "../actions/read-conversation.action"
+import {
+  getPendingUnread,
+  type InFlightRead,
+  inFlightReadByConversationId,
+} from "../lib/pending-reads"
 import type { ListConversationItemResource } from "../schema/resource"
 
 export type MarkReadTarget = Pick<
@@ -15,17 +20,6 @@ type ApplyAgentLastReadAt = (
   conversationIds: string[],
   agentLastReadAt: Date,
 ) => void
-
-type InFlightRead = {
-  request: Promise<void>
-  /** Activity the request was issued for, as epoch ms; null when none. */
-  activityAt: number | null
-}
-
-// Module-wide so every hook instance (active row, thread pane) shares it:
-// click, scroll and leave can all fire for the same conversation within one
-// tick, and one request in flight per conversation is enough.
-const inFlightByConversationId = new Map<string, InFlightRead>()
 
 const activityTimeOf = (target: MarkReadTarget): number | null =>
   target.lastActivityAt === null
@@ -48,8 +42,13 @@ const hasNewerActivity = (
 const requestRead = (
   target: MarkReadTarget,
   applyAgentLastReadAt: ApplyAgentLastReadAt,
-): Promise<void> =>
-  readConversationAction(target.workspaceId, target.id)
+  pendingUnread: Promise<void> | undefined,
+): Promise<void> => {
+  const read = () => readConversationAction(target.workspaceId, target.id)
+  // A "mark unread" write still in flight goes first; otherwise this read
+  // could commit before it and the reopened thread would end up unread.
+  // Issued synchronously when nothing is pending.
+  return (pendingUnread ? pendingUnread.then(read) : read())
     .then((result) => {
       if (result?.serverError) {
         toast.error(result.serverError)
@@ -63,6 +62,7 @@ const requestRead = (
       // Transport failure: same as `useAction`'s fetchError, which the
       // inbox never surfaces — the row simply stays unread.
     })
+}
 
 /**
  * Marks a conversation read on the server and mirrors the persisted read
@@ -81,23 +81,30 @@ export function useMarkConversationRead() {
 
   return useCallback(
     (target: MarkReadTarget): Promise<void> => {
-      const inFlight = inFlightByConversationId.get(target.id)
-      if (inFlight && !hasNewerActivity(inFlight, target)) {
+      const inFlight = inFlightReadByConversationId.get(target.id)
+      const pendingUnread = getPendingUnread(target.id)
+      if (
+        inFlight &&
+        inFlight.behindUnread === pendingUnread &&
+        !hasNewerActivity(inFlight, target)
+      ) {
         return inFlight.request
       }
 
-      const read = () => requestRead(target, applyAgentLastReadAt)
+      const read = () =>
+        requestRead(target, applyAgentLastReadAt, pendingUnread)
       const request: Promise<void> = (
         inFlight ? inFlight.request.then(read) : read()
       ).finally(() => {
-        if (inFlightByConversationId.get(target.id)?.request === request) {
-          inFlightByConversationId.delete(target.id)
+        if (inFlightReadByConversationId.get(target.id)?.request === request) {
+          inFlightReadByConversationId.delete(target.id)
         }
       })
 
-      inFlightByConversationId.set(target.id, {
+      inFlightReadByConversationId.set(target.id, {
         request,
         activityAt: activityTimeOf(target),
+        behindUnread: pendingUnread,
       })
       return request
     },

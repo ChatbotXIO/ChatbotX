@@ -3426,6 +3426,14 @@
     "deleteConfirmation": "Ești absolut sigur?\nAceastă acțiune nu poate fi anulată.\nAceasta va șterge definitiv {feature} de pe serverele noastre."
   },
   "messages": {
+    "timeAgo": {
+      "now": "acum",
+      "minutes": "{count} min",
+      "hours": "{count} h",
+      "days": "{count} z",
+      "months": "{count} luni",
+      "years": "{count} ani"
+    },
     "moveFeature": "Mută {feature}",
     "poweredBy": "Susținut de {name}",
     "noGiphyApiKey": "Nu a fost găsită nicio cheie API GIPHY. Te rugăm să adaugi una în Setările platformei.",

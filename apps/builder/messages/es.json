@@ -3426,6 +3426,14 @@
     "title": "Editar perfil"
   },
   "messages": {
+    "timeAgo": {
+      "now": "ahora",
+      "minutes": "{count} min",
+      "hours": "{count} h",
+      "days": "{count} d",
+      "months": "{count} mes",
+      "years": "{count} a"
+    },
     "moveFeature": "Mover {feature}",
     "poweredBy": "Con tecnología de {name}",
     "noGiphyApiKey": "No GIPHY API clave found. Por favor, Añadir one en Platform Ajustes.",

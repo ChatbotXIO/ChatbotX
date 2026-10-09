@@ -3426,6 +3426,14 @@
     "deleteConfirmation": "Er du absolutely sure?\nDenne action kan ikke være undone.\nDenne vil permanently slet din {feature} fra our servers."
   },
   "messages": {
+    "timeAgo": {
+      "now": "nu",
+      "minutes": "{count} min.",
+      "hours": "{count} t.",
+      "days": "{count} d.",
+      "months": "{count} md.",
+      "years": "{count} år"
+    },
     "moveFeature": "Flyt {feature}",
     "poweredBy": "Powered af {name}",
     "noGiphyApiKey": "Ingen GIPHY API-nøgle found. Venligst tilføj one i Platform Indstillinger.",

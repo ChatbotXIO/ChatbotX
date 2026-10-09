@@ -3426,6 +3426,14 @@
     "title": "تعديل الملف الشخصي"
   },
   "messages": {
+    "timeAgo": {
+      "now": "الآن",
+      "minutes": "{count} د",
+      "hours": "{count} س",
+      "days": "{count} ي",
+      "months": "{count} ش",
+      "years": "{count} سنة"
+    },
     "moveFeature": "نقل {feature}",
     "poweredBy": "مدعوم من {name}",
     "noGiphyApiKey": "لم يتم العثور على مفتاح GIPHY API. يُرجى إضافته في إعدادات المنصة.",

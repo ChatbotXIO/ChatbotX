@@ -67,15 +67,12 @@ function PaneEmptyState({
 export function ConversationListPane({
   canViewEmailAndPhone,
   workspaceId,
-  autoSelectFirstConversation,
 }: {
   canViewEmailAndPhone: boolean
   workspaceId: string
-  autoSelectFirstConversation?: boolean
 }) {
   return (
     <ConversationList
-      autoSelectFirstConversation={autoSelectFirstConversation}
       canViewEmailAndPhone={canViewEmailAndPhone}
       workspaceId={workspaceId}
     />

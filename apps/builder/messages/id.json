@@ -3426,6 +3426,14 @@
     "deleteConfirmation": "Apakah Anda benar-benar yakin?\nTindakan ini tidak dapat dibatalkan.\nTindakan ini akan menghapus {feature} Anda secara permanen dari server kami."
   },
   "messages": {
+    "timeAgo": {
+      "now": "baru saja",
+      "minutes": "{count} mnt",
+      "hours": "{count} jam",
+      "days": "{count} hr",
+      "months": "{count} bln",
+      "years": "{count} thn"
+    },
     "moveFeature": "Pindahkan {feature}",
     "poweredBy": "Didukung oleh {name}",
     "noGiphyApiKey": "Kunci API GIPHY tidak ditemukan. Tambahkan di Pengaturan Platform.",

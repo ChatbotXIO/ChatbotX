@@ -3405,6 +3405,14 @@
     "deleteConfirmation": "Você tem certeza absoluta?\nEsta ação não pode ser desfeita.\nIsso excluirá permanentemente {feature} dos nossos servidores."
   },
   "messages": {
+    "timeAgo": {
+      "now": "agora",
+      "minutes": "{count} min",
+      "hours": "{count} h",
+      "days": "{count} d",
+      "months": "{count} mês",
+      "years": "{count} a"
+    },
     "moveFeature": "Mover {feature}",
     "poweredBy": "Desenvolvido por {name}",
     "noGiphyApiKey": "Nenhuma chave da API do GIPHY encontrada. Adicione uma nas Configurações da plataforma.",
