@@ -147,6 +147,108 @@ describe("buildConversationWhere channel filter", () => {
     })
   })
 
+  // The inbox hides blocked contacts by default. A contact filter that names
+  // `blocked` is the user overriding that default, so the hidden predicate must
+  // step aside instead of AND-ing into `IS NULL AND IS NOT NULL` (zero rows).
+  test("drops the hidden blocked-contact default when the contact filter targets blocked", () => {
+    vi.mocked(applyContactFilter).mockReturnValueOnce({
+      AND: [{ blockedAt: { isNotNull: true } }],
+    })
+
+    const where = buildConversationWhere(
+      "1",
+      {
+        ...baseInput,
+        contactFilter: {
+          operator: "and",
+          conditions: [{ field: "blocked", operator: "eq", value: "true" }],
+        },
+      },
+      null,
+    )
+
+    expect(where.contact).toEqual({
+      AND: [{ blockedAt: { isNotNull: true } }],
+    })
+  })
+
+  test("keeps hiding blocked contacts when the contact filter does not mention blocked", () => {
+    vi.mocked(applyContactFilter).mockReturnValueOnce({
+      AND: [{ fullName: { ilike: "%ada%" } }],
+    })
+
+    const where = buildConversationWhere(
+      "1",
+      {
+        ...baseInput,
+        contactFilter: {
+          operator: "and",
+          conditions: [
+            { field: "fullName", operator: "contains", value: "ada" },
+          ],
+        },
+      },
+      null,
+    )
+
+    expect(where.contact).toEqual({
+      AND: [{ blockedAt: { isNull: true } }, { fullName: { ilike: "%ada%" } }],
+    })
+  })
+
+  test("lifts the hidden default for an `or` filter too, so the inbox matches the contacts page", () => {
+    vi.mocked(applyContactFilter).mockReturnValueOnce({
+      OR: [
+        { blockedAt: { isNotNull: true } },
+        { fullName: { ilike: "%ada%" } },
+      ],
+    })
+
+    const where = buildConversationWhere(
+      "1",
+      {
+        ...baseInput,
+        contactFilter: {
+          operator: "or",
+          conditions: [
+            { field: "blocked", operator: "eq", value: "true" },
+            { field: "fullName", operator: "contains", value: "ada" },
+          ],
+        },
+      },
+      null,
+    )
+
+    expect(where.contact).toEqual({
+      OR: [
+        { blockedAt: { isNotNull: true } },
+        { fullName: { ilike: "%ada%" } },
+      ],
+    })
+  })
+
+  test("lifts the hidden default for a single-condition `or` filter on blocked", () => {
+    vi.mocked(applyContactFilter).mockReturnValueOnce({
+      OR: [{ blockedAt: { isNotNull: true } }],
+    })
+
+    const where = buildConversationWhere(
+      "1",
+      {
+        ...baseInput,
+        contactFilter: {
+          operator: "or",
+          conditions: [{ field: "blocked", operator: "eq", value: "true" }],
+        },
+      },
+      null,
+    )
+
+    expect(where.contact).toEqual({
+      OR: [{ blockedAt: { isNotNull: true } }],
+    })
+  })
+
   test("forwards a restricted email/phone scope to the smart keyword search", () => {
     buildConversationWhere("1", { ...baseInput, keyword: "ada@x.com" }, null, {
       includeEmailAndPhone: false,

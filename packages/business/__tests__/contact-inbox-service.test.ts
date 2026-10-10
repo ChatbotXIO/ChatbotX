@@ -615,6 +615,47 @@ describe("contactInboxService timestamp helpers", () => {
     )
     expect(statement).not.toContain("CASE")
   })
+
+  // Coexist history sync dates a contact inbox from the first synced message;
+  // every other caller leaves `createdAt` unset, which LEAST turns into a
+  // no-op for that column.
+  test("bulkUpdateTracking backdates createdAt only when a row carries it", async () => {
+    const createdAt = new Date("2026-06-01T00:00:00.000Z")
+    await contactInboxService.bulkUpdateTracking({
+      rows: [
+        {
+          contactInboxId: "contact-inbox-1",
+          contactId: "contact-1",
+          workspaceId: "workspace-1",
+          firstInteractionAt: createdAt,
+          lastMessageAt: new Date("2026-07-02T00:00:00.000Z"),
+          lastIncomingMessageAt: null,
+          createdAt,
+        },
+        {
+          contactInboxId: "contact-inbox-2",
+          contactId: "contact-1",
+          workspaceId: "workspace-1",
+          firstInteractionAt: new Date("2026-07-03T00:00:00.000Z"),
+          lastMessageAt: new Date("2026-07-04T00:00:00.000Z"),
+          lastIncomingMessageAt: null,
+        },
+      ],
+    })
+
+    const call = mockDbExecute.mock.calls[0][0] as {
+      strings: string[]
+      values: unknown[]
+    }
+    expect(call.strings.join(" ")).toContain(
+      '"createdAt" = LEAST(t."createdAt", u.created_ts)',
+    )
+    // `mockSql.join` captures the per-row `sql` fragments; the last value of
+    // each is the `created_ts` operand.
+    const rows = call.values[0] as { chunks: Array<{ values: unknown[] }> }
+    expect(rows.chunks[0]?.values.at(-1)).toBe(createdAt)
+    expect(rows.chunks[1]?.values.at(-1)).toBeNull()
+  })
 })
 
 describe("contactInboxService.completeProfileSnapshot", () => {

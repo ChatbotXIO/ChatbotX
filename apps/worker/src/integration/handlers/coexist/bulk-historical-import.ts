@@ -5,6 +5,7 @@ import {
   bulkImportChannelContacts,
   type ChannelContactImportLink,
   contactInboxService,
+  contactService,
   conversationService,
 } from "@chatbotx.io/business"
 import { describeDatabaseError } from "@chatbotx.io/database/client"
@@ -420,6 +421,10 @@ const mergeConversationUpdate = (
  * worker's wall clock:
  *
  *   - ContactInbox.firstInteractionAt: set once from the oldest message.
+ *   - ContactInbox.createdAt / Contact.createdAt: moved back to the oldest
+ *     message, so a synced contact is dated from the first time they chatted
+ *     with the page rather than from when the sync ran (backdate-only, so
+ *     chunks that arrive newest-first converge on the true first message).
  *   - ContactInbox.lastMessageAt: set from the newest message.
  *   - ContactInbox.lastIncomingMessageAt: advance from the newest incoming
  *     message only; outgoing history must not move this field.
@@ -457,7 +462,17 @@ export const applyCoexistActivityUpdates = async (
     mergeConversationUpdate(newestByConversation, u)
   }
 
-  // The two writes touch disjoint tables from disjoint maps — run in parallel.
+  // A contact can own several contact inboxes in one batch (one per
+  // channel thread); its creation time is the oldest across all of them.
+  const oldestByContact = new Map<string, Date>()
+  for (const update of newestByContactInbox.values()) {
+    const current = oldestByContact.get(update.contactId)
+    if (!current || current > update.oldestMessageAt) {
+      oldestByContact.set(update.contactId, update.oldestMessageAt)
+    }
+  }
+
+  // The three writes touch disjoint tables from disjoint maps — run in parallel.
   await Promise.all([
     newestByContactInbox.size > 0
       ? contactInboxService.bulkUpdateTracking({
@@ -468,7 +483,16 @@ export const applyCoexistActivityUpdates = async (
             firstInteractionAt: update.oldestMessageAt,
             lastMessageAt: update.newestMessageAt,
             lastIncomingMessageAt: update.newestIncomingMessageAt,
+            createdAt: update.oldestMessageAt,
           })),
+        })
+      : Promise.resolve(),
+    oldestByContact.size > 0
+      ? contactService.backdateCreatedAt({
+          workspaceId: options.workspaceId,
+          rows: [...oldestByContact.entries()].map(
+            ([contactId, createdAt]) => ({ contactId, createdAt }),
+          ),
         })
       : Promise.resolve(),
     newestByConversation.size > 0
