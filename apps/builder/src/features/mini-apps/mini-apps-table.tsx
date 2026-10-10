@@ -29,7 +29,6 @@ import {
   LinkIcon,
   MoreHorizontalIcon,
   PencilIcon,
-  PlusIcon,
   SendIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -42,6 +41,7 @@ import { useClipboard } from "@/hooks/use-clipboard"
 import { getMiniAppFlowJsonAction } from "./actions/get-mini-app-flow-json.action"
 import { FlowJsonDialog } from "./components/flow-json-dialog"
 import { PublishWhatsappDialog } from "./components/publish-whatsapp-dialog"
+import { CreateMiniAppDialog } from "./create-mini-app-dialog"
 import { DeleteMiniAppsDialog } from "./delete-mini-apps"
 import { buildMiniAppPublicUrl } from "./lib/public-url"
 import type { listMiniApps, WhatsappPublishTarget } from "./queries"
@@ -314,13 +314,7 @@ export function MiniAppsTable({ workspaceId, promises }: MiniAppsTableProps) {
                 />
               ) : null}
             </div>
-            <Button
-              render={<Link href={`/space/${workspaceId}/mini-apps/create`} />}
-              size="sm"
-            >
-              <PlusIcon className="size-4" />
-              {t("actions.create")}
-            </Button>
+            <CreateMiniAppDialog workspaceId={workspaceId} />
           </DataTableToolbar>
         </DataTable>
 

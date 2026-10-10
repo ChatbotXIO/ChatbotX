@@ -1,6 +1,6 @@
 import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
-import { rescue, WhatsappException } from "../exception"
+import { parseOriginError, rescue, WhatsappException } from "../exception"
 import { logger } from "../lib/logger"
 import type {
   FlowAssetsResponse,
@@ -275,8 +275,13 @@ export type PublishFlowJsonParams = {
 
 export type PublishFlowJsonResult = {
   flow: WhatsappFlow
-  /** False when Meta kept the Flow as a draft because of validation errors. */
+  /**
+   * False when Meta kept the Flow as a draft: validation errors (on
+   * `flow.validation_errors`) or a refused publish (on `publishError`).
+   */
   published: boolean
+  /** Why Meta refused to publish a Flow with no validation errors. */
+  publishError?: string
 }
 
 type FlowWriteResponse = {
@@ -309,7 +314,6 @@ const createFlow = (
           name: params.name,
           categories: params.categories?.length ? params.categories : ["OTHER"],
           flow_json: params.flowJson,
-          publish: true,
         },
       },
     )
@@ -350,6 +354,49 @@ const publishFlow = (auth: WhatsappAuthValue, flowId: string) => {
 const hasErrors = (response: FlowWriteResponse) =>
   (response.validation_errors?.length ?? 0) > 0
 
+const PUBLISH_REFUSED_MESSAGE = "Meta did not publish the Flow"
+
+/** Calls `/publish`; returns Meta's reason when it refuses, else undefined. */
+const tryPublish = async (
+  auth: WhatsappAuthValue,
+  flowId: string,
+): Promise<string | undefined> => {
+  try {
+    const response = await publishFlow(auth, flowId)
+    return response.success === false ? PUBLISH_REFUSED_MESSAGE : undefined
+  } catch (err) {
+    // Publishing checks (business verification, connected app, …) can
+    // refuse a Flow whose JSON is valid.
+    logger.warn({ err, flowId }, "Meta refused to publish the Flow")
+    const origin = parseOriginError(err)
+    return origin.userMessage ?? origin.message ?? PUBLISH_REFUSED_MESSAGE
+  }
+}
+
+/**
+ * Publishes a Flow whose JSON was just written without validation errors.
+ * A new Flow starts as DRAFT, and writing new JSON to a published Flow turns
+ * it back to DRAFT, so a Flow read as DRAFT is published here. A refused
+ * publish returns the draft with `publishError` instead of throwing, so the
+ * caller still records the Flow and the next attempt reuses it.
+ */
+const publishDraft = async (
+  auth: WhatsappAuthValue,
+  flowId: string,
+): Promise<PublishFlowJsonResult> => {
+  const current = await getFlow(auth, flowId)
+  if (current.status !== "DRAFT") {
+    return { flow: current, published: current.status === "PUBLISHED" }
+  }
+  const publishError = await tryPublish(auth, flowId)
+  const flow = await getFlow(auth, flowId)
+  if (publishError) {
+    return { flow, published: false, publishError }
+  }
+  // Meta accepted the publish; a read right after it can still say DRAFT.
+  return { flow: { ...flow, status: "PUBLISHED" }, published: true }
+}
+
 /** Updates an editable Flow in place; returns undefined when it cannot be reused. */
 const tryUpdateExisting = async (
   auth: WhatsappAuthValue,
@@ -373,17 +420,15 @@ const tryUpdateExisting = async (
     )
     return
   }
-  if (current.status === "DRAFT") {
-    await publishFlow(auth, flowId)
-  }
-  return { flow: await getFlow(auth, flowId), published: true }
+  return await publishDraft(auth, flowId)
 }
 
 /**
  * Creates (or updates) a WhatsApp Flow from a Flow JSON and publishes it.
  * Reuses `existingFlowId` while Meta still allows editing it; otherwise
  * creates a new Flow. Meta's validation errors keep the Flow as a draft and
- * come back on `flow.validation_errors`.
+ * come back on `flow.validation_errors`. `published` is the source of truth;
+ * `flow.status` is only what Meta reported right after the call.
  */
 export function publishFlowJson({
   auth,
@@ -407,9 +452,9 @@ export function publishFlowJson({
     if (!created.id) {
       throw new WhatsappException("Meta did not return a Flow id")
     }
-    return {
-      flow: await getFlow(auth, created.id),
-      published: !hasErrors(created),
+    if (hasErrors(created)) {
+      return { flow: await getFlow(auth, created.id), published: false }
     }
+    return await publishDraft(auth, created.id)
   })
 }

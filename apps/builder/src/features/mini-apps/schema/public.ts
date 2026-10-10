@@ -123,7 +123,11 @@ export const listMiniAppsPublicResponse = publicListResponse(
 
 export const createMiniAppPublicRequest = z.object({
   name: miniAppName,
-  flowJson: flowJsonInput,
+  flowJson: flowJsonInput
+    .optional()
+    .describe(
+      "WhatsApp Flow JSON as in `miniApps.validate`. Omit it to start from a one-screen starter (a heading and a Complete button), like the builder's Create button.",
+    ),
   customFieldMappings: customFieldMappingsInput.optional(),
 })
 

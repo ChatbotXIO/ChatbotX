@@ -47,6 +47,10 @@ const publishMiniAppToWhatsapp = vi.fn()
 vi.mock("@/features/mini-apps/lib/publish-to-whatsapp", () => ({
   publishMiniAppToWhatsapp,
 }))
+const createTranslatedStarterDefinition = vi.fn()
+vi.mock("@/features/mini-apps/lib/starter-definition", () => ({
+  createTranslatedStarterDefinition,
+}))
 vi.mock("@/features/mini-apps/lib/public-url", () => ({
   buildMiniAppPublicUrl: (id: string) => `url:${id}`,
 }))
@@ -164,6 +168,27 @@ describe("Mini Apps public API", () => {
     expect(createInput.workspaceId).toBe("ws-1")
     expect(createInput.definition.screens[0]?.id).toBe("WELCOME")
     expect(result.validation.valid).toBe(true)
+  })
+
+  test("create without Flow JSON starts from the builder's starter screen", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(null))
+    const { createStarterDefinition } = await vi.importActual<
+      typeof import("@chatbotx.io/mini-app")
+    >("@chatbotx.io/mini-app")
+    const starter = createStarterDefinition("New screen")
+    createTranslatedStarterDefinition.mockResolvedValue(starter)
+    miniAppService.create.mockImplementation(
+      async (input: { definition: unknown }) => storedMiniApp(input.definition),
+    )
+
+    await invoke(miniAppsPublicRouter.create, { name: "Survey" })
+
+    const [createInput] = miniAppService.create.mock.calls[0] as [
+      { name: string; definition: unknown },
+    ]
+    expect(createTranslatedStarterDefinition).toHaveBeenCalledTimes(1)
+    expect(createInput.name).toBe("Survey")
+    expect(createInput.definition).toEqual(starter)
   })
 
   test("validate reports issues with Flow JSON paths", async () => {

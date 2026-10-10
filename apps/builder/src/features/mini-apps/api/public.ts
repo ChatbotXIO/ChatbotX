@@ -26,6 +26,7 @@ import {
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { buildMiniAppPublicUrl } from "../lib/public-url"
 import { publishMiniAppToWhatsapp } from "../lib/publish-to-whatsapp"
+import { createTranslatedStarterDefinition } from "../lib/starter-definition"
 import {
   createMiniAppPublicRequest,
   deleteMiniAppsPublicRequest,
@@ -177,7 +178,7 @@ export const miniAppsPublicRouter = {
       path: "/v1/mini-apps",
       summary: "Create Mini App",
       description:
-        "Creates a Mini App from WhatsApp Flow JSON. It is saved even with validation issues (returned in `validation`) so it can be fixed later; its `publicUrl` works on any channel. Use `miniApps.validate` first to check the JSON.",
+        "Creates a Mini App from WhatsApp Flow JSON, or from a one-screen starter when `flowJson` is omitted. It is saved even with validation issues (returned in `validation`) so it can be fixed later; its `publicUrl` works on any channel. Use `miniApps.validate` first to check the JSON.",
       successStatus: 201,
       tags,
       spec: mcpSpec({ visibility: "default" }),
@@ -190,7 +191,9 @@ export const miniAppsPublicRouter = {
         workspaceId: context.workspace.id,
         name: input.name,
         definition: applyCustomFieldMappings(
-          importMiniAppFlowJson(input.flowJson),
+          input.flowJson
+            ? importMiniAppFlowJson(input.flowJson)
+            : await createTranslatedStarterDefinition(),
           input.customFieldMappings ?? {},
         ),
       })
@@ -312,7 +315,7 @@ export const miniAppsPublicRouter = {
       })
       return {
         status: publication.status,
-        published: publication.status === "PUBLISHED",
+        published: publication.published,
         whatsappFlowId: publication.whatsappFlowId,
         validationErrors: publication.validationErrors as unknown[],
       }

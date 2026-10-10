@@ -3555,6 +3555,7 @@
     "quickReplyNextStepRequired": "Vælg et næste trin for hver aktiveret Quick Svar-indstilling",
     "quickReplyRetryMessageRequired": "Indtast en besked til nyt forsøg",
     "quickReplyRetryWithGetUserData": "Nyt forsøg kan ikke kombineres med et Get Bruger Data-trin",
+    "whatsappFlowIncomplete": "Åbn knappen, og vælg et WhatsApp Flow og dets startskærm.",
     "whatsappCarouselButtonsMismatch": "På WhatsApp skal en karrusel have de samme knapper på hvert kort: enten en enkelt linkknap på hvert kort eller det samme antal svarknapper på hvert kort",
     "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan et karruselkort med en linkknap ikke have andre knapper. Fjern de andre knapper på kortet, eller skift linkknappen til en anden handling.",
     "duplicateNodeError": "Could ikke dupliker den blokér. Prøv igen.",

@@ -3555,6 +3555,7 @@
     "quickReplyNextStepRequired": "Escolha um passo seguinte para cada definição de resposta rápida ativada",
     "quickReplyRetryMessageRequired": "Introduza uma mensagem de nova tentativa",
     "quickReplyRetryWithGetUserData": "A nova tentativa não pode ser combinada com um passo Obter dados do utilizador",
+    "whatsappFlowIncomplete": "Abra o botão e escolha um WhatsApp Flow e o respetivo ecrã inicial.",
     "whatsappCarouselButtonsMismatch": "No WhatsApp, um carrossel tem de ter os mesmos botões em cada cartão: um único botão de ligação em cada cartão, ou o mesmo número de botões de resposta em cada cartão",
     "whatsappCarouselLinkButtonNotAlone": "No WhatsApp, um cartão de carrossel com um botão de ligação não pode ter outros botões. Remova os outros botões nesse cartão ou altere o botão de ligação para outra ação.",
     "duplicateNodeError": "Não foi possível duplicar o bloco. Tente novamente.",

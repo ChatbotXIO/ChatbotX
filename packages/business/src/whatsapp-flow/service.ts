@@ -54,6 +54,21 @@ class WhatsappFlowService extends BaseService {
     })
   }
 
+  /** Meta's id for a workspace Flow, or undefined when the Flow is gone. */
+  async findSourceId(props: {
+    id: string
+    workspaceId: string
+  }): Promise<string | undefined> {
+    const row = await db.query.whatsappFlowModel.findFirst({
+      where: {
+        id: props.id,
+        integrationWhatsapp: { workspaceId: props.workspaceId },
+      },
+      columns: { sourceId: true },
+    })
+    return row?.sourceId || undefined
+  }
+
   /** Inserts or refreshes a single Flow, e.g. right after publishing a Mini App. */
   async upsertFromMeta(props: {
     integrationWhatsappId: string

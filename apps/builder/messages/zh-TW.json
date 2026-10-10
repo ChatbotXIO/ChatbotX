@@ -1657,6 +1657,7 @@
     "quickReplyNextStepRequired": "請為每個已啟用的快速回覆設定選擇下一步",
     "quickReplyRetryMessageRequired": "請輸入重試訊息",
     "quickReplyRetryWithGetUserData": "重試無法與「取得使用者資料」步驟同時使用",
+    "whatsappFlowIncomplete": "請開啟按鈕，選擇一個 WhatsApp Flow 及其起始畫面。",
     "whatsappCarouselButtonsMismatch": "在 WhatsApp 上，輪播需要在每張卡片上使用相同的按鈕：每張卡片上有一個連結按鈕，或每張卡片上有相同數量的回應按鈕",
     "whatsappCarouselLinkButtonNotAlone": "在 WhatsApp 中，帶有連結按鈕的輪播卡片不能同時包含其他按鈕。請移除此卡片上的其他按鈕，或將連結按鈕改成其他動作。",
     "duplicateNodeError": "無法複製該區塊。請再試一次。",

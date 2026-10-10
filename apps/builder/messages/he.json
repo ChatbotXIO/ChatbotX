@@ -1543,6 +1543,7 @@
     "quickReplyNextStepRequired": "יש לבחור שלב הבא לכל הגדרת תשובה מהירה מופעלת",
     "quickReplyRetryMessageRequired": "יש להזין הודעת ניסיון חוזר",
     "quickReplyRetryWithGetUserData": "לא ניתן לשלב ניסיון חוזר עם שלב קבלת נתוני משתמש",
+    "whatsappFlowIncomplete": "פתחו את הכפתור ובחרו WhatsApp Flow ואת מסך הפתיחה שלו.",
     "whatsappCarouselButtonsMismatch": "בוואטסאפ, קרוסלה חייבת לכלול את אותם כפתורים בכל כרטיס: או כפתור קישור יחיד בכל כרטיס, או אותו מספר כפתורי תשובה בכל כרטיס",
     "whatsappCarouselLinkButtonNotAlone": "בוואטסאפ, כרטיס קרוסלה עם כפתור קישור לא יכול לכלול כפתורים נוספים. הסר את הכפתורים הנוספים בכרטיס הזה, או שנה את כפתור הקישור לפעולה אחרת.",
     "duplicateNodeError": "לא ניתן היה לשכפל את הבלוק. נסו שוב.",

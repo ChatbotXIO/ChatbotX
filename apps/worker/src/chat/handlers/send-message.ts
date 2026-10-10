@@ -4,8 +4,8 @@ import {
   conversationService,
   publishToWorkspaceParty,
   threadControlService,
+  whatsappFlowService,
 } from "@chatbotx.io/business"
-import { db, eq } from "@chatbotx.io/database/client"
 import {
   channelTypes,
   isServiceSendBlocked,
@@ -15,7 +15,6 @@ import {
   toThreadControlTimestamp,
 } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
-import { whatsappFlowModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -911,22 +910,15 @@ export async function sendFlowStepToChannel({
 
   let resolvedStep: SendFlowStepData = step
 
-  if (
-    step.stepType === stepTypes.enum.whatsappFlow &&
-    step.flow.id &&
-    !step.flow.sourceId
-  ) {
-    const [row] = await db
-      .select({ sourceId: whatsappFlowModel.sourceId })
-      .from(whatsappFlowModel)
-      .where(eq(whatsappFlowModel.id, step.flow.id))
-      .limit(1)
-
-    if (row?.sourceId) {
-      resolvedStep = {
-        ...step,
-        flow: { ...step.flow, sourceId: row.sourceId },
-      }
+  // `flow.id` is authoritative: the stored `sourceId` can be stale after the
+  // step's Flow was switched, so it is only a fallback.
+  if (step.stepType === stepTypes.enum.whatsappFlow && step.flow.id) {
+    const sourceId = await whatsappFlowService.findSourceId({
+      id: step.flow.id,
+      workspaceId: conversation.workspaceId,
+    })
+    if (sourceId) {
+      resolvedStep = { ...step, flow: { ...step.flow, sourceId } }
     }
   }
 

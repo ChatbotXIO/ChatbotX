@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   recordSendFailure: vi.fn().mockResolvedValue(undefined),
   recordEvent: vi.fn(),
   refreshForRouting: vi.fn(),
+  findWhatsappFlowSourceId: vi.fn(),
   loggerWarn: vi.fn(),
 }))
 
@@ -33,6 +34,7 @@ vi.mock("@chatbotx.io/business", () => ({
     recordEvent: mocks.recordEvent,
     refreshForRouting: mocks.refreshForRouting,
   },
+  whatsappFlowService: { findSourceId: mocks.findWhatsappFlowSourceId },
 }))
 
 vi.mock("@chatbotx.io/channel-registry/thread-control", () => ({
@@ -47,7 +49,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   messageModel: { id: "id", sourceId: "sourceId" },
-  whatsappFlowModel: { id: "id", sourceId: "sourceId" },
 }))
 
 vi.mock("@chatbotx.io/event-bus", () => ({ emit: mocks.emit }))
@@ -530,5 +531,52 @@ describe("send gate — sendFlowStepToChannel", () => {
     ).rejects.toBe(error)
 
     expect(mocks.recordEvent).not.toHaveBeenCalled()
+  })
+})
+
+describe("sendFlowStepToChannel — WhatsApp Flow step", () => {
+  const whatsappFlowStep = (sourceId: string) =>
+    ({
+      id: "s-1",
+      nodeId: "n-1",
+      stepType: "whatsappFlow",
+      text: "Fill in the form",
+      flow: {
+        id: "22",
+        sourceId,
+        startScreenId: "WELCOME",
+        fieldMappings: [],
+      },
+    }) as never
+
+  const sentSourceId = () =>
+    mocks.runChannelHandler.mock.calls[0]?.[2]?.data?.step?.flow?.sourceId
+
+  test("sends the sourceId of flow.id, not a stale stored one", async () => {
+    mocks.findWhatsappFlowSourceId.mockResolvedValue("meta-flow-b")
+
+    await sendFlowStepToChannel({
+      ...flowStepArgs,
+      step: whatsappFlowStep("meta-flow-a"),
+      contactInbox: baseContactInbox as never,
+    })
+
+    expect(mocks.findWhatsappFlowSourceId).toHaveBeenCalledWith({
+      id: "22",
+      workspaceId: "ws-1",
+    })
+    expect(sentSourceId()).toBe("meta-flow-b")
+  })
+
+  test("falls back to the stored sourceId when the Flow is gone", async () => {
+    mocks.findWhatsappFlowSourceId.mockResolvedValue(undefined)
+
+    await sendFlowStepToChannel({
+      ...flowStepArgs,
+      step: whatsappFlowStep("meta-flow-a"),
+      contactInbox: baseContactInbox as never,
+    })
+
+    expect(sentSourceId()).toBe("meta-flow-a")
   })
 })

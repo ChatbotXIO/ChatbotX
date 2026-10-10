@@ -16,7 +16,7 @@ export const publishMiniAppWhatsappAction = workspaceActionClient
     })
     return {
       status: publication.status,
-      published: publication.status === "PUBLISHED",
+      published: publication.published,
       validationErrors: publication.validationErrors as unknown[],
     }
   })
