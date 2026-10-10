@@ -187,6 +187,11 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "PUT /v1/contacts/{identifier}/custom-fields/{idOrName}":
     "contacts:set-custom-field",
   "PUT /v1/bot-fields/{idOrName}": "bot-fields:set",
+  "PATCH /v1/messenger-channels/{id}/settings":
+    "messenger-channels:settings:edit",
+  "PATCH /v1/instagram-channels/{id}/settings":
+    "instagram-channels:settings:edit",
+  "PATCH /v1/inboxes/{inboxId}/ai-handover/settings": "inboxes:settings:edit",
   "PATCH /v1/bot-fields/{idOrName}": "bot-fields:edit",
   "DELETE /v1/analytics/flows/{flowId}/stats": "analytics:reset-flow-stats",
   "POST /v1/ads/campaigns": "ads:create-campaign",

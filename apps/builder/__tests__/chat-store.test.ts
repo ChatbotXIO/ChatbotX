@@ -428,34 +428,28 @@ describe("chat store conversation updates", () => {
     expect(store.getState().activeConversationId).toBeNull()
   })
 
-  test("loadMoreConversations can ignore the URL conversation id for filter reloads", async () => {
+  // Opening a thread marks it read, so the page load must never pick one on
+  // the agent's behalf: the inbox stays on the empty state until they click.
+  test("loadMoreConversations never selects a conversation when the URL has no conversation id", async () => {
     const store = createChatStore()
     const first = makeConversation("conv-1", new Date("2026-01-01T00:00:00Z"))
-    setConversationUrl("conv-missing")
-    mockConversationPage([first])
-
-    await store
-      .getState()
-      .loadMoreConversations("ws-1", { respectUrlConversationId: false })
-
-    expect(store.getState().activeConversationId).toBe("conv-1")
-  })
-
-  test("loadMoreConversations auto-selects the first item when the URL has no conversation id", async () => {
-    const store = createChatStore()
-    const first = makeConversation("conv-1", new Date("2026-01-01T00:00:00Z"))
-    store.setState({
-      messages: [
-        makeMessage("conv-old", new Date("2026-01-01T01:00:00Z")),
-      ] as never,
-    })
     mockConversationPage([first])
 
     await store.getState().loadMoreConversations("ws-1")
 
-    expect(store.getState().activeConversationId).toBe("conv-1")
-    expect(store.getState().messages).toEqual([])
-    expect(store.getState().activeConversationAutoSelected).toBe(true)
+    expect(store.getState().conversations).toEqual([first])
+    expect(store.getState().activeConversationId).toBeNull()
+  })
+
+  test("loadMoreConversations keeps the current selection on a filter reload", async () => {
+    const store = createChatStore()
+    const first = makeConversation("conv-1", new Date("2026-01-01T00:00:00Z"))
+    store.setState({ activeConversationId: "conv-open" })
+    mockConversationPage([first])
+
+    await store.getState().loadMoreConversations("ws-1")
+
+    expect(store.getState().activeConversationId).toBe("conv-open")
   })
 
   test("initActiveConversationFromUrl waits for the first page before fetching a URL conversation", async () => {
@@ -1490,7 +1484,6 @@ describe("chat store inbox seed state", () => {
         makeConversation("conv-seeded", new Date("2026-01-01T00:00:00Z")),
       ] as never,
       activeConversationId: "conv-seeded",
-      activeConversationAutoSelected: true,
       messagesSeed: {
         messages: [seededMessage] as never,
         nextCursorMessage: null,
@@ -1502,7 +1495,6 @@ describe("chat store inbox seed state", () => {
 
     expect(store.getState()).toMatchObject({
       activeConversationId: "conv-seeded",
-      activeConversationAutoSelected: true,
       messages: [seededMessage],
       messagesConversationId: "conv-seeded",
       seededContact,
@@ -1542,7 +1534,6 @@ describe("chat store inbox seed state", () => {
   test("clears the seed fields when changing conversations and resetting state", () => {
     const store = createChatStore({
       activeConversationId: "conv-seeded",
-      activeConversationAutoSelected: true,
       messagesSeed: {
         messages: [],
         nextCursorMessage: null,
@@ -1555,26 +1546,23 @@ describe("chat store inbox seed state", () => {
     store.getState().setActiveConversationId("conv-other")
 
     expect(store.getState()).toMatchObject({
-      activeConversationAutoSelected: false,
       messagesConversationId: null,
       seededContact: null,
     })
 
     store.setState({
-      activeConversationAutoSelected: true,
       messagesConversationId: "conv-other",
       seededContact: { id: "contact-other" } as never,
     })
     store.getState().resetState()
 
     expect(store.getState()).toMatchObject({
-      activeConversationAutoSelected: false,
       messagesConversationId: null,
       seededContact: null,
     })
   })
 
-  test("re-selecting the auto-selected conversation clears the auto-selected flag without resetting the thread", () => {
+  test("re-selecting the open conversation keeps the thread intact", () => {
     const seededMessage = makeMessage(
       "conv-seeded",
       new Date("2026-01-01T00:00:00Z"),
@@ -1584,7 +1572,6 @@ describe("chat store inbox seed state", () => {
         makeConversation("conv-seeded", new Date("2026-01-01T00:00:00Z")),
       ] as never,
       activeConversationId: "conv-seeded",
-      activeConversationAutoSelected: true,
       messagesSeed: {
         messages: [seededMessage] as never,
         nextCursorMessage: "next-message",
@@ -1597,7 +1584,6 @@ describe("chat store inbox seed state", () => {
     store.getState().setActiveConversationId("conv-seeded")
 
     expect(store.getState()).toMatchObject({
-      activeConversationAutoSelected: false,
       messages: [seededMessage],
       nextCursorMessage: "next-message",
       messagesConversationId: "conv-seeded",
@@ -1625,14 +1611,15 @@ describe("chat store inbox seed state", () => {
     })
   })
 
-  test("deleteConversation clears the seed fields when it removes the active conversation", () => {
+  // Deleting the open conversation must land on the empty state: moving on
+  // to the next row would open (and read) a thread nobody chose.
+  test("deleteConversation clears the selection and seed fields when it removes the active conversation", () => {
     const store = createChatStore({
       conversations: [
         makeConversation("conv-seeded", new Date("2026-01-01T00:00:00Z")),
         makeConversation("conv-next", new Date("2026-01-02T00:00:00Z")),
       ] as never,
       activeConversationId: "conv-seeded",
-      activeConversationAutoSelected: true,
       messagesSeed: {
         messages: [
           makeMessage("conv-seeded", new Date("2026-01-01T00:00:00Z")),
@@ -1647,8 +1634,7 @@ describe("chat store inbox seed state", () => {
     store.getState().deleteConversation("conv-seeded")
 
     expect(store.getState()).toMatchObject({
-      activeConversationId: "conv-next",
-      activeConversationAutoSelected: false,
+      activeConversationId: null,
       messages: [],
       messagesConversationId: null,
       seededContact: null,
@@ -1681,7 +1667,7 @@ describe("chat store inbox seed state", () => {
 
     expect(notifications).toEqual([
       {
-        activeConversationId: "conv-next",
+        activeConversationId: null,
         conversationIds: ["conv-next"],
       },
     ])
@@ -1694,7 +1680,6 @@ describe("chat store inbox seed state", () => {
         makeConversation("conv-other", new Date("2026-01-02T00:00:00Z")),
       ] as never,
       activeConversationId: "conv-seeded",
-      activeConversationAutoSelected: true,
       messagesSeed: {
         messages: [],
         nextCursorMessage: null,
@@ -1708,10 +1693,143 @@ describe("chat store inbox seed state", () => {
 
     expect(store.getState()).toMatchObject({
       activeConversationId: "conv-seeded",
-      activeConversationAutoSelected: true,
       messagesConversationId: "conv-seeded",
       seededContact: { id: "contact-seeded" },
     })
+  })
+})
+
+describe("chat store manual unread marks", () => {
+  const ids = (store: ReturnType<typeof createChatStore>) => [
+    ...store.getState().manuallyUnreadConversationIds,
+  ]
+
+  test("markManuallyUnread records the id without touching other state", () => {
+    const store = createChatStore({ activeConversationId: "conv-1" })
+
+    store.getState().markManuallyUnread("conv-1")
+    store.getState().markManuallyUnread("conv-1")
+
+    expect(ids(store)).toEqual(["conv-1"])
+    expect(store.getState().activeConversationId).toBe("conv-1")
+  })
+
+  test("markManuallyUnread publishes a new set so subscribers re-render", () => {
+    const store = createChatStore()
+    const before = store.getState().manuallyUnreadConversationIds
+
+    store.getState().markManuallyUnread("conv-1")
+
+    expect(store.getState().manuallyUnreadConversationIds).not.toBe(before)
+    expect(before.size).toBe(0)
+  })
+
+  test("clearManuallyUnread removes the id and is a no-op for an unknown id", () => {
+    const store = createChatStore()
+    store.getState().markManuallyUnread("conv-1")
+    const marked = store.getState().manuallyUnreadConversationIds
+
+    store.getState().clearManuallyUnread("conv-other")
+    expect(store.getState().manuallyUnreadConversationIds).toBe(marked)
+
+    store.getState().clearManuallyUnread("conv-1")
+    expect(ids(store)).toEqual([])
+  })
+
+  // Selecting the conversation again is the deliberate reopen that ends the
+  // manual mark; selecting a different one leaves it in place.
+  test("setActiveConversationId clears the mark only for the conversation being opened", () => {
+    const store = createChatStore()
+    store.getState().markManuallyUnread("conv-1")
+    store.getState().markManuallyUnread("conv-2")
+
+    store.getState().setActiveConversationId("conv-1")
+
+    expect(ids(store)).toEqual(["conv-2"])
+
+    store.getState().setActiveConversationId(null)
+
+    expect(ids(store)).toEqual(["conv-2"])
+  })
+
+  test("deleteConversation drops the mark of the removed conversation", () => {
+    const store = createChatStore({
+      conversations: [
+        makeConversation("conv-1", new Date("2026-01-01T00:00:00Z")),
+        makeConversation("conv-2", new Date("2026-01-02T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-2",
+    })
+    store.getState().markManuallyUnread("conv-1")
+    store.getState().markManuallyUnread("conv-2")
+
+    store.getState().deleteConversation("conv-1")
+    expect(ids(store)).toEqual(["conv-2"])
+
+    store.getState().deleteConversation("conv-2")
+    expect(ids(store)).toEqual([])
+  })
+
+  test("resetState forgets the marks along with the list", () => {
+    const store = createChatStore()
+    store.getState().markManuallyUnread("conv-1")
+
+    store.getState().resetState()
+
+    expect(ids(store)).toEqual([])
+  })
+
+  // The call panel navigates with openConversation; landing on the thread
+  // that is already open is still a deliberate open.
+  test("openConversation on the already-active conversation clears its mark", async () => {
+    const store = createChatStore({
+      conversations: [
+        makeConversation("conv-1", new Date("2026-01-01T00:00:00Z")),
+      ] as never,
+      activeConversationId: "conv-1",
+    })
+    store.getState().markManuallyUnread("conv-1")
+
+    await expect(
+      store.getState().openConversation("ws-1", "conv-1"),
+    ).resolves.toBe(true)
+
+    expect(ids(store)).toEqual([])
+    expect(store.getState().openRequestNonce).toBe(1)
+    expect(mockFindConversationAuthenticatedAPI).not.toHaveBeenCalled()
+  })
+
+  test("applyUnreadResult mirrors the server cursor while the mark stands", () => {
+    const store = createChatStore({
+      conversations: [
+        makeConversation("conv-1", new Date("2026-01-02T00:00:00Z")),
+      ] as never,
+    })
+    store.getState().markManuallyUnread("conv-1")
+
+    store.getState().applyUnreadResult("conv-1", null)
+
+    expect(store.getState().conversations[0]?.agentLastReadAt).toBeNull()
+  })
+
+  // A reopen while the unread write was in flight is the newer intent: the
+  // stale unread cursor arriving afterwards must not undo it.
+  test("applyUnreadResult drops the result once the conversation was reopened", () => {
+    const readAt = new Date("2026-01-03T00:00:00Z")
+    const store = createChatStore({
+      conversations: [
+        {
+          ...makeConversation("conv-1", new Date("2026-01-02T00:00:00Z")),
+          agentLastReadAt: readAt,
+        },
+      ] as never,
+    })
+    store.getState().markManuallyUnread("conv-1")
+    store.getState().setActiveConversationId("conv-1")
+
+    store.getState().applyUnreadResult("conv-1", null)
+
+    expect(store.getState().conversations[0]?.agentLastReadAt).toBe(readAt)
   })
 })
 

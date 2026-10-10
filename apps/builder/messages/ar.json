@@ -697,6 +697,7 @@
       "noAdminReply": "لا يوجد رد من المشرف",
       "contactCreatedAt": "تاريخ إنشاء جهة الاتصال",
       "fromCtwaAd": "من الإعلانات",
+      "fromGoogleAd": "من إعلانات Google",
       "ctwaConversion": "تحويل الإعلان",
       "lastUserInputTypes": {
         "text": "نص",
@@ -2077,7 +2078,10 @@
       "label": "معرّف العميل"
     },
     "clientSecret": {
-      "label": "سر العميل"
+      "label": "سر العميل",
+      "keepHint": "اتركه فارغًا للاحتفاظ بسر العميل المخزَّن.",
+      "isSet": "تم تعيين سر العميل.",
+      "isNotSet": "لم يتم تعيين سر العميل."
     },
     "verifyToken": {
       "label": "رمز التحقق من Webhook"
@@ -2197,6 +2201,17 @@
     "signInCallbackUrl": {
       "label": "رابط استدعاء تسجيل الدخول",
       "hint": "أضف هذا إلى روابط إعادة التوجيه المصرّح بها في تطبيق Google لتفعيل تسجيل الدخول عبر Google."
+    },
+    "adsDeveloperToken": {
+      "label": "رمز المطوّر لـ Google Ads",
+      "hint": "اختياري: لم تعد Google تتطلب رمز مطوّر. اتركه فارغًا للاحتفاظ بالرمز المحفوظ.",
+      "isSet": "تم تعيين رمز المطوّر.",
+      "isNotSet": "لم يتم تعيين رمز المطوّر.",
+      "clear": "مسح",
+      "cleared": "تم مسح رمز المطوّر."
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "استخدم تطبيق Google OAuth مخصصًا لـ Google Ads ومنفصلًا عن تطبيق Google الخاص بك، مع تفعيل النطاقين adwords وdatamanager. يحتاج هذا التطبيق إلى توثيق OAuth خاص به من Google."
     },
     "webhookUrl": {
       "label": "عنوان URL لخطاف الويب",
@@ -2407,7 +2422,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -2424,6 +2442,12 @@
     },
     "sendRatePerMinute": {
       "label": "الرسائل في الدقيقة"
+    },
+    "adsUploadMethod": {
+      "label": "طريقة الرفع",
+      "hint": "يُنصح باستخدام Data Manager. تعمل واجهة الرفع القديمة فقط مع مشاريع Google Cloud التي لا تزال Google تسمح بها ولا تستخدم إذن Data Manager. يسري التغيير على الاتصالات الجديدة فقط: أعد ربط مساحات العمل الحالية.",
+      "dataManager": "واجهة Data Manager (موصى بها)",
+      "legacy": "واجهة الرفع القديمة"
     }
   },
   "flows": {
@@ -2592,7 +2616,8 @@
       "importJsonOnly": "ملفات JSON فقط",
       "whatsappCallButton": "الاتصال عبر واتساب",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "التحكم في المحادثة"
+      "threadControl": "التحكم في المحادثة",
+      "sendGoogleAdsConversion": "إرسال تحويل Google Ads"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -2800,7 +2825,8 @@
     "dashboardNav": {
       "whatsapp": "إعلانات Click-to-WhatsApp",
       "messenger": "إعلانات Click-to-Messenger",
-      "instagram": "إعلانات Click-to-Instagram"
+      "instagram": "إعلانات Click-to-Instagram",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "ربط حساب إعلاني",
@@ -3401,6 +3427,14 @@
     "title": "تعديل الملف الشخصي"
   },
   "messages": {
+    "timeAgo": {
+      "now": "الآن",
+      "minutes": "{count} د",
+      "hours": "{count} س",
+      "days": "{count} ي",
+      "months": "{count} ش",
+      "years": "{count} سنة"
+    },
     "moveFeature": "نقل {feature}",
     "poweredBy": "مدعوم من {name}",
     "noGiphyApiKey": "لم يتم العثور على مفتاح GIPHY API. يُرجى إضافته في إعدادات المنصة.",
@@ -3800,7 +3834,14 @@
     "signUpTitle": "إنشاء حساب في {name}",
     "changePasswordTitle": "تغيير كلمة المرور",
     "changePasswordDescription": "عيّن كلمة مرور جديدة قبل المتابعة.",
-    "passwordChangeSuccess": "تم تغيير كلمة المرور"
+    "passwordChangeSuccess": "تم تغيير كلمة المرور",
+    "oauthError": {
+      "accountNotLinked": "يوجد حساب بهذا البريد الإلكتروني بالفعل وتعذر ربطه. سجّل الدخول بالطريقة التي استخدمتها سابقًا، أو تواصل مع الدعم.",
+      "unableToLinkAccount": "تعذر ربط عملية تسجيل الدخول هذه بالحساب الحالي. سجّل الدخول بالطريقة التي استخدمتها سابقًا، أو تواصل مع الدعم.",
+      "sessionExpired": "انتهت صلاحية محاولة تسجيل الدخول. يرجى المحاولة مرة أخرى.",
+      "accessDenied": "تم إلغاء تسجيل الدخول.",
+      "generic": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى."
+    }
   },
   "emailTopics": {
     "title": "موضوعات البريد الإلكتروني"
@@ -4457,7 +4498,27 @@
       "preview": "معاينة",
       "embedCodeDescription": "الصق هذا الرمز قبل وسم body الختامي في موقعك. تُطبَّق التغييرات المحفوظة تلقائيًا دون الحاجة إلى لصقه مجددًا.",
       "savedSuccess": "تم حفظ إعدادات أداة الدردشة",
-      "poweredBy": "بواسطة"
+      "poweredBy": "بواسطة",
+      "toggleLabel": "تحدث معنا",
+      "logo": {
+        "description": "الزر الدائري الذي ينقر عليه الزوار لفتح الأداة. اختر صورة مربعة، أو اتركه فارغًا لاستخدام أيقونة الدردشة الافتراضية.",
+        "choose": "اختر من مكتبة الوسائط",
+        "notImage": "يجب أن يكون الشعار صورة."
+      },
+      "brandUrl": {
+        "label": "رابط إعادة التوجيه",
+        "placeholder": "https://example.com",
+        "description": "الصفحة التي يفتحها اسم علامتك التجارية في سطر \"بواسطة\". مطلوب عند تعيين اسم العلامة التجارية.",
+        "requiredWithName": "أدخل رابط إعادة توجيه لاسم العلامة التجارية هذا."
+      },
+      "brandName": {
+        "description": "يظهر في سطر \"بواسطة\" في الأداة. مطلوب عند تعيين رابط إعادة التوجيه. اترك الحقلين فارغين لإخفاء هذا السطر.",
+        "requiredWithUrl": "أدخل اسم علامة تجارية لرابط إعادة التوجيه هذا."
+      },
+      "logoBackgroundColor": {
+        "label": "لون خلفية الأيقونة",
+        "description": "خلفية أيقونة الدردشة الافتراضية. تصبح الأيقونة بيضاء أو سوداء لتبقى واضحة."
+      }
     }
   },
   "qrCodes": {
@@ -4584,7 +4645,8 @@
       "startAnotherFlow": "بدء مسار آخر",
       "notifyAdmins": "إشعار المسؤولين",
       "transferConversationToHuman": "نقل المحادثة إلى موظف",
-      "sendMetaCapiEvent": "إرسال حدث Meta CAPI"
+      "sendMetaCapiEvent": "إرسال حدث Meta CAPI",
+      "sendGoogleAdsConversion": "إرسال تحويل Google Ads"
     },
     "triggerGoesOff": "يتم تشغيل المشغّل",
     "before": "قبل",
@@ -6597,6 +6659,447 @@
       "messagingIdHint": "أحرف وأرقام وشرطات وشرطات سفلية فقط (بحد أقصى 512).",
       "cancel": "إلغاء",
       "confirmSend": "إرسال"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "أرسل التحويلات غير المتصلة إلى Google Ads لجهات الاتصال التي وصلت من نقرة على إعلان Google.",
+    "notAvailable": {
+      "description": "لم يتم إعداد بيانات اعتماد Google Ads الخاصة بالمنصة (معرّف عميل OAuth والسر). اطلب من مسؤول المنصة إضافتها في إعدادات منصة Google Ads."
+    },
+    "connect": {
+      "scopes": "نطلب إذنًا لقراءة حسابات Google Ads وإجراءات التحويل لديك، ولإرسال التحويلات نيابةً عنك.",
+      "button": "ربط Google Ads",
+      "reconnect": "إعادة الربط",
+      "unnamedAccount": "حساب Google Ads",
+      "viaManager": "عبر المدير {manager}",
+      "statusLabel": "حالة الاتصال",
+      "needsReauthDescription": "تم إلغاء وصول Google أو انتهت صلاحيته. أعد الربط لمواصلة إرسال التحويلات.",
+      "pausedDescription": "هذا الاتصال متوقف مؤقتًا، لذا لا يتم إرسال التحويلات.",
+      "degradedDescription": "يستجيب Google Ads بأخطاء. ستتم إعادة محاولة إرسال التحويلات تلقائيًا.",
+      "howItWorks": "كيف يعمل",
+      "steps": {
+        "signIn": "سجّل الدخول بحساب Google الذي يدير إعلاناتك.",
+        "chooseAccount": "اختر حساب Google Ads.",
+        "pickAction": "اختر إجراء التحويل في مساراتك."
+      },
+      "uploadMethod": "طريقة الرفع: {method}"
+    },
+    "status": {
+      "connected": "متصل",
+      "degraded": "متأثر",
+      "needsReauth": "يحتاج إلى إعادة الربط",
+      "paused": "متوقف مؤقتًا",
+      "disconnected": "غير متصل"
+    },
+    "picker": {
+      "title": "اختر حساب Google Ads",
+      "legend": "حسابات Google Ads",
+      "loading": "جارٍ تحميل اتصال Google Ads",
+      "loadError": "تعذّر تحميل محاولة الاتصال بـ Google Ads.",
+      "waiting": "في انتظار تأكيد Google لتسجيل الدخول…",
+      "noTargets": "لم يتم العثور على حسابات Google Ads لحساب Google هذا.",
+      "alreadyThisWorkspace": "متصل بالفعل بمساحة العمل هذه",
+      "alreadyOtherWorkspace": "متصل بالفعل بمساحة عمل أخرى",
+      "notSelectable": "لا يمكن اختيار هذا الحساب",
+      "connectSelected": "ربط الحساب",
+      "sessionExpired": "انتهت صلاحية محاولة الاتصال. اربط مرة أخرى للمتابعة.",
+      "sessionCancelled": "تم إلغاء محاولة الاتصال.",
+      "stalled": "لم يكتمل تسجيل الدخول. استخدم «ربط Google Ads» للمحاولة مرة أخرى.",
+      "dismiss": "تجاهل",
+      "cancelFailed": "تعذر إلغاء محاولة الربط. حاول مرة أخرى.",
+      "connectErrorTitle": "تعذّر ربط Google Ads",
+      "errors": {
+        "stateMismatch": "تعذّر التحقق من تسجيل الدخول. اربط مرة أخرى للمتابعة.",
+        "expired": "انتهت صلاحية محاولة الاتصال. اربط مرة أخرى للمتابعة.",
+        "providerDenied": "لم يتم منح الوصول إلى Google. اربط مرة أخرى واسمح بالأذونات المطلوبة.",
+        "exchangeFailed": "تعذّر إكمال تسجيل الدخول إلى Google. اربط مرة أخرى للمتابعة.",
+        "providerError": "أرجعت Google خطأً. حاول الربط مرة أخرى بعد قليل.",
+        "noCandidates": "لم يتم العثور على حساب Google Ads نشط لمستخدم Google هذا. لا يمكن استخدام الحسابات الملغاة أو المعلّقة أو غير المكتملة الإعداد. سجّل الدخول بحساب Google يدير حساب Google Ads نشطًا.",
+        "alreadyConnected": "حساب Google Ads هذا متصل بالفعل.",
+        "quotaExceeded": "تم بلوغ حد الاتصالات في خطتك.",
+        "trialExpired": "انتهت فترتك التجريبية، لذا لا يمكن إضافة اتصالات جديدة.",
+        "internalError": "حدث خطأ ما أثناء الربط. حاول مرة أخرى.",
+        "providerUnavailable": "خدمة Google Ads غير متاحة مؤقتًا، لذا تعذّر إكمال الربط. حاول مرة أخرى بعد قليل.",
+        "developerTokenMissing": "لم يكتمل إعداد Google Ads: بيانات اعتماد Google الخاصة بالمنصة غير مكتملة. اطلب من المسؤول مراجعة بيانات اعتماد Google Ads.",
+        "developerTokenNotApproved": "رفضت Google رمز المطوّر المخزّن في بيانات اعتماد Google Ads. الرمز اختياري: اطلب من المسؤول حذفه أو استبداله برمز صالح.",
+        "projectNotApproved": "لم تتم الموافقة بعد على مشروع Google Cloud الخاص بك لحسابات Google Ads الفعلية. قدّم طلب الحصول على وصول Explorer أو Basic للمشروع في Google Cloud Console (Google Ads API ← Overview)، ثم اتصل مرة أخرى.",
+        "permissionDenied": "لا يملك مستخدم Google هذا إذن الوصول إلى حسابات Google Ads. سجّل الدخول بمستخدم Google لديه حق الوصول إلى حساب Google Ads.",
+        "apiNotEnabled": "واجهة Google Ads API غير مفعّلة لمشروع Google Cloud. اطلب من المسؤول تفعيلها ثم حاول مرة أخرى.",
+        "credentialsInvalid": "رفضت Google بيانات تسجيل الدخول. أعد الربط للمتابعة.",
+        "scopeMissing": "لم يتم منح جميع الأذونات. يحتاج Google Ads إلى الوصول إلى حسابك في Google Ads وإلى إذن لإرسال التحويلات. اتصل مرة أخرى وحدد كل الأذونات.",
+        "legacyUploadNotAllowed": "لا تسمح Google بواجهة الرفع القديمة لهذا الحساب. بدّل بيانات الاعتماد إلى Data Manager وأعد ربط مساحة العمل هذه."
+      }
+    },
+    "setup": {
+      "conversionCustomer": "حساب التحويلات",
+      "notResolved": "لم يتم تحديده بعد",
+      "retry": "إعادة محاولة الإعداد",
+      "dataTermsWarning": "لم يتم قبول شروط بيانات العملاء لهذا الحساب. اقبلها في Google Ads ثم أعد محاولة الإعداد.",
+      "errors": {
+        "conversionCustomerInaccessible": "لا يمكن الوصول إلى حساب التحويلات بتسجيل الدخول هذا إلى Google. تحقق من صلاحياتك في Google Ads ثم أعد المحاولة.",
+        "customerDataTermsNotAccepted": "لم يتم قبول شروط بيانات العملاء لهذا الحساب. اقبلها في Google Ads ثم أعد محاولة الإعداد.",
+        "syncFailed": "تعذّرت قراءة إجراءات التحويل من Google Ads. أعد محاولة الإعداد بعد قليل.",
+        "developerTokenMissing": "لم يتم إعداد بيانات اعتماد Google Ads الخاصة بالمنصة (معرّف عميل OAuth والسر)."
+      }
+    },
+    "conversionActions": {
+      "title": "إجراءات التحويل",
+      "description": "يمكن فقط للإجراءات المفعّلة التي تستورد التحويلات من النقرات تلقي التحويلات.",
+      "helpLink": "مساعدة Google Ads",
+      "sync": "مزامنة إجراءات التحويل",
+      "syncedAt": "آخر مزامنة {date}",
+      "neverSynced": "لم تتم المزامنة بعد",
+      "empty": "لم يتم العثور على إجراءات تحويل. أنشئ إجراء تحويل لاستيراد التحويلات غير المتصلة في Google Ads ثم زامن.",
+      "name": "الاسم",
+      "category": "الفئة",
+      "counting": "طريقة العد",
+      "status": "الحالة",
+      "onePerClickNote": "لا يمكن إرسال نقرات iOS (gbraid) إلى هذا الإجراء. استخدم العدّ \"كل مرة\" لاستلامها.",
+      "externalNote": "غير مدعوم: يستخدم هذا الإجراء إسنادًا خارجيًا لا يمكن إرساله عبر Google Data Manager.",
+      "count": "{count, plural, one {# إجراء تحويل} other {# إجراءات تحويل}}"
+    },
+    "events": {
+      "title": "سجل التحويلات",
+      "description": "أحدث التحويلات المرسلة إلى Google Ads. معرّفات النقرات مخفية جزئيًا.",
+      "empty": "تظهر التحويلات هنا بمجرد أن يرسل مسار أو مشغّل تحويلاً.",
+      "emptyFiltered": "لا توجد تحويلات تطابق هذه الحالة.",
+      "loadError": "تعذّر تحميل سجل التحويلات.",
+      "page": "الصفحة {page} من {pages}",
+      "filter": {
+        "label": "الحالة",
+        "all": "كل الحالات"
+      },
+      "columns": {
+        "status": "الحالة",
+        "action": "إجراء التحويل",
+        "channel": "القناة",
+        "clickId": "معرّف النقرة (Click ID)",
+        "occurredAt": "وقت الحدوث",
+        "actions": "الإجراءات",
+        "dedup": "منع التكرار",
+        "consent": "لقطة الموافقة",
+        "matching": "المطابقة",
+        "properties": "الخصائص"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "sending": "جارٍ الإرسال",
+        "sent": "تم الإرسال",
+        "processed": "تمت المعالجة",
+        "failed": "فشل",
+        "skippedNoAccount": "تم التخطي: لا يوجد حساب",
+        "skippedExpired": "تم التخطي: منتهي الصلاحية"
+      },
+      "processing": {
+        "processing": "Google قيد المعالجة",
+        "success": "مقبول",
+        "partialSuccess": "مقبول جزئيًا",
+        "failed": "مرفوض",
+        "unknown": "النتيجة غير معروفة",
+        "timedOut": "انتهت المهلة"
+      },
+      "stage": {
+        "delivery": "فشل التسليم",
+        "processing": "فشلت المعالجة",
+        "timeout": "انتهت المهلة"
+      },
+      "consent": {
+        "adUserDataFull": "بيانات مستخدم الإعلانات: {status}",
+        "adPersonalizationFull": "تخصيص الإعلانات: {status}",
+        "status": {
+          "granted": "تمت الموافقة",
+          "denied": "مرفوض",
+          "notProvided": "غير مقدَّم",
+          "notSupported": "غير مدعوم (رفع قديم)"
+        },
+        "adUserDataShort": "البيانات: {status}",
+        "adPersonalizationShort": "التخصيص: {status}",
+        "delivery": {
+          "toSend": "للإرسال",
+          "notSent": "لم يُرسَل",
+          "unknown": "غير مؤكد"
+        }
+      },
+      "dedup": {
+        "click": "لكل نقرة",
+        "id": "المعرّف: {id}",
+        "event": "كل تشغيل"
+      },
+      "matching": {
+        "enabled": "مضبوط: {fields}",
+        "withheldConsent": "محجوب (بدون موافقة): {fields}",
+        "unsupportedTransport": "لم يُرسل (قديم): {fields}"
+      },
+      "timeProvided": "وقت محدد",
+      "timeProvidedTooltip": "جاء وقت التحويل هذا من الخطوة، وليس من وقت تشغيلها."
+    },
+    "validate": {
+      "open": "التحقق من الطلب",
+      "title": "التحقق من الطلب",
+      "description": "فحص للإعدادات: تتحقق Google من الطلب دون تسجيل أي تحويل.",
+      "conversionAction": "إجراء التحويل",
+      "clickIdType": "نوع معرّف النقرة",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "معرّف النقرة (Click ID)",
+      "submit": "تشغيل الفحص",
+      "ok": "قبلت Google هذا الإعداد. لم يتم تسجيل أي شيء.",
+      "reasons": {
+        "accountNotReady": "حساب Google Ads غير جاهز بعد. أكمل الربط والإعداد ثم حاول مرة أخرى.",
+        "needsReauth": "يلزم إعادة ربط اتصال Google Ads.",
+        "rejected": "رفضت Google هذا الطلب",
+        "legacyUploadNotAllowed": "لا تسمح Google بواجهة الرفع القديمة لهذا الحساب. بدّل بيانات الاعتماد إلى Data Manager وأعد ربط مساحة العمل هذه."
+      },
+      "invalid": "اختر إجراء تحويل وأدخل معرّف نقرة صالحًا.",
+      "consentIncluded": "تتضمن الموافقة: {values}.",
+      "consentNone": "لا تتضمن هذه التجربة أي موافقة.",
+      "consentVariableSkipped": "لا يمكن اختبار الموافقة المأخوذة من حقل جهة الاتصال، لذا تم استبعادها.",
+      "consentNotSentLegacy": "لا يتم إرسال تخصيص الإعلانات ({status}) مع طريقة الرفع القديمة."
+    },
+    "conversionFields": {
+      "conversionAction": "إجراء التحويل",
+      "unavailableOption": "{id} (غير متاح)",
+      "unavailableWarning": "إجراء التحويل المحدد لم يعد متاحًا أو غير مفعّل. اختر إجراءً آخر قبل النشر.",
+      "externalOption": "{name} (إسناد خارجي، غير مدعوم)",
+      "loading": "جارٍ تحميل إجراءات التحويل",
+      "loadError": "تعذّر تحميل إجراءات التحويل في Google Ads.",
+      "notConnected": "اربط Google Ads لإرسال التحويلات.",
+      "noActions": "لم يتم العثور على إجراءات تحويل مفعّلة. قم بمزامنتها من إعدادات Google Ads.",
+      "openSettings": "فتح إعدادات Google Ads",
+      "needsReauth": "يلزم إعادة ربط اتصال Google Ads.",
+      "dedupModeClick": "مرة واحدة لكل نقرة على الإعلان",
+      "dedupModeClickHelp": "يحتسب إجراء التحويل هذا مرة واحدة لكل نقرة على الإعلان.",
+      "dedupModeIdHelp": "يُحتسب مرة واحدة لكل معرّف مختلف.",
+      "dedupModeId": "مرة واحدة لكل معرّف طلب أو حدث",
+      "dedupModeEvent": "في كل مرة يعمل",
+      "dedupModeEventHelp": "يسجّل تحويلًا جديدًا في كل مرة يعمل فيها، حتى لنقرة الإعلان نفسها. لا تُحتسب إعادة المحاولة للتشغيل نفسه مرتين.",
+      "dedupId": "معرّف الطلب أو الحدث",
+      "dedupIdPlaceholder": "مثال: '{{order_number}}'",
+      "dedupIdHelp": "أعد استخدام المعرّف نفسه عند إعادة المحاولة والاستيراد. استخدم معرّفًا مختلفًا لكل عملية شراء أو حدث.",
+      "dedupIdExample": "لا يوجد معرّف طلب في مبيعات الدردشة؟ اجمع جهة الاتصال مع حقل تعيّنه لكل عملية بيع، مثل {example}. لا تستخدم الوقت الحالي: فهو يتغير في كل تشغيل.",
+      "dedupIdInfoLabel": "حول معرّف الطلب أو الحدث",
+      "dedupLeadIdNote": "كل معرّف مختلف يُحتسب عميلًا محتملًا جديدًا من النقرة نفسها.",
+      "dedupClickNote": "لن تُحتسب عمليات الشراء المتكررة من النقرة نفسها.",
+      "dedupLegacyNote": "الرفع القديم: تتلقى Google معرّفًا مشوّشًا.",
+      "additionalOptions": "خيارات إضافية",
+      "additionalOptionsCount": "تم تعيين {count}",
+      "customerMatching": "مطابقة العملاء",
+      "customerMatchingCount": "{count} مفعّل",
+      "customerMatchingLegacy": "غير مدعوم في طريقة الرفع القديمة. حوّل الاتصال إلى Data Manager API لاستخدامه.",
+      "customerMatchingTermsNotAccepted": "لن يتم الإرسال حتى تقبل شروط بيانات العملاء في إعدادات التحويل في Google Ads.",
+      "learnMore": "اعرف المزيد",
+      "matchEmailLabel": "البريد الإلكتروني",
+      "matchPhoneLabel": "رقم الهاتف",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "نوع العميل",
+      "customerValueBucketLabel": "قيمة العميل",
+      "customerPropertiesLegacy": "غير مدعوم في طريقة الرفع القديمة. حوّل الاتصال إلى Data Manager API لاستخدامه.",
+      "conversionTime": "وقت التحويل",
+      "conversionTimePlaceholder": "اتركه فارغًا لاستخدام وقت تشغيل هذه الخطوة",
+      "valuePlaceholder": "اختياري، مثل 250",
+      "currencyPlaceholder": "اختياري، USD",
+      "validation": {
+        "dedupIdRequired": "أدخل معرّفًا، أو اختر مرة واحدة لكل نقرة.",
+        "dedupIdTooLong": "استخدم 64 حرفًا أو أقل.",
+        "matchTemplateInvalid": "استخدم متغيرًا واحدًا فقط، مثل '{{email}}'. القيمة الثابتة غير مسموحة.",
+        "customerTypeInvalid": "استخدم NEW أو RETURNING، أو متغيّرًا مثل '{{customer_type}}'.",
+        "customerValueBucketInvalid": "استخدم LOW أو MEDIUM أو HIGH، أو متغيّرًا مثل '{{customer_value}}'.",
+        "timeFormat": "استخدم تاريخًا مع المنطقة الزمنية، مثل 2026-10-08T14:30:00+07:00.",
+        "timeInvalidDate": "هذا التاريخ غير موجود.",
+        "currencyRequired": "أضف عملة عند تعيين قيمة.",
+        "valueRequired": "أضف قيمة عند تعيين عملة.",
+        "conversionActionRequired": "اختر إجراء التحويل.",
+        "valueInvalid": "استخدم رقمًا عاديًا، مثل 19.99.",
+        "valueTooLarge": "هذه القيمة كبيرة جدًا.",
+        "currencyInvalid": "استخدم رمز عملة من 3 أحرف، مثل USD."
+      },
+      "consentInvalid": "تتعذر قراءة إعدادات الموافقة، لذلك ستفشل هذه الخطوة.",
+      "consentFixLink": "أصلحها في الإعدادات",
+      "dedupModeLabel": "تجنب التحويلات المكررة"
+    },
+    "summary": {
+      "conversionAction": "إجراء التحويل {id}",
+      "notConfigured": "اختر إجراء تحويل",
+      "dedupClick": "مرة واحدة لكل نقرة على الإعلان",
+      "dedupId": "المعرّف: {id}",
+      "dedupEvent": "في كل مرة يعمل"
+    },
+    "consent": {
+      "title": "الموافقة على بيانات التحويل",
+      "description": "هل وافق العملاء على مشاركة بياناتهم للإعلانات. ينطبق على كل تحويل ترسله مساحة العمل هذه.",
+      "learnMore": "اعرف المزيد",
+      "notConnected": "تنطبق على التحويلات بعد ربط حساب Google Ads.",
+      "adUserData": {
+        "label": "بيانات مستخدم الإعلانات"
+      },
+      "adPersonalization": {
+        "label": "تخصيص الإعلانات"
+      },
+      "source": {
+        "notProvided": "غير مقدَّمة",
+        "granted": "ممنوحة دائمًا",
+        "denied": "مرفوضة دائمًا",
+        "variable": "من حقل في جهة الاتصال"
+      },
+      "help": {
+        "notProvided": "غير مُرسل. تستخدم Google الموافقة الافتراضية لحسابك.",
+        "granted": "كل تحويل يفيد بأن العميل وافق.",
+        "denied": "كل تحويل يفيد بأن العميل رفض.",
+        "variable": "استخدم \"{granted}\" أو \"{denied}\". تُتجاهل القيمة الفارغة؛ وأي قيمة أخرى تُفشل الخطوة."
+      },
+      "templatePlaceholder": "مثال: '{{gdpr_consent}}'",
+      "templateLabel": "حقل جهة الاتصال لـ {setting}",
+      "validation": {
+        "templateRequired": "أدرج حقلًا من جهة الاتصال، مثال: '{{gdpr_consent}}'.",
+        "templateTooLong": "استخدم 200 حرف أو أقل."
+      },
+      "legacy": {
+        "title": "لا يُرسل مع الرفع القديم",
+        "body": "الرفع القديم يقبل فقط موافقة بيانات مستخدم الإعلانات. أعد الاتصال عبر Data Manager لإرسالها."
+      },
+      "save": "حفظ",
+      "saved": "تم حفظ إعدادات الموافقة",
+      "invalidStored": "تعذّرت قراءة إعدادات الموافقة المحفوظة. ستفشل الخطوات التي ترسل التحويلات حتى تحفظ إعدادات جديدة."
+    },
+    "errors": {
+      "supportSession": "لا يمكن لجلسات دعم المنصة تغيير اتصال Google Ads أو إرسال التحويلات.",
+      "developerTokenMissing": "Google Ads غير متاح بعد: لم يتم إعداد بيانات اعتماد Google Ads الخاصة بالمنصة (معرّف عميل OAuth والسر).",
+      "notConnected": "Google Ads غير متصل بمساحة العمل هذه.",
+      "sessionNotFound": "لم يتم العثور على محاولة اتصال Google Ads هذه أو انتهت صلاحيتها. ابدأ من جديد.",
+      "pickFailed": "تعذّر ربط حساب Google Ads هذا. ربما هو متصل بالفعل في مكان آخر أو انتهت صلاحية المحاولة.",
+      "notRetryable": "لا يمكن إعادة محاولة هذا التحويل: يمكن إعادة محاولة التحويلات الفاشلة فقط.",
+      "authorizationUnavailable": "تعذّر بدء تسجيل الدخول إلى Google. حاول مرة أخرى بعد قليل.",
+      "credentialSecretsRequired": "أدخل سر العميل. لم يتم حفظه بعد."
+    },
+    "enums": {
+      "category": {
+        "default": "افتراضي",
+        "purchase": "شراء",
+        "addToCart": "إضافة إلى السلة",
+        "beginCheckout": "بدء الدفع",
+        "subscribePaid": "اشتراك مدفوع",
+        "phoneCallLead": "عميل محتمل عبر مكالمة هاتفية",
+        "importedLead": "عميل محتمل مستورد",
+        "submitLeadForm": "إرسال نموذج عميل محتمل",
+        "bookAppointment": "حجز موعد",
+        "signup": "تسجيل",
+        "requestQuote": "طلب عرض سعر",
+        "getDirections": "الحصول على الاتجاهات",
+        "outboundClick": "نقرة خارجية",
+        "contact": "اتصال",
+        "engagement": "تفاعل",
+        "storeVisit": "زيارة متجر",
+        "storeSale": "بيع في المتجر",
+        "qualifiedLead": "عميل محتمل مؤهل",
+        "convertedLead": "عميل محتمل محوَّل",
+        "pageView": "مشاهدة صفحة",
+        "download": "تنزيل",
+        "lead": "عميل محتمل"
+      },
+      "countingType": {
+        "onePerClick": "مرة واحدة لكل نقرة",
+        "manyPerClick": "مرات متعددة لكل نقرة"
+      },
+      "actionStatus": {
+        "enabled": "مفعّل",
+        "removed": "محذوف",
+        "hidden": "مخفي"
+      },
+      "unknown": "أخرى ({value})"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "الرفع القديم"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "لا يمكن لقناة جهة الاتصال هذه إرسال تحويلات Google Ads.",
+      "google_ads_no_click": "لم تصل جهة الاتصال من نقرة على إعلان Google.",
+      "google_ads_no_account": "لا يوجد حساب Google Ads جاهز متصل.",
+      "google_ads_unknown_conversion_action": "إجراء التحويل لم يعد موجودًا. زامِن واختر إجراءً آخر.",
+      "google_ads_action_disabled": "إجراء التحويل غير مفعّل في Google Ads.",
+      "google_ads_incompatible_action": "يحتسب هذا الإجراء تحويلًا واحدًا لكل نقرة، وهو ما لا تسمح به Google لنقرة iOS هذه.",
+      "google_ads_unsupported_action": "يستخدم هذا الإجراء إسنادًا خارجيًا ولا يمكنه استقبال هذه التحويلات.",
+      "google_ads_invalid_value": "القيمة أو العملة غير صالحة.",
+      "google_ads_invalid_input": "إعدادات الخطوة غير صالحة.",
+      "google_ads_record_failed": "تعذّر حفظ التحويل.",
+      "google_ads_missing_dedup_id": "كان معرّف الطلب أو الحدث فارغًا.",
+      "google_ads_invalid_dedup_id": "كان معرّف الطلب أو الحدث أطول من 64 حرفًا.",
+      "google_ads_missing_occurrence_key": "لم يكن لهذا التشغيل معرّف ثابت، لذلك لم يتم تسجيل التحويل.",
+      "google_ads_invalid_customer_property": "نوع العميل أو قيمته ليست قيمة مسموحًا بها.",
+      "google_ads_invalid_consent_config": "تعذّرت قراءة إعدادات الموافقة المحفوظة.",
+      "google_ads_invalid_consent_value": "احتوى حقل موافقة على قيمة غير \"granted\" أو \"denied\".",
+      "google_ads_invalid_conversion_time": "وقت التحويل ليس تاريخًا صالحًا مع منطقة زمنية، أو يقع في المستقبل."
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "كل القنوات",
+        "allActions": "كل الإجراءات",
+        "channelLabel": "القناة",
+        "actionLabel": "إجراء التحويل"
+      },
+      "tiles": {
+        "confirmed": "مؤكدة",
+        "awaitingGoogle": "بانتظار Google",
+        "queued": "في قائمة الانتظار",
+        "failed": "فاشلة",
+        "skipped": "متخطاة",
+        "deliveryRate": "معدل التسليم",
+        "confirmedHelp": "أكدت Google تسجيل هذه التحويلات.",
+        "awaitingGoogleHelp": "أُرسلت إلى Google وبانتظار انتهائها من المعالجة.",
+        "queuedHelp": "بانتظار الإرسال.",
+        "failedHelp": "لم تقبلها Google أو لم تعالجها.",
+        "skippedHelp": "لم تُرسل: لا يوجد حساب جاهز، أو أنها أقدم مما تقبله Google.",
+        "deliveryRateHelp": "المؤكدة ÷ (المؤكدة + الفاشلة). لا تُحتسب التحويلات في قائمة الانتظار أو بانتظار Google أو المتخطاة."
+      },
+      "confirmedValue": "القيمة المؤكدة",
+      "confirmedValueItem": "{value} ({count, plural, one {# تحويل} other {# تحويلات}})",
+      "moreCurrencies": "+{count} أخرى",
+      "chart": {
+        "title": "التحويلات في كل يوم",
+        "viewAsTable": "عرض كجدول",
+        "tableCaption": "التحويلات في كل يوم",
+        "dateColumn": "التاريخ"
+      },
+      "byAction": {
+        "title": "حسب إجراء التحويل",
+        "truncated": "عرض أكثر 50 إجراءً من حيث عدد التحويلات."
+      },
+      "byChannel": {
+        "title": "حسب القناة",
+        "confirmedCount": "{count, plural, one {# مؤكدة} other {# مؤكدة}}"
+      },
+      "failures": {
+        "title": "حالات الفشل حسب المرحلة",
+        "unknown": "غير معروف"
+      },
+      "empty": {
+        "title": "لا توجد تحويلات في هذه الفترة",
+        "description": "تظهر التحويلات هنا عندما ترسل خطوة في تدفق أو مشغّل تحويلًا."
+      },
+      "error": {
+        "title": "تعذّر تحميل الإحصائيات",
+        "retry": "حاول مرة أخرى"
+      },
+      "viewStatistics": "عرض الإحصائيات",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "لا توجد تحويلات مؤكدة أو فاشلة في هذه الفترة.",
+      "actionFallback": "الإجراء {id}",
+      "openSettings": "فتح إعدادات Google Ads",
+      "outcome": {
+        "title": "توزيع النتائج"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
     }
   },
   "minigames": {

@@ -11,7 +11,8 @@ export const startProductImportJob = async (input: {
   workspaceId: string
   userId: string | null
   fileId: string
-  format: "csv" | "xlsx"
+  /** Omitted: taken from the uploaded file. */
+  format?: "csv" | "xlsx"
   meta: ProductImportMeta
 }): Promise<{ importId: string }> => {
   const row = await importService.startProductImport(input)

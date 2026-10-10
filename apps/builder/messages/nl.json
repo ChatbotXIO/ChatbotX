@@ -1740,7 +1740,10 @@
       "label": "Client-ID"
     },
     "clientSecret": {
-      "label": "Clientgeheim"
+      "label": "Clientgeheim",
+      "keepHint": "Laat leeg om het opgeslagen clientgeheim te behouden.",
+      "isSet": "Er is een clientgeheim ingesteld.",
+      "isNotSet": "Geen clientgeheim ingesteld."
     },
     "verifyToken": {
       "label": "Verificatietoken voor webhook"
@@ -1860,6 +1863,17 @@
     "signInCallbackUrl": {
       "label": "URL voor inlogcallback",
       "hint": "Voeg deze toe aan de geautoriseerde omleidings-URI's van je Google-app om inloggen met Google mogelijk te maken."
+    },
+    "adsDeveloperToken": {
+      "label": "Google Ads-developertoken",
+      "hint": "Optioneel: Google vereist geen developertoken meer. Laat leeg om het opgeslagen token te behouden.",
+      "isSet": "Er is een developertoken ingesteld.",
+      "isNotSet": "Er is geen developertoken ingesteld.",
+      "clear": "Wissen",
+      "cleared": "Developer token gewist."
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "Gebruik een aparte Google OAuth-app voor Google Ads, los van je Google-app, met de scopes adwords en datamanager ingeschakeld. Deze app heeft een eigen Google OAuth-verificatie nodig."
     },
     "webhookUrl": {
       "label": "Webhook-URL",
@@ -2070,7 +2084,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -2087,6 +2104,12 @@
     },
     "sendRatePerMinute": {
       "label": "Berichten per minuut"
+    },
+    "adsUploadMethod": {
+      "label": "Uploadmethode",
+      "hint": "Data Manager wordt aanbevolen. De oude upload-API werkt alleen voor Google Cloud-projecten die Google nog toestaat en gebruikt de Data Manager-machtiging niet. Een wijziging geldt alleen voor nieuwe verbindingen: verbind bestaande werkruimtes opnieuw.",
+      "dataManager": "Data Manager API (aanbevolen)",
+      "legacy": "Oude upload-API"
     }
   },
   "condition": {
@@ -2203,6 +2226,7 @@
       "noAdminReply": "Geen antwoord van beheerder",
       "contactCreatedAt": "Contact aangemaakt op",
       "fromCtwaAd": "Van advertentie",
+      "fromGoogleAd": "Van Google Ads",
       "ctwaConversion": "Advertentieconversie",
       "lastUserInputTypes": {
         "text": "Tekst",
@@ -2446,7 +2470,8 @@
       "importJsonOnly": "Alleen JSON-bestanden",
       "whatsappCallButton": "Bellen via WhatsApp",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "Threadbeheer"
+      "threadControl": "Threadbeheer",
+      "sendGoogleAdsConversion": "Google Ads-conversie verzenden"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -2654,7 +2679,8 @@
     "dashboardNav": {
       "whatsapp": "Click-to-WhatsApp-advertenties",
       "messenger": "Click-to-Messenger-advertenties",
-      "instagram": "Click-to-Instagram-advertenties"
+      "instagram": "Click-to-Instagram-advertenties",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "Advertentieaccount koppelen",
@@ -3401,6 +3427,14 @@
     "deleteConfirmation": "Weet je het absoluut zeker?\nDeze actie kan niet ongedaan worden gemaakt.\nHiermee wordt je {feature} permanent van onze servers verwijderd."
   },
   "messages": {
+    "timeAgo": {
+      "now": "nu",
+      "minutes": "{count} min",
+      "hours": "{count} u",
+      "days": "{count} d",
+      "months": "{count} mnd",
+      "years": "{count} j"
+    },
     "moveFeature": "{feature} verplaatsen",
     "poweredBy": "Mogelijk gemaakt door {name}",
     "noGiphyApiKey": "Geen GIPHY API-sleutel gevonden. Voeg er een toe in Platforminstellingen.",
@@ -3800,7 +3834,14 @@
     "signUpTitle": "Registreren bij {name}",
     "changePasswordTitle": "Je wachtwoord wijzigen",
     "changePasswordDescription": "Stel een nieuw wachtwoord in voordat je verdergaat.",
-    "passwordChangeSuccess": "Wachtwoord gewijzigd"
+    "passwordChangeSuccess": "Wachtwoord gewijzigd",
+    "oauthError": {
+      "accountNotLinked": "Er bestaat al een account met dit e-mailadres en het kon niet worden gekoppeld. Log in zoals je eerder deed of neem contact op met support.",
+      "unableToLinkAccount": "We konden deze aanmelding niet aan het bestaande account koppelen. Meld je aan zoals je eerder deed, of neem contact op met support.",
+      "sessionExpired": "De aanmeldpoging is verlopen. Probeer het opnieuw.",
+      "accessDenied": "Aanmelden is geannuleerd.",
+      "generic": "Aanmelden mislukt. Probeer het opnieuw."
+    }
   },
   "emailTopics": {
     "title": "E-mailonderwerpen"
@@ -4457,7 +4498,27 @@
       "preview": "Voorbeeld",
       "embedCodeDescription": "Plak deze code vóór de afsluitende body-tag van je website. Opgeslagen wijzigingen worden automatisch toegepast, opnieuw plakken is niet nodig.",
       "savedSuccess": "Instellingen van chatwidget opgeslagen",
-      "poweredBy": "door"
+      "poweredBy": "door",
+      "toggleLabel": "Chat met ons",
+      "logo": {
+        "description": "De ronde knop waarop bezoekers klikken om de widget te openen. Kies een vierkante afbeelding, of laat leeg voor het standaard chatpictogram.",
+        "choose": "Kiezen uit mediabibliotheek",
+        "notImage": "Het logo moet een afbeelding zijn."
+      },
+      "brandUrl": {
+        "label": "Doorverwijs-URL",
+        "placeholder": "https://example.com",
+        "description": "Waar je merknaam in de \"door\"-regel van de widget naartoe linkt. Verplicht als er een merknaam is ingesteld.",
+        "requiredWithName": "Voer een doorverwijs-URL in voor deze merknaam."
+      },
+      "brandName": {
+        "description": "Getoond in de \"door\"-regel van de widget. Verplicht als er een doorverwijs-URL is ingesteld. Laat beide leeg om die regel te verbergen.",
+        "requiredWithUrl": "Voer een merknaam in voor deze doorverwijs-URL."
+      },
+      "logoBackgroundColor": {
+        "label": "Achtergrondkleur pictogram",
+        "description": "Achtergrond van het standaard chatpictogram. Het pictogram wordt wit of zwart zodat het leesbaar blijft."
+      }
     }
   },
   "qrCodes": {
@@ -4584,7 +4645,8 @@
       "startAnotherFlow": "Andere flow starten",
       "notifyAdmins": "Beheerders informeren",
       "transferConversationToHuman": "Gesprek overdragen aan een medewerker",
-      "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden"
+      "sendMetaCapiEvent": "Meta CAPI-gebeurtenis verzenden",
+      "sendGoogleAdsConversion": "Google Ads-conversie verzenden"
     },
     "triggerGoesOff": "Trigger wordt geactiveerd",
     "before": "Voor",
@@ -6597,6 +6659,447 @@
       "messagingIdHint": "Alleen letters, cijfers, koppeltekens en onderstrepingstekens (max. 512).",
       "cancel": "Annuleren",
       "confirmSend": "Verzenden"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "Verstuur offline conversies naar Google Ads voor contacten die via een klik op een Google-advertentie zijn binnengekomen.",
+    "notAvailable": {
+      "description": "De Google Ads-inloggegevens van het platform (OAuth-client-ID en geheim) zijn niet geconfigureerd. Vraag de platformbeheerder ze toe te voegen in de Google Ads-platforminstellingen."
+    },
+    "connect": {
+      "scopes": "We vragen toestemming om je Google Ads-accounts en conversieacties te lezen en om namens jou conversies te versturen.",
+      "button": "Google Ads koppelen",
+      "reconnect": "Opnieuw koppelen",
+      "unnamedAccount": "Google Ads-account",
+      "viaManager": "via manager {manager}",
+      "statusLabel": "Verbindingsstatus",
+      "needsReauthDescription": "De Google-toegang is ingetrokken of verlopen. Koppel opnieuw om conversies te blijven versturen.",
+      "pausedDescription": "Deze verbinding is gepauzeerd, dus er worden geen conversies verstuurd.",
+      "degradedDescription": "Google Ads reageert met fouten. Conversies worden automatisch opnieuw geprobeerd.",
+      "howItWorks": "Hoe het werkt",
+      "steps": {
+        "signIn": "Log in met het Google-account dat je advertenties beheert.",
+        "chooseAccount": "Kies het Google Ads-account.",
+        "pickAction": "Kies de conversieactie in je flows."
+      },
+      "uploadMethod": "Uploadmethode: {method}"
+    },
+    "status": {
+      "connected": "Gekoppeld",
+      "degraded": "Verstoord",
+      "needsReauth": "Opnieuw koppelen vereist",
+      "paused": "Gepauzeerd",
+      "disconnected": "Losgekoppeld"
+    },
+    "picker": {
+      "title": "Kies een Google Ads-account",
+      "legend": "Google Ads-accounts",
+      "loading": "Google Ads-verbinding laden",
+      "loadError": "Kan de Google Ads-verbindingspoging niet laden.",
+      "waiting": "Wachten tot Google de aanmelding bevestigt…",
+      "noTargets": "Er zijn geen Google Ads-accounts gevonden voor dit Google-account.",
+      "alreadyThisWorkspace": "Al gekoppeld aan deze workspace",
+      "alreadyOtherWorkspace": "Al gekoppeld aan een andere workspace",
+      "notSelectable": "Dit account kan niet worden geselecteerd",
+      "connectSelected": "Account koppelen",
+      "sessionExpired": "De verbindingspoging is verlopen. Koppel opnieuw om door te gaan.",
+      "sessionCancelled": "De verbindingspoging is geannuleerd.",
+      "stalled": "De aanmelding is niet voltooid. Gebruik «Google Ads koppelen» om het opnieuw te proberen.",
+      "dismiss": "Negeren",
+      "cancelFailed": "De koppelpoging kon niet worden geannuleerd. Probeer het opnieuw.",
+      "connectErrorTitle": "Google Ads kon niet worden gekoppeld",
+      "errors": {
+        "stateMismatch": "De aanmelding kon niet worden geverifieerd. Koppel opnieuw om door te gaan.",
+        "expired": "De verbindingspoging is verlopen. Koppel opnieuw om door te gaan.",
+        "providerDenied": "Google-toegang is niet verleend. Koppel opnieuw en sta de gevraagde machtigingen toe.",
+        "exchangeFailed": "Kan de Google-aanmelding niet voltooien. Koppel opnieuw om door te gaan.",
+        "providerError": "Google heeft een fout geretourneerd. Probeer het over een moment opnieuw te koppelen.",
+        "noCandidates": "Er is geen actief Google Ads-account gevonden voor deze Google-gebruiker. Accounts die zijn geannuleerd, opgeschort of niet volledig zijn ingesteld, kunnen niet worden gebruikt. Meld je aan met een Google-account dat een actief Google Ads-account beheert.",
+        "alreadyConnected": "Dat Google Ads-account is al gekoppeld.",
+        "quotaExceeded": "De verbindingslimiet van je abonnement is bereikt.",
+        "trialExpired": "Je proefperiode is afgelopen, dus er kunnen geen nieuwe verbindingen worden toegevoegd.",
+        "internalError": "Er is iets misgegaan bij het koppelen. Probeer het opnieuw.",
+        "providerUnavailable": "Google Ads is tijdelijk niet beschikbaar, dus de koppeling kon niet worden voltooid. Probeer het over een moment opnieuw.",
+        "developerTokenMissing": "Google Ads is niet volledig ingesteld: de Google-inloggegevens van het platform zijn onvolledig. Vraag je beheerder de Google Ads-inloggegevens te controleren.",
+        "developerTokenNotApproved": "Google heeft het developer token in de Google Ads-inloggegevens geweigerd. Het token is optioneel: vraag je beheerder het te verwijderen of te vervangen door een geldig token.",
+        "projectNotApproved": "Je Google Cloud-project is nog niet goedgekeurd voor Google Ads-accounts in productie. Vraag Explorer- of Basic-toegang aan voor het project in Google Cloud Console (Google Ads API → Overview) en verbind daarna opnieuw.",
+        "permissionDenied": "Deze Google-gebruiker heeft geen toestemming om toegang te krijgen tot Google Ads-accounts. Log in met een Google-gebruiker die toegang heeft tot een Google Ads-account.",
+        "apiNotEnabled": "De Google Ads API is niet ingeschakeld voor het Google Cloud-project. Vraag je beheerder deze in te schakelen en probeer het daarna opnieuw.",
+        "credentialsInvalid": "Google heeft de inloggegevens geweigerd. Koppel opnieuw om door te gaan.",
+        "scopeMissing": "Niet alle machtigingen zijn verleend. Google Ads heeft toegang nodig tot je Google Ads-account en toestemming om conversies te verzenden. Maak opnieuw verbinding en vink alle machtigingen aan.",
+        "legacyUploadNotAllowed": "Google staat de oude upload-API niet toe voor dit account. Zet de inloggegevens om naar Data Manager en verbind deze werkruimte opnieuw."
+      }
+    },
+    "setup": {
+      "conversionCustomer": "Conversieaccount",
+      "notResolved": "Nog niet bepaald",
+      "retry": "Installatie opnieuw proberen",
+      "dataTermsWarning": "De voorwaarden voor klantgegevens zijn voor dit account niet geaccepteerd. Accepteer ze in Google Ads en probeer de installatie opnieuw.",
+      "errors": {
+        "conversionCustomerInaccessible": "Het conversieaccount is niet toegankelijk met deze Google-aanmelding. Controleer je toegang in Google Ads en probeer het opnieuw.",
+        "customerDataTermsNotAccepted": "De voorwaarden voor klantgegevens zijn voor dit account niet geaccepteerd. Accepteer ze in Google Ads en probeer de installatie opnieuw.",
+        "syncFailed": "Kan de conversieacties niet uit Google Ads lezen. Probeer de installatie over een moment opnieuw.",
+        "developerTokenMissing": "De Google Ads-inloggegevens van het platform (OAuth-client-ID en geheim) zijn niet geconfigureerd."
+      }
+    },
+    "conversionActions": {
+      "title": "Conversieacties",
+      "description": "Alleen ingeschakelde acties die conversies uit klikken importeren, kunnen conversies ontvangen.",
+      "helpLink": "Google Ads Help",
+      "sync": "Conversieacties synchroniseren",
+      "syncedAt": "Laatst gesynchroniseerd {date}",
+      "neverSynced": "Nog niet gesynchroniseerd",
+      "empty": "Geen conversieacties gevonden. Maak in Google Ads een conversieactie voor offline import aan en synchroniseer daarna.",
+      "name": "Naam",
+      "category": "Categorie",
+      "counting": "Telling",
+      "status": "Status",
+      "onePerClickNote": "iOS-klikken (gbraid) kunnen niet naar deze actie worden verzonden. Gebruik de telling \"Elke\" om ze te ontvangen.",
+      "externalNote": "Niet ondersteund: deze actie gebruikt externe attributie, die niet via Google Data Manager kan worden verzonden.",
+      "count": "{count, plural, one {# conversieactie} other {# conversieacties}}"
+    },
+    "events": {
+      "title": "Conversiegeschiedenis",
+      "description": "Recente conversies die naar Google Ads zijn verstuurd. Klik-ID's zijn gemaskeerd.",
+      "empty": "Conversies verschijnen hier zodra een flow of trigger er een verstuurt.",
+      "emptyFiltered": "Geen conversies komen overeen met deze status.",
+      "loadError": "Kan de conversiegeschiedenis niet laden.",
+      "page": "Pagina {page} van {pages}",
+      "filter": {
+        "label": "Status",
+        "all": "Alle statussen"
+      },
+      "columns": {
+        "status": "Status",
+        "action": "Conversieactie",
+        "channel": "Kanaal",
+        "clickId": "Klik-ID",
+        "occurredAt": "Opgetreden",
+        "actions": "Acties",
+        "dedup": "Ontdubbeling",
+        "consent": "Toestemmingsmomentopname",
+        "matching": "Matching",
+        "properties": "Eigenschappen"
+      },
+      "status": {
+        "pending": "In afwachting",
+        "sending": "Wordt verstuurd",
+        "sent": "Verstuurd",
+        "processed": "Verwerkt",
+        "failed": "Mislukt",
+        "skippedNoAccount": "Overgeslagen: geen account",
+        "skippedExpired": "Overgeslagen: verlopen"
+      },
+      "processing": {
+        "processing": "Google is bezig met verwerken",
+        "success": "Geaccepteerd",
+        "partialSuccess": "Gedeeltelijk geaccepteerd",
+        "failed": "Afgewezen",
+        "unknown": "Resultaat onbekend",
+        "timedOut": "Time-out"
+      },
+      "stage": {
+        "delivery": "Bezorging mislukt",
+        "processing": "Verwerking mislukt",
+        "timeout": "Time-out"
+      },
+      "consent": {
+        "adUserDataFull": "Gebruikersgegevens voor advertenties: {status}",
+        "adPersonalizationFull": "Advertentiepersonalisatie: {status}",
+        "status": {
+          "granted": "Verleend",
+          "denied": "Geweigerd",
+          "notProvided": "Niet opgegeven",
+          "notSupported": "Niet ondersteund (verouderde upload)"
+        },
+        "adUserDataShort": "Data: {status}",
+        "adPersonalizationShort": "Pers.: {status}",
+        "delivery": {
+          "toSend": "Te verzenden",
+          "notSent": "Niet verzonden",
+          "unknown": "Niet bevestigd"
+        }
+      },
+      "dedup": {
+        "click": "Per klik",
+        "id": "ID: {id}",
+        "event": "Elke uitvoering"
+      },
+      "matching": {
+        "enabled": "Geconfigureerd: {fields}",
+        "withheldConsent": "Achtergehouden (geen toestemming): {fields}",
+        "unsupportedTransport": "Niet verzonden (oud): {fields}"
+      },
+      "timeProvided": "Opgegeven tijd",
+      "timeProvidedTooltip": "Deze conversietijd komt uit de stap, niet uit het moment waarop de stap werd uitgevoerd."
+    },
+    "validate": {
+      "open": "Aanvraag valideren",
+      "title": "Aanvraag valideren",
+      "description": "Een configuratiecontrole: Google valideert de aanvraag zonder een conversie vast te leggen.",
+      "conversionAction": "Conversieactie",
+      "clickIdType": "Type klik-ID",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "Klik-ID",
+      "submit": "Controle uitvoeren",
+      "ok": "Google heeft deze configuratie geaccepteerd. Er is niets vastgelegd.",
+      "reasons": {
+        "accountNotReady": "Google Ads is nog niet klaar. Rond het koppelen en instellen van je account af en probeer het opnieuw.",
+        "needsReauth": "De Google Ads-koppeling moet opnieuw worden gemaakt.",
+        "rejected": "Google heeft deze aanvraag afgewezen",
+        "legacyUploadNotAllowed": "Google staat de oude upload-API niet toe voor dit account. Zet de inloggegevens om naar Data Manager en verbind deze werkruimte opnieuw."
+      },
+      "invalid": "Kies een conversieactie en voer een geldig klik-ID in.",
+      "consentIncluded": "Bevat toestemming: {values}.",
+      "consentNone": "In deze test is geen toestemming opgenomen.",
+      "consentVariableSkipped": "Toestemming uit een contactveld kan niet worden getest en wordt weggelaten.",
+      "consentNotSentLegacy": "Advertentiepersonalisatie ({status}) wordt niet verzonden met de oude uploadmethode."
+    },
+    "conversionFields": {
+      "conversionAction": "Conversieactie",
+      "unavailableOption": "{id} (niet beschikbaar)",
+      "unavailableWarning": "De geselecteerde conversieactie is niet meer beschikbaar of niet ingeschakeld. Kies een andere voordat je publiceert.",
+      "externalOption": "{name} (externe attributie, niet ondersteund)",
+      "loading": "Conversieacties laden",
+      "loadError": "Je Google Ads-conversieacties konden niet worden geladen.",
+      "notConnected": "Koppel Google Ads om conversies te verzenden.",
+      "noActions": "Geen ingeschakelde conversieacties gevonden. Synchroniseer ze in je Google Ads-instellingen.",
+      "openSettings": "Google Ads-instellingen openen",
+      "needsReauth": "De Google Ads-koppeling moet opnieuw worden gemaakt.",
+      "dedupModeClick": "Eén keer per advertentieklik",
+      "dedupModeClickHelp": "Telt deze conversieactie één keer per advertentieklik.",
+      "dedupModeIdHelp": "Telt één keer per verschillende ID.",
+      "dedupModeId": "Eén keer per order- of gebeurtenis-ID",
+      "dedupModeEvent": "Bij elke uitvoering",
+      "dedupModeEventHelp": "Registreert bij elke uitvoering een nieuwe conversie, ook voor dezelfde advertentieklik. Een nieuwe poging van dezelfde uitvoering wordt niet dubbel geteld.",
+      "dedupId": "Order- of gebeurtenis-ID",
+      "dedupIdPlaceholder": "bijv. '{{order_number}}'",
+      "dedupIdHelp": "Gebruik hetzelfde ID opnieuw bij nieuwe pogingen en imports. Gebruik voor elke aankoop of gebeurtenis een ander ID.",
+      "dedupIdExample": "Geen order-ID bij verkoop via chat? Combineer het contact met een veld dat je per verkoop instelt, bijv. {example}. Gebruik niet de huidige tijd: die verandert bij elke run.",
+      "dedupIdInfoLabel": "Over de order- of gebeurtenis-ID",
+      "dedupLeadIdNote": "Elk ander ID telt als een nieuwe lead van dezelfde klik.",
+      "dedupClickNote": "Herhaalde aankopen van dezelfde klik worden niet geteld.",
+      "dedupLegacyNote": "Legacy-upload: Google krijgt een versluierde ID.",
+      "additionalOptions": "Extra opties",
+      "additionalOptionsCount": "{count} ingesteld",
+      "customerMatching": "Klantmatching",
+      "customerMatchingCount": "{count} aan",
+      "customerMatchingLegacy": "Niet ondersteund door de oude uploadmethode. Schakel de verbinding over naar de Data Manager API om dit te gebruiken.",
+      "customerMatchingTermsNotAccepted": "Wordt niet verzonden totdat de voorwaarden voor klantgegevens zijn geaccepteerd in de conversie-instellingen van Google Ads.",
+      "learnMore": "Meer informatie",
+      "matchEmailLabel": "E-mailadres",
+      "matchPhoneLabel": "Telefoonnummer",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "Klanttype",
+      "customerValueBucketLabel": "Klantwaarde",
+      "customerPropertiesLegacy": "Niet ondersteund door de oude uploadmethode. Schakel de verbinding over naar de Data Manager API om dit te gebruiken.",
+      "conversionTime": "Conversietijd",
+      "conversionTimePlaceholder": "Laat leeg om het tijdstip te gebruiken waarop deze stap wordt uitgevoerd",
+      "valuePlaceholder": "Optioneel, bijv. 250",
+      "currencyPlaceholder": "Optioneel, USD",
+      "validation": {
+        "dedupIdRequired": "Voer een ID in of kies Eén keer per advertentieklik.",
+        "dedupIdTooLong": "Gebruik maximaal 64 tekens.",
+        "matchTemplateInvalid": "Gebruik slechts één variabele, zoals '{{email}}'. Een vaste waarde is niet toegestaan.",
+        "customerTypeInvalid": "Gebruik NEW of RETURNING, of een variabele zoals '{{customer_type}}'.",
+        "customerValueBucketInvalid": "Gebruik LOW, MEDIUM of HIGH, of een variabele zoals '{{customer_value}}'.",
+        "timeFormat": "Gebruik een datum met tijdzone, bijv. 2026-10-08T14:30:00+07:00.",
+        "timeInvalidDate": "Deze datum bestaat niet.",
+        "currencyRequired": "Voeg een valuta toe als je een waarde instelt.",
+        "valueRequired": "Voeg een waarde toe als je een valuta instelt.",
+        "conversionActionRequired": "Kies een conversieactie.",
+        "valueInvalid": "Gebruik een gewoon getal, bijv. 19.99.",
+        "valueTooLarge": "Deze waarde is te groot.",
+        "currencyInvalid": "Gebruik een valutacode van 3 letters, bijv. USD."
+      },
+      "consentInvalid": "De toestemmingsinstellingen kunnen niet worden gelezen, dus deze stap zal mislukken.",
+      "consentFixLink": "Los het op in instellingen",
+      "dedupModeLabel": "Dubbele conversies voorkomen"
+    },
+    "summary": {
+      "conversionAction": "Conversieactie {id}",
+      "notConfigured": "Kies een conversieactie",
+      "dedupClick": "Eén keer per advertentieklik",
+      "dedupId": "ID: {id}",
+      "dedupEvent": "Bij elke uitvoering"
+    },
+    "consent": {
+      "title": "Toestemming voor conversiegegevens",
+      "description": "Of klanten ermee instemden hun gegevens voor advertenties te delen. Geldt voor elke conversie die deze werkruimte verstuurt.",
+      "learnMore": "Meer informatie",
+      "notConnected": "Geldt voor conversies zodra een Google Ads-account is gekoppeld.",
+      "adUserData": {
+        "label": "Gebruikersgegevens voor advertenties"
+      },
+      "adPersonalization": {
+        "label": "Advertentiepersonalisatie"
+      },
+      "source": {
+        "notProvided": "Niet opgegeven",
+        "granted": "Altijd toegestaan",
+        "denied": "Altijd geweigerd",
+        "variable": "Uit een contactveld"
+      },
+      "help": {
+        "notProvided": "Weggelaten. Google gebruikt de standaardtoestemming van je account.",
+        "granted": "Elke conversie geeft aan dat de klant akkoord ging.",
+        "denied": "Elke conversie geeft aan dat de klant weigerde.",
+        "variable": "Gebruik \"{granted}\" of \"{denied}\". Leeg wordt overgeslagen; al het andere laat de stap mislukken."
+      },
+      "templatePlaceholder": "bijv. '{{gdpr_consent}}'",
+      "templateLabel": "Contactveld voor {setting}",
+      "validation": {
+        "templateRequired": "Voeg een contactveld in, bijv. '{{gdpr_consent}}'.",
+        "templateTooLong": "Gebruik maximaal 200 tekens."
+      },
+      "legacy": {
+        "title": "Niet verzonden met legacy-upload",
+        "body": "Legacy-upload accepteert alleen toestemming voor gebruikersgegevens voor advertenties. Maak opnieuw verbinding met Data Manager om het te verzenden."
+      },
+      "save": "Opslaan",
+      "saved": "Toestemmingsinstellingen opgeslagen",
+      "invalidStored": "De opgeslagen toestemmingsinstellingen konden niet worden gelezen. Stappen die conversies verzenden mislukken totdat je nieuwe instellingen opslaat."
+    },
+    "errors": {
+      "supportSession": "Platformsupportsessies kunnen de Google Ads-verbinding niet wijzigen of conversies versturen.",
+      "developerTokenMissing": "Google Ads is nog niet beschikbaar: de Google Ads-inloggegevens van het platform (OAuth-client-ID en geheim) zijn niet geconfigureerd.",
+      "notConnected": "Google Ads is niet gekoppeld voor deze workspace.",
+      "sessionNotFound": "Deze Google Ads-verbindingspoging is niet gevonden of is verlopen. Begin opnieuw.",
+      "pickFailed": "Kan dat Google Ads-account niet koppelen. Mogelijk is het al elders gekoppeld of is de poging verlopen.",
+      "notRetryable": "Deze conversie kan niet opnieuw worden geprobeerd: alleen mislukte conversies kunnen opnieuw worden geprobeerd.",
+      "authorizationUnavailable": "Kan de Google-aanmelding niet starten. Probeer het over een moment opnieuw.",
+      "credentialSecretsRequired": "Voer het clientgeheim in. Het is nog niet opgeslagen."
+    },
+    "enums": {
+      "category": {
+        "default": "Standaard",
+        "purchase": "Aankoop",
+        "addToCart": "Toevoegen aan winkelwagen",
+        "beginCheckout": "Afrekenen starten",
+        "subscribePaid": "Betaald abonnement",
+        "phoneCallLead": "Lead via telefoongesprek",
+        "importedLead": "Geïmporteerde lead",
+        "submitLeadForm": "Leadformulier verzenden",
+        "bookAppointment": "Afspraak boeken",
+        "signup": "Aanmelding",
+        "requestQuote": "Offerte aanvragen",
+        "getDirections": "Routebeschrijving",
+        "outboundClick": "Uitgaande klik",
+        "contact": "Contact",
+        "engagement": "Betrokkenheid",
+        "storeVisit": "Winkelbezoek",
+        "storeSale": "Winkelverkoop",
+        "qualifiedLead": "Gekwalificeerde lead",
+        "convertedLead": "Geconverteerde lead",
+        "pageView": "Paginaweergave",
+        "download": "Download",
+        "lead": "Lead"
+      },
+      "countingType": {
+        "onePerClick": "Eén per klik",
+        "manyPerClick": "Meerdere per klik"
+      },
+      "actionStatus": {
+        "enabled": "Ingeschakeld",
+        "removed": "Verwijderd",
+        "hidden": "Verborgen"
+      },
+      "unknown": "Overig ({value})"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "Verouderde upload"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "Het kanaal van dit contact kan geen Google Ads-conversies verzenden.",
+      "google_ads_no_click": "Het contact kwam niet via een klik op een Google-advertentie.",
+      "google_ads_no_account": "Er is geen gereed Google Ads-account verbonden.",
+      "google_ads_unknown_conversion_action": "De conversieactie bestaat niet meer. Synchroniseer en kies een andere.",
+      "google_ads_action_disabled": "De conversieactie is niet ingeschakeld in Google Ads.",
+      "google_ads_incompatible_action": "Deze actie telt één conversie per klik, wat Google niet toestaat voor deze iOS-klik.",
+      "google_ads_unsupported_action": "Deze actie gebruikt externe attributie en kan deze conversies niet ontvangen.",
+      "google_ads_invalid_value": "De waarde of valuta was ongeldig.",
+      "google_ads_invalid_input": "De instellingen van de stap waren ongeldig.",
+      "google_ads_record_failed": "De conversie kon niet worden opgeslagen.",
+      "google_ads_missing_dedup_id": "De order- of gebeurtenis-ID was leeg.",
+      "google_ads_invalid_dedup_id": "De order- of gebeurtenis-ID was langer dan 64 tekens.",
+      "google_ads_missing_occurrence_key": "Deze uitvoering had geen stabiele identificatie, dus de conversie is niet vastgelegd.",
+      "google_ads_invalid_customer_property": "Het klanttype of de klantwaarde was geen toegestane waarde.",
+      "google_ads_invalid_consent_config": "De opgeslagen toestemmingsinstellingen konden niet worden gelezen.",
+      "google_ads_invalid_consent_value": "Een toestemmingsveld bevatte een andere waarde dan \"granted\" of \"denied\".",
+      "google_ads_invalid_conversion_time": "De conversietijd was geen geldige datum met tijdzone, of lag in de toekomst."
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "Alle kanalen",
+        "allActions": "Alle acties",
+        "channelLabel": "Kanaal",
+        "actionLabel": "Conversieactie"
+      },
+      "tiles": {
+        "confirmed": "Bevestigd",
+        "awaitingGoogle": "Wacht op Google",
+        "queued": "In wachtrij",
+        "failed": "Mislukt",
+        "skipped": "Overgeslagen",
+        "deliveryRate": "Afleverpercentage",
+        "confirmedHelp": "Google heeft bevestigd dat deze conversies zijn vastgelegd.",
+        "awaitingGoogleHelp": "Naar Google verzonden, wacht tot Google de verwerking heeft afgerond.",
+        "queuedHelp": "Wacht om te worden verzonden.",
+        "failedHelp": "Niet geaccepteerd of niet verwerkt door Google.",
+        "skippedHelp": "Niet verzonden: geen account gereed, of te oud voor Google.",
+        "deliveryRateHelp": "Bevestigd ÷ (bevestigd + mislukt). In wachtrij, wachtend en overgeslagen worden niet meegeteld."
+      },
+      "confirmedValue": "Bevestigde waarde",
+      "confirmedValueItem": "{value} ({count, plural, one {# conversie} other {# conversies}})",
+      "moreCurrencies": "+{count} meer",
+      "chart": {
+        "title": "Conversies per dag",
+        "viewAsTable": "Weergeven als tabel",
+        "tableCaption": "Conversies per dag",
+        "dateColumn": "Datum"
+      },
+      "byAction": {
+        "title": "Per conversieactie",
+        "truncated": "De 50 acties met de meeste conversies worden getoond."
+      },
+      "byChannel": {
+        "title": "Per kanaal",
+        "confirmedCount": "{count, plural, one {# bevestigd} other {# bevestigd}}"
+      },
+      "failures": {
+        "title": "Fouten per fase",
+        "unknown": "Onbekend"
+      },
+      "empty": {
+        "title": "Geen conversies in deze periode",
+        "description": "Conversies verschijnen hier zodra een flowstap of trigger er een verzendt."
+      },
+      "error": {
+        "title": "Statistieken konden niet worden geladen",
+        "retry": "Opnieuw proberen"
+      },
+      "viewStatistics": "Statistieken bekijken",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "Geen bevestigde of mislukte conversies in deze periode.",
+      "actionFallback": "Actie {id}",
+      "openSettings": "Instellingen van Google Ads openen",
+      "outcome": {
+        "title": "Verdeling van resultaten"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
     }
   },
   "minigames": {

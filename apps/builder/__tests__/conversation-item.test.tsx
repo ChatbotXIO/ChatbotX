@@ -5,7 +5,9 @@ import type { ListConversationItemResource } from "@/features/conversations/sche
 import { useWhatsappVoipCallStore } from "@/features/integration-whatsapp/calling/voip/voip-call-store"
 
 vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string) => key,
+  useTranslations: () => (key: string, values?: { count?: number }) =>
+    values?.count === undefined ? key : `${key}:${values.count}`,
+  useFormatter: () => ({ dateTime: (at: Date) => at.toISOString() }),
 }))
 
 const executeReadActionMock = vi.fn()
@@ -38,12 +40,15 @@ vi.mock(
 
 vi.mock("@/features/conversations/utils/ad-badge", () => ({
   selectAdBadge: () => null,
+  selectGoogleAdsBadge: () => null,
   adBadgeLabelKey: () => "whatsapp.calls.ringingBadge",
+  googleAdsBadgeLabelKey: () => "fields.adReferral.googleAds",
 }))
 
 const storeState = {
   activeConversationId: null as string | null,
   applyAgentLastReadAt: vi.fn(),
+  clearManuallyUnread: vi.fn(),
 }
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
   useChatStore: (selector: (state: typeof storeState) => unknown) =>
@@ -266,6 +271,49 @@ describe("ConversationItem", () => {
     expect(onSelect).toHaveBeenCalledTimes(1)
   })
 
+  // Like Chatwoot's conversation card: a compact age ("8d", never seconds)
+  // with the exact time one hover away.
+  test("shows the last activity as a short age with the exact time as tooltip", async () => {
+    vi.useFakeTimers({
+      now: new Date("2026-01-10T00:00:00Z"),
+      toFake: ["Date"],
+    })
+    try {
+      await render(
+        makeConversation({
+          lastActivityAt: new Date("2026-01-02T00:00:00Z"),
+        }),
+      )
+
+      const age = container.querySelector<HTMLElement>("time")
+      expect(age?.textContent).toBe("messages.timeAgo.days:8")
+      expect(age?.getAttribute("title")).toBe("2026-01-02T00:00:00.000Z")
+      expect(age?.getAttribute("datetime")).toBe("2026-01-02T00:00:00.000Z")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("shows a conversation younger than a minute as now", async () => {
+    vi.useFakeTimers({
+      now: new Date("2026-01-10T00:00:07Z"),
+      toFake: ["Date"],
+    })
+    try {
+      await render(
+        makeConversation({
+          lastActivityAt: new Date("2026-01-10T00:00:00Z"),
+        }),
+      )
+
+      expect(container.querySelector("time")?.textContent).toBe(
+        "messages.timeAgo.now",
+      )
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   test("clicking an active unread row triggers the read action", async () => {
     storeState.activeConversationId = "conversation-1"
     await render(
@@ -281,6 +329,41 @@ describe("ConversationItem", () => {
       rowButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
     })
 
+    expect(executeReadActionMock).toHaveBeenCalledTimes(1)
+  })
+
+  // Opening is read by the thread pane; a row effect would re-read on every
+  // virtualized remount and miss the mobile layout, where selecting a row
+  // unmounts the list.
+  test("does not read an active row on mount", async () => {
+    storeState.activeConversationId = "conversation-1"
+    await render(
+      makeConversation({
+        lastActivityAt: new Date("2026-01-02T00:00:00Z"),
+        agentLastReadAt: null,
+      }),
+    )
+
+    expect(executeReadActionMock).not.toHaveBeenCalled()
+  })
+
+  test("clicking the active row clears a manual-unread mark and reads it", async () => {
+    storeState.activeConversationId = "conversation-1"
+    await render(
+      makeConversation({
+        lastActivityAt: new Date("2026-01-02T00:00:00Z"),
+        agentLastReadAt: null,
+      }),
+    )
+
+    const rowButton = container.querySelector("button")
+    act(() => {
+      rowButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+    })
+
+    expect(storeState.clearManuallyUnread).toHaveBeenCalledWith(
+      "conversation-1",
+    )
     expect(executeReadActionMock).toHaveBeenCalledTimes(1)
   })
 

@@ -19,6 +19,7 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 const {
+  allIntegrations,
   integrations,
   integrationService,
   resolveIntegrationContextFromContactInbox,
@@ -118,5 +119,14 @@ describe("post tracking capability", () => {
         "getPostDetails",
       ),
     ).toBe(true)
+  })
+})
+
+describe("workspace teardown registry", () => {
+  // purge/teardown hand `allIntegrations` to the lifecycle service and the
+  // worker resolves provider integrations through it, so googleAds must be there.
+  test("allIntegrations includes googleAds", () => {
+    expect(allIntegrations.googleAds).toBe(integrations.googleAds)
+    expect(allIntegrations.googleAds).toBeDefined()
   })
 })

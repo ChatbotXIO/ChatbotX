@@ -4,6 +4,7 @@ import {
 } from "@chatbotx.io/business"
 import { resolveAdReferral } from "@chatbotx.io/business/ads-conversion/channel-fields"
 import { notFoundException } from "@chatbotx.io/business/errors"
+import { resolveGoogleAdsClick } from "@chatbotx.io/business/google-ads/click-fields"
 import {
   contactInboxOperationalColumns,
   createMessageRepository,
@@ -54,6 +55,7 @@ const mapConversationContactInboxes = (
     contactLastReadAt: contactInbox.contactLastReadAt,
     inbox: contactInbox.inbox,
     adReferral: resolveAdReferral(contactInbox.referral),
+    googleAdsClick: resolveGoogleAdsClick(contactInbox.referral),
     // Conversation routing (thread control): the composer's standby lock and
     // the owner pill read these off the listed conversation, so the allow-list
     // mapper must carry them or the lock never engages on reload.

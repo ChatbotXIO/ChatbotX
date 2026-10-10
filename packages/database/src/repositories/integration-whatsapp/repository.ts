@@ -208,6 +208,23 @@ class IntegrationWhatsappRepository {
   }
 
   /**
+   * No workspace scope — for inbound webhook handlers that only know the
+   * integration id from the URL.
+   */
+  async findByIdUnscoped(
+    id: string,
+    tx: DatabaseClient = db,
+  ): Promise<IntegrationWhatsappModel | null> {
+    const [row] = await tx
+      .select()
+      .from(integrationWhatsappModel)
+      .where(eq(integrationWhatsappModel.id, id))
+      .limit(1)
+
+    return row ?? null
+  }
+
+  /**
    * Replace the stored OAuth credentials after a token refresh. Scoped by
    * workspace so a forged integration id can never touch another tenant's row.
    */

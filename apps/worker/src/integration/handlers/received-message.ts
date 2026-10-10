@@ -73,7 +73,11 @@ import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { toLogSafeError } from "@chatbotx.io/logger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { distributedLock, isLockAcquisitionError } from "@chatbotx.io/redis"
-import type { ChannelPostDetails, IncomingAttachment } from "@chatbotx.io/sdk"
+import type {
+  ChannelPostDetails,
+  IncomingAttachment,
+  MessageReferral,
+} from "@chatbotx.io/sdk"
 import {
   type AuthValue,
   contentTypes,
@@ -93,6 +97,7 @@ import {
   type SourceScopedIdentityMatchedBy,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { hasGoogleClick } from "@chatbotx.io/utils/google-click"
 import {
   ChatJobAction,
   chatQueue,
@@ -131,6 +136,10 @@ import {
   refreshExistingContactProfile,
 } from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
+import {
+  syncAdLabelsIfAdReferred,
+  tagAdReferralOnlyContact,
+} from "./sync-ad-labels"
 import { recordInboundThreadControl } from "./thread-control-inbound"
 import { resolveTiktokCommenterIdentity } from "./tiktok-comment-identity"
 
@@ -213,6 +222,19 @@ export const metaReferralToContactSource = (
       return
   }
 }
+
+/**
+ * A Google click is checked first: an m.me `?ref=` carrying it also arrives as
+ * a Meta `SHORTLINK` referral, which would otherwise map to `botLink`.
+ */
+const resolveContactSource = (
+  referral: MessageReferral | null | undefined,
+  referralSource: string | null | undefined,
+): ContactSource =>
+  hasGoogleClick(referral)
+    ? contactSources.enum.ads
+    : (metaReferralToContactSource(referralSource) ??
+      contactSources.enum.inboundMessage)
 
 /**
  * A third-party echo (another app's send mirrored back by the channel, as
@@ -364,9 +386,7 @@ export const receiveMessage = async (
       incomingContact,
       inbox,
       integrationRow,
-      source:
-        metaReferralToContactSource(referralSource) ??
-        contactSources.enum.inboundMessage,
+      source: resolveContactSource(parsedMessage.referral, referralSource),
       existingContactMatch,
     }),
     resolvePostbackButtonLabel({
@@ -714,6 +734,18 @@ export const receiveMessage = async (
     })
   }
 
+  // A referral-only ad delivery stores no message, so the label lookup further
+  // down skips it; tag the contact with the ad locally instead. Runs before
+  // the ref job is enqueued so a ref flow can already see the tag.
+  await tagAdReferralOnlyContact({
+    canAutomate,
+    inbox,
+    integrationRow,
+    referral: parsedMessage.referral,
+    isReferralOnly: !incomingMessage,
+    contactInbox: { id: contactInbox.id, contactId: contactInbox.contactId },
+  })
+
   if (ref && canAutomate) {
     await integrationQueue.add(IntegrationJobAction.runRef, {
       type: IntegrationJobAction.runRef,
@@ -726,6 +758,22 @@ export const receiveMessage = async (
       },
     })
   }
+
+  // Per-ad labels some channels auto-assign never arrive by webhook, so a newly
+  // stored ad-referred message reads them once the message is fully handled.
+  await syncAdLabelsIfAdReferred({
+    canAutomate,
+    inbox,
+    integrationRow,
+    referral: parsedMessage.referral,
+    newMessageType: createdMessage?.messageType,
+    sourceId: incomingContact.sourceId,
+    listLabels: (requestTimeoutMs) =>
+      integration.runChannelHandler("bot", "listLabels", {
+        ctx,
+        data: { sourceId: incomingContact.sourceId, requestTimeoutMs },
+      }),
+  })
 
   return {
     message: createdMessage,

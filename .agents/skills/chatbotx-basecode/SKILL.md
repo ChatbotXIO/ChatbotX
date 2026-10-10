@@ -31,6 +31,9 @@ Two routing notes that table does not spell out:
 
 - CLI, MCP server, and the generated public client all follow the public oRPC surface — use
   `orpc-api`.
+- ChatbotX is agent-first: a new feature is `feature-scaffold` + `orpc-api` (public procedure
+  first, including result-returning operations like the bot simulator link) + `cli-mcp-docs`;
+  the UI is the last layer. See AGENTS.md invariant 23.
 - A broad request usually decomposes into several skills (e.g. a new feature with a table and
   a queue = `feature-scaffold` + `drizzle-database` + `worker-development`). Read each before
   writing that layer, not all of them up front.

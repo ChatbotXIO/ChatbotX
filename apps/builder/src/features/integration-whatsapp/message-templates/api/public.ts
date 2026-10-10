@@ -1,4 +1,5 @@
 import {
+  describeTemplateParameters,
   integrationMetaCatalogService,
   integrationWhatsappService,
   whatsappMessageTemplateService,
@@ -11,6 +12,7 @@ import {
   possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
+import { templateParametersField } from "@/lib/public-api/template-parameters"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { syncWhatsappMessageTemplates } from "../lib/sync-whatsapp-templates"
 import {
@@ -30,7 +32,7 @@ export const whatsappTemplatesPublicRouter = {
       path: "/v1/whatsapp/templates/{id}",
       summary: "Get WhatsApp template",
       description:
-        "Returns one WhatsApp message template with its components and approval status. Find its id with `whatsappTemplates.list`.",
+        "Returns one WhatsApp message template with its components, approval status and `parameters`: the keys to fill in `templateParams` when sending it. Find its id with `whatsappTemplates.list`.",
       tags: ["WhatsApp Templates"],
     })
     .input(
@@ -40,7 +42,11 @@ export const whatsappTemplatesPublicRouter = {
         ),
       }),
     )
-    .output(whatsappMessageTemplateResource)
+    .output(
+      whatsappMessageTemplateResource.extend({
+        parameters: templateParametersField,
+      }),
+    )
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
       const template =
@@ -51,7 +57,13 @@ export const whatsappTemplatesPublicRouter = {
       if (!template) {
         throw notFoundException("Template not found")
       }
-      return template
+      return {
+        ...template,
+        parameters: describeTemplateParameters({
+          channel: "whatsapp",
+          components: template.components,
+        }),
+      }
     }),
 
   sync: workspaceTokenAuthAPI

@@ -213,6 +213,68 @@ describe("evaluateDateTimeTriggers", () => {
     }
   })
 
+  describe("occurrence key", () => {
+    const sweep = async (value: string, sweptAt: string) => {
+      actionExecute.mockClear()
+      listActiveWithConditionsPage.mockResolvedValueOnce({
+        triggers: [
+          triggerRow({
+            id: "trigger-1",
+            conditions: [dateTimeCondition("field-1")],
+          }),
+        ],
+        nextCursor: undefined,
+      })
+      const row = contactCustomFieldRow({
+        contactId: "contact-1",
+        customFieldId: "field-1",
+        value,
+      })
+      listContactCustomFieldsForDateTimeSweep.mockResolvedValueOnce({
+        rows: [row],
+        nextCursor: undefined,
+      })
+      listContactCustomFieldsForDateTimeSweepContacts.mockResolvedValueOnce([
+        row,
+      ])
+      await evaluateDateTimeTriggers({ startOfMinute: Date.parse(sweptAt) })
+      return actionExecute.mock.calls[0]?.[0].occurrenceKey
+    }
+
+    test("changes when the contact's date is edited", async () => {
+      const first = await sweep(
+        "2026-07-11T14:00:00.000Z",
+        "2026-07-11T14:05:00.000Z",
+      )
+      const edited = await sweep(
+        "2026-07-12T14:00:00.000Z",
+        "2026-07-12T14:05:00.000Z",
+      )
+
+      expect(edited).not.toBe(first)
+    })
+
+    test("is the same when a crash re-sweeps the same scheduled date after UTC midnight", async () => {
+      vi.useFakeTimers()
+      try {
+        vi.setSystemTime(new Date("2026-07-11T23:58:00.000Z"))
+        const before = await sweep(
+          "2026-07-11T14:00:00.000Z",
+          "2026-07-11T14:05:00.000Z",
+        )
+        vi.setSystemTime(new Date("2026-07-12T00:02:00.000Z"))
+        const after = await sweep(
+          "2026-07-11T14:00:00.000Z",
+          "2026-07-11T14:05:00.000Z",
+        )
+
+        expect(after).toBe(before)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+  })
+
   test("waits for all datetime conditions before executing a trigger across cursor pages", async () => {
     listActiveWithConditionsPage.mockResolvedValueOnce({
       triggers: [

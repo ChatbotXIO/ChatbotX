@@ -697,6 +697,7 @@
       "noAdminReply": "Ei ylläpitäjän vastausta",
       "contactCreatedAt": "Yhteystieto luotu",
       "fromCtwaAd": "Mainoksesta",
+      "fromGoogleAd": "Google Adsista",
       "ctwaConversion": "Mainoksen konversio",
       "lastUserInputTypes": {
         "text": "Teksti",
@@ -1931,7 +1932,10 @@
       "label": "Asiakastunnus"
     },
     "clientSecret": {
-      "label": "Asiakassalaisuus"
+      "label": "Asiakassalaisuus",
+      "keepHint": "Jätä tyhjäksi, jos haluat säilyttää tallennetun asiakassalaisuuden.",
+      "isSet": "Asiakassalaisuus on asetettu.",
+      "isNotSet": "Asiakassalaisuutta ei ole asetettu."
     },
     "verifyToken": {
       "label": "Webhook-vahvistustunnus"
@@ -2051,6 +2055,17 @@
     "signInCallbackUrl": {
       "label": "Kirjautumisen takaisinkutsu-URL",
       "hint": "Lisää tämä Google-sovelluksesi valtuutettuihin uudelleenohjaus-URI-osoitteisiin ottaaksesi Google-kirjautumisen käyttöön."
+    },
+    "adsDeveloperToken": {
+      "label": "Google Ads -kehittäjätunnus",
+      "hint": "Valinnainen: Google ei enää vaadi kehittäjätunnusta. Jätä tyhjäksi, jos haluat säilyttää tallennetun tunnuksen.",
+      "isSet": "Kehittäjätunnus on asetettu.",
+      "isNotSet": "Kehittäjätunnusta ei ole asetettu.",
+      "clear": "Tyhjennä",
+      "cleared": "Kehittäjätunnus tyhjennetty."
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "Käytä Google Adsille omaa Google OAuth -sovellusta, joka on erillinen Google-sovelluksestasi ja jossa adwords- ja datamanager-scopet on otettu käyttöön. Se tarvitsee oman Google OAuth -vahvistuksensa."
     },
     "webhookUrl": {
       "label": "Webhook-URL",
@@ -2261,7 +2276,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -2278,6 +2296,12 @@
     },
     "sendRatePerMinute": {
       "label": "Viestejä minuutissa"
+    },
+    "adsUploadMethod": {
+      "label": "Lähetystapa",
+      "hint": "Data Manager on suositeltu. Vanha lähetys-API toimii vain Google Cloud -projekteissa, jotka Google vielä sallii, eikä se käytä Data Manager -oikeutta. Muutos koskee vain uusia yhteyksiä: yhdistä nykyiset työtilat uudelleen.",
+      "dataManager": "Data Manager API (suositeltu)",
+      "legacy": "Vanha lähetys-API"
     }
   },
   "flows": {
@@ -2446,7 +2470,8 @@
       "importJsonOnly": "Vain JSON-tiedostot",
       "whatsappCallButton": "Soita WhatsAppissa",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "Keskustelun hallinta"
+      "threadControl": "Keskustelun hallinta",
+      "sendGoogleAdsConversion": "Lähetä Google Ads -konversio"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2654,7 +2679,8 @@
     "dashboardNav": {
       "whatsapp": "Click-to-WhatsApp-mainokset",
       "messenger": "Click-to-Messenger-mainokset",
-      "instagram": "Click-to-Instagram-mainokset"
+      "instagram": "Click-to-Instagram-mainokset",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "Yhdistä mainostili",
@@ -3401,6 +3427,14 @@
     "deleteConfirmation": "Oletko aivan varma?\nTätä toimintoa ei voi kumota.\nTämä poistaa kohteen {feature} pysyvästi palvelimiltamme."
   },
   "messages": {
+    "timeAgo": {
+      "now": "nyt",
+      "minutes": "{count} min",
+      "hours": "{count} t",
+      "days": "{count} pv",
+      "months": "{count} kk",
+      "years": "{count} v"
+    },
     "moveFeature": "Siirrä {feature}",
     "poweredBy": "Palvelun tarjoaa {name}",
     "noGiphyApiKey": "GIPHY-API-avainta ei löytynyt. Lisää se alusta-asetuksissa.",
@@ -3800,7 +3834,14 @@
     "signUpTitle": "Rekisteröidy palveluun {name}",
     "changePasswordTitle": "Vaihda salasanasi",
     "changePasswordDescription": "Aseta uusi salasana ennen jatkamista.",
-    "passwordChangeSuccess": "Salasana vaihdettu"
+    "passwordChangeSuccess": "Salasana vaihdettu",
+    "oauthError": {
+      "accountNotLinked": "Tällä sähköpostiosoitteella on jo tili, eikä sitä voitu yhdistää. Kirjaudu sisään samalla tavalla kuin aiemmin tai ota yhteyttä tukeen.",
+      "unableToLinkAccount": "Tätä kirjautumista ei voitu yhdistää olemassa olevaan tiliin. Kirjaudu samalla tavalla kuin aiemmin tai ota yhteyttä tukeen.",
+      "sessionExpired": "Kirjautumisyritys vanheni. Yritä uudelleen.",
+      "accessDenied": "Kirjautuminen peruutettiin.",
+      "generic": "Kirjautuminen epäonnistui. Yritä uudelleen."
+    }
   },
   "emailTopics": {
     "title": "Sähköpostiaiheet"
@@ -4457,7 +4498,27 @@
       "preview": "Esikatselu",
       "embedCodeDescription": "Liitä tämä koodi ennen sivustosi sulkevaa body-tagia. Tallennetut muutokset otetaan käyttöön automaattisesti, eikä koodia tarvitse liittää uudelleen.",
       "savedSuccess": "Chat-widgetin asetukset tallennettu",
-      "poweredBy": "tekijä"
+      "poweredBy": "tekijä",
+      "toggleLabel": "Keskustele kanssamme",
+      "logo": {
+        "description": "Pyöreä painike, jota kävijät klikkaavat avatakseen widgetin. Valitse neliön muotoinen kuva tai jätä tyhjäksi käyttääksesi oletuskeskustelukuvaketta.",
+        "choose": "Valitse mediakirjastosta",
+        "notImage": "Logon on oltava kuva."
+      },
+      "brandUrl": {
+        "label": "Uudelleenohjauksen URL",
+        "placeholder": "https://example.com",
+        "description": "Mihin brändinimesi widgetin \"tekijä\"-rivillä linkittää. Pakollinen, kun brändinimi on asetettu.",
+        "requiredWithName": "Anna uudelleenohjauksen URL tälle brändinimelle."
+      },
+      "brandName": {
+        "description": "Näytetään widgetin \"tekijä\"-rivillä. Pakollinen, kun uudelleenohjauksen URL on asetettu. Jätä molemmat tyhjiksi piilottaaksesi rivin.",
+        "requiredWithUrl": "Anna brändinimi tälle uudelleenohjauksen URL-osoitteelle."
+      },
+      "logoBackgroundColor": {
+        "label": "Kuvakkeen taustaväri",
+        "description": "Oletuskeskustelukuvakkeen tausta. Kuvake muuttuu valkoiseksi tai mustaksi, jotta se erottuu."
+      }
     }
   },
   "qrCodes": {
@@ -4584,7 +4645,8 @@
       "startAnotherFlow": "Käynnistä toinen flow",
       "notifyAdmins": "Ilmoita ylläpitäjille",
       "transferConversationToHuman": "Siirrä keskustelu ihmiselle",
-      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma"
+      "sendMetaCapiEvent": "Lähetä Meta CAPI -tapahtuma",
+      "sendGoogleAdsConversion": "Lähetä Google Ads -konversio"
     },
     "triggerGoesOff": "Käynnistin aktivoituu",
     "before": "Ennen",
@@ -6597,6 +6659,447 @@
       "messagingIdHint": "Vain kirjaimia, numeroita, viivoja ja alaviivoja (enintään 512).",
       "cancel": "Peruuta",
       "confirmSend": "Lähetä"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "Lähetä offline-konversiot Google Adsiin kontakteista, jotka tulivat Google-mainoksen klikkauksesta.",
+    "notAvailable": {
+      "description": "Alustan Google Ads -tunnistetietoja (OAuth-asiakastunnus ja salaisuus) ei ole määritetty. Pyydä alustan ylläpitäjää lisäämään ne alustan Google Ads -asetuksiin."
+    },
+    "connect": {
+      "scopes": "Pyydämme lupaa lukea Google Ads -tilisi ja konversiotoimintosi sekä lähettää konversioita puolestasi.",
+      "button": "Yhdistä Google Ads",
+      "reconnect": "Yhdistä uudelleen",
+      "unnamedAccount": "Google Ads -tili",
+      "viaManager": "hallintatilin {manager} kautta",
+      "statusLabel": "Yhteyden tila",
+      "needsReauthDescription": "Googlen käyttöoikeus on peruttu tai vanhentunut. Yhdistä uudelleen, jotta konversioiden lähetys jatkuu.",
+      "pausedDescription": "Yhteys on keskeytetty, joten konversioita ei lähetetä.",
+      "degradedDescription": "Google Ads vastaa virheillä. Konversioiden lähetystä yritetään automaattisesti uudelleen.",
+      "howItWorks": "Näin se toimii",
+      "steps": {
+        "signIn": "Kirjaudu sisään Google-tilillä, joka hallinnoi mainoksiasi.",
+        "chooseAccount": "Valitse Google Ads -tili.",
+        "pickAction": "Valitse konversiotoiminto flow'issasi."
+      },
+      "uploadMethod": "Latausmenetelmä: {method}"
+    },
+    "status": {
+      "connected": "Yhdistetty",
+      "degraded": "Heikentynyt",
+      "needsReauth": "Vaatii uudelleenyhdistämisen",
+      "paused": "Keskeytetty",
+      "disconnected": "Yhteys katkaistu"
+    },
+    "picker": {
+      "title": "Valitse Google Ads -tili",
+      "legend": "Google Ads -tilit",
+      "loading": "Ladataan Google Ads -yhteyttä",
+      "loadError": "Google Ads -yhteysyrityksen lataus epäonnistui.",
+      "waiting": "Odotetaan, että Google vahvistaa kirjautumisen…",
+      "noTargets": "Tälle Google-tilille ei löytynyt Google Ads -tilejä.",
+      "alreadyThisWorkspace": "Yhdistetty jo tähän työtilaan",
+      "alreadyOtherWorkspace": "Yhdistetty jo toiseen työtilaan",
+      "notSelectable": "Tätä tiliä ei voi valita",
+      "connectSelected": "Yhdistä tili",
+      "sessionExpired": "Yhteysyritys vanheni. Jatka yhdistämällä uudelleen.",
+      "sessionCancelled": "Yhteysyritys peruttiin.",
+      "stalled": "Kirjautuminen ei valmistunut. Yritä uudelleen painamalla «Yhdistä Google Ads».",
+      "dismiss": "Hylkää",
+      "cancelFailed": "Yhdistämisyrityksen peruuttaminen epäonnistui. Yritä uudelleen.",
+      "connectErrorTitle": "Google Adsin yhdistäminen epäonnistui",
+      "errors": {
+        "stateMismatch": "Kirjautumista ei voitu vahvistaa. Jatka yhdistämällä uudelleen.",
+        "expired": "Yhteysyritys vanheni. Jatka yhdistämällä uudelleen.",
+        "providerDenied": "Googlen käyttöoikeutta ei myönnetty. Yhdistä uudelleen ja salli pyydetyt käyttöoikeudet.",
+        "exchangeFailed": "Google-kirjautumista ei voitu viimeistellä. Jatka yhdistämällä uudelleen.",
+        "providerError": "Google palautti virheen. Yritä yhdistää uudelleen hetken kuluttua.",
+        "noCandidates": "Tälle Google-käyttäjälle ei löytynyt aktiivista Google Ads -tiliä. Peruttuja, jäädytettyjä tai vajaasti määritettyjä tilejä ei voi käyttää. Kirjaudu sisään Google-tilillä, joka hallinnoi aktiivista Google Ads -tiliä.",
+        "alreadyConnected": "Tämä Google Ads -tili on jo yhdistetty.",
+        "quotaExceeded": "Tilauksesi yhteysraja on saavutettu.",
+        "trialExpired": "Kokeilujaksosi on päättynyt, joten uusia yhteyksiä ei voi lisätä.",
+        "internalError": "Yhdistämisessä tapahtui virhe. Yritä uudelleen.",
+        "providerUnavailable": "Google Ads ei ole tilapäisesti käytettävissä, joten yhteyttä ei voitu viimeistellä. Yritä uudelleen hetken kuluttua.",
+        "developerTokenMissing": "Google Ads ei ole täysin määritetty: alustan Google-tunnistetiedot ovat puutteelliset. Pyydä ylläpitäjää tarkistamaan Google Ads -tunnistetiedot.",
+        "developerTokenNotApproved": "Google hylkäsi Google Ads -tunnistetiedoissa tallennetun kehittäjätunnuksen (developer token). Tunnus on valinnainen: pyydä ylläpitäjää poistamaan se tai korvaamaan se kelvollisella.",
+        "projectNotApproved": "Google Cloud -projektiasi ei ole vielä hyväksytty tuotannon Google Ads -tileille. Hae projektille Explorer- tai Basic-käyttöoikeutta Google Cloud Consolessa (Google Ads API → Overview) ja yhdistä sitten uudelleen.",
+        "permissionDenied": "Tällä Google-käyttäjällä ei ole oikeutta käyttää Google Ads -tilejä. Kirjaudu sisään Google-käyttäjällä, jolla on pääsy Google Ads -tiliin.",
+        "apiNotEnabled": "Google Ads API ei ole käytössä Google Cloud -projektissa. Pyydä ylläpitäjää ottamaan se käyttöön ja yritä sitten uudelleen.",
+        "credentialsInvalid": "Google hylkäsi kirjautumistiedot. Yhdistä uudelleen jatkaaksesi.",
+        "scopeMissing": "Kaikkia käyttöoikeuksia ei myönnetty. Google Ads tarvitsee pääsyn Google Ads -tiliisi ja luvan lähettää konversioita. Yhdistä uudelleen ja valitse kaikki käyttöoikeudet.",
+        "legacyUploadNotAllowed": "Google ei salli vanhaa lähetys-API:a tälle tilille. Vaihda tunnistetiedot Data Manageriin ja yhdistä tämä työtila uudelleen."
+      }
+    },
+    "setup": {
+      "conversionCustomer": "Konversiotili",
+      "notResolved": "Ei vielä selvitetty",
+      "retry": "Yritä määritystä uudelleen",
+      "dataTermsWarning": "Asiakastietoehtoja ei ole hyväksytty tälle tilille. Hyväksy ne Google Adsissa ja yritä määritystä sitten uudelleen.",
+      "errors": {
+        "conversionCustomerInaccessible": "Konversiotiliin ei ole pääsyä tällä Google-kirjautumisella. Tarkista käyttöoikeutesi Google Adsissa ja yritä uudelleen.",
+        "customerDataTermsNotAccepted": "Asiakastietoehtoja ei ole hyväksytty tälle tilille. Hyväksy ne Google Adsissa ja yritä määritystä sitten uudelleen.",
+        "syncFailed": "Konversiotoimintojen lukeminen Google Adsista epäonnistui. Yritä määritystä uudelleen hetken kuluttua.",
+        "developerTokenMissing": "Alustan Google Ads -tunnistetietoja (OAuth-asiakastunnus ja salaisuus) ei ole määritetty."
+      }
+    },
+    "conversionActions": {
+      "title": "Konversiotoiminnot",
+      "description": "Vain käytössä olevat toiminnot, jotka tuovat konversioita klikkauksista, voivat vastaanottaa konversioita.",
+      "helpLink": "Google Ads -ohje",
+      "sync": "Synkronoi konversiotoiminnot",
+      "syncedAt": "Viimeksi synkronoitu {date}",
+      "neverSynced": "Ei vielä synkronoitu",
+      "empty": "Konversiotoimintoja ei löytynyt. Luo Google Adsissa offline-tuonnin konversiotoiminto ja synkronoi sitten.",
+      "name": "Nimi",
+      "category": "Luokka",
+      "counting": "Laskenta",
+      "status": "Tila",
+      "onePerClickNote": "iOS-klikkauksia (gbraid) ei voi lähettää tähän toimintoon. Käytä laskentatapaa \"Jokainen\", jotta ne voidaan vastaanottaa.",
+      "externalNote": "Ei tuettu: tämä toiminto käyttää ulkoista attribuutiota, jota ei voi lähettää Google Data Managerin kautta.",
+      "count": "{count, plural, one {# konversiotoiminto} other {# konversiotoimintoa}}"
+    },
+    "events": {
+      "title": "Konversiohistoria",
+      "description": "Viimeisimmät Google Adsiin lähetetyt konversiot. Klikkaustunnukset on peitetty.",
+      "empty": "Konversiot näkyvät tässä, kun flow tai trigger lähettää yhden.",
+      "emptyFiltered": "Mikään konversio ei vastaa tätä tilaa.",
+      "loadError": "Konversiohistorian lataus epäonnistui.",
+      "page": "Sivu {page} / {pages}",
+      "filter": {
+        "label": "Tila",
+        "all": "Kaikki tilat"
+      },
+      "columns": {
+        "status": "Tila",
+        "action": "Konversiotoiminto",
+        "channel": "Kanava",
+        "clickId": "Klikkaustunnus",
+        "occurredAt": "Tapahtunut",
+        "actions": "Toiminnot",
+        "dedup": "Kaksoiskappaleiden esto",
+        "consent": "Suostumuksen tilannekuva",
+        "matching": "Täsmäytys",
+        "properties": "Ominaisuudet"
+      },
+      "status": {
+        "pending": "Odottaa",
+        "sending": "Lähetetään",
+        "sent": "Lähetetty",
+        "processed": "Käsitelty",
+        "failed": "Epäonnistui",
+        "skippedNoAccount": "Ohitettu: ei tiliä",
+        "skippedExpired": "Ohitettu: vanhentunut"
+      },
+      "processing": {
+        "processing": "Google käsittelee",
+        "success": "Hyväksytty",
+        "partialSuccess": "Hyväksytty osittain",
+        "failed": "Hylätty",
+        "unknown": "Tulos tuntematon",
+        "timedOut": "Aikakatkaisu"
+      },
+      "stage": {
+        "delivery": "Toimitus epäonnistui",
+        "processing": "Käsittely epäonnistui",
+        "timeout": "Aikakatkaisu"
+      },
+      "consent": {
+        "adUserDataFull": "Mainoskäyttäjätiedot: {status}",
+        "adPersonalizationFull": "Mainosten personointi: {status}",
+        "status": {
+          "granted": "Myönnetty",
+          "denied": "Evätty",
+          "notProvided": "Ei annettu",
+          "notSupported": "Ei tuettu (vanha lähetystapa)"
+        },
+        "adUserDataShort": "Data: {status}",
+        "adPersonalizationShort": "Pers.: {status}",
+        "delivery": {
+          "toSend": "Lähetettävä",
+          "notSent": "Ei lähetetty",
+          "unknown": "Ei vahvistettu"
+        }
+      },
+      "dedup": {
+        "click": "Klikkausta kohden",
+        "id": "ID: {id}",
+        "event": "Jokainen suoritus"
+      },
+      "matching": {
+        "enabled": "Määritetty: {fields}",
+        "withheldConsent": "Pidätetty (ei suostumusta): {fields}",
+        "unsupportedTransport": "Ei lähetetty (vanha): {fields}"
+      },
+      "timeProvided": "Annettu aika",
+      "timeProvidedTooltip": "Tämä konversioaika tuli vaiheesta, ei suorituksen ajankohdasta."
+    },
+    "validate": {
+      "open": "Vahvista pyyntö",
+      "title": "Vahvista pyyntö",
+      "description": "Määritystarkistus: Google vahvistaa pyynnön tallentamatta konversiota.",
+      "conversionAction": "Konversiotoiminto",
+      "clickIdType": "Klikkaustunnuksen tyyppi",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "Klikkaustunnus",
+      "submit": "Suorita tarkistus",
+      "ok": "Google hyväksyi tämän määrityksen. Mitään ei tallennettu.",
+      "reasons": {
+        "accountNotReady": "Google Ads ei ole vielä valmis. Viimeistele tilin yhdistäminen ja määritys ja yritä uudelleen.",
+        "needsReauth": "Google Ads -yhteys on yhdistettävä uudelleen.",
+        "rejected": "Google hylkäsi tämän pyynnön",
+        "legacyUploadNotAllowed": "Google ei salli vanhaa lähetys-API:a tälle tilille. Vaihda tunnistetiedot Data Manageriin ja yhdistä tämä työtila uudelleen."
+      },
+      "invalid": "Valitse konversiotoiminto ja anna kelvollinen klikkaustunnus.",
+      "consentIncluded": "Sisältää suostumuksen: {values}.",
+      "consentNone": "Tähän testiin ei sisälly suostumusta.",
+      "consentVariableSkipped": "Yhteystietokentän suostumusta ei voi testata, ja se jätetään pois.",
+      "consentNotSentLegacy": "Mainosten personointia ({status}) ei lähetetä vanhalla latausmenetelmällä."
+    },
+    "conversionFields": {
+      "conversionAction": "Konversiotoiminto",
+      "unavailableOption": "{id} (ei saatavilla)",
+      "unavailableWarning": "Valittu konversiotoiminto ei ole enää saatavilla tai se ei ole käytössä. Valitse toinen ennen julkaisua.",
+      "externalOption": "{name} (ulkoinen attribuutio, ei tuettu)",
+      "loading": "Ladataan konversiotoimintoja",
+      "loadError": "Google Ads -konversiotoimintojen lataus epäonnistui.",
+      "notConnected": "Yhdistä Google Ads lähettääksesi konversioita.",
+      "noActions": "Käytössä olevia konversiotoimintoja ei löytynyt. Synkronoi ne Google Ads -asetuksissa.",
+      "openSettings": "Avaa Google Ads -asetukset",
+      "needsReauth": "Google Ads -yhteys on yhdistettävä uudelleen.",
+      "dedupModeClick": "Kerran mainosklikkausta kohti",
+      "dedupModeClickHelp": "Laskee tämän konversiotoiminnon kerran jokaista mainosklikkausta kohti.",
+      "dedupModeIdHelp": "Lasketaan kerran jokaista eri tunnusta kohti.",
+      "dedupModeId": "Kerran tilaus- tai tapahtumatunnusta kohti",
+      "dedupModeEvent": "Joka suorituskerralla",
+      "dedupModeEventHelp": "Tallentaa uuden konversion joka suorituskerralla, myös samalle mainosklikkaukselle. Saman suorituksen uudelleenyritystä ei lasketa kahdesti.",
+      "dedupId": "Tilaus- tai tapahtumatunnus",
+      "dedupIdPlaceholder": "esim. '{{order_number}}'",
+      "dedupIdHelp": "Käytä samaa tunnusta uusinnoissa ja tuonneissa. Käytä eri tunnusta jokaiselle ostokselle tai tapahtumalle.",
+      "dedupIdExample": "Ei tilaustunnusta chat-myynnissä? Yhdistä kontakti kenttään, jonka asetat jokaisessa myynnissä, esim. {example}. Älä käytä nykyistä aikaa: se muuttuu jokaisella ajolla.",
+      "dedupIdInfoLabel": "Tilaus- tai tapahtumatunnuksesta",
+      "dedupLeadIdNote": "Jokainen eri tunnus lasketaan uudeksi liidiksi samasta klikkauksesta.",
+      "dedupClickNote": "Samasta klikkauksesta tulevia toistuvia ostoksia ei lasketa.",
+      "dedupLegacyNote": "Vanha lähetys: Google saa sekoitetun tunnuksen.",
+      "additionalOptions": "Lisäasetukset",
+      "additionalOptionsCount": "{count} asetettu",
+      "customerMatching": "Asiakastäsmäytys",
+      "customerMatchingCount": "{count} käytössä",
+      "customerMatchingLegacy": "Vanha latausmenetelmä ei tue tätä. Vaihda yhteys Data Manager API:in.",
+      "customerMatchingTermsNotAccepted": "Ei lähetetä ennen kuin asiakastietoehdot on hyväksytty Google Adsin konversioasetuksissa.",
+      "learnMore": "Lue lisää",
+      "matchEmailLabel": "Sähköposti",
+      "matchPhoneLabel": "Puhelinnumero",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "Asiakastyyppi",
+      "customerValueBucketLabel": "Asiakkaan arvo",
+      "customerPropertiesLegacy": "Vanha latausmenetelmä ei tue tätä. Vaihda yhteys Data Manager API:in.",
+      "conversionTime": "Konversion aika",
+      "conversionTimePlaceholder": "Jätä tyhjäksi, jos haluat käyttää tämän vaiheen suoritusaikaa",
+      "valuePlaceholder": "Valinnainen, esim. 250",
+      "currencyPlaceholder": "Valinnainen, USD",
+      "validation": {
+        "dedupIdRequired": "Anna tunnus tai valitse Kerran mainosklikkausta kohti.",
+        "dedupIdTooLong": "Käytä enintään 64 merkkiä.",
+        "matchTemplateInvalid": "Käytä vain yhtä muuttujaa, esimerkiksi '{{email}}'. Kiinteä arvo ei ole sallittu.",
+        "customerTypeInvalid": "Käytä arvoa NEW tai RETURNING tai muuttujaa, kuten '{{customer_type}}'.",
+        "customerValueBucketInvalid": "Käytä arvoa LOW, MEDIUM tai HIGH tai muuttujaa, kuten '{{customer_value}}'.",
+        "timeFormat": "Käytä päivämäärää aikavyöhykkeen kanssa, esim. 2026-10-08T14:30:00+07:00.",
+        "timeInvalidDate": "Tätä päivämäärää ei ole olemassa.",
+        "currencyRequired": "Lisää valuutta, kun asetat arvon.",
+        "valueRequired": "Lisää arvo, kun asetat valuutan.",
+        "conversionActionRequired": "Valitse konversiotoiminto.",
+        "valueInvalid": "Käytä pelkkää lukua, esim. 19.99.",
+        "valueTooLarge": "Arvo on liian suuri.",
+        "currencyInvalid": "Käytä 3-kirjaimista valuuttakoodia, esim. USD."
+      },
+      "consentInvalid": "Suostumusasetuksia ei voi lukea, joten tämä vaihe epäonnistuu.",
+      "consentFixLink": "Korjaa ne asetuksissa",
+      "dedupModeLabel": "Vältä päällekkäiset konversiot"
+    },
+    "summary": {
+      "conversionAction": "Konversiotoiminto {id}",
+      "notConfigured": "Valitse konversiotoiminto",
+      "dedupClick": "Kerran mainosklikkausta kohti",
+      "dedupId": "Tunnus: {id}",
+      "dedupEvent": "Joka suorituskerralla"
+    },
+    "consent": {
+      "title": "Suostumus konversiotietoihin",
+      "description": "Ovatko asiakkaat suostuneet jakamaan tietonsa mainontaan. Koskee jokaista tämän työtilan lähettämää konversiota.",
+      "learnMore": "Lue lisää",
+      "notConnected": "Koskee konversioita, kun Google Ads -tili on yhdistetty.",
+      "adUserData": {
+        "label": "Mainoskäyttäjätiedot"
+      },
+      "adPersonalization": {
+        "label": "Mainosten personointi"
+      },
+      "source": {
+        "notProvided": "Ei annettu",
+        "granted": "Aina myönnetty",
+        "denied": "Aina evätty",
+        "variable": "Yhteystiedon kentästä"
+      },
+      "help": {
+        "notProvided": "Jätetty pois. Google käyttää tilisi oletussuostumusta.",
+        "granted": "Jokainen konversio ilmoittaa, että asiakas suostui.",
+        "denied": "Jokainen konversio ilmoittaa, että asiakas kieltäytyi.",
+        "variable": "Käytä arvoa \"{granted}\" tai \"{denied}\". Tyhjä ohitetaan; mikä tahansa muu epäonnistuttaa vaiheen."
+      },
+      "templatePlaceholder": "esim. '{{gdpr_consent}}'",
+      "templateLabel": "Yhteystiedon kenttä: {setting}",
+      "validation": {
+        "templateRequired": "Lisää yhteystiedon kenttä, esim. '{{gdpr_consent}}'.",
+        "templateTooLong": "Käytä enintään 200 merkkiä."
+      },
+      "legacy": {
+        "title": "Ei lähetetä vanhalla latauksella",
+        "body": "Vanha lataus hyväksyy vain mainoskäyttäjätietojen suostumuksen. Yhdistä uudelleen Data Managerilla lähettääksesi sen."
+      },
+      "save": "Tallenna",
+      "saved": "Suostumusasetukset tallennettu",
+      "invalidStored": "Tallennettuja suostumusasetuksia ei voitu lukea. Konversioita lähettävät vaiheet epäonnistuvat, kunnes tallennat uudet asetukset."
+    },
+    "errors": {
+      "supportSession": "Alustan tukisessiot eivät voi muuttaa Google Ads -yhteyttä tai lähettää konversioita.",
+      "developerTokenMissing": "Google Ads ei ole vielä käytettävissä: alustan Google Ads -tunnistetietoja (OAuth-asiakastunnus ja salaisuus) ei ole määritetty.",
+      "notConnected": "Google Ads ei ole yhdistetty tähän työtilaan.",
+      "sessionNotFound": "Tätä Google Ads -yhteysyritystä ei löytynyt tai se on vanhentunut. Aloita alusta.",
+      "pickFailed": "Google Ads -tilin yhdistäminen epäonnistui. Se voi olla jo yhdistetty muualle tai yritys on vanhentunut.",
+      "notRetryable": "Tätä konversiota ei voi yrittää uudelleen: vain epäonnistuneita konversioita voi yrittää uudelleen.",
+      "authorizationUnavailable": "Google-kirjautumisen aloitus epäonnistui. Yritä uudelleen hetken kuluttua.",
+      "credentialSecretsRequired": "Anna asiakassalaisuus. Sitä ei ole vielä tallennettu."
+    },
+    "enums": {
+      "category": {
+        "default": "Oletus",
+        "purchase": "Osto",
+        "addToCart": "Lisäys ostoskoriin",
+        "beginCheckout": "Kassalle siirtyminen",
+        "subscribePaid": "Maksullinen tilaus",
+        "phoneCallLead": "Puhelun kautta saatu liidi",
+        "importedLead": "Tuotu liidi",
+        "submitLeadForm": "Liidilomakkeen lähetys",
+        "bookAppointment": "Ajanvaraus",
+        "signup": "Rekisteröityminen",
+        "requestQuote": "Tarjouspyyntö",
+        "getDirections": "Reittiohjeet",
+        "outboundClick": "Lähtevä klikkaus",
+        "contact": "Yhteydenotto",
+        "engagement": "Sitoutuminen",
+        "storeVisit": "Myymälävierailu",
+        "storeSale": "Myymälämyynti",
+        "qualifiedLead": "Kvalifioitu liidi",
+        "convertedLead": "Muunnettu liidi",
+        "pageView": "Sivun katselu",
+        "download": "Lataus",
+        "lead": "Liidi"
+      },
+      "countingType": {
+        "onePerClick": "Yksi klikkausta kohden",
+        "manyPerClick": "Useita klikkausta kohden"
+      },
+      "actionStatus": {
+        "enabled": "Käytössä",
+        "removed": "Poistettu",
+        "hidden": "Piilotettu"
+      },
+      "unknown": "Muu ({value})"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "Vanha lataus"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "Tämän kontaktin kanava ei voi lähettää Google Ads -konversioita.",
+      "google_ads_no_click": "Kontakti ei tullut Google-mainoksen klikkauksesta.",
+      "google_ads_no_account": "Valmista Google Ads -tiliä ei ole yhdistetty.",
+      "google_ads_unknown_conversion_action": "Konversiotoimintoa ei enää ole. Synkronoi ja valitse toinen.",
+      "google_ads_action_disabled": "Konversiotoimintoa ei ole otettu käyttöön Google Adsissa.",
+      "google_ads_incompatible_action": "Tämä toiminto laskee yhden konversion klikkausta kohden, mitä Google ei salli tälle iOS-klikkaukselle.",
+      "google_ads_unsupported_action": "Tämä toiminto käyttää ulkoista attribuutiota eikä voi vastaanottaa näitä konversioita.",
+      "google_ads_invalid_value": "Arvo tai valuutta ei kelvannut.",
+      "google_ads_invalid_input": "Vaiheen asetukset eivät kelvanneet.",
+      "google_ads_record_failed": "Konversiota ei voitu tallentaa.",
+      "google_ads_missing_dedup_id": "Tilauksen tai tapahtuman tunnus oli tyhjä.",
+      "google_ads_invalid_dedup_id": "Tilauksen tai tapahtuman tunnus oli yli 64 merkkiä pitkä.",
+      "google_ads_missing_occurrence_key": "Tällä suorituksella ei ollut vakaata tunnistetta, joten konversiota ei tallennettu.",
+      "google_ads_invalid_customer_property": "Asiakastyyppi tai asiakkaan arvo ei ollut sallittu arvo.",
+      "google_ads_invalid_consent_config": "Tallennettuja suostumusasetuksia ei voitu lukea.",
+      "google_ads_invalid_consent_value": "Suostumuskentän arvo oli jokin muu kuin \"granted\" tai \"denied\".",
+      "google_ads_invalid_conversion_time": "Konversioaika ei ollut kelvollinen päivämäärä aikavyöhykkeellä tai se oli tulevaisuudessa."
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "Kaikki kanavat",
+        "allActions": "Kaikki toiminnot",
+        "channelLabel": "Kanava",
+        "actionLabel": "Konversiotoiminto"
+      },
+      "tiles": {
+        "confirmed": "Vahvistettu",
+        "awaitingGoogle": "Odottaa Googlea",
+        "queued": "Jonossa",
+        "failed": "Epäonnistui",
+        "skipped": "Ohitettu",
+        "deliveryRate": "Toimitusprosentti",
+        "confirmedHelp": "Google vahvisti tallentaneensa nämä konversiot.",
+        "awaitingGoogleHelp": "Lähetetty Googlelle, odottaa että Google saa käsittelyn valmiiksi.",
+        "queuedHelp": "Odottaa lähetystä.",
+        "failedHelp": "Google ei hyväksynyt tai käsitellyt.",
+        "skippedHelp": "Ei lähetetty: ei valmista tiliä tai liian vanha Googlelle.",
+        "deliveryRateHelp": "Vahvistettu ÷ (vahvistettu + epäonnistunut). Jonossa olevia, odottavia ja ohitettuja ei lasketa."
+      },
+      "confirmedValue": "Vahvistettu arvo",
+      "confirmedValueItem": "{value} ({count, plural, one {# konversio} other {# konversiota}})",
+      "moreCurrencies": "+{count} lisää",
+      "chart": {
+        "title": "Konversiot päivittäin",
+        "viewAsTable": "Näytä taulukkona",
+        "tableCaption": "Konversiot päivittäin",
+        "dateColumn": "Päivämäärä"
+      },
+      "byAction": {
+        "title": "Konversiotoiminnon mukaan",
+        "truncated": "Näytetään 50 toimintoa, joilla on eniten konversioita."
+      },
+      "byChannel": {
+        "title": "Kanavan mukaan",
+        "confirmedCount": "{count, plural, one {# vahvistettu} other {# vahvistettu}}"
+      },
+      "failures": {
+        "title": "Virheet vaiheen mukaan",
+        "unknown": "Tuntematon"
+      },
+      "empty": {
+        "title": "Ei konversioita tällä jaksolla",
+        "description": "Konversiot näkyvät tässä, kun flow-vaihe tai laukaisin lähettää sellaisen."
+      },
+      "error": {
+        "title": "Tilastojen lataus epäonnistui",
+        "retry": "Yritä uudelleen"
+      },
+      "viewStatistics": "Näytä tilastot",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "Ei vahvistettuja tai epäonnistuneita konversioita tällä jaksolla.",
+      "actionFallback": "Toiminto {id}",
+      "openSettings": "Avaa Google Adsin asetukset",
+      "outcome": {
+        "title": "Tulosten jakauma"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
     }
   },
   "minigames": {

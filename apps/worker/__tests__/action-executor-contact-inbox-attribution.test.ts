@@ -5,8 +5,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // ActionExecutor must resolve the contact inbox via contactInboxRepository
 // (never a raw db.query.contactInboxModel lookup), preferring a threaded
 // contactInboxId over the contact's most-recently-active inbox, and only the
-// 3 inbox-consuming branches (startAnotherFlow, sendMetaCapiEvent,
-// runGoogleSheet) should ever call the resolver at all — the other 11
+// 4 inbox-consuming branches (startAnotherFlow, sendMetaCapiEvent,
+// sendGoogleAdsConversion, runGoogleSheet) should ever call the resolver at all — the other 11
 // contact/conversation-scoped actions must run without paying for that
 // query.
 // ---------------------------------------------------------------------------
@@ -18,6 +18,9 @@ const mocks = vi.hoisted(() => ({
   findActiveById: vi.fn(),
   findByIdForContact: vi.fn(),
   findMostRecentByContact: vi.fn(),
+  findGoogleClickAttribution: vi.fn(),
+  findLatestGoogleClickInboxByContact: vi.fn(),
+  recordGoogleAdsConversion: vi.fn(),
   enqueueEvent: vi.fn(),
   buildSourceKey: vi.fn(),
   setValues: vi.fn(),
@@ -52,7 +55,20 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/business", () => ({
+vi.mock("@chatbotx.io/business", async () => ({
+  // Pure consent mapping stays real; only the settings read is stubbed.
+  ...(await vi.importActual<
+    typeof import("../../../packages/business/src/google-ads/consent")
+  >("../../../packages/business/src/google-ads/consent")),
+  googleAdsSettingsService: {
+    getConsent: async () => ({
+      status: "absent",
+      consent: {
+        adUserData: { type: "notProvided" },
+        adPersonalization: { type: "notProvided" },
+      },
+    }),
+  },
   contactCustomFieldService: {
     setValues: (...args: unknown[]) => mocks.setValues(...args),
     deleteByCustomFieldId: (...args: unknown[]) =>
@@ -87,6 +103,15 @@ vi.mock("@chatbotx.io/business", () => ({
   metaConversionsService: {
     enqueueEvent: (...args: unknown[]) => mocks.enqueueEvent(...args),
     buildSourceKey: (...args: unknown[]) => mocks.buildSourceKey(...args),
+  },
+  contactInboxService: {
+    findGoogleClickAttribution: (...args: unknown[]) =>
+      mocks.findGoogleClickAttribution(...args),
+    findLatestGoogleClickInboxByContact: (...args: unknown[]) =>
+      mocks.findLatestGoogleClickInboxByContact(...args),
+  },
+  googleAdsConversionService: {
+    record: (...args: unknown[]) => mocks.recordGoogleAdsConversion(...args),
   },
 }))
 
@@ -243,6 +268,39 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
     })
   })
 
+  describe("sendGoogleAdsConversion — threaded inbox with a click wins", () => {
+    test("records against the threaded WhatsApp inbox without the latest-click fallback", async () => {
+      mocks.findByIdForContact.mockResolvedValue(WHATSAPP_INBOX)
+      mocks.findGoogleClickAttribution.mockResolvedValue({
+        id: "ci-whatsapp",
+        referral: { gclid: "gclid-1234567890" },
+      })
+      mocks.recordGoogleAdsConversion.mockResolvedValue({ status: "queued" })
+
+      const executor = new ActionExecutor()
+      await executor.execute({
+        action: {
+          type: "sendGoogleAdsConversion",
+          conversionActionId: "123",
+          dedupMode: "click",
+        },
+        contactId: "contact-1",
+        triggerId: "trigger-1",
+        workspaceId: "ws-1",
+        contactInboxId: "ci-whatsapp",
+      })
+
+      expect(mocks.findLatestGoogleClickInboxByContact).not.toHaveBeenCalled()
+      expect(mocks.recordGoogleAdsConversion).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contactInboxId: "ci-whatsapp",
+          source: "triggerAction",
+          scopeId: "trigger-1",
+        }),
+      )
+    })
+  })
+
   describe("stale/foreign threaded id falls back to most-recent", () => {
     test("sendMetaCapiEvent falls back when the threaded contactInboxId doesn't resolve for this contact/workspace", async () => {
       mocks.findByIdForContact.mockResolvedValue(null)
@@ -264,13 +322,22 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
     })
   })
 
-  describe("no inbox at all — the 3 inbox-consuming branches warn and skip", () => {
+  describe("no inbox at all — the 4 inbox-consuming branches warn and skip", () => {
     beforeEach(() => {
       mocks.findMostRecentByContact.mockResolvedValue(null)
+      mocks.findLatestGoogleClickInboxByContact.mockResolvedValue(null)
     })
 
     test.each([
       ["sendMetaCapiEvent", { type: "sendMetaCapiEvent" }],
+      [
+        "sendGoogleAdsConversion",
+        {
+          type: "sendGoogleAdsConversion",
+          conversionActionId: "123",
+          dedupMode: "click",
+        },
+      ],
       ["startAnotherFlow", { type: "startAnotherFlow", flowId: "flow-1" }],
       [
         "runGoogleSheet",
@@ -293,6 +360,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
       ).resolves.toBeUndefined()
 
       expect(mocks.enqueueEvent).not.toHaveBeenCalled()
+      expect(mocks.recordGoogleAdsConversion).not.toHaveBeenCalled()
       expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
       expect(mocks.getSpreadsheetRow).not.toHaveBeenCalled()
       expect(baseLogger.warn).toHaveBeenCalled()

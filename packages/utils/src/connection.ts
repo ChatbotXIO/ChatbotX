@@ -171,3 +171,98 @@ export const connectSessionErrorCodes = z.enum([
   "internal_error",
 ])
 export type ConnectSessionErrorCode = z.infer<typeof connectSessionErrorCodes>
+
+/**
+ * Provider-specific reasons a connect failed, finer than the stored
+ * `ConnectSessionErrorCode` (a DB CHECK-constrained column, so it cannot grow
+ * without a migration). They travel only in the `connect_error` redirect
+ * parameter, never in the database.
+ */
+export const connectFailureCauses = z.enum([
+  "developer_token_missing",
+  "developer_token_not_approved",
+  "project_not_approved",
+  "permission_denied",
+  "api_not_enabled",
+  "credentials_invalid",
+  "scope_missing",
+  "legacy_upload_not_allowed",
+])
+export type ConnectFailureCause = z.infer<typeof connectFailureCauses>
+
+/** Query parameter the OAuth callback appends to the return URL on a failed or stalled connect. */
+export const CONNECT_ERROR_QUERY_PARAM = "connect_error"
+
+/** Every value the `connect_error` query parameter may carry; anything else must be ignored. */
+export const connectErrorQueryCodes = z.enum([
+  ...connectSessionErrorCodes.options,
+  "provider_unavailable",
+  ...connectFailureCauses.options,
+])
+export type ConnectErrorQueryCode = z.infer<typeof connectErrorQueryCodes>
+
+const URL_SCHEME_PATTERN = /^[a-z][a-z\d+.-]*:/i
+
+/**
+ * `returnUrl` with `?connect_error=<code>` set, preserving its other query
+ * params (e.g. `?session=`) and hash. A relative URL stays relative.
+ */
+export const appendConnectError = (
+  returnUrl: string,
+  code: ConnectErrorQueryCode,
+): string => {
+  const isAbsolute = URL_SCHEME_PATTERN.test(returnUrl)
+  const url = new URL(returnUrl, "http://relative.invalid")
+  url.searchParams.set(CONNECT_ERROR_QUERY_PARAM, code)
+  if (isAbsolute) {
+    return url.toString()
+  }
+  const relative = `${url.pathname}${url.search}${url.hash}`
+  // URL normalisation can turn `/..//evil.com` into `//evil.com`, which a
+  // browser reads as a protocol-relative URL to another host. Never emit one:
+  // fall back to the site root, keeping only the error code.
+  return isSafeRelativeRedirect(relative)
+    ? relative
+    : `/?${CONNECT_ERROR_QUERY_PARAM}=${code}`
+}
+
+/** A single leading `/` (not `//` or `/\`), no backslash, no control characters. */
+const isSafeRelativeRedirect = (value: string): boolean => {
+  if (
+    !value.startsWith("/") ||
+    value.startsWith("//") ||
+    value.includes("\\")
+  ) {
+    return false
+  }
+  return !Array.from(value).some((character) => {
+    const point = character.charCodeAt(0)
+    return point <= 31 || point === 127
+  })
+}
+
+const failureCauseCandidate = (error: object): unknown => {
+  if ("failureCause" in error) {
+    return error.failureCause
+  }
+  if ("data" in error && typeof error.data === "object" && error.data) {
+    return (error.data as { cause?: unknown }).cause
+  }
+  return
+}
+
+/**
+ * The provider-specific failure cause carried by a thrown connect error, if
+ * any: `ConnectionProviderRejectedError.failureCause` or the `cause` entry of
+ * a `ChatbotXException.data`. Duck-typed so this package needs neither class.
+ */
+export const connectFailureCauseOf = (
+  error: unknown,
+): ConnectFailureCause | undefined => {
+  if (typeof error !== "object" || error === null) {
+    return
+  }
+  const candidate = failureCauseCandidate(error)
+  const parsed = connectFailureCauses.safeParse(candidate)
+  return parsed.success ? parsed.data : undefined
+}

@@ -739,6 +739,7 @@
       "noAdminReply": "Administrator cavabı yoxdur",
       "contactCreatedAt": "Kontaktın yaradılma vaxtı",
       "fromCtwaAd": "Reklamlardan",
+      "fromGoogleAd": "Google Ads-dən",
       "ctwaConversion": "Reklam çevrilməsi",
       "lastUserInputTypes": {
         "text": "Mətn",
@@ -2128,7 +2129,10 @@
       "label": "Müştəri ID-si"
     },
     "clientSecret": {
-      "label": "Müştərinin məxfi açarı"
+      "label": "Müştərinin məxfi açarı",
+      "keepHint": "Saxlanmış müştəri məxfi açarını saxlamaq üçün boş buraxın.",
+      "isSet": "Müştəri məxfi açarı təyin edilib.",
+      "isNotSet": "Müştəri məxfi açarı təyin edilməyib."
     },
     "verifyToken": {
       "label": "Webhook doğrulama tokeni"
@@ -2248,6 +2252,17 @@
     "signInCallbackUrl": {
       "label": "Giriş geri çağırış URL-i",
       "hint": "Google ilə girişi aktivləşdirmək üçün bunu Google tətbiqinizin icazəli yönləndirmə URI-lərinə əlavə edin."
+    },
+    "adsDeveloperToken": {
+      "label": "Google Ads developer token",
+      "hint": "Könüllü: Google artıq developer token tələb etmir. Saxlanmış tokeni saxlamaq üçün boş buraxın.",
+      "isSet": "Developer token təyin edilib.",
+      "isNotSet": "Developer token təyin edilməyib.",
+      "clear": "Təmizlə",
+      "cleared": "Developer token təmizləndi."
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "Google Ads üçün Google tətbiqinizdən ayrı, xüsusi Google OAuth tətbiqindən istifadə edin və adwords ilə datamanager scope-larını aktivləşdirin. Bu tətbiq öz Google OAuth təsdiqinə ehtiyac duyur."
     },
     "webhookUrl": {
       "label": "Webhook URL-i",
@@ -2449,7 +2464,10 @@
       "label": "Reklamlar",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Reklam mənbəyi"
@@ -2466,6 +2484,12 @@
     },
     "sendRatePerMinute": {
       "label": "Dəqiqədə mesaj sayı"
+    },
+    "adsUploadMethod": {
+      "label": "Yükləmə üsulu",
+      "hint": "Data Manager tövsiyə olunur. Köhnə yükləmə API-si yalnız Google-un hələ də icazə verdiyi Google Cloud layihələri ilə işləyir və Data Manager icazəsindən istifadə etmir. Dəyişiklik yalnız yeni bağlantılara şamil olunur: mövcud iş sahələrini yenidən qoşun.",
+      "dataManager": "Data Manager API (tövsiyə olunur)",
+      "legacy": "Köhnə yükləmə API-si"
     }
   },
   "metaConversions": {
@@ -2668,6 +2692,447 @@
       "confirmSend": "Göndər"
     }
   },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "Google reklam klikindən gələn kontaktlar üçün oflayn konversiyaları Google Ads-ə göndərin.",
+    "notAvailable": {
+      "description": "Platformanın Google Ads etibarnaməsi (OAuth müştəri ID-si və sirri) konfiqurasiya edilməyib. Platforma administratorundan onları Google Ads platforma parametrlərinə əlavə etməsini xahiş edin."
+    },
+    "connect": {
+      "scopes": "Google Ads hesablarınızı və konversiya fəaliyyətlərini oxumaq və sizin adınızdan konversiyalar göndərmək üçün icazə istəyirik.",
+      "button": "Google Ads-i qoş",
+      "reconnect": "Yenidən qoş",
+      "unnamedAccount": "Google Ads hesabı",
+      "viaManager": "menecer vasitəsilə: {manager}",
+      "statusLabel": "Bağlantı statusu",
+      "needsReauthDescription": "Google çıxışı ləğv edilib və ya müddəti bitib. Konversiyaların göndərilməsini davam etdirmək üçün yenidən qoşun.",
+      "pausedDescription": "Bu bağlantı dayandırılıb, buna görə konversiyalar göndərilmir.",
+      "degradedDescription": "Google Ads xətalarla cavab verir. Konversiyalar avtomatik təkrar göndəriləcək.",
+      "howItWorks": "Necə işləyir",
+      "steps": {
+        "signIn": "Reklamlarınızı idarə edən Google hesabı ilə daxil olun.",
+        "chooseAccount": "Google Ads hesabını seçin.",
+        "pickAction": "Axınlarınızda konversiya fəaliyyətini seçin."
+      },
+      "uploadMethod": "Yükləmə metodu: {method}"
+    },
+    "status": {
+      "connected": "Qoşulub",
+      "degraded": "Pozulub",
+      "needsReauth": "Yenidən qoşulma lazımdır",
+      "paused": "Dayandırılıb",
+      "disconnected": "Əlaqə kəsilib"
+    },
+    "picker": {
+      "title": "Google Ads hesabı seçin",
+      "legend": "Google Ads hesabları",
+      "loading": "Google Ads bağlantısı yüklənir",
+      "loadError": "Google Ads qoşulma cəhdi yüklənmədi.",
+      "waiting": "Google-un girişi təsdiqləməsi gözlənilir…",
+      "noTargets": "Bu Google hesabı üçün Google Ads hesabı tapılmadı.",
+      "alreadyThisWorkspace": "Artıq bu iş sahəsinə qoşulub",
+      "alreadyOtherWorkspace": "Artıq başqa iş sahəsinə qoşulub",
+      "notSelectable": "Bu hesabı seçmək mümkün deyil",
+      "connectSelected": "Hesabı qoş",
+      "sessionExpired": "Qoşulma cəhdinin müddəti bitib. Davam etmək üçün yenidən qoşun.",
+      "sessionCancelled": "Qoşulma cəhdi ləğv edildi.",
+      "stalled": "Giriş tamamlanmadı. Yenidən cəhd etmək üçün «Google Ads-i qoş» düyməsindən istifadə edin.",
+      "dismiss": "Bağla",
+      "cancelFailed": "Qoşulma cəhdini ləğv etmək mümkün olmadı. Yenidən cəhd edin.",
+      "connectErrorTitle": "Google Ads qoşula bilmədi",
+      "errors": {
+        "stateMismatch": "Giriş təsdiqlənə bilmədi. Davam etmək üçün yenidən qoşun.",
+        "expired": "Qoşulma cəhdinin müddəti bitib. Davam etmək üçün yenidən qoşun.",
+        "providerDenied": "Google çıxışı verilmədi. Yenidən qoşun və tələb olunan icazələri verin.",
+        "exchangeFailed": "Google ilə giriş tamamlanmadı. Davam etmək üçün yenidən qoşun.",
+        "providerError": "Google xəta qaytardı. Bir azdan yenidən qoşulmağa cəhd edin.",
+        "noCandidates": "Bu Google istifadəçisi üçün aktiv Google Ads hesabı tapılmadı. Ləğv edilmiş, dayandırılmış və ya tam qurulmamış hesablardan istifadə etmək mümkün deyil. Aktiv Google Ads hesabını idarə edən Google hesabı ilə daxil olun.",
+        "alreadyConnected": "Bu Google Ads hesabı artıq qoşulub.",
+        "quotaExceeded": "Planınızın bağlantı limitinə çatılıb.",
+        "trialExpired": "Sınaq müddətiniz bitib, buna görə yeni bağlantı əlavə etmək olmur.",
+        "internalError": "Qoşulma zamanı xəta baş verdi. Yenidən cəhd edin.",
+        "providerUnavailable": "Google Ads müvəqqəti əlçatmazdır, ona görə qoşulma tamamlana bilmədi. Bir azdan yenidən cəhd edin.",
+        "developerTokenMissing": "Google Ads tam qurulmayıb: platformanın Google etibarnaməsi natamamdır. Administratordan Google Ads etibarnaməsini yoxlamasını xahiş edin.",
+        "developerTokenNotApproved": "Google, Google Ads etibarnaməsində saxlanan developer token-i rədd etdi. Token ixtiyaridir: administratordan onu silməsini və ya etibarlı token ilə əvəz etməsini xahiş edin.",
+        "projectNotApproved": "Google Cloud layihəniz hələ real Google Ads hesabları üçün təsdiqlənməyib. Google Cloud Console-da (Google Ads API → Overview) layihə üçün Explorer və ya Basic girişinə müraciət edin, sonra yenidən qoşulun.",
+        "permissionDenied": "Bu Google istifadəçisinin Google Ads hesablarına giriş icazəsi yoxdur. Google Ads hesabına girişi olan Google istifadəçisi ilə daxil olun.",
+        "apiNotEnabled": "Google Ads API Google Cloud layihəsi üçün aktiv deyil. İdarəçidən onu aktiv etməsini xahiş edin, sonra yenidən cəhd edin.",
+        "credentialsInvalid": "Google giriş məlumatlarını rədd etdi. Davam etmək üçün yenidən qoşulun.",
+        "scopeMissing": "Bütün icazələr verilməyib. Google Ads Google Ads hesabınıza giriş və konversiyaları göndərmək icazəsi tələb edir. Yenidən qoşulun və bütün icazələri işarələyin.",
+        "legacyUploadNotAllowed": "Google bu hesab üçün köhnə yükləmə API-sinə icazə vermir. Etibarnaməni Data Manager-ə keçirin və bu iş sahəsini yenidən qoşun."
+      }
+    },
+    "setup": {
+      "conversionCustomer": "Konversiya hesabı",
+      "notResolved": "Hələ müəyyən edilməyib",
+      "retry": "Quraşdırmanı təkrarla",
+      "dataTermsWarning": "Bu hesab üçün müştəri məlumatları şərtləri qəbul edilməyib. Onları Google Ads-də qəbul edin, sonra quraşdırmanı təkrarlayın.",
+      "errors": {
+        "conversionCustomerInaccessible": "Bu Google girişi ilə konversiya hesabına çıxış mümkün deyil. Google Ads-də çıxışınızı yoxlayın və yenidən cəhd edin.",
+        "customerDataTermsNotAccepted": "Bu hesab üçün müştəri məlumatları şərtləri qəbul edilməyib. Onları Google Ads-də qəbul edin, sonra quraşdırmanı təkrarlayın.",
+        "syncFailed": "Konversiya fəaliyyətləri Google Ads-dən oxuna bilmədi. Bir azdan quraşdırmanı təkrarlayın.",
+        "developerTokenMissing": "Platformanın Google Ads etibarnaməsi (OAuth müştəri ID-si və sirri) konfiqurasiya edilməyib."
+      }
+    },
+    "conversionActions": {
+      "title": "Konversiya fəaliyyətləri",
+      "description": "Yalnız kliklərdən konversiya idxal edən aktiv fəaliyyətlər konversiya qəbul edə bilər.",
+      "helpLink": "Google Ads Yardım",
+      "sync": "Konversiya fəaliyyətlərini sinxronlaşdır",
+      "syncedAt": "Son sinxronlaşma: {date}",
+      "neverSynced": "Hələ sinxronlaşdırılmayıb",
+      "empty": "Konversiya fəaliyyəti tapılmadı. Google Ads-də oflayn idxal konversiya fəaliyyəti yaradın, sonra sinxronlaşdırın.",
+      "name": "Ad",
+      "category": "Kateqoriya",
+      "counting": "Sayma",
+      "status": "Status",
+      "onePerClickNote": "iOS klikləri (gbraid) bu fəaliyyətə göndərilə bilməz. Onları qəbul etmək üçün \"Hər biri\" saymasından istifadə edin.",
+      "externalNote": "Dəstəklənmir: bu fəaliyyət xarici atribusiyadan istifadə edir və Google Data Manager vasitəsilə göndərilə bilməz.",
+      "count": "{count, plural, one {# konversiya fəaliyyəti} other {# konversiya fəaliyyəti}}"
+    },
+    "events": {
+      "title": "Konversiya tarixçəsi",
+      "description": "Google Ads-ə göndərilən son konversiyalar. Klik ID-ləri gizlədilib.",
+      "empty": "Axın və ya trigger konversiya göndərən kimi konversiyalar burada görünəcək.",
+      "emptyFiltered": "Bu statusa uyğun konversiya yoxdur.",
+      "loadError": "Konversiya tarixçəsi yüklənmədi.",
+      "page": "Səhifə {page} / {pages}",
+      "filter": {
+        "label": "Status",
+        "all": "Bütün statuslar"
+      },
+      "columns": {
+        "status": "Status",
+        "action": "Konversiya fəaliyyəti",
+        "channel": "Kanal",
+        "clickId": "Click ID",
+        "occurredAt": "Baş verdiyi vaxt",
+        "actions": "Əməliyyatlar",
+        "dedup": "Təkrarın qarşısı",
+        "consent": "Razılıq görüntüsü",
+        "matching": "Uyğunlaşdırma",
+        "properties": "Xüsusiyyətlər"
+      },
+      "status": {
+        "pending": "Gözləyir",
+        "sending": "Göndərilir",
+        "sent": "Göndərilib",
+        "processed": "Emal edilib",
+        "failed": "Uğursuz",
+        "skippedNoAccount": "Atlanıb: hesab yoxdur",
+        "skippedExpired": "Atlanıb: müddəti bitib"
+      },
+      "processing": {
+        "processing": "Google emal edir",
+        "success": "Qəbul edildi",
+        "partialSuccess": "Qismən qəbul edildi",
+        "failed": "Rədd edildi",
+        "unknown": "Nəticə məlum deyil",
+        "timedOut": "Vaxt bitdi"
+      },
+      "stage": {
+        "delivery": "Çatdırılma uğursuz oldu",
+        "processing": "Emal uğursuz oldu",
+        "timeout": "Vaxt bitdi"
+      },
+      "consent": {
+        "adUserDataFull": "Reklam istifadəçi məlumatları: {status}",
+        "adPersonalizationFull": "Reklam fərdiləşdirməsi: {status}",
+        "status": {
+          "granted": "Razılıq verilib",
+          "denied": "Rədd edilib",
+          "notProvided": "Təqdim edilməyib",
+          "notSupported": "Dəstəklənmir (köhnə yükləmə)"
+        },
+        "adUserDataShort": "Data: {status}",
+        "adPersonalizationShort": "Pers.: {status}",
+        "delivery": {
+          "toSend": "Göndəriləcək",
+          "notSent": "Göndərilməyib",
+          "unknown": "Təsdiqlənməyib"
+        }
+      },
+      "dedup": {
+        "click": "Klik başına",
+        "id": "ID: {id}",
+        "event": "Hər işləmə"
+      },
+      "matching": {
+        "enabled": "Konfiqurasiya edilib: {fields}",
+        "withheldConsent": "Saxlanıldı (razılıq yoxdur): {fields}",
+        "unsupportedTransport": "Göndərilmədi (köhnə): {fields}"
+      },
+      "timeProvided": "Göstərilən vaxt",
+      "timeProvidedTooltip": "Bu konversiya vaxtı addımdan gəlib, addımın işləmə vaxtından yox."
+    },
+    "validate": {
+      "open": "Sorğunu yoxla",
+      "title": "Sorğunu yoxla",
+      "description": "Konfiqurasiya yoxlaması: Google konversiya qeyd etmədən sorğunu yoxlayır.",
+      "conversionAction": "Konversiya fəaliyyəti",
+      "clickIdType": "Click ID növü",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "Click ID",
+      "submit": "Yoxlamanı işə sal",
+      "ok": "Google bu konfiqurasiyanı qəbul etdi. Heç nə qeyd edilmədi.",
+      "reasons": {
+        "accountNotReady": "Google Ads hələ hazır deyil. Hesabın qoşulmasını və quraşdırılmasını tamamlayın, sonra yenidən cəhd edin.",
+        "needsReauth": "Google Ads bağlantısı yenidən qurulmalıdır.",
+        "rejected": "Google bu sorğunu rədd etdi",
+        "legacyUploadNotAllowed": "Google bu hesab üçün köhnə yükləmə API-sinə icazə vermir. Etibarnaməni Data Manager-ə keçirin və bu iş sahəsini yenidən qoşun."
+      },
+      "invalid": "Konversiya fəaliyyətini seçin və düzgün Click ID daxil edin.",
+      "consentIncluded": "Razılıq daxildir: {values}.",
+      "consentNone": "Bu testə heç bir razılıq daxil deyil.",
+      "consentVariableSkipped": "Əlaqə sahəsindən gələn razılıq test edilə bilmir və kənarda qalır.",
+      "consentNotSentLegacy": "Reklam fərdiləşdirməsi ({status}) köhnə yükləmə metodu ilə göndərilmir."
+    },
+    "conversionFields": {
+      "conversionAction": "Konversiya fəaliyyəti",
+      "unavailableOption": "{id} (əlçatmaz)",
+      "unavailableWarning": "Seçilmiş konversiya fəaliyyəti artıq əlçatmazdır və ya aktiv deyil. Dərc etməzdən əvvəl başqasını seçin.",
+      "externalOption": "{name} (xarici atribusiya, dəstəklənmir)",
+      "loading": "Konversiya fəaliyyətləri yüklənir",
+      "loadError": "Google Ads konversiya fəaliyyətləri yüklənə bilmədi.",
+      "notConnected": "Konversiya göndərmək üçün Google Ads-i qoşun.",
+      "noActions": "Aktiv konversiya fəaliyyəti tapılmadı. Onları Google Ads ayarlarında sinxronlaşdırın.",
+      "openSettings": "Google Ads ayarlarını aç",
+      "needsReauth": "Google Ads bağlantısı yenidən qurulmalıdır.",
+      "dedupModeClick": "Hər reklam klikinə görə bir dəfə",
+      "dedupModeClickHelp": "Bu konversiya fəaliyyətini hər reklam klikinə görə bir dəfə sayır.",
+      "dedupModeIdHelp": "Hər fərqli İD üçün bir dəfə sayılır.",
+      "dedupModeId": "Hər sifariş və ya hadisə İD-sinə görə bir dəfə",
+      "dedupModeEvent": "Hər işləmədə",
+      "dedupModeEventHelp": "Hər işləmədə, eyni reklam klikində belə, yeni konversiya qeyd edir. Eyni işləmənin təkrar cəhdi iki dəfə sayılmır.",
+      "dedupId": "Sifariş və ya hadisə İD-si",
+      "dedupIdPlaceholder": "məs. '{{order_number}}'",
+      "dedupIdHelp": "Təkrar cəhdlər və idxallar üçün eyni İD-dən istifadə edin. Hər alış və ya hadisə üçün fərqli İD istifadə edin.",
+      "dedupIdExample": "Çat satışlarında sifariş İD-si yoxdur? Kontaktı hər satışda təyin etdiyiniz sahə ilə birləşdirin, məs. {example}. Cari vaxtdan istifadə etməyin: hər işləmədə dəyişir.",
+      "dedupIdInfoLabel": "Sifariş və ya hadisə İD-si haqqında",
+      "dedupLeadIdNote": "Hər fərqli İD eyni klikdən yeni lid kimi sayılır.",
+      "dedupClickNote": "Eyni klikdən təkrar alışlar sayılmayacaq.",
+      "dedupLegacyNote": "Köhnə yükləmə: Google qarışdırılmış İD alır.",
+      "additionalOptions": "Əlavə seçimlər",
+      "additionalOptionsCount": "{count} təyin edilib",
+      "customerMatching": "Müştəri uyğunlaşdırması",
+      "customerMatchingCount": "{count} aktiv",
+      "customerMatchingLegacy": "Köhnə yükləmə metodu tərəfindən dəstəklənmir. İstifadə üçün bağlantını Data Manager API-yə keçirin.",
+      "customerMatchingTermsNotAccepted": "Müştəri məlumatları şərtləri Google Ads konversiya parametrlərində qəbul edilənə qədər göndərilmir.",
+      "learnMore": "Ətraflı məlumat",
+      "matchEmailLabel": "E-poçt",
+      "matchPhoneLabel": "Telefon nömrəsi",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "Müştəri növü",
+      "customerValueBucketLabel": "Müştəri dəyəri",
+      "customerPropertiesLegacy": "Köhnə yükləmə metodu tərəfindən dəstəklənmir. İstifadə üçün bağlantını Data Manager API-yə keçirin.",
+      "conversionTime": "Konversiya vaxtı",
+      "conversionTimePlaceholder": "Bu addımın işlədiyi vaxtdan istifadə etmək üçün boş buraxın",
+      "valuePlaceholder": "İstəyə bağlı, məs. 250",
+      "currencyPlaceholder": "İstəyə bağlı, USD",
+      "validation": {
+        "dedupIdRequired": "İD daxil edin və ya Hər reklam klikinə görə bir dəfə seçin.",
+        "dedupIdTooLong": "Ən çox 64 simvoldan istifadə edin.",
+        "matchTemplateInvalid": "Yalnız bir dəyişən istifadə edin, məsələn '{{email}}'. Sabit dəyər icazəli deyil.",
+        "customerTypeInvalid": "NEW və ya RETURNING, yaxud '{{customer_type}}' kimi dəyişən istifadə edin.",
+        "customerValueBucketInvalid": "LOW, MEDIUM və ya HIGH, yaxud '{{customer_value}}' kimi dəyişən istifadə edin.",
+        "timeFormat": "Saat qurşağı ilə tarixdən istifadə edin, məs. 2026-10-08T14:30:00+07:00.",
+        "timeInvalidDate": "Bu tarix mövcud deyil.",
+        "currencyRequired": "Dəyər təyin edəndə valyuta əlavə edin.",
+        "valueRequired": "Valyuta təyin edəndə dəyər əlavə edin.",
+        "conversionActionRequired": "Konversiya əməliyyatını seçin.",
+        "valueInvalid": "Sadə rəqəm istifadə edin, məsələn 19.99.",
+        "valueTooLarge": "Bu dəyər çox böyükdür.",
+        "currencyInvalid": "3 hərfli valyuta kodu istifadə edin, məsələn USD."
+      },
+      "consentInvalid": "Razılıq parametrlərini oxumaq mümkün deyil, ona görə bu addım uğursuz olacaq.",
+      "consentFixLink": "Parametrlərdə düzəldin",
+      "dedupModeLabel": "Təkrarlanan konversiyalardan çəkinin"
+    },
+    "summary": {
+      "conversionAction": "Konversiya fəaliyyəti {id}",
+      "notConfigured": "Konversiya fəaliyyəti seçin",
+      "dedupClick": "Hər reklam klikinə görə bir dəfə",
+      "dedupId": "İD: {id}",
+      "dedupEvent": "Hər işləmədə"
+    },
+    "consent": {
+      "title": "Konversiya məlumatlarına razılıq",
+      "description": "Müştərilərin reklamlar üçün məlumatlarını paylaşmağa razılıq verib-vermədiyi. Bu iş sahəsinin göndərdiyi hər konversiyaya aiddir.",
+      "learnMore": "Ətraflı məlumat",
+      "notConnected": "Google Ads hesabı qoşulduqdan sonra konversiyalara tətbiq olunur.",
+      "adUserData": {
+        "label": "Reklam istifadəçi məlumatları"
+      },
+      "adPersonalization": {
+        "label": "Reklam fərdiləşdirməsi"
+      },
+      "source": {
+        "notProvided": "Təqdim edilməyib",
+        "granted": "Həmişə verilib",
+        "denied": "Həmişə rədd edilib",
+        "variable": "Kontakt sahəsindən"
+      },
+      "help": {
+        "notProvided": "Göndərilmir. Google hesabınızın defolt razılığından istifadə edir.",
+        "granted": "Hər konversiya müştərinin razılıq verdiyini bildirir.",
+        "denied": "Hər konversiya müştərinin imtina etdiyini bildirir.",
+        "variable": "\"{granted}\" və ya \"{denied}\" istifadə edin. Boş dəyər keçilir; digər dəyərlər addımı uğursuz edir."
+      },
+      "templatePlaceholder": "məs. '{{gdpr_consent}}'",
+      "templateLabel": "{setting} üçün kontakt sahəsi",
+      "validation": {
+        "templateRequired": "Kontakt sahəsi əlavə edin, məs. '{{gdpr_consent}}'.",
+        "templateTooLong": "Ən çoxu 200 simvol istifadə edin."
+      },
+      "legacy": {
+        "title": "Köhnə yükləmə ilə göndərilmir",
+        "body": "Köhnə yükləmə yalnız reklam istifadəçi məlumatı razılığını qəbul edir. Göndərmək üçün Data Manager ilə yenidən qoşulun."
+      },
+      "save": "Yadda saxla",
+      "saved": "Razılıq parametrləri yadda saxlanıldı",
+      "invalidStored": "Saxlanmış razılıq parametrlərini oxumaq mümkün olmadı. Yeni parametrləri saxlayana qədər konversiya göndərən addımlar uğursuz olur."
+    },
+    "errors": {
+      "supportSession": "Platforma dəstək sessiyaları Google Ads bağlantısını dəyişə və ya konversiya göndərə bilməz.",
+      "developerTokenMissing": "Google Ads hələ əlçatan deyil: platformanın Google Ads etibarnaməsi (OAuth müştəri ID-si və sirri) konfiqurasiya edilməyib.",
+      "notConnected": "Google Ads bu iş sahəsi üçün qoşulmayıb.",
+      "sessionNotFound": "Bu Google Ads qoşulma cəhdi tapılmadı və ya müddəti bitib. Yenidən başlayın.",
+      "pickFailed": "Bu Google Ads hesabı qoşula bilmədi. O, başqa yerdə artıq qoşulmuş ola bilər və ya cəhdin müddəti bitib.",
+      "notRetryable": "Bu konversiya təkrar göndərilə bilməz: yalnız uğursuz konversiyalar təkrar göndərilə bilər.",
+      "authorizationUnavailable": "Google girişini başlatmaq mümkün olmadı. Bir azdan yenidən cəhd edin.",
+      "credentialSecretsRequired": "Client secret daxil edin. Hələ saxlanmayıb."
+    },
+    "enums": {
+      "category": {
+        "default": "Defolt",
+        "purchase": "Satınalma",
+        "addToCart": "Səbətə əlavə etmə",
+        "beginCheckout": "Ödənişə başlama",
+        "subscribePaid": "Ödənişli abunəlik",
+        "phoneCallLead": "Zəng üzrə potensial müştəri",
+        "importedLead": "İdxal olunmuş potensial müştəri",
+        "submitLeadForm": "Potensial müştəri formasının göndərilməsi",
+        "bookAppointment": "Görüş təyin etmə",
+        "signup": "Qeydiyyat",
+        "requestQuote": "Qiymət sorğusu",
+        "getDirections": "Yol tapma",
+        "outboundClick": "Xarici kliklə keçid",
+        "contact": "Əlaqə",
+        "engagement": "Cəlbetmə",
+        "storeVisit": "Mağazaya ziyarət",
+        "storeSale": "Mağazada satış",
+        "qualifiedLead": "Kvalifikasiya olunmuş potensial müştəri",
+        "convertedLead": "Çevrilmiş potensial müştəri",
+        "pageView": "Səhifəyə baxış",
+        "download": "Yükləmə",
+        "lead": "Potensial müştəri"
+      },
+      "countingType": {
+        "onePerClick": "Hər klikə bir dəfə",
+        "manyPerClick": "Hər klikə bir neçə dəfə"
+      },
+      "actionStatus": {
+        "enabled": "Aktiv",
+        "removed": "Silinib",
+        "hidden": "Gizlədilib"
+      },
+      "unknown": "Digər ({value})"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "Köhnə yükləmə"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "Bu kontaktın kanalı Google Ads konversiyaları göndərə bilmir.",
+      "google_ads_no_click": "Kontakt Google reklam klikindən gəlməyib.",
+      "google_ads_no_account": "Hazır Google Ads hesabı qoşulmayıb.",
+      "google_ads_unknown_conversion_action": "Konversiya əməliyyatı artıq mövcud deyil. Sinxronlaşdırın və başqasını seçin.",
+      "google_ads_action_disabled": "Konversiya əməliyyatı Google Ads-də aktiv deyil.",
+      "google_ads_incompatible_action": "Bu əməliyyat klik başına bir konversiya sayır, Google bu iOS kliki üçün buna icazə vermir.",
+      "google_ads_unsupported_action": "Bu əməliyyat xarici atribusiya istifadə edir və bu konversiyaları qəbul edə bilmir.",
+      "google_ads_invalid_value": "Dəyər və ya valyuta yararsız idi.",
+      "google_ads_invalid_input": "Addımın parametrləri yararsız idi.",
+      "google_ads_record_failed": "Konversiya yadda saxlanıla bilmədi.",
+      "google_ads_missing_dedup_id": "Sifariş və ya hadisə ID-si boş idi.",
+      "google_ads_invalid_dedup_id": "Sifariş və ya hadisə ID-si 64 simvoldan uzun idi.",
+      "google_ads_missing_occurrence_key": "Bu işləmənin sabit identifikatoru olmadığından konversiya qeyd edilmədi.",
+      "google_ads_invalid_customer_property": "Müştəri növü və ya dəyəri icazə verilən dəyər deyildi.",
+      "google_ads_invalid_consent_config": "Saxlanmış razılıq parametrləri oxuna bilmədi.",
+      "google_ads_invalid_consent_value": "Razılıq sahəsində \"granted\" və ya \"denied\" xaricində dəyər var idi.",
+      "google_ads_invalid_conversion_time": "Konversiya vaxtı saat qurşağı olan yararlı tarix deyildi və ya gələcəkdə idi."
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "Bütün kanallar",
+        "allActions": "Bütün əməliyyatlar",
+        "channelLabel": "Kanal",
+        "actionLabel": "Konversiya əməliyyatı"
+      },
+      "tiles": {
+        "confirmed": "Təsdiqlənib",
+        "awaitingGoogle": "Google-ı gözləyir",
+        "queued": "Növbədə",
+        "failed": "Uğursuz",
+        "skipped": "Keçilib",
+        "deliveryRate": "Çatdırılma dərəcəsi",
+        "confirmedHelp": "Google bu konversiyaları qeydə aldığını təsdiqləyib.",
+        "awaitingGoogleHelp": "Google-a göndərilib, Google-ın emalı bitirməsi gözlənilir.",
+        "queuedHelp": "Göndərilməsi gözlənilir.",
+        "failedHelp": "Google tərəfindən qəbul edilməyib və ya emal olunmayıb.",
+        "skippedHelp": "Göndərilməyib: hazır hesab yoxdur və ya Google üçün çox köhnədir.",
+        "deliveryRateHelp": "Təsdiqlənib ÷ (təsdiqlənib + uğursuz). Növbədə olanlar, gözləyənlər və keçilənlər sayılmır."
+      },
+      "confirmedValue": "Təsdiqlənmiş dəyər",
+      "confirmedValueItem": "{value} ({count, plural, one {# konversiya} other {# konversiya}})",
+      "moreCurrencies": "+{count} daha",
+      "chart": {
+        "title": "Gündəlik konversiyalar",
+        "viewAsTable": "Cədvəl kimi göstər",
+        "tableCaption": "Gündəlik konversiyalar",
+        "dateColumn": "Tarix"
+      },
+      "byAction": {
+        "title": "Konversiya əməliyyatı üzrə",
+        "truncated": "Ən çox konversiyası olan 50 əməliyyat göstərilir."
+      },
+      "byChannel": {
+        "title": "Kanal üzrə",
+        "confirmedCount": "{count, plural, one {# təsdiqlənib} other {# təsdiqlənib}}"
+      },
+      "failures": {
+        "title": "Mərhələ üzrə uğursuzluqlar",
+        "unknown": "Naməlum"
+      },
+      "empty": {
+        "title": "Bu dövrdə konversiya yoxdur",
+        "description": "Flow addımı və ya trigger konversiya göndərdikdən sonra burada görünür."
+      },
+      "error": {
+        "title": "Statistikanı yükləmək alınmadı",
+        "retry": "Yenidən cəhd et"
+      },
+      "viewStatistics": "Statistikaya bax",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "Bu dövrdə təsdiqlənmiş və ya uğursuz konversiya yoxdur.",
+      "actionFallback": "Əməliyyat {id}",
+      "openSettings": "Google Ads parametrlərini aç",
+      "outcome": {
+        "title": "Nəticələrin payı"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
+    }
+  },
   "flows": {
     "title": "Axınlar",
     "export": {
@@ -2834,7 +3299,8 @@
       "importJsonOnly": "Yalnız JSON faylları",
       "whatsappCallButton": "WhatsApp-da zəng et",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "Thread Control"
+      "threadControl": "Thread Control",
+      "sendGoogleAdsConversion": "Google Ads konversiyası göndər"
     },
     "splitTraffic": {
       "balanceHint": "Ümumi cəm 100% olmalıdır.",
@@ -3042,7 +3508,8 @@
     "dashboardNav": {
       "whatsapp": "WhatsApp-a yönləndirən reklamlar",
       "messenger": "Messenger-ə yönləndirən reklamlar",
-      "instagram": "Instagram-a yönləndirən reklamlar"
+      "instagram": "Instagram-a yönləndirən reklamlar",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "Reklam hesabı qoş",
@@ -3643,6 +4110,14 @@
     "title": "Profili redaktə et"
   },
   "messages": {
+    "timeAgo": {
+      "now": "indi",
+      "minutes": "{count} dəq",
+      "hours": "{count} saat",
+      "days": "{count} gün",
+      "months": "{count} ay",
+      "years": "{count} il"
+    },
     "moveFeature": "Köçür: {feature}",
     "poweredBy": "{name} tərəfindən təmin edilir",
     "noGiphyApiKey": "GIPHY API açarı tapılmadı. Platforma parametrlərində açar əlavə edin.",
@@ -4042,7 +4517,14 @@
     "signUpTitle": "{name} üçün qeydiyyatdan keç",
     "changePasswordTitle": "Parolunu dəyiş",
     "changePasswordDescription": "Davam etməzdən əvvəl yeni parol təyin edin.",
-    "passwordChangeSuccess": "Parol dəyişdirildi"
+    "passwordChangeSuccess": "Parol dəyişdirildi",
+    "oauthError": {
+      "accountNotLinked": "Bu e-poçtla hesab artıq mövcuddur və əlaqələndirilə bilmədi. Əvvəl necə daxil olmusunuzsa, o üsulla daxil olun və ya dəstəklə əlaqə saxlayın.",
+      "unableToLinkAccount": "Bu girişi mövcud hesabla əlaqələndirə bilmədik. Əvvəl necə daxil olmusunuzsa, eyni üsulla daxil olun və ya dəstəklə əlaqə saxlayın.",
+      "sessionExpired": "Giriş cəhdinin vaxtı bitdi. Zəhmət olmasa yenidən cəhd edin.",
+      "accessDenied": "Giriş ləğv edildi.",
+      "generic": "Giriş uğursuz oldu. Zəhmət olmasa yenidən cəhd edin."
+    }
   },
   "emailTopics": {
     "title": "E-poçt mövzuları"
@@ -4699,7 +5181,27 @@
       "preview": "Önizləmə",
       "embedCodeDescription": "Bu kodu saytınızda bağlayan body teqindən əvvəl yapışdırın. Yadda saxlanan dəyişikliklər avtomatik tətbiq olunur, yenidən yapışdırmağa ehtiyac yoxdur.",
       "savedSuccess": "Çat vidceti ayarları yadda saxlanıldı",
-      "poweredBy": "tərəfindən"
+      "poweredBy": "tərəfindən",
+      "toggleLabel": "Bizimlə söhbət edin",
+      "logo": {
+        "description": "Ziyarətçilərin vidceti açmaq üçün kliklədiyi dairəvi düymə. Kvadrat şəkil seçin və ya standart söhbət ikonu üçün boş buraxın.",
+        "choose": "Media kitabxanasından seçin",
+        "notImage": "Loqo şəkil olmalıdır."
+      },
+      "brandUrl": {
+        "label": "Yönləndirmə URL-i",
+        "placeholder": "https://example.com",
+        "description": "Vidcetin \"tərəfindən\" sətrindəki brend adınızın keçid verdiyi ünvan. Brend adı təyin edildikdə tələb olunur.",
+        "requiredWithName": "Bu brend adı üçün yönləndirmə URL-i daxil edin."
+      },
+      "brandName": {
+        "description": "Vidcetin \"tərəfindən\" sətrində göstərilir. Yönləndirmə URL-i təyin edildikdə tələb olunur. Bu sətri gizlətmək üçün hər ikisini boş buraxın.",
+        "requiredWithUrl": "Bu yönləndirmə URL-i üçün brend adı daxil edin."
+      },
+      "logoBackgroundColor": {
+        "label": "İkonun fon rəngi",
+        "description": "Standart söhbət ikonunun fonu. İkon oxunaqlı qalması üçün ağ və ya qara olur."
+      }
     }
   },
   "qrCodes": {
@@ -4826,7 +5328,8 @@
       "startAnotherFlow": "Başqa axın başlat",
       "notifyAdmins": "Administratorları xəbərdar et",
       "sendMetaCapiEvent": "Meta CAPI hadisəsi göndər",
-      "transferConversationToHuman": "Söhbəti operatora ötür"
+      "transferConversationToHuman": "Söhbəti operatora ötür",
+      "sendGoogleAdsConversion": "Google Ads konversiyası göndər"
     },
     "triggerGoesOff": "Tətikləyicinin işə düşmə vaxtı",
     "before": "Əvvəl",

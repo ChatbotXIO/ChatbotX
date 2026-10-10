@@ -224,7 +224,8 @@
     "dashboardNav": {
       "whatsapp": "Click-to-WhatsApp广告",
       "messenger": "Click-to-Messenger广告",
-      "instagram": "Click-to-Instagram广告"
+      "instagram": "Click-to-Instagram广告",
+      "google": "Google Ads"
     },
     "analytics": {
       "adAccountFilter": {
@@ -606,7 +607,14 @@
     "signUpSuccess": "注册成功。请检查您的电子邮件以进行验证。",
     "signUpTitle": "注册 {name}",
     "termsOfService": "服务条款",
-    "trySigningInAgain": "您也可以尝试改用其他电子邮件再次登录。"
+    "trySigningInAgain": "您也可以尝试改用其他电子邮件再次登录。",
+    "oauthError": {
+      "accountNotLinked": "使用此邮箱的账户已存在，无法关联。请使用之前的方式登录，或联系支持人员。",
+      "unableToLinkAccount": "我们无法将此次登录关联到现有账户。请使用您之前的方式登录，或联系支持人员。",
+      "sessionExpired": "登录尝试已过期。请重试。",
+      "accessDenied": "登录已取消。",
+      "generic": "登录失败。请重试。"
+    }
   },
   "autoAssignConversation": {
     "rule": {
@@ -1132,6 +1140,7 @@
       "followerCountOnInstagram": "Instagram 追踪者数",
       "followsBusinessOnInstagram": "关注 Instagram 上的商家",
       "fromCtwaAd": "来自广告",
+      "fromGoogleAd": "来自 Google Ads",
       "fullName": "全名",
       "gender": "性别",
       "hasContactInfo": "电话和电子邮件",
@@ -1845,7 +1854,10 @@
       "label": "Client ID"
     },
     "clientSecret": {
-      "label": "客户端密码"
+      "label": "客户端密码",
+      "keepHint": "留空以保留已保存的客户端密码。",
+      "isSet": "已设置客户端密码。",
+      "isNotSet": "尚未设置客户端密码。"
     },
     "code": {
       "label": "代码",
@@ -2789,6 +2801,17 @@
       "hint": "请将此网址添加为 Google 应用程序中的授权重新导向 URI，以激活 Google 登录。",
       "label": "登录回呼 URL"
     },
+    "adsDeveloperToken": {
+      "label": "Google Ads 开发者令牌",
+      "hint": "可选：Google 不再要求开发者令牌。留空即可保留已保存的令牌。",
+      "isSet": "已设置开发者令牌。",
+      "isNotSet": "未设置开发者令牌。",
+      "clear": "清除",
+      "cleared": "已清除开发者令牌。"
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "请为 Google Ads 使用独立的 Google OAuth 应用(与您的 Google 应用分开),并启用 adwords 和 datamanager 权限范围。该应用需要单独通过 Google OAuth 验证。"
+    },
     "size": {
       "label": "大小",
       "options": {
@@ -3167,7 +3190,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -3184,6 +3210,12 @@
     },
     "sendRatePerMinute": {
       "label": "每分钟发送消息数"
+    },
+    "adsUploadMethod": {
+      "label": "上传方式",
+      "hint": "推荐使用 Data Manager。旧版上传 API 仅适用于 Google 仍允许的 Google Cloud 项目，且不使用 Data Manager 权限。更改仅对新连接生效：请重新连接现有工作区。",
+      "dataManager": "Data Manager API（推荐）",
+      "legacy": "旧版上传 API"
     }
   },
   "flowAnalytics": {
@@ -3317,7 +3349,8 @@
       "importJsonOnly": "仅限 JSON 文件",
       "whatsappCallButton": "通过 WhatsApp 通话",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "会话控制"
+      "threadControl": "会话控制",
+      "sendGoogleAdsConversion": "发送 Google Ads 转化"
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
@@ -4237,6 +4270,14 @@
     "toolsGroup": "工具"
   },
   "messages": {
+    "timeAgo": {
+      "now": "刚刚",
+      "minutes": "{count}分钟",
+      "hours": "{count}小时",
+      "days": "{count}天",
+      "months": "{count}个月",
+      "years": "{count}年"
+    },
     "addFeature": "添加 {feature}",
     "archiveFeature": "封存 {feature}",
     "archiveFeatureDescription": "您确定要封存 {feature} 吗？",
@@ -5120,7 +5161,27 @@
       "preview": "预览",
       "embedCodeDescription": "将此代码粘贴到网站的 body 结束标签之前。保存的更改会自动生效，无需重新粘贴。",
       "savedSuccess": "聊天小部件设置已保存",
-      "poweredBy": "由"
+      "poweredBy": "由",
+      "toggleLabel": "与我们聊天",
+      "logo": {
+        "description": "访客点击以打开小部件的圆形按钮。请选择正方形图片，或留空以使用默认聊天图标。",
+        "choose": "从媒体库选择",
+        "notImage": "标志必须是图片。"
+      },
+      "brandUrl": {
+        "label": "跳转链接",
+        "placeholder": "https://example.com",
+        "description": "小部件“由”行中品牌名称链接到的地址。设置品牌名称时必填。",
+        "requiredWithName": "请为此品牌名称输入跳转 URL。"
+      },
+      "brandName": {
+        "description": "显示在小部件的“由”行中。设置跳转 URL 时必填。两者都留空则隐藏该行。",
+        "requiredWithUrl": "请为此跳转 URL 输入品牌名称。"
+      },
+      "logoBackgroundColor": {
+        "label": "图标背景色",
+        "description": "默认聊天图标的背景色。图标会自动变为白色或黑色以保持清晰。"
+      }
     }
   },
   "sendGrid": {
@@ -5366,7 +5427,8 @@
       "sendMetaCapiEvent": "发送 Meta CAPI 事件",
       "setCustomField": "设置自订字段",
       "startAnotherFlow": "开始另一个流程",
-      "transferConversationToHuman": "将对话转移给人类"
+      "transferConversationToHuman": "将对话转移给人类",
+      "sendGoogleAdsConversion": "发送 Google Ads 转化"
     },
     "after": "之后",
     "at": "在",
@@ -6310,6 +6372,447 @@
       "messagingIdHint": "仅限字母、数字、连字符和下划线（最多 512 个字符）。",
       "cancel": "取消",
       "confirmSend": "发送"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "将离线转化发送到 Google Ads，用于通过 Google 广告点击而来的联系人。",
+    "notAvailable": {
+      "description": "平台的 Google Ads 凭据(OAuth 客户端 ID 和密钥)尚未配置。请联系平台管理员在平台的 Google Ads 设置中添加。"
+    },
+    "connect": {
+      "scopes": "我们会请求读取您的 Google Ads 账号和转化操作，并代表您发送转化的权限。",
+      "button": "连接 Google Ads",
+      "reconnect": "重新连接",
+      "unnamedAccount": "Google Ads 账号",
+      "viaManager": "通过管理账号 {manager}",
+      "statusLabel": "连接状态",
+      "needsReauthDescription": "Google 访问权限已被撤销或已过期。请重新连接以继续发送转化。",
+      "pausedDescription": "此连接已暂停，因此不会发送转化。",
+      "degradedDescription": "Google Ads 返回错误，系统将自动重试发送转化。",
+      "howItWorks": "工作原理",
+      "steps": {
+        "signIn": "使用管理你广告的 Google 账号登录。",
+        "chooseAccount": "选择 Google Ads 账号。",
+        "pickAction": "在你的流程中选择转化操作。"
+      },
+      "uploadMethod": "上传方式:{method}"
+    },
+    "status": {
+      "connected": "已连接",
+      "degraded": "异常",
+      "needsReauth": "需要重新连接",
+      "paused": "已暂停",
+      "disconnected": "已断开"
+    },
+    "picker": {
+      "title": "选择 Google Ads 账号",
+      "legend": "Google Ads 账号",
+      "loading": "正在加载 Google Ads 连接",
+      "loadError": "无法加载 Google Ads 连接尝试。",
+      "waiting": "正在等待 Google 确认登录…",
+      "noTargets": "此 Google 账号下未找到任何 Google Ads 账号。",
+      "alreadyThisWorkspace": "已连接到此工作区",
+      "alreadyOtherWorkspace": "已连接到其他工作区",
+      "notSelectable": "无法选择此账号",
+      "connectSelected": "连接账号",
+      "sessionExpired": "连接尝试已过期。请重新连接以继续。",
+      "sessionCancelled": "连接尝试已取消。",
+      "stalled": "登录未完成。请使用“连接 Google Ads”重试。",
+      "dismiss": "忽略",
+      "cancelFailed": "无法取消此次连接尝试。请重试。",
+      "connectErrorTitle": "无法连接 Google Ads",
+      "errors": {
+        "stateMismatch": "无法验证此次登录。请重新连接以继续。",
+        "expired": "连接尝试已过期。请重新连接以继续。",
+        "providerDenied": "未授予 Google 访问权限。请重新连接并允许所请求的权限。",
+        "exchangeFailed": "无法完成 Google 登录。请重新连接以继续。",
+        "providerError": "Google 返回了错误。请稍后再试。",
+        "noCandidates": "未找到此 Google 用户的有效 Google Ads 账号。已取消、已暂停或尚未完成设置的账号无法使用。请使用管理有效 Google Ads 账号的 Google 账号登录。",
+        "alreadyConnected": "该 Google Ads 账号已连接。",
+        "quotaExceeded": "已达到您套餐的连接数上限。",
+        "trialExpired": "您的试用已结束，无法添加新连接。",
+        "internalError": "连接时出错，请重试。",
+        "providerUnavailable": "Google Ads 暂时不可用，因此无法完成连接。请稍后重试。",
+        "developerTokenMissing": "Google Ads 尚未完全设置:平台的 Google 凭据不完整。请联系管理员检查 Google Ads 凭据。",
+        "developerTokenNotApproved": "Google 拒绝了 Google Ads 凭据中保存的开发者令牌。该令牌为可选项:请联系管理员删除它或替换为有效令牌。",
+        "projectNotApproved": "您的 Google Cloud 项目尚未获准用于正式的 Google Ads 账号。请在 Google Cloud Console(Google Ads API → Overview)中为该项目申请 Explorer 或 Basic 访问权限,然后重新连接。",
+        "permissionDenied": "此 Google 用户无权访问 Google Ads 账号。请使用有权访问 Google Ads 账号的 Google 用户登录。",
+        "apiNotEnabled": "Google Cloud 项目未启用 Google Ads API。请让管理员启用后重试。",
+        "credentialsInvalid": "Google 拒绝了登录凭据。请重新连接以继续。",
+        "scopeMissing": "未授予全部权限。Google Ads 需要访问您的 Google Ads 账号并有权发送转化。请重新连接并勾选所有权限。",
+        "legacyUploadNotAllowed": "Google 不允许此账号使用旧版上传 API。请将凭据切换为 Data Manager，并重新连接此工作区。"
+      }
+    },
+    "setup": {
+      "conversionCustomer": "转化账号",
+      "notResolved": "尚未解析",
+      "retry": "重试设置",
+      "dataTermsWarning": "此账号尚未接受客户数据条款。请在 Google Ads 中接受后重试设置。",
+      "errors": {
+        "conversionCustomerInaccessible": "使用此 Google 登录无法访问该转化账号。请在 Google Ads 中检查您的权限后重试。",
+        "customerDataTermsNotAccepted": "此账号尚未接受客户数据条款。请在 Google Ads 中接受后重试设置。",
+        "syncFailed": "无法从 Google Ads 读取转化操作。请稍后重试设置。",
+        "developerTokenMissing": "平台的 Google Ads 凭据(OAuth 客户端 ID 和密钥)尚未配置。"
+      }
+    },
+    "conversionActions": {
+      "title": "转化操作",
+      "description": "只有已启用且通过点击导入转化的操作才能接收转化。",
+      "helpLink": "Google Ads 帮助",
+      "sync": "同步转化操作",
+      "syncedAt": "上次同步：{date}",
+      "neverSynced": "尚未同步",
+      "empty": "未找到转化操作。请在 Google Ads 中创建离线导入转化操作，然后同步。",
+      "name": "名称",
+      "category": "类别",
+      "counting": "计数方式",
+      "status": "状态",
+      "onePerClickNote": "iOS 点击(gbraid)无法发送到此操作。请使用“每次”计数方式来接收它们。",
+      "externalNote": "不支持:此操作使用外部归因,无法通过 Google Data Manager 发送。",
+      "count": "{count, plural, one {# 个转化操作} other {# 个转化操作}}"
+    },
+    "events": {
+      "title": "转化历史",
+      "description": "最近发送到 Google Ads 的转化。点击 ID 已做遮盖处理。",
+      "empty": "流程或触发器发送转化后，会显示在此处。",
+      "emptyFiltered": "没有符合此状态的转化。",
+      "loadError": "无法加载转化历史。",
+      "page": "第 {page} 页，共 {pages} 页",
+      "filter": {
+        "label": "状态",
+        "all": "所有状态"
+      },
+      "columns": {
+        "status": "状态",
+        "action": "转化操作",
+        "channel": "渠道",
+        "clickId": "点击 ID",
+        "occurredAt": "发生时间",
+        "actions": "操作",
+        "dedup": "去重",
+        "consent": "同意快照",
+        "matching": "匹配",
+        "properties": "属性"
+      },
+      "status": {
+        "pending": "待发送",
+        "sending": "发送中",
+        "sent": "已发送",
+        "processed": "已处理",
+        "failed": "失败",
+        "skippedNoAccount": "已跳过：无账号",
+        "skippedExpired": "已跳过：已过期"
+      },
+      "processing": {
+        "processing": "Google 正在处理",
+        "success": "已接受",
+        "partialSuccess": "部分接受",
+        "failed": "已拒绝",
+        "unknown": "结果未知",
+        "timedOut": "已超时"
+      },
+      "stage": {
+        "delivery": "发送失败",
+        "processing": "处理失败",
+        "timeout": "已超时"
+      },
+      "consent": {
+        "adUserDataFull": "广告用户数据：{status}",
+        "adPersonalizationFull": "广告个性化：{status}",
+        "status": {
+          "granted": "已同意",
+          "denied": "已拒绝",
+          "notProvided": "未提供",
+          "notSupported": "不支持（旧版上传）"
+        },
+        "adUserDataShort": "数据：{status}",
+        "adPersonalizationShort": "个性化：{status}",
+        "delivery": {
+          "toSend": "待发送",
+          "notSent": "未发送",
+          "unknown": "未确认"
+        }
+      },
+      "dedup": {
+        "click": "按点击",
+        "id": "ID：{id}",
+        "event": "每次运行"
+      },
+      "matching": {
+        "enabled": "已配置：{fields}",
+        "withheldConsent": "已暂缓（无同意）：{fields}",
+        "unsupportedTransport": "未发送（旧版）：{fields}"
+      },
+      "timeProvided": "指定时间",
+      "timeProvidedTooltip": "此转化时间来自步骤设置，而非步骤的运行时间。"
+    },
+    "validate": {
+      "open": "验证请求",
+      "title": "验证请求",
+      "description": "配置检查：Google 会验证请求，但不会记录转化。",
+      "conversionAction": "转化操作",
+      "clickIdType": "点击 ID 类型",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "点击 ID",
+      "submit": "运行检查",
+      "ok": "Google 已接受此配置，未记录任何内容。",
+      "reasons": {
+        "accountNotReady": "Google Ads 尚未就绪。请先完成账号的连接和设置，然后重试。",
+        "needsReauth": "需要重新连接 Google Ads。",
+        "rejected": "Google 拒绝了此请求",
+        "legacyUploadNotAllowed": "Google 不允许此账号使用旧版上传 API。请将凭据切换为 Data Manager，并重新连接此工作区。"
+      },
+      "invalid": "请选择转化操作并输入有效的点击 ID。",
+      "consentIncluded": "包含同意：{values}。",
+      "consentNone": "此次测试不包含任何同意。",
+      "consentVariableSkipped": "来自联系人字段的同意无法测试，已被省略。",
+      "consentNotSentLegacy": "广告个性化（{status}）不会通过旧版上传方式发送。"
+    },
+    "conversionFields": {
+      "conversionAction": "转化操作",
+      "unavailableOption": "{id}（不可用）",
+      "unavailableWarning": "所选转化操作已不可用或未启用。发布前请选择其他操作。",
+      "externalOption": "{name}(外部归因,不支持)",
+      "loading": "正在加载转化操作",
+      "loadError": "无法加载您的 Google Ads 转化操作。",
+      "notConnected": "连接 Google Ads 以发送转化。",
+      "noActions": "未找到已启用的转化操作。请在 Google Ads 设置中同步。",
+      "openSettings": "打开 Google Ads 设置",
+      "needsReauth": "需要重新连接 Google Ads。",
+      "dedupModeClick": "每次广告点击一次",
+      "dedupModeClickHelp": "对每次广告点击仅统计一次此转化操作。",
+      "dedupModeIdHelp": "每个不同的 ID 计一次。",
+      "dedupModeId": "每个订单或事件 ID 一次",
+      "dedupModeEvent": "每次运行",
+      "dedupModeEventHelp": "每次运行都记录一次新的转化，即使是同一次广告点击。同一次运行的重试不会被重复计算。",
+      "dedupId": "订单或事件 ID",
+      "dedupIdPlaceholder": "例如 '{{order_number}}'",
+      "dedupIdHelp": "重试和导入时请重复使用同一个 ID。每次购买或事件请使用不同的 ID。",
+      "dedupIdExample": "聊天销售没有订单 ID？可将联系人与您为每笔销售设置的字段组合，例如 {example}。请勿使用当前时间：它在每次运行时都会变化。",
+      "dedupIdInfoLabel": "关于订单或事件 ID",
+      "dedupLeadIdNote": "每个不同的 ID 都会算作来自同一次点击的新线索。",
+      "dedupClickNote": "来自同一次点击的重复购买不会被统计。",
+      "dedupLegacyNote": "旧版上传：Google 收到的是混淆后的 ID。",
+      "additionalOptions": "更多选项",
+      "additionalOptionsCount": "已设置 {count} 项",
+      "customerMatching": "客户匹配",
+      "customerMatchingCount": "已开启 {count} 项",
+      "customerMatchingLegacy": "旧版上传方式不支持。请将连接切换为 Data Manager API 后使用。",
+      "customerMatchingTermsNotAccepted": "在 Google Ads 转化设置中接受客户数据条款之前，不会发送。",
+      "learnMore": "了解详情",
+      "matchEmailLabel": "电子邮件",
+      "matchPhoneLabel": "电话号码",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "客户类型",
+      "customerValueBucketLabel": "客户价值",
+      "customerPropertiesLegacy": "旧版上传方式不支持。请将连接切换为 Data Manager API 后使用。",
+      "conversionTime": "转化时间",
+      "conversionTimePlaceholder": "留空则使用此步骤运行的时间",
+      "valuePlaceholder": "可选，例如 250",
+      "currencyPlaceholder": "可选，USD",
+      "validation": {
+        "dedupIdRequired": "请输入 ID，或选择“每次广告点击一次”。",
+        "dedupIdTooLong": "最多使用 64 个字符。",
+        "matchTemplateInvalid": "只能使用一个变量，例如 '{{email}}'，不允许填写固定值。",
+        "customerTypeInvalid": "请使用 NEW 或 RETURNING，或变量，例如 '{{customer_type}}'。",
+        "customerValueBucketInvalid": "请使用 LOW、MEDIUM 或 HIGH，或变量，例如 '{{customer_value}}'。",
+        "timeFormat": "请使用带时区的日期，例如 2026-10-08T14:30:00+07:00。",
+        "timeInvalidDate": "此日期不存在。",
+        "currencyRequired": "设置值时请添加币种。",
+        "valueRequired": "设置币种时请添加值。",
+        "conversionActionRequired": "请选择转化操作。",
+        "valueInvalid": "请使用普通数字，例如 19.99。",
+        "valueTooLarge": "该数值过大。",
+        "currencyInvalid": "请使用 3 个字母的货币代码，例如 USD。"
+      },
+      "consentInvalid": "无法读取同意设置，因此此步骤将失败。",
+      "consentFixLink": "在设置中修复",
+      "dedupModeLabel": "避免重复转化"
+    },
+    "summary": {
+      "conversionAction": "转化操作 {id}",
+      "notConfigured": "选择转化操作",
+      "dedupClick": "每次广告点击一次",
+      "dedupId": "ID：{id}",
+      "dedupEvent": "每次运行"
+    },
+    "consent": {
+      "title": "转化数据同意",
+      "description": "客户是否同意为广告共享其数据。适用于此工作区发送的每一次转化。",
+      "learnMore": "了解详情",
+      "notConnected": "连接 Google Ads 账号后适用于转化。",
+      "adUserData": {
+        "label": "广告用户数据"
+      },
+      "adPersonalization": {
+        "label": "广告个性化"
+      },
+      "source": {
+        "notProvided": "未提供",
+        "granted": "始终同意",
+        "denied": "始终拒绝",
+        "variable": "来自联系人字段"
+      },
+      "help": {
+        "notProvided": "不发送。Google 将使用您账户的默认同意设置。",
+        "granted": "每次转化都表明客户已同意。",
+        "denied": "每次转化都表明客户已拒绝。",
+        "variable": "使用 \"{granted}\" 或 \"{denied}\"。留空则跳过；其他任何值都会导致该步骤失败。"
+      },
+      "templatePlaceholder": "例如 '{{gdpr_consent}}'",
+      "templateLabel": "{setting}的联系人字段",
+      "validation": {
+        "templateRequired": "请插入联系人字段,例如 '{{gdpr_consent}}'。",
+        "templateTooLong": "最多使用 200 个字符。"
+      },
+      "legacy": {
+        "title": "旧版上传不会发送",
+        "body": "旧版上传仅接受广告用户数据同意。请通过 Data Manager 重新连接以发送。"
+      },
+      "save": "保存",
+      "saved": "同意设置已保存",
+      "invalidStored": "无法读取已保存的同意设置。在您保存新设置之前，发送转化的步骤将会失败。"
+    },
+    "errors": {
+      "supportSession": "平台支持会话无法更改 Google Ads 连接或发送转化。",
+      "developerTokenMissing": "Google Ads 暂不可用:平台的 Google Ads 凭据(OAuth 客户端 ID 和密钥)尚未配置。",
+      "notConnected": "此工作区尚未连接 Google Ads。",
+      "sessionNotFound": "未找到此 Google Ads 连接尝试，或已过期。请重新开始。",
+      "pickFailed": "无法连接该 Google Ads 账号。它可能已在别处连接，或连接尝试已过期。",
+      "notRetryable": "无法重试此转化：只有失败的转化才能重试。",
+      "authorizationUnavailable": "无法启动 Google 登录。请稍后再试。",
+      "credentialSecretsRequired": "请输入客户端密钥。它尚未保存。"
+    },
+    "enums": {
+      "category": {
+        "default": "默认",
+        "purchase": "购买",
+        "addToCart": "加入购物车",
+        "beginCheckout": "开始结账",
+        "subscribePaid": "付费订阅",
+        "phoneCallLead": "电话线索",
+        "importedLead": "导入的线索",
+        "submitLeadForm": "提交线索表单",
+        "bookAppointment": "预约",
+        "signup": "注册",
+        "requestQuote": "请求报价",
+        "getDirections": "获取路线",
+        "outboundClick": "出站点击",
+        "contact": "联系",
+        "engagement": "互动",
+        "storeVisit": "到店访问",
+        "storeSale": "店内销售",
+        "qualifiedLead": "合格线索",
+        "convertedLead": "已转化线索",
+        "pageView": "页面浏览",
+        "download": "下载",
+        "lead": "线索"
+      },
+      "countingType": {
+        "onePerClick": "每次点击计一次",
+        "manyPerClick": "每次点击可计多次"
+      },
+      "actionStatus": {
+        "enabled": "已启用",
+        "removed": "已移除",
+        "hidden": "已隐藏"
+      },
+      "unknown": "其他（{value}）"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "旧版上传"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "此联系人的渠道无法发送 Google Ads 转化。",
+      "google_ads_no_click": "该联系人并非来自 Google 广告点击。",
+      "google_ads_no_account": "未连接可用的 Google Ads 账号。",
+      "google_ads_unknown_conversion_action": "该转化操作已不存在。请同步后选择其他操作。",
+      "google_ads_action_disabled": "该转化操作在 Google Ads 中未启用。",
+      "google_ads_incompatible_action": "此操作按每次点击计一次转化，而 Google 不允许对这次 iOS 点击这样做。",
+      "google_ads_unsupported_action": "此操作使用外部归因，无法接收这些转化。",
+      "google_ads_invalid_value": "数值或币种无效。",
+      "google_ads_invalid_input": "步骤设置无效。",
+      "google_ads_record_failed": "无法保存转化。",
+      "google_ads_missing_dedup_id": "订单或事件 ID 为空。",
+      "google_ads_invalid_dedup_id": "订单或事件 ID 超过 64 个字符。",
+      "google_ads_missing_occurrence_key": "此次运行没有稳定的标识符，因此未记录转化。",
+      "google_ads_invalid_customer_property": "客户类型或客户价值不是允许的值。",
+      "google_ads_invalid_consent_config": "无法读取已保存的同意设置。",
+      "google_ads_invalid_consent_value": "某个同意字段的值不是 \"granted\" 或 \"denied\"。",
+      "google_ads_invalid_conversion_time": "转化时间不是带时区的有效日期，或晚于当前时间。"
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "所有渠道",
+        "allActions": "所有操作",
+        "channelLabel": "渠道",
+        "actionLabel": "转化操作"
+      },
+      "tiles": {
+        "confirmed": "已确认",
+        "awaitingGoogle": "等待 Google",
+        "queued": "排队中",
+        "failed": "失败",
+        "skipped": "已跳过",
+        "deliveryRate": "送达率",
+        "confirmedHelp": "Google 已确认记录这些转化。",
+        "awaitingGoogleHelp": "已发送至 Google，等待 Google 处理完成。",
+        "queuedHelp": "等待发送。",
+        "failedHelp": "未被 Google 接受或处理。",
+        "skippedHelp": "未发送：没有就绪的账号，或对 Google 来说时间过早。",
+        "deliveryRateHelp": "已确认 ÷（已确认 + 失败）。排队中、等待中和已跳过的不计入。"
+      },
+      "confirmedValue": "已确认价值",
+      "confirmedValueItem": "{value} ({count, plural, one {#次转化} other {#次转化}})",
+      "moreCurrencies": "另外 {count} 项",
+      "chart": {
+        "title": "每日转化",
+        "viewAsTable": "以表格查看",
+        "tableCaption": "每日转化",
+        "dateColumn": "日期"
+      },
+      "byAction": {
+        "title": "按转化操作",
+        "truncated": "显示转化最多的 50 个操作。"
+      },
+      "byChannel": {
+        "title": "按渠道",
+        "confirmedCount": "{count, plural, one {已确认 #} other {已确认 #}}"
+      },
+      "failures": {
+        "title": "按阶段统计的失败",
+        "unknown": "未知"
+      },
+      "empty": {
+        "title": "此时间段内没有转化",
+        "description": "当流程步骤或触发器发送转化后，会显示在这里。"
+      },
+      "error": {
+        "title": "无法加载统计数据",
+        "retry": "重试"
+      },
+      "viewStatistics": "查看统计",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "此时间段内没有已确认或失败的转化。",
+      "actionFallback": "操作 {id}",
+      "openSettings": "打开 Google Ads 设置",
+      "outcome": {
+        "title": "结果占比"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
     }
   },
   "appointments": {

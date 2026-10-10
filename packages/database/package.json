@@ -62,6 +62,7 @@
     "./queries/contact-filter/permission": "./src/queries/contact-filter/permission.ts",
     "./queries/contact-filter/value-format": "./src/queries/contact-filter/value-format.ts",
     "./queries/date-bucket": "./src/queries/date-bucket.ts",
+    "./queries/google-click": "./src/queries/google-click.ts",
     "./repositories": "./src/repositories/index.ts",
     "./repositories/contact-inbox-post": "./src/repositories/contact-inbox-post/index.ts",
     "./schema": "./src/schema/index.ts",

@@ -1,4 +1,7 @@
-import { workspaceService } from "@chatbotx.io/business"
+import {
+  type WorkspaceQuotaConsumption,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import { redirect } from "next/navigation"
@@ -78,6 +81,7 @@ function createChannelErrorPathFor(error: unknown): string | null {
 export async function createFirstWorkspace(
   userId: string,
   tx?: DatabaseClient,
+  quotaConsumption?: WorkspaceQuotaConsumption,
 ) {
   const existing = await workspaceService.findActiveByOwner({
     ownerId: userId,
@@ -91,6 +95,7 @@ export async function createFirstWorkspace(
       data: { name: "New Workspace", ownerId: userId },
       createdBy: userId,
       tx,
+      quotaConsumption,
     })
   } catch (error) {
     const errorPath = createChannelErrorPathFor(error)

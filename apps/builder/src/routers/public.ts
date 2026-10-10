@@ -48,6 +48,7 @@ import { igStoriesPublicRouter } from "@/features/ig-stories/api/public"
 import { inboxesPublicRouter } from "@/features/inboxes/api/public"
 import { aiHandoverPublicRouter } from "@/features/integration-ai-handover/api/public"
 import { channelsPublicRouter } from "@/features/integration-api/api/public"
+import { googleAdsPublicRouter } from "@/features/integration-google-ads/api/public"
 import { instagramChannelsPublicRouter } from "@/features/integration-instagram/api/public"
 import { messengerChannelsPublicRouter } from "@/features/integration-messenger/api/public"
 import { messengerTemplatesPublicRouter } from "@/features/integration-messenger/message-templates/api/public"
@@ -123,6 +124,7 @@ export const publicRouter = {
   fbComments: fbCommentsPublicRouter,
   flows: flowsPublicRouter,
   folders: foldersPublicRouter,
+  googleAds: googleAdsPublicRouter,
   igComments: igCommentsPublicRouter,
   igStories: igStoriesPublicRouter,
   channelIntegrations: channelIntegrationsPublicRouter,

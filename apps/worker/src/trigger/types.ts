@@ -41,6 +41,12 @@ export type ActionExecutionContext = {
    * which fall back by design.
    */
   contactInboxId?: string
+  /**
+   * Durable key of this occurrence of the action: identical on every retry of
+   * the job that produced it, different for each run and each action. Unset
+   * when the producer has no such key; `event` dedup then refuses to record.
+   */
+  occurrenceKey?: string
 }
 
 /**
@@ -52,4 +58,6 @@ export type ActionExecutionContext = {
 export type TriggerExecutionInput = {
   contactId: string
   contactInboxId?: string
+  /** The trigger queue job id; stable across retries of that job. */
+  occurrenceId?: string
 }

@@ -86,162 +86,178 @@ export const broadcastTargetSchema = z.object({
 })
 export type BroadcastTargetRequest = z.infer<typeof broadcastTargetSchema>
 
-export const createBroadcastRequest = z
-  .object({
-    channel: channelTypes.describe("Channel to send the broadcast over."),
-    flowId: zodBigintAsString()
-      .optional()
-      .describe(
-        "Flow id (numeric string) to send. Provide this or templateId, not both.",
-      ),
-    templateId: zodBigintAsString()
-      .optional()
-      .describe(
-        "WhatsApp template id (numeric string) to send. Provide this or flowId, not both.",
-      ),
-    integrationWhatsappId: zodBigintAsString()
-      .optional()
-      .describe("WhatsApp integration id (numeric string) to send from."),
-    integrationMessengerId: zodBigintAsString()
-      .optional()
-      .describe("Messenger integration id (numeric string) to send from."),
-    templateData: broadcastTemplateDataSchema
-      .optional()
-      .describe(
-        "Parameters for the WhatsApp template, when sending a single-page broadcast.",
-      ),
-    buttons: broadcastTemplateButtonsSchema
-      .optional()
-      .describe("Button overrides for the WhatsApp template."),
-    targets: z
-      .array(broadcastTargetSchema)
-      .optional()
-      .describe(
-        "Per-page targets for a multi-page broadcast, each with its own template/flow.",
-      ),
-    /** The page multi-select's value; `targets` mirrors it and is what the server reads. */
-    inboxIds: z
-      .array(zodBigintAsString())
-      .optional()
-      .describe("Inbox ids (numeric strings) this broadcast sends from."),
-    subaction: broadcastSubactions.describe("Audience sub-action filter."),
-    schedulesType: broadcastScheduleTypes.describe(
-      "When to send: immediately (`now`) or at `schedulesAt` (`future`).",
+/** The broadcast payload fields, before the cross-field rules below. */
+export const createBroadcastFields = z.object({
+  channel: channelTypes.describe("Channel to send the broadcast over."),
+  flowId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Flow id (numeric string) to send. Provide this or templateId, not both.",
     ),
-    // Future-ness is validated by the `superRefine` below, not here: that
-    // check has the full object (`schedulesType`, `saveAsDraft`) and is the
-    // only one that can tell a schedule actually being set (validate) from
-    // a draft merely carrying a stale or not-yet-chosen date (don't). A
-    // field-level `.refine` here ran unconditionally on any non-null value,
-    // so it blocked re-saving an untouched `future` draft once its
-    // previously-chosen `schedulesAt` elapsed.
-    schedulesAt: z
-      .string()
-      .nullable()
-      .describe(
-        "ISO 8601 send time, required when schedulesType is `future` and not a draft.",
-      ),
-    contactFilter: contactFilterRequest.shape.contactFilter.describe(
-      "Structured filter selecting the recipient audience. See `contacts.listFilterFields`.",
+  templateId: zodBigintAsString()
+    .optional()
+    .describe(
+      "WhatsApp template id (numeric string) to send. Provide this or flowId, not both.",
     ),
-    audienceRangeStart:
-      broadcastSendLimitSchema.shape.audienceRangeStart.describe(
-        "1-based inclusive start of the ordered audience window (ascending contact inbox id). Omit to start from the first contact.",
-      ),
-    audienceRangeEnd: broadcastSendLimitSchema.shape.audienceRangeEnd.describe(
-      "1-based inclusive end of the ordered audience window. Omit to include through the last contact.",
+  integrationWhatsappId: zodBigintAsString()
+    .optional()
+    .describe("WhatsApp integration id (numeric string) to send from."),
+  integrationMessengerId: zodBigintAsString()
+    .optional()
+    .describe("Messenger integration id (numeric string) to send from."),
+  templateData: broadcastTemplateDataSchema
+    .optional()
+    .describe(
+      "Parameters for the WhatsApp template, when sending a single-page broadcast.",
     ),
-    sendRatePerMinute:
-      broadcastSendLimitSchema.shape.sendRatePerMinute.describe(
-        "Maximum recipients handed off per dispatch minute (1-1000). Omit to use your plan's default (500; Messenger broadcasts on a trial plan use and cap at 60).",
-      ),
-    saveAsDraft: z
-      .boolean()
-      .optional()
-      .describe("Save as a draft instead of scheduling/sending immediately."),
-  })
-  .refine(isAudienceRangeOrdered, {
-    path: ["audienceRange"],
-    message: broadcastSendLimitIssues.rangeEndBeforeStart,
-  })
-  .refine(
-    (data) => !!(broadcastSendsFlow(data) || broadcastSendsTemplate(data)),
-    {
-      message: "Either flow or template must be selected",
+  buttons: broadcastTemplateButtonsSchema
+    .optional()
+    .describe("Button overrides for the WhatsApp template."),
+  targets: z
+    .array(broadcastTargetSchema)
+    .optional()
+    .describe(
+      "Per-page targets for a multi-page broadcast, each with its own template/flow.",
+    ),
+  /** The page multi-select's value; `targets` mirrors it and is what the server reads. */
+  inboxIds: z
+    .array(zodBigintAsString())
+    .optional()
+    .describe("Inbox ids (numeric strings) this broadcast sends from."),
+  subaction: broadcastSubactions.describe("Audience sub-action filter."),
+  schedulesType: broadcastScheduleTypes.describe(
+    "When to send: immediately (`now`) or at `schedulesAt` (`future`).",
+  ),
+  // Future-ness is validated by the `superRefine` below, not here: that
+  // check has the full object (`schedulesType`, `saveAsDraft`) and is the
+  // only one that can tell a schedule actually being set (validate) from
+  // a draft merely carrying a stale or not-yet-chosen date (don't). A
+  // field-level `.refine` here ran unconditionally on any non-null value,
+  // so it blocked re-saving an untouched `future` draft once its
+  // previously-chosen `schedulesAt` elapsed.
+  schedulesAt: z
+    .string()
+    .nullable()
+    .describe(
+      "ISO 8601 send time, required when schedulesType is `future` and not a draft.",
+    ),
+  contactFilter: contactFilterRequest.shape.contactFilter.describe(
+    "Structured filter selecting the recipient audience. See `contacts.listFilterFields`.",
+  ),
+  audienceRangeStart:
+    broadcastSendLimitSchema.shape.audienceRangeStart.describe(
+      "1-based inclusive start of the ordered audience window (ascending contact inbox id). Omit to start from the first contact.",
+    ),
+  audienceRangeEnd: broadcastSendLimitSchema.shape.audienceRangeEnd.describe(
+    "1-based inclusive end of the ordered audience window. Omit to include through the last contact.",
+  ),
+  sendRatePerMinute: broadcastSendLimitSchema.shape.sendRatePerMinute.describe(
+    "Maximum recipients handed off per dispatch minute (1-1000). Omit to use your plan's default (500; Messenger broadcasts on a trial plan use and cap at 60).",
+  ),
+  saveAsDraft: z
+    .boolean()
+    .optional()
+    .describe("Save as a draft instead of scheduling/sending immediately."),
+})
+
+type CreateBroadcastFields = z.output<typeof createBroadcastFields>
+
+/**
+ * The cross-field rules every broadcast payload must pass. Shared so the
+ * public API's request (which adds flat `templateParams`) keeps exactly the
+ * same rules as the builder's.
+ */
+export const withBroadcastRules = <
+  TSchema extends z.ZodType<CreateBroadcastFields>,
+>(
+  schema: TSchema,
+) =>
+  schema
+    .refine(isAudienceRangeOrdered, {
+      path: ["audienceRange"],
+      message: broadcastSendLimitIssues.rangeEndBeforeStart,
+    })
+    .refine(
+      (data) => !!(broadcastSendsFlow(data) || broadcastSendsTemplate(data)),
+      {
+        message: "Either flow or template must be selected",
+        path: ["flowId"],
+      },
+    )
+    .refine((data) => !hasFlowAndTemplate(data), {
+      message: "A broadcast sends either a flow or a template, not both",
       path: ["flowId"],
-    },
-  )
-  .refine((data) => !hasFlowAndTemplate(data), {
-    message: "A broadcast sends either a flow or a template, not both",
-    path: ["flowId"],
-  })
-  .refine((data) => !isTargetsTemplateSendWithoutTemplate(data), {
-    message: "Select a template for at least one page",
-    path: ["targets"],
-  })
-  .refine((data) => !isTargetsFlowSendWithoutFlow(data), {
-    message: "Select a flow for at least one page",
-    path: ["targets"],
-  })
-  .refine((data) => !hasDuplicateBroadcastTarget(data), {
-    message: "A page can only be selected once",
-    path: ["targets"],
-  })
-  .refine((data) => !isTemplateSendWithoutPage(data), {
-    message: "Select the page the template belongs to",
-    path: ["inboxIds"],
-  })
-  // A `future` schedule that is actually being scheduled (`saveAsDraft` is
-  // false/undefined) must carry the time it is scheduled for. Without this,
-  // `create`/`updateDraft` fall back to `startOfMinute(new Date())` and
-  // persist `schedulesType: "future"` alongside an already-elapsed
-  // `schedulesAt` — an internally inconsistent row that `enqueueBroadcast`
-  // then picks up on its next tick, i.e. a silent send-now. Mirrors the
-  // equivalent check in `scheduleBroadcastSchema` below.
-  //
-  // `saveAsDraft: true` is exempt: a draft is never picked up by
-  // `enqueueBroadcast` (it only scans `status = scheduled`), so a draft
-  // saved with `schedulesType: "future"` and no date yet chosen — or one
-  // whose previously-chosen date has since elapsed while it sat unsent — is
-  // harmless and must remain saveable. Without this exemption, reopening and
-  // re-saving such a draft (with no schedule-related edit at all) fails
-  // validation until the user re-picks a future date.
-  .superRefine((data, ctx) => {
-    if (
-      !data.saveAsDraft &&
-      data.schedulesType === "future" &&
-      !(data.schedulesAt && isFutureScheduleTime(data.schedulesAt))
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["schedulesAt"],
-        message: FUTURE_SCHEDULE_MESSAGE,
-      })
-    }
-  })
-  // Send-blocking WhatsApp template rules (MPM sections, LTO expiration):
-  // the flow editor enforces them at publish, this refinement covers the
-  // broadcast surface with the same shared rule set — once for the legacy
-  // single template and once per page of a multi-page broadcast.
-  .superRefine((data, ctx) => {
-    if (data.channel !== channelTypes.enum.whatsapp) {
-      return
-    }
-    if (data.templateData) {
-      validateWaTemplateSendParams(data.templateData as WaTemplateParams, ctx, [
-        "templateData",
-      ])
-    }
-    for (const [index, target] of (data.targets ?? []).entries()) {
-      if (target.templateData) {
+    })
+    .refine((data) => !isTargetsTemplateSendWithoutTemplate(data), {
+      message: "Select a template for at least one page",
+      path: ["targets"],
+    })
+    .refine((data) => !isTargetsFlowSendWithoutFlow(data), {
+      message: "Select a flow for at least one page",
+      path: ["targets"],
+    })
+    .refine((data) => !hasDuplicateBroadcastTarget(data), {
+      message: "A page can only be selected once",
+      path: ["targets"],
+    })
+    .refine((data) => !isTemplateSendWithoutPage(data), {
+      message: "Select the page the template belongs to",
+      path: ["inboxIds"],
+    })
+    // A `future` schedule that is actually being scheduled (`saveAsDraft` is
+    // false/undefined) must carry the time it is scheduled for. Without this,
+    // `create`/`updateDraft` fall back to `startOfMinute(new Date())` and
+    // persist `schedulesType: "future"` alongside an already-elapsed
+    // `schedulesAt` — an internally inconsistent row that `enqueueBroadcast`
+    // then picks up on its next tick, i.e. a silent send-now. Mirrors the
+    // equivalent check in `scheduleBroadcastSchema` below.
+    //
+    // `saveAsDraft: true` is exempt: a draft is never picked up by
+    // `enqueueBroadcast` (it only scans `status = scheduled`), so a draft
+    // saved with `schedulesType: "future"` and no date yet chosen — or one
+    // whose previously-chosen date has since elapsed while it sat unsent — is
+    // harmless and must remain saveable. Without this exemption, reopening and
+    // re-saving such a draft (with no schedule-related edit at all) fails
+    // validation until the user re-picks a future date.
+    .superRefine((data, ctx) => {
+      if (
+        !data.saveAsDraft &&
+        data.schedulesType === "future" &&
+        !(data.schedulesAt && isFutureScheduleTime(data.schedulesAt))
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["schedulesAt"],
+          message: FUTURE_SCHEDULE_MESSAGE,
+        })
+      }
+    })
+    // Send-blocking WhatsApp template rules (MPM sections, LTO expiration):
+    // the flow editor enforces them at publish, this refinement covers the
+    // broadcast surface with the same shared rule set — once for the legacy
+    // single template and once per page of a multi-page broadcast.
+    .superRefine((data, ctx) => {
+      if (data.channel !== channelTypes.enum.whatsapp) {
+        return
+      }
+      if (data.templateData) {
         validateWaTemplateSendParams(
-          target.templateData as WaTemplateParams,
+          data.templateData as WaTemplateParams,
           ctx,
-          ["targets", index, "templateData"],
+          ["templateData"],
         )
       }
-    }
-  })
+      for (const [index, target] of (data.targets ?? []).entries()) {
+        if (target.templateData) {
+          validateWaTemplateSendParams(
+            target.templateData as WaTemplateParams,
+            ctx,
+            ["targets", index, "templateData"],
+          )
+        }
+      }
+    })
+export const createBroadcastRequest = withBroadcastRules(createBroadcastFields)
 export type CreateBroadcastRequest = z.infer<typeof createBroadcastRequest>
 
 export const updateBroadcastSchema = z.object({

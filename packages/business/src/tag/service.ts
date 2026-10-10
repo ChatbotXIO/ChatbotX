@@ -676,22 +676,16 @@ class TagService extends BaseService {
     contactId: string
   }): Promise<TagModel[]> {
     const { tx = db, contactId } = props
-    const key = `contacts:${contactId}:tags`
-
-    return await withCache(
-      key,
-      async () =>
-        await tx.query.tagModel.findMany({
-          where: {
-            deletedAt: { isNull: true as const },
-            contactsToTags: { contactId },
-          },
-          orderBy: { name: "asc" },
-        }),
-      {
-        tags: [`contacts:${contactId}`],
+    // Deliberately uncached: a contact's tags are small and change on every
+    // attach/detach path (manual, flow step, label webhook, ad referral), so
+    // a cached copy went stale for a day whenever one path forgot to clear it.
+    return await tx.query.tagModel.findMany({
+      where: {
+        deletedAt: { isNull: true as const },
+        contactsToTags: { contactId },
       },
-    )
+      orderBy: { name: "asc" },
+    })
   }
 
   async findByKey(props: {
@@ -1411,6 +1405,11 @@ class TagService extends BaseService {
   /**
    * Get-or-create a tag's channel mapping — moved VERBATIM from
    * `inbox_labels/sync.ts` `ensureChannel`, including the read-back retry.
+   *
+   * A label deleted and re-created on the channel keeps its name but gets a
+   * new external id, so an existing mapping for the tag is repointed to the
+   * new id (as `tagChannelRepository.upsertLabelMapping` does); otherwise the
+   * channel's later "remove label" event could not find the mapping.
    */
   async ensureTagChannel(props: {
     workspaceId: string
@@ -1438,12 +1437,13 @@ class TagService extends BaseService {
         integrationId,
         externalLabelId,
       })
-      .onConflictDoNothing({
+      .onConflictDoUpdate({
         target: [
           tagChannelModel.tagId,
           tagChannelModel.channelType,
           tagChannelModel.integrationId,
         ],
+        set: { externalLabelId: sql`EXCLUDED."externalLabelId"` },
       })
       .returning({ id: tagChannelModel.id })
     if (created) {

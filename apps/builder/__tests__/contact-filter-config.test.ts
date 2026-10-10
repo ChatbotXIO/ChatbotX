@@ -552,6 +552,13 @@ describe("contact filter field config helpers", () => {
     )
     expect(configs).toContainEqual(
       expect.objectContaining({
+        name: "fromGoogleAd",
+        formField: formFieldTypes.enum.boolean,
+        group: "ctwaAds",
+      }),
+    )
+    expect(configs).toContainEqual(
+      expect.objectContaining({
         name: "ctwaConversion",
         formField: formFieldTypes.enum.multiSelect,
         group: "ctwaAds",
@@ -574,6 +581,10 @@ describe("contact filter field config helpers", () => {
         value: "group-ctwaAds",
         children: [
           { label: "condition.fields.fromCtwaAd", value: "fromCtwaAd" },
+          {
+            label: "condition.fields.fromGoogleAd",
+            value: "fromGoogleAd",
+          },
           {
             label: "condition.fields.ctwaConversion",
             value: "ctwaConversion",

@@ -28,6 +28,7 @@ import {
   bulkEligibilityConditions,
   bulkEligibilityWhere,
 } from "../../queries/ai-handover-bulk-eligibility"
+import { googleClickPredicate } from "../../queries/google-click"
 import type { AdsConversionChannel } from "../../schema"
 import {
   type ContactInboxIdentityChangeReason,
@@ -200,6 +201,20 @@ const contactInboxWorkspaceRowColumns = {
   inboxId: contactInboxModel.inboxId,
   sourceId: contactInboxModel.sourceId,
 } satisfies Record<keyof ContactInboxWorkspaceRow, unknown>
+
+/** A contact inbox that carries a Google Ads Click-to-Message click. */
+export type GoogleClickInboxRow = Pick<
+  ContactInboxModel,
+  "id" | "channel" | "contactId" | "referral" | "sourceId"
+>
+
+const googleClickInboxColumns = {
+  id: contactInboxModel.id,
+  channel: contactInboxModel.channel,
+  contactId: contactInboxModel.contactId,
+  referral: contactInboxModel.referral,
+  sourceId: contactInboxModel.sourceId,
+} satisfies Record<keyof GoogleClickInboxRow, unknown>
 
 /**
  * The columns a coexist history patch needs to decide (a) which ContactInbox a
@@ -491,6 +506,65 @@ export const contactInboxRepository = {
   },
 
   /**
+   * The click recorded on one contact inbox, workspace-scoped through `Inbox`.
+   * `null` when the inbox does not exist in the workspace or carries no click —
+   * the attribution gate for every Google Ads conversion.
+   */
+  async findGoogleClickAttribution(
+    input: { workspaceId: string; contactInboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<GoogleClickInboxRow | null> {
+    const [row] = await tx
+      .select(googleClickInboxColumns)
+      .from(contactInboxModel)
+      .innerJoin(
+        inboxModel,
+        and(
+          eq(inboxModel.id, contactInboxModel.inboxId),
+          eq(inboxModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .where(
+        and(
+          eq(contactInboxModel.id, input.contactInboxId),
+          googleClickPredicate(),
+        ),
+      )
+      .limit(1)
+
+    return row ?? null
+  },
+
+  /** The contact's most recently clicked inbox (trigger actions without an inbox in scope). */
+  async findLatestGoogleClickInboxByContact(
+    input: { workspaceId: string; contactId: string },
+    tx: DatabaseClient = db,
+  ): Promise<GoogleClickInboxRow | null> {
+    const [row] = await tx
+      .select(googleClickInboxColumns)
+      .from(contactInboxModel)
+      .innerJoin(
+        inboxModel,
+        and(
+          eq(inboxModel.id, contactInboxModel.inboxId),
+          eq(inboxModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .where(
+        and(
+          eq(contactInboxModel.contactId, input.contactId),
+          googleClickPredicate(),
+        ),
+      )
+      .orderBy(
+        sql`${contactInboxModel.referral}->>'googleClickReceivedAt' DESC NULLS LAST`,
+      )
+      .limit(1)
+
+    return row ?? null
+  },
+
+  /**
    * Every WhatsApp contact-inbox for a contact that carries CTWA (click-to-
    * WhatsApp ad) attribution, paired with the WhatsApp integration that owns
    * it. Used by the `tagApplied` conversion-trigger hook points: a tag is
@@ -678,10 +752,10 @@ export const contactInboxRepository = {
   listIdsByInboxAndSourceIds(
     props: { inboxId: string; sourceIds: string[] },
     tx: DatabaseClient = db,
-  ): Promise<Pick<ContactInboxModel, "id" | "contactId">[]> {
+  ): Promise<Pick<ContactInboxModel, "id" | "contactId" | "sourceId">[]> {
     return tx.query.contactInboxModel.findMany({
       where: { inboxId: props.inboxId, sourceId: { in: props.sourceIds } },
-      columns: { id: true, contactId: true },
+      columns: { id: true, contactId: true, sourceId: true },
     })
   },
 

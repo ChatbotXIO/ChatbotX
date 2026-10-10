@@ -23,6 +23,7 @@ import {
   integrationGoogleSheetsModel,
   integrationModel,
 } from "@chatbotx.io/database/schema"
+import type { ConnectSessionModel } from "@chatbotx.io/database/types"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
 import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
 import {
@@ -37,6 +38,11 @@ import {
   getPublicUrlFromRequest,
   zodBigintAsString,
 } from "@chatbotx.io/utils"
+import {
+  appendConnectError,
+  type ConnectErrorQueryCode,
+  connectFailureCauseOf,
+} from "@chatbotx.io/utils/connection"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { normalizeError } from "universal-error-normalizer"
@@ -104,6 +110,35 @@ const stateValidationSchema = z.object({
 
 const CONNECT_SESSION_STATE_PATTERN = /^\d+\.[A-Za-z0-9_-]+$/
 
+type ConnectCallbackOutcome =
+  | { kind: "redirect"; target: string }
+  | { kind: "notFound" }
+
+const redirectTo = (target: string): ConnectCallbackOutcome => ({
+  kind: "redirect",
+  target,
+})
+
+const NOT_FOUND_OUTCOME: ConnectCallbackOutcome = { kind: "notFound" }
+
+/**
+ * `session.returnUrl` is always application-relative (`ConnectSession
+ * .returnUrl` is validated by `validateReturnUrl`, which rejects an
+ * absolute value) — resolve it against this callback's own public origin
+ * before handing it to `sanitizeReferer` (which only accepts absolute
+ * URLs). The callback always lands on the correct host for the session:
+ * `buildProviderCallbackUrl` built the registered `redirect_uri` on the
+ * tenant's custom domain for a tenant-owned credential, else the broker —
+ * the same origin the connect flow started on.
+ */
+const resolveReturnUrl = async (
+  session: ConnectSessionModel,
+  url: URL,
+): Promise<string> =>
+  session.returnUrl
+    ? await sanitizeReferer(new URL(session.returnUrl, url.origin).toString())
+    : `/connect/${session.id}`
+
 /**
  * Dispatches an OAuth callback whose `state` is a raw `"{sessionId}.{nonce}"`
  * string — the Connection-domain `ConnectSession` flow (`POST
@@ -121,6 +156,10 @@ const CONNECT_SESSION_STATE_PATTERN = /^\d+\.[A-Za-z0-9_-]+$/
  * still redirects to the broker even when `originHost` is a reseller's
  * custom domain. The completion page (`/connect/{id}`) does not require a
  * signed-in builder session either.
+ *
+ * Once the session is resolved nothing may surface as a raw 500: any
+ * unexpected throw fails the session best-effort and redirects back with
+ * `?connect_error=internal_error`, so the person always sees an error.
  */
 const handleConnectSessionCallback = async (
   url: URL,
@@ -145,6 +184,70 @@ const handleConnectSessionCallback = async (
     return notFound()
   }
 
+  let outcome: ConnectCallbackOutcome
+  try {
+    outcome = await runConnectSessionCallback({ url, session, nonce })
+  } catch (err) {
+    logger.error(
+      { err, sessionId: session.id, provider: session.provider },
+      "connect session callback failed unexpectedly",
+    )
+    await failSession(session, "internal_error")
+    let returnUrl = `/connect/${session.id}`
+    try {
+      returnUrl = await resolveReturnUrl(session, url)
+    } catch (resolveErr) {
+      logger.warn(
+        { err: resolveErr, sessionId: session.id },
+        "connect session return URL could not be resolved — using the completion page",
+      )
+    }
+    outcome = redirectTo(appendConnectError(returnUrl, "internal_error"))
+  }
+  return outcome.kind === "notFound" ? notFound() : redirect(outcome.target)
+}
+
+/**
+ * The `connect_error` code for a non-retryable, non-replay failure. A provider
+ * cause (e.g. a Google developer-token problem) and the "no accounts" outcome
+ * are named explicitly; a provider rejection with no recognised cause is left
+ * to the session's own stored code (`undefined`); everything else is an
+ * unexpected fault.
+ */
+const unexpectedConnectErrorCode = (
+  err: unknown,
+): ConnectErrorQueryCode | undefined => {
+  const cause = connectFailureCauseOf(err)
+  if (cause) {
+    return cause
+  }
+  if (
+    err instanceof ChatbotXException &&
+    err.code === "connectionNoCandidates"
+  ) {
+    return "no_candidates"
+  }
+  // The provider rejected the grant without a recognised cause: the
+  // connections layer already stored the precise code (`exchange_failed` or
+  // `provider_error`) on the session, which the page reads via `?session=`.
+  if (
+    err instanceof ChatbotXException &&
+    err.code === "connectionCredentialsRejected"
+  ) {
+    return
+  }
+  return "internal_error"
+}
+
+const runConnectSessionCallback = async ({
+  url,
+  session,
+  nonce,
+}: {
+  url: URL
+  session: ConnectSessionModel
+  nonce: string
+}): Promise<ConnectCallbackOutcome> => {
   // Mirrors the legacy flow's relay (see `handleCallback` below): OAuth
   // `redirect_uri`s are pinned per-credential (broker host for an inherited
   // platform credential, the reseller's own custom domain for a
@@ -163,22 +266,11 @@ const handleConnectSessionCallback = async (
       `https://${session.originHost}`,
     )
     if (relayTarget) {
-      return redirect(relayTarget)
+      return redirectTo(relayTarget)
     }
   }
 
-  // `session.returnUrl` is always application-relative now (`ConnectSession
-  // .returnUrl` is validated by `validateReturnUrl`, which rejects an
-  // absolute value) — resolve it against this callback's own public origin
-  // before handing it to `sanitizeReferer` (which only accepts absolute
-  // URLs). The callback always lands on the correct host for the session:
-  // `buildProviderCallbackUrl` built the registered `redirect_uri` on the
-  // tenant's custom domain for a tenant-owned credential, else the broker —
-  // the same origin the connect flow started on.
-  const fallbackReturnUrl = `/connect/${session.id}`
-  const returnUrl = session.returnUrl
-    ? await sanitizeReferer(new URL(session.returnUrl, url.origin).toString())
-    : fallbackReturnUrl
+  const returnUrl = await resolveReturnUrl(session, url)
 
   // Facebook/Google/Zalo/TikTok all return ?error=... when the user cancels
   // the OAuth dialog — no code exchange to attempt. Only `access_denied` is
@@ -196,7 +288,7 @@ const handleConnectSessionCallback = async (
       oauthError === "access_denied" ? "provider_denied" : "provider_error",
       ["pending"],
     )
-    return redirect(returnUrl)
+    return redirectTo(returnUrl)
   }
 
   const adapter = CONNECTION_REGISTRY[session.provider]
@@ -209,7 +301,7 @@ const handleConnectSessionCallback = async (
     // until its TTL lapses and the completion page polls the whole time —
     // a server-side misconfiguration, not a recoverable state.
     await failSession(session, "internal_error", ["pending"])
-    return notFound()
+    return NOT_FOUND_OUTCOME
   }
 
   // Same helper the session's start route used, so the `redirect_uri` sent
@@ -227,10 +319,14 @@ const handleConnectSessionCallback = async (
       "connect session platform credential missing",
     )
     await failSession(session, "internal_error", ["pending"])
-    return notFound()
+    return NOT_FOUND_OUTCOME
   }
 
   const code = url.searchParams.get("code") ?? ""
+  // Set when the callback ends in a failed or stalled connect so the page it
+  // returns to can say so (the session row alone is not enough: a retryable
+  // failure leaves it active, and a failure may carry a provider-specific cause).
+  let connectErrorCode: ConnectErrorQueryCode | undefined
 
   try {
     const completed = await connectionService.completeAuthorization({
@@ -294,6 +390,7 @@ const handleConnectSessionCallback = async (
         "connect session completeAuthorization replay ignored",
       )
     } else if (isRetryable) {
+      connectErrorCode = "provider_unavailable"
       logger.warn(
         { err, sessionId: session.id, provider: session.provider },
         "connect session completeAuthorization failed with a retryable provider error — left active for retry",
@@ -315,10 +412,15 @@ const handleConnectSessionCallback = async (
         "connect session completeAuthorization failed",
       )
       await failSession(session, "internal_error")
+      connectErrorCode = unexpectedConnectErrorCode(err)
     }
   }
 
-  return redirect(returnUrl)
+  return redirectTo(
+    connectErrorCode
+      ? appendConnectError(returnUrl, connectErrorCode)
+      : returnUrl,
+  )
 }
 
 export const handleCallback = async (

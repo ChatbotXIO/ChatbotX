@@ -203,7 +203,8 @@ class ImportService extends BaseService {
     workspaceId: string
     userId: string | null
     fileId: string
-    format: Extract<ImportFormat, "csv" | "xlsx">
+    /** Omitted: taken from the uploaded file. */
+    format?: Extract<ImportFormat, "csv" | "xlsx">
     meta: typeof importModel.$inferInsert.meta
   }) {
     const file = await this.findFile(input)
@@ -223,7 +224,7 @@ class ImportService extends BaseService {
         422,
       )
     }
-    if (fileFormat !== input.format) {
+    if (input.format && fileFormat !== input.format) {
       throw new ChatbotXException(
         "Product import format does not match the uploaded file",
         "productImportFormatMismatch",
@@ -268,7 +269,7 @@ class ImportService extends BaseService {
             userId: input.userId,
             fileId: input.fileId,
             type: "products",
-            format: input.format,
+            format: fileFormat,
             status: importStatuses.enum.pending,
             meta: input.meta,
           })

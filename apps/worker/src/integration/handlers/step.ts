@@ -12,7 +12,6 @@ import {
   stepTypes,
   type WaitStepSchema,
 } from "@chatbotx.io/flow-config"
-import { createId } from "@chatbotx.io/utils"
 import {
   type ChatJobSendFlowStep,
   HeavyJobAction,
@@ -20,6 +19,7 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
+import { mintRandomFlowExecutionKey } from "../flow-execution-key"
 import { syncActiveCampaignContact } from "./active-campaign-handler"
 import { handleAIAnalyzeImage } from "./analyze-image"
 import { appointmentScheduling } from "./appointment-scheduling"
@@ -55,6 +55,7 @@ import { handleAIGenerateText } from "./generate-text"
 import { handleAIGenerateTextAgent } from "./generate-text-agent"
 import { addGetResponseContact } from "./get-response-handler"
 import { getUserData } from "./get-user-data"
+import { handleSendGoogleAdsConversionStep } from "./google-ads/send-google-ads-conversion-step-handler"
 import { runViaHeavyWorker } from "./heavy-step-runner"
 import { syncKlaviyoProfile } from "./klaviyo-handler"
 import { addMailchimpMember } from "./mailchimp-handler"
@@ -399,7 +400,7 @@ function toHeavyStepProps<T extends { id: string }>(
     return { ...props, flowExecutionKey: props.flowExecutionKey }
   }
 
-  const flowExecutionKey = `flow-inline-${createId()}`
+  const flowExecutionKey = mintRandomFlowExecutionKey("flow-inline-")
   logger.warn(
     {
       flowExecutionKey,
@@ -447,6 +448,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.activeCampaignSyncContact]: syncActiveCampaignContact,
   [stepTypes.enum.facebookCustomAudience]: handleFacebookCustomAudience,
   [stepTypes.enum.sendMetaCapiEvent]: handleSendMetaCapiEventStep,
+  [stepTypes.enum.sendGoogleAdsConversion]: handleSendGoogleAdsConversionStep,
   [stepTypes.enum.getResponseAddContact]: addGetResponseContact,
   [stepTypes.enum.dripSubscribeSubscriber]: subscribeDripSubscriber,
   [stepTypes.enum.mailchimpAddMember]: addMailchimpMember,

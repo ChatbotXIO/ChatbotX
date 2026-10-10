@@ -13,7 +13,7 @@ import {
 } from "../connection"
 import { connectionStateService } from "../connection/state-service"
 import { inboxService } from "../inbox/service"
-import { workspaceService } from "../workspace"
+import { type WorkspaceQuotaConsumption, workspaceService } from "../workspace"
 
 class TelegramIntegrationService extends BaseService {
   findByInboxIdForWorkspace(props: { inboxId: string; workspaceId: string }) {
@@ -85,10 +85,14 @@ class TelegramIntegrationService extends BaseService {
       workspaceUsageIncremented: false,
     }
 
+    const workspaceQuotaConsumption: WorkspaceQuotaConsumption = {
+      consumed: false,
+    }
     const result = await withQuotaCompensation(
       {
         ownerId: effectiveOwnerId,
         quotaConsumption,
+        workspaceQuotaConsumption,
         context: { provider: "telegram" },
       },
       () =>
@@ -102,6 +106,7 @@ class TelegramIntegrationService extends BaseService {
                 timezone: "UTC",
                 ownerId: createdBy,
               },
+              quotaConsumption: workspaceQuotaConsumption,
             })
             workspaceId = workspace.id
           }

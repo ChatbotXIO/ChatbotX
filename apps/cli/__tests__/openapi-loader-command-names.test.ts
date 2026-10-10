@@ -100,6 +100,27 @@ describe("pathAndMethodToCommandName — operations that used to collide get dis
     ).toBe("bot-fields:edit")
   })
 
+  test("partial settings updates do not collide with the full replace", () => {
+    expect(
+      pathAndMethodToCommandName(
+        "/v1/messenger-channels/{id}/settings",
+        "PATCH",
+      ),
+    ).toBe("messenger-channels:settings:edit")
+    expect(
+      pathAndMethodToCommandName(
+        "/v1/instagram-channels/{id}/settings",
+        "PATCH",
+      ),
+    ).toBe("instagram-channels:settings:edit")
+    expect(
+      pathAndMethodToCommandName(
+        "/v1/inboxes/{inboxId}/ai-handover/settings",
+        "PATCH",
+      ),
+    ).toBe("inboxes:settings:edit")
+  })
+
   test("bulk tag removal has its own command", () => {
     expect(
       pathAndMethodToCommandName("/v1/contacts/bulk/tags/remove", "POST"),
@@ -128,6 +149,31 @@ describe("pathAndMethodToCommandName — operations that used to collide get dis
     expect(names).toContain("ads:update-conversion-rule")
     expect(names).toContain("ads:delete-conversion-rule")
     expect(names).toContain("analytics:reset-flow-stats")
+  })
+})
+
+describe("pathAndMethodToCommandName — Google Ads reads", () => {
+  test("stats, events and connection get distinct google-ads commands", () => {
+    const names = [
+      pathAndMethodToCommandName("/v1/google-ads/stats", "GET"),
+      pathAndMethodToCommandName("/v1/google-ads/events", "GET"),
+      pathAndMethodToCommandName("/v1/google-ads/connection", "GET"),
+    ]
+
+    expect(names).toEqual([
+      "google-ads:stats",
+      "google-ads:events",
+      "google-ads:connection",
+    ])
+    expect(new Set(names)).toHaveLength(names.length)
+  })
+
+  test("do not collide with the Meta ads commands", () => {
+    expect(
+      pathAndMethodToCommandName("/v1/google-ads/stats", "GET").startsWith(
+        "ads:",
+      ),
+    ).toBe(false)
   })
 })
 

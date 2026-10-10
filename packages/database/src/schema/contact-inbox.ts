@@ -41,6 +41,14 @@ export type ContactInboxReferral = {
   videoUrl?: string | null
   productId?: string | null
   flowId?: string | null
+  // Google Ads Click-to-Message click (see `@chatbotx.io/utils/google-click`).
+  // `googleClickReceivedAt` is when the carrying message arrived, not the click.
+  gclid?: string | null
+  gbraid?: string | null
+  googleCampaignId?: string | null
+  googleAdGroupId?: string | null
+  googleAdId?: string | null
+  googleClickReceivedAt?: string | null
   raw?: Record<string, unknown>
 }
 

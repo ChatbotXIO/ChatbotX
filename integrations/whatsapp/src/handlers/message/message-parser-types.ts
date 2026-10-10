@@ -4,6 +4,7 @@ import type {
   IncomingAttachment,
   IncomingMessage,
 } from "@chatbotx.io/sdk"
+import type { GoogleClickReferral } from "@chatbotx.io/utils/google-click"
 import type { WhatsAppAPI } from "whatsapp-api-js"
 import type { ServerMessageTypes } from "whatsapp-api-js/types"
 import type { WhatsappAuthValue } from "../../schema"
@@ -18,11 +19,15 @@ export type IncomingMessageFragment = {
   templateFlowToken?: string | null
   buttonTitle?: string | null
   ref?: string | null
+  /** Google Ads click referral decoded from the invisible payload in the message text. */
+  googleClick?: GoogleClickReferral
 }
 
 export type MessageParserDeps = {
   ctx: Context<WhatsappAuthValue>
   whatsappClient: WhatsAppAPI
+  /** Provider message time (clock fallback); stamps the Google click capture. */
+  receivedAt: Date
 }
 
 export type WhatsappMessageParser<Type extends ServerMessageTypes["type"]> = (

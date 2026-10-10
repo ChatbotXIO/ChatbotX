@@ -73,6 +73,9 @@ async function startTriggerWorker() {
                       triggerExecutor.execute(trigger, {
                         contactId: eventData.contactId,
                         contactInboxId,
+                        occurrenceId: job.id
+                          ? `${job.id}:${job.timestamp}`
+                          : undefined,
                       }),
                     ),
                   ),

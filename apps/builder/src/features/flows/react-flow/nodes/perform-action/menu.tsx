@@ -641,6 +641,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
     stepType: stepTypes.enum.sendMetaCapiEvent,
   },
   {
+    label: t("flows.actions.sendGoogleAdsConversion"),
+    icon: MegaphoneIcon,
+    stepType: stepTypes.enum.sendGoogleAdsConversion,
+  },
+  {
     label: t("flows.actions.triggers"),
     icon: WebhookIcon,
     stepType: null,

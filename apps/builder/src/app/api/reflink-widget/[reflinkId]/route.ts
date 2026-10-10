@@ -4,6 +4,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createTranslator } from "next-intl"
 import { isEmbedOriginAllowed } from "@/features/integration-webchat/lib/authorized-domain"
 import { createReflinkLinkBuilder } from "@/features/reflinks/lib/reflink-links"
+import { resolveWidgetBrand } from "@/features/reflinks/lib/widget-brand"
 import { resolveLocale } from "@/i18n/config"
 import { messagesByLocale } from "@/i18n/messages"
 import { logger } from "@/lib/log"
@@ -113,12 +114,17 @@ export async function GET(req: NextRequest, context: RouteContext) {
       {
         channels,
         brand: {
-          name: tenant.name,
-          url: tenant.appUrl,
-          // A square icon: the toggle is a small round button, where the wide
-          // (and white) light logo renders blank.
-          logoUrl: tenant.faviconUrl || null,
+          ...resolveWidgetBrand(
+            {
+              widgetLogoPath: reflink.widgetLogoFile?.path ?? null,
+              widgetBrandName: reflink.widgetBrandName,
+              widgetBrandUrl: reflink.widgetBrandUrl,
+              widgetLogoBackgroundColor: reflink.widgetLogoBackgroundColor,
+            },
+            tenant,
+          ),
           poweredByLabel: t("reflinks.chatWidget.poweredBy"),
+          toggleLabel: t("reflinks.chatWidget.toggleLabel"),
         },
       },
       { headers: corsHeaders(origin) },

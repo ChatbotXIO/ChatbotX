@@ -19,6 +19,7 @@ import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 export const OAUTH_CALLBACK_SLUG: Partial<Record<IntegrationType, string>> = {
   instagramFacebook: "instagram-facebook",
   facebookAds: "facebook-ads",
+  googleAds: "google-ads",
   googleCalendar: "google-calendar",
   googleSheets: "google-sheets",
 }

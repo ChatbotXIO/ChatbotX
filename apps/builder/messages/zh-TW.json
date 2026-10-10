@@ -1156,7 +1156,10 @@
       "label": "Client ID"
     },
     "clientSecret": {
-      "label": "客戶端密碼"
+      "label": "客戶端密碼",
+      "keepHint": "留空以保留已儲存的客戶端密碼。",
+      "isSet": "已設定客戶端密碼。",
+      "isNotSet": "尚未設定客戶端密碼。"
     },
     "verifyToken": {
       "label": "Webhook 驗證權杖"
@@ -1276,6 +1279,17 @@
     "signInCallbackUrl": {
       "label": "登入回呼 URL",
       "hint": "請將此網址新增為 Google 應用程式中的授權重新導向 URI，以啟用 Google 登入。"
+    },
+    "adsDeveloperToken": {
+      "label": "Google Ads 開發人員權杖",
+      "hint": "選填：Google 已不再要求開發人員權杖。留空即可保留已儲存的權杖。",
+      "isSet": "已設定開發人員權杖。",
+      "isNotSet": "未設定開發人員權杖。",
+      "clear": "清除",
+      "cleared": "已清除開發人員權杖。"
+    },
+    "googleAdsCallbackUrl": {
+      "hint": "請為 Google Ads 使用獨立的 Google OAuth 應用程式(與您的 Google 應用程式分開),並啟用 adwords 和 datamanager 範圍。此應用程式需要單獨通過 Google OAuth 驗證。"
     },
     "webhookUrl": {
       "label": "WebhookURL",
@@ -1486,7 +1500,10 @@
       "label": "Ads",
       "ctwa": "CTWA",
       "ctm": "CTM",
-      "ctid": "CTID"
+      "ctid": "CTID",
+      "googleAds": "Google Ads",
+      "googleAdsWhatsapp": "GA CCWA",
+      "googleAdsMessenger": "GA CCTM"
     },
     "adSource": {
       "label": "Ad source"
@@ -1503,9 +1520,23 @@
     },
     "sendRatePerMinute": {
       "label": "每分鐘傳送訊息數"
+    },
+    "adsUploadMethod": {
+      "label": "上傳方式",
+      "hint": "建議使用 Data Manager。舊版上傳 API 僅適用於 Google 仍允許的 Google Cloud 專案，且不使用 Data Manager 權限。變更僅適用於新連線：請重新連接現有工作區。",
+      "dataManager": "Data Manager API（建議）",
+      "legacy": "舊版上傳 API"
     }
   },
   "messages": {
+    "timeAgo": {
+      "now": "剛剛",
+      "minutes": "{count}分鐘",
+      "hours": "{count}小時",
+      "days": "{count}天",
+      "months": "{count}個月",
+      "years": "{count}年"
+    },
     "sentAttachments": "已傳送 {count, plural, one {1 個附件} other {# 個附件}}",
     "moveFeature": "移動 {feature}",
     "poweredBy": "由 {name} 提供技術支援",
@@ -2388,6 +2419,7 @@
       "noAdminReply": "無管理員回覆",
       "contactCreatedAt": "聯絡人建立時間",
       "fromCtwaAd": "來自廣告",
+      "fromGoogleAd": "來自 Google Ads",
       "ctwaConversion": "廣告轉換",
       "lastUserInputTypes": {
         "text": "文字",
@@ -2777,7 +2809,8 @@
       "importJsonOnly": "僅限 JSON 檔案",
       "whatsappCallButton": "透過 WhatsApp 通話",
       "metaConversions": "Meta Conversions API",
-      "threadControl": "對話控制"
+      "threadControl": "對話控制",
+      "sendGoogleAdsConversion": "傳送 Google Ads 轉換"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -2985,7 +3018,8 @@
     "dashboardNav": {
       "whatsapp": "Click-to-WhatsApp廣告",
       "messenger": "Click-to-Messenger廣告",
-      "instagram": "Click-to-Instagram廣告"
+      "instagram": "Click-to-Instagram廣告",
+      "google": "Google Ads"
     },
     "connectAccounts": {
       "connectAdAccount": "連接廣告帳戶",
@@ -3833,7 +3867,14 @@
     "signUpTitle": "註冊 {name}",
     "changePasswordTitle": "更改密碼",
     "changePasswordDescription": "在繼續之前設定新密碼。",
-    "passwordChangeSuccess": "密碼已更改"
+    "passwordChangeSuccess": "密碼已更改",
+    "oauthError": {
+      "accountNotLinked": "使用此電子郵件的帳戶已存在，無法連結。請使用之前的方式登入，或聯絡支援人員。",
+      "unableToLinkAccount": "我們無法將此次登入連結到現有帳戶。請使用您之前的方式登入，或聯絡支援人員。",
+      "sessionExpired": "登入嘗試已逾時。請重試。",
+      "accessDenied": "登入已取消。",
+      "generic": "登入失敗。請重試。"
+    }
   },
   "emailTopics": {
     "title": "電子郵件主題"
@@ -4490,7 +4531,27 @@
       "preview": "預覽",
       "embedCodeDescription": "將此程式碼貼到網站的 body 結束標籤之前。儲存的變更會自動套用，無須重新貼上。",
       "savedSuccess": "聊天小工具設定已儲存",
-      "poweredBy": "由"
+      "poweredBy": "由",
+      "toggleLabel": "與我們聊天",
+      "logo": {
+        "description": "訪客點擊以開啟小工具的圓形按鈕。請選擇正方形圖片，或留空以使用預設聊天圖示。",
+        "choose": "從媒體庫選擇",
+        "notImage": "標誌必須是圖片。"
+      },
+      "brandUrl": {
+        "label": "跳轉連結",
+        "placeholder": "https://example.com",
+        "description": "小工具「由」行中品牌名稱連結到的位址。設定品牌名稱時必填。",
+        "requiredWithName": "請為此品牌名稱輸入跳轉 URL。"
+      },
+      "brandName": {
+        "description": "顯示在小工具的「由」行中。設定跳轉 URL 時必填。兩者都留空則隱藏該行。",
+        "requiredWithUrl": "請為此跳轉 URL 輸入品牌名稱。"
+      },
+      "logoBackgroundColor": {
+        "label": "圖示背景色",
+        "description": "預設聊天圖示的背景色。圖示會自動變為白色或黑色以保持清晰。"
+      }
     }
   },
   "qrCodes": {
@@ -4617,7 +4678,8 @@
       "startAnotherFlow": "開始另一個流程",
       "notifyAdmins": "通知管理員",
       "transferConversationToHuman": "將對話轉移給人類",
-      "sendMetaCapiEvent": "傳送 Meta CAPI 事件"
+      "sendMetaCapiEvent": "傳送 Meta CAPI 事件",
+      "sendGoogleAdsConversion": "傳送 Google Ads 轉換"
     },
     "triggerGoesOff": "觸發器熄滅",
     "before": "之前",
@@ -6597,6 +6659,447 @@
       "messagingIdHint": "僅限字母、數字、連字號和底線（最多 512 個字元）。",
       "cancel": "取消",
       "confirmSend": "傳送"
+    }
+  },
+  "googleAds": {
+    "title": "Google Ads",
+    "description": "將離線轉換傳送至 Google Ads，適用於透過 Google 廣告點擊而來的聯絡人。",
+    "notAvailable": {
+      "description": "平台的 Google Ads 憑證(OAuth 用戶端 ID 和密鑰)尚未設定。請聯絡平台管理員在平台的 Google Ads 設定中新增。"
+    },
+    "connect": {
+      "scopes": "我們會要求讀取您的 Google Ads 帳戶與轉換動作，並代表您傳送轉換的權限。",
+      "button": "連結 Google Ads",
+      "reconnect": "重新連結",
+      "unnamedAccount": "Google Ads 帳戶",
+      "viaManager": "透過管理員帳戶 {manager}",
+      "statusLabel": "連線狀態",
+      "needsReauthDescription": "Google 存取權已被撤銷或已過期。請重新連結以繼續傳送轉換。",
+      "pausedDescription": "此連線已暫停，因此不會傳送轉換。",
+      "degradedDescription": "Google Ads 回應錯誤，系統將自動重試傳送轉換。",
+      "howItWorks": "運作方式",
+      "steps": {
+        "signIn": "使用管理你廣告的 Google 帳戶登入。",
+        "chooseAccount": "選擇 Google Ads 帳戶。",
+        "pickAction": "在你的流程中選擇轉換動作。"
+      },
+      "uploadMethod": "上傳方式:{method}"
+    },
+    "status": {
+      "connected": "已連線",
+      "degraded": "異常",
+      "needsReauth": "需要重新連結",
+      "paused": "已暫停",
+      "disconnected": "已中斷連線"
+    },
+    "picker": {
+      "title": "選擇 Google Ads 帳戶",
+      "legend": "Google Ads 帳戶",
+      "loading": "正在載入 Google Ads 連線",
+      "loadError": "無法載入 Google Ads 連線嘗試。",
+      "waiting": "正在等待 Google 確認登入…",
+      "noTargets": "此 Google 帳戶下找不到任何 Google Ads 帳戶。",
+      "alreadyThisWorkspace": "已連結至此工作區",
+      "alreadyOtherWorkspace": "已連結至其他工作區",
+      "notSelectable": "無法選取此帳戶",
+      "connectSelected": "連結帳戶",
+      "sessionExpired": "連線嘗試已過期。請重新連結以繼續。",
+      "sessionCancelled": "連線嘗試已取消。",
+      "stalled": "登入未完成。請使用「連結 Google Ads」重試。",
+      "dismiss": "忽略",
+      "cancelFailed": "無法取消此次連結嘗試。請重試。",
+      "connectErrorTitle": "無法連結 Google Ads",
+      "errors": {
+        "stateMismatch": "無法驗證此次登入。請重新連結以繼續。",
+        "expired": "連線嘗試已過期。請重新連結以繼續。",
+        "providerDenied": "未授予 Google 存取權。請重新連結並允許所要求的權限。",
+        "exchangeFailed": "無法完成 Google 登入。請重新連結以繼續。",
+        "providerError": "Google 傳回錯誤。請稍後再試。",
+        "noCandidates": "找不到此 Google 使用者的有效 Google Ads 帳戶。已取消、已停權或尚未完成設定的帳戶無法使用。請使用管理有效 Google Ads 帳戶的 Google 帳戶登入。",
+        "alreadyConnected": "該 Google Ads 帳戶已連結。",
+        "quotaExceeded": "已達到您方案的連線數上限。",
+        "trialExpired": "您的試用已結束，無法新增連線。",
+        "internalError": "連結時發生錯誤，請再試一次。",
+        "providerUnavailable": "Google Ads 暫時無法使用，因此無法完成連結。請稍後再試。",
+        "developerTokenMissing": "Google Ads 尚未完全設定:平台的 Google 憑證不完整。請聯絡管理員檢查 Google Ads 憑證。",
+        "developerTokenNotApproved": "Google 拒絕了 Google Ads 憑證中儲存的開發人員權杖。該權杖為選填:請聯絡管理員移除它或換成有效的權杖。",
+        "projectNotApproved": "您的 Google Cloud 專案尚未獲准用於正式的 Google Ads 帳戶。請在 Google Cloud Console(Google Ads API → Overview)中為該專案申請 Explorer 或 Basic 存取權,然後重新連線。",
+        "permissionDenied": "此 Google 使用者無權存取 Google Ads 帳戶。請使用有權存取 Google Ads 帳戶的 Google 使用者登入。",
+        "apiNotEnabled": "Google Cloud 專案尚未啟用 Google Ads API。請請管理員啟用後再試。",
+        "credentialsInvalid": "Google 拒絕了登入憑證。請重新連結以繼續。",
+        "scopeMissing": "尚未授予所有權限。Google Ads 需要存取您的 Google Ads 帳戶,並有權傳送轉換。請重新連結並勾選所有權限。",
+        "legacyUploadNotAllowed": "Google 不允許此帳號使用舊版上傳 API。請將憑證切換為 Data Manager，並重新連接此工作區。"
+      }
+    },
+    "setup": {
+      "conversionCustomer": "轉換帳戶",
+      "notResolved": "尚未解析",
+      "retry": "重試設定",
+      "dataTermsWarning": "此帳戶尚未接受客戶資料條款。請在 Google Ads 中接受後重試設定。",
+      "errors": {
+        "conversionCustomerInaccessible": "使用此 Google 登入無法存取該轉換帳戶。請在 Google Ads 中檢查您的權限後重試。",
+        "customerDataTermsNotAccepted": "此帳戶尚未接受客戶資料條款。請在 Google Ads 中接受後重試設定。",
+        "syncFailed": "無法從 Google Ads 讀取轉換動作。請稍後重試設定。",
+        "developerTokenMissing": "平台的 Google Ads 憑證(OAuth 用戶端 ID 和密鑰)尚未設定。"
+      }
+    },
+    "conversionActions": {
+      "title": "轉換動作",
+      "description": "只有已啟用且透過點擊匯入轉換的動作才能接收轉換。",
+      "helpLink": "Google Ads 說明",
+      "sync": "同步轉換動作",
+      "syncedAt": "上次同步：{date}",
+      "neverSynced": "尚未同步",
+      "empty": "找不到轉換動作。請在 Google Ads 中建立離線匯入轉換動作，然後同步。",
+      "name": "名稱",
+      "category": "類別",
+      "counting": "計算方式",
+      "status": "狀態",
+      "onePerClickNote": "iOS 點擊(gbraid)無法傳送到此動作。請使用「每次」計算方式來接收。",
+      "externalNote": "不支援:此動作使用外部歸因,無法透過 Google Data Manager 傳送。",
+      "count": "{count, plural, one {# 個轉換動作} other {# 個轉換動作}}"
+    },
+    "events": {
+      "title": "轉換記錄",
+      "description": "最近傳送至 Google Ads 的轉換。點擊 ID 已遮蔽。",
+      "empty": "流程或觸發器傳送轉換後，會顯示在此處。",
+      "emptyFiltered": "沒有符合此狀態的轉換。",
+      "loadError": "無法載入轉換記錄。",
+      "page": "第 {page} 頁，共 {pages} 頁",
+      "filter": {
+        "label": "狀態",
+        "all": "所有狀態"
+      },
+      "columns": {
+        "status": "狀態",
+        "action": "轉換動作",
+        "channel": "管道",
+        "clickId": "點擊 ID",
+        "occurredAt": "發生時間",
+        "actions": "操作",
+        "dedup": "重複排除",
+        "consent": "同意快照",
+        "matching": "比對",
+        "properties": "屬性"
+      },
+      "status": {
+        "pending": "待傳送",
+        "sending": "傳送中",
+        "sent": "已傳送",
+        "processed": "已處理",
+        "failed": "失敗",
+        "skippedNoAccount": "已略過：無帳戶",
+        "skippedExpired": "已略過：已過期"
+      },
+      "processing": {
+        "processing": "Google 處理中",
+        "success": "已接受",
+        "partialSuccess": "部分接受",
+        "failed": "已拒絕",
+        "unknown": "結果不明",
+        "timedOut": "已逾時"
+      },
+      "stage": {
+        "delivery": "傳送失敗",
+        "processing": "處理失敗",
+        "timeout": "已逾時"
+      },
+      "consent": {
+        "adUserDataFull": "廣告使用者資料：{status}",
+        "adPersonalizationFull": "廣告個人化：{status}",
+        "status": {
+          "granted": "已同意",
+          "denied": "已拒絕",
+          "notProvided": "未提供",
+          "notSupported": "不支援（舊版上傳）"
+        },
+        "adUserDataShort": "資料：{status}",
+        "adPersonalizationShort": "個人化：{status}",
+        "delivery": {
+          "toSend": "待傳送",
+          "notSent": "未傳送",
+          "unknown": "未確認"
+        }
+      },
+      "dedup": {
+        "click": "依點擊",
+        "id": "ID：{id}",
+        "event": "每次執行"
+      },
+      "matching": {
+        "enabled": "已設定：{fields}",
+        "withheldConsent": "已暫緩（無同意）：{fields}",
+        "unsupportedTransport": "未傳送（舊版）：{fields}"
+      },
+      "timeProvided": "指定時間",
+      "timeProvidedTooltip": "此轉換時間來自步驟設定，而非步驟的執行時間。"
+    },
+    "validate": {
+      "open": "驗證要求",
+      "title": "驗證要求",
+      "description": "設定檢查：Google 會驗證要求，但不會記錄轉換。",
+      "conversionAction": "轉換動作",
+      "clickIdType": "點擊 ID 類型",
+      "clickIdTypes": {
+        "gclid": "GCLID",
+        "gbraid": "GBRAID"
+      },
+      "clickId": "點擊 ID",
+      "submit": "執行檢查",
+      "ok": "Google 已接受此設定，未記錄任何內容。",
+      "reasons": {
+        "accountNotReady": "Google Ads 尚未就緒。請先完成帳號的連結與設定，然後再試一次。",
+        "needsReauth": "需要重新連結 Google Ads。",
+        "rejected": "Google 拒絕了此要求",
+        "legacyUploadNotAllowed": "Google 不允許此帳號使用舊版上傳 API。請將憑證切換為 Data Manager，並重新連接此工作區。"
+      },
+      "invalid": "請選擇轉換動作並輸入有效的點擊 ID。",
+      "consentIncluded": "包含同意：{values}。",
+      "consentNone": "此次測試不包含任何同意。",
+      "consentVariableSkipped": "來自聯絡人欄位的同意無法測試，已略過。",
+      "consentNotSentLegacy": "廣告個人化（{status}）不會透過舊版上傳方式傳送。"
+    },
+    "conversionFields": {
+      "conversionAction": "轉換動作",
+      "unavailableOption": "{id}（無法使用）",
+      "unavailableWarning": "所選轉換動作已無法使用或未啟用。發佈前請選擇其他動作。",
+      "externalOption": "{name}(外部歸因,不支援)",
+      "loading": "正在載入轉換動作",
+      "loadError": "無法載入您的 Google Ads 轉換動作。",
+      "notConnected": "連結 Google Ads 以傳送轉換。",
+      "noActions": "找不到已啟用的轉換動作。請在 Google Ads 設定中同步。",
+      "openSettings": "開啟 Google Ads 設定",
+      "needsReauth": "需要重新連結 Google Ads。",
+      "dedupModeClick": "每次廣告點擊一次",
+      "dedupModeClickHelp": "針對每次廣告點擊，只計算一次此轉換動作。",
+      "dedupModeIdHelp": "每個不同的 ID 計一次。",
+      "dedupModeId": "每個訂單或事件 ID 一次",
+      "dedupModeEvent": "每次執行",
+      "dedupModeEventHelp": "每次執行都記錄一次新的轉換，即使是同一次廣告點擊。同一次執行的重試不會被重複計算。",
+      "dedupId": "訂單或事件 ID",
+      "dedupIdPlaceholder": "例如 '{{order_number}}'",
+      "dedupIdHelp": "重試和匯入時請重複使用同一個 ID。每次購買或事件請使用不同的 ID。",
+      "dedupIdExample": "聊天銷售沒有訂單 ID？可將聯絡人與您為每筆銷售設定的欄位組合，例如 {example}。請勿使用目前時間：它每次執行都會改變。",
+      "dedupIdInfoLabel": "關於訂單或事件 ID",
+      "dedupLeadIdNote": "每個不同的 ID 都會算作來自同一次點擊的新潛在客戶。",
+      "dedupClickNote": "來自同一次點擊的重複購買不會被計算。",
+      "dedupLegacyNote": "舊版上傳：Google 收到的是混淆後的 ID。",
+      "additionalOptions": "更多選項",
+      "additionalOptionsCount": "已設定 {count} 項",
+      "customerMatching": "客戶比對",
+      "customerMatchingCount": "已開啟 {count} 項",
+      "customerMatchingLegacy": "舊版上傳方式不支援。請將連線切換為 Data Manager API 後使用。",
+      "customerMatchingTermsNotAccepted": "在 Google Ads 轉換設定中接受客戶資料條款之前，不會傳送。",
+      "learnMore": "瞭解詳情",
+      "matchEmailLabel": "電子郵件",
+      "matchPhoneLabel": "電話號碼",
+      "matchEmailPlaceholder": "'{{email}}'",
+      "matchPhonePlaceholder": "'{{phone}}'",
+      "customerTypeLabel": "客戶類型",
+      "customerValueBucketLabel": "客戶價值",
+      "customerPropertiesLegacy": "舊版上傳方式不支援。請將連線切換為 Data Manager API 後使用。",
+      "conversionTime": "轉換時間",
+      "conversionTimePlaceholder": "留空則使用此步驟執行的時間",
+      "valuePlaceholder": "選填，例如 250",
+      "currencyPlaceholder": "選填，USD",
+      "validation": {
+        "dedupIdRequired": "請輸入 ID，或選擇「每次廣告點擊一次」。",
+        "dedupIdTooLong": "最多使用 64 個字元。",
+        "matchTemplateInvalid": "只能使用一個變數，例如 '{{email}}'，不允許填寫固定值。",
+        "customerTypeInvalid": "請使用 NEW 或 RETURNING，或變數，例如 '{{customer_type}}'。",
+        "customerValueBucketInvalid": "請使用 LOW、MEDIUM 或 HIGH，或變數，例如 '{{customer_value}}'。",
+        "timeFormat": "請使用含時區的日期，例如 2026-10-08T14:30:00+07:00。",
+        "timeInvalidDate": "此日期不存在。",
+        "currencyRequired": "設定值時請新增幣別。",
+        "valueRequired": "設定幣別時請新增值。",
+        "conversionActionRequired": "請選擇轉換動作。",
+        "valueInvalid": "請使用一般數字，例如 19.99。",
+        "valueTooLarge": "此數值過大。",
+        "currencyInvalid": "請使用 3 個字母的貨幣代碼，例如 USD。"
+      },
+      "consentInvalid": "無法讀取同意設定，因此此步驟將會失敗。",
+      "consentFixLink": "在設定中修正",
+      "dedupModeLabel": "避免重複轉換"
+    },
+    "summary": {
+      "conversionAction": "轉換動作 {id}",
+      "notConfigured": "選擇轉換動作",
+      "dedupClick": "每次廣告點擊一次",
+      "dedupId": "ID：{id}",
+      "dedupEvent": "每次執行"
+    },
+    "consent": {
+      "title": "轉換資料同意",
+      "description": "客戶是否同意為廣告分享其資料。適用於此工作區傳送的每一筆轉換。",
+      "learnMore": "瞭解詳情",
+      "notConnected": "連結 Google Ads 帳戶後適用於轉換。",
+      "adUserData": {
+        "label": "廣告使用者資料"
+      },
+      "adPersonalization": {
+        "label": "廣告個人化"
+      },
+      "source": {
+        "notProvided": "未提供",
+        "granted": "一律同意",
+        "denied": "一律拒絕",
+        "variable": "來自聯絡人欄位"
+      },
+      "help": {
+        "notProvided": "不傳送。Google 會使用您帳戶的預設同意設定。",
+        "granted": "每筆轉換都表示客戶已同意。",
+        "denied": "每筆轉換都表示客戶已拒絕。",
+        "variable": "使用 \"{granted}\" 或 \"{denied}\"。留空則略過；其他任何值都會導致該步驟失敗。"
+      },
+      "templatePlaceholder": "例如 '{{gdpr_consent}}'",
+      "templateLabel": "{setting}的聯絡人欄位",
+      "validation": {
+        "templateRequired": "請插入聯絡人欄位,例如 '{{gdpr_consent}}'。",
+        "templateTooLong": "最多使用 200 個字元。"
+      },
+      "legacy": {
+        "title": "舊版上傳不會傳送",
+        "body": "舊版上傳僅接受廣告使用者資料同意。請透過 Data Manager 重新連線以傳送。"
+      },
+      "save": "儲存",
+      "saved": "同意設定已儲存",
+      "invalidStored": "無法讀取已儲存的同意設定。在您儲存新設定之前，傳送轉換的步驟都會失敗。"
+    },
+    "errors": {
+      "supportSession": "平台支援工作階段無法變更 Google Ads 連線或傳送轉換。",
+      "developerTokenMissing": "Google Ads 暫時無法使用:平台的 Google Ads 憑證(OAuth 用戶端 ID 和密鑰)尚未設定。",
+      "notConnected": "此工作區尚未連結 Google Ads。",
+      "sessionNotFound": "找不到此 Google Ads 連線嘗試，或已過期。請重新開始。",
+      "pickFailed": "無法連結該 Google Ads 帳戶。它可能已在其他地方連結，或連線嘗試已過期。",
+      "notRetryable": "無法重試此轉換：只有失敗的轉換才能重試。",
+      "authorizationUnavailable": "無法啟動 Google 登入。請稍後再試。",
+      "credentialSecretsRequired": "請輸入用戶端密鑰。尚未儲存。"
+    },
+    "enums": {
+      "category": {
+        "default": "預設",
+        "purchase": "購買",
+        "addToCart": "加入購物車",
+        "beginCheckout": "開始結帳",
+        "subscribePaid": "付費訂閱",
+        "phoneCallLead": "電話潛在客戶",
+        "importedLead": "匯入的潛在客戶",
+        "submitLeadForm": "提交潛在客戶表單",
+        "bookAppointment": "預約",
+        "signup": "註冊",
+        "requestQuote": "索取報價",
+        "getDirections": "取得路線",
+        "outboundClick": "外連點擊",
+        "contact": "聯絡",
+        "engagement": "互動",
+        "storeVisit": "到店造訪",
+        "storeSale": "店內銷售",
+        "qualifiedLead": "合格潛在客戶",
+        "convertedLead": "已轉換的潛在客戶",
+        "pageView": "網頁瀏覽",
+        "download": "下載",
+        "lead": "潛在客戶"
+      },
+      "countingType": {
+        "onePerClick": "每次點擊計一次",
+        "manyPerClick": "每次點擊可計多次"
+      },
+      "actionStatus": {
+        "enabled": "已啟用",
+        "removed": "已移除",
+        "hidden": "已隱藏"
+      },
+      "unknown": "其他（{value}）"
+    },
+    "uploadMethods": {
+      "dataManager": "Data Manager",
+      "legacy": "舊版上傳"
+    },
+    "stepErrors": {
+      "google_ads_unsupported_channel": "此聯絡人的管道無法傳送 Google Ads 轉換。",
+      "google_ads_no_click": "該聯絡人並非來自 Google 廣告點擊。",
+      "google_ads_no_account": "尚未連結可用的 Google Ads 帳戶。",
+      "google_ads_unknown_conversion_action": "該轉換動作已不存在。請同步後選擇其他動作。",
+      "google_ads_action_disabled": "該轉換動作在 Google Ads 中未啟用。",
+      "google_ads_incompatible_action": "此動作每次點擊只計一次轉換，而 Google 不允許對這次 iOS 點擊這樣做。",
+      "google_ads_unsupported_action": "此動作使用外部歸因，無法接收這些轉換。",
+      "google_ads_invalid_value": "數值或幣別無效。",
+      "google_ads_invalid_input": "步驟設定無效。",
+      "google_ads_record_failed": "無法儲存轉換。",
+      "google_ads_missing_dedup_id": "訂單或事件 ID 為空。",
+      "google_ads_invalid_dedup_id": "訂單或事件 ID 超過 64 個字元。",
+      "google_ads_missing_occurrence_key": "此次執行沒有穩定的識別碼，因此未記錄轉換。",
+      "google_ads_invalid_customer_property": "客戶類型或客戶價值不是允許的值。",
+      "google_ads_invalid_consent_config": "無法讀取已儲存的同意設定。",
+      "google_ads_invalid_consent_value": "某個同意欄位的值不是 \"granted\" 或 \"denied\"。",
+      "google_ads_invalid_conversion_time": "轉換時間不是含時區的有效日期，或晚於目前時間。"
+    },
+    "stats": {
+      "filters": {
+        "allChannels": "所有管道",
+        "allActions": "所有動作",
+        "channelLabel": "管道",
+        "actionLabel": "轉換動作"
+      },
+      "tiles": {
+        "confirmed": "已確認",
+        "awaitingGoogle": "等待 Google",
+        "queued": "排隊中",
+        "failed": "失敗",
+        "skipped": "已略過",
+        "deliveryRate": "送達率",
+        "confirmedHelp": "Google 已確認記錄這些轉換。",
+        "awaitingGoogleHelp": "已傳送至 Google，等待 Google 處理完成。",
+        "queuedHelp": "等待傳送。",
+        "failedHelp": "未被 Google 接受或處理。",
+        "skippedHelp": "未傳送：沒有就緒的帳號，或對 Google 來說時間過早。",
+        "deliveryRateHelp": "已確認 ÷（已確認 + 失敗）。排隊中、等待中和已略過的不計入。"
+      },
+      "confirmedValue": "已確認價值",
+      "confirmedValueItem": "{value} ({count, plural, one {#筆轉換} other {#筆轉換}})",
+      "moreCurrencies": "另外 {count} 項",
+      "chart": {
+        "title": "每日轉換",
+        "viewAsTable": "以表格檢視",
+        "tableCaption": "每日轉換",
+        "dateColumn": "日期"
+      },
+      "byAction": {
+        "title": "依轉換動作",
+        "truncated": "顯示轉換最多的 50 個動作。"
+      },
+      "byChannel": {
+        "title": "依管道",
+        "confirmedCount": "{count, plural, one {已確認 #} other {已確認 #}}"
+      },
+      "failures": {
+        "title": "依階段統計的失敗",
+        "unknown": "未知"
+      },
+      "empty": {
+        "title": "此期間沒有轉換",
+        "description": "流程步驟或觸發器傳送轉換後，會顯示在這裡。"
+      },
+      "error": {
+        "title": "無法載入統計資料",
+        "retry": "重試"
+      },
+      "viewStatistics": "檢視統計",
+      "deliveryRateNone": "—",
+      "deliveryRateNoneHelp": "此期間沒有已確認或失敗的轉換。",
+      "actionFallback": "動作 {id}",
+      "openSettings": "開啟 Google Ads 設定",
+      "outcome": {
+        "title": "結果占比"
+      },
+      "googleReport": {
+        "title": "Reported by Google Ads",
+        "description": "Conversions Google Ads itself recorded for these days, next to what ChatbotX sent and Google confirmed.",
+        "sent": "Confirmed by ChatbotX",
+        "reported": "Reported by Google",
+        "note": "Google can take hours to update its reports, and counts follow the action's own settings, so small gaps are normal.",
+        "unavailable": "Google Ads reporting is not available right now."
+      }
     }
   },
   "minigames": {

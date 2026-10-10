@@ -92,6 +92,10 @@ type PlainTextTiptapEditorProps = {
   disableLineBreaks?: boolean
   /** Turn off Markdown shortcuts and formatting so the text is saved verbatim. */
   plainText?: boolean
+  /** Extra attributes (e.g. ARIA) set on tiptap's `contenteditable` element. */
+  editorAttributes?: Record<string, string>
+  /** Render the variable picker next to the editor instead of portaling it to `<body>`. */
+  inlineVariablePicker?: boolean
 }
 
 export const PlainTextTiptapEditor = ({
@@ -108,6 +112,8 @@ export const PlainTextTiptapEditor = ({
   inline = false,
   disableLineBreaks = false,
   plainText = false,
+  editorAttributes,
+  inlineVariablePicker = false,
 }: PlainTextTiptapEditorProps) => {
   const [isOpenEmoji, setIsOpenEmoji] = useState(false)
   const [isEditorFocused, setIsEditorFocused] = useState(false)
@@ -165,6 +171,7 @@ export const PlainTextTiptapEditor = ({
             : "tiptap-plain-text",
           className,
         ),
+        ...editorAttributes,
       },
       handlePaste(view, event) {
         const clipboardHtml = event.clipboardData?.getData("text/html")
@@ -259,6 +266,8 @@ export const PlainTextTiptapEditor = ({
 
   // Inline (filter value) keeps the picker inside the box on the right and always
   // visible; the default hangs it below the editor and reveals it on focus.
+  // An inline picker is not portaled, so it lives in this bar's stacking
+  // context: the bar is raised while open or the next field's bar paints over it.
   const iconBarClassName = cn(
     "absolute z-10 flex cursor-pointer items-center",
     inline
@@ -267,6 +276,7 @@ export const PlainTextTiptapEditor = ({
           "end-0 bottom-0 translate-y-full rounded-b-sm bg-gray-500 hover:bg-gray-600",
           isEditorFocused ? "opacity-100" : "opacity-0",
         ),
+    isOpenCustomField && inlineVariablePicker && "z-30",
   )
   const iconWrapperClassName = inline ? "p-1" : "p-2"
   const iconClassName = inline
@@ -305,7 +315,7 @@ export const PlainTextTiptapEditor = ({
               </div>
             }
           />
-          <PopoverContent className="w-auto p-0">
+          <PopoverContent className="w-auto p-0" portal={!inlineVariablePicker}>
             {promptVariableOptions.length > 0 && (
               <div className="max-h-60 w-50 overflow-y-auto">
                 {promptVariableOptions.map((field, index) => {

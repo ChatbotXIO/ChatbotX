@@ -27,6 +27,8 @@ const mocks = vi.hoisted(() => ({
   pickDue: vi.fn(),
   markMaxAttemptsFailed: vi.fn(),
   transaction: vi.fn(),
+  lockKeys: [] as string[],
+  lockTails: new Map<string, Promise<unknown>>(),
 }))
 
 const TX = { tx: true }
@@ -85,7 +87,28 @@ vi.mock("@chatbotx.io/logger", () => ({
     warn: mocks.loggerWarn,
   }),
 }))
-vi.mock("@chatbotx.io/redis", () => ({ invalidateCacheByTags: vi.fn() }))
+vi.mock("@chatbotx.io/redis", () => ({
+  invalidateCacheByTags: vi.fn(),
+  distributedLock: {
+    // Serializes per key like the Redis lock, so interleaving tests see
+    // the second writer wait for the first.
+    runExclusive: ({
+      key,
+      fn,
+    }: {
+      key: string
+      fn: () => Promise<unknown>
+    }) => {
+      mocks.lockKeys.push(key)
+      const run = (mocks.lockTails.get(key) ?? Promise.resolve()).then(fn)
+      mocks.lockTails.set(
+        key,
+        run.catch(() => undefined),
+      )
+      return run
+    },
+  },
+}))
 
 const { aiHandoverBulkRunService } = await import(
   "../src/ai-handover-bulk-run/service"
@@ -1254,5 +1277,126 @@ describe("saveSettings", () => {
       aiHandoverBulkRunService.saveSettings(input),
     ).resolves.toMatchObject({ enabled: false })
     expect(mocks.loggerError).toHaveBeenCalled()
+  })
+})
+
+describe("aiHandoverBulkRunService.patchSettings", () => {
+  const saved = {
+    enabled: true,
+    scheduleEnabled: false,
+    timeRanges: [],
+    gotoFlowId: "7",
+    returnMessage: "Back",
+    pauseBotWaitingForStaff: true,
+  }
+
+  beforeEach(() => {
+    mocks.lockKeys.length = 0
+    mocks.lockTails.clear()
+    mocks.requireInbox.mockResolvedValue({ id: "5" })
+    mocks.saveSettings.mockImplementation(async (input) => input)
+  })
+
+  test("merges the sent fields onto a fresh read, under the Page's lock", async () => {
+    mocks.findSettings.mockResolvedValue(saved)
+
+    await aiHandoverBulkRunService.patchSettings({
+      workspaceId: "ws-1",
+      inboxId: "5",
+      changes: { pauseBotWaitingForStaff: false, gotoFlowId: undefined },
+    })
+
+    expect(mocks.lockKeys).toEqual(["ai-handover-settings:5"])
+    expect(mocks.findSettings).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      inboxId: "5",
+    })
+    expect(mocks.saveSettings).toHaveBeenCalledWith({
+      ...saved,
+      pauseBotWaitingForStaff: false,
+      workspaceId: "ws-1",
+      inboxId: "5",
+    })
+  })
+
+  test("a Page without saved settings starts from everything off", async () => {
+    mocks.findSettings.mockResolvedValue(null)
+
+    await aiHandoverBulkRunService.patchSettings({
+      workspaceId: "ws-1",
+      inboxId: "5",
+      changes: { enabled: true },
+    })
+
+    expect(mocks.saveSettings).toHaveBeenCalledWith({
+      enabled: true,
+      scheduleEnabled: false,
+      timeRanges: [],
+      gotoFlowId: null,
+      returnMessage: null,
+      pauseBotWaitingForStaff: false,
+      workspaceId: "ws-1",
+      inboxId: "5",
+    })
+  })
+
+  test("the full save takes the same lock", async () => {
+    await aiHandoverBulkRunService.saveSettings({
+      ...saved,
+      workspaceId: "ws-1",
+      inboxId: "5",
+    })
+
+    expect(mocks.lockKeys).toEqual(["ai-handover-settings:5"])
+  })
+
+  /** Saved settings whose writes take a moment, like a real row. */
+  const useStoredSettings = () => {
+    let stored: typeof saved = { ...saved }
+    mocks.findSettings.mockImplementation(async () => ({ ...stored }))
+    mocks.saveSettings.mockImplementation(
+      async ({ workspaceId: _w, inboxId: _i, ...fields }) => {
+        await new Promise((resolve) => setTimeout(resolve, 5))
+        stored = fields
+        return fields
+      },
+    )
+    return () => stored
+  }
+  const ref = { workspaceId: "ws-1", inboxId: "5" }
+
+  test("two partial updates sent at once both survive", async () => {
+    const read = useStoredSettings()
+
+    await Promise.all([
+      aiHandoverBulkRunService.patchSettings({
+        ...ref,
+        changes: { enabled: false },
+      }),
+      aiHandoverBulkRunService.patchSettings({
+        ...ref,
+        changes: { returnMessage: "Later" },
+      }),
+    ])
+
+    expect(read()).toMatchObject({ enabled: false, returnMessage: "Later" })
+  })
+
+  test("a partial update sent during a full save merges onto the save", async () => {
+    const read = useStoredSettings()
+
+    await Promise.all([
+      aiHandoverBulkRunService.saveSettings({
+        ...saved,
+        ...ref,
+        gotoFlowId: "8",
+      }),
+      aiHandoverBulkRunService.patchSettings({
+        ...ref,
+        changes: { enabled: false },
+      }),
+    ])
+
+    expect(read()).toMatchObject({ gotoFlowId: "8", enabled: false })
   })
 })

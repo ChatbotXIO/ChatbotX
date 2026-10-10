@@ -312,3 +312,190 @@ describe("findDecryptedThreadsByClientId", () => {
     ).resolves.toBeUndefined()
   })
 })
+
+describe("strict credential lookups", () => {
+  const failure = new Error("decrypt failed")
+
+  test("non-strict findDecryptedForUser swallows failures", async () => {
+    vi.spyOn(platformCredentialService, "findForUser").mockRejectedValue(
+      failure,
+    )
+    expect(
+      await platformCredentialService.findDecryptedForUser({
+        userId: "u1",
+        type: "messenger",
+      }),
+    ).toBeUndefined()
+  })
+
+  test("strict findDecryptedForUser rethrows failures", async () => {
+    vi.spyOn(platformCredentialService, "findForUser").mockRejectedValue(
+      failure,
+    )
+    await expect(
+      platformCredentialService.findDecryptedForUser({
+        userId: "u1",
+        type: "messenger",
+        strict: true,
+      }),
+    ).rejects.toBe(failure)
+  })
+
+  test("non-strict findDecryptedPlatform swallows failures", async () => {
+    vi.spyOn(platformCredentialService, "findPlatform").mockRejectedValue(
+      failure,
+    )
+    expect(
+      await platformCredentialService.findDecryptedPlatform({
+        type: "messenger",
+      }),
+    ).toBeUndefined()
+  })
+
+  test("strict findDecryptedPlatform rethrows failures", async () => {
+    vi.spyOn(platformCredentialService, "findPlatform").mockRejectedValue(
+      failure,
+    )
+    await expect(
+      platformCredentialService.findDecryptedPlatform({
+        type: "messenger",
+        strict: true,
+      }),
+    ).rejects.toBe(failure)
+  })
+
+  test("resolveForOwner forwards strict to both lookups", async () => {
+    tenantService.findByOwner.mockResolvedValue({ status: "active" })
+    const own = vi
+      .spyOn(platformCredentialService, "findDecryptedForUser")
+      .mockResolvedValue(undefined)
+    const platform = vi
+      .spyOn(platformCredentialService, "findDecryptedPlatform")
+      .mockResolvedValue(PLATFORM as never)
+    await platformCredentialService.resolveForOwner({
+      ownerId: "owner-1",
+      type: "messenger",
+      strict: true,
+    })
+    expect(own).toHaveBeenCalledWith(expect.objectContaining({ strict: true }))
+    expect(platform).toHaveBeenCalledWith(
+      expect.objectContaining({ strict: true }),
+    )
+  })
+
+  test("strict resolveForOwner propagates an own-credential failure without falling back", async () => {
+    tenantService.findByOwner.mockResolvedValue({ status: "active" })
+    vi.spyOn(platformCredentialService, "findForUser").mockRejectedValue(
+      failure,
+    )
+    const platform = vi.spyOn(
+      platformCredentialService,
+      "findDecryptedPlatform",
+    )
+    await expect(
+      platformCredentialService.resolveForOwner({
+        ownerId: "owner-1",
+        type: "messenger",
+        strict: true,
+      }),
+    ).rejects.toBe(failure)
+    expect(platform).not.toHaveBeenCalled()
+  })
+})
+
+describe("googleAds hasDeveloperToken derivation (legacy rows)", () => {
+  const legacyRow = {
+    id: "g1",
+    type: "googleAds",
+    userId: null,
+    value: {},
+    publicConfig: { clientId: "cid", uploadMethod: "dataManager" },
+  }
+
+  test("legacy row whose encrypted value holds a token reads true, token never leaked", async () => {
+    vi.spyOn(platformCredentialService, "findPlatform").mockResolvedValue(
+      legacyRow as never,
+    )
+    vi.mocked(encryptUtils.decryptObject).mockResolvedValue({
+      clientId: "cid",
+      clientSecret: "s3cret",
+      developerToken: "tok-123",
+    } as never)
+
+    const result = await platformCredentialService.findPlatformPublic({
+      type: "googleAds",
+    })
+
+    expect(result).toEqual({
+      clientId: "cid",
+      uploadMethod: "dataManager",
+      hasDeveloperToken: true,
+    })
+    expect(JSON.stringify(result)).not.toContain("tok-123")
+    expect(JSON.stringify(result)).not.toContain("s3cret")
+  })
+
+  test("legacy row without a token reads false", async () => {
+    vi.spyOn(platformCredentialService, "findPlatform").mockResolvedValue(
+      legacyRow as never,
+    )
+    vi.mocked(encryptUtils.decryptObject).mockResolvedValue({
+      clientId: "cid",
+      clientSecret: "s3cret",
+    } as never)
+
+    const result = await platformCredentialService.findPlatformPublic({
+      type: "googleAds",
+    })
+
+    expect(result).toMatchObject({ hasDeveloperToken: false })
+  })
+
+  test("row already carrying the flag is not decrypted", async () => {
+    vi.mocked(encryptUtils.decryptObject).mockClear()
+    vi.spyOn(platformCredentialService, "findPlatform").mockResolvedValue({
+      ...legacyRow,
+      publicConfig: { ...legacyRow.publicConfig, hasDeveloperToken: true },
+    } as never)
+
+    const result = await platformCredentialService.findPlatformPublic({
+      type: "googleAds",
+    })
+
+    expect(result).toMatchObject({ hasDeveloperToken: true })
+    expect(encryptUtils.decryptObject).not.toHaveBeenCalled()
+  })
+
+  test("resolvePublicForUser derives the flag for the user's own legacy row", async () => {
+    vi.spyOn(platformCredentialService, "findForUser").mockResolvedValue({
+      ...legacyRow,
+      userId: "user-1",
+    } as never)
+    vi.mocked(encryptUtils.decryptObject).mockResolvedValue({
+      clientId: "cid",
+      clientSecret: "s",
+      developerToken: "tok",
+    } as never)
+
+    const result = await platformCredentialService.resolvePublicForUser({
+      userId: "user-1",
+      type: "googleAds",
+    })
+
+    expect(result?.publicConfig).toMatchObject({ hasDeveloperToken: true })
+  })
+
+  test("non-googleAds rows are never decrypted", async () => {
+    vi.mocked(encryptUtils.decryptObject).mockClear()
+    vi.spyOn(platformCredentialService, "findPlatform").mockResolvedValue(
+      PLATFORM as never,
+    )
+
+    const result = await platformCredentialService.findPlatformPublic({
+      type: "messenger",
+    })
+
+    expect(result).toEqual(PLATFORM.publicConfig)
+    expect(encryptUtils.decryptObject).not.toHaveBeenCalled()
+  })
+})

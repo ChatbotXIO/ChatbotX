@@ -50,6 +50,8 @@
          that empty area reach the page underneath. */
       pointer-events: none;
     }
+    /* No powered-by line: keep the toggle where it would sit above one. */
+    .container.no-powered-by { bottom: 22px; }
     .button, .powered-by { pointer-events: auto; }
     .button {
       display: block; width: 56px; height: 56px; padding: 0; border: 0;
@@ -60,6 +62,10 @@
     .button:hover { transform: scale(1.08); }
     .toggle:active { transform: scale(0.94); }
     .button img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .default-logo {
+      display: flex; width: 100%; height: 100%; align-items: center;
+      justify-content: center; background: #111827; color: #fff;
+    }
     .powered-by {
       display: inline-flex; align-items: center; gap: 3px; margin-top: 6px;
       font-size: 10px; line-height: 1; color: #64748b;
@@ -131,6 +137,24 @@
   const POWERED_BY_ICON =
     '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="#ecc94b" stroke="#ecc94b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>'
 
+  // lucide's messages-circle (lucide 1.45.0, ISC), shown when the ref link
+  // has no logo. Keep in sync with `DefaultWidgetLogo` in
+  // `reflink-chat-widget-preview.tsx`.
+  const DEFAULT_LOGO_ICON =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.95 10.05a7 7 0 011.412 7.872 1 1 0 00-.058.787l.675 2.089a1 1 0 01-1.236 1.168l-2.155-.631a1 1 0 00-.745.06 7 7 0 01-7.793-1.445"></path><path d="M2.696 12.708a1 1 0 00-.058-.785 7 7 0 113.518 3.473 1 1 0 00-.744-.061l-2.155.63a1 1 0 01-1.236-1.167z"></path></svg>'
+
+  const createDefaultLogo = (brand) => {
+    const logo = createElement("span", "default-logo")
+    if (brand.logoBackgroundColor) {
+      logo.style.background = brand.logoBackgroundColor
+    }
+    if (brand.logoForegroundColor) {
+      logo.style.color = brand.logoForegroundColor
+    }
+    logo.innerHTML = DEFAULT_LOGO_ICON
+    return logo
+  }
+
   const createElement = (tag, className, attributes) => {
     const element = document.createElement(tag)
     if (className) {
@@ -142,30 +166,7 @@
     return element
   }
 
-  const createImage = (src, alt, fallbackSrc) => {
-    const image = createElement("img", "", { src, alt })
-    if (fallbackSrc) {
-      image.addEventListener(
-        "error",
-        () => {
-          image.src = fallbackSrc
-        },
-        { once: true },
-      )
-    }
-    return image
-  }
-
-  const buildPoweredByUrl = (brandUrl) => {
-    try {
-      const url = new URL(brandUrl)
-      url.searchParams.set("utm_source", window.location.hostname)
-      url.searchParams.set("utm_medium", "web-widget")
-      return url.toString()
-    } catch {
-      return brandUrl
-    }
-  }
+  const createImage = (src, alt) => createElement("img", "", { src, alt })
 
   const render = ({ channels, brand }) => {
     const host = createElement("div", "", {
@@ -210,17 +211,27 @@
 
     const toggle = createElement("button", "button toggle", {
       type: "button",
-      title: brand.name,
-      "aria-label": brand.name,
+      "aria-label": brand.name || brand.toggleLabel,
       "aria-expanded": "false",
     })
-    const fallbackLogo = iconUrl("chat")
-    const logo = createImage(
-      brand.logoUrl || fallbackLogo,
-      brand.name,
-      fallbackLogo,
-    )
-    toggle.appendChild(logo)
+    if (brand.name) {
+      toggle.title = brand.name
+    }
+    if (brand.logoUrl) {
+      const logo = createElement("img", "", {
+        src: brand.logoUrl,
+        alt: brand.name || "",
+      })
+      // A deleted or broken logo file falls back to the default icon too.
+      logo.addEventListener(
+        "error",
+        () => logo.replaceWith(createDefaultLogo(brand)),
+        { once: true },
+      )
+      toggle.appendChild(logo)
+    } else {
+      toggle.appendChild(createDefaultLogo(brand))
+    }
     toggle.addEventListener("click", () => {
       const open = list.classList.toggle("closed") === false
       container.classList.toggle("open", open)
@@ -229,19 +240,25 @@
       toggle.setAttribute("aria-expanded", String(open))
     })
 
-    const poweredBy = createElement("small", "powered-by")
-    poweredBy.innerHTML = POWERED_BY_ICON
-    const byLabel = document.createElement("span")
-    byLabel.textContent = brand.poweredByLabel || "by"
-    const brandLink = createElement("a", "", {
-      href: buildPoweredByUrl(brand.url),
-      target: "_blank",
-      rel: "noopener",
-    })
-    brandLink.textContent = brand.name
-    poweredBy.append(byLabel, brandLink)
-
-    container.append(list, toggle, poweredBy)
+    container.append(list, toggle)
+    // Shown only with both a brand name and a redirect URL.
+    if (brand.name && brand.url) {
+      const poweredBy = createElement("small", "powered-by")
+      poweredBy.innerHTML = POWERED_BY_ICON
+      const byLabel = document.createElement("span")
+      byLabel.textContent = brand.poweredByLabel || "by"
+      const brandLink = createElement("a", "", {
+        // Exactly as entered: no tracking params on the brand's own link.
+        href: brand.url,
+        target: "_blank",
+        rel: "noopener",
+      })
+      brandLink.textContent = brand.name
+      poweredBy.append(byLabel, brandLink)
+      container.appendChild(poweredBy)
+    } else {
+      container.classList.add("no-powered-by")
+    }
     root.appendChild(container)
     if (document.body) {
       document.body.appendChild(host)

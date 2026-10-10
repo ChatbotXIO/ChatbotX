@@ -5,6 +5,7 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 ## What this project is
 
 - **Product:** Open-source omnichannel chatbot platform (inbox, flow builder, AI agents, broadcasts, webhooks, public APIs, CLI, MCP).
+- **Agent-first:** the primary user is an **AI agent** driving the product through the public API, the CLI, and the MCP server. The web UI is a secondary client of the same capabilities. A feature that exists only in the UI is invisible to agents — see invariant 23.
 - **Architecture:** **pnpm** workspaces + **Turborepo**. Shared packages use the **`@chatbotx.io/*`** npm scope.
 - **License:** Community Edition is **MIT**; enterprise-specific code may fall under a separate commercial license (see `apps/builder/src/enterprise/LICENSE`).
 
@@ -194,6 +195,8 @@ These are the most common mistakes — read before writing any code:
 
 22. **`ContactInboxPost` has no FK and is partitioned by `workspaceId`.** Every ContactInbox, Contact, or Workspace delete path must go through `contactInboxPostService`; every post query must include `workspaceId`; and post writes must hold the durable workspace purge guard through commit.
 
+23. **Agent-first: every feature ships a public API — including the ones that only return a result.** The CLI and MCP server derive their whole surface from `GET /api/public-spec.json` (`publicRouter`), so a capability without a public procedure does not exist for an AI agent, however well it works in the UI. A new feature — or a new operation on an existing one — must add a procedure to its `features/<x>/api/public.ts`, nested in `apps/builder/src/routers/public.ts`, behind `workspaceTokenAuthAPIForScope("<scope>")`. This covers **result-returning operations**, not just CRUD: anything a user clicks in the UI to *get something back* — a link (`botSimulator.getLink` is the reference), a preview or render, a test run/test send/connection test, stats and reports, an export, AI-generated content, a status check, a sync or scan. The rule of thumb: if a button in the UI produces a result, an agent must be able to call one operation and receive the same result. Build the public procedure **first** and the UI second; both call the same service method or `features/<x>/lib/` function, never two implementations. The response must be machine-usable data (ids, URLs, JSON) — never something that only renders on screen — and the procedure's `summary`/`description` must say which operation supplies each input id (e.g. "Get webchat ids from `webchats.list`"). Then run the `cli-mcp-docs` skill. **Exempt** (state the reason in the PR): sign-in/sign-up and personal account settings; platform administration (super admin, reseller, tenant, platform credentials); end-customer public pages (webviews, short links, booking pages); the browser-redirect step of a channel OAuth connect (the post-connect read/settings/disconnect still need an API); UI-only plumbing (device push tokens, realtime, help items); and operations a workspace token must never perform (minting/revoking API tokens).
+
 <!-- END GENERATED: SHARED-INVARIANTS -->
 
 ## Git conventions
@@ -210,6 +213,8 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - White-label tenancy model: `docs/tenancy.md`
 - Workspace API tokens (hashing, scopes, `{{api_key}}` default token): `docs/developer/workspace-api-tokens.md`
 - Ads conversion tracking (CTWA/CTM/CTID, rules vs Trigger actions, CAPI): `docs/ads-conversion-tracking.md`
+- Google Ads Click-to-Message conversion tracking (gclid/gbraid capture, Connection-engine OAuth, Data Manager API delivery, dedup, state machine, statistics dashboard, read-only public API, ops runbook): `docs/google-ads-conversion-tracking.md`
+- Google Ads conversion options for admins (dedup mode, conversion time, consent, legacy differences): `docs/google-ads-conversion-options-admin-guide.md`
 - Comment automation (all channels): `docs/comment-automation.md` (skill: `.agents/skills/comment-automation/`)
 - Push notifications (Expo Push Service, device tokens): `docs/push-notifications.md`
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`

@@ -96,6 +96,7 @@ export {
 } from "./value-format"
 
 import { anyChannelAdConversationPredicate } from "../ad-referral"
+import { googleClickPredicate } from "../google-click"
 
 const hasWhereParts = (where: ContactWhere): boolean =>
   Object.keys(where).length > 0
@@ -573,6 +574,14 @@ function buildConditionWhere(
       return buildExistsBooleanWhere(
         contactInboxExists,
         anyChannelAdConversationPredicate(),
+        operator,
+        value,
+      )
+
+    case "fromGoogleAd":
+      return buildExistsBooleanWhere(
+        contactInboxExists,
+        googleClickPredicate(),
         operator,
         value,
       )

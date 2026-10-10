@@ -16,6 +16,10 @@ import type {
 } from "@chatbotx.io/sdk"
 import { connectionAlreadyConnectedException } from "../errors"
 import { logger } from "../logger"
+import {
+  compensateWorkspaceQuotaConsumption,
+  type WorkspaceQuotaConsumption,
+} from "../workspace/quota-consumption"
 import { workspaceMemberService } from "../workspace-member/service"
 import type { ConnectionQuotaConsumption } from "./state-service"
 import { connectionStateService } from "./state-service"
@@ -74,6 +78,8 @@ export const withQuotaCompensation = async <T>(
   input: {
     ownerId: string | undefined
     quotaConsumption: ConnectionQuotaConsumption
+    /** Seat taken by `workspaceService.create` inside the same transaction (first-channel connects). */
+    workspaceQuotaConsumption?: WorkspaceQuotaConsumption
     context: Record<string, unknown>
   },
   operation: () => Promise<T>,
@@ -82,6 +88,9 @@ export const withQuotaCompensation = async <T>(
     return await operation()
   } catch (err) {
     const { ownerId, quotaConsumption } = input
+    if (input.workspaceQuotaConsumption) {
+      await compensateWorkspaceQuotaConsumption(input.workspaceQuotaConsumption)
+    }
     if (quotaConsumption.consumed && quotaConsumption.workspaceId && ownerId) {
       try {
         await connectionStateService.compensateQuotaConsumption({

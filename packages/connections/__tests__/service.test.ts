@@ -44,6 +44,7 @@ const mocks = vi.hoisted(() => ({
   })),
   isUniqueViolationError: vi.fn(() => false),
   transaction: vi.fn(async (fn: (tx: unknown) => unknown) => await fn("tx")),
+  compensateWorkspaceQuota: vi.fn(async () => undefined),
   createSession: vi.fn(),
   findByNonce: vi.fn(),
   submitInput: vi.fn(),
@@ -113,6 +114,10 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   inboxService: { create: mocks.inboxCreate },
 }))
+vi.mock("@chatbotx.io/business/workspace", () => ({
+  compensateWorkspaceQuotaConsumption: mocks.compensateWorkspaceQuota,
+}))
+
 vi.mock("@chatbotx.io/business/connection", () => ({
   authExpiresAtOf: (auth: {
     authType: string
@@ -1608,7 +1613,11 @@ describe("ConnectionService.startSession", () => {
     })
 
     expect(mocks.transaction).toHaveBeenCalledOnce()
-    expect(mockCreateWorkspace).toHaveBeenCalledWith("tx")
+    expect(mockCreateWorkspace).toHaveBeenCalledWith(
+      "tx",
+      expect.objectContaining({ consumed: false }),
+    )
+    expect(mocks.compensateWorkspaceQuota).not.toHaveBeenCalled()
     expect(mocks.createSession).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId: "ws-new",
@@ -1621,6 +1630,32 @@ describe("ConnectionService.startSession", () => {
       type: "open_url",
       url: "https://provider.example.com/authorize",
     })
+  })
+
+  it("hands the workspace seat back when the session insert fails after createWorkspace already consumed it", async () => {
+    const mockCreateWorkspace = vi.fn(
+      (_tx: unknown, quotaConsumption: { consumed: boolean }) => {
+        Object.assign(quotaConsumption, { consumed: true, userId: "user-1" })
+        return Promise.resolve({ id: "ws-new" })
+      },
+    )
+    const sessionError = new Error("pending session cap reached")
+    mocks.createSession.mockRejectedValueOnce(sessionError)
+
+    await expect(
+      connectionService.startSession({
+        createWorkspace: mockCreateWorkspace,
+        provider: "messenger",
+        purpose: "connect",
+        credential: { clientId: "app-1" },
+        callbackUrl: "https://app.example.test/integrations/messenger/callback",
+        actorUserId: "user-1",
+      }),
+    ).rejects.toBe(sessionError)
+
+    expect(mocks.compensateWorkspaceQuota).toHaveBeenCalledWith(
+      expect.objectContaining({ consumed: true, userId: "user-1" }),
+    )
   })
 
   it("never creates a session when createWorkspace itself fails (the real transaction rolls both back together)", async () => {
@@ -1734,6 +1769,24 @@ describe("ConnectionService.completeAuthorization", () => {
       workspaceId: "ws-1",
       errorCode: "exchange_failed",
       statuses: ["authorized"],
+    })
+  })
+
+  it("carries a provider-specific cause (partial consent) from a failed exchange", async () => {
+    mocks.exchangeCode.mockRejectedValue(
+      new ConnectionProviderRejectedError("scopes", undefined, "scope_missing"),
+    )
+    await expect(
+      connectionService.completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      }),
+    ).rejects.toMatchObject({
+      code: "connectionCredentialsRejected",
+      data: { cause: "scope_missing" },
     })
   })
 
@@ -1853,6 +1906,53 @@ describe("ConnectionService.completeAuthorization", () => {
       workspaceId: "ws-1",
       errorCode: "no_candidates",
     })
+  })
+
+  it("fails the session with the stored provider_error code and carries a provider-specific cause on the thrown exception", async () => {
+    mocks.listCandidates.mockRejectedValue(
+      new ConnectionProviderRejectedError(
+        "Google rejected the Google Ads developer token",
+        undefined,
+        "developer_token_not_approved",
+      ),
+    )
+
+    await expect(
+      connectionService.completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      }),
+    ).rejects.toMatchObject({
+      code: "connectionCredentialsRejected",
+      data: { cause: "developer_token_not_approved" },
+    })
+    expect(mocks.failSession).toHaveBeenCalledWith({
+      id: "session-1",
+      workspaceId: "ws-1",
+      errorCode: "provider_error",
+    })
+  })
+
+  it("does not attach a cause for an unrecognised or forged cause value", async () => {
+    mocks.listCandidates.mockRejectedValue(
+      new ConnectionProviderRejectedError("nope", undefined, "<script>"),
+    )
+
+    const failure = await connectionService
+      .completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      })
+      .catch((error: unknown) => error)
+
+    expect(failure).toMatchObject({ code: "connectionCredentialsRejected" })
+    expect((failure as { data?: unknown }).data).toBeUndefined()
   })
 
   it("keeps encrypted authorization for a retryable candidate listing failure", async () => {
@@ -2128,6 +2228,49 @@ describe("ConnectionService.completeAuthorization (reconnect path)", () => {
       },
     })
     expect(result.status).toBe("completed")
+  })
+
+  it("refreshes provider-derived config on reconnect via candidateToConfig", async () => {
+    mocks.findByNonce.mockResolvedValue(reconnectSession)
+    mocks.findByIdForWorkspace.mockResolvedValue(
+      baseConnection({ sourceId: "page-1" }),
+    )
+    mocks.exchangeCode.mockResolvedValue({
+      authType: "oauth2",
+      clientId: "id",
+      clientSecret: "secret",
+      redirectUrl: "https://x",
+      tokens: { accessToken: "tok" },
+    })
+    mockAdapter.provider.describe = () => ({
+      sourceId: "page-1",
+      displayName: "Page One",
+    })
+    const providerWithConfig =
+      mockAdapter.provider as typeof mockAdapter.provider & {
+        candidateToConfig?: (auth: unknown) => Record<string, unknown>
+      }
+    providerWithConfig.candidateToConfig = () => ({ loginCustomerId: "999" })
+
+    try {
+      await connectionService.completeAuthorization({
+        sessionId: "session-1",
+        nonce: "nonce-abc",
+        code: "auth-code",
+        callbackUrl: "https://app.example.test/callback",
+        credential: {},
+      })
+    } finally {
+      providerWithConfig.candidateToConfig = undefined
+    }
+
+    expect(mocks.saveAuthByForeignKey).toHaveBeenCalledWith(
+      "inbox-1",
+      "ws-1",
+      expect.objectContaining({ authType: "oauth2" }),
+      { loginCustomerId: "999" },
+      "tx",
+    )
   })
 
   it("fails the authorized session when reconnect rollback compensation fails", async () => {

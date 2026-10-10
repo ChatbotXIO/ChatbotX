@@ -111,19 +111,6 @@ export type ConversationFilters = {
   contactFilter?: ContactFilterRequest["contactFilter"]
 }
 
-type LoadMoreConversationsOptions = {
-  respectUrlConversationId?: boolean
-  /**
-   * Whether an empty selection may be filled in with the first loaded
-   * conversation.
-   *
-   * Defaults to `true`. The mobile single-pane inbox passes `false`: on that
-   * layout a remount of the conversation list (returning from the thread via
-   * the back control) must land back on the list, not re-select a thread.
-   */
-  autoSelectFirst?: boolean
-}
-
 export type ChatState = {
   // conversation list
   isFirstLoadConversation: boolean
@@ -132,6 +119,19 @@ export type ChatState = {
   isLoadingConversation: boolean
   isBootstrappingUrlConversation: boolean
   activeConversationId: string | null
+  /**
+   * Conversations the agent explicitly marked unread from the row menu. The
+   * automatic read paths (opening a row, interacting with or leaving the
+   * thread) skip these so the mark sticks until the agent deliberately
+   * selects the conversation again, which clears it.
+   */
+  manuallyUnreadConversationIds: ReadonlySet<string>
+  /**
+   * Bumped when something opens the conversation that is already active (the
+   * call panel navigating to it), so the thread treats it as a fresh open
+   * and reads it even though `activeConversationId` did not change.
+   */
+  openRequestNonce: number
   filters: ConversationFilters
 
   // message list
@@ -141,8 +141,6 @@ export type ChatState = {
   hasNextMessagePage: boolean
   // Which conversation the loaded message page belongs to, so loadInitialMessages can skip a server-seeded page.
   messagesConversationId: string | null
-  // True when the first conversation was auto-selected rather than deep-linked, so mobile can suppress auto-open.
-  activeConversationAutoSelected: boolean
   // The initially active conversation's server-resolved contact, used as initialData to skip a client fetch.
   seededContact: GetContactResponse | null
 
@@ -175,7 +173,6 @@ export type ChatStoreInitialState = Partial<
     | "nextCursorConversation"
     | "isFirstLoadConversation"
     | "activeConversationId"
-    | "activeConversationAutoSelected"
     | "seededContact"
   >
 > & {
@@ -205,11 +202,20 @@ export type ChatActions = {
     workspaceId: string,
     conversationId: string,
   ) => Promise<boolean>
-  loadMoreConversations: (
-    workspaceId: string,
-    options?: LoadMoreConversationsOptions,
-  ) => Promise<void>
+  loadMoreConversations: (workspaceId: string) => Promise<void>
   setActiveConversationId: (activeConversationId: string | null) => void
+  /** Records an explicit "mark as unread" so automatic reads leave it alone. */
+  markManuallyUnread: (conversationId: string) => void
+  clearManuallyUnread: (conversationId: string) => void
+  /**
+   * Mirrors the server's answer to "mark as unread" into the row — unless the
+   * agent reopened the conversation while that write was in flight, in which
+   * case the reopen's read is the newer intent and the stale cursor is dropped.
+   */
+  applyUnreadResult: (
+    conversationId: string,
+    agentLastReadAt: Date | null,
+  ) => void
   updateConversation: (
     conversationId: string,
     data: Partial<ListConversationItemResource>,
@@ -364,11 +370,6 @@ const replaceMessageById = (
   return { messages: nextMessages }
 }
 
-const hasConversationIdInUrl = () =>
-  !!new URLSearchParams(
-    typeof window === "undefined" ? "" : window.location.search,
-  ).get("conversationId")
-
 /**
  * Shared core of initActiveConversationFromUrl and openConversation: selects
  * conversationId if already loaded, otherwise fetches and prepends it. Callers
@@ -414,6 +415,8 @@ type ConversationListState = Pick<
   | "isLoadingConversation"
   | "isBootstrappingUrlConversation"
   | "activeConversationId"
+  | "manuallyUnreadConversationIds"
+  | "openRequestNonce"
 >
 
 const conversationListDefaults = (): ConversationListState => ({
@@ -423,7 +426,21 @@ const conversationListDefaults = (): ConversationListState => ({
   isLoadingConversation: false,
   isBootstrappingUrlConversation: false,
   activeConversationId: null,
+  manuallyUnreadConversationIds: new Set(),
+  openRequestNonce: 0,
 })
+
+const withoutId = (
+  ids: ReadonlySet<string>,
+  id: string,
+): ReadonlySet<string> => {
+  if (!ids.has(id)) {
+    return ids
+  }
+  const next = new Set(ids)
+  next.delete(id)
+  return next
+}
 
 type MessageThreadState = Pick<
   ChatState,
@@ -432,7 +449,6 @@ type MessageThreadState = Pick<
   | "isLoadMoreMessage"
   | "hasNextMessagePage"
   | "messagesConversationId"
-  | "activeConversationAutoSelected"
   | "seededContact"
   | "replyToMessage"
   | "isPrivateReply"
@@ -441,31 +457,19 @@ type MessageThreadState = Pick<
 
 // The message-thread fields that must be cleared together whenever the
 // active conversation changes (or is unset) — otherwise a stale
-// `activeConversationAutoSelected`/`messagesConversationId` etc. from the
-// previous conversation leaks into the next one.
+// `messagesConversationId`/`seededContact` etc. from the previous
+// conversation leaks into the next one.
 const messageThreadDefaults = (): MessageThreadState => ({
   messages: [],
   nextCursorMessage: null,
   isLoadMoreMessage: false,
   hasNextMessagePage: true,
   messagesConversationId: null,
-  activeConversationAutoSelected: false,
   seededContact: null,
   replyToMessage: null,
   isPrivateReply: false,
   activePost: null,
 })
-
-const shouldAutoSelectConversation = ({
-  activeConversationId,
-  hasUrlConversationId,
-  conversations,
-}: {
-  activeConversationId: string | null
-  hasUrlConversationId: boolean
-  conversations: ListConversationsResponse["data"]
-}) =>
-  !(activeConversationId || hasUrlConversationId) && conversations.length > 0
 
 /**
  * `ChatStoreInitialState` is a `Partial` of independently-optional fields, so
@@ -674,6 +678,11 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
 
       openConversation: async (workspaceId: string, conversationId: string) => {
         if (get().activeConversationId === conversationId) {
+          // Navigating to the thread that is already open (e.g. from the call
+          // panel) is still a deliberate open: end any "mark as unread" and
+          // tell the thread to read it as if it had just been selected.
+          get().clearManuallyUnread(conversationId)
+          set((state) => ({ openRequestNonce: state.openRequestNonce + 1 }))
           return true
         }
 
@@ -710,20 +719,17 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         return get().activeConversationId === conversationId
       },
 
-      loadMoreConversations: async (
-        workspaceId: string,
-        options: LoadMoreConversationsOptions = {},
-      ) => {
+      // Never selects anything: the inbox opens on the empty state until the
+      // agent (or a `?conversationId=` deep link) picks a conversation, so a
+      // page load cannot mark a thread read on the agent's behalf.
+      loadMoreConversations: async (workspaceId: string) => {
         const { isLoadingConversation, nextCursorConversation } = get()
         if (isLoadingConversation || !selectHasNextConversationPage(get())) {
           return
         }
 
         // fetch next conversation list
-        const { activeConversationId, filters } = get()
-        const shouldRespectUrlConversationId =
-          options.respectUrlConversationId ?? true
-        const autoSelectFirst = options.autoSelectFirst ?? true
+        const { filters } = get()
         set({ isLoadingConversation: true })
 
         try {
@@ -742,18 +748,6 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
               { signal: AbortSignal.timeout(30_000) },
             )
 
-          const hasUrlConversationId =
-            shouldRespectUrlConversationId && hasConversationIdInUrl()
-          const firstConversationToOpen =
-            autoSelectFirst &&
-            shouldAutoSelectConversation({
-              activeConversationId,
-              hasUrlConversationId,
-              conversations: newConversations,
-            })
-              ? newConversations[0]
-              : null
-
           set((state) => ({
             conversations: appendUniqueConversations(
               state.conversations,
@@ -763,11 +757,6 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             isLoadingConversation: false,
             isFirstLoadConversation: false,
           }))
-
-          if (firstConversationToOpen) {
-            get().setActiveConversationId(firstConversationToOpen.id)
-            set({ activeConversationAutoSelected: true })
-          }
         } catch (error) {
           set({
             isLoadingConversation: false,
@@ -780,19 +769,53 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
       setActiveConversationId: (activeConversationId: string | null) => {
         const {
           activeConversationId: oldActiveConversationId,
-          activeConversationAutoSelected,
+          manuallyUnreadConversationIds,
         } = get()
-        if (oldActiveConversationId !== activeConversationId) {
-          set({
-            activeConversationId,
-            ...messageThreadDefaults(),
-          })
+        if (oldActiveConversationId === activeConversationId) {
           return
         }
+        set({
+          activeConversationId,
+          // Selecting a conversation is a deliberate open, so an explicit
+          // "mark as unread" on it is over and the row may be read again.
+          manuallyUnreadConversationIds: activeConversationId
+            ? withoutId(manuallyUnreadConversationIds, activeConversationId)
+            : manuallyUnreadConversationIds,
+          ...messageThreadDefaults(),
+        })
+      },
 
-        if (activeConversationAutoSelected) {
-          set({ activeConversationAutoSelected: false })
+      markManuallyUnread: (conversationId: string) => {
+        set((state) => {
+          if (state.manuallyUnreadConversationIds.has(conversationId)) {
+            return state
+          }
+          return {
+            manuallyUnreadConversationIds: new Set([
+              ...state.manuallyUnreadConversationIds,
+              conversationId,
+            ]),
+          }
+        })
+      },
+
+      clearManuallyUnread: (conversationId: string) => {
+        set((state) => {
+          const next = withoutId(
+            state.manuallyUnreadConversationIds,
+            conversationId,
+          )
+          return next === state.manuallyUnreadConversationIds
+            ? state
+            : { manuallyUnreadConversationIds: next }
+        })
+      },
+
+      applyUnreadResult: (conversationId, agentLastReadAt) => {
+        if (!get().manuallyUnreadConversationIds.has(conversationId)) {
+          return
         }
+        get().updateConversation(conversationId, { agentLastReadAt })
       },
 
       deleteConversation: (conversationId: string) => {
@@ -800,14 +823,24 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
         const updatedConversations = conversations.filter(
           (c) => c.id !== conversationId,
         )
+        const manuallyUnreadConversationIds = withoutId(
+          get().manuallyUnreadConversationIds,
+          conversationId,
+        )
         if (activeConversationId !== conversationId) {
-          set({ conversations: updatedConversations })
+          set({
+            conversations: updatedConversations,
+            manuallyUnreadConversationIds,
+          })
           return
         }
 
+        // Deleting the open conversation lands on the empty state rather
+        // than silently opening (and reading) whichever row comes next.
         set({
           conversations: updatedConversations,
-          activeConversationId: updatedConversations[0]?.id ?? null,
+          manuallyUnreadConversationIds,
+          activeConversationId: null,
           ...messageThreadDefaults(),
         })
       },

@@ -14,6 +14,7 @@ import {
 } from "../connection"
 import { connectionStateService } from "../connection/state-service"
 import { inboxService } from "../inbox/service"
+import type { WorkspaceQuotaConsumption } from "../workspace/quota-consumption"
 
 type ConnectIntegrationApiInput = {
   ownerId: string
@@ -24,7 +25,11 @@ type ConnectIntegrationApiInput = {
   tokenHash: string
   tokenPrefix: string
   callbackUrl: string | null
-  createWorkspace?: (tx: DatabaseClient) => Promise<string>
+  /** First-channel path: creates the workspace on `tx`; thread `quotaConsumption` into `workspaceService.create` so a rollback hands the seat back. */
+  createWorkspace?: (
+    tx: DatabaseClient,
+    quotaConsumption: WorkspaceQuotaConsumption,
+  ) => Promise<string>
 }
 
 type DisconnectIntegrationApiInput = {
@@ -42,17 +47,22 @@ class IntegrationApiService extends BaseService {
       consumed: false,
       workspaceUsageIncremented: false,
     }
+    const workspaceQuotaConsumption: WorkspaceQuotaConsumption = {
+      consumed: false,
+    }
     const result = await withQuotaCompensation(
       {
         ownerId: input.ownerId,
         quotaConsumption,
+        workspaceQuotaConsumption,
         context: { provider: "api", actorUserId: input.actorUserId },
       },
       () =>
         db.transaction(async (tx) => {
           const workspaceCreated = !input.workspaceId
           const workspaceId =
-            input.workspaceId ?? (await input.createWorkspace?.(tx))
+            input.workspaceId ??
+            (await input.createWorkspace?.(tx, workspaceQuotaConsumption))
           if (!workspaceId) {
             throw new Error(
               "integrationApiService.connect: workspaceId or createWorkspace is required",

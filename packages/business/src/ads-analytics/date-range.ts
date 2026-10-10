@@ -1,4 +1,5 @@
-import { fromZonedTime } from "date-fns-tz"
+import { timezoneCandidates } from "@chatbotx.io/utils/timezone"
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
 
 // Exported so the shared `DateRangePresetFilter` bridge (Ads is URL-driven,
 // not store-driven) formats its `?from=&to=` params identically to this
@@ -35,17 +36,31 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000
 // dashboard's first load lines up with the preset the filter shows as active.
 const DEFAULT_RANGE_DAYS_BACK = 6
 
-export function getDefaultAdsAnalyticsRange(now = new Date()) {
-  const until = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  )
-  const since = new Date(until)
+/**
+ * The default window: "today" back 6 days. `tz` (an already-resolved IANA name)
+ * makes "today" the viewer's local day; empty or omitted means UTC.
+ */
+export function getDefaultAdsAnalyticsRange(now = new Date(), tz = "") {
+  const to = tz ? formatInTimeZone(now, tz, "yyyy-MM-dd") : toDateKey(now)
+  const since = new Date(`${to}T00:00:00.000Z`)
   since.setUTCDate(since.getUTCDate() - DEFAULT_RANGE_DAYS_BACK)
 
   return {
     from: toDateKey(since),
-    to: toDateKey(until),
+    to,
   }
+}
+
+/** Every `YYYY-MM-DD` key from `from` to `to`, inclusive (UTC-anchored key arithmetic). */
+export function enumerateDateKeys(from: string, to: string): string[] {
+  const dates: string[] = []
+  const cursor = new Date(`${from}T00:00:00.000Z`)
+  const end = new Date(`${to}T00:00:00.000Z`)
+  while (cursor.getTime() <= end.getTime()) {
+    dates.push(cursor.toISOString().slice(0, 10))
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  }
+  return dates
 }
 
 /**
@@ -58,14 +73,29 @@ export function getDefaultAdsAnalyticsRange(now = new Date()) {
  * or mangles the param.
  */
 const MAX_TIMEZONE_NAME_LENGTH = 64
+const OFFSET_ZONE_RE = /^[+-]/
 
 export function resolveTimezone(tz: string): string {
-  if (tz.length > MAX_TIMEZONE_NAME_LENGTH) {
+  // Node's Intl accepts offset zones (`+07:00`) that PostgreSQL's zone names
+  // do not, which would put the window and the SQL day buckets in different
+  // zones. Only IANA names are accepted.
+  if (tz.length > MAX_TIMEZONE_NAME_LENGTH || OFFSET_ZONE_RE.test(tz)) {
     return "UTC"
   }
   try {
-    new Intl.DateTimeFormat("en", { timeZone: tz })
-    return tz
+    // Intl matches names case-insensitively, PostgreSQL by exact text, so hand
+    // both sides a correctly cased name. ICU may prefer a legacy alias
+    // (`Asia/Saigon` for `Asia/Ho_Chi_Minh`): keep the caller's spelling when
+    // it is a known alias pair, the SQL side offers both spellings.
+    const resolved = new Intl.DateTimeFormat("en", {
+      timeZone: tz,
+    }).resolvedOptions().timeZone
+    const wanted = tz.toLowerCase()
+    return (
+      [resolved, ...timezoneCandidates(resolved)].find(
+        (name) => name.toLowerCase() === wanted,
+      ) ?? resolved
+    )
   } catch {
     return "UTC"
   }
@@ -93,7 +123,7 @@ export function parseAnalyticsDateRange(input: {
   timezone: string
 } {
   const timezone = resolveTimezone(input.tz ?? "")
-  const fallback = getDefaultAdsAnalyticsRange()
+  const fallback = getDefaultAdsAnalyticsRange(new Date(), timezone)
   const from = isValidDateKey(input.from) ? input.from : fallback.from
   const to = isValidDateKey(input.to) ? input.to : fallback.to
   const since = zonedDayStart(from, timezone)

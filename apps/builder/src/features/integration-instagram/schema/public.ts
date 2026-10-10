@@ -28,3 +28,13 @@ export const updateInstagramSettingsPublicRequest = z.object({
     "Mark the conversation read whenever a message is sent from this account. Left unchanged when omitted.",
   ),
 })
+
+/** Only the fields to change; the others keep their saved value. */
+export const patchInstagramSettingsPublicRequest = z.object({
+  id: instagramChannelIdSchema,
+  welcomeFlowId: settingsShape.welcomeFlowId.optional(),
+  conversationStarters: settingsShape.conversationStarters.optional(),
+  persistentMenus: settingsShape.persistentMenus.optional(),
+  markReadOnOutbound:
+    updateInstagramSettingsPublicRequest.shape.markReadOnOutbound,
+})

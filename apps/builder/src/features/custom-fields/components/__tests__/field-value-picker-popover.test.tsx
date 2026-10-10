@@ -187,6 +187,8 @@ function FormWatcher({
   return null
 }
 
+const RFC3339_LOCAL = /^2026-05-19T14:05:09(Z|[+-]\d{2}:\d{2})$/
+
 const click = (element: Element | null | undefined) => {
   act(() => {
     element?.dispatchEvent(
@@ -264,6 +266,28 @@ describe("FieldValuePickerPopover", () => {
     click(container.querySelector('[data-testid="time-pick"]'))
 
     expect(latestValue).toBe("2026-05-19 14:05:09")
+  })
+
+  test("a custom valueFormat writes an RFC 3339 value with the local offset", () => {
+    let latestValue: string | undefined
+    act(() => {
+      root.render(
+        <FormHarness onValuesChange={(value) => (latestValue = value)}>
+          <FieldValuePickerPopover
+            kind="datetime"
+            name="value"
+            valueFormat="yyyy-MM-dd'T'HH:mm:ssXXX"
+          >
+            {(inputKey) => <TrackedInput inputKey={inputKey} key={inputKey} />}
+          </FieldValuePickerPopover>
+        </FormHarness>,
+      )
+    })
+
+    click(container.querySelector('[data-testid="wrapped-input"]'))
+    click(container.querySelector('[data-testid="time-pick"]'))
+
+    expect(latestValue).toMatch(RFC3339_LOCAL)
   })
 
   test("date picker writes yyyy-MM-dd", () => {

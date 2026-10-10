@@ -72,8 +72,19 @@ export class AuthException extends SdkException {}
 
 /** A provider explicitly rejected supplied credentials or an OAuth request. */
 export class ConnectionProviderRejectedError extends SdkException {
-  constructor(message: string, originError?: Error | unknown) {
+  /**
+   * Stable, provider-specific reason (a `ConnectFailureCause`) the caller can
+   * translate; the `message` is English-only and not for display.
+   */
+  readonly failureCause?: string
+
+  constructor(
+    message: string,
+    originError?: Error | unknown,
+    failureCause?: string,
+  ) {
     super(message, "connectionProviderRejected", 400)
+    this.failureCause = failureCause
     if (originError) {
       this.setOriginError(originError)
     }

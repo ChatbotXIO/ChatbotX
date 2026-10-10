@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest"
 import {
   adBadgeLabelKey,
+  googleAdsBadgeLabelKey,
   selectAdBadge,
+  selectGoogleAdsBadge,
 } from "@/features/conversations/utils/ad-badge"
 
 type Inbox = { channel: string; adReferral: { adTitle: string | null } | null }
@@ -73,5 +75,47 @@ describe("adBadgeLabelKey", () => {
 
   test("falls back to the generic Ads label for an unknown channel", () => {
     expect(adBadgeLabelKey("telegram")).toBe("fields.adReferral.label")
+  })
+})
+
+describe("selectGoogleAdsBadge (conversation badge)", () => {
+  test("is independent of selectAdBadge: a Google-only conversation has no Meta badge", () => {
+    const inboxes = [
+      {
+        channel: "whatsapp",
+        adReferral: null,
+        googleAdsClick: {
+          clickIdType: "gclid" as const,
+          receivedAt: "2026-10-05T01:00:00.000Z",
+        },
+      },
+    ]
+    expect(selectAdBadge(inboxes)).toBeNull()
+    expect(selectGoogleAdsBadge(inboxes)).toEqual({
+      channel: "whatsapp",
+      clickIdType: "gclid",
+    })
+  })
+
+  test("returns null when no inbox carries a Google click", () => {
+    expect(
+      selectGoogleAdsBadge([{ channel: "whatsapp", googleAdsClick: null }]),
+    ).toBeNull()
+    expect(selectGoogleAdsBadge(null)).toBeNull()
+  })
+})
+
+describe("googleAdsBadgeLabelKey", () => {
+  test("names the Google pill per channel (GA CCWA / GA CCTM)", () => {
+    expect(googleAdsBadgeLabelKey("whatsapp")).toBe(
+      "fields.adReferral.googleAdsWhatsapp",
+    )
+    expect(googleAdsBadgeLabelKey("messenger")).toBe(
+      "fields.adReferral.googleAdsMessenger",
+    )
+  })
+
+  test("an unknown channel keeps the generic label", () => {
+    expect(googleAdsBadgeLabelKey("zalo")).toBe("fields.adReferral.googleAds")
   })
 })

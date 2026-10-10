@@ -1,11 +1,8 @@
+import { integrationWhatsappService } from "@chatbotx.io/business"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { SdkException } from "@chatbotx.io/sdk"
 import { integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
-import {
-  findIntegrationWhatsappById,
-  markWhatsappWebhookVerified,
-} from "@/features/integration-whatsapp/queries"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { logWebhookRequestBody } from "@/lib/webhook-log"
@@ -20,7 +17,7 @@ const json = (body: unknown, status: number) =>
 
 const loadManualIntegration = async (integrationId: string) => {
   // must cache
-  const row = await findIntegrationWhatsappById(integrationId)
+  const row = await integrationWhatsappService.findByIdUnscoped(integrationId)
   if (!row) {
     return null
   }
@@ -61,7 +58,7 @@ const handleGet = async (req: NextRequest, integrationId: string) => {
     return json({ message: "Forbidden" }, 403)
   }
 
-  await markWhatsappWebhookVerified(integrationId, auth)
+  await integrationWhatsappService.markWebhookVerified(integrationId, auth)
 
   return new Response(challenge, {
     status: 200,

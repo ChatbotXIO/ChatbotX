@@ -13,5 +13,9 @@ export const reflinkRelations = defineRelationsPart(schema, (r) => ({
       from: r.reflinkModel.customFieldId,
       to: r.customFieldModel.id,
     }),
+    widgetLogoFile: r.one.mediaLibraryFileModel({
+      from: r.reflinkModel.widgetLogoFileId,
+      to: r.mediaLibraryFileModel.id,
+    }),
   },
 }))

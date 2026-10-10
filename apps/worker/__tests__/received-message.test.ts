@@ -562,6 +562,15 @@ vi.mock("../src/integration/handlers/comment-media-attachment", () => ({
   fetchThreadsCommentAttachments: mockFetchThreadsCommentAttachments,
 }))
 
+const mockSyncAdLabelsIfAdReferred = vi.fn().mockResolvedValue(undefined)
+const mockTagAdReferralOnlyContact = vi.fn().mockResolvedValue(undefined)
+vi.mock("../src/integration/handlers/sync-ad-labels", () => ({
+  syncAdLabelsIfAdReferred: (...args: unknown[]) =>
+    mockSyncAdLabelsIfAdReferred(...args),
+  tagAdReferralOnlyContact: (...args: unknown[]) =>
+    mockTagAdReferralOnlyContact(...args),
+}))
+
 const mockProcessCommentAutomation = vi.fn().mockResolvedValue(undefined)
 vi.mock("../src/integration/handlers/comment-automation", () => ({
   processCommentAutomation: mockProcessCommentAutomation,
@@ -773,6 +782,75 @@ describe("receiveMessage — message repository branch", () => {
 
     expect(mockCreateOrUpdate).toHaveBeenCalledTimes(1)
     expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
+  })
+
+  describe("Google click referral persistence", () => {
+    const googleReferral = {
+      gclid: "ABCDEFGHIJ1234567890",
+      gbraid: null,
+      googleCampaignId: "123",
+      googleAdGroupId: "456",
+      googleAdId: "789",
+      googleClickReceivedAt: "2026-06-21T00:00:00.000Z",
+    }
+
+    test("passes the six Google keys in tracking.referral to recordInboundActivity", async () => {
+      mockRunChannelHandler.mockResolvedValue({
+        message: { ...baseIncomingMessage, attachments: [] },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        referral: googleReferral,
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockRecordInboundActivity).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tracking: expect.objectContaining({
+            referral: expect.objectContaining(googleReferral),
+          }),
+        }),
+      )
+    })
+
+    test("persists the Google keys via updateTracking when message is null", async () => {
+      mockRunChannelHandler.mockResolvedValue({
+        message: null,
+        contact: { sourceId: "psid-123" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        referral: googleReferral,
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockUpdateTracking).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { referral: expect.objectContaining(googleReferral) },
+        }),
+      )
+    })
+
+    test("does not enqueue runRef when ref is null for a Google referral", async () => {
+      mockRunChannelHandler.mockResolvedValue({
+        message: { ...baseIncomingMessage, attachments: [] },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        referral: googleReferral,
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockIntegrationQueueAdd).not.toHaveBeenCalledWith(
+        "runRef",
+        expect.anything(),
+      )
+    })
   })
 
   test("auto-unblocks on inbound messages using the loaded contact", async () => {
@@ -2306,6 +2384,90 @@ describe("receiveMessage — new contact MAC gate", () => {
     expect(rows).toContainEqual(expect.objectContaining({ source: "botLink" }))
   })
 
+  describe("contact source with a Google click", () => {
+    const runWith = async (extra: Record<string, unknown>) => {
+      mockRunChannelHandler.mockResolvedValue({
+        message: { ...baseIncomingMessage, attachments: [] },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        ...extra,
+      })
+      mockCreateNewContactWithMac.mockResolvedValue({
+        ok: true,
+        value: {
+          newContact: {
+            id: "contact-new",
+            workspaceId: "ws-1",
+            firstName: "Test",
+            phoneNumber: null,
+            email: null,
+            blockedAt: null,
+            createdAt: new Date("2026-06-21T00:00:00Z"),
+          },
+          contactInbox: {
+            ...fakeContactInbox,
+            id: "ci-new",
+            contactId: "contact-new",
+          },
+          conversation: fakeConversation,
+        },
+      })
+      await receiveMessage(baseProps)
+      return runCapturedNewContactCreate()
+    }
+
+    test("uses ads for a gclid referral even when referralSource is SHORTLINK", async () => {
+      const rows = await runWith({
+        referralSource: "SHORTLINK",
+        referral: { gclid: "ABCDEFGHIJ1234567890", gbraid: null },
+      })
+      expect(rows).toContainEqual(expect.objectContaining({ source: "ads" }))
+    })
+
+    test("uses ads for a gbraid referral even when referralSource is SHORTLINK", async () => {
+      const rows = await runWith({
+        referralSource: "SHORTLINK",
+        referral: { gclid: null, gbraid: "ABCDEFGHIJ1234567890" },
+      })
+      expect(rows).toContainEqual(expect.objectContaining({ source: "ads" }))
+    })
+
+    test("uses ads for a Google click with no Meta referralSource", async () => {
+      const rows = await runWith({
+        referralSource: null,
+        referral: { gclid: "ABCDEFGHIJ1234567890" },
+      })
+      expect(rows).toContainEqual(expect.objectContaining({ source: "ads" }))
+    })
+
+    test("keeps botLink for SHORTLINK without a Google click", async () => {
+      const rows = await runWith({
+        referralSource: "SHORTLINK",
+        referral: { gclid: null, gbraid: null },
+      })
+      expect(rows).toContainEqual(
+        expect.objectContaining({ source: "botLink" }),
+      )
+    })
+
+    test("keeps ads for ADS without a Google click", async () => {
+      const rows = await runWith({
+        referralSource: "ADS",
+        referral: { adId: "ad-1" },
+      })
+      expect(rows).toContainEqual(expect.objectContaining({ source: "ads" }))
+    })
+
+    test("defaults to inboundMessage with no referral at all", async () => {
+      const rows = await runWith({ referralSource: null, referral: null })
+      expect(rows).toContainEqual(
+        expect.objectContaining({ source: "inboundMessage" }),
+      )
+    })
+  })
+
   test("derives WhatsApp locale, timezone, and language from the wa_id phone country", async () => {
     vi.mocked(
       integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
@@ -2700,6 +2862,171 @@ describe("receiveMessage — referral-only events", () => {
 // pipeline: eligibility, fetcher selection per channel, and the never-throws
 // guarantee.
 // ---------------------------------------------------------------------------
+
+describe("receiveMessage — ad label sync (Meta auto labels on CTM referrals)", () => {
+  const adsReferral = { source: "ADS", type: "OPEN_THREAD", adId: "ad-9" }
+
+  const parsed = (overrides: Record<string, unknown> = {}) => ({
+    message: baseIncomingMessage,
+    contact: { sourceId: "psid-123" },
+    postbackAction: null,
+    quickReplyAction: null,
+    ref: null,
+    referralSource: "ADS",
+    referral: adsReferral,
+    ...overrides,
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: fakeInbox,
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      contact: fakeContact,
+    })
+    mockConversationFindOrCreate.mockResolvedValue(fakeConversation)
+    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockresolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://files.example.test",
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      createOrUpdate: mockCreateOrUpdate,
+      createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,
+      findLastByConversation: mockFindLastByConversation,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: true,
+    })
+    mockEmit.mockResolvedValue(undefined)
+    mockIntegrationQueueAdd.mockResolvedValue(undefined)
+    mockWorkspaceIsActiveNow.mockReturnValue(true)
+  })
+
+  test("hands the newly stored message to the ad label sync, inline (no queue job)", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed())
+
+    await receiveMessage(baseProps)
+
+    expect(mockSyncAdLabelsIfAdReferred).toHaveBeenCalledTimes(1)
+    expect(mockSyncAdLabelsIfAdReferred).toHaveBeenCalledWith({
+      canAutomate: true,
+      inbox: fakeInbox,
+      integrationRow: fakeIntegrationRow,
+      referral: adsReferral,
+      newMessageType: "incoming",
+      sourceId: "psid-123",
+      listLabels: expect.any(Function),
+    })
+    const queuedJobNames = mockIntegrationQueueAdd.mock.calls.map(
+      (call) => call[0],
+    )
+    expect(queuedJobNames).not.toContain("syncAdLabels")
+  })
+
+  test("passes no new message for a redelivered (already stored) message", async () => {
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: false,
+    })
+    mockRunChannelHandler.mockResolvedValue(parsed())
+
+    await receiveMessage(baseProps)
+
+    expect(mockSyncAdLabelsIfAdReferred).toHaveBeenCalledWith(
+      expect.objectContaining({ newMessageType: undefined }),
+    )
+  })
+
+  test("passes no new message for the referral-only webhook", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed({ message: null }))
+
+    await receiveMessage(baseProps)
+
+    expect(mockSyncAdLabelsIfAdReferred).toHaveBeenCalledWith(
+      expect.objectContaining({ newMessageType: undefined }),
+    )
+  })
+
+  test("tags the contact with the ad for the referral-only webhook", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed({ message: null }))
+
+    await receiveMessage(baseProps)
+
+    expect(mockTagAdReferralOnlyContact).toHaveBeenCalledWith({
+      canAutomate: true,
+      inbox: fakeInbox,
+      integrationRow: fakeIntegrationRow,
+      referral: adsReferral,
+      isReferralOnly: true,
+      contactInbox: {
+        id: fakeContactInbox.id,
+        contactId: fakeContactInbox.contactId,
+      },
+    })
+  })
+
+  test("tags the contact before the ref job is enqueued", async () => {
+    mockRunChannelHandler.mockResolvedValue(
+      parsed({ message: null, ref: "promo" }),
+    )
+
+    await receiveMessage(baseProps)
+
+    const runRefCall = mockIntegrationQueueAdd.mock.calls.findIndex(
+      (call) => call[0] === "runRef",
+    )
+    expect(runRefCall).toBeGreaterThanOrEqual(0)
+    expect(
+      mockTagAdReferralOnlyContact.mock.invocationCallOrder[0],
+    ).toBeLessThan(mockIntegrationQueueAdd.mock.invocationCallOrder[runRefCall])
+  })
+
+  test("marks a delivery with a message as not referral-only", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed())
+
+    await receiveMessage(baseProps)
+
+    expect(mockTagAdReferralOnlyContact).toHaveBeenCalledWith(
+      expect.objectContaining({ isReferralOnly: false }),
+    )
+  })
+
+  test("passes canAutomate false for an expired workspace", async () => {
+    mockWorkspaceIsActiveNow.mockReturnValue(false)
+    mockRunChannelHandler.mockResolvedValue(parsed())
+
+    await receiveMessage(baseProps)
+
+    expect(mockSyncAdLabelsIfAdReferred).toHaveBeenCalledWith(
+      expect.objectContaining({ canAutomate: false }),
+    )
+  })
+
+  test("listLabels reads the person's labels through the channel handler with the given deadline", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed())
+
+    await receiveMessage(baseProps)
+
+    const { listLabels } = mockSyncAdLabelsIfAdReferred.mock.calls[0][0] as {
+      listLabels: (requestTimeoutMs: number) => Promise<unknown>
+    }
+    mockRunChannelHandler.mockResolvedValueOnce([])
+    await listLabels(5000)
+    expect(mockRunChannelHandler).toHaveBeenLastCalledWith(
+      "bot",
+      "listLabels",
+      expect.objectContaining({
+        data: { sourceId: "psid-123", requestTimeoutMs: 5000 },
+      }),
+    )
+  })
+})
 
 describe("receiveMessage — existing contact profile refresh (post-save)", () => {
   beforeEach(() => {

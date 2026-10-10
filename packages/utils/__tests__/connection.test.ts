@@ -2,7 +2,9 @@ import { describe, expect, test } from "vitest"
 import {
   ACTIVE_CONNECT_SESSION_STATUSES,
   ACTIVE_CONNECTION_STATUSES,
+  appendConnectError,
   CONNECTION_TO_INBOX_DISCONNECT_REASON,
+  connectFailureCauseOf,
   connectionStatuses,
   connectionStatusReasons,
   connectSessionNextActionSchema,
@@ -72,5 +74,66 @@ describe("connectSessionNextActionSchema", () => {
     expect(
       connectSessionNextActionSchema.safeParse({ type: "redirect" }).success,
     ).toBe(false)
+  })
+})
+
+describe("appendConnectError", () => {
+  test("adds the code to a relative return URL and keeps its query and hash", () => {
+    expect(
+      appendConnectError("/space/1/settings?session=9#top", "internal_error"),
+    ).toBe("/space/1/settings?session=9&connect_error=internal_error#top")
+  })
+
+  test("replaces an existing connect_error value", () => {
+    expect(
+      appendConnectError("/a?connect_error=x&b=1", "provider_unavailable"),
+    ).toBe("/a?connect_error=provider_unavailable&b=1")
+  })
+
+  test("keeps an absolute return URL absolute", () => {
+    expect(
+      appendConnectError("https://app.example.com/a?b=1", "internal_error"),
+    ).toBe("https://app.example.com/a?b=1&connect_error=internal_error")
+  })
+
+  test.each([
+    "/..//evil.example",
+    "/.//evil.example/x",
+    "/%2e%2e//evil.example",
+    "//evil.example",
+    "/\\evil.example",
+  ])("never emits a protocol-relative or backslash redirect for %s", (input) => {
+    const out = appendConnectError(input, "internal_error")
+
+    expect(out.startsWith("/")).toBe(true)
+    expect(out.startsWith("//")).toBe(false)
+    expect(out.includes("\\")).toBe(false)
+    expect(out).toContain("connect_error=internal_error")
+  })
+})
+
+describe("connectFailureCauseOf", () => {
+  test("reads an allow-listed cause from failureCause or data.cause", () => {
+    expect(connectFailureCauseOf({ failureCause: "permission_denied" })).toBe(
+      "permission_denied",
+    )
+    expect(
+      connectFailureCauseOf({ failureCause: "project_not_approved" }),
+    ).toBe("project_not_approved")
+    expect(connectFailureCauseOf({ data: { cause: "api_not_enabled" } })).toBe(
+      "api_not_enabled",
+    )
+  })
+
+  test.each([
+    null,
+    undefined,
+    "x",
+    new Error("boom"),
+    { failureCause: "<script>" },
+    { data: { cause: "internal_error" } },
+    { data: null },
+  ])("ignores anything else (%#)", (value) => {
+    expect(connectFailureCauseOf(value)).toBeUndefined()
   })
 })

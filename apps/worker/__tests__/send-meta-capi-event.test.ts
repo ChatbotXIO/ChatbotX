@@ -806,22 +806,28 @@ describe("handleSendMetaCapiEvent", () => {
       expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
     })
 
-    test("skips a whatsapp event when the integration lacks CAPI scope", async () => {
-      mocks.refreshCapiScopeCache.mockResolvedValue({
+    test("sends a whatsapp event without CAPI scope and never refreshes it (Meta is the arbiter)", async () => {
+      mocks.findWhatsappIntegration.mockResolvedValue({
         ...whatsappIntegration,
         hasCapiScope: false,
       })
 
       await handleSendMetaCapiEvent(jobData)
 
+      expect(mocks.refreshCapiScopeCache).not.toHaveBeenCalled()
+      expect(mocks.sendConversionEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          datasetId: "dataset-1",
+          accessToken: "token-1",
+        }),
+      )
       expect(mocks.updateCapiStatus).toHaveBeenCalledWith({
         id: "mce-1",
         workspaceId: "ws-1",
         from: "pending",
-        to: "skipped_no_scope",
+        to: "sent",
+        capiSentAt: expect.any(Date),
       })
-      expect(mocks.ensureDatasetId).not.toHaveBeenCalled()
-      expect(mocks.sendConversionEvent).not.toHaveBeenCalled()
     })
 
     test("a whatsapp integration without a disconnect flag still sends", async () => {

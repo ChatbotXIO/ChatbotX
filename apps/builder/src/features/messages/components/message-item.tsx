@@ -177,12 +177,10 @@ export const MessageItem = (props: MessageItemProps) => {
     }
   }
 
+  const createdAt = new Date(message.createdAt)
+
   return (
-    <MessageBubble
-      className="group"
-      title={format(new Date(message.createdAt), "yyyy/MM/dd HH:mm:ss")}
-      variant={variant}
-    >
+    <MessageBubble className="group" variant={variant}>
       {variant === "left" && avatarUrl && !whatsappCall && (
         <Avatar className="mt-2 size-7 self-start">
           <AvatarImage alt="" src={avatarUrl} />
@@ -360,6 +358,28 @@ export const MessageItem = (props: MessageItemProps) => {
           />
         )}
       </div>
+      {variant !== "full" && (
+        // Sits beside the bubble (after it for incoming, before it for
+        // outgoing via the reversed row) and appears the moment the bubble
+        // is hovered, or when one of its action buttons has keyboard focus —
+        // an OS `title` tooltip waits about a second.
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <time
+                className="self-center whitespace-nowrap text-muted-foreground text-xs opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+                dateTime={createdAt.toISOString()}
+                suppressHydrationWarning
+              >
+                {format(createdAt, "HH:mm")}
+              </time>
+            }
+          />
+          <TooltipContent side="top">
+            {format(createdAt, "yyyy/MM/dd HH:mm:ss")}
+          </TooltipContent>
+        </Tooltip>
+      )}
     </MessageBubble>
   )
 }

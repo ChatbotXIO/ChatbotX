@@ -8,7 +8,6 @@ import {
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
 import { getStoryReply } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
 import {
   AIJobAction,
   aiAgentQueue,
@@ -36,6 +35,7 @@ import { logger } from "../lib/logger"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { integrationService } from "../services/integrations"
+import { mintRandomFlowExecutionKey } from "./flow-execution-key"
 import { handleAdsAutomaticEvent } from "./handlers/ads-automatic-event"
 import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
 import { runAiHandoverBulkToggle } from "./handlers/ai-handover-bulk-toggle"
@@ -57,6 +57,7 @@ import {
   runFlowQuickReply,
 } from "./handlers/flow"
 import { runFollowUpResume } from "./handlers/follow-up"
+import { handleSendGoogleAdsConversion } from "./handlers/google-ads/send-conversion"
 import { resumeHeavyStep } from "./handlers/heavy-step-resume"
 import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
 import { processLeadgen } from "./handlers/lead-ads"
@@ -117,10 +118,12 @@ function hashLegacyPayload(payload: object): string {
 
 function getFlowExecutionKey(job: Job): string {
   if (job.id) {
-    return job.id
+    // The creation time is fixed for the job's retries but differs when a
+    // job id is reused (a fixed id, or a counter restarted after a Redis loss).
+    return `${job.id}:${job.timestamp}`
   }
 
-  const flowExecutionKey = `integration-job-${createId()}`
+  const flowExecutionKey = mintRandomFlowExecutionKey("integration-job-")
   logger.warn(
     { flowExecutionKey, jobName: job.name },
     "Integration job is missing id; generated flow execution key",
@@ -467,6 +470,10 @@ async function startIntegrationWorker() {
             }
             case IntegrationJobAction.sendMetaCapiEvent: {
               await handleSendMetaCapiEvent(job.data.data)
+              return
+            }
+            case IntegrationJobAction.sendGoogleAdsConversion: {
+              await handleSendGoogleAdsConversion(job.data.data, job)
               return
             }
             case IntegrationJobAction.updateContactAvatar: {

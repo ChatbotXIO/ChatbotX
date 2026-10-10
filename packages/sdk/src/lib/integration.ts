@@ -464,9 +464,14 @@ export type BotHandlers<IAuth extends AuthValue> = {
     { ctx: Context<IAuth>; data: { pageId: string; name: string } },
     ChannelLabel
   >
-  // List the labels currently assigned to a specific user.
+  // List the labels currently assigned to a specific user. `requestTimeoutMs`
+  // makes the lookup fail fast (no retries) for callers on a latency-sensitive
+  // path; omit it to keep the client's default timeout and retries.
   listLabels?: Handler<
-    { ctx: Context<IAuth>; data: { sourceId: string } },
+    {
+      ctx: Context<IAuth>
+      data: { sourceId: string; requestTimeoutMs?: number }
+    },
     ChannelLabel[]
   >
   deleteLabel?: Handler<

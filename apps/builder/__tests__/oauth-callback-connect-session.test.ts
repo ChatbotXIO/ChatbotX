@@ -1,6 +1,8 @@
 // @vitest-environment node
 
 import {
+  connectionCredentialsRejectedException,
+  connectionNoCandidatesException,
   connectionProviderUnavailableException,
   connectionStateMismatchException,
   connectSessionExpiredException,
@@ -709,7 +711,9 @@ describe("handleCallback — ConnectSession state dispatch", () => {
       id: "123",
       errorCode: "internal_error",
     })
-    expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/connect/123?connect_error=internal_error",
+    )
   })
 
   test("a DB blip inside failSession for an unexpected completeAuthorization error is swallowed — the request still redirects instead of throwing", async () => {
@@ -724,7 +728,9 @@ describe("handleCallback — ConnectSession state dispatch", () => {
 
     await handleCallback("messenger", buildRequest("123.abc-nonce"))
 
-    expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/connect/123?connect_error=internal_error",
+    )
   })
 
   test("fails the session when the post-authorization auto-connect (connectTargets) throws (regression: item 10 — the session previously stayed awaiting_selection forever)", async () => {
@@ -748,7 +754,9 @@ describe("handleCallback — ConnectSession state dispatch", () => {
       id: "123",
       errorCode: "internal_error",
     })
-    expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/connect/123?connect_error=internal_error",
+    )
   })
 
   test("replaying the callback while the session is still legitimately active (completeAuthorization rejects the duplicate code exchange) redirects without failing the session (regression: a double-fired/replayed callback must not corrupt a connect that's genuinely still in progress)", async () => {
@@ -818,11 +826,163 @@ describe("handleCallback — ConnectSession state dispatch", () => {
     await handleCallback("messenger", buildRequest("123.abc-nonce"))
 
     expect(mockFailSession).not.toHaveBeenCalled()
-    expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/connect/123?connect_error=provider_unavailable",
+    )
     expect(mockLoggerWarn).toHaveBeenCalledWith(
       expect.objectContaining({ sessionId: "123", provider: "messenger" }),
       "connect session completeAuthorization failed with a retryable provider error — left active for retry",
     )
     expect(mockLoggerError).not.toHaveBeenCalled()
+  })
+
+  test("a retryable failure keeps the session's own returnUrl query (?session=) and appends connect_error", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: "/space/1/settings/integrations/google-ads?session=123",
+      platformOwnerId: "owner-1",
+    })
+    mockCompleteAuthorization.mockRejectedValueOnce(
+      connectionProviderUnavailableException(502),
+    )
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockFailSession).not.toHaveBeenCalled()
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "https://app.example.com/space/1/settings/integrations/google-ads?session=123&connect_error=provider_unavailable",
+    )
+  })
+
+  test("a provider-specific failure cause rides in connect_error while the session keeps its stored code", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    const rejection = connectionCredentialsRejectedException("rejected")
+    rejection.data = { cause: "developer_token_not_approved" }
+    mockCompleteAuthorization.mockRejectedValueOnce(rejection)
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/connect/123?connect_error=developer_token_not_approved",
+    )
+  })
+
+  test("a provider rejection with no recognised cause leaves the stored session code to speak (no connect_error)", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    mockCompleteAuthorization.mockRejectedValueOnce(
+      connectionCredentialsRejectedException("rejected"),
+    )
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+  })
+
+  test("a forged cause that is not an allow-listed value is ignored", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    const rejection = connectionCredentialsRejectedException("rejected")
+    rejection.data = { cause: "<script>alert(1)</script>" }
+    mockCompleteAuthorization.mockRejectedValueOnce(rejection)
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockRedirect).toHaveBeenCalledWith("/connect/123")
+  })
+
+  test("no candidates redirects with connect_error=no_candidates", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      platformOwnerId: "owner-1",
+    })
+    mockCompleteAuthorization.mockRejectedValueOnce(
+      connectionNoCandidatesException(),
+    )
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/connect/123?connect_error=no_candidates",
+    )
+  })
+
+  test("an unexpected throw before the exchange (credential resolution) never surfaces as a 500: the session is failed and the person is redirected with connect_error=internal_error", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: "/space/1/settings/integrations/google-ads?session=123",
+      platformOwnerId: "owner-1",
+    })
+    mockResolveForOwner.mockRejectedValueOnce(new Error("decrypt failed"))
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockCompleteAuthorization).not.toHaveBeenCalled()
+    expect(mockFailSession).toHaveBeenCalledWith({
+      id: "123",
+      errorCode: "internal_error",
+    })
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error), sessionId: "123" }),
+      "connect session callback failed unexpectedly",
+    )
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "https://app.example.com/space/1/settings/integrations/google-ads?session=123&connect_error=internal_error",
+    )
+  })
+
+  test("the pre-exchange fallback still redirects when failSession itself and the return URL resolution fail", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: "/x",
+      platformOwnerId: "owner-1",
+    })
+    // Rejects in the main flow and again in the fallback's own resolution.
+    mockSanitizeReferer
+      .mockRejectedValueOnce(new Error("sanitize"))
+      .mockRejectedValueOnce(new Error("sanitize"))
+    mockFailSession.mockRejectedValueOnce(new Error("db blip"))
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/connect/123?connect_error=internal_error",
+    )
+  })
+
+  test("a notFound/redirect control-flow throw from the relay is not swallowed by the safety net", async () => {
+    mockFindByNonce.mockResolvedValueOnce({
+      id: "123",
+      provider: "messenger",
+      returnUrl: null,
+      originHost: "app.example.com",
+      platformOwnerId: "owner-1",
+    })
+    mockResolveRelayTarget.mockResolvedValueOnce(
+      "https://relay.example.com/x" as never,
+    )
+
+    await handleCallback("messenger", buildRequest("123.abc-nonce"))
+
+    expect(mockRedirect).toHaveBeenCalledWith("https://relay.example.com/x")
+    expect(mockFailSession).not.toHaveBeenCalled()
   })
 })

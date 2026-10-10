@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 // The broadcast policy import reaches quota/workspace modules these narrow mocks omit.
 vi.mock("../src/broadcast/plan-policy.service", () => ({
@@ -16,6 +16,7 @@ const {
   mockFindByIdAndWorkspace,
   mockFindById,
   mockListInboxLabelsByIds,
+  mockFindMediaFile,
   mockResolveFreezeReason,
   mockIsUniqueViolationError,
 } = vi.hoisted(() => {
@@ -37,6 +38,7 @@ const {
     mockFindByIdAndWorkspace: vi.fn(),
     mockFindById: vi.fn(),
     mockListInboxLabelsByIds: vi.fn(),
+    mockFindMediaFile: vi.fn(),
     mockResolveFreezeReason: vi.fn(async () => ({
       freezeReason: null as string | null,
     })),
@@ -64,6 +66,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("../src/inbox/service", () => ({
   inboxService: { listLabelsByIds: mockListInboxLabelsByIds },
+}))
+
+vi.mock("../src/media-library-file/service", () => ({
+  mediaLibraryFileService: { findById: mockFindMediaFile },
 }))
 
 vi.mock("../src/workspace-lifecycle/with-blocked-owner-guard", () => ({
@@ -223,6 +229,17 @@ describe("reflinkService.update", () => {
 })
 
 describe("reflinkService.updateWidgetSettings", () => {
+  const BRANDING = {
+    logoFileId: "file-1",
+    brandName: "Shop",
+    brandUrl: "https://shop.test",
+    logoBackgroundColor: "#2563eb",
+  }
+
+  beforeEach(() => {
+    mockFindMediaFile.mockResolvedValue({ id: "file-1", mimeType: "image/png" })
+  })
+
   test("folds domain case and duplicates and keeps only this workspace's inboxes", async () => {
     mockFindByIdAndWorkspace.mockResolvedValueOnce({ id: "reflink-1" })
     mockListInboxLabelsByIds.mockResolvedValueOnce([
@@ -237,6 +254,7 @@ describe("reflinkService.updateWidgetSettings", () => {
       {
         authorizedDomains: ["Example.COM", "example.com", "shop.test"],
         hiddenInboxIds: ["inbox-1", "inbox-1", "foreign-inbox"],
+        ...BRANDING,
       },
     )
 
@@ -244,10 +262,63 @@ describe("reflinkService.updateWidgetSettings", () => {
       workspaceId: WS,
       ids: ["inbox-1", "foreign-inbox"],
     })
+    expect(mockFindMediaFile).toHaveBeenCalledWith({
+      workspaceId: WS,
+      id: "file-1",
+    })
     expect(mockUpdateSet).toHaveBeenCalledWith({
       widgetAuthorizedDomains: ["example.com", "shop.test"],
       widgetHiddenInboxIds: ["inbox-1"],
+      widgetLogoFileId: BRANDING.logoFileId,
+      widgetBrandName: BRANDING.brandName,
+      widgetBrandUrl: BRANDING.brandUrl,
+      widgetLogoBackgroundColor: BRANDING.logoBackgroundColor,
     })
+  })
+
+  test("stores no logo, brand name or URL when they are empty", async () => {
+    mockFindByIdAndWorkspace.mockResolvedValueOnce({ id: "reflink-1" })
+    mockListInboxLabelsByIds.mockResolvedValueOnce([])
+    mockUpdateWhere.mockReturnValueOnce({
+      returning: vi.fn().mockResolvedValue([{ id: "reflink-1" }]),
+    })
+
+    await reflinkService.updateWidgetSettings(
+      { workspaceId: WS, id: "reflink-1" },
+      {
+        authorizedDomains: [],
+        hiddenInboxIds: [],
+        logoFileId: "",
+        brandName: "",
+        brandUrl: "",
+        logoBackgroundColor: "#111827",
+      },
+    )
+
+    expect(mockUpdateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        widgetLogoFileId: null,
+        widgetBrandName: null,
+        widgetBrandUrl: null,
+      }),
+    )
+  })
+
+  test.each([
+    ["outside the workspace", undefined],
+    ["not an image", { id: "file-1", mimeType: "application/pdf" }],
+  ])("rejects a logo file %s", async (_case, file) => {
+    mockFindByIdAndWorkspace.mockResolvedValueOnce({ id: "reflink-1" })
+    mockListInboxLabelsByIds.mockResolvedValueOnce([])
+    mockFindMediaFile.mockResolvedValueOnce(file)
+
+    await expect(
+      reflinkService.updateWidgetSettings(
+        { workspaceId: WS, id: "reflink-1" },
+        { authorizedDomains: [], hiddenInboxIds: [], ...BRANDING },
+      ),
+    ).rejects.toThrow("Logo must be an image")
+    expect(mockUpdate).not.toHaveBeenCalled()
   })
 
   test("throws not found for a ref link outside the workspace", async () => {
@@ -256,7 +327,7 @@ describe("reflinkService.updateWidgetSettings", () => {
     await expect(
       reflinkService.updateWidgetSettings(
         { workspaceId: WS, id: "missing" },
-        { authorizedDomains: [], hiddenInboxIds: [] },
+        { authorizedDomains: [], hiddenInboxIds: [], ...BRANDING },
       ),
     ).rejects.toThrow("Reflink not found")
     expect(mockUpdate).not.toHaveBeenCalled()

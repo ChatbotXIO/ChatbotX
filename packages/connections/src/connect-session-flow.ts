@@ -25,6 +25,10 @@ import {
   notFoundException,
   toPublicErrorMessage,
 } from "@chatbotx.io/business/errors"
+import {
+  compensateWorkspaceQuotaConsumption,
+  type WorkspaceQuotaConsumption,
+} from "@chatbotx.io/business/workspace"
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import type {
   ConnectSessionPurpose,
@@ -47,6 +51,7 @@ import type {
   ConnectSessionNextAction,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { connectFailureCauseOf } from "@chatbotx.io/utils/connection"
 import { failSession } from "./connect-targets"
 import {
   encryptedAuthorizationSchema,
@@ -81,7 +86,10 @@ type StartSessionTarget =
        * this instead of a plain `workspaceId` precisely so the insert it does
        * (`workspaceService.create`) can run against this package's `tx`.
        */
-      createWorkspace: (tx: DatabaseClient) => Promise<{ id: string }>
+      createWorkspace: (
+        tx: DatabaseClient,
+        quotaConsumption: WorkspaceQuotaConsumption,
+      ) => Promise<{ id: string }>
     }
 
 /**
@@ -160,15 +168,25 @@ export const startSession = async (
   let session: ConnectSessionModel
   if (input.createWorkspace) {
     const { createWorkspace } = input
-    session = await db.transaction(async (tx) => {
-      const workspace = await createWorkspace(tx)
-      await verifyTargetOwnership(workspace.id)
-      const created = await connectSessionService.create(
-        buildSessionInsertInput(workspace.id),
-        tx,
-      )
-      return created.session
-    })
+    // The `workspaces` seat is consumed outside SQL; a rollback below (session
+    // cap, ownership check, DB error) must hand it back from this catch.
+    const workspaceQuotaConsumption: WorkspaceQuotaConsumption = {
+      consumed: false,
+    }
+    try {
+      session = await db.transaction(async (tx) => {
+        const workspace = await createWorkspace(tx, workspaceQuotaConsumption)
+        await verifyTargetOwnership(workspace.id)
+        const created = await connectSessionService.create(
+          buildSessionInsertInput(workspace.id),
+          tx,
+        )
+        return created.session
+      })
+    } catch (err) {
+      await compensateWorkspaceQuotaConsumption(workspaceQuotaConsumption)
+      throw err
+    }
   } else {
     await verifyTargetOwnership(input.workspaceId)
     const created = await connectSessionService.create(
@@ -260,12 +278,19 @@ export const completeAuthorization = async (input: {
       throw connectionProviderUnavailableException(retryStatus)
     }
     await failSession(session, "exchange_failed", ["authorized"])
-    throw connectionCredentialsRejectedException(
+    const rejection = connectionCredentialsRejectedException(
       toPublicErrorMessage(
         providerError,
         "The provider rejected the authorization.",
       ),
     )
+    // Same channel as the listing failure: a provider-specific reason (e.g. a
+    // partial OAuth consent) rides on the exception into the redirect.
+    const cause = connectFailureCauseOf(providerError)
+    if (cause) {
+      rejection.data = { cause }
+    }
+    throw rejection
   }
 
   if (isReconnectSession(session)) {
@@ -324,9 +349,16 @@ export const listAndAttachCandidates = async (
       throw connectionProviderUnavailableException(retryStatus)
     }
     await failSession(session, "provider_error")
-    throw connectionCredentialsRejectedException(
+    const rejection = connectionCredentialsRejectedException(
       toPublicErrorMessage(providerError, "Failed to list accounts."),
     )
+    // The stored error code is a fixed enum; the specific reason rides on the
+    // exception so the callback can put it in the redirect.
+    const cause = connectFailureCauseOf(providerError)
+    if (cause) {
+      rejection.data = { cause }
+    }
+    throw rejection
   }
 
   if (candidates.length === 0) {

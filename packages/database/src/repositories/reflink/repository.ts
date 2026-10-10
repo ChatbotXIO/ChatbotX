@@ -36,6 +36,7 @@ export const reflinkRepository = {
       with: {
         flow: true,
         customField: true,
+        widgetLogoFile: { columns: { path: true } },
       },
     })
   },
@@ -60,10 +61,22 @@ export const reflinkRepository = {
     })
   },
 
+  /** Workspace-scoped lookup with the chat widget logo's storage path. */
+  async findWidgetByIdAndWorkspace(
+    input: { workspaceId: string; id: string },
+    tx: DatabaseClient = db,
+  ) {
+    return await tx.query.reflinkModel.findFirst({
+      where: { id: input.id, workspaceId: input.workspaceId, type: "refLink" },
+      with: { widgetLogoFile: { columns: { path: true } } },
+    })
+  },
+
   /** Unscoped lookup for the public chat widget, which only knows the id. */
   async findById(id: string, tx: DatabaseClient = db) {
     return await tx.query.reflinkModel.findFirst({
       where: { id, type: "refLink" },
+      with: { widgetLogoFile: { columns: { path: true } } },
     })
   },
 }

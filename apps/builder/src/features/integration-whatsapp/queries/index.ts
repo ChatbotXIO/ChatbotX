@@ -1,12 +1,11 @@
 import type { IntegrationWhatsappResource } from "@chatbotx.io/business"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { findOrFail } from "@chatbotx.io/database/client"
 import { integrationWhatsappRepository } from "@chatbotx.io/database/repositories"
 import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
 import type {
   InboxModel,
   IntegrationWhatsappModel,
 } from "@chatbotx.io/database/types"
-import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import type { PaginatedResponse } from "@/features/common/schema/pagination"
 
 type IntegrationWhatsappWithInbox = IntegrationWhatsappResource & {
@@ -62,31 +61,3 @@ export const toIntegrationWhatsappLinkable = (
   businessId: integration.businessId,
   wabaId: integration.wabaId,
 })
-
-export const findIntegrationWhatsappById = async (
-  id: IntegrationWhatsappModel["id"],
-): Promise<IntegrationWhatsappModel | null> => {
-  const integration = await db.query.integrationWhatsappModel.findFirst({
-    where: { id },
-  })
-
-  return integration ?? null
-}
-
-export const markWhatsappWebhookVerified = async (
-  id: IntegrationWhatsappModel["id"],
-  current: WhatsappAuthValue,
-): Promise<void> => {
-  const updatedAuth: WhatsappAuthValue = {
-    ...current,
-    metadata: {
-      ...current.metadata,
-      webhookVerifiedAt: new Date().toISOString(),
-    },
-  }
-
-  await db
-    .update(integrationWhatsappModel)
-    .set({ auth: updatedAuth })
-    .where(eq(integrationWhatsappModel.id, id))
-}

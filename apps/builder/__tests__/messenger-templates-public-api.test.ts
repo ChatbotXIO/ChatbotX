@@ -159,6 +159,31 @@ describe("Messenger template routes", () => {
     expect(mocks.templateDelete).not.toHaveBeenCalled()
   })
 
+  test("get lists the keys to fill as parameters", async () => {
+    mocks.templateFind.mockResolvedValueOnce({
+      ...template,
+      components: [{ type: "BODY", text: "Code {{1}}" }],
+    })
+
+    const result = await find(
+      "GET",
+      "/v1/messenger/templates/{id}",
+    )?.({
+      context,
+      input: { id: "t-1" },
+    })
+
+    expect(result.parameters).toEqual([
+      {
+        key: "body.1",
+        component: "body",
+        kind: "text",
+        required: true,
+        placeholder: "{{1}}",
+      },
+    ])
+  })
+
   test("delete removes only the local row and drops the cache", async () => {
     await find(
       "DELETE",

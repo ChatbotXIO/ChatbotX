@@ -26,6 +26,23 @@ describe("CONNECTION_REGISTRY", () => {
     }
   })
 
+  it("registers googleAds as a multi-account Google OAuth integration with its own googleAds platform credential and with its own satellite", () => {
+    const adapter = CONNECTION_REGISTRY.googleAds
+    expect(adapter?.provider.multiAccount).toBe(true)
+    expect(adapter?.provider.strategy).toBe("oauth_redirect")
+    expect(adapter?.provider.kind).toBe("integration")
+    expect(adapter?.credentialType).toBe("googleAds")
+    expect(adapter?.store?.duplicateConstraint).toBe(
+      "IntegrationGoogleAds_workspaceId_key",
+    )
+    expect(adapter?.store?.configColumns).toEqual([
+      "customerId",
+      "loginCustomerId",
+      "descriptiveName",
+      "currencyCode",
+    ])
+  })
+
   it("kind=channel adapters map onto a real ChannelType (directly, via instagramFacebook -> instagram, or chatbotx's documented exception)", () => {
     const channelSet = new Set<string>(channelTypes.options)
     for (const [type, adapter] of Object.entries(CONNECTION_REGISTRY)) {
