@@ -925,6 +925,25 @@ chatbotx messenger-personas list                       # Personas across every c
 
 ---
 
+### `mini-apps` (scope `mini-apps`)
+
+Mini Apps are WhatsApp Flow forms (Flow JSON 7.3) with a public web link for any channel. `customFieldMappings` (`{ "<input name>": "<custom field id>" | null }`) saves answers submitted through the link to the contact's custom fields; a new `flowJson` keeps existing mappings by input name.
+
+```bash
+chatbotx mini-apps list                                 # [--name --page --perPage]
+chatbotx mini-apps get <id>                             # Flow JSON, validation issues, public URL, WhatsApp publications
+chatbotx mini-apps flow-json <id>                       # Only the WhatsApp Flow JSON (same as the dashboard's Copy JSON)
+chatbotx mini-apps validate --flowJson <json>           # Check Flow JSON against Meta's rules without saving
+chatbotx mini-apps create --name <name> --flowJson <json>   # [--customFieldMappings <json>]
+chatbotx mini-apps update <id>                          # [--name --enabled --flowJson --customFieldMappings]
+chatbotx mini-apps delete <id>
+chatbotx mini-apps bulk-delete --ids <ids>
+chatbotx mini-apps publish-whatsapp <id> --integrationWhatsappId <id>   # id from `whatsapp-channels list`
+chatbotx mini-apps submissions list <id>                # Answers from the public link (uploaded files as public URLs)
+```
+
+---
+
 ### `minigames`
 
 ```bash

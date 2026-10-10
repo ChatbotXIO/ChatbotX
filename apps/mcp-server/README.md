@@ -45,7 +45,7 @@ Use `search_tools` when the task needs something outside the default set (e.g. d
 
 ## Available tools
 
-Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 43 tools:
+Tool names are derived from the OpenAPI `operationId` converted to `snake_case` (e.g. `tags.list` → `tags_list`). The current default set has 45 tools:
 
 ### Capabilities
 
@@ -136,6 +136,13 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 | Tool | Description |
 |---|---|
 | `messages_list` | List messages on conversation |
+
+### Mini Apps
+
+| Tool | Description |
+|---|---|
+| `mini_apps_list` | List Mini Apps |
+| `mini_apps_create` | Create Mini App |
 
 ### Sequences
 
@@ -323,7 +330,7 @@ pnpm --filter chatbotx-mcp eval:business \
 ```
 
 - `--repeat N` runs every selected case under every model and exposure N times. Smoke runs default to 3; baseline and candidate runs default to 1.
-- `--exposure meta-only` restricts the model's tool set to `search_tools`/`call_tool` only (no directly-listed default tools) — the path a client using only the default connection payload takes for any request outside the ~43 default-visible tools. `both` (the default) runs every case under both exposures.
+- `--exposure meta-only` restricts the model's tool set to `search_tools`/`call_tool` only (no directly-listed default tools) — the path a client using only the default connection payload takes for any request outside the ~45 default-visible tools. `both` (the default) runs every case under both exposures.
 - Each episode is graded on semantic arguments, ordered tool sequences, its expected final HTTP state, API-error claims, post-failure mutations, and step exhaustion. The summary reports the pass rate per model × exposure × locale × family; episodes also record `searchRank`, `callToolErrorCount`, and `unknownToolCount`.
 - The smoke sandbox includes contact, conversation reply, flow, broadcast, appointment, and analytics fixtures. No public appointment-availability operation exists, so unavailable-slot coverage exercises `appointments_book` returning 422.
 - Compare two runs (regressions fail the command):

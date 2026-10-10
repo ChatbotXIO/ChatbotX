@@ -40,6 +40,8 @@ exports[`default tool set > operation ids match the curated snapshot 1`] = `
   "flows.validate",
   "keywords.list",
   "messages.list",
+  "miniApps.create",
+  "miniApps.list",
   "schemas.flowSpec",
   "sequences.get",
   "sequences.list",

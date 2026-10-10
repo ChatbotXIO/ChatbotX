@@ -20,7 +20,6 @@ import {
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
 import {
   RadioGroup,
@@ -28,14 +27,14 @@ import {
 } from "@chatbotx.io/ui/components/ui/radio-group"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { CopyIcon, Loader2Icon, PencilIcon } from "lucide-react"
+import { Loader2Icon, PencilIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"
+import { PublicUrlSection } from "@/components/public-url-section"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
 import { createMinigameAction } from "./actions/create-minigame.action"
 import { updateMinigameAction } from "./actions/update-minigame.action"
@@ -65,44 +64,6 @@ type MinigameFormProps =
       workspaceId: string
       publicUrl: string
     }
-
-function PublicUrlSection({ publicUrl }: { publicUrl: string }) {
-  const t = useTranslations()
-  const [, copy] = useCopyToClipboard()
-
-  const handleCopy = () => {
-    copy(publicUrl)
-      .then(() => {
-        toast.success(t("messages.copiedToClipboard"))
-      })
-      .catch(() => {
-        toast.error(t("messages.copyFailed"))
-      })
-  }
-
-  return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      <div className="flex min-w-0 items-center gap-2">
-        <p className="flex-none font-medium text-sm">
-          {t("minigames.publicUrl.label")}
-        </p>
-        <Input className="min-w-0 max-w-md" readOnly value={publicUrl} />
-        <Button
-          aria-label={t("actions.copyUrl")}
-          onClick={handleCopy}
-          size="icon"
-          type="button"
-          variant="secondary"
-        >
-          <CopyIcon className="size-4" />
-        </Button>
-      </div>
-      <p className="text-muted-foreground text-xs">
-        {t("minigames.publicUrl.hint")}
-      </p>
-    </div>
-  )
-}
 
 export function MinigameForm(props: MinigameFormProps) {
   const t = useTranslations()
@@ -577,7 +538,11 @@ export function MinigameForm(props: MinigameFormProps) {
 
         {isEdit && (
           <div className="sticky bottom-0 z-10 mt-auto border-t bg-background px-6 py-3">
-            <PublicUrlSection publicUrl={props.publicUrl} />
+            <PublicUrlSection
+              hint={t("minigames.publicUrl.hint")}
+              label={t("minigames.publicUrl.label")}
+              publicUrl={props.publicUrl}
+            />
           </div>
         )}
       </div>

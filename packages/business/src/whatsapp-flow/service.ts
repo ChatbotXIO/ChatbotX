@@ -54,6 +54,38 @@ class WhatsappFlowService extends BaseService {
     })
   }
 
+  /** Inserts or refreshes a single Flow, e.g. right after publishing a Mini App. */
+  async upsertFromMeta(props: {
+    integrationWhatsappId: string
+    flow: MetaWhatsappFlow
+  }): Promise<{ id: string }> {
+    const values = {
+      name: props.flow.name,
+      status: props.flow.status,
+      categories: props.flow.categories ?? [],
+      validationErrors: props.flow.validation_errors ?? [],
+    }
+    const [row] = await db
+      .insert(whatsappFlowModel)
+      .values({
+        id: createId(),
+        integrationWhatsappId: props.integrationWhatsappId,
+        sourceId: props.flow.id,
+        completedCount: "0",
+        screens: [],
+        ...values,
+      })
+      .onConflictDoUpdate({
+        target: [
+          whatsappFlowModel.integrationWhatsappId,
+          whatsappFlowModel.sourceId,
+        ],
+        set: values,
+      })
+      .returning({ id: whatsappFlowModel.id })
+    return row as { id: string }
+  }
+
   async syncFromMeta(props: {
     integrationWhatsappId: string
     flows: MetaWhatsappFlow[]

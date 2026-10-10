@@ -139,3 +139,12 @@ describe("TOOLS_CONFIG — facebook-marketing-messages entry", () => {
     expect(canShowTool(permission, permissions({}))).toBe(true)
   })
 })
+
+describe("TOOLS_CONFIG — mini-apps entry", () => {
+  test("links to the Mini Apps list with miniApps.* labels", () => {
+    const entry = TOOLS_CONFIG.find((config) => config.id === "mini-apps")
+    expect(entry?.labelKey).toBe("miniApps.title")
+    expect(entry?.descriptionKey).toBe("miniApps.description")
+    expect(entry?.getLink?.("42")).toBe("/space/42/mini-apps")
+  })
+})

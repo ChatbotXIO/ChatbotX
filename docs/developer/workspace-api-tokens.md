@@ -615,6 +615,10 @@ an endpoint's scope.
     declared on all three write routes (`POST`, `PUT`, `PATCH`) — not the 500
     the raw Postgres unique violation used to produce.
 
+### Mini Apps scope
+
+`mini-apps` covers `/v1/mini-apps/*` (`apps/builder/src/features/mini-apps/api/public.ts`): list, get, validate, create, update, delete, publish to WhatsApp and list answers. Mini Apps are exchanged as WhatsApp Flow JSON; the stored editor definition never leaves the builder. `POST /v1/mini-apps/validate` writes nothing but is a POST, so a `read_only` token cannot call it. Publishing calls Meta's Flows API on the chosen WhatsApp number and mirrors the Flow into `WhatsappFlow`; it is gated by `mini-apps` only, not `integrations`. Scope wiring is pinned in `apps/builder/__tests__/mini-apps-public-api.test.ts`.
+
 ### Ads scope — endpoint-to-scope table
 
 `ads` shipped in the enum/registry/i18n from day one (alongside `channels`,

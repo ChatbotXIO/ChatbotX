@@ -23,6 +23,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { signAppointmentScheduleToken } from "@chatbotx.io/encryption"
+import { signMiniAppToken } from "@chatbotx.io/encryption/mini-app-token"
 import { signMinigamePlayToken } from "@chatbotx.io/encryption/minigame-play-token"
 import { signUserHash } from "@chatbotx.io/encryption/user-hash"
 import {
@@ -413,6 +414,11 @@ export const getSystemFieldValue = async (
         contactInboxId: contactInbox.id,
       })
     }
+    case systemFieldTypes.enum.mini_app_token:
+      return await signMiniAppToken({
+        workspaceId: contact.workspaceId,
+        contactId: contact.id,
+      })
     case systemFieldTypes.enum.workspace_id:
       return contact.workspaceId
     case systemFieldTypes.enum.user_source:

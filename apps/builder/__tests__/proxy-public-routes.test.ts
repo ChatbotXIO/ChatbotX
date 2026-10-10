@@ -32,6 +32,13 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/bsx")).toBe(false)
   })
 
+  test("/mini-apps is public so a Mini App link opens without a session", () => {
+    expect(isPublicRoute("/mini-apps")).toBe(true)
+    expect(isPublicRoute("/mini-appsx")).toBe(false)
+    // The builder pages live under /space and stay private.
+    expect(isPublicRoute("/space/1/mini-apps")).toBe(false)
+  })
+
   test("an authenticated app path is not public", () => {
     expect(isPublicRoute("/space/1/inbox")).toBe(false)
     expect(isPublicRoute("/channels/create")).toBe(false)

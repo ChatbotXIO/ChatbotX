@@ -1964,6 +1964,56 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "miniApps.create",
+    "path": "/v1/mini-apps",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "miniApps.delete",
+    "path": "/v1/mini-apps/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "miniApps.deleteMany",
+    "path": "/v1/mini-apps/bulk-delete",
+  },
+  {
+    "method": "GET",
+    "operationId": "miniApps.get",
+    "path": "/v1/mini-apps/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "miniApps.getFlowJson",
+    "path": "/v1/mini-apps/{id}/flow-json",
+  },
+  {
+    "method": "GET",
+    "operationId": "miniApps.list",
+    "path": "/v1/mini-apps",
+  },
+  {
+    "method": "GET",
+    "operationId": "miniApps.listSubmissions",
+    "path": "/v1/mini-apps/{id}/submissions",
+  },
+  {
+    "method": "POST",
+    "operationId": "miniApps.publishWhatsapp",
+    "path": "/v1/mini-apps/{id}/publish-whatsapp",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "miniApps.update",
+    "path": "/v1/mini-apps/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "miniApps.validate",
+    "path": "/v1/mini-apps/validate",
+  },
+  {
+    "method": "POST",
     "operationId": "minigames.create",
     "path": "/v1/minigames",
   },

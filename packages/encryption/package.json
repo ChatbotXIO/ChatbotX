@@ -24,6 +24,7 @@
     "./appointment-schedule-token": "./src/appointment-schedule-token.ts",
     "./appointment-webview-token": "./src/appointment-webview-token.ts",
     "./keys": "./src/keys.ts",
+    "./mini-app-token": "./src/mini-app-token.ts",
     "./minigame-play-token": "./src/minigame-play-token.ts",
     "./link-signature": "./src/link-signature.ts",
     "./open-link-token": "./src/open-link-token.ts",

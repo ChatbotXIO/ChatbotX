@@ -13,6 +13,8 @@ export const PUBLIC_ROUTES = [
   "/media/attachment",
   "/media/avatar",
   "/minigames",
+  // Public Mini App runner; submissions are attributed only via a signed token.
+  "/mini-apps",
   "/auth",
   "/api",
   // Like "/api": the RPC handler runs the full router, where every procedure
