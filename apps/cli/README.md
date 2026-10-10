@@ -936,8 +936,8 @@ chatbotx mini-apps flow-json <id>                       # Only the WhatsApp Flow
 chatbotx mini-apps validate --flowJson <json>           # Check Flow JSON against Meta's rules without saving
 chatbotx mini-apps create --name <name>                 # [--flowJson <json> --customFieldMappings <json>]; no --flowJson = one-screen starter
 chatbotx mini-apps update <id>                          # [--name --enabled --flowJson --customFieldMappings]
-chatbotx mini-apps delete <id>
-chatbotx mini-apps bulk-delete --ids <ids>
+chatbotx mini-apps delete <id>                          # [--deleteWhatsappFlows] also deletes draft Flows / deprecates published ones on Meta; returns each Flow's outcome
+chatbotx mini-apps bulk-delete --ids <ids>              # [--deleteWhatsappFlows]
 chatbotx mini-apps publish-whatsapp <id> --integrationWhatsappId <id>   # id from `whatsapp-channels list`
 chatbotx mini-apps submissions list <id>                # Answers from the public link (uploaded files as public URLs)
 ```

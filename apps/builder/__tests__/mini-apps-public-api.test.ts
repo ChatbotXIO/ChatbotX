@@ -51,6 +51,12 @@ const createTranslatedStarterDefinition = vi.fn()
 vi.mock("@/features/mini-apps/lib/starter-definition", () => ({
   createTranslatedStarterDefinition,
 }))
+const deleteMiniApps = vi
+  .fn()
+  .mockResolvedValue({ deletedCount: 1, whatsappFlows: [] })
+vi.mock("@/features/mini-apps/lib/delete-mini-apps", () => ({
+  deleteMiniApps,
+}))
 vi.mock("@/features/mini-apps/lib/public-url", () => ({
   buildMiniAppPublicUrl: (id: string) => `url:${id}`,
 }))
@@ -271,9 +277,10 @@ describe("Mini Apps public API", () => {
   test("bulk delete is scoped to the token's workspace and denied to read-only tokens", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(["mini-apps"]))
     await invoke(miniAppsPublicRouter.deleteMany, { ids: ["10", "11"] })
-    expect(miniAppService.deleteMany).toHaveBeenCalledWith({
+    expect(deleteMiniApps).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       ids: ["10", "11"],
+      deleteWhatsappFlows: false,
     })
 
     vi.clearAllMocks()
@@ -283,7 +290,46 @@ describe("Mini Apps public API", () => {
     ).rejects.toMatchObject({
       code: "FORBIDDEN",
     })
-    expect(miniAppService.deleteMany).not.toHaveBeenCalled()
+    expect(deleteMiniApps).not.toHaveBeenCalled()
+  })
+
+  test("delete removes the WhatsApp Flows only when asked", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(["mini-apps"]))
+    miniAppService.findOrFail.mockResolvedValue(storedMiniApp({ screens: [] }))
+    const removal = {
+      deletedCount: 1,
+      whatsappFlows: [
+        {
+          miniAppId: "10",
+          integrationWhatsappId: "wa-1",
+          flowId: "flow-a",
+          outcome: "failed",
+          error: "Error validating access token",
+        },
+      ],
+    }
+    deleteMiniApps.mockResolvedValueOnce(removal)
+    await expect(
+      invoke(miniAppsPublicRouter.delete, {
+        id: "10",
+        deleteWhatsappFlows: true,
+      }),
+    ).resolves.toEqual(removal)
+    expect(deleteMiniApps).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      ids: ["10"],
+      deleteWhatsappFlows: true,
+    })
+
+    await invoke(miniAppsPublicRouter.deleteMany, {
+      ids: ["11"],
+      deleteWhatsappFlows: true,
+    })
+    expect(deleteMiniApps).toHaveBeenLastCalledWith({
+      workspaceId: "ws-1",
+      ids: ["11"],
+      deleteWhatsappFlows: true,
+    })
   })
 
   test("submissions check the Mini App belongs to the token's workspace first", async () => {

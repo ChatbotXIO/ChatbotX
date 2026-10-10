@@ -2,7 +2,11 @@ import { flowJsonSchema } from "@chatbotx.io/mini-app"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
-import { MINI_APP_NAME_MAX_LENGTH } from "./action"
+import {
+  deleteWhatsappFlowsField,
+  MINI_APP_BULK_DELETE_MAX_IDS,
+  MINI_APP_NAME_MAX_LENGTH,
+} from "./action"
 
 const miniAppId = zodBigintAsString().describe(
   "Mini App id. Get it from `miniApps.list`.",
@@ -141,7 +145,10 @@ export const updateMiniAppPublicRequest = z.object({
 
 export const miniAppIdPublicRequest = z.object({ id: miniAppId })
 
-export const MINI_APP_BULK_DELETE_MAX_IDS = 100
+export const deleteMiniAppPublicRequest = z.object({
+  id: miniAppId,
+  deleteWhatsappFlows: deleteWhatsappFlowsField,
+})
 
 export const deleteMiniAppsPublicRequest = z.object({
   ids: z
@@ -150,6 +157,38 @@ export const deleteMiniAppsPublicRequest = z.object({
     .max(MINI_APP_BULK_DELETE_MAX_IDS)
     .describe(
       `Ids of the Mini Apps to delete, at most ${MINI_APP_BULK_DELETE_MAX_IDS} per call.`,
+    ),
+  deleteWhatsappFlows: deleteWhatsappFlowsField,
+})
+
+export const deleteMiniAppsPublicResponse = z.object({
+  deletedCount: z
+    .number()
+    .int()
+    .describe(
+      "Mini Apps actually deleted; ids outside the workspace are not counted.",
+    ),
+  whatsappFlows: z
+    .array(
+      z.object({
+        miniAppId: z.string().describe("The deleted Mini App."),
+        integrationWhatsappId: z
+          .string()
+          .describe("The WhatsApp number the Flow was published on."),
+        flowId: z.string().describe("Meta's Flow id."),
+        outcome: z
+          .enum(["deleted", "deprecated", "missing", "skipped", "failed"])
+          .describe(
+            "`deleted`: draft Flow deleted. `deprecated`: published Flow deprecated, it can no longer be sent. `missing`: the Flow was already gone. `skipped`: already deprecated. `failed`: Meta refused or could not be reached (see `error`); the Flow is unchanged on Meta and must be removed in WhatsApp Manager.",
+          ),
+        error: z
+          .string()
+          .optional()
+          .describe("Why it failed; only on `failed`."),
+      }),
+    )
+    .describe(
+      "One entry per WhatsApp publication; empty unless `deleteWhatsappFlows` was true.",
     ),
 })
 

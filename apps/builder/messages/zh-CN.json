@@ -7635,7 +7635,9 @@
     "title": "迷你应用",
     "description": "创建 WhatsApp Flow 表单，并通过链接在任意渠道分享。",
     "feature": "迷你应用",
-    "deleteKeepsWhatsapp": "已发布到 WhatsApp 的 Flow 会保留在 Meta 上。",
+    "deleteWhatsappChoice": "“删除”会保留已发布到 WhatsApp 的 Flow。“删除并移除 WhatsApp Flow”会同时从 Meta 移除：草稿 Flow 会被删除，已发布的 Flow 会被弃用，因为 Meta 不允许删除它们。",
+    "deleteWhatsappFailed": "已删除 Mini App，但有 {count} 个 WhatsApp Flow 未能从 Meta 移除。请在 WhatsApp Manager 中手动移除。",
+    "deleteWithWhatsapp": "删除并移除 WhatsApp Flow",
     "publicUrl": {
       "label": "公开链接",
       "hint": "复制此 URL 并粘贴到你的流程、群发或序列中。通过这种方式发送时，每条回答都会关联到打开它的联系人。"

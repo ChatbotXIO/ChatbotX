@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "Creează formulare WhatsApp Flow și distribuie-le ca link pe orice canal.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "Flow-urile deja publicate în WhatsApp rămân la Meta.",
+    "deleteWhatsappChoice": "„Șterge” păstrează Flow-urile deja publicate pe WhatsApp. „Șterge și elimină WhatsApp Flow” le elimină și din Meta: Flow-urile ciornă sunt șterse, iar cele publicate sunt retrase, deoarece Meta nu permite ștergerea lor.",
+    "deleteWhatsappFailed": "Mini App a fost șters, dar {count} WhatsApp Flow nu au putut fi eliminate din Meta. Elimină-le manual în WhatsApp Manager.",
+    "deleteWithWhatsapp": "Șterge și elimină WhatsApp Flow",
     "publicUrl": {
       "label": "URL public",
       "hint": "Copiază URL-ul și lipește-l în flow, broadcast sau secvență. Trimis astfel, fiecare răspuns este legat de contactul care l-a deschis."

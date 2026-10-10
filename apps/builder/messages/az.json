@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "WhatsApp Flow formaları yaradın və istənilən kanalda link kimi paylaşın.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "WhatsApp-da dərc olunmuş Flow-lar Meta-da qalır.",
+    "deleteWhatsappChoice": "“Sil” WhatsApp-da artıq dərc olunmuş Flow-ları saxlayır. “Sil və WhatsApp Flow-u götür” onları Meta-dan da götürür: qaralama Flow-lar silinir, dərc olunmuş Flow-lar isə dayandırılır, çünki Meta onları silməyə icazə vermir.",
+    "deleteWhatsappFailed": "Mini App silindi, lakin {count} WhatsApp Flow Meta-dan götürülə bilmədi. Onları WhatsApp Manager-də əl ilə götürün.",
+    "deleteWithWhatsapp": "Sil və WhatsApp Flow-u götür",
     "publicUrl": {
       "label": "İctimai URL",
       "hint": "URL-i kopyalayıb axına, yayıma və ya ardıcıllığa yapışdırın. Bu yolla göndərildikdə hər cavab onu açan kontakta bağlanır."

@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "Tạo form theo chuẩn WhatsApp Flows và chia sẻ bằng link trên mọi kênh.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "Các Flow đã đẩy lên WhatsApp vẫn còn trên Meta.",
+    "deleteWhatsappChoice": "“Xoá” giữ lại các Flow đã đẩy lên WhatsApp. “Xoá kèm WhatsApp Flow” gỡ luôn chúng trên Meta: Flow nháp bị xoá, Flow đã đăng bị ngừng dùng vì Meta không cho xoá.",
+    "deleteWhatsappFailed": "Đã xoá Mini App, nhưng không gỡ được {count} WhatsApp Flow trên Meta. Hãy gỡ tay trong WhatsApp Manager.",
+    "deleteWithWhatsapp": "Xoá kèm WhatsApp Flow",
     "publicUrl": {
       "label": "URL công khai",
       "hint": "Sao chép URL này và dán vào flow, broadcast hoặc sequence. Gửi theo cách đó, mỗi câu trả lời sẽ gắn với contact đã mở link."

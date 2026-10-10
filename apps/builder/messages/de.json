@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "Erstelle WhatsApp-Flow-Formulare und teile sie als Link über jeden Kanal.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "Bereits auf WhatsApp veröffentlichte Flows bleiben bei Meta bestehen.",
+    "deleteWhatsappChoice": "„Löschen“ behält die bereits auf WhatsApp veröffentlichten Flows. „Löschen & WhatsApp Flow entfernen“ entfernt sie auch bei Meta: Entwürfe werden gelöscht, veröffentlichte Flows werden eingestellt, da Meta das Löschen nicht erlaubt.",
+    "deleteWhatsappFailed": "Mini App gelöscht, aber {count} WhatsApp Flow(s) konnten bei Meta nicht entfernt werden. Entferne sie im WhatsApp Manager.",
+    "deleteWithWhatsapp": "Löschen & WhatsApp Flow entfernen",
     "publicUrl": {
       "label": "Öffentliche URL",
       "hint": "Kopiere die URL und füge sie in deinen Flow, Broadcast oder deine Sequenz ein. So versendet, wird jede Antwort dem Kontakt zugeordnet, der sie geöffnet hat."

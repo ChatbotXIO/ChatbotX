@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "Opret WhatsApp Flow-formularer og del dem som et link på enhver kanal.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "Flows, der allerede er udgivet på WhatsApp, forbliver hos Meta.",
+    "deleteWhatsappChoice": "“Slet” beholder de Flows, der allerede er udgivet på WhatsApp. “Slet og fjern WhatsApp Flow” fjerner dem også fra Meta: kladde-Flows slettes, og udgivne Flows udfases, fordi Meta ikke tillader at slette dem.",
+    "deleteWhatsappFailed": "Mini App slettet, men {count} WhatsApp Flow(s) kunne ikke fjernes fra Meta. Fjern dem i WhatsApp Manager.",
+    "deleteWithWhatsapp": "Slet og fjern WhatsApp Flow",
     "publicUrl": {
       "label": "Offentlig URL",
       "hint": "Kopiér URL'en, og indsæt den i dit flow, din broadcast eller sekvens. Sendt på den måde knyttes hvert svar til den kontakt, der åbnede den."

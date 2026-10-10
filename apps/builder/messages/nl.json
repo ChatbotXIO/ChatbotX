@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "Maak WhatsApp Flow-formulieren en deel ze als link via elk kanaal.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "Flows die al op WhatsApp zijn gepubliceerd blijven bij Meta staan.",
+    "deleteWhatsappChoice": "“Verwijderen” behoudt de Flows die al op WhatsApp zijn gepubliceerd. “Verwijderen & WhatsApp Flow verwijderen” haalt ze ook bij Meta weg: concept-Flows worden verwijderd, gepubliceerde Flows worden uitgefaseerd omdat Meta verwijderen niet toestaat.",
+    "deleteWhatsappFailed": "Mini App verwijderd, maar {count} WhatsApp Flow(s) konden niet bij Meta worden verwijderd. Verwijder ze in WhatsApp Manager.",
+    "deleteWithWhatsapp": "Verwijderen & WhatsApp Flow verwijderen",
     "publicUrl": {
       "label": "Openbare URL",
       "hint": "Kopieer de URL en plak hem in je flow, broadcast of reeks. Zo verstuurd wordt elk antwoord gekoppeld aan het contact dat hem opende."

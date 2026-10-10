@@ -7,7 +7,11 @@ import type {
 import type { ServerMessage } from "whatsapp-api-js/types"
 import z from "zod"
 import type { WhatsappCallingSettings } from "./api/calling"
-import type { PublishFlowJsonParams, PublishFlowJsonResult } from "./api/flow"
+import type {
+  DeleteFlowResult,
+  PublishFlowJsonParams,
+  PublishFlowJsonResult,
+} from "./api/flow"
 import type {
   ConversationalAutomation,
   WhatsappPhoneNumber,
@@ -338,6 +342,13 @@ export type WhatsappActions = {
       params: PublishFlowJsonParams
     },
     PublishFlowJsonResult
+  >
+  deleteFlow: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      params: { flowSourceId: string }
+    },
+    DeleteFlowResult
   >
   findConversationalAutomation: Handler<
     {

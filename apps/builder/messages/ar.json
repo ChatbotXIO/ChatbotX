@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "أنشئ نماذج WhatsApp Flow وشاركها كرابط على أي قناة.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "تبقى الـ Flows المنشورة على WhatsApp لدى Meta.",
+    "deleteWhatsappChoice": "«حذف» يُبقي التدفقات المنشورة على WhatsApp. «حذف مع إزالة WhatsApp Flow» يزيلها أيضًا من Meta: تُحذف التدفقات المسودة، وتُوقف التدفقات المنشورة لأن Meta لا تسمح بحذفها.",
+    "deleteWhatsappFailed": "تم حذف التطبيق المصغّر، لكن تعذّرت إزالة {count} من تدفقات WhatsApp من Meta. أزلها يدويًا من WhatsApp Manager.",
+    "deleteWithWhatsapp": "حذف مع إزالة WhatsApp Flow",
     "publicUrl": {
       "label": "الرابط العام",
       "hint": "انسخ الرابط والصقه في التدفق أو البث أو التسلسل. عند إرساله بهذه الطريقة، تُربط كل إجابة بجهة الاتصال التي فتحته."

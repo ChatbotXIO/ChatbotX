@@ -853,7 +853,8 @@ describe("public API spec — error response coverage", () => {
   // guard's filter ran against the real generated spec, which is exactly
   // the "signal" this guard exists to catch: both were silently broken (or
   // silently limited to the default) by the same dropped-DELETE-body bug
-  // this change fixes.
+  // this change fixes. `miniApps.delete` (`deleteWhatsappFlows`, defaulted
+  // to false) opts into also removing the Mini App's Flows on Meta.
   test("DELETE operations with a request body are exactly the reviewed set", () => {
     const deletesWithBody = operations
       .filter((op) => op.method === "DELETE" && op.bodySchema)
@@ -866,6 +867,7 @@ describe("public API spec — error response coverage", () => {
       "inboxTeams.removeMembers",
       "keywords.delete",
       "messages.delete",
+      "miniApps.delete",
     ])
   })
 })

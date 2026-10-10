@@ -7635,7 +7635,9 @@
     "title": "ミニアプリ",
     "description": "WhatsApp Flowのフォームを作成し、あらゆるチャネルでリンクとして共有できます。",
     "feature": "ミニアプリ",
-    "deleteKeepsWhatsapp": "WhatsAppに公開済みのFlowはMetaに残ります。",
+    "deleteWhatsappChoice": "「削除」では WhatsApp に公開済みの Flow は残ります。「削除して WhatsApp Flow も削除」を選ぶと Meta からも取り除きます。下書きの Flow は削除され、公開済みの Flow は Meta が削除を許可しないため廃止されます。",
+    "deleteWhatsappFailed": "Mini App は削除されましたが、{count} 件の WhatsApp Flow を Meta から削除できませんでした。WhatsApp Manager で手動で削除してください。",
+    "deleteWithWhatsapp": "削除して WhatsApp Flow も削除",
     "publicUrl": {
       "label": "公開URL",
       "hint": "この URL をコピーして、フロー、ブロードキャスト、シーケンスに貼り付けてください。その方法で送信すると、各回答は開いたコンタクトに紐付けられます。"

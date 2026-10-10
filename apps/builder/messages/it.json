@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "Crea moduli WhatsApp Flow e condividili come link su qualsiasi canale.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "I Flow già pubblicati su WhatsApp restano su Meta.",
+    "deleteWhatsappChoice": "«Elimina» mantiene i Flow già pubblicati su WhatsApp. «Elimina e rimuovi WhatsApp Flow» li rimuove anche da Meta: i Flow in bozza vengono eliminati, quelli pubblicati vengono deprecati perché Meta non ne consente l'eliminazione.",
+    "deleteWhatsappFailed": "Mini App eliminata, ma non è stato possibile rimuovere {count} WhatsApp Flow da Meta. Rimuovili in WhatsApp Manager.",
+    "deleteWithWhatsapp": "Elimina e rimuovi WhatsApp Flow",
     "publicUrl": {
       "label": "URL pubblico",
       "hint": "Copia e incolla l'URL nel tuo flusso, broadcast o sequenza. Inviata così, ogni risposta viene collegata al contatto che l'ha aperta."

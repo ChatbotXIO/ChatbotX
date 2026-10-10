@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "Buat formulir WhatsApp Flow dan bagikan sebagai tautan di channel mana pun.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "Flow yang sudah dipublikasikan ke WhatsApp tetap ada di Meta.",
+    "deleteWhatsappChoice": "“Hapus” mempertahankan Flow yang sudah dipublikasikan ke WhatsApp. “Hapus & hapus WhatsApp Flow” juga menghapusnya dari Meta: Flow draf dihapus, Flow yang sudah dipublikasikan dinonaktifkan karena Meta tidak mengizinkan penghapusannya.",
+    "deleteWhatsappFailed": "Mini App dihapus, tetapi {count} WhatsApp Flow tidak dapat dihapus dari Meta. Hapus secara manual di WhatsApp Manager.",
+    "deleteWithWhatsapp": "Hapus & hapus WhatsApp Flow",
     "publicUrl": {
       "label": "URL Publik",
       "hint": "Salin dan tempel URL ke flow, broadcast, atau sequence Anda. Jika dikirim dengan cara itu, setiap jawaban terhubung ke kontak yang membukanya."

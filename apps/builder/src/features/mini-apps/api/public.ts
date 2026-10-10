@@ -24,12 +24,15 @@ import {
   possibleIdempotencyErrors,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
+import { deleteMiniApps } from "../lib/delete-mini-apps"
 import { buildMiniAppPublicUrl } from "../lib/public-url"
 import { publishMiniAppToWhatsapp } from "../lib/publish-to-whatsapp"
 import { createTranslatedStarterDefinition } from "../lib/starter-definition"
 import {
   createMiniAppPublicRequest,
+  deleteMiniAppPublicRequest,
   deleteMiniAppsPublicRequest,
+  deleteMiniAppsPublicResponse,
   listMiniAppSubmissionsPublicRequest,
   listMiniAppSubmissionsPublicResponse,
   listMiniAppsPublicRequest,
@@ -229,20 +232,21 @@ export const miniAppsPublicRouter = {
       path: "/v1/mini-apps/{id}",
       summary: "Delete Mini App",
       description:
-        "Permanently deletes a Mini App and its answers. Files visitors uploaded stay in storage, and Flows already published to WhatsApp stay on Meta. Find the id with `miniApps.list`.",
-      successStatus: 204,
+        "Permanently deletes a Mini App and its answers. Files visitors uploaded stay in storage. Flows published to WhatsApp stay on Meta unless `deleteWhatsappFlows` is true: then a draft Flow is deleted and a published Flow is deprecated (Meta cannot delete it). The Mini App is deleted even when Meta refuses; `whatsappFlows` reports each Flow's outcome. Find the id with `miniApps.list`.",
       tags,
     })
-    .input(miniAppIdPublicRequest)
+    .input(deleteMiniAppPublicRequest)
+    .output(deleteMiniAppsPublicResponse)
     .errors(possibleErrorsOnDeletingResource)
     .handler(async ({ context, input }) => {
       await miniAppService.findOrFail({
         workspaceId: context.workspace.id,
         id: input.id,
       })
-      await miniAppService.deleteMany({
+      return await deleteMiniApps({
         workspaceId: context.workspace.id,
         ids: [input.id],
+        deleteWhatsappFlows: input.deleteWhatsappFlows,
       })
     }),
 
@@ -252,18 +256,20 @@ export const miniAppsPublicRouter = {
       path: "/v1/mini-apps/bulk-delete",
       summary: "Delete multiple Mini Apps",
       description:
-        "Permanently deletes up to 100 Mini Apps and their answers in one call; ids outside this workspace are ignored. Files visitors uploaded stay in storage, and Flows already published to WhatsApp stay on Meta. Use `miniApps.list` to find the ids first.",
-      successStatus: 204,
+        "Permanently deletes up to 100 Mini Apps and their answers in one call; ids outside this workspace are ignored. Files visitors uploaded stay in storage. Flows published to WhatsApp stay on Meta unless `deleteWhatsappFlows` is true: then draft Flows are deleted and published Flows are deprecated (Meta cannot delete them). The Mini Apps are deleted even when Meta refuses; `whatsappFlows` reports each Flow's outcome. Use `miniApps.list` to find the ids first.",
       tags,
     })
     .input(deleteMiniAppsPublicRequest)
+    .output(deleteMiniAppsPublicResponse)
     .errors(possibleErrorsOnDeletingResource)
-    .handler(async ({ context, input }) => {
-      await miniAppService.deleteMany({
-        workspaceId: context.workspace.id,
-        ids: input.ids,
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await deleteMiniApps({
+          workspaceId: context.workspace.id,
+          ids: input.ids,
+          deleteWhatsappFlows: input.deleteWhatsappFlows,
+        }),
+    ),
 
   getFlowJson: workspaceTokenAuthAPI
     .route({

@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "Build WhatsApp Flow forms and share them as a link on any channel.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "Flows already published to WhatsApp stay on Meta.",
+    "deleteWhatsappChoice": "“Delete” keeps the Flows already published to WhatsApp. “Delete & remove WhatsApp Flow” also removes them from Meta: draft Flows are deleted, published Flows are deprecated because Meta does not allow deleting them.",
+    "deleteWhatsappFailed": "Mini App deleted, but {count} WhatsApp Flow(s) could not be removed on Meta. Remove them in WhatsApp Manager.",
+    "deleteWithWhatsapp": "Delete & remove WhatsApp Flow",
     "publicUrl": {
       "label": "Public URL",
       "hint": "Copy and paste the URL into your flow, broadcast, or sequence. Sent that way, each answer is linked to the contact who opened it."

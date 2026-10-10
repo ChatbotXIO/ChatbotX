@@ -1,11 +1,15 @@
 import {
+  and,
   type DatabaseClient,
   db,
   eq,
   findOrFail,
   inArray,
 } from "@chatbotx.io/database/client"
-import { whatsappFlowModel } from "@chatbotx.io/database/schema"
+import {
+  integrationWhatsappModel,
+  whatsappFlowModel,
+} from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 
@@ -163,6 +167,38 @@ class WhatsappFlowService extends BaseService {
         }
       }
     })
+  }
+
+  /**
+   * Mirrors a Flow just deleted or deprecated on Meta into every number of
+   * the workspace that synced it (Flows belong to the WABA, so several
+   * numbers can hold a copy). A deprecated Flow keeps its row: customers can
+   * still answer it from their phones and those answers count into
+   * `completedCount`. Pickers only list PUBLISHED Flows, so it disappears
+   * from them either way.
+   */
+  async markRemovedOnMeta(props: {
+    workspaceId: string
+    sourceId: string
+    /** Meta's status afterwards; null when the Flow no longer exists. */
+    status: string | null
+  }): Promise<void> {
+    const workspaceNumbers = db
+      .select({ id: integrationWhatsappModel.id })
+      .from(integrationWhatsappModel)
+      .where(eq(integrationWhatsappModel.workspaceId, props.workspaceId))
+    const where = and(
+      eq(whatsappFlowModel.sourceId, props.sourceId),
+      inArray(whatsappFlowModel.integrationWhatsappId, workspaceNumbers),
+    )
+    if (props.status === null) {
+      await db.delete(whatsappFlowModel).where(where)
+      return
+    }
+    await db
+      .update(whatsappFlowModel)
+      .set({ status: props.status })
+      .where(where)
   }
 }
 

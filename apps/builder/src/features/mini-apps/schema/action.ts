@@ -46,3 +46,21 @@ export const submitMiniAppRequest = z.object({
   timezone: z.string().max(64).optional(),
 })
 export type SubmitMiniAppRequest = z.infer<typeof submitMiniAppRequest>
+
+export const MINI_APP_BULK_DELETE_MAX_IDS = 100
+
+export const deleteWhatsappFlowsField = z
+  .boolean()
+  .default(false)
+  .describe(
+    "Also remove the WhatsApp Flows the Mini Apps were published as. Meta deletes a draft Flow but cannot delete a published one, so a published Flow is deprecated instead (it can no longer be sent). Defaults to false: the Flows stay on Meta.",
+  )
+
+export const deleteMiniAppsRequest = z.object({
+  ids: z
+    .array(zodBigintAsString())
+    .max(MINI_APP_BULK_DELETE_MAX_IDS)
+    .describe("Ids of the Mini Apps to delete."),
+  deleteWhatsappFlows: deleteWhatsappFlowsField,
+})
+export type DeleteMiniAppsRequest = z.input<typeof deleteMiniAppsRequest>
