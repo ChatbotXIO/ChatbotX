@@ -3555,6 +3555,7 @@
     "quickReplyNextStepRequired": "Alege un pas următor pentru fiecare setare de răspuns rapid activată",
     "quickReplyRetryMessageRequired": "Introdu un mesaj de reîncercare",
     "quickReplyRetryWithGetUserData": "Reîncercarea nu poate fi combinată cu un pas Obține datele utilizatorului",
+    "whatsappFlowIncomplete": "Deschide butonul și alege un WhatsApp Flow și ecranul său de start.",
     "whatsappCarouselButtonsMismatch": "Pe WhatsApp, un carusel are nevoie de aceleași butoane pe fiecare card: fie un singur buton de link pe fiecare card, fie același număr de butoane de răspuns pe fiecare card",
     "whatsappCarouselLinkButtonNotAlone": "Pe WhatsApp, un card de carusel cu un buton de link nu poate avea alte butoane. Elimină celelalte butoane de pe acel card sau schimbă butonul de link cu o altă acțiune.",
     "duplicateNodeError": "Blocul nu a putut fi duplicat. Te rugăm să încerci din nou.",

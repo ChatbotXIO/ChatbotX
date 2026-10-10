@@ -4238,6 +4238,7 @@
     "quickReplyNextStepRequired": "Aktiv olan hər sürətli cavab parametri üçün növbəti addımı seçin",
     "quickReplyRetryMessageRequired": "Təkrar cəhd mesajını daxil edin",
     "quickReplyRetryWithGetUserData": "Təkrar cəhd İstifadəçi məlumatlarını al addımı ilə birlikdə istifadə edilə bilməz",
+    "whatsappFlowIncomplete": "Düyməni açın və WhatsApp Flow ilə onun başlanğıc ekranını seçin.",
     "whatsappCarouselButtonsMismatch": "WhatsApp-da karuselin bütün kartlarında eyni düymələr olmalıdır: hər kartda ya tək keçid düyməsi, ya da eyni sayda cavab düyməsi olmalıdır",
     "whatsappCarouselLinkButtonNotAlone": "WhatsApp-da keçid düyməsi olan karusel kartında başqa düymə ola bilməz. Həmin kartdakı digər düymələri çıxarın və ya keçid düyməsini başqa əməliyyata dəyişin.",
     "duplicateNodeError": "Blokun surətini yaratmaq mümkün olmadı. Yenidən cəhd edin.",

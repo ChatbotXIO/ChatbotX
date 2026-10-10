@@ -4346,6 +4346,7 @@
     "quickReplyNextStepRequired": "请为每个已启用的快速回复设置选择下一步",
     "quickReplyRetryMessageRequired": "请输入重试消息",
     "quickReplyRetryWithGetUserData": "重试不能与“取得用户数据”步骤同时使用",
+    "whatsappFlowIncomplete": "请打开按钮，选择一个 WhatsApp Flow 及其起始屏幕。",
     "historyDepth": "({count})",
     "humanAgentWindowExpired": "消息传递窗口已过期。联系人必须先发送消息才能重新开始对话。",
     "leaveEmptyToKeepSecret": "留空以保留目前秘密",

@@ -3555,6 +3555,7 @@
     "quickReplyNextStepRequired": "Pilih langkah berikutnya untuk setiap pengaturan balasan cepat yang aktif",
     "quickReplyRetryMessageRequired": "Masukkan pesan coba lagi",
     "quickReplyRetryWithGetUserData": "Coba lagi tidak dapat digabungkan dengan langkah Ambil Data Pengguna",
+    "whatsappFlowIncomplete": "Buka tombol lalu pilih WhatsApp Flow dan layar awalnya.",
     "whatsappCarouselButtonsMismatch": "Di WhatsApp, carousel memerlukan tombol yang sama di setiap kartu: satu tombol tautan di setiap kartu, atau jumlah tombol balasan yang sama di setiap kartu",
     "whatsappCarouselLinkButtonNotAlone": "Di WhatsApp, kartu carousel dengan tombol tautan tidak boleh memiliki tombol lain. Hapus tombol lain pada kartu tersebut, atau ubah tombol tautan menjadi tindakan lain.",
     "duplicateNodeError": "Blok tidak dapat diduplikat. Silakan coba lagi.",

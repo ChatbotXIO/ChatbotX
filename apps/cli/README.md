@@ -934,7 +934,7 @@ chatbotx mini-apps list                                 # [--name --page --perPa
 chatbotx mini-apps get <id>                             # Flow JSON, validation issues, public URL, WhatsApp publications
 chatbotx mini-apps flow-json <id>                       # Only the WhatsApp Flow JSON (same as the dashboard's Copy JSON)
 chatbotx mini-apps validate --flowJson <json>           # Check Flow JSON against Meta's rules without saving
-chatbotx mini-apps create --name <name> --flowJson <json>   # [--customFieldMappings <json>]
+chatbotx mini-apps create --name <name>                 # [--flowJson <json> --customFieldMappings <json>]; no --flowJson = one-screen starter
 chatbotx mini-apps update <id>                          # [--name --enabled --flowJson --customFieldMappings]
 chatbotx mini-apps delete <id>
 chatbotx mini-apps bulk-delete --ids <ids>

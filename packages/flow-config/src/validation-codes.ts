@@ -27,6 +27,7 @@ export const flowValidationCodes = {
   quickReplyNextStepRequired: "quickReplyNextStepRequired",
   quickReplyRetryMessageRequired: "quickReplyRetryMessageRequired",
   quickReplyRetryWithGetUserData: "quickReplyRetryWithGetUserData",
+  whatsappFlowIncomplete: "whatsappFlowIncomplete",
 } as const
 
 export type FlowValidationCode =

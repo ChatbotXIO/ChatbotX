@@ -3555,6 +3555,7 @@
     "quickReplyNextStepRequired": "Elige un siguiente paso para cada configuración de respuesta rápida activada",
     "quickReplyRetryMessageRequired": "Introduce un mensaje de reintento",
     "quickReplyRetryWithGetUserData": "El reintento no se puede combinar con un paso Obtener datos del usuario",
+    "whatsappFlowIncomplete": "Abre el botón y elige un WhatsApp Flow y su pantalla de inicio.",
     "whatsappCarouselButtonsMismatch": "En WhatsApp, un carrusel necesita los mismos botones en cada tarjeta: un único botón de enlace en cada tarjeta, o el mismo número de botones de respuesta en cada tarjeta",
     "whatsappCarouselLinkButtonNotAlone": "En WhatsApp, una tarjeta de carrusel con un botón de enlace no puede tener otros botones. Elimina los otros botones de esa tarjeta o cambia el botón de enlace a otra acción.",
     "duplicateNodeError": "Could not duplicate el block. Por favor, try again.",

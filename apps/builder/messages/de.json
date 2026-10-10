@@ -3555,6 +3555,7 @@
     "quickReplyNextStepRequired": "Wähle für jede aktivierte Schnellantwort-Einstellung einen nächsten Schritt",
     "quickReplyRetryMessageRequired": "Gib eine Nachricht für die erneute Anfrage ein",
     "quickReplyRetryWithGetUserData": "Wiederholen kann nicht mit einem Schritt „Benutzerdaten abrufen“ kombiniert werden",
+    "whatsappFlowIncomplete": "Öffne den Button und wähle einen WhatsApp Flow und dessen Startbildschirm.",
     "whatsappCarouselButtonsMismatch": "Bei WhatsApp benötigt ein Karussell auf jeder Karte dieselben Schaltflächen: entweder eine einzelne Link-Schaltfläche auf jeder Karte oder dieselbe Anzahl an Antwort-Schaltflächen auf jeder Karte",
     "whatsappCarouselLinkButtonNotAlone": "Bei WhatsApp darf eine Karussellkarte mit einer Link-Schaltfläche keine weiteren Schaltflächen haben. Entfernen Sie die anderen Schaltflächen auf dieser Karte oder ändern Sie die Link-Schaltfläche in eine andere Aktion.",
     "duplicateNodeError": "Der Block konnte nicht dupliziert werden. Versuchen Sie es erneut.",

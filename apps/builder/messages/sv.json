@@ -4346,6 +4346,7 @@
     "quickReplyNextStepRequired": "Välj ett nästa steg för varje aktiverad snabbsvarsinställning",
     "quickReplyRetryMessageRequired": "Ange ett meddelande för nytt försök",
     "quickReplyRetryWithGetUserData": "Nytt försök kan inte kombineras med steget Hämta användardata",
+    "whatsappFlowIncomplete": "Öppna knappen och välj ett WhatsApp Flow och dess startskärm.",
     "whatsappCarouselButtonsMismatch": "På WhatsApp måste ett karusellkort ha samma knappar på varje kort: antingen en enda länkknapp på varje kort, eller samma antal svarsknappar på varje kort",
     "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan ett karusellkort med en länkknapp inte ha några andra knappar. Ta bort de andra knapparna på det kortet, eller ändra länkknappen till en annan åtgärd.",
     "historyDepth": "({count})",

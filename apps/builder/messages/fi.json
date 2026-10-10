@@ -3555,6 +3555,7 @@
     "quickReplyNextStepRequired": "Valitse seuraava vaihe jokaiselle käytössä olevalle pikavastausasetukselle",
     "quickReplyRetryMessageRequired": "Kirjoita uudelleenyrityksen viesti",
     "quickReplyRetryWithGetUserData": "Uudelleenyritystä ei voi yhdistää Hae käyttäjätiedot -vaiheeseen",
+    "whatsappFlowIncomplete": "Avaa painike ja valitse WhatsApp Flow sekä sen aloitusnäkymä.",
     "whatsappCarouselButtonsMismatch": "WhatsAppissa karusellin jokaisella kortilla on oltava samat painikkeet: joko yksi linkkipainike jokaisella kortilla tai sama määrä vastauspainikkeita jokaisella kortilla",
     "whatsappCarouselLinkButtonNotAlone": "WhatsAppissa linkkipainikkeen sisältävällä karusellikortilla ei voi olla muita painikkeita. Poista kortin muut painikkeet tai vaihda linkkipainike toiseen toimintoon.",
     "duplicateNodeError": "Lohkoa ei voitu monistaa. Yritä uudelleen.",

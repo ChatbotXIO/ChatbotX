@@ -75,13 +75,21 @@ export async function publishMiniAppToWhatsapp(props: {
     integrationWhatsappId: integrationWhatsapp.id,
     flow: result.flow,
   })
-  return await miniAppPublicationService.record({
+  const publication = await miniAppPublicationService.record({
     miniAppId: miniApp.id,
     integrationWhatsappId: integrationWhatsapp.id,
     whatsappFlowId: whatsappFlow.id,
     sourceId: result.flow.id,
     status: result.flow.status,
-    validationErrors: result.flow.validation_errors ?? [],
+    // A refused publish has no validation error; surface Meta's reason the
+    // same way so the dialog and API callers see why it stayed a draft.
+    validationErrors: [
+      ...(result.flow.validation_errors ?? []),
+      ...(result.publishError ? [{ message: result.publishError }] : []),
+    ],
     published: result.published,
   })
+  // `published` comes from the publish call itself; the status Meta reports
+  // right after it can lag behind.
+  return { ...publication, published: result.published }
 }

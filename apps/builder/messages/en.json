@@ -4238,6 +4238,7 @@
     "quickReplyNextStepRequired": "Choose a next step for each enabled quick reply setting",
     "quickReplyRetryMessageRequired": "Enter a retry message",
     "quickReplyRetryWithGetUserData": "Retry can’t be combined with a Get User Data step",
+    "whatsappFlowIncomplete": "Open the button and pick a WhatsApp Flow and its start screen.",
     "whatsappCarouselButtonsMismatch": "On WhatsApp, a carousel needs the same buttons on every card: either a single link button on each card, or the same number of reply buttons on each card",
     "whatsappCarouselLinkButtonNotAlone": "On WhatsApp, a carousel card with a link button cannot have any other buttons. Remove the other buttons on that card, or change the link button to another action.",
     "duplicateNodeError": "Could not duplicate the block. Please try again.",

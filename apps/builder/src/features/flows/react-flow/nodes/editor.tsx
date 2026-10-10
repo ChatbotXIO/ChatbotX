@@ -448,10 +448,19 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
                       )}
                     >
                       {(() => {
-                        const messages = collectErrorMessages(
-                          // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors
-                          (form.formState.errors as any).steps?.[index],
-                        )
+                        // A validation code becomes its translated message;
+                        // one rule failing on several fields shows once.
+                        const messages = [
+                          ...new Set(
+                            collectErrorMessages(
+                              // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors
+                              (form.formState.errors as any).steps?.[index],
+                            ).map((message) => {
+                              const key = resolveFlowValidationCodeKey(message)
+                              return key ? t(key) : message
+                            }),
+                          ),
+                        ]
                         return messages.length > 0 ? (
                           <ErrorAlert message={messages.join(", ")} />
                         ) : (

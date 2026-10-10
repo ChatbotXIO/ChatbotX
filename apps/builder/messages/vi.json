@@ -3597,6 +3597,7 @@
     "quickReplyNextStepRequired": "Chọn bước tiếp theo cho mỗi cài đặt trả lời nhanh đang bật",
     "quickReplyRetryMessageRequired": "Nhập tin nhắn thử lại",
     "quickReplyRetryWithGetUserData": "Không thể kết hợp Thử lại với bước Lấy đầu vào người dùng",
+    "whatsappFlowIncomplete": "Mở nút và chọn WhatsApp Flow cùng màn hình bắt đầu.",
     "whatsappCarouselButtonsMismatch": "Với WhatsApp, mọi thẻ trong một carousel phải có nút giống nhau: hoặc mỗi thẻ đúng một nút mở liên kết, hoặc mỗi thẻ cùng số nút trả lời",
     "whatsappCarouselLinkButtonNotAlone": "Với WhatsApp, thẻ carousel có nút mở liên kết thì không được có nút nào khác. Hãy xoá các nút còn lại trên thẻ đó, hoặc đổi nút mở liên kết sang hành động khác.",
     "duplicateNodeError": "Không thể nhân bản khối. Vui lòng thử lại.",

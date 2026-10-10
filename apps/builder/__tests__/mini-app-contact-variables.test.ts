@@ -9,8 +9,12 @@ const integrationWhatsappFind = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: { findRecentByContactId },
   integrationWhatsappService: { findByIdForWorkspace: integrationWhatsappFind },
-  whatsappFlowService: { upsertFromMeta: vi.fn() },
+  whatsappFlowService: { upsertFromMeta },
 }))
+
+const upsertFromMeta = vi.fn()
+const recordPublication = vi.fn()
+const runWhatsappAction = vi.fn()
 
 const getAll = vi.fn()
 const replaceAll = vi.fn()
@@ -28,7 +32,10 @@ vi.mock("@chatbotx.io/business/mini-app", () => ({
     findOrFail,
     validate: () => ({ valid: true, issues: [] }),
   },
-  miniAppPublicationService: { findForIntegration: vi.fn(), record: vi.fn() },
+  miniAppPublicationService: {
+    findForIntegration: vi.fn(),
+    record: recordPublication,
+  },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -51,7 +58,9 @@ vi.mock(
   "@/features/integration-whatsapp/flows/lib/whatsapp-flow-operations",
   () => ({ buildWhatsappContext: vi.fn() }),
 )
-vi.mock("@/integration", () => ({ integrations: {} }))
+vi.mock("@/integration", () => ({
+  integrations: { whatsapp: { runAction: runWhatsappAction } },
+}))
 
 const { resolveContactVariables } = await import(
   "../src/features/mini-apps/lib/resolve-contact-variables"
@@ -266,5 +275,46 @@ describe("publishMiniAppToWhatsapp", () => {
       }),
     ).rejects.toMatchObject({ code: "validation", field: "definition" })
     expect(integrationWhatsappFind).not.toHaveBeenCalled()
+  })
+
+  test("a refused publish records the draft and surfaces Meta's reason", async () => {
+    findOrFail.mockResolvedValue({
+      id: "10",
+      name: "Signup",
+      definition: { screens: [] },
+      flowJson: {},
+    })
+    integrationWhatsappFind.mockResolvedValue({ id: "wa-1" })
+    runWhatsappAction.mockResolvedValue({
+      flow: {
+        id: "meta-1",
+        name: "Signup",
+        status: "DRAFT",
+        categories: [],
+        validation_errors: [],
+      },
+      published: false,
+      publishError: "Verify your business before publishing.",
+    })
+    upsertFromMeta.mockResolvedValue({ id: "flow-row-1" })
+    recordPublication.mockImplementation(async (input: object) => input)
+
+    const result = await publishMiniAppToWhatsapp({
+      workspaceId: "ws-1",
+      miniAppId: "10",
+      integrationWhatsappId: "wa-1",
+    })
+
+    expect(recordPublication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceId: "meta-1",
+        status: "DRAFT",
+        validationErrors: [
+          { message: "Verify your business before publishing." },
+        ],
+        published: false,
+      }),
+    )
+    expect(result.published).toBe(false)
   })
 })

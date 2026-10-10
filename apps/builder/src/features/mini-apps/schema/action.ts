@@ -13,9 +13,10 @@ const miniAppName = z
     "Mini App name, unique within the workspace. Also used as the WhatsApp Flow name.",
   )
 
+// The builder creates a Mini App from its name alone; the editor opens on a
+// starter screen.
 export const createMiniAppRequest = z.object({
   name: miniAppName,
-  definition: miniAppDefinitionSchema,
 })
 export type CreateMiniAppRequest = z.infer<typeof createMiniAppRequest>
 

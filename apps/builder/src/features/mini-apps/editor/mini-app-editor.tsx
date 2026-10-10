@@ -55,7 +55,6 @@ import { useAction } from "next-safe-action/hooks"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { PublicUrlSection } from "@/components/public-url-section"
-import { createMiniAppAction } from "../actions/create-mini-app.action"
 import { updateMiniAppAction } from "../actions/update-mini-app.action"
 import { FlowJsonDialog } from "../components/flow-json-dialog"
 import { PublishWhatsappDialog } from "../components/publish-whatsapp-dialog"
@@ -78,8 +77,8 @@ import { componentIcon, Palette } from "./palette"
 
 export type MiniAppEditorProps = {
   workspaceId: string
-  miniAppId?: string
-  /** The shareable link, shown once the Mini App exists (edit page only). */
+  miniAppId: string
+  /** The shareable link of the Mini App. */
   publicUrl?: string
   initialName: string
   initialDefinition: MiniAppDefinition
@@ -290,17 +289,8 @@ function EditorBody({
       nameMessage ?? error.serverError ?? t("miniApps.editor.saveFailed"),
     )
   }
-  const create = useAction(createMiniAppAction.bind(null, workspaceId), {
-    onSuccess: ({ data }) => {
-      onSaved()
-      if (data?.id) {
-        router.push(`/space/${workspaceId}/mini-apps/${data.id}/edit`)
-      }
-    },
-    onError: onSaveError,
-  })
   const update = useAction(
-    updateMiniAppAction.bind(null, workspaceId, miniAppId ?? ""),
+    updateMiniAppAction.bind(null, workspaceId, miniAppId),
     {
       onSuccess: () => {
         onSaved()
@@ -309,15 +299,10 @@ function EditorBody({
       onError: onSaveError,
     },
   )
-  const isSaving = create.isPending || update.isPending
+  const isSaving = update.isPending
   const save = useCallback(() => {
-    const input = { name: name.trim(), definition }
-    if (miniAppId) {
-      update.execute(input)
-    } else {
-      create.execute(input)
-    }
-  }, [name, definition, miniAppId, update, create])
+    update.execute({ name: name.trim(), definition })
+  }, [name, definition, update])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -530,28 +515,26 @@ function EditorBody({
             </ScrollArea>
           </div>
         </CanvasContext.Provider>
-        {miniAppId ? (
-          <div className="flex items-center gap-3 border-t px-3 py-2">
-            <div className="min-w-0 flex-1">
-              {publicUrl ? (
-                <PublicUrlSection
-                  hint={t("miniApps.publicUrl.hint")}
-                  label={t("miniApps.publicUrl.label")}
-                  publicUrl={publicUrl}
-                />
-              ) : null}
-            </div>
-            <Button
-              className="flex-none"
-              onClick={() => setPublishOpen(true)}
-              size="sm"
-              variant="outline"
-            >
-              <SendIcon className="size-4" />
-              {t("miniApps.publish.open")}
-            </Button>
+        <div className="flex items-center gap-3 border-t px-3 py-2">
+          <div className="min-w-0 flex-1">
+            {publicUrl ? (
+              <PublicUrlSection
+                hint={t("miniApps.publicUrl.hint")}
+                label={t("miniApps.publicUrl.label")}
+                publicUrl={publicUrl}
+              />
+            ) : null}
           </div>
-        ) : null}
+          <Button
+            className="flex-none"
+            onClick={() => setPublishOpen(true)}
+            size="sm"
+            variant="outline"
+          >
+            <SendIcon className="size-4" />
+            {t("miniApps.publish.open")}
+          </Button>
+        </div>
         <DragOverlay dropAnimation={null}>
           {dragSource && DragIcon ? (
             <div className="flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm shadow-lg">
@@ -589,16 +572,14 @@ function EditorBody({
           </div>
         </DialogContent>
       </Dialog>
-      {miniAppId ? (
-        <PublishWhatsappDialog
-          hasUnsavedChanges={dirty}
-          miniAppId={miniAppId}
-          onOpenChange={setPublishOpen}
-          open={publishOpen}
-          targets={publishTargets}
-          workspaceId={workspaceId}
-        />
-      ) : null}
+      <PublishWhatsappDialog
+        hasUnsavedChanges={dirty}
+        miniAppId={miniAppId}
+        onOpenChange={setPublishOpen}
+        open={publishOpen}
+        targets={publishTargets}
+        workspaceId={workspaceId}
+      />
     </div>
   )
 }

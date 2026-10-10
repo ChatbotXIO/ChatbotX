@@ -1,5 +1,6 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { flowValidationCodes } from "../validation-codes"
 import { baseStepSchema } from "./base"
 import { type ButtonStepProps, buttonStepSchema } from "./button"
 import { stepTypes } from "./step-action"
@@ -25,6 +26,24 @@ export const whatsappFlowDataSchema = z.object({
 })
 export type WhatsappFlowData = z.infer<typeof whatsappFlowDataSchema>
 
+/**
+ * The step's flow must name a WhatsApp Flow and its start screen, both picked
+ * in the button's dialog. They stay nullable in the type (a new step starts
+ * empty). `id` is authoritative: the worker resolves `sourceId` from it, so an
+ * empty `sourceId` is fine. The one issue sits on `flow` itself, so the step's
+ * error alert translates it and no field shows the raw code.
+ */
+const whatsappFlowStepFlowSchema = whatsappFlowDataSchema.superRefine(
+  (flow, ctx) => {
+    if (flow.id === null || !flow.startScreenId?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        message: flowValidationCodes.whatsappFlowIncomplete,
+      })
+    }
+  },
+)
+
 export const whatsappFlowStepSchema = baseStepSchema.extend({
   stepType: z
     .literal(stepTypes.enum.whatsappFlow)
@@ -32,7 +51,7 @@ export const whatsappFlowStepSchema = baseStepSchema.extend({
   text: z.string().trim().min(1).max(WHATSAPP_FLOW_BODY_MAX),
   buttons: z.array(buttonStepSchema).min(1).max(1),
   inboxId: zodBigintAsString().nullable(),
-  flow: whatsappFlowDataSchema,
+  flow: whatsappFlowStepFlowSchema,
 })
 export type WhatsappFlowStepSchema = z.infer<typeof whatsappFlowStepSchema>
 
