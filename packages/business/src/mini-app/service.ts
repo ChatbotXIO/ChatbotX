@@ -337,6 +337,22 @@ class MiniAppPublicationService extends BaseService {
     )
   }
 
+  /** Every WhatsApp publication of the workspace's given Mini Apps. */
+  async listForMiniApps(input: {
+    workspaceId: string
+    miniAppIds: string[]
+  }): Promise<MiniAppPublicationModel[]> {
+    if (input.miniAppIds.length === 0) {
+      return []
+    }
+    return await db.query.miniAppPublicationModel.findMany({
+      where: {
+        miniAppId: { in: input.miniAppIds },
+        miniApp: { workspaceId: input.workspaceId },
+      },
+    })
+  }
+
   /** Records the outcome of a publish attempt (one row per Mini App + number). */
   async record(input: {
     miniAppId: string

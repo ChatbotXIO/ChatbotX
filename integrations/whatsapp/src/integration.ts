@@ -7,7 +7,7 @@ import {
 } from "@chatbotx.io/sdk"
 import { exchangeLongLivedToken } from "./api/auth"
 import { getCallingSettings, updateCallingSettings } from "./api/calling"
-import { getFlowAssets, publishFlowJson } from "./api/flow"
+import { deleteFlow, getFlowAssets, publishFlowJson } from "./api/flow"
 import {
   findConversationalAutomation,
   updateConversationalAutomation,
@@ -52,6 +52,8 @@ const config: IntegrationDefinition<
       }),
     publishFlowJson: async ({ ctx, params }) =>
       await publishFlowJson({ auth: ctx.auth, params }),
+    deleteFlow: async ({ ctx, params }) =>
+      await deleteFlow({ auth: ctx.auth, flowId: params.flowSourceId }),
     findConversationalAutomation: async ({ ctx }) =>
       await findConversationalAutomation(ctx.auth),
     updateConversationalAutomation: async ({ ctx, data }) =>

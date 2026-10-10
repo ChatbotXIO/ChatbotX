@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "Luo WhatsApp Flow -lomakkeita ja jaa ne linkkinä millä tahansa kanavalla.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "WhatsAppiin jo julkaistut Flowt säilyvät Metalla.",
+    "deleteWhatsappChoice": "”Poista” säilyttää WhatsAppiin jo julkaistut Flowt. ”Poista ja poista WhatsApp Flow” poistaa ne myös Metasta: luonnos-Flowt poistetaan ja julkaistut Flowt poistetaan käytöstä, koska Meta ei salli niiden poistamista.",
+    "deleteWhatsappFailed": "Mini App poistettiin, mutta {count} WhatsApp Flow'ta ei voitu poistaa Metasta. Poista ne WhatsApp Managerissa.",
+    "deleteWithWhatsapp": "Poista ja poista WhatsApp Flow",
     "publicUrl": {
       "label": "Julkinen URL",
       "hint": "Kopioi URL ja liitä se kulkuun, lähetykseen tai sarjaan. Näin lähetettynä jokainen vastaus liitetään yhteystietoon, joka avasi sen."

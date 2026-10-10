@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "Skapa formulär för WhatsApp Flows och dela dem som en länk i valfri kanal.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "Flows som redan publicerats på WhatsApp finns kvar hos Meta.",
+    "deleteWhatsappChoice": "”Ta bort” behåller de Flows som redan publicerats på WhatsApp. ”Ta bort och ta bort WhatsApp Flow” tar även bort dem från Meta: utkast tas bort och publicerade Flows fasas ut eftersom Meta inte tillåter att de tas bort.",
+    "deleteWhatsappFailed": "Mini App borttagen, men {count} WhatsApp Flow(s) kunde inte tas bort från Meta. Ta bort dem i WhatsApp Manager.",
+    "deleteWithWhatsapp": "Ta bort och ta bort WhatsApp Flow",
     "publicUrl": {
       "label": "Offentlig URL",
       "hint": "Kopiera URL:en och klistra in den i ditt flöde, din broadcast eller sekvens. Skickad så kopplas varje svar till kontakten som öppnade den."

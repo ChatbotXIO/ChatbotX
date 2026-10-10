@@ -458,3 +458,143 @@ export function publishFlowJson({
     return await publishDraft(auth, created.id)
   })
 }
+
+// Meta's Flow management error codes (Flows "Error Codes" reference).
+/** "Can't deprecate unpublished flow" or "Flow is already deprecated". */
+const CANNOT_DEPRECATE_CODE = 139_003
+/** "Can't delete published Flow". */
+const CANNOT_DELETE_CODE = 139_004
+/** Graph's generic code; with "does not exist" it means the Flow is gone. */
+const INVALID_PARAMETER_CODE = 100
+const DOES_NOT_EXIST_REGEX = /does not exist/i
+
+/** Statuses of a published Flow: Meta deprecates these, it never deletes them. */
+const DEPRECATABLE_FLOW_STATUSES = new Set([
+  "PUBLISHED",
+  "THROTTLED",
+  "BLOCKED",
+])
+
+export type DeleteFlowResult = {
+  /**
+   * `deleted` for a draft, `deprecated` for a published Flow (Meta cannot
+   * delete those), `missing` when the Flow no longer exists on Meta, and
+   * `skipped` when it is already deprecated or in a status Meta allows
+   * neither call on.
+   */
+  outcome: "deleted" | "deprecated" | "missing" | "skipped"
+  /** Meta's status afterwards; null once the Flow is gone. */
+  status: string | null
+}
+
+const readMetaErrorCode = (err: unknown) => Number(parseOriginError(err).code)
+
+const isFlowMissing = (err: unknown) => {
+  const origin = parseOriginError(err)
+  return (
+    Number(origin.code) === INVALID_PARAMETER_CODE &&
+    DOES_NOT_EXIST_REGEX.test(origin.message ?? "")
+  )
+}
+
+const MISSING_FLOW: DeleteFlowResult = { outcome: "missing", status: null }
+
+/** The Flow's current status, or null when it no longer exists. */
+const readFlowStatus = async (
+  auth: WhatsappAuthValue,
+  flowId: string,
+): Promise<string | null> => {
+  try {
+    return (await getFlow(auth, flowId)).status
+  } catch (err) {
+    if (isFlowMissing(err)) {
+      return null
+    }
+    throw err
+  }
+}
+
+const deleteDraftFlow = (auth: WhatsappAuthValue, flowId: string) => {
+  const { version = DEFAULT_API_VERSION } = auth
+  return ky
+    .delete(`${API_URL}/${version}/${flowId}`, {
+      headers: buildAuthHeaders(auth),
+    })
+    .json()
+}
+
+const deprecateFlow = (auth: WhatsappAuthValue, flowId: string) => {
+  const { version = DEFAULT_API_VERSION } = auth
+  return ky
+    .post(`${API_URL}/${version}/${flowId}/deprecate`, {
+      headers: buildAuthHeaders(auth),
+    })
+    .json()
+}
+
+/**
+ * Deletes or deprecates a Flow read as `status`. The status can change
+ * between the read and the call (Meta throttling a Flow, someone publishing
+ * it in WhatsApp Manager), so Meta's refusal codes pick the other call —
+ * once, so the two can never bounce off each other.
+ */
+const removeFlow = async (
+  auth: WhatsappAuthValue,
+  flowId: string,
+  status: string | null,
+  canRetry: boolean,
+): Promise<DeleteFlowResult> => {
+  if (status === null) {
+    return MISSING_FLOW
+  }
+  if (status === "DRAFT") {
+    try {
+      await deleteDraftFlow(auth, flowId)
+      return { outcome: "deleted", status: null }
+    } catch (err) {
+      if (isFlowMissing(err)) {
+        return MISSING_FLOW
+      }
+      if (canRetry && readMetaErrorCode(err) === CANNOT_DELETE_CODE) {
+        return await removeFlow(auth, flowId, "PUBLISHED", false)
+      }
+      throw err
+    }
+  }
+  if (DEPRECATABLE_FLOW_STATUSES.has(status)) {
+    try {
+      await deprecateFlow(auth, flowId)
+      return { outcome: "deprecated", status: "DEPRECATED" }
+    } catch (err) {
+      if (isFlowMissing(err)) {
+        return MISSING_FLOW
+      }
+      if (canRetry && readMetaErrorCode(err) === CANNOT_DEPRECATE_CODE) {
+        // Already deprecated, or turned back into a draft: re-read and act.
+        const current = await readFlowStatus(auth, flowId)
+        return await removeFlow(auth, flowId, current, false)
+      }
+      throw err
+    }
+  }
+  return { outcome: "skipped", status }
+}
+
+/**
+ * Removes a Flow from Meta as far as Meta allows: a draft is deleted, a
+ * published (or throttled/blocked) Flow is deprecated so it can no longer be
+ * sent. A Flow already gone reads as `missing`; token, permission and rate
+ * limit errors throw.
+ */
+export function deleteFlow({
+  auth,
+  flowId,
+}: {
+  auth: WhatsappAuthValue
+  flowId: string
+}): Promise<DeleteFlowResult> {
+  return rescue(async () => {
+    const status = await readFlowStatus(auth, flowId)
+    return await removeFlow(auth, flowId, status, true)
+  })
+}

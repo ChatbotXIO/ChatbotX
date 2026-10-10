@@ -7635,7 +7635,9 @@
     "title": "Mini Apps",
     "description": "בנו טפסי WhatsApp Flow ושתפו אותם כקישור בכל ערוץ.",
     "feature": "Mini App",
-    "deleteKeepsWhatsapp": "Flows שכבר פורסמו ב-WhatsApp נשארים ב-Meta.",
+    "deleteWhatsappChoice": "״מחיקה״ שומרת את ה-Flows שכבר פורסמו ב-WhatsApp. ״מחיקה והסרת WhatsApp Flow״ מסירה אותם גם מ-Meta: טיוטות נמחקות, ו-Flows שפורסמו מושבתים כי Meta לא מאפשרת למחוק אותם.",
+    "deleteWhatsappFailed": "ה-Mini App נמחק, אך לא ניתן היה להסיר {count} WhatsApp Flows מ-Meta. הסירו אותם ידנית ב-WhatsApp Manager.",
+    "deleteWithWhatsapp": "מחיקה והסרת WhatsApp Flow",
     "publicUrl": {
       "label": "קישור ציבורי",
       "hint": "העתיקו את הכתובת והדביקו אותה בזרימה, בשידור או ברצף. כשהיא נשלחת כך, כל תשובה משויכת לאיש הקשר שפתח אותה."

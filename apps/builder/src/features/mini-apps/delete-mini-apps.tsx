@@ -15,13 +15,13 @@ import { Loader, Trash } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import type { ComponentPropsWithoutRef } from "react"
+import { type ComponentPropsWithoutRef, useState } from "react"
 import { toast } from "sonner"
 import { deleteMiniAppsAction } from "./actions/delete-mini-apps.action"
 
 type DeleteMiniAppsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   workspaceId: string
-  miniApps: { id: string }[]
+  miniApps: { id: string; publications: unknown[] }[]
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange?: (open: boolean) => void
@@ -38,11 +38,26 @@ export function DeleteMiniAppsDialog({
   const t = useTranslations()
   const router = useRouter()
   const feature = t("miniApps.feature")
+  // Only offer removing WhatsApp Flows when one of them was published there.
+  const hasWhatsappFlows = miniApps.some(
+    (miniApp) => miniApp.publications.length > 0,
+  )
+  // Which button started the delete, so only that one shows the spinner.
+  const [withWhatsappFlows, setWithWhatsappFlows] = useState(false)
   const { execute, isPending } = useAction(
     deleteMiniAppsAction.bind(null, workspaceId),
     {
-      onSuccess: () => {
-        toast.success(t("messages.deletedSuccess", { feature }))
+      onSuccess: ({ data }) => {
+        const failedFlows =
+          data?.whatsappFlows.filter((flow) => flow.outcome === "failed")
+            .length ?? 0
+        if (failedFlows > 0) {
+          toast.warning(
+            t("miniApps.deleteWhatsappFailed", { count: failedFlows }),
+          )
+        } else {
+          toast.success(t("messages.deletedSuccess", { feature }))
+        }
         onOpenChange?.(false)
         onSuccess?.()
         router.refresh()
@@ -54,6 +69,14 @@ export function DeleteMiniAppsDialog({
       },
     },
   )
+
+  const runDelete = (deleteWhatsappFlows: boolean) => {
+    setWithWhatsappFlows(deleteWhatsappFlows)
+    execute({
+      ids: miniApps.map((miniApp) => miniApp.id),
+      deleteWhatsappFlows,
+    })
+  }
 
   return (
     <Dialog onOpenChange={onOpenChange} {...props}>
@@ -72,8 +95,9 @@ export function DeleteMiniAppsDialog({
           <DialogTitle>{t("messages.deleteFeature", { feature })}</DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
             {t("messages.deleteConfirmation", { feature })}
-            {"\n"}
-            {t("miniApps.deleteKeepsWhatsapp")}
+            {hasWhatsappFlows
+              ? `\n${t("miniApps.deleteWhatsappChoice")}`
+              : null}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">
@@ -90,17 +114,31 @@ export function DeleteMiniAppsDialog({
           />
           <Button
             disabled={isPending}
-            onClick={() =>
-              execute({ ids: miniApps.map((miniApp) => miniApp.id) })
-            }
+            onClick={() => runDelete(false)}
             size="sm"
-            variant="destructive"
+            variant={hasWhatsappFlows ? "outline" : "destructive"}
           >
-            {isPending && (
+            {isPending && !withWhatsappFlows && (
               <Loader aria-hidden="true" className="me-2 size-4 animate-spin" />
             )}
             {t("actions.delete")}
           </Button>
+          {hasWhatsappFlows ? (
+            <Button
+              disabled={isPending}
+              onClick={() => runDelete(true)}
+              size="sm"
+              variant="destructive"
+            >
+              {isPending && withWhatsappFlows && (
+                <Loader
+                  aria-hidden="true"
+                  className="me-2 size-4 animate-spin"
+                />
+              )}
+              {t("miniApps.deleteWithWhatsapp")}
+            </Button>
+          ) : null}
         </DialogFooter>
       </DialogContent>
     </Dialog>
