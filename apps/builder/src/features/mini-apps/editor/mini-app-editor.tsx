@@ -122,8 +122,13 @@ function IssuesButton({ issues }: { issues: MiniAppValidationIssue[] }) {
           </Button>
         }
       />
-      <PopoverContent align="end" className="w-96 p-0">
-        <ScrollArea className="max-h-80">
+      <PopoverContent
+        align="end"
+        className="w-96 max-w-[calc(100vw-2rem)] overflow-hidden p-0"
+      >
+        {/* A plain overflow box: ScrollArea's viewport is `h-full`, which a
+            max-height alone cannot bound, so the list spilled out. */}
+        <div className="max-h-80 overflow-y-auto">
           <div className="flex flex-col divide-y">
             {issues.map((issue, index) => {
               const screen = definition.screens.find(
@@ -131,7 +136,7 @@ function IssuesButton({ issues }: { issues: MiniAppValidationIssue[] }) {
               )
               return (
                 <button
-                  className="flex flex-col gap-0.5 px-3 py-2 text-start hover:bg-muted"
+                  className="flex min-w-0 flex-col gap-0.5 px-3 py-2 text-start hover:bg-muted"
                   // biome-ignore lint/suspicious/noArrayIndexKey: issues have no id
                   key={index}
                   onClick={() => {
@@ -146,7 +151,7 @@ function IssuesButton({ issues }: { issues: MiniAppValidationIssue[] }) {
                 >
                   <span
                     className={cn(
-                      "text-sm",
+                      "break-words text-sm",
                       issue.severity === "error"
                         ? "text-destructive"
                         : "text-amber-600",
@@ -155,7 +160,7 @@ function IssuesButton({ issues }: { issues: MiniAppValidationIssue[] }) {
                     {message(issue)}
                   </span>
                   {screen ? (
-                    <span className="text-muted-foreground text-xs">
+                    <span className="truncate text-muted-foreground text-xs">
                       {screen.title || screen.id}
                     </span>
                   ) : null}
@@ -163,7 +168,7 @@ function IssuesButton({ issues }: { issues: MiniAppValidationIssue[] }) {
               )
             })}
           </div>
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   )
