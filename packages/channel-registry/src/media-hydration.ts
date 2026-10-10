@@ -739,15 +739,31 @@ export async function ensureAttachmentMirrored(input: {
           }
         }
         if (!mediaReference) {
-          // Fresh media for this pending attachment is unavailable. Fail only
-          // the requested attachment (retryable, same as before); skip
-          // unrelated siblings so one gap can't sink the whole request.
-          if (attachment.id === input.attachmentId) {
+          // Skip unrelated siblings so one gap can't sink the whole request.
+          if (attachment.id !== input.attachmentId) {
+            continue
+          }
+          // A positional miss on a legacy row may just be a shifted index
+          // (the resolver drops url-less entries), so keep it retryable.
+          if (!attachment.sourceId && (media?.length ?? 0) > 0) {
             throw new SdkException(
               `[media-hydration] Media reference is unavailable for attachment ${attachment.id}`,
             )
           }
-          continue
+          // The provider answered but no longer exposes media for this
+          // attachment (expired story, unsent message, url-less share) —
+          // retrying gets the same answer. Transport failures throw from
+          // `resolveMedia` above and stay retryable.
+          await markAttachmentFailed(
+            state.repository,
+            input.workspaceId,
+            attachment,
+            "unresolvable",
+          )
+          throw new TerminalMediaError(
+            "unresolvable",
+            `Media reference is unavailable for attachment ${attachment.id}`,
+          )
         }
         let originPath: string
         try {

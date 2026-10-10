@@ -941,7 +941,7 @@ describe("media hydration", () => {
     })
   })
 
-  test("keeps a row pending when Graph resolves no media", async () => {
+  test("marks a row unresolvable when Graph resolves no media for it", async () => {
     const pending = attachment("101")
     arrangeAttachmentGraph([pending])
     mocks.runChannelHandler.mockResolvedValue([])
@@ -952,8 +952,65 @@ describe("media hydration", () => {
     })
 
     await expect(result).rejects.toThrow(UNAVAILABLE_PATTERN)
-    await expect(result).rejects.not.toBeInstanceOf(TerminalMediaError)
+    await expect(result).rejects.toMatchObject({ reason: "unresolvable" })
     expect(mocks.putObject).not.toHaveBeenCalled()
+    expect(mocks.updateAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: pending.id,
+        fields: expect.objectContaining({ originPath: "failed:unresolvable" }),
+      }),
+    )
+  })
+
+  test("keeps a legacy row pending on a positional miss", async () => {
+    const attachments = [
+      attachment("101", "https://cdn.example/101", null),
+      attachment("102", "https://cdn.example/102", null),
+    ]
+    arrangeAttachmentGraph(attachments)
+    // Graph dropped one url-less entry, so index 1 has no media.
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "graph-b",
+        url: "https://fresh.example/102",
+        mimeType: "image/jpeg",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      ),
+    )
+
+    const result = ensureAttachmentMirrored({
+      attachmentId: "102",
+      workspaceId,
+    })
+
+    await expect(result).rejects.toThrow(UNAVAILABLE_PATTERN)
+    await expect(result).rejects.not.toBeInstanceOf(TerminalMediaError)
+    expect(mocks.updateAttachment).not.toHaveBeenCalledWith(
+      expect.objectContaining({ id: "102" }),
+    )
+  })
+
+  test("keeps a row pending when resolving Graph media fails", async () => {
+    const pending = attachment("101")
+    arrangeAttachmentGraph([pending])
+    mocks.runChannelHandler.mockRejectedValue(new Error("Graph timeout"))
+
+    const result = ensureAttachmentMirrored({
+      attachmentId: pending.id,
+      workspaceId,
+    })
+
+    await expect(result).rejects.toThrow("Graph timeout")
+    await expect(result).rejects.not.toBeInstanceOf(TerminalMediaError)
     expect(mocks.updateAttachment).not.toHaveBeenCalled()
   })
 
