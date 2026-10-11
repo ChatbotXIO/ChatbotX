@@ -1985,6 +1985,10 @@
     "autoSkipFailAttempts": {
       "label": "محاولات الفشل قبل التخطي التلقائي"
     },
+    "showHint": {
+      "label": "عرض تلميح",
+      "description": "اقتراح رقم هاتف جهة الاتصال أو بريدها الإلكتروني كردّ سريع. يعمل على Messenger وInstagram فقط."
+    },
     "autoSkip": {
       "label": "تخطي تلقائي"
     },

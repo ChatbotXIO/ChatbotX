@@ -1839,6 +1839,10 @@
     "autoSkipFailAttempts": {
       "label": "Jumlah Kegagalan untuk Lewati Otomatis"
     },
+    "showHint": {
+      "label": "Tampilkan petunjuk",
+      "description": "Sarankan nomor telepon atau email kontak sebagai balasan cepat. Hanya berfungsi di Messenger dan Instagram."
+    },
     "autoSkip": {
       "label": "Lewati Otomatis"
     },

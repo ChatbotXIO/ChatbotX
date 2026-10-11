@@ -32,6 +32,12 @@ const conversationUpdateChallenge = vi.fn(async () => undefined)
 const conversationConsumeChallenge = vi.fn(async () => true)
 const conversationRestoreChallengeIfAbsent = vi.fn(async () => true)
 const workspaceFindById = vi.fn(async () => ({ language: "en" }))
+const contactFindById = vi.fn(
+  async (): Promise<{ phoneNumber: string | null; email: string | null }> => ({
+    phoneNumber: null,
+    email: null,
+  }),
+)
 const resolveTenantSettings = vi.fn(async () => ({
   storageUrl: "https://cdn.example.com/",
   appUrl: "https://app.example.com",
@@ -42,6 +48,7 @@ vi.mock("@chatbotx.io/business", () => ({
     setValueByKey: contactCustomFieldSetValueByKey,
   },
   contactInboxService: { updateTracking: contactInboxUpdateTracking },
+  contactService: { findById: contactFindById },
   conversationService: {
     updateChallenge: conversationUpdateChallenge,
     consumeChallenge: conversationConsumeChallenge,
@@ -1534,5 +1541,213 @@ describe("getUserData — WhatsApp native location request (RF08)", () => {
       "sendChatMessage",
       expect.anything(),
     )
+  })
+})
+
+describe("getUserData — Show Hint contact quick reply (phone/email)", () => {
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+    waitForChatJobCompletion.mockClear()
+    contactFindById.mockReset()
+    contactFindById.mockResolvedValue({ phoneNumber: null, email: null })
+  })
+
+  function makeFirstSendProps(
+    replyFormat: ReplyFormat,
+    channel: string,
+    overrides: StepOverride = { showHint: true },
+  ) {
+    const props = makeProps(replyFormat, overrides)
+    props.ctx = { variables: { conversation: {} } }
+    props.contactInbox = { ...props.contactInbox, channel }
+    return props
+  }
+
+  function expectTextPromptPath() {
+    expect(chatQueueAdd).toHaveBeenCalledWith(
+      "sendFlowMessage",
+      expect.objectContaining({ type: "sendFlowMessage" }),
+      { priority: 5 },
+    )
+    expect(chatQueueAdd).not.toHaveBeenCalledWith(
+      "sendChatMessage",
+      expect.anything(),
+    )
+  }
+
+  test("messenger offers the stored contact phone with the full value in the payload", async () => {
+    contactFindById.mockResolvedValueOnce({
+      phoneNumber: "0708122593",
+      email: null,
+    })
+
+    const result = await getUserData(
+      makeFirstSendProps(ReplyFormat.phone, "messenger"),
+    )
+
+    expect(result.status).toBe("wait")
+    expect(contactFindById).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "contact-1",
+    })
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data.quickReplies).toEqual([
+      {
+        id: "test-id",
+        label: "0708122593",
+        buttonType: "postback",
+        postback: "GET_USER_DATA_CONTACT_HINT|0708122593",
+      },
+    ])
+    expect(waitForChatJobCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "job-1" }),
+      { conversationId: "conv-1", stepId: "step-1" },
+    )
+  })
+
+  test("a value longer than 20 characters gets a shortened title and the full payload", async () => {
+    contactFindById.mockResolvedValueOnce({
+      phoneNumber: null,
+      email: "taubancam171995.1@gmail.com",
+    })
+
+    await getUserData(makeFirstSendProps(ReplyFormat.email, "messenger"))
+
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data.quickReplies?.[0]).toMatchObject({
+      label: "taubancam171995.1@g…",
+      postback: "GET_USER_DATA_CONTACT_HINT|taubancam171995.1@gmail.com",
+    })
+    expect(job.data.quickReplies?.[0]?.label).toHaveLength(20)
+  })
+
+  test("messenger without a stored phone falls back to the native user_phone_number quick reply", async () => {
+    await getUserData(makeFirstSendProps(ReplyFormat.phone, "messenger"))
+
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data.quickReplies).toEqual([
+      {
+        id: "messenger:native-quick-reply:user_phone_number",
+        label: "Phone",
+        buttonType: "postback",
+        postback: "messenger:native-quick-reply:user_phone_number",
+      },
+    ])
+  })
+
+  test("messenger without a stored email falls back to the native user_email quick reply", async () => {
+    await getUserData(makeFirstSendProps(ReplyFormat.email, "messenger"))
+
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data.quickReplies?.[0]?.postback).toBe(
+      "messenger:native-quick-reply:user_email",
+    )
+  })
+
+  test("instagram offers the stored contact value", async () => {
+    contactFindById.mockResolvedValueOnce({
+      phoneNumber: null,
+      email: "an@example.com",
+    })
+
+    await getUserData(makeFirstSendProps(ReplyFormat.email, "instagram"))
+
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data.quickReplies?.[0]).toMatchObject({
+      label: "an@example.com",
+      postback: "GET_USER_DATA_CONTACT_HINT|an@example.com",
+    })
+  })
+
+  test("messenger with an invalid stored phone falls back to the native quick reply", async () => {
+    contactFindById.mockResolvedValueOnce({
+      phoneNumber: "call me maybe",
+      email: null,
+    })
+
+    await getUserData(makeFirstSendProps(ReplyFormat.phone, "messenger"))
+
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data.quickReplies?.[0]?.postback).toBe(
+      "messenger:native-quick-reply:user_phone_number",
+    )
+  })
+
+  test("instagram with an invalid stored email keeps the text prompt path", async () => {
+    contactFindById.mockResolvedValueOnce({
+      phoneNumber: null,
+      email: "not-an-email",
+    })
+
+    await getUserData(makeFirstSendProps(ReplyFormat.email, "instagram"))
+
+    expectTextPromptPath()
+  })
+
+  test("trims the stored value before offering it", async () => {
+    contactFindById.mockResolvedValueOnce({
+      phoneNumber: "  0708122593  ",
+      email: null,
+    })
+
+    await getUserData(makeFirstSendProps(ReplyFormat.phone, "instagram"))
+
+    const job = findChatJobCall("sendChatMessage")
+    expect(job.data.quickReplies?.[0]).toMatchObject({
+      label: "0708122593",
+      postback: "GET_USER_DATA_CONTACT_HINT|0708122593",
+    })
+  })
+
+  test("a comment-triggered run keeps the text prompt path", async () => {
+    contactFindById.mockResolvedValueOnce({
+      phoneNumber: "0708122593",
+      email: null,
+    })
+    const props = makeFirstSendProps(ReplyFormat.phone, "messenger")
+    props.commentAnchor = {
+      commentId: "comment-1",
+      replyChannel: "private",
+    }
+
+    await getUserData(props)
+
+    expect(contactFindById).not.toHaveBeenCalled()
+    expect(chatQueueAdd).not.toHaveBeenCalledWith(
+      "sendChatMessage",
+      expect.anything(),
+    )
+  })
+
+  test("instagram without a stored value keeps the text prompt path", async () => {
+    await getUserData(makeFirstSendProps(ReplyFormat.phone, "instagram"))
+
+    expectTextPromptPath()
+  })
+
+  test.each([
+    "whatsapp",
+    "zalo",
+    "telegram",
+    "tiktok",
+    "webchat",
+  ])("%s keeps the text prompt path", async (channel) => {
+    await getUserData(makeFirstSendProps(ReplyFormat.phone, channel))
+
+    expectTextPromptPath()
+  })
+
+  test("showHint off keeps the text prompt path", async () => {
+    await getUserData(
+      makeFirstSendProps(ReplyFormat.phone, "messenger", { showHint: false }),
+    )
+
+    expectTextPromptPath()
+  })
+
+  test("showHint is ignored for non phone/email formats", async () => {
+    await getUserData(makeFirstSendProps(ReplyFormat.text, "messenger"))
+
+    expectTextPromptPath()
   })
 })

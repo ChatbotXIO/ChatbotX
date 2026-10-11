@@ -1063,6 +1063,10 @@
     "autoSkipFailAttempts": {
       "label": "自動跳過失敗嘗試"
     },
+    "showHint": {
+      "label": "顯示提示",
+      "description": "以快速回覆的形式建議聯絡人的電話號碼或電子郵件。僅適用於 Messenger 和 Instagram。"
+    },
     "autoSkip": {
       "label": "自動跳過"
     },

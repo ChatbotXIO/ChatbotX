@@ -1839,6 +1839,10 @@
     "autoSkipFailAttempts": {
       "label": "Auto Skip Fail Attempts"
     },
+    "showHint": {
+      "label": "Vis tip",
+      "description": "Foreslå kontaktens telefonnummer eller e-mail som et hurtigt svar. Virker kun på Messenger og Instagram."
+    },
     "autoSkip": {
       "label": "Auto Skip"
     },

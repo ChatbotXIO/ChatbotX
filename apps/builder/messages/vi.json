@@ -1991,6 +1991,10 @@
     "autoSkipFailAttempts": {
       "label": "Số lần thất bại tự động bỏ qua"
     },
+    "showHint": {
+      "label": "Hiện gợi ý",
+      "description": "Gợi ý số điện thoại hoặc email của khách bằng quick reply. Chỉ áp dụng cho Messenger và Instagram."
+    },
     "autoSkip": {
       "label": "Tự động bỏ qua"
     },

@@ -1985,6 +1985,10 @@
     "autoSkipFailAttempts": {
       "label": "Otomatik Atlama İçin Başarısız Denemeler"
     },
+    "showHint": {
+      "label": "İpucu göster",
+      "description": "Kişinin telefon numarasını veya e-postasını hızlı yanıt olarak önerin. Yalnızca Messenger ve Instagram'da çalışır."
+    },
     "autoSkip": {
       "label": "Otomatik Atla"
     },

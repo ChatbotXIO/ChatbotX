@@ -1528,6 +1528,67 @@ describe("receiveMessage — message repository branch", () => {
     )
   })
 
+  test("treats a native phone quick reply (payload equals text) as a typed reply, not a bare flow ID", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        text: "8490123456789",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: "8490123456789",
+      ref: null,
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result.quickReplyAction).toBeNull()
+    expect(mockAutomatedResponseEnqueueFlowAction).not.toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "quickReply" }),
+    )
+  })
+
+  test("replaces a shortened Show Hint title with the full value from the payload", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        text: "taubancam171995.1@g…",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction:
+        "GET_USER_DATA_CONTACT_HINT|taubancam171995.1@gmail.com",
+      ref: null,
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result.quickReplyAction).toBeNull()
+    expect(mockCreateOrUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "taubancam171995.1@gmail.com" }),
+    )
+    expect(logger.warn).not.toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "quickReply" }),
+      expect.anything(),
+    )
+  })
+
+  test("keeps a bare flow ID quick reply whose payload differs from the text", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, text: "Get started", attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: "1234567890123",
+      ref: null,
+    })
+
+    const result = await receiveMessage(baseProps)
+
+    expect(result.quickReplyAction).toBe("1234567890123")
+  })
+
   test("keeps valid postback action and enqueues the postback flow job", async () => {
     const postbackAction = encodeButtonPayload({ flowId: "42" })
     mockRunChannelHandler.mockResolvedValue({

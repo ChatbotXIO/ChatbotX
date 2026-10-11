@@ -66,7 +66,10 @@ import {
   setWebhookExecutionContext,
 } from "@chatbotx.io/events"
 import { uploader } from "@chatbotx.io/filesystem"
-import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
+import {
+  decodeContactHintQuickReplyPayload,
+  messageEventTypeSchema,
+} from "@chatbotx.io/flow-config"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
@@ -323,7 +326,7 @@ export const receiveMessage = async (
   }
 
   const {
-    message: rawIncomingMessage,
+    message: parsedIncomingMessage,
     contact: incomingContact,
     postbackAction: rawPostbackAction,
     templateFlowToken,
@@ -346,11 +349,31 @@ export const receiveMessage = async (
     integrationType,
     integrationIdentifier,
   })
-  const quickReplyAction = sanitizeFlowAction(rawQuickReplyAction, {
-    kind: "quickReply",
-    integrationType,
-    integrationIdentifier,
-  })
+  // A getUserData "Show Hint" tap: the title may be shortened to Meta's
+  // 20-character limit, so the full phone/email from the payload becomes the
+  // reply text the pending challenge validates and stores.
+  const contactHintValue =
+    decodeContactHintQuickReplyPayload(rawQuickReplyAction)
+  const rawIncomingMessage =
+    contactHintValue && parsedIncomingMessage
+      ? { ...parsedIncomingMessage, text: contactHintValue }
+      : parsedIncomingMessage
+  // Messenger's native user_phone_number / user_email quick replies echo the
+  // shared value as both the text and the payload. A bare-digit phone number
+  // would otherwise decode as a Messenger bare flow ID, so a payload equal to
+  // the message text is treated as a typed reply, never a flow action.
+  const isValueQuickReply =
+    contactHintValue !== null ||
+    (rawQuickReplyAction !== null &&
+      rawQuickReplyAction === parsedIncomingMessage?.text)
+  const quickReplyAction = sanitizeFlowAction(
+    isValueQuickReply ? null : rawQuickReplyAction,
+    {
+      kind: "quickReply",
+      integrationType,
+      integrationIdentifier,
+    },
+  )
 
   // Third-party echoes for a contact this inbox has never seen are dropped
   // before any contact, profile-fetch, or message write. Such tools fan out

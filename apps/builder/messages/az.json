@@ -2036,6 +2036,10 @@
     "autoSkipFailAttempts": {
       "label": "Avtomatik ötürmə üçün uğursuz cəhd sayı"
     },
+    "showHint": {
+      "label": "İpucu göstər",
+      "description": "Kontaktın telefon nömrəsini və ya e-poçtunu sürətli cavab kimi təklif edin. Yalnız Messenger və Instagram-da işləyir."
+    },
     "autoSkip": {
       "label": "Avtomatik ötürmə"
     },
