@@ -76,8 +76,12 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
 
 // --- imports after mocks ---
 
-const { findWhatsappFlowStepByButtonId, applyWhatsappFlowResponseSideEffects } =
-  await import("../src/integration/handlers/whatsapp-flow-response")
+const { findWhatsappFlowStepByButtonId } = await import(
+  "@chatbotx.io/flow-config"
+)
+const { applyWhatsappFlowResponseSideEffects } = await import(
+  "../src/integration/handlers/whatsapp-flow-response"
+)
 
 // --- helpers ---
 

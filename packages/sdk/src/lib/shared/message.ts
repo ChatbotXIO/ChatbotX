@@ -713,6 +713,31 @@ export const resolveWhatsappCallActivityLabelKey = (
     : "unansweredVoiceCall"
 }
 
+/**
+ * A WhatsApp Flow's completion reply (`nfm_reply`). Shared by the worker
+ * (writer) and the inbox (reader). An `nfm_reply` named `address_message`
+ * is an address answer, not a Flow, so it does not match.
+ */
+export const getWhatsappFlowResponse = (
+  contentAttributes: unknown,
+): MessageWhatsappFlowResponseEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const attrs = contentAttributes as {
+    type?: string
+    name?: unknown
+    flowResponse?: unknown
+  }
+  return attrs.type === "whatsapp_flow_response" &&
+    (attrs.name === undefined || attrs.name === "flow") &&
+    attrs.flowResponse !== null &&
+    typeof attrs.flowResponse === "object" &&
+    !Array.isArray(attrs.flowResponse)
+    ? (contentAttributes as MessageWhatsappFlowResponseEntity)
+    : undefined
+}
+
 export const getWhatsappCallPermissionReply = (
   contentAttributes: unknown,
 ): MessageWhatsappCallPermissionReplyEntity | undefined => {

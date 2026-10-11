@@ -18,6 +18,7 @@ import {
   type EdgeSchema,
   type FlowActionTargetType,
   type FlowNode,
+  findWhatsappFlowStepByButtonId,
   flowActionTargetTypes,
   flowEventTypeSchema,
   isQuickReplyCarrierStep,
@@ -68,10 +69,7 @@ import {
   flowStepHandlers,
   type StepRoutingStatus,
 } from "./step"
-import {
-  applyWhatsappFlowResponseSideEffects,
-  findWhatsappFlowStepByButtonId,
-} from "./whatsapp-flow-response"
+import { applyWhatsappFlowResponseSideEffects } from "./whatsapp-flow-response"
 
 const ROUTING_STATUSES = new Set<StepRoutingStatus>([
   "success",

@@ -98,6 +98,11 @@ vi.mock("@/features/messages/actions/change-message-attributes.action", () => ({
   changeMessageAttributes,
 }))
 
+const getWhatsappFlowResponseView = vi.fn()
+vi.mock("@/features/messages/lib/get-whatsapp-flow-response", () => ({
+  getWhatsappFlowResponseView,
+}))
+
 vi.mock("@/lib/workspace-quota", () => ({
   assertWorkspaceNotBlocked: vi.fn(),
 }))
@@ -210,6 +215,35 @@ describe("GET /v1/conversations/{conversationId}/messages/{messageId}", () => {
         input: { conversationId: "conv-1", messageId: "msg-1", createdAt },
       }),
     ).rejects.toThrow("Message not found")
+  })
+})
+
+describe("GET /v1/conversations/{conversationId}/messages/{messageId}/flow-response", () => {
+  const procedure = findProcedure(
+    "GET",
+    "/v1/conversations/{conversationId}/messages/{messageId}/flow-response",
+  )
+
+  test("labels the response through the shared lib, scoped to the token's workspace", async () => {
+    const createdAt = new Date("2026-10-01T00:00:00Z")
+    const view = {
+      fields: [{ key: "name", label: "Name", kind: "text", value: "An" }],
+      labelSource: "whatsappFlow",
+    }
+    getWhatsappFlowResponseView.mockResolvedValueOnce(view)
+
+    const result = await procedure.handler?.({
+      context,
+      input: { conversationId: "conv-1", messageId: "msg-1", createdAt },
+    })
+
+    expect(getWhatsappFlowResponseView).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      messageId: "msg-1",
+      createdAt,
+    })
+    expect(result).toBe(view)
   })
 })
 

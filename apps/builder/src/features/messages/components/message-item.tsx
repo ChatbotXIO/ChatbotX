@@ -8,6 +8,7 @@ import type {
 import {
   getWhatsappCallEntity,
   getWhatsappCallPermissionReply,
+  getWhatsappFlowResponse,
 } from "@chatbotx.io/sdk"
 import {
   Avatar,
@@ -60,6 +61,7 @@ import { MessageErrorBadge } from "./message-error-badge"
 import { ThreadControlContextCard } from "./thread-control-context-card"
 import { ThreadControlDivider } from "./thread-control-divider"
 import { WhatsappCallCard } from "./whatsapp-call-card"
+import { WhatsappFlowResponseButton } from "./whatsapp-flow-response-dialog"
 
 type MessageItemProps = {
   message: MessageResourceWithRelations
@@ -764,6 +766,22 @@ const RenderContentAttributes = (props: MessageItemProps) => {
   if (callPermissionReply) {
     return (
       <WhatsappCallPermissionReply response={callPermissionReply.response} />
+    )
+  }
+
+  // The guest widget is the customer's own view: the answers are agent-only.
+  // A deleted message shows only its "deleted" note, so no answers either.
+  if (
+    !(props.guestDisplay || message.deletedAt) &&
+    getWhatsappFlowResponse(message.contentAttributes)
+  ) {
+    return (
+      <WhatsappFlowResponseButton
+        conversationId={message.conversationId}
+        createdAt={message.createdAt}
+        messageId={message.id}
+        workspaceId={message.workspaceId}
+      />
     )
   }
 

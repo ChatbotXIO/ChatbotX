@@ -3564,7 +3564,18 @@
     "sendHumanAgentTag": "HUMAN_AGENTタグを付けてメッセージを1件送信",
     "warning": "警告！",
     "humanAgentWarningDescription": "問題を24時間以内に解決することが合理的に困難な場合に限り、ユーザーのメッセージに7日以内で返信できます。たとえば、週末、祝日、または完了までに1日以上かかるケースです。それ以外の理由でこのオプションを使用すると、FacebookページまたはInstagramアカウントが危険にさらされる可能性があります。確信がない場合は続行しないでください。",
-    "callFailed": "通話の問題"
+    "callFailed": "通話の問題",
+    "flowResponse": {
+      "viewResponse": "回答を表示",
+      "title": "Flowの回答",
+      "description": "このWhatsApp Flowで顧客が送信した回答です。",
+      "empty": "この回答には内容がありません。",
+      "failed": "回答を読み込めませんでした。",
+      "noAnswer": "未回答",
+      "labelsUnavailable": "Flowの質問を読み込めなかったため、項目名を表示しています。",
+      "yes": "はい",
+      "no": "いいえ"
+    }
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",

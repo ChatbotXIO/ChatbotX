@@ -3627,7 +3627,18 @@
     "sendHumanAgentTag": "Gửi một tin nhắn với thẻ HUMAN_AGENT",
     "warning": "Warning!",
     "humanAgentWarningDescription": "Bạn chỉ có thể trả lời tin nhắn của người dùng trong vòng 7 ngày khi vấn đề không thể giải quyết trong vòng 24 giờ. Ví dụ: cuối tuần, ngày lễ, hoặc các trường hợp cần hơn một ngày để xử lý. Không sử dụng tùy chọn này cho bất kỳ lý do nào khác vì có thể ảnh hưởng đến Trang Facebook hoặc tài khoản Instagram của bạn. Nếu bạn không chắc chắn, đừng tiếp tục.",
-    "callFailed": "Sự cố cuộc gọi"
+    "callFailed": "Sự cố cuộc gọi",
+    "flowResponse": {
+      "viewResponse": "Xem phản hồi",
+      "title": "Phản hồi Flow",
+      "description": "Các câu trả lời khách hàng đã gửi trong WhatsApp Flow này.",
+      "empty": "Phản hồi này không có câu trả lời nào.",
+      "failed": "Không tải được phản hồi.",
+      "noAnswer": "Không trả lời",
+      "labelsUnavailable": "Không tải được câu hỏi của Flow nên đang hiển thị tên trường.",
+      "yes": "Có",
+      "no": "Không"
+    }
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

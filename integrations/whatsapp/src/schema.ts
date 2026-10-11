@@ -11,6 +11,7 @@ import type {
   DeleteFlowResult,
   PublishFlowJsonParams,
   PublishFlowJsonResult,
+  WhatsappFlowResponseField,
 } from "./api/flow"
 import type {
   ConversationalAutomation,
@@ -335,6 +336,13 @@ export type WhatsappActions = {
       params: { flowSourceId: string }
     },
     WhatsappFlowScreen[]
+  >
+  getFlowResponseFields: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      params: { flowSourceId: string }
+    },
+    WhatsappFlowResponseField[]
   >
   publishFlowJson: Handler<
     {

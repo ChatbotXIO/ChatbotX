@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest"
 import {
   getCanonicalReplyPayload,
+  getWhatsappFlowResponse,
   isDistinctPrimaryIdentity,
   isWhatsappNativeLocationRequest,
   type MessageButtonTemplate,
@@ -252,5 +253,32 @@ describe("resolveMessagingWindowOpenedAt", () => {
         contentAttributes,
       }),
     ).toBeNull()
+  })
+})
+
+describe("getWhatsappFlowResponse", () => {
+  const entity = {
+    type: "whatsapp_flow_response",
+    name: "flow",
+    flowResponse: { flow_token: "tok", name: "An" },
+    flowToken: "tok",
+    decoded: null,
+  }
+
+  test.each([
+    ["a Flow completion", entity],
+    ["a completion without a name", { ...entity, name: undefined }],
+  ])("matches %s", (_label, value) => {
+    expect(getWhatsappFlowResponse(value)).toBe(value)
+  })
+
+  test.each([
+    ["no attributes", null],
+    ["another type", { type: "template" }],
+    ["an address answer", { ...entity, name: "address_message" }],
+    ["a missing response", { ...entity, flowResponse: null }],
+    ["an array response", { ...entity, flowResponse: [] }],
+  ])("rejects %s", (_label, value) => {
+    expect(getWhatsappFlowResponse(value)).toBeUndefined()
   })
 })

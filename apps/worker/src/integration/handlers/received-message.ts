@@ -84,6 +84,7 @@ import {
   type EchoOrigin,
   echoOrigins,
   getStoryReply,
+  getWhatsappFlowResponse,
   type IncomingContact,
   type IncomingMessage,
   isSourceUserIdKeyedIdentity,
@@ -652,7 +653,7 @@ export const receiveMessage = async (
       }
 
       if (templateFlowToken && canAutomate) {
-        const flowResponse = getWhatsappFlowResponse(incomingMessage)
+        const flowResponse = getWhatsappFlowResponseValues(incomingMessage)
         if (flowResponse) {
           await integrationQueue.add(
             IntegrationJobAction.captureTemplateFlowResponse,
@@ -798,18 +799,10 @@ const getReceivedMessageSystemFieldUpdates = (
   contactLocation: parseIncomingLocation(parsedMessage.message),
 })
 
-const getWhatsappFlowResponse = (
+const getWhatsappFlowResponseValues = (
   message: IncomingMessage,
-): Record<string, unknown> | null => {
-  const entity = message.contentAttributes as
-    | MessageWhatsappFlowResponseEntity
-    | undefined
-  return entity?.type === "whatsapp_flow_response" &&
-    entity.flowResponse &&
-    typeof entity.flowResponse === "object"
-    ? entity.flowResponse
-    : null
-}
+): Record<string, unknown> | null =>
+  getWhatsappFlowResponse(message.contentAttributes)?.flowResponse ?? null
 
 const getReceivedMessageContactInboxTracking = (
   parsedMessage: Pick<ReceivedMessageResult, "buttonTitle" | "referral">,
