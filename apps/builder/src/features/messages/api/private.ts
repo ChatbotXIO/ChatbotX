@@ -11,7 +11,9 @@ import { authorizedAPI } from "@/orpc"
 import { changeMessageAttributes } from "../actions/change-message-attributes.action"
 import { deleteMessage } from "../actions/delete-message.action"
 import { editMessage } from "../actions/edit-message.action"
+import { getWhatsappFlowResponseView } from "../lib/get-whatsapp-flow-response"
 import { findMessage, listMessages } from "../queries"
+import { whatsappFlowResponseSchema } from "../schema/flow-response"
 import {
   changeMessageAttributesRequest,
   createMessageRequest,
@@ -54,6 +56,31 @@ export const messagesAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(messageResourceWithRelations)
     .handler(async ({ input }) => await findMessage(input)),
+
+  getWhatsappFlowResponseAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/conversations/{conversationId}/messages/{messageId}/flow-response",
+      summary: "Get WhatsApp Flow response",
+      tags: ["Messages"],
+    })
+    .input(
+      workspaceIdAndConversationIdRequest.extend({
+        messageId: zodBigintAsString(),
+        createdAt: z.coerce.date(),
+      }),
+    )
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(whatsappFlowResponseSchema)
+    .handler(
+      async ({ input }) =>
+        await getWhatsappFlowResponseView({
+          workspaceId: input.workspaceId,
+          conversationId: input.conversationId,
+          messageId: input.messageId,
+          createdAt: input.createdAt,
+        }),
+    ),
 
   createMessageAuthenticatedAPI: authorizedAPI
     .route({

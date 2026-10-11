@@ -3585,7 +3585,18 @@
     "sendHumanAgentTag": "HUMAN_AGENT etiketiyle bir mesaj gönder",
     "warning": "Uyarı!",
     "humanAgentWarningDescription": "Bir kullanıcının mesajına, sorunun 24 saat içinde makul şekilde çözülemediği durumlarda 7 gün içinde yanıt verebilirsiniz. Örnekler arasında hafta sonları, tatiller veya tamamlanması bir günden fazla süren durumlar yer alır. Bu seçeneği başka herhangi bir nedenle kullanmayın; aksi takdirde Facebook Sayfanız veya Instagram hesabınız risk altına girebilir. Emin değilseniz devam etmeyin.",
-    "callFailed": "Arama sorunu"
+    "callFailed": "Arama sorunu",
+    "flowResponse": {
+      "viewResponse": "Yanıtı görüntüle",
+      "title": "Flow yanıtı",
+      "description": "Müşterinin bu WhatsApp Flow'da gönderdiği yanıtlar.",
+      "empty": "Bu yanıtta hiç cevap yok.",
+      "failed": "Yanıt yüklenemedi.",
+      "noAnswer": "Yanıt yok",
+      "labelsUnavailable": "Flow'un soruları yüklenemedi, bu yüzden alan adları gösteriliyor.",
+      "yes": "Evet",
+      "no": "Hayır"
+    }
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",

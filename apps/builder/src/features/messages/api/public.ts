@@ -12,8 +12,10 @@ import {
 import { changeMessageAttributes } from "@/features/messages/actions/change-message-attributes.action"
 import { deleteMessage } from "@/features/messages/actions/delete-message.action"
 import { editMessage } from "@/features/messages/actions/edit-message.action"
+import { getWhatsappFlowResponseView } from "@/features/messages/lib/get-whatsapp-flow-response"
 import { sendWhatsappTemplateToConversation } from "@/features/messages/lib/send-whatsapp-template"
 import { listMessages } from "@/features/messages/queries"
+import { whatsappFlowResponseSchema } from "@/features/messages/schema/flow-response"
 import {
   changeMessageAttributesRequest,
   createMessageRequest,
@@ -174,6 +176,28 @@ export const messagesPublicRouter = {
       }
       return message
     }),
+
+  getFlowResponse: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/conversations/{conversationId}/messages/{messageId}/flow-response",
+      summary: "Get WhatsApp Flow response",
+      description:
+        "Returns the answers of a WhatsApp Flow response message (`contentAttributes.type` = `whatsapp_flow_response`), each paired with the question as the Flow labels it, in the Flow's order. Take `messageId`/`createdAt` from `messages.list`. Labels come from the Flow JSON on Meta; when the Flow cannot be identified (e.g. it was sent by another app) `labelSource` is `fallback` and labels are humanized keys. 404 when the message is not a Flow response.",
+      tags: ["Messages"],
+    })
+    .input(messageIdWithCreatedAtParam)
+    .output(whatsappFlowResponseSchema)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(
+      async ({ context, input }) =>
+        await getWhatsappFlowResponseView({
+          workspaceId: context.workspace.id,
+          conversationId: input.conversationId,
+          messageId: input.messageId,
+          createdAt: input.createdAt,
+        }),
+    ),
 
   // `user` is omitted from `createOutgoing` — a workspace token has no user;
   // same as the already-public `contacts.sendMessage`

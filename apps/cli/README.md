@@ -263,6 +263,7 @@ chatbotx conversations disable-bot add <id>
 # Messages
 chatbotx conversations messages list <conversationId>  # [--perPage --cursor]
 chatbotx conversations message get <conversationId> <messageId> --createdAt <createdAt>
+chatbotx conversations flow-response get <conversationId> <messageId> --createdAt <createdAt>  # WhatsApp Flow answers, labelled
 chatbotx conversations message send <conversationId>   # [--text --files --mediaFile --mediaFileId --mediaFileIds
                                                      #  --flowId --nodeId --inboxId --clientId
                                                      #  --replyToMessageId --replyToMessageCreatedAt --isPrivateReply]

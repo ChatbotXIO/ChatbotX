@@ -3585,7 +3585,18 @@
     "sendHumanAgentTag": "Lähetä yksi viesti HUMAN_AGENT-tunnisteella",
     "warning": "Varoitus!",
     "humanAgentWarningDescription": "Voit vastata käyttäjän viestiin 7 päivän kuluessa vain, jos ongelmaa ei kohtuudella voi ratkaista 24 tunnissa. Esimerkkejä ovat viikonloput, pyhäpäivät tai tapaukset, joiden ratkaiseminen kestää yli päivän. Älä käytä tätä vaihtoehtoa muusta syystä, sillä se voi vaarantaa Facebook-sivusi tai Instagram-tilisi. Jos olet epävarma, älä jatka.",
-    "callFailed": "Puheluongelma"
+    "callFailed": "Puheluongelma",
+    "flowResponse": {
+      "viewResponse": "Näytä vastaus",
+      "title": "Flow-vastaus",
+      "description": "Vastaukset, jotka asiakas lähetti tässä WhatsApp Flow'ssa.",
+      "empty": "Tässä vastauksessa ei ole vastauksia.",
+      "failed": "Vastausta ei voitu ladata.",
+      "noAnswer": "Ei vastausta",
+      "labelsUnavailable": "Flow'n kysymyksiä ei voitu ladata, joten kenttien nimet näytetään.",
+      "yes": "Kyllä",
+      "no": "Ei"
+    }
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",

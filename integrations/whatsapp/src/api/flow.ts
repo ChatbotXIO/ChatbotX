@@ -199,6 +199,182 @@ export const parseFlowScreens = (json: unknown): WhatsappFlowScreen[] => {
   })
 }
 
+/** One question of a Flow's response, as the Flow JSON labels it. */
+export type WhatsappFlowResponseField = {
+  /** The key in the response (`response_json`). */
+  key: string
+  label: string
+  /** Option id → title, for a static `data-source`. */
+  options: Record<string, string>
+  /** False when no component matched, so `label` is the humanized key. */
+  labelled: boolean
+}
+
+type FlowComponentInfo = {
+  label: string | null
+  options: Record<string, string>
+}
+
+// `${form.X}` or `${screen.SCREEN_ID.form.X}`: the input a complete payload
+// value reads from. Anything else (data, literals) has no component.
+const FORM_REFERENCE_REGEX = /^\$\{(?:screen\.([^.}]+)\.)?form\.([^}]+)\}$/
+
+const readStaticLabel = (value: unknown): string | null =>
+  typeof value === "string" && value.trim() && !value.includes("${")
+    ? value
+    : null
+
+const readStaticOptions = (dataSource: unknown): Record<string, string> => {
+  const options: Record<string, string> = {}
+  if (!Array.isArray(dataSource)) {
+    return options
+  }
+  for (const option of dataSource) {
+    if (
+      option &&
+      typeof option === "object" &&
+      typeof option.id === "string" &&
+      typeof option.title === "string"
+    ) {
+      options[option.id] = option.title
+    }
+  }
+  return options
+}
+
+type FlowComponentIndex = {
+  /** Screen id → input name → component. */
+  byScreen: Map<string, Map<string, FlowComponentInfo>>
+  /** Input name → the first component with a static label, else the first. */
+  byName: Map<string, FlowComponentInfo>
+}
+
+const readScreenId = (screen: unknown): string => {
+  const id = (screen as { id?: unknown }).id
+  return typeof id === "string" ? id : ""
+}
+
+const indexFlowComponents = (screens: unknown[]): FlowComponentIndex => {
+  const byScreen = new Map<string, Map<string, FlowComponentInfo>>()
+  const byName = new Map<string, FlowComponentInfo>()
+  for (const screen of screens) {
+    const screenComponents = new Map<string, FlowComponentInfo>()
+    byScreen.set(readScreenId(screen), screenComponents)
+    forEachJsonNode((screen as { layout?: unknown }).layout, (obj) => {
+      const name = typeof obj.name === "string" ? obj.name : ""
+      // A navigate target (`next: { type: "screen", name }`) is no input.
+      if (!name || typeof obj.type !== "string" || obj.type === "screen") {
+        return
+      }
+      const info: FlowComponentInfo = {
+        label: readStaticLabel(obj.label),
+        options: readStaticOptions(obj["data-source"]),
+      }
+      if (!screenComponents.has(name)) {
+        screenComponents.set(name, info)
+      }
+      const known = byName.get(name)
+      if (!known || (!known.label && info.label)) {
+        byName.set(name, info)
+      }
+    })
+  }
+  return { byScreen, byName }
+}
+
+type CompletePayloadEntry = { screenId: string; value: unknown }
+
+const collectCompletePayloads = (
+  screens: unknown[],
+): Map<string, CompletePayloadEntry> => {
+  const payload = new Map<string, CompletePayloadEntry>()
+  for (const screen of screens) {
+    const screenId = readScreenId(screen)
+    forEachJsonNode((screen as { layout?: unknown }).layout, (obj) => {
+      const action = readOnClickAction(obj)
+      if (action?.name !== "complete" || !action.payload) {
+        return
+      }
+      for (const [key, value] of Object.entries(action.payload as JsonObject)) {
+        if (!payload.has(key)) {
+          payload.set(key, { screenId, value })
+        }
+      }
+    })
+  }
+  return payload
+}
+
+/** The component a payload value reads, on the screen it names (or its own). */
+const findReferencedComponent = (
+  key: string,
+  entry: CompletePayloadEntry,
+  index: FlowComponentIndex,
+): FlowComponentInfo | undefined => {
+  const match =
+    typeof entry.value === "string"
+      ? FORM_REFERENCE_REGEX.exec(entry.value)
+      : null
+  if (!match) {
+    return index.byName.get(key)
+  }
+  const [, referencedScreenId, name] = match
+  const onScreen = index.byScreen
+    .get(referencedScreenId ?? entry.screenId)
+    ?.get(name ?? "")
+  // Another screen's same-named input is a guess, used only when the named
+  // screen has no such input (e.g. a hand-written Flow with a stale screen id).
+  return onScreen ?? index.byName.get(name ?? "")
+}
+
+/**
+ * Labels for a Flow's response keys. A key is whatever the `complete`
+ * payload names it, which need not match the input's `name`
+ * (`{ "full_name": "${form.name_input}" }`), so each key is traced through its
+ * `${form.X}` / `${screen.S.form.X}` reference to the component that holds the
+ * label, on that screen first since names may repeat across screens. Flows
+ * that finish through an endpoint have no `complete` payload, so none of their
+ * keys are listed here.
+ */
+export const parseFlowResponseFields = (
+  json: unknown,
+): WhatsappFlowResponseField[] => {
+  const screens = (json as { screens?: unknown } | null)?.screens
+  if (!Array.isArray(screens)) {
+    return []
+  }
+  const index = indexFlowComponents(screens)
+  return Array.from(collectCompletePayloads(screens), ([key, entry]) => {
+    const component = findReferencedComponent(key, entry, index)
+    return {
+      key,
+      label: component?.label ?? humanizeKey(key),
+      options: component?.options ?? {},
+      labelled: Boolean(component?.label),
+    }
+  })
+}
+
+const downloadFlowJson = async (
+  auth: WhatsappAuthValue,
+  flowSourceId: string,
+): Promise<unknown> => {
+  const { version = DEFAULT_API_VERSION } = auth
+  const assets = await ky
+    .get<FlowAssetsResponse>(`${API_URL}/${version}/${flowSourceId}/assets`, {
+      headers: buildAuthHeaders(auth),
+    })
+    .json()
+
+  const flowJsonAsset = assets.data.find(
+    (a) => a.asset_type === "FLOW_JSON" || a.name?.endsWith(".json"),
+  )
+  if (!flowJsonAsset?.download_url) {
+    return null
+  }
+  return await ky.get(flowJsonAsset.download_url).json()
+}
+
 export async function getFlowAssets({
   auth,
   flowSourceId,
@@ -206,26 +382,26 @@ export async function getFlowAssets({
   auth: WhatsappAuthValue
   flowSourceId: string
 }): Promise<WhatsappFlowScreen[]> {
-  const { version = DEFAULT_API_VERSION } = auth
-
   try {
-    const assets = await ky
-      .get<FlowAssetsResponse>(`${API_URL}/${version}/${flowSourceId}/assets`, {
-        headers: buildAuthHeaders(auth),
-      })
-      .json()
-
-    const flowJsonAsset = assets.data.find(
-      (a) => a.asset_type === "FLOW_JSON" || a.name?.endsWith(".json"),
-    )
-    if (!flowJsonAsset?.download_url) {
-      return []
-    }
-
-    const flowJson = await ky.get(flowJsonAsset.download_url).json()
-    return parseFlowScreens(flowJson)
+    return parseFlowScreens(await downloadFlowJson(auth, flowSourceId))
   } catch (err) {
     logger.error({ err }, "Failed to load flow assets")
+    return []
+  }
+}
+
+/** Response labels of a published Flow; empty when Meta cannot serve its JSON. */
+export async function getFlowResponseFields({
+  auth,
+  flowSourceId,
+}: {
+  auth: WhatsappAuthValue
+  flowSourceId: string
+}): Promise<WhatsappFlowResponseField[]> {
+  try {
+    return parseFlowResponseFields(await downloadFlowJson(auth, flowSourceId))
+  } catch (err) {
+    logger.warn({ err, flowSourceId }, "Failed to load flow response labels")
     return []
   }
 }

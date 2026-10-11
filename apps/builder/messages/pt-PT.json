@@ -3585,7 +3585,18 @@
     "sendHumanAgentTag": "Enviar uma mensagem com a etiqueta HUMAN_AGENT",
     "warning": "Atenção!",
     "humanAgentWarningDescription": "Só pode responder à mensagem de um utilizador no prazo de 7 dias quando o problema não puder ser razoavelmente resolvido no prazo de 24 horas. Alguns exemplos são fins de semana, feriados ou casos que exigem mais de um dia para serem concluídos. Não utilize esta opção por qualquer outro motivo, pois poderá colocar a sua Página do Facebook ou conta do Instagram em risco. Em caso de dúvida, não continue.",
-    "callFailed": "Problema na chamada"
+    "callFailed": "Problema na chamada",
+    "flowResponse": {
+      "viewResponse": "Ver resposta",
+      "title": "Resposta do Flow",
+      "description": "Respostas que o cliente enviou neste WhatsApp Flow.",
+      "empty": "Esta resposta não tem dados.",
+      "failed": "Não foi possível carregar a resposta.",
+      "noAnswer": "Sem resposta",
+      "labelsUnavailable": "Não foi possível carregar as perguntas do Flow, por isso são apresentados os nomes dos campos.",
+      "yes": "Sim",
+      "no": "Não"
+    }
   },
   "instagram": {
     "description": "Esta integração permite-lhe criar bots do Instagram.",

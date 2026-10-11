@@ -3585,7 +3585,18 @@
     "sendHumanAgentTag": "Send one besked med HUMAN_AGENT tag",
     "warning": "Warning!",
     "humanAgentWarningDescription": "Du may respond til a user's besked within 7 dage kun når den issue kan ikke reasonably være resolved within 24 timer. Examples include weekends, holidays, eller cases at require mere than one day til complete. Do ikke use denne option for vilkårlig anden reason, as it could put din Facebook Page eller Instagram konto på risk. Hvis you're ikke sure, do ikke fortsæt.",
-    "callFailed": "Opkaldsproblem"
+    "callFailed": "Opkaldsproblem",
+    "flowResponse": {
+      "viewResponse": "Se svar",
+      "title": "Flow-svar",
+      "description": "Svar, som kunden indsendte i dette WhatsApp Flow.",
+      "empty": "Dette svar indeholder ingen svar.",
+      "failed": "Svaret kunne ikke indlæses.",
+      "noAnswer": "Intet svar",
+      "labelsUnavailable": "Flowets spørgsmål kunne ikke indlæses, så feltnavne vises i stedet.",
+      "yes": "Ja",
+      "no": "Nej"
+    }
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",

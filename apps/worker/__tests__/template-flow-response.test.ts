@@ -4,17 +4,18 @@ import {
 } from "@chatbotx.io/flow-config"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const findBroadcastByIdForResponse = vi.fn()
+// Resolving the token to a template FLOW button lives in
+// `@chatbotx.io/business` (`resolveTemplateFlowButton`, covered by
+// packages/business/__tests__/resolve-sent-whatsapp-flow.test.ts); this file
+// covers the worker's job: guard the workspace, then apply the response.
+const resolveTemplateFlowButton = vi.fn()
 const applyWhatsappFlowResponse = vi.fn(async () => undefined)
 const detectConversationAndContactInbox = vi.fn()
-const detectFlowVersion = vi.fn()
 const loggerWarn = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastService: {
-    findByIdForResponse: (...args: unknown[]) =>
-      findBroadcastByIdForResponse(...args),
-  },
+  resolveTemplateFlowButton: (...args: unknown[]) =>
+    resolveTemplateFlowButton(...args),
   whatsappFlowResponseService: {
     applyResponse: (...args: unknown[]) => applyWhatsappFlowResponse(...args),
   },
@@ -23,7 +24,6 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("../src/lib/db", () => ({
   detectConversationAndContactInbox: (...args: unknown[]) =>
     detectConversationAndContactInbox(...args),
-  detectFlowVersion: (...args: unknown[]) => detectFlowVersion(...args),
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -43,31 +43,31 @@ const conversation = {
   workspaceId: "ws-1",
 }
 
+const flowResponse = {
+  email: "user@example.com",
+  phone: "+84900000000",
+}
+
 const makeJobData = (templateFlowToken: string) => ({
   workspaceId: "ws-1",
   conversationId: "conv-1",
   contactInboxId: "ci-1",
   messageId: "msg-1",
   templateFlowToken,
-  flowResponse: {
-    email: "user@example.com",
-    phone: "+84900000000",
-  },
+  flowResponse,
 })
 
-const makeFlowParam = (flowSourceId = "wa-flow-1") => ({
+const param = {
   sub_type: "flow" as const,
   index: 0,
-  flowSourceId,
+  flowSourceId: "wa-flow-1",
   fieldMappings: [{ paramKey: "email", customFieldId: "cf-email" }],
-})
+}
 
-const makeSendTemplateStep = (params: unknown) => ({
-  id: "11612473309626370",
-  stepType: "sendWaTemplateMessage",
-  template: {
-    params,
-  },
+const token = encodeTemplateFlowToken({
+  origin: TemplateFlowOrigin.Broadcast,
+  broadcastId: "11612473309626368",
+  buttonIndex: 0,
 })
 
 describe("captureTemplateFlowResponse", () => {
@@ -77,30 +77,25 @@ describe("captureTemplateFlowResponse", () => {
       conversation,
       contactInbox,
     })
-    findBroadcastByIdForResponse.mockResolvedValue(null)
-    detectFlowVersion.mockRejectedValue(new Error("missing flow version"))
+    resolveTemplateFlowButton.mockResolvedValue(null)
   })
 
-  test("applies response for broadcast-origin top-level FLOW button", async () => {
-    const param = makeFlowParam()
-    findBroadcastByIdForResponse.mockResolvedValue({
+  test("applies the response to the resolved FLOW button", async () => {
+    resolveTemplateFlowButton.mockResolvedValue({
       integrationWhatsappId: "wa-integration-1",
-      templateData: { button: [param] },
-    })
-
-    const token = encodeTemplateFlowToken({
-      origin: TemplateFlowOrigin.Broadcast,
-      broadcastId: "11612473309626368",
-      buttonIndex: 0,
+      flowSourceId: "wa-flow-1",
+      param,
     })
 
     await captureTemplateFlowResponse(makeJobData(token))
 
-    expect(findBroadcastByIdForResponse).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      broadcastId: "11612473309626368",
-      inboxId: "inbox-1",
-    })
+    expect(resolveTemplateFlowButton).toHaveBeenCalledWith(
+      expect.objectContaining({
+        origin: TemplateFlowOrigin.Broadcast,
+        broadcastId: "11612473309626368",
+      }),
+      { workspaceId: "ws-1", inboxId: "inbox-1" },
+    )
     expect(applyWhatsappFlowResponse).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactId: "contact-1",
@@ -108,133 +103,35 @@ describe("captureTemplateFlowResponse", () => {
       integrationWhatsappId: "wa-integration-1",
       flowSourceId: "wa-flow-1",
       fieldMappings: param.fieldMappings,
-      flowResponse: {
-        email: "user@example.com",
-        phone: "+84900000000",
-      },
+      flowResponse,
     })
   })
 
-  test("applies a multi-page broadcast response with the responding page's params and no legacy integration", async () => {
-    // A multi-page broadcast keeps its params per target and leaves the
-    // legacy `integrationWhatsappId` null: the service resolves the params by
-    // the responding contact's inbox, and `applyResponse` falls back to that
-    // inbox's WhatsApp integration.
-    const param = makeFlowParam("wa-flow-page-b")
-    findBroadcastByIdForResponse.mockResolvedValue({
-      integrationWhatsappId: null,
-      templateData: { button: [param] },
-    })
-
-    const token = encodeTemplateFlowToken({
-      origin: TemplateFlowOrigin.Broadcast,
-      broadcastId: "11612473309626368",
-      buttonIndex: 0,
+  test("applies with no field mappings when the button has none", async () => {
+    resolveTemplateFlowButton.mockResolvedValue({
+      flowSourceId: "wa-flow-step",
+      param: { ...param, fieldMappings: undefined },
     })
 
     await captureTemplateFlowResponse(makeJobData(token))
 
-    expect(findBroadcastByIdForResponse).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      broadcastId: "11612473309626368",
-      inboxId: "inbox-1",
-    })
-    expect(applyWhatsappFlowResponse).toHaveBeenCalledWith(
-      expect.objectContaining({
-        contactInbox,
-        integrationWhatsappId: null,
-        flowSourceId: "wa-flow-page-b",
-      }),
-    )
-  })
-
-  test("skips a multi-page broadcast response when the responding page has no params", async () => {
-    findBroadcastByIdForResponse.mockResolvedValue({
-      integrationWhatsappId: null,
-      templateData: null,
-    })
-
-    const token = encodeTemplateFlowToken({
-      origin: TemplateFlowOrigin.Broadcast,
-      broadcastId: "11612473309626368",
-      buttonIndex: 0,
-    })
-
-    await captureTemplateFlowResponse(makeJobData(token))
-
-    expect(applyWhatsappFlowResponse).not.toHaveBeenCalled()
-    expect(loggerWarn).toHaveBeenCalledWith(
-      expect.objectContaining({ broadcastId: "11612473309626368" }),
-      "[template-flow-response] broadcast FLOW button params not found",
-    )
-  })
-
-  test("applies response for broadcast-origin carousel FLOW button", async () => {
-    const param = makeFlowParam("wa-flow-carousel")
-    findBroadcastByIdForResponse.mockResolvedValue({
-      integrationWhatsappId: "wa-integration-1",
-      templateData: {
-        carousel: [
-          { card_index: 0, button: [makeFlowParam("wrong-flow")] },
-          { card_index: 2, button: [param] },
-        ],
-      },
-    })
-
-    const token = encodeTemplateFlowToken({
-      origin: TemplateFlowOrigin.Broadcast,
-      broadcastId: "11612473309626368",
-      buttonIndex: 0,
-      cardIndex: 2,
-    })
-
-    await captureTemplateFlowResponse(makeJobData(token))
-
-    expect(applyWhatsappFlowResponse).toHaveBeenCalledWith(
-      expect.objectContaining({
-        flowSourceId: "wa-flow-carousel",
-        fieldMappings: param.fieldMappings,
-      }),
-    )
-  })
-
-  test("applies response for flow-step-origin FLOW button", async () => {
-    const param = makeFlowParam("wa-flow-step")
-    detectFlowVersion.mockResolvedValue({
-      flowVersion: {
-        nodes: [
-          {
-            data: {
-              details: {
-                steps: [makeSendTemplateStep({ button: [param] })],
-              },
-            },
-          },
-        ],
-      },
-    })
-
-    const token = encodeTemplateFlowToken({
-      origin: TemplateFlowOrigin.FlowStep,
-      flowId: "11612473309626368",
-      flowVersionId: "11612473309626369",
-      stepId: "11612473309626370",
-      buttonIndex: 0,
-    })
-
-    await captureTemplateFlowResponse(makeJobData(token))
-
-    expect(detectFlowVersion).toHaveBeenCalledWith({
-      workspaceId: "ws-1",
-      flowId: "11612473309626368",
-      flowVersionId: "11612473309626369",
-    })
     expect(applyWhatsappFlowResponse).toHaveBeenCalledWith(
       expect.objectContaining({
         integrationWhatsappId: undefined,
         flowSourceId: "wa-flow-step",
-        fieldMappings: param.fieldMappings,
+        fieldMappings: [],
       }),
+    )
+  })
+
+  test("skips when the token is invalid", async () => {
+    await captureTemplateFlowResponse(makeJobData("not-a-template-token"))
+
+    expect(resolveTemplateFlowButton).not.toHaveBeenCalled()
+    expect(applyWhatsappFlowResponse).not.toHaveBeenCalled()
+    expect(loggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: "msg-1" }),
+      "[template-flow-response] invalid token",
     )
   })
 
@@ -244,15 +141,9 @@ describe("captureTemplateFlowResponse", () => {
       contactInbox,
     })
 
-    const token = encodeTemplateFlowToken({
-      origin: TemplateFlowOrigin.Broadcast,
-      broadcastId: "11612473309626368",
-      buttonIndex: 0,
-    })
-
     await captureTemplateFlowResponse(makeJobData(token))
 
-    expect(findBroadcastByIdForResponse).not.toHaveBeenCalled()
+    expect(resolveTemplateFlowButton).not.toHaveBeenCalled()
     expect(applyWhatsappFlowResponse).not.toHaveBeenCalled()
     expect(loggerWarn).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -263,68 +154,9 @@ describe("captureTemplateFlowResponse", () => {
     )
   })
 
-  test("skips when broadcast is missing", async () => {
-    const token = encodeTemplateFlowToken({
-      origin: TemplateFlowOrigin.Broadcast,
-      broadcastId: "11612473309626368",
-      buttonIndex: 0,
-    })
-
+  test("skips when the FLOW button cannot be resolved", async () => {
     await captureTemplateFlowResponse(makeJobData(token))
 
     expect(applyWhatsappFlowResponse).not.toHaveBeenCalled()
-    expect(loggerWarn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        workspaceId: "ws-1",
-        broadcastId: "11612473309626368",
-      }),
-      "[template-flow-response] broadcast not found",
-    )
-  })
-
-  test("skips when resolved button is not a FLOW button", async () => {
-    findBroadcastByIdForResponse.mockResolvedValue({
-      integrationWhatsappId: "wa-integration-1",
-      templateData: {
-        button: [{ sub_type: "quick_reply", index: 0, payload: "payload" }],
-      },
-    })
-
-    const token = encodeTemplateFlowToken({
-      origin: TemplateFlowOrigin.Broadcast,
-      broadcastId: "11612473309626368",
-      buttonIndex: 0,
-    })
-
-    await captureTemplateFlowResponse(makeJobData(token))
-
-    expect(applyWhatsappFlowResponse).not.toHaveBeenCalled()
-    expect(loggerWarn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        buttonIndex: 0,
-      }),
-      "[template-flow-response] broadcast FLOW button params not found",
-    )
-  })
-
-  test("skips when flow version is missing", async () => {
-    const token = encodeTemplateFlowToken({
-      origin: TemplateFlowOrigin.FlowStep,
-      flowId: "11612473309626368",
-      flowVersionId: "11612473309626369",
-      stepId: "11612473309626370",
-      buttonIndex: 0,
-    })
-
-    await captureTemplateFlowResponse(makeJobData(token))
-
-    expect(applyWhatsappFlowResponse).not.toHaveBeenCalled()
-    expect(loggerWarn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        flowId: "11612473309626368",
-        flowVersionId: "11612473309626369",
-      }),
-      "[template-flow-response] flow version not found",
-    )
   })
 })

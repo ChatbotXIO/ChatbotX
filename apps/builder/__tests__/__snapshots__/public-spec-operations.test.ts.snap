@@ -1839,6 +1839,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "messages.getFlowResponse",
+    "path": "/v1/conversations/{conversationId}/messages/{messageId}/flow-response",
+  },
+  {
+    "method": "GET",
     "operationId": "messages.list",
     "path": "/v1/conversations/{conversationId}/messages",
   },
