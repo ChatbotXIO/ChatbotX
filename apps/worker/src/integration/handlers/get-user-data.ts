@@ -1,6 +1,7 @@
 import {
   contactCustomFieldService,
   contactInboxService,
+  contactService,
   conversationService,
   normalizeLanguage,
   resolveTenantSettings,
@@ -19,6 +20,7 @@ import {
 } from "@chatbotx.io/database/repositories"
 import { signUserDataWebviewToken } from "@chatbotx.io/encryption"
 import {
+  encodeContactHintQuickReplyPayload,
   GET_USER_DATA_WEBVIEW_SELECTION_PAYLOAD_TYPE,
   type GetUserDataStepSchema,
   type GetUserDataWebviewSelectionPayload,
@@ -30,6 +32,8 @@ import {
 } from "@chatbotx.io/flow-config"
 import {
   IntegrationException,
+  MESSENGER_NATIVE_QUICK_REPLY,
+  type MessageButtonTemplate,
   NATIVE_LOCATION_REQUEST_CHANNELS,
   URL_QUICK_REPLY_CAPABLE_CHANNELS,
   type Variable,
@@ -513,6 +517,12 @@ async function sendMessage(
     return
   }
 
+  const contactHintQuickReplies = await buildContactHintQuickReplies(props)
+  if (contactHintQuickReplies.length > 0) {
+    await sendContactHintPrompt(props, text, contactHintQuickReplies)
+    return
+  }
+
   const promptStep: SendTextStepSchema = {
     id: step.id,
     nodeId,
@@ -659,6 +669,143 @@ async function sendWhatsappLocationRequestPrompt(
           postback: WHATSAPP_NATIVE_LOCATION_REQUEST,
         },
       ],
+      trackingContext: props.trackingContext,
+      metadata,
+      isBulkBroadcast: props.isBulkBroadcast,
+    },
+  })
+
+  await waitForChatJobCompletion(job, {
+    conversationId: conversation.id,
+    stepId: step.id,
+  })
+}
+
+/**
+ * Channels whose outgoing converter renders `quickReplies` as real quick
+ * replies (chips that send their text), not as buttons. Telegram (inline
+ * keyboard), WhatsApp (reply buttons), Zalo/TikTok (merged into buttons) and
+ * webchat (no quick replies) are deliberately left out.
+ */
+const CONTACT_HINT_QUICK_REPLY_CHANNELS = new Set(["messenger", "instagram"])
+
+// Meta caps a text quick reply title at 20 characters. Longer values are
+// shortened for display only; the payload carries the full value.
+const QUICK_REPLY_TITLE_MAX_LENGTH = 20
+
+function toQuickReplyTitle(value: string): string {
+  // Count code points, so a shortened title never splits a surrogate pair.
+  const characters = Array.from(value)
+  return characters.length > QUICK_REPLY_TITLE_MAX_LENGTH
+    ? `${characters.slice(0, QUICK_REPLY_TITLE_MAX_LENGTH - 1).join("")}…`
+    : value
+}
+
+/**
+ * Returns the stored phone/email only when it passes the step's own reply
+ * validation; otherwise a tap would be rejected and the retry prompt would
+ * offer the same unusable hint again until the step auto-skips.
+ */
+function resolveValidContactHintValue(
+  replyFormat: GetUserDataStepSchema["replyFormat"],
+  value: string | null | undefined,
+): string | undefined {
+  const trimmed = value?.trim()
+  if (!trimmed) {
+    return
+  }
+  const validation = validateReplyInput(replyFormat, {
+    attachments: [],
+    contentType: "text",
+    text: trimmed,
+  })
+  return validation.ok ? trimmed : undefined
+}
+
+/**
+ * Builds the "Show Hint" quick reply for phone/email reply formats from the
+ * value stored on the contact (only when it passes the step's validation).
+ * The full value travels in the payload (see
+ * `encodeContactHintQuickReplyPayload`), so a shortened title still answers
+ * with the whole value. When the contact has no stored value, Messenger falls
+ * back to its native user_phone_number / user_email quick reply (Facebook
+ * fills it from the contact's own account); Instagram has no such fallback.
+ * Returns [] when the hint does not apply, so callers fall back to the plain
+ * text prompt.
+ */
+async function buildContactHintQuickReplies(
+  props: ExecuteStepProps<GetUserDataStepSchema>,
+): Promise<MessageButtonTemplate[]> {
+  const { conversation, contactInbox, step } = props
+  const isPhone = step.replyFormat === ReplyFormat.phone
+  const isEmail = step.replyFormat === ReplyFormat.email
+
+  if (
+    !(step.showHint && (isPhone || isEmail)) ||
+    props.commentAnchor ||
+    !CONTACT_HINT_QUICK_REPLY_CHANNELS.has(contactInbox.channel)
+  ) {
+    return []
+  }
+
+  const contact = await contactService.findById({
+    workspaceId: conversation.workspaceId,
+    id: conversation.contactId,
+  })
+  const value = resolveValidContactHintValue(
+    step.replyFormat,
+    isEmail ? contact?.email : contact?.phoneNumber,
+  )
+  if (value) {
+    const payload = encodeContactHintQuickReplyPayload(value)
+    return [
+      {
+        id: createId(),
+        label: toQuickReplyTitle(value),
+        buttonType: "postback",
+        postback: payload,
+      },
+    ]
+  }
+
+  if (contactInbox.channel === "messenger") {
+    const payload = isEmail
+      ? MESSENGER_NATIVE_QUICK_REPLY.USER_EMAIL
+      : MESSENGER_NATIVE_QUICK_REPLY.USER_PHONE_NUMBER
+    // The converter swaps this for the native content_type, so the label is
+    // only what the inbox shows for the sent quick reply.
+    return [
+      {
+        id: payload,
+        label: isEmail ? "Email" : "Phone",
+        buttonType: "postback",
+        postback: payload,
+      },
+    ]
+  }
+
+  return []
+}
+
+/**
+ * Sends the getUserData prompt with the contact hint quick reply. Waits for
+ * delivery like the text-prompt path, so the flow does not return `wait`
+ * before the contact can tap the hint.
+ */
+async function sendContactHintPrompt(
+  props: ExecuteStepProps<GetUserDataStepSchema>,
+  text: string,
+  quickReplies: MessageButtonTemplate[],
+): Promise<void> {
+  const { conversation, contactInbox, step, metadata } = props
+
+  const job = await chatQueue.add(ChatJobAction.sendChatMessage, {
+    type: ChatJobAction.sendChatMessage,
+    data: {
+      conversation,
+      contactInbox,
+      text,
+      quickReplies,
       trackingContext: props.trackingContext,
       metadata,
       isBulkBroadcast: props.isBulkBroadcast,

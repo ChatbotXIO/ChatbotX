@@ -1839,6 +1839,10 @@
     "autoSkipFailAttempts": {
       "label": "Automaattisen ohituksen epäonnistumisyritykset"
     },
+    "showHint": {
+      "label": "Näytä vihje",
+      "description": "Ehdota yhteystiedon puhelinnumeroa tai sähköpostia pikavastauksena. Toimii vain Messengerissä ja Instagramissa."
+    },
     "autoSkip": {
       "label": "Automaattinen ohitus"
     },

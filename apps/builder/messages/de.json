@@ -1839,6 +1839,10 @@
     "autoSkipFailAttempts": {
       "label": "Fehlversuche bis zum automatischen Überspringen"
     },
+    "showHint": {
+      "label": "Hinweis anzeigen",
+      "description": "Telefonnummer oder E-Mail des Kontakts als Schnellantwort vorschlagen. Funktioniert nur bei Messenger und Instagram."
+    },
     "autoSkip": {
       "label": "Automatisch überspringen"
     },

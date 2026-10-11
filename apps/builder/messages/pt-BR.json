@@ -1839,6 +1839,10 @@
     "autoSkipFailAttempts": {
       "label": "Tentativas com falha antes de ignorar automaticamente"
     },
+    "showHint": {
+      "label": "Mostrar sugestão",
+      "description": "Sugere o telefone ou e-mail do contato como resposta rápida. Funciona apenas no Messenger e no Instagram."
+    },
     "autoSkip": {
       "label": "Ignorar automaticamente"
     },

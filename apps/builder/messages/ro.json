@@ -2815,6 +2815,10 @@
     "autoSkipFailAttempts": {
       "label": "Încercări eșuate înainte de omiterea automată"
     },
+    "showHint": {
+      "label": "Afișează sugestie",
+      "description": "Sugerează telefonul sau e-mailul contactului ca răspuns rapid. Funcționează doar pe Messenger și Instagram."
+    },
     "autoSkip": {
       "label": "Omitere automată"
     },

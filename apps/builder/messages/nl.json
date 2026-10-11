@@ -1647,6 +1647,10 @@
     "autoSkipFailAttempts": {
       "label": "Mislukte pogingen voor automatisch overslaan"
     },
+    "showHint": {
+      "label": "Hint tonen",
+      "description": "Stel het telefoonnummer of e-mailadres van het contact voor als snel antwoord. Werkt alleen op Messenger en Instagram."
+    },
     "autoSkip": {
       "label": "Automatisch overslaan"
     },

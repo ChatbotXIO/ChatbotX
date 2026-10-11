@@ -1776,6 +1776,10 @@
       "description": "有权访问您的网络聊天的网域或子网域。",
       "label": "已授权网域 {plural, select, 1 {} other {}}"
     },
+    "showHint": {
+      "label": "显示提示",
+      "description": "以快速回复的形式建议联系人的电话号码或邮箱。仅适用于 Messenger 和 Instagram。"
+    },
     "autoSkip": {
       "label": "自动跳过"
     },

@@ -1839,6 +1839,10 @@
     "autoSkipFailAttempts": {
       "label": "自動スキップまでの失敗回数"
     },
+    "showHint": {
+      "label": "ヒントを表示",
+      "description": "連絡先の電話番号またはメールアドレスをクイックリプライとして提案します。Messenger と Instagram のみ対応。"
+    },
     "autoSkip": {
       "label": "自動スキップ"
     },

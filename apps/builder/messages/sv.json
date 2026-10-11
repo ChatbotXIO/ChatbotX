@@ -1773,6 +1773,10 @@
       "description": "Domänerna eller underdomänerna som har behörighet att komma åt din webbchatt.",
       "label": "Behörighetsdomän{plural, select, 1 {} other {er}}"
     },
+    "showHint": {
+      "label": "Visa tips",
+      "description": "Föreslå kontaktens telefonnummer eller e-post som snabbsvar. Fungerar endast på Messenger och Instagram."
+    },
     "autoSkip": {
       "label": "Hoppa över automatiskt"
     },

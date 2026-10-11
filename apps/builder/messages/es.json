@@ -1985,6 +1985,10 @@
     "autoSkipFailAttempts": {
       "label": "Omitir automáticamente los intentos fallidos"
     },
+    "showHint": {
+      "label": "Mostrar sugerencia",
+      "description": "Sugiere el teléfono o el correo del contacto como respuesta rápida. Solo funciona en Messenger e Instagram."
+    },
     "autoSkip": {
       "label": "Omisión automática"
     },

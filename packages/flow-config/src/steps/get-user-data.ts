@@ -45,6 +45,12 @@ export const getUserDataStepSchema = z.object({
   retryMessage: z.string().trim().max(255),
   // Reserved for a future runtime skip-button event; currently schema-only.
   skipButtonLabel: z.string().trim().max(255),
+  showHint: z
+    .boolean()
+    .optional()
+    .describe(
+      "Phone/email reply formats only: offer the contact's stored phone/email as a quick reply on Messenger and Instagram. With no stored value, Messenger falls back to its native phone/email quick reply. Other channels send the plain prompt.",
+    ),
   autoSkip: z.boolean(),
   autoSkipTimeUnit: z.string().pipe(waitStepDelayUnits),
   autoSkipTimeValue: z.coerce.number().int().min(1).max(100),
@@ -52,6 +58,29 @@ export const getUserDataStepSchema = z.object({
   states: z.tuple([successStateSchema, skipStateSchema]),
 })
 export type GetUserDataStepSchema = z.infer<typeof getUserDataStepSchema>
+
+// No ":" and a "|" (invalid base64), so `decodeButtonPayload` can never read
+// it as a flow action.
+const CONTACT_HINT_QUICK_REPLY_PREFIX = "GET_USER_DATA_CONTACT_HINT|"
+
+/**
+ * Quick reply payload for the "Show Hint" option: carries the contact's
+ * stored phone/email in full, because Meta caps the visible title at 20
+ * characters. The receiving side swaps the tapped (possibly shortened) title
+ * for this value via {@link decodeContactHintQuickReplyPayload}.
+ */
+export function encodeContactHintQuickReplyPayload(value: string): string {
+  return `${CONTACT_HINT_QUICK_REPLY_PREFIX}${value}`
+}
+
+export function decodeContactHintQuickReplyPayload(
+  payload: string | null | undefined,
+): string | null {
+  if (!payload?.startsWith(CONTACT_HINT_QUICK_REPLY_PREFIX)) {
+    return null
+  }
+  return payload.slice(CONTACT_HINT_QUICK_REPLY_PREFIX.length) || null
+}
 
 export const getUserDataStepDefaultFn = (): GetUserDataStepSchema => ({
   id: createId(),
@@ -61,6 +90,7 @@ export const getUserDataStepDefaultFn = (): GetUserDataStepSchema => ({
   outputFieldId: "",
   retryMessage: "",
   skipButtonLabel: "",
+  showHint: false,
   autoSkip: false,
   autoSkipTimeUnit: waitStepDelayUnits.enum.minutes,
   autoSkipTimeValue: 3,
