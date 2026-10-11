@@ -17,3 +17,20 @@ export const flowWithVersionsResource = flowResource.and(
   }),
 )
 export type FlowWithVersionsResource = z.infer<typeof flowWithVersionsResource>
+
+export const welcomeMessageFlowResource = z.object({
+  integrationMessengerId: z
+    .string()
+    .describe(
+      "Messenger channel id, as used by `messengerChannels.getSettings`.",
+    ),
+  pageId: z.string().describe("Facebook Page id."),
+  welcomeMessageFlowId: z
+    .string()
+    .describe(
+      "Meta welcome message flow id. Use it as `partner_app_welcome_message_flow_id` in a Click-to-Messenger ad creative, or pick it under Partner app in Ads Manager.",
+    ),
+})
+export type WelcomeMessageFlowResource = z.infer<
+  typeof welcomeMessageFlowResource
+>

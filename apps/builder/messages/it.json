@@ -3446,6 +3446,8 @@
     "failed": "Operazione non riuscita",
     "copiedToClipboard": "Copiato negli appunti",
     "messengerAdsJsonDescription": "Dovrai generare un nuovo codice JSON solo se modifichi il passaggio iniziale. Le modifiche agli altri passaggi non influiranno su questo codice JSON.",
+    "welcomeMessageFlowIdsTitle": "ID dei flussi di messaggi di benvenuto",
+    "welcomeMessageFlowIdsDescription": "Sincronizzato con ogni Pagina Facebook quando pubblichi. Selezionalo in App partner in Gestione inserzioni.",
     "messengerAdsNotPublished": "Pubblica il contenuto di questo flusso e riprova.",
     "messengerAdsNoStartNode": "Questo flusso non ha un passaggio iniziale valido. Apri il flusso, imposta come iniziale un passaggio Invia messaggio, quindi pubblica e riprova.",
     "messengerAdsError": "Si è verificato un errore durante la generazione del JSON. Riprova.",

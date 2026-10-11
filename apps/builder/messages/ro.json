@@ -3446,6 +3446,8 @@
     "failed": "Eșuat",
     "copiedToClipboard": "Copiat în clipboard",
     "messengerAdsJsonDescription": "Va trebui să generezi un cod JSON nou doar dacă faci modificări la pasul de start. Modificările din alți pași nu vor afecta acest cod JSON.",
+    "welcomeMessageFlowIdsTitle": "ID-uri ale fluxurilor de mesaje de bun venit",
+    "welcomeMessageFlowIdsDescription": "Se sincronizează cu fiecare Pagină de Facebook când publici. Alege-l la Aplicație partener în Ads Manager.",
     "messengerAdsNotPublished": "Publică conținutul acestui flux și încearcă din nou.",
     "messengerAdsNoStartNode": "Acest flux nu are un pas de start valid. Deschide fluxul, setează un pas de Trimite mesaj ca start, apoi publică și încearcă din nou.",
     "messengerAdsError": "Ceva nu a mers bine la generarea JSON-ului. Te rugăm să încerci din nou.",

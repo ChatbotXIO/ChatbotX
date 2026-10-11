@@ -136,6 +136,7 @@ type DeleteOptions = {
   headers?: Record<string, string>
   searchParams?: Record<string, string>
   json?: Record<string, unknown>
+  retry?: number
 }
 
 class MessengerHttpClient {

@@ -1549,6 +1549,8 @@
     "failed": "失敗",
     "copiedToClipboard": "已複製到剪貼簿",
     "messengerAdsJsonDescription": "如果您變更起始步驟，只需要重新產生 JSON 程式碼。其他步驟的變更不會影響此 JSON 程式碼。",
+    "welcomeMessageFlowIdsTitle": "歡迎訊息流程 ID",
+    "welcomeMessageFlowIdsDescription": "發佈時會同步到每個 Facebook 粉絲專頁。請在廣告管理員的「合作夥伴應用程式」中選擇。",
     "messengerAdsNotPublished": "請先發佈此流程的內容並重試。",
     "messengerAdsNoStartNode": "此流程沒有有效的起始步驟。開啟流程，設定起始傳送訊息步驟，然後發布並重試。",
     "messengerAdsError": "產生 JSON 時發生問題。請再試一次。",

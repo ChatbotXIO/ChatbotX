@@ -19,6 +19,10 @@ const {
   mockUpdateSet,
   mockUpdateReturning,
   mockAssertFlowGraphPublishable,
+  mockEnqueueSync,
+  mockEnqueueDelete,
+  mockFlowFindMany,
+  mockAssertDeletable,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn().mockResolvedValue([{ id: "flow-1" }])
   const mockInsertValues = vi.fn(() =>
@@ -50,6 +54,10 @@ const {
     mockUpdateSet,
     mockUpdateReturning,
     mockAssertFlowGraphPublishable: vi.fn(),
+    mockEnqueueSync: vi.fn(),
+    mockEnqueueDelete: vi.fn(),
+    mockFlowFindMany: vi.fn(),
+    mockAssertDeletable: vi.fn(),
   }
 })
 
@@ -72,10 +80,14 @@ vi.mock("@chatbotx.io/database/client", () => ({
     insert: mockInsert,
     update: mockUpdate,
     query: {
-      flowModel: { findFirst: mockTopLevelFlowFindFirst },
+      flowModel: {
+        findFirst: mockTopLevelFlowFindFirst,
+        findMany: mockFlowFindMany,
+      },
     },
   },
   eq: (...args: unknown[]) => ({ eq: args }),
+  inArray: (...args: unknown[]) => ({ inArray: args }),
 }))
 
 // The repositories barrel transitively pulls in the contact-filter query
@@ -149,6 +161,17 @@ vi.mock("../src/custom-field/service", () => ({
 
 vi.mock("../src/folder/service", () => ({
   folderService: { find: vi.fn(), ensureExists: mockEnsureExists },
+}))
+
+vi.mock("../src/template/installed-resource.service", () => ({
+  assertDeletable: mockAssertDeletable,
+}))
+
+vi.mock("../src/messenger-welcome-message-flow/service", () => ({
+  messengerWelcomeMessageFlowService: {
+    enqueueSync: mockEnqueueSync,
+    enqueueDelete: mockEnqueueDelete,
+  },
 }))
 
 const { flowService } = await import("../src/flow/service")
@@ -673,5 +696,94 @@ describe("flowService.createPublished", () => {
       "create",
       "created a new flow (#flow-1)",
     )
+  })
+})
+
+describe("flowService welcome message flow sync hooks", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const existing = {
+    id: "flow-1",
+    workspaceId: "ws-1",
+    name: "Welcome",
+    active: true,
+    enableInInbox: true,
+  }
+
+  test("update enqueues a rename sync when the name changes", async () => {
+    mockTopLevelFlowFindFirst.mockResolvedValue(existing)
+    mockUpdateReturning.mockResolvedValue([{ id: "flow-1" }])
+
+    await flowService.update(
+      { workspaceId: "ws-1", id: "flow-1" },
+      { name: "Onboarding" },
+    )
+
+    expect(mockEnqueueSync).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      flowId: "flow-1",
+      reason: "rename",
+    })
+  })
+
+  test("update without a name change does not enqueue", async () => {
+    mockTopLevelFlowFindFirst.mockResolvedValue(existing)
+    mockUpdateReturning.mockResolvedValue([{ id: "flow-1" }])
+
+    await flowService.update(
+      { workspaceId: "ws-1", id: "flow-1" },
+      { name: "Welcome", active: false },
+    )
+
+    expect(mockUpdateSet).toHaveBeenCalled()
+    expect(mockEnqueueSync).not.toHaveBeenCalled()
+  })
+
+  test("createPublished enqueues a publish sync for the new flow", async () => {
+    mockDbTransaction.mockResolvedValue({ flowId: "flow-9" })
+
+    await flowService.createPublished({
+      workspaceId: "ws-1",
+      data: { name: "New flow" },
+      graph: {
+        nodes: [{ id: "node-1" }] as never,
+        edges: [] as never,
+        startNodeId: "node-1",
+      },
+    })
+
+    expect(mockEnqueueSync).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      flowId: "flow-9",
+      reason: "publish",
+    })
+  })
+
+  test("deleteMany enqueues one delete job for the deleted ids after commit", async () => {
+    mockFlowFindMany.mockResolvedValue([{ id: "flow-2" }, { id: "flow-3" }])
+    mockDbTransaction.mockResolvedValue(undefined)
+
+    await flowService.deleteMany({
+      workspaceId: "ws-1",
+      ids: ["flow-2", "flow-3", "flow-404"],
+    })
+
+    expect(mockEnqueueDelete).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      flowIds: ["flow-2", "flow-3"],
+    })
+    expect(mockDbTransaction.mock.invocationCallOrder[0]).toBeLessThan(
+      mockEnqueueDelete.mock.invocationCallOrder[0],
+    )
+  })
+
+  test("deleteMany with no matching flows does not enqueue", async () => {
+    mockFlowFindMany.mockResolvedValue([])
+
+    await flowService.deleteMany({ workspaceId: "ws-1", ids: ["flow-404"] })
+
+    expect(mockEnqueueDelete).not.toHaveBeenCalled()
   })
 })

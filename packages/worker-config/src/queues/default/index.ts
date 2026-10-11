@@ -41,6 +41,8 @@ export const DefaultJobAction = {
   syncExternalCalendarEvent: "syncExternalCalendarEvent",
   sendAppointmentReminder: "sendAppointmentReminder",
   installTemplate: "installTemplate",
+  syncWelcomeMessageFlows: "syncWelcomeMessageFlows",
+  deleteWelcomeMessageFlows: "deleteWelcomeMessageFlows",
 } as const
 
 export const syncExternalCalendarEventJobId = (
@@ -265,7 +267,37 @@ export type JobInstallTemplate = {
   }
 }
 
+/**
+ * Mirror a flow's published start node (or just its name, for `rename`) to a
+ * Meta welcome message flow on every Messenger page of the workspace.
+ * Debounced per `(reason, flowId)`; the handler always reads current state.
+ */
+export type JobSyncWelcomeMessageFlows = {
+  type: typeof DefaultJobAction.syncWelcomeMessageFlows
+  data: {
+    workspaceId: string
+    flowId: string
+    reason: "publish" | "rename"
+  }
+}
+
+/**
+ * Best-effort DELETE of every Meta welcome message flow recorded for the
+ * (already hard-deleted) flows. Rows are read inside the job, under the
+ * per-flow lock, so a create racing the delete is still cleaned up.
+ */
+export type JobDeleteWelcomeMessageFlows = {
+  type: typeof DefaultJobAction.deleteWelcomeMessageFlows
+  data: { workspaceId: string; flowIds: string[] }
+}
+
+/** Redis lock serializing every welcome-message-flow job of one flow. */
+export const welcomeMessageFlowLockKey = (flowId: string) =>
+  `welcome-message-flow-${flowId}`
+
 export type DefaultJobData =
+  | JobSyncWelcomeMessageFlows
+  | JobDeleteWelcomeMessageFlows
   | JobExportContacts
   | JobExportCoupons
   | JobBulkTagContacts

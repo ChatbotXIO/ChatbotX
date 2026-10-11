@@ -3446,6 +3446,8 @@
     "failed": "Gagal",
     "copiedToClipboard": "Disalin ke papan klip",
     "messengerAdsJsonDescription": "Anda hanya perlu membuat kode JSON baru jika mengubah Langkah awal. Perubahan pada langkah lain tidak akan memengaruhi kode JSON ini.",
+    "welcomeMessageFlowIdsTitle": "ID alur pesan sambutan",
+    "welcomeMessageFlowIdsDescription": "Disinkronkan ke setiap Halaman Facebook saat Anda memublikasikan. Pilih di bawah Aplikasi mitra di Pengelola Iklan.",
     "messengerAdsNotPublished": "Publikasikan konten alur ini lalu coba lagi.",
     "messengerAdsNoStartNode": "Alur ini tidak memiliki langkah awal yang valid. Buka alur, tetapkan langkah Kirim Pesan sebagai awal, lalu publikasikan dan coba lagi.",
     "messengerAdsError": "Terjadi kesalahan saat membuat JSON. Silakan coba lagi.",

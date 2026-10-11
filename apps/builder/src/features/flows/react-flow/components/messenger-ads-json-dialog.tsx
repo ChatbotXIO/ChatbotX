@@ -24,6 +24,7 @@ import { CopyIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useClipboard } from "@/hooks/use-clipboard"
 import { orpc } from "@/lib/orpc/query"
+import type { WelcomeMessageFlowResource } from "../../schema/resource"
 
 type MessengerAdsJsonDialogProps = {
   workspaceId: string
@@ -61,7 +62,10 @@ export function MessengerAdsJsonDialog({
     }),
   )
 
-  const renderError = (message: string) => (
+  const renderError = (
+    message: string,
+    welcomeMessageFlows: WelcomeMessageFlowResource[] = [],
+  ) => (
     <AlertDialog onOpenChange={onOpenChange} open={open}>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -70,6 +74,7 @@ export function MessengerAdsJsonDialog({
           </AlertDialogTitle>
           <AlertDialogDescription>{message}</AlertDialogDescription>
         </AlertDialogHeader>
+        <WelcomeMessageFlowIds items={welcomeMessageFlows} />
         <AlertDialogFooter>
           <AlertDialogAction onClick={() => onOpenChange(false)}>
             {t("actions.ok")}
@@ -93,7 +98,10 @@ export function MessengerAdsJsonDialog({
   }
 
   if (data.status === "error") {
-    return renderError(t(ERROR_MESSAGE_KEY[data.reason]))
+    return renderError(
+      t(ERROR_MESSAGE_KEY[data.reason]),
+      data.welcomeMessageFlows,
+    )
   }
 
   return (
@@ -112,6 +120,8 @@ export function MessengerAdsJsonDialog({
           value={data.json}
         />
 
+        <WelcomeMessageFlowIds items={data.welcomeMessageFlows} />
+
         <DialogFooter>
           <Button onClick={() => handleCopy(data.json)}>
             <CopyIcon className="h-4 w-4" />
@@ -120,5 +130,51 @@ export function MessengerAdsJsonDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/**
+ * Read-only list of the Meta welcome message flows synced from this flow, one
+ * per Messenger page. Renders nothing when there are none (sync failures are
+ * never surfaced).
+ */
+function WelcomeMessageFlowIds({
+  items,
+}: {
+  items: WelcomeMessageFlowResource[]
+}) {
+  const t = useTranslations()
+  const { handleCopy } = useClipboard()
+
+  if (items.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="space-y-1 text-sm">
+      <p className="font-medium">{t("messages.welcomeMessageFlowIdsTitle")}</p>
+      <p className="text-muted-foreground">
+        {t("messages.welcomeMessageFlowIdsDescription")}
+      </p>
+      <ul className="space-y-1">
+        {items.map((item) => (
+          <li
+            className="flex items-center justify-between gap-2 font-mono"
+            key={item.integrationMessengerId}
+          >
+            <span>
+              {item.pageId}: {item.welcomeMessageFlowId}
+            </span>
+            <Button
+              onClick={() => handleCopy(item.welcomeMessageFlowId)}
+              size="icon"
+              variant="ghost"
+            >
+              <CopyIcon className="h-4 w-4" />
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

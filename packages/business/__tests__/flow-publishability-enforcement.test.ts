@@ -24,6 +24,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/partials", () => ({ rootFolderId: "0" }))
+vi.mock("../src/messenger-welcome-message-flow/service", () => ({
+  messengerWelcomeMessageFlowService: { enqueueSync: vi.fn() },
+}))
 vi.mock("@chatbotx.io/database/repositories", () => ({
   flowRepository: { listIdsByIds: vi.fn(), listPublishedOptions: vi.fn() },
   whatsappMessageTemplateRepository: { listIdsByIntegration: vi.fn() },

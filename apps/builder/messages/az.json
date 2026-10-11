@@ -4129,6 +4129,8 @@
     "failed": "Uğursuz",
     "copiedToClipboard": "Mübadilə buferinə kopyalandı",
     "messengerAdsJsonDescription": "Yalnız başlanğıc addımında dəyişiklik etdikdə yeni JSON kodu yaratmalısınız. Digər addımlardakı dəyişikliklər bu JSON koduna təsir etməyəcək.",
+    "welcomeMessageFlowIdsTitle": "Xoş gəlmisiniz mesaj axını ID-ləri",
+    "welcomeMessageFlowIdsDescription": "Dərc etdiyiniz zaman hər Facebook Səhifəsi ilə sinxronlaşdırılır. Reklam Menecerində Tərəfdaş tətbiqi altında seçin.",
     "messengerAdsNotPublished": "Bu axının məzmununu dərc edin və yenidən cəhd edin.",
     "messengerAdsNoStartNode": "Bu axının etibarlı başlanğıc addımı yoxdur. Axını açın, başlanğıc üçün «Mesaj göndər» addımı təyin edin, sonra dərc edin və yenidən cəhd edin.",
     "messengerAdsError": "JSON yaradılarkən xəta baş verdi. Yenidən cəhd edin.",

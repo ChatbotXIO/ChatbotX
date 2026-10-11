@@ -25,6 +25,12 @@ const ALLOWED_STEP_TYPES = new Set<string>([
   stepTypes.enum.sendFile,
 ])
 
+/** Lenient mode also accepts GIFs (sent as an image attachment). */
+const LENIENT_STEP_TYPES = new Set<string>([
+  ...ALLOWED_STEP_TYPES,
+  stepTypes.enum.sendGif,
+])
+
 /** Only these variables survive; everything else is a Facebook limitation. */
 const ALLOWED_VARIABLES = new Set(["first_name", "last_name", "full_name"])
 
@@ -38,6 +44,8 @@ const MAX_CAROUSEL_ELEMENTS = 10
 
 /** One element of the Messenger Ads opt-in payload array. */
 export type MessengerAdsMessage = { message: FacebookMessage }
+
+export type MessengerAdsJsonMode = "strict" | "lenient"
 
 export type MessengerAdsJsonResult =
   | { status: "ok"; messages: MessengerAdsMessage[] }
@@ -53,21 +61,35 @@ export function convertStartNodeToMessengerAdsJson(props: {
   startNode: unknown
   flowId: string
   flowVersionId?: string
+  /**
+   * `strict` (copy-JSON dialog): any unsupported step/variable is an error.
+   * `lenient` (welcome message flow sync): unsupported steps are skipped,
+   * unsupported variables are blanked, and the result is always `ok`.
+   */
+  mode?: MessengerAdsJsonMode
 }): MessengerAdsJsonResult {
-  const { startNode, flowId, flowVersionId } = props
+  const { startNode, flowId, flowVersionId, mode = "strict" } = props
+  const lenient = mode === "lenient"
 
-  const parsed = sendMessageNodeSchema.safeParse(startNode)
+  const parsed = sendMessageNodeSchema.safeParse(
+    lenient ? withLenientSteps(startNode) : startNode,
+  )
   if (!parsed.success) {
     // Not a Send Message node (e.g. landing page / start flow), so it can't
     // contain the allowed message content.
-    return { status: "error", reason: "invalidStepType" }
+    return lenient
+      ? { status: "ok", messages: [] }
+      : { status: "error", reason: "invalidStepType" }
   }
 
   const { steps, quickReplies } = parsed.data.data.details
 
-  for (const step of steps) {
-    if (!ALLOWED_STEP_TYPES.has(step.stepType)) {
-      return { status: "error", reason: "invalidStepType" }
+  // Lenient mode already dropped unsupported steps in `withLenientSteps`.
+  if (!lenient) {
+    for (const step of steps) {
+      if (!ALLOWED_STEP_TYPES.has(step.stepType)) {
+        return { status: "error", reason: "invalidStepType" }
+      }
     }
   }
 
@@ -79,21 +101,35 @@ export function convertStartNodeToMessengerAdsJson(props: {
       const name = rawName.trim()
       if (!ALLOWED_VARIABLES.has(name)) {
         hasInvalidVariable = true
-        return `{{${name}}}`
+        return lenient ? "" : `{{${name}}}`
       }
       return `{{user_${name}}}`
     })
 
+  /** Rewrites a title or label; lenient mode trims what stripping left. */
+  const rewriteLabel = (label: string): string =>
+    lenient ? rewrite(label).trim() : rewrite(label)
+
+  /**
+   * Lenient only: Meta rejects the whole flow over one empty title or label,
+   * so a button, card or quick reply left blank by variable stripping is
+   * dropped instead (strict mode already rejects the unknown variable).
+   */
+  const isBlankLabel = (label: string): boolean =>
+    lenient && rewriteLabel(label) === ""
+
   /**
    * Templates a step's buttons via the shared runtime helper so ad JSON and
    * live sends never diverge, applying the variable rewrite to each label.
+   * If every button is dropped the helper returns `undefined`, so a text
+   * step falls back to a plain text message.
    */
   const buildButtons = (buttons: ButtonStepProps[]) =>
     convertButtons({
       flowId,
       flowVersionId,
-      buttons,
-      transformLabel: rewrite,
+      buttons: buttons.filter((button) => !isBlankLabel(button.label)),
+      transformLabel: rewriteLabel,
     })
 
   const messages: MessengerAdsMessage[] = []
@@ -101,6 +137,12 @@ export function convertStartNodeToMessengerAdsJson(props: {
   for (const step of steps) {
     switch (step.stepType) {
       case stepTypes.enum.sendText: {
+        const text = rewrite(step.text)
+        // Meta rejects an empty text (or button template text); in lenient
+        // mode a step left blank by variable stripping is dropped.
+        if (lenient && text.trim() === "") {
+          break
+        }
         const buttons = buildButtons(step.buttons)
         if (buttons) {
           messages.push({
@@ -109,14 +151,14 @@ export function convertStartNodeToMessengerAdsJson(props: {
                 type: "template",
                 payload: {
                   template_type: "button",
-                  text: rewrite(step.text),
+                  text,
                   buttons,
                 },
               },
             },
           })
         } else {
-          messages.push({ message: { text: rewrite(step.text) } })
+          messages.push({ message: { text } })
         }
         break
       }
@@ -124,7 +166,10 @@ export function convertStartNodeToMessengerAdsJson(props: {
         // Facebook rejects a generic template with more than 10 elements, so
         // chunk cards into one message per group of 10, mirroring the runtime
         // send path (send-carousel).
-        for (const cards of chunk(step.cards, MAX_CAROUSEL_ELEMENTS)) {
+        const keptCards = step.cards.filter(
+          (card: SendCardStepSchema) => !isBlankLabel(card.title),
+        )
+        for (const cards of chunk(keptCards, MAX_CAROUSEL_ELEMENTS)) {
           messages.push({
             message: {
               attachment: {
@@ -132,9 +177,9 @@ export function convertStartNodeToMessengerAdsJson(props: {
                 payload: {
                   template_type: "generic",
                   elements: cards.map((card: SendCardStepSchema) => ({
-                    title: rewrite(card.title),
+                    title: rewriteLabel(card.title),
                     subtitle: card.subtitle
-                      ? rewrite(card.subtitle)
+                      ? rewriteLabel(card.subtitle) || undefined
                       : undefined,
                     image_url: card.image?.url || undefined,
                     buttons: buildButtons(card.buttons),
@@ -149,7 +194,8 @@ export function convertStartNodeToMessengerAdsJson(props: {
       case stepTypes.enum.sendImage:
       case stepTypes.enum.sendVideo:
       case stepTypes.enum.sendAudio:
-      case stepTypes.enum.sendFile: {
+      case stepTypes.enum.sendFile:
+      case stepTypes.enum.sendGif: {
         messages.push({
           message: {
             attachment: getAttachmentTemplate(
@@ -180,33 +226,62 @@ export function convertStartNodeToMessengerAdsJson(props: {
 
   // Node-level quick replies ride on the last message, mirroring the runtime.
   const lastMessage = messages.at(-1)
-  if (lastMessage && quickReplies.length > 0) {
-    lastMessage.message.quick_replies = quickReplies
-      .filter((qr) => qr.buttonType !== null)
-      .slice(0, MAX_QUICK_REPLIES)
-      .map(
-        (qr): FacebookQuickReply => ({
-          content_type: "text",
-          title: rewrite(qr.label),
-          payload: encodeButtonPayload({
-            flowId,
-            flowVersionId,
-            buttonId: qr.id,
-          }),
+  const keptQuickReplies = quickReplies
+    .filter((qr) => qr.buttonType !== null && !isBlankLabel(qr.label))
+    .slice(0, MAX_QUICK_REPLIES)
+  if (lastMessage && keptQuickReplies.length > 0) {
+    lastMessage.message.quick_replies = keptQuickReplies.map(
+      (qr): FacebookQuickReply => ({
+        content_type: "text",
+        title: rewriteLabel(qr.label),
+        payload: encodeButtonPayload({
+          flowId,
+          flowVersionId,
+          buttonId: qr.id,
         }),
-      )
+      }),
+    )
   }
 
-  if (hasInvalidVariable) {
+  if (hasInvalidVariable && !lenient) {
     return { status: "error", reason: "invalidVariable" }
   }
 
   return { status: "ok", messages }
 }
 
+/**
+ * Drops unsupported steps from the raw node before schema parsing, so a step
+ * that lenient mode would skip anyway can't fail validation for the whole
+ * node and take every supported message down with it.
+ */
+function withLenientSteps(startNode: unknown): unknown {
+  const details = (startNode as { data?: { details?: { steps?: unknown } } })
+    ?.data?.details
+  if (!(details && Array.isArray(details.steps))) {
+    return startNode
+  }
+  const node = startNode as { data: { details: Record<string, unknown> } }
+  return {
+    ...node,
+    data: {
+      ...node.data,
+      details: {
+        ...details,
+        steps: details.steps.filter((step: unknown) =>
+          LENIENT_STEP_TYPES.has(
+            (step as { stepType?: string })?.stepType ?? "",
+          ),
+        ),
+      },
+    },
+  }
+}
+
 function mediaType(stepType: string): "image" | "video" | "audio" | "file" {
   switch (stepType) {
     case stepTypes.enum.sendImage:
+    case stepTypes.enum.sendGif:
       return "image"
     case stepTypes.enum.sendVideo:
       return "video"

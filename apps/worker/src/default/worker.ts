@@ -24,6 +24,10 @@ import { sendAuditLog } from "./handlers/send-audit-log"
 import { handleSyncChannelLabels } from "./handlers/sync-channel-labels"
 import { syncExternalCalendarEvent } from "./handlers/sync-external-calendar-event"
 import { handleSyncTag } from "./handlers/sync-tag"
+import {
+  deleteWelcomeMessageFlows,
+  syncWelcomeMessageFlows,
+} from "./handlers/welcome-message-flows"
 
 async function runGuardedDefaultJob<T>(
   data: unknown,
@@ -153,6 +157,20 @@ async function startDefaultWorker() {
           const { type, data } = job.data
           await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
             installTemplate(data),
+          )
+          return
+        }
+        case DefaultJobAction.syncWelcomeMessageFlows: {
+          const { type, data } = job.data
+          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+            syncWelcomeMessageFlows(data),
+          )
+          return
+        }
+        case DefaultJobAction.deleteWelcomeMessageFlows: {
+          const { type, data } = job.data
+          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+            deleteWelcomeMessageFlows(data),
           )
           return
         }

@@ -3446,6 +3446,8 @@
     "failed": "Fehlgeschlagen",
     "copiedToClipboard": "In die Zwischenablage kopiert",
     "messengerAdsJsonDescription": "Sie müssen nur dann einen neuen JSON-Code generieren, wenn Sie Änderungen am Startschritt vornehmen. Änderungen an anderen Schritten wirken sich nicht auf diesen JSON-Code aus.",
+    "welcomeMessageFlowIdsTitle": "IDs der Begrüßungsnachrichten-Flows",
+    "welcomeMessageFlowIdsDescription": "Wird beim Veröffentlichen mit jeder Facebook-Seite synchronisiert. Wähle sie im Werbeanzeigenmanager unter Partner-App aus.",
     "messengerAdsNotPublished": "Veröffentlichen Sie den Inhalt dieses Flows und versuchen Sie es erneut.",
     "messengerAdsNoStartNode": "Dieser Flow hat keinen gültigen Startschritt. Öffnen Sie den Flow, legen Sie einen Schritt „Nachricht senden“ als Start fest, veröffentlichen Sie ihn und versuchen Sie es erneut.",
     "messengerAdsError": "Beim Generieren des JSON ist ein Fehler aufgetreten. Versuchen Sie es erneut.",

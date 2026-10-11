@@ -69,9 +69,13 @@ const flowVersionService = {
 const importService = {
   startFlowImport: vi.fn(),
 }
+const messengerWelcomeMessageFlowService = {
+  listCurrentByFlow: vi.fn(async () => []),
+}
 vi.mock("@chatbotx.io/business", () => ({
   flowService,
   flowVersionService,
+  messengerWelcomeMessageFlowService,
 }))
 vi.mock("@chatbotx.io/business/import", () => ({ importService }))
 
@@ -246,6 +250,27 @@ describe("GET /v1/flows/{id}", () => {
     expect(flowService.findById).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       id: "flow-1",
+    })
+  })
+  test("returns the flow's current Meta welcome message flows", async () => {
+    flowService.findById.mockResolvedValueOnce({ id: "flow-1" })
+    messengerWelcomeMessageFlowService.listCurrentByFlow.mockResolvedValueOnce([
+      { integrationMessengerId: "3", pageId: "p", welcomeMessageFlowId: "m" },
+    ] as never)
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "flow-1" },
+    })
+
+    expect(
+      messengerWelcomeMessageFlowService.listCurrentByFlow,
+    ).toHaveBeenCalledWith({ workspaceId: "workspace-1", flowId: "flow-1" })
+    expect(result).toEqual({
+      id: "flow-1",
+      welcomeMessageFlows: [
+        { integrationMessengerId: "3", pageId: "p", welcomeMessageFlowId: "m" },
+      ],
     })
   })
 })

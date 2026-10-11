@@ -1434,6 +1434,8 @@
     "failed": "נכשל",
     "copiedToClipboard": "הועתק ללוח",
     "messengerAdsJsonDescription": "תצטרכו ליצור קוד JSON חדש רק אם תבצעו שינויים בשלב ההתחלה. שינויים בשלבים אחרים לא ישפיעו על קוד JSON זה.",
+    "welcomeMessageFlowIdsTitle": "מזהי תהליכי הודעת פתיחה",
+    "welcomeMessageFlowIdsDescription": "מסונכרן לכל דף פייסבוק בעת פרסום. בחרו אותו תחת אפליקציית שותף במנהל המודעות.",
     "messengerAdsNotPublished": "פרסמו את תוכן התהליך ונסו שוב.",
     "messengerAdsNoStartNode": "לתהליך זה אין שלב התחלה תקין. פתחו את התהליך, הגדירו שלב שליחת הודעה כשלב התחלה, לאחר מכן פרסמו ונסו שוב.",
     "messengerAdsError": "אירעה שגיאה בעת יצירת ה-JSON. נסו שוב.",
