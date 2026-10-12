@@ -199,8 +199,8 @@ fix or a new filter only has to happen once.
 
 The public path is required, not "if there is one": every operation —
 including result-returning ones like links, previews, test runs, stats, and
-exports — ships a public procedure unless it is on the AGENTS.md invariant 23
-exempt list. A result-returning operation with no DB access keeps its one
+exports — ships a public procedure unless it is on the exempt list of invariant 23
+in `docs/agents/invariants.md`. A result-returning operation with no DB access keeps its one
 implementation in `features/<x>/lib/` instead of a service (the bot simulator's
 `createBotSimulatorLink` is the example); the same convergence rule applies.
 

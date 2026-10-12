@@ -36,7 +36,7 @@ Check:
   operation returns the link/preview/stats itself — see `orpc-api`,
   "Result-returning operations").
 - Nothing in the feature's UI is left without a matching operation, unless it is
-  on the invariant 23 exempt list.
+  on the invariant 23 exempt list (`docs/agents/invariants.md`).
 
 ## 2. Check for a silent CLI command-name collision
 

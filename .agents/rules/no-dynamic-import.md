@@ -17,6 +17,8 @@ globs:
 
 # Dynamic Imports Rule
 
+`pnpm check:invariants` (run by `pnpm lint`) fails on a runtime `import()` in these workspaces.
+
 ## Principle
 
 Never use dynamic `import()` expressions (e.g. `await import('...')`, `const x = import('...')`) in code that is built by **tsdown**. Always use static `import` statements at the top of the file there.
