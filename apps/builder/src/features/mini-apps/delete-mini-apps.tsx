@@ -90,7 +90,7 @@ export function DeleteMiniAppsDialog({
           }
         />
       ) : null}
-      <DialogContent className="max-w-xl">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{t("messages.deleteFeature", { feature })}</DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
@@ -100,7 +100,7 @@ export function DeleteMiniAppsDialog({
               : null}
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="gap-2 sm:space-x-0">
+        <DialogFooter className="gap-2 sm:flex-wrap sm:space-x-0">
           <DialogClose
             render={
               <Button
