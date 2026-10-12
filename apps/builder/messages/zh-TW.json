@@ -2824,6 +2824,7 @@
       "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
       "importJsonOnly": "僅限 JSON 檔案",
       "whatsappCallButton": "透過 WhatsApp 通話",
+      "whatsappLocation": "位置",
       "metaConversions": "Meta Conversions API",
       "threadControl": "對話控制",
       "sendGoogleAdsConversion": "傳送 Google Ads 轉換"
@@ -2946,6 +2947,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "編輯按鈕",
       "buttonLabel": "按鈕標籤"
+    },
+    "whatsappLocation": {
+      "title": "位置",
+      "name": "名稱",
+      "address": "地址",
+      "latitude": "緯度",
+      "longitude": "經度",
+      "setLocation": "設定位置",
+      "errors": {
+        "tooLong": "最多 1000 個字元。",
+        "invalidLatitude": "請輸入 -90 到 90 之間的緯度。",
+        "invalidLongitude": "請輸入 -180 到 180 之間的經度。",
+        "locationRequired": "請輸入位置的座標。"
+      }
     }
   },
   "folders": {

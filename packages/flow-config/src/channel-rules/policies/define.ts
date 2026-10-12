@@ -108,6 +108,7 @@ const stepExecutionKinds = {
   whatsappOptionList: "channel",
   whatsappCallButton: "channel",
   whatsappFlow: "channel",
+  whatsappLocation: "channel",
   sendMessengerTemplateMessage: "channel",
   facebookCustomAudience: "worker",
   sendMetaCapiEvent: "worker",
@@ -134,6 +135,7 @@ export const channelDeliverableStepTypes = [
   stepTypes.enum.sendWaTemplateMessage,
   stepTypes.enum.whatsappCallButton,
   stepTypes.enum.whatsappFlow,
+  stepTypes.enum.whatsappLocation,
   stepTypes.enum.whatsappOptionList,
 ] as const satisfies readonly StepType[]
 

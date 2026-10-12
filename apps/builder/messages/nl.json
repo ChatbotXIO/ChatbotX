@@ -2473,6 +2473,7 @@
       "importStarted": "De flow wordt geïmporteerd. Bekijk de importgeschiedenis voor de resultaten.",
       "importJsonOnly": "Alleen JSON-bestanden",
       "whatsappCallButton": "Bellen via WhatsApp",
+      "whatsappLocation": "Locatie",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Threadbeheer",
       "sendGoogleAdsConversion": "Google Ads-conversie verzenden"
@@ -2595,6 +2596,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "Knop bewerken",
       "buttonLabel": "Knoplabel"
+    },
+    "whatsappLocation": {
+      "title": "Locatie",
+      "name": "Naam",
+      "address": "Adres",
+      "latitude": "Breedtegraad",
+      "longitude": "Lengtegraad",
+      "setLocation": "Locatie instellen",
+      "errors": {
+        "tooLong": "Maximaal 1000 tekens.",
+        "invalidLatitude": "Voer een breedtegraad in tussen -90 en 90.",
+        "invalidLongitude": "Voer een lengtegraad in tussen -180 en 180.",
+        "locationRequired": "Voer de coördinaten van de locatie in."
+      }
     }
   },
   "folders": {

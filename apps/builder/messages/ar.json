@@ -2619,6 +2619,7 @@
       "importStarted": "جارٍ استيراد التدفق. يرجى مراجعة سجل الاستيراد للحصول على النتائج.",
       "importJsonOnly": "ملفات JSON فقط",
       "whatsappCallButton": "الاتصال عبر واتساب",
+      "whatsappLocation": "الموقع",
       "metaConversions": "Meta Conversions API",
       "threadControl": "التحكم في المحادثة",
       "sendGoogleAdsConversion": "إرسال تحويل Google Ads"
@@ -2741,6 +2742,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "تعديل الزر",
       "buttonLabel": "تسمية الزر"
+    },
+    "whatsappLocation": {
+      "title": "الموقع",
+      "name": "الاسم",
+      "address": "العنوان",
+      "latitude": "خط العرض",
+      "longitude": "خط الطول",
+      "setLocation": "تعيين الموقع",
+      "errors": {
+        "tooLong": "يجب ألا يتجاوز 1000 حرف.",
+        "invalidLatitude": "أدخل خط عرض بين -90 و90.",
+        "invalidLongitude": "أدخل خط طول بين -180 و180.",
+        "locationRequired": "أدخل إحداثيات الموقع."
+      }
     }
   },
   "folders": {

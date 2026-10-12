@@ -457,6 +457,7 @@
       "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
       "importJsonOnly": "קבצי JSON בלבד",
       "whatsappCallButton": "התקשרות בוואטסאפ",
+      "whatsappLocation": "מיקום",
       "metaConversions": "Meta Conversions API",
       "threadControl": "שליטה בשרשור",
       "sendGoogleAdsConversion": "שליחת המרה של Google Ads"
@@ -579,6 +580,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "עריכת כפתור",
       "buttonLabel": "תווית כפתור"
+    },
+    "whatsappLocation": {
+      "title": "מיקום",
+      "name": "שם",
+      "address": "כתובת",
+      "latitude": "קו רוחב",
+      "longitude": "קו אורך",
+      "setLocation": "הגדרת מיקום",
+      "errors": {
+        "tooLong": "עד 1000 תווים.",
+        "invalidLatitude": "הזינו קו רוחב בין ‎-90 ל-90.",
+        "invalidLongitude": "הזינו קו אורך בין ‎-180 ל-180.",
+        "locationRequired": "הזינו את קואורדינטות המיקום."
+      }
     }
   },
   "folders": {

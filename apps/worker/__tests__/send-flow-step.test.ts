@@ -519,6 +519,49 @@ describe("sendFlowStep", () => {
     expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
   })
 
+  describe("whatsappLocation step", () => {
+    const locationStep = {
+      id: "step-location",
+      nodeId: "node-location",
+      stepType: "whatsappLocation",
+      name: "Head office",
+      address: "1 Main St",
+      latitude: 15.5614,
+      longitude: 108.4867,
+    } as unknown as SendFlowStepData["step"]
+
+    test("stores a location message with its coordinates on WhatsApp", async () => {
+      mockFindContactInbox.mockResolvedValue({
+        ...fakeContactInbox,
+        channel: "whatsapp",
+      })
+
+      await sendFlowStep({ ...baseParams, step: locationStep })
+
+      expect(mockRepositoryCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contentType: "location",
+          text: "Head office: 1 Main St",
+          contentAttributes: expect.objectContaining({
+            latitude: "15.5614",
+            longitude: "108.4867",
+            name: "Head office",
+            address: "1 Main St",
+            stepId: "step-location",
+          }),
+        }),
+      )
+      expect(mockSendFlowStepToChannel).toHaveBeenCalledTimes(1)
+    })
+
+    test("skips the step when an omnichannel flow reaches a non-WhatsApp contact", async () => {
+      await sendFlowStep({ ...baseParams, step: locationStep })
+
+      expect(mockRepositoryCreate).not.toHaveBeenCalled()
+      expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+    })
+  })
+
   test("calls repository.create() for step without url (sendText)", async () => {
     await sendFlowStep({
       ...baseParams,

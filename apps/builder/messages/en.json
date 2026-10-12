@@ -3302,6 +3302,7 @@
       "importStarted": "Flow is importing. Check the import history for results.",
       "importJsonOnly": "JSON files only",
       "whatsappCallButton": "Call on WhatsApp",
+      "whatsappLocation": "Location",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread Control",
       "sendGoogleAdsConversion": "Send Google Ads Conversion"
@@ -3424,6 +3425,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "Edit Button",
       "buttonLabel": "Button Label"
+    },
+    "whatsappLocation": {
+      "title": "Location",
+      "name": "Name",
+      "address": "Address",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "setLocation": "Set location",
+      "errors": {
+        "tooLong": "Keep this under 1000 characters.",
+        "invalidLatitude": "Enter a latitude between -90 and 90.",
+        "invalidLongitude": "Enter a longitude between -180 and 180.",
+        "locationRequired": "Enter the location's coordinates."
+      }
     }
   },
   "folders": {

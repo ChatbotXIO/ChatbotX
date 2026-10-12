@@ -19,5 +19,6 @@ export const whatsappFlowPolicy = defineChannelFlowPolicy({
     stepTypes.enum.whatsappOptionList,
     stepTypes.enum.whatsappCallButton,
     stepTypes.enum.whatsappFlow,
+    stepTypes.enum.whatsappLocation,
   ],
 })

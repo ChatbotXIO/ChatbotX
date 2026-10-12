@@ -2473,6 +2473,7 @@
       "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
       "importJsonOnly": "Hanya file JSON",
       "whatsappCallButton": "Telepon di WhatsApp",
+      "whatsappLocation": "Lokasi",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Kontrol thread",
       "sendGoogleAdsConversion": "Kirim konversi Google Ads"
@@ -2595,6 +2596,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "Edit Tombol",
       "buttonLabel": "Label Tombol"
+    },
+    "whatsappLocation": {
+      "title": "Lokasi",
+      "name": "Nama",
+      "address": "Alamat",
+      "latitude": "Lintang",
+      "longitude": "Bujur",
+      "setLocation": "Atur lokasi",
+      "errors": {
+        "tooLong": "Maksimal 1000 karakter.",
+        "invalidLatitude": "Masukkan lintang antara -90 dan 90.",
+        "invalidLongitude": "Masukkan bujur antara -180 dan 180.",
+        "locationRequired": "Masukkan koordinat lokasi."
+      }
     }
   },
   "folders": {

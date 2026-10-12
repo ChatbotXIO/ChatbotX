@@ -93,6 +93,7 @@ import { updateMessengerContactDataStep } from "./update-messenger-contact-data"
 import { waitStep } from "./wait"
 import whatsappCallButtonStep from "./whatsapp-call-button"
 import whatsappFlowStep from "./whatsapp-flow"
+import whatsappLocationStep from "./whatsapp-location"
 import whatsappOptionListStep from "./whatsapp-option-list"
 
 // biome-ignore lint/suspicious/noExplicitAny: wip
@@ -196,6 +197,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.whatsappOptionList]: whatsappOptionListStep,
   [stepTypes.enum.whatsappCallButton]: whatsappCallButtonStep,
   [stepTypes.enum.whatsappFlow]: whatsappFlowStep,
+  [stepTypes.enum.whatsappLocation]: whatsappLocationStep,
   [stepTypes.enum.setMessengerUserPersistentMenu]:
     setMessengerUserPersistentMenuStep,
   [stepTypes.enum.enableMessengerComposer]: enableMessengerComposerStep,

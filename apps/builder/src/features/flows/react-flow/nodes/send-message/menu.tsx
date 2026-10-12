@@ -13,6 +13,7 @@ import {
   ImagesIcon,
   KeyboardIcon,
   ListIcon,
+  MapPinIcon,
   MessageSquareIcon,
   PaperclipIcon,
   PhoneIcon,
@@ -101,6 +102,11 @@ const ALL_MENU_ITEMS = (
     icon: PhoneIcon,
     stepType: stepTypes.enum.whatsappCallButton,
   },
+  whatsappLocation: {
+    label: t("flows.actions.whatsappLocation"),
+    icon: MapPinIcon,
+    stepType: stepTypes.enum.whatsappLocation,
+  },
   typing: {
     label: t("flows.actions.typing"),
     icon: TimerIcon,
@@ -150,6 +156,7 @@ const WHATSAPP_MENU_EXTRAS = [
   "whatsappFlow",
   "whatsappOptionList",
   "whatsappCallButton",
+  "whatsappLocation",
 ] as const
 
 const MENU_ITEM_STEP_TYPES: Record<string, readonly StepType[]> = {

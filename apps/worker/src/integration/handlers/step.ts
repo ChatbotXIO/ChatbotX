@@ -524,6 +524,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.whatsappOptionList]: sendFlowMessage,
   [stepTypes.enum.whatsappCallButton]: sendFlowMessage,
   [stepTypes.enum.whatsappFlow]: sendFlowMessage,
+  [stepTypes.enum.whatsappLocation]: sendFlowMessage,
   [stepTypes.enum.setMessengerUserPersistentMenu]:
     setMessengerUserPersistentMenu,
   [stepTypes.enum.enableMessengerComposer]: enableMessengerComposer,

@@ -30,6 +30,7 @@ const MESSAGE_STEP_TYPES = [
   stepTypes.enum.sendMessengerTemplateMessage,
   stepTypes.enum.whatsappOptionList,
   stepTypes.enum.whatsappCallButton,
+  stepTypes.enum.whatsappLocation,
   stepTypes.enum.whatsappFlow,
 ] as const satisfies readonly StepType[]
 

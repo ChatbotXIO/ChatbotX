@@ -164,6 +164,7 @@
       "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
       "importJsonOnly": "Doar fișiere JSON",
       "whatsappCallButton": "Sună pe WhatsApp",
+      "whatsappLocation": "Locație",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Controlul conversației",
       "sendGoogleAdsConversion": "Trimite conversie Google Ads"
@@ -286,6 +287,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "Editează butonul",
       "buttonLabel": "Eticheta butonului"
+    },
+    "whatsappLocation": {
+      "title": "Locație",
+      "name": "Nume",
+      "address": "Adresă",
+      "latitude": "Latitudine",
+      "longitude": "Longitudine",
+      "setLocation": "Setează locația",
+      "errors": {
+        "tooLong": "Maximum 1000 de caractere.",
+        "invalidLatitude": "Introdu o latitudine între -90 și 90.",
+        "invalidLongitude": "Introdu o longitudine între -180 și 180.",
+        "locationRequired": "Introdu coordonatele locației."
+      }
     }
   },
   "folders": {

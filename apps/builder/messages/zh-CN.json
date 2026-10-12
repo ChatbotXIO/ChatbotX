@@ -3352,6 +3352,7 @@
       "importStarted": "流程正在导入中，请稍后查看导入记录以获取结果。",
       "importJsonOnly": "仅限 JSON 文件",
       "whatsappCallButton": "通过 WhatsApp 通话",
+      "whatsappLocation": "位置",
       "metaConversions": "Meta Conversions API",
       "threadControl": "会话控制",
       "sendGoogleAdsConversion": "发送 Google Ads 转化"
@@ -3522,6 +3523,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "编辑按钮",
       "buttonLabel": "按钮标签"
+    },
+    "whatsappLocation": {
+      "title": "位置",
+      "name": "名称",
+      "address": "地址",
+      "latitude": "纬度",
+      "longitude": "经度",
+      "setLocation": "设置位置",
+      "errors": {
+        "tooLong": "最多 1000 个字符。",
+        "invalidLatitude": "请输入 -90 到 90 之间的纬度。",
+        "invalidLongitude": "请输入 -180 到 180 之间的经度。",
+        "locationRequired": "请输入位置的坐标。"
+      }
     }
   },
   "folders": {

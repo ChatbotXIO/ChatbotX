@@ -2473,6 +2473,7 @@
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
       "importJsonOnly": "JSONファイルのみ",
       "whatsappCallButton": "WhatsAppで通話",
+      "whatsappLocation": "位置情報",
       "metaConversions": "Meta Conversions API",
       "threadControl": "スレッド制御",
       "sendGoogleAdsConversion": "Google 広告コンバージョンを送信"
@@ -2595,6 +2596,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "ボタンを編集",
       "buttonLabel": "ボタンラベル"
+    },
+    "whatsappLocation": {
+      "title": "位置情報",
+      "name": "名前",
+      "address": "住所",
+      "latitude": "緯度",
+      "longitude": "経度",
+      "setLocation": "位置情報を設定",
+      "errors": {
+        "tooLong": "1000文字以内で入力してください。",
+        "invalidLatitude": "-90〜90の緯度を入力してください。",
+        "invalidLongitude": "-180〜180の経度を入力してください。",
+        "locationRequired": "位置情報の座標を入力してください。"
+      }
     }
   },
   "folders": {

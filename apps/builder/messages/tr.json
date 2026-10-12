@@ -2619,6 +2619,7 @@
       "importStarted": "Akış içe aktarılıyor. Sonuçlar için içe aktarma geçmişini kontrol edin.",
       "importJsonOnly": "Yalnızca JSON dosyaları",
       "whatsappCallButton": "WhatsApp'ta ara",
+      "whatsappLocation": "Konum",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Konuşma kontrolü",
       "sendGoogleAdsConversion": "Google Ads dönüşümü gönder"
@@ -2741,6 +2742,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "Butonu Düzenle",
       "buttonLabel": "Buton Etiketi"
+    },
+    "whatsappLocation": {
+      "title": "Konum",
+      "name": "Ad",
+      "address": "Adres",
+      "latitude": "Enlem",
+      "longitude": "Boylam",
+      "setLocation": "Konumu ayarla",
+      "errors": {
+        "tooLong": "En fazla 1000 karakter.",
+        "invalidLatitude": "-90 ile 90 arasında bir enlem girin.",
+        "invalidLongitude": "-180 ile 180 arasında bir boylam girin.",
+        "locationRequired": "Konumun koordinatlarını girin."
+      }
     }
   },
   "folders": {

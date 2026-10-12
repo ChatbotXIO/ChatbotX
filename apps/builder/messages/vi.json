@@ -2661,6 +2661,7 @@
       "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
       "importJsonOnly": "Chỉ tệp JSON",
       "whatsappCallButton": "Gọi qua WhatsApp",
+      "whatsappLocation": "Vị trí",
       "metaConversions": "API Chuyển đổi Meta",
       "threadControl": "Điều khiển luồng",
       "sendGoogleAdsConversion": "Gửi chuyển đổi Google Ads"
@@ -2783,6 +2784,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "Chỉnh sửa nút",
       "buttonLabel": "Nhãn nút"
+    },
+    "whatsappLocation": {
+      "title": "Vị trí",
+      "name": "Tên",
+      "address": "Địa chỉ",
+      "latitude": "Vĩ độ",
+      "longitude": "Kinh độ",
+      "setLocation": "Thiết lập vị trí",
+      "errors": {
+        "tooLong": "Tối đa 1000 ký tự.",
+        "invalidLatitude": "Nhập vĩ độ từ -90 đến 90.",
+        "invalidLongitude": "Nhập kinh độ từ -180 đến 180.",
+        "locationRequired": "Nhập tọa độ của vị trí."
+      }
     }
   },
   "folders": {
