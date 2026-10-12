@@ -2476,7 +2476,8 @@
       "whatsappLocation": "Locatie",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Threadbeheer",
-      "sendGoogleAdsConversion": "Google Ads-conversie verzenden"
+      "sendGoogleAdsConversion": "Google Ads-conversie verzenden",
+      "sendViewCatalog": "Catalogus bekijken"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -2610,6 +2611,10 @@
         "invalidLongitude": "Voer een lengtegraad in tussen -180 en 180.",
         "locationRequired": "Voer de coördinaten van de locatie in."
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Voettekst",
+      "thumbnailLabel": "Product voor miniatuur"
     }
   },
   "folders": {
@@ -3615,7 +3620,10 @@
       "labelsUnavailable": "De vragen van de Flow konden niet worden geladen, daarom worden de veldnamen getoond.",
       "yes": "Ja",
       "no": "Nee"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "De berichttekst is te lang voor een catalogusbericht. Maak hem korter.",
+    "sendViewCatalogFooterTooLong": "De voettekst is te lang voor een catalogusbericht. Maak hem korter.",
+    "viewCatalog": "Catalogus bekijken"
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",

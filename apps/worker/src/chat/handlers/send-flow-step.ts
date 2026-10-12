@@ -115,7 +115,8 @@ const resolveMessageAttachmentUrls = async (
 const isBlankTextCarrierStep = (step: SendFlowStepData) => {
   if (
     step.stepType === stepTypes.enum.sendText ||
-    step.stepType === stepTypes.enum.whatsappCallButton
+    step.stepType === stepTypes.enum.whatsappCallButton ||
+    step.stepType === stepTypes.enum.sendViewCatalog
   ) {
     return !step.text.trim()
   }

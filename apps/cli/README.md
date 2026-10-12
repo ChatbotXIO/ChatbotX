@@ -989,6 +989,7 @@ chatbotx products imports create --fileId <id>          # [--columnMap <json> --
 chatbotx products imports list                          # [--page --perPage --status --keyword --sort]
 chatbotx products find-by-imports <id>                  # Get one product import job
 chatbotx products meta-catalog delete                   # Disconnect Meta Catalog; 409 while a sync runs
+chatbotx products meta-catalog-items                    # [--keyword] Search catalog items (max 20, ordered by name; use --keyword); returns each `retailerId` (e.g. a `sendViewCatalog` step's `thumbnailProductId`); `connected` false when none
 ```
 
 ---

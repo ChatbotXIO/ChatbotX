@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest"
 import {
   getCanonicalReplyPayload,
+  getViewCatalogEntity,
   getWhatsappFlowResponse,
   isDistinctPrimaryIdentity,
   isWhatsappNativeLocationRequest,
@@ -280,5 +281,36 @@ describe("getWhatsappFlowResponse", () => {
     ["an array response", { ...entity, flowResponse: [] }],
   ])("rejects %s", (_label, value) => {
     expect(getWhatsappFlowResponse(value)).toBeUndefined()
+  })
+})
+
+describe("getViewCatalogEntity", () => {
+  test("reads the marker the sender stamps on a view-catalog message", () => {
+    expect(
+      getViewCatalogEntity({ viewCatalog: { footer: "Free shipping" } }),
+    ).toEqual({ footer: "Free shipping" })
+  })
+
+  test("accepts a marker without a footer", () => {
+    expect(getViewCatalogEntity({ viewCatalog: {} })).toEqual({})
+  })
+
+  test("drops a footer that is not a string, so the inbox never renders an object", () => {
+    expect(getViewCatalogEntity({ viewCatalog: { footer: { a: 1 } } })).toEqual(
+      {},
+    )
+  })
+
+  test.each([
+    undefined,
+    null,
+    "viewCatalog",
+    [],
+    {},
+    { viewCatalog: null },
+    { viewCatalog: "yes" },
+    { type: "template", payload: { templateType: "button", buttons: [] } },
+  ])("returns undefined for %j", (contentAttributes) => {
+    expect(getViewCatalogEntity(contentAttributes)).toBeUndefined()
   })
 })

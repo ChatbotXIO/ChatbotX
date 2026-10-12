@@ -54,7 +54,10 @@ const productService = {
   update: vi.fn(),
   delete: vi.fn(),
 }
-const integrationMetaCatalogService = { disconnect: vi.fn() }
+const integrationMetaCatalogService = {
+  disconnect: vi.fn(),
+  searchProductsForSend: vi.fn(),
+}
 vi.mock("@chatbotx.io/business", () => ({
   productService,
   integrationMetaCatalogService,
@@ -108,6 +111,83 @@ describe("DELETE /v1/products/meta-catalog", () => {
     await expect(
       procedure.handler?.({ context: { workspace: { id: "ws-1" } } }),
     ).rejects.toMatchObject({ code: "metaCatalogSyncAlreadyRunning" })
+  })
+})
+
+describe("GET /v1/products/meta-catalog/items", () => {
+  const procedure = findProcedure("GET", "/v1/products/meta-catalog/items")
+
+  test("searches the token workspace's catalog by keyword and returns ids an agent can use", async () => {
+    const result = {
+      connected: true,
+      items: [{ retailerId: "sku-1", name: "Shoe", imageUrl: null }],
+    }
+    integrationMetaCatalogService.searchProductsForSend.mockResolvedValueOnce(
+      result,
+    )
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: { keyword: "shoe" },
+      }),
+    ).resolves.toEqual(result)
+
+    expect(
+      integrationMetaCatalogService.searchProductsForSend,
+    ).toHaveBeenCalledWith({ keyword: "shoe", workspaceId: "workspace-1" })
+  })
+
+  test("looks one item up by its exact retailer id", async () => {
+    integrationMetaCatalogService.searchProductsForSend.mockResolvedValueOnce({
+      connected: true,
+      items: [{ retailerId: "sku-1", name: "Shoe", imageUrl: null }],
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { retailerId: "sku-1" },
+    })
+
+    expect(
+      integrationMetaCatalogService.searchProductsForSend,
+    ).toHaveBeenCalledWith({
+      keyword: undefined,
+      retailerId: "sku-1",
+      workspaceId: "workspace-1",
+    })
+  })
+
+  test("reports a workspace without a catalog as not connected instead of failing", async () => {
+    integrationMetaCatalogService.searchProductsForSend.mockResolvedValueOnce({
+      connected: false,
+      items: [],
+    })
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: "workspace-1" } },
+        input: {},
+      }),
+    ).resolves.toEqual({ connected: false, items: [] })
+  })
+
+  test("never lets the caller pick another workspace", async () => {
+    integrationMetaCatalogService.searchProductsForSend.mockResolvedValueOnce({
+      connected: false,
+      items: [],
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { keyword: "x", workspaceId: "foreign-ws" },
+    })
+
+    expect(
+      integrationMetaCatalogService.searchProductsForSend,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "workspace-1" }),
+    )
   })
 })
 

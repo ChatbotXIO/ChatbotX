@@ -3352,7 +3352,8 @@
       "whatsappLocation": "Plats",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Trådkontroll",
-      "sendGoogleAdsConversion": "Skicka Google Ads-konvertering"
+      "sendGoogleAdsConversion": "Skicka Google Ads-konvertering",
+      "sendViewCatalog": "Visa katalog"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -3534,6 +3535,10 @@
         "invalidLongitude": "Ange en longitud mellan -180 och 180.",
         "locationRequired": "Ange platsens koordinater."
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Sidfot",
+      "thumbnailLabel": "Miniatyrprodukt"
     }
   },
   "folders": {
@@ -4458,7 +4463,10 @@
       "labelsUnavailable": "Flowets frågor kunde inte läsas in, så fältnamnen visas i stället.",
       "yes": "Ja",
       "no": "Nej"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "Meddelandetexten är för lång för ett katalogmeddelande. Korta ned den.",
+    "sendViewCatalogFooterTooLong": "Sidfoten är för lång för ett katalogmeddelande. Korta ned den.",
+    "viewCatalog": "Visa katalog"
   },
   "messenger": {
     "botProfile": "Botprofil",

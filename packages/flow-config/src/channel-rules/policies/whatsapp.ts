@@ -8,6 +8,9 @@ export const whatsappFlowPolicy = defineChannelFlowPolicy({
     buttonCount: 3,
     buttonLabel: 20,
     text: 4096,
+    // `catalog_message` is an interactive message: its body is capped at 1,024
+    // characters and its optional footer at 60, unlike the 4,096 of plain text.
+    viewCatalog: { footer: 60, text: 1024 },
   },
   quickRepliesShareButtonSlots: true,
   supported: [
@@ -15,6 +18,7 @@ export const whatsappFlowPolicy = defineChannelFlowPolicy({
     stepTypes.enum.sendImage,
     stepTypes.enum.sendMultipleImages,
     stepTypes.enum.sendCarousel,
+    stepTypes.enum.sendViewCatalog,
     stepTypes.enum.sendWaTemplateMessage,
     stepTypes.enum.whatsappOptionList,
     stepTypes.enum.whatsappCallButton,

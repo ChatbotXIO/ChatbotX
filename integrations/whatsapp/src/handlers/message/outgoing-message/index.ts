@@ -3,6 +3,7 @@ import {
   type SendImageStepSchema,
   type SendMultipleImagesStepSchema,
   type SendTextStepSchema,
+  type SendViewCatalogStepSchema,
   type SendWaTemplateMessageStepSchema,
   type StepType,
   stepTypes,
@@ -45,6 +46,7 @@ import {
   convertFlowStepMultipleImages,
 } from "./send-image"
 import { convertFlowStepText } from "./send-text"
+import { convertFlowStepViewCatalog } from "./send-view-catalog"
 import { convertFlowStepWaTemplate } from "./send-wa-template"
 import { convertFlowStepWhatsappCallButton } from "./whatsapp-call-button"
 import { convertFlowStepWhatsappFlow } from "./whatsapp-flow"
@@ -183,6 +185,16 @@ function* convertFlowStepToWhatsappMessage(
         >[0],
       )
       break
+    case stepTypes.enum.sendViewCatalog:
+      yield* convertFlowStepViewCatalog(
+        props as Parameters<
+          MessageHandlers<
+            WhatsappAuthValue,
+            SendViewCatalogStepSchema
+          >["sendFlowStep"]
+        >[0],
+      )
+      break
     case stepTypes.enum.whatsappOptionList:
       yield* convertFlowStepWhatsappOptionList(
         props as Parameters<
@@ -310,6 +322,7 @@ export const handledFlowStepTypes = [
   stepTypes.enum.sendImage,
   stepTypes.enum.sendMultipleImages,
   stepTypes.enum.sendCarousel,
+  stepTypes.enum.sendViewCatalog,
   stepTypes.enum.sendWaTemplateMessage,
   stepTypes.enum.whatsappOptionList,
   stepTypes.enum.whatsappCallButton,

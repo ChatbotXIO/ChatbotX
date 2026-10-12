@@ -70,7 +70,7 @@ describe("getCapabilities", () => {
     })
 
     expect(result.flowSpec?.selectedChannelPolicy).toMatchObject({
-      policyVersion: 1,
+      policyVersion: 2,
       limits: { buttonCount },
     })
     expect(result.flowSpec?.selectedChannelPolicy?.unsupportedSteps).toEqual(

@@ -2476,7 +2476,8 @@
       "whatsappLocation": "Placering",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Trådkontrol",
-      "sendGoogleAdsConversion": "Send Google Ads-konvertering"
+      "sendGoogleAdsConversion": "Send Google Ads-konvertering",
+      "sendViewCatalog": "Se katalog"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2610,6 +2611,10 @@
         "invalidLongitude": "Angiv en længdegrad mellem -180 og 180.",
         "locationRequired": "Angiv placeringens koordinater."
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Sidefod",
+      "thumbnailLabel": "Miniaturebillede-produkt"
     }
   },
   "folders": {
@@ -3615,7 +3620,10 @@
       "labelsUnavailable": "Flowets spørgsmål kunne ikke indlæses, så feltnavne vises i stedet.",
       "yes": "Ja",
       "no": "Nej"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "Beskedteksten er for lang til en katalogbesked. Gør den kortere.",
+    "sendViewCatalogFooterTooLong": "Sidefoden er for lang til en katalogbesked. Gør den kortere.",
+    "viewCatalog": "Se katalog"
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",

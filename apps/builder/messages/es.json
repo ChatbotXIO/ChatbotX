@@ -2622,7 +2622,8 @@
       "whatsappLocation": "Ubicación",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Control del hilo",
-      "sendGoogleAdsConversion": "Enviar conversión de Google Ads"
+      "sendGoogleAdsConversion": "Enviar conversión de Google Ads",
+      "sendViewCatalog": "Ver catálogo"
     },
     "splitTraffic": {
       "balanceHint": "La suma total debe ser igual al 100 %.",
@@ -2756,6 +2757,10 @@
         "invalidLongitude": "Introduce una longitud entre -180 y 180.",
         "locationRequired": "Introduce las coordenadas de la ubicación."
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Pie de mensaje",
+      "thumbnailLabel": "Producto de la miniatura"
     }
   },
   "folders": {
@@ -3615,7 +3620,10 @@
       "labelsUnavailable": "No se pudieron cargar las preguntas del Flow, así que se muestran los nombres de los campos.",
       "yes": "Sí",
       "no": "No"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "El texto del mensaje es demasiado largo para un mensaje de catálogo. Acórtalo.",
+    "sendViewCatalogFooterTooLong": "El pie es demasiado largo para un mensaje de catálogo. Acórtalo.",
+    "viewCatalog": "Ver catálogo"
   },
   "instagram": {
     "description": "This integración lets tú Crear Instagram bots.",

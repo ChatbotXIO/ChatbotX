@@ -2476,7 +2476,8 @@
       "whatsappLocation": "位置情報",
       "metaConversions": "Meta Conversions API",
       "threadControl": "スレッド制御",
-      "sendGoogleAdsConversion": "Google 広告コンバージョンを送信"
+      "sendGoogleAdsConversion": "Google 広告コンバージョンを送信",
+      "sendViewCatalog": "カタログを見る"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2610,6 +2611,10 @@
         "invalidLongitude": "-180〜180の経度を入力してください。",
         "locationRequired": "位置情報の座標を入力してください。"
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "フッター",
+      "thumbnailLabel": "サムネイル商品"
     }
   },
   "folders": {
@@ -3594,7 +3599,10 @@
       "labelsUnavailable": "Flowの質問を読み込めなかったため、項目名を表示しています。",
       "yes": "はい",
       "no": "いいえ"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "メッセージ本文がカタログメッセージには長すぎます。短くしてください。",
+    "sendViewCatalogFooterTooLong": "フッターがカタログメッセージには長すぎます。短くしてください。",
+    "viewCatalog": "カタログを見る"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",

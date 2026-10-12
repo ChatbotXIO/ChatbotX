@@ -2158,6 +2158,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/products/imports/files/{fileId}/headers",
   },
   {
+    "method": "GET",
+    "operationId": "products.searchMetaCatalogItems",
+    "path": "/v1/products/meta-catalog/items",
+  },
+  {
     "method": "POST",
     "operationId": "products.selectMetaCatalog",
     "path": "/v1/products/meta-catalog/select",

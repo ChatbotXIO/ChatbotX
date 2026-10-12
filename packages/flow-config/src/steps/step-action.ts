@@ -12,6 +12,7 @@ export const stepTypes = z.enum([
   "sendMultipleImages",
   "sendCard",
   "sendCarousel",
+  "sendViewCatalog",
   "sendVideo",
   "sendGif",
   "sendMessengerOtn",

@@ -460,7 +460,8 @@
       "whatsappLocation": "מיקום",
       "metaConversions": "Meta Conversions API",
       "threadControl": "שליטה בשרשור",
-      "sendGoogleAdsConversion": "שליחת המרה של Google Ads"
+      "sendGoogleAdsConversion": "שליחת המרה של Google Ads",
+      "sendViewCatalog": "הצגת קטלוג"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -594,6 +595,10 @@
         "invalidLongitude": "הזינו קו אורך בין ‎-180 ל-180.",
         "locationRequired": "הזינו את קואורדינטות המיקום."
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "כותרת תחתונה",
+      "thumbnailLabel": "מוצר לתמונה ממוזערת"
     }
   },
   "folders": {
@@ -1599,7 +1604,10 @@
       "labelsUnavailable": "לא ניתן לטעון את שאלות ה-Flow, לכן מוצגים שמות השדות.",
       "yes": "כן",
       "no": "לא"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "טקסט ההודעה ארוך מדי להודעת קטלוג. קצרו אותו.",
+    "sendViewCatalogFooterTooLong": "הכותרת התחתונה ארוכה מדי להודעת קטלוג. קצרו אותה.",
+    "viewCatalog": "צפייה בקטלוג"
   },
   "instagram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Instagram.",

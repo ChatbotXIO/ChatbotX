@@ -2664,7 +2664,8 @@
       "whatsappLocation": "Vị trí",
       "metaConversions": "API Chuyển đổi Meta",
       "threadControl": "Điều khiển luồng",
-      "sendGoogleAdsConversion": "Gửi chuyển đổi Google Ads"
+      "sendGoogleAdsConversion": "Gửi chuyển đổi Google Ads",
+      "sendViewCatalog": "Xem danh mục"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2798,6 +2799,10 @@
         "invalidLongitude": "Nhập kinh độ từ -180 đến 180.",
         "locationRequired": "Nhập tọa độ của vị trí."
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Chân tin nhắn",
+      "thumbnailLabel": "Sản phẩm làm ảnh thu nhỏ"
     }
   },
   "folders": {
@@ -3657,7 +3662,10 @@
       "labelsUnavailable": "Không tải được câu hỏi của Flow nên đang hiển thị tên trường.",
       "yes": "Có",
       "no": "Không"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "Nội dung tin nhắn quá dài so với tin nhắn danh mục. Hãy rút ngắn.",
+    "sendViewCatalogFooterTooLong": "Chân tin nhắn quá dài so với tin nhắn danh mục. Hãy rút ngắn.",
+    "viewCatalog": "Xem sản phẩm"
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

@@ -22,6 +22,8 @@ export const messageLimits = {
   text: 4096,
 } as const
 
+const LONE_TRAILING_HIGH_SURROGATE = /[\uD800-\uDBFF]$/
+
 /**
  * Trims both before and after slicing: Meta rejects button ids that have
  * leading or trailing spaces, and a cut can land mid-word and leave one behind.
@@ -31,7 +33,15 @@ export const messageLimits = {
  * continued should use {@link splitText} instead of losing content.
  */
 export function clampText(value: string, maxLength: number): string {
-  return value.trim().slice(0, maxLength).trim()
+  return (
+    value
+      .trim()
+      .slice(0, maxLength)
+      // The cut can land between the two halves of an emoji; the lone high
+      // surrogate left behind is invalid Unicode and Meta rejects the message.
+      .replace(LONE_TRAILING_HIGH_SURROGATE, "")
+      .trim()
+  )
 }
 
 /** The whitespace run before the last, possibly truncated, word. */

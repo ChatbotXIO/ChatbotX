@@ -167,7 +167,8 @@
       "whatsappLocation": "Locație",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Controlul conversației",
-      "sendGoogleAdsConversion": "Trimite conversie Google Ads"
+      "sendGoogleAdsConversion": "Trimite conversie Google Ads",
+      "sendViewCatalog": "Vezi catalogul"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -301,6 +302,10 @@
         "invalidLongitude": "Introdu o longitudine între -180 și 180.",
         "locationRequired": "Introdu coordonatele locației."
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Subsol",
+      "thumbnailLabel": "Produs pentru miniatură"
     }
   },
   "folders": {
@@ -3615,7 +3620,10 @@
       "labelsUnavailable": "Întrebările Flow-ului nu au putut fi încărcate, așa că sunt afișate numele câmpurilor.",
       "yes": "Da",
       "no": "Nu"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "Textul mesajului este prea lung pentru un mesaj de catalog. Scurtează-l.",
+    "sendViewCatalogFooterTooLong": "Subsolul este prea lung pentru un mesaj de catalog. Scurtează-l.",
+    "viewCatalog": "Vezi catalogul"
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",

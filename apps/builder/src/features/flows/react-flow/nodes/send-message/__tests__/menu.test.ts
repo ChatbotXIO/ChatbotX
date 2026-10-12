@@ -265,3 +265,39 @@ describe("sendMessageEditorMenus — WhatsApp-only send steps", () => {
     )
   })
 })
+
+describe("sendMessageEditorMenus — catalog entry", () => {
+  const CATALOG_LABEL = "flows.actions.sendViewCatalog"
+  const labelsFor = (channel: MenuData["beforeStep"]["channel"]) =>
+    sendMessageEditorMenus(t, buildMenuData(channel)).map((item) => item.label)
+
+  it("offers the catalog on a WhatsApp node", () => {
+    expect(labelsFor(channelTypes.enum.whatsapp)).toContain(CATALOG_LABEL)
+  })
+
+  it.each([
+    channelTypes.enum.messenger,
+    channelTypes.enum.instagram,
+    channelTypes.enum.telegram,
+    channelTypes.enum.tiktok,
+    channelTypes.enum.webchat,
+    channelTypes.enum.zalo,
+  ])("hides the catalog on a %s node, which cannot deliver it", (channel) => {
+    expect(labelsFor(channel)).not.toContain(CATALOG_LABEL)
+  })
+
+  it("offers the catalog on an omnichannel node: it reaches the contacts that can receive it", () => {
+    expect(labelsFor(channelTypes.enum.omnichannel)).toContain(CATALOG_LABEL)
+  })
+
+  it.each([
+    channelTypes.enum.whatsapp,
+    channelTypes.enum.omnichannel,
+  ])("lists the catalog right below WhatsApp Flow on a %s node", (channel) => {
+    const labels = labelsFor(channel)
+
+    expect(labels.indexOf(CATALOG_LABEL)).toBe(
+      labels.indexOf("flows.actions.whatsappFlow") + 1,
+    )
+  })
+})

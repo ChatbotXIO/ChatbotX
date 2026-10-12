@@ -242,14 +242,81 @@ describe("WhatsApp receiveMessage — location / contacts / order", () => {
     expect(result.message?.contentAttributes).toEqual({ contacts })
   })
 
-  test("order carries the order payload as contentAttributes", async () => {
-    const order = {
-      catalog_id: "catalog-1",
-      product_items: [{ product_retailer_id: "product-1" }],
-    }
-    const result = await receiveMessage(buildProps({ type: "order", order }))
+  describe("order", () => {
+    const item = (retailerId: string, quantity: number, price: number) => ({
+      product_retailer_id: retailerId,
+      quantity,
+      item_price: price,
+      currency: "VND",
+    })
 
-    expect(result.message?.contentAttributes).toEqual(order)
+    test("carries the order payload as contentAttributes", async () => {
+      const order = {
+        catalog_id: "catalog-1",
+        product_items: [item("product-1", 1, 350_000)],
+      }
+      const result = await receiveMessage(buildProps({ type: "order", order }))
+
+      expect(result.message?.contentAttributes).toEqual(order)
+    })
+
+    test("sets a readable text, one line per product, so the inbox and keywords see it", async () => {
+      const result = await receiveMessage(
+        buildProps({
+          type: "order",
+          order: {
+            catalog_id: "catalog-1",
+            product_items: [
+              item("abc123xyz", 1, 350_000),
+              item("def456uvw", 3, 450_000),
+            ],
+          },
+        }),
+      )
+
+      expect(result.message?.text).toBe(
+        "Received order\nabc123xyz × 1 (350000 VND)\ndef456uvw × 3 (450000 VND)",
+      )
+    })
+
+    test("appends the customer's note when there is one", async () => {
+      const result = await receiveMessage(
+        buildProps({
+          type: "order",
+          order: {
+            catalog_id: "catalog-1",
+            product_items: [item("abc123xyz", 1, 350_000)],
+            text: "Please deliver after 5pm",
+          },
+        }),
+      )
+
+      expect(result.message?.text).toBe(
+        "Received order\nabc123xyz × 1 (350000 VND)\nPlease deliver after 5pm",
+      )
+    })
+
+    test("does not throw when Meta omits the items array", async () => {
+      const result = await receiveMessage(
+        buildProps({
+          type: "order",
+          order: { catalog_id: "catalog-1" },
+        }),
+      )
+
+      expect(result.message?.text).toBe("Received order")
+    })
+
+    test("falls back to the bare label for an order without items", async () => {
+      const result = await receiveMessage(
+        buildProps({
+          type: "order",
+          order: { catalog_id: "catalog-1", product_items: [] },
+        }),
+      )
+
+      expect(result.message?.text).toBe("Received order")
+    })
   })
 })
 

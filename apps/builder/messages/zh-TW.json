@@ -1702,7 +1702,10 @@
       "labelsUnavailable": "無法載入 Flow 的問題，因此顯示欄位名稱。",
       "yes": "是",
       "no": "否"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "訊息文字對目錄訊息來說太長，請縮短。",
+    "sendViewCatalogFooterTooLong": "頁尾對目錄訊息來說太長，請縮短。",
+    "viewCatalog": "查看目錄"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
@@ -2827,7 +2830,8 @@
       "whatsappLocation": "位置",
       "metaConversions": "Meta Conversions API",
       "threadControl": "對話控制",
-      "sendGoogleAdsConversion": "傳送 Google Ads 轉換"
+      "sendGoogleAdsConversion": "傳送 Google Ads 轉換",
+      "sendViewCatalog": "查看商品目錄"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -2961,6 +2965,10 @@
         "invalidLongitude": "請輸入 -180 到 180 之間的經度。",
         "locationRequired": "請輸入位置的座標。"
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "頁尾",
+      "thumbnailLabel": "縮圖商品"
     }
   },
   "folders": {

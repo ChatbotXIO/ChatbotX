@@ -17,6 +17,7 @@ import {
   sendQuickReplyStepDefaultFn,
   sendTextStepDefaultFn,
   sendVideoStepDefaultFn,
+  sendViewCatalogStepDefaultFn,
 } from "../src"
 
 describe("sendMessage quick replies", () => {
@@ -71,6 +72,7 @@ describe("sendMessage quick replies", () => {
       url: "https://example.com/anim.gif",
     }
     const carouselStep = sendCarouselStepDefaultFn()
+    const viewCatalogStep = sendViewCatalogStepDefaultFn({ text: "Browse" })
     const multipleImagesStep = sendMultipleImagesStepDefaultFn()
 
     expect(isQuickReplyCarrierStep("telegram", textStep)).toBe(true)
@@ -86,6 +88,9 @@ describe("sendMessage quick replies", () => {
 
     expect(isQuickReplyCarrierStep("whatsapp", imageStep)).toBe(true)
     expect(isQuickReplyCarrierStep("whatsapp", carouselStep)).toBe(true)
+    // A catalog message carries no quick replies: its interactive action holds
+    // only the catalog button, so it must never be picked as the carrier.
+    expect(isQuickReplyCarrierStep("whatsapp", viewCatalogStep)).toBe(false)
     expect(isQuickReplyCarrierStep("zalo", imageStep)).toBe(true)
     expect(isQuickReplyCarrierStep("messenger", imageStep)).toBe(true)
     expect(isQuickReplyCarrierStep("instagram", imageStep)).toBe(true)
