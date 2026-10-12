@@ -5568,7 +5568,6 @@
     "allForms": "Tất cả biểu mẫu",
     "allFormsNote": "Lead từ mọi biểu mẫu của trang này sẽ được thu thập. Các trường tiêu chuẩn (email, số điện thoại, tên, giới tính) được lưu tự động vào trường liên hệ tương ứng.",
     "leadData": "Dữ liệu Lead",
-    "whatFlow": "Kịch bản được kích hoạt",
     "addNewPage": "Thêm mới",
     "noEligiblePages": "Không có trang phù hợp. Dùng \"Thêm mới\" để cấp quyền truy cập lead.",
     "duplicateError": "Đã tồn tại một automation cho trang và biểu mẫu này.",

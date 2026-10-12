@@ -16,7 +16,6 @@ const {
   mockSetValueByKey,
   mockGetLead,
   mockDetect,
-  mockRunFlowNode,
 } = vi.hoisted(() => ({
   mockIdentify: vi.fn(),
   mockFindMatching: vi.fn(),
@@ -29,7 +28,6 @@ const {
   mockSetValueByKey: vi.fn(),
   mockGetLead: vi.fn(),
   mockDetect: vi.fn(),
-  mockRunFlowNode: vi.fn(),
 }))
 
 const RICH_FIELDS = [
@@ -71,10 +69,6 @@ vi.mock("../src/services/integrations", () => ({
 
 vi.mock("../src/integration/handlers/received-message", () => ({
   detectContactAndConversation: mockDetect,
-}))
-
-vi.mock("../src/integration/handlers/flow", () => ({
-  runFlowNode: mockRunFlowNode,
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -171,7 +165,6 @@ describe("processLeadgen", () => {
     mockFindMatching.mockResolvedValue({
       id: "auto-1",
       fieldMapping: [],
-      flowId: null,
     })
     mockClaim.mockResolvedValue(null)
 
@@ -179,7 +172,6 @@ describe("processLeadgen", () => {
 
     expect(mockGetLead).not.toHaveBeenCalled()
     expect(mockDetect).not.toHaveBeenCalled()
-    expect(mockRunFlowNode).not.toHaveBeenCalled()
     expect(mockIncrementLeadsHandled).not.toHaveBeenCalled()
   })
 
@@ -188,7 +180,6 @@ describe("processLeadgen", () => {
     mockFindMatching.mockResolvedValue({
       id: "auto-1",
       fieldMapping: [],
-      flowId: "flow-9",
     })
     mockGetLead.mockRejectedValue(new Error("graph 500"))
 
@@ -203,7 +194,6 @@ describe("processLeadgen", () => {
     mockFindMatching.mockResolvedValue({
       id: "auto-1",
       fieldMapping: [],
-      flowId: null,
     })
     mockGetLead.mockResolvedValue(
       leadWith([{ name: "inbox_url", values: [INBOX_URL] }]),
@@ -225,7 +215,6 @@ describe("processLeadgen", () => {
     mockFindMatching.mockResolvedValue({
       id: "auto-1",
       fieldMapping: [],
-      flowId: "flow-9",
     })
     mockGetLead.mockRejectedValue(new Error("graph 500"))
 
@@ -240,7 +229,6 @@ describe("processLeadgen", () => {
     mockFindMatching.mockResolvedValue({
       id: "auto-1",
       fieldMapping: [],
-      flowId: "flow-9",
     })
     mockGetLead.mockRejectedValue(new Error("graph 500"))
 
@@ -255,12 +243,11 @@ describe("processLeadgen", () => {
     )
   })
 
-  test("no inbox_url: skips contact creation, flow, and counter", async () => {
+  test("no inbox_url: skips contact creation and counter", async () => {
     primeResolvers()
     mockFindMatching.mockResolvedValue({
       id: "auto-1",
       fieldMapping: [],
-      flowId: "flow-9",
     })
     mockGetLead.mockResolvedValue(
       leadWith([{ name: "email", values: ["a@b.com"] }]),
@@ -269,15 +256,13 @@ describe("processLeadgen", () => {
     await processLeadgen(JOB, bullJob())
 
     expect(mockDetect).not.toHaveBeenCalled()
-    expect(mockRunFlowNode).not.toHaveBeenCalled()
     expect(mockIncrementLeadsHandled).not.toHaveBeenCalled()
   })
 
-  test("specific-form mapping: routes system vs custom targets, sends flow, counts", async () => {
+  test("specific-form mapping: routes system vs custom targets and counts", async () => {
     primeResolvers()
     mockFindMatching.mockResolvedValue({
       id: "auto-1",
-      flowId: "flow-9",
       fieldMapping: [
         { key: "email", label: "Email", type: "EMAIL", target: "email" },
         { key: "phone_number", label: "Phone", type: "PHONE", target: "phone" },
@@ -304,10 +289,6 @@ describe("processLeadgen", () => {
     expect(mockSetValueByKey).toHaveBeenCalledWith(
       expect.objectContaining({ keyword: "12345", value: "1000" }),
     )
-    expect(mockRunFlowNode).toHaveBeenCalledWith(
-      expect.objectContaining({ flowId: "flow-9" }),
-      { flowExecutionKey: undefined },
-    )
     expect(mockSetContactId).toHaveBeenCalledWith({
       id: "claim-1",
       contactId: "contact-1",
@@ -319,7 +300,6 @@ describe("processLeadgen", () => {
     primeResolvers()
     mockFindMatching.mockResolvedValue({
       id: "auto-1",
-      flowId: null,
       fieldMapping: [],
     })
     mockGetLead.mockResolvedValue(
@@ -343,8 +323,6 @@ describe("processLeadgen", () => {
       { workspaceId: "ws-1", id: "contact-1" },
       { gender: "male" },
     )
-    // No flow configured → not sent, but the lead is still counted.
-    expect(mockRunFlowNode).not.toHaveBeenCalled()
     expect(mockIncrementLeadsHandled).toHaveBeenCalledWith("auto-1")
   })
 })

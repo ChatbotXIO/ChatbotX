@@ -5487,7 +5487,6 @@
     "allForms": "Kaikki lomakkeet",
     "allFormsNote": "Kaikkien tämän sivun lomakkeiden liidit tallennetaan. Vakiokentät (sähköposti, puhelin, nimi, sukupuoli) tallennetaan automaattisesti vastaaviin yhteystietokenttiin.",
     "leadData": "Liiditiedot",
-    "whatFlow": "Käynnistettävä flow",
     "addNewPage": "Lisää uusi",
     "noEligiblePages": "Sopivia sivuja ei ole. Myönnä liidien käyttöoikeus valitsemalla Lisää uusi.",
     "duplicateError": "Tälle sivulle ja lomakkeelle on jo olemassa automaatio.",

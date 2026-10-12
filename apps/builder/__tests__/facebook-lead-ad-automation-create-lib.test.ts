@@ -67,7 +67,6 @@ describe("createLeadAdAutomation", () => {
       formId: "form-1",
       formName: null,
       fieldMapping: [],
-      flowId: null,
       duplicateMessage: messages.duplicateError,
     })
   })

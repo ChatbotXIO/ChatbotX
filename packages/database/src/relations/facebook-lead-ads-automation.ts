@@ -11,10 +11,6 @@ export const facebookLeadAdsAutomationRelations = defineRelationsPart(
         to: r.workspaceModel.id,
         optional: false,
       }),
-      flow: r.one.flowModel({
-        from: r.facebookLeadAdsAutomationModel.flowId,
-        to: r.flowModel.id,
-      }),
       leads: r.many.facebookLeadAdsLeadModel({
         from: r.facebookLeadAdsAutomationModel.id,
         to: r.facebookLeadAdsLeadModel.automationId,

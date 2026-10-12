@@ -5487,7 +5487,6 @@
     "allForms": "Todos forms",
     "allFormsNote": "Leads desde every form en este página se be captured. Standard campos (correo, teléfono, nombre, gender) son saved un matching contacto campos automáticamente.",
     "leadData": "Lead Datos",
-    "whatFlow": "What flujo es desencadenadored",
     "addNewPage": "Añadir Nuevo",
     "noEligiblePages": "No eligible páginas. Use \"Añadir Nuevo\" un grant lead access.",
     "duplicateError": "An automatización ya existe para este página y form.",

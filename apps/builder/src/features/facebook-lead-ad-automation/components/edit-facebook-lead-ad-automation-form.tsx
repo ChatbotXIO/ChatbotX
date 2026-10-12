@@ -4,7 +4,6 @@ import {
   ALL_FORMS_ID,
   type FacebookLeadFieldMapping,
 } from "@chatbotx.io/database/partials"
-import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
@@ -21,7 +20,6 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
-import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { updateFacebookLeadAdAutomationAction } from "../actions/update-facebook-lead-ad-automation.action"
 import {
   type UpdateFacebookLeadAdAutomationRequest,
@@ -36,7 +34,6 @@ export type EditLeadAdInitialData = {
   formId: string
   formName: string | null
   fieldMapping: FacebookLeadFieldMapping[]
-  flowId: string | null
 }
 
 export function EditFacebookLeadAdAutomationForm({
@@ -49,17 +46,11 @@ export function EditFacebookLeadAdAutomationForm({
   const t = useTranslations()
   const router = useRouter()
 
-  const flowOptions = [
-    { label: t("messages.none"), value: "" },
-    ...useFlowSelectOptions(),
-  ]
-
   const form = useForm<UpdateFacebookLeadAdAutomationRequest>({
     resolver: zodResolver(updateFacebookLeadAdAutomationRequest),
     mode: "onChange",
     defaultValues: {
       fieldMapping: initialData.fieldMapping,
-      flowId: initialData.flowId ?? "",
     },
   })
 
@@ -124,14 +115,6 @@ export function EditFacebookLeadAdAutomationForm({
                 workspaceId={workspaceId}
               />
             )}
-
-            <ComboboxField
-              label={t("facebookLeadAdsAutomation.whatFlow")}
-              name="flowId"
-              options={flowOptions}
-              placeholder={t("messages.none")}
-              popoverClassName="w-[var(--anchor-width)]"
-            />
 
             <div className="flex justify-end gap-2">
               <Button

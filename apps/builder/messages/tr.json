@@ -5487,7 +5487,6 @@
     "allForms": "Tüm formlar",
     "allFormsNote": "Bu sayfadaki her formdan gelen potansiyel müşteriler yakalanacaktır. Standart alanlar (e-posta, telefon, ad, cinsiyet) eşleşen kişi alanlarına otomatik olarak kaydedilir.",
     "leadData": "Potansiyel Müşteri Verisi",
-    "whatFlow": "Hangi akış tetiklenecek",
     "addNewPage": "Yeni Ekle",
     "noEligiblePages": "Uygun sayfa yok. Potansiyel müşteri erişimi vermek için \"Yeni Ekle\"yi kullanın.",
     "duplicateError": "Bu sayfa ve form için zaten bir otomasyon mevcut.",

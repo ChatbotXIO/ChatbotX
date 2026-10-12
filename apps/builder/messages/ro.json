@@ -5226,8 +5226,7 @@
     "leads": "Lead-uri",
     "noEligiblePages": "Nicio pagină eligibilă. Folosește „Adaugă nouă” pentru a acorda acces la lead-uri.",
     "subscribeError": "Nu s-a putut abona această pagină la notificările Facebook pentru lead-uri, astfel automatizarea nu a fost creată. Reconectează pagina cu „Adaugă nouă” și încearcă din nou.",
-    "title": "Automatizare reclame pentru lead-uri Facebook",
-    "whatFlow": "Ce flux este declanșat"
+    "title": "Automatizare reclame pentru lead-uri Facebook"
   },
   "clickToMessageAds": {
     "title": "Reclame Click-to-Message",

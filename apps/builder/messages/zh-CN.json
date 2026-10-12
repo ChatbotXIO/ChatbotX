@@ -1676,8 +1676,7 @@
     "leads": "线索",
     "noEligiblePages": "没有符合条件的页面。使用「添加新建」授予潜在客户访问权限。",
     "subscribeError": "无法将此页面订阅至 Facebook 潜在客户通知，因此未创建自动化。使用「添加 New」重新连接页面并重试。",
-    "title": "Facebook 引导广告自动化",
-    "whatFlow": "触发什么流程"
+    "title": "Facebook 引导广告自动化"
   },
   "clickToMessageAds": {
     "title": "Click-to-Message广告",

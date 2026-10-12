@@ -23,7 +23,6 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { validationException } from "../errors"
-import { flowService } from "../flow/service"
 
 type ListInput = {
   workspaceId: string
@@ -41,13 +40,10 @@ type CreateInput = {
   formId: string
   formName?: string | null
   fieldMapping: FacebookLeadFieldMappings
-  flowId?: string | null
   duplicateMessage: string
 }
 
-type UpdateInput = Partial<
-  Pick<CreateInput, "name" | "fieldMapping" | "flowId">
->
+type UpdateInput = Partial<Pick<CreateInput, "name" | "fieldMapping">>
 
 class FacebookLeadAdsAutomationService extends BaseService {
   async list(input: ListInput) {
@@ -65,7 +61,6 @@ class FacebookLeadAdsAutomationService extends BaseService {
         where,
         orderBy,
         ...pagination,
-        with: { flow: true },
       }),
       db.$count(
         facebookLeadAdsAutomationModel,
@@ -80,7 +75,6 @@ class FacebookLeadAdsAutomationService extends BaseService {
   findById(props: { workspaceId: string; id: string }) {
     return db.query.facebookLeadAdsAutomationModel.findFirst({
       where: { id: props.id, workspaceId: props.workspaceId },
-      with: { flow: true },
     })
   }
 
@@ -108,13 +102,6 @@ class FacebookLeadAdsAutomationService extends BaseService {
   }
 
   async create(input: CreateInput) {
-    if (
-      input.flowId &&
-      !(await flowService.exists(input.workspaceId, input.flowId))
-    ) {
-      throw validationException("flowId", "Flow not found in this workspace")
-    }
-
     try {
       const [row] = await db
         .insert(facebookLeadAdsAutomationModel)
@@ -127,7 +114,6 @@ class FacebookLeadAdsAutomationService extends BaseService {
           formId: input.formId,
           formName: input.formName ?? null,
           fieldMapping: input.fieldMapping,
-          flowId: input.flowId ?? null,
         })
         .returning()
       return row
@@ -140,13 +126,6 @@ class FacebookLeadAdsAutomationService extends BaseService {
   }
 
   async update(props: { workspaceId: string; id: string }, input: UpdateInput) {
-    if (
-      input.flowId &&
-      !(await flowService.exists(props.workspaceId, input.flowId))
-    ) {
-      throw validationException("flowId", "Flow not found in this workspace")
-    }
-
     const [row] = await db
       .update(facebookLeadAdsAutomationModel)
       .set(input)

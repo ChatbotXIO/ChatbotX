@@ -5487,7 +5487,6 @@
     "allForms": "Tous les formulaires",
     "allFormsNote": "Les prospects de tous les formulaires de cette Page seront capturés. Les champs standard (e-mail, téléphone, nom et genre) sont automatiquement enregistrés dans les champs de contact correspondants.",
     "leadData": "Données du prospect",
-    "whatFlow": "Flux déclenché",
     "addNewPage": "Ajouter",
     "noEligiblePages": "Aucune Page admissible. Utilisez « Ajouter » pour accorder l’accès aux prospects.",
     "duplicateError": "Une automatisation existe déjà pour cette Page et ce formulaire.",

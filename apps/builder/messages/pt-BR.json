@@ -5332,7 +5332,6 @@
     "allForms": "Todos os formulários",
     "allFormsNote": "Os cadastros de todos os formulários desta página serão capturados. Os campos padrão (e-mail, telefone, nome e gênero) são salvos automaticamente nos campos correspondentes do contato.",
     "leadData": "Dados do cadastro",
-    "whatFlow": "Qual fluxo é acionado",
     "addNewPage": "Adicionar nova",
     "noEligiblePages": "Nenhuma página qualificada. Use \"Adicionar nova\" para conceder acesso aos cadastros.",
     "duplicateError": "Já existe uma automação para esta página e formulário.",

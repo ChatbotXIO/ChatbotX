@@ -1,11 +1,5 @@
 import { facebookLeadFieldMappingSchema } from "@chatbotx.io/database/partials"
-import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-
-const nullableFlowId = z
-  .union([z.literal("").transform(() => null), zodBigintAsString()])
-  .nullable()
-  .optional()
 
 export const createFacebookLeadAdAutomationRequest = z.object({
   name: z.string().min(1).max(100).describe("Automation name."),
@@ -34,9 +28,6 @@ export const createFacebookLeadAdAutomationRequest = z.object({
     .array(facebookLeadFieldMappingSchema)
     .default([])
     .describe("Mappings from lead form fields to contact/custom fields."),
-  flowId: nullableFlowId.describe(
-    "Flow id to start when a new lead arrives, or null to send no flow.",
-  ),
 })
 export type CreateFacebookLeadAdAutomationRequest = z.infer<
   typeof createFacebookLeadAdAutomationRequest
@@ -48,9 +39,6 @@ export const updateFacebookLeadAdAutomationRequest = z.object({
     .array(facebookLeadFieldMappingSchema)
     .optional()
     .describe("Mappings from lead form fields to contact/custom fields."),
-  flowId: nullableFlowId.describe(
-    "Flow id to start when a new lead arrives, or null to send no flow.",
-  ),
 })
 export type UpdateFacebookLeadAdAutomationRequest = z.infer<
   typeof updateFacebookLeadAdAutomationRequest

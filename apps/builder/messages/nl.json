@@ -5487,7 +5487,6 @@
     "allForms": "Alle formulieren",
     "allFormsNote": "Leads uit elk formulier op deze pagina worden vastgelegd. Standaardvelden (e-mail, telefoonnummer, naam en geslacht) worden automatisch in de overeenkomstige contactvelden opgeslagen.",
     "leadData": "Leadgegevens",
-    "whatFlow": "Welke flow wordt geactiveerd",
     "addNewPage": "Nieuwe toevoegen",
     "noEligiblePages": "Geen geschikte pagina's. Gebruik 'Nieuwe toevoegen' om toegang tot leads te verlenen.",
     "duplicateError": "Er bestaat al een automatisering voor deze pagina en dit formulier.",

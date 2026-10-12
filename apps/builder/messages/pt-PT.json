@@ -5483,7 +5483,6 @@
     "allForms": "Todos os formulários",
     "allFormsNote": "Os leads de todos os formulários desta página serão capturados. Os campos padrão (e-mail, telefone, nome e género) são guardados automaticamente nos campos correspondentes do contacto.",
     "leadData": "Dados do lead",
-    "whatFlow": "Fluxo acionado",
     "addNewPage": "Adicionar novo",
     "noEligiblePages": "Não existem páginas elegíveis. Utilize «Adicionar novo» para conceder acesso aos leads.",
     "duplicateError": "Já existe uma automatização para esta página e este formulário.",

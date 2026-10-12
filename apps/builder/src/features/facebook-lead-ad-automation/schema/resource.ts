@@ -10,7 +10,6 @@ export const facebookLeadAdsAutomationResource = createSelectSchema(
   {
     id: z.string(),
     workspaceId: z.string(),
-    flowId: z.string().nullable(),
     fieldMapping: facebookLeadFieldMappingsSchema,
   },
 )

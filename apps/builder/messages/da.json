@@ -5487,7 +5487,6 @@
     "allForms": "Alle forms",
     "allFormsNote": "Leads fra every form på denne side vil være captured. Standard felter (e-mail, telefon, navn, køn) er saved til matching kontakt felter automatically.",
     "leadData": "Lead Data",
-    "whatFlow": "What flow er triggered",
     "addNewPage": "Tilføj Ny",
     "noEligiblePages": "Ingen eligible sider. Use \"Tilføj Ny\" til grant lead access.",
     "duplicateError": "An automatisering already exists for denne side og form.",

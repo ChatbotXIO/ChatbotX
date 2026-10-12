@@ -6213,7 +6213,6 @@
     "allForms": "All forms",
     "allFormsNote": "Leads from every form on this page will be captured. Standard fields (email, phone, name, gender) are saved to matching contact fields automatically.",
     "leadData": "Lead Data",
-    "whatFlow": "What flow is triggered",
     "addNewPage": "Add New",
     "noEligiblePages": "No eligible pages. Use \"Add New\" to grant lead access.",
     "duplicateError": "An automation already exists for this page and form.",

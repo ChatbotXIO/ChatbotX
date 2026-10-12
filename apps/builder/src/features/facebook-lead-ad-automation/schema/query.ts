@@ -6,7 +6,6 @@ import {
   parseAsString,
 } from "nuqs/server"
 import { z } from "zod"
-import { flowResource } from "@/features/flows/schema/resource"
 import { facebookLeadAdsAutomationResource } from "./resource"
 
 export const listFacebookLeadAdsSearchParams = {
@@ -25,11 +24,7 @@ export type ListFacebookLeadAdsRequest = Awaited<
   ReturnType<typeof listFacebookLeadAdsSearchParamsCache.parse>
 > & { workspaceId: string }
 
-export const listFacebookLeadAdItem = facebookLeadAdsAutomationResource.and(
-  z.object({
-    flow: flowResource.nullable(),
-  }),
-)
+export const listFacebookLeadAdItem = facebookLeadAdsAutomationResource
 export type ListFacebookLeadAdItem = z.infer<typeof listFacebookLeadAdItem>
 
 export const listFacebookLeadAdsResponse = z.object({

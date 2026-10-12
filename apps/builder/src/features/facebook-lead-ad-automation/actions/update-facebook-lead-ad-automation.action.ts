@@ -19,8 +19,8 @@ export const updateFacebookLeadAdAutomationAction = workspaceActionClient
       bindArgsParsedInputs: readonly [string, string]
       parsedInput: UpdateFacebookLeadAdAutomationRequest
     }) => {
-      // Drizzle's `.set()` skips `undefined` keys, so pass the partial input
-      // straight through (an explicit `flowId: null` still clears the column).
+      // Drizzle's `.set()` skips `undefined` keys, but throws "No values to
+      // set" if every key is undefined — callers must send at least one field.
       await facebookLeadAdsAutomationService.update(
         { workspaceId, id },
         parsedInput,

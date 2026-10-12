@@ -1673,8 +1673,7 @@
     "leads": "Leads",
     "noEligiblePages": "Inga kvalificerade sidor. Använd ”Lägg till ny” för att bevilja leadåtkomst.",
     "subscribeError": "Det gick inte att prenumerera på Facebooks leadaviseringar för den här sidan, så automatiseringen skapades inte. Återanslut sidan med ”Lägg till ny” och försök igen.",
-    "title": "Automatisering av Facebook-leadannonser",
-    "whatFlow": "Vilket flöde utlöses"
+    "title": "Automatisering av Facebook-leadannonser"
   },
   "clickToMessageAds": {
     "title": "Click-to-Message-annonser",

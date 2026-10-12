@@ -23,7 +23,6 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
-import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { client } from "@/lib/orpc/orpc"
 import { connectLeadAdsAction } from "../actions/connect-lead-ads.action"
 import { createFacebookLeadAdAutomationAction } from "../actions/create-facebook-lead-ad-automation.action"
@@ -62,11 +61,6 @@ export function CreateFacebookLeadAdAutomationForm({
   const [forms, setForms] = useState<LeadForm[]>([])
   const [loadingForms, setLoadingForms] = useState(false)
 
-  const flowOptions: SelectOption[] = [
-    { label: t("messages.none"), value: "" },
-    ...useFlowSelectOptions(),
-  ]
-
   const { execute: connect } = useAction(
     connectLeadAdsAction.bind(null, workspaceId),
   )
@@ -103,7 +97,6 @@ export function CreateFacebookLeadAdAutomationForm({
           formId: "",
           formName: "",
           fieldMapping: [],
-          flowId: "",
         },
       },
     },
@@ -245,16 +238,6 @@ export function CreateFacebookLeadAdAutomationForm({
               <p className="rounded-md border bg-muted/50 p-3 text-muted-foreground text-sm">
                 {t("facebookLeadAdsAutomation.allFormsNote")}
               </p>
-            ) : null}
-
-            {formId ? (
-              <ComboboxField
-                label={t("facebookLeadAdsAutomation.whatFlow")}
-                name="flowId"
-                options={flowOptions}
-                placeholder={t("messages.none")}
-                popoverClassName="w-[var(--anchor-width)]"
-              />
             ) : null}
 
             <div className="flex justify-end gap-2">

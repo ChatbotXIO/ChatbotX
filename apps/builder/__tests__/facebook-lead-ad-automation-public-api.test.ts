@@ -137,7 +137,7 @@ describe("GET /v1/facebook-lead-ads/{id}", () => {
   const procedure = findProcedure("GET", "/v1/facebook-lead-ads/{id}")
 
   test("gets an automation scoped to the token workspace", async () => {
-    const automation = { id: "lead-ad-1", flow: null }
+    const automation = { id: "lead-ad-1" }
     facebookLeadAdsAutomationService.findById.mockResolvedValueOnce(automation)
 
     await expect(
@@ -204,13 +204,13 @@ describe("PATCH /v1/facebook-lead-ads/{id}", () => {
     await expect(
       procedure.handler?.({
         context: workspaceContext,
-        input: { id: "lead-ad-1", name: "Renamed", flowId: null },
+        input: { id: "lead-ad-1", name: "Renamed" },
       }),
     ).resolves.toEqual(automation)
 
     expect(facebookLeadAdsAutomationService.update).toHaveBeenCalledWith(
       { workspaceId: "workspace-1", id: "lead-ad-1" },
-      { name: "Renamed", flowId: null },
+      { name: "Renamed" },
     )
   })
 
