@@ -24,7 +24,7 @@ and get the same result as data. `botSimulator.getLink`
 API returns the `url`, and both go through `createBotSimulatorLink` in the feature's `lib/`.
 
 Exemptions are narrow (auth/account, platform admin, end-customer webviews, the OAuth
-redirect step, UI-only plumbing, token minting) — see invariant 23 for the list, and
+redirect step, UI-only plumbing, token minting) — see invariant 23 in `docs/agents/invariants.md` for the list, and
 state the reason in the PR when you use one.
 
 ## Feature Directory Structure
