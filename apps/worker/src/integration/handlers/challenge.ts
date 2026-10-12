@@ -77,6 +77,7 @@ export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
       details: targetNode.data.details,
       targetType: "node",
       targetId: targetNode.id,
+      targetNodeId: targetNode.id,
       startFromStepId: challenge.data.stepId,
       ctx: {
         variables,
