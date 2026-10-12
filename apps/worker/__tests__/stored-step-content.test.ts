@@ -16,6 +16,23 @@ describe("resolveStoredStepContent", () => {
     })
   })
 
+  test("stores a view-catalog step as its text, marked with its footer for the inbox", () => {
+    expect(
+      resolveStoredStepContent(
+        step({
+          stepType: "sendViewCatalog",
+          text: "Browse",
+          footer: "Free shipping",
+          thumbnailProductId: "sku-1",
+        }),
+      ),
+    ).toEqual({
+      contentType: "text",
+      text: "Browse",
+      contentAttributes: { viewCatalog: { footer: "Free shipping" } },
+    })
+  })
+
   test("stores a step without a text body as text with no text", () => {
     expect(
       resolveStoredStepContent(step({ stepType: "sendImage", url: "x" })),

@@ -24,6 +24,7 @@ import { removeContactTagStepDefaultFn } from "../steps/remove-contact-tag"
 import { sendFileStepDefaultFn } from "../steps/send-file"
 import { sendImageStepDefaultFn } from "../steps/send-image"
 import { sendTextStepDefaultFn } from "../steps/send-text"
+import { sendViewCatalogStepDefaultFn } from "../steps/send-view-catalog"
 import { sendWaTemplateMessageStepDefaultFn } from "../steps/send-wa-message-template"
 import {
   FieldOperationType,
@@ -62,6 +63,7 @@ export type CompiledFlow = {
 const ENDS_STEP_LIST: Record<FlowStepSpec["type"], boolean> = {
   send: false,
   sendTemplate: false,
+  sendViewCatalog: false,
   wait: false,
   branch: true,
   action: false,
@@ -169,6 +171,7 @@ function childChains(step: FlowStepSpec): ChildChain[] {
           : []),
       ]
     case "sendTemplate":
+    case "sendViewCatalog":
     case "wait":
     case "action":
     case "startFlow":
@@ -412,6 +415,31 @@ function compileSendTemplateStep(
       },
     }),
     [templateStep],
+  )
+
+  return registerNode(state, step.id, node, stepPath)
+}
+
+function compileSendViewCatalogStep(
+  step: Extract<FlowStepSpec, { type: "sendViewCatalog" }>,
+  stepPath: string,
+  state: CompileState,
+): string {
+  const node = withSteps(
+    sendMessageNodeDefaultFn({
+      detailProps: {
+        beforeStep: chooseChannelStepDefaultFn({
+          channel: state.channel ?? "omnichannel",
+        }),
+      },
+    }),
+    [
+      sendViewCatalogStepDefaultFn({
+        text: step.text,
+        footer: step.footer ?? "",
+        thumbnailProductId: step.thumbnailProductId ?? "",
+      }),
+    ],
   )
 
   return registerNode(state, step.id, node, stepPath)
@@ -671,6 +699,8 @@ function compileStep(
       return compileSendStep(step, stepPath, state)
     case "sendTemplate":
       return compileSendTemplateStep(step, stepPath, state)
+    case "sendViewCatalog":
+      return compileSendViewCatalogStep(step, stepPath, state)
     case "wait":
       return compileWaitStep(step, stepPath, state)
     case "branch":

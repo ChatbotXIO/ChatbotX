@@ -10,6 +10,7 @@ const capabilitiesChannelPolicySchema = z.object({
     buttonLabel: z.number(),
     cardTitle: z.number().optional(),
     text: z.number(),
+    viewCatalog: z.object({ footer: z.number(), text: z.number() }).optional(),
   }),
 })
 

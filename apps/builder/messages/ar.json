@@ -2622,7 +2622,8 @@
       "whatsappLocation": "الموقع",
       "metaConversions": "Meta Conversions API",
       "threadControl": "التحكم في المحادثة",
-      "sendGoogleAdsConversion": "إرسال تحويل Google Ads"
+      "sendGoogleAdsConversion": "إرسال تحويل Google Ads",
+      "sendViewCatalog": "عرض الكتالوج"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -2756,6 +2757,10 @@
         "invalidLongitude": "أدخل خط طول بين -180 و180.",
         "locationRequired": "أدخل إحداثيات الموقع."
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "التذييل",
+      "thumbnailLabel": "منتج الصورة المصغرة"
     }
   },
   "folders": {
@@ -3615,7 +3620,10 @@
       "labelsUnavailable": "تعذر تحميل أسئلة التدفق، لذلك تُعرض أسماء الحقول بدلاً منها.",
       "yes": "نعم",
       "no": "لا"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "نص الرسالة طويل جدًا لرسالة الكتالوج. قم باختصاره.",
+    "sendViewCatalogFooterTooLong": "التذييل طويل جدًا لرسالة الكتالوج. قم باختصاره.",
+    "viewCatalog": "عرض الكتالوج"
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",

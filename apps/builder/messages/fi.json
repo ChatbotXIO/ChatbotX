@@ -2476,7 +2476,8 @@
       "whatsappLocation": "Sijainti",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Keskustelun hallinta",
-      "sendGoogleAdsConversion": "Lähetä Google Ads -konversio"
+      "sendGoogleAdsConversion": "Lähetä Google Ads -konversio",
+      "sendViewCatalog": "Näytä tuotekatalogi"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2610,6 +2611,10 @@
         "invalidLongitude": "Anna pituusaste väliltä -180–180.",
         "locationRequired": "Anna sijainnin koordinaatit."
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Alatunniste",
+      "thumbnailLabel": "Pikkukuvan tuote"
     }
   },
   "folders": {
@@ -3615,7 +3620,10 @@
       "labelsUnavailable": "Flow'n kysymyksiä ei voitu ladata, joten kenttien nimet näytetään.",
       "yes": "Kyllä",
       "no": "Ei"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "Viestin teksti on liian pitkä katalogiviestiin. Lyhennä sitä.",
+    "sendViewCatalogFooterTooLong": "Alatunniste on liian pitkä katalogiviestiin. Lyhennä sitä.",
+    "viewCatalog": "Näytä luettelo"
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",

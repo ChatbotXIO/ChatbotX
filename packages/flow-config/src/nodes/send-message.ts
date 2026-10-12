@@ -23,6 +23,7 @@ import { sendMultipleImagesStepSchema } from "../steps/send-multiple-images"
 import { MAX_QUICK_REPLIES } from "../steps/send-quick-reply"
 import { sendTextStepSchema } from "../steps/send-text"
 import { sendVideoStepSchema } from "../steps/send-video"
+import { sendViewCatalogStepSchema } from "../steps/send-view-catalog"
 import { sendWaTemplateMessageStepSchema } from "../steps/send-wa-message-template"
 import { typingStepSchema } from "../steps/typing"
 import { whatsappCallButtonStepSchema } from "../steps/whatsapp-call-button"
@@ -63,6 +64,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
             sendWaTemplateMessageStepSchema,
             sendMessengerTemplateMessageStepSchema,
             whatsappOptionListStepSchema,
+            sendViewCatalogStepSchema,
             whatsappCallButtonStepSchema,
             whatsappFlowStepSchema,
             whatsappLocationStepSchema,

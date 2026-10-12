@@ -19,6 +19,7 @@ import type {
   SendQuickReplyStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
+  SendViewCatalogStepSchema,
   SendWaTemplateMessageStepSchema,
   WaTemplateParams,
   WhatsappCallButtonStepSchema,
@@ -92,6 +93,7 @@ export type ChatJobSendFlowStep = {
       | SendMessengerTemplateMessageStepSchema
       | WhatsappCallButtonStepSchema
       | WhatsappLocationStepSchema
+      | SendViewCatalogStepSchema
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
     /**

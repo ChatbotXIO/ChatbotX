@@ -2622,7 +2622,8 @@
       "whatsappLocation": "Konum",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Konuşma kontrolü",
-      "sendGoogleAdsConversion": "Google Ads dönüşümü gönder"
+      "sendGoogleAdsConversion": "Google Ads dönüşümü gönder",
+      "sendViewCatalog": "Kataloğu görüntüle"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -2756,6 +2757,10 @@
         "invalidLongitude": "-180 ile 180 arasında bir boylam girin.",
         "locationRequired": "Konumun koordinatlarını girin."
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Alt bilgi",
+      "thumbnailLabel": "Küçük resim ürünü"
     }
   },
   "folders": {
@@ -3615,7 +3620,10 @@
       "labelsUnavailable": "Flow'un soruları yüklenemedi, bu yüzden alan adları gösteriliyor.",
       "yes": "Evet",
       "no": "Hayır"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "Mesaj metni bir katalog mesajı için çok uzun. Kısaltın.",
+    "sendViewCatalogFooterTooLong": "Alt bilgi bir katalog mesajı için çok uzun. Kısaltın.",
+    "viewCatalog": "Kataloğu görüntüle"
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",

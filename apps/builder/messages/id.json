@@ -2476,7 +2476,8 @@
       "whatsappLocation": "Lokasi",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Kontrol thread",
-      "sendGoogleAdsConversion": "Kirim konversi Google Ads"
+      "sendGoogleAdsConversion": "Kirim konversi Google Ads",
+      "sendViewCatalog": "Lihat katalog"
     },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
@@ -2610,6 +2611,10 @@
         "invalidLongitude": "Masukkan bujur antara -180 dan 180.",
         "locationRequired": "Masukkan koordinat lokasi."
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Footer",
+      "thumbnailLabel": "Produk thumbnail"
     }
   },
   "folders": {
@@ -3615,7 +3620,10 @@
       "labelsUnavailable": "Pertanyaan Flow tidak dapat dimuat, jadi nama kolom yang ditampilkan.",
       "yes": "Ya",
       "no": "Tidak"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "Teks pesan terlalu panjang untuk pesan katalog. Persingkat.",
+    "sendViewCatalogFooterTooLong": "Footer terlalu panjang untuk pesan katalog. Persingkat.",
+    "viewCatalog": "Lihat katalog"
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",

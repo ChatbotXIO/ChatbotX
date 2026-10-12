@@ -94,7 +94,7 @@
     "getDraftLink": "Get Draft Link",
     "getPublishedLink": "Get Published Link",
     "getMessengerAdsJson": "Get JSON for Messenger Ads",
-    "getMessengerAdPayload": "Get payload for Messenger Ad",
+    "getMessengerAdPayload": "Get payload for Messenger Ads",
     "ok": "OK",
     "next": "Next",
     "prev": "Prev",
@@ -3305,7 +3305,8 @@
       "whatsappLocation": "Location",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread Control",
-      "sendGoogleAdsConversion": "Send Google Ads Conversion"
+      "sendGoogleAdsConversion": "Send Google Ads Conversion",
+      "sendViewCatalog": "View catalog"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
@@ -3439,6 +3440,10 @@
         "invalidLongitude": "Enter a longitude between -180 and 180.",
         "locationRequired": "Enter the location's coordinates."
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Footer",
+      "thumbnailLabel": "Thumbnail product"
     }
   },
   "folders": {
@@ -4298,7 +4303,10 @@
       "labelsUnavailable": "Couldn't load the Flow's questions, so field names are shown instead.",
       "yes": "Yes",
       "no": "No"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "The message text is too long for a catalog message. Shorten it.",
+    "sendViewCatalogFooterTooLong": "The footer is too long for a catalog message. Shorten it.",
+    "viewCatalog": "View catalog"
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

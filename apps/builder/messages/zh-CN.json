@@ -3355,7 +3355,8 @@
       "whatsappLocation": "位置",
       "metaConversions": "Meta Conversions API",
       "threadControl": "会话控制",
-      "sendGoogleAdsConversion": "发送 Google Ads 转化"
+      "sendGoogleAdsConversion": "发送 Google Ads 转化",
+      "sendViewCatalog": "查看商品目录"
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
@@ -3537,6 +3538,10 @@
         "invalidLongitude": "请输入 -180 到 180 之间的经度。",
         "locationRequired": "请输入位置的坐标。"
       }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "页脚",
+      "thumbnailLabel": "缩略图商品"
     }
   },
   "folders": {
@@ -4458,7 +4463,10 @@
       "labelsUnavailable": "无法加载 Flow 的问题，因此显示字段名称。",
       "yes": "是",
       "no": "否"
-    }
+    },
+    "sendViewCatalogBodyTooLong": "消息文本对目录消息来说太长，请缩短。",
+    "sendViewCatalogFooterTooLong": "页脚对目录消息来说太长，请缩短。",
+    "viewCatalog": "查看目录"
   },
   "messenger": {
     "botProfile": "机器人个人数据",

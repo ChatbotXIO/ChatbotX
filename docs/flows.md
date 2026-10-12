@@ -91,7 +91,8 @@ shape before publishing or updating the draft, via
 
 - `formatVersion` — always `1`.
 - `channel` — optional; omit for omnichannel. `sendTemplate` steps always send over
-  WhatsApp regardless of this value.
+  WhatsApp regardless of this value. A `sendViewCatalog` step in an omnichannel flow is
+  only sent to WhatsApp contacts (others skip it); set `channel` to check it at publish.
 - `steps` — ordered, executed from the flow's start node. At least one required.
 
 Validated by [`flowSpecSchema`](../packages/flow-config/src/authoring/spec-schema.ts).
@@ -105,6 +106,7 @@ here, so it cannot drift from the schema.
 |---|---|---|
 | `send` | No | Text, image, or file, with optional quick-reply `buttons`. Each button's `then` is a nested step list. |
 | `sendTemplate` | No | Sends an existing WhatsApp template by `templateName`. The template must resolve (by name) to a workspace template with status `APPROVED`. |
+| `sendViewCatalog` | No | Shares the product catalog: a message (`text`, optional `footer`) with a button that opens it. Optional `thumbnailProductId` is a catalog item's `retailerId` from `products.searchMetaCatalogItems`. Publish rejects it on channels that cannot deliver it (WhatsApp is the only one today; see `capabilities.get`'s `unsupportedSteps`). In an omnichannel flow (`channel` omitted) it is accepted but only sent to WhatsApp contacts; other contacts skip it. Set `channel: "whatsapp"` to get the publish-time check. |
 | `wait` | No | Pauses for a duration before continuing. |
 | `branch` | **Yes** | Contact-filter-style `cases` (`when`/`match`/`then`) plus an `otherwise`. Terminal within its own step list — nothing may follow a `branch` at the same level; continue inside `cases[].then` / `otherwise` instead. |
 | `action` | No | A workspace side-effect: `addTags`, `removeTags`, `setCustomField`, `assignConversation`, `archiveConversation`. |

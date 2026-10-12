@@ -123,9 +123,27 @@ const parseContactsMessage: WhatsappMessageParser<"contacts"> = (message) => ({
   contentAttributes: { contacts: message.contacts },
 })
 
-const parseOrderMessage: WhatsappMessageParser<"order"> = (message) => ({
-  contentAttributes: message.order,
-})
+/**
+ * An order has no text of its own, so without a readable one the inbox shows an
+ * empty bubble and keywords/AI have nothing to read. One line per product, then
+ * the customer's note when there is one; the full order stays in
+ * `contentAttributes` for anything that needs more than this summary.
+ */
+const parseOrderMessage: WhatsappMessageParser<"order"> = (message) => {
+  const { product_items: items, text: note } = message.order
+  const lines = [
+    "Received order",
+    // Meta always sends the items, but a parser that throws would drop the
+    // whole message, which is worse than a summary without them.
+    ...(items ?? []).map(
+      (item) =>
+        `${item.product_retailer_id} × ${item.quantity} (${item.item_price} ${item.currency})`,
+    ),
+    ...(note ? [note] : []),
+  ]
+
+  return { text: lines.join("\n"), contentAttributes: message.order }
+}
 
 const parseInteractiveMessage: WhatsappMessageParser<"interactive"> = (
   message,

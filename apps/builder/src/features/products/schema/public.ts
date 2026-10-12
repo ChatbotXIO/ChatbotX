@@ -130,6 +130,38 @@ export const metaCatalogStatePublicResponse = z.object({
   history: z.array(metaCatalogSyncRunPublicResource),
 })
 
+export const searchMetaCatalogItemsPublicRequest = z.object({
+  keyword: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .describe("Case-insensitive text to search product names for."),
+  retailerId: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .describe("Return only the item with exactly this `retailerId`."),
+})
+
+export const metaCatalogItemPublicResource = z.object({
+  retailerId: z
+    .string()
+    .describe(
+      "The item's Content ID in the Meta catalog (its `retailer_id`). Use it wherever a flow step asks for a catalog product, e.g. `thumbnailProductId` of a `sendViewCatalog` step.",
+    ),
+  name: z.string().describe("Product name."),
+  imageUrl: z.string().nullable().describe("Product image URL, if any."),
+})
+
+export const searchMetaCatalogItemsPublicResponse = z.object({
+  connected: z
+    .boolean()
+    .describe("False when the workspace has no Meta Catalog connected."),
+  items: z.array(metaCatalogItemPublicResource),
+})
+
 export const selectMetaCatalogPublicRequest = z.object({
   catalogId: z
     .string()

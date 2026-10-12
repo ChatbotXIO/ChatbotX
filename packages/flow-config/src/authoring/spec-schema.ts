@@ -2,6 +2,7 @@ import { channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { BUTTON_LABEL_MAX } from "../steps/button"
+import { sendViewCatalogStepSchema } from "../steps/send-view-catalog"
 import { waitStepDelayUnits } from "../steps/wait"
 import { flowValidationCodes } from "../validation-codes"
 
@@ -31,6 +32,13 @@ export type FlowStepSpec =
       buttons?: Array<{ text: string; then?: FlowStepSpec[] }>
     }
   | { type: "sendTemplate"; id?: string; templateName: string }
+  | {
+      type: "sendViewCatalog"
+      id?: string
+      text: string
+      footer?: string
+      thumbnailProductId?: string
+    }
   | {
       type: "wait"
       id?: string
@@ -178,6 +186,20 @@ const sendTemplateStepSpecSchema = z
       ),
   })
   .describe("Sends an existing WhatsApp message template.")
+
+const sendViewCatalogStepSpecSchema = z
+  .object({
+    type: stepTypeLiteral("sendViewCatalog"),
+    id: stepIdField,
+    // Reused from the step itself so the DSL and the compiled step can never
+    // disagree on limits or wording.
+    text: sendViewCatalogStepSchema.shape.text,
+    footer: sendViewCatalogStepSchema.shape.footer,
+    thumbnailProductId: sendViewCatalogStepSchema.shape.thumbnailProductId,
+  })
+  .describe(
+    "Shares the product catalog: a message with a button that opens it. Publish rejects it on channels that cannot deliver it (see `capabilities.get`'s `unsupportedSteps`); in an omnichannel flow (`channel` omitted) it is accepted but only sent to WhatsApp contacts, so set `channel` to check it at publish.",
+  )
 
 const waitStepSpecSchema = z
   .object({
@@ -388,6 +410,7 @@ const gotoStepSpecSchema = z
 const flowStepSpecOptions = [
   sendStepSpecSchema,
   sendTemplateStepSpecSchema,
+  sendViewCatalogStepSpecSchema,
   waitStepSpecSchema,
   branchStepSpecSchema,
   actionStepSpecSchema,
@@ -399,7 +422,7 @@ const flowStepSpecOptions = [
 const flowStepSpecSchema: z.ZodType<FlowStepSpec> = z
   .discriminatedUnion("type", flowStepSpecOptions)
   .describe(
-    "One flow step. The `type` field selects the step kind: send, sendTemplate, wait, branch, action, startFlow, addNote or goto.",
+    "One flow step. The `type` field selects the step kind: send, sendTemplate, sendViewCatalog, wait, branch, action, startFlow, addNote or goto.",
   )
 
 export type FlowSpecStepType = { type: string; description: string }

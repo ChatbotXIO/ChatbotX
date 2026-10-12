@@ -1,16 +1,22 @@
 import { type ContentType, contentTypes } from "@chatbotx.io/database/partials"
 import type { WhatsappLocationStepSchema } from "@chatbotx.io/flow-config"
 import { stepTypes } from "@chatbotx.io/flow-config"
-import type { MessageLocationEntity, SendFlowStepData } from "@chatbotx.io/sdk"
+import type {
+  MessageLocationEntity,
+  MessageViewCatalogEntity,
+  SendFlowStepData,
+} from "@chatbotx.io/sdk"
 
 /** How a delivered flow step is recorded on its outgoing Message row. */
 export type StoredStepContent = {
   contentType: ContentType
   text: string | null
-  contentAttributes?: MessageLocationEntity & {
-    name?: string
-    address?: string
-  }
+  contentAttributes?:
+    | (MessageLocationEntity & {
+        name?: string
+        address?: string
+      })
+    | { viewCatalog: MessageViewCatalogEntity }
 }
 
 /**
@@ -41,6 +47,14 @@ export const resolveStoredStepContent = (
       return { contentType: contentTypes.enum.text, text: step.text }
     case stepTypes.enum.whatsappLocation:
       return toStoredLocation(step)
+    // The text alone reads like any other reply, so the message is marked: the
+    // inbox shows the footer and the catalog button the contact sees from it.
+    case stepTypes.enum.sendViewCatalog:
+      return {
+        contentType: contentTypes.enum.text,
+        text: step.text,
+        contentAttributes: { viewCatalog: { footer: step.footer } },
+      }
     default:
       return { contentType: contentTypes.enum.text, text: null }
   }
