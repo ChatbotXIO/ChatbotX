@@ -77,7 +77,7 @@ export function shareCreditLine({
         },
       )
     } catch (error) {
-      logger.info({ error }, "Failed to share credit line")
+      logger.info({ err: error }, "Failed to share credit line")
     }
   })
 }
