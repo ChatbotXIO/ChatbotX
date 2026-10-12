@@ -2473,6 +2473,7 @@
       "importStarted": "O fluxo está sendo importado. Verifique o histórico de importações para ver os resultados.",
       "importJsonOnly": "Somente arquivos JSON",
       "whatsappCallButton": "Ligar no WhatsApp",
+      "whatsappLocation": "Localização",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Controle da conversa",
       "sendGoogleAdsConversion": "Enviar conversão do Google Ads"
@@ -2595,6 +2596,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "Editar botão",
       "buttonLabel": "Rótulo do botão"
+    },
+    "whatsappLocation": {
+      "title": "Localização",
+      "name": "Nome",
+      "address": "Endereço",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "setLocation": "Definir localização",
+      "errors": {
+        "tooLong": "Máximo de 1000 caracteres.",
+        "invalidLatitude": "Informe uma latitude entre -90 e 90.",
+        "invalidLongitude": "Informe uma longitude entre -180 e 180.",
+        "locationRequired": "Informe as coordenadas da localização."
+      }
     }
   },
   "folders": {

@@ -238,3 +238,30 @@ describe("integrationMenus", () => {
     expect(childLabels(templateItem)).toEqual([NO_TEMPLATES_LABEL])
   })
 })
+
+describe("sendMessageEditorMenus — WhatsApp-only send steps", () => {
+  const stepTypesFor = (channel: MenuData["beforeStep"]["channel"]) =>
+    sendMessageEditorMenus(t, buildMenuData(channel)).map(
+      (item) => item.stepType,
+    )
+
+  it.each([
+    channelTypes.enum.whatsapp,
+    channelTypes.enum.omnichannel,
+  ])("offers the location step on %s", (channel) => {
+    expect(stepTypesFor(channel)).toContain(stepTypes.enum.whatsappLocation)
+  })
+
+  it.each([
+    channelTypes.enum.messenger,
+    channelTypes.enum.telegram,
+  ])("hides the location step on %s", (channel) => {
+    expect(stepTypesFor(channel)).not.toContain(stepTypes.enum.whatsappLocation)
+  })
+
+  it("keeps the call button off omnichannel", () => {
+    expect(stepTypesFor(channelTypes.enum.omnichannel)).not.toContain(
+      stepTypes.enum.whatsappCallButton,
+    )
+  })
+})

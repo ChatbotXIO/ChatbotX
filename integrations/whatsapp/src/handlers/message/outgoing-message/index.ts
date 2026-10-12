@@ -8,6 +8,7 @@ import {
   stepTypes,
   type WhatsappCallButtonStepSchema,
   type WhatsappFlowStepSchema,
+  type WhatsappLocationStepSchema,
   type WhatsappOptionListStepSchema,
 } from "@chatbotx.io/flow-config"
 import {
@@ -47,6 +48,7 @@ import { convertFlowStepText } from "./send-text"
 import { convertFlowStepWaTemplate } from "./send-wa-template"
 import { convertFlowStepWhatsappCallButton } from "./whatsapp-call-button"
 import { convertFlowStepWhatsappFlow } from "./whatsapp-flow"
+import { convertFlowStepWhatsappLocation } from "./whatsapp-location"
 import { convertFlowStepWhatsappOptionList } from "./whatsapp-option-list"
 
 function buildLocationRequestMessage(bodyText: string): LocationRequestMessage {
@@ -201,6 +203,16 @@ function* convertFlowStepToWhatsappMessage(
         >[0],
       )
       break
+    case stepTypes.enum.whatsappLocation:
+      yield* convertFlowStepWhatsappLocation(
+        props as Parameters<
+          MessageHandlers<
+            WhatsappAuthValue,
+            WhatsappLocationStepSchema
+          >["sendFlowStep"]
+        >[0],
+      )
+      break
     case stepTypes.enum.whatsappFlow:
       yield* convertFlowStepWhatsappFlow(
         props as Parameters<
@@ -224,6 +236,7 @@ const isRawWhatsappMessage = (
   message._type === "interactive_carousel" ||
   message._type === "interactive_voice_call" ||
   message._type === "interactive_call_permission_request" ||
+  message._type === "location" ||
   message._type === "location_request"
 
 /**
@@ -301,6 +314,7 @@ export const handledFlowStepTypes = [
   stepTypes.enum.whatsappOptionList,
   stepTypes.enum.whatsappCallButton,
   stepTypes.enum.whatsappFlow,
+  stepTypes.enum.whatsappLocation,
 ] as const satisfies readonly StepType[]
 
 export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =

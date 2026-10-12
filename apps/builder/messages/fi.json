@@ -2473,6 +2473,7 @@
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
       "importJsonOnly": "Vain JSON-tiedostot",
       "whatsappCallButton": "Soita WhatsAppissa",
+      "whatsappLocation": "Sijainti",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Keskustelun hallinta",
       "sendGoogleAdsConversion": "Lähetä Google Ads -konversio"
@@ -2595,6 +2596,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "Muokkaa painiketta",
       "buttonLabel": "Painikkeen teksti"
+    },
+    "whatsappLocation": {
+      "title": "Sijainti",
+      "name": "Nimi",
+      "address": "Osoite",
+      "latitude": "Leveysaste",
+      "longitude": "Pituusaste",
+      "setLocation": "Aseta sijainti",
+      "errors": {
+        "tooLong": "Enintään 1000 merkkiä.",
+        "invalidLatitude": "Anna leveysaste väliltä -90–90.",
+        "invalidLongitude": "Anna pituusaste väliltä -180–180.",
+        "locationRequired": "Anna sijainnin koordinaatit."
+      }
     }
   },
   "folders": {

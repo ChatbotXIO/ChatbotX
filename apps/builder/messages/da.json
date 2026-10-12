@@ -2473,6 +2473,7 @@
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
       "importJsonOnly": "Kun JSON-filer",
       "whatsappCallButton": "Ring på WhatsApp",
+      "whatsappLocation": "Placering",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Trådkontrol",
       "sendGoogleAdsConversion": "Send Google Ads-konvertering"
@@ -2595,6 +2596,20 @@
     "whatsappCallButton": {
       "editButtonTitle": "Rediger Knap",
       "buttonLabel": "Knap Etiket"
+    },
+    "whatsappLocation": {
+      "title": "Placering",
+      "name": "Navn",
+      "address": "Adresse",
+      "latitude": "Breddegrad",
+      "longitude": "Længdegrad",
+      "setLocation": "Angiv placering",
+      "errors": {
+        "tooLong": "Maks. 1000 tegn.",
+        "invalidLatitude": "Angiv en breddegrad mellem -90 og 90.",
+        "invalidLongitude": "Angiv en længdegrad mellem -180 og 180.",
+        "locationRequired": "Angiv placeringens koordinater."
+      }
     }
   },
   "folders": {

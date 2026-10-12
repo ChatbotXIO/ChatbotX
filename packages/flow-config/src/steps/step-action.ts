@@ -126,6 +126,7 @@ export const stepTypes = z.enum([
   "sendWaTemplateMessage",
   "whatsappOptionList",
   "whatsappCallButton",
+  "whatsappLocation",
   "whatsappFlow",
 
   "sendMessengerTemplateMessage",
