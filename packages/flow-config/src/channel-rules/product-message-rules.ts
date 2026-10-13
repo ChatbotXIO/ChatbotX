@@ -37,7 +37,6 @@ export type ProductDisplayRule = {
   body?: ProductMessageTextRule
   footer?: ProductMessageTextRule
   sectionTitle?: ProductMessageTextRule
-  thumbnail: boolean
 }
 
 /** A display with no rule is unsupported on that channel. */
@@ -56,7 +55,6 @@ export type ProductMessageShape = {
   body?: string
   footer?: string
   sections: ReadonlyArray<{ title?: string; productCount: number }>
-  hasThumbnail: boolean
 }
 
 export type ProductMessageIssue = {
@@ -167,12 +165,6 @@ export const evaluateProductMessage = (
       }),
     )
   })
-  if (shape.hasThumbnail && !rule.thumbnail) {
-    issues.push({
-      code: flowValidationCodes.sendProductsThumbnailNotAllowed,
-      path: ["thumbnailProductId"],
-    })
-  }
   return issues
 }
 
@@ -187,7 +179,6 @@ export const toProductMessageShape = (
     title: section.title,
     productCount: section.productIds.length,
   })),
-  hasThumbnail: Boolean(step.thumbnailProductId),
 })
 
 /** zod adapter: the evaluator itself stays free of zod so `business` can reuse it. */

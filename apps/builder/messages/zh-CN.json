@@ -3548,8 +3548,7 @@
       "display": "展示方式",
       "displays": {
         "products": "商品",
-        "carousel": "轮播",
-        "catalog": "目录"
+        "carousel": "轮播"
       },
       "products": "商品",
       "selectProducts": "选择商品",
@@ -3571,8 +3570,6 @@
       "footer": "页脚",
       "sectionTitle": "分组标题",
       "addSection": "添加分组",
-      "thumbnail": "缩略图商品",
-      "catalogHint": "目录必须已连接到发送账号并在该账号上可见，否则“查看目录”按钮将无法打开它。",
       "productCount": "{count} / {max} 件商品",
       "productsSelected": "{count, plural, one {# 件商品} other {# 件商品}}",
       "noneSelected": "暂无商品"
@@ -4509,9 +4506,7 @@
     "sendProductsFieldTooLong": "文本过长。",
     "sendProductsProductCountOutOfRange": "请选择有效的商品数量。",
     "sendProductsSectionCountOutOfRange": "分组过多。",
-    "sendProductsDuplicateProduct": "同一商品只能出现一次。",
-    "sendProductsThumbnailNotAllowed": "此处无法使用缩略图。",
-    "productMessageViewCatalog": "查看目录"
+    "sendProductsDuplicateProduct": "同一商品只能出现一次。"
   },
   "messenger": {
     "botProfile": "机器人个人数据",

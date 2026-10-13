@@ -47,7 +47,6 @@ export const REFERENCE_FIELD_ENTITY_KIND: Record<string, string> = {
   inboxId: "inbox",
   personaId: "messengerPersona",
   spreadsheetId: "spreadsheet",
-  thumbnailProductId: "product",
 }
 
 // `flowId` shows up both as a cross-flow jump target (steps/start-external-flow.ts,

@@ -265,7 +265,7 @@ describe("sendProducts carousel on whatsapp", () => {
     }
   })
 
-  test("rejects header, footer, titles, a second section and a thumbnail", () => {
+  test("rejects header, footer, titles and a second section", () => {
     expect(
       issueCodes(
         channelTypes.enum.whatsapp,
@@ -274,7 +274,6 @@ describe("sendProducts carousel on whatsapp", () => {
           header: "h",
           body: "Look",
           footer: "f",
-          thumbnailProductId: "9",
           sections: [
             { title: "t", productIds: ["1", "2"] },
             { productIds: ["3"] },
@@ -286,55 +285,7 @@ describe("sendProducts carousel on whatsapp", () => {
       flowValidationCodes.sendProductsFieldNotAllowed,
       flowValidationCodes.sendProductsFieldNotAllowed,
       flowValidationCodes.sendProductsFieldNotAllowed,
-      flowValidationCodes.sendProductsThumbnailNotAllowed,
     ])
-  })
-})
-
-describe("sendProducts catalog on whatsapp", () => {
-  test("accepts a body with or without footer and thumbnail", () => {
-    validOnWhatsapp(
-      buildStep({ display: "catalog", body: "Browse", sections: [] }),
-    )
-    validOnWhatsapp(
-      buildStep({
-        display: "catalog",
-        body: "Browse",
-        footer: "f",
-        thumbnailProductId: "1",
-        sections: [],
-      }),
-    )
-  })
-
-  test("requires a body and rejects header and products", () => {
-    expect(
-      issueCodes(
-        channelTypes.enum.whatsapp,
-        buildStep({
-          display: "catalog",
-          header: "h",
-          sections: [{ productIds: ["1"] }],
-        }),
-      ),
-    ).toEqual([
-      flowValidationCodes.sendProductsProductCountOutOfRange,
-      flowValidationCodes.sendProductsSectionCountOutOfRange,
-      flowValidationCodes.sendProductsFieldNotAllowed,
-      flowValidationCodes.sendProductsFieldRequired,
-    ])
-  })
-
-  test("rejects a thumbnail on the products display", () => {
-    expect(
-      issueCodes(
-        channelTypes.enum.whatsapp,
-        buildStep({
-          thumbnailProductId: "1",
-          sections: [{ productIds: ["2"] }],
-        }),
-      ),
-    ).toEqual([flowValidationCodes.sendProductsThumbnailNotAllowed])
   })
 })
 
@@ -342,7 +293,6 @@ describe("evaluateProductMessage", () => {
   const shape = (props: Partial<ProductMessageShape>): ProductMessageShape => ({
     display: "products",
     sections: [{ productCount: 1 }],
-    hasThumbnail: false,
     ...props,
   })
 

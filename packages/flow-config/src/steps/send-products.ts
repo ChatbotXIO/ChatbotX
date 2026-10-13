@@ -10,7 +10,7 @@ import { stepTypes } from "./step-action"
  * stores ChatbotX product ids only — how a channel renders them, and which
  * catalog id they map to there, is resolved at send time.
  */
-export const sendProductsDisplays = z.enum(["products", "carousel", "catalog"])
+export const sendProductsDisplays = z.enum(["products", "carousel"])
 export type SendProductsDisplay = z.infer<typeof sendProductsDisplays>
 
 /**
@@ -52,7 +52,7 @@ export const sendProductsStepSchema = baseStepSchema.extend({
     .literal(stepTypes.enum.sendProducts)
     .describe('Step type discriminator: "sendProducts".'),
   display: sendProductsDisplays.describe(
-    '"products": one product, or a list of products grouped in sections. "carousel": 2+ products as scrollable cards. "catalog": opens the whole catalog.',
+    '"products": one product, or a list of products grouped in sections. "carousel": 2+ products as scrollable cards.',
   ),
   header: sendProductsTextSchema
     .optional()
@@ -66,20 +66,14 @@ export const sendProductsStepSchema = baseStepSchema.extend({
   sections: z
     .array(sendProductsSectionSchema)
     .describe(
-      'Product sections. "products": 1+ sections; "carousel": exactly one untitled section; "catalog": none.',
-    ),
-  thumbnailProductId: zodBigintAsString()
-    .optional()
-    .describe(
-      'Product whose image is the thumbnail. Only for the "catalog" display.',
+      'Product sections. "products": 1+ sections; "carousel": exactly one untitled section.',
     ),
 })
 export type SendProductsStepSchema = z.infer<typeof sendProductsStepSchema>
 
 /**
- * Structure that holds on every channel. Section and product counts, text
- * limits and thumbnail support are per-channel and live in the channel policy
- * (`productMessages`).
+ * Structure that holds on every channel. Section and product counts and text
+ * limits are per-channel and live in the channel policy (`productMessages`).
  */
 export const refineSendProductsStructure = (
   step: SendProductsStepSchema,

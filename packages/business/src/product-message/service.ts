@@ -114,17 +114,11 @@ class ProductMessageService {
       throw new ProductMessageUnresolvableError("channelUnsupported")
     }
 
-    const productIds = collectProductIds(input.step)
-    const lookup =
-      productIds.length > 0
-        ? await source.findSendable({
-            workspaceId: input.workspaceId,
-            productIds,
-          })
-        : { ready: true, items: [] }
-    // A display with no products (the whole catalog) needs no catalog here; an
-    // unconnected catalog only matters when products must be resolved.
-    if (!lookup.ready && displayRule.minProducts > 0) {
+    const lookup = await source.findSendable({
+      workspaceId: input.workspaceId,
+      productIds: collectProductIds(input.step),
+    })
+    if (!lookup.ready) {
       throw new ProductMessageUnresolvableError("catalogNotConnected")
     }
 

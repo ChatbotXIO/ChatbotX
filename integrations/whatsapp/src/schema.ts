@@ -383,31 +383,10 @@ export type InteractiveProductCarouselMessage = {
   }
 }
 
-/**
- * Meta's catalog message: opens the catalog linked to the WABA, so it carries
- * no `catalog_id`. Not modeled by whatsapp-api-js, so it's posted raw.
- *
- * @see https://developers.facebook.com/documentation/business-messaging/whatsapp/catalogs/catalog-messages/
- */
-export type InteractiveCatalogMessage = {
-  _type: "interactive_catalog"
-  type: "interactive"
-  interactive: {
-    type: "catalog_message"
-    body: InteractiveText
-    footer?: InteractiveText
-    action: {
-      name: "catalog_message"
-      parameters?: { thumbnail_product_retailer_id: string }
-    }
-  }
-}
-
 /** Messages posted raw because whatsapp-api-js does not model their payloads. */
 export type RawWhatsappMessage =
   | InteractiveCallPermissionRequestMessage
   | InteractiveCarouselMessage
-  | InteractiveCatalogMessage
   | InteractiveProductCarouselMessage
   | InteractiveProductListMessage
   | InteractiveProductMessage

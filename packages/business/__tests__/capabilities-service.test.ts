@@ -90,7 +90,7 @@ describe("getCapabilities", () => {
     const policy = whatsapp.flowSpec?.selectedChannelPolicy
     expect(policy?.unsupportedSteps).not.toContain("sendProducts")
     expect(Object.keys(policy?.productMessages?.displays ?? {}).sort()).toEqual(
-      ["carousel", "catalog", "products"],
+      ["carousel", "products"],
     )
     // The documented response shape must carry the rules through, not strip them.
     expect(

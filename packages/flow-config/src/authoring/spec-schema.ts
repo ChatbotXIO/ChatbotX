@@ -42,7 +42,6 @@ export type FlowStepSpec =
       body?: string
       footer?: string
       sections?: Array<{ title?: string; productIds: string[] }>
-      thumbnailProductId?: string
     }
   | {
       type: "sendViewCatalog"
@@ -204,7 +203,7 @@ const sendProductsStepSpecSchema = z
     type: stepTypeLiteral("sendProducts"),
     id: stepIdField,
     display: sendProductsDisplays.describe(
-      'How the products are shown. "products": one product, or several grouped in `sections`. "carousel": 2+ products as scrollable cards (one section, `body` only). "catalog": opens the whole catalog (`body`, optional `footer`/`thumbnailProductId`, no `sections`). Which displays and text limits a channel supports is in `capabilities.get`.',
+      'How the products are shown. "products": one product, or several grouped in `sections`. "carousel": 2+ products as scrollable cards (one section, `body` only). Which displays and text limits a channel supports is in `capabilities.get`.',
     ),
     header: z.string().trim().optional().describe("Header text."),
     body: z.string().trim().optional().describe("Message text."),
@@ -222,16 +221,11 @@ const sendProductsStepSpecSchema = z
       )
       .optional()
       .describe(
-        'Product sections. Needed for "products" and "carousel" (exactly one section); omit for "catalog".',
-      ),
-    thumbnailProductId: zodBigintAsString()
-      .optional()
-      .describe(
-        'Product whose image is the thumbnail ("catalog" display only). Id from `products.listSendable`.',
+        'Product sections. Needed for "products" and "carousel" (exactly one section).',
       ),
   })
   .describe(
-    "Sends products from the workspace catalog (single product, product list, carousel or the whole catalog). Only on channels that support product messages.",
+    "Sends products from the workspace catalog (single product, product list or carousel; use sendViewCatalog to open the whole catalog). Only on channels that support product messages.",
   )
 
 const sendViewCatalogStepSpecSchema = z

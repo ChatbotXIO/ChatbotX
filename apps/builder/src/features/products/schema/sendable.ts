@@ -23,7 +23,7 @@ const sendableProductResource = z.object({
   id: z
     .string()
     .describe(
-      "Product id. Use it in a `sendProducts` step's `sections[].productIds` or `thumbnailProductId`.",
+      "Product id. Use it in a `sendProducts` step's `sections[].productIds`.",
     ),
   name: z.string().describe("Product name."),
   imageUrl: z.string().nullable().describe("First product image, if any."),

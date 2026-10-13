@@ -396,7 +396,7 @@ export const productsPublicRouter = {
       path: "/v1/products/sendable",
       summary: "List sendable products",
       description:
-        "Lists the products a `sendProducts` flow step can show on a channel: active products linked in the workspace's connected Meta Catalog. Put the returned ids in the step's `sections[].productIds` or `thumbnailProductId`. `ready` is false, with a `reason`, when the channel cannot send products or no catalog is connected. See `capabilities.get` for per-channel limits.",
+        "Lists the products a `sendProducts` flow step can show on a channel: active products linked in the workspace's connected Meta Catalog. Put the returned ids in the step's `sections[].productIds`. `ready` is false, with a `reason`, when the channel cannot send products or no catalog is connected. See `capabilities.get` for per-channel limits.",
       tags: ["Products"],
     })
     .input(withPublicPaging(listSendableProductsRequest))

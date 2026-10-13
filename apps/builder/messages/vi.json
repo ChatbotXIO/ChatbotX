@@ -2810,8 +2810,7 @@
       "display": "Kiểu hiển thị",
       "displays": {
         "products": "Sản phẩm",
-        "carousel": "Băng chuyền",
-        "catalog": "Danh mục"
+        "carousel": "Băng chuyền"
       },
       "products": "Sản phẩm",
       "selectProducts": "Chọn sản phẩm",
@@ -2833,8 +2832,6 @@
       "footer": "Chân trang",
       "sectionTitle": "Tiêu đề nhóm",
       "addSection": "Thêm nhóm",
-      "thumbnail": "Sản phẩm ảnh bìa",
-      "catalogHint": "Danh mục phải được kết nối và hiển thị trên tài khoản gửi, nếu không nút Xem danh mục sẽ không mở được.",
       "productCount": "{count} / {max} sản phẩm",
       "productsSelected": "{count, plural, one {# sản phẩm} other {# sản phẩm}}",
       "noneSelected": "Chưa có sản phẩm"
@@ -3709,9 +3706,7 @@
     "sendProductsFieldTooLong": "Văn bản này quá dài.",
     "sendProductsProductCountOutOfRange": "Hãy chọn số lượng sản phẩm hợp lệ.",
     "sendProductsSectionCountOutOfRange": "Có quá nhiều nhóm.",
-    "sendProductsDuplicateProduct": "Mỗi sản phẩm chỉ được xuất hiện một lần.",
-    "sendProductsThumbnailNotAllowed": "Không thể dùng ảnh bìa ở đây.",
-    "productMessageViewCatalog": "Xem danh mục"
+    "sendProductsDuplicateProduct": "Mỗi sản phẩm chỉ được xuất hiện một lần."
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

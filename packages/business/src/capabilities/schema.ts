@@ -27,7 +27,6 @@ const productDisplayRuleSchema = z.object({
   body: productMessageTextRuleSchema.optional(),
   footer: productMessageTextRuleSchema.optional(),
   sectionTitle: productMessageTextRuleSchema.optional(),
-  thumbnail: z.boolean().describe("Whether `thumbnailProductId` is allowed."),
 })
 
 const capabilitiesChannelPolicySchema = z.object({

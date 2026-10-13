@@ -2622,8 +2622,7 @@
       "display": "Tampilan",
       "displays": {
         "products": "Produk",
-        "carousel": "Karusel",
-        "catalog": "Katalog"
+        "carousel": "Karusel"
       },
       "products": "Produk",
       "selectProducts": "Pilih produk",
@@ -2645,8 +2644,6 @@
       "footer": "Footer",
       "sectionTitle": "Judul bagian",
       "addSection": "Tambah bagian",
-      "thumbnail": "Produk thumbnail",
-      "catalogHint": "Katalog harus terhubung dan terlihat di akun pengirim, atau tombol Lihat katalog tidak akan membukanya.",
       "productCount": "{count} / {max} produk",
       "productsSelected": "{count, plural, one {# produk} other {# produk}}",
       "noneSelected": "Belum ada produk"
@@ -3667,9 +3664,7 @@
     "sendProductsFieldTooLong": "Teks ini terlalu panjang.",
     "sendProductsProductCountOutOfRange": "Pilih jumlah produk yang valid.",
     "sendProductsSectionCountOutOfRange": "Terlalu banyak bagian.",
-    "sendProductsDuplicateProduct": "Satu produk hanya boleh muncul sekali.",
-    "sendProductsThumbnailNotAllowed": "Thumbnail tidak dapat digunakan di sini.",
-    "productMessageViewCatalog": "Lihat katalog"
+    "sendProductsDuplicateProduct": "Satu produk hanya boleh muncul sekali."
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",

@@ -12,9 +12,9 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@chatbotx.io/ui/components/ui/carousel"
-import { PackageSearchIcon, StoreIcon } from "lucide-react"
+import { PackageSearchIcon } from "lucide-react"
 import Image from "next/image"
-import { useLocale, useTranslations } from "next-intl"
+import { useLocale } from "next-intl"
 import { formatPrice } from "@/lib/format-price"
 
 type ProductMessageBubbleProps = {
@@ -106,34 +106,10 @@ const sectionKey = (section: { title?: string; items: ProductMessageItem[] }) =>
  * body is not repeated here — the message text above already shows it.
  */
 export function ProductMessageBubble({ message }: ProductMessageBubbleProps) {
-  const t = useTranslations("messages")
-
   if (message.display === "carousel") {
     return (
       <div className="mt-1">
         <ProductCards items={message.items} />
-      </div>
-    )
-  }
-
-  if (message.display === "catalog") {
-    return (
-      <div className="mt-1 flex flex-col gap-1.5">
-        {message.thumbnail && (
-          <ProductImage
-            className="h-24 w-40 rounded-md"
-            imageUrl={message.thumbnail.imageUrl}
-          />
-        )}
-        <div className="flex items-center justify-center gap-1.5 rounded-md bg-secondary px-3 py-1.5 font-medium text-secondary-foreground text-sm">
-          <StoreIcon aria-hidden className="size-3.5" />
-          {t("productMessageViewCatalog")}
-        </div>
-        {message.footer && (
-          <span className="text-muted-foreground text-xs">
-            {message.footer}
-          </span>
-        )}
       </div>
     )
   }

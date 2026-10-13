@@ -4,7 +4,6 @@ import type {
   ResolvedProductMessage,
 } from "@chatbotx.io/sdk"
 import type {
-  InteractiveCatalogMessage,
   InteractiveProductCarouselMessage,
   InteractiveProductListMessage,
   InteractiveProductMessage,
@@ -14,7 +13,6 @@ import type {
 
 type ProductsMessage = Extract<ResolvedProductMessage, { display: "products" }>
 type CarouselMessage = Extract<ResolvedProductMessage, { display: "carousel" }>
-type CatalogMessage = Extract<ResolvedProductMessage, { display: "catalog" }>
 
 /**
  * Meta addresses a product by its catalog id plus its retailer id. A message's
@@ -108,29 +106,6 @@ const convertCarousel = (
   }
 }
 
-const convertCatalog = (
-  message: CatalogMessage,
-): InteractiveCatalogMessage => ({
-  _type: "interactive_catalog",
-  type: "interactive",
-  interactive: {
-    type: "catalog_message",
-    body: { text: message.body },
-    ...(message.footer ? { footer: { text: message.footer } } : {}),
-    action: {
-      name: "catalog_message",
-      ...(message.thumbnail
-        ? {
-            parameters: {
-              thumbnail_product_retailer_id:
-                message.thumbnail.catalogReference.retailerId,
-            },
-          }
-        : {}),
-    },
-  },
-})
-
 const toWhatsappProductMessage = (
   message: ResolvedProductMessage,
 ): RawWhatsappMessage => {
@@ -139,8 +114,6 @@ const toWhatsappProductMessage = (
       return convertProducts(message)
     case "carousel":
       return convertCarousel(message)
-    case "catalog":
-      return convertCatalog(message)
     default: {
       const unreachable: never = message
       throw new Error(

@@ -313,8 +313,7 @@
       "display": "Afișare",
       "displays": {
         "products": "Produse",
-        "carousel": "Carusel",
-        "catalog": "Catalog"
+        "carousel": "Carusel"
       },
       "products": "Produse",
       "selectProducts": "Selectează produse",
@@ -336,8 +335,6 @@
       "footer": "Subsol",
       "sectionTitle": "Titlul secțiunii",
       "addSection": "Adaugă secțiune",
-      "thumbnail": "Produsul pentru miniatură",
-      "catalogHint": "Catalogul trebuie să fie conectat și vizibil pe contul de trimitere, altfel butonul Vezi catalogul nu îl va deschide.",
       "productCount": "{count} / {max} produse",
       "productsSelected": "{count, plural, one {# produs} other {# produse}}",
       "noneSelected": "Încă nu există produse"
@@ -3667,9 +3664,7 @@
     "sendProductsFieldTooLong": "Acest text este prea lung.",
     "sendProductsProductCountOutOfRange": "Alege un număr valid de produse.",
     "sendProductsSectionCountOutOfRange": "Sunt prea multe secțiuni.",
-    "sendProductsDuplicateProduct": "Un produs poate apărea o singură dată.",
-    "sendProductsThumbnailNotAllowed": "Aici nu se poate folosi o miniatură.",
-    "productMessageViewCatalog": "Vezi catalogul"
+    "sendProductsDuplicateProduct": "Un produs poate apărea o singură dată."
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",

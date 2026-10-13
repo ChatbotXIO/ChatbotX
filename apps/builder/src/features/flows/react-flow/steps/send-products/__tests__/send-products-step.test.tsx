@@ -138,7 +138,6 @@ describe("SendProductsStepEditor", () => {
         body: " Look ",
         footer: "",
         sections: [{ title: "", productIds: ["1", "2"] }],
-        thumbnailProductId: undefined,
       })
     })
 
@@ -172,15 +171,5 @@ describe("SendProductsStepViewer", () => {
     expect(container.textContent).toContain(
       "flows.sendProducts.productsSelected:3",
     )
-  })
-
-  test("a catalog shows just its display, with no product count", () => {
-    renderViewer({ display: "catalog", sections: [] })
-
-    expect(container.textContent).toContain(
-      "flows.sendProducts.displays.catalog",
-    )
-    expect(container.textContent).not.toContain("productsSelected")
-    expect(container.textContent).not.toContain("noneSelected")
   })
 })

@@ -3545,8 +3545,7 @@
       "display": "Visning",
       "displays": {
         "products": "Produkter",
-        "carousel": "Karusell",
-        "catalog": "Katalog"
+        "carousel": "Karusell"
       },
       "products": "Produkter",
       "selectProducts": "Välj produkter",
@@ -3568,8 +3567,6 @@
       "footer": "Sidfot",
       "sectionTitle": "Avsnittsrubrik",
       "addSection": "Lägg till avsnitt",
-      "thumbnail": "Produkt för miniatyrbild",
-      "catalogHint": "Katalogen måste vara ansluten till och synlig på det skickande kontot, annars öppnar knappen Visa katalog den inte.",
       "productCount": "{count} / {max} produkter",
       "productsSelected": "{count, plural, one {# produkt} other {# produkter}}",
       "noneSelected": "Inga produkter ännu"
@@ -4509,9 +4506,7 @@
     "sendProductsFieldTooLong": "Texten är för lång.",
     "sendProductsProductCountOutOfRange": "Välj ett giltigt antal produkter.",
     "sendProductsSectionCountOutOfRange": "Det finns för många avsnitt.",
-    "sendProductsDuplicateProduct": "En produkt kan bara förekomma en gång.",
-    "sendProductsThumbnailNotAllowed": "En miniatyrbild kan inte användas här.",
-    "productMessageViewCatalog": "Visa katalog"
+    "sendProductsDuplicateProduct": "En produkt kan bara förekomma en gång."
   },
   "messenger": {
     "botProfile": "Botprofil",

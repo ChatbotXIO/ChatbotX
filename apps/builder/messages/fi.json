@@ -2622,8 +2622,7 @@
       "display": "Näyttötapa",
       "displays": {
         "products": "Tuotteet",
-        "carousel": "Karuselli",
-        "catalog": "Katalogi"
+        "carousel": "Karuselli"
       },
       "products": "Tuotteet",
       "selectProducts": "Valitse tuotteet",
@@ -2645,8 +2644,6 @@
       "footer": "Alatunniste",
       "sectionTitle": "Osion otsikko",
       "addSection": "Lisää osio",
-      "thumbnail": "Pikkukuvan tuote",
-      "catalogHint": "Katalogin on oltava yhdistetty lähettävään tiliin ja näkyvissä siinä, muuten Näytä katalogi -painike ei avaa sitä.",
       "productCount": "{count} / {max} tuotetta",
       "productsSelected": "{count, plural, one {# tuote} other {# tuotetta}}",
       "noneSelected": "Ei vielä tuotteita"
@@ -3667,9 +3664,7 @@
     "sendProductsFieldTooLong": "Teksti on liian pitkä.",
     "sendProductsProductCountOutOfRange": "Valitse kelvollinen määrä tuotteita.",
     "sendProductsSectionCountOutOfRange": "Osioita on liikaa.",
-    "sendProductsDuplicateProduct": "Tuote voi esiintyä vain kerran.",
-    "sendProductsThumbnailNotAllowed": "Pikkukuvaa ei voi käyttää tässä.",
-    "productMessageViewCatalog": "Näytä katalogi"
+    "sendProductsDuplicateProduct": "Tuote voi esiintyä vain kerran."
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",

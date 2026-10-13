@@ -215,39 +215,6 @@ describe("convertFlowStepSendProducts", () => {
     ])
   })
 
-  test("catalog message has no catalog_id, and parameters only with a thumbnail", () => {
-    const [withoutThumbnail] = convert({
-      display: "catalog",
-      body: "Browse",
-      footer: "Deals",
-    })
-    expect(withoutThumbnail).toEqual({
-      _type: "interactive_catalog",
-      type: "interactive",
-      interactive: {
-        type: "catalog_message",
-        body: { text: "Browse" },
-        footer: { text: "Deals" },
-        action: { name: "catalog_message" },
-      },
-    })
-
-    const [withThumbnail] = convert({
-      display: "catalog",
-      body: "Browse",
-      thumbnail: item("7"),
-    })
-    expect(withThumbnail?.interactive).toEqual({
-      type: "catalog_message",
-      body: { text: "Browse" },
-      action: {
-        name: "catalog_message",
-        parameters: { thumbnail_product_retailer_id: "sku-7" },
-      },
-    })
-    expect(JSON.stringify(withThumbnail)).not.toContain("catalog_id")
-  })
-
   test("does not truncate text — limits are enforced before this point", () => {
     const body = "b".repeat(1024)
     const [message] = convert({
@@ -278,9 +245,10 @@ describe("sendFlowStep — sendProducts delivery", () => {
     )
   })
 
-  const catalogMessage: ResolvedProductMessage = {
-    display: "catalog",
+  const carouselMessage: ResolvedProductMessage = {
+    display: "carousel",
     body: "Browse",
+    items: [item("1"), item("2")],
   }
   const requestBody = () =>
     JSON.parse((mockApiFetch.mock.calls[0]?.[1] as RequestInit).body as string)
@@ -290,7 +258,7 @@ describe("sendFlowStep — sendProducts delivery", () => {
   })
 
   test("posts the interactive payload raw to a phone-keyed contact", async () => {
-    const result = await sendFlowStep(stepProps(catalogMessage))
+    const result = await sendFlowStep(stepProps(carouselMessage))
 
     expect(mockSendMessage).not.toHaveBeenCalled()
     expect(mockApiFetch).toHaveBeenCalledTimes(1)
@@ -299,14 +267,14 @@ describe("sendFlowStep — sendProducts delivery", () => {
       messaging_product: "whatsapp",
       to: "84123456789",
       type: "interactive",
-      interactive: { type: "catalog_message", body: { text: "Browse" } },
+      interactive: { type: "carousel", body: { text: "Browse" } },
     })
     expect(body).not.toHaveProperty("_type")
     expect(result).toEqual({ messageIds: ["wamid.products-1"], sentCount: 1 })
   })
 
   test("addresses a BSUID-keyed contact with `recipient`, not `to`", async () => {
-    await sendFlowStep(stepProps(catalogMessage, bsuidContact))
+    await sendFlowStep(stepProps(carouselMessage, bsuidContact))
 
     const body = requestBody()
     expect(body.recipient).toBe("user.9373001")
@@ -394,12 +362,12 @@ describe("sendFlowStep — sendProducts delivery", () => {
   ])("Meta rejecting a product message for %s is a %#", async (_name, code, type, category, retryable) => {
     metaRejection(code, type)
 
-    await expect(sendFlowStep(stepProps(catalogMessage))).rejects.toMatchObject(
-      {
-        category,
-        code,
-        isRetryable: retryable,
-      },
-    )
+    await expect(
+      sendFlowStep(stepProps(carouselMessage)),
+    ).rejects.toMatchObject({
+      category,
+      code,
+      isRetryable: retryable,
+    })
   })
 })

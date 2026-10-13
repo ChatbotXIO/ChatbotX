@@ -2622,8 +2622,7 @@
       "display": "Weergave",
       "displays": {
         "products": "Producten",
-        "carousel": "Carrousel",
-        "catalog": "Catalogus"
+        "carousel": "Carrousel"
       },
       "products": "Producten",
       "selectProducts": "Producten selecteren",
@@ -2645,8 +2644,6 @@
       "footer": "Voettekst",
       "sectionTitle": "Sectietitel",
       "addSection": "Sectie toevoegen",
-      "thumbnail": "Product voor de miniatuur",
-      "catalogHint": "De catalogus moet gekoppeld en zichtbaar zijn op het verzendende account, anders opent de knop Catalogus bekijken hem niet.",
       "productCount": "{count} / {max} producten",
       "productsSelected": "{count, plural, one {# product} other {# producten}}",
       "noneSelected": "Nog geen producten"
@@ -3667,9 +3664,7 @@
     "sendProductsFieldTooLong": "Deze tekst is te lang.",
     "sendProductsProductCountOutOfRange": "Kies een geldig aantal producten.",
     "sendProductsSectionCountOutOfRange": "Er zijn te veel secties.",
-    "sendProductsDuplicateProduct": "Een product mag maar één keer voorkomen.",
-    "sendProductsThumbnailNotAllowed": "Een miniatuur kan hier niet worden gebruikt.",
-    "productMessageViewCatalog": "Catalogus bekijken"
+    "sendProductsDuplicateProduct": "Een product mag maar één keer voorkomen."
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",

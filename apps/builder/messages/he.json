@@ -606,8 +606,7 @@
       "display": "תצוגה",
       "displays": {
         "products": "מוצרים",
-        "carousel": "קרוסלה",
-        "catalog": "קטלוג"
+        "carousel": "קרוסלה"
       },
       "products": "מוצרים",
       "selectProducts": "בחירת מוצרים",
@@ -629,8 +628,6 @@
       "footer": "כותרת תחתונה",
       "sectionTitle": "כותרת המקטע",
       "addSection": "הוספת מקטע",
-      "thumbnail": "מוצר לתמונה הממוזערת",
-      "catalogHint": "הקטלוג חייב להיות מחובר לחשבון השולח ונראה בו, אחרת כפתור הצגת הקטלוג לא יפתח אותו.",
       "productCount": "{count} / {max} מוצרים",
       "productsSelected": "{count, plural, one {מוצר #} other {# מוצרים}}",
       "noneSelected": "עדיין אין מוצרים"
@@ -1651,9 +1648,7 @@
     "sendProductsFieldTooLong": "הטקסט ארוך מדי.",
     "sendProductsProductCountOutOfRange": "בחרו מספר מוצרים תקין.",
     "sendProductsSectionCountOutOfRange": "יש יותר מדי מקטעים.",
-    "sendProductsDuplicateProduct": "מוצר יכול להופיע רק פעם אחת.",
-    "sendProductsThumbnailNotAllowed": "לא ניתן להשתמש כאן בתמונה ממוזערת.",
-    "productMessageViewCatalog": "הצגת הקטלוג"
+    "sendProductsDuplicateProduct": "מוצר יכול להופיע רק פעם אחת."
   },
   "instagram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Instagram.",

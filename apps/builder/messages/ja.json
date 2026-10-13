@@ -2622,8 +2622,7 @@
       "display": "表示形式",
       "displays": {
         "products": "商品",
-        "carousel": "カルーセル",
-        "catalog": "カタログ"
+        "carousel": "カルーセル"
       },
       "products": "商品",
       "selectProducts": "商品を選択",
@@ -2645,8 +2644,6 @@
       "footer": "フッター",
       "sectionTitle": "セクションタイトル",
       "addSection": "セクションを追加",
-      "thumbnail": "サムネイルの商品",
-      "catalogHint": "カタログは送信元アカウントに接続され、表示されている必要があります。そうでない場合、「カタログを見る」ボタンでは開けません。",
       "productCount": "{count} / {max} 件の商品",
       "productsSelected": "{count, plural, one {# 件の商品} other {# 件の商品}}",
       "noneSelected": "商品はまだありません"
@@ -3646,9 +3643,7 @@
     "sendProductsFieldTooLong": "テキストが長すぎます。",
     "sendProductsProductCountOutOfRange": "商品数を正しく選択してください。",
     "sendProductsSectionCountOutOfRange": "セクションが多すぎます。",
-    "sendProductsDuplicateProduct": "同じ商品は1回しか使用できません。",
-    "sendProductsThumbnailNotAllowed": "ここではサムネイルを使用できません。",
-    "productMessageViewCatalog": "カタログを見る"
+    "sendProductsDuplicateProduct": "同じ商品は1回しか使用できません。"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",

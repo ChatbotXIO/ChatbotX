@@ -1714,9 +1714,7 @@
     "sendProductsFieldTooLong": "文字過長。",
     "sendProductsProductCountOutOfRange": "請選擇有效的商品數量。",
     "sendProductsSectionCountOutOfRange": "群組過多。",
-    "sendProductsDuplicateProduct": "同一商品只能出現一次。",
-    "sendProductsThumbnailNotAllowed": "此處無法使用縮圖。",
-    "productMessageViewCatalog": "查看目錄"
+    "sendProductsDuplicateProduct": "同一商品只能出現一次。"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
@@ -2987,8 +2985,7 @@
       "display": "顯示方式",
       "displays": {
         "products": "商品",
-        "carousel": "輪播",
-        "catalog": "目錄"
+        "carousel": "輪播"
       },
       "products": "商品",
       "selectProducts": "選擇商品",
@@ -3010,8 +3007,6 @@
       "footer": "頁尾",
       "sectionTitle": "群組標題",
       "addSection": "新增群組",
-      "thumbnail": "縮圖商品",
-      "catalogHint": "目錄必須已連結至傳送帳號並在該帳號上可見，否則「查看目錄」按鈕將無法開啟。",
       "productCount": "{count} / {max} 件商品",
       "productsSelected": "{count, plural, one {# 件商品} other {# 件商品}}",
       "noneSelected": "尚無商品"

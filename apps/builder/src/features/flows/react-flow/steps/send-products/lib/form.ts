@@ -13,7 +13,7 @@ import {
 
 export type SendProductsFormValues = Pick<
   SendProductsStepSchema,
-  "display" | "header" | "body" | "footer" | "sections" | "thumbnailProductId"
+  "display" | "header" | "body" | "footer" | "sections"
 >
 
 export type SendProductsFormIssue = {
@@ -22,17 +22,11 @@ export type SendProductsFormIssue = {
   code: FlowValidationCode
 }
 
-/** A catalog holds no products; every other display opens with at least one section to fill. */
+/** Every display opens with at least one section to fill. */
 const initialSections = (
   step: SendProductsStepSchema,
-): SendProductsFormValues["sections"] => {
-  if (step.display === "catalog") {
-    return []
-  }
-  return step.sections.length > 0
-    ? step.sections
-    : [{ title: "", productIds: [] }]
-}
+): SendProductsFormValues["sections"] =>
+  step.sections.length > 0 ? step.sections : [{ title: "", productIds: [] }]
 
 export const toFormValues = (
   step: SendProductsStepSchema,
@@ -42,7 +36,6 @@ export const toFormValues = (
   body: step.body ?? "",
   footer: step.footer ?? "",
   sections: initialSections(step),
-  thumbnailProductId: step.thumbnailProductId,
 })
 
 const blankToUndefined = (value: string | undefined) =>
@@ -58,14 +51,10 @@ export const toStepFields = (
   header: blankToUndefined(values.header),
   body: blankToUndefined(values.body),
   footer: blankToUndefined(values.footer),
-  sections:
-    values.display === "catalog"
-      ? []
-      : values.sections.map((section) => ({
-          title: blankToUndefined(section.title),
-          productIds: section.productIds,
-        })),
-  thumbnailProductId: values.thumbnailProductId || undefined,
+  sections: values.sections.map((section) => ({
+    title: blankToUndefined(section.title),
+    productIds: section.productIds,
+  })),
 })
 
 export const countProducts = (values: SendProductsFormValues): number =>
@@ -76,7 +65,7 @@ export const countProducts = (values: SendProductsFormValues): number =>
 
 /**
  * Moves the values to another display, keeping what still means something
- * there: carousel is one flat list, catalog holds no products.
+ * there: carousel is one flat list.
  */
 export const switchDisplay = (
   values: SendProductsFormValues,
@@ -90,16 +79,12 @@ export const switchDisplay = (
         display,
         header: "",
         footer: "",
-        thumbnailProductId: undefined,
         sections: [{ productIds: allProductIds }],
       }
-    case "catalog":
-      return { ...values, display, header: "", sections: [] }
     default:
       return {
         ...values,
         display,
-        thumbnailProductId: undefined,
         sections:
           values.sections.length > 0 ? values.sections : [{ productIds: [] }],
       }
@@ -111,7 +96,6 @@ export type FieldRules = {
   body?: ProductMessageTextRule
   footer?: ProductMessageTextRule
   sectionTitle?: ProductMessageTextRule
-  thumbnail: boolean
   /** Which of the fields above must be filled right now. */
   required: {
     header: boolean
@@ -167,7 +151,6 @@ export const resolveFieldRules = (
     body,
     footer,
     sectionTitle,
-    thumbnail: Boolean(rule?.thumbnail),
     required,
     hasRequiredText: Object.values(required).some(Boolean),
   }
@@ -200,11 +183,9 @@ export const validateSendProductsForm = (props: {
 export const displayLabelKey = {
   products: "flows.sendProducts.displays.products",
   carousel: "flows.sendProducts.displays.carousel",
-  catalog: "flows.sendProducts.displays.catalog",
 } as const satisfies Record<SendProductsDisplay, string>
 
 export const sendProductsDisplayOrder: readonly SendProductsDisplay[] = [
   "products",
   "carousel",
-  "catalog",
 ]

@@ -337,36 +337,6 @@ describe("SendProductsDialog — other displays", () => {
     expect(field("body")).not.toBeNull()
   })
 
-  test("catalog needs a body, takes an optional thumbnail and no product list", () => {
-    open({ display: "catalog", sections: [] })
-
-    expect(field("body")).not.toBeNull()
-    expect(field("footer")).not.toBeNull()
-    // Only the thumbnail picker: a catalog holds no product list and no count.
-    expect(
-      document.body.querySelectorAll('[data-testid="picker"]'),
-    ).toHaveLength(1)
-    expect(
-      document.body
-        .querySelector('[data-testid="picker"]')
-        ?.getAttribute("data-max"),
-    ).toBe("1")
-    expect(document.body.textContent).not.toContain(
-      "flows.sendProducts.productCount",
-    )
-    expect(document.body.textContent).not.toContain(
-      "flows.sendProducts.addSection",
-    )
-    expect(continueButton().disabled).toBe(true)
-
-    type(field("body"), "Browse")
-
-    expect(continueButton().disabled).toBe(false)
-    expect(document.body.textContent).toContain(
-      "flows.sendProducts.catalogHint",
-    )
-  })
-
   test("a channel with no product messages says so instead of showing a form", () => {
     open({ sections: [{ productIds: ["1"] }] }, "messenger")
 

@@ -2768,8 +2768,7 @@
       "display": "Visualización",
       "displays": {
         "products": "Productos",
-        "carousel": "Carrusel",
-        "catalog": "Catálogo"
+        "carousel": "Carrusel"
       },
       "products": "Productos",
       "selectProducts": "Seleccionar productos",
@@ -2791,8 +2790,6 @@
       "footer": "Pie de página",
       "sectionTitle": "Título de la sección",
       "addSection": "Añadir sección",
-      "thumbnail": "Producto de la miniatura",
-      "catalogHint": "El catálogo debe estar conectado y visible en la cuenta de envío; de lo contrario, el botón Ver catálogo no lo abrirá.",
       "productCount": "{count} / {max} productos",
       "productsSelected": "{count, plural, one {# producto} other {# productos}}",
       "noneSelected": "Aún no hay productos"
@@ -3667,9 +3664,7 @@
     "sendProductsFieldTooLong": "Este texto es demasiado largo.",
     "sendProductsProductCountOutOfRange": "Elige un número válido de productos.",
     "sendProductsSectionCountOutOfRange": "Hay demasiadas secciones.",
-    "sendProductsDuplicateProduct": "Un producto solo puede aparecer una vez.",
-    "sendProductsThumbnailNotAllowed": "Aquí no se puede usar una miniatura.",
-    "productMessageViewCatalog": "Ver catálogo"
+    "sendProductsDuplicateProduct": "Un producto solo puede aparecer una vez."
   },
   "instagram": {
     "description": "This integración lets tú Crear Instagram bots.",

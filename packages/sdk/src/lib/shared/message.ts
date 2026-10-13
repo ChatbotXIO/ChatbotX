@@ -980,12 +980,6 @@ export type ResolvedProductMessage =
       sections: Array<{ title?: string; items: ProductMessageItem[] }>
     }
   | { display: "carousel"; body: string; items: ProductMessageItem[] }
-  | {
-      display: "catalog"
-      body: string
-      footer?: string
-      thumbnail?: ProductMessageItem
-    }
 
 export type MessageProductEntity = {
   type: "product_message"

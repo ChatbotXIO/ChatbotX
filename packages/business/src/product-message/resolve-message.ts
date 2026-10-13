@@ -22,7 +22,6 @@ type Draft = {
   body?: string
   footer?: string
   sections: DraftSection[]
-  thumbnail?: ProductMessageItem
 }
 
 export type ProductMessageResolution =
@@ -47,21 +46,13 @@ const toResolvedMessage: Record<
     body: draft.body ?? "",
     items: draft.sections.flatMap((section) => section.items),
   }),
-  catalog: (draft) => ({
-    display: "catalog",
-    body: draft.body ?? "",
-    footer: draft.footer,
-    thumbnail: draft.thumbnail,
-  }),
 }
 
 const textOrUndefined = (value: string | undefined) =>
   value?.trim() || undefined
 
-export const collectProductIds = (step: SendProductsStepSchema): string[] => [
-  ...step.sections.flatMap((section) => section.productIds),
-  ...(step.thumbnailProductId ? [step.thumbnailProductId] : []),
-]
+export const collectProductIds = (step: SendProductsStepSchema): string[] =>
+  step.sections.flatMap((section) => section.productIds)
 
 const draftToShape = (draft: Draft): ProductMessageShape => ({
   display: draft.display,
@@ -72,7 +63,6 @@ const draftToShape = (draft: Draft): ProductMessageShape => ({
     title: section.title,
     productCount: section.items.length,
   })),
-  hasThumbnail: Boolean(draft.thumbnail),
 })
 
 /**
@@ -138,9 +128,6 @@ export const resolveProductMessage = (props: {
     body: textOrUndefined(step.body),
     footer: textOrUndefined(step.footer),
     sections,
-    thumbnail: step.thumbnailProductId
-      ? sendableById.get(step.thumbnailProductId)
-      : undefined,
   })
 
   // The step was valid as authored, so what is left to fail is the catalog:

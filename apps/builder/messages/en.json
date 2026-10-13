@@ -3451,8 +3451,7 @@
       "display": "Display",
       "displays": {
         "products": "Products",
-        "carousel": "Carousel",
-        "catalog": "Catalog"
+        "carousel": "Carousel"
       },
       "products": "Products",
       "selectProducts": "Select products",
@@ -3474,8 +3473,6 @@
       "footer": "Footer",
       "sectionTitle": "Section title",
       "addSection": "Add section",
-      "thumbnail": "Thumbnail product",
-      "catalogHint": "The catalog must be connected to and visible on the sending account, or the View catalog button won't open it.",
       "productCount": "{count} / {max} products",
       "productsSelected": "{count, plural, one {# product} other {# products}}",
       "noneSelected": "No products yet"
@@ -4350,9 +4347,7 @@
     "sendProductsFieldTooLong": "This text is too long.",
     "sendProductsProductCountOutOfRange": "Pick a valid number of products.",
     "sendProductsSectionCountOutOfRange": "There are too many sections.",
-    "sendProductsDuplicateProduct": "A product can only appear once.",
-    "sendProductsThumbnailNotAllowed": "A thumbnail can't be used here.",
-    "productMessageViewCatalog": "View catalog"
+    "sendProductsDuplicateProduct": "A product can only appear once."
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

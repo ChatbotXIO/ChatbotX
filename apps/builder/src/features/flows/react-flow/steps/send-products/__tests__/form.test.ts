@@ -55,7 +55,6 @@ describe("toFormValues / toStepFields", () => {
       body: "Hi",
       footer: undefined,
       sections: [{ title: undefined, productIds: ["1", "2"] }],
-      thumbnailProductId: undefined,
     })
   })
 
@@ -65,33 +64,17 @@ describe("toFormValues / toStepFields", () => {
     ])
   })
 
-  test("a catalog opens, and saves, with no sections at all", () => {
-    expect(
-      toFormValues(step({ display: "catalog", sections: [] })).sections,
-    ).toEqual([])
-    expect(
-      toStepFields(
-        values({
-          display: "catalog",
-          sections: [{ title: "", productIds: [] }],
-        }),
-      ).sections,
-    ).toEqual([])
-  })
-
-  test("trims text and drops blank titles and thumbnails", () => {
+  test("trims text and drops blank titles", () => {
     expect(
       toStepFields(
         values({
           body: "  Hello  ",
           sections: [{ title: "   ", productIds: ["1"] }],
-          thumbnailProductId: "",
         }),
       ),
     ).toMatchObject({
       body: "Hello",
       sections: [{ title: undefined, productIds: ["1"] }],
-      thumbnailProductId: undefined,
     })
   })
 })
@@ -115,31 +98,12 @@ describe("switchDisplay", () => {
     })
   })
 
-  test("catalog holds no products and no header", () => {
-    expect(switchDisplay(start, "catalog")).toMatchObject({
-      display: "catalog",
-      header: "",
-      sections: [],
-    })
-  })
-
   test("back to products keeps the sections it has, or starts one", () => {
     expect(switchDisplay(start, "products").sections).toHaveLength(2)
     expect(
-      switchDisplay(values({ display: "catalog", sections: [] }), "products")
+      switchDisplay(values({ display: "carousel", sections: [] }), "products")
         .sections,
     ).toEqual([{ productIds: [] }])
-  })
-
-  test("never carries a thumbnail onto a display that cannot use it", () => {
-    expect(
-      switchDisplay(values({ thumbnailProductId: "9" }), "carousel")
-        .thumbnailProductId,
-    ).toBeUndefined()
-    expect(
-      switchDisplay(values({ thumbnailProductId: "9" }), "products")
-        .thumbnailProductId,
-    ).toBeUndefined()
   })
 })
 
@@ -176,21 +140,12 @@ describe("resolveFieldRules", () => {
 
     expect(rules.header).toBeUndefined()
     expect(rules.footer).toBeUndefined()
-    expect(rules.thumbnail).toBe(false)
-  })
-
-  test("only the catalog display takes a thumbnail", () => {
-    expect(
-      resolveFieldRules(whatsappRules?.catalog, values({ display: "catalog" }))
-        .thumbnail,
-    ).toBe(true)
   })
 
   test("an unsupported display offers nothing", () => {
     expect(resolveFieldRules(undefined, values({}))).toMatchObject({
       header: undefined,
       body: undefined,
-      thumbnail: false,
     })
   })
 })

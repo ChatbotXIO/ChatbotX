@@ -4,7 +4,7 @@ import type { SendProductsStepSchema } from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
 import { displayLabelKey } from "../lib/form"
 
-/** "Carousel · 3 products", or just the display when it holds no products. */
+/** "Carousel · 3 products", or "No products yet" while empty. */
 export function SendProductsSummary({
   step,
 }: {
@@ -16,9 +16,6 @@ export function SendProductsSummary({
     0,
   )
   const label = t(displayLabelKey[step.display])
-  if (step.display === "catalog") {
-    return <>{label}</>
-  }
   return (
     <>
       {label} ·{" "}

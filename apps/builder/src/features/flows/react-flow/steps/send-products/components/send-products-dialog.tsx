@@ -209,7 +209,7 @@ function SendProductsForm(props: Omit<SendProductsDialogProps, "open">) {
           </div>
         )}
 
-        {rule && rule.maxProducts > 0 && (
+        {rule && (
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <Label>{t("flows.sendProducts.products")}</Label>
@@ -286,26 +286,6 @@ function SendProductsForm(props: Omit<SendProductsDialogProps, "open">) {
                 {t("flows.sendProducts.addSection")}
               </Button>
             )}
-          </div>
-        )}
-
-        {fieldRules.thumbnail && (
-          <div className="space-y-2">
-            <Label>{t("flows.sendProducts.thumbnail")}</Label>
-            <ProductMultiSelect
-              channel={channel}
-              max={1}
-              onChange={(ids) =>
-                setValue("thumbnailProductId", ids[0], { shouldDirty: true })
-              }
-              value={
-                values.thumbnailProductId ? [values.thumbnailProductId] : []
-              }
-            />
-            <IssueMessage issues={issues} path="thumbnailProductId" />
-            <p className="text-muted-foreground text-xs">
-              {t("flows.sendProducts.catalogHint")}
-            </p>
           </div>
         )}
 

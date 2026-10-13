@@ -224,7 +224,7 @@ describe("compileFlowSpec — one node per step type", () => {
     expectPublishable(compiled.nodes, compiled.edges)
   })
 
-  test("sendProducts carousel and catalog compile for whatsapp", () => {
+  test("sendProducts carousel compiles for whatsapp", () => {
     const compiled = compileFlowSpec(
       spec(
         [
@@ -234,21 +234,12 @@ describe("compileFlowSpec — one node per step type", () => {
             body: "Look",
             sections: [{ productIds: ["11", "12"] }],
           },
-          { type: "sendProducts", display: "catalog", body: "Browse" },
         ],
         { channel: "whatsapp" },
       ),
       emptyCtx,
     )
-    expect(compiled.nodes).toHaveLength(2)
-    const catalogNode = compiled.nodes[1]
-    if (catalogNode?.type === "sendMessage") {
-      expect(catalogNode.data.details.steps[0]).toMatchObject({
-        stepType: stepTypes.enum.sendProducts,
-        display: "catalog",
-        sections: [],
-      })
-    }
+    expect(compiled.nodes).toHaveLength(1)
     expectPublishable(compiled.nodes, compiled.edges)
   })
 
@@ -258,8 +249,9 @@ describe("compileFlowSpec — one node per step type", () => {
         [
           {
             type: "sendProducts",
-            display: "catalog",
-            body: "Browse",
+            display: "carousel",
+            body: "Look",
+            sections: [{ productIds: ["11", "12"] }],
           },
         ],
         { channel: "messenger" },

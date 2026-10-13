@@ -2622,8 +2622,7 @@
       "display": "Visning",
       "displays": {
         "products": "Produkter",
-        "carousel": "Karrusel",
-        "catalog": "Katalog"
+        "carousel": "Karrusel"
       },
       "products": "Produkter",
       "selectProducts": "Vælg produkter",
@@ -2645,8 +2644,6 @@
       "footer": "Sidefod",
       "sectionTitle": "Sektionstitel",
       "addSection": "Tilføj sektion",
-      "thumbnail": "Produkt til miniaturebillede",
-      "catalogHint": "Kataloget skal være forbundet til og synligt på den afsendende konto, ellers åbner knappen Se katalog det ikke.",
       "productCount": "{count} / {max} produkter",
       "productsSelected": "{count, plural, one {# produkt} other {# produkter}}",
       "noneSelected": "Ingen produkter endnu"
@@ -3667,9 +3664,7 @@
     "sendProductsFieldTooLong": "Denne tekst er for lang.",
     "sendProductsProductCountOutOfRange": "Vælg et gyldigt antal produkter.",
     "sendProductsSectionCountOutOfRange": "Der er for mange sektioner.",
-    "sendProductsDuplicateProduct": "Et produkt kan kun forekomme én gang.",
-    "sendProductsThumbnailNotAllowed": "Et miniaturebillede kan ikke bruges her.",
-    "productMessageViewCatalog": "Se katalog"
+    "sendProductsDuplicateProduct": "Et produkt kan kun forekomme én gang."
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",

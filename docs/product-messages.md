@@ -1,13 +1,14 @@
 # Product messages (`sendProducts` flow step)
 
 Sends products from the workspace catalog to a contact from inside a flow, as
-one of three displays:
+one of two displays:
 
 | Display | What the contact gets |
 |---------|-----------------------|
 | `products` | One product, or a list grouped in sections (1 product → single-product message, 2+ → multi-product message) |
 | `carousel` | 2+ products as scrollable cards, body text only |
-| `catalog` | A message that opens the whole catalog, with an optional thumbnail product |
+
+To open the whole catalog, use the separate `sendViewCatalog` step.
 
 WhatsApp is the first channel. The step and its data are channel-neutral; a
 channel is added by declaring a policy entry and a converter, not by changing
@@ -27,8 +28,7 @@ flow step (productIds) ──► send-flow-step ──► productMessageService.
                  integration `sendFlowStep` (data.productMessage) ──► channel API
 ```
 
-- The step stores **ChatbotX product ids** (`sections[].productIds`,
-  `thumbnailProductId`). They survive SKU changes and catalog re-syncs; the
+- The step stores **ChatbotX product ids** (`sections[].productIds`). They survive SKU changes and catalog re-syncs; the
   channel-side id (`retailerId`) is resolved at send time.
 - Resolution runs **before** the Message row is created. A step that cannot be
   sent (no catalog, nothing sendable, invalid as authored) creates no message and
@@ -74,7 +74,6 @@ Values live in `policies/whatsapp.ts`; the payloads follow Meta's
 | 1 product | `product` | `catalog_id` + `product_retailer_id`; optional body/footer; no header |
 | 2+ products | `product_list` | Header (≤60) and body (≤1024) required; footer ≤60; ≤30 products; section title ≤24 and required with 2+ sections; ≤10 sections (a ChatbotX limit — Meta states none) |
 | `carousel` | `carousel` | 2–10 product cards, body only (≤1024) |
-| `catalog` | `catalog_message` | Body required; optional footer and thumbnail; no `catalog_id` (uses the catalog linked to the WABA) |
 
 - These are service messages: they can only be sent inside an open customer
   conversation (24h window), never as notifications.
@@ -102,5 +101,5 @@ Values live in `policies/whatsapp.ts`; the payloads follow Meta's
   error mapper classes as `AUTH_FAILED` ahead of the specific code, so an unknown
   product shows as an authentication error in the log. This is existing mapper
   behavior shared with template sends and has no side effect on the connection.
-- A multi-product header/body, a section title or a thumbnail that stops being
+- A multi-product header/body or a section title that stops being
   allowed because products were dropped is omitted rather than failing the send.

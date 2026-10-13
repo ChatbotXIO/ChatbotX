@@ -121,28 +121,6 @@ describe("ProductMessageBubble", () => {
     expect(container.querySelectorAll("[data-slide]")).toHaveLength(3)
   })
 
-  test("a catalog shows the view-catalog action, thumbnail and footer", () => {
-    render({
-      display: "catalog",
-      body: "Browse",
-      footer: "Deals",
-      thumbnail: item("7", { imageUrl: "https://img/7.png" }),
-    })
-
-    expect(container.textContent).toContain("productMessageViewCatalog")
-    expect(container.textContent).toContain("Deals")
-    expect(container.querySelector("img")?.getAttribute("src")).toBe(
-      "https://img/7.png",
-    )
-  })
-
-  test("a catalog without a thumbnail still renders", () => {
-    render({ display: "catalog", body: "Browse" })
-
-    expect(container.textContent).toContain("productMessageViewCatalog")
-    expect(container.querySelector("img")).toBeNull()
-  })
-
   test("an unknown currency code falls back to plain text instead of crashing", () => {
     render({
       display: "products",

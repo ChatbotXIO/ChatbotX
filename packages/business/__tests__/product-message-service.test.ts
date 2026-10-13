@@ -150,7 +150,7 @@ describe("productMessageService.listSendable", () => {
 })
 
 describe("productMessageService.resolveForSend", () => {
-  test("resolves every section and the thumbnail with one catalog query", async () => {
+  test("resolves every section with one catalog query", async () => {
     mocks.findSendableByProductIds.mockResolvedValue([
       row("1"),
       row("2"),
@@ -240,38 +240,6 @@ describe("productMessageService.resolveForSend", () => {
       }),
     ).rejects.toMatchObject({ reason: "catalogNotConnected" })
     expect(mocks.findSendableByProductIds).not.toHaveBeenCalled()
-  })
-
-  test("sends the whole-catalog display without any lookup", async () => {
-    const result = await productMessageService.resolveForSend({
-      workspaceId: "ws-1",
-      channel: "whatsapp",
-      step: step({ display: "catalog", body: "Browse" }),
-    })
-
-    expect(result.message).toMatchObject({ display: "catalog", body: "Browse" })
-    expect(mocks.findByWorkspaceId).not.toHaveBeenCalled()
-    expect(mocks.findSendableByProductIds).not.toHaveBeenCalled()
-  })
-
-  test("drops the thumbnail instead of failing when the catalog is not connected", async () => {
-    mocks.findByWorkspaceId.mockResolvedValue(undefined)
-
-    const result = await productMessageService.resolveForSend({
-      workspaceId: "ws-1",
-      channel: "whatsapp",
-      step: step({
-        display: "catalog",
-        body: "Browse",
-        thumbnailProductId: "1",
-      }),
-    })
-
-    expect(result.missing).toEqual([{ productId: "1" }])
-    expect(result.message).toMatchObject({
-      display: "catalog",
-      thumbnail: undefined,
-    })
   })
 
   test.each([

@@ -2768,8 +2768,7 @@
       "display": "Görünüm",
       "displays": {
         "products": "Ürünler",
-        "carousel": "Karusel",
-        "catalog": "Katalog"
+        "carousel": "Karusel"
       },
       "products": "Ürünler",
       "selectProducts": "Ürün seç",
@@ -2791,8 +2790,6 @@
       "footer": "Alt bilgi",
       "sectionTitle": "Bölüm başlığı",
       "addSection": "Bölüm ekle",
-      "thumbnail": "Küçük resim ürünü",
-      "catalogHint": "Katalog, gönderen hesaba bağlı ve o hesapta görünür olmalıdır; aksi hâlde Kataloğu görüntüle düğmesi onu açmaz.",
       "productCount": "{count} / {max} ürün",
       "productsSelected": "{count, plural, one {# ürün} other {# ürün}}",
       "noneSelected": "Henüz ürün yok"
@@ -3667,9 +3664,7 @@
     "sendProductsFieldTooLong": "Bu metin çok uzun.",
     "sendProductsProductCountOutOfRange": "Geçerli bir ürün sayısı seçin.",
     "sendProductsSectionCountOutOfRange": "Çok fazla bölüm var.",
-    "sendProductsDuplicateProduct": "Bir ürün yalnızca bir kez görünebilir.",
-    "sendProductsThumbnailNotAllowed": "Burada küçük resim kullanılamaz.",
-    "productMessageViewCatalog": "Kataloğu görüntüle"
+    "sendProductsDuplicateProduct": "Bir ürün yalnızca bir kez görünebilir."
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",

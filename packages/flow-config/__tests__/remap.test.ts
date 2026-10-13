@@ -253,21 +253,18 @@ describe("remapReferences — array-valued keys", () => {
 describe("remapReferences — sendProducts product references", () => {
   const step = {
     sections: [{ productIds: ["p-1", "p-missing"] }, { productIds: ["p-2"] }],
-    thumbnailProductId: "p-3",
   }
 
-  test("remaps every section product and the thumbnail via the product map", () => {
+  test("remaps every section product via the product map", () => {
     const remapped = remapReferences(step, {
       product: new Map([
         ["p-1", "t-1"],
         ["p-2", "t-2"],
-        ["p-3", "t-3"],
       ]),
     })
 
     expect(remapped).toEqual({
       sections: [{ productIds: ["t-1", "p-missing"] }, { productIds: ["t-2"] }],
-      thumbnailProductId: "t-3",
     })
   })
 
@@ -291,7 +288,6 @@ describe("remapReferences — sendProducts product references", () => {
         path: "sections[1].productIds[0]",
         value: "p-2",
       },
-      { entityKind: "product", path: "thumbnailProductId", value: "p-3" },
     ])
   })
 })

@@ -2622,8 +2622,7 @@
       "display": "Darstellung",
       "displays": {
         "products": "Produkte",
-        "carousel": "Karussell",
-        "catalog": "Katalog"
+        "carousel": "Karussell"
       },
       "products": "Produkte",
       "selectProducts": "Produkte auswählen",
@@ -2645,8 +2644,6 @@
       "footer": "Fußzeile",
       "sectionTitle": "Abschnittstitel",
       "addSection": "Abschnitt hinzufügen",
-      "thumbnail": "Vorschaubild-Produkt",
-      "catalogHint": "Der Katalog muss mit dem sendenden Konto verbunden und dort sichtbar sein, sonst öffnet die Schaltfläche „Katalog ansehen“ ihn nicht.",
       "productCount": "{count} / {max} Produkte",
       "productsSelected": "{count, plural, one {# Produkt} other {# Produkte}}",
       "noneSelected": "Noch keine Produkte"
@@ -3667,9 +3664,7 @@
     "sendProductsFieldTooLong": "Dieser Text ist zu lang.",
     "sendProductsProductCountOutOfRange": "Wähle eine gültige Anzahl an Produkten.",
     "sendProductsSectionCountOutOfRange": "Es gibt zu viele Abschnitte.",
-    "sendProductsDuplicateProduct": "Ein Produkt darf nur einmal vorkommen.",
-    "sendProductsThumbnailNotAllowed": "Ein Vorschaubild kann hier nicht verwendet werden.",
-    "productMessageViewCatalog": "Katalog ansehen"
+    "sendProductsDuplicateProduct": "Ein Produkt darf nur einmal vorkommen."
   },
   "instagram": {
     "description": "Mit dieser Integration können Sie Instagram-Bots erstellen.",

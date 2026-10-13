@@ -255,7 +255,6 @@ const isRawWhatsappMessage = (
   message._type === "interactive_product" ||
   message._type === "interactive_product_list" ||
   message._type === "interactive_product_carousel" ||
-  message._type === "interactive_catalog" ||
   message._type === "location" ||
   message._type === "location_request"
 

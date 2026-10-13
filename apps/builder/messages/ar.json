@@ -2768,8 +2768,7 @@
       "display": "طريقة العرض",
       "displays": {
         "products": "المنتجات",
-        "carousel": "شريط متحرك",
-        "catalog": "الكتالوج"
+        "carousel": "شريط متحرك"
       },
       "products": "المنتجات",
       "selectProducts": "اختيار المنتجات",
@@ -2791,8 +2790,6 @@
       "footer": "التذييل",
       "sectionTitle": "عنوان القسم",
       "addSection": "إضافة قسم",
-      "thumbnail": "منتج الصورة المصغّرة",
-      "catalogHint": "يجب أن يكون الكتالوج مربوطًا بالحساب المُرسِل وظاهرًا فيه، وإلا فلن يفتحه زر عرض الكتالوج.",
       "productCount": "{count} / {max} منتج",
       "productsSelected": "{count, plural, one {# منتج} other {# منتجات}}",
       "noneSelected": "لا توجد منتجات بعد"
@@ -3667,9 +3664,7 @@
     "sendProductsFieldTooLong": "هذا النص طويل جدًا.",
     "sendProductsProductCountOutOfRange": "اختر عددًا صالحًا من المنتجات.",
     "sendProductsSectionCountOutOfRange": "عدد الأقسام كبير جدًا.",
-    "sendProductsDuplicateProduct": "لا يمكن أن يظهر المنتج إلا مرة واحدة.",
-    "sendProductsThumbnailNotAllowed": "لا يمكن استخدام صورة مصغّرة هنا.",
-    "productMessageViewCatalog": "عرض الكتالوج"
+    "sendProductsDuplicateProduct": "لا يمكن أن يظهر المنتج إلا مرة واحدة."
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",

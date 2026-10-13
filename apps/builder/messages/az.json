@@ -3451,8 +3451,7 @@
       "display": "Görünüş",
       "displays": {
         "products": "Məhsullar",
-        "carousel": "Karusel",
-        "catalog": "Katalog"
+        "carousel": "Karusel"
       },
       "products": "Məhsullar",
       "selectProducts": "Məhsul seçin",
@@ -3474,8 +3473,6 @@
       "footer": "Alt məlumat",
       "sectionTitle": "Bölmə başlığı",
       "addSection": "Bölmə əlavə et",
-      "thumbnail": "Miniatür məhsulu",
-      "catalogHint": "Katalog göndərən hesaba qoşulmalı və orada görünməlidir, əks halda Kataloqa bax düyməsi onu açmayacaq.",
       "productCount": "{count} / {max} məhsul",
       "productsSelected": "{count, plural, one {# məhsul} other {# məhsul}}",
       "noneSelected": "Hələ məhsul yoxdur"
@@ -4350,9 +4347,7 @@
     "sendProductsFieldTooLong": "Bu mətn çox uzundur.",
     "sendProductsProductCountOutOfRange": "Məhsulların düzgün sayını seçin.",
     "sendProductsSectionCountOutOfRange": "Bölmələr çoxdur.",
-    "sendProductsDuplicateProduct": "Məhsul yalnız bir dəfə görünə bilər.",
-    "sendProductsThumbnailNotAllowed": "Burada miniatür istifadə oluna bilməz.",
-    "productMessageViewCatalog": "Kataloqa bax"
+    "sendProductsDuplicateProduct": "Məhsul yalnız bir dəfə görünə bilər."
   },
   "instagram": {
     "description": "Bu inteqrasiya Instagram botları yaratmağa imkan verir.",
