@@ -52,6 +52,7 @@
     "broadcasts/resend-broadcast.action:resendBroadcastAction": "covered:broadcasts",
     "broadcasts/resume-broadcast.action:resumeBroadcastAction": "covered:broadcasts",
     "broadcasts/schedule-broadcast.action:scheduleBroadcastAction": "covered:broadcasts",
+    "broadcasts/set-broadcast-run-skipped.action:setBroadcastRunSkippedAction": "covered:broadcasts",
     "broadcasts/stop-broadcast.action:stopBroadcastAction": "covered:broadcasts",
     "broadcasts/update-broadcast.action:updateBroadcastAction": "covered:broadcasts",
     "broadcasts/update-draft-broadcast.action:updateDraftBroadcastAction": "covered:broadcasts",

@@ -41,6 +41,8 @@ export const queueGroupByName: Record<QueueName, QueueGroup> = {
   callTranscription: "hot",
   whatsappVoipSignaling: "hot",
   low: "hot",
+  // Bursty minute-aligned batch work; must not compete with chat/integration.
+  broadcastRecurrence: "bulk",
   // Rate-limited background enrichment; must not compete with chat/integration.
   profileSnapshot: "bulk",
 }
@@ -109,4 +111,6 @@ export const fakeQueue = {
   addBulk: () => Promise.resolve(""),
   getJob: () => Promise.resolve(undefined),
   remove: () => Promise.resolve(0),
+  getWaitingCount: () => Promise.resolve(0),
+  getDelayedCount: () => Promise.resolve(0),
 }

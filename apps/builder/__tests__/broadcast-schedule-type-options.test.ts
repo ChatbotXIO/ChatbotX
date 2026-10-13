@@ -56,7 +56,7 @@ describe("broadcast schedule-type labels", () => {
     expect(resolveBroadcastScheduleTypeMessageKey("")).toBe(
       "fields.schedule.now",
     )
-    expect(resolveBroadcastScheduleTypeMessageKey("recurring")).toBe(
+    expect(resolveBroadcastScheduleTypeMessageKey("weekly")).toBe(
       "fields.schedule.now",
     )
   })
@@ -67,6 +67,7 @@ describe("broadcast schedule-type labels", () => {
     expect(options).toEqual([
       { value: "now", label: "t:fields.schedule.now" },
       { value: "future", label: "t:fields.schedule.scheduled" },
+      { value: "recurring", label: "t:fields.schedule.recurring" },
     ])
     expect(options.map((option) => option.value)).toEqual(
       broadcastScheduleTypes.options,

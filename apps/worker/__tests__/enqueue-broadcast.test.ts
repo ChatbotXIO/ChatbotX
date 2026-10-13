@@ -24,6 +24,8 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   scheduleQueue: {
     addBulk: (...args: unknown[]) => addBulkSpy(...args),
   },
+  // Same key format as the real helper, which both prepare producers share.
+  broadcastPrepareJobId: (id: string) => `schedule-prepare-broadcast-${id}`,
   ScheduleJobData: {
     sendBroadcast: "sendBroadcast",
     prepareBroadcast: "prepareBroadcast",

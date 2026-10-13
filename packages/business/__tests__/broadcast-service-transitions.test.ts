@@ -77,8 +77,16 @@ vi.mock("@chatbotx.io/database/partials", () => ({
       cancelled: "cancelled",
       draft: "draft",
       failed: "failed",
+      recurring: "recurring",
     },
   },
+  broadcastScheduleTypes: {
+    enum: { now: "now", future: "future", recurring: "recurring" },
+  },
+  isRecurringTemplate: (row: {
+    schedulesType: string
+    occurrenceAt?: Date | null
+  }) => row.schedulesType === "recurring" && row.occurrenceAt == null,
   resolveActivationSendRate: ({
     submitted,
     stored,
@@ -99,6 +107,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     handoffCompletedAt: "broadcast.handoffCompletedAt",
     resumeCount: "broadcast.resumeCount",
     deletedAt: "broadcast.deletedAt",
+    parentBroadcastId: "broadcast.parentBroadcastId",
+    occurrenceAt: "broadcast.occurrenceAt",
+    schedulesType: "broadcast.schedulesType",
   },
   contactsOnBroadcastsModel: {
     broadcastId: "cob.broadcastId",
@@ -129,6 +140,12 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  broadcastRecurrenceRepository: {
+    findByBroadcastId: vi.fn().mockResolvedValue(null),
+    lockForWrite: vi.fn().mockResolvedValue([]),
+    selectDbNow: vi.fn().mockResolvedValue(new Date("2026-10-13T00:00:00Z")),
+    insertIfMissing: vi.fn(),
+  },
   broadcastRepository: {
     listWithRelations: vi.fn(),
     count: vi.fn(),
@@ -144,6 +161,15 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
 
+vi.mock("../src/broadcast/recurrence.service", () => ({
+  broadcastRecurrenceService: {
+    upsertRule: vi.fn(),
+    arm: vi.fn(),
+    disarm: vi.fn(),
+    upcomingRunsOf: vi.fn(() => []),
+  },
+}))
+
 vi.mock("../src/broadcast/plan-policy.service", () => ({
   broadcastPlanPolicyService: {
     appliesToChannel: vi.fn((channel: string) => channel === "messenger"),
@@ -157,6 +183,41 @@ vi.mock("../src/broadcast/plan-policy.service", () => ({
     lockActivation: vi.fn().mockResolvedValue(undefined),
     assertActiveSlotAvailable: vi.fn().mockResolvedValue(undefined),
     resolveSendRateOverride: vi.fn(() => ({ sendRatePerMinute: 60 })),
+    assertActivationAllowed: vi.fn(
+      async (
+        tx: unknown,
+        input: {
+          workspaceId: string
+          channel: string
+          restriction: unknown
+          sendRatePerMinute: number | null | undefined
+          excludeBroadcastId?: string
+          checkSlot: boolean
+        },
+      ) => {
+        // Composes the mocked primitives in the real gate's order, so the
+        // existing call-order assertions keep describing the real behavior.
+        const gate = (await import("../src/broadcast/plan-policy.service"))
+          .broadcastPlanPolicyService
+        gate.assertSendRateAllowed(
+          input.restriction as never,
+          input.sendRatePerMinute,
+        )
+        if (input.checkSlot) {
+          await gate.lockActivation(tx as never, input.workspaceId)
+          await gate.assertActiveSlotAvailable(tx as never, {
+            workspaceId: input.workspaceId,
+            channel: input.channel,
+            ctx: input.restriction as never,
+            excludeBroadcastId: input.excludeBroadcastId,
+          })
+        }
+        return gate.resolveSendRateOverride(
+          input.restriction as never,
+          input.sendRatePerMinute,
+        )
+      },
+    ),
   },
 }))
 
@@ -245,6 +306,8 @@ describe("broadcastService.moveToDraft", () => {
       { __eq: ["broadcast.workspaceId", "ws-1"] },
       { __eq: ["broadcast.status", "scheduled"] },
       { __isNull: "broadcast.deletedAt" },
+      // A run of a series is not unscheduled on its own.
+      { __isNull: "broadcast.occurrenceAt" },
     ])
     expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
       action: "broadcast_moved_to_draft",
@@ -750,5 +813,246 @@ describe("broadcastService.markContactSentIfSending", () => {
     expect(strings.join("")).toContain("b.id =")
     expect(strings.join("")).toContain("b.status =")
     expect(sqlValues).toEqual(["b-1", "sending"])
+  })
+})
+
+describe("repeating broadcasts (templates)", () => {
+  const series = {
+    id: "series-1",
+    broadcastId: "b-1",
+    rule: {},
+    nextRunAt: null,
+  }
+  const templateRow = {
+    id: "b-1",
+    channel: "whatsapp",
+    sendRatePerMinute: null,
+  }
+
+  const loadSeriesMocks = async () => {
+    const { broadcastRecurrenceRepository } = await import(
+      "@chatbotx.io/database/repositories"
+    )
+    const { broadcastRecurrenceService } = await import(
+      "../src/broadcast/recurrence.service"
+    )
+    return {
+      repository: broadcastRecurrenceRepository,
+      service: broadcastRecurrenceService,
+    }
+  }
+
+  test("stopping pauses the series: the series row is locked first, then the template moves recurring -> cancelled", async () => {
+    const { repository, service } = await loadSeriesMocks()
+    updateReturning
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([templateRow])
+    vi.mocked(repository.lockForWrite).mockResolvedValue([series] as never)
+
+    const result = await broadcastService.stopSending({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+    })
+
+    expect(result).toEqual({ id: "b-1" })
+    expect(updateReturning.mock.calls[1][0].values).toEqual({
+      status: "cancelled",
+    })
+    expect(flatten(updateReturning.mock.calls[1][0].condition)).toEqual(
+      expect.arrayContaining([
+        { __eq: ["broadcast.id", "b-1"] },
+        { __inArray: ["broadcast.status", ["recurring"]] },
+      ]),
+    )
+    expect(service.disarm).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ recurrence: series, reason: "paused" }),
+    )
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "broadcast_stopped",
+      detail: "paused a broadcast (#b-1)",
+    })
+  })
+
+  test("a template that is not recurring cannot be paused", async () => {
+    const { repository, service } = await loadSeriesMocks()
+    updateReturning.mockResolvedValueOnce([]).mockResolvedValueOnce([])
+    vi.mocked(repository.lockForWrite).mockResolvedValue([series] as never)
+
+    await expect(
+      broadcastService.stopSending({ workspaceId: "ws-1", broadcastId: "b-1" }),
+    ).rejects.toThrow("Broadcast is not in progress")
+    expect(service.disarm).not.toHaveBeenCalled()
+  })
+
+  test("moving a running or paused series to draft stops it so the schedule can be edited", async () => {
+    const { repository, service } = await loadSeriesMocks()
+    updateReturning
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([templateRow])
+    vi.mocked(repository.lockForWrite).mockResolvedValue([series] as never)
+
+    const result = await broadcastService.moveToDraft({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+    })
+
+    expect(result).toEqual({ id: "b-1" })
+    const { values, condition } = updateReturning.mock.calls[1][0]
+    expect(values.status).toBe("draft")
+    expect(flatten(condition)).toEqual(
+      expect.arrayContaining([
+        { __inArray: ["broadcast.status", ["recurring", "cancelled"]] },
+      ]),
+    )
+    expect(service.disarm).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ reason: "draft" }),
+    )
+  })
+
+  test("resuming re-arms the series, returns the next run, and does not touch the one-off resume path", async () => {
+    const { repository, service } = await loadSeriesMocks()
+    const nextRunAt = new Date("2026-10-14T02:00:00.000Z")
+    findFirstBroadcast.mockResolvedValue({
+      schedulesType: "recurring",
+      occurrenceAt: null,
+    })
+    vi.mocked(repository.lockForWrite).mockResolvedValue([series] as never)
+    vi.mocked(service.arm).mockResolvedValue({
+      nextRunAt,
+      sendRateOverride: undefined,
+    })
+    // First the guarded transition, then the activation that re-arms it.
+    updateReturning
+      .mockResolvedValueOnce([templateRow])
+      .mockResolvedValueOnce([{ ...templateRow, schedulesAt: nextRunAt }])
+
+    const result = await broadcastService.resumeSending({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+    })
+
+    expect(result).toEqual({ id: "b-1", nextRunAt })
+    expect(updateReturning.mock.calls[0][0].values).toEqual({
+      status: "recurring",
+    })
+    expect(flatten(updateReturning.mock.calls[0][0].condition)).toEqual(
+      expect.arrayContaining([
+        { __inArray: ["broadcast.status", ["cancelled"]] },
+      ]),
+    )
+    expect(updateReturning.mock.calls[1][0].values).toMatchObject({
+      status: "recurring",
+      schedulesAt: nextRunAt,
+    })
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith({
+      action: "broadcast_resumed",
+      detail: "resumed a broadcast (#b-1)",
+    })
+  })
+
+  test("resume stores a submitted rate even when the plan sets no override", async () => {
+    const { repository, service } = await loadSeriesMocks()
+    findFirstBroadcast.mockResolvedValue({
+      schedulesType: "recurring",
+      occurrenceAt: null,
+    })
+    vi.mocked(repository.lockForWrite).mockResolvedValue([series] as never)
+    vi.mocked(service.arm).mockResolvedValue({
+      nextRunAt: new Date("2026-10-14T02:00:00.000Z"),
+      sendRateOverride: undefined,
+    })
+    updateReturning
+      .mockResolvedValueOnce([templateRow])
+      .mockResolvedValueOnce([templateRow])
+
+    await broadcastService.resumeSending({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+      sendRatePerMinute: 500,
+    })
+
+    expect(updateReturning.mock.calls[1][0].values).toMatchObject({
+      sendRatePerMinute: 500,
+    })
+  })
+
+  test("a one-off that still has a disarmed series row resumes through the one-off path", async () => {
+    const { repository } = await loadSeriesMocks()
+    findFirstBroadcast.mockResolvedValue({
+      schedulesType: "now",
+      occurrenceAt: null,
+    })
+    vi.mocked(repository.lockForWrite).mockResolvedValue([series] as never)
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    const result = await broadcastService.resumeSending({
+      workspaceId: "ws-1",
+      broadcastId: "b-1",
+    })
+
+    expect(result).toEqual({ id: "b-1" })
+    expect(repository.lockForWrite).not.toHaveBeenCalled()
+    expect(updateReturning.mock.calls[0][0].values.status).toBe("sending")
+  })
+
+  test("series locks are scoped to the caller's workspace", async () => {
+    const { repository } = await loadSeriesMocks()
+    vi.mocked(repository.lockForWrite).mockResolvedValue([])
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.softDeleteBroadcasts({
+      workspaceId: "ws-1",
+      ids: ["b-1"],
+    })
+
+    expect(repository.lockForWrite).toHaveBeenCalledWith(expect.anything(), {
+      workspaceId: "ws-1",
+      broadcastIds: ["b-1"],
+    })
+  })
+
+  test("deleting a repeating broadcast stops its series and deletes its runs that are not sending", async () => {
+    const { repository, service } = await loadSeriesMocks()
+    vi.mocked(repository.lockForWrite).mockResolvedValue([series] as never)
+    updateReturning.mockResolvedValue([{ id: "b-1" }, { id: "b-2" }])
+
+    const result = await broadcastService.softDeleteBroadcasts({
+      workspaceId: "ws-1",
+      ids: ["b-1", "b-2"],
+    })
+
+    expect(result).toEqual({ deletedCount: 2, requestedCount: 2 })
+    // Series rows are locked before any broadcast row is touched.
+    expect(repository.lockForWrite.mock.invocationCallOrder[0]).toBeLessThan(
+      updateReturning.mock.invocationCallOrder[0],
+    )
+    expect(service.disarm).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ reason: "deleted" }),
+    )
+    const runDeletion = updateWhere.mock.calls.at(-1)?.[0]
+    expect(runDeletion.values.deletedAt).toBeInstanceOf(Date)
+    expect(flatten(runDeletion.condition)).toEqual(
+      expect.arrayContaining([
+        { __inArray: ["broadcast.parentBroadcastId", ["b-1"]] },
+        { __ne: ["broadcast.status", "sending"] },
+      ]),
+    )
+  })
+
+  test("deleting only one-off broadcasts leaves no series work to do", async () => {
+    const { repository, service } = await loadSeriesMocks()
+    vi.mocked(repository.lockForWrite).mockResolvedValue([])
+    updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+    await broadcastService.softDeleteBroadcasts({
+      workspaceId: "ws-1",
+      ids: ["b-1"],
+    })
+
+    expect(service.disarm).not.toHaveBeenCalled()
+    expect(updateWhere).toHaveBeenCalledTimes(1)
   })
 })

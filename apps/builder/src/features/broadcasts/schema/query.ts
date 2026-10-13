@@ -2,7 +2,10 @@ import type { BroadcastModel } from "@chatbotx.io/database/types"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
 import z from "zod"
-import type { BroadcastFilterStatus } from "../lib/broadcast-status"
+import type {
+  BroadcastFilterStatus,
+  BroadcastKind,
+} from "../lib/broadcast-status"
 import { publicBroadcastResource } from "./resource"
 import { broadcastsSearchParsers } from "./search-parsers"
 
@@ -20,10 +23,11 @@ type ParsedBroadcastsSearchParams = Awaited<
 
 export type GetBroadcastsSchema = Omit<
   ParsedBroadcastsSearchParams,
-  "view" | "range" | "date" | "endDate" | "status"
+  "view" | "range" | "date" | "endDate" | "status" | "kind"
 > & {
   workspaceId: string
   status?: BroadcastFilterStatus | null
+  kind?: BroadcastKind | null
 }
 
 export const publicListBroadcastsResponse = z.object({

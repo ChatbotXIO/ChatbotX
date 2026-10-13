@@ -4,6 +4,8 @@ import {
   broadcastSendsTemplate,
   broadcastSubactions,
   channelTypes,
+  isRecurrenceRun,
+  isRecurringTemplate,
   resolveBroadcastSendRatePerMinute,
 } from "@chatbotx.io/database/partials"
 import {
@@ -13,8 +15,10 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { format } from "date-fns"
+import Link from "next/link"
 import { useFormatter, useTranslations } from "next-intl"
 import { useMemo } from "react"
+import { RecurrenceSummary } from "@/components/recurrence/recurrence-summary"
 import { ContactFilterSummary } from "@/features/contact-filter/components/contact-filter-summary"
 import { contactFilterCriteriaSchema } from "@/features/contact-filter/schema"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
@@ -29,6 +33,7 @@ import {
   resolveBroadcastPageNames,
 } from "./lib/broadcast-detail-pages"
 import { resolveBroadcastInboxLabelKey } from "./lib/broadcast-inbox-label"
+import { broadcastRunsHref } from "./lib/broadcast-links"
 import { describeBroadcastAudienceRange } from "./lib/broadcast-send-limit"
 import { resolveBroadcastScheduleTypeMessageKey } from "./lib/schedule-type-options"
 import type { BroadcastResourceWithRelations } from "./schema/resource"
@@ -125,7 +130,13 @@ export function BroadcastDetailDialog({
             />
             <BroadcastDetailField
               label={t("fields.status.label")}
-              value={<BroadcastStatusBadge status={broadcast.status} />}
+              value={
+                <BroadcastStatusBadge
+                  occurrenceAt={broadcast.occurrenceAt}
+                  schedulesType={broadcast.schedulesType}
+                  status={broadcast.status}
+                />
+              }
             />
             <BroadcastDetailField
               label={t("fields.schedule.label")}
@@ -157,6 +168,44 @@ export function BroadcastDetailDialog({
               value={formatter.number(sendRatePerMinute)}
             />
           </div>
+
+          {isRecurringTemplate(broadcast) && broadcast.recurrence && (
+            <section className="space-y-2">
+              <h3 className="font-medium text-sm">
+                {t("broadcasts.detail.schedule")}
+              </h3>
+              <RecurrenceSummary
+                occurrenceCount={broadcast.recurrence.occurrenceCount}
+                rule={broadcast.recurrence.rule}
+                showUpcoming={broadcast.status === "recurring"}
+              />
+              <Link
+                className="text-primary text-sm underline-offset-4 hover:underline"
+                href={broadcastRunsHref(workspaceId, broadcast.id)}
+              >
+                {t("actions.viewRuns")}
+              </Link>
+            </section>
+          )}
+
+          {isRecurrenceRun(broadcast) && broadcast.parent && (
+            <p className="text-sm">
+              {t.rich("broadcasts.detail.runOf", {
+                name: broadcast.parent.name,
+                link: (chunks) => (
+                  <Link
+                    className="text-primary underline-offset-4 hover:underline"
+                    href={broadcastRunsHref(
+                      workspaceId,
+                      broadcast.parent?.id ?? broadcast.id,
+                    )}
+                  >
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </p>
+          )}
 
           <section className="space-y-2">
             <h3 className="font-medium text-sm">

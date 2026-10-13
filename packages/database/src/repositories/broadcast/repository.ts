@@ -9,6 +9,7 @@ import {
   relationsFilterToSQL,
 } from "../../client"
 import {
+  type BroadcastScheduleType,
   type BroadcastStatus,
   withBroadcastTargets,
 } from "../../partials/broadcast"
@@ -33,6 +34,13 @@ export type BroadcastListInput = {
   /** Inclusive bounds on the scheduled send time. */
   scheduledFrom?: Date | null
   scheduledTo?: Date | null
+  /** `false` hides the runs spawned by a repeating broadcast. Defaults to showing them, so existing callers are unchanged. */
+  includeRuns?: boolean | null
+  /** `true` hides the templates of repeating broadcasts (they never send themselves). */
+  excludeTemplates?: boolean | null
+  /** Only the runs spawned by this repeating broadcast. */
+  parentBroadcastId?: string | null
+  schedulesType?: BroadcastScheduleType | null
 }
 
 const buildScheduleWhere = (input: BroadcastListInput) => {
@@ -45,14 +53,47 @@ const buildScheduleWhere = (input: BroadcastListInput) => {
   }
 }
 
+// A template is `schedulesType = recurring` without an `occurrenceAt`; runs are
+// recognised by `occurrenceAt`, which survives the template being purged.
+const buildRecurrenceWhere = (input: BroadcastListInput) => ({
+  occurrenceAt:
+    input.includeRuns === false ? { isNull: true as const } : undefined,
+  OR: input.excludeTemplates
+    ? [
+        { schedulesType: { ne: "recurring" } },
+        { occurrenceAt: { isNotNull: true as const } },
+      ]
+    : undefined,
+})
+
 const buildWhere = (input: BroadcastListInput) => ({
   workspaceId: input.workspaceId,
   name: input.name ? { ilike: likeContains(input.name) } : undefined,
   status: input.status ?? undefined,
   channel: input.channel ?? undefined,
   schedulesAt: buildScheduleWhere(input),
+  schedulesType: input.schedulesType ?? undefined,
+  parentBroadcastId: input.parentBroadcastId ?? undefined,
+  ...buildRecurrenceWhere(input),
   deletedAt: { isNull: true as const },
 })
+
+// The schedule summary and the parent name ride along with a broadcast so
+// neither the list nor the detail needs a second query.
+const withBroadcastRecurrence = {
+  recurrence: {
+    columns: {
+      id: true,
+      rule: true,
+      nextRunAt: true,
+      occurrenceCount: true,
+      lastOccurrenceAt: true,
+      pausedAt: true,
+      endedAt: true,
+    },
+  },
+  parent: { columns: { id: true, name: true } },
+} as const
 
 export const broadcastRepository = {
   /**
@@ -93,6 +134,7 @@ export const broadcastRepository = {
           },
         },
         ...withBroadcastTargets,
+        ...withBroadcastRecurrence,
       },
       ...pagination,
       orderBy,
@@ -169,7 +211,7 @@ export const broadcastRepository = {
 
     return await tx.query.broadcastModel.findFirst({
       where,
-      with: withBroadcastTargets,
+      with: { ...withBroadcastTargets, ...withBroadcastRecurrence },
     })
   },
 }

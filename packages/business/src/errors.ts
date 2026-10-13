@@ -206,6 +206,34 @@ export const workspaceDeletionStartedException = () =>
     409,
   )
 
+/** The request field a broadcast validation failure points at. */
+export type BroadcastValidationField =
+  | "channel"
+  | "subaction"
+  | "flowId"
+  | "templateId"
+  | "targets"
+  | "integrationWhatsappId"
+  | "integrationMessengerId"
+  | "audienceRangeEnd"
+  | "recurrence"
+
+/**
+ * A rejected create/edit payload. Carries the offending field so the app
+ * layer can surface it as a field-level form error instead of a toast.
+ * `code` must stay `"validation"` — `isValidationException`
+ * (`apps/builder/src/lib/errors/validation-exception.ts`) narrows on that
+ * exact code before trusting `.field`.
+ */
+export class BroadcastValidationException extends ChatbotXException {
+  declare readonly field: BroadcastValidationField
+
+  constructor(message: string, field: BroadcastValidationField) {
+    super(message, "validation", 422)
+    this.field = field
+  }
+}
+
 export const notFoundException = (message: string) =>
   new ChatbotXException(message, "notFound", 404)
 

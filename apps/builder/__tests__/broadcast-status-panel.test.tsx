@@ -9,11 +9,15 @@ vi.mock("next-intl", () => ({
 
 const setQuery = vi.fn()
 let currentStatus: string | null = null
+let currentKind: string | null = null
 vi.mock("nuqs", () => ({
   parseAsInteger: { withDefault: () => ({}) },
   parseAsString: {},
   parseAsStringEnum: () => ({ withDefault: () => ({}) }),
-  useQueryStates: () => [{ status: currentStatus, page: 1 }, setQuery],
+  useQueryStates: () => [
+    { status: currentStatus, kind: currentKind, page: 1 },
+    setQuery,
+  ],
 }))
 
 let container: HTMLDivElement | null = null
@@ -40,10 +44,11 @@ afterEach(() => {
   root = null
   setQuery.mockReset()
   currentStatus = null
+  currentKind = null
 })
 
 describe("BroadcastStatusPanel", () => {
-  test("renders All plus the six design filters in order", () => {
+  test("renders All, the six design filters and Repeating in order", () => {
     const el = renderPanel(<BroadcastStatusPanel onOpenChange={vi.fn()} open />)
     const labels = Array.from(el.querySelectorAll("nav button")).map((b) =>
       b.textContent?.trim(),
@@ -56,7 +61,47 @@ describe("BroadcastStatusPanel", () => {
       "broadcasts.status.sent",
       "broadcasts.status.failed",
       "broadcasts.status.cancelled",
+      "broadcasts.status.recurring",
     ])
+  })
+
+  test("Repeating filters by kind, not by status, and is the only active item then", () => {
+    currentKind = "repeating"
+    const el = renderPanel(<BroadcastStatusPanel onOpenChange={vi.fn()} open />)
+    expect(el.querySelectorAll('nav button[aria-pressed="true"]')).toHaveLength(
+      1,
+    )
+    expect(
+      el.querySelector('nav button[aria-pressed="true"]')?.textContent?.trim(),
+    ).toBe("broadcasts.status.recurring")
+
+    const draft = Array.from(el.querySelectorAll("nav button")).find(
+      (b) => b.textContent?.trim() === "broadcasts.status.draft",
+    ) as HTMLButtonElement
+    act(() => {
+      draft.click()
+    })
+    expect(setQuery).toHaveBeenCalledWith({
+      status: "draft",
+      kind: null,
+      page: 1,
+    })
+  })
+
+  test("clicking Repeating clears the status filter", () => {
+    currentStatus = "failed"
+    const el = renderPanel(<BroadcastStatusPanel onOpenChange={vi.fn()} open />)
+    const repeating = Array.from(el.querySelectorAll("nav button")).find(
+      (b) => b.textContent?.trim() === "broadcasts.status.recurring",
+    ) as HTMLButtonElement
+    act(() => {
+      repeating.click()
+    })
+    expect(setQuery).toHaveBeenCalledWith({
+      status: null,
+      kind: "repeating",
+      page: 1,
+    })
   })
 
   test("marks the active filter and resets the page on click", () => {
@@ -72,7 +117,11 @@ describe("BroadcastStatusPanel", () => {
     act(() => {
       draft.click()
     })
-    expect(setQuery).toHaveBeenCalledWith({ status: "draft", page: 1 })
+    expect(setQuery).toHaveBeenCalledWith({
+      status: "draft",
+      kind: null,
+      page: 1,
+    })
   })
 
   test("renders nothing when closed", () => {

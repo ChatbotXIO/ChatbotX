@@ -20,6 +20,7 @@ import {
 import { clearExpiredSupportAccess } from "./handlers/clear-expired-support-access"
 import { dispatchProfileSnapshots } from "./handlers/dispatch-profile-snapshots"
 import { enqueueBroadcast } from "./handlers/enqueue-broadcast"
+import { enqueueRecurringBroadcasts } from "./handlers/enqueue-recurring-broadcasts"
 import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
 import {
   googleAdsHousekeeping,
@@ -80,6 +81,10 @@ async function startScheduleWorker() {
           switch (job.data.type) {
             case ScheduleJobData.enqueueBroadcast:
               await enqueueBroadcast()
+              return
+
+            case ScheduleJobData.enqueueRecurringBroadcasts:
+              await enqueueRecurringBroadcasts()
               return
 
             case ScheduleJobData.prepareBroadcast:

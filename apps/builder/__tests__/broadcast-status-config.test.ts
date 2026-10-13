@@ -2,8 +2,10 @@ import { broadcastStatuses } from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
 import {
   BROADCAST_FILTER_STATUSES,
+  BROADCAST_KINDS,
   broadcastStatusConfig,
   parseBroadcastStatus,
+  resolveBroadcastDisplayState,
 } from "@/features/broadcasts/lib/broadcast-status"
 import { publicBroadcastResource } from "@/features/broadcasts/schema/resource"
 
@@ -30,6 +32,68 @@ describe("broadcastStatusConfig", () => {
       "failed",
       "cancelled",
     ])
+  })
+
+  test("repeating is a kind of broadcast, not a status filter", () => {
+    expect(BROADCAST_KINDS).toEqual(["repeating"])
+    expect(BROADCAST_FILTER_STATUSES).not.toContain("recurring")
+  })
+
+  test("labels the paused and ended states of a repeating broadcast", () => {
+    expect(broadcastStatusConfig.paused.labelKey).toBe(
+      "broadcasts.status.paused",
+    )
+    expect(broadcastStatusConfig.ended.labelKey).toBe("broadcasts.status.ended")
+  })
+})
+
+describe("resolveBroadcastDisplayState", () => {
+  const template = { schedulesType: "recurring", occurrenceAt: null }
+
+  test("a one-off keeps its own status", () => {
+    for (const status of broadcastStatuses.options) {
+      expect(
+        resolveBroadcastDisplayState({
+          status,
+          schedulesType: "future",
+          occurrenceAt: null,
+        }),
+      ).toBe(status)
+    }
+  })
+
+  test("a repeating broadcast reads paused when cancelled and ended when sent", () => {
+    expect(
+      resolveBroadcastDisplayState({ ...template, status: "cancelled" }),
+    ).toBe("paused")
+    expect(resolveBroadcastDisplayState({ ...template, status: "sent" })).toBe(
+      "ended",
+    )
+  })
+
+  test("an active or draft repeating broadcast keeps its status", () => {
+    expect(
+      resolveBroadcastDisplayState({ ...template, status: "recurring" }),
+    ).toBe("recurring")
+    expect(resolveBroadcastDisplayState({ ...template, status: "draft" })).toBe(
+      "draft",
+    )
+  })
+
+  test("a run of a series is an ordinary broadcast", () => {
+    expect(
+      resolveBroadcastDisplayState({
+        status: "cancelled",
+        schedulesType: "recurring",
+        occurrenceAt: new Date("2026-10-16T02:00:00Z"),
+      }),
+    ).toBe("cancelled")
+  })
+
+  test("an unknown status stays null", () => {
+    expect(
+      resolveBroadcastDisplayState({ ...template, status: "nope" }),
+    ).toBeNull()
   })
 })
 

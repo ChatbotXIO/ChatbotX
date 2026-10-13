@@ -27,7 +27,7 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   metaCatalogSyncRunService: { list: mocks.runList, fail: mocks.runFail },
 }))
-vi.mock("@chatbotx.io/integration-meta-catalog", () => ({
+vi.mock("@chatbotx.io/integration-meta-catalog/apis/catalogs", () => ({
   createCatalog: vi.fn(),
   getCatalog: mocks.getCatalog,
   listBusinesses: vi.fn(),

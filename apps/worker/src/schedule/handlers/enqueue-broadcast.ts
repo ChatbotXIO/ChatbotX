@@ -1,5 +1,9 @@
 import { broadcastService } from "@chatbotx.io/business"
-import { ScheduleJobData, scheduleQueue } from "@chatbotx.io/worker-config"
+import {
+  broadcastPrepareJobId,
+  ScheduleJobData,
+  scheduleQueue,
+} from "@chatbotx.io/worker-config"
 import { startOfMinute } from "date-fns"
 
 const ENQUEUE_BULK_SIZE = 500
@@ -29,7 +33,7 @@ export const enqueueBroadcast = async () => {
         },
         opts: {
           // Deduplicate fan-out when the scheduler job retries.
-          jobId: `schedule-prepare-broadcast-${broadcast.id}`,
+          jobId: broadcastPrepareJobId(broadcast.id),
           // A deterministic jobId is a Redis dedup key that outlives ANY
           // terminal state, `failed` included. Without these two the first
           // permanent failure turns the key into a tombstone: every later

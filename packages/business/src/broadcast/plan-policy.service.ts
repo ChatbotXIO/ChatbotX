@@ -87,6 +87,40 @@ class BroadcastPlanPolicyService {
     }
   }
 
+  /**
+   * The single plan gate for activating a broadcast: rejects an over-cap
+   * explicit rate, optionally takes the workspace activation lock and checks
+   * the active-slot cap, and returns the rate to persist. A repeating
+   * broadcast's template passes `checkSlot: false` — only its runs occupy
+   * slots.
+   */
+  async assertActivationAllowed(
+    tx: DatabaseClient,
+    input: {
+      workspaceId: string
+      channel: string
+      restriction: RestrictedBroadcastPlanContext
+      sendRatePerMinute: number | null | undefined
+      excludeBroadcastId?: string
+      checkSlot: boolean
+    },
+  ): Promise<{ sendRatePerMinute: number }> {
+    this.assertSendRateAllowed(input.restriction, input.sendRatePerMinute)
+    if (input.checkSlot) {
+      await this.lockActivation(tx, input.workspaceId)
+      await this.assertActiveSlotAvailable(tx, {
+        workspaceId: input.workspaceId,
+        channel: input.channel,
+        ctx: input.restriction,
+        excludeBroadcastId: input.excludeBroadcastId,
+      })
+    }
+    return this.resolveSendRateOverride(
+      input.restriction,
+      input.sendRatePerMinute,
+    )
+  }
+
   async lockActivation(tx: DatabaseClient, workspaceId: string): Promise<void> {
     const lockKey = `broadcast-activation:${workspaceId}`
     await tx.execute(

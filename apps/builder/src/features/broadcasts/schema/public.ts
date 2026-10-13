@@ -1,16 +1,22 @@
 import { broadcastEventType } from "@chatbotx.io/analytics/schemas"
 import {
+  broadcastOccurrenceOutcomes,
+  broadcastOccurrenceReasons,
+  broadcastScheduleTypes,
   broadcastSendLimitSchema,
   broadcastStatuses,
   broadcastSubactions,
   channelTypes,
   isAudienceRangeOrdered,
+  occurrenceBucketGranularities,
 } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { recurrenceRuleSchema } from "@chatbotx.io/utils/recurrence"
 import { z } from "zod"
 import { strictContactFilter } from "@/features/contacts/schema/public/crud"
 import { publicListRequest } from "@/lib/public-api/list"
 import {
+  broadcastRunDateSchema,
   broadcastTargetSchema,
   createBroadcastFields,
   withBroadcastRules,
@@ -59,6 +65,11 @@ export const publicListBroadcastContactsResponse = z.object({
   pageCount: z.number().int(),
 })
 
+/** A query-string boolean: only the literal `true` / `false` are accepted. */
+const booleanQuery = z
+  .enum(["true", "false"])
+  .transform((value) => value === "true")
+
 export const listBroadcastsPublicRequest = publicListRequest.extend({
   status: broadcastStatuses
     .optional()
@@ -85,6 +96,26 @@ export const listBroadcastsPublicRequest = publicListRequest.extend({
     .optional()
     .describe(
       "Sort order as [{ id, desc }] pairs, e.g. `createdAt`, `schedulesAt`, `name`. Defaults to newest first.",
+    ),
+  schedulesType: broadcastScheduleTypes
+    .optional()
+    .describe(
+      "Restrict to one schedule type. `recurring` lists the repeating broadcasts themselves.",
+    ),
+  parentBroadcastId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Only the runs of this repeating broadcast. Get its id from `broadcasts.list` with `schedulesType: recurring`; combine with `scheduledFrom`/`scheduledTo` for one period.",
+    ),
+  includeRuns: booleanQuery
+    .optional()
+    .describe(
+      "`false` hides the runs of repeating broadcasts, leaving one-offs and the repeating broadcasts. Defaults to `true`.",
+    ),
+  excludeTemplates: booleanQuery
+    .optional()
+    .describe(
+      "`true` hides the repeating broadcasts themselves (they never send on their own), leaving one-offs and runs. Defaults to `false`.",
     ),
 })
 
@@ -225,3 +256,221 @@ export const createBroadcastPublicRequest = withBroadcastRules(
 export type CreateBroadcastPublicRequest = z.infer<
   typeof createBroadcastPublicRequest
 >
+
+export const previewRecurrencePublicRequest = z.object({
+  recurrence: recurrenceRuleSchema.describe(
+    "The repeat rule to preview, the same object `broadcasts.create` takes.",
+  ),
+  count: z
+    .number()
+    .int()
+    .min(1)
+    .max(10)
+    .default(3)
+    .describe("How many upcoming runs to return, 1-10. Defaults to 3."),
+})
+
+export const previewRecurrencePublicResponse = z.object({
+  upcomingRuns: z
+    .array(z.string())
+    .describe("ISO 8601 times of the next runs, soonest first."),
+  timezone: z.string().describe("The IANA timezone the rule runs in."),
+  weekStartsOn: z
+    .literal("monday")
+    .describe("Weeks are ISO weeks, starting on Monday."),
+})
+
+const SKIP_RUNS_PER_CALL_MAX = 100
+
+export const setBroadcastOccurrenceSkippedPublicRequest = z
+  .object({
+    id: zodBigintAsString().describe(
+      "Id of a repeating broadcast. Get it from `broadcasts.list` with `schedulesType: recurring`.",
+    ),
+    dates: z
+      .array(broadcastRunDateSchema)
+      .max(SKIP_RUNS_PER_CALL_MAX)
+      .optional()
+      .describe(
+        "Local dates (YYYY-MM-DD) of the runs, in the broadcast's own timezone (`recurrence.rule.timezone`).",
+      ),
+    occurrenceAts: z
+      .array(z.coerce.date())
+      .max(SKIP_RUNS_PER_CALL_MAX)
+      .optional()
+      .describe(
+        "Runs named by their time (ISO 8601), exactly as listed in `recurrence.upcomingRuns` of `broadcasts.get` or `broadcasts.previewRecurrence`; no timezone conversion needed. Combine with `dates` if you like.",
+      ),
+  })
+  .refine(
+    (input) =>
+      (input.dates?.length ?? 0) + (input.occurrenceAts?.length ?? 0) > 0,
+    { message: "Give at least one date or occurrenceAt.", path: ["dates"] },
+  )
+
+export const setBroadcastOccurrenceSkippedPublicResponse = z.object({
+  excludeDates: z
+    .array(z.string())
+    .describe("All skipped local dates of the series, oldest first."),
+  nextSendAt: z
+    .date()
+    .nullable()
+    .describe(
+      "The next run that will really send; null when paused or only skipped dates remain.",
+    ),
+  upcomingRuns: z
+    .array(z.string())
+    .describe("ISO 8601 times of the next runs that will send."),
+})
+
+const runGranularity = z.enum(occurrenceBucketGranularities)
+
+export const listBroadcastRunGroupsPublicRequest = z.object({
+  idOrName: z
+    .string()
+    .describe(
+      "Id (numeric string) or exact name of a repeating broadcast. Get it from `broadcasts.list` with `schedulesType: recurring`.",
+    ),
+  groupBy: runGranularity
+    .default("day")
+    .describe("Group the slots by local `day`, ISO `week` or `month`."),
+  timezone: z
+    .string()
+    .optional()
+    .describe(
+      "IANA timezone to group in. Defaults to the broadcast's own timezone; an unknown name falls back to it.",
+    ),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(31)
+    .default(31)
+    .describe("Groups per page, 1-31."),
+  cursor: z
+    .string()
+    .optional()
+    .describe("`nextCursor` of the previous page. Omit for the first page."),
+})
+
+const runStatsResource = z
+  .record(z.string(), z.number())
+  .describe(
+    "Recipient counts by event: `message:sent`, `message:delivered`, `message:seen`, `flow:clicked`, `message:failed`.",
+  )
+
+export const listBroadcastRunGroupsPublicResponse = z.object({
+  data: z.array(
+    z.object({
+      periodStart: z
+        .string()
+        .describe("First local day of the group, YYYY-MM-DD."),
+      periodEnd: z
+        .string()
+        .describe("First local day after the group (exclusive)."),
+      periodStartAt: z
+        .string()
+        .describe(
+          "`periodStart` as an ISO 8601 instant (local midnight in `timezone`). Pass it as `from` to `broadcasts.listOccurrences`.",
+        ),
+      periodEndAt: z
+        .string()
+        .describe(
+          "`periodEnd` as an ISO 8601 instant (exclusive). Pass it as `to` to `broadcasts.listOccurrences`; for `broadcasts.list` use the instant just before it as `scheduledTo`, which is inclusive.",
+        ),
+      slotCount: z.number().int().describe("Scheduled slots in the group."),
+      createdCount: z.number().int().describe("Slots that became a run."),
+      skippedCount: z
+        .number()
+        .int()
+        .describe("Slots deliberately not sent (see `reasonCounts`)."),
+      missedCount: z
+        .number()
+        .int()
+        .describe("Slots lost to an outage; a later slot was sent instead."),
+      reasonCounts: z
+        .partialRecord(broadcastOccurrenceReasons, z.number().int())
+        .describe("Skipped and missed slots by reason."),
+      runStateCounts: z
+        .record(z.string(), z.number().int())
+        .describe("Runs by status, e.g. `sent`, `failed`, `scheduled`."),
+      stats: runStatsResource,
+    }),
+  ),
+  nextCursor: z.string().nullable(),
+  totalSlots: z.number().int(),
+  totalRuns: z.number().int().describe("Runs created over the series' life."),
+  timezone: z.string(),
+  weekStartsOn: z.literal("monday"),
+})
+
+export const listBroadcastOccurrencesPublicRequest = z.object({
+  idOrName: z
+    .string()
+    .describe(
+      "Id (numeric string) or exact name of a repeating broadcast. Get it from `broadcasts.list` with `schedulesType: recurring`.",
+    ),
+  from: z.coerce
+    .date()
+    .optional()
+    .describe("Only slots at or after this time (ISO 8601)."),
+  to: z.coerce
+    .date()
+    .optional()
+    .describe("Only slots before this time (ISO 8601)."),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(50)
+    .describe("Slots per page, 1-100."),
+  cursor: z
+    .string()
+    .optional()
+    .describe("`nextCursor` of the previous page. Omit for the first page."),
+})
+
+export const listBroadcastOccurrencesPublicResponse = z.object({
+  data: z.array(
+    z.object({
+      localSlot: z
+        .string()
+        .describe("The slot in the schedule's timezone, `YYYY-MM-DD HH:mm`."),
+      occurrenceAt: z.date().describe("The slot as an instant."),
+      outcome: broadcastOccurrenceOutcomes.describe(
+        "`created`: a run exists. `skipped`: deliberately not sent. `missed`: lost to an outage.",
+      ),
+      reason: broadcastOccurrenceReasons
+        .nullable()
+        .describe(
+          "Why a slot was not sent. `catchUpSuperseded`: the platform was down and a later slot was sent instead. `paused` / `draft`: the schedule was off.",
+        ),
+      latenessMs: z
+        .number()
+        .int()
+        .describe("How long after the slot it was handled."),
+      supersededCount: z
+        .number()
+        .int()
+        .describe(
+          "More than 1 only on a row that stands for several older slots.",
+        ),
+      run: z
+        .object({
+          id: z
+            .string()
+            .describe("The run's broadcast id; works with `broadcasts.get`."),
+          status: z.string(),
+          contactCount: z.number().int().nullable(),
+          isStalled: z
+            .boolean()
+            .describe("Still `scheduled` long after its slot."),
+          stats: runStatsResource.optional(),
+        })
+        .nullable()
+        .describe("The run this slot created; null when it was not sent."),
+    }),
+  ),
+  nextCursor: z.string().nullable(),
+})

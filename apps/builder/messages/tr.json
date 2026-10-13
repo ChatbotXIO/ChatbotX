@@ -154,7 +154,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "Çalıştırmaları gör",
+    "editSchedule": "Programı düzenle"
   },
   "errors": {
     "superAdminRequired": "Bunu yapmak için çalışma alanı süper yöneticisi olmanız gerekir."
@@ -367,7 +369,10 @@
       "sending": "Gönderiliyor",
       "cancelled": "İptal Edildi",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "Tekrarlayan",
+      "paused": "Duraklatıldı",
+      "ended": "Sona erdi"
     },
     "stats": {
       "sent": "Gönderildi",
@@ -451,7 +456,9 @@
       "audienceFilter": "Hedef kitle filtresi",
       "noAudienceFilter": "Hedef kitle filtresi yok",
       "template": "Şablon",
-      "integration": "Entegrasyon"
+      "integration": "Entegrasyon",
+      "schedule": "Tekrar programı",
+      "runOf": "<link>{name}</link> çalıştırması"
     },
     "filters": {
       "all": "All"
@@ -500,15 +507,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "Programı düzenle",
+      "templateDescription": "\"{name}\" duraklatılır ve programını değiştirebilmeniz için taslaklara taşınır."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "Tekrarlayan yayını duraklat",
+      "templateDescription": "\"{name}\" yeni çalıştırma oluşturmayı durdurur. Zaten gönderilmekte olan çalıştırma devam eder. Daha sonra devam ettirebilirsiniz; duraklatma sırasındaki çalıştırmalar atlanır."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "\"{name}\" bir sonraki planlanan zamandan itibaren yeniden tekrarlanır. Duraklatma sırasındaki çalıştırmalar atlandı."
     },
     "planLimitDialog": {
       "title": "Planınızı yükseltin",
@@ -526,6 +538,63 @@
       "toLabel": "Bitiş",
       "allPlaceholder": "Tümü",
       "rangeEndBeforeStart": "Bitiş konumu başlangıç konumundan önce olamaz"
+    },
+    "recurring": {
+      "nextRun": "Sonraki çalıştırma {when}",
+      "paused": "Duraklatıldı",
+      "ended": "Sona erdi {when} · {count, plural, one {# çalıştırma} other {# çalıştırma}}",
+      "runs": "{count, plural, one {# çalıştırma} other {# çalıştırma}}",
+      "noUpcomingSends": "Başka gönderim yok — kalan tarihler atlanıyor"
+    },
+    "runs": {
+      "back": "Tekrarlayan yayınlar",
+      "pausedNotice": "{when} tarihinden beri duraklatıldı. Duraklatma sırasındaki çalıştırmalar atlanır.",
+      "groupBy": "Çalıştırmaları grupla",
+      "grouping": {
+        "day": "Gün",
+        "week": "Hafta",
+        "month": "Ay"
+      },
+      "totals": "{runs, plural, one {# çalıştırma} other {# çalıştırma}} ({slots, plural, one {# zamanlama} other {# zamanlama}})",
+      "error": "Çalıştırmalar yüklenemedi.",
+      "retry": "Tekrar dene",
+      "empty": "Henüz çalıştırma yok. İlki bir sonraki planlanan zamanda başlar.",
+      "loadMore": "Daha fazla yükle",
+      "weekOf": "{date} haftası",
+      "groupSummary": "{created, plural, one {# çalıştırma} other {# çalıştırma}}{missed, plural, =0 {} other { · # kaçırıldı}}{skipped, plural, =0 {} other { · # atlandı}}",
+      "deliveredRate": "{rate} iletildi",
+      "notSent": "Gönderilmedi — {reason}",
+      "earlierSlots": "{count, plural, one {# önceki zamanlama} other {# önceki zamanlama}} kaçırıldı",
+      "stalled": "Takıldı",
+      "lateByMinutes": "{count, plural, one {# dakika gecikme} other {# dakika gecikme}}",
+      "lateByHours": "{count, plural, one {# saat gecikme} other {# saat gecikme}}",
+      "recipients": "{count, plural, one {# alıcı} other {# alıcı}}",
+      "reasons": {
+        "catchUpSuperseded": "platform çalışmıyordu; bunun yerine sonraki çalıştırma gönderildi",
+        "paused": "program duraklatılmıştı",
+        "draft": "yayın düzenleniyordu",
+        "blockedOwner": "hesap engellendi",
+        "planLimit": "plan sınırına ulaşıldı",
+        "noTargets": "göndermek için sayfa yok",
+        "undeliverable": "akış veya şablon kullanılamıyor",
+        "excludedDate": "Atlanan tarih"
+      },
+      "outcomes": {
+        "created": "Gönderildi",
+        "skipped": "Atlandı",
+        "missed": "Kaçırıldı"
+      },
+      "upcoming": {
+        "title": "Yaklaşan gönderimler",
+        "empty": "Yaklaşan gönderim yok",
+        "skip": "Atla",
+        "restore": "Geri yükle",
+        "skippedBadge": "Atlandı",
+        "skipped": "{date} atlandı",
+        "restored": "{date} geri yüklendi",
+        "undo": "Geri al",
+        "error": "Bu gönderim artık değiştirilemez"
+      }
     }
   },
   "commentAutomation": {
@@ -1926,7 +1995,8 @@
     "schedule": {
       "label": "Planlama",
       "now": "Şimdi",
-      "scheduled": "Daha sonrası için planla"
+      "scheduled": "Daha sonrası için planla",
+      "recurring": "Tekrarla"
     },
     "inputFieldId": {
       "label": "Girdi Özel Alanı"
@@ -8031,6 +8101,47 @@
         "rate_limited": "Çok fazla yükleme. Biraz bekleyip tekrar deneyin.",
         "upload_failed": "Dosya yüklenemedi. Tekrar deneyin."
       }
+    }
+  },
+  "recurrence": {
+    "title": "Tekrarla",
+    "every": "Şu aralıkla tekrarla:",
+    "unit": "{count, plural, one {{frequency, select, daily {gün} weekly {hafta} monthly {ay} other {}}} other {{frequency, select, daily {gün} weekly {hafta} monthly {ay} other {}}}}",
+    "weekdays": "Tekrarlanacak günler",
+    "time": "Saat",
+    "timezone": "Saat dilimi",
+    "noTimezone": "Saat dilimi bulunamadı",
+    "searchTimezone": "Saat dilimi ara…",
+    "startsOn": "Başlangıç",
+    "end": {
+      "label": "Bitiş",
+      "never": "Hiçbir zaman",
+      "onDate": "Tarihinde",
+      "after": "Şundan sonra:",
+      "pickDate": "Tarih seç",
+      "occurrences": "{count, plural, one {kez} other {kez}}"
+    },
+    "monthDay": {
+      "label": "Ayın günü",
+      "day": "{day}. gün",
+      "last": "Son gün",
+      "hint": "Daha kısa aylarda gönderim son günde yapılır."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {Her {frequency, select, daily {gün} weekly {hafta} monthly {ay} other {}}} other {Her # {frequency, select, daily {gün} weekly {hafta} monthly {ay} other {}}}}{frequency, select, weekly { {weekdays} günleri} monthly { {monthDay, select, last {ayın son günü} other {ayın {monthDay}. günü}}} other {}} saat {time} ({timezone}), {startsOn} tarihinden itibaren{endKind, select, onDate {, {endDate} tarihinde biter} afterOccurrences {, {endCount, plural, one {# kez} other {# kez}} sonra biter} other {}}"
+    },
+    "firstRunLater": "İlk gönderim {when}, çünkü bugünün saati geçti.",
+    "nextRuns": "Sonraki gönderimler",
+    "noUpcomingRuns": "Yaklaşan gönderim yok.",
+    "skipping": "{dates} atlanıyor{more, plural, =0 {} one { (+# daha)} other { (+# daha)}}",
+    "excludeDates": {
+      "label": "Tarihleri atla",
+      "hint": "Bu tarihlerde gönderim yapılmaz. Seri devam eder.",
+      "add": "Tarih ekle",
+      "remove": "{date} tarihini kaldır",
+      "showAll": "{count} tane daha göster",
+      "showLess": "Daha az göster",
+      "clearAll": "Tümünü temizle"
     }
   }
 }

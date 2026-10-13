@@ -25,6 +25,7 @@ import {
   type BroadcastStatus,
   type BroadcastSubaction,
   type BroadcastTerminalStatus,
+  broadcastScheduleTypes,
   broadcastSendsFlow,
   broadcastSendsTemplate,
   broadcastStatuses,
@@ -35,6 +36,7 @@ import {
   hasDuplicateBroadcastTarget,
   hasFlowAndTemplate,
   isAudienceRangeOrdered,
+  isRecurringTemplate,
   isTargetsFlowSendWithoutFlow,
   isTargetsTemplateSendWithoutTemplate,
   isTemplateSendWithoutPage,
@@ -56,6 +58,7 @@ import {
 } from "@chatbotx.io/database/queries"
 import {
   type BroadcastListInput,
+  broadcastRecurrenceRepository,
   broadcastRepository,
 } from "@chatbotx.io/database/repositories"
 import {
@@ -72,6 +75,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import type {
   BroadcastModel,
+  BroadcastRecurrenceModel,
   BroadcastTargetModel,
   ConversationModel,
   FlowModel,
@@ -92,21 +96,30 @@ import {
 } from "@chatbotx.io/flow-config"
 import { casStore } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
+import type { RecurrenceRule } from "@chatbotx.io/utils/recurrence"
 import { startOfMinute } from "date-fns"
+import type { PgUpdateSetSource } from "drizzle-orm/pg-core"
 import { BaseService } from "../base.service"
 import {
   mapStatsContactRow,
   type StatsContactRow,
 } from "../contact-inbox/map-stats-contact-row"
 import { contactInboxService } from "../contact-inbox/service"
-import { ChatbotXException, notFoundException } from "../errors"
+import {
+  BroadcastValidationException,
+  type BroadcastValidationField,
+  ChatbotXException,
+  notFoundException,
+} from "../errors"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
+import { buildDerivedBroadcastValues, copyBroadcastTargets } from "./derive"
 import {
   broadcastPlanPolicyService,
   type RestrictedBroadcastPlanContext,
 } from "./plan-policy.service"
+import { broadcastRecurrenceService } from "./recurrence.service"
 import type {
   BroadcastAudienceInput,
   BroadcastAudiencePreviewRow,
@@ -114,6 +127,8 @@ import type {
 } from "./schema"
 
 const DEFAULT_BROADCAST_NAME = "Broadcast"
+/** Next runs shown on a repeating broadcast's detail. */
+const UPCOMING_RUNS_IN_DETAIL = 3
 const DEFAULT_CHUNK_SIZE = 1000
 const OPTION_LIST_LIMIT = 500
 const CALENDAR_LIST_LIMIT = 500
@@ -200,6 +215,7 @@ const NO_TARGET_CONTEXT: BroadcastTargetContext = { inboxes: [], flows: [] }
  */
 export type BroadcastDraftRow = BroadcastModel & {
   targets: BroadcastTargetModel[]
+  recurrence: Pick<BroadcastRecurrenceModel, "rule" | "occurrenceCount"> | null
   integrationWhatsapp: Pick<IntegrationWhatsappModel, "inboxId"> | null
   integrationMessenger: Pick<IntegrationMessengerModel, "inboxId"> | null
 }
@@ -238,6 +254,8 @@ export type UpdateDraftBroadcastData = {
   subaction: BroadcastSubaction
   schedulesType: BroadcastScheduleType
   schedulesAt: string | null
+  /** The repeat rule; present if and only if `schedulesType` is `recurring`. */
+  recurrence?: RecurrenceRule | null
   contactFilter?: ContactFilterCriteriaInput | null
   saveAsDraft?: boolean
 } & BroadcastSendLimit
@@ -291,32 +309,8 @@ const buildStoredTemplateData = (input: {
     ? { ...input.templateData, buttons: input.buttons ?? [] }
     : null
 
-/** The request field a broadcast validation failure points at. */
-export type BroadcastValidationField =
-  | "channel"
-  | "subaction"
-  | "flowId"
-  | "templateId"
-  | "targets"
-  | "integrationWhatsappId"
-  | "integrationMessengerId"
-  | "audienceRangeEnd"
-
-/**
- * A rejected create/edit payload. Carries the offending field so the app
- * layer can surface it as a field-level form error instead of a toast.
- * `code` must stay `"validation"` — `isValidationException`
- * (`apps/builder/src/lib/errors/validation-exception.ts`) narrows on that
- * exact code before trusting `.field`.
- */
-export class BroadcastValidationException extends ChatbotXException {
-  readonly field: BroadcastValidationField
-
-  constructor(message: string, field: BroadcastValidationField) {
-    super(message, "validation", 422)
-    this.field = field
-  }
-}
+export type { BroadcastValidationField } from "../errors"
+export { BroadcastValidationException } from "../errors"
 
 type BroadcastPayloadRule = {
   violated: boolean
@@ -422,6 +416,10 @@ const isContactFilterShape = (
   })
 }
 
+/** A repeating broadcast cannot be armed without its rule. */
+const repeatSettingsRequired = () =>
+  new BroadcastValidationException("Repeat settings are required", "recurrence")
+
 class BroadcastService extends BaseService {
   private async activateWithinPlan<T>(
     tx: DatabaseClient,
@@ -434,22 +432,11 @@ class BroadcastService extends BaseService {
     },
     write: (override: { sendRatePerMinute: number }) => Promise<T>,
   ): Promise<T> {
-    broadcastPlanPolicyService.assertSendRateAllowed(
-      input.restriction,
-      input.sendRatePerMinute,
-    )
-    await broadcastPlanPolicyService.lockActivation(tx, input.workspaceId)
-    await broadcastPlanPolicyService.assertActiveSlotAvailable(tx, {
-      workspaceId: input.workspaceId,
-      channel: input.channel,
-      ctx: input.restriction,
-      excludeBroadcastId: input.excludeBroadcastId,
-    })
     return await write(
-      broadcastPlanPolicyService.resolveSendRateOverride(
-        input.restriction,
-        input.sendRatePerMinute,
-      ),
+      await broadcastPlanPolicyService.assertActivationAllowed(tx, {
+        ...input,
+        checkSlot: true,
+      }),
     )
   }
 
@@ -495,7 +482,21 @@ class BroadcastService extends BaseService {
       broadcastRepository.count(input),
     ])
 
-    return { data, pageCount: Math.ceil(total / pagination.limit) }
+    return {
+      data: data.map((row) => ({
+        ...row,
+        recurrence:
+          isRecurringTemplate(row) && row.recurrence
+            ? {
+                ...row.recurrence,
+                nextSendAt: broadcastRecurrenceService.nextSendAtOf(
+                  row.recurrence,
+                ),
+              }
+            : null,
+      })),
+      pageCount: Math.ceil(total / pagination.limit),
+    }
   }
 
   /**
@@ -556,7 +557,26 @@ class BroadcastService extends BaseService {
       throw notFoundException("Broadcast not found")
     }
 
-    return broadcast
+    // A one-off edited from a repeating draft keeps its disarmed series row;
+    // it must not present a schedule it no longer follows.
+    const { recurrence } = broadcast
+    if (!(recurrence && isRecurringTemplate(broadcast))) {
+      return { ...broadcast, recurrence: null }
+    }
+    return {
+      ...broadcast,
+      recurrence: {
+        ...recurrence,
+        nextSendAt: broadcastRecurrenceService.nextSendAtOf(recurrence),
+        upcomingRuns: recurrence.nextRunAt
+          ? broadcastRecurrenceService.upcomingRunsOf(
+              recurrence,
+              new Date(),
+              UPCOMING_RUNS_IN_DETAIL,
+            )
+          : [],
+      },
+    }
   }
 
   /**
@@ -823,6 +843,74 @@ class BroadcastService extends BaseService {
     return rows.length > 0
   }
 
+  /**
+   * The restriction a repeating broadcast's TEMPLATE is checked against. Only
+   * the send rate applies — a template never occupies an active slot, its runs
+   * do — so no activation lock or slot count is taken for it.
+   */
+  private async resolveTemplateRestriction(
+    workspaceId: string,
+    channel: string,
+  ): Promise<RestrictedBroadcastPlanContext | null> {
+    return broadcastPlanPolicyService.appliesToChannel(channel)
+      ? broadcastPlanPolicyService.restrictionFor(
+          await broadcastPlanPolicyService.resolveForWorkspace(workspaceId),
+          channel,
+        )
+      : null
+  }
+
+  /**
+   * Arms a repeating broadcast's series and flips its template to `recurring`
+   * with the next run as its schedule. The caller has already stored the rule
+   * (which locks the series row) so the lock order — series row, then broadcast
+   * row — holds.
+   */
+  private async activateRecurringTemplate(
+    tx: DatabaseClient,
+    input: {
+      workspaceId: string
+      where: SQL | undefined
+      broadcast: {
+        id: string
+        channel: string
+        sendRatePerMinute: number | null
+      }
+      /** The rate the caller submitted; `undefined` keeps the stored one. */
+      submittedSendRate?: number | null
+      recurrence: BroadcastRecurrenceModel
+      restriction: RestrictedBroadcastPlanContext | null
+    },
+  ): Promise<BroadcastModel> {
+    const now = await broadcastRecurrenceRepository.selectDbNow(tx)
+    const armed = await broadcastRecurrenceService.arm(tx, {
+      recurrence: input.recurrence,
+      workspaceId: input.workspaceId,
+      channel: input.broadcast.channel,
+      sendRatePerMinute: resolveActivationSendRate({
+        submitted: input.submittedSendRate,
+        stored: input.broadcast.sendRatePerMinute,
+      }),
+      restriction: input.restriction,
+      now,
+    })
+    const [row] = await tx
+      .update(broadcastModel)
+      .set({
+        status: broadcastStatuses.enum.recurring,
+        schedulesType: broadcastScheduleTypes.enum.recurring,
+        schedulesAt: armed.nextRunAt,
+        ...(armed.sendRateOverride ??
+          resolveSubmittedSendRatePatch(input.submittedSendRate)),
+      })
+      .where(input.where)
+      .returning()
+    if (!row) {
+      throw new ChatbotXException("Broadcast is not a draft")
+    }
+    return row
+  }
+
   /** Shared workspace + draft-status scope reused by scheduleDraft and updateDraft. */
   private draftScope(workspaceId: string, broadcastId: string) {
     return and(
@@ -858,7 +946,12 @@ class BroadcastService extends BaseService {
     schedulesType: BroadcastScheduleType
     schedulesAt: Date
     sendRatePerMinute?: number | null
+    /** Replaces the saved repeat rule; omit to keep it. Only for `recurring`. */
+    recurrence?: RecurrenceRule
   }): Promise<{ id: string }> {
+    if (input.schedulesType === broadcastScheduleTypes.enum.recurring) {
+      return await this.scheduleRecurringDraft(input)
+    }
     const planContext = await broadcastPlanPolicyService.resolveForWorkspace(
       input.workspaceId,
     )
@@ -960,6 +1053,82 @@ class BroadcastService extends BaseService {
   }
 
   /**
+   * `draft` -> `recurring`: stores the rule (or keeps the saved one), arms the
+   * series and makes the next run the template's schedule. Nothing is sent now.
+   */
+  private async scheduleRecurringDraft(input: {
+    workspaceId: string
+    broadcastId: string
+    sendRatePerMinute?: number | null
+    recurrence?: RecurrenceRule
+  }): Promise<{ id: string }> {
+    // A run of another series is never itself repeated: it would be armed but
+    // never recognised as a template, and stay `recurring` with no next run.
+    const scope = and(
+      this.draftScope(input.workspaceId, input.broadcastId),
+      isNull(broadcastModel.occurrenceAt),
+    )
+
+    const row = await db.transaction(async (tx) => {
+      // Unlocked existence check: the series row must be locked BEFORE the
+      // broadcast row, and the guarded UPDATE below still rejects a stale draft.
+      const [draft] = await tx
+        .select({
+          id: broadcastModel.id,
+          channel: broadcastModel.channel,
+          sendRatePerMinute: broadcastModel.sendRatePerMinute,
+          targetMode: broadcastModel.targetMode,
+        })
+        .from(broadcastModel)
+        .where(scope)
+        .limit(1)
+      if (!draft) {
+        throw new ChatbotXException("Broadcast is not a draft")
+      }
+
+      const recurrence = input.recurrence
+        ? await broadcastRecurrenceService.upsertRule(tx, {
+            workspaceId: input.workspaceId,
+            broadcastId: draft.id,
+            rule: input.recurrence,
+          })
+        : (
+            await broadcastRecurrenceRepository.lockForWrite(tx, {
+              workspaceId: input.workspaceId,
+              broadcastIds: [draft.id],
+            })
+          )[0]
+      if (!recurrence) {
+        throw repeatSettingsRequired()
+      }
+
+      await this.dropUndeliverableTargets(tx, draft)
+      return await this.activateRecurringTemplate(tx, {
+        workspaceId: input.workspaceId,
+        where: scope,
+        broadcast: draft,
+        submittedSendRate: input.sendRatePerMinute,
+        recurrence,
+        restriction: await this.resolveTemplateRestriction(
+          input.workspaceId,
+          draft.channel,
+        ),
+      })
+    })
+
+    await this.auditRecurrenceStarted(row.id)
+    return { id: row.id }
+  }
+
+  /** Every path that arms a series records the same entry. */
+  private async auditRecurrenceStarted(broadcastId: string): Promise<void> {
+    await this.audit(
+      "broadcast_recurrence_started",
+      `started a repeating broadcast (#${broadcastId})`,
+    )
+  }
+
+  /**
    * Removes a targets-mode broadcast's rows that can deliver nothing — neither
    * a template nor a flow — so an unconfigured page is skipped at send time
    * instead of failing every recipient on it. Throws rather than schedule a
@@ -1003,6 +1172,56 @@ class BroadcastService extends BaseService {
   }
 
   /**
+   * One status transition of a repeating broadcast's TEMPLATE. Locks the series
+   * row first, then moves the broadcast row with a guarded UPDATE; a miss
+   * throws, which rolls the lock back. The caller finishes the series side
+   * (arm / disarm) with the returned rows.
+   */
+  private async transitionRecurringTemplate(
+    tx: DatabaseClient,
+    input: {
+      workspaceId: string
+      broadcastId: string
+      from: readonly BroadcastStatus[]
+      set: PgUpdateSetSource<typeof broadcastModel>
+      failure: string
+    },
+  ) {
+    const [recurrence] = await broadcastRecurrenceRepository.lockForWrite(tx, {
+      workspaceId: input.workspaceId,
+      broadcastIds: [input.broadcastId],
+    })
+    if (!recurrence) {
+      throw new ChatbotXException(input.failure)
+    }
+    const [row] = await tx
+      .update(broadcastModel)
+      .set(input.set)
+      .where(
+        and(
+          eq(broadcastModel.id, input.broadcastId),
+          eq(broadcastModel.workspaceId, input.workspaceId),
+          inArray(broadcastModel.status, [...input.from]),
+          eq(
+            broadcastModel.schedulesType,
+            broadcastScheduleTypes.enum.recurring,
+          ),
+          isNull(broadcastModel.occurrenceAt),
+          isNull(broadcastModel.deletedAt),
+        ),
+      )
+      .returning({
+        id: broadcastModel.id,
+        channel: broadcastModel.channel,
+        sendRatePerMinute: broadcastModel.sendRatePerMinute,
+      })
+    if (!row) {
+      throw new ChatbotXException(input.failure)
+    }
+    return { recurrence, row }
+  }
+
+  /**
    * `scheduled` -> `draft`. Bumps `resumeCount` (the dispatch epoch) so a
    * still-running stale `prepareBroadcast` for the old schedule loses its
    * pinned promotion UPDATE if this round-trips back through `scheduleDraft`.
@@ -1020,12 +1239,21 @@ class BroadcastService extends BaseService {
         resumeCount: sql`${broadcastModel.resumeCount} + 1`,
       })
       .where(
-        this.transitionScope(input.workspaceId, input.broadcastId, "scheduled"),
+        and(
+          this.transitionScope(
+            input.workspaceId,
+            input.broadcastId,
+            "scheduled",
+          ),
+          // A run belongs to its series' schedule; as a draft it would vanish
+          // from the list, so only the series itself can be unscheduled.
+          isNull(broadcastModel.occurrenceAt),
+        ),
       )
       .returning({ id: broadcastModel.id })
 
     if (!row) {
-      throw new ChatbotXException("Broadcast is no longer scheduled")
+      return await this.moveRecurringToDraft(input)
     }
 
     await this.audit(
@@ -1036,7 +1264,39 @@ class BroadcastService extends BaseService {
     return row
   }
 
-  /** `sending` -> `cancelled`. */
+  /** A repeating broadcast, running or paused, back to an editable draft; its series is stopped. */
+  private async moveRecurringToDraft(input: {
+    workspaceId: string
+    broadcastId: string
+  }): Promise<{ id: string }> {
+    const row = await db.transaction(async (tx) => {
+      const moved = await this.transitionRecurringTemplate(tx, {
+        ...input,
+        from: [
+          broadcastStatuses.enum.recurring,
+          broadcastStatuses.enum.cancelled,
+        ],
+        set: {
+          status: broadcastStatuses.enum.draft,
+          resumeCount: sql`${broadcastModel.resumeCount} + 1`,
+        },
+        failure: "Broadcast is no longer scheduled",
+      })
+      await broadcastRecurrenceService.disarm(tx, {
+        recurrence: moved.recurrence,
+        reason: "draft",
+        now: await broadcastRecurrenceRepository.selectDbNow(tx),
+      })
+      return moved.row
+    })
+    await this.audit(
+      "broadcast_moved_to_draft",
+      `moved broadcast (#${row.id}) to draft`,
+    )
+    return { id: row.id }
+  }
+
+  /** `sending` -> `cancelled`; a repeating broadcast is paused instead (`recurring` -> `cancelled`). */
   async stopSending(input: {
     workspaceId: string
     broadcastId: string
@@ -1050,12 +1310,35 @@ class BroadcastService extends BaseService {
       .returning({ id: broadcastModel.id })
 
     if (!row) {
-      throw new ChatbotXException("Broadcast is not in progress")
+      return await this.pauseRecurringTemplate(input)
     }
 
     await this.audit("broadcast_stopped", `stopped a broadcast (#${row.id})`)
 
     return row
+  }
+
+  /** Pauses a repeating broadcast: no new runs start, a run already sending carries on. */
+  private async pauseRecurringTemplate(input: {
+    workspaceId: string
+    broadcastId: string
+  }): Promise<{ id: string }> {
+    const row = await db.transaction(async (tx) => {
+      const paused = await this.transitionRecurringTemplate(tx, {
+        ...input,
+        from: [broadcastStatuses.enum.recurring],
+        set: { status: broadcastStatuses.enum.cancelled },
+        failure: "Broadcast is not in progress",
+      })
+      await broadcastRecurrenceService.disarm(tx, {
+        recurrence: paused.recurrence,
+        reason: "paused",
+        now: await broadcastRecurrenceRepository.selectDbNow(tx),
+      })
+      return paused.row
+    })
+    await this.audit("broadcast_stopped", `paused a broadcast (#${row.id})`)
+    return { id: row.id }
   }
 
   /**
@@ -1077,7 +1360,11 @@ class BroadcastService extends BaseService {
     workspaceId: string
     broadcastId: string
     sendRatePerMinute?: number | null
-  }): Promise<{ id: string }> {
+  }): Promise<{ id: string; nextRunAt?: Date }> {
+    const resumedSeries = await this.resumeRecurringTemplate(input)
+    if (resumedSeries) {
+      return resumedSeries
+    }
     const planContext = await broadcastPlanPolicyService.resolveForWorkspace(
       input.workspaceId,
     )
@@ -1155,6 +1442,54 @@ class BroadcastService extends BaseService {
   }
 
   /**
+   * Re-arms a paused repeating broadcast. Returns null when the broadcast is
+   * not a repeating one, so the one-off resume path takes over. Slots that
+   * elapsed during the pause are not sent — they are accounted as skipped.
+   */
+  private async resumeRecurringTemplate(input: {
+    workspaceId: string
+    broadcastId: string
+    sendRatePerMinute?: number | null
+  }): Promise<{ id: string; nextRunAt: Date } | null> {
+    // Routed on the broadcast itself, not on whether a series row exists: a
+    // one-off edited from a repeating draft keeps its (disarmed) series row.
+    const broadcast = await db.query.broadcastModel.findFirst({
+      where: {
+        id: input.broadcastId,
+        workspaceId: input.workspaceId,
+        deletedAt: { isNull: true },
+      },
+      columns: { schedulesType: true, occurrenceAt: true },
+    })
+    if (!(broadcast && isRecurringTemplate(broadcast))) {
+      return null
+    }
+    const result = await db.transaction(async (tx) => {
+      const resumed = await this.transitionRecurringTemplate(tx, {
+        workspaceId: input.workspaceId,
+        broadcastId: input.broadcastId,
+        from: [broadcastStatuses.enum.cancelled],
+        set: { status: broadcastStatuses.enum.recurring },
+        failure: "Broadcast is not stopped",
+      })
+      const row = await this.activateRecurringTemplate(tx, {
+        workspaceId: input.workspaceId,
+        where: eq(broadcastModel.id, resumed.row.id),
+        broadcast: resumed.row,
+        submittedSendRate: input.sendRatePerMinute,
+        recurrence: resumed.recurrence,
+        restriction: await this.resolveTemplateRestriction(
+          input.workspaceId,
+          resumed.row.channel,
+        ),
+      })
+      return { id: row.id, nextRunAt: row.schedulesAt }
+    })
+    await this.audit("broadcast_resumed", `resumed a broadcast (#${result.id})`)
+    return result
+  }
+
+  /**
    * Soft-deletes broadcasts by stamping `deletedAt`. A `sending` broadcast
    * can never be soft-deleted (the `purgeBroadcasts` hard-delete path assumes
    * recipients are no longer being actively dispatched), so it is silently
@@ -1170,18 +1505,30 @@ class BroadcastService extends BaseService {
       return { deletedCount: 0, requestedCount: 0 }
     }
 
-    const rows = await db
-      .update(broadcastModel)
-      .set({ deletedAt: new Date() })
-      .where(
-        and(
-          eq(broadcastModel.workspaceId, input.workspaceId),
-          inArray(broadcastModel.id, input.ids),
-          ne(broadcastModel.status, broadcastStatuses.enum.sending),
-          isNull(broadcastModel.deletedAt),
-        ),
-      )
-      .returning({ id: broadcastModel.id })
+    const rows = await db.transaction(async (tx) => {
+      // Series rows first (lock order), so a delete never races a run being created.
+      const series = await broadcastRecurrenceRepository.lockForWrite(tx, {
+        workspaceId: input.workspaceId,
+        broadcastIds: input.ids,
+      })
+      const deleted = await tx
+        .update(broadcastModel)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(
+            eq(broadcastModel.workspaceId, input.workspaceId),
+            inArray(broadcastModel.id, input.ids),
+            ne(broadcastModel.status, broadcastStatuses.enum.sending),
+            isNull(broadcastModel.deletedAt),
+          ),
+        )
+        .returning({ id: broadcastModel.id })
+      await this.retireDeletedSeries(tx, {
+        deletedIds: deleted.map((row) => row.id),
+        series,
+      })
+      return deleted
+    })
 
     // Some requested ids can be silently skipped (already deleted, foreign,
     // or `sending`) — only audit when something actually changed.
@@ -1190,6 +1537,46 @@ class BroadcastService extends BaseService {
     }
 
     return { deletedCount: rows.length, requestedCount }
+  }
+
+  /** Deleting a repeating broadcast stops its series and deletes the runs that are not sending. */
+  private async retireDeletedSeries(
+    tx: DatabaseClient,
+    input: {
+      deletedIds: string[]
+      series: Awaited<
+        ReturnType<typeof broadcastRecurrenceRepository.lockForWrite>
+      >
+    },
+  ): Promise<void> {
+    const deleted = new Set(input.deletedIds)
+    const retired = input.series.filter((recurrence) =>
+      deleted.has(recurrence.broadcastId),
+    )
+    if (retired.length === 0) {
+      return
+    }
+    const now = await broadcastRecurrenceRepository.selectDbNow(tx)
+    for (const recurrence of retired) {
+      await broadcastRecurrenceService.disarm(tx, {
+        recurrence,
+        reason: "deleted",
+        now,
+      })
+    }
+    await tx
+      .update(broadcastModel)
+      .set({ deletedAt: now })
+      .where(
+        and(
+          inArray(
+            broadcastModel.parentBroadcastId,
+            retired.map((recurrence) => recurrence.broadcastId),
+          ),
+          ne(broadcastModel.status, broadcastStatuses.enum.sending),
+          isNull(broadcastModel.deletedAt),
+        ),
+      )
   }
 
   /**
@@ -1259,6 +1646,7 @@ class BroadcastService extends BaseService {
       },
       with: {
         targets: true,
+        recurrence: { columns: { rule: true, occurrenceCount: true } },
         integrationWhatsapp: { columns: { inboxId: true } },
         integrationMessenger: { columns: { inboxId: true } },
       },
@@ -1314,9 +1702,14 @@ class BroadcastService extends BaseService {
       data: resolved,
       context,
     })
-    const status = resolved.saveAsDraft
-      ? broadcastStatuses.enum.draft
-      : broadcastStatuses.enum.scheduled
+    const isRecurring =
+      resolved.schedulesType === broadcastScheduleTypes.enum.recurring
+    // A repeating broadcast is inserted as a draft and flipped to `recurring`
+    // by its activation, so it can never be picked up as a one-off send.
+    const status =
+      resolved.saveAsDraft || isRecurring
+        ? broadcastStatuses.enum.draft
+        : broadcastStatuses.enum.scheduled
 
     const insert = async (
       tx: DatabaseClient,
@@ -1334,11 +1727,18 @@ class BroadcastService extends BaseService {
         .returning()
 
       await this.replaceTargets(tx, inserted.id, resolved.targets ?? [])
-      return inserted
+      return isRecurring
+        ? await this.attachRecurrence(tx, {
+            workspaceId,
+            broadcast: inserted,
+            rule: resolved.recurrence,
+            activate: !resolved.saveAsDraft,
+          })
+        : inserted
     }
 
     const restriction =
-      !resolved.saveAsDraft &&
+      !(resolved.saveAsDraft || isRecurring) &&
       broadcastPlanPolicyService.appliesToChannel(resolved.channel)
         ? broadcastPlanPolicyService.restrictionFor(
             await broadcastPlanPolicyService.resolveForWorkspace(workspaceId),
@@ -1369,8 +1769,48 @@ class BroadcastService extends BaseService {
     if (resolved.schedulesType === "now" && !resolved.saveAsDraft) {
       await this.audit("launch", `launched a broadcast (#${broadcast.id})`)
     }
+    if (resolved.schedulesType === "recurring" && !resolved.saveAsDraft) {
+      await this.auditRecurrenceStarted(broadcast.id)
+    }
 
     return broadcast
+  }
+
+  /**
+   * Stores the rule of a freshly inserted repeating broadcast and, unless it is
+   * only a draft, arms it. The broadcast row is new and unpublished here, so no
+   * other transaction can contend for it.
+   */
+  private async attachRecurrence(
+    tx: DatabaseClient,
+    input: {
+      workspaceId: string
+      broadcast: BroadcastModel
+      rule: RecurrenceRule | null | undefined
+      activate: boolean
+    },
+  ): Promise<BroadcastModel> {
+    if (!input.rule) {
+      throw repeatSettingsRequired()
+    }
+    const recurrence = await broadcastRecurrenceService.upsertRule(tx, {
+      workspaceId: input.workspaceId,
+      broadcastId: input.broadcast.id,
+      rule: input.rule,
+    })
+    if (!input.activate) {
+      return input.broadcast
+    }
+    return await this.activateRecurringTemplate(tx, {
+      workspaceId: input.workspaceId,
+      where: eq(broadcastModel.id, input.broadcast.id),
+      broadcast: input.broadcast,
+      recurrence,
+      restriction: await this.resolveTemplateRestriction(
+        input.workspaceId,
+        input.broadcast.channel,
+      ),
+    })
   }
 
   /**
@@ -1449,21 +1889,7 @@ class BroadcastService extends BaseService {
     tx: DatabaseClient,
     input: { sourceBroadcastId: string; broadcastId: string },
   ): Promise<void> {
-    const targets = await tx.query.broadcastTargetModel.findMany({
-      where: { broadcastId: input.sourceBroadcastId },
-    })
-    if (targets.length === 0) {
-      return
-    }
-    await tx.insert(broadcastTargetModel).values(
-      targets.map(({ inboxId, flowId, templateId, templateData }) => ({
-        broadcastId: input.broadcastId,
-        inboxId,
-        flowId,
-        templateId,
-        templateData,
-      })),
-    )
+    await copyBroadcastTargets(tx, input)
   }
 
   /**
@@ -1531,11 +1957,32 @@ class BroadcastService extends BaseService {
         sourceBroadcastId: source.id,
         broadcastId: clone.id,
       })
+      await this.copyRecurrenceRule(tx, { source, cloneId: clone.id })
       return clone
     })
     // Audited here (not in the UI action) so the token path leaves a record too.
     await this.audit("create", `cloned a broadcast (#${cloned.id})`)
     return cloned
+  }
+
+  /** A cloned repeating broadcast keeps its rule as a draft (disarmed); a clone of a run is a plain draft. */
+  private async copyRecurrenceRule(
+    tx: DatabaseClient,
+    input: { source: BroadcastModel; cloneId: string },
+  ): Promise<void> {
+    if (!isRecurringTemplate(input.source)) {
+      return
+    }
+    const series = await broadcastRecurrenceRepository.findByBroadcastId(tx, {
+      broadcastId: input.source.id,
+    })
+    if (series) {
+      await broadcastRecurrenceRepository.insertIfMissing(tx, {
+        workspaceId: input.source.workspaceId,
+        broadcastId: input.cloneId,
+        rule: series.rule,
+      })
+    }
   }
 
   /**
@@ -1608,12 +2055,17 @@ class BroadcastService extends BaseService {
       data,
       context,
     })
-    const status = data.saveAsDraft
-      ? broadcastStatuses.enum.draft
-      : broadcastStatuses.enum.scheduled
+    const isRecurring =
+      data.schedulesType === broadcastScheduleTypes.enum.recurring
+    let status: BroadcastStatus = broadcastStatuses.enum.scheduled
+    if (data.saveAsDraft) {
+      status = broadcastStatuses.enum.draft
+    } else if (isRecurring) {
+      status = broadcastStatuses.enum.recurring
+    }
 
     const planContext =
-      !data.saveAsDraft &&
+      !(data.saveAsDraft || isRecurring) &&
       broadcastPlanPolicyService.appliesToChannel(data.channel)
         ? await broadcastPlanPolicyService.resolveForWorkspace(workspaceId)
         : null
@@ -1622,6 +2074,16 @@ class BroadcastService extends BaseService {
       : null
 
     const row = await db.transaction(async (tx) => {
+      if (isRecurring) {
+        return await this.updateRecurringDraft(tx, {
+          workspaceId,
+          broadcastId: input.broadcastId,
+          data,
+          derivedName,
+          canViewEmailAndPhone: input.canViewEmailAndPhone,
+        })
+      }
+
       const write = async (override?: { sendRatePerMinute: number }) => {
         const [updated] = await tx
           .update(broadcastModel)
@@ -1684,10 +2146,78 @@ class BroadcastService extends BaseService {
     ) {
       await this.audit("launch", `launched a broadcast (#${row.id})`)
     }
+    if (status === broadcastStatuses.enum.recurring) {
+      await this.auditRecurrenceStarted(row.id)
+    }
 
     // `status` is the value we just wrote, so it needs no unsafe narrowing of
     // the `text`-widened enum column that `.returning()` would hand back.
     return { id: row.id, status }
+  }
+
+  /** The `updateDraft` write for a repeating broadcast: store the rule first (it locks the series), then the draft, then arm. */
+  private async updateRecurringDraft(
+    tx: DatabaseClient,
+    input: {
+      workspaceId: string
+      broadcastId: string
+      data: UpdateDraftBroadcastData
+      derivedName: string
+      canViewEmailAndPhone: boolean
+    },
+  ): Promise<{ id: string }> {
+    const { workspaceId, broadcastId, data } = input
+    // See `scheduleRecurringDraft`: a run is never turned into a series.
+    const scope = and(
+      this.draftScope(workspaceId, broadcastId),
+      isNull(broadcastModel.occurrenceAt),
+    )
+    if (!data.recurrence) {
+      throw repeatSettingsRequired()
+    }
+
+    // Unlocked check first: the series row is locked before the broadcast row.
+    const [draft] = await tx
+      .select({ id: broadcastModel.id })
+      .from(broadcastModel)
+      .where(scope)
+      .limit(1)
+    if (!draft) {
+      throw new ChatbotXException("Broadcast is not a draft")
+    }
+    const recurrence = await broadcastRecurrenceService.upsertRule(tx, {
+      workspaceId,
+      broadcastId,
+      rule: data.recurrence,
+    })
+
+    const [updated] = await tx
+      .update(broadcastModel)
+      .set({
+        name: sql`COALESCE(NULLIF(BTRIM(${broadcastModel.name}), ''), ${input.derivedName})`,
+        status: broadcastStatuses.enum.draft,
+        ...this.buildBroadcastColumns(data, input.canViewEmailAndPhone),
+      })
+      .where(scope)
+      .returning()
+    if (!updated) {
+      throw new ChatbotXException("Broadcast is not a draft")
+    }
+    await this.replaceTargets(tx, updated.id, data.targets ?? [])
+
+    if (data.saveAsDraft) {
+      return updated
+    }
+    return await this.activateRecurringTemplate(tx, {
+      workspaceId,
+      where: eq(broadcastModel.id, updated.id),
+      broadcast: updated,
+      recurrence,
+      restriction: await this.resolveTemplateRestriction(
+        workspaceId,
+        updated.channel,
+      ),
+    })
   }
 
   /**
@@ -1743,6 +2273,14 @@ class BroadcastService extends BaseService {
         violated: isTemplateSendWithoutPage(data),
         message: "Select the page the template belongs to",
         field: "targets",
+      },
+      {
+        violated:
+          (data.schedulesType === broadcastScheduleTypes.enum.recurring) !==
+          Boolean(data.recurrence),
+        message:
+          "Repeat settings are required for a repeating broadcast, and only for one",
+        field: "recurrence",
       },
       {
         violated: !isAudienceRangeOrdered(data),
@@ -2014,6 +2552,7 @@ class BroadcastService extends BaseService {
     from: Date
     to: Date
     status?: BroadcastStatus
+    schedulesType?: BroadcastScheduleType
     name?: string
   }): Promise<BroadcastCalendarRow[]> {
     return await db.query.broadcastModel.findMany({
@@ -2021,8 +2560,23 @@ class BroadcastService extends BaseService {
         workspaceId: input.workspaceId,
         schedulesAt: { gte: input.from, lte: input.to },
         status: input.status,
+        schedulesType: input.schedulesType,
         name: input.name ? { ilike: likeContains(input.name) } : undefined,
         deletedAt: { isNull: true },
+        // A paused or ended series keeps its last `schedulesAt`, a time at
+        // which nothing will run; only a live series is a calendar event.
+        OR: [
+          { schedulesType: { ne: broadcastScheduleTypes.enum.recurring } },
+          { occurrenceAt: { isNotNull: true } },
+          {
+            status: {
+              notIn: [
+                broadcastStatuses.enum.cancelled,
+                broadcastStatuses.enum.sent,
+              ],
+            },
+          },
+        ],
       },
       with: {
         flow: { columns: { id: true, name: true } },
@@ -2462,7 +3016,10 @@ class BroadcastService extends BaseService {
         deletedAt: { isNull: true },
       },
     })
-    if (broadcast.status !== "sent" && broadcast.status !== "failed") {
+    if (
+      (broadcast.status !== "sent" && broadcast.status !== "failed") ||
+      isRecurringTemplate(broadcast)
+    ) {
       throw new ChatbotXException("Broadcast is not sent")
     }
     return broadcast
@@ -2504,25 +3061,17 @@ class BroadcastService extends BaseService {
     ) => {
       const inserted = await tx
         .insert(broadcastModel)
-        .values({
-          workspaceId: input.workspaceId,
-          flowId: broadcast.flowId,
-          integrationWhatsappId: broadcast.integrationWhatsappId,
-          integrationMessengerId: broadcast.integrationMessengerId,
-          channel: broadcast.channel,
-          subaction: broadcast.subaction,
-          templateId: broadcast.templateId,
-          templateData: broadcast.templateData,
-          targetMode: broadcast.targetMode,
-          status: "scheduled",
-          schedulesType: "now",
-          schedulesAt: new Date(),
-          contactFilter,
-          ...normalizeBroadcastSendLimit(broadcast),
-          name: `${broadcast.name} (Resend)`,
-          id: createId(),
-          ...override,
-        })
+        .values(
+          buildDerivedBroadcastValues(broadcast, {
+            name: `${broadcast.name} (Resend)`,
+            id: createId(),
+            status: "scheduled",
+            schedulesType: "now",
+            schedulesAt: new Date(),
+            contactFilter,
+            ...override,
+          }),
+        )
         .returning()
         .then((result) => result[0])
 

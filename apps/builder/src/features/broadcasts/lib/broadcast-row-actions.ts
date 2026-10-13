@@ -1,9 +1,13 @@
-import type { BroadcastStatus } from "@chatbotx.io/database/partials"
+import {
+  type BroadcastStatus,
+  isRecurringTemplate,
+} from "@chatbotx.io/database/partials"
 import {
   CalendarClockIcon,
   CircleStopIcon,
   CopyIcon,
   EyeIcon,
+  HistoryIcon,
   type LucideIcon,
   PencilIcon,
   PlayIcon,
@@ -16,6 +20,7 @@ import { parseBroadcastStatus } from "./broadcast-status"
 
 export const BROADCAST_ROW_ACTION_VARIANTS = [
   "view",
+  "viewRuns",
   "rename",
   "clone",
   "edit",
@@ -29,9 +34,14 @@ export const BROADCAST_ROW_ACTION_VARIANTS = [
 export type BroadcastRowActionVariant =
   (typeof BROADCAST_ROW_ACTION_VARIANTS)[number]
 
+/** `editSchedule` is how a repeating broadcast's `moveToDraft` reads. */
+export type BroadcastRowActionLabelKey =
+  | `actions.${BroadcastRowActionVariant}`
+  | "actions.editSchedule"
+
 type BroadcastRowActionItem = {
   icon: LucideIcon
-  labelKey: `actions.${BroadcastRowActionVariant}`
+  labelKey: BroadcastRowActionLabelKey
 }
 
 /**
@@ -44,6 +54,7 @@ export const ROW_ACTION_ITEMS: Record<
   BroadcastRowActionItem
 > = {
   view: { icon: EyeIcon, labelKey: "actions.view" },
+  viewRuns: { icon: HistoryIcon, labelKey: "actions.viewRuns" },
   rename: { icon: PencilIcon, labelKey: "actions.rename" },
   clone: { icon: CopyIcon, labelKey: "actions.clone" },
   edit: { icon: SquarePenIcon, labelKey: "actions.edit" },
@@ -78,9 +89,24 @@ export const ROW_ACTIONS_BY_STATUS: Record<
 > = {
   draft: [...DEFAULT_ROW_ACTIONS, "edit", "schedule", "delete"],
   scheduled: [...DEFAULT_ROW_ACTIONS, "moveToDraft", "delete"],
+  // A repeating broadcast is paused with `stop`; `moveToDraft` stops it so the
+  // schedule can be edited.
+  recurring: [
+    ...DEFAULT_ROW_ACTIONS,
+    "viewRuns",
+    "moveToDraft",
+    "stop",
+    "delete",
+  ],
   sending: [...DEFAULT_ROW_ACTIONS, "stop"],
-  cancelled: [...DEFAULT_ROW_ACTIONS, "resume", "delete"],
-  sent: [...DEFAULT_ROW_ACTIONS, "resend", "delete"],
+  cancelled: [
+    ...DEFAULT_ROW_ACTIONS,
+    "viewRuns",
+    "moveToDraft",
+    "resume",
+    "delete",
+  ],
+  sent: [...DEFAULT_ROW_ACTIONS, "viewRuns", "resend", "delete"],
   failed: [...DEFAULT_ROW_ACTIONS, "resend", "delete"],
 }
 
@@ -99,6 +125,9 @@ export const getBroadcastRowActions = (
 /** The subset of a broadcast row a `ROW_ACTION_GUARDS` predicate needs. */
 export type BroadcastRowActionGuardRow = {
   contactCount: number | null
+  status: string
+  schedulesType: string
+  occurrenceAt: Date | null
 }
 
 /**
@@ -112,7 +141,13 @@ export type BroadcastRowActionGuardRow = {
  * cancelled before `prepareBroadcast` ever ran (e.g. workspace-teardown
  * cleanup of a `scheduled` broadcast) and has no recipients to resume —
  * mirrors the `contactCount IS NOT NULL` guard in
- * `broadcastService.resumeSending`.
+ * `broadcastService.resumeSending`. A paused repeating broadcast never has
+ * recipients of its own, so it resumes regardless.
+ *
+ * `viewRuns`, a repeating broadcast only. `moveToDraft` on a `cancelled` row is
+ * likewise only a paused repeating broadcast ("Edit schedule"); a cancelled
+ * one-off has no draft to return to. `resend` is never offered for a template,
+ * which sends nothing itself.
  */
 export const ROW_ACTION_GUARDS: Partial<
   Record<
@@ -120,8 +155,20 @@ export const ROW_ACTION_GUARDS: Partial<
     (row: BroadcastRowActionGuardRow) => boolean
   >
 > = {
-  resume: (row) => row.contactCount !== null,
+  resume: (row) => row.contactCount !== null || isRecurringTemplate(row),
+  viewRuns: isRecurringTemplate,
+  resend: (row) => !isRecurringTemplate(row),
+  moveToDraft: (row) => row.status !== "cancelled" || isRecurringTemplate(row),
 }
+
+/** The menu label of an action for a row: a repeating broadcast edits its schedule. */
+export const resolveBroadcastRowActionLabelKey = (
+  variant: BroadcastRowActionVariant,
+  row: BroadcastRowActionGuardRow,
+): BroadcastRowActionLabelKey =>
+  variant === "moveToDraft" && isRecurringTemplate(row)
+    ? "actions.editSchedule"
+    : ROW_ACTION_ITEMS[variant].labelKey
 
 /**
  * Filters row-action variants against their `ROW_ACTION_GUARDS` predicate
