@@ -11,6 +11,7 @@ import {
   sendAccountCredentials,
 } from "@chatbotx.io/mail"
 import { generateRandomString, hashPassword } from "better-auth/crypto"
+import { isPlaceholderEmail } from "./placeholder-email"
 
 const TEMP_PASSWORD_LENGTH = 16
 
@@ -48,6 +49,17 @@ export async function provisionResellerAccount(
 ): Promise<ProvisionResellerAccountResult> {
   const { resellerUserId, email, name } = input
   const livemode = input.livemode ?? false
+
+  // The Facebook placeholder domain belongs to phone-only Facebook users; a
+  // verified row on it would capture that person's Facebook sign-in while the
+  // reseller's temporary password keeps working.
+  if (isPlaceholderEmail(email)) {
+    throw new ChatbotXException(
+      "Email address is reserved and cannot be provisioned",
+      "invalidEmail",
+      400,
+    )
+  }
 
   // 1. Resolve the reseller's OWN SMTP credential first. `findDecryptedForUser`
   //    (not `resolveForOwner`) deliberately skips the platform fallback so a

@@ -23,12 +23,17 @@ import type { SmtpTransportOptions } from "@chatbotx.io/mail/transport"
 import { createId, getPublicOriginFromRequest } from "@chatbotx.io/utils"
 import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
+import { createAuthMiddleware } from "better-auth/api"
 import { nextCookies } from "better-auth/next-js"
 import { anonymous, bearer, magicLink, oneTimeToken } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { env, getBrokerUrl } from "./keys"
 import { logger } from "./logger"
+import {
+  isPlaceholderEmail,
+  mapFacebookProfileToUser,
+} from "./placeholder-email"
 import { getTenantId, resolveTenantOwnerId } from "./tenant-context"
 
 const getTenantSettings = async (request: Request) => {
@@ -356,17 +361,17 @@ function buildSocialProviders(
     return
   }
 
-  const providers: Partial<
-    Record<
-      SocialProvider,
-      {
-        enabled: true
-        redirectURI: string
-        scope?: string[]
-        disableDefaultScope?: boolean
-      } & SocialAuthCredential
-    >
-  > = {}
+  type ProviderOptions = {
+    enabled: true
+    redirectURI: string
+    scope?: string[]
+    disableDefaultScope?: boolean
+  } & SocialAuthCredential
+  const providers: Partial<Record<SocialProvider, ProviderOptions>> & {
+    facebook?: ProviderOptions & {
+      mapProfileToUser?: typeof mapFacebookProfileToUser
+    }
+  } = {}
   const pinnedOrigin = new URL(redirectOrigin ?? getBrokerUrl()).origin
   for (const provider of SOCIAL_PROVIDERS) {
     const credential = socialCredentials[provider]
@@ -391,6 +396,14 @@ function buildSocialProviders(
         // source of truth regardless of the provider's internal defaults.
         ...(scope && { scope, disableDefaultScope: true }),
       }
+    }
+  }
+  if (providers.facebook) {
+    // A phone-only Facebook account returns no email; without this
+    // better-auth aborts the callback with `email_not_found`.
+    providers.facebook = {
+      ...providers.facebook,
+      mapProfileToUser: mapFacebookProfileToUser,
     }
   }
 
@@ -478,6 +491,23 @@ function buildDatabaseHooks({
     },
   }
 }
+
+/**
+ * The Facebook placeholder domain is reserved for phone-only Facebook users
+ * (see `placeholder-email.ts`); nobody may register it by hand, or they could
+ * pre-create the row a Facebook sign-in later resolves to by email.
+ */
+const rejectPlaceholderEmailSignUp = createAuthMiddleware((ctx) => {
+  if (
+    ctx.path === "/sign-up/email" &&
+    isPlaceholderEmail((ctx.body as { email?: unknown } | undefined)?.email)
+  ) {
+    return Promise.reject(
+      new APIError("BAD_REQUEST", { message: "Invalid email" }),
+    )
+  }
+  return Promise.resolve()
+})
 
 export function createAuth(config: AuthConfig) {
   const socialProviders = buildSocialProviders(
@@ -570,10 +600,16 @@ export function createAuth(config: AuthConfig) {
       },
     },
     socialProviders,
+    hooks: {
+      before: rejectPlaceholderEmailSignUp,
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
       sendResetPassword: async ({ user, url }, request) => {
+        if (isPlaceholderEmail(user.email)) {
+          return
+        }
         if (!request) {
           throw new APIError(400, {
             message: "Unknown request",
@@ -617,6 +653,9 @@ export function createAuth(config: AuthConfig) {
     },
     emailVerification: {
       sendVerificationEmail: async ({ user, url }, request) => {
+        if (isPlaceholderEmail(user.email)) {
+          return
+        }
         if (!request) {
           throw new APIError(400, {
             message: "Unknown request",
@@ -665,6 +704,9 @@ export function createAuth(config: AuthConfig) {
     plugins: [
       magicLink({
         sendMagicLink: async ({ email, url }, request) => {
+          if (isPlaceholderEmail(email)) {
+            return
+          }
           if (!request) {
             throw new APIError(400, {
               message: "Unknown request",

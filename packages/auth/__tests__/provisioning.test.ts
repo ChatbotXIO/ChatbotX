@@ -102,6 +102,20 @@ beforeEach(() => {
 })
 
 describe("provisionResellerAccount", () => {
+  test("refuses the Facebook placeholder domain before touching anything", async () => {
+    await expect(
+      provisionResellerAccount({
+        resellerUserId: "owner-1",
+        email: "fb-42@facebook.placeholder.invalid",
+        name: "Customer",
+      }),
+    ).rejects.toMatchObject({ code: "invalidEmail" })
+
+    expect(findDecryptedForUser).not.toHaveBeenCalled()
+    expect(insertValues).not.toHaveBeenCalled()
+    expect(sendAccountCredentials).not.toHaveBeenCalled()
+  })
+
   test("hard-fails before creating anything when the reseller has no SMTP credential", async () => {
     findDecryptedForUser.mockResolvedValue(undefined)
 
