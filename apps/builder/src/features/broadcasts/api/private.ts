@@ -4,12 +4,23 @@ import {
   listBroadcastContactsRequest,
   listBroadcastContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
-import { broadcastService } from "@chatbotx.io/business"
+import {
+  broadcastRecurrenceService,
+  broadcastService,
+} from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import {
+  listBroadcastOccurrencesPublicRequest,
+  listBroadcastOccurrencesPublicResponse,
+  listBroadcastRunGroupsPublicRequest,
+  listBroadcastRunGroupsPublicResponse,
+  previewRecurrencePublicRequest,
+  previewRecurrencePublicResponse,
+} from "../schema/public"
 
 const selectOptionResource = z.object({
   id: z.string(),
@@ -71,7 +82,71 @@ const listBroadcastTemplateDetailsResponse = z.array(
   broadcastTemplateDetailResource,
 )
 
+const workspaceScoped = z.object({ workspaceId: z.string() })
+
 export const broadcastPrivateAPIs = {
+  // The same service methods as the public `previewRecurrence`, `listRunGroups`
+  // and `listOccurrences`: the builder shows exactly what an agent reads.
+  privatePreviewBroadcastRecurrenceAPI: authorizedAPI
+    .route({
+      method: "POST",
+      path: "/workspaces/{workspaceId}/broadcasts/preview-recurrence",
+      summary: "Preview repeat rule",
+      tags: ["Broadcasts"],
+    })
+    .input(workspaceScoped.extend(previewRecurrencePublicRequest.shape))
+    .output(previewRecurrencePublicResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(({ input }) =>
+      broadcastRecurrenceService.previewUpcoming({
+        rule: input.recurrence,
+        count: input.count,
+        now: new Date(),
+      }),
+    ),
+
+  privateListBroadcastRunGroupsAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/broadcasts/{idOrName}/run-groups",
+      summary: "List repeating broadcast runs by period",
+      tags: ["Broadcasts"],
+    })
+    .input(workspaceScoped.extend(listBroadcastRunGroupsPublicRequest.shape))
+    .output(listBroadcastRunGroupsPublicResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(({ input }) =>
+      broadcastRecurrenceService.listRunGroups({
+        workspaceId: input.workspaceId,
+        idOrName: input.idOrName,
+        granularity: input.groupBy,
+        timezone: input.timezone,
+        limit: input.limit,
+        cursor: input.cursor,
+      }),
+    ),
+
+  privateListBroadcastOccurrencesAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/broadcasts/{idOrName}/occurrences",
+      summary: "List repeating broadcast slots",
+      tags: ["Broadcasts"],
+    })
+    .input(workspaceScoped.extend(listBroadcastOccurrencesPublicRequest.shape))
+    .output(listBroadcastOccurrencesPublicResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(({ input }) =>
+      broadcastRecurrenceService.listOccurrences({
+        workspaceId: input.workspaceId,
+        idOrName: input.idOrName,
+        from: input.from,
+        to: input.to,
+        limit: input.limit,
+        cursor: input.cursor,
+      }),
+    ),
+
   privateListBroadcastOptionsAPI: authorizedAPI
     .route({
       method: "GET",

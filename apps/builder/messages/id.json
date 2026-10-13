@@ -154,7 +154,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "Lihat eksekusi",
+    "editSchedule": "Ubah jadwal"
   },
   "errors": {
     "superAdminRequired": "Anda harus menjadi super admin workspace untuk melakukan ini."
@@ -367,7 +369,10 @@
       "sending": "Mengirim",
       "cancelled": "Dibatalkan",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "Berulang",
+      "paused": "Dijeda",
+      "ended": "Berakhir"
     },
     "stats": {
       "sent": "Terkirim",
@@ -451,7 +456,9 @@
       "audienceFilter": "Filter audiens",
       "noAudienceFilter": "Tanpa filter audiens",
       "template": "Template",
-      "integration": "Integrasi"
+      "integration": "Integrasi",
+      "schedule": "Jadwal pengulangan",
+      "runOf": "Eksekusi dari <link>{name}</link>"
     },
     "filters": {
       "all": "All"
@@ -500,15 +507,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "Ubah jadwal",
+      "templateDescription": "\"{name}\" dijeda dan dipindahkan kembali ke draf agar Anda dapat mengubah jadwalnya."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "Jeda siaran berulang",
+      "templateDescription": "\"{name}\" berhenti membuat eksekusi baru. Eksekusi yang sedang mengirim tetap berjalan. Anda dapat melanjutkan nanti; eksekusi selama jeda dilewati."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "\"{name}\" berulang kembali mulai waktu terjadwal berikutnya. Eksekusi selama jeda telah dilewati."
     },
     "planLimitDialog": {
       "title": "Tingkatkan paket Anda",
@@ -526,6 +538,63 @@
       "toLabel": "Sampai",
       "allPlaceholder": "Semua",
       "rangeEndBeforeStart": "Posisi akhir tidak boleh sebelum posisi awal"
+    },
+    "recurring": {
+      "nextRun": "Eksekusi berikutnya {when}",
+      "paused": "Dijeda",
+      "ended": "Berakhir {when} · {count, plural, one {# eksekusi} other {# eksekusi}}",
+      "runs": "{count, plural, one {# eksekusi} other {# eksekusi}}",
+      "noUpcomingSends": "Tidak ada pengiriman lagi — tanggal yang tersisa dilewati"
+    },
+    "runs": {
+      "back": "Siaran berulang",
+      "pausedNotice": "Dijeda sejak {when}. Eksekusi selama jeda dilewati.",
+      "groupBy": "Kelompokkan eksekusi per",
+      "grouping": {
+        "day": "Hari",
+        "week": "Minggu",
+        "month": "Bulan"
+      },
+      "totals": "{runs, plural, one {# eksekusi} other {# eksekusi}} dari {slots, plural, one {# slot} other {# slot}}",
+      "error": "Gagal memuat eksekusi.",
+      "retry": "Coba lagi",
+      "empty": "Belum ada eksekusi. Yang pertama dimulai pada waktu terjadwal berikutnya.",
+      "loadMore": "Muat lainnya",
+      "weekOf": "Minggu {date}",
+      "groupSummary": "{created, plural, one {# eksekusi} other {# eksekusi}}{missed, plural, =0 {} other { · # terlewat}}{skipped, plural, =0 {} other { · # dilewati}}",
+      "deliveredRate": "{rate} terkirim",
+      "notSent": "Tidak terkirim — {reason}",
+      "earlierSlots": "{count, plural, one {# slot sebelumnya terlewat} other {# slot sebelumnya terlewat}}",
+      "stalled": "Tertahan",
+      "lateByMinutes": "{count, plural, one {Terlambat # menit} other {Terlambat # menit}}",
+      "lateByHours": "{count, plural, one {Terlambat # jam} other {Terlambat # jam}}",
+      "recipients": "{count, plural, one {# penerima} other {# penerima}}",
+      "reasons": {
+        "catchUpSuperseded": "platform sedang tidak aktif; eksekusi yang lebih baru dikirim sebagai gantinya",
+        "paused": "jadwal sedang dijeda",
+        "draft": "siaran sedang diedit",
+        "blockedOwner": "akun diblokir",
+        "planLimit": "batas paket tercapai",
+        "noTargets": "tidak ada halaman untuk mengirim",
+        "undeliverable": "alur atau templat tidak tersedia",
+        "excludedDate": "Tanggal dilewati"
+      },
+      "outcomes": {
+        "created": "Terkirim",
+        "skipped": "Dilewati",
+        "missed": "Terlewat"
+      },
+      "upcoming": {
+        "title": "Pengiriman mendatang",
+        "empty": "Tidak ada pengiriman mendatang",
+        "skip": "Lewati",
+        "restore": "Pulihkan",
+        "skippedBadge": "Dilewati",
+        "skipped": "{date} dilewati",
+        "restored": "{date} dipulihkan",
+        "undo": "Urungkan",
+        "error": "Pengiriman ini tidak dapat diubah lagi"
+      }
     }
   },
   "commentAutomation": {
@@ -1780,7 +1849,8 @@
     "schedule": {
       "label": "Jadwal",
       "now": "Sekarang",
-      "scheduled": "Jadwalkan untuk nanti"
+      "scheduled": "Jadwalkan untuk nanti",
+      "recurring": "Ulangi"
     },
     "inputFieldId": {
       "label": "Custom Field Input"
@@ -8031,6 +8101,47 @@
         "rate_limited": "Terlalu banyak unggahan. Tunggu sebentar lalu coba lagi.",
         "upload_failed": "File tidak dapat diunggah. Coba lagi."
       }
+    }
+  },
+  "recurrence": {
+    "title": "Ulangi",
+    "every": "Ulangi setiap",
+    "unit": "{count, plural, one {{frequency, select, daily {hari} weekly {minggu} monthly {bulan} other {}}} other {{frequency, select, daily {hari} weekly {minggu} monthly {bulan} other {}}}}",
+    "weekdays": "Ulangi pada",
+    "time": "Waktu",
+    "timezone": "Zona waktu",
+    "noTimezone": "Zona waktu tidak ditemukan",
+    "searchTimezone": "Cari zona waktu…",
+    "startsOn": "Mulai",
+    "end": {
+      "label": "Berakhir",
+      "never": "Tidak pernah",
+      "onDate": "Pada",
+      "after": "Setelah",
+      "pickDate": "Pilih tanggal",
+      "occurrences": "{count, plural, one {kali} other {kali}}"
+    },
+    "monthDay": {
+      "label": "Tanggal dalam bulan",
+      "day": "Tanggal {day}",
+      "last": "Hari terakhir",
+      "hint": "Pada bulan yang lebih pendek, pengiriman dilakukan pada hari terakhir."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {Setiap {frequency, select, daily {hari} weekly {minggu} monthly {bulan} other {}}} other {Setiap # {frequency, select, daily {hari} weekly {minggu} monthly {bulan} other {}}}}{frequency, select, weekly { pada {weekdays}} monthly { pada {monthDay, select, last {hari terakhir} other {tanggal {monthDay}}}} other {}} pukul {time} ({timezone}), mulai {startsOn}{endKind, select, onDate {, berakhir pada {endDate}} afterOccurrences {, berakhir setelah {endCount, plural, one {# kali} other {# kali}}} other {}}"
+    },
+    "firstRunLater": "Pengiriman pertama adalah {when}, karena waktu hari ini sudah lewat.",
+    "nextRuns": "Pengiriman berikutnya",
+    "noUpcomingRuns": "Tidak ada pengiriman mendatang.",
+    "skipping": "Melewati {dates}{more, plural, =0 {} one { (+# lagi)} other { (+# lagi)}}",
+    "excludeDates": {
+      "label": "Lewati tanggal",
+      "hint": "Tidak ada pengiriman pada tanggal ini. Seri tetap berjalan.",
+      "add": "Tambah tanggal",
+      "remove": "Hapus {date}",
+      "showAll": "Tampilkan {count} lagi",
+      "showLess": "Tampilkan lebih sedikit",
+      "clearAll": "Hapus semua"
     }
   }
 }

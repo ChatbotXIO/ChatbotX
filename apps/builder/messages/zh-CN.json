@@ -158,7 +158,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "查看运行记录",
+    "editSchedule": "编辑计划"
   },
   "activeCampaign": {
     "automations": {
@@ -717,7 +719,9 @@
       "noAudienceFilter": "无受众过滤器",
       "subaction": "子操作",
       "template": "范本",
-      "title": "广播详细信息"
+      "title": "广播详细信息",
+      "schedule": "重复计划",
+      "runOf": "<link>{name}</link> 的运行"
     },
     "flowType": {
       "flow": {
@@ -781,7 +785,10 @@
       "sending": "正在发送",
       "sent": "已发送",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "重复",
+      "paused": "已暂停",
+      "ended": "已结束"
     },
     "telegramAllContacts": {
       "description": "如果您想向您的Telegram 联系人发送广播，请使用此消息类型。",
@@ -847,15 +854,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "编辑计划",
+      "templateDescription": "“{name}”将被暂停并移回草稿，以便您修改计划。"
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "暂停重复广播",
+      "templateDescription": "“{name}”将不再创建新的运行。已在发送的运行会继续。您可以稍后恢复；暂停期间的运行会被跳过。"
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "“{name}”将从下一个计划时间起重新重复。暂停期间的运行已被跳过。"
     },
     "planLimitDialog": {
       "title": "升级您的套餐",
@@ -873,6 +885,63 @@
       "toLabel": "到",
       "allPlaceholder": "全部",
       "rangeEndBeforeStart": "结束位置不能早于开始位置"
+    },
+    "recurring": {
+      "nextRun": "下次运行 {when}",
+      "paused": "已暂停",
+      "ended": "{when} 结束 · {count, plural, one {#次运行} other {#次运行}}",
+      "runs": "{count, plural, one {#次运行} other {#次运行}}",
+      "noUpcomingSends": "没有更多发送了——其余日期已被跳过"
+    },
+    "runs": {
+      "back": "重复广播",
+      "pausedNotice": "自 {when} 起已暂停。暂停期间的运行会被跳过。",
+      "groupBy": "运行分组方式",
+      "grouping": {
+        "day": "日",
+        "week": "周",
+        "month": "月"
+      },
+      "totals": "{runs, plural, one {#次运行} other {#次运行}}（共{slots, plural, one {#个计划时间} other {#个计划时间}}）",
+      "error": "无法加载运行记录。",
+      "retry": "重试",
+      "empty": "还没有运行记录。第一次运行将在下一个计划时间开始。",
+      "loadMore": "加载更多",
+      "weekOf": "{date} 当周",
+      "groupSummary": "{created, plural, one {#次运行} other {#次运行}}{missed, plural, =0 {} other { · #次错过}}{skipped, plural, =0 {} other { · #次跳过}}",
+      "deliveredRate": "{rate} 已送达",
+      "notSent": "未发送 — {reason}",
+      "earlierSlots": "{count, plural, one {此前有#个计划时间被错过} other {此前有#个计划时间被错过}}",
+      "stalled": "已停滞",
+      "lateByMinutes": "{count, plural, one {延迟#分钟} other {延迟#分钟}}",
+      "lateByHours": "{count, plural, one {延迟#小时} other {延迟#小时}}",
+      "recipients": "{count, plural, one {#位收件人} other {#位收件人}}",
+      "reasons": {
+        "catchUpSuperseded": "平台当时不可用，已改为发送较晚的一次运行",
+        "paused": "计划已暂停",
+        "draft": "广播正在编辑",
+        "blockedOwner": "账号已被封锁",
+        "planLimit": "已达到套餐上限",
+        "noTargets": "没有可用于发送的主页",
+        "undeliverable": "其流程或模板不可用",
+        "excludedDate": "已跳过的日期"
+      },
+      "outcomes": {
+        "created": "已发送",
+        "skipped": "已跳过",
+        "missed": "已错过"
+      },
+      "upcoming": {
+        "title": "即将发送",
+        "empty": "暂无即将发送的任务",
+        "skip": "跳过",
+        "restore": "恢复",
+        "skippedBadge": "已跳过",
+        "skipped": "已跳过 {date}",
+        "restored": "已恢复 {date}",
+        "undo": "撤销",
+        "error": "此次发送已无法更改"
+      }
     }
   },
   "commentAutomation": {
@@ -2767,7 +2836,8 @@
     "schedule": {
       "label": "时间表",
       "now": "现在",
-      "scheduled": "稍后安排"
+      "scheduled": "稍后安排",
+      "recurring": "重复"
     },
     "scheduledAt": {
       "label": "预定于"
@@ -8031,6 +8101,47 @@
         "rate_limited": "上传次数过多，请稍后再试。",
         "upload_failed": "文件上传失败，请重试。"
       }
+    }
+  },
+  "recurrence": {
+    "title": "重复",
+    "every": "重复间隔",
+    "unit": "{count, plural, one {{frequency, select, daily {天} weekly {周} monthly {个月} other {}}} other {{frequency, select, daily {天} weekly {周} monthly {个月} other {}}}}",
+    "weekdays": "重复日期",
+    "time": "时间",
+    "timezone": "时区",
+    "noTimezone": "未找到时区",
+    "searchTimezone": "搜索时区…",
+    "startsOn": "开始日期",
+    "end": {
+      "label": "结束",
+      "never": "从不",
+      "onDate": "于",
+      "after": "在",
+      "pickDate": "选择日期",
+      "occurrences": "{count, plural, one {次} other {次}}"
+    },
+    "monthDay": {
+      "label": "每月日期",
+      "day": "{day}日",
+      "last": "最后一天",
+      "hint": "在天数较少的月份，将在最后一天发送。"
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {每{frequency, select, daily {天} weekly {周} monthly {个月} other {}}} other {每#{frequency, select, daily {天} weekly {周} monthly {个月} other {}}}}{frequency, select, weekly { 于{weekdays}} monthly { 于{monthDay, select, last {最后一天} other {{monthDay}日}}} other {}} {time}（{timezone}），自{startsOn}起{endKind, select, onDate {，于{endDate}结束} afterOccurrences {，在{endCount, plural, one {#次} other {#次}}后结束} other {}}"
+    },
+    "firstRunLater": "今天的时间已过，因此首次发送时间为{when}。",
+    "nextRuns": "后续发送",
+    "noUpcomingRuns": "没有即将进行的发送。",
+    "skipping": "跳过 {dates}{more, plural, =0 {} one {（另有 # 个）} other {（另有 # 个）}}",
+    "excludeDates": {
+      "label": "跳过日期",
+      "hint": "这些日期不会发送，系列任务继续运行。",
+      "add": "添加日期",
+      "remove": "移除 {date}",
+      "showAll": "再显示 {count} 个",
+      "showLess": "收起",
+      "clearAll": "全部清除"
     }
   }
 }

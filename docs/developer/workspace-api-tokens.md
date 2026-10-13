@@ -372,6 +372,19 @@ an endpoint's scope.
     operations accept optional nullable `sendRatePerMinute` (1-1000): omit it
     to keep the stored rate, or send `null` to clear it and use the applicable
     default when activation succeeds.
+  - *Repeating broadcasts use the same scope and the same plan gates* —
+    `create`/`updateDraft`/`schedule` with `schedulesType: "recurring"`
+    activate a series. At activation only an explicit over-cap
+    `sendRatePerMinute` returns `403 broadcastPlanLimit`; the
+    active-broadcast cap is applied per run, so a run that finds no free slot
+    is not an error but a `skipped/planLimit` row in
+    `GET /v1/broadcasts/{idOrName}/occurrences`.
+    The three read/preview operations (`preview-recurrence`, `run-groups`,
+    `occurrences`) are part of the `broadcasts` scope; `occurrences` and
+    `run-groups` return counts and run ids, never contact PII.
+    `skip-occurrence` / `restore-occurrence` skip or restore one run of a
+    repeating broadcast by local date (also `broadcasts` scope, workspace-scoped
+    lookup, rejected with 422 once the run started).
   - *`GET /v1/broadcasts/{idOrName}/audience` returns full contact PII*
     (email, phone, gender) with no field-level gating, including for a
     `read_only` token — unlike the write paths (`create`/`updateDraft`/

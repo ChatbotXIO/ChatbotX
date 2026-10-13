@@ -3,6 +3,7 @@
 import {
   BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE,
   BROADCAST_MAX_SEND_RATE_PER_MINUTE,
+  isRecurringTemplate,
 } from "@chatbotx.io/database/partials"
 import type { BroadcastModel } from "@chatbotx.io/database/types"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
@@ -98,9 +99,12 @@ export function ResumeBroadcastDialog({
               <DialogHeader>
                 <DialogTitle>{t("broadcasts.resumeDialog.title")}</DialogTitle>
                 <DialogDescription>
-                  {t("broadcasts.resumeDialog.description", {
-                    name: broadcast?.name ?? "",
-                  })}
+                  {t(
+                    broadcast && isRecurringTemplate(broadcast)
+                      ? "broadcasts.resumeDialog.templateDescription"
+                      : "broadcasts.resumeDialog.description",
+                    { name: broadcast?.name ?? "" },
+                  )}
                 </DialogDescription>
               </DialogHeader>
               <InputNumberField

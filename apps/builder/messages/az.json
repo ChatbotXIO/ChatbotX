@@ -154,7 +154,9 @@
     "schedule": "Planlaşdır",
     "moveToDraft": "Qaralamalara köçür",
     "stop": "Dayandır",
-    "resume": "Davam et"
+    "resume": "Davam et",
+    "viewRuns": "İcraları göstər",
+    "editSchedule": "Cədvəli redaktə et"
   },
   "errors": {
     "superAdminRequired": "Bunu etmək üçün iş sahəsinin super administratoru olmalısınız."
@@ -409,7 +411,10 @@
       "sending": "İcra olunur",
       "cancelled": "Ləğv edilib",
       "draft": "Qaralama",
-      "failed": "Uğursuz"
+      "failed": "Uğursuz",
+      "recurring": "Təkrarlanan",
+      "paused": "Dayandırılıb",
+      "ended": "Bitib"
     },
     "stats": {
       "sent": "Göndərilib",
@@ -493,7 +498,9 @@
       "audienceFilter": "Auditoriya süzgəci",
       "noAudienceFilter": "Auditoriya süzgəci yoxdur",
       "template": "Şablon",
-      "integration": "İnteqrasiya"
+      "integration": "İnteqrasiya",
+      "schedule": "Təkrar cədvəli",
+      "runOf": "<link>{name}</link> icrası"
     },
     "filters": {
       "all": "Hamısı"
@@ -542,15 +549,20 @@
     },
     "moveToDraftDialog": {
       "title": "Qaralamalara köçür",
-      "description": "\"{name}\" üçün planlaşdırma ləğv ediləcək və o, yenidən qaralamalara köçürüləcək."
+      "description": "\"{name}\" üçün planlaşdırma ləğv ediləcək və o, yenidən qaralamalara köçürüləcək.",
+      "templateTitle": "Cədvəli redaktə et",
+      "templateDescription": "\"{name}\" dayandırılır və cədvəli dəyişə bilməyiniz üçün qaralamalara qaytarılır."
     },
     "stopDialog": {
       "title": "Kütləvi göndərişi dayandır",
-      "description": "\"{name}\" üçün qalan mesajların göndərilməsi təxminən bir dəqiqə ərzində dayanacaq. Artıq kanala ötürülmüş bir neçə mesaj yenə də çatdırıla bilər. Daha sonra davam edə bilərsiniz: yalnız hələ mesaj göndərilməmiş alıcılar onu alacaq."
+      "description": "\"{name}\" üçün qalan mesajların göndərilməsi təxminən bir dəqiqə ərzində dayanacaq. Artıq kanala ötürülmüş bir neçə mesaj yenə də çatdırıla bilər. Daha sonra davam edə bilərsiniz: yalnız hələ mesaj göndərilməmiş alıcılar onu alacaq.",
+      "templateTitle": "Təkrarlanan yayımı dayandır",
+      "templateDescription": "\"{name}\" yeni icra yaratmağı dayandırır. Artıq göndərilən icra davam edir. Sonra davam etdirə bilərsiniz; fasilə zamanı icralar keçilir."
     },
     "resumeDialog": {
       "title": "Kütləvi göndərişə davam et",
-      "description": "\"{name}\" hələ onu almamış alıcılara göndərilməyə davam edəcək."
+      "description": "\"{name}\" hələ onu almamış alıcılara göndərilməyə davam edəcək.",
+      "templateDescription": "\"{name}\" növbəti planlaşdırılmış vaxtdan yenidən təkrarlanır. Fasilə zamanı icralar keçildi."
     },
     "planLimitDialog": {
       "title": "Planınızı yüksəldin",
@@ -568,6 +580,63 @@
       "toLabel": "Son",
       "allPlaceholder": "Hamısı",
       "rangeEndBeforeStart": "Son mövqe başlanğıc mövqeyindən əvvəl olmamalıdır"
+    },
+    "recurring": {
+      "nextRun": "Növbəti icra {when}",
+      "paused": "Dayandırılıb",
+      "ended": "Bitib {when} · {count, plural, one {# icra} other {# icra}}",
+      "runs": "{count, plural, one {# icra} other {# icra}}",
+      "noUpcomingSends": "Daha göndəriş yoxdur — qalan tarixlər keçilir"
+    },
+    "runs": {
+      "back": "Təkrarlanan yayımlar",
+      "pausedNotice": "{when} tarixindən dayandırılıb. Fasilə zamanı icralar keçilir.",
+      "groupBy": "İcraları qruplaşdır",
+      "grouping": {
+        "day": "Gün",
+        "week": "Həftə",
+        "month": "Ay"
+      },
+      "totals": "{runs, plural, one {# icra} other {# icra}} ({slots, plural, one {# vaxtdan} other {# vaxtdan}})",
+      "error": "İcralar yüklənmədi.",
+      "retry": "Yenidən cəhd et",
+      "empty": "Hələ icra yoxdur. İlk icra növbəti planlaşdırılmış vaxtda başlayır.",
+      "loadMore": "Daha çox yüklə",
+      "weekOf": "{date} həftəsi",
+      "groupSummary": "{created, plural, one {# icra} other {# icra}}{missed, plural, =0 {} other { · # buraxıldı}}{skipped, plural, =0 {} other { · # keçildi}}",
+      "deliveredRate": "{rate} çatdırıldı",
+      "notSent": "Göndərilmədi — {reason}",
+      "earlierSlots": "{count, plural, one {# əvvəlki vaxt} other {# əvvəlki vaxt}} buraxıldı",
+      "stalled": "Ilişib",
+      "lateByMinutes": "{count, plural, one {# dəqiqə gecikmə} other {# dəqiqə gecikmə}}",
+      "lateByHours": "{count, plural, one {# saat gecikmə} other {# saat gecikmə}}",
+      "recipients": "{count, plural, one {# alıcı} other {# alıcı}}",
+      "reasons": {
+        "catchUpSuperseded": "platforma işləmirdi; əvəzində sonrakı icra göndərildi",
+        "paused": "cədvəl dayandırılmışdı",
+        "draft": "yayım redaktə olunurdu",
+        "blockedOwner": "hesab bloklanıb",
+        "planLimit": "plan limiti dolub",
+        "noTargets": "göndərmək üçün səhifə yoxdur",
+        "undeliverable": "axın və ya şablon əlçatan deyil",
+        "excludedDate": "Keçilmiş tarix"
+      },
+      "outcomes": {
+        "created": "Göndərildi",
+        "skipped": "Keçildi",
+        "missed": "Buraxıldı"
+      },
+      "upcoming": {
+        "title": "Gələcək göndərişlər",
+        "empty": "Gələcək göndəriş yoxdur",
+        "skip": "Keç",
+        "restore": "Bərpa et",
+        "skippedBadge": "Keçilib",
+        "skipped": "{date} keçildi",
+        "restored": "{date} bərpa edildi",
+        "undo": "Geri al",
+        "error": "Bu göndərişi artıq dəyişmək olmaz"
+      }
     }
   },
   "commentAutomation": {
@@ -1977,7 +2046,8 @@
     "schedule": {
       "label": "Cədvəl",
       "now": "İndi",
-      "scheduled": "Sonraya planlaşdır"
+      "scheduled": "Sonraya planlaşdır",
+      "recurring": "Təkrarla"
     },
     "inputFieldId": {
       "label": "Giriş üçün fərdi sahə"
@@ -8031,6 +8101,47 @@
         "rate_limited": "Çox sayda yükləmə. Bir az gözləyib yenidən cəhd edin.",
         "upload_failed": "Fayl yüklənmədi. Yenidən cəhd edin."
       }
+    }
+  },
+  "recurrence": {
+    "title": "Təkrarla",
+    "every": "Təkrarlama aralığı",
+    "unit": "{count, plural, one {{frequency, select, daily {gün} weekly {həftə} monthly {ay} other {}}} other {{frequency, select, daily {gün} weekly {həftə} monthly {ay} other {}}}}",
+    "weekdays": "Təkrar günləri",
+    "time": "Saat",
+    "timezone": "Saat qurşağı",
+    "noTimezone": "Saat qurşağı tapılmadı",
+    "searchTimezone": "Saat qurşağı axtar…",
+    "startsOn": "Başlama",
+    "end": {
+      "label": "Bitmə",
+      "never": "Heç vaxt",
+      "onDate": "Tarixdə",
+      "after": "Sonra",
+      "pickDate": "Tarix seç",
+      "occurrences": "{count, plural, one {dəfə} other {dəfə}}"
+    },
+    "monthDay": {
+      "label": "Ayın günü",
+      "day": "{day}-ci gün",
+      "last": "Son gün",
+      "hint": "Qısa aylarda göndərmə son gündə olur."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {Hər {frequency, select, daily {gün} weekly {həftə} monthly {ay} other {}}} other {Hər # {frequency, select, daily {gün} weekly {həftə} monthly {ay} other {}}}}{frequency, select, weekly { {weekdays} günləri} monthly { {monthDay, select, last {ayın son günü} other {ayın {monthDay}-i}}} other {}} saat {time} ({timezone}), {startsOn} tarixindən{endKind, select, onDate {, {endDate} tarixində bitir} afterOccurrences {, {endCount, plural, one {# dəfə} other {# dəfə}} sonra bitir} other {}}"
+    },
+    "firstRunLater": "Bugünkü vaxt keçdiyi üçün ilk göndərmə {when} olacaq.",
+    "nextRuns": "Növbəti göndərmələr",
+    "noUpcomingRuns": "Gələcək göndərmə yoxdur.",
+    "skipping": "{dates} keçilir{more, plural, =0 {} one { (+# daha)} other { (+# daha)}}",
+    "excludeDates": {
+      "label": "Tarixləri keç",
+      "hint": "Bu tarixlərdə göndərilməyəcək. Seriya davam edir.",
+      "add": "Tarix əlavə et",
+      "remove": "{date} tarixini sil",
+      "showAll": "Daha {count} göstər",
+      "showLess": "Az göstər",
+      "clearAll": "Hamısını təmizlə"
     }
   }
 }

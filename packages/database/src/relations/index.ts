@@ -28,6 +28,7 @@ import { automatedResponseRelations } from "./automated-response"
 import { automationThrottleRelations } from "./automation-throttle"
 import { botFieldRelations } from "./bot-field"
 import { broadcastRelations } from "./broadcast"
+import { broadcastRecurrenceRelations } from "./broadcast-recurrence"
 import { broadcastTargetRelations } from "./broadcast-target"
 import { channelPostRelations } from "./channel-post"
 import { coexistSyncRunRelations } from "./coexist-sync-run"
@@ -201,6 +202,7 @@ export const relations = {
   ...customFieldRelations,
   ...dynamicImageRelations,
   ...broadcastRelations,
+  ...broadcastRecurrenceRelations,
   ...broadcastTargetRelations,
   ...inboxTeamRelations,
   ...inboxRelations,

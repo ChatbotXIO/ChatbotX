@@ -7,6 +7,7 @@ const {
   findFirstIntegrationMessenger,
   insertValues,
   insertReturning,
+  updateReturning,
   mockPruneFilter,
   mockDispatchAuditRecord,
 } = vi.hoisted(() => ({
@@ -16,6 +17,7 @@ const {
   findFirstIntegrationMessenger: vi.fn(),
   insertValues: vi.fn(),
   insertReturning: vi.fn(),
+  updateReturning: vi.fn(),
   mockPruneFilter: vi.fn((filter: unknown) => filter),
   mockDispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
 }))
@@ -23,6 +25,7 @@ const {
 const dbMock: {
   query: Record<string, unknown>
   insert: (...args: unknown[]) => unknown
+  update: (...args: unknown[]) => unknown
   delete: (...args: unknown[]) => unknown
   transaction: (fn: (tx: typeof dbMock) => Promise<unknown>) => Promise<unknown>
 } = {
@@ -40,6 +43,11 @@ const dbMock: {
     },
   }),
   delete: () => ({ where: () => Promise.resolve() }),
+  update: () => ({
+    set: (values: Record<string, unknown>) => ({
+      where: () => ({ returning: () => updateReturning(values) }),
+    }),
+  }),
   transaction: (fn) => fn(dbMock),
 }
 
@@ -105,7 +113,9 @@ vi.mock("@chatbotx.io/database/partials", async () => {
   >("@chatbotx.io/database/partials")
   return {
     ...actual,
-    broadcastStatuses: { enum: { draft: "draft", scheduled: "scheduled" } },
+    broadcastStatuses: {
+      enum: { draft: "draft", scheduled: "scheduled", recurring: "recurring" },
+    },
     findBroadcastChannelCapability: mockFindCapability,
     broadcastSendsFlow: sendsFlowStub,
     broadcastSendsTemplate: sendsTemplateStub,
@@ -168,6 +178,12 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  broadcastRecurrenceRepository: {
+    findByBroadcastId: vi.fn().mockResolvedValue(null),
+    lockForWrite: vi.fn().mockResolvedValue([]),
+    selectDbNow: vi.fn().mockResolvedValue(new Date("2026-10-13T00:00:00Z")),
+    insertIfMissing: vi.fn(),
+  },
   broadcastRepository: {
     listWithRelations: vi.fn(),
     count: vi.fn(),
@@ -208,6 +224,15 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
 
+vi.mock("../src/broadcast/recurrence.service", () => ({
+  broadcastRecurrenceService: {
+    upsertRule: vi.fn(),
+    arm: vi.fn(),
+    disarm: vi.fn(),
+    upcomingRunsOf: vi.fn(() => []),
+  },
+}))
+
 vi.mock("../src/broadcast/plan-policy.service", () => ({
   broadcastPlanPolicyService: {
     appliesToChannel: vi.fn((channel: string) => channel === "messenger"),
@@ -221,6 +246,41 @@ vi.mock("../src/broadcast/plan-policy.service", () => ({
     lockActivation: vi.fn().mockResolvedValue(undefined),
     assertActiveSlotAvailable: vi.fn().mockResolvedValue(undefined),
     resolveSendRateOverride: vi.fn(() => ({ sendRatePerMinute: 60 })),
+    assertActivationAllowed: vi.fn(
+      async (
+        tx: unknown,
+        input: {
+          workspaceId: string
+          channel: string
+          restriction: unknown
+          sendRatePerMinute: number | null | undefined
+          excludeBroadcastId?: string
+          checkSlot: boolean
+        },
+      ) => {
+        // Composes the mocked primitives in the real gate's order, so the
+        // existing call-order assertions keep describing the real behavior.
+        const gate = (await import("../src/broadcast/plan-policy.service"))
+          .broadcastPlanPolicyService
+        gate.assertSendRateAllowed(
+          input.restriction as never,
+          input.sendRatePerMinute,
+        )
+        if (input.checkSlot) {
+          await gate.lockActivation(tx as never, input.workspaceId)
+          await gate.assertActiveSlotAvailable(tx as never, {
+            workspaceId: input.workspaceId,
+            channel: input.channel,
+            ctx: input.restriction as never,
+            excludeBroadcastId: input.excludeBroadcastId,
+          })
+        }
+        return gate.resolveSendRateOverride(
+          input.restriction as never,
+          input.sendRatePerMinute,
+        )
+      },
+    ),
   },
 }))
 
@@ -676,5 +736,130 @@ describe("broadcastService.create — validation branches", () => {
       vi.mocked(broadcastPlanPolicyService.assertActiveSlotAvailable).mock
         .invocationCallOrder[0],
     )
+  })
+})
+
+describe("broadcastService.create — repeating broadcasts", () => {
+  const recurrence = {
+    frequency: "daily" as const,
+    interval: 1,
+    timeOfDay: "09:00",
+    timezone: "Asia/Ho_Chi_Minh",
+    startsOn: "2026-10-01",
+    end: { kind: "never" as const },
+  }
+  const nextRunAt = new Date("2026-10-14T02:00:00.000Z")
+  const repeating = {
+    ...baseInput,
+    schedulesType: "recurring" as const,
+    schedulesAt: null,
+    recurrence,
+  }
+
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    mockFindCapability.mockReturnValue({
+      subactions: ["sendMessage"],
+      supportsTemplateBroadcast: false,
+    })
+    findFirstFlow.mockResolvedValue({ id: "flow-1", name: "Promo flow" })
+    insertReturning.mockResolvedValue([
+      { id: "broadcast-1", channel: "whatsapp", sendRatePerMinute: null },
+    ])
+    updateReturning.mockImplementation((values: Record<string, unknown>) => [
+      { id: "broadcast-1", ...values },
+    ])
+    vi.mocked(broadcastPlanPolicyService.appliesToChannel).mockReturnValue(
+      false,
+    )
+    const { broadcastRecurrenceService } = await import(
+      "../src/broadcast/recurrence.service"
+    )
+    vi.mocked(broadcastRecurrenceService.upsertRule).mockResolvedValue({
+      id: "series-1",
+    } as never)
+    vi.mocked(broadcastRecurrenceService.arm).mockResolvedValue({
+      nextRunAt,
+      sendRateOverride: undefined,
+    })
+  })
+
+  test("is inserted as a draft, then armed into `recurring`: it can never be picked up as a one-off send", async () => {
+    const { broadcastRecurrenceService } = await import(
+      "../src/broadcast/recurrence.service"
+    )
+
+    const result = await broadcastService.create(repeating)
+
+    expect(insertValues.mock.calls[0][0].status).toBe("draft")
+    expect(insertValues.mock.calls[0][0].status).not.toBe("scheduled")
+    expect(broadcastRecurrenceService.upsertRule).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ workspaceId: WS, rule: recurrence }),
+    )
+    expect(broadcastRecurrenceService.arm).toHaveBeenCalledTimes(1)
+    expect(updateReturning).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "recurring",
+        schedulesType: "recurring",
+        schedulesAt: nextRunAt,
+      }),
+    )
+    expect(result).toMatchObject({ status: "recurring" })
+    // The template never takes an active slot, and a repeating broadcast is not a launch.
+    expect(broadcastPlanPolicyService.lockActivation).not.toHaveBeenCalled()
+    expect(mockDispatchAuditRecord).not.toHaveBeenCalledWith(
+      expect.objectContaining({ action: "launch" }),
+    )
+    expect(mockDispatchAuditRecord).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "broadcast_recurrence_started" }),
+    )
+  })
+
+  test("saved as a draft it stores the rule but is not armed", async () => {
+    const { broadcastRecurrenceService } = await import(
+      "../src/broadcast/recurrence.service"
+    )
+
+    const result = await broadcastService.create({
+      ...repeating,
+      saveAsDraft: true,
+    })
+
+    expect(broadcastRecurrenceService.upsertRule).toHaveBeenCalledTimes(1)
+    expect(broadcastRecurrenceService.arm).not.toHaveBeenCalled()
+    expect(updateReturning).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ id: "broadcast-1" })
+  })
+
+  test("a repeating broadcast without its rule, or a one-off with one, is a recurrence validation error", async () => {
+    await expect(
+      broadcastService.create({ ...repeating, recurrence: undefined }),
+    ).rejects.toMatchObject({ code: "validation", field: "recurrence" })
+    await expect(
+      broadcastService.create({ ...baseInput, recurrence }),
+    ).rejects.toMatchObject({ code: "validation", field: "recurrence" })
+    expect(insertValues).not.toHaveBeenCalled()
+  })
+
+  test("on a trial channel only the rate is checked, never an active slot", async () => {
+    vi.mocked(broadcastPlanPolicyService.appliesToChannel).mockReturnValue(true)
+    vi.mocked(broadcastPlanPolicyService.restrictionFor).mockReturnValue(
+      restrictedContext,
+    )
+    const { broadcastRecurrenceService } = await import(
+      "../src/broadcast/recurrence.service"
+    )
+
+    await broadcastService.create(repeating)
+
+    expect(broadcastRecurrenceService.arm).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ restriction: restrictedContext }),
+    )
+    expect(broadcastPlanPolicyService.lockActivation).not.toHaveBeenCalled()
+    expect(
+      broadcastPlanPolicyService.assertActiveSlotAvailable,
+    ).not.toHaveBeenCalled()
   })
 })

@@ -9,7 +9,10 @@ import { CreateBroadcastForm } from "@/features/broadcasts/create-broadcast-form
 import type { BroadcastPlanLimitOutcome } from "@/features/broadcasts/lib/broadcast-plan-limit"
 
 const translate = vi.hoisted(() => (key: string) => key)
-vi.mock("next-intl", () => ({ useTranslations: () => translate }))
+vi.mock("next-intl", () => ({
+  useTranslations: () => translate,
+  useTimeZone: () => "UTC",
+}))
 
 const push = vi.hoisted(() => vi.fn())
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }))

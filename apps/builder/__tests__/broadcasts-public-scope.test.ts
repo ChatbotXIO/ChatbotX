@@ -38,6 +38,12 @@ vi.mock("@chatbotx.io/business", () => ({
     cloneBroadcast: vi.fn(),
     softDeleteBroadcasts: vi.fn(),
   },
+  broadcastRecurrenceService: {
+    previewUpcoming: vi.fn(),
+    listRunGroups: vi.fn(),
+    listOccurrences: vi.fn(),
+    setOccurrenceExcluded: vi.fn(),
+  },
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -196,6 +202,282 @@ describe("real router: broadcasts public API scope wiring", () => {
           id: "999999",
         }),
       )
+    })
+
+    describe("repeating broadcasts", () => {
+      const recurrence = {
+        frequency: "daily" as const,
+        interval: 1,
+        timeOfDay: "09:00",
+        timezone: "Asia/Ho_Chi_Minh",
+        startsOn: "2026-10-01",
+        end: { kind: "never" as const },
+      }
+      const emptyStats = { "message:sent": 0 }
+
+      test("previewRecurrence returns the next runs of the rule it was given", async () => {
+        const { broadcastRecurrenceService } = await import(
+          "@chatbotx.io/business"
+        )
+        vi.mocked(broadcastRecurrenceService.previewUpcoming).mockReturnValue({
+          upcomingRuns: ["2026-10-14T02:00:00.000Z"],
+          timezone: "Asia/Ho_Chi_Minh",
+          weekStartsOn: "monday",
+        })
+
+        const result = await invoke(broadcastsPublicRouter.previewRecurrence, {
+          recurrence,
+        })
+
+        expect(result).toEqual({
+          upcomingRuns: ["2026-10-14T02:00:00.000Z"],
+          timezone: "Asia/Ho_Chi_Minh",
+          weekStartsOn: "monday",
+        })
+        expect(broadcastRecurrenceService.previewUpcoming).toHaveBeenCalledWith(
+          expect.objectContaining({ rule: recurrence, count: 3 }),
+        )
+      })
+
+      test("previewRecurrence rejects an invalid rule before the service is called", async () => {
+        const { broadcastRecurrenceService } = await import(
+          "@chatbotx.io/business"
+        )
+        await expect(
+          invoke(broadcastsPublicRouter.previewRecurrence, {
+            recurrence: { ...recurrence, timezone: "+07:00" },
+          }),
+        ).rejects.toBeDefined()
+        expect(
+          broadcastRecurrenceService.previewUpcoming,
+        ).not.toHaveBeenCalled()
+      })
+
+      test("listRunGroups scopes to the token's workspace and defaults to day groups", async () => {
+        const { broadcastRecurrenceService } = await import(
+          "@chatbotx.io/business"
+        )
+        vi.mocked(broadcastRecurrenceService.listRunGroups).mockResolvedValue({
+          data: [
+            {
+              periodStart: "2026-10-13",
+              periodEnd: "2026-10-14",
+              periodStartAt: "2026-10-12T17:00:00.000Z",
+              periodEndAt: "2026-10-13T17:00:00.000Z",
+              slotCount: 1,
+              createdCount: 0,
+              skippedCount: 0,
+              missedCount: 1,
+              reasonCounts: { catchUpSuperseded: 1 },
+              runStateCounts: {},
+              stats: emptyStats,
+            },
+          ],
+          nextCursor: null,
+          totalSlots: 1,
+          totalRuns: 0,
+          timezone: "Asia/Ho_Chi_Minh",
+          weekStartsOn: "monday",
+        } as never)
+
+        const result = await invoke(broadcastsPublicRouter.listRunGroups, {
+          idOrName: "999999",
+        })
+
+        expect(broadcastRecurrenceService.listRunGroups).toHaveBeenCalledWith(
+          expect.objectContaining({
+            workspaceId: "ws-1",
+            idOrName: "999999",
+            granularity: "day",
+            limit: 31,
+          }),
+        )
+        // A day nothing was sent is still a group, with its reason.
+        expect(result).toMatchObject({
+          data: [{ missedCount: 1, reasonCounts: { catchUpSuperseded: 1 } }],
+        })
+      })
+
+      test("listOccurrences scopes to the token's workspace and passes the window", async () => {
+        const { broadcastRecurrenceService } = await import(
+          "@chatbotx.io/business"
+        )
+        vi.mocked(broadcastRecurrenceService.listOccurrences).mockResolvedValue(
+          {
+            data: [],
+            nextCursor: null,
+          } as never,
+        )
+
+        await invoke(broadcastsPublicRouter.listOccurrences, {
+          idOrName: "999999",
+          from: "2026-10-01T00:00:00.000Z",
+          limit: "10",
+        })
+
+        expect(broadcastRecurrenceService.listOccurrences).toHaveBeenCalledWith(
+          expect.objectContaining({
+            workspaceId: "ws-1",
+            idOrName: "999999",
+            from: new Date("2026-10-01T00:00:00.000Z"),
+            limit: 10,
+          }),
+        )
+      })
+
+      test.each([
+        ["skipOccurrence", true],
+        ["restoreOccurrence", false],
+      ] as const)("%s scopes to the token's workspace and names the date", async (procedure, excluded) => {
+        const { broadcastRecurrenceService } = await import(
+          "@chatbotx.io/business"
+        )
+        const state = {
+          excludeDates: excluded ? ["2026-12-25"] : [],
+          nextSendAt: null,
+          upcomingRuns: [],
+        }
+        vi.mocked(
+          broadcastRecurrenceService.setOccurrenceExcluded,
+        ).mockResolvedValue(state)
+
+        const result = await invoke(broadcastsPublicRouter[procedure], {
+          id: "999999",
+          date: "2026-12-25",
+        })
+
+        expect(
+          broadcastRecurrenceService.setOccurrenceExcluded,
+        ).toHaveBeenCalledWith({
+          workspaceId: "ws-1",
+          idOrName: "999999",
+          date: "2026-12-25",
+          excluded,
+        })
+        expect(result).toEqual(state)
+      })
+
+      test("skipOccurrence rejects a date that is not on the calendar", async () => {
+        await expect(
+          invoke(broadcastsPublicRouter.skipOccurrence, {
+            id: "999999",
+            date: "2026-02-30",
+          }),
+        ).rejects.toBeDefined()
+      })
+
+      test("create and updateDraft forward the repeat rule to the service", async () => {
+        const { broadcastService } = await import("@chatbotx.io/business")
+        vi.mocked(broadcastService.create).mockResolvedValue({
+          id: "999999",
+          name: "Daily promo",
+          status: "recurring",
+          schedulesType: "recurring",
+          schedulesAt: new Date("2026-10-14T02:00:00.000Z"),
+          flowId: "1",
+          contactCount: null,
+          audienceRangeStart: null,
+          audienceRangeEnd: null,
+          sendRatePerMinute: null,
+        } as never)
+        vi.mocked(broadcastService.updateDraft).mockResolvedValue({
+          id: "999999",
+          status: "recurring",
+        })
+        const request = {
+          channel: "whatsapp",
+          flowId: "1",
+          subaction: "whatsappTemplateMessage",
+          schedulesType: "recurring",
+          schedulesAt: null,
+          recurrence,
+          contactFilter: { operator: "and", conditions: [] },
+        }
+
+        await invoke(broadcastsPublicRouter.create, request)
+        await invoke(broadcastsPublicRouter.updateDraft, {
+          ...request,
+          id: "999999",
+        })
+
+        expect(broadcastService.create).toHaveBeenCalledWith(
+          expect.objectContaining({ workspaceId: "ws-1", recurrence }),
+        )
+        expect(broadcastService.updateDraft).toHaveBeenCalledWith(
+          expect.objectContaining({
+            workspaceId: "ws-1",
+            data: expect.objectContaining({ recurrence }),
+          }),
+        )
+      })
+
+      test("schedule forwards the repeat rule to the service", async () => {
+        const { broadcastService } = await import("@chatbotx.io/business")
+        vi.mocked(broadcastService.scheduleDraft).mockResolvedValue({
+          id: "999999",
+        })
+
+        await invoke(broadcastsPublicRouter.schedule, {
+          id: "999999",
+          schedulesType: "recurring",
+          schedulesAt: null,
+          recurrence,
+        })
+
+        expect(broadcastService.scheduleDraft).toHaveBeenCalledWith(
+          expect.objectContaining({
+            workspaceId: "ws-1",
+            schedulesType: "recurring",
+            recurrence,
+          }),
+        )
+      })
+
+      test("resume reports when a repeating broadcast runs next", async () => {
+        const { broadcastService } = await import("@chatbotx.io/business")
+        const nextRunAt = new Date("2026-10-14T02:00:00.000Z")
+        vi.mocked(broadcastService.resumeSending).mockResolvedValue({
+          id: "999999",
+          nextRunAt,
+        })
+
+        const result = await invoke(broadcastsPublicRouter.resume, {
+          id: "999999",
+        })
+
+        expect(result).toEqual({ id: "999999", nextRunAt })
+      })
+
+      test("list passes the run filters, reading query-string booleans literally", async () => {
+        const { broadcastService } = await import("@chatbotx.io/business")
+        vi.mocked(broadcastService.list).mockResolvedValue({
+          data: [],
+          pageCount: 1,
+        } as never)
+
+        await invoke(broadcastsPublicRouter.list, {
+          schedulesType: "recurring",
+          parentBroadcastId: "555",
+          includeRuns: "false",
+          excludeTemplates: "true",
+        })
+
+        expect(broadcastService.list).toHaveBeenCalledWith(
+          expect.objectContaining({
+            workspaceId: "ws-1",
+            schedulesType: "recurring",
+            parentBroadcastId: "555",
+            includeRuns: false,
+            excludeTemplates: true,
+          }),
+        )
+      })
+
+      test("list rejects a boolean that is not literally true or false", async () => {
+        await expect(
+          invoke(broadcastsPublicRouter.list, { includeRuns: "yes" }),
+        ).rejects.toBeDefined()
+      })
     })
 
     test("updateDraft scopes to the token's workspace, not any workspace implied by the id", async () => {

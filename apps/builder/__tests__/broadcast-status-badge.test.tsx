@@ -42,6 +42,33 @@ describe("BroadcastStatusBadge", () => {
     expect(dot?.className).toContain("bg-red-500")
   })
 
+  test("reads Paused for a cancelled repeating broadcast", () => {
+    const el = renderComponent(
+      <BroadcastStatusBadge
+        occurrenceAt={null}
+        schedulesType="recurring"
+        status="cancelled"
+      />,
+    )
+    expect(el.textContent).toBe("broadcasts.status.paused")
+  })
+
+  test("reads Ended for a completed repeating broadcast", () => {
+    const el = renderComponent(
+      <BroadcastStatusBadge
+        occurrenceAt={null}
+        schedulesType="recurring"
+        status="sent"
+      />,
+    )
+    expect(el.textContent).toBe("broadcasts.status.ended")
+  })
+
+  test("a one-off that is cancelled still reads Cancelled", () => {
+    const el = renderComponent(<BroadcastStatusBadge status="cancelled" />)
+    expect(el.textContent).toBe("broadcasts.status.cancelled")
+  })
+
   test("renders the raw value with no dot for an unrecognized status", () => {
     const el = renderComponent(<BroadcastStatusBadge status="nope" />)
 

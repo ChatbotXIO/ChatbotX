@@ -59,3 +59,42 @@ export function timezoneCandidates(timezone: string): string[] {
   )
   return legacy ? [timezone, legacy] : [timezone]
 }
+
+/** Maps a legacy IANA alias to its canonical name; any other value is returned unchanged. */
+export function canonicalizeTimezone(timezone: string): string {
+  return CANONICAL_BY_LEGACY_TIMEZONE[timezone] ?? timezone
+}
+
+let supportedTimezones: ReadonlySet<string> | null = null
+
+const getSupportedTimezones = (): ReadonlySet<string> => {
+  supportedTimezones ??= new Set([...Intl.supportedValuesOf("timeZone"), "UTC"])
+  return supportedTimezones
+}
+
+const isRuntimeUsableTimezone = (timezone: string): boolean => {
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: timezone })
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * True only for a named IANA zone this runtime can actually format with. Unlike
+ * `resolveFilterTimezone`, which silently falls back to UTC, a stored schedule
+ * must be rejected when its zone is unknown — and offsets such as `+07:00`,
+ * which carry no DST rules, and aliases the runtime cannot resolve (`US`) are
+ * rejected too.
+ */
+export function isValidTimezone(timezone: string): boolean {
+  // `Intl` and IANA disagree about which spelling is canonical (see the module
+  // doc), so accept the name if the runtime lists ANY of its spellings — but
+  // the stored spelling itself must be one `Intl` can use.
+  const supported = getSupportedTimezones()
+  return (
+    isRuntimeUsableTimezone(timezone) &&
+    timezoneCandidates(timezone).some((name) => supported.has(name))
+  )
+}

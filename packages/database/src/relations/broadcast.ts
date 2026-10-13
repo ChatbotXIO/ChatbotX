@@ -30,5 +30,21 @@ export const broadcastRelations = defineRelationsPart(schema, (r) => ({
       from: r.broadcastModel.id,
       to: r.broadcastTargetModel.broadcastId,
     }),
+    // Template side: the schedule that spawns runs.
+    recurrence: r.one.broadcastRecurrenceModel({
+      from: r.broadcastModel.id,
+      to: r.broadcastRecurrenceModel.broadcastId,
+    }),
+    // Run side: the template this run was spawned from.
+    parent: r.one.broadcastModel({
+      from: r.broadcastModel.parentBroadcastId,
+      to: r.broadcastModel.id,
+      alias: "broadcastRuns",
+    }),
+    runs: r.many.broadcastModel({
+      from: r.broadcastModel.id,
+      to: r.broadcastModel.parentBroadcastId,
+      alias: "broadcastRuns",
+    }),
   },
 }))

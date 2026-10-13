@@ -40,6 +40,7 @@ import {
   publicListBroadcastsResponse,
 } from "../schema/query"
 import { publicBroadcastResource } from "../schema/resource"
+import { broadcastsRecurrencePublicRouter } from "./public-recurrence"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 
@@ -63,6 +64,8 @@ const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("broadcasts")
 const TOKEN_CALLER_CAN_VIEW_EMAIL_AND_PHONE = true
 
 export const broadcastsPublicRouter = {
+  ...broadcastsRecurrencePublicRouter,
+
   list: workspaceTokenAuthAPI
     .route({
       method: "GET",
@@ -235,7 +238,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts",
       summary: "Create broadcast",
       description:
-        "Starts a broadcast as a draft or scheduled send for the supplied audience. For a template broadcast, fill the template with `templateParams` (keys from the template's `parameters`) instead of building `templateData`. Use `broadcasts.list` to avoid duplicates, then use `broadcasts.schedule` to control its send time.",
+        "Starts a broadcast as a draft or scheduled send for the supplied audience. Set `schedulesType: recurring` with a `recurrence` rule to repeat it daily, weekly or monthly; check the rule first with `broadcasts.previewRecurrence`. For a template broadcast, fill the template with `templateParams` (keys from the template's `parameters`) instead of building `templateData`. Use `broadcasts.list` to avoid duplicates, then use `broadcasts.schedule` to control its send time.",
       successStatus: 201,
       tags: ["Broadcasts"],
     })
@@ -328,7 +331,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/schedule",
       summary: "Schedule draft broadcast",
       description:
-        "Moves a draft broadcast to its scheduled state using the provided schedule. Call `broadcasts.get` to inspect it first, or use `broadcasts.updateDraft` to change its payload.",
+        "Moves a draft broadcast to its scheduled state using the provided schedule; for `schedulesType: recurring` it starts the repeating schedule (send `recurrence` to replace the saved rule, or omit it to keep it). Call `broadcasts.get` to inspect it first, or use `broadcasts.updateDraft` to change its payload.",
       tags: ["Broadcasts"],
     })
     .input(
@@ -350,6 +353,7 @@ export const broadcastsPublicRouter = {
         schedulesType: data.schedulesType,
         schedulesAt: resolveScheduleTime(data),
         sendRatePerMinute: data.sendRatePerMinute,
+        recurrence: data.recurrence,
       })
     }),
 
@@ -359,7 +363,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/move-to-draft",
       summary: "Move scheduled broadcast back to draft",
       description:
-        "Reverses a broadcast's `scheduled` state so its payload can be edited again. Only matches a broadcast whose status is `scheduled`; 404 otherwise. Use `broadcasts.updateDraft` afterward, or `broadcasts.schedule` to re-schedule.",
+        "Reverses a broadcast's `scheduled` state so its payload can be edited again. For a repeating broadcast it stops the schedule, running or paused, so the rule can be edited; slots that pass while it is a draft are skipped. Only matches a broadcast whose status is `scheduled`, or a repeating one that is `recurring` or paused (`cancelled`); 404 otherwise. Use `broadcasts.updateDraft` afterward, or `broadcasts.schedule` to re-schedule.",
       tags: ["Broadcasts"],
     })
     .input(
@@ -385,7 +389,7 @@ export const broadcastsPublicRouter = {
       path: BROADCAST_STOP_TOKEN_PATH,
       summary: "Stop broadcast",
       description:
-        "Stops a broadcast only while it is sending and returns its id. Allowed even when the workspace trial has expired, like the builder. Call `broadcasts.get` to confirm its state first, or use `broadcasts.moveToDraft` for scheduled broadcasts.",
+        "Stops a broadcast while it is sending and returns its id. On a repeating broadcast (status `recurring`) it pauses the schedule: no new runs start, a run already sending carries on. Allowed even when the workspace trial has expired, like the builder. Call `broadcasts.get` to confirm its state first, or use `broadcasts.moveToDraft` for scheduled broadcasts.",
       tags: ["Broadcasts"],
       spec: mcpSpec({ visibility: "default" }),
     })
@@ -412,7 +416,7 @@ export const broadcastsPublicRouter = {
       path: "/v1/broadcasts/{id}/resume",
       summary: "Resume stopped broadcast",
       description:
-        "Resumes sending a stopped broadcast where it left off. Only matches a broadcast whose status is `cancelled`; 404 otherwise. Use `broadcasts.stop` to pause a sending broadcast.",
+        "Resumes sending a stopped broadcast where it left off. On a paused repeating broadcast it restarts the schedule and returns `nextRunAt`; slots that passed while it was paused are not sent. Only matches a broadcast whose status is `cancelled`; 404 otherwise. Use `broadcasts.stop` to pause a sending broadcast.",
       tags: ["Broadcasts"],
     })
     .input(
@@ -424,7 +428,15 @@ export const broadcastsPublicRouter = {
         }),
       ),
     )
-    .output(z.object({ id: z.string() }))
+    .output(
+      z.object({
+        id: z.string(),
+        nextRunAt: z
+          .date()
+          .optional()
+          .describe("A repeating broadcast only: when its next run is due."),
+      }),
+    )
     .errors(possibleErrorsOnActivatingBroadcast)
     .handler(
       async ({ context, input }) =>

@@ -303,6 +303,14 @@ chatbotx broadcasts resume add <id>                  # [--sendRatePerMinute] Res
 chatbotx broadcasts resend add <id>                  # Clone a sent/failed broadcast into a new scheduled one
 chatbotx broadcasts duplicate add <id>               # Copy into a new draft, including targets/audience filter
 chatbotx broadcasts delete <id>                      # Soft-delete (fails while status is sending)
+chatbotx broadcasts preview-recurrence               # --recurrence <rule json> [--count]; next run times of a repeat rule
+chatbotx broadcasts run-groups list <idOrName>       # Repeating broadcast's runs grouped by --groupBy day|week|month [--timezone --limit --cursor]
+chatbotx broadcasts occurrences list <idOrName>      # Repeating broadcast's slots incl. skipped/missed and why [--from --to --limit --cursor]
+chatbotx broadcasts skip-occurrence add <id>         # --date YYYY-MM-DD; skip one run of a repeating broadcast without pausing it
+chatbotx broadcasts restore-occurrence add <id>      # --date YYYY-MM-DD; undo a skip (422 once the run started)
+                                                     # Repeat: --schedulesType recurring --recurrence '{"frequency":"weekly","interval":1,
+                                                     #   "weekdays":[1],"timeOfDay":"09:00","timezone":"Asia/Ho_Chi_Minh",
+                                                     #   "startsOn":"2026-10-14","end":{"kind":"never"},"excludeDates":["2026-12-25"]}' (weekdays: 0 = Sunday)
 ```
 
 ---

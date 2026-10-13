@@ -126,6 +126,51 @@ describe("createBroadcastAction — validation branches map to returnValidationE
     expect(result).toMatchObject({ __validationError: expect.anything() })
   })
 
+  test("recurrence — a repeat rule the service rejects is shown on its field", async () => {
+    mockCreate.mockRejectedValue(
+      validationError("recurrence", "The schedule has no upcoming run"),
+    )
+
+    const result = await callAction({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: baseInput,
+    })
+
+    const [, errors] = mockReturnValidationErrors.mock.calls[0] as [
+      unknown,
+      { recurrence: { _errors: string[] } },
+    ]
+    expect(errors.recurrence._errors).toContain(
+      "The schedule has no upcoming run",
+    )
+    expect(result).toMatchObject({ __validationError: expect.anything() })
+  })
+
+  test("a repeating broadcast's rule is passed to the service untouched", async () => {
+    mockCreate.mockResolvedValue({ id: "b-1" })
+    const recurrence = {
+      frequency: "daily",
+      interval: 1,
+      timeOfDay: "09:00",
+      timezone: "Asia/Ho_Chi_Minh",
+      startsOn: "2026-10-01",
+      end: { kind: "never" },
+    }
+
+    await callAction({
+      bindArgsParsedInputs: [WORKSPACE_ID],
+      parsedInput: { ...baseInput, schedulesType: "recurring", recurrence },
+    })
+
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WORKSPACE_ID,
+        schedulesType: "recurring",
+        recurrence,
+      }),
+    )
+  })
+
   test("flowId — neither flow nor template selected", async () => {
     mockCreate.mockRejectedValue(
       validationError("flowId", "Either flow or template must be selected"),

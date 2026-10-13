@@ -17,6 +17,7 @@ import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { deleteBroadcastAction } from "../actions/delete-broadcast.action"
 import { deleteBroadcastsAction } from "../actions/delete-broadcasts.action"
+import { useInvalidateBroadcastRuns } from "../hooks/use-invalidate-broadcast-runs"
 
 type BroadcastDeleteTarget = { id: string; name: string | null }
 
@@ -37,6 +38,7 @@ export function DeleteBroadcastDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateRuns = useInvalidateBroadcastRuns()
 
   const isBulk = broadcasts.length > 1
   const singleId = broadcasts.length === 1 ? broadcasts[0].id : ""
@@ -60,6 +62,7 @@ export function DeleteBroadcastDialog({
         }),
       )
     }
+    invalidateRuns()
     onOpenChange(false)
     router.refresh()
     onSuccess?.()

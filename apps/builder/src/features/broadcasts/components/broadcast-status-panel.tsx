@@ -8,13 +8,16 @@ import { useQueryStates } from "nuqs"
 import {
   BROADCAST_FILTER_STATUSES,
   type BroadcastFilterStatus,
+  type BroadcastKind,
   type BroadcastStatusLabelKey,
   broadcastStatusConfig,
 } from "../lib/broadcast-status"
 import { broadcastsSearchParsers } from "../schema/search-parsers"
 
 type PanelItem = {
+  /** Set for a status filter; `kind` is set for the "Repeating" filter. */
   value: BroadcastFilterStatus | null
+  kind: BroadcastKind | null
   labelKey: BroadcastStatusLabelKey | "broadcasts.filters.all"
   dotClassName: string
 }
@@ -22,14 +25,22 @@ type PanelItem = {
 const PANEL_ITEMS: PanelItem[] = [
   {
     value: null,
+    kind: null,
     labelKey: "broadcasts.filters.all",
     dotClassName: "bg-primary",
   },
   ...BROADCAST_FILTER_STATUSES.map((value) => ({
     value,
+    kind: null,
     labelKey: broadcastStatusConfig[value].labelKey,
     dotClassName: broadcastStatusConfig[value].dotClassName,
   })),
+  {
+    value: null,
+    kind: "repeating",
+    labelKey: broadcastStatusConfig.recurring.labelKey,
+    dotClassName: broadcastStatusConfig.recurring.dotClassName,
+  },
 ]
 
 export function BroadcastStatusPanel({
@@ -40,9 +51,10 @@ export function BroadcastStatusPanel({
   onOpenChange: (open: boolean) => void
 }) {
   const t = useTranslations()
-  const [{ status }, setQuery] = useQueryStates(
+  const [{ status, kind }, setQuery] = useQueryStates(
     {
       status: broadcastsSearchParsers.status,
+      kind: broadcastsSearchParsers.kind,
       page: broadcastsSearchParsers.page,
     },
     { shallow: false, clearOnDefault: true },
@@ -67,7 +79,7 @@ export function BroadcastStatusPanel({
       </div>
       <nav className="flex flex-col gap-0.5 px-2 py-1">
         {PANEL_ITEMS.map((item) => {
-          const isActive = status === item.value
+          const isActive = status === item.value && kind === item.kind
           return (
             <button
               aria-pressed={isActive}
@@ -77,10 +89,10 @@ export function BroadcastStatusPanel({
                   ? "bg-primary/10 font-medium text-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
-              key={item.value ?? "all"}
+              key={item.kind ?? item.value ?? "all"}
               onClick={() => {
                 if (!isActive) {
-                  setQuery({ status: item.value, page: 1 })
+                  setQuery({ status: item.value, kind: item.kind, page: 1 })
                 }
               }}
               type="button"

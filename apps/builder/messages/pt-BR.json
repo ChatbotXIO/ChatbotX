@@ -154,7 +154,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "Ver execuções",
+    "editSchedule": "Editar agendamento"
   },
   "errors": {
     "superAdminRequired": "Você precisa ser um superadministrador do espaço de trabalho para fazer isso."
@@ -367,7 +369,10 @@
       "sending": "Enviando",
       "cancelled": "Cancelada",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "Recorrente",
+      "paused": "Pausada",
+      "ended": "Encerrada"
     },
     "stats": {
       "sent": "Enviado",
@@ -451,7 +456,9 @@
       "audienceFilter": "Filtro de público",
       "noAudienceFilter": "Sem filtro de público",
       "template": "Modelo",
-      "integration": "Integração"
+      "integration": "Integração",
+      "schedule": "Agendamento de repetição",
+      "runOf": "Execução de <link>{name}</link>"
     },
     "filters": {
       "all": "All"
@@ -500,15 +507,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "Editar agendamento",
+      "templateDescription": "\"{name}\" é pausada e volta para rascunhos para você alterar o agendamento."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "Pausar transmissão recorrente",
+      "templateDescription": "\"{name}\" para de criar novas execuções. Uma execução que já está enviando continua. Você pode retomar depois; as execuções durante a pausa são ignoradas."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "\"{name}\" volta a se repetir a partir do próximo horário agendado. As execuções durante a pausa foram ignoradas."
     },
     "planLimitDialog": {
       "title": "Faça upgrade do seu plano",
@@ -526,6 +538,63 @@
       "toLabel": "Até",
       "allPlaceholder": "Todos",
       "rangeEndBeforeStart": "A posição final não pode ser anterior à posição inicial"
+    },
+    "recurring": {
+      "nextRun": "Próximo envio {when}",
+      "paused": "Pausada",
+      "ended": "Encerrada {when} · {count, plural, one {# execução} other {# execuções}}",
+      "runs": "{count, plural, one {# execução} other {# execuções}}",
+      "noUpcomingSends": "Não há mais envios — as datas restantes foram puladas"
+    },
+    "runs": {
+      "back": "Transmissões recorrentes",
+      "pausedNotice": "Pausada desde {when}. As execuções durante a pausa são ignoradas.",
+      "groupBy": "Agrupar execuções por",
+      "grouping": {
+        "day": "Dia",
+        "week": "Semana",
+        "month": "Mês"
+      },
+      "totals": "{runs, plural, one {# execução} other {# execuções}} em {slots, plural, one {# horário} other {# horários}}",
+      "error": "Não foi possível carregar as execuções.",
+      "retry": "Tentar novamente",
+      "empty": "Ainda não há execuções. A primeira começa no próximo horário agendado.",
+      "loadMore": "Carregar mais",
+      "weekOf": "Semana de {date}",
+      "groupSummary": "{created, plural, one {# execução} other {# execuções}}{missed, plural, =0 {} other { · # perdida(s)}}{skipped, plural, =0 {} other { · # ignorada(s)}}",
+      "deliveredRate": "{rate} entregue",
+      "notSent": "Não enviada — {reason}",
+      "earlierSlots": "{count, plural, one {# horário anterior} other {# horários anteriores}} perdido(s)",
+      "stalled": "Travada",
+      "lateByMinutes": "{count, plural, one {# minuto de atraso} other {# minutos de atraso}}",
+      "lateByHours": "{count, plural, one {# hora de atraso} other {# horas de atraso}}",
+      "recipients": "{count, plural, one {# destinatário} other {# destinatários}}",
+      "reasons": {
+        "catchUpSuperseded": "a plataforma estava fora do ar; uma execução posterior foi enviada",
+        "paused": "o agendamento estava pausado",
+        "draft": "a transmissão estava sendo editada",
+        "blockedOwner": "a conta está bloqueada",
+        "planLimit": "limite do plano atingido",
+        "noTargets": "nenhuma página para enviar",
+        "undeliverable": "o fluxo ou modelo está indisponível",
+        "excludedDate": "Data pulada"
+      },
+      "outcomes": {
+        "created": "Enviada",
+        "skipped": "Ignorada",
+        "missed": "Perdida"
+      },
+      "upcoming": {
+        "title": "Próximos envios",
+        "empty": "Nenhum envio programado",
+        "skip": "Pular",
+        "restore": "Restaurar",
+        "skippedBadge": "Pulado",
+        "skipped": "{date} pulado",
+        "restored": "{date} restaurado",
+        "undo": "Desfazer",
+        "error": "Este envio não pode mais ser alterado"
+      }
     }
   },
   "commentAutomation": {
@@ -1780,7 +1849,8 @@
     "schedule": {
       "label": "Agendamento",
       "now": "Agora",
-      "scheduled": "Agendar para mais tarde"
+      "scheduled": "Agendar para mais tarde",
+      "recurring": "Repetir"
     },
     "inputFieldId": {
       "label": "Campo personalizado de entrada"
@@ -8031,6 +8101,47 @@
         "rate_limited": "Muitos envios. Aguarde um momento e tente novamente.",
         "upload_failed": "Não foi possível enviar o arquivo. Tente novamente."
       }
+    }
+  },
+  "recurrence": {
+    "title": "Repetir",
+    "every": "Repetir a cada",
+    "unit": "{count, plural, one {{frequency, select, daily {dia} weekly {semana} monthly {mês} other {}}} other {{frequency, select, daily {dias} weekly {semanas} monthly {meses} other {}}}}",
+    "weekdays": "Repetir em",
+    "time": "Hora",
+    "timezone": "Fuso horário",
+    "noTimezone": "Nenhum fuso horário encontrado",
+    "searchTimezone": "Buscar fuso horário…",
+    "startsOn": "Começa em",
+    "end": {
+      "label": "Termina",
+      "never": "Nunca",
+      "onDate": "Em",
+      "after": "Após",
+      "pickDate": "Escolher data",
+      "occurrences": "{count, plural, one {execução} other {execuções}}"
+    },
+    "monthDay": {
+      "label": "Dia do mês",
+      "day": "Dia {day}",
+      "last": "Último dia",
+      "hint": "Em meses mais curtos, o envio acontece no último dia."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {Todo {frequency, select, daily {dia} weekly {semana} monthly {mês} other {}}} other {A cada # {frequency, select, daily {dias} weekly {semanas} monthly {meses} other {}}}}{frequency, select, weekly { em {weekdays}} monthly { no {monthDay, select, last {último dia} other {dia {monthDay}}}} other {}} às {time} ({timezone}), a partir de {startsOn}{endKind, select, onDate {, termina em {endDate}} afterOccurrences {, termina após {endCount, plural, one {# execução} other {# execuções}}} other {}}"
+    },
+    "firstRunLater": "O primeiro envio será {when}, pois o horário de hoje já passou.",
+    "nextRuns": "Próximos envios",
+    "noUpcomingRuns": "Nenhum envio próximo.",
+    "skipping": "Pulando {dates}{more, plural, =0 {} one { (+# a mais)} other { (+# a mais)}}",
+    "excludeDates": {
+      "label": "Pular datas",
+      "hint": "Nada será enviado nestas datas. A série continua.",
+      "add": "Adicionar datas",
+      "remove": "Remover {date}",
+      "showAll": "Mostrar mais {count}",
+      "showLess": "Mostrar menos",
+      "clearAll": "Limpar tudo"
     }
   }
 }

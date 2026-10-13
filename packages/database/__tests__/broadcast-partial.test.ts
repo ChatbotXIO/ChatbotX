@@ -6,6 +6,9 @@ import {
   BROADCAST_MAX_SEND_RATE_PER_MINUTE,
   BROADCAST_OUTCOME_GRACE_MS,
   broadcastChannelCapabilities,
+  broadcastOccurrenceOutcomes,
+  broadcastOccurrenceReasons,
+  broadcastScheduleTypes,
   broadcastSendLimitIssues,
   broadcastSendLimitSchema,
   broadcastStatuses,
@@ -15,6 +18,8 @@ import {
   findBroadcastChannelCapability,
   isAudienceRangeOrdered,
   isBroadcastOutcomeGraceElapsed,
+  isRecurrenceRun,
+  isRecurringTemplate,
   isTargetsFlowSendWithoutFlow,
   isTargetsTemplateSendWithoutTemplate,
   normalizeBroadcastSendLimit,
@@ -621,5 +626,54 @@ describe("resolveSubmittedSendRatePatch", () => {
     expect(resolveSubmittedSendRatePatch(null)).toEqual({
       sendRatePerMinute: null,
     })
+  })
+})
+
+describe("recurring broadcast vocabulary", () => {
+  test("recurring is a schedule type and a status, appended so the enum migration only adds a label", () => {
+    expect(broadcastScheduleTypes.options).toEqual([
+      "now",
+      "future",
+      "recurring",
+    ])
+    expect(broadcastStatuses.options.at(-1)).toBe("recurring")
+  })
+
+  test("every skip and miss reason the ledger can store is a known value", () => {
+    expect(broadcastOccurrenceOutcomes.options).toEqual([
+      "created",
+      "skipped",
+      "missed",
+    ])
+    expect(broadcastOccurrenceReasons.options).toEqual([
+      "catchUpSuperseded",
+      "paused",
+      "draft",
+      "blockedOwner",
+      "planLimit",
+      "noTargets",
+      "undeliverable",
+      "excludedDate",
+    ])
+  })
+
+  test("a template is a recurring broadcast with no occurrence", () => {
+    expect(isRecurringTemplate({ schedulesType: "recurring" })).toBe(true)
+    expect(
+      isRecurringTemplate({ schedulesType: "recurring", occurrenceAt: null }),
+    ).toBe(true)
+    expect(
+      isRecurringTemplate({
+        schedulesType: "recurring",
+        occurrenceAt: new Date(),
+      }),
+    ).toBe(false)
+    expect(isRecurringTemplate({ schedulesType: "future" })).toBe(false)
+  })
+
+  test("a run is identified by occurrenceAt alone, so it survives its template being purged", () => {
+    expect(isRecurrenceRun({ occurrenceAt: new Date() })).toBe(true)
+    expect(isRecurrenceRun({ occurrenceAt: null })).toBe(false)
+    expect(isRecurrenceRun({})).toBe(false)
   })
 })
