@@ -10,6 +10,8 @@ import {
   or,
   sql,
 } from "@chatbotx.io/database/client"
+import type { OccurrenceBucketGranularity } from "@chatbotx.io/database/partials"
+import { zonedBucketKey } from "@chatbotx.io/database/queries/date-bucket"
 import {
   broadcastModel,
   contactsOnBroadcastsModel,
@@ -154,63 +156,101 @@ export class BroadcastStatsRepository extends BaseRepository {
     const t = contactsOnBroadcastsModel
     const b = broadcastModel
 
-    const scopedBroadcastIds = and(
-      inArray(t.broadcastId, input.broadcastIds),
-      eq(b.workspaceId, input.workspaceId),
-    )
-
-    const [deliveredRows, seenRows, clickedRows, failedRows] =
-      await Promise.all([
-        db
-          .select({ broadcastId: t.broadcastId, count: count() })
-          .from(t)
-          .innerJoin(b, eq(t.broadcastId, b.id))
-          .where(and(scopedBroadcastIds, isNotNull(t.deliveredAt)))
-          .groupBy(t.broadcastId),
-        db
-          .select({ broadcastId: t.broadcastId, count: count() })
-          .from(t)
-          .innerJoin(b, eq(t.broadcastId, b.id))
-          .where(and(scopedBroadcastIds, isNotNull(t.seenAt)))
-          .groupBy(t.broadcastId),
-        db
-          .select({ broadcastId: t.broadcastId, count: count() })
-          .from(t)
-          .innerJoin(b, eq(t.broadcastId, b.id))
-          .where(and(scopedBroadcastIds, isNotNull(t.clickedAt)))
-          .groupBy(t.broadcastId),
-        db
-          .select({ broadcastId: t.broadcastId, count: count() })
-          .from(t)
-          .innerJoin(b, eq(t.broadcastId, b.id))
-          .where(and(scopedBroadcastIds, isNotNull(t.failedAt)))
-          .groupBy(t.broadcastId),
-      ])
+    const rows = await db
+      .select({ broadcastId: t.broadcastId, ...this.recipientCounts() })
+      .from(t)
+      .innerJoin(b, eq(t.broadcastId, b.id))
+      .where(
+        and(
+          inArray(t.broadcastId, input.broadcastIds),
+          eq(b.workspaceId, input.workspaceId),
+        ),
+      )
+      .groupBy(t.broadcastId)
 
     const result: Record<string, BroadcastStats> = {}
     for (const id of input.broadcastIds) {
       result[id] = this.emptyStats()
     }
-
-    for (const row of deliveredRows) {
-      result[row.broadcastId]["message:delivered"] = row.count
+    for (const row of rows) {
+      result[row.broadcastId] = this.toStats(row)
     }
-    for (const row of seenRows) {
-      result[row.broadcastId]["message:seen"] = row.count
-    }
-    for (const row of clickedRows) {
-      result[row.broadcastId]["flow:clicked"] = row.count
-    }
-    for (const row of failedRows) {
-      result[row.broadcastId]["message:failed"] = row.count
-    }
-
-    for (const id of input.broadcastIds) {
-      result[id]["message:sent"] =
-        result[id]["message:delivered"] + result[id]["message:failed"]
-    }
-
     return result
+  }
+
+  /**
+   * Stats per day / ISO week / month of a repeating broadcast's runs, in ONE
+   * pass over the recipients: the buckets are selected by `occurrenceAt` and
+   * aggregated in SQL, so no run ids travel in and an oversized bucket costs
+   * the same as a small one.
+   */
+  async getStatsByOccurrenceBucket(input: {
+    workspaceId: string
+    parentBroadcastId: string
+    granularity: OccurrenceBucketGranularity
+    timezone: string
+    buckets: string[]
+  }): Promise<Record<string, BroadcastStats>> {
+    const result: Record<string, BroadcastStats> = {}
+    for (const bucket of input.buckets) {
+      result[bucket] = this.emptyStats()
+    }
+    if (input.buckets.length === 0) {
+      return result
+    }
+
+    const t = contactsOnBroadcastsModel
+    const b = broadcastModel
+    const bucket = zonedBucketKey(
+      b.occurrenceAt,
+      input.granularity,
+      input.timezone,
+    )
+
+    const rows = await db
+      .select({ bucket, ...this.recipientCounts() })
+      .from(t)
+      .innerJoin(b, eq(t.broadcastId, b.id))
+      .where(
+        and(
+          eq(b.workspaceId, input.workspaceId),
+          eq(b.parentBroadcastId, input.parentBroadcastId),
+          inArray(bucket, input.buckets),
+        ),
+      )
+      // Ordinal: the bucket expression carries bound parameters, and repeating
+      // it would render different placeholders Postgres cannot match.
+      .groupBy(sql`1`)
+
+    for (const row of rows) {
+      result[row.bucket] = this.toStats(row)
+    }
+    return result
+  }
+
+  private recipientCounts() {
+    const t = contactsOnBroadcastsModel
+    return {
+      delivered: sql<number>`count(*) FILTER (WHERE ${t.deliveredAt} IS NOT NULL)::int`,
+      seen: sql<number>`count(*) FILTER (WHERE ${t.seenAt} IS NOT NULL)::int`,
+      clicked: sql<number>`count(*) FILTER (WHERE ${t.clickedAt} IS NOT NULL)::int`,
+      failed: sql<number>`count(*) FILTER (WHERE ${t.failedAt} IS NOT NULL)::int`,
+    }
+  }
+
+  private toStats(row: {
+    delivered: number
+    seen: number
+    clicked: number
+    failed: number
+  }): BroadcastStats {
+    return {
+      "message:sent": row.delivered + row.failed,
+      "message:delivered": row.delivered,
+      "message:seen": row.seen,
+      "flow:clicked": row.clicked,
+      "message:failed": row.failed,
+    }
   }
 
   async getContacts(input: {

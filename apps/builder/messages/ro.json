@@ -1150,7 +1150,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "Vezi rulările",
+    "editSchedule": "Editează programarea"
   },
   "errors": {
     "superAdminRequired": "Trebuie să fii superadministrator al spațiului de lucru pentru a face acest lucru."
@@ -1363,7 +1365,10 @@
       "sending": "Se trimite",
       "cancelled": "Anulată",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "Recurentă",
+      "paused": "Întrerupt",
+      "ended": "Încheiat"
     },
     "stats": {
       "sent": "Trimis",
@@ -1447,7 +1452,9 @@
       "audienceFilter": "Filtru de public",
       "noAudienceFilter": "Niciun filtru de public",
       "template": "Șablon",
-      "integration": "Integrare"
+      "integration": "Integrare",
+      "schedule": "Programare repetare",
+      "runOf": "Rulare a <link>{name}</link>"
     },
     "filters": {
       "all": "All"
@@ -1496,15 +1503,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "Editează programarea",
+      "templateDescription": "„{name}” este întrerupt și mutat înapoi în ciorne pentru a-i putea schimba programarea."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "Întrerupe difuzarea repetitivă",
+      "templateDescription": "„{name}” nu mai creează rulări noi. O rulare care deja trimite continuă. Puteți relua mai târziu; rulările din timpul pauzei sunt omise."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "„{name}” se repetă din nou de la următoarea oră programată. Rulările din timpul pauzei au fost omise."
     },
     "planLimitDialog": {
       "title": "Actualizează planul",
@@ -1522,6 +1534,50 @@
       "toLabel": "Până la",
       "allPlaceholder": "Toate",
       "rangeEndBeforeStart": "Poziția de final nu poate fi înainte de poziția de start"
+    },
+    "recurring": {
+      "nextRun": "Următoarea rulare {when}",
+      "paused": "Întrerupt",
+      "ended": "Încheiat {when} · {count, plural, one {# rulare} other {# rulări}}",
+      "runs": "{count, plural, one {# rulare} other {# rulări}}"
+    },
+    "runs": {
+      "back": "Difuzări repetitive",
+      "pausedNotice": "Întrerupt din {when}. Rulările din timpul pauzei sunt omise.",
+      "groupBy": "Grupează rulările pe",
+      "grouping": {
+        "day": "Zi",
+        "week": "Săptămână",
+        "month": "Lună"
+      },
+      "totals": "{runs, plural, one {# rulare} other {# rulări}} din {slots, plural, one {# interval} other {# intervale}}",
+      "error": "Nu s-au putut încărca rulările.",
+      "retry": "Încearcă din nou",
+      "empty": "Încă nu există rulări. Prima începe la următoarea oră programată.",
+      "loadMore": "Încarcă mai multe",
+      "weekOf": "Săptămâna din {date}",
+      "groupSummary": "{created, plural, one {# rulare} other {# rulări}}{missed, plural, =0 {} other { · # ratat(e)}}{skipped, plural, =0 {} other { · # omis(e)}}",
+      "deliveredRate": "{rate} livrate",
+      "notSent": "Netrimis — {reason}",
+      "earlierSlots": "{count, plural, one {# interval anterior} other {# intervale anterioare}} ratat(e)",
+      "stalled": "Blocat",
+      "lateByMinutes": "{count, plural, one {# minut întârziere} other {# minute întârziere}}",
+      "lateByHours": "{count, plural, one {# oră întârziere} other {# ore întârziere}}",
+      "recipients": "{count, plural, one {# destinatar} other {# destinatari}}",
+      "reasons": {
+        "catchUpSuperseded": "platforma nu a funcționat; a fost trimisă în schimb o rulare ulterioară",
+        "paused": "programarea era întreruptă",
+        "draft": "difuzarea era în editare",
+        "blockedOwner": "contul este blocat",
+        "planLimit": "limita planului a fost atinsă",
+        "noTargets": "nicio pagină din care să se trimită",
+        "undeliverable": "fluxul sau șablonul nu este disponibil"
+      },
+      "outcomes": {
+        "created": "Trimis",
+        "skipped": "Omis",
+        "missed": "Ratat"
+      }
     }
   },
   "commentAutomation": {
@@ -2776,7 +2832,8 @@
     "schedule": {
       "label": "Programare",
       "now": "Acum",
-      "scheduled": "Programați pentru mai târziu"
+      "scheduled": "Programați pentru mai târziu",
+      "recurring": "Repetă"
     },
     "inputFieldId": {
       "label": "Câmp personalizat de intrare"
@@ -8032,5 +8089,36 @@
         "upload_failed": "Fișierul nu a putut fi încărcat. Încearcă din nou."
       }
     }
+  },
+  "recurrence": {
+    "title": "Repetă",
+    "every": "Repetă la fiecare",
+    "unit": "{count, plural, one {{frequency, select, daily {zi} weekly {săptămână} monthly {lună} other {}}} other {{frequency, select, daily {zile} weekly {săptămâni} monthly {luni} other {}}}}",
+    "weekdays": "Repetă în",
+    "time": "Ora",
+    "timezone": "Fus orar",
+    "noTimezone": "Niciun fus orar găsit",
+    "searchTimezone": "Caută fus orar…",
+    "startsOn": "Începe pe",
+    "end": {
+      "label": "Se încheie",
+      "never": "Niciodată",
+      "onDate": "Pe",
+      "after": "După",
+      "pickDate": "Alege o dată",
+      "occurrences": "{count, plural, one {execuție} other {execuții}}"
+    },
+    "monthDay": {
+      "label": "Ziua din lună",
+      "day": "Ziua {day}",
+      "last": "Ultima zi",
+      "hint": "În lunile mai scurte, trimiterea are loc în ultima zi."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {În fiecare {frequency, select, daily {zi} weekly {săptămână} monthly {lună} other {}}} other {La fiecare # {frequency, select, daily {zile} weekly {săptămâni} monthly {luni} other {}}}}{frequency, select, weekly { în {weekdays}} monthly { în {monthDay, select, last {ultima zi} other {ziua {monthDay}}}} other {}} la {time} ({timezone}), începând cu {startsOn}{endKind, select, onDate {, se încheie pe {endDate}} afterOccurrences {, se încheie după {endCount, plural, one {# execuție} other {# execuții}}} other {}}"
+    },
+    "firstRunLater": "Prima trimitere este {when}, deoarece ora de azi a trecut deja.",
+    "nextRuns": "Următoarele trimiteri",
+    "noUpcomingRuns": "Nicio trimitere programată."
   }
 }

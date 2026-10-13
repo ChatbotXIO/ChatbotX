@@ -1,5 +1,6 @@
 "use client"
 
+import { isRecurringTemplate } from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableRowCard } from "@chatbotx.io/ui/components/data-table/data-table-row-card"
@@ -20,6 +21,7 @@ import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { CopyIcon, Loader2Icon, MoreHorizontalIcon } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { useCallback, useMemo, useState } from "react"
@@ -30,6 +32,7 @@ import { useWorkspaceId } from "@/hooks/routing"
 import { useIntervalRouterRefresh } from "@/hooks/use-interval-router-refresh"
 import { BroadcastDetailDialog } from "./broadcast-detail-dialog"
 import { CloneBroadcastDialog } from "./clone-broadcast-dialog"
+import { BroadcastSeriesSummary } from "./components/broadcast-series-summary"
 import { BroadcastStatsCell } from "./components/broadcast-stats-cell"
 import { BroadcastStatusBadge } from "./components/broadcast-status-badge"
 import { BroadcastsEmptyState } from "./components/broadcasts-empty-state"
@@ -39,11 +42,13 @@ import { MoveBroadcastToDraftDialog } from "./components/move-broadcast-to-draft
 import { ResumeBroadcastDialog } from "./components/resume-broadcast-dialog"
 import { ScheduleBroadcastDialog } from "./components/schedule-broadcast-dialog"
 import { StopBroadcastDialog } from "./components/stop-broadcast-dialog"
+import { broadcastRunsHref } from "./lib/broadcast-links"
 import {
   type BroadcastRowActionVariant,
   filterBroadcastRowActions,
   getBroadcastRowActions,
   ROW_ACTION_ITEMS,
+  resolveBroadcastRowActionLabelKey,
 } from "./lib/broadcast-row-actions"
 import { BroadcastStatsStoreProvider } from "./provider/broadcast-stats-store-context"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
@@ -68,6 +73,9 @@ type BroadcastRowAction = {
   variant: BroadcastRowActionVariant
 }
 
+const isPausedSeries = (broadcast: BroadcastResourceWithRelations) =>
+  isRecurringTemplate(broadcast) && broadcast.status === "cancelled"
+
 export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
   const isEmpty = shouldShowBroadcastsEmptyState({
@@ -76,7 +84,11 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
   })
 
   const workspaceId = useWorkspaceId()
-  const broadcastIds = useMemo(() => data.map((b) => b.id), [data])
+  // A repeating series sends nothing itself, so it has no stats to load.
+  const broadcastIds = useMemo(
+    () => data.filter((b) => !isRecurringTemplate(b)).map((b) => b.id),
+    [data],
+  )
   const hasInProgressBroadcast = useMemo(
     () => data.some((broadcast) => isBroadcastInProgress(broadcast.status)),
     [data],
@@ -99,6 +111,33 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
       })
     },
     [copyToClipboard, t],
+  )
+
+  // A series shows its run count (a link to the runs page) where the first
+  // stat would be, and nothing in the others: its runs carry the stats.
+  const renderStatsCell = useCallback(
+    (
+      broadcast: BroadcastResourceWithRelations,
+      field: React.ComponentProps<typeof BroadcastStatsCell>["field"],
+    ) => {
+      if (!isRecurringTemplate(broadcast)) {
+        return <BroadcastStatsCell broadcastId={broadcast.id} field={field} />
+      }
+      if (field !== "message:sent") {
+        return <span className="text-muted-foreground">-</span>
+      }
+      return (
+        <Link
+          className="text-primary text-sm underline-offset-4 hover:underline"
+          href={broadcastRunsHref(workspaceId, broadcast.id)}
+        >
+          {t("broadcasts.recurring.runs", {
+            count: broadcast.recurrence?.occurrenceCount ?? 0,
+          })}
+        </Link>
+      )
+    },
+    [t, workspaceId],
   )
 
   const columns = useMemo<ColumnDef<BroadcastResourceWithRelations>[]>(
@@ -165,18 +204,21 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <div className="inline-block max-w-[200px] truncate">
-                  {row.original.name ?? ""}
-                </div>
-              }
-            />
-            <TooltipContent>
-              <p>{row.original.name ?? ""}</p>
-            </TooltipContent>
-          </Tooltip>
+          <div className="flex flex-col">
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <div className="inline-block max-w-[200px] truncate">
+                    {row.original.name ?? ""}
+                  </div>
+                }
+              />
+              <TooltipContent>
+                <p>{row.original.name ?? ""}</p>
+              </TooltipContent>
+            </Tooltip>
+            <BroadcastSeriesSummary broadcast={row.original} />
+          </div>
         ),
         meta: {
           label: t("fields.name.label"),
@@ -213,7 +255,11 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <BroadcastStatusBadge status={row.original.status} />
+          <BroadcastStatusBadge
+            occurrenceAt={row.original.occurrenceAt}
+            schedulesType={row.original.schedulesType}
+            status={row.original.status}
+          />
         ),
         enableSorting: false,
         enableHiding: false,
@@ -230,6 +276,9 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => {
+          if (isRecurringTemplate(row.original)) {
+            return <span className="text-muted-foreground">-</span>
+          }
           const displayState = getEstimatedContactsDisplayState({
             contactCount: row.original.contactCount,
             status: row.original.status,
@@ -258,12 +307,7 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
             title={t("broadcasts.stats.sent")}
           />
         ),
-        cell: ({ row }) => (
-          <BroadcastStatsCell
-            broadcastId={row.original.id}
-            field="message:sent"
-          />
-        ),
+        cell: ({ row }) => renderStatsCell(row.original, "message:sent"),
         meta: {
           label: t("broadcasts.stats.sent"),
         },
@@ -278,12 +322,7 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
             title={t("broadcasts.stats.delivered")}
           />
         ),
-        cell: ({ row }) => (
-          <BroadcastStatsCell
-            broadcastId={row.original.id}
-            field="message:delivered"
-          />
-        ),
+        cell: ({ row }) => renderStatsCell(row.original, "message:delivered"),
         meta: {
           label: t("broadcasts.stats.delivered"),
         },
@@ -298,12 +337,7 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
             title={t("broadcasts.stats.seen")}
           />
         ),
-        cell: ({ row }) => (
-          <BroadcastStatsCell
-            broadcastId={row.original.id}
-            field="message:seen"
-          />
-        ),
+        cell: ({ row }) => renderStatsCell(row.original, "message:seen"),
         meta: {
           label: t("broadcasts.stats.seen"),
         },
@@ -318,12 +352,7 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
             title={t("broadcasts.stats.clicked")}
           />
         ),
-        cell: ({ row }) => (
-          <BroadcastStatsCell
-            broadcastId={row.original.id}
-            field="flow:clicked"
-          />
-        ),
+        cell: ({ row }) => renderStatsCell(row.original, "flow:clicked"),
         meta: {
           label: t("broadcasts.stats.clicked"),
         },
@@ -338,12 +367,7 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
             title={t("broadcasts.stats.failed")}
           />
         ),
-        cell: ({ row }) => (
-          <BroadcastStatsCell
-            broadcastId={row.original.id}
-            field="message:failed"
-          />
-        ),
+        cell: ({ row }) => renderStatsCell(row.original, "message:failed"),
         meta: {
           label: t("broadcasts.stats.failed"),
         },
@@ -358,9 +382,14 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
             title={t("fields.scheduledAt.label")}
           />
         ),
-        cell: ({ row }) => (
-          <div>{format(row.original.schedulesAt, "yyyy/MM/dd HH:mm")}</div>
-        ),
+        cell: ({ row }) =>
+          // A paused series keeps its last `schedulesAt`, a time at which
+          // nothing will run.
+          isPausedSeries(row.original) ? (
+            <span className="text-muted-foreground">-</span>
+          ) : (
+            <div>{format(row.original.schedulesAt, "yyyy/MM/dd HH:mm")}</div>
+          ),
         meta: {
           label: t("fields.scheduledAt.label"),
         },
@@ -382,20 +411,30 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
             <DropdownMenuContent align="end">
               {filterBroadcastRowActions(
                 getBroadcastRowActions(row.original.status),
-                { contactCount: row.original.contactCount },
+                row.original,
               ).map((variant) => {
-                const { icon: ActionIcon, labelKey } = ROW_ACTION_ITEMS[variant]
+                const { icon: ActionIcon } = ROW_ACTION_ITEMS[variant]
+                const labelKey = resolveBroadcastRowActionLabelKey(
+                  variant,
+                  row.original,
+                )
                 return (
                   <DropdownMenuItem
                     key={variant}
-                    onClick={() =>
-                      // Edit is a full-page form, not a dialog.
-                      variant === "edit"
-                        ? router.push(
-                            `/space/${workspaceId}/broadcasts/${row.original.id}/edit`,
-                          )
-                        : setRowAction({ row, variant })
-                    }
+                    onClick={() => {
+                      // Edit and the runs list are pages, not dialogs.
+                      if (variant === "edit") {
+                        router.push(
+                          `/space/${workspaceId}/broadcasts/${row.original.id}/edit`,
+                        )
+                      } else if (variant === "viewRuns") {
+                        router.push(
+                          broadcastRunsHref(workspaceId, row.original.id),
+                        )
+                      } else {
+                        setRowAction({ row, variant })
+                      }
+                    }}
                   >
                     <ActionIcon className="me-2" />
                     {t(labelKey)}
@@ -410,7 +449,7 @@ export function BroadcastsTable({ promises, filtered }: BroadcastsTableProps) {
         enableHiding: false,
       },
     ],
-    [t, router, workspaceId, handleCopyId],
+    [t, router, workspaceId, handleCopyId, renderStatsCell],
   )
 
   const { table } = useDataTable({

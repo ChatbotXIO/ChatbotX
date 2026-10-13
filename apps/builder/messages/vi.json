@@ -154,7 +154,9 @@
     "schedule": "Lên lịch",
     "moveToDraft": "Chuyển về nháp",
     "stop": "Dừng",
-    "resume": "Tiếp tục"
+    "resume": "Tiếp tục",
+    "viewRuns": "Xem các lần gửi",
+    "editSchedule": "Sửa lịch"
   },
   "errors": {
     "superAdminRequired": "Bạn cần là super admin của workspace để thực hiện thao tác này."
@@ -409,7 +411,10 @@
       "sending": "Đang gửi",
       "cancelled": "Đã huỷ",
       "draft": "Nháp",
-      "failed": "Thất bại"
+      "failed": "Thất bại",
+      "recurring": "Lặp lại",
+      "paused": "Tạm dừng",
+      "ended": "Đã kết thúc"
     },
     "stats": {
       "sent": "Đã gửi",
@@ -493,7 +498,9 @@
       "audienceFilter": "Bộ lọc người nhận",
       "noAudienceFilter": "Không có bộ lọc người nhận",
       "template": "Template",
-      "integration": "Tích hợp"
+      "integration": "Tích hợp",
+      "schedule": "Lịch lặp lại",
+      "runOf": "Lần gửi của <link>{name}</link>"
     },
     "filters": {
       "all": "Tất cả"
@@ -542,15 +549,20 @@
     },
     "moveToDraftDialog": {
       "title": "Chuyển về nháp",
-      "description": "\"{name}\" sẽ được hủy lịch và chuyển về mục nháp."
+      "description": "\"{name}\" sẽ được hủy lịch và chuyển về mục nháp.",
+      "templateTitle": "Sửa lịch",
+      "templateDescription": "\"{name}\" được tạm dừng và chuyển về bản nháp để bạn đổi lịch."
     },
     "stopDialog": {
       "title": "Dừng broadcast",
-      "description": "Các tin nhắn còn lại của \"{name}\" sẽ dừng trong khoảng một phút. Một vài tin đã được chuyển cho kênh gửi có thể vẫn được gửi đi. Bạn có thể tiếp tục sau — chỉ những người chưa nhận sẽ nhận được tin."
+      "description": "Các tin nhắn còn lại của \"{name}\" sẽ dừng trong khoảng một phút. Một vài tin đã được chuyển cho kênh gửi có thể vẫn được gửi đi. Bạn có thể tiếp tục sau — chỉ những người chưa nhận sẽ nhận được tin.",
+      "templateTitle": "Tạm dừng broadcast lặp lại",
+      "templateDescription": "\"{name}\" sẽ ngừng tạo lần gửi mới. Lần gửi đang chạy vẫn tiếp tục. Bạn có thể tiếp tục sau; các lần gửi trong thời gian tạm dừng sẽ bị bỏ qua."
     },
     "resumeDialog": {
       "title": "Tiếp tục broadcast",
-      "description": "\"{name}\" sẽ tiếp tục gửi đến những người nhận chưa nhận được tin."
+      "description": "\"{name}\" sẽ tiếp tục gửi đến những người nhận chưa nhận được tin.",
+      "templateDescription": "\"{name}\" sẽ lặp lại trở lại từ lần gửi theo lịch tiếp theo. Các lần gửi trong thời gian tạm dừng đã bị bỏ qua."
     },
     "planLimitDialog": {
       "title": "Nâng cấp gói của bạn",
@@ -568,6 +580,50 @@
       "toLabel": "Đến",
       "allPlaceholder": "Tất cả",
       "rangeEndBeforeStart": "Vị trí kết thúc không được trước vị trí bắt đầu"
+    },
+    "recurring": {
+      "nextRun": "Lần gửi tiếp theo {when}",
+      "paused": "Tạm dừng",
+      "ended": "Đã kết thúc {when} · {count, plural, one {# lần gửi} other {# lần gửi}}",
+      "runs": "{count, plural, one {# lần gửi} other {# lần gửi}}"
+    },
+    "runs": {
+      "back": "Broadcast lặp lại",
+      "pausedNotice": "Đã tạm dừng từ {when}. Các lần gửi trong thời gian tạm dừng bị bỏ qua.",
+      "groupBy": "Nhóm theo",
+      "grouping": {
+        "day": "Ngày",
+        "week": "Tuần",
+        "month": "Tháng"
+      },
+      "totals": "{runs, plural, one {# lần gửi} other {# lần gửi}} trên {slots, plural, one {# khung giờ} other {# khung giờ}}",
+      "error": "Không tải được các lần gửi.",
+      "retry": "Thử lại",
+      "empty": "Chưa có lần gửi nào. Lần gửi đầu tiên bắt đầu vào giờ theo lịch tiếp theo.",
+      "loadMore": "Tải thêm",
+      "weekOf": "Tuần của {date}",
+      "groupSummary": "{created, plural, one {# lần gửi} other {# lần gửi}}{missed, plural, =0 {} other { · # bỏ lỡ}}{skipped, plural, =0 {} other { · # bỏ qua}}",
+      "deliveredRate": "{rate} đã nhận",
+      "notSent": "Không gửi — {reason}",
+      "earlierSlots": "{count, plural, one {# khung giờ trước đó bị bỏ lỡ} other {# khung giờ trước đó bị bỏ lỡ}}",
+      "stalled": "Bị kẹt",
+      "lateByMinutes": "{count, plural, one {Trễ # phút} other {Trễ # phút}}",
+      "lateByHours": "{count, plural, one {Trễ # giờ} other {Trễ # giờ}}",
+      "recipients": "{count, plural, one {# người nhận} other {# người nhận}}",
+      "reasons": {
+        "catchUpSuperseded": "hệ thống gặp sự cố; lần gửi sau đã được gửi thay thế",
+        "paused": "lịch đang tạm dừng",
+        "draft": "broadcast đang được chỉnh sửa",
+        "blockedOwner": "tài khoản đang bị chặn",
+        "planLimit": "đã đạt giới hạn gói",
+        "noTargets": "không có trang để gửi",
+        "undeliverable": "flow hoặc mẫu tin không khả dụng"
+      },
+      "outcomes": {
+        "created": "Đã gửi",
+        "skipped": "Bỏ qua",
+        "missed": "Bị lỡ"
+      }
     }
   },
   "commentAutomation": {
@@ -1932,7 +1988,8 @@
     "schedule": {
       "label": "Lịch trình",
       "now": "Ngay bây giờ",
-      "scheduled": "Lên lịch cho sau"
+      "scheduled": "Lên lịch cho sau",
+      "recurring": "Lặp lại"
     },
     "inputFieldId": {
       "label": "Trường tùy chỉnh đầu vào"
@@ -8032,5 +8089,36 @@
         "upload_failed": "Không tải file lên được. Vui lòng thử lại."
       }
     }
+  },
+  "recurrence": {
+    "title": "Lặp lại",
+    "every": "Lặp lại mỗi",
+    "unit": "{count, plural, one {{frequency, select, daily {ngày} weekly {tuần} monthly {tháng} other {}}} other {{frequency, select, daily {ngày} weekly {tuần} monthly {tháng} other {}}}}",
+    "weekdays": "Lặp lại vào",
+    "time": "Giờ",
+    "timezone": "Múi giờ",
+    "noTimezone": "Không tìm thấy múi giờ",
+    "searchTimezone": "Tìm múi giờ…",
+    "startsOn": "Bắt đầu từ",
+    "end": {
+      "label": "Kết thúc",
+      "never": "Không bao giờ",
+      "onDate": "Vào ngày",
+      "after": "Sau",
+      "pickDate": "Chọn ngày",
+      "occurrences": "{count, plural, one {lần} other {lần}}"
+    },
+    "monthDay": {
+      "label": "Ngày trong tháng",
+      "day": "Ngày {day}",
+      "last": "Ngày cuối tháng",
+      "hint": "Với tháng ngắn hơn, lần gửi sẽ rơi vào ngày cuối tháng."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {Mỗi {frequency, select, daily {ngày} weekly {tuần} monthly {tháng} other {}}} other {Mỗi # {frequency, select, daily {ngày} weekly {tuần} monthly {tháng} other {}}}}{frequency, select, weekly { vào {weekdays}} monthly { vào {monthDay, select, last {ngày cuối tháng} other {ngày {monthDay}}}} other {}} lúc {time} ({timezone}), bắt đầu từ {startsOn}{endKind, select, onDate {, kết thúc vào {endDate}} afterOccurrences {, kết thúc sau {endCount, plural, one {# lần} other {# lần}}} other {}}"
+    },
+    "firstRunLater": "Lần gửi đầu tiên là {when}, vì giờ hôm nay đã qua.",
+    "nextRuns": "Các lần gửi tiếp theo",
+    "noUpcomingRuns": "Chưa có lần gửi nào sắp tới."
   }
 }

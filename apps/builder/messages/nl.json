@@ -154,7 +154,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "Uitvoeringen bekijken",
+    "editSchedule": "Planning bewerken"
   },
   "errors": {
     "superAdminRequired": "Je moet superbeheerder van de werkruimte zijn om dit te doen."
@@ -367,7 +369,10 @@
       "sending": "Wordt verzonden",
       "cancelled": "Geannuleerd",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "Terugkerend",
+      "paused": "Gepauzeerd",
+      "ended": "Beëindigd"
     },
     "stats": {
       "sent": "Verzonden",
@@ -451,7 +456,9 @@
       "audienceFilter": "Doelgroepfilter",
       "noAudienceFilter": "Geen doelgroepfilter",
       "template": "Sjabloon",
-      "integration": "Integratie"
+      "integration": "Integratie",
+      "schedule": "Herhaalschema",
+      "runOf": "Uitvoering van <link>{name}</link>"
     },
     "filters": {
       "all": "All"
@@ -500,15 +507,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "Planning bewerken",
+      "templateDescription": "\"{name}\" wordt gepauzeerd en teruggezet naar concepten zodat u de planning kunt wijzigen."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "Herhalende broadcast pauzeren",
+      "templateDescription": "\"{name}\" maakt geen nieuwe uitvoeringen meer. Een uitvoering die al verzendt, gaat door. U kunt later hervatten; uitvoeringen tijdens de pauze worden overgeslagen."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "\"{name}\" herhaalt zich weer vanaf het volgende geplande tijdstip. Uitvoeringen tijdens de pauze zijn overgeslagen."
     },
     "planLimitDialog": {
       "title": "Upgrade je abonnement",
@@ -526,6 +538,50 @@
       "toLabel": "Tot",
       "allPlaceholder": "Alle",
       "rangeEndBeforeStart": "De eindpositie mag niet vóór de startpositie liggen"
+    },
+    "recurring": {
+      "nextRun": "Volgende uitvoering {when}",
+      "paused": "Gepauzeerd",
+      "ended": "Beëindigd {when} · {count, plural, one {# uitvoering} other {# uitvoeringen}}",
+      "runs": "{count, plural, one {# uitvoering} other {# uitvoeringen}}"
+    },
+    "runs": {
+      "back": "Herhalende broadcasts",
+      "pausedNotice": "Gepauzeerd sinds {when}. Uitvoeringen tijdens de pauze worden overgeslagen.",
+      "groupBy": "Uitvoeringen groeperen per",
+      "grouping": {
+        "day": "Dag",
+        "week": "Week",
+        "month": "Maand"
+      },
+      "totals": "{runs, plural, one {# uitvoering} other {# uitvoeringen}} uit {slots, plural, one {# moment} other {# momenten}}",
+      "error": "De uitvoeringen konden niet worden geladen.",
+      "retry": "Opnieuw proberen",
+      "empty": "Nog geen uitvoeringen. De eerste start op het volgende geplande tijdstip.",
+      "loadMore": "Meer laden",
+      "weekOf": "Week van {date}",
+      "groupSummary": "{created, plural, one {# uitvoering} other {# uitvoeringen}}{missed, plural, =0 {} other { · # gemist}}{skipped, plural, =0 {} other { · # overgeslagen}}",
+      "deliveredRate": "{rate} afgeleverd",
+      "notSent": "Niet verzonden — {reason}",
+      "earlierSlots": "{count, plural, one {# eerder moment} other {# eerdere momenten}} gemist",
+      "stalled": "Vastgelopen",
+      "lateByMinutes": "{count, plural, one {# minuut te laat} other {# minuten te laat}}",
+      "lateByHours": "{count, plural, one {# uur te laat} other {# uur te laat}}",
+      "recipients": "{count, plural, one {# ontvanger} other {# ontvangers}}",
+      "reasons": {
+        "catchUpSuperseded": "het platform was niet beschikbaar; in plaats daarvan is een latere uitvoering verzonden",
+        "paused": "het schema was gepauzeerd",
+        "draft": "de broadcast werd bewerkt",
+        "blockedOwner": "het account is geblokkeerd",
+        "planLimit": "abonnementslimiet bereikt",
+        "noTargets": "geen pagina om vanaf te verzenden",
+        "undeliverable": "flow of sjabloon is niet beschikbaar"
+      },
+      "outcomes": {
+        "created": "Verzonden",
+        "skipped": "Overgeslagen",
+        "missed": "Gemist"
+      }
     }
   },
   "commentAutomation": {
@@ -1588,7 +1644,8 @@
     "schedule": {
       "label": "Planning",
       "now": "Nu",
-      "scheduled": "Voor later plannen"
+      "scheduled": "Voor later plannen",
+      "recurring": "Herhalen"
     },
     "inputFieldId": {
       "label": "Aangepast invoerveld"
@@ -8032,5 +8089,36 @@
         "upload_failed": "Het bestand kon niet worden geüpload. Probeer het opnieuw."
       }
     }
+  },
+  "recurrence": {
+    "title": "Herhalen",
+    "every": "Herhaal elke",
+    "unit": "{count, plural, one {{frequency, select, daily {dag} weekly {week} monthly {maand} other {}}} other {{frequency, select, daily {dagen} weekly {weken} monthly {maanden} other {}}}}",
+    "weekdays": "Herhaal op",
+    "time": "Tijd",
+    "timezone": "Tijdzone",
+    "noTimezone": "Geen tijdzone gevonden",
+    "searchTimezone": "Tijdzone zoeken…",
+    "startsOn": "Begint op",
+    "end": {
+      "label": "Eindigt",
+      "never": "Nooit",
+      "onDate": "Op",
+      "after": "Na",
+      "pickDate": "Kies een datum",
+      "occurrences": "{count, plural, one {keer} other {keer}}"
+    },
+    "monthDay": {
+      "label": "Dag van de maand",
+      "day": "Dag {day}",
+      "last": "Laatste dag",
+      "hint": "In kortere maanden wordt op de laatste dag verzonden."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {Elke {frequency, select, daily {dag} weekly {week} monthly {maand} other {}}} other {Elke # {frequency, select, daily {dagen} weekly {weken} monthly {maanden} other {}}}}{frequency, select, weekly { op {weekdays}} monthly { op {monthDay, select, last {de laatste dag} other {dag {monthDay}}}} other {}} om {time} ({timezone}), vanaf {startsOn}{endKind, select, onDate {, eindigt op {endDate}} afterOccurrences {, eindigt na {endCount, plural, one {# keer} other {# keer}}} other {}}"
+    },
+    "firstRunLater": "De eerste verzending is {when}, omdat de tijd van vandaag al voorbij is.",
+    "nextRuns": "Volgende verzendingen",
+    "noUpcomingRuns": "Geen geplande verzendingen."
   }
 }

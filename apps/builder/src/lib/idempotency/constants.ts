@@ -10,4 +10,6 @@ export const IDEMPOTENCY_RETENTION_HOURS = 24
  */
 export const IDEMPOTENCY_EXEMPT_READ_PATHS: ReadonlySet<string> = new Set([
   "/v1/broadcasts/audience/preview",
+  // Next run times depend on the current time, so a replayed response would go stale.
+  "/v1/broadcasts/preview-recurrence",
 ])

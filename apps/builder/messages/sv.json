@@ -158,7 +158,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "Visa körningar",
+    "editSchedule": "Redigera schema"
   },
   "errors": {
     "superAdminRequired": "Du måste vara superadministratör för arbetsytan för att göra detta."
@@ -529,7 +531,9 @@
       "noAudienceFilter": "Inget målgruppsfilter",
       "subaction": "Underåtgärd",
       "template": "Mall",
-      "title": "Utskickningsinformation"
+      "title": "Utskickningsinformation",
+      "schedule": "Upprepningsschema",
+      "runOf": "Körning av <link>{name}</link>"
     },
     "flowType": {
       "flow": {
@@ -593,7 +597,10 @@
       "sending": "Skickar",
       "sent": "Skickat",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "Återkommande",
+      "paused": "Pausad",
+      "ended": "Avslutad"
     },
     "telegramAllContacts": {
       "description": "Använd den här meddelandetypen om du vill skicka ett utskick till dina Telegram-kontakter.",
@@ -659,15 +666,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "Redigera schema",
+      "templateDescription": "\"{name}\" pausas och flyttas tillbaka till utkast så att du kan ändra schemat."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "Pausa återkommande utskick",
+      "templateDescription": "\"{name}\" skapar inga nya körningar. En körning som redan skickas fortsätter. Du kan återuppta senare; körningar under pausen hoppas över."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "\"{name}\" börjar upprepas igen från nästa schemalagda tidpunkt. Körningar under pausen hoppades över."
     },
     "planLimitDialog": {
       "title": "Uppgradera ditt abonnemang",
@@ -685,6 +697,50 @@
       "toLabel": "Till",
       "allPlaceholder": "Alla",
       "rangeEndBeforeStart": "Slutpositionen får inte vara före startpositionen"
+    },
+    "recurring": {
+      "nextRun": "Nästa körning {when}",
+      "paused": "Pausad",
+      "ended": "Avslutad {when} · {count, plural, one {# körning} other {# körningar}}",
+      "runs": "{count, plural, one {# körning} other {# körningar}}"
+    },
+    "runs": {
+      "back": "Återkommande utskick",
+      "pausedNotice": "Pausad sedan {when}. Körningar under pausen hoppas över.",
+      "groupBy": "Gruppera körningar efter",
+      "grouping": {
+        "day": "Dag",
+        "week": "Vecka",
+        "month": "Månad"
+      },
+      "totals": "{runs, plural, one {# körning} other {# körningar}} av {slots, plural, one {# tillfälle} other {# tillfällen}}",
+      "error": "Det gick inte att läsa in körningarna.",
+      "retry": "Försök igen",
+      "empty": "Inga körningar än. Den första startar vid nästa schemalagda tidpunkt.",
+      "loadMore": "Läs in fler",
+      "weekOf": "Veckan från {date}",
+      "groupSummary": "{created, plural, one {# körning} other {# körningar}}{missed, plural, =0 {} other { · # missad}}{skipped, plural, =0 {} other { · # överhoppad}}",
+      "deliveredRate": "{rate} levererade",
+      "notSent": "Inte skickad — {reason}",
+      "earlierSlots": "{count, plural, one {# tidigare tillfälle} other {# tidigare tillfällen}} missade",
+      "stalled": "Fastnat",
+      "lateByMinutes": "{count, plural, one {# minut sen} other {# minuter sen}}",
+      "lateByHours": "{count, plural, one {# timme sen} other {# timmar sen}}",
+      "recipients": "{count, plural, one {# mottagare} other {# mottagare}}",
+      "reasons": {
+        "catchUpSuperseded": "plattformen låg nere; en senare körning skickades i stället",
+        "paused": "schemat var pausat",
+        "draft": "utskicket redigerades",
+        "blockedOwner": "kontot är blockerat",
+        "planLimit": "planens gräns är nådd",
+        "noTargets": "ingen sida att skicka från",
+        "undeliverable": "flödet eller mallen är inte tillgänglig"
+      },
+      "outcomes": {
+        "created": "Skickad",
+        "skipped": "Överhoppad",
+        "missed": "Missad"
+      }
     }
   },
   "commentAutomation": {
@@ -2764,7 +2820,8 @@
     "schedule": {
       "label": "Schema",
       "now": "Nu",
-      "scheduled": "Schemalägg till senare"
+      "scheduled": "Schemalägg till senare",
+      "recurring": "Upprepa"
     },
     "scheduledAt": {
       "label": "Schemalagd till"
@@ -8032,5 +8089,36 @@
         "upload_failed": "Filen kunde inte laddas upp. Försök igen."
       }
     }
+  },
+  "recurrence": {
+    "title": "Upprepa",
+    "every": "Upprepa var",
+    "unit": "{count, plural, one {{frequency, select, daily {dag} weekly {vecka} monthly {månad} other {}}} other {{frequency, select, daily {dagar} weekly {veckor} monthly {månader} other {}}}}",
+    "weekdays": "Upprepa på",
+    "time": "Tid",
+    "timezone": "Tidszon",
+    "noTimezone": "Ingen tidszon hittades",
+    "searchTimezone": "Sök tidszon…",
+    "startsOn": "Börjar",
+    "end": {
+      "label": "Slutar",
+      "never": "Aldrig",
+      "onDate": "Den",
+      "after": "Efter",
+      "pickDate": "Välj ett datum",
+      "occurrences": "{count, plural, one {gång} other {gånger}}"
+    },
+    "monthDay": {
+      "label": "Dag i månaden",
+      "day": "Dag {day}",
+      "last": "Sista dagen",
+      "hint": "I kortare månader skickas det på sista dagen."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {Varje {frequency, select, daily {dag} weekly {vecka} monthly {månad} other {}}} other {Var # {frequency, select, daily {dagar} weekly {veckor} monthly {månader} other {}}}}{frequency, select, weekly { på {weekdays}} monthly { på {monthDay, select, last {sista dagen} other {dag {monthDay}}}} other {}} kl. {time} ({timezone}), från {startsOn}{endKind, select, onDate {, slutar {endDate}} afterOccurrences {, slutar efter {endCount, plural, one {# gång} other {# gånger}}} other {}}"
+    },
+    "firstRunLater": "Första utskicket är {when}, eftersom dagens tid redan har passerat.",
+    "nextRuns": "Nästa utskick",
+    "noUpcomingRuns": "Inga kommande utskick."
   }
 }

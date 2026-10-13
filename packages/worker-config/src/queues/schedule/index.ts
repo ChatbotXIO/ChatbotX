@@ -11,6 +11,7 @@ import { queueNames } from "../../lib/types"
 
 export const ScheduleJobData = {
   enqueueBroadcast: "enqueueBroadcast",
+  enqueueRecurringBroadcasts: "enqueueRecurringBroadcasts",
   prepareBroadcast: "prepareBroadcast",
   sendBroadcast: "sendBroadcast",
   reconcileBroadcasts: "reconcileBroadcasts",
@@ -81,6 +82,10 @@ export const PURGE_BROADCAST_CONCURRENCY = 5
 export const broadcastSendJobId = (broadcastId: string) =>
   `broadcast-send-${broadcastId}`
 
+/** Shared by every producer of a `prepareBroadcast` job, so the same broadcast is never prepared twice. */
+export const broadcastPrepareJobId = (broadcastId: string) =>
+  `schedule-prepare-broadcast-${broadcastId}`
+
 export const teardownExpiredTrialJobId = (userId: string) =>
   `teardown-expired-trial-${userId}`
 
@@ -96,6 +101,11 @@ export type ScheduleJobEnqueueBroadcast = {
   data: {
     schedulesAt: Date
   }
+}
+
+export type ScheduleJobEnqueueRecurringBroadcasts = {
+  type: typeof ScheduleJobData.enqueueRecurringBroadcasts
+  data: Record<string, never>
 }
 
 export type ScheduleJobPrepareBroadcast = {
@@ -279,6 +289,7 @@ export type ScheduleJobSweepStaleWhatsappCalls = {
 export type ScheduleJobData =
   | ScheduleJobBroadcast
   | ScheduleJobEnqueueBroadcast
+  | ScheduleJobEnqueueRecurringBroadcasts
   | ScheduleJobPrepareBroadcast
   | ScheduleJobFinalizeBroadcasts
   | ScheduleJobReconcileBroadcasts

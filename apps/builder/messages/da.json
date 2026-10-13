@@ -154,7 +154,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "Se kørsler",
+    "editSchedule": "Rediger tidsplan"
   },
   "errors": {
     "superAdminRequired": "Du skal være super admin for arbejdsområdet for at gøre dette."
@@ -367,7 +369,10 @@
       "sending": "Sender",
       "cancelled": "Annulleret",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "Gentagende",
+      "paused": "På pause",
+      "ended": "Afsluttet"
     },
     "stats": {
       "sent": "Sendt",
@@ -451,7 +456,9 @@
       "audienceFilter": "Målgruppefilter",
       "noAudienceFilter": "Intet målgruppefilter",
       "template": "Skabelon",
-      "integration": "Integration"
+      "integration": "Integration",
+      "schedule": "Gentagelsesplan",
+      "runOf": "Kørsel af <link>{name}</link>"
     },
     "filters": {
       "all": "All"
@@ -500,15 +507,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "Rediger tidsplan",
+      "templateDescription": "\"{name}\" sættes på pause og flyttes tilbage til kladder, så du kan ændre tidsplanen."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "Sæt gentagende broadcast på pause",
+      "templateDescription": "\"{name}\" opretter ikke flere kørsler. En kørsel, der allerede sender, fortsætter. Du kan genoptage senere; kørsler under pausen springes over."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "\"{name}\" gentages igen fra næste planlagte tidspunkt. Kørsler under pausen blev sprunget over."
     },
     "planLimitDialog": {
       "title": "Opgrader dit abonnement",
@@ -526,6 +538,50 @@
       "toLabel": "Til",
       "allPlaceholder": "Alle",
       "rangeEndBeforeStart": "Slutpositionen må ikke være før startpositionen"
+    },
+    "recurring": {
+      "nextRun": "Næste kørsel {when}",
+      "paused": "På pause",
+      "ended": "Afsluttet {when} · {count, plural, one {# kørsel} other {# kørsler}}",
+      "runs": "{count, plural, one {# kørsel} other {# kørsler}}"
+    },
+    "runs": {
+      "back": "Gentagende broadcasts",
+      "pausedNotice": "På pause siden {when}. Kørsler under pausen springes over.",
+      "groupBy": "Gruppér kørsler efter",
+      "grouping": {
+        "day": "Dag",
+        "week": "Uge",
+        "month": "Måned"
+      },
+      "totals": "{runs, plural, one {# kørsel} other {# kørsler}} fra {slots, plural, one {# tidspunkt} other {# tidspunkter}}",
+      "error": "Kørslerne kunne ikke indlæses.",
+      "retry": "Prøv igen",
+      "empty": "Ingen kørsler endnu. Den første starter på det næste planlagte tidspunkt.",
+      "loadMore": "Indlæs flere",
+      "weekOf": "Ugen for {date}",
+      "groupSummary": "{created, plural, one {# kørsel} other {# kørsler}}{missed, plural, =0 {} other { · # overset}}{skipped, plural, =0 {} other { · # sprunget over}}",
+      "deliveredRate": "{rate} leveret",
+      "notSent": "Ikke sendt — {reason}",
+      "earlierSlots": "{count, plural, one {# tidligere tidspunkt} other {# tidligere tidspunkter}} overset",
+      "stalled": "Sidder fast",
+      "lateByMinutes": "{count, plural, one {# minut forsinket} other {# minutter forsinket}}",
+      "lateByHours": "{count, plural, one {# time forsinket} other {# timer forsinket}}",
+      "recipients": "{count, plural, one {# modtager} other {# modtagere}}",
+      "reasons": {
+        "catchUpSuperseded": "platformen var nede; en senere kørsel blev sendt i stedet",
+        "paused": "tidsplanen var på pause",
+        "draft": "broadcasten blev redigeret",
+        "blockedOwner": "kontoen er blokeret",
+        "planLimit": "planens grænse er nået",
+        "noTargets": "ingen side at sende fra",
+        "undeliverable": "flow eller skabelon er ikke tilgængelig"
+      },
+      "outcomes": {
+        "created": "Sendt",
+        "skipped": "Sprunget over",
+        "missed": "Overset"
+      }
     }
   },
   "commentAutomation": {
@@ -1780,7 +1836,8 @@
     "schedule": {
       "label": "Schedule",
       "now": "Now",
-      "scheduled": "Schedule for later"
+      "scheduled": "Schedule for later",
+      "recurring": "Gentag"
     },
     "inputFieldId": {
       "label": "Input Brugerdefineret Felt"
@@ -8032,5 +8089,36 @@
         "upload_failed": "Filen kunne ikke uploades. Prøv igen."
       }
     }
+  },
+  "recurrence": {
+    "title": "Gentag",
+    "every": "Gentag hver",
+    "unit": "{count, plural, one {{frequency, select, daily {dag} weekly {uge} monthly {måned} other {}}} other {{frequency, select, daily {dage} weekly {uger} monthly {måneder} other {}}}}",
+    "weekdays": "Gentag på",
+    "time": "Tidspunkt",
+    "timezone": "Tidszone",
+    "noTimezone": "Ingen tidszone fundet",
+    "searchTimezone": "Søg tidszone…",
+    "startsOn": "Starter",
+    "end": {
+      "label": "Slutter",
+      "never": "Aldrig",
+      "onDate": "Den",
+      "after": "Efter",
+      "pickDate": "Vælg en dato",
+      "occurrences": "{count, plural, one {gang} other {gange}}"
+    },
+    "monthDay": {
+      "label": "Dag i måneden",
+      "day": "Dag {day}",
+      "last": "Sidste dag",
+      "hint": "I kortere måneder sendes der på den sidste dag."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {Hver {frequency, select, daily {dag} weekly {uge} monthly {måned} other {}}} other {Hver # {frequency, select, daily {dage} weekly {uger} monthly {måneder} other {}}}}{frequency, select, weekly { på {weekdays}} monthly { på {monthDay, select, last {sidste dag} other {dag {monthDay}}}} other {}} kl. {time} ({timezone}), fra {startsOn}{endKind, select, onDate {, slutter {endDate}} afterOccurrences {, slutter efter {endCount, plural, one {# gang} other {# gange}}} other {}}"
+    },
+    "firstRunLater": "Første udsendelse er {when}, fordi dagens tidspunkt allerede er passeret.",
+    "nextRuns": "Næste udsendelser",
+    "noUpcomingRuns": "Ingen kommende udsendelser."
   }
 }

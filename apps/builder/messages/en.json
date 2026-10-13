@@ -154,7 +154,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "View runs",
+    "editSchedule": "Edit schedule"
   },
   "errors": {
     "superAdminRequired": "You need to be a workspace super admin to do this."
@@ -409,7 +411,10 @@
       "sending": "In progress",
       "cancelled": "Cancelled",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "Repeating",
+      "paused": "Paused",
+      "ended": "Ended"
     },
     "stats": {
       "sent": "Sent",
@@ -493,7 +498,9 @@
       "audienceFilter": "Audience filter",
       "noAudienceFilter": "No audience filter",
       "template": "Template",
-      "integration": "Integration"
+      "integration": "Integration",
+      "schedule": "Repeat schedule",
+      "runOf": "Run of <link>{name}</link>"
     },
     "filters": {
       "all": "All"
@@ -542,15 +549,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "Edit schedule",
+      "templateDescription": "\"{name}\" is paused and moved back to drafts so you can change its schedule."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "Pause repeating broadcast",
+      "templateDescription": "\"{name}\" stops creating new runs. A run that is already sending continues. You can resume later; runs during the pause are skipped."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "\"{name}\" starts repeating again from its next scheduled time. Runs during the pause were skipped."
     },
     "planLimitDialog": {
       "title": "Upgrade your plan",
@@ -568,6 +580,50 @@
       "toLabel": "To",
       "allPlaceholder": "All",
       "rangeEndBeforeStart": "The end position must not be before the start position"
+    },
+    "recurring": {
+      "nextRun": "Next run {when}",
+      "paused": "Paused",
+      "ended": "Ended {when} · {count, plural, one {# run} other {# runs}}",
+      "runs": "{count, plural, one {# run} other {# runs}}"
+    },
+    "runs": {
+      "back": "Repeating broadcasts",
+      "pausedNotice": "Paused since {when}. Runs during the pause are skipped.",
+      "groupBy": "Group runs by",
+      "grouping": {
+        "day": "Day",
+        "week": "Week",
+        "month": "Month"
+      },
+      "totals": "{runs, plural, one {# run} other {# runs}} from {slots, plural, one {# slot} other {# slots}}",
+      "error": "Could not load the runs.",
+      "retry": "Try again",
+      "empty": "No runs yet. The first run starts at its next scheduled time.",
+      "loadMore": "Load more",
+      "weekOf": "Week of {date}",
+      "groupSummary": "{created, plural, one {# run} other {# runs}}{missed, plural, =0 {} other { · # missed}}{skipped, plural, =0 {} other { · # skipped}}",
+      "deliveredRate": "{rate} delivered",
+      "notSent": "Not sent — {reason}",
+      "earlierSlots": "{count, plural, one {# earlier slot} other {# earlier slots}} missed",
+      "stalled": "Stalled",
+      "lateByMinutes": "{count, plural, one {Late by # minute} other {Late by # minutes}}",
+      "lateByHours": "{count, plural, one {Late by # hour} other {Late by # hours}}",
+      "recipients": "{count, plural, one {# recipient} other {# recipients}}",
+      "reasons": {
+        "catchUpSuperseded": "the platform was down; a later run was sent instead",
+        "paused": "the schedule was paused",
+        "draft": "the broadcast was being edited",
+        "blockedOwner": "the account is blocked",
+        "planLimit": "plan limit reached",
+        "noTargets": "no page to send from",
+        "undeliverable": "its flow or template is unavailable"
+      },
+      "outcomes": {
+        "created": "Sent",
+        "skipped": "Skipped",
+        "missed": "Missed"
+      }
     }
   },
   "commentAutomation": {
@@ -1977,7 +2033,8 @@
     "schedule": {
       "label": "Schedule",
       "now": "Now",
-      "scheduled": "Schedule for later"
+      "scheduled": "Schedule for later",
+      "recurring": "Repeat"
     },
     "inputFieldId": {
       "label": "Input Custom Field"
@@ -8032,5 +8089,36 @@
         "upload_failed": "The file could not be uploaded. Please try again."
       }
     }
+  },
+  "recurrence": {
+    "title": "Repeat",
+    "every": "Repeat every",
+    "unit": "{count, plural, one {{frequency, select, daily {day} weekly {week} monthly {month} other {}}} other {{frequency, select, daily {days} weekly {weeks} monthly {months} other {}}}}",
+    "weekdays": "Repeat on",
+    "time": "Time",
+    "timezone": "Timezone",
+    "noTimezone": "No timezone found",
+    "searchTimezone": "Search timezone…",
+    "startsOn": "Starts on",
+    "end": {
+      "label": "Ends",
+      "never": "Never",
+      "onDate": "On",
+      "after": "After",
+      "pickDate": "Pick a date",
+      "occurrences": "{count, plural, one {occurrence} other {occurrences}}"
+    },
+    "monthDay": {
+      "label": "Day of the month",
+      "day": "Day {day}",
+      "last": "Last day",
+      "hint": "In shorter months this runs on the last day."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {Every {frequency, select, daily {day} weekly {week} monthly {month} other {}}} other {Every # {frequency, select, daily {days} weekly {weeks} monthly {months} other {}}}}{frequency, select, weekly { on {weekdays}} monthly { on {monthDay, select, last {the last day} other {day {monthDay}}}} other {}} at {time} ({timezone}), starting {startsOn}{endKind, select, onDate {, ending {endDate}} afterOccurrences {, ending after {endCount, plural, one {# occurrence} other {# occurrences}}} other {}}"
+    },
+    "firstRunLater": "The first run is {when}, because today's time has already passed.",
+    "nextRuns": "Next runs",
+    "noUpcomingRuns": "No upcoming runs."
   }
 }

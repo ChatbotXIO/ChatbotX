@@ -1,3 +1,4 @@
+import type { OccurrenceBucketGranularity } from "@chatbotx.io/database/partials"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   BROADCAST_PAYLOAD_TYPE,
@@ -78,6 +79,16 @@ export class BroadcastAnalyticsService {
     broadcastIds: string[]
   }): Promise<Record<string, BroadcastStats>> {
     return broadcastStatsRepository.getBatchStats(input)
+  }
+
+  getStatsByOccurrenceBucket(input: {
+    workspaceId: string
+    parentBroadcastId: string
+    granularity: OccurrenceBucketGranularity
+    timezone: string
+    buckets: string[]
+  }): Promise<Record<string, BroadcastStats>> {
+    return broadcastStatsRepository.getStatsByOccurrenceBucket(input)
   }
 
   getContacts(input: {

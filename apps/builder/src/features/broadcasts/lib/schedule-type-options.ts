@@ -19,6 +19,7 @@ import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 export const BROADCAST_SCHEDULE_TYPE_MESSAGE_KEY = {
   now: "fields.schedule.now",
   future: "fields.schedule.scheduled",
+  recurring: "fields.schedule.recurring",
 } as const satisfies Record<BroadcastScheduleType, string>
 
 export type BroadcastScheduleTypeMessageKey =

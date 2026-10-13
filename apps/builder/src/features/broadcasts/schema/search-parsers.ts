@@ -1,6 +1,7 @@
 import { parseAsInteger, parseAsString, parseAsStringEnum } from "nuqs/server"
 import {
   BROADCAST_FILTER_STATUSES,
+  BROADCAST_KINDS,
   BROADCAST_VIEWS,
 } from "../lib/broadcast-status"
 import { CALENDAR_RANGES } from "../lib/calendar-grid"
@@ -17,6 +18,7 @@ export const broadcastsSearchParsers = {
   page: parseAsInteger.withDefault(1),
   name: parseAsString,
   status: parseAsStringEnum([...BROADCAST_FILTER_STATUSES]),
+  kind: parseAsStringEnum([...BROADCAST_KINDS]),
   view: parseAsStringEnum([...BROADCAST_VIEWS]).withDefault("table"),
   range: parseAsStringEnum([...CALENDAR_RANGES]).withDefault("month"),
   date: parseAsString,

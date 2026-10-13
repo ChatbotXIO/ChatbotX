@@ -34,12 +34,15 @@ import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { RecurrenceRuleFields } from "@/components/recurrence/recurrence-rule-fields"
+import { useRecurrenceRuleSwitch } from "@/components/recurrence/use-recurrence-rule-switch"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
 import { updateDraftBroadcastAction } from "@/features/broadcasts/actions/update-draft-broadcast.action"
 import { BroadcastAudiencePreviewDialog } from "@/features/broadcasts/components/broadcast-audience-preview-dialog"
 import { BroadcastConfirmDialog } from "@/features/broadcasts/components/broadcast-confirm-dialog"
 import { BroadcastPlanLimitDialog } from "@/features/broadcasts/components/broadcast-plan-limit-dialog"
 import { useBroadcastPlanLimit } from "@/features/broadcasts/hooks/use-broadcast-plan-limit"
+import { useInvalidateBroadcastRuns } from "@/features/broadcasts/hooks/use-invalidate-broadcast-runs"
 import { isBroadcastPlanLimitOutcome } from "@/features/broadcasts/lib/broadcast-plan-limit"
 import {
   type BroadcastTargetRequest,
@@ -150,6 +153,7 @@ export function CreateBroadcastForm({
   const isEditing = Boolean(editDraft)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const planLimit = useBroadcastPlanLimit()
+  const invalidateRuns = useInvalidateBroadcastRuns()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     editDraft
@@ -177,6 +181,8 @@ export function CreateBroadcastForm({
               },
             ),
           )
+          // Re-arming a series writes slot records its runs page must show.
+          invalidateRuns()
           router.push(`/space/${workspaceId}/broadcasts`)
         },
         onError: ({ error }) => {
@@ -261,7 +267,11 @@ export function CreateBroadcastForm({
               confirmOpen={confirmOpen}
               flows={flows}
               hydrated={
-                editDraft && { targets: editDraft.defaultValues.targets }
+                editDraft && {
+                  targets: editDraft.defaultValues.targets,
+                  recurrenceOccurrenceCount:
+                    editDraft.recurrenceOccurrenceCount,
+                }
               }
               onConfirmOpenChange={setConfirmOpen}
               onSaveAsDraft={handleSaveAsDraft}
@@ -431,7 +441,10 @@ type CreateBroadcastChooseFlowProps = {
    * can tell a still-hydrated selection from one the user changed. Absent when
    * creating.
    */
-  hydrated?: { targets: BroadcastTargetRequest[] }
+  hydrated?: {
+    targets: BroadcastTargetRequest[]
+    recurrenceOccurrenceCount: number
+  }
   confirmOpen: boolean
   onConfirmOpenChange: (open: boolean) => void
   onSaveAsDraft: () => Promise<void>
@@ -592,17 +605,23 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     router.push(`/space/${workspaceId}/broadcasts`)
   }, [router, workspaceId])
 
+  const { selectScheduleType } = useRecurrenceRuleSwitch({
+    read: () => getValues("recurrence"),
+    write: (rule) => setValue("recurrence", rule, { shouldValidate: true }),
+  })
+
   const handleScheduleTypeChange = useCallback(
     (value: BroadcastScheduleType) => {
-      if (value === "now") {
+      if (value !== "future") {
         // Revalidate: clearing an expired `future` time must refresh
         // `formState.isValid` (mode "onChange" only recomputes on a validated
         // change), otherwise the submit buttons stay disabled on a stale
         // schedule error.
         setValue("schedulesAt", null, { shouldValidate: true })
       }
+      selectScheduleType(value === "recurring")
     },
-    [setValue],
+    [selectScheduleType, setValue],
   )
 
   const defaultDateTime = useMemo(() => add(new Date(), { minutes: 15 }), [])
@@ -729,6 +748,12 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
               // (UTC in production), which silently shifts the send time.
               saveFormat="iso"
               value={defaultDateTime}
+            />
+          )}
+
+          {watchedSchedulesType === "recurring" && (
+            <RecurrenceRuleFields
+              occurrenceCount={props.hydrated?.recurrenceOccurrenceCount}
             />
           )}
         </CardContent>

@@ -179,6 +179,72 @@ describe("broadcastService.cloneBroadcast", () => {
     expect(mockDispatchAuditRecord).not.toHaveBeenCalled()
   })
 
+  describe("repeating broadcasts", () => {
+    const rule = {
+      frequency: "daily",
+      interval: 1,
+      timeOfDay: "09:00",
+      timezone: "Asia/Ho_Chi_Minh",
+      startsOn: "2026-10-01",
+      end: { kind: "never" },
+    }
+
+    test("a cloned repeating broadcast keeps its rule as a disarmed draft", async () => {
+      const { broadcastRecurrenceRepository } = await import(
+        "@chatbotx.io/database/repositories"
+      )
+      const findSeries = vi
+        .spyOn(broadcastRecurrenceRepository, "findByBroadcastId")
+        .mockResolvedValue({ rule } as never)
+      const insertSeries = vi
+        .spyOn(broadcastRecurrenceRepository, "insertIfMissing")
+        .mockResolvedValue(undefined)
+      findFirstBroadcast.mockResolvedValue({
+        ...source,
+        schedulesType: "recurring",
+        occurrenceAt: null,
+        status: "recurring",
+      })
+
+      await clone()
+
+      expect(broadcastInsert.mock.calls[0][0]).toMatchObject({
+        status: "draft",
+        schedulesType: "recurring",
+      })
+      expect(findSeries).toHaveBeenCalledWith(expect.anything(), {
+        broadcastId: "src-1",
+      })
+      expect(insertSeries).toHaveBeenCalledWith(expect.anything(), {
+        workspaceId: "ws-1",
+        broadcastId: "clone-1",
+        rule,
+      })
+    })
+
+    test("a clone of a run, or of a one-off, carries no rule", async () => {
+      const { broadcastRecurrenceRepository } = await import(
+        "@chatbotx.io/database/repositories"
+      )
+      const insertSeries = vi
+        .spyOn(broadcastRecurrenceRepository, "insertIfMissing")
+        .mockResolvedValue(undefined)
+      findFirstBroadcast.mockResolvedValue({
+        ...source,
+        schedulesType: "future",
+        occurrenceAt: new Date("2026-10-13T02:00:00.000Z"),
+        parentBroadcastId: "tpl-1",
+      })
+
+      await clone()
+
+      expect(insertSeries).not.toHaveBeenCalled()
+      expect(broadcastInsert.mock.calls[0][0]).not.toHaveProperty(
+        "parentBroadcastId",
+      )
+    })
+  })
+
   test("creates a draft copy carrying every config column and the schedule", async () => {
     const result = await clone()
 

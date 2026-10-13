@@ -154,7 +154,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "Ver ejecuciones",
+    "editSchedule": "Editar programación"
   },
   "errors": {
     "superAdminRequired": "Debes ser superadministrador del espacio de trabajo para hacer esto."
@@ -367,7 +369,10 @@
       "sending": "Enviando",
       "cancelled": "Cancelada",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "Recurrente",
+      "paused": "En pausa",
+      "ended": "Finalizada"
     },
     "stats": {
       "sent": "Enviado",
@@ -451,7 +456,9 @@
       "audienceFilter": "Filtro de audiencia",
       "noAudienceFilter": "Sin filtro de audiencia",
       "template": "Plantilla",
-      "integration": "Integración"
+      "integration": "Integración",
+      "schedule": "Programación de repetición",
+      "runOf": "Ejecución de <link>{name}</link>"
     },
     "filters": {
       "all": "All"
@@ -500,15 +507,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "Editar programación",
+      "templateDescription": "«{name}» se pausa y vuelve a borradores para que cambies su programación."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "Pausar difusión repetitiva",
+      "templateDescription": "«{name}» deja de crear nuevas ejecuciones. Una ejecución que ya se está enviando continúa. Puedes reanudar más tarde; las ejecuciones durante la pausa se omiten."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "«{name}» vuelve a repetirse desde su próxima hora programada. Las ejecuciones durante la pausa se omitieron."
     },
     "planLimitDialog": {
       "title": "Mejora tu plan",
@@ -526,6 +538,50 @@
       "toLabel": "Hasta",
       "allPlaceholder": "Todos",
       "rangeEndBeforeStart": "La posición final no debe ser anterior a la posición inicial"
+    },
+    "recurring": {
+      "nextRun": "Próximo envío {when}",
+      "paused": "En pausa",
+      "ended": "Finalizada {when} · {count, plural, one {# ejecución} other {# ejecuciones}}",
+      "runs": "{count, plural, one {# ejecución} other {# ejecuciones}}"
+    },
+    "runs": {
+      "back": "Difusiones repetitivas",
+      "pausedNotice": "En pausa desde {when}. Las ejecuciones durante la pausa se omiten.",
+      "groupBy": "Agrupar ejecuciones por",
+      "grouping": {
+        "day": "Día",
+        "week": "Semana",
+        "month": "Mes"
+      },
+      "totals": "{runs, plural, one {# ejecución} other {# ejecuciones}} de {slots, plural, one {# turno} other {# turnos}}",
+      "error": "No se pudieron cargar las ejecuciones.",
+      "retry": "Reintentar",
+      "empty": "Aún no hay ejecuciones. La primera empieza en la próxima hora programada.",
+      "loadMore": "Cargar más",
+      "weekOf": "Semana del {date}",
+      "groupSummary": "{created, plural, one {# ejecución} other {# ejecuciones}}{missed, plural, =0 {} other { · # perdido(s)}}{skipped, plural, =0 {} other { · # omitido(s)}}",
+      "deliveredRate": "{rate} entregado",
+      "notSent": "No enviado — {reason}",
+      "earlierSlots": "{count, plural, one {# turno anterior} other {# turnos anteriores}} perdido(s)",
+      "stalled": "Detenido",
+      "lateByMinutes": "{count, plural, one {# minuto de retraso} other {# minutos de retraso}}",
+      "lateByHours": "{count, plural, one {# hora de retraso} other {# horas de retraso}}",
+      "recipients": "{count, plural, one {# destinatario} other {# destinatarios}}",
+      "reasons": {
+        "catchUpSuperseded": "la plataforma estuvo caída; se envió una ejecución posterior",
+        "paused": "la programación estaba en pausa",
+        "draft": "la difusión se estaba editando",
+        "blockedOwner": "la cuenta está bloqueada",
+        "planLimit": "límite del plan alcanzado",
+        "noTargets": "no hay página desde la que enviar",
+        "undeliverable": "su flujo o plantilla no está disponible"
+      },
+      "outcomes": {
+        "created": "Enviado",
+        "skipped": "Omitido",
+        "missed": "Perdido"
+      }
     }
   },
   "commentAutomation": {
@@ -1926,7 +1982,8 @@
     "schedule": {
       "label": "Programación",
       "now": "Ahora",
-      "scheduled": "Schedule para later"
+      "scheduled": "Schedule para later",
+      "recurring": "Repetir"
     },
     "inputFieldId": {
       "label": "Campo personalizado de entrada"
@@ -8032,5 +8089,36 @@
         "upload_failed": "No se pudo subir el archivo. Inténtalo de nuevo."
       }
     }
+  },
+  "recurrence": {
+    "title": "Repetir",
+    "every": "Repetir cada",
+    "unit": "{count, plural, one {{frequency, select, daily {día} weekly {semana} monthly {mes} other {}}} other {{frequency, select, daily {días} weekly {semanas} monthly {meses} other {}}}}",
+    "weekdays": "Repetir el",
+    "time": "Hora",
+    "timezone": "Zona horaria",
+    "noTimezone": "No se encontró ninguna zona horaria",
+    "searchTimezone": "Buscar zona horaria…",
+    "startsOn": "Empieza el",
+    "end": {
+      "label": "Termina",
+      "never": "Nunca",
+      "onDate": "El",
+      "after": "Después de",
+      "pickDate": "Elegir fecha",
+      "occurrences": "{count, plural, one {ejecución} other {ejecuciones}}"
+    },
+    "monthDay": {
+      "label": "Día del mes",
+      "day": "Día {day}",
+      "last": "Último día",
+      "hint": "En los meses más cortos se envía el último día."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {Cada {frequency, select, daily {día} weekly {semana} monthly {mes} other {}}} other {Cada # {frequency, select, daily {días} weekly {semanas} monthly {meses} other {}}}}{frequency, select, weekly { el {weekdays}} monthly { el {monthDay, select, last {último día} other {día {monthDay}}}} other {}} a las {time} ({timezone}), a partir del {startsOn}{endKind, select, onDate {, termina el {endDate}} afterOccurrences {, termina tras {endCount, plural, one {# ejecución} other {# ejecuciones}}} other {}}"
+    },
+    "firstRunLater": "El primer envío será {when}, porque la hora de hoy ya pasó.",
+    "nextRuns": "Próximos envíos",
+    "noUpcomingRuns": "No hay envíos próximos."
   }
 }

@@ -25,6 +25,7 @@ export const scheduleBroadcastAction = workspaceActionClient
         schedulesType: parsedInput.schedulesType,
         schedulesAt: resolveScheduleTime(parsedInput),
         sendRatePerMinute: parsedInput.sendRatePerMinute,
+        recurrence: parsedInput.recurrence,
       }),
     )
   })

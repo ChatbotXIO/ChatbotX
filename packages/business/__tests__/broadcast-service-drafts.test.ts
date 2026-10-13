@@ -71,6 +71,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
           from: () => ({
             where: () => ({
               for: () => ({ limit: () => selectForUpdate() }),
+              limit: () => selectForUpdate(),
             }),
           }),
         }),
@@ -100,6 +101,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     status: "broadcast.status",
     handoffCompletedAt: "broadcast.handoffCompletedAt",
     deletedAt: "broadcast.deletedAt",
+    occurrenceAt: "broadcast.occurrenceAt",
   },
   broadcastTargetModel: {
     broadcastId: "broadcastTarget.broadcastId",
@@ -121,6 +123,18 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   whatsappMessageTemplateModel: {},
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  broadcastRepository: {
+    findByIdOrName: vi.fn(),
+  },
+  broadcastRecurrenceRepository: {
+    findByBroadcastId: vi.fn().mockResolvedValue(null),
+    lockForWrite: vi.fn().mockResolvedValue([]),
+    selectDbNow: vi.fn().mockResolvedValue(new Date("2026-10-13T00:00:00Z")),
+    insertIfMissing: vi.fn(),
+  },
+}))
+
 vi.mock("@chatbotx.io/database/queries", () => ({
   buildContactInboxContactFilterSQL: vi.fn(),
   contactInboxInteractedWithin24hSQL: vi.fn(),
@@ -130,12 +144,22 @@ vi.mock("@chatbotx.io/database/queries", () => ({
 vi.mock("@chatbotx.io/database/utils", () => ({
   chunkById: vi.fn(),
   likeContains: (value: string) => `%${value}%`,
+  getPaginationWithDefaults: () => ({ limit: 10, offset: 0 }),
 }))
 
 vi.mock("../src/inbox/service", () => ({ inboxService: {} }))
 
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
+}))
+
+vi.mock("../src/broadcast/recurrence.service", () => ({
+  broadcastRecurrenceService: {
+    upsertRule: vi.fn(),
+    arm: vi.fn(),
+    disarm: vi.fn(),
+    upcomingRunsOf: vi.fn(() => []),
+  },
 }))
 
 vi.mock("../src/broadcast/plan-policy.service", () => ({
@@ -151,6 +175,41 @@ vi.mock("../src/broadcast/plan-policy.service", () => ({
     lockActivation: vi.fn().mockResolvedValue(undefined),
     assertActiveSlotAvailable: vi.fn().mockResolvedValue(undefined),
     resolveSendRateOverride: vi.fn(() => ({ sendRatePerMinute: 60 })),
+    assertActivationAllowed: vi.fn(
+      async (
+        tx: unknown,
+        input: {
+          workspaceId: string
+          channel: string
+          restriction: unknown
+          sendRatePerMinute: number | null | undefined
+          excludeBroadcastId?: string
+          checkSlot: boolean
+        },
+      ) => {
+        // Composes the mocked primitives in the real gate's order, so the
+        // existing call-order assertions keep describing the real behavior.
+        const gate = (await import("../src/broadcast/plan-policy.service"))
+          .broadcastPlanPolicyService
+        gate.assertSendRateAllowed(
+          input.restriction as never,
+          input.sendRatePerMinute,
+        )
+        if (input.checkSlot) {
+          await gate.lockActivation(tx as never, input.workspaceId)
+          await gate.assertActiveSlotAvailable(tx as never, {
+            workspaceId: input.workspaceId,
+            channel: input.channel,
+            ctx: input.restriction as never,
+            excludeBroadcastId: input.excludeBroadcastId,
+          })
+        }
+        return gate.resolveSendRateOverride(
+          input.restriction as never,
+          input.sendRatePerMinute,
+        )
+      },
+    ),
   },
 }))
 
@@ -810,8 +869,15 @@ describe("broadcastService.listForCalendar", () => {
       workspaceId: "ws-1",
       schedulesAt: { gte: from, lte: to },
       status: "scheduled",
+      schedulesType: undefined,
       name: { ilike: "%sale%" },
       deletedAt: { isNull: true },
+      // A paused or ended series has no run at its stale `schedulesAt`.
+      OR: [
+        { schedulesType: { ne: "recurring" } },
+        { occurrenceAt: { isNotNull: true } },
+        { status: { notIn: ["cancelled", "sent"] } },
+      ],
     })
     expect(args.limit).toBe(500)
     expect(args.orderBy).toEqual({ schedulesAt: "asc" })
@@ -1246,5 +1312,377 @@ describe("broadcastService.updateDraft template data integrity", () => {
     })
 
     expect(updateReturning.mock.calls[0][0].values.templateData).toBeNull()
+  })
+})
+
+describe("repeating drafts", () => {
+  const recurrence = {
+    frequency: "daily" as const,
+    interval: 1,
+    timeOfDay: "09:00",
+    timezone: "Asia/Ho_Chi_Minh",
+    startsOn: "2026-10-01",
+    end: { kind: "never" as const },
+  }
+  const nextRunAt = new Date("2026-10-14T02:00:00.000Z")
+  const draftRow = {
+    id: "b-1",
+    channel: "whatsapp",
+    sendRatePerMinute: null,
+    targetMode: "channel",
+  }
+
+  const loadMocks = async () => {
+    const { broadcastRecurrenceService } = await import(
+      "../src/broadcast/recurrence.service"
+    )
+    const { broadcastRecurrenceRepository } = await import(
+      "@chatbotx.io/database/repositories"
+    )
+    vi.mocked(broadcastRecurrenceService.upsertRule).mockResolvedValue({
+      id: "series-1",
+    } as never)
+    vi.mocked(broadcastRecurrenceService.arm).mockResolvedValue({
+      nextRunAt,
+      sendRateOverride: undefined,
+    })
+    return {
+      service: broadcastRecurrenceService,
+      repository: broadcastRecurrenceRepository,
+    }
+  }
+
+  describe("scheduleDraft", () => {
+    test("stores the rule, arms the series and makes the next run the schedule - nothing is sent now", async () => {
+      const { service } = await loadMocks()
+      selectForUpdate.mockResolvedValue([draftRow])
+      updateReturning.mockResolvedValue([{ id: "b-1", status: "recurring" }])
+
+      const result = await broadcastService.scheduleDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        schedulesType: "recurring",
+        schedulesAt: new Date(),
+        recurrence,
+      })
+
+      expect(result).toEqual({ id: "b-1" })
+      expect(service.upsertRule).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ broadcastId: "b-1", rule: recurrence }),
+      )
+      expect(updateReturning.mock.calls[0][0].values).toMatchObject({
+        status: "recurring",
+        schedulesType: "recurring",
+        schedulesAt: nextRunAt,
+      })
+      expect(mockDispatchAuditRecord).not.toHaveBeenCalledWith(
+        expect.objectContaining({ action: "launch" }),
+      )
+      expect(broadcastPlanPolicyService.lockActivation).not.toHaveBeenCalled()
+    })
+
+    test("only a series can be armed: a run of another series is out of scope", async () => {
+      await loadMocks()
+      selectForUpdate.mockResolvedValue([draftRow])
+      updateReturning.mockResolvedValue([{ id: "b-1", status: "recurring" }])
+
+      await broadcastService.scheduleDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        schedulesType: "recurring",
+        schedulesAt: new Date(),
+        recurrence,
+      })
+
+      expect(
+        updateReturning.mock.calls.some(([call]) =>
+          flatten(call.condition).some(
+            (part) =>
+              JSON.stringify(part) ===
+              JSON.stringify({ __isNull: "broadcast.occurrenceAt" }),
+          ),
+        ),
+      ).toBe(true)
+    })
+
+    test("a submitted send rate is stored even when the plan sets no override", async () => {
+      await loadMocks()
+      selectForUpdate.mockResolvedValue([draftRow])
+      updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+      await broadcastService.scheduleDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        schedulesType: "recurring",
+        schedulesAt: new Date(),
+        sendRatePerMinute: 250,
+        recurrence,
+      })
+
+      expect(updateReturning.mock.calls[0][0].values.sendRatePerMinute).toBe(
+        250,
+      )
+    })
+
+    test("without a new rule it re-arms the saved one", async () => {
+      const { service, repository } = await loadMocks()
+      selectForUpdate.mockResolvedValue([draftRow])
+      vi.mocked(repository.lockForWrite).mockResolvedValue([
+        { id: "series-1" },
+      ] as never)
+      updateReturning.mockResolvedValue([{ id: "b-1" }])
+
+      await broadcastService.scheduleDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        schedulesType: "recurring",
+        schedulesAt: new Date(),
+      })
+
+      expect(service.upsertRule).not.toHaveBeenCalled()
+      expect(service.arm).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ recurrence: { id: "series-1" } }),
+      )
+    })
+
+    test("a draft with neither a new nor a saved rule is a recurrence validation error", async () => {
+      const { repository } = await loadMocks()
+      selectForUpdate.mockResolvedValue([draftRow])
+      vi.mocked(repository.lockForWrite).mockResolvedValue([])
+
+      await expect(
+        broadcastService.scheduleDraft({
+          workspaceId: "ws-1",
+          broadcastId: "b-1",
+          schedulesType: "recurring",
+          schedulesAt: new Date(),
+        }),
+      ).rejects.toMatchObject({ code: "validation", field: "recurrence" })
+      expect(updateReturning).not.toHaveBeenCalled()
+    })
+
+    test("a broadcast that is not a draft is rejected without touching the series", async () => {
+      const { service } = await loadMocks()
+      selectForUpdate.mockResolvedValue([])
+
+      await expect(
+        broadcastService.scheduleDraft({
+          workspaceId: "ws-1",
+          broadcastId: "b-1",
+          schedulesType: "recurring",
+          schedulesAt: new Date(),
+          recurrence,
+        }),
+      ).rejects.toThrow("Broadcast is not a draft")
+      expect(service.upsertRule).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("updateDraft", () => {
+    const repeatingData = {
+      channel: "whatsapp" as const,
+      flowId: "flow-9",
+      subaction: "whatsappTemplateMessage" as const,
+      schedulesType: "recurring" as const,
+      schedulesAt: null,
+      recurrence,
+      contactFilter: { operator: "and" as const, conditions: [] },
+      saveAsDraft: false,
+    }
+
+    test("checks the draft, stores the rule first (locking the series), then rewrites the draft and arms it", async () => {
+      const { service } = await loadMocks()
+      findFirstFlow.mockResolvedValue({ id: "flow-9", name: "Autumn sale" })
+      selectForUpdate.mockResolvedValue([{ id: "b-1" }])
+      updateReturning.mockResolvedValue([
+        { id: "b-1", channel: "whatsapp", sendRatePerMinute: null },
+      ])
+
+      const result = await broadcastService.updateDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        canViewEmailAndPhone: true,
+        data: repeatingData,
+      })
+
+      expect(result).toMatchObject({ id: "b-1", status: "recurring" })
+      expect(service.upsertRule.mock.invocationCallOrder[0]).toBeLessThan(
+        updateReturning.mock.invocationCallOrder[0],
+      )
+      // First write keeps it a draft; the activation flips it to recurring.
+      expect(updateReturning.mock.calls[0][0].values.status).toBe("draft")
+      expect(updateReturning.mock.calls[1][0].values).toMatchObject({
+        status: "recurring",
+        schedulesAt: nextRunAt,
+      })
+      expect(broadcastPlanPolicyService.lockActivation).not.toHaveBeenCalled()
+      expect(mockDispatchAuditRecord).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "broadcast_recurrence_started" }),
+      )
+    })
+
+    test("only a series can be armed: a run of another series is out of scope", async () => {
+      await loadMocks()
+      findFirstFlow.mockResolvedValue({ id: "flow-9", name: "Autumn sale" })
+      selectForUpdate.mockResolvedValue([{ id: "b-1" }])
+      updateReturning.mockResolvedValue([
+        { id: "b-1", channel: "whatsapp", sendRatePerMinute: null },
+      ])
+
+      await broadcastService.updateDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        canViewEmailAndPhone: true,
+        data: repeatingData,
+      })
+
+      expect(
+        updateReturning.mock.calls.some(([call]) =>
+          flatten(call.condition).some(
+            (part) =>
+              JSON.stringify(part) ===
+              JSON.stringify({ __isNull: "broadcast.occurrenceAt" }),
+          ),
+        ),
+      ).toBe(true)
+    })
+
+    test("saving it as a draft stores the rule but does not arm", async () => {
+      const { service } = await loadMocks()
+      findFirstFlow.mockResolvedValue({ id: "flow-9", name: "Autumn sale" })
+      selectForUpdate.mockResolvedValue([{ id: "b-1" }])
+      updateReturning.mockResolvedValue([{ id: "b-1", channel: "whatsapp" }])
+
+      const result = await broadcastService.updateDraft({
+        workspaceId: "ws-1",
+        broadcastId: "b-1",
+        canViewEmailAndPhone: true,
+        data: { ...repeatingData, saveAsDraft: true },
+      })
+
+      expect(result).toEqual({ id: "b-1", status: "draft" })
+      expect(service.arm).not.toHaveBeenCalled()
+      expect(updateReturning).toHaveBeenCalledTimes(1)
+    })
+
+    test("a draft that is gone is rejected before the series is touched", async () => {
+      const { service } = await loadMocks()
+      findFirstFlow.mockResolvedValue({ id: "flow-9", name: "Autumn sale" })
+      selectForUpdate.mockResolvedValue([])
+
+      await expect(
+        broadcastService.updateDraft({
+          workspaceId: "ws-1",
+          broadcastId: "b-1",
+          canViewEmailAndPhone: true,
+          data: repeatingData,
+        }),
+      ).rejects.toThrow("Broadcast is not a draft")
+      expect(service.upsertRule).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe("broadcastService.list — repeating broadcasts", () => {
+  test("a one-off that kept a disarmed series row does not present a schedule, same as the detail", async () => {
+    const { broadcastRepository } = await import(
+      "@chatbotx.io/database/repositories"
+    )
+    const series = { id: "series-1", rule: {} }
+    Object.assign(broadcastRepository, {
+      listWithRelations: vi.fn().mockResolvedValue([
+        {
+          id: "t",
+          schedulesType: "recurring",
+          occurrenceAt: null,
+          recurrence: series,
+        },
+        {
+          id: "o",
+          schedulesType: "now",
+          occurrenceAt: null,
+          recurrence: series,
+        },
+        {
+          id: "r",
+          schedulesType: "future",
+          occurrenceAt: new Date("2026-10-13T02:00:00.000Z"),
+          recurrence: null,
+        },
+      ]),
+      count: vi.fn().mockResolvedValue(3),
+    })
+
+    const result = await broadcastService.list({ workspaceId: "ws-1" })
+
+    expect(result.data.map((row) => [row.id, row.recurrence])).toEqual([
+      ["t", series],
+      ["o", null],
+      ["r", null],
+    ])
+  })
+})
+
+describe("broadcastService.findByIdOrName — repeating broadcasts", () => {
+  const upcoming = ["2026-10-14T02:00:00.000Z"]
+  const series = {
+    id: "series-1",
+    rule: {},
+    nextRunAt: new Date("2026-10-14T02:00:00.000Z"),
+    occurrenceCount: 0,
+  }
+
+  const find = async (broadcast: Record<string, unknown>) => {
+    const { broadcastRepository } = await import(
+      "@chatbotx.io/database/repositories"
+    )
+    const { broadcastRecurrenceService } = await import(
+      "../src/broadcast/recurrence.service"
+    )
+    vi.mocked(broadcastRepository.findByIdOrName).mockResolvedValue(
+      broadcast as never,
+    )
+    vi.mocked(broadcastRecurrenceService.upcomingRunsOf).mockReturnValue(
+      upcoming,
+    )
+    return await broadcastService.findByIdOrName({
+      workspaceId: "ws-1",
+      idOrName: "b-1",
+    })
+  }
+
+  test("a repeating broadcast carries its schedule with the next runs", async () => {
+    const result = await find({
+      id: "b-1",
+      schedulesType: "recurring",
+      occurrenceAt: null,
+      recurrence: series,
+    })
+    expect(result.recurrence).toMatchObject({
+      id: "series-1",
+      upcomingRuns: upcoming,
+    })
+  })
+
+  test("a paused series lists no upcoming runs", async () => {
+    const result = await find({
+      id: "b-1",
+      schedulesType: "recurring",
+      occurrenceAt: null,
+      recurrence: { ...series, nextRunAt: null },
+    })
+    expect(result.recurrence?.upcomingRuns).toEqual([])
+  })
+
+  test("a one-off edited from a repeating draft does not present the schedule it no longer follows", async () => {
+    const result = await find({
+      id: "b-1",
+      schedulesType: "now",
+      occurrenceAt: null,
+      recurrence: series,
+    })
+    expect(result.recurrence).toBeNull()
   })
 })

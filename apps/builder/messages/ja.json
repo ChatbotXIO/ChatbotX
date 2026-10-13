@@ -154,7 +154,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "実行履歴を見る",
+    "editSchedule": "スケジュールを編集"
   },
   "errors": {
     "superAdminRequired": "この操作を行うには、ワークスペースのスーパー管理者である必要があります。"
@@ -367,7 +369,10 @@
       "sending": "送信中",
       "cancelled": "キャンセル済み",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "繰り返し",
+      "paused": "一時停止中",
+      "ended": "終了"
     },
     "stats": {
       "sent": "送信済み",
@@ -451,7 +456,9 @@
       "audienceFilter": "オーディエンスフィルター",
       "noAudienceFilter": "オーディエンスフィルターなし",
       "template": "テンプレート",
-      "integration": "連携"
+      "integration": "連携",
+      "schedule": "繰り返しスケジュール",
+      "runOf": "<link>{name}</link>の実行"
     },
     "filters": {
       "all": "All"
@@ -500,15 +507,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "スケジュールを編集",
+      "templateDescription": "「{name}」を一時停止して下書きに戻し、スケジュールを変更できるようにします。"
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "繰り返しブロードキャストを一時停止",
+      "templateDescription": "「{name}」は新しい実行を作成しなくなります。すでに送信中の実行は続行されます。後で再開できます。一時停止中の実行はスキップされます。"
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "「{name}」は次の予定時刻から再び繰り返されます。一時停止中の実行はスキップされました。"
     },
     "planLimitDialog": {
       "title": "プランをアップグレード",
@@ -526,6 +538,50 @@
       "toLabel": "終了",
       "allPlaceholder": "すべて",
       "rangeEndBeforeStart": "終了位置は開始位置より前にできません"
+    },
+    "recurring": {
+      "nextRun": "次回の実行 {when}",
+      "paused": "一時停止中",
+      "ended": "{when}に終了 · {count, plural, one {#回実行} other {#回実行}}",
+      "runs": "{count, plural, one {#回実行} other {#回実行}}"
+    },
+    "runs": {
+      "back": "繰り返しブロードキャスト",
+      "pausedNotice": "{when}から一時停止中です。一時停止中の実行はスキップされます。",
+      "groupBy": "実行をグループ化",
+      "grouping": {
+        "day": "日",
+        "week": "週",
+        "month": "月"
+      },
+      "totals": "{runs, plural, one {#回実行} other {#回実行}}（予定{slots, plural, one {#件} other {#件}}）",
+      "error": "実行履歴を読み込めませんでした。",
+      "retry": "再試行",
+      "empty": "まだ実行はありません。最初の実行は次の予定時刻に始まります。",
+      "loadMore": "さらに読み込む",
+      "weekOf": "{date}の週",
+      "groupSummary": "{created, plural, one {#回実行} other {#回実行}}{missed, plural, =0 {} other { · #件見逃し}}{skipped, plural, =0 {} other { · #件スキップ}}",
+      "deliveredRate": "{rate}配信済み",
+      "notSent": "未送信 — {reason}",
+      "earlierSlots": "{count, plural, one {それ以前の#件の予定を見逃し} other {それ以前の#件の予定を見逃し}}",
+      "stalled": "停滞中",
+      "lateByMinutes": "{count, plural, one {#分遅れ} other {#分遅れ}}",
+      "lateByHours": "{count, plural, one {#時間遅れ} other {#時間遅れ}}",
+      "recipients": "{count, plural, one {#人の受信者} other {#人の受信者}}",
+      "reasons": {
+        "catchUpSuperseded": "プラットフォームが停止していたため、後の実行が代わりに送信されました",
+        "paused": "スケジュールが一時停止されていました",
+        "draft": "ブロードキャストを編集中でした",
+        "blockedOwner": "アカウントがブロックされています",
+        "planLimit": "プランの上限に達しました",
+        "noTargets": "送信元のページがありません",
+        "undeliverable": "フローまたはテンプレートが利用できません"
+      },
+      "outcomes": {
+        "created": "送信済み",
+        "skipped": "スキップ",
+        "missed": "見逃し"
+      }
     }
   },
   "commentAutomation": {
@@ -1780,7 +1836,8 @@
     "schedule": {
       "label": "スケジュール",
       "now": "今すぐ",
-      "scheduled": "後で配信"
+      "scheduled": "後で配信",
+      "recurring": "繰り返す"
     },
     "inputFieldId": {
       "label": "入力カスタムフィールド"
@@ -8032,5 +8089,36 @@
         "upload_failed": "ファイルをアップロードできませんでした。もう一度お試しください。"
       }
     }
+  },
+  "recurrence": {
+    "title": "繰り返し",
+    "every": "繰り返す間隔",
+    "unit": "{count, plural, one {{frequency, select, daily {日} weekly {週間} monthly {か月} other {}}} other {{frequency, select, daily {日} weekly {週間} monthly {か月} other {}}}}",
+    "weekdays": "繰り返す曜日",
+    "time": "時刻",
+    "timezone": "タイムゾーン",
+    "noTimezone": "タイムゾーンが見つかりません",
+    "searchTimezone": "タイムゾーンを検索…",
+    "startsOn": "開始日",
+    "end": {
+      "label": "終了",
+      "never": "しない",
+      "onDate": "指定日",
+      "after": "回数",
+      "pickDate": "日付を選択",
+      "occurrences": "{count, plural, one {回} other {回}}"
+    },
+    "monthDay": {
+      "label": "日付",
+      "day": "{day}日",
+      "last": "最終日",
+      "hint": "日数の少ない月は最終日に配信されます。"
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {{frequency, select, daily {日} weekly {週間} monthly {か月} other {}}ごと} other {#{frequency, select, daily {日} weekly {週間} monthly {か月} other {}}ごと}}{frequency, select, weekly { {weekdays}} monthly { {monthDay, select, last {最終日} other {{monthDay}日}}} other {}} {time}（{timezone}）、{startsOn}から{endKind, select, onDate {、{endDate}に終了} afterOccurrences {、{endCount, plural, one {#回} other {#回}}で終了} other {}}"
+    },
+    "firstRunLater": "今日の時刻はすでに過ぎているため、最初の配信は{when}です。",
+    "nextRuns": "次回の配信",
+    "noUpcomingRuns": "予定されている配信はありません。"
   }
 }

@@ -1,6 +1,7 @@
 import { timezoneCandidates } from "@chatbotx.io/utils/timezone"
 import { type SQL, sql } from "drizzle-orm"
 import type { PgColumn } from "drizzle-orm/pg-core"
+import type { OccurrenceBucketGranularity } from "../partials/broadcast"
 
 /**
  * The timezone name to hand to `AT TIME ZONE`, resolved BY PostgreSQL rather
@@ -39,4 +40,25 @@ export function resolvedTimezone(timezone: string): SQL<string> {
  */
 export function zonedDateKey(column: PgColumn, timezone: string): SQL<string> {
   return sql<string>`to_char(${column} AT TIME ZONE ${resolvedTimezone(timezone)}, 'YYYY-MM-DD')`
+}
+
+/** Fixed `date_trunc` units — the granularity never reaches SQL as free text. `week` starts on Monday (ISO). */
+const DATE_TRUNC_UNIT: Record<OccurrenceBucketGranularity, SQL> = {
+  day: sql.raw("'day'"),
+  week: sql.raw("'week'"),
+  month: sql.raw("'month'"),
+}
+
+/**
+ * `YYYY-MM-DD` key of the day / ISO week / month that holds `column`, bucketed
+ * in `timezone` via {@link resolvedTimezone}. The key is the local first day of
+ * the bucket, so it sorts chronologically as plain text and is safe to use as
+ * a keyset cursor.
+ */
+export function zonedBucketKey(
+  column: PgColumn,
+  granularity: OccurrenceBucketGranularity,
+  timezone: string,
+): SQL<string> {
+  return sql<string>`to_char(date_trunc(${DATE_TRUNC_UNIT[granularity]}, ${column} AT TIME ZONE ${resolvedTimezone(timezone)}), 'YYYY-MM-DD')`
 }

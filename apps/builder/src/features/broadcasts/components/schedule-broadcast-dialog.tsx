@@ -4,7 +4,6 @@ import {
   BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE,
   BROADCAST_MAX_SEND_RATE_PER_MINUTE,
 } from "@chatbotx.io/database/partials"
-import type { BroadcastModel } from "@chatbotx.io/database/types"
 import { DateTimePickerField } from "@chatbotx.io/ui/components/form/date-picker-field"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -26,26 +25,35 @@ import { useTranslations } from "next-intl"
 import { useEffect, useMemo } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { RecurrenceRuleFields } from "@/components/recurrence/recurrence-rule-fields"
+import { useRecurrenceRuleSwitch } from "@/components/recurrence/use-recurrence-rule-switch"
 import { scheduleBroadcastAction } from "../actions/schedule-broadcast.action"
 import { useBroadcastPlanLimit } from "../hooks/use-broadcast-plan-limit"
+import { useInvalidateBroadcastRuns } from "../hooks/use-invalidate-broadcast-runs"
 import { isBroadcastPlanLimitOutcome } from "../lib/broadcast-plan-limit"
 import { buildBroadcastScheduleTypeOptions } from "../lib/schedule-type-options"
 import {
   type ScheduleBroadcastSchema,
   scheduleBroadcastSchema,
 } from "../schema/action"
+import type { BroadcastResourceWithRelations } from "../schema/resource"
 import { BroadcastPlanLimitDialog } from "./broadcast-plan-limit-dialog"
 
 // Single source of truth for the form's reset target — reused by
 // `formProps.defaultValues` (initial mount) and the resync effect below
 // (every time the dialog reopens), so both always agree.
 const resolveScheduleFormDefaults = (
-  broadcast: BroadcastModel | null,
-): ScheduleBroadcastSchema => ({
-  schedulesType: "now",
-  schedulesAt: null,
-  sendRatePerMinute: broadcast?.sendRatePerMinute ?? null,
-})
+  broadcast: BroadcastResourceWithRelations | null,
+): ScheduleBroadcastSchema => {
+  const savedRule = broadcast?.recurrence?.rule
+  return {
+    // A draft that already repeats reopens on its saved rule.
+    schedulesType: savedRule ? "recurring" : "now",
+    schedulesAt: null,
+    recurrence: savedRule,
+    sendRatePerMinute: broadcast?.sendRatePerMinute ?? null,
+  }
+}
 
 const scheduleBroadcastDialogSchema = scheduleBroadcastSchema.transform(
   (data) => ({
@@ -60,13 +68,14 @@ export function ScheduleBroadcastDialog({
   onOpenChange,
   onSuccess,
 }: {
-  broadcast: BroadcastModel | null
+  broadcast: BroadcastResourceWithRelations | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
 }) {
   const t = useTranslations()
   const planLimit = useBroadcastPlanLimit()
+  const invalidateRuns = useInvalidateBroadcastRuns()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -89,6 +98,7 @@ export function ScheduleBroadcastDialog({
                 feature: t("fields.broadcast.label"),
               }),
             )
+            invalidateRuns()
             resetFormAndAction()
             onOpenChange(false)
             onSuccess?.()
@@ -106,6 +116,13 @@ export function ScheduleBroadcastDialog({
       },
     )
 
+  const { selectScheduleType, forget: forgetRule } = useRecurrenceRuleSwitch({
+    read: () => form.getValues("recurrence"),
+    write: (rule) =>
+      form.setValue("recurrence", rule, { shouldValidate: true }),
+    savedRule: broadcast?.recurrence?.rule,
+  })
+
   // Reset to defaults every time the dialog opens for a broadcast — the
   // component stays mounted in the table and only toggles `open`, so
   // without this a cancelled "future" + date selection leaks into the
@@ -118,6 +135,7 @@ export function ScheduleBroadcastDialog({
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional extra dependency, see comment above
   useEffect(() => {
     if (open) {
+      forgetRule()
       resetFormAndAction()
       form.reset(resolveScheduleFormDefaults(broadcast))
     }
@@ -132,7 +150,7 @@ export function ScheduleBroadcastDialog({
   return (
     <>
       <Dialog onOpenChange={onOpenChange} open={open}>
-        <DialogContent>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto">
           <Form {...form}>
             <form
               className="flex flex-col gap-6"
@@ -153,6 +171,9 @@ export function ScheduleBroadcastDialog({
                 name="schedulesType"
                 options={options}
                 required
+                triggerValueChange={(value) =>
+                  selectScheduleType(value === "recurring")
+                }
               />
               {schedulesType === "future" && (
                 <DateTimePickerField
@@ -166,6 +187,11 @@ export function ScheduleBroadcastDialog({
                   // an ISO instant so the operator's wall-clock choice keeps its
                   // offset across the wire.
                   saveFormat="iso"
+                />
+              )}
+              {schedulesType === "recurring" && (
+                <RecurrenceRuleFields
+                  occurrenceCount={broadcast?.recurrence?.occurrenceCount}
                 />
               )}
               <InputNumberField

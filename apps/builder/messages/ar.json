@@ -154,7 +154,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "عرض عمليات التشغيل",
+    "editSchedule": "تعديل الجدول"
   },
   "errors": {
     "superAdminRequired": "يجب أن تكون مسؤولًا فائقًا لمساحة العمل للقيام بذلك."
@@ -367,7 +369,10 @@
       "sending": "قيد الإرسال",
       "cancelled": "ملغى",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "متكرر",
+      "paused": "متوقف مؤقتًا",
+      "ended": "منتهٍ"
     },
     "stats": {
       "sent": "مُرسَل",
@@ -451,7 +456,9 @@
       "audienceFilter": "تصفية الجمهور",
       "noAudienceFilter": "لا توجد تصفية للجمهور",
       "template": "القالب",
-      "integration": "التكامل"
+      "integration": "التكامل",
+      "schedule": "جدول التكرار",
+      "runOf": "تشغيل لـ <link>{name}</link>"
     },
     "filters": {
       "all": "All"
@@ -500,15 +507,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "تعديل الجدول",
+      "templateDescription": "سيتم إيقاف \"{name}\" مؤقتًا ونقله إلى المسودات لتتمكن من تغيير جدوله."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "إيقاف البث المتكرر مؤقتًا",
+      "templateDescription": "لن ينشئ \"{name}\" عمليات تشغيل جديدة. ستستمر عملية التشغيل الجارية. يمكنك الاستئناف لاحقًا؛ وسيتم تخطي عمليات التشغيل أثناء الإيقاف."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "سيعود \"{name}\" إلى التكرار من الموعد المجدول التالي. تم تخطي عمليات التشغيل أثناء الإيقاف."
     },
     "planLimitDialog": {
       "title": "ترقية خطتك",
@@ -526,6 +538,50 @@
       "toLabel": "إلى",
       "allPlaceholder": "الكل",
       "rangeEndBeforeStart": "لا يمكن أن يكون موضع النهاية قبل موضع البداية"
+    },
+    "recurring": {
+      "nextRun": "التشغيل التالي {when}",
+      "paused": "متوقف مؤقتًا",
+      "ended": "انتهى {when} · {count, plural, one {تشغيل #} other {# عمليات تشغيل}}",
+      "runs": "{count, plural, one {تشغيل #} other {# عمليات تشغيل}}"
+    },
+    "runs": {
+      "back": "البث المتكرر",
+      "pausedNotice": "متوقف مؤقتًا منذ {when}. يتم تخطي عمليات التشغيل أثناء الإيقاف.",
+      "groupBy": "تجميع عمليات التشغيل حسب",
+      "grouping": {
+        "day": "يوم",
+        "week": "أسبوع",
+        "month": "شهر"
+      },
+      "totals": "{runs, plural, one {تشغيل #} other {# عمليات تشغيل}} من {slots, plural, one {موعد #} other {# مواعيد}}",
+      "error": "تعذر تحميل عمليات التشغيل.",
+      "retry": "حاول مرة أخرى",
+      "empty": "لا توجد عمليات تشغيل بعد. يبدأ أول تشغيل في الموعد المجدول التالي.",
+      "loadMore": "تحميل المزيد",
+      "weekOf": "أسبوع {date}",
+      "groupSummary": "{created, plural, one {تشغيل #} other {# عمليات تشغيل}}{missed, plural, =0 {} other { · # فائتة}}{skipped, plural, =0 {} other { · # متخطاة}}",
+      "deliveredRate": "{rate} تم تسليمها",
+      "notSent": "لم يُرسل — {reason}",
+      "earlierSlots": "{count, plural, one {موعد سابق # فائت} other {# مواعيد سابقة فائتة}}",
+      "stalled": "متعطل",
+      "lateByMinutes": "{count, plural, one {متأخر # دقيقة} other {متأخر # دقائق}}",
+      "lateByHours": "{count, plural, one {متأخر # ساعة} other {متأخر # ساعات}}",
+      "recipients": "{count, plural, one {# مستلم} other {# مستلمين}}",
+      "reasons": {
+        "catchUpSuperseded": "كانت المنصة متوقفة؛ تم إرسال تشغيل لاحق بدلًا منه",
+        "paused": "كان الجدول متوقفًا مؤقتًا",
+        "draft": "كان البث قيد التعديل",
+        "blockedOwner": "الحساب محظور",
+        "planLimit": "تم بلوغ حد الباقة",
+        "noTargets": "لا توجد صفحة للإرسال منها",
+        "undeliverable": "التدفق أو القالب غير متاح"
+      },
+      "outcomes": {
+        "created": "تم الإرسال",
+        "skipped": "تم التخطي",
+        "missed": "فائت"
+      }
     }
   },
   "commentAutomation": {
@@ -1926,7 +1982,8 @@
     "schedule": {
       "label": "الجدول الزمني",
       "now": "الآن",
-      "scheduled": "جدولة لوقت لاحق"
+      "scheduled": "جدولة لوقت لاحق",
+      "recurring": "تكرار"
     },
     "inputFieldId": {
       "label": "حقل الإدخال المخصص"
@@ -8032,5 +8089,36 @@
         "upload_failed": "تعذّر رفع الملف. حاول مرة أخرى."
       }
     }
+  },
+  "recurrence": {
+    "title": "تكرار",
+    "every": "كرر كل",
+    "unit": "{count, plural, one {{frequency, select, daily {يوم} weekly {أسبوع} monthly {شهر} other {}}} other {{frequency, select, daily {أيام} weekly {أسابيع} monthly {أشهر} other {}}}}",
+    "weekdays": "كرر في",
+    "time": "الوقت",
+    "timezone": "المنطقة الزمنية",
+    "noTimezone": "لم يتم العثور على منطقة زمنية",
+    "searchTimezone": "ابحث عن منطقة زمنية…",
+    "startsOn": "يبدأ في",
+    "end": {
+      "label": "ينتهي",
+      "never": "أبدًا",
+      "onDate": "في",
+      "after": "بعد",
+      "pickDate": "اختر تاريخًا",
+      "occurrences": "{count, plural, one {مرة} other {مرات}}"
+    },
+    "monthDay": {
+      "label": "يوم الشهر",
+      "day": "اليوم {day}",
+      "last": "اليوم الأخير",
+      "hint": "في الأشهر الأقصر يتم الإرسال في اليوم الأخير."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {كل {frequency, select, daily {يوم} weekly {أسبوع} monthly {شهر} other {}}} other {كل # {frequency, select, daily {أيام} weekly {أسابيع} monthly {أشهر} other {}}}}{frequency, select, weekly { في {weekdays}} monthly { في {monthDay, select, last {اليوم الأخير} other {اليوم {monthDay}}}} other {}} في الساعة {time} ({timezone})، بدءًا من {startsOn}{endKind, select, onDate {، وينتهي في {endDate}} afterOccurrences {، وينتهي بعد {endCount, plural, one {# مرة} other {# مرات}}} other {}}"
+    },
+    "firstRunLater": "أول إرسال هو {when} لأن وقت اليوم قد مضى.",
+    "nextRuns": "عمليات الإرسال القادمة",
+    "noUpcomingRuns": "لا توجد عمليات إرسال قادمة."
   }
 }

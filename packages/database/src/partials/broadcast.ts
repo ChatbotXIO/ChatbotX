@@ -18,7 +18,7 @@ export {
   templateBroadcastSubactions,
 } from "@chatbotx.io/utils/broadcast"
 
-export const broadcastScheduleTypes = z.enum(["now", "future"])
+export const broadcastScheduleTypes = z.enum(["now", "future", "recurring"])
 export type BroadcastScheduleType = z.infer<typeof broadcastScheduleTypes>
 
 export const broadcastStatuses = z.enum([
@@ -28,8 +28,52 @@ export const broadcastStatuses = z.enum([
   "cancelled",
   "draft",
   "failed",
+  "recurring",
 ])
 export type BroadcastStatus = z.infer<typeof broadcastStatuses>
+
+/**
+ * What happened to one slot of a repeating broadcast. `created` means a run
+ * (child broadcast) exists — not that it was delivered; `skipped` is an
+ * intentional non-send; `missed` is a slot an outage swallowed.
+ */
+export const broadcastOccurrenceOutcomes = z.enum([
+  "created",
+  "skipped",
+  "missed",
+])
+export type BroadcastOccurrenceOutcome = z.infer<
+  typeof broadcastOccurrenceOutcomes
+>
+
+export const broadcastOccurrenceReasons = z.enum([
+  "catchUpSuperseded",
+  "paused",
+  "draft",
+  "blockedOwner",
+  "planLimit",
+  "noTargets",
+  "undeliverable",
+])
+export type BroadcastOccurrenceReason = z.infer<
+  typeof broadcastOccurrenceReasons
+>
+
+/**
+ * The template of a repeating broadcast: it never sends itself, it only owns
+ * the schedule that spawns runs. A run carries `occurrenceAt`; a template
+ * does not.
+ */
+export const isRecurringTemplate = (row: {
+  schedulesType: string
+  occurrenceAt?: Date | null
+}): boolean =>
+  row.schedulesType === broadcastScheduleTypes.enum.recurring &&
+  row.occurrenceAt == null
+
+/** One run (child broadcast) spawned by a repeating broadcast's schedule. */
+export const isRecurrenceRun = (row: { occurrenceAt?: Date | null }): boolean =>
+  row.occurrenceAt != null
 
 /** Share of targeted contacts that must have failed for the broadcast itself to be `failed`. */
 export const BROADCAST_FAILED_RATE_THRESHOLD = 1
@@ -539,3 +583,8 @@ export const resolveSubmittedSendRatePatch = (
   submitted: number | null | undefined,
 ): { sendRatePerMinute: number | null } | undefined =>
   submitted === undefined ? undefined : { sendRatePerMinute: submitted }
+
+/** How a repeating broadcast's runs are grouped: by local day, ISO week or month. */
+export const occurrenceBucketGranularities = ["day", "week", "month"] as const
+export type OccurrenceBucketGranularity =
+  (typeof occurrenceBucketGranularities)[number]

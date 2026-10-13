@@ -74,10 +74,16 @@ const BROADCAST = {
   name: "Spring sale",
 } as BroadcastModel
 
+const REPEATING = {
+  ...BROADCAST,
+  schedulesType: "recurring",
+  occurrenceAt: null,
+} as BroadcastModel
+
 let container: HTMLDivElement | null = null
 let root: Root | null = null
 
-function renderDialog() {
+function renderDialog(broadcast: BroadcastModel = BROADCAST) {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   container = document.createElement("div")
   document.body.append(container)
@@ -85,7 +91,7 @@ function renderDialog() {
   act(() => {
     root?.render(
       <MoveBroadcastToDraftDialog
-        broadcast={BROADCAST}
+        broadcast={broadcast}
         onOpenChange={() => {
           // no-op — the test drives `open` directly via re-render
         }}
@@ -155,5 +161,26 @@ describe("MoveBroadcastToDraftDialog", () => {
 
     expect(toast.error).toHaveBeenCalledWith("Broadcast is no longer scheduled")
     expect(refresh).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("MoveBroadcastToDraftDialog for a repeating broadcast", () => {
+  test("uses the repeating copy", () => {
+    const el = renderDialog(REPEATING)
+    const text = el.textContent ?? ""
+    expect(text).toContain("broadcasts.moveToDraftDialog.templateTitle")
+    expect(text).toContain("broadcasts.moveToDraftDialog.templateDescription")
+    expect(text).toContain("actions.editSchedule")
+    expect(text).not.toContain("broadcasts.moveToDraftDialog.title")
+  })
+
+  test("keeps the one-off copy for a one-off", () => {
+    const el = renderDialog()
+    const text = el.textContent ?? ""
+    expect(text).toContain("broadcasts.moveToDraftDialog.title")
+    expect(text).toContain("broadcasts.moveToDraftDialog.description")
+    expect(text).not.toContain(
+      "broadcasts.moveToDraftDialog.templateDescription",
+    )
   })
 })

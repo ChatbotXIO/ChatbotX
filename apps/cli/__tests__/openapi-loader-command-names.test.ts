@@ -278,3 +278,37 @@ describe("pathAndMethodToCommandName — meta catalog singleton", () => {
     ).toBe("products:meta-catalog:create")
   })
 })
+
+describe("pathAndMethodToCommandName — repeating broadcasts", () => {
+  // A command whose derived name collides is silently dropped by the CLI, so
+  // the three new operations are pinned here.
+  test("each new broadcast operation gets its own command name", () => {
+    const names = [
+      pathAndMethodToCommandName("/v1/broadcasts/preview-recurrence", "POST"),
+      pathAndMethodToCommandName("/v1/broadcasts/{idOrName}/run-groups", "GET"),
+      pathAndMethodToCommandName(
+        "/v1/broadcasts/{idOrName}/occurrences",
+        "GET",
+      ),
+    ]
+    expect(names).toEqual([
+      "broadcasts:preview-recurrence",
+      "broadcasts:run-groups:list",
+      "broadcasts:occurrences:list",
+    ])
+    expect(new Set(names).size).toBe(names.length)
+  })
+
+  test("they do not collide with the existing broadcast commands", () => {
+    const existing = [
+      pathAndMethodToCommandName("/v1/broadcasts", "GET"),
+      pathAndMethodToCommandName("/v1/broadcasts/{idOrName}", "GET"),
+      pathAndMethodToCommandName("/v1/broadcasts/{idOrName}/audience", "GET"),
+      pathAndMethodToCommandName("/v1/broadcasts/{id}/contacts", "GET"),
+      pathAndMethodToCommandName("/v1/broadcasts/audience/preview", "POST"),
+    ]
+    expect(existing).not.toContain("broadcasts:preview-recurrence")
+    expect(existing).not.toContain("broadcasts:run-groups:list")
+    expect(existing).not.toContain("broadcasts:occurrences:list")
+  })
+})

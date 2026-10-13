@@ -294,3 +294,60 @@ describe("buildEditBroadcastDefaultValues", () => {
     ).toBeNull()
   })
 })
+
+describe("buildEditBroadcastDefaultValues — repeating drafts", () => {
+  const rule = {
+    frequency: "weekly" as const,
+    interval: 2,
+    weekdays: [1, 3],
+    timeOfDay: "09:00",
+    timezone: "Asia/Ho_Chi_Minh",
+    startsOn: "2026-10-14",
+    end: { kind: "never" as const },
+  }
+
+  test("reopens a repeating draft on its saved rule and no one-off time", () => {
+    const built = buildEditBroadcastDefaultValues({
+      ...baseDraft,
+      flowId: "flow-9",
+      subaction: "allContacts",
+      channel: "omnichannel",
+      schedulesType: "recurring",
+      recurrence: { rule, occurrenceCount: 9 },
+    })
+
+    expect(built?.defaultValues.schedulesType).toBe("recurring")
+    expect(built?.defaultValues.recurrence).toEqual(rule)
+    expect(built?.defaultValues.schedulesAt).toBeNull()
+    // The preview counts from the runs already made, like the server.
+    expect(built?.recurrenceOccurrenceCount).toBe(9)
+  })
+
+  test("leaves the rule out for a one-off even when a disarmed series row survives", () => {
+    const built = buildEditBroadcastDefaultValues({
+      ...baseDraft,
+      flowId: "flow-9",
+      subaction: "allContacts",
+      channel: "omnichannel",
+      schedulesType: "future",
+      recurrence: { rule, occurrenceCount: 9 },
+    })
+
+    expect(built?.defaultValues.schedulesType).toBe("future")
+    expect(built?.defaultValues.recurrence).toBeUndefined()
+  })
+
+  test("a repeating draft with no saved rule opens without one", () => {
+    const built = buildEditBroadcastDefaultValues({
+      ...baseDraft,
+      flowId: "flow-9",
+      subaction: "allContacts",
+      channel: "omnichannel",
+      schedulesType: "recurring",
+      recurrence: null,
+    })
+
+    expect(built?.defaultValues.recurrence).toBeUndefined()
+    expect(built?.recurrenceOccurrenceCount).toBe(0)
+  })
+})

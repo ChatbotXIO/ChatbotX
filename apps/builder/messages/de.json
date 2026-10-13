@@ -154,7 +154,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "Durchläufe anzeigen",
+    "editSchedule": "Zeitplan bearbeiten"
   },
   "errors": {
     "superAdminRequired": "Sie müssen Super-Administrator des Arbeitsbereichs sein, um dies zu tun."
@@ -367,7 +369,10 @@
       "sending": "Wird gesendet",
       "cancelled": "Abgebrochen",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "Wiederkehrend",
+      "paused": "Pausiert",
+      "ended": "Beendet"
     },
     "stats": {
       "sent": "Gesendet",
@@ -451,7 +456,9 @@
       "audienceFilter": "Zielgruppenfilter",
       "noAudienceFilter": "Kein Zielgruppenfilter",
       "template": "Vorlage",
-      "integration": "Integration"
+      "integration": "Integration",
+      "schedule": "Wiederholungsplan",
+      "runOf": "Lauf von <link>{name}</link>"
     },
     "filters": {
       "all": "All"
@@ -500,15 +507,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "Zeitplan bearbeiten",
+      "templateDescription": "„{name}“ wird pausiert und in die Entwürfe verschoben, damit Sie den Zeitplan ändern können."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "Wiederkehrenden Broadcast pausieren",
+      "templateDescription": "„{name}“ erstellt keine neuen Läufe mehr. Ein bereits laufender Versand wird fortgesetzt. Sie können später fortsetzen; Läufe während der Pause werden übersprungen."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "„{name}“ wiederholt sich wieder ab dem nächsten geplanten Zeitpunkt. Läufe während der Pause wurden übersprungen."
     },
     "planLimitDialog": {
       "title": "Tarif upgraden",
@@ -526,6 +538,50 @@
       "toLabel": "Bis",
       "allPlaceholder": "Alle",
       "rangeEndBeforeStart": "Die Endposition darf nicht vor der Startposition liegen"
+    },
+    "recurring": {
+      "nextRun": "Nächster Lauf {when}",
+      "paused": "Pausiert",
+      "ended": "Beendet {when} · {count, plural, one {# Lauf} other {# Läufe}}",
+      "runs": "{count, plural, one {# Lauf} other {# Läufe}}"
+    },
+    "runs": {
+      "back": "Wiederkehrende Broadcasts",
+      "pausedNotice": "Pausiert seit {when}. Läufe während der Pause werden übersprungen.",
+      "groupBy": "Läufe gruppieren nach",
+      "grouping": {
+        "day": "Tag",
+        "week": "Woche",
+        "month": "Monat"
+      },
+      "totals": "{runs, plural, one {# Lauf} other {# Läufe}} aus {slots, plural, one {# Termin} other {# Terminen}}",
+      "error": "Die Läufe konnten nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "empty": "Noch keine Läufe. Der erste Lauf startet zum nächsten geplanten Zeitpunkt.",
+      "loadMore": "Mehr laden",
+      "weekOf": "Woche vom {date}",
+      "groupSummary": "{created, plural, one {# Lauf} other {# Läufe}}{missed, plural, =0 {} other { · # verpasst}}{skipped, plural, =0 {} other { · # übersprungen}}",
+      "deliveredRate": "{rate} zugestellt",
+      "notSent": "Nicht gesendet — {reason}",
+      "earlierSlots": "{count, plural, one {# früherer Termin} other {# frühere Termine}} verpasst",
+      "stalled": "Hängt",
+      "lateByMinutes": "{count, plural, one {# Minute verspätet} other {# Minuten verspätet}}",
+      "lateByHours": "{count, plural, one {# Stunde verspätet} other {# Stunden verspätet}}",
+      "recipients": "{count, plural, one {# Empfänger} other {# Empfänger}}",
+      "reasons": {
+        "catchUpSuperseded": "die Plattform war nicht erreichbar; stattdessen wurde ein späterer Lauf gesendet",
+        "paused": "der Zeitplan war pausiert",
+        "draft": "der Broadcast wurde bearbeitet",
+        "blockedOwner": "das Konto ist gesperrt",
+        "planLimit": "Tarifgrenze erreicht",
+        "noTargets": "keine Seite zum Senden",
+        "undeliverable": "Flow oder Vorlage nicht verfügbar"
+      },
+      "outcomes": {
+        "created": "Gesendet",
+        "skipped": "Übersprungen",
+        "missed": "Verpasst"
+      }
     }
   },
   "commentAutomation": {
@@ -1780,7 +1836,8 @@
     "schedule": {
       "label": "Zeitplan",
       "now": "Jetzt",
-      "scheduled": "Für später planen"
+      "scheduled": "Für später planen",
+      "recurring": "Wiederholen"
     },
     "inputFieldId": {
       "label": "Benutzerdefiniertes Eingabefeld"
@@ -8032,5 +8089,36 @@
         "upload_failed": "Die Datei konnte nicht hochgeladen werden. Bitte versuche es erneut."
       }
     }
+  },
+  "recurrence": {
+    "title": "Wiederholen",
+    "every": "Wiederholen alle",
+    "unit": "{count, plural, one {{frequency, select, daily {Tag} weekly {Woche} monthly {Monat} other {}}} other {{frequency, select, daily {Tage} weekly {Wochen} monthly {Monate} other {}}}}",
+    "weekdays": "Wiederholen am",
+    "time": "Uhrzeit",
+    "timezone": "Zeitzone",
+    "noTimezone": "Keine Zeitzone gefunden",
+    "searchTimezone": "Zeitzone suchen…",
+    "startsOn": "Beginnt am",
+    "end": {
+      "label": "Endet",
+      "never": "Nie",
+      "onDate": "Am",
+      "after": "Nach",
+      "pickDate": "Datum wählen",
+      "occurrences": "{count, plural, one {Ausführung} other {Ausführungen}}"
+    },
+    "monthDay": {
+      "label": "Tag des Monats",
+      "day": "Tag {day}",
+      "last": "Letzter Tag",
+      "hint": "In kürzeren Monaten läuft der Versand am letzten Tag."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {Jeden {frequency, select, daily {Tag} weekly {Woche} monthly {Monat} other {}}} other {Alle # {frequency, select, daily {Tage} weekly {Wochen} monthly {Monate} other {}}}}{frequency, select, weekly { am {weekdays}} monthly { am {monthDay, select, last {letzten Tag} other {{monthDay}. Tag}}} other {}} um {time} ({timezone}), ab {startsOn}{endKind, select, onDate {, endet am {endDate}} afterOccurrences {, endet nach {endCount, plural, one {# Ausführung} other {# Ausführungen}}} other {}}"
+    },
+    "firstRunLater": "Der erste Versand ist {when}, da die heutige Uhrzeit bereits vorbei ist.",
+    "nextRuns": "Nächste Versände",
+    "noUpcomingRuns": "Keine anstehenden Versände."
   }
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import { isRecurringTemplate } from "@chatbotx.io/database/partials"
 import type { BroadcastModel } from "@chatbotx.io/database/types"
 import { useAction } from "next-safe-action/hooks"
 import { stopBroadcastAction } from "../actions/stop-broadcast.action"
@@ -13,6 +14,14 @@ const CONFIG = {
   descriptionKey: "broadcasts.stopDialog.description",
   confirmLabelKey: "actions.stop",
   destructive: true,
+}
+
+// Stopping a repeating broadcast pauses it: no new run starts, one already
+// sending carries on.
+const TEMPLATE_CONFIG = {
+  ...CONFIG,
+  titleKey: "broadcasts.stopDialog.templateTitle",
+  descriptionKey: "broadcasts.stopDialog.templateDescription",
 }
 
 export function StopBroadcastDialog({
@@ -42,7 +51,9 @@ export function StopBroadcastDialog({
   return (
     <BroadcastTransitionDialog
       broadcast={broadcast}
-      config={CONFIG}
+      config={
+        broadcast && isRecurringTemplate(broadcast) ? TEMPLATE_CONFIG : CONFIG
+      }
       execute={execute}
       isPending={isPending}
       onOpenChange={onOpenChange}
