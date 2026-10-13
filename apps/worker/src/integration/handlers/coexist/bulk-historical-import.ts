@@ -19,7 +19,11 @@ import {
   createMessageRepository,
 } from "@chatbotx.io/database/repositories"
 import type { InboxModel } from "@chatbotx.io/database/types"
-import type { IncomingContact, IncomingMessage } from "@chatbotx.io/sdk"
+import {
+  type IncomingContact,
+  type IncomingMessage,
+  toKeepOriginal,
+} from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import pLimit from "p-limit"
 import { logger } from "../../../lib/logger"
@@ -753,6 +757,7 @@ export const bulkImportMessages = async (props: {
           width: att.width ?? undefined,
           height: att.height ?? undefined,
           name: att.name,
+          keepOriginal: toKeepOriginal(att),
         })
       }
     }

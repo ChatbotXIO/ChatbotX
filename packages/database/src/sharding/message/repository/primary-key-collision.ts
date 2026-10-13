@@ -27,6 +27,14 @@ export function isMessagePrimaryKeyViolation(error: unknown): boolean {
   )
 }
 
+/** The message with its `createdAt`, stamped now when the caller left it out. */
+export const withCreatedAt = <M extends { createdAt?: Date }>(
+  message: M,
+): M & { createdAt: Date } => ({
+  ...message,
+  createdAt: message.createdAt ?? new Date(),
+})
+
 /**
  * Run a Message insert under {@link withShardRetry} and, if the very first
  * attempt fails only because another process minted the same snowflake id in
@@ -46,9 +54,12 @@ export function withPrimaryKeyCollisionRecovery<T>(
   insertOnce: (message: CreateMessageInput) => Promise<T>,
 ): Promise<T> {
   let isFirstAttempt = true
+  // Stamped once, here, never by `defaultNow()`: the database's microseconds
+  // cannot round-trip through a JS Date, and every later lookup or update by
+  // (id, createdAt) would miss the row. A retry keeps the same timestamp.
+  const attemptMessage = withCreatedAt(message)
 
   return withShardRetry(async () => {
-    const attemptMessage = message
     const isCollisionRecoverable = isFirstAttempt
     isFirstAttempt = false
     try {

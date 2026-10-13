@@ -58,7 +58,6 @@
     "@chatbotx.io/integration-google-sheets": "workspace:*",
     "@chatbotx.io/integration-instagram": "workspace:*",
     "@chatbotx.io/integration-instagram-facebook": "workspace:*",
-    "@chatbotx.io/integration-threads": "workspace:*",
     "@chatbotx.io/integration-klaviyo": "workspace:*",
     "@chatbotx.io/integration-mailchimp": "workspace:*",
     "@chatbotx.io/integration-mailer-lite": "workspace:*",
@@ -69,6 +68,7 @@
     "@chatbotx.io/integration-sendgrid": "workspace:*",
     "@chatbotx.io/integration-smtp": "workspace:*",
     "@chatbotx.io/integration-telegram": "workspace:*",
+    "@chatbotx.io/integration-threads": "workspace:*",
     "@chatbotx.io/integration-tiktok": "workspace:*",
     "@chatbotx.io/integration-webchat": "workspace:*",
     "@chatbotx.io/integration-whatsapp": "workspace:*",
@@ -107,6 +107,7 @@
     "pdf-parse-new": "2.0.0",
     "remeda": "^2.34.0",
     "remove-markdown": "^0.6.3",
+    "sharp": "0.35.5",
     "universal-error-normalizer": "^1.0.0",
     "xlsx": "^0.18.5",
     "zod": "^4.3.6"

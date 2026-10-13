@@ -1,4 +1,5 @@
 import { systemFieldService } from "@chatbotx.io/business/system-field"
+import { ensureContactAvatarMirrored } from "@chatbotx.io/channel-registry/media-hydration"
 import { NextResponse } from "next/server"
 import {
   parseMeLinkSearchParams,
@@ -22,7 +23,10 @@ export async function GET(request: Request) {
     )
   }
 
-  const data = await systemFieldService.buildMeExport(toMePrivacyParams(input))
+  const data = await systemFieldService.buildMeExport(
+    toMePrivacyParams(input),
+    { ensureAvatarMirrored: ensureContactAvatarMirrored },
+  )
 
   if (!data) {
     return new Response(null, { status: 404 })

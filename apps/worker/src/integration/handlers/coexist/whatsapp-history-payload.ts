@@ -202,7 +202,7 @@ const extractMedia = (
  * cannot resolve.
  */
 const buildWaIncomingAttachment = (
-  _fileType: MediaKey,
+  mediaKey: MediaKey,
   payload: z.infer<typeof waMediaSchema>,
 ): IncomingAttachment | null => {
   if (!payload.id) {
@@ -218,6 +218,9 @@ const buildWaIncomingAttachment = (
     width: null,
     height: null,
     name: payload.caption,
+    // WhatsApp's message type is the sender's intent: `image` is a photo;
+    // an image sent as `document` (or a `sticker`) keeps its original bytes.
+    isPhotoMessage: mediaKey === "image",
   }
 }
 

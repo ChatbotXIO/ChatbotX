@@ -48,7 +48,7 @@
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "image-size": "^2.0.3"
+    "@chatbotx.io/worker-config": "workspace:*"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",

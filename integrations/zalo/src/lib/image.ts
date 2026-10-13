@@ -1,5 +1,6 @@
 import type { Context } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { storeIncomingImage } from "@chatbotx.io/utils/store-incoming-image"
 import type { ZaloAuthValue } from "../schema/definition"
 
 export const fetchAndReuploadImage = async ({
@@ -16,15 +17,15 @@ export const fetchAndReuploadImage = async ({
     },
   })
   if (response.ok && response.body) {
-    const originPath = `${ctx.storagePrefix}/${createId()}`
-    const bytes = await response.arrayBuffer()
-    const mimeType = response.headers.get("content-type") ?? "image/png"
-
-    await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
-      ACL: "public-read",
-      ContentType: mimeType,
+    const stored = await storeIncomingImage({
+      uploader: ctx.uploader,
+      key: `${ctx.storagePrefix}/${createId()}`,
+      bytes: await response.arrayBuffer(),
+      mimeType: response.headers.get("content-type") ?? "image/png",
+      profile: "avatar",
+      acl: "public-read",
     })
 
-    return originPath
+    return stored.originPath
   }
 }

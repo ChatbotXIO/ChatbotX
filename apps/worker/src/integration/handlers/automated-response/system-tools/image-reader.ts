@@ -4,6 +4,10 @@ import type {
   ImageReaderInput,
   SystemToolExecutors,
 } from "@chatbotx.io/ai/server"
+import {
+  ensureAttachmentStored,
+  MediaNotReadyError,
+} from "@chatbotx.io/channel-registry/media-hydration"
 import type { AIAgentModelConfig } from "@chatbotx.io/database/partials"
 import type { AttachmentModel } from "@chatbotx.io/database/types"
 import {
@@ -131,6 +135,18 @@ export function createImageReaderExecutor(options: {
         return "I couldn't find a supported image in this conversation yet."
       }
 
+      // A lazily-ingested image is still a provider URL: store it now, the
+      // analysis job reads the object from storage.
+      const stored = await ensureAttachmentStored({
+        attachmentId: attachment.id,
+        workspaceId: context.workspaceId,
+        messageCreatedAt: attachment.messageCreatedAt,
+        originPath: attachment.originPath,
+      })
+      if (!stored) {
+        return "I couldn't find a supported image in this conversation yet."
+      }
+
       const prompt = buildVisionPrompt({
         attachment,
         fileOnlyTrigger: options.fileOnlyTrigger,
@@ -142,9 +158,9 @@ export function createImageReaderExecutor(options: {
           type: HeavyJobAction.analyzeImage,
           data: {
             workspaceId: context.workspaceId,
-            originPath: attachment.originPath,
-            mimeType: attachment.mimeType,
-            sizeBytes: attachment.size,
+            originPath: stored.originPath,
+            mimeType: stored.mimeType ?? attachment.mimeType,
+            sizeBytes: stored.size ?? attachment.size,
             prompt,
             providerInfo: options.providerInfo,
           },
@@ -185,6 +201,9 @@ export function createImageReaderExecutor(options: {
         fileOnlyTrigger: options.fileOnlyTrigger,
       })
     } catch (error) {
+      if (error instanceof MediaNotReadyError) {
+        return "The image is still being fetched. Please ask again in a moment."
+      }
       const normalizedError = normalizeError(error)
       logger.error(
         {

@@ -24,13 +24,16 @@ const getProfileSnapshot: NonNullable<
 }
 
 export const contactHandlers: Partial<ContactHandlers<InstagramAuthValue>> = {
-  getProfile: async ({ ctx, data: { includeProfileSnapshot, sourceId } }) => {
+  getProfile: async ({
+    ctx,
+    data: { includeAvatar, includeProfileSnapshot, sourceId },
+  }) => {
     if (!includeProfileSnapshot) {
-      return await getUserProfile({ ctx, psid: sourceId })
+      return await getUserProfile({ ctx, psid: sourceId, includeAvatar })
     }
 
     const [profile, snapshot] = await Promise.allSettled([
-      getUserProfile({ ctx, psid: sourceId }),
+      getUserProfile({ ctx, psid: sourceId, includeAvatar }),
       getProfileSnapshot({ ctx, data: { sourceId } }),
     ])
     if (profile.status === "rejected" && snapshot.status === "rejected") {
