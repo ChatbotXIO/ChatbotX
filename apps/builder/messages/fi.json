@@ -154,7 +154,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "Näytä ajot",
+    "editSchedule": "Muokkaa aikataulua"
   },
   "errors": {
     "superAdminRequired": "Sinun täytyy olla työtilan pääylläpitäjä tehdäksesi tämän."
@@ -367,7 +369,10 @@
       "sending": "Lähetetään",
       "cancelled": "Peruutettu",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "Toistuva",
+      "paused": "Tauolla",
+      "ended": "Päättynyt"
     },
     "stats": {
       "sent": "Lähetetty",
@@ -451,7 +456,9 @@
       "audienceFilter": "Yleisösuodatin",
       "noAudienceFilter": "Ei yleisösuodatinta",
       "template": "Malli",
-      "integration": "Integraatio"
+      "integration": "Integraatio",
+      "schedule": "Toistoaikataulu",
+      "runOf": "Lähetyksen <link>{name}</link> ajo"
     },
     "filters": {
       "all": "All"
@@ -500,15 +507,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "Muokkaa aikataulua",
+      "templateDescription": "\"{name}\" keskeytetään ja siirretään takaisin luonnoksiin, jotta voit muuttaa aikataulua."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "Keskeytä toistuva lähetys",
+      "templateDescription": "\"{name}\" ei luo uusia ajoja. Jo käynnissä oleva ajo jatkuu. Voit jatkaa myöhemmin; tauon aikaiset ajot ohitetaan."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "\"{name}\" alkaa toistua uudelleen seuraavasta ajastetusta ajankohdasta. Tauon aikaiset ajot ohitettiin."
     },
     "planLimitDialog": {
       "title": "Päivitä tilauksesi",
@@ -526,6 +538,63 @@
       "toLabel": "Asti",
       "allPlaceholder": "Kaikki",
       "rangeEndBeforeStart": "Loppusijainti ei voi olla ennen alkusijaintia"
+    },
+    "recurring": {
+      "nextRun": "Seuraava ajo {when}",
+      "paused": "Tauolla",
+      "ended": "Päättynyt {when} · {count, plural, one {# ajo} other {# ajoa}}",
+      "runs": "{count, plural, one {# ajo} other {# ajoa}}",
+      "noUpcomingSends": "Ei enää lähetyksiä — jäljellä olevat päivät ohitetaan"
+    },
+    "runs": {
+      "back": "Toistuvat lähetykset",
+      "pausedNotice": "Tauolla {when} alkaen. Tauon aikaiset ajot ohitetaan.",
+      "groupBy": "Ryhmittele ajot",
+      "grouping": {
+        "day": "Päivä",
+        "week": "Viikko",
+        "month": "Kuukausi"
+      },
+      "totals": "{runs, plural, one {# ajo} other {# ajoa}}, {slots, plural, one {# ajankohdasta} other {# ajankohdasta}}",
+      "error": "Ajojen lataaminen epäonnistui.",
+      "retry": "Yritä uudelleen",
+      "empty": "Ei vielä ajoja. Ensimmäinen alkaa seuraavana ajastettuna ajankohtana.",
+      "loadMore": "Lataa lisää",
+      "weekOf": "Viikko alkaen {date}",
+      "groupSummary": "{created, plural, one {# ajo} other {# ajoa}}{missed, plural, =0 {} other { · # ohitettu}}{skipped, plural, =0 {} other { · # jätetty väliin}}",
+      "deliveredRate": "{rate} toimitettu",
+      "notSent": "Ei lähetetty — {reason}",
+      "earlierSlots": "{count, plural, one {# aiempi ajankohta} other {# aiempaa ajankohtaa}} jäi väliin",
+      "stalled": "Jumissa",
+      "lateByMinutes": "{count, plural, one {# minuutti myöhässä} other {# minuuttia myöhässä}}",
+      "lateByHours": "{count, plural, one {# tunti myöhässä} other {# tuntia myöhässä}}",
+      "recipients": "{count, plural, one {# vastaanottaja} other {# vastaanottajaa}}",
+      "reasons": {
+        "catchUpSuperseded": "alusta oli alhaalla; sen sijaan lähetettiin myöhempi ajo",
+        "paused": "aikataulu oli tauolla",
+        "draft": "lähetystä muokattiin",
+        "blockedOwner": "tili on estetty",
+        "planLimit": "paketin raja täynnä",
+        "noTargets": "ei sivua, josta lähettää",
+        "undeliverable": "kulku tai malli ei ole käytettävissä",
+        "excludedDate": "Ohitettu päivä"
+      },
+      "outcomes": {
+        "created": "Lähetetty",
+        "skipped": "Ohitettu",
+        "missed": "Jäi väliin"
+      },
+      "upcoming": {
+        "title": "Tulevat lähetykset",
+        "empty": "Ei tulevia lähetyksiä",
+        "skip": "Ohita",
+        "restore": "Palauta",
+        "skippedBadge": "Ohitettu",
+        "skipped": "{date} ohitettu",
+        "restored": "{date} palautettu",
+        "undo": "Kumoa",
+        "error": "Tätä lähetystä ei voi enää muuttaa"
+      }
     }
   },
   "commentAutomation": {
@@ -1780,7 +1849,8 @@
     "schedule": {
       "label": "Ajastus",
       "now": "Nyt",
-      "scheduled": "Ajasta myöhemmäksi"
+      "scheduled": "Ajasta myöhemmäksi",
+      "recurring": "Toista"
     },
     "inputFieldId": {
       "label": "Syötteen mukautettu kenttä"
@@ -8031,6 +8101,47 @@
         "rate_limited": "Liian monta latausta. Odota hetki ja yritä uudelleen.",
         "upload_failed": "Tiedostoa ei voitu ladata. Yritä uudelleen."
       }
+    }
+  },
+  "recurrence": {
+    "title": "Toista",
+    "every": "Toista joka",
+    "unit": "{count, plural, one {{frequency, select, daily {päivä} weekly {viikko} monthly {kuukausi} other {}}} other {{frequency, select, daily {päivää} weekly {viikkoa} monthly {kuukautta} other {}}}}",
+    "weekdays": "Toista",
+    "time": "Aika",
+    "timezone": "Aikavyöhyke",
+    "noTimezone": "Aikavyöhykettä ei löytynyt",
+    "searchTimezone": "Hae aikavyöhykettä…",
+    "startsOn": "Alkaa",
+    "end": {
+      "label": "Päättyy",
+      "never": "Ei koskaan",
+      "onDate": "Päivänä",
+      "after": "Jälkeen",
+      "pickDate": "Valitse päivämäärä",
+      "occurrences": "{count, plural, one {kerta} other {kertaa}}"
+    },
+    "monthDay": {
+      "label": "Kuukauden päivä",
+      "day": "{day}. päivä",
+      "last": "Viimeinen päivä",
+      "hint": "Lyhyempinä kuukausina lähetys tehdään viimeisenä päivänä."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {Joka {frequency, select, daily {päivä} weekly {viikko} monthly {kuukausi} other {}}} other {Joka # {frequency, select, daily {päivää} weekly {viikkoa} monthly {kuukautta} other {}}}}{frequency, select, weekly { {weekdays}} monthly { {monthDay, select, last {kuukauden viimeinen päivä} other {kuukauden {monthDay}. päivä}}} other {}} klo {time} ({timezone}), alkaen {startsOn}{endKind, select, onDate {, päättyy {endDate}} afterOccurrences {, päättyy {endCount, plural, one {# kerta} other {# kertaa}} jälkeen} other {}}"
+    },
+    "firstRunLater": "Ensimmäinen lähetys on {when}, koska tämän päivän aika on jo mennyt.",
+    "nextRuns": "Seuraavat lähetykset",
+    "noUpcomingRuns": "Ei tulevia lähetyksiä.",
+    "skipping": "Ohitetaan {dates}{more, plural, =0 {} one { (+# lisää)} other { (+# lisää)}}",
+    "excludeDates": {
+      "label": "Ohita päiviä",
+      "hint": "Näinä päivinä ei lähetetä. Sarja jatkuu.",
+      "add": "Lisää päiviä",
+      "remove": "Poista {date}",
+      "showAll": "Näytä {count} lisää",
+      "showLess": "Näytä vähemmän",
+      "clearAll": "Tyhjennä kaikki"
     }
   }
 }

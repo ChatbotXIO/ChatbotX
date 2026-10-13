@@ -67,6 +67,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   or,
 }))
 
+vi.mock("@chatbotx.io/database/queries/date-bucket", () => ({
+  zonedBucketKey: (...args: unknown[]) => ({ bucketKey: args }),
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactsOnBroadcastsModel: {
     broadcastId: "cob.broadcastId",
@@ -82,8 +86,18 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   broadcastModel: {
     id: "b.id",
     workspaceId: "b.workspaceId",
+    occurrenceAt: "b.occurrenceAt",
+    parentBroadcastId: "b.parentBroadcastId",
   },
 }))
+
+const EMPTY_STATS = {
+  "message:sent": 0,
+  "message:delivered": 0,
+  "message:seen": 0,
+  "flow:clicked": 0,
+  "message:failed": 0,
+}
 
 const { BroadcastStatsRepository } = await import(
   "../src/repositories/postgres/broadcast-stats.repository"
@@ -95,13 +109,9 @@ beforeEach(() => {
 })
 
 describe("BroadcastStatsRepository — workspace scoping", () => {
-  test("getBatchStats joins Broadcast and filters every subquery on workspaceId", async () => {
-    // No rows returned for any subquery — simulates a broadcast belonging to
-    // a different workspace than the caller's.
-    queueResult([]) // delivered
-    queueResult([]) // seen
-    queueResult([]) // clicked
-    queueResult([]) // failed
+  test("getBatchStats is a single scoped pass: one select, joined to Broadcast and filtered on workspaceId", async () => {
+    // No rows: simulates a broadcast belonging to another workspace.
+    queueResult([])
 
     const repo = new BroadcastStatsRepository()
     const result = await repo.getBatchStats({
@@ -109,31 +119,108 @@ describe("BroadcastStatsRepository — workspace scoping", () => {
       broadcastIds: ["broadcast-of-ws-B"],
     })
 
-    // Every subquery joins Broadcast and scopes on workspaceId — this is the
-    // regression test for the cross-tenant IDOR: without the join+filter,
+    // Regression test for the cross-tenant IDOR: without the join+filter,
     // `getBatchStats({ workspaceId: "ws-A", broadcastIds: ["b-of-ws-B"] })`
     // would return workspace B's real counts instead of empty stats.
-    expect(dbSelect).toHaveBeenCalledTimes(4)
-    for (const chainResult of dbSelect.mock.results) {
-      const chain = chainResult.value as QueryChain
-      expect(chain.innerJoin).toHaveBeenCalledWith(
-        { id: "b.id", workspaceId: "b.workspaceId" },
-        { op: "eq", args: ["cob.broadcastId", "b.id"] },
-      )
-    }
-
-    const workspaceScopedCalls = eq.mock.calls.filter(
-      (call) => call[0] === "b.workspaceId" && call[1] === "ws-A",
+    expect(dbSelect).toHaveBeenCalledTimes(1)
+    const chain = dbSelect.mock.results[0].value as QueryChain
+    expect(chain.innerJoin).toHaveBeenCalledWith(
+      {
+        id: "b.id",
+        workspaceId: "b.workspaceId",
+        occurrenceAt: "b.occurrenceAt",
+        parentBroadcastId: "b.parentBroadcastId",
+      },
+      { op: "eq", args: ["cob.broadcastId", "b.id"] },
     )
-    expect(workspaceScopedCalls.length).toBeGreaterThan(0)
+    expect(
+      eq.mock.calls.filter(
+        (call) => call[0] === "b.workspaceId" && call[1] === "ws-A",
+      ).length,
+    ).toBeGreaterThan(0)
 
-    expect(result["broadcast-of-ws-B"]).toEqual({
-      "message:sent": 0,
-      "message:delivered": 0,
-      "message:seen": 0,
-      "flow:clicked": 0,
-      "message:failed": 0,
+    expect(result["broadcast-of-ws-B"]).toEqual(EMPTY_STATS)
+  })
+
+  test("getBatchStats maps aggregated counts and derives sent = delivered + failed", async () => {
+    queueResult([
+      { broadcastId: "b1", delivered: 8, seen: 5, clicked: 2, failed: 3 },
+    ])
+
+    const repo = new BroadcastStatsRepository()
+    const result = await repo.getBatchStats({
+      workspaceId: "ws-A",
+      broadcastIds: ["b1", "b2"],
     })
+
+    expect(result.b1).toEqual({
+      "message:sent": 11,
+      "message:delivered": 8,
+      "message:seen": 5,
+      "flow:clicked": 2,
+      "message:failed": 3,
+    })
+    // A broadcast with no recipient rows still gets zeroed stats.
+    expect(result.b2).toEqual(EMPTY_STATS)
+  })
+
+  test("getBatchStats short-circuits on an empty id list", async () => {
+    const repo = new BroadcastStatsRepository()
+    expect(
+      await repo.getBatchStats({ workspaceId: "ws-A", broadcastIds: [] }),
+    ).toEqual({})
+    expect(dbSelect).not.toHaveBeenCalled()
+  })
+
+  test("getStatsByOccurrenceBucket scopes on workspace and parent, returns one entry per requested bucket", async () => {
+    queueResult([
+      { bucket: "2026-10-12", delivered: 4, seen: 1, clicked: 0, failed: 1 },
+    ])
+
+    const repo = new BroadcastStatsRepository()
+    const result = await repo.getStatsByOccurrenceBucket({
+      workspaceId: "ws-A",
+      parentBroadcastId: "tpl-1",
+      granularity: "day",
+      timezone: "Asia/Ho_Chi_Minh",
+      buckets: ["2026-10-12", "2026-10-11"],
+    })
+
+    expect(dbSelect).toHaveBeenCalledTimes(1)
+    expect(eq).toHaveBeenCalledWith("b.workspaceId", "ws-A")
+    expect(eq).toHaveBeenCalledWith("b.parentBroadcastId", "tpl-1")
+    expect(result["2026-10-12"]["message:sent"]).toBe(5)
+    // A bucket with only skipped/missed slots has no recipients: zeros, not absent.
+    expect(result["2026-10-11"]).toEqual(EMPTY_STATS)
+  })
+
+  test("getStatsByOccurrenceBucket groups by ordinal so the parameterised bucket expression is not repeated", async () => {
+    queueResult([])
+    const repo = new BroadcastStatsRepository()
+    await repo.getStatsByOccurrenceBucket({
+      workspaceId: "ws-A",
+      parentBroadcastId: "tpl-1",
+      granularity: "month",
+      timezone: "UTC",
+      buckets: ["2026-10-01"],
+    })
+    const chain = dbSelect.mock.results[0].value as QueryChain
+    const [groupBy] = chain.groupBy.mock.calls[0] as [{ strings: string[] }]
+    expect(groupBy.strings.join("")).toBe("1")
+  })
+
+  test("getStatsByOccurrenceBucket does not query when no buckets are requested", async () => {
+    const repo = new BroadcastStatsRepository()
+    expect(
+      await repo.getStatsByOccurrenceBucket({
+        workspaceId: "ws-A",
+        parentBroadcastId: "tpl-1",
+        granularity: "week",
+        timezone: "UTC",
+        buckets: [],
+      }),
+    ).toEqual({})
+    expect(dbSelect).not.toHaveBeenCalled()
   })
 
   test("getContacts joins Broadcast and filters on workspaceId", async () => {
@@ -150,7 +237,7 @@ describe("BroadcastStatsRepository — workspace scoping", () => {
 
     const chain = dbSelect.mock.results[0].value as QueryChain
     expect(chain.innerJoin).toHaveBeenCalledWith(
-      { id: "b.id", workspaceId: "b.workspaceId" },
+      expect.objectContaining({ id: "b.id", workspaceId: "b.workspaceId" }),
       { op: "eq", args: ["cob.broadcastId", "b.id"] },
     )
 

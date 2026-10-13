@@ -20,6 +20,8 @@ import {
   waTemplateParamsSchema,
 } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { isRealCalendarDate } from "@chatbotx.io/utils/datetime"
+import { recurrenceRuleSchema } from "@chatbotx.io/utils/recurrence"
 import { startOfMinute } from "date-fns"
 import { z } from "zod"
 import { contactFilterRequest } from "@/features/contact-filter/schema"
@@ -126,8 +128,13 @@ export const createBroadcastFields = z.object({
     .describe("Inbox ids (numeric strings) this broadcast sends from."),
   subaction: broadcastSubactions.describe("Audience sub-action filter."),
   schedulesType: broadcastScheduleTypes.describe(
-    "When to send: immediately (`now`) or at `schedulesAt` (`future`).",
+    "When to send: immediately (`now`), once at `schedulesAt` (`future`), or on a repeating schedule (`recurring`, with `recurrence`).",
   ),
+  recurrence: recurrenceRuleSchema
+    .optional()
+    .describe(
+      "The repeat rule. Required when `schedulesType` is `recurring`, and only then. Preview its next runs with `broadcasts.previewRecurrence`.",
+    ),
   // Future-ness is validated by the `superRefine` below, not here: that
   // check has the full object (`schedulesType`, `saveAsDraft`) and is the
   // only one that can tell a schedule actually being set (validate) from
@@ -188,6 +195,16 @@ export const withBroadcastRules = <
       message: "A broadcast sends either a flow or a template, not both",
       path: ["flowId"],
     })
+    .refine(
+      (data) =>
+        (data.schedulesType === broadcastScheduleTypes.enum.recurring) ===
+        Boolean(data.recurrence),
+      {
+        message:
+          "Repeat settings are required for a repeating broadcast, and only for one",
+        path: ["recurrence"],
+      },
+    )
     .refine((data) => !isTargetsTemplateSendWithoutTemplate(data), {
       message: "Select a template for at least one page",
       path: ["targets"],
@@ -265,15 +282,31 @@ export const updateBroadcastSchema = z.object({
 })
 export type UpdateBroadcastSchema = z.infer<typeof updateBroadcastSchema>
 
+/** A run of a repeating broadcast, named by its local date in the series' timezone. */
+export const broadcastRunDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine(isRealCalendarDate, "Not a real calendar date.")
+
+export const setBroadcastRunSkippedSchema = z.object({
+  date: broadcastRunDateSchema,
+  skipped: z.boolean(),
+})
+
 export const scheduleBroadcastSchema = z
   .object({
     schedulesType: broadcastScheduleTypes.describe(
-      "When to send: immediately (`now`) or at `schedulesAt` (`future`).",
+      "When to send: immediately (`now`), once at `schedulesAt` (`future`), or on a repeating schedule (`recurring`).",
     ),
     schedulesAt: z
       .string()
       .nullable()
       .describe("ISO 8601 send time, required when schedulesType is `future`."),
+    recurrence: recurrenceRuleSchema
+      .optional()
+      .describe(
+        "The repeat rule for `recurring`. Omit to keep the rule saved on the draft.",
+      ),
     sendRatePerMinute:
       broadcastSendLimitSchema.shape.sendRatePerMinute.describe(
         "Maximum recipients handed off per dispatch minute (1-1000). Omit to keep the stored rate; null clears it.",
@@ -290,6 +323,18 @@ export const scheduleBroadcastSchema = z
         message: FUTURE_SCHEDULE_MESSAGE,
       })
     }
+    // Same rule as create: a repeat rule belongs to a repeating schedule only,
+    // so a one-off never silently drops one.
+    if (
+      data.recurrence &&
+      data.schedulesType !== broadcastScheduleTypes.enum.recurring
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["recurrence"],
+        message: "Repeat settings are only for a repeating broadcast",
+      })
+    }
   })
 export type ScheduleBroadcastSchema = z.infer<typeof scheduleBroadcastSchema>
 
@@ -304,6 +349,7 @@ export type ResumeBroadcastSchema = z.infer<typeof resumeBroadcastSchema>
 // `enqueueBroadcast`'s `schedulesAt <= startTime AND status = scheduled` scan
 // picks it up on its next minute tick — the same path a "send now" create takes.
 // Shared by `scheduleBroadcastAction` and the public API's `schedule` route.
+// A `recurring` schedule ignores it: the service computes the next run.
 export const resolveScheduleTime = (
   parsedInput: ScheduleBroadcastSchema,
 ): Date =>

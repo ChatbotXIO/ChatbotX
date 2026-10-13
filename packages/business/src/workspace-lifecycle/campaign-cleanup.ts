@@ -10,12 +10,22 @@ import {
   broadcastModel,
   contactsOnSequenceModel,
 } from "@chatbotx.io/database/schema"
+import { disarmAllSeriesForWorkspace } from "../broadcast/recurrence-ledger"
 
 export async function cancelInFlightBroadcastsForWorkspace(props: {
   tx?: DatabaseClient
   workspaceId: string
 }): Promise<number> {
-  const { tx = db, workspaceId } = props
+  const { tx, workspaceId } = props
+  if (!tx) {
+    return await db.transaction(async (own) =>
+      cancelInFlightBroadcastsForWorkspace({ tx: own, workspaceId }),
+    )
+  }
+
+  // Repeating series first (lock order: series rows, then broadcast rows), so
+  // a run being created concurrently cannot slip past the cancellation.
+  await disarmAllSeriesForWorkspace(tx, { workspaceId })
 
   const cancelledBroadcasts = await tx
     .update(broadcastModel)
@@ -29,6 +39,7 @@ export async function cancelInFlightBroadcastsForWorkspace(props: {
         inArray(broadcastModel.status, [
           broadcastStatuses.enum.scheduled,
           broadcastStatuses.enum.sending,
+          broadcastStatuses.enum.recurring,
         ]),
       ),
     )

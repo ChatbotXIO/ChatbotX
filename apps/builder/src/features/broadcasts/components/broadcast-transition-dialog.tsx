@@ -15,6 +15,7 @@ import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
+import { useInvalidateBroadcastRuns } from "../hooks/use-invalidate-broadcast-runs"
 import type { BroadcastPlanLimitOutcome } from "../lib/broadcast-plan-limit"
 import { isBroadcastPlanLimitOutcome } from "../lib/broadcast-plan-limit"
 
@@ -47,6 +48,7 @@ export function useBroadcastTransitionActionCallbacks({
 } {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateRuns = useInvalidateBroadcastRuns()
 
   return {
     onSuccess: ({ data } = {}) => {
@@ -62,6 +64,7 @@ export function useBroadcastTransitionActionCallbacks({
           feature: t("fields.broadcast.label"),
         }),
       )
+      invalidateRuns()
       onOpenChange(false)
       router.refresh()
       onSuccess?.()

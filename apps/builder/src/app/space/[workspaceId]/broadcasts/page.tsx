@@ -29,7 +29,7 @@ export default async function BroadcastsPage(props: {
   const search = getBroadcastsSearchParamsCache.parse(await props.searchParams)
   const panelOpen =
     (await cookies()).get(BROADCASTS_PANEL_COOKIE)?.value !== "false"
-  const filtered = Boolean(search.name || search.status)
+  const filtered = Boolean(search.name || search.status || search.kind)
 
   if (search.view === "calendar") {
     const timezone = await getUserTimezone()
@@ -41,6 +41,7 @@ export default async function BroadcastsPage(props: {
       date: calendarDate,
       endDate: calendarEndDate,
       status: search.status,
+      kind: search.kind,
       name: search.name,
       timezone,
     })

@@ -1,18 +1,26 @@
 import type { BroadcastModel } from "@chatbotx.io/database/types"
+import type { RecurrenceRule } from "@chatbotx.io/utils/recurrence"
 import { act, useCallback, useState } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { useForm, useFormContext } from "react-hook-form"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { ScheduleBroadcastDialog } from "@/features/broadcasts/components/schedule-broadcast-dialog"
 import type { BroadcastPlanLimitOutcome } from "@/features/broadcasts/lib/broadcast-plan-limit"
+import type { BroadcastResourceWithRelations } from "@/features/broadcasts/schema/resource"
 
 /** Echoes the key back so assertions never depend on the English copy. */
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+  useTimeZone: () => "UTC",
 }))
 
 vi.mock("sonner", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
+}))
+
+const invalidateRuns = vi.hoisted(() => vi.fn())
+vi.mock("@/features/broadcasts/hooks/use-invalidate-broadcast-runs", () => ({
+  useInvalidateBroadcastRuns: () => invalidateRuns,
 }))
 
 vi.mock("@/enterprise/features/billing/upgrade-plan-dialog", () => ({
@@ -97,15 +105,26 @@ vi.mock("@chatbotx.io/ui/components/form/input-number-field", () => ({
 // Swap the heavy form widgets for buttons that mutate the real RHF state
 // via `useFormContext` — avoids simulating native `<select>`/date-picker
 // interaction, which is irrelevant to the reset bug this test covers.
+const nextScheduleType = vi.hoisted(() => ({ current: "future" }))
+
 vi.mock("@chatbotx.io/ui/components/form/select-field", () => ({
-  SelectField: ({ name }: { name: string }) => {
+  SelectField: ({
+    name,
+    triggerValueChange,
+  }: {
+    name: string
+    triggerValueChange?: (value?: string) => void
+  }) => {
     const { setValue, watch } = useFormContext()
     const value = watch(name)
     return (
       <button
         data-testid={`field-${name}`}
         data-value={String(value ?? "")}
-        onClick={() => setValue(name, "future", { shouldDirty: true })}
+        onClick={() => {
+          setValue(name, nextScheduleType.current, { shouldDirty: true })
+          triggerValueChange?.(nextScheduleType.current)
+        }}
         type="button"
       >
         {String(value ?? "")}
@@ -139,6 +158,12 @@ vi.mock("@chatbotx.io/ui/components/form/date-picker-field", () => ({
       </button>
     )
   },
+}))
+
+// The rule editor has its own tests; here only its wiring into the dialog is
+// under test, so a marker stands in for it.
+vi.mock("@/components/recurrence/recurrence-rule-fields", () => ({
+  RecurrenceRuleFields: () => <div data-testid="recurrence-fields" />,
 }))
 
 // Simple conditional shell — no portal/animation machinery, which is
@@ -199,7 +224,7 @@ let container: HTMLDivElement | null = null
 let root: Root | null = null
 
 function renderDialog(props: {
-  broadcast: BroadcastModel | null
+  broadcast: BroadcastResourceWithRelations | null
   open: boolean
 }) {
   if (!root) {
@@ -236,6 +261,8 @@ afterEach(() => {
   numberFieldProps.current = null
   actionCallbacks.onSuccess = undefined
   actionCallbacks.execute.mockReset()
+  nextScheduleType.current = "future"
+  invalidateRuns.mockReset()
 })
 
 function PlanLimitHarness() {
@@ -382,6 +409,143 @@ describe("ScheduleBroadcastDialog plan limit", () => {
     expect(dialogs).toHaveLength(1)
     expect(dialogs[0]?.textContent).toContain(
       "broadcasts.planLimitDialog.title",
+    )
+  })
+})
+
+const SAVED_RULE: RecurrenceRule = {
+  frequency: "weekly",
+  interval: 2,
+  weekdays: [1, 3],
+  timeOfDay: "09:00",
+  timezone: "Asia/Ho_Chi_Minh",
+  startsOn: "2026-10-14",
+  end: { kind: "never" },
+}
+
+const REPEATING_DRAFT = {
+  ...BROADCAST_A,
+  schedulesType: "recurring",
+  recurrence: { id: "r-1", rule: SAVED_RULE },
+} as unknown as BroadcastResourceWithRelations
+
+async function submit(el: HTMLElement) {
+  await act(async () => {
+    el.querySelector("form")?.dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true }),
+    )
+    await Promise.resolve()
+  })
+}
+
+describe("ScheduleBroadcastDialog repeat", () => {
+  test("opens a repeating draft on its saved rule and shows the rule editor", () => {
+    const el = renderDialog({ broadcast: REPEATING_DRAFT, open: true })
+
+    expect(
+      el.querySelector<HTMLButtonElement>('[data-testid="field-schedulesType"]')
+        ?.dataset.value,
+    ).toBe("recurring")
+    expect(el.querySelector('[data-testid="recurrence-fields"]')).not.toBeNull()
+  })
+
+  test("submits the saved rule unchanged", async () => {
+    const el = renderDialog({ broadcast: REPEATING_DRAFT, open: true })
+    await submit(el)
+
+    expect(actionCallbacks.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schedulesType: "recurring",
+        recurrence: SAVED_RULE,
+      }),
+      expect.anything(),
+    )
+  })
+
+  test("choosing Repeat seeds a rule in the user's timezone", async () => {
+    nextScheduleType.current = "recurring"
+    const el = renderDialog({ broadcast: BROADCAST_A, open: true })
+    expect(el.querySelector('[data-testid="recurrence-fields"]')).toBeNull()
+
+    act(() => {
+      el.querySelector<HTMLButtonElement>(
+        '[data-testid="field-schedulesType"]',
+      )?.click()
+    })
+    expect(el.querySelector('[data-testid="recurrence-fields"]')).not.toBeNull()
+    await submit(el)
+
+    expect(actionCallbacks.execute).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schedulesType: "recurring",
+        recurrence: expect.objectContaining({
+          frequency: "weekly",
+          interval: 1,
+          timezone: "UTC",
+          end: { kind: "never" },
+        }),
+      }),
+      expect.anything(),
+    )
+  })
+
+  test("switching away from Repeat drops the rule and hides its editor", async () => {
+    nextScheduleType.current = "now"
+    const el = renderDialog({ broadcast: REPEATING_DRAFT, open: true })
+
+    act(() => {
+      el.querySelector<HTMLButtonElement>(
+        '[data-testid="field-schedulesType"]',
+      )?.click()
+    })
+    expect(el.querySelector('[data-testid="recurrence-fields"]')).toBeNull()
+    await submit(el)
+
+    const [submitted] = actionCallbacks.execute.mock.calls[0] ?? []
+    expect(submitted).toMatchObject({ schedulesType: "now" })
+    expect(submitted.recurrence).toBeUndefined()
+  })
+
+  test("a one-off draft opens without a rule", () => {
+    const el = renderDialog({ broadcast: BROADCAST_A, open: true })
+
+    expect(el.querySelector('[data-testid="recurrence-fields"]')).toBeNull()
+  })
+
+  test("scheduling refreshes the series' runs pages", () => {
+    renderDialog({ broadcast: REPEATING_DRAFT, open: true })
+
+    act(() => actionCallbacks.onSuccess?.({ data: { id: "bc-a" } }))
+
+    expect(invalidateRuns).toHaveBeenCalledTimes(1)
+  })
+
+  test("a plan-limit outcome changed nothing, so nothing is refreshed", () => {
+    renderDialog({ broadcast: REPEATING_DRAFT, open: true })
+
+    act(() => actionCallbacks.onSuccess?.({ data: PLAN_LIMIT_OUTCOME }))
+
+    expect(invalidateRuns).not.toHaveBeenCalled()
+  })
+
+  test("going away from Repeat and back restores the saved rule, not a new default", async () => {
+    const el = renderDialog({ broadcast: REPEATING_DRAFT, open: true })
+    const typeField = () =>
+      el.querySelector<HTMLButtonElement>('[data-testid="field-schedulesType"]')
+
+    nextScheduleType.current = "now"
+    act(() => {
+      typeField()?.click()
+    })
+    nextScheduleType.current = "recurring"
+    act(() => {
+      typeField()?.click()
+    })
+    await submit(el)
+
+    expect(actionCallbacks.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ recurrence: SAVED_RULE }),
+      expect.anything(),
     )
   })
 })

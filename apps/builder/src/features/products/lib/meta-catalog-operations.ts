@@ -8,11 +8,14 @@ import {
   validationException,
 } from "@chatbotx.io/business/errors"
 import type { MetaCatalogSyncScope } from "@chatbotx.io/database/partials"
+// The subpath, not the package index: the index re-exports `fingerprint`
+// (`node:crypto`), and this module is in the instrumentation import chain that
+// Next also compiles for the Edge runtime.
 import {
   createCatalog,
   getCatalog,
   listBusinesses,
-} from "@chatbotx.io/integration-meta-catalog"
+} from "@chatbotx.io/integration-meta-catalog/apis/catalogs"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { toSafeMetaCatalogConnection } from "./meta-catalog-connection"
 

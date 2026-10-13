@@ -1,5 +1,7 @@
 import { sql } from "drizzle-orm"
 import {
+  type AnyPgColumn,
+  check,
   index,
   integer,
   jsonb,
@@ -7,6 +9,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core"
 import {
   broadcastScheduleTypes,
@@ -91,6 +94,20 @@ export const broadcastModel = pgTable(
     audienceRangeEnd: integer(),
     /** Recipients handed to channel send jobs per dispatch minute; null = `BROADCAST_DEFAULT_SEND_RATE_PER_MINUTE`. No `.default()` — null is the "unset" state the form/API send. */
     sendRatePerMinute: integer(),
+    /**
+     * Set on a run spawned by a repeating broadcast: the template that owns the
+     * schedule. `set null` so purging a template leaves its runs intact — they
+     * stay hidden from the default list through `occurrenceAt`, which is kept.
+     */
+    parentBroadcastId: bigintAsString().references(
+      (): AnyPgColumn => broadcastModel.id,
+      {
+        onDelete: "set null",
+        onUpdate: "cascade",
+      },
+    ),
+    /** The scheduled slot this run was created for; null on every non-run broadcast. */
+    occurrenceAt: timestamp(timestampConfig),
   },
   (table) => [
     index("Broadcast_workspaceId_idx").using(
@@ -119,5 +136,17 @@ export const broadcastModel = pgTable(
     index("Broadcast_deletedAt_idx")
       .using("btree", table.deletedAt.asc().nullsLast())
       .where(sql`"deletedAt" IS NOT NULL`),
+    // A purged template may null the FK while `occurrenceAt` keeps the run
+    // identifiable, so the pair is only constrained in one direction.
+    check(
+      "Broadcast_occurrence_pair_check",
+      sql`"parentBroadcastId" IS NULL OR "occurrenceAt" IS NOT NULL`,
+    ),
+    // Unconditional on purpose: NULLs are distinct, so one-off broadcasts are
+    // unaffected, and `ON CONFLICT (cols)` can infer it without a predicate.
+    uniqueIndex("Broadcast_parentBroadcastId_occurrenceAt_key").on(
+      table.parentBroadcastId,
+      table.occurrenceAt,
+    ),
   ],
 )

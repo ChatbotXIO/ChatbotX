@@ -142,10 +142,16 @@ const PLAN_LIMIT_OUTCOME: BroadcastPlanLimitOutcome = {
   },
 }
 
+const REPEATING = {
+  ...BROADCAST,
+  schedulesType: "recurring",
+  occurrenceAt: null,
+} as BroadcastModel
+
 let container: HTMLDivElement | null = null
 let root: Root | null = null
 
-function renderDialog() {
+function renderDialog(broadcast: BroadcastModel = BROADCAST) {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   container = document.createElement("div")
   document.body.append(container)
@@ -153,7 +159,7 @@ function renderDialog() {
   act(() => {
     root?.render(
       <ResumeBroadcastDialog
-        broadcast={BROADCAST}
+        broadcast={broadcast}
         onOpenChange={() => {
           // no-op — the test drives `open` directly via re-render
         }}
@@ -314,5 +320,21 @@ describe("ResumeBroadcastDialog", () => {
 
     expect(toast.error).toHaveBeenCalledWith("Broadcast is no longer cancelled")
     expect(refresh).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("ResumeBroadcastDialog for a repeating broadcast", () => {
+  test("uses the repeating copy", () => {
+    const el = renderDialog(REPEATING)
+    const text = el.textContent ?? ""
+    expect(text).toContain("broadcasts.resumeDialog.templateDescription")
+    expect(text).not.toContain("broadcasts.resumeDialog.description")
+  })
+
+  test("keeps the one-off copy for a one-off", () => {
+    const el = renderDialog()
+    const text = el.textContent ?? ""
+    expect(text).toContain("broadcasts.resumeDialog.description")
+    expect(text).not.toContain("broadcasts.resumeDialog.templateDescription")
   })
 })

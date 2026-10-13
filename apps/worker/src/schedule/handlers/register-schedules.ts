@@ -64,6 +64,20 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.enqueueRecurringBroadcasts,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.enqueueRecurringBroadcasts,
+      data: {
+        type: ScheduleJobData.enqueueRecurringBroadcasts,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.finalizeBroadcasts,
     {
       pattern: "* * * * *",

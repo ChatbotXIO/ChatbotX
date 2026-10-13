@@ -102,6 +102,12 @@ vi.mock("@chatbotx.io/database/utils", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  broadcastRecurrenceRepository: {
+    findByBroadcastId: vi.fn().mockResolvedValue(null),
+    lockForWrite: vi.fn().mockResolvedValue([]),
+    selectDbNow: vi.fn().mockResolvedValue(new Date("2026-10-13T00:00:00Z")),
+    insertIfMissing: vi.fn(),
+  },
   broadcastRepository: {
     listWithRelations: vi.fn(),
     count: vi.fn(),
@@ -142,6 +148,15 @@ vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: mockDispatchAuditRecord,
 }))
 
+vi.mock("../src/broadcast/recurrence.service", () => ({
+  broadcastRecurrenceService: {
+    upsertRule: vi.fn(),
+    arm: vi.fn(),
+    disarm: vi.fn(),
+    upcomingRunsOf: vi.fn(() => []),
+  },
+}))
+
 vi.mock("../src/broadcast/plan-policy.service", () => ({
   broadcastPlanPolicyService: {
     appliesToChannel: vi.fn((channel: string) => channel === "messenger"),
@@ -155,6 +170,41 @@ vi.mock("../src/broadcast/plan-policy.service", () => ({
     lockActivation: vi.fn().mockResolvedValue(undefined),
     assertActiveSlotAvailable: vi.fn().mockResolvedValue(undefined),
     resolveSendRateOverride: vi.fn(() => ({ sendRatePerMinute: 60 })),
+    assertActivationAllowed: vi.fn(
+      async (
+        tx: unknown,
+        input: {
+          workspaceId: string
+          channel: string
+          restriction: unknown
+          sendRatePerMinute: number | null | undefined
+          excludeBroadcastId?: string
+          checkSlot: boolean
+        },
+      ) => {
+        // Composes the mocked primitives in the real gate's order, so the
+        // existing call-order assertions keep describing the real behavior.
+        const gate = (await import("../src/broadcast/plan-policy.service"))
+          .broadcastPlanPolicyService
+        gate.assertSendRateAllowed(
+          input.restriction as never,
+          input.sendRatePerMinute,
+        )
+        if (input.checkSlot) {
+          await gate.lockActivation(tx as never, input.workspaceId)
+          await gate.assertActiveSlotAvailable(tx as never, {
+            workspaceId: input.workspaceId,
+            channel: input.channel,
+            ctx: input.restriction as never,
+            excludeBroadcastId: input.excludeBroadcastId,
+          })
+        }
+        return gate.resolveSendRateOverride(
+          input.restriction as never,
+          input.sendRatePerMinute,
+        )
+      },
+    ),
   },
 }))
 
@@ -423,6 +473,23 @@ describe("broadcastService.resendWithPruning", () => {
     expect(mockTxInsertValues).toHaveBeenCalledWith(
       expect.objectContaining({ contactFilter: pruned }),
     )
+  })
+
+  test("a repeating broadcast's template cannot be resent, whatever its status", async () => {
+    mockFindOrFail.mockResolvedValue({
+      ...sourceBroadcast,
+      status: "sent",
+      schedulesType: "recurring",
+      occurrenceAt: null,
+    })
+
+    await expect(
+      broadcastService.resendWithPruning({
+        workspaceId: WS,
+        id: SOURCE_ID,
+        canViewEmailAndPhone: true,
+      }),
+    ).rejects.toThrow("Broadcast is not sent")
   })
 
   test("propagates a 'Broadcast is not sent' error from the existence/status guard", async () => {

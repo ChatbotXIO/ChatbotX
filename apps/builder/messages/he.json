@@ -154,7 +154,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "הצג הרצות",
+    "editSchedule": "ערוך לוח זמנים"
   },
   "errors": {
     "superAdminRequired": "עליכם להיות מנהל-על של סביבת העבודה כדי לבצע פעולה זו."
@@ -5221,7 +5223,8 @@
     "schedule": {
       "label": "תזמון",
       "now": "עכשיו",
-      "scheduled": "תזמון למועד מאוחר יותר"
+      "scheduled": "תזמון למועד מאוחר יותר",
+      "recurring": "חזרה"
     },
     "inputFieldId": {
       "label": "שדה קלט מותאם אישית"
@@ -5806,7 +5809,10 @@
       "sending": "נשלח כעת",
       "cancelled": "בוטל",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "חוזר",
+      "paused": "מושהה",
+      "ended": "הסתיים"
     },
     "stats": {
       "sent": "נשלח",
@@ -5890,7 +5896,9 @@
       "audienceFilter": "מסנן קהל",
       "noAudienceFilter": "ללא מסנן קהל",
       "template": "תבנית",
-      "integration": "שילוב"
+      "integration": "שילוב",
+      "schedule": "לוח זמנים לחזרה",
+      "runOf": "הרצה של <link>{name}</link>"
     },
     "filters": {
       "all": "All"
@@ -5939,15 +5947,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "ערוך לוח זמנים",
+      "templateDescription": "\"{name}\" יושהה ויועבר חזרה לטיוטות כדי שתוכל לשנות את לוח הזמנים."
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "השהיית שידור חוזר",
+      "templateDescription": "\"{name}\" מפסיק ליצור הרצות חדשות. הרצה שכבר נשלחת תמשיך. אפשר לחדש מאוחר יותר; הרצות בזמן ההשהיה ידולגו."
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "\"{name}\" יחזור על עצמו שוב מהמועד המתוזמן הבא. הרצות בזמן ההשהיה דולגו."
     },
     "planLimitDialog": {
       "title": "שדרוג התוכנית",
@@ -5965,6 +5978,63 @@
       "toLabel": "עד",
       "allPlaceholder": "הכול",
       "rangeEndBeforeStart": "מיקום הסיום לא יכול להיות לפני מיקום ההתחלה"
+    },
+    "recurring": {
+      "nextRun": "ההרצה הבאה {when}",
+      "paused": "מושהה",
+      "ended": "הסתיים ב-{when} · {count, plural, one {הרצה #} other {# הרצות}}",
+      "runs": "{count, plural, one {הרצה #} other {# הרצות}}",
+      "noUpcomingSends": "אין עוד שליחות — שאר התאריכים מדולגים"
+    },
+    "runs": {
+      "back": "שידורים חוזרים",
+      "pausedNotice": "מושהה מאז {when}. הרצות בזמן ההשהיה ידולגו.",
+      "groupBy": "קבץ הרצות לפי",
+      "grouping": {
+        "day": "יום",
+        "week": "שבוע",
+        "month": "חודש"
+      },
+      "totals": "{runs, plural, one {הרצה #} other {# הרצות}} מתוך {slots, plural, one {מועד #} other {# מועדים}}",
+      "error": "לא ניתן לטעון את ההרצות.",
+      "retry": "נסה שוב",
+      "empty": "אין עדיין הרצות. הראשונה תתחיל במועד המתוזמן הבא.",
+      "loadMore": "טען עוד",
+      "weekOf": "שבוע של {date}",
+      "groupSummary": "{created, plural, one {הרצה #} other {# הרצות}}{missed, plural, =0 {} other { · # הוחמצו}}{skipped, plural, =0 {} other { · # דולגו}}",
+      "deliveredRate": "{rate} נמסרו",
+      "notSent": "לא נשלח — {reason}",
+      "earlierSlots": "{count, plural, one {מועד קודם # הוחמץ} other {# מועדים קודמים הוחמצו}}",
+      "stalled": "תקוע",
+      "lateByMinutes": "{count, plural, one {איחור של # דקה} other {איחור של # דקות}}",
+      "lateByHours": "{count, plural, one {איחור של # שעה} other {איחור של # שעות}}",
+      "recipients": "{count, plural, one {# נמען} other {# נמענים}}",
+      "reasons": {
+        "catchUpSuperseded": "הפלטפורמה לא הייתה זמינה; במקומו נשלחה הרצה מאוחרת יותר",
+        "paused": "לוח הזמנים היה מושהה",
+        "draft": "השידור היה בעריכה",
+        "blockedOwner": "החשבון חסום",
+        "planLimit": "הגעת למגבלת החבילה",
+        "noTargets": "אין עמוד לשליחה",
+        "undeliverable": "הזרימה או התבנית אינן זמינות",
+        "excludedDate": "תאריך שדולג"
+      },
+      "outcomes": {
+        "created": "נשלח",
+        "skipped": "דולג",
+        "missed": "הוחמץ"
+      },
+      "upcoming": {
+        "title": "שליחות קרובות",
+        "empty": "אין שליחות קרובות",
+        "skip": "דלג",
+        "restore": "שחזר",
+        "skippedBadge": "דולג",
+        "skipped": "{date} דולג",
+        "restored": "{date} שוחזר",
+        "undo": "ביטול",
+        "error": "לא ניתן לשנות את השליחה הזו יותר"
+      }
     }
   },
   "commentAutomation": {
@@ -8031,6 +8101,47 @@
         "rate_limited": "יותר מדי העלאות. המתינו רגע ונסו שוב.",
         "upload_failed": "לא ניתן היה להעלות את הקובץ. נסו שוב."
       }
+    }
+  },
+  "recurrence": {
+    "title": "חזרה",
+    "every": "חזור כל",
+    "unit": "{count, plural, one {{frequency, select, daily {יום} weekly {שבוע} monthly {חודש} other {}}} other {{frequency, select, daily {ימים} weekly {שבועות} monthly {חודשים} other {}}}}",
+    "weekdays": "חזור ב",
+    "time": "שעה",
+    "timezone": "אזור זמן",
+    "noTimezone": "לא נמצא אזור זמן",
+    "searchTimezone": "חפש אזור זמן…",
+    "startsOn": "מתחיל ב",
+    "end": {
+      "label": "מסתיים",
+      "never": "לעולם לא",
+      "onDate": "ב",
+      "after": "לאחר",
+      "pickDate": "בחר תאריך",
+      "occurrences": "{count, plural, one {הרצה} other {הרצות}}"
+    },
+    "monthDay": {
+      "label": "יום בחודש",
+      "day": "יום {day}",
+      "last": "היום האחרון",
+      "hint": "בחודשים קצרים יותר השליחה תתבצע ביום האחרון."
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {כל {frequency, select, daily {יום} weekly {שבוע} monthly {חודש} other {}}} other {כל # {frequency, select, daily {ימים} weekly {שבועות} monthly {חודשים} other {}}}}{frequency, select, weekly { ב{weekdays}} monthly { ב{monthDay, select, last {היום האחרון} other {יום {monthDay}}}} other {}} בשעה {time} ({timezone}), החל מ-{startsOn}{endKind, select, onDate {, מסתיים ב-{endDate}} afterOccurrences {, מסתיים לאחר {endCount, plural, one {הרצה #} other {# הרצות}}} other {}}"
+    },
+    "firstRunLater": "השליחה הראשונה היא {when} מכיוון שהשעה של היום כבר חלפה.",
+    "nextRuns": "שליחות הבאות",
+    "noUpcomingRuns": "אין שליחות קרובות.",
+    "skipping": "מדלג על {dates}{more, plural, =0 {} one { (+# נוסף)} other { (+# נוספים)}}",
+    "excludeDates": {
+      "label": "דילוג על תאריכים",
+      "hint": "לא תתבצע שליחה בתאריכים אלה. הסדרה ממשיכה לרוץ.",
+      "add": "הוספת תאריכים",
+      "remove": "הסרת {date}",
+      "showAll": "הצג עוד {count}",
+      "showLess": "הצג פחות",
+      "clearAll": "נקה הכול"
     }
   }
 }

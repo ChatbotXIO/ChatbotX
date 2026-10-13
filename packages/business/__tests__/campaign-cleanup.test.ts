@@ -9,6 +9,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
   and: (...conditions: unknown[]) => ({ __and: conditions }),
   db: {
     update: (...args: unknown[]) => updateMock(...args),
+    transaction: async (run: (tx: unknown) => Promise<unknown>) =>
+      await run({ update: (...args: unknown[]) => updateMock(...args) }),
   },
   eq: (column: unknown, value: unknown) => ({ __eq: [column, value] }),
   inArray: (column: unknown, value: unknown) => ({
@@ -22,8 +24,15 @@ vi.mock("@chatbotx.io/database/partials", () => ({
       cancelled: "cancelled",
       scheduled: "scheduled",
       sending: "sending",
+      recurring: "recurring",
     },
   },
+}))
+
+const disarmAllForWorkspaceMock = vi.fn()
+vi.mock("../src/broadcast/recurrence-ledger", () => ({
+  disarmAllSeriesForWorkspace: (...args: unknown[]) =>
+    disarmAllForWorkspaceMock(...args),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -47,7 +56,7 @@ beforeEach(() => {
   updateMock.mockReturnValue({ set: updateSetMock })
 })
 
-test("cancelInFlightBroadcastsForWorkspace cancels scheduled and sending broadcasts only", async () => {
+test("cancelInFlightBroadcastsForWorkspace cancels scheduled, sending and recurring broadcasts only, stopping their series first", async () => {
   const { cancelInFlightBroadcastsForWorkspace } = await import(
     "../src/workspace-lifecycle/campaign-cleanup"
   )
@@ -57,6 +66,14 @@ test("cancelInFlightBroadcastsForWorkspace cancels scheduled and sending broadca
   })
 
   expect(cancelledCount).toBe(1)
+  expect(disarmAllForWorkspaceMock).toHaveBeenCalledTimes(1)
+  expect(disarmAllForWorkspaceMock.mock.calls[0][1]).toEqual({
+    workspaceId: "workspace-1",
+  })
+  // Series rows are locked and stopped BEFORE the broadcast rows are touched.
+  expect(disarmAllForWorkspaceMock.mock.invocationCallOrder[0]).toBeLessThan(
+    updateMock.mock.invocationCallOrder[0],
+  )
   expect(updateMock).toHaveBeenCalledOnce()
   expect(updateSetMock).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -75,7 +92,7 @@ test("cancelInFlightBroadcastsForWorkspace cancels scheduled and sending broadca
         expect.objectContaining({
           __inArray: [
             expect.objectContaining({ __column: "broadcast.status" }),
-            ["scheduled", "sending"],
+            ["scheduled", "sending", "recurring"],
           ],
         }),
       ]),

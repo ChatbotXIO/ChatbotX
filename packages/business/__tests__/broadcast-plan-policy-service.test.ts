@@ -227,3 +227,73 @@ describe("broadcastPlanPolicyService enforcement", () => {
     })
   })
 })
+
+describe("broadcastPlanPolicyService.assertActivationAllowed", () => {
+  const restriction = { policy: TRIAL_BROADCAST_PLAN_POLICY, planName: "Trial" }
+  const tx = { execute: vi.fn() } as never
+  const input = {
+    workspaceId: "ws-1",
+    channel: "messenger",
+    restriction,
+    sendRatePerMinute: null,
+  }
+
+  test("a one-off activation locks the workspace, counts the slot, and returns the rate to store", async () => {
+    mocks.countActive.mockResolvedValue(0)
+
+    const override = await broadcastPlanPolicyService.assertActivationAllowed(
+      tx,
+      { ...input, checkSlot: true },
+    )
+
+    expect(override).toEqual({
+      sendRatePerMinute: TRIAL_BROADCAST_PLAN_POLICY.maxSendRatePerMinute,
+    })
+    expect(
+      (tx as { execute: ReturnType<typeof vi.fn> }).execute,
+    ).toHaveBeenCalled()
+    expect(mocks.countActive).toHaveBeenCalledTimes(1)
+  })
+
+  test("a repeating broadcast's template checks only the rate: no lock, no slot count", async () => {
+    const override = await broadcastPlanPolicyService.assertActivationAllowed(
+      tx,
+      { ...input, sendRatePerMinute: 30, checkSlot: false },
+    )
+
+    expect(override).toEqual({ sendRatePerMinute: 30 })
+    expect(
+      (tx as { execute: ReturnType<typeof vi.fn> }).execute,
+    ).not.toHaveBeenCalled()
+    expect(mocks.countActive).not.toHaveBeenCalled()
+  })
+
+  test("an explicit over-cap rate is rejected before anything is locked", async () => {
+    await expect(
+      broadcastPlanPolicyService.assertActivationAllowed(tx, {
+        ...input,
+        sendRatePerMinute: TRIAL_BROADCAST_PLAN_POLICY.maxSendRatePerMinute + 1,
+        checkSlot: true,
+      }),
+    ).rejects.toMatchObject({ code: "broadcastPlanLimit" })
+    expect(
+      (tx as { execute: ReturnType<typeof vi.fn> }).execute,
+    ).not.toHaveBeenCalled()
+  })
+
+  test("a full active slot is rejected", async () => {
+    mocks.countActive.mockResolvedValue(
+      TRIAL_BROADCAST_PLAN_POLICY.maxActiveBroadcasts,
+    )
+
+    await expect(
+      broadcastPlanPolicyService.assertActivationAllowed(tx, {
+        ...input,
+        checkSlot: true,
+      }),
+    ).rejects.toMatchObject({
+      code: "broadcastPlanLimit",
+      data: expect.objectContaining({ reason: "activeBroadcasts" }),
+    })
+  })
+})

@@ -13,6 +13,7 @@ import type {
   BroadcastModel,
   BroadcastTargetModel,
 } from "@chatbotx.io/database/types"
+import type { RecurrenceRule } from "@chatbotx.io/utils/recurrence"
 import { z } from "zod"
 import {
   type ContactFilterCriteria,
@@ -105,6 +106,8 @@ export type EditableBroadcastDraft = Pick<
     BroadcastTargetModel,
     "inboxId" | "flowId" | "templateId" | "templateData"
   >[]
+  /** The saved repeat rule of a recurring draft. */
+  recurrence?: { rule: RecurrenceRule; occurrenceCount: number } | null
   /** Inbox of the legacy integration columns, for drafts saved before targets existed. */
   integrationWhatsapp?: { inboxId: string } | null
   integrationMessenger?: { inboxId: string } | null
@@ -126,6 +129,7 @@ export type EditBroadcastDefaultValues = {
   targets: BroadcastTargetRequest[]
   schedulesType: BroadcastScheduleType
   schedulesAt: string | null
+  recurrence: RecurrenceRule | undefined
   contactFilter: ContactFilterCriteria
   audienceRangeStart: number | undefined
   audienceRangeEnd: number | undefined
@@ -136,6 +140,8 @@ export type EditBroadcastDefaultValues = {
 export type EditBroadcastDraft = {
   id: string
   channel: ChannelType
+  /** Runs the repeating draft already made; its preview counts from here. */
+  recurrenceOccurrenceCount: number
   defaultValues: EditBroadcastDefaultValues
 }
 
@@ -259,6 +265,7 @@ export function buildEditBroadcastDefaultValues(
   return {
     id: draft.id,
     channel: channel.data,
+    recurrenceOccurrenceCount: draft.recurrence?.occurrenceCount ?? 0,
     defaultValues: {
       channel: channel.data,
       subaction: subaction.data,
@@ -281,6 +288,10 @@ export function buildEditBroadcastDefaultValues(
       targets,
       schedulesType: resolvedSchedulesType,
       schedulesAt: resolveSchedulesAt(draft, resolvedSchedulesType),
+      recurrence:
+        resolvedSchedulesType === broadcastScheduleTypes.enum.recurring
+          ? (draft.recurrence?.rule ?? undefined)
+          : undefined,
       contactFilter: contactFilter.success
         ? contactFilter.data
         : EMPTY_CONTACT_FILTER,

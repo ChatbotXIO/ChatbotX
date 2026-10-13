@@ -93,3 +93,36 @@ describe("listBroadcastsForCalendar", () => {
     expect(call?.[0]?.name).toBeUndefined()
   })
 })
+
+describe("listBroadcastsForCalendar — repeating filter", () => {
+  const range = {
+    range: "day" as const,
+    date: "2026-09-02",
+    endDate: "2026-09-02",
+    timezone: "UTC",
+  }
+
+  beforeEach(() => {
+    mockListForCalendar.mockClear()
+  })
+
+  test("the Repeating filter narrows the calendar to repeating series", async () => {
+    await listBroadcastsForCalendar({
+      ...baseInput,
+      ...range,
+      kind: "repeating",
+    })
+
+    expect(mockListForCalendar.mock.calls[0]?.[0]?.schedulesType).toBe(
+      "recurring",
+    )
+  })
+
+  test("without it the calendar keeps every schedule type", async () => {
+    await listBroadcastsForCalendar({ ...baseInput, ...range, kind: null })
+
+    expect(
+      mockListForCalendar.mock.calls[0]?.[0]?.schedulesType,
+    ).toBeUndefined()
+  })
+})

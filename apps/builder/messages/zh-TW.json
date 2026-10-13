@@ -1004,7 +1004,8 @@
     "schedule": {
       "label": "時間表",
       "now": "現在",
-      "scheduled": "稍後安排"
+      "scheduled": "稍後安排",
+      "recurring": "重複"
     },
     "inputFieldId": {
       "label": "輸入自訂欄位"
@@ -1897,7 +1898,9 @@
     "schedule": "Schedule",
     "moveToDraft": "Move to draft",
     "stop": "Stop",
-    "resume": "Resume"
+    "resume": "Resume",
+    "viewRuns": "查看執行記錄",
+    "editSchedule": "編輯排程"
   },
   "errors": {
     "superAdminRequired": "您需要是工作區的超級管理員才能執行此操作。"
@@ -2110,7 +2113,10 @@
       "sending": "正在傳送",
       "cancelled": "已取消",
       "draft": "Draft",
-      "failed": "Failed"
+      "failed": "Failed",
+      "recurring": "重複",
+      "paused": "已暫停",
+      "ended": "已結束"
     },
     "stats": {
       "sent": "已傳送",
@@ -2194,7 +2200,9 @@
       "audienceFilter": "受眾過濾器",
       "noAudienceFilter": "無受眾過濾器",
       "template": "範本",
-      "integration": "整合"
+      "integration": "整合",
+      "schedule": "重複排程",
+      "runOf": "<link>{name}</link> 的執行"
     },
     "filters": {
       "all": "All"
@@ -2243,15 +2251,20 @@
     },
     "moveToDraftDialog": {
       "title": "Move to draft",
-      "description": "\"{name}\" will be unscheduled and moved back to drafts."
+      "description": "\"{name}\" will be unscheduled and moved back to drafts.",
+      "templateTitle": "編輯排程",
+      "templateDescription": "「{name}」將被暫停並移回草稿，以便您修改排程。"
     },
     "stopDialog": {
       "title": "Stop broadcast",
-      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive."
+      "description": "Remaining messages for \"{name}\" stop within about a minute. A few already handed to the channel may still deliver. You can resume later — only unsent recipients will receive.",
+      "templateTitle": "暫停重複廣播",
+      "templateDescription": "「{name}」將不再建立新的執行。已在傳送的執行會繼續。您可以稍後恢復；暫停期間的執行會被略過。"
     },
     "resumeDialog": {
       "title": "Resume broadcast",
-      "description": "\"{name}\" will continue sending to recipients who have not received it yet."
+      "description": "\"{name}\" will continue sending to recipients who have not received it yet.",
+      "templateDescription": "「{name}」將從下一個排定時間起重新重複。暫停期間的執行已被略過。"
     },
     "planLimitDialog": {
       "title": "升級您的方案",
@@ -2269,6 +2282,63 @@
       "toLabel": "到",
       "allPlaceholder": "全部",
       "rangeEndBeforeStart": "結束位置不能早於開始位置"
+    },
+    "recurring": {
+      "nextRun": "下次執行 {when}",
+      "paused": "已暫停",
+      "ended": "{when} 結束 · {count, plural, one {#次執行} other {#次執行}}",
+      "runs": "{count, plural, one {#次執行} other {#次執行}}",
+      "noUpcomingSends": "沒有更多發送了——其餘日期已略過"
+    },
+    "runs": {
+      "back": "重複廣播",
+      "pausedNotice": "自 {when} 起已暫停。暫停期間的執行會被略過。",
+      "groupBy": "執行分組方式",
+      "grouping": {
+        "day": "日",
+        "week": "週",
+        "month": "月"
+      },
+      "totals": "{runs, plural, one {#次執行} other {#次執行}}（共{slots, plural, one {#個排定時間} other {#個排定時間}}）",
+      "error": "無法載入執行記錄。",
+      "retry": "重試",
+      "empty": "尚無執行記錄。第一次執行將在下一個排定時間開始。",
+      "loadMore": "載入更多",
+      "weekOf": "{date} 當週",
+      "groupSummary": "{created, plural, one {#次執行} other {#次執行}}{missed, plural, =0 {} other { · #次錯過}}{skipped, plural, =0 {} other { · #次略過}}",
+      "deliveredRate": "{rate} 已送達",
+      "notSent": "未傳送 — {reason}",
+      "earlierSlots": "{count, plural, one {先前有#個排定時間被錯過} other {先前有#個排定時間被錯過}}",
+      "stalled": "已停滯",
+      "lateByMinutes": "{count, plural, one {延遲#分鐘} other {延遲#分鐘}}",
+      "lateByHours": "{count, plural, one {延遲#小時} other {延遲#小時}}",
+      "recipients": "{count, plural, one {#位收件者} other {#位收件者}}",
+      "reasons": {
+        "catchUpSuperseded": "平台當時無法使用，已改為傳送較晚的一次執行",
+        "paused": "排程已暫停",
+        "draft": "廣播正在編輯",
+        "blockedOwner": "帳號已被封鎖",
+        "planLimit": "已達到方案上限",
+        "noTargets": "沒有可用於傳送的粉絲專頁",
+        "undeliverable": "其流程或範本無法使用",
+        "excludedDate": "已略過的日期"
+      },
+      "outcomes": {
+        "created": "已傳送",
+        "skipped": "已略過",
+        "missed": "已錯過"
+      },
+      "upcoming": {
+        "title": "即將發送",
+        "empty": "暫無即將發送的任務",
+        "skip": "略過",
+        "restore": "還原",
+        "skippedBadge": "已略過",
+        "skipped": "已略過 {date}",
+        "restored": "已還原 {date}",
+        "undo": "復原",
+        "error": "此次發送已無法變更"
+      }
     }
   },
   "commentAutomation": {
@@ -8031,6 +8101,47 @@
         "rate_limited": "上傳次數過多，請稍後再試。",
         "upload_failed": "檔案上傳失敗，請重試。"
       }
+    }
+  },
+  "recurrence": {
+    "title": "重複",
+    "every": "重複間隔",
+    "unit": "{count, plural, one {{frequency, select, daily {天} weekly {週} monthly {個月} other {}}} other {{frequency, select, daily {天} weekly {週} monthly {個月} other {}}}}",
+    "weekdays": "重複日期",
+    "time": "時間",
+    "timezone": "時區",
+    "noTimezone": "找不到時區",
+    "searchTimezone": "搜尋時區…",
+    "startsOn": "開始日期",
+    "end": {
+      "label": "結束",
+      "never": "永不",
+      "onDate": "於",
+      "after": "在",
+      "pickDate": "選擇日期",
+      "occurrences": "{count, plural, one {次} other {次}}"
+    },
+    "monthDay": {
+      "label": "每月日期",
+      "day": "{day}日",
+      "last": "最後一天",
+      "hint": "在天數較少的月份，將於最後一天發送。"
+    },
+    "summary": {
+      "sentence": "{interval, plural, one {每{frequency, select, daily {天} weekly {週} monthly {個月} other {}}} other {每#{frequency, select, daily {天} weekly {週} monthly {個月} other {}}}}{frequency, select, weekly { 於{weekdays}} monthly { 於{monthDay, select, last {最後一天} other {{monthDay}日}}} other {}} {time}（{timezone}），自{startsOn}起{endKind, select, onDate {，於{endDate}結束} afterOccurrences {，在{endCount, plural, one {#次} other {#次}}後結束} other {}}"
+    },
+    "firstRunLater": "今天的時間已過，因此首次發送時間為{when}。",
+    "nextRuns": "後續發送",
+    "noUpcomingRuns": "沒有即將進行的發送。",
+    "skipping": "略過 {dates}{more, plural, =0 {} one {（另有 # 個）} other {（另有 # 個）}}",
+    "excludeDates": {
+      "label": "略過日期",
+      "hint": "這些日期不會發送，系列任務會繼續執行。",
+      "add": "新增日期",
+      "remove": "移除 {date}",
+      "showAll": "再顯示 {count} 個",
+      "showLess": "收合",
+      "clearAll": "全部清除"
     }
   }
 }
