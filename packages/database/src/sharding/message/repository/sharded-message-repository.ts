@@ -1248,6 +1248,7 @@ export class ShardedMessageRepository implements IMessageRepository {
             thumbnailPath: a.thumbnailPath,
             originPath: a.originPath,
             name: a.name,
+            keepOriginal: a.keepOriginal,
           })),
         )
         .returning({ id: attachmentModel.id })
@@ -2109,7 +2110,9 @@ export class ShardedMessageRepository implements IMessageRepository {
         sourceId: attachmentModel.sourceId,
         originPath: attachmentModel.originPath,
         mimeType: attachmentModel.mimeType,
+        size: attachmentModel.size,
         createdAt: attachmentModel.createdAt,
+        keepOriginal: attachmentModel.keepOriginal,
       })
       .from(attachmentModel)
       .where(

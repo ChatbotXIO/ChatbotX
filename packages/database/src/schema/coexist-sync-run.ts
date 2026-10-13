@@ -89,7 +89,7 @@ export const coexistRunType = pgEnum(
  * directions, without `packages/database` depending on `@chatbotx.io/sdk`.
  */
 export type PendingCoexistAttachment = {
-  sourceId: string
+  sourceId: string | null
   fileType: "image" | "audio" | "video" | "gif" | "file"
   mimeType: string
   originPath: string
@@ -98,6 +98,8 @@ export type PendingCoexistAttachment = {
   width?: number | null
   height?: number | null
   name?: string
+  /** The channel's photo-vs-file intent; persisted as `Attachment.keepOriginal`. */
+  isPhotoMessage?: boolean
 }
 
 type PendingCoexistPatchBase = {

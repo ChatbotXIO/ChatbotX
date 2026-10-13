@@ -1,6 +1,8 @@
 import type { ButtonPayload } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 import type { ChannelError } from "../channel-error"
+import { guessFileTypeFromMimeType } from "../util"
+import { EXTENSION_MIME_TYPES } from "./mime-types"
 
 export type IncomingContact = {
   sourceId: string
@@ -784,7 +786,10 @@ export const MessageEntitySchema = z.custom<IncomingMessage>(
 )
 
 export type IncomingAttachment = {
-  sourceId: string
+  // The provider's attachment id, or null when the channel's webhook does not
+  // carry one (a lazily-ingested attachment: the row is paired with the
+  // provider's media list later).
+  sourceId: string | null
   fileType: IncomingFileType
   mimeType: string
   originPath: string
@@ -793,6 +798,106 @@ export type IncomingAttachment = {
   width?: number | null
   height?: number | null
   name?: string
+  /**
+   * Set by the channel when the attachment arrived as a photo message, as
+   * opposed to an image sent as a document/file (a scan, an invoice) whose
+   * original the sender meant to keep. Only photos are re-encoded in storage.
+   * Not persisted.
+   */
+  isPhotoMessage?: boolean
+  /**
+   * Set when the channel already re-encoded the image before its first write
+   * (inline compression), so no background re-encode job is needed. Not
+   * persisted.
+   */
+  optimized?: boolean
+}
+
+/**
+ * The persisted form of `isPhotoMessage` (`Attachment.keepOriginal`): only an
+ * image sent as a file — not a photo message — keeps its original bytes.
+ * Other kinds have no opinion (null), except a `file` the channel explicitly
+ * marked as not a photo: its kind may be a guess (a pending attachment with an
+ * extension-less URL) and it can turn out to be an image once downloaded. The
+ * one place this rule lives; the webhook path and the history importers both
+ * call it.
+ */
+export const toKeepOriginal = (
+  attachment: Pick<IncomingAttachment, "fileType" | "isPhotoMessage">,
+): boolean | null => {
+  if (attachment.fileType === "image") {
+    return !attachment.isPhotoMessage
+  }
+  return attachment.fileType === "file" && attachment.isPhotoMessage === false
+    ? true
+    : null
+}
+
+const DEFERRABLE_ATTACHMENT_TYPES = ["image", "video", "audio", "file"] as const
+
+export type DeferrableAttachmentType =
+  (typeof DEFERRABLE_ATTACHMENT_TYPES)[number]
+
+/**
+ * Whether a channel's attachment type is plain media that can be fetched again
+ * later. Other types (templates, shares, stories, locations, fallbacks) are
+ * stored or handled at ingestion as before.
+ */
+export const isDeferrableAttachmentType = (
+  type: string,
+): type is DeferrableAttachmentType =>
+  (DEFERRABLE_ATTACHMENT_TYPES as readonly string[]).includes(type)
+
+const DEFAULT_MIME_TYPE_BY_KIND: Record<DeferrableAttachmentType, string> = {
+  image: "image/jpeg",
+  video: "video/mp4",
+  audio: "audio/mpeg",
+  file: "application/octet-stream",
+}
+
+// The kind of file a MIME type describes, the way the eager path classifies a
+// downloaded body (`image/*` -> image, ..., anything else -> file).
+const kindOfMimeType = (mimeType: string): DeferrableAttachmentType =>
+  guessFileTypeFromMimeType(mimeType)
+
+const mimeTypeFromUrl = (url: string): string | undefined => {
+  try {
+    const extension = new URL(url).pathname.split(".").pop()?.toLowerCase()
+    return extension ? EXTENSION_MIME_TYPES[extension] : undefined
+  } catch {
+    return
+  }
+}
+
+/**
+ * An attachment ingested without downloading it: the provider's URL is kept as
+ * the reference (`originPath`) and the bytes are stored on first use. The size
+ * and dimensions are unknown until then. The MIME type and kind are a best
+ * guess from the URL and must agree with each other:
+ * - a webhook `file` takes the kind of its URL's MIME type, as the eager path
+ *   does with the real content (a JPEG sent as a file is an image);
+ * - an `image`/`video`/`audio` keeps its declared kind, and an extension that
+ *   contradicts it (a voice clip delivered as `.mp4`) falls back to the kind's
+ *   default MIME type.
+ */
+export const toPendingIncomingAttachment = (input: {
+  url: string
+  type: DeferrableAttachmentType
+}): IncomingAttachment => {
+  const fromUrl = mimeTypeFromUrl(input.url)
+  const mimeType =
+    fromUrl && (input.type === "file" || kindOfMimeType(fromUrl) === input.type)
+      ? fromUrl
+      : DEFAULT_MIME_TYPE_BY_KIND[input.type]
+
+  return {
+    sourceId: null,
+    fileType: input.type === "file" ? kindOfMimeType(mimeType) : input.type,
+    mimeType,
+    originPath: input.url,
+    size: 0,
+    isPhotoMessage: input.type === "image",
+  }
 }
 
 export type OutgoingAttachment = {
@@ -809,6 +914,9 @@ export type OutgoingAttachment = {
 export type ExternalMediaResult = {
   originPath: string
   size: number
+  /** Only set when the stored bytes are in a different format than received. */
+  mimeType?: string
+  optimized?: boolean
   width?: number
   height?: number
   name?: string

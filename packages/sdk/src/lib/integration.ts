@@ -390,7 +390,14 @@ export type ContactHandlers<IAuth extends AuthValue> = {
   getProfile: Handler<
     {
       ctx: Context<IAuth>
-      data: { includeProfileSnapshot?: boolean; sourceId: string }
+      data: {
+        // Download and store the profile picture (default). A caller that does
+        // not need the picture yet (contact creation on a lazy-avatar channel)
+        // passes false and the picture is fetched the first time it is needed.
+        includeAvatar?: boolean
+        includeProfileSnapshot?: boolean
+        sourceId: string
+      }
     },
     IncomingContact
   >

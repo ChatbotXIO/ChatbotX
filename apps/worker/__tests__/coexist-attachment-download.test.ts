@@ -68,6 +68,18 @@ describe("coexistAttachmentDownload", () => {
     })
   })
 
+  test("forwards the parent message time so a sharded lookup goes straight to its window", async () => {
+    const messageCreatedAt = Date.parse("2026-10-14T01:00:00.000Z")
+
+    await coexistAttachmentDownload(job(), { ...data, messageCreatedAt })
+
+    expect(mocks.ensureAttachmentMirrored).toHaveBeenCalledWith({
+      attachmentId: data.attachmentId,
+      workspaceId: data.workspaceId,
+      messageCreatedAt: new Date(messageCreatedAt),
+    })
+  })
+
   test("delegates a restore payload to the restore path instead of mirroring", async () => {
     const messageCreatedAt = Date.parse("2026-09-18T00:00:00.000Z")
 
@@ -83,6 +95,21 @@ describe("coexistAttachmentDownload", () => {
       messageCreatedAt: new Date(messageCreatedAt),
     })
     expect(mocks.ensureAttachmentMirrored).not.toHaveBeenCalled()
+  })
+
+  test("marks the row unresolvable by its message time on the final attempt", async () => {
+    const messageCreatedAt = Date.parse("2026-10-14T01:00:00.000Z")
+    mocks.ensureAttachmentMirrored.mockRejectedValue(new Error("Graph down"))
+
+    await expect(
+      coexistAttachmentDownload(job(4, 5), { ...data, messageCreatedAt }),
+    ).rejects.toThrow("Graph down")
+
+    expect(mocks.markAttachmentUnresolvable).toHaveBeenCalledWith({
+      attachmentId: data.attachmentId,
+      workspaceId: data.workspaceId,
+      messageCreatedAt: new Date(messageCreatedAt),
+    })
   })
 
   test("never marks a row unresolvable when a restore fails on the final attempt", async () => {

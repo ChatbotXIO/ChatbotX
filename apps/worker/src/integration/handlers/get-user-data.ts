@@ -12,6 +12,10 @@ import {
   validateReplyInput,
 } from "@chatbotx.io/business/get-user-data"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
+import {
+  ensureAttachmentStored,
+  MediaNotReadyError,
+} from "@chatbotx.io/channel-registry/media-hydration"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import {
@@ -69,7 +73,8 @@ export async function getUserData(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     logger.error({ err: error }, "getUserData: error")
-    if (isMessageStorageError(error)) {
+    // Transient: let the job retry with the challenge intact.
+    if (isMessageStorageError(error) || error instanceof MediaNotReadyError) {
       throw error
     }
 
@@ -399,7 +404,28 @@ async function validateUserData(
     }
   }
 
-  return validateReplyInput(props.step.replyFormat, lastUserMessage)
+  const validated = validateReplyInput(props.step.replyFormat, lastUserMessage)
+  if (!(validated.ok && validated.attachment)) {
+    return validated
+  }
+
+  // A lazily-ingested attachment is still a provider URL that expires: store
+  // it first so the saved value (and the step result) is a durable object.
+  // A `MediaNotReadyError` propagates — the chat job is retried.
+  const stored = await ensureAttachmentStored({
+    attachmentId: validated.attachment.id,
+    workspaceId: props.conversation.workspaceId,
+    messageCreatedAt: validated.attachment.messageCreatedAt,
+    originPath: validated.userInput,
+  })
+  if (!stored) {
+    return {
+      ok: false,
+      errorMessage: "getUserData: attachment is no longer available",
+    }
+  }
+
+  return { ...validated, userInput: stored.originPath }
 }
 
 // Attachments validate to a bare storage key; turn it into a public URL (with

@@ -35,6 +35,7 @@ import { emitContactCreated } from "@chatbotx.io/events"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
+import { enqueueStoredImageOptimizations } from "@chatbotx.io/worker-config"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
 import { getContactInboxSinceTime } from "../contact-inbox/service"
@@ -412,6 +413,13 @@ class ContactService extends BaseService {
       .where(eq(contactModel.id, ctx.id))
       .returning()
     await this.invalidate({ workspaceId: ctx.workspaceId, ids: [ctx.id] })
+    if (data.avatar && data.avatar !== existing.avatar) {
+      await scheduleAvatarOptimization({
+        workspaceId: ctx.workspaceId,
+        contactId: ctx.id,
+        avatar: data.avatar,
+      })
+    }
     if (ownsTransaction) {
       await emitContactInfoChangeEvents(
         ctx.workspaceId,
@@ -472,6 +480,13 @@ class ContactService extends BaseService {
     }
 
     await this.invalidate({ workspaceId: ctx.workspaceId, ids: [ctx.id] })
+    if (data.avatar && data.avatar !== existing.avatar) {
+      await scheduleAvatarOptimization({
+        workspaceId: ctx.workspaceId,
+        contactId: ctx.id,
+        avatar: data.avatar,
+      })
+    }
     if (ownsTransaction) {
       await emitContactInfoChangeEvents(
         ctx.workspaceId,
@@ -1143,6 +1158,7 @@ class ContactService extends BaseService {
       .returning({ id: contactModel.id })
     if (updated) {
       await this.invalidate({ workspaceId, ids: [contactId] })
+      await scheduleAvatarOptimization({ workspaceId, contactId, avatar })
     }
   }
 
@@ -1171,6 +1187,7 @@ class ContactService extends BaseService {
       .returning({ id: contactModel.id })
     if (updated) {
       await this.invalidate({ workspaceId, ids: [contactId] })
+      await scheduleAvatarOptimization({ workspaceId, contactId, avatar })
     }
   }
 
@@ -1237,5 +1254,23 @@ function withContactAccessScope<TWhere extends Record<string, unknown>>(
     },
   }
 }
+
+/**
+ * A freshly stored avatar is re-encoded in the background (heavy queue, low
+ * priority) and overwritten under the same key, so the stored value never
+ * changes. External URLs and sentinels are filtered out by the enqueue.
+ */
+const scheduleAvatarOptimization = ({
+  workspaceId,
+  contactId,
+  avatar,
+}: {
+  workspaceId: string
+  contactId: string
+  avatar: string
+}) =>
+  enqueueStoredImageOptimizations([
+    { kind: "avatar", workspaceId, contactId, objectKey: avatar },
+  ])
 
 export const contactService = new ContactService()

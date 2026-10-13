@@ -71,6 +71,14 @@ export const isPendingOriginPath = (originPath: string): boolean =>
 export const isFailedOriginPath = (originPath: string): boolean =>
   originPath.startsWith(FAILED_PREFIX)
 
+/**
+ * True for a key that names an object in our storage. A pending reference (a
+ * provider URL or `wa-media:` id) or a failed marker names nothing there, so
+ * deleting it would only issue a request that cannot succeed.
+ */
+export const isStoredObjectPath = (originPath: string): boolean =>
+  !(isPendingOriginPath(originPath) || isFailedOriginPath(originPath))
+
 // A fallback URL is only used after its attachment's presigned storage URL
 // (1 hour) fails, so it must outlive it — otherwise an inbox left open past the
 // hour has an expired fallback exactly when it needs one.

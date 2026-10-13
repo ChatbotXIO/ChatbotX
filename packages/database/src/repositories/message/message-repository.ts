@@ -27,6 +27,8 @@ export interface CreateAttachmentInput {
   createdAt?: Date
   fileType: "image" | "video" | "audio" | "gif" | "file"
   height?: number | null
+  // true: never re-encode (image sent as a file). null/undefined: a photo.
+  keepOriginal?: boolean | null
   messageCreatedAt: Date
   messageId: string
   mimeType: string
@@ -187,7 +189,9 @@ export type AttachmentLookupRow = Pick<
   | "sourceId"
   | "originPath"
   | "mimeType"
+  | "size"
   | "createdAt"
+  | "keepOriginal"
 >
 
 export interface UpdateAttachmentParams {

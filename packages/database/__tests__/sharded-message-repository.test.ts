@@ -399,7 +399,9 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
       sourceId: "source-attachment-1",
       originPath: "wa-media:123",
       mimeType: "image/png",
+      size: 0,
       createdAt: new Date("2026-01-03T00:00:00Z"),
+      keepOriginal: null,
     }
     const writeClient = makeSelectClient([])
     const rangeClient = makeSelectClient([attachment])
@@ -428,7 +430,9 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
       sourceId: attachmentModel.sourceId,
       originPath: attachmentModel.originPath,
       mimeType: attachmentModel.mimeType,
+      size: attachmentModel.size,
       createdAt: attachmentModel.createdAt,
+      keepOriginal: attachmentModel.keepOriginal,
     })
     expect(shardManager.getShardForWrite).toHaveBeenCalledWith("ws-1")
     expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(1)

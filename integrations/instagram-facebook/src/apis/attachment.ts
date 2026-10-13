@@ -6,8 +6,8 @@ import {
   type IncomingAttachment,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { storeIncomingImage } from "@chatbotx.io/utils/store-incoming-image"
 import fetch from "cross-fetch"
-import imageSize from "image-size"
 import { rescue } from "../exception"
 import { instagramAttachmentClient } from "../lib/http-client"
 import type {
@@ -62,34 +62,29 @@ export const getMessageAttachmentEntity = async ({
     },
   })
   if (response.ok && response.body) {
-    const originPath = `${getMediaStoragePrefix(ctx)}/${createId()}`
-    const bytes = await response.arrayBuffer()
     const mimeType = response.headers.get("content-type") ?? "image/png"
     const fileType = guessFileTypeFromMimeType(mimeType)
-
-    await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
-      ACL: "public-read",
-      ContentType: mimeType,
+    const isPhotoMessage = attachment.type === "image"
+    const stored = await storeIncomingImage({
+      uploader: ctx.uploader,
+      key: `${getMediaStoragePrefix(ctx)}/${createId()}`,
+      bytes: await response.arrayBuffer(),
+      mimeType,
+      profile: isPhotoMessage ? "media" : "original",
+      acl: "public-read",
     })
-
-    const imageProperties: {
-      width?: number
-      height?: number
-    } = {}
-    if (mimeType.startsWith("image/")) {
-      const arrayBytes = new Uint8Array(bytes)
-      const dimensions = imageSize(arrayBytes)
-      imageProperties.width = dimensions.width
-      imageProperties.height = dimensions.height
-    }
 
     return {
       sourceId: createId(),
-      originPath,
+      isPhotoMessage,
+      ...(stored.optimized ? { optimized: true } : {}),
+      originPath: stored.originPath,
       fileType,
-      mimeType,
-      size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
-      ...imageProperties,
+      mimeType: stored.mimeType,
+      size: stored.size,
+      ...(stored.width && stored.height
+        ? { width: stored.width, height: stored.height }
+        : {}),
     }
   }
 }

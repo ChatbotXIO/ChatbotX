@@ -6,14 +6,17 @@ import {
   type IncomingAttachment,
   type IncomingContact,
   type IncomingMessage,
+  isDeferrableAttachmentType,
   type MessageHandlers,
   type MessageReferral,
   messageTypes,
   type ReceivedMessageResult,
   type ThreadControlReceiveInfo,
   threadControlRoles,
+  toPendingIncomingAttachment,
 } from "@chatbotx.io/sdk"
 import { consumeGoogleClickRef } from "@chatbotx.io/utils/google-click"
+import { isLiveMediaDeferrableUrl } from "@chatbotx.io/utils/live-media"
 import {
   metaReferralTypes,
   PAID_AD_REFERRAL_SOURCE,
@@ -33,6 +36,26 @@ import {
   messengerStandbyEventSchema,
   messengerWebhookEventSchema,
 } from "../../schema"
+
+// A lazy channel keeps the provider's CDN URL and stores the bytes on first
+// use; anything else (a sticker/GIF host, a share, a template) is downloaded
+// now, exactly as before.
+const toIncomingAttachment = (
+  ctx: Context<MessengerAuthValue>,
+  attachment: Parameters<typeof getMessageAttachmentEntity>[0]["attachment"],
+): Promise<IncomingAttachment | undefined> => {
+  const url = attachment.payload.url
+  if (
+    url &&
+    isDeferrableAttachmentType(attachment.type) &&
+    isLiveMediaDeferrableUrl("messenger", url)
+  ) {
+    return Promise.resolve(
+      toPendingIncomingAttachment({ url, type: attachment.type }),
+    )
+  }
+  return getMessageAttachmentEntity({ ctx, attachment })
+}
 
 const getMessageAttachments = async (
   ctx: Context<MessengerAuthValue>,
@@ -57,7 +80,7 @@ const getMessageAttachments = async (
     })
 
     const attachmentPromises = uniqueAttachments.map((attachment) =>
-      getMessageAttachmentEntity({ ctx, attachment }).catch((error) => {
+      toIncomingAttachment(ctx, attachment).catch((error) => {
         logger.error("Error processing attachment", error)
         return null
       }),

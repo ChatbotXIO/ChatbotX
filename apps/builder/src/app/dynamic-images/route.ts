@@ -3,6 +3,7 @@ import {
   dynamicImageService,
   getDynamicElementIds,
 } from "@chatbotx.io/business/dynamic-image"
+import { ensureContactAvatarMirrored } from "@chatbotx.io/channel-registry/media-hydration"
 import { resolveContactVariablesDeep } from "@chatbotx.io/variables"
 import { type NextRequest, NextResponse } from "next/server"
 import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
@@ -93,6 +94,8 @@ export const GET = async (request: NextRequest) => {
   const withResolvedImages = await dynamicImageService.resolveDynamicElements({
     workspaceId: dynamicImage.workspaceId,
     contactId,
+    contactInbox,
+    ensureAvatarMirrored: ensureContactAvatarMirrored,
     document: dynamicImage.data,
   })
 

@@ -28,7 +28,7 @@ import {
 } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { logger } from "../logger"
-import { resolveContactAvatarUrl } from "../media"
+import { isStoredObjectPath, resolveContactAvatarUrl } from "../media"
 import { messageService } from "../message/service"
 import { resolveTenantSettings } from "../platform/settings"
 import { tagService } from "../tag/service"
@@ -260,7 +260,9 @@ class SystemFieldService extends BaseService {
       })
 
     const deleteResults = await Promise.allSettled(
-      attachmentPaths.map((path) => uploader.deleteObject(path)),
+      attachmentPaths
+        .filter(isStoredObjectPath)
+        .map((path) => uploader.deleteObject(path)),
     )
     for (const result of deleteResults) {
       if (result.status === "rejected") {

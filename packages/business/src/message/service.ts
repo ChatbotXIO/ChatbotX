@@ -12,6 +12,7 @@ import {
   findByIdWithUrls,
   findForContact,
   listForConversation,
+  withResolvedAttachmentUrls,
 } from "./list-for-conversation"
 
 type FindByProps = {
@@ -25,6 +26,7 @@ class MessageService extends BaseService {
   listForConversation = listForConversation
   findForContact = findForContact
   findByIdWithUrls = findByIdWithUrls
+  withResolvedAttachmentUrls = withResolvedAttachmentUrls
   protected readonly cachePrefix: string = "messages"
 
   async findByUncached(props: {
