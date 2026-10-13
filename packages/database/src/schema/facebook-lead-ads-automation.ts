@@ -2,7 +2,6 @@ import { sql } from "drizzle-orm"
 import { integer, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import type { FacebookLeadFieldMappings } from "../partials/facebook-lead-ads-automation"
 import { bigintAsString, sharedColumns } from "../partials/shared"
-import { flowModel } from "./flow"
 import { workspaceModel } from "./workspace"
 
 export const facebookLeadAdsAutomationModel = pgTable(
@@ -26,10 +25,6 @@ export const facebookLeadAdsAutomationModel = pgTable(
       .$type<FacebookLeadFieldMappings>()
       .notNull()
       .default(sql`'[]'`),
-    flowId: bigintAsString().references(() => flowModel.id, {
-      onDelete: "set null",
-      onUpdate: "cascade",
-    }),
     leadsHandledCount: integer().notNull().default(0),
   },
   (table) => [

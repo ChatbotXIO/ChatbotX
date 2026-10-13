@@ -516,6 +516,100 @@ describe("sendFlowStep", () => {
     expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
   })
 
+  test.each([
+    ["sendQuickReply", { message: "   ", quickReplies: [] }],
+    ["whatsappCallButton", { text: "   ", buttonLabel: "Call" }],
+    ["sendViewCatalog", { text: "   ", footer: "", thumbnailProductId: "" }],
+  ])("skips a whitespace-only %s step instead of sending an empty message", async (stepType, fields) => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "whatsapp",
+    })
+    const blankStep = {
+      id: "step-blank",
+      nodeId: "node-blank",
+      stepType,
+      ...fields,
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({ ...baseParams, step: blankStep })
+
+    expect(mockRepositoryCreate).not.toHaveBeenCalled()
+    expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    ["sendText", { text: "Hello", buttons: [] }],
+    ["whatsappCallButton", { text: "Hello", buttonLabel: "Call" }],
+    [
+      "sendViewCatalog",
+      { text: "Hello", footer: "Bye", thumbnailProductId: "sku-1" },
+    ],
+  ])("stores the %s body as the message text so the inbox shows it", async (stepType, fields) => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "whatsapp",
+    })
+    const step = {
+      id: "step-text",
+      nodeId: "node-text",
+      stepType,
+      ...fields,
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({ ...baseParams, step })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Hello" }),
+    )
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledTimes(1)
+  })
+
+  test("marks a sendViewCatalog message with its resolved footer so the inbox can show the catalog button", async () => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "whatsapp",
+    })
+    const step = {
+      id: "step-catalog",
+      nodeId: "node-catalog",
+      stepType: "sendViewCatalog",
+      text: "Browse",
+      footer: "Free shipping",
+      thumbnailProductId: "sku-1",
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({ ...baseParams, step })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          viewCatalog: { footer: "Free shipping" },
+        }),
+      }),
+    )
+  })
+
+  test("does not mark other text steps as a view-catalog message", async () => {
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "whatsapp",
+    })
+    const step = {
+      id: "step-text-plain",
+      nodeId: "node-text-plain",
+      stepType: "sendText",
+      text: "Hello",
+      buttons: [],
+    } as unknown as SendFlowStepData["step"]
+
+    await sendFlowStep({ ...baseParams, step })
+
+    expect(
+      mockRepositoryCreate.mock.calls.at(-1)?.[0]?.contentAttributes,
+    ).not.toHaveProperty("viewCatalog")
+  })
+
   test("skips a step the RESOLVED channel's policy marks unsupported (omnichannel sendCard reaching Telegram)", async () => {
     mockFindContactInbox.mockResolvedValue({
       ...fakeContactInbox,
@@ -535,6 +629,49 @@ describe("sendFlowStep", () => {
     expect(mockRepositoryCreate).not.toHaveBeenCalled()
     expect(mockRepositoryCreateWithAttachments).not.toHaveBeenCalled()
     expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+  })
+
+  describe("whatsappLocation step", () => {
+    const locationStep = {
+      id: "step-location",
+      nodeId: "node-location",
+      stepType: "whatsappLocation",
+      name: "Head office",
+      address: "1 Main St",
+      latitude: 15.5614,
+      longitude: 108.4867,
+    } as unknown as SendFlowStepData["step"]
+
+    test("stores a location message with its coordinates on WhatsApp", async () => {
+      mockFindContactInbox.mockResolvedValue({
+        ...fakeContactInbox,
+        channel: "whatsapp",
+      })
+
+      await sendFlowStep({ ...baseParams, step: locationStep })
+
+      expect(mockRepositoryCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          contentType: "location",
+          text: "Head office: 1 Main St",
+          contentAttributes: expect.objectContaining({
+            latitude: "15.5614",
+            longitude: "108.4867",
+            name: "Head office",
+            address: "1 Main St",
+            stepId: "step-location",
+          }),
+        }),
+      )
+      expect(mockSendFlowStepToChannel).toHaveBeenCalledTimes(1)
+    })
+
+    test("skips the step when an omnichannel flow reaches a non-WhatsApp contact", async () => {
+      await sendFlowStep({ ...baseParams, step: locationStep })
+
+      expect(mockRepositoryCreate).not.toHaveBeenCalled()
+      expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
+    })
   })
 
   test("calls repository.create() for step without url (sendText)", async () => {

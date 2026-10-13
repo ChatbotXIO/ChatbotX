@@ -24,10 +24,12 @@ import { sendProductsStepSchema } from "../steps/send-products"
 import { MAX_QUICK_REPLIES } from "../steps/send-quick-reply"
 import { sendTextStepSchema } from "../steps/send-text"
 import { sendVideoStepSchema } from "../steps/send-video"
+import { sendViewCatalogStepSchema } from "../steps/send-view-catalog"
 import { sendWaTemplateMessageStepSchema } from "../steps/send-wa-message-template"
 import { typingStepSchema } from "../steps/typing"
 import { whatsappCallButtonStepSchema } from "../steps/whatsapp-call-button"
 import { whatsappFlowStepSchema } from "../steps/whatsapp-flow"
+import { whatsappLocationStepSchema } from "../steps/whatsapp-location"
 import { whatsappOptionListStepSchema } from "../steps/whatsapp-option-list"
 import {
   baseNodeDataSchema,
@@ -63,9 +65,11 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
             sendWaTemplateMessageStepSchema,
             sendMessengerTemplateMessageStepSchema,
             whatsappOptionListStepSchema,
+            sendViewCatalogStepSchema,
             whatsappCallButtonStepSchema,
             whatsappFlowStepSchema,
             sendProductsStepSchema,
+            whatsappLocationStepSchema,
             ...actionSteps,
           ]),
         ),

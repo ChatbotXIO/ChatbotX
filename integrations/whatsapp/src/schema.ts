@@ -266,6 +266,23 @@ export type LocationRequestMessage = {
 }
 
 /**
+ * Cloud API plain `location` message — a map pin with an optional name and
+ * address. `whatsapp-api-js` does not model it for sending, so it is posted raw.
+ *
+ * @see https://developers.facebook.com/docs/whatsapp/cloud-api/messages/location-messages
+ */
+export type LocationMessage = {
+  _type: "location"
+  type: "location"
+  location: {
+    latitude: number
+    longitude: number
+    name?: string
+    address?: string
+  }
+}
+
+/**
  * Meta's voice_call interactive — body text plus one "Call on WhatsApp" button.
  * Not modeled by whatsapp-api-js, so it's posted raw.
  */
@@ -395,6 +412,7 @@ export type RawWhatsappMessage =
   | InteractiveProductListMessage
   | InteractiveProductMessage
   | InteractiveVoiceCallMessage
+  | LocationMessage
   | LocationRequestMessage
   | TemplateMessage
 

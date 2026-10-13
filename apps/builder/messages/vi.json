@@ -2661,9 +2661,11 @@
       "importStarted": "Luồng đang được nhập. Kiểm tra lịch sử nhập để xem kết quả.",
       "importJsonOnly": "Chỉ tệp JSON",
       "whatsappCallButton": "Gọi qua WhatsApp",
+      "whatsappLocation": "Vị trí",
       "metaConversions": "API Chuyển đổi Meta",
       "threadControl": "Điều khiển luồng",
       "sendGoogleAdsConversion": "Gửi chuyển đổi Google Ads",
+      "sendViewCatalog": "Xem danh mục",
       "sendProducts": "Gửi sản phẩm"
     },
     "splitTraffic": {
@@ -2784,6 +2786,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "Chỉnh sửa nút",
       "buttonLabel": "Nhãn nút"
+    },
+    "whatsappLocation": {
+      "title": "Vị trí",
+      "name": "Tên",
+      "address": "Địa chỉ",
+      "latitude": "Vĩ độ",
+      "longitude": "Kinh độ",
+      "setLocation": "Thiết lập vị trí",
+      "errors": {
+        "tooLong": "Tối đa 1000 ký tự.",
+        "invalidLatitude": "Nhập vĩ độ từ -90 đến 90.",
+        "invalidLongitude": "Nhập kinh độ từ -180 đến 180.",
+        "locationRequired": "Nhập tọa độ của vị trí."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Chân tin nhắn",
+      "thumbnailLabel": "Sản phẩm làm ảnh thu nhỏ"
     },
     "sendProducts": {
       "description": "Chọn sản phẩm cần gửi và cách hiển thị.",
@@ -3527,6 +3547,8 @@
     "failed": "Thất bại",
     "copiedToClipboard": "Đã sao chép vào bộ nhớ tạm",
     "messengerAdsJsonDescription": "Bạn chỉ cần tạo mã JSON mới nếu bạn thay đổi Bước bắt đầu. Các thay đổi ở những bước khác sẽ không ảnh hưởng đến mã JSON này.",
+    "welcomeMessageFlowIdsTitle": "ID luồng tin nhắn chào mừng",
+    "welcomeMessageFlowIdsDescription": "Được đồng bộ lên từng Trang Facebook khi bạn xuất bản. Chọn trong mục Ứng dụng đối tác ở Trình quản lý quảng cáo.",
     "messengerAdsNotPublished": "Hãy xuất bản nội dung của luồng này rồi thử lại.",
     "messengerAdsNoStartNode": "Luồng này chưa có Bước bắt đầu hợp lệ. Hãy mở luồng, đặt một Bước bắt đầu gửi tin nhắn, sau đó xuất bản và thử lại.",
     "messengerAdsError": "Đã xảy ra lỗi khi tạo mã JSON. Vui lòng thử lại.",
@@ -3678,6 +3700,9 @@
       "yes": "Có",
       "no": "Không"
     },
+    "sendViewCatalogBodyTooLong": "Nội dung tin nhắn quá dài so với tin nhắn danh mục. Hãy rút ngắn.",
+    "sendViewCatalogFooterTooLong": "Chân tin nhắn quá dài so với tin nhắn danh mục. Hãy rút ngắn.",
+    "viewCatalog": "Xem sản phẩm",
     "sendProductsDisplayUnsupported": "Kênh này không thể gửi loại tin nhắn sản phẩm này.",
     "sendProductsFieldRequired": "Trường này là bắt buộc.",
     "sendProductsFieldNotAllowed": "Không thể dùng trường này ở đây.",
@@ -5626,7 +5651,6 @@
     "allForms": "Tất cả biểu mẫu",
     "allFormsNote": "Lead từ mọi biểu mẫu của trang này sẽ được thu thập. Các trường tiêu chuẩn (email, số điện thoại, tên, giới tính) được lưu tự động vào trường liên hệ tương ứng.",
     "leadData": "Dữ liệu Lead",
-    "whatFlow": "Kịch bản được kích hoạt",
     "addNewPage": "Thêm mới",
     "noEligiblePages": "Không có trang phù hợp. Dùng \"Thêm mới\" để cấp quyền truy cập lead.",
     "duplicateError": "Đã tồn tại một automation cho trang và biểu mẫu này.",

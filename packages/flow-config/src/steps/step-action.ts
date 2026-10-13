@@ -12,6 +12,7 @@ export const stepTypes = z.enum([
   "sendMultipleImages",
   "sendCard",
   "sendCarousel",
+  "sendViewCatalog",
   "sendVideo",
   "sendGif",
   "sendMessengerOtn",
@@ -126,6 +127,7 @@ export const stepTypes = z.enum([
   "sendWaTemplateMessage",
   "whatsappOptionList",
   "whatsappCallButton",
+  "whatsappLocation",
   "whatsappFlow",
   "sendProducts",
 

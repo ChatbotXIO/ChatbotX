@@ -124,6 +124,17 @@ describe("runChallenge", () => {
     )
   })
 
+  test("passes the node id so the remaining steps resume in the same node", async () => {
+    await runChallenge(makeChallenge())
+
+    expect(mocks.runStepsAndQuickReplies).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetId: "node-1",
+        targetNodeId: "node-1",
+      }),
+    )
+  })
+
   test("delegates a quickReply challenge and does not re-run the node", async () => {
     await runChallenge({
       conversationId: "conversation-1",

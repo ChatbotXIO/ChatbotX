@@ -66,6 +66,8 @@ import {
   metaCatalogSyncRunPublicResource,
   publicProductDetailResource,
   publicProductResource,
+  searchMetaCatalogItemsPublicRequest,
+  searchMetaCatalogItemsPublicResponse,
   selectMetaCatalogPublicRequest,
   startProductImportPublicRequest,
   startProductImportPublicResponse,
@@ -96,6 +98,27 @@ export const productsPublicRouter = {
       const state = await getMetaCatalogState(context.workspace.id)
       return metaCatalogStatePublicResponse.parse(state)
     }),
+
+  searchMetaCatalogItems: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/products/meta-catalog/items",
+      summary: "Search Meta Catalog items",
+      description:
+        "Searches the workspace's connected Meta Catalog by product name and returns each item's `retailerId`, the id flow steps use to reference a catalog product (e.g. `thumbnailProductId` of a `sendViewCatalog` step). Returns at most 20 items ordered by name, so pass `keyword` to narrow the search. `connected` is false when no catalog is connected; connect one in the builder (see `products.getMetaCatalog`).",
+      tags: ["Products"],
+    })
+    .input(searchMetaCatalogItemsPublicRequest)
+    .output(searchMetaCatalogItemsPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(
+      async ({ context, input }) =>
+        await integrationMetaCatalogService.searchProductsForSend({
+          keyword: input.keyword,
+          retailerId: input.retailerId,
+          workspaceId: context.workspace.id,
+        }),
+    ),
 
   disconnectMetaCatalog: workspaceTokenAuthAPI
     .route({

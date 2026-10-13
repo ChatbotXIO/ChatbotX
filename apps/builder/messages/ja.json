@@ -2473,9 +2473,11 @@
       "importStarted": "フローをインポート中です。結果はインポート履歴でご確認ください。",
       "importJsonOnly": "JSONファイルのみ",
       "whatsappCallButton": "WhatsAppで通話",
+      "whatsappLocation": "位置情報",
       "metaConversions": "Meta Conversions API",
       "threadControl": "スレッド制御",
       "sendGoogleAdsConversion": "Google 広告コンバージョンを送信",
+      "sendViewCatalog": "カタログを見る",
       "sendProducts": "商品を送信"
     },
     "splitTraffic": {
@@ -2596,6 +2598,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "ボタンを編集",
       "buttonLabel": "ボタンラベル"
+    },
+    "whatsappLocation": {
+      "title": "位置情報",
+      "name": "名前",
+      "address": "住所",
+      "latitude": "緯度",
+      "longitude": "経度",
+      "setLocation": "位置情報を設定",
+      "errors": {
+        "tooLong": "1000文字以内で入力してください。",
+        "invalidLatitude": "-90〜90の緯度を入力してください。",
+        "invalidLongitude": "-180〜180の経度を入力してください。",
+        "locationRequired": "位置情報の座標を入力してください。"
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "フッター",
+      "thumbnailLabel": "サムネイル商品"
     },
     "sendProducts": {
       "description": "送信する商品と表示方法を選択します。",
@@ -3464,6 +3484,8 @@
     "failed": "失敗",
     "copiedToClipboard": "クリップボードにコピーしました",
     "messengerAdsJsonDescription": "開始ステップを変更した場合のみ、新しいJSONコードを生成する必要があります。他のステップの変更はこのJSONコードに影響しません。",
+    "welcomeMessageFlowIdsTitle": "ウェルカムメッセージフローID",
+    "welcomeMessageFlowIdsDescription": "公開時に各Facebookページへ同期されます。広告マネージャの「パートナーアプリ」から選択してください。",
     "messengerAdsNotPublished": "このフローの内容を公開してから、もう一度お試しください。",
     "messengerAdsNoStartNode": "このフローには有効な開始ステップがありません。フローを開き、メッセージ送信ステップを開始ステップに設定してから、公開してもう一度お試しください。",
     "messengerAdsError": "JSONの生成中に問題が発生しました。もう一度お試しください。",
@@ -3615,6 +3637,9 @@
       "yes": "はい",
       "no": "いいえ"
     },
+    "sendViewCatalogBodyTooLong": "メッセージ本文がカタログメッセージには長すぎます。短くしてください。",
+    "sendViewCatalogFooterTooLong": "フッターがカタログメッセージには長すぎます。短くしてください。",
+    "viewCatalog": "カタログを見る",
     "sendProductsDisplayUnsupported": "このチャネルでは、この種類の商品メッセージを送信できません。",
     "sendProductsFieldRequired": "この項目は必須です。",
     "sendProductsFieldNotAllowed": "この項目はここでは使用できません。",
@@ -5524,7 +5549,6 @@
     "allForms": "すべてのフォーム",
     "allFormsNote": "このページのすべてのフォームからリードを取得します。標準フィールド（メール、電話番号、名前、性別）は、対応する連絡先フィールドに自動的に保存されます。",
     "leadData": "リードデータ",
-    "whatFlow": "開始するフロー",
     "addNewPage": "新規追加",
     "noEligiblePages": "利用可能なページがありません。「新規追加」からリードへのアクセスを許可してください。",
     "duplicateError": "このページとフォームの自動化はすでに存在します。",

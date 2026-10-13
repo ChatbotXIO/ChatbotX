@@ -1553,6 +1553,8 @@
     "failed": "失敗",
     "copiedToClipboard": "已複製到剪貼簿",
     "messengerAdsJsonDescription": "如果您變更起始步驟，只需要重新產生 JSON 程式碼。其他步驟的變更不會影響此 JSON 程式碼。",
+    "welcomeMessageFlowIdsTitle": "歡迎訊息流程 ID",
+    "welcomeMessageFlowIdsDescription": "發佈時會同步到每個 Facebook 粉絲專頁。請在廣告管理員的「合作夥伴應用程式」中選擇。",
     "messengerAdsNotPublished": "請先發佈此流程的內容並重試。",
     "messengerAdsNoStartNode": "此流程沒有有效的起始步驟。開啟流程，設定起始傳送訊息步驟，然後發布並重試。",
     "messengerAdsError": "產生 JSON 時發生問題。請再試一次。",
@@ -1703,6 +1705,9 @@
       "yes": "是",
       "no": "否"
     },
+    "sendViewCatalogBodyTooLong": "訊息文字對目錄訊息來說太長，請縮短。",
+    "sendViewCatalogFooterTooLong": "頁尾對目錄訊息來說太長，請縮短。",
+    "viewCatalog": "查看目錄",
     "sendProductsDisplayUnsupported": "此管道無法傳送這種類型的商品訊息。",
     "sendProductsFieldRequired": "此欄位為必填。",
     "sendProductsFieldNotAllowed": "此處無法使用該欄位。",
@@ -2833,9 +2838,11 @@
       "importStarted": "流程匯入中，請稍後查看匯入紀錄以取得結果。",
       "importJsonOnly": "僅限 JSON 檔案",
       "whatsappCallButton": "透過 WhatsApp 通話",
+      "whatsappLocation": "位置",
       "metaConversions": "Meta Conversions API",
       "threadControl": "對話控制",
       "sendGoogleAdsConversion": "傳送 Google Ads 轉換",
+      "sendViewCatalog": "查看商品目錄",
       "sendProducts": "傳送商品"
     },
     "splitTraffic": {
@@ -2956,6 +2963,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "編輯按鈕",
       "buttonLabel": "按鈕標籤"
+    },
+    "whatsappLocation": {
+      "title": "位置",
+      "name": "名稱",
+      "address": "地址",
+      "latitude": "緯度",
+      "longitude": "經度",
+      "setLocation": "設定位置",
+      "errors": {
+        "tooLong": "最多 1000 個字元。",
+        "invalidLatitude": "請輸入 -90 到 90 之間的緯度。",
+        "invalidLongitude": "請輸入 -180 到 180 之間的經度。",
+        "locationRequired": "請輸入位置的座標。"
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "頁尾",
+      "thumbnailLabel": "縮圖商品"
     },
     "sendProducts": {
       "description": "選擇要傳送的商品以及顯示方式。",
@@ -5578,7 +5603,6 @@
     "allForms": "所有表格",
     "allFormsNote": "此頁面上每個表單的潛在客戶都將被捕獲。標準欄位（電子郵件、電話、姓名、性別）會自動儲存到符合的聯絡人欄位。",
     "leadData": "潛在客戶資料",
-    "whatFlow": "觸發什麼流程",
     "addNewPage": "新增新",
     "noEligiblePages": "沒有符合條件的頁面。使用「新增新建」授予潛在客戶存取權限。",
     "duplicateError": "此頁面和表單已存在自動化。",

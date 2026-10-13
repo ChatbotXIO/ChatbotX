@@ -66,6 +66,7 @@ import sendMultipleImagesStep from "./send-multiple-images"
 import sendProductsStep from "./send-products"
 import sendTextStep from "./send-text"
 import { sendVideoStep } from "./send-video"
+import sendViewCatalogStep from "./send-view-catalog"
 import sendWaTemplateMessageStep from "./send-wa-template-message"
 import { sendGridAddContactStep } from "./sendgrid-add-contact"
 import { setCustomFieldStep } from "./set-custom-field"
@@ -94,6 +95,7 @@ import { updateMessengerContactDataStep } from "./update-messenger-contact-data"
 import { waitStep } from "./wait"
 import whatsappCallButtonStep from "./whatsapp-call-button"
 import whatsappFlowStep from "./whatsapp-flow"
+import whatsappLocationStep from "./whatsapp-location"
 import whatsappOptionListStep from "./whatsapp-option-list"
 
 // biome-ignore lint/suspicious/noExplicitAny: wip
@@ -105,6 +107,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.sendCarousel]: sendCarouselStep,
   [stepTypes.enum.getUserData]: getUserDataStep,
   [stepTypes.enum.sendVideo]: sendVideoStep,
+  [stepTypes.enum.sendViewCatalog]: sendViewCatalogStep,
   [stepTypes.enum.sendWaTemplateMessage]: sendWaTemplateMessageStep,
   [stepTypes.enum.sendGif]: sendGifStep,
   [stepTypes.enum.setDebounce]: undefined,
@@ -198,6 +201,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.whatsappCallButton]: whatsappCallButtonStep,
   [stepTypes.enum.whatsappFlow]: whatsappFlowStep,
   [stepTypes.enum.sendProducts]: sendProductsStep,
+  [stepTypes.enum.whatsappLocation]: whatsappLocationStep,
   [stepTypes.enum.setMessengerUserPersistentMenu]:
     setMessengerUserPersistentMenuStep,
   [stepTypes.enum.enableMessengerComposer]: enableMessengerComposerStep,

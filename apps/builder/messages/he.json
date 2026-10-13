@@ -457,9 +457,11 @@
       "importStarted": "הזרימה בתהליך ייבוא. בדקו את היסטוריית הייבוא לתוצאות.",
       "importJsonOnly": "קבצי JSON בלבד",
       "whatsappCallButton": "התקשרות בוואטסאפ",
+      "whatsappLocation": "מיקום",
       "metaConversions": "Meta Conversions API",
       "threadControl": "שליטה בשרשור",
       "sendGoogleAdsConversion": "שליחת המרה של Google Ads",
+      "sendViewCatalog": "הצגת קטלוג",
       "sendProducts": "שליחת מוצרים"
     },
     "splitTraffic": {
@@ -580,6 +582,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "עריכת כפתור",
       "buttonLabel": "תווית כפתור"
+    },
+    "whatsappLocation": {
+      "title": "מיקום",
+      "name": "שם",
+      "address": "כתובת",
+      "latitude": "קו רוחב",
+      "longitude": "קו אורך",
+      "setLocation": "הגדרת מיקום",
+      "errors": {
+        "tooLong": "עד 1000 תווים.",
+        "invalidLatitude": "הזינו קו רוחב בין ‎-90 ל-90.",
+        "invalidLongitude": "הזינו קו אורך בין ‎-180 ל-180.",
+        "locationRequired": "הזינו את קואורדינטות המיקום."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "כותרת תחתונה",
+      "thumbnailLabel": "מוצר לתמונה ממוזערת"
     },
     "sendProducts": {
       "description": "בחרו את המוצרים לשליחה ואת אופן התצוגה שלהם.",
@@ -1469,6 +1489,8 @@
     "failed": "נכשל",
     "copiedToClipboard": "הועתק ללוח",
     "messengerAdsJsonDescription": "תצטרכו ליצור קוד JSON חדש רק אם תבצעו שינויים בשלב ההתחלה. שינויים בשלבים אחרים לא ישפיעו על קוד JSON זה.",
+    "welcomeMessageFlowIdsTitle": "מזהי תהליכי הודעת פתיחה",
+    "welcomeMessageFlowIdsDescription": "מסונכרן לכל דף פייסבוק בעת פרסום. בחרו אותו תחת אפליקציית שותף במנהל המודעות.",
     "messengerAdsNotPublished": "פרסמו את תוכן התהליך ונסו שוב.",
     "messengerAdsNoStartNode": "לתהליך זה אין שלב התחלה תקין. פתחו את התהליך, הגדירו שלב שליחת הודעה כשלב התחלה, לאחר מכן פרסמו ונסו שוב.",
     "messengerAdsError": "אירעה שגיאה בעת יצירת ה-JSON. נסו שוב.",
@@ -1620,6 +1642,9 @@
       "yes": "כן",
       "no": "לא"
     },
+    "sendViewCatalogBodyTooLong": "טקסט ההודעה ארוך מדי להודעת קטלוג. קצרו אותו.",
+    "sendViewCatalogFooterTooLong": "הכותרת התחתונה ארוכה מדי להודעת קטלוג. קצרו אותה.",
+    "viewCatalog": "צפייה בקטלוג",
     "sendProductsDisplayUnsupported": "ערוץ זה אינו יכול לשלוח סוג זה של הודעת מוצר.",
     "sendProductsFieldRequired": "שדה זה הוא חובה.",
     "sendProductsFieldNotAllowed": "לא ניתן להשתמש בשדה זה כאן.",
@@ -3529,7 +3554,6 @@
     "allForms": "כל הטפסים",
     "allFormsNote": "לידים מכל טופס בדף זה יילכדו. שדות רגילים (דוא\"ל, טלפון, שם, מגדר) נשמרים אוטומטית בשדות המתאימים של איש הקשר.",
     "leadData": "נתוני ליד",
-    "whatFlow": "איזה תהליך מופעל",
     "addNewPage": "הוספת חדש",
     "noEligiblePages": "אין דפים זכאים. השתמשו ב\"הוספת חדש\" כדי להעניק גישה ללידים.",
     "duplicateError": "כבר קיימת אוטומציה עבור דף וטופס אלה.",

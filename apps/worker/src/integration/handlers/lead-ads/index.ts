@@ -24,7 +24,6 @@ import type { Job } from "bullmq"
 import { isFinalAttempt } from "../../../lib/job-attempts"
 import { logger } from "../../../lib/logger"
 import { integrationService } from "../../../services/integrations"
-import { runFlowNode } from "../flow"
 import { detectContactAndConversation } from "../received-message"
 
 type Gender = (typeof genderTypes.options)[number]
@@ -95,8 +94,8 @@ async function applyField(props: {
 /**
  * Handle one Facebook `leadgen` webhook: resolve the page's Messenger inbox and
  * token, match a lead-ads automation for (workspace, page, form), fetch the
- * lead's answers, resolve the contact by PSID, write the mapped fields, send
- * the flow, and bump the counter. Deduped by (automation, leadgen_id) so
+ * lead's answers, resolve the contact by PSID, write the mapped fields, and
+ * bump the counter. Deduped by (automation, leadgen_id) so
  * re-delivered webhooks no-op; the claim is released again if the work fails so
  * the job retry can pick the lead back up.
  */
@@ -136,7 +135,7 @@ export async function processLeadgen(
   // gone. Before this, the row carried no contact attribution at all.
   let leadPsid: string | undefined
   // Set once the contact exists and is linked to the claim, so a failure in
-  // the field-mapping or flow steps that follow still resolves to a real
+  // the field-mapping step that follows still resolves to a real
   // `Contact` in the builder table instead of only a raw PSID.
   let leadContactId: string | undefined
 
@@ -166,13 +165,12 @@ export async function processLeadgen(
       firstName: findValue(fieldData, "full_name"),
     }
 
-    const { contact, contactInbox, conversation } =
-      await detectContactAndConversation({
-        incomingContact,
-        inbox,
-        integrationRow,
-        source: contactSources.enum.ads,
-      })
+    const { contact } = await detectContactAndConversation({
+      incomingContact,
+      inbox,
+      integrationRow,
+      source: contactSources.enum.ads,
+    })
 
     await facebookLeadAdsLeadService.setContactId({
       id: claim.id,
@@ -209,18 +207,6 @@ export async function processLeadgen(
         target: entry.target,
         value,
       })
-    }
-
-    if (automation.flowId) {
-      await runFlowNode(
-        {
-          flowId: automation.flowId,
-          conversationId: conversation,
-          contactInboxId: contactInbox,
-          origin: "channel",
-        },
-        { flowExecutionKey: job.id },
-      )
     }
 
     await facebookLeadAdsAutomationService.incrementLeadsHandled(automation.id)

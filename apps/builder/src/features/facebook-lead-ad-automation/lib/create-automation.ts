@@ -35,7 +35,6 @@ export async function createLeadAdAutomation(input: {
     formId: data.formId,
     formName: data.formName ?? null,
     fieldMapping: data.fieldMapping,
-    flowId: data.flowId ?? null,
     duplicateMessage: messages.duplicateError,
   })
 }

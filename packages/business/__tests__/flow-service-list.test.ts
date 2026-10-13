@@ -44,6 +44,13 @@ vi.mock("../src/errors", () => ({
   notFoundException: (message: string) =>
     Object.assign(new Error(message), { code: "notFound" }),
 }))
+vi.mock("../src/messenger-welcome-message-flow/service", () => ({
+  messengerWelcomeMessageFlowService: {
+    enqueueSync: vi.fn(),
+    enqueueDelete: vi.fn(),
+  },
+}))
+
 vi.mock("../src/flow-version", () => ({
   assertFlowGraphPublishable: vi.fn(),
   flowVersionService: {},

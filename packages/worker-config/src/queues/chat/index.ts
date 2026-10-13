@@ -20,9 +20,11 @@ import type {
   SendQuickReplyStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
+  SendViewCatalogStepSchema,
   SendWaTemplateMessageStepSchema,
   WaTemplateParams,
   WhatsappCallButtonStepSchema,
+  WhatsappLocationStepSchema,
 } from "@chatbotx.io/flow-config"
 import type { CommentAnchor, MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
@@ -92,6 +94,8 @@ export type ChatJobSendFlowStep = {
       | SendMessengerTemplateMessageStepSchema
       | WhatsappCallButtonStepSchema
       | SendProductsStepSchema
+      | WhatsappLocationStepSchema
+      | SendViewCatalogStepSchema
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
     /**

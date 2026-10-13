@@ -1,5 +1,6 @@
 import {
   CHANNEL_FLOW_POLICIES,
+  channelDeliverableStepTypes,
   type StepType,
   stepSupport,
   stepTypes,
@@ -21,6 +22,7 @@ const MESSAGE_STEP_TYPES = [
   stepTypes.enum.sendMultipleImages,
   stepTypes.enum.sendCard,
   stepTypes.enum.sendCarousel,
+  stepTypes.enum.sendViewCatalog,
   stepTypes.enum.sendVideo,
   stepTypes.enum.sendGif,
   stepTypes.enum.sendAudio,
@@ -30,6 +32,7 @@ const MESSAGE_STEP_TYPES = [
   stepTypes.enum.sendMessengerTemplateMessage,
   stepTypes.enum.whatsappOptionList,
   stepTypes.enum.whatsappCallButton,
+  stepTypes.enum.whatsappLocation,
   stepTypes.enum.whatsappFlow,
   stepTypes.enum.sendProducts,
 ] as const satisfies readonly StepType[]
@@ -51,6 +54,12 @@ const HANDLED_STEP_TYPES: ReadonlyArray<{
 ]
 
 describe("channel flow policy runtime contract", () => {
+  test("lists every deliverable step type, so a new one cannot go unchecked", () => {
+    expect(new Set(MESSAGE_STEP_TYPES)).toEqual(
+      new Set(channelDeliverableStepTypes),
+    )
+  })
+
   test.each(
     HANDLED_STEP_TYPES,
   )("$channel handles every message step its policy permits", ({

@@ -21,12 +21,12 @@ import type {
 } from "@chatbotx.io/database/types"
 import { chunkById } from "@chatbotx.io/database/utils"
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
-import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import { integration as integrationZalo } from "@chatbotx.io/integration-zalo"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo/schema"
 import { distributedLock } from "@chatbotx.io/redis"
 import type { JobSyncTag } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
+import { buildMessengerContext } from "../../lib/messenger-context"
 
 const DELETE_CHUNK_SIZE = 500
 
@@ -589,21 +589,6 @@ async function deleteLabelOnChannel(props: {
 // ---------------------------------------------------------------------------
 // Channel context helpers (local to tag sync).
 // ---------------------------------------------------------------------------
-
-function buildMessengerContext(props: {
-  workspaceId: string
-  integration: IntegrationMessengerModel
-}) {
-  const { workspaceId, integration } = props
-  return buildContext({
-    workspaceId,
-    integrationType: channelTypes.enum.messenger,
-    integration: {
-      ...integration,
-      auth: integration.auth as unknown as MessengerAuthValue,
-    },
-  })
-}
 
 function buildZaloContext(props: {
   workspaceId: string

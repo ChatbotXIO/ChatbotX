@@ -1,4 +1,8 @@
-import { flowService, flowVersionService } from "@chatbotx.io/business"
+import {
+  flowService,
+  flowVersionService,
+  messengerWelcomeMessageFlowService,
+} from "@chatbotx.io/business"
 import { validationException } from "@chatbotx.io/business/errors"
 import { importService } from "@chatbotx.io/business/import"
 import { stepTypes } from "@chatbotx.io/flow-config"
@@ -33,7 +37,11 @@ import {
   updateDraftFlowRequest,
   updateFlowSchema,
 } from "../schema/action"
-import { flowResource, flowWithVersionsResource } from "../schema/resource"
+import {
+  flowResource,
+  flowWithVersionsResource,
+  welcomeMessageFlowResource,
+} from "../schema/resource"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
@@ -109,20 +117,28 @@ export const flowsPublicRouter = {
       path: "/v1/flows/{id}",
       summary: "Get flow",
       description:
-        "Use this to inspect one flow and its versions after finding its id with `flows.list`. Call `flows.updateDraft` to change the draft or `flows.publish` to create a version.",
+        "Use this to inspect one flow and its versions after finding its id with `flows.list`. Call `flows.updateDraft` to change the draft or `flows.publish` to create a version. `welcomeMessageFlows` lists the Meta welcome message flow created on each Messenger page from the published starting step (refreshed a few seconds after `flows.publish`); use its id in Click-to-Messenger ads.",
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),
     })
     .input(publicIdParam("flow", "flows.list"))
-    .output(flowWithVersionsResource)
+    .output(
+      flowWithVersionsResource.and(
+        z.object({ welcomeMessageFlows: z.array(welcomeMessageFlowResource) }),
+      ),
+    )
     .errors(possibleErrorsOnFindingResource)
-    .handler(
-      async ({ context, input }) =>
-        await flowService.findById({
-          workspaceId: context.workspace.id,
-          id: input.id,
+    .handler(async ({ context, input }) => {
+      const scope = { workspaceId: context.workspace.id }
+      const [flow, welcomeMessageFlows] = await Promise.all([
+        flowService.findById({ ...scope, id: input.id }),
+        messengerWelcomeMessageFlowService.listCurrentByFlow({
+          ...scope,
+          flowId: input.id,
         }),
-    ),
+      ])
+      return { ...flow, welcomeMessageFlows }
+    }),
 
   create: workspaceTokenAuthAPI
     .route({
@@ -177,7 +193,7 @@ export const flowsPublicRouter = {
       path: "/v1/flows/{id}",
       summary: "Update flow settings",
       description:
-        "Partially updates a flow's name, active, or enableInInbox flags.",
+        "Partially updates a flow's name, active, or enableInInbox flags. A new name is also applied to the flow's existing Meta welcome message flows (best-effort, asynchronous).",
       successStatus: 204,
       tags: ["Flows"],
     })
@@ -194,7 +210,7 @@ export const flowsPublicRouter = {
       path: "/v1/flows/{id}",
       summary: "Delete flow",
       description:
-        "Permanently deletes a flow and its draft/published versions. Use `flows.get` to confirm it first.",
+        "Permanently deletes a flow and its draft/published versions. Use `flows.get` to confirm it first. Also deletes its Meta welcome message flows (best-effort, asynchronous).",
       successStatus: 204,
       tags: ["Flows"],
     })
@@ -234,7 +250,7 @@ export const flowsPublicRouter = {
       path: "/v1/flows/{id}/publish",
       summary: "Publish flow",
       description:
-        "Creates an immutable version from a draft and synchronizes the draft to match. Call `flows.validate` before this when supplying a spec, or use `flows.updateDraft` to save changes without publishing.",
+        "Creates an immutable version from a draft and synchronizes the draft to match. Call `flows.validate` before this when supplying a spec, or use `flows.updateDraft` to save changes without publishing. Also syncs the Meta welcome message flow on every Messenger page (best-effort, asynchronous); read the ids from `flows.get`.",
       successStatus: 204,
       tags: ["Flows"],
       spec: mcpSpec({ visibility: "default" }),

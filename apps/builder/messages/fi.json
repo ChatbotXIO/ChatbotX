@@ -2473,9 +2473,11 @@
       "importStarted": "Vuota tuodaan. Tarkista tuontihistoriasta tulokset.",
       "importJsonOnly": "Vain JSON-tiedostot",
       "whatsappCallButton": "Soita WhatsAppissa",
+      "whatsappLocation": "Sijainti",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Keskustelun hallinta",
       "sendGoogleAdsConversion": "Lähetä Google Ads -konversio",
+      "sendViewCatalog": "Näytä tuotekatalogi",
       "sendProducts": "Lähetä tuotteita"
     },
     "splitTraffic": {
@@ -2596,6 +2598,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "Muokkaa painiketta",
       "buttonLabel": "Painikkeen teksti"
+    },
+    "whatsappLocation": {
+      "title": "Sijainti",
+      "name": "Nimi",
+      "address": "Osoite",
+      "latitude": "Leveysaste",
+      "longitude": "Pituusaste",
+      "setLocation": "Aseta sijainti",
+      "errors": {
+        "tooLong": "Enintään 1000 merkkiä.",
+        "invalidLatitude": "Anna leveysaste väliltä -90–90.",
+        "invalidLongitude": "Anna pituusaste väliltä -180–180.",
+        "locationRequired": "Anna sijainnin koordinaatit."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Alatunniste",
+      "thumbnailLabel": "Pikkukuvan tuote"
     },
     "sendProducts": {
       "description": "Valitse lähetettävät tuotteet ja tapa, jolla ne näytetään.",
@@ -3485,6 +3505,8 @@
     "failed": "Epäonnistui",
     "copiedToClipboard": "Kopioitu leikepöydälle",
     "messengerAdsJsonDescription": "Sinun tarvitsee luoda uusi JSON-koodi vain, jos muutat aloitusvaihetta. Muiden vaiheiden muutokset eivät vaikuta tähän JSON-koodiin.",
+    "welcomeMessageFlowIdsTitle": "Tervetuloviestivirtojen tunnukset",
+    "welcomeMessageFlowIdsDescription": "Synkronoidaan jokaiselle Facebook-sivulle, kun julkaiset. Valitse se Ads Managerissa kohdasta Kumppanisovellus.",
     "messengerAdsNotPublished": "Julkaise tämän flown sisältö ja yritä uudelleen.",
     "messengerAdsNoStartNode": "Tällä flow'lla ei ole kelvollista aloitusvaihetta. Avaa flow, aseta Viestin lähetys -vaihe aloitukseksi, julkaise ja yritä uudelleen.",
     "messengerAdsError": "JSONin luomisessa tapahtui virhe. Yritä uudelleen.",
@@ -3636,6 +3658,9 @@
       "yes": "Kyllä",
       "no": "Ei"
     },
+    "sendViewCatalogBodyTooLong": "Viestin teksti on liian pitkä katalogiviestiin. Lyhennä sitä.",
+    "sendViewCatalogFooterTooLong": "Alatunniste on liian pitkä katalogiviestiin. Lyhennä sitä.",
+    "viewCatalog": "Näytä luettelo",
     "sendProductsDisplayUnsupported": "Tämä kanava ei voi lähettää tämän tyyppistä tuoteviestiä.",
     "sendProductsFieldRequired": "Tämä kenttä on pakollinen.",
     "sendProductsFieldNotAllowed": "Tätä kenttää ei voi käyttää tässä.",
@@ -5545,7 +5570,6 @@
     "allForms": "Kaikki lomakkeet",
     "allFormsNote": "Kaikkien tämän sivun lomakkeiden liidit tallennetaan. Vakiokentät (sähköposti, puhelin, nimi, sukupuoli) tallennetaan automaattisesti vastaaviin yhteystietokenttiin.",
     "leadData": "Liiditiedot",
-    "whatFlow": "Käynnistettävä flow",
     "addNewPage": "Lisää uusi",
     "noEligiblePages": "Sopivia sivuja ei ole. Myönnä liidien käyttöoikeus valitsemalla Lisää uusi.",
     "duplicateError": "Tälle sivulle ja lomakkeelle on jo olemassa automaatio.",

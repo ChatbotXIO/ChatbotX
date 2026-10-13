@@ -2619,9 +2619,11 @@
       "importStarted": "Akış içe aktarılıyor. Sonuçlar için içe aktarma geçmişini kontrol edin.",
       "importJsonOnly": "Yalnızca JSON dosyaları",
       "whatsappCallButton": "WhatsApp'ta ara",
+      "whatsappLocation": "Konum",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Konuşma kontrolü",
       "sendGoogleAdsConversion": "Google Ads dönüşümü gönder",
+      "sendViewCatalog": "Kataloğu görüntüle",
       "sendProducts": "Ürün gönder"
     },
     "splitTraffic": {
@@ -2742,6 +2744,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "Butonu Düzenle",
       "buttonLabel": "Buton Etiketi"
+    },
+    "whatsappLocation": {
+      "title": "Konum",
+      "name": "Ad",
+      "address": "Adres",
+      "latitude": "Enlem",
+      "longitude": "Boylam",
+      "setLocation": "Konumu ayarla",
+      "errors": {
+        "tooLong": "En fazla 1000 karakter.",
+        "invalidLatitude": "-90 ile 90 arasında bir enlem girin.",
+        "invalidLongitude": "-180 ile 180 arasında bir boylam girin.",
+        "locationRequired": "Konumun koordinatlarını girin."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Alt bilgi",
+      "thumbnailLabel": "Küçük resim ürünü"
     },
     "sendProducts": {
       "description": "Gönderilecek ürünleri ve nasıl gösterileceğini seçin.",
@@ -3485,6 +3505,8 @@
     "failed": "Başarısız",
     "copiedToClipboard": "Panoya kopyalandı",
     "messengerAdsJsonDescription": "Yeni bir JSON kodu yalnızca başlangıç Adımında değişiklik yaparsanız oluşturmanız gerekir. Diğer adımlardaki değişiklikler bu JSON kodunu etkilemez.",
+    "welcomeMessageFlowIdsTitle": "Karşılama mesajı akışı kimlikleri",
+    "welcomeMessageFlowIdsDescription": "Yayınladığınızda her Facebook Sayfası ile senkronize edilir. Reklam Yöneticisi'nde İş ortağı uygulaması altından seçin.",
     "messengerAdsNotPublished": "Bu akışın içeriğini yayınlayın ve tekrar deneyin.",
     "messengerAdsNoStartNode": "Bu akışın geçerli bir başlangıç adımı yok. Akışı açın, bir Mesaj Gönder başlangıç adımı belirleyin, ardından yayınlayıp tekrar deneyin.",
     "messengerAdsError": "JSON oluşturulurken bir sorun oluştu. Lütfen tekrar deneyin.",
@@ -3636,6 +3658,9 @@
       "yes": "Evet",
       "no": "Hayır"
     },
+    "sendViewCatalogBodyTooLong": "Mesaj metni bir katalog mesajı için çok uzun. Kısaltın.",
+    "sendViewCatalogFooterTooLong": "Alt bilgi bir katalog mesajı için çok uzun. Kısaltın.",
+    "viewCatalog": "Kataloğu görüntüle",
     "sendProductsDisplayUnsupported": "Bu kanal bu tür ürün mesajını gönderemez.",
     "sendProductsFieldRequired": "Bu alan zorunludur.",
     "sendProductsFieldNotAllowed": "Bu alan burada kullanılamaz.",
@@ -5545,7 +5570,6 @@
     "allForms": "Tüm formlar",
     "allFormsNote": "Bu sayfadaki her formdan gelen potansiyel müşteriler yakalanacaktır. Standart alanlar (e-posta, telefon, ad, cinsiyet) eşleşen kişi alanlarına otomatik olarak kaydedilir.",
     "leadData": "Potansiyel Müşteri Verisi",
-    "whatFlow": "Hangi akış tetiklenecek",
     "addNewPage": "Yeni Ekle",
     "noEligiblePages": "Uygun sayfa yok. Potansiyel müşteri erişimi vermek için \"Yeni Ekle\"yi kullanın.",
     "duplicateError": "Bu sayfa ve form için zaten bir otomasyon mevcut.",

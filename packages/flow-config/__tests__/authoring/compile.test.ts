@@ -103,6 +103,73 @@ describe("compileFlowSpec — one node per step type", () => {
     expectPublishable(compiled.nodes, compiled.edges)
   })
 
+  test("sendViewCatalog builds the catalog step on the flow channel", () => {
+    const compiled = compileFlowSpec(
+      spec(
+        [
+          {
+            type: "sendViewCatalog",
+            text: "Browse our catalog",
+            footer: "Free shipping",
+            thumbnailProductId: "sku-1",
+          },
+        ],
+        { channel: "whatsapp" },
+      ),
+      emptyCtx,
+    )
+    const node = compiled.nodes[0]
+    expect(node?.type).toBe(nodeTypeSchema.enum.sendMessage)
+    if (node?.type === "sendMessage") {
+      expect(node.data.details.beforeStep.channel).toBe("whatsapp")
+      expect(node.data.details.steps[0]).toMatchObject({
+        stepType: stepTypes.enum.sendViewCatalog,
+        text: "Browse our catalog",
+        footer: "Free shipping",
+        thumbnailProductId: "sku-1",
+      })
+    }
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("sendViewCatalog defaults footer and thumbnail to empty and can be followed by more steps", () => {
+    const compiled = compileFlowSpec(
+      spec(
+        [
+          { type: "sendViewCatalog", text: "Browse our catalog" },
+          { type: "send", text: "Anything else?" },
+        ],
+        { channel: "whatsapp" },
+      ),
+      emptyCtx,
+    )
+    expect(compiled.nodes).toHaveLength(2)
+    const node = compiled.nodes[0]
+    if (node?.type === "sendMessage") {
+      expect(node.data.details.steps[0]).toMatchObject({
+        footer: "",
+        thumbnailProductId: "",
+      })
+    }
+    expect(compiled.edges).toHaveLength(1)
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("sendViewCatalog is rejected at publish on a channel that cannot deliver it", () => {
+    const compiled = compileFlowSpec(
+      spec([{ type: "sendViewCatalog", text: "Browse our catalog" }], {
+        channel: "messenger",
+      }),
+      emptyCtx,
+    )
+    const result = z
+      .array(flowVersionSchema)
+      .superRefine(refineStepsByChannel)
+      .safeParse(compiled.nodes)
+
+    expect(result.success).toBe(false)
+  })
+
   test("sendTemplate resolves the template by name", () => {
     const compiled = compileFlowSpec(
       spec([{ type: "sendTemplate", templateName: "welcome_promo" }], {

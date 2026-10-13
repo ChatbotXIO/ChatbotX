@@ -4,6 +4,7 @@ import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { BUTTON_LABEL_MAX } from "../steps/button"
 import { sendProductsDisplays } from "../steps/send-products"
+import { sendViewCatalogStepSchema } from "../steps/send-view-catalog"
 import { waitStepDelayUnits } from "../steps/wait"
 import { flowValidationCodes } from "../validation-codes"
 
@@ -41,6 +42,13 @@ export type FlowStepSpec =
       body?: string
       footer?: string
       sections?: Array<{ title?: string; productIds: string[] }>
+      thumbnailProductId?: string
+    }
+  | {
+      type: "sendViewCatalog"
+      id?: string
+      text: string
+      footer?: string
       thumbnailProductId?: string
     }
   | {
@@ -224,6 +232,20 @@ const sendProductsStepSpecSchema = z
   })
   .describe(
     "Sends products from the workspace catalog (single product, product list, carousel or the whole catalog). Only on channels that support product messages.",
+  )
+
+const sendViewCatalogStepSpecSchema = z
+  .object({
+    type: stepTypeLiteral("sendViewCatalog"),
+    id: stepIdField,
+    // Reused from the step itself so the DSL and the compiled step can never
+    // disagree on limits or wording.
+    text: sendViewCatalogStepSchema.shape.text,
+    footer: sendViewCatalogStepSchema.shape.footer,
+    thumbnailProductId: sendViewCatalogStepSchema.shape.thumbnailProductId,
+  })
+  .describe(
+    "Shares the product catalog: a message with a button that opens it. Publish rejects it on channels that cannot deliver it (see `capabilities.get`'s `unsupportedSteps`); in an omnichannel flow (`channel` omitted) it is accepted but only sent to WhatsApp contacts, so set `channel` to check it at publish.",
   )
 
 const waitStepSpecSchema = z
@@ -436,6 +458,7 @@ const flowStepSpecOptions = [
   sendStepSpecSchema,
   sendTemplateStepSpecSchema,
   sendProductsStepSpecSchema,
+  sendViewCatalogStepSpecSchema,
   waitStepSpecSchema,
   branchStepSpecSchema,
   actionStepSpecSchema,
@@ -447,7 +470,7 @@ const flowStepSpecOptions = [
 const flowStepSpecSchema: z.ZodType<FlowStepSpec> = z
   .discriminatedUnion("type", flowStepSpecOptions)
   .describe(
-    "One flow step. The `type` field selects the step kind: send, sendTemplate, sendProducts, wait, branch, action, startFlow, addNote or goto.",
+    "One flow step. The `type` field selects the step kind: send, sendTemplate, sendProducts, sendViewCatalog, wait, branch, action, startFlow, addNote or goto.",
   )
 
 export type FlowSpecStepType = { type: string; description: string }

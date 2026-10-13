@@ -3302,9 +3302,11 @@
       "importStarted": "Axın idxal olunur. Nəticələr üçün idxal tarixçəsinə baxın.",
       "importJsonOnly": "Yalnız JSON faylları",
       "whatsappCallButton": "WhatsApp-da zəng et",
+      "whatsappLocation": "Məkan",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread Control",
       "sendGoogleAdsConversion": "Google Ads konversiyası göndər",
+      "sendViewCatalog": "Kataloqa bax",
       "sendProducts": "Məhsul göndər"
     },
     "splitTraffic": {
@@ -3425,6 +3427,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "Düyməni redaktə et",
       "buttonLabel": "Düymə etiketi"
+    },
+    "whatsappLocation": {
+      "title": "Məkan",
+      "name": "Ad",
+      "address": "Ünvan",
+      "latitude": "Enlik",
+      "longitude": "Uzunluq",
+      "setLocation": "Məkanı təyin et",
+      "errors": {
+        "tooLong": "1000 simvoldan çox olmamalıdır.",
+        "invalidLatitude": "-90 ilə 90 arasında enlik daxil edin.",
+        "invalidLongitude": "-180 ilə 180 arasında uzunluq daxil edin.",
+        "locationRequired": "Məkanın koordinatlarını daxil edin."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Alt məlumat",
+      "thumbnailLabel": "Miniatür məhsul"
     },
     "sendProducts": {
       "description": "Göndəriləcək məhsulları və onların necə göstəriləcəyini seçin.",
@@ -4168,6 +4188,8 @@
     "failed": "Uğursuz",
     "copiedToClipboard": "Mübadilə buferinə kopyalandı",
     "messengerAdsJsonDescription": "Yalnız başlanğıc addımında dəyişiklik etdikdə yeni JSON kodu yaratmalısınız. Digər addımlardakı dəyişikliklər bu JSON koduna təsir etməyəcək.",
+    "welcomeMessageFlowIdsTitle": "Xoş gəlmisiniz mesaj axını ID-ləri",
+    "welcomeMessageFlowIdsDescription": "Dərc etdiyiniz zaman hər Facebook Səhifəsi ilə sinxronlaşdırılır. Reklam Menecerində Tərəfdaş tətbiqi altında seçin.",
     "messengerAdsNotPublished": "Bu axının məzmununu dərc edin və yenidən cəhd edin.",
     "messengerAdsNoStartNode": "Bu axının etibarlı başlanğıc addımı yoxdur. Axını açın, başlanğıc üçün «Mesaj göndər» addımı təyin edin, sonra dərc edin və yenidən cəhd edin.",
     "messengerAdsError": "JSON yaradılarkən xəta baş verdi. Yenidən cəhd edin.",
@@ -4319,6 +4341,9 @@
       "yes": "Bəli",
       "no": "Xeyr"
     },
+    "sendViewCatalogBodyTooLong": "Mesaj mətni kataloq mesajı üçün çox uzundur. Onu qısaldın.",
+    "sendViewCatalogFooterTooLong": "Alt məlumat kataloq mesajı üçün çox uzundur. Onu qısaldın.",
+    "viewCatalog": "Kataloqa bax",
     "sendProductsDisplayUnsupported": "Bu kanal bu növ məhsul mesajını göndərə bilməz.",
     "sendProductsFieldRequired": "Bu sahə məcburidir.",
     "sendProductsFieldNotAllowed": "Bu sahə burada istifadə oluna bilməz.",
@@ -6271,7 +6296,6 @@
     "allForms": "Bütün formalar",
     "allFormsNote": "Bu səhifədəki hər formadan potensial müştərilər toplanacaq. Standart sahələr (e-poçt, telefon, ad, cins) avtomatik olaraq uyğun kontakt sahələrində yadda saxlanılır.",
     "leadData": "Potensial müştəri məlumatları",
-    "whatFlow": "İşə salınacaq axın",
     "addNewPage": "Yenisini əlavə et",
     "noEligiblePages": "Uyğun səhifə yoxdur. Potensial müştərilərə giriş icazəsi vermək üçün “Yenisini əlavə et” düyməsindən istifadə edin.",
     "duplicateError": "Bu səhifə və forma üçün avtomatlaşdırma artıq mövcuddur.",

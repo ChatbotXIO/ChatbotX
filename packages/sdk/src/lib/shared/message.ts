@@ -660,6 +660,34 @@ export const getWhatsappCallEntity = (
 }
 
 /**
+ * What the sender stamps on the message a "view catalog" step produces. The
+ * message text alone reads like any other reply, so this is what lets the inbox
+ * show the catalog button the contact sees. Channel-neutral on purpose: only the
+ * step type decides it, never the channel that delivered it.
+ */
+export type MessageViewCatalogEntity = {
+  footer?: string
+}
+
+/**
+ * Centralized so the worker (writer) and inbox renderer (reader) cannot drift
+ * on the shape check.
+ */
+export const getViewCatalogEntity = (
+  contentAttributes: unknown,
+): MessageViewCatalogEntity | undefined => {
+  if (!contentAttributes || typeof contentAttributes !== "object") {
+    return
+  }
+  const { viewCatalog } = contentAttributes as { viewCatalog?: unknown }
+  if (!viewCatalog || typeof viewCatalog !== "object") {
+    return
+  }
+  const { footer } = viewCatalog as { footer?: unknown }
+  return typeof footer === "string" ? { footer } : {}
+}
+
+/**
  * A contact's message always opens the window; an activity card only when it
  * explicitly carries the moment - the server decides so callers never re-derive
  * channel window policy.

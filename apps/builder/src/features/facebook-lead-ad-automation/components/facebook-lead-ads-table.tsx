@@ -17,11 +17,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -120,34 +115,6 @@ export function FacebookLeadAdsTable({
         ),
         cell: ({ row }) => (
           <div className="text-center">{row.original.leadsHandledCount}</div>
-        ),
-        enableSorting: false,
-      },
-      {
-        id: "flow",
-        accessorKey: "flowId",
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            className="w-full justify-center"
-            column={column}
-            title={t("fields.flow.label")}
-          />
-        ),
-        cell: ({ row }) => (
-          <div className="flex justify-center">
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <div className="inline-block max-w-[200px] truncate">
-                    {row.original.flow?.name ?? "—"}
-                  </div>
-                }
-              />
-              <TooltipContent>
-                <p>{row.original.flow?.name ?? "—"}</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
         ),
         enableSorting: false,
       },

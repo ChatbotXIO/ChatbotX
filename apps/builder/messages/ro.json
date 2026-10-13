@@ -164,9 +164,11 @@
       "importStarted": "Fluxul se importă. Verifică istoricul importurilor pentru rezultate.",
       "importJsonOnly": "Doar fișiere JSON",
       "whatsappCallButton": "Sună pe WhatsApp",
+      "whatsappLocation": "Locație",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Controlul conversației",
       "sendGoogleAdsConversion": "Trimite conversie Google Ads",
+      "sendViewCatalog": "Vezi catalogul",
       "sendProducts": "Trimite produse"
     },
     "splitTraffic": {
@@ -287,6 +289,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "Editează butonul",
       "buttonLabel": "Eticheta butonului"
+    },
+    "whatsappLocation": {
+      "title": "Locație",
+      "name": "Nume",
+      "address": "Adresă",
+      "latitude": "Latitudine",
+      "longitude": "Longitudine",
+      "setLocation": "Setează locația",
+      "errors": {
+        "tooLong": "Maximum 1000 de caractere.",
+        "invalidLatitude": "Introdu o latitudine între -90 și 90.",
+        "invalidLongitude": "Introdu o longitudine între -180 și 180.",
+        "locationRequired": "Introdu coordonatele locației."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Subsol",
+      "thumbnailLabel": "Produs pentru miniatură"
     },
     "sendProducts": {
       "description": "Alege produsele de trimis și modul în care sunt afișate.",
@@ -3485,6 +3505,8 @@
     "failed": "Eșuat",
     "copiedToClipboard": "Copiat în clipboard",
     "messengerAdsJsonDescription": "Va trebui să generezi un cod JSON nou doar dacă faci modificări la pasul de start. Modificările din alți pași nu vor afecta acest cod JSON.",
+    "welcomeMessageFlowIdsTitle": "ID-uri ale fluxurilor de mesaje de bun venit",
+    "welcomeMessageFlowIdsDescription": "Se sincronizează cu fiecare Pagină de Facebook când publici. Alege-l la Aplicație partener în Ads Manager.",
     "messengerAdsNotPublished": "Publică conținutul acestui flux și încearcă din nou.",
     "messengerAdsNoStartNode": "Acest flux nu are un pas de start valid. Deschide fluxul, setează un pas de Trimite mesaj ca start, apoi publică și încearcă din nou.",
     "messengerAdsError": "Ceva nu a mers bine la generarea JSON-ului. Te rugăm să încerci din nou.",
@@ -3636,6 +3658,9 @@
       "yes": "Da",
       "no": "Nu"
     },
+    "sendViewCatalogBodyTooLong": "Textul mesajului este prea lung pentru un mesaj de catalog. Scurtează-l.",
+    "sendViewCatalogFooterTooLong": "Subsolul este prea lung pentru un mesaj de catalog. Scurtează-l.",
+    "viewCatalog": "Vezi catalogul",
     "sendProductsDisplayUnsupported": "Acest canal nu poate trimite acest tip de mesaj cu produse.",
     "sendProductsFieldRequired": "Acest câmp este obligatoriu.",
     "sendProductsFieldNotAllowed": "Acest câmp nu poate fi folosit aici.",
@@ -5284,8 +5309,7 @@
     "leads": "Lead-uri",
     "noEligiblePages": "Nicio pagină eligibilă. Folosește „Adaugă nouă” pentru a acorda acces la lead-uri.",
     "subscribeError": "Nu s-a putut abona această pagină la notificările Facebook pentru lead-uri, astfel automatizarea nu a fost creată. Reconectează pagina cu „Adaugă nouă” și încearcă din nou.",
-    "title": "Automatizare reclame pentru lead-uri Facebook",
-    "whatFlow": "Ce flux este declanșat"
+    "title": "Automatizare reclame pentru lead-uri Facebook"
   },
   "clickToMessageAds": {
     "title": "Reclame Click-to-Message",

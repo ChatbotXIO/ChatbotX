@@ -99,6 +99,17 @@ export function MetaCatalogProductSelect({
     }),
   )
 
+  // The list above only holds what the open popover searched for, so a saved
+  // pick would show as a bare id until its name happens to be listed. Asking
+  // for exactly that item names it right away, open or not.
+  const selectedLookup = useQuery(
+    orpc.whatsappMessageTemplateAPIs.searchMetaCatalogProductsAPI.queryOptions({
+      input: { workspaceId, retailerId: value },
+      enabled: Boolean(value) && Boolean(workspaceId),
+      refetchOnWindowFocus: false,
+    }),
+  )
+
   const items = search.data?.items ?? []
   const connected = search.data?.connected ?? true
   const loading = search.isLoading
@@ -114,7 +125,9 @@ export function MetaCatalogProductSelect({
     [items, excludeRetailerIds, value],
   )
 
-  const selectedOption = items.find((item) => item.retailerId === value)
+  const selectedOption =
+    items.find((item) => item.retailerId === value) ??
+    selectedLookup.data?.items.find((item) => item.retailerId === value)
   const triggerLabel =
     selectedOption?.name ??
     (value

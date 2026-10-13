@@ -13,11 +13,13 @@ import {
   ImagesIcon,
   KeyboardIcon,
   ListIcon,
+  MapPinIcon,
   MessageSquareIcon,
   PaperclipIcon,
   PhoneIcon,
   PictureInPicture2Icon,
   ShoppingCartIcon,
+  StoreIcon,
   TextIcon,
   TimerIcon,
   VideoIcon,
@@ -86,6 +88,11 @@ const ALL_MENU_ITEMS = (
       menuData?.beforeStep?.channel as ChannelType | undefined,
     ),
   },
+  sendViewCatalog: {
+    label: t("flows.actions.sendViewCatalog"),
+    icon: StoreIcon,
+    stepType: stepTypes.enum.sendViewCatalog,
+  },
   whatsappFlow: {
     label: t("flows.actions.whatsappFlow"),
     icon: WorkflowIcon,
@@ -106,6 +113,11 @@ const ALL_MENU_ITEMS = (
     label: t("flows.actions.sendProducts"),
     icon: ShoppingCartIcon,
     stepType: stepTypes.enum.sendProducts,
+  },
+  whatsappLocation: {
+    label: t("flows.actions.whatsappLocation"),
+    icon: MapPinIcon,
+    stepType: stepTypes.enum.whatsappLocation,
   },
   typing: {
     label: t("flows.actions.typing"),
@@ -155,8 +167,10 @@ const BASE_MENU_ORDER = [
 
 const WHATSAPP_MENU_EXTRAS = [
   "whatsappFlow",
+  "sendViewCatalog",
   "whatsappOptionList",
   "whatsappCallButton",
+  "whatsappLocation",
 ] as const
 
 const MENU_ITEM_STEP_TYPES: Record<string, readonly StepType[]> = {

@@ -38,6 +38,7 @@ import { customFieldService } from "../custom-field/service"
 import { notFoundException } from "../errors"
 import { assertFlowGraphPublishable, flowVersionService } from "../flow-version"
 import { folderService } from "../folder/service"
+import { messengerWelcomeMessageFlowService } from "../messenger-welcome-message-flow/service"
 import { assertDeletable } from "../template/installed-resource.service"
 import {
   type FlowWithNodeVersions,
@@ -457,6 +458,11 @@ class FlowService extends BaseService {
     )
 
     await flowVersionService.invalidateList(flowId)
+    await messengerWelcomeMessageFlowService.enqueueSync({
+      workspaceId,
+      flowId,
+      reason: "publish",
+    })
     await this.audit("create", `created a new flow (#${flowId})`)
 
     return { id: flowId }
@@ -491,6 +497,14 @@ class FlowService extends BaseService {
 
     if (updated.length === 0) {
       return
+    }
+
+    if (data.name !== undefined && data.name !== flow.name) {
+      await messengerWelcomeMessageFlowService.enqueueSync({
+        workspaceId: ctx.workspaceId,
+        flowId: flow.id,
+        reason: "rename",
+      })
     }
 
     await this.audit("update", `updated a flow (#${flow.id})`)
@@ -682,6 +696,11 @@ class FlowService extends BaseService {
         .update(flowAnalyticsSessionModel)
         .set({ deletedAt: new Date() })
         .where(inArray(flowAnalyticsSessionModel.flowId, flowIds))
+    })
+
+    await messengerWelcomeMessageFlowService.enqueueDelete({
+      workspaceId: input.workspaceId,
+      flowIds,
     })
 
     await this.audit(

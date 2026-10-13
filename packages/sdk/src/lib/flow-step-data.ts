@@ -11,9 +11,11 @@ import type {
   SendQuickReplyStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
+  SendViewCatalogStepSchema,
   SendWaTemplateMessageStepSchema,
   WhatsappCallButtonStepSchema,
   WhatsappFlowStepSchema,
+  WhatsappLocationStepSchema,
   WhatsappOptionListStepSchema,
 } from "@chatbotx.io/flow-config"
 
@@ -33,4 +35,6 @@ export type SendFlowStepData =
   | WhatsappCallButtonStepSchema
   | WhatsappFlowStepSchema
   | SendProductsStepSchema
+  | WhatsappLocationStepSchema
   | SendMessengerTemplateMessageStepSchema
+  | SendViewCatalogStepSchema

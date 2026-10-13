@@ -2473,9 +2473,11 @@
       "importStarted": "Alur sedang diimpor. Periksa riwayat impor untuk melihat hasilnya.",
       "importJsonOnly": "Hanya file JSON",
       "whatsappCallButton": "Telepon di WhatsApp",
+      "whatsappLocation": "Lokasi",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Kontrol thread",
       "sendGoogleAdsConversion": "Kirim konversi Google Ads",
+      "sendViewCatalog": "Lihat katalog",
       "sendProducts": "Kirim produk"
     },
     "splitTraffic": {
@@ -2596,6 +2598,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "Edit Tombol",
       "buttonLabel": "Label Tombol"
+    },
+    "whatsappLocation": {
+      "title": "Lokasi",
+      "name": "Nama",
+      "address": "Alamat",
+      "latitude": "Lintang",
+      "longitude": "Bujur",
+      "setLocation": "Atur lokasi",
+      "errors": {
+        "tooLong": "Maksimal 1000 karakter.",
+        "invalidLatitude": "Masukkan lintang antara -90 dan 90.",
+        "invalidLongitude": "Masukkan bujur antara -180 dan 180.",
+        "locationRequired": "Masukkan koordinat lokasi."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Footer",
+      "thumbnailLabel": "Produk thumbnail"
     },
     "sendProducts": {
       "description": "Pilih produk yang akan dikirim dan cara menampilkannya.",
@@ -3485,6 +3505,8 @@
     "failed": "Gagal",
     "copiedToClipboard": "Disalin ke papan klip",
     "messengerAdsJsonDescription": "Anda hanya perlu membuat kode JSON baru jika mengubah Langkah awal. Perubahan pada langkah lain tidak akan memengaruhi kode JSON ini.",
+    "welcomeMessageFlowIdsTitle": "ID alur pesan sambutan",
+    "welcomeMessageFlowIdsDescription": "Disinkronkan ke setiap Halaman Facebook saat Anda memublikasikan. Pilih di bawah Aplikasi mitra di Pengelola Iklan.",
     "messengerAdsNotPublished": "Publikasikan konten alur ini lalu coba lagi.",
     "messengerAdsNoStartNode": "Alur ini tidak memiliki langkah awal yang valid. Buka alur, tetapkan langkah Kirim Pesan sebagai awal, lalu publikasikan dan coba lagi.",
     "messengerAdsError": "Terjadi kesalahan saat membuat JSON. Silakan coba lagi.",
@@ -3636,6 +3658,9 @@
       "yes": "Ya",
       "no": "Tidak"
     },
+    "sendViewCatalogBodyTooLong": "Teks pesan terlalu panjang untuk pesan katalog. Persingkat.",
+    "sendViewCatalogFooterTooLong": "Footer terlalu panjang untuk pesan katalog. Persingkat.",
+    "viewCatalog": "Lihat katalog",
     "sendProductsDisplayUnsupported": "Kanal ini tidak dapat mengirim jenis pesan produk ini.",
     "sendProductsFieldRequired": "Kolom ini wajib diisi.",
     "sendProductsFieldNotAllowed": "Kolom ini tidak dapat digunakan di sini.",
@@ -5545,7 +5570,6 @@
     "allForms": "Semua formulir",
     "allFormsNote": "Prospek dari setiap formulir di halaman ini akan diambil. Kolom standar (email, telepon, nama, jenis kelamin) otomatis disimpan ke kolom kontak yang sesuai.",
     "leadData": "Data Prospek",
-    "whatFlow": "Alur yang dipicu",
     "addNewPage": "Tambahkan Baru",
     "noEligiblePages": "Tidak ada halaman yang memenuhi syarat. Gunakan \"Tambahkan Baru\" untuk memberikan akses prospek.",
     "duplicateError": "Otomatisasi untuk halaman dan formulir ini sudah ada.",

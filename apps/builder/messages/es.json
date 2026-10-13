@@ -2619,9 +2619,11 @@
       "importStarted": "El flujo se está importando. Consulta el historial de importaciones para ver los resultados.",
       "importJsonOnly": "Solo archivos JSON",
       "whatsappCallButton": "Llamar por WhatsApp",
+      "whatsappLocation": "Ubicación",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Control del hilo",
       "sendGoogleAdsConversion": "Enviar conversión de Google Ads",
+      "sendViewCatalog": "Ver catálogo",
       "sendProducts": "Enviar productos"
     },
     "splitTraffic": {
@@ -2742,6 +2744,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "Editar botón",
       "buttonLabel": "Etiqueta del botón"
+    },
+    "whatsappLocation": {
+      "title": "Ubicación",
+      "name": "Nombre",
+      "address": "Dirección",
+      "latitude": "Latitud",
+      "longitude": "Longitud",
+      "setLocation": "Definir ubicación",
+      "errors": {
+        "tooLong": "Máximo 1000 caracteres.",
+        "invalidLatitude": "Introduce una latitud entre -90 y 90.",
+        "invalidLongitude": "Introduce una longitud entre -180 y 180.",
+        "locationRequired": "Introduce las coordenadas de la ubicación."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Pie de mensaje",
+      "thumbnailLabel": "Producto de la miniatura"
     },
     "sendProducts": {
       "description": "Elige los productos que quieres enviar y cómo mostrarlos.",
@@ -3485,6 +3505,8 @@
     "failed": "Fallido",
     "copiedToClipboard": "Copied un clipboard",
     "messengerAdsJsonDescription": "You se only need un generate un nuevo JSON código si tú make changes un el starting Step. Changes en other steps won't affect este JSON código.",
+    "welcomeMessageFlowIdsTitle": "ID de flujos de mensajes de bienvenida",
+    "welcomeMessageFlowIdsDescription": "Se sincroniza con cada página de Facebook al publicar. Selecciónalo en App de socio en el Administrador de anuncios.",
     "messengerAdsNotPublished": "Publicar el content de este flow y try again.",
     "messengerAdsNoStartNode": "This flow tiene no valid starting step. Abrir el flow, Establecer un starting Enviar Mensaje step, then publicar y try again.",
     "messengerAdsError": "Something went wrong while generating el JSON. Por favor, try again.",
@@ -3636,6 +3658,9 @@
       "yes": "Sí",
       "no": "No"
     },
+    "sendViewCatalogBodyTooLong": "El texto del mensaje es demasiado largo para un mensaje de catálogo. Acórtalo.",
+    "sendViewCatalogFooterTooLong": "El pie es demasiado largo para un mensaje de catálogo. Acórtalo.",
+    "viewCatalog": "Ver catálogo",
     "sendProductsDisplayUnsupported": "Este canal no puede enviar este tipo de mensaje de producto.",
     "sendProductsFieldRequired": "Este campo es obligatorio.",
     "sendProductsFieldNotAllowed": "Este campo no se puede usar aquí.",
@@ -5545,7 +5570,6 @@
     "allForms": "Todos forms",
     "allFormsNote": "Leads desde every form en este página se be captured. Standard campos (correo, teléfono, nombre, gender) son saved un matching contacto campos automáticamente.",
     "leadData": "Lead Datos",
-    "whatFlow": "What flujo es desencadenadored",
     "addNewPage": "Añadir Nuevo",
     "noEligiblePages": "No eligible páginas. Use \"Añadir Nuevo\" un grant lead access.",
     "duplicateError": "An automatización ya existe para este página y form.",

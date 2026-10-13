@@ -210,6 +210,25 @@ describe("flowSpecSchema", () => {
     expect(hasJsonSchemaMaxLength(textSchema, 1000)).toBe(true)
   })
 
+  test("publishes the sendViewCatalog length limits to agents", () => {
+    const jsonSchema = z.toJSONSchema(flowSpecSchema)
+    if (!isJsonSchemaNode(jsonSchema)) {
+      throw new Error("Expected flowSpecSchema to serialize to JSON Schema")
+    }
+
+    const textSchema = findJsonSchemaNode(
+      jsonSchema,
+      "Message text shown above the catalog button (max 1024 characters, counted in UTF-16 units so an emoji may count as 2). May include `{{variable}}` placeholders.",
+    )
+    const footerSchema = findJsonSchemaNode(
+      jsonSchema,
+      "Optional small text under the message (max 60 characters, UTF-16 units; use an empty string for none). May include `{{variable}}` placeholders.",
+    )
+
+    expect(hasJsonSchemaMaxLength(textSchema, 1024)).toBe(true)
+    expect(hasJsonSchemaMaxLength(footerSchema, 60)).toBe(true)
+  })
+
   test("requires exactly one send content kind", () => {
     const missingContentIssues = expectInvalid(
       createFlowSpec([{ type: "send" }]),
@@ -345,6 +364,7 @@ describe("flowSpecStepTypes", () => {
         "send",
         "sendProducts",
         "sendTemplate",
+        "sendViewCatalog",
         "startFlow",
         "wait",
       ].sort(),

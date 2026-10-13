@@ -2473,9 +2473,11 @@
       "importStarted": "Il flusso è in fase di importazione. Controlla la cronologia delle importazioni per i risultati.",
       "importJsonOnly": "Solo file JSON",
       "whatsappCallButton": "Chiama su WhatsApp",
+      "whatsappLocation": "Posizione",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Controllo del thread",
       "sendGoogleAdsConversion": "Invia conversione Google Ads",
+      "sendViewCatalog": "Vedi catalogo",
       "sendProducts": "Invia prodotti"
     },
     "splitTraffic": {
@@ -2596,6 +2598,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "Modifica pulsante",
       "buttonLabel": "Etichetta del pulsante"
+    },
+    "whatsappLocation": {
+      "title": "Posizione",
+      "name": "Nome",
+      "address": "Indirizzo",
+      "latitude": "Latitudine",
+      "longitude": "Longitudine",
+      "setLocation": "Imposta posizione",
+      "errors": {
+        "tooLong": "Massimo 1000 caratteri.",
+        "invalidLatitude": "Inserisci una latitudine tra -90 e 90.",
+        "invalidLongitude": "Inserisci una longitudine tra -180 e 180.",
+        "locationRequired": "Inserisci le coordinate della posizione."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Piè di pagina",
+      "thumbnailLabel": "Prodotto per l'anteprima"
     },
     "sendProducts": {
       "description": "Scegli i prodotti da inviare e come mostrarli.",
@@ -3485,6 +3505,8 @@
     "failed": "Operazione non riuscita",
     "copiedToClipboard": "Copiato negli appunti",
     "messengerAdsJsonDescription": "Dovrai generare un nuovo codice JSON solo se modifichi il passaggio iniziale. Le modifiche agli altri passaggi non influiranno su questo codice JSON.",
+    "welcomeMessageFlowIdsTitle": "ID dei flussi di messaggi di benvenuto",
+    "welcomeMessageFlowIdsDescription": "Sincronizzato con ogni Pagina Facebook quando pubblichi. Selezionalo in App partner in Gestione inserzioni.",
     "messengerAdsNotPublished": "Pubblica il contenuto di questo flusso e riprova.",
     "messengerAdsNoStartNode": "Questo flusso non ha un passaggio iniziale valido. Apri il flusso, imposta come iniziale un passaggio Invia messaggio, quindi pubblica e riprova.",
     "messengerAdsError": "Si è verificato un errore durante la generazione del JSON. Riprova.",
@@ -3636,6 +3658,9 @@
       "yes": "Sì",
       "no": "No"
     },
+    "sendViewCatalogBodyTooLong": "Il testo del messaggio è troppo lungo per un messaggio catalogo. Accorcialo.",
+    "sendViewCatalogFooterTooLong": "Il piè di pagina è troppo lungo per un messaggio catalogo. Accorcialo.",
+    "viewCatalog": "Vedi catalogo",
     "sendProductsDisplayUnsupported": "Questo canale non può inviare questo tipo di messaggio prodotto.",
     "sendProductsFieldRequired": "Questo campo è obbligatorio.",
     "sendProductsFieldNotAllowed": "Questo campo non può essere usato qui.",
@@ -5545,7 +5570,6 @@
     "allForms": "Tutti i moduli",
     "allFormsNote": "Verranno acquisiti i contatti provenienti da ogni modulo di questa pagina. I campi standard (e-mail, telefono, nome, genere) vengono salvati automaticamente nei campi corrispondenti del contatto.",
     "leadData": "Dati del contatto acquisito",
-    "whatFlow": "Quale flusso viene attivato",
     "addNewPage": "Aggiungi",
     "noEligiblePages": "Nessuna pagina idonea. Usa \"Aggiungi\" per concedere l'accesso ai contatti acquisiti.",
     "duplicateError": "Esiste già un'automazione per questa pagina e questo modulo.",

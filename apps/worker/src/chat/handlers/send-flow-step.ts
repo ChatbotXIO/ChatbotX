@@ -19,7 +19,6 @@ import { wrapOpenLinkUrl } from "@chatbotx.io/business/open-link"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   channelTypes,
-  contentTypes,
   messageTypes,
   senderTypes,
 } from "@chatbotx.io/database/partials"
@@ -76,6 +75,7 @@ import {
   settleCommentAutomationFailure,
 } from "../../lib/comment-automation-anchor"
 import { logger } from "../../lib/logger"
+import { resolveStoredStepContent } from "../utils/stored-step-content"
 import {
   isDeliveredDirectMessage,
   markConversationReadAfterDelivery,
@@ -124,7 +124,8 @@ const resolveMessageAttachmentUrls = async (
 const isBlankTextCarrierStep = (step: SendFlowStepData) => {
   if (
     step.stepType === stepTypes.enum.sendText ||
-    step.stepType === stepTypes.enum.whatsappCallButton
+    step.stepType === stepTypes.enum.whatsappCallButton ||
+    step.stepType === stepTypes.enum.sendViewCatalog
   ) {
     return !step.text.trim()
   }
@@ -707,11 +708,9 @@ export async function sendFlowStep({
     return
   }
 
-  const messageText =
-    resolvedStep.stepType === stepTypes.enum.sendText ||
-    resolvedStep.stepType === stepTypes.enum.whatsappCallButton
-      ? resolvedStep.text
-      : null
+  const storedContent = resolveStoredStepContent(
+    resolvedStep as SendFlowStepData,
+  )
 
   let message: MessageModel | MessageWithAttachments | undefined
 
@@ -775,6 +774,7 @@ export async function sendFlowStep({
 
     let contentAttributes: (typeof messageModel.$inferInsert)["contentAttributes"] =
       {
+        ...storedContent.contentAttributes,
         metadata,
         richResponse,
         stepId: resolvedStep.id,
@@ -882,11 +882,11 @@ export async function sendFlowStep({
       conversationId: conversation.id,
       contactInboxId: targetContactInbox.id,
       messageType: messageTypes.enum.outgoing,
-      contentType: contentTypes.enum.text,
+      contentType: storedContent.contentType,
       senderType: senderTypes.enum.bot,
       sourceId: null,
       text:
-        messageText ??
+        storedContent.text ??
         (productMessage ? resolveProductMessageText(productMessage) : null),
       contentAttributes,
       createdAt: new Date(),

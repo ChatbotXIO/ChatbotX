@@ -3,11 +3,13 @@ import {
   type SendImageStepSchema,
   type SendMultipleImagesStepSchema,
   type SendTextStepSchema,
+  type SendViewCatalogStepSchema,
   type SendWaTemplateMessageStepSchema,
   type StepType,
   stepTypes,
   type WhatsappCallButtonStepSchema,
   type WhatsappFlowStepSchema,
+  type WhatsappLocationStepSchema,
   type WhatsappOptionListStepSchema,
 } from "@chatbotx.io/flow-config"
 import {
@@ -45,9 +47,11 @@ import {
 } from "./send-image"
 import { convertFlowStepSendProducts } from "./send-products"
 import { convertFlowStepText } from "./send-text"
+import { convertFlowStepViewCatalog } from "./send-view-catalog"
 import { convertFlowStepWaTemplate } from "./send-wa-template"
 import { convertFlowStepWhatsappCallButton } from "./whatsapp-call-button"
 import { convertFlowStepWhatsappFlow } from "./whatsapp-flow"
+import { convertFlowStepWhatsappLocation } from "./whatsapp-location"
 import { convertFlowStepWhatsappOptionList } from "./whatsapp-option-list"
 
 function buildLocationRequestMessage(bodyText: string): LocationRequestMessage {
@@ -182,6 +186,16 @@ function* convertFlowStepToWhatsappMessage(
         >[0],
       )
       break
+    case stepTypes.enum.sendViewCatalog:
+      yield* convertFlowStepViewCatalog(
+        props as Parameters<
+          MessageHandlers<
+            WhatsappAuthValue,
+            SendViewCatalogStepSchema
+          >["sendFlowStep"]
+        >[0],
+      )
+      break
     case stepTypes.enum.whatsappOptionList:
       yield* convertFlowStepWhatsappOptionList(
         props as Parameters<
@@ -198,6 +212,16 @@ function* convertFlowStepToWhatsappMessage(
           MessageHandlers<
             WhatsappAuthValue,
             WhatsappCallButtonStepSchema
+          >["sendFlowStep"]
+        >[0],
+      )
+      break
+    case stepTypes.enum.whatsappLocation:
+      yield* convertFlowStepWhatsappLocation(
+        props as Parameters<
+          MessageHandlers<
+            WhatsappAuthValue,
+            WhatsappLocationStepSchema
           >["sendFlowStep"]
         >[0],
       )
@@ -232,6 +256,7 @@ const isRawWhatsappMessage = (
   message._type === "interactive_product_list" ||
   message._type === "interactive_product_carousel" ||
   message._type === "interactive_catalog" ||
+  message._type === "location" ||
   message._type === "location_request"
 
 /**
@@ -305,11 +330,13 @@ export const handledFlowStepTypes = [
   stepTypes.enum.sendImage,
   stepTypes.enum.sendMultipleImages,
   stepTypes.enum.sendCarousel,
+  stepTypes.enum.sendViewCatalog,
   stepTypes.enum.sendWaTemplateMessage,
   stepTypes.enum.whatsappOptionList,
   stepTypes.enum.whatsappCallButton,
   stepTypes.enum.whatsappFlow,
   stepTypes.enum.sendProducts,
+  stepTypes.enum.whatsappLocation,
 ] as const satisfies readonly StepType[]
 
 export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =

@@ -2,7 +2,7 @@ import type { ChannelType } from "@chatbotx.io/utils/channel"
 import { type StepType, stepTypes } from "../../steps/step-action"
 import type { ProductMessageCapability } from "../product-message-rules"
 
-export const CHANNEL_POLICY_VERSION = 1
+export const CHANNEL_POLICY_VERSION = 2
 
 export const stepSupport = {
   full: "full",
@@ -105,11 +105,13 @@ const stepExecutionKinds = {
   subscribeSequence: "worker",
   unsubscribeSequence: "worker",
   email: "worker",
+  sendViewCatalog: "channel",
   sendWaTemplateMessage: "channel",
   whatsappOptionList: "channel",
   whatsappCallButton: "channel",
   whatsappFlow: "channel",
   sendProducts: "channel",
+  whatsappLocation: "channel",
   sendMessengerTemplateMessage: "channel",
   facebookCustomAudience: "worker",
   sendMetaCapiEvent: "worker",
@@ -134,9 +136,11 @@ export const channelDeliverableStepTypes = [
   stepTypes.enum.sendQuickReply,
   stepTypes.enum.sendText,
   stepTypes.enum.sendVideo,
+  stepTypes.enum.sendViewCatalog,
   stepTypes.enum.sendWaTemplateMessage,
   stepTypes.enum.whatsappCallButton,
   stepTypes.enum.whatsappFlow,
+  stepTypes.enum.whatsappLocation,
   stepTypes.enum.whatsappOptionList,
 ] as const satisfies readonly StepType[]
 
@@ -163,6 +167,8 @@ export type ChannelFlowPolicy = {
     buttonLabel: number
     cardTitle?: number
     text: number
+    /** Declared only by channels that can deliver `sendViewCatalog`. */
+    viewCatalog?: { footer: number; text: number }
   }
   quickRepliesShareButtonSlots: boolean
   steps: Record<StepType, StepSupport>

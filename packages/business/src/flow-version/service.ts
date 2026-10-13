@@ -4,6 +4,7 @@ import {
   db,
   desc,
   eq,
+  lte,
 } from "@chatbotx.io/database/client"
 import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
 import type { FlowVersionModel } from "@chatbotx.io/database/types"
@@ -13,6 +14,7 @@ import { BaseService } from "../base.service"
 import { conversationService } from "../conversation/service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
+import { messengerWelcomeMessageFlowService } from "../messenger-welcome-message-flow/service"
 import { smartDelayService } from "../smart-delay/service"
 import { assertFlowGraphPublishable } from "./assert-publishable"
 
@@ -31,6 +33,33 @@ class FlowVersionService extends BaseService {
     return await client.query.flowVersionModel.findFirst({
       where: { flowId, workspaceId, isDraft: true },
     })
+  }
+
+  /**
+   * 1-based position of the live (`isLatest`) published version among the
+   * flow's published versions, oldest first; 0 when nothing is published.
+   * The `vN` in the Meta welcome flow name. A restore re-points `isLatest`
+   * without inserting a row, so this follows it back to the restored
+   * version's own number.
+   */
+  async publishedVersionNumber(input: {
+    workspaceId: string
+    flowId: string
+  }): Promise<number> {
+    const live = await this.findPublished(input)
+    if (!live) {
+      return 0
+    }
+    return await db.$count(
+      flowVersionModel,
+      and(
+        eq(flowVersionModel.workspaceId, input.workspaceId),
+        eq(flowVersionModel.flowId, input.flowId),
+        eq(flowVersionModel.isDraft, false),
+        // Snowflake ids grow with creation time: same order as the dialog.
+        lte(flowVersionModel.id, live.id),
+      ),
+    )
   }
 
   async findPublished(
@@ -171,6 +200,14 @@ class FlowVersionService extends BaseService {
     })
 
     await this.invalidateCacheTags(`flows:${version.flowId}:versions`)
+
+    // Restoring changes what is published, so the Meta welcome message flows
+    // must follow it exactly like a publish (fire-and-forget, never throws).
+    await messengerWelcomeMessageFlowService.enqueueSync({
+      workspaceId: version.workspaceId,
+      flowId: version.flowId,
+      reason: "publish",
+    })
   }
 
   async revertDraftToPublished({
@@ -231,9 +268,16 @@ class FlowVersionService extends BaseService {
   async getMessengerAdsStartNode({
     flowId,
     workspaceId,
+    fresh = false,
   }: {
     flowId: string
     workspaceId: string
+    /**
+     * Skip the cache. The welcome-message-flow sync job uses this: a reader
+     * racing a publish can write the previous version back into the cache
+     * after invalidation, and the job must never push stale content to Meta.
+     */
+    fresh?: boolean
   }): Promise<
     | {
         status: "ok"
@@ -243,49 +287,57 @@ class FlowVersionService extends BaseService {
     | { status: "notPublished" }
     | { status: "noStartNode" }
   > {
+    const resolve = async () => {
+      const publishedVersion = await db.query.flowVersionModel.findFirst({
+        where: { flowId, workspaceId, isDraft: false, isLatest: true },
+      })
+      if (!publishedVersion) {
+        return { status: "notPublished" as const }
+      }
+
+      // The authoritative start node is the one flagged `isStartNode` in the
+      // canvas — `startNodeId` is set at creation and is NOT re-synced when
+      // the start node is reassigned, so it can be stale or point to a deleted
+      // node. Fall back to the column only if no node carries the flag.
+      const isStartNode = (node: {
+        id: string
+        [x: string]: unknown
+      }): boolean => {
+        const data = node.data
+        return (
+          typeof data === "object" &&
+          data !== null &&
+          (data as { isStartNode?: unknown }).isStartNode === true
+        )
+      }
+
+      const startNode =
+        publishedVersion.nodes.find(isStartNode) ??
+        publishedVersion.nodes.find(
+          (node) => node.id === publishedVersion.startNodeId,
+        )
+
+      if (!startNode) {
+        return { status: "noStartNode" as const }
+      }
+
+      return {
+        status: "ok" as const,
+        flowVersionId: publishedVersion.id,
+        startNode,
+      }
+    }
+
+    if (fresh) {
+      return await resolve()
+    }
+
     return await withCache(
       `flows:${flowId}:messenger-ads-start-node`,
-      async () => {
-        const publishedVersion = await db.query.flowVersionModel.findFirst({
-          where: { flowId, workspaceId, isDraft: false, isLatest: true },
-        })
-        if (!publishedVersion) {
-          return { status: "notPublished" as const }
-        }
-
-        // The authoritative start node is the one flagged `isStartNode` in the
-        // canvas — `startNodeId` is set at creation and is NOT re-synced when
-        // the start node is reassigned, so it can be stale or point to a deleted
-        // node. Fall back to the column only if no node carries the flag.
-        const isStartNode = (node: {
-          id: string
-          [x: string]: unknown
-        }): boolean => {
-          const data = node.data
-          return (
-            typeof data === "object" &&
-            data !== null &&
-            (data as { isStartNode?: unknown }).isStartNode === true
-          )
-        }
-
-        const startNode =
-          publishedVersion.nodes.find(isStartNode) ??
-          publishedVersion.nodes.find(
-            (node) => node.id === publishedVersion.startNodeId,
-          )
-
-        if (!startNode) {
-          return { status: "noStartNode" as const }
-        }
-
-        return {
-          status: "ok" as const,
-          flowVersionId: publishedVersion.id,
-          startNode,
-        }
+      resolve,
+      {
+        tags: [`flows:${flowId}:versions`],
       },
-      { tags: [`flows:${flowId}:versions`] },
     )
   }
 
@@ -450,6 +502,14 @@ class FlowVersionService extends BaseService {
     })
 
     await this.invalidateCacheTags(`flows:${flow.id}:versions`)
+
+    // Fire-and-forget, never throws: mirrors the start node to Meta welcome
+    // message flows (Click-to-Messenger ads) on every Messenger page.
+    await messengerWelcomeMessageFlowService.enqueueSync({
+      workspaceId: input.workspaceId,
+      flowId: flow.id,
+      reason: "publish",
+    })
 
     // Fire-and-forget: publishing must never fail or wait on cleanup;
     // stale state also resolves itself at the worker.

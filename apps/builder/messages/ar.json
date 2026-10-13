@@ -2619,9 +2619,11 @@
       "importStarted": "جارٍ استيراد التدفق. يرجى مراجعة سجل الاستيراد للحصول على النتائج.",
       "importJsonOnly": "ملفات JSON فقط",
       "whatsappCallButton": "الاتصال عبر واتساب",
+      "whatsappLocation": "الموقع",
       "metaConversions": "Meta Conversions API",
       "threadControl": "التحكم في المحادثة",
       "sendGoogleAdsConversion": "إرسال تحويل Google Ads",
+      "sendViewCatalog": "عرض الكتالوج",
       "sendProducts": "إرسال المنتجات"
     },
     "splitTraffic": {
@@ -2742,6 +2744,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "تعديل الزر",
       "buttonLabel": "تسمية الزر"
+    },
+    "whatsappLocation": {
+      "title": "الموقع",
+      "name": "الاسم",
+      "address": "العنوان",
+      "latitude": "خط العرض",
+      "longitude": "خط الطول",
+      "setLocation": "تعيين الموقع",
+      "errors": {
+        "tooLong": "يجب ألا يتجاوز 1000 حرف.",
+        "invalidLatitude": "أدخل خط عرض بين -90 و90.",
+        "invalidLongitude": "أدخل خط طول بين -180 و180.",
+        "locationRequired": "أدخل إحداثيات الموقع."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "التذييل",
+      "thumbnailLabel": "منتج الصورة المصغرة"
     },
     "sendProducts": {
       "description": "اختر المنتجات المراد إرسالها وطريقة عرضها.",
@@ -3485,6 +3505,8 @@
     "failed": "فشل",
     "copiedToClipboard": "تم النسخ إلى الحافظة",
     "messengerAdsJsonDescription": "لن تحتاج إلى إنشاء كود JSON جديد إلا إذا أجريت تغييرات على خطوة البداية. لن تؤثر التغييرات في الخطوات الأخرى في هذا الكود.",
+    "welcomeMessageFlowIdsTitle": "معرّفات تدفقات رسائل الترحيب",
+    "welcomeMessageFlowIdsDescription": "تتم مزامنتها مع كل صفحة فيسبوك عند النشر. اخترها ضمن تطبيق الشريك في مدير الإعلانات.",
     "messengerAdsNotPublished": "انشر محتوى هذا المسار ثم حاول مرة أخرى.",
     "messengerAdsNoStartNode": "لا يحتوي هذا المسار على خطوة بداية صالحة. افتح المسار، وحدد خطوة «إرسال رسالة» كبداية، ثم انشره وحاول مرة أخرى.",
     "messengerAdsError": "حدث خطأ أثناء إنشاء JSON. يُرجى المحاولة مرة أخرى.",
@@ -3636,6 +3658,9 @@
       "yes": "نعم",
       "no": "لا"
     },
+    "sendViewCatalogBodyTooLong": "نص الرسالة طويل جدًا لرسالة الكتالوج. قم باختصاره.",
+    "sendViewCatalogFooterTooLong": "التذييل طويل جدًا لرسالة الكتالوج. قم باختصاره.",
+    "viewCatalog": "عرض الكتالوج",
     "sendProductsDisplayUnsupported": "لا يمكن لهذه القناة إرسال هذا النوع من رسائل المنتجات.",
     "sendProductsFieldRequired": "هذا الحقل مطلوب.",
     "sendProductsFieldNotAllowed": "لا يمكن استخدام هذا الحقل هنا.",
@@ -5162,7 +5187,6 @@
     "allForms": "جميع النماذج",
     "allFormsNote": "سيتم التقاط العملاء المحتملين من كل نموذج في هذه الصفحة. تُحفظ الحقول القياسية (البريد الإلكتروني والهاتف والاسم والجنس) تلقائيًا في حقول جهة الاتصال المطابقة.",
     "leadData": "بيانات العميل المحتمل",
-    "whatFlow": "المسار الذي سيتم تشغيله",
     "addNewPage": "إضافة جديد",
     "noEligiblePages": "لا توجد صفحات مؤهلة. استخدم «إضافة جديد» لمنح صلاحية الوصول إلى العملاء المحتملين.",
     "duplicateError": "توجد أتمتة بالفعل لهذه الصفحة وهذا النموذج.",

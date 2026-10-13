@@ -2473,9 +2473,11 @@
       "importStarted": "Flowet importeres. Tjek importhistorikken for resultater.",
       "importJsonOnly": "Kun JSON-filer",
       "whatsappCallButton": "Ring på WhatsApp",
+      "whatsappLocation": "Placering",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Trådkontrol",
       "sendGoogleAdsConversion": "Send Google Ads-konvertering",
+      "sendViewCatalog": "Se katalog",
       "sendProducts": "Send produkter"
     },
     "splitTraffic": {
@@ -2596,6 +2598,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "Rediger Knap",
       "buttonLabel": "Knap Etiket"
+    },
+    "whatsappLocation": {
+      "title": "Placering",
+      "name": "Navn",
+      "address": "Adresse",
+      "latitude": "Breddegrad",
+      "longitude": "Længdegrad",
+      "setLocation": "Angiv placering",
+      "errors": {
+        "tooLong": "Maks. 1000 tegn.",
+        "invalidLatitude": "Angiv en breddegrad mellem -90 og 90.",
+        "invalidLongitude": "Angiv en længdegrad mellem -180 og 180.",
+        "locationRequired": "Angiv placeringens koordinater."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Sidefod",
+      "thumbnailLabel": "Miniaturebillede-produkt"
     },
     "sendProducts": {
       "description": "Vælg de produkter, der skal sendes, og hvordan de vises.",
@@ -3485,6 +3505,8 @@
     "failed": "Mislykkedes",
     "copiedToClipboard": "Copied til clipboard",
     "messengerAdsJsonDescription": "Du vil kun need til generér a ny JSON kode hvis du make changes til den starting Step. Changes i anden steps won't affect denne JSON kode.",
+    "welcomeMessageFlowIdsTitle": "Id'er for velkomstbeskedflow",
+    "welcomeMessageFlowIdsDescription": "Synkroniseres til hver Facebook-side, når du udgiver. Vælg det under Partnerapp i Ads Manager.",
     "messengerAdsNotPublished": "Udgiv den content af denne flow og try igen.",
     "messengerAdsNoStartNode": "Denne flow har ingen valid starting step. Åbn den flow, set a starting Send Besked step, then udgiv og try igen.",
     "messengerAdsError": "Noget gik galt while generating den JSON. Prøv igen.",
@@ -3636,6 +3658,9 @@
       "yes": "Ja",
       "no": "Nej"
     },
+    "sendViewCatalogBodyTooLong": "Beskedteksten er for lang til en katalogbesked. Gør den kortere.",
+    "sendViewCatalogFooterTooLong": "Sidefoden er for lang til en katalogbesked. Gør den kortere.",
+    "viewCatalog": "Se katalog",
     "sendProductsDisplayUnsupported": "Denne kanal kan ikke sende denne type produktbesked.",
     "sendProductsFieldRequired": "Dette felt er påkrævet.",
     "sendProductsFieldNotAllowed": "Dette felt kan ikke bruges her.",
@@ -5545,7 +5570,6 @@
     "allForms": "Alle forms",
     "allFormsNote": "Leads fra every form på denne side vil være captured. Standard felter (e-mail, telefon, navn, køn) er saved til matching kontakt felter automatically.",
     "leadData": "Lead Data",
-    "whatFlow": "What flow er triggered",
     "addNewPage": "Tilføj Ny",
     "noEligiblePages": "Ingen eligible sider. Use \"Tilføj Ny\" til grant lead access.",
     "duplicateError": "An automatisering already exists for denne side og form.",

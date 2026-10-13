@@ -196,7 +196,12 @@ export const metaCatalogItemRepository = {
    * picker's whole point is that the end user never has to type one.
    */
   async searchWithProductInfo(
-    input: CatalogScope & { keyword?: string; limit?: number },
+    input: CatalogScope & {
+      keyword?: string
+      /** Exactly this item, e.g. to show a saved pick by name. */
+      retailerId?: string
+      limit?: number
+    },
     tx: DatabaseClient = db,
   ) {
     const limit = input.limit ?? DEFAULT_SEARCH_LIMIT
@@ -216,6 +221,9 @@ export const metaCatalogItemRepository = {
           inCatalog(input),
           input.keyword
             ? ilike(productModel.name, likeContains(input.keyword))
+            : undefined,
+          input.retailerId
+            ? eq(metaCatalogItemModel.retailerId, input.retailerId)
             : undefined,
         ),
       )

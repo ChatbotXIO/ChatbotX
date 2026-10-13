@@ -94,7 +94,7 @@
     "getDraftLink": "Get Draft Link",
     "getPublishedLink": "Get Published Link",
     "getMessengerAdsJson": "Get JSON for Messenger Ads",
-    "getMessengerAdPayload": "Get payload for Messenger Ad",
+    "getMessengerAdPayload": "Get payload for Messenger Ads",
     "ok": "OK",
     "next": "Next",
     "prev": "Prev",
@@ -3302,9 +3302,11 @@
       "importStarted": "Flow is importing. Check the import history for results.",
       "importJsonOnly": "JSON files only",
       "whatsappCallButton": "Call on WhatsApp",
+      "whatsappLocation": "Location",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread Control",
       "sendGoogleAdsConversion": "Send Google Ads Conversion",
+      "sendViewCatalog": "View catalog",
       "sendProducts": "Send Products"
     },
     "splitTraffic": {
@@ -3425,6 +3427,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "Edit Button",
       "buttonLabel": "Button Label"
+    },
+    "whatsappLocation": {
+      "title": "Location",
+      "name": "Name",
+      "address": "Address",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "setLocation": "Set location",
+      "errors": {
+        "tooLong": "Keep this under 1000 characters.",
+        "invalidLatitude": "Enter a latitude between -90 and 90.",
+        "invalidLongitude": "Enter a longitude between -180 and 180.",
+        "locationRequired": "Enter the location's coordinates."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Footer",
+      "thumbnailLabel": "Thumbnail product"
     },
     "sendProducts": {
       "description": "Choose the products to send and how to show them.",
@@ -4168,6 +4188,8 @@
     "failed": "Failed",
     "copiedToClipboard": "Copied to clipboard",
     "messengerAdsJsonDescription": "You will only need to generate a new JSON code if you make changes to the starting Step. Changes in other steps won't affect this JSON code.",
+    "welcomeMessageFlowIdsTitle": "Welcome message flow IDs",
+    "welcomeMessageFlowIdsDescription": "Synced to each Facebook Page when you publish. Pick it under Partner app in Ads Manager.",
     "messengerAdsNotPublished": "Publish the content of this flow and try again.",
     "messengerAdsNoStartNode": "This flow has no valid starting step. Open the flow, set a starting Send Message step, then publish and try again.",
     "messengerAdsError": "Something went wrong while generating the JSON. Please try again.",
@@ -4319,6 +4341,9 @@
       "yes": "Yes",
       "no": "No"
     },
+    "sendViewCatalogBodyTooLong": "The message text is too long for a catalog message. Shorten it.",
+    "sendViewCatalogFooterTooLong": "The footer is too long for a catalog message. Shorten it.",
+    "viewCatalog": "View catalog",
     "sendProductsDisplayUnsupported": "This channel can't send this kind of product message.",
     "sendProductsFieldRequired": "This field is required.",
     "sendProductsFieldNotAllowed": "This field can't be used here.",
@@ -6271,7 +6296,6 @@
     "allForms": "All forms",
     "allFormsNote": "Leads from every form on this page will be captured. Standard fields (email, phone, name, gender) are saved to matching contact fields automatically.",
     "leadData": "Lead Data",
-    "whatFlow": "What flow is triggered",
     "addNewPage": "Add New",
     "noEligiblePages": "No eligible pages. Use \"Add New\" to grant lead access.",
     "duplicateError": "An automation already exists for this page and form.",

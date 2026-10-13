@@ -2473,9 +2473,11 @@
       "importStarted": "De flow wordt geïmporteerd. Bekijk de importgeschiedenis voor de resultaten.",
       "importJsonOnly": "Alleen JSON-bestanden",
       "whatsappCallButton": "Bellen via WhatsApp",
+      "whatsappLocation": "Locatie",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Threadbeheer",
       "sendGoogleAdsConversion": "Google Ads-conversie verzenden",
+      "sendViewCatalog": "Catalogus bekijken",
       "sendProducts": "Producten verzenden"
     },
     "splitTraffic": {
@@ -2596,6 +2598,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "Knop bewerken",
       "buttonLabel": "Knoplabel"
+    },
+    "whatsappLocation": {
+      "title": "Locatie",
+      "name": "Naam",
+      "address": "Adres",
+      "latitude": "Breedtegraad",
+      "longitude": "Lengtegraad",
+      "setLocation": "Locatie instellen",
+      "errors": {
+        "tooLong": "Maximaal 1000 tekens.",
+        "invalidLatitude": "Voer een breedtegraad in tussen -90 en 90.",
+        "invalidLongitude": "Voer een lengtegraad in tussen -180 en 180.",
+        "locationRequired": "Voer de coördinaten van de locatie in."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Voettekst",
+      "thumbnailLabel": "Product voor miniatuur"
     },
     "sendProducts": {
       "description": "Kies de producten die je wilt verzenden en hoe ze worden getoond.",
@@ -3485,6 +3505,8 @@
     "failed": "Mislukt",
     "copiedToClipboard": "Naar klembord gekopieerd",
     "messengerAdsJsonDescription": "Je hoeft alleen een nieuwe JSON-code te genereren als je wijzigingen aanbrengt in de beginstap. Wijzigingen in andere stappen hebben geen invloed op deze JSON-code.",
+    "welcomeMessageFlowIdsTitle": "ID's van welkomstberichtflows",
+    "welcomeMessageFlowIdsDescription": "Wordt bij publiceren gesynchroniseerd met elke Facebook-pagina. Kies het onder Partner-app in Advertentiebeheer.",
     "messengerAdsNotPublished": "Publiceer de inhoud van deze flow en probeer het opnieuw.",
     "messengerAdsNoStartNode": "Deze flow heeft geen geldige beginstap. Open de flow, stel een beginstap Bericht verzenden in, publiceer en probeer het opnieuw.",
     "messengerAdsError": "Er ging iets mis bij het genereren van de JSON. Probeer het opnieuw.",
@@ -3636,6 +3658,9 @@
       "yes": "Ja",
       "no": "Nee"
     },
+    "sendViewCatalogBodyTooLong": "De berichttekst is te lang voor een catalogusbericht. Maak hem korter.",
+    "sendViewCatalogFooterTooLong": "De voettekst is te lang voor een catalogusbericht. Maak hem korter.",
+    "viewCatalog": "Catalogus bekijken",
     "sendProductsDisplayUnsupported": "Dit kanaal kan dit soort productbericht niet verzenden.",
     "sendProductsFieldRequired": "Dit veld is verplicht.",
     "sendProductsFieldNotAllowed": "Dit veld kan hier niet worden gebruikt.",
@@ -5545,7 +5570,6 @@
     "allForms": "Alle formulieren",
     "allFormsNote": "Leads uit elk formulier op deze pagina worden vastgelegd. Standaardvelden (e-mail, telefoonnummer, naam en geslacht) worden automatisch in de overeenkomstige contactvelden opgeslagen.",
     "leadData": "Leadgegevens",
-    "whatFlow": "Welke flow wordt geactiveerd",
     "addNewPage": "Nieuwe toevoegen",
     "noEligiblePages": "Geen geschikte pagina's. Gebruik 'Nieuwe toevoegen' om toegang tot leads te verlenen.",
     "duplicateError": "Er bestaat al een automatisering voor deze pagina en dit formulier.",

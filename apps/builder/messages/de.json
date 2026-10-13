@@ -2473,9 +2473,11 @@
       "importStarted": "Der Flow wird importiert. Ergebnisse im Importverlauf prüfen.",
       "importJsonOnly": "Nur JSON-Dateien",
       "whatsappCallButton": "Auf WhatsApp anrufen",
+      "whatsappLocation": "Standort",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread-Steuerung",
       "sendGoogleAdsConversion": "Google-Ads-Conversion senden",
+      "sendViewCatalog": "Katalog ansehen",
       "sendProducts": "Produkte senden"
     },
     "splitTraffic": {
@@ -2596,6 +2598,24 @@
     "whatsappCallButton": {
       "editButtonTitle": "Schaltfläche bearbeiten",
       "buttonLabel": "Schaltflächenbeschriftung"
+    },
+    "whatsappLocation": {
+      "title": "Standort",
+      "name": "Name",
+      "address": "Adresse",
+      "latitude": "Breitengrad",
+      "longitude": "Längengrad",
+      "setLocation": "Standort festlegen",
+      "errors": {
+        "tooLong": "Maximal 1000 Zeichen.",
+        "invalidLatitude": "Gib einen Breitengrad zwischen -90 und 90 ein.",
+        "invalidLongitude": "Gib einen Längengrad zwischen -180 und 180 ein.",
+        "locationRequired": "Gib die Koordinaten des Standorts ein."
+      }
+    },
+    "sendViewCatalog": {
+      "footerLabel": "Fußzeile",
+      "thumbnailLabel": "Vorschaubild-Produkt"
     },
     "sendProducts": {
       "description": "Wähle die Produkte aus, die gesendet werden sollen, und wie sie angezeigt werden.",
@@ -3485,6 +3505,8 @@
     "failed": "Fehlgeschlagen",
     "copiedToClipboard": "In die Zwischenablage kopiert",
     "messengerAdsJsonDescription": "Sie müssen nur dann einen neuen JSON-Code generieren, wenn Sie Änderungen am Startschritt vornehmen. Änderungen an anderen Schritten wirken sich nicht auf diesen JSON-Code aus.",
+    "welcomeMessageFlowIdsTitle": "IDs der Begrüßungsnachrichten-Flows",
+    "welcomeMessageFlowIdsDescription": "Wird beim Veröffentlichen mit jeder Facebook-Seite synchronisiert. Wähle sie im Werbeanzeigenmanager unter Partner-App aus.",
     "messengerAdsNotPublished": "Veröffentlichen Sie den Inhalt dieses Flows und versuchen Sie es erneut.",
     "messengerAdsNoStartNode": "Dieser Flow hat keinen gültigen Startschritt. Öffnen Sie den Flow, legen Sie einen Schritt „Nachricht senden“ als Start fest, veröffentlichen Sie ihn und versuchen Sie es erneut.",
     "messengerAdsError": "Beim Generieren des JSON ist ein Fehler aufgetreten. Versuchen Sie es erneut.",
@@ -3636,6 +3658,9 @@
       "yes": "Ja",
       "no": "Nein"
     },
+    "sendViewCatalogBodyTooLong": "Der Nachrichtentext ist für eine Katalognachricht zu lang. Kürze ihn.",
+    "sendViewCatalogFooterTooLong": "Die Fußzeile ist für eine Katalognachricht zu lang. Kürze sie.",
+    "viewCatalog": "Katalog ansehen",
     "sendProductsDisplayUnsupported": "Dieser Kanal kann diese Art von Produktnachricht nicht senden.",
     "sendProductsFieldRequired": "Dieses Feld ist erforderlich.",
     "sendProductsFieldNotAllowed": "Dieses Feld kann hier nicht verwendet werden.",
@@ -5545,7 +5570,6 @@
     "allForms": "Alle Formulare",
     "allFormsNote": "Leads aus jedem Formular auf dieser Seite werden erfasst. Standardfelder (E-Mail, Telefon, Name, Geschlecht) werden automatisch in den passenden Kontaktfeldern gespeichert.",
     "leadData": "Lead-Daten",
-    "whatFlow": "Welcher Flow wird ausgelöst",
     "addNewPage": "Neu hinzufügen",
     "noEligiblePages": "Keine berechtigten Seiten. Verwenden Sie „Neu hinzufügen“, um Lead-Zugriff zu gewähren.",
     "duplicateError": "Für diese Seite und dieses Formular ist bereits eine Automatisierung vorhanden.",
