@@ -118,6 +118,7 @@ import { messageRelations } from "./message"
 import { messagingAdOperationRelations } from "./messaging-ad-operation"
 import { messagingAdsConnectionRelations } from "./messaging-ads-connection"
 import { messengerMessageTemplateRelations } from "./messenger-message-template"
+import { messengerWelcomeMessageFlowRelations } from "./messenger-welcome-message-flow"
 import { metaCapiEventRelations } from "./meta-capi-event"
 import { metaCatalogRelations } from "./meta-catalog"
 import { miniAppRelations } from "./mini-app"
@@ -188,6 +189,7 @@ export const relations = {
   ...conversationRelations,
   ...couponRelations,
   ...messageRelations,
+  ...messengerWelcomeMessageFlowRelations,
   ...automatedResponseRelations,
   ...customDomainRelations,
   ...tenantRelations,

@@ -25,13 +25,9 @@ export const listFacebookLeadAdsPublicRequest = publicListRequest.extend({
     .describe("Sort order as [{ id, desc }] column/direction pairs."),
 })
 
-const facebookLeadAdPublicItem = facebookLeadAdsAutomationResource
-  .omit({ workspaceId: true })
-  .and(
-    z.object({
-      flow: z.object({ id: z.string(), name: z.string() }).nullable(),
-    }),
-  )
+const facebookLeadAdPublicItem = facebookLeadAdsAutomationResource.omit({
+  workspaceId: true,
+})
 
 export const listFacebookLeadAdsPublicResponse = publicListResponse(
   facebookLeadAdPublicItem,

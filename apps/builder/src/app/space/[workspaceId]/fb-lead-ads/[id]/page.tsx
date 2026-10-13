@@ -39,7 +39,6 @@ export default async function EditFacebookLeadAdPage(props: {
           formId: automation.formId,
           formName: automation.formName,
           fieldMapping: automation.fieldMapping,
-          flowId: automation.flowId,
         }}
         workspaceId={workspaceId}
       />

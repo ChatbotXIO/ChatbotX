@@ -1676,8 +1676,7 @@
     "leads": "线索",
     "noEligiblePages": "没有符合条件的页面。使用「添加新建」授予潜在客户访问权限。",
     "subscribeError": "无法将此页面订阅至 Facebook 潜在客户通知，因此未创建自动化。使用「添加 New」重新连接页面并重试。",
-    "title": "Facebook 引导广告自动化",
-    "whatFlow": "触发什么流程"
+    "title": "Facebook 引导广告自动化"
   },
   "clickToMessageAds": {
     "title": "Click-to-Message广告",
@@ -4381,6 +4380,8 @@
     "messengerAdsInvalidStepType": "起始步骤可以包含文本、图像、卡片、图库、视频、Facebook 视频、音频和文件。",
     "messengerAdsInvalidVariable": "由于 Facebook 限制，您无法在「起始步骤」使用自订字段。只能将名字、姓氏与全名加入消息中。",
     "messengerAdsJsonDescription": "如果您变更起始步骤，只需要重新产生 JSON 代码。其他步骤的变更不会影响此 JSON 代码。",
+    "welcomeMessageFlowIdsTitle": "欢迎消息流 ID",
+    "welcomeMessageFlowIdsDescription": "发布时会同步到每个 Facebook 主页。请在广告管理工具的“合作伙伴应用”中选择。",
     "messengerAdsNoStartNode": "此流程没有有效的起始步骤。打开流程，设置起始发送消息步骤，然后发布并重试。",
     "messengerAdsNotPublished": "请先发布此流程的内容并重试。",
     "moveFeature": "移动 {feature}",

@@ -24,6 +24,8 @@ const workerState = vi.hoisted(() => ({
   resolveWorkspaceId: vi.fn(),
   sendAppointmentReminder: vi.fn(),
   submitMetaCatalogSync: vi.fn(),
+  syncWelcomeMessageFlows: vi.fn(),
+  deleteWelcomeMessageFlows: vi.fn(),
   workerClose: vi.fn(async () => undefined),
   workerOn: vi.fn(),
 }))
@@ -71,6 +73,8 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
       syncChannelLabels: "syncChannelLabels",
       syncTag: "syncTag",
       submitMetaCatalogSync: "submitMetaCatalogSync",
+      syncWelcomeMessageFlows: "syncWelcomeMessageFlows",
+      deleteWelcomeMessageFlows: "deleteWelcomeMessageFlows",
     },
     defaultQueue: {
       add: (...args: unknown[]) => workerState.defaultQueueAdd(...args),
@@ -152,6 +156,11 @@ vi.mock("../src/default/handlers/sync-tag", () => ({
   handleSyncTag: vi.fn(),
 }))
 
+vi.mock("../src/default/handlers/welcome-message-flows", () => ({
+  syncWelcomeMessageFlows: workerState.syncWelcomeMessageFlows,
+  deleteWelcomeMessageFlows: workerState.deleteWelcomeMessageFlows,
+}))
+
 await import("../src/default/worker")
 
 const buildBulkTagContactsJob = (): DefaultJobData => ({
@@ -217,6 +226,8 @@ beforeEach(() => {
   workerState.resolveWorkspaceId.mockReset()
   workerState.sendAppointmentReminder.mockReset()
   workerState.submitMetaCatalogSync.mockReset()
+  workerState.syncWelcomeMessageFlows.mockReset()
+  workerState.deleteWelcomeMessageFlows.mockReset()
   workerState.resolveWorkspaceId.mockResolvedValue("workspace-1")
   workerState.isBlockedWorkspace.mockResolvedValue(false)
 })
@@ -321,5 +332,38 @@ describe("default worker", () => {
     // The error-log write now rides its own event bus, so the catch-all must
     // not enqueue anything at all on the default queue.
     expect(workerState.defaultQueueAdd).not.toHaveBeenCalled()
+  })
+})
+
+describe("default worker — welcome message flows", () => {
+  const syncJob: DefaultJobData = {
+    type: "syncWelcomeMessageFlows",
+    data: { workspaceId: "workspace-1", flowId: "flow-1", reason: "publish" },
+  }
+  const deleteJob: DefaultJobData = {
+    type: "deleteWelcomeMessageFlows",
+    data: { workspaceId: "workspace-1", flowIds: ["flow-1"] },
+  }
+
+  test("dispatches sync and delete jobs for active workspaces", async () => {
+    await processDefaultJob(syncJob)
+    await processDefaultJob(deleteJob)
+
+    expect(workerState.syncWelcomeMessageFlows).toHaveBeenCalledWith(
+      syncJob.data,
+    )
+    expect(workerState.deleteWelcomeMessageFlows).toHaveBeenCalledWith(
+      deleteJob.data,
+    )
+  })
+
+  test("skips both jobs for blocked workspaces", async () => {
+    workerState.isBlockedWorkspace.mockResolvedValue(true)
+
+    await processDefaultJob(syncJob)
+    await processDefaultJob(deleteJob)
+
+    expect(workerState.syncWelcomeMessageFlows).not.toHaveBeenCalled()
+    expect(workerState.deleteWelcomeMessageFlows).not.toHaveBeenCalled()
   })
 })

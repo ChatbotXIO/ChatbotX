@@ -1673,8 +1673,7 @@
     "leads": "Leads",
     "noEligiblePages": "Inga kvalificerade sidor. Använd ”Lägg till ny” för att bevilja leadåtkomst.",
     "subscribeError": "Det gick inte att prenumerera på Facebooks leadaviseringar för den här sidan, så automatiseringen skapades inte. Återanslut sidan med ”Lägg till ny” och försök igen.",
-    "title": "Automatisering av Facebook-leadannonser",
-    "whatFlow": "Vilket flöde utlöses"
+    "title": "Automatisering av Facebook-leadannonser"
   },
   "clickToMessageAds": {
     "title": "Click-to-Message-annonser",
@@ -4384,6 +4383,8 @@
     "messengerAdsInvalidStepType": "Startsteget kan innehålla text, bild, kort, galleri, video, Facebook-video, ljud och fil.",
     "messengerAdsInvalidVariable": "På grund av Facebooks begränsningar kan du inte använda anpassade fält i Startsteget. Endast first_name, last_name och full_name kan läggas till i meddelandet.",
     "messengerAdsJsonDescription": "Du behöver bara generera en ny JSON-kod om du ändrar startsteget. Ändringar i andra steg påverkar inte den här JSON-koden.",
+    "welcomeMessageFlowIdsTitle": "ID:n för välkomstmeddelandeflöden",
+    "welcomeMessageFlowIdsDescription": "Synkroniseras till varje Facebook-sida när du publicerar. Välj det under Partnerapp i Ads Manager.",
     "messengerAdsNoStartNode": "Det här flödet saknar ett giltigt startsteg. Öppna flödet, ange ett Skicka meddelande-steg som startsteg, publicera och försök igen.",
     "messengerAdsNotPublished": "Publicera innehållet i det här flödet och försök igen.",
     "moveFeature": "Flytta {feature}",

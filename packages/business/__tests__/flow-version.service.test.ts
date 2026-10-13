@@ -8,6 +8,8 @@ const {
   mockUpdateSet,
   mockUpdateWhere,
   mockDbUpdate,
+  mockCount,
+  mockWithCache,
 } = vi.hoisted(() => {
   const mockUpdateWhere = vi.fn().mockResolvedValue(undefined)
   const mockUpdateSet = vi.fn().mockReturnValue({ where: mockUpdateWhere })
@@ -19,6 +21,8 @@ const {
     mockUpdateSet,
     mockUpdateWhere,
     mockDbUpdate,
+    mockCount: vi.fn(),
+    mockWithCache: vi.fn((_key: string, fn: () => unknown) => fn()),
   }
 })
 
@@ -33,21 +37,29 @@ vi.mock("@chatbotx.io/database/client", () => ({
       },
     },
     update: mockDbUpdate,
+    $count: mockCount,
   },
   and: (...args: unknown[]) => ({ and: args }),
   eq: (...args: unknown[]) => ({ eq: args }),
+  lte: (...args: unknown[]) => ({ lte: args }),
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   flowVersionModel: {
+    name: "flowVersionModel",
+    id: "flowVersionModel.id",
     flowId: "flowVersionModel.flowId",
     workspaceId: "flowVersionModel.workspaceId",
     isDraft: "flowVersionModel.isDraft",
   },
 }))
 
+vi.mock("@chatbotx.io/redis", () => ({ withCache: mockWithCache }))
 vi.mock("../src/smart-delay/service", () => ({ smartDelayService: {} }))
 vi.mock("../src/conversation/service", () => ({ conversationService: {} }))
+vi.mock("../src/messenger-welcome-message-flow/service", () => ({
+  messengerWelcomeMessageFlowService: {},
+}))
 
 vi.mock("../src/base.service", () => ({
   BaseService: class BaseService {
@@ -273,5 +285,95 @@ describe("flowVersionService.findForButtonPayload", () => {
         workspaceId: "ws-1",
       }),
     ).resolves.toBeUndefined()
+  })
+})
+
+describe("flowVersionService.publishedVersionNumber", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("is 0 for a flow that was never published", async () => {
+    mockFindFirst.mockResolvedValue(undefined)
+
+    await expect(
+      flowVersionService.publishedVersionNumber({
+        flowId: "flow-1",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toBe(0)
+    expect(mockCount).not.toHaveBeenCalled()
+  })
+
+  test("counts published versions up to and including the live one", async () => {
+    // e.g. v1..v5 published and v2 restored: only v1 and v2 are <= v2's id.
+    mockFindFirst.mockResolvedValue({ id: "200" })
+    mockCount.mockResolvedValue(2)
+
+    await expect(
+      flowVersionService.publishedVersionNumber({
+        flowId: "flow-1",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toBe(2)
+    expect(mockFindFirst).toHaveBeenCalledWith({
+      where: {
+        flowId: "flow-1",
+        workspaceId: "ws-1",
+        isDraft: false,
+        isLatest: true,
+      },
+    })
+    expect(mockCount).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "flowVersionModel" }),
+      {
+        and: [
+          { eq: ["flowVersionModel.workspaceId", "ws-1"] },
+          { eq: ["flowVersionModel.flowId", "flow-1"] },
+          { eq: ["flowVersionModel.isDraft", false] },
+          { lte: ["flowVersionModel.id", "200"] },
+        ],
+      },
+    )
+  })
+})
+
+describe("flowVersionService.getMessengerAdsStartNode", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const published = {
+    id: "v1",
+    startNodeId: "n1",
+    nodes: [{ id: "n1", data: { isStartNode: true } }],
+  }
+
+  test("is cached by default", async () => {
+    mockFindFirst.mockResolvedValue(published)
+
+    await flowVersionService.getMessengerAdsStartNode({
+      flowId: "flow-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(mockWithCache).toHaveBeenCalledTimes(1)
+  })
+
+  test("fresh: true bypasses the cache and reads the published version", async () => {
+    mockFindFirst.mockResolvedValue(published)
+
+    const result = await flowVersionService.getMessengerAdsStartNode({
+      flowId: "flow-1",
+      workspaceId: "ws-1",
+      fresh: true,
+    })
+
+    expect(mockWithCache).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      status: "ok",
+      flowVersionId: "v1",
+      startNode: published.nodes[0],
+    })
   })
 })
