@@ -184,6 +184,14 @@ vi.mock(
     resolveMatchingTemplates: vi.fn(),
   }),
 )
+vi.mock("../src/integration/handlers/leaderboard-sources", () => ({
+  awardCommentLeaderboard: vi.fn(),
+  awardInboundMessageLeaderboard: vi.fn(),
+  awardReactionLeaderboard: vi.fn(),
+}))
+vi.mock("../src/integration/handlers/channel-audience-event", () => ({
+  processChannelAudienceEvent: vi.fn(),
+}))
 vi.mock("../src/integration/handlers/challenge", () => ({
   runChallenge: vi.fn(),
 }))

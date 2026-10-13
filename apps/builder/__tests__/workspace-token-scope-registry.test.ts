@@ -14,6 +14,7 @@ const NEW_SCOPES = [
   "ads",
   "settings",
   "mini-apps",
+  "leaderboards",
 ] as const
 
 describe("workspaceApiTokenScopes", () => {
@@ -22,13 +23,13 @@ describe("workspaceApiTokenScopes", () => {
       expect(workspaceApiTokenScopes.options).toContain(scope)
     }
     expect(workspaceApiTokenScopes.options).not.toContain("connections")
-    expect(workspaceApiTokenScopes.options).toHaveLength(14)
+    expect(workspaceApiTokenScopes.options).toHaveLength(15)
   })
 })
 
 describe("orderedWorkspaceApiTokenScopes", () => {
-  test("has 14 entries with unique, contiguous orders", () => {
-    expect(orderedWorkspaceApiTokenScopes).toHaveLength(14)
+  test("has 15 entries with unique, contiguous orders", () => {
+    expect(orderedWorkspaceApiTokenScopes).toHaveLength(15)
 
     const orders = orderedWorkspaceApiTokenScopes
       .map((scope) => workspaceApiTokenScopeRegistry[scope].order)

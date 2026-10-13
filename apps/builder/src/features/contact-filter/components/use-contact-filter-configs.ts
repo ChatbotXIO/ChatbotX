@@ -10,6 +10,7 @@ import {
 } from "@/features/custom-fields/provider/custom-field-hook"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { useInboxOptionsByChannel } from "@/features/inboxes/provider/inbox-hook"
+import { useLeaderboardOptions } from "@/features/leaderboards/lib/use-leaderboard-options"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
 import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"
@@ -104,6 +105,7 @@ export const useContactFilterConfigs = (
     includeUnassigned: true,
   })
   const { options: couponTopicOptions } = useCouponTopicOptions()
+  const { options: leaderboardOptions } = useLeaderboardOptions()
   const filterValueLabels = useFilterValueLabels(conditions)
 
   const configs = useMemo(
@@ -120,6 +122,7 @@ export const useContactFilterConfigs = (
         channelPostOptions,
         assigneeOptions,
         couponTopicOptions,
+        leaderboardOptions,
         botFields,
         includeBotFields,
         filterValueLabels,
@@ -136,6 +139,7 @@ export const useContactFilterConfigs = (
       channelPostOptions,
       assigneeOptions,
       couponTopicOptions,
+      leaderboardOptions,
       botFields,
       includeBotFields,
       filterValueLabels,

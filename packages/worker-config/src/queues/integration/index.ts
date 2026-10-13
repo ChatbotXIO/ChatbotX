@@ -12,7 +12,11 @@ import type {
   FlowActionTargetType,
   MetadataPayload,
 } from "@chatbotx.io/flow-config"
-import type { CommentAnchor, OutgoingMessage } from "@chatbotx.io/sdk"
+import type {
+  ChannelAudienceEventJobData,
+  CommentAnchor,
+  OutgoingMessage,
+} from "@chatbotx.io/sdk"
 import { type JobsOptions, Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -86,6 +90,9 @@ export const IntegrationJobAction = {
   threadControlAction: "threadControlAction",
   aiHandoverTakeBack: "aiHandoverTakeBack",
   aiHandoverBulkToggle: "aiHandoverBulkToggle",
+  // Follow/unfollow, group join/leave, group messages and the bot's own group
+  // membership — audience events that are not 1:1 messages (leaderboard scoring).
+  channelAudienceEvent: "channelAudienceEvent",
 } as const
 
 type IntegrationJobActionValue =
@@ -215,6 +222,11 @@ export type IntegrationJobMessageReaction = {
     emoji?: string
     contactSourceId: string
   }
+}
+
+export type IntegrationJobChannelAudienceEvent = {
+  type: typeof IntegrationJobAction.channelAudienceEvent
+  data: ChannelAudienceEventJobData
 }
 
 export type IntegrationJobMessageStatus = {
@@ -1162,6 +1174,7 @@ export type IntegrationJobData =
   | IntegrationJobThreadControlAction
   | IntegrationJobAiHandoverTakeBack
   | IntegrationJobAiHandoverBulkToggle
+  | IntegrationJobChannelAudienceEvent
 
 export const integrationQueue = isNoRedisEnv()
   ? fakeQueue

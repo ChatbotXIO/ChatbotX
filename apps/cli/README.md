@@ -957,6 +957,37 @@ chatbotx messenger-personas list                       # Personas across every c
 
 ---
 
+### `leaderboards`
+
+```bash
+chatbotx leaderboards list                              # [--status --platform --keyword --page --perPage] with live counters + per-status summary
+chatbotx leaderboards get <id>
+chatbotx leaderboards default-rules --platform <platform>   # Recommended scoring rules to start `create` from
+chatbotx leaderboards telegram-chats --inboxId <id>     # Telegram groups/channels (bot is admin) for scope.telegramChatIds
+chatbotx leaderboards create --name <name> --platform <platform> --startsAt <iso> --endsAt <iso>   # Draft; --inboxId from `inboxes list` (--minigameId for gamification)
+chatbotx leaderboards update <id>
+chatbotx leaderboards delete <id>                       # Draft, paused or finished only
+chatbotx leaderboards publish add <id>                  # Draft → active (starts scoring)
+chatbotx leaderboards pause add <id>
+chatbotx leaderboards start add <id>                    # Resume a paused leaderboard
+chatbotx leaderboards finish add <id>                   # Freeze scores (also automatic at endsAt)
+chatbotx leaderboards reset-point add <id>              # Danger: every score → 0 (active only)
+chatbotx leaderboards top list <id>                     # [--limit] current top N with names
+chatbotx leaderboards view-link list <id>               # [--contactId] public page URL (signed for that contact when given)
+chatbotx leaderboards export add <id>                   # Queue participants CSV → fileId
+chatbotx leaderboards find-by-exports <fileId>          # Export status + downloadUrl
+chatbotx leaderboards trigger-reward add <id>           # Send the reward flow to the top N (finished only, once)
+chatbotx leaderboards participants list <id>            # [--keyword --filter top10|top50|banned]
+chatbotx leaderboards adjust add <id> <contactId> --delta <n> --reason <text>
+chatbotx leaderboards ban add <id> <contactId>          # [--reason]
+chatbotx leaderboards unban add <id> <contactId>        # [--reason]
+chatbotx leaderboards reset <id> <contactId>            # One participant's score → 0
+chatbotx leaderboards history list <id> <contactId>     # Score changes during the campaign (anti-cheat)
+chatbotx leaderboards audit-log list <id>               # Manual adjustments, resets, bans
+```
+
+---
+
 ### `mini-apps` (scope `mini-apps`)
 
 Mini Apps are WhatsApp Flow forms (Flow JSON 7.3) with a public web link for any channel. `customFieldMappings` (`{ "<input name>": "<custom field id>" | null }`) saves answers submitted through the link to the contact's custom fields; a new `flowJson` keeps existing mappings by input name.

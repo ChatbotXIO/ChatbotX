@@ -33,6 +33,9 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     syncUserQuota: "syncUserQuota",
     reconcileTenants: "reconcileTenants",
     maintainMacPartitions: "maintainMacPartitions",
+    maintainLeaderboardPartitions: "maintainLeaderboardPartitions",
+    finishOverdueLeaderboards: "finishOverdueLeaderboards",
+    maintainLeaderboardRankings: "maintainLeaderboardRankings",
     scanCoexistRuns: "scanCoexistRuns",
     reconcileMetaCatalogSyncs: "reconcileMetaCatalogSyncs",
     purgeCoexistStaging: "purgeCoexistStaging",
@@ -113,6 +116,9 @@ describe("registerSchedules — edition gating", () => {
     expect(names).toContain("purgeWorkspaces")
     expect(names).toContain("purgeBroadcasts")
     expect(names).toContain("maintainMacPartitions")
+    expect(names).toContain("maintainLeaderboardPartitions")
+    expect(names).toContain("finishOverdueLeaderboards")
+    expect(names).toContain("maintainLeaderboardRankings")
     expect(names).toContain("enqueueBroadcast")
     expect(names).toContain("purgeExpiredConnectSessions")
     expect(names).toContain("googleAdsHousekeeping")

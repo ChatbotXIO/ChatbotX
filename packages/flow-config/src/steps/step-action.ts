@@ -41,6 +41,7 @@ export const stepTypes = z.enum([
   "questionnaires",
   "setUpCoupon",
   "markCouponUsed",
+  "changeGamificationScore",
   "condition",
 
   // Inbox Operations (I_)

@@ -58,6 +58,7 @@ export const ContactFilterConditionRow = ({
   const isCustomField = row.field === "customField"
   const isBotField = row.field === "botField"
   const isCouponTopic = row.field === "couponTopic"
+  const isLeaderboardScore = row.field === "leaderboardScore"
   const fieldConfig = configs.find((c) => {
     if (isCustomField && "customFieldId" in row) {
       return String(c.customFieldId) === String(row.customFieldId)
@@ -67,6 +68,9 @@ export const ContactFilterConditionRow = ({
     }
     if (isCouponTopic && "topicId" in row) {
       return String(c.topicId) === String(row.topicId)
+    }
+    if (isLeaderboardScore && "leaderboardId" in row) {
+      return String(c.leaderboardId) === String(row.leaderboardId)
     }
     return c.name === row.field
   })
@@ -81,6 +85,9 @@ export const ContactFilterConditionRow = ({
       }
       if (isCouponTopic) {
         return t("condition.fields.couponTopic")
+      }
+      if (isLeaderboardScore) {
+        return t("condition.fields.leaderboardScore")
       }
       return t(`condition.fields.${row.field}`)
     })()

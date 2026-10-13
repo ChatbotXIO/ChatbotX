@@ -766,6 +766,7 @@
       "questionnaireInProgress": "Bảng câu hỏi đang thực hiện",
       "questionnaireFinished": "Bảng câu hỏi đã hoàn tất",
       "couponTopic": "Mã giảm giá",
+      "leaderboardScore": "Điểm xếp hạng",
       "votedOnPoll": "Đã bình chọn khảo sát",
       "lastComment": "Bình luận cuối",
       "commentedOnPost": "Đã bình luận bài viết",
@@ -835,6 +836,7 @@
       "ecommerce": "Thương mại điện tử",
       "systemFields": "Trường hệ thống",
       "topicCoupon": "Topic coupon",
+      "leaderboard": "Điểm xếp hạng",
       "customFields": "Trường tùy chỉnh",
       "botFields": "Trường bot",
       "email": "Email",
@@ -2533,7 +2535,8 @@
       "media": "Phương tiện",
       "ads": "Quảng cáo",
       "settings": "Cài đặt",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "Bảng xếp hạng"
     },
     "adReferral": {
       "label": "Ads",
@@ -2565,6 +2568,9 @@
       "hint": "Nên dùng Data Manager. API tải lên cũ chỉ hoạt động với các dự án Google Cloud mà Google vẫn cho phép và không dùng quyền Data Manager. Thay đổi chỉ áp dụng cho kết nối mới: hãy kết nối lại các không gian làm việc hiện có.",
       "dataManager": "API Data Manager (khuyến nghị)",
       "legacy": "API tải lên cũ"
+    },
+    "referralName": {
+      "label": "Tên người giới thiệu"
     }
   },
   "flows": {
@@ -2736,6 +2742,7 @@
       "metaConversions": "API Chuyển đổi Meta",
       "threadControl": "Điều khiển luồng",
       "sendGoogleAdsConversion": "Gửi chuyển đổi Google Ads",
+      "changeGamificationScore": "Thay đổi điểm xếp hạng",
       "sendViewCatalog": "Xem danh mục",
       "sendProducts": "Gửi sản phẩm"
     },
@@ -2857,6 +2864,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "Chỉnh sửa nút",
       "buttonLabel": "Nhãn nút"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "Bảng xếp hạng",
+      "operation": "Thao tác",
+      "add": "Cộng điểm (+)",
+      "subtract": "Trừ điểm (−)",
+      "points": "Số điểm",
+      "targetUser": "Điểm của người đang chat",
+      "targetReferrer": "Điểm của người giới thiệu",
+      "targetReferrerHint": "Thay đổi cả điểm của người đã mời khách này.",
+      "summary": "{points} điểm trên {leaderboard}"
     },
     "whatsappLocation": {
       "title": "Vị trí",
@@ -8382,6 +8400,358 @@
         "type_not_allowed": "Loại file này không được phép.",
         "rate_limited": "Tải lên quá nhiều. Vui lòng đợi một lát rồi thử lại.",
         "upload_failed": "Không tải file lên được. Vui lòng thử lại."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "Bảng xếp hạng",
+    "public": {
+      "points": "{points} điểm",
+      "endsIn": "Kết thúc sau {days} ngày {hours} giờ {minutes} phút {seconds} giây",
+      "finished": "Đã kết thúc",
+      "empty": "Chưa có người chơi — hãy là người đầu tiên!",
+      "myRank": "Hạng của bạn: #{rank}",
+      "unranked": "Chưa có hạng",
+      "shareToEarn": "Chia sẻ nhận điểm ngay",
+      "linkCopied": "Đã sao chép link"
+    },
+    "description": "Tổ chức các chiến dịch xếp hạng theo điểm, nơi khách hàng cạnh tranh vị trí dẫn đầu và nhận phần thưởng.",
+    "feature": "Bảng xếp hạng",
+    "create": "Tạo bảng xếp hạng",
+    "kpi": {
+      "total": "Tổng số chiến dịch",
+      "active": "Đang chạy"
+    },
+    "tabs": {
+      "all": "Tất cả",
+      "active": "Đang chạy",
+      "paused": "Tạm dừng",
+      "finished": "Đã kết thúc"
+    },
+    "status": {
+      "draft": "Bản nháp",
+      "active": "Đang chạy",
+      "paused": "Tạm dừng",
+      "finished": "Đã kết thúc"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "Chiến dịch",
+      "searchPlaceholder": "Tìm bảng xếp hạng...",
+      "platformFilter": "Nền tảng",
+      "participants": "Người chơi",
+      "totalPoints": "Tổng điểm",
+      "newToday": "+{count} hôm nay",
+      "average": "trung bình {value} / người chơi",
+      "daysLeft": "{days, plural, one {Còn # ngày} other {Còn # ngày}}",
+      "ended": "Đã kết thúc"
+    },
+    "scope": {
+      "allPosts": "Tất cả bài viết",
+      "specificPosts": "Bài viết cụ thể",
+      "specificPostsCount": "{count, plural, one {# bài viết} other {# bài viết}}",
+      "telegramChatsCount": "{count, plural, one {# nhóm} other {# nhóm}}"
+    },
+    "menu": {
+      "start": "Bắt đầu",
+      "pause": "Tạm dừng",
+      "finish": "Kết thúc",
+      "resetPoints": "Đặt lại điểm",
+      "triggerRewards": "Gửi phần thưởng",
+      "viewParticipants": "Xem người chơi",
+      "copyLink": "Sao chép liên kết công khai"
+    },
+    "confirm": {
+      "publishTitle": "Xuất bản bảng xếp hạng này?",
+      "publishDescription": "Việc tính điểm bắt đầu ngay và người chơi có thể xem trang công khai.",
+      "pauseTitle": "Tạm dừng bảng xếp hạng này?",
+      "pauseDescription": "Việc tính điểm tự động và qua flow sẽ dừng lại. Bạn vẫn có thể chỉnh điểm thủ công.",
+      "startTitle": "Tiếp tục bảng xếp hạng này?",
+      "startDescription": "Việc tính điểm sẽ chạy lại cho mọi quy tắc.",
+      "finishTitle": "Kết thúc bảng xếp hạng này?",
+      "finishDescription": "Mọi điểm số sẽ bị chốt và không thể thay đổi nữa. Phần thưởng tự động sẽ được gửi nếu bạn đã bật.",
+      "resetPointsTitle": "Đặt lại toàn bộ điểm?",
+      "resetPointsDescription": "Mọi người chơi của \"{name}\" sẽ quay về 0 điểm. Thao tác này được ghi lại và không thể hoàn tác."
+    },
+    "toast": {
+      "published": "Đã xuất bản bảng xếp hạng",
+      "paused": "Đã tạm dừng bảng xếp hạng",
+      "started": "Đã tiếp tục bảng xếp hạng",
+      "finished": "Đã kết thúc bảng xếp hạng",
+      "pointsReset": "Đã đặt lại toàn bộ điểm"
+    },
+    "export": {
+      "title": "Xuất danh sách người chơi",
+      "description": "Tải về danh sách mọi người chơi kèm thứ hạng và điểm số dưới dạng tệp CSV.",
+      "preparing": "Đang chuẩn bị tệp của bạn...",
+      "ready": "Tệp của bạn đã sẵn sàng ({count} dòng).",
+      "failed": "Xuất tệp thất bại. Vui lòng thử lại."
+    },
+    "rewards": {
+      "title": "Gửi phần thưởng",
+      "description": "Gửi flow phần thưởng cho những người chơi đứng đầu. Phần thưởng chỉ có thể gửi một lần.",
+      "flow": "Flow phần thưởng",
+      "topN": "Số người thắng (top N)",
+      "noFlow": "Chưa chọn flow phần thưởng — hãy chọn trong phần cài đặt bảng xếp hạng.",
+      "alreadySent": "Phần thưởng đã được gửi cho bảng xếp hạng này.",
+      "confirm": "Gửi phần thưởng",
+      "result": "Đã gửi cho {sent} người thắng, bỏ qua {skipped} người (chưa có cuộc trò chuyện trên kênh này)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "Thông tin",
+        "config": "Kênh & quy tắc",
+        "review": "Xem lại & xuất bản"
+      },
+      "namePlaceholder": "VD: Fan cứng tháng 10",
+      "coverImage": "Ảnh bìa",
+      "coverImageHint": "JPG hoặc PNG, tối đa 5MB. Kích thước đề xuất 1200×630.",
+      "coverImageRejected": "Hãy chọn ảnh JPG hoặc PNG tối đa 5MB.",
+      "description": "Quy tắc & phần thưởng",
+      "descriptionPlaceholder": "Giải thích cách người chơi kiếm điểm và những người đứng đầu sẽ nhận được gì.",
+      "startsAt": "Bắt đầu lúc",
+      "endsAt": "Kết thúc lúc",
+      "startLocked": "Không thể đổi thời gian bắt đầu sau khi xuất bản.",
+      "channelTitle": "Nền tảng & kênh",
+      "platform": "Nền tảng",
+      "hostChannel": "Kênh",
+      "hostLocked": "Không thể đổi nền tảng và kênh sau khi xuất bản.",
+      "noChannel": "Chưa có kênh {platform} nào được kết nối. Hãy kết nối trước tại Cài đặt → Kênh.",
+      "openMinigameSettings": "Mở cài đặt trò chơi",
+      "postScope": "Bài viết được tính điểm",
+      "choosePosts": "Chọn bài viết",
+      "telegramChats": "Nhóm & kênh",
+      "telegramChatsHint": "Hãy thêm bot của bạn vào nhóm hoặc kênh với quyền quản trị viên để bot thấy được thành viên và tin nhắn.",
+      "telegramChatsEmpty": "Không tìm thấy nhóm nào — hãy thêm bot làm quản trị viên trước",
+      "rulesTitle": "Quy tắc tính điểm",
+      "rulesHint": "Bật các hành động được tính điểm và đặt số điểm cho từng hành động.",
+      "allPlatforms": "Tất cả nền tảng",
+      "points": "Điểm",
+      "maxPerDay": "Tối đa mỗi ngày",
+      "maxPerDayHint": "Để trống nếu không giới hạn.",
+      "minChars": "Số ký tự tối thiểu",
+      "bonusPoints": "Điểm thưởng giờ vàng",
+      "bonusPointsHint": "Điểm cộng thêm cho các bình luận ngay sau khi bài viết được đăng.",
+      "bonusMinutes": "Thời lượng giờ vàng (phút)",
+      "emailTopicNote": "Chỉ những email được gửi kèm Email Topic mới được theo dõi lượt mở và lượt nhấp.",
+      "generalTitle": "Cài đặt chung",
+      "followersOnly": "Chỉ người theo dõi",
+      "followersOnlyHint": "Chỉ những người theo dõi tài khoản của bạn mới được tính điểm.",
+      "tagFilter": "Lọc theo thẻ",
+      "tagFilterHint": "Chỉ những liên hệ có ít nhất một trong các thẻ này mới được tính điểm.",
+      "everyone": "Tất cả mọi người",
+      "resetTime": "Giờ đặt lại hằng ngày (UTC)",
+      "resetTimeHint": "Giới hạn hằng ngày được làm mới vào giờ này. = {time} giờ Việt Nam (UTC+7).",
+      "cooldown": "Thời gian chờ chống spam (giây)",
+      "cooldownHint": "Số giây tối thiểu giữa hai lần cộng điểm tự động cho cùng một người. Nhập 0 để tắt.",
+      "referralFlow": "Flow chào mừng giới thiệu",
+      "referralFlowAuto": "Tạo tự động",
+      "referralFlowHint": "Được gửi cho người bạn tham gia qua liên kết giới thiệu. Có thể dùng '{{referral_name}}' và liên kết bảng xếp hạng công khai. Để trống để tự tạo một tin nhắn chào mừng mà bạn có thể chỉnh sửa trong Flow Builder.",
+      "publicLink": "Liên kết công khai",
+      "publicLinkHint": "Gửi liên kết này từ một flow để mỗi người chơi thấy thứ hạng của riêng mình.",
+      "publicLinkAfterSave": "Liên kết công khai sẽ có sau khi lưu.",
+      "rewardsTitle": "Phần thưởng",
+      "autoOnFinish": "Tự động gửi khi kết thúc",
+      "autoOnFinishHint": "Chạy flow phần thưởng cho top N ngay khi bảng xếp hạng kết thúc.",
+      "backToStep2": "Quay lại bước 2",
+      "notEditable": "Không thể chỉnh sửa bảng xếp hạng đã kết thúc."
+    },
+    "review": {
+      "infoCard": "Thông tin",
+      "yes": "Có",
+      "no": "Không",
+      "off": "Tắt",
+      "seconds": "{seconds} giây",
+      "resetTimeValue": "{utc} UTC (= {local} giờ Việt Nam)",
+      "noRules": "Chưa bật quy tắc nào.",
+      "rulePoints": "{points} điểm",
+      "maxPerDay": "tối đa {count}/ngày",
+      "unlimited": "không giới hạn"
+    },
+    "preview": {
+      "sampleName": "Người chơi {rank}",
+      "placeholderName": "Tên bảng xếp hạng của bạn",
+      "pinnedBar": "#{rank} · {points} điểm"
+    },
+    "validation": {
+      "nameRequired": "Hãy nhập tên",
+      "dateRequired": "Hãy chọn ngày và giờ",
+      "endsAfterStart": "Thời gian kết thúc phải sau thời gian bắt đầu",
+      "channelRequired": "Hãy chọn một kênh",
+      "minigameRequired": "Hãy chọn một minigame",
+      "pointsRequired": "Hãy nhập số điểm mà quy tắc này cộng",
+      "bonusMinutesRequired": "Hãy đặt giờ vàng kéo dài bao nhiêu phút",
+      "postsRequired": "Hãy chọn ít nhất một bài viết",
+      "telegramChatsRequired": "Hãy chọn ít nhất một nhóm hoặc kênh",
+      "enableOneRule": "Hãy bật ít nhất một quy tắc tính điểm trước khi xuất bản",
+      "fixErrors": "Vui lòng sửa các trường được đánh dấu"
+    },
+    "rules": {
+      "comments": {
+        "label": "Bình luận",
+        "description": "Điểm cho mỗi bình luận trên bài viết của bạn."
+      },
+      "liveComments": {
+        "label": "Bình luận livestream",
+        "description": "Điểm cho mỗi bình luận trong lúc livestream."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "Điểm khi tin nhắn khớp với bất kỳ từ khóa nào trong công cụ Keywords của kênh này."
+      },
+      "storyMention": {
+        "label": "Nhắc đến trong story",
+        "description": "Điểm khi ai đó gắn thẻ tài khoản của bạn trong story của họ."
+      },
+      "storyReaction": {
+        "label": "Cảm xúc story",
+        "description": "Điểm khi ai đó thả cảm xúc cho story của bạn."
+      },
+      "ctwaReactions": {
+        "label": "Nhấp CTWA & cảm xúc",
+        "description": "Điểm khi nhấp vào quảng cáo Click-to-WhatsApp hoặc thả cảm xúc cho một tin nhắn."
+      },
+      "survey": {
+        "label": "Khảo sát & câu đố",
+        "description": "Điểm khi hoàn thành một Questionnaire hoặc gửi biểu mẫu WhatsApp Flow."
+      },
+      "follow": {
+        "label": "Theo dõi OA & QR",
+        "description": "Điểm khi theo dõi Official Account hoặc quét mã QR của OA. Bỏ theo dõi sẽ bị trừ lại điểm."
+      },
+      "message": {
+        "label": "Tin nhắn Zalo",
+        "description": "Điểm cho mỗi tin nhắn gửi đến Official Account của bạn."
+      },
+      "joinGroup": {
+        "label": "Tham gia kênh & nhóm",
+        "description": "Điểm khi tham gia nhóm hoặc kênh của bạn. Rời đi sẽ bị trừ lại điểm."
+      },
+      "groupDiscussion": {
+        "label": "Thảo luận nhóm",
+        "description": "Điểm cho mỗi tin nhắn trong nhóm của bạn."
+      },
+      "emailOpen": {
+        "label": "Mở email",
+        "description": "Điểm khi một email được mở."
+      },
+      "emailClick": {
+        "label": "Nhấp email",
+        "description": "Điểm khi một liên kết trong email được nhấp."
+      },
+      "minigameWin": {
+        "label": "Thắng minigame",
+        "description": "Điểm cho mỗi giải thưởng trúng được trong minigame."
+      },
+      "inGameShare": {
+        "label": "Chia sẻ trong game",
+        "description": "Điểm khi chia sẻ trò chơi để nhận thêm lượt chơi."
+      },
+      "referral": {
+        "label": "Giới thiệu",
+        "description": "Điểm cho người mời khi một người bạn mới tham gia qua liên kết của họ."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} bình luận",
+      "liveComments": "{count} bình luận live",
+      "keywords": "{count} từ khóa",
+      "storyMention": "{count} lượt nhắc trong story",
+      "storyReaction": "{count} cảm xúc story",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} khảo sát",
+      "follow": "{count} lượt theo dõi",
+      "message": "{count} tin nhắn",
+      "joinGroup": "{count} lượt tham gia",
+      "groupDiscussion": "{count} tin nhắn nhóm",
+      "emailOpen": "{count} lượt mở",
+      "emailClick": "{count} lượt nhấp",
+      "minigameWin": "{count} lượt thắng",
+      "inGameShare": "{count} lượt chia sẻ",
+      "referral": "{count} lượt giới thiệu",
+      "flow": "{count} flow",
+      "manual": "{count} thủ công"
+    },
+    "participants": {
+      "title": "Người chơi",
+      "switcher": "Chuyển bảng xếp hạng",
+      "count": "{count, plural, one {# người chơi} other {# người chơi}}",
+      "searchPlaceholder": "Tìm tên, ID người dùng hoặc số điện thoại...",
+      "filters": {
+        "all": "Tất cả",
+        "top10": "Top 10",
+        "top50": "Top 50",
+        "banned": "Bị cấm"
+      },
+      "columns": {
+        "rank": "Hạng",
+        "participant": "Người chơi",
+        "score": "Tổng điểm",
+        "breakdown": "Chi tiết",
+        "lastActivity": "Hoạt động gần nhất"
+      },
+      "unknown": "Không rõ",
+      "contactId": "ID {id}",
+      "lockedFinished": "Bảng xếp hạng này đã kết thúc — điểm số đã bị khóa.",
+      "lockedDraft": "Hãy xuất bản bảng xếp hạng trước khi chỉnh điểm.",
+      "actions": {
+        "adjust": "Chỉnh điểm",
+        "ban": "Cấm",
+        "unban": "Bỏ cấm",
+        "reset": "Đặt về 0",
+        "history": "Xem lịch sử"
+      },
+      "adjust": {
+        "title": "Chỉnh điểm",
+        "description": "Cộng hoặc trừ điểm cho {name}. Thay đổi này được lưu trong nhật ký kiểm tra.",
+        "delta": "Điểm (+/-)",
+        "deltaPlaceholder": "VD: 50 hoặc -20",
+        "reason": "Lý do",
+        "reasonPlaceholder": "Vì sao bạn thay đổi điểm này?",
+        "success": "Đã chỉnh điểm"
+      },
+      "banConfirm": "{name} sẽ bị loại khỏi bảng xếp hạng và không được tính điểm nữa.",
+      "unbanConfirm": "{name} sẽ quay lại bảng xếp hạng với số điểm hiện tại.",
+      "resetConfirm": "Điểm của {name} sẽ về 0. Thao tác này được ghi lại.",
+      "banned": "Đã cấm người chơi",
+      "unbanned": "Đã bỏ cấm người chơi",
+      "resetDone": "Đã đặt điểm về 0",
+      "history": {
+        "title": "Lịch sử điểm — {name}",
+        "empty": "Chưa có thay đổi điểm nào.",
+        "sources": {
+          "rule": "Quy tắc",
+          "flow": "Flow",
+          "referral": "Giới thiệu",
+          "manual": "Chỉnh thủ công",
+          "reset": "Đặt lại"
+        }
+      },
+      "conversationNotFound": "Không tìm thấy cuộc trò chuyện nào cho liên hệ này",
+      "popupBlocked": "Vui lòng cho phép cửa sổ bật lên cho trang này rồi thử lại."
+    },
+    "auditLog": {
+      "title": "Nhật ký kiểm tra",
+      "admin": "Quản trị viên",
+      "change": "Thay đổi",
+      "time": "Thời gian",
+      "reason": "Lý do",
+      "api": "API",
+      "empty": "Chưa có thay đổi thủ công nào.",
+      "actions": {
+        "adjust": "Chỉnh điểm",
+        "resetOne": "Đặt lại người chơi",
+        "resetAll": "Đặt lại tất cả",
+        "ban": "Cấm",
+        "unban": "Bỏ cấm"
       }
     }
   },

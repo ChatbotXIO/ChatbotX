@@ -3,6 +3,7 @@ import { casStoreFactory } from "./cas-store"
 import { cacheConnections } from "./connections/cache-connection"
 import { distributedLockFactory } from "./distributed-lock"
 import { distributedStoreFactory } from "./distributed-store"
+import { leaderboardStoreFactory } from "./leaderboard-store"
 import { presenceStoreFactory } from "./presence-store"
 
 export type * from "ioredis"
@@ -19,6 +20,21 @@ export { presenceStoreFactory } from "./presence-store"
 export const presenceStore = presenceStoreFactory(cacheConnections.useExisting)
 
 export { cacheConnections } from "./connections/cache-connection"
+export type {
+  LeaderboardRankEntry,
+  LeaderboardStats,
+  LeaderboardStore,
+} from "./leaderboard-store"
+export {
+  decodeRankValue,
+  encodeRankValue,
+  leaderboardKeys,
+  leaderboardStoreFactory,
+  tieSecondsSince,
+} from "./leaderboard-store"
+export const leaderboardStore = leaderboardStoreFactory(
+  cacheConnections.useExisting,
+)
 export {
   type DistributedLock,
   distributedLockFactory,

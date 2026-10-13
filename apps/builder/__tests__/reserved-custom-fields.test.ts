@@ -33,6 +33,7 @@ const expectedReservedSystemFieldIds = [
   systemFieldTypes.enum.last_btn_title,
   systemFieldTypes.enum.fb_chat_link,
   systemFieldTypes.enum.last_fb_comment,
+  systemFieldTypes.enum.referral_name,
 ]
 
 const getMessageValue = (

@@ -67,6 +67,7 @@ import {
 } from "@/features/integration-whatsapp/message-templates/api/public"
 import { zaloChannelsPublicRouter } from "@/features/integration-zalo/api/public"
 import { integrationsPublicRouter } from "@/features/integrations/api/public"
+import { leaderboardsPublicRouter } from "@/features/leaderboards/api/public"
 import { magicLinksPublicRouter } from "@/features/magic-links/api/public"
 import { mediaLibraryPublicRouter } from "@/features/media-library/api/public"
 import { messagesPublicRouter } from "@/features/messages/api/public"
@@ -152,6 +153,7 @@ export const publicRouter = {
   messengerTemplates: messengerTemplatesPublicRouter,
   miniApps: miniAppsPublicRouter,
   minigames: minigamesPublicRouter,
+  leaderboards: leaderboardsPublicRouter,
   productCategories: productCategoriesPublicRouter,
   products: productsPublicRouter,
   qrCodes: qrCodesPublicRouter,

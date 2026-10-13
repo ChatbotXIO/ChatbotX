@@ -463,6 +463,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "שליטה בשרשור",
       "sendGoogleAdsConversion": "שליחת המרה של Google Ads",
+      "changeGamificationScore": "שינוי נקודות משחוק",
       "sendViewCatalog": "הצגת קטלוג",
       "sendProducts": "שליחת מוצרים"
     },
@@ -584,6 +585,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "עריכת כפתור",
       "buttonLabel": "תווית כפתור"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "טבלת מובילים",
+      "operation": "פעולה",
+      "add": "הוספת נקודות (+)",
+      "subtract": "הפחתת נקודות (−)",
+      "points": "נקודות",
+      "targetUser": "נקודות המשתמש",
+      "targetReferrer": "נקודות הממליץ",
+      "targetReferrerHint": "שנה גם את הנקודות של מי שהפנה את איש הקשר הזה.",
+      "summary": "{points} נק׳ ב־{leaderboard}"
     },
     "whatsappLocation": {
       "title": "מיקום",
@@ -5988,7 +6000,8 @@
       "media": "מדיה",
       "ads": "מודעות",
       "settings": "הגדרות",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "טבלאות מובילים"
     },
     "adReferral": {
       "label": "Ads",
@@ -6020,6 +6033,9 @@
       "hint": "מומלץ להשתמש ב-Data Manager. ממשק ההעלאה הישן פועל רק עבור פרויקטים של Google Cloud ש-Google עדיין מתירה, ואינו משתמש בהרשאת Data Manager. שינוי חל על חיבורים חדשים בלבד: חברו מחדש סביבות עבודה קיימות.",
       "dataManager": "Data Manager API (מומלץ)",
       "legacy": "ממשק העלאה ישן"
+    },
+    "referralName": {
+      "label": "שם הממליץ"
     }
   },
   "billing": {
@@ -6434,6 +6450,7 @@
       "questionnaireInProgress": "השאלון בתהליך",
       "questionnaireFinished": "השאלון הסתיים",
       "couponTopic": "קופון",
+      "leaderboardScore": "נקודות משחוק",
       "votedOnPoll": "הצביע בסקר",
       "lastComment": "תגובה אחרונה",
       "commentedOnPost": "הגיב לפוסט",
@@ -6503,6 +6520,7 @@
       "ecommerce": "מסחר אלקטרוני",
       "systemFields": "שדות מערכת",
       "topicCoupon": "נושא קופון",
+      "leaderboard": "נקודות משחוק",
       "customFields": "שדות מותאמים אישית",
       "botFields": "שדות בוט",
       "email": "דוא\"ל",
@@ -8382,6 +8400,358 @@
         "type_not_allowed": "סוג קובץ זה אינו מותר.",
         "rate_limited": "יותר מדי העלאות. המתינו רגע ונסו שוב.",
         "upload_failed": "לא ניתן היה להעלות את הקובץ. נסו שוב."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "טבלאות מובילים",
+    "public": {
+      "points": "{points} נק׳",
+      "endsIn": "מסתיים בעוד {days} ימ׳ {hours} שע׳ {minutes} דק׳ {seconds} שנ׳",
+      "finished": "הסתיים",
+      "empty": "עדיין אין משתתפים — היו הראשונים!",
+      "myRank": "הדירוג שלך: #{rank}",
+      "unranked": "עדיין ללא דירוג",
+      "shareToEarn": "שתפו וצברו נקודות",
+      "linkCopied": "הקישור הועתק"
+    },
+    "description": "הפעילו קמפיינים של דירוג מבוסס נקודות, שבהם לקוחות מתחרים על המקומות הראשונים ועל פרסים.",
+    "feature": "לוח מובילים",
+    "create": "יצירת לוח מובילים",
+    "kpi": {
+      "total": "סה״כ קמפיינים",
+      "active": "פעילים כעת"
+    },
+    "tabs": {
+      "all": "הכול",
+      "active": "פעילים",
+      "paused": "מושהים",
+      "finished": "הסתיימו"
+    },
+    "status": {
+      "draft": "טיוטה",
+      "active": "פעיל",
+      "paused": "מושהה",
+      "finished": "הסתיים"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "קמפיין",
+      "searchPlaceholder": "חיפוש לוחות מובילים...",
+      "platformFilter": "פלטפורמה",
+      "participants": "משתתפים",
+      "totalPoints": "סה״כ נקודות",
+      "newToday": "+{count} היום",
+      "average": "ממוצע {value} / שחקן",
+      "daysLeft": "{days, plural, one {נותר # יום} other {נותרו # ימים}}",
+      "ended": "הסתיים"
+    },
+    "scope": {
+      "allPosts": "כל הפוסטים",
+      "specificPosts": "פוסטים ספציפיים",
+      "specificPostsCount": "{count, plural, one {# פוסט} other {# פוסטים}}",
+      "telegramChatsCount": "{count, plural, one {# קבוצה} other {# קבוצות}}"
+    },
+    "menu": {
+      "start": "התחלה",
+      "pause": "השהיה",
+      "finish": "סיום",
+      "resetPoints": "איפוס נקודות",
+      "triggerRewards": "שליחת פרסים",
+      "viewParticipants": "הצגת משתתפים",
+      "copyLink": "העתקת קישור ציבורי"
+    },
+    "confirm": {
+      "publishTitle": "לפרסם את לוח המובילים?",
+      "publishDescription": "צבירת הנקודות מתחילה מיד והשחקנים יכולים לראות את הדף הציבורי.",
+      "pauseTitle": "להשהות את לוח המובילים?",
+      "pauseDescription": "הניקוד האוטומטי וניקוד הפלואים נעצרים. עדיין אפשר לשנות נקודות ידנית.",
+      "startTitle": "לחדש את לוח המובילים?",
+      "startDescription": "הניקוד מתחיל שוב בכל החוקים.",
+      "finishTitle": "לסיים את לוח המובילים?",
+      "finishDescription": "כל הניקוד נקבע ולא ניתן עוד לשנות אותו. פרסים אוטומטיים יישלחו אם הם מופעלים.",
+      "resetPointsTitle": "לאפס את כל הנקודות?",
+      "resetPointsDescription": "כל המשתתפים ב-\"{name}\" חוזרים ל-0 נקודות. הפעולה נרשמת ולא ניתן לבטל אותה."
+    },
+    "toast": {
+      "published": "לוח המובילים פורסם",
+      "paused": "לוח המובילים הושהה",
+      "started": "לוח המובילים חודש",
+      "finished": "לוח המובילים הסתיים",
+      "pointsReset": "כל הנקודות אופסו"
+    },
+    "export": {
+      "title": "ייצוא משתתפים",
+      "description": "הורידו את כל המשתתפים עם הדירוג והניקוד שלהם כקובץ CSV.",
+      "preparing": "מכין את הקובץ...",
+      "ready": "הקובץ מוכן ({count} שורות).",
+      "failed": "הייצוא נכשל. נסו שוב."
+    },
+    "rewards": {
+      "title": "שליחת פרסים",
+      "description": "שלחו את פלואו הפרסים לשחקנים המובילים. אפשר לשלוח פרסים פעם אחת בלבד.",
+      "flow": "פלואו פרסים",
+      "topN": "מספר הזוכים (top N)",
+      "noFlow": "לא נבחר פלואו פרסים — הגדירו אחד בהגדרות לוח המובילים.",
+      "alreadySent": "הפרסים כבר נשלחו עבור לוח מובילים זה.",
+      "confirm": "שליחת פרסים",
+      "result": "נשלח ל-{sent} זוכים, {skipped} דולגו (אין שיחה בערוץ זה)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "פרטים",
+        "config": "ערוץ וחוקים",
+        "review": "בדיקה ופרסום"
+      },
+      "namePlaceholder": "לדוגמה: מעריצי אוקטובר המובילים",
+      "coverImage": "תמונת כיסוי",
+      "coverImageHint": "JPG או PNG, עד 5MB. הגודל המומלץ 1200×630.",
+      "coverImageRejected": "בחרו תמונת JPG או PNG בגודל של עד 5MB.",
+      "description": "חוקים ופרסים",
+      "descriptionPlaceholder": "הסבירו איך שחקנים צוברים נקודות ומה זוכים השחקנים המובילים.",
+      "startsAt": "מתחיל ב",
+      "endsAt": "מסתיים ב",
+      "startLocked": "לא ניתן לשנות את שעת ההתחלה לאחר הפרסום.",
+      "channelTitle": "פלטפורמה וערוץ",
+      "platform": "פלטפורמה",
+      "hostChannel": "ערוץ",
+      "hostLocked": "לא ניתן לשנות את הפלטפורמה והערוץ לאחר הפרסום.",
+      "noChannel": "אין ערוץ {platform} מחובר. חברו ערוץ קודם בהגדרות ← ערוצים.",
+      "openMinigameSettings": "פתיחת הגדרות המשחק",
+      "postScope": "פוסטים שצוברים נקודות",
+      "choosePosts": "בחירת פוסטים",
+      "telegramChats": "קבוצות וערוצים",
+      "telegramChatsHint": "הוסיפו את הבוט לקבוצה או לערוץ כמנהל כדי שיוכל לראות חברים והודעות.",
+      "telegramChatsEmpty": "לא נמצאו קבוצות — הוסיפו קודם את הבוט כמנהל",
+      "rulesTitle": "חוקי ניקוד",
+      "rulesHint": "הפעילו את הפעולות שמזכות בנקודות וקבעו כמה.",
+      "allPlatforms": "כל הפלטפורמות",
+      "points": "נקודות",
+      "maxPerDay": "מקסימום ליום",
+      "maxPerDayHint": "השאירו ריק ללא הגבלה.",
+      "minChars": "מינימום תווים",
+      "bonusPoints": "נקודות בונוס לשעת הזהב",
+      "bonusPointsHint": "נקודות נוספות לתגובות זמן קצר לאחר פרסום הפוסט.",
+      "bonusMinutes": "משך שעת הזהב (דקות)",
+      "emailTopicNote": "רק אימיילים שנשלחו עם Email Topic נמדדים לפתיחות וללחיצות.",
+      "generalTitle": "הגדרות כלליות",
+      "followersOnly": "עוקבים בלבד",
+      "followersOnlyHint": "רק אנשים שעוקבים אחרי החשבון שלכם צוברים נקודות.",
+      "tagFilter": "סינון לפי תגיות",
+      "tagFilterHint": "רק אנשי קשר עם לפחות אחת מהתגיות האלה צוברים נקודות.",
+      "everyone": "כולם",
+      "resetTime": "שעת איפוס יומית (UTC)",
+      "resetTimeHint": "המגבלות היומיות מתאפסות בשעה זו. = {time} שעון וייטנאם (UTC+7).",
+      "cooldown": "השהיית אנטי-ספאם (שניות)",
+      "cooldownHint": "מספר השניות המינימלי בין שתי הענקות אוטומטיות לאותו אדם. 0 מכבה את האפשרות.",
+      "referralFlow": "פלואו קבלת פנים להפניה",
+      "referralFlowAuto": "יצירה אוטומטית",
+      "referralFlowHint": "נשלח לחבר שמצטרף דרך קישור הפניה. אפשר להשתמש ב-'{{referral_name}}' ובקישור הציבורי של לוח המובילים. השאירו ריק כדי ליצור אוטומטית הודעת קבלת פנים שאפשר לערוך ב-Flow Builder.",
+      "publicLink": "קישור ציבורי",
+      "publicLinkHint": "שלחו את הקישור הזה מתוך פלואו כדי שכל שחקן יראה את הדירוג שלו.",
+      "publicLinkAfterSave": "הקישור הציבורי יהיה זמין לאחר השמירה.",
+      "rewardsTitle": "פרסים",
+      "autoOnFinish": "שליחה אוטומטית בסיום",
+      "autoOnFinishHint": "מריץ את פלואו הפרסים עבור ה-top N מיד עם סיום לוח המובילים.",
+      "backToStep2": "חזרה לשלב 2",
+      "notEditable": "לא ניתן לערוך לוחות מובילים שהסתיימו."
+    },
+    "review": {
+      "infoCard": "פרטים",
+      "yes": "כן",
+      "no": "לא",
+      "off": "כבוי",
+      "seconds": "{seconds} שניות",
+      "resetTimeValue": "{utc} UTC (= {local} וייטנאם)",
+      "noRules": "עדיין לא הופעל אף חוק.",
+      "rulePoints": "{points} נק׳",
+      "maxPerDay": "מקס׳ {count} ביום",
+      "unlimited": "ללא הגבלה"
+    },
+    "preview": {
+      "sampleName": "שחקן {rank}",
+      "placeholderName": "שם לוח המובילים שלכם",
+      "pinnedBar": "#{rank} · {points} נק׳"
+    },
+    "validation": {
+      "nameRequired": "הזינו שם",
+      "dateRequired": "בחרו תאריך ושעה",
+      "endsAfterStart": "שעת הסיום חייבת להיות אחרי שעת ההתחלה",
+      "channelRequired": "בחרו ערוץ",
+      "minigameRequired": "בחרו מיני-משחק",
+      "pointsRequired": "הזינו את הנקודות שהחוק הזה מעניק",
+      "bonusMinutesRequired": "קבעו כמה דקות נמשכת שעת הזהב",
+      "postsRequired": "בחרו לפחות פוסט אחד",
+      "telegramChatsRequired": "בחרו לפחות קבוצה או ערוץ אחד",
+      "enableOneRule": "הפעילו לפחות חוק ניקוד אחד לפני הפרסום",
+      "fixErrors": "תקנו את השדות המסומנים"
+    },
+    "rules": {
+      "comments": {
+        "label": "תגובות",
+        "description": "נקודות על כל תגובה בפוסטים שלכם."
+      },
+      "liveComments": {
+        "label": "תגובות בלייב",
+        "description": "נקודות על כל תגובה במהלך שידור חי."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "נקודות כאשר הודעה תואמת מילת מפתח כלשהי בכלי Keywords של הערוץ הזה."
+      },
+      "storyMention": {
+        "label": "תיוג בסטורי",
+        "description": "נקודות כאשר מישהו מתייג את החשבון שלכם בסטורי שלו."
+      },
+      "storyReaction": {
+        "label": "תגובה לסטורי",
+        "description": "נקודות כאשר מישהו מגיב לסטורי שלכם."
+      },
+      "ctwaReactions": {
+        "label": "קליק CTWA ותגובות",
+        "description": "נקודות על לחיצה על מודעת Click-to-WhatsApp או על תגובה להודעה."
+      },
+      "survey": {
+        "label": "סקר וחידון",
+        "description": "נקודות על מילוי Questionnaire או שליחת טופס WhatsApp Flow."
+      },
+      "follow": {
+        "label": "מעקב אחרי OA ו-QR",
+        "description": "נקודות על מעקב אחרי ה-Official Account שלכם או סריקת קוד ה-QR שלו. ביטול מעקב מבטל את הנקודות."
+      },
+      "message": {
+        "label": "הודעת Zalo",
+        "description": "נקודות על כל הודעה שנשלחת ל-Official Account שלכם."
+      },
+      "joinGroup": {
+        "label": "הצטרפות לערוץ ולקבוצה",
+        "description": "נקודות על הצטרפות לקבוצה או לערוץ שלכם. עזיבה מבטלת את הנקודות."
+      },
+      "groupDiscussion": {
+        "label": "שיחה בקבוצה",
+        "description": "נקודות על כל הודעה בקבוצה שלכם."
+      },
+      "emailOpen": {
+        "label": "פתיחת אימייל",
+        "description": "נקודות כאשר אימייל נפתח."
+      },
+      "emailClick": {
+        "label": "לחיצה באימייל",
+        "description": "נקודות כאשר לוחצים על קישור באימייל."
+      },
+      "minigameWin": {
+        "label": "זכייה במיני-משחק",
+        "description": "נקודות על כל פרס שנזכה במיני-משחק."
+      },
+      "inGameShare": {
+        "label": "שיתוף מתוך המשחק",
+        "description": "נקודות על שיתוף המשחק כדי לקבל עוד סיבובים."
+      },
+      "referral": {
+        "label": "הפניה",
+        "description": "נקודות למזמין כאשר חבר חדש מצטרף דרך הקישור שלו."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} תגובות",
+      "liveComments": "{count} תגובות בלייב",
+      "keywords": "{count} keywords",
+      "storyMention": "{count} תיוגים בסטורי",
+      "storyReaction": "{count} תגובות לסטורי",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} סקרים",
+      "follow": "{count} מעקבים",
+      "message": "{count} הודעות",
+      "joinGroup": "{count} הצטרפויות",
+      "groupDiscussion": "{count} הודעות בקבוצה",
+      "emailOpen": "{count} פתיחות",
+      "emailClick": "{count} לחיצות",
+      "minigameWin": "{count} זכיות",
+      "inGameShare": "{count} שיתופים",
+      "referral": "{count} הפניות",
+      "flow": "{count} פלואו",
+      "manual": "{count} ידני"
+    },
+    "participants": {
+      "title": "משתתפים",
+      "switcher": "החלפת לוח מובילים",
+      "count": "{count, plural, one {# שחקן} other {# שחקנים}}",
+      "searchPlaceholder": "חיפוש לפי שם, מזהה משתמש או טלפון...",
+      "filters": {
+        "all": "הכול",
+        "top10": "Top 10",
+        "top50": "Top 50",
+        "banned": "חסומים"
+      },
+      "columns": {
+        "rank": "דירוג",
+        "participant": "משתתף",
+        "score": "ניקוד כולל",
+        "breakdown": "פירוט",
+        "lastActivity": "פעילות אחרונה"
+      },
+      "unknown": "לא ידוע",
+      "contactId": "מזהה {id}",
+      "lockedFinished": "לוח המובילים הזה הסתיים — הניקוד נעול.",
+      "lockedDraft": "פרסמו את לוח המובילים לפני עריכת הניקוד.",
+      "actions": {
+        "adjust": "התאמת נקודות",
+        "ban": "חסימה",
+        "unban": "ביטול חסימה",
+        "reset": "איפוס ל-0",
+        "history": "הצגת היסטוריה"
+      },
+      "adjust": {
+        "title": "התאמת נקודות",
+        "description": "הוסיפו או הפחיתו נקודות עבור {name}. השינוי נשמר ביומן הביקורת.",
+        "delta": "נקודות (+/-)",
+        "deltaPlaceholder": "לדוגמה: 50 או -20",
+        "reason": "סיבה",
+        "reasonPlaceholder": "למה אתם משנים את הניקוד הזה?",
+        "success": "הנקודות הותאמו"
+      },
+      "banConfirm": "{name} יוסר מהדירוג ויפסיק לצבור נקודות.",
+      "unbanConfirm": "{name} יחזור לדירוג עם הניקוד הנוכחי שלו.",
+      "resetConfirm": "הניקוד של {name} חוזר ל-0. הפעולה נרשמת.",
+      "banned": "המשתתף נחסם",
+      "unbanned": "חסימת המשתתף בוטלה",
+      "resetDone": "הניקוד אופס ל-0",
+      "history": {
+        "title": "היסטוריית ניקוד — {name}",
+        "empty": "עדיין אין שינויים בניקוד.",
+        "sources": {
+          "rule": "חוק",
+          "flow": "פלואו",
+          "referral": "הפניה",
+          "manual": "התאמה ידנית",
+          "reset": "איפוס"
+        }
+      },
+      "conversationNotFound": "לא נמצאה שיחה עבור איש קשר זה",
+      "popupBlocked": "אפשרו חלונות קופצים באתר זה ונסו שוב."
+    },
+    "auditLog": {
+      "title": "יומן ביקורת",
+      "admin": "מנהל",
+      "change": "שינוי",
+      "time": "זמן",
+      "reason": "סיבה",
+      "api": "API",
+      "empty": "עדיין אין שינויים ידניים.",
+      "actions": {
+        "adjust": "התאמה",
+        "resetOne": "איפוס שחקן",
+        "resetAll": "איפוס הכול",
+        "ban": "חסימה",
+        "unban": "ביטול חסימה"
       }
     }
   },

@@ -46,6 +46,7 @@ export type EmailTopicModel = typeof schema.emailTopicModel.$inferSelect
 export type AnalyticsEmailTopicModel =
   typeof schema.analyticsEmailTopicModel.$inferSelect
 export type TagChannelModel = typeof schema.tagChannelModel.$inferSelect
+export type TelegramChatModel = typeof schema.telegramChatModel.$inferSelect
 export type ContactToTagChannelModel =
   typeof schema.contactToTagChannelModel.$inferSelect
 export type FlowVersionModel = typeof schema.flowVersionModel.$inferSelect
@@ -207,6 +208,13 @@ export type MinigameModel = typeof schema.minigameModel.$inferSelect
 export type MinigameContactModel =
   typeof schema.minigameContactModel.$inferSelect
 export type MinigamePlayModel = typeof schema.minigamePlayModel.$inferSelect
+export type LeaderboardModel = typeof schema.leaderboardModel.$inferSelect
+export type LeaderboardParticipantModel =
+  typeof schema.leaderboardParticipantModel.$inferSelect
+export type LeaderboardScoreEventModel =
+  typeof schema.leaderboardScoreEventModel.$inferSelect
+export type LeaderboardAuditLogModel =
+  typeof schema.leaderboardAuditLogModel.$inferSelect
 export type MagicLinkModel = typeof schema.magicLinkModel.$inferSelect
 export type IntegrationInstagramModel =
   typeof schema.integrationInstagramModel.$inferSelect

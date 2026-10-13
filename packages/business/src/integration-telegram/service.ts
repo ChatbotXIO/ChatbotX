@@ -15,6 +15,12 @@ import { connectionStateService } from "../connection/state-service"
 import { inboxService } from "../inbox/service"
 import { type WorkspaceQuotaConsumption, workspaceService } from "../workspace"
 
+/** 64 hex chars from Web Crypto (no `node:crypto`: this module is in the Edge-safe barrel). */
+const generateWebhookSecretToken = (): string =>
+  Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("")
+
 class TelegramIntegrationService extends BaseService {
   findByInboxIdForWorkspace(props: { inboxId: string; workspaceId: string }) {
     return findOrFail({
@@ -57,7 +63,11 @@ class TelegramIntegrationService extends BaseService {
     botId: string
     botUsername: string
     botToken: string
-    onConnected: (ctx: { integrationId: string }) => Promise<void>
+    onConnected: (ctx: {
+      integrationId: string
+      /** Pass as `secret_token` to setWebhook; the webhook checks it. */
+      webhookSecretToken: string
+    }) => Promise<void>
   }): Promise<{
     workspaceId: string
     createdWorkspace: boolean
@@ -76,9 +86,14 @@ class TelegramIntegrationService extends BaseService {
     const createdWorkspace = !workspaceId
     const effectiveOwnerId = createdWorkspace ? createdBy : input.ownerId
 
+    // Telegram echoes this in `X-Telegram-Bot-Api-Secret-Token` on every
+    // update, so the webhook can reject forged updates (group activity
+    // awards leaderboard points). Rotated on every (re)connect.
+    const webhookSecretToken = generateWebhookSecretToken()
     const auth = {
       authType: "secretText" as const,
       secretText: botToken,
+      metadata: { botId, webhookSecretToken },
     }
     const quotaConsumption: ConnectionQuotaConsumption = {
       consumed: false,
@@ -158,7 +173,10 @@ class TelegramIntegrationService extends BaseService {
             )
           }
 
-          await onConnected({ integrationId: integration.id })
+          await onConnected({
+            integrationId: integration.id,
+            webhookSecretToken,
+          })
 
           return {
             workspaceId,

@@ -19,6 +19,7 @@ export type TelegramActions = {
   registerWebhook: (props: {
     botToken: string
     webhookUrl: string
+    secretToken?: string
   }) => Promise<void>
 }
 
@@ -101,10 +102,35 @@ export const telegramCallbackQuerySchema = z.object({
 })
 export type TelegramCallbackQuery = z.infer<typeof telegramCallbackQuerySchema>
 
+// `ChatMember` is a union keyed by `status` (creator, administrator, member,
+// restricted, left, kicked); only the fields every variant shares are read.
+export const telegramChatMemberSchema = z.object({
+  user: telegramUserSchema,
+  status: z.string(),
+  // Restricted members only: whether they are still in the chat.
+  is_member: z.boolean().optional(),
+})
+export type TelegramChatMember = z.infer<typeof telegramChatMemberSchema>
+
+export const telegramChatMemberUpdatedSchema = z.object({
+  chat: telegramChatSchema,
+  from: telegramUserSchema,
+  date: z.number(),
+  old_chat_member: telegramChatMemberSchema,
+  new_chat_member: telegramChatMemberSchema,
+})
+export type TelegramChatMemberUpdated = z.infer<
+  typeof telegramChatMemberUpdatedSchema
+>
+
 export const telegramUpdateSchema = z.object({
   update_id: z.number(),
   message: telegramMessageSchema.optional(),
   callback_query: telegramCallbackQuerySchema.optional(),
+  // The bot's own membership changed (added/promoted/removed in a group or channel).
+  my_chat_member: telegramChatMemberUpdatedSchema.optional(),
+  // Another member's status changed; only sent when listed in `allowed_updates`.
+  chat_member: telegramChatMemberUpdatedSchema.optional(),
 })
 export type TelegramUpdate = z.infer<typeof telegramUpdateSchema>
 

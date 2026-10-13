@@ -227,6 +227,49 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.maintainLeaderboardPartitions,
+    {
+      pattern: "20 1 * * *",
+    },
+    {
+      name: ScheduleJobData.maintainLeaderboardPartitions,
+      data: {
+        type: ScheduleJobData.maintainLeaderboardPartitions,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.finishOverdueLeaderboards,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.finishOverdueLeaderboards,
+      data: {
+        type: ScheduleJobData.finishOverdueLeaderboards,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.maintainLeaderboardRankings,
+    {
+      // Minute 1 so a 22:00 reset rebuilds right after the day rolls over.
+      pattern: "1 * * * *",
+    },
+    {
+      name: ScheduleJobData.maintainLeaderboardRankings,
+      data: {
+        type: ScheduleJobData.maintainLeaderboardRankings,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.scanCoexistRuns,
     {
       pattern: "* * * * *",

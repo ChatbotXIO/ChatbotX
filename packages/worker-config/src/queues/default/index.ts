@@ -30,6 +30,7 @@ export const defaultQueue = isNoRedisEnv()
 export const DefaultJobAction = {
   exportContacts: "exportContacts",
   exportCoupons: "exportCoupons",
+  exportLeaderboardParticipants: "exportLeaderboardParticipants",
   bulkTagContacts: "bulkTagContacts",
   runImport: "runImport",
   sendAuditLog: "sendAuditLog",
@@ -91,6 +92,18 @@ export type ExportCouponsFilter = {
   issueStatus?: CouponIssueStatus
   usageStatus?: CouponUsageStatus
   search?: string
+}
+
+export type JobExportLeaderboardParticipants = {
+  type: typeof DefaultJobAction.exportLeaderboardParticipants
+  data: {
+    workspaceId: string
+    leaderboardId: string
+    fileId: string
+    outputPath: string
+    /** Phone/email columns — only when the requester may see contact info. */
+    includeContactInfo?: boolean
+  }
 }
 
 export type JobExportCoupons = {
@@ -347,6 +360,7 @@ export type DefaultJobData =
   | JobDeleteWelcomeMessageFlows
   | JobExportContacts
   | JobExportCoupons
+  | JobExportLeaderboardParticipants
   | JobBulkTagContacts
   | JobRunImport
   | JobSendAuditLog

@@ -114,6 +114,10 @@ vi.mock("../src/helpers/contact", () => ({
   getLatestContactNoteString: vi.fn().mockResolvedValue("note"),
 }))
 
+vi.mock("../src/helpers/leaderboard", () => ({
+  getLeaderboardReferrerName: vi.fn().mockResolvedValue("Ada Referrer"),
+}))
+
 vi.mock("../src/helpers/message", () => ({
   getChatHistory: vi.fn().mockResolvedValue("history"),
 }))

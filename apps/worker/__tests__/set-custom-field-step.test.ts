@@ -29,6 +29,10 @@ vi.mock("@chatbotx.io/variables", () => ({
   contactVariableService: { getAll: getAllVariables, replaceAll },
 }))
 
+vi.mock("@chatbotx.io/business/leaderboard", () => ({
+  leaderboardScoringService: { changeFromFlow: vi.fn() },
+}))
+
 vi.mock("@chatbotx.io/business/contact-sequence", () => ({
   contactSequenceService: { removeContactSequencesForContact: vi.fn() },
 }))

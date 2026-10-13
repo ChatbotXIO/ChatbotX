@@ -41,6 +41,7 @@ import { dispatchAdsConversionJob } from "./handlers/ads-conversion/registry"
 import { runAiHandoverBulkToggle } from "./handlers/ai-handover-bulk-toggle"
 import { runAiHandoverTakeBack } from "./handlers/ai-handover-take-back"
 import { runChallenge } from "./handlers/challenge"
+import { processChannelAudienceEvent } from "./handlers/channel-audience-event"
 import { coexistAttachmentDownload } from "./handlers/coexist/attachment-download"
 import { coexistInstagramSync } from "./handlers/coexist/instagram-sync"
 import { coexistMessengerSync } from "./handlers/coexist/messenger-sync"
@@ -335,6 +336,10 @@ async function startIntegrationWorker() {
             }
             case IntegrationJobAction.messageReaction: {
               await processMessageReaction(job.data.data)
+              return
+            }
+            case IntegrationJobAction.channelAudienceEvent: {
+              await processChannelAudienceEvent(job.data.data)
               return
             }
             case IntegrationJobAction.sendFlow: {

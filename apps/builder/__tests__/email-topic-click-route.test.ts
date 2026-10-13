@@ -5,6 +5,7 @@ const recordClick = vi.fn().mockResolvedValue(undefined)
 const verifyEmailClickToken = vi.fn()
 const findAnalyticsWorkspaceIdByToken = vi.fn()
 const loadServableWorkspace = vi.fn()
+const awardLeaderboardEmailEngagement = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("@chatbotx.io/analytics", () => ({
   emailTopicAnalyticsService: { recordClick },
@@ -15,11 +16,16 @@ vi.mock("@chatbotx.io/business", () => ({
   verifyEmailClickToken,
 }))
 
+vi.mock("@chatbotx.io/business/leaderboard", () => ({
+  awardLeaderboardEmailEngagement,
+}))
+
 vi.mock("@/lib/workspace/load-servable-workspace", () => ({
   loadServableWorkspace,
 }))
 
 beforeEach(() => {
+  awardLeaderboardEmailEngagement.mockClear()
   recordClick.mockReset()
   recordClick.mockResolvedValue(undefined)
   verifyEmailClickToken.mockReset()
@@ -161,4 +167,25 @@ test("does not redirect when tracking token and signed token disagree on workspa
 
   expect(res.status).toBe(302)
   expect(res.headers.get("location")).toBe("http://localhost/")
+})
+
+test("scores the click for leaderboards with the verified destination", async () => {
+  findAnalyticsWorkspaceIdByToken.mockResolvedValue("workspace-1")
+  verifyEmailClickToken.mockResolvedValueOnce({
+    url: "https://example.com/path",
+    workspaceId: "workspace-1",
+  })
+  await GET(new Request("http://localhost/email-topic/click?r=tok&u=signed"))
+  expect(awardLeaderboardEmailEngagement).toHaveBeenCalledWith({
+    token: "tok",
+    kind: "click",
+    link: "https://example.com/path",
+  })
+})
+
+test("does not score a click for a workspace scheduled for deletion", async () => {
+  findAnalyticsWorkspaceIdByToken.mockResolvedValue("workspace-1")
+  loadServableWorkspace.mockResolvedValue({ servable: false })
+  await GET(new Request("http://localhost/email-topic/click?r=tok&u=signed"))
+  expect(awardLeaderboardEmailEngagement).not.toHaveBeenCalled()
 })

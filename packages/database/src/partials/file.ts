@@ -21,5 +21,9 @@ export type FileContextType = z.infer<typeof fileContextTypes>
 export const fileStatuses = z.enum(["pending", "uploaded", "failed"])
 export type FileStatus = z.infer<typeof fileStatuses>
 
-export const exportSubTypes = z.enum(["contacts", "coupons"])
+export const exportSubTypes = z.enum([
+  "contacts",
+  "coupons",
+  "leaderboardParticipants",
+])
 export type ExportSubType = z.infer<typeof exportSubTypes>

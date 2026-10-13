@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const HEX_64_PATTERN = /^[0-9a-f]{64}$/
+
 const {
   mockCreateInbox,
   mockDelete,
@@ -253,7 +255,14 @@ describe("telegramIntegrationService.connect", () => {
         provider: "telegram",
         kind: "channel",
         descriptor: { sourceId: "bot-1", displayName: "mybot" },
-        auth: { authType: "secretText", secretText: "token-1" },
+        auth: {
+          authType: "secretText",
+          secretText: "token-1",
+          metadata: {
+            botId: "bot-1",
+            webhookSecretToken: expect.stringMatching(HEX_64_PATTERN),
+          },
+        },
         existing: undefined,
         ownerId: "owner-1",
         inboxId: "inbox-1",

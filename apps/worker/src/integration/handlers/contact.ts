@@ -5,10 +5,12 @@ import {
   tagService,
 } from "@chatbotx.io/business"
 import { contactSequenceService } from "@chatbotx.io/business/contact-sequence"
+import { leaderboardScoringService } from "@chatbotx.io/business/leaderboard"
 import { emitContactUnsubscribed } from "@chatbotx.io/events"
 import type {
   AddContactNotesStepSchema,
   AddContactTagStepSchema,
+  ChangeGamificationScoreStepSchema,
   ClearCustomFieldStepSchema,
   DeleteContactStepSchema,
   MarkEmailVerifiedStepSchema,
@@ -226,6 +228,39 @@ export async function addContactSequence({
     sequenceId: step.sequenceId,
     contactInboxId: contactInbox.id,
   })
+}
+
+/**
+ * "Change gamification scores" action. A paused/finished/deleted leaderboard
+ * blocks bot scoring by design — the step then simply does nothing.
+ */
+export async function changeGamificationScore({
+  conversation,
+  step,
+  flowExecutionKey,
+  triggerMessageCreatedAt,
+}: ExecuteStepProps<ChangeGamificationScoreStepSchema>) {
+  if (!(step.leaderboardId && (step.targetUser || step.targetReferrer))) {
+    return
+  }
+  const result = await leaderboardScoringService.changeFromFlow({
+    workspaceId: conversation.workspaceId,
+    leaderboardId: step.leaderboardId,
+    contactId: conversation.contactId,
+    operation: step.operation,
+    points: step.points,
+    targets: { user: step.targetUser, referrer: step.targetReferrer },
+    dedup:
+      flowExecutionKey && triggerMessageCreatedAt
+        ? { key: `${flowExecutionKey}:${step.id}`, at: triggerMessageCreatedAt }
+        : null,
+  })
+  if (result.status !== "applied") {
+    logger.info(
+      { leaderboardId: step.leaderboardId, status: result.status },
+      "changeGamificationScore skipped",
+    )
+  }
 }
 
 export async function removeContactSequence({

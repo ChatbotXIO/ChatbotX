@@ -520,11 +520,12 @@ class QuestionnaireSubmissionService extends BaseService {
           const nextQuestion = questions[currentIndex + 1]
 
           if (!nextQuestion) {
+            const completedAt = new Date()
             await tx
               .update(questionnaireSubmissionModel)
               .set({
                 status: "completed",
-                completedAt: new Date(),
+                completedAt,
                 currentQuestionId: null,
                 currentQuestionSentAt: null,
                 lastAnsweredMessageId: input.triggerMessageId ?? null,
@@ -534,6 +535,7 @@ class QuestionnaireSubmissionService extends BaseService {
               status: "completed" as const,
               submissionId: submission.id,
               triggerFlowId: questionnaire.triggerFlowId,
+              completedAt,
             }
           }
 
@@ -647,12 +649,13 @@ class QuestionnaireSubmissionService extends BaseService {
         : null
 
       if (!nextQuestion) {
+        const completedAt = new Date()
         await tx
           .update(questionnaireSubmissionModel)
           .set({
             status: "completed",
             totalPoints,
-            completedAt: new Date(),
+            completedAt,
             currentQuestionId: null,
             currentQuestionSentAt: null,
             lastAnsweredMessageId: input.triggerMessageId ?? null,
@@ -662,6 +665,7 @@ class QuestionnaireSubmissionService extends BaseService {
           status: "completed" as const,
           submissionId: submission.id,
           triggerFlowId: questionnaire.triggerFlowId,
+          completedAt,
         }
       }
 

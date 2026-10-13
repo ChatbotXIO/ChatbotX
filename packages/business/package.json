@@ -41,6 +41,7 @@
     "./javascript-execution": "./src/javascript-execution/index.ts",
     "./mini-app": "./src/mini-app/index.ts",
     "./meta-conversions/capi-scope-policy": "./src/meta-conversions/capi-scope-policy.ts",
+    "./leaderboard": "./src/leaderboard/index.ts",
     "./minigame": "./src/minigame/index.ts",
     "./open-link": "./src/open-link/index.ts",
     "./smart-delay": "./src/smart-delay/index.ts",

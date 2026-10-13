@@ -13,6 +13,8 @@ export const PUBLIC_ROUTES = [
   "/media/attachment",
   "/media/avatar",
   "/minigames",
+  // Public leaderboard page; the personal bar is attributed only via a signed token.
+  "/leaderboards",
   // Public Mini App runner; submissions are attributed only via a signed token.
   "/mini-apps",
   "/auth",

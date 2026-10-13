@@ -1,10 +1,16 @@
 import { decodeRef, encodeRef, type RefConfig } from "@chatbotx.io/business"
 import {
+  leaderboardScoringService,
+  leaderboardService,
+} from "@chatbotx.io/business/leaderboard"
+import {
   isMinigameWithinPlayWindow,
   minigameContactService,
   minigameService,
 } from "@chatbotx.io/business/minigame"
+import { canShareMinigame } from "@chatbotx.io/business/utils"
 import { findOrFail } from "@chatbotx.io/database/client"
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import {
   flowModel,
   flowVersionModel,
@@ -238,6 +244,18 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
       return
     }
 
+    if (refData.type === "leaderboard") {
+      const dispatched = await handleLeaderboardRef({
+        conversation,
+        contactInbox,
+        refData,
+      })
+      if (dispatched) {
+        emitSuccess()
+      }
+      return
+    }
+
     // Trigger reflink
     await handleReflink({
       conversation,
@@ -249,6 +267,83 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
   } catch (error) {
     emitFallback()
     throw error
+  }
+}
+
+/**
+ * A friend (B) arrived through a player's (A) leaderboard referral link:
+ * B joins the leaderboard and A is credited when B is new to it (see
+ * `leaderboardScoringService.creditReferral` for the guards — the ref is
+ * unsigned). B then gets the leaderboard's welcome flow, if one is set.
+ * Returns whether a flow was dispatched.
+ */
+async function handleLeaderboardRef(props: {
+  conversation: ConversationModel
+  contactInbox: ContactInboxModel
+  refData: Extract<RefConfig, { type: "leaderboard" }>
+}): Promise<boolean> {
+  const { conversation, contactInbox, refData } = props
+  // `findUnscoped` + explicit workspace check: a stale or crafted link must
+  // neither throw (retry loop) nor reach another workspace's leaderboard.
+  // A crafted ref can carry an id outside the bigint range; treat it as
+  // unknown instead of letting the job throw and retry forever.
+  const leaderboard = await leaderboardService
+    .findUnscoped(refData.leaderboardId)
+    .catch(() => null)
+  if (!leaderboard || leaderboard.workspaceId !== conversation.workspaceId) {
+    logger.warn(`Leaderboard ref: ${refData.leaderboardId} not in workspace`)
+    return false
+  }
+  // The ref is unsigned. Only credit arrivals on a shareable channel (not
+  // webchat, whose anonymous visitors are free to mint) and, for channel
+  // leaderboards, on the leaderboard's own host inbox.
+  if (
+    !canShareMinigame(contactInbox.channel as ChannelType) ||
+    (leaderboard.inboxId && leaderboard.inboxId !== contactInbox.inboxId)
+  ) {
+    logger.warn(
+      { leaderboardId: leaderboard.id, channel: contactInbox.channel },
+      "Leaderboard ref: arrival channel cannot earn referral credit",
+    )
+    return false
+  }
+
+  try {
+    await leaderboardScoringService.creditReferral({
+      workspaceId: conversation.workspaceId,
+      leaderboardId: leaderboard.id,
+      inviteeContactId: conversation.contactId,
+      referrerContactId: refData.contactId,
+    })
+  } catch (error) {
+    logger.warn(error, "Failed to credit leaderboard referral")
+  }
+
+  if (!leaderboard.referralWelcomeFlowId) {
+    return false
+  }
+  try {
+    const welcomeFlow = await findOrFail({
+      table: flowModel,
+      where: {
+        id: leaderboard.referralWelcomeFlowId,
+        workspaceId: conversation.workspaceId,
+      },
+      message: "Flow not found",
+    })
+    await integrationQueue.add(IntegrationJobAction.sendFlow, {
+      type: IntegrationJobAction.sendFlow,
+      data: {
+        conversationId: conversation,
+        contactInboxId: contactInbox,
+        flowId: welcomeFlow.id,
+        origin: webhookChannelOrigin(),
+      },
+    })
+    return true
+  } catch (error) {
+    logger.warn(error, "Leaderboard ref: welcome flow unavailable")
+    return false
   }
 }
 

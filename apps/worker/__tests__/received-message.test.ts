@@ -596,8 +596,23 @@ vi.mock("../src/integration/handlers/sync-ad-labels", () => ({
 }))
 
 const mockProcessCommentAutomation = vi.fn().mockResolvedValue(undefined)
-vi.mock("../src/integration/handlers/comment-automation", () => ({
-  processCommentAutomation: mockProcessCommentAutomation,
+vi.mock("../src/integration/handlers/comment-automation", async () => {
+  const matching = await vi.importActual<
+    typeof import("../src/integration/handlers/comment-automation/automation-matching")
+  >("../src/integration/handlers/comment-automation/automation-matching")
+  return {
+    processCommentAutomation: mockProcessCommentAutomation,
+    isCommentReply: matching.isCommentReply,
+  }
+})
+
+const mockAwardCommentLeaderboard = vi.fn().mockResolvedValue(undefined)
+const mockAwardInboundMessageLeaderboard = vi.fn().mockResolvedValue(undefined)
+const mockAwardReactionLeaderboard = vi.fn().mockResolvedValue(undefined)
+vi.mock("../src/integration/handlers/leaderboard-sources", () => ({
+  awardCommentLeaderboard: mockAwardCommentLeaderboard,
+  awardInboundMessageLeaderboard: mockAwardInboundMessageLeaderboard,
+  awardReactionLeaderboard: mockAwardReactionLeaderboard,
 }))
 
 const mockRunAsMissedCommentReplay = vi.fn((callback: () => Promise<unknown>) =>
@@ -806,6 +821,48 @@ describe("receiveMessage — message repository branch", () => {
 
     expect(mockCreateOrUpdate).toHaveBeenCalledTimes(1)
     expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
+  })
+
+  test("scores a NEW inbound message for leaderboards with the saved row", async () => {
+    const referral = { ctwaClid: "clid-1" }
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+      referral,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockAwardInboundMessageLeaderboard).toHaveBeenCalledWith({
+      inbox: fakeInbox,
+      contactId: "contact-1",
+      message: expect.objectContaining({
+        id: fakeCreatedMessage.id,
+        createdAt: fakeCreatedMessage.createdAt,
+      }),
+      referral,
+    })
+  })
+
+  test("does not score a redelivered (already stored) message", async () => {
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: false,
+    })
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockAwardInboundMessageLeaderboard).not.toHaveBeenCalled()
   })
 
   describe("Google click referral persistence", () => {
@@ -4242,6 +4299,77 @@ describe("contact source taxonomy", () => {
         workspaceId: "ws-1",
       }),
     )
+  })
+
+  test("scores a new top-level comment for leaderboards with its own time", async () => {
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "page_post-1_comment-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello",
+        postId: "page_post-1",
+        createdTime: 0,
+      },
+    })
+
+    expect(mockAwardCommentLeaderboard).toHaveBeenCalledWith({
+      inbox: fakeInbox,
+      contactId: "contact-new",
+      commentId: "page_post-1_comment-1",
+      externalPostId: "page_post-1",
+      channelPostId: "post-row-1",
+      text: "hello",
+      isLive: false,
+      isReply: false,
+      eventAt: fakeCreatedMessage.createdAt,
+    })
+  })
+
+  test("flags a reply to a comment and skips an already stored comment", async () => {
+    mockCreateMessageRepository.mockResolvedValue({
+      createOrUpdate: mockCreateOrUpdate,
+      createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,
+      findLastByConversation: mockFindLastByConversation,
+      findBySourceId: vi.fn().mockResolvedValue(null),
+    })
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "post-1_reply-2",
+        parentId: "post-1_comment-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "reply",
+        postId: "page_post-1",
+        createdTime: 0,
+      },
+    })
+    expect(mockAwardCommentLeaderboard).toHaveBeenCalledWith(
+      expect.objectContaining({ isReply: true }),
+    )
+
+    mockAwardCommentLeaderboard.mockClear()
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: false,
+    })
+    await receiveComment({
+      integrationType: "messenger",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "page_post-1_comment-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello",
+        postId: "page_post-1",
+        createdTime: 0,
+      },
+    })
+    expect(mockAwardCommentLeaderboard).not.toHaveBeenCalled()
   })
 
   test("propagates a post-persistence failure so the job retries", async () => {

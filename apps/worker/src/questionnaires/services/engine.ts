@@ -2,6 +2,7 @@ import {
   conversationService,
   questionnaireSubmissionService,
 } from "@chatbotx.io/business"
+import { enqueueLeaderboardAward } from "@chatbotx.io/business/leaderboard"
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import {
   createMessageRepository,
@@ -368,6 +369,17 @@ export async function runQuestionnaireEngine(
     }
 
     if (result.status === "completed") {
+      // WhatsApp leaderboards score a completed questionnaire ("survey").
+      // The submission is the source event; its completion time keeps a
+      // retry from scoring twice. The pre-check drops other channels.
+      await enqueueLeaderboardAward({
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        inboxId: props.contactInbox.inboxId,
+        rule: "survey",
+        sourceRef: `questionnaire:${result.submissionId}`,
+        eventAt: result.completedAt,
+      })
       await conversationService.updateChallenge({
         workspaceId: conversation.workspaceId,
         conversationId: conversation.id,

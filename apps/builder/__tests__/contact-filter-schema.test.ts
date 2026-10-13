@@ -11,6 +11,7 @@ import {
   contactFilterCriteriaSchema,
   couponTopicConditionSchema,
   customFieldConditionSchema,
+  leaderboardScoreConditionSchema,
   singleContactFilterConditionSchema,
 } from "@/features/contact-filter/schema"
 import { staticFieldFilter } from "@/features/contact-filter/schema/static-field-filter"
@@ -697,5 +698,48 @@ describe("listContactsRequest contactFilter preprocess", () => {
 
     expect(parsed.contactFilter).toBeUndefined()
     expect(parsed.keyword).toBe("Acme")
+  })
+})
+
+describe("leaderboardScoreConditionSchema", () => {
+  test("accepts a numeric comparison and coerces numbers to strings", () => {
+    const parsed = leaderboardScoreConditionSchema.safeParse({
+      field: "leaderboardScore",
+      leaderboardId: "77",
+      operator: operatorTypes.enum.gte,
+      value: 100,
+    })
+    expect(parsed.success).toBe(true)
+    expect(parsed.data?.value).toBe("100")
+  })
+
+  test("rejects other operators and non-numeric values", () => {
+    expect(
+      leaderboardScoreConditionSchema.safeParse({
+        field: "leaderboardScore",
+        leaderboardId: "77",
+        operator: operatorTypes.enum.contains,
+        value: "1",
+      }).success,
+    ).toBe(false)
+    expect(
+      leaderboardScoreConditionSchema.safeParse({
+        field: "leaderboardScore",
+        leaderboardId: "77",
+        operator: operatorTypes.enum.gt,
+        value: "abc",
+      }).success,
+    ).toBe(false)
+  })
+
+  test("is part of the single-condition union (flow Condition step)", () => {
+    expect(
+      singleContactFilterConditionSchema.safeParse({
+        field: "leaderboardScore",
+        leaderboardId: "77",
+        operator: operatorTypes.enum.lt,
+        value: "5",
+      }).success,
+    ).toBe(true)
   })
 })

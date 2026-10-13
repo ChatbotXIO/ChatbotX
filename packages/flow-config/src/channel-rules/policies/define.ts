@@ -103,6 +103,7 @@ const stepExecutionKinds = {
   sendGridAddContact: "worker",
   klaviyoSyncProfile: "worker",
   subscribeSequence: "worker",
+  changeGamificationScore: "worker",
   unsubscribeSequence: "worker",
   email: "worker",
   sendViewCatalog: "channel",

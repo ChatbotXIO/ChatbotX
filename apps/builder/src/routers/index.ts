@@ -55,6 +55,11 @@ export const router = {
   couponsAPI: lazy(() =>
     import("@/features/coupons/api").then((m) => ({ default: m.couponsAPI })),
   ),
+  leaderboardsAPI: lazy(() =>
+    import("@/features/leaderboards/api").then((m) => ({
+      default: m.leaderboardsAPI,
+    })),
+  ),
   deviceTokensAPI: lazy(() =>
     import("@/features/device-tokens/api").then((m) => ({
       default: m.deviceTokensAPI,

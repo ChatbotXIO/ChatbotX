@@ -56,6 +56,8 @@ export type FieldConfig = {
   botFieldId?: string
   /** Set for dynamic coupon-topic configs; identifies the workspace coupon topic. */
   topicId?: string
+  /** Set for dynamic "Gamification scores" configs; identifies the leaderboard. */
+  leaderboardId?: string
   /** Display label override (custom field / coupon topic name); static fields fall back to i18n. */
   label?: string
   formField: FormFieldType
@@ -93,6 +95,7 @@ export type ContactFilterFieldGroup =
   | "ecommerce"
   | "systemFields"
   | "topicCoupon"
+  | "leaderboard"
   | "customFields"
   | "botFields"
   | "ctwaAds"
@@ -378,6 +381,9 @@ const CONTACT_FILTER_GROUP_FIELDS = {
   // Populated dynamically — each coupon topic gets its own FieldConfig with
   // group "topicCoupon" set directly (see couponTopicConfigs below).
   topicCoupon: [],
+  // Populated dynamically — each leaderboard gets its own FieldConfig with
+  // group "leaderboard" set directly (see leaderboardConfigs below).
+  leaderboard: [],
   customFields: ["customFields"],
   // Populated dynamically (opt-in only — see `getFieldConfigs`'s
   // `includeBotFields`) — each workspace bot field gets its own FieldConfig
@@ -420,6 +426,7 @@ export const getFieldConfigs = ({
   assigneeOptions = [],
   channelPostOptions = [],
   couponTopicOptions = [],
+  leaderboardOptions = [],
   botFields = [],
   includeBotFields = false,
   filterValueLabels,
@@ -435,6 +442,8 @@ export const getFieldConfigs = ({
   assigneeOptions?: SelectOption[]
   channelPostOptions?: SelectOption[]
   couponTopicOptions?: SelectOption[]
+  /** Workspace leaderboards, each offered as a "Gamification scores" field. */
+  leaderboardOptions?: SelectOption[]
   /** Workspace bot (account) fields — only read when `includeBotFields` is true. */
   botFields?: CustomFieldFilterOption[]
   /**
@@ -519,6 +528,19 @@ export const getFieldConfigs = ({
     group: "topicCoupon",
   }))
 
+  // Each leaderboard becomes its own "Gamification scores" field, encoded as
+  // `leaderboardScore:<id>` so the form/row can map back to a
+  // `{ field: "leaderboardScore", leaderboardId }` condition.
+  const leaderboardConfigs: FieldConfig[] = leaderboardOptions.map(
+    (leaderboard) => ({
+      name: `leaderboardScore:${leaderboard.value}`,
+      leaderboardId: leaderboard.value,
+      label: leaderboard.label,
+      formField: formFieldTypes.enum.number,
+      group: "leaderboard",
+    }),
+  )
+
   // Each workspace bot field becomes its own filter field, same shape as a
   // custom-field config (`customFieldType` carries the raw type either way —
   // see the `FieldConfig` doc comment) so the row/dialog UI can reuse the
@@ -537,6 +559,7 @@ export const getFieldConfigs = ({
     ...customFieldConfigs,
     ...botFieldConfigs,
     ...couponTopicConfigs,
+    ...leaderboardConfigs,
   ]
 }
 

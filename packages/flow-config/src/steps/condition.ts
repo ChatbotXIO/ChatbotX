@@ -28,6 +28,12 @@ export const conditionFilterConditionSchema = z.object({
    */
   topicId: zodBigintAsString().optional(),
   /**
+   * Leaderboard id for dynamic "Gamification scores" filter rows. Same
+   * reason as `topicId`: without it zod strips the key on save and the
+   * condition compares against no leaderboard.
+   */
+  leaderboardId: zodBigintAsString().optional(),
+  /**
    * Precise custom-field type (`date` | `datetime`). Kept alongside `valueType`
    * so the runtime filter compares a date field by wall clock rather than the
    * zone-aware datetime path. Without it here, zod strips the key on save and

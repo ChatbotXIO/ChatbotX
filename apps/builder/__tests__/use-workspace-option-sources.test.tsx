@@ -52,6 +52,14 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
+vi.mock("@/features/leaderboards/lib/use-leaderboard-options", () => ({
+  useLeaderboardOptions: () => ({
+    leaderboards: [],
+    options: [],
+    isLoading: false,
+  }),
+}))
+
 vi.mock("@/features/coupons/provider/use-coupon-topic-options", () => {
   const options: never[] = []
   return {

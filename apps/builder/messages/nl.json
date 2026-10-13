@@ -2152,7 +2152,8 @@
       "media": "Media",
       "ads": "Advertenties",
       "settings": "Instellingen",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "Ranglijsten"
     },
     "adReferral": {
       "label": "Ads",
@@ -2184,6 +2185,9 @@
       "hint": "Data Manager wordt aanbevolen. De oude upload-API werkt alleen voor Google Cloud-projecten die Google nog toestaat en gebruikt de Data Manager-machtiging niet. Een wijziging geldt alleen voor nieuwe verbindingen: verbind bestaande werkruimtes opnieuw.",
       "dataManager": "Data Manager API (aanbevolen)",
       "legacy": "Oude upload-API"
+    },
+    "referralName": {
+      "label": "Naam doorverwijzer"
     }
   },
   "condition": {
@@ -2258,6 +2262,7 @@
       "questionnaireInProgress": "Vragenlijst bezig",
       "questionnaireFinished": "Vragenlijst voltooid",
       "couponTopic": "Coupon",
+      "leaderboardScore": "Gamificationpunten",
       "votedOnPoll": "Op de peiling gestemd",
       "lastComment": "Laatste opmerking",
       "commentedOnPost": "Op bericht gereageerd",
@@ -2327,6 +2332,7 @@
       "ecommerce": "E-commerce",
       "systemFields": "Systeemvelden",
       "topicCoupon": "Coupononderwerp",
+      "leaderboard": "Gamificationpunten",
       "customFields": "Aangepaste velden",
       "botFields": "Botvelden",
       "email": "E-mail",
@@ -2548,6 +2554,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Threadbeheer",
       "sendGoogleAdsConversion": "Google Ads-conversie verzenden",
+      "changeGamificationScore": "Gamificationpunten wijzigen",
       "sendViewCatalog": "Catalogus bekijken",
       "sendProducts": "Producten verzenden"
     },
@@ -2669,6 +2676,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "Knop bewerken",
       "buttonLabel": "Knoplabel"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "Ranglijst",
+      "operation": "Bewerking",
+      "add": "Punten toevoegen (+)",
+      "subtract": "Punten aftrekken (−)",
+      "points": "Punten",
+      "targetUser": "Punten van gebruiker",
+      "targetReferrer": "Punten van doorverwijzer",
+      "targetReferrerHint": "Wijzig ook de punten van degene die dit contact heeft doorverwezen.",
+      "summary": "{points} punten op {leaderboard}"
     },
     "whatsappLocation": {
       "title": "Locatie",
@@ -8382,6 +8400,358 @@
         "type_not_allowed": "Dit bestandstype is niet toegestaan.",
         "rate_limited": "Te veel uploads. Wacht even en probeer het opnieuw.",
         "upload_failed": "Het bestand kon niet worden geüpload. Probeer het opnieuw."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "Ranglijsten",
+    "public": {
+      "points": "{points} pnt",
+      "endsIn": "Eindigt over {days}d {hours}u {minutes}m {seconds}s",
+      "finished": "Afgelopen",
+      "empty": "Nog geen spelers — wees de eerste!",
+      "myRank": "Jouw positie: #{rank}",
+      "unranked": "Nog geen positie",
+      "shareToEarn": "Deel en verdien punten",
+      "linkCopied": "Link gekopieerd"
+    },
+    "description": "Start ranglijstcampagnes op basis van punten waarin klanten strijden om topposities en beloningen.",
+    "feature": "Ranglijst",
+    "create": "Ranglijst maken",
+    "kpi": {
+      "total": "Totaal aantal campagnes",
+      "active": "Lopend"
+    },
+    "tabs": {
+      "all": "Alle",
+      "active": "Actief",
+      "paused": "Gepauzeerd",
+      "finished": "Afgelopen"
+    },
+    "status": {
+      "draft": "Concept",
+      "active": "Actief",
+      "paused": "Gepauzeerd",
+      "finished": "Afgelopen"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "Campagne",
+      "searchPlaceholder": "Ranglijsten zoeken...",
+      "platformFilter": "Platform",
+      "participants": "Deelnemers",
+      "totalPoints": "Totaal aantal punten",
+      "newToday": "+{count} vandaag",
+      "average": "gem. {value} / speler",
+      "daysLeft": "{days, plural, one {# dag resterend} other {# dagen resterend}}",
+      "ended": "Afgelopen"
+    },
+    "scope": {
+      "allPosts": "Alle berichten",
+      "specificPosts": "Specifieke berichten",
+      "specificPostsCount": "{count, plural, one {# bericht} other {# berichten}}",
+      "telegramChatsCount": "{count, plural, one {# groep} other {# groepen}}"
+    },
+    "menu": {
+      "start": "Starten",
+      "pause": "Pauzeren",
+      "finish": "Afronden",
+      "resetPoints": "Punten resetten",
+      "triggerRewards": "Beloningen versturen",
+      "viewParticipants": "Deelnemers bekijken",
+      "copyLink": "Openbare link kopiëren"
+    },
+    "confirm": {
+      "publishTitle": "Deze ranglijst publiceren?",
+      "publishDescription": "Het scoren begint direct en spelers kunnen de openbare pagina zien.",
+      "pauseTitle": "Deze ranglijst pauzeren?",
+      "pauseDescription": "Automatisch scoren en scoren via flows stoppen. Je kunt punten nog steeds handmatig aanpassen.",
+      "startTitle": "Deze ranglijst hervatten?",
+      "startDescription": "Het scoren start weer voor elke regel.",
+      "finishTitle": "Deze ranglijst afronden?",
+      "finishDescription": "Alle scores worden bevroren en kunnen niet meer veranderen. Automatische beloningen worden verstuurd als ze zijn ingeschakeld.",
+      "resetPointsTitle": "Alle punten resetten?",
+      "resetPointsDescription": "Elke deelnemer van \"{name}\" gaat terug naar 0 punten. Dit wordt vastgelegd en kan niet ongedaan worden gemaakt."
+    },
+    "toast": {
+      "published": "Ranglijst gepubliceerd",
+      "paused": "Ranglijst gepauzeerd",
+      "started": "Ranglijst hervat",
+      "finished": "Ranglijst afgerond",
+      "pointsReset": "Alle punten zijn gereset"
+    },
+    "export": {
+      "title": "Deelnemers exporteren",
+      "description": "Download alle deelnemers met hun positie en score als CSV-bestand.",
+      "preparing": "Je bestand wordt voorbereid...",
+      "ready": "Je bestand is klaar ({count} rijen).",
+      "failed": "De export is mislukt. Probeer het opnieuw."
+    },
+    "rewards": {
+      "title": "Beloningen versturen",
+      "description": "Stuur de beloningsflow naar de beste spelers. Beloningen kunnen maar één keer worden verstuurd.",
+      "flow": "Beloningsflow",
+      "topN": "Aantal winnaars (top N)",
+      "noFlow": "Geen beloningsflow gekozen — stel er een in bij de instellingen van de ranglijst.",
+      "alreadySent": "Voor deze ranglijst zijn de beloningen al verstuurd.",
+      "confirm": "Beloningen versturen",
+      "result": "Verstuurd naar {sent} winnaars, {skipped} overgeslagen (geen gesprek op dit kanaal)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "Gegevens",
+        "config": "Kanaal en regels",
+        "review": "Controleren en publiceren"
+      },
+      "namePlaceholder": "bijv. Topfans van oktober",
+      "coverImage": "Omslagafbeelding",
+      "coverImageHint": "JPG of PNG, maximaal 5 MB. Aanbevolen formaat 1200×630.",
+      "coverImageRejected": "Kies een JPG- of PNG-afbeelding van maximaal 5 MB.",
+      "description": "Regels en beloningen",
+      "descriptionPlaceholder": "Leg uit hoe spelers punten verdienen en wat de besten winnen.",
+      "startsAt": "Begint op",
+      "endsAt": "Eindigt op",
+      "startLocked": "De starttijd kan na publicatie niet meer worden gewijzigd.",
+      "channelTitle": "Platform en kanaal",
+      "platform": "Platform",
+      "hostChannel": "Kanaal",
+      "hostLocked": "Platform en kanaal kunnen na publicatie niet meer worden gewijzigd.",
+      "noChannel": "Geen gekoppeld {platform}-kanaal. Koppel er eerst een via Instellingen → Kanalen.",
+      "openMinigameSettings": "Spelinstellingen openen",
+      "postScope": "Berichten die punten opleveren",
+      "choosePosts": "Berichten kiezen",
+      "telegramChats": "Groepen en kanalen",
+      "telegramChatsHint": "Voeg je bot als beheerder toe aan de groep of het kanaal, zodat die leden en berichten kan zien.",
+      "telegramChatsEmpty": "Geen groepen gevonden — voeg de bot eerst als beheerder toe",
+      "rulesTitle": "Scoreregels",
+      "rulesHint": "Schakel de acties in die punten opleveren en stel in hoeveel.",
+      "allPlatforms": "Alle platforms",
+      "points": "Punten",
+      "maxPerDay": "Max. per dag",
+      "maxPerDayHint": "Laat leeg voor onbeperkt.",
+      "minChars": "Minimaal aantal tekens",
+      "bonusPoints": "Bonuspunten gouden uur",
+      "bonusPointsHint": "Extra punten voor reacties kort nadat het bericht is gepubliceerd.",
+      "bonusMinutes": "Duur van het gouden uur (minuten)",
+      "emailTopicNote": "Alleen e-mails die met een Email Topic zijn verstuurd, worden gevolgd op openen en klikken.",
+      "generalTitle": "Algemene instellingen",
+      "followersOnly": "Alleen volgers",
+      "followersOnlyHint": "Alleen mensen die je account volgen verdienen punten.",
+      "tagFilter": "Tagfilter",
+      "tagFilterHint": "Alleen contacten met minstens één van deze tags verdienen punten.",
+      "everyone": "Iedereen",
+      "resetTime": "Dagelijkse resettijd (UTC)",
+      "resetTimeHint": "Dagelijkse limieten starten op dit tijdstip opnieuw. = {time} Vietnamese tijd (UTC+7).",
+      "cooldown": "Antispam-cooldown (seconden)",
+      "cooldownHint": "Minimaal aantal seconden tussen twee automatische toekenningen aan dezelfde persoon. 0 schakelt het uit.",
+      "referralFlow": "Welkomstflow voor doorverwijzingen",
+      "referralFlowAuto": "Automatisch aanmaken",
+      "referralFlowHint": "Wordt verstuurd naar een vriend die zich aanmeldt via een verwijzingslink. Je kunt '{{referral_name}}' en de openbare ranglijstlink gebruiken. Laat leeg om automatisch een welkomstbericht te maken dat je kunt bewerken in Flow Builder.",
+      "publicLink": "Openbare link",
+      "publicLinkHint": "Stuur deze link vanuit een flow zodat elke speler zijn eigen positie ziet.",
+      "publicLinkAfterSave": "De openbare link is beschikbaar na het opslaan.",
+      "rewardsTitle": "Beloningen",
+      "autoOnFinish": "Automatisch versturen bij afronding",
+      "autoOnFinishHint": "Voert de beloningsflow uit voor de top N zodra de ranglijst is afgerond.",
+      "backToStep2": "Terug naar stap 2",
+      "notEditable": "Afgeronde ranglijsten kunnen niet worden bewerkt."
+    },
+    "review": {
+      "infoCard": "Gegevens",
+      "yes": "Ja",
+      "no": "Nee",
+      "off": "Uit",
+      "seconds": "{seconds} seconden",
+      "resetTimeValue": "{utc} UTC (= {local} Vietnamese tijd)",
+      "noRules": "Er is nog geen regel ingeschakeld.",
+      "rulePoints": "{points} ptn",
+      "maxPerDay": "max. {count}/dag",
+      "unlimited": "onbeperkt"
+    },
+    "preview": {
+      "sampleName": "Speler {rank}",
+      "placeholderName": "Naam van je ranglijst",
+      "pinnedBar": "#{rank} · {points} ptn"
+    },
+    "validation": {
+      "nameRequired": "Vul een naam in",
+      "dateRequired": "Kies een datum en tijd",
+      "endsAfterStart": "De eindtijd moet na de starttijd liggen",
+      "channelRequired": "Kies een kanaal",
+      "minigameRequired": "Kies een minigame",
+      "pointsRequired": "Vul de punten in die deze regel toekent",
+      "bonusMinutesRequired": "Stel in hoeveel minuten het gouden uur duurt",
+      "postsRequired": "Kies minstens één bericht",
+      "telegramChatsRequired": "Kies minstens één groep of kanaal",
+      "enableOneRule": "Schakel minstens één scoreregel in voordat je publiceert",
+      "fixErrors": "Corrigeer de gemarkeerde velden"
+    },
+    "rules": {
+      "comments": {
+        "label": "Reacties",
+        "description": "Punten voor elke reactie op je berichten."
+      },
+      "liveComments": {
+        "label": "Live-reacties",
+        "description": "Punten voor elke reactie tijdens een livestream."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "Punten wanneer een bericht overeenkomt met een trefwoord van de Keywords-tool van dit kanaal."
+      },
+      "storyMention": {
+        "label": "Vermelding in story",
+        "description": "Punten wanneer iemand je account tagt in zijn story."
+      },
+      "storyReaction": {
+        "label": "Reactie op story",
+        "description": "Punten wanneer iemand reageert op je story."
+      },
+      "ctwaReactions": {
+        "label": "CTWA-klik en reacties",
+        "description": "Punten voor het klikken op een Click-to-WhatsApp-advertentie of het reageren op een bericht."
+      },
+      "survey": {
+        "label": "Enquête en quiz",
+        "description": "Punten voor het invullen van een Questionnaire of het versturen van een WhatsApp Flow-formulier."
+      },
+      "follow": {
+        "label": "OA volgen en QR",
+        "description": "Punten voor het volgen van je Official Account of het scannen van de QR-code. Bij ontvolgen worden de punten teruggenomen."
+      },
+      "message": {
+        "label": "Zalo-bericht",
+        "description": "Punten voor elk bericht dat naar je Official Account wordt gestuurd."
+      },
+      "joinGroup": {
+        "label": "Lid worden van kanaal en groep",
+        "description": "Punten voor het lid worden van je groep of kanaal. Bij vertrek worden de punten teruggenomen."
+      },
+      "groupDiscussion": {
+        "label": "Groepsdiscussie",
+        "description": "Punten voor elk bericht in je groep."
+      },
+      "emailOpen": {
+        "label": "E-mail geopend",
+        "description": "Punten wanneer een e-mail wordt geopend."
+      },
+      "emailClick": {
+        "label": "Klik in e-mail",
+        "description": "Punten wanneer er op een link in een e-mail wordt geklikt."
+      },
+      "minigameWin": {
+        "label": "Minigame gewonnen",
+        "description": "Punten voor elke prijs die in de minigame wordt gewonnen."
+      },
+      "inGameShare": {
+        "label": "Delen in het spel",
+        "description": "Punten voor het delen van het spel om meer beurten te krijgen."
+      },
+      "referral": {
+        "label": "Doorverwijzing",
+        "description": "Punten voor de uitnodiger wanneer een nieuwe vriend zich aanmeldt via zijn link."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} reacties",
+      "liveComments": "{count} live-reacties",
+      "keywords": "{count} trefwoorden",
+      "storyMention": "{count} story-vermeldingen",
+      "storyReaction": "{count} story-reacties",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} enquêtes",
+      "follow": "{count} volgers",
+      "message": "{count} berichten",
+      "joinGroup": "{count} aanmeldingen",
+      "groupDiscussion": "{count} groepsberichten",
+      "emailOpen": "{count} keer geopend",
+      "emailClick": "{count} klikken",
+      "minigameWin": "{count} winsten",
+      "inGameShare": "{count} keer gedeeld",
+      "referral": "{count} doorverwijzingen",
+      "flow": "{count} flow",
+      "manual": "{count} handmatig"
+    },
+    "participants": {
+      "title": "Deelnemers",
+      "switcher": "Ranglijst wisselen",
+      "count": "{count, plural, one {# speler} other {# spelers}}",
+      "searchPlaceholder": "Zoek op naam, gebruikers-ID of telefoon...",
+      "filters": {
+        "all": "Alle",
+        "top10": "Top 10",
+        "top50": "Top 50",
+        "banned": "Geblokkeerd"
+      },
+      "columns": {
+        "rank": "Positie",
+        "participant": "Deelnemer",
+        "score": "Totaalscore",
+        "breakdown": "Details",
+        "lastActivity": "Laatste activiteit"
+      },
+      "unknown": "Onbekend",
+      "contactId": "ID {id}",
+      "lockedFinished": "Deze ranglijst is afgerond — de scores zijn vergrendeld.",
+      "lockedDraft": "Publiceer de ranglijst voordat je scores bewerkt.",
+      "actions": {
+        "adjust": "Punten aanpassen",
+        "ban": "Blokkeren",
+        "unban": "Blokkade opheffen",
+        "reset": "Resetten naar 0",
+        "history": "Geschiedenis bekijken"
+      },
+      "adjust": {
+        "title": "Punten aanpassen",
+        "description": "Tel punten op of trek ze af voor {name}. De wijziging wordt bewaard in het auditlogboek.",
+        "delta": "Punten (+/-)",
+        "deltaPlaceholder": "bijv. 50 of -20",
+        "reason": "Reden",
+        "reasonPlaceholder": "Waarom wijzig je deze score?",
+        "success": "Punten aangepast"
+      },
+      "banConfirm": "{name} wordt uit de ranglijst verwijderd en verdient geen punten meer.",
+      "unbanConfirm": "{name} komt met de huidige score terug in de ranglijst.",
+      "resetConfirm": "De score van {name} gaat terug naar 0. Dit wordt vastgelegd.",
+      "banned": "Deelnemer geblokkeerd",
+      "unbanned": "Blokkade van deelnemer opgeheven",
+      "resetDone": "Score gereset naar 0",
+      "history": {
+        "title": "Scoregeschiedenis — {name}",
+        "empty": "Nog geen scorewijzigingen.",
+        "sources": {
+          "rule": "Regel",
+          "flow": "Flow",
+          "referral": "Doorverwijzing",
+          "manual": "Handmatige aanpassing",
+          "reset": "Reset"
+        }
+      },
+      "conversationNotFound": "Geen gesprek gevonden voor dit contact",
+      "popupBlocked": "Sta pop-ups voor deze site toe en probeer het opnieuw."
+    },
+    "auditLog": {
+      "title": "Auditlogboek",
+      "admin": "Beheerder",
+      "change": "Wijziging",
+      "time": "Tijd",
+      "reason": "Reden",
+      "api": "API",
+      "empty": "Nog geen handmatige wijzigingen.",
+      "actions": {
+        "adjust": "Aanpassen",
+        "resetOne": "Speler resetten",
+        "resetAll": "Alles resetten",
+        "ban": "Blokkeren",
+        "unban": "Blokkade opheffen"
       }
     }
   },

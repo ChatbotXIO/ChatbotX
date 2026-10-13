@@ -37,6 +37,7 @@ export const REFERENCE_FIELD_ENTITY_KIND: Record<string, string> = {
   // `resolveBotFieldReferenceSlot` in `remap.ts`.
   botFieldId: FieldReferenceKind.botField,
   sequenceId: "sequence",
+  leaderboardId: "leaderboard",
   aiAgentId: "aiAgent",
   integrationId: "integration",
   integrationSmtpId: "integration",

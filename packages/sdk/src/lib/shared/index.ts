@@ -7,6 +7,7 @@ import type {
   ThreadControlReceiveInfo,
 } from "./message"
 
+export * from "./audience-event"
 export * from "./context"
 export * from "./message"
 export * from "./meta-messaging"

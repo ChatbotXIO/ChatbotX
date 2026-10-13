@@ -724,6 +724,7 @@
       "questionnaireInProgress": "Kysely käynnissä",
       "questionnaireFinished": "Kysely valmis",
       "couponTopic": "Kuponki",
+      "leaderboardScore": "Pelillistämisen pisteet",
       "votedOnPoll": "Äänesti kyselyssä",
       "lastComment": "Viimeisin kommentti",
       "commentedOnPost": "Kommentoi julkaisua",
@@ -793,6 +794,7 @@
       "ecommerce": "Verkkokauppa",
       "systemFields": "Järjestelmäkentät",
       "topicCoupon": "Kuponkiaihe",
+      "leaderboard": "Pelillistämisen pisteet",
       "customFields": "Mukautetut kentät",
       "botFields": "Bottikentät",
       "email": "Sähköposti",
@@ -2345,7 +2347,8 @@
       "media": "Media",
       "ads": "Mainokset",
       "settings": "Asetukset",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "Tulostaulukot"
     },
     "adReferral": {
       "label": "Ads",
@@ -2377,6 +2380,9 @@
       "hint": "Data Manager on suositeltu. Vanha lähetys-API toimii vain Google Cloud -projekteissa, jotka Google vielä sallii, eikä se käytä Data Manager -oikeutta. Muutos koskee vain uusia yhteyksiä: yhdistä nykyiset työtilat uudelleen.",
       "dataManager": "Data Manager API (suositeltu)",
       "legacy": "Vanha lähetys-API"
+    },
+    "referralName": {
+      "label": "Suosittelijan nimi"
     }
   },
   "flows": {
@@ -2548,6 +2554,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Keskustelun hallinta",
       "sendGoogleAdsConversion": "Lähetä Google Ads -konversio",
+      "changeGamificationScore": "Muuta pelillistämisen pisteitä",
       "sendViewCatalog": "Näytä tuotekatalogi",
       "sendProducts": "Lähetä tuotteita"
     },
@@ -2669,6 +2676,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "Muokkaa painiketta",
       "buttonLabel": "Painikkeen teksti"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "Tulostaulukko",
+      "operation": "Toiminto",
+      "add": "Lisää pisteitä (+)",
+      "subtract": "Vähennä pisteitä (−)",
+      "points": "Pisteet",
+      "targetUser": "Käyttäjän pisteet",
+      "targetReferrer": "Suosittelijan pisteet",
+      "targetReferrerHint": "Muuta myös tämän yhteystiedon suositelleen henkilön pisteitä.",
+      "summary": "{points} pistettä: {leaderboard}"
     },
     "whatsappLocation": {
       "title": "Sijainti",
@@ -8382,6 +8400,358 @@
         "type_not_allowed": "Tämä tiedostotyyppi ei ole sallittu.",
         "rate_limited": "Liian monta latausta. Odota hetki ja yritä uudelleen.",
         "upload_failed": "Tiedostoa ei voitu ladata. Yritä uudelleen."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "Tulostaulukot",
+    "public": {
+      "points": "{points} p",
+      "endsIn": "Päättyy {days} pv {hours} h {minutes} min {seconds} s kuluttua",
+      "finished": "Päättynyt",
+      "empty": "Ei vielä pelaajia — ole ensimmäinen!",
+      "myRank": "Sijoituksesi: #{rank}",
+      "unranked": "Ei vielä sijoitusta",
+      "shareToEarn": "Jaa ja ansaitse pisteitä",
+      "linkCopied": "Linkki kopioitu"
+    },
+    "description": "Järjestä pistepohjaisia kisoja, joissa asiakkaat kilpailevat kärkisijoista ja palkinnoista.",
+    "feature": "Tulostaulu",
+    "create": "Luo tulostaulu",
+    "kpi": {
+      "total": "Kampanjat yhteensä",
+      "active": "Käynnissä"
+    },
+    "tabs": {
+      "all": "Kaikki",
+      "active": "Aktiiviset",
+      "paused": "Tauolla",
+      "finished": "Päättyneet"
+    },
+    "status": {
+      "draft": "Luonnos",
+      "active": "Aktiivinen",
+      "paused": "Tauolla",
+      "finished": "Päättynyt"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "Kampanja",
+      "searchPlaceholder": "Hae tulostauluja...",
+      "platformFilter": "Alusta",
+      "participants": "Osallistujat",
+      "totalPoints": "Pisteet yhteensä",
+      "newToday": "+{count} tänään",
+      "average": "ka. {value} / pelaaja",
+      "daysLeft": "{days, plural, one {# päivä jäljellä} other {# päivää jäljellä}}",
+      "ended": "Päättynyt"
+    },
+    "scope": {
+      "allPosts": "Kaikki julkaisut",
+      "specificPosts": "Tietyt julkaisut",
+      "specificPostsCount": "{count, plural, one {# julkaisu} other {# julkaisua}}",
+      "telegramChatsCount": "{count, plural, one {# ryhmä} other {# ryhmää}}"
+    },
+    "menu": {
+      "start": "Aloita",
+      "pause": "Keskeytä",
+      "finish": "Päätä",
+      "resetPoints": "Nollaa pisteet",
+      "triggerRewards": "Lähetä palkinnot",
+      "viewParticipants": "Näytä osallistujat",
+      "copyLink": "Kopioi julkinen linkki"
+    },
+    "confirm": {
+      "publishTitle": "Julkaistaanko tämä tulostaulu?",
+      "publishDescription": "Pisteiden kertyminen alkaa heti ja pelaajat näkevät julkisen sivun.",
+      "pauseTitle": "Keskeytetäänkö tämä tulostaulu?",
+      "pauseDescription": "Automaattinen ja flow-pisteytys pysähtyvät. Voit silti säätää pisteitä käsin.",
+      "startTitle": "Jatketaanko tätä tulostaulua?",
+      "startDescription": "Pisteytys alkaa taas kaikilla säännöillä.",
+      "finishTitle": "Päätetäänkö tämä tulostaulu?",
+      "finishDescription": "Kaikki pisteet lukitaan, eivätkä ne voi enää muuttua. Automaattiset palkinnot lähetetään, jos ne on otettu käyttöön.",
+      "resetPointsTitle": "Nollataanko kaikki pisteet?",
+      "resetPointsDescription": "Kaikkien tulostaulun \"{name}\" osallistujien pisteet palaavat nollaan. Tämä kirjataan lokiin eikä sitä voi perua."
+    },
+    "toast": {
+      "published": "Tulostaulu julkaistu",
+      "paused": "Tulostaulu keskeytetty",
+      "started": "Tulostaulua jatkettu",
+      "finished": "Tulostaulu päättynyt",
+      "pointsReset": "Kaikki pisteet nollattiin"
+    },
+    "export": {
+      "title": "Vie osallistujat",
+      "description": "Lataa kaikki osallistujat sijoituksineen ja pisteineen CSV-tiedostona.",
+      "preparing": "Valmistellaan tiedostoa...",
+      "ready": "Tiedostosi on valmis ({count} riviä).",
+      "failed": "Vienti epäonnistui. Yritä uudelleen."
+    },
+    "rewards": {
+      "title": "Lähetä palkinnot",
+      "description": "Lähetä palkintoflow parhaille pelaajille. Palkinnot voi lähettää vain kerran.",
+      "flow": "Palkintoflow",
+      "topN": "Voittajien määrä (top N)",
+      "noFlow": "Palkintoflowta ei ole valittu – määritä se tulostaulun asetuksissa.",
+      "alreadySent": "Tämän tulostaulun palkinnot on jo lähetetty.",
+      "confirm": "Lähetä palkinnot",
+      "result": "Lähetetty {sent} voittajalle, {skipped} ohitettu (ei keskustelua tällä kanavalla)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "Tiedot",
+        "config": "Kanava ja säännöt",
+        "review": "Tarkista ja julkaise"
+      },
+      "namePlaceholder": "esim. Lokakuun parhaat fanit",
+      "coverImage": "Kansikuva",
+      "coverImageHint": "JPG tai PNG, enintään 5 Mt. Suositeltu koko 1200×630.",
+      "coverImageRejected": "Valitse enintään 5 Mt:n JPG- tai PNG-kuva.",
+      "description": "Säännöt ja palkinnot",
+      "descriptionPlaceholder": "Kerro, miten pelaajat ansaitsevat pisteitä ja mitä parhaat voittavat.",
+      "startsAt": "Alkaa",
+      "endsAt": "Päättyy",
+      "startLocked": "Aloitusaikaa ei voi muuttaa julkaisun jälkeen.",
+      "channelTitle": "Alusta ja kanava",
+      "platform": "Alusta",
+      "hostChannel": "Kanava",
+      "hostLocked": "Alustaa ja kanavaa ei voi muuttaa julkaisun jälkeen.",
+      "noChannel": "Ei yhdistettyä {platform}-kanavaa. Yhdistä ensin yksi kohdassa Asetukset → Kanavat.",
+      "openMinigameSettings": "Avaa pelin asetukset",
+      "postScope": "Pisteitä tuottavat julkaisut",
+      "choosePosts": "Valitse julkaisut",
+      "telegramChats": "Ryhmät ja kanavat",
+      "telegramChatsHint": "Lisää bottisi ryhmään tai kanavalle ylläpitäjänä, jotta se näkee jäsenet ja viestit.",
+      "telegramChatsEmpty": "Ryhmiä ei löytynyt – lisää ensin botti ylläpitäjäksi",
+      "rulesTitle": "Pisteytyssäännöt",
+      "rulesHint": "Ota käyttöön toiminnot, joista saa pisteitä, ja määritä niiden arvo.",
+      "allPlatforms": "Kaikki alustat",
+      "points": "Pisteet",
+      "maxPerDay": "Enintään päivässä",
+      "maxPerDayHint": "Jätä tyhjäksi, jos rajaa ei ole.",
+      "minChars": "Merkkien vähimmäismäärä",
+      "bonusPoints": "Kultaisen tunnin bonuspisteet",
+      "bonusPointsHint": "Lisäpisteitä kommenteista, jotka tulevat pian julkaisun jälkeen.",
+      "bonusMinutes": "Kultaisen tunnin pituus (minuuttia)",
+      "emailTopicNote": "Avauksia ja klikkauksia seurataan vain Email Topicilla lähetetyistä sähköposteista.",
+      "generalTitle": "Yleiset asetukset",
+      "followersOnly": "Vain seuraajat",
+      "followersOnlyHint": "Vain tiliäsi seuraavat ihmiset ansaitsevat pisteitä.",
+      "tagFilter": "Tunnisteiden suodatin",
+      "tagFilterHint": "Vain yhteystiedot, joilla on vähintään yksi näistä tunnisteista, ansaitsevat pisteitä.",
+      "everyone": "Kaikki",
+      "resetTime": "Päivittäinen nollausaika (UTC)",
+      "resetTimeHint": "Päivärajat nollautuvat tähän aikaan. = {time} Vietnamin aikaa (UTC+7).",
+      "cooldown": "Roskapostin estoviive (sekuntia)",
+      "cooldownHint": "Vähimmäisaika sekunteina kahden automaattisen pistemyöntämisen välillä samalle henkilölle. 0 poistaa käytöstä.",
+      "referralFlow": "Suosittelun tervetulloflow",
+      "referralFlowAuto": "Luo automaattisesti",
+      "referralFlowHint": "Lähetetään ystävälle, joka liittyy suosituslinkin kautta. Siinä voi käyttää '{{referral_name}}' ja tulostaulun julkista linkkiä. Jätä tyhjäksi, niin luodaan automaattisesti tervetuloviesti, jota voit muokata Flow Builderissa.",
+      "publicLink": "Julkinen linkki",
+      "publicLinkHint": "Lähetä tämä linkki flowsta, jotta jokainen pelaaja näkee oman sijoituksensa.",
+      "publicLinkAfterSave": "Julkinen linkki on saatavilla tallennuksen jälkeen.",
+      "rewardsTitle": "Palkinnot",
+      "autoOnFinish": "Lähetä automaattisesti päättyessä",
+      "autoOnFinishHint": "Suorittaa palkintoflow'n top N -pelaajille heti, kun tulostaulu päättyy.",
+      "backToStep2": "Takaisin vaiheeseen 2",
+      "notEditable": "Päättyneitä tulostauluja ei voi muokata."
+    },
+    "review": {
+      "infoCard": "Tiedot",
+      "yes": "Kyllä",
+      "no": "Ei",
+      "off": "Pois",
+      "seconds": "{seconds} sekuntia",
+      "resetTimeValue": "{utc} UTC (= {local} Vietnam)",
+      "noRules": "Yhtään sääntöä ei ole vielä käytössä.",
+      "rulePoints": "{points} p.",
+      "maxPerDay": "enint. {count}/päivä",
+      "unlimited": "rajaton"
+    },
+    "preview": {
+      "sampleName": "Pelaaja {rank}",
+      "placeholderName": "Tulostaulusi nimi",
+      "pinnedBar": "#{rank} · {points} p."
+    },
+    "validation": {
+      "nameRequired": "Anna nimi",
+      "dateRequired": "Valitse päivämäärä ja kellonaika",
+      "endsAfterStart": "Päättymisajan on oltava aloitusajan jälkeen",
+      "channelRequired": "Valitse kanava",
+      "minigameRequired": "Valitse minipeli",
+      "pointsRequired": "Anna pisteet, jotka tämä sääntö myöntää",
+      "bonusMinutesRequired": "Määritä, kuinka monta minuuttia kultainen tunti kestää",
+      "postsRequired": "Valitse vähintään yksi julkaisu",
+      "telegramChatsRequired": "Valitse vähintään yksi ryhmä tai kanava",
+      "enableOneRule": "Ota käyttöön vähintään yksi pisteytyssääntö ennen julkaisua",
+      "fixErrors": "Korjaa korostetut kentät"
+    },
+    "rules": {
+      "comments": {
+        "label": "Kommentit",
+        "description": "Pisteitä jokaisesta julkaisujesi kommentista."
+      },
+      "liveComments": {
+        "label": "Live-kommentit",
+        "description": "Pisteitä jokaisesta kommentista live-lähetyksen aikana."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "Pisteitä, kun viesti vastaa mitä tahansa tämän kanavan Keywords-työkalun avainsanaa."
+      },
+      "storyMention": {
+        "label": "Tarinamaininta",
+        "description": "Pisteitä, kun joku merkitsee tilisi tarinaansa."
+      },
+      "storyReaction": {
+        "label": "Tarinareaktio",
+        "description": "Pisteitä, kun joku reagoi tarinaasi."
+      },
+      "ctwaReactions": {
+        "label": "CTWA-klikkaus ja reaktiot",
+        "description": "Pisteitä Click-to-WhatsApp-mainoksen klikkaamisesta tai viestiin reagoimisesta."
+      },
+      "survey": {
+        "label": "Kysely ja tietovisa",
+        "description": "Pisteitä Questionnairen täyttämisestä tai WhatsApp Flow -lomakkeen lähettämisestä."
+      },
+      "follow": {
+        "label": "Seuraa OA:ta ja QR",
+        "description": "Pisteitä Official Accountisi seuraamisesta tai sen QR-koodin skannaamisesta. Seuraamisen lopettaminen poistaa pisteet."
+      },
+      "message": {
+        "label": "Zalo-viesti",
+        "description": "Pisteitä jokaisesta Official Accountiisi lähetetystä viestistä."
+      },
+      "joinGroup": {
+        "label": "Liity kanavaan ja ryhmään",
+        "description": "Pisteitä ryhmääsi tai kanavaasi liittymisestä. Poistuminen poistaa pisteet."
+      },
+      "groupDiscussion": {
+        "label": "Ryhmäkeskustelu",
+        "description": "Pisteitä jokaisesta ryhmäsi viestistä."
+      },
+      "emailOpen": {
+        "label": "Sähköpostin avaus",
+        "description": "Pisteitä, kun sähköposti avataan."
+      },
+      "emailClick": {
+        "label": "Sähköpostin klikkaus",
+        "description": "Pisteitä, kun sähköpostin linkkiä klikataan."
+      },
+      "minigameWin": {
+        "label": "Minipelin voitto",
+        "description": "Pisteitä jokaisesta minipelissä voitetusta palkinnosta."
+      },
+      "inGameShare": {
+        "label": "Jako pelistä",
+        "description": "Pisteitä pelin jakamisesta lisävuorojen saamiseksi."
+      },
+      "referral": {
+        "label": "Suositus",
+        "description": "Pisteitä kutsujalle, kun uusi ystävä liittyy hänen linkkinsä kautta."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} kommenttia",
+      "liveComments": "{count} live-kommenttia",
+      "keywords": "{count} keywords",
+      "storyMention": "{count} tarinamainintaa",
+      "storyReaction": "{count} tarinareaktiota",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} kyselyä",
+      "follow": "{count} seurantaa",
+      "message": "{count} viestiä",
+      "joinGroup": "{count} liittymistä",
+      "groupDiscussion": "{count} ryhmäviestiä",
+      "emailOpen": "{count} avausta",
+      "emailClick": "{count} klikkausta",
+      "minigameWin": "{count} voittoa",
+      "inGameShare": "{count} jakoa",
+      "referral": "{count} suositusta",
+      "flow": "{count} flow",
+      "manual": "{count} manuaalista"
+    },
+    "participants": {
+      "title": "Osallistujat",
+      "switcher": "Vaihda tulostaulua",
+      "count": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
+      "searchPlaceholder": "Hae nimeä, käyttäjätunnusta tai puhelinnumeroa...",
+      "filters": {
+        "all": "Kaikki",
+        "top10": "Top 10",
+        "top50": "Top 50",
+        "banned": "Estetyt"
+      },
+      "columns": {
+        "rank": "Sijoitus",
+        "participant": "Osallistuja",
+        "score": "Pisteet yhteensä",
+        "breakdown": "Tiedot",
+        "lastActivity": "Viimeisin toiminta"
+      },
+      "unknown": "Tuntematon",
+      "contactId": "ID {id}",
+      "lockedFinished": "Tämä tulostaulu on päättynyt – pisteet on lukittu.",
+      "lockedDraft": "Julkaise tulostaulu ennen pisteiden muokkaamista.",
+      "actions": {
+        "adjust": "Säädä pisteitä",
+        "ban": "Estä",
+        "unban": "Poista esto",
+        "reset": "Nollaa",
+        "history": "Näytä historia"
+      },
+      "adjust": {
+        "title": "Säädä pisteitä",
+        "description": "Lisää tai vähennä pisteitä: {name}. Muutos tallennetaan auditointilokiin.",
+        "delta": "Pisteet (+/-)",
+        "deltaPlaceholder": "esim. 50 tai -20",
+        "reason": "Syy",
+        "reasonPlaceholder": "Miksi muutat tätä pistemäärää?",
+        "success": "Pisteitä säädetty"
+      },
+      "banConfirm": "{name} poistetaan sijoituksista, eikä hän enää ansaitse pisteitä.",
+      "unbanConfirm": "{name} palaa sijoituksiin nykyisellä pistemäärällään.",
+      "resetConfirm": "Osallistujan {name} pisteet palaavat nollaan. Tämä kirjataan lokiin.",
+      "banned": "Osallistuja estetty",
+      "unbanned": "Osallistujan esto poistettu",
+      "resetDone": "Pisteet nollattu",
+      "history": {
+        "title": "Pistehistoria – {name}",
+        "empty": "Ei vielä pistemuutoksia.",
+        "sources": {
+          "rule": "Sääntö",
+          "flow": "Flow",
+          "referral": "Suositus",
+          "manual": "Manuaalinen säätö",
+          "reset": "Nollaus"
+        }
+      },
+      "conversationNotFound": "Tälle yhteystiedolle ei löytynyt keskustelua",
+      "popupBlocked": "Salli tämän sivuston ponnahdusikkunat ja yritä uudelleen."
+    },
+    "auditLog": {
+      "title": "Auditointiloki",
+      "admin": "Ylläpitäjä",
+      "change": "Muutos",
+      "time": "Aika",
+      "reason": "Syy",
+      "api": "API",
+      "empty": "Ei vielä manuaalisia muutoksia.",
+      "actions": {
+        "adjust": "Säätö",
+        "resetOne": "Nollaa pelaaja",
+        "resetAll": "Nollaa kaikki",
+        "ban": "Esto",
+        "unban": "Eston poisto"
       }
     }
   },

@@ -49,6 +49,13 @@ const selectDistinctChain = {
   limit: mockSelectDistinctLimit,
 }
 
+vi.mock("../../leaderboard/purge", () => ({
+  purgeLeaderboardDataForWorkspace: vi.fn(async () => ({
+    deleted: 0,
+    complete: true,
+  })),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     execute: mockDbExecute,
@@ -83,7 +90,7 @@ const { workspaceLifecycleService } = await import("../service")
 
 // `HEAVY_WORKSPACE_TABLES` holds 6 non-hypertable tables; Message/Attachment are
 // drained separately by the hypertable pass and are not in the ctid loop.
-const HEAVY_TABLE_COUNT = 6
+const HEAVY_TABLE_COUNT = 7
 const MAX_BATCHES_PER_TABLE = 2000
 
 describe("workspaceLifecycleService", () => {
@@ -111,7 +118,7 @@ describe("workspaceLifecycleService", () => {
       batchSize: 2,
     })
 
-    // Table 1: 2 + 1 rows (2 calls); tables 2..6: 1 row each (1 call).
+    // Table 1: 2 + 1 rows (2 calls); tables 2..7: 1 row each (1 call).
     expect(result).toBe(2 + 1 + (HEAVY_TABLE_COUNT - 1))
     expect(mockDbExecute).toHaveBeenCalledTimes(
       2 + (HEAVY_TABLE_COUNT - 1) + HEAVY_TABLE_COUNT,

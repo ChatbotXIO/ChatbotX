@@ -24,6 +24,7 @@ import {
   MegaphoneIcon,
   QrCodeIcon,
   TicketPercentIcon,
+  TrophyIcon,
   UserCheck2Icon,
   Wand2Icon,
   WebhookIcon,
@@ -166,6 +167,13 @@ export const TOOLS_CONFIG = [
     descriptionKey: "minigames.description",
     icon: Gamepad2Icon,
     getLink: (id: string) => `/space/${id}/minigames`,
+  },
+  {
+    id: "leaderboards",
+    labelKey: "leaderboards.title",
+    descriptionKey: "leaderboards.description",
+    icon: TrophyIcon,
+    getLink: (id: string) => `/space/${id}/leaderboards`,
   },
   {
     id: "mini-apps",

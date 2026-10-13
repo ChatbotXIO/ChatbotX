@@ -532,3 +532,46 @@ describe("getDefaultConditionValue", () => {
     )
   })
 })
+
+describe("leaderboardScore conditions", () => {
+  const leaderboardConfig: FieldConfig = {
+    name: "leaderboardScore:77",
+    leaderboardId: "77",
+    formField: formFieldTypes.enum.number,
+    group: "leaderboard",
+  }
+
+  test("a leaderboard config builds a leaderboardScore condition and round-trips", () => {
+    const draft = buildConditionDraft(
+      {
+        field: "leaderboardScore:77",
+        operator: operatorTypes.enum.gte,
+        value: "100",
+      },
+      leaderboardConfig,
+    )
+    expect(draft).toEqual({
+      field: "leaderboardScore",
+      leaderboardId: "77",
+      operator: operatorTypes.enum.gte,
+      value: "100",
+    })
+    expect(
+      roundTripCondition(draft as ContactFilterCondition, leaderboardConfig),
+    ).toEqual(draft)
+  })
+
+  test("offers exactly the five comparison operators", () => {
+    const options = getConditionOptionsForConfig(
+      leaderboardConfig,
+      getConditionOptions((key) => key),
+    )
+    expect(options.map((option) => option.value)).toEqual([
+      operatorTypes.enum.eq,
+      operatorTypes.enum.lt,
+      operatorTypes.enum.lte,
+      operatorTypes.enum.gt,
+      operatorTypes.enum.gte,
+    ])
+  })
+})

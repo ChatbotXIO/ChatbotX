@@ -82,6 +82,13 @@ vi.mock("../src/schedule/handlers/enqueue-broadcast", () => ({
 vi.mock("../src/schedule/handlers/finalize-broadcasts", () => ({
   finalizeBroadcasts: vi.fn(),
 }))
+vi.mock("../src/schedule/handlers/leaderboard-schedules", () => ({
+  finishOverdueLeaderboards: vi.fn(),
+  maintainLeaderboardRankings: vi.fn(),
+}))
+vi.mock("../src/schedule/handlers/maintain-leaderboard-partitions", () => ({
+  maintainLeaderboardPartitions: vi.fn(),
+}))
 vi.mock("../src/schedule/handlers/maintain-mac-partitions", () => ({
   maintainMacPartitions: vi.fn(),
 }))

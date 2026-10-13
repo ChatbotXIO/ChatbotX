@@ -15,6 +15,7 @@ import { archiveConversationStepSchema } from "./steps/archive-conversation"
 import { assignConversationStepSchema } from "./steps/assign-conversation"
 import { autoAssignConversationStepSchema } from "./steps/auto-assign-conversation"
 import { blockContactStepSchema } from "./steps/block-contact"
+import { changeGamificationScoreStepSchema } from "./steps/change-gamification-score"
 import { clearCustomFieldStepSchema } from "./steps/clear-custom-field"
 import { countCharactersStepSchema } from "./steps/count-characters"
 import { markCouponUsedStepSchema, setUpCouponStepSchema } from "./steps/coupon"
@@ -96,6 +97,7 @@ const contactSteps = [
   questionnairesStepSchema,
   setUpCouponStepSchema,
   markCouponUsedStepSchema,
+  changeGamificationScoreStepSchema,
 ]
 
 const broadcastSteps = [

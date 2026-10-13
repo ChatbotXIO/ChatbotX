@@ -28,6 +28,7 @@ import {
 } from "./ctwa-retarget"
 import { buildCustomFieldWhere } from "./custom-field-predicates"
 import { contactInboxExists, existsWhere, joinTableExists } from "./exists"
+import { buildLeaderboardScoreWhere } from "./leaderboard-score"
 import {
   buildBooleanColumn,
   buildBooleanFromTimestamp,
@@ -663,6 +664,13 @@ function buildConditionWhere(
 
     case "couponTopic":
       return buildCouponTopicWhere(condition.topicId, operator, value)
+
+    case "leaderboardScore":
+      return buildLeaderboardScoreWhere(
+        condition.leaderboardId,
+        operator,
+        value,
+      )
 
     case "conversationAssigned":
       return buildConversationAssignedWhere(operator, value)

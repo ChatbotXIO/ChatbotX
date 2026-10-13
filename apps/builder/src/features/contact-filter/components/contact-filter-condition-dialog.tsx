@@ -60,6 +60,10 @@ import {
   getDefaultCustomFieldValue,
 } from "./custom-field-filter-config"
 import {
+  getLeaderboardScoreConditionOptions,
+  getLeaderboardScoreValueInputConfig,
+} from "./leaderboard-score-filter-config"
+import {
   getDefaultStaticFieldValue,
   getStaticFieldConditionOptions,
   getStaticFieldValueInputConfig,
@@ -132,6 +136,15 @@ export const buildConditionDraft = (
     return shouldOmitValue ? draft : { ...draft, value: values.value }
   }
 
+  if (config?.leaderboardId) {
+    return {
+      field: "leaderboardScore" as const,
+      leaderboardId: config.leaderboardId,
+      operator,
+      value: values.value,
+    }
+  }
+
   return shouldOmitValue
     ? {
         field: values.field,
@@ -149,6 +162,9 @@ const resolveDraftFieldName = (condition: ContactFilterCondition): string => {
   }
   if (condition.field === "couponTopic" && "topicId" in condition) {
     return `couponTopic:${condition.topicId}`
+  }
+  if (condition.field === "leaderboardScore" && "leaderboardId" in condition) {
+    return `leaderboardScore:${condition.leaderboardId}`
   }
   return condition.field
 }
@@ -186,6 +202,9 @@ export const getConditionOptionsForConfig = (
   if (config.topicId) {
     return getCouponTopicConditionOptions(conditionOptions)
   }
+  if (config.leaderboardId) {
+    return getLeaderboardScoreConditionOptions(conditionOptions)
+  }
   return getStaticFieldConditionOptions(config, conditionOptions)
 }
 
@@ -198,6 +217,9 @@ export const getDefaultConditionValue = (
   }
   if (config?.topicId) {
     return getDefaultCouponTopicValue(config, operator)
+  }
+  if (config?.leaderboardId) {
+    return ""
   }
   return getDefaultStaticFieldValue(config, operator)
 }
@@ -625,8 +647,15 @@ export const ContactFilterConditionDialog = ({
     () => getStaticFieldValueInputConfig(activeConfig, watchOperator),
     [activeConfig, watchOperator],
   )
+  const leaderboardScoreInput = useMemo(
+    () => getLeaderboardScoreValueInputConfig(activeConfig),
+    [activeConfig],
+  )
   const resolvedFieldInput =
-    customFieldInput ?? couponTopicInput ?? staticFieldInput
+    customFieldInput ??
+    couponTopicInput ??
+    leaderboardScoreInput ??
+    staticFieldInput
   const valueInputKind = useMemo(
     () => resolveValueInputKind(resolvedFieldInput, valueType),
     [resolvedFieldInput, valueType],

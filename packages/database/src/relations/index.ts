@@ -113,6 +113,9 @@ import { integrationTiktokRelations } from "./integration-tiktok"
 import { integrationWebchatRelations } from "./integration-webchat"
 import { integrationWhatsappRelations } from "./integration-whatsapp"
 import { integrationZaloRelations } from "./integration-zalo"
+import { leaderboardRelations } from "./leaderboard"
+import { leaderboardAuditLogRelations } from "./leaderboard-audit-log"
+import { leaderboardParticipantRelations } from "./leaderboard-participant"
 import { magicLinkRelations } from "./magic-link"
 import { mediaLibraryFileRelations } from "./media-library-file"
 import { mediaLibraryFolderRelations } from "./media-library-folder"
@@ -138,6 +141,7 @@ import { sequenceStepRelations } from "./sequence-step"
 import { spreadsheetRelations } from "./spreadsheet"
 import { tagRelations } from "./tag"
 import { tagChannelRelations } from "./tag-channel"
+import { telegramChatRelations } from "./telegram-chat"
 import { templateRelations } from "./template"
 import { templateInstallationRelations } from "./template-installation"
 import { templateInstalledResourceRelations } from "./template-installed-resource"
@@ -266,6 +270,7 @@ export const relations = {
   ...contactsOnBroadcastsRelations,
   ...contactsToTagsRelations,
   ...tagChannelRelations,
+  ...telegramChatRelations,
   ...contactToTagChannelRelations,
   ...reflinkRelations,
   ...magicLinkRelations,
@@ -322,4 +327,7 @@ export const relations = {
   ...minigameRelations,
   ...minigameContactRelations,
   ...minigamePlayRelations,
+  ...leaderboardRelations,
+  ...leaderboardParticipantRelations,
+  ...leaderboardAuditLogRelations,
 }

@@ -170,3 +170,20 @@ export const getIdFromParams = <
 const NUMERIC_ID_REGEX = /^\d+$/
 export const isNumericId = (value: string): boolean =>
   NUMERIC_ID_REGEX.test(value)
+
+/**
+ * The creation time packed into an id from {@link createId} (ms precision).
+ * Deterministic for a given id, so it can stand in for a row's `createdAt`
+ * when only the id travels (e.g. an idempotency timestamp). Null when the id
+ * is not a numeric snowflake.
+ */
+export const createdAtFromId = (id: string): Date | null => {
+  try {
+    const millis = Number(BigInt(id) / TIMESTAMP_SCALE) + SNOWFLAKE_EPOCH_MS
+    return Number.isFinite(millis) && millis > SNOWFLAKE_EPOCH_MS
+      ? new Date(millis)
+      : null
+  } catch {
+    return null
+  }
+}

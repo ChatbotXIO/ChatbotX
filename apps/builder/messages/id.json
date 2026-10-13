@@ -724,6 +724,7 @@
       "questionnaireInProgress": "Kuesioner sedang berlangsung",
       "questionnaireFinished": "Kuesioner selesai",
       "couponTopic": "Kupon",
+      "leaderboardScore": "Skor gamifikasi",
       "votedOnPoll": "Memberikan suara pada jajak pendapat",
       "lastComment": "Komentar terakhir",
       "commentedOnPost": "Mengomentari Postingan",
@@ -793,6 +794,7 @@
       "ecommerce": "E-commerce",
       "systemFields": "Kolom Sistem",
       "topicCoupon": "Topik kupon",
+      "leaderboard": "Skor gamifikasi",
       "customFields": "Kolom Kustom",
       "botFields": "Kolom Bot",
       "email": "Email",
@@ -2345,7 +2347,8 @@
       "media": "Media",
       "ads": "Iklan",
       "settings": "Pengaturan",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "Papan peringkat"
     },
     "adReferral": {
       "label": "Ads",
@@ -2377,6 +2380,9 @@
       "hint": "Data Manager direkomendasikan. API unggah lama hanya berfungsi untuk proyek Google Cloud yang masih diizinkan Google dan tidak memakai izin Data Manager. Perubahan hanya berlaku untuk koneksi baru: hubungkan ulang ruang kerja yang ada.",
       "dataManager": "API Data Manager (direkomendasikan)",
       "legacy": "API unggah lama"
+    },
+    "referralName": {
+      "label": "Nama perujuk"
     }
   },
   "flows": {
@@ -2548,6 +2554,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Kontrol thread",
       "sendGoogleAdsConversion": "Kirim konversi Google Ads",
+      "changeGamificationScore": "Ubah skor gamifikasi",
       "sendViewCatalog": "Lihat katalog",
       "sendProducts": "Kirim produk"
     },
@@ -2669,6 +2676,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "Edit Tombol",
       "buttonLabel": "Label Tombol"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "Papan peringkat",
+      "operation": "Operasi",
+      "add": "Tambah poin (+)",
+      "subtract": "Kurangi poin (−)",
+      "points": "Poin",
+      "targetUser": "Skor pengguna",
+      "targetReferrer": "Skor perujuk",
+      "targetReferrerHint": "Ubah juga skor orang yang merujuk kontak ini.",
+      "summary": "{points} poin di {leaderboard}"
     },
     "whatsappLocation": {
       "title": "Lokasi",
@@ -8382,6 +8400,358 @@
         "type_not_allowed": "Jenis file ini tidak diizinkan.",
         "rate_limited": "Terlalu banyak unggahan. Tunggu sebentar lalu coba lagi.",
         "upload_failed": "File tidak dapat diunggah. Coba lagi."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "Papan peringkat",
+    "public": {
+      "points": "{points} poin",
+      "endsIn": "Berakhir dalam {days}h {hours}j {minutes}m {seconds}d",
+      "finished": "Selesai",
+      "empty": "Belum ada pemain — jadilah yang pertama!",
+      "myRank": "Peringkatmu: #{rank}",
+      "unranked": "Belum berperingkat",
+      "shareToEarn": "Bagikan dan dapatkan poin",
+      "linkCopied": "Tautan disalin"
+    },
+    "description": "Jalankan kampanye peringkat berbasis poin di mana pelanggan bersaing untuk posisi teratas dan hadiah.",
+    "feature": "Papan peringkat",
+    "create": "Buat papan peringkat",
+    "kpi": {
+      "total": "Total kampanye",
+      "active": "Berjalan"
+    },
+    "tabs": {
+      "all": "Semua",
+      "active": "Aktif",
+      "paused": "Dijeda",
+      "finished": "Selesai"
+    },
+    "status": {
+      "draft": "Draf",
+      "active": "Aktif",
+      "paused": "Dijeda",
+      "finished": "Selesai"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "Kampanye",
+      "searchPlaceholder": "Cari papan peringkat...",
+      "platformFilter": "Platform",
+      "participants": "Peserta",
+      "totalPoints": "Total poin",
+      "newToday": "+{count} hari ini",
+      "average": "rata-rata {value} / pemain",
+      "daysLeft": "{days, plural, one {Sisa # hari} other {Sisa # hari}}",
+      "ended": "Berakhir"
+    },
+    "scope": {
+      "allPosts": "Semua postingan",
+      "specificPosts": "Postingan tertentu",
+      "specificPostsCount": "{count, plural, one {# postingan} other {# postingan}}",
+      "telegramChatsCount": "{count, plural, one {# grup} other {# grup}}"
+    },
+    "menu": {
+      "start": "Mulai",
+      "pause": "Jeda",
+      "finish": "Selesaikan",
+      "resetPoints": "Reset poin",
+      "triggerRewards": "Kirim hadiah",
+      "viewParticipants": "Lihat peserta",
+      "copyLink": "Salin tautan publik"
+    },
+    "confirm": {
+      "publishTitle": "Publikasikan papan peringkat ini?",
+      "publishDescription": "Penilaian dimulai segera dan pemain dapat melihat halaman publik.",
+      "pauseTitle": "Jeda papan peringkat ini?",
+      "pauseDescription": "Penilaian otomatis dan penilaian dari flow berhenti. Anda tetap bisa menyesuaikan poin secara manual.",
+      "startTitle": "Lanjutkan papan peringkat ini?",
+      "startDescription": "Penilaian dimulai kembali untuk semua aturan.",
+      "finishTitle": "Selesaikan papan peringkat ini?",
+      "finishDescription": "Semua skor dibekukan dan tidak dapat diubah lagi. Hadiah otomatis dikirim jika diaktifkan.",
+      "resetPointsTitle": "Reset semua poin?",
+      "resetPointsDescription": "Setiap peserta \"{name}\" kembali ke 0 poin. Tindakan ini dicatat dan tidak dapat dibatalkan."
+    },
+    "toast": {
+      "published": "Papan peringkat dipublikasikan",
+      "paused": "Papan peringkat dijeda",
+      "started": "Papan peringkat dilanjutkan",
+      "finished": "Papan peringkat selesai",
+      "pointsReset": "Semua poin telah direset"
+    },
+    "export": {
+      "title": "Ekspor peserta",
+      "description": "Unduh semua peserta beserta peringkat dan skornya sebagai file CSV.",
+      "preparing": "Menyiapkan file Anda...",
+      "ready": "File Anda siap ({count} baris).",
+      "failed": "Ekspor gagal. Silakan coba lagi."
+    },
+    "rewards": {
+      "title": "Kirim hadiah",
+      "description": "Kirim flow hadiah ke pemain teratas. Hadiah hanya dapat dikirim sekali.",
+      "flow": "Flow hadiah",
+      "topN": "Jumlah pemenang (top N)",
+      "noFlow": "Belum ada flow hadiah yang dipilih — atur di pengaturan papan peringkat.",
+      "alreadySent": "Hadiah sudah dikirim untuk papan peringkat ini.",
+      "confirm": "Kirim hadiah",
+      "result": "Terkirim ke {sent} pemenang, {skipped} dilewati (tidak ada percakapan di kanal ini)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "Informasi",
+        "config": "Kanal & aturan",
+        "review": "Tinjau & publikasikan"
+      },
+      "namePlaceholder": "mis. Fans teratas Oktober",
+      "coverImage": "Gambar sampul",
+      "coverImageHint": "JPG atau PNG, maksimal 5MB. Ukuran yang disarankan 1200×630.",
+      "coverImageRejected": "Pilih gambar JPG atau PNG maksimal 5MB.",
+      "description": "Aturan & hadiah",
+      "descriptionPlaceholder": "Jelaskan cara pemain mendapatkan poin dan apa yang dimenangkan pemain teratas.",
+      "startsAt": "Mulai pada",
+      "endsAt": "Berakhir pada",
+      "startLocked": "Waktu mulai tidak dapat diubah setelah dipublikasikan.",
+      "channelTitle": "Platform & kanal",
+      "platform": "Platform",
+      "hostChannel": "Kanal",
+      "hostLocked": "Platform dan kanal tidak dapat diubah setelah dipublikasikan.",
+      "noChannel": "Belum ada kanal {platform} yang terhubung. Hubungkan satu terlebih dahulu di Pengaturan → Kanal.",
+      "openMinigameSettings": "Buka pengaturan game",
+      "postScope": "Postingan yang bernilai poin",
+      "choosePosts": "Pilih postingan",
+      "telegramChats": "Grup & kanal",
+      "telegramChatsHint": "Tambahkan bot Anda ke grup atau kanal sebagai admin agar dapat melihat anggota dan pesan.",
+      "telegramChatsEmpty": "Grup tidak ditemukan — tambahkan bot sebagai admin terlebih dahulu",
+      "rulesTitle": "Aturan penilaian",
+      "rulesHint": "Aktifkan tindakan yang memberi poin dan tentukan jumlahnya.",
+      "allPlatforms": "Semua platform",
+      "points": "Poin",
+      "maxPerDay": "Maks per hari",
+      "maxPerDayHint": "Kosongkan untuk tanpa batas.",
+      "minChars": "Jumlah karakter minimum",
+      "bonusPoints": "Poin bonus golden hour",
+      "bonusPointsHint": "Poin tambahan untuk komentar yang masuk tak lama setelah postingan dipublikasikan.",
+      "bonusMinutes": "Durasi golden hour (menit)",
+      "emailTopicNote": "Hanya email yang dikirim dengan Email Topic yang dilacak untuk pembukaan dan klik.",
+      "generalTitle": "Pengaturan umum",
+      "followersOnly": "Hanya pengikut",
+      "followersOnlyHint": "Hanya orang yang mengikuti akun Anda yang mendapat poin.",
+      "tagFilter": "Filter tag",
+      "tagFilterHint": "Hanya kontak dengan setidaknya salah satu tag ini yang mendapat poin.",
+      "everyone": "Semua orang",
+      "resetTime": "Waktu reset harian (UTC)",
+      "resetTimeHint": "Batas harian dimulai ulang pada waktu ini. = {time} waktu Vietnam (UTC+7).",
+      "cooldown": "Jeda anti-spam (detik)",
+      "cooldownHint": "Jumlah detik minimum antara dua pemberian poin otomatis untuk orang yang sama. 0 untuk menonaktifkan.",
+      "referralFlow": "Flow sambutan referral",
+      "referralFlowAuto": "Buat otomatis",
+      "referralFlowHint": "Dikirim ke teman yang bergabung lewat tautan referral. Dapat memakai '{{referral_name}}' dan tautan publik papan peringkat. Kosongkan untuk membuat pesan sambutan otomatis yang dapat Anda edit di Flow Builder.",
+      "publicLink": "Tautan publik",
+      "publicLinkHint": "Kirim tautan ini dari sebuah flow agar setiap pemain melihat peringkatnya sendiri.",
+      "publicLinkAfterSave": "Tautan publik tersedia setelah disimpan.",
+      "rewardsTitle": "Hadiah",
+      "autoOnFinish": "Kirim otomatis saat selesai",
+      "autoOnFinishHint": "Menjalankan flow hadiah untuk top N segera setelah papan peringkat selesai.",
+      "backToStep2": "Kembali ke langkah 2",
+      "notEditable": "Papan peringkat yang sudah selesai tidak dapat diedit."
+    },
+    "review": {
+      "infoCard": "Informasi",
+      "yes": "Ya",
+      "no": "Tidak",
+      "off": "Nonaktif",
+      "seconds": "{seconds} detik",
+      "resetTimeValue": "{utc} UTC (= {local} Vietnam)",
+      "noRules": "Belum ada aturan yang diaktifkan.",
+      "rulePoints": "{points} poin",
+      "maxPerDay": "maks {count}/hari",
+      "unlimited": "tanpa batas"
+    },
+    "preview": {
+      "sampleName": "Pemain {rank}",
+      "placeholderName": "Nama papan peringkat Anda",
+      "pinnedBar": "#{rank} · {points} poin"
+    },
+    "validation": {
+      "nameRequired": "Masukkan nama",
+      "dateRequired": "Pilih tanggal dan waktu",
+      "endsAfterStart": "Waktu berakhir harus setelah waktu mulai",
+      "channelRequired": "Pilih kanal",
+      "minigameRequired": "Pilih minigame",
+      "pointsRequired": "Masukkan poin yang diberikan aturan ini",
+      "bonusMinutesRequired": "Tentukan berapa menit golden hour berlangsung",
+      "postsRequired": "Pilih setidaknya satu postingan",
+      "telegramChatsRequired": "Pilih setidaknya satu grup atau kanal",
+      "enableOneRule": "Aktifkan setidaknya satu aturan penilaian sebelum dipublikasikan",
+      "fixErrors": "Harap perbaiki kolom yang disorot"
+    },
+    "rules": {
+      "comments": {
+        "label": "Komentar",
+        "description": "Poin untuk setiap komentar di postingan Anda."
+      },
+      "liveComments": {
+        "label": "Komentar live",
+        "description": "Poin untuk setiap komentar saat siaran langsung."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "Poin saat pesan cocok dengan kata kunci mana pun di alat Keywords kanal ini."
+      },
+      "storyMention": {
+        "label": "Mention di story",
+        "description": "Poin saat seseorang menandai akun Anda di story mereka."
+      },
+      "storyReaction": {
+        "label": "Reaksi story",
+        "description": "Poin saat seseorang bereaksi pada story Anda."
+      },
+      "ctwaReactions": {
+        "label": "Klik CTWA & reaksi",
+        "description": "Poin untuk mengeklik iklan Click-to-WhatsApp atau bereaksi pada pesan."
+      },
+      "survey": {
+        "label": "Survei & kuis",
+        "description": "Poin untuk menyelesaikan Questionnaire atau mengirim formulir WhatsApp Flow."
+      },
+      "follow": {
+        "label": "Ikuti OA & QR",
+        "description": "Poin untuk mengikuti Official Account Anda atau memindai kode QR-nya. Berhenti mengikuti akan menarik kembali poin."
+      },
+      "message": {
+        "label": "Pesan Zalo",
+        "description": "Poin untuk setiap pesan yang dikirim ke Official Account Anda."
+      },
+      "joinGroup": {
+        "label": "Gabung kanal & grup",
+        "description": "Poin untuk bergabung ke grup atau kanal Anda. Keluar akan menarik kembali poin."
+      },
+      "groupDiscussion": {
+        "label": "Diskusi grup",
+        "description": "Poin untuk setiap pesan di grup Anda."
+      },
+      "emailOpen": {
+        "label": "Email dibuka",
+        "description": "Poin saat email dibuka."
+      },
+      "emailClick": {
+        "label": "Klik email",
+        "description": "Poin saat tautan di dalam email diklik."
+      },
+      "minigameWin": {
+        "label": "Kemenangan minigame",
+        "description": "Poin untuk setiap hadiah yang dimenangkan di minigame."
+      },
+      "inGameShare": {
+        "label": "Bagikan dari game",
+        "description": "Poin untuk membagikan game demi mendapat lebih banyak giliran."
+      },
+      "referral": {
+        "label": "Referral",
+        "description": "Poin untuk pengundang saat teman baru bergabung lewat tautannya."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} komentar",
+      "liveComments": "{count} komentar live",
+      "keywords": "{count} keywords",
+      "storyMention": "{count} mention story",
+      "storyReaction": "{count} reaksi story",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} survei",
+      "follow": "{count} follow",
+      "message": "{count} pesan",
+      "joinGroup": "{count} gabung",
+      "groupDiscussion": "{count} pesan grup",
+      "emailOpen": "{count} dibuka",
+      "emailClick": "{count} klik",
+      "minigameWin": "{count} kemenangan",
+      "inGameShare": "{count} bagikan",
+      "referral": "{count} referral",
+      "flow": "{count} flow",
+      "manual": "{count} manual"
+    },
+    "participants": {
+      "title": "Peserta",
+      "switcher": "Ganti papan peringkat",
+      "count": "{count, plural, one {# pemain} other {# pemain}}",
+      "searchPlaceholder": "Cari nama, ID pengguna, atau telepon...",
+      "filters": {
+        "all": "Semua",
+        "top10": "Top 10",
+        "top50": "Top 50",
+        "banned": "Diblokir"
+      },
+      "columns": {
+        "rank": "Peringkat",
+        "participant": "Peserta",
+        "score": "Total skor",
+        "breakdown": "Detail",
+        "lastActivity": "Aktivitas terakhir"
+      },
+      "unknown": "Tidak diketahui",
+      "contactId": "ID {id}",
+      "lockedFinished": "Papan peringkat ini sudah selesai — skor dikunci.",
+      "lockedDraft": "Publikasikan papan peringkat sebelum mengedit skor.",
+      "actions": {
+        "adjust": "Sesuaikan poin",
+        "ban": "Blokir",
+        "unban": "Buka blokir",
+        "reset": "Reset ke 0",
+        "history": "Lihat riwayat"
+      },
+      "adjust": {
+        "title": "Sesuaikan poin",
+        "description": "Tambah atau kurangi poin untuk {name}. Perubahan disimpan di log audit.",
+        "delta": "Poin (+/-)",
+        "deltaPlaceholder": "mis. 50 atau -20",
+        "reason": "Alasan",
+        "reasonPlaceholder": "Mengapa Anda mengubah skor ini?",
+        "success": "Poin disesuaikan"
+      },
+      "banConfirm": "{name} dikeluarkan dari peringkat dan tidak lagi mendapat poin.",
+      "unbanConfirm": "{name} kembali ke peringkat dengan skor saat ini.",
+      "resetConfirm": "Skor {name} kembali ke 0. Tindakan ini dicatat.",
+      "banned": "Peserta diblokir",
+      "unbanned": "Blokir peserta dibuka",
+      "resetDone": "Skor direset ke 0",
+      "history": {
+        "title": "Riwayat skor — {name}",
+        "empty": "Belum ada perubahan skor.",
+        "sources": {
+          "rule": "Aturan",
+          "flow": "Flow",
+          "referral": "Referral",
+          "manual": "Penyesuaian manual",
+          "reset": "Reset"
+        }
+      },
+      "conversationNotFound": "Tidak ada percakapan yang ditemukan untuk kontak ini",
+      "popupBlocked": "Izinkan pop-up untuk situs ini, lalu coba lagi."
+    },
+    "auditLog": {
+      "title": "Log audit",
+      "admin": "Admin",
+      "change": "Perubahan",
+      "time": "Waktu",
+      "reason": "Alasan",
+      "api": "API",
+      "empty": "Belum ada perubahan manual.",
+      "actions": {
+        "adjust": "Sesuaikan",
+        "resetOne": "Reset pemain",
+        "resetAll": "Reset semua",
+        "ban": "Blokir",
+        "unban": "Buka blokir"
       }
     }
   },

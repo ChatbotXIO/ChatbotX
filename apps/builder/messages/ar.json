@@ -724,6 +724,7 @@
       "questionnaireInProgress": "الاستبيان قيد التقدم",
       "questionnaireFinished": "أنهى الاستبيان",
       "couponTopic": "الكوبون",
+      "leaderboardScore": "نقاط التحدي",
       "votedOnPoll": "صوّت في الاستطلاع",
       "lastComment": "آخر تعليق",
       "commentedOnPost": "علّق على المنشور",
@@ -793,6 +794,7 @@
       "ecommerce": "التجارة الإلكترونية",
       "systemFields": "حقول النظام",
       "topicCoupon": "موضوع الكوبون",
+      "leaderboard": "نقاط التحدي",
       "customFields": "الحقول المخصصة",
       "botFields": "حقول البوت",
       "email": "البريد الإلكتروني",
@@ -2491,7 +2493,8 @@
       "media": "الوسائط",
       "ads": "الإعلانات",
       "settings": "الإعدادات",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "لوحات المتصدرين"
     },
     "adReferral": {
       "label": "Ads",
@@ -2523,6 +2526,9 @@
       "hint": "يُنصح باستخدام Data Manager. تعمل واجهة الرفع القديمة فقط مع مشاريع Google Cloud التي لا تزال Google تسمح بها ولا تستخدم إذن Data Manager. يسري التغيير على الاتصالات الجديدة فقط: أعد ربط مساحات العمل الحالية.",
       "dataManager": "واجهة Data Manager (موصى بها)",
       "legacy": "واجهة الرفع القديمة"
+    },
+    "referralName": {
+      "label": "اسم المُحيل"
     }
   },
   "flows": {
@@ -2694,6 +2700,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "التحكم في المحادثة",
       "sendGoogleAdsConversion": "إرسال تحويل Google Ads",
+      "changeGamificationScore": "تغيير نقاط التحدي",
       "sendViewCatalog": "عرض الكتالوج",
       "sendProducts": "إرسال المنتجات"
     },
@@ -2815,6 +2822,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "تعديل الزر",
       "buttonLabel": "تسمية الزر"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "لوحة المتصدرين",
+      "operation": "العملية",
+      "add": "إضافة نقاط (+)",
+      "subtract": "خصم نقاط (−)",
+      "points": "النقاط",
+      "targetUser": "نقاط المستخدم",
+      "targetReferrer": "نقاط المُحيل",
+      "targetReferrerHint": "غيّر أيضًا نقاط من قام بإحالة جهة الاتصال هذه.",
+      "summary": "{points} نقطة في {leaderboard}"
     },
     "whatsappLocation": {
       "title": "الموقع",
@@ -8382,6 +8400,358 @@
         "type_not_allowed": "نوع الملف هذا غير مسموح.",
         "rate_limited": "عمليات رفع كثيرة. انتظر قليلًا ثم حاول مجددًا.",
         "upload_failed": "تعذّر رفع الملف. حاول مرة أخرى."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "لوحات المتصدرين",
+    "public": {
+      "points": "{points} نقطة",
+      "endsIn": "ينتهي خلال {days}ي {hours}س {minutes}د {seconds}ث",
+      "finished": "انتهى",
+      "empty": "لا يوجد لاعبون بعد — كن الأول!",
+      "myRank": "ترتيبك: #{rank}",
+      "unranked": "غير مصنف بعد",
+      "shareToEarn": "شارك لتربح نقاطًا",
+      "linkCopied": "تم نسخ الرابط"
+    },
+    "description": "أطلق حملات ترتيب قائمة على النقاط يتنافس فيها العملاء على المراكز الأولى والمكافآت.",
+    "feature": "لوحة المتصدرين",
+    "create": "إنشاء لوحة متصدرين",
+    "kpi": {
+      "total": "إجمالي الحملات",
+      "active": "قيد التشغيل"
+    },
+    "tabs": {
+      "all": "الكل",
+      "active": "نشطة",
+      "paused": "متوقفة مؤقتًا",
+      "finished": "منتهية"
+    },
+    "status": {
+      "draft": "مسودة",
+      "active": "نشطة",
+      "paused": "متوقفة مؤقتًا",
+      "finished": "منتهية"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "الحملة",
+      "searchPlaceholder": "ابحث في لوحات المتصدرين...",
+      "platformFilter": "المنصة",
+      "participants": "المشاركون",
+      "totalPoints": "إجمالي النقاط",
+      "newToday": "+{count} اليوم",
+      "average": "المتوسط {value} / لاعب",
+      "daysLeft": "{days, plural, one {متبقٍ # يوم} other {متبقٍ # يوم}}",
+      "ended": "انتهت"
+    },
+    "scope": {
+      "allPosts": "كل المنشورات",
+      "specificPosts": "منشورات محددة",
+      "specificPostsCount": "{count, plural, one {# منشور} other {# منشور}}",
+      "telegramChatsCount": "{count, plural, one {# مجموعة} other {# مجموعة}}"
+    },
+    "menu": {
+      "start": "بدء",
+      "pause": "إيقاف مؤقت",
+      "finish": "إنهاء",
+      "resetPoints": "إعادة تعيين النقاط",
+      "triggerRewards": "إرسال المكافآت",
+      "viewParticipants": "عرض المشاركين",
+      "copyLink": "نسخ الرابط العام"
+    },
+    "confirm": {
+      "publishTitle": "نشر لوحة المتصدرين هذه؟",
+      "publishDescription": "يبدأ احتساب النقاط فورًا ويمكن للاعبين رؤية الصفحة العامة.",
+      "pauseTitle": "إيقاف لوحة المتصدرين هذه مؤقتًا؟",
+      "pauseDescription": "يتوقف احتساب النقاط التلقائي وعبر الـ flow. ما زال بإمكانك تعديل النقاط يدويًا.",
+      "startTitle": "استئناف لوحة المتصدرين هذه؟",
+      "startDescription": "يبدأ احتساب النقاط مجددًا لجميع القواعد.",
+      "finishTitle": "إنهاء لوحة المتصدرين هذه؟",
+      "finishDescription": "سيتم تجميد جميع النتائج ولن يمكن تغييرها بعد ذلك. تُرسل المكافآت التلقائية إذا كانت مفعّلة.",
+      "resetPointsTitle": "إعادة تعيين كل النقاط؟",
+      "resetPointsDescription": "سيعود جميع المشاركين في \"{name}\" إلى 0 نقطة. يتم تسجيل هذا الإجراء ولا يمكن التراجع عنه."
+    },
+    "toast": {
+      "published": "تم نشر لوحة المتصدرين",
+      "paused": "تم إيقاف لوحة المتصدرين مؤقتًا",
+      "started": "تم استئناف لوحة المتصدرين",
+      "finished": "تم إنهاء لوحة المتصدرين",
+      "pointsReset": "تمت إعادة تعيين كل النقاط"
+    },
+    "export": {
+      "title": "تصدير المشاركين",
+      "description": "نزّل جميع المشاركين مع ترتيبهم ونتائجهم كملف CSV.",
+      "preparing": "جارٍ تجهيز ملفك...",
+      "ready": "ملفك جاهز ({count} صفوف).",
+      "failed": "فشل التصدير. يرجى المحاولة مرة أخرى."
+    },
+    "rewards": {
+      "title": "إرسال المكافآت",
+      "description": "أرسل flow المكافأة إلى أفضل اللاعبين. يمكن إرسال المكافآت مرة واحدة فقط.",
+      "flow": "Flow المكافأة",
+      "topN": "عدد الفائزين (أفضل N)",
+      "noFlow": "لم يتم اختيار flow للمكافأة — حدده في إعدادات لوحة المتصدرين.",
+      "alreadySent": "تم إرسال المكافآت بالفعل لهذه اللوحة.",
+      "confirm": "إرسال المكافآت",
+      "result": "تم الإرسال إلى {sent} فائزين، وتم تخطي {skipped} (لا توجد محادثة على هذه القناة)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "المعلومات",
+        "config": "القناة والقواعد",
+        "review": "المراجعة والنشر"
+      },
+      "namePlaceholder": "مثال: أفضل المعجبين لشهر أكتوبر",
+      "coverImage": "صورة الغلاف",
+      "coverImageHint": "JPG أو PNG بحجم يصل إلى 5 ميغابايت. الحجم الموصى به 1200×630.",
+      "coverImageRejected": "اختر صورة JPG أو PNG بحجم لا يتجاوز 5 ميغابايت.",
+      "description": "القواعد والمكافآت",
+      "descriptionPlaceholder": "اشرح كيف يكسب اللاعبون النقاط وماذا يربح أفضل اللاعبين.",
+      "startsAt": "يبدأ في",
+      "endsAt": "ينتهي في",
+      "startLocked": "لا يمكن تغيير وقت البدء بعد النشر.",
+      "channelTitle": "المنصة والقناة",
+      "platform": "المنصة",
+      "hostChannel": "القناة",
+      "hostLocked": "لا يمكن تغيير المنصة والقناة بعد النشر.",
+      "noChannel": "لا توجد قناة {platform} متصلة. اربط واحدة أولًا من الإعدادات ← القنوات.",
+      "openMinigameSettings": "فتح إعدادات اللعبة",
+      "postScope": "المنشورات التي تمنح نقاطًا",
+      "choosePosts": "اختيار المنشورات",
+      "telegramChats": "المجموعات والقنوات",
+      "telegramChatsHint": "أضف البوت الخاص بك إلى المجموعة أو القناة كمشرف ليتمكن من رؤية الأعضاء والرسائل.",
+      "telegramChatsEmpty": "لم يتم العثور على مجموعات — أضف البوت كمشرف أولًا",
+      "rulesTitle": "قواعد احتساب النقاط",
+      "rulesHint": "فعّل الإجراءات التي تمنح نقاطًا وحدد عددها.",
+      "allPlatforms": "كل المنصات",
+      "points": "النقاط",
+      "maxPerDay": "الحد الأقصى يوميًا",
+      "maxPerDayHint": "اتركه فارغًا لعدم وضع حد.",
+      "minChars": "الحد الأدنى للأحرف",
+      "bonusPoints": "نقاط مكافأة الساعة الذهبية",
+      "bonusPointsHint": "نقاط إضافية للتعليقات التي تُكتب بعد نشر المنشور مباشرة.",
+      "bonusMinutes": "مدة الساعة الذهبية (بالدقائق)",
+      "emailTopicNote": "يتم تتبع الفتح والنقرات فقط للرسائل المرسلة عبر Email Topic.",
+      "generalTitle": "الإعدادات العامة",
+      "followersOnly": "المتابعون فقط",
+      "followersOnlyHint": "يكسب النقاط فقط من يتابعون حسابك.",
+      "tagFilter": "تصفية الوسوم",
+      "tagFilterHint": "تكسب النقاط فقط جهات الاتصال التي لديها واحد على الأقل من هذه الوسوم.",
+      "everyone": "الجميع",
+      "resetTime": "وقت إعادة التعيين اليومي (UTC)",
+      "resetTimeHint": "تُعاد الحدود اليومية في هذا الوقت. = {time} بتوقيت فيتنام (UTC+7).",
+      "cooldown": "فترة الانتظار لمنع الرسائل المزعجة (بالثواني)",
+      "cooldownHint": "الحد الأدنى من الثواني بين منحتين تلقائيتين لنفس الشخص. القيمة 0 تعطّلها.",
+      "referralFlow": "Flow الترحيب بالإحالة",
+      "referralFlowAuto": "إنشاء تلقائي",
+      "referralFlowHint": "يُرسل إلى الصديق الذي ينضم عبر رابط الإحالة. يمكنه استخدام '{{referral_name}}' ورابط لوحة المتصدرين العامة. اتركه فارغًا لإنشاء رسالة ترحيب تلقائيًا يمكنك تعديلها في Flow Builder.",
+      "publicLink": "الرابط العام",
+      "publicLinkHint": "أرسل هذا الرابط من خلال flow ليرى كل لاعب ترتيبه الخاص.",
+      "publicLinkAfterSave": "يتوفر الرابط العام بعد الحفظ.",
+      "rewardsTitle": "المكافآت",
+      "autoOnFinish": "الإرسال تلقائيًا عند الانتهاء",
+      "autoOnFinishHint": "يشغّل flow المكافأة لأفضل N فور انتهاء لوحة المتصدرين.",
+      "backToStep2": "العودة إلى الخطوة 2",
+      "notEditable": "لا يمكن تعديل لوحات المتصدرين المنتهية."
+    },
+    "review": {
+      "infoCard": "المعلومات",
+      "yes": "نعم",
+      "no": "لا",
+      "off": "متوقف",
+      "seconds": "{seconds} ثانية",
+      "resetTimeValue": "{utc} UTC (= {local} بتوقيت فيتنام)",
+      "noRules": "لم يتم تفعيل أي قاعدة بعد.",
+      "rulePoints": "{points} نقطة",
+      "maxPerDay": "بحد أقصى {count}/يوم",
+      "unlimited": "غير محدود"
+    },
+    "preview": {
+      "sampleName": "اللاعب {rank}",
+      "placeholderName": "اسم لوحة المتصدرين",
+      "pinnedBar": "#{rank} · {points} نقطة"
+    },
+    "validation": {
+      "nameRequired": "أدخل اسمًا",
+      "dateRequired": "اختر التاريخ والوقت",
+      "endsAfterStart": "يجب أن يكون وقت الانتهاء بعد وقت البدء",
+      "channelRequired": "اختر قناة",
+      "minigameRequired": "اختر لعبة مصغرة",
+      "pointsRequired": "أدخل النقاط التي تمنحها هذه القاعدة",
+      "bonusMinutesRequired": "حدد عدد دقائق الساعة الذهبية",
+      "postsRequired": "اختر منشورًا واحدًا على الأقل",
+      "telegramChatsRequired": "اختر مجموعة أو قناة واحدة على الأقل",
+      "enableOneRule": "فعّل قاعدة احتساب واحدة على الأقل قبل النشر",
+      "fixErrors": "يرجى تصحيح الحقول المميزة"
+    },
+    "rules": {
+      "comments": {
+        "label": "التعليقات",
+        "description": "نقاط عن كل تعليق على منشوراتك."
+      },
+      "liveComments": {
+        "label": "تعليقات البث المباشر",
+        "description": "نقاط عن كل تعليق أثناء البث المباشر."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "نقاط عندما تطابق الرسالة أي كلمة مفتاحية في أداة Keywords لهذه القناة."
+      },
+      "storyMention": {
+        "label": "الإشارة في القصة",
+        "description": "نقاط عندما يشير أحدهم إلى حسابك في قصته."
+      },
+      "storyReaction": {
+        "label": "التفاعل مع القصة",
+        "description": "نقاط عندما يتفاعل أحدهم مع قصتك."
+      },
+      "ctwaReactions": {
+        "label": "نقرات CTWA والتفاعلات",
+        "description": "نقاط عن النقر على إعلان Click-to-WhatsApp أو التفاعل مع رسالة."
+      },
+      "survey": {
+        "label": "الاستبيان والاختبار",
+        "description": "نقاط عن إكمال Questionnaire أو إرسال نموذج WhatsApp Flow."
+      },
+      "follow": {
+        "label": "متابعة OA ورمز QR",
+        "description": "نقاط عن متابعة Official Account الخاص بك أو مسح رمز QR الخاص به. إلغاء المتابعة يسترجع النقاط."
+      },
+      "message": {
+        "label": "رسالة Zalo",
+        "description": "نقاط عن كل رسالة تُرسل إلى Official Account الخاص بك."
+      },
+      "joinGroup": {
+        "label": "الانضمام إلى القناة والمجموعة",
+        "description": "نقاط عن الانضمام إلى مجموعتك أو قناتك. المغادرة تسترجع النقاط."
+      },
+      "groupDiscussion": {
+        "label": "نقاش المجموعة",
+        "description": "نقاط عن كل رسالة في مجموعتك."
+      },
+      "emailOpen": {
+        "label": "فتح البريد",
+        "description": "نقاط عند فتح رسالة بريد إلكتروني."
+      },
+      "emailClick": {
+        "label": "النقر في البريد",
+        "description": "نقاط عند النقر على رابط داخل رسالة بريد إلكتروني."
+      },
+      "minigameWin": {
+        "label": "الفوز في اللعبة المصغرة",
+        "description": "نقاط عن كل جائزة يتم ربحها في اللعبة المصغرة."
+      },
+      "inGameShare": {
+        "label": "المشاركة داخل اللعبة",
+        "description": "نقاط عن مشاركة اللعبة للحصول على محاولات إضافية."
+      },
+      "referral": {
+        "label": "الإحالة",
+        "description": "نقاط للمُحيل عندما ينضم صديق جديد عبر رابطه."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} تعليقات",
+      "liveComments": "{count} تعليقات مباشرة",
+      "keywords": "{count} كلمات مفتاحية",
+      "storyMention": "{count} إشارات في القصص",
+      "storyReaction": "{count} تفاعلات مع القصص",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} استبيانات",
+      "follow": "{count} متابعات",
+      "message": "{count} رسائل",
+      "joinGroup": "{count} انضمامات",
+      "groupDiscussion": "{count} رسائل مجموعة",
+      "emailOpen": "{count} مرات فتح",
+      "emailClick": "{count} نقرات",
+      "minigameWin": "{count} مرات فوز",
+      "inGameShare": "{count} مشاركات",
+      "referral": "{count} إحالات",
+      "flow": "{count} flow",
+      "manual": "{count} يدويًا"
+    },
+    "participants": {
+      "title": "المشاركون",
+      "switcher": "تبديل لوحة المتصدرين",
+      "count": "{count, plural, one {# لاعب} other {# لاعب}}",
+      "searchPlaceholder": "ابحث بالاسم أو معرّف المستخدم أو الهاتف...",
+      "filters": {
+        "all": "الكل",
+        "top10": "أفضل 10",
+        "top50": "أفضل 50",
+        "banned": "المحظورون"
+      },
+      "columns": {
+        "rank": "الترتيب",
+        "participant": "المشارك",
+        "score": "إجمالي النقاط",
+        "breakdown": "التفاصيل",
+        "lastActivity": "آخر نشاط"
+      },
+      "unknown": "غير معروف",
+      "contactId": "المعرّف {id}",
+      "lockedFinished": "انتهت لوحة المتصدرين هذه — النتائج مقفلة.",
+      "lockedDraft": "انشر لوحة المتصدرين قبل تعديل النتائج.",
+      "actions": {
+        "adjust": "تعديل النقاط",
+        "ban": "حظر",
+        "unban": "إلغاء الحظر",
+        "reset": "إعادة التعيين إلى 0",
+        "history": "عرض السجل"
+      },
+      "adjust": {
+        "title": "تعديل النقاط",
+        "description": "أضف نقاطًا أو اخصمها لـ {name}. يتم حفظ التغيير في سجل التدقيق.",
+        "delta": "النقاط (+/-)",
+        "deltaPlaceholder": "مثال: 50 أو -20",
+        "reason": "السبب",
+        "reasonPlaceholder": "لماذا تغيّر هذه النتيجة؟",
+        "success": "تم تعديل النقاط"
+      },
+      "banConfirm": "سيتم إزالة {name} من الترتيب ولن يكسب نقاطًا بعد الآن.",
+      "unbanConfirm": "سيعود {name} إلى الترتيب بنتيجته الحالية.",
+      "resetConfirm": "ستعود نتيجة {name} إلى 0. يتم تسجيل هذا الإجراء.",
+      "banned": "تم حظر المشارك",
+      "unbanned": "تم إلغاء حظر المشارك",
+      "resetDone": "تمت إعادة النتيجة إلى 0",
+      "history": {
+        "title": "سجل النتائج — {name}",
+        "empty": "لا توجد تغييرات في النتيجة بعد.",
+        "sources": {
+          "rule": "قاعدة",
+          "flow": "Flow",
+          "referral": "إحالة",
+          "manual": "تعديل يدوي",
+          "reset": "إعادة تعيين"
+        }
+      },
+      "conversationNotFound": "لم يتم العثور على محادثة لجهة الاتصال هذه",
+      "popupBlocked": "يُرجى السماح بالنوافذ المنبثقة لهذا الموقع ثم المحاولة مرة أخرى."
+    },
+    "auditLog": {
+      "title": "سجل التدقيق",
+      "admin": "المسؤول",
+      "change": "التغيير",
+      "time": "الوقت",
+      "reason": "السبب",
+      "api": "API",
+      "empty": "لا توجد تغييرات يدوية بعد.",
+      "actions": {
+        "adjust": "تعديل",
+        "resetOne": "إعادة تعيين لاعب",
+        "resetAll": "إعادة تعيين الكل",
+        "ban": "حظر",
+        "unban": "إلغاء الحظر"
       }
     }
   },
