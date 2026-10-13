@@ -250,6 +250,52 @@ describe("remapReferences — array-valued keys", () => {
   })
 })
 
+describe("remapReferences — sendProducts product references", () => {
+  const step = {
+    sections: [{ productIds: ["p-1", "p-missing"] }, { productIds: ["p-2"] }],
+    thumbnailProductId: "p-3",
+  }
+
+  test("remaps every section product and the thumbnail via the product map", () => {
+    const remapped = remapReferences(step, {
+      product: new Map([
+        ["p-1", "t-1"],
+        ["p-2", "t-2"],
+        ["p-3", "t-3"],
+      ]),
+    })
+
+    expect(remapped).toEqual({
+      sections: [{ productIds: ["t-1", "p-missing"] }, { productIds: ["t-2"] }],
+      thumbnailProductId: "t-3",
+    })
+  })
+
+  test("reports each unmapped product id with its path", () => {
+    const unresolved: unknown[] = []
+    remapReferences(step, {}, { onUnresolved: (ref) => unresolved.push(ref) })
+
+    expect(unresolved).toEqual([
+      {
+        entityKind: "product",
+        path: "sections[0].productIds[0]",
+        value: "p-1",
+      },
+      {
+        entityKind: "product",
+        path: "sections[0].productIds[1]",
+        value: "p-missing",
+      },
+      {
+        entityKind: "product",
+        path: "sections[1].productIds[0]",
+        value: "p-2",
+      },
+      { entityKind: "product", path: "thumbnailProductId", value: "p-3" },
+    ])
+  })
+})
+
 describe("remapReferences — discriminated union (sourceId)", () => {
   test("resolves sourceId as a trigger id when sourceType is trigger", () => {
     const remapped = remapReferences(

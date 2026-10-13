@@ -2154,6 +2154,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "products.listSendable",
+    "path": "/v1/products/sendable",
+  },
+  {
+    "method": "GET",
     "operationId": "products.peekImportHeaders",
     "path": "/v1/products/imports/files/{fileId}/headers",
   },

@@ -1,5 +1,34 @@
-import { waTemplateParamsSchema } from "@chatbotx.io/flow-config"
+import {
+  productMessageConditions,
+  sendProductsDisplays,
+  waTemplateParamsSchema,
+} from "@chatbotx.io/flow-config"
 import { z } from "zod"
+
+const productMessageConditionSchema = z.enum(productMessageConditions)
+
+const productMessageTextRuleSchema = z
+  .object({
+    max: z.number().describe("Maximum characters."),
+    allowedWhen: productMessageConditionSchema.describe(
+      "When the field may be set.",
+    ),
+    requiredWhen: productMessageConditionSchema.describe(
+      "When the field must be set.",
+    ),
+  })
+  .describe("Rule for one text field. A field with no rule is not allowed.")
+
+const productDisplayRuleSchema = z.object({
+  minProducts: z.number().describe("Fewest products in the message."),
+  maxProducts: z.number().describe("Most products in the message."),
+  maxSections: z.number().describe("Most sections."),
+  header: productMessageTextRuleSchema.optional(),
+  body: productMessageTextRuleSchema.optional(),
+  footer: productMessageTextRuleSchema.optional(),
+  sectionTitle: productMessageTextRuleSchema.optional(),
+  thumbnail: z.boolean().describe("Whether `thumbnailProductId` is allowed."),
+})
 
 const capabilitiesChannelPolicySchema = z.object({
   policyVersion: z.number(),
@@ -11,6 +40,18 @@ const capabilitiesChannelPolicySchema = z.object({
     cardTitle: z.number().optional(),
     text: z.number(),
   }),
+  productMessages: z
+    .object({
+      displays: z
+        .partialRecord(sendProductsDisplays, productDisplayRuleSchema)
+        .describe(
+          "Rules per `sendProducts` display. A display missing here is not supported on this channel.",
+        ),
+    })
+    .optional()
+    .describe(
+      "Present only on channels that can send products with the `sendProducts` step.",
+    ),
 })
 
 export const capabilitiesInboxSchema = z

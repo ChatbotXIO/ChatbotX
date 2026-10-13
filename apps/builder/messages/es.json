@@ -2621,7 +2621,8 @@
       "whatsappCallButton": "Llamar por WhatsApp",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Control del hilo",
-      "sendGoogleAdsConversion": "Enviar conversión de Google Ads"
+      "sendGoogleAdsConversion": "Enviar conversión de Google Ads",
+      "sendProducts": "Enviar productos"
     },
     "splitTraffic": {
       "balanceHint": "La suma total debe ser igual al 100 %.",
@@ -2741,6 +2742,40 @@
     "whatsappCallButton": {
       "editButtonTitle": "Editar botón",
       "buttonLabel": "Etiqueta del botón"
+    },
+    "sendProducts": {
+      "description": "Elige los productos que quieres enviar y cómo mostrarlos.",
+      "display": "Visualización",
+      "displays": {
+        "products": "Productos",
+        "carousel": "Carrusel",
+        "catalog": "Catálogo"
+      },
+      "products": "Productos",
+      "selectProducts": "Seleccionar productos",
+      "searchProducts": "Buscar productos",
+      "noProducts": "No se encontraron productos.",
+      "loading": "Cargando...",
+      "loadError": "No se pudieron cargar los productos.",
+      "retry": "Reintentar",
+      "catalogNotConnected": "Conecta y sincroniza un catálogo de Meta para enviar productos.",
+      "openProducts": "Abrir Productos",
+      "channelUnsupported": "Este canal no puede enviar productos.",
+      "unavailableProduct": "Producto no disponible",
+      "removeProduct": "Quitar producto",
+      "removeSection": "Quitar sección",
+      "moreOptions": "Más opciones",
+      "fewerOptions": "Menos opciones",
+      "header": "Titular",
+      "body": "Cuerpo",
+      "footer": "Pie de página",
+      "sectionTitle": "Título de la sección",
+      "addSection": "Añadir sección",
+      "thumbnail": "Producto de la miniatura",
+      "catalogHint": "El catálogo debe estar conectado y visible en la cuenta de envío; de lo contrario, el botón Ver catálogo no lo abrirá.",
+      "productCount": "{count} / {max} productos",
+      "productsSelected": "{count, plural, one {# producto} other {# productos}}",
+      "noneSelected": "Aún no hay productos"
     }
   },
   "folders": {
@@ -3600,7 +3635,16 @@
       "labelsUnavailable": "No se pudieron cargar las preguntas del Flow, así que se muestran los nombres de los campos.",
       "yes": "Sí",
       "no": "No"
-    }
+    },
+    "sendProductsDisplayUnsupported": "Este canal no puede enviar este tipo de mensaje de producto.",
+    "sendProductsFieldRequired": "Este campo es obligatorio.",
+    "sendProductsFieldNotAllowed": "Este campo no se puede usar aquí.",
+    "sendProductsFieldTooLong": "Este texto es demasiado largo.",
+    "sendProductsProductCountOutOfRange": "Elige un número válido de productos.",
+    "sendProductsSectionCountOutOfRange": "Hay demasiadas secciones.",
+    "sendProductsDuplicateProduct": "Un producto solo puede aparecer una vez.",
+    "sendProductsThumbnailNotAllowed": "Aquí no se puede usar una miniatura.",
+    "productMessageViewCatalog": "Ver catálogo"
   },
   "instagram": {
     "description": "This integración lets tú Crear Instagram bots.",

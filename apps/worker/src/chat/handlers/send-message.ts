@@ -35,6 +35,7 @@ import {
   type MessageButtonTemplate,
   type OutgoingSendResult,
   parseSdkError,
+  type ResolvedProductMessage,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
 import { resolveStackFrames } from "@chatbotx.io/utils/error-log"
@@ -863,6 +864,7 @@ export async function sendFlowStepToChannel({
   flowId,
   flowVersionId,
   step,
+  productMessage,
   quickReplies,
   metadata,
   richResponse,
@@ -878,6 +880,8 @@ export async function sendFlowStepToChannel({
   flowId: string
   flowVersionId?: string
   step: SendFlowStepData
+  /** Set for a `sendProducts` step: its products, resolved for this send. */
+  productMessage?: ResolvedProductMessage
   quickReplies?: MessageButtonTemplate[]
   metadata?: MetadataPayload
   richResponse?: ChatJobSendFlowStep["data"]["richResponse"]
@@ -936,6 +940,7 @@ export async function sendFlowStepToChannel({
         flowId,
         flowVersionId,
         step: resolvedStep,
+        productMessage,
         quickReplies,
         metadata,
         richResponse,

@@ -2475,7 +2475,8 @@
       "whatsappCallButton": "Ring på WhatsApp",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Trådkontrol",
-      "sendGoogleAdsConversion": "Send Google Ads-konvertering"
+      "sendGoogleAdsConversion": "Send Google Ads-konvertering",
+      "sendProducts": "Send produkter"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2595,6 +2596,40 @@
     "whatsappCallButton": {
       "editButtonTitle": "Rediger Knap",
       "buttonLabel": "Knap Etiket"
+    },
+    "sendProducts": {
+      "description": "Vælg de produkter, der skal sendes, og hvordan de vises.",
+      "display": "Visning",
+      "displays": {
+        "products": "Produkter",
+        "carousel": "Karrusel",
+        "catalog": "Katalog"
+      },
+      "products": "Produkter",
+      "selectProducts": "Vælg produkter",
+      "searchProducts": "Søg efter produkter",
+      "noProducts": "Ingen produkter fundet.",
+      "loading": "Indlæser...",
+      "loadError": "Produkterne kunne ikke indlæses.",
+      "retry": "Prøv igen",
+      "catalogNotConnected": "Forbind og synkroniser et Meta-katalog for at sende produkter.",
+      "openProducts": "Åbn Produkter",
+      "channelUnsupported": "Denne kanal kan ikke sende produkter.",
+      "unavailableProduct": "Produkt ikke tilgængeligt",
+      "removeProduct": "Fjern produkt",
+      "removeSection": "Fjern sektion",
+      "moreOptions": "Flere indstillinger",
+      "fewerOptions": "Færre indstillinger",
+      "header": "Overskrift",
+      "body": "Brødtekst",
+      "footer": "Sidefod",
+      "sectionTitle": "Sektionstitel",
+      "addSection": "Tilføj sektion",
+      "thumbnail": "Produkt til miniaturebillede",
+      "catalogHint": "Kataloget skal være forbundet til og synligt på den afsendende konto, ellers åbner knappen Se katalog det ikke.",
+      "productCount": "{count} / {max} produkter",
+      "productsSelected": "{count, plural, one {# produkt} other {# produkter}}",
+      "noneSelected": "Ingen produkter endnu"
     }
   },
   "folders": {
@@ -3600,7 +3635,16 @@
       "labelsUnavailable": "Flowets spørgsmål kunne ikke indlæses, så feltnavne vises i stedet.",
       "yes": "Ja",
       "no": "Nej"
-    }
+    },
+    "sendProductsDisplayUnsupported": "Denne kanal kan ikke sende denne type produktbesked.",
+    "sendProductsFieldRequired": "Dette felt er påkrævet.",
+    "sendProductsFieldNotAllowed": "Dette felt kan ikke bruges her.",
+    "sendProductsFieldTooLong": "Denne tekst er for lang.",
+    "sendProductsProductCountOutOfRange": "Vælg et gyldigt antal produkter.",
+    "sendProductsSectionCountOutOfRange": "Der er for mange sektioner.",
+    "sendProductsDuplicateProduct": "Et produkt kan kun forekomme én gang.",
+    "sendProductsThumbnailNotAllowed": "Et miniaturebillede kan ikke bruges her.",
+    "productMessageViewCatalog": "Se katalog"
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",

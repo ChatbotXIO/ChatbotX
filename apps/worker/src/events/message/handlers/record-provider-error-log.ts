@@ -5,11 +5,8 @@ import type {
   MessageFailedPayload,
   MessagePayload,
 } from "@chatbotx.io/event-bus"
-import {
-  BROADCAST_PAYLOAD_TYPE,
-  SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
-} from "@chatbotx.io/flow-config"
 import { errorLogProviders } from "@chatbotx.io/utils/error-log"
+import { isBulkSendOrigin } from "../../../lib/bulk-send-origin"
 import { logger } from "../../../lib/logger"
 
 type FailedPayloadWithMetadata = MessageFailedPayload & EventBusMessageMetadata
@@ -34,32 +31,11 @@ const readErrorData = (
   }
 }
 
-/**
- * Audience fan-out. One failing broadcast or sequence run emits one
- * `message:failed` per recipient, so a 50k-contact broadcast against an expired
- * token would write 50k rows and bury every other failure in the workspace's
- * feed. Broadcast and sequence analytics already report per-run failure counts,
- * and the emit site still logs to `logger.error`, so nothing becomes invisible.
- *
- * `metadata` rides the whole chain: the broadcast/sequence dispatchers stamp it
- * (`process-broadcast-contacts.ts`, `sequence-scheduler/worker-consumer.ts`),
- * `flow.ts` re-passes it into every downstream step and re-enqueue, and
- * `message-status.ts` copies it back off the stored message, so a provider's
- * async "failed" status for a bulk message is skipped too.
- */
-const BULK_SEND_ORIGINS = new Set<string>([
-  BROADCAST_PAYLOAD_TYPE,
-  SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
-])
-
-const isBulkSend = (payload: FailedPayloadWithMetadata): boolean =>
-  BULK_SEND_ORIGINS.has(payload.metadata?.type ?? "")
-
 const toEligibleFailure = (
   payload: FailedPayloadWithMetadata,
 ): { input: LogProviderErrorInput } | null => {
   // Cheapest test first, and the one that removes the most rows.
-  if (isBulkSend(payload)) {
+  if (isBulkSendOrigin(payload.metadata)) {
     return null
   }
 
@@ -119,7 +95,7 @@ const toEligibleFailure = (
  * flow-step sends, and provider delivery-status callbacks — every site that
  * emits `message:failed`.
  *
- * Broadcast and sequence sends are excluded — see {@link BULK_SEND_ORIGINS}.
+ * Broadcast and sequence sends are excluded — see {@link isBulkSendOrigin}.
  *
  * Batches are up to `readBatchSize` (500) payloads and the stream is not acked
  * until this returns. The whole batch is handed to `logProviderErrors` in one

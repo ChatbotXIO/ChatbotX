@@ -343,6 +343,7 @@ describe("flowSpecStepTypes", () => {
         "branch",
         "goto",
         "send",
+        "sendProducts",
         "sendTemplate",
         "startFlow",
         "wait",

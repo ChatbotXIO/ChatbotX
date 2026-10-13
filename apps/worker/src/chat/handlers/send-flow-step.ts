@@ -9,10 +9,12 @@ import {
   broadcastToGuestParty,
   contactInboxService,
   conversationService,
+  productMessageService,
   publishToWorkspaceParty,
   resolveMediaUrl,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
+import { logProviderErrorForChannel } from "@chatbotx.io/business/error-log"
 import { wrapOpenLinkUrl } from "@chatbotx.io/business/open-link"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
@@ -26,7 +28,12 @@ import {
   type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
-import type { AttachmentModel, MessageModel } from "@chatbotx.io/database/types"
+import type {
+  AttachmentModel,
+  ContactInboxModel,
+  ConversationModel,
+  MessageModel,
+} from "@chatbotx.io/database/types"
 import { signAppointmentWebviewToken } from "@chatbotx.io/encryption"
 import { emit } from "@chatbotx.io/event-bus"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem"
@@ -52,6 +59,7 @@ import {
   type MessageButtonTemplate,
   type MessageCardTemplate,
   parseSdkError,
+  type ResolvedProductMessage,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
@@ -62,6 +70,7 @@ import type {
   ChatJobSendFlowStep,
 } from "@chatbotx.io/worker-config"
 import { normalizeError } from "universal-error-normalizer"
+import { isBulkSendOrigin } from "../../lib/bulk-send-origin"
 import {
   settleCommentAutomationDelivered,
   settleCommentAutomationFailure,
@@ -436,6 +445,58 @@ const convertCardsToTemplate = (props: {
   }))
 }
 
+const resolveProductMessageText = (
+  message: ResolvedProductMessage,
+): string | null =>
+  message.body ??
+  (message.display === "products" ? message.header : null) ??
+  null
+
+/**
+ * A `sendProducts` step stores product ids; the products to show are resolved
+ * here, before any Message row exists, so a step that cannot be sent leaves no
+ * phantom message behind. Throws `ProductMessageUnresolvableError`, which the
+ * caller's terminal catch records once.
+ */
+async function resolveProductMessageForStep(props: {
+  step: SendFlowStepData
+  conversation: Pick<ConversationModel, "workspaceId" | "contactId" | "id">
+  contactInbox: Pick<ContactInboxModel, "channel" | "sourceId">
+  flowId: string
+  metadata?: MetadataPayload
+}): Promise<ResolvedProductMessage | undefined> {
+  const { step, conversation, contactInbox, flowId, metadata } = props
+  if (step.stepType !== stepTypes.enum.sendProducts) {
+    return
+  }
+
+  const { message, missing } = await productMessageService.resolveForSend({
+    workspaceId: conversation.workspaceId,
+    channel: contactInbox.channel,
+    step,
+  })
+  if (missing.length > 0) {
+    const productIds = missing.map(({ productId }) => productId)
+    logger.warn(
+      { conversationId: conversation.id, flowId, stepId: step.id, productIds },
+      "Product message sent without products that are no longer sendable",
+    )
+    // A broadcast or sequence repeats this for every recipient; its per-run
+    // analytics already count it, so it never gets an ErrorLog row of its own.
+    if (!isBulkSendOrigin(metadata)) {
+      await logProviderErrorForChannel(contactInbox.channel, {
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        sourceId: contactInbox.sourceId,
+        error: new Error(
+          `Product message sent without ${productIds.length} product(s) that are no longer in the catalog: ${productIds.join(", ")}`,
+        ),
+      })
+    }
+  }
+  return message
+}
+
 export async function sendFlowStep({
   conversationId,
   contactInboxId,
@@ -655,6 +716,13 @@ export async function sendFlowStep({
   let message: MessageModel | MessageWithAttachments | undefined
 
   try {
+    const productMessage = await resolveProductMessageForStep({
+      step: resolvedStep as SendFlowStepData,
+      conversation,
+      contactInbox: targetContactInbox,
+      flowId,
+      metadata,
+    })
     const [repository, tenantSettings] = await Promise.all([
       createMessageRepository(),
       resolveTenantSettings({ workspaceId: conversation.workspaceId }),
@@ -742,6 +810,14 @@ export async function sendFlowStep({
       ...(canonicalQuickReplies ?? []),
     ]
 
+    if (productMessage) {
+      contentAttributes = {
+        type: "product_message",
+        payload: productMessage,
+        ...contentAttributes,
+      }
+    }
+
     if (displayButtons.length > 0) {
       contentAttributes = {
         type: "template",
@@ -809,7 +885,9 @@ export async function sendFlowStep({
       contentType: contentTypes.enum.text,
       senderType: senderTypes.enum.bot,
       sourceId: null,
-      text: messageText,
+      text:
+        messageText ??
+        (productMessage ? resolveProductMessageText(productMessage) : null),
       contentAttributes,
       createdAt: new Date(),
       ...(isPublicCommentReply ? { type: "comment" as const } : {}),
@@ -898,6 +976,7 @@ export async function sendFlowStep({
           flowId,
           flowVersionId,
           step: stepForSend,
+          productMessage,
           metadata,
           richResponse,
           quickReplies: canonicalQuickReplies,

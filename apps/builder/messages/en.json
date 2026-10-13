@@ -3304,7 +3304,8 @@
       "whatsappCallButton": "Call on WhatsApp",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread Control",
-      "sendGoogleAdsConversion": "Send Google Ads Conversion"
+      "sendGoogleAdsConversion": "Send Google Ads Conversion",
+      "sendProducts": "Send Products"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
@@ -3424,6 +3425,40 @@
     "whatsappCallButton": {
       "editButtonTitle": "Edit Button",
       "buttonLabel": "Button Label"
+    },
+    "sendProducts": {
+      "description": "Choose the products to send and how to show them.",
+      "display": "Display",
+      "displays": {
+        "products": "Products",
+        "carousel": "Carousel",
+        "catalog": "Catalog"
+      },
+      "products": "Products",
+      "selectProducts": "Select products",
+      "searchProducts": "Search products",
+      "noProducts": "No products found.",
+      "loading": "Loading...",
+      "loadError": "Couldn't load products.",
+      "retry": "Try again",
+      "catalogNotConnected": "Connect and sync a Meta Catalog to send products.",
+      "openProducts": "Open Products",
+      "channelUnsupported": "This channel can't send products.",
+      "unavailableProduct": "Unavailable product",
+      "removeProduct": "Remove product",
+      "removeSection": "Remove section",
+      "moreOptions": "More Options",
+      "fewerOptions": "Fewer Options",
+      "header": "Headline",
+      "body": "Body",
+      "footer": "Footer",
+      "sectionTitle": "Section title",
+      "addSection": "Add section",
+      "thumbnail": "Thumbnail product",
+      "catalogHint": "The catalog must be connected to and visible on the sending account, or the View catalog button won't open it.",
+      "productCount": "{count} / {max} products",
+      "productsSelected": "{count, plural, one {# product} other {# products}}",
+      "noneSelected": "No products yet"
     }
   },
   "folders": {
@@ -4283,7 +4318,16 @@
       "labelsUnavailable": "Couldn't load the Flow's questions, so field names are shown instead.",
       "yes": "Yes",
       "no": "No"
-    }
+    },
+    "sendProductsDisplayUnsupported": "This channel can't send this kind of product message.",
+    "sendProductsFieldRequired": "This field is required.",
+    "sendProductsFieldNotAllowed": "This field can't be used here.",
+    "sendProductsFieldTooLong": "This text is too long.",
+    "sendProductsProductCountOutOfRange": "Pick a valid number of products.",
+    "sendProductsSectionCountOutOfRange": "There are too many sections.",
+    "sendProductsDuplicateProduct": "A product can only appear once.",
+    "sendProductsThumbnailNotAllowed": "A thumbnail can't be used here.",
+    "productMessageViewCatalog": "View catalog"
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

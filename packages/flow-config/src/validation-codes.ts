@@ -28,6 +28,14 @@ export const flowValidationCodes = {
   quickReplyRetryMessageRequired: "quickReplyRetryMessageRequired",
   quickReplyRetryWithGetUserData: "quickReplyRetryWithGetUserData",
   whatsappFlowIncomplete: "whatsappFlowIncomplete",
+  sendProductsDisplayUnsupported: "sendProductsDisplayUnsupported",
+  sendProductsFieldRequired: "sendProductsFieldRequired",
+  sendProductsFieldNotAllowed: "sendProductsFieldNotAllowed",
+  sendProductsFieldTooLong: "sendProductsFieldTooLong",
+  sendProductsProductCountOutOfRange: "sendProductsProductCountOutOfRange",
+  sendProductsSectionCountOutOfRange: "sendProductsSectionCountOutOfRange",
+  sendProductsDuplicateProduct: "sendProductsDuplicateProduct",
+  sendProductsThumbnailNotAllowed: "sendProductsThumbnailNotAllowed",
 } as const
 
 export type FlowValidationCode =

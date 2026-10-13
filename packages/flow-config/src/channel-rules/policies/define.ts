@@ -1,5 +1,6 @@
 import type { ChannelType } from "@chatbotx.io/utils/channel"
 import { type StepType, stepTypes } from "../../steps/step-action"
+import type { ProductMessageCapability } from "../product-message-rules"
 
 export const CHANNEL_POLICY_VERSION = 1
 
@@ -108,6 +109,7 @@ const stepExecutionKinds = {
   whatsappOptionList: "channel",
   whatsappCallButton: "channel",
   whatsappFlow: "channel",
+  sendProducts: "channel",
   sendMessengerTemplateMessage: "channel",
   facebookCustomAudience: "worker",
   sendMetaCapiEvent: "worker",
@@ -128,6 +130,7 @@ export const channelDeliverableStepTypes = [
   stepTypes.enum.sendImage,
   stepTypes.enum.sendMessengerTemplateMessage,
   stepTypes.enum.sendMultipleImages,
+  stepTypes.enum.sendProducts,
   stepTypes.enum.sendQuickReply,
   stepTypes.enum.sendText,
   stepTypes.enum.sendVideo,
@@ -140,6 +143,20 @@ export const channelDeliverableStepTypes = [
 export type ChannelDeliverableStepType =
   (typeof channelDeliverableStepTypes)[number]
 
+/**
+ * Steps a channel has to declare support for itself: omnichannel is a
+ * lowest-common-denominator authoring surface, so it must not inherit them
+ * from `channelDeliverableStepTypes`.
+ */
+const channelOptInStepTypes: readonly ChannelDeliverableStepType[] = [
+  stepTypes.enum.sendProducts,
+]
+
+export const omnichannelDeliverableStepTypes: readonly ChannelDeliverableStepType[] =
+  channelDeliverableStepTypes.filter(
+    (stepType) => !channelOptInStepTypes.includes(stepType),
+  )
+
 export type ChannelFlowPolicy = {
   limits: {
     buttonCount: number
@@ -149,11 +166,14 @@ export type ChannelFlowPolicy = {
   }
   quickRepliesShareButtonSlots: boolean
   steps: Record<StepType, StepSupport>
+  /** Present only on channels that can render `sendProducts`. */
+  productMessages?: ProductMessageCapability
 }
 
 type ChannelFlowPolicyDefinition = {
   limits: ChannelFlowPolicy["limits"]
   quickRepliesShareButtonSlots?: boolean
+  productMessages?: ProductMessageCapability
   supported?: readonly ChannelDeliverableStepType[]
   noButtons?: readonly ChannelDeliverableStepType[]
 }
@@ -186,6 +206,9 @@ export const defineChannelFlowPolicy = (
     quickRepliesShareButtonSlots:
       definition.quickRepliesShareButtonSlots ?? false,
     steps,
+    ...(definition.productMessages
+      ? { productMessages: definition.productMessages }
+      : {}),
   }
 }
 

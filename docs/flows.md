@@ -105,6 +105,7 @@ here, so it cannot drift from the schema.
 |---|---|---|
 | `send` | No | Text, image, or file, with optional quick-reply `buttons`. Each button's `then` is a nested step list. |
 | `sendTemplate` | No | Sends an existing WhatsApp template by `templateName`. The template must resolve (by name) to a workspace template with status `APPROVED`. |
+| `sendProducts` | No | Sends catalog products (`display`: `products`, `carousel` or `catalog`) by ChatbotX product id; get ids from `products.listSendable`. Needs a `channel` that supports product messages (WhatsApp); omnichannel flows reject it. Limits per channel come from `capabilities.get`. See `docs/product-messages.md`. |
 | `wait` | No | Pauses for a duration before continuing. |
 | `branch` | **Yes** | Contact-filter-style `cases` (`when`/`match`/`then`) plus an `otherwise`. Terminal within its own step list — nothing may follow a `branch` at the same level; continue inside `cases[].then` / `otherwise` instead. |
 | `action` | No | A workspace side-effect: `addTags`, `removeTags`, `setCustomField`, `assignConversation`, `archiveConversation`. |

@@ -977,6 +977,7 @@ chatbotx product-categories delete <id>
 ```bash
 chatbotx products list                                 # [--page --perPage]
 chatbotx products get <id>
+chatbotx products sendable --channel <channel>          # Products a `sendProducts` flow step can show [--keyword --page --perPage]; ready=false + reason when unsupported/no catalog
 chatbotx products create --name <name>
 chatbotx products update <id>                           # Full replace
 chatbotx products active update <id> --isActive <isActive>  # Show/hide without replacing

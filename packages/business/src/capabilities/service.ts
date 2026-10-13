@@ -263,6 +263,9 @@ const getFlowSpecCapabilities = (
       unsupportedSteps,
       noButtonSteps,
       limits: policy.limits,
+      ...(policy.productMessages
+        ? { productMessages: policy.productMessages }
+        : {}),
     },
   }
 }

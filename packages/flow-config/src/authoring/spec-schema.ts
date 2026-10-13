@@ -1,7 +1,9 @@
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { BUTTON_LABEL_MAX } from "../steps/button"
+import { sendProductsDisplays } from "../steps/send-products"
 import { waitStepDelayUnits } from "../steps/wait"
 import { flowValidationCodes } from "../validation-codes"
 
@@ -31,6 +33,16 @@ export type FlowStepSpec =
       buttons?: Array<{ text: string; then?: FlowStepSpec[] }>
     }
   | { type: "sendTemplate"; id?: string; templateName: string }
+  | {
+      type: "sendProducts"
+      id?: string
+      display: z.infer<typeof sendProductsDisplays>
+      header?: string
+      body?: string
+      footer?: string
+      sections?: Array<{ title?: string; productIds: string[] }>
+      thumbnailProductId?: string
+    }
   | {
       type: "wait"
       id?: string
@@ -178,6 +190,41 @@ const sendTemplateStepSpecSchema = z
       ),
   })
   .describe("Sends an existing WhatsApp message template.")
+
+const sendProductsStepSpecSchema = z
+  .object({
+    type: stepTypeLiteral("sendProducts"),
+    id: stepIdField,
+    display: sendProductsDisplays.describe(
+      'How the products are shown. "products": one product, or several grouped in `sections`. "carousel": 2+ products as scrollable cards (one section, `body` only). "catalog": opens the whole catalog (`body`, optional `footer`/`thumbnailProductId`, no `sections`). Which displays and text limits a channel supports is in `capabilities.get`.',
+    ),
+    header: z.string().trim().optional().describe("Header text."),
+    body: z.string().trim().optional().describe("Message text."),
+    footer: z.string().trim().optional().describe("Footer text."),
+    sections: z
+      .array(
+        z.object({
+          title: z.string().trim().optional().describe("Section title."),
+          productIds: z
+            .array(zodBigintAsString())
+            .describe(
+              "Product ids, from `products.listSendable`. A product may appear only once in the whole message.",
+            ),
+        }),
+      )
+      .optional()
+      .describe(
+        'Product sections. Needed for "products" and "carousel" (exactly one section); omit for "catalog".',
+      ),
+    thumbnailProductId: zodBigintAsString()
+      .optional()
+      .describe(
+        'Product whose image is the thumbnail ("catalog" display only). Id from `products.listSendable`.',
+      ),
+  })
+  .describe(
+    "Sends products from the workspace catalog (single product, product list, carousel or the whole catalog). Only on channels that support product messages.",
+  )
 
 const waitStepSpecSchema = z
   .object({
@@ -388,6 +435,7 @@ const gotoStepSpecSchema = z
 const flowStepSpecOptions = [
   sendStepSpecSchema,
   sendTemplateStepSpecSchema,
+  sendProductsStepSpecSchema,
   waitStepSpecSchema,
   branchStepSpecSchema,
   actionStepSpecSchema,
@@ -399,7 +447,7 @@ const flowStepSpecOptions = [
 const flowStepSpecSchema: z.ZodType<FlowStepSpec> = z
   .discriminatedUnion("type", flowStepSpecOptions)
   .describe(
-    "One flow step. The `type` field selects the step kind: send, sendTemplate, wait, branch, action, startFlow, addNote or goto.",
+    "One flow step. The `type` field selects the step kind: send, sendTemplate, sendProducts, wait, branch, action, startFlow, addNote or goto.",
   )
 
 export type FlowSpecStepType = { type: string; description: string }

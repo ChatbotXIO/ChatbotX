@@ -223,6 +223,7 @@ export const STEP_PRODUCES_MESSAGE: Record<StepType, boolean> = {
   whatsappOptionList: true,
   whatsappCallButton: true,
   whatsappFlow: true,
+  sendProducts: true,
   sendMessengerTemplateMessage: true,
 
   // Messenger Operations (N_)

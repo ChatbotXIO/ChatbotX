@@ -2621,7 +2621,8 @@
       "whatsappCallButton": "الاتصال عبر واتساب",
       "metaConversions": "Meta Conversions API",
       "threadControl": "التحكم في المحادثة",
-      "sendGoogleAdsConversion": "إرسال تحويل Google Ads"
+      "sendGoogleAdsConversion": "إرسال تحويل Google Ads",
+      "sendProducts": "إرسال المنتجات"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -2741,6 +2742,40 @@
     "whatsappCallButton": {
       "editButtonTitle": "تعديل الزر",
       "buttonLabel": "تسمية الزر"
+    },
+    "sendProducts": {
+      "description": "اختر المنتجات المراد إرسالها وطريقة عرضها.",
+      "display": "طريقة العرض",
+      "displays": {
+        "products": "المنتجات",
+        "carousel": "شريط متحرك",
+        "catalog": "الكتالوج"
+      },
+      "products": "المنتجات",
+      "selectProducts": "اختيار المنتجات",
+      "searchProducts": "البحث عن المنتجات",
+      "noProducts": "لم يتم العثور على منتجات.",
+      "loading": "جارٍ التحميل...",
+      "loadError": "تعذّر تحميل المنتجات.",
+      "retry": "إعادة المحاولة",
+      "catalogNotConnected": "اربط كتالوج Meta وزامِنه لإرسال المنتجات.",
+      "openProducts": "فتح المنتجات",
+      "channelUnsupported": "لا يمكن لهذه القناة إرسال المنتجات.",
+      "unavailableProduct": "منتج غير متاح",
+      "removeProduct": "إزالة المنتج",
+      "removeSection": "إزالة القسم",
+      "moreOptions": "المزيد من الخيارات",
+      "fewerOptions": "خيارات أقل",
+      "header": "العنوان",
+      "body": "النص",
+      "footer": "التذييل",
+      "sectionTitle": "عنوان القسم",
+      "addSection": "إضافة قسم",
+      "thumbnail": "منتج الصورة المصغّرة",
+      "catalogHint": "يجب أن يكون الكتالوج مربوطًا بالحساب المُرسِل وظاهرًا فيه، وإلا فلن يفتحه زر عرض الكتالوج.",
+      "productCount": "{count} / {max} منتج",
+      "productsSelected": "{count, plural, one {# منتج} other {# منتجات}}",
+      "noneSelected": "لا توجد منتجات بعد"
     }
   },
   "folders": {
@@ -3600,7 +3635,16 @@
       "labelsUnavailable": "تعذر تحميل أسئلة التدفق، لذلك تُعرض أسماء الحقول بدلاً منها.",
       "yes": "نعم",
       "no": "لا"
-    }
+    },
+    "sendProductsDisplayUnsupported": "لا يمكن لهذه القناة إرسال هذا النوع من رسائل المنتجات.",
+    "sendProductsFieldRequired": "هذا الحقل مطلوب.",
+    "sendProductsFieldNotAllowed": "لا يمكن استخدام هذا الحقل هنا.",
+    "sendProductsFieldTooLong": "هذا النص طويل جدًا.",
+    "sendProductsProductCountOutOfRange": "اختر عددًا صالحًا من المنتجات.",
+    "sendProductsSectionCountOutOfRange": "عدد الأقسام كبير جدًا.",
+    "sendProductsDuplicateProduct": "لا يمكن أن يظهر المنتج إلا مرة واحدة.",
+    "sendProductsThumbnailNotAllowed": "لا يمكن استخدام صورة مصغّرة هنا.",
+    "productMessageViewCatalog": "عرض الكتالوج"
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",

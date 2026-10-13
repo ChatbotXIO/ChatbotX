@@ -1,0 +1,159 @@
+import {
+  evaluateProductMessage,
+  type ProductMessageCapability,
+  type ProductMessageShape,
+  type SendProductsDisplay,
+  type SendProductsStepSchema,
+  toProductMessageShape,
+} from "@chatbotx.io/flow-config"
+import type {
+  ProductMessageItem,
+  ResolvedProductMessage,
+} from "@chatbotx.io/sdk"
+
+export type MissingProduct = { productId: string }
+
+type DraftSection = { title?: string; items: ProductMessageItem[] }
+
+/** The message as it would be sent, before it is shaped into its display. */
+type Draft = {
+  display: SendProductsDisplay
+  header?: string
+  body?: string
+  footer?: string
+  sections: DraftSection[]
+  thumbnail?: ProductMessageItem
+}
+
+export type ProductMessageResolution =
+  | { ok: true; message: ResolvedProductMessage; missing: MissingProduct[] }
+  | { ok: false; reason: "noProductsSendable" | "invalidMessage" }
+
+const textFields = ["header", "body", "footer"] as const
+
+const toResolvedMessage: Record<
+  SendProductsDisplay,
+  (draft: Draft) => ResolvedProductMessage
+> = {
+  products: (draft) => ({
+    display: "products",
+    header: draft.header,
+    body: draft.body,
+    footer: draft.footer,
+    sections: draft.sections,
+  }),
+  carousel: (draft) => ({
+    display: "carousel",
+    body: draft.body ?? "",
+    items: draft.sections.flatMap((section) => section.items),
+  }),
+  catalog: (draft) => ({
+    display: "catalog",
+    body: draft.body ?? "",
+    footer: draft.footer,
+    thumbnail: draft.thumbnail,
+  }),
+}
+
+const textOrUndefined = (value: string | undefined) =>
+  value?.trim() || undefined
+
+export const collectProductIds = (step: SendProductsStepSchema): string[] => [
+  ...step.sections.flatMap((section) => section.productIds),
+  ...(step.thumbnailProductId ? [step.thumbnailProductId] : []),
+]
+
+const draftToShape = (draft: Draft): ProductMessageShape => ({
+  display: draft.display,
+  header: draft.header,
+  body: draft.body,
+  footer: draft.footer,
+  sections: draft.sections.map((section) => ({
+    title: section.title,
+    productCount: section.items.length,
+  })),
+  hasThumbnail: Boolean(draft.thumbnail),
+})
+
+/**
+ * Dropping products can only relax what a message requires, never add to it,
+ * but it can make a field it carried no longer allowed — a header on a message
+ * that shrank to one product. Those are omitted rather than failing the send;
+ * everything else the evaluator objects to means the message cannot be sent.
+ */
+const withoutFieldsNoLongerAllowed = (
+  capability: ProductMessageCapability,
+  draft: Draft,
+): Draft => {
+  const notAllowed = new Set(
+    evaluateProductMessage(capability, draftToShape(draft)).flatMap((issue) =>
+      issue.code === "sendProductsFieldNotAllowed" && issue.path.length === 1
+        ? [String(issue.path[0])]
+        : [],
+    ),
+  )
+  return {
+    ...draft,
+    ...Object.fromEntries(
+      textFields
+        .filter((field) => notAllowed.has(field))
+        .map((field) => [field, undefined]),
+    ),
+  }
+}
+
+/**
+ * Pure: turns a step plus the products that turned out to be sendable into the
+ * message to dispatch. Order and sections follow the author's; products that
+ * are not sendable are reported, never replaced.
+ */
+export const resolveProductMessage = (props: {
+  capability: ProductMessageCapability
+  step: SendProductsStepSchema
+  sendableById: ReadonlyMap<string, ProductMessageItem>
+}): ProductMessageResolution => {
+  const { capability, step, sendableById } = props
+
+  // A step that is invalid as authored (raw graph, legacy data) must fail, not
+  // be repaired. Only what shrinking the product list causes may be adjusted.
+  if (
+    evaluateProductMessage(capability, toProductMessageShape(step)).length > 0
+  ) {
+    return { ok: false, reason: "invalidMessage" }
+  }
+
+  const sections = step.sections
+    .map((section) => ({
+      title: textOrUndefined(section.title),
+      items: section.productIds.flatMap((productId) => {
+        const item = sendableById.get(productId)
+        return item ? [item] : []
+      }),
+    }))
+    .filter((section) => section.items.length > 0)
+
+  const draft = withoutFieldsNoLongerAllowed(capability, {
+    display: step.display,
+    header: textOrUndefined(step.header),
+    body: textOrUndefined(step.body),
+    footer: textOrUndefined(step.footer),
+    sections,
+    thumbnail: step.thumbnailProductId
+      ? sendableById.get(step.thumbnailProductId)
+      : undefined,
+  })
+
+  // The step was valid as authored, so what is left to fail is the catalog:
+  // too few of its products are sendable any more.
+  if (evaluateProductMessage(capability, draftToShape(draft)).length > 0) {
+    return { ok: false, reason: "noProductsSendable" }
+  }
+
+  return {
+    ok: true,
+    message: toResolvedMessage[step.display](draft),
+    missing: collectProductIds(step)
+      .filter((productId) => !sendableById.has(productId))
+      .map((productId) => ({ productId })),
+  }
+}

@@ -2663,7 +2663,8 @@
       "whatsappCallButton": "Gọi qua WhatsApp",
       "metaConversions": "API Chuyển đổi Meta",
       "threadControl": "Điều khiển luồng",
-      "sendGoogleAdsConversion": "Gửi chuyển đổi Google Ads"
+      "sendGoogleAdsConversion": "Gửi chuyển đổi Google Ads",
+      "sendProducts": "Gửi sản phẩm"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2783,6 +2784,40 @@
     "whatsappCallButton": {
       "editButtonTitle": "Chỉnh sửa nút",
       "buttonLabel": "Nhãn nút"
+    },
+    "sendProducts": {
+      "description": "Chọn sản phẩm cần gửi và cách hiển thị.",
+      "display": "Kiểu hiển thị",
+      "displays": {
+        "products": "Sản phẩm",
+        "carousel": "Băng chuyền",
+        "catalog": "Danh mục"
+      },
+      "products": "Sản phẩm",
+      "selectProducts": "Chọn sản phẩm",
+      "searchProducts": "Tìm sản phẩm",
+      "noProducts": "Không tìm thấy sản phẩm.",
+      "loading": "Đang tải...",
+      "loadError": "Không thể tải sản phẩm.",
+      "retry": "Thử lại",
+      "catalogNotConnected": "Hãy kết nối và đồng bộ Meta Catalog để gửi sản phẩm.",
+      "openProducts": "Mở Sản phẩm",
+      "channelUnsupported": "Kênh này không thể gửi sản phẩm.",
+      "unavailableProduct": "Sản phẩm không khả dụng",
+      "removeProduct": "Xóa sản phẩm",
+      "removeSection": "Xóa nhóm",
+      "moreOptions": "Thêm tùy chọn",
+      "fewerOptions": "Ít tùy chọn hơn",
+      "header": "Tiêu đề",
+      "body": "Nội dung",
+      "footer": "Chân trang",
+      "sectionTitle": "Tiêu đề nhóm",
+      "addSection": "Thêm nhóm",
+      "thumbnail": "Sản phẩm ảnh bìa",
+      "catalogHint": "Danh mục phải được kết nối và hiển thị trên tài khoản gửi, nếu không nút Xem danh mục sẽ không mở được.",
+      "productCount": "{count} / {max} sản phẩm",
+      "productsSelected": "{count, plural, one {# sản phẩm} other {# sản phẩm}}",
+      "noneSelected": "Chưa có sản phẩm"
     }
   },
   "folders": {
@@ -3642,7 +3677,16 @@
       "labelsUnavailable": "Không tải được câu hỏi của Flow nên đang hiển thị tên trường.",
       "yes": "Có",
       "no": "Không"
-    }
+    },
+    "sendProductsDisplayUnsupported": "Kênh này không thể gửi loại tin nhắn sản phẩm này.",
+    "sendProductsFieldRequired": "Trường này là bắt buộc.",
+    "sendProductsFieldNotAllowed": "Không thể dùng trường này ở đây.",
+    "sendProductsFieldTooLong": "Văn bản này quá dài.",
+    "sendProductsProductCountOutOfRange": "Hãy chọn số lượng sản phẩm hợp lệ.",
+    "sendProductsSectionCountOutOfRange": "Có quá nhiều nhóm.",
+    "sendProductsDuplicateProduct": "Mỗi sản phẩm chỉ được xuất hiện một lần.",
+    "sendProductsThumbnailNotAllowed": "Không thể dùng ảnh bìa ở đây.",
+    "productMessageViewCatalog": "Xem danh mục"
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

@@ -8,6 +8,7 @@ import {
   sendVideoValidator,
 } from "./media-step-validators"
 import { sendCarouselValidator } from "./send-carousel-validator"
+import { sendProductsValidator } from "./send-products-validator"
 import { sendTextValidator } from "./send-text-validator"
 import { sendWaTemplateMessageValidator } from "./send-wa-template-validator"
 
@@ -32,6 +33,7 @@ export const channelAwareStepValidators: Partial<
   [stepTypes.enum.sendFile]: sendFileValidator,
   [stepTypes.enum.sendGif]: sendGifValidator,
   [stepTypes.enum.sendImage]: sendImageValidator,
+  [stepTypes.enum.sendProducts]: sendProductsValidator,
   [stepTypes.enum.sendText]: sendTextValidator,
   [stepTypes.enum.sendVideo]: sendVideoValidator,
   [stepTypes.enum.sendWaTemplateMessage]: sendWaTemplateMessageValidator,

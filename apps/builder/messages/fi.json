@@ -2475,7 +2475,8 @@
       "whatsappCallButton": "Soita WhatsAppissa",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Keskustelun hallinta",
-      "sendGoogleAdsConversion": "Lähetä Google Ads -konversio"
+      "sendGoogleAdsConversion": "Lähetä Google Ads -konversio",
+      "sendProducts": "Lähetä tuotteita"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2595,6 +2596,40 @@
     "whatsappCallButton": {
       "editButtonTitle": "Muokkaa painiketta",
       "buttonLabel": "Painikkeen teksti"
+    },
+    "sendProducts": {
+      "description": "Valitse lähetettävät tuotteet ja tapa, jolla ne näytetään.",
+      "display": "Näyttötapa",
+      "displays": {
+        "products": "Tuotteet",
+        "carousel": "Karuselli",
+        "catalog": "Katalogi"
+      },
+      "products": "Tuotteet",
+      "selectProducts": "Valitse tuotteet",
+      "searchProducts": "Hae tuotteita",
+      "noProducts": "Tuotteita ei löytynyt.",
+      "loading": "Ladataan...",
+      "loadError": "Tuotteiden lataus epäonnistui.",
+      "retry": "Yritä uudelleen",
+      "catalogNotConnected": "Yhdistä ja synkronoi Meta-katalogi, jotta voit lähettää tuotteita.",
+      "openProducts": "Avaa Tuotteet",
+      "channelUnsupported": "Tämä kanava ei voi lähettää tuotteita.",
+      "unavailableProduct": "Tuote ei ole saatavilla",
+      "removeProduct": "Poista tuote",
+      "removeSection": "Poista osio",
+      "moreOptions": "Lisää asetuksia",
+      "fewerOptions": "Vähemmän asetuksia",
+      "header": "Otsikko",
+      "body": "Leipäteksti",
+      "footer": "Alatunniste",
+      "sectionTitle": "Osion otsikko",
+      "addSection": "Lisää osio",
+      "thumbnail": "Pikkukuvan tuote",
+      "catalogHint": "Katalogin on oltava yhdistetty lähettävään tiliin ja näkyvissä siinä, muuten Näytä katalogi -painike ei avaa sitä.",
+      "productCount": "{count} / {max} tuotetta",
+      "productsSelected": "{count, plural, one {# tuote} other {# tuotetta}}",
+      "noneSelected": "Ei vielä tuotteita"
     }
   },
   "folders": {
@@ -3600,7 +3635,16 @@
       "labelsUnavailable": "Flow'n kysymyksiä ei voitu ladata, joten kenttien nimet näytetään.",
       "yes": "Kyllä",
       "no": "Ei"
-    }
+    },
+    "sendProductsDisplayUnsupported": "Tämä kanava ei voi lähettää tämän tyyppistä tuoteviestiä.",
+    "sendProductsFieldRequired": "Tämä kenttä on pakollinen.",
+    "sendProductsFieldNotAllowed": "Tätä kenttää ei voi käyttää tässä.",
+    "sendProductsFieldTooLong": "Teksti on liian pitkä.",
+    "sendProductsProductCountOutOfRange": "Valitse kelvollinen määrä tuotteita.",
+    "sendProductsSectionCountOutOfRange": "Osioita on liikaa.",
+    "sendProductsDuplicateProduct": "Tuote voi esiintyä vain kerran.",
+    "sendProductsThumbnailNotAllowed": "Pikkukuvaa ei voi käyttää tässä.",
+    "productMessageViewCatalog": "Näytä katalogi"
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",

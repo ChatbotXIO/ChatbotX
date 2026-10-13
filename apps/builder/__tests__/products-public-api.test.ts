@@ -55,9 +55,11 @@ const productService = {
   delete: vi.fn(),
 }
 const integrationMetaCatalogService = { disconnect: vi.fn() }
+const productMessageService = { listSendable: vi.fn() }
 vi.mock("@chatbotx.io/business", () => ({
   productService,
   integrationMetaCatalogService,
+  productMessageService,
 }))
 vi.mock("@chatbotx.io/business/import", () => ({
   createImportUpload: vi.fn(),
@@ -127,6 +129,50 @@ describe("GET /v1/products", () => {
       perPage: 50,
       workspaceId: "workspace-1",
     })
+  })
+})
+
+describe("GET /v1/products/sendable", () => {
+  const procedure = findProcedure("GET", "/v1/products/sendable")
+
+  test("lists sendable products for the token's workspace and the requested channel", async () => {
+    productMessageService.listSendable.mockResolvedValueOnce({
+      ready: true,
+      data: [],
+      pageCount: 0,
+    })
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { channel: "whatsapp", keyword: "shoe", page: 2, perPage: 10 },
+    })
+
+    expect(productMessageService.listSendable).toHaveBeenCalledWith({
+      channel: "whatsapp",
+      keyword: "shoe",
+      page: 2,
+      perPage: 10,
+      workspaceId: "workspace-1",
+    })
+    expect(result).toEqual({ ready: true, data: [], pageCount: 0 })
+  })
+
+  test("a workspace id in the input can never override the token's workspace", async () => {
+    productMessageService.listSendable.mockResolvedValueOnce({
+      ready: false,
+      reason: "channelUnsupported",
+      data: [],
+      pageCount: 0,
+    })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { channel: "telegram", workspaceId: "other-workspace" },
+    })
+
+    expect(productMessageService.listSendable).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "workspace-1" }),
+    )
   })
 })
 

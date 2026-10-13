@@ -3354,7 +3354,8 @@
       "whatsappCallButton": "通过 WhatsApp 通话",
       "metaConversions": "Meta Conversions API",
       "threadControl": "会话控制",
-      "sendGoogleAdsConversion": "发送 Google Ads 转化"
+      "sendGoogleAdsConversion": "发送 Google Ads 转化",
+      "sendProducts": "发送商品"
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
@@ -3522,6 +3523,40 @@
     "whatsappCallButton": {
       "editButtonTitle": "编辑按钮",
       "buttonLabel": "按钮标签"
+    },
+    "sendProducts": {
+      "description": "选择要发送的商品以及展示方式。",
+      "display": "展示方式",
+      "displays": {
+        "products": "商品",
+        "carousel": "轮播",
+        "catalog": "目录"
+      },
+      "products": "商品",
+      "selectProducts": "选择商品",
+      "searchProducts": "搜索商品",
+      "noProducts": "未找到商品。",
+      "loading": "加载中...",
+      "loadError": "无法加载商品。",
+      "retry": "重试",
+      "catalogNotConnected": "请连接并同步 Meta 商品目录以发送商品。",
+      "openProducts": "打开商品",
+      "channelUnsupported": "此渠道无法发送商品。",
+      "unavailableProduct": "商品不可用",
+      "removeProduct": "移除商品",
+      "removeSection": "移除分组",
+      "moreOptions": "更多选项",
+      "fewerOptions": "收起选项",
+      "header": "标题",
+      "body": "正文",
+      "footer": "页脚",
+      "sectionTitle": "分组标题",
+      "addSection": "添加分组",
+      "thumbnail": "缩略图商品",
+      "catalogHint": "目录必须已连接到发送账号并在该账号上可见，否则“查看目录”按钮将无法打开它。",
+      "productCount": "{count} / {max} 件商品",
+      "productsSelected": "{count, plural, one {# 件商品} other {# 件商品}}",
+      "noneSelected": "暂无商品"
     }
   },
   "folders": {
@@ -4443,7 +4478,16 @@
       "labelsUnavailable": "无法加载 Flow 的问题，因此显示字段名称。",
       "yes": "是",
       "no": "否"
-    }
+    },
+    "sendProductsDisplayUnsupported": "此渠道无法发送这种类型的商品消息。",
+    "sendProductsFieldRequired": "此字段为必填项。",
+    "sendProductsFieldNotAllowed": "此处无法使用该字段。",
+    "sendProductsFieldTooLong": "文本过长。",
+    "sendProductsProductCountOutOfRange": "请选择有效的商品数量。",
+    "sendProductsSectionCountOutOfRange": "分组过多。",
+    "sendProductsDuplicateProduct": "同一商品只能出现一次。",
+    "sendProductsThumbnailNotAllowed": "此处无法使用缩略图。",
+    "productMessageViewCatalog": "查看目录"
   },
   "messenger": {
     "botProfile": "机器人个人数据",

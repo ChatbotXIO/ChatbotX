@@ -24,6 +24,7 @@ import type {
   OutgoingContact,
   OutgoingMessage,
   ReceivedMessageResult,
+  ResolvedProductMessage,
   ThreadControlAction,
   ThreadControlRole,
   ThreadControlUpdateResult,
@@ -77,6 +78,11 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
     flowId: string
     flowVersionId?: string
     step: SendFlowStepData
+    /**
+     * The `sendProducts` step's products, resolved for this send. Only present
+     * for that step; the persisted `step` stays as authored.
+     */
+    productMessage?: ResolvedProductMessage
     quickReplies?: MessageButtonTemplate[]
     metadata?: MetadataPayload
     richResponse?: RichResponseContentAttributes
@@ -130,6 +136,8 @@ export type MessageHandlers<
         flowId: string
         flowVersionId?: string
         step: TStep
+        /** See {@link ChannelSendFlowStepProps}. */
+        productMessage?: ResolvedProductMessage
         quickReplies?: MessageButtonTemplate[]
         metadata?: MetadataPayload
         richResponse?: RichResponseContentAttributes

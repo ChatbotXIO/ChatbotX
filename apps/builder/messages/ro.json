@@ -166,7 +166,8 @@
       "whatsappCallButton": "Sună pe WhatsApp",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Controlul conversației",
-      "sendGoogleAdsConversion": "Trimite conversie Google Ads"
+      "sendGoogleAdsConversion": "Trimite conversie Google Ads",
+      "sendProducts": "Trimite produse"
     },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
@@ -286,6 +287,40 @@
     "whatsappCallButton": {
       "editButtonTitle": "Editează butonul",
       "buttonLabel": "Eticheta butonului"
+    },
+    "sendProducts": {
+      "description": "Alege produsele de trimis și modul în care sunt afișate.",
+      "display": "Afișare",
+      "displays": {
+        "products": "Produse",
+        "carousel": "Carusel",
+        "catalog": "Catalog"
+      },
+      "products": "Produse",
+      "selectProducts": "Selectează produse",
+      "searchProducts": "Caută produse",
+      "noProducts": "Nu s-a găsit niciun produs.",
+      "loading": "Se încarcă...",
+      "loadError": "Produsele nu au putut fi încărcate.",
+      "retry": "Încearcă din nou",
+      "catalogNotConnected": "Conectează și sincronizează un catalog Meta pentru a trimite produse.",
+      "openProducts": "Deschide Produse",
+      "channelUnsupported": "Acest canal nu poate trimite produse.",
+      "unavailableProduct": "Produs indisponibil",
+      "removeProduct": "Elimină produsul",
+      "removeSection": "Elimină secțiunea",
+      "moreOptions": "Mai multe opțiuni",
+      "fewerOptions": "Mai puține opțiuni",
+      "header": "Titlu",
+      "body": "Corp",
+      "footer": "Subsol",
+      "sectionTitle": "Titlul secțiunii",
+      "addSection": "Adaugă secțiune",
+      "thumbnail": "Produsul pentru miniatură",
+      "catalogHint": "Catalogul trebuie să fie conectat și vizibil pe contul de trimitere, altfel butonul Vezi catalogul nu îl va deschide.",
+      "productCount": "{count} / {max} produse",
+      "productsSelected": "{count, plural, one {# produs} other {# produse}}",
+      "noneSelected": "Încă nu există produse"
     }
   },
   "folders": {
@@ -3600,7 +3635,16 @@
       "labelsUnavailable": "Întrebările Flow-ului nu au putut fi încărcate, așa că sunt afișate numele câmpurilor.",
       "yes": "Da",
       "no": "Nu"
-    }
+    },
+    "sendProductsDisplayUnsupported": "Acest canal nu poate trimite acest tip de mesaj cu produse.",
+    "sendProductsFieldRequired": "Acest câmp este obligatoriu.",
+    "sendProductsFieldNotAllowed": "Acest câmp nu poate fi folosit aici.",
+    "sendProductsFieldTooLong": "Acest text este prea lung.",
+    "sendProductsProductCountOutOfRange": "Alege un număr valid de produse.",
+    "sendProductsSectionCountOutOfRange": "Sunt prea multe secțiuni.",
+    "sendProductsDuplicateProduct": "Un produs poate apărea o singură dată.",
+    "sendProductsThumbnailNotAllowed": "Aici nu se poate folosi o miniatură.",
+    "productMessageViewCatalog": "Vezi catalogul"
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",

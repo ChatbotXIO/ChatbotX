@@ -459,7 +459,8 @@
       "whatsappCallButton": "התקשרות בוואטסאפ",
       "metaConversions": "Meta Conversions API",
       "threadControl": "שליטה בשרשור",
-      "sendGoogleAdsConversion": "שליחת המרה של Google Ads"
+      "sendGoogleAdsConversion": "שליחת המרה של Google Ads",
+      "sendProducts": "שליחת מוצרים"
     },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
@@ -579,6 +580,40 @@
     "whatsappCallButton": {
       "editButtonTitle": "עריכת כפתור",
       "buttonLabel": "תווית כפתור"
+    },
+    "sendProducts": {
+      "description": "בחרו את המוצרים לשליחה ואת אופן התצוגה שלהם.",
+      "display": "תצוגה",
+      "displays": {
+        "products": "מוצרים",
+        "carousel": "קרוסלה",
+        "catalog": "קטלוג"
+      },
+      "products": "מוצרים",
+      "selectProducts": "בחירת מוצרים",
+      "searchProducts": "חיפוש מוצרים",
+      "noProducts": "לא נמצאו מוצרים.",
+      "loading": "טוען...",
+      "loadError": "לא ניתן לטעון את המוצרים.",
+      "retry": "נסו שוב",
+      "catalogNotConnected": "חברו וסנכרנו קטלוג Meta כדי לשלוח מוצרים.",
+      "openProducts": "פתיחת מוצרים",
+      "channelUnsupported": "ערוץ זה אינו יכול לשלוח מוצרים.",
+      "unavailableProduct": "מוצר לא זמין",
+      "removeProduct": "הסרת מוצר",
+      "removeSection": "הסרת מקטע",
+      "moreOptions": "אפשרויות נוספות",
+      "fewerOptions": "פחות אפשרויות",
+      "header": "כותרת",
+      "body": "גוף ההודעה",
+      "footer": "כותרת תחתונה",
+      "sectionTitle": "כותרת המקטע",
+      "addSection": "הוספת מקטע",
+      "thumbnail": "מוצר לתמונה הממוזערת",
+      "catalogHint": "הקטלוג חייב להיות מחובר לחשבון השולח ונראה בו, אחרת כפתור הצגת הקטלוג לא יפתח אותו.",
+      "productCount": "{count} / {max} מוצרים",
+      "productsSelected": "{count, plural, one {מוצר #} other {# מוצרים}}",
+      "noneSelected": "עדיין אין מוצרים"
     }
   },
   "folders": {
@@ -1584,7 +1619,16 @@
       "labelsUnavailable": "לא ניתן לטעון את שאלות ה-Flow, לכן מוצגים שמות השדות.",
       "yes": "כן",
       "no": "לא"
-    }
+    },
+    "sendProductsDisplayUnsupported": "ערוץ זה אינו יכול לשלוח סוג זה של הודעת מוצר.",
+    "sendProductsFieldRequired": "שדה זה הוא חובה.",
+    "sendProductsFieldNotAllowed": "לא ניתן להשתמש בשדה זה כאן.",
+    "sendProductsFieldTooLong": "הטקסט ארוך מדי.",
+    "sendProductsProductCountOutOfRange": "בחרו מספר מוצרים תקין.",
+    "sendProductsSectionCountOutOfRange": "יש יותר מדי מקטעים.",
+    "sendProductsDuplicateProduct": "מוצר יכול להופיע רק פעם אחת.",
+    "sendProductsThumbnailNotAllowed": "לא ניתן להשתמש כאן בתמונה ממוזערת.",
+    "productMessageViewCatalog": "הצגת הקטלוג"
   },
   "instagram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Instagram.",

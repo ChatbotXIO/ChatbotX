@@ -3304,7 +3304,8 @@
       "whatsappCallButton": "WhatsApp-da zəng et",
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread Control",
-      "sendGoogleAdsConversion": "Google Ads konversiyası göndər"
+      "sendGoogleAdsConversion": "Google Ads konversiyası göndər",
+      "sendProducts": "Məhsul göndər"
     },
     "splitTraffic": {
       "balanceHint": "Ümumi cəm 100% olmalıdır.",
@@ -3424,6 +3425,40 @@
     "whatsappCallButton": {
       "editButtonTitle": "Düyməni redaktə et",
       "buttonLabel": "Düymə etiketi"
+    },
+    "sendProducts": {
+      "description": "Göndəriləcək məhsulları və onların necə göstəriləcəyini seçin.",
+      "display": "Görünüş",
+      "displays": {
+        "products": "Məhsullar",
+        "carousel": "Karusel",
+        "catalog": "Katalog"
+      },
+      "products": "Məhsullar",
+      "selectProducts": "Məhsul seçin",
+      "searchProducts": "Məhsul axtarın",
+      "noProducts": "Məhsul tapılmadı.",
+      "loading": "Yüklənir...",
+      "loadError": "Məhsullar yüklənmədi.",
+      "retry": "Yenidən cəhd edin",
+      "catalogNotConnected": "Məhsul göndərmək üçün Meta Kataloqunu qoşun və sinxronlaşdırın.",
+      "openProducts": "Məhsulları aç",
+      "channelUnsupported": "Bu kanal məhsul göndərə bilməz.",
+      "unavailableProduct": "Məhsul əlçatan deyil",
+      "removeProduct": "Məhsulu sil",
+      "removeSection": "Bölməni sil",
+      "moreOptions": "Daha çox seçim",
+      "fewerOptions": "Daha az seçim",
+      "header": "Başlıq",
+      "body": "Mətn",
+      "footer": "Alt məlumat",
+      "sectionTitle": "Bölmə başlığı",
+      "addSection": "Bölmə əlavə et",
+      "thumbnail": "Miniatür məhsulu",
+      "catalogHint": "Katalog göndərən hesaba qoşulmalı və orada görünməlidir, əks halda Kataloqa bax düyməsi onu açmayacaq.",
+      "productCount": "{count} / {max} məhsul",
+      "productsSelected": "{count, plural, one {# məhsul} other {# məhsul}}",
+      "noneSelected": "Hələ məhsul yoxdur"
     }
   },
   "folders": {
@@ -4283,7 +4318,16 @@
       "labelsUnavailable": "Flow-un sualları yüklənə bilmədi, ona görə sahə adları göstərilir.",
       "yes": "Bəli",
       "no": "Xeyr"
-    }
+    },
+    "sendProductsDisplayUnsupported": "Bu kanal bu növ məhsul mesajını göndərə bilməz.",
+    "sendProductsFieldRequired": "Bu sahə məcburidir.",
+    "sendProductsFieldNotAllowed": "Bu sahə burada istifadə oluna bilməz.",
+    "sendProductsFieldTooLong": "Bu mətn çox uzundur.",
+    "sendProductsProductCountOutOfRange": "Məhsulların düzgün sayını seçin.",
+    "sendProductsSectionCountOutOfRange": "Bölmələr çoxdur.",
+    "sendProductsDuplicateProduct": "Məhsul yalnız bir dəfə görünə bilər.",
+    "sendProductsThumbnailNotAllowed": "Burada miniatür istifadə oluna bilməz.",
+    "productMessageViewCatalog": "Kataloqa bax"
   },
   "instagram": {
     "description": "Bu inteqrasiya Instagram botları yaratmağa imkan verir.",
