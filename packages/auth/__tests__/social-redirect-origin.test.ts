@@ -137,4 +137,48 @@ describe("buildSocialProviders — socialRedirectOrigin", () => {
       "https://chat.acme.com/api/auth/callback/facebook",
     )
   })
+
+  test("gives only Facebook a placeholder email for phone-only accounts", async () => {
+    const { createAuth } = await import("../src/server")
+    createAuth({
+      socialCredentials: {
+        google: { clientId: "id-1", clientSecret: "secret-1" },
+        facebook: { clientId: "id-2", clientSecret: "secret-2" },
+      },
+    })
+
+    const config = betterAuthMock.mock.calls[0]?.[0] as {
+      socialProviders?: Record<
+        string,
+        { mapProfileToUser?: (profile: { id: string }) => unknown }
+      >
+    }
+    expect(config.socialProviders?.google?.mapProfileToUser).toBeUndefined()
+    expect(
+      config.socialProviders?.facebook?.mapProfileToUser?.({ id: "42" }),
+    ).toEqual({
+      email: "fb-42@facebook.placeholder.invalid",
+      emailVerified: false,
+    })
+  })
+  test("rejects an email/password sign-up using the Facebook placeholder domain", async () => {
+    const { createAuth } = await import("../src/server")
+    createAuth({})
+
+    const config = betterAuthMock.mock.calls[0]?.[0] as {
+      hooks: { before: (ctx: unknown) => Promise<unknown> }
+    }
+    const signUp = (path: string, email: string) =>
+      config.hooks.before({ path, body: { email }, context: {} })
+
+    await expect(
+      signUp("/sign-up/email", "fb-42@facebook.placeholder.invalid"),
+    ).rejects.toThrow("Invalid email")
+    await expect(
+      signUp("/sign-up/email", "a@example.com"),
+    ).resolves.not.toThrow()
+    await expect(
+      signUp("/callback/facebook", "fb-42@facebook.placeholder.invalid"),
+    ).resolves.not.toThrow()
+  })
 })
