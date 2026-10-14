@@ -1,6 +1,7 @@
 // biome-ignore-all lint/suspicious/noTemplateCurlyInString: Flow JSON bindings are literally written as ${...}
 // biome-ignore-all lint/suspicious/noThenProperty: `then` is the Flow JSON If branch key
 import { describe, expect, it } from "vitest"
+import { TEXT_INPUT_DATE_FORMATS } from "../src/components"
 import { locateIssues } from "../src/issue-location"
 import {
   fromFlowJson,
@@ -46,7 +47,6 @@ describe("toFlowJson", () => {
       key: "s_orphan",
       id: "ORPHAN",
       title: "",
-      terminal: false,
       children: [
         {
           id: "n_o",
@@ -156,5 +156,26 @@ describe("toNestedExpression", () => {
     }
     expect(ifJson.condition).toBe("${form.full_name} == 'x'")
     expect(ifJson.then[0]?.text).toBe("`'Hi ' ${form.full_name}`")
+  })
+})
+
+describe("TextInput date types", () => {
+  it("sends a date input to WhatsApp as a pattern-checked text input", () => {
+    const definition = twoScreenDefinition()
+    const input = definition.screens[0]?.children[1]
+    if (input) {
+      input.props["input-type"] = "datetime"
+    }
+    const component = toFlowJson(definition).screens[0]?.layout.children[1]
+    expect(component).toMatchObject({
+      type: "TextInput",
+      "input-type": "text",
+      pattern: TEXT_INPUT_DATE_FORMATS.datetime.pattern,
+      "helper-text": "YYYY-MM-DD HH:mm",
+    })
+    const pattern = new RegExp(TEXT_INPUT_DATE_FORMATS.datetime.pattern)
+    expect(pattern.test("2026-10-14 14:30")).toBe(true)
+    expect(pattern.test("2026-10-14T14:30")).toBe(true)
+    expect(pattern.test("14/10/2026")).toBe(false)
   })
 })

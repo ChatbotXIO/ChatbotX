@@ -7798,8 +7798,6 @@
       "screenTitle": "العنوان",
       "screenId": "معرّف الشاشة",
       "screenIdHint": "أحرف وشرطات سفلية فقط. يُستخدم في التنقل وفي Flow JSON.",
-      "terminal": "الشاشة الأخيرة",
-      "terminalHint": "يمكن أن ينتهي التدفق هنا. يحتاج إلى زر تذييل (Footer) يُكمل التدفق.",
       "remove": "حذف الشاشة"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "بريد إلكتروني",
         "password": "كلمة مرور",
         "passcode": "رمز مرور",
-        "phone": "هاتف"
+        "phone": "هاتف",
+        "date": "التاريخ",
+        "datetime": "التاريخ والوقت"
       },
       "fontWeight": {
         "normal": "عادي",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "يمكن أن يحتوي معرّف الشاشة على أحرف وشرطات سفلية فقط.",
       "screen_id_reserved": "“SUCCESS” محجوز من WhatsApp. اختر معرّف شاشة آخر.",
       "screen_id_duplicate": "شاشة أخرى تستخدم هذا المعرّف بالفعل.",
-      "no_terminal_screen": "حدد شاشة واحدة على الأقل كشاشة أخيرة.",
-      "terminal_screen_without_complete": "تحتاج الشاشة الأخيرة إلى زر تذييل (Footer) يُكمل التدفق.",
+      "no_terminal_screen": "أضف تذييلاً يُنهي التدفق إلى الشاشة الأخيرة.",
       "screen_without_exit": "لا توجد طريقة للمتابعة من هذه الشاشة. أضف Footer أو رابطًا ينتقل إلى شاشة أخرى.",
       "screen_unreachable": "لا توجد شاشة تنتقل إلى هذه الشاشة.",
       "too_many_components": "يمكن أن تحتوي الشاشة على {max} مكونًا كحد أقصى.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} لا يطابق أي حقل.",
       "data_reference_unsupported": "{reference}: بيانات الشاشة غير مدعومة. استخدم حقول النموذج بدلًا منها.",
       "property_unknown": "لا يقبل WhatsApp الخاصية “{name}” في هذا المكوّن.",
-      "complete_on_non_terminal": "لا يمكن استخدام “إكمال التدفق” إلا في الشاشة الأخيرة.",
       "footer_captions_invalid": "استخدم تعليقًا في الوسط فقط، أو تعليقين أيمن وأيسر معًا.",
       "options_with_images_limit": "مع الصور، يمكن أن تحتوي القائمة المنسدلة على {max} خيارًا كحد أقصى.",
       "navigation_badge_multiple": "يمكن لعنصر واحد فقط في قائمة التنقل أن يحمل شارة.",

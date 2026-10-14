@@ -7798,8 +7798,6 @@
       "screenTitle": "Titel",
       "screenId": "Skærm-ID",
       "screenIdHint": "Kun bogstaver og understregninger. Bruges til navigation og i Flow JSON.",
-      "terminal": "Sidste skærm",
-      "terminalHint": "Flowet kan slutte her. Det kræver en Footer, der afslutter flowet.",
       "remove": "Slet skærm"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "E-mail",
         "password": "Adgangskode",
         "passcode": "Pinkode",
-        "phone": "Telefon"
+        "phone": "Telefon",
+        "date": "Dato",
+        "datetime": "Dato og klokkeslæt"
       },
       "fontWeight": {
         "normal": "Normal",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "Skærm-ID'et må kun indeholde bogstaver og understregninger.",
       "screen_id_reserved": "“SUCCESS” er reserveret af WhatsApp. Vælg et andet skærm-ID.",
       "screen_id_duplicate": "En anden skærm bruger allerede dette ID.",
-      "no_terminal_screen": "Markér mindst én skærm som sidste skærm.",
-      "terminal_screen_without_complete": "Den sidste skærm kræver en Footer, der afslutter flowet.",
+      "no_terminal_screen": "Tilføj en Footer, der afslutter flowet, til den sidste skærm.",
       "screen_without_exit": "Denne skærm har ingen måde at fortsætte på. Tilføj en Footer eller et link, der fører til en anden skærm.",
       "screen_unreachable": "Ingen skærm navigerer hertil.",
       "too_many_components": "En skærm kan højst indeholde {max} komponenter.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} matcher ikke noget felt.",
       "data_reference_unsupported": "{reference}: skærmdata understøttes ikke. Brug formularfelter i stedet.",
       "property_unknown": "WhatsApp accepterer ikke egenskaben “{name}” på denne komponent.",
-      "complete_on_non_terminal": "“Fuldfør flowet” kan kun bruges på den sidste skærm.",
       "footer_captions_invalid": "Brug enten en midtertekst eller både venstre og højre tekst.",
       "options_with_images_limit": "Med billeder kan en rullemenu højst have {max} valgmuligheder.",
       "navigation_badge_multiple": "Kun ét element i en navigationsliste kan have et badge.",

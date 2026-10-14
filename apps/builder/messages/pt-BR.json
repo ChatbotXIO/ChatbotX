@@ -7798,8 +7798,6 @@
       "screenTitle": "Título",
       "screenId": "ID da tela",
       "screenIdHint": "Apenas letras e sublinhados. Usado na navegação e no Flow JSON.",
-      "terminal": "Última tela",
-      "terminalHint": "O flow pode terminar aqui. Ele precisa de um Footer que conclua o flow.",
       "remove": "Excluir tela"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "E-mail",
         "password": "Senha",
         "passcode": "Código",
-        "phone": "Telefone"
+        "phone": "Telefone",
+        "date": "Data",
+        "datetime": "Data e hora"
       },
       "fontWeight": {
         "normal": "Normal",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "O ID da tela só pode conter letras e sublinhados.",
       "screen_id_reserved": "“SUCCESS” é reservado pelo WhatsApp. Escolha outro ID de tela.",
       "screen_id_duplicate": "Outra tela já usa este ID.",
-      "no_terminal_screen": "Marque pelo menos uma tela como última tela.",
-      "terminal_screen_without_complete": "A última tela precisa de um Footer que conclua o flow.",
+      "no_terminal_screen": "Adicione à última tela um Footer que conclua o fluxo.",
       "screen_without_exit": "Esta tela não tem como continuar. Adicione um Footer ou link que vá para outra tela.",
       "screen_unreachable": "Nenhuma tela navega para esta.",
       "too_many_components": "Uma tela pode conter no máximo {max} componentes.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} não corresponde a nenhum campo.",
       "data_reference_unsupported": "{reference}: dados da tela não são suportados. Use campos do formulário.",
       "property_unknown": "O WhatsApp não aceita a propriedade “{name}” neste componente.",
-      "complete_on_non_terminal": "“Concluir o fluxo” só pode ser usado na última tela.",
       "footer_captions_invalid": "Use uma legenda central, ou uma legenda esquerda e uma direita juntas.",
       "options_with_images_limit": "Com imagens, um menu suspenso pode ter no máximo {max} opções.",
       "navigation_badge_multiple": "Apenas um item de uma lista de navegação pode ter selo.",

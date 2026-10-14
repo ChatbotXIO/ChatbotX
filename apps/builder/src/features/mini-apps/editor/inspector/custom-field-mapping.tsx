@@ -1,18 +1,43 @@
 "use client"
 
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
-import { canMapToCustomField, type MiniAppNode } from "@chatbotx.io/mini-app"
+import {
+  canMapToCustomField,
+  isTextInputDateType,
+  type MiniAppNode,
+  type TextInputDateType,
+} from "@chatbotx.io/mini-app"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useMiniAppEditor } from "../editor-context"
+import { InspectorHint } from "./fields"
 
 /**
  * Picks the contact custom field an input's answer is saved to. Stored on the
  * node (not in Flow JSON); applied when a known contact submits the web link.
  */
 const FILE_FIELD_TYPES: CustomFieldType[] = ["shortText", "longText"]
+
+/** A date input fills a field of its own kind, or a text field. */
+const DATE_FIELD_TYPES: Record<TextInputDateType, CustomFieldType[]> = {
+  date: ["date", "shortText", "longText"],
+  datetime: ["datetime", "shortText", "longText"],
+}
+
+const allowedFieldTypes = (
+  node: MiniAppNode,
+): CustomFieldType[] | undefined => {
+  if (node.type === "PhotoPicker" || node.type === "DocumentPicker") {
+    return FILE_FIELD_TYPES
+  }
+  const inputType = node.props["input-type"]
+  if (node.type === "TextInput" && isTextInputDateType(inputType)) {
+    return DATE_FIELD_TYPES[inputType]
+  }
+  return
+}
 
 export function CustomFieldMapping({ node }: { node: MiniAppNode }) {
   const isFileInput =
@@ -37,16 +62,14 @@ export function CustomFieldMapping({ node }: { node: MiniAppNode }) {
           clearable
           // Uploaded files are stored as their public URLs, so only text fields fit.
           createDefaultType={isFileInput ? "longText" : undefined}
-          customFieldTypes={isFileInput ? FILE_FIELD_TYPES : undefined}
+          customFieldTypes={allowedFieldTypes(node)}
           label={t("saveToCustomField")}
           name="customFieldId"
           onValueChange={(value) => setNodeCustomField(node.id, value || null)}
           placeholder={t("chooseCustomField")}
         />
       </Form>
-      <span className="text-muted-foreground text-xs">
-        {t("customFieldHint")}
-      </span>
+      <InspectorHint>{t("customFieldHint")}</InspectorHint>
     </div>
   )
 }

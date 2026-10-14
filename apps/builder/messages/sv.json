@@ -7798,8 +7798,6 @@
       "screenTitle": "Titel",
       "screenId": "Skärm-ID",
       "screenIdHint": "Endast bokstäver och understreck. Används för navigering och i Flow JSON.",
-      "terminal": "Sista skärmen",
-      "terminalHint": "Flödet kan avslutas här. Det behöver en Footer som slutför flödet.",
       "remove": "Ta bort skärm"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "E-post",
         "password": "Lösenord",
         "passcode": "Kod",
-        "phone": "Telefon"
+        "phone": "Telefon",
+        "date": "Datum",
+        "datetime": "Datum och tid"
       },
       "fontWeight": {
         "normal": "Normal",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "Skärm-ID får bara innehålla bokstäver och understreck.",
       "screen_id_reserved": "“SUCCESS” är reserverat av WhatsApp. Välj ett annat skärm-ID.",
       "screen_id_duplicate": "En annan skärm använder redan det här ID:t.",
-      "no_terminal_screen": "Markera minst en skärm som sista skärm.",
-      "terminal_screen_without_complete": "Den sista skärmen behöver en Footer som slutför flödet.",
+      "no_terminal_screen": "Lägg till en Footer som avslutar flödet på den sista skärmen.",
       "screen_without_exit": "Den här skärmen har inget sätt att fortsätta. Lägg till en Footer eller länk som leder till en annan skärm.",
       "screen_unreachable": "Ingen skärm navigerar hit.",
       "too_many_components": "En skärm kan innehålla högst {max} komponenter.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} matchar inget fält.",
       "data_reference_unsupported": "{reference}: skärmdata stöds inte. Använd formulärfält i stället.",
       "property_unknown": "WhatsApp accepterar inte egenskapen ”{name}” för den här komponenten.",
-      "complete_on_non_terminal": "”Slutför flödet” kan bara användas på den sista skärmen.",
       "footer_captions_invalid": "Använd antingen en mittentext eller en vänster- och högertext tillsammans.",
       "options_with_images_limit": "Med bilder kan en rullgardinsmeny ha högst {max} alternativ.",
       "navigation_badge_multiple": "Bara ett objekt i en navigeringslista kan ha en etikett.",

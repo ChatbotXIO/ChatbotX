@@ -5,6 +5,7 @@ import {
   type MiniAppNode,
   type MiniAppRuntimeScope,
   type MiniAppSlotAddress,
+  slotEntries,
 } from "@chatbotx.io/mini-app"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useDraggable, useDroppable } from "@dnd-kit/core"
@@ -105,7 +106,7 @@ function ContainerSlots({
   }
   return (
     <div className="flex flex-col gap-2">
-      {Object.entries(node.slots ?? {}).map(([slot, children]) => (
+      {slotEntries(node).map(([slot, children]) => (
         <SlotList
           address={{ screenKey, parentId: node.id, slot }}
           key={slot}

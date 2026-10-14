@@ -7798,8 +7798,6 @@
       "screenTitle": "כותרת",
       "screenId": "מזהה מסך",
       "screenIdHint": "אותיות וקווים תחתונים בלבד. משמש לניווט וב-Flow JSON.",
-      "terminal": "מסך אחרון",
-      "terminalHint": "ה-Flow יכול להסתיים כאן. נדרש Footer שמסיים את ה-Flow.",
       "remove": "מחיקת מסך"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "אימייל",
         "password": "סיסמה",
         "passcode": "קוד גישה",
-        "phone": "טלפון"
+        "phone": "טלפון",
+        "date": "תאריך",
+        "datetime": "תאריך ושעה"
       },
       "fontWeight": {
         "normal": "רגיל",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "מזהה המסך יכול להכיל אותיות וקווים תחתונים בלבד.",
       "screen_id_reserved": "“SUCCESS” שמור על ידי WhatsApp. בחרו מזהה מסך אחר.",
       "screen_id_duplicate": "מסך אחר כבר משתמש במזהה הזה.",
-      "no_terminal_screen": "סמנו לפחות מסך אחד כמסך האחרון.",
-      "terminal_screen_without_complete": "המסך האחרון צריך Footer שמסיים את ה-Flow.",
+      "no_terminal_screen": "הוסיפו למסך האחרון Footer שמסיים את הזרימה.",
       "screen_without_exit": "אין למסך הזה דרך להמשיך. הוסיפו Footer או קישור שמוביל למסך אחר.",
       "screen_unreachable": "אף מסך לא מנווט אל המסך הזה.",
       "too_many_components": "מסך יכול להכיל לכל היותר {max} רכיבים.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} לא תואם לאף שדה.",
       "data_reference_unsupported": "{reference}: נתוני מסך אינם נתמכים. השתמשו בשדות טופס במקום.",
       "property_unknown": "WhatsApp לא מקבל את המאפיין “{name}” ברכיב זה.",
-      "complete_on_non_terminal": "“השלמת התהליך” זמינה רק במסך האחרון.",
       "footer_captions_invalid": "השתמשו בכיתוב מרכזי בלבד, או בכיתוב שמאלי וימני יחד.",
       "options_with_images_limit": "עם תמונות, לרשימה נפתחת יכולות להיות עד {max} אפשרויות.",
       "navigation_badge_multiple": "רק פריט אחד ברשימת ניווט יכול לשאת תג.",

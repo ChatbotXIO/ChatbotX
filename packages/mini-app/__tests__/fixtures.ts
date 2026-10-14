@@ -8,7 +8,6 @@ export const twoScreenDefinition = (): MiniAppDefinition => ({
       key: "s_welcome",
       id: "WELCOME",
       title: "Welcome",
-      terminal: false,
       children: [
         {
           id: "n_heading",
@@ -40,7 +39,6 @@ export const twoScreenDefinition = (): MiniAppDefinition => ({
       key: "s_confirm",
       id: "CONFIRM",
       title: "Confirm",
-      terminal: true,
       children: [
         {
           id: "n_body",

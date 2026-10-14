@@ -1,9 +1,9 @@
 "use client"
 
 import {
+  appendScreen,
   collectAllNames,
   createNode,
-  createScreen,
   duplicateNode,
   findNode,
   insertNode,
@@ -16,6 +16,7 @@ import {
   moveNode,
   removeNode,
   removeScreen,
+  slotEntries,
   updateNodeCustomField,
   updateNodeProps,
   updateNodeSlots,
@@ -52,10 +53,10 @@ export type MiniAppEditorActions = {
   updateNodeProps: (nodeId: string, props: Record<string, unknown>) => void
   updateNodeSlots: (
     nodeId: string,
-    slots: Record<string, MiniAppNode[]>,
+    entries: [slot: string, children: MiniAppNode[]][],
   ) => void
   setNodeCustomField: (nodeId: string, customFieldId: string | null) => void
-  addScreen: (title: string) => void
+  addScreen: (title: string, text: MiniAppDefaultText) => void
   updateScreen: (
     screenKey: string,
     patch: Partial<Omit<MiniAppScreen, "key" | "children">>,
@@ -79,9 +80,7 @@ export const resolveInsertTarget = (
     ? findNode(definition, selectedNodeId)
     : undefined
   if (selected && selected.screen.key === screenKey) {
-    const firstSlot = selected.node.slots
-      ? Object.keys(selected.node.slots)[0]
-      : undefined
+    const firstSlot = slotEntries(selected.node)[0]?.[0]
     if (firstSlot) {
       return {
         address: { screenKey, parentId: selected.node.id, slot: firstSlot },
@@ -194,14 +193,13 @@ export const createMiniAppEditorStore = (initial: {
       setNodeCustomField: (nodeId, customFieldId) =>
         commit(updateNodeCustomField(get().definition, nodeId, customFieldId)),
 
-      updateNodeSlots: (nodeId, slots) =>
-        commit(updateNodeSlots(get().definition, nodeId, slots)),
+      updateNodeSlots: (nodeId, entries) =>
+        commit(updateNodeSlots(get().definition, nodeId, entries)),
 
-      addScreen: (title) => {
-        const { definition } = get()
-        const screen = createScreen(definition, title)
-        commit({ screens: [...definition.screens, screen] })
-        set({ selectedScreenKey: screen.key, selectedNodeId: null })
+      addScreen: (title, text) => {
+        const result = appendScreen(get().definition, title, text)
+        commit(result.definition)
+        set({ selectedScreenKey: result.screenKey, selectedNodeId: null })
       },
 
       updateScreen: (screenKey, patch) => {

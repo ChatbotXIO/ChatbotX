@@ -76,7 +76,6 @@ const definition = {
       key: "s1",
       id: "SCREEN_A",
       title: "Hi {{first_name}}",
-      terminal: true,
       children: [
         {
           id: "n1",
@@ -133,9 +132,7 @@ const singleNodeDefinition = (
 ): MiniAppDefinition =>
   ({
     version: "7.3",
-    screens: [
-      { key: "s1", id: "A", title: "", terminal: true, children: [node] },
-    ],
+    screens: [{ key: "s1", id: "A", title: "", children: [node] }],
   }) as unknown as MiniAppDefinition
 
 describe("resolveContactVariables", () => {

@@ -21,7 +21,6 @@ const definition: MiniAppDefinition = {
       key: "s1",
       id: "WELCOME",
       title: "",
-      terminal: true,
       children: [
         {
           id: "p",

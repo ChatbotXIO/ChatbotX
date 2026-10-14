@@ -7798,8 +7798,6 @@
       "screenTitle": "Titolo",
       "screenId": "ID schermata",
       "screenIdHint": "Solo lettere e trattini bassi. Usato dalla navigazione e nel Flow JSON.",
-      "terminal": "Ultima schermata",
-      "terminalHint": "Il flow può terminare qui. Serve un Footer che completi il flow.",
       "remove": "Elimina schermata"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "Email",
         "password": "Password",
         "passcode": "Codice",
-        "phone": "Telefono"
+        "phone": "Telefono",
+        "date": "Data",
+        "datetime": "Data e ora"
       },
       "fontWeight": {
         "normal": "Normale",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "L'ID schermata può contenere solo lettere e trattini bassi.",
       "screen_id_reserved": "“SUCCESS” è riservato da WhatsApp. Scegli un altro ID schermata.",
       "screen_id_duplicate": "Un'altra schermata usa già questo ID.",
-      "no_terminal_screen": "Contrassegna almeno una schermata come ultima schermata.",
-      "terminal_screen_without_complete": "L'ultima schermata richiede un Footer che completi il flow.",
+      "no_terminal_screen": "Aggiungi all'ultima schermata un Footer che completa il flusso.",
       "screen_without_exit": "Questa schermata non ha modo di proseguire. Aggiungi un Footer o un link che porti a un'altra schermata.",
       "screen_unreachable": "Nessuna schermata porta a questa.",
       "too_many_components": "Una schermata può contenere al massimo {max} componenti.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} non corrisponde a nessun campo.",
       "data_reference_unsupported": "{reference}: i dati della schermata non sono supportati. Usa i campi del modulo.",
       "property_unknown": "WhatsApp non accetta la proprietà “{name}” su questo componente.",
-      "complete_on_non_terminal": "“Completa il flow” si può usare solo nell’ultima schermata.",
       "footer_captions_invalid": "Usa una didascalia centrale, oppure una sinistra e una destra insieme.",
       "options_with_images_limit": "Con immagini, un menu a tendina può avere al massimo {max} opzioni.",
       "navigation_badge_multiple": "Solo un elemento di un elenco di navigazione può avere un badge.",

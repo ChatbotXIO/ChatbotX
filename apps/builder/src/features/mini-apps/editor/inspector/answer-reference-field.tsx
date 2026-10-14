@@ -7,6 +7,7 @@ import { CopyIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useId } from "react"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { InspectorHint } from "./fields"
 
 // Same rule the validator applies to input names.
 const VALID_KEY = /^[A-Za-z_][A-Za-z0-9_]*$/
@@ -51,9 +52,7 @@ export function AnswerReferenceField({
           <CopyIcon className="size-4" />
         </Button>
       </div>
-      <span className="text-muted-foreground text-xs">
-        {t("answerReferenceHint")}
-      </span>
+      <InspectorHint>{t("answerReferenceHint")}</InspectorHint>
     </div>
   )
 }

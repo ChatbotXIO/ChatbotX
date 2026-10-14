@@ -7798,8 +7798,6 @@
       "screenTitle": "Titel",
       "screenId": "Bildschirm-ID",
       "screenIdHint": "Nur Buchstaben und Unterstriche. Wird für die Navigation und im Flow JSON verwendet.",
-      "terminal": "Letzter Bildschirm",
-      "terminalHint": "Der Flow kann hier enden. Er braucht einen Footer, der den Flow abschließt.",
       "remove": "Bildschirm löschen"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "E-Mail",
         "password": "Passwort",
         "passcode": "Passcode",
-        "phone": "Telefon"
+        "phone": "Telefon",
+        "date": "Datum",
+        "datetime": "Datum & Uhrzeit"
       },
       "fontWeight": {
         "normal": "Normal",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "Die Bildschirm-ID darf nur Buchstaben und Unterstriche enthalten.",
       "screen_id_reserved": "„SUCCESS“ ist von WhatsApp reserviert. Wähle eine andere Bildschirm-ID.",
       "screen_id_duplicate": "Ein anderer Bildschirm verwendet diese ID bereits.",
-      "no_terminal_screen": "Markiere mindestens einen Bildschirm als letzten Bildschirm.",
-      "terminal_screen_without_complete": "Der letzte Bildschirm braucht einen Footer, der den Flow abschließt.",
+      "no_terminal_screen": "Füge dem letzten Bildschirm einen Footer hinzu, der den Flow abschließt.",
       "screen_without_exit": "Dieser Bildschirm bietet keine Möglichkeit zum Fortfahren. Füge einen Footer oder Link hinzu, der zu einem anderen Bildschirm führt.",
       "screen_unreachable": "Kein Bildschirm navigiert zu diesem.",
       "too_many_components": "Ein Bildschirm kann höchstens {max} Komponenten enthalten.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} entspricht keinem Feld.",
       "data_reference_unsupported": "{reference}: Bildschirmdaten werden nicht unterstützt. Verwende stattdessen Formularfelder.",
       "property_unknown": "WhatsApp akzeptiert die Eigenschaft „{name}“ bei dieser Komponente nicht.",
-      "complete_on_non_terminal": "„Flow abschließen“ ist nur auf dem letzten Bildschirm erlaubt.",
       "footer_captions_invalid": "Verwende entweder eine mittlere Beschriftung oder eine linke und rechte zusammen.",
       "options_with_images_limit": "Mit Bildern darf ein Dropdown höchstens {max} Optionen haben.",
       "navigation_badge_multiple": "Nur ein Eintrag einer Navigationsliste darf ein Badge haben.",

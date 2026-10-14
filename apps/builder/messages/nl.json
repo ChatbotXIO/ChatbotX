@@ -7798,8 +7798,6 @@
       "screenTitle": "Titel",
       "screenId": "Scherm-ID",
       "screenIdHint": "Alleen letters en underscores. Wordt gebruikt voor navigatie en in de Flow JSON.",
-      "terminal": "Laatste scherm",
-      "terminalHint": "De flow kan hier eindigen. Er is een Footer nodig die de flow afrondt.",
       "remove": "Scherm verwijderen"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "E-mail",
         "password": "Wachtwoord",
         "passcode": "Toegangscode",
-        "phone": "Telefoon"
+        "phone": "Telefoon",
+        "date": "Datum",
+        "datetime": "Datum en tijd"
       },
       "fontWeight": {
         "normal": "Normaal",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "De scherm-ID mag alleen letters en underscores bevatten.",
       "screen_id_reserved": "“SUCCESS” is gereserveerd door WhatsApp. Kies een andere scherm-ID.",
       "screen_id_duplicate": "Een ander scherm gebruikt deze ID al.",
-      "no_terminal_screen": "Markeer minstens één scherm als laatste scherm.",
-      "terminal_screen_without_complete": "Het laatste scherm heeft een Footer nodig die de flow afrondt.",
+      "no_terminal_screen": "Voeg aan het laatste scherm een Footer toe die de flow afrondt.",
       "screen_without_exit": "Dit scherm heeft geen manier om verder te gaan. Voeg een Footer of link toe die naar een ander scherm gaat.",
       "screen_unreachable": "Geen enkel scherm navigeert naar dit scherm.",
       "too_many_components": "Een scherm kan maximaal {max} componenten bevatten.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} komt met geen enkel veld overeen.",
       "data_reference_unsupported": "{reference}: schermgegevens worden niet ondersteund. Gebruik in plaats daarvan formuliervelden.",
       "property_unknown": "WhatsApp accepteert de eigenschap “{name}” niet voor dit onderdeel.",
-      "complete_on_non_terminal": "“Flow voltooien” kan alleen op het laatste scherm.",
       "footer_captions_invalid": "Gebruik alleen een middentekst, of een linker- en rechtertekst samen.",
       "options_with_images_limit": "Met afbeeldingen mag een dropdown hoogstens {max} opties hebben.",
       "navigation_badge_multiple": "Slechts één item in een navigatielijst mag een badge hebben.",

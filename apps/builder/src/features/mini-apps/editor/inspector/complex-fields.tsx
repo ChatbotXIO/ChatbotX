@@ -9,6 +9,7 @@ import {
   type MiniAppNode,
   type MiniAppOption,
   miniAppActionSchema,
+  slotEntries,
 } from "@chatbotx.io/mini-app"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
@@ -39,7 +40,7 @@ import { toImageSrc } from "../../lib/image-src"
 import { imageFileToBase64 } from "../../lib/image-to-base64"
 import { actionLabelKey, type MiniAppPropertyKey } from "../../lib/labels"
 import { useMiniAppEditor } from "../editor-context"
-import { FieldRow, useInspector } from "./fields"
+import { FieldRow, InspectorHint, useInspector } from "./fields"
 import { VariableTextEditor } from "./variable-text-editor"
 
 const moveItem = <T,>(items: T[], from: number, to: number): T[] => {
@@ -452,9 +453,7 @@ function ActionPicker({
         </Select>
       ) : null}
       {action?.name === "navigate" && targets.length === 0 ? (
-        <span className="text-muted-foreground text-xs">
-          {t("miniApps.inspector.noOtherScreen")}
-        </span>
+        <InspectorHint>{t("miniApps.inspector.noOtherScreen")}</InspectorHint>
       ) : null}
       {action?.name === "open_url" ? (
         <Input
@@ -466,9 +465,7 @@ function ActionPicker({
         />
       ) : null}
       {action?.name === "complete" ? (
-        <span className="text-muted-foreground text-xs">
-          {t("miniApps.inspector.completeHint")}
-        </span>
+        <InspectorHint>{t("miniApps.inspector.completeHint")}</InspectorHint>
       ) : null}
     </div>
   )
@@ -685,17 +682,18 @@ const CASE_KEY_PATTERN = /^[A-Za-z0-9_]+$/
 export function SwitchCasesProp({ node }: { node: MiniAppNode }) {
   const t = useTranslations("miniApps.inspector")
   const updateNodeSlots = useMiniAppEditor((state) => state.updateNodeSlots)
-  const slots = node.slots ?? {}
-  const keys = Object.keys(slots)
+  const entries = slotEntries(node)
+  const keys = entries.map(([key]) => key)
   const rename = (from: string, to: string) => {
-    if (!(to && CASE_KEY_PATTERN.test(to)) || (to !== from && to in slots)) {
+    if (
+      !(to && CASE_KEY_PATTERN.test(to)) ||
+      (to !== from && keys.includes(to))
+    ) {
       return
     }
     updateNodeSlots(
       node.id,
-      Object.fromEntries(
-        keys.map((key) => [key === from ? to : key, slots[key] ?? []]),
-      ),
+      entries.map(([key, children]) => [key === from ? to : key, children]),
     )
   }
   return (
@@ -714,11 +712,7 @@ export function SwitchCasesProp({ node }: { node: MiniAppNode }) {
             onClick={() =>
               updateNodeSlots(
                 node.id,
-                Object.fromEntries(
-                  keys
-                    .filter((other) => other !== key)
-                    .map((other) => [other, slots[other] ?? []]),
-                ),
+                entries.filter(([other]) => other !== key),
               )
             }
             size="icon"
@@ -732,10 +726,10 @@ export function SwitchCasesProp({ node }: { node: MiniAppNode }) {
       <Button
         onClick={() => {
           let counter = keys.length + 1
-          while (`case_${counter}` in slots) {
+          while (keys.includes(`case_${counter}`)) {
             counter++
           }
-          updateNodeSlots(node.id, { ...slots, [`case_${counter}`]: [] })
+          updateNodeSlots(node.id, [...entries, [`case_${counter}`, []]])
         }}
         size="sm"
         type="button"
@@ -744,7 +738,7 @@ export function SwitchCasesProp({ node }: { node: MiniAppNode }) {
         <PlusIcon className="size-4" />
         {t("addCase")}
       </Button>
-      <span className="text-muted-foreground text-xs">{t("casesHint")}</span>
+      <InspectorHint>{t("casesHint")}</InspectorHint>
     </div>
   )
 }

@@ -81,8 +81,6 @@ export const issueLabelKey = {
   screen_id_reserved: "miniApps.issues.screen_id_reserved",
   screen_id_duplicate: "miniApps.issues.screen_id_duplicate",
   no_terminal_screen: "miniApps.issues.no_terminal_screen",
-  terminal_screen_without_complete:
-    "miniApps.issues.terminal_screen_without_complete",
   screen_without_exit: "miniApps.issues.screen_without_exit",
   screen_unreachable: "miniApps.issues.screen_unreachable",
   too_many_components: "miniApps.issues.too_many_components",
@@ -115,7 +113,6 @@ export const issueLabelKey = {
   reference_unknown: "miniApps.issues.reference_unknown",
   data_reference_unsupported: "miniApps.issues.data_reference_unsupported",
   property_unknown: "miniApps.issues.property_unknown",
-  complete_on_non_terminal: "miniApps.issues.complete_on_non_terminal",
   footer_captions_invalid: "miniApps.issues.footer_captions_invalid",
   options_with_images_limit: "miniApps.issues.options_with_images_limit",
   navigation_badge_multiple: "miniApps.issues.navigation_badge_multiple",
@@ -192,6 +189,8 @@ export const enumOptionLabelKey = {
     password: "miniApps.options.inputType.password",
     passcode: "miniApps.options.inputType.passcode",
     phone: "miniApps.options.inputType.phone",
+    date: "miniApps.options.inputType.date",
+    datetime: "miniApps.options.inputType.datetime",
   },
   "font-weight": {
     normal: "miniApps.options.fontWeight.normal",

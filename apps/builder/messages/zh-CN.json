@@ -7798,8 +7798,6 @@
       "screenTitle": "标题",
       "screenId": "屏幕 ID",
       "screenIdHint": "仅限字母和下划线。用于导航和 Flow JSON。",
-      "terminal": "最后一屏",
-      "terminalHint": "流程可在此结束。需要有一个完成流程的 Footer。",
       "remove": "删除屏幕"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "邮箱",
         "password": "密码",
         "passcode": "密码口令",
-        "phone": "电话"
+        "phone": "电话",
+        "date": "日期",
+        "datetime": "日期和时间"
       },
       "fontWeight": {
         "normal": "常规",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "屏幕 ID 只能包含字母和下划线。",
       "screen_id_reserved": "“SUCCESS”是 WhatsApp 的保留字，请选择其他屏幕 ID。",
       "screen_id_duplicate": "另一个屏幕已使用此 ID。",
-      "no_terminal_screen": "请至少将一个屏幕标记为最后一屏。",
-      "terminal_screen_without_complete": "最后一屏需要有一个完成流程的 Footer。",
+      "no_terminal_screen": "请在最后一屏添加一个完成流程的页脚。",
       "screen_without_exit": "此屏幕无法继续。请添加跳转到其他屏幕的 Footer 或链接。",
       "screen_unreachable": "没有屏幕跳转到此屏幕。",
       "too_many_components": "一个屏幕最多可包含 {max} 个组件。",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} 与任何字段都不匹配。",
       "data_reference_unsupported": "{reference}：不支持屏幕数据，请改用表单字段。",
       "property_unknown": "WhatsApp 不接受此组件的属性“{name}”。",
-      "complete_on_non_terminal": "“完成流程”只能用于最后一个屏幕。",
       "footer_captions_invalid": "请只使用中间说明，或同时使用左侧和右侧说明。",
       "options_with_images_limit": "含图片时，下拉列表最多 {max} 个选项。",
       "navigation_badge_multiple": "导航列表中只能有一个项目带徽章。",

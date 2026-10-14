@@ -7798,8 +7798,6 @@
       "screenTitle": "標題",
       "screenId": "畫面 ID",
       "screenIdHint": "僅限英文字母和底線。用於導覽和 Flow JSON。",
-      "terminal": "最後一個畫面",
-      "terminalHint": "流程可在此結束。需要有一個完成流程的 Footer。",
       "remove": "刪除畫面"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "電子郵件",
         "password": "密碼",
         "passcode": "通行碼",
-        "phone": "電話"
+        "phone": "電話",
+        "date": "日期",
+        "datetime": "日期和時間"
       },
       "fontWeight": {
         "normal": "一般",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "畫面 ID 只能包含英文字母和底線。",
       "screen_id_reserved": "「SUCCESS」是 WhatsApp 的保留字，請選擇其他畫面 ID。",
       "screen_id_duplicate": "另一個畫面已使用此 ID。",
-      "no_terminal_screen": "請至少將一個畫面標記為最後一個畫面。",
-      "terminal_screen_without_complete": "最後一個畫面需要有一個完成流程的 Footer。",
+      "no_terminal_screen": "請在最後一個畫面加入完成流程的頁尾。",
       "screen_without_exit": "此畫面無法繼續。請新增跳轉到其他畫面的 Footer 或連結。",
       "screen_unreachable": "沒有畫面跳轉到此畫面。",
       "too_many_components": "一個畫面最多可包含 {max} 個元件。",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} 與任何欄位都不相符。",
       "data_reference_unsupported": "{reference}：不支援畫面資料，請改用表單欄位。",
       "property_unknown": "WhatsApp 不接受此元件的屬性「{name}」。",
-      "complete_on_non_terminal": "「完成流程」只能用於最後一個畫面。",
       "footer_captions_invalid": "請只使用中間說明，或同時使用左側和右側說明。",
       "options_with_images_limit": "含圖片時，下拉選單最多 {max} 個選項。",
       "navigation_badge_multiple": "導覽清單中只能有一個項目帶徽章。",

@@ -11,7 +11,6 @@ import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useMemo } from "react"
 import { componentLabelKey } from "../../lib/labels"
-import { useIssueMessage } from "../../lib/use-issue-message"
 import { useMiniAppEditor } from "../editor-context"
 import { componentIcon } from "../palette"
 import { AnswerReferenceField } from "./answer-reference-field"
@@ -30,6 +29,7 @@ import {
   DateProp,
   EnumProp,
   InspectorContext,
+  IssueList,
   ListProp,
   MultiEnumProp,
   NumberProp,
@@ -273,21 +273,7 @@ function NodeFields({
 }
 
 function GeneralIssues({ issues }: { issues: MiniAppValidationIssue[] }) {
-  const message = useIssueMessage()
-  const general = issues.filter((issue) => !issue.property)
-  if (general.length === 0) {
-    return null
-  }
-  return (
-    <div className="flex flex-col gap-1 rounded-md border border-destructive/40 bg-destructive/5 p-2">
-      {general.map((issue, index) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: issues have no id
-        <span className="text-destructive text-xs" key={index}>
-          {message(issue)}
-        </span>
-      ))}
-    </div>
-  )
+  return <IssueList issues={issues.filter((issue) => !issue.property)} />
 }
 
 export function NodeInspector({

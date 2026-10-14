@@ -15,14 +15,19 @@ import {
 } from "./display-text"
 import { extractReferences, isValidExpression } from "./expression"
 import { cleanObject, collectInputNames, collectPathScreens } from "./serialize"
-import { walkNodes } from "./tree"
+import {
+  MINI_APP_ACTION_KEY as ACTION_KEY,
+  isTerminalScreen,
+  readMiniAppAction as readAction,
+  screenActions,
+  walkNodes,
+} from "./tree"
 import {
   MINI_APP_SCREEN_TITLE_MAX_LENGTH,
   type MiniAppAction,
   type MiniAppDefinition,
   type MiniAppNode,
   type MiniAppScreen,
-  miniAppActionSchema,
   miniAppDefinitionSchema,
 } from "./types"
 
@@ -32,7 +37,6 @@ export type MiniAppIssueCode =
   | "screen_id_reserved"
   | "screen_id_duplicate"
   | "no_terminal_screen"
-  | "terminal_screen_without_complete"
   | "screen_without_exit"
   | "screen_unreachable"
   | "too_many_components"
@@ -65,7 +69,6 @@ export type MiniAppIssueCode =
   | "reference_unknown"
   | "data_reference_unsupported"
   | "property_unknown"
-  | "complete_on_non_terminal"
   | "footer_captions_invalid"
   | "options_with_images_limit"
   | "navigation_badge_multiple"
@@ -89,7 +92,6 @@ export interface MiniAppValidationResult {
 const SCREEN_ID_PATTERN = /^[A-Za-z][A-Za-z_]*$/
 const NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
 const RESERVED_SCREEN_IDS = new Set(["SUCCESS"])
-const ACTION_KEY = "on-click-action"
 
 const MIN_MAX_PAIRS: readonly [string, string][] = [
   ["min-chars", "max-chars"],
@@ -198,11 +200,6 @@ const checkComponentRules = (node: MiniAppNode, context: ScreenContext) => {
   }
 }
 
-const readAction = (value: unknown): MiniAppAction | undefined => {
-  const parsed = miniAppActionSchema.safeParse(value)
-  return parsed.success ? parsed.data : undefined
-}
-
 interface ScreenContext {
   collector: IssueCollector
   definition: MiniAppDefinition
@@ -233,9 +230,6 @@ const checkAction = (
   if (!(action && allowed?.includes(action.name))) {
     context.collector.add({ ...base, code: "action_not_allowed" })
     return
-  }
-  if (action.name === "complete" && !context.screen.terminal) {
-    context.collector.add({ ...base, code: "complete_on_non_terminal" })
   }
   if (action.name === "navigate") {
     if (!context.screenKeys.has(action.next)) {
@@ -520,7 +514,7 @@ const checkStructure = (screen: MiniAppScreen, context: ScreenContext) => {
       code: "navigation_list_with_footer",
     })
   }
-  if (hasNavigationList && screen.terminal) {
+  if (hasNavigationList && isTerminalScreen(screen)) {
     collector.add({
       screenKey: screen.key,
       code: "navigation_list_on_terminal",
@@ -554,28 +548,6 @@ const checkRootFooterCount = (
       params: { type: "Footer", max: 1 },
     })
   }
-}
-
-const screenActions = (screen: MiniAppScreen): MiniAppAction[] => {
-  const actions: MiniAppAction[] = []
-  walkNodes(screen.children, ({ node }) => {
-    const action = readAction(node.props[ACTION_KEY])
-    if (action) {
-      actions.push(action)
-    }
-    const items = node.props["list-items"]
-    if (Array.isArray(items)) {
-      for (const item of items) {
-        const itemAction = readAction(
-          (item as Record<string, unknown>)?.[ACTION_KEY],
-        )
-        if (itemAction) {
-          actions.push(itemAction)
-        }
-      }
-    }
-  })
-  return actions
 }
 
 const PICKER_MAX_KEY: Partial<Record<MiniAppNode["type"], string>> = {
@@ -656,8 +628,7 @@ const checkScreens = (
     seenIds.add(screen.id)
   }
 
-  const terminals = definition.screens.filter((screen) => screen.terminal)
-  if (terminals.length === 0) {
+  if (!definition.screens.some(isTerminalScreen)) {
     collector.add({ code: "no_terminal_screen" })
   }
 
@@ -679,15 +650,8 @@ const checkScreens = (
 
   for (const screen of definition.screens) {
     const actions = screenActions(screen)
-    if (screen.terminal) {
-      if (actions.some((action) => action.name === "complete")) {
-        checkPickersInComplete(definition, screen, collector)
-      } else {
-        collector.add({
-          screenKey: screen.key,
-          code: "terminal_screen_without_complete",
-        })
-      }
+    if (actions.some((action) => action.name === "complete")) {
+      checkPickersInComplete(definition, screen, collector)
     } else if (!actions.some((action) => action.name === "navigate")) {
       collector.add({ screenKey: screen.key, code: "screen_without_exit" })
     }

@@ -15,7 +15,6 @@ const withVariables = (): MiniAppDefinition => ({
       key: "s1",
       id: "WELCOME",
       title: "Hi {{first_name}}",
-      terminal: true,
       children: [
         {
           id: "t",
