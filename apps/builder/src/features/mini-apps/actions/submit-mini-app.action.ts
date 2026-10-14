@@ -5,7 +5,6 @@ import {
   miniAppService,
   miniAppSubmissionService,
 } from "@chatbotx.io/business/mini-app"
-import { verifyMiniAppToken } from "@chatbotx.io/encryption/mini-app-token"
 import { headers } from "next/headers"
 import { getTranslations } from "next-intl/server"
 import {
@@ -14,6 +13,7 @@ import {
 } from "@/lib/rate-limit/guest-rate-limit"
 import { actionClient } from "@/lib/safe-action"
 import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
+import { resolveVisitorContactId } from "../lib/resolve-visitor-contact"
 import { submitMiniAppRequest } from "../schema/action"
 
 /**
@@ -34,14 +34,10 @@ export const submitMiniAppAction = actionClient
       throw new ChatbotXException(t("notFoundDescription"), "notFound", 404)
     }
 
-    const payload = parsedInput.token
-      ? await verifyMiniAppToken(parsedInput.token).catch(() => null)
-      : null
-    // A token for another workspace is ignored rather than trusted.
-    const contactId =
-      payload && payload.workspaceId === miniApp.workspaceId
-        ? payload.contactId
-        : null
+    const contactId = await resolveVisitorContactId({
+      token: parsedInput.token,
+      workspaceId: miniApp.workspaceId,
+    })
 
     const rateLimit = await checkGuestRateLimit({
       webchatId: `mini-app:${miniApp.id}`,

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   displayTexts,
   hasContactVariables,
+  hasSameStructure,
   mapDisplayText,
   nodeHasContactVariables,
 } from "../src/display-text"
@@ -147,5 +148,30 @@ describe("validation with variables", () => {
           issue.severity === "warning",
       ),
     ).toBe(true)
+  })
+})
+
+describe("hasSameStructure", () => {
+  it("treats definitions that differ only in their texts as the same", () => {
+    const resolved = mapDisplayText(withVariables(), (text) =>
+      text.replaceAll("{{first_name}}", "Ana"),
+    )
+    expect(hasSameStructure(withVariables(), resolved)).toBe(true)
+  })
+
+  it("sees an added or removed screen as a different structure", () => {
+    const definition = twoScreenDefinition()
+    const fewer = { screens: definition.screens.slice(0, 1) }
+    expect(hasSameStructure(definition, fewer)).toBe(false)
+  })
+
+  it("sees a renamed input as a different structure", () => {
+    const definition = withVariables()
+    const renamed = structuredClone(definition)
+    const input = renamed.screens[0]?.children[0]
+    if (input) {
+      input.props.name = "mobile"
+    }
+    expect(hasSameStructure(definition, renamed)).toBe(false)
   })
 })

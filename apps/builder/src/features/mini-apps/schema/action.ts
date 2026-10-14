@@ -50,6 +50,11 @@ export const submitMiniAppRequest = z.object({
 })
 export type SubmitMiniAppRequest = z.infer<typeof submitMiniAppRequest>
 
+export const saveMiniAppScreenRequest = submitMiniAppRequest.extend({
+  screenKey: z.string().min(1).max(64),
+})
+export type SaveMiniAppScreenRequest = z.infer<typeof saveMiniAppScreenRequest>
+
 export const MINI_APP_BULK_DELETE_MAX_IDS = 100
 
 export const deleteWhatsappFlowsField = z
