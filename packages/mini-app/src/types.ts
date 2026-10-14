@@ -3,9 +3,6 @@ import { z } from "zod"
 /** The Flow JSON version every Mini App is exported as. */
 export const MINI_APP_FLOW_JSON_VERSION = "7.3"
 
-/** `flow_message_version` used when a published Mini App is sent on WhatsApp. */
-export const MINI_APP_FLOW_MESSAGE_VERSION = "3"
-
 export const miniAppComponentTypes = z.enum([
   "TextHeading",
   "TextSubheading",
@@ -47,6 +44,11 @@ export const miniAppActionSchema = z.discriminatedUnion("name", [
 export type MiniAppAction = z.infer<typeof miniAppActionSchema>
 export type MiniAppActionName = MiniAppAction["name"]
 
+/** Node ids, screen keys and screen ids. */
+const MAX_ID_LENGTH = 64
+/** Storage cap on a raw screen title; the real limit is checked by `validateMiniApp`. */
+const MAX_STORED_TITLE_LENGTH = 1000
+
 export interface MiniAppNode {
   /**
    * Contact custom field that receives this input's answer. Editor-only: it is
@@ -72,26 +74,26 @@ export interface MiniAppNode {
 
 export const miniAppNodeSchema: z.ZodType<MiniAppNode> = z.lazy(() =>
   z.object({
-    id: z.string().min(1).max(64),
+    id: z.string().min(1).max(MAX_ID_LENGTH),
     type: miniAppComponentTypes,
     props: z.record(z.string(), z.unknown()),
     slots: z.record(z.string(), z.array(miniAppNodeSchema)).optional(),
     slotOrder: z.array(z.string()).optional(),
-    customFieldId: z.string().max(64).nullish(),
+    customFieldId: z.string().max(MAX_ID_LENGTH).nullish(),
   }),
 )
 
 export const miniAppScreenSchema = z.object({
   /** Stable editor key, never exported. */
-  key: z.string().min(1).max(64),
+  key: z.string().min(1).max(MAX_ID_LENGTH),
   /** Flow JSON screen id. */
-  id: z.string().min(1).max(64),
+  id: z.string().min(1).max(MAX_ID_LENGTH),
   /**
    * At most `MINI_APP_SCREEN_TITLE_MAX_LENGTH` once each `{{variable}}`
    * counts as one character — checked by `validateMiniApp`, so the raw text
    * here only gets a storage cap.
    */
-  title: z.string().max(1000).default(""),
+  title: z.string().max(MAX_STORED_TITLE_LENGTH).default(""),
   children: z.array(miniAppNodeSchema),
 })
 export type MiniAppScreen = z.infer<typeof miniAppScreenSchema>

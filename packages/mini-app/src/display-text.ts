@@ -1,3 +1,4 @@
+import { isNestedExpression } from "./expression"
 import { flattenNodes } from "./tree"
 import type {
   MiniAppComponentType,
@@ -59,9 +60,16 @@ const CONTACT_VARIABLE_TEST = /\{\{[^{}\n]+\}\}/
 export const hasContactVariable = (value: unknown): boolean =>
   typeof value === "string" && CONTACT_VARIABLE_TEST.test(value)
 
+/**
+ * The text with each `{{variable}}` shrunk to one character. A variable only
+ * gets its value on the web link, so length limits count it as one character.
+ */
+export const collapseContactVariables = (text: string): string =>
+  text.replace(CONTACT_VARIABLE_PATTERN, "x")
+
 /** Length of a display text where each `{{variable}}` counts as one character. */
 export const displayTextLength = (text: string): number =>
-  text.replace(CONTACT_VARIABLE_PATTERN, "x").length
+  collapseContactVariables(text).length
 
 /** Where a display text is shown, which decides how a value put into it must be escaped. */
 export interface DisplayTextContext {
@@ -250,12 +258,6 @@ const WORD_JOINER = "⁠"
 const REFERENCE_START = /\$\{/g
 const VARIABLE_START = /\{\{/g
 const QUOTED_STRING_SPECIAL_CHARACTER = /[\\'"]/g
-
-/** Whether the text is a backtick-wrapped Flow JSON expression (`` `'Hi ' ${form.name}` ``). */
-const isNestedExpression = (text: string): boolean => {
-  const trimmed = text.trim()
-  return trimmed.length >= 2 && trimmed.startsWith("`") && trimmed.endsWith("`")
-}
 
 /**
  * Escapes a contact's value before it is put into `text`, so it is always

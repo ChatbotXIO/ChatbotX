@@ -1,6 +1,6 @@
 import { isFileAnswer } from "./answers"
 import { MINI_APP_COMPONENTS } from "./components"
-import { walkNodes } from "./tree"
+import { inputName, setNodeCustomField, walkNodes } from "./tree"
 import type { MiniAppComponentType, MiniAppDefinition } from "./types"
 
 /** Every input can feed a custom field; file inputs store their public URLs. */
@@ -14,13 +14,8 @@ export const collectCustomFieldMappings = (
   const mappings: Record<string, string> = {}
   for (const screen of definition.screens) {
     walkNodes(screen.children, ({ node }) => {
-      const name = node.props.name
-      if (
-        node.customFieldId &&
-        canMapToCustomField(node.type) &&
-        typeof name === "string" &&
-        name
-      ) {
+      const name = inputName(node)
+      if (name && node.customFieldId) {
         mappings[name] = node.customFieldId
       }
     })
@@ -39,21 +34,9 @@ export const applyCustomFieldMappings = (
   const next = structuredClone(definition)
   for (const screen of next.screens) {
     walkNodes(screen.children, ({ node }) => {
-      const name = node.props.name
-      if (
-        !(
-          typeof name === "string" &&
-          name in mappings &&
-          canMapToCustomField(node.type)
-        )
-      ) {
-        return
-      }
-      const customFieldId = mappings[name]
-      if (customFieldId) {
-        node.customFieldId = customFieldId
-      } else {
-        node.customFieldId = undefined
+      const name = inputName(node)
+      if (name && name in mappings) {
+        setNodeCustomField(node, mappings[name])
       }
     })
   }
