@@ -1,3 +1,4 @@
+import { slotEntries } from "./tree"
 import type { MiniAppDefinition, MiniAppNode } from "./types"
 import type { MiniAppValidationIssue } from "./validate"
 
@@ -24,7 +25,7 @@ const indexNodePaths = (
   nodes.forEach((node, index) => {
     const path = `${base}[${index}]`
     paths.set(node.id, path)
-    for (const [slot, children] of Object.entries(node.slots ?? {})) {
+    for (const [slot, children] of slotEntries(node)) {
       indexNodePaths(children, `${path}.${slotPath(node, slot)}`, paths)
     }
   })

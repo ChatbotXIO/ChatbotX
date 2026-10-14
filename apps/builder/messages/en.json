@@ -7798,8 +7798,6 @@
       "screenTitle": "Title",
       "screenId": "Screen ID",
       "screenIdHint": "Letters and underscores only. Used by navigation and in the Flow JSON.",
-      "terminal": "Last screen",
-      "terminalHint": "The flow can finish here. It needs a Footer that completes the flow.",
       "remove": "Delete screen"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "Email",
         "password": "Password",
         "passcode": "Passcode",
-        "phone": "Phone"
+        "phone": "Phone",
+        "date": "Date",
+        "datetime": "Date & time"
       },
       "fontWeight": {
         "normal": "Normal",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "The screen ID may only contain letters and underscores.",
       "screen_id_reserved": "“SUCCESS” is reserved by WhatsApp. Choose another screen ID.",
       "screen_id_duplicate": "Another screen already uses this ID.",
-      "no_terminal_screen": "Mark at least one screen as the last screen.",
-      "terminal_screen_without_complete": "The last screen needs a Footer that completes the flow.",
+      "no_terminal_screen": "Add a Footer that completes the flow to the last screen.",
       "screen_without_exit": "This screen has no way to continue. Add a Footer or link that goes to another screen.",
       "screen_unreachable": "No screen navigates to this one.",
       "too_many_components": "A screen can hold at most {max} components.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} does not match any field.",
       "data_reference_unsupported": "{reference}: screen data is not supported. Use form fields instead.",
       "property_unknown": "WhatsApp does not accept the property “{name}” on this component.",
-      "complete_on_non_terminal": "“Complete the flow” can only be used on the last screen.",
       "footer_captions_invalid": "Use either a center caption, or a left and a right caption together.",
       "options_with_images_limit": "With images, a dropdown can have at most {max} options.",
       "navigation_badge_multiple": "Only one item in a navigation list can have a badge.",

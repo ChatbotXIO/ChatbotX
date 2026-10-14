@@ -7798,8 +7798,6 @@
       "screenTitle": "Título",
       "screenId": "ID de pantalla",
       "screenIdHint": "Solo letras y guiones bajos. Se usa en la navegación y en el Flow JSON.",
-      "terminal": "Última pantalla",
-      "terminalHint": "El flow puede terminar aquí. Necesita un Footer que complete el flow.",
       "remove": "Eliminar pantalla"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "Correo electrónico",
         "password": "Contraseña",
         "passcode": "Código",
-        "phone": "Teléfono"
+        "phone": "Teléfono",
+        "date": "Fecha",
+        "datetime": "Fecha y hora"
       },
       "fontWeight": {
         "normal": "Normal",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "El ID de pantalla solo puede contener letras y guiones bajos.",
       "screen_id_reserved": "“SUCCESS” está reservado por WhatsApp. Elige otro ID de pantalla.",
       "screen_id_duplicate": "Otra pantalla ya usa este ID.",
-      "no_terminal_screen": "Marca al menos una pantalla como última pantalla.",
-      "terminal_screen_without_complete": "La última pantalla necesita un Footer que complete el flow.",
+      "no_terminal_screen": "Agrega un Footer que complete el flujo en la última pantalla.",
       "screen_without_exit": "Esta pantalla no tiene forma de continuar. Añade un Footer o un enlace que lleve a otra pantalla.",
       "screen_unreachable": "Ninguna pantalla navega a esta.",
       "too_many_components": "Una pantalla puede contener como máximo {max} componentes.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} no coincide con ningún campo.",
       "data_reference_unsupported": "{reference}: los datos de pantalla no son compatibles. Usa campos del formulario.",
       "property_unknown": "WhatsApp no acepta la propiedad “{name}” en este componente.",
-      "complete_on_non_terminal": "“Completar el flujo” solo se puede usar en la última pantalla.",
       "footer_captions_invalid": "Usa un texto central, o un texto izquierdo y uno derecho juntos.",
       "options_with_images_limit": "Con imágenes, un desplegable puede tener como máximo {max} opciones.",
       "navigation_badge_multiple": "Solo un elemento de una lista de navegación puede tener insignia.",

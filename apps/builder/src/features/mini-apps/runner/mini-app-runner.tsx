@@ -3,6 +3,7 @@
 import {
   buildCompletePayload,
   evaluateExpression,
+  isTextInputDateType,
   isTruthy,
   MINI_APP_COMPONENTS,
   type MiniAppAction,
@@ -12,6 +13,7 @@ import {
   type MiniAppScreen,
   parseReference,
   resolveReference,
+  TEXT_INPUT_DATE_FORMATS,
 } from "@chatbotx.io/mini-app"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
@@ -120,6 +122,13 @@ const validateField = (
   if (node.type === "TextInput" && typeof value === "string") {
     if (props["input-type"] === "email" && !EMAIL_PATTERN.test(value)) {
       return "invalidEmail"
+    }
+    const inputType = props["input-type"]
+    if (
+      isTextInputDateType(inputType) &&
+      !new RegExp(TEXT_INPUT_DATE_FORMATS[inputType].pattern).test(value)
+    ) {
+      return "invalidFormat"
     }
     if (typeof props.pattern === "string" && props.pattern) {
       try {

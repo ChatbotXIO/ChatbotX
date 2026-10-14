@@ -7798,8 +7798,6 @@
       "screenTitle": "Titre",
       "screenId": "ID de l'écran",
       "screenIdHint": "Lettres et tirets bas uniquement. Utilisé par la navigation et dans le Flow JSON.",
-      "terminal": "Dernier écran",
-      "terminalHint": "Le flow peut se terminer ici. Il faut un Footer qui termine le flow.",
       "remove": "Supprimer l'écran"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "E-mail",
         "password": "Mot de passe",
         "passcode": "Code",
-        "phone": "Téléphone"
+        "phone": "Téléphone",
+        "date": "Date",
+        "datetime": "Date et heure"
       },
       "fontWeight": {
         "normal": "Normal",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "L'ID de l'écran ne peut contenir que des lettres et des tirets bas.",
       "screen_id_reserved": "« SUCCESS » est réservé par WhatsApp. Choisissez un autre ID d'écran.",
       "screen_id_duplicate": "Un autre écran utilise déjà cet ID.",
-      "no_terminal_screen": "Marquez au moins un écran comme dernier écran.",
-      "terminal_screen_without_complete": "Le dernier écran a besoin d'un Footer qui termine le flow.",
+      "no_terminal_screen": "Ajoutez au dernier écran un Footer qui termine le flux.",
       "screen_without_exit": "Cet écran ne permet pas de continuer. Ajoutez un Footer ou un lien vers un autre écran.",
       "screen_unreachable": "Aucun écran ne mène à celui-ci.",
       "too_many_components": "Un écran peut contenir au maximum {max} composants.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} ne correspond à aucun champ.",
       "data_reference_unsupported": "{reference} : les données d'écran ne sont pas prises en charge. Utilisez les champs du formulaire.",
       "property_unknown": "WhatsApp n’accepte pas la propriété « {name} » sur ce composant.",
-      "complete_on_non_terminal": "« Terminer le flow » n’est possible que sur le dernier écran.",
       "footer_captions_invalid": "Utilisez soit une légende centrale, soit une légende gauche et une droite ensemble.",
       "options_with_images_limit": "Avec des images, une liste déroulante peut avoir au plus {max} options.",
       "navigation_badge_multiple": "Un seul élément d’une liste de navigation peut avoir un badge.",

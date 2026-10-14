@@ -60,6 +60,11 @@ export interface MiniAppNode {
    * NavigationList item) holds a `MiniAppAction`.
    */
   props: Record<string, unknown>
+  /**
+   * Order of the `slots` keys. Stored separately because a jsonb column sorts
+   * object keys (shortest first), which would reshuffle Switch cases.
+   */
+  slotOrder?: string[]
   /** Child slots: Form → `children`, If → `then`/`else`, Switch → one per case. */
   slots?: Record<string, MiniAppNode[]>
   type: MiniAppComponentType
@@ -71,6 +76,7 @@ export const miniAppNodeSchema: z.ZodType<MiniAppNode> = z.lazy(() =>
     type: miniAppComponentTypes,
     props: z.record(z.string(), z.unknown()),
     slots: z.record(z.string(), z.array(miniAppNodeSchema)).optional(),
+    slotOrder: z.array(z.string()).optional(),
     customFieldId: z.string().max(64).nullish(),
   }),
 )
@@ -86,7 +92,6 @@ export const miniAppScreenSchema = z.object({
    * here only gets a storage cap.
    */
   title: z.string().max(1000).default(""),
-  terminal: z.boolean().default(false),
   children: z.array(miniAppNodeSchema),
 })
 export type MiniAppScreen = z.infer<typeof miniAppScreenSchema>

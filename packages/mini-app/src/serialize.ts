@@ -1,6 +1,17 @@
 // biome-ignore-all lint/suspicious/noThenProperty: `then` is the Flow JSON If branch key
-import { MINI_APP_COMPONENTS } from "./components"
-import { createMiniAppId, walkNodes } from "./tree"
+import {
+  isTextInputDateType,
+  MINI_APP_COMPONENTS,
+  TEXT_INPUT_DATE_FORMATS,
+} from "./components"
+import {
+  MINI_APP_ACTION_KEY as ACTION_KEY,
+  createMiniAppId,
+  isTerminalScreen,
+  readMiniAppAction as readAction,
+  slotEntries,
+  walkNodes,
+} from "./tree"
 import {
   type FlowJson,
   type FlowJsonComponent,
@@ -10,11 +21,9 @@ import {
   type MiniAppDefinition,
   type MiniAppNode,
   type MiniAppScreen,
-  miniAppActionSchema,
   miniAppComponentTypes,
 } from "./types"
 
-const ACTION_KEY = "on-click-action"
 const LIST_ITEMS_KEY = "list-items"
 
 /** Input names per screen key, in document order. */
@@ -31,11 +40,6 @@ export const collectInputNames = (screen: MiniAppScreen): string[] => {
     }
   })
   return names
-}
-
-const readAction = (value: unknown): MiniAppAction | undefined => {
-  const parsed = miniAppActionSchema.safeParse(value)
-  return parsed.success ? parsed.data : undefined
 }
 
 /** Every navigate target per screen key. */
@@ -251,6 +255,14 @@ const serializeNode = (
     type: node.type,
     ...toNestedExpressions(cleanObject(rest)),
   }
+  const inputType = rest["input-type"]
+  if (node.type === "TextInput" && isTextInputDateType(inputType)) {
+    // Meta has no date keyboard: a text input checked by a pattern instead.
+    const format = TEXT_INPUT_DATE_FORMATS[inputType]
+    output["input-type"] = "text"
+    output.pattern ??= format.pattern
+    output["helper-text"] ??= format.helperText
+  }
 
   if (Array.isArray(listItems)) {
     output[LIST_ITEMS_KEY] = (listItems as Record<string, unknown>[]).map(
@@ -286,10 +298,7 @@ const serializeNode = (
     }
     case "Switch":
       output.cases = Object.fromEntries(
-        Object.entries(node.slots ?? {}).map(([key, nodes]) => [
-          key,
-          serializeList(nodes),
-        ]),
+        slotEntries(node).map(([key, nodes]) => [key, serializeList(nodes)]),
       )
       break
     default:
@@ -310,7 +319,7 @@ export const toFlowJson = (definition: MiniAppDefinition): FlowJson => {
       return {
         id: screen.id,
         ...(screen.title.trim() ? { title: screen.title.trim() } : {}),
-        ...(screen.terminal ? { terminal: true, success: true } : {}),
+        ...(isTerminalScreen(screen) ? { terminal: true, success: true } : {}),
         layout: {
           type: "SingleColumnLayout",
           children: screen.children.map((node) => serializeNode(node, context)),
@@ -451,12 +460,14 @@ const importNode = (
       if (!cases || typeof cases !== "object" || Array.isArray(cases)) {
         throw new MiniAppImportError("invalid_component", `${path}.cases`)
       }
+      const caseEntries = Object.entries(cases as Record<string, unknown>)
       node.slots = Object.fromEntries(
-        Object.entries(cases as Record<string, unknown>).map(([key, nodes]) => [
+        caseEntries.map(([key, nodes]) => [
           key,
           importList(nodes, `${path}.cases.${key}`),
         ]),
       )
+      node.slotOrder = caseEntries.map(([key]) => key)
       break
     }
     default:
@@ -483,7 +494,6 @@ export const fromFlowJson = (flowJson: FlowJson): MiniAppDefinition => {
       key: screenKeys.get(screen.id) as string,
       id: screen.id,
       title: typeof screen.title === "string" ? screen.title : "",
-      terminal: screen.terminal === true,
       children: (screen.layout?.children ?? []).map((component, index) =>
         importNode(
           component,

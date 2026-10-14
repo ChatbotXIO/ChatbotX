@@ -7798,8 +7798,6 @@
       "screenTitle": "タイトル",
       "screenId": "画面ID",
       "screenIdHint": "英字とアンダースコアのみ。画面遷移とFlow JSONで使われます。",
-      "terminal": "最後の画面",
-      "terminalHint": "ここでフローを終了できます。フローを完了するFooterが必要です。",
       "remove": "画面を削除"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "メール",
         "password": "パスワード",
         "passcode": "パスコード",
-        "phone": "電話"
+        "phone": "電話",
+        "date": "日付",
+        "datetime": "日付と時刻"
       },
       "fontWeight": {
         "normal": "標準",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "画面IDには英字とアンダースコアのみ使用できます。",
       "screen_id_reserved": "「SUCCESS」はWhatsAppの予約語です。別の画面IDを指定してください。",
       "screen_id_duplicate": "この画面IDは別の画面で使われています。",
-      "no_terminal_screen": "最後の画面を1つ以上指定してください。",
-      "terminal_screen_without_complete": "最後の画面には、フローを完了するFooterが必要です。",
+      "no_terminal_screen": "最後の画面にフローを完了するフッターを追加してください。",
       "screen_without_exit": "この画面には次へ進む手段がありません。別の画面へ移動するFooterまたはリンクを追加してください。",
       "screen_unreachable": "この画面へ遷移する画面がありません。",
       "too_many_components": "1つの画面に配置できるコンポーネントは最大{max}個です。",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference}に一致するフィールドがありません。",
       "data_reference_unsupported": "{reference}: 画面データには対応していません。代わりにフォームのフィールドを使用してください。",
       "property_unknown": "WhatsApp はこのコンポーネントのプロパティ「{name}」を受け付けません。",
-      "complete_on_non_terminal": "「フローを完了」は最後の画面でのみ使用できます。",
       "footer_captions_invalid": "中央キャプションのみ、または左右のキャプションを一緒に使用してください。",
       "options_with_images_limit": "画像がある場合、ドロップダウンの選択肢は最大 {max} 件です。",
       "navigation_badge_multiple": "ナビゲーションリストでバッジを付けられる項目は 1 つだけです。",

@@ -7798,8 +7798,6 @@
       "screenTitle": "Tiêu đề",
       "screenId": "Mã màn hình",
       "screenIdHint": "Chỉ dùng chữ cái và dấu gạch dưới. Dùng cho điều hướng và trong Flow JSON.",
-      "terminal": "Màn hình cuối",
-      "terminalHint": "Flow có thể kết thúc ở đây. Cần một nút Footer để hoàn tất.",
       "remove": "Xoá màn hình"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "Email",
         "password": "Mật khẩu",
         "passcode": "Mã số",
-        "phone": "Số điện thoại"
+        "phone": "Số điện thoại",
+        "date": "Ngày",
+        "datetime": "Ngày & giờ"
       },
       "fontWeight": {
         "normal": "Thường",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "Mã màn hình chỉ được chứa chữ cái và dấu gạch dưới.",
       "screen_id_reserved": "“SUCCESS” là tên WhatsApp đã giữ riêng. Hãy chọn mã khác.",
       "screen_id_duplicate": "Một màn hình khác đã dùng mã này.",
-      "no_terminal_screen": "Hãy đánh dấu ít nhất một màn hình là màn hình cuối.",
-      "terminal_screen_without_complete": "Màn hình cuối cần một nút Footer để hoàn tất flow.",
+      "no_terminal_screen": "Hãy thêm Footer kết thúc flow vào màn hình cuối.",
       "screen_without_exit": "Màn hình này không có cách đi tiếp. Hãy thêm nút Footer hoặc link chuyển sang màn hình khác.",
       "screen_unreachable": "Không có màn hình nào chuyển tới màn hình này.",
       "too_many_components": "Mỗi màn hình chứa tối đa {max} thành phần.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} không khớp với ô nào.",
       "data_reference_unsupported": "{reference}: chưa hỗ trợ dữ liệu màn hình. Hãy dùng ô nhập (form).",
       "property_unknown": "WhatsApp không chấp nhận thuộc tính “{name}” cho thành phần này.",
-      "complete_on_non_terminal": "“Hoàn tất flow” chỉ dùng được ở màn hình cuối.",
       "footer_captions_invalid": "Chỉ dùng chú thích giữa, hoặc dùng cả chú thích trái và phải.",
       "options_with_images_limit": "Khi có ảnh, danh sách thả xuống chỉ được tối đa {max} lựa chọn.",
       "navigation_badge_multiple": "Trong danh sách điều hướng chỉ một mục được có nhãn.",

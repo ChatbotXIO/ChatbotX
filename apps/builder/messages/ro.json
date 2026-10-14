@@ -7798,8 +7798,6 @@
       "screenTitle": "Titlu",
       "screenId": "ID ecran",
       "screenIdHint": "Doar litere și caractere de subliniere. Folosit la navigare și în Flow JSON.",
-      "terminal": "Ultimul ecran",
-      "terminalHint": "Flow-ul se poate încheia aici. Are nevoie de un Footer care finalizează flow-ul.",
       "remove": "Șterge ecranul"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "E-mail",
         "password": "Parolă",
         "passcode": "Cod",
-        "phone": "Telefon"
+        "phone": "Telefon",
+        "date": "Dată",
+        "datetime": "Dată și oră"
       },
       "fontWeight": {
         "normal": "Normal",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "ID-ul ecranului poate conține doar litere și caractere de subliniere.",
       "screen_id_reserved": "„SUCCESS” este rezervat de WhatsApp. Alege alt ID de ecran.",
       "screen_id_duplicate": "Alt ecran folosește deja acest ID.",
-      "no_terminal_screen": "Marchează cel puțin un ecran ca ultim ecran.",
-      "terminal_screen_without_complete": "Ultimul ecran are nevoie de un Footer care finalizează flow-ul.",
+      "no_terminal_screen": "Adaugă pe ultimul ecran un Footer care finalizează fluxul.",
       "screen_without_exit": "Acest ecran nu are cum să continue. Adaugă un Footer sau un link către alt ecran.",
       "screen_unreachable": "Niciun ecran nu navighează către acesta.",
       "too_many_components": "Un ecran poate conține cel mult {max} componente.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} nu corespunde niciunui câmp.",
       "data_reference_unsupported": "{reference}: datele ecranului nu sunt acceptate. Folosește câmpurile formularului.",
       "property_unknown": "WhatsApp nu acceptă proprietatea „{name}” pentru această componentă.",
-      "complete_on_non_terminal": "„Finalizează fluxul” se poate folosi doar pe ultimul ecran.",
       "footer_captions_invalid": "Folosește fie o legendă centrală, fie o legendă stânga și una dreapta împreună.",
       "options_with_images_limit": "Cu imagini, o listă derulantă poate avea cel mult {max} opțiuni.",
       "navigation_badge_multiple": "Doar un element dintr-o listă de navigare poate avea insignă.",

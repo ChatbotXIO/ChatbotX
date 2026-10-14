@@ -44,26 +44,48 @@ export const InspectorContext = createContext<InspectorContextValue>({
 
 export const useInspector = () => useContext(InspectorContext)
 
+const ISSUE_BOX_CLASS = {
+  error:
+    "flex flex-col gap-1 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-destructive text-xs",
+  warning:
+    "flex flex-col gap-1 rounded-md border border-amber-500/60 bg-amber-500/5 p-2 text-amber-700 text-xs dark:text-amber-400",
+} as const
+
+/** Errors in a red box, warnings in an amber box (amber text, amber border). */
+export function IssueList({ issues }: { issues: MiniAppValidationIssue[] }) {
+  const message = useIssueMessage()
+  return (
+    <>
+      {(["error", "warning"] as const).map((severity) => {
+        const matching = issues.filter((issue) => issue.severity === severity)
+        if (matching.length === 0) {
+          return null
+        }
+        return (
+          <div className={ISSUE_BOX_CLASS[severity]} key={severity}>
+            {matching.map((issue, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: issues have no id
+              <span key={index}>{message(issue)}</span>
+            ))}
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
 function PropertyIssues({ propKey }: { propKey: string }) {
   const { issues } = useInspector()
-  const message = useIssueMessage()
   const matching = issues.filter(
     (issue) =>
       issue.property === propKey || issue.property?.startsWith(`${propKey}.`),
   )
-  if (matching.length === 0) {
-    return null
-  }
-  return (
-    <div className="flex flex-col">
-      {matching.map((issue, index) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: issues have no id
-        <span className="text-destructive text-xs" key={index}>
-          {message(issue)}
-        </span>
-      ))}
-    </div>
-  )
+  return <IssueList issues={matching} />
+}
+
+/** Helper text under a field. */
+export function InspectorHint({ children }: { children: ReactNode }) {
+  return <span className="text-muted-foreground text-xs">{children}</span>
 }
 
 export function FieldRow({
@@ -91,9 +113,7 @@ export function FieldRow({
         <Label htmlFor={htmlFor}>{t(propertyLabelKey[propKey])}</Label>
         {children}
       </div>
-      {hint ? (
-        <span className="text-muted-foreground text-xs">{hint}</span>
-      ) : null}
+      {hint ? <InspectorHint>{hint}</InspectorHint> : null}
       <PropertyIssues propKey={propKey} />
     </div>
   )

@@ -4,6 +4,7 @@ import {
   canPlaceInSlot,
   getSlotOwnerType,
   isDescendantOf,
+  isTerminalScreen,
   type MiniAppComponentType,
   type MiniAppDefaultText,
   type MiniAppDefinition,
@@ -179,6 +180,7 @@ function ScreensBar() {
   const selectedScreenKey = useMiniAppEditor((state) => state.selectedScreenKey)
   const selectScreen = useMiniAppEditor((state) => state.selectScreen)
   const addScreen = useMiniAppEditor((state) => state.addScreen)
+  const defaultText = useDefaultText()
   const moveScreen = useMiniAppEditor((state) => state.moveScreen)
   return (
     <div className="flex items-center gap-1 overflow-x-auto border-b px-3 py-2">
@@ -207,13 +209,13 @@ function ScreensBar() {
         >
           <span className="text-muted-foreground text-xs">{index + 1}</span>
           {screen.title || screen.id}
-          {screen.terminal ? (
+          {isTerminalScreen(screen) ? (
             <CheckCircle2Icon className="size-3.5 text-green-600" />
           ) : null}
         </button>
       ))}
       <Button
-        onClick={() => addScreen(t("newScreenTitle"))}
+        onClick={() => addScreen(t("newScreenTitle"), defaultText)}
         size="sm"
         variant="ghost"
       >

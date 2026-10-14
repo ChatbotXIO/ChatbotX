@@ -7798,8 +7798,6 @@
       "screenTitle": "Otsikko",
       "screenId": "Näkymän tunnus",
       "screenIdHint": "Vain kirjaimia ja alaviivoja. Käytetään siirtymisessä ja Flow JSONissa.",
-      "terminal": "Viimeinen näkymä",
-      "terminalHint": "Flow voi päättyä tähän. Se tarvitsee Footerin, joka päättää Flow'n.",
       "remove": "Poista näkymä"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "Sähköposti",
         "password": "Salasana",
         "passcode": "Tunnuskoodi",
-        "phone": "Puhelin"
+        "phone": "Puhelin",
+        "date": "Päivämäärä",
+        "datetime": "Päivämäärä ja aika"
       },
       "fontWeight": {
         "normal": "Normaali",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "Näkymän tunnus saa sisältää vain kirjaimia ja alaviivoja.",
       "screen_id_reserved": "WhatsApp on varannut tunnuksen “SUCCESS”. Valitse toinen näkymän tunnus.",
       "screen_id_duplicate": "Toinen näkymä käyttää jo tätä tunnusta.",
-      "no_terminal_screen": "Merkitse vähintään yksi näkymä viimeiseksi näkymäksi.",
-      "terminal_screen_without_complete": "Viimeinen näkymä tarvitsee Footerin, joka päättää Flow'n.",
+      "no_terminal_screen": "Lisää viimeiseen näkymään Footer, joka päättää flow'n.",
       "screen_without_exit": "Tästä näkymästä ei pääse eteenpäin. Lisää Footer tai linkki, joka johtaa toiseen näkymään.",
       "screen_unreachable": "Mikään näkymä ei siirry tähän.",
       "too_many_components": "Näkymässä voi olla enintään {max} komponenttia.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} ei vastaa mitään kenttää.",
       "data_reference_unsupported": "{reference}: näkymän tietoja ei tueta. Käytä sen sijaan lomakkeen kenttiä.",
       "property_unknown": "WhatsApp ei hyväksy ominaisuutta ”{name}” tälle komponentille.",
-      "complete_on_non_terminal": "”Viimeistele kulku” on sallittu vain viimeisellä näytöllä.",
       "footer_captions_invalid": "Käytä joko keskitekstiä tai vasenta ja oikeaa tekstiä yhdessä.",
       "options_with_images_limit": "Kuvien kanssa pudotusvalikossa voi olla enintään {max} vaihtoehtoa.",
       "navigation_badge_multiple": "Vain yhdellä navigointiluettelon kohteella voi olla merkki.",

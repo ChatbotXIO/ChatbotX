@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest"
 import { sanitizeMiniAppAnswers } from "../src/answers"
 import {
+  appendScreen,
   collectAllNames,
   createNode,
   createScreen,
@@ -10,10 +11,14 @@ import {
   duplicateNode,
   findNode,
   insertNode,
+  isTerminalScreen,
   moveNode,
   removeNode,
   removeScreen,
+  screenActions,
+  slotEntries,
   toAlphabeticIndex,
+  updateNodeSlots,
 } from "../src/tree"
 import { validateMiniApp } from "../src/validate"
 import { twoScreenDefinition } from "./fixtures"
@@ -142,12 +147,61 @@ describe("tree helpers", () => {
     expect(findNode(removeNode(definition, "n_name"), "n_name")).toBeUndefined()
   })
 
-  it("clears navigate actions pointing to a removed screen", () => {
+  it("ends the flow on the new last screen when the last screen is removed", () => {
     const definition = removeScreen(twoScreenDefinition(), "s_confirm")
     expect(definition.screens).toHaveLength(1)
     expect(
       findNode(definition, "n_next")?.node.props["on-click-action"],
-    ).toBeUndefined()
+    ).toEqual({ name: "complete" })
+  })
+
+  it("moves the end of the flow to an appended screen", () => {
+    const { definition, screenKey } = appendScreen(
+      twoScreenDefinition(),
+      "Thanks",
+    )
+    const [welcome, confirm, added] = definition.screens
+    expect(added?.key).toBe(screenKey)
+    expect(welcome && isTerminalScreen(welcome)).toBe(false)
+    expect(confirm && isTerminalScreen(confirm)).toBe(false)
+    expect(added && isTerminalScreen(added)).toBe(true)
+    expect(
+      confirm && screenActions(confirm).map((action) => action.name),
+    ).toEqual(["navigate"])
+  })
+
+  it("keeps Switch cases in order after jsonb sorts their keys", () => {
+    const takenNames = new Set<string>()
+    let definition = twoScreenDefinition()
+    const node = createNode("Switch", takenNames)
+    definition = insertNode(definition, { screenKey: "s_welcome" }, 0, node)
+    definition = updateNodeSlots(definition, node.id, [
+      ["basic", []],
+      ["pro", []],
+      ["vip", []],
+    ])
+    const stored = findNode(definition, node.id)?.node
+    // Postgres jsonb returns keys shortest first.
+    const reloaded = stored && {
+      ...stored,
+      slots: { pro: [], vip: [], basic: [] },
+    }
+    expect(reloaded && slotEntries(reloaded).map(([key]) => key)).toEqual([
+      "basic",
+      "pro",
+      "vip",
+    ])
+  })
+
+  it("lists If branches as then, else without a stored order", () => {
+    expect(
+      slotEntries({
+        id: "n_if",
+        type: "If",
+        props: {},
+        slots: { else: [], then: [] },
+      }).map(([key]) => key),
+    ).toEqual(["then", "else"])
   })
 })
 

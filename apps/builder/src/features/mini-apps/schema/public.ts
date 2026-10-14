@@ -13,7 +13,7 @@ const miniAppId = zodBigintAsString().describe(
 )
 
 const flowJsonInput = flowJsonSchema.describe(
-  "WhatsApp Flow JSON (Meta's format, e.g. `{ version, screens: [{ id, title, terminal, layout: { type: 'SingleColumnLayout', children: [...] } }] }`). Only endpoint-less Flows are accepted: actions `navigate`, `complete` and `open_url`; `complete` payloads are regenerated from the inputs, so any payload you send is ignored. Exported as Flow JSON version 7.3.",
+  "WhatsApp Flow JSON (Meta's format, e.g. `{ version, screens: [{ id, title, terminal, layout: { type: 'SingleColumnLayout', children: [...] } }] }`). Only endpoint-less Flows are accepted: actions `navigate`, `complete` and `open_url`; `complete` payloads are regenerated from the inputs, so any payload you send is ignored. `terminal` is derived too: a screen is terminal exactly when it has a `complete` action. Exported as Flow JSON version 7.3.",
 )
 
 const customFieldMappingsInput = z

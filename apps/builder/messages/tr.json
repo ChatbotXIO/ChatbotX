@@ -7798,8 +7798,6 @@
       "screenTitle": "Başlık",
       "screenId": "Ekran kimliği",
       "screenIdHint": "Yalnızca harf ve alt çizgi. Gezinmede ve Flow JSON içinde kullanılır.",
-      "terminal": "Son ekran",
-      "terminalHint": "Akış burada bitebilir. Akışı tamamlayan bir Footer gerekir.",
       "remove": "Ekranı sil"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "E-posta",
         "password": "Parola",
         "passcode": "Parola kodu",
-        "phone": "Telefon"
+        "phone": "Telefon",
+        "date": "Tarih",
+        "datetime": "Tarih ve saat"
       },
       "fontWeight": {
         "normal": "Normal",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "Ekran kimliği yalnızca harf ve alt çizgi içerebilir.",
       "screen_id_reserved": "“SUCCESS” WhatsApp tarafından ayrılmıştır. Başka bir ekran kimliği seçin.",
       "screen_id_duplicate": "Başka bir ekran zaten bu kimliği kullanıyor.",
-      "no_terminal_screen": "En az bir ekranı son ekran olarak işaretleyin.",
-      "terminal_screen_without_complete": "Son ekranda akışı tamamlayan bir Footer olmalı.",
+      "no_terminal_screen": "Son ekrana akışı tamamlayan bir Footer ekleyin.",
       "screen_without_exit": "Bu ekranda devam etmenin bir yolu yok. Başka bir ekrana giden bir Footer veya bağlantı ekleyin.",
       "screen_unreachable": "Hiçbir ekran bu ekrana gitmiyor.",
       "too_many_components": "Bir ekranda en fazla {max} bileşen olabilir.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} hiçbir alanla eşleşmiyor.",
       "data_reference_unsupported": "{reference}: ekran verileri desteklenmiyor. Bunun yerine form alanlarını kullanın.",
       "property_unknown": "WhatsApp bu bileşende “{name}” özelliğini kabul etmiyor.",
-      "complete_on_non_terminal": "“Akışı tamamla” yalnızca son ekranda kullanılabilir.",
       "footer_captions_invalid": "Ya yalnızca orta açıklama ya da sol ve sağ açıklamayı birlikte kullanın.",
       "options_with_images_limit": "Görsellerle bir açılır listede en fazla {max} seçenek olabilir.",
       "navigation_badge_multiple": "Bir gezinme listesinde yalnızca bir öğe rozet taşıyabilir.",

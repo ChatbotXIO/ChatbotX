@@ -16,11 +16,11 @@ describe("validateMiniApp", () => {
     })
   })
 
-  it("requires a terminal screen that completes", () => {
+  it("requires a screen that completes the flow", () => {
     const definition = twoScreenDefinition()
-    const confirm = definition.screens[1]
-    if (confirm) {
-      confirm.terminal = false
+    const footer = definition.screens[1]?.children.at(-1)
+    if (footer) {
+      footer.props["on-click-action"] = undefined
     }
     expect(codes(definition)).toContain("no_terminal_screen")
   })
@@ -157,20 +157,14 @@ describe("validateMiniApp", () => {
     expect(issue?.params?.name).toBe("enabled, placeholder")
   })
 
-  it("rejects `required` on file pickers and a complete action on a non-terminal screen", () => {
+  it("rejects `required` on file pickers", () => {
     const definition = twoScreenDefinition()
     definition.screens[0]?.children.splice(1, 0, {
       id: "n_photo",
       type: "PhotoPicker",
       props: { name: "photo", label: "Photo", required: true },
     })
-    const footer = definition.screens[0]?.children.at(-1)
-    if (footer) {
-      footer.props["on-click-action"] = { name: "complete" }
-    }
-    const result = codes(definition)
-    expect(result).toContain("property_unknown")
-    expect(result).toContain("complete_on_non_terminal")
+    expect(codes(definition)).toContain("property_unknown")
   })
 
   it("checks Footer captions, Chips options and NavigationList badges", () => {

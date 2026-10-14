@@ -176,6 +176,8 @@ export function NodeView({
         password: "password",
         passcode: "password",
         phone: "tel",
+        date: "date",
+        datetime: "datetime-local",
       }
       return (
         <FieldShell error={fieldError} helper={helper} label={label}>

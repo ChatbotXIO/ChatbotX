@@ -5,11 +5,13 @@ import {
   type MiniAppDefaultText,
   NAMED_COMPONENT_TYPES,
 } from "./components"
-import type {
-  MiniAppComponentType,
-  MiniAppDefinition,
-  MiniAppNode,
-  MiniAppScreen,
+import {
+  type MiniAppAction,
+  type MiniAppComponentType,
+  type MiniAppDefinition,
+  type MiniAppNode,
+  type MiniAppScreen,
+  miniAppActionSchema,
 } from "./types"
 
 /** Where a list of nodes lives: a screen root, or one slot of a container. */
@@ -28,6 +30,36 @@ export interface MiniAppNodeVisit {
   node: MiniAppNode
   parent?: MiniAppNode
   slot?: string
+}
+
+/** Slot keys a container lists first when no `slotOrder` is stored. */
+const DEFAULT_SLOT_ORDER: Partial<Record<MiniAppComponentType, string[]>> = {
+  If: ["then", "else"],
+}
+
+/**
+ * A container's slots in display order: `slotOrder` first, then the defaults
+ * for its type, then any remaining key. Never trust plain object key order —
+ * a jsonb round trip sorts the keys.
+ */
+export const slotEntries = (
+  node: MiniAppNode,
+): [slot: string, children: MiniAppNode[]][] => {
+  const slots = node.slots
+  if (!slots) {
+    return []
+  }
+  const keys = new Set<string>()
+  for (const key of [
+    ...(node.slotOrder ?? []),
+    ...(DEFAULT_SLOT_ORDER[node.type] ?? []),
+    ...Object.keys(slots),
+  ]) {
+    if (key in slots) {
+      keys.add(key)
+    }
+  }
+  return [...keys].map((key) => [key, slots[key] ?? []])
 }
 
 const ID_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -60,7 +92,7 @@ export const walkNodes = (
     }
     const isIf = node.type === "If"
     const isConditional = isIf || node.type === "Switch"
-    for (const [slot, children] of Object.entries(node.slots)) {
+    for (const [slot, children] of slotEntries(node)) {
       walkNodes(children, visit, {
         parent: node,
         slot,
@@ -225,17 +257,19 @@ export const updateNodeCustomField = (
   return next
 }
 
+/** Replaces a container's slots; the entry order becomes the stored order. */
 export const updateNodeSlots = (
   definition: MiniAppDefinition,
   nodeId: string,
-  slots: Record<string, MiniAppNode[]>,
+  entries: [slot: string, children: MiniAppNode[]][],
 ): MiniAppDefinition => {
   const next = clone(definition)
   const location = findNode(next, nodeId)
   if (!location) {
     return definition
   }
-  location.node.slots = slots
+  location.node.slots = Object.fromEntries(entries)
+  location.node.slotOrder = entries.map(([slot]) => slot)
   return next
 }
 
@@ -332,7 +366,12 @@ export const createNode = (
     props.name = name
   }
   const slots = defaultSlotsFor(type)
-  return { id: createMiniAppId(), type, props, ...(slots ? { slots } : {}) }
+  return {
+    id: createMiniAppId(),
+    type,
+    props,
+    ...(slots ? { slots, slotOrder: Object.keys(slots) } : {}),
+  }
 }
 
 /** Deep-copies a node with fresh ids and fresh (unique) names. */
@@ -408,7 +447,6 @@ export const createScreen = (
     key: createMiniAppId("s"),
     id: `${SCREEN_ID_PREFIX}_${toAlphabeticIndex(position)}`,
     title,
-    terminal: false,
     children: [],
   }
 }
@@ -427,7 +465,6 @@ export const createStarterDefinition = (
         key: createMiniAppId("s"),
         id: "WELCOME",
         title: screenTitle,
-        terminal: true,
         children: [createNode("TextHeading", names, text), footer],
       },
     ],
@@ -444,13 +481,18 @@ export const removeScreen = (
   }
   const next = clone(definition)
   next.screens = next.screens.filter((screen) => screen.key !== screenKey)
+  const lastScreen = next.screens.at(-1)
   for (const screen of next.screens) {
     walkNodes(screen.children, ({ node }) => {
       const action = node.props["on-click-action"] as
         | { name?: string; next?: string }
         | undefined
       if (action?.name === "navigate" && action.next === screenKey) {
-        node.props["on-click-action"] = undefined
+        // The Footer that led to a removed last screen now ends the flow.
+        node.props["on-click-action"] =
+          screen === lastScreen && node.type === "Footer"
+            ? { name: "complete" }
+            : undefined
       }
       const items = node.props["list-items"]
       if (Array.isArray(items)) {
@@ -469,4 +511,74 @@ export const removeScreen = (
     })
   }
   return next
+}
+
+/** The prop holding a node's (or a NavigationList item's) action. */
+export const MINI_APP_ACTION_KEY = "on-click-action"
+
+/** The action in a `MINI_APP_ACTION_KEY` prop, or undefined when it is not a valid one. */
+export const readMiniAppAction = (
+  value: unknown,
+): MiniAppAction | undefined => {
+  const parsed = miniAppActionSchema.safeParse(value)
+  return parsed.success ? parsed.data : undefined
+}
+
+/** Every action on a screen: node actions and NavigationList item actions. */
+export const screenActions = (screen: MiniAppScreen): MiniAppAction[] => {
+  const actions: MiniAppAction[] = []
+  walkNodes(screen.children, ({ node }) => {
+    const action = readMiniAppAction(node.props[MINI_APP_ACTION_KEY])
+    if (action) {
+      actions.push(action)
+    }
+    const items = node.props["list-items"]
+    if (Array.isArray(items)) {
+      for (const item of items) {
+        const itemAction = readMiniAppAction(
+          (item as Record<string, unknown>)?.[MINI_APP_ACTION_KEY],
+        )
+        if (itemAction) {
+          actions.push(itemAction)
+        }
+      }
+    }
+  })
+  return actions
+}
+
+/**
+ * A screen ends the flow when it has a `complete` action — there is no flag
+ * to keep in sync, so the end-flow button can move freely between screens.
+ */
+export const isTerminalScreen = (screen: MiniAppScreen): boolean =>
+  screenActions(screen).some((action) => action.name === "complete")
+
+/**
+ * Appends a new screen and moves the end of the flow onto it: every
+ * `complete` on the previous last screen now navigates to the new screen,
+ * which gets a Footer that completes the flow.
+ */
+export const appendScreen = (
+  definition: MiniAppDefinition,
+  title: string,
+  text: MiniAppDefaultText = defaultMiniAppText,
+): { definition: MiniAppDefinition; screenKey: string } => {
+  const next = clone(definition)
+  const screen = createScreen(next, title)
+  const previous = next.screens.at(-1)
+  if (previous) {
+    walkNodes(previous.children, ({ node }) => {
+      if (
+        readMiniAppAction(node.props[MINI_APP_ACTION_KEY])?.name === "complete"
+      ) {
+        node.props[MINI_APP_ACTION_KEY] = { name: "navigate", next: screen.key }
+      }
+    })
+  }
+  const footer = createNode("Footer", collectAllNames(next), text)
+  footer.props[MINI_APP_ACTION_KEY] = { name: "complete" }
+  screen.children.push(footer)
+  next.screens.push(screen)
+  return { definition: next, screenKey: screen.key }
 }

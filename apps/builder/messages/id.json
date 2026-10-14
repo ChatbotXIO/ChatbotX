@@ -7798,8 +7798,6 @@
       "screenTitle": "Judul",
       "screenId": "ID layar",
       "screenIdHint": "Hanya huruf dan garis bawah. Digunakan untuk navigasi dan di Flow JSON.",
-      "terminal": "Layar terakhir",
-      "terminalHint": "Flow dapat berakhir di sini. Diperlukan Footer yang menyelesaikan flow.",
       "remove": "Hapus layar"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "Email",
         "password": "Kata sandi",
         "passcode": "Kode sandi",
-        "phone": "Telepon"
+        "phone": "Telepon",
+        "date": "Tanggal",
+        "datetime": "Tanggal & waktu"
       },
       "fontWeight": {
         "normal": "Normal",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "ID layar hanya boleh berisi huruf dan garis bawah.",
       "screen_id_reserved": "“SUCCESS” dicadangkan oleh WhatsApp. Pilih ID layar lain.",
       "screen_id_duplicate": "Layar lain sudah menggunakan ID ini.",
-      "no_terminal_screen": "Tandai setidaknya satu layar sebagai layar terakhir.",
-      "terminal_screen_without_complete": "Layar terakhir memerlukan Footer yang menyelesaikan flow.",
+      "no_terminal_screen": "Tambahkan Footer yang menyelesaikan flow ke layar terakhir.",
       "screen_without_exit": "Layar ini tidak punya cara untuk melanjutkan. Tambahkan Footer atau tautan yang menuju ke layar lain.",
       "screen_unreachable": "Tidak ada layar yang menuju ke layar ini.",
       "too_many_components": "Satu layar dapat memuat paling banyak {max} komponen.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} tidak cocok dengan kolom mana pun.",
       "data_reference_unsupported": "{reference}: data layar tidak didukung. Gunakan kolom formulir.",
       "property_unknown": "WhatsApp tidak menerima properti “{name}” pada komponen ini.",
-      "complete_on_non_terminal": "“Selesaikan flow” hanya bisa dipakai di layar terakhir.",
       "footer_captions_invalid": "Gunakan keterangan tengah saja, atau keterangan kiri dan kanan bersamaan.",
       "options_with_images_limit": "Dengan gambar, dropdown maksimal {max} opsi.",
       "navigation_badge_multiple": "Hanya satu item di daftar navigasi yang boleh punya lencana.",

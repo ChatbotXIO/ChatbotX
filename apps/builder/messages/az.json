@@ -7798,8 +7798,6 @@
       "screenTitle": "Başlıq",
       "screenId": "Ekran ID-si",
       "screenIdHint": "Yalnız hərflər və alt xətt. Naviqasiyada və Flow JSON-da istifadə olunur.",
-      "terminal": "Son ekran",
-      "terminalHint": "Axın burada bitə bilər. Axını tamamlayan Footer lazımdır.",
       "remove": "Ekranı sil"
     },
     "inspector": {
@@ -8009,7 +8007,9 @@
         "email": "E-poçt",
         "password": "Parol",
         "passcode": "Giriş kodu",
-        "phone": "Telefon"
+        "phone": "Telefon",
+        "date": "Tarix",
+        "datetime": "Tarix və vaxt"
       },
       "fontWeight": {
         "normal": "Normal",
@@ -8049,8 +8049,7 @@
       "screen_id_invalid": "Ekran ID-si yalnız hərflərdən və alt xətdən ibarət ola bilər.",
       "screen_id_reserved": "“SUCCESS” WhatsApp tərəfindən qorunur. Başqa ekran ID-si seçin.",
       "screen_id_duplicate": "Başqa ekran artıq bu ID-dən istifadə edir.",
-      "no_terminal_screen": "Ən azı bir ekranı son ekran kimi qeyd edin.",
-      "terminal_screen_without_complete": "Son ekranda axını tamamlayan Footer olmalıdır.",
+      "no_terminal_screen": "Son ekrana axını tamamlayan Footer əlavə edin.",
       "screen_without_exit": "Bu ekranda davam etmək üçün yol yoxdur. Başqa ekrana keçən Footer və ya link əlavə edin.",
       "screen_unreachable": "Heç bir ekran bu ekrana keçmir.",
       "too_many_components": "Bir ekranda ən çox {max} komponent ola bilər.",
@@ -8083,7 +8082,6 @@
       "reference_unknown": "{reference} heç bir sahəyə uyğun gəlmir.",
       "data_reference_unsupported": "{reference}: ekran məlumatları dəstəklənmir. Bunun əvəzinə forma sahələrindən istifadə edin.",
       "property_unknown": "WhatsApp bu komponentdə “{name}” xüsusiyyətini qəbul etmir.",
-      "complete_on_non_terminal": "“Axını tamamla” yalnız son ekranda istifadə oluna bilər.",
       "footer_captions_invalid": "Ya yalnız orta başlıq, ya da sol və sağ başlıqları birlikdə istifadə edin.",
       "options_with_images_limit": "Şəkillərlə açılan siyahıda ən çox {max} seçim ola bilər.",
       "navigation_badge_multiple": "Naviqasiya siyahısında yalnız bir elementin nişanı ola bilər.",
