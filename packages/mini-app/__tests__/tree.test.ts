@@ -10,6 +10,7 @@ import {
   createStarterDefinition,
   duplicateNode,
   findNode,
+  getSlotOwnerType,
   insertNode,
   isTerminalScreen,
   moveNode,
@@ -18,6 +19,8 @@ import {
   screenActions,
   slotEntries,
   toAlphabeticIndex,
+  updateNodeCustomField,
+  updateNodeProps,
   updateNodeSlots,
 } from "../src/tree"
 import { validateMiniApp } from "../src/validate"
@@ -153,6 +156,77 @@ describe("tree helpers", () => {
     expect(
       findNode(definition, "n_next")?.node.props["on-click-action"],
     ).toEqual({ name: "complete" })
+  })
+
+  it("clears NavigationList items that navigated to a removed screen", () => {
+    const definition = twoScreenDefinition()
+    definition.screens.push({
+      key: "s_menu",
+      id: "MENU",
+      title: "Menu",
+      children: [
+        {
+          id: "n_menu",
+          type: "NavigationList",
+          props: {
+            name: "menu",
+            "list-items": [
+              {
+                id: "back",
+                "main-content": { title: "Back" },
+                "on-click-action": { name: "navigate", next: "s_welcome" },
+              },
+              {
+                id: "confirm",
+                "main-content": { title: "Confirm" },
+                "on-click-action": { name: "navigate", next: "s_confirm" },
+              },
+            ],
+          },
+        },
+      ],
+    })
+    const items = findNode(removeScreen(definition, "s_confirm"), "n_menu")
+      ?.node.props["list-items"] as Record<string, unknown>[]
+    expect(items.map((item) => item["on-click-action"])).toEqual([
+      { name: "navigate", next: "s_welcome" },
+      undefined,
+    ])
+  })
+
+  it("replaces a node's props and custom field without touching the input", () => {
+    const definition = twoScreenDefinition()
+    const withProps = updateNodeProps(definition, "n_name", { name: "x" })
+    expect(findNode(withProps, "n_name")?.node.props).toEqual({ name: "x" })
+    expect(findNode(definition, "n_name")?.node.props.name).toBe("full_name")
+    expect(updateNodeProps(definition, "n_missing", {})).toBe(definition)
+
+    const linked = updateNodeCustomField(definition, "n_name", "cf_1")
+    expect(findNode(linked, "n_name")?.node.customFieldId).toBe("cf_1")
+    const unlinked = updateNodeCustomField(linked, "n_name", null)
+    expect(findNode(unlinked, "n_name")?.node.customFieldId).toBeUndefined()
+    expect(updateNodeCustomField(definition, "n_missing", "cf_1")).toBe(
+      definition,
+    )
+  })
+
+  it("resolves the container type that owns a slot", () => {
+    const definition = twoScreenDefinition()
+    const form = createNode("Form", new Set())
+    const withForm = insertNode(definition, { screenKey: "s_welcome" }, 0, form)
+    expect(getSlotOwnerType(withForm, { screenKey: "s_welcome" })).toBe(
+      "Screen",
+    )
+    expect(
+      getSlotOwnerType(withForm, {
+        screenKey: "s_welcome",
+        parentId: form.id,
+        slot: "children",
+      }),
+    ).toBe("Form")
+    expect(
+      getSlotOwnerType(withForm, { screenKey: "s_welcome", parentId: "nope" }),
+    ).toBeUndefined()
   })
 
   it("moves the end of the flow to an appended screen", () => {

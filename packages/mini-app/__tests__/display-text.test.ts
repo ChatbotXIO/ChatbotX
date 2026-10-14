@@ -1,6 +1,8 @@
+// biome-ignore-all lint/suspicious/noTemplateCurlyInString: contact values are tested with literal ${...} text
 import { describe, expect, it } from "vitest"
 import {
   displayTexts,
+  escapeContactValue,
   hasContactVariables,
   hasSameStructure,
   mapDisplayText,
@@ -173,5 +175,30 @@ describe("hasSameStructure", () => {
       input.props.name = "mobile"
     }
     expect(hasSameStructure(definition, renamed)).toBe(false)
+  })
+})
+
+describe("escapeContactValue", () => {
+  const WORD_JOINER = "\u2060"
+
+  it("splits reference and variable openers so a value stays plain text", () => {
+    expect(
+      escapeContactValue("${form.x} {{y}}", "Hi {{name}}", { markdown: false }),
+    ).toBe(`$${WORD_JOINER}{form.x} {${WORD_JOINER}{y}}`)
+  })
+
+  it("escapes markdown characters only in markdown text", () => {
+    expect(escapeContactValue("*a*", "{{name}}", { markdown: true })).toBe(
+      "\\*a\\*",
+    )
+    expect(escapeContactValue("*a*", "{{name}}", { markdown: false })).toBe(
+      "*a*",
+    )
+  })
+
+  it("escapes quotes inside a nested expression", () => {
+    expect(
+      escapeContactValue("O'Neil", "`'Hi ' {{name}}`", { markdown: false }),
+    ).toBe("O\\'Neil")
   })
 })
