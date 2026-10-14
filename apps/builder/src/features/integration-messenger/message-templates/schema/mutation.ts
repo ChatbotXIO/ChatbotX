@@ -1,6 +1,15 @@
+import {
+  findMessengerTokenVariable,
+  normalizeMessengerTokenUrl,
+} from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
 const NUMERIC_PLACEHOLDER_PATTERN = /{{\d+}}/g
+const ANY_PLACEHOLDER_PATTERN = /{{[^{}]*}}/g
+const NUMERIC_PLACEHOLDER = /^{{\d+}}$/
+// A Mini App or Minigame link ends in its token variable, which Meta does not
+// accept; it is saved with the positional `{{1}}` suffix and this example.
+const TOKEN_URL_SUFFIX_EXAMPLE = "example-token"
 const SUPPORTED_PLACEHOLDER_PATTERN = /^{{([1-9]|1[0-5])}}$/
 
 const templateVariableSchema = z.object({
@@ -40,8 +49,11 @@ const templateButtonSchema = z.discriminatedUnion("type", [
     title: BUTTON_TITLE,
     url: z
       .string()
+      .trim()
       .min(1)
-      .describe("Link to open; end it with `{{1}}` to append a variable."),
+      .describe(
+        "Link to open; end it with `{{1}}` to append a variable. A Mini App (`/mini-apps?...&token={{mini_app_token}}`) or Minigame (`/minigames?...&token={{minigame_play_token}}`) public URL can be pasted as is, with the token variable last and no other variable: it is saved with a `{{1}}` suffix that each recipient's token fills at send time.",
+      ),
     variables: z
       .array(z.string().min(1))
       .max(1)
@@ -54,6 +66,25 @@ function extractPlaceholders(text: string): string[] {
   return [...new Set(text.match(NUMERIC_PLACEHOLDER_PATTERN) ?? [])].sort(
     (a, b) => Number(a.replace(/\D/g, "")) - Number(b.replace(/\D/g, "")),
   )
+}
+
+/** Swaps a Mini App / Minigame token suffix for `{{1}}` with a sample value. */
+function normalizeTokenUrlButton(
+  button: z.infer<typeof templateButtonSchema>,
+): z.infer<typeof templateButtonSchema> {
+  const tokenUrl =
+    button.type === "URL" ? normalizeMessengerTokenUrl(button.url) : null
+  if (button.type !== "URL" || !tokenUrl) {
+    return button
+  }
+  return {
+    ...button,
+    url: tokenUrl.url,
+    variables:
+      button.variables.length > 0
+        ? button.variables
+        : [TOKEN_URL_SUFFIX_EXAMPLE],
+  }
 }
 
 function addPlaceholderIssues({
@@ -198,16 +229,46 @@ export const createMessengerMessageTemplateRequest = z
         return
       }
 
+      const urlPath = ["buttons", index, "url"]
+      const allPlaceholders = button.url.match(ANY_PLACEHOLDER_PATTERN) ?? []
+      const tokenUrl = normalizeMessengerTokenUrl(button.url)
+
+      if (tokenUrl) {
+        // Meta allows one suffix variable, so the token must be the only one.
+        if (allPlaceholders.length > 1) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              "A Mini App or Minigame link cannot have other variables besides its token",
+            path: urlPath,
+          })
+        }
+        return
+      }
+
+      if (findMessengerTokenVariable(button.url)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "The token variable must be the last part of a Mini App or Minigame link",
+          path: urlPath,
+        })
+        return
+      }
+
       const placeholders = extractPlaceholders(button.url)
+      const hasNonNumericPlaceholder = allPlaceholders.some(
+        (placeholder) => !NUMERIC_PLACEHOLDER.test(placeholder),
+      )
       const unsupportedPlaceholder = placeholders.find(
         (placeholder) => !SUPPORTED_PLACEHOLDER_PATTERN.test(placeholder),
       )
 
-      if (unsupportedPlaceholder) {
+      if (unsupportedPlaceholder || hasNonNumericPlaceholder) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Only variables from {{1}} to {{15}} are supported",
-          path: ["buttons", index, "url"],
+          path: urlPath,
         })
         return
       }
@@ -216,7 +277,7 @@ export const createMessengerMessageTemplateRequest = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "URL buttons support only one variable",
-          path: ["buttons", index, "url"],
+          path: urlPath,
         })
         return
       }
@@ -230,6 +291,10 @@ export const createMessengerMessageTemplateRequest = z
       }
     })
   })
+  .transform((value) => ({
+    ...value,
+    buttons: value.buttons.map(normalizeTokenUrlButton),
+  }))
 
 export type CreateMessengerMessageTemplateRequest = z.infer<
   typeof createMessengerMessageTemplateRequest
