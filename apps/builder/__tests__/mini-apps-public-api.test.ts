@@ -50,7 +50,7 @@ const publishMiniAppToWhatsapp = vi.fn()
 const publishMiniAppWhatsappDraft = vi.fn()
 const getMiniAppWhatsappPreview = vi.fn()
 const deleteMiniAppWhatsappDraft = vi.fn()
-vi.mock("@/features/mini-apps/lib/publish-to-whatsapp", () => ({
+vi.mock("@/features/mini-apps/lib/whatsapp-publication", () => ({
   publishMiniAppToWhatsapp,
   publishMiniAppWhatsappDraft,
   getMiniAppWhatsappPreview,

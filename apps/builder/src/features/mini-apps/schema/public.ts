@@ -153,6 +153,17 @@ export const deleteMiniAppsPublicRequest = z.object({
   deleteWhatsappFlows: deleteWhatsappFlowsField,
 })
 
+/** What happened to one WhatsApp Flow when its Mini App was deleted. */
+export const WHATSAPP_FLOW_REMOVAL_OUTCOMES = [
+  "deleted",
+  "deprecated",
+  "missing",
+  "skipped",
+  "failed",
+] as const
+export type WhatsappFlowRemovalOutcome =
+  (typeof WHATSAPP_FLOW_REMOVAL_OUTCOMES)[number]
+
 export const deleteMiniAppsPublicResponse = z.object({
   deletedCount: z
     .number()
@@ -169,7 +180,7 @@ export const deleteMiniAppsPublicResponse = z.object({
           .describe("The WhatsApp number the Flow was published on."),
         flowId: z.string().describe("Meta's Flow id."),
         outcome: z
-          .enum(["deleted", "deprecated", "missing", "skipped", "failed"])
+          .enum(WHATSAPP_FLOW_REMOVAL_OUTCOMES)
           .describe(
             "`deleted`: draft Flow deleted. `deprecated`: published Flow deprecated, it can no longer be sent. `missing`: the Flow was already gone. `skipped`: already deprecated. `failed`: Meta refused or could not be reached (see `error`); the Flow is unchanged on Meta and must be removed in WhatsApp Manager.",
           ),

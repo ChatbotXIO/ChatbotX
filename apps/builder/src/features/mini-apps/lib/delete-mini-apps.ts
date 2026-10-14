@@ -7,9 +7,11 @@ import {
   miniAppService,
 } from "@chatbotx.io/business/mini-app"
 import type { MiniAppPublicationModel } from "@chatbotx.io/database/types"
+import { mapWithConcurrency } from "@chatbotx.io/utils"
 import { buildWhatsappContext } from "@/features/integration-whatsapp/flows/lib/whatsapp-flow-operations"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
+import type { WhatsappFlowRemovalOutcome } from "../schema/public"
 
 /** Meta calls in flight at once, so a bulk delete neither stalls nor floods the WABA. */
 const FLOW_REMOVAL_CONCURRENCY = 5
@@ -21,7 +23,7 @@ export type WhatsappFlowRemoval = {
   integrationWhatsappId: string
   /** Meta's Flow id. */
   flowId: string
-  outcome: "deleted" | "deprecated" | "missing" | "skipped" | "failed"
+  outcome: WhatsappFlowRemovalOutcome
   /** Why Meta refused; only on `failed`. */
   error?: string
 }
@@ -33,32 +35,11 @@ export type DeleteMiniAppsResult = {
 
 type WhatsappContext = Awaited<ReturnType<typeof buildWhatsappContext>>
 
-/** Runs `task` over `items`, at most `limit` at a time; `task` must not throw. */
-async function mapWithConcurrency<T, R>(
-  items: T[],
-  limit: number,
-  task: (item: T) => Promise<R>,
-): Promise<R[]> {
-  const results: R[] = []
-  let next = 0
-  const worker = async () => {
-    while (next < items.length) {
-      const index = next
-      next += 1
-      results[index] = await task(items[index] as T)
-    }
-  }
-  await Promise.all(
-    Array.from({ length: Math.min(limit, items.length) }, worker),
-  )
-  return results
-}
-
 const errorMessage = (err: unknown) =>
   err instanceof Error ? err.message : String(err)
 
 /** One context per number; null when the number left the workspace or cannot be loaded. */
-async function buildContexts(
+async function buildWhatsappContexts(
   workspaceId: string,
   integrationWhatsappIds: string[],
 ): Promise<Map<string, WhatsappContext | null>> {
@@ -92,7 +73,7 @@ async function buildContexts(
 async function removeFlow(props: {
   workspaceId: string
   publication: MiniAppPublicationModel
-  ctx: WhatsappContext | null | undefined
+  whatsappContext: WhatsappContext | null | undefined
 }): Promise<WhatsappFlowRemoval> {
   const { publication } = props
   const base = {
@@ -100,13 +81,13 @@ async function removeFlow(props: {
     integrationWhatsappId: publication.integrationWhatsappId,
     flowId: publication.sourceId,
   }
-  if (!props.ctx) {
+  if (!props.whatsappContext) {
     return { ...base, outcome: "failed", error: NUMBER_NOT_CONNECTED }
   }
   let result: { outcome: WhatsappFlowRemoval["outcome"]; status: string | null }
   try {
     result = await integrations.whatsapp.runAction("deleteFlow", {
-      ctx: props.ctx,
+      ctx: props.whatsappContext,
       params: { flowSourceId: publication.sourceId },
     })
   } catch (err) {
@@ -157,19 +138,23 @@ export async function deleteMiniApps(props: {
   if (publications.length === 0) {
     return { deletedCount, whatsappFlows: [] }
   }
-  const contexts = await buildContexts(
+  const contexts = await buildWhatsappContexts(
     props.workspaceId,
     publications.map((publication) => publication.integrationWhatsappId),
   )
-  const whatsappFlows = await mapWithConcurrency(
+  // `removeFlow` reports a refusal instead of throwing, so every result is fulfilled.
+  const results = await mapWithConcurrency(
     publications,
     FLOW_REMOVAL_CONCURRENCY,
     (publication) =>
       removeFlow({
         workspaceId: props.workspaceId,
         publication,
-        ctx: contexts.get(publication.integrationWhatsappId),
+        whatsappContext: contexts.get(publication.integrationWhatsappId),
       }),
+  )
+  const whatsappFlows = results.flatMap((result) =>
+    result.status === "fulfilled" ? [result.value] : [],
   )
   return { deletedCount, whatsappFlows }
 }

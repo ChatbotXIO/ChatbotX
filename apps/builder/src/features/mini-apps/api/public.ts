@@ -14,13 +14,13 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { deleteMiniApps } from "../lib/delete-mini-apps"
+import { createTranslatedStarterDefinition } from "../lib/starter-definition"
 import {
   deleteMiniAppWhatsappDraft,
   getMiniAppWhatsappPreview,
   publishMiniAppToWhatsapp,
   publishMiniAppWhatsappDraft,
-} from "../lib/publish-to-whatsapp"
-import { createTranslatedStarterDefinition } from "../lib/starter-definition"
+} from "../lib/whatsapp-publication"
 import {
   createMiniAppPublicRequest,
   deleteMiniAppPublicRequest,

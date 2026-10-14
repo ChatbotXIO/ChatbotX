@@ -3,7 +3,7 @@
 import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { toPublishResponse } from "../api/mappers"
-import { publishMiniAppWhatsappDraft } from "../lib/publish-to-whatsapp"
+import { publishMiniAppWhatsappDraft } from "../lib/whatsapp-publication"
 import { miniAppWhatsappRequest } from "../schema/action"
 
 export const publishMiniAppWhatsappDraftAction = workspaceActionClient
