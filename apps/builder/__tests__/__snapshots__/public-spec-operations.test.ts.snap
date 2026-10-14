@@ -2008,6 +2008,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/mini-apps/bulk-delete",
   },
   {
+    "method": "POST",
+    "operationId": "miniApps.duplicate",
+    "path": "/v1/mini-apps/{id}/duplicate",
+  },
+  {
     "method": "GET",
     "operationId": "miniApps.get",
     "path": "/v1/mini-apps/{id}",

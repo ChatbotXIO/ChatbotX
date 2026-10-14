@@ -25,6 +25,7 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
   BracesIcon,
+  CopyPlusIcon,
   InboxIcon,
   LinkIcon,
   MoreHorizontalIcon,
@@ -39,6 +40,7 @@ import { useAction } from "next-safe-action/hooks"
 import { use, useEffect, useMemo, useState } from "react"
 import { useClipboard } from "@/hooks/use-clipboard"
 import { getMiniAppFlowJsonAction } from "./actions/get-mini-app-flow-json.action"
+import { DuplicateMiniAppDialog } from "./components/duplicate-mini-app-dialog"
 import { FlowJsonDialog } from "./components/flow-json-dialog"
 import { PublishWhatsappDialog } from "./components/publish-whatsapp-dialog"
 import { CreateMiniAppDialog } from "./create-mini-app-dialog"
@@ -231,6 +233,12 @@ export function MiniAppsTable({ workspaceId, promises }: MiniAppsTableProps) {
                 {t("actions.edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
+                onClick={() => setRowAction({ row, variant: "duplicate" })}
+              >
+                <CopyPlusIcon />
+                {t("actions.duplicate")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "copyJson" })}
               >
                 <BracesIcon />
@@ -334,6 +342,17 @@ export function MiniAppsTable({ workspaceId, promises }: MiniAppsTableProps) {
           onOpenChange={() => setRowAction(null)}
           open={rowAction?.variant === "publish"}
           targets={publishTargets}
+          workspaceId={workspaceId}
+        />
+
+        <DuplicateMiniAppDialog
+          miniAppId={
+            rowAction?.variant === "duplicate"
+              ? rowAction.row.original.id
+              : null
+          }
+          onOpenChange={() => setRowAction(null)}
+          open={rowAction?.variant === "duplicate"}
           workspaceId={workspaceId}
         />
 

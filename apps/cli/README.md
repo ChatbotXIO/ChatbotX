@@ -947,6 +947,7 @@ chatbotx mini-apps create --name <name>                 # [--flowJson <json> --c
 chatbotx mini-apps update <id>                          # [--name --enabled --flowJson --customFieldMappings]
 chatbotx mini-apps delete <id>                          # [--deleteWhatsappFlows] also deletes draft Flows / deprecates published ones on Meta; returns each Flow's outcome
 chatbotx mini-apps bulk-delete --ids <ids>              # [--deleteWhatsappFlows]
+chatbotx mini-apps duplicate <id>                       # Copy as "<name> - Copy" (answers and WhatsApp publications are not copied)
 chatbotx mini-apps publish-whatsapp <id> --integrationWhatsappId <id>   # id from `whatsapp-channels list`
 chatbotx mini-apps submissions list <id>                # Answers from the public link (uploaded files as public URLs)
 ```
