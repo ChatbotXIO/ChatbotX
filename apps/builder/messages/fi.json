@@ -2547,7 +2547,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Keskustelun hallinta",
       "sendGoogleAdsConversion": "Lähetä Google Ads -konversio",
-      "sendViewCatalog": "Näytä tuotekatalogi"
+      "sendViewCatalog": "Näytä tuotekatalogi",
+      "sendProducts": "Lähetä tuotteita"
     },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
@@ -2685,6 +2686,37 @@
     "sendViewCatalog": {
       "footerLabel": "Alatunniste",
       "thumbnailLabel": "Pikkukuvan tuote"
+    },
+    "sendProducts": {
+      "description": "Valitse lähetettävät tuotteet ja tapa, jolla ne näytetään.",
+      "display": "Näyttötapa",
+      "displays": {
+        "products": "Tuotteet",
+        "carousel": "Karuselli"
+      },
+      "products": "Tuotteet",
+      "selectProducts": "Valitse tuotteet",
+      "searchProducts": "Hae tuotteita",
+      "noProducts": "Tuotteita ei löytynyt.",
+      "loading": "Ladataan...",
+      "loadError": "Tuotteiden lataus epäonnistui.",
+      "retry": "Yritä uudelleen",
+      "catalogNotConnected": "Yhdistä ja synkronoi Meta-katalogi, jotta voit lähettää tuotteita.",
+      "openProducts": "Avaa Tuotteet",
+      "channelUnsupported": "Tämä kanava ei voi lähettää tuotteita.",
+      "unavailableProduct": "Tuote ei ole saatavilla",
+      "removeProduct": "Poista tuote",
+      "removeSection": "Poista osio",
+      "moreOptions": "Lisää asetuksia",
+      "fewerOptions": "Vähemmän asetuksia",
+      "header": "Otsikko",
+      "body": "Leipäteksti",
+      "footer": "Alatunniste",
+      "sectionTitle": "Osion otsikko",
+      "addSection": "Lisää osio",
+      "productCount": "{count} / {max} tuotetta",
+      "productsSelected": "{count, plural, one {# tuote} other {# tuotetta}}",
+      "noneSelected": "Ei vielä tuotteita"
     }
   },
   "folders": {
@@ -3695,7 +3727,14 @@
     },
     "sendViewCatalogBodyTooLong": "Viestin teksti on liian pitkä katalogiviestiin. Lyhennä sitä.",
     "sendViewCatalogFooterTooLong": "Alatunniste on liian pitkä katalogiviestiin. Lyhennä sitä.",
-    "viewCatalog": "Näytä luettelo"
+    "viewCatalog": "Näytä luettelo",
+    "sendProductsDisplayUnsupported": "Tämä kanava ei voi lähettää tämän tyyppistä tuoteviestiä.",
+    "sendProductsFieldRequired": "Tämä kenttä on pakollinen.",
+    "sendProductsFieldNotAllowed": "Tätä kenttää ei voi käyttää tässä.",
+    "sendProductsFieldTooLong": "Teksti on liian pitkä.",
+    "sendProductsProductCountOutOfRange": "Valitse kelvollinen määrä tuotteita.",
+    "sendProductsSectionCountOutOfRange": "Osioita on liikaa.",
+    "sendProductsDuplicateProduct": "Tuote voi esiintyä vain kerran."
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",

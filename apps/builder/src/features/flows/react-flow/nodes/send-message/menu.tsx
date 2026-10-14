@@ -18,6 +18,7 @@ import {
   PaperclipIcon,
   PhoneIcon,
   PictureInPicture2Icon,
+  ShoppingCartIcon,
   StoreIcon,
   TextIcon,
   TimerIcon,
@@ -108,6 +109,11 @@ const ALL_MENU_ITEMS = (
     icon: PhoneIcon,
     stepType: stepTypes.enum.whatsappCallButton,
   },
+  sendProducts: {
+    label: t("flows.actions.sendProducts"),
+    icon: ShoppingCartIcon,
+    stepType: stepTypes.enum.sendProducts,
+  },
   whatsappLocation: {
     label: t("flows.actions.whatsappLocation"),
     icon: MapPinIcon,
@@ -153,6 +159,7 @@ const BASE_MENU_ORDER = [
   "getUserData",
   "sendGif",
   "sendTemplateMessage",
+  "sendProducts",
   "typing",
   "sendFile",
   "actions",

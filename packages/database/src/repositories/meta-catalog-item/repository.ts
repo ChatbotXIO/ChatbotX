@@ -1,20 +1,26 @@
 import {
   and,
   asc,
+  count,
   type DatabaseClient,
   db,
   eq,
   ilike,
   inArray,
+  isNull,
   ne,
   or,
   sql,
 } from "@chatbotx.io/database/client"
 import {
+  integrationMetaCatalogModel,
   metaCatalogItemModel,
   productModel,
 } from "@chatbotx.io/database/schema"
-import { likeContains } from "@chatbotx.io/database/utils"
+import {
+  getPaginationWithDefaults,
+  likeContains,
+} from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 
 /** Keeps a single "type to search" list from ever returning an unbounded page. */
@@ -38,6 +44,46 @@ const inCatalog = (scope: CatalogScope) =>
     ),
     eq(metaCatalogItemModel.catalogId, scope.catalogId),
   )
+
+/**
+ * A product a contact can be sent: linked in the connection's current catalog,
+ * still active, and owned by the workspace. The connection row is joined so a
+ * disconnect or rebind that lands after the caller read its scope cannot
+ * resolve against the catalog it left. The workspace check is explicit
+ * rather than implied by the connection, so a product id lifted from another
+ * workspace's flow can never resolve.
+ */
+const sendableProductWhere = (
+  input: CatalogScope & {
+    workspaceId: string
+    keyword?: string
+    productIds?: string[]
+  },
+) =>
+  and(
+    inCatalog(input),
+    eq(integrationMetaCatalogModel.workspaceId, input.workspaceId),
+    eq(integrationMetaCatalogModel.catalogId, input.catalogId),
+    isNull(integrationMetaCatalogModel.deletedAt),
+    eq(productModel.workspaceId, input.workspaceId),
+    eq(productModel.isActive, true),
+    input.keyword
+      ? ilike(productModel.name, likeContains(input.keyword))
+      : undefined,
+    input.productIds
+      ? inArray(metaCatalogItemModel.productId, input.productIds)
+      : undefined,
+  )
+
+const sendableProductColumns = () => ({
+  productId: productModel.id,
+  retailerId: metaCatalogItemModel.retailerId,
+  catalogId: metaCatalogItemModel.catalogId,
+  name: productModel.name,
+  images: productModel.images,
+  price: productModel.price,
+  currency: productModel.currency,
+})
 
 /**
  * `linkImported` and `markSucceeded` both call this before writing, so every
@@ -183,6 +229,99 @@ export const metaCatalogItemRepository = {
       )
       .orderBy(asc(productModel.name))
       .limit(limit)
+  },
+
+  /**
+   * One page of products that can be sent, for the flow step's product picker.
+   * Same scoping as `findSendableByProductIds`, so what the picker offers is
+   * exactly what a send can resolve.
+   */
+  async listSendableProducts(
+    input: CatalogScope & {
+      workspaceId: string
+      keyword?: string
+      /** Only these products — how a picker names the ones a step already holds. */
+      productIds?: string[]
+      page?: number
+      perPage?: number
+    },
+    tx: DatabaseClient = db,
+  ) {
+    // An empty id list means "none of these", not "no filter".
+    if (input.productIds?.length === 0) {
+      return { data: [], pageCount: 0 }
+    }
+    const pagination = getPaginationWithDefaults(input)
+    const where = sendableProductWhere(input)
+    const [rows, [totals]] = await Promise.all([
+      tx
+        .select(sendableProductColumns())
+        .from(metaCatalogItemModel)
+        .innerJoin(
+          productModel,
+          eq(metaCatalogItemModel.productId, productModel.id),
+        )
+        .innerJoin(
+          integrationMetaCatalogModel,
+          eq(
+            metaCatalogItemModel.integrationMetaCatalogId,
+            integrationMetaCatalogModel.id,
+          ),
+        )
+        .where(where)
+        .orderBy(asc(productModel.name), asc(productModel.id))
+        .limit(pagination.limit)
+        .offset(pagination.offset),
+      tx
+        .select({ total: count() })
+        .from(metaCatalogItemModel)
+        .innerJoin(
+          productModel,
+          eq(metaCatalogItemModel.productId, productModel.id),
+        )
+        .innerJoin(
+          integrationMetaCatalogModel,
+          eq(
+            metaCatalogItemModel.integrationMetaCatalogId,
+            integrationMetaCatalogModel.id,
+          ),
+        )
+        .where(where),
+    ])
+
+    return {
+      data: rows,
+      pageCount: Math.ceil((totals?.total ?? 0) / pagination.limit),
+    }
+  },
+
+  /**
+   * Resolves flow-step product ids to what a send needs, in one query. Ids that
+   * are not sendable (missing, other workspace, inactive, not in the current
+   * catalog) are simply absent from the result — the caller reports them.
+   */
+  async findSendableByProductIds(
+    input: CatalogScope & { workspaceId: string; productIds: string[] },
+    tx: DatabaseClient = db,
+  ) {
+    if (input.productIds.length === 0) {
+      return []
+    }
+    return await tx
+      .select(sendableProductColumns())
+      .from(metaCatalogItemModel)
+      .innerJoin(
+        productModel,
+        eq(metaCatalogItemModel.productId, productModel.id),
+      )
+      .innerJoin(
+        integrationMetaCatalogModel,
+        eq(
+          metaCatalogItemModel.integrationMetaCatalogId,
+          integrationMetaCatalogModel.id,
+        ),
+      )
+      .where(sendableProductWhere(input))
   },
 
   async findByProductIds(

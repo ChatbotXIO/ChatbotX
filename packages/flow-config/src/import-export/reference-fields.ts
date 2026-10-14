@@ -68,6 +68,7 @@ export const CROSS_FLOW_NODE_FIELD = "nodeId"
 export const REFERENCE_ARRAY_FIELD_ENTITY_KIND: Record<string, string> = {
   tagIds: "tag",
   addonProductIds: "product",
+  productIds: "product",
 }
 
 /**

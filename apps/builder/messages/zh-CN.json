@@ -3425,7 +3425,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "会话控制",
       "sendGoogleAdsConversion": "发送 Google Ads 转化",
-      "sendViewCatalog": "查看商品目录"
+      "sendViewCatalog": "查看商品目录",
+      "sendProducts": "发送商品"
     },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
@@ -3611,6 +3612,37 @@
     "sendViewCatalog": {
       "footerLabel": "页脚",
       "thumbnailLabel": "缩略图商品"
+    },
+    "sendProducts": {
+      "description": "选择要发送的商品以及展示方式。",
+      "display": "展示方式",
+      "displays": {
+        "products": "商品",
+        "carousel": "轮播"
+      },
+      "products": "商品",
+      "selectProducts": "选择商品",
+      "searchProducts": "搜索商品",
+      "noProducts": "未找到商品。",
+      "loading": "加载中...",
+      "loadError": "无法加载商品。",
+      "retry": "重试",
+      "catalogNotConnected": "请连接并同步 Meta 商品目录以发送商品。",
+      "openProducts": "打开商品",
+      "channelUnsupported": "此渠道无法发送商品。",
+      "unavailableProduct": "商品不可用",
+      "removeProduct": "移除商品",
+      "removeSection": "移除分组",
+      "moreOptions": "更多选项",
+      "fewerOptions": "收起选项",
+      "header": "标题",
+      "body": "正文",
+      "footer": "页脚",
+      "sectionTitle": "分组标题",
+      "addSection": "添加分组",
+      "productCount": "{count} / {max} 件商品",
+      "productsSelected": "{count, plural, one {# 件商品} other {# 件商品}}",
+      "noneSelected": "暂无商品"
     }
   },
   "folders": {
@@ -4537,7 +4569,14 @@
     },
     "sendViewCatalogBodyTooLong": "消息文本对目录消息来说太长，请缩短。",
     "sendViewCatalogFooterTooLong": "页脚对目录消息来说太长，请缩短。",
-    "viewCatalog": "查看目录"
+    "viewCatalog": "查看目录",
+    "sendProductsDisplayUnsupported": "此渠道无法发送这种类型的商品消息。",
+    "sendProductsFieldRequired": "此字段为必填项。",
+    "sendProductsFieldNotAllowed": "此处无法使用该字段。",
+    "sendProductsFieldTooLong": "文本过长。",
+    "sendProductsProductCountOutOfRange": "请选择有效的商品数量。",
+    "sendProductsSectionCountOutOfRange": "分组过多。",
+    "sendProductsDuplicateProduct": "同一商品只能出现一次。"
   },
   "messenger": {
     "botProfile": "机器人个人数据",

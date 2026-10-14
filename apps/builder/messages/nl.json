@@ -2547,7 +2547,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Threadbeheer",
       "sendGoogleAdsConversion": "Google Ads-conversie verzenden",
-      "sendViewCatalog": "Catalogus bekijken"
+      "sendViewCatalog": "Catalogus bekijken",
+      "sendProducts": "Producten verzenden"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -2685,6 +2686,37 @@
     "sendViewCatalog": {
       "footerLabel": "Voettekst",
       "thumbnailLabel": "Product voor miniatuur"
+    },
+    "sendProducts": {
+      "description": "Kies de producten die je wilt verzenden en hoe ze worden getoond.",
+      "display": "Weergave",
+      "displays": {
+        "products": "Producten",
+        "carousel": "Carrousel"
+      },
+      "products": "Producten",
+      "selectProducts": "Producten selecteren",
+      "searchProducts": "Producten zoeken",
+      "noProducts": "Geen producten gevonden.",
+      "loading": "Laden...",
+      "loadError": "Producten konden niet worden geladen.",
+      "retry": "Opnieuw proberen",
+      "catalogNotConnected": "Koppel en synchroniseer een Meta-catalogus om producten te verzenden.",
+      "openProducts": "Producten openen",
+      "channelUnsupported": "Dit kanaal kan geen producten verzenden.",
+      "unavailableProduct": "Product niet beschikbaar",
+      "removeProduct": "Product verwijderen",
+      "removeSection": "Sectie verwijderen",
+      "moreOptions": "Meer opties",
+      "fewerOptions": "Minder opties",
+      "header": "Kop",
+      "body": "Tekst",
+      "footer": "Voettekst",
+      "sectionTitle": "Sectietitel",
+      "addSection": "Sectie toevoegen",
+      "productCount": "{count} / {max} producten",
+      "productsSelected": "{count, plural, one {# product} other {# producten}}",
+      "noneSelected": "Nog geen producten"
     }
   },
   "folders": {
@@ -3695,7 +3727,14 @@
     },
     "sendViewCatalogBodyTooLong": "De berichttekst is te lang voor een catalogusbericht. Maak hem korter.",
     "sendViewCatalogFooterTooLong": "De voettekst is te lang voor een catalogusbericht. Maak hem korter.",
-    "viewCatalog": "Catalogus bekijken"
+    "viewCatalog": "Catalogus bekijken",
+    "sendProductsDisplayUnsupported": "Dit kanaal kan dit soort productbericht niet verzenden.",
+    "sendProductsFieldRequired": "Dit veld is verplicht.",
+    "sendProductsFieldNotAllowed": "Dit veld kan hier niet worden gebruikt.",
+    "sendProductsFieldTooLong": "Deze tekst is te lang.",
+    "sendProductsProductCountOutOfRange": "Kies een geldig aantal producten.",
+    "sendProductsSectionCountOutOfRange": "Er zijn te veel secties.",
+    "sendProductsDuplicateProduct": "Een product mag maar één keer voorkomen."
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",

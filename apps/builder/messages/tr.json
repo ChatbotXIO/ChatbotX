@@ -2693,7 +2693,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Konuşma kontrolü",
       "sendGoogleAdsConversion": "Google Ads dönüşümü gönder",
-      "sendViewCatalog": "Kataloğu görüntüle"
+      "sendViewCatalog": "Kataloğu görüntüle",
+      "sendProducts": "Ürün gönder"
     },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
@@ -2831,6 +2832,37 @@
     "sendViewCatalog": {
       "footerLabel": "Alt bilgi",
       "thumbnailLabel": "Küçük resim ürünü"
+    },
+    "sendProducts": {
+      "description": "Gönderilecek ürünleri ve nasıl gösterileceğini seçin.",
+      "display": "Görünüm",
+      "displays": {
+        "products": "Ürünler",
+        "carousel": "Karusel"
+      },
+      "products": "Ürünler",
+      "selectProducts": "Ürün seç",
+      "searchProducts": "Ürün ara",
+      "noProducts": "Ürün bulunamadı.",
+      "loading": "Yükleniyor...",
+      "loadError": "Ürünler yüklenemedi.",
+      "retry": "Tekrar dene",
+      "catalogNotConnected": "Ürün göndermek için bir Meta Kataloğu bağlayın ve senkronize edin.",
+      "openProducts": "Ürünleri aç",
+      "channelUnsupported": "Bu kanal ürün gönderemez.",
+      "unavailableProduct": "Ürün kullanılamıyor",
+      "removeProduct": "Ürünü kaldır",
+      "removeSection": "Bölümü kaldır",
+      "moreOptions": "Daha fazla seçenek",
+      "fewerOptions": "Daha az seçenek",
+      "header": "Başlık",
+      "body": "Gövde",
+      "footer": "Alt bilgi",
+      "sectionTitle": "Bölüm başlığı",
+      "addSection": "Bölüm ekle",
+      "productCount": "{count} / {max} ürün",
+      "productsSelected": "{count, plural, one {# ürün} other {# ürün}}",
+      "noneSelected": "Henüz ürün yok"
     }
   },
   "folders": {
@@ -3695,7 +3727,14 @@
     },
     "sendViewCatalogBodyTooLong": "Mesaj metni bir katalog mesajı için çok uzun. Kısaltın.",
     "sendViewCatalogFooterTooLong": "Alt bilgi bir katalog mesajı için çok uzun. Kısaltın.",
-    "viewCatalog": "Kataloğu görüntüle"
+    "viewCatalog": "Kataloğu görüntüle",
+    "sendProductsDisplayUnsupported": "Bu kanal bu tür ürün mesajını gönderemez.",
+    "sendProductsFieldRequired": "Bu alan zorunludur.",
+    "sendProductsFieldNotAllowed": "Bu alan burada kullanılamaz.",
+    "sendProductsFieldTooLong": "Bu metin çok uzun.",
+    "sendProductsProductCountOutOfRange": "Geçerli bir ürün sayısı seçin.",
+    "sendProductsSectionCountOutOfRange": "Çok fazla bölüm var.",
+    "sendProductsDuplicateProduct": "Bir ürün yalnızca bir kez görünebilir."
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",

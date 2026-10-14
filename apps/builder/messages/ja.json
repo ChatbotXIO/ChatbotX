@@ -2547,7 +2547,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "スレッド制御",
       "sendGoogleAdsConversion": "Google 広告コンバージョンを送信",
-      "sendViewCatalog": "カタログを見る"
+      "sendViewCatalog": "カタログを見る",
+      "sendProducts": "商品を送信"
     },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
@@ -2685,6 +2686,37 @@
     "sendViewCatalog": {
       "footerLabel": "フッター",
       "thumbnailLabel": "サムネイル商品"
+    },
+    "sendProducts": {
+      "description": "送信する商品と表示方法を選択します。",
+      "display": "表示形式",
+      "displays": {
+        "products": "商品",
+        "carousel": "カルーセル"
+      },
+      "products": "商品",
+      "selectProducts": "商品を選択",
+      "searchProducts": "商品を検索",
+      "noProducts": "商品が見つかりません。",
+      "loading": "読み込み中...",
+      "loadError": "商品を読み込めませんでした。",
+      "retry": "再試行",
+      "catalogNotConnected": "商品を送信するには、Metaカタログを接続して同期してください。",
+      "openProducts": "商品を開く",
+      "channelUnsupported": "このチャネルでは商品を送信できません。",
+      "unavailableProduct": "利用できない商品",
+      "removeProduct": "商品を削除",
+      "removeSection": "セクションを削除",
+      "moreOptions": "その他のオプション",
+      "fewerOptions": "オプションを減らす",
+      "header": "見出し",
+      "body": "本文",
+      "footer": "フッター",
+      "sectionTitle": "セクションタイトル",
+      "addSection": "セクションを追加",
+      "productCount": "{count} / {max} 件の商品",
+      "productsSelected": "{count, plural, one {# 件の商品} other {# 件の商品}}",
+      "noneSelected": "商品はまだありません"
     }
   },
   "folders": {
@@ -3674,7 +3706,14 @@
     },
     "sendViewCatalogBodyTooLong": "メッセージ本文がカタログメッセージには長すぎます。短くしてください。",
     "sendViewCatalogFooterTooLong": "フッターがカタログメッセージには長すぎます。短くしてください。",
-    "viewCatalog": "カタログを見る"
+    "viewCatalog": "カタログを見る",
+    "sendProductsDisplayUnsupported": "このチャネルでは、この種類の商品メッセージを送信できません。",
+    "sendProductsFieldRequired": "この項目は必須です。",
+    "sendProductsFieldNotAllowed": "この項目はここでは使用できません。",
+    "sendProductsFieldTooLong": "テキストが長すぎます。",
+    "sendProductsProductCountOutOfRange": "商品数を正しく選択してください。",
+    "sendProductsSectionCountOutOfRange": "セクションが多すぎます。",
+    "sendProductsDuplicateProduct": "同じ商品は1回しか使用できません。"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",

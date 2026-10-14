@@ -947,6 +947,56 @@ export type MessageTemplateEntity = {
       }
 }
 
+/**
+ * Where a product's channel-side identity comes from. One source per catalog
+ * system; a channel is mapped to its source by the business layer.
+ */
+export type ProductCatalogSource = "metaCatalog"
+
+export type ProductMessageItem = {
+  productId: string
+  name: string
+  imageUrl: string | null
+  price: number
+  currency: string
+  catalogReference: {
+    source: ProductCatalogSource
+    catalogId: string
+    retailerId: string
+  }
+}
+
+/**
+ * A `sendProducts` step after its product ids were resolved for one send. The
+ * channel-neutral hand-off from the business layer to an integration, and the
+ * snapshot stored on the message so history survives later product edits.
+ */
+export type ResolvedProductMessage =
+  | {
+      display: "products"
+      header?: string
+      body?: string
+      footer?: string
+      sections: Array<{ title?: string; items: ProductMessageItem[] }>
+    }
+  | { display: "carousel"; body: string; items: ProductMessageItem[] }
+
+export type MessageProductEntity = {
+  type: "product_message"
+  payload: ResolvedProductMessage
+}
+
+export const isMessageProductEntity = (
+  value: unknown,
+): value is MessageProductEntity =>
+  typeof value === "object" &&
+  value !== null &&
+  "type" in value &&
+  value.type === "product_message" &&
+  "payload" in value &&
+  typeof value.payload === "object" &&
+  value.payload !== null
+
 export const contentTypes = z.enum(["text", "location", "refLink"])
 export type ContentType = z.infer<typeof contentTypes>
 

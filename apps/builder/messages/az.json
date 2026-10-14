@@ -3376,7 +3376,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread Control",
       "sendGoogleAdsConversion": "Google Ads konversiyası göndər",
-      "sendViewCatalog": "Kataloqa bax"
+      "sendViewCatalog": "Kataloqa bax",
+      "sendProducts": "Məhsul göndər"
     },
     "splitTraffic": {
       "balanceHint": "Ümumi cəm 100% olmalıdır.",
@@ -3514,6 +3515,37 @@
     "sendViewCatalog": {
       "footerLabel": "Alt məlumat",
       "thumbnailLabel": "Miniatür məhsul"
+    },
+    "sendProducts": {
+      "description": "Göndəriləcək məhsulları və onların necə göstəriləcəyini seçin.",
+      "display": "Görünüş",
+      "displays": {
+        "products": "Məhsullar",
+        "carousel": "Karusel"
+      },
+      "products": "Məhsullar",
+      "selectProducts": "Məhsul seçin",
+      "searchProducts": "Məhsul axtarın",
+      "noProducts": "Məhsul tapılmadı.",
+      "loading": "Yüklənir...",
+      "loadError": "Məhsullar yüklənmədi.",
+      "retry": "Yenidən cəhd edin",
+      "catalogNotConnected": "Məhsul göndərmək üçün Meta Kataloqunu qoşun və sinxronlaşdırın.",
+      "openProducts": "Məhsulları aç",
+      "channelUnsupported": "Bu kanal məhsul göndərə bilməz.",
+      "unavailableProduct": "Məhsul əlçatan deyil",
+      "removeProduct": "Məhsulu sil",
+      "removeSection": "Bölməni sil",
+      "moreOptions": "Daha çox seçim",
+      "fewerOptions": "Daha az seçim",
+      "header": "Başlıq",
+      "body": "Mətn",
+      "footer": "Alt məlumat",
+      "sectionTitle": "Bölmə başlığı",
+      "addSection": "Bölmə əlavə et",
+      "productCount": "{count} / {max} məhsul",
+      "productsSelected": "{count, plural, one {# məhsul} other {# məhsul}}",
+      "noneSelected": "Hələ məhsul yoxdur"
     }
   },
   "folders": {
@@ -4378,7 +4410,14 @@
     },
     "sendViewCatalogBodyTooLong": "Mesaj mətni kataloq mesajı üçün çox uzundur. Onu qısaldın.",
     "sendViewCatalogFooterTooLong": "Alt məlumat kataloq mesajı üçün çox uzundur. Onu qısaldın.",
-    "viewCatalog": "Kataloqa bax"
+    "viewCatalog": "Kataloqa bax",
+    "sendProductsDisplayUnsupported": "Bu kanal bu növ məhsul mesajını göndərə bilməz.",
+    "sendProductsFieldRequired": "Bu sahə məcburidir.",
+    "sendProductsFieldNotAllowed": "Bu sahə burada istifadə oluna bilməz.",
+    "sendProductsFieldTooLong": "Bu mətn çox uzundur.",
+    "sendProductsProductCountOutOfRange": "Məhsulların düzgün sayını seçin.",
+    "sendProductsSectionCountOutOfRange": "Bölmələr çoxdur.",
+    "sendProductsDuplicateProduct": "Məhsul yalnız bir dəfə görünə bilər."
   },
   "instagram": {
     "description": "Bu inteqrasiya Instagram botları yaratmağa imkan verir.",

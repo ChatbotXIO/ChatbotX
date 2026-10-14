@@ -3422,7 +3422,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Trådkontroll",
       "sendGoogleAdsConversion": "Skicka Google Ads-konvertering",
-      "sendViewCatalog": "Visa katalog"
+      "sendViewCatalog": "Visa katalog",
+      "sendProducts": "Skicka produkter"
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -3608,6 +3609,37 @@
     "sendViewCatalog": {
       "footerLabel": "Sidfot",
       "thumbnailLabel": "Miniatyrprodukt"
+    },
+    "sendProducts": {
+      "description": "Välj vilka produkter som ska skickas och hur de visas.",
+      "display": "Visning",
+      "displays": {
+        "products": "Produkter",
+        "carousel": "Karusell"
+      },
+      "products": "Produkter",
+      "selectProducts": "Välj produkter",
+      "searchProducts": "Sök produkter",
+      "noProducts": "Inga produkter hittades.",
+      "loading": "Laddar...",
+      "loadError": "Det gick inte att läsa in produkterna.",
+      "retry": "Försök igen",
+      "catalogNotConnected": "Anslut och synkronisera en Meta-katalog för att skicka produkter.",
+      "openProducts": "Öppna Produkter",
+      "channelUnsupported": "Den här kanalen kan inte skicka produkter.",
+      "unavailableProduct": "Produkten är inte tillgänglig",
+      "removeProduct": "Ta bort produkt",
+      "removeSection": "Ta bort avsnitt",
+      "moreOptions": "Fler alternativ",
+      "fewerOptions": "Färre alternativ",
+      "header": "Rubrik",
+      "body": "Brödtext",
+      "footer": "Sidfot",
+      "sectionTitle": "Avsnittsrubrik",
+      "addSection": "Lägg till avsnitt",
+      "productCount": "{count} / {max} produkter",
+      "productsSelected": "{count, plural, one {# produkt} other {# produkter}}",
+      "noneSelected": "Inga produkter ännu"
     }
   },
   "folders": {
@@ -4537,7 +4569,14 @@
     },
     "sendViewCatalogBodyTooLong": "Meddelandetexten är för lång för ett katalogmeddelande. Korta ned den.",
     "sendViewCatalogFooterTooLong": "Sidfoten är för lång för ett katalogmeddelande. Korta ned den.",
-    "viewCatalog": "Visa katalog"
+    "viewCatalog": "Visa katalog",
+    "sendProductsDisplayUnsupported": "Den här kanalen kan inte skicka den här typen av produktmeddelande.",
+    "sendProductsFieldRequired": "Det här fältet är obligatoriskt.",
+    "sendProductsFieldNotAllowed": "Det här fältet kan inte användas här.",
+    "sendProductsFieldTooLong": "Texten är för lång.",
+    "sendProductsProductCountOutOfRange": "Välj ett giltigt antal produkter.",
+    "sendProductsSectionCountOutOfRange": "Det finns för många avsnitt.",
+    "sendProductsDuplicateProduct": "En produkt kan bara förekomma en gång."
   },
   "messenger": {
     "botProfile": "Botprofil",

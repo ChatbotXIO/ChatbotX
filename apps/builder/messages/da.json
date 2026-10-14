@@ -2547,7 +2547,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Trådkontrol",
       "sendGoogleAdsConversion": "Send Google Ads-konvertering",
-      "sendViewCatalog": "Se katalog"
+      "sendViewCatalog": "Se katalog",
+      "sendProducts": "Send produkter"
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2685,6 +2686,37 @@
     "sendViewCatalog": {
       "footerLabel": "Sidefod",
       "thumbnailLabel": "Miniaturebillede-produkt"
+    },
+    "sendProducts": {
+      "description": "Vælg de produkter, der skal sendes, og hvordan de vises.",
+      "display": "Visning",
+      "displays": {
+        "products": "Produkter",
+        "carousel": "Karrusel"
+      },
+      "products": "Produkter",
+      "selectProducts": "Vælg produkter",
+      "searchProducts": "Søg efter produkter",
+      "noProducts": "Ingen produkter fundet.",
+      "loading": "Indlæser...",
+      "loadError": "Produkterne kunne ikke indlæses.",
+      "retry": "Prøv igen",
+      "catalogNotConnected": "Forbind og synkroniser et Meta-katalog for at sende produkter.",
+      "openProducts": "Åbn Produkter",
+      "channelUnsupported": "Denne kanal kan ikke sende produkter.",
+      "unavailableProduct": "Produkt ikke tilgængeligt",
+      "removeProduct": "Fjern produkt",
+      "removeSection": "Fjern sektion",
+      "moreOptions": "Flere indstillinger",
+      "fewerOptions": "Færre indstillinger",
+      "header": "Overskrift",
+      "body": "Brødtekst",
+      "footer": "Sidefod",
+      "sectionTitle": "Sektionstitel",
+      "addSection": "Tilføj sektion",
+      "productCount": "{count} / {max} produkter",
+      "productsSelected": "{count, plural, one {# produkt} other {# produkter}}",
+      "noneSelected": "Ingen produkter endnu"
     }
   },
   "folders": {
@@ -3695,7 +3727,14 @@
     },
     "sendViewCatalogBodyTooLong": "Beskedteksten er for lang til en katalogbesked. Gør den kortere.",
     "sendViewCatalogFooterTooLong": "Sidefoden er for lang til en katalogbesked. Gør den kortere.",
-    "viewCatalog": "Se katalog"
+    "viewCatalog": "Se katalog",
+    "sendProductsDisplayUnsupported": "Denne kanal kan ikke sende denne type produktbesked.",
+    "sendProductsFieldRequired": "Dette felt er påkrævet.",
+    "sendProductsFieldNotAllowed": "Dette felt kan ikke bruges her.",
+    "sendProductsFieldTooLong": "Denne tekst er for lang.",
+    "sendProductsProductCountOutOfRange": "Vælg et gyldigt antal produkter.",
+    "sendProductsSectionCountOutOfRange": "Der er for mange sektioner.",
+    "sendProductsDuplicateProduct": "Et produkt kan kun forekomme én gang."
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",

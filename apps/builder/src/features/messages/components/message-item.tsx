@@ -10,6 +10,7 @@ import {
   getWhatsappCallEntity,
   getWhatsappCallPermissionReply,
   getWhatsappFlowResponse,
+  isMessageProductEntity,
 } from "@chatbotx.io/sdk"
 import {
   Avatar,
@@ -60,6 +61,7 @@ import type { MessageResourceWithRelations } from "../schema/resource"
 import { MessageActions, MessageActionsEditor } from "./message-actions"
 import { MessageBubble } from "./message-bubble"
 import { MessageErrorBadge } from "./message-error-badge"
+import { ProductMessageBubble } from "./product-message-bubble"
 import { ThreadControlContextCard } from "./thread-control-context-card"
 import { ThreadControlDivider } from "./thread-control-divider"
 import { WhatsappCallCard } from "./whatsapp-call-card"
@@ -836,6 +838,10 @@ const RenderContentAttributes = (props: MessageItemProps) => {
   )
   if (threadControlContext) {
     return <ThreadControlContextCard data={threadControlContext} />
+  }
+
+  if (isMessageProductEntity(message.contentAttributes)) {
+    return <ProductMessageBubble message={message.contentAttributes.payload} />
   }
 
   const contentAttributes = message.contentAttributes as

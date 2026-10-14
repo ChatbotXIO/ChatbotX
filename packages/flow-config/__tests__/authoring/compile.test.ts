@@ -189,6 +189,82 @@ describe("compileFlowSpec — one node per step type", () => {
     expectPublishable(compiled.nodes, compiled.edges)
   })
 
+  test("sendProducts compiles to a publishable whatsapp product list", () => {
+    const compiled = compileFlowSpec(
+      spec(
+        [
+          {
+            type: "sendProducts",
+            display: "products",
+            header: "Our picks",
+            body: "Have a look",
+            sections: [
+              { title: "Shoes", productIds: ["11", "12"] },
+              { title: "Bags", productIds: ["13"] },
+            ],
+          },
+        ],
+        { channel: "whatsapp" },
+      ),
+      emptyCtx,
+    )
+    const node = compiled.nodes[0]
+    expect(node?.type).toBe(nodeTypeSchema.enum.sendMessage)
+    if (node?.type === "sendMessage") {
+      expect(node.data.details.beforeStep.channel).toBe("whatsapp")
+      expect(node.data.details.steps[0]).toMatchObject({
+        stepType: stepTypes.enum.sendProducts,
+        display: "products",
+        sections: [
+          { title: "Shoes", productIds: ["11", "12"] },
+          { title: "Bags", productIds: ["13"] },
+        ],
+      })
+    }
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("sendProducts carousel compiles for whatsapp", () => {
+    const compiled = compileFlowSpec(
+      spec(
+        [
+          {
+            type: "sendProducts",
+            display: "carousel",
+            body: "Look",
+            sections: [{ productIds: ["11", "12"] }],
+          },
+        ],
+        { channel: "whatsapp" },
+      ),
+      emptyCtx,
+    )
+    expect(compiled.nodes).toHaveLength(1)
+    expectPublishable(compiled.nodes, compiled.edges)
+  })
+
+  test("sendProducts is rejected at publish on a channel without product messages", () => {
+    const compiled = compileFlowSpec(
+      spec(
+        [
+          {
+            type: "sendProducts",
+            display: "carousel",
+            body: "Look",
+            sections: [{ productIds: ["11", "12"] }],
+          },
+        ],
+        { channel: "messenger" },
+      ),
+      emptyCtx,
+    )
+    const result = z
+      .array(flowVersionSchema)
+      .superRefine(refineStepsByChannel)
+      .safeParse(compiled.nodes)
+    expect(result.success).toBe(false)
+  })
+
   test("send uses the flow channel or defaults to omnichannel", () => {
     const whatsapp = compileFlowSpec(
       spec([{ type: "send", text: "Hello!" }], { channel: "whatsapp" }),

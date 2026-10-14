@@ -1708,7 +1708,14 @@
     },
     "sendViewCatalogBodyTooLong": "訊息文字對目錄訊息來說太長，請縮短。",
     "sendViewCatalogFooterTooLong": "頁尾對目錄訊息來說太長，請縮短。",
-    "viewCatalog": "查看目錄"
+    "viewCatalog": "查看目錄",
+    "sendProductsDisplayUnsupported": "此管道無法傳送這種類型的商品訊息。",
+    "sendProductsFieldRequired": "此欄位為必填。",
+    "sendProductsFieldNotAllowed": "此處無法使用該欄位。",
+    "sendProductsFieldTooLong": "文字過長。",
+    "sendProductsProductCountOutOfRange": "請選擇有效的商品數量。",
+    "sendProductsSectionCountOutOfRange": "群組過多。",
+    "sendProductsDuplicateProduct": "同一商品只能出現一次。"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
@@ -2903,7 +2910,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "對話控制",
       "sendGoogleAdsConversion": "傳送 Google Ads 轉換",
-      "sendViewCatalog": "查看商品目錄"
+      "sendViewCatalog": "查看商品目錄",
+      "sendProducts": "傳送商品"
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -3041,6 +3049,37 @@
     "sendViewCatalog": {
       "footerLabel": "頁尾",
       "thumbnailLabel": "縮圖商品"
+    },
+    "sendProducts": {
+      "description": "選擇要傳送的商品以及顯示方式。",
+      "display": "顯示方式",
+      "displays": {
+        "products": "商品",
+        "carousel": "輪播"
+      },
+      "products": "商品",
+      "selectProducts": "選擇商品",
+      "searchProducts": "搜尋商品",
+      "noProducts": "找不到商品。",
+      "loading": "載入中...",
+      "loadError": "無法載入商品。",
+      "retry": "重試",
+      "catalogNotConnected": "請連結並同步 Meta 商品目錄以傳送商品。",
+      "openProducts": "開啟商品",
+      "channelUnsupported": "此管道無法傳送商品。",
+      "unavailableProduct": "商品無法使用",
+      "removeProduct": "移除商品",
+      "removeSection": "移除群組",
+      "moreOptions": "更多選項",
+      "fewerOptions": "收合選項",
+      "header": "標題",
+      "body": "內文",
+      "footer": "頁尾",
+      "sectionTitle": "群組標題",
+      "addSection": "新增群組",
+      "productCount": "{count} / {max} 件商品",
+      "productsSelected": "{count, plural, one {# 件商品} other {# 件商品}}",
+      "noneSelected": "尚無商品"
     }
   },
   "folders": {

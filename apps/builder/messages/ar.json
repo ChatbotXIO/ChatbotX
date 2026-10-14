@@ -2693,7 +2693,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "التحكم في المحادثة",
       "sendGoogleAdsConversion": "إرسال تحويل Google Ads",
-      "sendViewCatalog": "عرض الكتالوج"
+      "sendViewCatalog": "عرض الكتالوج",
+      "sendProducts": "إرسال المنتجات"
     },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
@@ -2831,6 +2832,37 @@
     "sendViewCatalog": {
       "footerLabel": "التذييل",
       "thumbnailLabel": "منتج الصورة المصغرة"
+    },
+    "sendProducts": {
+      "description": "اختر المنتجات المراد إرسالها وطريقة عرضها.",
+      "display": "طريقة العرض",
+      "displays": {
+        "products": "المنتجات",
+        "carousel": "شريط متحرك"
+      },
+      "products": "المنتجات",
+      "selectProducts": "اختيار المنتجات",
+      "searchProducts": "البحث عن المنتجات",
+      "noProducts": "لم يتم العثور على منتجات.",
+      "loading": "جارٍ التحميل...",
+      "loadError": "تعذّر تحميل المنتجات.",
+      "retry": "إعادة المحاولة",
+      "catalogNotConnected": "اربط كتالوج Meta وزامِنه لإرسال المنتجات.",
+      "openProducts": "فتح المنتجات",
+      "channelUnsupported": "لا يمكن لهذه القناة إرسال المنتجات.",
+      "unavailableProduct": "منتج غير متاح",
+      "removeProduct": "إزالة المنتج",
+      "removeSection": "إزالة القسم",
+      "moreOptions": "المزيد من الخيارات",
+      "fewerOptions": "خيارات أقل",
+      "header": "العنوان",
+      "body": "النص",
+      "footer": "التذييل",
+      "sectionTitle": "عنوان القسم",
+      "addSection": "إضافة قسم",
+      "productCount": "{count} / {max} منتج",
+      "productsSelected": "{count, plural, one {# منتج} other {# منتجات}}",
+      "noneSelected": "لا توجد منتجات بعد"
     }
   },
   "folders": {
@@ -3695,7 +3727,14 @@
     },
     "sendViewCatalogBodyTooLong": "نص الرسالة طويل جدًا لرسالة الكتالوج. قم باختصاره.",
     "sendViewCatalogFooterTooLong": "التذييل طويل جدًا لرسالة الكتالوج. قم باختصاره.",
-    "viewCatalog": "عرض الكتالوج"
+    "viewCatalog": "عرض الكتالوج",
+    "sendProductsDisplayUnsupported": "لا يمكن لهذه القناة إرسال هذا النوع من رسائل المنتجات.",
+    "sendProductsFieldRequired": "هذا الحقل مطلوب.",
+    "sendProductsFieldNotAllowed": "لا يمكن استخدام هذا الحقل هنا.",
+    "sendProductsFieldTooLong": "هذا النص طويل جدًا.",
+    "sendProductsProductCountOutOfRange": "اختر عددًا صالحًا من المنتجات.",
+    "sendProductsSectionCountOutOfRange": "عدد الأقسام كبير جدًا.",
+    "sendProductsDuplicateProduct": "لا يمكن أن يظهر المنتج إلا مرة واحدة."
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",

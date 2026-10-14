@@ -2693,7 +2693,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Control del hilo",
       "sendGoogleAdsConversion": "Enviar conversión de Google Ads",
-      "sendViewCatalog": "Ver catálogo"
+      "sendViewCatalog": "Ver catálogo",
+      "sendProducts": "Enviar productos"
     },
     "splitTraffic": {
       "balanceHint": "La suma total debe ser igual al 100 %.",
@@ -2831,6 +2832,37 @@
     "sendViewCatalog": {
       "footerLabel": "Pie de mensaje",
       "thumbnailLabel": "Producto de la miniatura"
+    },
+    "sendProducts": {
+      "description": "Elige los productos que quieres enviar y cómo mostrarlos.",
+      "display": "Visualización",
+      "displays": {
+        "products": "Productos",
+        "carousel": "Carrusel"
+      },
+      "products": "Productos",
+      "selectProducts": "Seleccionar productos",
+      "searchProducts": "Buscar productos",
+      "noProducts": "No se encontraron productos.",
+      "loading": "Cargando...",
+      "loadError": "No se pudieron cargar los productos.",
+      "retry": "Reintentar",
+      "catalogNotConnected": "Conecta y sincroniza un catálogo de Meta para enviar productos.",
+      "openProducts": "Abrir Productos",
+      "channelUnsupported": "Este canal no puede enviar productos.",
+      "unavailableProduct": "Producto no disponible",
+      "removeProduct": "Quitar producto",
+      "removeSection": "Quitar sección",
+      "moreOptions": "Más opciones",
+      "fewerOptions": "Menos opciones",
+      "header": "Titular",
+      "body": "Cuerpo",
+      "footer": "Pie de página",
+      "sectionTitle": "Título de la sección",
+      "addSection": "Añadir sección",
+      "productCount": "{count} / {max} productos",
+      "productsSelected": "{count, plural, one {# producto} other {# productos}}",
+      "noneSelected": "Aún no hay productos"
     }
   },
   "folders": {
@@ -3695,7 +3727,14 @@
     },
     "sendViewCatalogBodyTooLong": "El texto del mensaje es demasiado largo para un mensaje de catálogo. Acórtalo.",
     "sendViewCatalogFooterTooLong": "El pie es demasiado largo para un mensaje de catálogo. Acórtalo.",
-    "viewCatalog": "Ver catálogo"
+    "viewCatalog": "Ver catálogo",
+    "sendProductsDisplayUnsupported": "Este canal no puede enviar este tipo de mensaje de producto.",
+    "sendProductsFieldRequired": "Este campo es obligatorio.",
+    "sendProductsFieldNotAllowed": "Este campo no se puede usar aquí.",
+    "sendProductsFieldTooLong": "Este texto es demasiado largo.",
+    "sendProductsProductCountOutOfRange": "Elige un número válido de productos.",
+    "sendProductsSectionCountOutOfRange": "Hay demasiadas secciones.",
+    "sendProductsDuplicateProduct": "Un producto solo puede aparecer una vez."
   },
   "instagram": {
     "description": "This integración lets tú Crear Instagram bots.",

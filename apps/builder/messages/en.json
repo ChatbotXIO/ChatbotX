@@ -3376,7 +3376,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread Control",
       "sendGoogleAdsConversion": "Send Google Ads Conversion",
-      "sendViewCatalog": "View catalog"
+      "sendViewCatalog": "View catalog",
+      "sendProducts": "Send Products"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
@@ -3514,6 +3515,37 @@
     "sendViewCatalog": {
       "footerLabel": "Footer",
       "thumbnailLabel": "Thumbnail product"
+    },
+    "sendProducts": {
+      "description": "Choose the products to send and how to show them.",
+      "display": "Display",
+      "displays": {
+        "products": "Products",
+        "carousel": "Carousel"
+      },
+      "products": "Products",
+      "selectProducts": "Select products",
+      "searchProducts": "Search products",
+      "noProducts": "No products found.",
+      "loading": "Loading...",
+      "loadError": "Couldn't load products.",
+      "retry": "Try again",
+      "catalogNotConnected": "Connect and sync a Meta Catalog to send products.",
+      "openProducts": "Open Products",
+      "channelUnsupported": "This channel can't send products.",
+      "unavailableProduct": "Unavailable product",
+      "removeProduct": "Remove product",
+      "removeSection": "Remove section",
+      "moreOptions": "More Options",
+      "fewerOptions": "Fewer Options",
+      "header": "Headline",
+      "body": "Body",
+      "footer": "Footer",
+      "sectionTitle": "Section title",
+      "addSection": "Add section",
+      "productCount": "{count} / {max} products",
+      "productsSelected": "{count, plural, one {# product} other {# products}}",
+      "noneSelected": "No products yet"
     }
   },
   "folders": {
@@ -4378,7 +4410,14 @@
     },
     "sendViewCatalogBodyTooLong": "The message text is too long for a catalog message. Shorten it.",
     "sendViewCatalogFooterTooLong": "The footer is too long for a catalog message. Shorten it.",
-    "viewCatalog": "View catalog"
+    "viewCatalog": "View catalog",
+    "sendProductsDisplayUnsupported": "This channel can't send this kind of product message.",
+    "sendProductsFieldRequired": "This field is required.",
+    "sendProductsFieldNotAllowed": "This field can't be used here.",
+    "sendProductsFieldTooLong": "This text is too long.",
+    "sendProductsProductCountOutOfRange": "Pick a valid number of products.",
+    "sendProductsSectionCountOutOfRange": "There are too many sections.",
+    "sendProductsDuplicateProduct": "A product can only appear once."
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

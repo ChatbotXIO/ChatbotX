@@ -16,6 +16,7 @@ import type {
   SendImageStepSchema,
   SendMessengerTemplateMessageStepSchema,
   SendMultipleImagesStepSchema,
+  SendProductsStepSchema,
   SendQuickReplyStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
@@ -92,6 +93,7 @@ export type ChatJobSendFlowStep = {
       | SendWaTemplateMessageStepSchema
       | SendMessengerTemplateMessageStepSchema
       | WhatsappCallButtonStepSchema
+      | SendProductsStepSchema
       | WhatsappLocationStepSchema
       | SendViewCatalogStepSchema
     trackingContext?: BotResponseTrackingContext

@@ -34,6 +34,7 @@ const MESSAGE_STEP_TYPES = [
   stepTypes.enum.whatsappCallButton,
   stepTypes.enum.whatsappLocation,
   stepTypes.enum.whatsappFlow,
+  stepTypes.enum.sendProducts,
 ] as const satisfies readonly StepType[]
 
 const HANDLED_STEP_TYPES: ReadonlyArray<{

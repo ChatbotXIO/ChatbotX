@@ -2735,7 +2735,8 @@
       "metaConversions": "API Chuyển đổi Meta",
       "threadControl": "Điều khiển luồng",
       "sendGoogleAdsConversion": "Gửi chuyển đổi Google Ads",
-      "sendViewCatalog": "Xem danh mục"
+      "sendViewCatalog": "Xem danh mục",
+      "sendProducts": "Gửi sản phẩm"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2873,6 +2874,37 @@
     "sendViewCatalog": {
       "footerLabel": "Chân tin nhắn",
       "thumbnailLabel": "Sản phẩm làm ảnh thu nhỏ"
+    },
+    "sendProducts": {
+      "description": "Chọn sản phẩm cần gửi và cách hiển thị.",
+      "display": "Kiểu hiển thị",
+      "displays": {
+        "products": "Sản phẩm",
+        "carousel": "Băng chuyền"
+      },
+      "products": "Sản phẩm",
+      "selectProducts": "Chọn sản phẩm",
+      "searchProducts": "Tìm sản phẩm",
+      "noProducts": "Không tìm thấy sản phẩm.",
+      "loading": "Đang tải...",
+      "loadError": "Không thể tải sản phẩm.",
+      "retry": "Thử lại",
+      "catalogNotConnected": "Hãy kết nối và đồng bộ Meta Catalog để gửi sản phẩm.",
+      "openProducts": "Mở Sản phẩm",
+      "channelUnsupported": "Kênh này không thể gửi sản phẩm.",
+      "unavailableProduct": "Sản phẩm không khả dụng",
+      "removeProduct": "Xóa sản phẩm",
+      "removeSection": "Xóa nhóm",
+      "moreOptions": "Thêm tùy chọn",
+      "fewerOptions": "Ít tùy chọn hơn",
+      "header": "Tiêu đề",
+      "body": "Nội dung",
+      "footer": "Chân trang",
+      "sectionTitle": "Tiêu đề nhóm",
+      "addSection": "Thêm nhóm",
+      "productCount": "{count} / {max} sản phẩm",
+      "productsSelected": "{count, plural, one {# sản phẩm} other {# sản phẩm}}",
+      "noneSelected": "Chưa có sản phẩm"
     }
   },
   "folders": {
@@ -3737,7 +3769,14 @@
     },
     "sendViewCatalogBodyTooLong": "Nội dung tin nhắn quá dài so với tin nhắn danh mục. Hãy rút ngắn.",
     "sendViewCatalogFooterTooLong": "Chân tin nhắn quá dài so với tin nhắn danh mục. Hãy rút ngắn.",
-    "viewCatalog": "Xem sản phẩm"
+    "viewCatalog": "Xem sản phẩm",
+    "sendProductsDisplayUnsupported": "Kênh này không thể gửi loại tin nhắn sản phẩm này.",
+    "sendProductsFieldRequired": "Trường này là bắt buộc.",
+    "sendProductsFieldNotAllowed": "Không thể dùng trường này ở đây.",
+    "sendProductsFieldTooLong": "Văn bản này quá dài.",
+    "sendProductsProductCountOutOfRange": "Hãy chọn số lượng sản phẩm hợp lệ.",
+    "sendProductsSectionCountOutOfRange": "Có quá nhiều nhóm.",
+    "sendProductsDuplicateProduct": "Mỗi sản phẩm chỉ được xuất hiện một lần."
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

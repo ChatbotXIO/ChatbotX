@@ -45,6 +45,7 @@ import {
   convertFlowStepImage,
   convertFlowStepMultipleImages,
 } from "./send-image"
+import { convertFlowStepSendProducts } from "./send-products"
 import { convertFlowStepText } from "./send-text"
 import { convertFlowStepViewCatalog } from "./send-view-catalog"
 import { convertFlowStepWaTemplate } from "./send-wa-template"
@@ -235,6 +236,9 @@ function* convertFlowStepToWhatsappMessage(
         >[0],
       )
       break
+    case stepTypes.enum.sendProducts:
+      yield* convertFlowStepSendProducts(props)
+      break
     default:
       throw new Error(`Unsupported WhatsApp flow step: ${step.stepType}`)
   }
@@ -248,6 +252,9 @@ const isRawWhatsappMessage = (
   message._type === "interactive_carousel" ||
   message._type === "interactive_voice_call" ||
   message._type === "interactive_call_permission_request" ||
+  message._type === "interactive_product" ||
+  message._type === "interactive_product_list" ||
+  message._type === "interactive_product_carousel" ||
   message._type === "location" ||
   message._type === "location_request"
 
@@ -327,6 +334,7 @@ export const handledFlowStepTypes = [
   stepTypes.enum.whatsappOptionList,
   stepTypes.enum.whatsappCallButton,
   stepTypes.enum.whatsappFlow,
+  stepTypes.enum.sendProducts,
   stepTypes.enum.whatsappLocation,
 ] as const satisfies readonly StepType[]
 

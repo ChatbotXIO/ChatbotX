@@ -320,10 +320,78 @@ export type InteractiveCallPermissionRequestMessage = {
   }
 }
 
+type InteractiveText = { text: string }
+
+/**
+ * Meta's single-product interactive — one catalog product, optional body and
+ * footer. Not modeled by whatsapp-api-js, so it's posted raw.
+ *
+ * @see https://developers.facebook.com/documentation/business-messaging/whatsapp/catalogs/single-product-messages/
+ */
+export type InteractiveProductMessage = {
+  _type: "interactive_product"
+  type: "interactive"
+  interactive: {
+    type: "product"
+    body?: InteractiveText
+    footer?: InteractiveText
+    action: { catalog_id: string; product_retailer_id: string }
+  }
+}
+
+/**
+ * Meta's multi-product interactive. Not modeled by whatsapp-api-js, so it's
+ * posted raw.
+ *
+ * @see https://developers.facebook.com/documentation/business-messaging/whatsapp/catalogs/multi-product-messages/
+ */
+export type InteractiveProductListMessage = {
+  _type: "interactive_product_list"
+  type: "interactive"
+  interactive: {
+    type: "product_list"
+    header: { type: "text"; text: string }
+    body: InteractiveText
+    footer?: InteractiveText
+    action: {
+      catalog_id: string
+      sections: Array<{
+        title?: string
+        product_items: Array<{ product_retailer_id: string }>
+      }>
+    }
+  }
+}
+
+/**
+ * Meta's product carousel interactive: 2-10 product cards, body only. Not
+ * modeled by whatsapp-api-js, so it's posted raw.
+ *
+ * @see https://developers.facebook.com/documentation/business-messaging/whatsapp/catalogs/interactive-product-carousel-messages/
+ */
+export type InteractiveProductCarouselMessage = {
+  _type: "interactive_product_carousel"
+  type: "interactive"
+  interactive: {
+    type: "carousel"
+    body: InteractiveText
+    action: {
+      cards: Array<{
+        card_index: number
+        type: "product"
+        action: { product_retailer_id: string; catalog_id: string }
+      }>
+    }
+  }
+}
+
 /** Messages posted raw because whatsapp-api-js does not model their payloads. */
 export type RawWhatsappMessage =
   | InteractiveCallPermissionRequestMessage
   | InteractiveCarouselMessage
+  | InteractiveProductCarouselMessage
+  | InteractiveProductListMessage
+  | InteractiveProductMessage
   | InteractiveVoiceCallMessage
   | LocationMessage
   | LocationRequestMessage

@@ -63,6 +63,7 @@ import sendImageStep from "./send-image"
 import sendMessengerTemplateMessageStep from "./send-messenger-template-message"
 import { sendMetaCapiEventStep } from "./send-meta-capi-event"
 import sendMultipleImagesStep from "./send-multiple-images"
+import sendProductsStep from "./send-products"
 import sendTextStep from "./send-text"
 import { sendVideoStep } from "./send-video"
 import sendViewCatalogStep from "./send-view-catalog"
@@ -199,6 +200,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.whatsappOptionList]: whatsappOptionListStep,
   [stepTypes.enum.whatsappCallButton]: whatsappCallButtonStep,
   [stepTypes.enum.whatsappFlow]: whatsappFlowStep,
+  [stepTypes.enum.sendProducts]: sendProductsStep,
   [stepTypes.enum.whatsappLocation]: whatsappLocationStep,
   [stepTypes.enum.setMessengerUserPersistentMenu]:
     setMessengerUserPersistentMenuStep,

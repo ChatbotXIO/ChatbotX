@@ -2547,7 +2547,8 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread-Steuerung",
       "sendGoogleAdsConversion": "Google-Ads-Conversion senden",
-      "sendViewCatalog": "Katalog ansehen"
+      "sendViewCatalog": "Katalog ansehen",
+      "sendProducts": "Produkte senden"
     },
     "splitTraffic": {
       "balanceHint": "Die Gesamtsumme muss 100 % ergeben.",
@@ -2685,6 +2686,37 @@
     "sendViewCatalog": {
       "footerLabel": "Fußzeile",
       "thumbnailLabel": "Vorschaubild-Produkt"
+    },
+    "sendProducts": {
+      "description": "Wähle die Produkte aus, die gesendet werden sollen, und wie sie angezeigt werden.",
+      "display": "Darstellung",
+      "displays": {
+        "products": "Produkte",
+        "carousel": "Karussell"
+      },
+      "products": "Produkte",
+      "selectProducts": "Produkte auswählen",
+      "searchProducts": "Produkte suchen",
+      "noProducts": "Keine Produkte gefunden.",
+      "loading": "Wird geladen...",
+      "loadError": "Produkte konnten nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "catalogNotConnected": "Verbinde und synchronisiere einen Meta-Katalog, um Produkte zu senden.",
+      "openProducts": "Produkte öffnen",
+      "channelUnsupported": "Dieser Kanal kann keine Produkte senden.",
+      "unavailableProduct": "Produkt nicht verfügbar",
+      "removeProduct": "Produkt entfernen",
+      "removeSection": "Abschnitt entfernen",
+      "moreOptions": "Weitere Optionen",
+      "fewerOptions": "Weniger Optionen",
+      "header": "Überschrift",
+      "body": "Text",
+      "footer": "Fußzeile",
+      "sectionTitle": "Abschnittstitel",
+      "addSection": "Abschnitt hinzufügen",
+      "productCount": "{count} / {max} Produkte",
+      "productsSelected": "{count, plural, one {# Produkt} other {# Produkte}}",
+      "noneSelected": "Noch keine Produkte"
     }
   },
   "folders": {
@@ -3695,7 +3727,14 @@
     },
     "sendViewCatalogBodyTooLong": "Der Nachrichtentext ist für eine Katalognachricht zu lang. Kürze ihn.",
     "sendViewCatalogFooterTooLong": "Die Fußzeile ist für eine Katalognachricht zu lang. Kürze sie.",
-    "viewCatalog": "Katalog ansehen"
+    "viewCatalog": "Katalog ansehen",
+    "sendProductsDisplayUnsupported": "Dieser Kanal kann diese Art von Produktnachricht nicht senden.",
+    "sendProductsFieldRequired": "Dieses Feld ist erforderlich.",
+    "sendProductsFieldNotAllowed": "Dieses Feld kann hier nicht verwendet werden.",
+    "sendProductsFieldTooLong": "Dieser Text ist zu lang.",
+    "sendProductsProductCountOutOfRange": "Wähle eine gültige Anzahl an Produkten.",
+    "sendProductsSectionCountOutOfRange": "Es gibt zu viele Abschnitte.",
+    "sendProductsDuplicateProduct": "Ein Produkt darf nur einmal vorkommen."
   },
   "instagram": {
     "description": "Mit dieser Integration können Sie Instagram-Bots erstellen.",

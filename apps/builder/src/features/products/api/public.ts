@@ -1,5 +1,6 @@
 import {
   integrationMetaCatalogService,
+  productMessageService,
   productService,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
@@ -74,6 +75,10 @@ import {
   updateProductPublicRequest,
 } from "../schema/public"
 import { listProductsRequest } from "../schema/query"
+import {
+  listSendableProductsRequest,
+  listSendableProductsResponse,
+} from "../schema/sendable"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("ecommerce")
 
@@ -380,6 +385,26 @@ export const productsPublicRouter = {
     .handler(
       async ({ context, input }) =>
         await productService.list({
+          ...input,
+          workspaceId: context.workspace.id,
+        }),
+    ),
+
+  listSendable: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/products/sendable",
+      summary: "List sendable products",
+      description:
+        "Lists the products a `sendProducts` flow step can show on a channel: active products linked in the workspace's connected Meta Catalog. Put the returned ids in the step's `sections[].productIds`. `ready` is false, with a `reason`, when the channel cannot send products or no catalog is connected. See `capabilities.get` for per-channel limits.",
+      tags: ["Products"],
+    })
+    .input(withPublicPaging(listSendableProductsRequest))
+    .output(listSendableProductsResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(
+      async ({ context, input }) =>
+        await productMessageService.listSendable({
           ...input,
           workspaceId: context.workspace.id,
         }),
