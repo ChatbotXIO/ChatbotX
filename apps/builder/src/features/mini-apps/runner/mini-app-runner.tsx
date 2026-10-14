@@ -23,7 +23,7 @@ import {
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useMemo, useState } from "react"
-import { NodeView } from "../components/node-view"
+import { NodeView } from "../renderer/node-view"
 
 type Answers = Record<string, Record<string, unknown>>
 

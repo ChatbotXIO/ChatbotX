@@ -14,7 +14,7 @@ import { submitMiniAppAction } from "../actions/submit-mini-app.action"
 import {
   type MiniAppUploader,
   MiniAppUploaderContext,
-} from "../components/file-upload-field"
+} from "../renderer/file-upload-field"
 import { MiniAppRunner } from "./mini-app-runner"
 
 const HTTP_CREATED = 201

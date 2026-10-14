@@ -24,6 +24,7 @@ import {
   type MiniAppPropertyKey,
   propertyLabelKey,
 } from "../../lib/labels"
+import { readString } from "../../lib/props"
 import { useIssueMessage } from "../../lib/use-issue-message"
 import { VariableTextEditor } from "./variable-text-editor"
 
@@ -118,8 +119,6 @@ export function FieldRow({
     </div>
   )
 }
-
-const readString = (value: unknown) => (typeof value === "string" ? value : "")
 
 /** `length/max` under a text field; a `{{custom field}}` counts as one character. */
 export function DisplayTextCounter({
