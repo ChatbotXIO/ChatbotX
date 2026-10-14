@@ -208,6 +208,19 @@ export const mapDisplayText = (
   return next
 }
 
+const stripDisplayText = (definition: MiniAppDefinition) =>
+  JSON.stringify(mapDisplayText(definition, () => ""))
+
+/**
+ * Whether two definitions differ only in their display texts (e.g. the same
+ * Mini App with `{{variables}}` resolved for different values): same screens,
+ * nodes, inputs and actions.
+ */
+export const hasSameStructure = (
+  a: MiniAppDefinition,
+  b: MiniAppDefinition,
+): boolean => stripDisplayText(a) === stripDisplayText(b)
+
 /** Whether any display text or screen title holds a `{{variable}}`. */
 export const hasContactVariables = (definition: MiniAppDefinition): boolean => {
   for (const { text } of displayTexts(definition)) {

@@ -23,6 +23,7 @@ import type {
 import {
   collectCustomFieldMappings,
   collectFileInputNames,
+  collectInputNames,
   type FlowJson,
   formatAnswerForCustomField,
   fromFlowJson,
@@ -38,7 +39,10 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { contactService } from "../contact/service"
-import { contactCustomFieldService } from "../contact-custom-field/service"
+import {
+  contactCustomFieldService,
+  type PendingContactCustomFieldChange,
+} from "../contact-custom-field/service"
 import { notFoundException, validationException } from "../errors"
 import { logger } from "../logger"
 import { miniAppUploadService } from "./upload-service"
@@ -351,9 +355,58 @@ class MiniAppSubmissionService extends BaseService {
   }
 
   /**
-   * Copies mapped answers into the contact's custom fields. Runs after the
-   * submission is stored, and a rejected value (e.g. text into a number
-   * field) is logged rather than failing the visitor's submit.
+   * Saves one screen's mapped answers to the contact's custom fields as the
+   * visitor moves on, so the next screens already show the new values. File
+   * inputs wait for the final submit, which claims their uploads. Returns
+   * whether the contact is known (anonymous visitors save nothing).
+   */
+  async saveScreenAnswers(input: {
+    miniApp: Pick<MiniAppModel, "workspaceId" | "definition">
+    contactId?: string | null
+    screenKey: string
+    answers: unknown
+    sourceTimezone?: string
+  }): Promise<boolean> {
+    const screen = input.miniApp.definition.screens.find(
+      (candidate) => candidate.key === input.screenKey,
+    )
+    if (!(screen && input.contactId)) {
+      return false
+    }
+    const contact = await contactService.findById({
+      workspaceId: input.miniApp.workspaceId,
+      id: input.contactId,
+    })
+    if (!contact) {
+      return false
+    }
+    const answers = sanitizeMiniAppAnswers(
+      input.miniApp.definition,
+      input.answers,
+    )
+    const screenNames = new Set(collectInputNames(screen))
+    const fileInputNames = collectFileInputNames(input.miniApp.definition)
+    const screenAnswers = Object.fromEntries(
+      Object.entries(answers ?? {}).filter(
+        ([name]) => screenNames.has(name) && !fileInputNames.has(name),
+      ),
+    )
+    await this.writeCustomFields({
+      workspaceId: input.miniApp.workspaceId,
+      contactId: contact.id,
+      definition: input.miniApp.definition,
+      answers: screenAnswers,
+      sourceTimezone: input.sourceTimezone,
+    })
+    return true
+  }
+
+  /**
+   * Copies mapped answers into the contact's custom fields in one
+   * transaction, each field behind its own savepoint: a rejected value (e.g.
+   * text into a number field) is logged and skipped, never dropping the other
+   * fields or failing the visitor's submit. Events go out and the contact
+   * cache is cleared once, after the commit.
    */
   private async writeCustomFields(input: {
     workspaceId: string
@@ -371,19 +424,47 @@ class MiniAppSubmissionService extends BaseService {
     if (fields.length === 0) {
       return
     }
-    try {
-      await contactCustomFieldService.setValues({
-        workspaceId: input.workspaceId,
-        contactId: input.contactId,
-        fields,
-        sourceTimezone: input.sourceTimezone,
-      })
-    } catch (err) {
-      logger.warn(
-        { err, contactId: input.contactId },
-        "Mini App answers not written to custom fields",
-      )
-    }
+    const changes = await db.transaction(async (tx) => {
+      const writeFields = (batch: typeof fields) =>
+        tx.transaction((savepoint) =>
+          contactCustomFieldService.setValuesInTransaction(
+            {
+              workspaceId: input.workspaceId,
+              contactId: input.contactId,
+              fields: batch,
+              sourceTimezone: input.sourceTimezone,
+            },
+            savepoint,
+          ),
+        )
+      // All fields at once; only a rejected value falls back to one by one.
+      try {
+        return await writeFields(fields)
+      } catch {
+        // Retried field by field below to find and skip the rejected value.
+      }
+      const written: PendingContactCustomFieldChange[] = []
+      for (const field of fields) {
+        try {
+          written.push(...(await writeFields([field])))
+        } catch (err) {
+          logger.warn(
+            {
+              err,
+              contactId: input.contactId,
+              customFieldId: field.customFieldId,
+            },
+            "Mini App answer not written to its custom field",
+          )
+        }
+      }
+      return written
+    })
+    await contactCustomFieldService.emitCustomFieldChanges({
+      workspaceId: input.workspaceId,
+      contactId: input.contactId,
+      changes,
+    })
   }
 }
 

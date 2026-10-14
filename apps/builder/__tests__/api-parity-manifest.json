@@ -315,6 +315,7 @@
     "mini-apps/get-mini-app-flow-json.action:getMiniAppFlowJsonAction": "covered:mini-apps",
     "mini-apps/load-media-library-image.action:loadMediaLibraryImageAction": "private:editor-only helper that inlines a media-library image as base64; the public API takes Flow JSON with images already inlined",
     "mini-apps/publish-mini-app-whatsapp.action:publishMiniAppWhatsappAction": "covered:mini-apps",
+    "mini-apps/save-mini-app-screen.action:saveMiniAppScreenAction": "private:public visitor save of one screen's answers to the contact's custom fields from the Mini App link; answers are read through GET /v1/mini-apps/{id}/submissions",
     "mini-apps/submit-mini-app.action:submitMiniAppAction": "private:public visitor submit from the Mini App link; answers are read through GET /v1/mini-apps/{id}/submissions",
     "mini-apps/update-mini-app.action:updateMiniAppAction": "covered:mini-apps",
     "minigames/create-minigame.action:createMinigameAction": "covered:minigames",

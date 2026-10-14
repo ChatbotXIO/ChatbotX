@@ -1,9 +1,9 @@
 import { miniAppService } from "@chatbotx.io/business/mini-app"
-import { verifyMiniAppToken } from "@chatbotx.io/encryption/mini-app-token"
 import type { Metadata } from "next"
 import type { SearchParams } from "next/dist/server/request/search-params"
 import { getTranslations } from "next-intl/server"
 import { resolveContactVariables } from "@/features/mini-apps/lib/resolve-contact-variables"
+import { resolveVisitorContactId } from "@/features/mini-apps/lib/resolve-visitor-contact"
 import { PublicMiniApp } from "@/features/mini-apps/runner/public-mini-app"
 import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
 
@@ -56,18 +56,14 @@ export default async function MiniAppPublicPage(props: MiniAppPageProps) {
   // An unresolved `{{mini_app_token}}` (link opened outside a flow) is dropped.
   const rawToken = getParam(searchParams.token)
   const token = rawToken && !rawToken.startsWith("{{") ? rawToken : undefined
-  const payload = token
-    ? await verifyMiniAppToken(token).catch(() => null)
-    : null
-  // A token for another workspace is ignored rather than trusted.
-  const contactId =
-    payload && payload.workspaceId === miniApp.workspaceId
-      ? payload.contactId
-      : undefined
+  const contactId = await resolveVisitorContactId({
+    token,
+    workspaceId: miniApp.workspaceId,
+  })
   const definition = await resolveContactVariables({
     definition: miniApp.definition,
     workspaceId: miniApp.workspaceId,
-    contactId,
+    contactId: contactId ?? undefined,
   })
 
   return (

@@ -32,6 +32,14 @@ export type MiniAppRunnerProps = {
   definition: MiniAppDefinition
   /** Called with the `complete` payload; resolve to show the thank-you screen. */
   onComplete: (answers: Record<string, unknown>) => Promise<void>
+  /**
+   * Called with a screen's answers before the visitor moves to the next
+   * screen, so they can be saved right away. A failure never blocks moving on.
+   */
+  onNavigate?: (
+    screenKey: string,
+    answers: Record<string, unknown>,
+  ) => Promise<void>
   className?: string
 }
 
@@ -166,6 +174,7 @@ const validateField = (
 export function MiniAppRunner({
   definition,
   onComplete,
+  onNavigate,
   className,
 }: MiniAppRunnerProps) {
   const t = useTranslations("miniApps.runner")
@@ -175,9 +184,9 @@ export function MiniAppRunner({
   )
   const [answers, setAnswers] = useState<Answers>({})
   const [errors, setErrors] = useState<Record<string, FieldErrorCode>>({})
-  const [status, setStatus] = useState<"filling" | "submitting" | "done">(
-    "filling",
-  )
+  const [status, setStatus] = useState<
+    "filling" | "saving" | "submitting" | "done"
+  >("filling")
 
   const screen = definition.screens.find(
     (candidate) => candidate.key === history.at(-1),
@@ -227,7 +236,7 @@ export function MiniAppRunner({
   }
 
   const complete = async () => {
-    if (!screen) {
+    if (!screen || status !== "filling") {
       return
     }
     const payload: Record<string, unknown> = {}
@@ -249,17 +258,34 @@ export function MiniAppRunner({
     }
   }
 
+  const navigate = async (next: string) => {
+    if (status !== "filling") {
+      return
+    }
+    if (screen && onNavigate) {
+      setStatus("saving")
+      try {
+        await onNavigate(screen.key, answers[screen.id] ?? {})
+      } catch {
+        // Saving early is best effort; the final submit still sends everything.
+      }
+      setStatus("filling")
+    }
+    setHistory((current) => [...current, next])
+    setErrors({})
+  }
+
   const handleAction = (action: MiniAppAction) => {
     if (action.name === "open_url") {
       window.open(action.url, "_blank", "noopener,noreferrer")
       return
     }
-    if (!validateScreen()) {
+    // One step at a time: a screen save or submit in flight blocks the rest.
+    if (status !== "filling" || !validateScreen()) {
       return
     }
     if (action.name === "navigate") {
-      setHistory((current) => [...current, action.next])
-      setErrors({})
+      navigate(action.next).catch(() => undefined)
       return
     }
     complete().catch(() => undefined)
@@ -320,7 +346,7 @@ export function MiniAppRunner({
       )}
     >
       <div className="flex items-center gap-3 border-b px-4 py-3">
-        {history.length > 1 && status !== "done" ? (
+        {history.length > 1 && status === "filling" ? (
           <button
             aria-label={t("back")}
             onClick={() => {
@@ -337,7 +363,7 @@ export function MiniAppRunner({
         <span className="flex-1 truncate font-medium text-[16px]">
           {status === "done" ? "" : screen?.title || screen?.id}
         </span>
-        {status === "submitting" ? (
+        {status === "submitting" || status === "saving" ? (
           <Loader2Icon className="size-4 animate-spin text-[#008069]" />
         ) : null}
       </div>
