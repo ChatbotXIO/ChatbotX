@@ -21,7 +21,9 @@ export const messengerTemplateButtonParamSchema = z.object({
   text: z
     .string()
     .optional()
-    .describe("Variable value for a `url` button (the dynamic URL suffix)."),
+    .describe(
+      "Variable value for a `url` button (the dynamic URL suffix). For a Mini App or Minigame link, leave it blank to send each recipient's own token (`{{mini_app_token}}` / `{{minigame_play_token}}`); a fixed value would not identify the contact.",
+    ),
   payload: z
     .string()
     .optional()
@@ -160,6 +162,80 @@ function hasPlaceholder(text: string | undefined): boolean {
   return extractPlaceholderNames(text).length > 0
 }
 
+// Public Mini App and Minigame links carry a per-contact token as their last
+// query parameter. In a Messenger template that token becomes the URL button's
+// dynamic suffix: a pasted `.../mini-apps?id=1&token={{mini_app_token}}` is
+// saved as `.../mini-apps?id=1&token={{1}}`, and at send time the `{{1}}` gets
+// the matching system variable, minted for each recipient. Both directions use
+// the same page/variable pairs so a link saved with `{{1}}` is always filled.
+const TOKEN_URL_PAGES = [
+  { page: "mini-apps", variable: "mini_app_token" },
+  { page: "minigames", variable: "minigame_play_token" },
+] as const
+
+type MessengerUrlTokenVariable = (typeof TOKEN_URL_PAGES)[number]["variable"]
+
+function tokenUrlPattern(page: string, placeholder: string): RegExp {
+  return new RegExp(`/${page}\\?(?:[^#]*&)?token=\\{\\{${placeholder}\\}\\}$`)
+}
+
+const TOKEN_URL_SUFFIXES = TOKEN_URL_PAGES.map((entry) => ({
+  variable: entry.variable,
+  // A pasted link, still ending in its own token variable.
+  pastedPattern: tokenUrlPattern(entry.page, `\\s*${entry.variable}\\s*`),
+  // A saved template link, ending in a positional or named suffix.
+  savedPattern: tokenUrlPattern(entry.page, "\\w+"),
+}))
+
+const TOKEN_VARIABLE_PATTERN = new RegExp(
+  `\\{\\{\\s*(${TOKEN_URL_PAGES.map((entry) => entry.variable).join("|")})\\s*\\}\\}`,
+)
+const TRAILING_PLACEHOLDER_PATTERN = /\{\{[^{}]*\}\}$/
+
+/**
+ * Token variable (`mini_app_token` / `minigame_play_token`) used anywhere in
+ * `text`, or null.
+ */
+export function findMessengerTokenVariable(
+  text: string | undefined,
+): MessengerUrlTokenVariable | null {
+  const match = text?.match(TOKEN_VARIABLE_PATTERN)
+  return (match?.[1] as MessengerUrlTokenVariable | undefined) ?? null
+}
+
+/**
+ * For a pasted Mini App or Minigame link that ends in its token variable,
+ * the link with that suffix swapped for the positional `{{1}}` Meta accepts;
+ * otherwise null.
+ */
+export function normalizeMessengerTokenUrl(
+  url: string,
+): { url: string; variable: MessengerUrlTokenVariable } | null {
+  const match = TOKEN_URL_SUFFIXES.find((entry) =>
+    entry.pastedPattern.test(url),
+  )
+  if (!match) {
+    return null
+  }
+  return {
+    url: url.replace(TRAILING_PLACEHOLDER_PATTERN, "{{1}}"),
+    variable: match.variable,
+  }
+}
+
+/**
+ * Suggested value for a dynamic URL button's suffix: the token variable for a
+ * Mini App or Minigame link, otherwise an empty string.
+ */
+export function suggestMessengerUrlSuffixVariable(
+  url: string | undefined,
+): string {
+  const match = TOKEN_URL_SUFFIXES.find((entry) =>
+    entry.savedPattern.test(url ?? ""),
+  )
+  return match ? `{{${match.variable}}}` : ""
+}
+
 // NAMED templates echo each placeholder back as `parameter_name`; POSITIONAL
 // ones must omit the key entirely.
 function toParameterName(
@@ -211,11 +287,14 @@ export function extractMessengerTemplateParams(
         if (buttonType === "URL" && button.url) {
           // A dynamic URL ends in one suffix placeholder — {{1}}, or a named
           // one like {{url_suffix}} in NAMED templates — whose value the user
-          // fills in; a static URL is sent as is.
+          // fills in; a static URL is sent as is. A Mini App or Minigame link
+          // defaults its suffix to the recipient's token variable.
           buttonParams.push({
             sub_type: "url",
             index: idx,
-            text: hasPlaceholder(button.url) ? "" : button.url,
+            text: hasPlaceholder(button.url)
+              ? suggestMessengerUrlSuffixVariable(button.url)
+              : button.url,
           })
         }
         if (buttonType === "PHONE_NUMBER") {

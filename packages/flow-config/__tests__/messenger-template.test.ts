@@ -3,11 +3,14 @@ import {
   extractMessengerFlowButtons,
   extractMessengerParameterInfos,
   extractMessengerTemplateParams,
+  findMessengerTokenVariable,
   type MessengerTemplateComponent,
   mergeMessengerFlowButtonsWithExisting,
   messengerTemplateButtonParamSchema,
+  normalizeMessengerTokenUrl,
   sendMessengerTemplateMessageStepDefaultFn,
   sendMessengerTemplateMessageStepSchema,
+  suggestMessengerUrlSuffixVariable,
 } from "../src/steps/send-messenger-message-template"
 
 // ─── extractMessengerTemplateParams ─────────────────────────────────────────
@@ -265,6 +268,120 @@ describe("extractMessengerTemplateParams", () => {
         { sub_type: "url", index: 2, text: "https://ahachat.com/" },
       ])
     })
+  })
+})
+
+// ─── suggestMessengerUrlSuffixVariable ───────────────────────────────────────
+
+describe("suggestMessengerUrlSuffixVariable", () => {
+  test("Mini App link suggests {{mini_app_token}}", () => {
+    expect(
+      suggestMessengerUrlSuffixVariable(
+        "https://app.example.com/mini-apps?id=12&token={{1}}",
+      ),
+    ).toBe("{{mini_app_token}}")
+  })
+
+  test("Minigame link suggests {{minigame_play_token}}", () => {
+    expect(
+      suggestMessengerUrlSuffixVariable(
+        "https://app.example.com/minigames?minigameId=abc&token={{1}}",
+      ),
+    ).toBe("{{minigame_play_token}}")
+  })
+
+  test("other links suggest nothing", () => {
+    expect(suggestMessengerUrlSuffixVariable("https://example.com/{{1}}")).toBe(
+      "",
+    )
+    expect(suggestMessengerUrlSuffixVariable(undefined)).toBe("")
+  })
+
+  test("extractMessengerTemplateParams defaults a Mini App suffix to the token", () => {
+    const result = extractMessengerTemplateParams(
+      [
+        {
+          type: "BUTTONS",
+          buttons: [
+            {
+              type: "URL",
+              text: "Open",
+              url: "https://app.example.com/mini-apps?id=12&token={{1}}",
+            },
+          ],
+        },
+      ],
+      "POSITIONAL",
+    )
+    expect(result.button).toEqual([
+      { sub_type: "url", index: 0, text: "{{mini_app_token}}" },
+    ])
+  })
+})
+
+// ─── normalizeMessengerTokenUrl / findMessengerTokenVariable ─────────────────
+
+describe("normalizeMessengerTokenUrl", () => {
+  test("swaps a Mini App token suffix for {{1}}", () => {
+    expect(
+      normalizeMessengerTokenUrl(
+        "https://app.example.com/mini-apps?id=12&token={{mini_app_token}}",
+      ),
+    ).toEqual({
+      url: "https://app.example.com/mini-apps?id=12&token={{1}}",
+      variable: "mini_app_token",
+    })
+  })
+
+  test("swaps a Minigame token suffix for {{1}}", () => {
+    expect(
+      normalizeMessengerTokenUrl(
+        "https://app.example.com/minigames?minigameId=abc&token={{ minigame_play_token }}",
+      ),
+    ).toEqual({
+      url: "https://app.example.com/minigames?minigameId=abc&token={{1}}",
+      variable: "minigame_play_token",
+    })
+  })
+
+  test("every normalized link gets its token back at send time", () => {
+    const normalized = normalizeMessengerTokenUrl(
+      "https://app.example.com/mini-apps?id=12&token={{mini_app_token}}",
+    )
+    expect(suggestMessengerUrlSuffixVariable(normalized?.url)).toBe(
+      "{{mini_app_token}}",
+    )
+  })
+
+  test.each([
+    ["a non Mini App page", "https://shop.com/go?t={{mini_app_token}}"],
+    ["a path suffix", "https://x.com/app/{{minigame_play_token}}"],
+    [
+      "a token that is not last",
+      "https://app.example.com/mini-apps?id=12&token={{mini_app_token}}&utm=fb",
+    ],
+    [
+      "the other page's token",
+      "https://app.example.com/minigames?minigameId=abc&token={{mini_app_token}}",
+    ],
+  ])("returns null for %s", (_label, url) => {
+    expect(normalizeMessengerTokenUrl(url)).toBeNull()
+  })
+})
+
+describe("findMessengerTokenVariable", () => {
+  test("finds a token variable anywhere in the text", () => {
+    expect(
+      findMessengerTokenVariable("https://x/?t={{mini_app_token}}&a=1"),
+    ).toBe("mini_app_token")
+    expect(findMessengerTokenVariable("{{minigame_play_token}}")).toBe(
+      "minigame_play_token",
+    )
+  })
+
+  test("returns null without a token variable", () => {
+    expect(findMessengerTokenVariable("https://x/{{1}}")).toBeNull()
+    expect(findMessengerTokenVariable(undefined)).toBeNull()
   })
 })
 

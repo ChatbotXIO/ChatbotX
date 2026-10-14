@@ -46,6 +46,27 @@ export async function replaceMessengerTemplateVariables(props: {
     )
   }
 
+  // A dynamic URL button's suffix may hold contact variables, e.g. the
+  // per-recipient `{{mini_app_token}}` of a Mini App link. Each value is
+  // URL-encoded so a name like "a&b" cannot break or extend the link.
+  if (templateParams.button) {
+    replacedParams.button = await Promise.all(
+      templateParams.button.map(async (param) => {
+        if (param.sub_type === "url" && param.text) {
+          return {
+            ...param,
+            text: await contactVariableService.replaceAll({
+              variables,
+              text: param.text,
+              escapeValue: encodeURIComponent,
+            }),
+          }
+        }
+        return param
+      }),
+    )
+  }
+
   return replacedParams
 }
 
