@@ -411,4 +411,128 @@ describe("processMessengerTemplate — header variable guard", () => {
       { sub_type: "url", index: 0, text: "https://x.test/jobs" },
     ])
   })
+
+  test("fills a blank Mini App URL suffix with the recipient's token variable", async () => {
+    mockValidate.mockResolvedValue(
+      validatedWith([
+        BODY_WITH_VARIABLE,
+        {
+          type: "BUTTONS",
+          buttons: [
+            {
+              type: "URL",
+              text: "Open",
+              url: "https://x.test/mini-apps?id=12&token={{1}}",
+            },
+          ],
+        },
+      ]),
+    )
+
+    await sendWithParams({
+      body: [{ text: "Hi" }],
+      button: [{ sub_type: "url", index: 0, text: "" }],
+    })
+
+    expect(mockReplace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        templateParams: expect.objectContaining({
+          button: [{ sub_type: "url", index: 0, text: "{{mini_app_token}}" }],
+        }),
+      }),
+    )
+  })
+
+  test("fills a blank URL suffix saved without an index only once", async () => {
+    mockValidate.mockResolvedValue(
+      validatedWith([
+        BODY_WITH_VARIABLE,
+        {
+          type: "BUTTONS",
+          buttons: [
+            {
+              type: "URL",
+              text: "Open",
+              url: "https://x.test/mini-apps?id=12&token={{1}}",
+            },
+          ],
+        },
+      ]),
+    )
+
+    await sendWithParams({
+      body: [{ text: "Hi" }],
+      button: [{ sub_type: "url", text: "" }],
+    })
+
+    expect(sentParams().button).toEqual([
+      { sub_type: "url", index: 0, text: "{{mini_app_token}}" },
+    ])
+  })
+
+  test("stores the token variable, not the signed token, on the message", async () => {
+    mockValidate.mockResolvedValue(
+      validatedWith([
+        BODY_WITH_VARIABLE,
+        {
+          type: "BUTTONS",
+          buttons: [
+            {
+              type: "URL",
+              text: "Open",
+              url: "https://x.test/mini-apps?id=12&token={{1}}",
+            },
+          ],
+        },
+      ]),
+    )
+    mockReplace.mockImplementation(
+      ({ templateParams }: { templateParams: { button?: unknown[] } }) =>
+        Promise.resolve({
+          ...templateParams,
+          button: [{ sub_type: "url", index: 0, text: "signed-token" }],
+        }),
+    )
+
+    await sendWithParams({
+      body: [{ text: "Hi" }],
+      button: [{ sub_type: "url", index: 0, text: "" }],
+    })
+
+    const insertedValues = (db.insert as unknown as MockInstance).mock
+      .results[0].value.values as MockInstance
+    expect(
+      insertedValues.mock.calls[0][0].contentAttributes.template.params.button,
+    ).toEqual([{ sub_type: "url", index: 0, text: "{{mini_app_token}}" }])
+    expect(sentParams().button).toEqual([
+      { sub_type: "url", index: 0, text: "signed-token" },
+    ])
+  })
+
+  test("keeps a URL suffix the step already filled", async () => {
+    mockValidate.mockResolvedValue(
+      validatedWith([
+        BODY_WITH_VARIABLE,
+        {
+          type: "BUTTONS",
+          buttons: [
+            {
+              type: "URL",
+              text: "Open",
+              url: "https://x.test/mini-apps?id=12&token={{1}}",
+            },
+          ],
+        },
+      ]),
+    )
+
+    await sendWithParams({
+      body: [{ text: "Hi" }],
+      button: [{ sub_type: "url", index: 0, text: "custom" }],
+    })
+
+    expect(sentParams().button).toEqual([
+      { sub_type: "url", index: 0, text: "custom" },
+    ])
+  })
 })

@@ -111,6 +111,30 @@ describe("replaceMessengerTemplateVariables", () => {
     expect(result.button).toEqual(params.button)
   })
 
+  test("replaces variables in a URL button suffix", async () => {
+    mockReplaceAll.mockResolvedValue("signed-token")
+    const result = await replaceMessengerTemplateVariables({
+      templateParams: {
+        button: [
+          { sub_type: "url", index: 0, text: "{{mini_app_token}}" },
+          { sub_type: "phone_number", index: 1 },
+        ],
+      },
+      variables: {} as never,
+    })
+
+    expect(mockReplaceAll).toHaveBeenCalledTimes(1)
+    expect(mockReplaceAll).toHaveBeenCalledWith({
+      variables: {},
+      text: "{{mini_app_token}}",
+      escapeValue: encodeURIComponent,
+    })
+    expect(result.button).toEqual([
+      { sub_type: "url", index: 0, text: "signed-token" },
+      { sub_type: "phone_number", index: 1 },
+    ])
+  })
+
   test("preserves parameter_name on body items", async () => {
     const result = await replaceMessengerTemplateVariables({
       templateParams: {

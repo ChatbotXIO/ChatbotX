@@ -2,6 +2,7 @@ import {
   extractMessengerTemplateParams,
   type MessengerTemplateComponent,
   type MessengerTemplateParams,
+  suggestMessengerUrlSuffixVariable,
 } from "./send-messenger-message-template"
 import {
   extractTemplateParams,
@@ -406,7 +407,9 @@ function collectMessengerSlots(
             key: `button.${buttonIndex}`,
             component: "button",
             kind: "url_suffix",
-            required: true,
+            // A Mini App or Minigame link already defaults to the recipient's
+            // token variable, so the caller may leave it out.
+            required: !suggestMessengerUrlSuffixVariable(button.url),
             placeholder: `{{${suffix}}}`,
             apply: (params, value) => {
               const entry = params.button?.find(
