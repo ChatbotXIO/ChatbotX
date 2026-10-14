@@ -44,8 +44,9 @@ import { FlowJsonDialog } from "./components/flow-json-dialog"
 import { PublishWhatsappDialog } from "./components/publish-whatsapp-dialog"
 import { WhatsappPublicationBadge } from "./components/whatsapp-publication-badge"
 import { CreateMiniAppDialog } from "./create-mini-app-dialog"
-import { DeleteMiniAppsDialog } from "./delete-mini-apps"
+import { DeleteMiniAppsDialog } from "./delete-mini-apps-dialog"
 import { buildMiniAppPublicUrl } from "./lib/public-url"
+import { miniAppEditPath, miniAppSubmissionsPath } from "./lib/routes"
 import type { listMiniApps, WhatsappPublishTarget } from "./queries"
 
 type ListMiniAppsResponse = Awaited<ReturnType<typeof listMiniApps>>
@@ -86,14 +87,86 @@ function FlowJsonLoader({
   )
 }
 
-export function MiniAppsTable({ workspaceId, promises }: MiniAppsTableProps) {
+/** The row actions a menu item opens in a dialog. */
+type RowDialog = "duplicate" | "copyJson" | "publish" | "delete"
+
+/** The "…" menu of one Mini App row. */
+function MiniAppRowActions({
+  workspaceId,
+  miniAppId,
+  onAction,
+}: {
+  workspaceId: string
+  miniAppId: string
+  onAction: (variant: RowDialog) => void
+}) {
   const t = useTranslations()
   const router = useRouter()
   const { handleCopy } = useClipboard()
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            aria-label={t("actions.openMenu")}
+            size="icon"
+            variant="ghost"
+          >
+            <MoreHorizontalIcon className="h-4 w-4" />
+          </Button>
+        }
+      />
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={() => router.push(miniAppEditPath(workspaceId, miniAppId))}
+        >
+          <PencilIcon />
+          {t("actions.edit")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onAction("duplicate")}>
+          <CopyPlusIcon />
+          {t("actions.duplicate")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onAction("copyJson")}>
+          <BracesIcon />
+          {t("miniApps.table.copyJson")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => handleCopy(buildMiniAppPublicUrl(miniAppId))}
+        >
+          <LinkIcon />
+          {t("actions.copyUrl")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onAction("publish")}>
+          <SendIcon />
+          {t("miniApps.publish.open")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() =>
+            router.push(miniAppSubmissionsPath(workspaceId, miniAppId))
+          }
+        >
+          <InboxIcon />
+          {t("miniApps.submissions.title")}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => onAction("delete")}
+          variant="destructive"
+        >
+          <Trash2Icon />
+          {t("actions.delete")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+export function MiniAppsTable({ workspaceId, promises }: MiniAppsTableProps) {
+  const t = useTranslations()
   const [{ data, pageCount }, publishTargets] = use(promises)
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<MiniAppListItem> | null>(null)
-  const editHref = (id: string) => `/space/${workspaceId}/mini-apps/${id}/edit`
 
   const columns = useMemo<ColumnDef<MiniAppListItem>[]>(
     () => [
@@ -134,7 +207,7 @@ export function MiniAppsTable({ workspaceId, promises }: MiniAppsTableProps) {
         cell: ({ row }) => (
           <Link
             className="inline-block max-w-[260px] truncate font-medium hover:underline"
-            href={editHref(row.original.id)}
+            href={miniAppEditPath(workspaceId, row.original.id)}
           >
             {row.original.name}
           </Link>
@@ -198,7 +271,7 @@ export function MiniAppsTable({ workspaceId, promises }: MiniAppsTableProps) {
         cell: ({ row }) => (
           <Link
             className="hover:underline"
-            href={`/space/${workspaceId}/mini-apps/${row.original.id}/submissions`}
+            href={miniAppSubmissionsPath(workspaceId, row.original.id)}
           >
             {row.original.submissionsCount}
           </Link>
@@ -212,78 +285,17 @@ export function MiniAppsTable({ workspaceId, promises }: MiniAppsTableProps) {
           <DataTableColumnHeader column={column} title="" />
         ),
         cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  aria-label={t("actions.openMenu")}
-                  size="icon"
-                  variant="ghost"
-                >
-                  <MoreHorizontalIcon className="h-4 w-4" />
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => router.push(editHref(row.original.id))}
-              >
-                <PencilIcon />
-                {t("actions.edit")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "duplicate" })}
-              >
-                <CopyPlusIcon />
-                {t("actions.duplicate")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "copyJson" })}
-              >
-                <BracesIcon />
-                {t("miniApps.table.copyJson")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  handleCopy(buildMiniAppPublicUrl(row.original.id))
-                }
-              >
-                <LinkIcon />
-                {t("actions.copyUrl")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "publish" })}
-              >
-                <SendIcon />
-                {t("miniApps.publish.open")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  router.push(
-                    `/space/${workspaceId}/mini-apps/${row.original.id}/submissions`,
-                  )
-                }
-              >
-                <InboxIcon />
-                {t("miniApps.submissions.title")}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "delete" })}
-                variant="destructive"
-              >
-                <Trash2Icon />
-                {t("actions.delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <MiniAppRowActions
+            miniAppId={row.original.id}
+            onAction={(variant) => setRowAction({ row, variant })}
+            workspaceId={workspaceId}
+          />
         ),
         enableSorting: false,
         enableHiding: false,
       },
     ],
-    // biome-ignore lint/correctness/useExhaustiveDependencies: editHref only depends on workspaceId
-    [t, router, workspaceId, handleCopy, publishTargets, editHref],
+    [t, workspaceId, publishTargets],
   )
 
   const { table } = useDataTable({

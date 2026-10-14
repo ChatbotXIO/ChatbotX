@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { duplicateMiniAppAction } from "../actions/duplicate-mini-app.action"
+import { miniAppEditPath } from "../lib/routes"
 
 type DuplicateMiniAppDialogProps = {
   workspaceId: string
@@ -39,7 +40,7 @@ export function DuplicateMiniAppDialog({
         toast.success(t("messages.duplicatedSuccess", { feature }))
         onOpenChange(false)
         if (data?.id) {
-          router.push(`/space/${workspaceId}/mini-apps/${data.id}/edit`)
+          router.push(miniAppEditPath(workspaceId, data.id))
         }
       },
       onError: ({ error }) => {

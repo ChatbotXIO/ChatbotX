@@ -21,6 +21,7 @@ import { useTranslations } from "next-intl"
 import { useCallback, useState } from "react"
 import { toast } from "sonner"
 import { createMiniAppAction } from "./actions/create-mini-app.action"
+import { miniAppEditPath } from "./lib/routes"
 import { createMiniAppRequest } from "./schema/action"
 
 /** Asks for the name, creates the Mini App, then opens its editor. */
@@ -41,7 +42,7 @@ export function CreateMiniAppDialog({ workspaceId }: { workspaceId: string }) {
             setOpen(false)
             resetFormAndAction()
             if (data?.id) {
-              router.push(`/space/${workspaceId}/mini-apps/${data.id}/edit`)
+              router.push(miniAppEditPath(workspaceId, data.id))
             }
           },
           onError: ({ error }) => {
