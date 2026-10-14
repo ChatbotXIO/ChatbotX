@@ -1,20 +1,15 @@
 "use server"
 
-import { ChatbotXException } from "@chatbotx.io/business/errors"
-import {
-  miniAppService,
-  miniAppSubmissionService,
-} from "@chatbotx.io/business/mini-app"
-import { headers } from "next/headers"
-import { getTranslations } from "next-intl/server"
-import {
-  checkGuestRateLimit,
-  resolveGuestRateLimitKey,
-} from "@/lib/rate-limit/guest-rate-limit"
+import { miniAppSubmissionService } from "@chatbotx.io/business/mini-app"
 import { actionClient } from "@/lib/safe-action"
-import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
+import {
+  assertVisitorNotRateLimited,
+  requireServableMiniApp,
+} from "../lib/public-mini-app"
 import { resolveVisitorContactId } from "../lib/resolve-visitor-contact"
 import { submitMiniAppRequest } from "../schema/action"
+
+const SUBMITS_PER_WINDOW = 10
 
 /**
  * Public (unauthenticated) submit from the Mini App runner. The contact is
@@ -23,33 +18,17 @@ import { submitMiniAppRequest } from "../schema/action"
 export const submitMiniAppAction = actionClient
   .inputSchema(submitMiniAppRequest)
   .action(async ({ parsedInput }) => {
-    const t = await getTranslations("miniApps.public")
-
-    const miniApp = await miniAppService.findUnscoped(parsedInput.miniAppId)
-    if (!miniApp?.enabled) {
-      throw new ChatbotXException(t("notFoundDescription"), "notFound", 404)
-    }
-    const { servable } = await loadServableWorkspace(miniApp.workspaceId)
-    if (!servable) {
-      throw new ChatbotXException(t("notFoundDescription"), "notFound", 404)
-    }
-
+    const miniApp = await requireServableMiniApp(parsedInput.miniAppId)
     const contactId = await resolveVisitorContactId({
       token: parsedInput.token,
       workspaceId: miniApp.workspaceId,
     })
-
-    const rateLimit = await checkGuestRateLimit({
-      webchatId: `mini-app:${miniApp.id}`,
-      clientIp: resolveGuestRateLimitKey(
-        await headers(),
-        contactId ? `contact:${contactId}` : "anonymous",
-      ),
-      ipLimit: 10,
+    await assertVisitorNotRateLimited({
+      bucket: "mini-app",
+      miniAppId: miniApp.id,
+      contactId,
+      limit: SUBMITS_PER_WINDOW,
     })
-    if (rateLimit.limited) {
-      throw new ChatbotXException(t("rateLimited"), "rateLimited", 429)
-    }
 
     await miniAppSubmissionService.create({
       miniApp,

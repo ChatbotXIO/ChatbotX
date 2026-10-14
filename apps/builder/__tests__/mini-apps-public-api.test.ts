@@ -24,6 +24,7 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 const miniAppService = {
+  validate: vi.fn(),
   list: vi.fn(),
   findOrFail: vi.fn(),
   create: vi.fn(),
@@ -34,9 +35,10 @@ const miniAppService = {
 const miniAppSubmissionService = { list: vi.fn() }
 
 vi.mock("@chatbotx.io/business/mini-app", async () => {
-  const { fromFlowJson } = await vi.importActual<
+  const { fromFlowJson, validateMiniApp } = await vi.importActual<
     typeof import("@chatbotx.io/mini-app")
   >("@chatbotx.io/mini-app")
+  miniAppService.validate.mockImplementation(validateMiniApp)
   return {
     miniAppService,
     miniAppSubmissionService,
@@ -130,8 +132,12 @@ const storedMiniApp = (definition: unknown) => ({
   publications: [],
 })
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.clearAllMocks()
+  const { validateMiniApp } = await vi.importActual<
+    typeof import("@chatbotx.io/mini-app")
+  >("@chatbotx.io/mini-app")
+  miniAppService.validate.mockImplementation(validateMiniApp)
   isWorkspaceScheduledForDeletion.mockReturnValue(false)
   getAccessState.mockResolvedValue({ blocked: false })
   isAtLimit.mockResolvedValue(false)
@@ -164,22 +170,28 @@ describe("Mini Apps public API", () => {
     })
   })
 
-  test("create converts Flow JSON to a definition and returns validation", async () => {
+  test("create passes the Flow JSON to the service and returns validation", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(null))
+    const { fromFlowJson } = await vi.importActual<
+      typeof import("@chatbotx.io/mini-app")
+    >("@chatbotx.io/mini-app")
     miniAppService.create.mockImplementation(
-      async (input: { definition: unknown }) => storedMiniApp(input.definition),
+      async (input: { flowJson: never }) =>
+        storedMiniApp(fromFlowJson(input.flowJson)),
     )
     const result = (await invoke(miniAppsPublicRouter.create, {
       name: "Survey",
       flowJson,
+      customFieldMappings: { full_name: "77" },
     })) as {
       validation: { valid: boolean }
     }
-    const [createInput] = miniAppService.create.mock.calls[0] as [
-      { workspaceId: string; definition: { screens: { id: string }[] } },
-    ]
-    expect(createInput.workspaceId).toBe("ws-1")
-    expect(createInput.definition.screens[0]?.id).toBe("WELCOME")
+    expect(miniAppService.create).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      name: "Survey",
+      flowJson,
+      customFieldMappings: { full_name: "77" },
+    })
     expect(result.validation.valid).toBe(true)
   })
 
@@ -242,29 +254,27 @@ describe("Mini Apps public API", () => {
     expect(publishMiniAppToWhatsapp).not.toHaveBeenCalled()
   })
 
-  test("a new Flow JSON keeps existing custom field mappings by input name", async () => {
+  test("update hands the Flow JSON and mappings to the service, then reloads", async () => {
     findWorkspaceByTokenHash.mockResolvedValue(authResult(null))
-    const { fromFlowJson, applyCustomFieldMappings } = await vi.importActual<
-      typeof import("@chatbotx.io/mini-app")
-    >("@chatbotx.io/mini-app")
-    const current = applyCustomFieldMappings(fromFlowJson(flowJson as never), {
-      full_name: "77",
-    })
-    miniAppService.findOrFail.mockResolvedValue(storedMiniApp(current))
     miniAppService.update.mockResolvedValue(undefined)
+    miniAppService.findOrFail.mockResolvedValue(storedMiniApp({ screens: [] }))
 
-    await invoke(miniAppsPublicRouter.update, { id: "10", flowJson })
-
-    const [, data] = miniAppService.update.mock.calls[0] as [
-      unknown,
-      { definition: Parameters<typeof applyCustomFieldMappings>[0] },
-    ]
-    const { collectCustomFieldMappings } = await vi.importActual<
-      typeof import("@chatbotx.io/mini-app")
-    >("@chatbotx.io/mini-app")
-    expect(collectCustomFieldMappings(data.definition)).toEqual({
-      full_name: "77",
+    await invoke(miniAppsPublicRouter.update, {
+      id: "10",
+      flowJson,
+      customFieldMappings: { full_name: null },
     })
+
+    expect(miniAppService.update).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", id: "10" },
+      {
+        name: undefined,
+        enabled: undefined,
+        flowJson,
+        customFieldMappings: { full_name: null },
+      },
+    )
+    expect(miniAppService.findOrFail).toHaveBeenCalledTimes(1)
   })
 
   test("flow-json returns only the stored Flow JSON of the token's workspace", async () => {

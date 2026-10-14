@@ -5,7 +5,8 @@ import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import {
   deleteWhatsappFlowsField,
   MINI_APP_BULK_DELETE_MAX_IDS,
-  MINI_APP_NAME_MAX_LENGTH,
+  miniAppName,
+  publishTargetWhatsappId,
 } from "./action"
 
 const miniAppId = zodBigintAsString().describe(
@@ -20,15 +21,6 @@ const customFieldMappingsInput = z
   .record(z.string(), zodBigintAsString().nullable())
   .describe(
     "Input `name` → custom field id (get ids from `customFields.list`); `null` removes a mapping. When a contact submits the public link, mapped answers are saved to their custom fields; PhotoPicker/DocumentPicker inputs save their files' public URLs comma-separated and need a shortText/longText field. Names not listed keep their current mapping.",
-  )
-
-const miniAppName = z
-  .string()
-  .trim()
-  .min(1)
-  .max(MINI_APP_NAME_MAX_LENGTH)
-  .describe(
-    "Mini App name, unique within the workspace. Also used as the WhatsApp Flow name when published.",
   )
 
 export const miniAppIssuePublicResource = z.object({
@@ -202,9 +194,7 @@ export const validateMiniAppPublicRequest = z.object({
 
 export const publishMiniAppPublicRequest = z.object({
   id: miniAppId,
-  integrationWhatsappId: zodBigintAsString().describe(
-    "WhatsApp number to publish to (the WhatsApp channel id). Get it from `whatsappChannels.list`.",
-  ),
+  integrationWhatsappId: publishTargetWhatsappId,
 })
 
 export const miniAppWhatsappPublicRequest = z.object({

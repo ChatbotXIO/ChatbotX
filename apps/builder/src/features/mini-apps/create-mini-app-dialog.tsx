@@ -1,5 +1,6 @@
 "use client"
 
+import { MINI_APP_NAME_MAX_LENGTH } from "@chatbotx.io/mini-app"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -20,7 +21,7 @@ import { useTranslations } from "next-intl"
 import { useCallback, useState } from "react"
 import { toast } from "sonner"
 import { createMiniAppAction } from "./actions/create-mini-app.action"
-import { createMiniAppRequest, MINI_APP_NAME_MAX_LENGTH } from "./schema/action"
+import { createMiniAppRequest } from "./schema/action"
 
 /** Asks for the name, creates the Mini App, then opens its editor. */
 export function CreateMiniAppDialog({ workspaceId }: { workspaceId: string }) {

@@ -1,18 +1,17 @@
 import {
   MiniAppUploadError,
-  miniAppService,
   miniAppUploadService,
 } from "@chatbotx.io/business/mini-app"
-import { verifyMiniAppToken } from "@chatbotx.io/encryption/mini-app-token"
 import { MINI_APP_MAX_UPLOAD_BYTES } from "@chatbotx.io/mini-app"
 import { type NextRequest, NextResponse } from "next/server"
+import { loadServableMiniApp } from "@/features/mini-apps/lib/public-mini-app"
+import { resolveVisitorContactId } from "@/features/mini-apps/lib/resolve-visitor-contact"
 import { isCrossSiteRequest } from "@/lib/http/same-site-request"
 import { logger } from "@/lib/log"
 import {
   checkGuestRateLimit,
   resolveGuestRateLimitKey,
 } from "@/lib/rate-limit/guest-rate-limit"
-import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
 
 const ID_PATTERN = /^\d{1,20}$/
 // Room for the multipart envelope around the largest allowed file.
@@ -21,6 +20,45 @@ const UPLOADS_PER_WINDOW = 20
 
 const reject = (code: string, status: number) =>
   NextResponse.json({ error: code }, { status })
+
+/**
+ * Refuses a request before its body is read: cross-site, an id that is not
+ * one, or a body whose size is unknown or too large. formData() reads the
+ * body whole, so its size must be bounded first; browsers always send
+ * Content-Length for a FormData upload.
+ */
+function checkRequestEnvelope(req: NextRequest, id: string) {
+  if (isCrossSiteRequest(req)) {
+    return reject("forbidden", 403)
+  }
+  if (!ID_PATTERN.test(id)) {
+    return reject("not_found", 404)
+  }
+  const declaredLength = Number(req.headers.get("content-length"))
+  if (!(Number.isFinite(declaredLength) && declaredLength > 0)) {
+    return reject("invalid_request", 411)
+  }
+  if (declaredLength > MAX_BODY_BYTES) {
+    return reject("too_large", 413)
+  }
+  return null
+}
+
+/** The file, its input and the visitor's token from the multipart body. */
+async function parseUploadForm(req: NextRequest) {
+  const formData = await req.formData().catch(() => null)
+  const file = formData?.get("file")
+  const inputName = formData?.get("inputName")
+  const token = formData?.get("token")
+  if (!(file instanceof File) || typeof inputName !== "string") {
+    return null
+  }
+  return {
+    file,
+    inputName,
+    token: typeof token === "string" ? token : undefined,
+  }
+}
 
 /**
  * Public upload for PhotoPicker / DocumentPicker on a Mini App's web link.
@@ -33,21 +71,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    if (isCrossSiteRequest(req)) {
-      return reject("forbidden", 403)
-    }
     const { id } = await params
-    if (!ID_PATTERN.test(id)) {
-      return reject("not_found", 404)
-    }
-    // The body is read whole by formData(), so its size must be known and
-    // bounded first; browsers always send Content-Length for a FormData upload.
-    const declaredLength = Number(req.headers.get("content-length"))
-    if (!(Number.isFinite(declaredLength) && declaredLength > 0)) {
-      return reject("invalid_request", 411)
-    }
-    if (declaredLength > MAX_BODY_BYTES) {
-      return reject("too_large", 413)
+    const refused = checkRequestEnvelope(req, id)
+    if (refused) {
+      return refused
     }
 
     const rateLimit = await checkGuestRateLimit({
@@ -59,45 +86,31 @@ export async function POST(
       return reject("rate_limited", 429)
     }
 
-    const miniApp = await miniAppService.findUnscoped(id)
-    if (!miniApp?.enabled) {
-      return reject("not_found", 404)
-    }
-    const { servable } = await loadServableWorkspace(miniApp.workspaceId)
-    if (!servable) {
+    const miniApp = await loadServableMiniApp(id)
+    if (!miniApp) {
       return reject("not_found", 404)
     }
 
-    const formData = await req.formData().catch(() => null)
-    const file = formData?.get("file")
-    const inputName = formData?.get("inputName")
-    const token = formData?.get("token")
-    if (!(file instanceof File) || typeof inputName !== "string") {
+    const form = await parseUploadForm(req)
+    if (!form) {
       return reject("invalid_request", 400)
     }
-    if (file.size > MINI_APP_MAX_UPLOAD_BYTES) {
+    if (form.file.size > MINI_APP_MAX_UPLOAD_BYTES) {
       return reject("too_large", 413)
     }
 
-    const payload =
-      typeof token === "string" && token
-        ? await verifyMiniAppToken(token).catch(() => null)
-        : null
-    // A token for another workspace is ignored rather than trusted.
-    const contactId =
-      payload && payload.workspaceId === miniApp.workspaceId
-        ? payload.contactId
-        : null
-
     const result = await miniAppUploadService.create({
       miniApp,
-      contactId,
-      inputName,
+      contactId: await resolveVisitorContactId({
+        token: form.token,
+        workspaceId: miniApp.workspaceId,
+      }),
+      inputName: form.inputName,
       file: {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        bytes: new Uint8Array(await file.arrayBuffer()),
+        name: form.file.name,
+        type: form.file.type,
+        size: form.file.size,
+        bytes: new Uint8Array(await form.file.arrayBuffer()),
       },
     })
     return NextResponse.json(result, { status: 201 })

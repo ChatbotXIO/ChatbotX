@@ -5,15 +5,14 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
-export { MINI_APP_NAME_MAX_LENGTH } from "@chatbotx.io/mini-app"
-
-const miniAppName = z
+/** Shared by the builder actions and the public API. */
+export const miniAppName = z
   .string()
   .trim()
   .min(1)
   .max(MINI_APP_NAME_MAX_LENGTH)
   .describe(
-    "Mini App name, unique within the workspace. Also used as the WhatsApp Flow name.",
+    "Mini App name, unique within the workspace. Also used as the WhatsApp Flow name when published.",
   )
 
 // The builder creates a Mini App from its name alone; the editor opens on a
@@ -33,10 +32,13 @@ export const updateMiniAppRequest = z.object({
 })
 export type UpdateMiniAppRequest = z.infer<typeof updateMiniAppRequest>
 
+/** The WhatsApp number a Mini App is published to. Shared by the builder actions and the public API. */
+export const publishTargetWhatsappId = zodBigintAsString().describe(
+  "WhatsApp number to publish to (the WhatsApp channel id). Get it from `whatsappChannels.list`.",
+)
+
 export const miniAppWhatsappRequest = z.object({
-  integrationWhatsappId: zodBigintAsString().describe(
-    "WhatsApp number to publish to (the WhatsApp channel id). Get it from `whatsappChannels.list`.",
-  ),
+  integrationWhatsappId: publishTargetWhatsappId,
 })
 export type MiniAppWhatsappRequest = z.infer<typeof miniAppWhatsappRequest>
 
