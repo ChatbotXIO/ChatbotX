@@ -200,6 +200,7 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "DELETE /v1/ads/conversion-rules/{id}": "ads:delete-conversion-rule",
   "POST /v1/mini-apps/{id}/publish-whatsapp": "mini-apps:publish-whatsapp",
   "GET /v1/mini-apps/{id}/flow-json": "mini-apps:flow-json",
+  "POST /v1/mini-apps/{id}/duplicate": "mini-apps:duplicate",
   "GET /v1/conversations/{conversationId}/messages/{messageId}/flow-response":
     "conversations:flow-response:get",
 }

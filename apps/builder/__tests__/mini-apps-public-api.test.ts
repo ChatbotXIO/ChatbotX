@@ -28,6 +28,7 @@ const miniAppService = {
   findOrFail: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
+  duplicate: vi.fn(),
   deleteMany: vi.fn(),
 }
 const miniAppSubmissionService = { list: vi.fn() }
@@ -343,5 +344,20 @@ describe("Mini Apps public API", () => {
       id: "99",
     })
     expect(miniAppSubmissionService.list).not.toHaveBeenCalled()
+  })
+
+  test("duplicate copies the Mini App within the token's workspace", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(null))
+    miniAppService.duplicate.mockResolvedValue({
+      ...storedMiniApp({ screens: [] }),
+      id: "11",
+      name: "Survey - Copy",
+    })
+    const result = await invoke(miniAppsPublicRouter.duplicate, { id: "10" })
+    expect(miniAppService.duplicate).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "10",
+    })
+    expect(result).toMatchObject({ id: "11", name: "Survey - Copy" })
   })
 })

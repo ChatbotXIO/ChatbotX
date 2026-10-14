@@ -203,6 +203,28 @@ export const miniAppsPublicRouter = {
       return toDetail(created)
     }),
 
+  duplicate: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/mini-apps/{id}/duplicate",
+      summary: "Duplicate Mini App",
+      description:
+        "Copies a Mini App's screens and custom field mappings into a new Mini App named `<name> - Copy` (`- Copy 2`, … when taken). Answers and WhatsApp publications are not copied: publish the copy with `miniApps.publishWhatsapp`. Find the id with `miniApps.list`.",
+      successStatus: 201,
+      tags,
+    })
+    .input(miniAppIdPublicRequest)
+    .output(miniAppPublicResource)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) =>
+      toDetail(
+        await miniAppService.duplicate({
+          workspaceId: context.workspace.id,
+          id: input.id,
+        }),
+      ),
+    ),
+
   update: workspaceTokenAuthAPI
     .route({
       method: "PATCH",

@@ -1,8 +1,11 @@
-import { miniAppDefinitionSchema } from "@chatbotx.io/mini-app"
+import {
+  MINI_APP_NAME_MAX_LENGTH,
+  miniAppDefinitionSchema,
+} from "@chatbotx.io/mini-app"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
-export const MINI_APP_NAME_MAX_LENGTH = 100
+export { MINI_APP_NAME_MAX_LENGTH } from "@chatbotx.io/mini-app"
 
 const miniAppName = z
   .string()

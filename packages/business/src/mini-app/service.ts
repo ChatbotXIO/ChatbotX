@@ -26,6 +26,7 @@ import {
   type FlowJson,
   formatAnswerForCustomField,
   fromFlowJson,
+  MINI_APP_NAME_MAX_LENGTH,
   type MiniAppDefinition,
   MiniAppImportError,
   type MiniAppValidationResult,
@@ -75,6 +76,26 @@ export const importMiniAppFlowJson = (
     throw error
   }
 }
+
+const MAX_COPY_NAME_ATTEMPTS = 50
+/** Free names tried in turn when another copy takes one at the same time. */
+const COPY_NAME_INSERT_ATTEMPTS = 2
+
+const copyNameSuffix = (attempt: number) =>
+  attempt === 1 ? " - Copy" : ` - Copy ${attempt}`
+
+/** `<name> - Copy`, then `<name> - Copy 2`, … cut to fit the name limit. */
+const copyName = (name: string, attempt: number): string => {
+  const suffix = copyNameSuffix(attempt)
+  return `${name.slice(0, MINI_APP_NAME_MAX_LENGTH - suffix.length)}${suffix}`
+}
+
+/** The start every copy name of `name` shares, however much it was cut. */
+const copyNamePrefix = (name: string): string =>
+  name.slice(
+    0,
+    MINI_APP_NAME_MAX_LENGTH - copyNameSuffix(MAX_COPY_NAME_ATTEMPTS).length,
+  )
 
 const rethrowNameTaken = (error: unknown): never => {
   if (isUniqueViolationError(error)) {
@@ -137,6 +158,52 @@ class MiniAppService extends BaseService {
     } catch (error) {
       return rethrowNameTaken(error)
     }
+  }
+
+  /**
+   * Copies a Mini App's screens and custom field mappings into a new Mini App
+   * named `<name> - Copy` (then `- Copy 2`, `- Copy 3`, … while taken).
+   * Submissions and WhatsApp publications stay with the original.
+   */
+  async duplicate(input: {
+    workspaceId: string
+    id: string
+  }): Promise<MiniAppModel> {
+    const source = await this.findOrFail(input)
+    const taken = new Set(
+      await miniAppRepository.listNamesWithPrefix({
+        workspaceId: input.workspaceId,
+        prefix: copyNamePrefix(source.name),
+      }),
+    )
+    const freeNames = Array.from(
+      { length: MAX_COPY_NAME_ATTEMPTS },
+      (_, index) => copyName(source.name, index + 1),
+    )
+      .filter((name) => !taken.has(name))
+      .slice(0, COPY_NAME_INSERT_ATTEMPTS)
+    for (const name of freeNames) {
+      try {
+        const [created] = await db
+          .insert(miniAppModel)
+          .values({
+            id: createId(),
+            workspaceId: input.workspaceId,
+            name,
+            enabled: source.enabled,
+            definition: source.definition,
+            flowJson: toFlowJson(source.definition),
+            submissionsCount: 0,
+          })
+          .returning()
+        return created as MiniAppModel
+      } catch (error) {
+        if (!isUniqueViolationError(error)) {
+          throw error
+        }
+      }
+    }
+    throw validationException("name", NAME_TAKEN)
   }
 
   async update(

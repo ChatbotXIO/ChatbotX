@@ -1,6 +1,7 @@
 import { type DatabaseClient, db, relationsFilterToSQL } from "../../client"
 import { miniAppModel, miniAppSubmissionModel } from "../../schema"
 import {
+  escapeLikePattern,
   getPaginationWithDefaults,
   likeContains,
   parseOrderByAsObject,
@@ -61,6 +62,21 @@ export const miniAppRepository = {
       where: { id: input.id, workspaceId: input.workspaceId },
       with: { publications: true },
     })
+  },
+
+  /** Names in the workspace starting with `prefix` (taken as plain text). */
+  async listNamesWithPrefix(
+    input: { workspaceId: string; prefix: string },
+    tx: DatabaseClient = db,
+  ): Promise<string[]> {
+    const rows = await tx.query.miniAppModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        name: { like: `${escapeLikePattern(input.prefix)}%` },
+      },
+      columns: { name: true },
+    })
+    return rows.map((row) => row.name)
   },
 
   /** Unscoped lookup for the public runner, which only knows the id. */

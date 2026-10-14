@@ -98,6 +98,8 @@ export type MiniAppScreen = z.infer<typeof miniAppScreenSchema>
 
 export const MINI_APP_MAX_SCREENS = 100
 export const MINI_APP_SCREEN_TITLE_MAX_LENGTH = 80
+/** Mini App names (also the WhatsApp Flow name), copy names included. */
+export const MINI_APP_NAME_MAX_LENGTH = 100
 
 export const miniAppDefinitionSchema = z.object({
   screens: z.array(miniAppScreenSchema).min(1).max(MINI_APP_MAX_SCREENS),
