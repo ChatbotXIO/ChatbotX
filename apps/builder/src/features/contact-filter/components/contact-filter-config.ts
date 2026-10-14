@@ -305,7 +305,6 @@ const CONTACT_FILTER_GROUP_FIELDS = {
     "followerCountOnInstagram",
   ],
   analytics: [
-    "tags",
     "lastSent",
     "lastDelivered",
     "lastSeen",
@@ -315,6 +314,7 @@ const CONTACT_FILTER_GROUP_FIELDS = {
     "unreplied",
     "unread",
     "appliedJobs",
+    "tags",
     "completedWhatsAppFlows",
     "messengerList",
     "subscribedToDripCampaign",
