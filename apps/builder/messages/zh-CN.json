@@ -3642,7 +3642,8 @@
       "addSection": "添加分组",
       "productCount": "{count} / {max} 件商品",
       "productsSelected": "{count, plural, one {# 件商品} other {# 件商品}}",
-      "noneSelected": "暂无商品"
+      "noneSelected": "暂无商品",
+      "sendFailed": "无法发送商品。"
     }
   },
   "folders": {

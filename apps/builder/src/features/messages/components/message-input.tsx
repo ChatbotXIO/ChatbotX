@@ -279,6 +279,15 @@ export const MessageInput = () => {
     }
   }, [])
 
+  // BizAI (Meta AI) is NOT a Handover Protocol owner, so there is no
+  // `take_thread_control` to call (it would fail with "routing not enabled").
+  // The human agent just replies with the HUMAN_AGENT tag: bypass our local
+  // send gate, and the channel tags the send from this same metadata flag.
+  const bypassThreadControlLock =
+    takeOverOnSend || (routingLockDismissed && isThreadLocked)
+      ? true
+      : undefined
+
   const sendMessage = useCallback(() => {
     if (!replyToMessage && lastContactComment) {
       form.setValue("replyToMessageId", lastContactComment.id)
@@ -287,14 +296,6 @@ export const MessageInput = () => {
         lastContactComment.createdAt ?? undefined,
       )
     }
-    // BizAI (Meta AI) is NOT a Handover Protocol owner, so there is no
-    // `take_thread_control` to call (it would fail with "routing not enabled").
-    // The human agent just replies with the HUMAN_AGENT tag: bypass our local
-    // send gate, and the channel tags the send from this same metadata flag.
-    const bypassThreadControlLock =
-      takeOverOnSend || (routingLockDismissed && isThreadLocked)
-        ? true
-        : undefined
     form.setValue("bypassThreadControlLock", bypassThreadControlLock)
     handleSubmitWithAction()
   }, [
@@ -302,9 +303,7 @@ export const MessageInput = () => {
     lastContactComment,
     form,
     handleSubmitWithAction,
-    routingLockDismissed,
-    isThreadLocked,
-    takeOverOnSend,
+    bypassThreadControlLock,
   ])
 
   // Memoize keyboard handler
@@ -572,7 +571,13 @@ export const MessageInput = () => {
             </div>
 
             <div className="message-toolbar flex shrink-0 items-center gap-2">
-              {!hasFiles && <InputMenu setContent={setContent} />}
+              {!hasFiles && (
+                <InputMenu
+                  bypassThreadControlLock={bypassThreadControlLock}
+                  contactInbox={conversation?.contactInboxes[0]}
+                  setContent={setContent}
+                />
+              )}
               {!isInstagramPostComment && (
                 <>
                   <Button

@@ -2716,7 +2716,8 @@
       "addSection": "セクションを追加",
       "productCount": "{count} / {max} 件の商品",
       "productsSelected": "{count, plural, one {# 件の商品} other {# 件の商品}}",
-      "noneSelected": "商品はまだありません"
+      "noneSelected": "商品はまだありません",
+      "sendFailed": "商品を送信できませんでした。"
     }
   },
   "folders": {

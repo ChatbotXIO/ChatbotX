@@ -2716,7 +2716,8 @@
       "addSection": "Sectie toevoegen",
       "productCount": "{count} / {max} producten",
       "productsSelected": "{count, plural, one {# product} other {# producten}}",
-      "noneSelected": "Nog geen producten"
+      "noneSelected": "Nog geen producten",
+      "sendFailed": "De producten konden niet worden verzonden."
     }
   },
   "folders": {

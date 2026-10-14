@@ -1,4 +1,5 @@
 import { channelTypes } from "@chatbotx.io/database/partials"
+import { sendProductsContentSchema } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { zodGuestConversationId } from "@/features/integration-webchat/lib/guest-conversation-id"
@@ -38,6 +39,16 @@ const bypassField = z
 
 export const createMessageRequest = z
   .union([
+    // Listed first, like the Media Library branches below: z.object() strips
+    // unknown keys, so a body that also carries `text` would otherwise match the
+    // text branch and silently lose its products. A valid `products` wins; one
+    // that fails its own schema falls through to the other branches, as a
+    // body with an invalid `flowId` already does.
+    z.object({
+      products: sendProductsContentSchema.describe(
+        "Catalog products to send instead of text, on channels with product messages (WhatsApp today) inside the customer-service window. Product ids come from `products.listSendable` (scope `ecommerce`); put the text in `products.body`. Cannot be combined with text, files, media, `flowId` or a comment reply: when `products` is valid only it is sent. Fails with `validation` (422) when the message breaks the channel's rules, and `productMessageUnresolvable` (422, `data.reason`) when the channel has no product messages, no catalog is connected, or some ids are not sendable.",
+      ),
+    }),
     z.object({
       text: z.string().trim().min(1).max(1000).describe("Message text."),
       files: z

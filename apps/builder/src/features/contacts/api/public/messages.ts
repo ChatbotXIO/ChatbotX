@@ -15,6 +15,7 @@ import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
+  possibleErrorsOnSendingMessage,
 } from "@/lib/orpc/orpc-error-helper"
 import { publicContactIdentifier } from "@/lib/public-api/contact-identifier"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
@@ -33,7 +34,7 @@ export const contactsMessagesPublicRouter = {
       path: "/v1/contacts/{identifier}/messages",
       summary: "Send message to contact",
       description:
-        "Delivers a text or media message in the contact's existing conversation (404 when the contact has none, e.g. it was never reached on a channel). Use `contacts.get` to confirm the recipient first, and `contacts.listMessages` to inspect the conversation afterward.",
+        "Delivers a text, media or catalog product message (`products`, on channels with product messages such as WhatsApp; ids from `products.listSendable`) in the contact's existing conversation (404 when the contact has none, e.g. it was never reached on a channel). Use `contacts.get` to confirm the recipient first, and `contacts.listMessages` to inspect the conversation afterward.",
       successStatus: 204,
       tags: ["Contacts"],
       spec: mcpSpec({ visibility: "default" }),
@@ -45,7 +46,7 @@ export const contactsMessagesPublicRouter = {
         }),
       ),
     )
-    .errors(possibleErrorsOnMutatingResource)
+    .errors(possibleErrorsOnSendingMessage)
     .handler(async ({ context, input }) => {
       const contactId = await contactService.resolveIdByIdentifier({
         identifier: input.identifier,

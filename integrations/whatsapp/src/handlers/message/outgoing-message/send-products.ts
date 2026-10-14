@@ -106,7 +106,7 @@ const convertCarousel = (
   }
 }
 
-const toWhatsappProductMessage = (
+export const toWhatsappProductMessage = (
   message: ResolvedProductMessage,
 ): RawWhatsappMessage => {
   switch (message.display) {

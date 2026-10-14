@@ -120,4 +120,67 @@ describe("createMessageRequest", () => {
       expect(result.data).toMatchObject({ text: "hello" })
     }
   })
+
+  describe("products", () => {
+    const products = {
+      display: "products",
+      body: "Look",
+      sections: [{ productIds: ["1", "2"] }],
+    }
+
+    test("parses {products} alone", () => {
+      const result = createMessageRequest.safeParse({ products })
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toMatchObject({ products })
+      }
+    })
+
+    test("keeps the shared fields next to {products}", () => {
+      const result = createMessageRequest.safeParse({
+        products,
+        inboxId: "10000000000000001",
+        clientId: "10000000000000002",
+      })
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toMatchObject({
+          products,
+          inboxId: "10000000000000001",
+          clientId: "10000000000000002",
+        })
+      }
+    })
+
+    test("rejects {products} without a display or sections", () => {
+      expect(createMessageRequest.safeParse({ products: {} }).success).toBe(
+        false,
+      )
+    })
+
+    test("a valid {text, products} sends the products and drops the text", () => {
+      const result = createMessageRequest.safeParse({ text: "hi", products })
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toHaveProperty("products")
+        expect(result.data).not.toHaveProperty("text")
+      }
+    })
+
+    test("{text, products} with invalid products falls through to the text branch", () => {
+      const result = createMessageRequest.safeParse({
+        text: "hi",
+        products: { display: "nope" },
+      })
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toMatchObject({ text: "hi" })
+        expect(result.data).not.toHaveProperty("products")
+      }
+    })
+  })
 })

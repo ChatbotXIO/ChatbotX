@@ -1,6 +1,8 @@
 import type {
   BroadcastPlanLimitData,
   BroadcastPlanLimitReason,
+  PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
+  ProductMessageUnresolvableReason,
   RestrictedBroadcastPlanPolicy,
 } from "@chatbotx.io/database/partials"
 import { SdkException } from "@chatbotx.io/sdk"
@@ -505,3 +507,38 @@ export const channelHiddenException = (channel: string) =>
     "channelHidden",
     403,
   )
+
+/**
+ * Pinned to the constant the API error declaration uses (a type-only import, so
+ * this module keeps no runtime dependency on the database partials).
+ */
+const productMessageUnresolvableCode: typeof PRODUCT_MESSAGE_UNRESOLVABLE_CODE =
+  "productMessageUnresolvable"
+
+/**
+ * The message cannot be built right now. Permanent for this send — the author
+ * has to change the message or the catalog — so it is not worth retrying.
+ */
+export class ProductMessageUnresolvableError extends ChatbotXException {
+  readonly reason: ProductMessageUnresolvableReason
+
+  constructor(
+    reason: ProductMessageUnresolvableReason,
+    productIds?: readonly string[],
+  ) {
+    // The reason rides in the message too: the inbox composer only receives the
+    // message (not `data`), and the agent there needs to know what to fix.
+    super(
+      `Product message cannot be sent: ${reason}${
+        productIds ? ` (${productIds.join(", ")})` : ""
+      }`,
+      productMessageUnresolvableCode,
+      422,
+    )
+    this.reason = reason
+    this.data = {
+      reason,
+      ...(productIds ? { productIds: productIds.join(",") } : {}),
+    }
+  }
+}

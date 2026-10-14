@@ -26,9 +26,12 @@ vi.mock("../src/lib/logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
-const { sendFlowStep, handledFlowStepTypes } = await import(
-  "../src/handlers/message/outgoing-message"
-)
+const {
+  sendFlowStep,
+  sendMessage,
+  handledFlowStepTypes,
+  handledOutgoingContentEntities,
+} = await import("../src/handlers/message/outgoing-message")
 const { convertFlowStepSendProducts } = await import(
   "../src/handlers/message/outgoing-message/send-products"
 )
@@ -369,5 +372,135 @@ describe("sendFlowStep — sendProducts delivery", () => {
       code,
       isRetryable: retryable,
     })
+  })
+})
+
+describe("sendMessage — a product message row", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockApiFetch.mockResolvedValue(
+      new Response(JSON.stringify({ messages: [{ id: "wamid.row-1" }] }), {
+        status: 200,
+      }),
+    )
+  })
+
+  const row = (
+    payload: ResolvedProductMessage,
+    overrides: Record<string, unknown> = {},
+  ) => ({
+    id: "msg-1",
+    workspaceId: "ws-1",
+    conversationId: "conv-1",
+    messageType: "outgoing",
+    contentType: "text",
+    text: payload.body ?? null,
+    contentAttributes: { type: "product_message", payload },
+    ...overrides,
+  })
+
+  const send = (message: unknown, contact: unknown = phoneContact) =>
+    sendMessage({ ctx, data: { contact, message } } as never)
+
+  const requestBodies = () =>
+    mockApiFetch.mock.calls.map(([, init]) =>
+      JSON.parse((init as RequestInit).body as string),
+    )
+
+  test("is declared as a content entity this channel renders", () => {
+    expect(handledOutgoingContentEntities).toContain("product_message")
+  })
+
+  test.each([
+    [
+      "single product",
+      { display: "products", body: "b", sections: [{ items: [item("1")] }] },
+      "product",
+    ],
+    [
+      "multi-product",
+      {
+        display: "products",
+        header: "h",
+        body: "b",
+        sections: [{ items: [item("1"), item("2")] }],
+      },
+      "product_list",
+    ],
+    [
+      "carousel",
+      { display: "carousel", body: "b", items: [item("1"), item("2")] },
+      "carousel",
+    ],
+  ] as const)("sends %s as one raw %s interactive and never as text", async (_name, payload, interactiveType) => {
+    const result = await send(row(payload as ResolvedProductMessage))
+
+    expect(requestBodies()).toHaveLength(1)
+    expect(requestBodies()[0]).toMatchObject({
+      messaging_product: "whatsapp",
+      to: "84123456789",
+      type: "interactive",
+      interactive: { type: interactiveType },
+    })
+    expect(requestBodies()[0]).not.toHaveProperty("text")
+    expect(mockSendMessage).not.toHaveBeenCalled()
+    expect(result).toEqual({ messageIds: ["wamid.row-1"], sentCount: 1 })
+  })
+
+  test("a row with no text still goes out as the product message", async () => {
+    await send(
+      row(
+        { display: "products", sections: [{ items: [item("1")] }] },
+        { text: null },
+      ),
+    )
+
+    expect(requestBodies()).toHaveLength(1)
+    expect(requestBodies()[0].interactive.type).toBe("product")
+  })
+
+  test("the routing-bypass metadata next to the entity does not change the payload", async () => {
+    await send(
+      row(
+        { display: "products", sections: [{ items: [item("1")] }] },
+        {
+          contentAttributes: {
+            type: "product_message",
+            payload: {
+              display: "products",
+              sections: [{ items: [item("1")] }],
+            },
+            metadata: { bypassThreadControlLock: true },
+          },
+        },
+      ),
+    )
+
+    expect(requestBodies()[0].interactive.type).toBe("product")
+  })
+
+  test("addresses a BSUID-keyed contact with `recipient`, not `to`", async () => {
+    await send(
+      row({ display: "carousel", body: "b", items: [item("1"), item("2")] }),
+      bsuidContact,
+    )
+
+    expect(requestBodies()[0].recipient).toBe("user.9373001")
+    expect(requestBodies()[0]).not.toHaveProperty("to")
+  })
+
+  test("a plain text row is untouched", async () => {
+    await send({
+      id: "msg-2",
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      messageType: "outgoing",
+      contentType: "text",
+      text: "hello",
+      contentAttributes: null,
+    })
+
+    expect(mockSendMessage).toHaveBeenCalledTimes(1)
+    expect(mockApiFetch).not.toHaveBeenCalled()
   })
 })

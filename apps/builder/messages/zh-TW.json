@@ -3079,7 +3079,8 @@
       "addSection": "新增群組",
       "productCount": "{count} / {max} 件商品",
       "productsSelected": "{count, plural, one {# 件商品} other {# 件商品}}",
-      "noneSelected": "尚無商品"
+      "noneSelected": "尚無商品",
+      "sendFailed": "無法傳送商品。"
     }
   },
   "folders": {

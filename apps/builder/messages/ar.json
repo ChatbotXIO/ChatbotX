@@ -2862,7 +2862,8 @@
       "addSection": "إضافة قسم",
       "productCount": "{count} / {max} منتج",
       "productsSelected": "{count, plural, one {# منتج} other {# منتجات}}",
-      "noneSelected": "لا توجد منتجات بعد"
+      "noneSelected": "لا توجد منتجات بعد",
+      "sendFailed": "تعذّر إرسال المنتجات."
     }
   },
   "folders": {

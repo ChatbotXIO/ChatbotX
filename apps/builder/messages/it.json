@@ -2716,7 +2716,8 @@
       "addSection": "Aggiungi sezione",
       "productCount": "{count} / {max} prodotti",
       "productsSelected": "{count, plural, one {# prodotto} other {# prodotti}}",
-      "noneSelected": "Ancora nessun prodotto"
+      "noneSelected": "Ancora nessun prodotto",
+      "sendFailed": "Impossibile inviare i prodotti."
     }
   },
   "folders": {

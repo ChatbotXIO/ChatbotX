@@ -15,9 +15,11 @@ import {
 import {
   contentTypes,
   getWhatsappCallPermissionRequest,
+  isMessageProductEntity,
   isWhatsappNativeLocationRequest,
   type MessageButtonTemplate,
   type MessageHandlers,
+  type MessageProductEntity,
   type OutgoingMessage,
 } from "@chatbotx.io/sdk"
 import { Audio, Document, Image, Text, Video } from "whatsapp-api-js/messages"
@@ -45,7 +47,10 @@ import {
   convertFlowStepImage,
   convertFlowStepMultipleImages,
 } from "./send-image"
-import { convertFlowStepSendProducts } from "./send-products"
+import {
+  convertFlowStepSendProducts,
+  toWhatsappProductMessage,
+} from "./send-products"
 import { convertFlowStepText } from "./send-text"
 import { convertFlowStepViewCatalog } from "./send-view-catalog"
 import { convertFlowStepWaTemplate } from "./send-wa-template"
@@ -93,6 +98,14 @@ function* convertMessageToWhatsappMessage(
         action: { name: "call_permission_request" },
       },
     }
+    return
+  }
+
+  // A product message sent outside a flow (inbox, public API) carries its
+  // resolved products on the row; the text is only its preview, so it is never
+  // sent on its own.
+  if (isMessageProductEntity(message.contentAttributes)) {
+    yield toWhatsappProductMessage(message.contentAttributes.payload)
     return
   }
 
@@ -337,6 +350,15 @@ export const handledFlowStepTypes = [
   stepTypes.enum.sendProducts,
   stepTypes.enum.whatsappLocation,
 ] as const satisfies readonly StepType[]
+
+/**
+ * Outgoing message entities (`contentAttributes.type`) `sendMessage` renders as
+ * more than text. A channel whose policy declares `productMessages` must list
+ * `product_message` here, or such a row would go out as plain text.
+ */
+export const handledOutgoingContentEntities = [
+  "product_message",
+] as const satisfies readonly MessageProductEntity["type"][]
 
 export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
   async (props) => {

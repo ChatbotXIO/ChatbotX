@@ -9,6 +9,7 @@ import {
   broadcastToGuestParty,
   contactInboxService,
   conversationService,
+  type PreparedProductMessage,
   productMessageService,
   publishToWorkspaceParty,
   resolveMediaUrl,
@@ -58,7 +59,6 @@ import {
   type MessageButtonTemplate,
   type MessageCardTemplate,
   parseSdkError,
-  type ResolvedProductMessage,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
@@ -446,17 +446,11 @@ const convertCardsToTemplate = (props: {
   }))
 }
 
-const resolveProductMessageText = (
-  message: ResolvedProductMessage,
-): string | null =>
-  message.body ??
-  (message.display === "products" ? message.header : null) ??
-  null
-
 /**
  * A `sendProducts` step stores product ids; the products to show are resolved
  * here, before any Message row exists, so a step that cannot be sent leaves no
- * phantom message behind. Throws `ProductMessageUnresolvableError`, which the
+ * phantom message behind. Throws `ProductMessageUnresolvableError` or a `validation`
+ * exception, which the
  * caller's terminal catch records once.
  */
 async function resolveProductMessageForStep(props: {
@@ -465,19 +459,20 @@ async function resolveProductMessageForStep(props: {
   contactInbox: Pick<ContactInboxModel, "channel" | "sourceId">
   flowId: string
   metadata?: MetadataPayload
-}): Promise<ResolvedProductMessage | undefined> {
+}): Promise<PreparedProductMessage | undefined> {
   const { step, conversation, contactInbox, flowId, metadata } = props
   if (step.stepType !== stepTypes.enum.sendProducts) {
     return
   }
 
-  const { message, missing } = await productMessageService.resolveForSend({
+  const prepared = await productMessageService.prepareOutgoing({
     workspaceId: conversation.workspaceId,
     channel: contactInbox.channel,
-    step,
+    content: step,
+    onMissing: "drop",
   })
-  if (missing.length > 0) {
-    const productIds = missing.map(({ productId }) => productId)
+  if (prepared.missing.length > 0) {
+    const productIds = prepared.missing.map(({ productId }) => productId)
     logger.warn(
       { conversationId: conversation.id, flowId, stepId: step.id, productIds },
       "Product message sent without products that are no longer sendable",
@@ -495,7 +490,7 @@ async function resolveProductMessageForStep(props: {
       })
     }
   }
-  return message
+  return prepared
 }
 
 export async function sendFlowStep({
@@ -715,7 +710,7 @@ export async function sendFlowStep({
   let message: MessageModel | MessageWithAttachments | undefined
 
   try {
-    const productMessage = await resolveProductMessageForStep({
+    const preparedProductMessage = await resolveProductMessageForStep({
       step: resolvedStep as SendFlowStepData,
       conversation,
       contactInbox: targetContactInbox,
@@ -810,10 +805,9 @@ export async function sendFlowStep({
       ...(canonicalQuickReplies ?? []),
     ]
 
-    if (productMessage) {
+    if (preparedProductMessage) {
       contentAttributes = {
-        type: "product_message",
-        payload: productMessage,
+        ...preparedProductMessage.contentAttributes,
         ...contentAttributes,
       }
     }
@@ -885,9 +879,7 @@ export async function sendFlowStep({
       contentType: storedContent.contentType,
       senderType: senderTypes.enum.bot,
       sourceId: null,
-      text:
-        storedContent.text ??
-        (productMessage ? resolveProductMessageText(productMessage) : null),
+      text: storedContent.text ?? preparedProductMessage?.text ?? null,
       contentAttributes,
       createdAt: new Date(),
       ...(isPublicCommentReply ? { type: "comment" as const } : {}),
@@ -976,7 +968,7 @@ export async function sendFlowStep({
           flowId,
           flowVersionId,
           step: stepForSend,
-          productMessage,
+          productMessage: preparedProductMessage?.message,
           metadata,
           richResponse,
           quickReplies: canonicalQuickReplies,

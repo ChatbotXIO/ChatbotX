@@ -2862,7 +2862,8 @@
       "addSection": "Bölüm ekle",
       "productCount": "{count} / {max} ürün",
       "productsSelected": "{count, plural, one {# ürün} other {# ürün}}",
-      "noneSelected": "Henüz ürün yok"
+      "noneSelected": "Henüz ürün yok",
+      "sendFailed": "Ürünler gönderilemedi."
     }
   },
   "folders": {

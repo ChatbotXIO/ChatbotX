@@ -75,7 +75,7 @@ vi.mock("@chatbotx.io/ui/components/form/select-field", () => ({
 
 let container: HTMLDivElement
 let root: Root
-const onSave = vi.fn<(values: SendProductsFormValues) => void>()
+const onSave = vi.fn<(values: SendProductsFormValues) => unknown>()
 const onOpenChange = vi.fn<(open: boolean) => void>()
 
 beforeEach(() => {
@@ -344,5 +344,73 @@ describe("SendProductsDialog — other displays", () => {
       "flows.sendProducts.channelUnsupported",
     )
     expect(document.body.querySelector('[data-testid="picker"]')).toBeNull()
+  })
+})
+
+describe("SendProductsDialog — a caller that sends", () => {
+  const openForSending = (
+    props: Partial<ComponentProps<typeof SendProductsDialog>> = {},
+  ) =>
+    act(() =>
+      root.render(
+        <SendProductsDialog
+          channel="whatsapp"
+          onOpenChange={onOpenChange}
+          onSave={onSave}
+          open
+          step={sendProductsStepDefaultFn({
+            sections: [{ productIds: ["1"] }],
+          })}
+          {...props}
+        />,
+      ),
+    )
+
+  /** An async save settles on more ticks than react-hook-form's own submit. */
+  const submitAndSettle = (element: HTMLElement | null | undefined) =>
+    act(async () => {
+      element?.click()
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+  test("labels the submit button with the caller's text instead of Continue", () => {
+    openForSending({ submitText: "actions.send" })
+
+    expect(byText("actions.send")).toBeDefined()
+    expect(byText("actions.continue")).toBeUndefined()
+  })
+
+  test("disables the submit button while the caller is sending", () => {
+    openForSending({ submitText: "actions.send", isSubmitting: true })
+
+    expect((byText("actions.send") as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  test("stays open when the save resolves false, so the message can be fixed", async () => {
+    onSave.mockResolvedValue(false)
+    openForSending({ submitText: "actions.send" })
+
+    await submitAndSettle(byText("actions.send"))
+
+    expect(onSave).toHaveBeenCalledTimes(1)
+    expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
+  test("closes once the save resolves", async () => {
+    onSave.mockResolvedValue(true)
+    openForSending({ submitText: "actions.send" })
+
+    await submitAndSettle(byText("actions.send"))
+
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  test("a save that returns nothing closes, as the flow editor expects", async () => {
+    onSave.mockReturnValue(undefined)
+    openForSending()
+
+    await submitAndSettle(continueButton())
+
+    expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 })

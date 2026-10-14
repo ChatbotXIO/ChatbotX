@@ -908,6 +908,8 @@ describe("public API spec — declared codes match what the mapper throws", () =
     method: string
     codes: string[]
     statuses: Record<string, number | undefined>
+    /** Codes whose declaration carries a `data` schema (so the spec documents it). */
+    structuredCodes: string[]
   }
 
   function collectErrorMaps(
@@ -935,6 +937,11 @@ describe("public API spec — declared codes match what the mapper throws", () =
             def.errorMap as Record<string, { status?: number }>,
           ).map(([code, entry]) => [code, entry?.status]),
         ),
+        structuredCodes: Object.entries(
+          def.errorMap as Record<string, { data?: unknown }>,
+        )
+          .filter(([, entry]) => entry?.data !== undefined)
+          .map(([code]) => code),
       })
       return
     }
@@ -1062,6 +1069,11 @@ describe("public API spec — declared codes match what the mapper throws", () =
       "products.syncMetaCatalog": { metaCatalogReconnectRequired: 400 },
       "contacts.create": { notFound: 404, invalidCustomFieldValue: 400 },
       "contacts.upsert": { notFound: 404, phoneExists: 422 },
+      "contacts.sendMessage": {
+        notFound: 404,
+        productMessageUnresolvable: 422,
+      },
+      "messages.create": { productMessageUnresolvable: 422 },
       "contacts.update": { invalidCustomFieldValue: 400 },
       "contacts.setCustomField": { invalidCustomFieldValue: 400 },
       "contacts.applyCustomFieldOperations": { invalidCustomFieldValue: 400 },
@@ -1095,6 +1107,18 @@ describe("public API spec — declared codes match what the mapper throws", () =
     })
 
     expect(wrong).toEqual([])
+  })
+
+  test("sending a message documents why a product message was refused", () => {
+    const byPath = new Map(procedures.map((proc) => [proc.path, proc]))
+    const withoutReason = ["contacts.sendMessage", "messages.create"].filter(
+      (path) =>
+        !byPath
+          .get(path)
+          ?.structuredCodes.includes("productMessageUnresolvable"),
+    )
+
+    expect(withoutReason).toEqual([])
   })
 
   test("no-op routes do not promise a 404 they never return", () => {
