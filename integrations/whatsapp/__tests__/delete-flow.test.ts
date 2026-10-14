@@ -14,7 +14,7 @@ vi.mock("ky", async () => {
   }
 })
 
-import { deleteFlow } from "../src/api/flow"
+import { deleteFlow, deleteFlowDraft } from "../src/api/flow"
 import type { WhatsappAuthValue } from "../src/schema"
 
 const auth = {
@@ -146,5 +146,66 @@ describe("deleteFlow", () => {
     getMock.mockReturnValueOnce(metaError(100, "Invalid parameter"))
 
     await expect(run()).rejects.toThrow("Invalid parameter")
+  })
+})
+
+describe("deleteFlowDraft", () => {
+  const runDraft = () => deleteFlowDraft({ auth, flowId: "flow-1" })
+
+  it("deletes a draft Flow", async () => {
+    getMock.mockReturnValueOnce(flow("DRAFT"))
+    deleteMock.mockReturnValueOnce(jsonResponse({ success: true }))
+
+    await expect(runDraft()).resolves.toEqual({
+      outcome: "deleted",
+      status: null,
+    })
+    expect(deleteMock.mock.calls[0]?.[0]).toBe(flowUrl)
+  })
+
+  it.each([
+    "PUBLISHED",
+    "THROTTLED",
+    "BLOCKED",
+    "DEPRECATED",
+  ])("leaves a %s Flow untouched, never deprecating it", async (status) => {
+    getMock.mockReturnValueOnce(flow(status))
+
+    await expect(runDraft()).resolves.toEqual({ outcome: "notDraft", status })
+    expect(postMock).not.toHaveBeenCalled()
+    expect(deleteMock).not.toHaveBeenCalled()
+  })
+
+  it("does not deprecate a draft published after it was read (139004)", async () => {
+    getMock
+      .mockReturnValueOnce(flow("DRAFT"))
+      .mockReturnValueOnce(flow("PUBLISHED"))
+    deleteMock.mockReturnValueOnce(
+      metaError(139_004, "Can't delete published Flow"),
+    )
+
+    await expect(runDraft()).resolves.toEqual({
+      outcome: "notDraft",
+      status: "PUBLISHED",
+    })
+    expect(postMock).not.toHaveBeenCalled()
+  })
+
+  it("reports a Flow that no longer exists as missing", async () => {
+    getMock.mockReturnValueOnce(
+      metaError(100, "Flow with specified ID does not exist"),
+    )
+
+    await expect(runDraft()).resolves.toEqual({
+      outcome: "missing",
+      status: null,
+    })
+    expect(deleteMock).not.toHaveBeenCalled()
+  })
+
+  it("throws on an expired token", async () => {
+    getMock.mockReturnValueOnce(metaError(190, "Error validating access token"))
+
+    await expect(runDraft()).rejects.toThrow("Error validating access token")
   })
 })

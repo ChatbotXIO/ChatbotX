@@ -7852,7 +7852,20 @@
       "success": "Đã đẩy lên WhatsApp",
       "draftOnly": "Meta giữ Flow ở trạng thái nháp vì còn lỗi",
       "failed": "Không đẩy lên WhatsApp được",
-      "contactVariables": "Mini App này đang chèn custom field vào chữ. Hiện custom field chỉ chạy trên link web — hãy bỏ chúng trước khi đẩy lên WhatsApp."
+      "contactVariables": "Mini App này đang chèn custom field vào chữ. Hiện custom field chỉ chạy trên link web — hãy bỏ chúng trước khi đẩy lên WhatsApp.",
+      "notOnNumber": "Mini App chưa có trên số WhatsApp này.",
+      "onlyDraftDeletable": "Flow đang chạy thật trên Meta nên không xoá được. Chỉ xoá được bản nháp.",
+      "flowIsLive": "Mini App đang chạy trên số WhatsApp này. Lưu nháp sẽ làm nó ngừng chạy — hãy bấm “Đẩy lên” để cập nhật.",
+      "saveDraft": "Lưu nháp",
+      "draftSaved": "Đã lưu lên WhatsApp dưới dạng nháp",
+      "preview": "Xem trước",
+      "previewUnavailable": "Meta không trả về link xem trước",
+      "deleteDraft": "Xoá bản nháp trên WhatsApp",
+      "draftDeleted": "Đã xoá bản nháp trên WhatsApp"
+    },
+    "status": {
+      "draft": "Nháp",
+      "published": "Đã publish"
     },
     "runner": {
       "back": "Quay lại",

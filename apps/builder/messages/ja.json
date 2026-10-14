@@ -7852,7 +7852,20 @@
       "success": "WhatsAppに公開しました",
       "draftOnly": "エラーのため、MetaはこのFlowを下書きのままにしました",
       "failed": "WhatsAppに公開できませんでした",
-      "contactVariables": "このミニアプリのテキストにはカスタムフィールドが含まれています。現在は Web リンクでのみ機能します。WhatsApp に公開する前に削除してください。"
+      "contactVariables": "このミニアプリのテキストにはカスタムフィールドが含まれています。現在は Web リンクでのみ機能します。WhatsApp に公開する前に削除してください。",
+      "notOnNumber": "このミニアプリはこの WhatsApp 番号にありません。",
+      "onlyDraftDeletable": "Flow は Meta で公開中のため削除できません。削除できるのは下書きのみです。",
+      "flowIsLive": "このミニアプリはこの WhatsApp 番号で公開中です。下書きを保存すると公開が停止されるため、更新するには公開してください。",
+      "saveDraft": "下書きとして保存",
+      "draftSaved": "WhatsAppに下書きとして保存しました",
+      "preview": "プレビュー",
+      "previewUnavailable": "Metaからプレビューリンクが返されませんでした",
+      "deleteDraft": "WhatsAppの下書きを削除",
+      "draftDeleted": "WhatsAppから下書きを削除しました"
+    },
+    "status": {
+      "draft": "下書き",
+      "published": "公開済み"
     },
     "runner": {
       "back": "戻る",

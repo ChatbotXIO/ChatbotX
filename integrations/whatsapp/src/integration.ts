@@ -9,8 +9,11 @@ import { exchangeLongLivedToken } from "./api/auth"
 import { getCallingSettings, updateCallingSettings } from "./api/calling"
 import {
   deleteFlow,
+  deleteFlowDraft,
   getFlowAssets,
+  getFlowPreview,
   getFlowResponseFields,
+  publishFlowDraft,
   publishFlowJson,
 } from "./api/flow"
 import {
@@ -62,8 +65,14 @@ const config: IntegrationDefinition<
       }),
     publishFlowJson: async ({ ctx, params }) =>
       await publishFlowJson({ auth: ctx.auth, params }),
+    publishFlowDraft: async ({ ctx, params }) =>
+      await publishFlowDraft({ auth: ctx.auth, flowId: params.flowSourceId }),
+    getFlowPreview: async ({ ctx, params }) =>
+      await getFlowPreview({ auth: ctx.auth, flowId: params.flowSourceId }),
     deleteFlow: async ({ ctx, params }) =>
       await deleteFlow({ auth: ctx.auth, flowId: params.flowSourceId }),
+    deleteFlowDraft: async ({ ctx, params }) =>
+      await deleteFlowDraft({ auth: ctx.auth, flowId: params.flowSourceId }),
     findConversationalAutomation: async ({ ctx }) =>
       await findConversationalAutomation(ctx.auth),
     updateConversationalAutomation: async ({ ctx, data }) =>

@@ -8,7 +8,9 @@ import type { ServerMessage } from "whatsapp-api-js/types"
 import z from "zod"
 import type { WhatsappCallingSettings } from "./api/calling"
 import type {
+  DeleteFlowDraftResult,
   DeleteFlowResult,
+  FlowPreviewResult,
   PublishFlowJsonParams,
   PublishFlowJsonResult,
   WhatsappFlowResponseField,
@@ -369,12 +371,33 @@ export type WhatsappActions = {
     },
     PublishFlowJsonResult
   >
+  publishFlowDraft: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      params: { flowSourceId: string }
+    },
+    PublishFlowJsonResult
+  >
+  getFlowPreview: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      params: { flowSourceId: string }
+    },
+    FlowPreviewResult
+  >
   deleteFlow: Handler<
     {
       ctx: Context<WhatsappAuthValue>
       params: { flowSourceId: string }
     },
     DeleteFlowResult
+  >
+  deleteFlowDraft: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      params: { flowSourceId: string }
+    },
+    DeleteFlowDraftResult
   >
   findConversationalAutomation: Handler<
     {

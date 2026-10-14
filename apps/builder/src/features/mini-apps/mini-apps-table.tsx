@@ -4,7 +4,6 @@ import type { FlowJson } from "@chatbotx.io/mini-app"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
-import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
@@ -43,6 +42,7 @@ import { getMiniAppFlowJsonAction } from "./actions/get-mini-app-flow-json.actio
 import { DuplicateMiniAppDialog } from "./components/duplicate-mini-app-dialog"
 import { FlowJsonDialog } from "./components/flow-json-dialog"
 import { PublishWhatsappDialog } from "./components/publish-whatsapp-dialog"
+import { WhatsappPublicationBadge } from "./components/whatsapp-publication-badge"
 import { CreateMiniAppDialog } from "./create-mini-app-dialog"
 import { DeleteMiniAppsDialog } from "./delete-mini-apps"
 import { buildMiniAppPublicUrl } from "./lib/public-url"
@@ -166,22 +166,21 @@ export function MiniAppsTable({ workspaceId, promises }: MiniAppsTableProps) {
           }
           return (
             <div className="flex flex-wrap gap-1">
-              {publications.map((publication) => {
-                const label = publishTargets.find(
-                  (target) => target.id === publication.integrationWhatsappId,
-                )?.label
-                return (
-                  <Badge
-                    key={publication.id}
-                    variant={
-                      publication.status === "PUBLISHED" ? "default" : "outline"
-                    }
-                  >
-                    {label ?? publication.integrationWhatsappId} ·{" "}
-                    {publication.status}
-                  </Badge>
-                )
-              })}
+              {publications.map((publication) => (
+                <WhatsappPublicationBadge
+                  integrationWhatsappId={publication.integrationWhatsappId}
+                  key={publication.id}
+                  label={
+                    publishTargets.find(
+                      (target) =>
+                        target.id === publication.integrationWhatsappId,
+                    )?.label ?? publication.integrationWhatsappId
+                  }
+                  miniAppId={row.original.id}
+                  status={publication.status}
+                  workspaceId={workspaceId}
+                />
+              ))}
             </div>
           )
         },

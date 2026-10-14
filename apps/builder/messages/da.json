@@ -7852,7 +7852,20 @@
       "success": "Udgivet på WhatsApp",
       "draftOnly": "Meta beholdt Flowet som kladde på grund af fejl",
       "failed": "Kunne ikke udgive på WhatsApp",
-      "contactVariables": "Denne Mini App viser brugerdefinerede felter i sine tekster. De virker indtil videre kun på weblinket — fjern dem, før du udgiver til WhatsApp."
+      "contactVariables": "Denne Mini App viser brugerdefinerede felter i sine tekster. De virker indtil videre kun på weblinket — fjern dem, før du udgiver til WhatsApp.",
+      "notOnNumber": "Mini App'en er ikke på dette WhatsApp-nummer.",
+      "onlyDraftDeletable": "Flowet er live på Meta og kan derfor ikke slettes. Kun en kladde kan slettes.",
+      "flowIsLive": "Mini App'en er live på dette WhatsApp-nummer. At gemme en kladde ville tage den offline — udgiv i stedet for at opdatere den.",
+      "saveDraft": "Gem som kladde",
+      "draftSaved": "Gemt på WhatsApp som kladde",
+      "preview": "Forhåndsvisning",
+      "previewUnavailable": "Meta returnerede ikke et link til forhåndsvisning",
+      "deleteDraft": "Slet kladde på WhatsApp",
+      "draftDeleted": "Kladde slettet fra WhatsApp"
+    },
+    "status": {
+      "draft": "Kladde",
+      "published": "Udgivet"
     },
     "runner": {
       "back": "Tilbage",

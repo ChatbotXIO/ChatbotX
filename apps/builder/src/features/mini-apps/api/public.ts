@@ -13,7 +13,6 @@ import {
   locateIssues,
   validateMiniApp,
 } from "@chatbotx.io/mini-app"
-import { z } from "zod"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
@@ -26,13 +25,19 @@ import {
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { deleteMiniApps } from "../lib/delete-mini-apps"
 import { buildMiniAppPublicUrl } from "../lib/public-url"
-import { publishMiniAppToWhatsapp } from "../lib/publish-to-whatsapp"
+import {
+  deleteMiniAppWhatsappDraft,
+  getMiniAppWhatsappPreview,
+  publishMiniAppToWhatsapp,
+  publishMiniAppWhatsappDraft,
+} from "../lib/publish-to-whatsapp"
 import { createTranslatedStarterDefinition } from "../lib/starter-definition"
 import {
   createMiniAppPublicRequest,
   deleteMiniAppPublicRequest,
   deleteMiniAppsPublicRequest,
   deleteMiniAppsPublicResponse,
+  deleteMiniAppWhatsappDraftPublicResponse,
   listMiniAppSubmissionsPublicRequest,
   listMiniAppSubmissionsPublicResponse,
   listMiniAppsPublicRequest,
@@ -41,6 +46,9 @@ import {
   miniAppIdPublicRequest,
   miniAppPublicResource,
   miniAppValidationPublicResponse,
+  miniAppWhatsappPreviewPublicResponse,
+  miniAppWhatsappPublicRequest,
+  miniAppWhatsappPublishPublicResponse,
   publishMiniAppPublicRequest,
   updateMiniAppPublicRequest,
   validateMiniAppPublicRequest,
@@ -93,6 +101,18 @@ const buildUpdatedDefinition = (
     ...input.customFieldMappings,
   })
 }
+
+const toPublishResponse = (
+  publication: Pick<
+    MiniAppPublicationModel,
+    "status" | "whatsappFlowId" | "validationErrors"
+  > & { published: boolean },
+) => ({
+  status: publication.status,
+  published: publication.published,
+  whatsappFlowId: publication.whatsappFlowId,
+  validationErrors: publication.validationErrors as unknown[],
+})
 
 const toDetail = (
   miniApp: MiniAppModel & { publications?: MiniAppPublicationModel[] },
@@ -320,34 +340,109 @@ export const miniAppsPublicRouter = {
       path: "/v1/mini-apps/{id}/publish-whatsapp",
       summary: "Publish Mini App to WhatsApp",
       description:
-        "Creates or updates the Mini App as a WhatsApp Flow on one WhatsApp number and publishes it. The Flow then appears in `whatsappFlows.list` for Send WhatsApp Flow steps and template buttons. Meta keeps it as DRAFT when it finds validation errors (see `validationErrors`).",
+        "Creates or updates the Mini App as a WhatsApp Flow on one WhatsApp number and publishes it right away. The Flow then appears in `whatsappFlows.list` for Send WhatsApp Flow steps and template buttons. Meta keeps it as DRAFT when it finds validation errors (see `validationErrors`). To check it first, use `miniApps.pushWhatsappDraft`, `miniApps.getWhatsappPreview`, then `miniApps.publishWhatsappDraft`.",
       tags,
     })
     .input(publishMiniAppPublicRequest)
-    .output(
-      z.object({
-        status: z.string().describe("Meta Flow status after the call."),
-        published: z.boolean(),
-        whatsappFlowId: z.string().nullable(),
-        validationErrors: z
-          .array(z.unknown())
-          .describe("Meta's validation errors, if any."),
-      }),
-    )
+    .output(miniAppWhatsappPublishPublicResponse)
     .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) => {
-      const publication = await publishMiniAppToWhatsapp({
-        workspaceId: context.workspace.id,
-        miniAppId: input.id,
-        integrationWhatsappId: input.integrationWhatsappId,
-      })
-      return {
-        status: publication.status,
-        published: publication.published,
-        whatsappFlowId: publication.whatsappFlowId,
-        validationErrors: publication.validationErrors as unknown[],
-      }
-    }),
+    .handler(async ({ context, input }) =>
+      toPublishResponse(
+        await publishMiniAppToWhatsapp({
+          workspaceId: context.workspace.id,
+          miniAppId: input.id,
+          integrationWhatsappId: input.integrationWhatsappId,
+        }),
+      ),
+    ),
+
+  pushWhatsappDraft: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/mini-apps/{id}/whatsapp-draft",
+      summary: "Save Mini App to WhatsApp as draft",
+      description:
+        "Creates or updates the Mini App as a WhatsApp Flow on one WhatsApp number without publishing it: status DRAFT. Then preview it with `miniApps.getWhatsappPreview`, publish it with `miniApps.publishWhatsappDraft` or delete it with `miniApps.deleteWhatsappDraft`. Refused with a validation error while the Mini App's Flow is live on that number (saving a draft would take it offline): update it with `miniApps.publishWhatsapp` instead. Get the number id from `whatsappChannels.list`.",
+      tags,
+    })
+    .input(publishMiniAppPublicRequest)
+    .output(miniAppWhatsappPublishPublicResponse)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) =>
+      toPublishResponse(
+        await publishMiniAppToWhatsapp({
+          workspaceId: context.workspace.id,
+          miniAppId: input.id,
+          integrationWhatsappId: input.integrationWhatsappId,
+          publish: false,
+        }),
+      ),
+    ),
+
+  publishWhatsappDraft: workspaceTokenAuthAPI
+    .route({
+      method: "POST",
+      path: "/v1/mini-apps/{id}/whatsapp-draft/publish",
+      summary: "Publish Mini App WhatsApp draft",
+      description:
+        "Publishes the draft Flow saved by `miniApps.pushWhatsappDraft`, exactly as it was previewed (later edits are not included: push a new draft for those). A Flow that is not a draft is returned unchanged.",
+      tags,
+    })
+    .input(miniAppWhatsappPublicRequest)
+    .output(miniAppWhatsappPublishPublicResponse)
+    .errors(possibleErrorsOnMutatingResource)
+    .handler(async ({ context, input }) =>
+      toPublishResponse(
+        await publishMiniAppWhatsappDraft({
+          workspaceId: context.workspace.id,
+          miniAppId: input.id,
+          integrationWhatsappId: input.integrationWhatsappId,
+        }),
+      ),
+    ),
+
+  getWhatsappPreview: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/mini-apps/{id}/whatsapp-preview",
+      summary: "Get Mini App WhatsApp preview link",
+      description:
+        "Returns Meta's temporary web preview link of the Mini App's Flow on one WhatsApp number (draft or published). The Mini App must have been pushed there with `miniApps.pushWhatsappDraft` or `miniApps.publishWhatsapp`.",
+      tags,
+      spec: mcpSpec({ readOnlyHint: true }),
+    })
+    .input(miniAppWhatsappPublicRequest)
+    .output(miniAppWhatsappPreviewPublicResponse)
+    .errors(possibleErrorsOnFindingResource)
+    .handler(
+      async ({ context, input }) =>
+        await getMiniAppWhatsappPreview({
+          workspaceId: context.workspace.id,
+          miniAppId: input.id,
+          integrationWhatsappId: input.integrationWhatsappId,
+        }),
+    ),
+
+  deleteWhatsappDraft: workspaceTokenAuthAPI
+    .route({
+      method: "DELETE",
+      path: "/v1/mini-apps/{id}/whatsapp-draft/{integrationWhatsappId}",
+      summary: "Delete Mini App WhatsApp draft",
+      description:
+        "Deletes the Mini App's draft Flow from Meta on one WhatsApp number; the Mini App itself is kept. Only drafts can be deleted, judged by the Flow's current status on Meta: a Flow that is live there is refused with a validation error and keeps serving, it is never deprecated (delete the Mini App with `deleteWhatsappFlows` to deprecate it).",
+      tags,
+    })
+    .input(miniAppWhatsappPublicRequest)
+    .output(deleteMiniAppWhatsappDraftPublicResponse)
+    .errors(possibleErrorsOnDeletingResource)
+    .handler(
+      async ({ context, input }) =>
+        await deleteMiniAppWhatsappDraft({
+          workspaceId: context.workspace.id,
+          miniAppId: input.id,
+          integrationWhatsappId: input.integrationWhatsappId,
+        }),
+    ),
 
   listSubmissions: workspaceTokenAuthAPI
     .route({

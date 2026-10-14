@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@chatbotx.io/ui/components/ui/select"
-import { Loader2Icon, SendIcon } from "lucide-react"
+import { FileTextIcon, Loader2Icon, SendIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
@@ -53,8 +53,14 @@ export function PublishWhatsappDialog({
   const { execute, isPending } = useAction(
     publishMiniAppWhatsappAction.bind(null, workspaceId, miniAppId ?? ""),
     {
-      onSuccess: ({ data }) => {
-        if (data?.published) {
+      onSuccess: ({ data, input }) => {
+        const savedDraft =
+          input.publish === false && data?.validationErrors.length === 0
+        if (savedDraft) {
+          toast.success(t("draftSaved"))
+          setMetaErrors([])
+          onOpenChange(false)
+        } else if (data?.published) {
           toast.success(t("success"))
           setMetaErrors([])
           onOpenChange(false)
@@ -66,6 +72,8 @@ export function PublishWhatsappDialog({
       },
       onError: ({ error }) => {
         toast.error(error.serverError ?? t("failed"))
+        // A refused draft save re-syncs the stored status from Meta.
+        router.refresh()
       },
     },
   )
@@ -129,7 +137,19 @@ export function PublishWhatsappDialog({
         <DialogFooter>
           <Button
             disabled={!(miniAppId && targetId) || isPending}
-            onClick={() => execute({ integrationWhatsappId: targetId })}
+            onClick={() =>
+              execute({ integrationWhatsappId: targetId, publish: false })
+            }
+            variant="outline"
+          >
+            <FileTextIcon className="size-4" />
+            {t("saveDraft")}
+          </Button>
+          <Button
+            disabled={!(miniAppId && targetId) || isPending}
+            onClick={() =>
+              execute({ integrationWhatsappId: targetId, publish: true })
+            }
           >
             {isPending ? (
               <Loader2Icon className="size-4 animate-spin" />

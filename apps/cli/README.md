@@ -948,7 +948,11 @@ chatbotx mini-apps update <id>                          # [--name --enabled --fl
 chatbotx mini-apps delete <id>                          # [--deleteWhatsappFlows] also deletes draft Flows / deprecates published ones on Meta; returns each Flow's outcome
 chatbotx mini-apps bulk-delete --ids <ids>              # [--deleteWhatsappFlows]
 chatbotx mini-apps duplicate <id>                       # Copy as "<name> - Copy" (answers and WhatsApp publications are not copied)
-chatbotx mini-apps publish-whatsapp <id> --integrationWhatsappId <id>   # id from `whatsapp-channels list`
+chatbotx mini-apps publish-whatsapp <id> --integrationWhatsappId <id>   # Push and publish at once; id from `whatsapp-channels list`
+chatbotx mini-apps whatsapp-draft push <id> --integrationWhatsappId <id>      # Push to WhatsApp as a DRAFT (not published); refused while the Flow is live on that number — use publish-whatsapp to update it
+chatbotx mini-apps whatsapp-preview <id> --integrationWhatsappId <id>         # Meta's temporary preview link (draft or published)
+chatbotx mini-apps whatsapp-draft publish <id> --integrationWhatsappId <id>   # Publish the draft exactly as previewed
+chatbotx mini-apps whatsapp-draft delete <id> <integrationWhatsappId>         # Delete the draft from Meta; a Flow live there (by Meta's current status) is refused and never deprecated. Returns `deleted` or `missing`
 chatbotx mini-apps submissions list <id>                # Answers from the public link (uploaded files as public URLs)
 ```
 

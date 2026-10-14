@@ -7852,7 +7852,20 @@
       "success": "WhatsApp-da dərc olundu",
       "draftOnly": "Meta xətalara görə Flow-u qaralama kimi saxladı",
       "failed": "WhatsApp-da dərc etmək alınmadı",
-      "contactVariables": "Bu Mini App mətnlərində xüsusi sahələr göstərir. Hələlik onlar yalnız veb linkdə işləyir — WhatsApp-da dərc etməzdən əvvəl onları silin."
+      "contactVariables": "Bu Mini App mətnlərində xüsusi sahələr göstərir. Hələlik onlar yalnız veb linkdə işləyir — WhatsApp-da dərc etməzdən əvvəl onları silin.",
+      "notOnNumber": "Mini App bu WhatsApp nömrəsində yoxdur.",
+      "onlyDraftDeletable": "Flow Meta-da canlıdır, ona görə silinə bilməz. Yalnız qaralama silinə bilər.",
+      "flowIsLive": "Mini App bu WhatsApp nömrəsində canlıdır. Qaralama saxlamaq onu dayandırar — yeniləmək üçün dərc edin.",
+      "saveDraft": "Qaralama kimi saxla",
+      "draftSaved": "WhatsApp-a qaralama kimi saxlandı",
+      "preview": "Önizləmə",
+      "previewUnavailable": "Meta önizləmə linki qaytarmadı",
+      "deleteDraft": "WhatsApp-da qaralamanı sil",
+      "draftDeleted": "Qaralama WhatsApp-dan silindi"
+    },
+    "status": {
+      "draft": "Qaralama",
+      "published": "Dərc edilib"
     },
     "runner": {
       "back": "Geri",

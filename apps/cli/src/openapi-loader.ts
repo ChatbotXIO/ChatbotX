@@ -201,6 +201,10 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "POST /v1/mini-apps/{id}/publish-whatsapp": "mini-apps:publish-whatsapp",
   "GET /v1/mini-apps/{id}/flow-json": "mini-apps:flow-json",
   "POST /v1/mini-apps/{id}/duplicate": "mini-apps:duplicate",
+  "POST /v1/mini-apps/{id}/whatsapp-draft": "mini-apps:whatsapp-draft:push",
+  "POST /v1/mini-apps/{id}/whatsapp-draft/publish":
+    "mini-apps:whatsapp-draft:publish",
+  "GET /v1/mini-apps/{id}/whatsapp-preview": "mini-apps:whatsapp-preview",
   "GET /v1/conversations/{conversationId}/messages/{messageId}/flow-response":
     "conversations:flow-response:get",
 }

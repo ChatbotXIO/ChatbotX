@@ -7852,7 +7852,20 @@
       "success": "Publicerad på WhatsApp",
       "draftOnly": "Meta behöll Flowet som utkast på grund av fel",
       "failed": "Det gick inte att publicera på WhatsApp",
-      "contactVariables": "Den här Mini App visar anpassade fält i sina texter. De fungerar än så länge bara på webblänken – ta bort dem innan du publicerar till WhatsApp."
+      "contactVariables": "Den här Mini App visar anpassade fält i sina texter. De fungerar än så länge bara på webblänken – ta bort dem innan du publicerar till WhatsApp.",
+      "notOnNumber": "Mini App finns inte på det här WhatsApp-numret.",
+      "onlyDraftDeletable": "Flowet är live hos Meta och kan därför inte tas bort. Bara ett utkast kan tas bort.",
+      "flowIsLive": "Mini App är live på det här WhatsApp-numret. Att spara ett utkast skulle ta den offline – publicera i stället för att uppdatera den.",
+      "saveDraft": "Spara som utkast",
+      "draftSaved": "Sparat i WhatsApp som utkast",
+      "preview": "Förhandsgranska",
+      "previewUnavailable": "Meta returnerade ingen förhandsgranskningslänk",
+      "deleteDraft": "Ta bort utkast i WhatsApp",
+      "draftDeleted": "Utkastet togs bort från WhatsApp"
+    },
+    "status": {
+      "draft": "Utkast",
+      "published": "Publicerad"
     },
     "runner": {
       "back": "Tillbaka",

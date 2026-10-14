@@ -7852,7 +7852,20 @@
       "success": "Publicado no WhatsApp",
       "draftOnly": "A Meta manteve o Flow como rascunho por causa de erros",
       "failed": "Não foi possível publicar no WhatsApp",
-      "contactVariables": "Este Mini App mostra campos personalizados nos textos. Por enquanto eles só funcionam no link web — remova-os antes de publicar no WhatsApp."
+      "contactVariables": "Este Mini App mostra campos personalizados nos textos. Por enquanto eles só funcionam no link web — remova-os antes de publicar no WhatsApp.",
+      "notOnNumber": "O Mini App não está neste número do WhatsApp.",
+      "onlyDraftDeletable": "O Flow está publicado na Meta, então não pode ser excluído. Só um rascunho pode ser excluído.",
+      "flowIsLive": "O Mini App está ativo neste número do WhatsApp. Salvar um rascunho o tiraria do ar — publique para atualizá-lo.",
+      "saveDraft": "Salvar como rascunho",
+      "draftSaved": "Salvo no WhatsApp como rascunho",
+      "preview": "Pré-visualizar",
+      "previewUnavailable": "A Meta não retornou um link de pré-visualização",
+      "deleteDraft": "Excluir rascunho no WhatsApp",
+      "draftDeleted": "Rascunho excluído do WhatsApp"
+    },
+    "status": {
+      "draft": "Rascunho",
+      "published": "Publicado"
     },
     "runner": {
       "back": "Voltar",

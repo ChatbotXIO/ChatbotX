@@ -7852,7 +7852,20 @@
       "success": "Auf WhatsApp veröffentlicht",
       "draftOnly": "Meta hat den Flow wegen Fehlern als Entwurf belassen",
       "failed": "Veröffentlichung auf WhatsApp fehlgeschlagen",
-      "contactVariables": "Diese Mini App zeigt benutzerdefinierte Felder in ihren Texten. Sie funktionieren vorerst nur im Weblink – entferne sie vor dem Veröffentlichen auf WhatsApp."
+      "contactVariables": "Diese Mini App zeigt benutzerdefinierte Felder in ihren Texten. Sie funktionieren vorerst nur im Weblink – entferne sie vor dem Veröffentlichen auf WhatsApp.",
+      "notOnNumber": "Die Mini App ist nicht auf dieser WhatsApp-Nummer.",
+      "onlyDraftDeletable": "Der Flow ist bei Meta live und kann daher nicht gelöscht werden. Nur ein Entwurf kann gelöscht werden.",
+      "flowIsLive": "Die Mini App ist auf dieser WhatsApp-Nummer live. Ein Entwurf würde sie offline nehmen – veröffentliche stattdessen, um sie zu aktualisieren.",
+      "saveDraft": "Als Entwurf speichern",
+      "draftSaved": "Als Entwurf in WhatsApp gespeichert",
+      "preview": "Vorschau",
+      "previewUnavailable": "Meta hat keinen Vorschaulink zurückgegeben",
+      "deleteDraft": "Entwurf in WhatsApp löschen",
+      "draftDeleted": "Entwurf aus WhatsApp gelöscht"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "published": "Veröffentlicht"
     },
     "runner": {
       "back": "Zurück",

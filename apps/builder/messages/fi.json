@@ -7852,7 +7852,20 @@
       "success": "Julkaistu WhatsAppissa",
       "draftOnly": "Meta piti Flow'n luonnoksena virheiden vuoksi",
       "failed": "Julkaiseminen WhatsAppissa epäonnistui",
-      "contactVariables": "Tämä Mini App näyttää mukautettuja kenttiä teksteissään. Ne toimivat toistaiseksi vain verkkolinkissä – poista ne ennen julkaisua WhatsAppiin."
+      "contactVariables": "Tämä Mini App näyttää mukautettuja kenttiä teksteissään. Ne toimivat toistaiseksi vain verkkolinkissä – poista ne ennen julkaisua WhatsAppiin.",
+      "notOnNumber": "Mini App ei ole tässä WhatsApp-numerossa.",
+      "onlyDraftDeletable": "Flow on julkaistu Metassa, joten sitä ei voi poistaa. Vain luonnoksen voi poistaa.",
+      "flowIsLive": "Mini App on käytössä tässä WhatsApp-numerossa. Luonnoksen tallentaminen poistaisi sen käytöstä – päivitä se julkaisemalla.",
+      "saveDraft": "Tallenna luonnoksena",
+      "draftSaved": "Tallennettu WhatsAppiin luonnoksena",
+      "preview": "Esikatselu",
+      "previewUnavailable": "Meta ei palauttanut esikatselulinkkiä",
+      "deleteDraft": "Poista luonnos WhatsAppista",
+      "draftDeleted": "Luonnos poistettu WhatsAppista"
+    },
+    "status": {
+      "draft": "Luonnos",
+      "published": "Julkaistu"
     },
     "runner": {
       "back": "Takaisin",

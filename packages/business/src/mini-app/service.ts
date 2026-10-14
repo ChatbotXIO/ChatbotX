@@ -501,6 +501,24 @@ class MiniAppPublicationService extends BaseService {
     })
   }
 
+  /** Forgets a publication once its Flow is gone from Meta. */
+  async remove(input: {
+    miniAppId: string
+    integrationWhatsappId: string
+  }): Promise<void> {
+    await db
+      .delete(miniAppPublicationModel)
+      .where(
+        and(
+          eq(miniAppPublicationModel.miniAppId, input.miniAppId),
+          eq(
+            miniAppPublicationModel.integrationWhatsappId,
+            input.integrationWhatsappId,
+          ),
+        ),
+      )
+  }
+
   /** Records the outcome of a publish attempt (one row per Mini App + number). */
   async record(input: {
     miniAppId: string

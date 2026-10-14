@@ -431,6 +431,9 @@ const FLOW_FIELDS = "id,name,status,categories,validation_errors"
 /** Flows that can still take a new Flow JSON in place. */
 const EDITABLE_FLOW_STATUSES = new Set(["DRAFT", "PUBLISHED"])
 
+/** Statuses of a published Flow, still live for the templates and steps using it. */
+const LIVE_FLOW_STATUSES = new Set(["PUBLISHED", "THROTTLED", "BLOCKED"])
+
 export type WhatsappFlowCategory =
   | "SIGN_UP"
   | "SIGN_IN"
@@ -447,6 +450,11 @@ export type PublishFlowJsonParams = {
   categories?: WhatsappFlowCategory[]
   /** Meta id of a Flow created by an earlier publish of the same Mini App. */
   existingFlowId?: string | null
+  /**
+   * False saves the Flow JSON as a draft on Meta without publishing it, so
+   * it can be previewed (and deleted) before going live. Defaults to true.
+   */
+  publish?: boolean
 }
 
 export type PublishFlowJsonResult = {
@@ -458,6 +466,11 @@ export type PublishFlowJsonResult = {
   published: boolean
   /** Why Meta refused to publish a Flow with no validation errors. */
   publishError?: string
+  /**
+   * True when a draft save (`publish: false`) hit a Flow that is live on
+   * Meta: nothing was written, so the live Flow keeps serving as it is.
+   */
+  refusedLive?: boolean
 }
 
 type FlowWriteResponse = {
@@ -573,13 +586,35 @@ const publishDraft = async (
   return { flow: { ...flow, status: "PUBLISHED" }, published: true }
 }
 
+/** The Flow as saved, unpublished; `published` reports whether it is live. */
+const readDraft = async (
+  auth: WhatsappAuthValue,
+  flowId: string,
+): Promise<PublishFlowJsonResult> => {
+  const flow = await getFlow(auth, flowId)
+  return { flow, published: flow.status === "PUBLISHED" }
+}
+
 /** Updates an editable Flow in place; returns undefined when it cannot be reused. */
 const tryUpdateExisting = async (
   auth: WhatsappAuthValue,
   flowId: string,
   flowJson: string,
+  publish: boolean,
 ): Promise<PublishFlowJsonResult | undefined> => {
-  const current = await getFlow(auth, flowId).catch(() => undefined)
+  const current = await getFlow(auth, flowId).catch((err: unknown) => {
+    // A draft save that cannot tell whether the Flow is live must not create
+    // a new one in its place; only a Flow gone from Meta is replaced.
+    if (!(publish || isFlowMissing(err))) {
+      throw err
+    }
+    return
+  })
+  // New JSON on a live Flow takes it back to DRAFT, offline until published:
+  // a draft save must never do that, nor replace it with a new Flow.
+  if (!publish && current && LIVE_FLOW_STATUSES.has(current.status)) {
+    return { flow: current, published: true, refusedLive: true }
+  }
   if (!(current && EDITABLE_FLOW_STATUSES.has(current.status))) {
     return
   }
@@ -596,7 +631,9 @@ const tryUpdateExisting = async (
     )
     return
   }
-  return await publishDraft(auth, flowId)
+  return publish
+    ? await publishDraft(auth, flowId)
+    : await readDraft(auth, flowId)
 }
 
 /**
@@ -614,11 +651,13 @@ export function publishFlowJson({
   params: PublishFlowJsonParams
 }): Promise<PublishFlowJsonResult> {
   return rescue(async () => {
+    const publish = params.publish ?? true
     if (params.existingFlowId) {
       const updated = await tryUpdateExisting(
         auth,
         params.existingFlowId,
         params.flowJson,
+        publish,
       )
       if (updated) {
         return updated
@@ -631,7 +670,59 @@ export function publishFlowJson({
     if (hasErrors(created)) {
       return { flow: await getFlow(auth, created.id), published: false }
     }
-    return await publishDraft(auth, created.id)
+    return publish
+      ? await publishDraft(auth, created.id)
+      : await readDraft(auth, created.id)
+  })
+}
+
+/**
+ * Publishes a Flow already saved on Meta (e.g. a draft from
+ * `publishFlowJson` with `publish: false`). A Flow that is not a draft is
+ * returned as it is; a refused publish comes back on `publishError`.
+ */
+export function publishFlowDraft({
+  auth,
+  flowId,
+}: {
+  auth: WhatsappAuthValue
+  flowId: string
+}): Promise<PublishFlowJsonResult> {
+  return rescue(async () => await publishDraft(auth, flowId))
+}
+
+export type FlowPreviewResult = {
+  previewUrl: string | null
+  /** When Meta stops serving `previewUrl`. */
+  expiresAt: string | null
+}
+
+/**
+ * Meta's web preview of a Flow (drafts included). The link is temporary:
+ * fetch a new one rather than storing it.
+ */
+export function getFlowPreview({
+  auth,
+  flowId,
+}: {
+  auth: WhatsappAuthValue
+  flowId: string
+}): Promise<FlowPreviewResult> {
+  return rescue(async () => {
+    const { version = DEFAULT_API_VERSION } = auth
+    const response = await ky
+      .get<{ preview?: { preview_url?: string; expires_at?: string } }>(
+        `${API_URL}/${version}/${flowId}`,
+        {
+          headers: buildAuthHeaders(auth),
+          searchParams: { fields: "preview.invalidate(false)" },
+        },
+      )
+      .json()
+    return {
+      previewUrl: response.preview?.preview_url ?? null,
+      expiresAt: response.preview?.expires_at ?? null,
+    }
   })
 }
 
@@ -645,11 +736,7 @@ const INVALID_PARAMETER_CODE = 100
 const DOES_NOT_EXIST_REGEX = /does not exist/i
 
 /** Statuses of a published Flow: Meta deprecates these, it never deletes them. */
-const DEPRECATABLE_FLOW_STATUSES = new Set([
-  "PUBLISHED",
-  "THROTTLED",
-  "BLOCKED",
-])
+const DEPRECATABLE_FLOW_STATUSES = LIVE_FLOW_STATUSES
 
 export type DeleteFlowResult = {
   /**
@@ -772,5 +859,59 @@ export function deleteFlow({
   return rescue(async () => {
     const status = await readFlowStatus(auth, flowId)
     return await removeFlow(auth, flowId, status, true)
+  })
+}
+
+export type DeleteFlowDraftResult = {
+  /**
+   * `deleted` for a draft, `missing` when the Flow no longer exists on Meta,
+   * and `notDraft` when Meta reports any other status: the Flow is left as it
+   * is, never deprecated.
+   */
+  outcome: "deleted" | "missing" | "notDraft"
+  /** Meta's status afterwards; null once the Flow is gone. */
+  status: string | null
+}
+
+const MISSING_DRAFT: DeleteFlowDraftResult = {
+  outcome: "missing",
+  status: null,
+}
+
+/**
+ * Deletes a Flow only while Meta still has it as a draft. Unlike `deleteFlow`
+ * it never deprecates: a Flow that went live (even between the status read
+ * and the delete call) comes back as `notDraft`, untouched.
+ */
+export function deleteFlowDraft({
+  auth,
+  flowId,
+}: {
+  auth: WhatsappAuthValue
+  flowId: string
+}): Promise<DeleteFlowDraftResult> {
+  return rescue(async () => {
+    const status = await readFlowStatus(auth, flowId)
+    if (status === null) {
+      return MISSING_DRAFT
+    }
+    if (status !== "DRAFT") {
+      return { outcome: "notDraft", status }
+    }
+    try {
+      await deleteDraftFlow(auth, flowId)
+      return { outcome: "deleted", status: null }
+    } catch (err) {
+      if (isFlowMissing(err)) {
+        return MISSING_DRAFT
+      }
+      if (readMetaErrorCode(err) === CANNOT_DELETE_CODE) {
+        const current = await readFlowStatus(auth, flowId)
+        return current === null
+          ? MISSING_DRAFT
+          : { outcome: "notDraft", status: current }
+      }
+      throw err
+    }
   })
 }

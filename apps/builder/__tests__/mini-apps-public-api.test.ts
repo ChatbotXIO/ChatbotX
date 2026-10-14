@@ -45,8 +45,14 @@ vi.mock("@chatbotx.io/business/mini-app", async () => {
 })
 
 const publishMiniAppToWhatsapp = vi.fn()
+const publishMiniAppWhatsappDraft = vi.fn()
+const getMiniAppWhatsappPreview = vi.fn()
+const deleteMiniAppWhatsappDraft = vi.fn()
 vi.mock("@/features/mini-apps/lib/publish-to-whatsapp", () => ({
   publishMiniAppToWhatsapp,
+  publishMiniAppWhatsappDraft,
+  getMiniAppWhatsappPreview,
+  deleteMiniAppWhatsappDraft,
 }))
 const createTranslatedStarterDefinition = vi.fn()
 vi.mock("@/features/mini-apps/lib/starter-definition", () => ({
@@ -359,5 +365,52 @@ describe("Mini Apps public API", () => {
       id: "10",
     })
     expect(result).toMatchObject({ id: "11", name: "Survey - Copy" })
+  })
+
+  test("a WhatsApp draft is pushed without publishing, then published, previewed and deleted", async () => {
+    findWorkspaceByTokenHash.mockResolvedValue(authResult(null))
+    const draft = {
+      status: "DRAFT",
+      published: false,
+      whatsappFlowId: "wf-1",
+      validationErrors: [],
+    }
+    publishMiniAppToWhatsapp.mockResolvedValue(draft)
+    publishMiniAppWhatsappDraft.mockResolvedValue({
+      ...draft,
+      status: "PUBLISHED",
+      published: true,
+    })
+    getMiniAppWhatsappPreview.mockResolvedValue({
+      previewUrl: "https://business.facebook.com/wa/manage/flows/1/preview",
+      expiresAt: null,
+    })
+    deleteMiniAppWhatsappDraft.mockResolvedValue({ outcome: "deleted" })
+    const target = {
+      workspaceId: "ws-1",
+      miniAppId: "10",
+      integrationWhatsappId: "5",
+    }
+    const input = { id: "10", integrationWhatsappId: "5" }
+
+    await expect(
+      invoke(miniAppsPublicRouter.pushWhatsappDraft, input),
+    ).resolves.toMatchObject({ status: "DRAFT", published: false })
+    expect(publishMiniAppToWhatsapp).toHaveBeenCalledWith({
+      ...target,
+      publish: false,
+    })
+    await expect(
+      invoke(miniAppsPublicRouter.publishWhatsappDraft, input),
+    ).resolves.toMatchObject({ status: "PUBLISHED", published: true })
+    await expect(
+      invoke(miniAppsPublicRouter.getWhatsappPreview, input),
+    ).resolves.toMatchObject({ previewUrl: expect.any(String) })
+    await expect(
+      invoke(miniAppsPublicRouter.deleteWhatsappDraft, input),
+    ).resolves.toEqual({ outcome: "deleted" })
+    expect(publishMiniAppWhatsappDraft).toHaveBeenCalledWith(target)
+    expect(getMiniAppWhatsappPreview).toHaveBeenCalledWith(target)
+    expect(deleteMiniAppWhatsappDraft).toHaveBeenCalledWith(target)
   })
 })

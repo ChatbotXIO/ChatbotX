@@ -13,6 +13,7 @@ export const publishMiniAppWhatsappAction = workspaceActionClient
       workspaceId,
       miniAppId: id,
       integrationWhatsappId: parsedInput.integrationWhatsappId,
+      publish: parsedInput.publish,
     })
     return {
       status: publication.status,
