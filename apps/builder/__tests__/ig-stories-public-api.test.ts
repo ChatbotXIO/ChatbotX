@@ -71,6 +71,8 @@ vi.mock("@chatbotx.io/database/partials", async () => {
   const { z } = await import("zod")
   return {
     broadcastPlanLimitDataSchema: z.object({}),
+    PRODUCT_MESSAGE_UNRESOLVABLE_CODE: "productMessageUnresolvable",
+    productMessageUnresolvableDataSchema: z.object({}),
     commentIncludeKeywordsSchema: z.boolean(),
     commentReplySchema: z.object({}),
     igStoryAutomationTypes: z.enum(["instagram", "facebook"]),

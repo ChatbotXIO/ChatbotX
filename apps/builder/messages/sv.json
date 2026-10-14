@@ -3639,7 +3639,8 @@
       "addSection": "Lägg till avsnitt",
       "productCount": "{count} / {max} produkter",
       "productsSelected": "{count, plural, one {# produkt} other {# produkter}}",
-      "noneSelected": "Inga produkter ännu"
+      "noneSelected": "Inga produkter ännu",
+      "sendFailed": "Produkterna kunde inte skickas."
     }
   },
   "folders": {

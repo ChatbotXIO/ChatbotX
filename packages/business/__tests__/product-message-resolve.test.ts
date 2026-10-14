@@ -39,7 +39,7 @@ const step = (
 const resolve = (props: Partial<SendProductsStepSchema>, ids: string[]) =>
   resolveProductMessage({
     capability,
-    step: step(props),
+    content: step(props),
     sendableById: sendable(...ids),
   })
 

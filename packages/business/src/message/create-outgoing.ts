@@ -15,6 +15,7 @@ import {
   uploader,
   uploadMultipleFiles,
 } from "@chatbotx.io/filesystem"
+import type { SendProductsContent } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { createId } from "@chatbotx.io/utils"
 import {
@@ -25,14 +26,20 @@ import {
 } from "@chatbotx.io/worker-config"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
-import { ChatbotXException, notFoundException } from "../errors"
+import {
+  ChatbotXException,
+  notFoundException,
+  validationException,
+} from "../errors"
 import { logger } from "../logger"
 import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
 import { resolveTenantSettings } from "../platform/settings"
+import { productMessageService } from "../product-message/service"
 import { getPublicFileUrl } from "../utils"
 
 type CreateOutgoingInput = (
   | { flowId: string; nodeId?: string }
+  | { products: SendProductsContent }
   | {
       text?: string
       files?: File[]
@@ -151,6 +158,30 @@ export const createOutgoing = async (props: {
     return null
   }
 
+  // A product message is a standalone DM; a comment reply would be routed to
+  // the comment handler, which cannot send it.
+  if (
+    "products" in parsedInput &&
+    (parsedInput.replyToMessageId || parsedInput.isPrivateReply)
+  ) {
+    throw validationException(
+      "products",
+      "Products can't be sent as a comment reply",
+    )
+  }
+  // Resolved before any row exists, so a message that cannot be sent leaves
+  // nothing behind. A caller asked for exactly these products, so a message
+  // that would go out without some of them is refused rather than trimmed.
+  const productMessage =
+    "products" in parsedInput
+      ? await productMessageService.prepareOutgoing({
+          workspaceId: conversation.workspaceId,
+          channel: contactInbox.channel,
+          content: parsedInput.products,
+          onMissing: "reject",
+        })
+      : undefined
+
   const { storageUrl } = await resolveTenantSettings({
     workspaceId: conversation.workspaceId,
   })
@@ -235,9 +266,11 @@ export const createOutgoing = async (props: {
 
   const parentId = parsedInput.replyToMessageId ?? null
 
+  const plainText = "text" in parsedInput ? (parsedInput.text ?? null) : null
+
   const now = new Date()
   const messageInput = {
-    text: "text" in parsedInput ? (parsedInput.text ?? null) : null,
+    text: productMessage ? productMessage.text : plainText,
     messageType: "outgoing" as const,
     workspaceId: conversation.workspaceId,
     conversationId: targetConversation.id,
@@ -251,7 +284,8 @@ export const createOutgoing = async (props: {
       : ("message" as const),
     parentId,
     contentAttributes: withBypassThreadControlLock(
-      parsedInput.contentAttributes ??
+      productMessage?.contentAttributes ??
+        parsedInput.contentAttributes ??
         (parsedInput.isPrivateReply ? { isPrivateReply: true } : null),
       parsedInput.bypassThreadControlLock,
     ),
@@ -330,7 +364,7 @@ export const createOutgoing = async (props: {
           : []),
       ),
     },
-    ...(user && messageInput.text
+    ...(user && messageInput.text && !productMessage
       ? [
           {
             jobType: ChatJobAction.checkOutboundAutomatedResponse,

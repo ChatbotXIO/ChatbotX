@@ -1,7 +1,7 @@
 import type { z } from "zod"
 import type {
+  SendProductsContent,
   SendProductsDisplay,
-  SendProductsStepSchema,
 } from "../steps/send-products"
 import {
   type FlowValidationCode,
@@ -169,13 +169,13 @@ export const evaluateProductMessage = (
 }
 
 export const toProductMessageShape = (
-  step: SendProductsStepSchema,
+  content: SendProductsContent,
 ): ProductMessageShape => ({
-  display: step.display,
-  header: step.header,
-  body: step.body,
-  footer: step.footer,
-  sections: step.sections.map((section) => ({
+  display: content.display,
+  header: content.header,
+  body: content.body,
+  footer: content.footer,
+  sections: content.sections.map((section) => ({
     title: section.title,
     productCount: section.productIds.length,
   })),
@@ -184,10 +184,10 @@ export const toProductMessageShape = (
 /** zod adapter: the evaluator itself stays free of zod so `business` can reuse it. */
 export const refineProductMessage =
   (capability: ProductMessageCapability) =>
-  (step: SendProductsStepSchema, ctx: z.RefinementCtx): void => {
+  (content: SendProductsContent, ctx: z.RefinementCtx): void => {
     for (const issue of evaluateProductMessage(
       capability,
-      toProductMessageShape(step),
+      toProductMessageShape(content),
     )) {
       ctx.addIssue({
         code: "custom",

@@ -13,7 +13,10 @@ import { handledFlowStepTypes as instagramFacebookHandledFlowStepTypes } from ".
 import { handledFlowStepTypes as messengerHandledFlowStepTypes } from "../../../integrations/messenger/src/handlers/message/outgoing-message"
 import { handledFlowStepTypes as telegramHandledFlowStepTypes } from "../../../integrations/telegram/src/handlers/message/outgoing-message"
 import { handledFlowStepTypes as tiktokHandledFlowStepTypes } from "../../../integrations/tiktok/src/handlers/message/outgoing-message"
-import { handledFlowStepTypes as whatsappHandledFlowStepTypes } from "../../../integrations/whatsapp/src/handlers/message/outgoing-message"
+import {
+  handledFlowStepTypes as whatsappHandledFlowStepTypes,
+  handledOutgoingContentEntities as whatsappHandledOutgoingContentEntities,
+} from "../../../integrations/whatsapp/src/handlers/message/outgoing-message"
 import { handledFlowStepTypes as zaloHandledFlowStepTypes } from "../../../integrations/zalo/src/handlers/message/outgoing-message"
 
 const MESSAGE_STEP_TYPES = [
@@ -53,6 +56,16 @@ const HANDLED_STEP_TYPES: ReadonlyArray<{
   { channel: "zalo", steps: zaloHandledFlowStepTypes },
 ]
 
+/**
+ * Entities a channel's `sendMessage` renders from `contentAttributes.type`. Keyed
+ * by channel; a channel with no entry renders none.
+ */
+const HANDLED_OUTGOING_CONTENT_ENTITIES: Partial<
+  Record<ChannelType, readonly string[]>
+> = {
+  whatsapp: whatsappHandledOutgoingContentEntities,
+}
+
 describe("channel flow policy runtime contract", () => {
   test("lists every deliverable step type, so a new one cannot go unchecked", () => {
     expect(new Set(MESSAGE_STEP_TYPES)).toEqual(
@@ -74,5 +87,22 @@ describe("channel flow policy runtime contract", () => {
 
     expect(steps).toEqual(expect.arrayContaining(permittedSteps))
     expect(permittedSteps).toEqual(expect.arrayContaining(steps))
+  })
+
+  test.each(
+    (Object.keys(CHANNEL_FLOW_POLICIES) as ChannelType[]).map((channel) => ({
+      channel,
+    })),
+  )("$channel renders a product message row if and only if its policy declares product messages", ({
+    channel,
+  }) => {
+    const declaresProductMessages = Boolean(
+      CHANNEL_FLOW_POLICIES[channel].productMessages,
+    )
+    const rendersProductMessageRow = (
+      HANDLED_OUTGOING_CONTENT_ENTITIES[channel] ?? []
+    ).includes("product_message")
+
+    expect(rendersProductMessageRow).toBe(declaresProductMessages)
   })
 })

@@ -337,7 +337,8 @@
       "addSection": "Adaugă secțiune",
       "productCount": "{count} / {max} produse",
       "productsSelected": "{count, plural, one {# produs} other {# produse}}",
-      "noneSelected": "Încă nu există produse"
+      "noneSelected": "Încă nu există produse",
+      "sendFailed": "Produsele nu au putut fi trimise."
     }
   },
   "folders": {

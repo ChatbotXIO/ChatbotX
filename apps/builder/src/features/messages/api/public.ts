@@ -4,6 +4,7 @@ import {
   resolveTemplateParams,
 } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
+import { PRODUCT_MESSAGE_UNRESOLVABLE_CODE } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import {
   ENGLISH_CALL_PERMISSION_MESSAGES,
@@ -29,6 +30,7 @@ import {
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
   possibleErrorsOnMutatingResource,
+  productMessageUnresolvable,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
@@ -209,13 +211,16 @@ export const messagesPublicRouter = {
       path: "/v1/conversations/{conversationId}/messages",
       summary: "Send message on conversation",
       description:
-        "Use this to reply in an existing conversation by conversationId. Sends an outgoing text/media message on an existing conversation. To message a contact without first resolving their conversation id, use `contacts.sendMessage` instead.",
+        "Use this to reply in an existing conversation by conversationId. Sends an outgoing text, media or catalog product message (`products`, on channels with product messages such as WhatsApp; ids from `products.listSendable`) on an existing conversation. To message a contact without first resolving their conversation id, use `contacts.sendMessage` instead.",
       successStatus: 201,
       tags: ["Messages"],
     })
     .input(createMessageRequest.and(conversationIdPathParam))
     .output(messageResourceWithRelations.nullable())
-    .errors(possibleErrorsOnCreatingResource)
+    .errors({
+      ...possibleErrorsOnCreatingResource,
+      [PRODUCT_MESSAGE_UNRESOLVABLE_CODE]: productMessageUnresolvable,
+    })
     .handler(async ({ context, input }) => {
       const workspaceId = context.workspace.id
 

@@ -2716,7 +2716,8 @@
       "addSection": "Tilføj sektion",
       "productCount": "{count} / {max} produkter",
       "productsSelected": "{count, plural, one {# produkt} other {# produkter}}",
-      "noneSelected": "Ingen produkter endnu"
+      "noneSelected": "Ingen produkter endnu",
+      "sendFailed": "Produkterne kunne ikke sendes."
     }
   },
   "folders": {

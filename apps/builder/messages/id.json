@@ -2716,7 +2716,8 @@
       "addSection": "Tambah bagian",
       "productCount": "{count} / {max} produk",
       "productsSelected": "{count, plural, one {# produk} other {# produk}}",
-      "noneSelected": "Belum ada produk"
+      "noneSelected": "Belum ada produk",
+      "sendFailed": "Produk tidak dapat dikirim."
     }
   },
   "folders": {

@@ -233,6 +233,7 @@ chatbotx contacts refresh-profile add <identifier> --contactInboxId <contactInbo
 chatbotx contacts messages list <identifier>         # [--perPage --cursor]
 chatbotx contacts message get <identifier> <messageId>
 chatbotx contacts message send <identifier>          # [--text --files --mediaFile --mediaFileId --mediaFileIds
+                                                     #  --products (JSON catalog products; ids from `products sendable`)
                                                      #  --flowId --nodeId --inboxId --clientId
                                                      #  --replyToMessageId --replyToMessageCreatedAt --isPrivateReply]
 chatbotx contacts flow add <identifier> --flowId <flowId>  # [--inboxId]
@@ -265,6 +266,7 @@ chatbotx conversations messages list <conversationId>  # [--perPage --cursor]
 chatbotx conversations message get <conversationId> <messageId> --createdAt <createdAt>
 chatbotx conversations flow-response get <conversationId> <messageId> --createdAt <createdAt>  # WhatsApp Flow answers, labelled
 chatbotx conversations message send <conversationId>   # [--text --files --mediaFile --mediaFileId --mediaFileIds
+                                                     #  --products (JSON catalog products; ids from `products sendable`)
                                                      #  --flowId --nodeId --inboxId --clientId
                                                      #  --replyToMessageId --replyToMessageCreatedAt --isPrivateReply]
 chatbotx conversations messages update <conversationId> <messageId> --createdAt <createdAt> --newText <newText>

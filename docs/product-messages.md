@@ -17,8 +17,8 @@ shared code.
 ## How it works
 
 ```
-flow step (productIds) ──► send-flow-step ──► productMessageService.resolveForSend
-                                │                       │ connection + products lookup
+flow step (productIds) ──► send-flow-step ──► productMessageService.prepareOutgoing (drop)
+                                │                       │ validate → connection + products lookup → text
                                 │                       ▼
                                 │            ResolvedProductMessage (retailer ids, snapshot)
                                 ▼                       │
@@ -40,6 +40,36 @@ flow step (productIds) ──► send-flow-step ──► productMessageService.
 - The message stores a **snapshot** of what was sent, so the inbox stays correct
   after products change or are deleted.
 
+## Inbox and public API
+
+An agent can send the same message without a flow: from the inbox composer
+(cart button, only where the channel's policy has `productMessages`) or through
+`contacts.sendMessage` / `messages.create` with a `products` body
+(`{ display, header?, body?, footer?, sections[{ title?, productIds[] }] }`, ids
+from `products.listSendable`).
+
+```
+composer / public API ──► messageService.createOutgoing ──► productMessageService.prepareOutgoing
+                                       │                          (validate → resolve → text)
+                                       ▼
+                 Message row (contentAttributes.product_message) ──► sendChannelMessage ──► channel `sendMessage`
+```
+
+- `prepareOutgoing` is the one entry for any sender that is not a flow step; the
+  flow worker calls it too, with `onMissing: "drop"`. A caller that asked for
+  exactly these products uses `"reject"`: a message that would go out without some
+  of them is refused with `productsNotSendable` and the ids, never trimmed.
+- Refusals are `422`. A message that breaks the channel's rules is `validation`;
+  everything else is `productMessageUnresolvable` with `data.reason`
+  (`channelUnsupported`, `catalogNotConnected`, `noProductsSendable`,
+  `productsNotSendable`) so an agent can branch on it. No row is created.
+- Not combinable with `text`, files, media, `flowId` or a comment reply (a valid
+  `products` wins; one that fails its own schema falls through, as an invalid
+  `flowId` already does). Outside the channel's customer-service window the row
+  is created and the send fails like any text send; the composer hides itself.
+- Deploy the worker and integrations before the builder: a product row delivered
+  by an integration that predates the `sendMessage` branch would go out as text.
+
 ## Where it lives
 
 | Layer | Path |
@@ -54,7 +84,8 @@ flow step (productIds) ──► send-flow-step ──► productMessageService.
 | Worker | `apps/worker/src/chat/handlers/send-flow-step.ts` |
 | WhatsApp payloads | `integrations/whatsapp/src/handlers/message/outgoing-message/send-products.ts` |
 | Builder | `apps/builder/src/features/flows/react-flow/steps/send-products/`, inbox bubble `features/messages/components/product-message-bubble.tsx` |
-| Public API | `GET /v1/products/sendable` (`products.listSendable`, scope `ecommerce`) |
+| Public API | `GET /v1/products/sendable` (`products.listSendable`, scope `ecommerce`); send with `products` on `contacts.sendMessage` / `messages.create` |
+| Sending outside a flow | `packages/business/src/message/create-outgoing.ts` (`products` branch), `productMessageService.prepareOutgoing`, composer `features/messages/components/send-products-trigger.tsx` |
 
 ## Sendable products
 
@@ -92,6 +123,10 @@ Values live in `policies/whatsapp.ts`; the payloads follow Meta's
 3. Convert `data.productMessage` to the channel's payload in the integration, and
    add the step to its `handledFlowStepTypes` (the policy contract test enforces
    both directions).
+4. Render a stored `product_message` row in the integration's `sendMessage` (the
+   inbox and public API send through it) and list `product_message` in its
+   `handledOutgoingContentEntities`; the contract test fails a channel that
+   declares `productMessages` without it.
 
 ## Known limitations
 

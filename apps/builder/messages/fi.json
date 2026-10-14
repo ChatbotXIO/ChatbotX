@@ -2716,7 +2716,8 @@
       "addSection": "Lisää osio",
       "productCount": "{count} / {max} tuotetta",
       "productsSelected": "{count, plural, one {# tuote} other {# tuotetta}}",
-      "noneSelected": "Ei vielä tuotteita"
+      "noneSelected": "Ei vielä tuotteita",
+      "sendFailed": "Tuotteita ei voitu lähettää."
     }
   },
   "folders": {

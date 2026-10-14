@@ -1,5 +1,9 @@
 import { BROADCAST_PLAN_LIMIT_CODE } from "@chatbotx.io/business/errors"
-import { broadcastPlanLimitDataSchema } from "@chatbotx.io/database/partials"
+import {
+  broadcastPlanLimitDataSchema,
+  PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
+  productMessageUnresolvableDataSchema,
+} from "@chatbotx.io/database/partials"
 import type { ErrorMap } from "@orpc/server"
 import { z } from "zod"
 import { DENIAL_MESSAGES } from "@/lib/workspace/authorize-workspace-access"
@@ -20,8 +24,19 @@ const broadcastPlanLimit = {
   data: broadcastPlanLimitDataSchema,
 }
 
+/**
+ * A product message that cannot be sent as asked. `data.reason` says why, so an
+ * agent can branch on it instead of parsing the message.
+ */
+export const productMessageUnresolvable = {
+  message: "The product message cannot be sent",
+  status: 422,
+  data: productMessageUnresolvableDataSchema,
+}
+
 export const STRUCTURED_ERROR_CODES: ReadonlySet<string> = new Set([
   BROADCAST_PLAN_LIMIT_CODE,
+  PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
 ])
 
 /**
@@ -163,6 +178,12 @@ export const possibleErrorsOnMutatingResource = {
   notFound,
   businessError,
   ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+/** Sending a message that may carry products (`contacts.sendMessage`). */
+export const possibleErrorsOnSendingMessage = {
+  ...possibleErrorsOnMutatingResource,
+  [PRODUCT_MESSAGE_UNRESOLVABLE_CODE]: productMessageUnresolvable,
 } satisfies ErrorMap
 
 /** WhatsApp calling settings/hours: Meta or the local mirror failing is a 502. */

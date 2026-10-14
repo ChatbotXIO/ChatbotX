@@ -20,9 +20,8 @@ vi.mock("../src/meta-catalog/integration.service", () => ({
   },
 }))
 
-const { ProductMessageUnresolvableError, productMessageService } = await import(
-  "../src/product-message/service"
-)
+const { ProductMessageUnresolvableError } = await import("../src/errors")
+const { productMessageService } = await import("../src/product-message/service")
 
 const CONNECTION = { id: "conn-1", catalogId: "cat-1" }
 const SCOPE = { integrationMetaCatalogId: "conn-1", catalogId: "cat-1" }
@@ -149,7 +148,7 @@ describe("productMessageService.listSendable", () => {
   })
 })
 
-describe("productMessageService.resolveForSend", () => {
+describe("productMessageService.prepareOutgoing resolution", () => {
   test("resolves every section with one catalog query", async () => {
     mocks.findSendableByProductIds.mockResolvedValue([
       row("1"),
@@ -157,10 +156,11 @@ describe("productMessageService.resolveForSend", () => {
       row("3"),
     ])
 
-    const result = await productMessageService.resolveForSend({
+    const result = await productMessageService.prepareOutgoing({
+      onMissing: "drop",
       workspaceId: "ws-1",
       channel: "whatsapp",
-      step: step({
+      content: step({
         header: "Picks",
         body: "Look",
         sections: [
@@ -196,10 +196,11 @@ describe("productMessageService.resolveForSend", () => {
   test("reports products that are no longer sendable", async () => {
     mocks.findSendableByProductIds.mockResolvedValue([row("1"), row("2")])
 
-    const result = await productMessageService.resolveForSend({
+    const result = await productMessageService.prepareOutgoing({
+      onMissing: "drop",
       workspaceId: "ws-1",
       channel: "whatsapp",
-      step: step({
+      content: step({
         header: "h",
         body: "b",
         sections: [{ title: "A", productIds: ["1", "7", "2"] }],
@@ -213,10 +214,11 @@ describe("productMessageService.resolveForSend", () => {
     mocks.findSendableByProductIds.mockResolvedValue([])
 
     await expect(
-      productMessageService.resolveForSend({
+      productMessageService.prepareOutgoing({
+        onMissing: "drop",
         workspaceId: "ws-1",
         channel: "whatsapp",
-        step: step({
+        content: step({
           header: "h",
           body: "b",
           sections: [{ title: "A", productIds: ["7", "8"] }],
@@ -233,10 +235,11 @@ describe("productMessageService.resolveForSend", () => {
     mocks.findByWorkspaceId.mockResolvedValue(undefined)
 
     await expect(
-      productMessageService.resolveForSend({
+      productMessageService.prepareOutgoing({
+        onMissing: "drop",
         workspaceId: "ws-1",
         channel: "whatsapp",
-        step: step({ sections: [{ productIds: ["1"] }] }),
+        content: step({ sections: [{ productIds: ["1"] }] }),
       }),
     ).rejects.toMatchObject({ reason: "catalogNotConnected" })
     expect(mocks.findSendableByProductIds).not.toHaveBeenCalled()
@@ -248,12 +251,159 @@ describe("productMessageService.resolveForSend", () => {
     "unknown",
   ])("refuses channel %s before reading anything", async (channel) => {
     await expect(
-      productMessageService.resolveForSend({
+      productMessageService.prepareOutgoing({
+        onMissing: "drop",
         workspaceId: "ws-1",
         channel,
-        step: step({ sections: [{ productIds: ["1"] }] }),
+        content: step({ sections: [{ productIds: ["1"] }] }),
       }),
     ).rejects.toBeInstanceOf(ProductMessageUnresolvableError)
     expect(mocks.findByWorkspaceId).not.toHaveBeenCalled()
+  })
+})
+
+describe("productMessageService.prepareOutgoing", () => {
+  const prepare = (
+    content: Partial<SendProductsStepSchema>,
+    onMissing: "reject" | "drop" = "reject",
+    channel = "whatsapp",
+  ) =>
+    productMessageService.prepareOutgoing({
+      workspaceId: "ws-1",
+      channel,
+      content: step(content),
+      onMissing,
+    })
+
+  test("returns the message, its text and the entity to store", async () => {
+    mocks.findSendableByProductIds.mockResolvedValue([row("1"), row("2")])
+
+    const prepared = await prepare({
+      header: "Picks",
+      body: "Look",
+      sections: [{ productIds: ["1", "2"] }],
+    })
+
+    expect(prepared.missing).toEqual([])
+    expect(prepared.text).toBe("Look")
+    expect(prepared.contentAttributes).toEqual({
+      type: "product_message",
+      payload: prepared.message,
+    })
+  })
+
+  test("has no text when the message carries none", async () => {
+    mocks.findSendableByProductIds.mockResolvedValue([row("1")])
+
+    const prepared = await prepare({
+      display: "products",
+      sections: [{ productIds: ["1"] }],
+    })
+
+    expect(prepared.text).toBeNull()
+  })
+
+  test("refuses a message that breaks the channel's rules, before any lookup", async () => {
+    await expect(
+      prepare({ sections: [{ productIds: ["1", "2"] }] }),
+    ).rejects.toMatchObject({
+      code: "validation",
+      httpStatusCode: 422,
+      field: "products",
+      data: { issues: expect.stringContaining("header") },
+    })
+    expect(mocks.findByWorkspaceId).not.toHaveBeenCalled()
+  })
+
+  test("refuses duplicate products as a structural error", async () => {
+    await expect(
+      prepare({
+        header: "h",
+        body: "b",
+        sections: [{ title: "A", productIds: ["1", "1"] }],
+      }),
+    ).rejects.toMatchObject({ code: "validation" })
+  })
+
+  test.each([
+    ["telegram"],
+    ["omnichannel"],
+    ["unknown"],
+  ])("reports channel %s as unsupported, not as invalid", async (channel) => {
+    await expect(
+      prepare({ sections: [{ productIds: ["1", "1"] }] }, "reject", channel),
+    ).rejects.toMatchObject({
+      reason: "channelUnsupported",
+      data: { reason: "channelUnsupported" },
+    })
+    expect(mocks.findByWorkspaceId).not.toHaveBeenCalled()
+  })
+
+  test("carries the reason as data for each unresolvable case", async () => {
+    mocks.findByWorkspaceId.mockResolvedValue(undefined)
+    await expect(
+      prepare({ body: "b", sections: [{ productIds: ["1"] }] }),
+    ).rejects.toMatchObject({
+      reason: "catalogNotConnected",
+      data: { reason: "catalogNotConnected" },
+      message: "Product message cannot be sent: catalogNotConnected",
+    })
+
+    mocks.findByWorkspaceId.mockResolvedValue(CONNECTION)
+    mocks.findSendableByProductIds.mockResolvedValue([])
+    await expect(
+      prepare({ body: "b", sections: [{ productIds: ["1"] }] }),
+    ).rejects.toMatchObject({
+      reason: "noProductsSendable",
+      data: { reason: "noProductsSendable" },
+    })
+  })
+
+  test("rejects when some products are not sendable and says which", async () => {
+    mocks.findSendableByProductIds.mockResolvedValue([row("1"), row("2")])
+
+    await expect(
+      prepare({
+        header: "h",
+        body: "b",
+        sections: [{ title: "A", productIds: ["1", "7", "2", "8"] }],
+      }),
+    ).rejects.toMatchObject({
+      reason: "productsNotSendable",
+      httpStatusCode: 422,
+      data: { reason: "productsNotSendable", productIds: "7,8" },
+      message: "Product message cannot be sent: productsNotSendable (7, 8)",
+    })
+  })
+
+  test("drops the missing products and reports them when told to", async () => {
+    mocks.findSendableByProductIds.mockResolvedValue([row("1"), row("2")])
+
+    const prepared = await prepare(
+      {
+        header: "h",
+        body: "b",
+        sections: [{ title: "A", productIds: ["1", "7", "2"] }],
+      },
+      "drop",
+    )
+
+    expect(prepared.missing).toEqual([{ productId: "7" }])
+    expect(prepared.message).toMatchObject({ display: "products" })
+  })
+
+  test("a carousel left below its minimum fails instead of sending one card", async () => {
+    mocks.findSendableByProductIds.mockResolvedValue([row("1")])
+
+    await expect(
+      prepare(
+        {
+          display: "carousel",
+          body: "Look",
+          sections: [{ productIds: ["1", "2"] }],
+        },
+        "drop",
+      ),
+    ).rejects.toMatchObject({ reason: "noProductsSendable" })
   })
 })

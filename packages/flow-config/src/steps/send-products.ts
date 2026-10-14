@@ -19,9 +19,9 @@ export type SendProductsDisplay = z.infer<typeof sendProductsDisplays>
  *
  * Measured with `countMessageCharacters`, not `.max()`, so an emoji counts once
  * here exactly as it does in the editor's counter and the per-channel rules. The
- * check stays on the field: wrapping the object in a `superRefine` would make it
- * a ZodEffects and break the `z.discriminatedUnion("stepType", …)` that
- * `sendMessageNodeSchema` builds from it.
+ * check stays on the field so the step schema remains a plain object schema,
+ * which the `z.discriminatedUnion("stepType", …)` in `sendMessageNodeSchema`
+ * needs (an intersection from `.and()` would not be accepted there).
  */
 export const SEND_PRODUCTS_TEXT_MAX = 4096
 
@@ -47,10 +47,12 @@ export const sendProductsSectionSchema = z.object({
 })
 export type SendProductsSection = z.infer<typeof sendProductsSectionSchema>
 
-export const sendProductsStepSchema = baseStepSchema.extend({
-  stepType: z
-    .literal(stepTypes.enum.sendProducts)
-    .describe('Step type discriminator: "sendProducts".'),
+/**
+ * What a product message says, without anything specific to a flow step. A flow
+ * step extends it; a message sent outside a flow (inbox, public API) is exactly
+ * this, so both are validated and resolved by the same rules.
+ */
+export const sendProductsContentSchema = z.object({
   display: sendProductsDisplays.describe(
     '"products": one product, or a list of products grouped in sections. "carousel": 2+ products as scrollable cards.',
   ),
@@ -69,6 +71,14 @@ export const sendProductsStepSchema = baseStepSchema.extend({
       'Product sections. "products": 1+ sections; "carousel": exactly one untitled section.',
     ),
 })
+export type SendProductsContent = z.infer<typeof sendProductsContentSchema>
+
+export const sendProductsStepSchema = baseStepSchema.extend({
+  stepType: z
+    .literal(stepTypes.enum.sendProducts)
+    .describe('Step type discriminator: "sendProducts".'),
+  ...sendProductsContentSchema.shape,
+})
 export type SendProductsStepSchema = z.infer<typeof sendProductsStepSchema>
 
 /**
@@ -76,11 +86,11 @@ export type SendProductsStepSchema = z.infer<typeof sendProductsStepSchema>
  * limits are per-channel and live in the channel policy (`productMessages`).
  */
 export const refineSendProductsStructure = (
-  step: SendProductsStepSchema,
+  content: SendProductsContent,
   ctx: z.RefinementCtx,
 ): void => {
   const seen = new Set<string>()
-  step.sections.forEach((section, sectionIndex) => {
+  content.sections.forEach((section, sectionIndex) => {
     if (section.productIds.length === 0) {
       ctx.addIssue({
         code: "custom",

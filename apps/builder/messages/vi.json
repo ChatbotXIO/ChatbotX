@@ -2904,7 +2904,8 @@
       "addSection": "Thêm nhóm",
       "productCount": "{count} / {max} sản phẩm",
       "productsSelected": "{count, plural, one {# sản phẩm} other {# sản phẩm}}",
-      "noneSelected": "Chưa có sản phẩm"
+      "noneSelected": "Chưa có sản phẩm",
+      "sendFailed": "Không thể gửi sản phẩm."
     }
   },
   "folders": {

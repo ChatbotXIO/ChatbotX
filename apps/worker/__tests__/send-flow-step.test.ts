@@ -30,7 +30,7 @@ const {
   mockFindAppointmentCalendarBySlug,
   mockSignAppointmentWebviewToken,
   mockMarkReadByOutbound,
-  mockResolveProductMessage,
+  mockPrepareProductMessage,
   mockLogProviderErrorForChannel,
 } = vi.hoisted(() => {
   const mockFindConversation = vi.fn()
@@ -138,7 +138,7 @@ const {
     mockFindAppointmentCalendarBySlug: vi.fn(),
     mockSignAppointmentWebviewToken: vi.fn().mockResolvedValue("webview-token"),
     mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
-    mockResolveProductMessage: vi.fn(),
+    mockPrepareProductMessage: vi.fn(),
     mockLogProviderErrorForChannel: vi.fn().mockResolvedValue(undefined),
   }
 })
@@ -205,7 +205,7 @@ vi.mock("@chatbotx.io/business", () => ({
     recordOutboundMessageActivity: mockRecordOutboundMessageActivity,
     markReadByOutbound: mockMarkReadByOutbound,
   },
-  productMessageService: { resolveForSend: mockResolveProductMessage },
+  productMessageService: { prepareOutgoing: mockPrepareProductMessage },
   resolveTenantSettings: mockresolveTenantSettings,
   resolveMediaUrl: mockResolveMediaUrl,
 }))
@@ -2000,6 +2000,16 @@ describe("sendFlowStep — sendProducts", () => {
     ],
   }
 
+  const prepared = (
+    message: typeof productMessage,
+    missing: { productId: string }[] = [],
+  ) => ({
+    message,
+    missing,
+    text: message.body,
+    contentAttributes: { type: "product_message", payload: message },
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     mockFindConversation.mockResolvedValue(fakeConversation)
@@ -2034,10 +2044,7 @@ describe("sendFlowStep — sendProducts", () => {
       sentCount: 1,
     })
     mockEmit.mockResolvedValue(undefined)
-    mockResolveProductMessage.mockResolvedValue({
-      message: productMessage,
-      missing: [],
-    })
+    mockPrepareProductMessage.mockResolvedValue(prepared(productMessage))
   })
 
   const run = () =>
@@ -2051,11 +2058,12 @@ describe("sendFlowStep — sendProducts", () => {
   test("resolves the products for the contact's channel and persists the snapshot", async () => {
     await run()
 
-    expect(mockResolveProductMessage).toHaveBeenCalledTimes(1)
-    expect(mockResolveProductMessage).toHaveBeenCalledWith({
+    expect(mockPrepareProductMessage).toHaveBeenCalledTimes(1)
+    expect(mockPrepareProductMessage).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       channel: "whatsapp",
-      step: sendProductsStep,
+      content: sendProductsStep,
+      onMissing: "drop",
     })
     expect(mockRepositoryCreate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -2091,10 +2099,10 @@ describe("sendFlowStep — sendProducts", () => {
     )
   })
 
-  test("falls back to the header as the message text when there is no body", async () => {
-    mockResolveProductMessage.mockResolvedValue({
-      message: { display: "products", header: "Only a header", sections: [] },
-      missing: [],
+  test("stores the text the product service prepared", async () => {
+    mockPrepareProductMessage.mockResolvedValue({
+      ...prepared(productMessage),
+      text: "Only a header",
     })
 
     await run()
@@ -2105,7 +2113,7 @@ describe("sendFlowStep — sendProducts", () => {
   })
 
   test("an unresolvable step creates no message, sends nothing and is recorded once", async () => {
-    mockResolveProductMessage.mockRejectedValue(
+    mockPrepareProductMessage.mockRejectedValue(
       new Error("Product message cannot be sent: catalogNotConnected"),
     )
 
@@ -2128,10 +2136,9 @@ describe("sendFlowStep — sendProducts", () => {
   })
 
   test("sends what is left and logs the products that were dropped, once", async () => {
-    mockResolveProductMessage.mockResolvedValue({
-      message: productMessage,
-      missing: [{ productId: "13" }, { productId: "14" }],
-    })
+    mockPrepareProductMessage.mockResolvedValue(
+      prepared(productMessage, [{ productId: "13" }, { productId: "14" }]),
+    )
 
     await run()
 
@@ -2154,10 +2161,9 @@ describe("sendFlowStep — sendProducts", () => {
     BROADCAST_PAYLOAD_TYPE,
     SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
   ])("still sends but writes no ErrorLog row for a %s recipient", async (type) => {
-    mockResolveProductMessage.mockResolvedValue({
-      message: productMessage,
-      missing: [{ productId: "13" }],
-    })
+    mockPrepareProductMessage.mockResolvedValue(
+      prepared(productMessage, [{ productId: "13" }]),
+    )
 
     await sendFlowStep({
       conversationId: "conv-1",
@@ -2182,7 +2188,7 @@ describe("sendFlowStep — sendProducts", () => {
 
     await run()
 
-    expect(mockResolveProductMessage).not.toHaveBeenCalled()
+    expect(mockPrepareProductMessage).not.toHaveBeenCalled()
     expect(mockRepositoryCreate).not.toHaveBeenCalled()
     expect(mockSendFlowStepToChannel).not.toHaveBeenCalled()
   })
@@ -2192,7 +2198,7 @@ describe("sendFlowStep — sendProducts", () => {
 
     await sendFlowStep({ ...baseParams })
 
-    expect(mockResolveProductMessage).not.toHaveBeenCalled()
+    expect(mockPrepareProductMessage).not.toHaveBeenCalled()
     expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
       expect.not.objectContaining({ productMessage: expect.anything() }),
     )

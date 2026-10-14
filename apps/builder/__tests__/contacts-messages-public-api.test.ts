@@ -69,8 +69,8 @@ vi.mock("@chatbotx.io/business", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/business/errors", () => ({
-  BROADCAST_PLAN_LIMIT_CODE: "broadcastPlanLimit",
+vi.mock("@chatbotx.io/business/errors", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/business/errors")>()),
   notFoundException: (message: string) => new Error(message),
 }))
 
@@ -124,6 +124,58 @@ describe("POST /v1/contacts/{identifier}/messages", () => {
       contactInbox,
       input: { identifier: "id:1", text: "hello", inboxId: "inbox-1" },
     })
+  })
+
+  test("hands a product message to createOutgoing unchanged", async () => {
+    const conversation = { id: "conv-1" }
+    const contactInbox = { id: "ci-1", inboxId: "inbox-1" }
+    mocks.resolveContactInboxForSend.mockResolvedValueOnce({
+      conversation,
+      contactInbox,
+    })
+    const input = {
+      identifier: "id:1",
+      inboxId: "inbox-1",
+      products: {
+        display: "products",
+        body: "Look",
+        sections: [{ productIds: ["1", "2"] }],
+      },
+    }
+
+    await procedure.handler?.({
+      context: { workspace: { id: WORKSPACE_ID } },
+      input,
+    })
+
+    expect(mocks.createOutgoing).toHaveBeenCalledWith({
+      conversation,
+      contactInbox,
+      input,
+    })
+  })
+
+  test("lets an unsendable product message surface as the service's error", async () => {
+    mocks.resolveContactInboxForSend.mockResolvedValueOnce({
+      conversation: { id: "conv-1" },
+      contactInbox: { id: "ci-1" },
+    })
+    const error = Object.assign(new Error("Product message cannot be sent"), {
+      code: "productMessageUnresolvable",
+      httpStatusCode: 422,
+      data: { reason: "catalogNotConnected" },
+    })
+    mocks.createOutgoing.mockRejectedValueOnce(error)
+
+    await expect(
+      procedure.handler?.({
+        context: { workspace: { id: WORKSPACE_ID } },
+        input: {
+          identifier: "id:1",
+          products: { display: "products", sections: [{ productIds: ["1"] }] },
+        },
+      }),
+    ).rejects.toBe(error)
   })
 
   test("propagates the 404 when the contact has no matching inbox", async () => {

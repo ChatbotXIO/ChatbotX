@@ -45,7 +45,14 @@ type SendProductsDialogProps = {
   onOpenChange: (open: boolean) => void
   channel: ChannelType
   step: SendProductsStepSchema
-  onSave: (values: SendProductsFormValues) => void
+  /**
+   * Return `false` (or a promise of it) to keep the dialog open, e.g. when sending failed and the
+   * author should fix the message. Anything else closes it.
+   */
+  onSave: (values: SendProductsFormValues) => unknown
+  /** Replaces "Continue" for a caller that sends instead of saving. */
+  submitText?: string
+  isSubmitting?: boolean
 }
 
 function IssueMessage({
@@ -87,7 +94,8 @@ function CharacterCount({
 }
 
 function SendProductsForm(props: Omit<SendProductsDialogProps, "open">) {
-  const { channel, step, onSave, onOpenChange } = props
+  const { channel, step, onSave, onOpenChange, submitText, isSubmitting } =
+    props
   const t = useTranslations()
   const capability = getChannelFlowPolicy(channel)?.productMessages
   const form = useForm<SendProductsFormValues>({
@@ -159,9 +167,10 @@ function SendProductsForm(props: Omit<SendProductsDialogProps, "open">) {
         onSubmit={(event) => {
           event.preventDefault()
           event.stopPropagation()
-          handleSubmit((submitted) => {
-            onSave(submitted)
-            onOpenChange(false)
+          handleSubmit(async (submitted) => {
+            if ((await onSave(submitted)) !== false) {
+              onOpenChange(false)
+            }
           })(event)
         }}
       >
@@ -319,8 +328,12 @@ function SendProductsForm(props: Omit<SendProductsDialogProps, "open">) {
               </Button>
             }
           />
-          <Button disabled={issues.length > 0} size="sm" type="submit">
-            {t("actions.continue")}
+          <Button
+            disabled={issues.length > 0 || isSubmitting}
+            size="sm"
+            type="submit"
+          >
+            {submitText ?? t("actions.continue")}
           </Button>
         </DialogFooter>
       </form>

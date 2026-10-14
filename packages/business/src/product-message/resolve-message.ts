@@ -2,8 +2,8 @@ import {
   evaluateProductMessage,
   type ProductMessageCapability,
   type ProductMessageShape,
+  type SendProductsContent,
   type SendProductsDisplay,
-  type SendProductsStepSchema,
   toProductMessageShape,
 } from "@chatbotx.io/flow-config"
 import type {
@@ -51,8 +51,8 @@ const toResolvedMessage: Record<
 const textOrUndefined = (value: string | undefined) =>
   value?.trim() || undefined
 
-export const collectProductIds = (step: SendProductsStepSchema): string[] =>
-  step.sections.flatMap((section) => section.productIds)
+export const collectProductIds = (content: SendProductsContent): string[] =>
+  content.sections.flatMap((section) => section.productIds)
 
 const draftToShape = (draft: Draft): ProductMessageShape => ({
   display: draft.display,
@@ -93,26 +93,27 @@ const withoutFieldsNoLongerAllowed = (
 }
 
 /**
- * Pure: turns a step plus the products that turned out to be sendable into the
+ * Pure: turns a product message plus the products that turned out to be sendable into the
  * message to dispatch. Order and sections follow the author's; products that
  * are not sendable are reported, never replaced.
  */
 export const resolveProductMessage = (props: {
   capability: ProductMessageCapability
-  step: SendProductsStepSchema
+  content: SendProductsContent
   sendableById: ReadonlyMap<string, ProductMessageItem>
 }): ProductMessageResolution => {
-  const { capability, step, sendableById } = props
+  const { capability, content, sendableById } = props
 
-  // A step that is invalid as authored (raw graph, legacy data) must fail, not
+  // A message that is invalid as authored (raw graph, legacy data) must fail, not
   // be repaired. Only what shrinking the product list causes may be adjusted.
   if (
-    evaluateProductMessage(capability, toProductMessageShape(step)).length > 0
+    evaluateProductMessage(capability, toProductMessageShape(content)).length >
+    0
   ) {
     return { ok: false, reason: "invalidMessage" }
   }
 
-  const sections = step.sections
+  const sections = content.sections
     .map((section) => ({
       title: textOrUndefined(section.title),
       items: section.productIds.flatMap((productId) => {
@@ -123,14 +124,14 @@ export const resolveProductMessage = (props: {
     .filter((section) => section.items.length > 0)
 
   const draft = withoutFieldsNoLongerAllowed(capability, {
-    display: step.display,
-    header: textOrUndefined(step.header),
-    body: textOrUndefined(step.body),
-    footer: textOrUndefined(step.footer),
+    display: content.display,
+    header: textOrUndefined(content.header),
+    body: textOrUndefined(content.body),
+    footer: textOrUndefined(content.footer),
     sections,
   })
 
-  // The step was valid as authored, so what is left to fail is the catalog:
+  // The message was valid as authored, so what is left to fail is the catalog:
   // too few of its products are sendable any more.
   if (evaluateProductMessage(capability, draftToShape(draft)).length > 0) {
     return { ok: false, reason: "noProductsSendable" }
@@ -138,8 +139,8 @@ export const resolveProductMessage = (props: {
 
   return {
     ok: true,
-    message: toResolvedMessage[step.display](draft),
-    missing: collectProductIds(step)
+    message: toResolvedMessage[content.display](draft),
+    missing: collectProductIds(content)
       .filter((productId) => !sendableById.has(productId))
       .map((productId) => ({ productId })),
   }

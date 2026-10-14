@@ -11,8 +11,15 @@ import {
 } from "../src/channel-rules/product-message-rules"
 import { channelAwareStepValidators } from "../src/channel-rules/validators"
 import {
+  sendMessageNodeDefaultFn,
+  sendMessageNodeSchema,
+} from "../src/nodes/send-message"
+import { chooseChannelStepDefaultFn } from "../src/steps/choose-channel"
+import {
   type SendProductsStepSchema,
+  sendProductsContentSchema,
   sendProductsStepDefaultFn,
+  sendProductsStepSchema,
 } from "../src/steps/send-products"
 import { stepTypes } from "../src/steps/step-action"
 import { flowValidationCodes } from "../src/validation-codes"
@@ -41,6 +48,69 @@ const issueCodes = (
 
 const validOnWhatsapp = (step: SendProductsStepSchema) =>
   expect(issueCodes(channelTypes.enum.whatsapp, step)).toEqual([])
+
+describe("sendProducts content schema", () => {
+  test("parses the message fields a sender outside a flow provides", () => {
+    expect(
+      sendProductsContentSchema.parse({
+        display: "products",
+        body: "Look",
+        sections: [{ productIds: ["1"] }],
+      }),
+    ).toEqual({
+      display: "products",
+      body: "Look",
+      sections: [{ productIds: ["1"] }],
+    })
+  })
+
+  test("carries nothing that belongs to a flow step", () => {
+    const parsed = sendProductsContentSchema.parse({
+      id: "step-1",
+      stepType: "sendProducts",
+      display: "carousel",
+      sections: [{ productIds: ["1", "2"] }],
+    })
+
+    expect(parsed).not.toHaveProperty("id")
+    expect(parsed).not.toHaveProperty("stepType")
+  })
+
+  test("rejects a message without a display or sections", () => {
+    expect(sendProductsContentSchema.safeParse({}).success).toBe(false)
+  })
+
+  test("the step schema accepts everything the content schema does", () => {
+    const step = sendProductsStepDefaultFn({
+      body: "Look",
+      sections: [{ productIds: ["1"] }],
+    })
+
+    expect(sendProductsStepSchema.safeParse(step).success).toBe(true)
+  })
+
+  test("a sendProducts step still parses inside the send-message node", () => {
+    const step = sendProductsStepDefaultFn({
+      body: "Look",
+      sections: [{ productIds: ["1"] }],
+    })
+
+    const defaults = sendMessageNodeDefaultFn({
+      detailProps: {
+        beforeStep: chooseChannelStepDefaultFn({ channel: "whatsapp" }),
+      },
+    })
+    const node = sendMessageNodeSchema.safeParse({
+      ...defaults,
+      data: {
+        ...defaults.data,
+        details: { ...defaults.data.details, steps: [step] },
+      },
+    })
+
+    expect(node.success).toBe(true)
+  })
+})
 
 describe("sendProducts channel support", () => {
   test("only whatsapp declares the capability", () => {
