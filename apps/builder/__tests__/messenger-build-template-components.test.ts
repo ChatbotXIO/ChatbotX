@@ -327,4 +327,119 @@ describe("createMessengerMessageTemplateRequest", () => {
       }).success,
     ).toBe(false)
   })
+
+  test("turns a pasted Mini App token link into a {{1}} suffix with an example", () => {
+    const result = createMessengerMessageTemplateRequest.safeParse({
+      ...baseInput,
+      buttons: [
+        {
+          type: "URL",
+          title: "Open",
+          url: "https://app.example.com/mini-apps?id=12&token={{mini_app_token}}",
+          variables: [],
+        },
+      ],
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.data?.buttons[0]).toMatchObject({
+      url: "https://app.example.com/mini-apps?id=12&token={{1}}",
+      variables: ["example-token"],
+    })
+  })
+
+  test("turns a pasted Minigame token link into a {{1}} suffix", () => {
+    const result = createMessengerMessageTemplateRequest.safeParse({
+      ...baseInput,
+      buttons: [
+        {
+          type: "URL",
+          title: "Play",
+          url: "https://app.example.com/minigames?minigameId=abc&token={{minigame_play_token}}",
+          variables: [],
+        },
+      ],
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.data?.buttons[0]).toMatchObject({
+      url: "https://app.example.com/minigames?minigameId=abc&token={{1}}",
+    })
+  })
+
+  test("accepts a pasted token link with trailing whitespace", () => {
+    const result = createMessengerMessageTemplateRequest.safeParse({
+      ...baseInput,
+      buttons: [
+        {
+          type: "URL",
+          title: "Open",
+          url: "https://app.example.com/mini-apps?id=12&token={{mini_app_token}} \n",
+          variables: [],
+        },
+      ],
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.data?.buttons[0]).toMatchObject({
+      url: "https://app.example.com/mini-apps?id=12&token={{1}}",
+    })
+  })
+
+  test.each([
+    ["a non Mini App page", "https://shop.com/go?t={{mini_app_token}}"],
+    [
+      "a token that is not last",
+      "https://app.example.com/mini-apps?id=12&token={{mini_app_token}}&utm=fb",
+    ],
+    [
+      "the other page's token",
+      "https://app.example.com/minigames?minigameId=abc&token={{mini_app_token}}",
+    ],
+  ])("rejects a token variable in %s", (_label, url) => {
+    const result = createMessengerMessageTemplateRequest.safeParse({
+      ...baseInput,
+      buttons: [{ type: "URL", title: "Open", url, variables: [] }],
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.message).toBe(
+      "The token variable must be the last part of a Mini App or Minigame link",
+    )
+  })
+
+  test("rejects a token link that has another variable", () => {
+    const result = createMessengerMessageTemplateRequest.safeParse({
+      ...baseInput,
+      buttons: [
+        {
+          type: "URL",
+          title: "Open",
+          url: "https://x.example.com/{{1}}/mini-apps?id=1&token={{mini_app_token}}",
+          variables: [],
+        },
+      ],
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.message).toBe(
+      "A Mini App or Minigame link cannot have other variables besides its token",
+    )
+  })
+
+  test("rejects any other named variable in a URL", () => {
+    expect(
+      createMessengerMessageTemplateRequest.safeParse({
+        ...baseInput,
+        buttons: [
+          {
+            type: "URL",
+            title: "Open",
+            url: "https://example.com/?ref={{user_id}}",
+            variables: [],
+          },
+        ],
+      }).success,
+    ).toBe(false)
+  })
 })
