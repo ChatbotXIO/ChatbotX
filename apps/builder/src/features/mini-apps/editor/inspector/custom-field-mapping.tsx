@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useMiniAppEditor } from "../editor-context"
-import { InspectorHint } from "./fields"
+import { InspectorHint } from "./field-row"
 
 /**
  * Picks the contact custom field an input's answer is saved to. Stored on the

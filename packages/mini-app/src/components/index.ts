@@ -1,6 +1,7 @@
 export * from "./catalog"
 export * from "./default-text"
 export {
+  type MiniAppImageItem,
   type MiniAppNavigationItem,
   type MiniAppOption,
   miniAppNavigationItemSchema,

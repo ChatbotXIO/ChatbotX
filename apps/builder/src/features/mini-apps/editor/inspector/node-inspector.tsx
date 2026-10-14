@@ -13,28 +13,25 @@ import { type ReactNode, useMemo } from "react"
 import { componentLabelKey } from "../../lib/labels"
 import { useMiniAppEditor } from "../editor-context"
 import { componentIcon } from "../palette"
+import { ActionProp } from "./action-picker"
 import { AnswerReferenceField } from "./answer-reference-field"
-import {
-  ActionProp,
-  CarouselImagesProp,
-  ExpressionProp,
-  ImageProp,
-  NavigationItemsProp,
-  OptionsProp,
-  SwitchCasesProp,
-} from "./complex-fields"
+import { CarouselImagesProp } from "./carousel-images-prop"
 import { CustomFieldMapping } from "./custom-field-mapping"
+import { ExpressionProp } from "./expression-prop"
+import { InspectorContext, IssueList } from "./field-row"
 import {
   BooleanProp,
   DateProp,
   EnumProp,
-  InspectorContext,
-  IssueList,
   ListProp,
   MultiEnumProp,
   NumberProp,
   TextProp,
 } from "./fields"
+import { ImageProp } from "./image-picker"
+import { NavigationItemsProp } from "./navigation-items-prop"
+import { OptionsProp } from "./options-prop"
+import { SwitchCasesProp } from "./switch-cases-prop"
 
 const VARIABLE_HINT_PARAMS = { open: "{{", button: "</>" }
 

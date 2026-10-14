@@ -99,6 +99,9 @@ export const miniAppNavigationItemSchema = z.strictObject({
 })
 export type MiniAppNavigationItem = z.infer<typeof miniAppNavigationItemSchema>
 
+/** One image of an ImageCarousel's `images`. */
+export type MiniAppImageItem = { src?: string; "alt-text"?: string }
+
 // Meta rejects any property a component does not declare (INVALID_PROPERTY_KEY),
 // so every props schema is strict and each input spreads only what it supports.
 export const inputBase = {

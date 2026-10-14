@@ -12,7 +12,7 @@ import { MonitorSmartphoneIcon, Trash2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useId } from "react"
 import { useMiniAppEditor } from "../editor-context"
-import { DisplayTextCounter, InspectorHint, IssueList } from "./fields"
+import { DisplayTextCounter, InspectorHint, IssueList } from "./field-row"
 import { VariableTextEditor } from "./variable-text-editor"
 
 const SCREEN_ID_SANITIZE = /[^A-Za-z_]/g

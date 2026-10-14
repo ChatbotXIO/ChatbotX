@@ -1,3 +1,4 @@
+import type { MiniAppImageItem } from "@chatbotx.io/mini-app"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { toImageSrc } from "../../lib/image-src"
 import { readArray, readString } from "../../lib/props"
@@ -30,9 +31,7 @@ export function ImageView({ view }: { view: NodeView }) {
 export function CarouselView({ view }: { view: NodeView }) {
   return (
     <ImageCarouselView
-      images={readArray<{ src?: string; "alt-text"?: string }>(
-        view.props.images,
-      )}
+      images={readArray<MiniAppImageItem>(view.props.images)}
       scaleType={view.props["scale-type"]}
     />
   )
