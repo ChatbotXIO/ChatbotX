@@ -11,7 +11,7 @@ import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import { MonitorSmartphoneIcon, Trash2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useId } from "react"
-import { useMiniAppEditor } from "../editor-context"
+import { useMiniAppEditor, useSelectedScreen } from "../editor-context"
 import { DisplayTextCounter, InspectorHint, IssueList } from "./field-row"
 import { VariableTextEditor } from "./variable-text-editor"
 
@@ -24,13 +24,12 @@ export function ScreenInspector({
 }) {
   const t = useTranslations("miniApps.screen")
   const idInput = useId()
-  const definition = useMiniAppEditor((state) => state.definition)
-  const selectedScreenKey = useMiniAppEditor((state) => state.selectedScreenKey)
+  const screen = useSelectedScreen()
+  const screenCount = useMiniAppEditor(
+    (state) => state.definition.screens.length,
+  )
   const updateScreen = useMiniAppEditor((state) => state.updateScreen)
   const removeScreen = useMiniAppEditor((state) => state.removeScreen)
-  const screen = definition.screens.find(
-    (candidate) => candidate.key === selectedScreenKey,
-  )
   if (!screen) {
     return null
   }
@@ -75,7 +74,7 @@ export function ScreenInspector({
       </div>
       <Separator />
       <Button
-        disabled={definition.screens.length <= 1}
+        disabled={screenCount <= 1}
         onClick={() => removeScreen(screen.key)}
         size="sm"
         variant="outline"

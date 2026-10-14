@@ -1,13 +1,9 @@
-/** Immutable edits of the item lists a prop holds (options, images, navigation items). */
+/** Immutable edits of item lists: screens, options, images, navigation items. */
 
-/** `items` with the item at `from` moved to `to`; unchanged when `to` is out of range. */
-export const moveItem = <T>(
-  items: readonly T[],
-  from: number,
-  to: number,
-): T[] => {
-  if (to < 0 || to >= items.length) {
-    return [...items]
+/** `items` with the item at `from` moved to `to`; the same array when either is out of range. */
+export const moveItem = <T>(items: T[], from: number, to: number): T[] => {
+  if (to < 0 || to >= items.length || from < 0 || from >= items.length) {
+    return items
   }
   const next = [...items]
   const [moved] = next.splice(from, 1)

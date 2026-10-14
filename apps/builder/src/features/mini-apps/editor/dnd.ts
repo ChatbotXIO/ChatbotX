@@ -1,10 +1,16 @@
-import type {
-  MiniAppComponentType,
-  MiniAppSlotAddress,
+import {
+  canPlaceInSlot,
+  getSlotOwnerType,
+  isDescendantOf,
+  type MiniAppComponentType,
+  type MiniAppDefinition,
+  type MiniAppSlotAddress,
 } from "@chatbotx.io/mini-app"
 import {
   type ClientRect,
   type CollisionDetection,
+  type DragEndEvent,
+  type DragMoveEvent,
   pointerWithin,
   rectIntersection,
 } from "@dnd-kit/core"
@@ -67,4 +73,40 @@ export const resolveDropTarget = (
     index: after ? zone.index + 1 : zone.index,
     highlight: { kind: after ? "after" : "before", nodeId: zone.nodeId },
   }
+}
+
+/** Where the pointer is now: where the drag started, plus how far it moved. */
+const pointerY = (event: DragMoveEvent | DragEndEvent) => {
+  const activator = event.activatorEvent as PointerEvent | MouseEvent
+  return ("clientY" in activator ? activator.clientY : 0) + event.delta.y
+}
+
+/**
+ * Where the dragged component would land, or null when it may not go there:
+ * the container does not accept it, or a container is dropped into itself.
+ */
+export const findDropTarget = (
+  definition: MiniAppDefinition,
+  event: DragMoveEvent | DragEndEvent,
+): DropTarget | null => {
+  const source = event.active.data.current as DragSource | undefined
+  const zone = event.over?.data.current as DropZone | undefined
+  if (!(source && zone && event.over)) {
+    return null
+  }
+  const target = resolveDropTarget(zone, event.over.rect, pointerY(event))
+  const owner = getSlotOwnerType(definition, target.address)
+  if (!(owner && canPlaceInSlot(owner, source.type))) {
+    return null
+  }
+  const parentId = target.address.parentId
+  if (
+    source.kind === "node" &&
+    parentId &&
+    (parentId === source.nodeId ||
+      isDescendantOf(definition, source.nodeId, parentId))
+  ) {
+    return null
+  }
+  return target
 }

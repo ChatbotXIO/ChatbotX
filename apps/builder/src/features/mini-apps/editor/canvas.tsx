@@ -5,18 +5,19 @@ import {
   type MiniAppNode,
   type MiniAppRuntimeScope,
   type MiniAppSlotAddress,
+  screenLabel,
   slotEntries,
 } from "@chatbotx.io/mini-app"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { CopyIcon, GripVerticalIcon, Trash2Icon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { createContext, useContext } from "react"
+import { createContext, type HTMLAttributes, useContext } from "react"
 import { componentLabelKey } from "../lib/labels"
 import { NodeView } from "../renderer/node-view"
 import type { DragSource, DropTarget, DropZone } from "./dnd"
 import { slotDroppableId } from "./dnd"
-import { useMiniAppEditor } from "./editor-context"
+import { useMiniAppEditor, useSelectedScreen } from "./editor-context"
 
 export type CanvasContextValue = {
   dropTarget: DropTarget | null
@@ -140,6 +141,60 @@ function ContainerHeader({ node }: { node: MiniAppNode }) {
   )
 }
 
+/** Drag, duplicate and remove buttons above a component, shown on hover or when selected. */
+function NodeToolbar({
+  nodeId,
+  visible,
+  dragHandle,
+}: {
+  nodeId: string
+  visible: boolean
+  dragHandle: HTMLAttributes<HTMLButtonElement>
+}) {
+  const t = useTranslations("miniApps.editor")
+  const removeNode = useMiniAppEditor((state) => state.removeNode)
+  const duplicateNode = useMiniAppEditor((state) => state.duplicateNode)
+  return (
+    <div
+      className={cn(
+        "absolute end-1 -top-3 z-10 hidden items-center gap-0.5 rounded-md border bg-background shadow-sm group-hover:flex",
+        visible && "flex",
+      )}
+    >
+      <button
+        aria-label={t("drag")}
+        className="cursor-grab p-1 text-muted-foreground hover:text-foreground"
+        type="button"
+        {...dragHandle}
+      >
+        <GripVerticalIcon className="size-3.5" />
+      </button>
+      <button
+        aria-label={t("duplicate")}
+        className="p-1 text-muted-foreground hover:text-foreground"
+        onClick={(event) => {
+          event.stopPropagation()
+          duplicateNode(nodeId)
+        }}
+        type="button"
+      >
+        <CopyIcon className="size-3.5" />
+      </button>
+      <button
+        aria-label={t("remove")}
+        className="p-1 text-muted-foreground hover:text-destructive"
+        onClick={(event) => {
+          event.stopPropagation()
+          removeNode(nodeId)
+        }}
+        type="button"
+      >
+        <Trash2Icon className="size-3.5" />
+      </button>
+    </div>
+  )
+}
+
 function CanvasNode({
   node,
   address,
@@ -149,14 +204,11 @@ function CanvasNode({
   address: MiniAppSlotAddress
   index: number
 }) {
-  const t = useTranslations("miniApps.editor")
   const tRoot = useTranslations()
   const { dropTarget, draggingNodeId, nodesWithErrors } =
     useContext(CanvasContext)
   const selectedNodeId = useMiniAppEditor((state) => state.selectedNodeId)
   const selectNode = useMiniAppEditor((state) => state.selectNode)
-  const removeNode = useMiniAppEditor((state) => state.removeNode)
-  const duplicateNode = useMiniAppEditor((state) => state.duplicateNode)
 
   const source: DragSource = { kind: "node", nodeId: node.id, type: node.type }
   const zone: DropZone = { kind: "node", nodeId: node.id, address, index }
@@ -198,44 +250,11 @@ function CanvasNode({
         role="button"
         tabIndex={0}
       >
-        <div
-          className={cn(
-            "absolute end-1 -top-3 z-10 hidden items-center gap-0.5 rounded-md border bg-background shadow-sm group-hover:flex",
-            isSelected && "flex",
-          )}
-        >
-          <button
-            aria-label={t("drag")}
-            className="cursor-grab p-1 text-muted-foreground hover:text-foreground"
-            type="button"
-            {...drag.listeners}
-            {...drag.attributes}
-          >
-            <GripVerticalIcon className="size-3.5" />
-          </button>
-          <button
-            aria-label={t("duplicate")}
-            className="p-1 text-muted-foreground hover:text-foreground"
-            onClick={(event) => {
-              event.stopPropagation()
-              duplicateNode(node.id)
-            }}
-            type="button"
-          >
-            <CopyIcon className="size-3.5" />
-          </button>
-          <button
-            aria-label={t("remove")}
-            className="p-1 text-muted-foreground hover:text-destructive"
-            onClick={(event) => {
-              event.stopPropagation()
-              removeNode(node.id)
-            }}
-            type="button"
-          >
-            <Trash2Icon className="size-3.5" />
-          </button>
-        </div>
+        <NodeToolbar
+          dragHandle={{ ...drag.listeners, ...drag.attributes }}
+          nodeId={node.id}
+          visible={isSelected}
+        />
         {isContainer ? (
           <div className="flex flex-col gap-2">
             <ContainerHeader node={node} />
@@ -255,12 +274,8 @@ function CanvasNode({
 /** The phone-shaped preview of the selected screen. */
 export function ScreenCanvas() {
   const t = useTranslations("miniApps.editor")
-  const definition = useMiniAppEditor((state) => state.definition)
-  const selectedScreenKey = useMiniAppEditor((state) => state.selectedScreenKey)
+  const screen = useSelectedScreen()
   const selectNode = useMiniAppEditor((state) => state.selectNode)
-  const screen = definition.screens.find(
-    (candidate) => candidate.key === selectedScreenKey,
-  )
 
   if (!screen) {
     return null
@@ -278,7 +293,7 @@ export function ScreenCanvas() {
         <div className="flex items-center gap-3 border-b bg-white px-4 py-3">
           <XIcon className="size-5 text-[#54656f]" />
           <span className="flex-1 truncate font-medium text-[#111b21] text-[16px]">
-            {screen.title || screen.id}
+            {screenLabel(screen)}
           </span>
         </div>
         <div className="flex flex-1 flex-col gap-3 p-4">

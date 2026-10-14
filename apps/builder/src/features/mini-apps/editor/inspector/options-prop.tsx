@@ -6,10 +6,10 @@ import {
 } from "@chatbotx.io/mini-app"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { useTranslations } from "next-intl"
+import { nextFreeId } from "../../lib/list-editing"
 import { readArray } from "../../lib/props"
 import { FieldRow, useInspector } from "./field-row"
 import { ImagePicker } from "./image-picker"
-import { nextFreeId } from "./list-editing"
 import { RepeatableList } from "./repeatable-list"
 import { VariableTextEditor } from "./variable-text-editor"
 

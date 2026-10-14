@@ -5,9 +5,9 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { PlusIcon, Trash2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { nextFreeId } from "../../lib/list-editing"
 import { useMiniAppEditor } from "../editor-context"
 import { InspectorHint } from "./field-row"
-import { nextFreeId } from "./list-editing"
 
 const CASE_KEY_PATTERN = /^[A-Za-z0-9_]+$/
 

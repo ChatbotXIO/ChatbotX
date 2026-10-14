@@ -7,10 +7,10 @@ import {
 } from "@chatbotx.io/mini-app"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { useTranslations } from "next-intl"
+import { nextFreeId } from "../../lib/list-editing"
 import { readArray } from "../../lib/props"
 import { ActionPicker } from "./action-picker"
 import { FieldRow, useInspector } from "./field-row"
-import { nextFreeId } from "./list-editing"
 import { RepeatableList } from "./repeatable-list"
 import { VariableTextEditor } from "./variable-text-editor"
 

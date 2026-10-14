@@ -6,6 +6,7 @@ import {
   createNode,
   duplicateNode,
   findNode,
+  findScreen,
   insertNode,
   type MiniAppComponentType,
   type MiniAppDefaultText,
@@ -22,6 +23,7 @@ import {
   updateNodeSlots,
 } from "@chatbotx.io/mini-app"
 import { createStore } from "zustand/vanilla"
+import { moveItem } from "../lib/list-editing"
 
 const HISTORY_LIMIT = 100
 /** Edits to the same node within this window collapse into one undo step. */
@@ -89,10 +91,7 @@ export const resolveInsertTarget = (
     }
     return { address: selected.address, index: selected.index + 1 }
   }
-  const screen = definition.screens.find(
-    (candidate) => candidate.key === screenKey,
-  )
-  const children = screen?.children ?? []
+  const children = findScreen(definition, screenKey)?.children ?? []
   // Keep a root Footer last, where Meta requires it.
   const footerLast = children.at(-1)?.type === "Footer"
   return {
@@ -227,13 +226,11 @@ export const createMiniAppEditorStore = (initial: {
       },
 
       moveScreen: (from, to) => {
-        const screens = [...get().definition.screens]
-        const [moved] = screens.splice(from, 1)
-        if (!moved) {
-          return
+        const { screens } = get().definition
+        const moved = moveItem(screens, from, to)
+        if (moved !== screens) {
+          commit({ screens: moved })
         }
-        screens.splice(to, 0, moved)
-        commit({ screens })
       },
 
       undo: () => {

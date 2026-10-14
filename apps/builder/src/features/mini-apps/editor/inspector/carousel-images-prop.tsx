@@ -7,11 +7,11 @@ import {
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { moveItem, patchItem, removeItem } from "../../lib/list-editing"
 import { readArray } from "../../lib/props"
 import { FieldRow, useInspector } from "./field-row"
 import { ImagePicker } from "./image-picker"
 import { ItemControls } from "./item-controls"
-import { moveItem, patchItem, removeItem } from "./list-editing"
 
 /** Meta shows at most this many images in one ImageCarousel. */
 const MAX_CAROUSEL_IMAGES = 3
