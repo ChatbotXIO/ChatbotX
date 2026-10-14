@@ -455,7 +455,12 @@ an endpoint's scope.
     `markReadOnOutbound` only and needs the `inbox` scope.
 
 - **Integrations** — covers workspace integrations, AI provider credentials,
-  external webhooks, and event webhooks. A token scoped to `["integrations"]`
+  external webhooks, event webhooks, and inbound webhooks
+  (`/v1/inbound-webhooks…`, `/v1/inbound-webhook-channels`; see
+  `docs/inbound-webhooks.md`). The endpoint URL an inbound webhook returns
+  embeds a secret, so treat it like a credential (it is omitted for
+  `read_only` tokens), and `getRequest` only returns
+  the stored payload (which may hold personal data) with `includePayload=true`. A token scoped to `["integrations"]`
   is not authorized for channel configuration or operations.
 
 - **Conversation routing and AI hand-over** — `POST

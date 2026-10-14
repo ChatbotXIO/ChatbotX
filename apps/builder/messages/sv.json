@@ -1117,7 +1117,8 @@
       "fbLeadAd": "FB-leadannons",
       "imported": "Importerad",
       "inboundMessage": "Inkommande meddelande",
-      "webchat": "Webbchatt"
+      "webchat": "Webbchatt",
+      "inboundWebhook": "Inkommande webhook"
     },
     "ctwaRetarget": {
       "segments": {
@@ -4296,6 +4297,216 @@
     "description": "Skapa djuplänkar som omdirigerar till din URL med frågeparametrar.",
     "title": "Magiska länkar"
   },
+  "inboundWebhooks": {
+    "title": "Inkommande webhookar",
+    "feature": "Inkommande webhook",
+    "description": "Låt externa system skicka data till din arbetsyta: hitta eller skapa en kontakt, spara värden i dess fält och kör åtgärder.",
+    "createDescription": "En ny webhook är inaktiv från början. Konfigurera den i redigeraren och slå sedan på den.",
+    "deleteDescription": "System som fortfarande skickar till den här URL:en får ett fel. Det går inte att ångra.",
+    "editorDescription": "Skicka en JSON POST-begäran till URL:en nedan för att köra den här webhooken.",
+    "configure": "Konfigurera",
+    "getLink": "Hämta länk",
+    "activeToggle": "Aktivera {name}",
+    "columns": {
+      "active": "Aktiv",
+      "createdAt": "Skapad",
+      "requests": "Begäranden"
+    },
+    "link": {
+      "title": "Webhook-URL",
+      "description": "Skicka JSON med POST till den här URL:en. Den innehåller en hemlig token, så behandla den som ett lösenord."
+    },
+    "endpoint": {
+      "label": "Webhook-URL",
+      "show": "Visa URL",
+      "hide": "Dölj URL"
+    },
+    "regenerate": {
+      "button": "Generera om",
+      "title": "Generera om webhook-URL:en?",
+      "description": "Den nuvarande URL:en slutar fungera direkt. Uppdatera alla system som skickar till den.",
+      "cancel": "Avbryt",
+      "confirm": "Generera om",
+      "success": "Webhook-URL:en har genererats om",
+      "failed": "Det gick inte att generera om URL:en"
+    },
+    "activation": {
+      "incomplete": "Fyll i inkorgen, minst ett kontaktfält och minst en mappning och spara innan du aktiverar den här webhooken."
+    },
+    "sample": {
+      "title": "Exempel-JSON",
+      "description": "Klistra in ett exempel på en begärandekropp för att bläddra bland fälten och förhandsgranska värden.",
+      "load": "Läs in exempel-JSON",
+      "status": {
+        "loaded": "Exemplet har lästs in",
+        "invalid": "Det här är inte giltig JSON",
+        "tooLarge": "Exemplet är större än {max} KB",
+        "unsupported": "Exemplet innehåller tecken som inte stöds eller är för djupt nästlat"
+      },
+      "format": "Formatera JSON"
+    },
+    "contact": {
+      "title": "Hitta eller skapa kontakt",
+      "description": "Välj inkorgen som kontakten tillhör och hur den hittas. Om ingen matchar skapas en ny kontakt när begäran innehåller det som den här kanalen behöver."
+    },
+    "inbox": {
+      "modeLabel": "Inkorg",
+      "mode": {
+        "inbox": "Specifik inkorg",
+        "payload": "Från payload"
+      },
+      "modeDescription": {
+        "inbox": "Varje begäran använder den inkorg du väljer.",
+        "payload": "Varje begäran anger sin inkorg, till exempel ett Messenger-sid-id eller ett WhatsApp-telefonnummer-id."
+      },
+      "inboxLabel": "Inkorg",
+      "inboxPlaceholder": "Välj en inkorg",
+      "noInboxes": "Ingen ansluten inkorg hittades.",
+      "savedInboxMissing": "Den sparade inkorgen är inte längre ansluten. Välj en annan.",
+      "channelLabel": "Kanal",
+      "channelPlaceholder": "Välj en kanal",
+      "noPayloadChannels": "Anslut först en kanal som stöder detta.",
+      "identifierKindLabel": "Inkorgsidentifierare",
+      "identifierKindPlaceholder": "Välj den identifierare som skickas i payload",
+      "identifierPathHint": "JSON-sökväg till det här värdet i begäran."
+    },
+    "identity": {
+      "hint": "Fyll i minst ett. Kontakten slås upp med det första som hittas i begäran, i den här ordningen.",
+      "phone": "Telefon",
+      "email": "E-post",
+      "channelUserId": "Kanalanvändar-ID",
+      "fullName": "Fullständigt namn",
+      "creationHint": "Utan {identities} hoppas en begäran om en okänd kontakt över. Endast befintliga kontakter uppdateras."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "Facebook-sid-id",
+      "igId": "Instagram-konto-id",
+      "phoneNumberId": "WhatsApp-telefonnummer-id",
+      "displayPhoneNumber": "WhatsApp-telefonnummer (mindre exakt)",
+      "botId": "Telegram-bot-id",
+      "oaId": "Zalo OA-id",
+      "openId": "TikTok-konto-open-id",
+      "threadsUserId": "Threads-användar-id"
+    },
+    "channelUserIdKinds": {
+      "psid": "Messenger PSID",
+      "igsid": "Instagram IGSID",
+      "telegramChatId": "Telegram-chatt-id",
+      "zaloUserId": "Zalo-användar-id",
+      "tiktokCustomerOpenId": "TikTok-kund-open-id",
+      "threadsUsername": "Threads-användarnamn",
+      "apiSourceId": "Kontaktkälls-id",
+      "whatsappId": "WhatsApp-ID (wa_id)"
+    },
+    "mappings": {
+      "title": "Spara inkommande data",
+      "description": "Kopiera värden från begäran till kontaktfält.",
+      "empty": "Inga fält har mappats än.",
+      "add": "Lägg till fält",
+      "remove": "Ta bort fält",
+      "target": "Kontaktfält",
+      "targetPlaceholder": "Välj ett fält",
+      "path": "JSON-sökväg",
+      "rowTitle": "Mappning {number}"
+    },
+    "actions": {
+      "title": "Efter att data sparats",
+      "description": "Åtgärder som körs för kontakten när datan har sparats."
+    },
+    "picker": {
+      "title": "Bläddra i JSON",
+      "description": "Sök och klicka på ett värde, eller ange en JSONPath nedan",
+      "browse": "Bläddra",
+      "noSample": "Läs först in en exempel-JSON för att bläddra bland dess fält.",
+      "pathLabel": "JSON-sökväg",
+      "use": "Använd sökväg",
+      "cancel": "Avbryt",
+      "result": "Resultat:",
+      "noValue": "inget värde",
+      "searchLabel": "Sök i JSON",
+      "searchPlaceholder": "Sök efter nycklar, sökvägar eller värden",
+      "noMatches": "Inga matchande nycklar eller värden.",
+      "moreResults": "Visar de första {count} träffarna. Förfina sökningen för att se fler.",
+      "pathHint": "Stöder egenskapsnamn och arrayindex, inklusive $[\"customer-data\"][\"email\"]",
+      "invalidPath": "Det här är inte en JSONPath som stöds."
+    },
+    "requests": {
+      "title": "Begäranden",
+      "description": "De senaste leveranserna som den här webhooken tagit emot (sparas i 30 dagar).",
+      "refresh": "Uppdatera",
+      "empty": "Inga begäranden har tagits emot än.",
+      "previous": "Föregående sida",
+      "next": "Nästa sida",
+      "pageOf": "Sida {page} av {pageCount}",
+      "contact": "Kontakt #{id}",
+      "showDetails": "Visa detaljer",
+      "hideDetails": "Dölj detaljer",
+      "loadingDetails": "Läser in detaljer…",
+      "detailsFailed": "Det gick inte att läsa in detaljerna.",
+      "fieldErrors": "Fält som inte sparades",
+      "actionResults": "Åtgärder",
+      "payload": "Payload",
+      "status": {
+        "received": "Mottagen",
+        "processing": "Bearbetas",
+        "processed": "Bearbetad",
+        "completedWithErrors": "Slutförd med fel",
+        "skipped": "Överhoppad",
+        "failed": "Misslyckades"
+      },
+      "skipReason": {
+        "webhookInactive": "Webhooken var inaktiv.",
+        "missingInboxIdentifier": "Begäran innehöll inte inkorgsidentifieraren.",
+        "inboxNotFound": "Ingen inkorg matchar identifieraren i begäran.",
+        "inboxAmbiguous": "Mer än en inkorg matchar identifieraren i begäran.",
+        "inboxDisconnected": "Inkorgen är frånkopplad.",
+        "missingIdentifier": "Begäran innehöll ingen kontaktidentitet.",
+        "workspaceBlocked": "Arbetsytans ägare är blockerad.",
+        "contactNotFound": "Ingen kontakt matchade, och begäran innehöll inte det som behövs för att skapa en.",
+        "contactAmbiguous": "Fler än en kontakt har det här namnet i inkorgen, så begäran hoppades över."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Ogiltigt värde",
+        "invalidPhone": "Ogiltigt telefonnummer",
+        "unknownField": "Fältet finns inte längre"
+      },
+      "actionStatus": {
+        "succeeded": "lyckades",
+        "skipped": "hoppades över",
+        "failed": "misslyckades"
+      },
+      "errorCode": {
+        "abandoned": "Övergiven: inte bearbetad inom 24 timmar"
+      },
+      "actionSkipReason": {
+        "noConversation": "Kontakten har ingen konversation",
+        "noContactInbox": "Kontakten är inte ansluten till denna inkorg",
+        "flowInactive": "Flödet är inte publicerat",
+        "unsupportedAction": "Åtgärden stöds inte här",
+        "unsupportedChannel": "Kanalen stöder inte åtgärden",
+        "invalidAction": "Åtgärden är inte korrekt konfigurerad",
+        "unknownAction": "Okänd åtgärd",
+        "unsupportedSource": "Stöds inte för denna källa"
+      }
+    },
+    "save": {
+      "invalid": "Vissa inställningar är ogiltiga. Rätta de markerade fälten och spara igen."
+    },
+    "viewAnalytics": "Visa analys",
+    "analytics": {
+      "title": "Analys",
+      "back": "Tillbaka till webhooken",
+      "totalRequests": "Totalt antal mottagna begäranden",
+      "totalRequestsHint": "Varje godkänd begäran sedan webhooken skapades. Dubbletter räknas inte. Loggen nedan sparar de senaste 30 dagarna."
+    },
+    "issues": {
+      "inboxRequired": "Välj en inkorg.",
+      "identifierRequired": "Fyll i minst ett av de fyra kontaktfälten.",
+      "fieldMappingRequired": "Lägg till minst ett fält under \"Spara inkommande data\".",
+      "required": "Det här fältet är obligatoriskt.",
+      "unsupportedPath": "JSON-sökvägen stöds inte."
+    }
+  },
   "mailchimp": {
     "fields": {
       "audience": "Målgrupp",
@@ -5641,7 +5852,17 @@
     "maxItemsReached": "Högst {max} {feature} tillåts per arbetsyta",
     "maxCharacters": "Högst {max} tecken.",
     "maxMustBeGreaterThanMin": "{maxField} måste vara större än eller lika med {minField}",
-    "maxSize": "Filstorleken överskrider maxgränsen"
+    "maxSize": "Filstorleken överskrider maxgränsen",
+    "inboundWebhook": {
+      "inboxRequired": "Välj en inkorg.",
+      "inboxNotFound": "Den valda inkorgen hittades inte.",
+      "inboxDisconnected": "Den valda inkorgen är inte ansluten.",
+      "unsupportedInboxIdentifier": "Den här kanalen kan inte identifieras med det värdet.",
+      "identifierRequired": "Lägg till minst en kontaktidentitet.",
+      "unknownFieldTarget": "Ett mappat kontaktfält finns inte längre.",
+      "actionReferenceNotFound": "En åtgärd refererar till ett flöde, en tagg eller ett fält som inte längre finns.",
+      "fieldMappingRequired": "Lägg till minst en fältmappning."
+    }
   },
   "webchat": {
     "chatUnavailable": "Den här chatten är inte tillgänglig just nu.",

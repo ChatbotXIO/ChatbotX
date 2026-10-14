@@ -36,11 +36,13 @@ import { purgeCommentAutomationEvents } from "./handlers/purge-comment-automatio
 import { purgeErrorLogs } from "./handlers/purge-error-logs"
 import { purgeExpiredCallRecordings } from "./handlers/purge-expired-call-recordings"
 import { purgeExpiredConnectSessions } from "./handlers/purge-expired-connect-sessions"
+import { purgeInboundWebhookRequests } from "./handlers/purge-inbound-webhook-requests"
 import { purgeWhatsappSignupSessions } from "./handlers/purge-whatsapp-signup-sessions"
 import { purgeWorkspaces } from "./handlers/purge-workspaces"
 import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
 import { reconcileMetaCatalogSyncs } from "./handlers/reconcile-meta-catalog-syncs"
 import { reconcileTenants } from "./handlers/reconcile-tenants"
+import { redispatchInboundWebhookRequests } from "./handlers/redispatch-inbound-webhook-requests"
 import { refreshChannelTokens } from "./handlers/refresh-channel-tokens"
 import { registerSchedules } from "./handlers/register-schedules"
 import { scanAiHandoverBulkRuns } from "./handlers/scan-ai-handover-bulk-runs"
@@ -199,6 +201,16 @@ async function startScheduleWorker() {
             // excludes schedule crons other than the two broadcast handlers).
             case ScheduleJobData.purgeErrorLogs:
               await purgeErrorLogs()
+              return
+
+            // Not workspace-scoped (the jobs they enqueue are guarded in the
+            // default worker), so no `isBlockedJob` guard here either.
+            case ScheduleJobData.redispatchInboundWebhookRequests:
+              await redispatchInboundWebhookRequests()
+              return
+
+            case ScheduleJobData.purgeInboundWebhookRequests:
+              await purgeInboundWebhookRequests()
               return
 
             case ScheduleJobData.purgeCommentAutomationEvents:

@@ -832,7 +832,8 @@
       "api": "API",
       "webchat": "Webchat",
       "botLink": "Lien du bot",
-      "chatPlugin": "Plugin de chat C."
+      "chatPlugin": "Plugin de chat C.",
+      "inboundWebhook": "Webhook entrant"
     },
     "ctwaRetarget": {
       "segments": {
@@ -3973,7 +3974,17 @@
     "maxItemsReached": "Maximum de {max} {feature} autorisé par espace de travail",
     "maxCharacters": "Maximum {max} caractères.",
     "invalidApiKey": "Clé API non valide",
-    "maxMustBeGreaterThanMin": "{maxField} doit être supérieur ou égal à {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} doit être supérieur ou égal à {minField}",
+    "inboundWebhook": {
+      "inboxRequired": "Choisissez une boîte de réception.",
+      "inboxNotFound": "La boîte de réception sélectionnée est introuvable.",
+      "inboxDisconnected": "La boîte de réception sélectionnée n'est pas connectée.",
+      "unsupportedInboxIdentifier": "Ce canal ne peut pas être identifié par cette valeur.",
+      "identifierRequired": "Ajoutez au moins une identité de contact.",
+      "unknownFieldTarget": "Un champ de contact associé n'existe plus.",
+      "actionReferenceNotFound": "Une action fait référence à un flux, une étiquette ou un champ qui n'existe plus.",
+      "fieldMappingRequired": "Ajoutez au moins un mappage de champ."
+    }
   },
   "webchat": {
     "chatUnavailable": "Ce chat est actuellement indisponible.",
@@ -4700,6 +4711,216 @@
   "magicLinks": {
     "title": "Liens magiques",
     "description": "Créez des liens profonds qui redirigent vers votre URL avec des paramètres de requête."
+  },
+  "inboundWebhooks": {
+    "title": "Webhooks entrants",
+    "feature": "Webhook entrant",
+    "description": "Laissez des systèmes externes envoyer des données à votre espace de travail : trouver ou créer un contact, enregistrer des valeurs dans ses champs et exécuter des actions.",
+    "createDescription": "Un nouveau webhook est inactif au départ. Configurez-le dans l'éditeur, puis activez-le.",
+    "deleteDescription": "Les systèmes qui envoient encore des requêtes à cette URL recevront une erreur. Cette action est irréversible.",
+    "editorDescription": "Envoyez une requête POST JSON à l'URL ci-dessous pour exécuter ce webhook.",
+    "configure": "Configurer",
+    "getLink": "Obtenir le lien",
+    "activeToggle": "Activer {name}",
+    "columns": {
+      "active": "Actif",
+      "createdAt": "Créé",
+      "requests": "Requêtes"
+    },
+    "link": {
+      "title": "URL du webhook",
+      "description": "Envoyez du JSON en POST à cette URL. Elle contient un jeton secret : traitez-la comme un mot de passe."
+    },
+    "endpoint": {
+      "label": "URL du webhook",
+      "show": "Afficher l'URL",
+      "hide": "Masquer l'URL"
+    },
+    "regenerate": {
+      "button": "Régénérer",
+      "title": "Régénérer l'URL du webhook ?",
+      "description": "L'URL actuelle cesse de fonctionner immédiatement. Mettez à jour chaque système qui y envoie des requêtes.",
+      "cancel": "Annuler",
+      "confirm": "Régénérer",
+      "success": "URL du webhook régénérée",
+      "failed": "Impossible de régénérer l'URL"
+    },
+    "activation": {
+      "incomplete": "Renseignez la boîte de réception, au moins un champ du contact et au moins un mappage, puis enregistrez, avant d'activer ce webhook."
+    },
+    "sample": {
+      "title": "JSON d'exemple",
+      "description": "Collez un exemple de corps de requête pour parcourir ses champs et prévisualiser les valeurs.",
+      "load": "Charger un JSON d'exemple",
+      "status": {
+        "loaded": "Exemple chargé",
+        "invalid": "Ce JSON n'est pas valide",
+        "tooLarge": "L'exemple dépasse {max} KB",
+        "unsupported": "Cet exemple contient des caractères non pris en charge ou est trop imbriqué"
+      },
+      "format": "Formater le JSON"
+    },
+    "contact": {
+      "title": "Trouver ou créer un contact",
+      "description": "Choisissez la boîte de réception du contact et comment le trouver. Si personne ne correspond, un nouveau contact est créé lorsque la requête contient ce dont ce canal a besoin."
+    },
+    "inbox": {
+      "modeLabel": "Boîte de réception",
+      "mode": {
+        "inbox": "Boîte de réception spécifique",
+        "payload": "Depuis le payload"
+      },
+      "modeDescription": {
+        "inbox": "Chaque requête utilise la boîte de réception que vous choisissez.",
+        "payload": "Chaque requête indique sa boîte de réception, par exemple un identifiant de page Messenger ou un identifiant de numéro WhatsApp."
+      },
+      "inboxLabel": "Boîte de réception",
+      "inboxPlaceholder": "Sélectionnez une boîte de réception",
+      "noInboxes": "Aucune boîte de réception connectée trouvée.",
+      "savedInboxMissing": "La boîte de réception enregistrée n'est plus connectée. Choisissez-en une autre.",
+      "channelLabel": "Canal",
+      "channelPlaceholder": "Sélectionnez un canal",
+      "noPayloadChannels": "Connectez d'abord un canal compatible.",
+      "identifierKindLabel": "Identifiant de la boîte de réception",
+      "identifierKindPlaceholder": "Sélectionnez l'identifiant envoyé dans le payload",
+      "identifierPathHint": "Chemin JSON de cette valeur dans la requête."
+    },
+    "identity": {
+      "hint": "Renseignez-en au moins un. Le contact est recherché avec le premier trouvé dans la requête, dans cet ordre.",
+      "phone": "Téléphone",
+      "email": "E-mail",
+      "channelUserId": "ID utilisateur du canal",
+      "fullName": "Nom complet",
+      "creationHint": "Sans {identities}, une requête pour un contact inconnu est ignorée. Seuls les contacts existants sont mis à jour."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "ID de page Facebook",
+      "igId": "ID de compte Instagram",
+      "phoneNumberId": "ID de numéro de téléphone WhatsApp",
+      "displayPhoneNumber": "Numéro de téléphone WhatsApp (moins précis)",
+      "botId": "ID de bot Telegram",
+      "oaId": "ID Zalo OA",
+      "openId": "Open ID de compte TikTok",
+      "threadsUserId": "ID utilisateur Threads"
+    },
+    "channelUserIdKinds": {
+      "psid": "PSID Messenger",
+      "igsid": "IGSID Instagram",
+      "telegramChatId": "ID de chat Telegram",
+      "zaloUserId": "ID utilisateur Zalo",
+      "tiktokCustomerOpenId": "Open ID client TikTok",
+      "threadsUsername": "Nom d'utilisateur Threads",
+      "apiSourceId": "ID de source du contact",
+      "whatsappId": "ID WhatsApp (wa_id)"
+    },
+    "mappings": {
+      "title": "Enregistrer les données entrantes",
+      "description": "Copiez des valeurs de la requête vers les champs du contact.",
+      "empty": "Aucun champ associé pour l'instant.",
+      "add": "Ajouter un champ",
+      "remove": "Supprimer le champ",
+      "target": "Champ du contact",
+      "targetPlaceholder": "Sélectionnez un champ",
+      "path": "Chemin JSON",
+      "rowTitle": "Mappage {number}"
+    },
+    "actions": {
+      "title": "Après l'enregistrement des données",
+      "description": "Actions à exécuter pour le contact une fois les données enregistrées."
+    },
+    "picker": {
+      "title": "Parcourir le JSON",
+      "description": "Recherchez et cliquez sur une valeur, ou saisissez un JSONPath ci-dessous",
+      "browse": "Parcourir",
+      "noSample": "Chargez d'abord un JSON d'exemple pour parcourir ses champs.",
+      "pathLabel": "Chemin JSON",
+      "use": "Utiliser le chemin",
+      "cancel": "Annuler",
+      "result": "Résultat :",
+      "noValue": "aucune valeur",
+      "searchLabel": "Rechercher dans le JSON",
+      "searchPlaceholder": "Rechercher des clés, chemins ou valeurs",
+      "noMatches": "Aucune clé ni valeur correspondante.",
+      "moreResults": "Affichage des {count} premiers résultats. Affinez votre recherche pour voir les autres.",
+      "pathHint": "Prend en charge les noms de propriétés et les index de tableau, y compris $[\"customer-data\"][\"email\"]",
+      "invalidPath": "Ce JSONPath n'est pas pris en charge."
+    },
+    "requests": {
+      "title": "Requêtes",
+      "description": "Les dernières requêtes reçues par ce webhook (conservées 30 jours).",
+      "refresh": "Actualiser",
+      "empty": "Aucune requête reçue pour l'instant.",
+      "previous": "Page précédente",
+      "next": "Page suivante",
+      "pageOf": "Page {page} sur {pageCount}",
+      "contact": "Contact n° {id}",
+      "showDetails": "Afficher les détails",
+      "hideDetails": "Masquer les détails",
+      "loadingDetails": "Chargement des détails…",
+      "detailsFailed": "Impossible de charger les détails.",
+      "fieldErrors": "Champs non enregistrés",
+      "actionResults": "Actions",
+      "payload": "Payload",
+      "status": {
+        "received": "Reçue",
+        "processing": "En cours de traitement",
+        "processed": "Traitée",
+        "completedWithErrors": "Terminée avec des erreurs",
+        "skipped": "Ignorée",
+        "failed": "Échec"
+      },
+      "skipReason": {
+        "webhookInactive": "Le webhook était inactif.",
+        "missingInboxIdentifier": "La requête ne contenait pas l'identifiant de la boîte de réception.",
+        "inboxNotFound": "Aucune boîte de réception ne correspond à l'identifiant de la requête.",
+        "inboxAmbiguous": "Plusieurs boîtes de réception correspondent à l'identifiant de la requête.",
+        "inboxDisconnected": "La boîte de réception est déconnectée.",
+        "missingIdentifier": "La requête ne contenait aucune identité de contact.",
+        "workspaceBlocked": "Le propriétaire de l'espace de travail est bloqué.",
+        "contactNotFound": "Aucun contact ne correspond, et la requête ne contenait pas ce qu'il faut pour en créer un.",
+        "contactAmbiguous": "Plusieurs contacts portent ce nom dans la boîte, la requête a donc été ignorée."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Valeur non valide",
+        "invalidPhone": "Numéro de téléphone non valide",
+        "unknownField": "Le champ n'existe plus"
+      },
+      "actionStatus": {
+        "succeeded": "réussi",
+        "skipped": "ignoré",
+        "failed": "échoué"
+      },
+      "errorCode": {
+        "abandoned": "Abandonnée : non traitée sous 24 heures"
+      },
+      "actionSkipReason": {
+        "noConversation": "Le contact n'a pas de conversation",
+        "noContactInbox": "Le contact n'est pas connecté à cette boîte de réception",
+        "flowInactive": "Le flux n'est pas publié",
+        "unsupportedAction": "Cette action n'est pas prise en charge ici",
+        "unsupportedChannel": "Le canal ne prend pas cette action en charge",
+        "invalidAction": "L'action n'est pas correctement configurée",
+        "unknownAction": "Action inconnue",
+        "unsupportedSource": "Non pris en charge pour cette source"
+      }
+    },
+    "save": {
+      "invalid": "Certains réglages sont invalides. Corrigez les champs signalés puis enregistrez à nouveau."
+    },
+    "viewAnalytics": "Voir les statistiques",
+    "analytics": {
+      "title": "Statistiques",
+      "back": "Retour au webhook",
+      "totalRequests": "Total des requêtes reçues",
+      "totalRequestsHint": "Toutes les requêtes acceptées depuis la création du webhook. Les doublons ne sont pas comptés. Le journal ci-dessous conserve les 30 derniers jours."
+    },
+    "issues": {
+      "inboxRequired": "Choisissez une boîte de réception.",
+      "identifierRequired": "Renseignez au moins l'un des quatre champs du contact.",
+      "fieldMappingRequired": "Ajoutez au moins un champ sous « Enregistrer les données entrantes ».",
+      "required": "Ce champ est obligatoire.",
+      "unsupportedPath": "Chemin JSON non pris en charge."
+    }
   },
   "QRCode": {
     "title": "Code QR",

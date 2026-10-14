@@ -150,7 +150,7 @@ describe("ActionExecutor sendMetaCapiEvent", () => {
         contentName: "newsletter",
       },
       contactId: "contact-1",
-      triggerId: "trigger-1",
+      source: { kind: "trigger", triggerId: "trigger-1" },
       workspaceId: "ws-1",
     })
 
@@ -201,7 +201,7 @@ describe("ActionExecutor sendMetaCapiEvent", () => {
         currency: "USD",
       },
       contactId: "contact-1",
-      triggerId: "trigger-1",
+      source: { kind: "trigger", triggerId: "trigger-1" },
       workspaceId: "ws-1",
     })
 
@@ -223,7 +223,7 @@ describe("ActionExecutor sendMetaCapiEvent", () => {
         contentName: "newsletter",
       },
       contactId: "contact-1",
-      triggerId: "trigger-1",
+      source: { kind: "trigger", triggerId: "trigger-1" },
       workspaceId: "ws-1",
     })
 
@@ -249,10 +249,10 @@ describe("ActionExecutor sendMetaCapiEvent", () => {
       executor.execute({
         action: { type: "sendMetaCapiEvent" },
         contactId: "contact-1",
-        triggerId: "trigger-1",
+        source: { kind: "trigger", triggerId: "trigger-1" },
         workspaceId: "ws-1",
       }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ status: "skipped", reason: "unsupportedChannel" })
 
     expect(mocks.enqueueEvent).not.toHaveBeenCalled()
     expect(baseLogger.warn).toHaveBeenCalled()
@@ -264,10 +264,10 @@ describe("ActionExecutor sendMetaCapiEvent", () => {
       executor.execute({
         action: { type: "sendMetaCapiEvent", eventName: "Purchase" },
         contactId: "contact-1",
-        triggerId: "trigger-1",
+        source: { kind: "trigger", triggerId: "trigger-1" },
         workspaceId: "ws-1",
       }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ status: "skipped", reason: "invalidAction" })
 
     expect(mocks.enqueueEvent).not.toHaveBeenCalled()
     expect(mocks.resolveContactVariablesDeep).not.toHaveBeenCalled()
@@ -317,7 +317,7 @@ describe("ActionExecutor sendMetaCapiEvent", () => {
           currency: "VND",
         },
         contactId: "contact-1",
-        triggerId: "trigger-1",
+        source: { kind: "trigger", triggerId: "trigger-1" },
         workspaceId: "ws-1",
       }),
     ).rejects.toBe(validation.error)
@@ -348,7 +348,7 @@ describe("ActionExecutor sendMetaCapiEvent", () => {
       executor.execute({
         action: { type: "sendMetaCapiEvent", eventName: "LeadSubmitted" },
         contactId: "contact-1",
-        triggerId: "trigger-1",
+        source: { kind: "trigger", triggerId: "trigger-1" },
         workspaceId: "ws-1",
       }),
     ).rejects.toThrow("boom")

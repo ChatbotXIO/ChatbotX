@@ -1589,6 +1589,66 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "inboundWebhookChannels.list",
+    "path": "/v1/inbound-webhook-channels",
+  },
+  {
+    "method": "POST",
+    "operationId": "inboundWebhooks.create",
+    "path": "/v1/inbound-webhooks",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "inboundWebhooks.delete",
+    "path": "/v1/inbound-webhooks/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "inboundWebhooks.deleteMany",
+    "path": "/v1/inbound-webhooks/bulk-delete",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboundWebhooks.get",
+    "path": "/v1/inbound-webhooks/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboundWebhooks.getRequest",
+    "path": "/v1/inbound-webhooks/{id}/requests/{requestId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboundWebhooks.list",
+    "path": "/v1/inbound-webhooks",
+  },
+  {
+    "method": "GET",
+    "operationId": "inboundWebhooks.listRequests",
+    "path": "/v1/inbound-webhooks/{id}/requests",
+  },
+  {
+    "method": "POST",
+    "operationId": "inboundWebhooks.previewMapping",
+    "path": "/v1/inbound-webhooks/preview-mapping",
+  },
+  {
+    "method": "POST",
+    "operationId": "inboundWebhooks.regenerateToken",
+    "path": "/v1/inbound-webhooks/{id}/regenerate-token",
+  },
+  {
+    "method": "PUT",
+    "operationId": "inboundWebhooks.update",
+    "path": "/v1/inbound-webhooks/{id}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "inboundWebhooks.updateSettings",
+    "path": "/v1/inbound-webhooks/{id}/settings",
+  },
+  {
+    "method": "GET",
     "operationId": "inboxes.list",
     "path": "/v1/inboxes",
   },

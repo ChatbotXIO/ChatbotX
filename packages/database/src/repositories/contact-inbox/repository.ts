@@ -34,11 +34,13 @@ import {
   type ContactInboxIdentityChangeReason,
   type ContactInboxIdentityHistoryEntry,
   contactInboxModel,
+  contactModel,
   conversationModel,
   inboxModel,
   integrationInstagramModel,
   integrationMessengerModel,
   integrationWhatsappModel,
+  normalizedFullNameSql,
 } from "../../schema"
 import type {
   ContactInboxModel,
@@ -302,6 +304,11 @@ const bulkConversationJoin = (workspaceId: string) =>
     eq(conversationModel.workspaceId, workspaceId),
   )
 
+/**
+ * Rows read to find two DIFFERENT contacts with one name: a contact can have
+ * several connections on an inbox, so a bare `limit 2` could hold one person twice.
+ */
+
 export const contactInboxRepository = {
   async updateIdentityGuarded(
     input: {
@@ -409,6 +416,79 @@ export const contactInboxRepository = {
       )
 
     return rows.filter((row) => Boolean(row.sourceId))
+  },
+
+  /**
+   * The most recently active contact on `inboxId` whose phone or email equals
+   * `value` — the inbox-scoped lookup for an identity that is not the channel's
+   * source id (e.g. a phone on webchat). Never crosses inboxes.
+   */
+  async findLatestByInboxAndContactIdentity(
+    input: {
+      workspaceId: string
+      inboxId: string
+      field: "phoneNumber" | "email"
+      value: string
+    },
+    tx: DatabaseClient = db,
+  ): Promise<{ contactId: string; contactInboxId: string } | null> {
+    const [row] = await tx
+      .select({
+        contactId: contactInboxModel.contactId,
+        contactInboxId: contactInboxModel.id,
+      })
+      .from(contactInboxModel)
+      .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
+      .where(
+        and(
+          eq(contactInboxModel.inboxId, input.inboxId),
+          eq(contactModel.workspaceId, input.workspaceId),
+          eq(contactModel[input.field], input.value),
+        ),
+      )
+      .orderBy(sql`${contactInboxModel.lastMessageAt} DESC NULLS LAST`)
+      .limit(1)
+    return row ?? null
+  },
+
+  /**
+   * The contacts on `inboxId` whose full name equals `fullName` (already
+   * whitespace-normalised by the caller) — the inbox-scoped lookup for a webhook
+   * that identifies people by name. Names are not unique, so up to two rows come
+   * back, most recently active first: a second row tells the caller the name is
+   * ambiguous instead of silently picking one of two different people.
+   */
+  async findByInboxAndFullName(
+    input: { workspaceId: string; inboxId: string; fullName: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ contactId: string; contactInboxId: string }[]> {
+    const normalizedName = normalizedFullNameSql(contactModel.fullName)
+    const lastActiveAt = sql`max(${contactInboxModel.lastMessageAt})`
+    // One row per person (a contact can hold several connections on one inbox),
+    // deduplicated in SQL so the LIMIT counts people, not connections.
+    return await tx
+      .select({
+        contactId: contactInboxModel.contactId,
+        contactInboxId: sql<string>`(array_agg(${contactInboxModel.id} ORDER BY ${contactInboxModel.lastMessageAt} DESC NULLS LAST, ${contactInboxModel.id} DESC))[1]`,
+      })
+      .from(contactInboxModel)
+      .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
+      .where(
+        and(
+          eq(contactInboxModel.inboxId, input.inboxId),
+          eq(contactModel.workspaceId, input.workspaceId),
+          // The digest comparison is what the index serves; the equality keeps
+          // the match exact.
+          sql`md5(${normalizedName}) = md5(${input.fullName})`,
+          sql`${normalizedName} = ${input.fullName}`,
+        ),
+      )
+      .groupBy(contactInboxModel.contactId)
+      .orderBy(
+        sql`${lastActiveAt} DESC NULLS LAST`,
+        contactInboxModel.contactId,
+      )
+      .limit(2)
   },
 
   /**

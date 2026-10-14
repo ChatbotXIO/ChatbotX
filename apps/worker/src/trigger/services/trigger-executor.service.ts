@@ -28,7 +28,7 @@ export class TriggerExecutorService {
           await this.actionExecutor.execute({
             action: action as Record<string, unknown>,
             contactId,
-            triggerId,
+            source: { kind: "trigger", triggerId },
             workspaceId,
             contactInboxId,
             occurrenceKey: occurrenceId

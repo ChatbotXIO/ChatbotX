@@ -172,6 +172,9 @@ export type SequenceDispatchModel =
   typeof schema.sequenceDispatchModel.$inferSelect
 export type TriggerModel = typeof schema.triggerModel.$inferSelect
 export type WebhookModel = typeof schema.webhookModel.$inferSelect
+export type InboundWebhookModel = typeof schema.inboundWebhookModel.$inferSelect
+export type InboundWebhookRequestModel =
+  typeof schema.inboundWebhookRequestModel.$inferSelect
 export type ConditionModel = typeof schema.conditionModel.$inferSelect
 export type TriggerStatsModel = typeof schema.triggerStatsModel.$inferSelect
 export type TriggerContactHistoryModel =

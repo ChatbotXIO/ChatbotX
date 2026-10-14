@@ -30,6 +30,8 @@
     "./google-click": "./src/google-click.ts",
     "./graph-error": "./src/graph-error.ts",
     "./id": "./src/id.ts",
+    "./inbound-webhook-channel": "./src/inbound-webhook-channel.ts",
+    "./json-path": "./src/json-path.ts",
     "./media-download": "./src/media-download.ts",
     "./meta-capi": "./src/meta-capi.ts",
     "./no-avatar-sentinel": "./src/no-avatar-sentinel.ts",

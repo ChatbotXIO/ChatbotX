@@ -13,6 +13,10 @@ type JsonTreeViewProps = {
   data: unknown
   onSelectPath: (path: string) => void
   maxDepth?: number
+  /** How a node's path is written; defaults to the dot-prop form. */
+  formatPath?: (segments: JsonPathSegment[]) => string
+  /** Text of the root row; defaults to `{ }` / `[ ]`. */
+  rootLabel?: string
 }
 
 const formatPrimitive = (value: unknown): string => {
@@ -34,13 +38,17 @@ export const JsonTreeView = ({
   data,
   onSelectPath,
   maxDepth = DEFAULT_MAX_DEPTH,
+  formatPath = buildDotPropPath,
+  rootLabel,
 }: JsonTreeViewProps) => (
   <div className="flex flex-col gap-0.5 font-mono text-xs">
     <JsonTreeNode
       depth={0}
+      formatPath={formatPath}
       label={null}
       maxDepth={maxDepth}
       onSelectPath={onSelectPath}
+      rootLabel={rootLabel}
       segments={[]}
       value={data}
     />
@@ -54,6 +62,8 @@ type JsonTreeNodeProps = {
   depth: number
   maxDepth: number
   onSelectPath: (path: string) => void
+  formatPath: (segments: JsonPathSegment[]) => string
+  rootLabel?: string
 }
 
 const JsonTreeNode = ({
@@ -63,12 +73,14 @@ const JsonTreeNode = ({
   depth,
   maxDepth,
   onSelectPath,
+  formatPath,
+  rootLabel,
 }: JsonTreeNodeProps) => {
   const t = useTranslations()
   const [expanded, setExpanded] = useState(depth < 1)
   const [showAllChildren, setShowAllChildren] = useState(false)
 
-  const path = buildDotPropPath(segments)
+  const path = formatPath(segments)
 
   if (!isExpandable(value)) {
     return (
@@ -139,7 +151,7 @@ const JsonTreeNode = ({
         </button>
         {label === null ? (
           <span className="text-muted-foreground">
-            {Array.isArray(value) ? "[ ]" : "{ }"}
+            {rootLabel ?? (Array.isArray(value) ? "[ ]" : "{ }")}
           </span>
         ) : (
           <button
@@ -157,6 +169,7 @@ const JsonTreeNode = ({
           {visibleEntries.map(([key, childValue]) => (
             <JsonTreeNode
               depth={depth + 1}
+              formatPath={formatPath}
               key={key}
               label={key}
               maxDepth={maxDepth}

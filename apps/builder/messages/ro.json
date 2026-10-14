@@ -1828,7 +1828,8 @@
       "api": "API",
       "webchat": "Webchat",
       "botLink": "Link bot",
-      "chatPlugin": "Plugin C. chat"
+      "chatPlugin": "Plugin C. chat",
+      "inboundWebhook": "Webhook de intrare"
     },
     "ctwaRetarget": {
       "segments": {
@@ -3973,7 +3974,17 @@
     "maxItemsReached": "Sunt permise maximum {max} {feature} per spațiu de lucru",
     "maxCharacters": "Maximum {max} caractere.",
     "invalidApiKey": "Cheie API invalidă",
-    "maxMustBeGreaterThanMin": "{maxField} trebuie să fie mai mare sau egal cu {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} trebuie să fie mai mare sau egal cu {minField}",
+    "inboundWebhook": {
+      "inboxRequired": "Alege o căsuță de mesaje.",
+      "inboxNotFound": "Căsuța de mesaje selectată nu a fost găsită.",
+      "inboxDisconnected": "Căsuța de mesaje selectată nu este conectată.",
+      "unsupportedInboxIdentifier": "Acest canal nu poate fi identificat prin acea valoare.",
+      "identifierRequired": "Adaugă cel puțin o identitate de contact.",
+      "unknownFieldTarget": "Un câmp de contact mapat nu mai există.",
+      "actionReferenceNotFound": "O acțiune face referire la un flux, o etichetă sau un câmp care nu mai există.",
+      "fieldMappingRequired": "Adaugă cel puțin o mapare de câmp."
+    }
   },
   "webchat": {
     "chatUnavailable": "Acest chat este momentan indisponibil.",
@@ -4700,6 +4711,216 @@
   "magicLinks": {
     "title": "Linkuri magice",
     "description": "Creează linkuri directe care redirecționează către URL-ul tău cu parametri de interogare."
+  },
+  "inboundWebhooks": {
+    "title": "Webhook-uri de intrare",
+    "feature": "Webhook de intrare",
+    "description": "Permite sistemelor externe să trimită date către spațiul tău de lucru: găsește sau creează un contact, salvează valori în câmpurile lui și rulează acțiuni.",
+    "createDescription": "Un webhook nou începe inactiv. Configurează-l în editor, apoi activează-l.",
+    "deleteDescription": "Sistemele care încă trimit către acest URL vor primi o eroare. Acțiunea nu poate fi anulată.",
+    "editorDescription": "Trimite o cerere POST cu JSON către URL-ul de mai jos pentru a rula acest webhook.",
+    "configure": "Configurează",
+    "getLink": "Obține linkul",
+    "activeToggle": "Activează {name}",
+    "columns": {
+      "active": "Activ",
+      "createdAt": "Creat",
+      "requests": "Cereri"
+    },
+    "link": {
+      "title": "URL webhook",
+      "description": "Trimite JSON prin POST către acest URL. Conține un token secret, deci tratează-l ca pe o parolă."
+    },
+    "endpoint": {
+      "label": "URL webhook",
+      "show": "Afișează URL-ul",
+      "hide": "Ascunde URL-ul"
+    },
+    "regenerate": {
+      "button": "Regenerează",
+      "title": "Regenerezi URL-ul webhook-ului?",
+      "description": "URL-ul actual nu va mai funcționa imediat. Actualizează toate sistemele care trimit către el.",
+      "cancel": "Anulează",
+      "confirm": "Regenerează",
+      "success": "URL-ul webhook-ului a fost regenerat",
+      "failed": "Nu s-a putut regenera URL-ul"
+    },
+    "activation": {
+      "incomplete": "Completează căsuța de mesaje, cel puțin un câmp de contact și cel puțin o mapare, apoi salvează, înainte de a activa acest webhook."
+    },
+    "sample": {
+      "title": "JSON exemplu",
+      "description": "Lipește un exemplu de corp al cererii pentru a parcurge câmpurile și a previzualiza valorile.",
+      "load": "Încarcă JSON exemplu",
+      "status": {
+        "loaded": "Exemplu încărcat",
+        "invalid": "Acesta nu este un JSON valid",
+        "tooLarge": "Exemplul este mai mare de {max} KB",
+        "unsupported": "Exemplul conține caractere neacceptate sau este imbricat prea adânc"
+      },
+      "format": "Formatează JSON"
+    },
+    "contact": {
+      "title": "Găsește sau creează contact",
+      "description": "Alege căsuța de mesaje căreia îi aparține contactul și cum este găsit. Dacă nimeni nu se potrivește, se creează un contact nou când cererea conține ce are nevoie acest canal."
+    },
+    "inbox": {
+      "modeLabel": "Căsuță de mesaje",
+      "mode": {
+        "inbox": "Căsuță de mesaje anume",
+        "payload": "Din payload"
+      },
+      "modeDescription": {
+        "inbox": "Fiecare cerere folosește căsuța de mesaje pe care o alegi.",
+        "payload": "Fiecare cerere indică propria căsuță de mesaje, de exemplu un id de pagină Messenger sau un id de număr WhatsApp."
+      },
+      "inboxLabel": "Căsuță de mesaje",
+      "inboxPlaceholder": "Selectează o căsuță de mesaje",
+      "noInboxes": "Nu a fost găsită nicio căsuță de mesaje conectată.",
+      "savedInboxMissing": "Căsuța de mesaje salvată nu mai este conectată. Alege alta.",
+      "channelLabel": "Canal",
+      "channelPlaceholder": "Selectează un canal",
+      "noPayloadChannels": "Conectează mai întâi un canal care acceptă acest lucru.",
+      "identifierKindLabel": "Identificator al căsuței de mesaje",
+      "identifierKindPlaceholder": "Selectează identificatorul trimis în payload",
+      "identifierPathHint": "Calea JSON a acestei valori în cerere."
+    },
+    "identity": {
+      "hint": "Completează cel puțin unul. Contactul este căutat după primul găsit în cerere, în această ordine.",
+      "phone": "Telefon",
+      "email": "E-mail",
+      "channelUserId": "ID utilizator canal",
+      "fullName": "Nume complet",
+      "creationHint": "Fără {identities}, o cerere pentru un contact necunoscut este ignorată. Sunt actualizate doar contactele existente."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "ID pagină Facebook",
+      "igId": "ID cont Instagram",
+      "phoneNumberId": "ID număr de telefon WhatsApp",
+      "displayPhoneNumber": "Număr de telefon WhatsApp (mai puțin precis)",
+      "botId": "ID bot Telegram",
+      "oaId": "ID Zalo OA",
+      "openId": "Open ID cont TikTok",
+      "threadsUserId": "ID utilizator Threads"
+    },
+    "channelUserIdKinds": {
+      "psid": "PSID Messenger",
+      "igsid": "IGSID Instagram",
+      "telegramChatId": "ID chat Telegram",
+      "zaloUserId": "ID utilizator Zalo",
+      "tiktokCustomerOpenId": "Open ID client TikTok",
+      "threadsUsername": "Nume utilizator Threads",
+      "apiSourceId": "ID sursă contact",
+      "whatsappId": "ID WhatsApp (wa_id)"
+    },
+    "mappings": {
+      "title": "Salvează datele primite",
+      "description": "Copiază valori din cerere în câmpurile contactului.",
+      "empty": "Niciun câmp mapat încă.",
+      "add": "Adaugă câmp",
+      "remove": "Elimină câmpul",
+      "target": "Câmp de contact",
+      "targetPlaceholder": "Selectează un câmp",
+      "path": "Cale JSON",
+      "rowTitle": "Mapare {number}"
+    },
+    "actions": {
+      "title": "După salvarea datelor",
+      "description": "Acțiuni de rulat pentru contact după salvarea datelor."
+    },
+    "picker": {
+      "title": "Parcurge JSON",
+      "description": "Caută și apasă pe o valoare sau introdu mai jos un JSONPath",
+      "browse": "Parcurge",
+      "noSample": "Încarcă mai întâi un JSON exemplu pentru a-i parcurge câmpurile.",
+      "pathLabel": "Cale JSON",
+      "use": "Folosește calea",
+      "cancel": "Anulează",
+      "result": "Rezultat:",
+      "noValue": "fără valoare",
+      "searchLabel": "Caută în JSON",
+      "searchPlaceholder": "Caută chei, căi sau valori",
+      "noMatches": "Nicio cheie sau valoare potrivită.",
+      "moreResults": "Se afișează primele {count} rezultate. Restrânge căutarea pentru a le vedea pe celelalte.",
+      "pathHint": "Acceptă nume de proprietăți și indecși de tablou, inclusiv $[\"customer-data\"][\"email\"]",
+      "invalidPath": "Acesta nu este un JSONPath acceptat."
+    },
+    "requests": {
+      "title": "Cereri",
+      "description": "Ultimele livrări primite de acest webhook (păstrate 30 de zile).",
+      "refresh": "Reîmprospătează",
+      "empty": "Nu a fost primită nicio cerere încă.",
+      "previous": "Pagina anterioară",
+      "next": "Pagina următoare",
+      "pageOf": "Pagina {page} din {pageCount}",
+      "contact": "Contact #{id}",
+      "showDetails": "Afișează detaliile",
+      "hideDetails": "Ascunde detaliile",
+      "loadingDetails": "Se încarcă detaliile…",
+      "detailsFailed": "Nu s-au putut încărca detaliile.",
+      "fieldErrors": "Câmpuri nesalvate",
+      "actionResults": "Acțiuni",
+      "payload": "Payload",
+      "status": {
+        "received": "Primită",
+        "processing": "În procesare",
+        "processed": "Procesată",
+        "completedWithErrors": "Finalizată cu erori",
+        "skipped": "Omisă",
+        "failed": "Eșuată"
+      },
+      "skipReason": {
+        "webhookInactive": "Webhook-ul era inactiv.",
+        "missingInboxIdentifier": "Cererea nu conținea identificatorul căsuței de mesaje.",
+        "inboxNotFound": "Nicio căsuță de mesaje nu se potrivește cu identificatorul din cerere.",
+        "inboxAmbiguous": "Mai multe căsuțe de mesaje se potrivesc cu identificatorul din cerere.",
+        "inboxDisconnected": "Căsuța de mesaje este deconectată.",
+        "missingIdentifier": "Cererea nu conținea nicio identitate de contact.",
+        "workspaceBlocked": "Proprietarul spațiului de lucru este blocat.",
+        "contactNotFound": "Niciun contact nu s-a potrivit, iar cererea nu conținea ce este necesar pentru a crea unul.",
+        "contactAmbiguous": "Mai multe contacte au acest nume în inbox, așa că cererea a fost ignorată."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Valoare nevalidă",
+        "invalidPhone": "Număr de telefon nevalid",
+        "unknownField": "Câmpul nu mai există"
+      },
+      "actionStatus": {
+        "succeeded": "reușit",
+        "skipped": "omis",
+        "failed": "eșuat"
+      },
+      "errorCode": {
+        "abandoned": "Abandonată: neprocesată în 24 de ore"
+      },
+      "actionSkipReason": {
+        "noConversation": "Contactul nu are o conversație",
+        "noContactInbox": "Contactul nu este conectat la această căsuță",
+        "flowInactive": "Fluxul nu este publicat",
+        "unsupportedAction": "Această acțiune nu este acceptată aici",
+        "unsupportedChannel": "Canalul nu acceptă această acțiune",
+        "invalidAction": "Acțiunea nu este configurată corect",
+        "unknownAction": "Acțiune necunoscută",
+        "unsupportedSource": "Neacceptat pentru această sursă"
+      }
+    },
+    "save": {
+      "invalid": "Unele setări sunt nevalide. Corectează câmpurile evidențiate și salvează din nou."
+    },
+    "viewAnalytics": "Vezi statisticile",
+    "analytics": {
+      "title": "Statistici",
+      "back": "Înapoi la webhook",
+      "totalRequests": "Total cereri primite",
+      "totalRequestsHint": "Fiecare cerere acceptată de la crearea webhook-ului. Duplicatele nu sunt numărate. Jurnalul de mai jos păstrează ultimele 30 de zile."
+    },
+    "issues": {
+      "inboxRequired": "Alege o căsuță de mesaje.",
+      "identifierRequired": "Completează cel puțin unul dintre cele patru câmpuri de contact.",
+      "fieldMappingRequired": "Adaugă cel puțin un câmp la „Salvează datele primite”.",
+      "required": "Acest câmp este obligatoriu.",
+      "unsupportedPath": "Cale JSON neacceptată."
+    }
   },
   "QRCode": {
     "title": "Cod QR",

@@ -832,7 +832,8 @@
       "api": "API",
       "webchat": "Verkkokeskustelu",
       "botLink": "Bottilinkki",
-      "chatPlugin": "C.-keskustelulaajennus"
+      "chatPlugin": "C.-keskustelulaajennus",
+      "inboundWebhook": "Saapuva webhook"
     },
     "ctwaRetarget": {
       "segments": {
@@ -3973,7 +3974,17 @@
     "maxItemsReached": "Työtilassa sallitaan enintään {max} kohdetta {feature}",
     "maxCharacters": "Enintään {max} merkkiä.",
     "invalidApiKey": "Virheellinen API-avain",
-    "maxMustBeGreaterThanMin": "Kentän {maxField} arvon on oltava vähintään kentän {minField} arvo"
+    "maxMustBeGreaterThanMin": "Kentän {maxField} arvon on oltava vähintään kentän {minField} arvo",
+    "inboundWebhook": {
+      "inboxRequired": "Valitse saapuneet-kansio.",
+      "inboxNotFound": "Valittua saapuneet-kansiota ei löytynyt.",
+      "inboxDisconnected": "Valittua saapuneet-kansiota ei ole yhdistetty.",
+      "unsupportedInboxIdentifier": "Tätä kanavaa ei voi tunnistaa tällä arvolla.",
+      "identifierRequired": "Lisää vähintään yksi yhteystiedon tunniste.",
+      "unknownFieldTarget": "Yhdistettyä yhteystiedon kenttää ei ole enää olemassa.",
+      "actionReferenceNotFound": "Toiminto viittaa flow'hun, tunnisteeseen tai kenttään, jota ei ole enää olemassa.",
+      "fieldMappingRequired": "Lisää vähintään yksi kenttäyhdistäminen."
+    }
   },
   "webchat": {
     "chatUnavailable": "Tämä keskustelu ei ole tällä hetkellä käytettävissä.",
@@ -4700,6 +4711,216 @@
   "magicLinks": {
     "title": "Taikalinkit",
     "description": "Luo syvälinkkejä, jotka ohjaavat URL-osoitteeseesi kyselyparametrien kanssa."
+  },
+  "inboundWebhooks": {
+    "title": "Saapuvat webhookit",
+    "feature": "Saapuva webhook",
+    "description": "Anna ulkoisten järjestelmien lähettää tietoja työtilaasi: etsi tai luo yhteystieto, tallenna arvoja sen kenttiin ja suorita toimintoja.",
+    "createDescription": "Uusi webhook on aluksi ei-aktiivinen. Määritä se editorissa ja ota se sitten käyttöön.",
+    "deleteDescription": "Järjestelmät, jotka lähettävät yhä tähän URL-osoitteeseen, saavat virheen. Tätä ei voi perua.",
+    "editorDescription": "Suorita tämä webhook lähettämällä JSON POST -pyyntö alla olevaan URL-osoitteeseen.",
+    "configure": "Määritä",
+    "getLink": "Hae linkki",
+    "activeToggle": "Aktivoi {name}",
+    "columns": {
+      "active": "Aktiivinen",
+      "createdAt": "Luotu",
+      "requests": "Pyynnöt"
+    },
+    "link": {
+      "title": "Webhookin URL",
+      "description": "Lähetä JSON POST-pyynnöllä tähän URL-osoitteeseen. Se sisältää salaisen tunnuksen, joten käsittele sitä kuin salasanaa."
+    },
+    "endpoint": {
+      "label": "Webhookin URL",
+      "show": "Näytä URL",
+      "hide": "Piilota URL"
+    },
+    "regenerate": {
+      "button": "Luo uudelleen",
+      "title": "Luodaanko webhookin URL uudelleen?",
+      "description": "Nykyinen URL lakkaa toimimasta heti. Päivitä kaikki sitä käyttävät järjestelmät.",
+      "cancel": "Peruuta",
+      "confirm": "Luo uudelleen",
+      "success": "Webhookin URL luotu uudelleen",
+      "failed": "URL-osoitteen uudelleenluonti epäonnistui"
+    },
+    "activation": {
+      "incomplete": "Täytä saapuneet-kansio, vähintään yksi yhteystiedon kenttä ja vähintään yksi yhdistäminen ja tallenna ennen tämän webhookin aktivointia."
+    },
+    "sample": {
+      "title": "Esimerkki-JSON",
+      "description": "Liitä esimerkki pyynnön rungosta selataksesi sen kenttiä ja esikatsellaksesi arvoja.",
+      "load": "Lataa esimerkki-JSON",
+      "status": {
+        "loaded": "Esimerkki ladattu",
+        "invalid": "Tämä ei ole kelvollista JSON-tietoa",
+        "tooLarge": "Esimerkki on suurempi kuin {max} KB",
+        "unsupported": "Esimerkki sisältää tukemattomia merkkejä tai on sisäkkäin liian syvällä"
+      },
+      "format": "Muotoile JSON"
+    },
+    "contact": {
+      "title": "Etsi tai luo yhteystieto",
+      "description": "Valitse saapuneet-kansio, johon yhteystieto kuuluu, ja miten se löydetään. Jos mikään ei täsmää, luodaan uusi yhteystieto, kun pyyntö sisältää kanavan tarvitsemat tiedot."
+    },
+    "inbox": {
+      "modeLabel": "Saapuneet",
+      "mode": {
+        "inbox": "Tietty saapuneet-kansio",
+        "payload": "Payloadista"
+      },
+      "modeDescription": {
+        "inbox": "Jokainen pyyntö käyttää valitsemaasi saapuneet-kansiota.",
+        "payload": "Jokainen pyyntö ilmoittaa oman saapuneet-kansionsa, esimerkiksi Messenger-sivun tunnuksen tai WhatsApp-puhelinnumeron tunnuksen."
+      },
+      "inboxLabel": "Saapuneet",
+      "inboxPlaceholder": "Valitse saapuneet-kansio",
+      "noInboxes": "Yhdistettyä saapuneet-kansiota ei löytynyt.",
+      "savedInboxMissing": "Tallennettu saapuneet-kansio ei ole enää yhdistetty. Valitse toinen.",
+      "channelLabel": "Kanava",
+      "channelPlaceholder": "Valitse kanava",
+      "noPayloadChannels": "Yhdistä ensin kanava, joka tukee tätä.",
+      "identifierKindLabel": "Saapuneet-kansion tunniste",
+      "identifierKindPlaceholder": "Valitse payloadissa lähetettävä tunniste",
+      "identifierPathHint": "Tämän arvon JSON-polku pyynnössä."
+    },
+    "identity": {
+      "hint": "Täytä vähintään yksi. Yhteystieto haetaan pyynnöstä ensimmäisenä löytyvän perusteella tässä järjestyksessä.",
+      "phone": "Puhelin",
+      "email": "Sähköposti",
+      "channelUserId": "Kanavan käyttäjätunnus",
+      "fullName": "Koko nimi",
+      "creationHint": "Ilman {identities} tuntematonta yhteystietoa koskeva pyyntö ohitetaan. Vain olemassa olevia yhteystietoja päivitetään."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "Facebook-sivun tunnus",
+      "igId": "Instagram-tilin tunnus",
+      "phoneNumberId": "WhatsApp-puhelinnumeron tunnus",
+      "displayPhoneNumber": "WhatsApp-puhelinnumero (vähemmän tarkka)",
+      "botId": "Telegram-botin tunnus",
+      "oaId": "Zalo OA -tunnus",
+      "openId": "TikTok-tilin open id",
+      "threadsUserId": "Threads-käyttäjätunnus (id)"
+    },
+    "channelUserIdKinds": {
+      "psid": "Messenger PSID",
+      "igsid": "Instagram IGSID",
+      "telegramChatId": "Telegram-keskustelun tunnus",
+      "zaloUserId": "Zalo-käyttäjätunnus (id)",
+      "tiktokCustomerOpenId": "TikTok-asiakkaan open id",
+      "threadsUsername": "Threads-käyttäjänimi",
+      "apiSourceId": "Yhteystiedon lähteen tunnus",
+      "whatsappId": "WhatsApp-tunnus (wa_id)"
+    },
+    "mappings": {
+      "title": "Tallenna saapuvat tiedot",
+      "description": "Kopioi pyynnön arvoja yhteystiedon kenttiin.",
+      "empty": "Kenttiä ei ole vielä yhdistetty.",
+      "add": "Lisää kenttä",
+      "remove": "Poista kenttä",
+      "target": "Yhteystiedon kenttä",
+      "targetPlaceholder": "Valitse kenttä",
+      "path": "JSON-polku",
+      "rowTitle": "Yhdistäminen {number}"
+    },
+    "actions": {
+      "title": "Tietojen tallennuksen jälkeen",
+      "description": "Toiminnot, jotka suoritetaan yhteystiedolle tietojen tallennuksen jälkeen."
+    },
+    "picker": {
+      "title": "Selaa JSON-tietoa",
+      "description": "Hae ja napsauta arvoa tai anna JSONPath alla",
+      "browse": "Selaa",
+      "noSample": "Lataa ensin esimerkki-JSON selataksesi sen kenttiä.",
+      "pathLabel": "JSON-polku",
+      "use": "Käytä polkua",
+      "cancel": "Peruuta",
+      "result": "Tulos:",
+      "noValue": "ei arvoa",
+      "searchLabel": "Hae JSON-tiedosta",
+      "searchPlaceholder": "Hae avaimia, polkuja tai arvoja",
+      "noMatches": "Ei täsmääviä avaimia tai arvoja.",
+      "moreResults": "Näytetään ensimmäiset {count} osumaa. Tarkenna hakua nähdäksesi muut.",
+      "pathHint": "Tukee ominaisuuksien nimiä ja taulukkoindeksejä, mukaan lukien $[\"customer-data\"][\"email\"]",
+      "invalidPath": "Tämä ei ole tuettu JSONPath."
+    },
+    "requests": {
+      "title": "Pyynnöt",
+      "description": "Tämän webhookin viimeisimmät vastaanotetut toimitukset (säilytetään 30 päivää).",
+      "refresh": "Päivitä",
+      "empty": "Pyyntöjä ei ole vielä vastaanotettu.",
+      "previous": "Edellinen sivu",
+      "next": "Seuraava sivu",
+      "pageOf": "Sivu {page} / {pageCount}",
+      "contact": "Yhteystieto #{id}",
+      "showDetails": "Näytä tiedot",
+      "hideDetails": "Piilota tiedot",
+      "loadingDetails": "Ladataan tietoja…",
+      "detailsFailed": "Tietojen lataus epäonnistui.",
+      "fieldErrors": "Tallentamattomat kentät",
+      "actionResults": "Toiminnot",
+      "payload": "Payload",
+      "status": {
+        "received": "Vastaanotettu",
+        "processing": "Käsitellään",
+        "processed": "Käsitelty",
+        "completedWithErrors": "Valmis virheillä",
+        "skipped": "Ohitettu",
+        "failed": "Epäonnistui"
+      },
+      "skipReason": {
+        "webhookInactive": "Webhook oli ei-aktiivinen.",
+        "missingInboxIdentifier": "Pyyntö ei sisältänyt saapuneet-kansion tunnistetta.",
+        "inboxNotFound": "Mikään saapuneet-kansio ei täsmää pyynnön tunnisteeseen.",
+        "inboxAmbiguous": "Useampi kuin yksi saapuneet-kansio täsmää pyynnön tunnisteeseen.",
+        "inboxDisconnected": "Saapuneet-kansion yhteys on katkaistu.",
+        "missingIdentifier": "Pyyntö ei sisältänyt yhteystiedon tunnistetta.",
+        "workspaceBlocked": "Työtilan omistaja on estetty.",
+        "contactNotFound": "Yhtään yhteystietoa ei löytynyt, eikä pyyntö sisältänyt tietoja uuden luomiseen.",
+        "contactAmbiguous": "Useammalla kuin yhdellä yhteystiedolla on tämä nimi postilaatikossa, joten pyyntö ohitettiin."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Virheellinen arvo",
+        "invalidPhone": "Virheellinen puhelinnumero",
+        "unknownField": "Kenttää ei ole enää olemassa"
+      },
+      "actionStatus": {
+        "succeeded": "onnistui",
+        "skipped": "ohitettu",
+        "failed": "epäonnistui"
+      },
+      "errorCode": {
+        "abandoned": "Hylätty: ei käsitelty 24 tunnin kuluessa"
+      },
+      "actionSkipReason": {
+        "noConversation": "Yhteystiedolla ei ole keskustelua",
+        "noContactInbox": "Yhteystieto ei ole yhdistetty tähän saapuneet-kansioon",
+        "flowInactive": "Flow'ta ei ole julkaistu",
+        "unsupportedAction": "Toimintoa ei tueta tässä",
+        "unsupportedChannel": "Kanava ei tue tätä toimintoa",
+        "invalidAction": "Toimintoa ei ole määritetty oikein",
+        "unknownAction": "Tuntematon toiminto",
+        "unsupportedSource": "Ei tuettu tälle lähteelle"
+      }
+    },
+    "save": {
+      "invalid": "Joitakin asetuksia ei voi käyttää. Korjaa korostetut kentät ja tallenna uudelleen."
+    },
+    "viewAnalytics": "Näytä analytiikka",
+    "analytics": {
+      "title": "Analytiikka",
+      "back": "Takaisin webhookiin",
+      "totalRequests": "Vastaanotetut pyynnöt yhteensä",
+      "totalRequestsHint": "Kaikki hyväksytyt pyynnöt webhookin luomisesta lähtien. Kaksoiskappaleita ei lasketa. Alla oleva loki säilyttää viimeiset 30 päivää."
+    },
+    "issues": {
+      "inboxRequired": "Valitse saapuneet-kansio.",
+      "identifierRequired": "Täytä vähintään yksi neljästä yhteystiedon kentästä.",
+      "fieldMappingRequired": "Lisää vähintään yksi kenttä kohtaan \"Tallenna saapuvat tiedot\".",
+      "required": "Tämä kenttä on pakollinen.",
+      "unsupportedPath": "JSON-polkua ei tueta."
+    }
   },
   "QRCode": {
     "title": "QR-koodi",

@@ -832,7 +832,8 @@
       "api": "API",
       "webchat": "Webchat",
       "botLink": "Botlink",
-      "chatPlugin": "C. chatplugin"
+      "chatPlugin": "C. chatplugin",
+      "inboundWebhook": "Indgående webhook"
     },
     "ctwaRetarget": {
       "segments": {
@@ -3973,7 +3974,17 @@
     "maxItemsReached": "Maksimum {max} {feature} allowed per arbejdsområde",
     "maxCharacters": "Maksimalt {max} tegn.",
     "invalidApiKey": "Ugyldig API-nøgle",
-    "maxMustBeGreaterThanMin": "{maxField} must være greater than eller equal til {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} must være greater than eller equal til {minField}",
+    "inboundWebhook": {
+      "inboxRequired": "Vælg en inbox.",
+      "inboxNotFound": "Den valgte inbox blev ikke fundet.",
+      "inboxDisconnected": "Den valgte inbox er ikke forbundet.",
+      "unsupportedInboxIdentifier": "Denne kanal kan ikke identificeres ud fra den værdi.",
+      "identifierRequired": "Tilføj mindst en kontaktidentitet.",
+      "unknownFieldTarget": "Et tilknyttet kontaktfelt findes ikke længere.",
+      "actionReferenceNotFound": "En handling henviser til et flow, tag eller felt, der ikke længere findes.",
+      "fieldMappingRequired": "Tilføj mindst en feltmapping."
+    }
   },
   "webchat": {
     "chatUnavailable": "Denne chat er currently unavailable.",
@@ -4700,6 +4711,216 @@
   "magicLinks": {
     "title": "Magic Links",
     "description": "Opret deep links at redirect til din URL med query parameters."
+  },
+  "inboundWebhooks": {
+    "title": "Indgående webhooks",
+    "feature": "Indgående webhook",
+    "description": "Lad eksterne systemer sende data til dit workspace: find eller opret en kontakt, gem værdier i dens felter og kør handlinger.",
+    "createDescription": "En ny webhook starter inaktiv. Konfigurer den i editoren, og slå den derefter til.",
+    "deleteDescription": "Systemer, der stadig poster til denne URL, får en fejl. Dette kan ikke fortrydes.",
+    "editorDescription": "Send en JSON POST-anmodning til URL'en nedenfor for at køre denne webhook.",
+    "configure": "Konfigurer",
+    "getLink": "Hent link",
+    "activeToggle": "Aktivér {name}",
+    "columns": {
+      "active": "Aktiv",
+      "createdAt": "Oprettet",
+      "requests": "Anmodninger"
+    },
+    "link": {
+      "title": "Webhook-URL",
+      "description": "Post JSON til denne URL. Den indeholder et hemmeligt token, så behandl den som en adgangskode."
+    },
+    "endpoint": {
+      "label": "Webhook-URL",
+      "show": "Vis URL",
+      "hide": "Skjul URL"
+    },
+    "regenerate": {
+      "button": "Generér igen",
+      "title": "Generér webhook-URL'en igen?",
+      "description": "Den nuværende URL holder straks op med at virke. Opdater alle systemer, der poster til den.",
+      "cancel": "Annuller",
+      "confirm": "Generér igen",
+      "success": "Webhook-URL genereret igen",
+      "failed": "URL'en kunne ikke genereres igen"
+    },
+    "activation": {
+      "incomplete": "Udfyld inbox, mindst et kontaktfelt og mindst en mapping, og gem, før du aktiverer denne webhook."
+    },
+    "sample": {
+      "title": "Eksempel-JSON",
+      "description": "Indsæt et eksempel på en anmodningsbody for at gennemse felterne og få vist værdier.",
+      "load": "Indlæs eksempel-JSON",
+      "status": {
+        "loaded": "Eksempel indlæst",
+        "invalid": "Dette er ikke gyldig JSON",
+        "tooLarge": "Eksemplet er større end {max} KB",
+        "unsupported": "Eksemplet indeholder tegn, der ikke understøttes, eller er indlejret for dybt"
+      },
+      "format": "Formatér JSON"
+    },
+    "contact": {
+      "title": "Find eller opret kontakt",
+      "description": "Vælg den inbox, kontakten tilhører, og hvordan kontakten findes. Hvis ingen matcher, oprettes en ny kontakt, når anmodningen indeholder det, denne kanal skal bruge."
+    },
+    "inbox": {
+      "modeLabel": "Inbox",
+      "mode": {
+        "inbox": "Bestemt inbox",
+        "payload": "Fra payload"
+      },
+      "modeDescription": {
+        "inbox": "Hver anmodning bruger den inbox, du vælger.",
+        "payload": "Hver anmodning angiver sin inbox, f.eks. et Messenger-side-id eller et WhatsApp-telefonnummer-id."
+      },
+      "inboxLabel": "Inbox",
+      "inboxPlaceholder": "Vælg en inbox",
+      "noInboxes": "Ingen forbundet inbox fundet.",
+      "savedInboxMissing": "Den gemte inbox er ikke længere forbundet. Vælg en anden.",
+      "channelLabel": "Kanal",
+      "channelPlaceholder": "Vælg en kanal",
+      "noPayloadChannels": "Forbind først en kanal, der understøtter dette.",
+      "identifierKindLabel": "Inbox-identifikator",
+      "identifierKindPlaceholder": "Vælg den identifikator, der sendes i payload",
+      "identifierPathHint": "JSON-sti til denne værdi i anmodningen."
+    },
+    "identity": {
+      "hint": "Udfyld mindst et. Kontakten slås op med det første, der findes i anmodningen, i denne rækkefølge.",
+      "phone": "Telefon",
+      "email": "E-mail",
+      "channelUserId": "Kanalbruger-ID",
+      "fullName": "Fulde navn",
+      "creationHint": "Uden {identities} springes en anmodning om en ukendt kontakt over. Kun eksisterende kontakter opdateres."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "Facebook-side-id",
+      "igId": "Instagram-konto-id",
+      "phoneNumberId": "WhatsApp-telefonnummer-id",
+      "displayPhoneNumber": "WhatsApp-telefonnummer (mindre præcist)",
+      "botId": "Telegram-bot-id",
+      "oaId": "Zalo OA-id",
+      "openId": "TikTok-konto-open-id",
+      "threadsUserId": "Threads-bruger-id"
+    },
+    "channelUserIdKinds": {
+      "psid": "Messenger PSID",
+      "igsid": "Instagram IGSID",
+      "telegramChatId": "Telegram-chat-id",
+      "zaloUserId": "Zalo-bruger-id",
+      "tiktokCustomerOpenId": "TikTok-kunde-open-id",
+      "threadsUsername": "Threads-brugernavn",
+      "apiSourceId": "Kontaktkilde-id",
+      "whatsappId": "WhatsApp-ID (wa_id)"
+    },
+    "mappings": {
+      "title": "Gem indgående data",
+      "description": "Kopiér værdier fra anmodningen til kontaktfelter.",
+      "empty": "Ingen felter tilknyttet endnu.",
+      "add": "Tilføj felt",
+      "remove": "Fjern felt",
+      "target": "Kontaktfelt",
+      "targetPlaceholder": "Vælg et felt",
+      "path": "JSON-sti",
+      "rowTitle": "Mapping {number}"
+    },
+    "actions": {
+      "title": "Efter data er gemt",
+      "description": "Handlinger, der køres for kontakten, når dataene er gemt."
+    },
+    "picker": {
+      "title": "Gennemse JSON",
+      "description": "Søg og klik på en værdi, eller indtast en JSONPath nedenfor",
+      "browse": "Gennemse",
+      "noSample": "Indlæs først en eksempel-JSON for at gennemse dens felter.",
+      "pathLabel": "JSON-sti",
+      "use": "Brug sti",
+      "cancel": "Annuller",
+      "result": "Resultat:",
+      "noValue": "ingen værdi",
+      "searchLabel": "Søg i JSON",
+      "searchPlaceholder": "Søg efter nøgler, stier eller værdier",
+      "noMatches": "Ingen matchende nøgler eller værdier.",
+      "moreResults": "Viser de første {count} resultater. Indsnævr din søgning for at se andre.",
+      "pathHint": "Understøtter egenskabsnavne og array-indekser, herunder $[\"customer-data\"][\"email\"]",
+      "invalidPath": "Dette er ikke en understøttet JSONPath."
+    },
+    "requests": {
+      "title": "Anmodninger",
+      "description": "De seneste leverancer modtaget af denne webhook (gemmes i 30 dage).",
+      "refresh": "Opdater",
+      "empty": "Ingen anmodninger modtaget endnu.",
+      "previous": "Forrige side",
+      "next": "Næste side",
+      "pageOf": "Side {page} af {pageCount}",
+      "contact": "Kontakt #{id}",
+      "showDetails": "Vis detaljer",
+      "hideDetails": "Skjul detaljer",
+      "loadingDetails": "Indlæser detaljer…",
+      "detailsFailed": "Detaljerne kunne ikke indlæses.",
+      "fieldErrors": "Felter, der ikke blev gemt",
+      "actionResults": "Handlinger",
+      "payload": "Payload",
+      "status": {
+        "received": "Modtaget",
+        "processing": "Behandles",
+        "processed": "Behandlet",
+        "completedWithErrors": "Fuldført med fejl",
+        "skipped": "Sprunget over",
+        "failed": "Mislykkedes"
+      },
+      "skipReason": {
+        "webhookInactive": "Webhooken var inaktiv.",
+        "missingInboxIdentifier": "Anmodningen indeholdt ikke inbox-identifikatoren.",
+        "inboxNotFound": "Ingen inbox matcher identifikatoren i anmodningen.",
+        "inboxAmbiguous": "Mere end én inbox matcher identifikatoren i anmodningen.",
+        "inboxDisconnected": "Inboxen er afbrudt.",
+        "missingIdentifier": "Anmodningen indeholdt ingen kontaktidentitet.",
+        "workspaceBlocked": "Arbejdsområdets ejer er blokeret.",
+        "contactNotFound": "Ingen kontakt matchede, og anmodningen indeholdt ikke det, der skal til for at oprette en.",
+        "contactAmbiguous": "Mere end én kontakt har dette navn i indbakken, så anmodningen blev sprunget over."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Ugyldig værdi",
+        "invalidPhone": "Ugyldigt telefonnummer",
+        "unknownField": "Feltet findes ikke længere"
+      },
+      "actionStatus": {
+        "succeeded": "lykkedes",
+        "skipped": "sprunget over",
+        "failed": "mislykkedes"
+      },
+      "errorCode": {
+        "abandoned": "Opgivet: ikke behandlet inden for 24 timer"
+      },
+      "actionSkipReason": {
+        "noConversation": "Kontakten har ingen samtale",
+        "noContactInbox": "Kontakten er ikke forbundet til denne indbakke",
+        "flowInactive": "Flowet er ikke udgivet",
+        "unsupportedAction": "Handlingen understøttes ikke her",
+        "unsupportedChannel": "Kanalen understøtter ikke handlingen",
+        "invalidAction": "Handlingen er ikke konfigureret korrekt",
+        "unknownAction": "Ukendt handling",
+        "unsupportedSource": "Understøttes ikke for denne kilde"
+      }
+    },
+    "save": {
+      "invalid": "Nogle indstillinger er ugyldige. Ret de markerede felter, og gem igen."
+    },
+    "viewAnalytics": "Se analyser",
+    "analytics": {
+      "title": "Analyser",
+      "back": "Tilbage til webhook",
+      "totalRequests": "Samlede modtagne anmodninger",
+      "totalRequestsHint": "Alle accepterede anmodninger, siden webhooken blev oprettet. Dubletter tælles ikke med. Loggen nedenfor gemmer de seneste 30 dage."
+    },
+    "issues": {
+      "inboxRequired": "Vælg en inbox.",
+      "identifierRequired": "Udfyld mindst et af de fire kontaktfelter.",
+      "fieldMappingRequired": "Tilføj mindst et felt under \"Gem indgående data\".",
+      "required": "Dette felt er påkrævet.",
+      "unsupportedPath": "JSON-stien understøttes ikke."
+    }
   },
   "QRCode": {
     "title": "QR Kode",

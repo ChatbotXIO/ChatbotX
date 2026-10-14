@@ -832,7 +832,8 @@
       "api": "API",
       "webchat": "دردشة الويب",
       "botLink": "رابط البوت",
-      "chatPlugin": "إضافة الدردشة C."
+      "chatPlugin": "إضافة الدردشة C.",
+      "inboundWebhook": "ويب هوك وارد"
     },
     "ctwaRetarget": {
       "segments": {
@@ -3973,7 +3974,17 @@
     "maxItemsReached": "الحد الأقصى المسموح به لكل مساحة عمل هو {max} من {feature}",
     "maxCharacters": "الحد الأقصى {max} حرفًا.",
     "invalidApiKey": "مفتاح API غير صالح",
-    "maxMustBeGreaterThanMin": "يجب أن يكون {maxField} أكبر من أو يساوي {minField}"
+    "maxMustBeGreaterThanMin": "يجب أن يكون {maxField} أكبر من أو يساوي {minField}",
+    "inboundWebhook": {
+      "inboxRequired": "اختر صندوق وارد.",
+      "inboxNotFound": "لم يتم العثور على صندوق الوارد المحدد.",
+      "inboxDisconnected": "صندوق الوارد المحدد غير متصل.",
+      "unsupportedInboxIdentifier": "لا يمكن تحديد هوية هذه القناة بتلك القيمة.",
+      "identifierRequired": "أضف هوية جهة اتصال واحدة على الأقل.",
+      "unknownFieldTarget": "حقل جهة الاتصال المرتبط لم يعد موجودًا.",
+      "actionReferenceNotFound": "يشير أحد الإجراءات إلى مسار أو وسم أو حقل لم يعد موجودًا.",
+      "fieldMappingRequired": "أضف ربط حقل واحدًا على الأقل."
+    }
   },
   "webchat": {
     "chatUnavailable": "هذه الدردشة غير متاحة حاليًا.",
@@ -4700,6 +4711,216 @@
   "magicLinks": {
     "title": "الروابط السحرية",
     "description": "أنشئ روابط عميقة تعيد التوجيه إلى عنوان URL الخاص بك مع معاملات الاستعلام."
+  },
+  "inboundWebhooks": {
+    "title": "خطافات الويب الواردة",
+    "feature": "خطاف ويب وارد",
+    "description": "اسمح للأنظمة الخارجية بإرسال البيانات إلى مساحة العمل الخاصة بك: ابحث عن جهة اتصال أو أنشئها، واحفظ القيم في حقولها ونفّذ الإجراءات.",
+    "createDescription": "يبدأ خطاف الويب الجديد غير نشط. اضبطه في المحرر ثم فعّله.",
+    "deleteDescription": "ستتلقى الأنظمة التي ما زالت ترسل إلى عنوان URL هذا خطأً. لا يمكن التراجع عن هذا الإجراء.",
+    "editorDescription": "أرسل طلب POST بصيغة JSON إلى عنوان URL أدناه لتشغيل خطاف الويب هذا.",
+    "configure": "ضبط",
+    "getLink": "الحصول على الرابط",
+    "activeToggle": "تفعيل {name}",
+    "columns": {
+      "active": "نشط",
+      "createdAt": "تاريخ الإنشاء",
+      "requests": "الطلبات"
+    },
+    "link": {
+      "title": "عنوان URL لخطاف الويب",
+      "description": "أرسل JSON عبر POST إلى عنوان URL هذا. يحتوي على رمز سري، لذا تعامل معه كما تتعامل مع كلمة المرور."
+    },
+    "endpoint": {
+      "label": "عنوان URL لخطاف الويب",
+      "show": "إظهار الرابط",
+      "hide": "إخفاء الرابط"
+    },
+    "regenerate": {
+      "button": "إعادة الإنشاء",
+      "title": "إعادة إنشاء عنوان URL لخطاف الويب؟",
+      "description": "سيتوقف عنوان URL الحالي عن العمل فورًا. حدّث كل نظام يرسل إليه.",
+      "cancel": "إلغاء",
+      "confirm": "إعادة الإنشاء",
+      "success": "تمت إعادة إنشاء عنوان URL لخطاف الويب",
+      "failed": "تعذّرت إعادة إنشاء عنوان URL"
+    },
+    "activation": {
+      "incomplete": "املأ صندوق الوارد وحقل جهة اتصال واحدًا على الأقل وربطًا واحدًا على الأقل، ثم احفظ، قبل تفعيل خطاف الويب هذا."
+    },
+    "sample": {
+      "title": "نموذج JSON",
+      "description": "الصق نموذجًا لنص الطلب لاستعراض حقوله ومعاينة القيم.",
+      "load": "تحميل نموذج JSON",
+      "status": {
+        "loaded": "تم تحميل النموذج",
+        "invalid": "هذا ليس JSON صالحًا",
+        "tooLarge": "النموذج أكبر من {max} KB",
+        "unsupported": "يحتوي هذا النموذج على أحرف غير مدعومة أو مستويات متداخلة كثيرة"
+      },
+      "format": "تنسيق JSON"
+    },
+    "contact": {
+      "title": "البحث عن جهة اتصال أو إنشاؤها",
+      "description": "اختر صندوق الوارد الذي تنتمي إليه جهة الاتصال وكيفية العثور عليها. إذا لم تتطابق أي جهة، تُنشأ جهة اتصال جديدة عندما يحتوي الطلب على ما تحتاجه هذه القناة."
+    },
+    "inbox": {
+      "modeLabel": "صندوق الوارد",
+      "mode": {
+        "inbox": "صندوق وارد محدد",
+        "payload": "من payload"
+      },
+      "modeDescription": {
+        "inbox": "يستخدم كل طلب صندوق الوارد الذي تختاره.",
+        "payload": "يحدد كل طلب صندوق الوارد الخاص به، مثل معرّف صفحة Messenger أو معرّف رقم هاتف WhatsApp."
+      },
+      "inboxLabel": "صندوق الوارد",
+      "inboxPlaceholder": "اختر صندوق وارد",
+      "noInboxes": "لم يتم العثور على صندوق وارد متصل.",
+      "savedInboxMissing": "صندوق الوارد المحفوظ لم يعد متصلًا. اختر صندوقًا آخر.",
+      "channelLabel": "القناة",
+      "channelPlaceholder": "اختر قناة",
+      "noPayloadChannels": "اربط أولًا قناة تدعم ذلك.",
+      "identifierKindLabel": "معرّف صندوق الوارد",
+      "identifierKindPlaceholder": "اختر المعرّف المرسل في payload",
+      "identifierPathHint": "مسار JSON لهذه القيمة في الطلب."
+    },
+    "identity": {
+      "hint": "املأ واحدًا على الأقل. يُبحث عن جهة الاتصال بأول قيمة توجد في الطلب، بهذا الترتيب.",
+      "phone": "الهاتف",
+      "email": "البريد الإلكتروني",
+      "channelUserId": "معرّف مستخدم القناة",
+      "fullName": "الاسم الكامل",
+      "creationHint": "بدون {identities} يتم تخطي الطلب الخاص بجهة اتصال غير موجودة. يتم تحديث جهات الاتصال الموجودة فقط."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "معرّف صفحة Facebook",
+      "igId": "معرّف حساب Instagram",
+      "phoneNumberId": "معرّف رقم هاتف WhatsApp",
+      "displayPhoneNumber": "رقم هاتف WhatsApp (أقل دقة)",
+      "botId": "معرّف بوت Telegram",
+      "oaId": "معرّف Zalo OA",
+      "openId": "open id لحساب TikTok",
+      "threadsUserId": "معرّف مستخدم Threads"
+    },
+    "channelUserIdKinds": {
+      "psid": "Messenger PSID",
+      "igsid": "Instagram IGSID",
+      "telegramChatId": "معرّف دردشة Telegram",
+      "zaloUserId": "معرّف مستخدم Zalo",
+      "tiktokCustomerOpenId": "open id لعميل TikTok",
+      "threadsUsername": "اسم مستخدم Threads",
+      "apiSourceId": "معرّف مصدر جهة الاتصال",
+      "whatsappId": "معرّف WhatsApp (wa_id)"
+    },
+    "mappings": {
+      "title": "حفظ البيانات الواردة",
+      "description": "انسخ القيم من الطلب إلى حقول جهة الاتصال.",
+      "empty": "لم يتم ربط أي حقول بعد.",
+      "add": "إضافة حقل",
+      "remove": "إزالة الحقل",
+      "target": "حقل جهة الاتصال",
+      "targetPlaceholder": "اختر حقلًا",
+      "path": "مسار JSON",
+      "rowTitle": "الربط {number}"
+    },
+    "actions": {
+      "title": "بعد حفظ البيانات",
+      "description": "إجراءات تُنفَّذ لجهة الاتصال بعد حفظ البيانات."
+    },
+    "picker": {
+      "title": "استعراض JSON",
+      "description": "ابحث وانقر على قيمة، أو أدخل JSONPath أدناه",
+      "browse": "استعراض",
+      "noSample": "حمّل نموذج JSON أولًا لاستعراض حقوله.",
+      "pathLabel": "مسار JSON",
+      "use": "استخدام المسار",
+      "cancel": "إلغاء",
+      "result": "النتيجة:",
+      "noValue": "لا توجد قيمة",
+      "searchLabel": "البحث في JSON",
+      "searchPlaceholder": "ابحث عن مفاتيح أو مسارات أو قيم",
+      "noMatches": "لا توجد مفاتيح أو قيم مطابقة.",
+      "moreResults": "يتم عرض أول {count} نتيجة. حسّن بحثك لرؤية البقية.",
+      "pathHint": "يدعم أسماء الخصائص وفهارس المصفوفات، بما في ذلك $[\"customer-data\"][\"email\"]",
+      "invalidPath": "هذا ليس JSONPath مدعومًا."
+    },
+    "requests": {
+      "title": "الطلبات",
+      "description": "أحدث عمليات التسليم التي استقبلها خطاف الويب هذا (تُحفظ 30 يومًا).",
+      "refresh": "تحديث",
+      "empty": "لم يتم استلام أي طلبات بعد.",
+      "previous": "الصفحة السابقة",
+      "next": "الصفحة التالية",
+      "pageOf": "الصفحة {page} من {pageCount}",
+      "contact": "جهة الاتصال #{id}",
+      "showDetails": "عرض التفاصيل",
+      "hideDetails": "إخفاء التفاصيل",
+      "loadingDetails": "جارٍ تحميل التفاصيل…",
+      "detailsFailed": "تعذّر تحميل التفاصيل.",
+      "fieldErrors": "حقول لم تُحفظ",
+      "actionResults": "الإجراءات",
+      "payload": "Payload",
+      "status": {
+        "received": "تم الاستلام",
+        "processing": "قيد المعالجة",
+        "processed": "تمت المعالجة",
+        "completedWithErrors": "اكتمل مع أخطاء",
+        "skipped": "تم التخطي",
+        "failed": "فشل"
+      },
+      "skipReason": {
+        "webhookInactive": "كان خطاف الويب غير نشط.",
+        "missingInboxIdentifier": "لم يتضمن الطلب معرّف صندوق الوارد.",
+        "inboxNotFound": "لا يوجد صندوق وارد يطابق المعرّف في الطلب.",
+        "inboxAmbiguous": "يطابق أكثر من صندوق وارد المعرّف في الطلب.",
+        "inboxDisconnected": "صندوق الوارد غير متصل.",
+        "missingIdentifier": "لم يتضمن الطلب أي هوية لجهة اتصال.",
+        "workspaceBlocked": "مالك مساحة العمل محظور.",
+        "contactNotFound": "لم تتطابق أي جهة اتصال، ولم يحتوِ الطلب على ما يلزم لإنشاء واحدة.",
+        "contactAmbiguous": "أكثر من جهة اتصال بهذا الاسم في صندوق الوارد، لذلك تم تخطي الطلب."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "قيمة غير صالحة",
+        "invalidPhone": "رقم هاتف غير صالح",
+        "unknownField": "الحقل لم يعد موجودًا"
+      },
+      "actionStatus": {
+        "succeeded": "نجح",
+        "skipped": "تم تخطيه",
+        "failed": "فشل"
+      },
+      "errorCode": {
+        "abandoned": "تم التخلي عنه: لم تتم المعالجة خلال 24 ساعة"
+      },
+      "actionSkipReason": {
+        "noConversation": "ليس لجهة الاتصال محادثة",
+        "noContactInbox": "جهة الاتصال غير متصلة بهذا الصندوق",
+        "flowInactive": "لم يتم نشر التدفق",
+        "unsupportedAction": "هذا الإجراء غير مدعوم هنا",
+        "unsupportedChannel": "القناة لا تدعم هذا الإجراء",
+        "invalidAction": "الإجراء غير مهيأ بشكل صحيح",
+        "unknownAction": "إجراء غير معروف",
+        "unsupportedSource": "غير مدعوم لهذا المصدر"
+      }
+    },
+    "save": {
+      "invalid": "بعض الإعدادات غير صالحة. أصلح الحقول المميزة ثم احفظ مرة أخرى."
+    },
+    "viewAnalytics": "عرض التحليلات",
+    "analytics": {
+      "title": "التحليلات",
+      "back": "العودة إلى خطاف الويب",
+      "totalRequests": "إجمالي الطلبات المستلمة",
+      "totalRequestsHint": "كل طلب مقبول منذ إنشاء خطاف الويب. لا تُحتسب الطلبات المكررة. يحتفظ السجل أدناه بآخر 30 يومًا."
+    },
+    "issues": {
+      "inboxRequired": "اختر صندوق وارد.",
+      "identifierRequired": "املأ واحدًا على الأقل من حقول جهة الاتصال الأربعة.",
+      "fieldMappingRequired": "أضف حقلًا واحدًا على الأقل ضمن «حفظ البيانات الواردة».",
+      "required": "هذا الحقل مطلوب.",
+      "unsupportedPath": "مسار JSON غير مدعوم."
+    }
   },
   "QRCode": {
     "title": "رمز QR",

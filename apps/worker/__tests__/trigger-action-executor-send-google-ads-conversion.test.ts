@@ -130,7 +130,7 @@ const run = (action: Record<string, unknown>, occurrenceKey?: string) =>
   new ActionExecutor().execute({
     action: { type: "sendGoogleAdsConversion", ...action },
     contactId: "contact-1",
-    triggerId: "trigger-1",
+    source: { kind: "trigger", triggerId: "trigger-1" },
     workspaceId: "ws-1",
     occurrenceKey,
   })
@@ -251,7 +251,7 @@ describe("ActionExecutor sendGoogleAdsConversion", () => {
 
     await expect(
       run({ conversionActionId: "123", dedupMode: "click" }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ status: "skipped", reason: "noGoogleClick" })
 
     expect(mocks.record).not.toHaveBeenCalled()
     expect(baseLogger.warn).toHaveBeenCalled()
@@ -569,7 +569,7 @@ describe("ActionExecutor sendGoogleAdsConversion", () => {
 
     await expect(
       run({ conversionActionId: "123", dedupMode: "click" }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ status: "skipped", reason: "recordFailed" })
 
     const calls = vi.mocked(baseLogger.error).mock.calls
     expect(calls).toHaveLength(1)

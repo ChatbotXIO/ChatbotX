@@ -448,6 +448,27 @@ chatbotx webhooks bulk-delete --ids <ids>
 
 ---
 
+### `inbound-webhooks`
+
+```bash
+chatbotx inbound-webhooks list                       # Includes requestCount (all-time accepted requests)
+chatbotx inbound-webhooks get <id>                   # Config + the secret endpoint URL
+chatbotx inbound-webhooks create --name <name>       # Inactive; returns the endpoint URL
+chatbotx inbound-webhooks update <id> --inboxResolution <json> --identifiers <json> --fieldMappings <json> --actions <json>
+                                                     # Full replace; needs an inbox, >=1 identifier (channelUserId|phone|email|fullName, searched in that order) and >=1 mapping. JSON paths are stored as `$.…`. See `inbound-webhook-channels list`
+chatbotx inbound-webhooks settings update <id>       # [--name] [--active]  activating needs a complete config (inbox, identifier, mapping)
+chatbotx inbound-webhooks regenerate-token add <id>  # New URL; the old one stops working
+chatbotx inbound-webhooks preview-mapping --payload <json> --inboxResolution <json> --identifiers <json> --fieldMappings <json>
+                                                     # Dry run of a sample payload; shows contactLookup; writes nothing
+chatbotx inbound-webhooks requests list <id>         # [--status --page --perPage]  delivery log, 30 days
+chatbotx inbound-webhooks request get <id> <requestId>   # [--includePayload true]
+chatbotx inbound-webhooks delete <id>
+chatbotx inbound-webhooks bulk-delete --ids <ids>
+chatbotx inbound-webhook-channels list               # Per-channel inbox identifiers, example paths and creationIdentities
+```
+
+---
+
 ### `error-logs`
 
 ```bash

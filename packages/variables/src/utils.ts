@@ -92,6 +92,7 @@ const contactSourceLabels: Record<ContactSource, string> = {
   [contactSources.enum.imported]: "Imported",
   [contactSources.enum.api]: "API",
   [contactSources.enum.direct]: "Direct",
+  [contactSources.enum.inboundWebhook]: "Inbound Webhook",
 }
 
 const formatContactSource = (source: string | null | undefined): string => {

@@ -61,6 +61,7 @@ export * from "./folder"
 export * from "./google-ads"
 export * from "./google-ads-settings"
 export * from "./ig-story-automation/service"
+export * from "./inbound-webhook"
 // Not barrel-exported: `peekImportHeaders` reaches `createByteLimitedStream`
 // (`@chatbotx.io/imports/stream-guard`), which imports Node's `stream`. This
 // barrel is traced into the builder's Edge Runtime bundle, where a Node

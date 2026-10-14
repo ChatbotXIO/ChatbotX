@@ -832,7 +832,8 @@
       "api": "API",
       "webchat": "Webchat",
       "botLink": "Bot-Link",
-      "chatPlugin": "C.-Chat-Plugin"
+      "chatPlugin": "C.-Chat-Plugin",
+      "inboundWebhook": "Eingehender Webhook"
     },
     "ctwaRetarget": {
       "segments": {
@@ -3973,7 +3974,17 @@
     "maxItemsReached": "Pro Arbeitsbereich sind höchstens {max} {feature} zulässig",
     "maxCharacters": "Maximal {max} Zeichen.",
     "invalidApiKey": "Ungültiger API-Schlüssel",
-    "maxMustBeGreaterThanMin": "{maxField} muss größer als oder gleich {minField} sein"
+    "maxMustBeGreaterThanMin": "{maxField} muss größer als oder gleich {minField} sein",
+    "inboundWebhook": {
+      "inboxRequired": "Wählen Sie einen Posteingang.",
+      "inboxNotFound": "Der ausgewählte Posteingang wurde nicht gefunden.",
+      "inboxDisconnected": "Der ausgewählte Posteingang ist nicht verbunden.",
+      "unsupportedInboxIdentifier": "Dieser Kanal kann nicht über diesen Wert identifiziert werden.",
+      "identifierRequired": "Fügen Sie mindestens eine Kontaktidentität hinzu.",
+      "unknownFieldTarget": "Ein zugeordnetes Kontaktfeld existiert nicht mehr.",
+      "actionReferenceNotFound": "Eine Aktion verweist auf einen Flow, ein Tag oder ein Feld, das nicht mehr existiert.",
+      "fieldMappingRequired": "Fügen Sie mindestens eine Feldzuordnung hinzu."
+    }
   },
   "webchat": {
     "chatUnavailable": "Dieser Chat ist derzeit nicht verfügbar.",
@@ -4700,6 +4711,216 @@
   "magicLinks": {
     "title": "Magic Links",
     "description": "Erstellen Sie Deep Links, die mit Query-Parametern zu Ihrer URL weiterleiten."
+  },
+  "inboundWebhooks": {
+    "title": "Eingehende Webhooks",
+    "feature": "Eingehender Webhook",
+    "description": "Lassen Sie externe Systeme Daten an Ihren Workspace senden: Kontakt finden oder erstellen, Werte in dessen Feldern speichern und Aktionen ausführen.",
+    "createDescription": "Ein neuer Webhook ist zunächst inaktiv. Konfigurieren Sie ihn im Editor und schalten Sie ihn dann ein.",
+    "deleteDescription": "Systeme, die weiterhin an diese URL senden, erhalten einen Fehler. Dies kann nicht rückgängig gemacht werden.",
+    "editorDescription": "Senden Sie eine JSON-POST-Anfrage an die untenstehende URL, um diesen Webhook auszuführen.",
+    "configure": "Konfigurieren",
+    "getLink": "Link abrufen",
+    "activeToggle": "{name} aktivieren",
+    "columns": {
+      "active": "Aktiv",
+      "createdAt": "Erstellt",
+      "requests": "Anfragen"
+    },
+    "link": {
+      "title": "Webhook-URL",
+      "description": "Senden Sie JSON per POST an diese URL. Sie enthält ein geheimes Token, behandeln Sie sie daher wie ein Passwort."
+    },
+    "endpoint": {
+      "label": "Webhook-URL",
+      "show": "URL anzeigen",
+      "hide": "URL ausblenden"
+    },
+    "regenerate": {
+      "button": "Neu generieren",
+      "title": "Webhook-URL neu generieren?",
+      "description": "Die aktuelle URL funktioniert sofort nicht mehr. Aktualisieren Sie jedes System, das daran sendet.",
+      "cancel": "Abbrechen",
+      "confirm": "Neu generieren",
+      "success": "Webhook-URL neu generiert",
+      "failed": "URL konnte nicht neu generiert werden"
+    },
+    "activation": {
+      "incomplete": "Füllen Sie Posteingang, mindestens ein Kontaktfeld und mindestens eine Zuordnung aus und speichern Sie, bevor Sie diesen Webhook aktivieren."
+    },
+    "sample": {
+      "title": "Beispiel-JSON",
+      "description": "Fügen Sie einen Beispiel-Anfragetext ein, um die Felder zu durchsuchen und Werte in der Vorschau zu sehen.",
+      "load": "Beispiel-JSON laden",
+      "status": {
+        "loaded": "Beispiel geladen",
+        "invalid": "Das ist kein gültiges JSON",
+        "tooLarge": "Das Beispiel ist größer als {max} KB",
+        "unsupported": "Das Beispiel enthält nicht unterstützte Zeichen oder ist zu tief verschachtelt"
+      },
+      "format": "JSON formatieren"
+    },
+    "contact": {
+      "title": "Kontakt finden oder erstellen",
+      "description": "Wählen Sie den Posteingang, zu dem der Kontakt gehört, und wie er gefunden wird. Wenn niemand passt, wird ein neuer Kontakt erstellt, sofern die Anfrage enthält, was dieser Kanal benötigt."
+    },
+    "inbox": {
+      "modeLabel": "Posteingang",
+      "mode": {
+        "inbox": "Bestimmter Posteingang",
+        "payload": "Aus Payload"
+      },
+      "modeDescription": {
+        "inbox": "Jede Anfrage verwendet den ausgewählten Posteingang.",
+        "payload": "Jede Anfrage nennt ihren Posteingang, z. B. eine Messenger-Seiten-ID oder eine WhatsApp-Telefonnummern-ID."
+      },
+      "inboxLabel": "Posteingang",
+      "inboxPlaceholder": "Posteingang auswählen",
+      "noInboxes": "Kein verbundener Posteingang gefunden.",
+      "savedInboxMissing": "Der gespeicherte Posteingang ist nicht mehr verbunden. Wählen Sie einen anderen.",
+      "channelLabel": "Kanal",
+      "channelPlaceholder": "Kanal auswählen",
+      "noPayloadChannels": "Verbinden Sie zuerst einen Kanal, der dies unterstützt.",
+      "identifierKindLabel": "Posteingangs-Kennung",
+      "identifierKindPlaceholder": "Wählen Sie die im Payload gesendete Kennung",
+      "identifierPathHint": "JSON-Pfad dieses Werts in der Anfrage."
+    },
+    "identity": {
+      "hint": "Füllen Sie mindestens eines aus. Der Kontakt wird anhand des ersten in der Anfrage gefundenen Werts gesucht, in dieser Reihenfolge.",
+      "phone": "Telefon",
+      "email": "E-Mail",
+      "channelUserId": "Kanal-Nutzer-ID",
+      "fullName": "Vollständiger Name",
+      "creationHint": "Ohne {identities} wird eine Anfrage für einen unbekannten Kontakt übersprungen. Es werden nur vorhandene Kontakte aktualisiert."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "Facebook-Seiten-ID",
+      "igId": "Instagram-Konto-ID",
+      "phoneNumberId": "WhatsApp-Telefonnummern-ID",
+      "displayPhoneNumber": "WhatsApp-Telefonnummer (weniger präzise)",
+      "botId": "Telegram-Bot-ID",
+      "oaId": "Zalo-OA-ID",
+      "openId": "TikTok-Konto-Open-ID",
+      "threadsUserId": "Threads-Nutzer-ID"
+    },
+    "channelUserIdKinds": {
+      "psid": "Messenger PSID",
+      "igsid": "Instagram IGSID",
+      "telegramChatId": "Telegram-Chat-ID",
+      "zaloUserId": "Zalo-Nutzer-ID",
+      "tiktokCustomerOpenId": "TikTok-Kunden-Open-ID",
+      "threadsUsername": "Threads-Benutzername",
+      "apiSourceId": "Kontaktquellen-ID",
+      "whatsappId": "WhatsApp-ID (wa_id)"
+    },
+    "mappings": {
+      "title": "Eingehende Daten speichern",
+      "description": "Werte aus der Anfrage in Kontaktfelder kopieren.",
+      "empty": "Noch keine Felder zugeordnet.",
+      "add": "Feld hinzufügen",
+      "remove": "Feld entfernen",
+      "target": "Kontaktfeld",
+      "targetPlaceholder": "Feld auswählen",
+      "path": "JSON-Pfad",
+      "rowTitle": "Zuordnung {number}"
+    },
+    "actions": {
+      "title": "Nach dem Speichern der Daten",
+      "description": "Aktionen, die für den Kontakt ausgeführt werden, sobald die Daten gespeichert sind."
+    },
+    "picker": {
+      "title": "JSON durchsuchen",
+      "description": "Suchen Sie einen Wert und klicken Sie darauf, oder geben Sie unten einen JSONPath ein",
+      "browse": "Durchsuchen",
+      "noSample": "Laden Sie zuerst ein Beispiel-JSON, um dessen Felder zu durchsuchen.",
+      "pathLabel": "JSON-Pfad",
+      "use": "Pfad verwenden",
+      "cancel": "Abbrechen",
+      "result": "Ergebnis:",
+      "noValue": "kein Wert",
+      "searchLabel": "Im JSON suchen",
+      "searchPlaceholder": "Schlüssel, Pfade oder Werte suchen",
+      "noMatches": "Keine passenden Schlüssel oder Werte.",
+      "moreResults": "Die ersten {count} Treffer werden angezeigt. Verfeinern Sie die Suche, um weitere zu sehen.",
+      "pathHint": "Unterstützt Eigenschaftsnamen und Array-Indizes, z. B. $[\"customer-data\"][\"email\"]",
+      "invalidPath": "Dies ist kein unterstützter JSONPath."
+    },
+    "requests": {
+      "title": "Anfragen",
+      "description": "Die neuesten von diesem Webhook empfangenen Zustellungen (30 Tage gespeichert).",
+      "refresh": "Aktualisieren",
+      "empty": "Noch keine Anfragen empfangen.",
+      "previous": "Vorherige Seite",
+      "next": "Nächste Seite",
+      "pageOf": "Seite {page} von {pageCount}",
+      "contact": "Kontakt #{id}",
+      "showDetails": "Details anzeigen",
+      "hideDetails": "Details ausblenden",
+      "loadingDetails": "Details werden geladen…",
+      "detailsFailed": "Details konnten nicht geladen werden.",
+      "fieldErrors": "Nicht gespeicherte Felder",
+      "actionResults": "Aktionen",
+      "payload": "Payload",
+      "status": {
+        "received": "Empfangen",
+        "processing": "In Verarbeitung",
+        "processed": "Verarbeitet",
+        "completedWithErrors": "Mit Fehlern abgeschlossen",
+        "skipped": "Übersprungen",
+        "failed": "Fehlgeschlagen"
+      },
+      "skipReason": {
+        "webhookInactive": "Der Webhook war inaktiv.",
+        "missingInboxIdentifier": "Die Anfrage enthielt keine Posteingangs-Kennung.",
+        "inboxNotFound": "Kein Posteingang passt zur Kennung in der Anfrage.",
+        "inboxAmbiguous": "Mehr als ein Posteingang passt zur Kennung in der Anfrage.",
+        "inboxDisconnected": "Der Posteingang ist getrennt.",
+        "missingIdentifier": "Die Anfrage enthielt keine Kontaktidentität.",
+        "workspaceBlocked": "Der Besitzer des Arbeitsbereichs ist gesperrt.",
+        "contactNotFound": "Kein Kontakt gefunden, und die Anfrage enthielt nicht die Angaben, die zum Erstellen eines Kontakts nötig sind.",
+        "contactAmbiguous": "Mehrere Kontakte im Posteingang haben diesen Namen, daher wurde die Anfrage übersprungen."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Ungültiger Wert",
+        "invalidPhone": "Ungültige Telefonnummer",
+        "unknownField": "Das Feld existiert nicht mehr"
+      },
+      "actionStatus": {
+        "succeeded": "erfolgreich",
+        "skipped": "übersprungen",
+        "failed": "fehlgeschlagen"
+      },
+      "errorCode": {
+        "abandoned": "Aufgegeben: nicht innerhalb von 24 Stunden verarbeitet"
+      },
+      "actionSkipReason": {
+        "noConversation": "Der Kontakt hat keine Unterhaltung",
+        "noContactInbox": "Der Kontakt ist nicht mit diesem Posteingang verbunden",
+        "flowInactive": "Der Flow ist nicht veröffentlicht",
+        "unsupportedAction": "Diese Aktion wird hier nicht unterstützt",
+        "unsupportedChannel": "Der Kanal unterstützt diese Aktion nicht",
+        "invalidAction": "Die Aktion ist nicht richtig konfiguriert",
+        "unknownAction": "Unbekannte Aktion",
+        "unsupportedSource": "Für diese Quelle nicht unterstützt"
+      }
+    },
+    "save": {
+      "invalid": "Einige Einstellungen sind ungültig. Korrigiere die markierten Felder und speichere erneut."
+    },
+    "viewAnalytics": "Statistiken anzeigen",
+    "analytics": {
+      "title": "Statistiken",
+      "back": "Zurück zum Webhook",
+      "totalRequests": "Insgesamt empfangene Anfragen",
+      "totalRequestsHint": "Jede akzeptierte Anfrage seit der Erstellung des Webhooks. Duplikate werden nicht gezählt. Das Protokoll unten enthält die letzten 30 Tage."
+    },
+    "issues": {
+      "inboxRequired": "Wählen Sie einen Posteingang.",
+      "identifierRequired": "Füllen Sie mindestens eines der vier Kontaktfelder aus.",
+      "fieldMappingRequired": "Fügen Sie unter „Eingehende Daten speichern“ mindestens ein Feld hinzu.",
+      "required": "Dieses Feld ist erforderlich.",
+      "unsupportedPath": "Nicht unterstützter JSON-Pfad."
+    }
   },
   "QRCode": {
     "title": "QR-Code",

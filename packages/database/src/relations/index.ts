@@ -78,6 +78,7 @@ import { googleAdsConversionEventRelations } from "./google-ads-conversion-event
 import { googleAdsSettingsRelations } from "./google-ads-settings"
 import { igStoryAutomationRelations } from "./ig-story-automation"
 import { importRelations } from "./import"
+import { inboundWebhookRelations } from "./inbound-webhook"
 import { inboxRelations } from "./inbox"
 import { inboxContactStatsRelations } from "./inbox-contact-stats"
 import { inboxTeamRelations } from "./inbox-team"
@@ -210,6 +211,7 @@ export const relations = {
   ...folderRelations,
   ...igStoryAutomationRelations,
   ...importRelations,
+  ...inboundWebhookRelations,
   ...fileRelations,
   ...flowRunRelations,
   ...flowVersionRelations,

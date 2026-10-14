@@ -632,6 +632,26 @@ class ContactService extends BaseService {
     )
   }
 
+  /**
+   * Writes several rich system fields in ONE update. Fields are applied in key
+   * order and later ones win where they overlap (`full_name` after `first_name`
+   * sets both name columns), exactly as sequential `setRichSystemFieldByKey`
+   * calls would — but without a read-modify-write and event round trip each.
+   */
+  async applyRichSystemFields(input: {
+    workspaceId: string
+    contactId: string
+    fields: Partial<Record<RichSystemContactField, string>>
+    tx?: DatabaseClient
+  }): Promise<ContactModel | null> {
+    const { workspaceId, contactId, fields, tx = db } = input
+    const data = mergeRichSystemFields(fields)
+    if (Object.keys(data).length === 0) {
+      return null
+    }
+    return await this.update({ workspaceId, id: contactId }, data, tx)
+  }
+
   async unsetRichSystemFieldByKey(input: {
     workspaceId: string
     contactId: string
@@ -1212,6 +1232,18 @@ function richSystemFieldToContactData(
     default:
       return {}
   }
+}
+
+/** The merged column writes of several rich system fields; later ones win. */
+export function mergeRichSystemFields(
+  fields: Partial<Record<RichSystemContactField, string>>,
+): ContactWriteData {
+  return Object.assign(
+    {},
+    ...Object.entries(fields).map(([fieldName, value]) =>
+      richSystemFieldToContactData(fieldName as RichSystemContactField, value),
+    ),
+  )
 }
 
 function withContactAccessScope<TWhere extends Record<string, unknown>>(

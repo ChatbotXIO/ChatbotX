@@ -26,6 +26,7 @@ import {
   TicketPercentIcon,
   UserCheck2Icon,
   Wand2Icon,
+  WebhookIcon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -186,6 +187,14 @@ export const TOOLS_CONFIG = [
     descriptionKey: "botSimulator.description",
     icon: BotIcon,
     getLink: (id: string) => `/space/${id}/bot-simulator`,
+  },
+  {
+    id: "inbound-webhooks",
+    labelKey: "inboundWebhooks.title",
+    descriptionKey: "inboundWebhooks.description",
+    icon: WebhookIcon,
+    permission: "superAdmin",
+    getLink: (id: string) => `/space/${id}/inbound-webhooks`,
   },
   {
     id: "places-near-me",

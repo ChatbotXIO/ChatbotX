@@ -832,7 +832,8 @@
       "api": "API",
       "webchat": "Webチャット",
       "botLink": "ボットリンク",
-      "chatPlugin": "カスタマーチャットプラグイン"
+      "chatPlugin": "カスタマーチャットプラグイン",
+      "inboundWebhook": "受信Webhook"
     },
     "ctwaRetarget": {
       "segments": {
@@ -3952,7 +3953,17 @@
     "maxItemsReached": "ワークスペースごとに許可される{feature}は最大{max}件です",
     "maxCharacters": "最大{max}文字です。",
     "invalidApiKey": "APIキーが無効です",
-    "maxMustBeGreaterThanMin": "{maxField}は{minField}以上である必要があります"
+    "maxMustBeGreaterThanMin": "{maxField}は{minField}以上である必要があります",
+    "inboundWebhook": {
+      "inboxRequired": "受信トレイを選択してください。",
+      "inboxNotFound": "選択した受信トレイが見つかりません。",
+      "inboxDisconnected": "選択した受信トレイは接続されていません。",
+      "unsupportedInboxIdentifier": "このチャネルはその値では識別できません。",
+      "identifierRequired": "連絡先識別子を少なくとも1つ追加してください。",
+      "unknownFieldTarget": "マッピングされた連絡先フィールドは存在しなくなりました。",
+      "actionReferenceNotFound": "アクションが、存在しなくなったフロー、タグ、またはフィールドを参照しています。",
+      "fieldMappingRequired": "フィールドマッピングを少なくとも1つ追加してください。"
+    }
   },
   "webchat": {
     "chatUnavailable": "このチャットは現在利用できません。",
@@ -4679,6 +4690,216 @@
   "magicLinks": {
     "title": "マジックリンク",
     "description": "クエリパラメータ付きのURLにリダイレクトするディープリンクを作成します。"
+  },
+  "inboundWebhooks": {
+    "title": "受信Webhook",
+    "feature": "受信Webhook",
+    "description": "外部システムからワークスペースにデータを送信できます。連絡先の検索または作成、フィールドへの値の保存、アクションの実行が可能です。",
+    "createDescription": "新しいWebhookは無効の状態で作成されます。エディターで設定してから有効にしてください。",
+    "deleteDescription": "このURLに送信し続けているシステムはエラーを受け取ります。この操作は元に戻せません。",
+    "editorDescription": "このWebhookを実行するには、下のURLにJSONのPOSTリクエストを送信します。",
+    "configure": "設定",
+    "getLink": "リンクを取得",
+    "activeToggle": "{name}を有効にする",
+    "columns": {
+      "active": "有効",
+      "createdAt": "作成日",
+      "requests": "リクエスト"
+    },
+    "link": {
+      "title": "Webhook URL",
+      "description": "このURLにJSONをPOSTします。秘密のトークンが含まれているため、パスワードと同様に扱ってください。"
+    },
+    "endpoint": {
+      "label": "Webhook URL",
+      "show": "URL を表示",
+      "hide": "URL を非表示"
+    },
+    "regenerate": {
+      "button": "再生成",
+      "title": "Webhook URLを再生成しますか？",
+      "description": "現在のURLはすぐに使えなくなります。このURLに送信しているすべてのシステムを更新してください。",
+      "cancel": "キャンセル",
+      "confirm": "再生成",
+      "success": "Webhook URLを再生成しました",
+      "failed": "URLを再生成できませんでした"
+    },
+    "activation": {
+      "incomplete": "このWebhookを有効にする前に、受信トレイ、連絡先フィールド1つ以上、マッピング1つ以上を入力して保存してください。"
+    },
+    "sample": {
+      "title": "サンプルJSON",
+      "description": "サンプルのリクエストボディを貼り付けると、フィールドを参照して値をプレビューできます。",
+      "load": "サンプルJSONを読み込む",
+      "status": {
+        "loaded": "サンプルを読み込みました",
+        "invalid": "有効なJSONではありません",
+        "tooLarge": "サンプルが{max} KBを超えています",
+        "unsupported": "サンプルにサポートされていない文字が含まれているか、階層が深すぎます"
+      },
+      "format": "JSONを整形"
+    },
+    "contact": {
+      "title": "連絡先を検索または作成",
+      "description": "連絡先が属する受信トレイと、その検索方法を選択します。一致する連絡先がない場合、リクエストにこのチャネルに必要な情報があれば新しい連絡先が作成されます。"
+    },
+    "inbox": {
+      "modeLabel": "受信トレイ",
+      "mode": {
+        "inbox": "特定の受信トレイ",
+        "payload": "ペイロードから"
+      },
+      "modeDescription": {
+        "inbox": "すべてのリクエストで、選択した受信トレイを使用します。",
+        "payload": "各リクエストが受信トレイを指定します（例：MessengerのページIDやWhatsAppの電話番号ID）。"
+      },
+      "inboxLabel": "受信トレイ",
+      "inboxPlaceholder": "受信トレイを選択",
+      "noInboxes": "接続済みの受信トレイが見つかりません。",
+      "savedInboxMissing": "保存済みの受信トレイは接続されていません。別のものを選択してください。",
+      "channelLabel": "チャネル",
+      "channelPlaceholder": "チャネルを選択",
+      "noPayloadChannels": "先に対応するチャネルを接続してください。",
+      "identifierKindLabel": "受信トレイ識別子",
+      "identifierKindPlaceholder": "ペイロードで送信される識別子を選択",
+      "identifierPathHint": "リクエスト内でのこの値のJSONパス。"
+    },
+    "identity": {
+      "hint": "少なくとも1つ入力してください。連絡先は、リクエスト内で最初に見つかったものを、この順序で使って検索されます。",
+      "phone": "電話番号",
+      "email": "メール",
+      "channelUserId": "チャネルユーザーID",
+      "fullName": "氏名",
+      "creationHint": "{identities} がない場合、未登録の連絡先へのリクエストはスキップされます。既存の連絡先のみ更新されます。"
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "FacebookページID",
+      "igId": "InstagramアカウントID",
+      "phoneNumberId": "WhatsApp電話番号ID",
+      "displayPhoneNumber": "WhatsApp電話番号（精度は低め）",
+      "botId": "TelegramボットID",
+      "oaId": "Zalo OA ID",
+      "openId": "TikTokアカウントのopen id",
+      "threadsUserId": "ThreadsユーザーID"
+    },
+    "channelUserIdKinds": {
+      "psid": "Messenger PSID",
+      "igsid": "Instagram IGSID",
+      "telegramChatId": "TelegramチャットID",
+      "zaloUserId": "ZaloユーザーID",
+      "tiktokCustomerOpenId": "TikTok顧客のopen id",
+      "threadsUsername": "Threadsユーザー名",
+      "apiSourceId": "連絡先ソースID",
+      "whatsappId": "WhatsApp ID(wa_id)"
+    },
+    "mappings": {
+      "title": "受信データを保存",
+      "description": "リクエストの値を連絡先のフィールドにコピーします。",
+      "empty": "マッピングされたフィールドはまだありません。",
+      "add": "フィールドを追加",
+      "remove": "フィールドを削除",
+      "target": "連絡先フィールド",
+      "targetPlaceholder": "フィールドを選択",
+      "path": "JSONパス",
+      "rowTitle": "マッピング {number}"
+    },
+    "actions": {
+      "title": "データ保存後",
+      "description": "データの保存後に連絡先に対して実行するアクション。"
+    },
+    "picker": {
+      "title": "JSONを参照",
+      "description": "値を検索してクリックするか、下にJSONPathを入力してください",
+      "browse": "参照",
+      "noSample": "先にサンプルJSONを読み込んでフィールドを参照してください。",
+      "pathLabel": "JSONパス",
+      "use": "パスを使用",
+      "cancel": "キャンセル",
+      "result": "結果:",
+      "noValue": "値なし",
+      "searchLabel": "JSONを検索",
+      "searchPlaceholder": "キー、パス、値を検索",
+      "noMatches": "一致するキーまたは値がありません。",
+      "moreResults": "最初の{count}件の一致を表示しています。他を見るには検索を絞り込んでください。",
+      "pathHint": "プロパティ名と配列インデックスに対応しています。例: $[\"customer-data\"][\"email\"]",
+      "invalidPath": "これはサポートされていないJSONPathです。"
+    },
+    "requests": {
+      "title": "リクエスト",
+      "description": "このWebhookが受信した最新の配信（30日間保持されます）。",
+      "refresh": "更新",
+      "empty": "まだリクエストを受信していません。",
+      "previous": "前のページ",
+      "next": "次のページ",
+      "pageOf": "{page} / {pageCount}ページ",
+      "contact": "連絡先 #{id}",
+      "showDetails": "詳細を表示",
+      "hideDetails": "詳細を非表示",
+      "loadingDetails": "詳細を読み込み中…",
+      "detailsFailed": "詳細を読み込めませんでした。",
+      "fieldErrors": "保存されなかったフィールド",
+      "actionResults": "アクション",
+      "payload": "ペイロード",
+      "status": {
+        "received": "受信済み",
+        "processing": "処理中",
+        "processed": "処理済み",
+        "completedWithErrors": "エラーありで完了",
+        "skipped": "スキップ",
+        "failed": "失敗"
+      },
+      "skipReason": {
+        "webhookInactive": "Webhookが無効でした。",
+        "missingInboxIdentifier": "リクエストに受信トレイ識別子が含まれていませんでした。",
+        "inboxNotFound": "リクエスト内の識別子に一致する受信トレイがありません。",
+        "inboxAmbiguous": "リクエスト内の識別子に複数の受信トレイが一致します。",
+        "inboxDisconnected": "受信トレイの接続が解除されています。",
+        "missingIdentifier": "リクエストに連絡先識別子が含まれていませんでした。",
+        "workspaceBlocked": "ワークスペースの所有者がブロックされています。",
+        "contactNotFound": "一致する連絡先がなく、リクエストに新規作成に必要な情報も含まれていませんでした。",
+        "contactAmbiguous": "この受信トレイに同じ名前の連絡先が複数あるため、リクエストはスキップされました。"
+      },
+      "fieldErrorCode": {
+        "invalidValue": "無効な値",
+        "invalidPhone": "無効な電話番号",
+        "unknownField": "フィールドが存在しません"
+      },
+      "actionStatus": {
+        "succeeded": "成功",
+        "skipped": "スキップ",
+        "failed": "失敗"
+      },
+      "errorCode": {
+        "abandoned": "破棄：24時間以内に処理されませんでした"
+      },
+      "actionSkipReason": {
+        "noConversation": "コンタクトに会話がありません",
+        "noContactInbox": "コンタクトがこの受信トレイに接続されていません",
+        "flowInactive": "フローが公開されていません",
+        "unsupportedAction": "このアクションはここでは使用できません",
+        "unsupportedChannel": "このチャネルはこのアクションに対応していません",
+        "invalidAction": "アクションが正しく設定されていません",
+        "unknownAction": "不明なアクション",
+        "unsupportedSource": "このソースでは対応していません"
+      }
+    },
+    "save": {
+      "invalid": "無効な設定があります。強調表示されたフィールドを修正して、もう一度保存してください。"
+    },
+    "viewAnalytics": "分析を表示",
+    "analytics": {
+      "title": "分析",
+      "back": "Webhookに戻る",
+      "totalRequests": "受信リクエスト総数",
+      "totalRequestsHint": "Webhook作成以降に受け付けたすべてのリクエスト。重複はカウントされません。下のログには直近30日分が保存されます。"
+    },
+    "issues": {
+      "inboxRequired": "受信トレイを選択してください。",
+      "identifierRequired": "4つの連絡先フィールドのうち少なくとも1つを入力してください。",
+      "fieldMappingRequired": "「受信データを保存」に少なくとも1つのフィールドを追加してください。",
+      "required": "この項目は必須です。",
+      "unsupportedPath": "サポートされていない JSON パスです。"
+    }
   },
   "QRCode": {
     "title": "QRコード",
