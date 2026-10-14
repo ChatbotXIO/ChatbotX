@@ -7852,7 +7852,20 @@
       "success": "Publié sur WhatsApp",
       "draftOnly": "Meta a conservé le Flow en brouillon à cause d'erreurs",
       "failed": "Impossible de publier sur WhatsApp",
-      "contactVariables": "Cette Mini App affiche des champs personnalisés dans ses textes. Ils ne fonctionnent pour l’instant que sur le lien web — retirez-les avant de publier sur WhatsApp."
+      "contactVariables": "Cette Mini App affiche des champs personnalisés dans ses textes. Ils ne fonctionnent pour l’instant que sur le lien web — retirez-les avant de publier sur WhatsApp.",
+      "notOnNumber": "La Mini App n’est pas sur ce numéro WhatsApp.",
+      "onlyDraftDeletable": "Le Flow est en ligne sur Meta, il ne peut donc pas être supprimé. Seul un brouillon peut être supprimé.",
+      "flowIsLive": "La Mini App est en ligne sur ce numéro WhatsApp. Enregistrer un brouillon la mettrait hors ligne — publiez plutôt pour la mettre à jour.",
+      "saveDraft": "Enregistrer comme brouillon",
+      "draftSaved": "Enregistré sur WhatsApp comme brouillon",
+      "preview": "Aperçu",
+      "previewUnavailable": "Meta n'a pas renvoyé de lien d'aperçu",
+      "deleteDraft": "Supprimer le brouillon sur WhatsApp",
+      "draftDeleted": "Brouillon supprimé de WhatsApp"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "published": "Publié"
     },
     "runner": {
       "back": "Retour",

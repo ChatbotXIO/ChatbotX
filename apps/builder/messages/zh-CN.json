@@ -7852,7 +7852,20 @@
       "success": "已发布到 WhatsApp",
       "draftOnly": "由于出现错误，Meta 将此 Flow 保留为草稿",
       "failed": "无法发布到 WhatsApp",
-      "contactVariables": "此小程序的文本中包含自定义字段。目前它们仅在网页链接中生效——发布到 WhatsApp 前请先移除。"
+      "contactVariables": "此小程序的文本中包含自定义字段。目前它们仅在网页链接中生效——发布到 WhatsApp 前请先移除。",
+      "notOnNumber": "此小程序不在该 WhatsApp 号码上。",
+      "onlyDraftDeletable": "该 Flow 已在 Meta 上发布，无法删除。只能删除草稿。",
+      "flowIsLive": "此小程序已在该 WhatsApp 号码上发布。保存草稿会使其下线——请改为发布以更新。",
+      "saveDraft": "保存为草稿",
+      "draftSaved": "已作为草稿保存到 WhatsApp",
+      "preview": "预览",
+      "previewUnavailable": "Meta 未返回预览链接",
+      "deleteDraft": "删除 WhatsApp 上的草稿",
+      "draftDeleted": "已从 WhatsApp 删除草稿"
+    },
+    "status": {
+      "draft": "草稿",
+      "published": "已发布"
     },
     "runner": {
       "back": "返回",

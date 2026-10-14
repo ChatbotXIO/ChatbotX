@@ -207,6 +207,45 @@ export const publishMiniAppPublicRequest = z.object({
   ),
 })
 
+export const miniAppWhatsappPublicRequest = z.object({
+  id: miniAppId,
+  integrationWhatsappId: zodBigintAsString().describe(
+    "WhatsApp number the Mini App was pushed to (the WhatsApp channel id). See `publications` in `miniApps.get`.",
+  ),
+})
+
+export const miniAppWhatsappPublishPublicResponse = z.object({
+  status: z
+    .string()
+    .describe("Meta Flow status after the call: DRAFT or PUBLISHED, mostly."),
+  published: z.boolean(),
+  whatsappFlowId: z.string().nullable(),
+  validationErrors: z
+    .array(z.unknown())
+    .describe("Meta's validation errors, if any."),
+})
+
+export const miniAppWhatsappPreviewPublicResponse = z.object({
+  previewUrl: z
+    .string()
+    .nullable()
+    .describe(
+      "Meta's web preview of the Flow, drafts included. Temporary: fetch a new one each time.",
+    ),
+  expiresAt: z
+    .string()
+    .nullable()
+    .describe("When Meta stops serving `previewUrl`."),
+})
+
+export const deleteMiniAppWhatsappDraftPublicResponse = z.object({
+  outcome: z
+    .enum(["deleted", "missing"])
+    .describe(
+      "`deleted` (or `missing` when Meta no longer had it) removes the Mini App from that number.",
+    ),
+})
+
 export const listMiniAppSubmissionsPublicRequest = publicListRequest.extend({
   id: miniAppId,
 })

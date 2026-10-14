@@ -36,6 +36,7 @@ export const miniAppRepository = {
           columns: {
             id: true,
             integrationWhatsappId: true,
+            sourceId: true,
             status: true,
             publishedAt: true,
           },

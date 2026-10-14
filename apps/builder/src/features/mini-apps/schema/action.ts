@@ -33,10 +33,16 @@ export const updateMiniAppRequest = z.object({
 })
 export type UpdateMiniAppRequest = z.infer<typeof updateMiniAppRequest>
 
-export const publishMiniAppWhatsappRequest = z.object({
+export const miniAppWhatsappRequest = z.object({
   integrationWhatsappId: zodBigintAsString().describe(
     "WhatsApp number to publish to (the WhatsApp channel id). Get it from `whatsappChannels.list`.",
   ),
+})
+export type MiniAppWhatsappRequest = z.infer<typeof miniAppWhatsappRequest>
+
+export const publishMiniAppWhatsappRequest = miniAppWhatsappRequest.extend({
+  /** False saves the Flow on Meta as a draft instead of publishing it. */
+  publish: z.boolean().default(true),
 })
 export type PublishMiniAppWhatsappRequest = z.infer<
   typeof publishMiniAppWhatsappRequest

@@ -7852,7 +7852,20 @@
       "success": "Published to WhatsApp",
       "draftOnly": "Meta kept the Flow as a draft because of errors",
       "failed": "Could not publish to WhatsApp",
-      "contactVariables": "This Mini App shows custom fields in its texts. They only work on the web link for now — remove them before publishing to WhatsApp."
+      "contactVariables": "This Mini App shows custom fields in its texts. They only work on the web link for now — remove them before publishing to WhatsApp.",
+      "notOnNumber": "The Mini App is not on this WhatsApp number.",
+      "onlyDraftDeletable": "The Flow is live on Meta, so it can't be deleted. Only a draft can be deleted.",
+      "flowIsLive": "The Mini App is live on this WhatsApp number. Saving a draft would take it offline — publish instead to update it.",
+      "saveDraft": "Save as draft",
+      "draftSaved": "Saved to WhatsApp as a draft",
+      "preview": "Preview",
+      "previewUnavailable": "Meta did not return a preview link",
+      "deleteDraft": "Delete draft on WhatsApp",
+      "draftDeleted": "Draft deleted from WhatsApp"
+    },
+    "status": {
+      "draft": "Draft",
+      "published": "Published"
     },
     "runner": {
       "back": "Back",

@@ -7852,7 +7852,20 @@
       "success": "Gepubliceerd op WhatsApp",
       "draftOnly": "Meta heeft de Flow vanwege fouten als concept bewaard",
       "failed": "Publiceren op WhatsApp mislukt",
-      "contactVariables": "Deze Mini App toont aangepaste velden in de teksten. Die werken voorlopig alleen via de weblink — verwijder ze voordat je naar WhatsApp publiceert."
+      "contactVariables": "Deze Mini App toont aangepaste velden in de teksten. Die werken voorlopig alleen via de weblink — verwijder ze voordat je naar WhatsApp publiceert.",
+      "notOnNumber": "De Mini App staat niet op dit WhatsApp-nummer.",
+      "onlyDraftDeletable": "De Flow is live bij Meta en kan dus niet worden verwijderd. Alleen een concept kan worden verwijderd.",
+      "flowIsLive": "De Mini App is live op dit WhatsApp-nummer. Een concept opslaan zou hem offline halen — publiceer in plaats daarvan om hem bij te werken.",
+      "saveDraft": "Opslaan als concept",
+      "draftSaved": "Als concept opgeslagen in WhatsApp",
+      "preview": "Voorbeeld",
+      "previewUnavailable": "Meta gaf geen voorbeeldlink terug",
+      "deleteDraft": "Concept verwijderen in WhatsApp",
+      "draftDeleted": "Concept verwijderd uit WhatsApp"
+    },
+    "status": {
+      "draft": "Concept",
+      "published": "Gepubliceerd"
     },
     "runner": {
       "back": "Terug",

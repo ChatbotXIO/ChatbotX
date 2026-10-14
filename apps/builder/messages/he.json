@@ -7852,7 +7852,20 @@
       "success": "פורסם ב-WhatsApp",
       "draftOnly": "Meta השאירה את ה-Flow כטיוטה בגלל שגיאות",
       "failed": "לא ניתן היה לפרסם ב-WhatsApp",
-      "contactVariables": "המיני־אפליקציה הזו מציגה שדות מותאמים אישית בטקסטים שלה. כרגע הם פועלים רק בקישור האינטרנט — הסירו אותם לפני הפרסום ב־WhatsApp."
+      "contactVariables": "המיני־אפליקציה הזו מציגה שדות מותאמים אישית בטקסטים שלה. כרגע הם פועלים רק בקישור האינטרנט — הסירו אותם לפני הפרסום ב־WhatsApp.",
+      "notOnNumber": "המיני־אפליקציה לא נמצאת במספר ה־WhatsApp הזה.",
+      "onlyDraftDeletable": "ה־Flow פעיל ב־Meta ולכן לא ניתן למחוק אותו. ניתן למחוק רק טיוטה.",
+      "flowIsLive": "המיני־אפליקציה פעילה במספר ה־WhatsApp הזה. שמירת טיוטה תשבית אותה — פרסמו במקום זאת כדי לעדכן.",
+      "saveDraft": "שמירה כטיוטה",
+      "draftSaved": "נשמר ב-WhatsApp כטיוטה",
+      "preview": "תצוגה מקדימה",
+      "previewUnavailable": "Meta לא החזירה קישור לתצוגה מקדימה",
+      "deleteDraft": "מחיקת הטיוטה ב-WhatsApp",
+      "draftDeleted": "הטיוטה נמחקה מ-WhatsApp"
+    },
+    "status": {
+      "draft": "טיוטה",
+      "published": "פורסם"
     },
     "runner": {
       "back": "חזרה",

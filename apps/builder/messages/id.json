@@ -7852,7 +7852,20 @@
       "success": "Dipublikasikan ke WhatsApp",
       "draftOnly": "Meta menyimpan Flow sebagai draf karena ada kesalahan",
       "failed": "Tidak dapat mempublikasikan ke WhatsApp",
-      "contactVariables": "Mini App ini menampilkan bidang kustom di teksnya. Untuk saat ini bidang tersebut hanya berfungsi di tautan web — hapus sebelum memublikasikan ke WhatsApp."
+      "contactVariables": "Mini App ini menampilkan bidang kustom di teksnya. Untuk saat ini bidang tersebut hanya berfungsi di tautan web — hapus sebelum memublikasikan ke WhatsApp.",
+      "notOnNumber": "Mini App tidak ada di nomor WhatsApp ini.",
+      "onlyDraftDeletable": "Flow sedang aktif di Meta sehingga tidak bisa dihapus. Hanya draf yang bisa dihapus.",
+      "flowIsLive": "Mini App sedang aktif di nomor WhatsApp ini. Menyimpan draf akan menonaktifkannya — publikasikan untuk memperbaruinya.",
+      "saveDraft": "Simpan sebagai draf",
+      "draftSaved": "Disimpan ke WhatsApp sebagai draf",
+      "preview": "Pratinjau",
+      "previewUnavailable": "Meta tidak mengembalikan tautan pratinjau",
+      "deleteDraft": "Hapus draf di WhatsApp",
+      "draftDeleted": "Draf dihapus dari WhatsApp"
+    },
+    "status": {
+      "draft": "Draf",
+      "published": "Dipublikasikan"
     },
     "runner": {
       "back": "Kembali",

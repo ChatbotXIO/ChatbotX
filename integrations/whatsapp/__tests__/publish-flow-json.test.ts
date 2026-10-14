@@ -176,3 +176,90 @@ describe("publishFlowJson — existing Flow", () => {
     expect(result.published).toBe(false)
   })
 })
+
+describe("publishFlowJson — draft save on an existing Flow", () => {
+  const saveDraft = () =>
+    publishFlowJson({
+      auth,
+      params: {
+        name: "Signup",
+        flowJson: "{}",
+        existingFlowId: "flow-1",
+        publish: false,
+      },
+    })
+
+  it.each([
+    "PUBLISHED",
+    "THROTTLED",
+    "BLOCKED",
+  ])("refuses a %s Flow without writing or creating anything", async (status) => {
+    getMock.mockReturnValueOnce(flow(status))
+
+    const result = await saveDraft()
+
+    expect(postMock).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ refusedLive: true, published: true })
+    expect(result.flow.status).toBe(status)
+  })
+
+  it("updates a draft in place without publishing it", async () => {
+    postMock.mockReturnValueOnce(jsonResponse({ success: true }))
+    getMock
+      .mockReturnValueOnce(flow("DRAFT"))
+      .mockReturnValueOnce(flow("DRAFT"))
+
+    const result = await saveDraft()
+
+    expect(postedUrls()).toEqual([assetsUrl])
+    expect(result.refusedLive).toBeUndefined()
+    expect(result.published).toBe(false)
+  })
+})
+
+describe("publishFlowJson — draft save when the Flow can't be read", () => {
+  const saveDraft = () =>
+    publishFlowJson({
+      auth,
+      params: {
+        name: "Signup",
+        flowJson: "{}",
+        existingFlowId: "flow-1",
+        publish: false,
+      },
+    })
+
+  it("throws instead of creating a new Flow on a read error", async () => {
+    getMock.mockReturnValueOnce(
+      rejectedResponse({
+        httpStatus: 400,
+        errorBody: { error: { code: 190, message: "Token expired" } },
+      }),
+    )
+
+    await expect(saveDraft()).rejects.toThrow()
+    expect(postMock).not.toHaveBeenCalled()
+  })
+
+  it("creates a new draft when the old Flow is gone from Meta", async () => {
+    getMock
+      .mockReturnValueOnce(
+        rejectedResponse({
+          httpStatus: 400,
+          errorBody: {
+            error: {
+              code: 100,
+              message: "Flow with specified ID does not exist",
+            },
+          },
+        }),
+      )
+      .mockReturnValueOnce(flow("DRAFT"))
+    postMock.mockReturnValueOnce(jsonResponse({ id: "flow-1", success: true }))
+
+    const result = await saveDraft()
+
+    expect(postedUrls()).toEqual([createUrl])
+    expect(result.published).toBe(false)
+  })
+})

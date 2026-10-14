@@ -7852,7 +7852,20 @@
       "success": "Pubblicato su WhatsApp",
       "draftOnly": "Meta ha mantenuto il Flow come bozza a causa di errori",
       "failed": "Impossibile pubblicare su WhatsApp",
-      "contactVariables": "Questa Mini App mostra campi personalizzati nei suoi testi. Per ora funzionano solo sul link web: rimuovili prima di pubblicare su WhatsApp."
+      "contactVariables": "Questa Mini App mostra campi personalizzati nei suoi testi. Per ora funzionano solo sul link web: rimuovili prima di pubblicare su WhatsApp.",
+      "notOnNumber": "La Mini App non è su questo numero WhatsApp.",
+      "onlyDraftDeletable": "Il Flow è pubblicato su Meta, quindi non può essere eliminato. Si può eliminare solo una bozza.",
+      "flowIsLive": "La Mini App è attiva su questo numero WhatsApp. Salvare una bozza la disattiverebbe: pubblicala per aggiornarla.",
+      "saveDraft": "Salva come bozza",
+      "draftSaved": "Salvato su WhatsApp come bozza",
+      "preview": "Anteprima",
+      "previewUnavailable": "Meta non ha restituito un link di anteprima",
+      "deleteDraft": "Elimina bozza su WhatsApp",
+      "draftDeleted": "Bozza eliminata da WhatsApp"
+    },
+    "status": {
+      "draft": "Bozza",
+      "published": "Pubblicato"
     },
     "runner": {
       "back": "Indietro",

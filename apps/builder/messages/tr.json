@@ -7852,7 +7852,20 @@
       "success": "WhatsApp'ta yayınlandı",
       "draftOnly": "Meta hatalar nedeniyle Flow'u taslak olarak tuttu",
       "failed": "WhatsApp'ta yayınlanamadı",
-      "contactVariables": "Bu Mini App metinlerinde özel alanlar gösteriyor. Şimdilik yalnızca web bağlantısında çalışırlar — WhatsApp'ta yayınlamadan önce kaldırın."
+      "contactVariables": "Bu Mini App metinlerinde özel alanlar gösteriyor. Şimdilik yalnızca web bağlantısında çalışırlar — WhatsApp'ta yayınlamadan önce kaldırın.",
+      "notOnNumber": "Mini App bu WhatsApp numarasında değil.",
+      "onlyDraftDeletable": "Flow Meta'da yayında olduğu için silinemez. Yalnızca taslak silinebilir.",
+      "flowIsLive": "Mini App bu WhatsApp numarasında yayında. Taslak kaydetmek onu yayından kaldırır — güncellemek için yayınlayın.",
+      "saveDraft": "Taslak olarak kaydet",
+      "draftSaved": "WhatsApp'a taslak olarak kaydedildi",
+      "preview": "Önizleme",
+      "previewUnavailable": "Meta bir önizleme bağlantısı döndürmedi",
+      "deleteDraft": "WhatsApp'taki taslağı sil",
+      "draftDeleted": "Taslak WhatsApp'tan silindi"
+    },
+    "status": {
+      "draft": "Taslak",
+      "published": "Yayınlandı"
     },
     "runner": {
       "back": "Geri",

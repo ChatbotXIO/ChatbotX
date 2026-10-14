@@ -7852,7 +7852,20 @@
       "success": "Publicat în WhatsApp",
       "draftOnly": "Meta a păstrat Flow-ul ca ciornă din cauza erorilor",
       "failed": "Nu s-a putut publica în WhatsApp",
-      "contactVariables": "Această Mini App afișează câmpuri personalizate în texte. Deocamdată funcționează doar pe linkul web — elimină-le înainte de a publica pe WhatsApp."
+      "contactVariables": "Această Mini App afișează câmpuri personalizate în texte. Deocamdată funcționează doar pe linkul web — elimină-le înainte de a publica pe WhatsApp.",
+      "notOnNumber": "Mini App nu este pe acest număr WhatsApp.",
+      "onlyDraftDeletable": "Flow-ul este publicat pe Meta, deci nu poate fi șters. Doar o ciornă poate fi ștearsă.",
+      "flowIsLive": "Mini App este activă pe acest număr WhatsApp. Salvarea unei ciorne ar dezactiva-o — publică pentru a o actualiza.",
+      "saveDraft": "Salvează ca ciornă",
+      "draftSaved": "Salvat în WhatsApp ca ciornă",
+      "preview": "Previzualizare",
+      "previewUnavailable": "Meta nu a returnat un link de previzualizare",
+      "deleteDraft": "Șterge ciorna din WhatsApp",
+      "draftDeleted": "Ciorna a fost ștearsă din WhatsApp"
+    },
+    "status": {
+      "draft": "Ciornă",
+      "published": "Publicat"
     },
     "runner": {
       "back": "Înapoi",
