@@ -66,7 +66,7 @@ const { resolveContactVariables } = await import(
   "../src/features/mini-apps/lib/resolve-contact-variables"
 )
 const { publishMiniAppToWhatsapp } = await import(
-  "../src/features/mini-apps/lib/publish-to-whatsapp"
+  "../src/features/mini-apps/lib/whatsapp-publication"
 )
 
 const definition = {

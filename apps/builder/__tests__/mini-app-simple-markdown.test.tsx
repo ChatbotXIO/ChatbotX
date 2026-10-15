@@ -2,7 +2,7 @@
 import { escapeContactValue, interpolate } from "@chatbotx.io/mini-app"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it } from "vitest"
-import { SimpleMarkdown } from "@/features/mini-apps/components/simple-markdown"
+import { SimpleMarkdown } from "@/features/mini-apps/renderer/simple-markdown"
 
 const render = (source: string) =>
   renderToStaticMarkup(<SimpleMarkdown source={source} />)

@@ -31,3 +31,13 @@ export async function imageFileToBase64(
   }
   return
 }
+
+/** A `File` from bare base64, so a media-library image can be shrunk like an upload. */
+export const base64ToFile = (base64: string, mimeType: string): File => {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let index = 0; index < binary.length; index++) {
+    bytes[index] = binary.charCodeAt(index)
+  }
+  return new File([bytes], "image", { type: mimeType })
+}

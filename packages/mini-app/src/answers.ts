@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { collectInputNames } from "./serialize"
+import { collectInputNames } from "./tree"
 import type { MiniAppDefinition } from "./types"
 import {
   collectFileInputNames,
@@ -8,16 +8,22 @@ import {
 } from "./uploads"
 
 export const MINI_APP_MAX_ANSWER_TEXT_LENGTH = 4096
+/** Cap on the whole answers payload, measured in JSON characters. */
 export const MINI_APP_MAX_ANSWERS_BYTES = 64 * 1024
+/** Selected option ids of one input: how many, and how long each may be. */
+const MAX_SELECTED_IDS = 200
+const MAX_SELECTED_ID_LENGTH = 200
+/** `YYYY-MM-DD` */
+const DATE_LENGTH = 10
 
 const answerValueSchema = z.union([
   z.string().max(MINI_APP_MAX_ANSWER_TEXT_LENGTH),
   z.number().finite(),
   z.boolean(),
-  z.array(z.string().max(200)).max(200),
+  z.array(z.string().max(MAX_SELECTED_ID_LENGTH)).max(MAX_SELECTED_IDS),
   z.object({
-    "start-date": z.string().max(10),
-    "end-date": z.string().max(10),
+    "start-date": z.string().max(DATE_LENGTH),
+    "end-date": z.string().max(DATE_LENGTH),
   }),
 ])
 

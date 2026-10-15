@@ -11,7 +11,10 @@ import {
   miniAppService,
 } from "@chatbotx.io/business/mini-app"
 import type { PublishFlowJsonResult } from "@chatbotx.io/integration-whatsapp/api/flow"
-import { hasContactVariables } from "@chatbotx.io/mini-app"
+import {
+  hasContactVariables,
+  type MiniAppDefinition,
+} from "@chatbotx.io/mini-app"
 import { getTranslations } from "next-intl/server"
 import { buildWhatsappContext } from "@/features/integration-whatsapp/flows/lib/whatsapp-flow-operations"
 import { integrations } from "@/integration"
@@ -34,7 +37,10 @@ async function loadWhatsappContext(target: MiniAppWhatsappTarget) {
   }
   return {
     integrationWhatsapp,
-    ctx: await buildWhatsappContext(target.workspaceId, integrationWhatsapp),
+    whatsappContext: await buildWhatsappContext(
+      target.workspaceId,
+      integrationWhatsapp,
+    ),
   }
 }
 
@@ -94,14 +100,9 @@ async function recordFlowResult(props: {
  * publish or delete it); otherwise it is published right away. Shared by the
  * builder actions and the public API.
  */
-export async function publishMiniAppToWhatsapp(
-  props: MiniAppWhatsappTarget & { publish?: boolean },
-) {
-  const miniApp = await miniAppService.findOrFail({
-    workspaceId: props.workspaceId,
-    id: props.miniAppId,
-  })
-  const validation = miniAppService.validate(miniApp.definition)
+/** Refuses a Mini App with validation errors or `{{variables}}` WhatsApp cannot show. */
+async function assertPublishable(definition: MiniAppDefinition) {
+  const validation = miniAppService.validate(definition)
   if (!validation.valid) {
     throw validationException(
       "definition",
@@ -112,21 +113,31 @@ export async function publishMiniAppToWhatsapp(
       },
     )
   }
-
   // Custom field values only render on the web link for now; WhatsApp would
   // show the raw `{{first_name}}` tokens to every recipient.
-  if (hasContactVariables(miniApp.definition)) {
+  if (hasContactVariables(definition)) {
     const t = await getTranslations("miniApps.publish")
     throw validationException("definition", t("contactVariables"))
   }
+}
 
-  const { integrationWhatsapp, ctx } = await loadWhatsappContext(props)
+export async function publishMiniAppToWhatsapp(
+  props: MiniAppWhatsappTarget & { publish?: boolean },
+) {
+  const miniApp = await miniAppService.findOrFail({
+    workspaceId: props.workspaceId,
+    id: props.miniAppId,
+  })
+  await assertPublishable(miniApp.definition)
+
+  const { integrationWhatsapp, whatsappContext } =
+    await loadWhatsappContext(props)
   const existing = await miniAppPublicationService.findForIntegration({
     miniAppId: miniApp.id,
     integrationWhatsappId: integrationWhatsapp.id,
   })
   const result = await integrations.whatsapp.runAction("publishFlowJson", {
-    ctx,
+    ctx: whatsappContext,
     params: {
       name: miniApp.name,
       flowJson: JSON.stringify(miniApp.flowJson),
@@ -157,9 +168,9 @@ export async function publishMiniAppWhatsappDraft(
   props: MiniAppWhatsappTarget,
 ) {
   const publication = await loadPublication(props)
-  const { ctx } = await loadWhatsappContext(props)
+  const { whatsappContext } = await loadWhatsappContext(props)
   const result = await integrations.whatsapp.runAction("publishFlowDraft", {
-    ctx,
+    ctx: whatsappContext,
     params: { flowSourceId: publication.sourceId },
   })
   return await recordFlowResult({
@@ -172,9 +183,9 @@ export async function publishMiniAppWhatsappDraft(
 /** Meta's temporary web preview link of the Mini App's Flow on one number. */
 export async function getMiniAppWhatsappPreview(props: MiniAppWhatsappTarget) {
   const publication = await loadPublication(props)
-  const { ctx } = await loadWhatsappContext(props)
+  const { whatsappContext } = await loadWhatsappContext(props)
   return await integrations.whatsapp.runAction("getFlowPreview", {
-    ctx,
+    ctx: whatsappContext,
     params: { flowSourceId: publication.sourceId },
   })
 }
@@ -188,9 +199,9 @@ export async function getMiniAppWhatsappPreview(props: MiniAppWhatsappTarget) {
  */
 export async function deleteMiniAppWhatsappDraft(props: MiniAppWhatsappTarget) {
   const publication = await loadPublication(props)
-  const { ctx } = await loadWhatsappContext(props)
+  const { whatsappContext } = await loadWhatsappContext(props)
   const result = await integrations.whatsapp.runAction("deleteFlowDraft", {
-    ctx,
+    ctx: whatsappContext,
     params: { flowSourceId: publication.sourceId },
   })
   await whatsappFlowService.markRemovedOnMeta({

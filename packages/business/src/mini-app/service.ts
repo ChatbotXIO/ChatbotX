@@ -4,118 +4,44 @@ import {
   eq,
   inArray,
   isUniqueViolationError,
-  sql,
 } from "@chatbotx.io/database/client"
 import {
+  type MiniAppListInput,
   miniAppRepository,
-  miniAppSubmissionRepository,
 } from "@chatbotx.io/database/repositories"
+import { miniAppModel } from "@chatbotx.io/database/schema"
+import type { MiniAppModel } from "@chatbotx.io/database/types"
 import {
-  miniAppModel,
-  miniAppPublicationModel,
-  miniAppSubmissionModel,
-} from "@chatbotx.io/database/schema"
-import type {
-  MiniAppModel,
-  MiniAppPublicationModel,
-  MiniAppSubmissionModel,
-} from "@chatbotx.io/database/types"
-import {
-  collectCustomFieldMappings,
-  collectFileInputNames,
-  collectInputNames,
-  type FlowJson,
-  formatAnswerForCustomField,
-  fromFlowJson,
-  MINI_APP_NAME_MAX_LENGTH,
   type MiniAppDefinition,
-  MiniAppImportError,
   type MiniAppValidationResult,
-  miniAppDefinitionSchema,
-  sanitizeMiniAppAnswers,
   toFlowJson,
   validateMiniApp,
 } from "@chatbotx.io/mini-app"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { contactService } from "../contact/service"
-import {
-  contactCustomFieldService,
-  type PendingContactCustomFieldChange,
-} from "../contact-custom-field/service"
 import { notFoundException, validationException } from "../errors"
-import { logger } from "../logger"
-import { miniAppUploadService } from "./upload-service"
+import {
+  buildNewDefinition,
+  buildUpdatedDefinition,
+  type MiniAppDefinitionInput,
+} from "./definition"
+import {
+  copyName,
+  copyNamePrefix,
+  MAX_COPY_NAME_ATTEMPTS,
+  NAME_TAKEN,
+  rethrowNameTaken,
+} from "./names"
 
-const NAME_TAKEN = "Name is already taken"
+export { importMiniAppFlowJson } from "./definition"
 
-type MiniAppWriteData = {
-  name?: string
-  enabled?: boolean
-  definition?: MiniAppDefinition
-}
-
-/** Parses an editor definition, surfacing structural errors on `definition`. */
-const parseDefinition = (definition: unknown): MiniAppDefinition => {
-  const parsed = miniAppDefinitionSchema.safeParse(definition)
-  if (!parsed.success) {
-    throw validationException("definition", "Invalid Mini App definition")
-  }
-  return parsed.data
-}
-
-/** Converts Meta Flow JSON into a definition, surfacing import errors on `flowJson`. */
-export const importMiniAppFlowJson = (
-  flowJson: FlowJson,
-): MiniAppDefinition => {
-  try {
-    return parseDefinition(fromFlowJson(flowJson))
-  } catch (error) {
-    if (error instanceof MiniAppImportError) {
-      throw validationException("flowJson", "Unsupported Flow JSON", {
-        code: error.code,
-        path: error.path,
-      })
-    }
-    throw error
-  }
-}
-
-const MAX_COPY_NAME_ATTEMPTS = 50
 /** Free names tried in turn when another copy takes one at the same time. */
 const COPY_NAME_INSERT_ATTEMPTS = 2
 
-const copyNameSuffix = (attempt: number) =>
-  attempt === 1 ? " - Copy" : ` - Copy ${attempt}`
-
-/** `<name> - Copy`, then `<name> - Copy 2`, … cut to fit the name limit. */
-const copyName = (name: string, attempt: number): string => {
-  const suffix = copyNameSuffix(attempt)
-  return `${name.slice(0, MINI_APP_NAME_MAX_LENGTH - suffix.length)}${suffix}`
-}
-
-/** The start every copy name of `name` shares, however much it was cut. */
-const copyNamePrefix = (name: string): string =>
-  name.slice(
-    0,
-    MINI_APP_NAME_MAX_LENGTH - copyNameSuffix(MAX_COPY_NAME_ATTEMPTS).length,
-  )
-
-const rethrowNameTaken = (error: unknown): never => {
-  if (isUniqueViolationError(error)) {
-    throw validationException("name", NAME_TAKEN)
-  }
-  throw error
-}
+type MiniAppScope = { workspaceId: string; id: string }
 
 class MiniAppService extends BaseService {
-  async list(input: {
-    workspaceId: string
-    keyword?: string | null
-    page: number
-    perPage: number
-    sort?: { id: string; desc: boolean }[] | null
-  }) {
+  async list(input: MiniAppListInput) {
     const [data, totalRows] = await Promise.all([
       miniAppRepository.listPaginated(input),
       miniAppRepository.count(input),
@@ -123,8 +49,8 @@ class MiniAppService extends BaseService {
     return { data, pageCount: Math.ceil(totalRows / input.perPage) }
   }
 
-  async findOrFail(input: { workspaceId: string; id: string }) {
-    const miniApp = await miniAppRepository.findByIdAndWorkspace(input)
+  async findOrFail(scope: MiniAppScope) {
+    const miniApp = await miniAppRepository.findByIdAndWorkspace(scope)
     if (!miniApp) {
       throw notFoundException("Mini App not found")
     }
@@ -139,26 +65,37 @@ class MiniAppService extends BaseService {
     return validateMiniApp(definition)
   }
 
-  async create(input: {
+  /** Inserts a Mini App with its Flow JSON generated from the definition. */
+  private async insert(values: {
     workspaceId: string
     name: string
-    definition: unknown
+    enabled: boolean
+    definition: MiniAppDefinition
   }): Promise<MiniAppModel> {
-    const definition = parseDefinition(input.definition)
+    const [created] = await db
+      .insert(miniAppModel)
+      .values({
+        id: createId(),
+        ...values,
+        flowJson: toFlowJson(values.definition),
+        submissionsCount: 0,
+      })
+      .returning()
+    return created as MiniAppModel
+  }
+
+  /** Creates a Mini App from an editor definition or Meta Flow JSON. */
+  async create(
+    input: { workspaceId: string; name: string } & MiniAppDefinitionInput,
+  ): Promise<MiniAppModel> {
+    const definition = buildNewDefinition(input)
     try {
-      const [created] = await db
-        .insert(miniAppModel)
-        .values({
-          id: createId(),
-          workspaceId: input.workspaceId,
-          name: input.name,
-          enabled: true,
-          definition,
-          flowJson: toFlowJson(definition),
-          submissionsCount: 0,
-        })
-        .returning()
-      return created as MiniAppModel
+      return await this.insert({
+        workspaceId: input.workspaceId,
+        name: input.name,
+        enabled: true,
+        definition,
+      })
     } catch (error) {
       return rethrowNameTaken(error)
     }
@@ -169,14 +106,11 @@ class MiniAppService extends BaseService {
    * named `<name> - Copy` (then `- Copy 2`, `- Copy 3`, … while taken).
    * Submissions and WhatsApp publications stay with the original.
    */
-  async duplicate(input: {
-    workspaceId: string
-    id: string
-  }): Promise<MiniAppModel> {
-    const source = await this.findOrFail(input)
+  async duplicate(scope: MiniAppScope): Promise<MiniAppModel> {
+    const source = await this.findOrFail(scope)
     const taken = new Set(
       await miniAppRepository.listNamesWithPrefix({
-        workspaceId: input.workspaceId,
+        workspaceId: scope.workspaceId,
         prefix: copyNamePrefix(source.name),
       }),
     )
@@ -188,19 +122,12 @@ class MiniAppService extends BaseService {
       .slice(0, COPY_NAME_INSERT_ATTEMPTS)
     for (const name of freeNames) {
       try {
-        const [created] = await db
-          .insert(miniAppModel)
-          .values({
-            id: createId(),
-            workspaceId: input.workspaceId,
-            name,
-            enabled: source.enabled,
-            definition: source.definition,
-            flowJson: toFlowJson(source.definition),
-            submissionsCount: 0,
-          })
-          .returning()
-        return created as MiniAppModel
+        return await this.insert({
+          workspaceId: scope.workspaceId,
+          name,
+          enabled: source.enabled,
+          definition: source.definition,
+        })
       } catch (error) {
         if (!isUniqueViolationError(error)) {
           throw error
@@ -210,15 +137,17 @@ class MiniAppService extends BaseService {
     throw validationException("name", NAME_TAKEN)
   }
 
+  /**
+   * Changes the name, enabled state and/or screens. New screens come from the
+   * editor's `definition` or from Meta `flowJson`; see `buildUpdatedDefinition`
+   * for how custom field mappings are kept.
+   */
   async update(
-    ctx: { workspaceId: string; id: string },
-    data: MiniAppWriteData,
+    scope: MiniAppScope,
+    data: { name?: string; enabled?: boolean } & MiniAppDefinitionInput,
   ): Promise<MiniAppModel> {
-    const miniApp = await this.findOrFail(ctx)
-    const definition =
-      data.definition === undefined
-        ? undefined
-        : parseDefinition(data.definition)
+    const miniApp = await this.findOrFail(scope)
+    const definition = buildUpdatedDefinition(miniApp.definition, data)
     const changes = {
       ...(data.name === undefined ? {} : { name: data.name }),
       ...(data.enabled === undefined ? {} : { enabled: data.enabled }),
@@ -234,7 +163,7 @@ class MiniAppService extends BaseService {
         .where(
           and(
             eq(miniAppModel.id, miniApp.id),
-            eq(miniAppModel.workspaceId, ctx.workspaceId),
+            eq(miniAppModel.workspaceId, scope.workspaceId),
           ),
         )
         .returning()
@@ -265,295 +194,3 @@ class MiniAppService extends BaseService {
 }
 
 export const miniAppService = new MiniAppService()
-
-class MiniAppSubmissionService extends BaseService {
-  async list(input: {
-    workspaceId: string
-    miniAppId: string
-    page: number
-    perPage: number
-  }) {
-    const [data, totalRows] = await Promise.all([
-      miniAppSubmissionRepository.listPaginated(input),
-      miniAppSubmissionRepository.count(input),
-    ])
-    return { data, pageCount: Math.ceil(totalRows / input.perPage), totalRows }
-  }
-
-  /**
-   * Stores answers from the public runner. Unknown inputs and malformed
-   * values are dropped; an empty result is rejected. When the contact is
-   * known, mapped inputs are then copied into their custom fields.
-   */
-  async create(input: {
-    miniApp: Pick<MiniAppModel, "id" | "workspaceId" | "definition">
-    contactId?: string | null
-    answers: unknown
-    /** Visitor's browser zone, anchoring answers written to date fields. */
-    sourceTimezone?: string
-  }): Promise<MiniAppSubmissionModel> {
-    const answers = sanitizeMiniAppAnswers(
-      input.miniApp.definition,
-      input.answers,
-    )
-    if (!answers || Object.keys(answers).length === 0) {
-      throw validationException("answers", "No valid answers")
-    }
-    // The token may outlive the contact; a deleted contact submits anonymously.
-    const contact = input.contactId
-      ? await contactService.findById({
-          workspaceId: input.miniApp.workspaceId,
-          id: input.contactId,
-        })
-      : undefined
-    const contactId = contact?.id ?? null
-    const fileInputNames = collectFileInputNames(input.miniApp.definition)
-    const submission = await db.transaction(async (tx) => {
-      const submissionId = createId()
-      await tx.insert(miniAppSubmissionModel).values({
-        id: submissionId,
-        workspaceId: input.miniApp.workspaceId,
-        miniAppId: input.miniApp.id,
-        contactId,
-        source: "web",
-        answers,
-      })
-      // File inputs submit upload ids; swap them for the files they name.
-      for (const [name, value] of Object.entries(answers)) {
-        if (fileInputNames.has(name) && Array.isArray(value)) {
-          answers[name] = await miniAppUploadService.claimForSubmission({
-            tx,
-            miniApp: input.miniApp,
-            contactId,
-            submissionId,
-            inputName: name,
-            uploadIds: value as string[],
-          })
-        }
-      }
-      const [created] = await tx
-        .update(miniAppSubmissionModel)
-        .set({ answers })
-        .where(eq(miniAppSubmissionModel.id, submissionId))
-        .returning()
-      await tx
-        .update(miniAppModel)
-        .set({ submissionsCount: sql`${miniAppModel.submissionsCount} + 1` })
-        .where(eq(miniAppModel.id, input.miniApp.id))
-      return created as MiniAppSubmissionModel
-    })
-    if (contact) {
-      await this.writeCustomFields({
-        workspaceId: input.miniApp.workspaceId,
-        contactId: contact.id,
-        definition: input.miniApp.definition,
-        answers,
-        sourceTimezone: input.sourceTimezone,
-      })
-    }
-    return submission
-  }
-
-  /**
-   * Saves one screen's mapped answers to the contact's custom fields as the
-   * visitor moves on, so the next screens already show the new values. File
-   * inputs wait for the final submit, which claims their uploads. Returns
-   * whether the contact is known (anonymous visitors save nothing).
-   */
-  async saveScreenAnswers(input: {
-    miniApp: Pick<MiniAppModel, "workspaceId" | "definition">
-    contactId?: string | null
-    screenKey: string
-    answers: unknown
-    sourceTimezone?: string
-  }): Promise<boolean> {
-    const screen = input.miniApp.definition.screens.find(
-      (candidate) => candidate.key === input.screenKey,
-    )
-    if (!(screen && input.contactId)) {
-      return false
-    }
-    const contact = await contactService.findById({
-      workspaceId: input.miniApp.workspaceId,
-      id: input.contactId,
-    })
-    if (!contact) {
-      return false
-    }
-    const answers = sanitizeMiniAppAnswers(
-      input.miniApp.definition,
-      input.answers,
-    )
-    const screenNames = new Set(collectInputNames(screen))
-    const fileInputNames = collectFileInputNames(input.miniApp.definition)
-    const screenAnswers = Object.fromEntries(
-      Object.entries(answers ?? {}).filter(
-        ([name]) => screenNames.has(name) && !fileInputNames.has(name),
-      ),
-    )
-    await this.writeCustomFields({
-      workspaceId: input.miniApp.workspaceId,
-      contactId: contact.id,
-      definition: input.miniApp.definition,
-      answers: screenAnswers,
-      sourceTimezone: input.sourceTimezone,
-    })
-    return true
-  }
-
-  /**
-   * Copies mapped answers into the contact's custom fields in one
-   * transaction, each field behind its own savepoint: a rejected value (e.g.
-   * text into a number field) is logged and skipped, never dropping the other
-   * fields or failing the visitor's submit. Events go out and the contact
-   * cache is cleared once, after the commit.
-   */
-  private async writeCustomFields(input: {
-    workspaceId: string
-    contactId: string
-    definition: MiniAppDefinition
-    answers: Record<string, unknown>
-    sourceTimezone?: string
-  }): Promise<void> {
-    const fields = Object.entries(
-      collectCustomFieldMappings(input.definition),
-    ).flatMap(([name, customFieldId]) => {
-      const value = formatAnswerForCustomField(input.answers[name])
-      return value === null ? [] : [{ customFieldId, value }]
-    })
-    if (fields.length === 0) {
-      return
-    }
-    const changes = await db.transaction(async (tx) => {
-      const writeFields = (batch: typeof fields) =>
-        tx.transaction((savepoint) =>
-          contactCustomFieldService.setValuesInTransaction(
-            {
-              workspaceId: input.workspaceId,
-              contactId: input.contactId,
-              fields: batch,
-              sourceTimezone: input.sourceTimezone,
-            },
-            savepoint,
-          ),
-        )
-      // All fields at once; only a rejected value falls back to one by one.
-      try {
-        return await writeFields(fields)
-      } catch {
-        // Retried field by field below to find and skip the rejected value.
-      }
-      const written: PendingContactCustomFieldChange[] = []
-      for (const field of fields) {
-        try {
-          written.push(...(await writeFields([field])))
-        } catch (err) {
-          logger.warn(
-            {
-              err,
-              contactId: input.contactId,
-              customFieldId: field.customFieldId,
-            },
-            "Mini App answer not written to its custom field",
-          )
-        }
-      }
-      return written
-    })
-    await contactCustomFieldService.emitCustomFieldChanges({
-      workspaceId: input.workspaceId,
-      contactId: input.contactId,
-      changes,
-    })
-  }
-}
-
-export const miniAppSubmissionService = new MiniAppSubmissionService()
-
-class MiniAppPublicationService extends BaseService {
-  async findForIntegration(input: {
-    miniAppId: string
-    integrationWhatsappId: string
-  }): Promise<MiniAppPublicationModel | null> {
-    return (
-      (await db.query.miniAppPublicationModel.findFirst({
-        where: {
-          miniAppId: input.miniAppId,
-          integrationWhatsappId: input.integrationWhatsappId,
-        },
-      })) ?? null
-    )
-  }
-
-  /** Every WhatsApp publication of the workspace's given Mini Apps. */
-  async listForMiniApps(input: {
-    workspaceId: string
-    miniAppIds: string[]
-  }): Promise<MiniAppPublicationModel[]> {
-    if (input.miniAppIds.length === 0) {
-      return []
-    }
-    return await db.query.miniAppPublicationModel.findMany({
-      where: {
-        miniAppId: { in: input.miniAppIds },
-        miniApp: { workspaceId: input.workspaceId },
-      },
-    })
-  }
-
-  /** Forgets a publication once its Flow is gone from Meta. */
-  async remove(input: {
-    miniAppId: string
-    integrationWhatsappId: string
-  }): Promise<void> {
-    await db
-      .delete(miniAppPublicationModel)
-      .where(
-        and(
-          eq(miniAppPublicationModel.miniAppId, input.miniAppId),
-          eq(
-            miniAppPublicationModel.integrationWhatsappId,
-            input.integrationWhatsappId,
-          ),
-        ),
-      )
-  }
-
-  /** Records the outcome of a publish attempt (one row per Mini App + number). */
-  async record(input: {
-    miniAppId: string
-    integrationWhatsappId: string
-    whatsappFlowId: string | null
-    sourceId: string
-    status: string
-    validationErrors: unknown[]
-    published: boolean
-  }): Promise<MiniAppPublicationModel> {
-    const values = {
-      whatsappFlowId: input.whatsappFlowId,
-      sourceId: input.sourceId,
-      status: input.status,
-      validationErrors: input.validationErrors,
-      ...(input.published ? { publishedAt: new Date() } : {}),
-    }
-    const [row] = await db
-      .insert(miniAppPublicationModel)
-      .values({
-        id: createId(),
-        miniAppId: input.miniAppId,
-        integrationWhatsappId: input.integrationWhatsappId,
-        ...values,
-      })
-      .onConflictDoUpdate({
-        target: [
-          miniAppPublicationModel.miniAppId,
-          miniAppPublicationModel.integrationWhatsappId,
-        ],
-        set: values,
-      })
-      .returning()
-    return row as MiniAppPublicationModel
-  }
-}
-
-export const miniAppPublicationService = new MiniAppPublicationService()

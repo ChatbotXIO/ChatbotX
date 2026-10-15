@@ -1,3 +1,4 @@
+import { nodeName, walkNodes } from "./tree"
 import type { MiniAppDefinition, MiniAppNode } from "./types"
 
 /**
@@ -125,31 +126,23 @@ export const resolveUploadRules = (
   definition: MiniAppDefinition,
   inputName: string,
 ): MiniAppUploadRules | undefined => {
-  for (const screen of definition.screens) {
-    const location = findNodeByName(screen.children, inputName)
-    if (location) {
-      return rulesFor(location)
-    }
-  }
-  return
+  const picker = filePickers(definition).find(
+    (node) => nodeName(node) === inputName,
+  )
+  return picker && rulesFor(picker)
 }
 
-const findNodeByName = (
-  nodes: readonly MiniAppNode[],
-  name: string,
-): MiniAppNode | undefined => {
-  for (const node of nodes) {
-    if (isFilePicker(node) && node.props.name === name) {
-      return node
-    }
-    for (const children of Object.values(node.slots ?? {})) {
-      const found = findNodeByName(children, name)
-      if (found) {
-        return found
+/** Every PhotoPicker / DocumentPicker of the Mini App, in document order. */
+const filePickers = (definition: MiniAppDefinition): MiniAppNode[] => {
+  const pickers: MiniAppNode[] = []
+  for (const screen of definition.screens) {
+    walkNodes(screen.children, ({ node }) => {
+      if (isFilePicker(node)) {
+        pickers.push(node)
       }
-    }
+    })
   }
-  return
+  return pickers
 }
 
 const readNumber = (value: unknown, fallback: number) =>
@@ -263,20 +256,5 @@ export const buildUploadPath = (input: {
 /** Names of every PhotoPicker / DocumentPicker in the Mini App. */
 export const collectFileInputNames = (
   definition: MiniAppDefinition,
-): Set<string> => {
-  const names = new Set<string>()
-  const visit = (nodes: readonly MiniAppNode[]) => {
-    for (const node of nodes) {
-      if (isFilePicker(node) && typeof node.props.name === "string") {
-        names.add(node.props.name)
-      }
-      for (const children of Object.values(node.slots ?? {})) {
-        visit(children)
-      }
-    }
-  }
-  for (const screen of definition.screens) {
-    visit(screen.children)
-  }
-  return names
-}
+): Set<string> =>
+  new Set(filePickers(definition).flatMap((node) => nodeName(node) ?? []))

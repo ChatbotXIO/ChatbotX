@@ -3,16 +3,6 @@ import {
   miniAppService,
   miniAppSubmissionService,
 } from "@chatbotx.io/business/mini-app"
-import type {
-  MiniAppModel,
-  MiniAppPublicationModel,
-} from "@chatbotx.io/database/types"
-import {
-  applyCustomFieldMappings,
-  collectCustomFieldMappings,
-  locateIssues,
-  validateMiniApp,
-} from "@chatbotx.io/mini-app"
 import { mcpSpec } from "@/lib/orpc/mcp-annotations"
 import {
   possibleErrorsOnCreatingResource,
@@ -24,14 +14,13 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { deleteMiniApps } from "../lib/delete-mini-apps"
-import { buildMiniAppPublicUrl } from "../lib/public-url"
+import { createTranslatedStarterDefinition } from "../lib/starter-definition"
 import {
   deleteMiniAppWhatsappDraft,
   getMiniAppWhatsappPreview,
   publishMiniAppToWhatsapp,
   publishMiniAppWhatsappDraft,
-} from "../lib/publish-to-whatsapp"
-import { createTranslatedStarterDefinition } from "../lib/starter-definition"
+} from "../lib/whatsapp-publication"
 import {
   createMiniAppPublicRequest,
   deleteMiniAppPublicRequest,
@@ -53,81 +42,11 @@ import {
   updateMiniAppPublicRequest,
   validateMiniAppPublicRequest,
 } from "../schema/public"
+import { toDetail, toPublishResponse, toSummary, toValidation } from "./mappers"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("mini-apps")
 
 const tags = ["Mini Apps"]
-
-const toSummary = (
-  miniApp: Pick<
-    MiniAppModel,
-    "id" | "name" | "enabled" | "submissionsCount" | "createdAt" | "updatedAt"
-  >,
-) => ({
-  id: miniApp.id,
-  name: miniApp.name,
-  enabled: miniApp.enabled,
-  submissionsCount: miniApp.submissionsCount,
-  createdAt: miniApp.createdAt,
-  updatedAt: miniApp.updatedAt,
-  publicUrl: buildMiniAppPublicUrl(miniApp.id),
-})
-
-const toValidation = (definition: MiniAppModel["definition"]) => {
-  const result = validateMiniApp(definition)
-  return {
-    valid: result.valid,
-    issues: locateIssues(definition, result.issues),
-  }
-}
-
-/**
- * A new Flow JSON drops editor-only data, so existing custom field mappings
- * are carried over by input name before `customFieldMappings` is applied.
- */
-const buildUpdatedDefinition = (
-  current: MiniAppModel["definition"],
-  input: {
-    flowJson?: Parameters<typeof importMiniAppFlowJson>[0]
-    customFieldMappings?: Record<string, string | null>
-  },
-) => {
-  if (!(input.flowJson || input.customFieldMappings)) {
-    return
-  }
-  const base = input.flowJson ? importMiniAppFlowJson(input.flowJson) : current
-  return applyCustomFieldMappings(base, {
-    ...(input.flowJson ? collectCustomFieldMappings(current) : {}),
-    ...input.customFieldMappings,
-  })
-}
-
-const toPublishResponse = (
-  publication: Pick<
-    MiniAppPublicationModel,
-    "status" | "whatsappFlowId" | "validationErrors"
-  > & { published: boolean },
-) => ({
-  status: publication.status,
-  published: publication.published,
-  whatsappFlowId: publication.whatsappFlowId,
-  validationErrors: publication.validationErrors as unknown[],
-})
-
-const toDetail = (
-  miniApp: MiniAppModel & { publications?: MiniAppPublicationModel[] },
-) => ({
-  ...toSummary(miniApp),
-  flowJson: miniApp.flowJson as unknown as Record<string, unknown>,
-  customFieldMappings: collectCustomFieldMappings(miniApp.definition),
-  validation: toValidation(miniApp.definition),
-  publications: (miniApp.publications ?? []).map((publication) => ({
-    integrationWhatsappId: publication.integrationWhatsappId,
-    status: publication.status,
-    whatsappFlowId: publication.whatsappFlowId,
-    publishedAt: publication.publishedAt,
-  })),
-})
 
 export const miniAppsPublicRouter = {
   list: workspaceTokenAuthAPI
@@ -213,12 +132,10 @@ export const miniAppsPublicRouter = {
       const created = await miniAppService.create({
         workspaceId: context.workspace.id,
         name: input.name,
-        definition: applyCustomFieldMappings(
-          input.flowJson
-            ? importMiniAppFlowJson(input.flowJson)
-            : await createTranslatedStarterDefinition(),
-          input.customFieldMappings ?? {},
-        ),
+        customFieldMappings: input.customFieldMappings,
+        ...(input.flowJson
+          ? { flowJson: input.flowJson }
+          : { definition: await createTranslatedStarterDefinition() }),
       })
       return toDetail(created)
     }),
@@ -258,14 +175,15 @@ export const miniAppsPublicRouter = {
     .output(miniAppPublicResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const ctx = { workspaceId: context.workspace.id, id: input.id }
-      const current = await miniAppService.findOrFail(ctx)
-      await miniAppService.update(ctx, {
+      const scope = { workspaceId: context.workspace.id, id: input.id }
+      await miniAppService.update(scope, {
         name: input.name,
         enabled: input.enabled,
-        definition: buildUpdatedDefinition(current.definition, input),
+        flowJson: input.flowJson,
+        customFieldMappings: input.customFieldMappings,
       })
-      return toDetail(await miniAppService.findOrFail(ctx))
+      // Reloaded for its publications, which the update does not return.
+      return toDetail(await miniAppService.findOrFail(scope))
     }),
 
   delete: workspaceTokenAuthAPI

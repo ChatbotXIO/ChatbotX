@@ -1,5 +1,6 @@
 "use client"
 
+import { findScreen, type MiniAppScreen } from "@chatbotx.io/mini-app"
 import { createContext, type ReactNode, useContext, useState } from "react"
 import { useStore } from "zustand"
 import {
@@ -36,4 +37,11 @@ export function useMiniAppEditor<T>(
     )
   }
   return useStore(store, selector)
+}
+
+/** The screen the editor shows, or undefined while none is selected. */
+export function useSelectedScreen(): MiniAppScreen | undefined {
+  return useMiniAppEditor((state) =>
+    findScreen(state.definition, state.selectedScreenKey),
+  )
 }

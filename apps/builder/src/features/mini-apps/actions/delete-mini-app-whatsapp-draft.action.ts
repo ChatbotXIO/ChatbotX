@@ -2,7 +2,7 @@
 
 import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
-import { deleteMiniAppWhatsappDraft } from "../lib/publish-to-whatsapp"
+import { deleteMiniAppWhatsappDraft } from "../lib/whatsapp-publication"
 import { miniAppWhatsappRequest } from "../schema/action"
 
 // Deleting stays available after trial expiry (read/delete-only workspaces).

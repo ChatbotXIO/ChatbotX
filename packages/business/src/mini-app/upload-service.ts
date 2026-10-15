@@ -21,9 +21,9 @@ import {
 } from "@chatbotx.io/mini-app"
 import { createId, getPublicFileUrl } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { contactService } from "../contact/service"
 import { ChatbotXException, validationException } from "../errors"
 import { resolveTenantSettings } from "../platform/settings"
+import { findVisitorContactId } from "./visitor-contact"
 
 const MAX_ORIGINAL_NAME_LENGTH = 200
 
@@ -59,6 +59,65 @@ const publicUrl = async (workspaceId: string, path: string) => {
   return getPublicFileUrl(path, storageUrl)
 }
 
+type UploadedFile = {
+  name: string
+  type: string
+  size: number
+  bytes: Uint8Array
+}
+
+type UploadingMiniApp = Pick<MiniAppModel, "id" | "workspaceId" | "definition">
+
+/** The file's verified MIME type; throws when the input's rules refuse it. */
+const verifyFile = (
+  miniApp: UploadingMiniApp,
+  inputName: string,
+  file: UploadedFile,
+): string => {
+  const rules = resolveUploadRules(miniApp.definition, inputName)
+  if (!rules) {
+    throw new MiniAppUploadError("unknown_input")
+  }
+  const verdict = verifyUpload({
+    rules,
+    size: file.size,
+    head: file.bytes.subarray(0, MINI_APP_UPLOAD_SNIFF_BYTES),
+    declaredMimeType: file.type,
+  })
+  if (!verdict.ok) {
+    throw new MiniAppUploadError(verdict.reason)
+  }
+  return verdict.mimeType
+}
+
+/** Puts the file in public storage; returns its storage path. */
+const storeObject = async (input: {
+  miniApp: UploadingMiniApp
+  contactId: string | null
+  file: UploadedFile
+  mimeType: string
+}): Promise<string> => {
+  const fileName = sanitizeFileName(input.file.name)
+  const path = buildUploadPath({
+    workspaceId: input.miniApp.workspaceId,
+    miniAppId: input.miniApp.id,
+    contactId: input.contactId,
+    randomKey: randomToken(),
+    fileName,
+  })
+  const isImage = input.mimeType.startsWith("image/")
+  await uploader.putObject(path, input.file.bytes, {
+    ACL: "public-read",
+    ContentType: input.mimeType,
+    ContentLength: input.file.size,
+    // Documents download rather than open inline from the public URL.
+    ...(isImage
+      ? {}
+      : { ContentDisposition: `attachment; filename="${fileName}"` }),
+  })
+  return path
+}
+
 class MiniAppUploadService extends BaseService {
   /**
    * Stores one file a visitor picked in a PhotoPicker / DocumentPicker. The
@@ -66,76 +125,42 @@ class MiniAppUploadService extends BaseService {
    * `uploadId` is what the submit carries.
    */
   async create(input: {
-    miniApp: Pick<MiniAppModel, "id" | "workspaceId" | "definition">
+    miniApp: UploadingMiniApp
     contactId: string | null
     inputName: string
-    file: { name: string; type: string; size: number; bytes: Uint8Array }
+    file: UploadedFile
   }): Promise<MiniAppUploadResult> {
-    const rules = resolveUploadRules(input.miniApp.definition, input.inputName)
-    if (!rules) {
-      throw new MiniAppUploadError("unknown_input")
-    }
-    const verdict = verifyUpload({
-      rules,
-      size: input.file.size,
-      head: input.file.bytes.subarray(0, MINI_APP_UPLOAD_SNIFF_BYTES),
-      declaredMimeType: input.file.type,
+    const { miniApp, file } = input
+    const mimeType = verifyFile(miniApp, input.inputName, file)
+    const contactId = await findVisitorContactId({
+      workspaceId: miniApp.workspaceId,
+      contactId: input.contactId,
     })
-    if (!verdict.ok) {
-      throw new MiniAppUploadError(verdict.reason)
-    }
-
-    // The token may outlive the contact; a deleted contact uploads anonymously.
-    const contact = input.contactId
-      ? await contactService.findById({
-          workspaceId: input.miniApp.workspaceId,
-          id: input.contactId,
-        })
-      : undefined
-    const contactId = contact?.id ?? null
-    const fileName = sanitizeFileName(input.file.name)
-    const path = buildUploadPath({
-      workspaceId: input.miniApp.workspaceId,
-      miniAppId: input.miniApp.id,
-      contactId,
-      randomKey: randomToken(),
-      fileName,
-    })
-    const isImage = verdict.mimeType.startsWith("image/")
-    await uploader.putObject(path, input.file.bytes, {
-      ACL: "public-read",
-      ContentType: verdict.mimeType,
-      ContentLength: input.file.size,
-      // Documents download rather than open inline from the public URL.
-      ...(isImage
-        ? {}
-        : { ContentDisposition: `attachment; filename="${fileName}"` }),
-    })
-
+    const path = await storeObject({ miniApp, contactId, file, mimeType })
     const uploadToken = randomToken()
     const originalName =
-      input.file.name.slice(0, MAX_ORIGINAL_NAME_LENGTH) || fileName
+      file.name.slice(0, MAX_ORIGINAL_NAME_LENGTH) ||
+      sanitizeFileName(file.name)
     await db.insert(miniAppUploadModel).values({
       id: createId(),
-      workspaceId: input.miniApp.workspaceId,
-      miniAppId: input.miniApp.id,
+      workspaceId: miniApp.workspaceId,
+      miniAppId: miniApp.id,
       contactId,
       submissionId: null,
       inputName: input.inputName,
       uploadToken,
       path,
       fileName: originalName,
-      mimeType: verdict.mimeType,
-      size: input.file.size,
+      mimeType,
+      size: file.size,
       status: "pending",
     })
-
     return {
       uploadId: uploadToken,
       name: originalName,
-      size: input.file.size,
-      mimeType: verdict.mimeType,
-      url: await publicUrl(input.miniApp.workspaceId, path),
+      size: file.size,
+      mimeType,
+      url: await publicUrl(miniApp.workspaceId, path),
     }
   }
 
@@ -147,7 +172,7 @@ class MiniAppUploadService extends BaseService {
    */
   async claimForSubmission(input: {
     tx: DatabaseClient
-    miniApp: Pick<MiniAppModel, "id" | "workspaceId" | "definition">
+    miniApp: UploadingMiniApp
     contactId: string | null
     submissionId: string
     inputName: string

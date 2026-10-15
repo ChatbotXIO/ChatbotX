@@ -1,6 +1,33 @@
-// biome-ignore-all lint/suspicious/noThenProperty: `then` is the Flow JSON If branch key
 import { z } from "zod"
-import type { MiniAppActionName, MiniAppComponentType } from "./types"
+import type { MiniAppActionName, MiniAppComponentType } from "../types"
+import {
+  MINI_APP_PLACEHOLDER_IMAGE,
+  type MiniAppDefaultText,
+} from "./default-text"
+import {
+  base64Image,
+  dataSource,
+  inputBase,
+  inputWithoutEnabled,
+  isoDate,
+  maxFileSizeKb,
+  mediaSize,
+  miniAppNavigationItemSchema,
+  optionalText,
+  pickerBase,
+  requiredText,
+  scaleType,
+  selectedItemsRange,
+  textProps,
+  uploadedFilesCount,
+  visible,
+} from "./fields"
+import {
+  MINI_APP_MAX_DROPDOWN_OPTIONS,
+  MINI_APP_MAX_IMAGE_BASE64_LENGTH,
+  MINI_APP_MAX_NAVIGATION_ITEMS,
+  MINI_APP_MAX_OPTIONS,
+} from "./limits"
 
 /**
  * Component catalog, following Meta's Flow JSON 7.3 component reference.
@@ -17,175 +44,6 @@ export type MiniAppComponentCategory =
   | "container"
 
 export type MiniAppSlotKind = "form" | "if" | "switch"
-
-export type MiniAppDefaultTextKey =
-  | "heading"
-  | "subheading"
-  | "body"
-  | "caption"
-  | "richText"
-  | "textInputLabel"
-  | "textAreaLabel"
-  | "dropdownLabel"
-  | "radioLabel"
-  | "checkboxLabel"
-  | "chipsLabel"
-  | "dateLabel"
-  | "calendarLabel"
-  | "optInLabel"
-  | "photoLabel"
-  | "documentLabel"
-  | "linkText"
-  | "footerLabel"
-  | "option"
-  | "navigationItem"
-  | "imageAlt"
-
-export type MiniAppDefaultText = (key: MiniAppDefaultTextKey) => string
-
-export const defaultMiniAppText: MiniAppDefaultText = (key) =>
-  ({
-    heading: "Heading",
-    subheading: "Subheading",
-    body: "Body text",
-    caption: "Caption",
-    richText: "## Title\n\nSome **rich** text.",
-    textInputLabel: "Your answer",
-    textAreaLabel: "Details",
-    dropdownLabel: "Choose one",
-    radioLabel: "Choose one",
-    checkboxLabel: "Choose any",
-    chipsLabel: "Choose any",
-    dateLabel: "Date",
-    calendarLabel: "Date",
-    optInLabel: "I agree to the terms",
-    photoLabel: "Upload photos",
-    documentLabel: "Upload documents",
-    linkText: "Learn more",
-    footerLabel: "Continue",
-    option: "Option",
-    navigationItem: "Item",
-    imageAlt: "Image",
-  })[key]
-
-/** A 1×1 light-grey PNG, used as the placeholder for new images. */
-export const MINI_APP_PLACEHOLDER_IMAGE =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4//8/AAX+Av4N70a4AAAAAElFTkSuQmCC"
-
-/** Image payloads are base64 strings; ~300 KB of image ≈ 400 K characters. */
-export const MINI_APP_MAX_IMAGE_BASE64_LENGTH = 410_000
-/** Images inside selection options are capped at 100 KB by Meta. */
-export const MINI_APP_MAX_OPTION_IMAGE_BASE64_LENGTH = 137_000
-
-const BASE64_REGEX = /^[A-Za-z0-9+/]+={0,2}$/
-const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/
-const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
-
-const requiredText = (max: number) => z.string().trim().min(1).max(max)
-const optionalText = (max: number) =>
-  z.string().trim().min(1).max(max).optional()
-const base64Image = (max: number) => z.string().max(max).regex(BASE64_REGEX)
-const isoDate = z.string().regex(DATE_REGEX)
-const fontWeight = z.enum(["bold", "italic", "bold_italic", "normal"])
-const scaleType = z.enum(["cover", "contain"])
-const visible = z.boolean().optional()
-
-export const MINI_APP_MAX_OPTIONS = 20
-export const MINI_APP_MAX_DROPDOWN_OPTIONS = 200
-
-export const miniAppOptionSchema = z.strictObject({
-  id: requiredText(80),
-  title: requiredText(30),
-  description: optionalText(300),
-  metadata: optionalText(20),
-  enabled: z.boolean().optional(),
-  image: base64Image(MINI_APP_MAX_OPTION_IMAGE_BASE64_LENGTH).optional(),
-  "alt-text": optionalText(100),
-  color: z.string().regex(HEX_COLOR_REGEX).optional(),
-})
-export type MiniAppOption = z.infer<typeof miniAppOptionSchema>
-
-const dataSource = (max: number, min = 1) =>
-  z
-    .array(miniAppOptionSchema)
-    .min(min)
-    .max(max)
-    .refine(
-      (items) => new Set(items.map((item) => item.id)).size === items.length,
-      { message: "duplicate_option_id" },
-    )
-
-export const MINI_APP_MAX_NAVIGATION_ITEMS = 20
-
-export const miniAppNavigationItemSchema = z.strictObject({
-  id: requiredText(80),
-  "main-content": z.strictObject({
-    title: requiredText(30),
-    description: optionalText(20),
-    metadata: optionalText(80),
-  }),
-  start: z
-    .strictObject({
-      image: base64Image(MINI_APP_MAX_OPTION_IMAGE_BASE64_LENGTH),
-      "alt-text": optionalText(100),
-    })
-    .optional(),
-  end: z
-    .strictObject({
-      title: optionalText(10),
-      description: optionalText(10),
-      metadata: optionalText(10),
-    })
-    .optional(),
-  badge: optionalText(15),
-  tags: z.array(requiredText(15)).max(3).optional(),
-  "on-click-action": z.unknown(),
-})
-export type MiniAppNavigationItem = z.infer<typeof miniAppNavigationItemSchema>
-
-// Meta rejects any property a component does not declare (INVALID_PROPERTY_KEY),
-// so every props schema is strict and each input spreads only what it supports.
-const inputBase = {
-  name: z.string(),
-  required: z.boolean().optional(),
-  enabled: z.boolean().optional(),
-  visible,
-}
-/**
- * TextInput types Meta has no keyboard for. They are sent to WhatsApp as a
- * text input checked by this pattern; the web runner shows a native picker.
- */
-export const TEXT_INPUT_DATE_FORMATS = {
-  date: {
-    pattern: "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
-    helperText: "YYYY-MM-DD",
-  },
-  datetime: {
-    pattern:
-      "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])[ T]([01]\\d|2[0-3]):[0-5]\\d$",
-    helperText: "YYYY-MM-DD HH:mm",
-  },
-} as const
-export type TextInputDateType = keyof typeof TEXT_INPUT_DATE_FORMATS
-
-export const isTextInputDateType = (
-  value: unknown,
-): value is TextInputDateType =>
-  typeof value === "string" && value in TEXT_INPUT_DATE_FORMATS
-
-/** TextInput and OptIn have no `enabled`. */
-const { enabled: _enabled, ...inputWithoutEnabled } = inputBase
-/** Photo/Document pickers use `min-uploaded-*` instead of `required`. */
-const { required: _required, ...pickerBase } = inputBase
-
-const textProps = (max: number) =>
-  z.strictObject({
-    text: requiredText(max),
-    "font-weight": fontWeight.optional(),
-    strikethrough: z.boolean().optional(),
-    markdown: z.boolean().optional(),
-    visible,
-  })
 
 export interface MiniAppComponentDefinition {
   actionRequired?: boolean
@@ -317,7 +175,7 @@ const definitions: MiniAppComponentDefinition[] = [
       label: requiredText(30),
       description: optionalText(300),
       "data-source": dataSource(MINI_APP_MAX_OPTIONS),
-      "media-size": z.enum(["regular", "large"]).optional(),
+      "media-size": mediaSize.optional(),
       "init-value": optionalText(80),
       "error-message": optionalText(30),
     }),
@@ -336,9 +194,8 @@ const definitions: MiniAppComponentDefinition[] = [
       label: requiredText(30),
       description: optionalText(300),
       "data-source": dataSource(MINI_APP_MAX_OPTIONS),
-      "min-selected-items": z.number().int().min(0).max(20).optional(),
-      "max-selected-items": z.number().int().min(1).max(20).optional(),
-      "media-size": z.enum(["regular", "large"]).optional(),
+      ...selectedItemsRange,
+      "media-size": mediaSize.optional(),
       "init-value": z.array(z.string()).optional(),
       "error-message": optionalText(30),
     }),
@@ -357,8 +214,7 @@ const definitions: MiniAppComponentDefinition[] = [
       label: requiredText(80),
       description: optionalText(300),
       "data-source": dataSource(MINI_APP_MAX_OPTIONS, 2),
-      "min-selected-items": z.number().int().min(0).max(20).optional(),
-      "max-selected-items": z.number().int().min(1).max(20).optional(),
+      ...selectedItemsRange,
       "init-value": z.array(z.string()).optional(),
       "error-message": optionalText(30),
     }),
@@ -436,9 +292,9 @@ const definitions: MiniAppComponentDefinition[] = [
       "photo-source": z
         .enum(["camera_gallery", "camera", "gallery"])
         .optional(),
-      "max-file-size-kb": z.number().int().min(1).max(25_600).optional(),
-      "min-uploaded-photos": z.number().int().min(0).max(30).optional(),
-      "max-uploaded-photos": z.number().int().min(1).max(30).optional(),
+      "max-file-size-kb": maxFileSizeKb,
+      "min-uploaded-photos": uploadedFilesCount(0),
+      "max-uploaded-photos": uploadedFilesCount(1),
       "error-message": optionalText(80),
     }),
     defaultProps: (text) => ({
@@ -455,9 +311,9 @@ const definitions: MiniAppComponentDefinition[] = [
       ...pickerBase,
       label: requiredText(80),
       description: optionalText(300),
-      "max-file-size-kb": z.number().int().min(1).max(25_600).optional(),
-      "min-uploaded-documents": z.number().int().min(0).max(30).optional(),
-      "max-uploaded-documents": z.number().int().min(1).max(30).optional(),
+      "max-file-size-kb": maxFileSizeKb,
+      "min-uploaded-documents": uploadedFilesCount(0),
+      "max-uploaded-documents": uploadedFilesCount(1),
       "allowed-mime-types": z.array(requiredText(120)).max(30).optional(),
       "error-message": optionalText(80),
     }),
@@ -541,7 +397,7 @@ const definitions: MiniAppComponentDefinition[] = [
         .array(miniAppNavigationItemSchema)
         .min(1)
         .max(MINI_APP_MAX_NAVIGATION_ITEMS),
-      "media-size": z.enum(["regular", "large"]).optional(),
+      "media-size": mediaSize.optional(),
       visible,
     }),
     defaultProps: (text) => ({
@@ -610,86 +466,6 @@ export const NAMED_COMPONENT_TYPES: ReadonlySet<MiniAppComponentType> = new Set(
   ["Form", "NavigationList"],
 )
 
-export const MINI_APP_MAX_COMPONENTS_PER_SCREEN = 50
-export const MINI_APP_MAX_IF_DEPTH = 3
-
-/** Components Meta allows inside `If` branches (Footer only at the first If level). */
-export const IF_ALLOWED_CHILDREN: ReadonlySet<MiniAppComponentType> = new Set([
-  "TextHeading",
-  "TextSubheading",
-  "TextBody",
-  "TextCaption",
-  "CheckboxGroup",
-  "ChipsSelector",
-  "DatePicker",
-  "Dropdown",
-  "EmbeddedLink",
-  "Footer",
-  "Image",
-  "OptIn",
-  "RadioButtonsGroup",
-  "Switch",
-  "TextArea",
-  "TextInput",
-  "If",
-])
-
-/** Components Meta allows inside `Switch` cases. */
-export const SWITCH_ALLOWED_CHILDREN: ReadonlySet<MiniAppComponentType> =
-  new Set([
-    "TextHeading",
-    "TextSubheading",
-    "TextBody",
-    "TextCaption",
-    "CheckboxGroup",
-    "ChipsSelector",
-    "DatePicker",
-    "Dropdown",
-    "EmbeddedLink",
-    "Footer",
-    "Image",
-    "OptIn",
-    "RadioButtonsGroup",
-    "TextArea",
-    "TextInput",
-  ])
-
-const FORM_DISALLOWED_CHILDREN: ReadonlySet<MiniAppComponentType> = new Set([
-  "Form",
-  "NavigationList",
-])
-
-/** Whether `child` may be placed into a slot of a container of `parentType`. */
-export const canPlaceInSlot = (
-  parentType: MiniAppComponentType | "Screen",
-  child: MiniAppComponentType,
-): boolean => {
-  switch (parentType) {
-    case "Screen":
-      return true
-    case "Form":
-      return !FORM_DISALLOWED_CHILDREN.has(child)
-    case "If":
-      return IF_ALLOWED_CHILDREN.has(child)
-    case "Switch":
-      return SWITCH_ALLOWED_CHILDREN.has(child)
-    default:
-      return false
-  }
-}
-
-/** Default slot keys for a freshly created container. */
-export const defaultSlotsFor = (
-  type: MiniAppComponentType,
-): Record<string, []> | undefined => {
-  switch (MINI_APP_COMPONENTS[type].slotKind) {
-    case "form":
-      return { children: [] }
-    case "if":
-      return { then: [], else: [] }
-    case "switch":
-      return { case_1: [] }
-    default:
-      return
-  }
-}
+/** Whether a component of this type carries a `name`. */
+export const needsName = (type: MiniAppComponentType): boolean =>
+  MINI_APP_COMPONENTS[type].isInput || NAMED_COMPONENT_TYPES.has(type)

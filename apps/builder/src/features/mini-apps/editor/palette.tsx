@@ -10,64 +10,12 @@ import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { ScrollArea } from "@chatbotx.io/ui/components/ui/scroll-area"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useDraggable } from "@dnd-kit/core"
-import {
-  AlignLeftIcon,
-  CalendarDaysIcon,
-  CalendarIcon,
-  CheckSquareIcon,
-  ChevronDownSquareIcon,
-  CircleDotIcon,
-  FileTextIcon,
-  GalleryHorizontalIcon,
-  GitBranchIcon,
-  HeadingIcon,
-  ImageIcon,
-  LinkIcon,
-  ListIcon,
-  type LucideIcon,
-  PilcrowIcon,
-  RectangleHorizontalIcon,
-  SearchIcon,
-  ShieldCheckIcon,
-  SplitIcon,
-  SquareStackIcon,
-  TagsIcon,
-  TextCursorInputIcon,
-  TextIcon,
-  TypeIcon,
-  UploadIcon,
-} from "lucide-react"
+import { SearchIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
+import { componentIcon } from "../lib/component-icons"
 import { categoryLabelKey, componentLabelKey } from "../lib/labels"
 import type { DragSource } from "./dnd"
-
-export const componentIcon: Record<MiniAppComponentType, LucideIcon> = {
-  TextHeading: HeadingIcon,
-  TextSubheading: TypeIcon,
-  TextBody: TextIcon,
-  TextCaption: AlignLeftIcon,
-  RichText: PilcrowIcon,
-  TextInput: TextCursorInputIcon,
-  TextArea: FileTextIcon,
-  Dropdown: ChevronDownSquareIcon,
-  RadioButtonsGroup: CircleDotIcon,
-  CheckboxGroup: CheckSquareIcon,
-  ChipsSelector: TagsIcon,
-  DatePicker: CalendarIcon,
-  CalendarPicker: CalendarDaysIcon,
-  OptIn: ShieldCheckIcon,
-  PhotoPicker: ImageIcon,
-  DocumentPicker: UploadIcon,
-  Image: ImageIcon,
-  ImageCarousel: GalleryHorizontalIcon,
-  EmbeddedLink: LinkIcon,
-  NavigationList: ListIcon,
-  Footer: RectangleHorizontalIcon,
-  Form: SquareStackIcon,
-  If: GitBranchIcon,
-  Switch: SplitIcon,
-}
 
 function PaletteItem({
   definition,

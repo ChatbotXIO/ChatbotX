@@ -63,7 +63,9 @@ vi.mock("../src/mini-app/upload-service", () => ({
 }))
 
 const { applyCustomFieldMappings } = await import("@chatbotx.io/mini-app")
-const { miniAppSubmissionService } = await import("../src/mini-app/service")
+const { miniAppSubmissionService } = await import(
+  "../src/mini-app/submission-service"
+)
 
 const definition = applyCustomFieldMappings(
   {

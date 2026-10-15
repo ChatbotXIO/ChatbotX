@@ -1,11 +1,12 @@
 "use client"
 
-import type { MiniAppDefinition } from "@chatbotx.io/mini-app"
 import {
+  flattenNodes,
+  inputName,
   isFileAnswer,
-  MINI_APP_COMPONENTS,
+  type MiniAppDefinition,
   type MiniAppFileAnswer,
-  walkNodes,
+  type MiniAppOption,
 } from "@chatbotx.io/mini-app"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
@@ -16,39 +17,53 @@ import { FileTextIcon } from "lucide-react"
 import { useFormatter, useTranslations } from "next-intl"
 import { use, useMemo } from "react"
 import { SubmissionContactCell } from "./components/submission-contact-cell"
+import { readArray, readString } from "./lib/props"
 import type { listMiniAppSubmissions } from "./queries"
 
 type SubmissionsResponse = Awaited<ReturnType<typeof listMiniAppSubmissions>>
 type SubmissionRow = SubmissionsResponse["data"][number]
 
+type FieldColumn = { name: string; label: string; options: Map<string, string> }
+
 /** Input name → its label (and option titles), so answers read like the form. */
-const buildFieldIndex = (definition: MiniAppDefinition) => {
-  const fields: {
-    name: string
-    label: string
-    options: Map<string, string>
-  }[] = []
-  for (const screen of definition.screens) {
-    walkNodes(screen.children, ({ node }) => {
-      const name = node.props.name
-      if (
-        !(MINI_APP_COMPONENTS[node.type].isInput && typeof name === "string")
-      ) {
-        return
+const buildFieldIndex = (definition: MiniAppDefinition): FieldColumn[] =>
+  definition.screens
+    .flatMap((screen) => flattenNodes(screen.children))
+    .flatMap((node) => {
+      const name = inputName(node)
+      if (!name) {
+        return []
       }
-      const options = new Map<string, string>()
-      const dataSource = node.props["data-source"]
-      if (Array.isArray(dataSource)) {
-        for (const option of dataSource as { id: string; title: string }[]) {
-          options.set(option.id, option.title)
-        }
-      }
-      const label =
-        typeof node.props.label === "string" ? node.props.label : name
-      fields.push({ name, label, options })
+      const options = readArray<MiniAppOption>(node.props["data-source"])
+      return [
+        {
+          name,
+          label: readString(node.props.label) || name,
+          options: new Map(options.map((option) => [option.id, option.title])),
+        },
+      ]
     })
+
+/** An answer as text: option titles for ids, a yes/no word for a boolean, `a → b` for a range. */
+const formatAnswer = (
+  value: unknown,
+  options: Map<string, string>,
+  yesNo: { yes: string; no: string },
+): string => {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => options.get(String(item)) ?? String(item))
+      .join(", ")
   }
-  return fields
+  if (typeof value === "boolean") {
+    return value ? yesNo.yes : yesNo.no
+  }
+  if (value && typeof value === "object") {
+    return Object.values(value).join(" → ")
+  }
+  return value === undefined || value === null
+    ? ""
+    : (options.get(String(value)) ?? String(value))
 }
 
 /** Thumbnails for photos, file names for documents — each opens the public URL. */
@@ -105,26 +120,9 @@ export function SubmissionsTable({
   const fields = useMemo(() => buildFieldIndex(definition), [definition])
 
   const columns = useMemo<ColumnDef<SubmissionRow>[]>(() => {
-    const formatAnswer = (
-      value: unknown,
-      options: Map<string, string>,
-    ): string => {
-      if (Array.isArray(value)) {
-        return value
-          .map((item) => options.get(String(item)) ?? String(item))
-          .join(", ")
-      }
-      if (typeof value === "boolean") {
-        return value
-          ? t("miniApps.submissions.yes")
-          : t("miniApps.submissions.no")
-      }
-      if (value && typeof value === "object") {
-        return Object.values(value).join(" → ")
-      }
-      return value === undefined || value === null
-        ? ""
-        : (options.get(String(value)) ?? String(value))
+    const yesNo = {
+      yes: t("miniApps.submissions.yes"),
+      no: t("miniApps.submissions.no"),
     }
     return [
       {
@@ -177,7 +175,7 @@ export function SubmissionsTable({
               <FileAnswerCell files={answer} />
             ) : (
               <span className="line-clamp-2 max-w-[240px]">
-                {formatAnswer(answer, field.options)}
+                {formatAnswer(answer, field.options, yesNo)}
               </span>
             )
           },

@@ -2,7 +2,8 @@
 
 import { workspaceIdAndIdRequestParams } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { publishMiniAppWhatsappDraft } from "../lib/publish-to-whatsapp"
+import { toPublishResponse } from "../api/mappers"
+import { publishMiniAppWhatsappDraft } from "../lib/whatsapp-publication"
 import { miniAppWhatsappRequest } from "../schema/action"
 
 export const publishMiniAppWhatsappDraftAction = workspaceActionClient
@@ -14,9 +15,5 @@ export const publishMiniAppWhatsappDraftAction = workspaceActionClient
       miniAppId: id,
       integrationWhatsappId: parsedInput.integrationWhatsappId,
     })
-    return {
-      status: publication.status,
-      published: publication.published,
-      validationErrors: publication.validationErrors as unknown[],
-    }
+    return toPublishResponse(publication)
   })

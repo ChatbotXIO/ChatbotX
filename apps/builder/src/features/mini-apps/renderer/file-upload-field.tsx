@@ -6,6 +6,7 @@ import {
   MINI_APP_PHOTO_MIME_TYPES,
   type MiniAppFileAnswer,
   type MiniAppNode,
+  nodeName,
 } from "@chatbotx.io/mini-app"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { FileTextIcon, ImageIcon, Loader2Icon, XIcon } from "lucide-react"
@@ -99,7 +100,7 @@ export function FileUploadField({
   filesRef.current = value
 
   const isPhoto = node.type === "PhotoPicker"
-  const name = typeof node.props.name === "string" ? node.props.name : ""
+  const name = nodeName(node) ?? ""
   const maxFiles = Math.min(
     readNumber(
       node.props[isPhoto ? "max-uploaded-photos" : "max-uploaded-documents"],

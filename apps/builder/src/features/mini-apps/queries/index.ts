@@ -1,4 +1,7 @@
-import { integrationWhatsappService } from "@chatbotx.io/business"
+import {
+  integrationWhatsappService,
+  whatsappNumberLabel,
+} from "@chatbotx.io/business"
 import {
   miniAppService,
   miniAppSubmissionService,
@@ -35,23 +38,8 @@ export async function listWhatsappPublishTargets(
   await assertCurrentUserCanAccessChatbot(workspaceId)
   const integrations =
     await integrationWhatsappService.listByWorkspaceId(workspaceId)
-  return integrations.map((integration) => {
-    const phoneNumber = (
-      integration.auth as {
-        metadata?: {
-          phoneNumber?: {
-            verified_name?: string
-            display_phone_number?: string
-          }
-        }
-      }
-    ).metadata?.phoneNumber
-    const label = [
-      phoneNumber?.verified_name,
-      phoneNumber?.display_phone_number,
-    ]
-      .filter(Boolean)
-      .join(" · ")
-    return { id: integration.id, label: label || integration.id }
-  })
+  return integrations.map((integration) => ({
+    id: integration.id,
+    label: whatsappNumberLabel(integration),
+  }))
 }
