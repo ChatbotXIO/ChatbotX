@@ -19,10 +19,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 // itself is PostgreSQL-specific and is not re-evaluated by this mock.
 // ---------------------------------------------------------------------------
 
-const { mockDbUpdate, mockEmitContactInfoUpdated } = vi.hoisted(() => ({
-  mockDbUpdate: vi.fn(),
-  mockEmitContactInfoUpdated: vi.fn(),
-}))
+const { mockDbUpdate, mockEmitContactInfoUpdated, mockEnqueueOptimizations } =
+  vi.hoisted(() => ({
+    mockDbUpdate: vi.fn(),
+    mockEmitContactInfoUpdated: vi.fn(),
+    mockEnqueueOptimizations: vi.fn(),
+  }))
 
 const sqlCalls: Array<{ strings: readonly string[]; values: unknown[] }> = []
 
@@ -65,6 +67,11 @@ vi.mock("@chatbotx.io/redis", () => ({
 
 vi.mock("@chatbotx.io/analytics", () => ({
   macAnalyticsService: {},
+}))
+
+vi.mock("@chatbotx.io/worker-config", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/worker-config")>()),
+  enqueueStoredImageOptimizations: mockEnqueueOptimizations,
 }))
 
 vi.mock("../src/quota-enforcement/service", () => ({
@@ -204,6 +211,49 @@ describe("contactService.updateIfProfileNameEmpty", () => {
     expect(result).toBeUndefined()
     expect(invalidateSpy).not.toHaveBeenCalled()
     expect(mockEmitContactInfoUpdated).not.toHaveBeenCalled()
+  })
+
+  test("schedules the avatar re-encode when the conditional write stores a new avatar", async () => {
+    const avatar = "public/space/ws-1/avatars/avatar-1"
+    const existing = { id: "contact-1", workspaceId: "ws-1", avatar: null }
+    const dbUpdateClient = buildUpdateClient([{ ...existing, avatar }])
+    mockDbUpdate.mockImplementation(dbUpdateClient.update)
+    vi.spyOn(contactService, "findByIdOrFail").mockResolvedValue(
+      existing as never,
+    )
+    vi.spyOn(contactService, "invalidate").mockResolvedValue(undefined)
+
+    await contactService.updateIfProfileNameEmpty(
+      { workspaceId: "ws-1", id: "contact-1" },
+      { firstName: "Jane", avatar },
+    )
+
+    expect(mockEnqueueOptimizations).toHaveBeenCalledWith([
+      {
+        kind: "avatar",
+        workspaceId: "ws-1",
+        contactId: "contact-1",
+        objectKey: avatar,
+      },
+    ])
+  })
+
+  test("does not schedule an avatar re-encode when the write matched no row", async () => {
+    const dbUpdateClient = buildUpdateClient([])
+    mockDbUpdate.mockImplementation(dbUpdateClient.update)
+    vi.spyOn(contactService, "findByIdOrFail").mockResolvedValue({
+      id: "contact-1",
+      workspaceId: "ws-1",
+      avatar: null,
+    } as never)
+    vi.spyOn(contactService, "invalidate").mockResolvedValue(undefined)
+
+    await contactService.updateIfProfileNameEmpty(
+      { workspaceId: "ws-1", id: "contact-1" },
+      { firstName: "Jane", avatar: "public/space/ws-1/avatars/avatar-1" },
+    )
+
+    expect(mockEnqueueOptimizations).not.toHaveBeenCalled()
   })
 
   test("does not emit before a caller-owned transaction commits (mirrors update())", async () => {

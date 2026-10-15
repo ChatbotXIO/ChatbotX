@@ -2,13 +2,19 @@ import { contentTypes } from "@chatbotx.io/database/partials"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  mockEnsureAttachmentStored,
   mockFindLatestByContact,
   mockFindLatestIncomingMessageWithAttachments,
   mockResolveTenantSettings,
 } = vi.hoisted(() => ({
+  mockEnsureAttachmentStored: vi.fn(),
   mockFindLatestByContact: vi.fn(),
   mockFindLatestIncomingMessageWithAttachments: vi.fn(),
   mockResolveTenantSettings: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/channel-registry/media-hydration", () => ({
+  ensureAttachmentStored: mockEnsureAttachmentStored,
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -47,6 +53,11 @@ describe("last input helpers", () => {
     mockResolveTenantSettings.mockResolvedValue({
       storageUrl: "https://cdn.example/storage/",
     })
+    // Pass-through: a stored key is returned as-is, like the real helper.
+    mockEnsureAttachmentStored.mockImplementation(
+      async (input: { originPath?: string }) =>
+        input.originPath ? { originPath: input.originPath } : null,
+    )
   })
 
   test("last_input returns latest text message text", async () => {
@@ -82,6 +93,70 @@ describe("last input helpers", () => {
     await expect(getContactLastInput("contact-1")).resolves.toBe(
       "https://cdn.example/storage/public/space/workspace-1/messages/image.png",
     )
+  })
+
+  test("last_input stores a lazily-ingested attachment and returns the stored object's URL", async () => {
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue({
+      contentType: contentTypes.enum.text,
+      text: null,
+      attachments: [
+        {
+          id: "att-1",
+          messageCreatedAt: new Date("2026-10-14T01:00:00.000Z"),
+          fileType: "image",
+          originPath: "https://scontent.example/photo.jpg?sig=abc",
+        },
+      ],
+    })
+    mockEnsureAttachmentStored.mockResolvedValue({
+      originPath: "workspace/messenger/workspace-1/int-1/2026/10/14/abc.jpg",
+    })
+
+    await expect(getContactLastInput("contact-1")).resolves.toBe(
+      "https://cdn.example/storage/workspace/messenger/workspace-1/int-1/2026/10/14/abc.jpg",
+    )
+    expect(mockEnsureAttachmentStored).toHaveBeenCalledWith({
+      attachmentId: "att-1",
+      workspaceId: "workspace-1",
+      messageCreatedAt: new Date("2026-10-14T01:00:00.000Z"),
+      originPath: "https://scontent.example/photo.jpg?sig=abc",
+    })
+  })
+
+  test("last_input is null when the attachment is permanently unavailable", async () => {
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue({
+      contentType: contentTypes.enum.text,
+      text: null,
+      attachments: [
+        {
+          id: "att-1",
+          messageCreatedAt: new Date(),
+          fileType: "image",
+          originPath: "failed:unresolvable",
+        },
+      ],
+    })
+    mockEnsureAttachmentStored.mockResolvedValue(null)
+
+    await expect(getContactLastInput("contact-1")).resolves.toBeNull()
+  })
+
+  test("last_input is null instead of throwing when the attachment is not stored in time", async () => {
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue({
+      contentType: contentTypes.enum.text,
+      text: null,
+      attachments: [
+        {
+          id: "att-1",
+          messageCreatedAt: new Date(),
+          fileType: "image",
+          originPath: "https://scontent.example/photo.jpg",
+        },
+      ],
+    })
+    mockEnsureAttachmentStored.mockRejectedValue(new Error("not ready"))
+
+    await expect(getContactLastInput("contact-1")).resolves.toBeNull()
   })
 
   test("last_input and last_input_type return null when no message exists", async () => {

@@ -82,6 +82,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
     enqueueAttachmentMirror({
       attachmentId: lookup.id,
       messageId: lookup.messageId,
+      messageCreatedAt,
       workspaceId: resolvedRequest.workspaceId,
     })
 
@@ -132,6 +133,7 @@ export const GET = async (request: NextRequest, context: RouteContext) => {
         channel: freshMedia.channel,
         integrationId: freshMedia.integrationId,
         messageId: lookup.messageId,
+        messageCreatedAt,
         workspaceId: resolvedRequest.workspaceId,
       })
       return NextResponse.redirect(freshMedia.url, 302)

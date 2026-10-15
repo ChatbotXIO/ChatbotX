@@ -1097,6 +1097,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                     height: attachmentUpdate.newAttachmentHeight ?? null,
                     sourceId: null,
                     thumbnailPath: null,
+                    // An agent-edited attachment is a photo for storage purposes.
+                    keepOriginal: null,
                     createdAt: new Date(),
                     updatedAt: new Date(),
                   },

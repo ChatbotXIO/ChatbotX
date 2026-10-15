@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS "Attachment" (
   "thumbnailPath" text,
   "originPath" text NOT NULL,
   "name" text,
+  "keepOriginal" boolean,
   PRIMARY KEY ("id", "createdAt")
 );
 

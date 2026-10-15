@@ -308,6 +308,22 @@ describe("systemFieldService privacy message window", () => {
     })
   })
 
+  test("deleteMeData only deletes stored objects, never a pending or failed attachment reference", async () => {
+    mocks.hardDeleteAllByContactInbox.mockResolvedValue({
+      attachmentPaths: [
+        "messages/a.jpg",
+        "https://scontent.example/pending.jpg?sig=abc",
+        "wa-media:12345",
+        "failed:unresolvable",
+      ],
+    })
+
+    await systemFieldService.deleteMeData(params)
+
+    expect(mocks.deleteObject).toHaveBeenCalledTimes(1)
+    expect(mocks.deleteObject).toHaveBeenCalledWith("messages/a.jpg")
+  })
+
   test("deleteMeData deletes all contact inbox messages and attachments from firstInteractionAt", async () => {
     await systemFieldService.deleteMeData(params)
 

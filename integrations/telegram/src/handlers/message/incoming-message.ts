@@ -11,6 +11,8 @@ import {
   type ReceivedMessageResult,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import type { ImageOptimizeProfile } from "@chatbotx.io/utils/image-optimize"
+import { storeIncomingImage } from "@chatbotx.io/utils/store-incoming-image"
 import { getTelegramFileUrl } from "../../apis/bot"
 import { TelegramException } from "../../exception"
 import { logger } from "../../lib/logger"
@@ -135,9 +137,11 @@ const getMessageAttachments = async (
         largestPhoto.file_id,
         "image/jpeg",
         { width: largestPhoto.width, height: largestPhoto.height },
+        undefined,
+        "media",
       )
       if (attachment) {
-        attachments.push(attachment)
+        attachments.push({ ...attachment, isPhotoMessage: true })
       }
     }
   }
@@ -243,6 +247,8 @@ const downloadAndUploadFile = async (
   mimeType: string,
   dimensions?: { width: number; height: number },
   fileType: IncomingFileType = guessFileTypeFromMimeType(mimeType),
+  // Only a photo message is re-encoded; a document or sticker keeps its bytes.
+  profile: ImageOptimizeProfile = "original",
 ): Promise<IncomingAttachment | null> => {
   try {
     const fileUrl = await getTelegramFileUrl(ctx.auth, fileId)
@@ -257,21 +263,26 @@ const downloadAndUploadFile = async (
       )
     }
 
-    const bytes = await response.arrayBuffer()
-    const originPath = `${getMediaStoragePrefix(ctx)}/${createId()}`
-
-    await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
-      ACL: "public-read",
-      ContentType: mimeType,
+    const stored = await storeIncomingImage({
+      uploader: ctx.uploader,
+      key: `${getMediaStoragePrefix(ctx)}/${createId()}`,
+      bytes: await response.arrayBuffer(),
+      mimeType,
+      profile,
+      acl: "public-read",
     })
 
     return {
       sourceId: createId(),
-      originPath,
+      originPath: stored.originPath,
       fileType,
-      mimeType,
-      size: bytes.byteLength,
+      mimeType: stored.mimeType,
+      size: stored.size,
       ...dimensions,
+      ...(stored.width && stored.height
+        ? { width: stored.width, height: stored.height }
+        : {}),
+      ...(stored.optimized ? { optimized: true } : {}),
     }
   } catch (error) {
     logger.error(

@@ -176,6 +176,42 @@ describe("replyFormatValidators", () => {
     )
   })
 
+  test("carries the attachment identity so a lazily-ingested file can be stored before it is used", () => {
+    const messageCreatedAt = new Date("2026-10-14T01:00:00.000Z")
+
+    expect(
+      validateReplyInput(
+        ReplyFormat.image,
+        makeMessage({
+          attachments: [
+            {
+              id: "att-1",
+              messageCreatedAt,
+              fileType: "image",
+              originPath: "https://cdn.example/photo.jpg",
+            },
+          ],
+        }),
+      ),
+    ).toEqual({
+      ok: true,
+      userInput: "https://cdn.example/photo.jpg",
+      kind: "attachment",
+      attachment: { id: "att-1", messageCreatedAt },
+    })
+  })
+
+  test("omits the attachment identity when the row does not provide one", () => {
+    expect(
+      validateReplyInput(
+        ReplyFormat.image,
+        makeMessage({
+          attachments: [{ fileType: "image", originPath: "/image.jpg" }],
+        }),
+      ),
+    ).toEqual({ ok: true, userInput: "/image.jpg", kind: "attachment" })
+  })
+
   test("accepts image attachment only for image format and keeps text fallback", () => {
     expect(
       validateReplyInput(

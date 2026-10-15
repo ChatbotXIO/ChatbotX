@@ -919,6 +919,9 @@ importers:
       remove-markdown:
         specifier: ^0.6.3
         version: 0.6.4
+      sharp:
+        specifier: 0.35.5
+        version: 0.35.5(@types/node@24.13.1)
       universal-error-normalizer:
         specifier: ^1.0.0
         version: 1.0.0
@@ -1295,9 +1298,6 @@ importers:
       cross-fetch:
         specifier: ^4.1.0
         version: 4.1.0
-      image-size:
-        specifier: ^2.0.3
-        version: 2.0.3
       ky:
         specifier: ^2.0.2
         version: 2.0.2
@@ -1347,9 +1347,6 @@ importers:
       cross-fetch:
         specifier: ^4.1.0
         version: 4.1.0
-      image-size:
-        specifier: ^2.0.3
-        version: 2.0.3
       ky:
         specifier: ^2.0.2
         version: 2.0.2
@@ -1501,9 +1498,6 @@ importers:
       cross-fetch:
         specifier: ^4.1.0
         version: 4.1.0
-      image-size:
-        specifier: ^2.0.3
-        version: 2.0.3
       ky:
         specifier: ^2.0.2
         version: 2.0.2
@@ -1887,9 +1881,6 @@ importers:
       cross-fetch:
         specifier: ^4.1.0
         version: 4.1.0
-      image-size:
-        specifier: ^2.0.3
-        version: 2.0.3
       ky:
         specifier: ^2.0.2
         version: 2.0.2
@@ -2501,6 +2492,9 @@ importers:
       '@chatbotx.io/utils':
         specifier: workspace:*
         version: link:../utils
+      '@chatbotx.io/worker-config':
+        specifier: workspace:*
+        version: link:../worker-config
       image-size:
         specifier: ^2.0.3
         version: 2.0.3
@@ -3379,6 +3373,9 @@ importers:
 
   packages/utils:
     dependencies:
+      '@chatbotx.io/logger':
+        specifier: workspace:*
+        version: link:../logger
       '@t3-oss/env-core':
         specifier: ^0.13.11
         version: 0.13.11(typescript@5.9.3)(valibot@1.5.0(typescript@5.9.3))(zod@4.6.5)
@@ -3388,6 +3385,9 @@ importers:
       date-fns-tz:
         specifier: ^3.2.0
         version: 3.2.0(date-fns@4.4.0)
+      sharp:
+        specifier: 0.35.5
+        version: 0.35.5(@types/node@24.13.1)
       uuniq:
         specifier: ^1.3.20
         version: 1.3.22
@@ -13178,8 +13178,7 @@ snapshots:
     dependencies:
       react: 19.2.5
 
-  '@img/colour@1.1.0':
-    optional: true
+  '@img/colour@1.1.0': {}
 
   '@img/sharp-darwin-arm64@0.35.5':
     optionalDependencies:
@@ -19085,7 +19084,6 @@ snapshots:
       '@img/sharp-win32-ia32': 0.35.5
       '@img/sharp-win32-x64': 0.35.5
       '@types/node': 24.13.1
-    optional: true
 
   shebang-command@2.0.0:
     dependencies:

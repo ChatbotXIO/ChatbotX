@@ -57,6 +57,8 @@ const attachment = {
   width: null,
   height: null,
   name: undefined,
+  // A WhatsApp `image` message: a photo, re-encoded in storage.
+  isPhotoMessage: true,
 }
 
 /** contactInbox lookup returns one resolvable contact. */
@@ -154,7 +156,56 @@ describe("applyPostBatchPatches — pending patch carry-over", () => {
         conversationId: "conv-1",
         sourceId: "media-1",
         originPath: "wa-media:media-1",
+        // The photo flag survived the pending round-trip: a photo is not
+        // "keep original".
+        keepOriginal: false,
       }),
+    ])
+  })
+
+  it("flush 2: a replayed document image keeps its original bytes", async () => {
+    wireContactInbox(resolvedContactInbox)
+    mockFindManyBySourceIds.mockResolvedValue([])
+    const first = await applyPostBatchPatches({
+      workspaceId: "ws-1",
+      inboxId: "inbox-1",
+      mediaFollowUps: [
+        {
+          sourceId: WAMID,
+          contactWaId: CONTACT_WA_ID,
+          attachment: {
+            ...attachment,
+            mimeType: "image/png",
+            isPhotoMessage: false,
+          },
+        },
+      ],
+      edits: [],
+      revokes: [],
+    })
+
+    vi.clearAllMocks()
+    mockFindByInboxAndSourceIds.mockReset()
+    wireContactInbox(resolvedContactInbox)
+    mockBulkCreateAttachments.mockResolvedValue([{ id: "attachment-1" }])
+    mockFindManyBySourceIds.mockResolvedValue([
+      {
+        id: "msg-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        sourceId: WAMID,
+        createdAt: new Date("2026-01-02T00:00:00.000Z"),
+      },
+    ])
+
+    await applyPostBatchPatches({
+      workspaceId: "ws-1",
+      inboxId: "inbox-1",
+      ...pendingPatchesToBatch(first.unresolved),
+    })
+
+    expect(mockBulkCreateAttachments).toHaveBeenCalledWith([
+      expect.objectContaining({ sourceId: "media-1", keepOriginal: true }),
     ])
   })
 

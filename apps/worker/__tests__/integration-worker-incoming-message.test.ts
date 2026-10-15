@@ -345,6 +345,10 @@ const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
 
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: { cancelAppointmentByToken: vi.fn() },
+  // Pass-through: the real resolver signs proxy URLs for the realtime payload.
+  messageService: {
+    withResolvedAttachmentUrls: vi.fn(async (message: unknown) => message),
+  },
   publishToWorkspaceParty: mockPublishToWorkspaceParty,
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,

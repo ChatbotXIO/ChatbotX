@@ -6,11 +6,10 @@ import {
   type IncomingAttachment,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { storeIncomingImage } from "@chatbotx.io/utils/store-incoming-image"
 import fetch from "cross-fetch"
-import imageSize from "image-size"
 import { rescue } from "../exception"
 import { facebookAttachmentClient } from "../lib/http-client"
-import { logger } from "../lib/logger"
 import type {
   FacebookMessageAttachment,
   FacebookSendMessageResponse,
@@ -85,36 +84,26 @@ export const getMessageAttachmentEntity = async ({
     )
   }
 
-  const originPath = `${getMediaStoragePrefix(ctx)}/${createId()}`
-  const bytes = await response.arrayBuffer()
-
-  await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
-    ACL: "public-read",
-    ContentType: mimeType,
+  const isPhotoMessage = attachment.type === "image"
+  const stored = await storeIncomingImage({
+    uploader: ctx.uploader,
+    key: `${getMediaStoragePrefix(ctx)}/${createId()}`,
+    bytes: await response.arrayBuffer(),
+    mimeType,
+    profile: isPhotoMessage ? "media" : "original",
+    acl: "public-read",
   })
-
-  const imageProperties: {
-    width?: number
-    height?: number
-  } = {}
-  if (mimeType.startsWith("image/")) {
-    // Retrieve width / height
-    try {
-      const arrayBytes = new Uint8Array(bytes)
-      const dimensions = imageSize(arrayBytes)
-      imageProperties.width = dimensions.width
-      imageProperties.height = dimensions.height
-    } catch (error) {
-      logger.warn(error, "Failed to read attachment image dimensions")
-    }
-  }
 
   return {
     sourceId: createId(),
-    originPath,
+    isPhotoMessage,
+    ...(stored.optimized ? { optimized: true } : {}),
+    originPath: stored.originPath,
     fileType,
-    mimeType,
-    size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
-    ...imageProperties,
+    mimeType: stored.mimeType,
+    size: stored.size,
+    ...(stored.width && stored.height
+      ? { width: stored.width, height: stored.height }
+      : {}),
   }
 }
