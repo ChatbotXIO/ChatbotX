@@ -328,6 +328,25 @@ const pickContactsForMessage = (
   return
 }
 
+/**
+ * `whatsapp-api-js@6.2.1` reads `contact?.profile.name`, so a contact Meta
+ * sends with only `wa_id`/`user_id` (no `profile`) crashes it and drops the
+ * message. An empty `profile` lets it yield `name: undefined`; identity is
+ * still read from `wa_id`/`user_id`.
+ */
+const withSdkSafeProfile = (
+  contacts: unknown[] | undefined,
+): unknown[] | undefined =>
+  contacts?.map((contact) => {
+    if (typeof contact !== "object" || contact === null) {
+      return contact
+    }
+    const { profile } = contact as { profile?: unknown }
+    return typeof profile === "object" && profile !== null
+      ? contact
+      : { ...contact, profile: {} }
+  })
+
 const splitMessagesChangeValue = (
   value: MessagesChangeValue,
 ): MessagesChangeValue[] => {
@@ -339,7 +358,9 @@ const splitMessagesChangeValue = (
         ...value,
         messages: [message],
         statuses: undefined,
-        contacts: pickContactsForMessage(value.contacts, message, index),
+        contacts: withSdkSafeProfile(
+          pickContactsForMessage(value.contacts, message, index),
+        ),
       })
     }
   }
@@ -1375,8 +1396,8 @@ export const webhookHandler = async (
       )
 
       // Feed the SDK one single-item body per `messages` item — it only reads
-      // the first item. `calls` changes never reach it, which also avoids its
-      // crash on a contact with no `profile`.
+      // the first item. `calls` changes never reach it; `messages` contacts
+      // with no `profile` are patched by `withSdkSafeProfile`.
       const results: Array<
         | { type: "message"; data: OnMessageArgs }
         | { type: "status"; data: OnStatusArgs }

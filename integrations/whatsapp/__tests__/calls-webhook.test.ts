@@ -103,6 +103,8 @@ const extractMockDispatchArgs = async (
   return
 }
 
+const UNPARSABLE_MESSAGE_ID = "wamid.unparsable"
+
 vi.mock("whatsapp-api-js/middleware/next", () => ({
   WhatsAppAPI: class {
     on: MiddlewareHandlers = {}
@@ -112,6 +114,14 @@ vi.mock("whatsapp-api-js/middleware/next", () => ({
     async handle_post(...args: unknown[]): Promise<number> {
       middlewareHandlePost(...args)
       const dispatch = await extractMockDispatchArgs(args[0] as Request)
+      // Stands in for any item the real `post()` throws on, which
+      // `handle_post` reports as a non-200 status.
+      if (
+        dispatch?.kind === "message" &&
+        (dispatch.message as { id?: string }).id === UNPARSABLE_MESSAGE_ID
+      ) {
+        return 500
+      }
       // Mirrors the library's own `contact?.profile.name` (optional-chained on
       // `contact` but NOT on `.profile`): a contact carrying no `profile`
       // throws here, exactly as it does inside the real `post()`.
@@ -1157,14 +1167,12 @@ describe("webhookHandler — per-change dispatch (mixed batches, multi-message)"
         messagesValue({
           contacts: [
             { profile: { name: "Kerry" }, wa_id: "16315551234" },
-            // whatsapp-api-js@6.2.1 reads `contact?.profile.name` — a contact
-            // with no `profile` makes its item, and only its item, throw.
-            { wa_id: "16315559999" },
+            { profile: { name: "Pat" }, wa_id: "16315559999" },
             { profile: { name: "Sam" }, wa_id: "16315558888" },
           ],
           messages: [
             textMessage("16315551234", "wamid.1"),
-            textMessage("16315559999", "wamid.2"),
+            textMessage("16315559999", UNPARSABLE_MESSAGE_ID),
             textMessage("16315558888", "wamid.3"),
           ],
         }),
