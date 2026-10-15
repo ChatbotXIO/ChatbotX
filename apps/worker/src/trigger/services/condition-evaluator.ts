@@ -4,12 +4,43 @@ import {
 } from "@chatbotx.io/business"
 import {
   type OperatorType,
+  type TriggerEventType,
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import type {
+  ShoppingCartSentMetadata,
+  UserAskedAboutProductMetadata,
+} from "@chatbotx.io/events"
+import type { ResolvedInboundProductReference } from "@chatbotx.io/sdk"
 import { toZonedWallClock } from "@chatbotx.io/utils/datetime"
 import type { ConditionEvaluationContext } from "../types"
 import { parseDateTimeValue } from "../utils/datetime-calculator"
+
+/**
+ * The workspace product ids a catalog event refers to, by event type. Adding a
+ * catalog event is one entry here; an unresolved reference names no product.
+ */
+const referencedProductIdsByEventType: Partial<
+  Record<TriggerEventType, (eventData: Record<string, unknown>) => string[]>
+> = {
+  [triggerEventTypes.enum.shoppingCartSent]: (eventData) => {
+    const { products } = eventData as Partial<ShoppingCartSentMetadata>
+    return toProductIds(products ?? [])
+  },
+  [triggerEventTypes.enum.userAskedAboutProduct]: (eventData) => {
+    const { product } = eventData as Partial<UserAskedAboutProductMetadata>
+    return toProductIds(product ? [product] : [])
+  },
+}
+
+function toProductIds(
+  references: Pick<ResolvedInboundProductReference, "product">[],
+): string[] {
+  return references.flatMap(({ product }) =>
+    product ? [product.productId] : [],
+  )
+}
 
 export class ConditionEvaluator {
   async evaluate(context: ConditionEvaluationContext): Promise<boolean> {
@@ -62,6 +93,14 @@ export class ConditionEvaluator {
       case triggerEventTypes.enum.callTranscribed:
         return true
 
+      case triggerEventTypes.enum.shoppingCartSent:
+      case triggerEventTypes.enum.userAskedAboutProduct:
+        return this.evaluateReferencedProduct(
+          type,
+          sourceId,
+          eventData.eventData,
+        )
+
       case triggerEventTypes.enum.dateTimeBasedTrigger:
         return await this.evaluateDateTimeCondition(
           sourceId,
@@ -74,6 +113,23 @@ export class ConditionEvaluator {
       default:
         return false
     }
+  }
+
+  /**
+   * A catalog condition with no product matches every event of its type; one
+   * pinned to a product matches only an event that refers to that product.
+   */
+  private evaluateReferencedProduct(
+    type: TriggerEventType,
+    pinnedProductId: string | null,
+    eventData: Record<string, unknown>,
+  ): boolean {
+    if (!pinnedProductId) {
+      return true
+    }
+    const referencedProductIds =
+      referencedProductIdsByEventType[type]?.(eventData) ?? []
+    return referencedProductIds.includes(pinnedProductId)
   }
 
   /** Conditions pinned to a source (tag id, contact info type, …) match only that exact source. */

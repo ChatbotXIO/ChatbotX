@@ -1,6 +1,7 @@
 import type { ContextQueue } from "./context"
 import type {
   EchoOrigin,
+  IncomingCommerceEvent,
   IncomingContact,
   IncomingMessage,
   ThreadControlReceiveInfo,
@@ -80,6 +81,12 @@ export type ReceivedMessageResult = {
    * support routing (WhatsApp); absent means "no routing information".
    */
   threadControl?: ThreadControlReceiveInfo
+  /**
+   * Catalog interaction the message carries (a shopping cart, a product
+   * question), when the channel can tell. Raw identity only; the worker
+   * resolves it against the workspace catalog.
+   */
+  commerce?: IncomingCommerceEvent | null
 }
 
 /**

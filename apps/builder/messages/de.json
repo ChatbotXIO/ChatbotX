@@ -3735,7 +3735,16 @@
     "sendProductsFieldTooLong": "Dieser Text ist zu lang.",
     "sendProductsProductCountOutOfRange": "Wähle eine gültige Anzahl an Produkten.",
     "sendProductsSectionCountOutOfRange": "Es gibt zu viele Abschnitte.",
-    "sendProductsDuplicateProduct": "Ein Produkt darf nur einmal vorkommen."
+    "sendProductsDuplicateProduct": "Ein Produkt darf nur einmal vorkommen.",
+    "inboundOrder": {
+      "title": "Warenkorb",
+      "preview": "Warenkorb ({count, plural, one {# Artikel} other {# Artikel}})",
+      "note": "Notiz",
+      "unresolvedProduct": "Nicht in Ihrem Katalog gefunden"
+    },
+    "referredProduct": {
+      "askedAbout": "Hat nach diesem Produkt gefragt"
+    }
   },
   "instagram": {
     "description": "Mit dieser Integration können Sie Instagram-Bots erstellen.",
@@ -4771,8 +4780,8 @@
       "ticketPriorityChanged": "Ticketpriorität geändert",
       "subscribedToSequence": "Sequenz abonniert",
       "unsubscribedFromSequence": "Sequenz abbestellt",
-      "WhatsappShoppingCartSent": "WhatsApp-Warenkorb gesendet",
-      "userAskedAboutProduct": "Benutzer fragte nach Produkt",
+      "shoppingCartSent": "Kontakt hat Warenkorb gesendet",
+      "userAskedAboutProduct": "Kontakt hat nach Produkt gefragt",
       "cartAbandoned": "Warenkorb abgebrochen",
       "newOrder": "Neue Bestellung",
       "orderAccepted": "Bestellung angenommen",
@@ -4786,7 +4795,8 @@
       "contactReferredANewContact": "Kontakt hat einen neuen Kontakt geworben",
       "contactReferredExistingContact": "Kontakt hat einen bestehenden Kontakt geworben",
       "callRecorded": "Anruf aufgezeichnet",
-      "callTranscribed": "Anruf transkribiert"
+      "callTranscribed": "Anruf transkribiert",
+      "anyProduct": "Beliebiges Produkt"
     },
     "actions": {
       "addTag": "Tag hinzufügen",

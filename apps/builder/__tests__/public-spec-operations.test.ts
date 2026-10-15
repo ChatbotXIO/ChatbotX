@@ -1136,3 +1136,41 @@ describe("public API spec — declared codes match what the mapper throws", () =
     ).toEqual([])
   })
 })
+
+describe("public API spec — catalog and call conditions", () => {
+  // Agents build trigger and webhook conditions from this spec alone, so every
+  // operation that takes conditions must offer the two catalog conditions and
+  // the five call conditions, and say where a product id comes from.
+  const CONDITION_OPERATIONS = [
+    "triggers.update",
+    "webhooks.create",
+    "webhooks.update",
+  ]
+  const CONDITION_TYPES = [
+    "shoppingCartSent",
+    "userAskedAboutProduct",
+    "incomingCall",
+    "missedAudioCall",
+    "callEnded",
+    "callRecorded",
+    "callTranscribed",
+  ]
+
+  test.each(
+    CONDITION_OPERATIONS,
+  )("%s offers every catalog and call condition", (operationId) => {
+    const schema = JSON.stringify(requestSchemasByOperationId[operationId])
+
+    expect(
+      CONDITION_TYPES.filter((type) => !schema.includes(`"${type}"`)),
+    ).toEqual([])
+  })
+
+  test.each(
+    CONDITION_OPERATIONS,
+  )("%s tells an agent where a product id comes from", (operationId) => {
+    const schema = JSON.stringify(requestSchemasByOperationId[operationId])
+
+    expect(schema).toContain("products.list")
+  })
+})

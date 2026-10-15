@@ -3714,7 +3714,16 @@
     "sendProductsFieldTooLong": "テキストが長すぎます。",
     "sendProductsProductCountOutOfRange": "商品数を正しく選択してください。",
     "sendProductsSectionCountOutOfRange": "セクションが多すぎます。",
-    "sendProductsDuplicateProduct": "同じ商品は1回しか使用できません。"
+    "sendProductsDuplicateProduct": "同じ商品は1回しか使用できません。",
+    "inboundOrder": {
+      "title": "ショッピングカート",
+      "preview": "ショッピングカート ({count, plural, one {#点} other {#点}})",
+      "note": "メモ",
+      "unresolvedProduct": "カタログに見つかりません"
+    },
+    "referredProduct": {
+      "askedAbout": "この商品について質問しました"
+    }
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",
@@ -4750,8 +4759,8 @@
       "ticketPriorityChanged": "チケットの優先度が変更された",
       "subscribedToSequence": "シーケンスに登録された",
       "unsubscribedFromSequence": "シーケンスから登録解除された",
-      "WhatsappShoppingCartSent": "WhatsAppのショッピングカートが送信された",
-      "userAskedAboutProduct": "ユーザーが商品について質問した",
+      "shoppingCartSent": "連絡先がショッピングカートを送信",
+      "userAskedAboutProduct": "連絡先が商品について質問",
       "cartAbandoned": "カートが放棄された",
       "newOrder": "新しい注文",
       "orderAccepted": "注文が承認された",
@@ -4765,7 +4774,8 @@
       "contactReferredANewContact": "連絡先が新しい連絡先を紹介した",
       "contactReferredExistingContact": "連絡先が既存の連絡先を紹介した",
       "callRecorded": "通話が録音されました",
-      "callTranscribed": "通話が文字起こしされました"
+      "callTranscribed": "通話が文字起こしされました",
+      "anyProduct": "すべての商品"
     },
     "actions": {
       "addTag": "タグを追加",

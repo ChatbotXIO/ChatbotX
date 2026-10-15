@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest"
 import { containsVariablePlaceholder } from "../src/variables"
-import { zodBigintAsString, zodUrlWithVariables } from "../src/zod"
+import {
+  zodBigintAsString,
+  zodBigintIdAsString,
+  zodUrlWithVariables,
+} from "../src/zod"
 
 describe("zodBigintAsString", () => {
   const schema = zodBigintAsString()
@@ -13,6 +17,20 @@ describe("zodBigintAsString", () => {
   // one that lacks digits entirely — ids are numeric snowflakes (createId),
   // never a mixed string.
   test.each(["abc123", "12a", "", " 12"])("rejects %j", (value) => {
+    expect(schema.safeParse(value).success).toBe(false)
+  })
+})
+
+describe("zodBigintIdAsString", () => {
+  const schema = zodBigintIdAsString()
+
+  test.each(["1", "0", "9".repeat(18)])("accepts %j", (value) => {
+    expect(schema.safeParse(value).success).toBe(true)
+  })
+
+  // 19 digits can exceed a Postgres bigint, which would surface as a server
+  // error instead of a validation error.
+  test.each(["9".repeat(19), "abc", "", "12a"])("rejects %j", (value) => {
     expect(schema.safeParse(value).success).toBe(false)
   })
 })

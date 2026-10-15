@@ -25,6 +25,20 @@ export const EMITTED_EVENT_TYPES = [
   triggerEventTypes.enum.callEnded,
   triggerEventTypes.enum.callRecorded,
   triggerEventTypes.enum.callTranscribed,
+  triggerEventTypes.enum.shoppingCartSent,
+  triggerEventTypes.enum.userAskedAboutProduct,
+] as const
+
+/**
+ * Events whose conditions are narrowed by the evaluator, not by the event's
+ * `sourceId`. They carry no `sourceId` (a cart names many products, and a
+ * condition without a product must match all of them), so the "is anyone
+ * listening" cache admits them whenever any active condition of the type
+ * exists, whatever product that condition is pinned to.
+ */
+export const EVALUATOR_FILTERED_EVENT_TYPES = [
+  triggerEventTypes.enum.shoppingCartSent,
+  triggerEventTypes.enum.userAskedAboutProduct,
 ] as const
 
 export const SCANNER_VERIFIED_EVENT_TYPES = [
@@ -39,6 +53,9 @@ export type MatchableEventType = EmittedEventType | ScannerVerifiedEventType
 export const EMITTED_EVENT_TYPE_SET: ReadonlySet<TriggerEventType> = new Set(
   EMITTED_EVENT_TYPES,
 )
+
+export const EVALUATOR_FILTERED_EVENT_TYPE_SET: ReadonlySet<TriggerEventType> =
+  new Set(EVALUATOR_FILTERED_EVENT_TYPES)
 
 const MATCHABLE_EVENT_TYPE_SET: ReadonlySet<TriggerEventType> = new Set([
   ...EMITTED_EVENT_TYPES,

@@ -85,3 +85,89 @@ describe("TriggerEventEmitter — contactInboxId queue round-trip", () => {
     })
   })
 })
+
+describe("TriggerEventEmitter — catalog events", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.hasActiveTriggers.mockResolvedValue(true)
+  })
+
+  const reference = {
+    catalogReference: {
+      source: "metaCatalog",
+      catalogId: "cat-1",
+      retailerId: "sku-1",
+    },
+    product: null,
+  } as const
+  const base = {
+    channel: "whatsapp",
+    conversationId: "conv-1",
+    messageId: "msg-1",
+    catalogId: "cat-1",
+  }
+
+  const queuedEventData = () =>
+    (
+      mocks.triggerQueueAdd.mock.calls[0] as unknown as [
+        string,
+        { data: { eventType: string; eventData: Record<string, unknown> } },
+      ]
+    )[1].data
+
+  test("shoppingCartSent queues its metadata and contactInboxId, never a sourceId", async () => {
+    const metadata = {
+      ...base,
+      note: null,
+      products: [{ ...reference, quantity: 2, itemPrice: 5, currency: "USD" }],
+    }
+
+    await TriggerEventEmitter.shoppingCartSent(
+      "ws-1",
+      "contact-1",
+      metadata,
+      "ci-1",
+    )
+
+    expect(queuedEventData().eventType).toBe("shoppingCartSent")
+    expect(queuedEventData().eventData).toEqual({
+      ...metadata,
+      contactInboxId: "ci-1",
+    })
+    // No sourceId: the cache is asked "any active condition of this type?".
+    expect(mocks.hasActiveTriggers).toHaveBeenCalledWith(
+      "ws-1",
+      ["shoppingCartSent"],
+      undefined,
+    )
+  })
+
+  test("userAskedAboutProduct queues its metadata and contactInboxId, never a sourceId", async () => {
+    const metadata = { ...base, product: reference }
+
+    await TriggerEventEmitter.userAskedAboutProduct(
+      "ws-1",
+      "contact-1",
+      metadata,
+      "ci-1",
+    )
+
+    expect(queuedEventData().eventType).toBe("userAskedAboutProduct")
+    expect(queuedEventData().eventData).toEqual({
+      ...metadata,
+      contactInboxId: "ci-1",
+    })
+    expect(queuedEventData().eventData).not.toHaveProperty("sourceId")
+  })
+
+  test("queues nothing when no active trigger listens for the event", async () => {
+    mocks.hasActiveTriggers.mockResolvedValue(false)
+
+    await TriggerEventEmitter.userAskedAboutProduct("ws-1", "contact-1", {
+      ...base,
+      product: reference,
+    })
+
+    expect(mocks.triggerQueueAdd).not.toHaveBeenCalled()
+  })
+})

@@ -80,8 +80,8 @@ export const BaseEditor = ({
         return t("trigger.conditions.subscribedToSequence")
       case triggerEventTypes.enum.unsubscribedFromSequence:
         return t("trigger.conditions.unsubscribedFromSequence")
-      case triggerEventTypes.enum.WhatsappShoppingCartSent:
-        return t("trigger.conditions.WhatsappShoppingCartSent")
+      case triggerEventTypes.enum.shoppingCartSent:
+        return t("trigger.conditions.shoppingCartSent")
       case triggerEventTypes.enum.userAskedAboutProduct:
         return t("trigger.conditions.userAskedAboutProduct")
       case triggerEventTypes.enum.cartAbandoned:

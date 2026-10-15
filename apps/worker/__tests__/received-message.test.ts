@@ -269,8 +269,14 @@ const CONTACT_PROFILE_NAME_CAPABILITIES: Record<
 }
 
 const mockReserveLiveCommentWindow = vi.hoisted(() => vi.fn())
+const mockResolveInboundProducts = vi.hoisted(() => vi.fn())
+const mockEmitShoppingCartSent = vi.hoisted(() => vi.fn())
+const mockEmitUserAskedAboutProduct = vi.hoisted(() => vi.fn())
 
 vi.mock("@chatbotx.io/business", () => ({
+  productMessageService: {
+    resolveInboundProducts: mockResolveInboundProducts,
+  },
   commentAutomationService: {
     reserveLiveCommentWindow: mockReserveLiveCommentWindow,
   },
@@ -379,6 +385,8 @@ vi.mock("@chatbotx.io/event-bus", () => ({
 
 vi.mock("@chatbotx.io/events", () => ({
   emitContactCreated: vi.fn().mockResolvedValue(undefined),
+  emitShoppingCartSent: mockEmitShoppingCartSent,
+  emitUserAskedAboutProduct: mockEmitUserAskedAboutProduct,
   setWebhookExecutionContext: vi.fn(),
 }))
 
@@ -427,6 +435,22 @@ vi.mock("@chatbotx.io/sdk", () => ({
     }
     return
   },
+  // Mirrors of the real pure readers — the module is fully mocked here.
+  getInboundOrder: (
+    contentAttributes: { inboundOrder?: { items?: unknown } } | null,
+  ) =>
+    contentAttributes?.inboundOrder &&
+    Array.isArray(contentAttributes.inboundOrder.items)
+      ? contentAttributes.inboundOrder
+      : undefined,
+  getReferredProduct: (
+    contentAttributes: {
+      referredProduct?: { catalogReference?: unknown }
+    } | null,
+  ) =>
+    contentAttributes?.referredProduct?.catalogReference
+      ? contentAttributes.referredProduct
+      : undefined,
   messageTypes: { enum: { incoming: "incoming", outgoing: "outgoing" } },
   echoOrigins: { enum: { firstParty: "firstParty", thirdParty: "thirdParty" } },
   SdkException: class SdkException extends Error {},
@@ -6355,5 +6379,444 @@ describe("receiveMessage — conversation routing (thread control)", () => {
       )
       expect(mockAutomatedResponseEnqueueFlowAction).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe("receiveMessage — inbound commerce events", () => {
+  const commerceInbox = { ...fakeInbox, channel: "whatsapp" }
+  const whatsappProps = { ...baseProps, integrationType: "whatsapp" }
+
+  const reference = (retailerId: string, productId: string | null) => ({
+    catalogReference: { source: "metaCatalog", catalogId: "cat-1", retailerId },
+    product: productId
+      ? { productId, name: "Shoe", imageUrl: null, price: 10, currency: "USD" }
+      : null,
+  })
+  const cart = {
+    kind: "cartSent" as const,
+    catalogId: "cat-1",
+    note: "after 5pm",
+    items: [
+      {
+        catalogId: "cat-1",
+        retailerId: "sku-1",
+        quantity: 2,
+        itemPrice: 10,
+        currency: "USD",
+      },
+      {
+        catalogId: "cat-1",
+        retailerId: "sku-9",
+        quantity: 1,
+        itemPrice: 3,
+        currency: "USD",
+      },
+    ],
+  }
+  const inquiry = {
+    kind: "productInquiry" as const,
+    product: { catalogId: "cat-1", retailerId: "sku-1" },
+  }
+
+  const parsed = (
+    commerce: unknown,
+    overrides: Record<string, unknown> = {},
+  ) => ({
+    message: {
+      ...baseIncomingMessage,
+      attachments: [],
+      contentAttributes: { catalog_id: "cat-1" },
+    },
+    contact: { sourceId: "psid-123", firstName: "Test" },
+    postbackAction: null,
+    quickReplyAction: null,
+    ref: null,
+    commerce,
+    ...overrides,
+  })
+
+  const savedContentAttributes = () =>
+    (
+      mockCreateOrUpdate.mock.calls[0] as unknown as [
+        { contentAttributes: Record<string, unknown> },
+      ]
+    )[0].contentAttributes
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "whatsapp",
+      contact: fakeContact,
+    })
+    mockConversationFindOrCreate.mockResolvedValue(fakeConversation)
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: commerceInbox,
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockresolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://files.example.test",
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      createOrUpdate: mockCreateOrUpdate,
+      createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,
+      findLastByConversation: mockFindLastByConversation,
+    })
+    // The saved row carries what was written, as the real repository returns it.
+    mockCreateOrUpdate.mockImplementation(
+      async (input: { contentAttributes: unknown }) => ({
+        message: {
+          ...fakeCreatedMessage,
+          contentAttributes: input.contentAttributes,
+        },
+        isNew: true,
+      }),
+    )
+    mockFindLastByConversation.mockResolvedValue([])
+    mockParseAppointmentCancelPostback.mockReturnValue(null)
+    mockWorkspaceIsActiveNow.mockReturnValue(true)
+    mockRecordInboundDelivery.mockResolvedValue(null)
+    mockIntegrationQueueAdd.mockResolvedValue(undefined)
+    mockResolveInboundProducts.mockImplementation(
+      async ({ retailerIds }: { retailerIds: string[] }) =>
+        retailerIds.map((retailerId) =>
+          reference(retailerId, retailerId === "sku-1" ? "product-1" : null),
+        ),
+    )
+    mockEmitShoppingCartSent.mockResolvedValue(undefined)
+    mockEmitUserAskedAboutProduct.mockResolvedValue(undefined)
+  })
+
+  test("a cart is named before the save, stored beside the raw order, and announced once", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed(cart))
+
+    await receiveMessage(whatsappProps)
+
+    expect(mockResolveInboundProducts).toHaveBeenCalledTimes(1)
+    expect(mockResolveInboundProducts).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      channel: "whatsapp",
+      catalogId: "cat-1",
+      retailerIds: ["sku-1", "sku-9"],
+    })
+    const items = [
+      {
+        ...reference("sku-1", "product-1"),
+        quantity: 2,
+        itemPrice: 10,
+        currency: "USD",
+      },
+      {
+        ...reference("sku-9", null),
+        quantity: 1,
+        itemPrice: 3,
+        currency: "USD",
+      },
+    ]
+    expect(savedContentAttributes()).toEqual({
+      catalog_id: "cat-1",
+      inboundOrder: { note: "after 5pm", items },
+    })
+    expect(mockEmitShoppingCartSent).toHaveBeenCalledTimes(1)
+    expect(mockEmitShoppingCartSent).toHaveBeenCalledWith(
+      "ws-1",
+      fakeContactInbox.contactId,
+      {
+        channel: "whatsapp",
+        conversationId: "conv-1",
+        messageId: "msg-created",
+        catalogId: "cat-1",
+        note: "after 5pm",
+        products: items,
+      },
+      "ci-1",
+    )
+    expect(mockEmitUserAskedAboutProduct).not.toHaveBeenCalled()
+  })
+
+  test("a product question is stored as the referred product and announced once", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed(inquiry))
+
+    await receiveMessage(whatsappProps)
+
+    expect(savedContentAttributes()).toEqual({
+      catalog_id: "cat-1",
+      referredProduct: reference("sku-1", "product-1"),
+    })
+    expect(mockEmitUserAskedAboutProduct).toHaveBeenCalledTimes(1)
+    expect(mockEmitUserAskedAboutProduct).toHaveBeenCalledWith(
+      "ws-1",
+      fakeContactInbox.contactId,
+      {
+        channel: "whatsapp",
+        conversationId: "conv-1",
+        messageId: "msg-created",
+        catalogId: "cat-1",
+        product: reference("sku-1", "product-1"),
+      },
+      "ci-1",
+    )
+    expect(mockEmitShoppingCartSent).not.toHaveBeenCalled()
+  })
+
+  test("a message without a catalog interaction costs no lookup and announces nothing", async () => {
+    mockRunChannelHandler.mockResolvedValue(parsed(undefined))
+
+    await receiveMessage(whatsappProps)
+
+    expect(mockResolveInboundProducts).not.toHaveBeenCalled()
+    expect(mockEmitShoppingCartSent).not.toHaveBeenCalled()
+    expect(mockEmitUserAskedAboutProduct).not.toHaveBeenCalled()
+  })
+
+  test("a redelivery (message already stored) announces nothing", async () => {
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: false,
+    })
+    mockRunChannelHandler.mockResolvedValue(parsed(cart))
+
+    await receiveMessage(whatsappProps)
+
+    expect(mockEmitShoppingCartSent).not.toHaveBeenCalled()
+  })
+
+  test("an inactive workspace still stores the cart but announces nothing", async () => {
+    mockWorkspaceIsActiveNow.mockReturnValue(false)
+    mockRunChannelHandler.mockResolvedValue(parsed(cart))
+
+    await receiveMessage(whatsappProps)
+
+    expect(savedContentAttributes()).toHaveProperty("inboundOrder")
+    expect(mockEmitShoppingCartSent).not.toHaveBeenCalled()
+  })
+
+  test("a standby copy keeps its standby marker beside the cart and announces nothing", async () => {
+    mockRunChannelHandler.mockResolvedValue(
+      parsed(cart, { threadControl: { delivery: "standby" } }),
+    )
+
+    await receiveMessage(whatsappProps)
+
+    expect(savedContentAttributes()).toMatchObject({
+      threadControlDelivery: "standby",
+      inboundOrder: { note: "after 5pm" },
+    })
+    expect(mockEmitShoppingCartSent).not.toHaveBeenCalled()
+  })
+
+  describe("standby copy promoted by its owner delivery", () => {
+    const storedItems = [
+      {
+        ...reference("sku-1", "product-1"),
+        quantity: 2,
+        itemPrice: 10,
+        currency: "USD",
+      },
+    ]
+    const standbyCopy = (inboundOrder?: unknown) => ({
+      ...fakeCreatedMessage,
+      id: "msg-standby-copy",
+      contentAttributes: {
+        threadControlDelivery: "standby",
+        ...(inboundOrder ? { inboundOrder } : {}),
+      },
+    })
+    const ownerDelivery = () =>
+      parsed(cart, { threadControl: { delivery: "owner" } })
+
+    const redeliverOverStored = (message: unknown) =>
+      mockCreateOrUpdate.mockResolvedValue({ message, isNew: false })
+
+    test("announces the cart once, against the stored copy, when the promotion claim succeeds", async () => {
+      redeliverOverStored(
+        standbyCopy({ note: "stored note", items: storedItems }),
+      )
+      mockPromoteStandbyDelivery.mockResolvedValueOnce(true)
+      mockRunChannelHandler.mockResolvedValue(ownerDelivery())
+
+      await receiveMessage(whatsappProps)
+
+      expect(mockEmitShoppingCartSent).toHaveBeenCalledTimes(1)
+      expect(mockEmitShoppingCartSent).toHaveBeenCalledWith(
+        "ws-1",
+        fakeContactInbox.contactId,
+        expect.objectContaining({ messageId: "msg-standby-copy" }),
+        "ci-1",
+      )
+    })
+
+    test("announces what the stored copy says even when this delivery's lookup resolves differently", async () => {
+      // The standby copy saved product-1; the owner delivery's own lookup finds
+      // nothing, which must not change what the pinned conditions see.
+      redeliverOverStored(
+        standbyCopy({ note: "stored note", items: storedItems }),
+      )
+      mockResolveInboundProducts.mockResolvedValue([
+        reference("sku-1", null),
+        reference("sku-9", null),
+      ])
+      mockPromoteStandbyDelivery.mockResolvedValueOnce(true)
+      mockRunChannelHandler.mockResolvedValue(ownerDelivery())
+
+      await receiveMessage(whatsappProps)
+
+      expect(mockEmitShoppingCartSent).toHaveBeenCalledWith(
+        "ws-1",
+        fakeContactInbox.contactId,
+        expect.objectContaining({
+          catalogId: "cat-1",
+          note: "stored note",
+          products: storedItems,
+        }),
+        "ci-1",
+      )
+    })
+
+    test("a stored copy that saved the cart unresolved stays unresolved even if this lookup recovers", async () => {
+      const unresolvedItems = [
+        {
+          ...reference("sku-1", null),
+          quantity: 2,
+          itemPrice: 10,
+          currency: "USD",
+        },
+      ]
+      redeliverOverStored(standbyCopy({ note: null, items: unresolvedItems }))
+      mockPromoteStandbyDelivery.mockResolvedValueOnce(true)
+      mockRunChannelHandler.mockResolvedValue(ownerDelivery())
+
+      await receiveMessage(whatsappProps)
+
+      expect(mockEmitShoppingCartSent).toHaveBeenCalledWith(
+        "ws-1",
+        fakeContactInbox.contactId,
+        expect.objectContaining({ products: unresolvedItems }),
+        "ci-1",
+      )
+    })
+
+    test("a stored copy with no catalog interaction announces nothing", async () => {
+      redeliverOverStored(standbyCopy())
+      mockPromoteStandbyDelivery.mockResolvedValueOnce(true)
+      mockRunChannelHandler.mockResolvedValue(ownerDelivery())
+
+      await receiveMessage(whatsappProps)
+
+      expect(mockEmitShoppingCartSent).not.toHaveBeenCalled()
+      expect(mockEmitUserAskedAboutProduct).not.toHaveBeenCalled()
+    })
+
+    test("announces only the kind this delivery reported, never another the stored copy holds", async () => {
+      // A cart delivery over a copy that stored only a product question.
+      redeliverOverStored({
+        ...standbyCopy(),
+        contentAttributes: {
+          threadControlDelivery: "standby",
+          referredProduct: reference("sku-1", "product-1"),
+        },
+      })
+      mockPromoteStandbyDelivery.mockResolvedValueOnce(true)
+      mockRunChannelHandler.mockResolvedValue(ownerDelivery())
+
+      await receiveMessage(whatsappProps)
+
+      expect(mockEmitShoppingCartSent).not.toHaveBeenCalled()
+      expect(mockEmitUserAskedAboutProduct).not.toHaveBeenCalled()
+    })
+
+    test("a stored copy holding both kinds announces only the reported one", async () => {
+      redeliverOverStored({
+        ...standbyCopy({ note: null, items: storedItems }),
+        contentAttributes: {
+          threadControlDelivery: "standby",
+          inboundOrder: { note: null, items: storedItems },
+          referredProduct: reference("sku-1", "product-1"),
+        },
+      })
+      mockPromoteStandbyDelivery.mockResolvedValueOnce(true)
+      mockRunChannelHandler.mockResolvedValue(
+        parsed(inquiry, { threadControl: { delivery: "owner" } }),
+      )
+
+      await receiveMessage(whatsappProps)
+
+      expect(mockEmitUserAskedAboutProduct).toHaveBeenCalledTimes(1)
+      expect(mockEmitShoppingCartSent).not.toHaveBeenCalled()
+    })
+
+    test("announces nothing when the claim was already taken (replay or concurrent delivery)", async () => {
+      redeliverOverStored(standbyCopy({ note: null, items: storedItems }))
+      mockPromoteStandbyDelivery.mockResolvedValueOnce(false)
+      mockRunChannelHandler.mockResolvedValue(ownerDelivery())
+
+      await receiveMessage(whatsappProps)
+
+      expect(mockEmitShoppingCartSent).not.toHaveBeenCalled()
+    })
+  })
+
+  test("a delivery that reported no catalog interaction announces nothing, even if the saved attributes look like one", async () => {
+    // Some channels (the public API channel) store caller-supplied
+    // contentAttributes, so a forged `inboundOrder` must not fire anything.
+    const forged = {
+      inboundOrder: {
+        note: null,
+        items: [
+          {
+            ...reference("sku-1", "product-1"),
+            quantity: 1,
+            itemPrice: 10,
+            currency: "USD",
+          },
+        ],
+      },
+    }
+    mockRunChannelHandler.mockResolvedValue(
+      parsed(undefined, {
+        message: {
+          ...baseIncomingMessage,
+          attachments: [],
+          contentAttributes: forged,
+        },
+      }),
+    )
+
+    await receiveMessage(whatsappProps)
+
+    expect(mockResolveInboundProducts).not.toHaveBeenCalled()
+    expect(mockEmitShoppingCartSent).not.toHaveBeenCalled()
+    expect(mockEmitUserAskedAboutProduct).not.toHaveBeenCalled()
+  })
+
+  test("an outgoing echo is never resolved or announced", async () => {
+    mockRunChannelHandler.mockResolvedValue(
+      parsed(cart, {
+        message: {
+          ...baseIncomingMessage,
+          messageType: "outgoing",
+          attachments: [],
+        },
+      }),
+    )
+
+    await receiveMessage(whatsappProps)
+
+    expect(mockResolveInboundProducts).not.toHaveBeenCalled()
+    expect(mockEmitShoppingCartSent).not.toHaveBeenCalled()
+  })
+
+  test("a channel with no catalog source (no references) saves the message unchanged and announces nothing", async () => {
+    mockResolveInboundProducts.mockResolvedValue([])
+    mockRunChannelHandler.mockResolvedValue(parsed(cart))
+
+    const result = await receiveMessage(whatsappProps)
+
+    expect(result?.message).not.toBeNull()
+    expect(savedContentAttributes()).toEqual({ catalog_id: "cat-1" })
+    expect(mockEmitShoppingCartSent).not.toHaveBeenCalled()
   })
 })

@@ -3735,7 +3735,16 @@
     "sendProductsFieldTooLong": "Deze tekst is te lang.",
     "sendProductsProductCountOutOfRange": "Kies een geldig aantal producten.",
     "sendProductsSectionCountOutOfRange": "Er zijn te veel secties.",
-    "sendProductsDuplicateProduct": "Een product mag maar één keer voorkomen."
+    "sendProductsDuplicateProduct": "Een product mag maar één keer voorkomen.",
+    "inboundOrder": {
+      "title": "Winkelwagen",
+      "preview": "Winkelwagen ({count, plural, one {# artikel} other {# artikelen}})",
+      "note": "Notitie",
+      "unresolvedProduct": "Niet gevonden in je catalogus"
+    },
+    "referredProduct": {
+      "askedAbout": "Vroeg naar dit product"
+    }
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",
@@ -4771,8 +4780,8 @@
       "ticketPriorityChanged": "Ticketprioriteit gewijzigd",
       "subscribedToSequence": "Ingeschreven voor reeks",
       "unsubscribedFromSequence": "Uitgeschreven uit reeks",
-      "WhatsappShoppingCartSent": "WhatsApp-winkelwagen verzonden",
-      "userAskedAboutProduct": "Gebruiker vroeg naar product",
+      "shoppingCartSent": "Contact heeft winkelwagen verzonden",
+      "userAskedAboutProduct": "Contact vroeg naar product",
       "cartAbandoned": "Winkelwagen verlaten",
       "newOrder": "Nieuwe bestelling",
       "orderAccepted": "Bestelling geaccepteerd",
@@ -4786,7 +4795,8 @@
       "contactReferredANewContact": "Contact heeft een nieuw contact doorverwezen",
       "contactReferredExistingContact": "Contact heeft een bestaand contact doorverwezen",
       "callRecorded": "Oproep opgenomen",
-      "callTranscribed": "Oproep getranscribeerd"
+      "callTranscribed": "Oproep getranscribeerd",
+      "anyProduct": "Elk product"
     },
     "actions": {
       "addTag": "Tag toevoegen",

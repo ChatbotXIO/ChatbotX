@@ -3735,7 +3735,16 @@
     "sendProductsFieldTooLong": "Este texto es demasiado largo.",
     "sendProductsProductCountOutOfRange": "Elige un número válido de productos.",
     "sendProductsSectionCountOutOfRange": "Hay demasiadas secciones.",
-    "sendProductsDuplicateProduct": "Un producto solo puede aparecer una vez."
+    "sendProductsDuplicateProduct": "Un producto solo puede aparecer una vez.",
+    "inboundOrder": {
+      "title": "Carrito de compras",
+      "preview": "Carrito de compras ({count, plural, one {# artículo} other {# artículos}})",
+      "note": "Nota",
+      "unresolvedProduct": "No se encontró en tu catálogo"
+    },
+    "referredProduct": {
+      "askedAbout": "Preguntó por este producto"
+    }
   },
   "instagram": {
     "description": "This integración lets tú Crear Instagram bots.",
@@ -4771,8 +4780,8 @@
       "ticketPriorityChanged": "Prioridad del ticket modificada",
       "subscribedToSequence": "Suscrito a una secuencia",
       "unsubscribedFromSequence": "Baja de una secuencia",
-      "WhatsappShoppingCartSent": "Carrito de WhatsApp enviado",
-      "userAskedAboutProduct": "El usuario preguntó por un producto",
+      "shoppingCartSent": "El contacto envió un carrito",
+      "userAskedAboutProduct": "El contacto preguntó por un producto",
       "cartAbandoned": "Carrito abandonado",
       "newOrder": "Pedido nuevo",
       "orderAccepted": "Pedido aceptado",
@@ -4786,7 +4795,8 @@
       "contactReferredANewContact": "El contacto refirió a un contacto nuevo",
       "contactReferredExistingContact": "El contacto refirió a un contacto existente",
       "callRecorded": "Llamada grabada",
-      "callTranscribed": "Llamada transcrita"
+      "callTranscribed": "Llamada transcrita",
+      "anyProduct": "Cualquier producto"
     },
     "actions": {
       "addTag": "Añadir Etiqueta",

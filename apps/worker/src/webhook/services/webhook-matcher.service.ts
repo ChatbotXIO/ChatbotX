@@ -169,6 +169,14 @@ export class WebhookMatcherService {
         continue
       }
 
+      // A webhook fires when ANY of its conditions matches, so a condition for a
+      // different event cannot count: the evaluator answers `true` for a simple
+      // condition whatever the event, which would let it override the product a
+      // sibling condition for THIS event is pinned to.
+      if (condition.type !== eventData.eventType) {
+        continue
+      }
+
       const isMatch = await this.conditionEvaluator.evaluate({
         condition,
         eventData: {

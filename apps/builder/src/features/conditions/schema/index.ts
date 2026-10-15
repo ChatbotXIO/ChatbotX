@@ -4,6 +4,9 @@ import { customFieldValueChanged } from "./custom-field-value-changed"
 import { dateTimeBasedTrigger } from "./date-time-based-trigger"
 import {
   archived,
+  callEnded,
+  callRecorded,
+  callTranscribed,
   contactReferredANewContact,
   contactReferredExistingContact,
   contactUnsubscribedFormBroadcast,
@@ -12,9 +15,13 @@ import {
   conversationTransferredToHuman,
   conversationUnassigned,
   followUp,
+  incomingCall,
+  missedAudioCall,
   newContact,
+  shoppingCartSent,
   subscribedToSequence,
   unsubscribedFromSequence,
+  userAskedAboutProduct,
 } from "./simple-conditions"
 import { tagApplied } from "./tag-applied"
 import { tagRemoved } from "./tag-removed"
@@ -37,6 +44,13 @@ export const allConditions = {
   unsubscribedFromSequence,
   contactReferredANewContact,
   contactReferredExistingContact,
+  incomingCall,
+  missedAudioCall,
+  callEnded,
+  callRecorded,
+  callTranscribed,
+  shoppingCartSent,
+  userAskedAboutProduct,
 }
 
 export const conditionSchema = z.union(Object.values(allConditions))

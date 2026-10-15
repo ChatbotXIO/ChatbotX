@@ -4577,7 +4577,16 @@
     "sendProductsFieldTooLong": "文本过长。",
     "sendProductsProductCountOutOfRange": "请选择有效的商品数量。",
     "sendProductsSectionCountOutOfRange": "分组过多。",
-    "sendProductsDuplicateProduct": "同一商品只能出现一次。"
+    "sendProductsDuplicateProduct": "同一商品只能出现一次。",
+    "inboundOrder": {
+      "title": "购物车",
+      "preview": "购物车（{count, plural, one {#件商品} other {#件商品}}）",
+      "note": "备注",
+      "unresolvedProduct": "未在您的目录中找到"
+    },
+    "referredProduct": {
+      "askedAbout": "询问了此商品"
+    }
   },
   "messenger": {
     "botProfile": "机器人个人数据",
@@ -5585,7 +5594,7 @@
     "atTheDayOf": "当天",
     "before": "之前",
     "conditions": {
-      "WhatsappShoppingCartSent": "Whatsapp 购物车已发送",
+      "shoppingCartSent": "联系人发送了购物车",
       "archived": "已封存",
       "callEnded": "通话结束",
       "cartAbandoned": "购物车被遗弃",
@@ -5621,9 +5630,10 @@
       "ticketStatusChanged": "票证状态已更改",
       "ticketValueChanged": "票价已更改",
       "unsubscribedFromSequence": "取消订阅串行",
-      "userAskedAboutProduct": "用户询问产品",
+      "userAskedAboutProduct": "联系人询问了产品",
       "callRecorded": "通话已录音",
-      "callTranscribed": "通话已转写"
+      "callTranscribed": "通话已转写",
+      "anyProduct": "任意商品"
     },
     "day": "日",
     "hour": "小时",

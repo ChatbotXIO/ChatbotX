@@ -1651,7 +1651,16 @@
     "sendProductsFieldTooLong": "הטקסט ארוך מדי.",
     "sendProductsProductCountOutOfRange": "בחרו מספר מוצרים תקין.",
     "sendProductsSectionCountOutOfRange": "יש יותר מדי מקטעים.",
-    "sendProductsDuplicateProduct": "מוצר יכול להופיע רק פעם אחת."
+    "sendProductsDuplicateProduct": "מוצר יכול להופיע רק פעם אחת.",
+    "inboundOrder": {
+      "title": "עגלת קניות",
+      "preview": "עגלת קניות ({count, plural, one {# פריט} other {# פריטים}})",
+      "note": "הערה",
+      "unresolvedProduct": "לא נמצא בקטלוג שלך"
+    },
+    "referredProduct": {
+      "askedAbout": "שאל על מוצר זה"
+    }
   },
   "instagram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Instagram.",
@@ -2687,8 +2696,8 @@
       "ticketPriorityChanged": "עדיפות הכרטיס השתנתה",
       "subscribedToSequence": "נרשם לרצף",
       "unsubscribedFromSequence": "ביטל הרשמה לרצף",
-      "WhatsappShoppingCartSent": "עגלת קניות של WhatsApp נשלחה",
-      "userAskedAboutProduct": "המשתמש שאל על מוצר",
+      "shoppingCartSent": "איש הקשר שלח עגלת קניות",
+      "userAskedAboutProduct": "איש הקשר שאל על מוצר",
       "cartAbandoned": "העגלה ננטשה",
       "newOrder": "הזמנה חדשה",
       "orderAccepted": "ההזמנה התקבלה",
@@ -2702,7 +2711,8 @@
       "contactReferredANewContact": "איש קשר הפנה איש קשר חדש",
       "contactReferredExistingContact": "איש קשר הפנה איש קשר קיים",
       "callRecorded": "השיחה הוקלטה",
-      "callTranscribed": "השיחה תומללה"
+      "callTranscribed": "השיחה תומללה",
+      "anyProduct": "כל מוצר"
     },
     "actions": {
       "addTag": "הוספת תגית",

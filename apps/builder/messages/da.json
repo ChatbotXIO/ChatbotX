@@ -3735,7 +3735,16 @@
     "sendProductsFieldTooLong": "Denne tekst er for lang.",
     "sendProductsProductCountOutOfRange": "Vælg et gyldigt antal produkter.",
     "sendProductsSectionCountOutOfRange": "Der er for mange sektioner.",
-    "sendProductsDuplicateProduct": "Et produkt kan kun forekomme én gang."
+    "sendProductsDuplicateProduct": "Et produkt kan kun forekomme én gang.",
+    "inboundOrder": {
+      "title": "Indkøbskurv",
+      "preview": "Indkøbskurv ({count, plural, one {# vare} other {# varer}})",
+      "note": "Note",
+      "unresolvedProduct": "Ikke fundet i dit katalog"
+    },
+    "referredProduct": {
+      "askedAbout": "Spurgte om dette produkt"
+    }
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",
@@ -4771,8 +4780,8 @@
       "ticketPriorityChanged": "Ticket Priority Changed",
       "subscribedToSequence": "Subscribed Til Sekvens",
       "unsubscribedFromSequence": "Unsubscribed Fra Sekvens",
-      "WhatsappShoppingCartSent": "Whatsapp Shopping Cart Sendt",
-      "userAskedAboutProduct": "Bruger Asked About Product",
+      "shoppingCartSent": "Kontakt sendte indkøbskurv",
+      "userAskedAboutProduct": "Kontakt spurgte om produkt",
       "cartAbandoned": "Cart Abandoned",
       "newOrder": "Ny Ordre",
       "orderAccepted": "Order Accepted",
@@ -4786,7 +4795,8 @@
       "contactReferredANewContact": "Kontakt Referred A Ny Kontakt",
       "contactReferredExistingContact": "Kontakt Referred Existing Kontakt",
       "callRecorded": "Opkald optaget",
-      "callTranscribed": "Opkald transskriberet"
+      "callTranscribed": "Opkald transskriberet",
+      "anyProduct": "Alle produkter"
     },
     "actions": {
       "addTag": "Tilføj tag",

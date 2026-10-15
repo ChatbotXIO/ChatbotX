@@ -212,3 +212,41 @@ describe("metaCatalogItemRepository.listSendableProducts", () => {
     ).toEqual({ data: [], pageCount: 0 })
   })
 })
+
+describe("metaCatalogItemRepository.findLinkedProductsByRetailerIds", () => {
+  test("scopes to the workspace and current catalog but still resolves inactive products", async () => {
+    const builder = queryBuilder([{ productId: "1", retailerId: "sku-1" }])
+    mocks.select.mockReturnValue(builder)
+
+    const rows =
+      await metaCatalogItemRepository.findLinkedProductsByRetailerIds({
+        ...SCOPE,
+        workspaceId: "ws-1",
+        retailerIds: ["sku-1", "sku-2"],
+      })
+
+    expect(rows).toEqual([{ productId: "1", retailerId: "sku-1" }])
+    const conditions = conditionsOf(builder)
+    expect(conditions).toContain('"item.integrationMetaCatalogId","conn-1"')
+    expect(conditions).toContain('"item.catalogId","cat-1"')
+    expect(conditions).toContain('"connection.workspaceId","ws-1"')
+    expect(conditions).toContain('"product.workspaceId","ws-1"')
+    expect(conditions).toContain("isNull(connection.deletedAt)")
+    expect(conditions).toContain('"item.retailerId",["sku-1","sku-2"]')
+    // An inbound reference names a product the contact already saw, so an
+    // inactive one must stay identifiable.
+    expect(conditions).not.toContain("product.isActive")
+  })
+
+  test("skips the query when there are no retailer ids", async () => {
+    const rows =
+      await metaCatalogItemRepository.findLinkedProductsByRetailerIds({
+        ...SCOPE,
+        workspaceId: "ws-1",
+        retailerIds: [],
+      })
+
+    expect(rows).toEqual([])
+    expect(mocks.select).not.toHaveBeenCalled()
+  })
+})

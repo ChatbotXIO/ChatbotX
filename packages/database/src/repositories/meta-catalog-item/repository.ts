@@ -45,14 +45,40 @@ const inCatalog = (scope: CatalogScope) =>
     eq(metaCatalogItemModel.catalogId, scope.catalogId),
   )
 
+/** Catalog item rows joined to their product and catalog connection; the caller adds the where. */
+const selectLinkedProducts = (tx: DatabaseClient) =>
+  tx
+    .select(sendableProductColumns())
+    .from(metaCatalogItemModel)
+    .innerJoin(
+      productModel,
+      eq(metaCatalogItemModel.productId, productModel.id),
+    )
+    .innerJoin(
+      integrationMetaCatalogModel,
+      eq(
+        metaCatalogItemModel.integrationMetaCatalogId,
+        integrationMetaCatalogModel.id,
+      ),
+    )
+
 /**
- * A product a contact can be sent: linked in the connection's current catalog,
- * still active, and owned by the workspace. The connection row is joined so a
- * disconnect or rebind that lands after the caller read its scope cannot
- * resolve against the catalog it left. The workspace check is explicit
- * rather than implied by the connection, so a product id lifted from another
- * workspace's flow can never resolve.
+ * A product linked in the connection's current catalog and owned by the
+ * workspace. The connection row is joined so a disconnect or rebind that lands
+ * after the caller read its scope cannot resolve against the catalog it left.
+ * The workspace check is explicit rather than implied by the connection, so a
+ * product id lifted from another workspace's flow can never resolve.
  */
+const linkedProductWhere = (input: CatalogScope & { workspaceId: string }) =>
+  and(
+    inCatalog(input),
+    eq(integrationMetaCatalogModel.workspaceId, input.workspaceId),
+    eq(integrationMetaCatalogModel.catalogId, input.catalogId),
+    isNull(integrationMetaCatalogModel.deletedAt),
+    eq(productModel.workspaceId, input.workspaceId),
+  )
+
+/** A linked product a contact can be sent: it must also still be active. */
 const sendableProductWhere = (
   input: CatalogScope & {
     workspaceId: string
@@ -61,11 +87,7 @@ const sendableProductWhere = (
   },
 ) =>
   and(
-    inCatalog(input),
-    eq(integrationMetaCatalogModel.workspaceId, input.workspaceId),
-    eq(integrationMetaCatalogModel.catalogId, input.catalogId),
-    isNull(integrationMetaCatalogModel.deletedAt),
-    eq(productModel.workspaceId, input.workspaceId),
+    linkedProductWhere(input),
     eq(productModel.isActive, true),
     input.keyword
       ? ilike(productModel.name, likeContains(input.keyword))
@@ -254,20 +276,7 @@ export const metaCatalogItemRepository = {
     const pagination = getPaginationWithDefaults(input)
     const where = sendableProductWhere(input)
     const [rows, [totals]] = await Promise.all([
-      tx
-        .select(sendableProductColumns())
-        .from(metaCatalogItemModel)
-        .innerJoin(
-          productModel,
-          eq(metaCatalogItemModel.productId, productModel.id),
-        )
-        .innerJoin(
-          integrationMetaCatalogModel,
-          eq(
-            metaCatalogItemModel.integrationMetaCatalogId,
-            integrationMetaCatalogModel.id,
-          ),
-        )
+      selectLinkedProducts(tx)
         .where(where)
         .orderBy(asc(productModel.name), asc(productModel.id))
         .limit(pagination.limit)
@@ -307,21 +316,28 @@ export const metaCatalogItemRepository = {
     if (input.productIds.length === 0) {
       return []
     }
-    return await tx
-      .select(sendableProductColumns())
-      .from(metaCatalogItemModel)
-      .innerJoin(
-        productModel,
-        eq(metaCatalogItemModel.productId, productModel.id),
-      )
-      .innerJoin(
-        integrationMetaCatalogModel,
-        eq(
-          metaCatalogItemModel.integrationMetaCatalogId,
-          integrationMetaCatalogModel.id,
-        ),
-      )
-      .where(sendableProductWhere(input))
+    return await selectLinkedProducts(tx).where(sendableProductWhere(input))
+  },
+
+  /**
+   * Names the catalog items a contact sent back (a cart, a product question)
+   * with one query. Unlike a send, an inactive product still resolves: the
+   * contact referred to it, so it must be identifiable. Ids that are not linked
+   * in this workspace's current catalog are simply absent from the result.
+   */
+  async findLinkedProductsByRetailerIds(
+    input: CatalogScope & { workspaceId: string; retailerIds: string[] },
+    tx: DatabaseClient = db,
+  ) {
+    if (input.retailerIds.length === 0) {
+      return []
+    }
+    return await selectLinkedProducts(tx).where(
+      and(
+        linkedProductWhere(input),
+        inArray(metaCatalogItemModel.retailerId, input.retailerIds),
+      ),
+    )
   },
 
   async findByProductIds(

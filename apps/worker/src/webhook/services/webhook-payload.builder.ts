@@ -4,7 +4,12 @@ import {
   tagService,
 } from "@chatbotx.io/business"
 import { triggerEventTypes } from "@chatbotx.io/database/partials"
-import type { MatchableEventType } from "@chatbotx.io/events"
+import type {
+  MatchableEventType,
+  ShoppingCartSentMetadata,
+  UserAskedAboutProductMetadata,
+} from "@chatbotx.io/events"
+import type { ResolvedInboundProductReference } from "@chatbotx.io/sdk"
 import type { MatchableWebhookEventData, WebhookPayload } from "../types"
 
 type WebhookPayloadBase = {
@@ -48,6 +53,8 @@ const EVENT_NAMES = {
   [triggerEventTypes.enum.callEnded]: "call_ended",
   [triggerEventTypes.enum.callRecorded]: "call_recorded",
   [triggerEventTypes.enum.callTranscribed]: "call_transcribed",
+  [triggerEventTypes.enum.shoppingCartSent]: "shopping_cart_sent",
+  [triggerEventTypes.enum.userAskedAboutProduct]: "user_asked_about_product",
 } satisfies Record<MatchableEventType, string>
 
 async function buildTagPayload(
@@ -133,6 +140,58 @@ async function buildNewContactPayload(
   }
 }
 
+/** A product reference as an outside consumer sees it; unresolved ones keep their retailer id. */
+function toProductPayload(reference: ResolvedInboundProductReference) {
+  return {
+    product_id: reference.product?.productId ?? null,
+    retailer_id: reference.catalogReference.retailerId,
+    name: reference.product?.name ?? null,
+  }
+}
+
+// Explicit fields rather than spreading `data`: the event metadata also carries
+// internal ids (`contactInboxId`) that no payload exposes.
+function buildCatalogEventPayload(
+  basePayload: WebhookPayloadBase,
+  data: ShoppingCartSentMetadata | UserAskedAboutProductMetadata,
+): WebhookPayload {
+  return {
+    ...basePayload,
+    channel: data.channel,
+    conversation_id: data.conversationId,
+    message_id: data.messageId,
+    catalog_id: data.catalogId,
+  }
+}
+
+function buildShoppingCartPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  const metadata = data as ShoppingCartSentMetadata
+  return {
+    ...buildCatalogEventPayload(basePayload, metadata),
+    note: metadata.note,
+    products: metadata.products.map((item) => ({
+      ...toProductPayload(item),
+      quantity: item.quantity,
+      item_price: item.itemPrice,
+      currency: item.currency,
+    })),
+  }
+}
+
+function buildProductInquiryPayload(
+  basePayload: WebhookPayloadBase,
+  data: Record<string, unknown>,
+): WebhookPayload {
+  const metadata = data as UserAskedAboutProductMetadata
+  return {
+    ...buildCatalogEventPayload(basePayload, metadata),
+    product: toProductPayload(metadata.product),
+  }
+}
+
 const PAYLOAD_BUILDERS = {
   [triggerEventTypes.enum.tagApplied]: buildTagPayload,
   [triggerEventTypes.enum.tagRemoved]: buildTagPayload,
@@ -213,6 +272,8 @@ const PAYLOAD_BUILDERS = {
     ...basePayload,
     ...data,
   }),
+  [triggerEventTypes.enum.shoppingCartSent]: buildShoppingCartPayload,
+  [triggerEventTypes.enum.userAskedAboutProduct]: buildProductInquiryPayload,
 } satisfies Record<MatchableEventType, PayloadBuilder>
 
 /**

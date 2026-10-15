@@ -5,12 +5,14 @@ const mocks = vi.hoisted(() => ({
   findByWorkspaceId: vi.fn(),
   listSendableProducts: vi.fn(),
   findSendableByProductIds: vi.fn(),
+  findLinkedProductsByRetailerIds: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   metaCatalogItemRepository: {
     listSendableProducts: mocks.listSendableProducts,
     findSendableByProductIds: mocks.findSendableByProductIds,
+    findLinkedProductsByRetailerIds: mocks.findLinkedProductsByRetailerIds,
   },
 }))
 
@@ -405,5 +407,99 @@ describe("productMessageService.prepareOutgoing", () => {
         "drop",
       ),
     ).rejects.toMatchObject({ reason: "noProductsSendable" })
+  })
+})
+
+describe("productMessageService.resolveInboundProducts", () => {
+  const input = {
+    workspaceId: "ws-1",
+    channel: "whatsapp",
+    catalogId: "cat-1",
+    retailerIds: ["sku-1", "sku-9", "sku-1"],
+  }
+  const unresolved = (retailerId: string) => ({
+    catalogReference: { source: "metaCatalog", catalogId: "cat-1", retailerId },
+    product: null,
+  })
+
+  test("names linked products once, keeps unknown ids unresolved, in first-seen order", async () => {
+    mocks.findLinkedProductsByRetailerIds.mockResolvedValue([row("1")])
+
+    const result = await productMessageService.resolveInboundProducts(input)
+
+    expect(mocks.findLinkedProductsByRetailerIds).toHaveBeenCalledTimes(1)
+    expect(mocks.findLinkedProductsByRetailerIds).toHaveBeenCalledWith({
+      ...SCOPE,
+      workspaceId: "ws-1",
+      catalogId: "cat-1",
+      retailerIds: ["sku-1", "sku-9"],
+    })
+    expect(result).toEqual([
+      {
+        catalogReference: {
+          source: "metaCatalog",
+          catalogId: "cat-1",
+          retailerId: "sku-1",
+        },
+        product: {
+          productId: "1",
+          name: "Product 1",
+          imageUrl: "https://img/1.png",
+          price: 12.5,
+          currency: "USD",
+        },
+      },
+      unresolved("sku-9"),
+    ])
+  })
+
+  test("reports everything unresolved without querying products when no catalog is connected", async () => {
+    mocks.findByWorkspaceId.mockResolvedValue(null)
+
+    const result = await productMessageService.resolveInboundProducts(input)
+
+    expect(mocks.findLinkedProductsByRetailerIds).not.toHaveBeenCalled()
+    expect(result).toEqual([unresolved("sku-1"), unresolved("sku-9")])
+  })
+
+  test("never matches against a catalog other than the connected one", async () => {
+    const result = await productMessageService.resolveInboundProducts({
+      ...input,
+      catalogId: "cat-other",
+    })
+
+    expect(mocks.findLinkedProductsByRetailerIds).not.toHaveBeenCalled()
+    expect(result.every(({ product }) => product === null)).toBe(true)
+    expect(result[0]?.catalogReference.catalogId).toBe("cat-other")
+  })
+
+  test("still answers, unresolved, when the product lookup fails", async () => {
+    mocks.findLinkedProductsByRetailerIds.mockRejectedValue(
+      new Error("db down"),
+    )
+
+    const result = await productMessageService.resolveInboundProducts(input)
+
+    expect(result).toEqual([unresolved("sku-1"), unresolved("sku-9")])
+  })
+
+  test("has nothing to name for a channel without a catalog source", async () => {
+    const result = await productMessageService.resolveInboundProducts({
+      ...input,
+      channel: "telegram",
+    })
+
+    expect(result).toEqual([])
+    expect(mocks.findByWorkspaceId).not.toHaveBeenCalled()
+  })
+
+  test("skips every lookup when the contact referenced no products", async () => {
+    const result = await productMessageService.resolveInboundProducts({
+      ...input,
+      retailerIds: [],
+    })
+
+    expect(result).toEqual([])
+    expect(mocks.findByWorkspaceId).not.toHaveBeenCalled()
   })
 })

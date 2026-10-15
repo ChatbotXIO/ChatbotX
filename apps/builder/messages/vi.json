@@ -3777,7 +3777,16 @@
     "sendProductsFieldTooLong": "Văn bản này quá dài.",
     "sendProductsProductCountOutOfRange": "Hãy chọn số lượng sản phẩm hợp lệ.",
     "sendProductsSectionCountOutOfRange": "Có quá nhiều nhóm.",
-    "sendProductsDuplicateProduct": "Mỗi sản phẩm chỉ được xuất hiện một lần."
+    "sendProductsDuplicateProduct": "Mỗi sản phẩm chỉ được xuất hiện một lần.",
+    "inboundOrder": {
+      "title": "Giỏ hàng",
+      "preview": "Giỏ hàng ({count, plural, one {# sản phẩm} other {# sản phẩm}})",
+      "note": "Ghi chú",
+      "unresolvedProduct": "Không tìm thấy trong danh mục"
+    },
+    "referredProduct": {
+      "askedAbout": "Đã hỏi về sản phẩm này"
+    }
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",
@@ -4690,8 +4699,8 @@
       "ticketPriorityChanged": "Ưu tiên phiếu thay đổi",
       "subscribedToSequence": "Đăng ký chuỗi",
       "unsubscribedFromSequence": "Hủy đăng ký chuỗi",
-      "WhatsappShoppingCartSent": "Giỏ hàng WhatsApp đã gửi",
-      "userAskedAboutProduct": "Người dùng hỏi về sản phẩm",
+      "shoppingCartSent": "Liên hệ gửi giỏ hàng",
+      "userAskedAboutProduct": "Liên hệ hỏi về sản phẩm",
       "cartAbandoned": "Giỏ hàng bị bỏ rơi",
       "newOrder": "Đơn hàng mới",
       "orderAccepted": "Đơn hàng được chấp nhận",
@@ -4705,7 +4714,8 @@
       "contactReferredANewContact": "Liên hệ giới thiệu liên hệ mới",
       "contactReferredExistingContact": "Liên hệ giới thiệu liên hệ hiện có",
       "callRecorded": "Cuộc gọi đã ghi âm",
-      "callTranscribed": "Cuộc gọi đã chuyển văn bản"
+      "callTranscribed": "Cuộc gọi đã chuyển văn bản",
+      "anyProduct": "Bất kỳ sản phẩm nào"
     },
     "actions": {
       "addTag": "Thêm thẻ",

@@ -951,7 +951,8 @@ export type MessageTemplateEntity = {
  * Where a product's channel-side identity comes from. One source per catalog
  * system; a channel is mapped to its source by the business layer.
  */
-export type ProductCatalogSource = "metaCatalog"
+export const productCatalogSources = z.enum(["metaCatalog"])
+export type ProductCatalogSource = z.infer<typeof productCatalogSources>
 
 export type ProductMessageItem = {
   productId: string
@@ -996,6 +997,119 @@ export const isMessageProductEntity = (
   "payload" in value &&
   typeof value.payload === "object" &&
   value.payload !== null
+
+/**
+ * A catalog product as the contact's channel names it: raw identity only. An
+ * integration cannot know the catalog `source`, so it never builds a
+ * {@link ResolvedInboundProductReference}; the business layer does.
+ */
+export type InboundCatalogProductReference = {
+  catalogId: string
+  retailerId: string
+}
+
+/**
+ * What a channel reports when a contact interacts with the catalog. Channel
+ * neutral: an integration only fills this, whatever its own webhook looks like.
+ * - `cartSent`: the contact sent a shopping cart (an order of catalog items).
+ * - `productInquiry`: the contact asked about one specific product.
+ */
+export type IncomingCommerceEvent =
+  | {
+      kind: "cartSent"
+      catalogId: string
+      note: string | null
+      items: Array<
+        InboundCatalogProductReference & {
+          quantity: number
+          itemPrice: number
+          currency: string
+        }
+      >
+    }
+  | { kind: "productInquiry"; product: InboundCatalogProductReference }
+
+/**
+ * An inbound product reference after the business layer matched it to the
+ * workspace catalog. `product` is `null` when the item is not linked here.
+ */
+export type ResolvedInboundProductReference = {
+  catalogReference: ProductMessageItem["catalogReference"]
+  product: Omit<ProductMessageItem, "catalogReference"> | null
+}
+
+export type MessageInboundOrderEntity = {
+  note: string | null
+  items: Array<
+    ResolvedInboundProductReference & {
+      quantity: number
+      itemPrice: number
+      currency: string
+    }
+  >
+}
+
+// What a saved message may claim about a catalog interaction. `contentAttributes`
+// is caller-controlled on some channels (the public API channel stores it as
+// given), so these are checked field by field: a malformed or forged entry reads
+// as absent instead of reaching a trigger, a webhook payload or the inbox.
+const resolvedInboundProductReferenceSchema = z.object({
+  catalogReference: z.object({
+    source: productCatalogSources,
+    catalogId: z.string().min(1),
+    retailerId: z.string().min(1),
+  }),
+  product: z
+    .object({
+      productId: z.string().min(1),
+      name: z.string(),
+      imageUrl: z.string().nullable(),
+      price: z.number(),
+      currency: z.string(),
+    })
+    .nullable(),
+})
+
+const inboundOrderSchema = z.object({
+  note: z.string().nullable(),
+  items: z
+    .array(
+      resolvedInboundProductReferenceSchema.extend({
+        quantity: z.number(),
+        itemPrice: z.number(),
+        currency: z.string(),
+      }),
+    )
+    .min(1),
+})
+
+const readKeyedAttribute = (
+  contentAttributes: unknown,
+  key: "inboundOrder" | "referredProduct",
+): unknown =>
+  contentAttributes && typeof contentAttributes === "object"
+    ? (contentAttributes as Record<string, unknown>)[key]
+    : undefined
+
+/**
+ * Both entities live under their own key in `contentAttributes`, next to
+ * whatever the channel already stores (a WhatsApp order keeps its raw `order`
+ * fields), so adding them is backward compatible. Centralized so the worker
+ * (writer) and inbox renderer (reader) cannot drift on the shape check.
+ */
+export const getInboundOrder = (
+  contentAttributes: unknown,
+): MessageInboundOrderEntity | undefined =>
+  inboundOrderSchema.safeParse(
+    readKeyedAttribute(contentAttributes, "inboundOrder"),
+  ).data
+
+export const getReferredProduct = (
+  contentAttributes: unknown,
+): ResolvedInboundProductReference | undefined =>
+  resolvedInboundProductReferenceSchema.safeParse(
+    readKeyedAttribute(contentAttributes, "referredProduct"),
+  ).data
 
 export const contentTypes = z.enum(["text", "location", "refLink"])
 export type ContentType = z.infer<typeof contentTypes>

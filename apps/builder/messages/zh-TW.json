@@ -1715,7 +1715,16 @@
     "sendProductsFieldTooLong": "文字過長。",
     "sendProductsProductCountOutOfRange": "請選擇有效的商品數量。",
     "sendProductsSectionCountOutOfRange": "群組過多。",
-    "sendProductsDuplicateProduct": "同一商品只能出現一次。"
+    "sendProductsDuplicateProduct": "同一商品只能出現一次。",
+    "inboundOrder": {
+      "title": "購物車",
+      "preview": "購物車（{count, plural, one {#件商品} other {#件商品}}）",
+      "note": "備註",
+      "unresolvedProduct": "未在您的目錄中找到"
+    },
+    "referredProduct": {
+      "askedAbout": "詢問了此商品"
+    }
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",
@@ -4804,8 +4813,8 @@
       "ticketPriorityChanged": "票證優先權已更改",
       "subscribedToSequence": "訂閱序列",
       "unsubscribedFromSequence": "取消訂閱序列",
-      "WhatsappShoppingCartSent": "Whatsapp 購物車已傳送",
-      "userAskedAboutProduct": "使用者詢問產品",
+      "shoppingCartSent": "聯絡人傳送了購物車",
+      "userAskedAboutProduct": "聯絡人詢問了產品",
       "cartAbandoned": "購物車被遺棄",
       "newOrder": "新訂單",
       "orderAccepted": "訂單已接受",
@@ -4819,7 +4828,8 @@
       "contactReferredANewContact": "聯絡人推薦了新聯絡人",
       "contactReferredExistingContact": "聯絡人引用現有聯絡人",
       "callRecorded": "通話已錄音",
-      "callTranscribed": "通話已轉寫"
+      "callTranscribed": "通話已轉寫",
+      "anyProduct": "任何商品"
     },
     "actions": {
       "addTag": "新增標籤",

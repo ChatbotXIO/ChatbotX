@@ -26,6 +26,49 @@ const callMessage = (
     },
   }) as never
 
+describe("resolveLastMessagePreview inbound cart", () => {
+  const cartMessage = (itemCount: number) =>
+    ({
+      text: "Received order\nsku-1 × 1 (10 USD)",
+      contentAttributes: {
+        catalog_id: "cat-1",
+        inboundOrder: {
+          note: null,
+          items: Array.from({ length: itemCount }, () => ({
+            catalogReference: {
+              source: "metaCatalog",
+              catalogId: "cat-1",
+              retailerId: "sku-1",
+            },
+            product: null,
+            quantity: 1,
+            itemPrice: 10,
+            currency: "USD",
+          })),
+        },
+      },
+    }) as never
+
+  test.each([
+    [1, "Shopping cart (1 item)"],
+    [3, "Shopping cart (3 items)"],
+  ])("shows a count instead of the multi-line summary for %i item(s)", (count, expected) => {
+    expect(resolveLastMessagePreview(cartMessage(count), t)).toBe(expected)
+  })
+
+  test("a message without a stored cart still shows its text", () => {
+    expect(
+      resolveLastMessagePreview(
+        {
+          text: "Received order",
+          contentAttributes: { catalog_id: "c" },
+        } as never,
+        t,
+      ),
+    ).toBe("Received order")
+  })
+})
+
 describe("resolveLastMessagePreview", () => {
   test("uses the message text when present, even if attachments exist", () => {
     const result = resolveLastMessagePreview(

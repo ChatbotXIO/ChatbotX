@@ -23,6 +23,8 @@ export type ProductListInput = {
   workspaceId: string
   name?: string | null
   categoryId?: string | null
+  /** Only these products — how a picker names the ones already chosen. */
+  ids?: string[] | null
   page?: number
   perPage?: number
   sort?: { id: string; desc: boolean }[] | null
@@ -77,6 +79,7 @@ export const productRepository = {
     const where = {
       workspaceId: input.workspaceId,
       name: input.name ? { ilike: likeContains(input.name) } : undefined,
+      id: input.ids?.length ? { in: input.ids } : undefined,
       ...inCategory(input.categoryId),
     }
     const pagination = parsePagination(input)

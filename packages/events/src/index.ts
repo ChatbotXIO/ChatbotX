@@ -1,5 +1,9 @@
 // Main unified emitters
 
+export type {
+  ShoppingCartSentMetadata,
+  UserAskedAboutProductMetadata,
+} from "./base-emitter"
 export * from "./contact-inbox-context"
 export * from "./context"
 export * from "./event-dispatcher"

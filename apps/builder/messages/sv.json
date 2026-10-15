@@ -4577,7 +4577,16 @@
     "sendProductsFieldTooLong": "Texten är för lång.",
     "sendProductsProductCountOutOfRange": "Välj ett giltigt antal produkter.",
     "sendProductsSectionCountOutOfRange": "Det finns för många avsnitt.",
-    "sendProductsDuplicateProduct": "En produkt kan bara förekomma en gång."
+    "sendProductsDuplicateProduct": "En produkt kan bara förekomma en gång.",
+    "inboundOrder": {
+      "title": "Kundvagn",
+      "preview": "Kundvagn ({count, plural, one {# artikel} other {# artiklar}})",
+      "note": "Anteckning",
+      "unresolvedProduct": "Hittades inte i din katalog"
+    },
+    "referredProduct": {
+      "askedAbout": "Frågade om den här produkten"
+    }
   },
   "messenger": {
     "botProfile": "Botprofil",
@@ -5585,7 +5594,7 @@
     "atTheDayOf": "På dagen",
     "before": "Före",
     "conditions": {
-      "WhatsappShoppingCartSent": "WhatsApp-kundvagn har skickats",
+      "shoppingCartSent": "Kontakt skickade kundvagn",
       "archived": "Arkiverad",
       "callEnded": "Samtal har avslutats",
       "cartAbandoned": "Kundvagn har övergetts",
@@ -5621,9 +5630,10 @@
       "ticketStatusChanged": "Ärendets status har ändrats",
       "ticketValueChanged": "Ärendets värde har ändrats",
       "unsubscribedFromSequence": "Har avregistrerats från en sekvens",
-      "userAskedAboutProduct": "Användaren frågade om en produkt",
+      "userAskedAboutProduct": "Kontakt frågade om en produkt",
       "callRecorded": "Samtal inspelat",
-      "callTranscribed": "Samtal transkriberat"
+      "callTranscribed": "Samtal transkriberat",
+      "anyProduct": "Valfri produkt"
     },
     "day": "Dag",
     "hour": "Timme",

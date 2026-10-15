@@ -1,6 +1,8 @@
 import { describe, expect, test, vi } from "vitest"
 import {
   getCanonicalReplyPayload,
+  getInboundOrder,
+  getReferredProduct,
   getViewCatalogEntity,
   getWhatsappFlowResponse,
   isDistinctPrimaryIdentity,
@@ -312,5 +314,168 @@ describe("getViewCatalogEntity", () => {
     { type: "template", payload: { templateType: "button", buttons: [] } },
   ])("returns undefined for %j", (contentAttributes) => {
     expect(getViewCatalogEntity(contentAttributes)).toBeUndefined()
+  })
+})
+
+const catalogReference = {
+  source: "metaCatalog",
+  catalogId: "cat-1",
+  retailerId: "sku-1",
+} as const
+
+describe("getInboundOrder", () => {
+  test("reads the order stored under its own key, beside the raw channel fields", () => {
+    const inboundOrder = {
+      note: null,
+      items: [
+        {
+          catalogReference,
+          product: null,
+          quantity: 2,
+          itemPrice: 5,
+          currency: "USD",
+        },
+      ],
+    }
+    expect(
+      getInboundOrder({ catalog_id: "cat-1", product_items: [], inboundOrder }),
+    ).toEqual(inboundOrder)
+  })
+
+  test.each([
+    undefined,
+    null,
+    "inboundOrder",
+    [],
+    {},
+    { inboundOrder: null },
+    { inboundOrder: "yes" },
+    { inboundOrder: { note: null } },
+    { inboundOrder: { items: "none" } },
+    // Caller-controlled on some channels: every field is checked, so a forged
+    // or half-built entry can never reach a trigger, a payload or the inbox.
+    { inboundOrder: { note: null, items: [] } },
+    { inboundOrder: { note: null, items: [{}] } },
+    { inboundOrder: { note: null, items: [{ catalogReference: null }] } },
+    {
+      inboundOrder: {
+        note: null,
+        items: [
+          {
+            catalogReference: {
+              source: "unknown",
+              catalogId: "c",
+              retailerId: "r",
+            },
+            product: null,
+            quantity: 1,
+            itemPrice: 1,
+            currency: "USD",
+          },
+        ],
+      },
+    },
+    {
+      inboundOrder: {
+        note: null,
+        items: [
+          {
+            catalogReference: {
+              source: "metaCatalog",
+              catalogId: "",
+              retailerId: "r",
+            },
+            product: null,
+            quantity: 1,
+            itemPrice: 1,
+            currency: "USD",
+          },
+        ],
+      },
+    },
+    {
+      inboundOrder: {
+        note: null,
+        items: [
+          {
+            catalogReference: {
+              source: "metaCatalog",
+              catalogId: "c",
+              retailerId: "r",
+            },
+            product: { productId: 7 },
+            quantity: 1,
+            itemPrice: 1,
+            currency: "USD",
+          },
+        ],
+      },
+    },
+    {
+      inboundOrder: {
+        note: null,
+        items: [
+          {
+            catalogReference: {
+              source: "metaCatalog",
+              catalogId: "c",
+              retailerId: "r",
+            },
+            product: null,
+            quantity: "2",
+            itemPrice: 1,
+            currency: "USD",
+          },
+        ],
+      },
+    },
+  ])("returns undefined for %j", (contentAttributes) => {
+    expect(getInboundOrder(contentAttributes)).toBeUndefined()
+  })
+})
+
+describe("getReferredProduct", () => {
+  test("keeps an unresolved product as null so the inbox can fall back to the retailer id", () => {
+    const referredProduct = { catalogReference, product: null }
+    expect(getReferredProduct({ referredProduct })).toEqual(referredProduct)
+  })
+
+  test.each([
+    undefined,
+    null,
+    "referredProduct",
+    [],
+    {},
+    { referredProduct: null },
+    { referredProduct: "sku-1" },
+    { referredProduct: { product: null } },
+    { referredProduct: { catalogReference: null } },
+    {
+      referredProduct: {
+        catalogReference: { source: "metaCatalog", catalogId: "c" },
+        product: null,
+      },
+    },
+    {
+      referredProduct: {
+        catalogReference: {
+          source: "metaCatalog",
+          catalogId: "c",
+          retailerId: "r",
+        },
+        product: { name: "no id" },
+      },
+    },
+    {
+      referredProduct: {
+        catalogReference: {
+          source: "metaCatalog",
+          catalogId: "c",
+          retailerId: "r",
+        },
+      },
+    },
+  ])("returns undefined for %j", (contentAttributes) => {
+    expect(getReferredProduct(contentAttributes)).toBeUndefined()
   })
 })
