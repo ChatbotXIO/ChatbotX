@@ -661,6 +661,15 @@ class ContactInboxService extends BaseService {
     })
   }
 
+  /** One of the contact's own connections, by id (workspace-scoped), if it still has it. */
+  async findByIdForContact(props: {
+    id: string
+    contactId: string
+    workspaceId: string
+  }): Promise<{ id: string } | null> {
+    return await contactInboxRepository.findByIdForContact(props)
+  }
+
   /**
    * The most recently active contact inbox for a `sourceId` alone, scoped to
    * one workspace — for callers that only have `{{user_id}}` (the system

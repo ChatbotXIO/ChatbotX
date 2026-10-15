@@ -211,7 +211,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
       await executor.execute({
         action: { type: "sendMetaCapiEvent" },
         contactId: "contact-1",
-        triggerId: "trigger-1",
+        source: { kind: "trigger", triggerId: "trigger-1" },
         workspaceId: "ws-1",
         contactInboxId: "ci-whatsapp",
       })
@@ -230,7 +230,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
       await executor.execute({
         action: { type: "startAnotherFlow", flowId: "flow-1" },
         contactId: "contact-1",
-        triggerId: "trigger-1",
+        source: { kind: "trigger", triggerId: "trigger-1" },
         workspaceId: "ws-1",
         contactInboxId: "ci-whatsapp",
       })
@@ -253,7 +253,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
       await executor.execute({
         action: { type: "sendMetaCapiEvent" },
         contactId: "contact-1",
-        triggerId: "trigger-1",
+        source: { kind: "trigger", triggerId: "trigger-1" },
         workspaceId: "ws-1",
       })
 
@@ -285,7 +285,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
           dedupMode: "click",
         },
         contactId: "contact-1",
-        triggerId: "trigger-1",
+        source: { kind: "trigger", triggerId: "trigger-1" },
         workspaceId: "ws-1",
         contactInboxId: "ci-whatsapp",
       })
@@ -311,7 +311,7 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
       await executor.execute({
         action: { type: "sendMetaCapiEvent" },
         contactId: "contact-1",
-        triggerId: "trigger-1",
+        source: { kind: "trigger", triggerId: "trigger-1" },
         workspaceId: "ws-1",
         contactInboxId: "ci-stale",
       })
@@ -354,10 +354,10 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
         executor.execute({
           action,
           contactId: "contact-1",
-          triggerId: "trigger-1",
+          source: { kind: "trigger", triggerId: "trigger-1" },
           workspaceId: "ws-1",
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toMatchObject({ status: "skipped" })
 
       expect(mocks.enqueueEvent).not.toHaveBeenCalled()
       expect(mocks.recordGoogleAdsConversion).not.toHaveBeenCalled()
@@ -407,13 +407,145 @@ describe("ActionExecutor — per-integration contact inbox attribution", () => {
         executor.execute({
           action,
           contactId: "contact-1",
-          triggerId: "trigger-1",
+          source: { kind: "trigger", triggerId: "trigger-1" },
           workspaceId: "ws-1",
         }),
-      ).resolves.toBeUndefined()
+      ).resolves.toEqual({ status: "succeeded" })
 
       expect(mocks.findByIdForContact).not.toHaveBeenCalled()
       expect(mocks.findMostRecentByContact).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe("ActionExecutor — outcomes and non-trigger sources", () => {
+  const inboundWebhook = {
+    kind: "inboundWebhook" as const,
+    inboundWebhookId: "iw-1",
+  }
+  const run = (action: Record<string, unknown>, extra = {}) =>
+    new ActionExecutor().execute({
+      action,
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      source: inboundWebhook,
+      ...extra,
+    })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.findLatestCreatedByContact.mockResolvedValue({
+      id: "conv-1",
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+    })
+    mocks.findByIdForContact.mockResolvedValue(WHATSAPP_INBOX)
+    // Overrides the throwing implementation a previous describe installed.
+    mocks.findMostRecentByContact.mockResolvedValue(WHATSAPP_INBOX)
+    mocks.attachExistingToContactForTrigger.mockResolvedValue([])
+    mocks.findActiveById.mockResolvedValue({
+      id: "flow-1",
+      currentVersionId: "fv-1",
+    })
+  })
+
+  test("a contact without a conversation is skipped, not reported as done", async () => {
+    mocks.findLatestCreatedByContact.mockResolvedValue(undefined)
+
+    await expect(run({ type: "addTag", tagIds: ["t1"] })).resolves.toEqual({
+      status: "skipped",
+      reason: "noConversation",
+    })
+    expect(mocks.attachExistingToContactForTrigger).not.toHaveBeenCalled()
+  })
+
+  test("startAnotherFlow queues the flow on the threaded contact inbox for an inbound webhook", async () => {
+    await expect(
+      run(
+        { type: "startAnotherFlow", flowId: "flow-1" },
+        { contactInboxId: "ci-whatsapp" },
+      ),
+    ).resolves.toEqual({ status: "succeeded" })
+
+    expect(mocks.findByIdForContact).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "ci-whatsapp", contactId: "contact-1" }),
+    )
+    expect(mocks.integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          flowId: "flow-1",
+          contactInboxId: "ci-whatsapp",
+        }),
+      }),
+    )
+  })
+
+  test("an inbound-webhook flow start carries a deterministic job id, so a retried action cannot send it twice", async () => {
+    await run(
+      { type: "startAnotherFlow", flowId: "flow-1" },
+      { contactInboxId: "ci-whatsapp", occurrenceKey: "inboundWebhook:r-1:1" },
+    )
+
+    expect(mocks.integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.anything(),
+      { jobId: "send-flow-inboundWebhook-r-1-1" },
+    )
+  })
+
+  test("a trigger flow start keeps its unkeyed enqueue", async () => {
+    await new ActionExecutor().execute({
+      action: { type: "startAnotherFlow", flowId: "flow-1" },
+      contactId: "contact-1",
+      workspaceId: "ws-1",
+      source: { kind: "trigger", triggerId: "trigger-1" },
+      occurrenceKey: "trigger:occ:trigger-1:0",
+    })
+
+    expect(mocks.integrationQueueAdd).toHaveBeenCalledTimes(1)
+    expect(mocks.integrationQueueAdd.mock.calls[0]).toHaveLength(2)
+  })
+
+  test("an inactive or missing flow is skipped as flowInactive", async () => {
+    mocks.findActiveById.mockResolvedValue(null)
+
+    await expect(
+      run({ type: "startAnotherFlow", flowId: "flow-1" }),
+    ).resolves.toEqual({ status: "skipped", reason: "flowInactive" })
+    expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("tag actions run for an inbound webhook", async () => {
+    await expect(run({ type: "addTag", tagIds: ["t1"] })).resolves.toEqual({
+      status: "succeeded",
+    })
+    expect(mocks.attachExistingToContactForTrigger).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      tagIds: ["t1"],
+    })
+  })
+
+  test.each([
+    ["sendMetaCapiEvent", { type: "sendMetaCapiEvent" }],
+    ["sendGoogleAdsConversion", { type: "sendGoogleAdsConversion" }],
+    ["runGoogleSheet", { type: "runGoogleSheet", action: "spreadsheetGetRow" }],
+  ])("%s is trigger-only: skipped for an inbound webhook without touching its dedup scope", async (_name, action) => {
+    await expect(run(action)).resolves.toEqual({
+      status: "skipped",
+      reason: "unsupportedSource",
+    })
+    expect(mocks.findMostRecentByContact).not.toHaveBeenCalled()
+    expect(mocks.enqueueEvent).not.toHaveBeenCalled()
+    expect(mocks.recordGoogleAdsConversion).not.toHaveBeenCalled()
+    expect(mocks.getSpreadsheetRow).not.toHaveBeenCalled()
+  })
+
+  test("an unknown action type is skipped", async () => {
+    await expect(run({ type: "somethingNew" })).resolves.toEqual({
+      status: "skipped",
+      reason: "unknownAction",
     })
   })
 })

@@ -874,7 +874,8 @@
       "api": "API",
       "webchat": "Veb söhbət",
       "botLink": "Bot keçidi",
-      "chatPlugin": "C. söhbət əlavəsi"
+      "chatPlugin": "C. söhbət əlavəsi",
+      "inboundWebhook": "Daxil olan webhook"
     },
     "ctwaRetarget": {
       "segments": {
@@ -4705,7 +4706,17 @@
     "maxItemsReached": "Hər iş sahəsi üçün ən çox {max} {feature} icazəlidir",
     "maxCharacters": "Ən çox {max} simvol.",
     "invalidApiKey": "Etibarsız API açarı",
-    "maxMustBeGreaterThanMin": "{maxField} ən azı {minField} qədər olmalıdır"
+    "maxMustBeGreaterThanMin": "{maxField} ən azı {minField} qədər olmalıdır",
+    "inboundWebhook": {
+      "inboxRequired": "Gələnlər qutusu seçin.",
+      "inboxNotFound": "Seçilmiş gələnlər qutusu tapılmadı.",
+      "inboxDisconnected": "Seçilmiş gələnlər qutusu qoşulu deyil.",
+      "unsupportedInboxIdentifier": "Bu kanal həmin dəyərlə müəyyən edilə bilməz.",
+      "identifierRequired": "Ən azı bir kontakt identifikatoru əlavə edin.",
+      "unknownFieldTarget": "Uyğunlaşdırılmış kontakt sahəsi artıq mövcud deyil.",
+      "actionReferenceNotFound": "Əməliyyat artıq mövcud olmayan axına, etiketə və ya sahəyə istinad edir.",
+      "fieldMappingRequired": "Ən azı bir sahə uyğunlaşdırması əlavə edin."
+    }
   },
   "webchat": {
     "chatUnavailable": "Bu söhbət hazırda əlçatan deyil.",
@@ -5432,6 +5443,216 @@
   "magicLinks": {
     "title": "Sehrli keçidlər",
     "description": "Sorğu parametrləri ilə URL-inizə yönləndirən birbaşa keçidlər yaradın."
+  },
+  "inboundWebhooks": {
+    "title": "Daxil olan Webhook-lar",
+    "feature": "Daxil olan webhook",
+    "description": "Xarici sistemlərin iş sahənizə məlumat göndərməsinə icazə verin: kontakt tapın və ya yaradın, dəyərləri sahələrinə yazın və əməliyyatları icra edin.",
+    "createDescription": "Yeni webhook qeyri-aktiv başlayır. Redaktorda konfiqurasiya edin, sonra aktiv edin.",
+    "deleteDescription": "Hələ də bu URL-ə göndərən sistemlər xəta alacaq. Bunu geri qaytarmaq olmaz.",
+    "editorDescription": "Bu webhook-u işə salmaq üçün aşağıdakı URL-ə JSON POST sorğusu göndərin.",
+    "configure": "Konfiqurasiya et",
+    "getLink": "Keçid al",
+    "activeToggle": "{name} aktiv et",
+    "columns": {
+      "active": "Aktiv",
+      "createdAt": "Yaradılıb",
+      "requests": "Sorğular"
+    },
+    "link": {
+      "title": "Webhook URL",
+      "description": "Bu URL-ə JSON POST edin. Gizli token ehtiva edir, ona görə parol kimi qoruyun."
+    },
+    "endpoint": {
+      "label": "Webhook URL",
+      "show": "URL-i göstər",
+      "hide": "URL-i gizlət"
+    },
+    "regenerate": {
+      "button": "Yenidən yarat",
+      "title": "Webhook URL yenidən yaradılsın?",
+      "description": "Cari URL dərhal işləməyi dayandırır. Ona göndərən bütün sistemləri yeniləyin.",
+      "cancel": "Ləğv et",
+      "confirm": "Yenidən yarat",
+      "success": "Webhook URL yenidən yaradıldı",
+      "failed": "URL yenidən yaradıla bilmədi"
+    },
+    "activation": {
+      "incomplete": "Bu webhook-u aktivləşdirməzdən əvvəl gələnlər qutusunu, ən azı bir kontakt sahəsini və ən azı bir uyğunlaşdırmanı doldurub yadda saxlayın."
+    },
+    "sample": {
+      "title": "Nümunə JSON",
+      "description": "Sahələrinə baxmaq və dəyərləri önbaxışda görmək üçün nümunə sorğu gövdəsi yapışdırın.",
+      "load": "Nümunə JSON yüklə",
+      "status": {
+        "loaded": "Nümunə yükləndi",
+        "invalid": "Bu etibarlı JSON deyil",
+        "tooLarge": "Nümunə {max} KB-dan böyükdür",
+        "unsupported": "Bu nümunədə dəstəklənməyən simvollar var və ya çox dərin iç-içədir"
+      },
+      "format": "JSON-u formatla"
+    },
+    "contact": {
+      "title": "Kontakt tap və ya yarat",
+      "description": "Kontaktın aid olduğu gələnlər qutusunu və onu necə tapacağınızı seçin. Heç kim uyğun gəlməsə, sorğuda bu kanalın tələb etdiyi məlumat olduqda yeni kontakt yaradılır."
+    },
+    "inbox": {
+      "modeLabel": "Gələnlər qutusu",
+      "mode": {
+        "inbox": "Konkret gələnlər qutusu",
+        "payload": "Payload-dan"
+      },
+      "modeDescription": {
+        "inbox": "Hər sorğu seçdiyiniz gələnlər qutusundan istifadə edir.",
+        "payload": "Hər sorğu öz gələnlər qutusunu göstərir, məsələn Messenger səhifə id-si və ya WhatsApp telefon nömrəsi id-si."
+      },
+      "inboxLabel": "Gələnlər qutusu",
+      "inboxPlaceholder": "Gələnlər qutusu seçin",
+      "noInboxes": "Qoşulmuş gələnlər qutusu tapılmadı.",
+      "savedInboxMissing": "Yadda saxlanmış gələnlər qutusu artıq qoşulu deyil. Başqasını seçin.",
+      "channelLabel": "Kanal",
+      "channelPlaceholder": "Kanal seçin",
+      "noPayloadChannels": "Əvvəlcə bunu dəstəkləyən kanal qoşun.",
+      "identifierKindLabel": "Gələnlər qutusu identifikatoru",
+      "identifierKindPlaceholder": "Payload-da göndərilən identifikatoru seçin",
+      "identifierPathHint": "Bu dəyərin sorğudakı JSON yolu."
+    },
+    "identity": {
+      "hint": "Ən azı birini doldurun. Kontakt sorğuda tapılan ilk dəyərə görə bu sıra ilə axtarılır.",
+      "phone": "Telefon",
+      "email": "E-poçt",
+      "channelUserId": "Kanal istifadəçi ID-si",
+      "fullName": "Tam ad",
+      "creationHint": "{identities} olmadan naməlum kontakt üçün sorğu keçilir. Yalnız mövcud kontaktlar yenilənir."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "Facebook səhifə id-si",
+      "igId": "Instagram hesab id-si",
+      "phoneNumberId": "WhatsApp telefon nömrəsi id-si",
+      "displayPhoneNumber": "WhatsApp telefon nömrəsi (daha az dəqiq)",
+      "botId": "Telegram bot id-si",
+      "oaId": "Zalo OA id-si",
+      "openId": "TikTok hesab open id",
+      "threadsUserId": "Threads istifadəçi id-si"
+    },
+    "channelUserIdKinds": {
+      "psid": "Messenger PSID",
+      "igsid": "Instagram IGSID",
+      "telegramChatId": "Telegram çat id-si",
+      "zaloUserId": "Zalo istifadəçi id-si",
+      "tiktokCustomerOpenId": "TikTok müştəri open id",
+      "threadsUsername": "Threads istifadəçi adı",
+      "apiSourceId": "Kontakt mənbəyi id-si",
+      "whatsappId": "WhatsApp ID-si (wa_id)"
+    },
+    "mappings": {
+      "title": "Daxil olan məlumatı yadda saxla",
+      "description": "Sorğudakı dəyərləri kontakt sahələrinə kopyalayın.",
+      "empty": "Hələ heç bir sahə uyğunlaşdırılmayıb.",
+      "add": "Sahə əlavə et",
+      "remove": "Sahəni sil",
+      "target": "Kontakt sahəsi",
+      "targetPlaceholder": "Sahə seçin",
+      "path": "JSON yolu",
+      "rowTitle": "Uyğunlaşdırma {number}"
+    },
+    "actions": {
+      "title": "Məlumat yadda saxlandıqdan sonra",
+      "description": "Məlumat yadda saxlandıqdan sonra kontakt üçün icra ediləcək əməliyyatlar."
+    },
+    "picker": {
+      "title": "JSON-a bax",
+      "description": "Dəyəri axtarıb klikləyin və ya aşağıda JSONPath daxil edin",
+      "browse": "Bax",
+      "noSample": "Sahələrinə baxmaq üçün əvvəlcə nümunə JSON yükləyin.",
+      "pathLabel": "JSON yolu",
+      "use": "Yolu istifadə et",
+      "cancel": "Ləğv et",
+      "result": "Nəticə:",
+      "noValue": "dəyər yoxdur",
+      "searchLabel": "JSON-da axtar",
+      "searchPlaceholder": "Açar, yol və ya dəyər axtarın",
+      "noMatches": "Uyğun açar və ya dəyər yoxdur.",
+      "moreResults": "İlk {count} uyğunluq göstərilir. Digərlərini görmək üçün axtarışı dəqiqləşdirin.",
+      "pathHint": "Xassə adlarını və massiv indekslərini dəstəkləyir, o cümlədən $[\"customer-data\"][\"email\"]",
+      "invalidPath": "Bu, dəstəklənən JSONPath deyil."
+    },
+    "requests": {
+      "title": "Sorğular",
+      "description": "Bu webhook-un aldığı son çatdırılmalar (30 gün saxlanılır).",
+      "refresh": "Yenilə",
+      "empty": "Hələ sorğu alınmayıb.",
+      "previous": "Əvvəlki səhifə",
+      "next": "Növbəti səhifə",
+      "pageOf": "Səhifə {page} / {pageCount}",
+      "contact": "Kontakt #{id}",
+      "showDetails": "Təfərrüatları göstər",
+      "hideDetails": "Təfərrüatları gizlət",
+      "loadingDetails": "Təfərrüatlar yüklənir…",
+      "detailsFailed": "Təfərrüatlar yüklənə bilmədi.",
+      "fieldErrors": "Yadda saxlanmayan sahələr",
+      "actionResults": "Əməliyyatlar",
+      "payload": "Payload",
+      "status": {
+        "received": "Qəbul edildi",
+        "processing": "İşlənir",
+        "processed": "İşləndi",
+        "completedWithErrors": "Xətalarla tamamlandı",
+        "skipped": "Keçildi",
+        "failed": "Uğursuz oldu"
+      },
+      "skipReason": {
+        "webhookInactive": "Webhook qeyri-aktiv idi.",
+        "missingInboxIdentifier": "Sorğuda gələnlər qutusu identifikatoru yox idi.",
+        "inboxNotFound": "Sorğudakı identifikatora uyğun gələnlər qutusu yoxdur.",
+        "inboxAmbiguous": "Sorğudakı identifikatora birdən çox gələnlər qutusu uyğun gəlir.",
+        "inboxDisconnected": "Gələnlər qutusunun bağlantısı kəsilib.",
+        "missingIdentifier": "Sorğuda heç bir kontakt identifikatoru yox idi.",
+        "workspaceBlocked": "İş sahəsinin sahibi bloklanıb.",
+        "contactNotFound": "Heç bir kontakt uyğun gəlmədi və sorğuda yeni kontakt yaratmaq üçün lazım olanlar yox idi.",
+        "contactAmbiguous": "Gələn qutusunda bu adda birdən çox kontakt var, ona görə sorğu keçildi."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Yanlış dəyər",
+        "invalidPhone": "Yanlış telefon nömrəsi",
+        "unknownField": "Sahə artıq mövcud deyil"
+      },
+      "actionStatus": {
+        "succeeded": "uğurlu",
+        "skipped": "keçildi",
+        "failed": "uğursuz"
+      },
+      "errorCode": {
+        "abandoned": "Ləğv edildi: 24 saat ərzində işlənmədi"
+      },
+      "actionSkipReason": {
+        "noConversation": "Kontaktın söhbəti yoxdur",
+        "noContactInbox": "Kontakt bu qutuya qoşulmayıb",
+        "flowInactive": "Axın dərc olunmayıb",
+        "unsupportedAction": "Bu əməliyyat burada dəstəklənmir",
+        "unsupportedChannel": "Kanal bu əməliyyatı dəstəkləmir",
+        "invalidAction": "Əməliyyat düzgün qurulmayıb",
+        "unknownAction": "Naməlum əməliyyat",
+        "unsupportedSource": "Bu mənbə üçün dəstəklənmir"
+      }
+    },
+    "save": {
+      "invalid": "Bəzi parametrlər yanlışdır. Vurğulanmış sahələri düzəldib yenidən yadda saxlayın."
+    },
+    "viewAnalytics": "Analitikaya bax",
+    "analytics": {
+      "title": "Analitika",
+      "back": "Webhook-a qayıt",
+      "totalRequests": "Qəbul edilən ümumi sorğular",
+      "totalRequestsHint": "Webhook yaradıldığı gündən qəbul edilən hər sorğu. Dublikatlar sayılmır. Aşağıdakı jurnal son 30 günü saxlayır."
+    },
+    "issues": {
+      "inboxRequired": "Gələnlər qutusu seçin.",
+      "identifierRequired": "Dörd kontakt sahəsindən ən azı birini doldurun.",
+      "fieldMappingRequired": "\"Daxil olan məlumatı yadda saxla\" bölməsində ən azı bir sahə əlavə edin.",
+      "required": "Bu sahə mütləqdir.",
+      "unsupportedPath": "Dəstəklənməyən JSON yolu."
+    }
   },
   "QRCode": {
     "title": "QR kodu",

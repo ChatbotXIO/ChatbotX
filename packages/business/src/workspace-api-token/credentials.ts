@@ -1,4 +1,7 @@
-import type { TokenHash } from "@chatbotx.io/database/partials"
+import {
+  INBOUND_WEBHOOK_TOKEN_PREFIX,
+  type TokenHash,
+} from "@chatbotx.io/database/partials"
 
 const API_TOKEN_PREFIX = "cbx_api_"
 const WORKSPACE_TOKEN_PREFIX = "cbx_ws_"
@@ -77,6 +80,14 @@ export const generateApiChannelToken = (): Promise<ApiChannelCredentials> =>
  */
 export const generateWorkspaceToken = (): Promise<ApiChannelCredentials> =>
   generateBearerToken(WORKSPACE_TOKEN_PREFIX)
+
+/**
+ * Capability token embedded in an inbound webhook URL (`/api/hooks/<token>`).
+ * Unlike the bearer tokens above it is stored raw — the owner can copy the link
+ * again — so it carries no hash or display prefix.
+ */
+export const generateInboundWebhookToken = (): string =>
+  `${INBOUND_WEBHOOK_TOKEN_PREFIX}${randomUrlSafeString(TOKEN_BYTES)}`
 
 /** Per-inbox HMAC secret used to sign outbound callback payloads. */
 export const generateSigningSecret = (): string =>

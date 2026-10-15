@@ -832,7 +832,8 @@
       "api": "API",
       "webchat": "Webchat",
       "botLink": "Ligação do bot",
-      "chatPlugin": "Plugin de chat C."
+      "chatPlugin": "Plugin de chat C.",
+      "inboundWebhook": "Webhook de entrada"
     },
     "ctwaRetarget": {
       "segments": {
@@ -4022,7 +4023,17 @@
     "maxItemsReached": "É permitido um máximo de {max} {feature} por espaço de trabalho",
     "maxCharacters": "Máximo de {max} caracteres.",
     "invalidApiKey": "Chave da API inválida",
-    "maxMustBeGreaterThanMin": "{maxField} tem de ser maior ou igual a {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} tem de ser maior ou igual a {minField}",
+    "inboundWebhook": {
+      "inboxRequired": "Escolha uma caixa de entrada.",
+      "inboxNotFound": "A caixa de entrada selecionada não foi encontrada.",
+      "inboxDisconnected": "A caixa de entrada selecionada não está ligada.",
+      "unsupportedInboxIdentifier": "Este canal não pode ser identificado por esse valor.",
+      "identifierRequired": "Adicione pelo menos uma identidade de contacto.",
+      "unknownFieldTarget": "Um campo de contacto mapeado já não existe.",
+      "actionReferenceNotFound": "Uma ação faz referência a um fluxo, etiqueta ou campo que já não existe.",
+      "fieldMappingRequired": "Adicione pelo menos um mapeamento de campo."
+    }
   },
   "webchat": {
     "chatUnavailable": "Este chat está atualmente indisponível.",
@@ -4749,6 +4760,216 @@
   "magicLinks": {
     "title": "Ligações mágicas",
     "description": "Crie ligações diretas que redirecionam para o seu URL com parâmetros de consulta."
+  },
+  "inboundWebhooks": {
+    "title": "Webhooks de entrada",
+    "feature": "Webhook de entrada",
+    "description": "Permita que sistemas externos enviem dados para o seu workspace: encontrar ou criar um contacto, guardar valores nos respetivos campos e executar ações.",
+    "createDescription": "Um novo webhook começa inativo. Configure-o no editor e depois ative-o.",
+    "deleteDescription": "Os sistemas que ainda enviam para este URL receberão um erro. Esta ação não pode ser anulada.",
+    "editorDescription": "Envie um pedido POST com JSON para o URL abaixo para executar este webhook.",
+    "configure": "Configurar",
+    "getLink": "Obter ligação",
+    "activeToggle": "Ativar {name}",
+    "columns": {
+      "active": "Ativo",
+      "createdAt": "Criado",
+      "requests": "Pedidos"
+    },
+    "link": {
+      "title": "URL do webhook",
+      "description": "Envie JSON por POST para este URL. Contém um token secreto, por isso trate-o como uma palavra-passe."
+    },
+    "endpoint": {
+      "label": "URL do webhook",
+      "show": "Mostrar URL",
+      "hide": "Ocultar URL"
+    },
+    "regenerate": {
+      "button": "Regenerar",
+      "title": "Regenerar o URL do webhook?",
+      "description": "O URL atual deixa de funcionar imediatamente. Atualize todos os sistemas que enviam para ele.",
+      "cancel": "Cancelar",
+      "confirm": "Regenerar",
+      "success": "URL do webhook regenerado",
+      "failed": "Não foi possível regenerar o URL"
+    },
+    "activation": {
+      "incomplete": "Preencha a caixa de entrada, pelo menos um campo do contacto e pelo menos um mapeamento, e guarde, antes de ativar este webhook."
+    },
+    "sample": {
+      "title": "JSON de exemplo",
+      "description": "Cole um corpo de pedido de exemplo para explorar os campos e pré-visualizar os valores.",
+      "load": "Carregar JSON de exemplo",
+      "status": {
+        "loaded": "Exemplo carregado",
+        "invalid": "Este JSON não é válido",
+        "tooLarge": "O exemplo é maior do que {max} KB",
+        "unsupported": "O exemplo contém carateres não suportados ou está demasiado aninhado"
+      },
+      "format": "Formatar JSON"
+    },
+    "contact": {
+      "title": "Encontrar ou criar contacto",
+      "description": "Escolha a caixa de entrada a que o contacto pertence e como o encontrar. Se ninguém corresponder, é criado um novo contacto quando o pedido tiver o que este canal precisa."
+    },
+    "inbox": {
+      "modeLabel": "Caixa de entrada",
+      "mode": {
+        "inbox": "Caixa de entrada específica",
+        "payload": "Do payload"
+      },
+      "modeDescription": {
+        "inbox": "Cada pedido usa a caixa de entrada que escolher.",
+        "payload": "Cada pedido indica a sua caixa de entrada, por exemplo o id de uma página do Messenger ou o id de um número do WhatsApp."
+      },
+      "inboxLabel": "Caixa de entrada",
+      "inboxPlaceholder": "Selecione uma caixa de entrada",
+      "noInboxes": "Nenhuma caixa de entrada ligada encontrada.",
+      "savedInboxMissing": "A caixa de entrada guardada já não está ligada. Escolha outra.",
+      "channelLabel": "Canal",
+      "channelPlaceholder": "Selecione um canal",
+      "noPayloadChannels": "Ligue primeiro um canal compatível.",
+      "identifierKindLabel": "Identificador da caixa de entrada",
+      "identifierKindPlaceholder": "Selecione o identificador enviado no payload",
+      "identifierPathHint": "Caminho JSON deste valor no pedido."
+    },
+    "identity": {
+      "hint": "Preencha pelo menos um. O contacto é procurado pelo primeiro encontrado no pedido, por esta ordem.",
+      "phone": "Telefone",
+      "email": "E-mail",
+      "channelUserId": "ID de utilizador do canal",
+      "fullName": "Nome completo",
+      "creationHint": "Sem {identities}, um pedido para um contacto desconhecido é ignorado. Apenas os contactos existentes são atualizados."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "ID da página do Facebook",
+      "igId": "ID da conta do Instagram",
+      "phoneNumberId": "ID do número de telefone do WhatsApp",
+      "displayPhoneNumber": "Número de telefone do WhatsApp (menos preciso)",
+      "botId": "ID do bot do Telegram",
+      "oaId": "ID do Zalo OA",
+      "openId": "Open ID da conta do TikTok",
+      "threadsUserId": "ID de utilizador do Threads"
+    },
+    "channelUserIdKinds": {
+      "psid": "PSID do Messenger",
+      "igsid": "IGSID do Instagram",
+      "telegramChatId": "ID do chat do Telegram",
+      "zaloUserId": "ID de utilizador do Zalo",
+      "tiktokCustomerOpenId": "Open ID do cliente do TikTok",
+      "threadsUsername": "Nome de utilizador do Threads",
+      "apiSourceId": "ID da origem do contacto",
+      "whatsappId": "ID do WhatsApp (wa_id)"
+    },
+    "mappings": {
+      "title": "Guardar dados recebidos",
+      "description": "Copie valores do pedido para campos do contacto.",
+      "empty": "Ainda não há campos mapeados.",
+      "add": "Adicionar campo",
+      "remove": "Remover campo",
+      "target": "Campo do contacto",
+      "targetPlaceholder": "Selecione um campo",
+      "path": "Caminho JSON",
+      "rowTitle": "Mapeamento {number}"
+    },
+    "actions": {
+      "title": "Depois de guardar os dados",
+      "description": "Ações a executar para o contacto depois de os dados serem guardados."
+    },
+    "picker": {
+      "title": "Explorar JSON",
+      "description": "Pesquise e clique num valor, ou introduza um JSONPath abaixo",
+      "browse": "Explorar",
+      "noSample": "Carregue primeiro um JSON de exemplo para explorar os respetivos campos.",
+      "pathLabel": "Caminho JSON",
+      "use": "Usar caminho",
+      "cancel": "Cancelar",
+      "result": "Resultado:",
+      "noValue": "sem valor",
+      "searchLabel": "Pesquisar no JSON",
+      "searchPlaceholder": "Pesquisar chaves, caminhos ou valores",
+      "noMatches": "Nenhuma chave ou valor correspondente.",
+      "moreResults": "A mostrar as primeiras {count} correspondências. Refine a pesquisa para ver outras.",
+      "pathHint": "Suporta nomes de propriedades e índices de array, incluindo $[\"customer-data\"][\"email\"]",
+      "invalidPath": "Este não é um JSONPath suportado."
+    },
+    "requests": {
+      "title": "Pedidos",
+      "description": "As últimas entregas recebidas por este webhook (mantidas durante 30 dias).",
+      "refresh": "Atualizar",
+      "empty": "Ainda não foi recebido nenhum pedido.",
+      "previous": "Página anterior",
+      "next": "Página seguinte",
+      "pageOf": "Página {page} de {pageCount}",
+      "contact": "Contacto n.º {id}",
+      "showDetails": "Mostrar detalhes",
+      "hideDetails": "Ocultar detalhes",
+      "loadingDetails": "A carregar detalhes…",
+      "detailsFailed": "Não foi possível carregar os detalhes.",
+      "fieldErrors": "Campos não guardados",
+      "actionResults": "Ações",
+      "payload": "Payload",
+      "status": {
+        "received": "Recebido",
+        "processing": "A processar",
+        "processed": "Processado",
+        "completedWithErrors": "Concluído com erros",
+        "skipped": "Ignorado",
+        "failed": "Falhou"
+      },
+      "skipReason": {
+        "webhookInactive": "O webhook estava inativo.",
+        "missingInboxIdentifier": "O pedido não continha o identificador da caixa de entrada.",
+        "inboxNotFound": "Nenhuma caixa de entrada corresponde ao identificador do pedido.",
+        "inboxAmbiguous": "Mais do que uma caixa de entrada corresponde ao identificador do pedido.",
+        "inboxDisconnected": "A caixa de entrada está desligada.",
+        "missingIdentifier": "O pedido não continha qualquer identidade de contacto.",
+        "workspaceBlocked": "O proprietário do espaço de trabalho está bloqueado.",
+        "contactNotFound": "Nenhum contacto correspondeu, e o pedido não continha o necessário para criar um.",
+        "contactAmbiguous": "Mais do que um contacto tem este nome na caixa de entrada, por isso o pedido foi ignorado."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Valor inválido",
+        "invalidPhone": "Número de telefone inválido",
+        "unknownField": "O campo já não existe"
+      },
+      "actionStatus": {
+        "succeeded": "concluída",
+        "skipped": "ignorada",
+        "failed": "falhou"
+      },
+      "errorCode": {
+        "abandoned": "Abandonada: não processada em 24 horas"
+      },
+      "actionSkipReason": {
+        "noConversation": "O contacto não tem conversa",
+        "noContactInbox": "O contacto não está ligado a esta caixa de entrada",
+        "flowInactive": "O fluxo não está publicado",
+        "unsupportedAction": "Esta ação não é suportada aqui",
+        "unsupportedChannel": "O canal não suporta esta ação",
+        "invalidAction": "A ação não está configurada corretamente",
+        "unknownAction": "Ação desconhecida",
+        "unsupportedSource": "Não suportado para esta origem"
+      }
+    },
+    "save": {
+      "invalid": "Algumas definições são inválidas. Corrija os campos destacados e guarde novamente."
+    },
+    "viewAnalytics": "Ver análises",
+    "analytics": {
+      "title": "Análises",
+      "back": "Voltar ao webhook",
+      "totalRequests": "Total de pedidos recebidos",
+      "totalRequestsHint": "Todos os pedidos aceites desde a criação do webhook. Os duplicados não são contados. O registo abaixo guarda os últimos 30 dias."
+    },
+    "issues": {
+      "inboxRequired": "Escolha uma caixa de entrada.",
+      "identifierRequired": "Preencha pelo menos um dos quatro campos do contacto.",
+      "fieldMappingRequired": "Adicione pelo menos um campo em \"Guardar dados recebidos\".",
+      "required": "Este campo é obrigatório.",
+      "unsupportedPath": "Caminho JSON não suportado."
+    }
   },
   "trigger": {
     "when": "Quando isto acontecer",

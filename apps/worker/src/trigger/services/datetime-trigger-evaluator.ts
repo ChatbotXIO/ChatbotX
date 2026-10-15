@@ -179,7 +179,7 @@ async function executeActions(
         action,
         contactId,
         workspaceId: triggerInfo.workspaceId,
-        triggerId: triggerInfo.triggerId,
+        source: { kind: "trigger", triggerId: triggerInfo.triggerId },
         occurrenceKey: `datetime:${triggerInfo.triggerId}:${contactId}:${index}:${occurrence}`,
       })
     } catch (error) {

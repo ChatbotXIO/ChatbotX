@@ -874,7 +874,8 @@
       "api": "API",
       "webchat": "Webchat",
       "botLink": "Bot Link",
-      "chatPlugin": "C. chat plugin"
+      "chatPlugin": "C. chat plugin",
+      "inboundWebhook": "Inbound Webhook"
     },
     "ctwaRetarget": {
       "segments": {
@@ -4705,7 +4706,17 @@
     "maxItemsReached": "Maximum {max} {feature} allowed per workspace",
     "maxCharacters": "Maximum {max} characters.",
     "invalidApiKey": "Invalid API key",
-    "maxMustBeGreaterThanMin": "{maxField} must be greater than or equal to {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} must be greater than or equal to {minField}",
+    "inboundWebhook": {
+      "inboxRequired": "Choose an inbox.",
+      "inboxNotFound": "The selected inbox was not found.",
+      "inboxDisconnected": "The selected inbox is not connected.",
+      "unsupportedInboxIdentifier": "This channel cannot be identified by that value.",
+      "identifierRequired": "Add at least one contact identity.",
+      "unknownFieldTarget": "A mapped contact field no longer exists.",
+      "actionReferenceNotFound": "An action refers to a flow, tag or field that no longer exists.",
+      "fieldMappingRequired": "Add at least one field mapping."
+    }
   },
   "webchat": {
     "chatUnavailable": "This chat is currently unavailable.",
@@ -5432,6 +5443,216 @@
   "magicLinks": {
     "title": "Magic Links",
     "description": "Create deep links that redirect to your URL with query parameters."
+  },
+  "inboundWebhooks": {
+    "title": "Inbound Webhooks",
+    "feature": "Inbound webhook",
+    "description": "Let external systems send data to your workspace: find or create a contact, save values into its fields and run actions.",
+    "createDescription": "A new webhook starts inactive. Configure it in the editor, then switch it on.",
+    "deleteDescription": "Systems that still post to this URL will get an error. This cannot be undone.",
+    "editorDescription": "Send a JSON POST request to the URL below to run this webhook.",
+    "configure": "Configure",
+    "getLink": "Get link",
+    "activeToggle": "Activate {name}",
+    "columns": {
+      "active": "Active",
+      "createdAt": "Created",
+      "requests": "Requests"
+    },
+    "link": {
+      "title": "Webhook URL",
+      "description": "POST JSON to this URL. It contains a secret token, so treat it like a password."
+    },
+    "endpoint": {
+      "label": "Webhook URL",
+      "show": "Show URL",
+      "hide": "Hide URL"
+    },
+    "regenerate": {
+      "button": "Regenerate",
+      "title": "Regenerate the webhook URL?",
+      "description": "The current URL stops working within 10 seconds. Update every system that posts to it.",
+      "cancel": "Cancel",
+      "confirm": "Regenerate",
+      "success": "Webhook URL regenerated",
+      "failed": "Could not regenerate the URL"
+    },
+    "activation": {
+      "incomplete": "Fill in the inbox, at least one contact field and at least one mapping, and save, before activating this webhook."
+    },
+    "sample": {
+      "title": "Sample JSON",
+      "description": "Paste an example request body to browse its fields and preview values.",
+      "load": "Load sample JSON",
+      "status": {
+        "loaded": "Sample loaded",
+        "invalid": "This is not valid JSON",
+        "tooLarge": "The sample is larger than {max} KB",
+        "unsupported": "This sample contains unsupported characters or is nested too deeply"
+      },
+      "format": "Format JSON"
+    },
+    "contact": {
+      "title": "Find or create contact",
+      "description": "Choose the inbox the contact belongs to and how to find them. If nobody matches, a new contact is created when the request has what this channel needs."
+    },
+    "inbox": {
+      "modeLabel": "Inbox",
+      "mode": {
+        "inbox": "Specific inbox",
+        "payload": "From payload"
+      },
+      "modeDescription": {
+        "inbox": "Every request uses the inbox you pick.",
+        "payload": "Each request names its inbox, for example a Messenger page id or a WhatsApp phone number id."
+      },
+      "inboxLabel": "Inbox",
+      "inboxPlaceholder": "Select an inbox",
+      "noInboxes": "No connected inbox found.",
+      "savedInboxMissing": "The saved inbox is no longer connected. Pick another one.",
+      "channelLabel": "Channel",
+      "channelPlaceholder": "Select a channel",
+      "noPayloadChannels": "Connect a channel that supports this first.",
+      "identifierKindLabel": "Inbox identifier",
+      "identifierKindPlaceholder": "Select the identifier sent in the payload",
+      "identifierPathHint": "JSON path of this value in the request."
+    },
+    "identity": {
+      "hint": "Fill in at least one. The contact is looked up by the first one found in the request, in this order.",
+      "phone": "Phone",
+      "email": "Email",
+      "channelUserId": "Channel user ID",
+      "fullName": "Full name",
+      "creationHint": "Without {identities}, a request for an unknown contact is skipped. Only existing contacts are updated."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "Facebook Page ID",
+      "igId": "Instagram account ID",
+      "phoneNumberId": "WhatsApp phone number id",
+      "displayPhoneNumber": "WhatsApp phone number (less precise)",
+      "botId": "Telegram bot ID",
+      "oaId": "Zalo OA ID",
+      "openId": "TikTok account open id",
+      "threadsUserId": "Threads user ID"
+    },
+    "channelUserIdKinds": {
+      "psid": "Messenger PSID",
+      "igsid": "Instagram IGSID",
+      "telegramChatId": "Telegram chat id",
+      "zaloUserId": "Zalo user id",
+      "tiktokCustomerOpenId": "TikTok customer open id",
+      "threadsUsername": "Threads username",
+      "apiSourceId": "Contact source id",
+      "whatsappId": "WhatsApp ID (wa_id)"
+    },
+    "mappings": {
+      "title": "Save incoming data",
+      "description": "Copy values from the request into contact fields.",
+      "empty": "No fields mapped yet.",
+      "add": "Add field",
+      "remove": "Remove field",
+      "target": "Contact field",
+      "targetPlaceholder": "Select a field",
+      "path": "JSON path",
+      "rowTitle": "Mapping {number}"
+    },
+    "actions": {
+      "title": "After saving data",
+      "description": "Actions to run for the contact once the data is saved."
+    },
+    "picker": {
+      "title": "Browse JSON",
+      "description": "Search and click a value, or enter a JSONPath below",
+      "browse": "Browse",
+      "noSample": "Load a sample JSON first to browse its fields.",
+      "pathLabel": "JSON path",
+      "use": "Use path",
+      "cancel": "Cancel",
+      "result": "Result:",
+      "noValue": "no value",
+      "searchLabel": "Search the JSON",
+      "searchPlaceholder": "Search keys, paths, or values",
+      "noMatches": "No matching keys or values.",
+      "moreResults": "Showing the first {count} matches. Refine your search to see others.",
+      "pathHint": "Supports property names and array indexes, including $[\"customer-data\"][\"email\"]",
+      "invalidPath": "This is not a supported JSONPath."
+    },
+    "requests": {
+      "title": "Requests",
+      "description": "The latest deliveries received by this webhook (kept for 30 days).",
+      "refresh": "Refresh",
+      "empty": "No requests received yet.",
+      "previous": "Previous page",
+      "next": "Next page",
+      "pageOf": "Page {page} of {pageCount}",
+      "contact": "Contact #{id}",
+      "showDetails": "Show details",
+      "hideDetails": "Hide details",
+      "loadingDetails": "Loading details…",
+      "detailsFailed": "Could not load the details.",
+      "fieldErrors": "Fields not saved",
+      "actionResults": "Actions",
+      "payload": "Payload",
+      "status": {
+        "received": "Received",
+        "processing": "Processing",
+        "processed": "Processed",
+        "completedWithErrors": "Completed with errors",
+        "skipped": "Skipped",
+        "failed": "Failed"
+      },
+      "skipReason": {
+        "webhookInactive": "The webhook was inactive.",
+        "missingInboxIdentifier": "The request did not contain the inbox identifier.",
+        "inboxNotFound": "No inbox matches the identifier in the request.",
+        "inboxAmbiguous": "More than one inbox matches the identifier in the request.",
+        "inboxDisconnected": "The inbox is disconnected.",
+        "missingIdentifier": "The request did not contain any contact identity.",
+        "workspaceBlocked": "The workspace owner is blocked.",
+        "contactNotFound": "No contact matched, and the request did not contain what is needed to create one.",
+        "contactAmbiguous": "More than one contact has this name on the inbox, so the request was skipped."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Invalid value",
+        "invalidPhone": "Invalid phone number",
+        "unknownField": "Field no longer exists"
+      },
+      "actionStatus": {
+        "succeeded": "succeeded",
+        "skipped": "skipped",
+        "failed": "failed"
+      },
+      "errorCode": {
+        "abandoned": "Abandoned: not processed within 24 hours"
+      },
+      "actionSkipReason": {
+        "noConversation": "The contact has no conversation",
+        "noContactInbox": "The contact is not connected to this inbox",
+        "flowInactive": "The flow is not published",
+        "unsupportedAction": "This action is not supported here",
+        "unsupportedChannel": "The channel does not support this action",
+        "invalidAction": "The action is not configured correctly",
+        "unknownAction": "Unknown action",
+        "unsupportedSource": "Not supported for this source"
+      }
+    },
+    "save": {
+      "invalid": "Some settings are invalid. Fix the highlighted fields and save again."
+    },
+    "viewAnalytics": "View analytics",
+    "analytics": {
+      "title": "Analytics",
+      "back": "Back to webhook",
+      "totalRequests": "Total requests received",
+      "totalRequestsHint": "Every accepted request since the webhook was created. Duplicates are not counted. The log below keeps the latest 30 days."
+    },
+    "issues": {
+      "inboxRequired": "Choose an inbox.",
+      "identifierRequired": "Fill in at least one of the four contact fields.",
+      "fieldMappingRequired": "Add at least one field under Save incoming data.",
+      "required": "This field is required.",
+      "unsupportedPath": "Unsupported JSON path."
+    }
   },
   "QRCode": {
     "title": "QR Code",

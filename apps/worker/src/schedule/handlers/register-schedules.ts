@@ -312,6 +312,35 @@ export const registerSchedules = async () => {
     },
   )
 
+  // The inbound-webhook outbox sweep and its retention apply to every edition.
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.redispatchInboundWebhookRequests,
+    {
+      pattern: "*/5 * * * *",
+    },
+    {
+      name: ScheduleJobData.redispatchInboundWebhookRequests,
+      data: {
+        type: ScheduleJobData.redispatchInboundWebhookRequests,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.purgeInboundWebhookRequests,
+    {
+      pattern: "30 3 * * *",
+    },
+    {
+      name: ScheduleJobData.purgeInboundWebhookRequests,
+      data: {
+        type: ScheduleJobData.purgeInboundWebhookRequests,
+        data: {},
+      },
+    },
+  )
+
   // Same "retention applies to every edition" reasoning as `purgeErrorLogs`
   // above; offset 15 minutes so the two chunked deletes do not contend.
   await scheduleQueue.upsertJobScheduler(

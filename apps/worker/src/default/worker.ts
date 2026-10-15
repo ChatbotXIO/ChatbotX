@@ -18,6 +18,10 @@ import { installTemplate } from "./handlers/install-template"
 import { checkMetaCatalogSync } from "./handlers/meta-catalog/check"
 import { importMetaCatalogProducts } from "./handlers/meta-catalog/import-products"
 import { submitMetaCatalogSync } from "./handlers/meta-catalog/submit"
+import {
+  processInboundWebhookRequest,
+  skipBlockedInboundWebhookRequest,
+} from "./handlers/process-inbound-webhook-request"
 import { runImport } from "./handlers/run-import"
 import { sendAppointmentReminder } from "./handlers/send-appointment-reminder"
 import { sendAuditLog } from "./handlers/send-audit-log"
@@ -38,9 +42,13 @@ async function runGuardedDefaultJob<T>(
     userAgent?: string
   },
   handler: () => Promise<T>,
+  // For jobs backed by a durable row that must leave its pending set when the
+  // owner is blocked, or a re-dispatch scan keeps re-finding it.
+  onBlocked?: () => Promise<void>,
 ): Promise<T | undefined> {
   const workspaceId = await resolveWorkspaceId(data)
   if (await isBlockedWorkspace(workspaceId)) {
+    await onBlocked?.()
     return
   }
   return runJobWithAuditContext({ workspaceId, ...auditParams }, handler)
@@ -157,6 +165,16 @@ async function startDefaultWorker() {
           const { type, data } = job.data
           await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
             installTemplate(data),
+          )
+          return
+        }
+        case DefaultJobAction.processInboundWebhookRequest: {
+          const { type, data } = job.data
+          await runGuardedDefaultJob(
+            data,
+            { source: `default:${type}` },
+            () => processInboundWebhookRequest(data, job),
+            () => skipBlockedInboundWebhookRequest(data),
           )
           return
         }

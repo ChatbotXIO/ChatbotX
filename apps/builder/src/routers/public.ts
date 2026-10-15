@@ -45,6 +45,10 @@ import { flowsPublicRouter } from "@/features/flows/api/public"
 import { foldersPublicRouter } from "@/features/folders/api/public"
 import { igCommentsPublicRouter } from "@/features/ig-comments/api/public"
 import { igStoriesPublicRouter } from "@/features/ig-stories/api/public"
+import {
+  inboundWebhookChannelsPublicRouter,
+  inboundWebhooksPublicRouter,
+} from "@/features/inbound-webhooks/api/public"
 import { inboxesPublicRouter } from "@/features/inboxes/api/public"
 import { aiHandoverPublicRouter } from "@/features/integration-ai-handover/api/public"
 import { channelsPublicRouter } from "@/features/integration-api/api/public"
@@ -134,6 +138,8 @@ export const publicRouter = {
     ...createCapiRoutes("instagram"),
     ...instagramChannelsPublicRouter,
   },
+  inboundWebhookChannels: inboundWebhookChannelsPublicRouter,
+  inboundWebhooks: inboundWebhooksPublicRouter,
   inboxTeams: inboxTeamsPublicRouter,
   inboxes: inboxesPublicRouter,
   integrations: integrationsPublicRouter,

@@ -10,6 +10,7 @@ export const contactSources = z.enum([
   "imported",
   "api",
   "direct",
+  "inboundWebhook",
 ])
 export type ContactSource = z.infer<typeof contactSources>
 

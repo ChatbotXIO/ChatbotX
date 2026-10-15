@@ -85,6 +85,23 @@ describe("JsonTreeView", () => {
     expect(onSelectPath).toHaveBeenCalledWith("items.0.name")
   })
 
+  test("writes paths with the formatter it is given, and labels the root", () => {
+    const onSelectPath = vi.fn()
+    render(
+      <JsonTreeView
+        data={{ "customer-data": { email: "a@b.co" } }}
+        formatPath={(segments) => `$:${segments.join("/")}`}
+        onSelectPath={onSelectPath}
+        rootLabel="$"
+      />,
+    )
+
+    expect(container.textContent).toContain("$")
+    clickExpandToggleFor("customer-data")
+    clickButtonWithText("email")
+    expect(onSelectPath).toHaveBeenCalledWith("$:customer-data/email")
+  })
+
   test("renders values as plain text, not injected HTML", () => {
     const malicious = '<img src=x onerror="window.__pwned = true">'
     render(

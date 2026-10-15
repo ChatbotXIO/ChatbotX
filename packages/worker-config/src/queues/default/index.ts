@@ -43,6 +43,7 @@ export const DefaultJobAction = {
   installTemplate: "installTemplate",
   syncWelcomeMessageFlows: "syncWelcomeMessageFlows",
   deleteWelcomeMessageFlows: "deleteWelcomeMessageFlows",
+  processInboundWebhookRequest: "processInboundWebhookRequest",
 } as const
 
 export const syncExternalCalendarEventJobId = (
@@ -295,7 +296,53 @@ export type JobDeleteWelcomeMessageFlows = {
 export const welcomeMessageFlowLockKey = (flowId: string) =>
   `welcome-message-flow-${flowId}`
 
+/**
+ * Applies one stored inbound-webhook delivery (resolve inbox, find or create the
+ * contact, write fields, run actions). The `InboundWebhookRequest` row is the
+ * source of truth; this job only says "process this id", so it can be
+ * re-enqueued any number of times (the handler claims the row atomically).
+ */
+export type JobProcessInboundWebhookRequest = {
+  type: typeof DefaultJobAction.processInboundWebhookRequest
+  data: {
+    workspaceId: string
+    inboundWebhookId: string
+    requestId: string
+  }
+}
+
+/** Deterministic, so re-enqueueing a request that is still queued is a no-op. */
+export const processInboundWebhookRequestJobId = (requestId: string) =>
+  `inbound-webhook-request-${requestId}`
+
+/**
+ * Enqueues the processing of one inbound-webhook request. The job id dedupes
+ * jobs that are waiting, delayed or active; finished jobs, completed or failed,
+ * are never kept (`removeOnComplete` / `removeOnFail: true`). A job that
+ * ends while its request is still unfinished — a stalled retry that found the
+ * dead worker's lease still held, a blocked owner — must not block the
+ * re-dispatch cron from enqueueing the same request again; the atomic claim
+ * already makes a duplicate job harmless.
+ */
+export const enqueueProcessInboundWebhookRequest = async (
+  data: JobProcessInboundWebhookRequest["data"],
+): Promise<void> => {
+  await defaultQueue.add(
+    DefaultJobAction.processInboundWebhookRequest,
+    { type: DefaultJobAction.processInboundWebhookRequest, data },
+    {
+      jobId: processInboundWebhookRequestJobId(data.requestId),
+      removeOnComplete: true,
+      // The request row is the outbox, so a failed job has nothing left to say.
+      // Kept, it would make the next add() with this id a no-op and the re-dispatch
+      // of the unfinished request could not enqueue it.
+      removeOnFail: true,
+    },
+  )
+}
+
 export type DefaultJobData =
+  | JobProcessInboundWebhookRequest
   | JobSyncWelcomeMessageFlows
   | JobDeleteWelcomeMessageFlows
   | JobExportContacts

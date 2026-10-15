@@ -69,7 +69,7 @@ import {
   sendSpreadsheetData,
   updateSpreadsheetRow,
 } from "../../integration/handlers/spreadsheet-handler"
-import type { ActionExecutionContext } from "../types"
+import type { ActionExecutionContext, ActionExecutionOutcome } from "../types"
 import { resolveActionContactInbox } from "./resolve-action-contact-inbox"
 
 // The trigger action's stored shape is validated with the same field-set
@@ -89,9 +89,18 @@ const googleAdsTriggerActionSchema = withGoogleAdsConversionRefinements(
   googleAdsConversionFieldsSchema,
 )
 
+const succeeded: ActionExecutionOutcome = { status: "succeeded" }
+
+const skipped = (reason: string): ActionExecutionOutcome => ({
+  status: "skipped",
+  reason,
+})
+
 export class ActionExecutor {
-  async execute(context: ActionExecutionContext): Promise<void> {
-    const { action, contactId, triggerId, workspaceId } = context
+  async execute(
+    context: ActionExecutionContext,
+  ): Promise<ActionExecutionOutcome> {
+    const { action, contactId, source, workspaceId } = context
     const actionType = action.type
 
     const conversation = await conversationService.findLatestCreatedByContact({
@@ -101,7 +110,7 @@ export class ActionExecutor {
 
     if (!conversation) {
       baseLogger.warn(`No conversation found for contact ${contactId}`)
-      return
+      return skipped("noConversation")
     }
 
     // Lazy + memoized: only the 4 inbox-consuming branches below need a
@@ -241,7 +250,7 @@ export class ActionExecutor {
           baseLogger.warn(
             `No contact inbox found for contact ${contactId}, skipping startAnotherFlow action`,
           )
-          break
+          return skipped("noContactInbox")
         }
 
         const flowId = action.flowId as string
@@ -254,10 +263,10 @@ export class ActionExecutor {
           baseLogger.warn(
             `Flow ${flowId} not found or not active, skipping startAnotherFlow action`,
           )
-          break
+          return skipped("flowInactive")
         }
 
-        await integrationQueue.add(IntegrationJobAction.sendFlow, {
+        const sendFlowJob = {
           type: IntegrationJobAction.sendFlow,
           data: {
             conversationId: conversation,
@@ -265,7 +274,21 @@ export class ActionExecutor {
             flowId,
             origin: webhookChannelOrigin(),
           },
-        })
+        }
+        // An inbound-webhook action may run again after a retry that lost its
+        // checkpoint; a deterministic job id keeps the flow from being sent
+        // twice. Trigger runs keep their existing, unkeyed behaviour.
+        if (source.kind === "inboundWebhook" && context.occurrenceKey) {
+          await integrationQueue.add(
+            IntegrationJobAction.sendFlow,
+            sendFlowJob,
+            {
+              jobId: `send-flow-${context.occurrenceKey.replaceAll(":", "-")}`,
+            },
+          )
+        } else {
+          await integrationQueue.add(IntegrationJobAction.sendFlow, sendFlowJob)
+        }
         break
       }
 
@@ -366,12 +389,17 @@ export class ActionExecutor {
         break
 
       case triggerActions.enum.sendMetaCapiEvent: {
+        // Its dedup source key is scoped to a trigger.
+        if (source.kind !== "trigger") {
+          return skipped("unsupportedSource")
+        }
+        const { triggerId } = source
         const contactInbox = await getContactInbox()
         if (!contactInbox) {
           baseLogger.warn(
             `No contact inbox found for contact ${contactId}, skipping sendMetaCapiEvent action`,
           )
-          break
+          return skipped("noContactInbox")
         }
 
         const capiChannel = metaCapiEventChannelSchema.safeParse(
@@ -381,7 +409,7 @@ export class ActionExecutor {
           baseLogger.warn(
             `Unsupported Meta CAPI trigger channel: ${contactInbox.channel}`,
           )
-          break
+          return skipped("unsupportedChannel")
         }
 
         const parsedAction = metaCapiTriggerActionSchema.safeParse(action)
@@ -396,7 +424,7 @@ export class ActionExecutor {
             sourceId: contactInbox.sourceId,
             message: `Invalid Meta CAPI trigger action (trigger ${triggerId}):\n${detail}`,
           })
-          break
+          return skipped("invalidAction")
         }
 
         // Trigger executor passes `contactInbox.id` (a string), not the full
@@ -446,6 +474,11 @@ export class ActionExecutor {
       }
 
       case triggerActions.enum.sendGoogleAdsConversion: {
+        // Its dedup scope is a trigger.
+        if (source.kind !== "trigger") {
+          return skipped("unsupportedSource")
+        }
+        const { triggerId } = source
         // Prefer the threaded/most-recent inbox when it carries a Google
         // click; otherwise fall back to the contact's latest clicked inbox
         // (the attributable inbox is not necessarily the most recently active
@@ -467,7 +500,7 @@ export class ActionExecutor {
           baseLogger.warn(
             `No contact inbox with a Google click for contact ${contactId}, skipping sendGoogleAdsConversion action`,
           )
-          break
+          return skipped("noGoogleClick")
         }
 
         const parsedAction = googleAdsTriggerActionSchema.safeParse(action)
@@ -486,7 +519,7 @@ export class ActionExecutor {
             sourceId: clickInbox.sourceId,
             message: `${detail}\nTrigger: ${triggerId}`,
           })
-          break
+          return skipped("invalidAction")
         }
 
         const resolved = await resolveGoogleAdsConversionInputs({
@@ -517,7 +550,7 @@ export class ActionExecutor {
             sourceId: clickInbox.sourceId,
             message: `${detail}\nTrigger: ${triggerId}`,
           })
-          break
+          return skipped("configRefused")
         }
         const { dedupMode, fields, recordFields } = resolved.inputs
 
@@ -547,11 +580,11 @@ export class ActionExecutor {
           baseLogger.error(
             `Failed to record Google Ads conversion for trigger ${triggerId}: ${sanitizeGoogleAdsError(error).message}`,
           )
-          break
+          return skipped("recordFailed")
         }
 
         if (outcome.status === "queued") {
-          break
+          return succeeded
         }
         baseLogger.warn(
           `Google Ads conversion not recorded for trigger ${triggerId}: ${outcome.status}`,
@@ -567,16 +600,20 @@ export class ActionExecutor {
             )}\nTrigger: ${triggerId}`,
           })
         }
-        break
+        return skipped(outcome.status)
       }
 
       case triggerActions.enum.runGoogleSheet: {
+        // Spreadsheet runs are a trigger-only action today.
+        if (source.kind !== "trigger") {
+          return skipped("unsupportedSource")
+        }
         const contactInbox = await getContactInbox()
         if (!contactInbox) {
           baseLogger.warn(
             `No contact inbox found for contact ${contactId}, skipping runGoogleSheet action`,
           )
-          break
+          return skipped("noContactInbox")
         }
 
         const spreadsheetAction = action.action as StepType
@@ -663,12 +700,16 @@ export class ActionExecutor {
 
           default:
             baseLogger.warn(`Unknown spreadsheet action: ${spreadsheetAction}`)
+            return skipped("unknownSpreadsheetAction")
         }
         break
       }
 
       default:
         baseLogger.warn(`Unknown action type: ${actionType}`)
+        return skipped("unknownAction")
     }
+
+    return succeeded
   }
 }

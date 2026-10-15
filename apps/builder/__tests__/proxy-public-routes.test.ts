@@ -16,6 +16,11 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/api/contacts")).toBe(true)
   })
 
+  test("inbound webhook deliveries (/api/hooks/<token>) need no session", () => {
+    // The sender is an external system; the token in the path is the credential.
+    expect(isPublicRoute("/api/hooks/iwh_abc")).toBe(true)
+  })
+
   test("/go is public so a contact can tap a flow button without a session", () => {
     expect(isPublicRoute("/go/ws-1")).toBe(true)
     expect(isPublicRoute("/goals")).toBe(false)

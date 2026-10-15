@@ -41,7 +41,12 @@ import type {
   ListInboxesResponse,
 } from "./schema"
 
-type InboxWhere = Partial<{ id: string; workspaceId: string }>
+type InboxWhere = Partial<{
+  id: string
+  workspaceId: string
+  channel: ChannelType
+  sourceId: string
+}>
 
 export type BroadcastInboxResolutionInput = {
   workspaceId: string

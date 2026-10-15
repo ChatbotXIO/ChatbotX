@@ -1,6 +1,7 @@
 import { findOrFail } from "@chatbotx.io/database/client"
 import {
   type ChannelType,
+  type ContactSource,
   channelTypes,
   contactSources,
 } from "@chatbotx.io/database/partials"
@@ -13,14 +14,14 @@ import type { ContactModel } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import { emitContactCreated } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
-import { type CountryCode, parsePhoneNumberFromString } from "libphonenumber-js"
-import { randomString } from "remeda"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { contactInboxService } from "../contact-inbox/service"
 import { ChatbotXException, validationException } from "../errors"
 import { messageCleanupService } from "../message-cleanup/service"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceService } from "../workspace/service"
+import { resolveNewContactInboxSourceId } from "./contact-inbox-identity"
+import { normalizePhoneToE164 } from "./phone"
 import { contactService } from "./service"
 
 type CreateContactInput = {
@@ -34,39 +35,29 @@ type CreateContactInput = {
   inboxId: string
 }
 
-const UNKNOWN_TARGET_COUNTRY = "unknown"
-const E164_PREFIX_PATTERN = /^\+/
+/** Raised when `(inbox, sourceId)` already has a contact; callers racing to create may re-resolve it. */
+export const CONTACT_ALREADY_ON_INBOX_MESSAGE =
+  "This contact already exists on the selected inbox"
 
-// No workspace country means local-format WhatsApp numbers must include "+".
-const resolveDefaultRegion = (
-  targetCountry: string | null | undefined,
-): CountryCode | undefined =>
-  targetCountry && targetCountry !== UNKNOWN_TARGET_COUNTRY
-    ? (targetCountry as CountryCode)
-    : undefined
-
-const resolveContactSourceId = ({
-  channel,
-  parsedInput,
-}: {
-  channel: ChannelType
-  parsedInput: CreateContactInput
-}) => {
-  if (channel === channelTypes.enum.smtp) {
-    return parsedInput.email ?? ""
-  }
-  if (channel === channelTypes.enum.webchat) {
-    return `${randomString(10)}${createId()}`
-  }
-  return parsedInput.contactId ?? ""
-}
+/**
+ * `workspace` (default): a phone number may exist once per workspace — the
+ * manual / public-API creation rule. `inbox`: identity is scoped to the inbox,
+ * as it is for contacts created by an incoming message, so the same phone can
+ * exist on different channels; the `(inbox, sourceId)` unique index still
+ * guards duplicates within the inbox.
+ */
+export type ContactPhoneUniqueness = "workspace" | "inbox"
 
 export const createContactWithInbox = async ({
   workspaceId,
   input: parsedInput,
+  source = contactSources.enum.direct,
+  phoneUniqueness = "workspace",
 }: {
   workspaceId: string
   input: CreateContactInput
+  source?: ContactSource
+  phoneUniqueness?: ContactPhoneUniqueness
 }) => {
   const inbox = await findOrFail({
     table: inboxModel,
@@ -92,34 +83,34 @@ export const createContactWithInbox = async ({
   // needs one (it is the wa_id); other channels normalize only when a phone is given.
   let normalizedPhone = parsedInput.phoneNumber
   if (inboxChannel === channelTypes.enum.whatsapp || parsedInput.phoneNumber) {
-    const parsed = parsePhoneNumberFromString(
+    const e164Phone = normalizePhoneToE164(
       parsedInput.phoneNumber ?? "",
-      resolveDefaultRegion(workspace.targetCountry),
+      workspace.targetCountry,
     )
-    // Do not use isValid(); it rejects well-formed but unassigned numbers.
-    if (!parsed) {
+    if (!e164Phone) {
       throw validationException(
         "phoneNumber",
         "Please include the country code (e.g. +84)",
       )
     }
-    normalizedPhone = parsed.number
+    normalizedPhone = e164Phone
   }
 
-  // WhatsApp `wa_id` is the E.164 digits without "+"; other channels key on their own id.
-  let sourceId: string
-  if (inboxChannel === channelTypes.enum.whatsapp) {
-    sourceId = (normalizedPhone ?? "").replace(E164_PREFIX_PATTERN, "")
-  } else {
-    sourceId = resolveContactSourceId({ channel: inboxChannel, parsedInput })
-  }
+  // Each channel keys its contacts on its own identity (WhatsApp: phone digits,
+  // SMTP: email, webchat: minted, others: the channel user id).
+  const sourceId = resolveNewContactInboxSourceId(inboxChannel, {
+    channelUserId: parsedInput.contactId,
+    phoneE164: normalizedPhone,
+    email: parsedInput.email,
+  })
 
-  const existedContact = normalizedPhone
-    ? await contactService.findByPhone({
-        workspaceId,
-        phoneNumber: normalizedPhone,
-      })
-    : undefined
+  const existedContact =
+    normalizedPhone && phoneUniqueness === "workspace"
+      ? await contactService.findByPhone({
+          workspaceId,
+          phoneNumber: normalizedPhone,
+        })
+      : undefined
   if (existedContact) {
     throw validationException("phoneNumber", "Phone number is exists")
   }
@@ -137,10 +128,7 @@ export const createContactWithInbox = async ({
       } else if (inboxChannel === channelTypes.enum.smtp) {
         field = "email"
       }
-      throw validationException(
-        field,
-        "This contact already exists on the selected inbox",
-      )
+      throw validationException(field, CONTACT_ALREADY_ON_INBOX_MESSAGE)
     }
   }
 
@@ -171,7 +159,7 @@ export const createContactWithInbox = async ({
             contactId: contact.id,
             inboxId: inbox.id,
             channel: inboxChannel,
-            source: contactSources.enum.direct,
+            source,
             sourceId,
           })
           .returning()

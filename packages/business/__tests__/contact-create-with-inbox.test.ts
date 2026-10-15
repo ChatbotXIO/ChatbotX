@@ -734,6 +734,82 @@ describe("contactService.createWithInbox", () => {
     expect(mockFindByPhone).not.toHaveBeenCalled()
   })
 
+  test("records the direct source unless the caller names another", async () => {
+    const insertedRows = mockCreateWithInsertedRows()
+
+    await createContactWithInbox({ workspaceId: "ws-1", input: baseInput })
+    expect(insertedRows).toContainEqual(
+      expect.objectContaining({ source: "direct" }),
+    )
+
+    insertedRows.length = 0
+    await createContactWithInbox({
+      workspaceId: "ws-1",
+      input: baseInput,
+      source: "inboundWebhook",
+    })
+    expect(insertedRows).toContainEqual(
+      expect.objectContaining({ source: "inboundWebhook" }),
+    )
+    expect(insertedRows).not.toContainEqual(
+      expect.objectContaining({ source: "direct" }),
+    )
+  })
+
+  test("keeps the workspace-wide phone check by default", async () => {
+    mockCreateWithInsertedRows()
+
+    await createContactWithInbox({ workspaceId: "ws-1", input: baseInput })
+
+    expect(mockFindByPhone).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      phoneNumber: "+15551234567",
+    })
+  })
+
+  test("scopes phone identity to the inbox when asked, so another channel's contact does not block it", async () => {
+    const selectedInbox = { id: "whatsapp-inbox-1", channel: "whatsapp" }
+    mockFindOrFail.mockResolvedValue(selectedInbox)
+    mockFindByPhone.mockResolvedValue({ id: "contact-on-webchat" })
+    mockCreateWithInsertedRows()
+
+    const result = await createContactWithInbox({
+      workspaceId: "ws-1",
+      phoneUniqueness: "inbox",
+      input: {
+        ...baseInput,
+        email: "",
+        inboxId: selectedInbox.id,
+        channel: "whatsapp",
+        contactId: "",
+      },
+    })
+
+    expect(mockFindByPhone).not.toHaveBeenCalled()
+    expect(result.contact).toEqual(contact)
+  })
+
+  test("still rejects a contact already on the same inbox when phone identity is inbox-scoped", async () => {
+    mockFindOrFail.mockResolvedValue({ id: "wa-1", channel: "whatsapp" })
+    mockContactInboxFindLatestBySource.mockResolvedValue({ id: "existing" })
+
+    await expect(
+      createContactWithInbox({
+        workspaceId: "ws-1",
+        phoneUniqueness: "inbox",
+        input: {
+          ...baseInput,
+          email: "",
+          inboxId: "wa-1",
+          channel: "whatsapp",
+          contactId: "",
+        },
+      }),
+    ).rejects.toMatchObject({
+      message: "This contact already exists on the selected inbox",
+    })
+  })
+
   test("emits contact-created and analytics events on success", async () => {
     mockFindOrFail.mockResolvedValue({
       id: "webchat-inbox-1",

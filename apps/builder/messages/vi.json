@@ -874,7 +874,8 @@
       "api": "API",
       "webchat": "Webchat",
       "botLink": "Liên kết bot",
-      "chatPlugin": "C. chat plugin"
+      "chatPlugin": "C. chat plugin",
+      "inboundWebhook": "Webhook đến"
     },
     "ctwaRetarget": {
       "segments": {
@@ -4064,7 +4065,17 @@
     "maxItemsReached": "Tối đa {max} {feature} cho mỗi workspace",
     "maxCharacters": "Tối đa {max} ký tự.",
     "invalidApiKey": "API key không hợp lệ",
-    "maxMustBeGreaterThanMin": "{maxField} phải lớn hơn hoặc bằng {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} phải lớn hơn hoặc bằng {minField}",
+    "inboundWebhook": {
+      "inboxRequired": "Hãy chọn một hộp thư.",
+      "inboxNotFound": "Không tìm thấy hộp thư đã chọn.",
+      "inboxDisconnected": "Hộp thư đã chọn chưa được kết nối.",
+      "unsupportedInboxIdentifier": "Kênh này không thể được nhận diện bằng giá trị đó.",
+      "identifierRequired": "Hãy thêm ít nhất một định danh liên hệ.",
+      "unknownFieldTarget": "Một trường liên hệ đã ánh xạ không còn tồn tại.",
+      "actionReferenceNotFound": "Một hành động tham chiếu đến luồng, thẻ hoặc trường không còn tồn tại.",
+      "fieldMappingRequired": "Hãy thêm ít nhất một ánh xạ trường."
+    }
   },
   "webchat": {
     "chatUnavailable": "Cuộc trò chuyện này hiện không khả dụng.",
@@ -5023,6 +5034,216 @@
   "magicLinks": {
     "title": "Magic Link",
     "description": "Liên kết rút gọn: chèn biến từ query vào URL đích."
+  },
+  "inboundWebhooks": {
+    "title": "Webhook đến",
+    "feature": "Webhook đến",
+    "description": "Cho phép hệ thống bên ngoài gửi dữ liệu đến workspace của bạn: tìm hoặc tạo liên hệ, lưu giá trị vào các trường của liên hệ và chạy hành động.",
+    "createDescription": "Webhook mới ban đầu ở trạng thái tắt. Hãy cấu hình trong trình chỉnh sửa rồi bật lên.",
+    "deleteDescription": "Các hệ thống vẫn gửi đến URL này sẽ nhận lỗi. Không thể hoàn tác.",
+    "editorDescription": "Gửi một yêu cầu POST JSON đến URL bên dưới để chạy webhook này.",
+    "configure": "Cấu hình",
+    "getLink": "Lấy liên kết",
+    "activeToggle": "Kích hoạt {name}",
+    "columns": {
+      "active": "Hoạt động",
+      "createdAt": "Ngày tạo",
+      "requests": "Yêu cầu"
+    },
+    "link": {
+      "title": "URL webhook",
+      "description": "POST JSON đến URL này. URL chứa token bí mật nên hãy bảo mật như mật khẩu."
+    },
+    "endpoint": {
+      "label": "URL webhook",
+      "show": "Hiện URL",
+      "hide": "Ẩn URL"
+    },
+    "regenerate": {
+      "button": "Tạo lại",
+      "title": "Tạo lại URL webhook?",
+      "description": "URL hiện tại sẽ ngừng hoạt động ngay lập tức. Hãy cập nhật mọi hệ thống đang gửi đến URL này.",
+      "cancel": "Hủy",
+      "confirm": "Tạo lại",
+      "success": "Đã tạo lại URL webhook",
+      "failed": "Không thể tạo lại URL"
+    },
+    "activation": {
+      "incomplete": "Hãy điền hộp thư, ít nhất một trường liên hệ và ít nhất một ánh xạ, rồi lưu, trước khi kích hoạt webhook này."
+    },
+    "sample": {
+      "title": "JSON mẫu",
+      "description": "Dán nội dung yêu cầu mẫu để duyệt các trường và xem trước giá trị.",
+      "load": "Tải JSON mẫu",
+      "status": {
+        "loaded": "Đã tải mẫu",
+        "invalid": "JSON không hợp lệ",
+        "tooLarge": "Mẫu lớn hơn {max} KB",
+        "unsupported": "Mẫu chứa ký tự không được hỗ trợ hoặc lồng nhau quá sâu"
+      },
+      "format": "Định dạng JSON"
+    },
+    "contact": {
+      "title": "Tìm hoặc tạo liên hệ",
+      "description": "Chọn hộp thư mà liên hệ thuộc về và cách tìm liên hệ. Nếu không khớp ai, liên hệ mới sẽ được tạo khi yêu cầu có những gì kênh này cần."
+    },
+    "inbox": {
+      "modeLabel": "Hộp thư",
+      "mode": {
+        "inbox": "Hộp thư cụ thể",
+        "payload": "Từ payload"
+      },
+      "modeDescription": {
+        "inbox": "Mọi yêu cầu đều dùng hộp thư bạn chọn.",
+        "payload": "Mỗi yêu cầu nêu rõ hộp thư của nó, ví dụ ID trang Messenger hoặc ID số điện thoại WhatsApp."
+      },
+      "inboxLabel": "Hộp thư",
+      "inboxPlaceholder": "Chọn hộp thư",
+      "noInboxes": "Không tìm thấy hộp thư nào đã kết nối.",
+      "savedInboxMissing": "Hộp thư đã lưu không còn được kết nối. Hãy chọn hộp thư khác.",
+      "channelLabel": "Kênh",
+      "channelPlaceholder": "Chọn kênh",
+      "noPayloadChannels": "Hãy kết nối một kênh hỗ trợ tính năng này trước.",
+      "identifierKindLabel": "Định danh hộp thư",
+      "identifierKindPlaceholder": "Chọn định danh được gửi trong payload",
+      "identifierPathHint": "Đường dẫn JSON của giá trị này trong yêu cầu."
+    },
+    "identity": {
+      "hint": "Hãy điền ít nhất một mục. Liên hệ được tìm theo mục đầu tiên có trong yêu cầu, theo thứ tự này.",
+      "phone": "Điện thoại",
+      "email": "Email",
+      "channelUserId": "ID người dùng kênh",
+      "fullName": "Họ và tên",
+      "creationHint": "Nếu không có {identities}, request cho liên hệ chưa có sẽ bị bỏ qua. Chỉ cập nhật các liên hệ đã tồn tại."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "ID trang Facebook",
+      "igId": "ID tài khoản Instagram",
+      "phoneNumberId": "ID số điện thoại WhatsApp",
+      "displayPhoneNumber": "Số điện thoại WhatsApp (kém chính xác hơn)",
+      "botId": "ID bot Telegram",
+      "oaId": "ID Zalo OA",
+      "openId": "Open ID tài khoản TikTok",
+      "threadsUserId": "ID người dùng Threads"
+    },
+    "channelUserIdKinds": {
+      "psid": "PSID Messenger",
+      "igsid": "IGSID Instagram",
+      "telegramChatId": "ID cuộc trò chuyện Telegram",
+      "zaloUserId": "ID người dùng Zalo",
+      "tiktokCustomerOpenId": "Open ID khách hàng TikTok",
+      "threadsUsername": "Tên người dùng Threads",
+      "apiSourceId": "ID nguồn liên hệ",
+      "whatsappId": "ID WhatsApp (wa_id)"
+    },
+    "mappings": {
+      "title": "Lưu dữ liệu đến",
+      "description": "Sao chép giá trị từ yêu cầu vào các trường liên hệ.",
+      "empty": "Chưa ánh xạ trường nào.",
+      "add": "Thêm trường",
+      "remove": "Xóa trường",
+      "target": "Trường liên hệ",
+      "targetPlaceholder": "Chọn trường",
+      "path": "Đường dẫn JSON",
+      "rowTitle": "Ánh xạ {number}"
+    },
+    "actions": {
+      "title": "Sau khi lưu dữ liệu",
+      "description": "Các hành động chạy cho liên hệ sau khi dữ liệu được lưu."
+    },
+    "picker": {
+      "title": "Duyệt JSON",
+      "description": "Tìm kiếm rồi nhấp vào một giá trị, hoặc nhập JSONPath bên dưới",
+      "browse": "Duyệt",
+      "noSample": "Hãy tải JSON mẫu trước để duyệt các trường.",
+      "pathLabel": "Đường dẫn JSON",
+      "use": "Dùng đường dẫn",
+      "cancel": "Hủy",
+      "result": "Kết quả:",
+      "noValue": "không có giá trị",
+      "searchLabel": "Tìm trong JSON",
+      "searchPlaceholder": "Tìm khóa, đường dẫn hoặc giá trị",
+      "noMatches": "Không có khóa hoặc giá trị phù hợp.",
+      "moreResults": "Đang hiển thị {count} kết quả đầu tiên. Hãy thu hẹp tìm kiếm để xem thêm.",
+      "pathHint": "Hỗ trợ tên thuộc tính và chỉ mục mảng, bao gồm $[\"customer-data\"][\"email\"]",
+      "invalidPath": "Đây không phải là JSONPath được hỗ trợ."
+    },
+    "requests": {
+      "title": "Yêu cầu",
+      "description": "Các lượt gửi gần nhất mà webhook này nhận được (lưu trong 30 ngày).",
+      "refresh": "Làm mới",
+      "empty": "Chưa nhận được yêu cầu nào.",
+      "previous": "Trang trước",
+      "next": "Trang sau",
+      "pageOf": "Trang {page} / {pageCount}",
+      "contact": "Liên hệ #{id}",
+      "showDetails": "Hiện chi tiết",
+      "hideDetails": "Ẩn chi tiết",
+      "loadingDetails": "Đang tải chi tiết…",
+      "detailsFailed": "Không thể tải chi tiết.",
+      "fieldErrors": "Các trường chưa được lưu",
+      "actionResults": "Hành động",
+      "payload": "Payload",
+      "status": {
+        "received": "Đã nhận",
+        "processing": "Đang xử lý",
+        "processed": "Đã xử lý",
+        "completedWithErrors": "Hoàn tất có lỗi",
+        "skipped": "Đã bỏ qua",
+        "failed": "Thất bại"
+      },
+      "skipReason": {
+        "webhookInactive": "Webhook đang tắt.",
+        "missingInboxIdentifier": "Yêu cầu không chứa định danh hộp thư.",
+        "inboxNotFound": "Không có hộp thư nào khớp với định danh trong yêu cầu.",
+        "inboxAmbiguous": "Có nhiều hơn một hộp thư khớp với định danh trong yêu cầu.",
+        "inboxDisconnected": "Hộp thư đã ngắt kết nối.",
+        "missingIdentifier": "Yêu cầu không chứa định danh liên hệ nào.",
+        "workspaceBlocked": "Chủ sở hữu không gian làm việc đã bị chặn.",
+        "contactNotFound": "Không có liên hệ nào khớp, và yêu cầu không chứa những gì cần thiết để tạo liên hệ.",
+        "contactAmbiguous": "Có nhiều hơn một liên hệ trùng tên này trong hộp thư, nên request đã bị bỏ qua."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Giá trị không hợp lệ",
+        "invalidPhone": "Số điện thoại không hợp lệ",
+        "unknownField": "Trường không còn tồn tại"
+      },
+      "actionStatus": {
+        "succeeded": "thành công",
+        "skipped": "đã bỏ qua",
+        "failed": "thất bại"
+      },
+      "errorCode": {
+        "abandoned": "Đã bỏ: không được xử lý trong 24 giờ"
+      },
+      "actionSkipReason": {
+        "noConversation": "Liên hệ chưa có cuộc trò chuyện",
+        "noContactInbox": "Liên hệ chưa kết nối với hộp thư này",
+        "flowInactive": "Luồng chưa được xuất bản",
+        "unsupportedAction": "Hành động này không được hỗ trợ ở đây",
+        "unsupportedChannel": "Kênh không hỗ trợ hành động này",
+        "invalidAction": "Hành động chưa được cấu hình đúng",
+        "unknownAction": "Hành động không xác định",
+        "unsupportedSource": "Không hỗ trợ với nguồn này"
+      }
+    },
+    "save": {
+      "invalid": "Một số thiết lập không hợp lệ. Hãy sửa các trường được đánh dấu rồi lưu lại."
+    },
+    "viewAnalytics": "Xem phân tích",
+    "analytics": {
+      "title": "Phân tích",
+      "back": "Quay lại webhook",
+      "totalRequests": "Tổng số yêu cầu đã nhận",
+      "totalRequestsHint": "Mọi yêu cầu được chấp nhận kể từ khi tạo webhook. Yêu cầu trùng lặp không được tính. Nhật ký bên dưới lưu 30 ngày gần nhất."
+    },
+    "issues": {
+      "inboxRequired": "Hãy chọn một hộp thư.",
+      "identifierRequired": "Hãy điền ít nhất một trong bốn trường liên hệ.",
+      "fieldMappingRequired": "Hãy thêm ít nhất một trường trong \"Lưu dữ liệu đến\".",
+      "required": "Trường này là bắt buộc.",
+      "unsupportedPath": "Đường dẫn JSON không được hỗ trợ."
+    }
   },
   "sequences": {
     "subscribers": "Người đăng ký",

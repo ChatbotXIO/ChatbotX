@@ -1314,7 +1314,8 @@
       "fbLeadAd": "FB 领先广告",
       "imported": "导入",
       "inboundMessage": "传入消息",
-      "webchat": "网络聊天"
+      "webchat": "网络聊天",
+      "inboundWebhook": "入站 Webhook"
     },
     "valuePlaceholder": "...",
     "yes": "是"
@@ -4329,6 +4330,216 @@
     "description": "创建可通过查找参数重新导向到您 URL 的深层链接。",
     "title": "Magic Link"
   },
+  "inboundWebhooks": {
+    "title": "入站 Webhook",
+    "feature": "入站 Webhook",
+    "description": "允许外部系统向您的工作区发送数据：查找或创建联系人、将值保存到其字段并运行操作。",
+    "createDescription": "新建的 Webhook 默认未启用。请在编辑器中配置后再开启。",
+    "deleteDescription": "仍向此 URL 发送请求的系统将收到错误。此操作无法撤销。",
+    "editorDescription": "向下方 URL 发送 JSON POST 请求即可运行此 Webhook。",
+    "configure": "配置",
+    "getLink": "获取链接",
+    "activeToggle": "启用 {name}",
+    "columns": {
+      "active": "已启用",
+      "createdAt": "创建时间",
+      "requests": "请求"
+    },
+    "link": {
+      "title": "Webhook URL",
+      "description": "向此 URL POST JSON。它包含密钥令牌，请像对待密码一样妥善保管。"
+    },
+    "endpoint": {
+      "label": "Webhook URL",
+      "show": "显示 URL",
+      "hide": "隐藏 URL"
+    },
+    "regenerate": {
+      "button": "重新生成",
+      "title": "重新生成 Webhook URL？",
+      "description": "当前 URL 将立即失效。请更新所有向其发送请求的系统。",
+      "cancel": "取消",
+      "confirm": "重新生成",
+      "success": "Webhook URL 已重新生成",
+      "failed": "无法重新生成 URL"
+    },
+    "activation": {
+      "incomplete": "激活此 Webhook 之前，请先填写收件箱、至少一个联系人字段和至少一个映射，并保存。"
+    },
+    "sample": {
+      "title": "示例 JSON",
+      "description": "粘贴示例请求正文以浏览其字段并预览值。",
+      "load": "加载示例 JSON",
+      "status": {
+        "loaded": "示例已加载",
+        "invalid": "这不是有效的 JSON",
+        "tooLarge": "示例大于 {max} KB",
+        "unsupported": "示例包含不受支持的字符或嵌套过深"
+      },
+      "format": "格式化 JSON"
+    },
+    "contact": {
+      "title": "查找或创建联系人",
+      "description": "选择联系人所属的收件箱以及查找方式。如果没有匹配项，且请求包含此渠道所需的信息，则会创建新联系人。"
+    },
+    "inbox": {
+      "modeLabel": "收件箱",
+      "mode": {
+        "inbox": "指定收件箱",
+        "payload": "来自 payload"
+      },
+      "modeDescription": {
+        "inbox": "每个请求都使用您选择的收件箱。",
+        "payload": "每个请求自行指明其收件箱，例如 Messenger 主页 ID 或 WhatsApp 手机号 ID。"
+      },
+      "inboxLabel": "收件箱",
+      "inboxPlaceholder": "选择收件箱",
+      "noInboxes": "未找到已连接的收件箱。",
+      "savedInboxMissing": "已保存的收件箱不再处于连接状态。请另选一个。",
+      "channelLabel": "渠道",
+      "channelPlaceholder": "选择渠道",
+      "noPayloadChannels": "请先连接支持此功能的渠道。",
+      "identifierKindLabel": "收件箱标识符",
+      "identifierKindPlaceholder": "选择 payload 中发送的标识符",
+      "identifierPathHint": "此值在请求中的 JSON 路径。"
+    },
+    "identity": {
+      "hint": "请至少填写一项。将按此顺序，使用请求中找到的第一项查找联系人。",
+      "phone": "电话",
+      "email": "电子邮件",
+      "channelUserId": "渠道用户 ID",
+      "fullName": "全名",
+      "creationHint": "没有 {identities} 时，针对未知联系人的请求会被跳过，仅更新已有联系人。"
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "Facebook 主页 ID",
+      "igId": "Instagram 账号 ID",
+      "phoneNumberId": "WhatsApp 手机号 ID",
+      "displayPhoneNumber": "WhatsApp 手机号（精度较低）",
+      "botId": "Telegram 机器人 ID",
+      "oaId": "Zalo OA ID",
+      "openId": "TikTok 账号 open id",
+      "threadsUserId": "Threads 用户 ID"
+    },
+    "channelUserIdKinds": {
+      "psid": "Messenger PSID",
+      "igsid": "Instagram IGSID",
+      "telegramChatId": "Telegram 聊天 ID",
+      "zaloUserId": "Zalo 用户 ID",
+      "tiktokCustomerOpenId": "TikTok 客户 open id",
+      "threadsUsername": "Threads 用户名",
+      "apiSourceId": "联系人来源 ID",
+      "whatsappId": "WhatsApp ID (wa_id)"
+    },
+    "mappings": {
+      "title": "保存传入数据",
+      "description": "将请求中的值复制到联系人字段。",
+      "empty": "尚未映射任何字段。",
+      "add": "添加字段",
+      "remove": "移除字段",
+      "target": "联系人字段",
+      "targetPlaceholder": "选择字段",
+      "path": "JSON 路径",
+      "rowTitle": "映射 {number}"
+    },
+    "actions": {
+      "title": "保存数据后",
+      "description": "数据保存后为该联系人运行的操作。"
+    },
+    "picker": {
+      "title": "浏览 JSON",
+      "description": "搜索并点击某个值，或在下方输入 JSONPath",
+      "browse": "浏览",
+      "noSample": "请先加载示例 JSON 以浏览其字段。",
+      "pathLabel": "JSON 路径",
+      "use": "使用路径",
+      "cancel": "取消",
+      "result": "结果：",
+      "noValue": "无值",
+      "searchLabel": "搜索 JSON",
+      "searchPlaceholder": "搜索键、路径或值",
+      "noMatches": "没有匹配的键或值。",
+      "moreResults": "显示前 {count} 个匹配项。请缩小搜索范围以查看其他结果。",
+      "pathHint": "支持属性名和数组索引，包括 $[\"customer-data\"][\"email\"]",
+      "invalidPath": "这不是受支持的 JSONPath。"
+    },
+    "requests": {
+      "title": "请求",
+      "description": "此 Webhook 收到的最新请求（保留 30 天）。",
+      "refresh": "刷新",
+      "empty": "尚未收到请求。",
+      "previous": "上一页",
+      "next": "下一页",
+      "pageOf": "第 {page} 页，共 {pageCount} 页",
+      "contact": "联系人 #{id}",
+      "showDetails": "显示详情",
+      "hideDetails": "隐藏详情",
+      "loadingDetails": "正在加载详情…",
+      "detailsFailed": "无法加载详情。",
+      "fieldErrors": "未保存的字段",
+      "actionResults": "操作",
+      "payload": "Payload",
+      "status": {
+        "received": "已接收",
+        "processing": "处理中",
+        "processed": "已处理",
+        "completedWithErrors": "已完成但有错误",
+        "skipped": "已跳过",
+        "failed": "失败"
+      },
+      "skipReason": {
+        "webhookInactive": "该 Webhook 当时未启用。",
+        "missingInboxIdentifier": "请求中不包含收件箱标识符。",
+        "inboxNotFound": "没有收件箱与请求中的标识符匹配。",
+        "inboxAmbiguous": "有多个收件箱与请求中的标识符匹配。",
+        "inboxDisconnected": "该收件箱已断开连接。",
+        "missingIdentifier": "请求中不包含任何联系人标识。",
+        "workspaceBlocked": "工作区所有者已被封禁。",
+        "contactNotFound": "没有匹配的联系人，且请求中不包含创建联系人所需的信息。",
+        "contactAmbiguous": "收件箱中有多个联系人同名，因此该请求已被跳过。"
+      },
+      "fieldErrorCode": {
+        "invalidValue": "值无效",
+        "invalidPhone": "电话号码无效",
+        "unknownField": "字段已不存在"
+      },
+      "actionStatus": {
+        "succeeded": "成功",
+        "skipped": "已跳过",
+        "failed": "失败"
+      },
+      "errorCode": {
+        "abandoned": "已放弃：24 小时内未处理"
+      },
+      "actionSkipReason": {
+        "noConversation": "联系人没有会话",
+        "noContactInbox": "联系人未连接到此收件箱",
+        "flowInactive": "流程未发布",
+        "unsupportedAction": "此处不支持该操作",
+        "unsupportedChannel": "该渠道不支持此操作",
+        "invalidAction": "操作配置不正确",
+        "unknownAction": "未知操作",
+        "unsupportedSource": "此来源不支持"
+      }
+    },
+    "save": {
+      "invalid": "部分设置无效。请修正高亮的字段后重新保存。"
+    },
+    "viewAnalytics": "查看分析",
+    "analytics": {
+      "title": "分析",
+      "back": "返回 Webhook",
+      "totalRequests": "收到的请求总数",
+      "totalRequestsHint": "自创建 Webhook 以来接受的所有请求。重复请求不计入。下方日志保留最近 30 天。"
+    },
+    "issues": {
+      "inboxRequired": "请选择一个收件箱。",
+      "identifierRequired": "请至少填写四个联系人字段中的一个。",
+      "fieldMappingRequired": "请在“保存传入数据”下至少添加一个字段。",
+      "required": "此字段为必填项。",
+      "unsupportedPath": "不支持的 JSON 路径。"
+    }
+  },
   "mailchimp": {
     "fields": {
       "audience": "观众",
@@ -5691,7 +5902,17 @@
     "maxItemsReached": "最大 {max}{feature}",
     "maxCharacters": "最多 {max} 个字符。",
     "maxMustBeGreaterThanMin": "{maxField} 必须大于或等于 {minField}",
-    "maxSize": "文件大小超出上限"
+    "maxSize": "文件大小超出上限",
+    "inboundWebhook": {
+      "inboxRequired": "请选择一个收件箱。",
+      "inboxNotFound": "未找到所选收件箱。",
+      "inboxDisconnected": "所选收件箱未连接。",
+      "unsupportedInboxIdentifier": "无法通过该值识别此渠道。",
+      "identifierRequired": "请至少添加一个联系人标识。",
+      "unknownFieldTarget": "已映射的联系人字段已不存在。",
+      "actionReferenceNotFound": "某个操作引用了已不存在的流程、标签或字段。",
+      "fieldMappingRequired": "请至少添加一个字段映射。"
+    }
   },
   "webchat": {
     "chatUnavailable": "此聊天目前不可用。",

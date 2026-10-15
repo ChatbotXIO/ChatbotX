@@ -41,8 +41,11 @@ type ActionOption = {
 
 export function AddAction({
   onAdd,
+  allowedTypes,
 }: {
   onAdd: (option: ActionOption) => void
+  /** Limits the menu to these actions; every action is offered when omitted. */
+  allowedTypes?: readonly TriggerAction[]
 }) {
   const t = useTranslations()
   const options = useMemo(
@@ -96,6 +99,14 @@ export function AddAction({
     [t],
   )
 
+  const visibleOptions = useMemo(
+    () =>
+      allowedTypes
+        ? options.filter((option) => allowedTypes.includes(option.value))
+        : options,
+    [options, allowedTypes],
+  )
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -107,7 +118,7 @@ export function AddAction({
         }
       />
       <DropdownMenuContent>
-        {options.map((option) => (
+        {visibleOptions.map((option) => (
           <DropdownMenuItem
             key={option.value}
             onClick={() => {

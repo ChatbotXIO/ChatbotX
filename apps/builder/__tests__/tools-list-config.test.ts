@@ -66,12 +66,12 @@ describe("TOOLS_CONFIG — click-to-message-ads entry", () => {
 })
 
 describe("TOOLS_CONFIG — permission gating", () => {
-  test("no entry other than click-to-message-ads declares a permission", () => {
+  test("only click-to-message-ads and inbound-webhooks declare a permission", () => {
     const gatedEntries = TOOLS_CONFIG.filter(
       (config) => "permission" in config,
     ).map((config) => config.id)
 
-    expect(gatedEntries).toEqual(["click-to-message-ads"])
+    expect(gatedEntries).toEqual(["click-to-message-ads", "inbound-webhooks"])
   })
 })
 
@@ -146,5 +146,42 @@ describe("TOOLS_CONFIG — mini-apps entry", () => {
     expect(entry?.labelKey).toBe("miniApps.title")
     expect(entry?.descriptionKey).toBe("miniApps.description")
     expect(entry?.getLink?.("42")).toBe("/space/42/mini-apps")
+  })
+})
+
+describe("TOOLS_CONFIG — inbound-webhooks entry", () => {
+  test("links to the Inbound Webhooks list with inboundWebhooks.* labels", () => {
+    const entry = TOOLS_CONFIG.find(
+      (config) => config.id === "inbound-webhooks",
+    )
+    expect(entry?.labelKey).toBe("inboundWebhooks.title")
+    expect(entry?.descriptionKey).toBe("inboundWebhooks.description")
+    expect(entry?.getLink("42")).toBe("/space/42/inbound-webhooks")
+  })
+
+  test("sits right after bot-simulator", () => {
+    const botSimulatorIndex = TOOLS_CONFIG.findIndex(
+      (config) => config.id === "bot-simulator",
+    )
+    const inboundWebhooksIndex = TOOLS_CONFIG.findIndex(
+      (config) => config.id === "inbound-webhooks",
+    )
+
+    expect(inboundWebhooksIndex).toBe(botSimulatorIndex + 1)
+  })
+
+  test("is shown to super admins only", () => {
+    const entry = TOOLS_CONFIG.find(
+      (config) => config.id === "inbound-webhooks",
+    )
+    const permission =
+      entry && "permission" in entry ? entry.permission : undefined
+    expect(permission).toBe("superAdmin")
+    expect(canShowTool(permission, permissions({ superAdmin: true }))).toBe(
+      true,
+    )
+    expect(canShowTool(permission, permissions({ superAdmin: false }))).toBe(
+      false,
+    )
   })
 })

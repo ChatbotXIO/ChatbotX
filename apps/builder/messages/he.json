@@ -1938,7 +1938,17 @@
     "maxItemsReached": "מותר לכל היותר {max} {feature} בכל סביבת עבודה",
     "maxCharacters": "מקסימום {max} תווים.",
     "invalidApiKey": "מפתח API לא תקין",
-    "maxMustBeGreaterThanMin": "{maxField} חייב להיות גדול או שווה ל-{minField}"
+    "maxMustBeGreaterThanMin": "{maxField} חייב להיות גדול או שווה ל-{minField}",
+    "inboundWebhook": {
+      "inboxRequired": "בחרו תיבת דואר נכנס.",
+      "inboxNotFound": "תיבת הדואר הנכנס שנבחרה לא נמצאה.",
+      "inboxDisconnected": "תיבת הדואר הנכנס שנבחרה אינה מחוברת.",
+      "unsupportedInboxIdentifier": "לא ניתן לזהות את הערוץ הזה לפי הערך הזה.",
+      "identifierRequired": "הוסיפו לפחות זהות אחת של איש קשר.",
+      "unknownFieldTarget": "שדה איש קשר ממופה כבר אינו קיים.",
+      "actionReferenceNotFound": "פעולה מפנה לתהליך, תגית או שדה שכבר אינם קיימים.",
+      "fieldMappingRequired": "הוסיפו לפחות מיפוי שדה אחד."
+    }
   },
   "webchat": {
     "chatUnavailable": "צ'אט זה אינו זמין כרגע.",
@@ -2665,6 +2675,216 @@
   "magicLinks": {
     "title": "קישורי קסם",
     "description": "צרו קישורים עמוקים המפנים לכתובת ה-URL שלכם עם פרמטרים של שאילתה."
+  },
+  "inboundWebhooks": {
+    "title": "Webhooks נכנסים",
+    "feature": "Webhook נכנס",
+    "description": "אפשרו למערכות חיצוניות לשלוח נתונים לסביבת העבודה שלכם: מצאו או צרו איש קשר, שמרו ערכים בשדות שלו והריצו פעולות.",
+    "createDescription": "Webhook חדש מתחיל במצב לא פעיל. הגדירו אותו בעורך ואז הפעילו אותו.",
+    "deleteDescription": "מערכות שעדיין שולחות ל-URL הזה יקבלו שגיאה. לא ניתן לבטל פעולה זו.",
+    "editorDescription": "שלחו בקשת POST עם JSON ל-URL שלמטה כדי להפעיל את ה-Webhook הזה.",
+    "configure": "הגדרה",
+    "getLink": "קבלת קישור",
+    "activeToggle": "הפעלת {name}",
+    "columns": {
+      "active": "פעיל",
+      "createdAt": "נוצר",
+      "requests": "בקשות"
+    },
+    "link": {
+      "title": "כתובת URL של Webhook",
+      "description": "שלחו JSON ב-POST לכתובת URL זו. היא מכילה אסימון סודי, לכן התייחסו אליה כאל סיסמה."
+    },
+    "endpoint": {
+      "label": "כתובת URL של Webhook",
+      "show": "הצג כתובת URL",
+      "hide": "הסתר כתובת URL"
+    },
+    "regenerate": {
+      "button": "יצירה מחדש",
+      "title": "ליצור מחדש את כתובת ה-URL של ה-Webhook?",
+      "description": "כתובת ה-URL הנוכחית תפסיק לעבוד מיד. עדכנו כל מערכת ששולחת אליה.",
+      "cancel": "ביטול",
+      "confirm": "יצירה מחדש",
+      "success": "כתובת ה-URL של ה-Webhook נוצרה מחדש",
+      "failed": "לא ניתן היה ליצור מחדש את כתובת ה-URL"
+    },
+    "activation": {
+      "incomplete": "מלאו את תיבת הדואר הנכנס, לפחות שדה איש קשר אחד ולפחות מיפוי אחד, ושמרו, לפני הפעלת ה-Webhook הזה."
+    },
+    "sample": {
+      "title": "JSON לדוגמה",
+      "description": "הדביקו גוף בקשה לדוגמה כדי לעיין בשדות שלו ולהציג תצוגה מקדימה של הערכים.",
+      "load": "טעינת JSON לדוגמה",
+      "status": {
+        "loaded": "הדוגמה נטענה",
+        "invalid": "זה אינו JSON תקין",
+        "tooLarge": "הדוגמה גדולה מ-{max} KB",
+        "unsupported": "הדוגמה מכילה תווים שאינם נתמכים או שהיא מקוננת עמוק מדי"
+      },
+      "format": "עיצוב JSON"
+    },
+    "contact": {
+      "title": "מציאה או יצירה של איש קשר",
+      "description": "בחרו את תיבת הדואר הנכנס שאליה שייך איש הקשר ואיך לאתר אותו. אם אין התאמה, נוצר איש קשר חדש כשהבקשה מכילה את מה שהערוץ הזה צריך."
+    },
+    "inbox": {
+      "modeLabel": "תיבת דואר נכנס",
+      "mode": {
+        "inbox": "תיבת דואר נכנס ספציפית",
+        "payload": "מתוך ה-payload"
+      },
+      "modeDescription": {
+        "inbox": "כל בקשה משתמשת בתיבת הדואר הנכנס שבחרתם.",
+        "payload": "כל בקשה מציינת את תיבת הדואר הנכנס שלה, למשל מזהה עמוד Messenger או מזהה מספר טלפון ב-WhatsApp."
+      },
+      "inboxLabel": "תיבת דואר נכנס",
+      "inboxPlaceholder": "בחירת תיבת דואר נכנס",
+      "noInboxes": "לא נמצאה תיבת דואר נכנס מחוברת.",
+      "savedInboxMissing": "תיבת הדואר הנכנס שנשמרה אינה מחוברת עוד. בחרו אחרת.",
+      "channelLabel": "ערוץ",
+      "channelPlaceholder": "בחירת ערוץ",
+      "noPayloadChannels": "חברו תחילה ערוץ שתומך בכך.",
+      "identifierKindLabel": "מזהה תיבת דואר נכנס",
+      "identifierKindPlaceholder": "בחרו את המזהה שנשלח ב-payload",
+      "identifierPathHint": "נתיב ה-JSON של ערך זה בבקשה."
+    },
+    "identity": {
+      "hint": "מלאו לפחות אחד. איש הקשר מאותר לפי הראשון שנמצא בבקשה, בסדר הזה.",
+      "phone": "טלפון",
+      "email": "אימייל",
+      "channelUserId": "מזהה משתמש בערוץ",
+      "fullName": "שם מלא",
+      "creationHint": "ללא {identities} בקשה עבור איש קשר לא מוכר מדולגת. רק אנשי קשר קיימים מתעדכנים."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "מזהה עמוד Facebook",
+      "igId": "מזהה חשבון Instagram",
+      "phoneNumberId": "מזהה מספר טלפון ב-WhatsApp",
+      "displayPhoneNumber": "מספר טלפון ב-WhatsApp (פחות מדויק)",
+      "botId": "מזהה בוט Telegram",
+      "oaId": "מזהה Zalo OA",
+      "openId": "open id של חשבון TikTok",
+      "threadsUserId": "מזהה משתמש Threads"
+    },
+    "channelUserIdKinds": {
+      "psid": "Messenger PSID",
+      "igsid": "Instagram IGSID",
+      "telegramChatId": "מזהה צ'אט Telegram",
+      "zaloUserId": "מזהה משתמש Zalo",
+      "tiktokCustomerOpenId": "open id של לקוח TikTok",
+      "threadsUsername": "שם משתמש Threads",
+      "apiSourceId": "מזהה מקור איש הקשר",
+      "whatsappId": "מזהה WhatsApp (wa_id)"
+    },
+    "mappings": {
+      "title": "שמירת נתונים נכנסים",
+      "description": "העתיקו ערכים מהבקשה לשדות של איש הקשר.",
+      "empty": "עדיין לא מופו שדות.",
+      "add": "הוספת שדה",
+      "remove": "הסרת שדה",
+      "target": "שדה איש קשר",
+      "targetPlaceholder": "בחירת שדה",
+      "path": "נתיב JSON",
+      "rowTitle": "מיפוי {number}"
+    },
+    "actions": {
+      "title": "לאחר שמירת הנתונים",
+      "description": "פעולות להרצה עבור איש הקשר לאחר שמירת הנתונים."
+    },
+    "picker": {
+      "title": "עיון ב-JSON",
+      "description": "חפשו וליחצו על ערך, או הזינו JSONPath למטה",
+      "browse": "עיון",
+      "noSample": "טענו תחילה JSON לדוגמה כדי לעיין בשדות שלו.",
+      "pathLabel": "נתיב JSON",
+      "use": "שימוש בנתיב",
+      "cancel": "ביטול",
+      "result": "תוצאה:",
+      "noValue": "אין ערך",
+      "searchLabel": "חיפוש ב-JSON",
+      "searchPlaceholder": "חיפוש מפתחות, נתיבים או ערכים",
+      "noMatches": "אין מפתחות או ערכים תואמים.",
+      "moreResults": "מוצגות {count} ההתאמות הראשונות. צמצמו את החיפוש כדי לראות אחרות.",
+      "pathHint": "תומך בשמות מאפיינים ובאינדקסים של מערכים, כולל $[\"customer-data\"][\"email\"]",
+      "invalidPath": "זהו אינו JSONPath נתמך."
+    },
+    "requests": {
+      "title": "בקשות",
+      "description": "המשלוחים האחרונים שה-Webhook הזה קיבל (נשמרים למשך 30 יום).",
+      "refresh": "רענון",
+      "empty": "עדיין לא התקבלו בקשות.",
+      "previous": "העמוד הקודם",
+      "next": "העמוד הבא",
+      "pageOf": "עמוד {page} מתוך {pageCount}",
+      "contact": "איש קשר #{id}",
+      "showDetails": "הצגת פרטים",
+      "hideDetails": "הסתרת פרטים",
+      "loadingDetails": "טוען פרטים…",
+      "detailsFailed": "לא ניתן היה לטעון את הפרטים.",
+      "fieldErrors": "שדות שלא נשמרו",
+      "actionResults": "פעולות",
+      "payload": "Payload",
+      "status": {
+        "received": "התקבלה",
+        "processing": "בעיבוד",
+        "processed": "עובדה",
+        "completedWithErrors": "הסתיימה עם שגיאות",
+        "skipped": "דולגה",
+        "failed": "נכשלה"
+      },
+      "skipReason": {
+        "webhookInactive": "ה-Webhook היה לא פעיל.",
+        "missingInboxIdentifier": "הבקשה לא הכילה את מזהה תיבת הדואר הנכנס.",
+        "inboxNotFound": "אף תיבת דואר נכנס אינה תואמת למזהה בבקשה.",
+        "inboxAmbiguous": "יותר מתיבת דואר נכנס אחת תואמת למזהה בבקשה.",
+        "inboxDisconnected": "תיבת הדואר הנכנס מנותקת.",
+        "missingIdentifier": "הבקשה לא הכילה זהות של איש קשר.",
+        "workspaceBlocked": "בעל סביבת העבודה חסום.",
+        "contactNotFound": "לא נמצא איש קשר תואם, והבקשה לא הכילה את הנדרש ליצירת אחד.",
+        "contactAmbiguous": "יותר מאיש קשר אחד נושא את השם הזה בתיבה, ולכן הבקשה דולגה."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "ערך לא תקין",
+        "invalidPhone": "מספר טלפון לא תקין",
+        "unknownField": "השדה כבר לא קיים"
+      },
+      "actionStatus": {
+        "succeeded": "הצליח",
+        "skipped": "דולג",
+        "failed": "נכשל"
+      },
+      "errorCode": {
+        "abandoned": "ננטש: לא עובד תוך 24 שעות"
+      },
+      "actionSkipReason": {
+        "noConversation": "לאיש הקשר אין שיחה",
+        "noContactInbox": "איש הקשר לא מחובר לתיבה זו",
+        "flowInactive": "התהליך לא פורסם",
+        "unsupportedAction": "פעולה זו אינה נתמכת כאן",
+        "unsupportedChannel": "הערוץ אינו תומך בפעולה זו",
+        "invalidAction": "הפעולה לא הוגדרה כראוי",
+        "unknownAction": "פעולה לא מוכרת",
+        "unsupportedSource": "לא נתמך עבור מקור זה"
+      }
+    },
+    "save": {
+      "invalid": "חלק מההגדרות אינן תקינות. תקן את השדות המסומנים ושמור שוב."
+    },
+    "viewAnalytics": "הצגת ניתוחים",
+    "analytics": {
+      "title": "ניתוחים",
+      "back": "חזרה ל-Webhook",
+      "totalRequests": "סך הבקשות שהתקבלו",
+      "totalRequestsHint": "כל בקשה שהתקבלה מאז יצירת ה-Webhook. כפילויות אינן נספרות. היומן שלהלן שומר את 30 הימים האחרונים."
+    },
+    "issues": {
+      "inboxRequired": "בחרו תיבת דואר נכנס.",
+      "identifierRequired": "מלאו לפחות אחד מארבעת שדות איש הקשר.",
+      "fieldMappingRequired": "הוסיפו לפחות שדה אחד תחת \"שמירת נתונים נכנסים\".",
+      "required": "שדה זה הוא חובה.",
+      "unsupportedPath": "נתיב JSON לא נתמך."
+    }
   },
   "QRCode": {
     "title": "קוד QR",
@@ -6322,7 +6542,8 @@
       "api": "API",
       "webchat": "צ'אט אינטרנט",
       "botLink": "קישור לבוט",
-      "chatPlugin": "תוסף צ'אט C."
+      "chatPlugin": "תוסף צ'אט C.",
+      "inboundWebhook": "Webhook נכנס"
     },
     "ctwaRetarget": {
       "segments": {

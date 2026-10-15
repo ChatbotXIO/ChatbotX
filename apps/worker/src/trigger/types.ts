@@ -28,10 +28,24 @@ export type ConditionEvaluationContext = {
   workspace: WorkspaceModel
 }
 
+/** What asked for the action to run; scopes dedup keys and attributes failures. */
+export type ActionSource =
+  | { kind: "trigger"; triggerId: string }
+  | { kind: "inboundWebhook"; inboundWebhookId: string }
+
+/**
+ * How one action ended. A failure throws; anything that returns was handled,
+ * and `skipped` says it did nothing (no conversation, inactive flow, …) so the
+ * caller can tell that apart from an action that ran.
+ */
+export type ActionExecutionOutcome =
+  | { status: "succeeded" }
+  | { status: "skipped"; reason: string }
+
 export type ActionExecutionContext = {
   action: Record<string, unknown>
   contactId: string
-  triggerId: string
+  source: ActionSource
   workspaceId: string
   /**
    * The `ContactInbox` that owns the conversation/event that fired this

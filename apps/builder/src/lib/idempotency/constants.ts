@@ -12,4 +12,7 @@ export const IDEMPOTENCY_EXEMPT_READ_PATHS: ReadonlySet<string> = new Set([
   "/v1/broadcasts/audience/preview",
   // Next run times depend on the current time, so a replayed response would go stale.
   "/v1/broadcasts/preview-recurrence",
+  // A dry run of a mapping: nothing is written, and the verdict depends on
+  // the workspace's current custom fields.
+  "/v1/inbound-webhooks/preview-mapping",
 ])

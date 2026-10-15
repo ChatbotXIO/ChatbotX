@@ -356,6 +356,34 @@ class IntegrationWhatsappRepository {
     return row ?? null
   }
 
+  /**
+   * The WhatsApp numbers whose display phone, ignoring punctuation, equals
+   * `digits`. `displayPhoneNumber` is free-form and not unique, so this can
+   * return several rows (at most two are fetched: enough to tell "ambiguous").
+   * Empty `digits` never match — legacy rows default the column to `""`.
+   */
+  async listByDisplayPhoneDigits(
+    input: { workspaceId: string; digits: string },
+    tx: DatabaseClient = db,
+  ): Promise<{ id: string; inboxId: string }[]> {
+    if (input.digits.length === 0) {
+      return []
+    }
+    return await tx
+      .select({
+        id: integrationWhatsappModel.id,
+        inboxId: integrationWhatsappModel.inboxId,
+      })
+      .from(integrationWhatsappModel)
+      .where(
+        and(
+          eq(integrationWhatsappModel.workspaceId, input.workspaceId),
+          sql`regexp_replace(${integrationWhatsappModel.displayPhoneNumber}, '\\D', '', 'g') = ${input.digits}`,
+        ),
+      )
+      .limit(2)
+  }
+
   listByWorkspaceId(
     workspaceId: string,
     tx: DatabaseClient = db,

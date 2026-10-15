@@ -40,6 +40,8 @@ export const ScheduleJobData = {
   purgeBroadcasts: "purgeBroadcasts",
   purgeAutomationThrottle: "purgeAutomationThrottle",
   purgeErrorLogs: "purgeErrorLogs",
+  redispatchInboundWebhookRequests: "redispatchInboundWebhookRequests",
+  purgeInboundWebhookRequests: "purgeInboundWebhookRequests",
   purgeCommentAutomationEvents: "purgeCommentAutomationEvents",
   refreshChannelTokens: "refreshChannelTokens",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
@@ -252,6 +254,16 @@ export type ScheduleJobPurgeErrorLogs = {
   data: Record<string, never>
 }
 
+export type ScheduleJobRedispatchInboundWebhookRequests = {
+  type: typeof ScheduleJobData.redispatchInboundWebhookRequests
+  data: Record<string, never>
+}
+
+export type ScheduleJobPurgeInboundWebhookRequests = {
+  type: typeof ScheduleJobData.purgeInboundWebhookRequests
+  data: Record<string, never>
+}
+
 export type ScheduleJobPurgeCommentAutomationEvents = {
   type: typeof ScheduleJobData.purgeCommentAutomationEvents
   data: Record<string, never>
@@ -318,6 +330,8 @@ export type ScheduleJobData =
   | ScheduleJobPurgeBroadcasts
   | ScheduleJobPurgeAutomationThrottle
   | ScheduleJobPurgeErrorLogs
+  | ScheduleJobRedispatchInboundWebhookRequests
+  | ScheduleJobPurgeInboundWebhookRequests
   | ScheduleJobPurgeCommentAutomationEvents
   | ScheduleJobRefreshChannelTokens
   | ScheduleJobUnsubscribeExpiredTrials

@@ -832,7 +832,8 @@
       "api": "API",
       "webchat": "Webchat",
       "botLink": "Tautan Bot",
-      "chatPlugin": "Plugin C. chat"
+      "chatPlugin": "Plugin C. chat",
+      "inboundWebhook": "Webhook masuk"
     },
     "ctwaRetarget": {
       "segments": {
@@ -4022,7 +4023,17 @@
     "maxItemsReached": "Maksimum {max} {feature} diizinkan per ruang kerja",
     "maxCharacters": "Maksimum {max} karakter.",
     "invalidApiKey": "Kunci API tidak valid",
-    "maxMustBeGreaterThanMin": "{maxField} harus lebih besar dari atau sama dengan {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} harus lebih besar dari atau sama dengan {minField}",
+    "inboundWebhook": {
+      "inboxRequired": "Pilih inbox.",
+      "inboxNotFound": "Inbox yang dipilih tidak ditemukan.",
+      "inboxDisconnected": "Inbox yang dipilih tidak terhubung.",
+      "unsupportedInboxIdentifier": "Kanal ini tidak dapat diidentifikasi dengan nilai tersebut.",
+      "identifierRequired": "Tambahkan setidaknya satu identitas kontak.",
+      "unknownFieldTarget": "Kolom kontak yang dipetakan tidak ada lagi.",
+      "actionReferenceNotFound": "Sebuah aksi merujuk ke flow, tag, atau kolom yang tidak ada lagi.",
+      "fieldMappingRequired": "Tambahkan setidaknya satu pemetaan kolom."
+    }
   },
   "webchat": {
     "chatUnavailable": "Obrolan ini saat ini tidak tersedia.",
@@ -4749,6 +4760,216 @@
   "magicLinks": {
     "title": "Tautan Ajaib",
     "description": "Buat tautan dalam yang mengarahkan ke URL Anda dengan parameter kueri."
+  },
+  "inboundWebhooks": {
+    "title": "Webhook Masuk",
+    "feature": "Webhook masuk",
+    "description": "Izinkan sistem eksternal mengirim data ke workspace Anda: temukan atau buat kontak, simpan nilai ke kolomnya, dan jalankan aksi.",
+    "createDescription": "Webhook baru dimulai dalam keadaan nonaktif. Konfigurasikan di editor, lalu aktifkan.",
+    "deleteDescription": "Sistem yang masih mengirim ke URL ini akan menerima error. Tindakan ini tidak dapat dibatalkan.",
+    "editorDescription": "Kirim permintaan POST JSON ke URL di bawah untuk menjalankan webhook ini.",
+    "configure": "Konfigurasi",
+    "getLink": "Dapatkan tautan",
+    "activeToggle": "Aktifkan {name}",
+    "columns": {
+      "active": "Aktif",
+      "createdAt": "Dibuat",
+      "requests": "Permintaan"
+    },
+    "link": {
+      "title": "URL webhook",
+      "description": "POST JSON ke URL ini. URL ini berisi token rahasia, jadi perlakukan seperti kata sandi."
+    },
+    "endpoint": {
+      "label": "URL webhook",
+      "show": "Tampilkan URL",
+      "hide": "Sembunyikan URL"
+    },
+    "regenerate": {
+      "button": "Buat ulang",
+      "title": "Buat ulang URL webhook?",
+      "description": "URL saat ini langsung berhenti berfungsi. Perbarui setiap sistem yang mengirim ke URL tersebut.",
+      "cancel": "Batal",
+      "confirm": "Buat ulang",
+      "success": "URL webhook berhasil dibuat ulang",
+      "failed": "Tidak dapat membuat ulang URL"
+    },
+    "activation": {
+      "incomplete": "Isi inbox, setidaknya satu kolom kontak, dan setidaknya satu pemetaan, lalu simpan, sebelum mengaktifkan webhook ini."
+    },
+    "sample": {
+      "title": "Contoh JSON",
+      "description": "Tempel contoh body permintaan untuk menelusuri kolomnya dan melihat pratinjau nilai.",
+      "load": "Muat contoh JSON",
+      "status": {
+        "loaded": "Contoh dimuat",
+        "invalid": "Ini bukan JSON yang valid",
+        "tooLarge": "Contoh lebih besar dari {max} KB",
+        "unsupported": "Contoh ini berisi karakter yang tidak didukung atau terlalu dalam bersarang"
+      },
+      "format": "Format JSON"
+    },
+    "contact": {
+      "title": "Temukan atau buat kontak",
+      "description": "Pilih inbox tempat kontak berada dan cara menemukannya. Jika tidak ada yang cocok, kontak baru dibuat bila permintaan berisi yang dibutuhkan kanal ini."
+    },
+    "inbox": {
+      "modeLabel": "Inbox",
+      "mode": {
+        "inbox": "Inbox tertentu",
+        "payload": "Dari payload"
+      },
+      "modeDescription": {
+        "inbox": "Setiap permintaan menggunakan inbox yang Anda pilih.",
+        "payload": "Setiap permintaan menyebutkan inbox-nya, misalnya id halaman Messenger atau id nomor telepon WhatsApp."
+      },
+      "inboxLabel": "Inbox",
+      "inboxPlaceholder": "Pilih inbox",
+      "noInboxes": "Tidak ada inbox terhubung yang ditemukan.",
+      "savedInboxMissing": "Inbox yang tersimpan tidak lagi terhubung. Pilih yang lain.",
+      "channelLabel": "Kanal",
+      "channelPlaceholder": "Pilih kanal",
+      "noPayloadChannels": "Hubungkan dulu kanal yang mendukung ini.",
+      "identifierKindLabel": "Pengenal inbox",
+      "identifierKindPlaceholder": "Pilih pengenal yang dikirim dalam payload",
+      "identifierPathHint": "Path JSON nilai ini dalam permintaan."
+    },
+    "identity": {
+      "hint": "Isi setidaknya satu. Kontak dicari berdasarkan yang pertama ditemukan dalam permintaan, dengan urutan ini.",
+      "phone": "Telepon",
+      "email": "Email",
+      "channelUserId": "ID pengguna kanal",
+      "fullName": "Nama lengkap",
+      "creationHint": "Tanpa {identities}, permintaan untuk kontak yang belum dikenal dilewati. Hanya kontak yang sudah ada yang diperbarui."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "ID halaman Facebook",
+      "igId": "ID akun Instagram",
+      "phoneNumberId": "ID nomor telepon WhatsApp",
+      "displayPhoneNumber": "Nomor telepon WhatsApp (kurang akurat)",
+      "botId": "ID bot Telegram",
+      "oaId": "ID Zalo OA",
+      "openId": "Open ID akun TikTok",
+      "threadsUserId": "ID pengguna Threads"
+    },
+    "channelUserIdKinds": {
+      "psid": "PSID Messenger",
+      "igsid": "IGSID Instagram",
+      "telegramChatId": "ID chat Telegram",
+      "zaloUserId": "ID pengguna Zalo",
+      "tiktokCustomerOpenId": "Open ID pelanggan TikTok",
+      "threadsUsername": "Username Threads",
+      "apiSourceId": "ID sumber kontak",
+      "whatsappId": "ID WhatsApp (wa_id)"
+    },
+    "mappings": {
+      "title": "Simpan data masuk",
+      "description": "Salin nilai dari permintaan ke kolom kontak.",
+      "empty": "Belum ada kolom yang dipetakan.",
+      "add": "Tambah kolom",
+      "remove": "Hapus kolom",
+      "target": "Kolom kontak",
+      "targetPlaceholder": "Pilih kolom",
+      "path": "Path JSON",
+      "rowTitle": "Pemetaan {number}"
+    },
+    "actions": {
+      "title": "Setelah data disimpan",
+      "description": "Aksi yang dijalankan untuk kontak setelah data disimpan."
+    },
+    "picker": {
+      "title": "Telusuri JSON",
+      "description": "Cari dan klik sebuah nilai, atau masukkan JSONPath di bawah",
+      "browse": "Telusuri",
+      "noSample": "Muat contoh JSON dulu untuk menelusuri kolomnya.",
+      "pathLabel": "Path JSON",
+      "use": "Gunakan path",
+      "cancel": "Batal",
+      "result": "Hasil:",
+      "noValue": "tidak ada nilai",
+      "searchLabel": "Cari di JSON",
+      "searchPlaceholder": "Cari kunci, path, atau nilai",
+      "noMatches": "Tidak ada kunci atau nilai yang cocok.",
+      "moreResults": "Menampilkan {count} hasil pertama. Persempit pencarian untuk melihat yang lain.",
+      "pathHint": "Mendukung nama properti dan indeks array, termasuk $[\"customer-data\"][\"email\"]",
+      "invalidPath": "Ini bukan JSONPath yang didukung."
+    },
+    "requests": {
+      "title": "Permintaan",
+      "description": "Pengiriman terbaru yang diterima webhook ini (disimpan selama 30 hari).",
+      "refresh": "Segarkan",
+      "empty": "Belum ada permintaan yang diterima.",
+      "previous": "Halaman sebelumnya",
+      "next": "Halaman berikutnya",
+      "pageOf": "Halaman {page} dari {pageCount}",
+      "contact": "Kontak #{id}",
+      "showDetails": "Tampilkan detail",
+      "hideDetails": "Sembunyikan detail",
+      "loadingDetails": "Memuat detail…",
+      "detailsFailed": "Tidak dapat memuat detail.",
+      "fieldErrors": "Kolom yang tidak tersimpan",
+      "actionResults": "Aksi",
+      "payload": "Payload",
+      "status": {
+        "received": "Diterima",
+        "processing": "Diproses",
+        "processed": "Selesai diproses",
+        "completedWithErrors": "Selesai dengan error",
+        "skipped": "Dilewati",
+        "failed": "Gagal"
+      },
+      "skipReason": {
+        "webhookInactive": "Webhook dalam keadaan nonaktif.",
+        "missingInboxIdentifier": "Permintaan tidak berisi pengenal inbox.",
+        "inboxNotFound": "Tidak ada inbox yang cocok dengan pengenal dalam permintaan.",
+        "inboxAmbiguous": "Lebih dari satu inbox cocok dengan pengenal dalam permintaan.",
+        "inboxDisconnected": "Inbox terputus.",
+        "missingIdentifier": "Permintaan tidak berisi identitas kontak apa pun.",
+        "workspaceBlocked": "Pemilik ruang kerja diblokir.",
+        "contactNotFound": "Tidak ada kontak yang cocok, dan permintaan tidak berisi yang diperlukan untuk membuatnya.",
+        "contactAmbiguous": "Lebih dari satu kontak memiliki nama ini di kotak masuk, sehingga permintaan dilewati."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Nilai tidak valid",
+        "invalidPhone": "Nomor telepon tidak valid",
+        "unknownField": "Kolom sudah tidak ada"
+      },
+      "actionStatus": {
+        "succeeded": "berhasil",
+        "skipped": "dilewati",
+        "failed": "gagal"
+      },
+      "errorCode": {
+        "abandoned": "Ditinggalkan: tidak diproses dalam 24 jam"
+      },
+      "actionSkipReason": {
+        "noConversation": "Kontak tidak memiliki percakapan",
+        "noContactInbox": "Kontak tidak terhubung ke inbox ini",
+        "flowInactive": "Flow belum dipublikasikan",
+        "unsupportedAction": "Aksi ini tidak didukung di sini",
+        "unsupportedChannel": "Kanal tidak mendukung aksi ini",
+        "invalidAction": "Aksi tidak dikonfigurasi dengan benar",
+        "unknownAction": "Aksi tidak dikenal",
+        "unsupportedSource": "Tidak didukung untuk sumber ini"
+      }
+    },
+    "save": {
+      "invalid": "Beberapa pengaturan tidak valid. Perbaiki kolom yang ditandai lalu simpan lagi."
+    },
+    "viewAnalytics": "Lihat analitik",
+    "analytics": {
+      "title": "Analitik",
+      "back": "Kembali ke webhook",
+      "totalRequests": "Total permintaan diterima",
+      "totalRequestsHint": "Setiap permintaan yang diterima sejak webhook dibuat. Duplikat tidak dihitung. Log di bawah menyimpan 30 hari terakhir."
+    },
+    "issues": {
+      "inboxRequired": "Pilih inbox.",
+      "identifierRequired": "Isi setidaknya satu dari empat kolom kontak.",
+      "fieldMappingRequired": "Tambahkan setidaknya satu kolom di bawah \"Simpan data masuk\".",
+      "required": "Kolom ini wajib diisi.",
+      "unsupportedPath": "Jalur JSON tidak didukung."
+    }
   },
   "QRCode": {
     "title": "Kode QR",

@@ -832,7 +832,8 @@
       "api": "API",
       "webchat": "Web Sohbeti",
       "botLink": "Bot Bağlantısı",
-      "chatPlugin": "C. sohbet eklentisi"
+      "chatPlugin": "C. sohbet eklentisi",
+      "inboundWebhook": "Gelen webhook"
     },
     "ctwaRetarget": {
       "segments": {
@@ -4022,7 +4023,17 @@
     "maxItemsReached": "Çalışma alanı başına en fazla {max} {feature} izin verilir",
     "maxCharacters": "En fazla {max} karakter.",
     "invalidApiKey": "Geçersiz API anahtarı",
-    "maxMustBeGreaterThanMin": "{maxField}, {minField} değerinden büyük veya ona eşit olmalıdır"
+    "maxMustBeGreaterThanMin": "{maxField}, {minField} değerinden büyük veya ona eşit olmalıdır",
+    "inboundWebhook": {
+      "inboxRequired": "Bir gelen kutusu seçin.",
+      "inboxNotFound": "Seçilen gelen kutusu bulunamadı.",
+      "inboxDisconnected": "Seçilen gelen kutusu bağlı değil.",
+      "unsupportedInboxIdentifier": "Bu kanal o değerle tanımlanamaz.",
+      "identifierRequired": "En az bir kişi kimliği ekleyin.",
+      "unknownFieldTarget": "Eşlenen bir kişi alanı artık mevcut değil.",
+      "actionReferenceNotFound": "Bir eylem, artık mevcut olmayan bir akışa, etikete veya alana başvuruyor.",
+      "fieldMappingRequired": "En az bir alan eşlemesi ekleyin."
+    }
   },
   "webchat": {
     "chatUnavailable": "Bu sohbet şu anda kullanılamıyor.",
@@ -4749,6 +4760,216 @@
   "magicLinks": {
     "title": "Sihirli Bağlantılar",
     "description": "URL'nize sorgu parametreleriyle yönlendiren derin bağlantılar oluşturun."
+  },
+  "inboundWebhooks": {
+    "title": "Gelen Webhook'lar",
+    "feature": "Gelen webhook",
+    "description": "Harici sistemlerin çalışma alanınıza veri göndermesine izin verin: bir kişi bulun veya oluşturun, değerleri alanlarına kaydedin ve eylemleri çalıştırın.",
+    "createDescription": "Yeni bir webhook pasif başlar. Düzenleyicide yapılandırın, ardından açın.",
+    "deleteDescription": "Bu URL'ye hâlâ gönderim yapan sistemler hata alır. Bu işlem geri alınamaz.",
+    "editorDescription": "Bu webhook'u çalıştırmak için aşağıdaki URL'ye bir JSON POST isteği gönderin.",
+    "configure": "Yapılandır",
+    "getLink": "Bağlantıyı al",
+    "activeToggle": "{name} öğesini etkinleştir",
+    "columns": {
+      "active": "Etkin",
+      "createdAt": "Oluşturulma",
+      "requests": "İstekler"
+    },
+    "link": {
+      "title": "Webhook URL'si",
+      "description": "Bu URL'ye JSON POST edin. Gizli bir belirteç içerir, bu yüzden parola gibi davranın."
+    },
+    "endpoint": {
+      "label": "Webhook URL'si",
+      "show": "URL'yi göster",
+      "hide": "URL'yi gizle"
+    },
+    "regenerate": {
+      "button": "Yeniden oluştur",
+      "title": "Webhook URL'si yeniden oluşturulsun mu?",
+      "description": "Mevcut URL hemen çalışmayı bırakır. Ona gönderim yapan tüm sistemleri güncelleyin.",
+      "cancel": "İptal",
+      "confirm": "Yeniden oluştur",
+      "success": "Webhook URL'si yeniden oluşturuldu",
+      "failed": "URL yeniden oluşturulamadı"
+    },
+    "activation": {
+      "incomplete": "Bu webhook'u etkinleştirmeden önce gelen kutusunu, en az bir kişi alanını ve en az bir eşlemeyi doldurup kaydedin."
+    },
+    "sample": {
+      "title": "Örnek JSON",
+      "description": "Alanlarına göz atmak ve değerleri önizlemek için örnek bir istek gövdesi yapıştırın.",
+      "load": "Örnek JSON yükle",
+      "status": {
+        "loaded": "Örnek yüklendi",
+        "invalid": "Bu geçerli bir JSON değil",
+        "tooLarge": "Örnek {max} KB'tan büyük",
+        "unsupported": "Bu örnek desteklenmeyen karakterler içeriyor veya çok derin iç içe"
+      },
+      "format": "JSON'u biçimlendir"
+    },
+    "contact": {
+      "title": "Kişi bul veya oluştur",
+      "description": "Kişinin ait olduğu gelen kutusunu ve onu nasıl bulacağınızı seçin. Kimse eşleşmezse, istek bu kanalın ihtiyaç duyduğu bilgileri içeriyorsa yeni bir kişi oluşturulur."
+    },
+    "inbox": {
+      "modeLabel": "Gelen Kutusu",
+      "mode": {
+        "inbox": "Belirli gelen kutusu",
+        "payload": "Payload'dan"
+      },
+      "modeDescription": {
+        "inbox": "Her istek seçtiğiniz gelen kutusunu kullanır.",
+        "payload": "Her istek kendi gelen kutusunu belirtir, örneğin bir Messenger sayfa kimliği veya bir WhatsApp telefon numarası kimliği."
+      },
+      "inboxLabel": "Gelen Kutusu",
+      "inboxPlaceholder": "Bir gelen kutusu seçin",
+      "noInboxes": "Bağlı gelen kutusu bulunamadı.",
+      "savedInboxMissing": "Kayıtlı gelen kutusu artık bağlı değil. Başka bir tane seçin.",
+      "channelLabel": "Kanal",
+      "channelPlaceholder": "Bir kanal seçin",
+      "noPayloadChannels": "Önce bunu destekleyen bir kanal bağlayın.",
+      "identifierKindLabel": "Gelen kutusu tanımlayıcısı",
+      "identifierKindPlaceholder": "Payload'da gönderilen tanımlayıcıyı seçin",
+      "identifierPathHint": "Bu değerin istekteki JSON yolu."
+    },
+    "identity": {
+      "hint": "En az birini doldurun. Kişi, istekte bulunan ilk değere göre bu sırayla aranır.",
+      "phone": "Telefon",
+      "email": "E-posta",
+      "channelUserId": "Kanal kullanıcı kimliği",
+      "fullName": "Ad soyad",
+      "creationHint": "{identities} olmadan, bilinmeyen bir kişi için gelen istek atlanır. Yalnızca mevcut kişiler güncellenir."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "Facebook sayfa kimliği",
+      "igId": "Instagram hesap kimliği",
+      "phoneNumberId": "WhatsApp telefon numarası kimliği",
+      "displayPhoneNumber": "WhatsApp telefon numarası (daha az kesin)",
+      "botId": "Telegram bot kimliği",
+      "oaId": "Zalo OA kimliği",
+      "openId": "TikTok hesap open id",
+      "threadsUserId": "Threads kullanıcı kimliği"
+    },
+    "channelUserIdKinds": {
+      "psid": "Messenger PSID",
+      "igsid": "Instagram IGSID",
+      "telegramChatId": "Telegram sohbet kimliği",
+      "zaloUserId": "Zalo kullanıcı kimliği",
+      "tiktokCustomerOpenId": "TikTok müşteri open id",
+      "threadsUsername": "Threads kullanıcı adı",
+      "apiSourceId": "Kişi kaynağı kimliği",
+      "whatsappId": "WhatsApp kimliği (wa_id)"
+    },
+    "mappings": {
+      "title": "Gelen verileri kaydet",
+      "description": "İstekteki değerleri kişi alanlarına kopyalayın.",
+      "empty": "Henüz eşlenen alan yok.",
+      "add": "Alan ekle",
+      "remove": "Alanı kaldır",
+      "target": "Kişi alanı",
+      "targetPlaceholder": "Bir alan seçin",
+      "path": "JSON yolu",
+      "rowTitle": "Eşleme {number}"
+    },
+    "actions": {
+      "title": "Veriler kaydedildikten sonra",
+      "description": "Veriler kaydedildikten sonra kişi için çalıştırılacak eylemler."
+    },
+    "picker": {
+      "title": "JSON'a göz at",
+      "description": "Bir değeri arayıp tıklayın veya aşağıya bir JSONPath girin",
+      "browse": "Göz at",
+      "noSample": "Alanlarına göz atmak için önce örnek bir JSON yükleyin.",
+      "pathLabel": "JSON yolu",
+      "use": "Yolu kullan",
+      "cancel": "İptal",
+      "result": "Sonuç:",
+      "noValue": "değer yok",
+      "searchLabel": "JSON içinde ara",
+      "searchPlaceholder": "Anahtar, yol veya değer ara",
+      "noMatches": "Eşleşen anahtar veya değer yok.",
+      "moreResults": "İlk {count} eşleşme gösteriliyor. Diğerlerini görmek için aramanızı daraltın.",
+      "pathHint": "Özellik adlarını ve dizi indekslerini destekler, örneğin $[\"customer-data\"][\"email\"]",
+      "invalidPath": "Bu, desteklenen bir JSONPath değil."
+    },
+    "requests": {
+      "title": "İstekler",
+      "description": "Bu webhook'un aldığı son teslimatlar (30 gün saklanır).",
+      "refresh": "Yenile",
+      "empty": "Henüz istek alınmadı.",
+      "previous": "Önceki sayfa",
+      "next": "Sonraki sayfa",
+      "pageOf": "Sayfa {page} / {pageCount}",
+      "contact": "Kişi #{id}",
+      "showDetails": "Ayrıntıları göster",
+      "hideDetails": "Ayrıntıları gizle",
+      "loadingDetails": "Ayrıntılar yükleniyor…",
+      "detailsFailed": "Ayrıntılar yüklenemedi.",
+      "fieldErrors": "Kaydedilmeyen alanlar",
+      "actionResults": "Eylemler",
+      "payload": "Payload",
+      "status": {
+        "received": "Alındı",
+        "processing": "İşleniyor",
+        "processed": "İşlendi",
+        "completedWithErrors": "Hatalarla tamamlandı",
+        "skipped": "Atlandı",
+        "failed": "Başarısız"
+      },
+      "skipReason": {
+        "webhookInactive": "Webhook pasifti.",
+        "missingInboxIdentifier": "İstek gelen kutusu tanımlayıcısını içermiyordu.",
+        "inboxNotFound": "İstekteki tanımlayıcıyla eşleşen gelen kutusu yok.",
+        "inboxAmbiguous": "İstekteki tanımlayıcıyla birden fazla gelen kutusu eşleşiyor.",
+        "inboxDisconnected": "Gelen kutusunun bağlantısı kesilmiş.",
+        "missingIdentifier": "İstek herhangi bir kişi kimliği içermiyordu.",
+        "workspaceBlocked": "Çalışma alanının sahibi engellenmiş.",
+        "contactNotFound": "Hiçbir kişi eşleşmedi ve istek yeni bir kişi oluşturmak için gerekenleri içermiyordu.",
+        "contactAmbiguous": "Gelen kutusunda bu ada sahip birden fazla kişi var, bu nedenle istek atlandı."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Geçersiz değer",
+        "invalidPhone": "Geçersiz telefon numarası",
+        "unknownField": "Alan artık mevcut değil"
+      },
+      "actionStatus": {
+        "succeeded": "başarılı",
+        "skipped": "atlandı",
+        "failed": "başarısız"
+      },
+      "errorCode": {
+        "abandoned": "Terk edildi: 24 saat içinde işlenmedi"
+      },
+      "actionSkipReason": {
+        "noConversation": "Kişinin görüşmesi yok",
+        "noContactInbox": "Kişi bu gelen kutusuna bağlı değil",
+        "flowInactive": "Akış yayınlanmamış",
+        "unsupportedAction": "Bu eylem burada desteklenmiyor",
+        "unsupportedChannel": "Kanal bu eylemi desteklemiyor",
+        "invalidAction": "Eylem doğru yapılandırılmamış",
+        "unknownAction": "Bilinmeyen eylem",
+        "unsupportedSource": "Bu kaynak için desteklenmiyor"
+      }
+    },
+    "save": {
+      "invalid": "Bazı ayarlar geçersiz. Vurgulanan alanları düzeltip tekrar kaydedin."
+    },
+    "viewAnalytics": "Analizleri görüntüle",
+    "analytics": {
+      "title": "Analizler",
+      "back": "Webhook'a dön",
+      "totalRequests": "Alınan toplam istek",
+      "totalRequestsHint": "Webhook oluşturulduğundan beri kabul edilen her istek. Yinelenenler sayılmaz. Aşağıdaki günlük son 30 günü tutar."
+    },
+    "issues": {
+      "inboxRequired": "Bir gelen kutusu seçin.",
+      "identifierRequired": "Dört kişi alanından en az birini doldurun.",
+      "fieldMappingRequired": "\"Gelen verileri kaydet\" altında en az bir alan ekleyin.",
+      "required": "Bu alan zorunludur.",
+      "unsupportedPath": "Desteklenmeyen JSON yolu."
+    }
   },
   "QRCode": {
     "title": "QR Kod",

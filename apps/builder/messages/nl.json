@@ -2366,7 +2366,8 @@
       "api": "API",
       "webchat": "Webchat",
       "botLink": "Botlink",
-      "chatPlugin": "C. chatplugin"
+      "chatPlugin": "C. chatplugin",
+      "inboundWebhook": "Inkomende webhook"
     },
     "ctwaRetarget": {
       "segments": {
@@ -4022,7 +4023,17 @@
     "maxItemsReached": "Maximaal {max} {feature} toegestaan per workspace",
     "maxCharacters": "Maximaal {max} tekens.",
     "invalidApiKey": "Ongeldige API-sleutel",
-    "maxMustBeGreaterThanMin": "{maxField} moet groter zijn dan of gelijk zijn aan {minField}"
+    "maxMustBeGreaterThanMin": "{maxField} moet groter zijn dan of gelijk zijn aan {minField}",
+    "inboundWebhook": {
+      "inboxRequired": "Kies een inbox.",
+      "inboxNotFound": "De geselecteerde inbox is niet gevonden.",
+      "inboxDisconnected": "De geselecteerde inbox is niet verbonden.",
+      "unsupportedInboxIdentifier": "Dit kanaal kan niet met die waarde worden geïdentificeerd.",
+      "identifierRequired": "Voeg minstens één contactidentiteit toe.",
+      "unknownFieldTarget": "Een gekoppeld contactveld bestaat niet meer.",
+      "actionReferenceNotFound": "Een actie verwijst naar een flow, tag of veld dat niet meer bestaat.",
+      "fieldMappingRequired": "Voeg minstens één veldkoppeling toe."
+    }
   },
   "webchat": {
     "chatUnavailable": "Deze chat is momenteel niet beschikbaar.",
@@ -4749,6 +4760,216 @@
   "magicLinks": {
     "title": "Magische links",
     "description": "Maak deeplinks die met queryparameters naar je URL doorsturen."
+  },
+  "inboundWebhooks": {
+    "title": "Inkomende webhooks",
+    "feature": "Inkomende webhook",
+    "description": "Laat externe systemen gegevens naar je workspace sturen: een contact zoeken of aanmaken, waarden in de velden opslaan en acties uitvoeren.",
+    "createDescription": "Een nieuwe webhook is eerst inactief. Configureer hem in de editor en schakel hem daarna in.",
+    "deleteDescription": "Systemen die nog naar deze URL posten, krijgen een fout. Dit kan niet ongedaan worden gemaakt.",
+    "editorDescription": "Stuur een JSON POST-verzoek naar de onderstaande URL om deze webhook uit te voeren.",
+    "configure": "Configureren",
+    "getLink": "Link ophalen",
+    "activeToggle": "{name} activeren",
+    "columns": {
+      "active": "Actief",
+      "createdAt": "Aangemaakt",
+      "requests": "Verzoeken"
+    },
+    "link": {
+      "title": "Webhook-URL",
+      "description": "Post JSON naar deze URL. Hij bevat een geheim token, dus behandel hem als een wachtwoord."
+    },
+    "endpoint": {
+      "label": "Webhook-URL",
+      "show": "URL tonen",
+      "hide": "URL verbergen"
+    },
+    "regenerate": {
+      "button": "Opnieuw genereren",
+      "title": "Webhook-URL opnieuw genereren?",
+      "description": "De huidige URL werkt direct niet meer. Werk elk systeem bij dat ernaar post.",
+      "cancel": "Annuleren",
+      "confirm": "Opnieuw genereren",
+      "success": "Webhook-URL opnieuw gegenereerd",
+      "failed": "De URL kon niet opnieuw worden gegenereerd"
+    },
+    "activation": {
+      "incomplete": "Vul de inbox, minstens één contactveld en minstens één koppeling in en sla op voordat je deze webhook activeert."
+    },
+    "sample": {
+      "title": "Voorbeeld-JSON",
+      "description": "Plak een voorbeeld van een verzoekbody om de velden te bekijken en waarden te previewen.",
+      "load": "Voorbeeld-JSON laden",
+      "status": {
+        "loaded": "Voorbeeld geladen",
+        "invalid": "Dit is geen geldige JSON",
+        "tooLarge": "Het voorbeeld is groter dan {max} KB",
+        "unsupported": "Dit voorbeeld bevat niet-ondersteunde tekens of is te diep genest"
+      },
+      "format": "JSON opmaken"
+    },
+    "contact": {
+      "title": "Contact zoeken of aanmaken",
+      "description": "Kies de inbox waartoe het contact behoort en hoe je het vindt. Als niemand overeenkomt, wordt een nieuw contact aangemaakt wanneer het verzoek bevat wat dit kanaal nodig heeft."
+    },
+    "inbox": {
+      "modeLabel": "Inbox",
+      "mode": {
+        "inbox": "Specifieke inbox",
+        "payload": "Uit payload"
+      },
+      "modeDescription": {
+        "inbox": "Elk verzoek gebruikt de inbox die je kiest.",
+        "payload": "Elk verzoek noemt zijn inbox, bijvoorbeeld een Messenger-pagina-id of een WhatsApp-telefoonnummer-id."
+      },
+      "inboxLabel": "Inbox",
+      "inboxPlaceholder": "Selecteer een inbox",
+      "noInboxes": "Geen verbonden inbox gevonden.",
+      "savedInboxMissing": "De opgeslagen inbox is niet meer verbonden. Kies een andere.",
+      "channelLabel": "Kanaal",
+      "channelPlaceholder": "Selecteer een kanaal",
+      "noPayloadChannels": "Verbind eerst een kanaal dat dit ondersteunt.",
+      "identifierKindLabel": "Inbox-identifier",
+      "identifierKindPlaceholder": "Selecteer de identifier die in de payload wordt verstuurd",
+      "identifierPathHint": "JSON-pad van deze waarde in het verzoek."
+    },
+    "identity": {
+      "hint": "Vul er minstens één in. Het contact wordt gezocht met de eerste die in het verzoek wordt gevonden, in deze volgorde.",
+      "phone": "Telefoon",
+      "email": "E-mail",
+      "channelUserId": "Kanaalgebruiker-ID",
+      "fullName": "Volledige naam",
+      "creationHint": "Zonder {identities} wordt een verzoek voor een onbekend contact overgeslagen. Alleen bestaande contacten worden bijgewerkt."
+    },
+    "inboxIdentifierKinds": {
+      "pageId": "Facebook-pagina-id",
+      "igId": "Instagram-account-id",
+      "phoneNumberId": "WhatsApp-telefoonnummer-id",
+      "displayPhoneNumber": "WhatsApp-telefoonnummer (minder nauwkeurig)",
+      "botId": "Telegram-bot-id",
+      "oaId": "Zalo OA-id",
+      "openId": "TikTok-account-open-id",
+      "threadsUserId": "Threads-gebruikers-id"
+    },
+    "channelUserIdKinds": {
+      "psid": "Messenger PSID",
+      "igsid": "Instagram IGSID",
+      "telegramChatId": "Telegram-chat-id",
+      "zaloUserId": "Zalo-gebruikers-id",
+      "tiktokCustomerOpenId": "TikTok-klant-open-id",
+      "threadsUsername": "Threads-gebruikersnaam",
+      "apiSourceId": "Contactbron-id",
+      "whatsappId": "WhatsApp-ID (wa_id)"
+    },
+    "mappings": {
+      "title": "Binnenkomende gegevens opslaan",
+      "description": "Kopieer waarden uit het verzoek naar contactvelden.",
+      "empty": "Nog geen velden gekoppeld.",
+      "add": "Veld toevoegen",
+      "remove": "Veld verwijderen",
+      "target": "Contactveld",
+      "targetPlaceholder": "Selecteer een veld",
+      "path": "JSON-pad",
+      "rowTitle": "Koppeling {number}"
+    },
+    "actions": {
+      "title": "Na het opslaan van gegevens",
+      "description": "Acties die voor het contact worden uitgevoerd nadat de gegevens zijn opgeslagen."
+    },
+    "picker": {
+      "title": "JSON bekijken",
+      "description": "Zoek en klik op een waarde, of voer hieronder een JSONPath in",
+      "browse": "Bekijken",
+      "noSample": "Laad eerst een voorbeeld-JSON om de velden te bekijken.",
+      "pathLabel": "JSON-pad",
+      "use": "Pad gebruiken",
+      "cancel": "Annuleren",
+      "result": "Resultaat:",
+      "noValue": "geen waarde",
+      "searchLabel": "Zoeken in de JSON",
+      "searchPlaceholder": "Zoek sleutels, paden of waarden",
+      "noMatches": "Geen overeenkomende sleutels of waarden.",
+      "moreResults": "De eerste {count} resultaten worden getoond. Verfijn je zoekopdracht om andere te zien.",
+      "pathHint": "Ondersteunt eigenschapsnamen en array-indexen, waaronder $[\"customer-data\"][\"email\"]",
+      "invalidPath": "Dit is geen ondersteund JSONPath."
+    },
+    "requests": {
+      "title": "Verzoeken",
+      "description": "De laatste leveringen die deze webhook heeft ontvangen (30 dagen bewaard).",
+      "refresh": "Vernieuwen",
+      "empty": "Nog geen verzoeken ontvangen.",
+      "previous": "Vorige pagina",
+      "next": "Volgende pagina",
+      "pageOf": "Pagina {page} van {pageCount}",
+      "contact": "Contact #{id}",
+      "showDetails": "Details tonen",
+      "hideDetails": "Details verbergen",
+      "loadingDetails": "Details laden…",
+      "detailsFailed": "De details konden niet worden geladen.",
+      "fieldErrors": "Niet opgeslagen velden",
+      "actionResults": "Acties",
+      "payload": "Payload",
+      "status": {
+        "received": "Ontvangen",
+        "processing": "Wordt verwerkt",
+        "processed": "Verwerkt",
+        "completedWithErrors": "Voltooid met fouten",
+        "skipped": "Overgeslagen",
+        "failed": "Mislukt"
+      },
+      "skipReason": {
+        "webhookInactive": "De webhook was inactief.",
+        "missingInboxIdentifier": "Het verzoek bevatte de inbox-identifier niet.",
+        "inboxNotFound": "Geen inbox komt overeen met de identifier in het verzoek.",
+        "inboxAmbiguous": "Meer dan één inbox komt overeen met de identifier in het verzoek.",
+        "inboxDisconnected": "De inbox is losgekoppeld.",
+        "missingIdentifier": "Het verzoek bevatte geen contactidentiteit.",
+        "workspaceBlocked": "De eigenaar van de werkruimte is geblokkeerd.",
+        "contactNotFound": "Geen contact gevonden en het verzoek bevatte niet wat nodig is om er een aan te maken.",
+        "contactAmbiguous": "Meer dan één contact heeft deze naam in de inbox, dus het verzoek is overgeslagen."
+      },
+      "fieldErrorCode": {
+        "invalidValue": "Ongeldige waarde",
+        "invalidPhone": "Ongeldig telefoonnummer",
+        "unknownField": "Het veld bestaat niet meer"
+      },
+      "actionStatus": {
+        "succeeded": "geslaagd",
+        "skipped": "overgeslagen",
+        "failed": "mislukt"
+      },
+      "errorCode": {
+        "abandoned": "Opgegeven: niet binnen 24 uur verwerkt"
+      },
+      "actionSkipReason": {
+        "noConversation": "Het contact heeft geen gesprek",
+        "noContactInbox": "Het contact is niet verbonden met deze inbox",
+        "flowInactive": "De flow is niet gepubliceerd",
+        "unsupportedAction": "Deze actie wordt hier niet ondersteund",
+        "unsupportedChannel": "Het kanaal ondersteunt deze actie niet",
+        "invalidAction": "De actie is niet goed geconfigureerd",
+        "unknownAction": "Onbekende actie",
+        "unsupportedSource": "Niet ondersteund voor deze bron"
+      }
+    },
+    "save": {
+      "invalid": "Sommige instellingen zijn ongeldig. Corrigeer de gemarkeerde velden en sla opnieuw op."
+    },
+    "viewAnalytics": "Analyses bekijken",
+    "analytics": {
+      "title": "Analyses",
+      "back": "Terug naar webhook",
+      "totalRequests": "Totaal ontvangen verzoeken",
+      "totalRequestsHint": "Elk geaccepteerd verzoek sinds de webhook is aangemaakt. Dubbele worden niet geteld. Het logboek hieronder bewaart de laatste 30 dagen."
+    },
+    "issues": {
+      "inboxRequired": "Kies een inbox.",
+      "identifierRequired": "Vul minstens één van de vier contactvelden in.",
+      "fieldMappingRequired": "Voeg minstens één veld toe onder 'Binnenkomende gegevens opslaan'.",
+      "required": "Dit veld is verplicht.",
+      "unsupportedPath": "Niet-ondersteund JSON-pad."
+    }
   },
   "QRCode": {
     "title": "QR-code",
