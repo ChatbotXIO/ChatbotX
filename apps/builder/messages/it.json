@@ -3735,7 +3735,16 @@
     "sendProductsFieldTooLong": "Questo testo è troppo lungo.",
     "sendProductsProductCountOutOfRange": "Scegli un numero valido di prodotti.",
     "sendProductsSectionCountOutOfRange": "Ci sono troppe sezioni.",
-    "sendProductsDuplicateProduct": "Un prodotto può comparire una sola volta."
+    "sendProductsDuplicateProduct": "Un prodotto può comparire una sola volta.",
+    "inboundOrder": {
+      "title": "Carrello",
+      "preview": "Carrello ({count, plural, one {# articolo} other {# articoli}})",
+      "note": "Nota",
+      "unresolvedProduct": "Non trovato nel tuo catalogo"
+    },
+    "referredProduct": {
+      "askedAbout": "Ha chiesto informazioni su questo prodotto"
+    }
   },
   "instagram": {
     "description": "Questa integrazione ti consente di creare bot Instagram.",
@@ -4771,8 +4780,8 @@
       "ticketPriorityChanged": "Priorità del ticket modificata",
       "subscribedToSequence": "Iscritto alla sequenza",
       "unsubscribedFromSequence": "Disiscritto dalla sequenza",
-      "WhatsappShoppingCartSent": "Carrello WhatsApp inviato",
-      "userAskedAboutProduct": "L'utente ha chiesto informazioni sul prodotto",
+      "shoppingCartSent": "Il contatto ha inviato un carrello",
+      "userAskedAboutProduct": "Il contatto ha chiesto informazioni su un prodotto",
       "cartAbandoned": "Carrello abbandonato",
       "newOrder": "Nuovo ordine",
       "orderAccepted": "Ordine accettato",
@@ -4786,7 +4795,8 @@
       "contactReferredANewContact": "Il contatto ha segnalato un nuovo contatto",
       "contactReferredExistingContact": "Il contatto ha segnalato un contatto esistente",
       "callRecorded": "Chiamata registrata",
-      "callTranscribed": "Chiamata trascritta"
+      "callTranscribed": "Chiamata trascritta",
+      "anyProduct": "Qualsiasi prodotto"
     },
     "actions": {
       "addTag": "Aggiungi tag",

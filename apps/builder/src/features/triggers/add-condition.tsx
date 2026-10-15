@@ -22,6 +22,7 @@ import { defaultFn as addCustomFieldValueChangedCondition } from "../conditions/
 import { defaultFn as addDateTimeBaseTriggerCondition } from "../conditions/schema/date-time-based-trigger"
 import {
   createDefaultFn,
+  createDefaultFnWithOptionalSourceId,
   createDefaultFnWithSourceId,
 } from "../conditions/schema/simple-conditions"
 import { defaultFn as addTagAppliedCondition } from "../conditions/schema/tag-applied"
@@ -219,95 +220,28 @@ export function AddCondition({
         ],
       },
 
-      // {
-      //   label: t("fields.ecommerce.label"),
-      //   children: [
-      //     {
-      //       label: t("trigger.conditions.WhatsappShoppingCartSent"),
-      //       value: triggerEventTypes.enum.WhatsappShoppingCartSent,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.WhatsappShoppingCartSent,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.userAskedAboutProduct"),
-      //       value: triggerEventTypes.enum.userAskedAboutProduct,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.userAskedAboutProduct,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.cartAbandoned"),
-      //       value: triggerEventTypes.enum.cartAbandoned,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.cartAbandoned,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.newOrder"),
-      //       value: triggerEventTypes.enum.newOrder,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.newOrder,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.orderAccepted"),
-      //       value: triggerEventTypes.enum.orderAccepted,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.orderAccepted,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.orderShipped"),
-      //       value: triggerEventTypes.enum.orderShipped,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.orderShipped,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.orderConcluded"),
-      //       value: triggerEventTypes.enum.orderConcluded,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.orderConcluded,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.orderCancelled"),
-      //       value: triggerEventTypes.enum.orderCancelled,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.orderCancelled,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.categoryAddedToCart"),
-      //       value: triggerEventTypes.enum.categoryAddedToCart,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.categoryAddedToCart,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.productAddedToCart"),
-      //       value: triggerEventTypes.enum.productAddedToCart,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.productAddedToCart,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.productRemovedFromCart"),
-      //       value: triggerEventTypes.enum.productRemovedFromCart,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.productRemovedFromCart,
-      //       }),
-      //     },
-      //     {
-      //       label: t("trigger.conditions.productOrdered"),
-      //       value: triggerEventTypes.enum.productOrdered,
-      //       defaultFn: () => ({
-      //         type: triggerEventTypes.enum.productOrdered,
-      //       }),
-      //     },
-      //   ],
-      // },
+      // The other ecommerce events (cart abandoned, product added to cart, order
+      // accepted/shipped/…) are not implemented: only a submitted order and a
+      // product-page message have a documented WhatsApp webhook.
+      {
+        label: t("fields.ecommerce.label"),
+        children: [
+          {
+            label: t("trigger.conditions.shoppingCartSent"),
+            value: triggerEventTypes.enum.shoppingCartSent,
+            defaultFn: createDefaultFnWithOptionalSourceId(
+              triggerEventTypes.enum.shoppingCartSent,
+            ),
+          },
+          {
+            label: t("trigger.conditions.userAskedAboutProduct"),
+            value: triggerEventTypes.enum.userAskedAboutProduct,
+            defaultFn: createDefaultFnWithOptionalSourceId(
+              triggerEventTypes.enum.userAskedAboutProduct,
+            ),
+          },
+        ],
+      },
 
       {
         label: t("fields.entryPointLink.label"),

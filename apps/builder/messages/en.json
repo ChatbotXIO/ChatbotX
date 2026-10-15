@@ -4418,7 +4418,16 @@
     "sendProductsFieldTooLong": "This text is too long.",
     "sendProductsProductCountOutOfRange": "Pick a valid number of products.",
     "sendProductsSectionCountOutOfRange": "There are too many sections.",
-    "sendProductsDuplicateProduct": "A product can only appear once."
+    "sendProductsDuplicateProduct": "A product can only appear once.",
+    "inboundOrder": {
+      "title": "Shopping cart",
+      "preview": "Shopping cart ({count, plural, one {# item} other {# items}})",
+      "note": "Note",
+      "unresolvedProduct": "Not found in your catalog"
+    },
+    "referredProduct": {
+      "askedAbout": "Asked about this product"
+    }
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",
@@ -5454,8 +5463,8 @@
       "ticketPriorityChanged": "Ticket Priority Changed",
       "subscribedToSequence": "Subscribed To Sequence",
       "unsubscribedFromSequence": "Unsubscribed From Sequence",
-      "WhatsappShoppingCartSent": "Whatsapp Shopping Cart Sent",
-      "userAskedAboutProduct": "User Asked About Product",
+      "shoppingCartSent": "Contact Sent Shopping Cart",
+      "userAskedAboutProduct": "Contact Asked About Product",
       "cartAbandoned": "Cart Abandoned",
       "newOrder": "New Order",
       "orderAccepted": "Order Accepted",
@@ -5469,7 +5478,8 @@
       "contactReferredANewContact": "Contact Referred A New Contact",
       "contactReferredExistingContact": "Contact Referred Existing Contact",
       "callRecorded": "Call Recorded",
-      "callTranscribed": "Call Transcribed"
+      "callTranscribed": "Call Transcribed",
+      "anyProduct": "Any product"
     },
     "actions": {
       "addTag": "Add Tag",

@@ -141,6 +141,10 @@ import {
 } from "./contact-profile-refresh"
 import { resolvePostbackButtonLabel, sanitizeFlowAction } from "./flow-action"
 import {
+  emitStoredCommerceEvent,
+  enrichInboundCommerce,
+} from "./inbound-commerce"
+import {
   syncAdLabelsIfAdReferred,
   tagAdReferralOnlyContact,
 } from "./sync-ad-labels"
@@ -428,12 +432,20 @@ export const receiveMessage = async (
     rawIncomingMessage,
     isNewContact,
   )
-  const incomingMessage = markStandbyDelivery(
-    postbackButtonLabel && directedIncomingMessage
-      ? { ...directedIncomingMessage, text: postbackButtonLabel }
-      : directedIncomingMessage,
-    suppressAutomation,
-  )
+  // A cart or product question is named before the message is saved, so the
+  // stored message already carries it. Never blocks the save: see
+  // `enrichInboundCommerce`.
+  const incomingMessage = await enrichInboundCommerce({
+    commerce: parsedMessage.commerce,
+    message: markStandbyDelivery(
+      postbackButtonLabel && directedIncomingMessage
+        ? { ...directedIncomingMessage, text: postbackButtonLabel }
+        : directedIncomingMessage,
+      suppressAutomation,
+    ),
+    workspaceId: inbox.workspaceId,
+    channel: inbox.channel,
+  })
   const systemFieldUpdates = getReceivedMessageSystemFieldUpdates({
     buttonTitle: parsedMessage.buttonTitle || postbackButtonLabel,
     message: incomingMessage,
@@ -694,6 +706,26 @@ export const receiveMessage = async (
             { jobId: `template-flow-response-${createdMessage.id}` },
           )
         }
+      }
+
+      // Announced once per message, like the flow actions above: a redelivery
+      // is not new, and a standby copy fires on its owner delivery. Only when
+      // this delivery's channel reported a catalog interaction (never because a
+      // stored `contentAttributes` happens to look like one: some channels store
+      // caller-supplied attributes). The event is then read back from the saved
+      // message, so a promoted standby copy announces the snapshot it was
+      // stored with.
+      if (canAutomate && parsedMessage.commerce) {
+        await emitStoredCommerceEvent(
+          parsedMessage.commerce.kind,
+          createdMessage.contentAttributes,
+          {
+            inbox,
+            contactInbox,
+            conversationId: conversation.id,
+            messageId: createdMessage.id,
+          },
+        )
       }
 
       // Message echoes (agent replying from the channel's own native UI,

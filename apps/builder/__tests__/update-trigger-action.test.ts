@@ -47,6 +47,25 @@ describe("updateTriggerAction", () => {
     mockUpdateWithConditions.mockResolvedValue({ id: "trigger-1" })
   })
 
+  test("forwards catalog and call conditions as they were validated, leaving normalization to the service", async () => {
+    // The schema already turned an omitted or cleared product into `null`, and
+    // the call conditions carry nothing else.
+    const conditions = [
+      { type: "shoppingCartSent", sourceId: null },
+      { type: "userAskedAboutProduct", sourceId: "123456789012345678" },
+      { type: "incomingCall" },
+    ]
+
+    await callAction({
+      bindArgsParsedInputs: ["workspace-1", "trigger-1"],
+      parsedInput: { actions: [], conditions },
+    })
+
+    expect(mockUpdateWithConditions).toHaveBeenCalledWith(
+      expect.objectContaining({ conditions }),
+    )
+  })
+
   test("passes conditions through unmapped and delegates to triggerService.updateWithConditions", async () => {
     // `toConditionColumnsShared` inside the service now owns the column
     // normalization (`?? null` defaults) — the action forwards conditions

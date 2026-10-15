@@ -223,6 +223,99 @@ const payloadCases = [
       sourceId: "custom-field-1",
     },
   },
+  {
+    eventType: triggerEventTypes.enum.shoppingCartSent,
+    metadata: {
+      channel: "whatsapp",
+      conversationId: "conversation-1",
+      messageId: "message-1",
+      catalogId: "catalog-1",
+      note: "after 5pm",
+      contactInboxId: "contact-inbox-internal",
+      products: [
+        {
+          catalogReference: {
+            source: "metaCatalog",
+            catalogId: "catalog-1",
+            retailerId: "sku-1",
+          },
+          product: {
+            productId: "product-1",
+            name: "Shoe",
+            imageUrl: null,
+            price: 10,
+            currency: "USD",
+          },
+          quantity: 2,
+          itemPrice: 10,
+          currency: "USD",
+        },
+        {
+          catalogReference: {
+            source: "metaCatalog",
+            catalogId: "catalog-1",
+            retailerId: "sku-unknown",
+          },
+          product: null,
+          quantity: 1,
+          itemPrice: 3,
+          currency: "USD",
+        },
+      ],
+    },
+    expectedPayload: {
+      ...basePayload("shopping_cart_sent"),
+      channel: "whatsapp",
+      conversation_id: "conversation-1",
+      message_id: "message-1",
+      catalog_id: "catalog-1",
+      note: "after 5pm",
+      products: [
+        {
+          product_id: "product-1",
+          retailer_id: "sku-1",
+          name: "Shoe",
+          quantity: 2,
+          item_price: 10,
+          currency: "USD",
+        },
+        {
+          product_id: null,
+          retailer_id: "sku-unknown",
+          name: null,
+          quantity: 1,
+          item_price: 3,
+          currency: "USD",
+        },
+      ],
+    },
+  },
+  {
+    eventType: triggerEventTypes.enum.userAskedAboutProduct,
+    metadata: {
+      channel: "whatsapp",
+      conversationId: "conversation-1",
+      messageId: "message-1",
+      catalogId: "catalog-1",
+      contactInboxId: "contact-inbox-internal",
+      product: {
+        catalogReference: {
+          source: "metaCatalog",
+          catalogId: "catalog-1",
+          retailerId: "sku-unknown",
+        },
+        product: null,
+      },
+    },
+    expectedPayload: {
+      ...basePayload("user_asked_about_product"),
+      channel: "whatsapp",
+      conversation_id: "conversation-1",
+      message_id: "message-1",
+      catalog_id: "catalog-1",
+      product: { product_id: null, retailer_id: "sku-unknown", name: null },
+    },
+  },
 ] satisfies PayloadCase[]
 
 describe("WebhookExecutor payloads", () => {

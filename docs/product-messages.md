@@ -128,8 +128,89 @@ Values live in `policies/whatsapp.ts`; the payloads follow Meta's
    `handledOutgoingContentEntities`; the contract test fails a channel that
    declares `productMessages` without it.
 
+## Inbound: carts and product questions
+
+The other direction: a contact sends a shopping cart, or writes from a product's
+page. Nothing in the shared layers is channel specific; an integration only
+reports what happened and the rest is shared.
+
+| Event | Trigger / webhook condition | WhatsApp signal |
+|-------|-----------------------------|-----------------|
+| Cart sent | `shoppingCartSent` (webhook `shopping_cart_sent`) | `messages[].type = "order"` |
+| Product question | `userAskedAboutProduct` (webhook `user_asked_about_product`) | text message with `context.referred_product` ("Message business" button) |
+
+```
+integration parser ──► ReceivedMessageResult.commerce (raw ids only)
+        │
+        ▼
+worker received-message ──► productMessageService.resolveInboundProducts
+        │                        (retailer ids → workspace products, best effort)
+        ├─► message saved with contentAttributes.inboundOrder / .referredProduct
+        └─► emit shoppingCartSent / userAskedAboutProduct ──► triggers + webhooks
+```
+
+- **Contract.** An integration fills `commerce` (`IncomingCommerceEvent` in
+  `packages/sdk/src/lib/shared/message.ts`): `cartSent` (catalog id, note, items with
+  retailer id, quantity, price, currency) or `productInquiry` (catalog id + retailer id).
+  It never resolves products: it cannot know the catalog `source`. A new channel (for example Messenger's `send_cart`) fills this
+  field and maps the channel to a catalog source in `catalogSourceByChannel`
+  (`packages/business/src/product-message/catalog-sources.ts`, plus a `resolveInbound`
+  implementation if the source is new). Without that mapping nothing is stored or
+  announced. A new kind is one entry in the handler map in
+  `apps/worker/src/integration/handlers/inbound-commerce.ts`.
+- **Resolution.** At most two indexed queries (the catalog connection, then the items) per delivered commerce message, run before it is saved and repeated on a redelivery
+  (`productMessageService.resolveInboundProducts`, through the same
+  `ProductCatalogSourceStrategy` as sending). It resolves by catalog id and retailer id
+  inside the workspace; an inactive product still resolves, because the contact
+  referred to it. Raw identity is authoritative and the lookup is best effort: a
+  catalog this workspace never connected, an unknown id, or a failed lookup keep the
+  reference with `product: null`, and the message is still saved and announced. A
+  channel without a catalog source gets no references, so nothing is stored or announced.
+- **Stored on the message.** `contentAttributes.inboundOrder` (`note`, `items[]`) and
+  `contentAttributes.referredProduct`, beside whatever the channel already keeps: a
+  WhatsApp order keeps its raw `order` fields at the top level, unchanged. Readers:
+  `getInboundOrder` / `getReferredProduct`. The inbox shows a cart bubble (and a
+  "Shopping cart (N items)" preview) or a product card below the contact's text; an
+  unmatched item shows the channel's id.
+- **When it fires.** Once per message, for a new or newly promoted message, in an
+  active workspace, from a contact (never an echo): the same gate as postbacks. A
+  redelivery is not new, a standby copy fires on its owner delivery, and a retry
+  re-enters after the save and cannot announce twice. The event is read back from
+  the saved message, so a promoted standby copy announces the snapshot it was saved with, never a
+  fresh lookup that may differ.
+- **Conditions.** Both conditions take an optional product (`sourceId`, a product id
+  from `products.list`; omitted, `null` and `""` all mean "any product"). The event
+  carries no `sourceId`, so the product filter runs in the condition evaluator: a cart
+  matches when any resolved item is that product. The "is anyone listening" cache
+  admits these two event types whenever any active condition of the type exists
+  (`EVALUATOR_FILTERED_EVENT_TYPES`), including conditions pinned to a product.
+- **Public API.** No new operation: `triggers.update` and `webhooks.create|update`
+  accept the two conditions (and the five WhatsApp call conditions, which the schema
+  previously rejected) through the shared condition schema, and messages expose the
+  stored entities in `contentAttributes`.
+- **Webhook payload** (snake_case, no internal ids): `channel`, `conversation_id`,
+  `message_id`, `catalog_id`, then `note` and `products[{ product_id, retailer_id, name,
+  quantity, item_price, currency }]` for a cart, or `product{ product_id, retailer_id,
+  name }` for a question. An unmatched product has `product_id` and `name` of `null`.
+- **Not offered.** The other ecommerce stubs in the trigger enum (cart abandoned,
+  product or category added to a cart, product removed from a cart, new order, order
+  accepted, shipped, concluded or canceled, product ordered) are not implemented. Meta's
+  WhatsApp documentation describes a webhook for a submitted order and for a message
+  sent from a product page, which are the two above. It documents carts as local to a
+  device and describes no webhook for cart edits. `order_status` is a message the
+  business sends in the India and Brazil payment flows. These stubs would need their own
+  signal, which the documentation reviewed here does not provide.
+
 ## Known limitations
 
+- Inbound: an unmatched cart item is never reconciled later; if the catalog lookup
+  fails at receive time the stored reference stays unresolved.
+- Inbound parsing is deliberately tolerant, which is our own policy and not something
+  Meta documents: an order item missing its retailer id, quantity, price or currency is
+  skipped, an order with no catalog id or no usable item reports no event (the raw order
+  and its text are still stored), and a cart with some usable items is announced with
+  those. Retailer ids are matched inside the connected catalog, and Meta's pages
+  reviewed here do not state that they are unique per catalog.
 - Flow-step sends are terminal on failure (no automatic retry): a transient Meta
   error drops that message and shows in Error Logs.
 - Meta reports most WhatsApp API errors as `OAuthException`, which the shared

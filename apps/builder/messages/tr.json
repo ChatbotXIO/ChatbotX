@@ -3735,7 +3735,16 @@
     "sendProductsFieldTooLong": "Bu metin çok uzun.",
     "sendProductsProductCountOutOfRange": "Geçerli bir ürün sayısı seçin.",
     "sendProductsSectionCountOutOfRange": "Çok fazla bölüm var.",
-    "sendProductsDuplicateProduct": "Bir ürün yalnızca bir kez görünebilir."
+    "sendProductsDuplicateProduct": "Bir ürün yalnızca bir kez görünebilir.",
+    "inboundOrder": {
+      "title": "Alışveriş sepeti",
+      "preview": "Alışveriş sepeti ({count, plural, one {# ürün} other {# ürün}})",
+      "note": "Not",
+      "unresolvedProduct": "Kataloğunuzda bulunamadı"
+    },
+    "referredProduct": {
+      "askedAbout": "Bu ürün hakkında soru sordu"
+    }
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",
@@ -4771,8 +4780,8 @@
       "ticketPriorityChanged": "Talep Önceliği Değiştirildi",
       "subscribedToSequence": "Sıraya Abone Olundu",
       "unsubscribedFromSequence": "Sıra Aboneliğinden Çıkıldı",
-      "WhatsappShoppingCartSent": "WhatsApp Alışveriş Sepeti Gönderildi",
-      "userAskedAboutProduct": "Kullanıcı Ürün Hakkında Soru Sordu",
+      "shoppingCartSent": "Kişi Alışveriş Sepeti Gönderdi",
+      "userAskedAboutProduct": "Kişi Ürün Hakkında Soru Sordu",
       "cartAbandoned": "Sepet Terk Edildi",
       "newOrder": "Yeni Sipariş",
       "orderAccepted": "Sipariş Kabul Edildi",
@@ -4786,7 +4795,8 @@
       "contactReferredANewContact": "Kişi Yeni Bir Kişi Yönlendirdi",
       "contactReferredExistingContact": "Kişi Mevcut Bir Kişiyi Yönlendirdi",
       "callRecorded": "Arama kaydedildi",
-      "callTranscribed": "Arama yazıya döküldü"
+      "callTranscribed": "Arama yazıya döküldü",
+      "anyProduct": "Herhangi bir ürün"
     },
     "actions": {
       "addTag": "Etiket Ekle",

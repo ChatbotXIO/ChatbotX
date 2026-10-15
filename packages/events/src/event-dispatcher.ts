@@ -5,6 +5,8 @@ import type {
   CallRecordedMetadata,
   CallTranscribedMetadata,
   IncomingCallMetadata,
+  ShoppingCartSentMetadata,
+  UserAskedAboutProductMetadata,
 } from "./base-emitter"
 import { logger } from "./logger"
 import { TriggerEventEmitter } from "./trigger/emitter"
@@ -294,6 +296,35 @@ export const emitCallTranscribed = async (
   metadata: CallTranscribedMetadata,
 ) =>
   await emitToAllEmitters("callTranscribed", workspaceId, contactId, metadata)
+
+// Catalog events (channel-neutral — `metadata.channel` names the source)
+export const emitShoppingCartSent = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: ShoppingCartSentMetadata,
+  contactInboxId?: string,
+) =>
+  await emitToAllEmitters(
+    "shoppingCartSent",
+    workspaceId,
+    contactId,
+    metadata,
+    contactInboxId,
+  )
+
+export const emitUserAskedAboutProduct = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: UserAskedAboutProductMetadata,
+  contactInboxId?: string,
+) =>
+  await emitToAllEmitters(
+    "userAskedAboutProduct",
+    workspaceId,
+    contactId,
+    metadata,
+    contactInboxId,
+  )
 
 // Sequence events
 export const emitSequenceSubscribed = async (

@@ -2,6 +2,7 @@ import { db } from "@chatbotx.io/database/client"
 import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import { getRedisConnection } from "@chatbotx.io/worker-config"
 import { LRUCache } from "lru-cache"
+import { EVALUATOR_FILTERED_EVENT_TYPE_SET } from "./event-type-registry"
 
 type CacheEntry = {
   data: Record<number, string[]>
@@ -101,6 +102,10 @@ export abstract class BaseCache {
       const sourceIds = chatbotMap[eventType]
       if (!sourceIds) {
         continue
+      }
+
+      if (EVALUATOR_FILTERED_EVENT_TYPE_SET.has(eventType)) {
+        return true
       }
 
       if (sourceIds.includes("*")) {

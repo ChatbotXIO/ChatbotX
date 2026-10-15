@@ -4418,7 +4418,16 @@
     "sendProductsFieldTooLong": "Bu mətn çox uzundur.",
     "sendProductsProductCountOutOfRange": "Məhsulların düzgün sayını seçin.",
     "sendProductsSectionCountOutOfRange": "Bölmələr çoxdur.",
-    "sendProductsDuplicateProduct": "Məhsul yalnız bir dəfə görünə bilər."
+    "sendProductsDuplicateProduct": "Məhsul yalnız bir dəfə görünə bilər.",
+    "inboundOrder": {
+      "title": "Alış-veriş səbəti",
+      "preview": "Alış-veriş səbəti ({count, plural, one {# element} other {# element}})",
+      "note": "Qeyd",
+      "unresolvedProduct": "Kataloqunuzda tapılmadı"
+    },
+    "referredProduct": {
+      "askedAbout": "Bu məhsul haqqında soruşdu"
+    }
   },
   "instagram": {
     "description": "Bu inteqrasiya Instagram botları yaratmağa imkan verir.",
@@ -5454,8 +5463,8 @@
       "ticketPriorityChanged": "Müraciətin prioriteti dəyişib",
       "subscribedToSequence": "Ardıcıllığa abunə olub",
       "unsubscribedFromSequence": "Ardıcıllıq abunəliyindən çıxıb",
-      "WhatsappShoppingCartSent": "Whatsapp alış-veriş səbəti göndərilib",
-      "userAskedAboutProduct": "İstifadəçi məhsul haqqında soruşub",
+      "shoppingCartSent": "Kontakt alış-veriş səbətini göndərdi",
+      "userAskedAboutProduct": "Kontakt məhsul haqqında soruşdu",
       "cartAbandoned": "Səbət tərk edilib",
       "newOrder": "Yeni sifariş",
       "orderAccepted": "Sifariş qəbul edilib",
@@ -5469,7 +5478,8 @@
       "contactReferredANewContact": "Kontakt yeni kontakt dəvət edib",
       "contactReferredExistingContact": "Kontakt mövcud kontaktı dəvət edib",
       "callRecorded": "Zəng qeydə alınıb",
-      "callTranscribed": "Zəng mətnə çevrilib"
+      "callTranscribed": "Zəng mətnə çevrilib",
+      "anyProduct": "İstənilən məhsul"
     },
     "actions": {
       "addTag": "Etiket əlavə et",

@@ -3735,7 +3735,16 @@
     "sendProductsFieldTooLong": "Teks ini terlalu panjang.",
     "sendProductsProductCountOutOfRange": "Pilih jumlah produk yang valid.",
     "sendProductsSectionCountOutOfRange": "Terlalu banyak bagian.",
-    "sendProductsDuplicateProduct": "Satu produk hanya boleh muncul sekali."
+    "sendProductsDuplicateProduct": "Satu produk hanya boleh muncul sekali.",
+    "inboundOrder": {
+      "title": "Keranjang belanja",
+      "preview": "Keranjang belanja ({count, plural, one {# item} other {# item}})",
+      "note": "Catatan",
+      "unresolvedProduct": "Tidak ditemukan di katalog Anda"
+    },
+    "referredProduct": {
+      "askedAbout": "Bertanya tentang produk ini"
+    }
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",
@@ -4771,8 +4780,8 @@
       "ticketPriorityChanged": "Prioritas Tiket Diubah",
       "subscribedToSequence": "Berlangganan Urutan",
       "unsubscribedFromSequence": "Berhenti Berlangganan Urutan",
-      "WhatsappShoppingCartSent": "Keranjang Belanja WhatsApp Dikirim",
-      "userAskedAboutProduct": "Pengguna Menanyakan Produk",
+      "shoppingCartSent": "Kontak Mengirim Keranjang Belanja",
+      "userAskedAboutProduct": "Kontak Menanyakan Produk",
       "cartAbandoned": "Keranjang Ditinggalkan",
       "newOrder": "Pesanan Baru",
       "orderAccepted": "Pesanan Diterima",
@@ -4786,7 +4795,8 @@
       "contactReferredANewContact": "Kontak Mereferensikan Kontak Baru",
       "contactReferredExistingContact": "Kontak Mereferensikan Kontak yang Sudah Ada",
       "callRecorded": "Panggilan direkam",
-      "callTranscribed": "Panggilan ditranskripsi"
+      "callTranscribed": "Panggilan ditranskripsi",
+      "anyProduct": "Produk apa pun"
     },
     "actions": {
       "addTag": "Tambahkan Tag",

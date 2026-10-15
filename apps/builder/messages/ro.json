@@ -3735,7 +3735,16 @@
     "sendProductsFieldTooLong": "Acest text este prea lung.",
     "sendProductsProductCountOutOfRange": "Alege un număr valid de produse.",
     "sendProductsSectionCountOutOfRange": "Sunt prea multe secțiuni.",
-    "sendProductsDuplicateProduct": "Un produs poate apărea o singură dată."
+    "sendProductsDuplicateProduct": "Un produs poate apărea o singură dată.",
+    "inboundOrder": {
+      "title": "Coș de cumpărături",
+      "preview": "Coș de cumpărături ({count, plural, one {# articol} other {# articole}})",
+      "note": "Notă",
+      "unresolvedProduct": "Nu a fost găsit în catalogul tău"
+    },
+    "referredProduct": {
+      "askedAbout": "A întrebat despre acest produs"
+    }
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",
@@ -4771,8 +4780,8 @@
       "ticketPriorityChanged": "Prioritate tichet schimbată",
       "subscribedToSequence": "Abonat la secvență",
       "unsubscribedFromSequence": "Dezabonat de la secvență",
-      "WhatsappShoppingCartSent": "Coș de cumpărături WhatsApp trimis",
-      "userAskedAboutProduct": "Utilizatorul a întrebat despre produs",
+      "shoppingCartSent": "Contactul a trimis coșul de cumpărături",
+      "userAskedAboutProduct": "Contactul a întrebat despre un produs",
       "cartAbandoned": "Coș abandonat",
       "newOrder": "Comandă nouă",
       "orderAccepted": "Comandă acceptată",
@@ -4786,7 +4795,8 @@
       "contactReferredANewContact": "Contactul a recomandat un contact nou",
       "contactReferredExistingContact": "Contactul a recomandat un contact existent",
       "callRecorded": "Apel înregistrat",
-      "callTranscribed": "Apel transcris"
+      "callTranscribed": "Apel transcris",
+      "anyProduct": "Orice produs"
     },
     "actions": {
       "addTag": "Adaugă etichetă",

@@ -46,7 +46,7 @@ export const triggerEventTypes = z.enum([
   "ticketPriorityChanged",
   "subscribedToSequence",
   "unsubscribedFromSequence",
-  "WhatsappShoppingCartSent",
+  "shoppingCartSent",
   "userAskedAboutProduct",
   "cartAbandoned",
   "newOrder",

@@ -18,11 +18,11 @@ import {
 import { useDebouncedCallback } from "@chatbotx.io/ui/hooks/use-debounced-callback"
 import type { ChannelType } from "@chatbotx.io/utils/channel"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { Check, ChevronsUpDown, PackageSearch, X } from "lucide-react"
-import Image from "next/image"
+import { Check, ChevronsUpDown, X } from "lucide-react"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { useState } from "react"
+import { ProductThumbnail } from "@/features/products/components/product-thumbnail"
 import { useWorkspaceId } from "@/hooks/routing"
 import { formatPrice } from "@/lib/format-price"
 import { orpc } from "@/lib/orpc/query"
@@ -48,25 +48,6 @@ type SendableProductOption = {
 const SEARCH_DEBOUNCE_MS = 300
 const PAGE_SIZE = 20
 const NAMES_PAGE_SIZE = 50
-
-function ProductThumbnail({ imageUrl }: { imageUrl: string | null }) {
-  if (!imageUrl) {
-    return (
-      <div className="flex size-6 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
-        <PackageSearch aria-hidden className="size-3.5" />
-      </div>
-    )
-  }
-  return (
-    <Image
-      alt=""
-      className="size-6 shrink-0 rounded object-cover"
-      height={24}
-      src={imageUrl}
-      width={24}
-    />
-  )
-}
 
 type ProductChip =
   | { kind: "named"; option: SendableProductOption }

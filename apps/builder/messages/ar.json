@@ -3735,7 +3735,16 @@
     "sendProductsFieldTooLong": "هذا النص طويل جدًا.",
     "sendProductsProductCountOutOfRange": "اختر عددًا صالحًا من المنتجات.",
     "sendProductsSectionCountOutOfRange": "عدد الأقسام كبير جدًا.",
-    "sendProductsDuplicateProduct": "لا يمكن أن يظهر المنتج إلا مرة واحدة."
+    "sendProductsDuplicateProduct": "لا يمكن أن يظهر المنتج إلا مرة واحدة.",
+    "inboundOrder": {
+      "title": "سلة التسوق",
+      "preview": "سلة التسوق ({count, plural, one {# عنصر} other {# عناصر}})",
+      "note": "ملاحظة",
+      "unresolvedProduct": "غير موجود في الكتالوج"
+    },
+    "referredProduct": {
+      "askedAbout": "سأل عن هذا المنتج"
+    }
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",
@@ -4771,8 +4780,8 @@
       "ticketPriorityChanged": "تم تغيير أولوية التذكرة",
       "subscribedToSequence": "تم الاشتراك في تسلسل",
       "unsubscribedFromSequence": "تم إلغاء الاشتراك في تسلسل",
-      "WhatsappShoppingCartSent": "تم إرسال سلة تسوق WhatsApp",
-      "userAskedAboutProduct": "سأل المستخدم عن منتج",
+      "shoppingCartSent": "جهة الاتصال أرسلت سلة التسوق",
+      "userAskedAboutProduct": "جهة الاتصال سألت عن منتج",
       "cartAbandoned": "تم التخلي عن السلة",
       "newOrder": "طلب جديد",
       "orderAccepted": "تم قبول الطلب",
@@ -4786,7 +4795,8 @@
       "contactReferredANewContact": "أحالت جهة الاتصال جهة اتصال جديدة",
       "contactReferredExistingContact": "أحالت جهة الاتصال جهة اتصال موجودة",
       "callRecorded": "تم تسجيل المكالمة",
-      "callTranscribed": "تم تفريغ المكالمة"
+      "callTranscribed": "تم تفريغ المكالمة",
+      "anyProduct": "أي منتج"
     },
     "actions": {
       "addTag": "إضافة وسم",

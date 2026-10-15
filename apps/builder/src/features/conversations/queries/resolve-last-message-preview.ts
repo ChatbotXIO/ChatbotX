@@ -1,4 +1,5 @@
 import {
+  getInboundOrder,
   getWhatsappCallEntity,
   resolveWhatsappCallActivityLabelKey,
   type WhatsappCallActivityLabelKey,
@@ -90,6 +91,14 @@ export function resolveLastMessagePreview(
   }
   if (getThreadControlContextCard(message?.contentAttributes)) {
     return t("conversationRouting.context.title")
+  }
+
+  // A cart's stored text is a multi-line summary, so the list shows a count.
+  const inboundOrder = getInboundOrder(message?.contentAttributes)
+  if (inboundOrder) {
+    return t("messages.inboundOrder.preview", {
+      count: inboundOrder.items.length,
+    })
   }
 
   if (message?.text) {

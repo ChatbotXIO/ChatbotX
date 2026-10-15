@@ -2,6 +2,7 @@ import { deriveAdSourcePlatform } from "@chatbotx.io/business/referral"
 import {
   contentTypes,
   echoOrigins,
+  type IncomingCommerceEvent,
   type IncomingContact,
   type IncomingMessage,
   type MessageHandlers,
@@ -10,6 +11,7 @@ import {
 } from "@chatbotx.io/sdk"
 import { extractInvisibleGoogleClick } from "@chatbotx.io/utils/google-click"
 import type { ServerMessageTypes } from "whatsapp-api-js/types"
+import { z } from "zod"
 import { getWhatsappClient } from "../../client"
 import {
   isStandbyEchoItem,
@@ -123,6 +125,57 @@ const parseContactsMessage: WhatsappMessageParser<"contacts"> = (message) => ({
   contentAttributes: { contacts: message.contacts },
 })
 
+const nonEmptyString = z.string().min(1)
+
+const orderCommerceSchema = z.object({
+  catalog_id: nonEmptyString,
+  text: z.string().nullish(),
+  product_items: z.array(z.unknown()),
+})
+
+const orderItemSchema = z.object({
+  product_retailer_id: nonEmptyString,
+  quantity: z.number().finite(),
+  item_price: z.number().finite(),
+  currency: z.string(),
+})
+
+/**
+ * The cart as a channel-neutral commerce event. Meta documents every field, but
+ * one malformed item must not drop the others, so items are kept one by one; a
+ * cart with no catalog or no usable item reports nothing.
+ */
+const readOrderCommerce = (
+  order: unknown,
+): IncomingCommerceEvent | undefined => {
+  const parsedOrder = orderCommerceSchema.safeParse(order)
+  if (!parsedOrder.success) {
+    return
+  }
+  const items = parsedOrder.data.product_items.flatMap((candidate) => {
+    const item = orderItemSchema.safeParse(candidate)
+    return item.success
+      ? [
+          {
+            catalogId: parsedOrder.data.catalog_id,
+            retailerId: item.data.product_retailer_id,
+            quantity: item.data.quantity,
+            itemPrice: item.data.item_price,
+            currency: item.data.currency,
+          },
+        ]
+      : []
+  })
+  return items.length === 0
+    ? undefined
+    : {
+        kind: "cartSent",
+        catalogId: parsedOrder.data.catalog_id,
+        note: parsedOrder.data.text || null,
+        items,
+      }
+}
+
 /**
  * An order has no text of its own, so without a readable one the inbox shows an
  * empty bubble and keywords/AI have nothing to read. One line per product, then
@@ -142,7 +195,43 @@ const parseOrderMessage: WhatsappMessageParser<"order"> = (message) => {
     ...(note ? [note] : []),
   ]
 
-  return { text: lines.join("\n"), contentAttributes: message.order }
+  return {
+    text: lines.join("\n"),
+    contentAttributes: message.order,
+    commerce: readOrderCommerce(message.order),
+  }
+}
+
+const referredProductSchema = z.object({
+  catalog_id: nonEmptyString,
+  product_retailer_id: nonEmptyString,
+})
+
+/**
+ * "Message business" on a catalog, single- or multi-product message: Meta's text
+ * messages webhook reference documents `context.referred_product` on the text
+ * message that button sends, and on no other message type, so only a text
+ * message is read. `context` is only cast to a type by the webhook schema, so
+ * the product is validated here.
+ */
+const readReferredProductCommerce = (
+  message: WhatsappWebhookEvent["message"],
+): IncomingCommerceEvent | undefined => {
+  if (message.type !== "text") {
+    return
+  }
+  const referred = referredProductSchema.safeParse(
+    message.context?.referred_product,
+  )
+  return referred.success
+    ? {
+        kind: "productInquiry",
+        product: {
+          catalogId: referred.data.catalog_id,
+          retailerId: referred.data.product_retailer_id,
+        },
+      }
+    : undefined
 }
 
 const parseInteractiveMessage: WhatsappMessageParser<"interactive"> = (
@@ -264,6 +353,11 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
         }
       : metaReferral
 
+    // A cart (`order`) and a product question (`text`) are different message
+    // types, so at most one of the two applies.
+    const commerce =
+      fragment.commerce ?? readReferredProductCommerce(data.message)
+
     if (fragment.text !== undefined) {
       message.text = fragment.text
     }
@@ -287,6 +381,7 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       referralSource: referral?.source ?? null,
       referral,
       buttonTitle: fragment.buttonTitle ?? null,
+      ...(commerce ? { commerce } : {}),
       ...(threadControl ? { threadControl } : {}),
     }
   }

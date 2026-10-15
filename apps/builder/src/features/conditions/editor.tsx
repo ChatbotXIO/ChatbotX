@@ -13,6 +13,7 @@ import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
 import { CustomFieldValueChanged } from "./custom-field-value-changed"
 import { DateTimeBasedTrigger } from "./date-time-based-trigger"
+import { ProductReferenceCondition } from "./product-reference-condition"
 
 export const ConditionEditor = ({
   parentName,
@@ -69,6 +70,9 @@ export const ConditionEditor = ({
           popoverClassName="w-[var(--anchor-width)]"
         />
       )
+    case triggerEventTypes.enum.shoppingCartSent:
+    case triggerEventTypes.enum.userAskedAboutProduct:
+      return <ProductReferenceCondition parentName={parentName} />
     case triggerEventTypes.enum.dateTimeBasedTrigger:
       return <DateTimeBasedTrigger parentName={parentName} />
     case triggerEventTypes.enum.customFieldValueChanged:

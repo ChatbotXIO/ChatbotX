@@ -6,6 +6,8 @@ import type {
   MessageTemplateEntity,
 } from "@chatbotx.io/sdk"
 import {
+  getInboundOrder,
+  getReferredProduct,
   getViewCatalogEntity,
   getWhatsappCallEntity,
   getWhatsappCallPermissionReply,
@@ -58,10 +60,12 @@ import {
   isThreadControlEcho,
 } from "../lib/thread-control-content"
 import type { MessageResourceWithRelations } from "../schema/resource"
+import { InboundOrderBubble } from "./inbound-order-bubble"
 import { MessageActions, MessageActionsEditor } from "./message-actions"
 import { MessageBubble } from "./message-bubble"
 import { MessageErrorBadge } from "./message-error-badge"
 import { ProductMessageBubble } from "./product-message-bubble"
+import { ReferredProductContext } from "./referred-product-context"
 import { ThreadControlContextCard } from "./thread-control-context-card"
 import { ThreadControlDivider } from "./thread-control-divider"
 import { WhatsappCallCard } from "./whatsapp-call-card"
@@ -164,8 +168,12 @@ export const MessageItem = (props: MessageItemProps) => {
   // A partner's reply seen on the standby feed: outgoing side, but in the
   // muted bubble and captioned, so it never reads as the agent's own message.
   const isPartnerEcho = isThreadControlEcho(message.contentAttributes)
+  // An inbound cart renders as its own bubble; the stored text is only its
+  // plain-text summary for keywords and previews.
+  const inboundOrder = getInboundOrder(message.contentAttributes)
   const suppressRawText = Boolean(
-    whatsappCall ||
+    inboundOrder ||
+      whatsappCall ||
       callPermissionReply ||
       threadControlActivity ||
       threadControlContext,
@@ -842,6 +850,16 @@ const RenderContentAttributes = (props: MessageItemProps) => {
 
   if (isMessageProductEntity(message.contentAttributes)) {
     return <ProductMessageBubble message={message.contentAttributes.payload} />
+  }
+
+  const inboundOrder = getInboundOrder(message.contentAttributes)
+  if (inboundOrder) {
+    return <InboundOrderBubble order={inboundOrder} />
+  }
+
+  const referredProduct = getReferredProduct(message.contentAttributes)
+  if (referredProduct) {
+    return <ReferredProductContext reference={referredProduct} />
   }
 
   const contentAttributes = message.contentAttributes as

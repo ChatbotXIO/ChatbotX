@@ -4,6 +4,9 @@ import {
   triggerEventTypes,
 } from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
+import { updateTriggerSchema } from "../../triggers/schema/mutation"
+import { updateWebhookRequest } from "../../webhooks/schema/update-webhook-schema"
+import { conditionSchema } from "../schema"
 import { customFieldValueChanged } from "../schema/custom-field-value-changed"
 import { dateTimeBasedTrigger } from "../schema/date-time-based-trigger"
 
@@ -74,5 +77,91 @@ describe("customFieldValueChanged schema timezone", () => {
     })
 
     expect(parsed.value).toEqual(value)
+  })
+})
+
+describe("catalog and call conditions", () => {
+  const CATALOG_TYPES = [
+    triggerEventTypes.enum.shoppingCartSent,
+    triggerEventTypes.enum.userAskedAboutProduct,
+  ] as const
+  const CALL_TYPES = [
+    triggerEventTypes.enum.incomingCall,
+    triggerEventTypes.enum.missedAudioCall,
+    triggerEventTypes.enum.callEnded,
+    triggerEventTypes.enum.callRecorded,
+    triggerEventTypes.enum.callTranscribed,
+  ] as const
+
+  test.each(
+    CALL_TYPES,
+  )("accepts the %s condition the picker offers", (type) => {
+    expect(conditionSchema.parse({ type })).toEqual({ type })
+  })
+
+  test.each(
+    CATALOG_TYPES,
+  )("%s: an omitted, null or empty product all mean 'any product' (null)", (type) => {
+    for (const input of [
+      { type },
+      { type, sourceId: null },
+      { type, sourceId: "" },
+    ]) {
+      expect(conditionSchema.parse(input)).toEqual({ type, sourceId: null })
+    }
+  })
+
+  test.each(CATALOG_TYPES)("%s: keeps a product id", (type) => {
+    expect(
+      conditionSchema.parse({ type, sourceId: "123456789012345678" }),
+    ).toEqual({ type, sourceId: "123456789012345678" })
+  })
+
+  test.each(
+    CATALOG_TYPES,
+  )("%s: rejects a product id that is not an id", (type) => {
+    expect(conditionSchema.safeParse({ type, sourceId: "shoe" }).success).toBe(
+      false,
+    )
+  })
+
+  test.each(
+    CATALOG_TYPES,
+  )("%s: rejects a product id too long for a bigint column", (type) => {
+    expect(
+      conditionSchema.safeParse({ type, sourceId: "9".repeat(19) }).success,
+    ).toBe(false)
+    expect(
+      conditionSchema.safeParse({ type, sourceId: "9".repeat(18) }).success,
+    ).toBe(true)
+  })
+
+  test("still rejects an ecommerce event no channel can send", () => {
+    expect(conditionSchema.safeParse({ type: "cartAbandoned" }).success).toBe(
+      false,
+    )
+  })
+
+  // The trigger form, the server actions and both public APIs validate with
+  // these two schemas, so a condition they reject cannot be saved anywhere.
+  test.each([
+    ["triggers", updateTriggerSchema, { actions: [] }],
+    ["webhooks", updateWebhookRequest, { url: "https://example.com/hook" }],
+  ] as const)("%s accept the new conditions on save", (_name, schema, rest) => {
+    const parsed = schema.safeParse({
+      ...rest,
+      conditions: [
+        { type: triggerEventTypes.enum.shoppingCartSent, sourceId: "" },
+        { type: triggerEventTypes.enum.userAskedAboutProduct },
+        { type: triggerEventTypes.enum.incomingCall },
+      ],
+    })
+
+    expect(parsed.success).toBe(true)
+    expect(parsed.data?.conditions).toEqual([
+      { type: "shoppingCartSent", sourceId: null },
+      { type: "userAskedAboutProduct", sourceId: null },
+      { type: "incomingCall" },
+    ])
   })
 })

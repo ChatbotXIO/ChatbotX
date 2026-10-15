@@ -8,13 +8,16 @@ import {
 } from "@chatbotx.io/flow-config"
 import type {
   MessageProductEntity,
+  ResolvedInboundProductReference,
   ResolvedProductMessage,
 } from "@chatbotx.io/sdk"
 import { ProductMessageUnresolvableError, validationException } from "../errors"
+import { logger } from "../logger"
 
 import {
   resolveProductCatalogSource,
   type SendableProductRecord,
+  unresolvedInboundReference,
 } from "./catalog-sources"
 import {
   collectProductIds,
@@ -103,6 +106,50 @@ class ProductMessageService {
         }),
       ),
       pageCount: page.pageCount,
+    }
+  }
+
+  /**
+   * Names the catalog items a contact sent back (a cart, a product question).
+   * Raw identity is authoritative and the lookup is best effort: a catalog this
+   * workspace never connected, or a lookup that fails, still yields one
+   * reference per distinct retailer id (first-seen order) with `product: null`,
+   * so the contact's message is never lost to a catalog problem. A channel with
+   * no catalog source has nothing to name and gets an empty list.
+   */
+  async resolveInboundProducts(input: {
+    workspaceId: string
+    channel: string
+    catalogId: string
+    retailerIds: string[]
+  }): Promise<ResolvedInboundProductReference[]> {
+    // Not `supportedSource`: recognising what a contact sent must not depend on
+    // whether the channel's outbound product-message policy is enabled.
+    const source = resolveProductCatalogSource(input.channel)
+    if (!source) {
+      return []
+    }
+    const retailerIds = [...new Set(input.retailerIds)]
+    if (retailerIds.length === 0) {
+      return []
+    }
+    try {
+      return await source.resolveInbound({
+        workspaceId: input.workspaceId,
+        catalogId: input.catalogId,
+        retailerIds,
+      })
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId: input.workspaceId, channel: input.channel },
+        "Inbound product lookup failed; reporting the references unresolved",
+      )
+      return retailerIds.map((retailerId) =>
+        unresolvedInboundReference(source.name, {
+          catalogId: input.catalogId,
+          retailerId,
+        }),
+      )
     }
   }
 

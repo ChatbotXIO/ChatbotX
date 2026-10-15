@@ -2,6 +2,7 @@ import type {
   ContentType,
   Context,
   IncomingAttachment,
+  IncomingCommerceEvent,
   IncomingMessage,
 } from "@chatbotx.io/sdk"
 import type { GoogleClickReferral } from "@chatbotx.io/utils/google-click"
@@ -19,6 +20,8 @@ export type IncomingMessageFragment = {
   templateFlowToken?: string | null
   buttonTitle?: string | null
   ref?: string | null
+  /** Catalog interaction this message type carries (a shopping cart). */
+  commerce?: IncomingCommerceEvent
   /** Google Ads click referral decoded from the invisible payload in the message text. */
   googleClick?: GoogleClickReferral
 }

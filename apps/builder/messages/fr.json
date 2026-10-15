@@ -3735,7 +3735,16 @@
     "sendProductsFieldTooLong": "Ce texte est trop long.",
     "sendProductsProductCountOutOfRange": "Choisissez un nombre de produits valide.",
     "sendProductsSectionCountOutOfRange": "Il y a trop de sections.",
-    "sendProductsDuplicateProduct": "Un produit ne peut apparaître qu'une seule fois."
+    "sendProductsDuplicateProduct": "Un produit ne peut apparaître qu'une seule fois.",
+    "inboundOrder": {
+      "title": "Panier",
+      "preview": "Panier ({count, plural, one {# article} other {# articles}})",
+      "note": "Remarque",
+      "unresolvedProduct": "Introuvable dans votre catalogue"
+    },
+    "referredProduct": {
+      "askedAbout": "A posé une question sur ce produit"
+    }
   },
   "instagram": {
     "description": "Cette intégration permet de créer des bots Instagram.",
@@ -4771,8 +4780,8 @@
       "ticketPriorityChanged": "Priorité du ticket modifiée",
       "subscribedToSequence": "Abonné à la séquence",
       "unsubscribedFromSequence": "Désabonné de la séquence",
-      "WhatsappShoppingCartSent": "Panier WhatsApp envoyé",
-      "userAskedAboutProduct": "L’utilisateur a demandé des renseignements sur un produit",
+      "shoppingCartSent": "Le contact a envoyé un panier",
+      "userAskedAboutProduct": "Le contact a posé une question sur un produit",
       "cartAbandoned": "Panier abandonné",
       "newOrder": "Nouvelle commande",
       "orderAccepted": "Commande acceptée",
@@ -4786,7 +4795,8 @@
       "contactReferredANewContact": "Le contact a recommandé un nouveau contact",
       "contactReferredExistingContact": "Le contact a recommandé un contact existant",
       "callRecorded": "Appel enregistré",
-      "callTranscribed": "Appel transcrit"
+      "callTranscribed": "Appel transcrit",
+      "anyProduct": "N'importe quel produit"
     },
     "actions": {
       "addTag": "Ajouter une étiquette",

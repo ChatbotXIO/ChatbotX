@@ -3735,7 +3735,16 @@
     "sendProductsFieldTooLong": "Teksti on liian pitkä.",
     "sendProductsProductCountOutOfRange": "Valitse kelvollinen määrä tuotteita.",
     "sendProductsSectionCountOutOfRange": "Osioita on liikaa.",
-    "sendProductsDuplicateProduct": "Tuote voi esiintyä vain kerran."
+    "sendProductsDuplicateProduct": "Tuote voi esiintyä vain kerran.",
+    "inboundOrder": {
+      "title": "Ostoskori",
+      "preview": "Ostoskori ({count, plural, one {# tuote} other {# tuotetta}})",
+      "note": "Huomautus",
+      "unresolvedProduct": "Ei löytynyt luettelostasi"
+    },
+    "referredProduct": {
+      "askedAbout": "Kysyi tästä tuotteesta"
+    }
   },
   "instagram": {
     "description": "Tämän integraation avulla voit luoda Instagram-botteja.",
@@ -4771,8 +4780,8 @@
       "ticketPriorityChanged": "Tiketin prioriteetti muuttui",
       "subscribedToSequence": "Liitetty sekvenssiin",
       "unsubscribedFromSequence": "Poistettu sekvenssistä",
-      "WhatsappShoppingCartSent": "WhatsApp-ostoskori lähetetty",
-      "userAskedAboutProduct": "Käyttäjä kysyi tuotteesta",
+      "shoppingCartSent": "Yhteystieto lähetti ostoskorin",
+      "userAskedAboutProduct": "Yhteystieto kysyi tuotteesta",
       "cartAbandoned": "Ostoskori hylätty",
       "newOrder": "Uusi tilaus",
       "orderAccepted": "Tilaus hyväksytty",
@@ -4786,7 +4795,8 @@
       "contactReferredANewContact": "Yhteystieto suositteli uutta yhteystietoa",
       "contactReferredExistingContact": "Yhteystieto suositteli olemassa olevaa yhteystietoa",
       "callRecorded": "Puhelu tallennettu",
-      "callTranscribed": "Puhelu litteroitu"
+      "callTranscribed": "Puhelu litteroitu",
+      "anyProduct": "Mikä tahansa tuote"
     },
     "actions": {
       "addTag": "Lisää tunniste",

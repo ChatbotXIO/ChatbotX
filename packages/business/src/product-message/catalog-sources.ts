@@ -1,5 +1,10 @@
 import { metaCatalogItemRepository } from "@chatbotx.io/database/repositories"
-import type { ProductCatalogSource, ProductMessageItem } from "@chatbotx.io/sdk"
+import type {
+  InboundCatalogProductReference,
+  ProductCatalogSource,
+  ProductMessageItem,
+  ResolvedInboundProductReference,
+} from "@chatbotx.io/sdk"
 import { type ChannelType, channelTypes } from "@chatbotx.io/utils/channel"
 import { integrationMetaCatalogService } from "../meta-catalog/integration.service"
 
@@ -18,6 +23,8 @@ type SendableProductPage = {
  * bound to a source below; supporting another catalog is one more entry here.
  */
 export type ProductCatalogSourceStrategy = {
+  /** The source's own name, stamped on every catalog reference it produces. */
+  name: ProductCatalogSource
   listSendable(input: {
     workspaceId: string
     keyword?: string
@@ -29,7 +36,26 @@ export type ProductCatalogSourceStrategy = {
     workspaceId: string
     productIds: string[]
   }): Promise<{ ready: boolean; items: SendableProductRecord[] }>
+  /**
+   * Matches what a contact sent back (retailer ids from one catalog) to the
+   * workspace's products. Returns one reference per input id, in input order;
+   * an id that is not linked here keeps `product: null`.
+   */
+  resolveInbound(input: {
+    workspaceId: string
+    catalogId: string
+    retailerIds: string[]
+  }): Promise<ResolvedInboundProductReference[]>
 }
+
+/** An inbound id this source cannot name: its identity is kept, the product is not. */
+export const unresolvedInboundReference = (
+  source: ProductCatalogSource,
+  reference: InboundCatalogProductReference,
+): ResolvedInboundProductReference => ({
+  catalogReference: { source, ...reference },
+  product: null,
+})
 
 type MetaCatalogRow = Awaited<
   ReturnType<typeof metaCatalogItemRepository.findSendableByProductIds>
@@ -66,6 +92,7 @@ const resolveMetaCatalogScope = async (workspaceId: string) => {
 }
 
 const metaCatalogSource: ProductCatalogSourceStrategy = {
+  name: "metaCatalog",
   async listSendable(input) {
     const scope = await resolveMetaCatalogScope(input.workspaceId)
     if (!scope) {
@@ -92,6 +119,39 @@ const metaCatalogSource: ProductCatalogSourceStrategy = {
       ...input,
     })
     return { ready: true, items: rows.map(toSendableProductRecord) }
+  },
+
+  async resolveInbound(input) {
+    const unresolved = input.retailerIds.map((retailerId) =>
+      unresolvedInboundReference("metaCatalog", {
+        catalogId: input.catalogId,
+        retailerId,
+      }),
+    )
+    const scope = await resolveMetaCatalogScope(input.workspaceId)
+    // A cart from a catalog this workspace never connected must still be
+    // reported, just without products — never matched against another catalog.
+    if (!scope || scope.catalogId !== input.catalogId) {
+      return unresolved
+    }
+    const rows =
+      await metaCatalogItemRepository.findLinkedProductsByRetailerIds({
+        ...scope,
+        ...input,
+      })
+    const recordByRetailerId = new Map(
+      rows.map((row) => [row.retailerId, toSendableProductRecord(row)]),
+    )
+    return unresolved.map((reference) => {
+      const record = recordByRetailerId.get(
+        reference.catalogReference.retailerId,
+      )
+      if (!record) {
+        return reference
+      }
+      const { catalogReference, ...product } = record
+      return { catalogReference, product }
+    })
   },
 }
 

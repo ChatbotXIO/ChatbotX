@@ -1,5 +1,5 @@
 import { productMessageService, productService } from "@chatbotx.io/business"
-import { zodBigintAsString } from "@chatbotx.io/utils"
+import { zodBigintAsString, zodBigintIdAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { basePaginationRequest } from "@/lib/pagination"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
@@ -12,8 +12,19 @@ import {
   SENDABLE_PRODUCT_IDS_MAX,
 } from "../schema/sendable"
 
+/** A picker names the products it already holds; it never holds more than this. */
+const PRODUCT_IDS_FILTER_MAX = 50
+
 const listProductsAuthorizedRequest = listProductsRequest.and(
-  z.object({ workspaceId: z.string() }),
+  z.object({
+    workspaceId: z.string(),
+    ids: z
+      .array(zodBigintIdAsString())
+      .min(1)
+      .max(PRODUCT_IDS_FILTER_MAX)
+      .nullish()
+      .describe("Only these products."),
+  }),
 )
 
 const listSendableProductsAuthorizedRequest =
