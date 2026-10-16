@@ -7,7 +7,7 @@ import {
 import { auditService } from "@chatbotx.io/business/audit"
 import {
   exchangeCodeForToken as exchangeInstagramFacebookCode,
-  getUserInstagramAccounts,
+  getPageInstagramAccess,
 } from "@chatbotx.io/integration-instagram-facebook"
 import {
   exchangeCodeForToken as exchangeMessengerCode,
@@ -133,22 +133,21 @@ const connectInstagramCapi: CapiConnector = async (input) => {
     input.code,
     input.callbackUrl,
   )
-  const accounts = await getUserInstagramAccounts(
-    userToken,
-    input.credentialConfig.version,
-  )
-  // The account is matched by the stored `igId`, never by anything from OAuth state.
-  const account = accounts.find(
-    (candidate) => candidate.id === integration.igId,
-  )
-  if (!account) {
+  // Read from the stored page and matched by the stored `igId`, never by
+  // anything from OAuth state.
+  const page = await getPageInstagramAccess({
+    pageId: integration.pageId,
+    userAccessToken: userToken,
+    version: input.credentialConfig.version,
+  })
+  if (page?.igId !== integration.igId) {
     return errorResult("accountNotFound")
   }
 
   return storeDedicatedCapiToken({
     channel: "instagram",
     integration,
-    accessToken: account.pageAccessToken,
+    accessToken: page.pageAccessToken,
     provisionDataset: capiDatasetProvisioner("instagram"),
   })
 }

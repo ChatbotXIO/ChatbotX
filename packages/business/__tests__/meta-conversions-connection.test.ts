@@ -43,11 +43,17 @@ describe("resolveCapiConnection", () => {
     expect(resolveCapiConnection("instagram", row)).toBe("connected")
   })
 
-  test("shows Connect for a legacy messenger/instagram row whose dataset never had the scope", () => {
+  test("asks a legacy messenger/instagram row whose scope lapsed to reconnect, keeping its dataset", () => {
     const row = { ...baseRow, datasetId: "ds-1", hasCapiScope: false }
 
+    expect(resolveCapiConnection("messenger", row)).toBe("reconnect")
+    expect(resolveCapiConnection("instagram", row)).toBe("reconnect")
+  })
+
+  test("a row without a dataset is never a reconnect: there is nothing to keep", () => {
+    const row = { ...baseRow, datasetId: null, hasCapiScope: false }
+
     expect(resolveCapiConnection("messenger", row)).toBe("notConnected")
-    expect(resolveCapiConnection("instagram", row)).toBe("notConnected")
   })
 
   test("keeps a legacy whatsapp row with a dataset connected: the channel is exempt from the scope", () => {

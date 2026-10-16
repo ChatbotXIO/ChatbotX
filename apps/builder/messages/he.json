@@ -6900,12 +6900,14 @@
       "title": "Meta Conversions API",
       "ready": "מוכן",
       "unsupported": "לא נתמך",
-      "notConnected": "לא מחובר"
+      "notConnected": "לא מחובר",
+      "reconnect": "נדרש חיבור מחדש"
     },
     "statusDescriptions": {
       "ready": "אירועי Conversions API מהאינטגרציה הזו נשלחים ל-Meta.",
       "unsupported": "Meta Conversions API עבור Instagram דורש חשבון המחובר דרך Facebook Login for Business.",
-      "notConnected": "ה-Conversions API הוא כלי עסקי של Meta שמאפשר לכם לשתף נתונים עם Meta כדי לשפר את ביצועי המודעות."
+      "notConnected": "ה-Conversions API הוא כלי עסקי של Meta שמאפשר לכם לשתף נתונים עם Meta כדי לשפר את ביצועי המודעות.",
+      "reconnect": "ההרשאה של Conversions API פגה ולכן שליחת האירועים מושהית. מערך הנתונים והגדרות הבדיקה נשמרים; התחברו מחדש כדי להמשיך לשלוח."
     },
     "errors": {
       "reconnect": "החיבור מחדש ל-Meta CAPI נכשל.",
@@ -7067,7 +7069,8 @@
       "button": "חיבור Conversions API",
       "success": "Conversions API חובר.",
       "title": "התחברות עם Meta",
-      "description": "היכנסו ל-Meta ואשרו גישה לאירועי המרה. פעולה זו יוצרת חיבור נפרד עבור Conversions API ואינה משנה את אופן ההתחברות של הערוץ הזה."
+      "description": "היכנסו ל-Meta ואשרו גישה לאירועי המרה. פעולה זו יוצרת חיבור נפרד עבור Conversions API ואינה משנה את אופן ההתחברות של הערוץ הזה.",
+      "reconnect": "התחברות מחדש"
     },
     "connectResult": {
       "errors": {

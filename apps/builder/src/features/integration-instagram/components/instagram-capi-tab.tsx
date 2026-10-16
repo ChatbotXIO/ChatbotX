@@ -37,6 +37,7 @@ export function InstagramCapiTab({
         <CapiConnectButton
           connectAction={connectInstagramCapiAction}
           integrationId={integrationInstagram.id}
+          isReconnect={connection === "reconnect"}
           workspaceId={workspaceId}
         />
       }

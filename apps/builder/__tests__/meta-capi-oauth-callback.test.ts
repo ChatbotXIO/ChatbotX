@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   exchangeLongLivedToken: vi.fn(),
   getUserPages: vi.fn(),
   exchangeInstagramCode: vi.fn(),
-  getUserInstagramAccounts: vi.fn(),
+  getPageInstagramAccess: vi.fn(),
   provisioner: vi.fn(),
   getDataset: vi.fn(),
   capiDatasetProvisioner: vi.fn(),
@@ -45,7 +45,7 @@ vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
 }))
 vi.mock("@chatbotx.io/integration-instagram-facebook", () => ({
   exchangeCodeForToken: mocks.exchangeInstagramCode,
-  getUserInstagramAccounts: mocks.getUserInstagramAccounts,
+  getPageInstagramAccess: mocks.getPageInstagramAccess,
 }))
 vi.mock("@chatbotx.io/integration-meta-conversions", () => ({
   getDataset: mocks.getDataset,
@@ -78,6 +78,7 @@ const instagramIntegration = {
   id: "9",
   workspaceId: "ws-1",
   igId: "ig-1",
+  pageId: "ig-page-1",
   type: "facebook",
 }
 
@@ -121,10 +122,10 @@ beforeEach(() => {
     bmLookupFailed: false,
   })
   mocks.exchangeInstagramCode.mockResolvedValue("long-user-token")
-  mocks.getUserInstagramAccounts.mockResolvedValue([
-    { id: "ig-other", pageAccessToken: "other-token" },
-    { id: "ig-1", pageAccessToken: "ig-page-token" },
-  ])
+  mocks.getPageInstagramAccess.mockResolvedValue({
+    igId: "ig-1",
+    pageAccessToken: "ig-page-token",
+  })
 })
 
 describe("completeMetaCapiConnect — request binding", () => {
@@ -298,10 +299,11 @@ describe("completeMetaCapiConnect — instagram", () => {
       "auth-code",
       baseInput.callbackUrl,
     )
-    expect(mocks.getUserInstagramAccounts).toHaveBeenCalledWith(
-      "long-user-token",
-      "v25.0",
-    )
+    expect(mocks.getPageInstagramAccess).toHaveBeenCalledWith({
+      pageId: "ig-page-1",
+      userAccessToken: "long-user-token",
+      version: "v25.0",
+    })
     expect(mocks.capiDatasetProvisioner).toHaveBeenCalledWith("instagram")
     expect(mocks.connectCapiWithToken).toHaveBeenCalledWith({
       channel: "instagram",
@@ -312,10 +314,14 @@ describe("completeMetaCapiConnect — instagram", () => {
     })
   })
 
-  test("reports accountNotFound when the user did not grant the connected account", async () => {
-    mocks.getUserInstagramAccounts.mockResolvedValueOnce([
-      { id: "ig-other", pageAccessToken: "t" },
-    ])
+  test.each([
+    ["the user has no role on the stored page", null],
+    [
+      "the stored page now links another Instagram account",
+      { igId: "ig-other", pageAccessToken: "t" },
+    ],
+  ])("reports accountNotFound when %s", async (_label, page) => {
+    mocks.getPageInstagramAccess.mockResolvedValueOnce(page)
 
     await expect(completeMetaCapiConnect(instagramInput)).resolves.toEqual({
       status: "error",

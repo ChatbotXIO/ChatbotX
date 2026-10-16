@@ -6900,12 +6900,14 @@
       "title": "Meta Conversions API",
       "ready": "準備完了",
       "unsupported": "非対応",
-      "notConnected": "未連携"
+      "notConnected": "未連携",
+      "reconnect": "再接続が必要です"
     },
     "statusDescriptions": {
       "ready": "この連携の Conversions API イベントは Meta に送信されます。",
       "unsupported": "Instagram 向け Meta Conversions API には、Facebook ログイン(ビジネス向け)で連携したアカウントが必要です。",
-      "notConnected": "Conversions API は、広告のパフォーマンスを向上させるために Meta とデータを共有できる Meta ビジネスツールです。"
+      "notConnected": "Conversions API は、広告のパフォーマンスを向上させるために Meta とデータを共有できる Meta ビジネスツールです。",
+      "reconnect": "Conversions API の権限の有効期限が切れたため、イベントの送信は一時停止中です。データセットとテスト設定は保持されています。再接続すると送信を再開できます。"
     },
     "errors": {
       "reconnect": "Meta CAPI の再連携を開始できませんでした。",
@@ -7067,7 +7069,8 @@
       "button": "Conversions API を接続",
       "success": "Conversions API を接続しました。",
       "title": "Meta と接続",
-      "description": "Meta にログインし、コンバージョンイベントへのアクセスを許可します。Conversions API 用に別の接続が作成され、このチャネルのログイン方法は変わりません。"
+      "description": "Meta にログインし、コンバージョンイベントへのアクセスを許可します。Conversions API 用に別の接続が作成され、このチャネルのログイン方法は変わりません。",
+      "reconnect": "再接続"
     },
     "connectResult": {
       "errors": {

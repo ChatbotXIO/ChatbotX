@@ -52,7 +52,7 @@ describe("CapiConnectButton", () => {
     container.remove()
   })
 
-  function render() {
+  function render(props: { isReconnect?: boolean } = {}) {
     act(() => {
       root.render(
         <CapiConnectButton
@@ -63,6 +63,7 @@ describe("CapiConnectButton", () => {
           }
           integrationId="int-1"
           workspaceId="ws-1"
+          {...props}
         />,
       )
     })
@@ -75,6 +76,12 @@ describe("CapiConnectButton", () => {
 
     expect(button().textContent).toBe("metaConversions.connect.button")
     expect(mocks.bind).toHaveBeenCalledWith(null, "ws-1", "int-1")
+  })
+
+  test("labels the button Reconnect for a setup that only needs its permission renewed", () => {
+    render({ isReconnect: true })
+
+    expect(button().textContent).toBe("metaConversions.connect.reconnect")
   })
 
   test("starts the connect with no arguments", () => {

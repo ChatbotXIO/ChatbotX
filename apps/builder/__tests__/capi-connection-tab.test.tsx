@@ -91,6 +91,22 @@ describe("CapiConnectionTab", () => {
     expect(container.textContent).not.toContain("connect-card")
   })
 
+  test("keeps the settings and offers Reconnect when a legacy setup lapsed", () => {
+    render({ connection: "reconnect" })
+
+    expect(container.textContent).toContain("connected-card:ds-1")
+    expect(container.textContent).toContain("test-event-card:messenger")
+    expect(container.textContent).toContain("connect-slot")
+    expect(container.textContent).toContain("metaConversions.status.reconnect")
+    expect(container.textContent).not.toContain("connect-card")
+  })
+
+  test("does not repeat the Connect button once connected", () => {
+    render({ connection: "connected" })
+
+    expect(container.textContent).not.toContain("connect-slot")
+  })
+
   test("never renders a permission state", () => {
     render({ connection: "connected" })
     render({ connection: "notConnected" })
