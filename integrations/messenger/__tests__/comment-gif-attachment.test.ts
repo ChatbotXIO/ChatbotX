@@ -157,28 +157,95 @@ describe("getCommentAttachment GIF comments", () => {
 })
 
 describe("getCommentAttachment live comments", () => {
-  test("asks for live_broadcast_timestamp and flags a live comment", async () => {
-    let requestedFields: string | null = null
+  const LIVE_VIDEO_FIELDS = "object{live_status}"
+
+  /**
+   * One Graph endpoint answers both lookups: the comment fields, and — only
+   * for a timestamped comment — the commented video's live status.
+   */
+  function mockGraphComment(props: {
+    comment: Record<string, unknown>
+    video?: Record<string, unknown> | "error"
+  }) {
+    const requestedFields: string[] = []
     server.use(
       http.get(
         `https://graph.facebook.com/v23.0/${COMMENT_ID}`,
         ({ request }) => {
-          requestedFields = new URL(request.url).searchParams.get("fields")
-          return HttpResponse.json({
-            id: COMMENT_ID,
-            live_broadcast_timestamp: 42,
-          })
+          const fields = new URL(request.url).searchParams.get("fields") ?? ""
+          requestedFields.push(fields)
+          if (fields !== LIVE_VIDEO_FIELDS) {
+            return HttpResponse.json({ id: COMMENT_ID, ...props.comment })
+          }
+          if (props.video === "error") {
+            return HttpResponse.json(
+              { error: { message: "boom", code: 1 } },
+              { status: 500 },
+            )
+          }
+          return HttpResponse.json({ id: COMMENT_ID, ...props.video })
         },
       ),
     )
+    return requestedFields
+  }
 
-    const result = await getCommentAttachment({
+  const lookup = () =>
+    getCommentAttachment({
       ctx: buildCtx(),
       input: { commentId: COMMENT_ID },
     })
 
-    expect(requestedFields).toContain("live_broadcast_timestamp")
+  test("asks for live_broadcast_timestamp and flags a comment on a live video", async () => {
+    const requestedFields = mockGraphComment({
+      comment: { live_broadcast_timestamp: 42 },
+      video: { object: { id: "video-1", live_status: "LIVE" } },
+    })
+
+    const result = await lookup()
+
+    expect(requestedFields[0]).toContain("live_broadcast_timestamp")
+    expect(requestedFields).toContain(LIVE_VIDEO_FIELDS)
     expect(result).toEqual({ type: null, isLive: true })
+  })
+
+  test("a comment on an ended live broadcast is still live", async () => {
+    mockGraphComment({
+      comment: { live_broadcast_timestamp: 42 },
+      video: { object: { id: "video-1", live_status: "LIVE_STOPPED" } },
+    })
+
+    expect(await lookup()).toEqual({ type: null, isLive: true })
+  })
+
+  test.each([
+    0,
+    null,
+  ])("a reel comment with live_broadcast_timestamp %s is not live and skips the video lookup", async (timestamp) => {
+    const requestedFields = mockGraphComment({
+      comment: { live_broadcast_timestamp: timestamp },
+    })
+
+    expect(await lookup()).toEqual({ type: null, isLive: false })
+    expect(requestedFields).not.toContain(LIVE_VIDEO_FIELDS)
+  })
+
+  test("a timestamped comment on a video with no live status is not live", async () => {
+    mockGraphComment({
+      comment: { live_broadcast_timestamp: 42 },
+      video: { object: { id: "reel-video-1" } },
+    })
+
+    expect(await lookup()).toEqual({ type: null, isLive: false })
+  })
+
+  test("trusts the broadcast timestamp when the video lookup fails", async () => {
+    mockGraphComment({
+      comment: { live_broadcast_timestamp: 42 },
+      video: "error",
+    })
+
+    expect(await lookup()).toEqual({ type: null, isLive: true })
   })
 
   test("a comment without live_broadcast_timestamp is not live", async () => {

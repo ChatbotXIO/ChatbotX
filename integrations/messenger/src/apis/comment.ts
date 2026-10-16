@@ -237,6 +237,55 @@ const COMMENT_ATTACHMENT_FIELDS =
  */
 const COMMENT_LIVE_FIELD = "live_broadcast_timestamp"
 
+/**
+ * `live_status` of a video that is or was a live broadcast. A reel or an
+ * uploaded video carries no live status.
+ */
+const LIVE_VIDEO_STATUSES = new Set(["LIVE", "LIVE_STOPPED"])
+
+/**
+ * Whether the broadcast timestamp marks a live comment. Facebook can send the
+ * field on a comment that was never live — a reel comment arrives with it —
+ * so presence alone is not a signal: only a positive timestamp is.
+ */
+function hasLiveBroadcastTimestamp(timestamp: number | null | undefined) {
+  return typeof timestamp === "number" && timestamp > 0
+}
+
+/**
+ * Confirms a timestamped comment sits on a live video, so a reel or uploaded
+ * video comment is never answered as live. Only runs when the timestamp
+ * already says live, so ordinary comments pay no extra Graph call. When
+ * Facebook names no video, or the lookup fails, the timestamp stands.
+ */
+async function isOnLiveVideo(
+  ctx: Context<MessengerAuthValue>,
+  commentId: string,
+): Promise<boolean> {
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+  const endpoint = `${version}/${commentId}`
+  try {
+    const res = await rescue(endpoint, () =>
+      facebookGraphClient.get<{ object?: { live_status?: string } }>(endpoint, {
+        headers: {
+          Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+        },
+        searchParams: { fields: "object{live_status}" },
+      }),
+    )
+    if (!res.object) {
+      return true
+    }
+    return LIVE_VIDEO_STATUSES.has(res.object.live_status ?? "")
+  } catch (error) {
+    logger.warn(
+      { err: error, commentId },
+      "Failed to confirm the comment's live video, trusting its broadcast timestamp",
+    )
+    return true
+  }
+}
+
 export type CommentAttachmentLookup = {
   type: string | null
   attachment?: IncomingAttachment
@@ -347,7 +396,7 @@ export const getCommentAttachment = async (props: {
   const res = await rescue(endpoint, () =>
     facebookGraphClient.get<{
       attachment?: CommentAttachmentResponse
-      live_broadcast_timestamp?: number
+      live_broadcast_timestamp?: number | null
     }>(endpoint, {
       headers: {
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
@@ -361,7 +410,9 @@ export const getCommentAttachment = async (props: {
   )
 
   const type = res.attachment?.type ?? null
-  const isLive = res.live_broadcast_timestamp !== undefined
+  const isLive =
+    hasLiveBroadcastTimestamp(res.live_broadcast_timestamp) &&
+    (await isOnLiveVideo(ctx, input.commentId))
   const imageUrl = res.attachment?.media?.image?.src
 
   if (type === "photo" && imageUrl) {
