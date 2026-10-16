@@ -1,6 +1,6 @@
 import { contactRepository } from "@chatbotx.io/database/repositories"
 import type { MessageFailedPayload } from "@chatbotx.io/flow-config"
-import { invalidateCacheByTags } from "@chatbotx.io/redis"
+import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import { parsedErrorSchema } from "@chatbotx.io/sdk"
 import { toDate } from "../lib/date"
 import {
@@ -11,11 +11,13 @@ import type {
   ContactCountsSchema,
   ContactStats,
   ContactsByDimension,
+  ContactsByDimensionQuery,
   TimeRangeQuery,
 } from "../schemas"
 import type { ContactEventType } from "../schemas/contact-event"
 
 const USER_BLOCKED_CATEGORY = "user_blocked"
+const TOTAL_CONTACTS_CACHE_TTL_SECONDS = 120
 
 export class ContactAnalyticsService {
   recordEvents(
@@ -77,16 +79,20 @@ export class ContactAnalyticsService {
     return contactStatsRepository.getContactsCount(props)
   }
 
-  getContactsByCountry(props: TimeRangeQuery): Promise<ContactsByDimension[]> {
-    return contactStatsRepository.getContactsByCountry(props)
-  }
-
-  getContactsByChannel(props: TimeRangeQuery): Promise<ContactsByDimension[]> {
-    return contactStatsRepository.getContactsByChannel(props)
-  }
-
-  getContactsBySource(props: TimeRangeQuery): Promise<ContactsByDimension[]> {
-    return contactStatsRepository.getContactsBySource(props)
+  getContactsByDimension(
+    props: ContactsByDimensionQuery,
+  ): Promise<ContactsByDimension[]> {
+    if (props.metric !== "total") {
+      return contactStatsRepository.getContactsByDimension(props)
+    }
+    // The total scans the workspace's whole history up to `to`, so it is the
+    // only metric cached. `from` and the timezone do not affect it and stay out
+    // of the key; short TTL, no tags, a handful of rows per entry.
+    return withCache(
+      `analytics:contacts-by-dimension:total:${props.workspaceId}:${props.dimension}:${props.to.toISOString()}`,
+      () => contactStatsRepository.getContactsByDimension(props),
+      { ttl: TOTAL_CONTACTS_CACHE_TTL_SECONDS },
+    )
   }
 
   async handleBlocked(payloads: MessageFailedPayload[]): Promise<void> {

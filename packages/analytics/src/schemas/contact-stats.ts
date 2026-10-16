@@ -1,5 +1,6 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { timeRangeQuerySchema } from "./common"
 import { contactEventTypes, contactSenderTypes } from "./contact-event"
 
 export const contactStatsSchema = z.object({
@@ -17,6 +18,51 @@ export const contactsByDimensionSchema = z.object({
   uniqueContacts: z.number(),
 })
 export type ContactsByDimension = z.infer<typeof contactsByDimensionSchema>
+
+export const contactDimensionSchema = z.enum(["country", "channel", "source"])
+export type ContactDimension = z.infer<typeof contactDimensionSchema>
+
+export const contactDimensionMetricSchema = z.enum(["new", "total"])
+export type ContactDimensionMetric = z.infer<
+  typeof contactDimensionMetricSchema
+>
+
+// `contact_deleted` events never carry a country, so a net total cannot be
+// derived for it.
+const TOTAL_METRIC_DIMENSIONS: readonly ContactDimension[] = [
+  "channel",
+  "source",
+]
+
+export const contactsByDimensionFields = {
+  dimension: contactDimensionSchema.describe("How to group contact counts."),
+  metric: contactDimensionMetricSchema
+    .default("new")
+    .describe(
+      "`new` counts contacts created between `from` and `to`. `total` counts the contacts that exist as of `to` (created minus deleted); `from` is ignored and `country` is not supported. An empty `dimension` means unknown.",
+    ),
+}
+
+export const isSupportedDimensionMetric = ({
+  dimension,
+  metric,
+}: {
+  dimension: ContactDimension
+  metric: ContactDimensionMetric
+}): boolean => metric !== "total" || TOTAL_METRIC_DIMENSIONS.includes(dimension)
+
+export const unsupportedDimensionMetricIssue = {
+  message:
+    "`metric: total` is only supported for the channel and source dimensions",
+  path: ["metric"],
+}
+
+export const contactsByDimensionQuerySchema = timeRangeQuerySchema
+  .extend(contactsByDimensionFields)
+  .refine(isSupportedDimensionMetric, unsupportedDimensionMetricIssue)
+export type ContactsByDimensionQuery = z.infer<
+  typeof contactsByDimensionQuerySchema
+>
 
 export const getContactsByDimensionStatsResponseSchema = z.object({
   data: z.array(contactsByDimensionSchema),

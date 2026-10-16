@@ -565,7 +565,7 @@ chatbotx analytics blocked-contacts-count
 chatbotx analytics new-contacts-count
 chatbotx analytics contacts-count
 chatbotx analytics active-contacts-count
-chatbotx analytics contacts-by-dimension --dimension <country|channel|source>
+chatbotx analytics contacts-by-dimension --dimension <country|channel|source>   # [--metric <new|total>]
 chatbotx analytics messages-by-admin
 chatbotx analytics human-agent-stats
 chatbotx analytics conversation-handoffs
