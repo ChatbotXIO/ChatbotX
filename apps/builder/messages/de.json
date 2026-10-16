@@ -659,7 +659,9 @@
       "placeholder": "Konto auswählen",
       "required": "Mehrere Konten sind verbunden: Wähle eines aus oder bewusst „Alle Konten“.",
       "targetsCleared": "Die ausgewählten Beiträge wurden entfernt, da sie zu einem anderen Konto gehören könnten.",
-      "column": "Konto"
+      "column": "Konto",
+      "disconnected": "Getrenntes Konto",
+      "disconnectedDescription": "Diese Automatisierung gehört zu einem Konto, das nicht mehr verbunden ist, und beantwortet daher keine Kommentare. Verbinde das Konto erneut oder wähle ein anderes."
     }
   },
   "condition": {

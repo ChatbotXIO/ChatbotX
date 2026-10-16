@@ -818,7 +818,9 @@
       "placeholder": "Välj ett konto",
       "required": "Flera konton är anslutna: välj ett, eller välj medvetet ”Alla konton”.",
       "targetsCleared": "De valda inläggen rensades eftersom de kan tillhöra ett annat konto.",
-      "column": "Konto"
+      "column": "Konto",
+      "disconnected": "Frånkopplat konto",
+      "disconnectedDescription": "Den här automatiseringen hör till ett konto som inte längre är anslutet, så den svarar inte på några kommentarer. Anslut kontot igen eller välj ett annat."
     }
   },
   "channels": {

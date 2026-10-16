@@ -701,7 +701,9 @@
       "placeholder": "Select an account",
       "required": "Several accounts are connected: choose one, or choose “All accounts” on purpose.",
       "targetsCleared": "Selected posts were cleared because they may belong to another account.",
-      "column": "Account"
+      "column": "Account",
+      "disconnected": "Disconnected account",
+      "disconnectedDescription": "This automation is tied to an account that is no longer connected, so it answers no comments. Reconnect the account or choose another one."
     }
   },
   "condition": {

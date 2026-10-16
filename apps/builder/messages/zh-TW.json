@@ -2428,7 +2428,9 @@
       "placeholder": "選擇帳號",
       "required": "已連結多個帳號：請選擇一個，或刻意選擇「所有帳號」。",
       "targetsCleared": "已清除所選貼文，因為它們可能屬於其他帳號。",
-      "column": "帳號"
+      "column": "帳號",
+      "disconnected": "已中斷連結的帳號",
+      "disconnectedDescription": "此自動化綁定的帳號已不再連結，因此不會回覆任何留言。請重新連結該帳號或選擇其他帳號。"
     }
   },
   "condition": {

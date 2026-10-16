@@ -659,7 +659,9 @@
       "placeholder": "Selecione uma conta",
       "required": "Há várias contas ligadas: escolha uma ou escolha “Todas as contas” de propósito.",
       "targetsCleared": "As publicações selecionadas foram removidas porque podem pertencer a outra conta.",
-      "column": "Conta"
+      "column": "Conta",
+      "disconnected": "Conta desligada",
+      "disconnectedDescription": "Esta automação está associada a uma conta que já não está ligada, por isso não responde a nenhum comentário. Volte a ligar a conta ou escolha outra."
     }
   },
   "condition": {

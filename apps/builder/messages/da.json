@@ -659,7 +659,9 @@
       "placeholder": "Vælg en konto",
       "required": "Flere konti er tilsluttet: vælg én, eller vælg bevidst “Alle konti”.",
       "targetsCleared": "De valgte opslag blev ryddet, fordi de kan tilhøre en anden konto.",
-      "column": "Konto"
+      "column": "Konto",
+      "disconnected": "Afbrudt konto",
+      "disconnectedDescription": "Denne automatisering er knyttet til en konto, der ikke længere er tilsluttet, så den svarer ikke på kommentarer. Tilslut kontoen igen, eller vælg en anden."
     }
   },
   "condition": {

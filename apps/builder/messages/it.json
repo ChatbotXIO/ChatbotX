@@ -2202,7 +2202,9 @@
       "placeholder": "Seleziona un account",
       "required": "Sono collegati più account: scegline uno oppure scegli di proposito “Tutti gli account”.",
       "targetsCleared": "I post selezionati sono stati rimossi perché potrebbero appartenere a un altro account.",
-      "column": "Account"
+      "column": "Account",
+      "disconnected": "Account disconnesso",
+      "disconnectedDescription": "Questa automazione è legata a un account non più collegato, quindi non risponde a nessun commento. Ricollega l'account o scegline un altro."
     }
   },
   "condition": {

@@ -68,15 +68,25 @@ export async function listAutomationAccounts(props: {
  * Without it a public-API or MCP caller could save another workspace's inbox,
  * or a Page id on an Instagram automation — a scope that matches no incoming
  * comment, so the automation goes silent with no error anywhere.
+ *
+ * An update that re-sends the stored scope (`currentInboxId`) passes without a
+ * lookup. Disconnecting a channel deletes its integration row but keeps the
+ * inbox, so a scope pointing at a disconnected account is no longer listed —
+ * and every edit form sends the whole row back, so checking it again would
+ * stop the user from even renaming or switching off that automation.
  */
 export async function assertAutomationAccount(props: {
   workspaceId: string
   type: CommentAutomationType
   inboxId: string | null | undefined
+  currentInboxId?: string | null
   tx?: DatabaseClient
 }): Promise<void> {
-  const { inboxId } = props
+  const { inboxId, currentInboxId } = props
   if (inboxId === null || inboxId === undefined) {
+    return
+  }
+  if (inboxId === currentInboxId) {
     return
   }
   const accounts = await listAutomationAccounts(props)

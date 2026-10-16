@@ -170,14 +170,28 @@ Rules that keep it honest:
   stops receiving comments.
 - **On update, omitted keeps, `null` clears.** A PATCH without `inboxId` leaves the scope
   alone; `null` widens it back to every account.
+- **An unchanged scope is never re-validated.** Disconnecting a channel deletes its
+  integration row but keeps the `Inbox`, so the account disappears from
+  `listAutomationAccounts`. Every edit form sends the whole row back, so re-checking the
+  stored `inboxId` would block renaming or switching off that automation —
+  `assertAutomationAccount` skips when `inboxId === currentInboxId`. The builder shows such
+  a scope as "Disconnected account" in the form and the list instead of an empty choice.
 - **Post pickers follow the scope.** Every post/story list item carries its account's
   `inboxId`, the pickers show only the selected account's posts, and moving the form to a
-  specific account clears the selected posts (they may belong to another one). The
-  public `listPosts`/`listMedia`/`listStories` take an optional `inboxId` filter.
+  specific account keeps only the selected posts KNOWN to belong to it (an unknown one —
+  typed by hand, or not loaded — is dropped with a toast rather than risk a silent
+  automation). The public `listPosts`/`listMedia`/`listStories` take an optional `inboxId`
+  filter.
+- **Known gap: post ids are not checked against the account on the server.** A post id
+  carries no reliable account marker (reels and manual ids are bare), so an API caller
+  that pairs `inboxId` with another account's posts saves an automation that never fires.
+  The `inboxId` field description tells agents to list posts with the same `inboxId`.
 - **Missed-comments replay** scans only the scoped account (`ScanCommentsProps.inboxId`).
 - **Builder:** with two or more accounts of the channel connected, a new automation cannot
-  be saved until an account — or "All accounts" — is chosen on purpose
-  (`useAccountChoiceMissing`). Agents list accounts with `commentAutomations.listAccounts`.
+  be saved until an account — or "All accounts" — is chosen on purpose, and saving also
+  waits while the accounts are loading (`isAccountChoiceMissing`). This is a builder
+  guard only: an API create that omits `inboxId` is a deliberate "every account".
+  Agents list accounts with `commentAutomations.listAccounts`.
 
 ## Reply types
 

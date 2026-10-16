@@ -659,7 +659,9 @@
       "placeholder": "Sélectionnez un compte",
       "required": "Plusieurs comptes sont connectés : choisissez-en un, ou choisissez délibérément « Tous les comptes ».",
       "targetsCleared": "Les publications sélectionnées ont été retirées, car elles peuvent appartenir à un autre compte.",
-      "column": "Compte"
+      "column": "Compte",
+      "disconnected": "Compte déconnecté",
+      "disconnectedDescription": "Cette automatisation est liée à un compte qui n'est plus connecté : elle ne répond donc à aucun commentaire. Reconnectez le compte ou choisissez-en un autre."
     }
   },
   "condition": {

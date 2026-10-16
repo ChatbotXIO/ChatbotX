@@ -36,6 +36,14 @@ vi.mock(
   }),
 )
 
+vi.mock(
+  "@/features/ig-comments/provider/ig-comment-posts-store-context",
+  () => ({
+    useIgCommentPostsStore: (selector: (store: { posts: [] }) => unknown) =>
+      selector({ posts: [] }),
+  }),
+)
+
 vi.mock("@/components/tiptap/tiptap-editor-field", () => ({
   TiptapEditorField: ({ name }: { name: string }) => (
     <div data-testid={`tiptap-${name}`} />

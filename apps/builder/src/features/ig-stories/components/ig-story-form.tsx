@@ -32,6 +32,7 @@ import {
   useAccountChoiceMissing,
 } from "@/features/shared/comment-automation/automation-account-field"
 import { useWorkspaceId } from "@/hooks/routing"
+import { useIgStoryPostsStore } from "../provider/ig-story-posts-store-context"
 import type { CreateIgStoryRequest, IgStoryVariant } from "../schema/action"
 import { SelectInstagramStoriesDialog } from "./select-instagram-stories-dialog"
 
@@ -79,6 +80,9 @@ export function IgStoryForm({
   const storyValue = useWatch({ control: form.control, name: "story.value" })
   const inboxId = useWatch({ control: form.control, name: "inboxId" })
   const accountChoiceMissing = useAccountChoiceMissing(variant)
+  const instagramStories = useIgStoryPostsStore((s) => s.stories)
+  const findStoryOwner = (id: string) =>
+    instagramStories.find((story) => story.id === id)?.inboxId
 
   const replyType = useWatch({ control: form.control, name: "reply.type" })
   const includeKeywordsType = useWatch({
@@ -138,7 +142,11 @@ export function IgStoryForm({
           <CardTitle>{t("instagramStoryAutomation.card.targeting")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 space-y-4">
-          <AutomationAccountField targetField="story" type={variant} />
+          <AutomationAccountField
+            findTargetOwner={findStoryOwner}
+            targetField="story"
+            type={variant}
+          />
 
           <RadioGroupField
             description={t("instagramStoryAutomation.triggerDescription")}

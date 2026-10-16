@@ -40,6 +40,7 @@ import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclu
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
 import { useWorkspaceId } from "@/hooks/routing"
+import { useIgCommentPostsStore } from "../provider/ig-comment-posts-store-context"
 import type { CreateIgCommentRequest, IgCommentVariant } from "../schema/action"
 import { SelectInstagramPostsDialog } from "./select-instagram-posts-dialog"
 
@@ -79,6 +80,9 @@ export function IgCommentForm({
   const postValue = useWatch({ control: form.control, name: "post.value" })
   const inboxId = useWatch({ control: form.control, name: "inboxId" })
   const accountChoiceMissing = useAccountChoiceMissing(variant)
+  const instagramPosts = useIgCommentPostsStore((s) => s.posts)
+  const findPostOwner = (id: string) =>
+    instagramPosts.find((post) => post.id === id)?.inboxId
   // A Live automation answers every live broadcast, so there is no post to
   // target. Instagram Live is also private-reply-only (no public reply, like,
   // hide or reply delay — see `liveCommentCapabilities`), and the service pins
@@ -217,7 +221,11 @@ export function IgCommentForm({
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 space-y-4">
-          <AutomationAccountField targetField="post" type={variant} />
+          <AutomationAccountField
+            findTargetOwner={findPostOwner}
+            targetField="post"
+            type={variant}
+          />
 
           {isLive ? (
             <p className="text-muted-foreground text-sm">

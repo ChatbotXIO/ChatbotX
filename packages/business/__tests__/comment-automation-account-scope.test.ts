@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   commentFindMany: vi.fn(),
+  commentFindFirst: vi.fn(),
+  update: vi.fn(),
   storyFindMany: vi.fn(),
   messengerFindMany: vi.fn(),
   instagramFindMany: vi.fn(),
@@ -13,13 +15,17 @@ vi.mock("@chatbotx.io/database/client", () => ({
   and: (...args: unknown[]) => ({ and: args }),
   db: {
     query: {
-      commentAutomationModel: { findMany: mocks.commentFindMany },
+      commentAutomationModel: {
+        findMany: mocks.commentFindMany,
+        findFirst: mocks.commentFindFirst,
+      },
       igStoryAutomationModel: { findMany: mocks.storyFindMany },
       integrationMessengerModel: { findMany: mocks.messengerFindMany },
       integrationInstagramModel: { findMany: mocks.instagramFindMany },
       integrationThreadsModel: { findMany: mocks.threadsFindMany },
       integrationTiktokModel: { findMany: mocks.tiktokFindMany },
     },
+    update: mocks.update,
   },
   eq: (...args: unknown[]) => ({ eq: args }),
   inArray: (...args: unknown[]) => ({ inArray: args }),
@@ -183,6 +189,72 @@ describe("assertAutomationAccount", () => {
         inboxId: "inbox-other",
       }),
     ).rejects.toMatchObject({ field: "inboxId" })
+  })
+
+  test("passes an unchanged scope even when its account is no longer connected", async () => {
+    mocks.messengerFindMany.mockResolvedValue([])
+
+    await expect(
+      assertAutomationAccount({
+        workspaceId: "ws-1",
+        type: "messenger",
+        inboxId: "inbox-disconnected",
+        currentInboxId: "inbox-disconnected",
+      }),
+    ).resolves.toBeUndefined()
+    expect(mocks.messengerFindMany).not.toHaveBeenCalled()
+  })
+
+  test("still rejects moving a row to an account that is not connected", async () => {
+    mocks.messengerFindMany.mockResolvedValue([])
+
+    await expect(
+      assertAutomationAccount({
+        workspaceId: "ws-1",
+        type: "messenger",
+        inboxId: "inbox-other",
+        currentInboxId: "inbox-disconnected",
+      }),
+    ).rejects.toMatchObject({ field: "inboxId" })
+  })
+
+  test("updateMessenger saves a rename of an automation on a disconnected account", async () => {
+    mocks.commentFindFirst.mockResolvedValue({
+      id: "a-1",
+      workspaceId: "ws-1",
+      type: "messenger",
+      inboxId: "inbox-disconnected",
+    })
+    mocks.messengerFindMany.mockResolvedValue([])
+    const returning = vi.fn().mockResolvedValue([{ id: "a-1" }])
+    mocks.update.mockReturnValue({
+      set: () => ({ where: () => ({ returning }) }),
+    })
+
+    await expect(
+      commentAutomationService.updateMessenger(
+        { workspaceId: "ws-1", id: "a-1" },
+        { name: "Renamed", inboxId: "inbox-disconnected" },
+      ),
+    ).resolves.toEqual({ id: "a-1" })
+  })
+
+  test("updateThreadsAutomation passes an unchanged scope of a disconnected account", async () => {
+    mocks.commentFindFirst.mockResolvedValue({ inboxId: "inbox-disconnected" })
+    mocks.threadsFindMany.mockResolvedValue([])
+    const returning = vi.fn().mockResolvedValue([{ id: "a-1" }])
+    mocks.update.mockReturnValue({
+      set: () => ({ where: () => ({ returning }) }),
+    })
+
+    await expect(
+      commentAutomationService.updateThreadsAutomation({
+        workspaceId: "ws-1",
+        id: "a-1",
+        data: { name: "Renamed", inboxId: "inbox-disconnected" },
+      }),
+    ).resolves.toEqual({ id: "a-1" })
+    expect(mocks.threadsFindMany).not.toHaveBeenCalled()
   })
 
   test("createMessenger refuses to store an account that is not connected", async () => {

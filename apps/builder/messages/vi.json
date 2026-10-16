@@ -701,7 +701,9 @@
       "placeholder": "Chọn tài khoản",
       "required": "Đang có nhiều tài khoản được kết nối: hãy chọn một tài khoản, hoặc chủ động chọn “Tất cả tài khoản”.",
       "targetsCleared": "Đã bỏ chọn các bài viết vì có thể chúng thuộc tài khoản khác.",
-      "column": "Tài khoản"
+      "column": "Tài khoản",
+      "disconnected": "Tài khoản đã ngắt kết nối",
+      "disconnectedDescription": "Kịch bản này gắn với một tài khoản không còn kết nối nên sẽ không trả lời comment nào. Hãy kết nối lại tài khoản hoặc chọn tài khoản khác."
     }
   },
   "condition": {

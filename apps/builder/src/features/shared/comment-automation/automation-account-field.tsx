@@ -22,6 +22,10 @@ import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
 import { orpc } from "@/lib/orpc/query"
+import {
+  isAccountChoiceMissing,
+  keepTargetsOfAccount,
+} from "./lib/account-choice"
 
 const ALL_ACCOUNTS_VALUE = "all"
 
@@ -38,8 +42,8 @@ type AccountScopedFormValues = {
 
 /**
  * The accounts of one automation channel connected to the current workspace.
- * Shared by the account field, the submit guard and the post pickers, so one
- * request serves all of them.
+ * Shared by the account field, the submit guard, the list column and the post
+ * pickers, so one request serves all of them.
  */
 export function useAutomationAccounts(type: CommentAutomationType) {
   const workspaceId = useWorkspaceId()
@@ -52,55 +56,84 @@ export function useAutomationAccounts(type: CommentAutomationType) {
   return { accounts: query.data?.accounts ?? [], isLoading: query.isLoading }
 }
 
-/**
- * Whether the form still needs an account choice before it can be saved.
- *
- * With two or more accounts of the channel connected, an automation that
- * silently answers on all of them is the exact mistake the scope exists to
- * prevent — so a new automation must pick one, or pick "every account" on
- * purpose. With zero or one account there is nothing to choose.
- */
+/** See `isAccountChoiceMissing`. */
 export function useAccountChoiceMissing(type: CommentAutomationType): boolean {
   const { control } = useFormContext<AccountScopedFormValues>()
   const inboxId = useWatch({ control, name: "inboxId" })
-  const { accounts } = useAutomationAccounts(type)
-  return accounts.length > 1 && inboxId === undefined
+  const { accounts, isLoading } = useAutomationAccounts(type)
+  return isAccountChoiceMissing({
+    inboxId,
+    accountCount: accounts.length,
+    isLoading,
+  })
 }
 
 /**
  * Picks the connected account a comment or story automation answers on.
  *
- * Moving to a specific account drops the selected posts/stories: they may
- * belong to another account, and an automation scoped to one account never
- * sees another account's comments, so keeping them would save a target that
- * can never fire.
+ * Moving to a specific account keeps only the selected posts/stories known to
+ * belong to it: an automation scoped to one account never sees another
+ * account's comments, so keeping them would save a target that can never fire.
+ *
+ * A stored account that is no longer connected stays selectable as
+ * "disconnected" instead of rendering as an empty choice, so the user can see
+ * why the automation is quiet and move it to another account.
  */
 export function AutomationAccountField({
   type,
   targetField,
+  findTargetOwner,
 }: {
   type: CommentAutomationType
   /** The post or story selection that belongs to one account. */
   targetField: "post" | "story"
+  /** The inbox id a selected post/story belongs to, when it is known. */
+  findTargetOwner?: (id: string) => string | undefined
 }) {
   const t = useTranslations()
   const form = useFormContext<AccountScopedFormValues>()
   const { accounts, isLoading } = useAutomationAccounts(type)
   const choiceMissing = useAccountChoiceMissing(type)
+  const inboxId = useWatch({ control: form.control, name: "inboxId" })
 
-  if (!isLoading && accounts.length === 0) {
+  const hasStoredAccount = typeof inboxId === "string"
+  if (!(isLoading || hasStoredAccount) && accounts.length === 0) {
     return null
   }
+  const isStaleAccount =
+    hasStoredAccount &&
+    !isLoading &&
+    !accounts.some((account) => account.inboxId === inboxId)
 
-  const clearTargetsOfOtherAccounts = (nextInboxId: string | null) => {
+  let descriptionKey:
+    | "commentAutomation.account.disconnectedDescription"
+    | "commentAutomation.account.required"
+    | "commentAutomation.account.description" =
+    "commentAutomation.account.description"
+  if (isStaleAccount) {
+    descriptionKey = "commentAutomation.account.disconnectedDescription"
+  } else if (choiceMissing && !isLoading) {
+    descriptionKey = "commentAutomation.account.required"
+  }
+
+  const narrowTargetsTo = (nextInboxId: string | null) => {
     if (nextInboxId === null) {
       return
     }
     const target = form.getValues(targetField)
-    if (target?.value && target.value.length > 0) {
-      form.setValue(`${targetField}.value`, [], { shouldValidate: true })
-      toast.info(t("commentAutomation.account.targetsCleared"))
+    if (!target?.value || target.value.length === 0) {
+      return
     }
+    const kept = keepTargetsOfAccount(
+      target.value,
+      nextInboxId,
+      findTargetOwner,
+    )
+    if (kept.length === target.value.length) {
+      return
+    }
+    form.setValue(`${targetField}.value`, kept, { shouldValidate: true })
+    toast.info(t("commentAutomation.account.targetsCleared"))
   }
 
   return (
@@ -127,7 +160,7 @@ export function AutomationAccountField({
               onValueChange={(value) => {
                 const nextInboxId =
                   value === ALL_ACCOUNTS_VALUE ? null : (value as string)
-                clearTargetsOfOtherAccounts(nextInboxId)
+                narrowTargetsTo(nextInboxId)
                 field.onChange(nextInboxId)
               }}
               value={selectValue}
@@ -148,13 +181,14 @@ export function AutomationAccountField({
                     {account.name}
                   </SelectItem>
                 ))}
+                {isStaleAccount && (
+                  <SelectItem disabled value={inboxId}>
+                    {t("commentAutomation.account.disconnected")}
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
-            <FormDescription>
-              {choiceMissing
-                ? t("commentAutomation.account.required")
-                : t("commentAutomation.account.description")}
-            </FormDescription>
+            <FormDescription>{t(descriptionKey)}</FormDescription>
             <FormMessage />
           </FormItem>
         )

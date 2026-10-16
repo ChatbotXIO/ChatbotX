@@ -37,6 +37,7 @@ import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclu
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
 import { useWorkspaceId } from "@/hooks/routing"
+import { useThreadsPosts } from "../hooks/use-threads-posts"
 import type { CreateThreadsCommentRequest } from "../schema/action"
 import { SelectThreadsPostsDialog } from "./select-threads-posts-dialog"
 
@@ -68,6 +69,12 @@ export function ThreadsCommentForm({
     useWatch({ control: form.control, name: "post.value" }) ?? []
   const inboxId = useWatch({ control: form.control, name: "inboxId" })
   const accountChoiceMissing = useAccountChoiceMissing("threads")
+  // Reads the picker's cached posts only; never fetches on its own.
+  const { data: threadsPosts } = useThreadsPosts(useWorkspaceId(), {
+    enabled: false,
+  })
+  const findPostOwner = (id: string) =>
+    threadsPosts?.posts.find((post) => post.id === id)?.inboxId
   const [selectPostsOpen, setSelectPostsOpen] = useState(false)
   const includeKeywordsType = useWatch({
     control: form.control,
@@ -164,7 +171,11 @@ export function ThreadsCommentForm({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <AutomationAccountField targetField="post" type="threads" />
+          <AutomationAccountField
+            findTargetOwner={findPostOwner}
+            targetField="post"
+            type="threads"
+          />
 
           <RadioGroupField
             label={t("threadsCommentAutomation.trackCommentsOn")}

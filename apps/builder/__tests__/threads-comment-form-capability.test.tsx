@@ -25,6 +25,10 @@ vi.mock(
   }),
 )
 
+vi.mock("@/features/threads-comments/hooks/use-threads-posts", () => ({
+  useThreadsPosts: () => ({ data: undefined }),
+}))
+
 vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-1",
 }))

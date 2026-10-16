@@ -37,6 +37,7 @@ import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclu
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
 import { useWorkspaceId } from "@/hooks/routing"
+import { useFbCommentPostsStore } from "../provider/fb-comment-posts-store-context"
 import type { CreateFbCommentRequest } from "../schema/action"
 import { SelectFacebookPostsDialog } from "./select-facebook-posts-dialog"
 
@@ -74,6 +75,13 @@ export function FbCommentForm({
   const postValue = useWatch({ control: form.control, name: "post.value" })
   const inboxId = useWatch({ control: form.control, name: "inboxId" })
   const accountChoiceMissing = useAccountChoiceMissing("messenger")
+  const publishedPosts = useFbCommentPostsStore((s) => s.publishedPosts)
+  const adsPosts = useFbCommentPostsStore((s) => s.adsPosts)
+  const reelsPosts = useFbCommentPostsStore((s) => s.reelsPosts)
+  const findPostOwner = (id: string) =>
+    [...publishedPosts, ...adsPosts, ...reelsPosts].find(
+      (post) => post.id === id,
+    )?.inboxId
   // A Live automation answers every live broadcast, so there is no post to
   // target — the card keeps only the replies.
   const isLive = isLiveCommentAutomation({ type: postType })
@@ -200,7 +208,11 @@ export function FbCommentForm({
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 space-y-4">
-          <AutomationAccountField targetField="post" type="messenger" />
+          <AutomationAccountField
+            findTargetOwner={findPostOwner}
+            targetField="post"
+            type="messenger"
+          />
 
           {!isLive && (
             <RadioGroupField

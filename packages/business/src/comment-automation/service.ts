@@ -419,6 +419,29 @@ class CommentAutomationService extends BaseService {
   }
 
   /**
+   * The scope currently stored on a Threads/TikTok row, for
+   * `assertAutomationAccount`'s "unchanged scope" pass. Those two update
+   * methods do not load the row first, so it is read here — and only when the
+   * update actually carries an `inboxId`.
+   */
+  private async findStoredInboxId(props: {
+    workspaceId: string
+    id: string
+    type: CommentAutomationType
+    inboxId: string | null | undefined
+    tx: DatabaseClient
+  }): Promise<string | null | undefined> {
+    if (props.inboxId === null || props.inboxId === undefined) {
+      return
+    }
+    const row = await props.tx.query.commentAutomationModel.findFirst({
+      where: { id: props.id, workspaceId: props.workspaceId, type: props.type },
+      columns: { inboxId: true },
+    })
+    return row?.inboxId
+  }
+
+  /**
    * The automations that may answer a comment arriving on `inboxId`: the ones
    * scoped to that account plus the unscoped ones (`inboxId IS NULL`, "every
    * account of this channel"). `inboxId` is required so no caller can fall
@@ -1014,12 +1037,13 @@ class CommentAutomationService extends BaseService {
     ctx: { workspaceId: string; id: string },
     data: Partial<FbCommentAutomationWriteData>,
   ): Promise<CommentAutomationModel> {
-    await this.findMessengerOrFail(ctx)
+    const existing = await this.findMessengerOrFail(ctx)
     await this.assertReplyFlowsExist(ctx.workspaceId, data)
     await assertAutomationAccount({
       workspaceId: ctx.workspaceId,
       type: commentAutomationTypes.enum.messenger,
       inboxId: data.inboxId,
+      currentInboxId: existing.inboxId,
     })
 
     const [updated] = await db
@@ -1210,6 +1234,7 @@ class CommentAutomationService extends BaseService {
       workspaceId: ctx.workspaceId,
       type: existing.type as IgCommentAutomationType,
       inboxId: data.inboxId,
+      currentInboxId: existing.inboxId,
     })
 
     const [updated] = await db
@@ -1364,6 +1389,13 @@ class CommentAutomationService extends BaseService {
       workspaceId,
       type: this.threadsType,
       inboxId: data.inboxId,
+      currentInboxId: await this.findStoredInboxId({
+        workspaceId,
+        id,
+        type: this.threadsType,
+        inboxId: data.inboxId,
+        tx,
+      }),
       tx,
     })
     const values: Record<string, unknown> = {}
@@ -1550,6 +1582,13 @@ class CommentAutomationService extends BaseService {
       workspaceId,
       type: this.tiktokType,
       inboxId: data.inboxId,
+      currentInboxId: await this.findStoredInboxId({
+        workspaceId,
+        id,
+        type: this.tiktokType,
+        inboxId: data.inboxId,
+        tx,
+      }),
       tx,
     })
     const values: Record<string, unknown> = {}

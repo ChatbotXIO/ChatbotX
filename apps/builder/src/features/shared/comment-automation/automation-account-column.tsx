@@ -14,7 +14,7 @@ function AutomationAccountCell({
   inboxId: string | null
 }) {
   const t = useTranslations()
-  const { accounts } = useAutomationAccounts(type)
+  const { accounts, isLoading } = useAutomationAccounts(type)
 
   if (inboxId === null) {
     return (
@@ -23,8 +23,18 @@ function AutomationAccountCell({
       </span>
     )
   }
+  if (isLoading) {
+    return <span className="text-muted-foreground">—</span>
+  }
   const account = accounts.find((item) => item.inboxId === inboxId)
-  return <span className="truncate">{account?.name ?? "—"}</span>
+  if (!account) {
+    return (
+      <span className="text-destructive">
+        {t("commentAutomation.account.disconnected")}
+      </span>
+    )
+  }
+  return <span className="truncate">{account.name}</span>
 }
 
 /**

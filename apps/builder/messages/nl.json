@@ -659,7 +659,9 @@
       "placeholder": "Selecteer een account",
       "required": "Er zijn meerdere accounts gekoppeld: kies er één, of kies bewust “Alle accounts”.",
       "targetsCleared": "De geselecteerde berichten zijn gewist omdat ze bij een ander account kunnen horen.",
-      "column": "Account"
+      "column": "Account",
+      "disconnected": "Ontkoppeld account",
+      "disconnectedDescription": "Deze automatisering hoort bij een account dat niet meer gekoppeld is en reageert dus op geen enkele reactie. Koppel het account opnieuw of kies een ander."
     }
   },
   "fields": {

@@ -11,7 +11,7 @@ import { z } from "zod"
 export const automationInboxIdSchema = zodBigintAsString()
   .nullish()
   .describe(
-    "The connected account (its inbox id) this automation answers on. Get account ids from `commentAutomations.listAccounts` for the automation's `type`. `null` or omitted on create means every account of this channel in the workspace; omitted on update keeps the current account.",
+    "The connected account (its inbox id) this automation answers on. Get account ids from `commentAutomations.listAccounts` for the automation's `type`. `null` or omitted on create means every account of this channel in the workspace; omitted on update keeps the current account. When set, every id in `post.value`/`story.value` must be a post of this account (list them with the channel's posts operation and the same `inboxId`): a post of another account never fires and is not rejected.",
   )
 
 export const automationInboxIdResourceSchema = z

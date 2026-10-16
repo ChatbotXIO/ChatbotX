@@ -659,7 +659,9 @@
       "placeholder": "Bir hesap seçin",
       "required": "Birden fazla hesap bağlı: birini seçin ya da bilerek “Tüm hesaplar”ı seçin.",
       "targetsCleared": "Seçili gönderiler başka bir hesaba ait olabileceği için temizlendi.",
-      "column": "Hesap"
+      "column": "Hesap",
+      "disconnected": "Bağlantısı kesilmiş hesap",
+      "disconnectedDescription": "Bu otomasyon artık bağlı olmayan bir hesaba bağlı, bu yüzden hiçbir yoruma yanıt vermez. Hesabı yeniden bağlayın veya başka bir hesap seçin."
     }
   },
   "condition": {

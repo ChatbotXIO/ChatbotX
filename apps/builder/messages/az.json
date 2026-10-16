@@ -701,7 +701,9 @@
       "placeholder": "Hesab seçin",
       "required": "Bir neçə hesab qoşulub: birini seçin və ya qəsdən “Bütün hesablar” seçin.",
       "targetsCleared": "Seçilmiş paylaşımlar başqa hesaba aid ola biləcəyi üçün təmizləndi.",
-      "column": "Hesab"
+      "column": "Hesab",
+      "disconnected": "Bağlantısı kəsilmiş hesab",
+      "disconnectedDescription": "Bu avtomatlaşdırma artıq qoşulmayan hesaba bağlıdır, ona görə heç bir şərhə cavab vermir. Hesabı yenidən qoşun və ya başqasını seçin."
     }
   },
   "condition": {

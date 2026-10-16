@@ -213,6 +213,7 @@ class IgStoryAutomationService extends BaseService {
       // `findOrFail` only matches `igStoryAutomationTypes`.
       type: existing.type as IgStoryAutomationType,
       inboxId: data.inboxId,
+      currentInboxId: existing.inboxId,
     })
 
     const [updated] = await db

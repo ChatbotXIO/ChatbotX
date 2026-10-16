@@ -659,7 +659,9 @@
       "placeholder": "Valitse tili",
       "required": "Useita tilejä on yhdistetty: valitse yksi tai valitse tarkoituksella ”Kaikki tilit”.",
       "targetsCleared": "Valitut julkaisut poistettiin, koska ne voivat kuulua toiselle tilille.",
-      "column": "Tili"
+      "column": "Tili",
+      "disconnected": "Irrotettu tili",
+      "disconnectedDescription": "Tämä automaatio on sidottu tiliin, joka ei ole enää yhdistetty, joten se ei vastaa kommentteihin. Yhdistä tili uudelleen tai valitse toinen."
     }
   },
   "condition": {
