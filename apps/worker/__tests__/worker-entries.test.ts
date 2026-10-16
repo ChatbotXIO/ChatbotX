@@ -38,8 +38,4 @@ describe("worker processes", () => {
     )
     expect(missing).toEqual([])
   })
-
-  test("the broadcast recurrence worker is among them", () => {
-    expect(workerEntries()).toContain("src/broadcast-recurrence/worker.ts")
-  })
 })

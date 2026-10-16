@@ -40,7 +40,7 @@ vi.mock("../src/lib/run-job-with-audit-context", () => ({
 }))
 
 const { materializeRecurringBroadcasts } = await import(
-  "../src/broadcast-recurrence/handlers/materialize-recurring-broadcasts"
+  "../src/schedule/handlers/materialize-recurring-broadcasts"
 )
 
 const SLOT_MS = Date.parse("2026-10-13T02:00:00.000Z")

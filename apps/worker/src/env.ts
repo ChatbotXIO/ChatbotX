@@ -30,14 +30,6 @@ export const env = createEnv({
     // starves the latency-sensitive integration queue. I/O-bound → higher
     // default than integration; tune per node bandwidth / Graph rate limits.
     LOW_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(200).default(30),
-    // Materializes due slots of repeating broadcasts (one batch job = up to
-    // MATERIALIZE_BATCH_SIZE series, each in its own short transaction).
-    BROADCAST_RECURRENCE_WORKER_CONCURRENCY: z.coerce
-      .number()
-      .int()
-      .min(1)
-      .max(200)
-      .default(10),
     // Leaderboard scoring jobs; bounded so a livestream comment burst queues
     // up instead of flooding Postgres.
     LEADERBOARD_WORKER_CONCURRENCY: z.coerce

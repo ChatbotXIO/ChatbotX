@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest"
-import { materializeBatchJobId } from "../src/queues/broadcast-recurrence"
-import { broadcastPrepareJobId } from "../src/queues/schedule"
+import {
+  broadcastPrepareJobId,
+  materializeBatchJobId,
+} from "../src/queues/schedule"
 
 describe("broadcast job ids", () => {
   // Producers in different processes (and different deploy versions) must build

@@ -2,11 +2,12 @@ import { broadcastRecurrenceService } from "@chatbotx.io/business"
 import { getChildLogger } from "@chatbotx.io/logger"
 import { distributedLock, isLockAcquisitionError } from "@chatbotx.io/redis"
 import {
-  BroadcastRecurrenceJobAction,
-  broadcastRecurrenceQueue,
   MATERIALIZE_BATCH_SIZE,
+  MATERIALIZE_RECURRING_BROADCASTS_PRIORITY,
   type MaterializeRecurringBroadcastItem,
   materializeBatchJobId,
+  ScheduleJobData,
+  scheduleQueue,
 } from "@chatbotx.io/worker-config"
 import { startOfMinute } from "date-fns"
 
@@ -18,10 +19,12 @@ const LOCK_TTL_SECONDS = 55
 const LOCK_ACQUIRE_RETRY_SECONDS = 0
 const DUE_PAGE_SIZE = 5000
 const MAX_RECURRENCES_PER_TICK = 200_000
-// Batches already waiting (or backing off for a retry) beyond which a tick adds
-// no more: the database cursor keeps every slot due, so nothing is lost by
-// waiting, whereas re-enqueueing the same still-due series every minute would
-// grow Redis without bound while the recurrence worker is down or behind.
+// Batches already pending (prioritized) or backing off for a retry (delayed)
+// beyond which a tick adds no more: the database cursor keeps every slot due, so
+// nothing is lost by waiting, whereas re-enqueueing the same still-due series
+// every minute would grow Redis without bound while the schedule worker is down
+// or behind. The delayed count also holds the schedule queue's few delayed cron
+// runs, which is negligible against this limit.
 const MAX_PENDING_BATCHES = MAX_RECURRENCES_PER_TICK / MATERIALIZE_BATCH_SIZE
 
 const log = getChildLogger("enqueue-recurring-broadcasts")
@@ -38,17 +41,17 @@ const chunk = <T>(items: readonly T[], size: number): T[][] =>
   )
 
 const runEnqueue = async (): Promise<EnqueueRecurringBroadcastsResult> => {
-  const [waiting, delayed] = await Promise.all([
-    broadcastRecurrenceQueue.getWaitingCount(),
-    broadcastRecurrenceQueue.getDelayedCount(),
+  const [pending, delayed] = await Promise.all([
+    scheduleQueue.getPrioritizedCount(),
+    scheduleQueue.getDelayedCount(),
   ])
-  if (waiting + delayed >= MAX_PENDING_BATCHES) {
+  if (pending + delayed >= MAX_PENDING_BATCHES) {
     log.warn(
       {
-        pendingBatches: waiting + delayed,
+        pendingBatches: pending + delayed,
         oldestDueAgeMs: await broadcastRecurrenceService.findOldestDueAgeMs(),
       },
-      "recurrence queue is backlogged; tick skipped",
+      "schedule queue is backlogged; tick skipped",
     )
     return { scanned: 0, enqueued: 0, skipped: true }
   }
@@ -73,17 +76,18 @@ const runEnqueue = async (): Promise<EnqueueRecurringBroadcastsResult> => {
       workspaceId: series.workspaceId,
       occurrenceAtMs: series.nextRunAt.getTime(),
     }))
-    await broadcastRecurrenceQueue.addBulk(
+    await scheduleQueue.addBulk(
       chunk(items, MATERIALIZE_BATCH_SIZE).map((batch, index) => ({
-        name: BroadcastRecurrenceJobAction.materializeRecurringBroadcasts,
+        name: ScheduleJobData.materializeRecurringBroadcasts,
         data: {
-          type: BroadcastRecurrenceJobAction.materializeRecurringBroadcasts,
+          type: ScheduleJobData.materializeRecurringBroadcasts,
           data: { items: batch },
         },
         opts: {
           // Deduplicates fan-out when this tick is retried; the items
           // themselves are idempotent, so a repeat is harmless either way.
           jobId: materializeBatchJobId(dueAtMs, page, index),
+          priority: MATERIALIZE_RECURRING_BROADCASTS_PRIORITY,
           removeOnComplete: true,
           removeOnFail: true,
         },
@@ -98,7 +102,7 @@ const runEnqueue = async (): Promise<EnqueueRecurringBroadcastsResult> => {
     cursor = { nextRunAt: last.nextRunAt, id: last.id }
   }
 
-  // The number an operator alerts on: it grows when the recurrence worker or
+  // The number an operator alerts on: it grows when the schedule worker or
   // Redis is unhealthy, since the database cursor keeps every slot due.
   const oldestDueAgeMs = await broadcastRecurrenceService.findOldestDueAgeMs()
   log.info(
@@ -110,9 +114,10 @@ const runEnqueue = async (): Promise<EnqueueRecurringBroadcastsResult> => {
 
 /**
  * Per-minute cron: finds the series whose slot is due (an index scan on the
- * small series table) and hands them to the dedicated recurrence queue in
- * batches. Not workspace-scoped, so — like `enqueueBroadcast` — it is not
- * behind the blocked-owner guard; the materializer is.
+ * small series table) and hands them back to the `schedule` queue as
+ * low-priority `materializeRecurringBroadcasts` batches. Not workspace-scoped,
+ * so — like `enqueueBroadcast` — it is not behind the blocked-owner guard; the
+ * materializer is.
  */
 export async function enqueueRecurringBroadcasts(): Promise<EnqueueRecurringBroadcastsResult> {
   try {

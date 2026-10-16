@@ -32,6 +32,7 @@ import {
 } from "./handlers/leaderboard-schedules"
 import { maintainLeaderboardPartitions } from "./handlers/maintain-leaderboard-partitions"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
+import { materializeRecurringBroadcasts } from "./handlers/materialize-recurring-broadcasts"
 import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
 import { purgeAutomationThrottle } from "./handlers/purge-automation-throttle"
@@ -92,6 +93,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.enqueueRecurringBroadcasts:
               await enqueueRecurringBroadcasts()
+              return
+
+            case ScheduleJobData.materializeRecurringBroadcasts:
+              await materializeRecurringBroadcasts(job.data.data.items)
               return
 
             case ScheduleJobData.prepareBroadcast:

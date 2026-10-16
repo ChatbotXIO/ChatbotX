@@ -5,7 +5,7 @@ const FIXED_START = new Date("2026-10-13T02:00:00.000Z")
 const listDue = vi.fn()
 const findOldestDueAgeMs = vi.fn()
 const addBulk = vi.fn()
-const getWaitingCount = vi.fn()
+const getPrioritizedCount = vi.fn()
 const getDelayedCount = vi.fn()
 const runExclusive = vi.fn(async ({ fn }: { fn: () => Promise<unknown> }) =>
   fn(),
@@ -36,15 +36,16 @@ vi.mock("@chatbotx.io/redis", () => ({
     (key === undefined || (error as { key?: string }).key === key),
 }))
 vi.mock("@chatbotx.io/worker-config", () => ({
-  BroadcastRecurrenceJobAction: {
+  ScheduleJobData: {
     materializeRecurringBroadcasts: "materializeRecurringBroadcasts",
   },
-  broadcastRecurrenceQueue: {
+  scheduleQueue: {
     addBulk: (...a: unknown[]) => addBulk(...a),
-    getWaitingCount: () => getWaitingCount(),
+    getPrioritizedCount: () => getPrioritizedCount(),
     getDelayedCount: () => getDelayedCount(),
   },
   MATERIALIZE_BATCH_SIZE: 100,
+  MATERIALIZE_RECURRING_BROADCASTS_PRIORITY: 10,
   materializeBatchJobId: (due: number, page: number, chunk: number) =>
     `broadcast-recurrence-${due}-${page}-${chunk}`,
 }))
@@ -63,7 +64,7 @@ const dueRows = (count: number, offset = 0) =>
 beforeEach(() => {
   vi.clearAllMocks()
   addBulk.mockResolvedValue(undefined)
-  getWaitingCount.mockResolvedValue(0)
+  getPrioritizedCount.mockResolvedValue(0)
   getDelayedCount.mockResolvedValue(0)
   findOldestDueAgeMs.mockResolvedValue(1500)
 })
@@ -78,7 +79,7 @@ describe("enqueueRecurringBroadcasts", () => {
     expect(addBulk).not.toHaveBeenCalled()
   })
 
-  test("hands due series to the recurrence queue in batches, carrying the armed instant", async () => {
+  test("hands due series to the schedule queue in batches, carrying the armed instant", async () => {
     listDue.mockResolvedValueOnce(dueRows(250)).mockResolvedValue([])
 
     const result = await enqueueRecurringBroadcasts()
@@ -104,6 +105,20 @@ describe("enqueueRecurringBroadcasts", () => {
       workspaceId: "w1",
       occurrenceAtMs: FIXED_START.getTime(),
     })
+  })
+
+  test("batches are prioritized so they yield to every other schedule job", async () => {
+    listDue.mockResolvedValueOnce(dueRows(150)).mockResolvedValue([])
+
+    await enqueueRecurringBroadcasts()
+
+    const [jobs] = addBulk.mock.calls[0] as [
+      Array<{ opts: { priority: number } }>,
+    ]
+    expect(jobs).toHaveLength(2)
+    for (const job of jobs) {
+      expect(job.opts.priority).toBe(10)
+    }
   })
 
   test("batch job ids carry no colon and free their key when they end", async () => {
@@ -176,8 +191,8 @@ describe("enqueueRecurringBroadcasts", () => {
     expect(warn).toHaveBeenCalled()
   })
 
-  test("adds nothing while the recurrence worker is backlogged, so Redis cannot grow without bound", async () => {
-    getWaitingCount.mockResolvedValue(1500)
+  test("adds nothing while the schedule queue is backlogged, so Redis cannot grow without bound", async () => {
+    getPrioritizedCount.mockResolvedValue(1500)
     getDelayedCount.mockResolvedValue(500)
 
     const result = await enqueueRecurringBroadcasts()
@@ -192,7 +207,7 @@ describe("enqueueRecurringBroadcasts", () => {
   })
 
   test("a backlog just under the limit still enqueues", async () => {
-    getWaitingCount.mockResolvedValue(1999)
+    getPrioritizedCount.mockResolvedValue(1999)
     listDue.mockResolvedValueOnce(dueRows(1)).mockResolvedValue([])
 
     const result = await enqueueRecurringBroadcasts()
