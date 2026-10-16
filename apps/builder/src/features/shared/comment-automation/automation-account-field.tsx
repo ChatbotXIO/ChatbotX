@@ -116,6 +116,19 @@ export function AutomationAccountField({
     descriptionKey = "commentAutomation.account.required"
   }
 
+  // The trigger renders the label of the selected value from this list;
+  // without it Base UI's `SelectValue` shows the raw inbox id.
+  const selectItems = [
+    { value: ALL_ACCOUNTS_VALUE, label: t("commentAutomation.account.all") },
+    ...accounts.map((account) => ({
+      value: account.inboxId,
+      label: account.name,
+    })),
+    ...(isStaleAccount
+      ? [{ value: inboxId, label: t("commentAutomation.account.disconnected") }]
+      : []),
+  ]
+
   const narrowTargetsTo = (nextInboxId: string | null) => {
     if (nextInboxId === null) {
       return
@@ -157,6 +170,7 @@ export function AutomationAccountField({
             </FormLabel>
             <Select
               disabled={isLoading}
+              items={selectItems}
               onValueChange={(value) => {
                 const nextInboxId =
                   value === ALL_ACCOUNTS_VALUE ? null : (value as string)
