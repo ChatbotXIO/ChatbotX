@@ -59,6 +59,11 @@ import { reconnectThreadsHandler } from "@/features/integration-threads/actions/
 import { connectTiktokHandler } from "@/features/integration-tiktok/actions/connect.action"
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
 import { reconnectZaloHandler } from "@/features/integration-zalo/actions/reconnect-callback"
+import {
+  buildCapiConnectRedirectUrl,
+  CAPI_OAUTH_CHANNELS,
+  type CapiConnectResult,
+} from "@/features/meta-conversions/lib/capi-connect-result"
 import { integrations } from "@/integration"
 import { assertWorkspaceSuperAdmin } from "@/lib/auth/assert-workspace-super-admin"
 import { getCurrentUser } from "@/lib/auth/utils"
@@ -72,6 +77,7 @@ import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
 import { createFirstWorkspace } from "@/lib/workspace/create-first-workspace"
+import { completeMetaCapiConnect } from "./callback-meta-capi"
 import {
   messagingAdsIntegrationBelongsToWorkspace,
   storeFacebookAdsConnection,
@@ -94,6 +100,7 @@ const stateValidationSchema = z.object({
       "metaCatalog",
       "messagingAds",
       "facebookMarketingMessages",
+      "metaCapi",
     ])
     .optional(),
   // Set by the channel "Reconnect" buttons: the callback refreshes the tokens
@@ -106,7 +113,22 @@ const stateValidationSchema = z.object({
   // any token is stored — see the `messagingAds` branch below.
   messagingAdsChannel: messagingAdChannelTypes.optional(),
   messagingAdsIntegrationId: zodBigintAsString().optional(),
+  // `flow: "metaCapi"` only — the dedicated Conversions API connect of one
+  // integration. The nonce must match the httpOnly cookie set when Connect was
+  // pressed; both it and the integration are re-validated before any token is
+  // stored — see `completeMetaCapiConnect`.
+  capiChannel: z.enum(CAPI_OAUTH_CHANNELS).optional(),
+  capiIntegrationId: zodBigintAsString().optional(),
+  nonce: z.string().min(1).optional(),
 })
+
+const redirectWithMetaCapiOutcome = (
+  outcome: CapiConnectResult | "notFound",
+  safeReferer: string,
+) =>
+  outcome === "notFound"
+    ? notFound()
+    : redirect(buildCapiConnectRedirectUrl(safeReferer, outcome))
 
 const CONNECT_SESSION_STATE_PATTERN = /^\d+\.[A-Za-z0-9_-]+$/
 
@@ -466,9 +488,13 @@ export const handleCallback = async (
     return notFound()
   }
 
-  // A reconnect always targets an integration inside an existing workspace;
-  // without a workspaceId the create-workspace branch below would run.
-  if (stateParams.reconnectIntegrationId && !stateParams.workspaceId) {
+  // A reconnect — and a dedicated Conversions API connect — always targets an
+  // integration inside an existing workspace; without a workspaceId the
+  // create-workspace branch below would run.
+  if (
+    (stateParams.reconnectIntegrationId || stateParams.flow === "metaCapi") &&
+    !stateParams.workspaceId
+  ) {
     logger.debug(
       { url: url.toString() },
       "reconnect state is missing workspaceId",
@@ -496,6 +522,14 @@ export const handleCallback = async (
     if (stateParams.reconnectIntegrationId) {
       return redirect(
         buildReconnectRedirectUrl(cancelReferer, {
+          status: "error",
+          reason: "cancelled",
+        }),
+      )
+    }
+    if (stateParams.flow === "metaCapi") {
+      return redirect(
+        buildCapiConnectRedirectUrl(cancelReferer, {
           status: "error",
           reason: "cancelled",
         }),
@@ -688,6 +722,27 @@ export const handleCallback = async (
         return redirect(safeReferer)
       }
 
+      // Dedicated Conversions API connect from the Ads tab: stores a separate
+      // token and never touches the channel's own `auth`.
+      if (stateParams.flow === "metaCapi") {
+        return redirectWithMetaCapiOutcome(
+          await completeMetaCapiConnect({
+            channel: "messenger",
+            state: stateParams,
+            workspaceId: workspace.id,
+            userId,
+            credentialConfig: messengerCredential.config,
+            callbackUrl,
+            code,
+            request: {
+              ipAddress: getGuestClientIp(req.headers),
+              userAgent: req.headers.get("user-agent") ?? undefined,
+            },
+          }),
+          safeReferer,
+        )
+      }
+
       if (stateParams.reconnectIntegrationId) {
         const result = await reconnectMessengerHandler({
           credentialConfig: messengerCredential.config,
@@ -794,6 +849,27 @@ export const handleCallback = async (
         instagramFacebookCredential,
         "/integrations/instagram-facebook/callback",
       )
+
+      // Dedicated Conversions API connect from the Ads tab: stores a separate
+      // token and never touches the channel's own `auth`.
+      if (stateParams.flow === "metaCapi") {
+        return redirectWithMetaCapiOutcome(
+          await completeMetaCapiConnect({
+            channel: "instagram",
+            state: stateParams,
+            workspaceId: workspace.id,
+            userId,
+            credentialConfig: instagramFacebookCredential.config,
+            callbackUrl,
+            code,
+            request: {
+              ipAddress: getGuestClientIp(req.headers),
+              userAgent: req.headers.get("user-agent") ?? undefined,
+            },
+          }),
+          safeReferer,
+        )
+      }
 
       // Checked before exchanging the single-use `code`: a plain connect
       // never reaches here anymore (see the comment at the end of

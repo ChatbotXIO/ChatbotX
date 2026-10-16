@@ -27,6 +27,9 @@ import { createDatasetWithFallback } from "./dataset-fallback"
 import {
   type CapiConnectChannel,
   type ClearCapiAccessTokenInput,
+  type ConnectCapiWithTokenInput,
+  connectCapiWithTokenInput,
+  type DatasetValidationInput,
   type EnqueueEventInput,
   type EnsureDatasetIdInput,
   enqueueEventInput,
@@ -48,6 +51,24 @@ import {
 import { resolveCapiAccessToken } from "./token"
 
 const META_CAPI_SCOPE_CACHE_TTL_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Graph error codes that say the token cannot see an object: permission denied
+ * (10, 200-299), invalid or inaccessible id (100) and missing object (803).
+ * Anything else — a timeout, a rate limit, a 5xx — says nothing about access.
+ */
+const DATASET_ACCESS_ERROR_CODES = new Set([10, 100, 803])
+
+const isDatasetAccessError = (err: unknown): boolean => {
+  if (typeof err !== "object" || err === null || !("code" in err)) {
+    return false
+  }
+  const { code } = err
+  return (
+    typeof code === "number" &&
+    (DATASET_ACCESS_ERROR_CODES.has(code) || (code >= 200 && code <= 299))
+  )
+}
 
 export class CapiScopeRefreshError extends Error {
   retryable = true
@@ -591,6 +612,86 @@ class MetaConversionsService extends BaseService {
       datasetId: parsed.datasetId,
       capiAccessToken,
     })
+  }
+
+  /**
+   * Dedicated connect: the Ads tab's own OAuth minted `accessToken`, kept apart
+   * from the channel token. The dataset is settled with it *before* anything is
+   * stored — the worker treats a stored token without a dataset as "no scope"
+   * and drops the event for good, so a half-connected row must never exist. If
+   * Meta refuses the dataset this throws and the row is left untouched.
+   *
+   * A dataset the row already stores (picked by the user, or chosen before the
+   * dedicated connect existed) is kept when the new token can read it, so events
+   * keep flowing where they did. Only a row without one — or whose one the new
+   * token cannot read — gets the dataset Meta has linked to the page / account /
+   * WABA. The adapter still chooses who creates that dataset (WhatsApp prefers
+   * the agency System User and falls back to this token).
+   *
+   * Only the dataset id and the encrypted token are written, atomically, with
+   * the disconnect flag cleared.
+   */
+  async connectCapiWithToken<TChannel extends CapiConnectChannel>(
+    input: ConnectCapiWithTokenInput<TChannel>,
+  ): Promise<MetaConversionsIntegrationByChannel[TChannel] | null> {
+    const parsed = connectCapiWithTokenInput.parse({
+      accessToken: input.accessToken,
+    })
+    const sendAdapter = sendAdapterFor(input.channel)
+    const connectAdapter = connectAdapterFor(input.channel)
+    connectAdapter.assertSupported(input.integration)
+
+    const capiAccessToken = await encryptUtils.encryptObject({
+      accessToken: parsed.accessToken,
+    })
+    const datasetId =
+      (await this.findReadableStoredDataset({
+        integration: input.integration,
+        accessToken: parsed.accessToken,
+        validate: input.validate,
+      })) ??
+      (await this.provisionDatasetViaMeta(
+        sendAdapter,
+        { ...input.integration, capiAccessToken },
+        input.provisionDataset,
+      ))
+
+    return connectAdapter.connectCustomCapi({
+      id: input.integration.id,
+      workspaceId: input.integration.workspaceId,
+      datasetId,
+      capiAccessToken,
+    })
+  }
+
+  /** The dataset id a row already stores, when `accessToken` can read it; `null` otherwise. */
+  private async findReadableStoredDataset(input: {
+    integration: { id: string; datasetId: string | null }
+    accessToken: string
+    validate: (input: DatasetValidationInput) => Promise<string>
+  }): Promise<string | null> {
+    const storedDatasetId = input.integration.datasetId
+    if (!storedDatasetId) {
+      return null
+    }
+    try {
+      await input.validate({
+        datasetId: storedDatasetId,
+        accessToken: input.accessToken,
+      })
+      return storedDatasetId
+    } catch (err) {
+      // Only a definite "this token cannot read it" may swap the dataset events
+      // flow to; a timeout or rate limit is surfaced so the admin just retries.
+      if (!isDatasetAccessError(err)) {
+        throw err
+      }
+      logger.info(
+        { err, integrationId: input.integration.id },
+        "Stored CAPI dataset is not readable with the dedicated token; using the dataset linked at Meta",
+      )
+      return null
+    }
   }
 
   /**

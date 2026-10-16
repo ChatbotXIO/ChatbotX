@@ -206,6 +206,18 @@ export type SaveCapiAccessTokenInput<
   validate: (input: DatasetValidationInput) => Promise<string>
 }
 
+export type ConnectCapiWithTokenInput<
+  TChannel extends CapiConnectChannel = CapiConnectChannel,
+> = {
+  channel: TChannel
+  integration: MetaConversionsIntegrationByChannel[TChannel]
+  /** Token minted by the dedicated Conversions API OAuth, never the channel token. */
+  accessToken: string
+  provisionDataset: EnsureDatasetIdInput<TChannel>["provisionDataset"]
+  /** Checks a dataset id against the new token; used to keep a dataset the row already stores. */
+  validate: (input: DatasetValidationInput) => Promise<string>
+}
+
 export type ClearCapiAccessTokenInput<
   TChannel extends CapiConnectChannel = CapiConnectChannel,
 > = {
@@ -215,6 +227,10 @@ export type ClearCapiAccessTokenInput<
 
 export const saveDatasetIdInput = z.object({
   datasetId: capiDatasetIdSchema,
+})
+
+export const connectCapiWithTokenInput = z.object({
+  accessToken: capiAccessTokenSchema,
 })
 
 export const saveCapiAccessTokenInput = z.object({

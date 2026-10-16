@@ -2386,6 +2386,10 @@
     },
     "referralName": {
       "label": "Henviserens navn"
+    },
+    "capiConfigId": {
+      "label": "Conversions API Config ID",
+      "description": "Embedded Signup-konfigurations-ID, der bruges til at anmode om tilladelsen whatsapp_business_manage_events, når Conversions API tilsluttes."
     }
   },
   "flows": {
@@ -4627,7 +4631,8 @@
         "loadMoreError": "Kunne ikke indlæse flere opkald. Prøv igen.",
         "callInformation": "Opkaldsoplysninger"
       }
-    }
+    },
+    "credentialSecretsRequired": "Indtast app-hemmeligheden og systembruger-tokenet. De er ikke gemt endnu."
   },
   "zalo": {
     "title": "Zalo OA",
@@ -6883,15 +6888,11 @@
     "status": {
       "title": "Meta Conversions API",
       "ready": "Klar",
-      "missingPermission": "Tilladelse påkrævet",
-      "unverified": "Ikke bekræftet",
       "unsupported": "Ikke understøttet",
       "notConnected": "Ikke forbundet"
     },
     "statusDescriptions": {
-      "ready": "Denne integration har den nødvendige Meta-tilladelse til Conversions API-hændelser.",
-      "missingPermission": "Genopret forbindelsen til denne integration, og giv den ønskede Meta-tilladelse.",
-      "unverified": "Platformens appindstillinger er ikke tilgængelige, så CAPI-tilladelsen kan ikke bekræftes.",
+      "ready": "Conversions API-hændelser fra denne integration sendes til Meta.",
       "unsupported": "Meta Conversions API til Instagram kræver en konto forbundet via Facebook Login for Business.",
       "notConnected": "Conversions API er et Meta Business Tool, der gør det muligt at dele data med Meta for at forbedre annoncernes performance."
     },
@@ -6903,12 +6904,14 @@
       "saveFailed": "Kunne ikke gemme. Prøv venligst igen.",
       "datasetRequired": "Gem et Dataset-ID, før du tilføjer en adgangstoken.",
       "invalidToken": "Denne token kunne ikke tilgå datasættet.",
-      "invalidDatasetId": "Indtast et gyldigt Dataset ID (kun tal).",
       "whatsappNotFound": "WhatsApp-integration ikke fundet.",
       "testEventCodeRequired": "Gem en testhændelseskode, før du sender en testhændelse.",
       "invalidTestEventCode": "Testhændelseskoden må kun indeholde bogstaver, tal, bindestreger eller understregninger (maks. 64).",
       "invalidMessagingId": "Messaging-id må kun indeholde bogstaver, tal, bindestreger eller understregninger (maks. 512).",
-      "capiDisconnected": "Meta CAPI er afbrudt for denne kanal. Tilslut igen, før du sender en testhændelse."
+      "capiDisconnected": "Meta CAPI er afbrudt for denne kanal. Tilslut igen, før du sender en testhændelse.",
+      "appNotConfigured": "Meta-appen til denne kanal er endnu ikke konfigureret.",
+      "capiNotConfigured": "Forbindelsen til Conversions API er ikke konfigureret. Bed din administrator om at angive Conversions API Config ID.",
+      "wabaMismatch": "Den godkendte WhatsApp Business-konto er ikke den, dette nummer hører til. Tilslut med den samme konto."
     },
     "fields": {
       "eventType": {
@@ -6993,32 +6996,13 @@
     "disconnect": "Afbryd",
     "openEventManager": "Åbn Event Manager",
     "methods": {
-      "oauth": {
-        "title": "Forbind via Facebook",
-        "description": "Brug din sides eksisterende forbindelse, og vælg derefter et Dataset-ID.",
-        "connect": "Opret datasæt",
-        "connectedLabel": "via Facebook"
-      },
       "custom": {
         "title": "Brugerdefineret forbindelse",
         "description": "Brug et Dataset-ID og en adgangstoken fra Meta Events Manager.",
         "start": "Opsæt brugerdefineret forbindelse",
         "connect": "Forbind",
         "connectedLabel": "Brugerdefineret"
-      },
-      "whatsapp": {
-        "title": "Forbind via WhatsApp",
-        "description": "Brug din WhatsApp-forbindelse, og vælg derefter et Dataset-ID.",
-        "connect": "Opret datasæt",
-        "connectedLabel": "via WhatsApp"
       }
-    },
-    "finalize": {
-      "title": "Vælg et Dataset-ID",
-      "description": "Indtast et eksisterende Dataset-ID, eller lad det stå tomt for automatisk at oprette et.",
-      "save": "Gem",
-      "createDataset": "Opret datasæt",
-      "caveat": "Et Dataset-ID, der ikke er knyttet til denne side eller Instagram-konto, tilskriver muligvis ikke hændelser korrekt. Lad dette felt stå tomt for automatisk at oprette et tilknyttet datasæt."
     },
     "whatsapp": {
       "connect": "Forbind"
@@ -7067,6 +7051,23 @@
       "messagingIdHint": "Kun bogstaver, tal, bindestreger og understregninger (maks. 512).",
       "cancel": "Annuller",
       "confirmSend": "Send"
+    },
+    "connect": {
+      "button": "Tilslut Conversions API",
+      "success": "Conversions API er tilsluttet.",
+      "title": "Tilslut med Meta",
+      "description": "Log ind på Meta og giv adgang til konverteringshændelser. Det opretter en separat forbindelse til Conversions API og ændrer ikke, hvordan denne kanal logger ind."
+    },
+    "connectResult": {
+      "errors": {
+        "cancelled": "Forbindelsen blev annulleret. Intet er ændret.",
+        "notFound": "Denne kanal blev ikke fundet.",
+        "pageNotFound": "Den Facebook-konto, du brugte, administrerer ikke denne side. Log ind med en konto, der gør.",
+        "accountNotFound": "Den Facebook-konto, du brugte, administrerer ikke denne Instagram-konto. Log ind med en konto, der gør.",
+        "datasetFailed": "Meta tillod ikke oprettelse af et datasæt med denne forbindelse. Sørg for at give alle de ønskede tilladelser, og prøv igen.",
+        "sessionExpired": "Forbindelsen tog for lang tid eller blev startet i en anden fane. Prøv igen.",
+        "failed": "Conversions API kunne ikke tilsluttes. Prøv igen."
+      }
     }
   },
   "googleAds": {

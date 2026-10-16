@@ -2386,6 +2386,10 @@
     },
     "referralName": {
       "label": "Nama perujuk"
+    },
+    "capiConfigId": {
+      "label": "Conversions API Config ID",
+      "description": "ID konfigurasi Embedded Signup yang digunakan untuk meminta izin whatsapp_business_manage_events saat menghubungkan Conversions API."
     }
   },
   "flows": {
@@ -4627,7 +4631,8 @@
         "loadMoreError": "Gagal memuat panggilan lainnya. Silakan coba lagi.",
         "callInformation": "Informasi panggilan"
       }
-    }
+    },
+    "credentialSecretsRequired": "Masukkan app secret dan system user token. Keduanya belum tersimpan."
   },
   "zalo": {
     "title": "Zalo OA",
@@ -6883,15 +6888,11 @@
     "status": {
       "title": "Meta Conversions API",
       "ready": "Siap",
-      "missingPermission": "Izin diperlukan",
-      "unverified": "Belum diverifikasi",
       "unsupported": "Tidak didukung",
       "notConnected": "Belum terhubung"
     },
     "statusDescriptions": {
-      "ready": "Integrasi ini memiliki izin Meta yang diperlukan untuk peristiwa Conversions API.",
-      "missingPermission": "Sambungkan ulang integrasi ini dan berikan izin Meta yang diminta.",
-      "unverified": "Pengaturan aplikasi platform tidak tersedia, sehingga izin CAPI tidak dapat diverifikasi.",
+      "ready": "Peristiwa Conversions API dari integrasi ini dikirim ke Meta.",
       "unsupported": "Meta Conversions API untuk Instagram memerlukan akun yang terhubung melalui Facebook Login for Business.",
       "notConnected": "Conversions API adalah Meta Business Tool yang memungkinkan Anda membagikan data ke Meta untuk meningkatkan performa iklan."
     },
@@ -6903,12 +6904,14 @@
       "saveFailed": "Tidak dapat menyimpan. Silakan coba lagi.",
       "datasetRequired": "Simpan Dataset ID sebelum menambahkan token akses.",
       "invalidToken": "Token ini tidak dapat mengakses dataset.",
-      "invalidDatasetId": "Masukkan Dataset ID yang valid (hanya angka).",
       "whatsappNotFound": "Integrasi WhatsApp tidak ditemukan.",
       "testEventCodeRequired": "Simpan kode peristiwa uji sebelum mengirim peristiwa uji.",
       "invalidTestEventCode": "Kode peristiwa uji hanya boleh berisi huruf, angka, tanda hubung, atau garis bawah (maks. 64).",
       "invalidMessagingId": "ID pesan hanya boleh berisi huruf, angka, tanda hubung, atau garis bawah (maks. 512).",
-      "capiDisconnected": "Meta CAPI terputus untuk saluran ini. Hubungkan kembali sebelum mengirim event uji."
+      "capiDisconnected": "Meta CAPI terputus untuk saluran ini. Hubungkan kembali sebelum mengirim event uji.",
+      "appNotConfigured": "Aplikasi Meta untuk saluran ini belum dikonfigurasi.",
+      "capiNotConfigured": "Koneksi Conversions API belum dikonfigurasi. Minta administrator Anda untuk menetapkan Conversions API Config ID.",
+      "wabaMismatch": "Akun WhatsApp Business yang diotorisasi bukan akun tempat nomor ini berada. Hubungkan dengan akun yang sama."
     },
     "fields": {
       "eventType": {
@@ -6993,32 +6996,13 @@
     "disconnect": "Putuskan",
     "openEventManager": "Buka Event Manager",
     "methods": {
-      "oauth": {
-        "title": "Hubungkan via Facebook",
-        "description": "Gunakan koneksi halaman Anda yang sudah ada, lalu pilih Dataset ID.",
-        "connect": "Buat Dataset",
-        "connectedLabel": "via Facebook"
-      },
       "custom": {
         "title": "Koneksi kustom",
         "description": "Gunakan Dataset ID dan token akses dari Meta Events Manager.",
         "start": "Siapkan koneksi kustom",
         "connect": "Hubungkan",
         "connectedLabel": "Kustom"
-      },
-      "whatsapp": {
-        "title": "Hubungkan via WhatsApp",
-        "description": "Gunakan koneksi WhatsApp Anda, lalu pilih Dataset ID.",
-        "connect": "Buat Dataset",
-        "connectedLabel": "via WhatsApp"
       }
-    },
-    "finalize": {
-      "title": "Pilih Dataset ID",
-      "description": "Masukkan Dataset ID yang sudah ada, atau biarkan kosong untuk membuatnya secara otomatis.",
-      "save": "Simpan",
-      "createDataset": "Buat Dataset",
-      "caveat": "Dataset ID yang tidak tertaut ke Halaman atau akun Instagram ini mungkin tidak mengatribusikan peristiwa dengan benar. Biarkan kolom ini kosong untuk membuat dataset tertaut secara otomatis."
     },
     "whatsapp": {
       "connect": "Hubungkan"
@@ -7067,6 +7051,23 @@
       "messagingIdHint": "Hanya huruf, angka, tanda hubung, dan garis bawah (maks. 512).",
       "cancel": "Batal",
       "confirmSend": "Kirim"
+    },
+    "connect": {
+      "button": "Hubungkan Conversions API",
+      "success": "Conversions API terhubung.",
+      "title": "Hubungkan dengan Meta",
+      "description": "Masuk ke Meta dan berikan akses untuk peristiwa konversi. Ini membuat koneksi terpisah untuk Conversions API dan tidak mengubah cara saluran ini masuk."
+    },
+    "connectResult": {
+      "errors": {
+        "cancelled": "Koneksi dibatalkan. Tidak ada yang diubah.",
+        "notFound": "Saluran ini tidak ditemukan.",
+        "pageNotFound": "Akun Facebook yang Anda gunakan tidak mengelola Halaman ini. Masuk dengan akun yang mengelolanya.",
+        "accountNotFound": "Akun Facebook yang Anda gunakan tidak mengelola akun Instagram ini. Masuk dengan akun yang mengelolanya.",
+        "datasetFailed": "Meta tidak mengizinkan pembuatan dataset dengan koneksi ini. Pastikan Anda memberikan semua izin yang diminta, lalu coba lagi.",
+        "sessionExpired": "Koneksi memakan waktu terlalu lama atau dimulai di tab lain. Silakan coba lagi.",
+        "failed": "Tidak dapat menghubungkan Conversions API. Silakan coba lagi."
+      }
     }
   },
   "googleAds": {

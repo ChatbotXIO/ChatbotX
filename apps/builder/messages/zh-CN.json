@@ -3299,6 +3299,10 @@
     },
     "referralName": {
       "label": "推荐人姓名"
+    },
+    "capiConfigId": {
+      "label": "Conversions API Config ID",
+      "description": "连接 Conversions API 时用于请求 whatsapp_business_manage_events 权限的 Embedded Signup 配置 ID。"
     }
   },
   "flowAnalytics": {
@@ -6515,7 +6519,8 @@
         "loadMoreError": "无法加载更多通话，请重试。",
         "callInformation": "通话信息"
       }
-    }
+    },
+    "credentialSecretsRequired": "请输入应用密钥和系统用户令牌。它们尚未保存。"
   },
   "workspace": {
     "deletion": {
@@ -6596,15 +6601,11 @@
     "status": {
       "title": "Meta Conversions API",
       "ready": "已就绪",
-      "missingPermission": "需要权限",
-      "unverified": "未验证",
       "unsupported": "不支持",
       "notConnected": "未连接"
     },
     "statusDescriptions": {
-      "ready": "此集成已获得 Conversions API 事件所需的 Meta 权限。",
-      "missingPermission": "请重新连接此集成，并授予所请求的 Meta 权限。",
-      "unverified": "平台应用设置不可用，因此无法验证 CAPI 权限。",
+      "ready": "此集成的 Conversions API 事件将发送到 Meta。",
       "unsupported": "Instagram 的 Meta Conversions API 需要通过 Facebook 商业登录连接的帐户。",
       "notConnected": "Conversions API 是一款 Meta 商业工具，可让您与 Meta 共享数据，以提升广告效果。"
     },
@@ -6616,12 +6617,14 @@
       "saveFailed": "无法保存，请重试。",
       "datasetRequired": "请先保存数据集 ID，再添加访问令牌。",
       "invalidToken": "此令牌无法访问该数据集。",
-      "invalidDatasetId": "请输入有效的 Dataset ID（仅数字）。",
       "whatsappNotFound": "未找到 WhatsApp 集成。",
       "testEventCodeRequired": "发送测试事件前请先保存测试事件代码。",
       "invalidTestEventCode": "测试事件代码只能包含字母、数字、连字符或下划线(最多 64 个字符)。",
       "invalidMessagingId": "消息 ID 只能包含字母、数字、连字符或下划线（最多 512 个字符）。",
-      "capiDisconnected": "此渠道的 Meta CAPI 已断开连接。请先重新连接，再发送测试事件。"
+      "capiDisconnected": "此渠道的 Meta CAPI 已断开连接。请先重新连接，再发送测试事件。",
+      "appNotConfigured": "此渠道的 Meta 应用尚未配置。",
+      "capiNotConfigured": "尚未配置 Conversions API 连接。请联系管理员设置 Conversions API Config ID。",
+      "wabaMismatch": "授权的 WhatsApp Business 账号不是此号码所属的账号。请使用同一账号连接。"
     },
     "fields": {
       "eventType": {
@@ -6706,32 +6709,13 @@
     "disconnect": "断开连接",
     "openEventManager": "打开事件管理工具",
     "methods": {
-      "oauth": {
-        "title": "通过 Facebook 连接",
-        "description": "使用您页面现有的连接，然后选择数据集 ID。",
-        "connect": "创建数据集",
-        "connectedLabel": "通过 Facebook"
-      },
       "custom": {
         "title": "自定义连接",
         "description": "使用来自 Meta 事件管理工具的数据集 ID 和访问令牌。",
         "start": "设置自定义连接",
         "connect": "连接",
         "connectedLabel": "自定义"
-      },
-      "whatsapp": {
-        "title": "通过 WhatsApp 连接",
-        "description": "使用您的 WhatsApp 连接，然后选择数据集 ID。",
-        "connect": "创建数据集",
-        "connectedLabel": "通过 WhatsApp"
       }
-    },
-    "finalize": {
-      "title": "选择数据集 ID",
-      "description": "输入现有的数据集 ID，留空则自动创建一个。",
-      "save": "保存",
-      "createDataset": "创建数据集",
-      "caveat": "未关联到此页面或 Instagram 帐户的数据集 ID 可能无法正确归因事件。留空此字段可自动创建关联的数据集。"
     },
     "whatsapp": {
       "connect": "连接"
@@ -6780,6 +6764,23 @@
       "messagingIdHint": "仅限字母、数字、连字符和下划线（最多 512 个字符）。",
       "cancel": "取消",
       "confirmSend": "发送"
+    },
+    "connect": {
+      "button": "连接 Conversions API",
+      "success": "已连接 Conversions API。",
+      "title": "通过 Meta 连接",
+      "description": "登录 Meta 并授权转化事件的访问权限。这会为 Conversions API 创建一个单独的连接，不会改变此渠道的登录方式。"
+    },
+    "connectResult": {
+      "errors": {
+        "cancelled": "已取消连接。未做任何更改。",
+        "notFound": "找不到此渠道。",
+        "pageNotFound": "你使用的 Facebook 账号并未管理此主页。请使用管理此主页的账号登录。",
+        "accountNotFound": "你使用的 Facebook 账号并未管理此 Instagram 账号。请使用管理该账号的账号登录。",
+        "datasetFailed": "Meta 不允许通过此连接创建数据集。请确保授予所有请求的权限后重试。",
+        "sessionExpired": "连接耗时过长，或是在另一个标签页中发起的。请重试。",
+        "failed": "无法连接 Conversions API。请重试。"
+      }
     }
   },
   "googleAds": {

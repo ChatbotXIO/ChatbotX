@@ -356,7 +356,7 @@ export const createCapiRoutes = (channel: CapiChannel) => {
         method: "PUT",
         path: `${base}/dataset` as const,
         summary: `Set ${label} CAPI dataset`,
-        description: `Sets the Meta dataset used for Conversions API events on a ${label} channel and reconnects a disconnected Conversions API. Pass \`datasetId\` to select an existing dataset: it is validated with Meta using the channel's token, then stored. Omit \`datasetId\` to have a dataset created (or the existing one reused) with the channel's stored token, exactly like the builder's "Create dataset". A Meta rejection (for example a missing CAPI permission) is returned as 400 with Meta's message; reconnect the channel in the builder when Meta reports the permission as missing. Read the current \`datasetId\` and \`hasCapiScope\` from \`${listOperation}\`.`,
+        description: `Sets the Meta dataset used for Conversions API events on a ${label} channel and reconnects a disconnected Conversions API. Pass \`datasetId\` to select an existing dataset: it is validated with Meta using the channel's token, then stored. Omit \`datasetId\` to have a dataset created (or the existing one reused) with the channel's stored token (the dedicated Conversions API token when one is connected). A Meta rejection (for example a missing CAPI permission) is returned as 400 with Meta's message; a successful call clears a disconnect (a rejection leaves it in place), but events are only sent when \`capiConnected\` reads true afterwards (WhatsApp, or a channel whose own token still has the permission); otherwise connect a dedicated token from the Connect button on the channel's Ads tab in the builder (a browser OAuth step). Read \`datasetId\` and \`capiConnected\` from \`${listOperation}\`.`,
         successStatus: 204,
         tags: ["Channels"],
       })
@@ -391,7 +391,7 @@ export const createCapiRoutes = (channel: CapiChannel) => {
         method: "DELETE",
         path: base,
         summary: `Disconnect ${label} CAPI`,
-        description: `Stops sending Conversions API events for a ${label} channel. The saved dataset and test event code are kept; \`capiDisconnected\` becomes true in \`${listOperation}\`. Reconnect with \`${channel}Channels.setCapiDataset\` (pass a dataset, or none to create one). Nothing is deleted at Meta.`,
+        description: `Stops sending Conversions API events for a ${label} channel. The saved dataset and test event code are kept and a dedicated token connected from the Ads tab is removed; \`capiConnected\` becomes false and \`capiDisconnected\` true in \`${listOperation}\`. \`${channel}Channels.setCapiDataset\` clears the disconnect, but sending resumes only if \`capiConnected\` reads true afterwards (WhatsApp, or a channel whose own token still has the permission); otherwise connect a new dedicated token from the channel's Ads tab in the builder. Nothing is deleted at Meta.`,
         successStatus: 204,
         tags: ["Channels"],
       })

@@ -149,6 +149,163 @@ describe("channelIntegrationService", () => {
     expect(row.tokenRefreshError).toBe("expired")
   })
 
+  describe("capiConnected", () => {
+    const capiRow = {
+      inboxId: "2",
+      coexistEnabled: false,
+      hasCapiScope: false,
+      hasCapiAccessToken: false,
+      datasetId: null,
+      capiTestEventCode: null,
+      capiDisconnectedAt: null,
+      tokenRefreshError: null,
+    }
+
+    test("derives token presence in SQL instead of selecting the encrypted token", async () => {
+      await channelIntegrationService.list({ workspaceId: "ws-1" })
+
+      for (const model of [
+        queryModels.integrationWhatsappModel,
+        queryModels.integrationMessengerModel,
+        queryModels.integrationInstagramModel,
+      ]) {
+        const [{ columns, extras }] = model.findMany.mock
+          .calls[0] as unknown as [
+          {
+            columns: Record<string, boolean>
+            extras: Record<string, unknown>
+          },
+        ]
+        expect(columns.capiAccessToken).toBeUndefined()
+        expect(extras.hasCapiAccessToken).toEqual(expect.any(Function))
+      }
+    })
+
+    test("a messenger row with a dedicated token and a dataset is connected", async () => {
+      queryModels.integrationMessengerModel.findMany.mockResolvedValue([
+        {
+          ...capiRow,
+          id: "1",
+          name: "Page",
+          pageId: "p",
+          syncTagEnabledAt: null,
+          handoverResumeFlowId: null,
+          hasCapiAccessToken: true,
+          datasetId: "ds-1",
+        },
+      ])
+
+      const [row] = await channelIntegrationService.list({
+        workspaceId: "ws-1",
+        channel: "messenger",
+      })
+
+      expect(row.capiConnected).toBe(true)
+      expect(row).not.toHaveProperty("hasCapiAccessToken")
+    })
+
+    test("a legacy messenger row is connected on its stored scope and dataset", async () => {
+      queryModels.integrationMessengerModel.findMany.mockResolvedValue([
+        {
+          ...capiRow,
+          id: "1",
+          name: "Page",
+          pageId: "p",
+          syncTagEnabledAt: null,
+          handoverResumeFlowId: null,
+          hasCapiScope: true,
+          datasetId: "ds-1",
+        },
+        {
+          ...capiRow,
+          id: "2",
+          name: "Page without the scope",
+          pageId: "p2",
+          syncTagEnabledAt: null,
+          handoverResumeFlowId: null,
+          datasetId: "ds-2",
+        },
+      ])
+
+      const rows = await channelIntegrationService.list({
+        workspaceId: "ws-1",
+        channel: "messenger",
+      })
+
+      expect(rows.map((row) => [row.id, row.capiConnected])).toEqual([
+        ["1", true],
+        ["2", false],
+      ])
+    })
+
+    test("a whatsapp row with only a dataset is connected: the channel is exempt from the scope", async () => {
+      queryModels.integrationWhatsappModel.findMany.mockResolvedValue([
+        {
+          ...capiRow,
+          id: "1",
+          name: "Shop",
+          phoneNumberId: "pn-1",
+          wabaId: "waba-1",
+          displayPhoneNumber: "",
+          isCoexist: false,
+          handoverResumeFlowId: null,
+          datasetId: "ds-1",
+        },
+      ])
+
+      const [row] = await channelIntegrationService.list({
+        workspaceId: "ws-1",
+        channel: "whatsapp",
+      })
+
+      expect(row.capiConnected).toBe(true)
+    })
+
+    test("a user disconnect reads as not connected even with a token and a dataset", async () => {
+      queryModels.integrationInstagramModel.findMany.mockResolvedValue([
+        {
+          ...capiRow,
+          id: "1",
+          name: "IG",
+          igId: "ig",
+          type: "facebook",
+          username: null,
+          hasCapiAccessToken: true,
+          datasetId: "ds-1",
+          capiDisconnectedAt: new Date("2026-10-01T00:00:00.000Z"),
+        },
+      ])
+
+      const [row] = await channelIntegrationService.list({
+        workspaceId: "ws-1",
+        channel: "instagram",
+      })
+
+      expect(row.capiConnected).toBe(false)
+      expect(row.capiDisconnected).toBe(true)
+    })
+
+    test("channels without a Conversions API are never connected", async () => {
+      queryModels.integrationZaloModel.findMany.mockResolvedValue([
+        {
+          id: "1",
+          inboxId: "2",
+          name: "OA",
+          oaId: "oa",
+          syncTagEnabledAt: null,
+          tokenRefreshError: null,
+        },
+      ])
+
+      const [row] = await channelIntegrationService.list({
+        workspaceId: "ws-1",
+        channel: "zalo",
+      })
+
+      expect(row.capiConnected).toBe(false)
+    })
+  })
+
   test("get scopes by workspace and id, and throws when absent", async () => {
     await expect(
       channelIntegrationService.get({

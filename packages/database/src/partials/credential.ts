@@ -33,6 +33,12 @@ export const whatsappCredentialSchema = z.object({
   verifyToken: z.string(),
   clientSecret: z.string(),
   systemUserToken: z.string(),
+  // Optional: the credential `value` is stored encrypted as one object, so a
+  // required field would fail to parse every row written before this shipped.
+  // Embedded Signup `config_id` used by the Ads tab's dedicated Conversions API
+  // connect, kept apart from `configId` so the channel login can drop the CAPI
+  // permission.
+  capiConfigId: z.string().optional(),
 })
 export type WhatsappCredential = z.infer<typeof whatsappCredentialSchema>
 
@@ -44,6 +50,7 @@ export const whatsappCredentialPublicSchema = whatsappCredentialSchema.pick({
   businessId: true,
   businessName: true,
   verifyToken: true,
+  capiConfigId: true,
 })
 export type WhatsappCredentialPublic = z.infer<
   typeof whatsappCredentialPublicSchema
@@ -323,8 +330,13 @@ export const whatsappCredentialUpdateSchema = z.object({
   businessId: z.string().trim().optional(),
   businessName: z.string().trim().min(1),
   verifyToken: z.string().trim().min(1),
-  clientSecret: z.string().trim().min(1),
-  systemUserToken: z.string().trim().min(1),
+  // Secrets are never sent back to the form, so a blank one keeps the stored
+  // value; the action rejects a first save that leaves either blank.
+  clientSecret: z.string().trim().optional(),
+  systemUserToken: z.string().trim().optional(),
+  // Optional so existing admins can keep saving without configuring the
+  // dedicated Conversions API connect.
+  capiConfigId: z.string().trim().optional(),
 })
 export type WhatsappCredentialUpdate = z.infer<
   typeof whatsappCredentialUpdateSchema

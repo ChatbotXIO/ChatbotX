@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   provisionDatasetNow: vi.fn(),
   reconnectCapi: vi.fn(),
   disconnectCapi: vi.fn(),
+  saveDatasetId: vi.fn(),
   MetaConversionsException: class MetaConversionsException extends Error {},
 }))
 
@@ -28,11 +29,16 @@ vi.mock("@chatbotx.io/business", () => ({
     provisionDatasetNow: mocks.provisionDatasetNow,
     reconnectCapi: mocks.reconnectCapi,
     disconnectCapi: mocks.disconnectCapi,
+    saveDatasetId: mocks.saveDatasetId,
   },
 }))
 
-const { disconnectCapiFor, provisionCapiDatasetFor, saveCapiTestEventCodeFor } =
-  await import("@/features/meta-conversions/lib/capi-operations")
+const {
+  disconnectCapiFor,
+  provisionCapiDatasetFor,
+  saveCapiDataset,
+  saveCapiTestEventCodeFor,
+} = await import("@/features/meta-conversions/lib/capi-operations")
 
 const ref = { workspaceId: "ws-1", integrationId: "3", testEventCode: "T1" }
 
@@ -110,6 +116,55 @@ describe("capi operations: provision and disconnect", () => {
     ).rejects.toMatchObject({ code: "notFound", httpStatusCode: 404 })
 
     expect(mocks.provisionDatasetNow).not.toHaveBeenCalled()
+  })
+
+  test("saving a dataset validates it, stores it, then reconnects a disconnected channel", async () => {
+    const integration = { id: "3" }
+    mocks.findCapiIntegration.mockResolvedValue(integration)
+
+    await saveCapiDataset({
+      ...channelRef,
+      channel: "messenger",
+      datasetId: "123456",
+    })
+
+    expect(mocks.saveDatasetId).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "messenger",
+        integration,
+        datasetId: "123456",
+      }),
+    )
+    expect(mocks.reconnectCapi).toHaveBeenCalledWith({
+      channel: "messenger",
+      integration,
+    })
+  })
+
+  test("a rejected dataset is surfaced and the channel stays disconnected", async () => {
+    mocks.findCapiIntegration.mockResolvedValue({ id: "3" })
+    mocks.saveDatasetId.mockRejectedValueOnce(
+      new mocks.MetaConversionsException("(#100) no access to dataset"),
+    )
+
+    await expect(
+      saveCapiDataset({ ...channelRef, channel: "instagram", datasetId: "1" }),
+    ).rejects.toMatchObject({
+      message: "(#100) no access to dataset",
+      code: "capiRequestFailed",
+    })
+
+    expect(mocks.reconnectCapi).not.toHaveBeenCalled()
+  })
+
+  test("saving a dataset on a channel of another workspace is a 404 and calls Meta never", async () => {
+    mocks.findCapiIntegration.mockResolvedValue(null)
+
+    await expect(
+      saveCapiDataset({ ...channelRef, channel: "whatsapp", datasetId: "1" }),
+    ).rejects.toMatchObject({ code: "notFound", httpStatusCode: 404 })
+
+    expect(mocks.saveDatasetId).not.toHaveBeenCalled()
   })
 
   test("disconnecting marks the channel disconnected", async () => {

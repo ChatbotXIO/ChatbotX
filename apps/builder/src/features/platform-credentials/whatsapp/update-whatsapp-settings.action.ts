@@ -1,6 +1,7 @@
 "use server"
 
 import { platformCredentialService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   type WhatsappCredential,
   whatsappCredentialUpdateSchema,
@@ -48,6 +49,36 @@ export const updateWhatsappSettingsAction = authActionClient
   .inputSchema(whatsappCredentialUpdateSchema)
   .action(async ({ ctx, bindArgsParsedInputs: [scope], parsedInput }) => {
     const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
+
+    // A blank secret keeps the stored one, so the existing credential is only
+    // read then — `strict` so a transient read/decrypt failure aborts the save
+    // instead of silently dropping a secret. A fully re-submitted credential
+    // needs no read, so it can overwrite an undecryptable row.
+    const needsStored = !(
+      parsedInput.clientSecret && parsedInput.systemUserToken
+    )
+    const stored = needsStored
+      ? (
+          await platformCredentialService.findDecrypted({
+            userId: scopedUserId,
+            type: "whatsapp",
+            strict: true,
+          })
+        )?.config
+      : undefined
+
+    const clientSecret = parsedInput.clientSecret || stored?.clientSecret
+    const systemUserToken =
+      parsedInput.systemUserToken || stored?.systemUserToken
+    if (!(clientSecret && systemUserToken)) {
+      const t = await getTranslations()
+      throw new ChatbotXException(
+        t("whatsapp.credentialSecretsRequired"),
+        "whatsapp.credentialSecretsRequired",
+        422,
+      )
+    }
+
     const config: WhatsappCredential = {
       clientId: parsedInput.clientId,
       version: parsedInput.version,
@@ -56,8 +87,9 @@ export const updateWhatsappSettingsAction = authActionClient
       businessId: parsedInput.businessId,
       businessName: parsedInput.businessName,
       verifyToken: parsedInput.verifyToken,
-      clientSecret: parsedInput.clientSecret,
-      systemUserToken: parsedInput.systemUserToken,
+      clientSecret,
+      systemUserToken,
+      capiConfigId: parsedInput.capiConfigId,
     }
 
     await platformCredentialService.upsert({

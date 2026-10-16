@@ -1,172 +1,62 @@
 "use client"
 
+import type { CapiConnection } from "@chatbotx.io/business/meta-conversions/connection-state"
 import type { IntegrationInstagramModel } from "@chatbotx.io/database/types"
-import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
-import { cn } from "@chatbotx.io/ui/lib/utils"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { CapiConnectedCard } from "@/features/meta-conversions/components/capi-connected-card"
-import { CapiMethodChooser } from "@/features/meta-conversions/components/capi-method-chooser"
-import { CapiTestEventCard } from "@/features/meta-conversions/components/capi-test-event-card"
-import {
-  type CapiConnectionState,
-  getCapiConnectionState,
-} from "@/features/meta-conversions/lib/capi-connection-state"
-import {
-  type CapiStatus,
-  capiStatusConfig,
-  getCapiStatus,
-} from "@/features/meta-conversions/lib/capi-status"
+import { CapiConnectButton } from "@/features/meta-conversions/components/capi-connect-button"
+import { CapiConnectionTab } from "@/features/meta-conversions/components/capi-connection-tab"
 import { useWorkspaceId } from "@/hooks/routing"
+import { connectInstagramCapiAction } from "../actions/connect-capi.action"
 import { connectInstagramCustomCapiAction } from "../actions/connect-custom-capi.action"
 import { disconnectInstagramCapiAction } from "../actions/disconnect-capi.action"
-import { provisionInstagramCapiDatasetAction } from "../actions/provision-capi-dataset.action"
-import { setInstagramCapiDatasetAction } from "../actions/set-capi-dataset.action"
 
 type InstagramCapiTabProps = {
   integrationInstagram: Pick<
     IntegrationInstagramModel,
-    "id" | "type" | "hasCapiScope" | "datasetId" | "capiTestEventCode"
+    "id" | "type" | "datasetId" | "capiTestEventCode"
   >
-  hasManualCapiAccessToken: boolean
-  capiDisconnected: boolean
-  credentialAvailable: boolean
-}
-
-const statusDescriptionKey = {
-  ready: "metaConversions.statusDescriptions.ready",
-  notConnected: "metaConversions.statusDescriptions.notConnected",
-  missingPermission: "metaConversions.statusDescriptions.missingPermission",
-  unverified: "metaConversions.statusDescriptions.unverified",
-  unsupported: "metaConversions.statusDescriptions.unsupported",
-} as const satisfies Record<CapiStatus, string>
-
-function renderConnectionContent({
-  connectionState,
-  integrationInstagram,
-  workspaceId,
-  notice,
-}: {
-  connectionState: CapiConnectionState
-  integrationInstagram: InstagramCapiTabProps["integrationInstagram"]
-  workspaceId: string
-  notice: string
-}) {
-  if (connectionState === "disconnected") {
-    return (
-      <CapiMethodChooser
-        actions={{
-          connectCustom: connectInstagramCustomCapiAction,
-          setDataset: setInstagramCapiDatasetAction,
-          provision: provisionInstagramCapiDatasetAction,
-        }}
-        datasetId={integrationInstagram.datasetId}
-        integrationId={integrationInstagram.id}
-        workspaceId={workspaceId}
-      />
-    )
-  }
-  return (
-    <>
-      <CapiConnectedCard
-        datasetId={integrationInstagram.datasetId}
-        disconnectAction={disconnectInstagramCapiAction}
-        integrationId={integrationInstagram.id}
-        notice={connectionState === "awaitingScope" ? notice : undefined}
-        workspaceId={workspaceId}
-      />
-      {/* Sending needs the Meta scope or a manual token; while the scope is
-          still missing a test would only be skipped, so hide the card. */}
-      {connectionState === "awaitingScope" ? null : (
-        <CapiTestEventCard
-          channel="instagram"
-          datasetId={integrationInstagram.datasetId}
-          integrationId={integrationInstagram.id}
-          testEventCode={integrationInstagram.capiTestEventCode}
-          workspaceId={workspaceId}
-        />
-      )}
-    </>
-  )
+  connection: CapiConnection
 }
 
 export function InstagramCapiTab({
   integrationInstagram,
-  hasManualCapiAccessToken,
-  capiDisconnected,
-  credentialAvailable,
+  connection,
 }: InstagramCapiTabProps) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
   const supported = integrationInstagram.type === "facebook"
-  const connectionState = getCapiConnectionState({
-    capiDisconnected,
-    hasManualCapiAccessToken,
-    hasCapiScope: integrationInstagram.hasCapiScope,
-    hasDatasetId: Boolean(integrationInstagram.datasetId),
-  })
-  const status = getCapiStatus({
-    hasCapiScope: integrationInstagram.hasCapiScope,
-    capiDisconnected,
-    hasManualCapiAccessToken,
-    hasDatasetId: Boolean(integrationInstagram.datasetId),
-    credentialAvailable,
-    supported,
-  })
-  const statusConfig = capiStatusConfig[status]
-
-  const connectionContent = renderConnectionContent({
-    connectionState,
-    integrationInstagram,
-    workspaceId,
-    notice: t("metaConversions.statusDescriptions.missingPermission"),
-  })
 
   return (
-    <div className="flex flex-col gap-4">
-      <Card>
-        <CardHeader className="gap-2">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex flex-col gap-1.5">
-              <CardTitle>{t("metaConversions.status.title")}</CardTitle>
-              <CardDescription>
-                {t(statusDescriptionKey[status])}
-              </CardDescription>
-            </div>
-            <Badge className={cn("gap-2", statusConfig.className)}>
-              <span
-                className={cn("size-2 rounded-full", statusConfig.dotClassName)}
-              />
-              {t(statusConfig.labelKey)}
-            </Badge>
+    <CapiConnectionTab
+      channel="instagram"
+      connectCustomAction={connectInstagramCustomCapiAction}
+      connection={connection}
+      connectSlot={
+        <CapiConnectButton
+          connectAction={connectInstagramCapiAction}
+          integrationId={integrationInstagram.id}
+          workspaceId={workspaceId}
+        />
+      }
+      disconnectAction={disconnectInstagramCapiAction}
+      integration={integrationInstagram}
+      unsupportedContent={
+        supported ? undefined : (
+          <div className="flex flex-col items-start gap-3 rounded-md border bg-muted/30 p-4">
+            <p className="text-muted-foreground text-sm">
+              {t("metaConversions.unsupportedExplanation")}
+            </p>
+            <Link
+              className={buttonVariants()}
+              href={`/channels/create?channel=instagram-facebook&workspaceId=${workspaceId}`}
+            >
+              {t("metaConversions.connectViaFacebook")}
+            </Link>
           </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {supported ? (
-            connectionContent
-          ) : (
-            <div className="flex flex-col items-start gap-3 rounded-md border bg-muted/30 p-4">
-              <p className="text-muted-foreground text-sm">
-                {t("metaConversions.unsupportedExplanation")}
-              </p>
-              <Link
-                className={buttonVariants()}
-                href={`/channels/create?channel=instagram-facebook&workspaceId=${workspaceId}`}
-              >
-                {t("metaConversions.connectViaFacebook")}
-              </Link>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        )
+      }
+    />
   )
 }

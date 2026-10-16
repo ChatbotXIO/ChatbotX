@@ -5,12 +5,16 @@ import { exchangeLongLivedToken } from "./page"
 
 const FACEBOOK_OAUTH_BASE = "https://www.facebook.com"
 
-const INSTAGRAM_SCOPES = [
+/**
+ * Scopes of the channel login. Single source: the connect dialog and the
+ * integration definition both read it. The Conversions API permission is not
+ * here — the Ads tab connects it separately (`INSTAGRAM_CAPI_SCOPES`).
+ */
+export const INSTAGRAM_SCOPES = [
   "instagram_basic",
   "instagram_manage_comments",
   "instagram_manage_engagement",
   "instagram_manage_messages",
-  "instagram_manage_events",
   "pages_manage_metadata",
   "pages_show_list",
   "pages_messaging",
@@ -19,6 +23,18 @@ const INSTAGRAM_SCOPES = [
 ]
 
 export const INSTAGRAM_MANAGE_EVENTS_SCOPE = "instagram_manage_events"
+
+/**
+ * Scopes requested by the Conversions API connect on the Ads tab: the events
+ * permission, `instagram_basic` to resolve the Instagram account, and
+ * `pages_show_list` to read the linked page's access token. Kept apart from
+ * `INSTAGRAM_SCOPES` so the channel login does not carry the CAPI permission.
+ */
+export const INSTAGRAM_CAPI_SCOPES = [
+  INSTAGRAM_MANAGE_EVENTS_SCOPE,
+  "instagram_basic",
+  "pages_show_list",
+]
 
 export type InstagramAccount = {
   id: string
@@ -58,6 +74,34 @@ export function generateAuthUrl({
     client_id: clientId,
     redirect_uri: redirectUrl,
     scope: INSTAGRAM_SCOPES.join(","),
+    response_type: "code",
+    state: btoa(JSON.stringify(stateParams ?? {})),
+  })
+  return `${FACEBOOK_OAUTH_BASE}/${version}/dialog/oauth?${params.toString()}`
+}
+
+/**
+ * OAuth dialog URL for the dedicated Conversions API connect: requests only
+ * `INSTAGRAM_CAPI_SCOPES` and re-asks a previously declined permission, so a
+ * partial grant cannot silently pass. Callers pass `flow: "metaCapi"` in
+ * `stateParams` so the callback stores a separate CAPI token.
+ */
+export function generateCapiAuthUrl({
+  clientId,
+  version = DEFAULT_API_VERSION,
+  redirectUrl,
+  stateParams,
+}: {
+  clientId: string
+  version?: string
+  redirectUrl: string
+  stateParams?: Record<string, unknown>
+}): string {
+  const params = new URLSearchParams({
+    auth_type: "rerequest",
+    client_id: clientId,
+    redirect_uri: redirectUrl,
+    scope: INSTAGRAM_CAPI_SCOPES.join(","),
     response_type: "code",
     state: btoa(JSON.stringify(stateParams ?? {})),
   })

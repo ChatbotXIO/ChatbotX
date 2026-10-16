@@ -1536,6 +1536,10 @@
     },
     "referralName": {
       "label": "推薦人姓名"
+    },
+    "capiConfigId": {
+      "label": "Conversions API Config ID",
+      "description": "連接 Conversions API 時用於請求 whatsapp_business_manage_events 權限的 Embedded Signup 設定 ID。"
     }
   },
   "messages": {
@@ -4660,7 +4664,8 @@
         "loadMoreError": "無法載入更多通話，請重試。",
         "callInformation": "通話資訊"
       }
-    }
+    },
+    "credentialSecretsRequired": "請輸入應用程式密鑰和系統使用者權杖。它們尚未儲存。"
   },
   "zalo": {
     "title": "ZaloOA",
@@ -6883,15 +6888,11 @@
     "status": {
       "title": "Meta Conversions API",
       "ready": "已就緒",
-      "missingPermission": "需要權限",
-      "unverified": "未驗證",
       "unsupported": "不支援",
       "notConnected": "未連接"
     },
     "statusDescriptions": {
-      "ready": "此整合已取得 Conversions API 事件所需的 Meta 權限。",
-      "missingPermission": "請重新連接此整合，並授予所要求的 Meta 權限。",
-      "unverified": "平台應用程式設定無法取得，因此無法驗證 CAPI 權限。",
+      "ready": "此整合的 Conversions API 事件會傳送到 Meta。",
       "unsupported": "Instagram 的 Meta Conversions API 需要透過 Facebook Login for Business 連接的帳戶。",
       "notConnected": "Conversions API 是一項 Meta 商業工具，可讓您與 Meta 分享資料，以提升廣告成效。"
     },
@@ -6903,12 +6904,14 @@
       "saveFailed": "無法儲存，請再試一次。",
       "datasetRequired": "請先儲存資料集 ID，再新增存取權杖。",
       "invalidToken": "此權杖無法存取該資料集。",
-      "invalidDatasetId": "請輸入有效的 Dataset ID（僅數字）。",
       "whatsappNotFound": "找不到 WhatsApp 整合。",
       "testEventCodeRequired": "傳送測試事件前,請先儲存測試事件代碼。",
       "invalidTestEventCode": "測試事件代碼只能包含字母、數字、連字號或底線(最多 64 個字元)。",
       "invalidMessagingId": "訊息 ID 只能包含字母、數字、連字號或底線（最多 512 個字元）。",
-      "capiDisconnected": "此頻道的 Meta CAPI 已中斷連線。請先重新連線，再傳送測試事件。"
+      "capiDisconnected": "此頻道的 Meta CAPI 已中斷連線。請先重新連線，再傳送測試事件。",
+      "appNotConfigured": "此頻道的 Meta 應用程式尚未設定。",
+      "capiNotConfigured": "尚未設定 Conversions API 連線。請聯絡管理員設定 Conversions API Config ID。",
+      "wabaMismatch": "授權的 WhatsApp Business 帳號不是此號碼所屬的帳號。請使用同一帳號連接。"
     },
     "fields": {
       "eventType": {
@@ -6993,32 +6996,13 @@
     "disconnect": "中斷連線",
     "openEventManager": "開啟 Event Manager",
     "methods": {
-      "oauth": {
-        "title": "透過 Facebook 連接",
-        "description": "使用您粉專現有的連接，然後選擇資料集 ID。",
-        "connect": "建立資料集",
-        "connectedLabel": "透過 Facebook"
-      },
       "custom": {
         "title": "自訂連接",
         "description": "使用來自 Meta Events Manager 的資料集 ID 與存取權杖。",
         "start": "設定自訂連接",
         "connect": "連接",
         "connectedLabel": "自訂"
-      },
-      "whatsapp": {
-        "title": "透過 WhatsApp 連接",
-        "description": "使用您的 WhatsApp 連接，然後選擇資料集 ID。",
-        "connect": "建立資料集",
-        "connectedLabel": "透過 WhatsApp"
       }
-    },
-    "finalize": {
-      "title": "選擇資料集 ID",
-      "description": "輸入現有的資料集 ID，或留空以自動建立一個。",
-      "save": "儲存",
-      "createDataset": "建立資料集",
-      "caveat": "未連結至此粉專或 Instagram 帳戶的資料集 ID 可能無法正確歸因事件。將此欄位留空即可自動建立已連結的資料集。"
     },
     "whatsapp": {
       "connect": "連接"
@@ -7067,6 +7051,23 @@
       "messagingIdHint": "僅限字母、數字、連字號和底線（最多 512 個字元）。",
       "cancel": "取消",
       "confirmSend": "傳送"
+    },
+    "connect": {
+      "button": "連接 Conversions API",
+      "success": "已連接 Conversions API。",
+      "title": "透過 Meta 連接",
+      "description": "登入 Meta 並授權轉換事件的存取權限。這會為 Conversions API 建立獨立的連接，不會改變此頻道的登入方式。"
+    },
+    "connectResult": {
+      "errors": {
+        "cancelled": "已取消連接。未做任何變更。",
+        "notFound": "找不到此頻道。",
+        "pageNotFound": "你使用的 Facebook 帳號並未管理此粉絲專頁。請使用管理此專頁的帳號登入。",
+        "accountNotFound": "你使用的 Facebook 帳號並未管理此 Instagram 帳號。請使用管理該帳號的帳號登入。",
+        "datasetFailed": "Meta 不允許透過此連接建立資料集。請確認已授予所有要求的權限後再試一次。",
+        "sessionExpired": "連接耗時過長，或是在另一個分頁中發起的。請重試。",
+        "failed": "無法連接 Conversions API。請再試一次。"
+      }
     }
   },
   "googleAds": {

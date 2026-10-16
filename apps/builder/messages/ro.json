@@ -3427,6 +3427,10 @@
     },
     "referralName": {
       "label": "Numele celui care a recomandat"
+    },
+    "capiConfigId": {
+      "label": "Conversions API Config ID",
+      "description": "ID-ul configurației Embedded Signup folosit pentru a cere permisiunea whatsapp_business_manage_events la conectarea Conversions API."
     }
   },
   "channels": {
@@ -4627,7 +4631,8 @@
         "loadMoreError": "Nu s-au putut încărca mai multe apeluri. Încercați din nou.",
         "callInformation": "Informații despre apel"
       }
-    }
+    },
+    "credentialSecretsRequired": "Introdu secretul aplicației și tokenul utilizatorului de sistem. Nu sunt încă salvate."
   },
   "zalo": {
     "title": "Zalo OA",
@@ -6883,15 +6888,11 @@
     "status": {
       "title": "Meta Conversions API",
       "ready": "Pregătit",
-      "missingPermission": "Permisiune necesară",
-      "unverified": "Neverificat",
       "unsupported": "Neacceptat",
       "notConnected": "Neconectat"
     },
     "statusDescriptions": {
-      "ready": "Această integrare are permisiunea Meta necesară pentru evenimentele Conversions API.",
-      "missingPermission": "Reconectează această integrare și acordă permisiunea Meta solicitată.",
-      "unverified": "Setările aplicației platformei nu sunt disponibile, deci permisiunea CAPI nu poate fi verificată.",
+      "ready": "Evenimentele Conversions API ale acestei integrări sunt trimise către Meta.",
       "unsupported": "Meta Conversions API pentru Instagram necesită un cont conectat prin Facebook Login for Business.",
       "notConnected": "Conversions API este un instrument Meta Business care îți permite să partajezi date cu Meta pentru a îmbunătăți performanța anunțurilor."
     },
@@ -6903,12 +6904,14 @@
       "saveFailed": "Nu s-a putut salva. Te rugăm să încerci din nou.",
       "datasetRequired": "Salvează un ID set de date înainte de a adăuga un token de acces.",
       "invalidToken": "Acest token nu a putut accesa setul de date.",
-      "invalidDatasetId": "Introdu un Dataset ID valid (doar cifre).",
       "whatsappNotFound": "Integrarea WhatsApp nu a fost găsită.",
       "testEventCodeRequired": "Salvează un cod de eveniment de test înainte de a trimite un eveniment de test.",
       "invalidTestEventCode": "Codul evenimentului de test poate conține doar litere, cifre, cratime sau underscore-uri (max. 64).",
       "invalidMessagingId": "ID-ul de mesagerie poate conține doar litere, cifre, cratime sau liniuțe de subliniere (max. 512).",
-      "capiDisconnected": "Meta CAPI este deconectat pentru acest canal. Reconectează-l înainte de a trimite un eveniment de test."
+      "capiDisconnected": "Meta CAPI este deconectat pentru acest canal. Reconectează-l înainte de a trimite un eveniment de test.",
+      "appNotConfigured": "Aplicația Meta pentru acest canal nu este încă configurată.",
+      "capiNotConfigured": "Conexiunea Conversions API nu este configurată. Cere administratorului să seteze Conversions API Config ID.",
+      "wabaMismatch": "Contul WhatsApp Business autorizat nu este cel căruia îi aparține acest număr. Conectează-te cu același cont."
     },
     "fields": {
       "eventType": {
@@ -6993,32 +6996,13 @@
     "disconnect": "Deconectează",
     "openEventManager": "Deschide Event Manager",
     "methods": {
-      "oauth": {
-        "title": "Conectează prin Facebook",
-        "description": "Folosește conexiunea existentă a paginii tale, apoi alege un ID set de date.",
-        "connect": "Creează set de date",
-        "connectedLabel": "prin Facebook"
-      },
       "custom": {
         "title": "Conexiune personalizată",
         "description": "Folosește un ID set de date și un token de acces din Meta Events Manager.",
         "start": "Configurează o conexiune personalizată",
         "connect": "Conectează",
         "connectedLabel": "Personalizat"
-      },
-      "whatsapp": {
-        "title": "Conectează prin WhatsApp",
-        "description": "Folosește conexiunea ta WhatsApp, apoi alege un ID set de date.",
-        "connect": "Creează set de date",
-        "connectedLabel": "prin WhatsApp"
       }
-    },
-    "finalize": {
-      "title": "Alege un ID set de date",
-      "description": "Introdu un ID set de date existent, sau lasă gol pentru a crea unul automat.",
-      "save": "Salvează",
-      "createDataset": "Creează set de date",
-      "caveat": "Un ID set de date care nu este asociat acestei Pagini sau cont Instagram poate să nu atribuie corect evenimentele. Lasă acest câmp gol pentru a crea automat un set de date asociat."
     },
     "whatsapp": {
       "connect": "Conectează"
@@ -7067,6 +7051,23 @@
       "messagingIdHint": "Doar litere, cifre, cratime și liniuțe de subliniere (max. 512).",
       "cancel": "Anulează",
       "confirmSend": "Trimite"
+    },
+    "connect": {
+      "button": "Conectează Conversions API",
+      "success": "Conversions API a fost conectată.",
+      "title": "Conectează-te cu Meta",
+      "description": "Conectează-te la Meta și acordă acces pentru evenimentele de conversie. Se creează o conexiune separată pentru Conversions API și nu se schimbă modul în care se autentifică acest canal."
+    },
+    "connectResult": {
+      "errors": {
+        "cancelled": "Conectare anulată. Nu s-a modificat nimic.",
+        "notFound": "Acest canal nu a fost găsit.",
+        "pageNotFound": "Contul de Facebook folosit nu administrează această Pagină. Autentifică-te cu un cont care o administrează.",
+        "accountNotFound": "Contul de Facebook folosit nu administrează acest cont Instagram. Autentifică-te cu un cont care îl administrează.",
+        "datasetFailed": "Meta nu a permis crearea unui set de date cu această conexiune. Acordă toate permisiunile solicitate și încearcă din nou.",
+        "sessionExpired": "Conectarea a durat prea mult sau a fost pornită într-o altă filă. Încearcă din nou.",
+        "failed": "Nu s-a putut conecta Conversions API. Încearcă din nou."
+      }
     }
   },
   "googleAds": {

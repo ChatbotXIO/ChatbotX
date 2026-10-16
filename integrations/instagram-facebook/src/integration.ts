@@ -10,6 +10,7 @@ import {
   debugToken,
   exchangeCodeForToken,
   getUserInstagramAccounts,
+  INSTAGRAM_SCOPES,
   toAppAccessToken,
 } from "./apis/auth"
 import {
@@ -33,19 +34,6 @@ import type {
   InstagramConfig,
 } from "./schema"
 
-const INSTAGRAM_OAUTH_SCOPES = [
-  "instagram_basic",
-  "instagram_manage_comments",
-  "instagram_manage_engagement",
-  "instagram_manage_messages",
-  "instagram_manage_events",
-  "pages_manage_metadata",
-  "pages_show_list",
-  "pages_messaging",
-  "pages_read_engagement",
-  "business_management",
-]
-
 const config: IntegrationDefinition<
   InstagramConfig,
   InstagramAuthValue,
@@ -62,7 +50,7 @@ const config: IntegrationDefinition<
       return buildFacebookDialogUrl({
         clientId: config.clientId,
         callbackUrl,
-        scopes: INSTAGRAM_OAUTH_SCOPES,
+        scopes: INSTAGRAM_SCOPES,
         state,
         version: config.version,
       })

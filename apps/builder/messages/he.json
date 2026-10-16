@@ -2534,7 +2534,8 @@
         "loadMoreError": "טעינת שיחות נוספות נכשלה. נסו שוב.",
         "callInformation": "פרטי השיחה"
       }
-    }
+    },
+    "credentialSecretsRequired": "הזינו את סוד האפליקציה ואת אסימון משתמש המערכת. הם עדיין לא נשמרו."
   },
   "zalo": {
     "title": "Zalo OA",
@@ -6044,6 +6045,10 @@
     },
     "referralName": {
       "label": "שם הממליץ"
+    },
+    "capiConfigId": {
+      "label": "Conversions API Config ID",
+      "description": "מזהה תצורת Embedded Signup המשמש לבקשת ההרשאה whatsapp_business_manage_events בעת חיבור Conversions API."
     }
   },
   "billing": {
@@ -6883,15 +6888,11 @@
     "status": {
       "title": "Meta Conversions API",
       "ready": "מוכן",
-      "missingPermission": "נדרשת הרשאה",
-      "unverified": "לא מאומת",
       "unsupported": "לא נתמך",
       "notConnected": "לא מחובר"
     },
     "statusDescriptions": {
-      "ready": "לשילוב זה יש את הרשאת Meta הנדרשת לאירועי Conversions API.",
-      "missingPermission": "חברו מחדש את השילוב הזה והעניקו את הרשאת Meta המבוקשת.",
-      "unverified": "הגדרות אפליקציית הפלטפורמה אינן זמינות, ולכן לא ניתן לאמת את הרשאת ה-CAPI.",
+      "ready": "אירועי Conversions API מהאינטגרציה הזו נשלחים ל-Meta.",
       "unsupported": "Meta Conversions API עבור Instagram דורש חשבון המחובר דרך Facebook Login for Business.",
       "notConnected": "ה-Conversions API הוא כלי עסקי של Meta שמאפשר לכם לשתף נתונים עם Meta כדי לשפר את ביצועי המודעות."
     },
@@ -6903,12 +6904,14 @@
       "saveFailed": "לא ניתן היה לשמור. נסו שוב.",
       "datasetRequired": "שמרו מזהה Dataset לפני הוספת אסימון גישה.",
       "invalidToken": "האסימון הזה לא הצליח לגשת למאגר הנתונים.",
-      "invalidDatasetId": "הזן Dataset ID תקין (ספרות בלבד).",
       "whatsappNotFound": "שילוב WhatsApp לא נמצא.",
       "testEventCodeRequired": "שמור קוד אירוע בדיקה לפני שליחת אירוע בדיקה.",
       "invalidTestEventCode": "קוד אירוע הבדיקה יכול להכיל רק אותיות, ספרות, מקפים או קווים תחתונים (עד 64 תווים).",
       "invalidMessagingId": "מזהה ההודעות יכול להכיל רק אותיות, ספרות, מקפים או קווים תחתונים (עד 512).",
-      "capiDisconnected": "Meta CAPI מנותק עבור ערוץ זה. חבר אותו מחדש לפני שליחת אירוע בדיקה."
+      "capiDisconnected": "Meta CAPI מנותק עבור ערוץ זה. חבר אותו מחדש לפני שליחת אירוע בדיקה.",
+      "appNotConfigured": "אפליקציית Meta של הערוץ הזה עדיין לא הוגדרה.",
+      "capiNotConfigured": "חיבור Conversions API לא הוגדר. בקשו מהמנהל להגדיר את Conversions API Config ID.",
+      "wabaMismatch": "חשבון WhatsApp Business שאושר אינו החשבון שאליו שייך המספר הזה. יש להתחבר עם אותו חשבון."
     },
     "fields": {
       "eventType": {
@@ -6993,32 +6996,13 @@
     "disconnect": "ניתוק",
     "openEventManager": "פתיחת Event Manager",
     "methods": {
-      "oauth": {
-        "title": "חיבור דרך Facebook",
-        "description": "השתמשו בחיבור הקיים של הדף שלכם, ולאחר מכן בחרו מזהה Dataset.",
-        "connect": "יצירת מערך נתונים",
-        "connectedLabel": "דרך Facebook"
-      },
       "custom": {
         "title": "חיבור מותאם אישית",
         "description": "השתמשו במזהה Dataset ובאסימון גישה מ-Meta Events Manager.",
         "start": "הגדרת חיבור מותאם אישית",
         "connect": "חיבור",
         "connectedLabel": "מותאם אישית"
-      },
-      "whatsapp": {
-        "title": "חיבור דרך WhatsApp",
-        "description": "השתמשו בחיבור ה-WhatsApp שלכם, ולאחר מכן בחרו מזהה Dataset.",
-        "connect": "יצירת מערך נתונים",
-        "connectedLabel": "דרך WhatsApp"
       }
-    },
-    "finalize": {
-      "title": "בחרו מזהה Dataset",
-      "description": "הזינו מזהה Dataset קיים, או השאירו ריק כדי ליצור אחד באופן אוטומטי.",
-      "save": "שמור",
-      "createDataset": "יצירת מערך נתונים",
-      "caveat": "מזהה Dataset שאינו מקושר לעמוד או לחשבון Instagram הזה עלול לא לייחס אירועים כראוי. השאירו שדה זה ריק כדי ליצור מאגר נתונים מקושר באופן אוטומטי."
     },
     "whatsapp": {
       "connect": "חיבור"
@@ -7067,6 +7051,23 @@
       "messagingIdHint": "אותיות, ספרות, מקפים וקווים תחתונים בלבד (עד 512).",
       "cancel": "ביטול",
       "confirmSend": "שליחה"
+    },
+    "connect": {
+      "button": "חיבור Conversions API",
+      "success": "Conversions API חובר.",
+      "title": "התחברות עם Meta",
+      "description": "היכנסו ל-Meta ואשרו גישה לאירועי המרה. פעולה זו יוצרת חיבור נפרד עבור Conversions API ואינה משנה את אופן ההתחברות של הערוץ הזה."
+    },
+    "connectResult": {
+      "errors": {
+        "cancelled": "החיבור בוטל. לא בוצע שינוי.",
+        "notFound": "הערוץ הזה לא נמצא.",
+        "pageNotFound": "חשבון Facebook שבו השתמשתם אינו מנהל את הדף הזה. היכנסו עם חשבון שמנהל אותו.",
+        "accountNotFound": "חשבון Facebook שבו השתמשתם אינו מנהל את חשבון Instagram הזה. היכנסו עם חשבון שמנהל אותו.",
+        "datasetFailed": "Meta לא אפשרה יצירת מערך נתונים עם החיבור הזה. ודאו שאישרתם את כל ההרשאות המבוקשות ונסו שוב.",
+        "sessionExpired": "החיבור ארך זמן רב מדי או התחיל בלשונית אחרת. נסו שוב.",
+        "failed": "לא ניתן היה לחבר את Conversions API. נסו שוב."
+      }
     }
   },
   "googleAds": {

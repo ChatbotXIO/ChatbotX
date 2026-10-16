@@ -2190,6 +2190,10 @@
     },
     "referralName": {
       "label": "Naam doorverwijzer"
+    },
+    "capiConfigId": {
+      "label": "Conversions API Config ID",
+      "description": "Embedded Signup-configuratie-ID waarmee de machtiging whatsapp_business_manage_events wordt aangevraagd bij het koppelen van de Conversions API."
     }
   },
   "condition": {
@@ -4627,7 +4631,8 @@
         "loadMoreError": "Meer oproepen konden niet worden geladen. Probeer het opnieuw.",
         "callInformation": "Oproepinformatie"
       }
-    }
+    },
+    "credentialSecretsRequired": "Voer het app-geheim en het systeemgebruikerstoken in. Ze zijn nog niet opgeslagen."
   },
   "zalo": {
     "title": "Zalo OA",
@@ -6883,15 +6888,11 @@
     "status": {
       "title": "Meta Conversions API",
       "ready": "Gereed",
-      "missingPermission": "Machtiging vereist",
-      "unverified": "Niet geverifieerd",
       "unsupported": "Niet ondersteund",
       "notConnected": "Niet gekoppeld"
     },
     "statusDescriptions": {
-      "ready": "Deze integratie heeft de vereiste Meta-machtiging voor Conversions API-gebeurtenissen.",
-      "missingPermission": "Koppel deze integratie opnieuw en verleen de gevraagde Meta-machtiging.",
-      "unverified": "De platforminstellingen van de app zijn niet beschikbaar, waardoor de CAPI-machtiging niet kan worden geverifieerd.",
+      "ready": "Conversions API-gebeurtenissen van deze integratie worden naar Meta verzonden.",
       "unsupported": "Meta Conversions API voor Instagram vereist een account dat is gekoppeld via Facebook Login for Business.",
       "notConnected": "De Conversions API is een Meta Business Tool waarmee je gegevens met Meta kunt delen om de prestaties van advertenties te verbeteren."
     },
@@ -6903,12 +6904,14 @@
       "saveFailed": "Opslaan is mislukt. Probeer het opnieuw.",
       "datasetRequired": "Sla een Dataset-ID op voordat je een toegangstoken toevoegt.",
       "invalidToken": "Dit token kreeg geen toegang tot de dataset.",
-      "invalidDatasetId": "Voer een geldig Dataset ID in (alleen cijfers).",
       "whatsappNotFound": "WhatsApp-integratie niet gevonden.",
       "testEventCodeRequired": "Sla een testgebeurteniscode op voordat je een testgebeurtenis verzendt.",
       "invalidTestEventCode": "De testgebeurteniscode mag alleen letters, cijfers, koppeltekens of underscores bevatten (max. 64).",
       "invalidMessagingId": "Het messaging-id mag alleen letters, cijfers, koppeltekens of onderstrepingstekens bevatten (max. 512).",
-      "capiDisconnected": "Meta CAPI is losgekoppeld voor dit kanaal. Koppel het opnieuw voordat je een testgebeurtenis verzendt."
+      "capiDisconnected": "Meta CAPI is losgekoppeld voor dit kanaal. Koppel het opnieuw voordat je een testgebeurtenis verzendt.",
+      "appNotConfigured": "De Meta-app voor dit kanaal is nog niet geconfigureerd.",
+      "capiNotConfigured": "De Conversions API-koppeling is niet geconfigureerd. Vraag je beheerder om de Conversions API Config ID in te stellen.",
+      "wabaMismatch": "Het geautoriseerde WhatsApp Business-account is niet het account waartoe dit nummer behoort. Koppel met hetzelfde account."
     },
     "fields": {
       "eventType": {
@@ -6993,32 +6996,13 @@
     "disconnect": "Loskoppelen",
     "openEventManager": "Event Manager openen",
     "methods": {
-      "oauth": {
-        "title": "Koppelen via Facebook",
-        "description": "Gebruik de bestaande koppeling van je pagina en kies daarna een Dataset-ID.",
-        "connect": "Dataset maken",
-        "connectedLabel": "via Facebook"
-      },
       "custom": {
         "title": "Aangepaste koppeling",
         "description": "Gebruik een Dataset-ID en een toegangstoken uit Meta Events Manager.",
         "start": "Aangepaste koppeling instellen",
         "connect": "Koppelen",
         "connectedLabel": "Aangepast"
-      },
-      "whatsapp": {
-        "title": "Koppelen via WhatsApp",
-        "description": "Gebruik je WhatsApp-koppeling en kies daarna een Dataset-ID.",
-        "connect": "Dataset maken",
-        "connectedLabel": "via WhatsApp"
       }
-    },
-    "finalize": {
-      "title": "Kies een Dataset-ID",
-      "description": "Voer een bestaande Dataset-ID in, of laat dit veld leeg om er automatisch een aan te maken.",
-      "save": "Opslaan",
-      "createDataset": "Dataset maken",
-      "caveat": "Een Dataset-ID die niet aan deze pagina of dit Instagram-account is gekoppeld, kan gebeurtenissen mogelijk niet correct toewijzen. Laat dit veld leeg om automatisch een gekoppelde dataset aan te maken."
     },
     "whatsapp": {
       "connect": "Koppelen"
@@ -7067,6 +7051,23 @@
       "messagingIdHint": "Alleen letters, cijfers, koppeltekens en onderstrepingstekens (max. 512).",
       "cancel": "Annuleren",
       "confirmSend": "Verzenden"
+    },
+    "connect": {
+      "button": "Conversions API koppelen",
+      "success": "Conversions API is gekoppeld.",
+      "title": "Verbinden met Meta",
+      "description": "Meld je aan bij Meta en geef toegang voor conversiegebeurtenissen. Dit maakt een aparte koppeling voor de Conversions API en wijzigt niet hoe dit kanaal inlogt."
+    },
+    "connectResult": {
+      "errors": {
+        "cancelled": "Koppeling geannuleerd. Er is niets gewijzigd.",
+        "notFound": "Dit kanaal is niet gevonden.",
+        "pageNotFound": "Het gebruikte Facebook-account beheert deze pagina niet. Meld je aan met een account dat dat wel doet.",
+        "accountNotFound": "Het gebruikte Facebook-account beheert dit Instagram-account niet. Meld je aan met een account dat dat wel doet.",
+        "datasetFailed": "Meta stond het maken van een dataset met deze koppeling niet toe. Verleen alle gevraagde machtigingen en probeer het opnieuw.",
+        "sessionExpired": "De koppeling duurde te lang of is in een ander tabblad gestart. Probeer het opnieuw.",
+        "failed": "De Conversions API kon niet worden gekoppeld. Probeer het opnieuw."
+      }
     }
   },
   "googleAds": {
