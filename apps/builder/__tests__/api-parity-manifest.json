@@ -291,6 +291,7 @@
     "leaderboards/delete-leaderboard.action:deleteLeaderboardAction": "covered:leaderboards",
     "leaderboards/export-leaderboard.action:exportLeaderboardAction": "covered:leaderboards",
     "leaderboards/export-leaderboard.action:getLeaderboardExportAction": "covered:leaderboards",
+    "leaderboards/find-participant-conversation.action:findParticipantConversationAction": "private:opens the inbox from the participants table; conversations are listed through the conversations API",
     "leaderboards/list-telegram-chats.action:listTelegramChatsAction": "covered:leaderboards",
     "leaderboards/participant.action:adjustParticipantScoreAction": "covered:leaderboards",
     "leaderboards/participant.action:getParticipantHistoryAction": "covered:leaderboards",
