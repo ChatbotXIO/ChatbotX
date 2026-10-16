@@ -778,7 +778,8 @@
         "video": "Video",
         "audio": "Audio",
         "gif": "GIF",
-        "file": "Datei"
+        "file": "Datei",
+        "storyMention": "Story-Erwähnung"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -1369,7 +1370,8 @@
       "video": "Video",
       "audio": "Audio",
       "gif": "GIF",
-      "file": "Datei"
+      "file": "Datei",
+      "storyMention": "Story-Erwähnung"
     },
     "lastMonth": {
       "label": "Letzter Monat"
@@ -5817,12 +5819,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Instagram-Story-Antwort-Automatisierung",
-    "description": "Automatisieren Sie Antworten auf Instagram-Story-Antworten für Ihre Kontakte.",
+    "title": "Instagram-Story-Automatisierung",
+    "description": "Automatisieren Sie Antworten, wenn Kontakte auf Ihre Instagram-Storys antworten oder Sie in ihren Storys erwähnen.",
     "create": "Automatisierung erstellen",
     "replies": "Antworten",
     "activated": "Automatisierung aktiviert",
     "deactivated": "Automatisierung deaktiviert",
+    "trigger": "Auslöser",
+    "triggerDescription": "Wählen Sie, was diese Automatisierung startet. Nach dem Erstellen kann es nicht mehr geändert werden.",
+    "triggerType": {
+      "storyReply": "Antwortet auf Ihre Story",
+      "storyMention": "Erwähnt Sie in der eigenen Story"
+    },
     "trackStoryReplyOn": "Story-Antworten verfolgen für",
     "trackStoryReplyOnDescription": "Wenden Sie diese Automatisierung auf Antworten auf alle Ihre Stories an, oder begrenzen Sie sie auf bestimmte Stories, die Sie auswählen.",
     "reply": "Antwort",

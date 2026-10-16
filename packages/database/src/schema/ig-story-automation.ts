@@ -13,7 +13,9 @@ import type {
   CommentReply,
 } from "../partials/comment-automation"
 import {
+  type IgStoryAutomationTrigger,
   type IgStoryTarget,
+  igStoryAutomationTriggers,
   igStoryAutomationTypes,
 } from "../partials/ig-story-automation"
 import { bigintAsString, sharedColumns } from "../partials/shared"
@@ -23,6 +25,11 @@ import { workspaceModel } from "./workspace"
 export const igStoryAutomationType = pgEnum(
   "igStoryAutomationType",
   igStoryAutomationTypes.options as [string, ...string[]],
+)
+
+export const igStoryAutomationTrigger = pgEnum(
+  "igStoryAutomationTrigger",
+  igStoryAutomationTriggers.options as [string, ...string[]],
 )
 
 export const igStoryAutomationModel = pgTable(
@@ -41,6 +48,10 @@ export const igStoryAutomationModel = pgTable(
       onUpdate: "cascade",
     }),
     type: igStoryAutomationType().notNull(),
+    trigger: igStoryAutomationTrigger()
+      .$type<IgStoryAutomationTrigger>()
+      .notNull()
+      .default("storyReply"),
     isActive: boolean().notNull().default(true),
     startTime: text(),
     endTime: text(),

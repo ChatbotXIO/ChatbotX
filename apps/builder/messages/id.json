@@ -778,7 +778,8 @@
         "video": "Video",
         "audio": "Audio",
         "gif": "GIF",
-        "file": "File"
+        "file": "File",
+        "storyMention": "Sebutan di Story"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -1369,7 +1370,8 @@
       "video": "Video",
       "audio": "Audio",
       "gif": "GIF",
-      "file": "File"
+      "file": "File",
+      "storyMention": "Sebutan di Story"
     },
     "lastMonth": {
       "label": "Terakhir month"
@@ -5817,12 +5819,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Otomatisasi Balasan Story Instagram",
-    "description": "Otomatiskan balasan untuk balasan Story Instagram bagi kontak Anda.",
+    "title": "Otomatisasi Story Instagram",
+    "description": "Otomatiskan balasan saat kontak membalas Story Instagram Anda atau menyebut Anda di Story mereka.",
     "create": "Buat Otomatisasi",
     "replies": "Balasan",
     "activated": "Otomatisasi diaktifkan",
     "deactivated": "Otomatisasi dinonaktifkan",
+    "trigger": "Pemicu",
+    "triggerDescription": "Pilih apa yang memulai otomatisasi ini. Tidak dapat diubah setelah otomatisasi dibuat.",
+    "triggerType": {
+      "storyReply": "Membalas Story Anda",
+      "storyMention": "Menyebut Anda di Story mereka"
+    },
     "trackStoryReplyOn": "Lacak balasan Story pada",
     "trackStoryReplyOnDescription": "Terapkan otomatisasi ini pada balasan di semua Story Anda, atau batasi hanya untuk Story tertentu yang Anda pilih.",
     "reply": "Balasan",

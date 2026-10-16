@@ -1248,7 +1248,8 @@
         "location": "位置",
         "refLink": "参考链接",
         "text": "文本",
-        "video": "视频"
+        "video": "视频",
+        "storyMention": "限时动态提及"
       },
       "locale": "语言",
       "messengerList": "Messenger 清单",
@@ -2473,7 +2474,8 @@
       "location": "位置",
       "refLink": "参考链接",
       "text": "文本",
-      "video": "视频"
+      "video": "视频",
+      "storyMention": "限时动态提及"
     },
     "lifeTime": {
       "label": "生命周期"
@@ -4129,7 +4131,13 @@
     },
     "create": "创建自动化",
     "deactivated": "自动化已停用",
-    "description": "自动回复联系人对 Instagram 限时动态的回复。",
+    "trigger": "触发条件",
+    "triggerDescription": "选择启动此自动化的事件。创建后无法更改。",
+    "triggerType": {
+      "storyReply": "回复你的限时动态",
+      "storyMention": "在其限时动态中提及你"
+    },
+    "description": "当联系人回复你的 Instagram 限时动态或在自己的限时动态中提及你时，自动发送回复。",
     "includeKeywords": "要比对的关键字",
     "includeKeywordsType": "回复对象",
     "includeKeywordsTypeDescription": "选择此自动化要回应哪些限时动态回复。",
@@ -4169,7 +4177,7 @@
       "all": "所有限时动态",
       "specificStories": "指定限时动态"
     },
-    "title": "Instagram 限时动态回复自动化",
+    "title": "Instagram 限时动态自动化",
     "trackStoryReplyOn": "追踪限时动态回复的对象",
     "trackStoryReplyOnDescription": "可套用到您所有限时动态的回复，或缩小范围到您指定的特定限时动态。"
   },

@@ -7,7 +7,11 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import {
+  type CommentIncludeKeywords,
+  type IgStoryAutomationTrigger,
   type IgStoryAutomationType,
+  type IgStoryTarget,
+  igStoryAutomationTriggers,
   igStoryAutomationTypes,
 } from "@chatbotx.io/database/partials"
 import { igStoryAutomationModel } from "@chatbotx.io/database/schema"
@@ -31,6 +35,7 @@ type ListIgStoriesInput = {
   includeAllFolders?: boolean
   name?: string | null
   isActive?: boolean | null
+  trigger?: IgStoryAutomationTrigger | null
 }
 
 type ListIgStoriesResult = {
@@ -41,21 +46,52 @@ type ListIgStoriesResult = {
 // `type` is deliberately excluded: it decides which shared-table rows every
 // read path scopes to, so it is set once at creation and never carried in an
 // update payload. Excluding it here turns any regression into a compile error.
+// `trigger` is excluded for the same reason: it is chosen at creation only, so
+// `repliesCount` always counts one kind of event.
 type IgStoryAutomationWriteData = Omit<
   typeof igStoryAutomationModel.$inferInsert,
-  "id" | "workspaceId" | "type"
+  "id" | "workspaceId" | "type" | "trigger"
 >
+
+const matchAllStories = (): IgStoryTarget => ({ type: "all", value: [] })
+const matchAllKeywords = (): CommentIncludeKeywords => ({
+  type: "all",
+  value: [],
+})
+
+// A story mention happens on the contact's own story (so there is no story of
+// ours to pick) and usually carries no text (so there is nothing to match
+// keywords against): both filters are pinned to "all" for these rows. Only the
+// filters present in the payload are pinned, so an unrelated update (a status
+// toggle, a rename) does not rewrite them.
+function pinStoryMentionFilters<T extends Partial<IgStoryAutomationWriteData>>(
+  trigger: IgStoryAutomationTrigger,
+  data: T,
+): T {
+  if (trigger !== igStoryAutomationTriggers.enum.storyMention) {
+    return data
+  }
+  return {
+    ...data,
+    ...(data.story !== undefined && { story: matchAllStories() }),
+    ...(data.includeKeywords !== undefined && {
+      includeKeywords: matchAllKeywords(),
+    }),
+  }
+}
 
 class IgStoryAutomationService extends BaseService {
   findActiveAutomations(props: {
     workspaceId: string
     channelType: "instagram" | "instagramFacebook"
+    trigger: IgStoryAutomationTrigger
   }) {
     return db.query.igStoryAutomationModel.findMany({
       where: {
         workspaceId: props.workspaceId,
         isActive: true,
         type: props.channelType,
+        trigger: props.trigger,
       },
     })
   }
@@ -83,6 +119,7 @@ class IgStoryAutomationService extends BaseService {
         input.isActive !== undefined && input.isActive !== null
           ? input.isActive
           : undefined,
+      trigger: input.trigger ?? undefined,
     }
 
     const pagination = getPaginationWithDefaults(input)
@@ -127,15 +164,24 @@ class IgStoryAutomationService extends BaseService {
   async create(input: {
     workspaceId: string
     type: IgStoryAutomationType
+    trigger?: IgStoryAutomationTrigger
     data: IgStoryAutomationWriteData
   }): Promise<IgStoryAutomationModel> {
+    const trigger = input.trigger ?? igStoryAutomationTriggers.enum.storyReply
     const [created] = await db
       .insert(igStoryAutomationModel)
       .values({
         id: createId(),
         workspaceId: input.workspaceId,
         type: input.type,
-        ...input.data,
+        trigger,
+        // Filters are written explicitly (the API may omit them for a story
+        // mention) rather than relying on the jsonb column defaults.
+        ...pinStoryMentionFilters(trigger, {
+          story: matchAllStories(),
+          includeKeywords: matchAllKeywords(),
+          ...input.data,
+        }),
       })
       .returning()
     return created
@@ -145,11 +191,11 @@ class IgStoryAutomationService extends BaseService {
     ctx: { workspaceId: string; id: string },
     data: Partial<IgStoryAutomationWriteData>,
   ): Promise<IgStoryAutomationModel> {
-    await this.findOrFail(ctx)
+    const existing = await this.findOrFail(ctx)
 
     const [updated] = await db
       .update(igStoryAutomationModel)
-      .set(data)
+      .set(pinStoryMentionFilters(existing.trigger, data))
       .where(
         and(
           eq(igStoryAutomationModel.id, ctx.id),

@@ -778,7 +778,8 @@
         "video": "Video",
         "audio": "Ses",
         "gif": "GIF",
-        "file": "Dosya"
+        "file": "Dosya",
+        "storyMention": "Hikayede bahsetme"
       },
       "ctwaConversionTypes": {
         "lead": "Potansiyel Müşteri",
@@ -1515,7 +1516,8 @@
       "video": "Video",
       "audio": "Ses",
       "gif": "GIF",
-      "file": "Dosya"
+      "file": "Dosya",
+      "storyMention": "Hikayede bahsetme"
     },
     "lastMonth": {
       "label": "Geçen ay"
@@ -5817,12 +5819,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Instagram Hikaye Yanıt Otomasyonu",
-    "description": "Kişileriniz için Instagram hikaye yanıtlarına verilen yanıtları otomatikleştirin.",
+    "title": "Instagram Hikaye Otomasyonu",
+    "description": "Kişiler Instagram hikayelerinize yanıt verdiğinde veya kendi hikayelerinde sizden bahsettiğinde yanıtları otomatikleştirin.",
     "create": "Otomasyon Oluştur",
     "replies": "Yanıtlar",
     "activated": "Otomasyon etkinleştirildi",
     "deactivated": "Otomasyon devre dışı bırakıldı",
+    "trigger": "Tetikleyici",
+    "triggerDescription": "Bu otomasyonu neyin başlatacağını seçin. Otomasyon oluşturulduktan sonra değiştirilemez.",
+    "triggerType": {
+      "storyReply": "Hikayenize yanıt verir",
+      "storyMention": "Kendi hikayesinde sizden bahseder"
+    },
     "trackStoryReplyOn": "Hikaye yanıtlarını şurada izle",
     "trackStoryReplyOnDescription": "Bu otomasyonu tüm hikayelerinizdeki yanıtlara uygulayın veya seçtiğiniz belirli hikayelerle sınırlayın.",
     "reply": "Yanıt",

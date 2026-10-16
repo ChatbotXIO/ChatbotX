@@ -40,6 +40,8 @@ type IgStoryFormProps = {
   isSubmitting: boolean
   onCancel: () => void
   submitLabel: string
+  // The trigger is chosen at creation only.
+  isTriggerLocked?: boolean
 }
 
 export function IgStoryForm({
@@ -48,6 +50,7 @@ export function IgStoryForm({
   isSubmitting,
   onCancel,
   submitLabel,
+  isTriggerLocked = false,
 }: IgStoryFormProps) {
   const t = useTranslations()
   const flowOptions = useFlowSelectOptions()
@@ -61,6 +64,11 @@ export function IgStoryForm({
   }, [isAIAgentsError, t])
 
   const [selectStoriesOpen, setSelectStoriesOpen] = useState(false)
+
+  const trigger = useWatch({ control: form.control, name: "trigger" })
+  // A mention happens on the contact's own story and usually has no text, so
+  // the story and keyword filters do not apply to it.
+  const isStoryMention = trigger === "storyMention"
 
   const storyType = useWatch({ control: form.control, name: "story.type" })
   const storyValue = useWatch({ control: form.control, name: "story.value" })
@@ -79,6 +87,19 @@ export function IgStoryForm({
       value: "AIAgent",
     },
     { label: t("instagramStoryAutomation.replyType.none"), value: "none" },
+  ]
+
+  const triggerOptions = [
+    {
+      label: t("instagramStoryAutomation.triggerType.storyReply"),
+      value: "storyReply",
+      disabled: isTriggerLocked,
+    },
+    {
+      label: t("instagramStoryAutomation.triggerType.storyMention"),
+      value: "storyMention",
+      disabled: isTriggerLocked,
+    },
   ]
 
   const storyTypeOptions = [
@@ -111,18 +132,30 @@ export function IgStoryForm({
         </CardHeader>
         <CardContent className="flex flex-col gap-2 space-y-4">
           <RadioGroupField
-            description={t(
-              "instagramStoryAutomation.trackStoryReplyOnDescription",
-            )}
+            description={t("instagramStoryAutomation.triggerDescription")}
             descriptionType="tooltip"
-            label={t("instagramStoryAutomation.trackStoryReplyOn")}
-            name="story.type"
-            options={storyTypeOptions}
+            label={t("instagramStoryAutomation.trigger")}
+            name="trigger"
+            options={triggerOptions}
             orientation="horizontal"
             required
           />
 
-          {storyType === "storyIds" && (
+          {!isStoryMention && (
+            <RadioGroupField
+              description={t(
+                "instagramStoryAutomation.trackStoryReplyOnDescription",
+              )}
+              descriptionType="tooltip"
+              label={t("instagramStoryAutomation.trackStoryReplyOn")}
+              name="story.type"
+              options={storyTypeOptions}
+              orientation="horizontal"
+              required
+            />
+          )}
+
+          {!isStoryMention && storyType === "storyIds" && (
             <>
               <Button
                 onClick={() => setSelectStoriesOpen(true)}
@@ -187,41 +220,43 @@ export function IgStoryForm({
             )}
           </div>
 
-          <div className="flex items-start gap-2">
-            <SelectField
-              description={t(
-                "instagramStoryAutomation.includeKeywordsTypeDescription",
+          {!isStoryMention && (
+            <div className="flex items-start gap-2">
+              <SelectField
+                description={t(
+                  "instagramStoryAutomation.includeKeywordsTypeDescription",
+                )}
+                descriptionType="tooltip"
+                label={t("instagramStoryAutomation.includeKeywordsType")}
+                name="includeKeywords.type"
+                options={includeKeywordsTypeOptions}
+              />
+              {includeKeywordsType !== "all" && (
+                <div className="w-full">
+                  <FormField
+                    control={form.control}
+                    name="includeKeywords.value"
+                    render={() => (
+                      <FormItem>
+                        <FormLabel>
+                          {t("instagramStoryAutomation.includeKeywords")}
+                        </FormLabel>
+                        <FormControl>
+                          <TagsInputField
+                            name="includeKeywords.value"
+                            placeholder={t(
+                              "instagramStoryAutomation.keywordsPlaceholder",
+                            )}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               )}
-              descriptionType="tooltip"
-              label={t("instagramStoryAutomation.includeKeywordsType")}
-              name="includeKeywords.type"
-              options={includeKeywordsTypeOptions}
-            />
-            {includeKeywordsType !== "all" && (
-              <div className="w-full">
-                <FormField
-                  control={form.control}
-                  name="includeKeywords.value"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel>
-                        {t("instagramStoryAutomation.includeKeywords")}
-                      </FormLabel>
-                      <FormControl>
-                        <TagsInputField
-                          name="includeKeywords.value"
-                          placeholder={t(
-                            "instagramStoryAutomation.keywordsPlaceholder",
-                          )}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -21,6 +21,7 @@ export const AIJobAction = {
   processHandoffReentry: "processHandoffReentry",
   commentAIReply: "commentAIReply",
   processStoryReplyAutomation: "processStoryReplyAutomation",
+  processStoryMentionAutomation: "processStoryMentionAutomation",
 } as const
 
 export const aiJobSummarizeConversationDataSchema = z.object({
@@ -121,6 +122,17 @@ const aiJobProcessStoryReplyAutomationSchema = z.object({
   }),
 })
 
+const aiJobProcessStoryMentionAutomationSchema = z.object({
+  type: z.literal(AIJobAction.processStoryMentionAutomation),
+  data: z.object({
+    workspaceId: z.string().min(1),
+    conversationId: z.string().min(1),
+    contactInboxId: z.string().min(1),
+    messageId: z.string().min(1),
+    channelType: z.enum(["instagram", "instagramFacebook"]),
+  }),
+})
+
 export const aiJobDataSchema = z.discriminatedUnion("type", [
   aiJobProcessFileSchema,
   aiJobProcessPendingEmbeddingSchema,
@@ -131,6 +143,7 @@ export const aiJobDataSchema = z.discriminatedUnion("type", [
   aiJobProcessHandoffReentrySchema,
   aiJobCommentAIReplySchema,
   aiJobProcessStoryReplyAutomationSchema,
+  aiJobProcessStoryMentionAutomationSchema,
 ])
 
 export type AIJobData = z.infer<typeof aiJobDataSchema>
@@ -156,6 +169,9 @@ export type AIJobProcessHandoffReentry = z.infer<
 export type AIJobCommentAIReply = z.infer<typeof aiJobCommentAIReplySchema>
 export type AIJobProcessStoryReplyAutomation = z.infer<
   typeof aiJobProcessStoryReplyAutomationSchema
+>
+export type AIJobProcessStoryMentionAutomation = z.infer<
+  typeof aiJobProcessStoryMentionAutomationSchema
 >
 
 export const aiAgentQueue = isNoRedisEnv()

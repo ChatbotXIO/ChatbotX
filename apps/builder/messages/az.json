@@ -820,7 +820,8 @@
         "video": "Video",
         "audio": "Səs",
         "gif": "GIF",
-        "file": "Fayl"
+        "file": "Fayl",
+        "storyMention": "Hekayədə qeyd"
       },
       "ctwaConversionTypes": {
         "lead": "Potensial müştəri",
@@ -1566,7 +1567,8 @@
       "video": "Video",
       "audio": "Səs",
       "gif": "GIF",
-      "file": "Fayl"
+      "file": "Fayl",
+      "storyMention": "Hekayədə qeyd"
     },
     "lastMonth": {
       "label": "Keçən ay"
@@ -6543,12 +6545,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Instagram hekayə cavablarının avtomatlaşdırılması",
-    "description": "Kontaktlarınız üçün Instagram hekayələrinə verilən cavabların cavablandırılmasını avtomatlaşdırın.",
+    "title": "Instagram hekayə avtomatlaşdırılması",
+    "description": "Kontaktlar Instagram hekayələrinizə cavab verdikdə və ya öz hekayələrində sizi qeyd etdikdə cavabları avtomatlaşdırın.",
     "create": "Avtomatlaşdırma yarat",
     "replies": "Cavablar",
     "activated": "Avtomatlaşdırma aktivləşdirildi",
     "deactivated": "Avtomatlaşdırma söndürüldü",
+    "trigger": "Tetikleyici",
+    "triggerDescription": "Bu avtomatlaşdırmanı nəyin başlatdığını seçin. Avtomatlaşdırma yaradıldıqdan sonra dəyişdirilə bilməz.",
+    "triggerType": {
+      "storyReply": "Hekayənizə cavab verir",
+      "storyMention": "Öz hekayəsində sizi qeyd edir"
+    },
     "trackStoryReplyOn": "Cavabları izləniləcək hekayələr",
     "trackStoryReplyOnDescription": "Bu avtomatlaşdırmanı bütün hekayələrinizə verilən cavablara və ya yalnız seçdiyiniz müəyyən hekayələrə verilən cavablara tətbiq edin.",
     "reply": "Cavabla",

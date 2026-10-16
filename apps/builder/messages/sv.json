@@ -1047,7 +1047,8 @@
         "location": "Plats",
         "refLink": "Referenslänk",
         "text": "Text",
-        "video": "Video"
+        "video": "Video",
+        "storyMention": "Story-omnämnande"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -2464,7 +2465,8 @@
       "location": "Plats",
       "refLink": "Referenslänk",
       "text": "Text",
-      "video": "Video"
+      "video": "Video",
+      "storyMention": "Story-omnämnande"
     },
     "lifeTime": {
       "label": "Livstid"
@@ -4114,12 +4116,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Automatisering av Instagram Story-svar",
-    "description": "Automatisera svar på Instagram Story-svar för dina kontakter.",
+    "title": "Automatisering av Instagram Stories",
+    "description": "Automatisera svar när kontakter svarar på dina Instagram Stories eller nämner dig i sina egna.",
     "create": "Skapa automatisering",
     "replies": "Svar",
     "activated": "Automatisering aktiverad",
     "deactivated": "Automatisering inaktiverad",
+    "trigger": "Utlösare",
+    "triggerDescription": "Välj vad som startar den här automatiseringen. Det går inte att ändra efter att automatiseringen har skapats.",
+    "triggerType": {
+      "storyReply": "Svarar på din story",
+      "storyMention": "Nämner dig i sin story"
+    },
     "trackStoryReplyOn": "Spåra Story-svar på",
     "trackStoryReplyOnDescription": "Använd denna automatisering på svar på alla dina Stories, eller begränsa den till specifika Stories som du väljer.",
     "reply": "Svar",

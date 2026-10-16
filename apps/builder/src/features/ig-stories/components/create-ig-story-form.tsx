@@ -28,6 +28,7 @@ export function CreateIgStoryForm({
   const defaultValues = {
     name: "",
     type: variant,
+    trigger: "storyReply" as const,
     folderId: undefined,
     story: { type: "all" as const, value: [] },
     reply: { type: "text" as const, value: "" },

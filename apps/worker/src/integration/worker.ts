@@ -7,7 +7,6 @@ import {
 } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
-import { getStoryReply } from "@chatbotx.io/sdk"
 import {
   AIJobAction,
   aiAgentQueue,
@@ -96,6 +95,7 @@ import {
 } from "./handlers/whatsapp-voip-signaling"
 import { runIntegrationJobWithWebhookContext } from "./job-context"
 import { resolveIncomingTextRouting } from "./routing"
+import { dispatchStoryAutomation } from "./story-automation-dispatch"
 import { closeChatQueueEvents } from "./utils/message"
 
 const integrationWorkerLockDuration = Math.max(
@@ -228,26 +228,14 @@ async function startIntegrationWorker() {
               const hasAttachment = message.attachments.length > 0
               const isLocation = message.contentType === "location"
 
-              const storyReply = getStoryReply(message.contentAttributes)
-
-              if (isFromContact && storyReply) {
-                await aiAgentQueue.add(
-                  AIJobAction.processStoryReplyAutomation,
-                  {
-                    type: AIJobAction.processStoryReplyAutomation,
-                    data: {
-                      workspaceId: conversation.workspaceId,
-                      conversationId: conversation.id,
-                      contactInboxId: message.contactInboxId,
-                      messageId: message.id,
-                      storyId: storyReply.id,
-                      storyUrl: storyReply.url,
-                      message: message.text ?? undefined,
-                      channelType,
-                    },
-                  },
-                  { jobId: `story-reply-auto-${message.id}` },
-                )
+              if (
+                isFromContact &&
+                (await dispatchStoryAutomation({
+                  message,
+                  conversation,
+                  channelType,
+                }))
+              ) {
                 return
               }
 

@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   processCommentAIReply: vi.fn(),
   processJob: undefined as undefined | ((job: unknown) => Promise<void>),
   processStoryReplyAutomation: vi.fn(),
+  processStoryMentionAutomation: vi.fn(),
   resolveWorkspaceId: vi.fn(),
   runWithWebhookExecutionContext: vi.fn(
     async (_context: unknown, callback: () => Promise<unknown>) => callback(),
@@ -92,6 +93,7 @@ vi.mock("../src/integration/handlers/comment-automation/ai-reply", () => ({
 }))
 vi.mock("../src/integration/handlers/story-reply-automation", () => ({
   processStoryReplyAutomation: mocks.processStoryReplyAutomation,
+  processStoryMentionAutomation: mocks.processStoryMentionAutomation,
 }))
 vi.mock("../src/integration/utils/message", () => ({
   closeChatQueueEvents: mocks.closeChatQueueEvents,
@@ -231,6 +233,16 @@ describe("ai-agent worker audit context", () => {
           channelType: "instagram",
         },
       },
+      {
+        type: "processStoryMentionAutomation",
+        data: {
+          workspaceId: "workspace-1",
+          conversationId: "conversation-1",
+          contactInboxId: "contact-inbox-1",
+          messageId: "message-2",
+          channelType: "instagram",
+        },
+      },
     ]
 
     for (const [index, data] of jobs.entries()) {
@@ -252,6 +264,9 @@ describe("ai-agent worker audit context", () => {
     )
     expect(mocks.processStoryReplyAutomation).toHaveBeenCalledWith(
       jobs[2]?.data,
+    )
+    expect(mocks.processStoryMentionAutomation).toHaveBeenCalledWith(
+      jobs[3]?.data,
     )
     expect(mocks.runWithWebhookExecutionContext).toHaveBeenCalledTimes(1)
     expect(mocks.runWithWebhookExecutionContext).toHaveBeenCalledWith(

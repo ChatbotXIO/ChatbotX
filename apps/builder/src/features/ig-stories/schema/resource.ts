@@ -1,6 +1,7 @@
 import {
   commentIncludeKeywordsSchema,
   commentReplySchema,
+  igStoryAutomationTriggers,
   igStoryTargetSchema,
 } from "@chatbotx.io/database/partials"
 import {
@@ -13,6 +14,7 @@ export const igStoryResource = createSelectSchema(igStoryAutomationModel, {
   id: z.string(),
   workspaceId: z.string(),
   folderId: z.string().nullish(),
+  trigger: igStoryAutomationTriggers,
   story: igStoryTargetSchema,
   reply: commentReplySchema,
   includeKeywords: commentIncludeKeywordsSchema,

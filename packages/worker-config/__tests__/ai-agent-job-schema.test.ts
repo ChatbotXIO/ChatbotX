@@ -39,11 +39,23 @@ const storyReplyJob = {
   },
 }
 
+const storyMentionJob = {
+  type: AIJobAction.processStoryMentionAutomation,
+  data: {
+    workspaceId: "workspace-1",
+    conversationId: "conversation-1",
+    contactInboxId: "contact-inbox-1",
+    messageId: "message-1",
+    channelType: "instagramFacebook",
+  },
+}
+
 describe("aiJobDataSchema Phase 1 reply jobs", () => {
   test.each([
     automatedResponseJob,
     commentAIReplyJob,
     storyReplyJob,
+    storyMentionJob,
   ])("parses $type payloads", (jobData) => {
     expect(aiJobDataSchema.parse(jobData)).toEqual(jobData)
   })

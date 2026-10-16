@@ -778,7 +778,8 @@
         "video": "Video",
         "audio": "Lyd",
         "gif": "GIF",
-        "file": "Fil"
+        "file": "Fil",
+        "storyMention": "Story-omtale"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -1369,7 +1370,8 @@
       "video": "Video",
       "audio": "Lyd",
       "gif": "GIF",
-      "file": "Fil"
+      "file": "Fil",
+      "storyMention": "Story-omtale"
     },
     "lastMonth": {
       "label": "Seneste måned"
@@ -5817,12 +5819,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Automatisering af Instagram Story-svar",
-    "description": "Automatiser svar på Instagram Story-svar for dine kontakter.",
+    "title": "Automatisering af Instagram Stories",
+    "description": "Automatiser svar, når kontakter svarer på dine Instagram Stories eller nævner dig i deres egne.",
     "create": "Opret automatisering",
     "replies": "Svar",
     "activated": "Automatisering aktiveret",
     "deactivated": "Automatisering deaktiveret",
+    "trigger": "Udløser",
+    "triggerDescription": "Vælg, hvad der starter denne automatisering. Det kan ikke ændres, efter automatiseringen er oprettet.",
+    "triggerType": {
+      "storyReply": "Svarer på din story",
+      "storyMention": "Nævner dig i sin story"
+    },
     "trackStoryReplyOn": "Spor Story-svar på",
     "trackStoryReplyOnDescription": "Anvend denne automatisering på svar på alle dine Stories, eller begræns den til bestemte Stories, du vælger.",
     "reply": "Svar",

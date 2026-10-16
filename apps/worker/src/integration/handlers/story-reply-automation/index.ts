@@ -6,18 +6,22 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { logProviderError } from "@chatbotx.io/business/error-log"
-import type {
-  CommentIncludeKeywords,
-  IgStoryTarget,
+import {
+  type CommentIncludeKeywords,
+  type IgStoryAutomationTrigger,
+  type IgStoryTarget,
+  igStoryAutomationTriggers,
 } from "@chatbotx.io/database/partials"
 import type {
   ContactInboxModel,
   ConversationModel,
+  IgStoryAutomationModel,
 } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
 import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
+  type AIJobProcessStoryMentionAutomation,
   type AIJobProcessStoryReplyAutomation,
   ChatJobAction,
   chatQueue,
@@ -111,37 +115,78 @@ async function dispatchAIAgentReply(props: {
   return true
 }
 
-const logAutomationSkipped = ({
-  automationId,
-  messageId,
-  storyId,
-  workspaceId,
-  reason,
-}: {
-  automationId: string
-  messageId: string
-  storyId: string
+// A story mention usually carries no text, so the AI agent is told what
+// happened instead of being handed an empty message.
+const STORY_MENTION_AI_MESSAGE =
+  "The contact mentioned your account in their Instagram story."
+
+const automationLabels: Record<IgStoryAutomationTrigger, string> = {
+  storyReply: "Story reply automation",
+  storyMention: "Story mention automation",
+}
+
+type StoryAutomationEvent = {
+  trigger: IgStoryAutomationTrigger
   workspaceId: string
-  reason: string
-}) => {
-  logger.info(
-    { automationId, messageId, storyId, workspaceId, reason },
-    "Story reply automation skipped",
-  )
+  conversationId: string
+  contactInboxId: string
+  messageId: string
+  channelType: "instagram" | "instagramFacebook"
+  // Text handed to an AI agent reply.
+  aiMessage: string | undefined
+  // Extra fields carried on every log line (e.g. the story id).
+  logContext: Record<string, unknown>
+  // Returns why the automation does not apply, or null when it does.
+  findMismatch: (automation: IgStoryAutomationModel) => string | null
 }
 
 export async function processStoryReplyAutomation(
   data: AIJobProcessStoryReplyAutomation["data"],
 ): Promise<void> {
+  const { storyId, message } = data
+  await runStoryAutomations({
+    ...data,
+    trigger: igStoryAutomationTriggers.enum.storyReply,
+    aiMessage: message,
+    logContext: { storyId },
+    findMismatch: (automation) => {
+      if (!matchStory(automation.story, storyId)) {
+        return "story does not match"
+      }
+      if (!matchIncludeKeywords(automation.includeKeywords, message)) {
+        return "keywords do not match"
+      }
+      return null
+    },
+  })
+}
+
+// The mention happens on the contact's own story, so there is no story or
+// keyword filter: every active, in-schedule automation applies.
+export async function processStoryMentionAutomation(
+  data: AIJobProcessStoryMentionAutomation["data"],
+): Promise<void> {
+  await runStoryAutomations({
+    ...data,
+    trigger: igStoryAutomationTriggers.enum.storyMention,
+    aiMessage: STORY_MENTION_AI_MESSAGE,
+    logContext: {},
+    findMismatch: () => null,
+  })
+}
+
+async function runStoryAutomations(event: StoryAutomationEvent): Promise<void> {
   const {
+    trigger,
     workspaceId,
     conversationId,
     contactInboxId,
     messageId,
-    storyId,
-    message,
     channelType,
-  } = data
+    aiMessage,
+    logContext,
+  } = event
+  const label = automationLabels[trigger]
 
   const contactInbox = await contactInboxService.findBy({
     where: { id: contactInboxId },
@@ -149,7 +194,7 @@ export async function processStoryReplyAutomation(
   if (!contactInbox) {
     logger.warn(
       { contactInboxId, workspaceId, messageId },
-      "Story reply automation skipped: contactInbox not found",
+      `${label} skipped: contactInbox not found`,
     )
     return
   }
@@ -158,9 +203,17 @@ export async function processStoryReplyAutomation(
     igStoryAutomationService.findActiveAutomations({
       workspaceId,
       channelType,
+      trigger,
     }),
     workspaceService.findById({ id: workspaceId }),
   ])
+
+  const logAutomationSkipped = (automationId: string, reason: string) => {
+    logger.info(
+      { automationId, messageId, workspaceId, reason, ...logContext },
+      `${label} skipped`,
+    )
+  }
 
   for (const automation of automations) {
     try {
@@ -170,35 +223,13 @@ export async function processStoryReplyAutomation(
           workspace.timezone,
         )
       ) {
-        logAutomationSkipped({
-          automationId: automation.id,
-          messageId,
-          storyId,
-          workspaceId,
-          reason: "outside schedule",
-        })
+        logAutomationSkipped(automation.id, "outside schedule")
         continue
       }
 
-      if (!matchStory(automation.story, storyId)) {
-        logAutomationSkipped({
-          automationId: automation.id,
-          messageId,
-          storyId,
-          workspaceId,
-          reason: "story does not match",
-        })
-        continue
-      }
-
-      if (!matchIncludeKeywords(automation.includeKeywords, message)) {
-        logAutomationSkipped({
-          automationId: automation.id,
-          messageId,
-          storyId,
-          workspaceId,
-          reason: "keywords do not match",
-        })
+      const mismatch = event.findMismatch(automation)
+      if (mismatch) {
+        logAutomationSkipped(automation.id, mismatch)
         continue
       }
 
@@ -222,7 +253,7 @@ export async function processStoryReplyAutomation(
           })
         } catch (err) {
           logger.warn(
-            { err, messageId, storyId },
+            { err, messageId, ...logContext },
             "Failed to resolve variables in reply text, sending raw text",
           )
         }
@@ -250,15 +281,8 @@ export async function processStoryReplyAutomation(
           workspaceId,
           conversationId,
           contactInbox,
-          message,
-          onSkipped: (reason) =>
-            logAutomationSkipped({
-              automationId: automation.id,
-              messageId,
-              storyId,
-              workspaceId,
-              reason,
-            }),
+          message: aiMessage,
+          onSkipped: (reason) => logAutomationSkipped(automation.id, reason),
         })
       }
 
@@ -268,7 +292,7 @@ export async function processStoryReplyAutomation(
     } catch (err) {
       logger.error(
         { err, automationId: automation.id, messageId, workspaceId },
-        "Failed to process story reply automation",
+        `Failed to process ${label.toLowerCase()}`,
       )
       await logProviderError({
         provider: "instagram",

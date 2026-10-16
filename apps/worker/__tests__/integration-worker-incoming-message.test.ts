@@ -157,7 +157,8 @@ vi.mock("../src/integration/job-context", () => ({
   ) => callback(),
 }))
 
-vi.mock("../src/integration/routing", () => ({
+vi.mock("../src/integration/routing", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/integration/routing")>()),
   resolveIncomingTextRouting: mockResolveIncomingTextRouting,
 }))
 

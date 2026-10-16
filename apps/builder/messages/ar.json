@@ -778,7 +778,8 @@
         "video": "فيديو",
         "audio": "صوت",
         "gif": "GIF",
-        "file": "ملف"
+        "file": "ملف",
+        "storyMention": "إشارة في قصة"
       },
       "ctwaConversionTypes": {
         "lead": "عميل محتمل",
@@ -1515,7 +1516,8 @@
       "video": "فيديو",
       "audio": "صوت",
       "gif": "GIF",
-      "file": "ملف"
+      "file": "ملف",
+      "storyMention": "إشارة في قصة"
     },
     "lastMonth": {
       "label": "الشهر الماضي"
@@ -6314,12 +6316,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "أتمتة الرد على قصص إنستغرام",
-    "description": "أتمتة الردود على ردود قصص إنستغرام لجهات الاتصال الخاصة بك.",
+    "title": "أتمتة قصص إنستغرام",
+    "description": "أتمتة الردود عندما ترد جهات الاتصال على قصصك في إنستغرام أو تذكرك في قصصها.",
     "create": "إنشاء أتمتة",
     "replies": "الردود",
     "activated": "تم تفعيل الأتمتة",
     "deactivated": "تم إيقاف الأتمتة",
+    "trigger": "المُشغِّل",
+    "triggerDescription": "اختر ما يبدأ هذه الأتمتة. لا يمكن تغييره بعد إنشاء الأتمتة.",
+    "triggerType": {
+      "storyReply": "يرد على قصتك",
+      "storyMention": "يذكرك في قصته"
+    },
     "trackStoryReplyOn": "تتبع الرد على القصة في",
     "trackStoryReplyOnDescription": "طبّق هذه الأتمتة على الردود في جميع قصصك، أو حدّدها بقصص معينة تختارها.",
     "reply": "الرد",

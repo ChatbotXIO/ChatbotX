@@ -820,7 +820,8 @@
         "video": "Video",
         "audio": "Audio",
         "gif": "GIF",
-        "file": "File"
+        "file": "File",
+        "storyMention": "Story mention"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -1566,7 +1567,8 @@
       "video": "Video",
       "audio": "Audio",
       "gif": "GIF",
-      "file": "File"
+      "file": "File",
+      "storyMention": "Story mention"
     },
     "lastMonth": {
       "label": "Last month"
@@ -6543,12 +6545,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Instagram Story Reply Automation",
-    "description": "Automate replies to Instagram story replies for your contacts.",
+    "title": "Instagram Story Automation",
+    "description": "Automate replies when contacts reply to your Instagram stories or mention you in theirs.",
     "create": "Create Automation",
     "replies": "Replies",
     "activated": "Automation activated",
     "deactivated": "Automation deactivated",
+    "trigger": "Trigger",
+    "triggerDescription": "Choose what starts this automation. It can't be changed after the automation is created.",
+    "triggerType": {
+      "storyReply": "Replies to your story",
+      "storyMention": "Mentions you in their story"
+    },
     "trackStoryReplyOn": "Track Story reply on",
     "trackStoryReplyOnDescription": "Apply this automation to replies on any of your Stories, or narrow it to specific Stories you select.",
     "reply": "Reply",

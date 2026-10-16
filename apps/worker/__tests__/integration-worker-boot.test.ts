@@ -57,6 +57,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     commentAIReply: "commentAIReply",
     processAutomatedResponse: "processAutomatedResponse",
     processStoryReplyAutomation: "processStoryReplyAutomation",
+    processStoryMentionAutomation: "processStoryMentionAutomation",
   },
   aiAgentQueue: { add: workerState.aiAgentQueueAdd },
   closeIntegrationQueueEvents: vi.fn(async () => undefined),
@@ -267,7 +268,8 @@ vi.mock("../src/integration/job-context", () => ({
     async (_job: unknown, callback: () => Promise<unknown>) => callback(),
   ),
 }))
-vi.mock("../src/integration/routing", () => ({
+vi.mock("../src/integration/routing", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/integration/routing")>()),
   resolveIncomingTextRouting: vi.fn(),
 }))
 vi.mock("../src/integration/utils/message", () => ({
@@ -607,6 +609,101 @@ describe("Phase 1 AI reply compatibility forwarding", () => {
       }),
       { jobId: "story-reply-auto-message-1" },
     )
+  })
+
+  test("enqueues story mentions on aiAgent instead of the default routing", async () => {
+    workerState.aiAgentQueueAdd.mockClear()
+    const { conversationService } = await import("@chatbotx.io/business")
+    vi.mocked(conversationService.ensureActive).mockResolvedValueOnce(true)
+    workerState.getStoryReply.mockReturnValue(undefined)
+    workerState.receiveMessage.mockResolvedValue({
+      message: {
+        id: "message-2",
+        contactInboxId: "contact-inbox-1",
+        senderType: "contact",
+        contentType: "text",
+        attachments: [{ fileType: "image" }],
+        contentAttributes: { type: "story_mention" },
+        text: null,
+      },
+      conversation: { id: "conversation-1", workspaceId: "workspace-1" },
+      channelType: "instagram",
+    })
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({
+      id: "incoming-story-mention-job",
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "instagram",
+          integrationIdentifier: "ig-1",
+          payload: {},
+        },
+      },
+    })
+
+    expect(workerState.aiAgentQueueAdd).toHaveBeenCalledTimes(1)
+    expect(workerState.aiAgentQueueAdd).toHaveBeenCalledWith(
+      "processStoryMentionAutomation",
+      {
+        type: "processStoryMentionAutomation",
+        data: {
+          workspaceId: "workspace-1",
+          conversationId: "conversation-1",
+          contactInboxId: "contact-inbox-1",
+          messageId: "message-2",
+          channelType: "instagram",
+        },
+      },
+      { jobId: "story-mention-auto-message-2" },
+    )
+  })
+
+  test("routes a story mention normally while the bot is paused for a human", async () => {
+    workerState.aiAgentQueueAdd.mockClear()
+    const { conversationService } = await import("@chatbotx.io/business")
+    vi.mocked(conversationService.ensureActive).mockResolvedValue(false)
+    const { resolveIncomingTextRouting } = await import(
+      "../src/integration/routing"
+    )
+    vi.mocked(resolveIncomingTextRouting).mockResolvedValueOnce({
+      type: "none",
+    })
+    workerState.getStoryReply.mockReturnValue(undefined)
+    workerState.receiveMessage.mockResolvedValue({
+      message: {
+        id: "message-3",
+        contactInboxId: "contact-inbox-1",
+        senderType: "contact",
+        contentType: "text",
+        attachments: [{ fileType: "image" }],
+        contentAttributes: { type: "story_mention" },
+        text: null,
+      },
+      conversation: { id: "conversation-1", workspaceId: "workspace-1" },
+      channelType: "instagram",
+    })
+    const [integrationWorker] = workerState.capturedWorkers
+
+    await integrationWorker?.processor({
+      id: "incoming-paused-story-mention-job",
+      data: {
+        type: "incomingMessage",
+        data: {
+          integrationType: "instagram",
+          integrationIdentifier: "ig-1",
+          payload: {},
+        },
+      },
+    })
+
+    expect(workerState.aiAgentQueueAdd).not.toHaveBeenCalledWith(
+      "processStoryMentionAutomation",
+      expect.anything(),
+      expect.anything(),
+    )
+    vi.mocked(conversationService.ensureActive).mockReset()
   })
 
   test("normalizes legacy automated-response model references before forwarding", async () => {
