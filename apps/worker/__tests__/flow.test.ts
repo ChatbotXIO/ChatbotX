@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, type Mock, test, vi } from "vitest"
 
 const integrationQueueAdd = vi.fn(async () => undefined)
 const chatQueueAdd = vi.fn(async () => undefined)
+const stateContinuationJobIdPattern = /^flow-state-[a-f0-9]{64}$/
 const detectConversationAndContactInbox = vi.fn()
 const detectFlowVersion = vi.fn()
 const findSendableBroadcast = vi.fn()
@@ -756,6 +757,64 @@ describe("executeMultipleSteps — explicit status routing", () => {
       { data: { nodeId: string } },
     ]
     expect(jobArg.data.nodeId).toBe("success-node")
+  })
+
+  test("keeps a durable execution key and deduplicates a retried state branch", async () => {
+    const stateId = "state-ok"
+    const step = makeStep("autoAssignConversation", [
+      { id: stateId, stateType: "success" },
+    ])
+    const flowVersion = makeFlowVersion(
+      [],
+      [
+        {
+          id: "e1",
+          source: "n1",
+          sourceHandle: stateId,
+          target: "success-node",
+          targetHandle: "input",
+        },
+      ],
+    )
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    mockSpy(flowStepHandlers, "autoAssignConversation").mockResolvedValue({
+      status: "success",
+      result: null,
+    })
+
+    await executeMultipleSteps({
+      ...makeBaseProps(flowVersion),
+      flowExecutionKey: "parent-job-1:123",
+      nodeVisits: { "node-1": 1 },
+      steps: [step],
+    })
+    await executeMultipleSteps({
+      ...makeBaseProps(flowVersion),
+      flowExecutionKey: "parent-job-1:123",
+      nodeVisits: { "node-1": 1 },
+      steps: [step],
+    })
+
+    const [, job, firstOptions] = integrationQueueAdd.mock
+      .calls[0] as unknown as [
+      string,
+      { data: { flowExecutionKey?: string; nodeId: string } },
+      { jobId?: string },
+    ]
+    const [, , secondOptions] = integrationQueueAdd.mock
+      .calls[1] as unknown as [
+      string,
+      { data: { flowExecutionKey?: string; nodeId: string } },
+      { jobId?: string },
+    ]
+    expect(job.data).toMatchObject({
+      flowExecutionKey: "parent-job-1:123",
+      nodeId: "success-node",
+    })
+    expect(firstOptions.jobId).toMatch(stateContinuationJobIdPattern)
+    expect(secondOptions.jobId).toBe(firstOptions.jobId)
   })
 
   test("error status routes to error-connected node, not success node", async () => {

@@ -8,6 +8,7 @@ import type {
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "./base-emitter"
+import type { DecisionFlowOrigin } from "./decision-flow-lineage"
 import { logger } from "./logger"
 import { TriggerEventEmitter } from "./trigger/emitter"
 import { WebhookEventEmitter } from "./webhook/emitter"
@@ -136,6 +137,7 @@ export const emitCustomFieldChanged = async (
   oldValue: unknown,
   newValue: unknown,
   contactInboxId?: string,
+  decisionFlowOrigin?: DecisionFlowOrigin,
 ) =>
   await emitToAllEmitters(
     "customFieldChanged",
@@ -146,6 +148,7 @@ export const emitCustomFieldChanged = async (
     oldValue,
     newValue,
     contactInboxId,
+    decisionFlowOrigin,
   )
 
 // Contact info events

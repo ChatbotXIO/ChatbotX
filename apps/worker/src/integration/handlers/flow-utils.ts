@@ -138,6 +138,7 @@ export const STEP_PRODUCES_MESSAGE: Record<StepType, boolean> = {
   markCouponUsed: false,
   changeGamificationScore: false,
   condition: false,
+  evaluateDecision: false,
 
   // Inbox Operations (I_)
   disableBot: false,
@@ -300,6 +301,8 @@ export async function sendFlow(
           appointmentId: props.appointmentId,
           sendFrom: props.sendFrom,
           nodeVisits: props.nodeVisits,
+          triggerMessageId: props.triggerMessageId,
+          triggerMessageCreatedAt: props.triggerMessageCreatedAt,
           commentAnchor: props.commentAnchor,
           origin: webhookChannelOrigin(),
         },

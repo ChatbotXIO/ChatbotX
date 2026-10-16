@@ -200,6 +200,7 @@ describe("contactCustomFieldService.applyOperationToContacts — event ordering"
       null,
       "pro",
       undefined,
+      undefined,
     )
   })
 

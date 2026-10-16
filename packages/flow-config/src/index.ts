@@ -18,6 +18,7 @@ export {
   type AuthoredNodeInput,
   type NormalizedAuthoredGraph,
   normalizeAuthoredGraph,
+  normalizeFlowGraphDecisionMappings,
 } from "./authoring/normalize-graph"
 export {
   type FlowSpec,
@@ -103,6 +104,8 @@ export * from "./steps/drip-subscribe-subscriber"
 export * from "./steps/email"
 export * from "./steps/enable-bot"
 export * from "./steps/enable-messenger-composer"
+export * from "./steps/evaluate-decision"
+export * from "./steps/evaluate-decision"
 export * from "./steps/execute-javascript"
 export * from "./steps/external-request"
 export * from "./steps/facebook-custom-audience"

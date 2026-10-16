@@ -116,6 +116,7 @@ describe("contactCustomFieldService.setValues — timezone resolution", () => {
       null,
       "2026-07-22T08:30:00.000Z",
       undefined,
+      undefined,
     )
   })
 
@@ -183,6 +184,7 @@ describe("contactCustomFieldService.setValues — timezone resolution", () => {
       "birthday",
       null,
       "2026-07-22T00:00:00+07:00",
+      undefined,
       undefined,
     )
   })
@@ -265,6 +267,7 @@ describe("contactCustomFieldService.setValues — write/emit contract", () => {
       "booking_at",
       "2020-01-01T00:00:00.000Z",
       "2026-07-22T08:30:00.000Z",
+      undefined,
       undefined,
     )
   })
@@ -540,6 +543,7 @@ describe("contactCustomFieldService.emitCustomFieldChanges — post-commit fan-o
       "2020-01-01T00:00:00.000Z",
       "2026-07-22T08:30:00.000Z",
       "ci-1",
+      undefined,
     )
     expect(mocks.emitCustomFieldChanged).toHaveBeenNthCalledWith(
       2,
@@ -550,6 +554,7 @@ describe("contactCustomFieldService.emitCustomFieldChanges — post-commit fan-o
       null,
       "2026-07-22T00:00:00+07:00",
       "ci-1",
+      undefined,
     )
     expect(mocks.invalidateCacheByTags).toHaveBeenCalledOnce()
   })

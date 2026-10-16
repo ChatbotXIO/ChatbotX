@@ -117,7 +117,7 @@ describe("HandoffExecutorService", () => {
         source: "ai_system_tool",
         workspaceId: "ws-1",
       }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ status: "handedOff" })
 
     expect(transferredSpy).toHaveBeenCalledWith("ws-1", "contact-1", "conv-1")
     expect(emitSpy).toHaveBeenCalledWith(

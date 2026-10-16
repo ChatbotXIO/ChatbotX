@@ -53,7 +53,7 @@ describe("isSmartDelayEligible", () => {
   test("allows smart delay only for configured AI responses without keyword matches", () => {
     expect(
       isSmartDelayEligible({
-        hasAiAgent: true,
+        hasAsyncResponder: true,
         matchesKeyword: false,
         workspaceDelay: 30,
       }),
@@ -63,7 +63,7 @@ describe("isSmartDelayEligible", () => {
   test("rejects when the workspace delay is not configured", () => {
     expect(
       isSmartDelayEligible({
-        hasAiAgent: true,
+        hasAsyncResponder: true,
         matchesKeyword: false,
         workspaceDelay: null,
       }),
@@ -73,7 +73,7 @@ describe("isSmartDelayEligible", () => {
   test("rejects keyword-matched messages", () => {
     expect(
       isSmartDelayEligible({
-        hasAiAgent: true,
+        hasAsyncResponder: true,
         matchesKeyword: true,
         workspaceDelay: 30,
       }),
@@ -83,7 +83,7 @@ describe("isSmartDelayEligible", () => {
   test("rejects workspaces without a default AI agent", () => {
     expect(
       isSmartDelayEligible({
-        hasAiAgent: false,
+        hasAsyncResponder: false,
         matchesKeyword: false,
         workspaceDelay: 30,
       }),

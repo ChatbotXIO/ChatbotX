@@ -7,6 +7,7 @@ const {
   mockLoggerWarn,
   mockSimpleQueueEnqueue,
   mockWorkspaceFindById,
+  mockHasGlobalRouterEnabled,
 } = vi.hoisted(() => ({
   mockAiAgentFindDefault: vi.fn(),
   mockAiAgentQueueAdd: vi.fn().mockResolvedValue(undefined),
@@ -14,11 +15,15 @@ const {
   mockLoggerWarn: vi.fn(),
   mockSimpleQueueEnqueue: vi.fn().mockResolvedValue(undefined),
   mockWorkspaceFindById: vi.fn(),
+  mockHasGlobalRouterEnabled: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   aiAgentService: {
     findDefault: mockAiAgentFindDefault,
+  },
+  decisionProfileService: {
+    hasGlobalRouterEnabled: mockHasGlobalRouterEnabled,
   },
   workspaceService: {
     findById: mockWorkspaceFindById,
@@ -77,6 +82,7 @@ describe("enqueueMessage", () => {
     vi.clearAllMocks()
     mockAiAgentFindDefault.mockResolvedValue({ id: "ai-agent-1" })
     mockAutomatedResponseGetAll.mockResolvedValue([])
+    mockHasGlobalRouterEnabled.mockResolvedValue(false)
   })
 
   test("uses workspace smart delay timing for AI messages without keyword matches", async () => {
@@ -89,6 +95,7 @@ describe("enqueueMessage", () => {
     expect(mockWorkspaceFindById).toHaveBeenCalledWith({ id: "workspace-1" })
     expect(mockAutomatedResponseGetAll).toHaveBeenCalledWith("workspace-1")
     expect(mockAiAgentFindDefault).toHaveBeenCalledWith("workspace-1")
+    expect(mockHasGlobalRouterEnabled).toHaveBeenCalledWith("workspace-1")
     expect(mockAiAgentQueueAdd).toHaveBeenCalledWith(
       "processAutomatedResponse",
       {
@@ -160,6 +167,25 @@ describe("enqueueMessage", () => {
         deduplication: expect.objectContaining({
           ttl: 2000,
         }),
+      }),
+    )
+  })
+
+  test("uses smart delay when Global Router is the only async responder", async () => {
+    mockWorkspaceFindById.mockResolvedValue({
+      smartResponseDelaySeconds: 30,
+    })
+    mockAiAgentFindDefault.mockResolvedValue(undefined)
+    mockHasGlobalRouterEnabled.mockResolvedValue(true)
+
+    await enqueueMessage(enqueueProps)
+
+    expect(mockAiAgentQueueAdd).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(Object),
+      expect.objectContaining({
+        delay: 30_000,
+        deduplication: expect.objectContaining({ ttl: 30_000 }),
       }),
     )
   })

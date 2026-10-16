@@ -7,9 +7,52 @@ import {
   inArray,
   sql,
 } from "../../client"
-import { contactCustomFieldModel, contactModel } from "../../schema"
+import {
+  contactCustomFieldModel,
+  contactModel,
+  customFieldModel,
+} from "../../schema"
 
 export const contactCustomFieldRepository = {
+  /**
+   * Reads selected contact values through both ownership boundaries. The
+   * `ContactCustomField` table cannot be trusted on its own because legacy
+   * rows can theoretically join a Contact and CustomField from other spaces.
+   */
+  async listSelectedDefinitionValuesByContact(
+    input: { contactId: string; customFieldIds: string[]; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<
+    Array<{ id: string; name: string; type: string; value: unknown }>
+  > {
+    if (input.customFieldIds.length === 0) {
+      return []
+    }
+    return await tx
+      .select({
+        id: customFieldModel.id,
+        name: customFieldModel.name,
+        type: customFieldModel.type,
+        value: contactCustomFieldModel.value,
+      })
+      .from(contactCustomFieldModel)
+      .innerJoin(
+        customFieldModel,
+        eq(contactCustomFieldModel.customFieldId, customFieldModel.id),
+      )
+      .innerJoin(
+        contactModel,
+        eq(contactCustomFieldModel.contactId, contactModel.id),
+      )
+      .where(
+        and(
+          eq(contactCustomFieldModel.contactId, input.contactId),
+          eq(contactModel.workspaceId, input.workspaceId),
+          eq(customFieldModel.workspaceId, input.workspaceId),
+          inArray(contactCustomFieldModel.customFieldId, input.customFieldIds),
+        ),
+      )
+  },
   listWithDefinitionByContact(
     input: { contactId: string; workspaceId: string },
     tx: DatabaseClient = db,

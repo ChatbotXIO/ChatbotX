@@ -1,4 +1,8 @@
-import { aiAgentService, workspaceService } from "@chatbotx.io/business"
+import {
+  aiAgentService,
+  decisionProfileService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { isSmartResponseDelayOption } from "@chatbotx.io/database/partials"
 import { simpleQueue } from "@chatbotx.io/redis"
 import { AIJobAction, aiAgentQueue } from "@chatbotx.io/worker-config"
@@ -26,12 +30,14 @@ export const enqueueMessage = async (props: {
     const workspaceDelay = workspace?.smartResponseDelaySeconds
 
     if (isSmartResponseDelayOption(workspaceDelay)) {
-      const [allAutomatedResponses, aiAgent] = await Promise.all([
-        props.messageText
-          ? automatedResponseService.getAll(props.workspaceId)
-          : Promise.resolve([]),
-        aiAgentService.findDefault(props.workspaceId),
-      ])
+      const [allAutomatedResponses, aiAgent, hasGlobalRouter] =
+        await Promise.all([
+          props.messageText
+            ? automatedResponseService.getAll(props.workspaceId)
+            : Promise.resolve([]),
+          aiAgentService.findDefault(props.workspaceId),
+          decisionProfileService.hasGlobalRouterEnabled(props.workspaceId),
+        ])
       const keywordRules = allAutomatedResponses.filter(
         (rule) => rule.type === "inbound",
       )
@@ -41,7 +47,7 @@ export const enqueueMessage = async (props: {
 
       timing = resolveAutomatedResponseTiming(
         isSmartDelayEligible({
-          hasAiAgent: Boolean(aiAgent),
+          hasAsyncResponder: Boolean(aiAgent) || hasGlobalRouter,
           matchesKeyword,
           workspaceDelay,
         })

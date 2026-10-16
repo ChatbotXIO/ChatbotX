@@ -602,6 +602,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         icon: CodeIcon,
         stepType: stepTypes.enum.executeJavascript,
       },
+      {
+        label: t("decision.evaluateDecision"),
+        icon: BotIcon,
+        stepType: stepTypes.enum.evaluateDecision,
+      },
     ],
   },
   {

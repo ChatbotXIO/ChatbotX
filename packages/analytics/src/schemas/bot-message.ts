@@ -27,6 +27,13 @@ export const botMessageFallbackReasons = z.enum([
   "button_not_found",
   "handler_error_to_fallback",
   "unsupported_message_type",
+  "global_router_no_route",
+  "global_router_threshold_unmet",
+  "global_router_provider_failed",
+  "global_router_destination_unavailable",
+  "global_router_destination_failed",
+  "global_router_fallback_failed",
+  "global_router_config_invalid",
 ])
 export type BotMessageFallbackReason = z.infer<typeof botMessageFallbackReasons>
 

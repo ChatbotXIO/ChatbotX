@@ -4,6 +4,7 @@ import type {
   TriggerModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
+import type { DecisionFlowOrigin } from "@chatbotx.io/events"
 
 export type TriggerWithConditions = TriggerModel & {
   conditions: ConditionModel[]
@@ -55,6 +56,7 @@ export type ActionExecutionContext = {
    * which fall back by design.
    */
   contactInboxId?: string
+  decisionFlowOrigin?: DecisionFlowOrigin
   /**
    * Durable key of this occurrence of the action: identical on every retry of
    * the job that produced it, different for each run and each action. Unset
@@ -72,6 +74,7 @@ export type ActionExecutionContext = {
 export type TriggerExecutionInput = {
   contactId: string
   contactInboxId?: string
+  decisionFlowOrigin?: DecisionFlowOrigin
   /** The trigger queue job id; stable across retries of that job. */
   occurrenceId?: string
 }

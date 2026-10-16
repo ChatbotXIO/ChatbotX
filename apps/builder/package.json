@@ -15,6 +15,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@chatbotx.io/decision-config": "workspace:*",
     "@ai-sdk/mcp": "^2.0.32",
     "@base-ui/react": "^1.6.0",
     "@bull-board/api": "^9.10.1",

@@ -31,3 +31,29 @@ export async function assignUserIfUnassigned(
     )
     .returning()
 }
+
+export async function assignTargetIfUnassigned(
+  params: {
+    assignedInboxTeamId?: string | null
+    assignedUserId?: string | null
+    conversationId: string
+    workspaceId: string
+  },
+  tx: DatabaseClient = db,
+): Promise<ConversationModel[]> {
+  return await tx
+    .update(conversationModel)
+    .set({
+      assignedInboxTeamId: params.assignedInboxTeamId ?? null,
+      assignedUserId: params.assignedUserId ?? null,
+    })
+    .where(
+      and(
+        eq(conversationModel.workspaceId, params.workspaceId),
+        eq(conversationModel.id, params.conversationId),
+        isNull(conversationModel.assignedUserId),
+        isNull(conversationModel.assignedInboxTeamId),
+      ),
+    )
+    .returning()
+}

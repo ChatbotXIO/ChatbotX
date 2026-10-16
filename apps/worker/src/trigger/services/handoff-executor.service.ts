@@ -19,6 +19,7 @@ export interface HandoffRequest {
   source:
     | "ai_system_tool"
     | "automated_response"
+    | "global_router"
     | "manual"
     | "thread_control_handback"
   workspaceId: string
@@ -27,7 +28,9 @@ export interface HandoffRequest {
 const DEFAULT_CHANNEL = "webchat"
 
 export class HandoffExecutorService {
-  async execute(request: HandoffRequest): Promise<void> {
+  async execute(
+    request: HandoffRequest,
+  ): Promise<{ status: "alreadyHandedOff" | "handedOff" }> {
     const {
       workspaceId,
       conversationId,
@@ -57,7 +60,7 @@ export class HandoffExecutorService {
         .returning({ id: conversationModel.id })
 
       if (updated.length === 0) {
-        return
+        return { status: "alreadyHandedOff" }
       }
 
       // Best-effort: the handoff is already committed, so a failed cancel must
@@ -98,6 +101,7 @@ export class HandoffExecutorService {
           },
         },
       })
+      return { status: "handedOff" }
     } catch (error) {
       const normalizedError = normalizeError(error)
       baseLogger.error(

@@ -99,7 +99,12 @@ describe("trigger worker audit context", () => {
       id: "job-1",
       data: {
         type: "evaluateTriggers",
-        data: { source: "webhook", eventType: "test", contactId: "contact-1" },
+        data: {
+          source: "webhook",
+          eventType: "test",
+          contactId: "contact-1",
+          eventData: {},
+        },
       },
     })
 

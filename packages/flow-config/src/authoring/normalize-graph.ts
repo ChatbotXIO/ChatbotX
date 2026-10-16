@@ -1,6 +1,7 @@
 import { createId } from "@chatbotx.io/utils"
 import { DEFAULT_NODE_MEASURED } from "../nodes/base"
 import type { EdgeSchema } from "../nodes/index"
+import { normalizeEvaluateDecisionStep } from "../steps/evaluate-decision"
 import { FlowAuthoringException } from "./errors"
 import { type LayoutPosition, layoutNodes } from "./layout"
 
@@ -26,6 +27,53 @@ export type NormalizedAuthoredGraph<T> = {
   /** Authored id (e.g. `"n1"`) → persisted internal id, for callers that need to reference the nodes they just authored without a round-trip fetch. */
   nodeIds: Record<string, string>
 }
+
+/**
+ * Applies the dual-read/single-write Evaluate Decision compatibility rule to
+ * arbitrary persisted Flow nodes. It deliberately does not validate nodes;
+ * callers still choose the appropriate draft or publish schema afterwards.
+ */
+export const normalizeFlowGraphDecisionMappings = <T>(
+  nodes: readonly T[],
+): T[] =>
+  nodes.map((node) => {
+    if (!node || typeof node !== "object" || Array.isArray(node)) {
+      return node
+    }
+    const nodeRecord = node as Record<string, unknown>
+    const data = nodeRecord.data
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      return node
+    }
+    const details = (data as Record<string, unknown>).details
+    if (!details || typeof details !== "object" || Array.isArray(details)) {
+      return node
+    }
+    const steps = (details as Record<string, unknown>).steps
+    if (!Array.isArray(steps)) {
+      return node
+    }
+
+    return {
+      ...nodeRecord,
+      data: {
+        ...(data as Record<string, unknown>),
+        details: {
+          ...(details as Record<string, unknown>),
+          steps: steps.map((step) => {
+            if (!step || typeof step !== "object" || Array.isArray(step)) {
+              return step
+            }
+            const stepRecord = step as Record<string, unknown>
+            if (stepRecord.stepType !== "evaluateDecision") {
+              return step
+            }
+            return normalizeEvaluateDecisionStep(step)
+          }),
+        },
+      },
+    } as T
+  })
 
 /**
  * Normalizes a caller-authored `{ nodes, edges }` graph into the shape the

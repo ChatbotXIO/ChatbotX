@@ -53,6 +53,7 @@ import { conversationParticipantRelations } from "./conversation-participant"
 import { couponRelations } from "./coupon"
 import { platformCredentialRelations } from "./credential"
 import { customFieldRelations } from "./custom-field"
+import { decisionRelations } from "./decision"
 import { dynamicImageRelations } from "./dynamic-image"
 import { emailTopicRelations } from "./email-topic"
 import { auditLogRelations } from "./enterprise/audit-log"
@@ -205,6 +206,7 @@ export const relations = {
   ...workspaceUsageRelations,
   ...contactCustomFieldRelations,
   ...customFieldRelations,
+  ...decisionRelations,
   ...dynamicImageRelations,
   ...broadcastRelations,
   ...broadcastRecurrenceRelations,

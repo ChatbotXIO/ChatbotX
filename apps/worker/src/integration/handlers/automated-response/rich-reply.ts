@@ -53,7 +53,7 @@ export async function handleRichAIReply({
         provider,
         modelId,
         conversationId: conversation.id,
-        error: normalizedError,
+        err: normalizedError,
       },
       "[automated-response] processStreamingText threw error",
     )
@@ -82,7 +82,7 @@ export async function handleRichAIReply({
     provider,
     responseType: "ai_agent",
     startTime,
-    triggerType: "rich_response",
+    triggerType: props.trackingTriggerType ?? "rich_response",
     workspaceId: conversation.workspaceId,
   })
 
@@ -162,7 +162,7 @@ export async function handleRichAIReply({
         triggerContext: {
           triggerSource: "worker",
           triggerHandler: "replyByAI",
-          triggerType: "rich_response_action_only",
+          triggerType: props.trackingTriggerType ?? "rich_response_action_only",
         },
       },
     })

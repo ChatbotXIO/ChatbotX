@@ -339,6 +339,15 @@ class AiAgentService extends BaseService {
     return await tx.query.aiAgentModel.findFirst({ where })
   }
 
+  async findByIdForWorkspace(input: {
+    id: string
+    workspaceId: string
+  }): Promise<AIAgentModel | undefined> {
+    return await this.findBy({
+      where: { id: input.id, workspaceId: input.workspaceId },
+    })
+  }
+
   async findDefault(workspaceId: string): Promise<AIAgentModel | undefined> {
     return await withCache(
       this.getDefaultCacheKey(workspaceId),

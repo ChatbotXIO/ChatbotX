@@ -6,6 +6,7 @@ export type {
 } from "./base-emitter"
 export * from "./contact-inbox-context"
 export * from "./context"
+export * from "./decision-flow-lineage"
 export * from "./event-dispatcher"
 export * from "./event-type-registry"
 // Trigger events
