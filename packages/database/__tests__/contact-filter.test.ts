@@ -4401,3 +4401,45 @@ describe("applyContactFilter — W1 relation activations", () => {
     )
   })
 })
+
+describe("applyContactFilter — leaderboardScore (dynamic per-leaderboard field)", () => {
+  const scoreWhere = (operator: string, value: unknown) =>
+    applyContactFilter({
+      operator: "and",
+      conditions: [
+        { field: "leaderboardScore", leaderboardId: "77", operator, value },
+      ],
+    })
+
+  test.each([
+    [operatorTypes.enum.eq, "="],
+    [operatorTypes.enum.lt, "<"],
+    [operatorTypes.enum.lte, "<="],
+    [operatorTypes.enum.gt, ">"],
+    [operatorTypes.enum.gte, ">="],
+  ])("%s compares the score with %s", (operator, symbol) => {
+    const query = renderFirstRawCondition(scoreWhere(operator, "100"))
+    expect(query.sql).toContain("COALESCE((")
+    expect(query.sql).toContain(`), 0) ${symbol} $`)
+    expect(query.params).toContain("77")
+    expect(query.params).toContain(100)
+  })
+
+  test("a contact without a score counts as 0 and the lookup is workspace-scoped", () => {
+    const query = renderFirstRawCondition(scoreWhere(operatorTypes.enum.lt, 5))
+    expect(query.sql).toContain('"LeaderboardParticipant"."score"')
+    expect(query.sql).toContain(
+      '"LeaderboardParticipant"."workspaceId" = "Contact"."workspaceId"',
+    )
+    expect(query.sql).toContain(", 0)")
+  })
+
+  test("unsupported operators or missing values produce no condition", () => {
+    for (const where of [
+      scoreWhere(operatorTypes.enum.contains, "1"),
+      scoreWhere(operatorTypes.enum.gt, "abc"),
+    ]) {
+      expect((where as { AND?: unknown[] }).AND).toBeUndefined()
+    }
+  })
+})

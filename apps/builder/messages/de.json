@@ -724,6 +724,7 @@
       "questionnaireInProgress": "Fragebogen in Bearbeitung",
       "questionnaireFinished": "Fragebogen abgeschlossen",
       "couponTopic": "Gutschein",
+      "leaderboardScore": "Gamification-Punkte",
       "votedOnPoll": "An der Umfrage teilgenommen",
       "lastComment": "Letzter Kommentar",
       "commentedOnPost": "Beitrag kommentiert",
@@ -793,6 +794,7 @@
       "ecommerce": "E-Commerce",
       "systemFields": "Systemfelder",
       "topicCoupon": "Thema Gutschein",
+      "leaderboard": "Gamification-Punkte",
       "customFields": "Benutzerdefinierte Felder",
       "botFields": "Bot-Felder",
       "email": "E-Mail",
@@ -2345,7 +2347,8 @@
       "media": "Medien",
       "ads": "Anzeigen",
       "settings": "Einstellungen",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "Bestenlisten"
     },
     "adReferral": {
       "label": "Ads",
@@ -2377,6 +2380,9 @@
       "hint": "Data Manager wird empfohlen. Die alte Upload-API funktioniert nur für Google-Cloud-Projekte, die Google noch zulässt, und nutzt die Data-Manager-Berechtigung nicht. Eine Änderung gilt nur für neue Verbindungen: Bestehende Workspaces müssen neu verbunden werden.",
       "dataManager": "Data-Manager-API (empfohlen)",
       "legacy": "Alte Upload-API"
+    },
+    "referralName": {
+      "label": "Name des Werbers"
     }
   },
   "flows": {
@@ -2548,6 +2554,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread-Steuerung",
       "sendGoogleAdsConversion": "Google-Ads-Conversion senden",
+      "changeGamificationScore": "Gamification-Punkte ändern",
       "sendViewCatalog": "Katalog ansehen",
       "sendProducts": "Produkte senden"
     },
@@ -2669,6 +2676,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "Schaltfläche bearbeiten",
       "buttonLabel": "Schaltflächenbeschriftung"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "Bestenliste",
+      "operation": "Vorgang",
+      "add": "Punkte hinzufügen (+)",
+      "subtract": "Punkte abziehen (−)",
+      "points": "Punkte",
+      "targetUser": "Punkte des Nutzers",
+      "targetReferrer": "Punkte des Werbers",
+      "targetReferrerHint": "Ändert auch die Punkte der Person, die diesen Kontakt geworben hat.",
+      "summary": "{points} Punkte in {leaderboard}"
     },
     "whatsappLocation": {
       "title": "Standort",
@@ -8382,6 +8400,362 @@
         "type_not_allowed": "Dieser Dateityp ist nicht erlaubt.",
         "rate_limited": "Zu viele Uploads. Bitte warte kurz und versuche es erneut.",
         "upload_failed": "Die Datei konnte nicht hochgeladen werden. Bitte versuche es erneut."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "Bestenlisten",
+    "public": {
+      "points": "{points} Pkt.",
+      "endsIn": "Endet in {days} T {hours} Std {minutes} Min {seconds} s",
+      "finished": "Beendet",
+      "empty": "Noch keine Teilnehmer – sei die erste Person!",
+      "myRank": "Dein Rang: #{rank}",
+      "unranked": "Noch kein Rang",
+      "shareToEarn": "Teilen und Punkte sammeln",
+      "linkCopied": "Link kopiert",
+      "unavailableTitle": "Diese Rangliste ist nicht mehr verfügbar",
+      "unavailableDescription": "Sie wurde möglicherweise beendet oder entfernt. Frag die Seite, der du folgst, nach dem aktuellen Link."
+    },
+    "description": "Starte punktebasierte Ranking-Kampagnen, bei denen Kunden um die Spitzenplätze und Prämien wetteifern.",
+    "feature": "Bestenliste",
+    "create": "Bestenliste erstellen",
+    "kpi": {
+      "total": "Kampagnen insgesamt",
+      "active": "Laufend"
+    },
+    "tabs": {
+      "all": "Alle",
+      "active": "Aktiv",
+      "paused": "Pausiert",
+      "finished": "Beendet"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "active": "Aktiv",
+      "paused": "Pausiert",
+      "finished": "Beendet"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "Kampagne",
+      "searchPlaceholder": "Bestenlisten durchsuchen...",
+      "platformFilter": "Plattform",
+      "participants": "Teilnehmer",
+      "totalPoints": "Punkte insgesamt",
+      "newToday": "+{count} heute",
+      "average": "Ø {value} / Spieler",
+      "daysLeft": "{days, plural, one {# Tag übrig} other {# Tage übrig}}",
+      "ended": "Beendet"
+    },
+    "scope": {
+      "allPosts": "Alle Beiträge",
+      "specificPosts": "Bestimmte Beiträge",
+      "specificPostsCount": "{count, plural, one {# Beitrag} other {# Beiträge}}",
+      "telegramChatsCount": "{count, plural, one {# Gruppe} other {# Gruppen}}"
+    },
+    "menu": {
+      "start": "Starten",
+      "pause": "Pausieren",
+      "finish": "Beenden",
+      "resetPoints": "Punkte zurücksetzen",
+      "triggerRewards": "Prämien auslösen",
+      "viewParticipants": "Teilnehmer ansehen",
+      "copyLink": "Öffentlichen Link kopieren"
+    },
+    "confirm": {
+      "publishTitle": "Diese Bestenliste veröffentlichen?",
+      "publishDescription": "Die Punktevergabe startet sofort und Spieler können die öffentliche Seite sehen.",
+      "pauseTitle": "Diese Bestenliste pausieren?",
+      "pauseDescription": "Die automatische und die Flow-Punktevergabe stoppen. Du kannst Punkte weiterhin manuell anpassen.",
+      "startTitle": "Diese Bestenliste fortsetzen?",
+      "startDescription": "Die Punktevergabe läuft für alle Regeln wieder an.",
+      "finishTitle": "Diese Bestenliste beenden?",
+      "finishDescription": "Alle Punktestände werden eingefroren und können sich nicht mehr ändern. Automatische Prämien werden gesendet, falls sie aktiviert sind.",
+      "resetPointsTitle": "Alle Punkte zurücksetzen?",
+      "resetPointsDescription": "Alle Teilnehmer von \"{name}\" gehen zurück auf 0 Punkte. Dies wird protokolliert und kann nicht rückgängig gemacht werden."
+    },
+    "toast": {
+      "published": "Bestenliste veröffentlicht",
+      "paused": "Bestenliste pausiert",
+      "started": "Bestenliste fortgesetzt",
+      "finished": "Bestenliste beendet",
+      "pointsReset": "Alle Punkte wurden zurückgesetzt"
+    },
+    "export": {
+      "title": "Teilnehmer exportieren",
+      "description": "Lade alle Teilnehmer mit Rang und Punktestand als CSV-Datei herunter.",
+      "preparing": "Datei wird vorbereitet...",
+      "ready": "Deine Datei ist bereit ({count} Zeilen).",
+      "failed": "Der Export ist fehlgeschlagen. Bitte versuche es erneut."
+    },
+    "rewards": {
+      "title": "Prämien auslösen",
+      "description": "Sende den Prämien-Flow an die besten Spieler. Prämien können nur einmal gesendet werden.",
+      "flow": "Prämien-Flow",
+      "topN": "Anzahl der Gewinner (Top N)",
+      "noFlow": "Kein Prämien-Flow ausgewählt — lege einen in den Einstellungen der Bestenliste fest.",
+      "alreadySent": "Für diese Bestenliste wurden bereits Prämien gesendet.",
+      "confirm": "Prämien senden",
+      "result": "An {sent} Gewinner gesendet, {skipped} übersprungen (keine Unterhaltung auf diesem Kanal)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "Informationen",
+        "config": "Kanal & Regeln",
+        "review": "Prüfen & veröffentlichen"
+      },
+      "namePlaceholder": "z. B. Top-Fans im Oktober",
+      "coverImage": "Titelbild",
+      "coverImageHint": "JPG oder PNG, bis zu 5 MB. Empfohlene Größe 1200×630.",
+      "coverImageRejected": "Wähle ein JPG- oder PNG-Bild bis 5 MB.",
+      "description": "Regeln & Prämien",
+      "descriptionPlaceholder": "Erkläre, wie Spieler Punkte sammeln und was die besten Spieler gewinnen.",
+      "startsAt": "Beginnt am",
+      "endsAt": "Endet am",
+      "startLocked": "Die Startzeit kann nach der Veröffentlichung nicht mehr geändert werden.",
+      "channelTitle": "Plattform & Kanal",
+      "platform": "Plattform",
+      "hostChannel": "Kanal",
+      "hostLocked": "Plattform und Kanal können nach der Veröffentlichung nicht mehr geändert werden.",
+      "noChannel": "Kein verbundener {platform}-Kanal. Verbinde zuerst einen unter Einstellungen → Kanäle.",
+      "openMinigameSettings": "Spieleinstellungen öffnen",
+      "postScope": "Beiträge, die Punkte bringen",
+      "choosePosts": "Beiträge auswählen",
+      "telegramChats": "Gruppen & Kanäle",
+      "telegramChatsHint": "Füge deinen Bot als Admin zur Gruppe oder zum Kanal hinzu, damit er Mitglieder und Nachrichten sehen kann.",
+      "telegramChatsEmpty": "Keine Gruppen gefunden — füge den Bot zuerst als Admin hinzu",
+      "rulesTitle": "Punkteregeln",
+      "rulesHint": "Aktiviere die Aktionen, die Punkte bringen, und lege die Punktzahl fest.",
+      "allPlatforms": "Alle Plattformen",
+      "points": "Punkte",
+      "maxPerDay": "Max. pro Tag",
+      "maxPerDayHint": "Leer lassen für unbegrenzt.",
+      "minChars": "Mindestzeichenzahl",
+      "bonusPoints": "Bonuspunkte der Golden Hour",
+      "bonusPointsHint": "Zusätzliche Punkte für Kommentare kurz nach der Veröffentlichung des Beitrags.",
+      "bonusMinutes": "Dauer der Golden Hour (Minuten)",
+      "emailTopicNote": "Nur E-Mails, die mit einem Email Topic gesendet werden, werden für Öffnungen und Klicks erfasst.",
+      "generalTitle": "Allgemeine Einstellungen",
+      "followersOnly": "Nur Follower",
+      "followersOnlyHint": "Nur Personen, die deinem Konto folgen, erhalten Punkte.",
+      "tagFilter": "Tag-Filter",
+      "tagFilterHint": "Nur Kontakte mit mindestens einem dieser Tags erhalten Punkte.",
+      "everyone": "Alle",
+      "resetTime": "Tägliche Rücksetzzeit (UTC)",
+      "resetTimeHint": "Tageslimits starten zu dieser Zeit neu. = {time} Uhr vietnamesischer Zeit (UTC+7).",
+      "cooldown": "Anti-Spam-Abklingzeit (Sekunden)",
+      "cooldownHint": "Mindestanzahl Sekunden zwischen zwei automatischen Punktevergaben an dieselbe Person. 0 schaltet sie aus.",
+      "referralFlow": "Willkommens-Flow für Empfehlungen",
+      "referralFlowAuto": "Automatisch erstellen",
+      "referralFlowHint": "Wird an einen Freund gesendet, der über einen Empfehlungslink beitritt. Er kann '{{referral_name}}' und den öffentlichen Bestenlisten-Link verwenden. Leer lassen, um automatisch eine Willkommensnachricht zu erstellen, die du im Flow Builder bearbeiten kannst.",
+      "publicLink": "Öffentlicher Link",
+      "publicLinkHint": "Sende diesen Link aus einem Flow, damit jeder Spieler seinen eigenen Rang sieht.",
+      "publicLinkAfterSave": "Der öffentliche Link ist nach dem Speichern verfügbar.",
+      "rewardsTitle": "Prämien",
+      "autoOnFinish": "Automatisch senden, wenn beendet",
+      "autoOnFinishHint": "Führt den Prämien-Flow für die Top N aus, sobald die Bestenliste endet.",
+      "backToStep2": "Zurück zu Schritt 2",
+      "notEditable": "Beendete Bestenlisten können nicht bearbeitet werden."
+    },
+    "review": {
+      "infoCard": "Informationen",
+      "yes": "Ja",
+      "no": "Nein",
+      "off": "Aus",
+      "seconds": "{seconds} Sekunden",
+      "resetTimeValue": "{utc} UTC (= {local} vietnamesische Zeit)",
+      "noRules": "Es ist noch keine Regel aktiviert.",
+      "rulePoints": "{points} Pkt.",
+      "maxPerDay": "max. {count}/Tag",
+      "unlimited": "unbegrenzt"
+    },
+    "preview": {
+      "sampleName": "Spieler {rank}",
+      "placeholderName": "Name deiner Bestenliste",
+      "pinnedBar": "#{rank} · {points} Pkt."
+    },
+    "validation": {
+      "nameRequired": "Gib einen Namen ein",
+      "dateRequired": "Wähle Datum und Uhrzeit",
+      "endsAfterStart": "Die Endzeit muss nach der Startzeit liegen",
+      "channelRequired": "Wähle einen Kanal",
+      "minigameRequired": "Wähle ein Minispiel",
+      "pointsRequired": "Gib die Punkte ein, die diese Regel vergibt",
+      "bonusMinutesRequired": "Lege fest, wie viele Minuten die Golden Hour dauert",
+      "postsRequired": "Wähle mindestens einen Beitrag",
+      "telegramChatsRequired": "Wähle mindestens eine Gruppe oder einen Kanal",
+      "enableOneRule": "Aktiviere vor der Veröffentlichung mindestens eine Punkteregel",
+      "fixErrors": "Bitte korrigiere die markierten Felder"
+    },
+    "rules": {
+      "comments": {
+        "label": "Kommentare",
+        "description": "Punkte für jeden Kommentar unter deinen Beiträgen."
+      },
+      "liveComments": {
+        "label": "Live-Kommentare",
+        "description": "Punkte für jeden Kommentar während eines Livestreams."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "Punkte, wenn eine Nachricht zu einem Schlüsselwort aus dem Keywords-Tool dieses Kanals passt."
+      },
+      "storyMention": {
+        "label": "Story-Erwähnung",
+        "description": "Punkte, wenn jemand dein Konto in seiner Story markiert."
+      },
+      "storyReaction": {
+        "label": "Story-Reaktion",
+        "description": "Punkte, wenn jemand auf deine Story reagiert."
+      },
+      "ctwaReactions": {
+        "label": "CTWA-Klick & Reaktionen",
+        "description": "Punkte für das Klicken auf eine Click-to-WhatsApp-Anzeige oder das Reagieren auf eine Nachricht."
+      },
+      "survey": {
+        "label": "Umfrage & Quiz",
+        "description": "Punkte für das Abschließen eines Questionnaire oder das Absenden eines WhatsApp Flow-Formulars."
+      },
+      "follow": {
+        "label": "OA folgen & QR",
+        "description": "Punkte für das Folgen deines Official Account oder das Scannen seines QR-Codes. Beim Entfolgen werden die Punkte wieder abgezogen."
+      },
+      "message": {
+        "label": "Zalo-Nachricht",
+        "description": "Punkte für jede an deinen Official Account gesendete Nachricht."
+      },
+      "joinGroup": {
+        "label": "Kanal & Gruppe beitreten",
+        "description": "Punkte für den Beitritt zu deiner Gruppe oder deinem Kanal. Beim Verlassen werden die Punkte wieder abgezogen."
+      },
+      "groupDiscussion": {
+        "label": "Gruppendiskussion",
+        "description": "Punkte für jede Nachricht in deiner Gruppe."
+      },
+      "emailOpen": {
+        "label": "E-Mail geöffnet",
+        "description": "Punkte, wenn eine E-Mail geöffnet wird."
+      },
+      "emailClick": {
+        "label": "E-Mail-Klick",
+        "description": "Punkte, wenn auf einen Link in einer E-Mail geklickt wird."
+      },
+      "minigameWin": {
+        "label": "Minispiel-Gewinn",
+        "description": "Punkte für jeden im Minispiel gewonnenen Preis."
+      },
+      "inGameShare": {
+        "label": "Teilen im Spiel",
+        "description": "Punkte für das Teilen des Spiels, um weitere Versuche zu erhalten."
+      },
+      "referral": {
+        "label": "Empfehlung",
+        "description": "Punkte für den Einladenden, wenn ein neuer Freund über seinen Link beitritt."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} Kommentare",
+      "liveComments": "{count} Live-Kommentare",
+      "keywords": "{count} Keywords",
+      "storyMention": "{count} Story-Erwähnungen",
+      "storyReaction": "{count} Story-Reaktionen",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} Umfragen",
+      "follow": "{count} Follows",
+      "message": "{count} Nachrichten",
+      "joinGroup": "{count} Beitritte",
+      "groupDiscussion": "{count} Gruppennachrichten",
+      "emailOpen": "{count} Öffnungen",
+      "emailClick": "{count} Klicks",
+      "minigameWin": "{count} Gewinne",
+      "inGameShare": "{count} Shares",
+      "referral": "{count} Empfehlungen",
+      "flow": "{count} Flow",
+      "manual": "{count} manuell"
+    },
+    "participants": {
+      "title": "Teilnehmer",
+      "switcher": "Bestenliste wechseln",
+      "count": "{count, plural, one {# Spieler} other {# Spieler}}",
+      "searchPlaceholder": "Name, Nutzer-ID oder Telefonnummer suchen...",
+      "filters": {
+        "all": "Alle",
+        "top10": "Top 10",
+        "top50": "Top 50",
+        "banned": "Gesperrt"
+      },
+      "columns": {
+        "rank": "Rang",
+        "participant": "Teilnehmer",
+        "score": "Gesamtpunktzahl",
+        "breakdown": "Details",
+        "lastActivity": "Letzte Aktivität"
+      },
+      "unknown": "Unbekannt",
+      "contactId": "ID {id}",
+      "lockedFinished": "Diese Bestenliste ist beendet — die Punktestände sind gesperrt.",
+      "lockedDraft": "Veröffentliche die Bestenliste, bevor du Punktestände bearbeitest.",
+      "actions": {
+        "adjust": "Punkte anpassen",
+        "ban": "Sperren",
+        "unban": "Entsperren",
+        "reset": "Auf 0 zurücksetzen",
+        "history": "Verlauf ansehen"
+      },
+      "adjust": {
+        "title": "Punkte anpassen",
+        "description": "Punkte für {name} hinzufügen oder abziehen. Die Änderung wird im Audit-Protokoll festgehalten.",
+        "delta": "Punkte (+/-)",
+        "deltaPlaceholder": "z. B. 50 oder -20",
+        "reason": "Grund",
+        "reasonPlaceholder": "Warum änderst du diesen Punktestand?",
+        "success": "Punkte angepasst"
+      },
+      "banConfirm": "{name} wird aus dem Ranking entfernt und erhält keine Punkte mehr.",
+      "unbanConfirm": "{name} kehrt mit dem aktuellen Punktestand ins Ranking zurück.",
+      "resetConfirm": "Der Punktestand von {name} wird auf 0 zurückgesetzt. Dies wird protokolliert.",
+      "banned": "Teilnehmer gesperrt",
+      "unbanned": "Teilnehmer entsperrt",
+      "resetDone": "Punktestand auf 0 zurückgesetzt",
+      "history": {
+        "title": "Punkteverlauf — {name}",
+        "empty": "Noch keine Punkteänderungen.",
+        "sources": {
+          "rule": "Regel",
+          "flow": "Flow",
+          "referral": "Empfehlung",
+          "manual": "Manuelle Anpassung",
+          "reset": "Zurücksetzen"
+        }
+      },
+      "conversationNotFound": "Keine Unterhaltung für diesen Kontakt gefunden",
+      "popupBlocked": "Erlauben Sie Pop-ups für diese Website und versuchen Sie es erneut."
+    },
+    "auditLog": {
+      "title": "Audit-Protokoll",
+      "admin": "Admin",
+      "change": "Änderung",
+      "time": "Zeit",
+      "reason": "Grund",
+      "api": "API",
+      "empty": "Noch keine manuellen Änderungen.",
+      "actions": {
+        "adjust": "Anpassen",
+        "resetOne": "Spieler zurücksetzen",
+        "resetAll": "Alle zurücksetzen",
+        "ban": "Sperren",
+        "unban": "Entsperren"
       }
     }
   },

@@ -4,6 +4,7 @@ import { beforeEach, expect, test, vi } from "vitest"
 const recordOpen = vi.fn().mockResolvedValue(undefined)
 const findAnalyticsWorkspaceIdByToken = vi.fn()
 const loadServableWorkspace = vi.fn()
+const awardLeaderboardEmailEngagement = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("@chatbotx.io/analytics", () => ({
   emailTopicAnalyticsService: { recordOpen },
@@ -11,6 +12,10 @@ vi.mock("@chatbotx.io/analytics", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   emailTopicService: { findAnalyticsWorkspaceIdByToken },
+}))
+
+vi.mock("@chatbotx.io/business/leaderboard", () => ({
+  awardLeaderboardEmailEngagement,
 }))
 
 vi.mock("@/lib/workspace/load-servable-workspace", () => ({
@@ -56,4 +61,20 @@ test("does not call recordOpen when r param is missing", async () => {
   const req = new Request("http://localhost/email-topic/open")
   await GET(req)
   expect(recordOpen).not.toHaveBeenCalled()
+})
+
+test("scores the open for leaderboards after recording it", async () => {
+  findAnalyticsWorkspaceIdByToken.mockResolvedValue("workspace-1")
+  await GET(new Request("http://localhost/email-topic/open?r=tok"))
+  expect(awardLeaderboardEmailEngagement).toHaveBeenCalledWith({
+    token: "tok",
+    kind: "open",
+  })
+})
+
+test("does not score an open for a workspace scheduled for deletion", async () => {
+  findAnalyticsWorkspaceIdByToken.mockResolvedValue("workspace-1")
+  loadServableWorkspace.mockResolvedValue({ servable: false })
+  await GET(new Request("http://localhost/email-topic/open?r=tok"))
+  expect(awardLeaderboardEmailEngagement).not.toHaveBeenCalled()
 })

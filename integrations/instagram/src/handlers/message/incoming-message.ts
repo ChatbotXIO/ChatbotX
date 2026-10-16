@@ -79,6 +79,26 @@ const getMessageLocation = (message: InstagramMessage) => {
   }
 }
 
+/** A `story_mention` attachment means the contact tagged the account in their story. */
+export const hasStoryMention = (message: InstagramMessage): boolean =>
+  message.attachments?.some(
+    (attachment) => attachment.type === "story_mention",
+  ) ?? false
+
+const getMessageContentAttributes = (
+  message: InstagramMessage,
+): Record<string, unknown> | undefined => {
+  const location = getMessageLocation(message)
+  if (location) {
+    return location
+  }
+  const storyReply = message.reply_to?.story
+  if (storyReply) {
+    return { type: "story_reply", story: storyReply }
+  }
+  return hasStoryMention(message) ? { type: "story_mention" } : undefined
+}
+
 export const receiveMessage: MessageHandlers<InstagramAuthValue>["receiveMessage"] =
   async ({ ctx, data }) => {
     const validatedData = instagramWebhookEventSchema.parse(data.payload)
@@ -119,7 +139,6 @@ const getMessageEntity = async (
 
   if (messaging.message) {
     const location = getMessageLocation(messaging.message)
-    const storyReply = messaging.message.reply_to?.story
     message = {
       sourceId: messaging.message.mid,
       messageType:
@@ -130,9 +149,7 @@ const getMessageEntity = async (
       contentType: location
         ? contentTypes.enum.location
         : contentTypes.enum.text,
-      contentAttributes:
-        location ??
-        (storyReply ? { type: "story_reply", story: storyReply } : undefined),
+      contentAttributes: getMessageContentAttributes(messaging.message),
       attachments: await getMessageAttachments(ctx, messaging.message),
     }
     quickReplyAction = messaging.message.quick_reply?.payload ?? null

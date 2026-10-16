@@ -6,6 +6,7 @@ import { decodeTemplateFlowToken } from "@chatbotx.io/flow-config"
 import type { IntegrationJobCaptureTemplateFlowResponse } from "@chatbotx.io/worker-config"
 import { detectConversationAndContactInbox } from "../../lib/db"
 import { logger } from "../../lib/logger"
+import { awardWhatsappFlowSurvey } from "./whatsapp-flow-response"
 
 export async function captureTemplateFlowResponse(
   data: IntegrationJobCaptureTemplateFlowResponse["data"],
@@ -55,5 +56,12 @@ export async function captureTemplateFlowResponse(
     flowSourceId: resolved.flowSourceId,
     fieldMappings: resolved.param.fieldMappings ?? [],
     flowResponse: data.flowResponse,
+  })
+
+  await awardWhatsappFlowSurvey({
+    workspaceId: data.workspaceId,
+    contactId: conversation.contactId,
+    contactInbox,
+    messageId: data.messageId,
   })
 }

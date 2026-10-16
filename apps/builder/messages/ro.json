@@ -168,6 +168,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Controlul conversației",
       "sendGoogleAdsConversion": "Trimite conversie Google Ads",
+      "changeGamificationScore": "Modifică punctele de gamificare",
       "sendViewCatalog": "Vezi catalogul",
       "sendProducts": "Trimite produse"
     },
@@ -289,6 +290,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "Editează butonul",
       "buttonLabel": "Eticheta butonului"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "Clasament",
+      "operation": "Operațiune",
+      "add": "Adaugă puncte (+)",
+      "subtract": "Scade puncte (−)",
+      "points": "Puncte",
+      "targetUser": "Punctele utilizatorului",
+      "targetReferrer": "Punctele celui care a recomandat",
+      "targetReferrerHint": "Modifică și punctele persoanei care a recomandat acest contact.",
+      "summary": "{points} puncte în {leaderboard}"
     },
     "whatsappLocation": {
       "title": "Locație",
@@ -1753,6 +1765,7 @@
       "questionnaireInProgress": "Chestionar în desfășurare",
       "questionnaireFinished": "Chestionar finalizat",
       "couponTopic": "Cupon",
+      "leaderboardScore": "Puncte de gamificare",
       "votedOnPoll": "A votat în sondaj",
       "lastComment": "Ultimul comentariu",
       "commentedOnPost": "A comentat la postare",
@@ -1822,6 +1835,7 @@
       "ecommerce": "Comerț electronic",
       "systemFields": "Câmpuri de sistem",
       "topicCoupon": "Subiect cupon",
+      "leaderboard": "Puncte de gamificare",
       "customFields": "Câmpuri personalizate",
       "botFields": "Câmpurile botului",
       "email": "E-mail",
@@ -3374,7 +3388,8 @@
       "media": "Media",
       "ads": "Reclame",
       "settings": "Setări",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "Clasamente"
     },
     "adReferral": {
       "label": "Ads",
@@ -3406,6 +3421,9 @@
       "hint": "Se recomandă Data Manager. API-ul de încărcare vechi funcționează doar pentru proiectele Google Cloud pe care Google le permite încă și nu folosește permisiunea Data Manager. Modificarea se aplică doar conexiunilor noi: reconectează spațiile de lucru existente.",
       "dataManager": "API Data Manager (recomandat)",
       "legacy": "API de încărcare vechi"
+    },
+    "referralName": {
+      "label": "Numele celui care a recomandat"
     }
   },
   "channels": {
@@ -8382,6 +8400,362 @@
         "type_not_allowed": "Acest tip de fișier nu este permis.",
         "rate_limited": "Prea multe încărcări. Așteaptă puțin și încearcă din nou.",
         "upload_failed": "Fișierul nu a putut fi încărcat. Încearcă din nou."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "Clasamente",
+    "public": {
+      "points": "{points} puncte",
+      "endsIn": "Se încheie în {days}z {hours}h {minutes}m {seconds}s",
+      "finished": "Încheiat",
+      "empty": "Încă nu sunt jucători — fii primul!",
+      "myRank": "Locul tău: #{rank}",
+      "unranked": "Încă neclasat",
+      "shareToEarn": "Distribuie și câștigă puncte",
+      "linkCopied": "Link copiat",
+      "unavailableTitle": "Acest clasament nu mai este disponibil",
+      "unavailableDescription": "Este posibil să se fi încheiat sau să fi fost eliminat. Cere cel mai recent link paginii pe care o urmărești."
+    },
+    "description": "Rulează campanii de clasament bazate pe puncte, în care clienții concurează pentru primele locuri și recompense.",
+    "feature": "Clasament",
+    "create": "Creează clasament",
+    "kpi": {
+      "total": "Total campanii",
+      "active": "În desfășurare"
+    },
+    "tabs": {
+      "all": "Toate",
+      "active": "Active",
+      "paused": "În pauză",
+      "finished": "Încheiate"
+    },
+    "status": {
+      "draft": "Ciornă",
+      "active": "Activ",
+      "paused": "În pauză",
+      "finished": "Încheiat"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "Campanie",
+      "searchPlaceholder": "Caută clasamente...",
+      "platformFilter": "Platformă",
+      "participants": "Participanți",
+      "totalPoints": "Total puncte",
+      "newToday": "+{count} azi",
+      "average": "medie {value} / jucător",
+      "daysLeft": "{days, plural, one {# zi rămasă} other {# de zile rămase}}",
+      "ended": "Încheiat"
+    },
+    "scope": {
+      "allPosts": "Toate postările",
+      "specificPosts": "Postări specifice",
+      "specificPostsCount": "{count, plural, one {# postare} other {# de postări}}",
+      "telegramChatsCount": "{count, plural, one {# grup} other {# de grupuri}}"
+    },
+    "menu": {
+      "start": "Pornește",
+      "pause": "Pune pe pauză",
+      "finish": "Încheie",
+      "resetPoints": "Resetează punctele",
+      "triggerRewards": "Trimite recompensele",
+      "viewParticipants": "Vezi participanții",
+      "copyLink": "Copiază linkul public"
+    },
+    "confirm": {
+      "publishTitle": "Publici acest clasament?",
+      "publishDescription": "Punctarea începe imediat, iar jucătorii pot vedea pagina publică.",
+      "pauseTitle": "Pui acest clasament pe pauză?",
+      "pauseDescription": "Punctarea automată și cea din fluxuri se oprește. Puteți ajusta în continuare punctele manual.",
+      "startTitle": "Reiei acest clasament?",
+      "startDescription": "Punctarea pornește din nou pentru fiecare regulă.",
+      "finishTitle": "Încheii acest clasament?",
+      "finishDescription": "Toate scorurile sunt înghețate și nu mai pot fi modificate. Recompensele automate sunt trimise dacă sunt activate.",
+      "resetPointsTitle": "Resetezi toate punctele?",
+      "resetPointsDescription": "Toți participanții din \"{name}\" revin la 0 puncte. Acțiunea este înregistrată și nu poate fi anulată."
+    },
+    "toast": {
+      "published": "Clasament publicat",
+      "paused": "Clasament pus pe pauză",
+      "started": "Clasament reluat",
+      "finished": "Clasament încheiat",
+      "pointsReset": "Toate punctele au fost resetate"
+    },
+    "export": {
+      "title": "Exportă participanții",
+      "description": "Descarcă toți participanții cu rangul și scorul lor ca fișier CSV.",
+      "preparing": "Se pregătește fișierul...",
+      "ready": "Fișierul tău este gata ({count} rânduri).",
+      "failed": "Exportul a eșuat. Încearcă din nou."
+    },
+    "rewards": {
+      "title": "Trimite recompensele",
+      "description": "Trimite fluxul de recompensă celor mai buni jucători. Recompensele pot fi trimise o singură dată.",
+      "flow": "Flux de recompensă",
+      "topN": "Număr de câștigători (top N)",
+      "noFlow": "Nu a fost ales niciun flux de recompensă — setează unul în setările clasamentului.",
+      "alreadySent": "Recompensele au fost deja trimise pentru acest clasament.",
+      "confirm": "Trimite recompensele",
+      "result": "Trimis la {sent} câștigători, {skipped} omiși (fără conversație pe acest canal)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "Informații",
+        "config": "Canal și reguli",
+        "review": "Verificare și publicare"
+      },
+      "namePlaceholder": "ex. Top fani octombrie",
+      "coverImage": "Imagine de copertă",
+      "coverImageHint": "JPG sau PNG, până la 5MB. Dimensiune recomandată 1200×630.",
+      "coverImageRejected": "Alege o imagine JPG sau PNG de până la 5MB.",
+      "description": "Reguli și recompense",
+      "descriptionPlaceholder": "Explică cum câștigă jucătorii puncte și ce câștigă cei mai buni.",
+      "startsAt": "Începe la",
+      "endsAt": "Se termină la",
+      "startLocked": "Ora de început nu mai poate fi schimbată după publicare.",
+      "channelTitle": "Platformă și canal",
+      "platform": "Platformă",
+      "hostChannel": "Canal",
+      "hostLocked": "Platforma și canalul nu mai pot fi schimbate după publicare.",
+      "noChannel": "Niciun canal {platform} conectat. Conectează unul mai întâi în Setări → Canale.",
+      "openMinigameSettings": "Deschide setările jocului",
+      "postScope": "Postări care acordă puncte",
+      "choosePosts": "Alege postări",
+      "telegramChats": "Grupuri și canale",
+      "telegramChatsHint": "Adaugă botul în grup sau canal ca administrator pentru a vedea membrii și mesajele.",
+      "telegramChatsEmpty": "Nu s-a găsit niciun grup — adaugă mai întâi botul ca administrator",
+      "rulesTitle": "Reguli de punctare",
+      "rulesHint": "Activează acțiunile care aduc puncte și stabilește câte.",
+      "allPlatforms": "Toate platformele",
+      "points": "Puncte",
+      "maxPerDay": "Maximum pe zi",
+      "maxPerDayHint": "Lasă gol pentru nelimitat.",
+      "minChars": "Număr minim de caractere",
+      "bonusPoints": "Puncte bonus pentru ora de aur",
+      "bonusPointsHint": "Puncte suplimentare pentru comentariile postate la scurt timp după publicarea postării.",
+      "bonusMinutes": "Durata orei de aur (minute)",
+      "emailTopicNote": "Doar emailurile trimise cu un Email Topic sunt urmărite pentru deschideri și clicuri.",
+      "generalTitle": "Setări generale",
+      "followersOnly": "Doar urmăritori",
+      "followersOnlyHint": "Doar persoanele care urmăresc contul tău câștigă puncte.",
+      "tagFilter": "Filtru de etichete",
+      "tagFilterHint": "Doar contactele cu cel puțin una dintre aceste etichete câștigă puncte.",
+      "everyone": "Toți",
+      "resetTime": "Ora de resetare zilnică (UTC)",
+      "resetTimeHint": "Limitele zilnice se resetează la această oră. = {time} ora Vietnamului (UTC+7).",
+      "cooldown": "Pauză anti-spam (secunde)",
+      "cooldownHint": "Numărul minim de secunde între două acordări automate pentru aceeași persoană. 0 dezactivează.",
+      "referralFlow": "Flux de bun venit pentru recomandări",
+      "referralFlowAuto": "Creează automat",
+      "referralFlowHint": "Trimis unui prieten care se alătură printr-un link de recomandare. Poate folosi '{{referral_name}}' și linkul public al clasamentului. Lasă gol pentru a crea automat un mesaj de bun venit pe care îl poți edita în Flow Builder.",
+      "publicLink": "Link public",
+      "publicLinkHint": "Trimite acest link dintr-un flux pentru ca fiecare jucător să își vadă propriul rang.",
+      "publicLinkAfterSave": "Linkul public este disponibil după salvare.",
+      "rewardsTitle": "Recompense",
+      "autoOnFinish": "Trimite automat la final",
+      "autoOnFinishHint": "Rulează fluxul de recompensă pentru top N imediat ce clasamentul se încheie.",
+      "backToStep2": "Înapoi la pasul 2",
+      "notEditable": "Clasamentele încheiate nu pot fi editate."
+    },
+    "review": {
+      "infoCard": "Informații",
+      "yes": "Da",
+      "no": "Nu",
+      "off": "Dezactivat",
+      "seconds": "{seconds} secunde",
+      "resetTimeValue": "{utc} UTC (= {local} ora Vietnamului)",
+      "noRules": "Nicio regulă nu este activată încă.",
+      "rulePoints": "{points} pct.",
+      "maxPerDay": "max. {count}/zi",
+      "unlimited": "nelimitat"
+    },
+    "preview": {
+      "sampleName": "Jucător {rank}",
+      "placeholderName": "Numele clasamentului tău",
+      "pinnedBar": "#{rank} · {points} pct."
+    },
+    "validation": {
+      "nameRequired": "Introdu un nume",
+      "dateRequired": "Alege o dată și o oră",
+      "endsAfterStart": "Ora de sfârșit trebuie să fie după ora de început",
+      "channelRequired": "Alege un canal",
+      "minigameRequired": "Alege un minijoc",
+      "pointsRequired": "Introdu punctele acordate de această regulă",
+      "bonusMinutesRequired": "Stabilește câte minute durează ora de aur",
+      "postsRequired": "Alege cel puțin o postare",
+      "telegramChatsRequired": "Alege cel puțin un grup sau canal",
+      "enableOneRule": "Activează cel puțin o regulă de punctare înainte de publicare",
+      "fixErrors": "Corectează câmpurile evidențiate"
+    },
+    "rules": {
+      "comments": {
+        "label": "Comentarii",
+        "description": "Puncte pentru fiecare comentariu la postările tale."
+      },
+      "liveComments": {
+        "label": "Comentarii live",
+        "description": "Puncte pentru fiecare comentariu în timpul unui livestream."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "Puncte când un mesaj se potrivește cu orice cuvânt cheie din instrumentul Keywords al acestui canal."
+      },
+      "storyMention": {
+        "label": "Mențiune în story",
+        "description": "Puncte când cineva îți etichetează contul în story-ul său."
+      },
+      "storyReaction": {
+        "label": "Reacție la story",
+        "description": "Puncte când cineva reacționează la story-ul tău."
+      },
+      "ctwaReactions": {
+        "label": "Clic CTWA și reacții",
+        "description": "Puncte pentru clicul pe o reclamă Click-to-WhatsApp sau pentru reacția la un mesaj."
+      },
+      "survey": {
+        "label": "Sondaj și test",
+        "description": "Puncte pentru completarea unui Questionnaire sau trimiterea unui formular WhatsApp Flow."
+      },
+      "follow": {
+        "label": "Urmărire OA și QR",
+        "description": "Puncte pentru urmărirea Official Account sau scanarea codului QR. Dezabonarea retrage punctele."
+      },
+      "message": {
+        "label": "Mesaj Zalo",
+        "description": "Puncte pentru fiecare mesaj trimis către Official Account."
+      },
+      "joinGroup": {
+        "label": "Alăturare la canal și grup",
+        "description": "Puncte pentru alăturarea la grupul sau canalul tău. Părăsirea retrage punctele."
+      },
+      "groupDiscussion": {
+        "label": "Discuție în grup",
+        "description": "Puncte pentru fiecare mesaj din grupul tău."
+      },
+      "emailOpen": {
+        "label": "Deschidere email",
+        "description": "Puncte când un email este deschis."
+      },
+      "emailClick": {
+        "label": "Clic în email",
+        "description": "Puncte când se dă clic pe un link dintr-un email."
+      },
+      "minigameWin": {
+        "label": "Câștig la minijoc",
+        "description": "Puncte pentru fiecare premiu câștigat la minijoc."
+      },
+      "inGameShare": {
+        "label": "Distribuire în joc",
+        "description": "Puncte pentru distribuirea jocului pentru a primi mai multe încercări."
+      },
+      "referral": {
+        "label": "Recomandare",
+        "description": "Puncte pentru cel care invită, când un prieten nou se alătură prin linkul său."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} comentarii",
+      "liveComments": "{count} comentarii live",
+      "keywords": "{count} cuvinte cheie",
+      "storyMention": "{count} mențiuni în story",
+      "storyReaction": "{count} reacții la story",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} sondaje",
+      "follow": "{count} urmăriri",
+      "message": "{count} mesaje",
+      "joinGroup": "{count} alăturări",
+      "groupDiscussion": "{count} mesaje în grup",
+      "emailOpen": "{count} deschideri",
+      "emailClick": "{count} clicuri",
+      "minigameWin": "{count} câștiguri",
+      "inGameShare": "{count} distribuiri",
+      "referral": "{count} recomandări",
+      "flow": "{count} flux",
+      "manual": "{count} manual"
+    },
+    "participants": {
+      "title": "Participanți",
+      "switcher": "Schimbă clasamentul",
+      "count": "{count, plural, one {# jucător} other {# de jucători}}",
+      "searchPlaceholder": "Caută nume, ID utilizator sau telefon...",
+      "filters": {
+        "all": "Toți",
+        "top10": "Top 10",
+        "top50": "Top 50",
+        "banned": "Blocați"
+      },
+      "columns": {
+        "rank": "Rang",
+        "participant": "Participant",
+        "score": "Scor total",
+        "breakdown": "Detalii",
+        "lastActivity": "Ultima activitate"
+      },
+      "unknown": "Necunoscut",
+      "contactId": "ID {id}",
+      "lockedFinished": "Acest clasament s-a încheiat — scorurile sunt blocate.",
+      "lockedDraft": "Publică clasamentul înainte de a edita scorurile.",
+      "actions": {
+        "adjust": "Ajustează punctele",
+        "ban": "Blochează",
+        "unban": "Deblochează",
+        "reset": "Resetează la 0",
+        "history": "Vezi istoricul"
+      },
+      "adjust": {
+        "title": "Ajustează punctele",
+        "description": "Adaugă sau scade puncte pentru {name}. Modificarea este păstrată în jurnalul de audit.",
+        "delta": "Puncte (+/-)",
+        "deltaPlaceholder": "ex. 50 sau -20",
+        "reason": "Motiv",
+        "reasonPlaceholder": "De ce modifici acest scor?",
+        "success": "Puncte ajustate"
+      },
+      "banConfirm": "{name} este eliminat din clasament și nu mai câștigă puncte.",
+      "unbanConfirm": "{name} revine în clasament cu scorul curent.",
+      "resetConfirm": "Scorul lui {name} revine la 0. Acțiunea este înregistrată.",
+      "banned": "Participant blocat",
+      "unbanned": "Participant deblocat",
+      "resetDone": "Scor resetat la 0",
+      "history": {
+        "title": "Istoricul scorului — {name}",
+        "empty": "Nicio modificare de scor încă.",
+        "sources": {
+          "rule": "Regulă",
+          "flow": "Flux",
+          "referral": "Recomandare",
+          "manual": "Ajustare manuală",
+          "reset": "Resetare"
+        }
+      },
+      "conversationNotFound": "Nu s-a găsit nicio conversație pentru acest contact",
+      "popupBlocked": "Te rugăm să permiți ferestrele pop-up pentru acest site, apoi încearcă din nou."
+    },
+    "auditLog": {
+      "title": "Jurnal de audit",
+      "admin": "Administrator",
+      "change": "Modificare",
+      "time": "Ora",
+      "reason": "Motiv",
+      "api": "API",
+      "empty": "Nicio modificare manuală încă.",
+      "actions": {
+        "adjust": "Ajustare",
+        "resetOne": "Resetare jucător",
+        "resetAll": "Resetare totală",
+        "ban": "Blocare",
+        "unban": "Deblocare"
       }
     }
   },

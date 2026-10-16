@@ -136,6 +136,7 @@ export const STEP_PRODUCES_MESSAGE: Record<StepType, boolean> = {
   questionnaires: false,
   setUpCoupon: false,
   markCouponUsed: false,
+  changeGamificationScore: false,
   condition: false,
 
   // Inbox Operations (I_)

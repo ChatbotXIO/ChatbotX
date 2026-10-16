@@ -1,5 +1,6 @@
 import { trackingResponseTypes } from "@chatbotx.io/analytics"
 import { adsConversionService } from "@chatbotx.io/business"
+import { enqueueLeaderboardAward } from "@chatbotx.io/business/leaderboard"
 import { db } from "@chatbotx.io/database/client"
 import type { AutomatedResponseType } from "@chatbotx.io/database/partials"
 import type {
@@ -8,6 +9,7 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
+import { createdAtFromId } from "@chatbotx.io/utils"
 import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
@@ -20,6 +22,41 @@ import {
   keywordMatchesText,
   keywordMatchModeByAutomatedResponseType,
 } from "./keyword-match"
+
+/** Channels whose leaderboards offer the "keywords" rule. */
+const KEYWORD_LEADERBOARD_CHANNELS = new Set([
+  "messenger",
+  "instagram",
+  "tiktok",
+])
+
+/**
+ * Leaderboard "keywords" rule: an inbound message that matches ANY Keywords
+ * rule scores once, whatever the rule then sends. The trigger message is the
+ * source event (its id is the sourceRef and the time packed in that id the
+ * event time), so re-processing the same message never scores twice.
+ */
+const awardKeywordLeaderboard = async (props: {
+  conversation: ConversationModel
+  contactInbox: ContactInboxModel
+  messageId: string
+}): Promise<void> => {
+  if (!KEYWORD_LEADERBOARD_CHANNELS.has(props.contactInbox.channel)) {
+    return
+  }
+  const eventAt = createdAtFromId(props.messageId)
+  if (!eventAt) {
+    return
+  }
+  await enqueueLeaderboardAward({
+    workspaceId: props.conversation.workspaceId,
+    contactId: props.contactInbox.contactId,
+    inboxId: props.contactInbox.inboxId,
+    rule: "keywords",
+    sourceRef: props.messageId,
+    eventAt,
+  })
+}
 
 export const dispatchAutomatedResponseReply = async (props: {
   conversation: ConversationModel
@@ -35,6 +72,7 @@ export const dispatchAutomatedResponseReply = async (props: {
   const { conversation, contactInbox, messageId, text, rules, triggerType } =
     props
   const lowerCaseText = text.toLowerCase()
+  let keywordAwarded = false
 
   for (const rule of rules) {
     // Match mode is derived from `rule.type` — see the Contact/Page
@@ -50,6 +88,11 @@ export const dispatchAutomatedResponseReply = async (props: {
 
     if (!matched) {
       continue
+    }
+
+    if (rule.type === "inbound" && !keywordAwarded) {
+      keywordAwarded = true
+      await awardKeywordLeaderboard({ conversation, contactInbox, messageId })
     }
 
     // Ads conversion `keywordMatched` trigger: only inbound-type rules

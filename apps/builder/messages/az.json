@@ -766,6 +766,7 @@
       "questionnaireInProgress": "Sorğu anketi davam edir",
       "questionnaireFinished": "Sorğu anketi tamamlanıb",
       "couponTopic": "Kupon",
+      "leaderboardScore": "Oyun xalları",
       "votedOnPoll": "Sorğuda səs verib",
       "lastComment": "Son şərh",
       "commentedOnPost": "Paylaşıma şərh yazıb",
@@ -835,6 +836,7 @@
       "ecommerce": "Elektron ticarət",
       "systemFields": "Sistem sahələri",
       "topicCoupon": "Kupon mövzusu",
+      "leaderboard": "Oyun xalları",
       "customFields": "Fərdi sahələr",
       "botFields": "Bot sahələri",
       "email": "E-poçt",
@@ -2533,7 +2535,8 @@
       "media": "Media",
       "ads": "Reklamlar",
       "settings": "Parametrlər",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "Liderlər lövhələri"
     },
     "adReferral": {
       "label": "Reklamlar",
@@ -2565,6 +2568,9 @@
       "hint": "Data Manager tövsiyə olunur. Köhnə yükləmə API-si yalnız Google-un hələ də icazə verdiyi Google Cloud layihələri ilə işləyir və Data Manager icazəsindən istifadə etmir. Dəyişiklik yalnız yeni bağlantılara şamil olunur: mövcud iş sahələrini yenidən qoşun.",
       "dataManager": "Data Manager API (tövsiyə olunur)",
       "legacy": "Köhnə yükləmə API-si"
+    },
+    "referralName": {
+      "label": "Dəvət edənin adı"
     }
   },
   "metaConversions": {
@@ -3377,6 +3383,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread Control",
       "sendGoogleAdsConversion": "Google Ads konversiyası göndər",
+      "changeGamificationScore": "Oyun xallarını dəyiş",
       "sendViewCatalog": "Kataloqa bax",
       "sendProducts": "Məhsul göndər"
     },
@@ -3498,6 +3505,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "Düyməni redaktə et",
       "buttonLabel": "Düymə etiketi"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "Liderlər lövhəsi",
+      "operation": "Əməliyyat",
+      "add": "Xal əlavə et (+)",
+      "subtract": "Xal çıx (−)",
+      "points": "Xal",
+      "targetUser": "İstifadəçi xalları",
+      "targetReferrer": "Dəvət edənin xalları",
+      "targetReferrerHint": "Bu kontaktı dəvət edənin xalını da dəyiş.",
+      "summary": "{leaderboard} üzrə {points} xal"
     },
     "whatsappLocation": {
       "title": "Məkan",
@@ -8382,6 +8400,362 @@
         "type_not_allowed": "Bu fayl növünə icazə verilmir.",
         "rate_limited": "Çox sayda yükləmə. Bir az gözləyib yenidən cəhd edin.",
         "upload_failed": "Fayl yüklənmədi. Yenidən cəhd edin."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "Liderlər lövhələri",
+    "public": {
+      "points": "{points} xal",
+      "endsIn": "Bitməsinə {days}g {hours}s {minutes}d {seconds}s",
+      "finished": "Bitib",
+      "empty": "Hələ oyunçu yoxdur — ilk sən ol!",
+      "myRank": "Sənin yerin: #{rank}",
+      "unranked": "Hələ sıralanmayıb",
+      "shareToEarn": "Paylaş, xal qazan",
+      "linkCopied": "Link kopyalandı",
+      "unavailableTitle": "Bu liderlər cədvəli artıq mövcud deyil",
+      "unavailableDescription": "Ola bilsin ki, başa çatıb və ya silinib. Ən son linki izlədiyiniz səhifədən soruşun."
+    },
+    "description": "Müştərilərin yüksək yerlər və mükafatlar uğrunda yarışdığı xal əsaslı reytinq kampaniyaları keçirin.",
+    "feature": "Liderlər cədvəli",
+    "create": "Liderlər cədvəli yarat",
+    "kpi": {
+      "total": "Ümumi kampaniyalar",
+      "active": "İşləyir"
+    },
+    "tabs": {
+      "all": "Hamısı",
+      "active": "Aktiv",
+      "paused": "Fasilədə",
+      "finished": "Bitib"
+    },
+    "status": {
+      "draft": "Qaralama",
+      "active": "Aktiv",
+      "paused": "Fasilədə",
+      "finished": "Bitib"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "Kampaniya",
+      "searchPlaceholder": "Liderlər cədvəllərini axtar...",
+      "platformFilter": "Platforma",
+      "participants": "İştirakçılar",
+      "totalPoints": "Ümumi xal",
+      "newToday": "bu gün +{count}",
+      "average": "orta {value} / oyunçu",
+      "daysLeft": "{days, plural, one {# gün qalıb} other {# gün qalıb}}",
+      "ended": "Bitib"
+    },
+    "scope": {
+      "allPosts": "Bütün paylaşımlar",
+      "specificPosts": "Seçilmiş paylaşımlar",
+      "specificPostsCount": "{count, plural, one {# paylaşım} other {# paylaşım}}",
+      "telegramChatsCount": "{count, plural, one {# qrup} other {# qrup}}"
+    },
+    "menu": {
+      "start": "Başlat",
+      "pause": "Fasilə ver",
+      "finish": "Bitir",
+      "resetPoints": "Xalları sıfırla",
+      "triggerRewards": "Mükafatları göndər",
+      "viewParticipants": "İştirakçılara bax",
+      "copyLink": "İctimai linki kopyala"
+    },
+    "confirm": {
+      "publishTitle": "Bu liderlər cədvəli dərc edilsin?",
+      "publishDescription": "Xal hesablanması dərhal başlayır və oyunçular ictimai səhifəni görə bilir.",
+      "pauseTitle": "Bu liderlər cədvəlinə fasilə verilsin?",
+      "pauseDescription": "Avtomatik və flow ilə xal hesablanması dayanır. Xalları yenə də əl ilə dəyişə bilərsiniz.",
+      "startTitle": "Bu liderlər cədvəli davam etdirilsin?",
+      "startDescription": "Xal hesablanması bütün qaydalar üçün yenidən başlayır.",
+      "finishTitle": "Bu liderlər cədvəli bitirilsin?",
+      "finishDescription": "Bütün xallar dondurulur və artıq dəyişdirilə bilməz. Avtomatik mükafatlar aktivdirsə, göndərilir.",
+      "resetPointsTitle": "Bütün xallar sıfırlansın?",
+      "resetPointsDescription": "\"{name}\" cədvəlinin bütün iştirakçıları 0 xala qayıdır. Bu, qeydə alınır və geri qaytarıla bilməz."
+    },
+    "toast": {
+      "published": "Liderlər cədvəli dərc edildi",
+      "paused": "Liderlər cədvəlinə fasilə verildi",
+      "started": "Liderlər cədvəli davam etdirildi",
+      "finished": "Liderlər cədvəli bitirildi",
+      "pointsReset": "Bütün xallar sıfırlandı"
+    },
+    "export": {
+      "title": "İştirakçıları ixrac et",
+      "description": "Bütün iştirakçıları yerləri və xalları ilə birlikdə CSV faylı kimi yükləyin.",
+      "preparing": "Faylınız hazırlanır...",
+      "ready": "Faylınız hazırdır ({count} sətir).",
+      "failed": "İxrac alınmadı. Yenidən cəhd edin."
+    },
+    "rewards": {
+      "title": "Mükafatları göndər",
+      "description": "Mükafat flow-unu ilk yerlərdəki oyunçulara göndərin. Mükafatlar yalnız bir dəfə göndərilə bilər.",
+      "flow": "Mükafat flow-u",
+      "topN": "Qalib sayı (top N)",
+      "noFlow": "Mükafat flow-u seçilməyib — liderlər cədvəlinin ayarlarında seçin.",
+      "alreadySent": "Bu liderlər cədvəli üçün mükafatlar artıq göndərilib.",
+      "confirm": "Mükafatları göndər",
+      "result": "{sent} qalibə göndərildi, {skipped} nəfər keçildi (bu kanalda söhbət yoxdur)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "Məlumat",
+        "config": "Kanal və qaydalar",
+        "review": "Yoxla və dərc et"
+      },
+      "namePlaceholder": "məs. Oktyabrın ən yaxşı fanatları",
+      "coverImage": "Örtük şəkli",
+      "coverImageHint": "JPG və ya PNG, 5MB-a qədər. Tövsiyə olunan ölçü 1200×630.",
+      "coverImageRejected": "5MB-a qədər JPG və ya PNG şəkil seçin.",
+      "description": "Qaydalar və mükafatlar",
+      "descriptionPlaceholder": "Oyunçuların xalı necə qazandığını və ilk yerlərin nə qazandığını izah edin.",
+      "startsAt": "Başlama vaxtı",
+      "endsAt": "Bitmə vaxtı",
+      "startLocked": "Başlama vaxtı dərc edildikdən sonra dəyişdirilə bilməz.",
+      "channelTitle": "Platforma və kanal",
+      "platform": "Platforma",
+      "hostChannel": "Kanal",
+      "hostLocked": "Platforma və kanal dərc edildikdən sonra dəyişdirilə bilməz.",
+      "noChannel": "Qoşulmuş {platform} kanalı yoxdur. Əvvəlcə Ayarlar → Kanallar bölməsində qoşun.",
+      "openMinigameSettings": "Oyun ayarlarını aç",
+      "postScope": "Xal qazandıran paylaşımlar",
+      "choosePosts": "Paylaşımları seç",
+      "telegramChats": "Qruplar və kanallar",
+      "telegramChatsHint": "Botunuzu qrupa və ya kanala admin kimi əlavə edin ki, üzvləri və mesajları görə bilsin.",
+      "telegramChatsEmpty": "Qrup tapılmadı — əvvəlcə botu admin kimi əlavə edin",
+      "rulesTitle": "Xal qaydaları",
+      "rulesHint": "Xal qazandıran əməlləri aktiv edin və neçə xal veriləcəyini təyin edin.",
+      "allPlatforms": "Bütün platformalar",
+      "points": "Xal",
+      "maxPerDay": "Gündə maksimum",
+      "maxPerDayHint": "Limitsiz üçün boş buraxın.",
+      "minChars": "Minimum simvol sayı",
+      "bonusPoints": "Qızıl saat bonus xalı",
+      "bonusPointsHint": "Paylaşım dərc edildikdən dərhal sonra yazılan şərhlər üçün əlavə xal.",
+      "bonusMinutes": "Qızıl saatın uzunluğu (dəqiqə)",
+      "emailTopicNote": "Yalnız Email Topic ilə göndərilən e-poçtlar üçün açılma və kliklər izlənir.",
+      "generalTitle": "Ümumi ayarlar",
+      "followersOnly": "Yalnız izləyicilər",
+      "followersOnlyHint": "Yalnız hesabınızı izləyən insanlar xal qazanır.",
+      "tagFilter": "Teq filtri",
+      "tagFilterHint": "Yalnız bu teqlərdən ən azı birinə malik kontaktlar xal qazanır.",
+      "everyone": "Hamı",
+      "resetTime": "Gündəlik sıfırlama vaxtı (UTC)",
+      "resetTimeHint": "Gündəlik limitlər bu vaxtda yenilənir. = Vyetnam vaxtı ilə {time} (UTC+7).",
+      "cooldown": "Spamdan qorunma fasiləsi (saniyə)",
+      "cooldownHint": "Eyni şəxsə iki avtomatik xal verilməsi arasında minimum saniyə. 0 bunu söndürür.",
+      "referralFlow": "Tövsiyə üçün salamlama flow-u",
+      "referralFlowAuto": "Avtomatik yarat",
+      "referralFlowHint": "Tövsiyə linki ilə qoşulan dosta göndərilir. '{{referral_name}}' və ictimai liderlər cədvəli linkindən istifadə edə bilər. Flow Builder-də redaktə edə biləcəyiniz salamlama mesajının avtomatik yaradılması üçün boş buraxın.",
+      "publicLink": "İctimai link",
+      "publicLinkHint": "Hər oyunçunun öz yerini görməsi üçün bu linki flow-dan göndərin.",
+      "publicLinkAfterSave": "İctimai link yadda saxladıqdan sonra əlçatan olur.",
+      "rewardsTitle": "Mükafatlar",
+      "autoOnFinish": "Bitəndə avtomatik göndər",
+      "autoOnFinishHint": "Liderlər cədvəli bitən kimi top N üçün mükafat flow-unu işə salır.",
+      "backToStep2": "2-ci addıma qayıt",
+      "notEditable": "Bitmiş liderlər cədvəlləri redaktə edilə bilməz."
+    },
+    "review": {
+      "infoCard": "Məlumat",
+      "yes": "Bəli",
+      "no": "Xeyr",
+      "off": "Söndürülüb",
+      "seconds": "{seconds} saniyə",
+      "resetTimeValue": "{utc} UTC (= Vyetnam vaxtı ilə {local})",
+      "noRules": "Hələ heç bir qayda aktiv deyil.",
+      "rulePoints": "{points} xal",
+      "maxPerDay": "gündə maks. {count}",
+      "unlimited": "limitsiz"
+    },
+    "preview": {
+      "sampleName": "Oyunçu {rank}",
+      "placeholderName": "Liderlər cədvəlinin adı",
+      "pinnedBar": "#{rank} · {points} xal"
+    },
+    "validation": {
+      "nameRequired": "Ad daxil edin",
+      "dateRequired": "Tarix və vaxt seçin",
+      "endsAfterStart": "Bitmə vaxtı başlama vaxtından sonra olmalıdır",
+      "channelRequired": "Kanal seçin",
+      "minigameRequired": "Mini oyun seçin",
+      "pointsRequired": "Bu qaydanın verdiyi xalı daxil edin",
+      "bonusMinutesRequired": "Qızıl saatın neçə dəqiqə davam edəcəyini təyin edin",
+      "postsRequired": "Ən azı bir paylaşım seçin",
+      "telegramChatsRequired": "Ən azı bir qrup və ya kanal seçin",
+      "enableOneRule": "Dərc etməzdən əvvəl ən azı bir xal qaydasını aktiv edin",
+      "fixErrors": "Zəhmət olmasa işarələnmiş sahələri düzəldin"
+    },
+    "rules": {
+      "comments": {
+        "label": "Şərhlər",
+        "description": "Paylaşımlarınızdakı hər şərh üçün xal."
+      },
+      "liveComments": {
+        "label": "Canlı yayım şərhləri",
+        "description": "Canlı yayım zamanı hər şərh üçün xal."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "Mesaj bu kanalın Keywords alətindəki hər hansı açar sözə uyğun gələndə xal."
+      },
+      "storyMention": {
+        "label": "Story-də qeyd",
+        "description": "Kimsə hesabınızı öz story-sində etiketlədikdə xal."
+      },
+      "storyReaction": {
+        "label": "Story reaksiyası",
+        "description": "Kimsə story-nizə reaksiya verdikdə xal."
+      },
+      "ctwaReactions": {
+        "label": "CTWA kliki və reaksiyalar",
+        "description": "Click-to-WhatsApp reklamına klik etmək və ya mesaja reaksiya vermək üçün xal."
+      },
+      "survey": {
+        "label": "Sorğu və viktorina",
+        "description": "Questionnaire-i tamamlamaq və ya WhatsApp Flow formasını göndərmək üçün xal."
+      },
+      "follow": {
+        "label": "OA izləmə və QR",
+        "description": "Official Account-u izləmək və ya onun QR kodunu skan etmək üçün xal. İzləməni dayandırdıqda xallar geri alınır."
+      },
+      "message": {
+        "label": "Zalo mesajı",
+        "description": "Official Account-unuza göndərilən hər mesaj üçün xal."
+      },
+      "joinGroup": {
+        "label": "Kanala və qrupa qoşulma",
+        "description": "Qrupunuza və ya kanalınıza qoşulmaq üçün xal. Tərk etdikdə xallar geri alınır."
+      },
+      "groupDiscussion": {
+        "label": "Qrup müzakirəsi",
+        "description": "Qrupunuzdakı hər mesaj üçün xal."
+      },
+      "emailOpen": {
+        "label": "E-poçtun açılması",
+        "description": "E-poçt açıldıqda xal."
+      },
+      "emailClick": {
+        "label": "E-poçtda klik",
+        "description": "E-poçtdakı link klik ediləndə xal."
+      },
+      "minigameWin": {
+        "label": "Mini oyun qələbəsi",
+        "description": "Mini oyunda qazanılan hər mükafat üçün xal."
+      },
+      "inGameShare": {
+        "label": "Oyun daxilində paylaşım",
+        "description": "Daha çox cəhd qazanmaq üçün oyunu paylaşmaq üçün xal."
+      },
+      "referral": {
+        "label": "Tövsiyə",
+        "description": "Yeni dost dəvət edənin linki ilə qoşulduqda dəvət edənə xal."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} şərh",
+      "liveComments": "{count} canlı şərh",
+      "keywords": "{count} açar söz",
+      "storyMention": "{count} story qeydi",
+      "storyReaction": "{count} story reaksiyası",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} sorğu",
+      "follow": "{count} izləmə",
+      "message": "{count} mesaj",
+      "joinGroup": "{count} qoşulma",
+      "groupDiscussion": "{count} qrup mesajı",
+      "emailOpen": "{count} açılma",
+      "emailClick": "{count} klik",
+      "minigameWin": "{count} qələbə",
+      "inGameShare": "{count} paylaşım",
+      "referral": "{count} tövsiyə",
+      "flow": "{count} flow",
+      "manual": "{count} əl ilə"
+    },
+    "participants": {
+      "title": "İştirakçılar",
+      "switcher": "Liderlər cədvəlini dəyiş",
+      "count": "{count, plural, one {# oyunçu} other {# oyunçu}}",
+      "searchPlaceholder": "Ad, istifadəçi ID-si və ya telefon axtar...",
+      "filters": {
+        "all": "Hamısı",
+        "top10": "Top 10",
+        "top50": "Top 50",
+        "banned": "Bloklanıb"
+      },
+      "columns": {
+        "rank": "Yer",
+        "participant": "İştirakçı",
+        "score": "Ümumi xal",
+        "breakdown": "Təfərrüatlar",
+        "lastActivity": "Son fəaliyyət"
+      },
+      "unknown": "Naməlum",
+      "contactId": "ID {id}",
+      "lockedFinished": "Bu liderlər cədvəli bitib — xallar kilidlənib.",
+      "lockedDraft": "Xalları redaktə etməzdən əvvəl liderlər cədvəlini dərc edin.",
+      "actions": {
+        "adjust": "Xalı tənzimlə",
+        "ban": "Blokla",
+        "unban": "Blokdan çıxar",
+        "reset": "0-a sıfırla",
+        "history": "Tarixçəyə bax"
+      },
+      "adjust": {
+        "title": "Xalı tənzimlə",
+        "description": "{name} üçün xal əlavə edin və ya çıxın. Dəyişiklik audit jurnalında saxlanılır.",
+        "delta": "Xal (+/-)",
+        "deltaPlaceholder": "məs. 50 və ya -20",
+        "reason": "Səbəb",
+        "reasonPlaceholder": "Bu xalı niyə dəyişirsiniz?",
+        "success": "Xal tənzimləndi"
+      },
+      "banConfirm": "{name} reytinqdən çıxarılır və artıq xal qazanmır.",
+      "unbanConfirm": "{name} cari xalı ilə yenidən reytinqə qayıdır.",
+      "resetConfirm": "{name} adlı iştirakçının xalı 0-a qayıdır. Bu, qeydə alınır.",
+      "banned": "İştirakçı bloklandı",
+      "unbanned": "İştirakçı blokdan çıxarıldı",
+      "resetDone": "Xal 0-a sıfırlandı",
+      "history": {
+        "title": "Xal tarixçəsi — {name}",
+        "empty": "Hələ xal dəyişikliyi yoxdur.",
+        "sources": {
+          "rule": "Qayda",
+          "flow": "Flow",
+          "referral": "Tövsiyə",
+          "manual": "Əl ilə tənzimləmə",
+          "reset": "Sıfırlama"
+        }
+      },
+      "conversationNotFound": "Bu kontakt üçün söhbət tapılmadı",
+      "popupBlocked": "Bu sayt üçün açılan pəncərələrə icazə verin, sonra yenidən cəhd edin."
+    },
+    "auditLog": {
+      "title": "Audit jurnalı",
+      "admin": "Admin",
+      "change": "Dəyişiklik",
+      "time": "Vaxt",
+      "reason": "Səbəb",
+      "api": "API",
+      "empty": "Hələ əl ilə dəyişiklik yoxdur.",
+      "actions": {
+        "adjust": "Tənzimləmə",
+        "resetOne": "Oyunçunu sıfırla",
+        "resetAll": "Hamısını sıfırla",
+        "ban": "Blokla",
+        "unban": "Blokdan çıxar"
       }
     }
   },

@@ -184,6 +184,13 @@ export const reservedCustomFieldIds: {
     labelKey: "fields.lastFbComment.label",
     channels: ["messenger", "instagram"],
   },
+  {
+    // Inviter's name for a contact who joined a leaderboard through a
+    // referral link — used in the leaderboard welcome message.
+    id: systemFieldTypes.enum.referral_name,
+    type: "shortText",
+    labelKey: "fields.referralName.label",
+  },
 ]
 
 /**

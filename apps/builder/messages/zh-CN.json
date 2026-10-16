@@ -1158,7 +1158,8 @@
       "sms": "短信",
       "systemFields": "系统字段",
       "systemTime": "系统时间",
-      "topicCoupon": "主题优惠券"
+      "topicCoupon": "主题优惠券",
+      "leaderboard": "积分"
     },
     "fields": {
       "appliedJobs": "申请的职位",
@@ -1183,6 +1184,7 @@
       "conversationTransferredToHuman": "对话转移到人类",
       "country": "国家/地区",
       "couponTopic": "优惠券",
+      "leaderboardScore": "积分",
       "ctwaConversion": "广告转化",
       "ctwaConversionTypes": {
         "lead": "潜在客户",
@@ -3258,7 +3260,8 @@
       "media": "媒体",
       "ads": "广告",
       "settings": "设置",
-      "miniApps": "迷你应用"
+      "miniApps": "迷你应用",
+      "leaderboards": "排行榜"
     },
     "adReferral": {
       "label": "Ads",
@@ -3290,6 +3293,9 @@
       "hint": "推荐使用 Data Manager。旧版上传 API 仅适用于 Google 仍允许的 Google Cloud 项目，且不使用 Data Manager 权限。更改仅对新连接生效：请重新连接现有工作区。",
       "dataManager": "Data Manager API（推荐）",
       "legacy": "旧版上传 API"
+    },
+    "referralName": {
+      "label": "推荐人姓名"
     }
   },
   "flowAnalytics": {
@@ -3426,6 +3432,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "会话控制",
       "sendGoogleAdsConversion": "发送 Google Ads 转化",
+      "changeGamificationScore": "更改积分",
       "sendViewCatalog": "查看商品目录",
       "sendProducts": "发送商品"
     },
@@ -3595,6 +3602,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "编辑按钮",
       "buttonLabel": "按钮标签"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "排行榜",
+      "operation": "操作",
+      "add": "加分 (+)",
+      "subtract": "减分 (−)",
+      "points": "积分",
+      "targetUser": "用户积分",
+      "targetReferrer": "推荐人积分",
+      "targetReferrerHint": "同时更改推荐此联系人的人的积分。",
+      "summary": "在 {leaderboard} 上 {points} 分"
     },
     "whatsappLocation": {
       "title": "位置",
@@ -8382,6 +8400,362 @@
         "type_not_allowed": "不允许此文件类型。",
         "rate_limited": "上传次数过多，请稍后再试。",
         "upload_failed": "文件上传失败，请重试。"
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "排行榜",
+    "public": {
+      "points": "{points} 分",
+      "endsIn": "{days}天 {hours}小时 {minutes}分 {seconds}秒后结束",
+      "finished": "已结束",
+      "empty": "还没有玩家 — 成为第一个！",
+      "myRank": "你的排名：#{rank}",
+      "unranked": "暂无排名",
+      "shareToEarn": "分享赚积分",
+      "linkCopied": "链接已复制",
+      "unavailableTitle": "此排行榜已不可用",
+      "unavailableDescription": "活动可能已结束或已被移除。请向你关注的主页索取最新链接。"
+    },
+    "description": "开展基于积分的排名活动，让客户争夺榜单名次并赢取奖励。",
+    "feature": "排行榜",
+    "create": "创建排行榜",
+    "kpi": {
+      "total": "活动总数",
+      "active": "进行中"
+    },
+    "tabs": {
+      "all": "全部",
+      "active": "进行中",
+      "paused": "已暂停",
+      "finished": "已结束"
+    },
+    "status": {
+      "draft": "草稿",
+      "active": "进行中",
+      "paused": "已暂停",
+      "finished": "已结束"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "活动",
+      "searchPlaceholder": "搜索排行榜...",
+      "platformFilter": "平台",
+      "participants": "参与者",
+      "totalPoints": "总积分",
+      "newToday": "今日 +{count}",
+      "average": "平均 {value} / 玩家",
+      "daysLeft": "{days, plural, one {剩余 # 天} other {剩余 # 天}}",
+      "ended": "已结束"
+    },
+    "scope": {
+      "allPosts": "所有帖子",
+      "specificPosts": "指定帖子",
+      "specificPostsCount": "{count, plural, one {# 篇帖子} other {# 篇帖子}}",
+      "telegramChatsCount": "{count, plural, one {# 个群组} other {# 个群组}}"
+    },
+    "menu": {
+      "start": "开始",
+      "pause": "暂停",
+      "finish": "结束",
+      "resetPoints": "重置积分",
+      "triggerRewards": "发放奖励",
+      "viewParticipants": "查看参与者",
+      "copyLink": "复制公开链接"
+    },
+    "confirm": {
+      "publishTitle": "发布此排行榜？",
+      "publishDescription": "积分将立即开始计算，玩家可以看到公开页面。",
+      "pauseTitle": "暂停此排行榜？",
+      "pauseDescription": "自动积分和流程积分将停止。您仍可手动调整积分。",
+      "startTitle": "恢复此排行榜？",
+      "startDescription": "所有规则将重新开始计分。",
+      "finishTitle": "结束此排行榜？",
+      "finishDescription": "所有分数将被冻结，无法再更改。如已开启，将发送自动奖励。",
+      "resetPointsTitle": "重置所有积分？",
+      "resetPointsDescription": "“{name}”的所有参与者积分将恢复为 0。此操作会被记录且无法撤销。"
+    },
+    "toast": {
+      "published": "排行榜已发布",
+      "paused": "排行榜已暂停",
+      "started": "排行榜已恢复",
+      "finished": "排行榜已结束",
+      "pointsReset": "所有积分已重置"
+    },
+    "export": {
+      "title": "导出参与者",
+      "description": "将所有参与者及其排名和分数下载为 CSV 文件。",
+      "preparing": "正在准备文件...",
+      "ready": "文件已就绪（{count} 行）。",
+      "failed": "导出失败，请重试。"
+    },
+    "rewards": {
+      "title": "发放奖励",
+      "description": "向排名靠前的玩家发送奖励流程。奖励只能发放一次。",
+      "flow": "奖励流程",
+      "topN": "获奖人数（前 N 名）",
+      "noFlow": "未选择奖励流程 — 请在排行榜设置中设置。",
+      "alreadySent": "此排行榜的奖励已发放过。",
+      "confirm": "发放奖励",
+      "result": "已发送给 {sent} 位获奖者，跳过 {skipped} 位（在此渠道没有对话）。"
+    },
+    "wizard": {
+      "steps": {
+        "info": "基本信息",
+        "config": "渠道与规则",
+        "review": "检查并发布"
+      },
+      "namePlaceholder": "例如：十月顶级粉丝",
+      "coverImage": "封面图片",
+      "coverImageHint": "JPG 或 PNG，最大 5MB。推荐尺寸 1200×630。",
+      "coverImageRejected": "请选择不超过 5MB 的 JPG 或 PNG 图片。",
+      "description": "规则与奖励",
+      "descriptionPlaceholder": "说明玩家如何获得积分，以及排名靠前的玩家可获得什么。",
+      "startsAt": "开始时间",
+      "endsAt": "结束时间",
+      "startLocked": "发布后无法更改开始时间。",
+      "channelTitle": "平台与渠道",
+      "platform": "平台",
+      "hostChannel": "渠道",
+      "hostLocked": "发布后无法更改平台和渠道。",
+      "noChannel": "没有已连接的 {platform} 渠道。请先在“设置 → 渠道”中连接一个。",
+      "openMinigameSettings": "打开游戏设置",
+      "postScope": "计分的帖子",
+      "choosePosts": "选择帖子",
+      "telegramChats": "群组与频道",
+      "telegramChatsHint": "请将机器人添加为群组或频道的管理员，以便它查看成员和消息。",
+      "telegramChatsEmpty": "未找到群组 — 请先将机器人添加为管理员",
+      "rulesTitle": "计分规则",
+      "rulesHint": "开启可获得积分的行为，并设置积分数。",
+      "allPlatforms": "所有平台",
+      "points": "积分",
+      "maxPerDay": "每日上限",
+      "maxPerDayHint": "留空表示不限。",
+      "minChars": "最少字符数",
+      "bonusPoints": "黄金时段奖励积分",
+      "bonusPointsHint": "帖子发布后不久发表评论可获得额外积分。",
+      "bonusMinutes": "黄金时段时长（分钟）",
+      "emailTopicNote": "只有通过 Email Topic 发送的邮件才会追踪打开和点击。",
+      "generalTitle": "常规设置",
+      "followersOnly": "仅限关注者",
+      "followersOnlyHint": "只有关注您账号的人才能获得积分。",
+      "tagFilter": "标签筛选",
+      "tagFilterHint": "只有拥有其中至少一个标签的联系人才能获得积分。",
+      "everyone": "所有人",
+      "resetTime": "每日重置时间 (UTC)",
+      "resetTimeHint": "每日上限在此时间重新计算。= 越南时间 {time} (UTC+7)。",
+      "cooldown": "防垃圾冷却时间（秒）",
+      "cooldownHint": "同一个人两次自动加分之间的最短间隔秒数。0 表示关闭。",
+      "referralFlow": "推荐欢迎流程",
+      "referralFlowAuto": "自动创建",
+      "referralFlowHint": "发送给通过推荐链接加入的好友。可以使用 '{{referral_name}}' 和公开排行榜链接。留空将自动创建一条欢迎消息，您可以在 Flow Builder 中编辑。",
+      "publicLink": "公开链接",
+      "publicLinkHint": "在流程中发送此链接，让每位玩家看到自己的排名。",
+      "publicLinkAfterSave": "保存后即可使用公开链接。",
+      "rewardsTitle": "奖励",
+      "autoOnFinish": "结束时自动发放",
+      "autoOnFinishHint": "排行榜一结束就为前 N 名运行奖励流程。",
+      "backToStep2": "返回第 2 步",
+      "notEditable": "已结束的排行榜无法编辑。"
+    },
+    "review": {
+      "infoCard": "基本信息",
+      "yes": "是",
+      "no": "否",
+      "off": "关闭",
+      "seconds": "{seconds} 秒",
+      "resetTimeValue": "{utc} UTC（= 越南时间 {local}）",
+      "noRules": "尚未开启任何规则。",
+      "rulePoints": "{points} 分",
+      "maxPerDay": "每天最多 {count}",
+      "unlimited": "不限"
+    },
+    "preview": {
+      "sampleName": "玩家 {rank}",
+      "placeholderName": "您的排行榜名称",
+      "pinnedBar": "#{rank} · {points} 分"
+    },
+    "validation": {
+      "nameRequired": "请输入名称",
+      "dateRequired": "请选择日期和时间",
+      "endsAfterStart": "结束时间必须晚于开始时间",
+      "channelRequired": "请选择渠道",
+      "minigameRequired": "请选择小游戏",
+      "pointsRequired": "请输入此规则奖励的积分",
+      "bonusMinutesRequired": "请设置黄金时段持续的分钟数",
+      "postsRequired": "请至少选择一篇帖子",
+      "telegramChatsRequired": "请至少选择一个群组或频道",
+      "enableOneRule": "发布前请至少开启一条计分规则",
+      "fixErrors": "请修正高亮显示的字段"
+    },
+    "rules": {
+      "comments": {
+        "label": "评论",
+        "description": "您的帖子每收到一条评论即得积分。"
+      },
+      "liveComments": {
+        "label": "直播评论",
+        "description": "直播期间每条评论即得积分。"
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "消息匹配此渠道 Keywords 工具中的任一关键词时得分。"
+      },
+      "storyMention": {
+        "label": "快拍提及",
+        "description": "有人在快拍中标记您的账号时得分。"
+      },
+      "storyReaction": {
+        "label": "快拍回应",
+        "description": "有人对您的快拍做出回应时得分。"
+      },
+      "ctwaReactions": {
+        "label": "CTWA 点击与回应",
+        "description": "点击 Click-to-WhatsApp 广告或对消息做出回应时得分。"
+      },
+      "survey": {
+        "label": "调查与测验",
+        "description": "完成 Questionnaire 或提交 WhatsApp Flow 表单时得分。"
+      },
+      "follow": {
+        "label": "关注 OA 与二维码",
+        "description": "关注您的官方账号或扫描其二维码时得分。取消关注将扣回积分。"
+      },
+      "message": {
+        "label": "Zalo 消息",
+        "description": "向您的官方账号每发送一条消息即得积分。"
+      },
+      "joinGroup": {
+        "label": "加入频道与群组",
+        "description": "加入您的群组或频道时得分。退出将扣回积分。"
+      },
+      "groupDiscussion": {
+        "label": "群组讨论",
+        "description": "在您的群组中每发一条消息即得积分。"
+      },
+      "emailOpen": {
+        "label": "邮件打开",
+        "description": "邮件被打开时得分。"
+      },
+      "emailClick": {
+        "label": "邮件点击",
+        "description": "邮件中的链接被点击时得分。"
+      },
+      "minigameWin": {
+        "label": "小游戏获奖",
+        "description": "在小游戏中每赢得一个奖品即得积分。"
+      },
+      "inGameShare": {
+        "label": "游戏内分享",
+        "description": "分享游戏以获得更多次数时得分。"
+      },
+      "referral": {
+        "label": "推荐",
+        "description": "新朋友通过邀请人的链接加入时，邀请人得分。"
+      }
+    },
+    "breakdown": {
+      "comments": "{count} 条评论",
+      "liveComments": "{count} 条直播评论",
+      "keywords": "{count} 个关键词",
+      "storyMention": "{count} 次快拍提及",
+      "storyReaction": "{count} 次快拍回应",
+      "ctwaReactions": "{count} 次 CTWA",
+      "survey": "{count} 份调查",
+      "follow": "{count} 次关注",
+      "message": "{count} 条消息",
+      "joinGroup": "{count} 次加入",
+      "groupDiscussion": "{count} 条群消息",
+      "emailOpen": "{count} 次打开",
+      "emailClick": "{count} 次点击",
+      "minigameWin": "{count} 次获奖",
+      "inGameShare": "{count} 次分享",
+      "referral": "{count} 次推荐",
+      "flow": "{count} 次流程",
+      "manual": "{count} 次手动"
+    },
+    "participants": {
+      "title": "参与者",
+      "switcher": "切换排行榜",
+      "count": "{count, plural, one {# 位玩家} other {# 位玩家}}",
+      "searchPlaceholder": "搜索姓名、用户 ID 或电话...",
+      "filters": {
+        "all": "全部",
+        "top10": "前 10 名",
+        "top50": "前 50 名",
+        "banned": "已封禁"
+      },
+      "columns": {
+        "rank": "排名",
+        "participant": "参与者",
+        "score": "总分",
+        "breakdown": "详情",
+        "lastActivity": "最近活动"
+      },
+      "unknown": "未知",
+      "contactId": "ID {id}",
+      "lockedFinished": "此排行榜已结束 — 分数已锁定。",
+      "lockedDraft": "请先发布排行榜，再编辑分数。",
+      "actions": {
+        "adjust": "调整积分",
+        "ban": "封禁",
+        "unban": "解除封禁",
+        "reset": "重置为 0",
+        "history": "查看历史"
+      },
+      "adjust": {
+        "title": "调整积分",
+        "description": "为 {name} 增加或扣除积分。此更改会保存在审计日志中。",
+        "delta": "积分 (+/-)",
+        "deltaPlaceholder": "例如 50 或 -20",
+        "reason": "原因",
+        "reasonPlaceholder": "您为什么要更改此分数？",
+        "success": "积分已调整"
+      },
+      "banConfirm": "{name} 将被移出排名，并停止获得积分。",
+      "unbanConfirm": "{name} 将以当前分数重新回到排名中。",
+      "resetConfirm": "{name} 的分数将恢复为 0。此操作会被记录。",
+      "banned": "参与者已被封禁",
+      "unbanned": "参与者已解除封禁",
+      "resetDone": "分数已重置为 0",
+      "history": {
+        "title": "分数历史 — {name}",
+        "empty": "暂无分数变动。",
+        "sources": {
+          "rule": "规则",
+          "flow": "流程",
+          "referral": "推荐",
+          "manual": "手动调整",
+          "reset": "重置"
+        }
+      },
+      "conversationNotFound": "未找到该联系人的会话",
+      "popupBlocked": "请允许此网站弹出窗口，然后再试一次。"
+    },
+    "auditLog": {
+      "title": "审计日志",
+      "admin": "管理员",
+      "change": "变更",
+      "time": "时间",
+      "reason": "原因",
+      "api": "API",
+      "empty": "暂无手动变更。",
+      "actions": {
+        "adjust": "调整",
+        "resetOne": "重置玩家",
+        "resetAll": "全部重置",
+        "ban": "封禁",
+        "unban": "解除封禁"
       }
     }
   },

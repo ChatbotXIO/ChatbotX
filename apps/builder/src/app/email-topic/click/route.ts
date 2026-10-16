@@ -1,5 +1,6 @@
 import { emailTopicAnalyticsService } from "@chatbotx.io/analytics"
 import { emailTopicService, verifyEmailClickToken } from "@chatbotx.io/business"
+import { awardLeaderboardEmailEngagement } from "@chatbotx.io/business/leaderboard"
 import { NextResponse } from "next/server"
 import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
 
@@ -67,6 +68,11 @@ export async function GET(request: Request) {
 
       if (shouldRecordClick && token) {
         await emailTopicAnalyticsService.recordClick(token)
+        await awardLeaderboardEmailEngagement({
+          token,
+          kind: "click",
+          link: payload.url,
+        })
       }
 
       return NextResponse.redirect(payload.url, { status: 302 })
@@ -78,6 +84,7 @@ export async function GET(request: Request) {
 
   if (shouldRecordClick && !signedUrl && token) {
     await emailTopicAnalyticsService.recordClick(token)
+    await awardLeaderboardEmailEngagement({ token, kind: "click" })
   }
 
   return NextResponse.redirect(origin, { status: 302 })

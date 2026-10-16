@@ -45,6 +45,8 @@ export const queueGroupByName: Record<QueueName, QueueGroup> = {
   broadcastRecurrence: "bulk",
   // Rate-limited background enrichment; must not compete with chat/integration.
   profileSnapshot: "bulk",
+  // Leaderboard scoring: bursty (livestream comments) but never latency-critical.
+  leaderboard: "bulk",
 }
 
 function resolveGroupUrl(group: QueueGroup): string {

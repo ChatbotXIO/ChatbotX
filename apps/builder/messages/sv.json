@@ -961,7 +961,8 @@
       "ctwaAds": "Annonser",
       "systemFields": "Systemfält",
       "systemTime": "Systemtid",
-      "topicCoupon": "Kupongämne"
+      "topicCoupon": "Kupongämne",
+      "leaderboard": "Gamificationpoäng"
     },
     "fields": {
       "appliedJobs": "Sökta jobb",
@@ -989,6 +990,7 @@
       "conversationTransferredToHuman": "Konversation överförd till människa",
       "country": "Land",
       "couponTopic": "Kupong",
+      "leaderboardScore": "Gamificationpoäng",
       "currentChannel": "Kanal",
       "currentDate": "Aktuellt datum",
       "currentDayOfMonth": "Aktuell dag i månaden",
@@ -3255,7 +3257,8 @@
       "media": "Media",
       "ads": "Annonser",
       "settings": "Inställningar",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "Topplistor"
     },
     "adReferral": {
       "label": "Ads",
@@ -3287,6 +3290,9 @@
       "hint": "Data Manager rekommenderas. Det gamla uppladdnings-API:et fungerar bara för Google Cloud-projekt som Google fortfarande tillåter och använder inte Data Manager-behörigheten. En ändring gäller bara nya anslutningar: anslut befintliga arbetsytor igen.",
       "dataManager": "Data Manager API (rekommenderas)",
       "legacy": "Gammalt uppladdnings-API"
+    },
+    "referralName": {
+      "label": "Värvarens namn"
     }
   },
   "flowAnalytics": {
@@ -3423,6 +3429,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Trådkontroll",
       "sendGoogleAdsConversion": "Skicka Google Ads-konvertering",
+      "changeGamificationScore": "Ändra gamificationpoäng",
       "sendViewCatalog": "Visa katalog",
       "sendProducts": "Skicka produkter"
     },
@@ -3592,6 +3599,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "Redigera knapp",
       "buttonLabel": "Knappetikett"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "Topplista",
+      "operation": "Åtgärd",
+      "add": "Lägg till poäng (+)",
+      "subtract": "Dra av poäng (−)",
+      "points": "Poäng",
+      "targetUser": "Användarens poäng",
+      "targetReferrer": "Värvarens poäng",
+      "targetReferrerHint": "Ändra även poängen för den som värvade den här kontakten.",
+      "summary": "{points} poäng i {leaderboard}"
     },
     "whatsappLocation": {
       "title": "Plats",
@@ -8382,6 +8400,362 @@
         "type_not_allowed": "Den här filtypen är inte tillåten.",
         "rate_limited": "För många uppladdningar. Vänta en stund och försök igen.",
         "upload_failed": "Filen kunde inte laddas upp. Försök igen."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "Topplistor",
+    "public": {
+      "points": "{points} p",
+      "endsIn": "Slutar om {days} d {hours} h {minutes} min {seconds} s",
+      "finished": "Avslutad",
+      "empty": "Inga spelare än — bli först!",
+      "myRank": "Din placering: #{rank}",
+      "unranked": "Ingen placering än",
+      "shareToEarn": "Dela och tjäna poäng",
+      "linkCopied": "Länk kopierad",
+      "unavailableTitle": "Den här topplistan är inte längre tillgänglig",
+      "unavailableDescription": "Den kan ha avslutats eller tagits bort. Be sidan du följer om den senaste länken."
+    },
+    "description": "Kör poängbaserade rankingkampanjer där kunder tävlar om topplaceringar och belöningar.",
+    "feature": "Topplista",
+    "create": "Skapa topplista",
+    "kpi": {
+      "total": "Totalt antal kampanjer",
+      "active": "Pågående"
+    },
+    "tabs": {
+      "all": "Alla",
+      "active": "Aktiva",
+      "paused": "Pausade",
+      "finished": "Avslutade"
+    },
+    "status": {
+      "draft": "Utkast",
+      "active": "Aktiv",
+      "paused": "Pausad",
+      "finished": "Avslutad"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "Kampanj",
+      "searchPlaceholder": "Sök topplistor...",
+      "platformFilter": "Plattform",
+      "participants": "Deltagare",
+      "totalPoints": "Totalt antal poäng",
+      "newToday": "+{count} idag",
+      "average": "snitt {value} / spelare",
+      "daysLeft": "{days, plural, one {# dag kvar} other {# dagar kvar}}",
+      "ended": "Avslutad"
+    },
+    "scope": {
+      "allPosts": "Alla inlägg",
+      "specificPosts": "Specifika inlägg",
+      "specificPostsCount": "{count, plural, one {# inlägg} other {# inlägg}}",
+      "telegramChatsCount": "{count, plural, one {# grupp} other {# grupper}}"
+    },
+    "menu": {
+      "start": "Starta",
+      "pause": "Pausa",
+      "finish": "Avsluta",
+      "resetPoints": "Nollställ poäng",
+      "triggerRewards": "Skicka belöningar",
+      "viewParticipants": "Visa deltagare",
+      "copyLink": "Kopiera publik länk"
+    },
+    "confirm": {
+      "publishTitle": "Publicera den här topplistan?",
+      "publishDescription": "Poängräkningen startar direkt och spelarna kan se den publika sidan.",
+      "pauseTitle": "Pausa den här topplistan?",
+      "pauseDescription": "Automatisk poängräkning och poängräkning via flöden stoppas. Du kan fortfarande justera poäng manuellt.",
+      "startTitle": "Återuppta den här topplistan?",
+      "startDescription": "Poängräkningen startar igen för alla regler.",
+      "finishTitle": "Avsluta den här topplistan?",
+      "finishDescription": "Alla poäng låses och kan inte längre ändras. Automatiska belöningar skickas om de är aktiverade.",
+      "resetPointsTitle": "Nollställa alla poäng?",
+      "resetPointsDescription": "Alla deltagare i \"{name}\" återgår till 0 poäng. Detta loggas och kan inte ångras."
+    },
+    "toast": {
+      "published": "Topplistan har publicerats",
+      "paused": "Topplistan har pausats",
+      "started": "Topplistan har återupptagits",
+      "finished": "Topplistan har avslutats",
+      "pointsReset": "Alla poäng har nollställts"
+    },
+    "export": {
+      "title": "Exportera deltagare",
+      "description": "Ladda ner alla deltagare med placering och poäng som en CSV-fil.",
+      "preparing": "Förbereder din fil...",
+      "ready": "Din fil är klar ({count} rader).",
+      "failed": "Exporten misslyckades. Försök igen."
+    },
+    "rewards": {
+      "title": "Skicka belöningar",
+      "description": "Skicka belöningsflödet till de bästa spelarna. Belöningar kan bara skickas en gång.",
+      "flow": "Belöningsflöde",
+      "topN": "Antal vinnare (topp N)",
+      "noFlow": "Inget belöningsflöde valt — ange ett i topplistans inställningar.",
+      "alreadySent": "Belöningar har redan skickats för den här topplistan.",
+      "confirm": "Skicka belöningar",
+      "result": "Skickat till {sent} vinnare, {skipped} hoppades över (ingen konversation i den här kanalen)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "Information",
+        "config": "Kanal och regler",
+        "review": "Granska och publicera"
+      },
+      "namePlaceholder": "t.ex. Oktobers toppfans",
+      "coverImage": "Omslagsbild",
+      "coverImageHint": "JPG eller PNG, upp till 5MB. Rekommenderad storlek 1200×630.",
+      "coverImageRejected": "Välj en JPG- eller PNG-bild på upp till 5MB.",
+      "description": "Regler och belöningar",
+      "descriptionPlaceholder": "Förklara hur spelare tjänar poäng och vad de bästa spelarna vinner.",
+      "startsAt": "Startar",
+      "endsAt": "Slutar",
+      "startLocked": "Starttiden kan inte ändras efter publicering.",
+      "channelTitle": "Plattform och kanal",
+      "platform": "Plattform",
+      "hostChannel": "Kanal",
+      "hostLocked": "Plattform och kanal kan inte ändras efter publicering.",
+      "noChannel": "Ingen ansluten {platform}-kanal. Anslut en i Inställningar → Kanaler först.",
+      "openMinigameSettings": "Öppna spelinställningar",
+      "postScope": "Inlägg som ger poäng",
+      "choosePosts": "Välj inlägg",
+      "telegramChats": "Grupper och kanaler",
+      "telegramChatsHint": "Lägg till din bot i gruppen eller kanalen som administratör så att den kan se medlemmar och meddelanden.",
+      "telegramChatsEmpty": "Inga grupper hittades — lägg först till boten som administratör",
+      "rulesTitle": "Poängregler",
+      "rulesHint": "Aktivera de handlingar som ger poäng och ange hur många.",
+      "allPlatforms": "Alla plattformar",
+      "points": "Poäng",
+      "maxPerDay": "Max per dag",
+      "maxPerDayHint": "Lämna tomt för obegränsat.",
+      "minChars": "Minsta antal tecken",
+      "bonusPoints": "Bonuspoäng för gyllene timmen",
+      "bonusPointsHint": "Extra poäng för kommentarer som skrivs strax efter att inlägget publicerats.",
+      "bonusMinutes": "Gyllene timmens längd (minuter)",
+      "emailTopicNote": "Endast e-post som skickas med ett Email Topic spåras för öppningar och klick.",
+      "generalTitle": "Allmänna inställningar",
+      "followersOnly": "Endast följare",
+      "followersOnlyHint": "Bara personer som följer ditt konto tjänar poäng.",
+      "tagFilter": "Taggfilter",
+      "tagFilterHint": "Bara kontakter med minst en av dessa taggar tjänar poäng.",
+      "everyone": "Alla",
+      "resetTime": "Daglig nollställningstid (UTC)",
+      "resetTimeHint": "Dagliga gränser startar om vid den här tiden. = {time} vietnamesisk tid (UTC+7).",
+      "cooldown": "Antispam-väntetid (sekunder)",
+      "cooldownHint": "Minsta antal sekunder mellan två automatiska tilldelningar till samma person. 0 stänger av.",
+      "referralFlow": "Välkomstflöde för värvning",
+      "referralFlowAuto": "Skapa automatiskt",
+      "referralFlowHint": "Skickas till en vän som går med via en värvningslänk. Det kan använda '{{referral_name}}' och topplistans publika länk. Lämna tomt för att automatiskt skapa ett välkomstmeddelande som du kan redigera i Flow Builder.",
+      "publicLink": "Publik länk",
+      "publicLinkHint": "Skicka den här länken från ett flöde så att varje spelare ser sin egen placering.",
+      "publicLinkAfterSave": "Den publika länken är tillgänglig efter att du sparat.",
+      "rewardsTitle": "Belöningar",
+      "autoOnFinish": "Skicka automatiskt vid avslut",
+      "autoOnFinishHint": "Kör belöningsflödet för topp N så fort topplistan avslutas.",
+      "backToStep2": "Tillbaka till steg 2",
+      "notEditable": "Avslutade topplistor kan inte redigeras."
+    },
+    "review": {
+      "infoCard": "Information",
+      "yes": "Ja",
+      "no": "Nej",
+      "off": "Av",
+      "seconds": "{seconds} sekunder",
+      "resetTimeValue": "{utc} UTC (= {local} vietnamesisk tid)",
+      "noRules": "Ingen regel är aktiverad ännu.",
+      "rulePoints": "{points} p",
+      "maxPerDay": "max {count}/dag",
+      "unlimited": "obegränsat"
+    },
+    "preview": {
+      "sampleName": "Spelare {rank}",
+      "placeholderName": "Namnet på din topplista",
+      "pinnedBar": "#{rank} · {points} p"
+    },
+    "validation": {
+      "nameRequired": "Ange ett namn",
+      "dateRequired": "Välj datum och tid",
+      "endsAfterStart": "Sluttiden måste vara efter starttiden",
+      "channelRequired": "Välj en kanal",
+      "minigameRequired": "Välj ett minispel",
+      "pointsRequired": "Ange hur många poäng den här regeln ger",
+      "bonusMinutesRequired": "Ange hur många minuter den gyllene timmen varar",
+      "postsRequired": "Välj minst ett inlägg",
+      "telegramChatsRequired": "Välj minst en grupp eller kanal",
+      "enableOneRule": "Aktivera minst en poängregel innan du publicerar",
+      "fixErrors": "Rätta de markerade fälten"
+    },
+    "rules": {
+      "comments": {
+        "label": "Kommentarer",
+        "description": "Poäng för varje kommentar på dina inlägg."
+      },
+      "liveComments": {
+        "label": "Livekommentarer",
+        "description": "Poäng för varje kommentar under en livesändning."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "Poäng när ett meddelande matchar något nyckelord i den här kanalens Keywords-verktyg."
+      },
+      "storyMention": {
+        "label": "Omnämnande i story",
+        "description": "Poäng när någon taggar ditt konto i sin story."
+      },
+      "storyReaction": {
+        "label": "Reaktion på story",
+        "description": "Poäng när någon reagerar på din story."
+      },
+      "ctwaReactions": {
+        "label": "CTWA-klick och reaktioner",
+        "description": "Poäng för att klicka på en Click-to-WhatsApp-annons eller reagera på ett meddelande."
+      },
+      "survey": {
+        "label": "Enkät och quiz",
+        "description": "Poäng för att slutföra ett Questionnaire eller skicka in ett WhatsApp Flow-formulär."
+      },
+      "follow": {
+        "label": "Följ OA och QR",
+        "description": "Poäng för att följa ditt Official Account eller skanna dess QR-kod. Om man slutar följa dras poängen tillbaka."
+      },
+      "message": {
+        "label": "Zalo-meddelande",
+        "description": "Poäng för varje meddelande som skickas till ditt Official Account."
+      },
+      "joinGroup": {
+        "label": "Gå med i kanal och grupp",
+        "description": "Poäng för att gå med i din grupp eller kanal. Om man lämnar dras poängen tillbaka."
+      },
+      "groupDiscussion": {
+        "label": "Gruppdiskussion",
+        "description": "Poäng för varje meddelande i din grupp."
+      },
+      "emailOpen": {
+        "label": "E-postöppning",
+        "description": "Poäng när ett e-postmeddelande öppnas."
+      },
+      "emailClick": {
+        "label": "E-postklick",
+        "description": "Poäng när en länk i ett e-postmeddelande klickas."
+      },
+      "minigameWin": {
+        "label": "Vinst i minispel",
+        "description": "Poäng för varje vinst i minispelet."
+      },
+      "inGameShare": {
+        "label": "Delning i spelet",
+        "description": "Poäng för att dela spelet för att få fler försök."
+      },
+      "referral": {
+        "label": "Värvning",
+        "description": "Poäng till den som bjuder in när en ny vän går med via deras länk."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} kommentarer",
+      "liveComments": "{count} livekommentarer",
+      "keywords": "{count} nyckelord",
+      "storyMention": "{count} omnämnanden i story",
+      "storyReaction": "{count} reaktioner på story",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} enkäter",
+      "follow": "{count} följningar",
+      "message": "{count} meddelanden",
+      "joinGroup": "{count} anslutningar",
+      "groupDiscussion": "{count} gruppmeddelanden",
+      "emailOpen": "{count} öppningar",
+      "emailClick": "{count} klick",
+      "minigameWin": "{count} vinster",
+      "inGameShare": "{count} delningar",
+      "referral": "{count} värvningar",
+      "flow": "{count} flöde",
+      "manual": "{count} manuellt"
+    },
+    "participants": {
+      "title": "Deltagare",
+      "switcher": "Byt topplista",
+      "count": "{count, plural, one {# spelare} other {# spelare}}",
+      "searchPlaceholder": "Sök namn, användar-ID eller telefon...",
+      "filters": {
+        "all": "Alla",
+        "top10": "Topp 10",
+        "top50": "Topp 50",
+        "banned": "Avstängda"
+      },
+      "columns": {
+        "rank": "Placering",
+        "participant": "Deltagare",
+        "score": "Totala poäng",
+        "breakdown": "Detaljer",
+        "lastActivity": "Senaste aktivitet"
+      },
+      "unknown": "Okänd",
+      "contactId": "ID {id}",
+      "lockedFinished": "Den här topplistan har avslutats — poängen är låsta.",
+      "lockedDraft": "Publicera topplistan innan du redigerar poäng.",
+      "actions": {
+        "adjust": "Justera poäng",
+        "ban": "Stäng av",
+        "unban": "Häv avstängning",
+        "reset": "Nollställ till 0",
+        "history": "Visa historik"
+      },
+      "adjust": {
+        "title": "Justera poäng",
+        "description": "Lägg till eller dra av poäng för {name}. Ändringen sparas i granskningsloggen.",
+        "delta": "Poäng (+/-)",
+        "deltaPlaceholder": "t.ex. 50 eller -20",
+        "reason": "Orsak",
+        "reasonPlaceholder": "Varför ändrar du den här poängen?",
+        "success": "Poängen har justerats"
+      },
+      "banConfirm": "{name} tas bort från rankingen och slutar tjäna poäng.",
+      "unbanConfirm": "{name} kommer tillbaka i rankingen med sina nuvarande poäng.",
+      "resetConfirm": "Poängen för {name} återgår till 0. Detta loggas.",
+      "banned": "Deltagaren har stängts av",
+      "unbanned": "Deltagarens avstängning har hävts",
+      "resetDone": "Poängen nollställdes till 0",
+      "history": {
+        "title": "Poänghistorik — {name}",
+        "empty": "Inga poängändringar ännu.",
+        "sources": {
+          "rule": "Regel",
+          "flow": "Flöde",
+          "referral": "Värvning",
+          "manual": "Manuell justering",
+          "reset": "Nollställning"
+        }
+      },
+      "conversationNotFound": "Ingen konversation hittades för den här kontakten",
+      "popupBlocked": "Tillåt popup-fönster för den här webbplatsen och försök sedan igen."
+    },
+    "auditLog": {
+      "title": "Granskningslogg",
+      "admin": "Admin",
+      "change": "Ändring",
+      "time": "Tid",
+      "reason": "Orsak",
+      "api": "API",
+      "empty": "Inga manuella ändringar ännu.",
+      "actions": {
+        "adjust": "Justering",
+        "resetOne": "Nollställ spelare",
+        "resetAll": "Nollställ alla",
+        "ban": "Avstängning",
+        "unban": "Hävd avstängning"
       }
     }
   },

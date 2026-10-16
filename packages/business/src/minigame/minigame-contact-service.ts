@@ -46,6 +46,7 @@ import { contactCustomFieldService } from "../contact-custom-field/service"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { ChatbotXException } from "../errors"
+import { enqueueLeaderboardAward } from "../leaderboard/enqueue"
 import { logger } from "../logger"
 import { tagService } from "../tag/service"
 import { isMinigameWithinPlayWindow } from "./play-window"
@@ -402,6 +403,8 @@ class MinigameContactService extends BaseService {
   }): Promise<{
     contactState: MinigameContactModel
     result: MinigamePlayResult
+    /** The recorded `MinigamePlay` row (id + time), the source of a leaderboard win. */
+    play: { id: string; createdAt: Date } | undefined
   }> {
     const { minigameId, contactId, contactInboxId, minigame } = props
 
@@ -472,15 +475,21 @@ class MinigameContactService extends BaseService {
         .where(eq(minigameContactModel.id, state.id))
         .returning()
 
-      await tx.insert(minigamePlayModel).values({
-        minigameId,
-        contactId,
-        isWinning: result.type === "prize",
-        prizeId: result.type === "prize" ? result.prize.id : null,
-        prizeName: result.type === "prize" ? result.prize.name : null,
-      })
+      const [play] = await tx
+        .insert(minigamePlayModel)
+        .values({
+          minigameId,
+          contactId,
+          isWinning: result.type === "prize",
+          prizeId: result.type === "prize" ? result.prize.id : null,
+          prizeName: result.type === "prize" ? result.prize.name : null,
+        })
+        .returning({
+          id: minigamePlayModel.id,
+          createdAt: minigamePlayModel.createdAt,
+        })
 
-      return { contactState, result }
+      return { contactState, result, play }
     })
   }
 
@@ -611,12 +620,26 @@ class MinigameContactService extends BaseService {
       contactInboxId,
     })
 
-    return await this.grantReferralBonus({
+    const granted = await this.grantReferralBonus({
       minigameId: minigame.id,
       referrerContactId: state.referrerContactId,
       inviteeContactId: contactId,
       playerSettings: minigame.playerSettings,
     })
+    if (granted) {
+      // The referrer earned an in-game share credit. The invitee's play-state
+      // row was created by this very call, so its creation time is the stable
+      // event time a retry would reproduce.
+      await enqueueLeaderboardAward({
+        workspaceId: minigame.workspaceId,
+        contactId: state.referrerContactId,
+        minigameId: minigame.id,
+        rule: "inGameShare",
+        sourceRef: contactId,
+        eventAt: state.createdAt,
+      })
+    }
+    return granted
   }
 
   /**
@@ -647,12 +670,23 @@ class MinigameContactService extends BaseService {
       resolveContactVariables,
     } = props
 
-    const { contactState, result } = await this.recordPlay({
+    const { contactState, result, play } = await this.recordPlay({
       minigameId,
       contactId,
       contactInboxId: contactInbox.id,
       minigame,
     })
+
+    if (result.type === "prize" && play) {
+      await enqueueLeaderboardAward({
+        workspaceId: minigame.workspaceId,
+        contactId,
+        minigameId,
+        rule: "minigameWin",
+        sourceRef: play.id,
+        eventAt: play.createdAt,
+      })
+    }
 
     await tagService.attachToContact({
       workspaceId: minigame.workspaceId,

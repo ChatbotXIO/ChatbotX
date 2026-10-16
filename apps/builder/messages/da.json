@@ -724,6 +724,7 @@
       "questionnaireInProgress": "Spørgeskema i gang",
       "questionnaireFinished": "Spørgeskema afsluttet",
       "couponTopic": "Kupon",
+      "leaderboardScore": "Gamification-point",
       "votedOnPoll": "Stemte i afstemningen",
       "lastComment": "Seneste kommentar",
       "commentedOnPost": "Kommenterede opslag",
@@ -793,6 +794,7 @@
       "ecommerce": "E-handel",
       "systemFields": "Systemfelter",
       "topicCoupon": "Emnekupon",
+      "leaderboard": "Gamification-point",
       "customFields": "Brugerdefinerede felter",
       "botFields": "Bot Felter",
       "email": "E-mail",
@@ -2345,7 +2347,8 @@
       "media": "Medier",
       "ads": "Annoncer",
       "settings": "Indstillinger",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "Ranglister"
     },
     "adReferral": {
       "label": "Ads",
@@ -2377,6 +2380,9 @@
       "hint": "Data Manager anbefales. Det gamle upload-API fungerer kun for Google Cloud-projekter, som Google stadig tillader, og bruger ikke Data Manager-tilladelsen. En ændring gælder kun nye forbindelser: genopret forbindelsen for eksisterende arbejdsområder.",
       "dataManager": "Data Manager API (anbefalet)",
       "legacy": "Gammelt upload-API"
+    },
+    "referralName": {
+      "label": "Henviserens navn"
     }
   },
   "flows": {
@@ -2548,6 +2554,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Trådkontrol",
       "sendGoogleAdsConversion": "Send Google Ads-konvertering",
+      "changeGamificationScore": "Skift gamification-point",
       "sendViewCatalog": "Se katalog",
       "sendProducts": "Send produkter"
     },
@@ -2669,6 +2676,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "Rediger Knap",
       "buttonLabel": "Knap Etiket"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "Rangliste",
+      "operation": "Handling",
+      "add": "Tilføj point (+)",
+      "subtract": "Træk point fra (−)",
+      "points": "Point",
+      "targetUser": "Brugerens point",
+      "targetReferrer": "Henviserens point",
+      "targetReferrerHint": "Skift også pointene for den, der henviste denne kontakt.",
+      "summary": "{points} point på {leaderboard}"
     },
     "whatsappLocation": {
       "title": "Placering",
@@ -8382,6 +8400,362 @@
         "type_not_allowed": "Denne filtype er ikke tilladt.",
         "rate_limited": "For mange uploads. Vent et øjeblik, og prøv igen.",
         "upload_failed": "Filen kunne ikke uploades. Prøv igen."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "Ranglister",
+    "public": {
+      "points": "{points} point",
+      "endsIn": "Slutter om {days}d {hours}t {minutes}m {seconds}s",
+      "finished": "Afsluttet",
+      "empty": "Ingen spillere endnu — bliv den første!",
+      "myRank": "Din placering: #{rank}",
+      "unranked": "Endnu ikke placeret",
+      "shareToEarn": "Del og optjen point",
+      "linkCopied": "Link kopieret",
+      "unavailableTitle": "Denne rangliste er ikke længere tilgængelig",
+      "unavailableDescription": "Den kan være afsluttet eller fjernet. Spørg siden, du følger, om det seneste link."
+    },
+    "description": "Kør pointbaserede rangeringskampagner, hvor kunder konkurrerer om topplaceringerne og belønninger.",
+    "feature": "Rangliste",
+    "create": "Opret rangliste",
+    "kpi": {
+      "total": "Kampagner i alt",
+      "active": "Kørende"
+    },
+    "tabs": {
+      "all": "Alle",
+      "active": "Aktive",
+      "paused": "På pause",
+      "finished": "Afsluttede"
+    },
+    "status": {
+      "draft": "Kladde",
+      "active": "Aktiv",
+      "paused": "På pause",
+      "finished": "Afsluttet"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "Kampagne",
+      "searchPlaceholder": "Søg i ranglister...",
+      "platformFilter": "Platform",
+      "participants": "Deltagere",
+      "totalPoints": "Point i alt",
+      "newToday": "+{count} i dag",
+      "average": "gns. {value} / spiller",
+      "daysLeft": "{days, plural, one {# dag tilbage} other {# dage tilbage}}",
+      "ended": "Afsluttet"
+    },
+    "scope": {
+      "allPosts": "Alle opslag",
+      "specificPosts": "Bestemte opslag",
+      "specificPostsCount": "{count, plural, one {# opslag} other {# opslag}}",
+      "telegramChatsCount": "{count, plural, one {# gruppe} other {# grupper}}"
+    },
+    "menu": {
+      "start": "Start",
+      "pause": "Sæt på pause",
+      "finish": "Afslut",
+      "resetPoints": "Nulstil point",
+      "triggerRewards": "Udløs belønninger",
+      "viewParticipants": "Se deltagere",
+      "copyLink": "Kopiér offentligt link"
+    },
+    "confirm": {
+      "publishTitle": "Udgiv denne rangliste?",
+      "publishDescription": "Pointtildelingen starter med det samme, og spillerne kan se den offentlige side.",
+      "pauseTitle": "Sæt denne rangliste på pause?",
+      "pauseDescription": "Automatisk pointtildeling og pointtildeling via flow stopper. Du kan stadig justere point manuelt.",
+      "startTitle": "Genoptag denne rangliste?",
+      "startDescription": "Pointtildelingen starter igen for alle regler.",
+      "finishTitle": "Afslut denne rangliste?",
+      "finishDescription": "Alle pointtal fryses og kan ikke længere ændres. Automatiske belønninger sendes, hvis de er slået til.",
+      "resetPointsTitle": "Nulstil alle point?",
+      "resetPointsDescription": "Alle deltagere i \"{name}\" går tilbage til 0 point. Det bliver logget og kan ikke fortrydes."
+    },
+    "toast": {
+      "published": "Ranglisten er udgivet",
+      "paused": "Ranglisten er sat på pause",
+      "started": "Ranglisten er genoptaget",
+      "finished": "Ranglisten er afsluttet",
+      "pointsReset": "Alle point er nulstillet"
+    },
+    "export": {
+      "title": "Eksportér deltagere",
+      "description": "Download alle deltagere med placering og pointtal som en CSV-fil.",
+      "preparing": "Forbereder din fil...",
+      "ready": "Din fil er klar ({count} rækker).",
+      "failed": "Eksporten mislykkedes. Prøv igen."
+    },
+    "rewards": {
+      "title": "Udløs belønninger",
+      "description": "Send belønningsflowet til topspillerne. Belønninger kan kun sendes én gang.",
+      "flow": "Belønningsflow",
+      "topN": "Antal vindere (top N)",
+      "noFlow": "Intet belønningsflow valgt — vælg et i ranglistens indstillinger.",
+      "alreadySent": "Belønninger er allerede sendt for denne rangliste.",
+      "confirm": "Send belønninger",
+      "result": "Sendt til {sent} vindere, {skipped} sprunget over (ingen samtale på denne kanal)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "Oplysninger",
+        "config": "Kanal og regler",
+        "review": "Gennemse og udgiv"
+      },
+      "namePlaceholder": "fx Oktobers topfans",
+      "coverImage": "Coverbillede",
+      "coverImageHint": "JPG eller PNG, op til 5 MB. Anbefalet størrelse 1200×630.",
+      "coverImageRejected": "Vælg et JPG- eller PNG-billede på op til 5 MB.",
+      "description": "Regler og belønninger",
+      "descriptionPlaceholder": "Forklar, hvordan spillere optjener point, og hvad topspillerne vinder.",
+      "startsAt": "Starter",
+      "endsAt": "Slutter",
+      "startLocked": "Starttidspunktet kan ikke ændres efter udgivelsen.",
+      "channelTitle": "Platform og kanal",
+      "platform": "Platform",
+      "hostChannel": "Kanal",
+      "hostLocked": "Platform og kanal kan ikke ændres efter udgivelsen.",
+      "noChannel": "Ingen tilsluttet {platform}-kanal. Tilslut en under Indstillinger → Kanaler først.",
+      "openMinigameSettings": "Åbn spilindstillinger",
+      "postScope": "Opslag, der giver point",
+      "choosePosts": "Vælg opslag",
+      "telegramChats": "Grupper og kanaler",
+      "telegramChatsHint": "Tilføj din bot til gruppen eller kanalen som admin, så den kan se medlemmer og beskeder.",
+      "telegramChatsEmpty": "Ingen grupper fundet — tilføj botten som admin først",
+      "rulesTitle": "Pointregler",
+      "rulesHint": "Slå de handlinger til, der giver point, og angiv hvor mange.",
+      "allPlatforms": "Alle platforme",
+      "points": "Point",
+      "maxPerDay": "Maks. pr. dag",
+      "maxPerDayHint": "Lad feltet stå tomt for ubegrænset.",
+      "minChars": "Minimum antal tegn",
+      "bonusPoints": "Bonuspoint i gyldne time",
+      "bonusPointsHint": "Ekstra point til kommentarer kort efter, at opslaget er udgivet.",
+      "bonusMinutes": "Længde på gyldne time (minutter)",
+      "emailTopicNote": "Kun e-mails sendt med et Email Topic spores for åbninger og klik.",
+      "generalTitle": "Generelle indstillinger",
+      "followersOnly": "Kun følgere",
+      "followersOnlyHint": "Kun personer, der følger din konto, optjener point.",
+      "tagFilter": "Tagfilter",
+      "tagFilterHint": "Kun kontakter med mindst ét af disse tags optjener point.",
+      "everyone": "Alle",
+      "resetTime": "Daglig nulstillingstid (UTC)",
+      "resetTimeHint": "Daglige grænser starter forfra på dette tidspunkt. = kl. {time} vietnamesisk tid (UTC+7).",
+      "cooldown": "Antispam-pause (sekunder)",
+      "cooldownHint": "Mindste antal sekunder mellem to automatiske pointtildelinger til samme person. 0 slår den fra.",
+      "referralFlow": "Velkomstflow for henvisninger",
+      "referralFlowAuto": "Opret automatisk",
+      "referralFlowHint": "Sendes til en ven, der tilmelder sig via et henvisningslink. Det kan bruge '{{referral_name}}' og det offentlige ranglistelink. Lad feltet stå tomt for automatisk at oprette en velkomstbesked, som du kan redigere i Flow Builder.",
+      "publicLink": "Offentligt link",
+      "publicLinkHint": "Send dette link fra et flow, så hver spiller kan se sin egen placering.",
+      "publicLinkAfterSave": "Det offentlige link er tilgængeligt efter lagring.",
+      "rewardsTitle": "Belønninger",
+      "autoOnFinish": "Send automatisk, når ranglisten er afsluttet",
+      "autoOnFinishHint": "Kører belønningsflowet for top N, så snart ranglisten afsluttes.",
+      "backToStep2": "Tilbage til trin 2",
+      "notEditable": "Afsluttede ranglister kan ikke redigeres."
+    },
+    "review": {
+      "infoCard": "Oplysninger",
+      "yes": "Ja",
+      "no": "Nej",
+      "off": "Slået fra",
+      "seconds": "{seconds} sekunder",
+      "resetTimeValue": "{utc} UTC (= {local} vietnamesisk tid)",
+      "noRules": "Ingen regel er slået til endnu.",
+      "rulePoints": "{points} point",
+      "maxPerDay": "maks. {count}/dag",
+      "unlimited": "ubegrænset"
+    },
+    "preview": {
+      "sampleName": "Spiller {rank}",
+      "placeholderName": "Din ranglistes navn",
+      "pinnedBar": "#{rank} · {points} point"
+    },
+    "validation": {
+      "nameRequired": "Angiv et navn",
+      "dateRequired": "Vælg en dato og et tidspunkt",
+      "endsAfterStart": "Sluttidspunktet skal ligge efter starttidspunktet",
+      "channelRequired": "Vælg en kanal",
+      "minigameRequired": "Vælg et minispil",
+      "pointsRequired": "Angiv, hvor mange point reglen giver",
+      "bonusMinutesRequired": "Angiv, hvor mange minutter den gyldne time varer",
+      "postsRequired": "Vælg mindst ét opslag",
+      "telegramChatsRequired": "Vælg mindst én gruppe eller kanal",
+      "enableOneRule": "Slå mindst én pointregel til, før du udgiver",
+      "fixErrors": "Ret de markerede felter"
+    },
+    "rules": {
+      "comments": {
+        "label": "Kommentarer",
+        "description": "Point for hver kommentar på dine opslag."
+      },
+      "liveComments": {
+        "label": "Livekommentarer",
+        "description": "Point for hver kommentar under en livestream."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "Point, når en besked matcher et nøgleord i denne kanals Keywords-værktøj."
+      },
+      "storyMention": {
+        "label": "Omtale i story",
+        "description": "Point, når nogen tagger din konto i deres story."
+      },
+      "storyReaction": {
+        "label": "Reaktion på story",
+        "description": "Point, når nogen reagerer på din story."
+      },
+      "ctwaReactions": {
+        "label": "CTWA-klik og reaktioner",
+        "description": "Point for at klikke på en Click-to-WhatsApp-annonce eller reagere på en besked."
+      },
+      "survey": {
+        "label": "Spørgeskema og quiz",
+        "description": "Point for at gennemføre et Questionnaire eller indsende en WhatsApp Flow-formular."
+      },
+      "follow": {
+        "label": "Følg OA og QR",
+        "description": "Point for at følge din Official Account eller scanne dens QR-kode. Hvis man stopper med at følge, trækkes pointene tilbage."
+      },
+      "message": {
+        "label": "Zalo-besked",
+        "description": "Point for hver besked sendt til din Official Account."
+      },
+      "joinGroup": {
+        "label": "Tilmeld kanal og gruppe",
+        "description": "Point for at tilmelde sig din gruppe eller kanal. Hvis man forlader den, trækkes pointene tilbage."
+      },
+      "groupDiscussion": {
+        "label": "Gruppediskussion",
+        "description": "Point for hver besked i din gruppe."
+      },
+      "emailOpen": {
+        "label": "E-mail åbnet",
+        "description": "Point, når en e-mail åbnes."
+      },
+      "emailClick": {
+        "label": "E-mail-klik",
+        "description": "Point, når der klikkes på et link i en e-mail."
+      },
+      "minigameWin": {
+        "label": "Minispilsgevinst",
+        "description": "Point for hver præmie, der vindes i minispillet."
+      },
+      "inGameShare": {
+        "label": "Deling i spillet",
+        "description": "Point for at dele spillet for at få flere forsøg."
+      },
+      "referral": {
+        "label": "Henvisning",
+        "description": "Point til den, der inviterer, når en ny ven tilmelder sig via vedkommendes link."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} kommentarer",
+      "liveComments": "{count} livekommentarer",
+      "keywords": "{count} keywords",
+      "storyMention": "{count} omtaler i story",
+      "storyReaction": "{count} reaktioner på story",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} spørgeskemaer",
+      "follow": "{count} følgere",
+      "message": "{count} beskeder",
+      "joinGroup": "{count} tilmeldinger",
+      "groupDiscussion": "{count} gruppebeskeder",
+      "emailOpen": "{count} åbninger",
+      "emailClick": "{count} klik",
+      "minigameWin": "{count} gevinster",
+      "inGameShare": "{count} delinger",
+      "referral": "{count} henvisninger",
+      "flow": "{count} flow",
+      "manual": "{count} manuelt"
+    },
+    "participants": {
+      "title": "Deltagere",
+      "switcher": "Skift rangliste",
+      "count": "{count, plural, one {# spiller} other {# spillere}}",
+      "searchPlaceholder": "Søg efter navn, bruger-ID eller telefon...",
+      "filters": {
+        "all": "Alle",
+        "top10": "Top 10",
+        "top50": "Top 50",
+        "banned": "Udelukkede"
+      },
+      "columns": {
+        "rank": "Placering",
+        "participant": "Deltager",
+        "score": "Samlet pointtal",
+        "breakdown": "Detaljer",
+        "lastActivity": "Seneste aktivitet"
+      },
+      "unknown": "Ukendt",
+      "contactId": "ID {id}",
+      "lockedFinished": "Denne rangliste er afsluttet — pointtallene er låst.",
+      "lockedDraft": "Udgiv ranglisten, før du redigerer pointtal.",
+      "actions": {
+        "adjust": "Juster point",
+        "ban": "Udeluk",
+        "unban": "Ophæv udelukkelse",
+        "reset": "Nulstil til 0",
+        "history": "Se historik"
+      },
+      "adjust": {
+        "title": "Juster point",
+        "description": "Læg point til eller træk dem fra for {name}. Ændringen gemmes i revisionsloggen.",
+        "delta": "Point (+/-)",
+        "deltaPlaceholder": "fx 50 eller -20",
+        "reason": "Årsag",
+        "reasonPlaceholder": "Hvorfor ændrer du dette pointtal?",
+        "success": "Point justeret"
+      },
+      "banConfirm": "{name} fjernes fra ranglisten og optjener ikke længere point.",
+      "unbanConfirm": "{name} kommer tilbage på ranglisten med det nuværende pointtal.",
+      "resetConfirm": "Pointtallet for {name} nulstilles til 0. Det bliver logget.",
+      "banned": "Deltager udelukket",
+      "unbanned": "Udelukkelsen af deltager er ophævet",
+      "resetDone": "Pointtal nulstillet til 0",
+      "history": {
+        "title": "Pointhistorik — {name}",
+        "empty": "Ingen pointændringer endnu.",
+        "sources": {
+          "rule": "Regel",
+          "flow": "Flow",
+          "referral": "Henvisning",
+          "manual": "Manuel justering",
+          "reset": "Nulstilling"
+        }
+      },
+      "conversationNotFound": "Ingen samtale fundet for denne kontakt",
+      "popupBlocked": "Venligst tillad pop-ups for denne site, then try igen."
+    },
+    "auditLog": {
+      "title": "Revisionslog",
+      "admin": "Admin",
+      "change": "Ændring",
+      "time": "Tidspunkt",
+      "reason": "Årsag",
+      "api": "API",
+      "empty": "Ingen manuelle ændringer endnu.",
+      "actions": {
+        "adjust": "Juster",
+        "resetOne": "Nulstil spiller",
+        "resetAll": "Nulstil alle",
+        "ban": "Udeluk",
+        "unban": "Ophæv udelukkelse"
       }
     }
   },

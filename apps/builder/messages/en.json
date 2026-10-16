@@ -766,6 +766,7 @@
       "questionnaireInProgress": "Questionnaire in progress",
       "questionnaireFinished": "Questionnaire finished",
       "couponTopic": "Coupon",
+      "leaderboardScore": "Gamification scores",
       "votedOnPoll": "Voted on the poll",
       "lastComment": "Last comment",
       "commentedOnPost": "Commented on Post",
@@ -835,6 +836,7 @@
       "ecommerce": "Ecommerce",
       "systemFields": "System Fields",
       "topicCoupon": "Topic coupon",
+      "leaderboard": "Gamification scores",
       "customFields": "Custom Fields",
       "botFields": "Bot Fields",
       "email": "Email",
@@ -2533,7 +2535,8 @@
       "media": "Media",
       "ads": "Ads",
       "settings": "Settings",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "Leaderboards"
     },
     "adReferral": {
       "label": "Ads",
@@ -2565,6 +2568,9 @@
       "hint": "Data Manager is recommended. The legacy upload API only works for Google Cloud projects Google still allows and does not use the Data Manager permission. A change applies to new connections only: reconnect existing workspaces.",
       "dataManager": "Data Manager API (recommended)",
       "legacy": "Legacy upload API"
+    },
+    "referralName": {
+      "label": "Referrer name"
     }
   },
   "metaConversions": {
@@ -3377,6 +3383,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Thread Control",
       "sendGoogleAdsConversion": "Send Google Ads Conversion",
+      "changeGamificationScore": "Change gamification scores",
       "sendViewCatalog": "View catalog",
       "sendProducts": "Send Products"
     },
@@ -3498,6 +3505,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "Edit Button",
       "buttonLabel": "Button Label"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "Leaderboard",
+      "operation": "Operation",
+      "add": "Add points (+)",
+      "subtract": "Subtract points (−)",
+      "points": "Points",
+      "targetUser": "User scores",
+      "targetReferrer": "Referent scores",
+      "targetReferrerHint": "Also change the score of whoever referred this contact.",
+      "summary": "{points} pts on {leaderboard}"
     },
     "whatsappLocation": {
       "title": "Location",
@@ -8382,6 +8400,362 @@
         "type_not_allowed": "This file type is not allowed.",
         "rate_limited": "Too many uploads. Please wait a moment and try again.",
         "upload_failed": "The file could not be uploaded. Please try again."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "Leaderboards",
+    "public": {
+      "points": "{points} pts",
+      "endsIn": "Ends in {days}d {hours}h {minutes}m {seconds}s",
+      "finished": "Finished",
+      "empty": "No players yet — be the first!",
+      "myRank": "Your rank: #{rank}",
+      "unranked": "Not ranked yet",
+      "shareToEarn": "Share to earn points",
+      "linkCopied": "Link copied",
+      "unavailableTitle": "This leaderboard is no longer available",
+      "unavailableDescription": "It may have ended or been removed. Ask the page you follow for the latest link."
+    },
+    "description": "Run points-based ranking campaigns where customers compete for top spots and rewards.",
+    "feature": "Leaderboard",
+    "create": "Create leaderboard",
+    "kpi": {
+      "total": "Total campaigns",
+      "active": "Running"
+    },
+    "tabs": {
+      "all": "All",
+      "active": "Active",
+      "paused": "Paused",
+      "finished": "Finished"
+    },
+    "status": {
+      "draft": "Draft",
+      "active": "Active",
+      "paused": "Paused",
+      "finished": "Finished"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "Campaign",
+      "searchPlaceholder": "Search leaderboards...",
+      "platformFilter": "Platform",
+      "participants": "Participants",
+      "totalPoints": "Total points",
+      "newToday": "+{count} today",
+      "average": "avg {value} / player",
+      "daysLeft": "{days, plural, one {# day left} other {# days left}}",
+      "ended": "Ended"
+    },
+    "scope": {
+      "allPosts": "All posts",
+      "specificPosts": "Specific posts",
+      "specificPostsCount": "{count, plural, one {# post} other {# posts}}",
+      "telegramChatsCount": "{count, plural, one {# group} other {# groups}}"
+    },
+    "menu": {
+      "start": "Start",
+      "pause": "Pause",
+      "finish": "Finish",
+      "resetPoints": "Reset points",
+      "triggerRewards": "Trigger rewards",
+      "viewParticipants": "View participants",
+      "copyLink": "Copy public link"
+    },
+    "confirm": {
+      "publishTitle": "Publish this leaderboard?",
+      "publishDescription": "Scoring starts right away and players can see the public page.",
+      "pauseTitle": "Pause this leaderboard?",
+      "pauseDescription": "Automatic and flow scoring stop. You can still adjust points by hand.",
+      "startTitle": "Resume this leaderboard?",
+      "startDescription": "Scoring starts again for every rule.",
+      "finishTitle": "Finish this leaderboard?",
+      "finishDescription": "Every score is frozen and can no longer change. Automatic rewards are sent if they are turned on.",
+      "resetPointsTitle": "Reset all points?",
+      "resetPointsDescription": "Every participant of \"{name}\" goes back to 0 points. This is logged and cannot be undone."
+    },
+    "toast": {
+      "published": "Leaderboard published",
+      "paused": "Leaderboard paused",
+      "started": "Leaderboard resumed",
+      "finished": "Leaderboard finished",
+      "pointsReset": "All points were reset"
+    },
+    "export": {
+      "title": "Export participants",
+      "description": "Download every participant with their rank and score as a CSV file.",
+      "preparing": "Preparing your file...",
+      "ready": "Your file is ready ({count} rows).",
+      "failed": "The export failed. Please try again."
+    },
+    "rewards": {
+      "title": "Trigger rewards",
+      "description": "Send the reward flow to the top players. Rewards can only be sent once.",
+      "flow": "Reward flow",
+      "topN": "Number of winners (top N)",
+      "noFlow": "No reward flow chosen — set one in the leaderboard settings.",
+      "alreadySent": "Rewards were already sent for this leaderboard.",
+      "confirm": "Send rewards",
+      "result": "Sent to {sent} winners, {skipped} skipped (no conversation on this channel)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "Information",
+        "config": "Channel & rules",
+        "review": "Review & publish"
+      },
+      "namePlaceholder": "e.g. October top fans",
+      "coverImage": "Cover image",
+      "coverImageHint": "JPG or PNG, up to 5MB. Recommended size 1200×630.",
+      "coverImageRejected": "Choose a JPG or PNG image up to 5MB.",
+      "description": "Rules & rewards",
+      "descriptionPlaceholder": "Explain how players earn points and what the top players win.",
+      "startsAt": "Starts at",
+      "endsAt": "Ends at",
+      "startLocked": "The start time cannot change after publishing.",
+      "channelTitle": "Platform & channel",
+      "platform": "Platform",
+      "hostChannel": "Channel",
+      "hostLocked": "Platform and channel cannot change after publishing.",
+      "noChannel": "No connected {platform} channel. Connect one in Settings → Channels first.",
+      "openMinigameSettings": "Open game settings",
+      "postScope": "Posts that score",
+      "choosePosts": "Choose posts",
+      "telegramChats": "Groups & channels",
+      "telegramChatsHint": "Add your bot to the group or channel as an admin so it can see members and messages.",
+      "telegramChatsEmpty": "No groups found — add the bot as an admin first",
+      "rulesTitle": "Scoring rules",
+      "rulesHint": "Turn on the actions that earn points and set how many.",
+      "allPlatforms": "All platforms",
+      "points": "Points",
+      "maxPerDay": "Max per day",
+      "maxPerDayHint": "Leave empty for unlimited.",
+      "minChars": "Minimum characters",
+      "bonusPoints": "Golden hour bonus points",
+      "bonusPointsHint": "Extra points for comments soon after the post is published.",
+      "bonusMinutes": "Golden hour length (minutes)",
+      "emailTopicNote": "Only emails sent with an Email Topic are tracked for opens and clicks.",
+      "generalTitle": "General settings",
+      "followersOnly": "Followers only",
+      "followersOnlyHint": "Only people who follow your account earn points.",
+      "tagFilter": "Tag filter",
+      "tagFilterHint": "Only contacts with at least one of these tags earn points.",
+      "everyone": "Everyone",
+      "resetTime": "Daily reset time (UTC)",
+      "resetTimeHint": "Daily limits restart at this time. = {time} Vietnam time (UTC+7).",
+      "cooldown": "Anti-spam cooldown (seconds)",
+      "cooldownHint": "Minimum seconds between two automatic awards for the same person. 0 turns it off.",
+      "referralFlow": "Referral welcome flow",
+      "referralFlowAuto": "Create automatically",
+      "referralFlowHint": "Sent to a friend who joins through a referral link. It can use '{{referral_name}}' and the public leaderboard link. Leave empty to auto-create a welcome message you can edit in Flow Builder.",
+      "publicLink": "Public link",
+      "publicLinkHint": "Send this link from a flow so each player sees their own rank.",
+      "publicLinkAfterSave": "The public link is available after saving.",
+      "rewardsTitle": "Rewards",
+      "autoOnFinish": "Send automatically when finished",
+      "autoOnFinishHint": "Runs the reward flow for the top N as soon as the leaderboard finishes.",
+      "backToStep2": "Back to step 2",
+      "notEditable": "Finished leaderboards cannot be edited."
+    },
+    "review": {
+      "infoCard": "Information",
+      "yes": "Yes",
+      "no": "No",
+      "off": "Off",
+      "seconds": "{seconds} seconds",
+      "resetTimeValue": "{utc} UTC (= {local} Vietnam)",
+      "noRules": "No rule is turned on yet.",
+      "rulePoints": "{points} pts",
+      "maxPerDay": "max {count}/day",
+      "unlimited": "unlimited"
+    },
+    "preview": {
+      "sampleName": "Player {rank}",
+      "placeholderName": "Your leaderboard name",
+      "pinnedBar": "#{rank} · {points} pts"
+    },
+    "validation": {
+      "nameRequired": "Enter a name",
+      "dateRequired": "Choose a date and time",
+      "endsAfterStart": "The end time must be after the start time",
+      "channelRequired": "Choose a channel",
+      "minigameRequired": "Choose a minigame",
+      "pointsRequired": "Enter the points this rule awards",
+      "bonusMinutesRequired": "Set how many minutes the golden hour lasts",
+      "postsRequired": "Choose at least one post",
+      "telegramChatsRequired": "Choose at least one group or channel",
+      "enableOneRule": "Turn on at least one scoring rule before publishing",
+      "fixErrors": "Please fix the highlighted fields"
+    },
+    "rules": {
+      "comments": {
+        "label": "Comments",
+        "description": "Points for each comment on your posts."
+      },
+      "liveComments": {
+        "label": "Live comments",
+        "description": "Points for each comment during a livestream."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "Points when a message matches any keyword of this channel's Keywords tool."
+      },
+      "storyMention": {
+        "label": "Story mention",
+        "description": "Points when someone tags your account in their story."
+      },
+      "storyReaction": {
+        "label": "Story reaction",
+        "description": "Points when someone reacts to your story."
+      },
+      "ctwaReactions": {
+        "label": "CTWA click & reactions",
+        "description": "Points for clicking a Click-to-WhatsApp ad or reacting to a message."
+      },
+      "survey": {
+        "label": "Survey & quiz",
+        "description": "Points for completing a Questionnaire or submitting a WhatsApp Flow form."
+      },
+      "follow": {
+        "label": "Follow OA & QR",
+        "description": "Points for following your Official Account or scanning its QR code. Unfollowing takes the points back."
+      },
+      "message": {
+        "label": "Zalo message",
+        "description": "Points for each message sent to your Official Account."
+      },
+      "joinGroup": {
+        "label": "Join channel & group",
+        "description": "Points for joining your group or channel. Leaving takes the points back."
+      },
+      "groupDiscussion": {
+        "label": "Group discussion",
+        "description": "Points for each message in your group."
+      },
+      "emailOpen": {
+        "label": "Email open",
+        "description": "Points when an email is opened."
+      },
+      "emailClick": {
+        "label": "Email click",
+        "description": "Points when a link in an email is clicked."
+      },
+      "minigameWin": {
+        "label": "Minigame win",
+        "description": "Points for each prize won in the minigame."
+      },
+      "inGameShare": {
+        "label": "In-game share",
+        "description": "Points for sharing the game to get more turns."
+      },
+      "referral": {
+        "label": "Referral",
+        "description": "Points for the inviter when a new friend joins through their link."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} comments",
+      "liveComments": "{count} live comments",
+      "keywords": "{count} keywords",
+      "storyMention": "{count} story mentions",
+      "storyReaction": "{count} story reactions",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} surveys",
+      "follow": "{count} follows",
+      "message": "{count} messages",
+      "joinGroup": "{count} joins",
+      "groupDiscussion": "{count} group messages",
+      "emailOpen": "{count} opens",
+      "emailClick": "{count} clicks",
+      "minigameWin": "{count} wins",
+      "inGameShare": "{count} shares",
+      "referral": "{count} referrals",
+      "flow": "{count} flow",
+      "manual": "{count} manual"
+    },
+    "participants": {
+      "title": "Participants",
+      "switcher": "Switch leaderboard",
+      "count": "{count, plural, one {# player} other {# players}}",
+      "searchPlaceholder": "Search name, user ID or phone...",
+      "filters": {
+        "all": "All",
+        "top10": "Top 10",
+        "top50": "Top 50",
+        "banned": "Banned"
+      },
+      "columns": {
+        "rank": "Rank",
+        "participant": "Participant",
+        "score": "Total score",
+        "breakdown": "Details",
+        "lastActivity": "Last activity"
+      },
+      "unknown": "Unknown",
+      "contactId": "ID {id}",
+      "lockedFinished": "This leaderboard has finished — scores are locked.",
+      "lockedDraft": "Publish the leaderboard before editing scores.",
+      "actions": {
+        "adjust": "Adjust points",
+        "ban": "Ban",
+        "unban": "Unban",
+        "reset": "Reset to 0",
+        "history": "View history"
+      },
+      "adjust": {
+        "title": "Adjust points",
+        "description": "Add or subtract points for {name}. The change is kept in the audit log.",
+        "delta": "Points (+/-)",
+        "deltaPlaceholder": "e.g. 50 or -20",
+        "reason": "Reason",
+        "reasonPlaceholder": "Why are you changing this score?",
+        "success": "Points adjusted"
+      },
+      "banConfirm": "{name} is removed from the ranking and stops earning points.",
+      "unbanConfirm": "{name} goes back into the ranking with their current score.",
+      "resetConfirm": "{name}'s score goes back to 0. This is logged.",
+      "banned": "Participant banned",
+      "unbanned": "Participant unbanned",
+      "resetDone": "Score reset to 0",
+      "history": {
+        "title": "Score history — {name}",
+        "empty": "No score changes yet.",
+        "sources": {
+          "rule": "Rule",
+          "flow": "Flow",
+          "referral": "Referral",
+          "manual": "Manual adjustment",
+          "reset": "Reset"
+        }
+      },
+      "conversationNotFound": "No conversation found for this contact",
+      "popupBlocked": "Please allow pop-ups for this site, then try again."
+    },
+    "auditLog": {
+      "title": "Audit log",
+      "admin": "Admin",
+      "change": "Change",
+      "time": "Time",
+      "reason": "Reason",
+      "api": "API",
+      "empty": "No manual changes yet.",
+      "actions": {
+        "adjust": "Adjust",
+        "resetOne": "Reset player",
+        "resetAll": "Reset all",
+        "ban": "Ban",
+        "unban": "Unban"
       }
     }
   },

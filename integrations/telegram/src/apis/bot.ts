@@ -126,6 +126,19 @@ export const deleteWebhook = (botToken: string): Promise<void> =>
     logger.debug("Deleted Telegram webhook")
   })
 
+/**
+ * Update types the bot subscribes to. `chat_member` is NOT delivered unless
+ * listed explicitly; `my_chat_member` tells us which groups/channels the bot
+ * administers (the leaderboard's group picker). Bots connected before this
+ * list existed keep their old subscription until the webhook is re-registered.
+ */
+export const TELEGRAM_ALLOWED_UPDATES = [
+  "message",
+  "callback_query",
+  "my_chat_member",
+  "chat_member",
+] as const
+
 export const setWebhook = (
   botToken: string,
   webhookUrl: string,
@@ -136,6 +149,7 @@ export const setWebhook = (
     await client.post<TelegramApiResponse<boolean>>("setWebhook", {
       json: {
         url: webhookUrl,
+        allowed_updates: TELEGRAM_ALLOWED_UPDATES,
         ...(secretToken ? { secret_token: secretToken } : {}),
       },
     })
@@ -161,16 +175,41 @@ export const connect = ({
 export const registerWebhook = ({
   botToken,
   webhookUrl,
+  secretToken,
 }: {
   botToken: string
   webhookUrl: string
+  /** Echoed by Telegram in `X-Telegram-Bot-Api-Secret-Token`. */
+  secretToken?: string
 }): Promise<void> =>
   rescue("setWebhook", async () => {
     const client = createTelegramClient(botToken)
     await client.post<TelegramApiResponse<boolean>>("setWebhook", {
-      json: { url: webhookUrl },
+      json: {
+        url: webhookUrl,
+        allowed_updates: TELEGRAM_ALLOWED_UPDATES,
+        ...(secretToken ? { secret_token: secretToken } : {}),
+      },
     })
     logger.debug(`Registered Telegram webhook: ${webhookUrl}`)
+  })
+
+/** A user's membership status in a group/channel (`getChatMember`). */
+export const getTelegramChatMemberStatus = (
+  auth: TelegramAuthValue,
+  props: { chatId: string; userId: string },
+): Promise<{ status: string; isMember?: boolean }> =>
+  rescue("getChatMember", async () => {
+    const client = createTelegramClient(auth.secretText)
+    const response = await client.get<
+      TelegramApiResponse<{ status: string; is_member?: boolean }>
+    >("getChatMember", {
+      searchParams: { chat_id: props.chatId, user_id: props.userId },
+    })
+    return {
+      status: response.result.status,
+      isMember: response.result.is_member,
+    }
   })
 
 export const getTelegramFileUrl = async (

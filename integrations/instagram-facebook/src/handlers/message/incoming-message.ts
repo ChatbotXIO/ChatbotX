@@ -70,6 +70,12 @@ export const receiveMessage: MessageHandlers<InstagramAuthValue>["receiveMessage
     return await getMessageEntity(ctx, messaging)
   }
 
+/** A `story_mention` attachment means the contact tagged the account in their story. */
+export const hasStoryMention = (message: InstagramMessage): boolean =>
+  message.attachments?.some(
+    (attachment) => attachment.type === "story_mention",
+  ) ?? false
+
 const getMessageEntity = async (
   ctx: Context<InstagramAuthValue>,
   messaging: InstagramMessagingEvent,
@@ -91,6 +97,12 @@ const getMessageEntity = async (
 
   if (messaging.message) {
     const storyReply = messaging.message.reply_to?.story
+    let contentAttributes: Record<string, unknown> | undefined
+    if (storyReply) {
+      contentAttributes = { type: "story_reply", story: storyReply }
+    } else if (hasStoryMention(messaging.message)) {
+      contentAttributes = { type: "story_mention" }
+    }
     message = {
       sourceId: messaging.message.mid,
       messageType:
@@ -99,9 +111,7 @@ const getMessageEntity = async (
           : messageTypes.enum.incoming,
       text: messaging.message.text,
       contentType: contentTypes.enum.text,
-      contentAttributes: storyReply
-        ? { type: "story_reply", story: storyReply }
-        : undefined,
+      contentAttributes,
       attachments: await getMessageAttachments(ctx, messaging.message),
     }
     quickReplyAction = messaging.message.quick_reply?.payload ?? null

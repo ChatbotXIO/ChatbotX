@@ -5,6 +5,7 @@ import {
 import {
   defaultWorkerOptions,
   getQueueConnection,
+  type LeaderboardJobData,
   LowJobAction,
   type LowJobData,
   type ProfileSnapshotJobData,
@@ -16,6 +17,7 @@ import { captureContactProfileSnapshot } from "../integration/handlers/capture-c
 import { coexistAttachmentDownload } from "../integration/handlers/coexist/attachment-download"
 import { updateContactAvatar } from "../integration/handlers/contact/update-avatar"
 import { receiveComment } from "../integration/handlers/received-message"
+import { processLeaderboardJob } from "../leaderboard/process-job"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
@@ -156,6 +158,34 @@ async function startLowWorker() {
     }
   })
 
+  // Leaderboard scoring: its own queue so a livestream burst never delays the
+  // shared `low` jobs, with bounded concurrency so it cannot flood Postgres.
+  const leaderboardWorker = new Worker(
+    queueNames.enum.leaderboard,
+    async (job: Job<LeaderboardJobData>) => {
+      const workspaceId = job.data.data.workspaceId
+      await withBlockedOwnerGuard(workspaceId, async () => {
+        await runJobWithAuditContext(
+          { workspaceId, source: `leaderboard:${job.data.type}` },
+          async () => {
+            await processLeaderboardJob(job.data)
+          },
+        )
+      })
+    },
+    {
+      connection: getQueueConnection(queueNames.enum.leaderboard),
+      ...defaultWorkerOptions,
+      concurrency: env.LEADERBOARD_WORKER_CONCURRENCY,
+    },
+  )
+
+  leaderboardWorker.on("failed", (job, err) => {
+    if (job) {
+      logger.error({ err }, `Leaderboard job ${job.id} has failed`)
+    }
+  })
+
   let isShuttingDown = false
   async function shutdown() {
     if (isShuttingDown) {
@@ -163,7 +193,11 @@ async function startLowWorker() {
     }
     isShuttingDown = true
     try {
-      await Promise.all([worker.close(), profileSnapshotWorker.close()])
+      await Promise.all([
+        worker.close(),
+        profileSnapshotWorker.close(),
+        leaderboardWorker.close(),
+      ])
       process.exit(0)
     } catch (err) {
       logger.error(err, "[LowWorker] Error during shutdown")

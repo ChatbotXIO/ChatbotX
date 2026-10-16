@@ -644,6 +644,22 @@ export const getStoryReply = (
 }
 
 /**
+ * Carried on an inbound Instagram message that is a `story_mention`
+ * attachment — the contact tagged the account in their story. Lets the
+ * leaderboard (and later the inbox) tell it apart from an ordinary image.
+ */
+export type MessageStoryMentionEntity = {
+  type: "story_mention"
+}
+
+export const isStoryMention = (contentAttributes: unknown): boolean =>
+  Boolean(
+    contentAttributes &&
+      typeof contentAttributes === "object" &&
+      (contentAttributes as { type?: unknown }).type === "story_mention",
+  )
+
+/**
  * Centralized so the worker (writer) and inbox renderer (reader) cannot drift
  * on the shape check.
  */

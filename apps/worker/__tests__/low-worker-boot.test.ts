@@ -55,10 +55,20 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     updateContactAvatar: "updateContactAvatar",
     replayMissedComment: "replayMissedComment",
   },
-  queueNames: { enum: { low: "low", profileSnapshot: "profileSnapshot" } },
+  queueNames: {
+    enum: {
+      low: "low",
+      profileSnapshot: "profileSnapshot",
+      leaderboard: "leaderboard",
+    },
+  },
   defaultWorkerOptions: { concurrency: 5, removeOnComplete: { count: 1000 } },
   getRedisConnection: vi.fn(() => ({})),
   getQueueConnection: vi.fn(() => ({})),
+}))
+
+vi.mock("../src/leaderboard/process-job", () => ({
+  processLeaderboardJob: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -69,7 +79,11 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("../src/env", () => ({
-  env: { LOW_WORKER_CONCURRENCY: 30, PROFILE_SNAPSHOT_JOBS_PER_SECOND: 5 },
+  env: {
+    LOW_WORKER_CONCURRENCY: 30,
+    PROFILE_SNAPSHOT_JOBS_PER_SECOND: 5,
+    LEADERBOARD_WORKER_CONCURRENCY: 10,
+  },
 }))
 
 vi.mock("../src/lib/bootstrap", () => ({
@@ -105,7 +119,7 @@ vi.mock("../src/integration/handlers/received-message", () => ({
 // Importing the worker module boots it exactly once (ESM module cache).
 await import("../src/low/worker")
 await vi.waitFor(() => {
-  expect(workerState.capturedWorkers).toHaveLength(2)
+  expect(workerState.capturedWorkers).toHaveLength(3)
 })
 
 describe("low worker process boot", () => {
@@ -121,11 +135,13 @@ describe("low worker process boot", () => {
     )
   })
 
-  test("boots the low Worker at the env-tunable concurrency plus the dedicated profileSnapshot Worker", () => {
-    expect(workerState.capturedWorkers).toHaveLength(2)
+  test("boots the low Worker at the env-tunable concurrency plus the dedicated profileSnapshot and leaderboard Workers", () => {
+    expect(workerState.capturedWorkers).toHaveLength(3)
     expect(workerState.capturedWorkers[0]?.queueName).toBe("low")
     expect(workerState.capturedWorkers[0]?.options.concurrency).toBe(30)
     expect(workerState.capturedWorkers[1]?.queueName).toBe("profileSnapshot")
+    expect(workerState.capturedWorkers[2]?.queueName).toBe("leaderboard")
+    expect(workerState.capturedWorkers[2]?.options.concurrency).toBe(10)
   })
 
   test("the profileSnapshot Worker is serial and carries the PROFILE_SNAPSHOT_JOBS_PER_SECOND limiter", () => {
@@ -172,7 +188,7 @@ describe("low worker process boot", () => {
     expect(workerState.captureContactProfileSnapshot).not.toHaveBeenCalled()
   })
 
-  test("shutdown closes both Workers", async () => {
+  test("shutdown closes every Worker", async () => {
     const exit = vi
       .spyOn(process, "exit")
       .mockImplementation((() => undefined) as never)
@@ -182,7 +198,7 @@ describe("low worker process boot", () => {
     await vi.waitFor(() => {
       expect(exit).toHaveBeenCalledWith(0)
     })
-    expect(workerState.workerClose).toHaveBeenCalledTimes(2)
+    expect(workerState.workerClose).toHaveBeenCalledTimes(3)
     exit.mockRestore()
   })
 

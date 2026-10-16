@@ -26,6 +26,11 @@ import {
   googleAdsHousekeeping,
   googleAdsSyncSetups,
 } from "./handlers/google-ads-housekeeping"
+import {
+  finishOverdueLeaderboards,
+  maintainLeaderboardRankings,
+} from "./handlers/leaderboard-schedules"
+import { maintainLeaderboardPartitions } from "./handlers/maintain-leaderboard-partitions"
 import { maintainMacPartitions } from "./handlers/maintain-mac-partitions"
 import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
@@ -139,6 +144,18 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.maintainMacPartitions:
               await maintainMacPartitions()
+              return
+
+            case ScheduleJobData.maintainLeaderboardPartitions:
+              await maintainLeaderboardPartitions()
+              return
+
+            case ScheduleJobData.finishOverdueLeaderboards:
+              await finishOverdueLeaderboards()
+              return
+
+            case ScheduleJobData.maintainLeaderboardRankings:
+              await maintainLeaderboardRankings()
               return
 
             case ScheduleJobData.scanCoexistRuns:

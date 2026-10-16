@@ -898,6 +898,7 @@ describe("questionnaireSubmissionService", () => {
       status: "completed",
       submissionId: "submission-1",
       triggerFlowId: "flow-1",
+      completedAt: expect.any(Date),
     })
 
     expect(mocks.updateBuilder.set).toHaveBeenCalledWith(

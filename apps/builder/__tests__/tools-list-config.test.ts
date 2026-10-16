@@ -185,3 +185,24 @@ describe("TOOLS_CONFIG — inbound-webhooks entry", () => {
     )
   })
 })
+
+describe("TOOLS_CONFIG — leaderboards entry", () => {
+  test("links to the Leaderboards list with leaderboards.* labels", () => {
+    const entry = TOOLS_CONFIG.find((config) => config.id === "leaderboards")
+    expect(entry?.labelKey).toBe("leaderboards.title")
+    expect(entry?.descriptionKey).toBe("leaderboards.description")
+    expect(entry?.getLink?.("42")).toBe("/space/42/leaderboards")
+  })
+
+  test("sits right after minigames and is ungated like it", () => {
+    const minigamesIndex = TOOLS_CONFIG.findIndex(
+      (config) => config.id === "minigames",
+    )
+    const leaderboardsIndex = TOOLS_CONFIG.findIndex(
+      (config) => config.id === "leaderboards",
+    )
+    const entry = TOOLS_CONFIG[leaderboardsIndex]
+    expect(leaderboardsIndex).toBe(minigamesIndex + 1)
+    expect(entry && "permission" in entry).toBe(false)
+  })
+})

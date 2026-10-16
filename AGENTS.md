@@ -219,6 +219,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Push notifications (Expo Push Service, device tokens): `docs/push-notifications.md`
 - Enterprise licensing (offline Ed25519 license keys): `docs/licensing.md`
 - Platform support access (super admin opening any workspace): `docs/support-access.md`
+- Leaderboards (ranking campaigns: scoring sources, Postgres/Redis split, partitioned score history, ops): `docs/leaderboard.md`
 - Automatic Customer Scan (contact import by scanning channel conversation history; shares the `CoexistSyncRun` table via a `type` discriminator): `docs/contact-scan.md`
 - Product messages (`sendProducts` flow step: sendable products, per-channel display rules, WhatsApp catalog payloads, adding a channel): `docs/product-messages.md`
 - WhatsApp Conversation Routing (thread control with Meta AI / other partners: webhook backfill, send gate, handover, archive release): `docs/whatsapp-conversation-routing.md`

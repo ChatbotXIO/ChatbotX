@@ -26,6 +26,9 @@ export const ScheduleJobData = {
   reconcileTenants: "reconcileTenants",
   reconcileMac: "reconcileMac",
   maintainMacPartitions: "maintainMacPartitions",
+  maintainLeaderboardPartitions: "maintainLeaderboardPartitions",
+  finishOverdueLeaderboards: "finishOverdueLeaderboards",
+  maintainLeaderboardRankings: "maintainLeaderboardRankings",
   scanCoexistRuns: "scanCoexistRuns",
   scanContactScans: "scanContactScans",
   scanAiHandoverBulkRuns: "scanAiHandoverBulkRuns",
@@ -200,6 +203,21 @@ export type ScheduleJobMaintainMacPartitions = {
   data: Record<string, never>
 }
 
+export type ScheduleJobMaintainLeaderboardPartitions = {
+  type: typeof ScheduleJobData.maintainLeaderboardPartitions
+  data: Record<string, never>
+}
+
+export type ScheduleJobFinishOverdueLeaderboards = {
+  type: typeof ScheduleJobData.finishOverdueLeaderboards
+  data: Record<string, never>
+}
+
+export type ScheduleJobMaintainLeaderboardRankings = {
+  type: typeof ScheduleJobData.maintainLeaderboardRankings
+  data: Record<string, never>
+}
+
 export type ScheduleJobPurgeCoexistStaging = {
   type: typeof ScheduleJobData.purgeCoexistStaging
   data: Record<string, never>
@@ -315,6 +333,9 @@ export type ScheduleJobData =
   | ScheduleJobReconcileTenants
   | ScheduleJobReconcileMac
   | ScheduleJobMaintainMacPartitions
+  | ScheduleJobMaintainLeaderboardPartitions
+  | ScheduleJobFinishOverdueLeaderboards
+  | ScheduleJobMaintainLeaderboardRankings
   | ScheduleJobScanCoexistRuns
   | ScheduleJobScanContactScans
   | ScheduleJobScanAiHandoverBulkRuns

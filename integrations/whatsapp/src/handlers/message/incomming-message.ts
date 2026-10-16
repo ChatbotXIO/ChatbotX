@@ -262,8 +262,9 @@ const parseButtonMessage: WhatsappMessageParser<"button"> = (message) => {
  * (`packages/flow-config/src/routable-handle.ts:296`), this repo's existing
  * pattern for "look up the handler for a discriminant".
  *
- * System messages are filtered and queued separately by the webhook handler.
- * Other unlisted types (`reaction`, `request_welcome`, and anything Meta adds
+ * System messages are filtered and queued separately by the webhook handler,
+ * and reactions are routed to the `messageReaction` job there.
+ * Other unlisted types (`request_welcome`, and anything Meta adds
  * later) fall through to the generic label in `receiveMessage` below, matching
  * the old `default` branch exactly.
  */

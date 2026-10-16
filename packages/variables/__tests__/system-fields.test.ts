@@ -95,6 +95,10 @@ const {
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 }))
 
+vi.mock("../src/helpers/leaderboard", () => ({
+  getLeaderboardReferrerName: vi.fn().mockResolvedValue(null),
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   appointmentService: {
     findBy: mockAppointmentFindBy,

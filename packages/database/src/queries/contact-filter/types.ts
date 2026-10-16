@@ -16,6 +16,8 @@ export type ContactFilterConditionInput = {
   valueType?: string
   /** Present for dynamic coupon-topic conditions (`field === "couponTopic"`). */
   topicId?: string
+  /** Present for "Gamification scores" conditions (`field === "leaderboardScore"`). */
+  leaderboardId?: string
   /** Present for `field === "ctwaRetarget"` conditions. */
   segment?: string
   /** Present for `field === "ctwaRetarget"` conditions. */

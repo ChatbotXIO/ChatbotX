@@ -80,6 +80,7 @@ function ContactFilterSummaryList({
           const isCustomField = condition.field === "customField"
           const isBotField = condition.field === "botField"
           const isCouponTopic = condition.field === "couponTopic"
+          const isLeaderboardScore = condition.field === "leaderboardScore"
           const fieldConfig = configs.find((config) => {
             if (isCustomField && "customFieldId" in condition) {
               return (
@@ -91,6 +92,11 @@ function ContactFilterSummaryList({
             }
             if (isCouponTopic && "topicId" in condition) {
               return String(config.topicId) === String(condition.topicId)
+            }
+            if (isLeaderboardScore && "leaderboardId" in condition) {
+              return (
+                String(config.leaderboardId) === String(condition.leaderboardId)
+              )
             }
             return config.name === condition.field
           })
@@ -105,6 +111,9 @@ function ContactFilterSummaryList({
               }
               if (isCouponTopic) {
                 return t("condition.fields.couponTopic")
+              }
+              if (isLeaderboardScore) {
+                return t("condition.fields.leaderboardScore")
               }
               return t(`condition.fields.${condition.field}`)
             })()

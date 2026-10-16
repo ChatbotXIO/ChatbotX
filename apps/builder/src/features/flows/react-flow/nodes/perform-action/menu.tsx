@@ -43,6 +43,7 @@ import {
   StarOffIcon,
   TagIcon,
   TicketPercentIcon,
+  TrophyIcon,
   UserIcon,
   UserRoundXIcon,
   WebhookIcon,
@@ -565,6 +566,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("coupons.tabs.topicCoupon"),
         icon: TicketPercentIcon,
         stepType: stepTypes.enum.setUpCoupon,
+      },
+      {
+        label: t("flows.actions.changeGamificationScore"),
+        icon: TrophyIcon,
+        stepType: stepTypes.enum.changeGamificationScore,
       },
       {
         label: t("flows.actions.getDataFromJson"),

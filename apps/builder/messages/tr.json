@@ -724,6 +724,7 @@
       "questionnaireInProgress": "Anket devam ediyor",
       "questionnaireFinished": "Anket tamamlandı",
       "couponTopic": "Kupon",
+      "leaderboardScore": "Oyunlaştırma puanları",
       "votedOnPoll": "Ankette oy kullandı",
       "lastComment": "Son yorum",
       "commentedOnPost": "Gönderiye yorum yaptı",
@@ -793,6 +794,7 @@
       "ecommerce": "E-ticaret",
       "systemFields": "Sistem Alanları",
       "topicCoupon": "Kupon konusu",
+      "leaderboard": "Oyunlaştırma puanları",
       "customFields": "Özel Alanlar",
       "botFields": "Bot Alanları",
       "email": "E-posta",
@@ -2491,7 +2493,8 @@
       "media": "Medya",
       "ads": "Reklamlar",
       "settings": "Ayarlar",
-      "miniApps": "Mini Apps"
+      "miniApps": "Mini Apps",
+      "leaderboards": "Liderlik tabloları"
     },
     "adReferral": {
       "label": "Ads",
@@ -2523,6 +2526,9 @@
       "hint": "Data Manager önerilir. Eski yükleme API'si yalnızca Google'ın hâlâ izin verdiği Google Cloud projelerinde çalışır ve Data Manager iznini kullanmaz. Değişiklik yalnızca yeni bağlantılara uygulanır: mevcut çalışma alanlarını yeniden bağlayın.",
       "dataManager": "Data Manager API (önerilir)",
       "legacy": "Eski yükleme API'si"
+    },
+    "referralName": {
+      "label": "Davet edenin adı"
     }
   },
   "flows": {
@@ -2694,6 +2700,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "Konuşma kontrolü",
       "sendGoogleAdsConversion": "Google Ads dönüşümü gönder",
+      "changeGamificationScore": "Oyunlaştırma puanlarını değiştir",
       "sendViewCatalog": "Kataloğu görüntüle",
       "sendProducts": "Ürün gönder"
     },
@@ -2815,6 +2822,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "Butonu Düzenle",
       "buttonLabel": "Buton Etiketi"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "Liderlik tablosu",
+      "operation": "İşlem",
+      "add": "Puan ekle (+)",
+      "subtract": "Puan düş (−)",
+      "points": "Puan",
+      "targetUser": "Kullanıcı puanı",
+      "targetReferrer": "Davet edenin puanı",
+      "targetReferrerHint": "Bu kişiyi davet edenin puanını da değiştirir.",
+      "summary": "{leaderboard} üzerinde {points} puan"
     },
     "whatsappLocation": {
       "title": "Konum",
@@ -8382,6 +8400,362 @@
         "type_not_allowed": "Bu dosya türüne izin verilmiyor.",
         "rate_limited": "Çok fazla yükleme. Biraz bekleyip tekrar deneyin.",
         "upload_failed": "Dosya yüklenemedi. Tekrar deneyin."
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "Liderlik tabloları",
+    "public": {
+      "points": "{points} puan",
+      "endsIn": "Bitişe {days}g {hours}sa {minutes}dk {seconds}sn",
+      "finished": "Sona erdi",
+      "empty": "Henüz oyuncu yok — ilk sen ol!",
+      "myRank": "Sıralaman: #{rank}",
+      "unranked": "Henüz sıralamada değil",
+      "shareToEarn": "Paylaş, puan kazan",
+      "linkCopied": "Bağlantı kopyalandı",
+      "unavailableTitle": "Bu sıralama tablosu artık mevcut değil",
+      "unavailableDescription": "Sona ermiş veya kaldırılmış olabilir. En güncel bağlantıyı takip ettiğiniz sayfadan isteyin."
+    },
+    "description": "Müşterilerin üst sıralar ve ödüller için yarıştığı, puan tabanlı sıralama kampanyaları yürütün.",
+    "feature": "Liderlik tablosu",
+    "create": "Liderlik tablosu oluştur",
+    "kpi": {
+      "total": "Toplam kampanya",
+      "active": "Devam eden"
+    },
+    "tabs": {
+      "all": "Tümü",
+      "active": "Aktif",
+      "paused": "Duraklatılmış",
+      "finished": "Bitmiş"
+    },
+    "status": {
+      "draft": "Taslak",
+      "active": "Aktif",
+      "paused": "Duraklatıldı",
+      "finished": "Bitti"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "Kampanya",
+      "searchPlaceholder": "Liderlik tablolarında ara...",
+      "platformFilter": "Platform",
+      "participants": "Katılımcılar",
+      "totalPoints": "Toplam puan",
+      "newToday": "bugün +{count}",
+      "average": "ort. {value} / oyuncu",
+      "daysLeft": "{days, plural, one {# gün kaldı} other {# gün kaldı}}",
+      "ended": "Sona erdi"
+    },
+    "scope": {
+      "allPosts": "Tüm gönderiler",
+      "specificPosts": "Belirli gönderiler",
+      "specificPostsCount": "{count, plural, one {# gönderi} other {# gönderi}}",
+      "telegramChatsCount": "{count, plural, one {# grup} other {# grup}}"
+    },
+    "menu": {
+      "start": "Başlat",
+      "pause": "Duraklat",
+      "finish": "Bitir",
+      "resetPoints": "Puanları sıfırla",
+      "triggerRewards": "Ödülleri gönder",
+      "viewParticipants": "Katılımcıları görüntüle",
+      "copyLink": "Herkese açık bağlantıyı kopyala"
+    },
+    "confirm": {
+      "publishTitle": "Bu liderlik tablosu yayınlansın mı?",
+      "publishDescription": "Puanlama hemen başlar ve oyuncular herkese açık sayfayı görebilir.",
+      "pauseTitle": "Bu liderlik tablosu duraklatılsın mı?",
+      "pauseDescription": "Otomatik ve akış tabanlı puanlama durur. Puanları yine de elle ayarlayabilirsiniz.",
+      "startTitle": "Bu liderlik tablosu devam ettirilsin mi?",
+      "startDescription": "Puanlama tüm kurallar için yeniden başlar.",
+      "finishTitle": "Bu liderlik tablosu bitirilsin mi?",
+      "finishDescription": "Tüm puanlar dondurulur ve artık değiştirilemez. Açıksa otomatik ödüller gönderilir.",
+      "resetPointsTitle": "Tüm puanlar sıfırlansın mı?",
+      "resetPointsDescription": "\"{name}\" içindeki tüm katılımcılar 0 puana döner. Bu işlem kaydedilir ve geri alınamaz."
+    },
+    "toast": {
+      "published": "Liderlik tablosu yayınlandı",
+      "paused": "Liderlik tablosu duraklatıldı",
+      "started": "Liderlik tablosu devam ettirildi",
+      "finished": "Liderlik tablosu bitirildi",
+      "pointsReset": "Tüm puanlar sıfırlandı"
+    },
+    "export": {
+      "title": "Katılımcıları dışa aktar",
+      "description": "Tüm katılımcıları sıralamaları ve puanlarıyla birlikte CSV dosyası olarak indirin.",
+      "preparing": "Dosyanız hazırlanıyor...",
+      "ready": "Dosyanız hazır ({count} satır).",
+      "failed": "Dışa aktarma başarısız oldu. Lütfen tekrar deneyin."
+    },
+    "rewards": {
+      "title": "Ödülleri gönder",
+      "description": "Ödül akışını en iyi oyunculara gönderin. Ödüller yalnızca bir kez gönderilebilir.",
+      "flow": "Ödül akışı",
+      "topN": "Kazanan sayısı (ilk N)",
+      "noFlow": "Ödül akışı seçilmedi — liderlik tablosu ayarlarından bir tane belirleyin.",
+      "alreadySent": "Bu liderlik tablosu için ödüller zaten gönderildi.",
+      "confirm": "Ödülleri gönder",
+      "result": "{sent} kazanana gönderildi, {skipped} atlandı (bu kanalda konuşma yok)."
+    },
+    "wizard": {
+      "steps": {
+        "info": "Bilgiler",
+        "config": "Kanal ve kurallar",
+        "review": "Gözden geçir ve yayınla"
+      },
+      "namePlaceholder": "ör. Ekim ayının en iyi hayranları",
+      "coverImage": "Kapak görseli",
+      "coverImageHint": "JPG veya PNG, en fazla 5MB. Önerilen boyut 1200×630.",
+      "coverImageRejected": "En fazla 5MB boyutunda bir JPG veya PNG görseli seçin.",
+      "description": "Kurallar ve ödüller",
+      "descriptionPlaceholder": "Oyuncuların nasıl puan kazandığını ve en iyilerin ne kazandığını açıklayın.",
+      "startsAt": "Başlangıç",
+      "endsAt": "Bitiş",
+      "startLocked": "Başlangıç zamanı yayınlandıktan sonra değiştirilemez.",
+      "channelTitle": "Platform ve kanal",
+      "platform": "Platform",
+      "hostChannel": "Kanal",
+      "hostLocked": "Platform ve kanal yayınlandıktan sonra değiştirilemez.",
+      "noChannel": "Bağlı {platform} kanalı yok. Önce Ayarlar → Kanallar bölümünden bir kanal bağlayın.",
+      "openMinigameSettings": "Oyun ayarlarını aç",
+      "postScope": "Puan kazandıran gönderiler",
+      "choosePosts": "Gönderi seç",
+      "telegramChats": "Gruplar ve kanallar",
+      "telegramChatsHint": "Üyeleri ve mesajları görebilmesi için botunuzu gruba veya kanala yönetici olarak ekleyin.",
+      "telegramChatsEmpty": "Grup bulunamadı — önce botu yönetici olarak ekleyin",
+      "rulesTitle": "Puanlama kuralları",
+      "rulesHint": "Puan kazandıran eylemleri açın ve kaç puan verileceğini belirleyin.",
+      "allPlatforms": "Tüm platformlar",
+      "points": "Puan",
+      "maxPerDay": "Günlük en fazla",
+      "maxPerDayHint": "Sınırsız için boş bırakın.",
+      "minChars": "En az karakter sayısı",
+      "bonusPoints": "Altın saat bonus puanı",
+      "bonusPointsHint": "Gönderi yayınlandıktan kısa süre sonra yapılan yorumlar için ekstra puan.",
+      "bonusMinutes": "Altın saat süresi (dakika)",
+      "emailTopicNote": "Yalnızca bir Email Topic ile gönderilen e-postalar için açılma ve tıklama takibi yapılır.",
+      "generalTitle": "Genel ayarlar",
+      "followersOnly": "Yalnızca takipçiler",
+      "followersOnlyHint": "Yalnızca hesabınızı takip edenler puan kazanır.",
+      "tagFilter": "Etiket filtresi",
+      "tagFilterHint": "Yalnızca bu etiketlerden en az birine sahip kişiler puan kazanır.",
+      "everyone": "Herkes",
+      "resetTime": "Günlük sıfırlama saati (UTC)",
+      "resetTimeHint": "Günlük limitler bu saatte yeniden başlar. = Vietnam saatiyle {time} (UTC+7).",
+      "cooldown": "Spam önleme bekleme süresi (saniye)",
+      "cooldownHint": "Aynı kişiye yapılan iki otomatik puan verme arasındaki en az saniye. 0 kapatır.",
+      "referralFlow": "Davet karşılama akışı",
+      "referralFlowAuto": "Otomatik oluştur",
+      "referralFlowHint": "Davet bağlantısıyla katılan arkadaşa gönderilir. '{{referral_name}}' ve herkese açık liderlik tablosu bağlantısını kullanabilir. Boş bırakırsanız, Flow Builder’da düzenleyebileceğiniz bir karşılama mesajı otomatik oluşturulur.",
+      "publicLink": "Herkese açık bağlantı",
+      "publicLinkHint": "Her oyuncunun kendi sıralamasını görmesi için bu bağlantıyı bir akıştan gönderin.",
+      "publicLinkAfterSave": "Herkese açık bağlantı kaydettikten sonra kullanılabilir.",
+      "rewardsTitle": "Ödüller",
+      "autoOnFinish": "Bittiğinde otomatik gönder",
+      "autoOnFinishHint": "Liderlik tablosu biter bitmez ilk N için ödül akışını çalıştırır.",
+      "backToStep2": "2. adıma dön",
+      "notEditable": "Biten liderlik tabloları düzenlenemez."
+    },
+    "review": {
+      "infoCard": "Bilgiler",
+      "yes": "Evet",
+      "no": "Hayır",
+      "off": "Kapalı",
+      "seconds": "{seconds} saniye",
+      "resetTimeValue": "{utc} UTC (= Vietnam saatiyle {local})",
+      "noRules": "Henüz hiçbir kural açık değil.",
+      "rulePoints": "{points} puan",
+      "maxPerDay": "günde en fazla {count}",
+      "unlimited": "sınırsız"
+    },
+    "preview": {
+      "sampleName": "Oyuncu {rank}",
+      "placeholderName": "Liderlik tablonuzun adı",
+      "pinnedBar": "#{rank} · {points} puan"
+    },
+    "validation": {
+      "nameRequired": "Bir ad girin",
+      "dateRequired": "Bir tarih ve saat seçin",
+      "endsAfterStart": "Bitiş zamanı başlangıç zamanından sonra olmalıdır",
+      "channelRequired": "Bir kanal seçin",
+      "minigameRequired": "Bir mini oyun seçin",
+      "pointsRequired": "Bu kuralın verdiği puanı girin",
+      "bonusMinutesRequired": "Altın saatin kaç dakika süreceğini belirleyin",
+      "postsRequired": "En az bir gönderi seçin",
+      "telegramChatsRequired": "En az bir grup veya kanal seçin",
+      "enableOneRule": "Yayınlamadan önce en az bir puanlama kuralını açın",
+      "fixErrors": "Lütfen vurgulanan alanları düzeltin"
+    },
+    "rules": {
+      "comments": {
+        "label": "Yorumlar",
+        "description": "Gönderilerinizdeki her yorum için puan."
+      },
+      "liveComments": {
+        "label": "Canlı yayın yorumları",
+        "description": "Canlı yayın sırasındaki her yorum için puan."
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "Bir mesaj bu kanalın Keywords aracındaki herhangi bir anahtar kelimeyle eşleştiğinde puan."
+      },
+      "storyMention": {
+        "label": "Hikâyede etiketleme",
+        "description": "Biri hikâyesinde hesabınızı etiketlediğinde puan."
+      },
+      "storyReaction": {
+        "label": "Hikâyeye tepki",
+        "description": "Biri hikâyenize tepki verdiğinde puan."
+      },
+      "ctwaReactions": {
+        "label": "CTWA tıklaması ve tepkiler",
+        "description": "Click-to-WhatsApp reklamına tıklamak veya bir mesaja tepki vermek için puan."
+      },
+      "survey": {
+        "label": "Anket ve test",
+        "description": "Bir Questionnaire’i tamamlamak veya bir WhatsApp Flow formu göndermek için puan."
+      },
+      "follow": {
+        "label": "OA takibi ve QR",
+        "description": "Official Account hesabınızı takip etmek veya QR kodunu taramak için puan. Takibi bırakmak puanı geri alır."
+      },
+      "message": {
+        "label": "Zalo mesajı",
+        "description": "Official Account hesabınıza gönderilen her mesaj için puan."
+      },
+      "joinGroup": {
+        "label": "Kanala ve gruba katılma",
+        "description": "Grubunuza veya kanalınıza katılmak için puan. Ayrılmak puanı geri alır."
+      },
+      "groupDiscussion": {
+        "label": "Grup sohbeti",
+        "description": "Grubunuzdaki her mesaj için puan."
+      },
+      "emailOpen": {
+        "label": "E-posta açma",
+        "description": "Bir e-posta açıldığında puan."
+      },
+      "emailClick": {
+        "label": "E-posta tıklaması",
+        "description": "Bir e-postadaki bağlantıya tıklandığında puan."
+      },
+      "minigameWin": {
+        "label": "Mini oyun galibiyeti",
+        "description": "Mini oyunda kazanılan her ödül için puan."
+      },
+      "inGameShare": {
+        "label": "Oyun içi paylaşım",
+        "description": "Daha fazla hak kazanmak için oyunu paylaşmak üzerine puan."
+      },
+      "referral": {
+        "label": "Davet",
+        "description": "Yeni bir arkadaş davet edenin bağlantısıyla katıldığında davet edene puan."
+      }
+    },
+    "breakdown": {
+      "comments": "{count} yorum",
+      "liveComments": "{count} canlı yorum",
+      "keywords": "{count} anahtar kelime",
+      "storyMention": "{count} hikâye etiketi",
+      "storyReaction": "{count} hikâye tepkisi",
+      "ctwaReactions": "{count} CTWA",
+      "survey": "{count} anket",
+      "follow": "{count} takip",
+      "message": "{count} mesaj",
+      "joinGroup": "{count} katılım",
+      "groupDiscussion": "{count} grup mesajı",
+      "emailOpen": "{count} açılma",
+      "emailClick": "{count} tıklama",
+      "minigameWin": "{count} galibiyet",
+      "inGameShare": "{count} paylaşım",
+      "referral": "{count} davet",
+      "flow": "{count} akış",
+      "manual": "{count} elle"
+    },
+    "participants": {
+      "title": "Katılımcılar",
+      "switcher": "Liderlik tablosunu değiştir",
+      "count": "{count, plural, one {# oyuncu} other {# oyuncu}}",
+      "searchPlaceholder": "Ad, kullanıcı kimliği veya telefon ara...",
+      "filters": {
+        "all": "Tümü",
+        "top10": "İlk 10",
+        "top50": "İlk 50",
+        "banned": "Engellenenler"
+      },
+      "columns": {
+        "rank": "Sıra",
+        "participant": "Katılımcı",
+        "score": "Toplam puan",
+        "breakdown": "Ayrıntılar",
+        "lastActivity": "Son etkinlik"
+      },
+      "unknown": "Bilinmiyor",
+      "contactId": "Kimlik {id}",
+      "lockedFinished": "Bu liderlik tablosu bitti — puanlar kilitli.",
+      "lockedDraft": "Puanları düzenlemeden önce liderlik tablosunu yayınlayın.",
+      "actions": {
+        "adjust": "Puanı ayarla",
+        "ban": "Engelle",
+        "unban": "Engeli kaldır",
+        "reset": "0’a sıfırla",
+        "history": "Geçmişi görüntüle"
+      },
+      "adjust": {
+        "title": "Puanı ayarla",
+        "description": "{name} için puan ekleyin veya çıkarın. Değişiklik denetim günlüğünde tutulur.",
+        "delta": "Puan (+/-)",
+        "deltaPlaceholder": "ör. 50 veya -20",
+        "reason": "Neden",
+        "reasonPlaceholder": "Bu puanı neden değiştiriyorsunuz?",
+        "success": "Puan ayarlandı"
+      },
+      "banConfirm": "{name} sıralamadan çıkarılır ve puan kazanmayı bırakır.",
+      "unbanConfirm": "{name} mevcut puanıyla sıralamaya geri döner.",
+      "resetConfirm": "{name} kişisinin puanı 0’a döner. Bu işlem kaydedilir.",
+      "banned": "Katılımcı engellendi",
+      "unbanned": "Katılımcının engeli kaldırıldı",
+      "resetDone": "Puan 0’a sıfırlandı",
+      "history": {
+        "title": "Puan geçmişi — {name}",
+        "empty": "Henüz puan değişikliği yok.",
+        "sources": {
+          "rule": "Kural",
+          "flow": "Akış",
+          "referral": "Davet",
+          "manual": "Elle ayarlama",
+          "reset": "Sıfırlama"
+        }
+      },
+      "conversationNotFound": "Bu kişi için görüşme bulunamadı",
+      "popupBlocked": "Lütfen bu site için açılır pencerelere izin verin, ardından tekrar deneyin."
+    },
+    "auditLog": {
+      "title": "Denetim günlüğü",
+      "admin": "Yönetici",
+      "change": "Değişiklik",
+      "time": "Zaman",
+      "reason": "Neden",
+      "api": "API",
+      "empty": "Henüz elle yapılmış değişiklik yok.",
+      "actions": {
+        "adjust": "Ayarlama",
+        "resetOne": "Oyuncuyu sıfırla",
+        "resetAll": "Tümünü sıfırla",
+        "ban": "Engelleme",
+        "unban": "Engeli kaldırma"
       }
     }
   },

@@ -72,7 +72,7 @@ export const connectTelegramAction = authActionClient
           botId: botData.id,
           botUsername: botData.username,
           botToken: parsedInput.botToken,
-          onConnected: async () => {
+          onConnected: async ({ webhookSecretToken }) => {
             // Register webhook URL with Telegram
             const webhookUrl = buildBrokerCallbackUrl(
               `/integrations/telegram/webhook?botId=${botData.id}`,
@@ -80,6 +80,7 @@ export const connectTelegramAction = authActionClient
             await integrations.telegram.runAction("registerWebhook", {
               botToken: parsedInput.botToken,
               webhookUrl,
+              secretToken: webhookSecretToken,
             })
           },
         })

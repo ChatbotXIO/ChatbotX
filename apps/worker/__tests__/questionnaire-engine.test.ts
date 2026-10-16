@@ -15,6 +15,11 @@ const mocks = vi.hoisted(() => ({
   findById: vi.fn(async () => null),
   safeSinceTime: new Date("2025-01-01T00:00:00Z"),
   getSafeSinceTime: vi.fn(),
+  enqueueLeaderboardAward: vi.fn(async (_input: unknown) => true),
+}))
+
+vi.mock("@chatbotx.io/business/leaderboard", () => ({
+  enqueueLeaderboardAward: mocks.enqueueLeaderboardAward,
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -485,6 +490,40 @@ describe("runQuestionnaireEngine", () => {
         origin: "channel",
         sendFrom: "inbox",
       }),
+    })
+  })
+
+  test("scores the leaderboard survey rule when a questionnaire completes", async () => {
+    const completedAt = new Date("2026-10-01T10:00:00Z")
+    mocks.answerCurrent.mockResolvedValue({
+      status: "completed",
+      submissionId: "submission-1",
+      triggerFlowId: null,
+      completedAt,
+    })
+
+    await runQuestionnaireEngine(
+      makeProps({
+        conversation: {
+          ...makeProps().conversation,
+          additionalAttributes: { challenge: { type: "step", data: {} } },
+        },
+        contactInbox: {
+          id: "contact-inbox-1",
+          contactId: "contact-1",
+          inboxId: "inbox-wa",
+          channel: "whatsapp",
+        } as never,
+      }),
+    )
+
+    expect(mocks.enqueueLeaderboardAward).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      contactId: "contact-1",
+      inboxId: "inbox-wa",
+      rule: "survey",
+      sourceRef: "questionnaire:submission-1",
+      eventAt: completedAt,
     })
   })
 

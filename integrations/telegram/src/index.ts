@@ -1,3 +1,5 @@
+export { getTelegramChatMemberStatus } from "./apis/bot"
+export { isTelegramMemberStatus } from "./handlers/webhook"
 export * from "./integration"
 export { isRevokedTokenError, mapToChannelError } from "./lib/error-mapper"
 export type {

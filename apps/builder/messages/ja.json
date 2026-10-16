@@ -724,6 +724,7 @@
       "questionnaireInProgress": "アンケートに回答中",
       "questionnaireFinished": "アンケートを完了済み",
       "couponTopic": "クーポン",
+      "leaderboardScore": "ゲーミフィケーションのスコア",
       "votedOnPoll": "投票に参加済み",
       "lastComment": "最新のコメント",
       "commentedOnPost": "投稿にコメント済み",
@@ -793,6 +794,7 @@
       "ecommerce": "Eコマース",
       "systemFields": "システムフィールド",
       "topicCoupon": "クーポントピック",
+      "leaderboard": "ゲーミフィケーションのスコア",
       "customFields": "カスタムフィールド",
       "botFields": "ボットフィールド",
       "email": "メール",
@@ -2345,7 +2347,8 @@
       "media": "メディア",
       "ads": "広告",
       "settings": "設定",
-      "miniApps": "ミニアプリ"
+      "miniApps": "ミニアプリ",
+      "leaderboards": "ランキング"
     },
     "adReferral": {
       "label": "Ads",
@@ -2377,6 +2380,9 @@
       "hint": "Data Manager を推奨します。従来のアップロード API は Google が現在も許可している Google Cloud プロジェクトでのみ動作し、Data Manager の権限は使用しません。変更は新しい接続にのみ適用されます。既存のワークスペースは再接続してください。",
       "dataManager": "Data Manager API（推奨）",
       "legacy": "従来のアップロード API"
+    },
+    "referralName": {
+      "label": "紹介者の名前"
     }
   },
   "flows": {
@@ -2548,6 +2554,7 @@
       "metaConversions": "Meta Conversions API",
       "threadControl": "スレッド制御",
       "sendGoogleAdsConversion": "Google 広告コンバージョンを送信",
+      "changeGamificationScore": "ゲーミフィケーションのスコアを変更",
       "sendViewCatalog": "カタログを見る",
       "sendProducts": "商品を送信"
     },
@@ -2669,6 +2676,17 @@
     "whatsappCallButton": {
       "editButtonTitle": "ボタンを編集",
       "buttonLabel": "ボタンラベル"
+    },
+    "changeGamificationScore": {
+      "leaderboard": "ランキング",
+      "operation": "操作",
+      "add": "ポイントを加算 (+)",
+      "subtract": "ポイントを減算 (−)",
+      "points": "ポイント",
+      "targetUser": "ユーザーのスコア",
+      "targetReferrer": "紹介者のスコア",
+      "targetReferrerHint": "このコンタクトを紹介した人のスコアも変更します。",
+      "summary": "{leaderboard} で {points} pt"
     },
     "whatsappLocation": {
       "title": "位置情報",
@@ -8382,6 +8400,362 @@
         "type_not_allowed": "このファイル形式は許可されていません。",
         "rate_limited": "アップロードが多すぎます。少し待ってから再度お試しください。",
         "upload_failed": "ファイルをアップロードできませんでした。もう一度お試しください。"
+      }
+    }
+  },
+  "leaderboards": {
+    "title": "ランキング",
+    "public": {
+      "points": "{points} pt",
+      "endsIn": "終了まで {days}日 {hours}時間 {minutes}分 {seconds}秒",
+      "finished": "終了",
+      "empty": "まだ参加者がいません。最初の参加者になりましょう！",
+      "myRank": "あなたの順位: #{rank}",
+      "unranked": "まだ順位がありません",
+      "shareToEarn": "シェアしてポイントを獲得",
+      "linkCopied": "リンクをコピーしました",
+      "unavailableTitle": "このランキングは利用できなくなりました",
+      "unavailableDescription": "終了したか削除された可能性があります。フォローしているページに最新のリンクを確認してください。"
+    },
+    "description": "ポイント制のランキングキャンペーンを実施し、顧客が上位と報酬を目指して競い合えます。",
+    "feature": "リーダーボード",
+    "create": "リーダーボードを作成",
+    "kpi": {
+      "total": "キャンペーン総数",
+      "active": "実施中"
+    },
+    "tabs": {
+      "all": "すべて",
+      "active": "有効",
+      "paused": "一時停止中",
+      "finished": "終了"
+    },
+    "status": {
+      "draft": "下書き",
+      "active": "有効",
+      "paused": "一時停止中",
+      "finished": "終了"
+    },
+    "platforms": {
+      "messenger": "Messenger",
+      "instagram": "Instagram",
+      "whatsapp": "WhatsApp",
+      "zalo": "Zalo OA",
+      "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
+      "email": "Email SMTP",
+      "gamification": "Gamification"
+    },
+    "list": {
+      "campaign": "キャンペーン",
+      "searchPlaceholder": "リーダーボードを検索...",
+      "platformFilter": "プラットフォーム",
+      "participants": "参加者",
+      "totalPoints": "合計ポイント",
+      "newToday": "本日 +{count}",
+      "average": "平均 {value} / プレイヤー",
+      "daysLeft": "{days, plural, one {残り#日} other {残り#日}}",
+      "ended": "終了"
+    },
+    "scope": {
+      "allPosts": "すべての投稿",
+      "specificPosts": "特定の投稿",
+      "specificPostsCount": "{count, plural, one {#件の投稿} other {#件の投稿}}",
+      "telegramChatsCount": "{count, plural, one {#個のグループ} other {#個のグループ}}"
+    },
+    "menu": {
+      "start": "開始",
+      "pause": "一時停止",
+      "finish": "終了する",
+      "resetPoints": "ポイントをリセット",
+      "triggerRewards": "報酬を送信",
+      "viewParticipants": "参加者を表示",
+      "copyLink": "公開リンクをコピー"
+    },
+    "confirm": {
+      "publishTitle": "このリーダーボードを公開しますか？",
+      "publishDescription": "すぐにポイントの加算が始まり、プレイヤーは公開ページを見られるようになります。",
+      "pauseTitle": "このリーダーボードを一時停止しますか？",
+      "pauseDescription": "自動およびフローによるポイント加算が停止します。ポイントの手動調整は引き続き可能です。",
+      "startTitle": "このリーダーボードを再開しますか？",
+      "startDescription": "すべてのルールでポイント加算が再開されます。",
+      "finishTitle": "このリーダーボードを終了しますか？",
+      "finishDescription": "すべてのスコアが固定され、変更できなくなります。自動報酬がオンの場合は送信されます。",
+      "resetPointsTitle": "すべてのポイントをリセットしますか？",
+      "resetPointsDescription": "「{name}」のすべての参加者が0ポイントに戻ります。この操作は記録され、元に戻せません。"
+    },
+    "toast": {
+      "published": "リーダーボードを公開しました",
+      "paused": "リーダーボードを一時停止しました",
+      "started": "リーダーボードを再開しました",
+      "finished": "リーダーボードを終了しました",
+      "pointsReset": "すべてのポイントをリセットしました"
+    },
+    "export": {
+      "title": "参加者をエクスポート",
+      "description": "すべての参加者の順位とスコアをCSVファイルでダウンロードします。",
+      "preparing": "ファイルを準備しています...",
+      "ready": "ファイルの準備ができました（{count}行）。",
+      "failed": "エクスポートに失敗しました。もう一度お試しください。"
+    },
+    "rewards": {
+      "title": "報酬を送信",
+      "description": "上位のプレイヤーに報酬フローを送信します。報酬は1回のみ送信できます。",
+      "flow": "報酬フロー",
+      "topN": "当選者数（上位N名）",
+      "noFlow": "報酬フローが選択されていません。リーダーボードの設定で指定してください。",
+      "alreadySent": "このリーダーボードの報酬はすでに送信済みです。",
+      "confirm": "報酬を送信",
+      "result": "{sent}名の当選者に送信しました。{skipped}名はスキップされました（このチャネルでの会話なし）。"
+    },
+    "wizard": {
+      "steps": {
+        "info": "基本情報",
+        "config": "チャネルとルール",
+        "review": "確認と公開"
+      },
+      "namePlaceholder": "例：10月のトップファン",
+      "coverImage": "カバー画像",
+      "coverImageHint": "JPGまたはPNG、5MBまで。推奨サイズは1200×630です。",
+      "coverImageRejected": "5MBまでのJPGまたはPNG画像を選択してください。",
+      "description": "ルールと報酬",
+      "descriptionPlaceholder": "プレイヤーがポイントを獲得する方法と、上位者への賞品を説明してください。",
+      "startsAt": "開始日時",
+      "endsAt": "終了日時",
+      "startLocked": "公開後は開始日時を変更できません。",
+      "channelTitle": "プラットフォームとチャネル",
+      "platform": "プラットフォーム",
+      "hostChannel": "チャネル",
+      "hostLocked": "公開後はプラットフォームとチャネルを変更できません。",
+      "noChannel": "接続済みの{platform}チャネルがありません。先に設定 → チャネルで接続してください。",
+      "openMinigameSettings": "ゲーム設定を開く",
+      "postScope": "ポイント対象の投稿",
+      "choosePosts": "投稿を選択",
+      "telegramChats": "グループとチャンネル",
+      "telegramChatsHint": "メンバーとメッセージを確認できるよう、ボットを管理者としてグループまたはチャンネルに追加してください。",
+      "telegramChatsEmpty": "グループが見つかりません。先にボットを管理者として追加してください",
+      "rulesTitle": "ポイントルール",
+      "rulesHint": "ポイントを獲得できるアクションをオンにして、付与ポイントを設定します。",
+      "allPlatforms": "すべてのプラットフォーム",
+      "points": "ポイント",
+      "maxPerDay": "1日の上限",
+      "maxPerDayHint": "空欄の場合は無制限です。",
+      "minChars": "最小文字数",
+      "bonusPoints": "ゴールデンアワーのボーナスポイント",
+      "bonusPointsHint": "投稿の公開直後に付いたコメントへの追加ポイントです。",
+      "bonusMinutes": "ゴールデンアワーの長さ（分）",
+      "emailTopicNote": "開封とクリックが追跡されるのは、Email Topic を使って送信したメールのみです。",
+      "generalTitle": "一般設定",
+      "followersOnly": "フォロワーのみ",
+      "followersOnlyHint": "あなたのアカウントをフォローしている人だけがポイントを獲得できます。",
+      "tagFilter": "タグフィルター",
+      "tagFilterHint": "これらのタグのいずれかを持つコンタクトのみがポイントを獲得できます。",
+      "everyone": "全員",
+      "resetTime": "毎日のリセット時刻（UTC）",
+      "resetTimeHint": "1日の上限はこの時刻に再開します。= ベトナム時間（UTC+7）の{time}。",
+      "cooldown": "スパム対策のクールダウン（秒）",
+      "cooldownHint": "同じ人への2回の自動付与の最小間隔（秒）。0にするとオフになります。",
+      "referralFlow": "紹介ウェルカムフロー",
+      "referralFlowAuto": "自動で作成",
+      "referralFlowHint": "紹介リンクから参加した友だちに送信されます。'{{referral_name}}' と公開リーダーボードのリンクを使用できます。空欄にすると、Flow Builder で編集できるウェルカムメッセージが自動作成されます。",
+      "publicLink": "公開リンク",
+      "publicLinkHint": "フローからこのリンクを送信すると、各プレイヤーが自分の順位を確認できます。",
+      "publicLinkAfterSave": "公開リンクは保存後に利用できます。",
+      "rewardsTitle": "報酬",
+      "autoOnFinish": "終了時に自動で送信",
+      "autoOnFinishHint": "リーダーボードが終了すると同時に、上位N名に報酬フローを実行します。",
+      "backToStep2": "ステップ2に戻る",
+      "notEditable": "終了したリーダーボードは編集できません。"
+    },
+    "review": {
+      "infoCard": "基本情報",
+      "yes": "はい",
+      "no": "いいえ",
+      "off": "オフ",
+      "seconds": "{seconds}秒",
+      "resetTimeValue": "{utc} UTC（= ベトナム時間 {local}）",
+      "noRules": "オンになっているルールはまだありません。",
+      "rulePoints": "{points}pt",
+      "maxPerDay": "最大 {count}/日",
+      "unlimited": "無制限"
+    },
+    "preview": {
+      "sampleName": "プレイヤー {rank}",
+      "placeholderName": "リーダーボード名",
+      "pinnedBar": "#{rank} · {points}pt"
+    },
+    "validation": {
+      "nameRequired": "名前を入力してください",
+      "dateRequired": "日時を選択してください",
+      "endsAfterStart": "終了日時は開始日時より後にしてください",
+      "channelRequired": "チャネルを選択してください",
+      "minigameRequired": "ミニゲームを選択してください",
+      "pointsRequired": "このルールで付与するポイントを入力してください",
+      "bonusMinutesRequired": "ゴールデンアワーの長さ（分）を設定してください",
+      "postsRequired": "投稿を1件以上選択してください",
+      "telegramChatsRequired": "グループまたはチャンネルを1つ以上選択してください",
+      "enableOneRule": "公開する前に、ポイントルールを1つ以上オンにしてください",
+      "fixErrors": "ハイライトされた項目を修正してください"
+    },
+    "rules": {
+      "comments": {
+        "label": "コメント",
+        "description": "投稿へのコメントごとにポイントを付与します。"
+      },
+      "liveComments": {
+        "label": "ライブコメント",
+        "description": "ライブ配信中のコメントごとにポイントを付与します。"
+      },
+      "keywords": {
+        "label": "Keywords",
+        "description": "メッセージがこのチャネルの Keywords ツールのいずれかのキーワードに一致したときにポイントを付与します。"
+      },
+      "storyMention": {
+        "label": "ストーリーズでのメンション",
+        "description": "ストーリーズであなたのアカウントがタグ付けされたときにポイントを付与します。"
+      },
+      "storyReaction": {
+        "label": "ストーリーズへのリアクション",
+        "description": "あなたのストーリーズにリアクションがあったときにポイントを付与します。"
+      },
+      "ctwaReactions": {
+        "label": "CTWAクリックとリアクション",
+        "description": "Click-to-WhatsApp 広告のクリック、またはメッセージへのリアクションでポイントを付与します。"
+      },
+      "survey": {
+        "label": "アンケートとクイズ",
+        "description": "Questionnaire の回答完了、または WhatsApp Flow フォームの送信でポイントを付与します。"
+      },
+      "follow": {
+        "label": "OAフォローとQR",
+        "description": "公式アカウントのフォロー、またはQRコードのスキャンでポイントを付与します。フォロー解除するとポイントは取り消されます。"
+      },
+      "message": {
+        "label": "Zaloメッセージ",
+        "description": "公式アカウントに送信されたメッセージごとにポイントを付与します。"
+      },
+      "joinGroup": {
+        "label": "チャンネル・グループへの参加",
+        "description": "グループまたはチャンネルへの参加でポイントを付与します。退出するとポイントは取り消されます。"
+      },
+      "groupDiscussion": {
+        "label": "グループでの会話",
+        "description": "グループ内のメッセージごとにポイントを付与します。"
+      },
+      "emailOpen": {
+        "label": "メールの開封",
+        "description": "メールが開封されたときにポイントを付与します。"
+      },
+      "emailClick": {
+        "label": "メールのクリック",
+        "description": "メール内のリンクがクリックされたときにポイントを付与します。"
+      },
+      "minigameWin": {
+        "label": "ミニゲームの当選",
+        "description": "ミニゲームで賞品が当たるたびにポイントを付与します。"
+      },
+      "inGameShare": {
+        "label": "ゲーム内シェア",
+        "description": "プレイ回数を増やすためにゲームをシェアするとポイントを付与します。"
+      },
+      "referral": {
+        "label": "紹介",
+        "description": "新しい友だちが紹介リンクから参加したときに、紹介者へポイントを付与します。"
+      }
+    },
+    "breakdown": {
+      "comments": "コメント {count}件",
+      "liveComments": "ライブコメント {count}件",
+      "keywords": "キーワード {count}件",
+      "storyMention": "ストーリーズメンション {count}件",
+      "storyReaction": "ストーリーズリアクション {count}件",
+      "ctwaReactions": "CTWA {count}件",
+      "survey": "アンケート {count}件",
+      "follow": "フォロー {count}件",
+      "message": "メッセージ {count}件",
+      "joinGroup": "参加 {count}件",
+      "groupDiscussion": "グループメッセージ {count}件",
+      "emailOpen": "開封 {count}件",
+      "emailClick": "クリック {count}件",
+      "minigameWin": "当選 {count}件",
+      "inGameShare": "シェア {count}件",
+      "referral": "紹介 {count}件",
+      "flow": "フロー {count}件",
+      "manual": "手動 {count}件"
+    },
+    "participants": {
+      "title": "参加者",
+      "switcher": "リーダーボードを切り替え",
+      "count": "{count, plural, one {#人のプレイヤー} other {#人のプレイヤー}}",
+      "searchPlaceholder": "名前、ユーザーID、電話番号で検索...",
+      "filters": {
+        "all": "すべて",
+        "top10": "トップ10",
+        "top50": "トップ50",
+        "banned": "BAN済み"
+      },
+      "columns": {
+        "rank": "順位",
+        "participant": "参加者",
+        "score": "合計スコア",
+        "breakdown": "詳細",
+        "lastActivity": "最終アクティビティ"
+      },
+      "unknown": "不明",
+      "contactId": "ID {id}",
+      "lockedFinished": "このリーダーボードは終了しています。スコアは固定されています。",
+      "lockedDraft": "スコアを編集する前に、リーダーボードを公開してください。",
+      "actions": {
+        "adjust": "ポイントを調整",
+        "ban": "BANする",
+        "unban": "BAN解除",
+        "reset": "0にリセット",
+        "history": "履歴を表示"
+      },
+      "adjust": {
+        "title": "ポイントを調整",
+        "description": "{name}のポイントを加算または減算します。変更は監査ログに保存されます。",
+        "delta": "ポイント（+/-）",
+        "deltaPlaceholder": "例：50 または -20",
+        "reason": "理由",
+        "reasonPlaceholder": "このスコアを変更する理由は何ですか？",
+        "success": "ポイントを調整しました"
+      },
+      "banConfirm": "{name}はランキングから除外され、ポイントを獲得できなくなります。",
+      "unbanConfirm": "{name}は現在のスコアでランキングに戻ります。",
+      "resetConfirm": "{name}のスコアが0に戻ります。この操作は記録されます。",
+      "banned": "参加者をBANしました",
+      "unbanned": "参加者のBANを解除しました",
+      "resetDone": "スコアを0にリセットしました",
+      "history": {
+        "title": "スコア履歴 — {name}",
+        "empty": "スコアの変更はまだありません。",
+        "sources": {
+          "rule": "ルール",
+          "flow": "フロー",
+          "referral": "紹介",
+          "manual": "手動調整",
+          "reset": "リセット"
+        }
+      },
+      "conversationNotFound": "この連絡先の会話が見つかりません",
+      "popupBlocked": "このサイトのポップアップを許可してから、もう一度お試しください。"
+    },
+    "auditLog": {
+      "title": "監査ログ",
+      "admin": "管理者",
+      "change": "変更",
+      "time": "日時",
+      "reason": "理由",
+      "api": "API",
+      "empty": "手動での変更はまだありません。",
+      "actions": {
+        "adjust": "調整",
+        "resetOne": "プレイヤーをリセット",
+        "resetAll": "すべてリセット",
+        "ban": "BAN",
+        "unban": "BAN解除"
       }
     }
   },

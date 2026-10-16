@@ -64,6 +64,7 @@ import { integrationMoosendService } from "../integration-moosend/service"
 import { integrationOpenAIService } from "../integration-openai/service"
 import { integrationOpenRouterService } from "../integration-openrouter/service"
 import { integrationSendGridService } from "../integration-sendgrid/service"
+import { purgeLeaderboardDataForWorkspace } from "../leaderboard/purge"
 import { logger } from "../logger"
 import { userQuotaService } from "../user-quota/service"
 import {
@@ -130,6 +131,7 @@ export type WorkspaceChannelsTeardownResult = {
  * same technique as `messageCleanupService.purgeRow`.
  */
 const HEAVY_WORKSPACE_TABLES = [
+  "LeaderboardParticipant",
   "AIConversationEmbedding",
   "AIEmbedding",
   "Conversation",
@@ -308,6 +310,21 @@ class WorkspaceLifecycleService extends BaseService {
     // conversationId, before the ctid loop deletes their parent Conversation
     // rows. Uses the decompression-cap-lifted delete, not `ctid`.
     totalDeleted += await this.deleteWorkspaceHypertableRows(props.workspaceId)
+
+    // The partitioned, FK-less leaderboard score history cannot go through the
+    // `ctid` loop below (ctid repeats across partitions); it drains by primary
+    // key and its Redis rankings are dropped.
+    const leaderboardPurge = await purgeLeaderboardDataForWorkspace(
+      props.workspaceId,
+      { batchSize },
+    )
+    totalDeleted += leaderboardPurge.deleted
+    if (!leaderboardPurge.complete) {
+      throw new WorkspacePurgeIncompleteError(
+        props.workspaceId,
+        "LeaderboardScoreEvent",
+      )
+    }
 
     for (const table of HEAVY_WORKSPACE_TABLES) {
       for (let batch = 0; batch < HEAVY_PURGE_MAX_BATCHES_PER_TABLE; batch++) {

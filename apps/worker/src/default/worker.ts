@@ -14,6 +14,7 @@ import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
 import { loopableExportContacts } from "./handlers/export-contacts"
 import { exportCoupons } from "./handlers/export-coupons"
+import { exportLeaderboardParticipants } from "./handlers/export-leaderboard-participants"
 import { installTemplate } from "./handlers/install-template"
 import { checkMetaCatalogSync } from "./handlers/meta-catalog/check"
 import { importMetaCatalogProducts } from "./handlers/meta-catalog/import-products"
@@ -83,6 +84,13 @@ async function startDefaultWorker() {
           const { type, data } = job.data
           await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
             exportCoupons(data),
+          )
+          return
+        }
+        case DefaultJobAction.exportLeaderboardParticipants: {
+          const { type, data } = job.data
+          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+            exportLeaderboardParticipants(data),
           )
           return
         }

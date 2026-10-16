@@ -7,6 +7,7 @@ const dbQueryIntegrationFindFirst = vi.fn()
 const dbQueryContactCustomFieldFindFirst = vi.fn()
 const setCustomFieldValues = vi.fn(async () => undefined)
 const applyWhatsappFlowResponse = vi.fn(async () => undefined)
+const enqueueLeaderboardAward = vi.fn(async (_input: unknown) => true)
 
 const dbUpdateWhere = vi.fn(async () => undefined)
 const dbUpdateSet = vi.fn(() => ({ where: dbUpdateWhere }))
@@ -57,6 +58,10 @@ vi.mock("@chatbotx.io/events", () => ({
 // The handler now delegates custom-field writes to the business service (which
 // owns normalization + change events). Mock the whole barrel so its real schema
 // graph isn't pulled into this test's partial schema mock.
+vi.mock("@chatbotx.io/business/leaderboard", () => ({
+  enqueueLeaderboardAward: (input: unknown) => enqueueLeaderboardAward(input),
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   contactCustomFieldService: {
     setValues: (...args: unknown[]) => setCustomFieldValues(...args),
@@ -247,6 +252,58 @@ describe("applyWhatsappFlowResponseSideEffects", () => {
       fieldMappings: [],
       flowResponse: {},
     })
+  })
+
+  test("scores the WhatsApp survey rule once per stored response message", async () => {
+    const { createdAtFromId } = await import("@chatbotx.io/utils")
+    const messageId = "8443913625935740928"
+    const step = makeWhatsappFlowStep("btn-1")
+
+    await applyWhatsappFlowResponseSideEffects({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      contactInbox: {
+        id: "ci-1",
+        contactId: "contact-1",
+        inboxId: "inbox-1",
+        channel: "whatsapp",
+      } as never,
+      step: step as never,
+      flowResponse: {},
+      messageId,
+    })
+
+    expect(enqueueLeaderboardAward).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      inboxId: "inbox-1",
+      rule: "survey",
+      sourceRef: `waflow:${messageId}`,
+      eventAt: createdAtFromId(messageId),
+    })
+  })
+
+  test("does not score without a message id or off WhatsApp", async () => {
+    const step = makeWhatsappFlowStep("btn-1")
+    enqueueLeaderboardAward.mockClear()
+
+    await applyWhatsappFlowResponseSideEffects({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      contactInbox: { ...makeContactInbox(), channel: "whatsapp" } as never,
+      step: step as never,
+      flowResponse: {},
+    })
+    await applyWhatsappFlowResponseSideEffects({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      contactInbox: { ...makeContactInbox(), channel: "messenger" } as never,
+      step: step as never,
+      flowResponse: {},
+      messageId: "8443913625935740928",
+    })
+
+    expect(enqueueLeaderboardAward).not.toHaveBeenCalled()
   })
 
   test("delegates mappings without customFieldId to the business service", async () => {

@@ -127,7 +127,7 @@ import {
   isInstagramViaFacebook,
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
-import { processCommentAutomation } from "./comment-automation"
+import { isCommentReply, processCommentAutomation } from "./comment-automation"
 import { resolveLiveComment } from "./comment-automation/live-comment"
 import { runAsMissedCommentReplay } from "./comment-automation/replay-priority"
 import {
@@ -144,6 +144,11 @@ import {
   emitStoredCommerceEvent,
   enrichInboundCommerce,
 } from "./inbound-commerce"
+import {
+  awardCommentLeaderboard,
+  awardInboundMessageLeaderboard,
+  awardReactionLeaderboard,
+} from "./leaderboard-sources"
 import {
   syncAdLabelsIfAdReferred,
   tagAdReferralOnlyContact,
@@ -162,6 +167,14 @@ type ReceivedMessageSystemFieldUpdates = {
   contactInboxTracking: ContactInboxTracking
   contactLocation: ContactLocation | null
 }
+
+/** Channels whose comments feed leaderboard "comments" / "liveComments". */
+const LEADERBOARD_COMMENT_CHANNELS = new Set<string>([
+  "messenger",
+  "instagram",
+  "tiktok",
+  "threads",
+])
 
 const correctStoryReplyDirectionForNewContact = (
   message: IncomingMessage | null,
@@ -532,6 +545,15 @@ export const receiveMessage = async (
         keepUnread: threadControl?.ownerRole === "ai_agent",
         ...systemFieldUpdates,
       })
+
+    if (isNewMessage) {
+      await awardInboundMessageLeaderboard({
+        inbox,
+        contactId: contactInbox.contactId,
+        message: newMessage,
+        referral: parsedMessage.referral,
+      })
+    }
 
     // Best-effort backfill of a nameless existing contact's profile. No
     // isNewMessage/isNewContact gate; awaited before the flow-action enqueue
@@ -1604,6 +1626,7 @@ export const receiveComment = async (
   }
   const { contactInbox, contact, conversation } = detected
 
+  let channelPostId: string | null = null
   if (supportsPostTracking(inbox.channel)) {
     // Post metadata fetch is best-effort (handled in channelPostService) and a
     // workspace deleted mid-flight is a no-op (resolveForComment returns null).
@@ -1634,6 +1657,7 @@ export const receiveComment = async (
         )
       },
     })
+    channelPostId = postId
     if (postId) {
       await contactInboxPostService.recordComment({
         workspaceId: inbox.workspaceId,
@@ -1771,18 +1795,41 @@ export const receiveComment = async (
     workspaceId: inbox.workspaceId,
   })
 
-  const { isNew: isNewComment } = await saveAndBroadcastMessage({
-    inbox,
-    contactInbox,
-    conversation,
-    incomingMessage,
-    // A replayed comment may be days old and already stored by its webhook.
-    // Dating the row at the comment itself puts it where it belongs in the
-    // thread, and moves the source-id dedup lookback (24h before `createdAt`
-    // up to now) back far enough to find that original row.
-    createdAt: replay ? new Date(commentData.createdTime * 1000) : undefined,
-    storageUrl,
-  })
+  const { isNew: isNewComment, message: savedComment } =
+    await saveAndBroadcastMessage({
+      inbox,
+      contactInbox,
+      conversation,
+      incomingMessage,
+      // A replayed comment may be days old and already stored by its webhook.
+      // Dating the row at the comment itself puts it where it belongs in the
+      // thread, and moves the source-id dedup lookback (24h before `createdAt`
+      // up to now) back far enough to find that original row.
+      createdAt: replay ? new Date(commentData.createdTime * 1000) : undefined,
+      storageUrl,
+    })
+
+  // Leaderboard comments/live comments, only for a newly stored comment.
+  // `isCommentReply` holds on every listed channel: TikTok normalizes its
+  // "no parent" sentinel at the webhook, and a top-level Threads reply's
+  // parent is the post itself.
+  if (isNewComment && LEADERBOARD_COMMENT_CHANNELS.has(inbox.channel)) {
+    await awardCommentLeaderboard({
+      inbox,
+      contactId: contactInbox.contactId,
+      commentId: commentData.commentId,
+      externalPostId: commentData.postId,
+      channelPostId,
+      text: commentData.message,
+      isLive: isLiveComment,
+      isReply: isCommentReply(
+        commentData.parentId,
+        commentData.postId,
+        commentData.commentId,
+      ),
+      eventAt: savedComment.createdAt,
+    })
+  }
 
   // Deliberately NOT an early return: this job can be retried after the save
   // already committed (a failure in anything below), and a retry always sees
@@ -2067,6 +2114,13 @@ export const processMessageReaction = async (
     publishToWorkspaceParty(inbox.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: reactionRow,
+    })
+    await awardReactionLeaderboard({
+      inbox,
+      contactId: existingContactInbox.contactId,
+      reactionSourceId,
+      action,
+      eventAt: reactionRow.createdAt,
     })
     return
   }

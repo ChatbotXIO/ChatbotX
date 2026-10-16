@@ -18,6 +18,11 @@ const configs = z.discriminatedUnion("type", [
     referrerContactId: z.string(),
   }),
   z.object({
+    type: z.literal("leaderboard"),
+    leaderboardId: z.string(),
+    contactId: z.string(),
+  }),
+  z.object({
     type: z.literal("qr-code"),
     name: z.string(),
   }),
@@ -39,6 +44,9 @@ export function encodeRef(params: RefConfig): string {
     }
     case "minigame-share": {
       return `mg_${encodeBase62(params.minigameId)}_${encodeBase62(params.referrerContactId)}`
+    }
+    case "leaderboard": {
+      return `lb_${encodeBase62(params.leaderboardId)}_${encodeBase62(params.contactId)}`
     }
     case "qr-code": {
       return `qr_${params.name}`
@@ -79,6 +87,19 @@ export function decodeRef(ref: string): RefConfig | undefined {
         type: "minigame-share",
         minigameId: decodeBase62(minigameId),
         referrerContactId: decodeBase62(referrerContactId),
+      }
+    }
+
+    if (ref.startsWith("lb_")) {
+      const [leaderboardId, contactId] = ref.slice(3).split("_")
+      // Same empty-segment guard as `mg_` above.
+      if (!(leaderboardId && contactId)) {
+        return
+      }
+      return {
+        type: "leaderboard",
+        leaderboardId: decodeBase62(leaderboardId),
+        contactId: decodeBase62(contactId),
       }
     }
 

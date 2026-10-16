@@ -1818,6 +1818,126 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/keywords/{id}/status",
   },
   {
+    "method": "GET",
+    "operationId": "leaderboards.auditLog.list",
+    "path": "/v1/leaderboards/{id}/audit-log",
+  },
+  {
+    "method": "POST",
+    "operationId": "leaderboards.create",
+    "path": "/v1/leaderboards",
+  },
+  {
+    "method": "GET",
+    "operationId": "leaderboards.defaultRules",
+    "path": "/v1/leaderboards/default-rules",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "leaderboards.delete",
+    "path": "/v1/leaderboards/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "leaderboards.export",
+    "path": "/v1/leaderboards/{id}/export",
+  },
+  {
+    "method": "POST",
+    "operationId": "leaderboards.finish",
+    "path": "/v1/leaderboards/{id}/finish",
+  },
+  {
+    "method": "GET",
+    "operationId": "leaderboards.get",
+    "path": "/v1/leaderboards/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "leaderboards.getExport",
+    "path": "/v1/leaderboards/exports/{fileId}",
+  },
+  {
+    "method": "GET",
+    "operationId": "leaderboards.getViewLink",
+    "path": "/v1/leaderboards/{id}/view-link",
+  },
+  {
+    "method": "GET",
+    "operationId": "leaderboards.list",
+    "path": "/v1/leaderboards",
+  },
+  {
+    "method": "POST",
+    "operationId": "leaderboards.participants.adjust",
+    "path": "/v1/leaderboards/{id}/participants/{contactId}/adjust",
+  },
+  {
+    "method": "POST",
+    "operationId": "leaderboards.participants.ban",
+    "path": "/v1/leaderboards/{id}/participants/{contactId}/ban",
+  },
+  {
+    "method": "GET",
+    "operationId": "leaderboards.participants.history",
+    "path": "/v1/leaderboards/{id}/participants/{contactId}/history",
+  },
+  {
+    "method": "GET",
+    "operationId": "leaderboards.participants.list",
+    "path": "/v1/leaderboards/{id}/participants",
+  },
+  {
+    "method": "POST",
+    "operationId": "leaderboards.participants.reset",
+    "path": "/v1/leaderboards/{id}/participants/{contactId}/reset",
+  },
+  {
+    "method": "POST",
+    "operationId": "leaderboards.participants.unban",
+    "path": "/v1/leaderboards/{id}/participants/{contactId}/unban",
+  },
+  {
+    "method": "POST",
+    "operationId": "leaderboards.pause",
+    "path": "/v1/leaderboards/{id}/pause",
+  },
+  {
+    "method": "POST",
+    "operationId": "leaderboards.publish",
+    "path": "/v1/leaderboards/{id}/publish",
+  },
+  {
+    "method": "POST",
+    "operationId": "leaderboards.resetPoints",
+    "path": "/v1/leaderboards/{id}/reset-points",
+  },
+  {
+    "method": "POST",
+    "operationId": "leaderboards.start",
+    "path": "/v1/leaderboards/{id}/start",
+  },
+  {
+    "method": "GET",
+    "operationId": "leaderboards.telegramChats",
+    "path": "/v1/leaderboards/telegram-chats",
+  },
+  {
+    "method": "GET",
+    "operationId": "leaderboards.top",
+    "path": "/v1/leaderboards/{id}/top",
+  },
+  {
+    "method": "POST",
+    "operationId": "leaderboards.triggerRewards",
+    "path": "/v1/leaderboards/{id}/trigger-rewards",
+  },
+  {
+    "method": "PUT",
+    "operationId": "leaderboards.update",
+    "path": "/v1/leaderboards/{id}",
+  },
+  {
     "method": "POST",
     "operationId": "magicLinks.create",
     "path": "/v1/magic-links",

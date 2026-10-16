@@ -1018,6 +1018,7 @@ async function runFlowAction(
         contactInbox,
         step: whatsappFlowStep,
         flowResponse: waFlowResponse,
+        messageId: data.messageId,
       })
     }
   }

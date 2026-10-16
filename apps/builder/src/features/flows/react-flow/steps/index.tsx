@@ -18,6 +18,7 @@ import { archiveConversationStep } from "./archive-conversation"
 import { assignConversationStep } from "./assign-conversation"
 import { autoAssignConversationStep } from "./auto-assign-conversation"
 import { blockContactStep } from "./block-contact"
+import { changeGamificationScoreStep } from "./change-gamification-score"
 import { chooseChannelStep } from "./choose-channel"
 import { clearCustomFieldStep } from "./clear-custom-field"
 import { conditionStep } from "./condition"
@@ -177,6 +178,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.questionnaires]: questionnairesStep,
   [stepTypes.enum.setUpCoupon]: setUpCouponStep,
   [stepTypes.enum.markCouponUsed]: markCouponUsedStep,
+  [stepTypes.enum.changeGamificationScore]: changeGamificationScoreStep,
   [stepTypes.enum.condition]: conditionStep,
   [stepTypes.enum.addNotes]: addNotesStep,
   [stepTypes.enum.waitUserReply]: undefined,

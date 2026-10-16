@@ -603,6 +603,53 @@ export const possibleErrorsOnMutatingMinigame = {
 } satisfies ErrorMap
 
 /**
+ * Leaderboard status machine and score edits (`@chatbotx.io/business/leaderboard`)
+ * reject out-of-state operations with these codes. Same declare-or-vanish
+ * rule as the minigame pair above.
+ */
+const leaderboardStateErrors = {
+  leaderboardActionNotAllowed: {
+    message: "This action is not allowed in the leaderboard's current status",
+    status: 409,
+  },
+  leaderboardFinished: {
+    message: "Scores are locked because the leaderboard has finished",
+    status: 409,
+  },
+  leaderboardNotPublished: {
+    message: "Publish the leaderboard before editing scores",
+    status: 409,
+  },
+  leaderboardParticipantBanned: {
+    message: "This participant is banned",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingLeaderboard = {
+  notFound,
+  businessError,
+  ...leaderboardStateErrors,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnTriggeringLeaderboardRewards = {
+  ...possibleErrorsOnMutatingLeaderboard,
+  leaderboardNotFinished: {
+    message: "Rewards can only be sent after the leaderboard finishes",
+    status: 409,
+  },
+  leaderboardRewardFlowMissing: {
+    message: "Choose a reward flow first",
+    status: 422,
+  },
+  leaderboardRewardsAlreadySent: {
+    message: "Rewards were already sent",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+/**
  * Email topic create/update reject a duplicate name with `nameTaken` at 400
  * (`packages/business/src/email-topic/service.ts`), and create surfaces a
  * 404 when `folderId` names a folder that does not exist in the workspace

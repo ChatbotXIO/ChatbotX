@@ -1,4 +1,6 @@
 import {
+  CHANNEL_AUDIENCE_EVENT_JOB_NAME,
+  type ChannelAudienceEventJobData,
   type ContextQueue,
   type HandleRequestProps,
   SdkException,
@@ -12,6 +14,44 @@ import {
 } from "../schema/webhook"
 
 const TAG_EVENT_NAME_SET = new Set<string>(TAG_EVENT_NAMES)
+
+/** Zalo sends `timestamp` as epoch milliseconds in a string. */
+const zaloTimestampToIso = (timestamp: string | undefined): string => {
+  const millis = Number(timestamp)
+  return Number.isFinite(millis) && millis > 0
+    ? new Date(millis).toISOString()
+    : new Date().toISOString()
+}
+
+/**
+ * A `follow`/`unfollow` event carries `oa_id` + `follower.id` and no
+ * sender/recipient, so it never fits the message path. Returns the audience
+ * job payload, or null when the event is not a well-formed (un)follow. A QR
+ * scan that makes the user follow arrives as an ordinary `follow` (with a
+ * `source` hint), so it scores the same way.
+ */
+export const parseZaloFollowEvent = (
+  webhookData: ZaloWebhookEvent,
+): ChannelAudienceEventJobData | null => {
+  const isFollow = webhookData.event_name === "follow"
+  if (!(isFollow || webhookData.event_name === "unfollow")) {
+    return null
+  }
+  const followerId = webhookData.follower?.id
+  if (!(webhookData.oa_id && followerId)) {
+    return null
+  }
+  return {
+    integrationType: "zalo",
+    integrationIdentifier: webhookData.oa_id,
+    event: {
+      kind: isFollow ? "follow" : "unfollow",
+      user: { sourceId: followerId },
+      occurredAt: zaloTimestampToIso(webhookData.timestamp),
+      ...(webhookData.source ? { source: webhookData.source } : {}),
+    },
+  }
+}
 
 const _verifyWebhookSignature = async (
   payload: ZaloWebhookEvent,
@@ -38,13 +78,37 @@ const _verifyWebhookSignature = async (
   }
 }
 
+/**
+ * Zalo signs `X-ZEvent-Signature: mac=sha256(appId + rawBody + timestamp +
+ * secret)`. Verified against the RAW body (re-serializing the parsed JSON
+ * changes key order/spacing and never matches — likely why the legacy
+ * all-events check above stays disabled). Only enforced for (un)follow,
+ * which award leaderboard points: an unsigned/forged follow is dropped.
+ */
+const verifyRawWebhookSignature = async (
+  rawBody: string,
+  payload: ZaloWebhookEvent,
+  signature: string,
+  config: ZaloConfig,
+): Promise<boolean> => {
+  const [, signatureHash] = signature.split("=")
+  if (!(signatureHash && config.verifyToken)) {
+    return false
+  }
+  const expectedHash = await sha256Hex(
+    `${payload.app_id}${rawBody}${payload.timestamp}${config.verifyToken}`,
+  )
+  return timingSafeStringEqual(signatureHash, expectedHash)
+}
+
 const handleWebhookEvent = async (
   req: Request,
   config: ZaloConfig,
   queue: ContextQueue,
 ): Promise<void> => {
   try {
-    const body = await req.json()
+    const rawBody = await req.text()
+    const body = rawBody ? JSON.parse(rawBody) : null
     if (!body) {
       throw new SdkException("Empty webhook payload")
     }
@@ -80,6 +144,35 @@ const handleWebhookEvent = async (
 
     if (webhookData.app_id !== config.clientId) {
       throw new SdkException("Invalid app_id in webhook payload")
+    }
+
+    const followEvent = parseZaloFollowEvent(webhookData)
+    if (
+      followEvent &&
+      !(await verifyRawWebhookSignature(
+        rawBody,
+        webhookData,
+        req.headers.get("X-ZEvent-Signature") ?? "",
+        config,
+      ))
+    ) {
+      // Ack (no retry) but never score an unverifiable follow.
+      return
+    }
+    if (followEvent) {
+      await queue.add(CHANNEL_AUDIENCE_EVENT_JOB_NAME, {
+        type: CHANNEL_AUDIENCE_EVENT_JOB_NAME,
+        data: followEvent,
+      })
+      return
+    }
+    if (
+      webhookData.event_name === "follow" ||
+      webhookData.event_name === "unfollow"
+    ) {
+      // Malformed (un)follow without oa_id/follower: ack and drop rather
+      // than fall into the message path and throw "Missing sender".
+      return
     }
 
     // Message events always carry sender/recipient.

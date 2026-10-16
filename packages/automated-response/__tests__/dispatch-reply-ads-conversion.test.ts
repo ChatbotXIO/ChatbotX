@@ -7,6 +7,10 @@ const { mockEnqueueKeywordMatchedEvaluation, mockChatQueueAdd } = vi.hoisted(
   }),
 )
 
+vi.mock("@chatbotx.io/business/leaderboard", () => ({
+  enqueueLeaderboardAward: vi.fn().mockResolvedValue(false),
+}))
+
 vi.mock("@chatbotx.io/business", () => ({
   adsConversionService: {
     enqueueKeywordMatchedEvaluation: mockEnqueueKeywordMatchedEvaluation,

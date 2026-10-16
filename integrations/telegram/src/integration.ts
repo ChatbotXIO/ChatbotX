@@ -41,8 +41,8 @@ const config: IntegrationDefinition<
         username: botData.username as string,
       }
     },
-    registerWebhook: async ({ botToken, webhookUrl }) =>
-      registerWebhook({ botToken, webhookUrl }),
+    registerWebhook: async ({ botToken, webhookUrl, secretToken }) =>
+      registerWebhook({ botToken, webhookUrl, secretToken }),
   },
   connection: {
     kind: "channel",

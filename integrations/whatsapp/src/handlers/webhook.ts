@@ -28,7 +28,11 @@ import {
   type ThreadControlJobPayload,
 } from "../lib/conversation-routing"
 import { logger } from "../lib/logger"
-import { extractWhatsappStatusRecipientUserId } from "../lib/raw-identity"
+import {
+  extractWhatsappStatusRecipientUserId,
+  extractWhatsappUserIdentity,
+} from "../lib/raw-identity"
+import { readWhatsappReaction } from "../lib/reaction"
 import { resolveSignaturePolicy } from "../lib/signature-policy"
 import {
   extractIdentityChangePayloads,
@@ -1233,6 +1237,40 @@ const dispatchWebhookResult = async (
     | { type: "status"; data: OnStatusArgs }
     | null,
 ): Promise<void> => {
+  const reaction =
+    result?.type === "message"
+      ? readWhatsappReaction(result.data.message)
+      : null
+  if (result?.type === "message" && reaction) {
+    // A reaction is not a message: it rides the shared `messageReaction` flow
+    // (activity row on the reacted thread, like Instagram/Messenger) instead
+    // of being stored as a "Received reaction" text message.
+    const contactSourceId =
+      asString(result.data.from) ??
+      extractWhatsappUserIdentity(result.data.raw).sourceUserId
+    if (contactSourceId) {
+      await queue?.add(
+        "messageReaction",
+        {
+          type: "messageReaction",
+          data: {
+            integrationType: "whatsapp",
+            integrationIdentifier: result.data.phoneID,
+            messageId: reaction.messageId,
+            action: reaction.action,
+            emoji: reaction.emoji,
+            contactSourceId,
+          },
+        },
+        {
+          jobId: `wa-reaction-${toBullMqSafeIdSegment(result.data.phoneID)}-${toBullMqSafeIdSegment(result.data.message.id)}`,
+          ...REDELIVERABLE_JOB_OPTIONS,
+        },
+      )
+    }
+    return
+  }
+
   if (result?.type === "message" && result.data.message) {
     await queue?.add(
       "incomingMessage",
