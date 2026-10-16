@@ -208,6 +208,35 @@ export function getFacebookUser(
   })
 }
 
+/**
+ * The page access token and linked Instagram account of one page, read straight
+ * from the page node: no `/me/accounts` paging and no per-account profile calls.
+ * `null` when the user has no role on the page (Graph then omits
+ * `access_token`) or the page has no linked Instagram account.
+ */
+export async function getPageInstagramAccess(input: {
+  pageId: string
+  userAccessToken: string
+  version?: string
+}): Promise<{ igId: string; pageAccessToken: string } | null> {
+  const endpoint = `${input.version ?? DEFAULT_API_VERSION}/${input.pageId}`
+  const page = await rescue(endpoint, () =>
+    instagramGraphClient.get<{
+      access_token?: string
+      instagram_business_account?: { id?: string }
+    }>(endpoint, {
+      searchParams: {
+        fields: "access_token,instagram_business_account",
+        access_token: input.userAccessToken,
+      },
+    }),
+  )
+  const igId = page.instagram_business_account?.id
+  return page.access_token && igId
+    ? { igId, pageAccessToken: page.access_token }
+    : null
+}
+
 export async function getUserInstagramAccounts(
   userAccessToken: string,
   version: string = DEFAULT_API_VERSION,
