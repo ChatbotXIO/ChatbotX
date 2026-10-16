@@ -5,6 +5,7 @@ import {
   type WhatsappCredentialUpdate,
   whatsappCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
+import { FormFieldWrapper } from "@chatbotx.io/ui/components/form/field-wrapper"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -21,6 +22,7 @@ import {
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { SiWhatsapp, SiWhatsappHex } from "@icons-pack/react-simple-icons"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
@@ -186,7 +188,7 @@ export function EditWhatsappSettingsDialog({
           </Button>
         }
       />
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogTitle>
           {t("messages.editFeature", { feature: "WhatsApp" })}
         </DialogTitle>
@@ -203,6 +205,8 @@ export function EditWhatsappSettingsDialog({
   )
 }
 
+const SECRET_MASK = "••••••••••••"
+
 export function EditWhatsappSettingsForm({
   publicConfig,
   onClose,
@@ -212,6 +216,9 @@ export function EditWhatsappSettingsForm({
 }) {
   const t = useTranslations()
   const scope = useCredentialScope()
+  // Both secrets are required by the stored credential, so a saved public
+  // config means they are set (they are never sent to the client).
+  const hasStoredSecrets = publicConfig !== null
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -243,6 +250,7 @@ export function EditWhatsappSettingsForm({
             verifyToken: publicConfig?.verifyToken ?? "",
             clientSecret: "",
             systemUserToken: "",
+            capiConfigId: publicConfig?.capiConfigId ?? "",
           } satisfies WhatsappCredentialUpdate,
         },
       },
@@ -260,16 +268,27 @@ export function EditWhatsappSettingsForm({
     },
   )
 
+  const [clientSecret, systemUserToken] = form.watch([
+    "clientSecret",
+    "systemUserToken",
+  ])
+  const hasMissingSecret = !(
+    hasStoredSecrets ||
+    (clientSecret?.trim() && systemUserToken?.trim())
+  )
+
   return (
     <Form {...form}>
-      <form className="flex flex-col gap-4" onSubmit={handleSubmitWithAction}>
+      <form
+        className="grid items-start gap-4 sm:grid-cols-2"
+        onSubmit={handleSubmitWithAction}
+      >
         <InputField label={t("fields.appId.label")} name="clientId" required />
 
-        <InputField
+        <SecretField
+          isSet={hasStoredSecrets}
           label={t("fields.appSecret.label")}
           name="clientSecret"
-          required
-          type="password"
         />
 
         <InputField
@@ -291,16 +310,21 @@ export function EditWhatsappSettingsForm({
         />
 
         <InputField
+          description={t("fields.capiConfigId.description")}
+          label={t("fields.capiConfigId.label")}
+          name="capiConfigId"
+        />
+
+        <InputField
           label={t("fields.systemUserId.label")}
           name="systemUserId"
           required
         />
 
-        <InputField
+        <SecretField
+          isSet={hasStoredSecrets}
           label={t("fields.systemUserToken.label")}
           name="systemUserToken"
-          required
-          type="password"
         />
 
         <InputField label={t("fields.businessId.label")} name="businessId" />
@@ -311,7 +335,7 @@ export function EditWhatsappSettingsForm({
           required
         />
 
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 sm:col-span-2">
           {publicConfig !== null && (
             <DeleteCredentialDialog
               disabled={form.formState.isSubmitting}
@@ -334,6 +358,7 @@ export function EditWhatsappSettingsForm({
             <Button
               disabled={
                 !form.formState.isValid ||
+                hasMissingSecret ||
                 form.formState.isSubmitting ||
                 isDeleting
               }
@@ -348,5 +373,44 @@ export function EditWhatsappSettingsForm({
         </div>
       </form>
     </Form>
+  )
+}
+
+/**
+ * A write-only secret input. The stored value never reaches the client, so the
+ * mask is display-only: the form value stays empty (a blank submit keeps the
+ * stored secret) and the mask disappears the moment the admin focuses the field
+ * to type a new one, so asterisks can never be saved as the secret.
+ */
+function SecretField({
+  name,
+  label,
+  isSet,
+}: {
+  name: "clientSecret" | "systemUserToken"
+  label: string
+  isSet: boolean
+}) {
+  const [isEditing, setIsEditing] = useState(false)
+
+  return (
+    <FormFieldWrapper label={label} name={name} required>
+      {(field) => {
+        const typed = typeof field.value === "string" ? field.value : ""
+        return (
+          <Input
+            autoComplete="new-password"
+            onBlur={() => {
+              field.onBlur()
+              setIsEditing(typed.length > 0)
+            }}
+            onChange={(event) => field.onChange(event.target.value)}
+            onFocus={() => setIsEditing(true)}
+            type="password"
+            value={isSet && !isEditing && typed === "" ? SECRET_MASK : typed}
+          />
+        )
+      }}
+    </FormFieldWrapper>
   )
 }

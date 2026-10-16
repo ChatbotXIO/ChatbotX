@@ -13,57 +13,45 @@ import { Loader2Icon, PlugZapIcon, SettingsIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useState } from "react"
+import { type ReactNode, useState } from "react"
 import { toast } from "sonner"
 import type { connectMessengerCustomCapiAction } from "@/features/integration-messenger/actions/connect-custom-capi.action"
-import type { provisionMessengerCapiDatasetAction } from "@/features/integration-messenger/actions/provision-capi-dataset.action"
-import type { setMessengerCapiDatasetAction } from "@/features/integration-messenger/actions/set-capi-dataset.action"
-import { CapiDatasetCard } from "./capi-dataset-card"
 
-// Messenger, Instagram, and WhatsApp CAPI actions share identical bind/input
-// signatures, so the Messenger action types stand in as the shared contract
-// for every channel that reuses this chooser.
-export type CapiMethodChooserActions = {
-  connectCustom: typeof connectMessengerCustomCapiAction
-  setDataset: typeof setMessengerCapiDatasetAction
-  provision: typeof provisionMessengerCapiDatasetAction
-}
-
-type CapiMethodChooserProps = {
+type CapiConnectCardProps = {
   workspaceId: string
   integrationId: string
   datasetId: string | null
-  actions: CapiMethodChooserActions
-  /**
-   * Which primary-card copy to render. Literal keys only — next-intl message
-   * typing is strict, so this maps to a fixed `metaConversions.methods.*`
-   * branch rather than building a dynamic key string.
-   */
-  primaryMethod?: "oauth" | "whatsapp"
+  // Messenger, Instagram and WhatsApp custom-connect actions share one
+  // signature; the Messenger action type stands in as the shared contract.
+  connectCustomAction: typeof connectMessengerCustomCapiAction
+  /** The channel's own Connect button: an OAuth redirect or an Embedded Signup popup. */
+  connectSlot: ReactNode
 }
 
-export function CapiMethodChooser({
+/**
+ * What a not-connected integration shows: the channel's Connect button first,
+ * and — collapsed, for admins who already hold a system-user token — the option
+ * to paste their own dataset id and access token instead.
+ */
+export function CapiConnectCard({
   workspaceId,
   integrationId,
   datasetId,
-  actions,
-  primaryMethod = "oauth",
-}: CapiMethodChooserProps) {
+  connectCustomAction,
+  connectSlot,
+}: CapiConnectCardProps) {
   const t = useTranslations()
   const router = useRouter()
-  const [step, setStep] = useState<"chooser" | "oauthDataset">("chooser")
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [datasetInput, setDatasetInput] = useState(datasetId ?? "")
   const [tokenInput, setTokenInput] = useState("")
 
-  const onError = ({ error }: { error: { serverError?: string } }) => {
-    toast.error(error.serverError ?? t("metaConversions.errors.saveFailed"))
-  }
-
   const connectCustom = useAction(
-    actions.connectCustom.bind(null, workspaceId, integrationId),
+    connectCustomAction.bind(null, workspaceId, integrationId),
     {
-      onError,
+      onError: ({ error }) => {
+        toast.error(error.serverError ?? t("metaConversions.errors.saveFailed"))
+      },
       onSuccess: () => {
         setTokenInput("")
         toast.success(t("metaConversions.connected"))
@@ -75,42 +63,19 @@ export function CapiMethodChooser({
   const customFormComplete =
     datasetInput.trim().length > 0 && tokenInput.trim().length > 0
 
-  if (step === "oauthDataset") {
-    return (
-      <CapiDatasetCard
-        actions={{
-          setDataset: actions.setDataset,
-          provision: actions.provision,
-        }}
-        integrationId={integrationId}
-        workspaceId={workspaceId}
-      />
-    )
-  }
-
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <PlugZapIcon className="size-4" />
-            {primaryMethod === "whatsapp"
-              ? t("metaConversions.methods.whatsapp.title")
-              : t("metaConversions.methods.oauth.title")}
+            {t("metaConversions.connect.title")}
           </CardTitle>
           <CardDescription>
-            {primaryMethod === "whatsapp"
-              ? t("metaConversions.methods.whatsapp.description")
-              : t("metaConversions.methods.oauth.description")}
+            {t("metaConversions.connect.description")}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button onClick={() => setStep("oauthDataset")} type="button">
-            {primaryMethod === "whatsapp"
-              ? t("metaConversions.methods.whatsapp.connect")
-              : t("metaConversions.methods.oauth.connect")}
-          </Button>
-        </CardContent>
+        <CardContent>{connectSlot}</CardContent>
       </Card>
 
       <Card>

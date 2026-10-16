@@ -21,22 +21,33 @@ export type ReconnectResult =
 
 const ABSOLUTE_URL_PATTERN = /^https?:\/\//i
 
+/**
+ * Adds outcome params to a sanitized referer. `sanitizeReferer` can fall back to
+ * a relative path ("/manage"), which a bare `new URL` rejects — resolve against a
+ * placeholder base and only keep the origin when the referer carried one.
+ */
+export function appendRedirectSearchParams(
+  safeReferer: string,
+  params: Record<string, string>,
+): string {
+  const isAbsolute = ABSOLUTE_URL_PATTERN.test(safeReferer)
+  const url = new URL(safeReferer, getBrokerOrigin())
+  for (const [name, value] of Object.entries(params)) {
+    url.searchParams.set(name, value)
+  }
+  return isAbsolute ? url.toString() : `${url.pathname}${url.search}`
+}
+
 export function buildReconnectRedirectUrl(
   safeReferer: string,
   result: ReconnectResult,
 ): string {
-  // sanitizeReferer can fall back to a relative path ("/manage"), which a
-  // bare `new URL` rejects — resolve against a placeholder base and only
-  // keep the origin when the referer carried one.
-  const isAbsolute = ABSOLUTE_URL_PATTERN.test(safeReferer)
-  const url = new URL(safeReferer, getBrokerOrigin())
-  if (result.status === "success") {
-    url.searchParams.set("reconnect", "success")
-  } else {
-    url.searchParams.set("reconnect", "error")
-    url.searchParams.set("reason", result.reason)
-  }
-  return isAbsolute ? url.toString() : `${url.pathname}${url.search}`
+  return appendRedirectSearchParams(
+    safeReferer,
+    result.status === "success"
+      ? { reconnect: "success" }
+      : { reconnect: "error", reason: result.reason },
+  )
 }
 
 export const CHANNEL_CONNECT_ERRORS = [
@@ -59,8 +70,5 @@ export function buildChannelErrorRedirectUrl(
   safeReferer: string,
   error: ChannelConnectError,
 ): string {
-  const isAbsolute = ABSOLUTE_URL_PATTERN.test(safeReferer)
-  const url = new URL(safeReferer, getBrokerOrigin())
-  url.searchParams.set("error", error)
-  return isAbsolute ? url.toString() : `${url.pathname}${url.search}`
+  return appendRedirectSearchParams(safeReferer, { error })
 }

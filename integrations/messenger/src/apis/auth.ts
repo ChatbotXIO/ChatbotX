@@ -251,7 +251,6 @@ export const MESSENGER_SCOPES = [
   "pages_show_list",
   "business_management",
   "pages_utility_messaging",
-  "page_events",
 ]
 
 /**
@@ -262,8 +261,7 @@ export const MESSENGER_SCOPES = [
  * page-connect step can reuse it instead of re-running OAuth.
  */
 export const MESSENGER_REUSE_REQUIRED_SCOPES = MESSENGER_SCOPES.filter(
-  (scope) =>
-    scope !== "email" && scope !== "public_profile" && scope !== "page_events",
+  (scope) => scope !== "email" && scope !== "public_profile",
 )
 
 /**
@@ -281,6 +279,14 @@ export const LEAD_ADS_SCOPES = [
 
 export const LEADS_RETRIEVAL_SCOPE = "leads_retrieval"
 export const PAGE_EVENTS_SCOPE = "page_events"
+
+/**
+ * Scopes requested by the Conversions API connect on the Ads tab: the events
+ * permission itself plus `pages_show_list`, which is what lets the callback read
+ * the page access token of the one page being connected. Kept apart from
+ * `MESSENGER_SCOPES` so the channel login does not carry the CAPI permission.
+ */
+export const MESSENGER_CAPI_SCOPES = [PAGE_EVENTS_SCOPE, "pages_show_list"]
 
 export function generateAuthUrl({
   clientId,
@@ -327,6 +333,34 @@ export function generateLeadAdsAuthUrl({
     client_id: clientId,
     redirect_uri: redirectUrl,
     scope: LEAD_ADS_SCOPES.join(","),
+    response_type: "code",
+    state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
+  })
+  return `${FACEBOOK_OAUTH_BASE}/${version}/dialog/oauth?${params.toString()}`
+}
+
+/**
+ * OAuth dialog URL for the dedicated Conversions API connect. Same shape as
+ * `generateLeadAdsAuthUrl`, requesting only `MESSENGER_CAPI_SCOPES`. Callers pass
+ * `flow: "metaCapi"` in `stateParams` so the callback stores a separate CAPI
+ * token instead of running the Messenger page picker or a reconnect.
+ */
+export function generateCapiAuthUrl({
+  clientId,
+  version = DEFAULT_API_VERSION,
+  redirectUrl,
+  stateParams,
+}: {
+  clientId: string
+  version?: string
+  redirectUrl: string
+  stateParams?: Record<string, unknown>
+}): string {
+  const params = new URLSearchParams({
+    auth_type: "rerequest",
+    client_id: clientId,
+    redirect_uri: redirectUrl,
+    scope: MESSENGER_CAPI_SCOPES.join(","),
     response_type: "code",
     state: Buffer.from(JSON.stringify(stateParams ?? {})).toString("base64"),
   })

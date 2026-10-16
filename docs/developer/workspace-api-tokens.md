@@ -544,11 +544,15 @@ an endpoint's scope.
   them. Scope `channels`: `PUT /v1/{whatsapp,messenger,instagram}-channels/{id}/capi/dataset`,
   `.../capi/test-event-code` and `POST .../capi/test-event` (the dataset is
   validated with Meta; while a test event code is set every CAPI event goes to
-  Test Events). The channel list shows `capiTestEventCode` and
-  `capiDisconnected`. `PUT .../{id}/capi/dataset` without `datasetId` creates
-  a dataset with the channel's stored token (either way it reconnects a
-  disconnected channel) and `DELETE .../{id}/capi` disconnects; custom connect stays private because it
-  takes an access token. Scope `broadcasts`: `GET /v1/whatsapp/templates/{id}`,
+  Test Events). The channel list shows `capiConnected` (events are sent right
+  now), `capiTestEventCode` and `capiDisconnected`; `hasCapiScope` is a legacy
+  cached flag. `PUT .../{id}/capi/dataset` without `datasetId` creates a
+  dataset with the channel's stored token (either way it clears a disconnect,
+  but sending resumes only when `capiConnected` reads true afterwards) and
+  `DELETE .../{id}/capi` disconnects and removes a dedicated token. The
+  dedicated Conversions API token is minted by the Connect button on the
+  channel's Ads tab (a browser OAuth step with no token-based equivalent), and
+  custom connect stays private because it takes an access token. Scope `broadcasts`: `GET /v1/whatsapp/templates/{id}`,
   `POST /v1/whatsapp-channels/{id}/templates/sync`,
   `GET /v1/whatsapp/templates/catalog-products`, and WhatsApp Flows
   (`GET /v1/whatsapp/flows`, `.../{flowId}/screens`,

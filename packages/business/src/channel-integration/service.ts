@@ -1,12 +1,15 @@
 import { db } from "@chatbotx.io/database/client"
 import { adsEligibleChannelTypes } from "@chatbotx.io/utils/channel"
+import { type AnyColumn, sql } from "drizzle-orm"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
+import { resolveCapiConnection } from "../meta-conversions/connection-state"
 import type { ChannelIntegrationChannel } from "./schema"
 
 /**
  * Credential-free view of a connected channel integration. `auth`, CAPI access
- * tokens and every other secret column are deliberately never selected.
+ * tokens and every other secret column are deliberately never selected: the
+ * dedicated CAPI token only contributes an `IS NOT NULL` boolean computed in SQL.
  */
 export type ChannelIntegrationSummary = {
   id: string
@@ -20,7 +23,10 @@ export type ChannelIntegrationSummary = {
   username: string | null
   coexistEnabled: boolean
   isCoexist: boolean | null
+  /** Legacy cached flag for rows that send with the channel token. */
   hasCapiScope: boolean
+  /** Whether the Conversions API is set up for this channel (see `resolveCapiConnection`). */
+  capiConnected: boolean
   datasetId: string | null
   /** Events Manager test code: while set, CAPI events go to Test Events. */
   capiTestEventCode: string | null
@@ -48,6 +54,7 @@ const SUMMARY_DEFAULTS = {
   coexistEnabled: false,
   isCoexist: null,
   hasCapiScope: false,
+  capiConnected: false,
   datasetId: null,
   capiTestEventCode: null,
   capiDisconnected: false,
@@ -55,6 +62,10 @@ const SUMMARY_DEFAULTS = {
   handoverResumeFlowId: null,
   tokenRefreshError: null,
 } as const
+
+/** `true` when the encrypted CAPI token is set, without ever selecting it. */
+const hasCapiAccessToken = (capiAccessToken: AnyColumn) =>
+  sql<boolean>`${capiAccessToken} is not null`
 
 function summarize(
   channel: ChannelIntegrationChannel,
@@ -93,6 +104,10 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         handoverResumeFlowId: true,
         tokenRefreshError: true,
       },
+      extras: {
+        hasCapiAccessToken: (table) =>
+          hasCapiAccessToken(table.capiAccessToken),
+      },
     })
     return rows.map((row) =>
       summarize("whatsapp", {
@@ -105,6 +120,7 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         coexistEnabled: row.coexistEnabled,
         isCoexist: row.isCoexist,
         hasCapiScope: row.hasCapiScope,
+        capiConnected: resolveCapiConnection("whatsapp", row) === "connected",
         datasetId: row.datasetId,
         capiTestEventCode: row.capiTestEventCode,
         capiDisconnected: row.capiDisconnectedAt !== null,
@@ -130,6 +146,10 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         handoverResumeFlowId: true,
         tokenRefreshError: true,
       },
+      extras: {
+        hasCapiAccessToken: (table) =>
+          hasCapiAccessToken(table.capiAccessToken),
+      },
     })
     return rows.map((row) =>
       summarize("messenger", {
@@ -139,6 +159,7 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         externalId: row.pageId,
         coexistEnabled: row.coexistEnabled,
         hasCapiScope: row.hasCapiScope,
+        capiConnected: resolveCapiConnection("messenger", row) === "connected",
         datasetId: row.datasetId,
         capiTestEventCode: row.capiTestEventCode,
         capiDisconnected: row.capiDisconnectedAt !== null,
@@ -165,6 +186,10 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         capiDisconnectedAt: true,
         tokenRefreshError: true,
       },
+      extras: {
+        hasCapiAccessToken: (table) =>
+          hasCapiAccessToken(table.capiAccessToken),
+      },
     })
     return rows.map((row) =>
       summarize("instagram", {
@@ -178,6 +203,7 @@ const channelFetchers: Record<ChannelIntegrationChannel, ChannelFetcher> = {
         username: row.username,
         coexistEnabled: row.coexistEnabled,
         hasCapiScope: row.hasCapiScope,
+        capiConnected: resolveCapiConnection("instagram", row) === "connected",
         datasetId: row.datasetId,
         capiTestEventCode: row.capiTestEventCode,
         capiDisconnected: row.capiDisconnectedAt !== null,

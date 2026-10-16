@@ -6,16 +6,15 @@ import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useInvalidateInboxes } from "@/features/inboxes/provider/inbox-hook"
 import { reconnectWhatsappAction } from "../actions/reconnect.action"
+import { useWhatsappOAuthPopup } from "../hooks/use-whatsapp-oauth-popup"
 import {
   buildFacebookOAuthDialogUrl,
   EMBEDDED_SIGNUP_VERSIONS,
   FACEBOOK_AUTH_TYPES,
 } from "../libs/embedded-signup"
-import { parseOAuthRelayResult } from "../libs/oauth-relay"
 
 export function WhatsappReconnectButton({
   integrationWhatsappId,
@@ -47,57 +46,29 @@ export function WhatsappReconnectButton({
   const router = useRouter()
   const t = useTranslations()
   const invalidateInboxes = useInvalidateInboxes()
-  const [isWaitingForCode, setIsWaitingForCodeState] = useState(false)
-  const isWaitingForCodeRef = useRef(false)
-  const setIsWaitingForCode = useCallback((waiting: boolean) => {
-    isWaitingForCodeRef.current = waiting
-    setIsWaitingForCodeState(waiting)
-  }, [])
   const { execute, isPending } = useAction(
     reconnectWhatsappAction.bind(null, workspaceId, integrationWhatsappId),
     {
       onSuccess: () => {
-        setIsWaitingForCode(false)
+        stopWaiting()
         toast.success(t("ads.connectAccounts.reconnectSuccess"))
         invalidateInboxes()
         router.refresh()
       },
       onError: ({ error }) => {
-        setIsWaitingForCode(false)
+        stopWaiting()
         if (error.serverError) {
           toast.error(error.serverError)
         }
       },
     },
   )
-
-  useEffect(() => {
-    const expectedOrigin = new URL(oauthCallbackUrl).origin
-    const handleMessage = (event: MessageEvent) => {
-      const result = parseOAuthRelayResult({
-        origin: event.origin,
-        expectedOrigin,
-        data: event.data,
-      })
-      if (result.type === "ignored") {
-        return
-      }
-      if (!isWaitingForCodeRef.current) {
-        return
-      }
-
-      if (result.type === "success") {
-        execute({ code: result.code })
-        return
-      }
-
-      setIsWaitingForCode(false)
-      toast.error(t("messages.connectFailed", { feature: "Whatsapp" }))
-    }
-
-    window.addEventListener("message", handleMessage)
-    return () => window.removeEventListener("message", handleMessage)
-  }, [execute, oauthCallbackUrl, setIsWaitingForCode, t])
+  const { isWaiting, openPopup, stopWaiting } = useWhatsappOAuthPopup({
+    oauthCallbackUrl,
+    onCode: (code) => execute({ code }),
+    onRelayError: () =>
+      toast.error(t("messages.connectFailed", { feature: "Whatsapp" })),
+  })
 
   const openReconnectDialog = () => {
     if (!settings?.clientId) {
@@ -105,7 +76,7 @@ export function WhatsappReconnectButton({
       return
     }
 
-    const authTab = window.open(
+    const opened = openPopup(
       buildFacebookOAuthDialogUrl({
         resellerOrigin: window.location.origin,
         redirectUri: oauthCallbackUrl,
@@ -127,25 +98,20 @@ export function WhatsappReconnectButton({
         // `extras`. Connect stays on the unpinned default until it follows.
         embeddedSignupVersion: EMBEDDED_SIGNUP_VERSIONS.V4,
       }),
-      "_blank",
     )
-    if (!authTab) {
+    if (!opened) {
       toast.error(t("whatsapp.embeddedSignupPopupBlocked"))
-      return
     }
-    setIsWaitingForCode(true)
   }
 
   return (
     <Button
-      disabled={disabled || isPending || isWaitingForCode}
+      disabled={disabled || isPending || isWaiting}
       onClick={openReconnectDialog}
       size="sm"
       variant="outline"
     >
-      {(isPending || isWaitingForCode) && (
-        <Loader2Icon className="animate-spin" />
-      )}
+      {(isPending || isWaiting) && <Loader2Icon className="animate-spin" />}
       {t("ads.connectAccounts.reconnect")}
     </Button>
   )

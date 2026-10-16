@@ -107,9 +107,9 @@ export async function sendCapiTestEventFor(
 }
 
 /**
- * Creates the channel's Meta dataset with the stored channel token (no
- * credential is passed in) and reconnects a user-intent disconnect, exactly as
- * the builder's "Create dataset" does.
+ * Creates the channel's Meta dataset with the stored token — the dedicated
+ * Conversions API token when one is connected, otherwise the channel's own (no
+ * credential is passed in) — and reconnects a user-intent disconnect.
  */
 export async function provisionCapiDatasetFor(
   input: IntegrationRef & { channel: MetaConversionsChannel },

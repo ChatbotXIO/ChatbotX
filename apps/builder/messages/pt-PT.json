@@ -2384,6 +2384,10 @@
     },
     "referralName": {
       "label": "Nome de quem convidou"
+    },
+    "capiConfigId": {
+      "label": "Config ID da Conversions API",
+      "description": "ID de configuração do Embedded Signup usado para pedir a permissão whatsapp_business_manage_events ao ligar a Conversions API."
     }
   },
   "flows": {
@@ -4625,7 +4629,8 @@
         "loadMoreError": "Não foi possível carregar mais chamadas. Tente novamente.",
         "callInformation": "Informações da chamada"
       }
-    }
+    },
+    "credentialSecretsRequired": "Introduza o segredo da aplicação e o token de utilizador do sistema. Ainda não estão guardados."
   },
   "zalo": {
     "title": "Zalo OA",
@@ -6875,15 +6880,11 @@
     "status": {
       "title": "Meta Conversions API",
       "ready": "Pronto",
-      "missingPermission": "Permissão necessária",
-      "unverified": "Não verificado",
       "unsupported": "Não suportado",
       "notConnected": "Não ligado"
     },
     "statusDescriptions": {
-      "ready": "Esta integração tem a permissão da Meta necessária para os eventos do Conversions API.",
-      "missingPermission": "Ligue novamente esta integração e conceda a permissão da Meta solicitada.",
-      "unverified": "As definições da aplicação da plataforma não estão disponíveis, pelo que a permissão CAPI não pode ser verificada.",
+      "ready": "Os eventos da Conversions API desta integração são enviados para a Meta.",
       "unsupported": "O Meta Conversions API para o Instagram requer uma conta ligada através do Facebook Login for Business.",
       "notConnected": "O Conversions API é uma ferramenta empresarial da Meta que lhe permite partilhar dados com a Meta para melhorar o desempenho dos anúncios."
     },
@@ -6895,12 +6896,14 @@
       "saveFailed": "Não foi possível guardar. Tente novamente.",
       "datasetRequired": "Guarde um ID do conjunto de dados antes de adicionar um token de acesso.",
       "invalidToken": "Este token não conseguiu aceder ao conjunto de dados.",
-      "invalidDatasetId": "Introduza um Dataset ID válido (apenas números).",
       "whatsappNotFound": "Integração do WhatsApp não encontrada.",
       "testEventCodeRequired": "Guarde um código de evento de teste antes de enviar um evento de teste.",
       "invalidTestEventCode": "O código do evento de teste só pode conter letras, números, hífenes ou sublinhados (máx. 64).",
       "invalidMessagingId": "O ID de mensagem só pode conter letras, dígitos, hífenes ou sublinhados (máx. 512).",
-      "capiDisconnected": "O Meta CAPI está desligado para este canal. Volte a ligá-lo antes de enviar um evento de teste."
+      "capiDisconnected": "O Meta CAPI está desligado para este canal. Volte a ligá-lo antes de enviar um evento de teste.",
+      "appNotConfigured": "A aplicação da Meta para este canal ainda não está configurada.",
+      "capiNotConfigured": "A ligação à Conversions API não está configurada. Peça ao administrador para definir o Config ID da Conversions API.",
+      "wabaMismatch": "A conta do WhatsApp Business autorizada não é aquela a que este número pertence. Ligue-se com a mesma conta."
     },
     "fields": {
       "eventType": {
@@ -6985,32 +6988,13 @@
     "disconnect": "Desligar",
     "openEventManager": "Abrir Gestor de Eventos",
     "methods": {
-      "oauth": {
-        "title": "Ligar através do Facebook",
-        "description": "Utilize a ligação já existente da sua página e escolha um ID do conjunto de dados.",
-        "connect": "Criar conjunto de dados",
-        "connectedLabel": "via Facebook"
-      },
       "custom": {
         "title": "Ligação personalizada",
         "description": "Utilize um ID do conjunto de dados e um token de acesso do Gestor de Eventos da Meta.",
         "start": "Configurar ligação personalizada",
         "connect": "Ligar",
         "connectedLabel": "Personalizada"
-      },
-      "whatsapp": {
-        "title": "Ligar através do WhatsApp",
-        "description": "Utilize a sua ligação do WhatsApp e escolha um ID do conjunto de dados.",
-        "connect": "Criar conjunto de dados",
-        "connectedLabel": "via WhatsApp"
       }
-    },
-    "finalize": {
-      "title": "Escolha um ID do conjunto de dados",
-      "description": "Introduza um ID do conjunto de dados existente ou deixe em branco para criar um automaticamente.",
-      "save": "Guardar",
-      "createDataset": "Criar conjunto de dados",
-      "caveat": "Um ID do conjunto de dados que não esteja associado a esta Página ou conta do Instagram pode não atribuir os eventos corretamente. Deixe este campo em branco para criar um conjunto de dados associado automaticamente."
     },
     "whatsapp": {
       "connect": "Ligar"
@@ -7059,6 +7043,23 @@
       "messagingIdHint": "Apenas letras, dígitos, hífenes e sublinhados (máx. 512).",
       "cancel": "Cancelar",
       "confirmSend": "Enviar"
+    },
+    "connect": {
+      "button": "Ligar a Conversions API",
+      "success": "Conversions API ligada.",
+      "title": "Ligar com a Meta",
+      "description": "Inicie sessão na Meta e conceda acesso aos eventos de conversão. Isto cria uma ligação separada para a Conversions API e não altera a forma como este canal inicia sessão."
+    },
+    "connectResult": {
+      "errors": {
+        "cancelled": "Ligação cancelada. Nada foi alterado.",
+        "notFound": "Este canal não foi encontrado.",
+        "pageNotFound": "A conta do Facebook que utilizou não administra esta Página. Inicie sessão com uma conta que a administre.",
+        "accountNotFound": "A conta do Facebook que utilizou não administra esta conta do Instagram. Inicie sessão com uma conta que a administre.",
+        "datasetFailed": "A Meta não permitiu criar um conjunto de dados com esta ligação. Conceda todas as permissões pedidas e tente novamente.",
+        "sessionExpired": "A ligação demorou demasiado ou foi iniciada noutro separador. Tente novamente.",
+        "failed": "Não foi possível ligar a Conversions API. Tente novamente."
+      }
     }
   },
   "googleAds": {

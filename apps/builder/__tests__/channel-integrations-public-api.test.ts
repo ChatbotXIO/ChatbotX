@@ -358,6 +358,26 @@ describe("CAPI routes", () => {
     )?.handler
   }
 
+  test("route descriptions point agents at capiConnected and say how a dedicated token is obtained", () => {
+    createCapiRoutes("messenger")
+    const descriptionOf = (method: string, path: string) =>
+      (
+        capturedProcedures.find(
+          (p) =>
+            p.route.method === method &&
+            p.route.path === `/v1/messenger-channels/{id}/capi${path}`,
+        )?.route as { description?: string } | undefined
+      )?.description
+
+    const setDataset = descriptionOf("PUT", "/dataset")
+    const disconnect = descriptionOf("DELETE", "")
+
+    expect(setDataset).toContain("`capiConnected`")
+    expect(setDataset).toContain("Ads tab")
+    expect(disconnect).toContain("`capiConnected`")
+    expect(disconnect).toContain("Ads tab")
+  })
+
   test("dataset selection delegates to the shared operation in the token's workspace", async () => {
     await handler(
       "/dataset",

@@ -2530,6 +2530,10 @@
     },
     "referralName": {
       "label": "اسم المُحيل"
+    },
+    "capiConfigId": {
+      "label": "معرّف تكوين Conversions API",
+      "description": "معرّف تكوين Embedded Signup المستخدم لطلب إذن whatsapp_business_manage_events عند ربط Conversions API."
     }
   },
   "flows": {
@@ -4625,7 +4629,8 @@
         "loadMoreError": "تعذر تحميل مزيد من المكالمات. يرجى المحاولة مرة أخرى.",
         "callInformation": "معلومات المكالمة"
       }
-    }
+    },
+    "credentialSecretsRequired": "أدخل سر التطبيق ورمز مستخدم النظام. لم يتم تخزينهما بعد."
   },
   "zalo": {
     "title": "Zalo OA",
@@ -6875,15 +6880,11 @@
     "status": {
       "title": "Meta Conversions API",
       "ready": "جاهز",
-      "missingPermission": "الصلاحية مطلوبة",
-      "unverified": "غير موثّق",
       "unsupported": "غير مدعوم",
       "notConnected": "غير متصل"
     },
     "statusDescriptions": {
-      "ready": "يمتلك هذا الاتصال صلاحية Meta المطلوبة لأحداث Conversions API.",
-      "missingPermission": "أعد ربط هذا الاتصال وامنح صلاحية Meta المطلوبة.",
-      "unverified": "إعدادات تطبيق المنصة غير متاحة، لذا لا يمكن التحقق من صلاحية CAPI.",
+      "ready": "تُرسل أحداث Conversions API من هذا التكامل إلى Meta.",
       "unsupported": "يتطلب Meta Conversions API لـ Instagram حسابًا متصلًا عبر Facebook Login for Business.",
       "notConnected": "تُعد Conversions API أداة أعمال من Meta تتيح لك مشاركة البيانات مع Meta لتحسين أداء الإعلانات."
     },
@@ -6895,12 +6896,14 @@
       "saveFailed": "تعذّر الحفظ. يُرجى المحاولة مرة أخرى.",
       "datasetRequired": "احفظ معرف Dataset قبل إضافة رمز وصول.",
       "invalidToken": "تعذّر على هذا الرمز الوصول إلى Dataset.",
-      "invalidDatasetId": "أدخل معرّف مجموعة بيانات صالحًا (أرقام فقط).",
       "whatsappNotFound": "لم يتم العثور على اتصال WhatsApp.",
       "testEventCodeRequired": "احفظ رمز حدث اختبار قبل إرسال حدث اختبار.",
       "invalidTestEventCode": "يجب ألا يحتوي رمز حدث الاختبار إلا على أحرف وأرقام وشرطات أو شرطات سفلية (بحد أقصى 64).",
       "invalidMessagingId": "يجوز أن يحتوي معرّف المراسلة على أحرف وأرقام وشرطات وشرطات سفلية فقط (بحد أقصى 512).",
-      "capiDisconnected": "تم قطع اتصال Meta CAPI لهذه القناة. أعد الاتصال قبل إرسال حدث اختبار."
+      "capiDisconnected": "تم قطع اتصال Meta CAPI لهذه القناة. أعد الاتصال قبل إرسال حدث اختبار.",
+      "appNotConfigured": "لم يتم إعداد تطبيق Meta لهذه القناة بعد.",
+      "capiNotConfigured": "لم يتم إعداد اتصال Conversions API. اطلب من المسؤول تعيين معرّف تكوين Conversions API.",
+      "wabaMismatch": "حساب WhatsApp Business المصرّح به ليس الحساب الذي ينتمي إليه هذا الرقم. يرجى الربط بالحساب نفسه."
     },
     "fields": {
       "eventType": {
@@ -6985,32 +6988,13 @@
     "disconnect": "قطع الاتصال",
     "openEventManager": "فتح Event Manager",
     "methods": {
-      "oauth": {
-        "title": "ربط عبر Facebook",
-        "description": "استخدم اتصال صفحتك الحالي، ثم اختر معرف Dataset.",
-        "connect": "إنشاء مجموعة بيانات",
-        "connectedLabel": "عبر Facebook"
-      },
       "custom": {
         "title": "اتصال مخصص",
         "description": "استخدم معرف Dataset ورمز وصول من Meta Events Manager.",
         "start": "إعداد اتصال مخصص",
         "connect": "ربط",
         "connectedLabel": "مخصص"
-      },
-      "whatsapp": {
-        "title": "ربط عبر WhatsApp",
-        "description": "استخدم اتصال WhatsApp الخاص بك، ثم اختر معرف Dataset.",
-        "connect": "إنشاء مجموعة بيانات",
-        "connectedLabel": "عبر WhatsApp"
       }
-    },
-    "finalize": {
-      "title": "اختر معرف Dataset",
-      "description": "أدخل معرف Dataset موجودًا، أو اتركه فارغًا لإنشاء واحد تلقائيًا.",
-      "save": "حفظ",
-      "createDataset": "إنشاء مجموعة بيانات",
-      "caveat": "قد لا يُسند معرف Dataset غير المرتبط بهذه الصفحة أو حساب Instagram الأحداث بشكل صحيح. اترك هذا الحقل فارغًا لإنشاء Dataset مرتبط تلقائيًا."
     },
     "whatsapp": {
       "connect": "ربط"
@@ -7059,6 +7043,23 @@
       "messagingIdHint": "أحرف وأرقام وشرطات وشرطات سفلية فقط (بحد أقصى 512).",
       "cancel": "إلغاء",
       "confirmSend": "إرسال"
+    },
+    "connect": {
+      "button": "ربط Conversions API",
+      "success": "تم ربط Conversions API.",
+      "title": "الربط مع Meta",
+      "description": "سجّل الدخول إلى Meta وامنح الإذن لأحداث التحويل. يؤدي ذلك إلى إنشاء اتصال منفصل لـ Conversions API ولا يغيّر طريقة تسجيل دخول هذه القناة."
+    },
+    "connectResult": {
+      "errors": {
+        "cancelled": "تم إلغاء الربط. لم يتم تغيير أي شيء.",
+        "notFound": "تعذّر العثور على هذه القناة.",
+        "pageNotFound": "حساب Facebook الذي استخدمته لا يدير هذه الصفحة. سجّل الدخول بحساب يديرها.",
+        "accountNotFound": "حساب Facebook الذي استخدمته لا يدير حساب Instagram هذا. سجّل الدخول بحساب يديره.",
+        "datasetFailed": "لم تسمح Meta بإنشاء مجموعة بيانات عبر هذا الاتصال. تأكد من منح جميع الأذونات المطلوبة وحاول مرة أخرى.",
+        "sessionExpired": "استغرق الاتصال وقتًا طويلًا أو بدأ في علامة تبويب أخرى. يرجى المحاولة مرة أخرى.",
+        "failed": "تعذّر ربط Conversions API. يرجى المحاولة مرة أخرى."
+      }
     }
   },
   "googleAds": {

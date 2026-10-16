@@ -2572,6 +2572,10 @@
     },
     "referralName": {
       "label": "Dəvət edənin adı"
+    },
+    "capiConfigId": {
+      "label": "Conversions API Config ID",
+      "description": "Conversions API qoşularkən whatsapp_business_manage_events icazəsini tələb etmək üçün istifadə olunan Embedded Signup konfiqurasiya ID-si."
     }
   },
   "metaConversions": {
@@ -2588,15 +2592,11 @@
     "status": {
       "title": "Meta Conversions API",
       "ready": "Hazırdır",
-      "missingPermission": "İcazə tələb olunur",
-      "unverified": "Doğrulanmayıb",
       "unsupported": "Dəstəklənmir",
       "notConnected": "Qoşulmayıb"
     },
     "statusDescriptions": {
-      "ready": "Bu inteqrasiyanın Conversions API hadisələri üçün tələb olunan Meta icazəsi var.",
-      "missingPermission": "Bu inteqrasiyanı yenidən qoşun və tələb olunan Meta icazəsini verin.",
-      "unverified": "Platforma tətbiqinin parametrləri əlçatan olmadığı üçün CAPI icazəsini doğrulamaq mümkün deyil.",
+      "ready": "Bu inteqrasiyadan gələn Conversions API hadisələri Meta-ya göndərilir.",
       "unsupported": "Instagram üçün Meta Conversions API Facebook Login for Business vasitəsilə qoşulmuş hesab tələb edir.",
       "notConnected": "Conversions API reklamların performansını artırmaq üçün Meta ilə məlumat paylaşmağa imkan verən Meta Business Tool alətidir."
     },
@@ -2608,12 +2608,14 @@
       "saveFailed": "Yadda saxlamaq mümkün olmadı. Yenidən cəhd edin.",
       "datasetRequired": "Giriş tokeni əlavə etməzdən əvvəl məlumat dəstinin ID-sini yadda saxlayın.",
       "invalidToken": "Bu token məlumat dəstinə daxil ola bilmədi.",
-      "invalidDatasetId": "Etibarlı məlumat dəsti ID-si daxil edin (yalnız rəqəmlər).",
       "whatsappNotFound": "WhatsApp inteqrasiyası tapılmadı.",
       "testEventCodeRequired": "Sınaq hadisəsi göndərməzdən əvvəl sınaq hadisəsi kodunu yadda saxlayın.",
       "invalidTestEventCode": "Sınaq hadisəsi kodunda yalnız hərflər, rəqəmlər, defislər və ya alt xətlər ola bilər (ən çox 64 simvol).",
       "invalidMessagingId": "Mesajlaşma ID-si yalnız hərflər, rəqəmlər, defislər və ya alt xətlərdən ibarət ola bilər (ən çox 512 simvol).",
-      "capiDisconnected": "Bu kanal üçün Meta CAPI ilə əlaqə kəsilib. Sınaq hadisəsi göndərməzdən əvvəl yenidən qoşulun."
+      "capiDisconnected": "Bu kanal üçün Meta CAPI ilə əlaqə kəsilib. Sınaq hadisəsi göndərməzdən əvvəl yenidən qoşulun.",
+      "appNotConfigured": "Bu kanal üçün Meta tətbiqi hələ konfiqurasiya edilməyib.",
+      "capiNotConfigured": "Conversions API əlaqəsi konfiqurasiya edilməyib. Administratordan Conversions API Config ID təyin etməsini xahiş edin.",
+      "wabaMismatch": "İcazə verilən WhatsApp Business hesabı bu nömrənin aid olduğu hesab deyil. Zəhmət olmasa eyni hesabla qoşulun."
     },
     "fields": {
       "eventType": {
@@ -2698,32 +2700,13 @@
     "disconnect": "Ayır",
     "openEventManager": "Event Manager-i aç",
     "methods": {
-      "oauth": {
-        "title": "Facebook vasitəsilə qoş",
-        "description": "Səhifənizin mövcud əlaqəsindən istifadə edin, sonra məlumat dəstinin ID-sini seçin.",
-        "connect": "Məlumat dəsti yarat",
-        "connectedLabel": "Facebook vasitəsilə"
-      },
       "custom": {
         "title": "Fərdi əlaqə",
         "description": "Meta Events Manager-dən alınan məlumat dəstinin ID-sindən və giriş tokenindən istifadə edin.",
         "start": "Fərdi əlaqə qur",
         "connect": "Qoş",
         "connectedLabel": "Fərdi"
-      },
-      "whatsapp": {
-        "title": "WhatsApp vasitəsilə qoş",
-        "description": "WhatsApp əlaqənizdən istifadə edin, sonra məlumat dəstinin ID-sini seçin.",
-        "connect": "Məlumat dəsti yarat",
-        "connectedLabel": "WhatsApp vasitəsilə"
       }
-    },
-    "finalize": {
-      "title": "Məlumat dəstinin ID-sini seç",
-      "description": "Mövcud məlumat dəstinin ID-sini daxil edin və ya avtomatik yaratmaq üçün boş saxlayın.",
-      "save": "Yadda saxla",
-      "createDataset": "Məlumat dəsti yarat",
-      "caveat": "Bu səhifəyə və ya Instagram hesabına bağlı olmayan məlumat dəsti ID-si hadisələri düzgün əlaqələndirməyə bilər. Əlaqəli məlumat dəstini avtomatik yaratmaq üçün bu sahəni boş saxlayın."
     },
     "whatsapp": {
       "connect": "Qoş"
@@ -2772,6 +2755,23 @@
       "messagingIdHint": "Yalnız hərflər, rəqəmlər, defislər və alt xətlər (ən çox 512 simvol).",
       "cancel": "Ləğv et",
       "confirmSend": "Göndər"
+    },
+    "connect": {
+      "button": "Conversions API-ni qoş",
+      "success": "Conversions API qoşuldu.",
+      "title": "Meta ilə qoşul",
+      "description": "Meta hesabına daxil olun və konversiya hadisələri üçün icazə verin. Bu, Conversions API üçün ayrıca əlaqə yaradır və bu kanalın giriş qaydasını dəyişmir."
+    },
+    "connectResult": {
+      "errors": {
+        "cancelled": "Qoşulma ləğv edildi. Heç nə dəyişdirilmədi.",
+        "notFound": "Bu kanal tapılmadı.",
+        "pageNotFound": "İstifadə etdiyiniz Facebook hesabı bu Səhifəni idarə etmir. Onu idarə edən hesabla daxil olun.",
+        "accountNotFound": "İstifadə etdiyiniz Facebook hesabı bu Instagram hesabını idarə etmir. Onu idarə edən hesabla daxil olun.",
+        "datasetFailed": "Meta bu qoşulma ilə dataset yaratmağa icazə vermədi. Tələb olunan bütün icazələri verdiyinizdən əmin olun və yenidən cəhd edin.",
+        "sessionExpired": "Qoşulma çox uzun çəkdi və ya başqa sekmədə başladıldı. Zəhmət olmasa yenidən cəhd edin.",
+        "failed": "Conversions API qoşula bilmədi. Zəhmət olmasa yenidən cəhd edin."
+      }
     }
   },
   "googleAds": {
@@ -5308,7 +5308,8 @@
       },
       "inboundLabel": "Daxil olan zəngləri qəbul et",
       "inboundHelper": "Müştərilərin zəng etməsinə icazə verin. Gələnlər qutusunda zəng çalmadan zəng etməyə davam etmək üçün bu seçimi söndürün."
-    }
+    },
+    "credentialSecretsRequired": "Tətbiq sirrini və sistem istifadəçisi tokenini daxil edin. Hələ saxlanmayıb."
   },
   "zalo": {
     "title": "Zalo OA",

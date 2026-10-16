@@ -24,7 +24,14 @@ export const channelIntegrationResource = z.object({
     ),
   hasCapiScope: z
     .boolean()
-    .describe("Whether the Meta token can send Conversions API events."),
+    .describe(
+      "Legacy cached flag: whether the channel's own Meta token was granted the Conversions API permission. Prefer `capiConnected`.",
+    ),
+  capiConnected: z
+    .boolean()
+    .describe(
+      "Whether the Conversions API is set up for this channel: a dataset is set, it was not disconnected, and either a dedicated token was connected from the builder Ads tab or the channel (connected earlier) still sends with its own token. A channel that is not set up reads false even if the worker would create its dataset on the first event.",
+    ),
   datasetId: z.string().nullable().describe("Meta dataset id for CAPI."),
   capiTestEventCode: z
     .string()

@@ -2384,6 +2384,10 @@
     },
     "referralName": {
       "label": "紹介者の名前"
+    },
+    "capiConfigId": {
+      "label": "Conversions API Config ID",
+      "description": "Conversions API を接続する際に whatsapp_business_manage_events 権限をリクエストするために使用する Embedded Signup の設定 ID。"
     }
   },
   "flows": {
@@ -4604,7 +4608,8 @@
         "loadMoreError": "通話をさらに読み込めませんでした。もう一度お試しください。",
         "callInformation": "通話情報"
       }
-    }
+    },
+    "credentialSecretsRequired": "アプリシークレットとシステムユーザートークンを入力してください。まだ保存されていません。"
   },
   "zalo": {
     "title": "Zalo OA",
@@ -6875,15 +6880,11 @@
     "status": {
       "title": "Meta Conversions API",
       "ready": "準備完了",
-      "missingPermission": "権限が必要です",
-      "unverified": "未検証",
       "unsupported": "非対応",
       "notConnected": "未連携"
     },
     "statusDescriptions": {
-      "ready": "この連携には Conversions API イベントに必要な Meta の権限があります。",
-      "missingPermission": "この連携を再接続し、要求された Meta の権限を付与してください。",
-      "unverified": "プラットフォームのアプリ設定が利用できないため、CAPI の権限を検証できません。",
+      "ready": "この連携の Conversions API イベントは Meta に送信されます。",
       "unsupported": "Instagram 向け Meta Conversions API には、Facebook ログイン(ビジネス向け)で連携したアカウントが必要です。",
       "notConnected": "Conversions API は、広告のパフォーマンスを向上させるために Meta とデータを共有できる Meta ビジネスツールです。"
     },
@@ -6895,12 +6896,14 @@
       "saveFailed": "保存できませんでした。もう一度お試しください。",
       "datasetRequired": "アクセストークンを追加する前にデータセットIDを保存してください。",
       "invalidToken": "このトークンではデータセットにアクセスできませんでした。",
-      "invalidDatasetId": "有効なデータセットID（数字のみ）を入力してください。",
       "whatsappNotFound": "WhatsApp の連携が見つかりません。",
       "testEventCodeRequired": "テストイベントを送信する前にテストイベントコードを保存してください。",
       "invalidTestEventCode": "テストイベントコードには英字、数字、ハイフン、アンダースコアのみ使用できます（最大64文字）。",
       "invalidMessagingId": "メッセージングIDに使えるのは英字、数字、ハイフン、アンダースコアのみです（最大512文字）。",
-      "capiDisconnected": "このチャネルのMeta CAPIは切断されています。テストイベントを送信する前に再接続してください。"
+      "capiDisconnected": "このチャネルのMeta CAPIは切断されています。テストイベントを送信する前に再接続してください。",
+      "appNotConfigured": "このチャネルの Meta アプリはまだ設定されていません。",
+      "capiNotConfigured": "Conversions API の接続が設定されていません。管理者に Conversions API Config ID の設定を依頼してください。",
+      "wabaMismatch": "認証された WhatsApp Business アカウントは、この番号が属するアカウントではありません。同じアカウントで接続してください。"
     },
     "fields": {
       "eventType": {
@@ -6985,32 +6988,13 @@
     "disconnect": "連携を解除",
     "openEventManager": "Event Manager を開く",
     "methods": {
-      "oauth": {
-        "title": "Facebook 経由で連携",
-        "description": "既存のページの連携を利用し、データセットIDを選択します。",
-        "connect": "データセットを作成",
-        "connectedLabel": "Facebook 経由"
-      },
       "custom": {
         "title": "カスタム連携",
         "description": "Meta Events Manager のデータセットIDとアクセストークンを利用します。",
         "start": "カスタム連携を設定",
         "connect": "連携",
         "connectedLabel": "カスタム"
-      },
-      "whatsapp": {
-        "title": "WhatsApp 経由で連携",
-        "description": "既存の WhatsApp 連携を利用し、データセットIDを選択します。",
-        "connect": "データセットを作成",
-        "connectedLabel": "WhatsApp 経由"
       }
-    },
-    "finalize": {
-      "title": "データセットIDを選択",
-      "description": "既存のデータセットIDを入力するか、空欄のままにすると自動的に作成されます。",
-      "save": "保存",
-      "createDataset": "データセットを作成",
-      "caveat": "このページまたは Instagram アカウントに紐付いていないデータセットIDでは、イベントが正しく属性付けされない場合があります。このフィールドを空欄にすると、紐付いたデータセットが自動的に作成されます。"
     },
     "whatsapp": {
       "connect": "連携"
@@ -7059,6 +7043,23 @@
       "messagingIdHint": "英字、数字、ハイフン、アンダースコアのみ（最大512文字）。",
       "cancel": "キャンセル",
       "confirmSend": "送信"
+    },
+    "connect": {
+      "button": "Conversions API を接続",
+      "success": "Conversions API を接続しました。",
+      "title": "Meta と接続",
+      "description": "Meta にログインし、コンバージョンイベントへのアクセスを許可します。Conversions API 用に別の接続が作成され、このチャネルのログイン方法は変わりません。"
+    },
+    "connectResult": {
+      "errors": {
+        "cancelled": "接続をキャンセルしました。変更はありません。",
+        "notFound": "このチャネルが見つかりません。",
+        "pageNotFound": "使用した Facebook アカウントはこのページを管理していません。管理しているアカウントでログインしてください。",
+        "accountNotFound": "使用した Facebook アカウントはこの Instagram アカウントを管理していません。管理しているアカウントでログインしてください。",
+        "datasetFailed": "Meta はこの接続でのデータセットの作成を許可しませんでした。要求されたすべての権限を付与してから、もう一度お試しください。",
+        "sessionExpired": "接続に時間がかかりすぎたか、別のタブで開始されました。もう一度お試しください。",
+        "failed": "Conversions API を接続できませんでした。もう一度お試しください。"
+      }
     }
   },
   "googleAds": {

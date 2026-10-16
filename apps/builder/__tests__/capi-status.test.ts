@@ -2,151 +2,26 @@ import { describe, expect, test } from "vitest"
 import { getCapiStatus } from "@/features/meta-conversions/lib/capi-status"
 
 describe("getCapiStatus", () => {
-  test("unsupported wins over every other input", () => {
+  test("a connected integration is ready", () => {
+    expect(getCapiStatus({ connection: "connected" })).toBe("ready")
+  })
+
+  test("anything that is not connected reads as not connected: there is no permission state", () => {
+    expect(getCapiStatus({ connection: "notConnected" })).toBe("notConnected")
+  })
+
+  test("an unsupported channel overrides the connection", () => {
+    expect(getCapiStatus({ connection: "connected", supported: false })).toBe(
+      "unsupported",
+    )
     expect(
-      getCapiStatus({
-        hasCapiScope: true,
-        hasManualCapiAccessToken: true,
-        hasDatasetId: true,
-        credentialAvailable: true,
-        supported: false,
-      }),
+      getCapiStatus({ connection: "notConnected", supported: false }),
     ).toBe("unsupported")
   })
 
-  test("manual token with dataset is ready", () => {
-    expect(
-      getCapiStatus({
-        hasCapiScope: false,
-        hasManualCapiAccessToken: true,
-        hasDatasetId: true,
-        credentialAvailable: true,
-      }),
-    ).toBe("ready")
-  })
-
-  test("oauth scope with dataset is ready", () => {
-    expect(
-      getCapiStatus({
-        hasCapiScope: true,
-        hasManualCapiAccessToken: false,
-        hasDatasetId: true,
-        credentialAvailable: true,
-      }),
-    ).toBe("ready")
-  })
-
-  test("credential unavailable is unverified even with a dataset saved", () => {
-    expect(
-      getCapiStatus({
-        hasCapiScope: false,
-        hasManualCapiAccessToken: false,
-        hasDatasetId: true,
-        credentialAvailable: false,
-      }),
-    ).toBe("unverified")
-  })
-
-  test("dataset saved, scope missing, no manual token, credential available is missingPermission", () => {
-    expect(
-      getCapiStatus({
-        hasCapiScope: false,
-        hasManualCapiAccessToken: false,
-        hasDatasetId: true,
-        credentialAvailable: true,
-      }),
-    ).toBe("missingPermission")
-  })
-
-  test("nothing configured with credential available is notConnected", () => {
-    expect(
-      getCapiStatus({
-        hasCapiScope: false,
-        hasManualCapiAccessToken: false,
-        hasDatasetId: false,
-        credentialAvailable: true,
-      }),
-    ).toBe("notConnected")
-  })
-
-  test("user disconnect wins even with a dataset and scope", () => {
-    expect(
-      getCapiStatus({
-        hasCapiScope: true,
-        hasManualCapiAccessToken: false,
-        hasDatasetId: true,
-        credentialAvailable: true,
-        capiDisconnected: true,
-      }),
-    ).toBe("notConnected")
-  })
-
-  test("user disconnect wins even with a manual token and dataset", () => {
-    expect(
-      getCapiStatus({
-        hasCapiScope: false,
-        hasManualCapiAccessToken: true,
-        hasDatasetId: true,
-        credentialAvailable: true,
-        capiDisconnected: true,
-      }),
-    ).toBe("notConnected")
-  })
-
-  test("user disconnect with a saved dataset is notConnected, not missingPermission", () => {
-    expect(
-      getCapiStatus({
-        hasCapiScope: false,
-        hasManualCapiAccessToken: false,
-        hasDatasetId: true,
-        credentialAvailable: true,
-        capiDisconnected: true,
-      }),
-    ).toBe("notConnected")
-  })
-
-  describe("capiScopeRequired: false", () => {
-    const base = {
-      hasCapiScope: false,
-      hasManualCapiAccessToken: false,
-      credentialAvailable: true,
-    }
-
-    test("dataset without scope is ready", () => {
-      expect(
-        getCapiStatus({
-          ...base,
-          hasDatasetId: true,
-          capiScopeRequired: false,
-        }),
-      ).toBe("ready")
-    })
-
-    test("no dataset is notConnected", () => {
-      expect(
-        getCapiStatus({
-          ...base,
-          hasDatasetId: false,
-          capiScopeRequired: false,
-        }),
-      ).toBe("notConnected")
-    })
-
-    test("user disconnect still wins", () => {
-      expect(
-        getCapiStatus({
-          ...base,
-          hasDatasetId: true,
-          capiDisconnected: true,
-          capiScopeRequired: false,
-        }),
-      ).toBe("notConnected")
-    })
-
-    test("omitted keeps missingPermission", () => {
-      expect(getCapiStatus({ ...base, hasDatasetId: true })).toBe(
-        "missingPermission",
-      )
-    })
+  test("a supported channel follows its connection", () => {
+    expect(getCapiStatus({ connection: "connected", supported: true })).toBe(
+      "ready",
+    )
   })
 })

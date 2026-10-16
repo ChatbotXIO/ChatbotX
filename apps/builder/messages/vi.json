@@ -2572,6 +2572,10 @@
     },
     "referralName": {
       "label": "Tên người giới thiệu"
+    },
+    "capiConfigId": {
+      "label": "Conversions API Config ID",
+      "description": "ID cấu hình Embedded Signup dùng để yêu cầu quyền whatsapp_business_manage_events khi kết nối Conversions API."
     }
   },
   "flows": {
@@ -4667,7 +4671,8 @@
         "loadMoreError": "Không thể tải thêm cuộc gọi. Vui lòng thử lại.",
         "callInformation": "Thông tin cuộc gọi"
       }
-    }
+    },
+    "credentialSecretsRequired": "Nhập App Secret và System User Token. Hiện chưa được lưu."
   },
   "zalo": {
     "title": "Zalo OA",
@@ -6917,15 +6922,11 @@
     "status": {
       "title": "Meta Conversions API",
       "ready": "Sẵn sàng",
-      "missingPermission": "Cần cấp quyền",
-      "unverified": "Chưa xác minh",
       "unsupported": "Chưa hỗ trợ",
       "notConnected": "Chưa kết nối"
     },
     "statusDescriptions": {
-      "ready": "Tích hợp này đã có quyền Meta cần thiết để gửi sự kiện Conversions API.",
-      "missingPermission": "Hãy kết nối lại tích hợp này và cấp quyền Meta được yêu cầu.",
-      "unverified": "Chưa có cấu hình ứng dụng nền tảng nên không thể xác minh quyền CAPI.",
+      "ready": "Các sự kiện Conversions API của tích hợp này được gửi tới Meta.",
       "unsupported": "Meta Conversions API cho Instagram yêu cầu tài khoản được kết nối qua Facebook Login for Business.",
       "notConnected": "Conversions API là công cụ kinh doanh của Meta cho phép bạn chia sẻ dữ liệu với Meta để nâng cao hiệu quả quảng cáo."
     },
@@ -6937,12 +6938,14 @@
       "saveFailed": "Không lưu được. Vui lòng thử lại.",
       "datasetRequired": "Hãy lưu Dataset ID trước khi thêm access token.",
       "invalidToken": "Token này không truy cập được dataset.",
-      "invalidDatasetId": "Nhập Dataset ID hợp lệ (chỉ gồm chữ số).",
       "whatsappNotFound": "Không tìm thấy tích hợp WhatsApp.",
       "testEventCodeRequired": "Hãy lưu mã sự kiện thử trước khi gửi sự kiện thử.",
       "invalidTestEventCode": "Mã sự kiện thử chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới (tối đa 64 ký tự).",
       "invalidMessagingId": "ID nhắn tin chỉ được chứa chữ, số, gạch ngang hoặc gạch dưới (tối đa 512 ký tự).",
-      "capiDisconnected": "Meta CAPI của kênh này đang ngắt kết nối. Hãy kết nối lại trước khi gửi sự kiện thử."
+      "capiDisconnected": "Meta CAPI của kênh này đang ngắt kết nối. Hãy kết nối lại trước khi gửi sự kiện thử.",
+      "appNotConfigured": "Ứng dụng Meta cho kênh này chưa được cấu hình.",
+      "capiNotConfigured": "Kết nối Conversions API chưa được cấu hình. Hãy nhờ quản trị viên thiết lập Conversions API Config ID.",
+      "wabaMismatch": "Tài khoản WhatsApp Business được ủy quyền không phải tài khoản của số này. Vui lòng kết nối bằng cùng tài khoản."
     },
     "fields": {
       "eventType": {
@@ -7027,32 +7030,13 @@
     "disconnect": "Ngắt kết nối",
     "openEventManager": "Mở Trình quản lý sự kiện",
     "methods": {
-      "oauth": {
-        "title": "Kết nối qua Facebook",
-        "description": "Sử dụng kết nối hiện có của trang, sau đó chọn Dataset ID.",
-        "connect": "Tạo Dataset",
-        "connectedLabel": "qua Facebook"
-      },
       "custom": {
         "title": "Kết nối tuỳ chỉnh",
         "description": "Dùng Dataset ID và access token từ Meta Events Manager.",
         "start": "Thiết lập kết nối tuỳ chỉnh",
         "connect": "Kết nối",
         "connectedLabel": "Tuỳ chỉnh"
-      },
-      "whatsapp": {
-        "title": "Kết nối qua WhatsApp",
-        "description": "Sử dụng kết nối WhatsApp hiện có, sau đó chọn Dataset ID.",
-        "connect": "Tạo Dataset",
-        "connectedLabel": "qua WhatsApp"
       }
-    },
-    "finalize": {
-      "title": "Chọn Dataset ID",
-      "description": "Nhập Dataset ID có sẵn, hoặc để trống để tự động tạo mới.",
-      "save": "Lưu",
-      "createDataset": "Tạo Dataset",
-      "caveat": "Dataset ID không liên kết với Trang hoặc tài khoản Instagram này có thể không ghi nhận đúng sự kiện. Để trống để tạo dataset được liên kết tự động."
     },
     "whatsapp": {
       "connect": "Kết nối"
@@ -7101,6 +7085,23 @@
       "messagingIdHint": "Chỉ gồm chữ, số, gạch ngang và gạch dưới (tối đa 512 ký tự).",
       "cancel": "Huỷ",
       "confirmSend": "Gửi"
+    },
+    "connect": {
+      "button": "Kết nối Conversions API",
+      "success": "Đã kết nối Conversions API.",
+      "title": "Kết nối với Meta",
+      "description": "Đăng nhập Meta và cấp quyền cho các sự kiện chuyển đổi. Việc này tạo một kết nối riêng cho Conversions API và không thay đổi cách kênh này đăng nhập."
+    },
+    "connectResult": {
+      "errors": {
+        "cancelled": "Đã hủy kết nối. Không có gì thay đổi.",
+        "notFound": "Không tìm thấy kênh này.",
+        "pageNotFound": "Tài khoản Facebook bạn dùng không quản lý Trang này. Hãy đăng nhập bằng tài khoản có quyền quản lý.",
+        "accountNotFound": "Tài khoản Facebook bạn dùng không quản lý tài khoản Instagram này. Hãy đăng nhập bằng tài khoản có quyền quản lý.",
+        "datasetFailed": "Meta không cho phép tạo bộ dữ liệu bằng kết nối này. Hãy cấp mọi quyền được yêu cầu rồi thử lại.",
+        "sessionExpired": "Kết nối mất quá nhiều thời gian hoặc được bắt đầu ở tab khác. Vui lòng thử lại.",
+        "failed": "Không thể kết nối Conversions API. Vui lòng thử lại."
+      }
     }
   },
   "googleAds": {

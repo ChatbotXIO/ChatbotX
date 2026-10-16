@@ -1,152 +1,42 @@
 "use client"
 
+import type { CapiConnection } from "@chatbotx.io/business/meta-conversions/connection-state"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
-import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
-import { cn } from "@chatbotx.io/ui/lib/utils"
-import { useTranslations } from "next-intl"
-import { CapiConnectedCard } from "@/features/meta-conversions/components/capi-connected-card"
-import { CapiMethodChooser } from "@/features/meta-conversions/components/capi-method-chooser"
-import { CapiTestEventCard } from "@/features/meta-conversions/components/capi-test-event-card"
-import {
-  type CapiConnectionState,
-  getCapiConnectionState,
-} from "@/features/meta-conversions/lib/capi-connection-state"
-import {
-  type CapiStatus,
-  capiStatusConfig,
-  getCapiStatus,
-} from "@/features/meta-conversions/lib/capi-status"
+import { CapiConnectButton } from "@/features/meta-conversions/components/capi-connect-button"
+import { CapiConnectionTab } from "@/features/meta-conversions/components/capi-connection-tab"
 import { useWorkspaceId } from "@/hooks/routing"
+import { connectMessengerCapiAction } from "../actions/connect-capi.action"
 import { connectMessengerCustomCapiAction } from "../actions/connect-custom-capi.action"
 import { disconnectMessengerCapiAction } from "../actions/disconnect-capi.action"
-import { provisionMessengerCapiDatasetAction } from "../actions/provision-capi-dataset.action"
-import { setMessengerCapiDatasetAction } from "../actions/set-capi-dataset.action"
 
 type MessengerCapiTabProps = {
   integrationMessenger: Pick<
     IntegrationMessengerModel,
-    "id" | "hasCapiScope" | "datasetId" | "capiTestEventCode"
+    "id" | "datasetId" | "capiTestEventCode"
   >
-  hasManualCapiAccessToken: boolean
-  capiDisconnected: boolean
-  credentialAvailable: boolean
-}
-
-const statusDescriptionKey = {
-  ready: "metaConversions.statusDescriptions.ready",
-  notConnected: "metaConversions.statusDescriptions.notConnected",
-  missingPermission: "metaConversions.statusDescriptions.missingPermission",
-  unverified: "metaConversions.statusDescriptions.unverified",
-  unsupported: "metaConversions.statusDescriptions.unsupported",
-} as const satisfies Record<CapiStatus, string>
-
-function renderConnectionContent({
-  connectionState,
-  integrationMessenger,
-  workspaceId,
-  notice,
-}: {
-  connectionState: CapiConnectionState
-  integrationMessenger: MessengerCapiTabProps["integrationMessenger"]
-  workspaceId: string
-  notice: string
-}) {
-  if (connectionState === "disconnected") {
-    return (
-      <CapiMethodChooser
-        actions={{
-          connectCustom: connectMessengerCustomCapiAction,
-          setDataset: setMessengerCapiDatasetAction,
-          provision: provisionMessengerCapiDatasetAction,
-        }}
-        datasetId={integrationMessenger.datasetId}
-        integrationId={integrationMessenger.id}
-        workspaceId={workspaceId}
-      />
-    )
-  }
-  return (
-    <>
-      <CapiConnectedCard
-        datasetId={integrationMessenger.datasetId}
-        disconnectAction={disconnectMessengerCapiAction}
-        integrationId={integrationMessenger.id}
-        notice={connectionState === "awaitingScope" ? notice : undefined}
-        workspaceId={workspaceId}
-      />
-      {/* Sending needs the Meta scope or a manual token; while the scope is
-          still missing a test would only be skipped, so hide the card. */}
-      {connectionState === "awaitingScope" ? null : (
-        <CapiTestEventCard
-          channel="messenger"
-          datasetId={integrationMessenger.datasetId}
-          integrationId={integrationMessenger.id}
-          testEventCode={integrationMessenger.capiTestEventCode}
-          workspaceId={workspaceId}
-        />
-      )}
-    </>
-  )
+  connection: CapiConnection
 }
 
 export function MessengerCapiTab({
   integrationMessenger,
-  hasManualCapiAccessToken,
-  capiDisconnected,
-  credentialAvailable,
+  connection,
 }: MessengerCapiTabProps) {
-  const t = useTranslations()
   const workspaceId = useWorkspaceId()
-  const connectionState = getCapiConnectionState({
-    capiDisconnected,
-    hasManualCapiAccessToken,
-    hasCapiScope: integrationMessenger.hasCapiScope,
-    hasDatasetId: Boolean(integrationMessenger.datasetId),
-  })
-  const status = getCapiStatus({
-    hasCapiScope: integrationMessenger.hasCapiScope,
-    capiDisconnected,
-    hasManualCapiAccessToken,
-    hasDatasetId: Boolean(integrationMessenger.datasetId),
-    credentialAvailable,
-  })
-  const statusConfig = capiStatusConfig[status]
 
   return (
-    <div className="flex flex-col gap-4">
-      <Card>
-        <CardHeader className="gap-2">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex flex-col gap-1.5">
-              <CardTitle>{t("metaConversions.status.title")}</CardTitle>
-              <CardDescription>
-                {t(statusDescriptionKey[status])}
-              </CardDescription>
-            </div>
-            <Badge className={cn("gap-2", statusConfig.className)}>
-              <span
-                className={cn("size-2 rounded-full", statusConfig.dotClassName)}
-              />
-              {t(statusConfig.labelKey)}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {renderConnectionContent({
-            connectionState,
-            integrationMessenger,
-            workspaceId,
-            notice: t("metaConversions.statusDescriptions.missingPermission"),
-          })}
-        </CardContent>
-      </Card>
-    </div>
+    <CapiConnectionTab
+      channel="messenger"
+      connectCustomAction={connectMessengerCustomCapiAction}
+      connection={connection}
+      connectSlot={
+        <CapiConnectButton
+          connectAction={connectMessengerCapiAction}
+          integrationId={integrationMessenger.id}
+          workspaceId={workspaceId}
+        />
+      }
+      disconnectAction={disconnectMessengerCapiAction}
+      integration={integrationMessenger}
+    />
   )
 }
