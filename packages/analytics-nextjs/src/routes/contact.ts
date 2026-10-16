@@ -1,6 +1,6 @@
 import {
-  type ContactsByDimension,
   contactAnalyticsService,
+  contactsByDimensionQuerySchema,
   getContactCountsResponseSchema,
   getContactsByDimensionStatsResponseSchema,
   getContactsCountResponseSchema,
@@ -12,7 +12,6 @@ import {
 } from "@chatbotx.io/analytics"
 import { withCache } from "@chatbotx.io/redis"
 import { os } from "@orpc/server"
-import z from "zod"
 import { logger } from "../lib/log"
 
 const timeRangeKey = (
@@ -221,30 +220,11 @@ export const analyticsContactRoutes = os.router({
       summary: "Get contacts by dimension",
       tags: ["Analytics"],
     })
-    .input(
-      timeRangeQuerySchema.extend({
-        dimension: z.enum(["country", "channel", "source"]),
-      }),
-    )
+    .input(contactsByDimensionQuerySchema)
     .output(getContactsByDimensionStatsResponseSchema)
     .handler(async ({ input }) => {
       try {
-        let data: ContactsByDimension[] = []
-
-        switch (input.dimension) {
-          case "country":
-            data = await contactAnalyticsService.getContactsByCountry(input)
-            break
-          case "channel":
-            data = await contactAnalyticsService.getContactsByChannel(input)
-            break
-          case "source":
-            data = await contactAnalyticsService.getContactsBySource(input)
-            break
-          default:
-            data = []
-        }
-
+        const data = await contactAnalyticsService.getContactsByDimension(input)
         return { data }
       } catch (error) {
         logger.error({ err: error }, "[analytics:contactsByDimension] failed")

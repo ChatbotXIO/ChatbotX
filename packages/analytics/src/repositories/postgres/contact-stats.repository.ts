@@ -19,9 +19,12 @@ import {
 } from "../../lib/time-series"
 import type {
   ContactCountsSchema,
+  ContactDimension,
+  ContactDimensionMetric,
   ContactEventType,
   ContactStats,
   ContactsByDimension,
+  ContactsByDimensionQuery,
   TimeRangeQuery,
 } from "../../schemas"
 import { BaseRepository } from "./base.repository"
@@ -36,6 +39,62 @@ export type InsertContactEventRow = EventBusMessageMetadata & {
   channel?: string | null
   country?: string | null
   metadata?: Record<string, unknown> | null
+}
+
+type SqlFragment = ReturnType<typeof sql>
+type SqlColumn = ReturnType<typeof sql.identifier>
+
+// Column names are static map entries (never request input). SQL is built when
+// a query runs, not at import time, so modules that mock the database client
+// without `sql` can still import this repository.
+const CONTACT_DIMENSION_COLUMNS: Record<ContactDimension, string> = {
+  country: "country",
+  channel: "channel",
+  source: "source",
+}
+
+// Contacts that exist as of `to`: same created-minus-deleted balance as the
+// total contacts series. Reads the raw hypertable because the hourly cagg only
+// materializes the last 7 days. Null/empty values collapse into one unknown
+// group so the groups still add up to the series total.
+const totalContactsBalance = (): SqlFragment => sql`(
+  COUNT(*) FILTER (WHERE "eventType" = 'contact_created') -
+  COUNT(*) FILTER (WHERE "eventType" = 'contact_deleted')
+)::int`
+
+const CONTACT_DIMENSION_QUERIES: Record<
+  ContactDimensionMetric,
+  (props: TimeRangeQuery, column: SqlColumn) => SqlFragment
+> = {
+  new: ({ workspaceId, from, to }, column) => sql`
+    SELECT
+      ${column} AS dimension,
+      COUNT(*)::int AS count,
+      COUNT(DISTINCT "contactId")::int AS "uniqueContacts"
+    FROM "AnalyticsContactEvent"
+    WHERE "workspaceId" = ${workspaceId}
+      AND "occurredAt" >= ${from}
+      AND "occurredAt" <= ${to}
+      AND "eventType" = 'contact_created'
+      AND ${column} IS NOT NULL
+      AND ${column} != ''
+    GROUP BY 1
+    ORDER BY count DESC
+  `,
+  // A donut cannot draw a zero or negative slice, so those groups are dropped.
+  total: ({ workspaceId, to }, column) => sql`
+    SELECT
+      COALESCE(NULLIF(${column}, ''), '') AS dimension,
+      ${totalContactsBalance()} AS count,
+      ${totalContactsBalance()} AS "uniqueContacts"
+    FROM "AnalyticsContactEvent"
+    WHERE "workspaceId" = ${workspaceId}
+      AND "occurredAt" <= ${to}
+      AND "eventType" IN ('contact_created', 'contact_deleted')
+    GROUP BY 1
+    HAVING ${totalContactsBalance()} > 0
+    ORDER BY count DESC
+  `,
 }
 
 export class ContactStatsRepository extends BaseRepository {
@@ -589,70 +648,13 @@ export class ContactStatsRepository extends BaseRepository {
     return Number((result.rows[0] as { total: number } | undefined)?.total ?? 0)
   }
 
-  getContactsByCountry(props: TimeRangeQuery): Promise<ContactsByDimension[]> {
-    return this.getContactsByDimension(props, "country")
-  }
-
-  getContactsByChannel(props: TimeRangeQuery): Promise<ContactsByDimension[]> {
-    return this.getContactsByDimension(props, "channel")
-  }
-
-  private async getContactsByDimension(
-    props: TimeRangeQuery,
-    dimension: "country" | "channel",
+  async getContactsByDimension(
+    props: ContactsByDimensionQuery,
   ): Promise<ContactsByDimension[]> {
-    const { workspaceId, from, to } = props
-    const col = dimension === "country" ? sql`"country"` : sql`"channel"`
-
-    const result = await db.execute(sql`
-      SELECT
-        ${col} AS dimension,
-        COUNT(*)::int AS count,
-        COUNT(DISTINCT "contactId")::int AS "uniqueContacts"
-      FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
-        AND "occurredAt" >= ${from}
-        AND "occurredAt" <= ${to}
-        AND "eventType" = 'contact_created'
-        AND ${col} IS NOT NULL
-        AND ${col} != ''
-      GROUP BY 1
-      ORDER BY count DESC
-    `)
-
-    return (
-      result.rows as {
-        dimension: string
-        count: number
-        uniqueContacts: number
-      }[]
-    ).map((row) => ({
-      dimension: row.dimension,
-      count: Number(row.count),
-      uniqueContacts: Number(row.uniqueContacts),
-    }))
-  }
-
-  async getContactsBySource(
-    props: TimeRangeQuery,
-  ): Promise<ContactsByDimension[]> {
-    const { workspaceId, from, to } = props
-
-    const result = await db.execute(sql`
-      SELECT
-        "source" AS dimension,
-        COUNT(*)::int AS count,
-        COUNT(DISTINCT "contactId")::int AS "uniqueContacts"
-      FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
-        AND "occurredAt" >= ${from}
-        AND "occurredAt" <= ${to}
-        AND "eventType" = 'contact_created'
-        AND "source" IS NOT NULL
-        AND "source" != ''
-      GROUP BY 1
-      ORDER BY count DESC
-    `)
+    const column = sql.identifier(CONTACT_DIMENSION_COLUMNS[props.dimension])
+    const result = await db.execute(
+      CONTACT_DIMENSION_QUERIES[props.metric](props, column),
+    )
 
     return (
       result.rows as {

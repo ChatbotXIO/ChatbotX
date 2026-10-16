@@ -6,6 +6,7 @@ const transitionResult: { current: { id: string }[] } = { current: [] }
 vi.mock("../src/repositories/postgres", () => ({
   contactStatsRepository: {
     insertEvents: vi.fn(async () => undefined),
+    getContactsByDimension: vi.fn(async () => []),
   },
 }))
 
@@ -17,11 +18,12 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: vi.fn(async () => undefined),
+  withCache: vi.fn(async (_key: string, fn: () => Promise<unknown>) => fn()),
 }))
 
 const { contactStatsRepository } = await import("../src/repositories/postgres")
 const { contactRepository } = await import("@chatbotx.io/database/repositories")
-const { invalidateCacheByTags } = await import("@chatbotx.io/redis")
+const { invalidateCacheByTags, withCache } = await import("@chatbotx.io/redis")
 const { contactAnalyticsService } = await import(
   "../src/services/contact-analytics.service"
 )
@@ -31,6 +33,9 @@ const insertEvents = contactStatsRepository.insertEvents as ReturnType<
 >
 const blockManyIfNotBlocked =
   contactRepository.blockManyIfNotBlocked as ReturnType<typeof vi.fn>
+const withCacheMock = withCache as ReturnType<typeof vi.fn>
+const getContactsByDimension =
+  contactStatsRepository.getContactsByDimension as ReturnType<typeof vi.fn>
 const invalidateCacheByTagsMock = invalidateCacheByTags as ReturnType<
   typeof vi.fn
 >
@@ -272,5 +277,82 @@ describe("ContactAnalyticsService.handleBlocked", () => {
     ])
 
     expect(invalidateCacheByTagsMock).not.toHaveBeenCalled()
+  })
+})
+
+describe("ContactAnalyticsService.getContactsByDimension", () => {
+  const query = {
+    workspaceId: "ws-1",
+    from: new Date("2026-10-01T00:00:00.000Z"),
+    to: new Date("2026-10-07T23:59:59.999Z"),
+    timezone: "UTC",
+    dimension: "channel" as const,
+  }
+
+  beforeEach(() => {
+    withCacheMock.mockClear()
+    getContactsByDimension.mockClear()
+  })
+
+  test("reads new contacts straight from the repository without caching", async () => {
+    await contactAnalyticsService.getContactsByDimension({
+      ...query,
+      metric: "new",
+    })
+
+    expect(getContactsByDimension).toHaveBeenCalledTimes(1)
+    expect(withCacheMock).not.toHaveBeenCalled()
+  })
+
+  test("caches the total briefly, keyed by workspace, dimension and range end only", async () => {
+    await contactAnalyticsService.getContactsByDimension({
+      ...query,
+      metric: "total",
+    })
+    await contactAnalyticsService.getContactsByDimension({
+      ...query,
+      from: new Date("2026-09-01T00:00:00.000Z"),
+      timezone: "Asia/Ho_Chi_Minh",
+      metric: "total",
+    })
+
+    const [firstKey, , firstOptions] = withCacheMock.mock.calls[0] ?? []
+    const [secondKey] = withCacheMock.mock.calls[1] ?? []
+    expect(firstKey).toBe(
+      "analytics:contacts-by-dimension:total:ws-1:channel:2026-10-07T23:59:59.999Z",
+    )
+    expect(secondKey).toBe(firstKey)
+    expect(firstOptions).toEqual({ ttl: 120 })
+  })
+
+  test("never shares a total cache entry across workspaces or dimensions", async () => {
+    await contactAnalyticsService.getContactsByDimension({
+      ...query,
+      metric: "total",
+    })
+    await contactAnalyticsService.getContactsByDimension({
+      ...query,
+      workspaceId: "ws-2",
+      metric: "total",
+    })
+    await contactAnalyticsService.getContactsByDimension({
+      ...query,
+      dimension: "source",
+      metric: "total",
+    })
+
+    const keys = withCacheMock.mock.calls.map(([key]) => key)
+    expect(new Set(keys).size).toBe(3)
+  })
+
+  test("propagates repository failures instead of caching them", async () => {
+    getContactsByDimension.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(
+      contactAnalyticsService.getContactsByDimension({
+        ...query,
+        metric: "total",
+      }),
+    ).rejects.toThrow("db down")
   })
 })

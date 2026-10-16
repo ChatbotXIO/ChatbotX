@@ -1,6 +1,7 @@
 // @vitest-environment node
 
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { contactsByDimensionPublicRequest } from "@/features/analytics/schema/public"
 
 // `@chatbotx.io/analytics`'s barrel re-exports its services, which import
 // repositories that open a real `pg.Pool` via `@chatbotx.io/database/client`
@@ -66,9 +67,7 @@ const contactAnalyticsService = {
   getBlockedContactsCount: vi.fn(),
   getNewContactsCount: vi.fn(),
   getContactsCount: vi.fn(),
-  getContactsByCountry: vi.fn(),
-  getContactsByChannel: vi.fn(),
-  getContactsBySource: vi.fn(),
+  getContactsByDimension: vi.fn(),
 }
 
 const macAnalyticsService = {
@@ -212,6 +211,52 @@ describe("GET /v1/analytics/contacts-count", () => {
     )
     expect(withCache).toHaveBeenCalled()
     expect(result).toEqual({ data: { count: 5 } })
+  })
+})
+
+describe("GET /v1/analytics/contacts-by-dimension", () => {
+  const procedure = findProcedure("GET", "/v1/analytics/contacts-by-dimension")
+  const range = {
+    from: new Date("2026-10-01T00:00:00.000Z"),
+    to: new Date("2026-10-07T23:59:59.999Z"),
+    timezone: "UTC",
+  }
+
+  test("sources workspaceId from context and forwards dimension and metric", async () => {
+    const rows = [{ dimension: "messenger", count: 3, uniqueContacts: 3 }]
+    contactAnalyticsService.getContactsByDimension.mockResolvedValueOnce(rows)
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { ...range, dimension: "channel", metric: "total" },
+    })
+
+    expect(contactAnalyticsService.getContactsByDimension).toHaveBeenCalledWith(
+      {
+        ...range,
+        dimension: "channel",
+        metric: "total",
+        workspaceId: "workspace-1",
+      },
+    )
+    expect(result).toEqual({ data: rows })
+  })
+
+  test("request schema defaults metric to new and rejects total for country", () => {
+    const defaulted = contactsByDimensionPublicRequest.parse({
+      from: range.from.toISOString(),
+      to: range.to.toISOString(),
+      dimension: "country",
+    })
+    expect(defaulted.metric).toBe("new")
+
+    const rejected = contactsByDimensionPublicRequest.safeParse({
+      from: range.from.toISOString(),
+      to: range.to.toISOString(),
+      dimension: "country",
+      metric: "total",
+    })
+    expect(rejected.success).toBe(false)
   })
 })
 

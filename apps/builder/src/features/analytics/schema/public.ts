@@ -1,6 +1,7 @@
 import {
   botMessageStatsSchema,
   commentAutomationTimeseriesRow,
+  contactsByDimensionFields,
   conversationArchivedStatsSchema,
   conversationAssignedByAdminStatsSchema,
   conversationAssignedStatsSchema,
@@ -18,6 +19,7 @@ import {
   getSequenceStepStatsRequest,
   getSequenceStepStatsResponse,
   humanAgentStatsSchema,
+  isSupportedDimensionMetric,
   messagesByAdminStatsSchema,
   messagesBySenderStatsSchema,
   refLinkTimeseriesRow,
@@ -25,6 +27,7 @@ import {
   timeRangeQueryWithGranularityDMSchema,
   timeRangeQueryWithGranularityMHDSchema,
   uniqueConversationsByAdminStatsSchema,
+  unsupportedDimensionMetricIssue,
 } from "@chatbotx.io/analytics/schemas"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
@@ -46,11 +49,9 @@ export const timeRangeWithGranularityMHDPublicRequest =
 export const timeRangeWithGranularityDMPublicRequest =
   timeRangeQueryWithGranularityDMSchema.omit({ workspaceId: true })
 
-export const contactsByDimensionPublicRequest = timeRangePublicRequest.extend({
-  dimension: z
-    .enum(["country", "channel", "source"])
-    .describe("How to group contact counts."),
-})
+export const contactsByDimensionPublicRequest = timeRangePublicRequest
+  .extend(contactsByDimensionFields)
+  .refine(isSupportedDimensionMetric, unsupportedDimensionMetricIssue)
 
 // ─────────────────────────────────────────────────────────────────────────
 // Contact stats

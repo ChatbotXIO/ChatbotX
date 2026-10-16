@@ -1,7 +1,6 @@
 import {
   botMessageAnalyticsService,
   broadcastAnalyticsService,
-  type ContactsByDimension,
   commentAutomationAnalyticsService,
   contactAnalyticsService,
   conversationAnalyticsService,
@@ -299,7 +298,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/contacts-by-dimension",
       summary: "Get contacts by dimension",
       description:
-        "Use this for a breakdown of contacts by channel, country, or source. Groups contact counts by country, channel, or source over a time range. Set `dimension` to choose the grouping.",
+        "Use this for a breakdown of contacts by channel, country, or source. Set `dimension` to choose the grouping. With `metric` `new` (default) it counts contacts created between `from` and `to`. With `metric` `total` it counts the contacts that exist as of `to` (`from` is ignored; not available for `country`).",
       tags: ["Analytics"],
     })
     .input(contactsByDimensionPublicRequest)
@@ -307,21 +306,7 @@ export const analyticsPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const request = { ...input, workspaceId: context.workspace.id }
-      let data: ContactsByDimension[] = []
-
-      switch (input.dimension) {
-        case "country":
-          data = await contactAnalyticsService.getContactsByCountry(request)
-          break
-        case "channel":
-          data = await contactAnalyticsService.getContactsByChannel(request)
-          break
-        case "source":
-          data = await contactAnalyticsService.getContactsBySource(request)
-          break
-        default:
-          data = []
-      }
+      const data = await contactAnalyticsService.getContactsByDimension(request)
 
       return { data }
     }),

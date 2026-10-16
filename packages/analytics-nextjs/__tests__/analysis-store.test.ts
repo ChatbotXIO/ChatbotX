@@ -418,10 +418,17 @@ describe("analysis store", () => {
       }
       ;(
         api.contactsByDimensionAnalyticsAPI as ReturnType<typeof vi.fn>
-      ).mockImplementation(({ dimension }: { dimension: string }) =>
-        Promise.resolve({
-          data: [{ dimension, uniqueContacts: 7 }],
-        }),
+      ).mockImplementation(
+        ({ dimension, metric }: { dimension: string; metric?: string }) =>
+          Promise.resolve({
+            data: [
+              {
+                dimension:
+                  metric === "total" ? `${dimension}:total` : dimension,
+                uniqueContacts: 7,
+              },
+            ],
+          }),
       )
     }
 
@@ -433,7 +440,7 @@ describe("analysis store", () => {
       }
     }
 
-    test("loads only the nine visible contact datasets and leaves conversation endpoints untouched", async () => {
+    test("loads only the ten visible contact datasets and leaves conversation endpoints untouched", async () => {
       stubContactsApi()
       for (const key of selectedConversationApiKeys) {
         ;(api[key] as ReturnType<typeof vi.fn>).mockRejectedValue(
@@ -459,18 +466,81 @@ describe("analysis store", () => {
         inboxNewContacts: 5,
         inboxActiveContacts: 6,
         contactsByChannel: [{ dimension: "channel", uniqueContacts: 7 }],
+        allContactsByChannel: [
+          { dimension: "channel:total", uniqueContacts: 7 },
+        ],
         contactsByCountry: [{ dimension: "country", uniqueContacts: 7 }],
         contactsBySource: [{ dimension: "source", uniqueContacts: 7 }],
         loading: false,
       })
       for (const key of selectedContactApiKeys) {
         expect(api[key]).toHaveBeenCalledTimes(
-          key === "contactsByDimensionAnalyticsAPI" ? 3 : 1,
+          key === "contactsByDimensionAnalyticsAPI" ? 4 : 1,
         )
       }
       for (const key of selectedConversationApiKeys) {
         expect(api[key]).not.toHaveBeenCalled()
       }
+    })
+
+    test("keeps new and all contacts by channel independent and range-aware", async () => {
+      stubContactsApi()
+      const store = createAnalysisStore({
+        api,
+        type: "contacts",
+        defaultSearchParams: baseSearchParams,
+        from,
+        to,
+      })
+
+      await store.getState().getContactsByChannel()
+      await store.getState().getAllContactsByChannel()
+
+      expect(store.getState().contactsByChannel).toEqual([
+        { dimension: "channel", uniqueContacts: 7 },
+      ])
+      expect(store.getState().allContactsByChannel).toEqual([
+        { dimension: "channel:total", uniqueContacts: 7 },
+      ])
+      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          dimension: "channel",
+          metric: "total",
+          from: from.toISOString(),
+          to: to.toISOString(),
+        }),
+      )
+    })
+
+    test("an all contacts by channel failure leaves new contacts by channel intact", async () => {
+      stubContactsApi()
+      ;(
+        api.contactsByDimensionAnalyticsAPI as ReturnType<typeof vi.fn>
+      ).mockImplementation(({ metric }: { metric?: string }) =>
+        metric === "total"
+          ? Promise.reject(new Error("boom"))
+          : Promise.resolve({
+              data: [{ dimension: "channel", uniqueContacts: 7 }],
+            }),
+      )
+      const store = createAnalysisStore({
+        api,
+        type: "contacts",
+        defaultSearchParams: baseSearchParams,
+        from,
+        to,
+      })
+
+      await store.getState().loadAnalysisData()
+
+      expect(store.getState().dashboardLoadStatus).toMatchObject({
+        getContactsByChannel: "success",
+        getAllContactsByChannel: "error",
+      })
+      expect(store.getState().contactsByChannel).toEqual([
+        { dimension: "channel", uniqueContacts: 7 },
+      ])
+      expect(store.getState().allContactsByChannel).toEqual([])
     })
 
     test("loads only the ten visible conversation datasets until their required work settles", async () => {
@@ -584,7 +654,7 @@ describe("analysis store", () => {
       expect(store.getState().dashboardLoadStatus.getContactCounts).toBe(
         "success",
       )
-      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(3)
+      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(4)
 
       ;(
         api.newContactCountsPerDayAnalyticsAPI as ReturnType<typeof vi.fn>
@@ -634,20 +704,29 @@ describe("analysis store", () => {
         getInboxActiveContacts: "loading",
         getContactCounts: "loading",
         getContactsByChannel: "loading",
+        getAllContactsByChannel: "loading",
         getBlockedContactCounts: "loading",
       })
       expect(api.contactCountsPerDayAnalyticsAPI).toHaveBeenCalledTimes(1)
-      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(3)
+      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(4)
       expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({ dimension: "channel" }),
       )
+      expect(
+        (api.contactsByDimensionAnalyticsAPI as ReturnType<typeof vi.fn>).mock
+          .calls[0]?.[0],
+      ).not.toHaveProperty("metric")
       expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenNthCalledWith(
         2,
-        expect.objectContaining({ dimension: "source" }),
+        expect.objectContaining({ dimension: "channel", metric: "total" }),
       )
       expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenNthCalledWith(
         3,
+        expect.objectContaining({ dimension: "source" }),
+      )
+      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenNthCalledWith(
+        4,
         expect.objectContaining({ dimension: "country" }),
       )
 
@@ -741,7 +820,7 @@ describe("analysis store", () => {
       await store.getState().setRange({ from: newerFrom, to: newerTo })
       expect(store.getState().inboxTotalContacts).toBe(99)
       expect(store.getState().errors.size).toBe(0)
-      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(6)
+      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(8)
 
       olderTotal.reject(new ORPCError("BAD_REQUEST", { message: "old range" }))
       await olderLoad
@@ -752,7 +831,7 @@ describe("analysis store", () => {
         "success",
       )
       expect(store.getState().loading).toBe(false)
-      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(6)
+      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(8)
     })
 
     test("keeps the newest same-range refresh when an older request settles", async () => {
@@ -786,7 +865,7 @@ describe("analysis store", () => {
         "success",
       )
       expect(store.getState().loading).toBe(false)
-      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(6)
+      expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenCalledTimes(8)
     })
 
     test("loads only the reflink batch for type: reflinks", async () => {
