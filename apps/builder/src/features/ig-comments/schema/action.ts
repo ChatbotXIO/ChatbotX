@@ -18,6 +18,7 @@ import {
   parseAsString,
 } from "nuqs/server"
 import z from "zod"
+import { automationInboxIdSchema } from "@/features/shared/comment-automation/schema/account"
 import { parseAsBigInt } from "@/lib/nuqs"
 import { basePaginationRequest } from "@/lib/pagination"
 import { igCommentResource } from "./resource"
@@ -57,6 +58,7 @@ export const createIgCommentRequest = z.object({
   type: igCommentVariants.describe(
     "Instagram connection type, `instagram` (native login) or `instagramFacebook` (linked via a Facebook page).",
   ),
+  inboxId: automationInboxIdSchema,
   folderId: zodBigintAsString()
     .nullish()
     .describe("Folder to place the automation in, or null for root-level."),

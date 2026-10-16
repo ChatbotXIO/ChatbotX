@@ -233,5 +233,8 @@ test("GET /v1/threads-comments/threads-posts lists posts of the token workspace"
     context,
   })
 
-  expect(listThreadsPostsForWorkspace).toHaveBeenCalledWith("workspace-1")
+  expect(listThreadsPostsForWorkspace).toHaveBeenCalledWith(
+    "workspace-1",
+    undefined,
+  )
 })

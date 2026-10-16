@@ -28,6 +28,14 @@ vi.mock("@/hooks/routing", () => ({
 // The rich-text body isn't under test here (only capability gating is);
 // mounting the real Tiptap/ProseMirror editor needs DOM APIs jsdom lacks
 // (e.g. Range.getClientRects, elementFromPoint).
+vi.mock(
+  "@/features/shared/comment-automation/automation-account-field",
+  () => ({
+    AutomationAccountField: () => null,
+    useAccountChoiceMissing: () => false,
+  }),
+)
+
 vi.mock("@/components/tiptap/tiptap-editor-field", () => ({
   TiptapEditorField: ({ name }: { name: string }) => (
     <div data-testid={`tiptap-${name}`} />

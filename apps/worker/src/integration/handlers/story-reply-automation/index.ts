@@ -204,6 +204,7 @@ async function runStoryAutomations(event: StoryAutomationEvent): Promise<void> {
       workspaceId,
       channelType,
       trigger,
+      inboxId: contactInbox.inboxId,
     }),
     workspaceService.findById({ id: workspaceId }),
   ])

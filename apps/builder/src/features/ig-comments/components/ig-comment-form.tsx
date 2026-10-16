@@ -32,6 +32,10 @@ import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import {
+  AutomationAccountField,
+  useAccountChoiceMissing,
+} from "@/features/shared/comment-automation/automation-account-field"
 import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclude-keywords-field"
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
@@ -73,6 +77,8 @@ export function IgCommentForm({
 
   const postType = useWatch({ control: form.control, name: "post.type" })
   const postValue = useWatch({ control: form.control, name: "post.value" })
+  const inboxId = useWatch({ control: form.control, name: "inboxId" })
+  const accountChoiceMissing = useAccountChoiceMissing(variant)
   // A Live automation answers every live broadcast, so there is no post to
   // target. Instagram Live is also private-reply-only (no public reply, like,
   // hide or reply delay — see `liveCommentCapabilities`), and the service pins
@@ -211,6 +217,8 @@ export function IgCommentForm({
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 space-y-4">
+          <AutomationAccountField targetField="post" type={variant} />
+
           {isLive ? (
             <p className="text-muted-foreground text-sm">
               {t("instagramCommentAutomation.liveReplyNote")}
@@ -240,6 +248,7 @@ export function IgCommentForm({
                 {postValue.length > 0 && ` (${postValue.length})`}
               </Button>
               <SelectInstagramPostsDialog
+                inboxId={inboxId}
                 onChange={(ids) =>
                   form.setValue("post.value", ids, { shouldValidate: true })
                 }
@@ -547,7 +556,9 @@ export function IgCommentForm({
           {t("actions.cancel")}
         </Button>
         <Button
-          disabled={!form.formState.isValid || isSubmitting}
+          disabled={
+            !form.formState.isValid || isSubmitting || accountChoiceMissing
+          }
           type="submit"
         >
           {submitLabel}

@@ -12,10 +12,12 @@ import {
   createSelectSchema,
 } from "@chatbotx.io/database/schema"
 import z from "zod"
+import { automationInboxIdResourceSchema } from "@/features/shared/comment-automation/schema/account"
 
 export const igCommentResource = createSelectSchema(commentAutomationModel, {
   id: z.string(),
   workspaceId: z.string(),
+  inboxId: automationInboxIdResourceSchema,
   folderId: z.string().nullish(),
   post: commentPostSchema,
   privateReply: commentReplySchema,

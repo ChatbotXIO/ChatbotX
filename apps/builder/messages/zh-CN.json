@@ -998,6 +998,15 @@
     "liveBadge": "直播",
     "postTypeDialog": {
       "title": "选择帖子类型"
+    },
+    "account": {
+      "label": "账号",
+      "description": "此自动化回复所在的已连接账号。选择“所有账号”可在此渠道的所有已连接账号上回复。",
+      "all": "所有账号",
+      "placeholder": "选择账号",
+      "required": "已连接多个账号：请选择一个，或有意选择“所有账号”。",
+      "targetsCleared": "所选帖子已清除，因为它们可能属于其他账号。",
+      "column": "账号"
     }
   },
   "channels": {

@@ -36,6 +36,7 @@ export function EditIgCommentForm({
     mode: "onChange",
     defaultValues: {
       name: initialData.name,
+      inboxId: initialData.inboxId,
       type: variant,
       folderId: initialData.folderId ?? undefined,
       post: initialData.post,

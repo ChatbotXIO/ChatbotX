@@ -77,6 +77,13 @@ vi.mock("@chatbotx.io/database/partials", async () => {
     commentReplySchema: z.object({}),
     igStoryAutomationTriggers: z.enum(["storyReply", "storyMention"]),
     igStoryAutomationTypes: z.enum(["instagram", "facebook"]),
+    commentAutomationTypes: z.enum([
+      "messenger",
+      "instagram",
+      "instagramFacebook",
+      "threads",
+      "tiktok",
+    ]),
     igStoryTargetSchema: z.object({}),
   }
 })
@@ -286,7 +293,10 @@ describe("GET /v1/ig-stories/instagram-stories", () => {
       procedure.handler?.({ context, input: { variant: "instagram" } }),
     ).resolves.toEqual(response)
 
-    expect(listInstagramLoginStories).toHaveBeenCalledWith("workspace-1")
+    expect(listInstagramLoginStories).toHaveBeenCalledWith(
+      "workspace-1",
+      undefined,
+    )
     expect(listInstagramFacebookStories).not.toHaveBeenCalled()
   })
 
@@ -301,6 +311,9 @@ describe("GET /v1/ig-stories/instagram-stories", () => {
       }),
     ).resolves.toEqual(response)
 
-    expect(listInstagramFacebookStories).toHaveBeenCalledWith("workspace-1")
+    expect(listInstagramFacebookStories).toHaveBeenCalledWith(
+      "workspace-1",
+      undefined,
+    )
   })
 })

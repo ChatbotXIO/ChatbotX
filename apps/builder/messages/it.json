@@ -2194,6 +2194,15 @@
     "liveBadge": "Live",
     "postTypeDialog": {
       "title": "Seleziona il tipo di post"
+    },
+    "account": {
+      "label": "Account",
+      "description": "L'account collegato su cui risponde questa automazione. Scegli “Tutti gli account” per rispondere su tutti gli account collegati di questo canale.",
+      "all": "Tutti gli account",
+      "placeholder": "Seleziona un account",
+      "required": "Sono collegati più account: scegline uno oppure scegli di proposito “Tutti gli account”.",
+      "targetsCleared": "I post selezionati sono stati rimossi perché potrebbero appartenere a un altro account.",
+      "column": "Account"
     }
   },
   "condition": {

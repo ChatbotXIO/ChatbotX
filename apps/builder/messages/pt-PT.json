@@ -651,6 +651,15 @@
     "liveBadge": "Em direto",
     "postTypeDialog": {
       "title": "Selecione o tipo de publicação"
+    },
+    "account": {
+      "label": "Conta",
+      "description": "A conta ligada em que esta automação responde. Escolha “Todas as contas” para responder em todas as contas ligadas deste canal.",
+      "all": "Todas as contas",
+      "placeholder": "Selecione uma conta",
+      "required": "Há várias contas ligadas: escolha uma ou escolha “Todas as contas” de propósito.",
+      "targetsCleared": "As publicações selecionadas foram removidas porque podem pertencer a outra conta.",
+      "column": "Conta"
     }
   },
   "condition": {

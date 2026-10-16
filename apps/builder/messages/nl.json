@@ -651,6 +651,15 @@
     "liveBadge": "Live",
     "postTypeDialog": {
       "title": "Berichttype selecteren"
+    },
+    "account": {
+      "label": "Account",
+      "description": "Het gekoppelde account waarop deze automatisering reageert. Kies “Alle accounts” om op alle gekoppelde accounts van dit kanaal te reageren.",
+      "all": "Alle accounts",
+      "placeholder": "Selecteer een account",
+      "required": "Er zijn meerdere accounts gekoppeld: kies er één, of kies bewust “Alle accounts”.",
+      "targetsCleared": "De geselecteerde berichten zijn gewist omdat ze bij een ander account kunnen horen.",
+      "column": "Account"
     }
   },
   "fields": {

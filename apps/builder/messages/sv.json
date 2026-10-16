@@ -810,6 +810,15 @@
     "liveBadge": "Live",
     "postTypeDialog": {
       "title": "Välj inläggstyp"
+    },
+    "account": {
+      "label": "Konto",
+      "description": "Det anslutna kontot som den här automatiseringen svarar på. Välj ”Alla konton” för att svara på alla anslutna konton i den här kanalen.",
+      "all": "Alla konton",
+      "placeholder": "Välj ett konto",
+      "required": "Flera konton är anslutna: välj ett, eller välj medvetet ”Alla konton”.",
+      "targetsCleared": "De valda inläggen rensades eftersom de kan tillhöra ett annat konto.",
+      "column": "Konto"
     }
   },
   "channels": {

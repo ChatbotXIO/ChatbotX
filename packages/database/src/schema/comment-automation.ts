@@ -21,6 +21,7 @@ import {
 } from "../partials/comment-automation"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { folderModel } from "./folder"
+import { inboxModel } from "./inbox"
 import { workspaceModel } from "./workspace"
 
 export const commentAutomationType = pgEnum(
@@ -49,6 +50,21 @@ export const commentAutomationModel = pgTable(
       onUpdate: "cascade",
     }),
     type: commentAutomationType().notNull().default("messenger"),
+    /**
+     * The one connected account (Page, Instagram account, Threads profile,
+     * TikTok account) this automation answers on. `NULL` means every account
+     * of `type` in the workspace — the behavior every automation had before
+     * the column existed, so legacy rows keep it without a data migration.
+     * `findActiveAutomations` matches `inboxId IS NULL OR inboxId = <the
+     * comment's inbox>`.
+     *
+     * `cascade`, not `set null`: nulling it would silently widen an automation
+     * meant for one Page into one that answers on every Page.
+     */
+    inboxId: bigintAsString().references(() => inboxModel.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
     isActive: boolean().notNull().default(true),
     startTime: text(),
     endTime: text(),
@@ -149,6 +165,10 @@ export const commentAutomationModel = pgTable(
     index("CommentAutomation_folderId_idx").using(
       "btree",
       table.folderId.asc().nullsLast(),
+    ),
+    index("CommentAutomation_inboxId_idx").using(
+      "btree",
+      table.inboxId.asc().nullsLast(),
     ),
   ],
 )

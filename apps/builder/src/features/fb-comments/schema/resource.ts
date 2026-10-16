@@ -12,10 +12,15 @@ import {
   createSelectSchema,
 } from "@chatbotx.io/database/schema"
 import z from "zod"
+import {
+  automationInboxIdResourceSchema,
+  postAccountInboxIdSchema,
+} from "@/features/shared/comment-automation/schema/account"
 
 export const fbCommentResource = createSelectSchema(commentAutomationModel, {
   id: z.string(),
   workspaceId: z.string(),
+  inboxId: automationInboxIdResourceSchema,
   folderId: z.string().nullish(),
   post: commentPostSchema,
   privateReply: commentReplySchema,
@@ -35,5 +40,6 @@ export const facebookPostSchema = z.object({
   created_time: z.string(),
   permalink_url: z.string().optional(),
   pageId: z.string(),
+  inboxId: postAccountInboxIdSchema,
 })
 export type FBCommentResource = z.infer<typeof fbCommentResource>

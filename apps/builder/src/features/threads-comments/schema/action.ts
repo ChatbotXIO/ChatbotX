@@ -14,6 +14,7 @@ import {
   parseAsString,
 } from "nuqs/server"
 import z from "zod"
+import { automationInboxIdSchema } from "@/features/shared/comment-automation/schema/account"
 import { basePaginationRequest } from "@/lib/pagination"
 import { threadsCommentResource } from "./resource"
 
@@ -244,6 +245,7 @@ export function createThreadsCommentRequestSchema(
       .min(1)
       .max(MAX_NAME_LENGTH)
       .describe("Automation name."),
+    inboxId: automationInboxIdSchema,
     post: threadsPostSchema.describe(
       "Which comments to answer: `all` posts or specific `postIds` (get them from `threadsComments.listPosts`).",
     ),

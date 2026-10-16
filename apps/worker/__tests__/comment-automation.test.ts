@@ -375,7 +375,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   mockClaimDedup.mockResolvedValue(true)
   mockIdentifyInboxAndIntegrationAuth.mockResolvedValue({
-    integrationRow: { auth: { accessToken: "token" } },
+    integrationRow: { auth: { accessToken: "token" }, inboxId: "inbox-1" },
   })
   mockFindContactInboxBy.mockResolvedValue({
     id: "contact-inbox-1",
@@ -574,6 +574,7 @@ describe("processCommentAutomation threads support", () => {
     expect(mockFindActiveAutomations).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       channelType: "threads",
+      inboxId: "inbox-1",
     })
   })
 
@@ -811,6 +812,7 @@ describe("processCommentAutomation tiktok support", () => {
     expect(mockFindActiveAutomations).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       channelType: "tiktok",
+      inboxId: "inbox-1",
     })
   })
 

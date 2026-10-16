@@ -4,6 +4,7 @@ import {
   listPostComments,
 } from "@chatbotx.io/integration-messenger/apis/comment"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
+import { filterIntegrationsByAccount } from "../account-filter"
 import { collectCommentsSince, parseGraphTime, toEpochSeconds } from "./paging"
 import {
   MissedCommentsIntegrationNotFoundError,
@@ -28,9 +29,11 @@ function trailingStoryId(postId: string): string {
 export async function scanMessengerComments(
   props: ScanCommentsProps,
 ): Promise<ScannedComment[]> {
-  const { workspaceId, postId, since } = props
-  const integrations =
-    await messengerIntegrationService.findByWorkspaceId(workspaceId)
+  const { workspaceId, postId, since, inboxId } = props
+  const integrations = filterIntegrationsByAccount(
+    await messengerIntegrationService.findByWorkspaceId(workspaceId),
+    inboxId,
+  )
 
   const pageIdInPostId = postId.includes("_")
     ? postId.slice(0, postId.indexOf("_"))

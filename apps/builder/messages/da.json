@@ -651,6 +651,15 @@
     "liveBadge": "Live",
     "postTypeDialog": {
       "title": "Vælg opslagstype"
+    },
+    "account": {
+      "label": "Konto",
+      "description": "Den tilsluttede konto, som denne automatisering svarer på. Vælg “Alle konti” for at svare på alle tilsluttede konti for denne kanal.",
+      "all": "Alle konti",
+      "placeholder": "Vælg en konto",
+      "required": "Flere konti er tilsluttet: vælg én, eller vælg bevidst “Alle konti”.",
+      "targetsCleared": "De valgte opslag blev ryddet, fordi de kan tilhøre en anden konto.",
+      "column": "Konto"
     }
   },
   "condition": {

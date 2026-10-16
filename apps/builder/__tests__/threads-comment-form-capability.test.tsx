@@ -17,6 +17,14 @@ vi.mock("@/features/ai-agents/hooks/use-ai-agents", () => ({
   useAIAgentSelectOptions: () => ({ options: [], isError: false }),
 }))
 
+vi.mock(
+  "@/features/shared/comment-automation/automation-account-field",
+  () => ({
+    AutomationAccountField: () => null,
+    useAccountChoiceMissing: () => false,
+  }),
+)
+
 vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-1",
 }))

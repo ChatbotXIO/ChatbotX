@@ -132,6 +132,25 @@ beforeEach(() => {
 // Tests
 // ---------------------------------------------------------------------------
 
+describe("processStoryReplyAutomation account scope", () => {
+  test("loads only the automations of the account the story reply arrived on", async () => {
+    mockFindContactInboxBy.mockResolvedValue({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      inboxId: "inbox-7",
+    })
+    mockFindActiveAutomations.mockResolvedValue([])
+
+    await processStoryReplyAutomation(buildJobData())
+
+    expect(mockFindActiveAutomations).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      channelType: "instagram",
+      inboxId: "inbox-7",
+    })
+  })
+})
+
 describe("processStoryReplyAutomation text reply variable resolution", () => {
   test("resolves {{variable}} tokens through contactVariableService before sending the story reply", async () => {
     mockFindActiveAutomations.mockResolvedValue([

@@ -193,11 +193,14 @@ export function SelectFacebookPostsDialog({
   onOpenChange,
   value,
   onChange,
+  inboxId,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   value: string[]
   onChange: (ids: string[]) => void
+  /** The automation's account; set, only that Page's posts are offered. */
+  inboxId?: string | null
 }) {
   const t = useTranslations()
 
@@ -216,10 +219,14 @@ export function SelectFacebookPostsDialog({
     }
   }, [open, value])
 
-  const filterByPage = (posts: FacebookPost[]) =>
-    selectedPageId === ALL_PAGES_VALUE
+  const filterByPage = (posts: FacebookPost[]) => {
+    if (inboxId) {
+      return posts.filter((post) => post.inboxId === inboxId)
+    }
+    return selectedPageId === ALL_PAGES_VALUE
       ? posts
       : posts.filter((post) => post.pageId === selectedPageId)
+  }
 
   const toggleId = (id: string) => {
     setSelectedIds((prev) =>
@@ -241,7 +248,7 @@ export function SelectFacebookPostsDialog({
           </DialogTitle>
         </DialogHeader>
 
-        {pages.length > 0 && (
+        {pages.length > 0 && !inboxId && (
           <Select
             onValueChange={(val) => setSelectedPageId(val as string)}
             value={selectedPageId}

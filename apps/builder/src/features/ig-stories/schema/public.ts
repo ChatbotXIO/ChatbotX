@@ -4,6 +4,11 @@ import {
 } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import {
+  automationInboxIdFilterSchema,
+  postAccountInboxIdSchema,
+  postsAccountFilterSchema,
+} from "@/features/shared/comment-automation/schema/account"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { createIgStoryRequest, updateIgStoryRequest } from "./action"
 import { igStoryResource } from "./resource"
@@ -25,6 +30,7 @@ export const listIgStoriesPublicRequest = publicListRequest.extend({
     .describe(
       "Restrict to story reply (`storyReply`) or story mention (`storyMention`) automations.",
     ),
+  inboxId: automationInboxIdFilterSchema,
 })
 export const igStoryPublicResource = igStoryResource.omit({
   workspaceId: true,
@@ -70,6 +76,7 @@ export const listInstagramStoriesPublicRequest = z.object({
   variant: igStoryAutomationTypes.describe(
     "Which Instagram connection type to list stories from, `instagram` (native login) or `instagramFacebook` (linked via a Facebook page).",
   ),
+  inboxId: postsAccountFilterSchema,
 })
 
 export const listInstagramStoriesPublicResponse = z.object({
@@ -81,6 +88,7 @@ export const listInstagramStoriesPublicResponse = z.object({
       created_time: z.string(),
       permalink_url: z.string().optional(),
       accountId: z.string(),
+      inboxId: postAccountInboxIdSchema,
     }),
   ),
   pages: z.array(z.object({ id: z.string(), name: z.string() })),

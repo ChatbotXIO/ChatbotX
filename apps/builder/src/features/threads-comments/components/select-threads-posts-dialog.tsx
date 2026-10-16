@@ -37,11 +37,14 @@ export function SelectThreadsPostsDialog({
   onOpenChange,
   value,
   onChange,
+  inboxId,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   value: string[]
   onChange: (ids: string[]) => void
+  /** The automation's account; set, only that account's posts are offered. */
+  inboxId?: string | null
 }) {
   const t = useTranslations()
   const { data, isLoading, isError } = useThreadsPosts(useWorkspaceId(), {
@@ -60,10 +63,12 @@ export function SelectThreadsPostsDialog({
     }
   }, [open, value])
 
-  const accountPosts =
-    selectedAccountId === ALL_ACCOUNTS_VALUE
-      ? posts
-      : posts.filter((post) => post.accountId === selectedAccountId)
+  let accountPosts = posts
+  if (inboxId) {
+    accountPosts = posts.filter((post) => post.inboxId === inboxId)
+  } else if (selectedAccountId !== ALL_ACCOUNTS_VALUE) {
+    accountPosts = posts.filter((post) => post.accountId === selectedAccountId)
+  }
 
   const toggleId = (id: string) => {
     setSelectedIds((prev) =>
@@ -83,7 +88,7 @@ export function SelectThreadsPostsDialog({
           <DialogTitle>{t("threadsCommentAutomation.selectPosts")}</DialogTitle>
         </DialogHeader>
 
-        {accounts.length > 1 && (
+        {accounts.length > 1 && !inboxId && (
           <Select
             onValueChange={(val) => setSelectedAccountId(val as string)}
             value={selectedAccountId}

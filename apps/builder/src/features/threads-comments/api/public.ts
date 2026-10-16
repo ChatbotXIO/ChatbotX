@@ -1,5 +1,7 @@
 import { commentAutomationService } from "@chatbotx.io/business"
+import { z } from "zod"
 import { bulkUpdateIdsRequest } from "@/features/common/schema"
+import { postsAccountFilterSchema } from "@/features/shared/comment-automation/schema/account"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -148,11 +150,15 @@ export const threadsCommentsPublicRouter = {
         "Returns recent posts from every connected Threads account. Use the post ids in `threadsComments.create` or `threadsComments.update` with `post.type: postIds`.",
       tags: ["Threads Comments"],
     })
+    .input(z.object({ inboxId: postsAccountFilterSchema }).optional())
     .output(listThreadsPostsResponse)
     .errors(possibleErrorsOnListingResource)
     .handler(
-      async ({ context }) =>
-        await listThreadsPostsForWorkspace(context.workspace.id),
+      async ({ context, input }) =>
+        await listThreadsPostsForWorkspace(
+          context.workspace.id,
+          input?.inboxId,
+        ),
     ),
 
   deleteMany: workspaceTokenAuthAPI

@@ -221,6 +221,11 @@ export const router = {
       default: m.savedRepliesAPI,
     })),
   ),
+  commentAutomationsAPI: lazy(() =>
+    import("@/features/shared/comment-automation/api").then((m) => ({
+      default: m.commentAutomationsAPI,
+    })),
+  ),
   fbCommentsAPI: lazy(() =>
     import("@/features/fb-comments/api").then((m) => ({
       default: m.fbCommentsAPI,

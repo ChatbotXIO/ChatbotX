@@ -651,6 +651,15 @@
     "liveBadge": "Live",
     "postTypeDialog": {
       "title": "Valitse julkaisun tyyppi"
+    },
+    "account": {
+      "label": "Tili",
+      "description": "Yhdistetty tili, jolla tämä automaatio vastaa. Valitse ”Kaikki tilit” vastataksesi kaikilla tämän kanavan yhdistetyillä tileillä.",
+      "all": "Kaikki tilit",
+      "placeholder": "Valitse tili",
+      "required": "Useita tilejä on yhdistetty: valitse yksi tai valitse tarkoituksella ”Kaikki tilit”.",
+      "targetsCleared": "Valitut julkaisut poistettiin, koska ne voivat kuulua toiselle tilille.",
+      "column": "Tili"
     }
   },
   "condition": {

@@ -120,6 +120,7 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 |---|---|---|
 | `isActive` | Automation on/off | `findActiveAutomations` filters `isActive: true`. |
 | `type` | `messenger` \| `instagram` \| `instagramFacebook` \| `threads` \| `tiktok` | `findActiveAutomations` filters `type === channelType`, which is the incoming `integrationType`. The builder writes it: `fb-comments` → `messenger`, `ig-comments` → the selected Instagram variant. |
+| `inboxId` | The one connected account (Page, Instagram account, Threads profile, TikTok account) the automation answers on; `NULL` = every account of `type` | `findActiveAutomations` takes the comment's `integrationRow.inboxId` and matches `inboxId IS NULL OR inboxId = :inboxId`, so another account's automation neither answers nor records a miss. See [Account scope](#account-scope). |
 | `startTime`/`endTime` | Daily active window (workspace tz) | `isWithinSchedule` — lexicographic `"HH:mm"` compare, handles overnight windows; null → always within. |
 | `post` (`all` / `postIds` / `live`) | Which posts | `matchPost(post, postId, isLive)` — `live` matches only live-broadcast comments; `all` matches only NON-live comments (Live and post automations never answer the same comment); `postIds` matches via normalized trailing id, live or not. See [Live comments](#live-comments). |
 | `options.ignoreCommentReplies` (default **true**) | Skip replies-to-comments | Skips only when `isCommentReply(parentId, postId, commentId)` is true. |
@@ -139,6 +140,44 @@ Each filter that fails calls `logAutomationSkipped(..., reason)` (logged at `inf
 `(automationId, contactId, postId)` row (used by both `replyOncePerUserPerPost` and
 `replyToUsersWhoCommentedOnOtherPosts`) and `incrementRepliesCount` bumps the counter when
 `willSendReply` is true.
+
+## Account scope
+
+A workspace can connect several accounts of one channel (two Pages, two Instagram
+accounts). `CommentAutomation.inboxId` and `IgStoryAutomation.inboxId` say which one an
+automation answers on:
+
+- **`NULL` — every account of the channel.** The behavior every automation had before the
+  column existed, so legacy rows kept it with no data migration. Template installs also
+  land here: `collect` never exports `inboxId`, because the source workspace's inbox does
+  not exist in the target one.
+- **An inbox id — that account only.** The worker passes the incoming comment's
+  `integrationRow.inboxId` (story replies: `contactInbox.inboxId`) into
+  `findActiveAutomations`, which matches `inboxId IS NULL OR inboxId = :inboxId`. The
+  parameter is required, so no caller can fall back to the old workspace-wide scan.
+
+Rules that keep it honest:
+
+- **Validated on every write.** `assertAutomationAccount`
+  (`packages/business/src/comment-automation/account-scope.ts`) rejects an inbox that is
+  not an account of the automation's `type` in its workspace. It reads the integration
+  tables, not `Inbox.channel`: both Instagram connections store `Inbox.channel =
+  "instagram"`, and only `IntegrationInstagram.type` (`instagram` / `facebook`) tells them
+  apart.
+- **`onDelete: cascade`, never `set null`.** Nulling the column would silently widen an
+  automation meant for one Page into one that answers on every Page. Disconnecting a
+  channel only stamps `Inbox.disconnectedAt`, so in practice the scoped automation simply
+  stops receiving comments.
+- **On update, omitted keeps, `null` clears.** A PATCH without `inboxId` leaves the scope
+  alone; `null` widens it back to every account.
+- **Post pickers follow the scope.** Every post/story list item carries its account's
+  `inboxId`, the pickers show only the selected account's posts, and moving the form to a
+  specific account clears the selected posts (they may belong to another one). The
+  public `listPosts`/`listMedia`/`listStories` take an optional `inboxId` filter.
+- **Missed-comments replay** scans only the scoped account (`ScanCommentsProps.inboxId`).
+- **Builder:** with two or more accounts of the channel connected, a new automation cannot
+  be saved until an account — or "All accounts" — is chosen on purpose
+  (`useAccountChoiceMissing`). Agents list accounts with `commentAutomations.listAccounts`.
 
 ## Reply types
 
@@ -388,8 +427,9 @@ compare two different populations. When `repliesCount` is 0 the rate would be a 
 "100%" that says nothing true (a Messenger automation replying publicly only counts no
 replies by design), so the cell shows the count alone.
 
-> **Write volume.** `findActiveAutomations` scopes by workspace + channel, **not** by post,
-> so one comment is shown to every active automation on that channel and can produce up to
+> **Write volume.** `findActiveAutomations` scopes by workspace + channel + account, **not**
+> by post, so one comment is shown to every active automation of that account (plus the
+> unscoped ones) and can produce up to
 > `N-1` miss rows. A workspace running 50 automations over 2,000 comments/day writes
 > ~100k rows/day. `processCommentAutomation` flushes them in **one** insert per comment to
 > keep that to a single statement, and the rows are **never purged** — an explicit product

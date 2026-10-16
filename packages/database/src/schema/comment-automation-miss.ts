@@ -34,9 +34,10 @@ export const commentAutomationMissReason = pgEnum(
  * - Every analytics-page query (the replies series, the user-comment and
  *   bot-reply panels, Error Logs) aggregates that table directly. Mixing a row
  *   type none of them want in would mean auditing all of them forever after.
- * - Volume. `findActiveAutomations` scopes by workspace + channel, not by post,
- *   so one comment is shown to EVERY active automation of that channel and
- *   misses outnumber replies by however many automations the workspace runs.
+ * - Volume. `findActiveAutomations` scopes by workspace + channel + account
+ *   (`inboxId`, with unscoped automations matching every account), not by
+ *   post, so one comment is shown to EVERY active automation of that account
+ *   and misses outnumber replies by however many automations it runs.
  *   Keeping them out of the analytics table is what keeps that table fast.
  *
  * **These rows are never purged.** `CommentAutomationEvent`'s failed rows

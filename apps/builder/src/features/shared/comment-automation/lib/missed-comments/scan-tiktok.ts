@@ -4,6 +4,7 @@ import type {
   TiktokComment,
 } from "@chatbotx.io/integration-tiktok"
 import { listTiktokComments } from "@chatbotx.io/integration-tiktok/apis/comment"
+import { filterIntegrationsByAccount } from "../account-filter"
 import { collectCommentsSince, toEpochSeconds } from "./paging"
 import {
   MissedCommentsIntegrationNotFoundError,
@@ -22,10 +23,11 @@ const TIKTOK_COMMENT_PAGE_SIZE = 30
 export async function scanTiktokComments(
   props: ScanCommentsProps,
 ): Promise<ScannedComment[]> {
-  const { workspaceId, postId, since } = props
-  const integrations = await tiktokIntegrationService.listByWorkspace({
-    workspaceId,
-  })
+  const { workspaceId, postId, since, inboxId } = props
+  const integrations = filterIntegrationsByAccount(
+    await tiktokIntegrationService.listByWorkspace({ workspaceId }),
+    inboxId,
+  )
 
   if (integrations.length === 0) {
     throw new MissedCommentsIntegrationNotFoundError()

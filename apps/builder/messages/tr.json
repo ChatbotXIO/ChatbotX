@@ -651,6 +651,15 @@
     "liveBadge": "Canlı",
     "postTypeDialog": {
       "title": "Gönderi türünü seçin"
+    },
+    "account": {
+      "label": "Hesap",
+      "description": "Bu otomasyonun yanıt verdiği bağlı hesap. Bu kanalın tüm bağlı hesaplarında yanıt vermek için “Tüm hesaplar”ı seçin.",
+      "all": "Tüm hesaplar",
+      "placeholder": "Bir hesap seçin",
+      "required": "Birden fazla hesap bağlı: birini seçin ya da bilerek “Tüm hesaplar”ı seçin.",
+      "targetsCleared": "Seçili gönderiler başka bir hesaba ait olabileceği için temizlendi.",
+      "column": "Hesap"
     }
   },
   "condition": {

@@ -6,20 +6,30 @@ import {
   listReelsPosts,
 } from "@chatbotx.io/integration-messenger/apis/post"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
+import { filterIntegrationsByAccount } from "@/features/shared/comment-automation/lib/account-filter"
 import { collectSettled } from "@/lib/collect-settled"
 
+/** `inboxId` is the Page's inbox id — what an automation's `inboxId` stores. */
+type FacebookAutomationPost = FacebookPostListItem & {
+  pageId: string
+  inboxId: string
+}
+
 export type FacebookPostsForAutomation = {
-  published: (FacebookPostListItem & { pageId: string })[]
-  ads: (FacebookPostListItem & { pageId: string })[]
-  reels: (FacebookPostListItem & { pageId: string })[]
+  published: FacebookAutomationPost[]
+  ads: FacebookAutomationPost[]
+  reels: FacebookAutomationPost[]
   pages: { id: string; name: string }[]
 }
 
 export async function listFacebookPostsForAutomation(
   workspaceId: string,
+  inboxId?: string | null,
 ): Promise<FacebookPostsForAutomation> {
-  const integrations =
-    await messengerIntegrationService.findByWorkspaceId(workspaceId)
+  const integrations = filterIntegrationsByAccount(
+    await messengerIntegrationService.findByWorkspaceId(workspaceId),
+    inboxId,
+  )
 
   const pages = integrations.map((integration) => ({
     id: integration.pageId,
@@ -45,7 +55,11 @@ export async function listFacebookPostsForAutomation(
         } else {
           posts = await listReelsPosts({ auth, pageId })
         }
-        return posts.map((post) => ({ ...post, pageId }))
+        return posts.map((post) => ({
+          ...post,
+          pageId,
+          inboxId: integration.inboxId,
+        }))
       },
       (integration) => ({ integrationId: integration.id }),
       `Failed to list Facebook ${type} posts for an integration`,

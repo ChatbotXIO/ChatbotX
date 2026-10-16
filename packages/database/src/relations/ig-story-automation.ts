@@ -13,5 +13,9 @@ export const igStoryAutomationRelations = defineRelationsPart(schema, (r) => ({
       from: r.igStoryAutomationModel.folderId,
       to: r.folderModel.id,
     }),
+    inbox: r.one.inboxModel({
+      from: r.igStoryAutomationModel.inboxId,
+      to: r.inboxModel.id,
+    }),
   },
 }))

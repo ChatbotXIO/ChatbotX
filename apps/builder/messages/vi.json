@@ -693,6 +693,15 @@
     "liveBadge": "Live",
     "postTypeDialog": {
       "title": "Chọn loại bài viết"
+    },
+    "account": {
+      "label": "Tài khoản",
+      "description": "Tài khoản đã kết nối mà kịch bản này sẽ trả lời. Chọn “Tất cả tài khoản” để trả lời trên mọi tài khoản đã kết nối của kênh này.",
+      "all": "Tất cả tài khoản",
+      "placeholder": "Chọn tài khoản",
+      "required": "Đang có nhiều tài khoản được kết nối: hãy chọn một tài khoản, hoặc chủ động chọn “Tất cả tài khoản”.",
+      "targetsCleared": "Đã bỏ chọn các bài viết vì có thể chúng thuộc tài khoản khác.",
+      "column": "Tài khoản"
     }
   },
   "condition": {

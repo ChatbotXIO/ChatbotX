@@ -34,6 +34,7 @@ export function EditIgStoryForm({
     mode: "onChange",
     defaultValues: {
       name: initialData.name,
+      inboxId: initialData.inboxId,
       type: variant,
       trigger: initialData.trigger,
       folderId: initialData.folderId ?? undefined,

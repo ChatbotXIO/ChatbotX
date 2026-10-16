@@ -651,6 +651,15 @@
     "liveBadge": "Live",
     "postTypeDialog": {
       "title": "Beitragstyp auswählen"
+    },
+    "account": {
+      "label": "Konto",
+      "description": "Das verbundene Konto, auf dem diese Automatisierung antwortet. Wähle „Alle Konten“, um auf allen verbundenen Konten dieses Kanals zu antworten.",
+      "all": "Alle Konten",
+      "placeholder": "Konto auswählen",
+      "required": "Mehrere Konten sind verbunden: Wähle eines aus oder bewusst „Alle Konten“.",
+      "targetsCleared": "Die ausgewählten Beiträge wurden entfernt, da sie zu einem anderen Konto gehören könnten.",
+      "column": "Konto"
     }
   },
   "condition": {

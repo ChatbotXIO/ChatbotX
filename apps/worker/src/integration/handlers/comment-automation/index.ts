@@ -101,9 +101,13 @@ async function loadCommentAutomationContext(props: {
     where: { id: props.contactInboxId },
   })
 
+  // Scoped by the account the comment arrived on: an automation tied to
+  // another Page/account of the same channel must neither answer nor record a
+  // miss for it.
   const automations = await commentAutomationService.findActiveAutomations({
     workspaceId: props.workspaceId,
     channelType: props.channelType,
+    inboxId: integrationRow.inboxId,
   })
 
   const workspace = await workspaceService.findById({ id: props.workspaceId })
@@ -286,10 +290,11 @@ export async function processCommentAutomation(
     : false
 
   // Every automation that declines this comment, flushed in ONE insert after
-  // the loop. `findActiveAutomations` scopes by workspace + channel, not by
-  // post, so a single comment is shown to every active automation on the
-  // channel — writing a row per decline inside the loop would fire one
-  // statement per automation per comment on a busy Page.
+  // the loop. `findActiveAutomations` scopes by workspace + channel + account,
+  // not by post, so a single comment is shown to every active automation of
+  // that account (plus the unscoped ones) — writing a row per decline inside
+  // the loop would fire one statement per automation per comment on a busy
+  // Page.
   const misses: CommentAutomationMissInsert[] = []
   const collectMiss = (
     automationId: string,

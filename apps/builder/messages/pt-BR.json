@@ -651,6 +651,15 @@
     "liveBadge": "Ao vivo",
     "postTypeDialog": {
       "title": "Selecione o tipo de publicação"
+    },
+    "account": {
+      "label": "Conta",
+      "description": "A conta conectada em que esta automação responde. Escolha “Todas as contas” para responder em todas as contas conectadas deste canal.",
+      "all": "Todas as contas",
+      "placeholder": "Selecione uma conta",
+      "required": "Há várias contas conectadas: escolha uma ou escolha “Todas as contas” de propósito.",
+      "targetsCleared": "As publicações selecionadas foram removidas porque podem pertencer a outra conta.",
+      "column": "Conta"
     }
   },
   "condition": {

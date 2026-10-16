@@ -32,6 +32,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
+import { buildAutomationAccountColumn } from "../shared/comment-automation/automation-account-column"
 import { buildCommentAutomationStatColumns } from "../shared/comment-automation/comment-automation-stat-columns"
 import { DeleteCommentAutomationDialog } from "../shared/comment-automation/delete-comment-automation-dialog"
 import { MissedCommentsProcessingLabel } from "../shared/comment-automation/missed-comments-processing-label"
@@ -125,6 +126,9 @@ export function ThreadsCommentsTable({
         enableSorting: true,
         enableColumnFilter: true,
       },
+      buildAutomationAccountColumn<ListThreadsCommentsResponse["data"][number]>(
+        { title: t("commentAutomation.account.column") },
+      ),
       {
         accessorKey: "isActive",
         header: ({ column }) => (
