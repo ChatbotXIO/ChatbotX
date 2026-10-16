@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "ff70f7e7-5a6d-42ce-afb9-2632272520a4",
+  "id": "d355889d-8263-400c-a763-d0828e6d8d7b",
   "prevIds": [
-    "e05ed887-8290-44fd-9d2d-2fa89a25ce6f"
+    "0e651d0d-11bb-44ba-9525-ab55d152ca25"
   ],
   "ddl": [
     {
@@ -313,7 +313,8 @@
     {
       "values": [
         "now",
-        "future"
+        "future",
+        "recurring"
       ],
       "name": "broadcastScheduleType",
       "entityType": "enums",
@@ -326,9 +327,35 @@
         "sending",
         "cancelled",
         "draft",
-        "failed"
+        "failed",
+        "recurring"
       ],
       "name": "broadcastStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "created",
+        "skipped",
+        "missed"
+      ],
+      "name": "broadcastOccurrenceOutcome",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "catchUpSuperseded",
+        "paused",
+        "draft",
+        "blockedOwner",
+        "planLimit",
+        "noTargets",
+        "undeliverable",
+        "excludedDate"
+      ],
+      "name": "broadcastOccurrenceReason",
       "entityType": "enums",
       "schema": "public"
     },
@@ -679,6 +706,19 @@
         "flow"
       ],
       "name": "importType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "received",
+        "processing",
+        "processed",
+        "completedWithErrors",
+        "skipped",
+        "failed"
+      ],
+      "name": "inboundWebhookRequestStatus",
       "entityType": "enums",
       "schema": "public"
     },
@@ -1363,6 +1403,18 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "BroadcastRecurrence",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "BroadcastRecurrenceOccurrence",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "BroadcastTarget",
       "entityType": "tables",
       "schema": "public"
@@ -1669,6 +1721,18 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "InboundWebhook",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "InboundWebhookRequest",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "Inbox",
       "entityType": "tables",
       "schema": "public"
@@ -1952,6 +2016,12 @@
     {
       "isRlsEnabled": false,
       "name": "MessengerMessageTemplate",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "MessengerWelcomeMessageFlow",
       "entityType": "tables",
       "schema": "public"
     },
@@ -8310,6 +8380,344 @@
       "entityType": "columns",
       "schema": "public",
       "table": "Broadcast"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "parentBroadcastId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Broadcast"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurrenceAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Broadcast"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "broadcastId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "rule",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "nextRunAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "accountedThroughAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "occurrenceCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastOccurrenceAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pausedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "endedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "recurrenceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "localSlot",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurrenceAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "type": "broadcastOccurrenceOutcome",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "outcome",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "type": "broadcastOccurrenceReason",
+      "typeSchema": "public",
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "reason",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "childBroadcastId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "materializedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "1",
+      "generated": null,
+      "identity": null,
+      "name": "supersededCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
     },
     {
       "type": "bigint",
@@ -14766,19 +15174,6 @@
       "table": "FacebookLeadAdsAutomation"
     },
     {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "flowId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FacebookLeadAdsAutomation"
-    },
-    {
       "type": "integer",
       "typeSchema": null,
       "notNull": true,
@@ -17065,6 +17460,461 @@
       "entityType": "columns",
       "schema": "public",
       "table": "Import"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "active",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "token",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxResolution",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "identifiers",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fieldMappings",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "actions",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sampleJson",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "requestCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboundWebhookId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "idempotencyKey",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "clientIp",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userAgent",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "inboundWebhookRequestStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'received'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "claimToken",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "claimedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "attempts",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "skipReason",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorCode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorMessage",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "payload",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fieldErrors",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "actionResults",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "processedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
     },
     {
       "type": "bigint",
@@ -23981,6 +24831,136 @@
       "entityType": "columns",
       "schema": "public",
       "table": "MessengerMessageTemplate"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "flowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationMessengerId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metaFlowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "flowVersionId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'current'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
     },
     {
       "type": "bigint",
@@ -34550,6 +35530,209 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "parentBroadcastId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurrenceAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Broadcast_parentBroadcastId_occurrenceAt_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Broadcast"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "broadcastId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "BroadcastRecurrence_broadcastId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "BroadcastRecurrence_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "nextRunAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"nextRunAt\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "BroadcastRecurrence_due_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "recurrenceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "localSlot",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurrenceAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "BroadcastRecurrenceOccurrence_recurrenceId_localSlot_occurrenceAt_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "recurrenceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurrenceAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "BroadcastRecurrenceOccurrence_recurrenceId_occurrenceAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "BroadcastRecurrenceOccurrence_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "childBroadcastId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "BroadcastRecurrenceOccurrence_childBroadcastId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "inboxId",
           "isExpression": false,
           "asc": true,
@@ -35515,6 +36698,34 @@
       "method": "btree",
       "concurrently": false,
       "name": "idx_contact_workspace_phone_number",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Contact"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "md5(btrim(regexp_replace(\"fullName\", '[ \\t\\n\\v\\f\\r]+', ' ', 'g')))",
+          "isExpression": true,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "idx_contact_workspace_full_name_md5",
       "entityType": "indexes",
       "schema": "public",
       "table": "Contact"
@@ -38284,6 +39495,230 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
+      "name": "InboundWebhook_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "token",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "InboundWebhook_token_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "inboundWebhookId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "idempotencyKey",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"idempotencyKey\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "InboundWebhookRequest_inboundWebhookId_idempotencyKey_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "inboundWebhookId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "InboundWebhookRequest_inboundWebhookId_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "InboundWebhookRequest_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "InboundWebhookRequest_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "inboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "InboundWebhookRequest_inboxId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"status\" = 'received'",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "InboundWebhookRequest_createdAt_received_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "claimedAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"status\" = 'processing'",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "InboundWebhookRequest_claimedAt_processing_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "InboundWebhookRequest_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
       "name": "Inbox_workspaceId_idx",
       "entityType": "indexes",
       "schema": "public",
@@ -40808,6 +42243,83 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "MessengerMessageTemplate"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "flowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessengerWelcomeMessageFlow_workspaceId_flowId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationMessengerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessengerWelcomeMessageFlow_integrationMessengerId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "flowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "integrationMessengerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"status\" = 'current'",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessengerWelcomeMessageFlow_current_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
     },
     {
       "nameExplicit": true,
@@ -45454,6 +46966,108 @@
     {
       "nameExplicit": false,
       "columns": [
+        "parentBroadcastId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Broadcast",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "Broadcast_parentBroadcastId_Broadcast_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Broadcast"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "BroadcastRecurrence_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "broadcastId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Broadcast",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "BroadcastRecurrence_broadcastId_Broadcast_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "BroadcastRecurrence"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "BroadcastRecurrenceOccurrence_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "recurrenceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "BroadcastRecurrence",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "BroadcastRecurrenceOccurrence_x0yNXfzZ2cZs_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "childBroadcastId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Broadcast",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "BroadcastRecurrenceOccurrence_Md67cxyTrOQZ_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "broadcastId"
       ],
       "schemaTo": "public",
@@ -46780,23 +48394,6 @@
     {
       "nameExplicit": false,
       "columns": [
-        "flowId"
-      ],
-      "schemaTo": "public",
-      "tableTo": "Flow",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "CASCADE",
-      "onDelete": "SET NULL",
-      "name": "FacebookLeadAdsAutomation_flowId_Flow_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "FacebookLeadAdsAutomation"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
         "automationId"
       ],
       "schemaTo": "public",
@@ -47235,6 +48832,91 @@
       "entityType": "fks",
       "schema": "public",
       "table": "Import"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "InboundWebhook_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "InboundWebhook"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "InboundWebhookRequest_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "inboundWebhookId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "InboundWebhook",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "InboundWebhookRequest_inboundWebhookId_InboundWebhook_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "inboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Inbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "InboundWebhookRequest_inboxId_Inbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "contactId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Contact",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "InboundWebhookRequest_contactId_Contact_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "InboundWebhookRequest"
     },
     {
       "nameExplicit": false,
@@ -48952,6 +50634,40 @@
       "entityType": "fks",
       "schema": "public",
       "table": "MessengerMessageTemplate"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MessengerWelcomeMessageFlow_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "integrationMessengerId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "IntegrationMessenger",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MessengerWelcomeMessageFlow_OSpsF41G77zr_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow"
     },
     {
       "nameExplicit": false,
@@ -51504,6 +53220,26 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "BroadcastRecurrence_pkey",
+      "schema": "public",
+      "table": "BroadcastRecurrence",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "BroadcastRecurrenceOccurrence_pkey",
+      "schema": "public",
+      "table": "BroadcastRecurrenceOccurrence",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "ChannelPost_pkey",
       "schema": "public",
       "table": "ChannelPost",
@@ -51927,6 +53663,26 @@
       "name": "Import_pkey",
       "schema": "public",
       "table": "Import",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "InboundWebhook_pkey",
+      "schema": "public",
+      "table": "InboundWebhook",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "InboundWebhookRequest_pkey",
+      "schema": "public",
+      "table": "InboundWebhookRequest",
       "entityType": "pks"
     },
     {
@@ -52367,6 +54123,16 @@
       "name": "MessengerMessageTemplate_pkey",
       "schema": "public",
       "table": "MessengerMessageTemplate",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "MessengerWelcomeMessageFlow_pkey",
+      "schema": "public",
+      "table": "MessengerWelcomeMessageFlow",
       "entityType": "pks"
     },
     {
@@ -52968,6 +54734,13 @@
       "entityType": "checks",
       "schema": "public",
       "table": "AdsConversionEvent"
+    },
+    {
+      "value": "\"parentBroadcastId\" IS NULL OR \"occurrenceAt\" IS NOT NULL",
+      "name": "Broadcast_occurrence_pair_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "Broadcast"
     },
     {
       "value": "((\"actorUserId\" IS NOT NULL)::int + (\"actorTokenId\" IS NOT NULL)::int) <= 1",
