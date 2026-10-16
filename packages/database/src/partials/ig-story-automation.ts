@@ -3,11 +3,9 @@ import { z } from "zod"
 export const igStoryAutomationTypes = z.enum(["instagram", "instagramFacebook"])
 export type IgStoryAutomationType = z.infer<typeof igStoryAutomationTypes>
 
-export const igStoryAutomationTriggers = z
-  .enum(["storyReply", "storyMention"])
-  .describe(
-    "What starts the automation: `storyReply` when a contact replies to one of your stories, `storyMention` when a contact tags your account in their own story. Set once at creation; it cannot be changed later.",
-  )
+// `storyReply`: a contact replies to one of your stories. `storyMention`: a
+// contact tags your account in their own story.
+export const igStoryAutomationTriggers = z.enum(["storyReply", "storyMention"])
 export type IgStoryAutomationTrigger = z.infer<typeof igStoryAutomationTriggers>
 
 export const igStoryTargetSchema = z.object({

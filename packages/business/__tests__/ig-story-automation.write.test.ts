@@ -103,7 +103,34 @@ describe("igStoryAutomationService.create", () => {
   })
 })
 
+test("writes all-matching filters when a story mention omits them", async () => {
+  await igStoryAutomationService.create({
+    workspaceId: "ws-1",
+    type: "instagram",
+    trigger: "storyMention",
+    data: { name: "Mentions" },
+  })
+
+  expect(mocks.insertValues).toHaveBeenCalledWith(
+    expect.objectContaining({ trigger: "storyMention", ...matchAll }),
+  )
+})
+
 describe("igStoryAutomationService.update", () => {
+  test("does not rewrite the filters on an unrelated story mention update", async () => {
+    mocks.findFirst.mockResolvedValue({
+      id: "story-1",
+      trigger: "storyMention",
+    })
+
+    await igStoryAutomationService.update(
+      { workspaceId: "ws-1", id: "story-1" },
+      { isActive: false },
+    )
+
+    expect(mocks.updateSet).toHaveBeenCalledWith({ isActive: false })
+  })
+
   test("pins the filters to all when the stored row is a story mention", async () => {
     mocks.findFirst.mockResolvedValue({
       id: "story-1",

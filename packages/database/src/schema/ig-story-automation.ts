@@ -74,11 +74,6 @@ export const igStoryAutomationModel = pgTable(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
-    index("IgStoryAutomation_workspaceId_trigger_idx").using(
-      "btree",
-      table.workspaceId.asc().nullsLast(),
-      table.trigger.asc().nullsLast(),
-    ),
     index("IgStoryAutomation_folderId_idx").using(
       "btree",
       table.folderId.asc().nullsLast(),

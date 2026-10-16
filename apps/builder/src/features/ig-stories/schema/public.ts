@@ -32,7 +32,20 @@ export const igStoryPublicResource = igStoryResource.omit({
 export const listIgStoriesPublicResponse = publicListResponse(
   igStoryPublicResource,
 )
-export const createIgStoryPublicRequest = createIgStoryRequest
+// A story mention has no story or keyword filter, so an agent may leave both
+// out; the service then writes `all` for them.
+export const createIgStoryPublicRequest = createIgStoryRequest.extend({
+  story: createIgStoryRequest.shape.story
+    .optional()
+    .describe(
+      "Instagram stories to watch for replies. Get story ids from `igStories.listStories`. Defaults to all stories; ignored (always `all`) when `trigger` is `storyMention`.",
+    ),
+  includeKeywords: createIgStoryRequest.shape.includeKeywords
+    .optional()
+    .describe(
+      "Only trigger when the reply matches these keywords. Defaults to all replies; ignored (always `all`) when `trigger` is `storyMention`.",
+    ),
+})
 export const updateIgStoryPublicRequest = updateIgStoryRequest.and(
   z.object({
     id: zodBigintAsString().describe(

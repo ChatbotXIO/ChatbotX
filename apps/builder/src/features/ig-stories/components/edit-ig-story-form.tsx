@@ -1,6 +1,5 @@
 "use client"
 
-import type { IgStoryAutomationTrigger } from "@chatbotx.io/database/partials"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
@@ -36,7 +35,7 @@ export function EditIgStoryForm({
     defaultValues: {
       name: initialData.name,
       type: variant,
-      trigger: initialData.trigger as IgStoryAutomationTrigger,
+      trigger: initialData.trigger,
       folderId: initialData.folderId ?? undefined,
       story: initialData.story,
       reply: initialData.reply,

@@ -7,8 +7,10 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import {
+  type CommentIncludeKeywords,
   type IgStoryAutomationTrigger,
   type IgStoryAutomationType,
+  type IgStoryTarget,
   igStoryAutomationTriggers,
   igStoryAutomationTypes,
 } from "@chatbotx.io/database/partials"
@@ -51,10 +53,18 @@ type IgStoryAutomationWriteData = Omit<
   "id" | "workspaceId" | "type" | "trigger"
 >
 
+const matchAllStories = (): IgStoryTarget => ({ type: "all", value: [] })
+const matchAllKeywords = (): CommentIncludeKeywords => ({
+  type: "all",
+  value: [],
+})
+
 // A story mention happens on the contact's own story (so there is no story of
 // ours to pick) and usually carries no text (so there is nothing to match
-// keywords against): both filters are pinned to "all" for these rows.
-function normalizeWriteData<T extends Partial<IgStoryAutomationWriteData>>(
+// keywords against): both filters are pinned to "all" for these rows. Only the
+// filters present in the payload are pinned, so an unrelated update (a status
+// toggle, a rename) does not rewrite them.
+function pinStoryMentionFilters<T extends Partial<IgStoryAutomationWriteData>>(
   trigger: IgStoryAutomationTrigger,
   data: T,
 ): T {
@@ -63,8 +73,10 @@ function normalizeWriteData<T extends Partial<IgStoryAutomationWriteData>>(
   }
   return {
     ...data,
-    story: { type: "all", value: [] },
-    includeKeywords: { type: "all", value: [] },
+    ...(data.story !== undefined && { story: matchAllStories() }),
+    ...(data.includeKeywords !== undefined && {
+      includeKeywords: matchAllKeywords(),
+    }),
   }
 }
 
@@ -163,7 +175,13 @@ class IgStoryAutomationService extends BaseService {
         workspaceId: input.workspaceId,
         type: input.type,
         trigger,
-        ...normalizeWriteData(trigger, input.data),
+        // Filters are written explicitly (the API may omit them for a story
+        // mention) rather than relying on the jsonb column defaults.
+        ...pinStoryMentionFilters(trigger, {
+          story: matchAllStories(),
+          includeKeywords: matchAllKeywords(),
+          ...input.data,
+        }),
       })
       .returning()
     return created
@@ -177,7 +195,7 @@ class IgStoryAutomationService extends BaseService {
 
     const [updated] = await db
       .update(igStoryAutomationModel)
-      .set(normalizeWriteData(existing.trigger, data))
+      .set(pinStoryMentionFilters(existing.trigger, data))
       .where(
         and(
           eq(igStoryAutomationModel.id, ctx.id),
