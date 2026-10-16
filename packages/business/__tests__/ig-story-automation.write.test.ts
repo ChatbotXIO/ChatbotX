@@ -168,6 +168,7 @@ describe("igStoryAutomationService.findActiveAutomations", () => {
       workspaceId: "ws-1",
       channelType: "instagramFacebook",
       trigger: "storyMention",
+      inboxId: "inbox-1",
     })
 
     expect(mocks.findMany).toHaveBeenCalledWith({
@@ -176,6 +177,7 @@ describe("igStoryAutomationService.findActiveAutomations", () => {
         isActive: true,
         type: "instagramFacebook",
         trigger: "storyMention",
+        OR: [{ inboxId: { isNull: true } }, { inboxId: "inbox-1" }],
       },
     })
   })

@@ -105,6 +105,7 @@ describe("findActiveAutomations — account scope", () => {
     await igStoryAutomationService.findActiveAutomations({
       workspaceId: "ws-1",
       channelType: "instagramFacebook",
+      trigger: "storyReply",
       inboxId: "inbox-b",
     })
 
@@ -113,6 +114,7 @@ describe("findActiveAutomations — account scope", () => {
         workspaceId: "ws-1",
         isActive: true,
         type: "instagramFacebook",
+        trigger: "storyReply",
         OR: [{ inboxId: { isNull: true } }, { inboxId: "inbox-b" }],
       },
     })

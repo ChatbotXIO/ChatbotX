@@ -146,6 +146,7 @@ describe("processStoryReplyAutomation account scope", () => {
     expect(mockFindActiveAutomations).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       channelType: "instagram",
+      trigger: "storyReply",
       inboxId: "inbox-7",
     })
   })
@@ -246,12 +247,19 @@ describe("processStoryMentionAutomation", () => {
   test("loads only story mention automations for the channel", async () => {
     mockFindActiveAutomations.mockResolvedValue([])
 
+    mockFindContactInboxBy.mockResolvedValueOnce({
+      id: "contact-inbox-1",
+      contactId: "contact-1",
+      inboxId: "inbox-9",
+    })
+
     await processStoryMentionAutomation(mentionJobData)
 
     expect(mockFindActiveAutomations).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
       channelType: "instagram",
       trigger: "storyMention",
+      inboxId: "inbox-9",
     })
   })
 
