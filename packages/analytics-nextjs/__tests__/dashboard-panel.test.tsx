@@ -77,6 +77,25 @@ describe("DashboardPanel", () => {
     expect(container.querySelector("[aria-busy='true']")).toBeNull()
   })
 
+  test("dims the previous numbers only while a refresh is loading", () => {
+    const store = createAnalysisStore({
+      api: {} as AnalyticsApi,
+      type: "contacts",
+      defaultSearchParams: { workspaceId: "workspace-1" },
+    })
+
+    renderPanel(store, "success")
+    expect(container.querySelector("[data-refreshing]")).toBeNull()
+
+    renderPanel(store, "refreshing")
+    const refreshing = container.querySelector("[data-refreshing]")
+    expect(refreshing).not.toBeNull()
+    expect(refreshing?.className).toContain("opacity-50")
+
+    renderPanel(store, "success")
+    expect(container.querySelector("[data-refreshing]")).toBeNull()
+  })
+
   test("hides failed content and returns to a skeleton for the next load", () => {
     const store = createAnalysisStore({
       api: {} as AnalyticsApi,

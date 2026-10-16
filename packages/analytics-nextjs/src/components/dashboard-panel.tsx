@@ -3,6 +3,7 @@
 import { ChartCardProvider } from "@chatbotx.io/ui/components/charts/chart-card-context"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 import type { DashboardLoadAction } from "../provider/analysis-store"
@@ -33,8 +34,17 @@ export const DashboardPanel = ({
   }
 
   if (status === "success" || status === "refreshing") {
+    // Keep the previous numbers while a new range or filter loads, but dim them
+    // so they are not mistaken for the result of the change.
+    const isRefreshing = status === "refreshing"
     return (
-      <Card className={className}>
+      <Card
+        className={cn(
+          className,
+          isRefreshing && "opacity-50 transition-opacity",
+        )}
+        data-refreshing={isRefreshing || undefined}
+      >
         <ChartCardProvider>{children}</ChartCardProvider>
       </Card>
     )

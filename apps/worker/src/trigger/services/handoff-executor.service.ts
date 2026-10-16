@@ -14,6 +14,7 @@ export interface HandoffRequest {
   channel?: string
   contactId: string
   conversationId: string
+  inboxId?: string
   metadata?: Record<string, unknown>
   reason: string
   source:
@@ -24,8 +25,6 @@ export interface HandoffRequest {
   workspaceId: string
 }
 
-const DEFAULT_CHANNEL = "webchat"
-
 export class HandoffExecutorService {
   async execute(request: HandoffRequest): Promise<void> {
     const {
@@ -34,6 +33,7 @@ export class HandoffExecutorService {
       reason,
       source,
       channel,
+      inboxId,
       metadata,
       contactId,
     } = request
@@ -74,8 +74,6 @@ export class HandoffExecutorService {
         )
       }
 
-      const resolvedChannel = channel ?? DEFAULT_CHANNEL
-
       await emitConversationTransferredToHuman(
         workspaceId,
         contactId,
@@ -86,7 +84,8 @@ export class HandoffExecutorService {
         eventType: "conversation:transferred_to_human",
         workspaceId,
         conversationId,
-        channel: resolvedChannel,
+        channel,
+        inboxId,
         occurredAt: new Date(),
         metadata: {
           ...metadata,

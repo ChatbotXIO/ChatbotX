@@ -7,6 +7,7 @@ import { resolvedTimezone } from "@chatbotx.io/database/queries/date-bucket"
 import { analyticsMessageEventModel } from "@chatbotx.io/database/schema"
 import type { EventBusMessageMetadata } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
+import { buildEventFilter } from "../../lib/event-filter"
 import {
   fillDailyMessageStats,
   fillMessageStatsMonthlySeries,
@@ -14,12 +15,13 @@ import {
   shouldUseMonthlyGranularity,
 } from "../../lib/time-series"
 import type {
+  FilteredTimeRangeQuery,
   HumanAgentStats,
   MessagesByAdminStats,
   MessagesBySenderStats,
-  TimeRangeQuery,
   UniqueContactsByAdminStats,
 } from "../../schemas"
+import { hasAnalyticsFilter } from "../../schemas/common"
 import type {
   MessageEventType,
   MessageStats,
@@ -29,12 +31,15 @@ import { conversationStatsRepository } from "./conversation-stats.repository"
 import { getEventBusEventId } from "./event-bus-idempotency"
 
 export type InsertMessageEventRow = EventBusMessageMetadata & {
+  /** Stable logical id; wins over the event-bus stream id when a send can re-run. */
+  eventId?: string | null
   workspaceId: string
   contactId: string
   occurredAt: Date | string | number
   senderType?: "bot" | "human" | null
   adminId?: string | null
   channel?: string | null
+  inboxId?: string | null
   source?: string | null
   sourceId?: string | null
   metadata?: Record<string, unknown> | null
@@ -49,7 +54,7 @@ export class MessageStatsRepository extends BaseRepository {
       return
     }
     const rows = payloads.map((p) => ({
-      eventId: getEventBusEventId(p) ?? createId(),
+      eventId: p.eventId ?? getEventBusEventId(p) ?? createId(),
       workspaceId: p.workspaceId,
       contactId: p.contactId,
       eventType,
@@ -60,6 +65,7 @@ export class MessageStatsRepository extends BaseRepository {
       senderType: p.senderType ?? null,
       adminId: p.adminId ?? null,
       channel: p.channel ?? null,
+      inboxId: p.inboxId ?? null,
       source: p.source ?? null,
       sourceId: p.sourceId ?? null,
       metadata: p.metadata ?? null,
@@ -71,11 +77,12 @@ export class MessageStatsRepository extends BaseRepository {
   }
 
   async getStatsByMinute(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       eventTypes?: MessageEventType[]
     },
   ): Promise<MessageStats[]> {
     const { workspaceId, from, to, eventTypes } = props
+    const eventFilter = buildEventFilter(props)
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
@@ -92,7 +99,7 @@ export class MessageStatsRepository extends BaseRepository {
         COUNT(*)::int AS count,
         COUNT(DISTINCT "contactId")::int AS "uniqueContacts"
       FROM "AnalyticsMessageEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         ${eventTypeFilter}
@@ -117,11 +124,12 @@ export class MessageStatsRepository extends BaseRepository {
   }
 
   async getStatsByHour(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       eventTypes?: MessageEventType[]
     },
   ): Promise<MessageStats[]> {
     const { workspaceId, from, to, eventTypes } = props
+    const eventFilter = buildEventFilter(props)
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
@@ -131,19 +139,36 @@ export class MessageStatsRepository extends BaseRepository {
           )})`
         : sql``
 
-    const result = await db.execute(sql`
-      SELECT
-        time_bucket('1 hour', bucket) AS bucket,
-        "eventType",
-        SUM(count)::int AS count
-      FROM analytics_message_events_hourly
-      WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
-        ${eventTypeFilter}
-      GROUP BY 1, 2
-      ORDER BY 1 ASC, 2 ASC
-    `)
+    // The hourly cagg carries no `inboxId`; a filtered read buckets the raw
+    // hypertable by hour instead and keeps the same output shape.
+    const query = hasAnalyticsFilter(props)
+      ? sql`
+          SELECT
+            time_bucket('1 hour', "occurredAt") AS bucket,
+            "eventType",
+            COUNT(*)::int AS count
+          FROM "AnalyticsMessageEvent"
+          WHERE "workspaceId" = ${workspaceId}${eventFilter}
+            AND "occurredAt" >= ${from}
+            AND "occurredAt" <= ${to}
+            ${eventTypeFilter}
+          GROUP BY 1, 2
+          ORDER BY 1 ASC, 2 ASC
+        `
+      : sql`
+          SELECT
+            time_bucket('1 hour', bucket) AS bucket,
+            "eventType",
+            SUM(count)::int AS count
+          FROM analytics_message_events_hourly
+          WHERE "workspaceId" = ${workspaceId}
+            AND bucket >= ${from}
+            AND bucket <= ${to}
+            ${eventTypeFilter}
+          GROUP BY 1, 2
+          ORDER BY 1 ASC, 2 ASC
+        `
+    const result = await db.execute(query)
 
     return (
       result.rows as {
@@ -161,7 +186,7 @@ export class MessageStatsRepository extends BaseRepository {
   }
 
   async getStatsByDay(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       eventTypes?: MessageEventType[]
     },
   ): Promise<MessageStats[]> {
@@ -170,6 +195,8 @@ export class MessageStatsRepository extends BaseRepository {
     }
 
     const { workspaceId, from, to, timezone, eventTypes } = props
+
+    const eventFilter = buildEventFilter(props)
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
@@ -199,7 +226,7 @@ export class MessageStatsRepository extends BaseRepository {
             "eventType",
             COUNT(*)::int AS count
           FROM "AnalyticsMessageEvent"
-          WHERE "workspaceId" = ${workspaceId}
+          WHERE "workspaceId" = ${workspaceId}${eventFilter}
             AND "occurredAt" >= ${from}
             AND "occurredAt" <= ${to}
             ${eventTypeFilter}
@@ -230,11 +257,12 @@ export class MessageStatsRepository extends BaseRepository {
   }
 
   private async getStatsByMonth(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       eventTypes?: MessageEventType[]
     },
   ): Promise<MessageStats[]> {
     const { workspaceId, from, to, timezone, eventTypes } = props
+    const eventFilter = buildEventFilter(props)
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
@@ -251,7 +279,7 @@ export class MessageStatsRepository extends BaseRepository {
         "eventType",
         COUNT(*)::int AS count
       FROM "AnalyticsMessageEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         ${eventTypeFilter}
@@ -280,9 +308,10 @@ export class MessageStatsRepository extends BaseRepository {
   }
 
   async getMessagesBySender(
-    props: TimeRangeQuery & { granularity?: "day" | "month" },
+    props: FilteredTimeRangeQuery & { granularity?: "day" | "month" },
   ): Promise<MessagesBySenderStats[]> {
     const { workspaceId, from, to, timezone } = props
+    const eventFilter = buildEventFilter(props)
     const useMonth =
       props.granularity === "month" || shouldUseMonthlyGranularity(props)
     const interval = useMonth ? "1 month" : "1 day"
@@ -296,7 +325,7 @@ export class MessageStatsRepository extends BaseRepository {
               "senderType",
               COUNT(*)::int AS count
             FROM "AnalyticsMessageEvent"
-            WHERE "workspaceId" = ${workspaceId}
+            WHERE "workspaceId" = ${workspaceId}${eventFilter}
               AND "occurredAt" >= ${from}
               AND "occurredAt" <= ${to}
               AND "senderType" IS NOT NULL
@@ -348,15 +377,16 @@ export class MessageStatsRepository extends BaseRepository {
   }
 
   private async getMessagesByAdminCounts(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<Map<string, number>> {
     const { workspaceId, from, to } = props
+    const eventFilter = buildEventFilter(props)
     const statsResult = await db.execute(sql`
       SELECT
         "adminId",
         COUNT(*)::int AS count
       FROM "AnalyticsMessageEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "eventType" = 'message_human_sent'
@@ -376,15 +406,16 @@ export class MessageStatsRepository extends BaseRepository {
   }
 
   private async getUniqueContactsByAdminCounts(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<Map<string, number>> {
     const { workspaceId, from, to } = props
+    const eventFilter = buildEventFilter(props)
     const statsResult = await db.execute(sql`
       SELECT
         "adminId",
         COUNT(DISTINCT "contactId")::int AS count
       FROM "AnalyticsMessageEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "senderType" = 'human'
@@ -404,7 +435,7 @@ export class MessageStatsRepository extends BaseRepository {
   }
 
   async getMessagesByAdmin(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<MessagesByAdminStats[]> {
     const { workspaceId } = props
     const [countByAdmin, members] = await Promise.all([
@@ -422,7 +453,7 @@ export class MessageStatsRepository extends BaseRepository {
   }
 
   async getUniqueContactsByAdmin(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<UniqueContactsByAdminStats[]> {
     const { workspaceId } = props
     const [countByAdmin, members] = await Promise.all([
@@ -439,7 +470,9 @@ export class MessageStatsRepository extends BaseRepository {
     }))
   }
 
-  async getHumanAgentStats(props: TimeRangeQuery): Promise<HumanAgentStats[]> {
+  async getHumanAgentStats(
+    props: FilteredTimeRangeQuery,
+  ): Promise<HumanAgentStats[]> {
     const { workspaceId } = props
 
     const [messageCount, contactCount, assignedByAdmin, members] =

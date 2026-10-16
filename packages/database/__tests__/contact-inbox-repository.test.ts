@@ -533,3 +533,97 @@ describe("contactInboxRepository.findByInboxAndSourceIds", () => {
     expect(rows.map((row) => row.id)).toEqual(["ci-2"])
   })
 })
+
+describe("contactInboxRepository analytics attribution", () => {
+  const render = (fragment: unknown) => {
+    const rendered = new PgDialect().sqlToQuery(fragment as never)
+    return {
+      sql: rendered.sql.replace(/\s+/g, " ").trim(),
+      params: rendered.params,
+    }
+  }
+
+  const chainFor = (result: unknown[]) => {
+    const chain = {
+      selectDistinctOn: vi.fn(),
+      select: vi.fn(),
+      from: vi.fn(),
+      innerJoin: vi.fn(),
+      where: vi.fn(),
+      orderBy: vi.fn(),
+    }
+    chain.selectDistinctOn.mockReturnValue(chain)
+    chain.select.mockReturnValue(chain)
+    chain.from.mockReturnValue(chain)
+    chain.innerJoin.mockReturnValue(chain)
+    chain.where.mockReturnValue(chain)
+    chain.orderBy.mockResolvedValue(result)
+    return chain
+  }
+
+  test("latest attribution: one row per contact, most recently active first, scoped to the workspace", async () => {
+    const rows = [{ contactId: "c1", inboxId: "7", channel: "messenger" }]
+    const chain = chainFor(rows)
+
+    const result = await contactInboxRepository.listLatestAnalyticsAttribution(
+      { workspaceId: "ws-1", contactIds: ["c1", "c2"] },
+      chain as never,
+    )
+
+    expect(result).toBe(rows)
+    expect(chain.selectDistinctOn).toHaveBeenCalledWith(
+      [contactInboxModel.contactId],
+      expect.objectContaining({
+        contactId: contactInboxModel.contactId,
+        inboxId: contactInboxModel.inboxId,
+        channel: contactInboxModel.channel,
+      }),
+    )
+    const where = render(chain.where.mock.calls[0]?.[0])
+    expect(where.sql).toContain('"ContactInbox"."contactId" in')
+    expect(where.sql).toContain('"Contact"."workspaceId" =')
+    expect(where.params).toEqual(["c1", "c2", "ws-1"])
+    const order = chain.orderBy.mock.calls[0] ?? []
+    expect(order[0]).toBe(contactInboxModel.contactId)
+    expect(render(order[1]).sql).toBe(
+      '"ContactInbox"."lastMessageAt" DESC NULLS LAST',
+    )
+    expect(render(order[2]).sql).toBe('"ContactInbox"."id" DESC')
+  })
+
+  test("latest attribution with no contacts makes no query", async () => {
+    const chain = chainFor([])
+
+    await expect(
+      contactInboxRepository.listLatestAnalyticsAttribution(
+        { workspaceId: "ws-1", contactIds: [] },
+        chain as never,
+      ),
+    ).resolves.toEqual([])
+    expect(chain.selectDistinctOn).not.toHaveBeenCalled()
+  })
+
+  test("per-contact attribution lists every connection of the contact in the workspace", async () => {
+    const chain = chainFor([])
+    chain.where.mockResolvedValue([
+      {
+        inboxId: "7",
+        channel: "messenger",
+        source: "messenger",
+        sourceId: "s",
+      },
+    ])
+
+    const result =
+      await contactInboxRepository.listAnalyticsAttributionByContact(
+        { workspaceId: "ws-1", contactId: "c1" },
+        chain as never,
+      )
+
+    expect(result).toHaveLength(1)
+    const where = render(chain.where.mock.calls[0]?.[0])
+    expect(where.sql).toContain('"ContactInbox"."contactId" =')
+    expect(where.sql).toContain('"Contact"."workspaceId" =')
+    expect(where.params).toEqual(["c1", "ws-1"])
+  })
+})

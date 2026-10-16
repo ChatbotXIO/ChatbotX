@@ -29,6 +29,7 @@ export const analyticsConversationEventModel = pgTable(
     fromAssignee: bigintAsString(),
     toAssignee: bigintAsString(),
     channel: text(),
+    inboxId: bigintAsString(),
     metadata: jsonb(),
     insertedAt: timestamp(timestampConfig).defaultNow().notNull(),
   },

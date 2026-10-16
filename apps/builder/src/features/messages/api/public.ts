@@ -118,6 +118,7 @@ export const messagesPublicRouter = {
         workspaceId: context.workspace.id,
         conversationId,
         request: { ...request, templateData },
+        sender: { initiatedBy: "api" },
       })
       return { queued: true as const }
     }),

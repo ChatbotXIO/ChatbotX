@@ -7,6 +7,7 @@ import { resolvedTimezone } from "@chatbotx.io/database/queries/date-bucket"
 import { analyticsContactEventModel } from "@chatbotx.io/database/schema"
 import type { EventBusMessageMetadata } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
+import { buildEventFilter } from "../../lib/event-filter"
 import {
   fillContactStatsMonthlySeries,
   fillDailyContactStats,
@@ -25,8 +26,12 @@ import type {
   ContactStats,
   ContactsByDimension,
   ContactsByDimensionQuery,
-  TimeRangeQuery,
+  FilteredTimeRangeQuery,
 } from "../../schemas"
+import {
+  hasAnalyticsFilter,
+  normalizeAnalyticsFilters,
+} from "../../schemas/common"
 import { BaseRepository } from "./base.repository"
 import { getEventBusEventId } from "./event-bus-idempotency"
 
@@ -37,6 +42,8 @@ export type InsertContactEventRow = EventBusMessageMetadata & {
   source?: string | null
   sourceId?: string | null
   channel?: string | null
+  inboxId?: string | null
+  language?: string | null
   country?: string | null
   metadata?: Record<string, unknown> | null
 }
@@ -51,6 +58,7 @@ const CONTACT_DIMENSION_COLUMNS: Record<ContactDimension, string> = {
   country: "country",
   channel: "channel",
   source: "source",
+  language: "language",
 }
 
 // Contacts that exist as of `to`: same created-minus-deleted balance as the
@@ -64,15 +72,15 @@ const totalContactsBalance = (): SqlFragment => sql`(
 
 const CONTACT_DIMENSION_QUERIES: Record<
   ContactDimensionMetric,
-  (props: TimeRangeQuery, column: SqlColumn) => SqlFragment
+  (props: FilteredTimeRangeQuery, column: SqlColumn) => SqlFragment
 > = {
-  new: ({ workspaceId, from, to }, column) => sql`
+  new: ({ workspaceId, from, to, ...filter }, column) => sql`
     SELECT
       ${column} AS dimension,
       COUNT(*)::int AS count,
       COUNT(DISTINCT "contactId")::int AS "uniqueContacts"
     FROM "AnalyticsContactEvent"
-    WHERE "workspaceId" = ${workspaceId}
+    WHERE "workspaceId" = ${workspaceId}${buildEventFilter(filter)}
       AND "occurredAt" >= ${from}
       AND "occurredAt" <= ${to}
       AND "eventType" = 'contact_created'
@@ -82,13 +90,13 @@ const CONTACT_DIMENSION_QUERIES: Record<
     ORDER BY count DESC
   `,
   // A donut cannot draw a zero or negative slice, so those groups are dropped.
-  total: ({ workspaceId, to }, column) => sql`
+  total: ({ workspaceId, to, ...filter }, column) => sql`
     SELECT
       COALESCE(NULLIF(${column}, ''), '') AS dimension,
       ${totalContactsBalance()} AS count,
       ${totalContactsBalance()} AS "uniqueContacts"
     FROM "AnalyticsContactEvent"
-    WHERE "workspaceId" = ${workspaceId}
+    WHERE "workspaceId" = ${workspaceId}${buildEventFilter(filter)}
       AND "occurredAt" <= ${to}
       AND "eventType" IN ('contact_created', 'contact_deleted')
     GROUP BY 1
@@ -96,6 +104,41 @@ const CONTACT_DIMENSION_QUERIES: Record<
     ORDER BY count DESC
   `,
 }
+
+// Total contacts per channel as of `to` under an inbox filter: the exact
+// current per-inbox counts walked back over the events after `to`, which all
+// carry their inbox (see `getTotalBefore` for why the event balance is not
+// usable there). Channel only: the per-inbox counts have no other dimension.
+const inboxFilteredChannelTotals = ({
+  workspaceId,
+  to,
+  ...filter
+}: FilteredTimeRangeQuery): SqlFragment => sql`
+  SELECT
+    current.channel AS dimension,
+    (current.total - COALESCE(since.net, 0))::int AS count,
+    (current.total - COALESCE(since.net, 0))::int AS "uniqueContacts"
+  FROM (
+    SELECT i."channel" AS channel, SUM(ics."totalContacts")::int AS total
+    FROM "InboxContactStat" ics
+    INNER JOIN "Inbox" i ON i.id = ics."inboxId"
+    WHERE i."workspaceId" = ${workspaceId}${buildEventFilter(filter, {
+      channel: sql`i."channel"`,
+      inboxId: sql`ics."inboxId"`,
+    })}
+    GROUP BY 1
+  ) current
+  LEFT JOIN (
+    SELECT "channel" AS channel, ${totalContactsBalance()} AS net
+    FROM "AnalyticsContactEvent"
+    WHERE "workspaceId" = ${workspaceId}${buildEventFilter(filter)}
+      AND "occurredAt" > ${to}
+      AND "eventType" IN ('contact_created', 'contact_deleted')
+    GROUP BY 1
+  ) since ON since.channel = current.channel
+  WHERE current.total - COALESCE(since.net, 0) > 0
+  ORDER BY count DESC
+`
 
 export class ContactStatsRepository extends BaseRepository {
   async insertEvents(
@@ -117,6 +160,8 @@ export class ContactStatsRepository extends BaseRepository {
       source: p.source ?? null,
       sourceId: p.sourceId ?? null,
       channel: p.channel ?? null,
+      inboxId: p.inboxId ?? null,
+      language: p.language ?? null,
       country: p.country ?? null,
       metadata: p.metadata ?? null,
     }))
@@ -127,11 +172,12 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   async getStatsByMinute(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       eventTypes?: ContactEventType[]
     },
   ): Promise<ContactStats[]> {
     const { workspaceId, from, to, eventTypes } = props
+    const eventFilter = buildEventFilter(props)
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
@@ -148,7 +194,7 @@ export class ContactStatsRepository extends BaseRepository {
         COUNT(*)::int AS count,
         COUNT(DISTINCT "contactId")::int AS "uniqueContacts"
       FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         ${eventTypeFilter}
@@ -173,11 +219,12 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   async getStatsByHour(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       eventTypes?: ContactEventType[]
     },
   ): Promise<ContactStats[]> {
     const { workspaceId, from, to, eventTypes } = props
+    const eventFilter = buildEventFilter(props)
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
@@ -187,19 +234,36 @@ export class ContactStatsRepository extends BaseRepository {
           )})`
         : sql``
 
-    const result = await db.execute(sql`
-      SELECT
-        time_bucket('1 hour', bucket) AS bucket,
-        "eventType",
-        SUM(count)::int AS count
-      FROM analytics_contact_events_hourly
-      WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
-        ${eventTypeFilter}
-      GROUP BY 1, 2
-      ORDER BY 1 ASC, 2 ASC
-    `)
+    // The hourly cagg carries no `inboxId`, so a filtered read buckets the raw
+    // hypertable by hour instead and keeps the same output shape.
+    const query = hasAnalyticsFilter(props)
+      ? sql`
+          SELECT
+            time_bucket('1 hour', "occurredAt") AS bucket,
+            "eventType",
+            COUNT(*)::int AS count
+          FROM "AnalyticsContactEvent"
+          WHERE "workspaceId" = ${workspaceId}${eventFilter}
+            AND "occurredAt" >= ${from}
+            AND "occurredAt" <= ${to}
+            ${eventTypeFilter}
+          GROUP BY 1, 2
+          ORDER BY 1 ASC, 2 ASC
+        `
+      : sql`
+          SELECT
+            time_bucket('1 hour', bucket) AS bucket,
+            "eventType",
+            SUM(count)::int AS count
+          FROM analytics_contact_events_hourly
+          WHERE "workspaceId" = ${workspaceId}
+            AND bucket >= ${from}
+            AND bucket <= ${to}
+            ${eventTypeFilter}
+          GROUP BY 1, 2
+          ORDER BY 1 ASC, 2 ASC
+        `
+    const result = await db.execute(query)
 
     return (
       result.rows as {
@@ -217,11 +281,12 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   async getStatsByDay(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       eventTypes?: ContactEventType[]
     },
   ): Promise<ContactStats[]> {
     const { workspaceId, from, to, timezone, eventTypes } = props
+    const eventFilter = buildEventFilter(props)
 
     if (shouldUseMonthlyGranularity(props)) {
       return this.getStatsByMonth({ ...props, eventTypes })
@@ -255,7 +320,7 @@ export class ContactStatsRepository extends BaseRepository {
             "eventType",
             COUNT(*)::int AS count
           FROM "AnalyticsContactEvent"
-          WHERE "workspaceId" = ${workspaceId}
+          WHERE "workspaceId" = ${workspaceId}${eventFilter}
             AND "occurredAt" >= ${from}
             AND "occurredAt" <= ${to}
             ${eventTypeFilter}
@@ -286,11 +351,12 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   private async getStatsByMonth(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       eventTypes?: ContactEventType[]
     },
   ): Promise<ContactStats[]> {
     const { workspaceId, from, to, timezone, eventTypes } = props
+    const eventFilter = buildEventFilter(props)
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
@@ -307,7 +373,7 @@ export class ContactStatsRepository extends BaseRepository {
         "eventType",
         COUNT(*)::int AS count
       FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         ${eventTypeFilter}
@@ -335,8 +401,49 @@ export class ContactStatsRepository extends BaseRepository {
     return fillContactStatsMonthlySeries({ ...props, rows, eventTypes })
   }
 
+  /**
+   * Contacts that existed before `start` (created minus deleted), the
+   * starting point of the running total.
+   *
+   * Under an inbox filter the event balance is not usable: events recorded
+   * before inbox tracking carry no inbox, so deleting an older contact would
+   * subtract a deletion whose creation the filter cannot see. The total is
+   * then anchored on the exact current per-inbox count and walked back over
+   * the events since `start`, which all carry their inbox.
+   */
+  private async getTotalBefore(
+    props: FilteredTimeRangeQuery,
+    start: SqlFragment,
+  ): Promise<number> {
+    const { workspaceId } = props
+    const eventFilter = buildEventFilter(props)
+    const isInboxFiltered = normalizeAnalyticsFilters(props).inboxIds.length > 0
+    // KNOWN PERF: the unfiltered baseline scans every row before `start`;
+    // the inbox-filtered one scans only rows since `start`.
+    const result = await db.execute(sql`
+      SELECT COALESCE(
+        COUNT(*) FILTER (WHERE "eventType" = 'contact_created') -
+        COUNT(*) FILTER (WHERE "eventType" = 'contact_deleted'),
+        0
+      )::int AS net
+      FROM "AnalyticsContactEvent"
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
+        AND "occurredAt" ${isInboxFiltered ? sql`>=` : sql`<`} ${start}
+        AND "eventType" IN ('contact_created', 'contact_deleted')
+    `)
+    const net = Number(
+      (result.rows[0] as { net: number } | undefined)?.net ?? 0,
+    )
+    if (!isInboxFiltered) {
+      return net
+    }
+    // The per-inbox count is maintained separately; never let a lag between
+    // the two sources show a negative total.
+    return Math.max(0, (await this.getContactsCount(props)) - net)
+  }
+
   async getContactCountsPerDay(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ContactCountsSchema[]> {
     if (shouldUseMonthlyGranularity(props)) {
       return this.getContactCountsPerMonth(props)
@@ -344,23 +451,9 @@ export class ContactStatsRepository extends BaseRepository {
 
     const { workspaceId, from, to, timezone } = props
 
-    const dayStart = sql`date_trunc('day', ${from}::timestamptz AT TIME ZONE ${resolvedTimezone(timezone)}) AT TIME ZONE ${resolvedTimezone(timezone)}`
+    const eventFilter = buildEventFilter(props)
 
-    // KNOWN PERF: baseline scans all historical rows before dayStart with no
-    // upper bound. On large workspaces this can be the dominant query cost.
-    // Future improvement: materialize a periodic running-total per workspace
-    // and cache it, then only sum incremental rows from that snapshot forward.
-    const baselineQuery = sql`
-      SELECT COALESCE(
-        COUNT(*) FILTER (WHERE "eventType" = 'contact_created') -
-        COUNT(*) FILTER (WHERE "eventType" = 'contact_deleted'),
-        0
-      )::int AS baseline
-      FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
-        AND "occurredAt" < ${dayStart}
-        AND "eventType" IN ('contact_created', 'contact_deleted')
-    `
+    const dayStart = sql`date_trunc('day', ${from}::timestamptz AT TIME ZONE ${resolvedTimezone(timezone)}) AT TIME ZONE ${resolvedTimezone(timezone)}`
 
     // Baseline always queries the raw hypertable: the cagg refresh policy only
     // materializes the last 7 days, so older events are absent from the cagg
@@ -385,7 +478,7 @@ export class ContactStatsRepository extends BaseRepository {
             SUM(CASE WHEN "eventType" = 'contact_created' THEN 1 ELSE 0 END)::int -
             SUM(CASE WHEN "eventType" = 'contact_deleted' THEN 1 ELSE 0 END)::int AS net
           FROM "AnalyticsContactEvent"
-          WHERE "workspaceId" = ${workspaceId}
+          WHERE "workspaceId" = ${workspaceId}${eventFilter}
             AND "occurredAt" >= ${dayStart}
             AND "occurredAt" <= ${to}
             AND "eventType" IN ('contact_created', 'contact_deleted')
@@ -393,15 +486,10 @@ export class ContactStatsRepository extends BaseRepository {
           ORDER BY 1 ASC
         `
 
-    const [baselineResult, seriesResult] = await Promise.all([
-      db.execute(baselineQuery),
+    const [baseline, seriesResult] = await Promise.all([
+      this.getTotalBefore(props, dayStart),
       db.execute(seriesQuery),
     ])
-
-    const baseline = Number(
-      (baselineResult.rows[0] as { baseline: number } | undefined)?.baseline ??
-        0,
-    )
 
     const raw: ContactCountsSchema[] = (
       seriesResult.rows as { day: Date; net: number }[]
@@ -421,34 +509,22 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   private async getContactCountsPerMonth(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ContactCountsSchema[]> {
     const { workspaceId, from, to, timezone } = props
+    const eventFilter = buildEventFilter(props)
 
     const monthStart = sql`date_trunc('month', ${from}::timestamptz AT TIME ZONE ${resolvedTimezone(timezone)}) AT TIME ZONE ${resolvedTimezone(timezone)}`
 
-    // Baseline uses the raw hypertable (not the cagg) for the same reason as
-    // the daily path: the cagg refresh policy only materializes the last 7
-    // days, so older data is absent from analytics_contact_events_hourly.
-    const [baselineResult, seriesResult] = await Promise.all([
-      db.execute(sql`
-        SELECT COALESCE(
-          COUNT(*) FILTER (WHERE "eventType" = 'contact_created') -
-          COUNT(*) FILTER (WHERE "eventType" = 'contact_deleted'),
-          0
-        )::int AS baseline
-        FROM "AnalyticsContactEvent"
-        WHERE "workspaceId" = ${workspaceId}
-          AND "occurredAt" < ${monthStart}
-          AND "eventType" IN ('contact_created', 'contact_deleted')
-      `),
+    const [baseline, seriesResult] = await Promise.all([
+      this.getTotalBefore(props, monthStart),
       db.execute(sql`
         SELECT
           time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS month,
           SUM(CASE WHEN "eventType" = 'contact_created' THEN 1 ELSE 0 END)::int -
           SUM(CASE WHEN "eventType" = 'contact_deleted' THEN 1 ELSE 0 END)::int AS net
         FROM "AnalyticsContactEvent"
-        WHERE "workspaceId" = ${workspaceId}
+        WHERE "workspaceId" = ${workspaceId}${eventFilter}
           AND "occurredAt" >= ${monthStart}
           AND "occurredAt" <= ${to}
           AND "eventType" IN ('contact_created', 'contact_deleted')
@@ -456,11 +532,6 @@ export class ContactStatsRepository extends BaseRepository {
         ORDER BY 1 ASC
       `),
     ])
-
-    const baseline = Number(
-      (baselineResult.rows[0] as { baseline: number } | undefined)?.baseline ??
-        0,
-    )
 
     const raw: ContactCountsSchema[] = (
       seriesResult.rows as { month: Date; net: number }[]
@@ -480,13 +551,15 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   async getNewContactsPerDay(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ContactCountsSchema[]> {
     if (shouldUseMonthlyGranularity(props)) {
       return this.getNewContactsPerMonth(props)
     }
 
     const { workspaceId, from, to, timezone } = props
+
+    const eventFilter = buildEventFilter(props)
 
     // Use raw table with COUNT(DISTINCT contactId) so duplicate
     // `contact_created` events for the same contact within a day collapse to
@@ -497,7 +570,7 @@ export class ContactStatsRepository extends BaseRepository {
         time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS day,
         COUNT(DISTINCT "contactId")::int AS new_contacts
       FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "eventType" = 'contact_created'
@@ -516,16 +589,17 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   private async getNewContactsPerMonth(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ContactCountsSchema[]> {
     const { workspaceId, from, to, timezone } = props
+    const eventFilter = buildEventFilter(props)
 
     const result = await db.execute(sql`
       SELECT
         time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS month,
         COUNT(DISTINCT "contactId")::int AS new_contacts
       FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "eventType" = 'contact_created'
@@ -543,13 +617,14 @@ export class ContactStatsRepository extends BaseRepository {
     return fillMonthlyNewContactsSeries({ ...props, raw })
   }
 
-  async getNewContactsCount(props: TimeRangeQuery): Promise<number> {
+  async getNewContactsCount(props: FilteredTimeRangeQuery): Promise<number> {
     const { workspaceId, from, to } = props
+    const eventFilter = buildEventFilter(props)
 
     const result = await db.execute(sql`
       SELECT COUNT(DISTINCT "contactId")::int AS count
       FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "eventType" = 'contact_created'
@@ -559,13 +634,15 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   async getBlockedContactsPerDay(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ContactCountsSchema[]> {
     if (shouldUseMonthlyGranularity(props)) {
       return this.getBlockedContactsPerMonth(props)
     }
 
     const { workspaceId, from, to, timezone } = props
+
+    const eventFilter = buildEventFilter(props)
 
     // COUNT(DISTINCT contactId) — same contact blocked twice in a day (manual
     // path + auto-detect via message:failed) collapses to 1.
@@ -574,7 +651,7 @@ export class ContactStatsRepository extends BaseRepository {
         time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS day,
         COUNT(DISTINCT "contactId")::int AS blocked_contacts
       FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "eventType" = 'contact_blocked'
@@ -593,16 +670,17 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   private async getBlockedContactsPerMonth(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ContactCountsSchema[]> {
     const { workspaceId, from, to, timezone } = props
+    const eventFilter = buildEventFilter(props)
 
     const result = await db.execute(sql`
       SELECT
         time_bucket('1 month', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS month,
         COUNT(DISTINCT "contactId")::int AS blocked_contacts
       FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "eventType" = 'contact_blocked'
@@ -620,13 +698,16 @@ export class ContactStatsRepository extends BaseRepository {
     return fillMonthlyNewContactsSeries({ ...props, raw })
   }
 
-  async getBlockedContactsCount(props: TimeRangeQuery): Promise<number> {
+  async getBlockedContactsCount(
+    props: FilteredTimeRangeQuery,
+  ): Promise<number> {
     const { workspaceId, from, to } = props
+    const eventFilter = buildEventFilter(props)
 
     const result = await db.execute(sql`
       SELECT COUNT(DISTINCT "contactId")::int AS count
       FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "eventType" = 'contact_blocked'
@@ -635,14 +716,18 @@ export class ContactStatsRepository extends BaseRepository {
     return Number((result.rows[0] as { count: number } | undefined)?.count ?? 0)
   }
 
-  async getContactsCount(props: TimeRangeQuery): Promise<number> {
+  async getContactsCount(props: FilteredTimeRangeQuery): Promise<number> {
     const { workspaceId } = props
+    const inboxFilter = buildEventFilter(props, {
+      channel: sql`i."channel"`,
+      inboxId: sql`ics."inboxId"`,
+    })
 
     const result = await db.execute(sql`
       SELECT COALESCE(SUM(ics."totalContacts"), 0)::int AS total
       FROM "InboxContactStat" ics
       INNER JOIN "Inbox" i ON i.id = ics."inboxId"
-      WHERE i."workspaceId" = ${workspaceId}
+      WHERE i."workspaceId" = ${workspaceId}${inboxFilter}
     `)
 
     return Number((result.rows[0] as { total: number } | undefined)?.total ?? 0)
@@ -652,8 +737,13 @@ export class ContactStatsRepository extends BaseRepository {
     props: ContactsByDimensionQuery,
   ): Promise<ContactsByDimension[]> {
     const column = sql.identifier(CONTACT_DIMENSION_COLUMNS[props.dimension])
+    const isInboxFilteredTotal =
+      props.metric === "total" &&
+      normalizeAnalyticsFilters(props).inboxIds.length > 0
     const result = await db.execute(
-      CONTACT_DIMENSION_QUERIES[props.metric](props, column),
+      isInboxFilteredTotal
+        ? inboxFilteredChannelTotals(props)
+        : CONTACT_DIMENSION_QUERIES[props.metric](props, column),
     )
 
     return (

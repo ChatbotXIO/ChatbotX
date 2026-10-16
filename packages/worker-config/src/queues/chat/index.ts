@@ -158,6 +158,15 @@ export type ChatJobSendWhatsappTemplateToConversation = {
     templateId: string
     templateData?: WaTemplateParams
     metadata?: MetadataPayload
+    /**
+     * Who triggered the send. Only `user` (a workspace member in the inbox)
+     * counts as a human agent message in analytics. Absent — automations
+     * (flows, broadcasts) and jobs queued before this field — counts as a bot
+     * message, like `api`.
+     */
+    initiatedBy?: "user" | "api"
+    /** The member behind `initiatedBy: "user"`. */
+    adminId?: string
   }
 }
 

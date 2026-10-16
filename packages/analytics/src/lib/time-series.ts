@@ -15,6 +15,8 @@ import {
   type ContactCountsSchema,
   type ContactEventType,
   type ContactStats,
+  type FilteredTimeRangeQuery,
+  hasAnalyticsFilter,
   type TimeRangeQuery,
   trackingResponseTypes,
 } from "../schemas"
@@ -76,8 +78,11 @@ export function shouldUseMonthlyGranularity(props: TimeRangeQuery): boolean {
 // We use 6 days (not 7) as the threshold to give a 1-day buffer against the
 // cagg refresh lag and the 120-second Redis cache TTL. A query that uses the
 // cagg now will still be within the materialized window when the cache expires.
-export function shouldUseCagg(props: TimeRangeQuery): boolean {
-  return props.from >= subDays(new Date(), 6)
+//
+// Filtered reads (channel / inbox) always take the raw-table path: the caggs
+// carry no `inboxId`, and conversation/bot-message caggs carry no `channel`.
+export function shouldUseCagg(props: FilteredTimeRangeQuery): boolean {
+  return !hasAnalyticsFilter(props) && props.from >= subDays(new Date(), 6)
 }
 
 export function getUtcDayKey(date: Date | string | number): string {

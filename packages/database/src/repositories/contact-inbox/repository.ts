@@ -946,6 +946,71 @@ export const contactInboxRepository = {
   },
 
   /**
+   * The connection analytics attributes each contact's events to: the
+   * contact's most recently active one (`lastMessageAt`, then id), one row per
+   * contact, scoped to the workspace. Contacts without a connection are absent.
+   */
+  async listLatestAnalyticsAttribution(
+    input: { workspaceId: string; contactIds: string[] },
+    tx: DatabaseClient = db,
+  ): Promise<{ contactId: string; inboxId: string; channel: string }[]> {
+    if (input.contactIds.length === 0) {
+      return []
+    }
+    return await tx
+      .selectDistinctOn([contactInboxModel.contactId], {
+        contactId: contactInboxModel.contactId,
+        inboxId: contactInboxModel.inboxId,
+        channel: contactInboxModel.channel,
+      })
+      .from(contactInboxModel)
+      .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
+      .where(
+        and(
+          inArray(contactInboxModel.contactId, input.contactIds),
+          eq(contactModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .orderBy(
+        contactInboxModel.contactId,
+        sql`${contactInboxModel.lastMessageAt} DESC NULLS LAST`,
+        sql`${contactInboxModel.id} DESC`,
+      )
+  },
+
+  /**
+   * Every connection of one contact, scoped to the workspace: the inboxes a
+   * contact-level analytics event (e.g. a manual block) is attributed to.
+   */
+  async listAnalyticsAttributionByContact(
+    input: { workspaceId: string; contactId: string },
+    tx: DatabaseClient = db,
+  ): Promise<
+    {
+      inboxId: string
+      channel: string
+      source: string | null
+      sourceId: string | null
+    }[]
+  > {
+    return await tx
+      .select({
+        inboxId: contactInboxModel.inboxId,
+        channel: contactInboxModel.channel,
+        source: contactInboxModel.source,
+        sourceId: contactInboxModel.sourceId,
+      })
+      .from(contactInboxModel)
+      .innerJoin(contactModel, eq(contactModel.id, contactInboxModel.contactId))
+      .where(
+        and(
+          eq(contactInboxModel.contactId, input.contactId),
+          eq(contactModel.workspaceId, input.workspaceId),
+        ),
+      )
+  },
+
+  /**
    * One guarded `UPDATE ... RETURNING`: applies a thread-control event only
    * when it is not stale (see `threadControlTransitionGuard`). Every non-stale
    * event advances `threadControlUpdatedAt`, even when the state is unchanged,

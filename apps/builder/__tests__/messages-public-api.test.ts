@@ -453,6 +453,8 @@ describe("POST /v1/conversations/{conversationId}/whatsapp-template", () => {
       workspaceId: "workspace-1",
       conversationId: "9",
       request: { templateId: "5", templateData: { params: [] }, inboxId: "3" },
+      // An API send is not an agent reply: no human-sent analytics event.
+      sender: { initiatedBy: "api" },
     })
   })
 
@@ -485,6 +487,7 @@ describe("POST /v1/conversations/{conversationId}/whatsapp-template", () => {
       workspaceId: "workspace-1",
       conversationId: "9",
       request: { templateId: "5", templateData: nested },
+      sender: { initiatedBy: "api" },
     })
   })
 

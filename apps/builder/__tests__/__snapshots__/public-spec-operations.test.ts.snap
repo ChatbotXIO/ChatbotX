@@ -399,6 +399,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "GET",
+    "operationId": "analytics.filterOptions",
+    "path": "/v1/analytics/filter-options",
+  },
+  {
+    "method": "GET",
     "operationId": "analytics.flowSmartDelayStats",
     "path": "/v1/analytics/flows/{flowId}/smart-delay-stats",
   },

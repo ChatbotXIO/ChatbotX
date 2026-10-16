@@ -159,6 +159,7 @@ export const bulkImportChannelContacts = async (props: {
       source: ev.source,
       sourceId: ev.sourceId,
       channel: ev.channel,
+      inboxId: inbox.id,
       metadata: {
         triggerContext: {
           triggerSource: "worker",

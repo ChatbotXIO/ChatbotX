@@ -292,6 +292,7 @@ describe("bulkImportChannelContacts", () => {
         workspaceId: "ws-1",
         contactId: "ci-1",
         sourceId: "src-1",
+        inboxId: "inbox-1",
       }),
     )
   })

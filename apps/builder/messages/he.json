@@ -249,7 +249,7 @@
     "blockedConversationsHelp": "שיחות שהחשבון שלכם חסם.",
     "blockedContacts": "אנשי קשר חסומים",
     "blockedContactsHelp": "אנשי קשר שאינם מעוניינים לקבל הודעות מהחשבון שלכם",
-    "newContactsByCountry": "אנשי קשר חדשים לפי מדינה",
+    "newContactsByLanguage": "אנשי קשר חדשים לפי שפה",
     "date": "תאריך",
     "total": "סה\"כ",
     "messagesSent": "הודעות שנשלחו",
@@ -280,7 +280,19 @@
     "message": "הודעה",
     "searchByDate": "חיפוש לפי תאריך...",
     "publicReply": "תגובה פומבית",
-    "privateReply": "תגובה פרטית"
+    "privateReply": "תגובה פרטית",
+    "filters": {
+      "allChannels": "כל הערוצים",
+      "allInboxes": "כל תיבות הדואר הנכנס",
+      "searchPlaceholder": "חיפוש...",
+      "empty": "לא נמצאו תוצאות.",
+      "clear": "נקה",
+      "close": "סגור",
+      "options": "אפשרויות זמינות",
+      "remove": "הסר",
+      "filterHint": "מסננים סופרים רק אירועים שנרשמו אחרי הוספת הסינון: לאירועים ישנים אין תיבת דואר נכנס, ולאירועי בוט ושיחה ישנים גם אין ערוץ. הכול תמיד סופר הכול.",
+      "tooManyInboxes": "בחרו עד {max} תיבות דואר נכנס, או סמנו הכול."
+    }
   },
   "flowAnalytics": {
     "nodes": {

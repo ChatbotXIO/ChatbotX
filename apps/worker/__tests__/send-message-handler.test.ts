@@ -474,6 +474,136 @@ describe("chat send-message handlers", () => {
     expect(mockEmit.mock.calls.filter(isBotSentDashboardCall)).toHaveLength(0)
   })
 
+  describe("human-sent dashboard events", () => {
+    const outgoing = (overrides: Record<string, unknown>) =>
+      ({
+        id: "msg-human-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        senderId: "admin-1",
+        sourceId: null,
+        text: "hello from an agent",
+        createdAt: new Date("2026-07-09T08:37:21.108Z"),
+        ...overrides,
+      }) as never
+
+    const humanSentCalls = () =>
+      mockEmit.mock.calls.filter(
+        (call) =>
+          call[0] === "analytics:dashboard" &&
+          (call[1] as { eventType?: string }).eventType ===
+            "message:human_sent",
+      )
+
+    test("emits one human-sent event per accepted part with admin, channel, inbox and a stable id", async () => {
+      mockRunChannelHandler.mockResolvedValueOnce({
+        messageIds: ["m1", "m2"],
+        sentCount: 2,
+      })
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: outgoing({}),
+      })
+
+      const calls = humanSentCalls()
+      expect(calls).toHaveLength(2)
+      expect(calls.map((call) => call[1])).toEqual([
+        expect.objectContaining({
+          adminId: "admin-1",
+          senderType: "human",
+          channel: "messenger",
+          inboxId: "inbox-1",
+          contactId: "contact-1",
+          eventId: "msg-human-1:0",
+          occurredAt: new Date("2026-07-09T08:37:21.108Z"),
+        }),
+        expect.objectContaining({
+          eventId: "msg-human-1:1",
+          occurredAt: new Date("2026-07-09T08:37:21.108Z"),
+        }),
+      ])
+      expect(mockEmit.mock.calls.filter(isBotSentDashboardCall)).toHaveLength(0)
+    })
+
+    test("re-running the same message yields the same logical ids", async () => {
+      const message = outgoing({})
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message,
+      })
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message,
+      })
+
+      const ids = humanSentCalls().map(
+        (call) => (call[1] as { eventId: string }).eventId,
+      )
+      expect(ids).toEqual(["msg-human-1:0", "msg-human-1:0"])
+    })
+
+    test.each([
+      "api",
+      "system",
+      "contact",
+    ] as const)("emits no human-sent event for a %s sender", async (senderType) => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: outgoing({ senderType }),
+      })
+
+      expect(humanSentCalls()).toHaveLength(0)
+    })
+
+    test("emits nothing for a user message without a sender id", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: outgoing({ senderId: null }),
+      })
+
+      expect(humanSentCalls()).toHaveLength(0)
+    })
+
+    test("emits nothing when the channel send fails", async () => {
+      mockRunChannelHandler.mockRejectedValueOnce(new Error("channel down"))
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: outgoing({}),
+      }).catch(() => undefined)
+
+      expect(humanSentCalls()).toHaveLength(0)
+    })
+
+    test("does not retry the send when the human-sent emit rejects", async () => {
+      mockEmit.mockImplementationOnce((type: string) =>
+        type === "analytics:dashboard"
+          ? Promise.reject(new Error("redis unavailable"))
+          : Promise.resolve(undefined),
+      )
+
+      await expect(
+        sendMessageToChannel({
+          conversation: conversation as never,
+          contactInbox: contactInbox as never,
+          message: outgoing({}),
+        }),
+      ).resolves.toEqual({ messageIds: ["mid-1"], sentCount: 1 })
+      expect(mockRunChannelHandler).toHaveBeenCalledTimes(1)
+    })
+  })
+
   test("does not retry the send when the bot-sent analytics emit rejects", async () => {
     // Regression: the message is already live on the channel at this point —
     // a rejected analytics emit must be swallowed, not rethrown, or BullMQ
@@ -658,6 +788,53 @@ describe("chat send-message handlers", () => {
       workspaceId: "ws-1",
       at: expect.any(Date),
     })
+  })
+
+  test("a member-initiated flow-step send is a human message, with or without a message id", async () => {
+    const step = {
+      id: "step-1",
+      nodeId: "node-1",
+      stepType: "sendText",
+      text: "hello",
+    } as never
+    const sentAt = new Date("2026-07-09T08:37:21.108Z")
+    const humanCalls = () =>
+      mockEmit.mock.calls
+        .filter(
+          (call) =>
+            call[0] === "analytics:dashboard" &&
+            (call[1] as { eventType?: string }).eventType ===
+              "message:human_sent",
+        )
+        .map(([, payload]) => payload as Record<string, unknown>)
+
+    await sendFlowStepToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      flowId: "",
+      step,
+      messageId: "msg-9",
+      botSentAnalytics: { triggerHandler: "t", triggerType: "t" },
+      humanSender: { adminId: "admin-1", occurredAt: sentAt },
+    })
+    await sendFlowStepToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      flowId: "",
+      step,
+      botSentAnalytics: { triggerHandler: "t", triggerType: "t" },
+      humanSender: { adminId: "admin-1", occurredAt: sentAt },
+    })
+
+    const [withId, withoutId] = humanCalls()
+    expect(withId).toMatchObject({
+      adminId: "admin-1",
+      eventId: "msg-9:0",
+      occurredAt: sentAt,
+    })
+    expect(withoutId).toMatchObject({ adminId: "admin-1", occurredAt: sentAt })
+    expect(withoutId).not.toHaveProperty("eventId")
+    expect(mockEmit.mock.calls.filter(isBotSentDashboardCall)).toHaveLength(0)
   })
 
   test("emits flow-step bot events using supplied trigger metadata", async () => {

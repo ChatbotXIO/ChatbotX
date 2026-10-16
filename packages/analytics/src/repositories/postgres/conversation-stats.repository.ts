@@ -7,6 +7,7 @@ import { resolvedTimezone } from "@chatbotx.io/database/queries/date-bucket"
 import { analyticsConversationEventModel } from "@chatbotx.io/database/schema"
 import type { EventBusMessageMetadata } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
+import { buildEventFilter } from "../../lib/event-filter"
 import { shouldUseCagg } from "../../lib/time-series"
 import type {
   ConversationArchivedStats,
@@ -14,7 +15,7 @@ import type {
   ConversationAssignedStats,
   ConversationFollowUpStats,
   ConversationHandoffStats,
-  TimeRangeQuery,
+  FilteredTimeRangeQuery,
   UniqueConversationsByAdminStats,
 } from "../../schemas"
 import type { ConversationEventType } from "../../schemas/conversation-event"
@@ -28,6 +29,7 @@ export type InsertConversationEventRow = EventBusMessageMetadata & {
   fromAssignee?: string | null
   toAssignee?: string | null
   channel?: string | null
+  inboxId?: string | null
   metadata?: Record<string, unknown> | null
 }
 
@@ -51,6 +53,7 @@ export class ConversationStatsRepository extends BaseRepository {
       fromAssignee: p.fromAssignee ?? null,
       toAssignee: p.toAssignee ?? null,
       channel: p.channel ?? null,
+      inboxId: p.inboxId ?? null,
       metadata: p.metadata ?? null,
     }))
     await db
@@ -60,9 +63,10 @@ export class ConversationStatsRepository extends BaseRepository {
   }
 
   async getHandoffsByDay(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ConversationHandoffStats[]> {
     const { workspaceId, from, to, timezone } = props
+    const eventFilter = buildEventFilter(props)
 
     const query = shouldUseCagg(props)
       ? sql`
@@ -90,7 +94,7 @@ export class ConversationStatsRepository extends BaseRepository {
             END AS direction,
             COUNT(*)::int AS count
           FROM "AnalyticsConversationEvent"
-          WHERE "workspaceId" = ${workspaceId}
+          WHERE "workspaceId" = ${workspaceId}${eventFilter}
             AND "occurredAt" >= ${from}
             AND "occurredAt" <= ${to}
             AND "eventType" IN ('conversation_transferred_to_human', 'conversation_transferred_to_bot')
@@ -115,9 +119,10 @@ export class ConversationStatsRepository extends BaseRepository {
   }
 
   async getFollowUpsByDay(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ConversationFollowUpStats[]> {
     const { workspaceId, from, to, timezone } = props
+    const eventFilter = buildEventFilter(props)
 
     const query = shouldUseCagg(props)
       ? sql`
@@ -137,7 +142,7 @@ export class ConversationStatsRepository extends BaseRepository {
             time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             COUNT(*)::int AS count
           FROM "AnalyticsConversationEvent"
-          WHERE "workspaceId" = ${workspaceId}
+          WHERE "workspaceId" = ${workspaceId}${eventFilter}
             AND "occurredAt" >= ${from}
             AND "occurredAt" <= ${to}
             AND "eventType" = 'conversation_followed'
@@ -160,9 +165,10 @@ export class ConversationStatsRepository extends BaseRepository {
   }
 
   async getArchivedByDay(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ConversationArchivedStats[]> {
     const { workspaceId, from, to, timezone } = props
+    const eventFilter = buildEventFilter(props)
 
     const query = shouldUseCagg(props)
       ? sql`
@@ -182,7 +188,7 @@ export class ConversationStatsRepository extends BaseRepository {
             time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             COUNT(*)::int AS count
           FROM "AnalyticsConversationEvent"
-          WHERE "workspaceId" = ${workspaceId}
+          WHERE "workspaceId" = ${workspaceId}${eventFilter}
             AND "occurredAt" >= ${from}
             AND "occurredAt" <= ${to}
             AND "eventType" = 'conversation_archived'
@@ -205,9 +211,10 @@ export class ConversationStatsRepository extends BaseRepository {
   }
 
   async getAssignedByDay(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ConversationAssignedStats[]> {
     const { workspaceId, from, to, timezone } = props
+    const eventFilter = buildEventFilter(props)
 
     const query = shouldUseCagg(props)
       ? sql`
@@ -227,7 +234,7 @@ export class ConversationStatsRepository extends BaseRepository {
             time_bucket('1 day', "occurredAt" AT TIME ZONE ${resolvedTimezone(timezone)} AT TIME ZONE 'UTC') AS bucket,
             COUNT(*)::int AS count
           FROM "AnalyticsConversationEvent"
-          WHERE "workspaceId" = ${workspaceId}
+          WHERE "workspaceId" = ${workspaceId}${eventFilter}
             AND "occurredAt" >= ${from}
             AND "occurredAt" <= ${to}
             AND "eventType" = 'conversation_assigned'
@@ -250,9 +257,10 @@ export class ConversationStatsRepository extends BaseRepository {
   }
 
   async getAssignedByAdmin(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ConversationAssignedByAdminStats[]> {
     const { workspaceId, from, to } = props
+    const eventFilter = buildEventFilter(props)
 
     const statsQuery = shouldUseCagg(props)
       ? sql`
@@ -273,7 +281,7 @@ export class ConversationStatsRepository extends BaseRepository {
             "toAssignee",
             COUNT(*)::int AS count
           FROM "AnalyticsConversationEvent"
-          WHERE "workspaceId" = ${workspaceId}
+          WHERE "workspaceId" = ${workspaceId}${eventFilter}
             AND "occurredAt" >= ${from}
             AND "occurredAt" <= ${to}
             AND "eventType" = 'conversation_assigned'
@@ -310,9 +318,10 @@ export class ConversationStatsRepository extends BaseRepository {
   }
 
   async getUniqueConversationsByAdmin(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<UniqueConversationsByAdminStats[]> {
     const { workspaceId, from, to } = props
+    const eventFilter = buildEventFilter(props)
 
     const [statsResult, members] = await Promise.all([
       db.execute(sql`
@@ -320,7 +329,7 @@ export class ConversationStatsRepository extends BaseRepository {
           "toAssignee",
           COUNT(DISTINCT "conversationId")::int AS count
         FROM "AnalyticsConversationEvent"
-        WHERE "workspaceId" = ${workspaceId}
+        WHERE "workspaceId" = ${workspaceId}${eventFilter}
           AND "occurredAt" >= ${from}
           AND "occurredAt" <= ${to}
           AND "eventType" = 'conversation_assigned'

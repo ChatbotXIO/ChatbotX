@@ -51,6 +51,7 @@ function makePayload(
       contactId,
       conversationId: "conv-1",
       channel: "messenger",
+      inboxId: "inbox-7",
     },
     action: {},
     occurredAt: new Date("2026-05-17T00:00:00Z"),
@@ -98,6 +99,7 @@ describe("ContactAnalyticsService.handleBlocked", () => {
       workspaceId: "ws-1",
       contactId: "c-1",
       channel: "messenger",
+      inboxId: "inbox-7",
     })
     const triggerContext = (rows[0].metadata as Record<string, unknown>)
       .triggerContext as Record<string, unknown>
@@ -319,7 +321,7 @@ describe("ContactAnalyticsService.getContactsByDimension", () => {
     const [firstKey, , firstOptions] = withCacheMock.mock.calls[0] ?? []
     const [secondKey] = withCacheMock.mock.calls[1] ?? []
     expect(firstKey).toBe(
-      "analytics:contacts-by-dimension:total:ws-1:channel:2026-10-07T23:59:59.999Z",
+      "analytics:contacts-by-dimension:total:ws-1:channel:2026-10-07T23:59:59.999Z:c=:i=",
     )
     expect(secondKey).toBe(firstKey)
     expect(firstOptions).toEqual({ ttl: 120 })
@@ -354,5 +356,28 @@ describe("ContactAnalyticsService.getContactsByDimension", () => {
         metric: "total",
       }),
     ).rejects.toThrow("db down")
+  })
+
+  test("keys the total by normalized filters so equal filters share and different filters never collide", async () => {
+    const base = { ...query, metric: "total" as const }
+    await contactAnalyticsService.getContactsByDimension({
+      ...base,
+      channels: ["whatsapp", "messenger", "messenger"],
+      inboxIds: ["2", "1"],
+    })
+    await contactAnalyticsService.getContactsByDimension({
+      ...base,
+      channels: ["messenger", "whatsapp"],
+      inboxIds: ["1", "2"],
+    })
+    await contactAnalyticsService.getContactsByDimension({
+      ...base,
+      channels: ["messenger"],
+    })
+
+    const keys = withCacheMock.mock.calls.slice(-3).map(([key]) => key)
+    expect(keys[0]).toBe(keys[1])
+    expect(keys[0]).toContain(":c=messenger,whatsapp:i=1,2")
+    expect(keys[2]).not.toBe(keys[0])
   })
 })

@@ -18,11 +18,14 @@ export function ConversationsDashboard({
   defaultSearchParams,
   workspaceCreatedAt,
   nav,
+  channelFilter,
 }: {
   defaultSearchParams: AnalysisStoreProviderProps["defaultSearchParams"]
   workspaceCreatedAt?: Date
   /** Optional side navigation, rendered one row below the filter bar. */
   nav?: ReactNode
+  /** Optional Channel / Inbox filter row, rendered below the date range row. */
+  channelFilter?: ReactNode
 }) {
   return (
     <AnalysisStoreProvider
@@ -33,6 +36,7 @@ export function ConversationsDashboard({
         defaultPreset="last7"
         workspaceCreatedAt={workspaceCreatedAt}
       />
+      {channelFilter}
 
       <div className="flex flex-col gap-4 md:flex-row md:gap-6">
         {nav}

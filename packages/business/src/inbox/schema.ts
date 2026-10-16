@@ -1,5 +1,6 @@
 import { createSelectSchema, inboxModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { channelTypes } from "@chatbotx.io/utils/channel"
 import { z } from "zod"
 import { integrationInstagramResource } from "../integration-instagram/schema"
 import { integrationMessengerResource } from "../integration-messenger/schema"
@@ -75,4 +76,19 @@ export const listAllConnectedInboxesResponse = z.object({
 })
 export type ListAllConnectedInboxesResponse = z.infer<
   typeof listAllConnectedInboxesResponse
+>
+
+/**
+ * One selectable inbox in the analytics Channel / Inbox filters. Lean on
+ * purpose: no credentials or integration relations.
+ */
+export const analyticsFilterOptionResource = z.object({
+  id: z
+    .string()
+    .describe("Inbox id; pass it as `inboxIds` to analytics calls."),
+  name: z.string(),
+  channel: channelTypes.describe("Channel type of the inbox."),
+})
+export type AnalyticsFilterOption = z.infer<
+  typeof analyticsFilterOptionResource
 >

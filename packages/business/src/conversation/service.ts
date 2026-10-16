@@ -18,6 +18,7 @@ import type {
 import {
   assignUserIfUnassigned,
   contactInboxOperationalColumns,
+  contactInboxRepository,
   createMessageRepository,
   getSafeSinceTime,
 } from "@chatbotx.io/database/repositories"
@@ -845,14 +846,53 @@ class ConversationService extends BaseService {
       await this.releaseOwnedThreads({ workspaceId, conversations, archivedAt })
     }
 
+    const attributions = await this.resolveAnalyticsAttribution({
+      workspaceId,
+      contactIds: conversations.map((conv) => conv.contactId),
+    })
     for (const conv of conversations) {
       emit("analytics:dashboard", {
         eventType,
         workspaceId,
         conversationId: conv.id,
         occurredAt: new Date(),
+        ...attributions.get(conv.contactId),
         metadata: { triggerContext },
       })
+    }
+  }
+
+  /**
+   * (channel, inboxId) pair analytics attributes each conversation event to.
+   * A conversation belongs to a contact, not an inbox, so the pair comes from
+   * the contact's most recently active ContactInbox — attribution by routing
+   * rule, not causal. One workspace-scoped query for the whole batch; contacts
+   * without a ContactInbox stay unattributed. It reads on `db`, never the
+   * caller's transaction, and a failed read only leaves the events
+   * unattributed: the conversation change is already committed.
+   */
+  private async resolveAnalyticsAttribution(props: {
+    workspaceId: string
+    contactIds: string[]
+  }): Promise<Map<string, { channel: string; inboxId: string }>> {
+    const { workspaceId } = props
+    try {
+      const rows = await contactInboxRepository.listLatestAnalyticsAttribution({
+        workspaceId,
+        contactIds: [...new Set(props.contactIds)],
+      })
+      return new Map(
+        rows.map((row) => [
+          row.contactId,
+          { channel: row.channel, inboxId: row.inboxId },
+        ]),
+      )
+    } catch (err) {
+      logger.warn(
+        { err, workspaceId },
+        "Conversation analytics attribution lookup failed; events stay unattributed",
+      )
+      return new Map()
     }
   }
 
@@ -1196,6 +1236,10 @@ class ConversationService extends BaseService {
     }
 
     const assignedTo = assignedUserId || assignedInboxTeamId
+    const attributions = await this.resolveAnalyticsAttribution({
+      workspaceId,
+      contactIds: conversations.map((conv) => conv.contactId),
+    })
     for (const conv of conversations) {
       if (assignedTo) {
         await emitConversationAssigned(
@@ -1211,6 +1255,7 @@ class ConversationService extends BaseService {
           conversationId: conv.id,
           toAssignee: assignedTo,
           occurredAt: new Date(),
+          ...attributions.get(conv.contactId),
           metadata: { triggerContext },
         })
       } else {
@@ -1225,6 +1270,7 @@ class ConversationService extends BaseService {
           workspaceId,
           conversationId: conv.id,
           occurredAt: new Date(),
+          ...attributions.get(conv.contactId),
           metadata: { triggerContext },
         })
       }
@@ -1356,11 +1402,16 @@ class ConversationService extends BaseService {
       await emitConversationFollowUp(workspaceId, contactId, id, props.userId)
     }
 
+    const attributions = await this.resolveAnalyticsAttribution({
+      workspaceId,
+      contactIds: [contactId],
+    })
     emit("analytics:dashboard", {
       eventType: followed ? "conversation:followed" : "conversation:unfollowed",
       workspaceId,
       conversationId: id,
       occurredAt: new Date(),
+      ...attributions.get(contactId),
       metadata: { triggerContext },
     })
   }
@@ -1734,6 +1785,10 @@ class ConversationService extends BaseService {
       tx: props.tx,
     })
 
+    const attributions = await this.resolveAnalyticsAttribution({
+      workspaceId: props.workspaceId,
+      contactIds: props.conversations.map((conv) => conv.contactId),
+    })
     for (const conv of props.conversations) {
       await emitConversationTransferredToHuman(
         props.workspaceId,
@@ -1747,6 +1802,7 @@ class ConversationService extends BaseService {
         workspaceId: props.workspaceId,
         conversationId: conv.id,
         occurredAt: new Date(),
+        ...attributions.get(conv.contactId),
         metadata: { triggerContext: props.triggerContext },
       })
     }
@@ -1767,6 +1823,10 @@ class ConversationService extends BaseService {
       tx: props.tx,
     })
 
+    const attributions = await this.resolveAnalyticsAttribution({
+      workspaceId: props.workspaceId,
+      contactIds: props.conversations.map((conv) => conv.contactId),
+    })
     for (const conv of props.conversations) {
       await emitConversationTransferredToBot(
         props.workspaceId,
@@ -1780,6 +1840,7 @@ class ConversationService extends BaseService {
         workspaceId: props.workspaceId,
         conversationId: conv.id,
         occurredAt: new Date(),
+        ...attributions.get(conv.contactId),
         metadata: { triggerContext: props.triggerContext },
       })
     }

@@ -18,8 +18,10 @@ export async function sendWhatsappTemplateToConversation(props: {
   workspaceId: string
   conversationId: string
   request: SendWhatsappTemplateRequest
+  /** Who is sending: a signed-in member (`user`) or a workspace token (`api`). */
+  sender: { initiatedBy: "api" } | { initiatedBy: "user"; adminId: string }
 }): Promise<void> {
-  const { workspaceId, conversationId, request } = props
+  const { workspaceId, conversationId, request, sender } = props
   const conversation = await conversationService.findByOrFail({
     where: { id: conversationId, workspaceId },
   })
@@ -47,6 +49,7 @@ export async function sendWhatsappTemplateToConversation(props: {
       contactInbox,
       templateId: request.templateId,
       templateData: request.templateData,
+      ...sender,
     },
   })
 }

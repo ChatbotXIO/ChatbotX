@@ -291,7 +291,7 @@
     "blockedConversationsHelp": "Cuộc trò chuyện mà tài khoản của bạn đã chặn.",
     "blockedContacts": "Liên hệ bị chặn",
     "blockedContactsHelp": "Khách hàng không muốn nhận tin nhắn từ tài khoản của bạn",
-    "newContactsByCountry": "Liên hệ mới theo quốc gia",
+    "newContactsByLanguage": "Liên hệ mới theo ngôn ngữ",
     "date": "Ngày",
     "total": "Tổng",
     "messagesSent": "Tin nhắn đã gửi",
@@ -322,7 +322,19 @@
     "message": "Tin nhắn",
     "searchByDate": "Tìm theo ngày...",
     "publicReply": "Trả lời công khai",
-    "privateReply": "Trả lời riêng"
+    "privateReply": "Trả lời riêng",
+    "filters": {
+      "allChannels": "Tất cả kênh",
+      "allInboxes": "Tất cả hộp thư đến",
+      "searchPlaceholder": "Tìm kiếm...",
+      "empty": "Không tìm thấy kết quả.",
+      "clear": "Xóa",
+      "close": "Đóng",
+      "options": "Các tùy chọn",
+      "remove": "Bỏ",
+      "filterHint": "Bộ lọc chỉ tính sự kiện ghi nhận sau khi có tính năng lọc: sự kiện cũ không có hộp thư, và sự kiện bot, hội thoại cũ cũng không có kênh. Tất cả luôn tính toàn bộ.",
+      "tooManyInboxes": "Chọn tối đa {max} hộp thư, hoặc tick Tất cả."
+    }
   },
   "flowAnalytics": {
     "nodes": {

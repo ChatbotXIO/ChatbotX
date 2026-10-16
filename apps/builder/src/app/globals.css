@@ -9,4 +9,5 @@
  * you can always add it with the @source directive.
  */
 @source "../../node_modules/@chatbotx.io/ui";
+@source "../../node_modules/@chatbotx.io/analytics-nextjs";
 @source "../../node_modules/@chatbotx.io/minigame-ui";

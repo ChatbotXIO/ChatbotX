@@ -28,11 +28,15 @@ export type AnalyticsDashboardEventType = z.infer<
 >
 
 const baseContactEventPayloadSchema = z.object({
+  /** Logical id for a source that can re-run (a re-sent job); beats the stream id. */
+  eventId: z.string().optional(),
   workspaceId: z.string(),
   contactId: z.string(),
   occurredAt: z.union([z.date(), z.string(), z.number()]),
   adminId: z.string().optional(),
   channel: z.string().nullish(),
+  inboxId: z.string().nullish(),
+  language: z.string().nullish(),
   country: z.string().nullish(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   senderType: contactSenderTypeSchema.optional(),
@@ -84,6 +88,7 @@ const baseConversationEventPayloadSchema = z.object({
   fromAssignee: z.string().optional(),
   toAssignee: z.string().optional(),
   channel: z.string().optional(),
+  inboxId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 })
 
@@ -144,6 +149,7 @@ export const messageBotReceivedEventSchema = z.object({
   result: botMessageResultSchema.optional(),
   aiProvider: z.string().optional(),
   channel: z.string().optional(),
+  inboxId: z.string().optional(),
   source: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 })

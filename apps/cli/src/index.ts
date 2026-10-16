@@ -3,33 +3,12 @@ import type { Argv } from "yargs"
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
 import packageJson from "../package.json"
+import { collectCliParams, registerActionArgs } from "./command-args"
 import { setConfig } from "./commands/config"
 import type { ConfigOptions } from "./config"
 import { getConfig } from "./config"
 import { executeDynamicCommand } from "./dynamic-executor"
 import { type DynamicTool, loadOpenApiSpecForCli } from "./openapi-loader"
-
-const registerActionArgs = (actionCli: Argv, tool: DynamicTool): Argv => {
-  // Positional path params are declared in the command string itself,
-  // so we only register them here via .positional() for description/type.
-  let next = actionCli
-  for (const name of tool.pathParamNames) {
-    next = next.positional(name, {
-      describe: name,
-      type: "string",
-      demandOption: true,
-    })
-  }
-  for (const name of [...tool.queryParamNames, ...tool.bodyParamNames]) {
-    const required = tool.inputSchema.required?.includes(name) ?? false
-    next = next.option(name, {
-      describe: name,
-      type: "string",
-      demandOption: required,
-    })
-  }
-  return next
-}
 
 const buildActionCommandString = (
   action: string,
@@ -42,18 +21,7 @@ const buildActionCommandString = (
 const buildActionHandler =
   (tool: DynamicTool, config: { apiKey: string; apiUrl: string }) =>
   async (argv: Record<string, unknown>): Promise<void> => {
-    const params: Record<string, string> = {}
-    for (const name of [
-      ...tool.pathParamNames,
-      ...tool.queryParamNames,
-      ...tool.bodyParamNames,
-    ]) {
-      const value = argv[name]
-      if (typeof value === "string") {
-        params[name] = value
-      }
-    }
-    await executeDynamicCommand(tool, params, config)
+    await executeDynamicCommand(tool, collectCliParams(tool, argv), config)
   }
 
 type ActionEntry = { tool: DynamicTool; name: string }

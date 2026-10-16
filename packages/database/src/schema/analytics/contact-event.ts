@@ -37,6 +37,8 @@ export const analyticsContactEventModel = pgTable(
     source: text(),
     sourceId: text(),
     channel: text(),
+    inboxId: bigintAsString(),
+    language: text(),
     country: text(),
     senderType: analyticsContactSenderTypeEnum(),
     adminId: bigintAsString(),

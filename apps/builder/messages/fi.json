@@ -249,7 +249,7 @@
     "blockedConversationsHelp": "Tilisi estämät keskustelut.",
     "blockedContacts": "Estetyt yhteystiedot",
     "blockedContactsHelp": "Yhteystiedot, jotka eivät halua vastaanottaa viestejä tililtäsi",
-    "newContactsByCountry": "Uudet yhteystiedot maittain",
+    "newContactsByLanguage": "Uudet yhteystiedot kielen mukaan",
     "date": "Päivämäärä",
     "total": "Yhteensä",
     "messagesSent": "Lähetetyt viestit",
@@ -280,7 +280,19 @@
     "message": "Viesti",
     "searchByDate": "Hae päivämäärällä...",
     "publicReply": "Julkinen vastaus",
-    "privateReply": "Yksityinen vastaus"
+    "privateReply": "Yksityinen vastaus",
+    "filters": {
+      "allChannels": "Kaikki kanavat",
+      "allInboxes": "Kaikki saapuneet",
+      "searchPlaceholder": "Hae...",
+      "empty": "Tuloksia ei löytynyt.",
+      "clear": "Tyhjennä",
+      "close": "Sulje",
+      "options": "Käytettävissä olevat vaihtoehdot",
+      "remove": "Poista",
+      "filterHint": "Suodattimet laskevat vain suodatuksen lisäämisen jälkeen tallennetut tapahtumat: vanhemmilla tapahtumilla ei ole saapuneet-kansiota, eikä vanhemmilla botti- ja keskustelutapahtumilla myöskään kanavaa. Kaikki laskee aina kaiken.",
+      "tooManyInboxes": "Valitse enintään {max} saapuneet-kansiota tai valitse Kaikki."
+    }
   },
   "flowAnalytics": {
     "nodes": {

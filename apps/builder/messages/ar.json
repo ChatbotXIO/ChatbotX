@@ -249,7 +249,7 @@
     "blockedConversationsHelp": "المحادثات التي حظرها حسابك.",
     "blockedContacts": "جهات الاتصال المحظورة",
     "blockedContactsHelp": "جهات اتصال لا ترغب في تلقي رسائل من حسابك",
-    "newContactsByCountry": "جهات الاتصال الجديدة حسب الدولة",
+    "newContactsByLanguage": "جهات الاتصال الجديدة حسب اللغة",
     "date": "التاريخ",
     "total": "الإجمالي",
     "messagesSent": "الرسائل المرسلة",
@@ -280,7 +280,19 @@
     "message": "رسالة",
     "searchByDate": "البحث حسب التاريخ...",
     "publicReply": "رد عام",
-    "privateReply": "رد خاص"
+    "privateReply": "رد خاص",
+    "filters": {
+      "allChannels": "كل القنوات",
+      "allInboxes": "جميع صناديق الوارد",
+      "searchPlaceholder": "بحث...",
+      "empty": "لم يتم العثور على نتائج.",
+      "clear": "مسح",
+      "close": "إغلاق",
+      "options": "الخيارات المتاحة",
+      "remove": "إزالة",
+      "filterHint": "لا تحتسب عوامل التصفية إلا الأحداث المسجلة بعد إضافة التصفية: الأحداث الأقدم بلا صندوق وارد، وأحداث البوت والمحادثات الأقدم بلا قناة أيضًا. الكل يحتسب كل شيء دائمًا.",
+      "tooManyInboxes": "اختر {max} صندوق وارد كحد أقصى، أو حدد الكل."
+    }
   },
   "flowAnalytics": {
     "nodes": {

@@ -6,7 +6,7 @@ import {
   getConversationFollowUpsResponseSchema,
   getConversationHandoffsResponseSchema,
   getUniqueConversationsByAdminResponseSchema,
-  timeRangeQuerySchema,
+  timeRangeQueryWithFilterSchema,
 } from "@chatbotx.io/analytics/schemas"
 import { os } from "@orpc/server"
 import { logger } from "../lib/log"
@@ -19,7 +19,7 @@ export const analyticsConversationRoutes = os.router({
       summary: "Get conversation handoffs",
       tags: ["Analytics"],
     })
-    .input(timeRangeQuerySchema)
+    .input(timeRangeQueryWithFilterSchema)
     .output(getConversationHandoffsResponseSchema)
     .handler(async ({ input }) => {
       try {
@@ -37,7 +37,7 @@ export const analyticsConversationRoutes = os.router({
       summary: "Get conversation follow-ups",
       tags: ["Analytics"],
     })
-    .input(timeRangeQuerySchema)
+    .input(timeRangeQueryWithFilterSchema)
     .output(getConversationFollowUpsResponseSchema)
     .handler(async ({ input }) => {
       try {
@@ -55,7 +55,7 @@ export const analyticsConversationRoutes = os.router({
       summary: "Get archived conversations",
       tags: ["Analytics"],
     })
-    .input(timeRangeQuerySchema)
+    .input(timeRangeQueryWithFilterSchema)
     .output(getConversationArchivedResponseSchema)
     .handler(async ({ input }) => {
       try {
@@ -73,7 +73,7 @@ export const analyticsConversationRoutes = os.router({
       summary: "Get assigned conversations",
       tags: ["Analytics"],
     })
-    .input(timeRangeQuerySchema)
+    .input(timeRangeQueryWithFilterSchema)
     .output(getConversationAssignedResponseSchema)
     .handler(async ({ input }) => {
       try {
@@ -91,7 +91,7 @@ export const analyticsConversationRoutes = os.router({
       summary: "Get assigned conversations by admin",
       tags: ["Analytics"],
     })
-    .input(timeRangeQuerySchema)
+    .input(timeRangeQueryWithFilterSchema)
     .output(getConversationAssignedByAdminResponseSchema)
     .handler(async ({ input }) => {
       try {
@@ -113,7 +113,7 @@ export const analyticsConversationRoutes = os.router({
       summary: "Get unique conversations by admin",
       tags: ["Analytics"],
     })
-    .input(timeRangeQuerySchema)
+    .input(timeRangeQueryWithFilterSchema)
     .output(getUniqueConversationsByAdminResponseSchema)
     .handler(async ({ input }) => {
       try {

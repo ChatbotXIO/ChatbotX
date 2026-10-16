@@ -249,7 +249,7 @@
     "blockedConversationsHelp": "Samtaler, som din konto har blokeret.",
     "blockedContacts": "Blokerede kontakter",
     "blockedContactsHelp": "Kontakter, der ikke ønsker at modtage beskeder fra din konto",
-    "newContactsByCountry": "Nye kontakter efter land",
+    "newContactsByLanguage": "Nye kontakter efter sprog",
     "date": "Dato",
     "total": "I alt",
     "messagesSent": "Sendte beskeder",
@@ -280,7 +280,19 @@
     "message": "Besked",
     "searchByDate": "Søg efter dato...",
     "publicReply": "Offentligt svar",
-    "privateReply": "Privat svar"
+    "privateReply": "Privat svar",
+    "filters": {
+      "allChannels": "Alle kanaler",
+      "allInboxes": "Alle indbakker",
+      "searchPlaceholder": "Søg...",
+      "empty": "Ingen resultater fundet.",
+      "clear": "Ryd",
+      "close": "Luk",
+      "options": "Tilgængelige valg",
+      "remove": "Fjern",
+      "filterHint": "Filtre tæller kun hændelser registreret efter filtrering blev tilføjet: ældre hændelser har ingen indbakke, og ældre bot- og samtalehændelser har heller ingen kanal. Alle tæller altid alt.",
+      "tooManyInboxes": "Vælg højst {max} indbakker, eller markér Alle."
+    }
   },
   "flowAnalytics": {
     "nodes": {

@@ -19,7 +19,10 @@ import {
   type ContactFilterCriteriaInput,
   contactFilterHasPredicate,
 } from "@chatbotx.io/database/queries"
-import { contactRepository } from "@chatbotx.io/database/repositories"
+import {
+  contactInboxRepository,
+  contactRepository,
+} from "@chatbotx.io/database/repositories"
 import {
   contactInboxModel,
   contactModel,
@@ -193,6 +196,7 @@ class ContactService extends BaseService {
           occurredAt,
           source: contactInbox.source,
           channel: contactInbox.channel,
+          inboxId: contactInbox.inboxId,
           sourceId: contactInbox.sourceId,
           metadata: {
             triggerContext: {
@@ -219,21 +223,49 @@ class ContactService extends BaseService {
   }) {
     const contact = await contactService.block(ctx)
 
-    emit("analytics:dashboard", {
-      eventType: "contact:blocked",
-      workspaceId: ctx.workspaceId,
-      contactId: contact.id,
-      occurredAt: contact.blockedAt ?? new Date(),
-      country: contact.country,
-      metadata: {
-        triggerContext: {
-          triggerSource: "api",
-          triggerHandler: "blockContactAction",
-          triggerType: "contact_blocked",
-          origin: "manual",
+    // One event per inbox, like delete, so a channel/inbox filter attributes the
+    // block; a contact without inboxes still records one unattributed event.
+    // The block is already committed: a failed lookup must not fail it, only
+    // leave the event unattributed.
+    const contactInboxes = await contactInboxRepository
+      .listAnalyticsAttributionByContact({
+        workspaceId: ctx.workspaceId,
+        contactId: contact.id,
+      })
+      .catch((err: unknown) => {
+        logger.warn(
+          { err, contactId: contact.id },
+          "Block analytics attribution lookup failed; event stays unattributed",
+        )
+        return []
+      })
+    const occurredAt = contact.blockedAt ?? new Date()
+    const attributions =
+      contactInboxes.length > 0
+        ? contactInboxes
+        : [{ inboxId: null, channel: null, source: null, sourceId: null }]
+
+    for (const attribution of attributions) {
+      emit("analytics:dashboard", {
+        eventType: "contact:blocked",
+        workspaceId: ctx.workspaceId,
+        contactId: contact.id,
+        occurredAt,
+        country: contact.country,
+        channel: attribution.channel,
+        inboxId: attribution.inboxId,
+        source: attribution.source,
+        sourceId: attribution.sourceId,
+        metadata: {
+          triggerContext: {
+            triggerSource: "api",
+            triggerHandler: "blockContactAction",
+            triggerType: "contact_blocked",
+            origin: "manual",
+          },
         },
-      },
-    })
+      })
+    }
   }
 
   async unblockAndRecord(ctx: {
@@ -981,6 +1013,7 @@ class ContactService extends BaseService {
       source: contactInbox.source,
       sourceId: contactInbox.sourceId,
       channel: inbox.channel,
+      inboxId: inbox.id,
       metadata: {
         triggerContext: {
           triggerSource: "api",

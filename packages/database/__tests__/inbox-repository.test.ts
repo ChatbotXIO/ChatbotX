@@ -79,3 +79,26 @@ describe("inboxRepository.listOptionsByWorkspaceAndChannel", () => {
     expect(mocks.findMany).not.toHaveBeenCalled()
   })
 })
+
+describe("inboxRepository.listAnalyticsOptionsByWorkspace", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.findMany.mockResolvedValue([])
+  })
+
+  test("offers only connected, non-smtp inboxes of the workspace, as a lean projection", async () => {
+    await inboxRepository.listAnalyticsOptionsByWorkspace({
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.findMany).toHaveBeenCalledExactlyOnceWith({
+      columns: { id: true, name: true, channel: true },
+      where: {
+        workspaceId: "ws-1",
+        status: "connected",
+        channel: { ne: "smtp" },
+      },
+      orderBy: { name: "asc" },
+    })
+  })
+})

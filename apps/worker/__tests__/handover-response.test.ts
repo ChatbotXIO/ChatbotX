@@ -264,6 +264,7 @@ describe("startHandoverResponse: hand-back from the AI agent", () => {
       contactId: "contact-1",
       conversationId: "conv-1",
       channel: "messenger",
+      inboxId: "inbox-1",
       reason: "ai_agent_handback",
       source: "thread_control_handback",
     })

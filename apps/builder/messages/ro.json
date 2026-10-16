@@ -1290,7 +1290,7 @@
     "blockedConversationsHelp": "Conversații blocate de contul tău.",
     "blockedContacts": "Contacte blocate",
     "blockedContactsHelp": "Contacte care nu doresc să primească mesaje de la contul tău",
-    "newContactsByCountry": "Contacte noi după țară",
+    "newContactsByLanguage": "Contacte noi după limbă",
     "date": "Dată",
     "total": "Total",
     "messagesSent": "Mesaje trimise",
@@ -1321,7 +1321,19 @@
     "message": "Mesaj",
     "searchByDate": "Caută după dată...",
     "publicReply": "Răspuns public",
-    "privateReply": "Răspuns privat"
+    "privateReply": "Răspuns privat",
+    "filters": {
+      "allChannels": "Toate canalele",
+      "allInboxes": "Toate Inbox-urile",
+      "searchPlaceholder": "Caută...",
+      "empty": "Nu s-au găsit rezultate.",
+      "clear": "Șterge",
+      "close": "Închide",
+      "options": "Opțiuni disponibile",
+      "remove": "Elimină",
+      "filterHint": "Filtrele numără doar evenimentele înregistrate după adăugarea filtrării: evenimentele mai vechi nu au Inbox, iar evenimentele mai vechi de bot și conversație nu au nici canal. Toate numără mereu tot.",
+      "tooManyInboxes": "Alege cel mult {max} Inbox-uri sau bifează Toate."
+    }
   },
   "flowAnalytics": {
     "nodes": {

@@ -1,10 +1,16 @@
 import { and, type DatabaseClient, db, eq, isNull, lt, or } from "../../client"
-import type { ChannelType } from "../../partials"
+import { type ChannelType, inboxStatuses } from "../../partials"
 import { THREAD_CONTROL_SEEN_REFRESH_MS } from "../../partials/thread-control"
 import { connectionModel, inboxModel, workspaceModel } from "../../schema"
 import type { InboxModel } from "../../types"
 
 export type InboxChannelOption = { id: string; name: string }
+
+export type InboxAnalyticsOption = {
+  id: string
+  name: string
+  channel: string
+}
 
 /**
  * Reads of the `Inbox` row itself. The richer inbox reads (with integrations,
@@ -37,6 +43,28 @@ export const inboxRepository = {
     return await tx.query.inboxModel.findMany({
       columns: { id: true, name: true },
       where: { workspaceId: input.workspaceId, channel: input.channel },
+    })
+  },
+
+  /**
+   * The workspace's connected inboxes as a three-column projection for the
+   * analytics Channel and Inbox filters. A disconnected inbox has lost its
+   * integration, so it is not offered; its past events still count under "All". `smtp` never carries contact or conversation
+   * traffic. No integration relations are loaded.
+   */
+  async listAnalyticsOptionsByWorkspace(input: {
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<InboxAnalyticsOption[]> {
+    const { tx = db } = input
+    return await tx.query.inboxModel.findMany({
+      columns: { id: true, name: true, channel: true },
+      where: {
+        workspaceId: input.workspaceId,
+        status: inboxStatuses.enum.connected,
+        channel: { ne: "smtp" },
+      },
+      orderBy: { name: "asc" },
     })
   },
 

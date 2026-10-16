@@ -249,7 +249,7 @@
     "blockedConversationsHelp": "Unterhaltungen, die Ihr Konto blockiert hat.",
     "blockedContacts": "Blockierte Kontakte",
     "blockedContactsHelp": "Kontakte möchten keine Nachrichten von Ihrem Konto erhalten.",
-    "newContactsByCountry": "Neue Kontakte nach Land",
+    "newContactsByLanguage": "Neue Kontakte nach Sprache",
     "date": "Datum",
     "total": "Gesamt",
     "messagesSent": "Gesendete Nachrichten",
@@ -280,7 +280,19 @@
     "message": "Nachricht",
     "searchByDate": "Nach Datum suchen...",
     "publicReply": "Öffentliche Antwort",
-    "privateReply": "Private Antwort"
+    "privateReply": "Private Antwort",
+    "filters": {
+      "allChannels": "Alle Kanäle",
+      "allInboxes": "Alle Posteingänge",
+      "searchPlaceholder": "Suchen...",
+      "empty": "Keine Ergebnisse gefunden.",
+      "clear": "Zurücksetzen",
+      "close": "Schließen",
+      "options": "Verfügbare Optionen",
+      "remove": "Entfernen",
+      "filterHint": "Filter zählen nur Ereignisse, die nach Einführung der Filterung erfasst wurden: Ältere Ereignisse haben keinen Posteingang, ältere Bot- und Unterhaltungsereignisse auch keinen Kanal. Alle zählt immer alles.",
+      "tooManyInboxes": "Wählen Sie höchstens {max} Posteingänge oder markieren Sie Alle."
+    }
   },
   "flowAnalytics": {
     "nodes": {

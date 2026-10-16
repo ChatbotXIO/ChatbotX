@@ -249,7 +249,7 @@
     "blockedConversationsHelp": "Hesabınızın engellediği görüşmeler.",
     "blockedContacts": "Engellenmiş kişiler",
     "blockedContactsHelp": "Hesabınızdan mesaj almak istemeyen kişiler",
-    "newContactsByCountry": "Ülkeye göre yeni kişiler",
+    "newContactsByLanguage": "Dile göre yeni kişiler",
     "date": "Tarih",
     "total": "Toplam",
     "messagesSent": "Gönderilen Mesajlar",
@@ -280,7 +280,19 @@
     "message": "Mesaj",
     "searchByDate": "Tarihe göre ara...",
     "publicReply": "Herkese açık yanıt",
-    "privateReply": "Özel yanıt"
+    "privateReply": "Özel yanıt",
+    "filters": {
+      "allChannels": "Tüm kanallar",
+      "allInboxes": "Tüm gelen kutuları",
+      "searchPlaceholder": "Ara...",
+      "empty": "Sonuç bulunamadı.",
+      "clear": "Temizle",
+      "close": "Kapat",
+      "options": "Kullanılabilir seçenekler",
+      "remove": "Kaldır",
+      "filterHint": "Filtreler yalnızca filtreleme eklendikten sonra kaydedilen olayları sayar: eski olayların gelen kutusu yoktur, eski bot ve konuşma olaylarının da kanalı yoktur. Tümü her zaman her şeyi sayar.",
+      "tooManyInboxes": "En fazla {max} gelen kutusu seçin veya Tümü'nü işaretleyin."
+    }
   },
   "flowAnalytics": {
     "nodes": {

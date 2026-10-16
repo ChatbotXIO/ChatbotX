@@ -291,7 +291,7 @@
     "blockedConversationsHelp": "Hesabınızın blokladığı söhbətlər.",
     "blockedContacts": "Bloklanmış kontaktlar",
     "blockedContactsHelp": "Hesabınızdan mesaj almaq istəməyən kontaktlar",
-    "newContactsByCountry": "Ölkələr üzrə yeni kontaktlar",
+    "newContactsByLanguage": "Dilə görə yeni kontaktlar",
     "date": "Tarix",
     "total": "Cəmi",
     "messagesSent": "Göndərilmiş mesajlar",
@@ -322,7 +322,19 @@
     "message": "Mesaj",
     "searchByDate": "Tarix üzrə axtarış...",
     "publicReply": "İctimai cavab",
-    "privateReply": "Şəxsi cavab"
+    "privateReply": "Şəxsi cavab",
+    "filters": {
+      "allChannels": "Bütün kanallar",
+      "allInboxes": "Bütün gələnlər qutuları",
+      "searchPlaceholder": "Axtar...",
+      "empty": "Nəticə tapılmadı.",
+      "clear": "Təmizlə",
+      "close": "Bağla",
+      "options": "Mövcud seçimlər",
+      "remove": "Sil",
+      "filterHint": "Filtrlər yalnız filtrləmə əlavə olunduqdan sonra qeydə alınan hadisələri sayır: köhnə hadisələrin gələnlər qutusu yoxdur, köhnə bot və söhbət hadisələrinin isə kanalı da yoxdur. Hamısı həmişə hər şeyi sayır.",
+      "tooManyInboxes": "Ən çox {max} gələnlər qutusu seçin və ya Hamısını işarələyin."
+    }
   },
   "flowAnalytics": {
     "nodes": {

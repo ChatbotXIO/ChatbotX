@@ -249,7 +249,7 @@
     "blockedConversationsHelp": "Gesprekken die door je account zijn geblokkeerd.",
     "blockedContacts": "Geblokkeerde contacten",
     "blockedContactsHelp": "Contacten die geen berichten van je account willen ontvangen",
-    "newContactsByCountry": "Nieuwe contacten per land",
+    "newContactsByLanguage": "Nieuwe contacten per taal",
     "date": "Datum",
     "total": "Totaal",
     "messagesSent": "Verzonden berichten",
@@ -280,7 +280,19 @@
     "message": "Bericht",
     "searchByDate": "Zoeken op datum...",
     "publicReply": "Openbare reactie",
-    "privateReply": "Privéreactie"
+    "privateReply": "Privéreactie",
+    "filters": {
+      "allChannels": "Alle kanalen",
+      "allInboxes": "Alle postvakken IN",
+      "searchPlaceholder": "Zoeken...",
+      "empty": "Geen resultaten gevonden.",
+      "clear": "Wissen",
+      "close": "Sluiten",
+      "options": "Beschikbare opties",
+      "remove": "Verwijderen",
+      "filterHint": "Filters tellen alleen gebeurtenissen die zijn vastgelegd nadat filteren is toegevoegd: oudere gebeurtenissen hebben geen postvak, en oudere bot- en gesprekgebeurtenissen ook geen kanaal. Alle telt altijd alles.",
+      "tooManyInboxes": "Kies maximaal {max} postvakken, of vink Alle aan."
+    }
   },
   "flowAnalytics": {
     "nodes": {

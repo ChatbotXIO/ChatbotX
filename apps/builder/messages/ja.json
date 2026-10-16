@@ -249,7 +249,7 @@
     "blockedConversationsHelp": "あなたのアカウントがブロックした会話です。",
     "blockedContacts": "ブロック済みの連絡先",
     "blockedContactsHelp": "あなたのアカウントからのメッセージ受信を希望しない連絡先です",
-    "newContactsByCountry": "国別の新規連絡先",
+    "newContactsByLanguage": "言語別の新規コンタクト",
     "date": "日付",
     "total": "合計",
     "messagesSent": "送信済みメッセージ",
@@ -280,7 +280,19 @@
     "message": "メッセージ",
     "searchByDate": "日付で検索...",
     "publicReply": "公開返信",
-    "privateReply": "非公開返信"
+    "privateReply": "非公開返信",
+    "filters": {
+      "allChannels": "すべてのチャネル",
+      "allInboxes": "すべての受信箱",
+      "searchPlaceholder": "検索...",
+      "empty": "結果が見つかりません。",
+      "clear": "クリア",
+      "close": "閉じる",
+      "options": "利用可能なオプション",
+      "remove": "削除",
+      "filterHint": "フィルターはフィルター機能の追加後に記録されたイベントのみを集計します。それ以前のイベントには受信箱がなく、以前のボットと会話のイベントにはチャネルもありません。すべてを選ぶと常にすべてを集計します。",
+      "tooManyInboxes": "受信箱は最大 {max} 件まで選択するか、すべてを選択してください。"
+    }
   },
   "flowAnalytics": {
     "nodes": {

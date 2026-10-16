@@ -158,6 +158,7 @@ export async function startHandoverResponse(
       contactId: props.thread.conversation.contactId,
       conversationId: props.thread.conversation.id,
       channel: props.integrationType,
+      inboxId: props.inboxId,
       reason: "ai_agent_handback",
       source: "thread_control_handback",
     })

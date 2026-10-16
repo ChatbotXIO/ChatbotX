@@ -249,7 +249,7 @@
     "blockedConversationsHelp": "Conversations bloquées par votre compte.",
     "blockedContacts": "Contacts bloqués",
     "blockedContactsHelp": "Contacts qui ne souhaitent pas recevoir de messages de votre compte",
-    "newContactsByCountry": "Nouveaux contacts par pays",
+    "newContactsByLanguage": "Nouveaux contacts par langue",
     "date": "Date",
     "total": "Total",
     "messagesSent": "Messages envoyés",
@@ -280,7 +280,19 @@
     "message": "Message",
     "searchByDate": "Rechercher par date...",
     "publicReply": "Réponse publique",
-    "privateReply": "Réponse privée"
+    "privateReply": "Réponse privée",
+    "filters": {
+      "allChannels": "Tous les canaux",
+      "allInboxes": "Toutes les boîtes de réception",
+      "searchPlaceholder": "Rechercher...",
+      "empty": "Aucun résultat trouvé.",
+      "clear": "Effacer",
+      "close": "Fermer",
+      "options": "Options disponibles",
+      "remove": "Retirer",
+      "filterHint": "Les filtres ne comptent que les événements enregistrés après l'ajout du filtrage : les événements plus anciens n'ont pas de boîte de réception, et les anciens événements de bot et de conversation n'ont pas non plus de canal. Tous compte toujours tout.",
+      "tooManyInboxes": "Choisissez au maximum {max} boîtes de réception, ou cochez Toutes."
+    }
   },
   "flowAnalytics": {
     "nodes": {

@@ -410,6 +410,7 @@ function createReplyToolset(options: {
           reason: args.reason,
           source: "ai_system_tool",
           channel: context.channel,
+          inboxId: options.props.contactInbox.inboxId,
           metadata: {
             userRequestExcerpt: args.userRequestExcerpt,
             requestedBy: args.requestedBy,
@@ -463,6 +464,7 @@ function createReplyToolset(options: {
                 contactId: conversation.contactId,
                 contactInboxId: options.props.contactInbox.id,
                 channel: options.props.channel,
+                inboxId: options.props.contactInbox.inboxId,
                 triggerMessageId: options.props.triggerMessageId,
                 workspaceTimezone: options.props.workspaceTimezone,
                 ruleId: "",

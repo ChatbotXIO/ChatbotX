@@ -842,6 +842,7 @@ describe("contactService.createWithInbox", () => {
         eventType: "contact:created",
         workspaceId: "ws-1",
         channel: "webchat",
+        inboxId: "webchat-inbox-1",
       }),
     )
   })
