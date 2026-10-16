@@ -6,7 +6,11 @@ describe("getCapiStatus", () => {
     expect(getCapiStatus({ connection: "connected" })).toBe("ready")
   })
 
-  test("anything that is not connected reads as not connected: there is no permission state", () => {
+  test("a lapsed legacy setup reads as reconnect, never as a permission state", () => {
+    expect(getCapiStatus({ connection: "reconnect" })).toBe("reconnect")
+  })
+
+  test("a never-connected integration reads as not connected", () => {
     expect(getCapiStatus({ connection: "notConnected" })).toBe("notConnected")
   })
 

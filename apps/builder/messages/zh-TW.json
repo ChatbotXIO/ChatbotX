@@ -6900,12 +6900,14 @@
       "title": "Meta Conversions API",
       "ready": "已就緒",
       "unsupported": "不支援",
-      "notConnected": "未連接"
+      "notConnected": "未連接",
+      "reconnect": "需要重新連線"
     },
     "statusDescriptions": {
       "ready": "此整合的 Conversions API 事件會傳送到 Meta。",
       "unsupported": "Instagram 的 Meta Conversions API 需要透過 Facebook Login for Business 連接的帳戶。",
-      "notConnected": "Conversions API 是一項 Meta 商業工具，可讓您與 Meta 分享資料，以提升廣告成效。"
+      "notConnected": "Conversions API 是一項 Meta 商業工具，可讓您與 Meta 分享資料，以提升廣告成效。",
+      "reconnect": "Conversions API 權限已失效，事件已暫停傳送。資料集與測試設定已保留；重新連線即可恢復傳送。"
     },
     "errors": {
       "reconnect": "無法啟動 Meta CAPI 重新連接。",
@@ -7067,7 +7069,8 @@
       "button": "連接 Conversions API",
       "success": "已連接 Conversions API。",
       "title": "透過 Meta 連接",
-      "description": "登入 Meta 並授權轉換事件的存取權限。這會為 Conversions API 建立獨立的連接，不會改變此頻道的登入方式。"
+      "description": "登入 Meta 並授權轉換事件的存取權限。這會為 Conversions API 建立獨立的連接，不會改變此頻道的登入方式。",
+      "reconnect": "重新連線"
     },
     "connectResult": {
       "errors": {

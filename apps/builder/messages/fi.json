@@ -6900,12 +6900,14 @@
       "title": "Meta Conversions API",
       "ready": "Valmis",
       "unsupported": "Ei tuettu",
-      "notConnected": "Ei yhdistetty"
+      "notConnected": "Ei yhdistetty",
+      "reconnect": "Yhdistä uudelleen"
     },
     "statusDescriptions": {
       "ready": "Tämän integraation Conversions API -tapahtumat lähetetään Metalle.",
       "unsupported": "Meta Conversions API Instagramille vaatii tilin, joka on yhdistetty Facebook Login for Business -kirjautumisella.",
-      "notConnected": "Conversions API on Metan liiketoimintatyökalu, jonka avulla voit jakaa tietoja Metalle mainostesi suorituskyvyn parantamiseksi."
+      "notConnected": "Conversions API on Metan liiketoimintatyökalu, jonka avulla voit jakaa tietoja Metalle mainostesi suorituskyvyn parantamiseksi.",
+      "reconnect": "Conversions API -käyttöoikeus on vanhentunut, joten tapahtumien lähetys on keskeytetty. Aineisto ja testiasetukset säilyvät; yhdistä uudelleen jatkaaksesi lähetystä."
     },
     "errors": {
       "reconnect": "Meta CAPI -uudelleenyhdistämisen käynnistäminen epäonnistui.",
@@ -7067,7 +7069,8 @@
       "button": "Yhdistä Conversions API",
       "success": "Conversions API on yhdistetty.",
       "title": "Yhdistä Metan kanssa",
-      "description": "Kirjaudu Metaan ja myönnä käyttöoikeus konversiotapahtumille. Tämä luo erillisen yhteyden Conversions API:lle eikä muuta sitä, miten tämä kanava kirjautuu."
+      "description": "Kirjaudu Metaan ja myönnä käyttöoikeus konversiotapahtumille. Tämä luo erillisen yhteyden Conversions API:lle eikä muuta sitä, miten tämä kanava kirjautuu.",
+      "reconnect": "Yhdistä uudelleen"
     },
     "connectResult": {
       "errors": {

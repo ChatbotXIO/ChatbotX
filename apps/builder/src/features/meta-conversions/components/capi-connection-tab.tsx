@@ -26,6 +26,7 @@ import { CapiTestEventCard } from "./capi-test-event-card"
 
 const statusDescriptionKey = {
   ready: "metaConversions.statusDescriptions.ready",
+  reconnect: "metaConversions.statusDescriptions.reconnect",
   notConnected: "metaConversions.statusDescriptions.notConnected",
   unsupported: "metaConversions.statusDescriptions.unsupported",
 } as const satisfies Record<CapiStatus, string>
@@ -95,7 +96,15 @@ export function CapiConnectionTab({
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {unsupportedContent ??
-            (connection === "connected" ? (
+            (connection === "notConnected" ? (
+              <CapiConnectCard
+                connectCustomAction={connectCustomAction}
+                connectSlot={connectSlot}
+                datasetId={integration.datasetId}
+                integrationId={integration.id}
+                workspaceId={workspaceId}
+              />
+            ) : (
               <>
                 <CapiConnectedCard
                   datasetId={integration.datasetId}
@@ -103,6 +112,7 @@ export function CapiConnectionTab({
                   integrationId={integration.id}
                   workspaceId={workspaceId}
                 />
+                {connection === "reconnect" && <div>{connectSlot}</div>}
                 <CapiTestEventCard
                   channel={channel}
                   datasetId={integration.datasetId}
@@ -111,14 +121,6 @@ export function CapiConnectionTab({
                   workspaceId={workspaceId}
                 />
               </>
-            ) : (
-              <CapiConnectCard
-                connectCustomAction={connectCustomAction}
-                connectSlot={connectSlot}
-                datasetId={integration.datasetId}
-                integrationId={integration.id}
-                workspaceId={workspaceId}
-              />
             ))}
           {footnote}
         </CardContent>

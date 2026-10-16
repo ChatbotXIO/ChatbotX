@@ -92,10 +92,13 @@ Conversions API and show an explanation instead.
   working unchanged. `resolveCapiConnection` reads stored columns only: a dataset
   plus the stored `hasCapiScope` flag (WhatsApp is exempt from the scope) is
   connected; a Custom connection (token + dataset) is connected; a user disconnect
-  always wins. A legacy Messenger/Instagram row whose dataset never had the
-  permission now shows Connect. Pressing it keeps the dataset the row already
-  stores when the new token can read it, and otherwise uses the dataset Meta has
-  linked to the page / account / WABA.
+  always wins. A legacy Messenger/Instagram row that has a dataset but whose
+  stored permission is missing or lapsed reads as `reconnect`: the tab keeps its
+  dataset, Test events and Disconnect, and shows a Reconnect button (events are
+  paused until it is used; the public API reports `capiConnected: false`). A row
+  with no dataset shows Connect. Pressing Connect/Reconnect keeps the dataset the
+  row already stores when the new token can read it, and otherwise uses the
+  dataset Meta has linked to the page / account / WABA.
 - **Agents.** The browser OAuth step is exempt from the public-API rule. Read the
   state from `*Channels.list` (`capiConnected`; `hasCapiScope` is a legacy flag) and
   disconnect with `*Channels.disconnectCapi`, which also removes the dedicated

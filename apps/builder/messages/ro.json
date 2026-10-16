@@ -6900,12 +6900,14 @@
       "title": "Meta Conversions API",
       "ready": "Pregătit",
       "unsupported": "Neacceptat",
-      "notConnected": "Neconectat"
+      "notConnected": "Neconectat",
+      "reconnect": "Este necesară reconectarea"
     },
     "statusDescriptions": {
       "ready": "Evenimentele Conversions API ale acestei integrări sunt trimise către Meta.",
       "unsupported": "Meta Conversions API pentru Instagram necesită un cont conectat prin Facebook Login for Business.",
-      "notConnected": "Conversions API este un instrument Meta Business care îți permite să partajezi date cu Meta pentru a îmbunătăți performanța anunțurilor."
+      "notConnected": "Conversions API este un instrument Meta Business care îți permite să partajezi date cu Meta pentru a îmbunătăți performanța anunțurilor.",
+      "reconnect": "Permisiunea Conversions API a expirat, deci evenimentele sunt în pauză. Datasetul și setările de test sunt păstrate; reconectează-te pentru a relua trimiterea."
     },
     "errors": {
       "reconnect": "Reconectarea Meta CAPI nu a putut fi pornită.",
@@ -7067,7 +7069,8 @@
       "button": "Conectează Conversions API",
       "success": "Conversions API a fost conectată.",
       "title": "Conectează-te cu Meta",
-      "description": "Conectează-te la Meta și acordă acces pentru evenimentele de conversie. Se creează o conexiune separată pentru Conversions API și nu se schimbă modul în care se autentifică acest canal."
+      "description": "Conectează-te la Meta și acordă acces pentru evenimentele de conversie. Se creează o conexiune separată pentru Conversions API și nu se schimbă modul în care se autentifică acest canal.",
+      "reconnect": "Reconectează"
     },
     "connectResult": {
       "errors": {
