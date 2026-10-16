@@ -6881,12 +6881,14 @@
       "title": "Meta Conversions API",
       "ready": "Siap",
       "unsupported": "Tidak didukung",
-      "notConnected": "Belum terhubung"
+      "notConnected": "Belum terhubung",
+      "reconnect": "Perlu menyambungkan ulang"
     },
     "statusDescriptions": {
       "ready": "Peristiwa Conversions API dari integrasi ini dikirim ke Meta.",
       "unsupported": "Meta Conversions API untuk Instagram memerlukan akun yang terhubung melalui Facebook Login for Business.",
-      "notConnected": "Conversions API adalah Meta Business Tool yang memungkinkan Anda membagikan data ke Meta untuk meningkatkan performa iklan."
+      "notConnected": "Conversions API adalah Meta Business Tool yang memungkinkan Anda membagikan data ke Meta untuk meningkatkan performa iklan.",
+      "reconnect": "Izin Conversions API sudah kedaluwarsa, sehingga pengiriman event dijeda. Dataset dan pengaturan uji tetap tersimpan; sambungkan ulang untuk melanjutkan pengiriman."
     },
     "errors": {
       "reconnect": "Gagal memulai penyambungan ulang Meta CAPI.",
@@ -7048,7 +7050,8 @@
       "button": "Hubungkan Conversions API",
       "success": "Conversions API terhubung.",
       "title": "Hubungkan dengan Meta",
-      "description": "Masuk ke Meta dan berikan akses untuk peristiwa konversi. Ini membuat koneksi terpisah untuk Conversions API dan tidak mengubah cara saluran ini masuk."
+      "description": "Masuk ke Meta dan berikan akses untuk peristiwa konversi. Ini membuat koneksi terpisah untuk Conversions API dan tidak mengubah cara saluran ini masuk.",
+      "reconnect": "Sambungkan ulang"
     },
     "connectResult": {
       "errors": {

@@ -21,13 +21,13 @@ describe("resolveIntegrationCapiConnection", () => {
     ).toBe("connected")
   })
 
-  test("a row with neither token nor scope is not connected on a scope-gated channel", () => {
+  test("a row with a dataset but neither token nor scope must reconnect on a scope-gated channel", () => {
     expect(
       resolveIntegrationCapiConnection("instagram", {
         ...row,
         datasetId: "ds-1",
       }),
-    ).toBe("notConnected")
+    ).toBe("reconnect")
   })
 
   test("a legacy WhatsApp row with only a dataset stays connected", () => {

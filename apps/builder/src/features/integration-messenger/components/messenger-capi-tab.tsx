@@ -32,6 +32,7 @@ export function MessengerCapiTab({
         <CapiConnectButton
           connectAction={connectMessengerCapiAction}
           integrationId={integrationMessenger.id}
+          isReconnect={connection === "reconnect"}
           workspaceId={workspaceId}
         />
       }

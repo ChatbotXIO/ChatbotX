@@ -2593,12 +2593,14 @@
       "title": "Meta Conversions API",
       "ready": "Hazırdır",
       "unsupported": "Dəstəklənmir",
-      "notConnected": "Qoşulmayıb"
+      "notConnected": "Qoşulmayıb",
+      "reconnect": "Yenidən qoşulmaq lazımdır"
     },
     "statusDescriptions": {
       "ready": "Bu inteqrasiyadan gələn Conversions API hadisələri Meta-ya göndərilir.",
       "unsupported": "Instagram üçün Meta Conversions API Facebook Login for Business vasitəsilə qoşulmuş hesab tələb edir.",
-      "notConnected": "Conversions API reklamların performansını artırmaq üçün Meta ilə məlumat paylaşmağa imkan verən Meta Business Tool alətidir."
+      "notConnected": "Conversions API reklamların performansını artırmaq üçün Meta ilə məlumat paylaşmağa imkan verən Meta Business Tool alətidir.",
+      "reconnect": "Conversions API icazəsinin müddəti bitib, buna görə hadisələr dayandırılıb. Dataset və test parametrləri saxlanılır; göndərməni davam etdirmək üçün yenidən qoşulun."
     },
     "errors": {
       "reconnect": "Meta CAPI-yə yenidən qoşulmanı başlatmaq mümkün olmadı.",
@@ -2760,7 +2762,8 @@
       "button": "Conversions API-ni qoş",
       "success": "Conversions API qoşuldu.",
       "title": "Meta ilə qoşul",
-      "description": "Meta hesabına daxil olun və konversiya hadisələri üçün icazə verin. Bu, Conversions API üçün ayrıca əlaqə yaradır və bu kanalın giriş qaydasını dəyişmir."
+      "description": "Meta hesabına daxil olun və konversiya hadisələri üçün icazə verin. Bu, Conversions API üçün ayrıca əlaqə yaradır və bu kanalın giriş qaydasını dəyişmir.",
+      "reconnect": "Yenidən qoş"
     },
     "connectResult": {
       "errors": {

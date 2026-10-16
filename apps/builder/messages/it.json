@@ -6881,12 +6881,14 @@
       "title": "Meta Conversions API",
       "ready": "Pronto",
       "unsupported": "Non supportato",
-      "notConnected": "Non connesso"
+      "notConnected": "Non connesso",
+      "reconnect": "Riconnessione necessaria"
     },
     "statusDescriptions": {
       "ready": "Gli eventi di Conversions API di questa integrazione vengono inviati a Meta.",
       "unsupported": "Meta Conversions API per Instagram richiede un account connesso tramite Facebook Login for Business.",
-      "notConnected": "Conversions API è uno strumento aziendale di Meta che consente di condividere dati con Meta per migliorare le prestazioni degli annunci."
+      "notConnected": "Conversions API è uno strumento aziendale di Meta che consente di condividere dati con Meta per migliorare le prestazioni degli annunci.",
+      "reconnect": "L'autorizzazione della Conversions API è scaduta, quindi gli eventi sono in pausa. Dataset e impostazioni di test vengono mantenuti; riconnetti per riprendere l'invio."
     },
     "errors": {
       "reconnect": "Impossibile avviare la riconnessione a Meta CAPI.",
@@ -7048,7 +7050,8 @@
       "button": "Collega Conversions API",
       "success": "Conversions API collegata.",
       "title": "Collega con Meta",
-      "description": "Accedi a Meta e concedi l'accesso per gli eventi di conversione. Viene creata una connessione separata per Conversions API, senza modificare l'accesso di questo canale."
+      "description": "Accedi a Meta e concedi l'accesso per gli eventi di conversione. Viene creata una connessione separata per Conversions API, senza modificare l'accesso di questo canale.",
+      "reconnect": "Riconnetti"
     },
     "connectResult": {
       "errors": {

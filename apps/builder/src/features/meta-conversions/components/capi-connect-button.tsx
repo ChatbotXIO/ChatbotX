@@ -13,6 +13,8 @@ type CapiConnectButtonProps = {
   // The Messenger and Instagram connect actions share one signature; the
   // Messenger action type stands in as the shared contract.
   connectAction: typeof connectMessengerCapiAction
+  /** The integration was set up before and only needs its permission renewed. */
+  isReconnect?: boolean
 }
 
 /**
@@ -24,6 +26,7 @@ export function CapiConnectButton({
   workspaceId,
   integrationId,
   connectAction,
+  isReconnect = false,
 }: CapiConnectButtonProps) {
   const t = useTranslations()
   const connect = useAction(
@@ -42,7 +45,11 @@ export function CapiConnectButton({
       type="button"
     >
       {connect.isPending && <Loader2Icon className="animate-spin" />}
-      {t("metaConversions.connect.button")}
+      {t(
+        isReconnect
+          ? "metaConversions.connect.reconnect"
+          : "metaConversions.connect.button",
+      )}
     </Button>
   )
 }
