@@ -1,5 +1,6 @@
 {
   "actions": {
+    "scrollToBottom": "Gulir ke bawah",
     "retry": "Coba lagi",
     "copy": "Salin",
     "copyUrl": "Salin URL",

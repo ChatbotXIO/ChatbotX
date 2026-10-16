@@ -1,5 +1,6 @@
 {
   "actions": {
+    "scrollToBottom": "一番下へスクロール",
     "retry": "再試行",
     "copy": "コピー",
     "copyUrl": "URLをコピー",

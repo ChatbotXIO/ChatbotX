@@ -1,5 +1,6 @@
 {
   "actions": {
+    "scrollToBottom": "Deslocar para o fim",
     "retry": "Tentar novamente",
     "copy": "Copiar",
     "copyUrl": "Copiar URL",

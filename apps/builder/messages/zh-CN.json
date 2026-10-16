@@ -4,6 +4,7 @@
     "title": "QR Code"
   },
   "actions": {
+    "scrollToBottom": "滚动到底部",
     "retry": "重试",
     "actions": "操作",
     "activate": "激活",

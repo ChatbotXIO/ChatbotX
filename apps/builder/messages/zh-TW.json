@@ -1764,6 +1764,7 @@
     "collapse": "隱藏子類別"
   },
   "actions": {
+    "scrollToBottom": "捲動到底部",
     "retry": "重試",
     "copy": "複製",
     "copyUrl": "複製 URL",

@@ -1,5 +1,6 @@
 {
   "actions": {
+    "scrollToBottom": "التمرير إلى الأسفل",
     "retry": "إعادة المحاولة",
     "copy": "نسخ",
     "copyUrl": "نسخ الرابط",
