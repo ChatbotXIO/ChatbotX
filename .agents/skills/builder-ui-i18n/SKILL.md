@@ -121,6 +121,30 @@ Available defined fields (import from `@chatbotx.io/ui/components/form/<name>`):
 All defined fields read `control` from `useFormContext`, so they only require a
 `<Form {...form}>` provider ancestor.
 
+### File and image fields — pick from the Media Library
+
+Any file a workspace admin/member attaches in the builder (cover images,
+banners, backgrounds, logos, flow-step media, product images…) **must be
+chosen from the workspace Media Library**, never uploaded straight from the
+computer into the form. Uploading still happens, but inside the library
+dialog, so every workspace file is listed, reusable and deletable in one
+place.
+
+- Use `MediaLibraryTrigger`
+  (`@/features/media-library/components/media-library-trigger`) and store the
+  selected file's `url` (or `id`). Pass `uploadPath` (e.g.
+  `public/space/${workspaceId}/<feature>`) so files uploaded from the dialog
+  land under the feature's prefix.
+- Inside a field that also accepts a link, use `DirectUploadOrInsertLink`
+  with `useMediaLibrary` (`@/components/direct-upload`) — see
+  `features/minigames/minigame-form.tsx`.
+- **Do not** use `DirectUploadButton` / a bare `<input type="file">` for
+  workspace files. Validate type/size limits in `onSelect` (the library holds
+  any file), e.g. reject non-JPG/PNG or files over the limit with a toast —
+  see `features/leaderboards/components/wizard/cover-image-field.tsx`.
+- Exempt: files that are not workspace assets — CSV/contact imports, a user's
+  own profile avatar, and end-customer uploads on public pages.
+
 ```typescript
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
