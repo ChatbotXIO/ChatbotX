@@ -22,10 +22,11 @@ export const createIgStoryAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateIgStoryRequest
     }) => {
-      const { type, ...data } = parsedInput
+      const { type, trigger, ...data } = parsedInput
       const record = await igStoryAutomationService.create({
         workspaceId,
         type,
+        trigger,
         data,
       })
       return { id: record.id }

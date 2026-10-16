@@ -528,7 +528,8 @@
       "video": "影片",
       "audio": "音頻",
       "gif": "GIF",
-      "file": "檔案"
+      "file": "檔案",
+      "storyMention": "限時動態提及"
     },
     "lastMonth": {
       "label": "上個月"
@@ -2542,7 +2543,8 @@
         "video": "影片",
         "audio": "音頻",
         "gif": "GIF",
-        "file": "檔案"
+        "file": "檔案",
+        "storyMention": "限時動態提及"
       },
       "ctwaConversionTypes": {
         "lead": "名單",
@@ -5850,12 +5852,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Instagram 限時動態回覆自動化",
-    "description": "自動回覆聯絡人對 Instagram 限時動態的回覆。",
+    "title": "Instagram 限時動態自動化",
+    "description": "當聯絡人回覆你的 Instagram 限時動態或在自己的限時動態中提及你時，自動傳送回覆。",
     "create": "建立自動化",
     "replies": "回覆",
     "activated": "自動化已啟用",
     "deactivated": "自動化已停用",
+    "trigger": "觸發條件",
+    "triggerDescription": "選擇啟動此自動化的事件。建立後無法變更。",
+    "triggerType": {
+      "storyReply": "回覆你的限時動態",
+      "storyMention": "在其限時動態中提及你"
+    },
     "trackStoryReplyOn": "追蹤限時動態回覆的對象",
     "trackStoryReplyOnDescription": "可套用到您所有限時動態的回覆，或縮小範圍到您指定的特定限時動態。",
     "reply": "回覆",

@@ -1819,7 +1819,8 @@
         "video": "Videoclip",
         "audio": "Audio",
         "gif": "GIF",
-        "file": "Fișier"
+        "file": "Fișier",
+        "storyMention": "Mențiune în Story"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -2410,7 +2411,8 @@
       "video": "Videoclip",
       "audio": "Audio",
       "gif": "GIF",
-      "file": "Fișier"
+      "file": "Fișier",
+      "storyMention": "Mențiune în Story"
     },
     "lastMonth": {
       "label": "Luna trecută"
@@ -5982,12 +5984,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Automatizare răspunsuri la Story-uri Instagram",
-    "description": "Automatizează răspunsurile la răspunsurile la Story-urile Instagram pentru contactele tale.",
+    "title": "Automatizare Story-uri Instagram",
+    "description": "Automatizează răspunsurile când contactele răspund la Story-urile tale Instagram sau te menționează în ale lor.",
     "create": "Creează automatizare",
     "replies": "Răspunsuri",
     "activated": "Automatizare activată",
     "deactivated": "Automatizare dezactivată",
+    "trigger": "Declanșator",
+    "triggerDescription": "Alege ce pornește această automatizare. Nu poate fi schimbat după crearea automatizării.",
+    "triggerType": {
+      "storyReply": "Răspunde la Story-ul tău",
+      "storyMention": "Te menționează în Story-ul său"
+    },
     "trackStoryReplyOn": "Urmărește răspunsurile la Story pe",
     "trackStoryReplyOnDescription": "Aplică această automatizare răspunsurilor la toate Story-urile tale, sau restrânge-o la Story-uri specifice pe care le selectezi.",
     "reply": "Răspuns",

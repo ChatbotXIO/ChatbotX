@@ -1,6 +1,9 @@
 "use client"
 
-import { folderTypes } from "@chatbotx.io/database/partials"
+import {
+  folderTypes,
+  igStoryAutomationTriggers,
+} from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
@@ -149,6 +152,28 @@ export function IgStoriesTable({ workspaceId, promises }: IgStoriesTableProps) {
         },
         size: 300,
         enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: "trigger",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("instagramStoryAutomation.trigger")}
+          />
+        ),
+        cell: ({ row }) =>
+          t(`instagramStoryAutomation.triggerType.${row.original.trigger}`),
+        meta: {
+          label: t("instagramStoryAutomation.trigger"),
+          variant: "select",
+          options: igStoryAutomationTriggers.options.map((trigger) => ({
+            label: t(`instagramStoryAutomation.triggerType.${trigger}`),
+            value: trigger,
+          })),
+        },
+        size: 200,
+        enableSorting: false,
         enableColumnFilter: true,
       },
       {

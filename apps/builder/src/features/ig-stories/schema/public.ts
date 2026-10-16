@@ -1,4 +1,7 @@
-import { igStoryAutomationTypes } from "@chatbotx.io/database/partials"
+import {
+  igStoryAutomationTriggers,
+  igStoryAutomationTypes,
+} from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
@@ -17,6 +20,11 @@ export const listIgStoriesPublicRequest = publicListRequest.extend({
     .boolean()
     .nullish()
     .describe("Restrict to enabled or disabled automations."),
+  trigger: igStoryAutomationTriggers
+    .nullish()
+    .describe(
+      "Restrict to story reply (`storyReply`) or story mention (`storyMention`) automations.",
+    ),
 })
 export const igStoryPublicResource = igStoryResource.omit({
   workspaceId: true,

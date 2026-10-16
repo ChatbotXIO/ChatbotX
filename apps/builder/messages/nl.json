@@ -1174,7 +1174,8 @@
       "video": "Video",
       "audio": "Audio",
       "gif": "GIF",
-      "file": "Bestand"
+      "file": "Bestand",
+      "storyMention": "Story-vermelding"
     },
     "lastMonth": {
       "label": "Afgelopen maand"
@@ -2316,7 +2317,8 @@
         "video": "Video",
         "audio": "Audio",
         "gif": "GIF",
-        "file": "Bestand"
+        "file": "Bestand",
+        "storyMention": "Story-vermelding"
       },
       "ctwaConversionTypes": {
         "lead": "Lead",
@@ -5817,12 +5819,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Instagram Story-reactie-automatisering",
-    "description": "Automatiseer reacties op Instagram Story-reacties voor je contacten.",
+    "title": "Instagram Story-automatisering",
+    "description": "Automatiseer reacties wanneer contacten reageren op je Instagram Stories of je noemen in hun eigen Story.",
     "create": "Automatisering maken",
     "replies": "Reacties",
     "activated": "Automatisering geactiveerd",
     "deactivated": "Automatisering gedeactiveerd",
+    "trigger": "Trigger",
+    "triggerDescription": "Kies wat deze automatisering start. Dit kan niet meer worden gewijzigd nadat de automatisering is gemaakt.",
+    "triggerType": {
+      "storyReply": "Reageert op je Story",
+      "storyMention": "Noemt je in hun Story"
+    },
     "trackStoryReplyOn": "Story-reacties volgen op",
     "trackStoryReplyOnDescription": "Pas deze automatisering toe op reacties op al je Stories, of beperk dit tot specifieke Stories die je selecteert.",
     "reply": "Reactie",

@@ -81,9 +81,8 @@ vi.mock("../src/integration/handlers/automated-response/replies", () => ({
 // Import after mocks
 // ---------------------------------------------------------------------------
 
-const { processStoryReplyAutomation } = await import(
-  "../src/integration/handlers/story-reply-automation"
-)
+const { processStoryMentionAutomation, processStoryReplyAutomation } =
+  await import("../src/integration/handlers/story-reply-automation")
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -213,5 +212,105 @@ describe("processStoryReplyAutomation keyword matching", () => {
         data: expect.objectContaining({ text: "Thanks!" }),
       }),
     )
+  })
+})
+
+describe("processStoryMentionAutomation", () => {
+  const mentionJobData = {
+    workspaceId: "workspace-1",
+    conversationId: "conversation-1",
+    contactInboxId: "contact-inbox-1",
+    messageId: MESSAGE_ID,
+    channelType: "instagram" as const,
+  }
+
+  test("loads only story mention automations for the channel", async () => {
+    mockFindActiveAutomations.mockResolvedValue([])
+
+    await processStoryMentionAutomation(mentionJobData)
+
+    expect(mockFindActiveAutomations).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      channelType: "instagram",
+      trigger: "storyMention",
+    })
+  })
+
+  test("replies without applying story or keyword filters", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      {
+        ...buildAutomation({ type: "text", value: "Thanks for the mention!" }),
+        story: { type: "storyIds", value: ["another-story"] },
+        includeKeywords: { type: "equal", value: ["never"] },
+      },
+    ])
+
+    await processStoryMentionAutomation(mentionJobData)
+
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "sendChatMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({ text: "Thanks for the mention!" }),
+      }),
+    )
+    expect(mockIncrementRepliesCount).toHaveBeenCalledWith("automation-1")
+  })
+
+  test("starts the chosen flow", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ type: "flow", value: "flow-1" }),
+    ])
+
+    await processStoryMentionAutomation(mentionJobData)
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith("sendFlow", {
+      type: "sendFlow",
+      data: {
+        conversationId: "conversation-1",
+        contactInboxId: "contact-inbox-1",
+        flowId: "flow-1",
+        origin: "webhook",
+      },
+    })
+  })
+
+  test("tells the AI agent that the contact mentioned the account", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ type: "AIAgent", value: "agent-1" }),
+    ])
+    mockAiAgentFindBy.mockResolvedValue({ id: "agent-1" })
+    mockGenerateAIReplyText.mockResolvedValue({ text: "Thank you!" })
+
+    await processStoryMentionAutomation(mentionJobData)
+
+    expect(mockGenerateAIReplyText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          {
+            role: "user",
+            content:
+              "The contact mentioned your account in their Instagram story.",
+          },
+        ],
+      }),
+    )
+    expect(mockChatQueueAdd).toHaveBeenCalledWith(
+      "sendChatMessage",
+      expect.objectContaining({
+        data: expect.objectContaining({ text: "Thank you!" }),
+      }),
+    )
+  })
+
+  test("skips automations outside their schedule", async () => {
+    mockFindActiveAutomations.mockResolvedValue([
+      buildAutomation({ type: "text", value: "Thanks!" }),
+    ])
+    mockIsWithinSchedule.mockReturnValue(false)
+
+    await processStoryMentionAutomation(mentionJobData)
+
+    expect(mockChatQueueAdd).not.toHaveBeenCalled()
+    expect(mockIncrementRepliesCount).not.toHaveBeenCalled()
   })
 })

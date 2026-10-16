@@ -1429,6 +1429,7 @@ const getMessageActivityTracking = (props: {
         contentType: incomingMessage.contentType,
         text: incomingMessage.text,
         attachments: incomingMessage.attachments,
+        contentAttributes: message.contentAttributes,
         storageUrl,
       }),
     )

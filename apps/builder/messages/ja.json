@@ -778,7 +778,8 @@
         "video": "動画",
         "audio": "音声",
         "gif": "GIF",
-        "file": "ファイル"
+        "file": "ファイル",
+        "storyMention": "ストーリーメンション"
       },
       "ctwaConversionTypes": {
         "lead": "リード",
@@ -1369,7 +1370,8 @@
       "video": "動画",
       "audio": "音声",
       "gif": "GIF",
-      "file": "ファイル"
+      "file": "ファイル",
+      "storyMention": "ストーリーメンション"
     },
     "lastMonth": {
       "label": "先月"
@@ -5796,12 +5798,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Instagramストーリー返信オートメーション",
-    "description": "連絡先に対するInstagramストーリーへの返信を自動化します。",
+    "title": "Instagramストーリーオートメーション",
+    "description": "連絡先があなたのInstagramストーリーに返信したとき、または自分のストーリーであなたをメンションしたときの返信を自動化します。",
     "create": "オートメーションを作成",
     "replies": "返信数",
     "activated": "オートメーションを有効化しました",
     "deactivated": "オートメーションを無効化しました",
+    "trigger": "トリガー",
+    "triggerDescription": "このオートメーションを開始する条件を選択します。作成後は変更できません。",
+    "triggerType": {
+      "storyReply": "あなたのストーリーに返信",
+      "storyMention": "自分のストーリーであなたをメンション"
+    },
     "trackStoryReplyOnDescription": "このオートメーションをすべてのストーリーへの返信に適用するか、選択した特定のストーリーに限定します。",
     "trackStoryReplyOn": "ストーリー返信を追跡する対象",
     "reply": "返信",

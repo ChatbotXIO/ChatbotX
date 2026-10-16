@@ -18,6 +18,8 @@ export const lastUserInputTypes = z.enum([
   "audio",
   "gif",
   "file",
+  // An Instagram story in which the contact tagged the connected account.
+  "storyMention",
 ])
 export type LastUserInputType = z.infer<typeof lastUserInputTypes>
 

@@ -778,7 +778,8 @@
         "video": "Vidéo",
         "audio": "Audio",
         "gif": "GIF",
-        "file": "Fichier"
+        "file": "Fichier",
+        "storyMention": "Mention en story"
       },
       "ctwaConversionTypes": {
         "lead": "Prospect",
@@ -1369,7 +1370,8 @@
       "video": "Vidéo",
       "audio": "Audio",
       "gif": "GIF",
-      "file": "Fichier"
+      "file": "Fichier",
+      "storyMention": "Mention en story"
     },
     "lastMonth": {
       "label": "Mois dernier"
@@ -5817,12 +5819,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Automatisation des réponses aux stories Instagram",
-    "description": "Automatisez les réponses aux réponses de stories Instagram pour vos contacts.",
+    "title": "Automatisation des stories Instagram",
+    "description": "Automatisez les réponses lorsque vos contacts répondent à vos stories Instagram ou vous mentionnent dans les leurs.",
     "create": "Créer une automatisation",
     "replies": "Réponses",
     "activated": "Automatisation activée",
     "deactivated": "Automatisation désactivée",
+    "trigger": "Déclencheur",
+    "triggerDescription": "Choisissez ce qui lance cette automatisation. Il ne peut plus être modifié après la création.",
+    "triggerType": {
+      "storyReply": "Répond à votre story",
+      "storyMention": "Vous mentionne dans sa story"
+    },
     "trackStoryReplyOn": "Suivre les réponses de story sur",
     "trackStoryReplyOnDescription": "Appliquez cette automatisation aux réponses sur toutes vos stories, ou limitez-la à des stories spécifiques que vous sélectionnez.",
     "reply": "Réponse",

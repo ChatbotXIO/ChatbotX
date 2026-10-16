@@ -20,7 +20,10 @@ import { env } from "../env"
 import { processHandoffReentry } from "../integration/handlers/ai-agent-actions/handoff-reentry"
 import { processAutomatedResponse } from "../integration/handlers/automated-response"
 import { processCommentAIReply } from "../integration/handlers/comment-automation/ai-reply"
-import { processStoryReplyAutomation } from "../integration/handlers/story-reply-automation"
+import {
+  processStoryMentionAutomation,
+  processStoryReplyAutomation,
+} from "../integration/handlers/story-reply-automation"
 import { runWithOrphanedIntegrationCleanup } from "../integration/job-context"
 import { closeChatQueueEvents } from "../integration/utils/message"
 import { ensureBootstrapped } from "../lib/bootstrap"
@@ -121,6 +124,9 @@ async function startAIAgentWorker() {
               return
             case AIJobAction.processStoryReplyAutomation:
               await processStoryReplyAutomation(jobData.data)
+              return
+            case AIJobAction.processStoryMentionAutomation:
+              await processStoryMentionAutomation(jobData.data)
               return
             default: {
               const _exhaustive: never = jobData

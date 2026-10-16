@@ -41,8 +41,13 @@ export const igStoriesPrivateAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(igStoryResource)
     .handler(async ({ input }) => {
-      const { workspaceId, type, ...data } = input
-      return await igStoryAutomationService.create({ workspaceId, type, data })
+      const { workspaceId, type, trigger, ...data } = input
+      return await igStoryAutomationService.create({
+        workspaceId,
+        type,
+        trigger,
+        data,
+      })
     }),
 
   updateIgStoryAPI: authorizedAPI

@@ -778,7 +778,8 @@
         "video": "Video",
         "audio": "Ääni",
         "gif": "GIF",
-        "file": "Tiedosto"
+        "file": "Tiedosto",
+        "storyMention": "Maininta tarinassa"
       },
       "ctwaConversionTypes": {
         "lead": "Liidi",
@@ -1369,7 +1370,8 @@
       "video": "Video",
       "audio": "Ääni",
       "gif": "GIF",
-      "file": "Tiedosto"
+      "file": "Tiedosto",
+      "storyMention": "Maininta tarinassa"
     },
     "lastMonth": {
       "label": "Viime kuukausi"
@@ -5817,12 +5819,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Instagram-tarinavastausautomaatio",
-    "description": "Automatisoi vastaukset Instagram-tarinavastauksiin yhteystiedoillesi.",
+    "title": "Instagram-tarina-automaatio",
+    "description": "Automatisoi vastaukset, kun yhteystiedot vastaavat Instagram-tarinoihisi tai mainitsevat sinut omissaan.",
     "create": "Luo automaatio",
     "replies": "Vastaukset",
     "activated": "Automaatio aktivoitu",
     "deactivated": "Automaatio poistettu käytöstä",
+    "trigger": "Käynnistin",
+    "triggerDescription": "Valitse, mikä käynnistää tämän automaation. Sitä ei voi muuttaa automaation luomisen jälkeen.",
+    "triggerType": {
+      "storyReply": "Vastaa tarinaasi",
+      "storyMention": "Mainitsee sinut omassa tarinassaan"
+    },
     "trackStoryReplyOn": "Seuraa tarinavastauksia kohteessa",
     "trackStoryReplyOnDescription": "Käytä tätä automaatiota vastauksiin kaikissa tarinoissasi, tai rajaa se valitsemiisi tiettyihin tarinoihin.",
     "reply": "Vastaus",

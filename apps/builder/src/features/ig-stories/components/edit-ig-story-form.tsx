@@ -1,5 +1,6 @@
 "use client"
 
+import type { IgStoryAutomationTrigger } from "@chatbotx.io/database/partials"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
@@ -35,6 +36,7 @@ export function EditIgStoryForm({
     defaultValues: {
       name: initialData.name,
       type: variant,
+      trigger: initialData.trigger as IgStoryAutomationTrigger,
       folderId: initialData.folderId ?? undefined,
       story: initialData.story,
       reply: initialData.reply,
@@ -70,6 +72,7 @@ export function EditIgStoryForm({
       <IgStoryForm
         form={typedForm}
         isSubmitting={isPending}
+        isTriggerLocked
         onCancel={() => router.push(`/space/${workspaceId}/ig-stories`)}
         onSubmit={handleSubmit}
         submitLabel={t("actions.save")}

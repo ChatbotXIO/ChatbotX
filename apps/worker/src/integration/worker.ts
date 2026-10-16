@@ -7,7 +7,7 @@ import {
 } from "@chatbotx.io/business"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
-import { getStoryReply } from "@chatbotx.io/sdk"
+import { getStoryReply, isStoryMention } from "@chatbotx.io/sdk"
 import {
   AIJobAction,
   aiAgentQueue,
@@ -247,6 +247,26 @@ async function startIntegrationWorker() {
                     },
                   },
                   { jobId: `story-reply-auto-${message.id}` },
+                )
+                return
+              }
+
+              // Like a story reply, a story mention is answered only by its own
+              // automations — never by keyword rules or the Default Reply.
+              if (isFromContact && isStoryMention(message.contentAttributes)) {
+                await aiAgentQueue.add(
+                  AIJobAction.processStoryMentionAutomation,
+                  {
+                    type: AIJobAction.processStoryMentionAutomation,
+                    data: {
+                      workspaceId: conversation.workspaceId,
+                      conversationId: conversation.id,
+                      contactInboxId: message.contactInboxId,
+                      messageId: message.id,
+                      channelType,
+                    },
+                  },
+                  { jobId: `story-mention-auto-${message.id}` },
                 )
                 return
               }

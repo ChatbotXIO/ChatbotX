@@ -396,6 +396,9 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({
 
 vi.mock("@chatbotx.io/sdk", () => ({
   contentTypes: { enum: { text: "text", location: "location" } },
+  // Mirror of the real pure helper — `resolveLastUserInputTracking` calls it.
+  isStoryMention: (contentAttributes: unknown) =>
+    (contentAttributes as { type?: unknown } | null)?.type === "story_mention",
   // Mirror of the real pure helper — the module is fully mocked here.
   resolveSourceScopedIdentityMatch: async <T>(
     identity: {

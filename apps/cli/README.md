@@ -821,10 +821,10 @@ chatbotx ig-comments instagram-media --variant <instagram|facebook>  # List elig
 ### `ig-stories`
 
 ```bash
-chatbotx ig-stories list
+chatbotx ig-stories list                              # [--trigger <storyReply|storyMention>]
 chatbotx ig-stories get <id>
-chatbotx ig-stories create
-chatbotx ig-stories update <id>
+chatbotx ig-stories create                            # --trigger storyReply (default, replies to your story) | storyMention (tagged in their story)
+chatbotx ig-stories update <id>                       # trigger is fixed at creation
 chatbotx ig-stories delete <id>
 chatbotx ig-stories bulk-delete --ids <ids>
 chatbotx ig-stories instagram-stories --variant <instagram|facebook>  # List eligible stories

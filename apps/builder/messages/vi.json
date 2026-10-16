@@ -820,7 +820,8 @@
         "video": "Video",
         "audio": "Âm thanh",
         "gif": "GIF",
-        "file": "Tệp"
+        "file": "Tệp",
+        "storyMention": "Nhắc tới trong Story"
       },
       "ctwaConversionTypes": {
         "lead": "Khách hàng tiềm năng",
@@ -2140,7 +2141,8 @@
       "video": "Video",
       "audio": "Âm thanh",
       "gif": "GIF",
-      "file": "Tệp"
+      "file": "Tệp",
+      "storyMention": "Nhắc tới trong Story"
     },
     "lastMonth": {
       "label": "Tháng trước"
@@ -5898,12 +5900,18 @@
     }
   },
   "instagramStoryAutomation": {
-    "title": "Tự động hóa trả lời Story Instagram",
-    "description": "Tự động hóa trả lời khi có người reply vào Story Instagram cho các liên hệ của bạn.",
+    "title": "Tự động hóa Story Instagram",
+    "description": "Tự động trả lời khi liên hệ reply vào Story Instagram của bạn hoặc nhắc tới bạn trong Story của họ.",
     "create": "Tạo tự động hóa",
     "replies": "Phản hồi",
     "activated": "Đã kích hoạt tự động hóa",
     "deactivated": "Đã tắt tự động hóa",
+    "trigger": "Kích hoạt khi",
+    "triggerDescription": "Chọn sự kiện khởi chạy tự động hóa này. Không thể đổi sau khi đã tạo.",
+    "triggerType": {
+      "storyReply": "Trả lời Story của bạn",
+      "storyMention": "Nhắc tới bạn trong Story của họ"
+    },
     "trackStoryReplyOn": "Theo dõi reply Story trên",
     "trackStoryReplyOnDescription": "Áp dụng tự động hóa cho reply trên tất cả Story của bạn, hoặc chỉ các Story cụ thể bạn chọn.",
     "reply": "Trả lời",
