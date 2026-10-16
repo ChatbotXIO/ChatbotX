@@ -1,5 +1,6 @@
 {
   "actions": {
+    "scrollToBottom": "גלול למטה",
     "retry": "נסה שוב",
     "copy": "העתקה",
     "copyUrl": "העתקת כתובת URL",

@@ -1,5 +1,6 @@
 {
   "actions": {
+    "scrollToBottom": "En alta kaydır",
     "retry": "Yeniden dene",
     "copy": "Kopyala",
     "copyUrl": "URL'yi Kopyala",

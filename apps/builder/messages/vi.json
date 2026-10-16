@@ -1,5 +1,6 @@
 {
   "actions": {
+    "scrollToBottom": "Cuộn xuống cuối",
     "retry": "Thử lại",
     "copy": "Sao chép",
     "copyUrl": "Sao chép URL",

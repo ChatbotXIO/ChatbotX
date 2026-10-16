@@ -1538,6 +1538,7 @@
     }
   },
   "actions": {
+    "scrollToBottom": "Scorri in fondo",
     "retry": "Riprova",
     "copy": "Copia",
     "copyUrl": "Copia URL",

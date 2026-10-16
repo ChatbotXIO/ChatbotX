@@ -1,5 +1,6 @@
 {
   "actions": {
+    "scrollToBottom": "Vieritä alas",
     "retry": "Yritä uudelleen",
     "copy": "Kopioi",
     "copyUrl": "Kopioi URL",

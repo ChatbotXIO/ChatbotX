@@ -1041,6 +1041,7 @@
     "title": "Editează profilul"
   },
   "actions": {
+    "scrollToBottom": "Derulează în jos",
     "retry": "Reîncearcă",
     "copy": "Copiază",
     "copyUrl": "Copiază adresa URL",

@@ -1,5 +1,6 @@
 {
   "actions": {
+    "scrollToBottom": "Rul til bunden",
     "retry": "Prøv igen",
     "copy": "Kopiér",
     "copyUrl": "Kopiér URL",

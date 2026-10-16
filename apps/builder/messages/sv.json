@@ -4,6 +4,7 @@
     "title": "QR-kod"
   },
   "actions": {
+    "scrollToBottom": "Scrolla till botten",
     "retry": "Försök igen",
     "actions": "Åtgärder",
     "activate": "Aktivera",

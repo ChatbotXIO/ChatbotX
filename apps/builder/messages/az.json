@@ -1,5 +1,6 @@
 {
   "actions": {
+    "scrollToBottom": "Aşağı sürüşdür",
     "copy": "Kopyala",
     "copyUrl": "URL-i kopyala",
     "chatWidget": "Çat vidceti",

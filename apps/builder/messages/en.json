@@ -1,5 +1,6 @@
 {
   "actions": {
+    "scrollToBottom": "Scroll to bottom",
     "copy": "Copy",
     "copyUrl": "Copy URL",
     "chatWidget": "Chat Widget",

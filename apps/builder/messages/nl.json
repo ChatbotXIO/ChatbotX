@@ -1,5 +1,6 @@
 {
   "actions": {
+    "scrollToBottom": "Naar beneden scrollen",
     "retry": "Opnieuw proberen",
     "copy": "Kopiëren",
     "copyUrl": "URL kopiëren",
