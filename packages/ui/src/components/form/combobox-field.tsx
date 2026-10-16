@@ -76,6 +76,7 @@ export type ComboboxFieldProps<T extends FieldValues> = {
   allowClear?: boolean
   clearLabel?: string
   emptyValue?: null | undefined
+  disabled?: boolean
 }
 
 export function ComboboxField<T extends FieldValues>({
@@ -99,6 +100,7 @@ export function ComboboxField<T extends FieldValues>({
   allowClear,
   clearLabel,
   emptyValue,
+  disabled,
 }: ComboboxFieldProps<T>) {
   const [open, setOpen] = useState(false)
 
@@ -152,6 +154,7 @@ export function ComboboxField<T extends FieldValues>({
                     className,
                     !field.value && "text-muted-foreground",
                   )}
+                  disabled={disabled}
                   role="combobox"
                   variant="outline"
                 >

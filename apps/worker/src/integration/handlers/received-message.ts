@@ -168,6 +168,14 @@ type ReceivedMessageSystemFieldUpdates = {
   contactLocation: ContactLocation | null
 }
 
+/** Channels whose comments feed leaderboard "comments" / "liveComments". */
+const LEADERBOARD_COMMENT_CHANNELS = new Set<string>([
+  "messenger",
+  "instagram",
+  "tiktok",
+  "threads",
+])
+
 const correctStoryReplyDirectionForNewContact = (
   message: IncomingMessage | null,
   isNewContact: boolean,
@@ -1801,12 +1809,11 @@ export const receiveComment = async (
       storageUrl,
     })
 
-  // Leaderboard comments/live comments: Meta channels only (`isCommentReply`
-  // is the Meta reply heuristic), and only for a newly stored comment.
-  if (
-    isNewComment &&
-    (inbox.channel === "messenger" || inbox.channel === "instagram")
-  ) {
+  // Leaderboard comments/live comments, only for a newly stored comment.
+  // `isCommentReply` holds on every listed channel: TikTok normalizes its
+  // "no parent" sentinel at the webhook, and a top-level Threads reply's
+  // parent is the post itself.
+  if (isNewComment && LEADERBOARD_COMMENT_CHANNELS.has(inbox.channel)) {
     await awardCommentLeaderboard({
       inbox,
       contactId: contactInbox.contactId,

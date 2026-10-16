@@ -1,4 +1,4 @@
-CREATE TYPE "leaderboardPlatform" AS ENUM('messenger', 'instagram', 'whatsapp', 'zalo', 'telegram', 'email', 'gamification');--> statement-breakpoint
+CREATE TYPE "leaderboardPlatform" AS ENUM('messenger', 'instagram', 'whatsapp', 'zalo', 'telegram', 'tiktok', 'threads', 'email', 'gamification');--> statement-breakpoint
 CREATE TYPE "leaderboardStatus" AS ENUM('draft', 'active', 'paused', 'finished');--> statement-breakpoint
 CREATE TYPE "leaderboardAuditAction" AS ENUM('adjust', 'resetOne', 'resetAll', 'ban', 'unban');--> statement-breakpoint
 CREATE TYPE "leaderboardScoreSource" AS ENUM('rule', 'flow', 'referral', 'manual', 'reset');--> statement-breakpoint
@@ -27,6 +27,7 @@ CREATE TABLE "Leaderboard" (
 	"referralWelcomeFlowId" bigint,
 	"rewardSettings" jsonb NOT NULL,
 	"rewardsTriggeredAt" timestamp(6) with time zone,
+	"rewardRecipients" jsonb,
 	"finishedAt" timestamp(6) with time zone,
 	"deletedAt" timestamp(6) with time zone
 );

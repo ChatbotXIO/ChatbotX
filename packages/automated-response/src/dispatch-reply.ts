@@ -24,7 +24,11 @@ import {
 } from "./keyword-match"
 
 /** Channels whose leaderboards offer the "keywords" rule. */
-const KEYWORD_LEADERBOARD_CHANNELS = new Set(["messenger", "instagram"])
+const KEYWORD_LEADERBOARD_CHANNELS = new Set([
+  "messenger",
+  "instagram",
+  "tiktok",
+])
 
 /**
  * Leaderboard "keywords" rule: an inbound message that matches ANY Keywords

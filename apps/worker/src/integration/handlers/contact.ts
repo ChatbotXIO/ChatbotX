@@ -250,10 +250,14 @@ export async function changeGamificationScore({
     operation: step.operation,
     points: step.points,
     targets: { user: step.targetUser, referrer: step.targetReferrer },
-    dedup:
-      flowExecutionKey && triggerMessageCreatedAt
-        ? { key: `${flowExecutionKey}:${step.id}`, at: triggerMessageCreatedAt }
-        : null,
+    // A retried flow job reuses its execution key, so the step never scores
+    // twice — whether or not a trigger message pins the event time.
+    dedup: flowExecutionKey
+      ? {
+          key: `${flowExecutionKey}:${step.id}`,
+          at: triggerMessageCreatedAt ?? null,
+        }
+      : null,
   })
   if (result.status !== "applied") {
     logger.info(

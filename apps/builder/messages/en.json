@@ -8413,7 +8413,9 @@
       "myRank": "Your rank: #{rank}",
       "unranked": "Not ranked yet",
       "shareToEarn": "Share to earn points",
-      "linkCopied": "Link copied"
+      "linkCopied": "Link copied",
+      "unavailableTitle": "This leaderboard is no longer available",
+      "unavailableDescription": "It may have ended or been removed. Ask the page you follow for the latest link."
     },
     "description": "Run points-based ranking campaigns where customers compete for top spots and rewards.",
     "feature": "Leaderboard",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },

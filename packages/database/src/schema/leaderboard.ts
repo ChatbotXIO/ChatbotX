@@ -10,6 +10,7 @@ import {
 } from "drizzle-orm/pg-core"
 import type {
   LeaderboardPlatform,
+  LeaderboardRewardRecipients,
   LeaderboardRewardSettings,
   LeaderboardRules,
   LeaderboardScope,
@@ -91,6 +92,9 @@ export const leaderboardModel = pgTable(
     }),
     rewardSettings: jsonb().$type<LeaderboardRewardSettings>().notNull(),
     rewardsTriggeredAt: timestamp(timestampConfig),
+    // Who already got (or is getting) the reward flow — see
+    // `LeaderboardRewardDelivery`. Null until rewards are first triggered.
+    rewardRecipients: jsonb().$type<LeaderboardRewardRecipients>(),
     finishedAt: timestamp(timestampConfig),
     deletedAt: timestamp(timestampConfig),
   },

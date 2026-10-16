@@ -62,27 +62,26 @@ describe.skipIf(!redisUrl)("leaderboard store against Redis", () => {
     return id
   }
 
-  const apply = (
+  const set = (
     leaderboardId: string,
     contactId: string,
-    delta: number,
+    score: number,
     tieSeconds: number,
     isNew = false,
   ) =>
-    store.applyDelta({
+    store.setScore({
       leaderboardId,
       contactId,
-      delta,
+      score,
       tieSeconds,
       isNew,
       dayKey: DAY,
-      maxScore: MAX_SCORE,
     })
 
-  test("applyDelta is a no-op when the ranking is not built", async () => {
+  test("setScore is a no-op when the ranking is not built", async () => {
     const id = `test-${createId()}`
     leaderboardIds.add(id)
-    await expect(apply(id, "1", 10, 5, true)).resolves.toBeNull()
+    await expect(set(id, "1", 10, 5, true)).resolves.toBe(false)
     await expect(client.exists(leaderboardKeys(id).rank)).resolves.toBe(0)
     await expect(store.top(id, 10)).resolves.toBeNull()
   })
@@ -92,21 +91,19 @@ describe.skipIf(!redisUrl)("leaderboard store against Redis", () => {
     await expect(store.top(id, 10)).resolves.toEqual([])
   })
 
-  test("concurrent deltas commute and match the summed score", async () => {
+  test("setScore writes the exact value, the last write wins", async () => {
     const id = await newLeaderboard()
-    await Promise.all(
-      Array.from({ length: 25 }, (_, index) => apply(id, "42", 4, index)),
-    )
-    await expect(store.top(id, 10)).resolves.toEqual([
-      { contactId: "42", score: 100 },
-    ])
+    await set(id, "42", 100, 50)
+    await set(id, "42", 60, 80)
+    const raw = Number(await client.zscore(leaderboardKeys(id).rank, "42"))
+    expect(raw).toBe(encodeRankValue(60, 80))
   })
 
   test("ranks by score, then by who reached the score first", async () => {
     const id = await newLeaderboard()
-    await apply(id, "late", 620, 500, true)
-    await apply(id, "early", 620, 100, true)
-    await apply(id, "top", 900, 900, true)
+    await set(id, "late", 620, 500, true)
+    await set(id, "early", 620, 100, true)
+    await set(id, "top", 900, 900, true)
 
     await expect(store.top(id, 10)).resolves.toEqual([
       { contactId: "top", score: 900 },
@@ -119,27 +116,17 @@ describe.skipIf(!redisUrl)("leaderboard store against Redis", () => {
     expect(ranks.get("missing")).toBeNull()
   })
 
-  test("the tie keeps the latest change time regardless of arrival order", async () => {
+  test("the max score stays an exact integer in the rank value", async () => {
     const id = await newLeaderboard()
-    await apply(id, "a", 10, 300)
-    await apply(id, "a", 10, 100)
-    const raw = Number(await client.zscore(leaderboardKeys(id).rank, "a"))
-    expect(raw).toBe(encodeRankValue(20, 300))
-  })
-
-  test("scores are floored at 0 and capped at the max score", async () => {
-    const id = await newLeaderboard()
-    await apply(id, "a", 30, 1)
-    await expect(apply(id, "a", -50, 2)).resolves.toBe(0)
-    await expect(apply(id, "b", MAX_SCORE + 5, 3)).resolves.toBe(MAX_SCORE)
+    await set(id, "b", MAX_SCORE, 3)
     const raw = Number(await client.zscore(leaderboardKeys(id).rank, "b"))
     expect(Number.isSafeInteger(raw)).toBe(true)
   })
 
   test("stats track points and new participants", async () => {
     const id = await newLeaderboard([{ contactId: "x", score: 5, tie: 0 }])
-    await apply(id, "y", 7, 1, true)
-    await apply(id, "x", 3, 2)
+    await set(id, "y", 7, 1, true)
+    await set(id, "x", 8, 2)
     const stats = await store.statsMany([id, "never-built"], DAY)
     expect(stats.get(id)).toEqual({
       participants: 2,
@@ -147,6 +134,34 @@ describe.skipIf(!redisUrl)("leaderboard store against Redis", () => {
       newToday: 1,
     })
     expect(stats.get("never-built")).toBeNull()
+  })
+
+  test("a write during a rebuild also lands in the rebuild key", async () => {
+    const id = await newLeaderboard()
+    const keys = leaderboardKeys(id)
+    await client.zadd(keys.rebuild, "-inf", "_")
+    await set(id, "new", 40, 10, true)
+    const raw = Number(await client.zscore(keys.rebuild, "new"))
+    expect(raw).toBe(encodeRankValue(40, 10))
+  })
+
+  test("setMembers overwrites and removes members, only when built", async () => {
+    const id = await newLeaderboard([
+      { contactId: "1", score: 30, tie: 0 },
+      { contactId: "2", score: 20, tie: 0 },
+    ])
+    await store.setMembers(id, [
+      { contactId: "1", value: encodeRankValue(55, 4) },
+      { contactId: "2", value: null },
+    ])
+    await expect(store.top(id, 5)).resolves.toEqual([
+      { contactId: "1", score: 55 },
+    ])
+
+    const missing = `test-${createId()}`
+    leaderboardIds.add(missing)
+    await store.setMembers(missing, [{ contactId: "1", value: 1 }])
+    await expect(client.exists(leaderboardKeys(missing).rank)).resolves.toBe(0)
   })
 
   test("replaceRanking swaps in the rebuilt set and pagination skips the sentinel", async () => {

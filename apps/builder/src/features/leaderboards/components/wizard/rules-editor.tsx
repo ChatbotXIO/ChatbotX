@@ -21,6 +21,7 @@ import {
   LEADERBOARD_RULE_DESCRIPTION_KEY,
   LEADERBOARD_RULE_LABEL_KEY,
   rulesForPlatform,
+  supportsPostScope,
 } from "../../lib/platforms"
 import type { LeaderboardWizardInput } from "../../lib/wizard-schema"
 
@@ -82,12 +83,14 @@ function RuleRow({
             name={`rules.${ruleKey}.maxPerDay`}
           />
           {ruleKey === "comments" ? (
+            <InputNumberField<LeaderboardWizardInput>
+              label={t("leaderboards.wizard.minChars")}
+              min={0}
+              name="rules.comments.minChars"
+            />
+          ) : null}
+          {ruleKey === "comments" && supportsPostScope(platform) ? (
             <>
-              <InputNumberField<LeaderboardWizardInput>
-                label={t("leaderboards.wizard.minChars")}
-                min={0}
-                name="rules.comments.minChars"
-              />
               <InputNumberField<LeaderboardWizardInput>
                 description={t("leaderboards.wizard.bonusPointsHint")}
                 label={t("leaderboards.wizard.bonusPoints")}

@@ -1,6 +1,8 @@
+import { db } from "@chatbotx.io/database/client"
 import { LEADERBOARD_MAX_SCORE } from "@chatbotx.io/database/partials"
 import {
   type LeaderboardRankedRow,
+  type LeaderboardRankingPageRow,
   leaderboardParticipantRepository,
 } from "@chatbotx.io/database/repositories"
 import type { LeaderboardModel } from "@chatbotx.io/database/types"
@@ -39,9 +41,15 @@ export type LeaderboardPublicEntry = {
 }
 
 const REBUILD_PAGE_SIZE = 5000
+/**
+ * A score write's `lastActivityAt` is its transaction's start time, which can
+ * precede the rebuild's start; writes are short, so a minute covers them.
+ */
+const RECONCILE_MARGIN_MS = 60_000
 const WHITESPACE_PATTERN = /\s+/
 const LIVE_TOP_CACHE_SECONDS = 3
-const FINISHED_TOP_CACHE_SECONDS = 60 * 60
+// Short: a finished board still takes late events until rewards are sent.
+const FINISHED_TOP_CACHE_SECONDS = 60
 
 /** Leaderboards whose ranking lives in Redis; drafts and finished ones are served from Postgres. */
 const isLive = (leaderboard: Pick<LeaderboardModel, "status">) =>
@@ -70,8 +78,17 @@ export function maskParticipantName(fullName: string | null): string {
   return [first, ...(middle.length > 0 ? middle : ["***"]), last].join(" ")
 }
 
+const encodeRow = (
+  leaderboard: RankingLeaderboard,
+  row: Pick<LeaderboardRankedRow, "score" | "scoredAt">,
+) =>
+  encodeRankValue(
+    Math.min(row.score, LEADERBOARD_MAX_SCORE),
+    tieSecondsSince(leaderboard.startsAt, row.scoredAt),
+  )
+
 async function* rankingPages(leaderboard: RankingLeaderboard) {
-  let after: LeaderboardRankedRow | null = null
+  let after: LeaderboardRankingPageRow | null = null
   while (true) {
     const page = await leaderboardParticipantRepository.rankingPage({
       leaderboardId: leaderboard.id,
@@ -83,10 +100,7 @@ async function* rankingPages(leaderboard: RankingLeaderboard) {
     }
     yield page.map((row) => ({
       contactId: row.contactId,
-      value: encodeRankValue(
-        Math.min(row.score, LEADERBOARD_MAX_SCORE),
-        tieSecondsSince(leaderboard.startsAt, row.scoredAt),
-      ),
+      value: encodeRow(leaderboard, row),
     }))
     if (page.length < REBUILD_PAGE_SIZE) {
       return
@@ -113,6 +127,7 @@ class LeaderboardRankingService {
         retryTimeoutInSeconds: 0,
         fn: async () => {
           const now = new Date()
+          const changedSince = new Date(now.getTime() - RECONCILE_MARGIN_MS)
           const stats = await leaderboardParticipantRepository.stats({
             leaderboardId: leaderboard.id,
             newSince: leaderboardDayStart(now, leaderboard.resetTime),
@@ -123,8 +138,12 @@ class LeaderboardRankingService {
             stats,
             dayKey: leaderboardDayKey(now, leaderboard.resetTime),
           })
+          const reconciled = await this.reconcileChangedSince(
+            leaderboard,
+            changedSince,
+          )
           logger.info(
-            { leaderboardId: leaderboard.id, total },
+            { leaderboardId: leaderboard.id, total, reconciled },
             "leaderboard ranking rebuilt",
           )
         },
@@ -159,42 +178,79 @@ class LeaderboardRankingService {
   }
 
   /**
-   * Mirrors a committed Postgres change into Redis. Never throws: Postgres is
-   * already correct, so a Redis failure only schedules a rebuild.
+   * After a rebuild swapped in its snapshot, re-reads every participant
+   * changed while it ran (row-locked, so in-flight writes finish first and
+   * later ones wait) and writes their exact values. Without this a score
+   * written to the old key during the rebuild would vanish from the public
+   * ranking until the next daily rebuild.
    */
-  async applyCommitted(input: {
+  private async reconcileChangedSince(
+    leaderboard: RankingLeaderboard,
+    since: Date,
+  ): Promise<number> {
+    return await db.transaction(async (tx) => {
+      const rows = await leaderboardParticipantRepository.lockChangedSince(
+        { leaderboardId: leaderboard.id, since },
+        tx,
+      )
+      await leaderboardStore.setMembers(
+        leaderboard.id,
+        rows.map((row) => ({
+          contactId: row.contactId,
+          value: row.isBanned ? null : encodeRow(leaderboard, row),
+        })),
+      )
+      return rows.length
+    })
+  }
+
+  /**
+   * Writes one participant's exact Postgres score to Redis. Call it INSIDE
+   * the transaction that changed the score, while the participant row is
+   * locked: writes for one member then reach Redis in commit order, so the
+   * absolute value is never overwritten by an older one. Never throws;
+   * returns false when Redis failed (the caller schedules a rebuild after
+   * the transaction).
+   */
+  async syncScore(input: {
     leaderboard: RankingLeaderboard
+    leaderboardStatus: LeaderboardModel["status"]
     contactId: string
-    delta: number
+    score: number
     scoredAt: Date
     isNew: boolean
-  }): Promise<void> {
+  }): Promise<boolean> {
     const { leaderboard } = input
-    if (!isLive(leaderboard)) {
-      return
+    if (!isLive({ status: input.leaderboardStatus })) {
+      return true
     }
     try {
-      await leaderboardStore.applyDelta({
+      await leaderboardStore.setScore({
         leaderboardId: leaderboard.id,
         contactId: input.contactId,
-        delta: input.delta,
+        score: Math.min(input.score, LEADERBOARD_MAX_SCORE),
         tieSeconds: tieSecondsSince(leaderboard.startsAt, input.scoredAt),
         isNew: input.isNew,
         dayKey: leaderboardDayKey(new Date(), leaderboard.resetTime),
-        maxScore: LEADERBOARD_MAX_SCORE,
       })
+      return true
     } catch (err) {
       logger.warn(
         { err, leaderboardId: leaderboard.id },
         "leaderboard redis update failed; scheduling rebuild",
       )
-      await this.scheduleRebuild(leaderboard).catch((scheduleErr) => {
-        logger.error(
-          { err: scheduleErr, leaderboardId: leaderboard.id },
-          "failed to schedule leaderboard rebuild",
-        )
-      })
+      return false
     }
+  }
+
+  /** `scheduleRebuild` that never throws — for after a failed `syncScore`. */
+  async scheduleRebuildSafely(leaderboard: RankingLeaderboard): Promise<void> {
+    await this.scheduleRebuild(leaderboard).catch((err) => {
+      logger.error(
+        { err, leaderboardId: leaderboard.id },
+        "failed to schedule leaderboard rebuild",
+      )
+    })
   }
 
   /** Top `limit` ranked contacts (offset-able), from Redis when live, Postgres otherwise. */

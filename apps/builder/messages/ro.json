@@ -8413,7 +8413,9 @@
       "myRank": "Locul tău: #{rank}",
       "unranked": "Încă neclasat",
       "shareToEarn": "Distribuie și câștigă puncte",
-      "linkCopied": "Link copiat"
+      "linkCopied": "Link copiat",
+      "unavailableTitle": "Acest clasament nu mai este disponibil",
+      "unavailableDescription": "Este posibil să se fi încheiat sau să fi fost eliminat. Cere cel mai recent link paginii pe care o urmărești."
     },
     "description": "Rulează campanii de clasament bazate pe puncte, în care clienții concurează pentru primele locuri și recompense.",
     "feature": "Clasament",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },

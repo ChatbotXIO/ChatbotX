@@ -15,6 +15,8 @@ import {
 } from "../../partials/file"
 import type {
   LeaderboardPlatform,
+  LeaderboardRewardDelivery,
+  LeaderboardRewardRecipients,
   LeaderboardStatus,
 } from "../../partials/leaderboard"
 import { fileModel, leaderboardModel } from "../../schema"
@@ -123,28 +125,159 @@ export const leaderboardRepository = {
   },
 
   /**
-   * Leaderboards that can award points for an inbox right now. Paused ones are
-   * included on purpose: callers decide (rules/flow skip them, manual edits
-   * don't come through here).
+   * Leaderboards that can still score an event of this inbox: active ones,
+   * plus ones that finished at or after `finishedSince` and have not sent
+   * rewards yet — so an event that happened before the end but was queued
+   * behind the end-of-campaign rush still counts. Callers check the event
+   * time against the window (`isWithinLeaderboardWindow`).
    */
-  async findLiveForInbox(inboxId: string, tx: DatabaseClient = db) {
+  async findScorableForInbox(
+    input: { inboxId: string; finishedSince: Date },
+    tx: DatabaseClient = db,
+  ) {
     return await tx.query.leaderboardModel.findMany({
       where: {
-        inboxId,
-        status: "active",
+        inboxId: input.inboxId,
         deletedAt: { isNull: true },
+        OR: [
+          { status: "active" },
+          {
+            status: "finished",
+            rewardsTriggeredAt: { isNull: true },
+            finishedAt: { gte: input.finishedSince },
+          },
+        ],
       },
     })
   },
 
-  async findLiveForMinigame(minigameId: string, tx: DatabaseClient = db) {
+  async findScorableForMinigame(
+    input: { minigameId: string; finishedSince: Date },
+    tx: DatabaseClient = db,
+  ) {
     return await tx.query.leaderboardModel.findMany({
       where: {
-        minigameId,
-        status: "active",
+        minigameId: input.minigameId,
         deletedAt: { isNull: true },
+        OR: [
+          { status: "active" },
+          {
+            status: "finished",
+            rewardsTriggeredAt: { isNull: true },
+            finishedAt: { gte: input.finishedSince },
+          },
+        ],
       },
     })
+  },
+
+  /**
+   * Status change that only applies while the row still has status `from`,
+   * so two racing transitions (the finish cron and an admin's pause) cannot
+   * overwrite each other. Null when the status moved on meanwhile.
+   */
+  async transitionStatus(
+    input: { id: string; workspaceId: string; from: LeaderboardStatus },
+    values: Partial<Pick<LeaderboardInsert, "status" | "finishedAt">>,
+    tx: DatabaseClient = db,
+  ) {
+    const [row] = await tx
+      .update(leaderboardModel)
+      .set(values)
+      .where(
+        and(
+          eq(leaderboardModel.id, input.id),
+          eq(leaderboardModel.workspaceId, input.workspaceId),
+          eq(leaderboardModel.status, input.from),
+          isNull(leaderboardModel.deletedAt),
+        ),
+      )
+      .returning()
+    return row ?? null
+  },
+
+  /**
+   * Stamps `rewardsTriggeredAt` (kept if already set) on a finished
+   * leaderboard. The UPDATE waits for in-flight score writes (they hold the
+   * row `FOR SHARE`) and blocks every later one, so the winners read after
+   * this call are final. Returns the recipients recorded so far and whether
+   * rewards had been triggered before; null when not finished.
+   */
+  async claimRewards(
+    input: { id: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<{
+    recipients: LeaderboardRewardRecipients
+    previouslyTriggered: boolean
+  } | null> {
+    const result = await tx.execute<{
+      rewardRecipients: LeaderboardRewardRecipients | null
+      previouslyTriggered: boolean
+    }>(sql`
+      UPDATE "Leaderboard" l
+      SET "rewardsTriggeredAt" = COALESCE(l."rewardsTriggeredAt", now())
+      -- The locked sub-select yields the value from BEFORE this update (a
+      -- CTE cannot: it skips the row once the same statement updated it).
+      FROM (
+        SELECT "id", "rewardsTriggeredAt" FROM "Leaderboard"
+        WHERE "id" = ${input.id}::bigint
+        FOR UPDATE
+      ) "old"
+      WHERE l."id" = "old"."id"
+        AND l."workspaceId" = ${input.workspaceId}::bigint
+        AND l."status" = 'finished'
+        AND l."deletedAt" IS NULL
+      RETURNING l."rewardRecipients",
+        "old"."rewardsTriggeredAt" IS NOT NULL AS "previouslyTriggered"
+    `)
+    const row = result.rows[0]
+    if (!row) {
+      return null
+    }
+    return {
+      recipients: row.rewardRecipients ?? {},
+      previouslyTriggered: Boolean(row.previouslyTriggered),
+    }
+  },
+
+  /**
+   * Atomically marks one winner `pending`. False when the winner is already
+   * recorded (another run sent, or is sending, the reward) — the caller must
+   * then not send.
+   */
+  async claimRewardRecipient(
+    input: { id: string; contactId: string },
+    tx: DatabaseClient = db,
+  ): Promise<boolean> {
+    const result = await tx.execute(sql`
+      UPDATE "Leaderboard"
+      SET "rewardRecipients" = COALESCE("rewardRecipients", '{}'::jsonb)
+        || jsonb_build_object(${input.contactId}::text, 'pending')
+      WHERE "id" = ${input.id}::bigint
+        AND (COALESCE("rewardRecipients", '{}'::jsonb) -> ${input.contactId}::text) IS NULL
+      RETURNING 1
+    `)
+    return (result.rowCount ?? 0) > 0
+  },
+
+  /** Records a winner's delivery outcome, or releases the claim (`null`) so a retry can send. */
+  async setRewardRecipient(
+    input: {
+      id: string
+      contactId: string
+      delivery: LeaderboardRewardDelivery | null
+    },
+    tx: DatabaseClient = db,
+  ): Promise<void> {
+    const value =
+      input.delivery === null
+        ? sql`COALESCE("rewardRecipients", '{}'::jsonb) - ${input.contactId}::text`
+        : sql`COALESCE("rewardRecipients", '{}'::jsonb)
+            || jsonb_build_object(${input.contactId}::text, ${input.delivery}::text)`
+    await tx.execute(sql`
+      UPDATE "Leaderboard" SET "rewardRecipients" = ${value}
+      WHERE "id" = ${input.id}::bigint
+    `)
   },
 
   async findLiveForWorkspace(workspaceId: string, tx: DatabaseClient = db) {

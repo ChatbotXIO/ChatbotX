@@ -4328,6 +4328,44 @@ describe("contact source taxonomy", () => {
     })
   })
 
+  test("scores a top-level Threads comment (parent is the post itself)", async () => {
+    const threadsInbox = { ...fakeInbox, channel: "threads" }
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: threadsInbox,
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockCreateMessageRepository.mockResolvedValue({
+      createOrUpdate: mockCreateOrUpdate,
+      createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,
+      findLastByConversation: mockFindLastByConversation,
+      findBySourceId: vi.fn().mockResolvedValue(null),
+    })
+
+    await receiveComment({
+      integrationType: "threads",
+      integrationIdentifier: "inbox-1",
+      commentData: {
+        commentId: "reply-1",
+        parentId: "thread-post-1",
+        fromId: "commenter-1",
+        fromName: "Commenter",
+        message: "hello",
+        postId: "thread-post-1",
+        createdTime: 0,
+      },
+    })
+
+    expect(mockAwardCommentLeaderboard).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inbox: threadsInbox,
+        commentId: "reply-1",
+        isReply: false,
+      }),
+    )
+  })
+
   test("flags a reply to a comment and skips an already stored comment", async () => {
     mockCreateMessageRepository.mockResolvedValue({
       createOrUpdate: mockCreateOrUpdate,

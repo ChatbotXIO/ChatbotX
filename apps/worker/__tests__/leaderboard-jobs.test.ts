@@ -32,7 +32,12 @@ const { processLeaderboardJob } = await import("../src/leaderboard/process-job")
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mocks.triggerRewards.mockResolvedValue({ winners: [], sent: 0, skipped: [] })
+  mocks.triggerRewards.mockResolvedValue({
+    winners: [],
+    sent: 0,
+    skipped: [],
+    failed: [],
+  })
 })
 
 describe("processLeaderboardJob", () => {
@@ -91,5 +96,20 @@ describe("processLeaderboardJob", () => {
       workspaceId: "1",
       leaderboardId: "5",
     })
+  })
+
+  test("triggerRewards fails the job so BullMQ retries winners that failed", async () => {
+    mocks.triggerRewards.mockResolvedValue({
+      winners: [],
+      sent: 1,
+      skipped: [],
+      failed: ["7"],
+    })
+    await expect(
+      processLeaderboardJob({
+        type: "triggerRewards",
+        data: { workspaceId: "1", leaderboardId: "5" },
+      }),
+    ).rejects.toThrow("1 reward flow(s) failed")
   })
 })

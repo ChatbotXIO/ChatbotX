@@ -1,8 +1,8 @@
 "use client"
 
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { TrophyIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -23,11 +23,14 @@ const ChangeGamificationScoreStepEditor = ({
       title={t("flows.actions.changeGamificationScore")}
     >
       <div className="mt-5 flex flex-col gap-4">
-        <SelectField
+        <ComboboxField
+          emptyText={t("actions.noRecordFound")}
           label={t("flows.changeGamificationScore.leaderboard")}
           name={`${parentName}.leaderboardId`}
           options={options}
-          placeholder={t("fields.search.placeholder")}
+          placeholder={t("actions.pleaseSelect")}
+          popoverClassName="w-[var(--anchor-width)]"
+          searchPlaceholder={t("actions.search")}
         />
         <RadioGroupField
           label={t("flows.changeGamificationScore.operation")}

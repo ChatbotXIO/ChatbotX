@@ -11,6 +11,7 @@ export const triggerLeaderboardRewardsAction = workspaceActionClient
     const result = await triggerLeaderboardRewards({
       workspaceId,
       leaderboardId: id,
+      retryFailedInBackground: true,
     })
     return {
       winners: result.winners.length,

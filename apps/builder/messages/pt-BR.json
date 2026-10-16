@@ -8413,7 +8413,9 @@
       "myRank": "Sua posição: #{rank}",
       "unranked": "Ainda sem posição",
       "shareToEarn": "Compartilhe e ganhe pontos",
-      "linkCopied": "Link copiado"
+      "linkCopied": "Link copiado",
+      "unavailableTitle": "Este ranking não está mais disponível",
+      "unavailableDescription": "Ele pode ter terminado ou sido removido. Peça o link mais recente à página que você segue."
     },
     "description": "Crie campanhas de ranking por pontos em que os clientes competem pelas primeiras posições e por recompensas.",
     "feature": "Ranking",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },

@@ -316,7 +316,12 @@ async function handleLeaderboardRef(props: {
       referrerContactId: refData.contactId,
     })
   } catch (error) {
-    logger.warn(error, "Failed to credit leaderboard referral")
+    // Not rethrown: the welcome flow must still go out. The credit is not
+    // lost — the friend's next arrival through the link retries it.
+    logger.warn(
+      { err: error, leaderboardId: leaderboard.id },
+      "Failed to credit leaderboard referral",
+    )
   }
 
   if (!leaderboard.referralWelcomeFlowId) {

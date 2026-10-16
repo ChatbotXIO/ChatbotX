@@ -8413,7 +8413,9 @@
       "myRank": "Din placering: #{rank}",
       "unranked": "Ingen placering än",
       "shareToEarn": "Dela och tjäna poäng",
-      "linkCopied": "Länk kopierad"
+      "linkCopied": "Länk kopierad",
+      "unavailableTitle": "Den här topplistan är inte längre tillgänglig",
+      "unavailableDescription": "Den kan ha avslutats eller tagits bort. Be sidan du följer om den senaste länken."
     },
     "description": "Kör poängbaserade rankingkampanjer där kunder tävlar om topplaceringar och belöningar.",
     "feature": "Topplista",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },

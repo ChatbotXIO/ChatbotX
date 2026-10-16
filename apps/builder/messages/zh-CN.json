@@ -8413,7 +8413,9 @@
       "myRank": "你的排名：#{rank}",
       "unranked": "暂无排名",
       "shareToEarn": "分享赚积分",
-      "linkCopied": "链接已复制"
+      "linkCopied": "链接已复制",
+      "unavailableTitle": "此排行榜已不可用",
+      "unavailableDescription": "活动可能已结束或已被移除。请向你关注的主页索取最新链接。"
     },
     "description": "开展基于积分的排名活动，让客户争夺榜单名次并赢取奖励。",
     "feature": "排行榜",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },

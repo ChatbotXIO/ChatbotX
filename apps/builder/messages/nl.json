@@ -8413,7 +8413,9 @@
       "myRank": "Jouw positie: #{rank}",
       "unranked": "Nog geen positie",
       "shareToEarn": "Deel en verdien punten",
-      "linkCopied": "Link gekopieerd"
+      "linkCopied": "Link gekopieerd",
+      "unavailableTitle": "Dit klassement is niet meer beschikbaar",
+      "unavailableDescription": "Het is mogelijk afgelopen of verwijderd. Vraag de pagina die je volgt om de nieuwste link."
     },
     "description": "Start ranglijstcampagnes op basis van punten waarin klanten strijden om topposities en beloningen.",
     "feature": "Ranglijst",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },

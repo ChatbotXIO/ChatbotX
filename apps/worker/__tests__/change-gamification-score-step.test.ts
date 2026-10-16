@@ -125,6 +125,28 @@ describe("changeGamificationScore", () => {
     )
   })
 
+  test("still dedups a step with no trigger message (button, sequence, broadcast)", async () => {
+    await changeGamificationScore({
+      conversation: { workspaceId: "ws-1", contactId: "c-1" },
+      contactInbox: { id: "ci-1" },
+      flowExecutionKey: "job-9:1760000000000",
+      step: {
+        id: "s-1",
+        stepType: "changeGamificationScore",
+        leaderboardId: "lb-1",
+        operation: "add",
+        points: 5,
+        targetUser: true,
+        targetReferrer: false,
+      },
+    } as never)
+    expect(changeFromFlow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dedup: { key: "job-9:1760000000000:s-1", at: null },
+      }),
+    )
+  })
+
   test("does nothing without a leaderboard or any target", async () => {
     await run({ leaderboardId: undefined })
     await run({ targetUser: false, targetReferrer: false })

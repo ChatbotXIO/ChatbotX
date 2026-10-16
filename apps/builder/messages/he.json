@@ -8413,7 +8413,9 @@
       "myRank": "הדירוג שלך: #{rank}",
       "unranked": "עדיין ללא דירוג",
       "shareToEarn": "שתפו וצברו נקודות",
-      "linkCopied": "הקישור הועתק"
+      "linkCopied": "הקישור הועתק",
+      "unavailableTitle": "טבלת המובילים הזו כבר לא זמינה",
+      "unavailableDescription": "ייתכן שהיא הסתיימה או הוסרה. בקשו את הקישור העדכני מהעמוד שאתם עוקבים אחריו."
     },
     "description": "הפעילו קמפיינים של דירוג מבוסס נקודות, שבהם לקוחות מתחרים על המקומות הראשונים ועל פרסים.",
     "feature": "לוח מובילים",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },

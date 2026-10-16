@@ -15,6 +15,8 @@ const ERROR_PATTERN_4 = /minigame/
 const ERROR_PATTERN_5 = /after start/
 const ERROR_PATTERN_6 = /3 years/
 const ERROR_PATTERN_7 = /post/
+const ERROR_PATTERN_8 = /golden-hour bonus is not available/
+const ERROR_PATTERN_9 = /specific posts is not available/
 
 const baseConfig = () => ({
   platform: "messenger" as const,
@@ -149,6 +151,55 @@ describe("assertValidLeaderboardConfig", () => {
         endsAt: new Date("2030-01-01T00:00:00Z"),
       }),
     ).toThrow(ERROR_PATTERN_6)
+  })
+
+  test("tiktok scores comments + keywords, threads comments only, no referral", () => {
+    expect(Object.keys(defaultLeaderboardRules("tiktok"))).toEqual([
+      "comments",
+      "keywords",
+    ])
+    expect(Object.keys(defaultLeaderboardRules("threads"))).toEqual([
+      "comments",
+    ])
+    expect(defaultLeaderboardRules("threads").comments).toMatchObject({
+      enabled: true,
+      points: 30,
+      minChars: 20,
+      bonusMinutes: null,
+    })
+    expect(() =>
+      assertValidLeaderboardConfig({
+        ...baseConfig(),
+        platform: "threads",
+        rules: defaultLeaderboardRules("threads"),
+      }),
+    ).not.toThrow()
+  })
+
+  test("golden hour and specific posts need tracked posts (not tiktok/threads)", () => {
+    const rules = defaultLeaderboardRules("tiktok")
+    expect(() =>
+      assertValidLeaderboardConfig({
+        ...baseConfig(),
+        platform: "tiktok",
+        rules: {
+          ...rules,
+          comments: {
+            ...(rules.comments as NonNullable<typeof rules.comments>),
+            bonusPoints: 10,
+            bonusMinutes: 60,
+          },
+        },
+      }),
+    ).toThrow(ERROR_PATTERN_8)
+    expect(() =>
+      assertValidLeaderboardConfig({
+        ...baseConfig(),
+        platform: "threads",
+        rules: defaultLeaderboardRules("threads"),
+        scope: { postScope: "specific", postIds: ["1"], telegramChatIds: [] },
+      }),
+    ).toThrow(ERROR_PATTERN_9)
   })
 
   test("specific post scope needs posts", () => {

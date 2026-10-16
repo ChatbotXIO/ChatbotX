@@ -11,7 +11,8 @@ export type LeaderboardStatus = z.infer<typeof leaderboardStatuses>
 
 /**
  * One platform per leaderboard (never merged): each platform identifies a
- * person by its own id (PSID, IGSID, Zalo id, phone, Telegram id), so mixing
+ * person by its own id (PSID, IGSID, Zalo id, phone, Telegram id, TikTok
+ * and Threads user ids), so mixing
  * them would split one human into several competitors.
  */
 export const leaderboardPlatforms = z.enum([
@@ -20,6 +21,8 @@ export const leaderboardPlatforms = z.enum([
   "whatsapp",
   "zalo",
   "telegram",
+  "tiktok",
+  "threads",
   "email",
   "gamification",
 ])
@@ -58,9 +61,23 @@ export const LEADERBOARD_RULES_BY_PLATFORM = {
   whatsapp: ["ctwaReactions", "survey", "referral"],
   zalo: ["follow", "message", "referral"],
   telegram: ["joinGroup", "groupDiscussion", "referral"],
+  // No referral: neither channel can carry a ref into a chat. Threads has no
+  // DMs, so it scores comments only.
+  tiktok: ["comments", "keywords"],
+  threads: ["comments"],
   email: ["emailOpen", "emailClick"],
   gamification: ["minigameWin", "inGameShare", "referral"],
 } as const satisfies Record<LeaderboardPlatform, readonly LeaderboardRuleKey[]>
+
+/**
+ * Platforms whose comments can be limited to specific posts and earn the
+ * golden-hour bonus: both need the channel's tracked posts (`ChannelPost`,
+ * with its publish time), which only the Meta channels store.
+ */
+export const LEADERBOARD_POST_TRACKING_PLATFORMS = [
+  "messenger",
+  "instagram",
+] as const satisfies readonly LeaderboardPlatform[]
 
 /** Rules whose points are taken back when the triggering state is undone (unfollow, leaving a group). */
 export const LEADERBOARD_REVERSIBLE_RULES = [
@@ -221,6 +238,18 @@ export const leaderboardAuditActions = z.enum([
   "unban",
 ])
 export type LeaderboardAuditAction = z.infer<typeof leaderboardAuditActions>
+
+/**
+ * Reward delivery per winner (`Leaderboard.rewardRecipients`, keyed by contact
+ * id). `pending` is written BEFORE the reward flow is queued, so a second run
+ * never sends twice; a run that died between the two leaves `pending` for an
+ * admin to check instead of re-sending a prize.
+ */
+export type LeaderboardRewardDelivery = "pending" | "sent" | "skipped"
+export type LeaderboardRewardRecipients = Record<
+  string,
+  LeaderboardRewardDelivery
+>
 
 /** Lifetime per-rule counters shown as "42 comments • 5 ref" in the participants table. */
 export type LeaderboardBreakdown = Partial<

@@ -1,10 +1,11 @@
-import { createHash } from "node:crypto"
 import { db } from "@chatbotx.io/database/client"
+import { sha256 } from "@noble/hashes/sha2.js"
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js"
 import { logger } from "../logger"
 import { enqueueLeaderboardAward } from "./enqueue"
 
 const shortHash = (value: string) =>
-  createHash("sha256").update(value).digest("hex").slice(0, 16)
+  bytesToHex(sha256(utf8ToBytes(value))).slice(0, 16)
 
 /**
  * Scores an Email Topic open/click for email leaderboards. Call it AFTER

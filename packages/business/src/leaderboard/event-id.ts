@@ -1,4 +1,5 @@
-import { createHash } from "node:crypto"
+import { sha256 } from "@noble/hashes/sha2.js"
+import { utf8ToBytes } from "@noble/hashes/utils.js"
 
 /**
  * Deterministic positive 63-bit id for a score event, derived from its
@@ -7,7 +8,14 @@ import { createHash } from "node:crypto"
  * retry collides with the first write instead of awarding twice.
  */
 export function deterministicLeaderboardEventId(parts: string[]): string {
-  const digest = createHash("sha256").update(parts.join("\u0000")).digest()
-  const value = BigInt.asUintN(63, digest.readBigUInt64BE(0))
+  // Pure-JS sha256 (not `node:crypto`): this module is reachable from the
+  // builder's oRPC router, which instrumentation also loads in the Edge Runtime.
+  const digest = sha256(utf8ToBytes(parts.join("\u0000")))
+  const firstWord = new DataView(
+    digest.buffer,
+    digest.byteOffset,
+    digest.byteLength,
+  ).getBigUint64(0, false)
+  const value = BigInt.asUintN(63, firstWord)
   return (value === 0n ? 1n : value).toString()
 }

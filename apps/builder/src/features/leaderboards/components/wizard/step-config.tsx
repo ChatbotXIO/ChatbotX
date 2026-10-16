@@ -4,7 +4,7 @@ import type {
   ChannelType,
   LeaderboardPlatform,
 } from "@chatbotx.io/database/partials"
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
@@ -88,13 +88,16 @@ export function StepConfig({
           ) : null}
           {platform === "gamification" ? (
             <div className="flex flex-col gap-2">
-              <SelectField<LeaderboardWizardInput>
+              <ComboboxField<LeaderboardWizardInput>
                 disabled={hostLocked}
+                emptyText={t("actions.noRecordFound")}
                 label={t("fields.minigame.label")}
                 name="minigameId"
                 options={minigameOptions}
                 placeholder={t("actions.pleaseSelect")}
+                popoverClassName="w-[var(--anchor-width)]"
                 required
+                searchPlaceholder={t("actions.search")}
               />
               {minigameId ? (
                 <Button
@@ -115,7 +118,7 @@ export function StepConfig({
               ) : null}
             </div>
           ) : (
-            <SelectField<LeaderboardWizardInput>
+            <ComboboxField<LeaderboardWizardInput>
               description={
                 inboxOptions.length === 0
                   ? t("leaderboards.wizard.noChannel", {
@@ -124,12 +127,15 @@ export function StepConfig({
                   : undefined
               }
               disabled={hostLocked}
+              emptyText={t("actions.noRecordFound")}
               key={platform}
               label={t("leaderboards.wizard.hostChannel")}
               name="inboxId"
               options={inboxOptions}
               placeholder={t("actions.pleaseSelect")}
+              popoverClassName="w-[var(--anchor-width)]"
               required
+              searchPlaceholder={t("actions.search")}
             />
           )}
           {platform === "messenger" || platform === "instagram" ? (

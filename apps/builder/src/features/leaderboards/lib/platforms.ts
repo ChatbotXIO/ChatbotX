@@ -1,5 +1,6 @@
 import {
   LEADERBOARD_FOLLOWER_CHECK_PLATFORMS,
+  LEADERBOARD_POST_TRACKING_PLATFORMS,
   LEADERBOARD_RULES_BY_PLATFORM,
   type LeaderboardPlatform,
   type LeaderboardRuleKey,
@@ -10,13 +11,15 @@ import {
   SiInstagram,
   SiMessenger,
   SiTelegram,
+  SiThreads,
+  SiTiktok,
   SiWhatsapp,
   SiZalo,
 } from "@icons-pack/react-simple-icons"
 import { Gamepad2Icon, MailIcon } from "lucide-react"
 import type { ComponentType } from "react"
 
-/** The 7 platforms, in the order the wizard offers them. */
+/** Every platform, in the order the wizard offers them. */
 export const LEADERBOARD_PLATFORMS = leaderboardPlatforms.options
 
 export const LEADERBOARD_PLATFORM_LABEL_KEY = {
@@ -25,6 +28,8 @@ export const LEADERBOARD_PLATFORM_LABEL_KEY = {
   whatsapp: "leaderboards.platforms.whatsapp",
   zalo: "leaderboards.platforms.zalo",
   telegram: "leaderboards.platforms.telegram",
+  tiktok: "leaderboards.platforms.tiktok",
+  threads: "leaderboards.platforms.threads",
   email: "leaderboards.platforms.email",
   gamification: "leaderboards.platforms.gamification",
 } as const satisfies Record<LeaderboardPlatform, string>
@@ -38,6 +43,8 @@ export const LEADERBOARD_PLATFORM_ICON: Record<
   whatsapp: SiWhatsapp,
   zalo: SiZalo,
   telegram: SiTelegram,
+  tiktok: SiTiktok,
+  threads: SiThreads,
   email: MailIcon,
   gamification: Gamepad2Icon,
 }
@@ -131,6 +138,11 @@ export const supportsFollowersOnly = (platform: LeaderboardPlatform) =>
     LEADERBOARD_FOLLOWER_CHECK_PLATFORMS as readonly LeaderboardPlatform[]
   ).includes(platform)
 
-/** Messenger and Instagram can limit scoring to specific posts. */
+/**
+ * Only channels with tracked posts (Messenger, Instagram) can limit scoring
+ * to specific posts and offer the golden-hour comment bonus.
+ */
 export const supportsPostScope = (platform: LeaderboardPlatform) =>
-  platform === "messenger" || platform === "instagram"
+  (
+    LEADERBOARD_POST_TRACKING_PLATFORMS as readonly LeaderboardPlatform[]
+  ).includes(platform)

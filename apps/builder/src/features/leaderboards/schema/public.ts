@@ -136,4 +136,9 @@ export const leaderboardRewardsResponse = z.object({
   skipped: z
     .array(z.string())
     .describe("Winner contact ids with no conversation on the channel."),
+  failed: z
+    .array(z.string())
+    .describe(
+      "Winner contact ids whose reward flow could not be queued; they are retried in the background shortly.",
+    ),
 })

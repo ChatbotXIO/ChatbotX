@@ -84,9 +84,16 @@ export async function processLeaderboardJob(
           leaderboardId: data.data.leaderboardId,
           sent: result.sent,
           skipped: result.skipped.length,
+          failed: result.failed.length,
         },
         "leaderboard rewards sent",
       )
+      if (result.failed.length > 0) {
+        // The retry sends only the winners not recorded yet.
+        throw new Error(
+          `Leaderboard ${data.data.leaderboardId}: ${result.failed.length} reward flow(s) failed to queue`,
+        )
+      }
       return
     }
     default: {

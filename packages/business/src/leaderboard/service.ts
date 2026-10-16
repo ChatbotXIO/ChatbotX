@@ -32,6 +32,7 @@ import { assertValidLeaderboardConfig, defaultLeaderboardRules } from "./config"
 import { purgeLeaderboardDataForWorkspace } from "./purge"
 import { leaderboardRankingService } from "./ranking"
 import {
+  LEADERBOARD_LATE_EVENT_GRACE_MS,
   leaderboardInboxCacheTag,
   leaderboardMinigameCacheTag,
 } from "./scoring"
@@ -69,6 +70,8 @@ export const LEADERBOARD_PLATFORM_CHANNEL: Record<
   whatsapp: "whatsapp",
   zalo: "zalo",
   telegram: "telegram",
+  tiktok: "tiktok",
+  threads: "threads",
   email: "smtp",
 }
 
@@ -383,9 +386,17 @@ class LeaderboardService extends BaseService {
       throw notFoundException("Leaderboard not found")
     }
     assertActionAllowed(current, action)
-    const row = await leaderboardRepository.update(input, next)
+    const row = await leaderboardRepository.transitionStatus(
+      { ...input, from: current.status },
+      next,
+    )
     if (!row) {
-      throw notFoundException("Leaderboard not found")
+      // Another transition (e.g. the finish cron) won the race.
+      throw new ChatbotXException(
+        "The leaderboard status changed meanwhile; reload and try again",
+        "leaderboardActionNotAllowed",
+        409,
+      )
     }
     await this.invalidateLive(row)
     await this.audit(
@@ -419,7 +430,11 @@ class LeaderboardService extends BaseService {
     return await this.transition(input, "start", { status: "active" })
   }
 
-  /** Closes the campaign: scores freeze, Redis is released, optional auto rewards. */
+  /**
+   * Closes the campaign: Redis is released and, after the late-event grace
+   * (events from before the end still queued), automatic rewards go out.
+   * Sending rewards is what freezes the scores for good.
+   */
   async finish(input: { workspaceId: string; id: string }) {
     const row = await this.transition(input, "finish", {
       status: "finished",
@@ -433,7 +448,10 @@ class LeaderboardService extends BaseService {
           type: LeaderboardJobAction.triggerRewards,
           data: { workspaceId: row.workspaceId, leaderboardId: row.id },
         },
-        { jobId: `lb-rewards-${row.id}` },
+        {
+          jobId: `lb-rewards-${row.id}`,
+          delay: LEADERBOARD_LATE_EVENT_GRACE_MS,
+        },
       )
     }
     return row

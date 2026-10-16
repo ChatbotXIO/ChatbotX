@@ -748,6 +748,8 @@
         "whatsapp",
         "zalo",
         "telegram",
+        "tiktok",
+        "threads",
         "email",
         "gamification"
       ],
@@ -22221,6 +22223,19 @@
       "generated": null,
       "identity": null,
       "name": "rewardsTriggeredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Leaderboard"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "rewardRecipients",
       "entityType": "columns",
       "schema": "public",
       "table": "Leaderboard"

@@ -8413,7 +8413,9 @@
       "myRank": "あなたの順位: #{rank}",
       "unranked": "まだ順位がありません",
       "shareToEarn": "シェアしてポイントを獲得",
-      "linkCopied": "リンクをコピーしました"
+      "linkCopied": "リンクをコピーしました",
+      "unavailableTitle": "このランキングは利用できなくなりました",
+      "unavailableDescription": "終了したか削除された可能性があります。フォローしているページに最新のリンクを確認してください。"
     },
     "description": "ポイント制のランキングキャンペーンを実施し、顧客が上位と報酬を目指して競い合えます。",
     "feature": "リーダーボード",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },

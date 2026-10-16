@@ -1,5 +1,6 @@
 import {
   LEADERBOARD_MAX_DURATION_SECONDS,
+  LEADERBOARD_POST_TRACKING_PLATFORMS,
   LEADERBOARD_RULES_BY_PLATFORM,
   type LeaderboardPlatform,
   type LeaderboardRule,
@@ -11,6 +12,9 @@ import {
 import { validationException } from "../errors"
 
 const COMMENT_ONLY_FIELDS = ["minChars", "bonusPoints", "bonusMinutes"] as const
+
+const tracksPosts = (platform: LeaderboardPlatform) =>
+  (LEADERBOARD_POST_TRACKING_PLATFORMS as readonly string[]).includes(platform)
 
 const disabledRule = (): LeaderboardRule => leaderboardRuleSchema.parse({})
 
@@ -36,6 +40,8 @@ const PLATFORM_RULE_DEFAULTS: Record<LeaderboardPlatform, RuleDefaults> = {
     referral: { enabled: true, points: 50, maxPerDay: 10 },
   },
   telegram: { referral: { enabled: true, points: 50, maxPerDay: 10 } },
+  tiktok: { comments: { enabled: true, points: 30, minChars: 20 } },
+  threads: { comments: { enabled: true, points: 30, minChars: 20 } },
   email: { emailClick: { maxPerDay: 2 } },
   gamification: { referral: { enabled: true, points: 50, maxPerDay: 10 } },
 }
@@ -122,6 +128,16 @@ export function assertValidLeaderboardConfig(input: {
     }
     if (
       key === "comments" &&
+      !tracksPosts(input.platform) &&
+      ((rule.bonusPoints ?? 0) > 0 || rule.bonusMinutes)
+    ) {
+      throw validationException(
+        "rules.comments.bonusPoints",
+        `The golden-hour bonus is not available on ${input.platform}`,
+      )
+    }
+    if (
+      key === "comments" &&
       (rule.bonusPoints ?? 0) > 0 &&
       !rule.bonusMinutes
     ) {
@@ -132,12 +148,16 @@ export function assertValidLeaderboardConfig(input: {
     }
   }
 
-  if (
-    input.scope.postScope === "specific" &&
-    input.scope.postIds.length === 0 &&
-    (input.platform === "messenger" || input.platform === "instagram")
-  ) {
-    throw validationException("scope.postIds", "Choose at least one post")
+  if (input.scope.postScope === "specific") {
+    if (!tracksPosts(input.platform)) {
+      throw validationException(
+        "scope.postScope",
+        `Scoring specific posts is not available on ${input.platform}`,
+      )
+    }
+    if (input.scope.postIds.length === 0) {
+      throw validationException("scope.postIds", "Choose at least one post")
+    }
   }
   if (
     input.platform === "telegram" &&
@@ -151,10 +171,17 @@ export function assertValidLeaderboardConfig(input: {
   }
 }
 
-/** Whether `startsAt..endsAt` contains `at`. */
+/**
+ * Whether the campaign window contains `at`. The window ends at `endsAt`, or
+ * earlier when an admin finished the leaderboard early (`finishedAt`).
+ */
 export const isWithinLeaderboardWindow = (
-  leaderboard: { startsAt: Date; endsAt: Date },
+  leaderboard: { startsAt: Date; endsAt: Date; finishedAt?: Date | null },
   at: Date,
-): boolean =>
-  at.getTime() >= leaderboard.startsAt.getTime() &&
-  at.getTime() < leaderboard.endsAt.getTime()
+): boolean => {
+  const endsAt = Math.min(
+    leaderboard.endsAt.getTime(),
+    leaderboard.finishedAt?.getTime() ?? Number.POSITIVE_INFINITY,
+  )
+  return at.getTime() >= leaderboard.startsAt.getTime() && at.getTime() < endsAt
+}

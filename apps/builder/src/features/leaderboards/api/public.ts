@@ -393,6 +393,7 @@ export const leaderboardsPublicRouter = {
         await triggerLeaderboardRewards({
           workspaceId: context.workspace.id,
           leaderboardId: input.id,
+          retryFailedInBackground: true,
         }),
     ),
 

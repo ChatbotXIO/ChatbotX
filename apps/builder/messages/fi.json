@@ -8413,7 +8413,9 @@
       "myRank": "Sijoituksesi: #{rank}",
       "unranked": "Ei vielä sijoitusta",
       "shareToEarn": "Jaa ja ansaitse pisteitä",
-      "linkCopied": "Linkki kopioitu"
+      "linkCopied": "Linkki kopioitu",
+      "unavailableTitle": "Tämä tulostaulu ei ole enää saatavilla",
+      "unavailableDescription": "Se on ehkä päättynyt tai poistettu. Pyydä uusin linkki sivulta, jota seuraat."
     },
     "description": "Järjestä pistepohjaisia kisoja, joissa asiakkaat kilpailevat kärkisijoista ja palkinnoista.",
     "feature": "Tulostaulu",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },

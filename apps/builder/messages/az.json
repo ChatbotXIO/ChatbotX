@@ -8413,7 +8413,9 @@
       "myRank": "Sənin yerin: #{rank}",
       "unranked": "Hələ sıralanmayıb",
       "shareToEarn": "Paylaş, xal qazan",
-      "linkCopied": "Link kopyalandı"
+      "linkCopied": "Link kopyalandı",
+      "unavailableTitle": "Bu liderlər cədvəli artıq mövcud deyil",
+      "unavailableDescription": "Ola bilsin ki, başa çatıb və ya silinib. Ən son linki izlədiyiniz səhifədən soruşun."
     },
     "description": "Müştərilərin yüksək yerlər və mükafatlar uğrunda yarışdığı xal əsaslı reytinq kampaniyaları keçirin.",
     "feature": "Liderlər cədvəli",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },

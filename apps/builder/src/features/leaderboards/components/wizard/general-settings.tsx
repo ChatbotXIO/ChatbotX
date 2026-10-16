@@ -1,9 +1,9 @@
 "use client"
 
 import type { LeaderboardPlatform } from "@chatbotx.io/database/partials"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { TimeField } from "@chatbotx.io/ui/components/form/time-field"
 import {
@@ -76,13 +76,17 @@ export function GeneralSettings({
           />
         </div>
         {hasReferral ? (
-          <SelectField<LeaderboardWizardInput>
+          <ComboboxField<LeaderboardWizardInput>
             allowClear
+            clearLabel={t("actions.clear")}
             description={t("leaderboards.wizard.referralFlowHint")}
+            emptyText={t("actions.noRecordFound")}
             label={t("leaderboards.wizard.referralFlow")}
             name="referralWelcomeFlowId"
             options={flowOptions}
             placeholder={t("leaderboards.wizard.referralFlowAuto")}
+            popoverClassName="w-[var(--anchor-width)]"
+            searchPlaceholder={t("actions.search")}
           />
         ) : null}
         {viewUrl ? (
@@ -113,12 +117,16 @@ export function RewardSettings() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <SelectField<LeaderboardWizardInput>
+        <ComboboxField<LeaderboardWizardInput>
           allowClear
+          clearLabel={t("actions.clear")}
+          emptyText={t("actions.noRecordFound")}
           label={t("leaderboards.rewards.flow")}
           name="rewardSettings.flowId"
           options={flowOptions}
           placeholder={t("actions.pleaseSelect")}
+          popoverClassName="w-[var(--anchor-width)]"
+          searchPlaceholder={t("actions.search")}
         />
         <div className="grid items-start gap-4 sm:grid-cols-2">
           <InputNumberField<LeaderboardWizardInput>

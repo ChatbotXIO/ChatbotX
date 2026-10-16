@@ -4,7 +4,7 @@ import {
   type LeaderboardAuditAction,
 } from "@chatbotx.io/database/partials"
 import {
-  LeaderboardChangeRejected,
+  type LeaderboardScoreChangeResult,
   leaderboardAuditLogRepository,
   leaderboardParticipantRepository,
   leaderboardRepository,
@@ -19,6 +19,7 @@ import {
   validationException,
 } from "../errors"
 import { leaderboardRankingService } from "./ranking"
+import { applyLeaderboardScoreChange } from "./scoring"
 
 export type LeaderboardParticipantFilter = "all" | "top10" | "top50" | "banned"
 
@@ -77,6 +78,28 @@ const assertEditable = (leaderboard: LeaderboardModel) => {
       409,
     )
   }
+}
+
+/** Manual edits are allowed while the campaign runs or is paused. */
+const MANUAL_STATUSES = ["active", "paused"] as const
+
+/** Maps a manual change that did not apply to the admin-facing error. */
+const assertManualChangeApplied = (result: LeaderboardScoreChangeResult) => {
+  if (result.status === "applied") {
+    return result
+  }
+  if (result.status === "closed") {
+    throw new ChatbotXException(
+      "Scores are locked because the leaderboard has finished",
+      "leaderboardFinished",
+      409,
+    )
+  }
+  throw new ChatbotXException(
+    "This participant is banned",
+    "leaderboardParticipantBanned",
+    409,
+  )
 }
 
 class LeaderboardParticipantService extends BaseService {
@@ -189,59 +212,35 @@ class LeaderboardParticipantService extends BaseService {
     assertEditable(leaderboard)
     await assertContactInWorkspace(leaderboard.workspaceId, input.contactId)
 
-    let applied: { score: number; scoredAt: Date; isNew: boolean }
-    try {
-      applied = await db.transaction(async (tx) => {
-        const result =
-          await leaderboardParticipantRepository.applyChangeInTransaction(
+    const applied = assertManualChangeApplied(
+      await applyLeaderboardScoreChange(
+        leaderboard,
+        {
+          contactId: input.contactId,
+          delta,
+          source: "manual",
+          breakdownKey: "manual",
+          eventId: createId(),
+          eventAt: new Date(),
+          limits: null,
+          allowedStatuses: MANUAL_STATUSES,
+        },
+        async (tx) => {
+          await leaderboardAuditLogRepository.insert(
             {
               leaderboardId: leaderboard.id,
               workspaceId: leaderboard.workspaceId,
               contactId: input.contactId,
+              action: "adjust",
               delta,
-              source: "manual",
-              breakdownKey: "manual",
-              eventId: createId(),
-              eventAt: new Date(),
-              limits: null,
-              maxScore: LEADERBOARD_MAX_SCORE,
+              actorUserId: input.actorUserId,
+              reason,
             },
             tx,
           )
-        if (result.status !== "applied") {
-          throw new LeaderboardChangeRejected()
-        }
-        await leaderboardAuditLogRepository.insert(
-          {
-            leaderboardId: leaderboard.id,
-            workspaceId: leaderboard.workspaceId,
-            contactId: input.contactId,
-            action: "adjust",
-            delta,
-            actorUserId: input.actorUserId,
-            reason,
-          },
-          tx,
-        )
-        return result
-      })
-    } catch (err) {
-      if (err instanceof LeaderboardChangeRejected) {
-        throw new ChatbotXException(
-          "This participant is banned",
-          "leaderboardParticipantBanned",
-          409,
-        )
-      }
-      throw err
-    }
-    await leaderboardRankingService.applyCommitted({
-      leaderboard,
-      contactId: input.contactId,
-      delta,
-      scoredAt: applied.scoredAt,
-      isNew: applied.isNew,
-    })
+        },
+      ),
+    )
     await this.audit(
       "leaderboard.adjust",
       `Leaderboard ${leaderboard.id} contact ${input.contactId}: ${delta > 0 ? "+" : ""}${delta} — ${reason}`,
@@ -259,32 +258,42 @@ class LeaderboardParticipantService extends BaseService {
   }) {
     const leaderboard = await this.requireLeaderboard(input)
     assertEditable(leaderboard)
-    const row = await leaderboardParticipantRepository.setBanned({
-      leaderboardId: leaderboard.id,
-      contactId: input.contactId,
-      isBanned: input.isBanned,
+    // Redis is updated while the row is still locked, so a score write
+    // waiting on the lock reaches Redis after this and cannot be undone by it.
+    const row = await db.transaction(async (tx) => {
+      const updated = await leaderboardParticipantRepository.setBanned(
+        {
+          leaderboardId: leaderboard.id,
+          contactId: input.contactId,
+          isBanned: input.isBanned,
+        },
+        tx,
+      )
+      if (!updated) {
+        return null
+      }
+      if (input.isBanned) {
+        await leaderboardRankingService.removeMember(
+          leaderboard.id,
+          input.contactId,
+        )
+      } else {
+        await leaderboardRankingService.restoreMember({
+          leaderboard,
+          contactId: input.contactId,
+          score: updated.score,
+          scoredAt: updated.scoredAt,
+        })
+      }
+      return updated
     })
     if (!row) {
       throw notFoundException("Participant not found")
     }
     if (input.isBanned) {
-      await leaderboardRankingService.removeMember(
-        leaderboard.id,
-        input.contactId,
-      )
-      // An award committed just before the ban can re-add the member to
-      // Redis after this removal; a delayed rebuild (from Postgres, which
-      // excludes banned rows) settles it.
-      await leaderboardRankingService
-        .scheduleRebuild(leaderboard)
-        .catch(() => undefined)
-    } else {
-      await leaderboardRankingService.restoreMember({
-        leaderboard,
-        contactId: input.contactId,
-        score: row.score,
-        scoredAt: row.scoredAt,
-      })
+      // A rebuild already reading pages may still hold the member; a delayed
+      // rebuild (from Postgres, which excludes banned rows) settles it.
+      await leaderboardRankingService.scheduleRebuildSafely(leaderboard)
     }
     await this.writeAudit({
       leaderboard,
@@ -324,45 +333,34 @@ class LeaderboardParticipantService extends BaseService {
       )
     }
     const delta = -participant.score
-    const result = await db.transaction(async (tx) => {
-      const change =
-        await leaderboardParticipantRepository.applyChangeInTransaction(
-          {
-            leaderboardId: leaderboard.id,
-            workspaceId: leaderboard.workspaceId,
-            contactId: input.contactId,
-            delta,
-            source: "reset",
-            eventId: createId(),
-            eventAt: new Date(),
-            limits: null,
-            maxScore: LEADERBOARD_MAX_SCORE,
-          },
-          tx,
-        )
-      await leaderboardAuditLogRepository.insert(
-        {
-          leaderboardId: leaderboard.id,
-          workspaceId: leaderboard.workspaceId,
-          contactId: input.contactId,
-          action: "resetOne",
-          delta,
-          actorUserId: input.actorUserId,
-          reason: input.reason.trim(),
-        },
-        tx,
-      )
-      return change
-    })
-    if (result.status === "applied") {
-      await leaderboardRankingService.applyCommitted({
+    assertManualChangeApplied(
+      await applyLeaderboardScoreChange(
         leaderboard,
-        contactId: input.contactId,
-        delta,
-        scoredAt: result.scoredAt,
-        isNew: false,
-      })
-    }
+        {
+          contactId: input.contactId,
+          delta,
+          source: "reset",
+          eventId: createId(),
+          eventAt: new Date(),
+          limits: null,
+          allowedStatuses: MANUAL_STATUSES,
+        },
+        async (tx) => {
+          await leaderboardAuditLogRepository.insert(
+            {
+              leaderboardId: leaderboard.id,
+              workspaceId: leaderboard.workspaceId,
+              contactId: input.contactId,
+              action: "resetOne",
+              delta,
+              actorUserId: input.actorUserId,
+              reason: input.reason.trim(),
+            },
+            tx,
+          )
+        },
+      ),
+    )
     return { score: 0 }
   }
 

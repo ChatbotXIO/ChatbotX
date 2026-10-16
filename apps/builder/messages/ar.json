@@ -8413,7 +8413,9 @@
       "myRank": "ترتيبك: #{rank}",
       "unranked": "غير مصنف بعد",
       "shareToEarn": "شارك لتربح نقاطًا",
-      "linkCopied": "تم نسخ الرابط"
+      "linkCopied": "تم نسخ الرابط",
+      "unavailableTitle": "لوحة المتصدرين هذه لم تعد متاحة",
+      "unavailableDescription": "ربما انتهت أو تمت إزالتها. اطلب أحدث رابط من الصفحة التي تتابعها."
     },
     "description": "أطلق حملات ترتيب قائمة على النقاط يتنافس فيها العملاء على المراكز الأولى والمكافآت.",
     "feature": "لوحة المتصدرين",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },

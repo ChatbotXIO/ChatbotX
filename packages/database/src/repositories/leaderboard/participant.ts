@@ -1,5 +1,8 @@
 import { type DatabaseClient, db, sql } from "../../client"
-import type { LeaderboardScoreSource } from "../../partials/leaderboard"
+import type {
+  LeaderboardScoreSource,
+  LeaderboardStatus,
+} from "../../partials/leaderboard"
 import { likeContains } from "../../utils"
 
 /** Thrown inside a transaction to roll back the event row when the score UPSERT is rejected. */
@@ -36,22 +39,48 @@ export type LeaderboardScoreChangeInput = {
   referrerContactId?: string | null
   /** Upper bound for the score (Redis precision limit). */
   maxScore: number
+  /**
+   * Leaderboard statuses this change may be written in, checked under a
+   * `FOR SHARE` lock on the Leaderboard row so a finish/pause racing the
+   * write is either seen or waits for it. A finished leaderboard never takes
+   * a change once rewards were triggered.
+   */
+  allowedStatuses: readonly LeaderboardStatus[]
+  /**
+   * For events with no stable source time (flow steps): `eventAt` is "now",
+   * so the primary key cannot catch a retry. When set, an event with the same
+   * id for this contact since this time counts as a duplicate.
+   */
+  dedupSince?: Date | null
 }
 
 export type LeaderboardScoreChangeResult =
   | { status: "duplicate" }
   | { status: "rejected" }
+  /** The leaderboard is not in an allowed status (or rewards were already sent). */
+  | { status: "closed" }
   | {
       status: "applied"
       score: number
       scoredAt: Date
       isNew: boolean
+      /** Status observed under the lock — decides whether Redis is live. */
+      leaderboardStatus: LeaderboardStatus
     }
 
 export type LeaderboardRankedRow = {
   contactId: string
   score: number
   scoredAt: Date
+}
+
+/** A ranking row plus its exact `scoredAt` (microseconds) for keyset paging. */
+export type LeaderboardRankingPageRow = LeaderboardRankedRow & {
+  cursor: string
+}
+
+export type LeaderboardChangedRow = LeaderboardRankedRow & {
+  isBanned: boolean
 }
 
 export type LeaderboardParticipantListInput = {
@@ -81,6 +110,41 @@ export const leaderboardParticipantRepository = {
     input: LeaderboardScoreChangeInput,
     tx: DatabaseClient,
   ): Promise<LeaderboardScoreChangeResult> {
+    const guard = await tx.execute<{ status: LeaderboardStatus }>(sql`
+      SELECT "status" FROM "Leaderboard"
+      WHERE "id" = ${input.leaderboardId}::bigint
+        AND "workspaceId" = ${input.workspaceId}::bigint
+        AND "deletedAt" IS NULL
+        AND "status"::text IN (${sql.join(
+          input.allowedStatuses.map((status) => sql`${status}`),
+          sql`, `,
+        )})
+        AND ("status" <> 'finished' OR "rewardsTriggeredAt" IS NULL)
+      FOR SHARE
+    `)
+    const leaderboardStatus = guard.rows[0]?.status
+    if (!leaderboardStatus) {
+      return { status: "closed" }
+    }
+
+    if (input.dedupSince) {
+      // Serializes concurrent attempts of the same event before the lookup.
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(${input.eventId}::bigint)`,
+      )
+      const existing = await tx.execute(sql`
+        SELECT 1 FROM "LeaderboardScoreEvent"
+        WHERE "leaderboardId" = ${input.leaderboardId}::bigint
+          AND "contactId" = ${input.contactId}::bigint
+          AND "createdAt" >= ${input.dedupSince}::timestamptz
+          AND "id" = ${input.eventId}::bigint
+        LIMIT 1
+      `)
+      if ((existing.rowCount ?? 0) > 0) {
+        return { status: "duplicate" }
+      }
+    }
+
     const inserted = await tx.execute(sql`
       INSERT INTO "LeaderboardScoreEvent"
         ("id", "createdAt", "leaderboardId", "workspaceId", "contactId",
@@ -179,6 +243,7 @@ export const leaderboardParticipantRepository = {
       score: Number(row.score),
       scoredAt: new Date(row.scoredAt),
       isNew: Boolean(row.isNew),
+      leaderboardStatus,
     }
   },
 
@@ -220,7 +285,8 @@ export const leaderboardParticipantRepository = {
         AND "contactId" = ${input.contactId}::bigint
       RETURNING "contactId"::text AS "contactId", "score", "scoredAt"
     `)
-    return result.rows[0] ?? null
+    const row = result.rows[0]
+    return row ? normalizeRankedRow(row) : null
   },
 
   /** Sets every score of a leaderboard to 0 (admin "reset points"). */
@@ -243,7 +309,9 @@ export const leaderboardParticipantRepository = {
       SELECT "contactId"::text AS "contactId", "score", "scoredAt"
       FROM "LeaderboardParticipant"
       WHERE "leaderboardId" = ${input.leaderboardId}::bigint AND NOT "isBanned"
-      ORDER BY "score" DESC, "scoredAt" ASC, "contactId" ASC
+      ORDER BY "score" DESC, "scoredAt" ASC,
+        -- Qualified: a bare "contactId" sorts the text output alias.
+        "LeaderboardParticipant"."contactId" ASC
       LIMIT ${input.limit}::int OFFSET ${input.offset ?? 0}::int
     `)
     return result.rows.map(normalizeRankedRow)
@@ -278,32 +346,65 @@ export const leaderboardParticipantRepository = {
 
   /**
    * Keyset page of the ranking for rebuilding the Redis sorted set. Pass the
-   * last row of the previous page as `after`.
+   * last row of the previous page as `after`. The cursor carries `scoredAt`
+   * as text: the column keeps microseconds and a JS Date only milliseconds,
+   * so a Date cursor would sit before the last row and — when a whole page
+   * shares one timestamp, as after "reset points" — return it forever.
    */
   async rankingPage(
     input: {
       leaderboardId: string
       limit: number
-      after?: LeaderboardRankedRow | null
+      after?: LeaderboardRankingPageRow | null
     },
     tx: DatabaseClient = db,
-  ): Promise<LeaderboardRankedRow[]> {
+  ): Promise<LeaderboardRankingPageRow[]> {
     const after = input.after
     const cursor = after
       ? sql`AND ("score" < ${after.score}::int
-          OR ("score" = ${after.score}::int AND "scoredAt" > ${after.scoredAt}::timestamptz)
-          OR ("score" = ${after.score}::int AND "scoredAt" = ${after.scoredAt}::timestamptz
+          OR ("score" = ${after.score}::int AND "scoredAt" > ${after.cursor}::timestamptz)
+          OR ("score" = ${after.score}::int AND "scoredAt" = ${after.cursor}::timestamptz
               AND "contactId" > ${after.contactId}::bigint))`
       : sql``
-    const result = await tx.execute<LeaderboardRankedRow>(sql`
-      SELECT "contactId"::text AS "contactId", "score", "scoredAt"
+    const result = await tx.execute<LeaderboardRankingPageRow>(sql`
+      SELECT "contactId"::text AS "contactId", "score", "scoredAt",
+             "scoredAt"::text AS "cursor"
       FROM "LeaderboardParticipant"
       WHERE "leaderboardId" = ${input.leaderboardId}::bigint AND NOT "isBanned"
         ${cursor}
-      ORDER BY "score" DESC, "scoredAt" ASC, "contactId" ASC
+      ORDER BY "score" DESC, "scoredAt" ASC,
+        -- Qualified: a bare "contactId" sorts the text output alias.
+        "LeaderboardParticipant"."contactId" ASC
       LIMIT ${input.limit}::int
     `)
-    return result.rows.map(normalizeRankedRow)
+    return result.rows.map((row) => ({
+      ...normalizeRankedRow(row),
+      cursor: String(row.cursor),
+    }))
+  },
+
+  /**
+   * Locks and returns every participant changed since `since` — the rows a
+   * Redis rebuild may have snapshotted before a concurrent write. Locking
+   * waits for in-flight writes to commit and holds later ones back until the
+   * caller's transaction ends, so the values written to Redis are final.
+   */
+  async lockChangedSince(
+    input: { leaderboardId: string; since: Date },
+    tx: DatabaseClient,
+  ): Promise<LeaderboardChangedRow[]> {
+    const result = await tx.execute<LeaderboardChangedRow>(sql`
+      SELECT "contactId"::text AS "contactId", "score", "scoredAt", "isBanned"
+      FROM "LeaderboardParticipant"
+      WHERE "leaderboardId" = ${input.leaderboardId}::bigint
+        AND "lastActivityAt" >= ${input.since}::timestamptz
+      ORDER BY "LeaderboardParticipant"."contactId"
+      FOR UPDATE
+    `)
+    return result.rows.map((row) => ({
+      ...normalizeRankedRow(row),
+      isBanned: Boolean(row.isBanned),
+    }))
   },
 
   /** Participant count, total points and today's new participants — the `stats` hash rebuild. */

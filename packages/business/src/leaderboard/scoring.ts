@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import {
   LEADERBOARD_FOLLOWER_CHECK_PLATFORMS,
   LEADERBOARD_MAX_SCORE,
@@ -51,12 +51,28 @@ export type LeaderboardAwardOutcome = {
   result: LeaderboardScoreChangeResult | { status: "skipped"; reason: string }
 }
 
-const asLiveList = (rows: LeaderboardModel[]) =>
-  rows.filter((row) => row.status === "active")
+/**
+ * How long after finishing a leaderboard still accepts events that happened
+ * before its end (queued behind the end-of-campaign rush, or a channel that
+ * delivers its webhook late). Automatic rewards wait this long too; sending
+ * rewards earlier closes the leaderboard for good.
+ */
+export const LEADERBOARD_LATE_EVENT_GRACE_MS = 10 * 60 * 1000
+
+const finishedSince = () =>
+  new Date(Date.now() - LEADERBOARD_LATE_EVENT_GRACE_MS)
+
+/** Statuses a rule award may be written in (finished: only before rewards). */
+const RULE_STATUSES = ["active", "finished"] as const
+/** Bot scoring (flow step, referral) needs a running campaign. */
+const ACTIVE_ONLY = ["active"] as const
+/** Flow-step retries happen within minutes; a week is a generous bound for the lookup. */
+const FLOW_DEDUP_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000
 
 /**
- * Live (active) leaderboards of an inbox, cached for a minute. Checked on
- * the inbound hot path BEFORE any job is queued, so the common case (no
+ * Leaderboards of an inbox that can score right now (active, or finished
+ * moments ago and awaiting rewards), cached for a minute. Checked on the
+ * inbound hot path BEFORE any job is queued, so the common case (no
  * leaderboard on this inbox) costs one cache read. Invalidated by tag on
  * every leaderboard create/update/status change.
  */
@@ -66,7 +82,10 @@ export async function findLiveLeaderboardsForInbox(
   return await withCache(
     `leaderboards:live:inbox:${inboxId}`,
     async () =>
-      asLiveList(await leaderboardRepository.findLiveForInbox(inboxId)),
+      await leaderboardRepository.findScorableForInbox({
+        inboxId,
+        finishedSince: finishedSince(),
+      }),
     { ttl: LIVE_CACHE_SECONDS, tags: [leaderboardInboxCacheTag(inboxId)] },
   )
 }
@@ -77,7 +96,10 @@ export async function findLiveLeaderboardsForMinigame(
   return await withCache(
     `leaderboards:live:minigame:${minigameId}`,
     async () =>
-      asLiveList(await leaderboardRepository.findLiveForMinigame(minigameId)),
+      await leaderboardRepository.findScorableForMinigame({
+        minigameId,
+        finishedSince: finishedSince(),
+      }),
     {
       ttl: LIVE_CACHE_SECONDS,
       tags: [leaderboardMinigameCacheTag(minigameId)],
@@ -112,16 +134,83 @@ export async function minigameHasLeaderboardRule(
   }
 }
 
-const findLiveLeaderboardsForEvent = async (
+const findScorableLeaderboardsForEvent = async (
   input: Pick<LeaderboardAwardInput, "inboxId" | "minigameId">,
 ): Promise<LeaderboardModel[]> => {
   if (input.minigameId) {
-    return await leaderboardRepository.findLiveForMinigame(input.minigameId)
+    return await leaderboardRepository.findScorableForMinigame({
+      minigameId: input.minigameId,
+      finishedSince: finishedSince(),
+    })
   }
   if (input.inboxId) {
-    return await leaderboardRepository.findLiveForInbox(input.inboxId)
+    return await leaderboardRepository.findScorableForInbox({
+      inboxId: input.inboxId,
+      finishedSince: finishedSince(),
+    })
   }
   return []
+}
+
+/**
+ * The one write path for score changes: applies the change in Postgres
+ * (status guard, idempotency, cap/cooldown) and mirrors the exact new score
+ * into Redis inside the same transaction. `afterApply` runs in that
+ * transaction only when the change applied (e.g. the admin audit row).
+ */
+export async function applyLeaderboardScoreChange(
+  leaderboard: LeaderboardModel,
+  input: Omit<
+    LeaderboardScoreChangeInput,
+    "maxScore" | "leaderboardId" | "workspaceId"
+  >,
+  afterApply?: (tx: DatabaseClient) => Promise<void>,
+): Promise<LeaderboardScoreChangeResult> {
+  let redisTouched = false
+  let redisFailed = false
+  try {
+    const result = await db.transaction(async (tx) => {
+      const change =
+        await leaderboardParticipantRepository.applyChangeInTransaction(
+          {
+            ...input,
+            leaderboardId: leaderboard.id,
+            workspaceId: leaderboard.workspaceId,
+            maxScore: LEADERBOARD_MAX_SCORE,
+          },
+          tx,
+        )
+      if (change.status !== "applied") {
+        return change
+      }
+      if (afterApply) {
+        await afterApply(tx)
+      }
+      redisTouched = true
+      redisFailed = !(await leaderboardRankingService.syncScore({
+        leaderboard,
+        leaderboardStatus: change.leaderboardStatus,
+        contactId: input.contactId,
+        score: change.score,
+        scoredAt: change.scoredAt,
+        isNew: change.isNew,
+      }))
+      return change
+    })
+    if (redisFailed) {
+      await leaderboardRankingService.scheduleRebuildSafely(leaderboard)
+    }
+    return result
+  } catch (err) {
+    if (err instanceof LeaderboardChangeRejected) {
+      return { status: "rejected" }
+    }
+    // Redis may hold a value whose transaction never committed.
+    if (redisTouched) {
+      await leaderboardRankingService.scheduleRebuildSafely(leaderboard)
+    }
+    throw err
+  }
 }
 
 const rulePoints = (
@@ -147,49 +236,6 @@ const rulePoints = (
 }
 
 class LeaderboardScoringService {
-  /**
-   * Applies one score change to Postgres (idempotent, cap/cooldown-checked)
-   * and mirrors it into Redis. The single write path every source uses.
-   */
-  async applyChange(
-    leaderboard: LeaderboardModel,
-    input: Omit<
-      LeaderboardScoreChangeInput,
-      "maxScore" | "leaderboardId" | "workspaceId"
-    >,
-  ): Promise<LeaderboardScoreChangeResult> {
-    let result: LeaderboardScoreChangeResult
-    try {
-      result = await db.transaction(
-        async (tx) =>
-          await leaderboardParticipantRepository.applyChangeInTransaction(
-            {
-              ...input,
-              leaderboardId: leaderboard.id,
-              workspaceId: leaderboard.workspaceId,
-              maxScore: LEADERBOARD_MAX_SCORE,
-            },
-            tx,
-          ),
-      )
-    } catch (err) {
-      if (err instanceof LeaderboardChangeRejected) {
-        return { status: "rejected" }
-      }
-      throw err
-    }
-    if (result.status === "applied") {
-      await leaderboardRankingService.applyCommitted({
-        leaderboard,
-        contactId: input.contactId,
-        delta: input.delta,
-        scoredAt: result.scoredAt,
-        isNew: result.isNew,
-      })
-    }
-    return result
-  }
-
   /** Why a live leaderboard does not score this event, or null when it does. */
   private async skipReason(
     leaderboard: LeaderboardModel,
@@ -256,7 +302,7 @@ class LeaderboardScoringService {
   async award(
     input: LeaderboardAwardInput,
   ): Promise<LeaderboardAwardOutcome[]> {
-    const leaderboards = await findLiveLeaderboardsForEvent(input)
+    const leaderboards = await findScorableLeaderboardsForEvent(input)
 
     const outcomes: LeaderboardAwardOutcome[] = []
     for (const leaderboard of leaderboards) {
@@ -272,7 +318,7 @@ class LeaderboardScoringService {
         continue
       }
       const rule = leaderboard.rules[input.rule] as LeaderboardRule
-      const result = await this.applyChange(leaderboard, {
+      const result = await applyLeaderboardScoreChange(leaderboard, {
         contactId: input.contactId,
         delta: rulePoints(rule, input.rule, input.context, input.eventAt),
         source: "rule",
@@ -289,6 +335,7 @@ class LeaderboardScoringService {
           maxPerDay: rule.maxPerDay,
           cooldownSeconds: leaderboard.cooldownSeconds,
         },
+        allowedStatuses: RULE_STATUSES,
       })
       outcomes.push({ leaderboardId: leaderboard.id, result })
     }
@@ -305,13 +352,18 @@ class LeaderboardScoringService {
     if (!input.inboxId) {
       return []
     }
-    const leaderboards = await leaderboardRepository.findLiveForInbox(
-      input.inboxId,
-    )
+    const leaderboards = await leaderboardRepository.findScorableForInbox({
+      inboxId: input.inboxId,
+      finishedSince: finishedSince(),
+    })
     const outcomes: LeaderboardAwardOutcome[] = []
     for (const leaderboard of leaderboards) {
       const rule = leaderboard.rules[input.rule]
-      if (leaderboard.workspaceId !== input.workspaceId || !rule?.enabled) {
+      if (
+        leaderboard.workspaceId !== input.workspaceId ||
+        !rule?.enabled ||
+        !isWithinLeaderboardWindow(leaderboard, input.eventAt)
+      ) {
         continue
       }
       if (
@@ -330,7 +382,7 @@ class LeaderboardScoringService {
       if (!participant || (participant.breakdown[input.rule] ?? 0) <= 0) {
         continue
       }
-      const result = await this.applyChange(leaderboard, {
+      const result = await applyLeaderboardScoreChange(leaderboard, {
         contactId: input.contactId,
         delta: -rule.points,
         source: "rule",
@@ -345,6 +397,7 @@ class LeaderboardScoringService {
         ]),
         eventAt: input.eventAt,
         limits: null,
+        allowedStatuses: RULE_STATUSES,
       })
       outcomes.push({ leaderboardId: leaderboard.id, result })
     }
@@ -364,10 +417,12 @@ class LeaderboardScoringService {
     targets: { user: boolean; referrer: boolean }
     /**
      * Stable identity of this step execution (flow execution key + step id)
-     * and the triggering time. With both, a retried step reuses the event
-     * key and never double-counts; without, each call is a new event.
+     * and, when known, the triggering time. A retried step reuses the event
+     * key and never double-counts: with `at` the event's primary key catches
+     * it, without it a look-back over recent events does. No dedup → each
+     * call is a new event.
      */
-    dedup?: { key: string; at: Date } | null
+    dedup?: { key: string; at?: Date | null } | null
   }): Promise<{
     status: "applied" | "blocked" | "notFound"
     results: { contactId: string; result: LeaderboardScoreChangeResult }[]
@@ -407,8 +462,10 @@ class LeaderboardScoringService {
       contactId: string
       result: LeaderboardScoreChangeResult
     }[] = []
+    const now = new Date()
+    const dedupAt = input.dedup?.at ?? null
     for (const contactId of recipients) {
-      const result = await this.applyChange(leaderboard, {
+      const result = await applyLeaderboardScoreChange(leaderboard, {
         contactId,
         delta,
         source: "flow",
@@ -421,10 +478,21 @@ class LeaderboardScoringService {
               contactId,
             ])
           : createId(),
-        eventAt: input.dedup?.at ?? new Date(),
+        eventAt: dedupAt ?? now,
+        dedupSince:
+          input.dedup && !dedupAt
+            ? new Date(now.getTime() - FLOW_DEDUP_LOOKBACK_MS)
+            : null,
         limits: null,
+        allowedStatuses: ACTIVE_ONLY,
       })
       results.push({ contactId, result })
+    }
+    if (
+      results.length > 0 &&
+      results.every((entry) => entry.result.status === "closed")
+    ) {
+      return { status: "blocked", results }
     }
     return { status: "applied", results }
   }
@@ -473,7 +541,7 @@ class LeaderboardScoringService {
       return "ignored"
     }
 
-    const joined = await this.applyChange(leaderboard, {
+    const joined = await applyLeaderboardScoreChange(leaderboard, {
       contactId: input.inviteeContactId,
       delta: 0,
       source: "referral",
@@ -485,8 +553,14 @@ class LeaderboardScoringService {
       ]),
       eventAt: leaderboard.startsAt,
       limits: null,
+      allowedStatuses: ACTIVE_ONLY,
     })
-    if (joined.status !== "applied" || !joined.isNew) {
+    const joinedNow = joined.status === "applied" && joined.isNew
+    // The join commits on its own, so a failure before the credit below
+    // would otherwise lose it for good (the next attempt sees "not new").
+    // A friend this referrer already brought in is credited again — the
+    // credit's event id is fixed per invitee, so this never pays twice.
+    if (!(joinedNow || (await this.isReferredBy(leaderboard, input)))) {
       return "notNew"
     }
 
@@ -494,7 +568,7 @@ class LeaderboardScoringService {
     if (!rule?.enabled || rule.points <= 0) {
       return "credited"
     }
-    await this.applyChange(leaderboard, {
+    const credit = await applyLeaderboardScoreChange(leaderboard, {
       contactId: input.referrerContactId,
       delta: rule.points,
       source: "referral",
@@ -511,8 +585,21 @@ class LeaderboardScoringService {
         maxPerDay: rule.maxPerDay,
         cooldownSeconds: 0,
       },
+      allowedStatuses: ACTIVE_ONLY,
     })
-    return "credited"
+    return joinedNow || credit.status === "applied" ? "credited" : "notNew"
+  }
+
+  /** Whether `inviteeContactId` joined this leaderboard through `referrerContactId`'s link. */
+  private async isReferredBy(
+    leaderboard: LeaderboardModel,
+    input: { inviteeContactId: string; referrerContactId: string },
+  ): Promise<boolean> {
+    const invitee = await leaderboardParticipantRepository.find({
+      leaderboardId: leaderboard.id,
+      contactId: input.inviteeContactId,
+    })
+    return invitee?.referrerContactId === input.referrerContactId
   }
 }
 

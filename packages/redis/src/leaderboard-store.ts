@@ -44,43 +44,53 @@ export const decodeRankValue = (value: number): number =>
   Math.floor(value / TIE_SCALE)
 
 /**
- * Adds `delta` to a member atomically and returns the new score, or -1 when
- * the ranking is not built (the caller then leaves it to the next rebuild).
- * Applying deltas (not absolute values) makes concurrent updates commute, so
- * no per-member version is stored. The tie part keeps the LATEST change time
- * (smallest inverted value).
+ * Writes a member's exact Postgres score + tie, returning 1, or -1 when the
+ * ranking is not built (the next read rebuilds it). Callers run it while
+ * holding the participant row lock, so writes for one member reach Redis in
+ * commit order and an absolute value never goes stale. While a rebuild is in
+ * progress the value is also written to the rebuild key, so a participant
+ * created after its page was read is not lost by the swap.
  *
- * KEYS: rank, stats
- * ARGV: member, delta, tieSeconds, isNew (0/1), newTodayField, ttlSeconds, maxScore
+ * KEYS: rank, stats, rebuild
+ * ARGV: member, rankValue, newScore, isNew (0/1), newTodayField, ttlSeconds
  */
-const APPLY_DELTA_LUA = `
+const SET_SCORE_LUA = `
+if redis.call('EXISTS', KEYS[3]) == 1 then
+  redis.call('ZADD', KEYS[3], ARGV[2], ARGV[1])
+end
 if redis.call('EXISTS', KEYS[1]) == 0 then return -1 end
-local member = ARGV[1]
-local delta = tonumber(ARGV[2])
-local newInv = ${TIE_MAX} - tonumber(ARGV[3])
-local maxScore = tonumber(ARGV[7])
 local oldScore = 0
-local oldInv = nil
-local current = redis.call('ZSCORE', KEYS[1], member)
+local current = redis.call('ZSCORE', KEYS[1], ARGV[1])
 if current then
   local value = tonumber(current)
-  oldInv = value % ${TIE_SCALE}
-  oldScore = (value - oldInv) / ${TIE_SCALE}
+  oldScore = (value - value % ${TIE_SCALE}) / ${TIE_SCALE}
 end
-local newScore = oldScore + delta
-if newScore < 0 then newScore = 0 end
-if newScore > maxScore then newScore = maxScore end
-local inv = newInv
-if oldInv and (delta == 0 or oldInv < newInv) then inv = oldInv end
-redis.call('ZADD', KEYS[1], string.format('%.0f', newScore * ${TIE_SCALE} + inv), member)
-redis.call('HINCRBY', KEYS[2], 'totalPoints', newScore - oldScore)
+redis.call('ZADD', KEYS[1], ARGV[2], ARGV[1])
+redis.call('HINCRBY', KEYS[2], 'totalPoints', tonumber(ARGV[3]) - oldScore)
 if ARGV[4] == '1' then
   redis.call('HINCRBY', KEYS[2], 'participants', 1)
   redis.call('HINCRBY', KEYS[2], ARGV[5], 1)
 end
 redis.call('EXPIRE', KEYS[1], tonumber(ARGV[6]))
 redis.call('EXPIRE', KEYS[2], tonumber(ARGV[6]))
-return newScore
+return 1
+`
+
+/**
+ * Overwrites several members with exact values (empty value = remove) — the
+ * post-rebuild reconcile. No-op when the ranking is not built.
+ * KEYS: rank — ARGV: member1, value1, member2, value2, …
+ */
+const SET_MANY_IF_BUILT_LUA = `
+if redis.call('EXISTS', KEYS[1]) == 0 then return 0 end
+for i = 1, #ARGV, 2 do
+  if ARGV[i + 1] == '' then
+    redis.call('ZREM', KEYS[1], ARGV[i])
+  else
+    redis.call('ZADD', KEYS[1], ARGV[i + 1], ARGV[i])
+  end
+end
+return 1
 `
 
 /**
@@ -94,21 +104,25 @@ return 1
 `
 
 type LeaderboardCommandsClient = Redis & {
-  leaderboardApplyDelta: (
+  leaderboardSetScore: (
     rankKey: string,
     statsKey: string,
+    rebuildKey: string,
     member: string,
-    delta: string,
-    tieSeconds: string,
+    rankValue: string,
+    newScore: string,
     isNew: string,
     newTodayField: string,
     ttlSeconds: string,
-    maxScore: string,
   ) => Promise<number>
   leaderboardSetIfBuilt: (
     rankKey: string,
     member: string,
     value: string,
+  ) => Promise<number>
+  leaderboardSetManyIfBuilt: (
+    rankKey: string,
+    ...memberValuePairs: string[]
   ) => Promise<number>
 }
 
@@ -116,13 +130,17 @@ const registeredClients = new WeakSet<Redis>()
 
 function withLeaderboardCommands(client: Redis): LeaderboardCommandsClient {
   if (!registeredClients.has(client)) {
-    client.defineCommand("leaderboardApplyDelta", {
-      numberOfKeys: 2,
-      lua: APPLY_DELTA_LUA,
+    client.defineCommand("leaderboardSetScore", {
+      numberOfKeys: 3,
+      lua: SET_SCORE_LUA,
     })
     client.defineCommand("leaderboardSetIfBuilt", {
       numberOfKeys: 1,
       lua: SET_IF_BUILT_LUA,
+    })
+    client.defineCommand("leaderboardSetManyIfBuilt", {
+      numberOfKeys: 1,
+      lua: SET_MANY_IF_BUILT_LUA,
     })
     registeredClients.add(client)
   }
@@ -157,32 +175,49 @@ export const leaderboardStoreFactory = (
   getRedisClient: () => Promise<Redis>,
 ) => ({
   /**
-   * Applies a committed score change. Returns the new score, or null when the
-   * ranking is not built (nothing written — the next read rebuilds it).
+   * Writes a member's exact score (see `SET_SCORE_LUA`). Returns false when
+   * the ranking is not built (the next read rebuilds it from Postgres).
    */
-  async applyDelta(input: {
+  async setScore(input: {
     leaderboardId: string
     contactId: string
-    delta: number
+    score: number
     tieSeconds: number
     isNew: boolean
     dayKey: string
-    maxScore: number
-  }): Promise<number | null> {
+  }): Promise<boolean> {
     const keys = leaderboardKeys(input.leaderboardId)
     const client = withLeaderboardCommands(await getRedisClient())
-    const result = await client.leaderboardApplyDelta(
+    const result = await client.leaderboardSetScore(
       keys.rank,
       keys.stats,
+      keys.rebuild,
       input.contactId,
-      String(input.delta),
-      String(input.tieSeconds),
+      String(encodeRankValue(input.score, input.tieSeconds)),
+      String(input.score),
       input.isNew ? "1" : "0",
       newTodayField(input.dayKey),
       String(KEY_TTL_SECONDS),
-      String(input.maxScore),
     )
-    return result < 0 ? null : Number(result)
+    return result > 0
+  },
+
+  /** Overwrites several members with exact values; `null` removes one. No-op when not built. */
+  async setMembers(
+    leaderboardId: string,
+    members: { contactId: string; value: number | null }[],
+  ): Promise<void> {
+    if (members.length === 0) {
+      return
+    }
+    const client = withLeaderboardCommands(await getRedisClient())
+    await client.leaderboardSetManyIfBuilt(
+      leaderboardKeys(leaderboardId).rank,
+      ...members.flatMap((member) => [
+        member.contactId,
+        member.value === null ? "" : String(member.value),
+      ]),
+    )
   },
 
   /** Puts a member back with an absolute value (unban); no-op when not built. */

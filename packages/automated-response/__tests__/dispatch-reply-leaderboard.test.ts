@@ -90,6 +90,30 @@ describe("dispatchAutomatedResponseReply leaderboard keywords rule", () => {
     })
   })
 
+  test("awards `keywords` for a tiktok DM, never for threads (no DMs)", async () => {
+    await dispatchAutomatedResponseReply({
+      conversation,
+      contactInbox: contactInbox("tiktok"),
+      messageId: createId(),
+      text: "hello",
+      rules: [rule()],
+      triggerType: "contact_message_in",
+    })
+    await dispatchAutomatedResponseReply({
+      conversation,
+      contactInbox: contactInbox("threads"),
+      messageId: createId(),
+      text: "hello",
+      rules: [rule()],
+      triggerType: "contact_message_in",
+    })
+
+    expect(mockEnqueueLeaderboardAward).toHaveBeenCalledTimes(1)
+    expect(mockEnqueueLeaderboardAward).toHaveBeenCalledWith(
+      expect.objectContaining({ rule: "keywords", inboxId: "inbox-1" }),
+    )
+  })
+
   test("skips other channels, outbound rules and non-matching text", async () => {
     await dispatchAutomatedResponseReply({
       conversation,

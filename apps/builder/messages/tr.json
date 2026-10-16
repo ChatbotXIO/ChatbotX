@@ -8413,7 +8413,9 @@
       "myRank": "Sıralaman: #{rank}",
       "unranked": "Henüz sıralamada değil",
       "shareToEarn": "Paylaş, puan kazan",
-      "linkCopied": "Bağlantı kopyalandı"
+      "linkCopied": "Bağlantı kopyalandı",
+      "unavailableTitle": "Bu sıralama tablosu artık mevcut değil",
+      "unavailableDescription": "Sona ermiş veya kaldırılmış olabilir. En güncel bağlantıyı takip ettiğiniz sayfadan isteyin."
     },
     "description": "Müşterilerin üst sıralar ve ödüller için yarıştığı, puan tabanlı sıralama kampanyaları yürütün.",
     "feature": "Liderlik tablosu",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },

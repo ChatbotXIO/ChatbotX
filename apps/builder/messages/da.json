@@ -8413,7 +8413,9 @@
       "myRank": "Din placering: #{rank}",
       "unranked": "Endnu ikke placeret",
       "shareToEarn": "Del og optjen point",
-      "linkCopied": "Link kopieret"
+      "linkCopied": "Link kopieret",
+      "unavailableTitle": "Denne rangliste er ikke længere tilgængelig",
+      "unavailableDescription": "Den kan være afsluttet eller fjernet. Spørg siden, du følger, om det seneste link."
     },
     "description": "Kør pointbaserede rangeringskampagner, hvor kunder konkurrerer om topplaceringerne og belønninger.",
     "feature": "Rangliste",
@@ -8440,6 +8442,8 @@
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA",
       "telegram": "Telegram",
+      "tiktok": "TikTok",
+      "threads": "Threads",
       "email": "Email SMTP",
       "gamification": "Gamification"
     },
