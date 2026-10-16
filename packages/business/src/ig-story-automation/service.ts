@@ -23,6 +23,7 @@ import {
 } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
+import { assertAutomationAccount } from "../comment-automation/account-scope"
 import { notFoundException } from "../errors"
 import { resolveFolderIdFilter } from "../lib/folder-filter"
 
@@ -36,6 +37,8 @@ type ListIgStoriesInput = {
   name?: string | null
   isActive?: boolean | null
   trigger?: IgStoryAutomationTrigger | null
+  /** Only automations scoped to this account (not the "every account" ones). */
+  inboxId?: string | null
 }
 
 type ListIgStoriesResult = {
@@ -81,10 +84,16 @@ function pinStoryMentionFilters<T extends Partial<IgStoryAutomationWriteData>>(
 }
 
 class IgStoryAutomationService extends BaseService {
+  /**
+   * The automations that may answer a story reply arriving on `inboxId`: the
+   * ones scoped to that account plus the unscoped ones (`inboxId IS NULL`).
+   * Same contract as `commentAutomationService.findActiveAutomations`.
+   */
   findActiveAutomations(props: {
     workspaceId: string
     channelType: "instagram" | "instagramFacebook"
     trigger: IgStoryAutomationTrigger
+    inboxId: string
   }) {
     return db.query.igStoryAutomationModel.findMany({
       where: {
@@ -92,6 +101,7 @@ class IgStoryAutomationService extends BaseService {
         isActive: true,
         type: props.channelType,
         trigger: props.trigger,
+        OR: [{ inboxId: { isNull: true } }, { inboxId: props.inboxId }],
       },
     })
   }
@@ -120,6 +130,7 @@ class IgStoryAutomationService extends BaseService {
           ? input.isActive
           : undefined,
       trigger: input.trigger ?? undefined,
+      inboxId: input.inboxId ?? undefined,
     }
 
     const pagination = getPaginationWithDefaults(input)
@@ -168,6 +179,11 @@ class IgStoryAutomationService extends BaseService {
     data: IgStoryAutomationWriteData
   }): Promise<IgStoryAutomationModel> {
     const trigger = input.trigger ?? igStoryAutomationTriggers.enum.storyReply
+    await assertAutomationAccount({
+      workspaceId: input.workspaceId,
+      type: input.type,
+      inboxId: input.data.inboxId,
+    })
     const [created] = await db
       .insert(igStoryAutomationModel)
       .values({
@@ -192,6 +208,13 @@ class IgStoryAutomationService extends BaseService {
     data: Partial<IgStoryAutomationWriteData>,
   ): Promise<IgStoryAutomationModel> {
     const existing = await this.findOrFail(ctx)
+    await assertAutomationAccount({
+      workspaceId: ctx.workspaceId,
+      // `findOrFail` only matches `igStoryAutomationTypes`.
+      type: existing.type as IgStoryAutomationType,
+      inboxId: data.inboxId,
+      currentInboxId: existing.inboxId,
+    })
 
     const [updated] = await db
       .update(igStoryAutomationModel)

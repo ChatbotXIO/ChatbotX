@@ -651,6 +651,17 @@
     "liveBadge": "Live",
     "postTypeDialog": {
       "title": "Pilih jenis postingan"
+    },
+    "account": {
+      "label": "Akun",
+      "description": "Akun terhubung tempat otomatisasi ini membalas. Pilih “Semua akun” untuk membalas di semua akun terhubung pada saluran ini.",
+      "all": "Semua akun",
+      "placeholder": "Pilih akun",
+      "required": "Beberapa akun terhubung: pilih salah satu, atau sengaja pilih “Semua akun”.",
+      "targetsCleared": "Postingan yang dipilih dihapus karena mungkin milik akun lain.",
+      "column": "Akun",
+      "disconnected": "Akun terputus",
+      "disconnectedDescription": "Otomatisasi ini terikat ke akun yang tidak lagi terhubung, jadi tidak membalas komentar apa pun. Hubungkan ulang akun atau pilih akun lain."
     }
   },
   "condition": {

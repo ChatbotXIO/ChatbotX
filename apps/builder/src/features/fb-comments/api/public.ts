@@ -1,5 +1,7 @@
 import { commentAutomationService } from "@chatbotx.io/business"
+import { z } from "zod"
 import { bulkUpdateIdsRequest } from "@/features/common/schema"
+import { postsAccountFilterSchema } from "@/features/shared/comment-automation/schema/account"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
@@ -133,11 +135,15 @@ export const fbCommentsPublicRouter = {
         "Use this to list posts to choose from before setting up comment automation. Returns posts from the workspace's connected Facebook pages that `fbComments.create` can target.",
       tags: ["FB Comments"],
     })
+    .input(z.object({ inboxId: postsAccountFilterSchema }).optional())
     .output(listFacebookPostsPublicResponse)
     .errors(possibleErrorsOnListingResource)
     .handler(
-      async ({ context }) =>
-        await listFacebookPostsForAutomation(context.workspace.id),
+      async ({ context, input }) =>
+        await listFacebookPostsForAutomation(
+          context.workspace.id,
+          input?.inboxId,
+        ),
     ),
 
   deleteMany: workspaceTokenAuthAPI

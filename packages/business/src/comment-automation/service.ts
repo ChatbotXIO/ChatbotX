@@ -44,6 +44,7 @@ import { notFoundException, validationException } from "../errors"
 import { flowService } from "../flow/service"
 import { resolveFolderIdFilter } from "../lib/folder-filter"
 import { assertDeletable } from "../template/installed-resource.service"
+import { assertAutomationAccount } from "./account-scope"
 
 type ListFbCommentsInput = {
   workspaceId: string
@@ -54,6 +55,8 @@ type ListFbCommentsInput = {
   includeAllFolders?: boolean
   name?: string | null
   isActive?: boolean | null
+  /** Only automations scoped to this account (not the "every account" ones). */
+  inboxId?: string | null
 }
 
 type ListFbCommentsResult = {
@@ -75,6 +78,8 @@ type ListChannelCommentsInput = {
   sort?: { id: string; desc: boolean }[] | null
   name?: string | null
   isActive?: boolean | null
+  /** Only automations scoped to this account (not the "every account" ones). */
+  inboxId?: string | null
   tx?: DatabaseClient
 }
 
@@ -157,6 +162,7 @@ type CreateThreadsCommentAutomationInput = {
   hideComments?: ThreadsCommentAutomationHideComments
   replyAfter: ThreadsCommentAutomationReplyAfter
   isActive?: boolean
+  inboxId?: string | null
 }
 
 type UpdateThreadsCommentAutomationInput = Partial<
@@ -238,6 +244,7 @@ type CreateTiktokCommentAutomationInput = {
   hideComments?: TiktokCommentAutomationHideComments
   replyAfter: ThreadsCommentAutomationReplyAfter
   isActive?: boolean
+  inboxId?: string | null
 }
 
 type UpdateTiktokCommentAutomationInput = Partial<
@@ -411,15 +418,46 @@ class CommentAutomationService extends BaseService {
     }
   }
 
+  /**
+   * The scope currently stored on a Threads/TikTok row, for
+   * `assertAutomationAccount`'s "unchanged scope" pass. Those two update
+   * methods do not load the row first, so it is read here — and only when the
+   * update actually carries an `inboxId`.
+   */
+  private async findStoredInboxId(props: {
+    workspaceId: string
+    id: string
+    type: CommentAutomationType
+    inboxId: string | null | undefined
+    tx: DatabaseClient
+  }): Promise<string | null | undefined> {
+    if (props.inboxId === null || props.inboxId === undefined) {
+      return
+    }
+    const row = await props.tx.query.commentAutomationModel.findFirst({
+      where: { id: props.id, workspaceId: props.workspaceId, type: props.type },
+      columns: { inboxId: true },
+    })
+    return row?.inboxId
+  }
+
+  /**
+   * The automations that may answer a comment arriving on `inboxId`: the ones
+   * scoped to that account plus the unscoped ones (`inboxId IS NULL`, "every
+   * account of this channel"). `inboxId` is required so no caller can fall
+   * back to evaluating another Page's automations by forgetting it.
+   */
   findActiveAutomations(props: {
     workspaceId: string
     channelType: CommentAutomationType
+    inboxId: string
   }) {
     return db.query.commentAutomationModel.findMany({
       where: {
         workspaceId: props.workspaceId,
         isActive: true,
         type: props.channelType,
+        OR: [{ inboxId: { isNull: true } }, { inboxId: props.inboxId }],
       },
     })
   }
@@ -870,6 +908,7 @@ class CommentAutomationService extends BaseService {
       folderId: resolveFolderIdFilter(input.folderId, input.includeAllFolders),
       name: input.name ? { ilike: likeContains(input.name) } : undefined,
       isActive: resolveIsActiveFilter(input.isActive),
+      inboxId: input.inboxId ?? undefined,
     }
 
     const pagination = getPaginationWithDefaults(input)
@@ -977,6 +1016,11 @@ class CommentAutomationService extends BaseService {
     data: FbCommentAutomationWriteData
   }): Promise<CommentAutomationModel> {
     await this.assertReplyFlowsExist(input.workspaceId, input.data)
+    await assertAutomationAccount({
+      workspaceId: input.workspaceId,
+      type: commentAutomationTypes.enum.messenger,
+      inboxId: input.data.inboxId,
+    })
     const [created] = await db
       .insert(commentAutomationModel)
       .values({
@@ -993,8 +1037,14 @@ class CommentAutomationService extends BaseService {
     ctx: { workspaceId: string; id: string },
     data: Partial<FbCommentAutomationWriteData>,
   ): Promise<CommentAutomationModel> {
-    await this.findMessengerOrFail(ctx)
+    const existing = await this.findMessengerOrFail(ctx)
     await this.assertReplyFlowsExist(ctx.workspaceId, data)
+    await assertAutomationAccount({
+      workspaceId: ctx.workspaceId,
+      type: commentAutomationTypes.enum.messenger,
+      inboxId: data.inboxId,
+      currentInboxId: existing.inboxId,
+    })
 
     const [updated] = await db
       .update(commentAutomationModel)
@@ -1035,6 +1085,7 @@ class CommentAutomationService extends BaseService {
       folderId: resolveFolderIdFilter(input.folderId, input.includeAllFolders),
       name: input.name ? { ilike: likeContains(input.name) } : undefined,
       isActive: resolveIsActiveFilter(input.isActive),
+      inboxId: input.inboxId ?? undefined,
     }
 
     const pagination = getPaginationWithDefaults(input)
@@ -1150,6 +1201,11 @@ class CommentAutomationService extends BaseService {
     data: FbCommentAutomationWriteData
   }): Promise<CommentAutomationModel> {
     await this.assertReplyFlowsExist(input.workspaceId, input.data)
+    await assertAutomationAccount({
+      workspaceId: input.workspaceId,
+      type: input.type,
+      inboxId: input.data.inboxId,
+    })
     const [created] = await db
       .insert(commentAutomationModel)
       .values({
@@ -1174,6 +1230,12 @@ class CommentAutomationService extends BaseService {
   ): Promise<CommentAutomationModel> {
     const existing = await this.findInstagramOrFail(ctx)
     await this.assertReplyFlowsExist(ctx.workspaceId, data)
+    await assertAutomationAccount({
+      workspaceId: ctx.workspaceId,
+      type: existing.type as IgCommentAutomationType,
+      inboxId: data.inboxId,
+      currentInboxId: existing.inboxId,
+    })
 
     const [updated] = await db
       .update(commentAutomationModel)
@@ -1223,6 +1285,7 @@ class CommentAutomationService extends BaseService {
       type: this.threadsType,
       isActive: resolveIsActiveFilter(input.isActive),
       name: input.name ? { ilike: likeContains(input.name) } : undefined,
+      inboxId: input.inboxId ?? undefined,
     }
 
     const pagination = getPaginationWithDefaults(input)
@@ -1280,12 +1343,19 @@ class CommentAutomationService extends BaseService {
       { publicReply: data.publicReply },
       tx,
     )
+    await assertAutomationAccount({
+      workspaceId,
+      type: this.threadsType,
+      inboxId: data.inboxId,
+      tx,
+    })
     const [record] = await tx
       .insert(commentAutomationModel)
       .values({
         id: createId(),
         workspaceId,
         type: this.threadsType,
+        inboxId: data.inboxId ?? null,
         isActive: data.isActive ?? true,
         name: data.name,
         post: data.post,
@@ -1315,6 +1385,19 @@ class CommentAutomationService extends BaseService {
       { publicReply: data.publicReply },
       tx,
     )
+    await assertAutomationAccount({
+      workspaceId,
+      type: this.threadsType,
+      inboxId: data.inboxId,
+      currentInboxId: await this.findStoredInboxId({
+        workspaceId,
+        id,
+        type: this.threadsType,
+        inboxId: data.inboxId,
+        tx,
+      }),
+      tx,
+    })
     const values: Record<string, unknown> = {}
 
     if (data.name !== undefined) {
@@ -1322,6 +1405,9 @@ class CommentAutomationService extends BaseService {
     }
     if (data.isActive !== undefined) {
       values.isActive = data.isActive
+    }
+    if (data.inboxId !== undefined) {
+      values.inboxId = data.inboxId
     }
     if (data.post !== undefined) {
       values.post = data.post
@@ -1392,6 +1478,7 @@ class CommentAutomationService extends BaseService {
       type: this.tiktokType,
       isActive: resolveIsActiveFilter(input.isActive),
       name: input.name ? { ilike: likeContains(input.name) } : undefined,
+      inboxId: input.inboxId ?? undefined,
     }
 
     const pagination = getPaginationWithDefaults(input)
@@ -1449,12 +1536,19 @@ class CommentAutomationService extends BaseService {
       { publicReply: data.publicReply },
       tx,
     )
+    await assertAutomationAccount({
+      workspaceId,
+      type: this.tiktokType,
+      inboxId: data.inboxId,
+      tx,
+    })
     const [record] = await tx
       .insert(commentAutomationModel)
       .values({
         id: createId(),
         workspaceId,
         type: this.tiktokType,
+        inboxId: data.inboxId ?? null,
         isActive: data.isActive ?? true,
         name: data.name,
         post: data.post,
@@ -1484,6 +1578,19 @@ class CommentAutomationService extends BaseService {
       { publicReply: data.publicReply },
       tx,
     )
+    await assertAutomationAccount({
+      workspaceId,
+      type: this.tiktokType,
+      inboxId: data.inboxId,
+      currentInboxId: await this.findStoredInboxId({
+        workspaceId,
+        id,
+        type: this.tiktokType,
+        inboxId: data.inboxId,
+        tx,
+      }),
+      tx,
+    })
     const values: Record<string, unknown> = {}
 
     if (data.name !== undefined) {
@@ -1491,6 +1598,9 @@ class CommentAutomationService extends BaseService {
     }
     if (data.isActive !== undefined) {
       values.isActive = data.isActive
+    }
+    if (data.inboxId !== undefined) {
+      values.inboxId = data.inboxId
     }
     if (data.post !== undefined) {
       values.post = data.post

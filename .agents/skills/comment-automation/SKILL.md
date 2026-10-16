@@ -323,8 +323,9 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
     and a decline has neither; every analytics-page query aggregates it directly, so a row
     type none of them want would have to be excluded from each one forever; and misses
     outnumber replies by however many automations the workspace runs
-    (`findActiveAutomations` scopes by workspace + channel, **not** by post, so ONE comment
-    is shown to every active automation on the channel). Three consequences. (a) The whole
+    (`findActiveAutomations` scopes by workspace + channel + account, **not** by post, so
+    ONE comment is shown to every active automation of that account plus the unscoped
+    ones). Three consequences. (a) The whole
     run's declines are flushed in **one** `recordMisses` call after the loop — never one
     insert per automation, or a busy Page fires N statements per comment. (b) `missedCount`
     is driven off the rows `INSERT ... ON CONFLICT DO NOTHING RETURNING` actually returned,
@@ -350,6 +351,15 @@ Read it before non-trivial changes. This skill is the quick map + the traps.
 18. **`replyOncePerUserPerPost` is enforced by `claimDedup`, not `findDedup`.** The
     read is a fast path for the miss reason; the atomic insert decides. Release a
     claimed row with `deleteDedup` whenever the run ends up dispatching nothing.
+
+19. **An automation's account scope is `inboxId`, and `NULL` means every account.** Comment
+    and story automations carry a nullable `inboxId`; `findActiveAutomations` REQUIRES the
+    incoming comment's inbox and matches `inboxId IS NULL OR inboxId = :inboxId`. Never
+    drop the parameter to "simplify" a caller — that silently brings back one Page's
+    automation answering every other Page (#1325). Writes go through
+    `assertAutomationAccount`, which reads the integration tables because `Inbox.channel`
+    is `instagram` for both Instagram connections. The FK is `cascade`, not `set null`:
+    nulling would widen the scope to every account. See the docs' "Account scope" section.
 
 ## Adding a new filter option (recipe)
 

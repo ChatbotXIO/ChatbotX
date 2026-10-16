@@ -18,6 +18,7 @@ import {
   parseAsStringLiteral,
 } from "nuqs/server"
 import z from "zod"
+import { automationInboxIdSchema } from "@/features/shared/comment-automation/schema/account"
 import { parseAsBigInt } from "@/lib/nuqs"
 import { basePaginationRequest } from "@/lib/pagination"
 import { igStoryResource } from "./resource"
@@ -68,6 +69,7 @@ export const createIgStoryRequest = z.object({
     .describe(
       "What starts the automation: `storyReply` (default) when a contact replies to one of your stories, `storyMention` when a contact tags your account in their own story. Set once at creation; it cannot be changed later.",
     ),
+  inboxId: automationInboxIdSchema,
   folderId: zodBigintAsString()
     .nullish()
     .describe("Folder to place the automation in, or null for root-level."),

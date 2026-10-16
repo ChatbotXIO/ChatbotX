@@ -1692,6 +1692,17 @@
     "liveBadge": "Live",
     "postTypeDialog": {
       "title": "Selectează tipul postării"
+    },
+    "account": {
+      "label": "Cont",
+      "description": "Contul conectat pe care răspunde această automatizare. Alege „Toate conturile” pentru a răspunde pe toate conturile conectate ale acestui canal.",
+      "all": "Toate conturile",
+      "placeholder": "Selectează un cont",
+      "required": "Sunt conectate mai multe conturi: alege unul sau alege intenționat „Toate conturile”.",
+      "targetsCleared": "Postările selectate au fost eliminate deoarece pot aparține altui cont.",
+      "column": "Cont",
+      "disconnected": "Cont deconectat",
+      "disconnectedDescription": "Această automatizare este legată de un cont care nu mai este conectat, deci nu răspunde la niciun comentariu. Reconectează contul sau alege altul."
     }
   },
   "condition": {

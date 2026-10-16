@@ -4,6 +4,7 @@ import {
   listPostConversation,
   type ThreadsConversationReply,
 } from "@chatbotx.io/integration-threads/apis/comment"
+import { filterIntegrationsByAccount } from "../account-filter"
 import { collectCommentsSince, parseGraphTime, toEpochSeconds } from "./paging"
 import {
   MissedCommentsIntegrationNotFoundError,
@@ -18,9 +19,10 @@ import {
 export async function scanThreadsComments(
   props: ScanCommentsProps,
 ): Promise<ScannedComment[]> {
-  const { workspaceId, postId, since } = props
-  const { data: integrations } =
+  const { workspaceId, postId, since, inboxId } = props
+  const { data: allIntegrations } =
     await integrationThreadsService.listByWorkspaceId({ workspaceId })
+  const integrations = filterIntegrationsByAccount(allIntegrations, inboxId)
 
   if (integrations.length === 0) {
     throw new MissedCommentsIntegrationNotFoundError()

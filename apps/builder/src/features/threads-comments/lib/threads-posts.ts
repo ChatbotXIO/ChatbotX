@@ -3,6 +3,7 @@ import {
   listThreadsPosts,
   type ThreadsAuthValue,
 } from "@chatbotx.io/integration-threads"
+import { filterIntegrationsByAccount } from "@/features/shared/comment-automation/lib/account-filter"
 import { resolvePostPreviewImage } from "@/features/shared/comment-automation/lib/post-preview-image"
 import { collectSettled } from "@/lib/collect-settled"
 
@@ -13,6 +14,8 @@ export type ThreadsAutomationPost = {
   created_time: string
   permalink_url?: string
   accountId: string
+  /** The account's inbox id — what an automation's `inboxId` scope stores. */
+  inboxId: string
 }
 
 export type ThreadsAutomationAccount = {
@@ -25,9 +28,13 @@ export type ThreadsAutomationAccount = {
  * account failing (e.g. an expired token) is logged and skipped so the
  * others still show up.
  */
-export async function listThreadsPostsForWorkspace(workspaceId: string) {
-  const { data: integrations } =
+export async function listThreadsPostsForWorkspace(
+  workspaceId: string,
+  inboxId?: string | null,
+) {
+  const { data: allIntegrations } =
     await integrationThreadsService.listByWorkspaceId({ workspaceId })
+  const integrations = filterIntegrationsByAccount(allIntegrations, inboxId)
 
   const accounts = integrations.map<ThreadsAutomationAccount>(
     (integration) => ({
@@ -49,6 +56,7 @@ export async function listThreadsPostsForWorkspace(workspaceId: string) {
         created_time: item.timestamp,
         permalink_url: item.permalink,
         accountId: integration.threadsUserId,
+        inboxId: integration.inboxId,
       }))
     },
     (integration) => ({ integrationId: integration.id }),

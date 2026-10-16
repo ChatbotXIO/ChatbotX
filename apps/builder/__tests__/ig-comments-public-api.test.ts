@@ -273,7 +273,10 @@ describe("GET /v1/ig-comments/instagram-media", () => {
       procedure.handler?.({ context, input: { variant: "instagram" } }),
     ).resolves.toEqual(response)
 
-    expect(listInstagramLoginMedia).toHaveBeenCalledWith("workspace-1")
+    expect(listInstagramLoginMedia).toHaveBeenCalledWith(
+      "workspace-1",
+      undefined,
+    )
     expect(listInstagramFacebookMedia).not.toHaveBeenCalled()
   })
 
@@ -288,6 +291,9 @@ describe("GET /v1/ig-comments/instagram-media", () => {
       }),
     ).resolves.toEqual(response)
 
-    expect(listInstagramFacebookMedia).toHaveBeenCalledWith("workspace-1")
+    expect(listInstagramFacebookMedia).toHaveBeenCalledWith(
+      "workspace-1",
+      undefined,
+    )
   })
 })

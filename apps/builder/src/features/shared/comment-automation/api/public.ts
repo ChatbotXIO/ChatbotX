@@ -1,13 +1,21 @@
-import { commentAutomationService } from "@chatbotx.io/business"
+import {
+  commentAutomationService,
+  listAutomationAccounts,
+} from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
   possibleErrorsOnFindingResource,
+  possibleErrorsOnListingResource,
   possibleErrorsOnMutatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import { processMissedComments } from "../lib/missed-comments/process-missed-comments"
 import { MISSED_COMMENTS_SCAN_DAYS } from "../lib/missed-comments/types"
+import {
+  listAutomationAccountsRequest,
+  listAutomationAccountsResponse,
+} from "../schema/account"
 
 const workspaceTokenAuthAPI = workspaceTokenAuthAPIForScope("automation")
 
@@ -44,6 +52,25 @@ const processMissedCommentsResponse = z.discriminatedUnion("status", [
 ])
 
 export const commentAutomationsPublicRouter = {
+  listAccounts: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/comment-automations/accounts",
+      summary: "List comment automation accounts",
+      description:
+        "Returns the connected accounts (Facebook Pages, Instagram accounts, Threads profiles, TikTok accounts) of one automation channel `type`. Pass an account's `inboxId` to `fbComments`, `igComments`, `igStories`, `threadsComments` or `tiktokComments` create/update so the automation answers on that account only; leave `inboxId` null to answer on every account of the channel.",
+      tags: ["Comment Automations"],
+    })
+    .input(listAutomationAccountsRequest)
+    .output(listAutomationAccountsResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) => ({
+      accounts: await listAutomationAccounts({
+        workspaceId: context.workspace.id,
+        type: input.type,
+      }),
+    })),
+
   processMissedComments: workspaceTokenAuthAPI
     .route({
       method: "POST",

@@ -8,6 +8,7 @@ import {
   type InstagramAuthValue as InstagramFacebookAuthValue,
   listInstagramStories as listInstagramFacebookStoriesApi,
 } from "@chatbotx.io/integration-instagram-facebook"
+import { filterIntegrationsByAccount } from "@/features/shared/comment-automation/lib/account-filter"
 import { collectSettled } from "@/lib/collect-settled"
 
 export type InstagramAutomationStory = {
@@ -17,6 +18,8 @@ export type InstagramAutomationStory = {
   created_time: string
   permalink_url?: string
   accountId: string
+  /** The account's inbox id — what an automation's `inboxId` scope stores. */
+  inboxId: string
 }
 
 export type InstagramAutomationAccount = {
@@ -58,6 +61,7 @@ async function collectInstagramStories(
         created_time: item.timestamp,
         permalink_url: item.permalink,
         accountId: integration.igId,
+        inboxId: integration.inboxId,
       }))
     },
     (integration) => ({ integrationId: integration.id }),
@@ -67,26 +71,36 @@ async function collectInstagramStories(
   return { stories, pages }
 }
 
-export async function listInstagramLoginStories(workspaceId: string) {
+export async function listInstagramLoginStories(
+  workspaceId: string,
+  inboxId?: string | null,
+) {
   const integrations = await instagramIntegrationService.findByWorkspaceId(
     workspaceId,
     "instagram",
   )
-  return collectInstagramStories(integrations, (integration) =>
-    listInstagramLoginStoriesApi({
-      auth: integration.auth as InstagramAuthValue,
-    }),
+  return collectInstagramStories(
+    filterIntegrationsByAccount(integrations, inboxId),
+    (integration) =>
+      listInstagramLoginStoriesApi({
+        auth: integration.auth as InstagramAuthValue,
+      }),
   )
 }
 
-export async function listInstagramFacebookStories(workspaceId: string) {
+export async function listInstagramFacebookStories(
+  workspaceId: string,
+  inboxId?: string | null,
+) {
   const integrations = await instagramIntegrationService.findByWorkspaceId(
     workspaceId,
     "facebook",
   )
-  return collectInstagramStories(integrations, (integration) =>
-    listInstagramFacebookStoriesApi({
-      auth: integration.auth as InstagramFacebookAuthValue,
-    }),
+  return collectInstagramStories(
+    filterIntegrationsByAccount(integrations, inboxId),
+    (integration) =>
+      listInstagramFacebookStoriesApi({
+        auth: integration.auth as InstagramFacebookAuthValue,
+      }),
   )
 }

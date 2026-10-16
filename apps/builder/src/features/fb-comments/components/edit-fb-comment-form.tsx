@@ -34,6 +34,7 @@ export function EditFbCommentForm({
     mode: "onChange",
     defaultValues: {
       name: initialData.name,
+      inboxId: initialData.inboxId,
       type: initialData.type as CreateFbCommentRequest["type"],
       folderId: initialData.folderId ?? undefined,
       post: initialData.post,

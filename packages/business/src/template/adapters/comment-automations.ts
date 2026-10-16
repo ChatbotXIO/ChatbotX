@@ -188,6 +188,9 @@ export const commentAutomationsAdapter: ResourceAdapter = {
       const rows = await db.query.commentAutomationModel.findMany({
         where: { workspaceId, id: { in: [...ids] } },
       })
+      // `inboxId` is deliberately not exported: it names an account of the
+      // source workspace that does not exist in the target one, so an
+      // installed automation starts unscoped (every account of its channel).
       const entries = rows.map((row) => ({
         sourceId: row.id,
         name: row.name,

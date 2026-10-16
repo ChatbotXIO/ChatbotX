@@ -9,6 +9,7 @@ export type InstagramStory = {
   created_time: string
   permalink_url?: string
   accountId: string
+  inboxId: string
 }
 
 export type InstagramAccount = {

@@ -9,6 +9,7 @@ export type FacebookPost = {
   permalink_url?: string
   media_product_type?: string
   pageId: string
+  inboxId: string
 }
 
 export type FacebookPage = {

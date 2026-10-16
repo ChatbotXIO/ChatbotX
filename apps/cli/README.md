@@ -672,6 +672,7 @@ chatbotx schemas flow-spec                            # JSON Schema for the flow
 Any channel's comment automation id (fb/ig/threads/tiktok).
 
 ```bash
+chatbotx comment-automations accounts --type <messenger|instagram|instagramFacebook|threads|tiktok>  # Accounts an automation can be scoped to (pass one's inboxId on create/update)
 chatbotx comment-automations missed-comment-run add <id>    # Process missed comments (last 7 days, single-post automations)
 chatbotx comment-automations missed-comment-runs list <id>  # { inProgress } — poll until false
 ```
@@ -776,7 +777,7 @@ chatbotx fb-comments create
 chatbotx fb-comments update <id>
 chatbotx fb-comments delete <id>
 chatbotx fb-comments bulk-delete --ids <ids>
-chatbotx fb-comments facebook-posts                   # List eligible Facebook posts
+chatbotx fb-comments facebook-posts                   # List eligible Facebook posts [--inboxId]
 ```
 
 ---
@@ -813,7 +814,7 @@ chatbotx ig-comments create
 chatbotx ig-comments update <id>
 chatbotx ig-comments delete <id>
 chatbotx ig-comments bulk-delete --ids <ids>
-chatbotx ig-comments instagram-media --variant <instagram|facebook>  # List eligible media
+chatbotx ig-comments instagram-media --variant <instagram|facebook>  # List eligible media [--inboxId]
 ```
 
 ---
@@ -827,7 +828,7 @@ chatbotx ig-stories create                            # --trigger storyReply (de
 chatbotx ig-stories update <id>                       # trigger is fixed at creation
 chatbotx ig-stories delete <id>
 chatbotx ig-stories bulk-delete --ids <ids>
-chatbotx ig-stories instagram-stories --variant <instagram|facebook>  # List eligible stories
+chatbotx ig-stories instagram-stories --variant <instagram|facebook>  # List eligible stories [--inboxId]
 ```
 
 ---
@@ -1142,7 +1143,7 @@ chatbotx threads-comments create
 chatbotx threads-comments update <id>
 chatbotx threads-comments delete <id>
 chatbotx threads-comments bulk-delete --ids <ids>
-chatbotx threads-comments threads-posts                # List eligible Threads posts
+chatbotx threads-comments threads-posts                # List eligible Threads posts [--inboxId]
 ```
 
 ---

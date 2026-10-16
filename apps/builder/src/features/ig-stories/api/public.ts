@@ -144,8 +144,11 @@ export const igStoriesPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) =>
       input.variant === "instagram"
-        ? await listInstagramLoginStories(context.workspace.id)
-        : await listInstagramFacebookStories(context.workspace.id),
+        ? await listInstagramLoginStories(context.workspace.id, input.inboxId)
+        : await listInstagramFacebookStories(
+            context.workspace.id,
+            input.inboxId,
+          ),
     ),
 
   deleteMany: workspaceTokenAuthAPI

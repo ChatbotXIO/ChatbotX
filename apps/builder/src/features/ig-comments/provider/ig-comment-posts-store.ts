@@ -10,6 +10,7 @@ export type InstagramPost = {
   permalink_url?: string
   media_product_type?: string
   accountId: string
+  inboxId: string
 }
 
 export type InstagramAccount = {

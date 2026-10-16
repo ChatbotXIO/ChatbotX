@@ -104,6 +104,7 @@ describe("scanPostComments — messenger", () => {
       workspaceId: "ws-1",
       postId: "222",
       since: SINCE,
+      inboxId: null,
     })
 
     expect(mockListPostComments).toHaveBeenCalledWith(
@@ -157,6 +158,7 @@ describe("scanPostComments — messenger", () => {
       workspaceId: "ws-1",
       postId: "111_222",
       since: SINCE,
+      inboxId: null,
     })
 
     expect(mockListPostComments).toHaveBeenCalledTimes(1)
@@ -183,12 +185,51 @@ describe("scanPostComments — messenger", () => {
       workspaceId: "ws-1",
       postId: "222",
       since: SINCE,
+      inboxId: null,
     })
 
     expect(
       mockListPostComments.mock.calls.map((call) => call[0].postId),
     ).toEqual(["999_222", "111_222"])
     expect(result[0]?.integrationIdentifier).toBe("111")
+  })
+
+  test("only tries the automation's own page when it is scoped to one", async () => {
+    mockMessengerFindByWorkspaceId.mockResolvedValue([
+      { pageId: "999", inboxId: "inbox-other", auth: {} },
+      { ...page, inboxId: "inbox-own" },
+    ])
+    mockListPostComments.mockResolvedValue({
+      comments: [{ id: "222_1", created_time: RECENT, from: { id: "user-1" } }],
+    })
+
+    await scanPostComments({
+      type: "messenger",
+      workspaceId: "ws-1",
+      postId: "222",
+      since: SINCE,
+      inboxId: "inbox-own",
+    })
+
+    expect(
+      mockListPostComments.mock.calls.map((call) => call[0].postId),
+    ).toEqual(["111_222"])
+  })
+
+  test("throws integration-not-found when the scoped page is not connected", async () => {
+    mockMessengerFindByWorkspaceId.mockResolvedValue([
+      { ...page, inboxId: "inbox-other" },
+    ])
+
+    await expect(
+      scanPostComments({
+        type: "messenger",
+        workspaceId: "ws-1",
+        postId: "111_222",
+        since: SINCE,
+        inboxId: "inbox-gone",
+      }),
+    ).rejects.toBeInstanceOf(MissedCommentsIntegrationNotFoundError)
   })
 
   test("throws integration-not-found when no page is connected", async () => {
@@ -200,6 +241,7 @@ describe("scanPostComments — messenger", () => {
         workspaceId: "ws-1",
         postId: "111_222",
         since: SINCE,
+        inboxId: null,
       }),
     ).rejects.toBeInstanceOf(MissedCommentsIntegrationNotFoundError)
   })
@@ -243,6 +285,7 @@ describe("scanPostComments — instagram", () => {
       workspaceId: "ws-1",
       postId: "media-1",
       since: SINCE,
+      inboxId: null,
     })
 
     expect(mockInstagramFindByWorkspaceId).toHaveBeenCalledWith(
@@ -302,6 +345,7 @@ describe("scanPostComments — threads", () => {
       workspaceId: "ws-1",
       postId: "post-1",
       since: SINCE,
+      inboxId: null,
     })
 
     expect(result).toEqual([
@@ -368,6 +412,7 @@ describe("scanPostComments — tiktok", () => {
       workspaceId: "ws-1",
       postId: "video-1",
       since: SINCE,
+      inboxId: null,
     })
 
     expect(mockListTiktokComments).toHaveBeenCalledWith(
@@ -421,6 +466,7 @@ describe("scanPostComments — tiktok", () => {
       workspaceId: "ws-1",
       postId: "video-1",
       since: SINCE,
+      inboxId: null,
     })
 
     expect(mockListTiktokComments).toHaveBeenCalledTimes(

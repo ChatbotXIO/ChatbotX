@@ -35,6 +35,10 @@ import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import {
+  AutomationAccountField,
+  useAccountChoiceMissing,
+} from "@/features/shared/comment-automation/automation-account-field"
 import { ExcludeKeywordsField } from "@/features/shared/comment-automation/exclude-keywords-field"
 import { ReplyTextsField } from "@/features/shared/comment-automation/reply-texts-field"
 import { ReplyToField } from "@/features/shared/comment-automation/reply-to-field"
@@ -98,6 +102,7 @@ export function TiktokCommentForm({
     name: "privateReply.type",
   })
   const postType = useWatch({ control: form.control, name: "post.type" })
+  const accountChoiceMissing = useAccountChoiceMissing("tiktok")
   const includeKeywordsType = useWatch({
     control: form.control,
     name: "includeKeywords.type",
@@ -196,6 +201,8 @@ export function TiktokCommentForm({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <AutomationAccountField targetField="post" type="tiktok" />
+
           <RadioGroupField
             label={t("tiktokCommentAutomation.trackCommentsOn")}
             name="post.type"
@@ -518,7 +525,7 @@ export function TiktokCommentForm({
         </button>
         <button
           className="rounded-md bg-primary px-4 py-2 text-primary-foreground text-sm"
-          disabled={isSubmitting}
+          disabled={isSubmitting || accountChoiceMissing}
           type="submit"
         >
           {submitLabel}

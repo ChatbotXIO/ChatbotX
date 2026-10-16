@@ -37,11 +37,14 @@ export function SelectInstagramPostsDialog({
   onOpenChange,
   value,
   onChange,
+  inboxId,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   value: string[]
   onChange: (ids: string[]) => void
+  /** The automation's account; set, only that account's media is offered. */
+  inboxId?: string | null
 }) {
   const t = useTranslations()
 
@@ -58,10 +61,12 @@ export function SelectInstagramPostsDialog({
     }
   }, [open, value])
 
-  const pagePosts =
-    selectedPageId === ALL_PAGES_VALUE
-      ? posts
-      : posts.filter((post) => post.accountId === selectedPageId)
+  let pagePosts = posts
+  if (inboxId) {
+    pagePosts = posts.filter((post) => post.inboxId === inboxId)
+  } else if (selectedPageId !== ALL_PAGES_VALUE) {
+    pagePosts = posts.filter((post) => post.accountId === selectedPageId)
+  }
   const instagramMedia = splitInstagramMediaPosts(pagePosts)
 
   const toggleId = (id: string) => {
@@ -84,7 +89,7 @@ export function SelectInstagramPostsDialog({
           </DialogTitle>
         </DialogHeader>
 
-        {pages.length > 0 && (
+        {pages.length > 0 && !inboxId && (
           <Select
             onValueChange={(val) => setSelectedPageId(val as string)}
             value={selectedPageId}

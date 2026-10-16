@@ -27,6 +27,12 @@ export type ScanCommentsProps = {
   workspaceId: string
   postId: string
   since: Date
+  /**
+   * The automation's account scope. A scoped automation only ever answers
+   * that account's comments, so the scan skips every other account's API
+   * calls; `null` tries every connected account, as before.
+   */
+  inboxId: string | null
 }
 
 /** No connected account of the automation's channel could reach the post. */

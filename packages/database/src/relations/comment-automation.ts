@@ -13,5 +13,9 @@ export const commentAutomationRelations = defineRelationsPart(schema, (r) => ({
       from: r.commentAutomationModel.folderId,
       to: r.folderModel.id,
     }),
+    inbox: r.one.inboxModel({
+      from: r.commentAutomationModel.inboxId,
+      to: r.inboxModel.id,
+    }),
   },
 }))

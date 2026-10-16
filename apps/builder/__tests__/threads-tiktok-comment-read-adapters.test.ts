@@ -32,6 +32,7 @@ function buildRow() {
     updatedAt: new Date("2026-09-01T00:00:00Z"),
     name: "automation",
     workspaceId: "1",
+    inboxId: null,
     folderId: null,
     type: "threads",
     isActive: true,

@@ -6,6 +6,7 @@ import {
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram/schema"
 import type { InstagramAuthValue as InstagramFacebookAuthValue } from "@chatbotx.io/integration-instagram-facebook"
 import { listMediaComments as listInstagramFacebookMediaComments } from "@chatbotx.io/integration-instagram-facebook/apis/comment"
+import { filterIntegrationsByAccount } from "../account-filter"
 import { collectCommentsSince, parseGraphTime, toEpochSeconds } from "./paging"
 import {
   MissedCommentsIntegrationNotFoundError,
@@ -25,10 +26,13 @@ type InstagramCommentFields = Omit<InstagramMediaComment, "replies">
 export async function scanInstagramComments(
   props: ScanCommentsProps & { type: InstagramCommentAutomationType },
 ): Promise<ScannedComment[]> {
-  const { workspaceId, postId, since, type } = props
-  const integrations = await instagramIntegrationService.findByWorkspaceId(
-    workspaceId,
-    type === "instagram" ? "instagram" : "facebook",
+  const { workspaceId, postId, since, type, inboxId } = props
+  const integrations = filterIntegrationsByAccount(
+    await instagramIntegrationService.findByWorkspaceId(
+      workspaceId,
+      type === "instagram" ? "instagram" : "facebook",
+    ),
+    inboxId,
   )
 
   if (integrations.length === 0) {

@@ -693,6 +693,17 @@
     "liveBadge": "Live",
     "postTypeDialog": {
       "title": "Select post type"
+    },
+    "account": {
+      "label": "Account",
+      "description": "The connected account this automation answers on. Choose “All accounts” to answer on every connected account of this channel.",
+      "all": "All accounts",
+      "placeholder": "Select an account",
+      "required": "Several accounts are connected: choose one, or choose “All accounts” on purpose.",
+      "targetsCleared": "Selected posts were cleared because they may belong to another account.",
+      "column": "Account",
+      "disconnected": "Disconnected account",
+      "disconnectedDescription": "This automation is tied to an account that is no longer connected, so it answers no comments. Reconnect the account or choose another one."
     }
   },
   "condition": {

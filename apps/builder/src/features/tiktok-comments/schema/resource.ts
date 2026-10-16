@@ -8,6 +8,7 @@ import {
   createSelectSchema,
 } from "@chatbotx.io/database/schema"
 import z from "zod"
+import { automationInboxIdResourceSchema } from "@/features/shared/comment-automation/schema/account"
 
 const tiktokReplySchema = z.discriminatedUnion("type", [
   z.object({
@@ -34,6 +35,7 @@ export const tiktokCommentResource = createSelectSchema(
   {
     id: z.string(),
     workspaceId: z.string(),
+    inboxId: automationInboxIdResourceSchema,
     post: z.object({
       type: z.enum(["all", "postIds"]),
       value: z.array(z.string()),

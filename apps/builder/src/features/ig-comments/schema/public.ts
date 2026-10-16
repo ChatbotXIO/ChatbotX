@@ -1,6 +1,11 @@
 import { igCommentAutomationTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import {
+  automationInboxIdFilterSchema,
+  postAccountInboxIdSchema,
+  postsAccountFilterSchema,
+} from "@/features/shared/comment-automation/schema/account"
 import { publicListRequest, publicListResponse } from "@/lib/public-api/list"
 import { createIgCommentRequest, updateIgCommentRequest } from "./action"
 import { igCommentResource } from "./resource"
@@ -24,6 +29,7 @@ export const listIgCommentsPublicRequest = publicListRequest.extend({
     .boolean()
     .nullish()
     .describe("Restrict to enabled or disabled automations."),
+  inboxId: automationInboxIdFilterSchema,
 })
 
 export const igCommentPublicResource = igCommentResource.omit({
@@ -60,6 +66,7 @@ export const listInstagramMediaPublicRequest = z.object({
   variant: igCommentAutomationTypes.describe(
     "Which Instagram connection type to list media from, `instagram` (native login) or `instagramFacebook` (linked via a Facebook page).",
   ),
+  inboxId: postsAccountFilterSchema,
 })
 
 export const listInstagramMediaPublicResponse = z.object({
@@ -72,6 +79,7 @@ export const listInstagramMediaPublicResponse = z.object({
       permalink_url: z.string().optional(),
       media_product_type: z.string().optional(),
       accountId: z.string(),
+      inboxId: postAccountInboxIdSchema,
     }),
   ),
   pages: z.array(z.object({ id: z.string(), name: z.string() })),

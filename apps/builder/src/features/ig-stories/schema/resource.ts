@@ -9,10 +9,12 @@ import {
   igStoryAutomationModel,
 } from "@chatbotx.io/database/schema"
 import z from "zod"
+import { automationInboxIdResourceSchema } from "@/features/shared/comment-automation/schema/account"
 
 export const igStoryResource = createSelectSchema(igStoryAutomationModel, {
   id: z.string(),
   workspaceId: z.string(),
+  inboxId: automationInboxIdResourceSchema,
   folderId: z.string().nullish(),
   trigger: igStoryAutomationTriggers,
   story: igStoryTargetSchema,

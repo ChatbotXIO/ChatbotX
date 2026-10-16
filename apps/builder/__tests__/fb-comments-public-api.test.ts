@@ -211,6 +211,9 @@ describe("GET /v1/fb-comments/facebook-posts", () => {
 
     await expect(procedure.handler?.({ context })).resolves.toEqual(response)
 
-    expect(listFacebookPostsForAutomation).toHaveBeenCalledWith("workspace-1")
+    expect(listFacebookPostsForAutomation).toHaveBeenCalledWith(
+      "workspace-1",
+      undefined,
+    )
   })
 })

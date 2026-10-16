@@ -693,6 +693,17 @@
     "liveBadge": "Canlı",
     "postTypeDialog": {
       "title": "Paylaşım növünü seçin"
+    },
+    "account": {
+      "label": "Hesab",
+      "description": "Bu avtomatlaşdırmanın cavab verdiyi qoşulmuş hesab. Bu kanalın bütün qoşulmuş hesablarında cavab vermək üçün “Bütün hesablar” seçin.",
+      "all": "Bütün hesablar",
+      "placeholder": "Hesab seçin",
+      "required": "Bir neçə hesab qoşulub: birini seçin və ya qəsdən “Bütün hesablar” seçin.",
+      "targetsCleared": "Seçilmiş paylaşımlar başqa hesaba aid ola biləcəyi üçün təmizləndi.",
+      "column": "Hesab",
+      "disconnected": "Bağlantısı kəsilmiş hesab",
+      "disconnectedDescription": "Bu avtomatlaşdırma artıq qoşulmayan hesaba bağlıdır, ona görə heç bir şərhə cavab vermir. Hesabı yenidən qoşun və ya başqasını seçin."
     }
   },
   "condition": {

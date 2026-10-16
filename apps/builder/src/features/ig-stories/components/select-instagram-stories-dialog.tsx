@@ -189,11 +189,14 @@ export function SelectInstagramStoriesDialog({
   onOpenChange,
   value,
   onChange,
+  inboxId,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   value: string[]
   onChange: (ids: string[]) => void
+  /** The automation's account; set, only that account's stories are offered. */
+  inboxId?: string | null
 }) {
   const t = useTranslations()
 
@@ -215,10 +218,12 @@ export function SelectInstagramStoriesDialog({
     }
   }, [open, value, pageFilterForm.reset])
 
-  const pageStories =
-    selectedPageId === ALL_PAGES_VALUE
-      ? stories
-      : stories.filter((story) => story.accountId === selectedPageId)
+  let pageStories = stories
+  if (inboxId) {
+    pageStories = stories.filter((story) => story.inboxId === inboxId)
+  } else if (selectedPageId !== ALL_PAGES_VALUE) {
+    pageStories = stories.filter((story) => story.accountId === selectedPageId)
+  }
 
   const toggleId = (id: string) => {
     setSelectedIds((prev) =>
@@ -240,7 +245,7 @@ export function SelectInstagramStoriesDialog({
           </DialogTitle>
         </DialogHeader>
 
-        {pages.length > 0 && (
+        {pages.length > 0 && !inboxId && (
           <Form {...pageFilterForm}>
             <SelectField<{ pageId: string }>
               name="pageId"

@@ -151,8 +151,8 @@ export const igCommentsPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) =>
       input.variant === "instagram"
-        ? await listInstagramLoginMedia(context.workspace.id)
-        : await listInstagramFacebookMedia(context.workspace.id),
+        ? await listInstagramLoginMedia(context.workspace.id, input.inboxId)
+        : await listInstagramFacebookMedia(context.workspace.id, input.inboxId),
     ),
 
   deleteMany: workspaceTokenAuthAPI

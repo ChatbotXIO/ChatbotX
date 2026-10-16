@@ -93,6 +93,7 @@ export async function processMissedComments(props: {
         workspaceId: props.workspaceId,
         postId,
         since: subDays(new Date(), MISSED_COMMENTS_SCAN_DAYS),
+        inboxId: automation.inboxId,
       })
     } catch (error) {
       if (error instanceof MissedCommentsIntegrationNotFoundError) {

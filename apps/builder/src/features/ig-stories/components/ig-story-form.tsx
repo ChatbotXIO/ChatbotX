@@ -27,7 +27,12 @@ import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useAIAgentSelectOptions } from "@/features/ai-agents/hooks/use-ai-agents"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import {
+  AutomationAccountField,
+  useAccountChoiceMissing,
+} from "@/features/shared/comment-automation/automation-account-field"
 import { useWorkspaceId } from "@/hooks/routing"
+import { useIgStoryPostsStore } from "../provider/ig-story-posts-store-context"
 import type { CreateIgStoryRequest, IgStoryVariant } from "../schema/action"
 import { SelectInstagramStoriesDialog } from "./select-instagram-stories-dialog"
 
@@ -46,6 +51,7 @@ type IgStoryFormProps = {
 
 export function IgStoryForm({
   form,
+  variant,
   onSubmit,
   isSubmitting,
   onCancel,
@@ -72,6 +78,11 @@ export function IgStoryForm({
 
   const storyType = useWatch({ control: form.control, name: "story.type" })
   const storyValue = useWatch({ control: form.control, name: "story.value" })
+  const inboxId = useWatch({ control: form.control, name: "inboxId" })
+  const accountChoiceMissing = useAccountChoiceMissing(variant)
+  const instagramStories = useIgStoryPostsStore((s) => s.stories)
+  const findStoryOwner = (id: string) =>
+    instagramStories.find((story) => story.id === id)?.inboxId
 
   const replyType = useWatch({ control: form.control, name: "reply.type" })
   const includeKeywordsType = useWatch({
@@ -131,6 +142,12 @@ export function IgStoryForm({
           <CardTitle>{t("instagramStoryAutomation.card.targeting")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 space-y-4">
+          <AutomationAccountField
+            findTargetOwner={findStoryOwner}
+            targetField="story"
+            type={variant}
+          />
+
           <RadioGroupField
             description={t("instagramStoryAutomation.triggerDescription")}
             descriptionType="tooltip"
@@ -166,6 +183,7 @@ export function IgStoryForm({
                 {storyValue.length > 0 && ` (${storyValue.length})`}
               </Button>
               <SelectInstagramStoriesDialog
+                inboxId={inboxId}
                 onChange={(ids) =>
                   form.setValue("story.value", ids, { shouldValidate: true })
                 }
@@ -265,7 +283,9 @@ export function IgStoryForm({
           {t("actions.cancel")}
         </Button>
         <Button
-          disabled={!form.formState.isValid || isSubmitting}
+          disabled={
+            !form.formState.isValid || isSubmitting || accountChoiceMissing
+          }
           type="submit"
         >
           {submitLabel}

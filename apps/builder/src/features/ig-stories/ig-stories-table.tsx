@@ -37,6 +37,7 @@ import { useTranslations } from "next-intl"
 import React, { use, useCallback, useMemo } from "react"
 import { toast } from "sonner"
 import { ChangeFolderDialog } from "../folders/change-folder"
+import { buildAutomationAccountColumn } from "../shared/comment-automation/automation-account-column"
 import { BulkDeleteCommentAutomationsDialog } from "../shared/comment-automation/bulk-delete-comment-automations-dialog"
 import { BulkMoveCommentAutomationFolderDialog } from "../shared/comment-automation/bulk-move-comment-automation-folder-dialog"
 import { CommentAutomationScheduleDialog } from "../shared/comment-automation/comment-automation-schedule-dialog"
@@ -154,6 +155,9 @@ export function IgStoriesTable({ workspaceId, promises }: IgStoriesTableProps) {
         enableSorting: true,
         enableColumnFilter: true,
       },
+      buildAutomationAccountColumn<ListIgStoriesResponse["data"][number]>({
+        title: t("commentAutomation.account.column"),
+      }),
       {
         accessorKey: "trigger",
         header: ({ column }) => (
