@@ -3,7 +3,6 @@ import { defineConfig } from "tsdown"
 export default defineConfig({
   format: ["esm"],
   entry: [
-    "src/broadcast-recurrence/worker.ts",
     "src/chat/worker.ts",
     "src/integration/worker.ts",
     "src/ai-agent/worker.ts",

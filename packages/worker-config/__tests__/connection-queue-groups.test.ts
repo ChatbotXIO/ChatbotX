@@ -142,7 +142,6 @@ describe("getRedisConnection queue-group routing", () => {
       callTranscription: "hot",
       whatsappVoipSignaling: "hot",
       low: "hot",
-      broadcastRecurrence: "bulk",
       profileSnapshot: "bulk",
       leaderboard: "bulk",
     })

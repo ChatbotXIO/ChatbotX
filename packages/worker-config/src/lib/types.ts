@@ -17,7 +17,6 @@ export const queueNames = z.enum([
   "profileSnapshot",
   "whatsappVoipSignaling",
   "low",
-  "broadcastRecurrence",
   "leaderboard",
 ])
 

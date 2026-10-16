@@ -98,8 +98,8 @@ before the migration.
 ```
 schedule queue     enqueueRecurringBroadcasts (cron, every minute, distributedLock 55 s, fails fast if held)
                    → keyset-pages the due series (index BroadcastRecurrence_due_idx, DB clock `now()`)
-                   → broadcastRecurrence queue, batches of 100 (job id broadcast-recurrence-<dueAtMs>-<page>-<chunk>)
-broadcastRecurrence worker  (dedicated; BROADCAST_RECURRENCE_WORKER_CONCURRENCY, default 10)
+                   → schedule queue, batches of 100 (job id broadcast-recurrence-<dueAtMs>-<page>-<chunk>, priority 10)
+schedule queue     materializeRecurringBroadcasts (10 series in parallel per job)
                    → per item: blocked owner ? skipOccurrence : materializeOccurrence
                    → after commit: schedule queue prepareBroadcast (shared job id broadcastPrepareJobId)
 ```
@@ -118,9 +118,10 @@ by id**, workspace-scoped. `create`/`clone` are exempt (the new parent is unpubl
 ## Capacity
 
 - The enqueue tick is ~20 index pages for 100 k due series; the worker materializes ≈ 6 short statements per series,
-  10 in parallel per job, horizontally scalable. A dedicated queue (bulk Redis group) keeps the `schedule` worker's
-  slots free for the other crons.
-- Backpressure: a tick adds nothing while ≥ 2 000 batches are waiting or delayed — the cursor stays due, so nothing is
+  10 in parallel per job, on the shared `schedule` worker. Batches are prioritized
+  (`MATERIALIZE_RECURRING_BROADCASTS_PRIORITY`), so every unprioritized schedule job — crons, prepare/send broadcast —
+  runs first; scale the `schedule` worker horizontally if batches drain too slowly.
+- Backpressure: a tick adds nothing while ≥ 2 000 batches are prioritized (pending) or delayed (retrying) — the cursor stays due, so nothing is
   lost by waiting.
 - Prepare/send capacity for the *children* is the pre-existing bottleneck and is unchanged.
 
@@ -131,7 +132,11 @@ by id**, workspace-scoped. `create`/`clone` are exempt (the new parent is unpubl
   `…_add_broadcast_recurrence` (transactional), `…_add_broadcast_occurrence_unique_index` (`CONCURRENTLY`; if it is
   interrupted, drop the INVALID index and re-run) and `…_widen_broadcast_occurrence_slot_key` (transactional; recreates
   the ledger unique index on `(recurrenceId, localSlot, occurrenceAt)`).
-- **Alert on `oldestDueAgeMs`** in the `enqueue-recurring-broadcasts` log: it grows when the recurrence worker or Redis
+- **Moving off the dedicated `broadcastRecurrence` queue**: until every `schedule` worker runs the new code, an old one
+  logs "Unknown schedule job type" for a `materializeRecurringBroadcasts` batch and drops it; jobs left on the old
+  queue are never consumed. Neither loses a slot — the cursor keeps it due and the next tick re-enqueues it (the
+  shortest frequency is daily, so a rollout only makes slots late). Obliterate the old queue once the rollout is done.
+- **Alert on `oldestDueAgeMs`** in the `enqueue-recurring-broadcasts` log: it grows when the schedule worker or Redis
   is unhealthy.
 - **Redis flush**: restart the workers so `registerSchedules` recreates the job schedulers (true of every cron). The
   database cursor loses nothing; slots are materialized late and the ledger shows the lateness.

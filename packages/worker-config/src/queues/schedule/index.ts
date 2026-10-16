@@ -12,6 +12,7 @@ import { queueNames } from "../../lib/types"
 export const ScheduleJobData = {
   enqueueBroadcast: "enqueueBroadcast",
   enqueueRecurringBroadcasts: "enqueueRecurringBroadcasts",
+  materializeRecurringBroadcasts: "materializeRecurringBroadcasts",
   prepareBroadcast: "prepareBroadcast",
   sendBroadcast: "sendBroadcast",
   reconcileBroadcasts: "reconcileBroadcasts",
@@ -91,6 +92,26 @@ export const broadcastSendJobId = (broadcastId: string) =>
 export const broadcastPrepareJobId = (broadcastId: string) =>
   `schedule-prepare-broadcast-${broadcastId}`
 
+/** Series handled by one `materializeRecurringBroadcasts` job. */
+export const MATERIALIZE_BATCH_SIZE = 100
+/** Series a schedule-worker slot materializes in parallel inside one job. */
+export const MATERIALIZE_ITEM_CONCURRENCY = 10
+/**
+ * BullMQ priority of `materializeRecurringBroadcasts` batches. Jobs without a
+ * priority run before any prioritized job, so a burst of due series always
+ * yields to the other schedule jobs (crons, prepare/send broadcast). No other
+ * schedule job is prioritized, so the queue's prioritized count is exactly the
+ * pending batches.
+ */
+export const MATERIALIZE_RECURRING_BROADCASTS_PRIORITY = 10
+
+/** No `:` — BullMQ rejects it in a custom job id. */
+export const materializeBatchJobId = (
+  dueAtMs: number,
+  page: number,
+  chunk: number,
+) => `broadcast-recurrence-${dueAtMs}-${page}-${chunk}`
+
 export const teardownExpiredTrialJobId = (userId: string) =>
   `teardown-expired-trial-${userId}`
 
@@ -111,6 +132,19 @@ export type ScheduleJobEnqueueBroadcast = {
 export type ScheduleJobEnqueueRecurringBroadcasts = {
   type: typeof ScheduleJobData.enqueueRecurringBroadcasts
   data: Record<string, never>
+}
+
+/** One due slot: the series, its workspace (for the blocked-owner guard) and the armed instant. */
+export type MaterializeRecurringBroadcastItem = {
+  recurrenceId: string
+  workspaceId: string
+  occurrenceAtMs: number
+}
+
+/** Turns due slots of repeating broadcasts into runs; the runs are then sent by the existing pipeline. */
+export type ScheduleJobMaterializeRecurringBroadcasts = {
+  type: typeof ScheduleJobData.materializeRecurringBroadcasts
+  data: { items: MaterializeRecurringBroadcastItem[] }
 }
 
 export type ScheduleJobPrepareBroadcast = {
@@ -320,6 +354,7 @@ export type ScheduleJobData =
   | ScheduleJobBroadcast
   | ScheduleJobEnqueueBroadcast
   | ScheduleJobEnqueueRecurringBroadcasts
+  | ScheduleJobMaterializeRecurringBroadcasts
   | ScheduleJobPrepareBroadcast
   | ScheduleJobFinalizeBroadcasts
   | ScheduleJobReconcileBroadcasts
