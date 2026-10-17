@@ -18,8 +18,6 @@ const {
   mockWorkspaceMemberServiceDelete,
   mockInvalidateMembershipCache,
   mockDbInsert,
-  mockInsertReturning,
-  mockInsertValues,
 } = vi.hoisted(() => {
   const mockInsertReturning = vi.fn()
   const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))

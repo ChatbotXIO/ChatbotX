@@ -13,10 +13,7 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import { resolveLastUserInputTracking } from "@chatbotx.io/business/contact-inbox"
-import {
-  finalizeContactProfile,
-  normalizeLanguage,
-} from "@chatbotx.io/business/contact-locale"
+import { normalizeLanguage } from "@chatbotx.io/business/contact-locale"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {

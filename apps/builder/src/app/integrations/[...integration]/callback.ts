@@ -2,7 +2,6 @@ import {
   appointmentExternalCalendarService,
   hasWorkspaceAccess,
   integrationFacebookAdsService,
-  integrationMetaCatalogService,
   integrationService,
   integrationThreadsService,
   platformCredentialService,
@@ -16,21 +15,11 @@ import {
   connectionService,
   failSession,
 } from "@chatbotx.io/connections"
-import { db } from "@chatbotx.io/database/client"
 import {
   type IntegrationType,
   messagingAdChannelTypes,
 } from "@chatbotx.io/database/partials"
-import {
-  integrationGoogleSheetsModel,
-  integrationModel,
-} from "@chatbotx.io/database/schema"
 import type { ConnectSessionModel } from "@chatbotx.io/database/types"
-import {
-  exchangeCodeForToken as exchangeFacebookAdsCode,
-  exchangeLongLivedToken as exchangeFacebookAdsLongLivedToken,
-  type FacebookAdsAuthValue,
-} from "@chatbotx.io/integration-facebook-ads"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
 import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
 import {
@@ -39,22 +28,13 @@ import {
   getThreadsProfile,
 } from "@chatbotx.io/integration-threads"
 import { TiktokMissingScopesError } from "@chatbotx.io/integration-tiktok"
-import {
-  AuthType,
-  type AuthValue,
-  type Oauth2AuthValue,
-} from "@chatbotx.io/sdk"
-import {
-  createId,
-  getPublicUrlFromRequest,
-  zodBigintAsString,
-} from "@chatbotx.io/utils"
+import type { AuthValue, Oauth2AuthValue } from "@chatbotx.io/sdk"
+import { getPublicUrlFromRequest, zodBigintAsString } from "@chatbotx.io/utils"
 import {
   appendConnectError,
   type ConnectErrorQueryCode,
   connectFailureCauseOf,
 } from "@chatbotx.io/utils/connection"
-import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { normalizeError } from "universal-error-normalizer"

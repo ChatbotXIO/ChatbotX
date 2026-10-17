@@ -103,6 +103,7 @@ class WhatsappFlowService extends BaseService {
       })
       .returning({ id: whatsappFlowModel.id })
     return row as { id: string }
+  }
   async findSourceIdForWorkspace(props: {
     id: string
     tx?: DatabaseClient

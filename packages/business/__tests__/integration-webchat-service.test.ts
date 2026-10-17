@@ -36,6 +36,9 @@ const {
   const mockUpdateSet = vi.fn(() => ({ where: mockUpdateWhere }))
   const mockUpdate = vi.fn(() => ({ set: mockUpdateSet }))
   const mockFindFirst = vi.fn()
+  const mockInsertReturning = vi.fn()
+  const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
+  const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
 
   return {
     mockCount: vi.fn(async () => 25),
@@ -87,6 +90,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
       },
     },
     transaction: mockTransaction,
+    insert: mockInsert,
     update: mockUpdate,
   },
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value })),
@@ -145,7 +149,10 @@ vi.mock("../src/connection/state-service", () => ({
 }))
 
 vi.mock("../src/quota-enforcement/service", () => ({
-  quotaEnforcementService: { isAtLimit: mockIsAtLimit },
+  quotaEnforcementService: {
+    createNewContactWithMac: mockCreateNewContactWithMac,
+    isAtLimit: mockIsAtLimit,
+  },
 }))
 
 vi.mock("../src/audit/dispatcher", () => ({
@@ -165,12 +172,6 @@ vi.mock("../src/workspace", () => ({
     create: mockWorkspaceCreate,
     findById: mockWorkspaceFindById,
     findOrFail: mockWorkspaceFindOrFail,
-  },
-}))
-
-vi.mock("../src/quota-enforcement/service", () => ({
-  quotaEnforcementService: {
-    createNewContactWithMac: mockCreateNewContactWithMac,
   },
 }))
 
@@ -626,7 +627,9 @@ describe("webchatsAdapter.insert — quota exhausted during template install", (
         resourceId: "webchat-2",
       }),
     )
+  })
 })
+
 describe("integrationWebchatService.findOrCreateGuestConversation", () => {
   beforeEach(() => {
     vi.clearAllMocks()
