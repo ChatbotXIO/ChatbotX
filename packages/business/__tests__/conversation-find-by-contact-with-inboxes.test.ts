@@ -8,21 +8,68 @@ const { conversationService } = await import("../src/conversation/service")
 const spyOnFindFirst = () =>
   vi.spyOn(db.query.conversationModel, "findFirst" as never)
 
+const activityAndIdOrderSuffix = /DESC NULLS LAST\s+DESC$/
+
+type DrizzleQueryExpression = {
+  queryChunks: unknown[]
+}
+
+type DrizzleQueryChunk = {
+  value: unknown[]
+}
+
+const isOrderByCallback = (
+  value: unknown,
+): value is (table: typeof conversationModel) => unknown =>
+  typeof value === "function"
+
+const hasQueryChunks = (value: unknown): value is DrizzleQueryExpression =>
+  typeof value === "object" &&
+  value !== null &&
+  "queryChunks" in value &&
+  Array.isArray(value.queryChunks)
+
+const hasValueParts = (value: unknown): value is DrizzleQueryChunk =>
+  typeof value === "object" &&
+  value !== null &&
+  "value" in value &&
+  Array.isArray(value.value)
+
+const getOrderBy = (call: unknown): unknown => {
+  if (!Array.isArray(call)) {
+    return
+  }
+
+  const [options] = call
+  if (
+    typeof options !== "object" ||
+    options === null ||
+    !("orderBy" in options)
+  ) {
+    return
+  }
+
+  return options.orderBy
+}
+
 /**
- * The literal text of the `orderBy` drizzle was handed.
- *
- * It arrives as drizzle's callback form — the only form that accepts a raw SQL
- * expression — so it is invoked first. `queryChunks` then interleaves
- * `StringChunk` (whose `value` is a string array) with column references, and
- * those reference their table, so the object as a whole cannot be stringified.
+ * The literal text of the `orderBy` Drizzle receives. Raw SQL arrives through
+ * its callback form; query chunks interleave string chunks and column objects.
  */
 const orderBySql = (orderBy: unknown): string => {
-  const expression =
-    typeof orderBy === "function"
-      ? (orderBy as (table: unknown) => unknown)(conversationModel)
-      : orderBy
-  return ((expression as { queryChunks?: unknown[] }).queryChunks ?? [])
-    .flatMap((chunk) => (chunk as { value?: unknown }).value ?? [])
+  const expression = isOrderByCallback(orderBy)
+    ? orderBy(conversationModel)
+    : orderBy
+  const expressions = Array.isArray(expression) ? expression : [expression]
+
+  return expressions
+    .flatMap((item) =>
+      hasQueryChunks(item)
+        ? item.queryChunks.flatMap((chunk) =>
+            hasValueParts(chunk) ? chunk.value : [],
+          )
+        : [],
+    )
     .filter((part): part is string => typeof part === "string")
     .join("")
 }
@@ -32,10 +79,10 @@ afterEach(() => {
 })
 
 describe("conversationService.findByContactWithInboxes", () => {
-  // `lastActivityAt` is nullable with no default, and Postgres puts NULLs FIRST
-  // on a plain DESC — so the object form `{ lastActivityAt: "desc" }` would
-  // rank a conversation that has never been active above every real one.
-  test("orders by lastActivityAt with NULLS LAST, not a bare DESC", async () => {
+  // The whole decision needs one statement: with a DM priority, activity
+  // recency and an id tie-breaker. Postgres otherwise orders equal timestamps
+  // arbitrarily, and a sequential DM probe can miss a concurrent DM insert.
+  test("orders DM first, then activity with NULLS LAST and id", async () => {
     const findFirst = spyOnFindFirst().mockResolvedValue({
       id: "conv-dm",
       contactInboxes: [],
@@ -46,17 +93,18 @@ describe("conversationService.findByContactWithInboxes", () => {
       workspaceId: "ws-1",
     })
 
-    const { orderBy } = findFirst.mock.calls[0]?.[0] as { orderBy: unknown }
-    expect(orderBySql(orderBy)).toContain("DESC NULLS LAST")
+    expect(findFirst).toHaveBeenCalledOnce()
+    const orderBy = getOrderBy(findFirst.mock.calls[0])
+    const ordering = orderBySql(orderBy)
+    expect(ordering).toContain(" IS NOT NULL")
+    expect(ordering).toContain("DESC NULLS LAST")
+    expect(ordering).toMatch(activityAndIdOrderSuffix)
   })
 
   // Every caller is a /v1/contacts/{identifier}/messages handler — send, list
-  // and get. When only the send path preferred the DM thread, an integrator
-  // could POST, get 204, then list and not find the message. There is no flag
-  // to forget, so the three cannot drift.
-  // `Conversation_contactId_dm_key` is unique on contactId where sourceId IS
-  // NULL, so this probe can match at most one row.
-  test("probes the DM thread first, with no caller opt-in", async () => {
+  // and get. The service owns the DM-vs-comment choice, so those paths cannot
+  // drift and no caller can observe a probe/fallback race.
+  test("uses one ordered lookup and returns the DM thread", async () => {
     const directMessage = { id: "conv-dm", sourceId: null, contactInboxes: [] }
     const findFirst = spyOnFindFirst().mockResolvedValue(directMessage as never)
 
@@ -66,29 +114,22 @@ describe("conversationService.findByContactWithInboxes", () => {
     })
 
     expect(result).toEqual(directMessage)
-    expect(findFirst).toHaveBeenCalledTimes(1)
+    expect(findFirst).toHaveBeenCalledOnce()
     expect(findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: {
-          contactId: "contact-1",
-          workspaceId: "ws-1",
-          sourceId: { isNull: true },
-        },
+        where: { contactId: "contact-1", workspaceId: "ws-1" },
       }),
     )
   })
 
-  // A contact who has only ever commented has no DM thread to prefer. Falling
-  // through to the unfiltered lookup is what keeps them reachable.
-  test("falls back to any conversation when the contact has no DM thread", async () => {
+  // A contact who has only ever commented has no DM thread to prefer.
+  test("returns a comment conversation when there is no DM thread", async () => {
     const commentThread = {
       id: "conv-comment",
       sourceId: "page-1_post-1",
       contactInboxes: [],
     }
-    const findFirst = spyOnFindFirst()
-      .mockResolvedValueOnce(undefined as never)
-      .mockResolvedValueOnce(commentThread as never)
+    const findFirst = spyOnFindFirst().mockResolvedValue(commentThread as never)
 
     const result = await conversationService.findByContactWithInboxes({
       contactId: "contact-1",
@@ -96,11 +137,6 @@ describe("conversationService.findByContactWithInboxes", () => {
     })
 
     expect(result).toEqual(commentThread)
-    expect(findFirst).toHaveBeenCalledTimes(2)
-    expect(findFirst).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        where: { contactId: "contact-1", workspaceId: "ws-1" },
-      }),
-    )
+    expect(findFirst).toHaveBeenCalledOnce()
   })
 })

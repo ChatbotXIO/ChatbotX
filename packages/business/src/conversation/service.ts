@@ -461,22 +461,16 @@ class ConversationService extends BaseService {
 
   /**
    * A contact can hold a DM conversation and one comment thread per post, so
-   * "the contact's conversation" is a choice, not a lookup. Without an order
-   * `findFirst` returned whichever row Postgres handed back — the same contact
-   * could resolve to a different conversation on two consecutive calls.
+   * "the contact's conversation" is a choice, not a lookup. The one query
+   * evaluates that choice in a single snapshot: a concurrently created DM
+   * cannot appear between a DM probe and the comment-thread fallback.
    *
    * The DM thread always wins. Every caller is a
    * `/v1/contacts/{identifier}/messages` handler — send, list and get — and a
-   * direct message is what all three are about, so none of them wants a post's
-   * comment thread. Deciding it here rather than behind a per-caller flag is
-   * the point: when the send path preferred the DM thread and the read paths
-   * did not, an integrator could POST a message, get 204, then list the
-   * conversation and not find it. The three cannot drift if there is nothing
-   * to pass. A contact who has only ever commented has no DM row to prefer and
-   * still resolves to their comment thread.
-   *
-   * The DM probe is a single index hit: `Conversation_contactId_dm_key` is
-   * unique on `contactId` where `sourceId IS NULL`, so at most one row matches.
+   * direct message is what all three are about. A contact who has only ever
+   * commented has no DM row to prefer and resolves to their newest comment
+   * thread instead. Equal activity timestamps fall back to `id` so the result
+   * stays deterministic.
    */
   async findByContactWithInboxes(props: {
     contactId: string
@@ -485,31 +479,18 @@ class ConversationService extends BaseService {
   }): Promise<ConversationWithContactInboxes | undefined> {
     const { tx = db, contactId, workspaceId } = props
 
-    const findFirstWhere = async (where: Record<string, unknown>) =>
-      (await tx.query.conversationModel.findFirst({
-        where,
-        // Spelled as SQL because `lastActivityAt` is nullable with no default —
-        // a freshly created conversation has NULL — and Postgres puts NULLs
-        // FIRST on a plain DESC. The `{ lastActivityAt: "desc" }` object form
-        // cannot express the NULLS clause, so it would rank a conversation that
-        // has never been active above every real one. This also matches
-        // `Conversation_workspaceId_lastActivityAt_id_idx`, declared
-        // `.desc().nullsLast()`. Raw SQL reaches `orderBy` only through its
-        // callback form; the object form takes no expression.
-        orderBy: (table) => sql`${table.lastActivityAt} DESC NULLS LAST`,
-        with: { contactInboxes: true },
-      })) as ConversationWithContactInboxes | undefined
-
-    const directMessage = await findFirstWhere({
-      contactId,
-      workspaceId,
-      sourceId: { isNull: true },
-    })
-    if (directMessage) {
-      return directMessage
-    }
-
-    return await findFirstWhere({ contactId, workspaceId })
+    return (await tx.query.conversationModel.findFirst({
+      where: { contactId, workspaceId },
+      // `sourceId IS NOT NULL` sorts false (DM) before true (comment thread).
+      // `lastActivityAt` is nullable with no default, so `NULLS LAST` is
+      // explicit, then id is the stable tie-breaker.
+      orderBy: (table) => [
+        sql`${table.sourceId} IS NOT NULL`,
+        sql`${table.lastActivityAt} DESC NULLS LAST`,
+        sql`${table.id} DESC`,
+      ],
+      with: { contactInboxes: true },
+    })) as ConversationWithContactInboxes | undefined
   }
 
   /**
@@ -599,13 +580,14 @@ class ConversationService extends BaseService {
   }): Promise<ConversationModel | undefined> {
     const { tx = db, contactId } = props
     // A contact can have multiple conversations (DM + comment threads), all
-    // sharing the same ContactInbox — order by lastActivityAt so callers get
-    // the conversation the contact is actually active in, not an arbitrary one.
-    // NULLS LAST is not optional here: the column is nullable with no default,
-    // so a plain DESC ranks a never-active conversation above every real one.
+    // sharing the same ContactInbox — order by activity so callers get the
+    // conversation the contact is actually active in, not an arbitrary one.
+    // NULLS LAST keeps never-active conversations last; id resolves equal
+    // activity timestamps deterministically.
     return await tx.query.conversationModel.findFirst({
       where: { contactId },
-      orderBy: (table) => sql`${table.lastActivityAt} DESC NULLS LAST`,
+      orderBy: (table) =>
+        sql`${table.lastActivityAt} DESC NULLS LAST, ${table.id} DESC`,
     })
   }
 
