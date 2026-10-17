@@ -459,14 +459,36 @@ class ConversationService extends BaseService {
     return rows.length
   }
 
+  /**
+   * A contact can hold a DM conversation and one comment thread per post, so
+   * "the contact's conversation" is a choice, not a lookup. The one query
+   * evaluates that choice in a single snapshot: a concurrently created DM
+   * cannot appear between a DM probe and the comment-thread fallback.
+   *
+   * The DM thread always wins. Every caller is a
+   * `/v1/contacts/{identifier}/messages` handler — send, list and get — and a
+   * direct message is what all three are about. A contact who has only ever
+   * commented has no DM row to prefer and resolves to their newest comment
+   * thread instead. Equal activity timestamps fall back to `id` so the result
+   * stays deterministic.
+   */
   async findByContactWithInboxes(props: {
     contactId: string
     workspaceId: string
     tx?: DatabaseClient
   }): Promise<ConversationWithContactInboxes | undefined> {
     const { tx = db, contactId, workspaceId } = props
+
     return (await tx.query.conversationModel.findFirst({
       where: { contactId, workspaceId },
+      // `sourceId IS NOT NULL` sorts false (DM) before true (comment thread).
+      // `lastActivityAt` is nullable with no default, so `NULLS LAST` is
+      // explicit, then id is the stable tie-breaker.
+      orderBy: (table) => [
+        sql`${table.sourceId} IS NOT NULL`,
+        sql`${table.lastActivityAt} DESC NULLS LAST`,
+        sql`${table.id} DESC`,
+      ],
       with: { contactInboxes: true },
     })) as ConversationWithContactInboxes | undefined
   }
@@ -474,9 +496,25 @@ class ConversationService extends BaseService {
   /**
    * Shared by the public `/v1/contacts/{identifier}/messages|auto-replies|flows`
    * handlers: resolve the contact's conversation and the specific
-   * `ContactInbox` to send through (or the first one when `inboxId` is
-   * omitted), throwing the same 404 either way instead of repeating both
-   * lookups + both `notFoundException` calls at every call site.
+   * `ContactInbox` to send through, throwing the same 404 either way instead of
+   * repeating both lookups + both `notFoundException` calls at every call site.
+   *
+   * Both halves used to be picked arbitrarily, and a send that resolved wrong
+   * failed asynchronously — the handler had already answered 204.
+   *
+   * - The conversation comes from `findByContactWithInboxes`, which settles the
+   *   DM-vs-comment-thread choice for the read paths too.
+   * - The `ContactInbox` now comes from `findRecentByContactId`. The relation
+   *   on the conversation row is keyed by `contactId`, so it carries every
+   *   inbox the contact has across every channel — taking `[0]` of an unordered
+   *   list could address the wrong page entirely. An explicit `inboxId` still
+   *   wins and is still matched against that relation.
+   *
+   * The channel is therefore decided by the `ContactInbox` alone — a
+   * `Conversation` carries no inbox or channel column, and the single DM row a
+   * contact owns is shared across all of their channels. So for a contact
+   * connected on more than one channel, omitting `inboxId` makes the channel a
+   * best guess ("most recently active"). Pass `inboxId` when it must be exact.
    */
   async resolveContactInboxForSend(props: {
     contactId: string
@@ -497,7 +535,10 @@ class ConversationService extends BaseService {
 
     const contactInbox = inboxId
       ? conversation.contactInboxes.find((ci) => ci.inboxId === inboxId)
-      : conversation.contactInboxes[0]
+      : await contactInboxService.findRecentByContactId({
+          workspaceId,
+          contactId,
+        })
     if (!contactInbox) {
       throw notFoundException("Conversation not found")
     }
@@ -510,9 +551,8 @@ class ConversationService extends BaseService {
    * `createMessageAction`: resolve the `ContactInbox` to send an outgoing
    * message through, scoped to an already-identified `conversationId` rather
    * than `contactId` (see `resolveContactInboxForSend` for the public-API
-   * variant, which starts from `contactId` and falls back to the
-   * conversation's first `ContactInbox` instead of the most recently
-   * active one).
+   * variant, which starts from `contactId` and resolves the conversation too).
+   * Both settle on the same `ContactInbox` for a given contact.
    */
   async resolveContactInboxForConversation(props: {
     conversation: Pick<ConversationModel, "contactId">
@@ -540,11 +580,14 @@ class ConversationService extends BaseService {
   }): Promise<ConversationModel | undefined> {
     const { tx = db, contactId } = props
     // A contact can have multiple conversations (DM + comment threads), all
-    // sharing the same ContactInbox — order by lastActivityAt so callers get
-    // the conversation the contact is actually active in, not an arbitrary one.
+    // sharing the same ContactInbox — order by activity so callers get the
+    // conversation the contact is actually active in, not an arbitrary one.
+    // NULLS LAST keeps never-active conversations last; id resolves equal
+    // activity timestamps deterministically.
     return await tx.query.conversationModel.findFirst({
       where: { contactId },
-      orderBy: { lastActivityAt: "desc" },
+      orderBy: (table) =>
+        sql`${table.lastActivityAt} DESC NULLS LAST, ${table.id} DESC`,
     })
   }
 
