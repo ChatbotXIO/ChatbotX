@@ -14,42 +14,31 @@ import { distributedStore } from "."
 // they never see an envelope they cannot decode.
 const CACHE_KEY_PREFIX = "sj:"
 
+// De-duplicates cache misses within this process. Cross-process coordination
+// remains intentionally out of scope: the Redis cache is still the shared
+// layer, while a distributed miss lock would need its own failure semantics.
+const inFlightCacheMisses = new Map<string, Promise<unknown>>()
+
 const isSuperJsonEnvelope = (value: unknown): value is SuperJSONResult =>
   typeof value === "object" && value !== null && "json" in value
 
-export const withCache = async <T>(
+/**
+ * Runs `fn`, then best-effort writes the result (and its tags) to the cache.
+ * Shared by every in-flight entry for `cacheKey`: joiners all await this same
+ * promise, so `fn` runs exactly once per miss.
+ */
+const loadAndStore = async <T>(
+  cacheKey: string,
   key: string,
   fn: () => Promise<T>,
-  options?: {
-    ttl?: number
-    /**
-     * Per-result TTL override (seconds); falls back to `ttl` when it returns
-     * undefined. Lets gate-style callers cache a negative result briefly while
-     * keeping the positive result long-lived — tag-based invalidation is
-     * best-effort, so a stale cached `false` guarding an event-producing path
-     * must expire quickly on its own.
-     */
+  options: {
+    ttl: number
     ttlFor?: (result: T) => number | undefined
-    tags?: string[]
+    tags: string[]
     dynamicTags?: (result: T) => string[] | undefined
   },
 ): Promise<T> => {
-  const { ttl = 24 * 60 * 60, ttlFor, tags = [], dynamicTags } = options || {}
-  const cacheKey = `${CACHE_KEY_PREFIX}${key}`
-
-  // Cache reads must never break callers: on a Redis failure (timeout, cold
-  // connection, server down) or a malformed envelope fall back to the source
-  // function instead of propagating. See cache-connection.ts — cache commands
-  // are configured to fail fast so callers can degrade gracefully.
-  try {
-    const cached = await distributedStore.get<SuperJSONResult>(cacheKey)
-    if (isSuperJsonEnvelope(cached)) {
-      return superjson.deserialize<T>(cached)
-    }
-  } catch (err) {
-    logger.debug({ err, key }, "Cache read failed, falling back to source")
-  }
-
+  const { ttl, ttlFor, tags, dynamicTags } = options
   const result = await fn()
   // Skip cache write if result is null or undefined
   if (result === null || result === undefined) {
@@ -89,6 +78,66 @@ export const withCache = async <T>(
 }
 
 /**
+ * Concurrent callers that miss the cache for the same `key` join the same
+ * in-flight fetch (`fn` runs once) and all resolve to the same result
+ * instance — treat the returned value as read-only, and never mutate it.
+ */
+export const withCache = async <T>(
+  key: string,
+  fn: () => Promise<T>,
+  options?: {
+    ttl?: number
+    /**
+     * Per-result TTL override (seconds); falls back to `ttl` when it returns
+     * undefined. Lets gate-style callers cache a negative result briefly while
+     * keeping the positive result long-lived — tag-based invalidation is
+     * best-effort, so a stale cached `false` guarding an event-producing path
+     * must expire quickly on its own.
+     */
+    ttlFor?: (result: T) => number | undefined
+    tags?: string[]
+    dynamicTags?: (result: T) => string[] | undefined
+  },
+): Promise<T> => {
+  const { ttl = 24 * 60 * 60, ttlFor, tags = [], dynamicTags } = options || {}
+  const cacheKey = `${CACHE_KEY_PREFIX}${key}`
+
+  // Cache reads must never break callers: on a Redis failure (timeout, cold
+  // connection, server down) or a malformed envelope fall back to the source
+  // function instead of propagating. See cache-connection.ts — cache commands
+  // are configured to fail fast so callers can degrade gracefully.
+  try {
+    const cached = await distributedStore.get<SuperJSONResult>(cacheKey)
+    if (isSuperJsonEnvelope(cached)) {
+      return superjson.deserialize<T>(cached)
+    }
+  } catch (err) {
+    logger.debug({ err, key }, "Cache read failed, falling back to source")
+  }
+
+  const inFlight = inFlightCacheMisses.get(cacheKey)
+  if (inFlight) {
+    return await (inFlight as Promise<T>)
+  }
+
+  const sourcePromise = loadAndStore(cacheKey, key, fn, {
+    ttl,
+    ttlFor,
+    tags,
+    dynamicTags,
+  })
+  inFlightCacheMisses.set(cacheKey, sourcePromise)
+
+  try {
+    return await sourcePromise
+  } finally {
+    if (inFlightCacheMisses.get(cacheKey) === sourcePromise) {
+      inFlightCacheMisses.delete(cacheKey)
+    }
+  }
+}
+
+/**
  * Invalidate withCache entries by their logical (unprefixed) key. Callers must
  * use this instead of `distributedStore.delete(key)` — withCache stores values
  * under a private namespace prefix, so a raw delete misses the real entry.
@@ -102,6 +151,11 @@ export const invalidateCacheKeys = async (
   if (keysArray.length === 0) {
     return
   }
+  // A reader that arrives after this invalidation must start a fresh fetch
+  // rather than join a fetch that began before the write it's meant to see.
+  for (const key of keysArray) {
+    inFlightCacheMisses.delete(`${CACHE_KEY_PREFIX}${key}`)
+  }
   await distributedStore.delete(
     keysArray.flatMap((key) => [`${CACHE_KEY_PREFIX}${key}`, key]),
   )
@@ -114,6 +168,9 @@ export const invalidateCacheByTags = async (tags: string[]) => {
   await Promise.all(
     tags.map(async (tag) => {
       const keys = await distributedStore.smembers(`tags:${tag}`)
+      for (const key of keys) {
+        inFlightCacheMisses.delete(key)
+      }
       await distributedStore.delete([...keys, `tags:${tag}`])
     }),
   )
