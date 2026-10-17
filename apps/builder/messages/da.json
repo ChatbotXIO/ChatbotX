@@ -2401,6 +2401,18 @@
     "capiConfigId": {
       "label": "Conversions API Config ID",
       "description": "Embedded Signup-konfigurations-ID, der bruges til at anmode om tilladelsen whatsapp_business_manage_events, når Conversions API tilsluttes."
+    },
+    "outboundAutomatedResponse": {
+      "label": "Side-nøgleord"
+    },
+    "fbComment": {
+      "label": "Facebook-kommentarautomatisering"
+    },
+    "igComment": {
+      "label": "Instagram-kommentarautomatisering"
+    },
+    "igStory": {
+      "label": "Instagram-historieautomatisering"
     }
   },
   "flows": {
@@ -2758,9 +2770,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "Mapper"
-    }
+    "rootOption": "-- Rod --",
+    "showMore": "+{count}",
+    "showLess": "Vis mindre",
+    "root": "Rod",
+    "viewingFolder": "Viser mappe: {name}"
   },
   "gemini": {
     "autoReply": {

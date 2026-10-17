@@ -482,7 +482,8 @@ importable from `apps/builder/src/features/*` — see `.agents/rules/data-access
 ## Layout Patterns
 
 - **Route groups** `()` organize without URL segments: `(settings)`, `(has-folder)`, `(ai)`
-- **Parallel routes** `@slot` for multi-panel layouts (e.g. the `@folders` sidebars under `(has-folder)`)
+- **Parallel routes** `@slot` for multi-panel layouts — but NOT for the folder bar: rendered inside a page's table card a slot never resolves and suspends the whole table
+- **Folder bar** (`(has-folder)` pages): pass the page's `folderType` explicitly. If a client table renders the card, wrap the page in `WithFolderBar` (`@/features/folders/with-folder-bar`) and place `<FolderBarSlot />` at the top of the table's `CardContent`, outside the `Suspense` that waits for table data. If the page renders the card itself, put `<SharedFolderSlot folderType=… />` straight into `CardContent`
 - **Route-driven accordions** for the channels/integrations settings lists: each row is a real nested route (`settings/channels/<channel>`, `settings/integrations/<slug>`) rendered through the shared `RouteAccordionShell` (`@/components/route-accordion-shell`) with `prefetch={false}`, so only the active row's server/client graph loads — do NOT convert these back to slots or eager panels
 - **Workspace layout** at `space/[workspaceId]/layout.tsx`: auth, sidebar, workspace context
 - Server layouts: auth checks, data loading

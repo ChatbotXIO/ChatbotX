@@ -2589,6 +2589,18 @@
     "capiConfigId": {
       "label": "Conversions API Config ID",
       "description": "Embedded Signup configuration ID used to request the whatsapp_business_manage_events permission when connecting the Conversions API."
+    },
+    "outboundAutomatedResponse": {
+      "label": "Page Keyword"
+    },
+    "fbComment": {
+      "label": "Facebook Comment Automation"
+    },
+    "igComment": {
+      "label": "Instagram Comment Automation"
+    },
+    "igStory": {
+      "label": "Instagram Story Automation"
     }
   },
   "metaConversions": {
@@ -3586,9 +3598,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "Folders"
-    }
+    "rootOption": "-- Root --",
+    "showMore": "+{count}",
+    "showLess": "Show less",
+    "root": "Root",
+    "viewingFolder": "Viewing folder: {name}"
   },
   "gemini": {
     "autoReply": {

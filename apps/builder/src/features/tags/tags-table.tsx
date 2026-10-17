@@ -2,6 +2,7 @@
 
 import type { TagModel } from "@chatbotx.io/database/types"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
+import { DataTableSkeleton } from "@chatbotx.io/ui/components/data-table/data-table-skeleton"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import {
   Card,
@@ -12,9 +13,10 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useTranslations } from "next-intl"
-import React, { useMemo } from "react"
+import React, { Suspense, useMemo } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
+import { FolderBarSlot } from "@/features/folders/folder-bar-slot"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { CreateTagDialog } from "./create-tag-dialog"
 import { DeleteTagsDialog } from "./delete-tag-dialog"
@@ -30,7 +32,7 @@ type TagsTableProps = {
   folderId: string | null
 }
 
-export function TagsTable({ promises, workspaceId, folderId }: TagsTableProps) {
+function TagsTableContent({ promises, workspaceId, folderId }: TagsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<TagModel> | null>(null)
@@ -68,45 +70,56 @@ export function TagsTable({ promises, workspaceId, folderId }: TagsTableProps) {
   })
 
   return (
+    <>
+      <DataTable table={table}>
+        <DataTableToolbar table={table}>
+          <TagsTableToolbarActions table={table} workspaceId={workspaceId} />
+          <CreateTagDialog folderId={folderId} workspaceId={workspaceId} />
+        </DataTableToolbar>
+      </DataTable>
+
+      <DeleteTagsDialog
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        open={rowAction?.variant === "delete"}
+        showTrigger={false}
+        tags={rowAction?.row.original ? [rowAction?.row.original] : []}
+        workspaceId={workspaceId}
+      />
+
+      <UpdateTagDialog
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "update"}
+        tag={rowAction?.row.original || null}
+        workspaceId={workspaceId}
+      />
+
+      <ChangeFolderDialog
+        currentFolderId={rowAction?.row.original?.folderId || null}
+        folderType="tag"
+        modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={invalidateTags}
+        open={rowAction?.variant === "move"}
+        workspaceId={workspaceId}
+      />
+    </>
+  )
+}
+
+export function TagsTable(props: TagsTableProps) {
+  const t = useTranslations()
+
+  return (
     <Card>
       <CardHeader>
         <CardTitle className="font-bold text-xl">{t("tags.title")}</CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <TagsTableToolbarActions table={table} workspaceId={workspaceId} />
-            <CreateTagDialog folderId={folderId} workspaceId={workspaceId} />
-          </DataTableToolbar>
-        </DataTable>
-
-        <DeleteTagsDialog
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => rowAction?.row.toggleSelected(false)}
-          open={rowAction?.variant === "delete"}
-          showTrigger={false}
-          tags={rowAction?.row.original ? [rowAction?.row.original] : []}
-          workspaceId={workspaceId}
-        />
-
-        <UpdateTagDialog
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "update"}
-          tag={rowAction?.row.original || null}
-          workspaceId={workspaceId}
-        />
-
-        <ChangeFolderDialog
-          currentFolderId={rowAction?.row.original?.folderId || null}
-          folderType="tag"
-          modelIds={
-            rowAction?.row.original ? [rowAction?.row.original.id] : null
-          }
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={invalidateTags}
-          open={rowAction?.variant === "move"}
-          workspaceId={workspaceId}
-        />
+        <FolderBarSlot />
+        <Suspense fallback={<DataTableSkeleton columnCount={5} />}>
+          <TagsTableContent {...props} />
+        </Suspense>
       </CardContent>
     </Card>
   )

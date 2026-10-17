@@ -2401,6 +2401,18 @@
     "capiConfigId": {
       "label": "Conversions API Config ID",
       "description": "ID konfigurasi Embedded Signup yang digunakan untuk meminta izin whatsapp_business_manage_events saat menghubungkan Conversions API."
+    },
+    "outboundAutomatedResponse": {
+      "label": "Kata kunci halaman"
+    },
+    "fbComment": {
+      "label": "Otomatisasi komentar Facebook"
+    },
+    "igComment": {
+      "label": "Otomatisasi komentar Instagram"
+    },
+    "igStory": {
+      "label": "Otomatisasi story Instagram"
     }
   },
   "flows": {
@@ -2758,9 +2770,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "Folder"
-    }
+    "rootOption": "-- Root --",
+    "showMore": "+{count}",
+    "showLess": "Tampilkan lebih sedikit",
+    "root": "Root",
+    "viewingFolder": "Melihat folder: {name}"
   },
   "gemini": {
     "autoReply": {

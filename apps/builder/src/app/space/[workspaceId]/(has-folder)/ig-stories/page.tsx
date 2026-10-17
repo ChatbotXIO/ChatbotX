@@ -1,3 +1,4 @@
+import { folderTypes } from "@chatbotx.io/database/partials"
 import {
   Card,
   CardContent,
@@ -8,6 +9,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
+import SharedFolderSlot from "@/features/folders/shared-folder-slot"
 import { IgStoriesTable } from "@/features/ig-stories/ig-stories-table"
 import { listIgStories } from "@/features/ig-stories/queries"
 import {
@@ -44,6 +46,11 @@ export default async function IgStoriesPage(props: {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <SharedFolderSlot
+          folderType={folderTypes.enum.igStory}
+          searchParams={props.searchParams}
+          workspaceId={workspaceId}
+        />
         <IgStoriesTable promises={promises} workspaceId={workspaceId} />
       </CardContent>
     </Card>

@@ -73,7 +73,6 @@ describe("page-automated-responses route guards", () => {
     await expect(
       PageAutomatedResponsesFolderableLayout({
         children: null,
-        folders: null,
         params: Promise.resolve({ workspaceId: "ws-1" }),
       }),
     ).resolves.toBeDefined()
@@ -106,7 +105,6 @@ describe("page-automated-responses route guards", () => {
     await expect(
       PageAutomatedResponsesFolderableLayout({
         children: null,
-        folders: null,
         params: Promise.resolve({ workspaceId: "ws-1" }),
       }),
     ).rejects.toThrow("not found")

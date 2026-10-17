@@ -1,3 +1,4 @@
+import { folderTypes } from "@chatbotx.io/database/partials"
 import {
   Card,
   CardContent,
@@ -8,6 +9,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
+import SharedFolderSlot from "@/features/folders/shared-folder-slot"
 import { listSequences } from "@/features/sequences/queries"
 import { listSequencesSearchParamsCache } from "@/features/sequences/schema/action"
 import { SequencesTable } from "@/features/sequences/sequences-table"
@@ -43,6 +45,11 @@ export default async function SequencesPage(props: {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <SharedFolderSlot
+          folderType={folderTypes.enum.sequence}
+          searchParams={props.searchParams}
+          workspaceId={workspaceId}
+        />
         <SequencesTable promises={promises} workspaceId={workspaceId} />
       </CardContent>
     </Card>

@@ -1,112 +1,41 @@
-import {
-  type FolderType,
-  folderTypes,
-  rootFolderId,
-} from "@chatbotx.io/database/partials"
+import { type FolderType, rootFolderId } from "@chatbotx.io/database/partials"
 import type { FolderModel } from "@chatbotx.io/database/types"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
-import { notFound } from "next/navigation"
-import { getTranslations } from "next-intl/server"
+import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, listFolders } from "@/features/folders/queries"
 import { listFoldersSearchParams } from "@/features/folders/schema/query"
-import { getOriginUrlFromHeader } from "@/lib/domain"
 
 export default async function SharedFolderSlot(props: {
+  folderType: FolderType
   workspaceId: string
   searchParams: Promise<SearchParams>
 }) {
-  const t = await getTranslations()
-
-  const originUrl = await getOriginUrlFromHeader()
-  const currentUrl = new URL(originUrl)
-  const featureName = currentUrl.pathname.split("/").pop()
-
-  let folderType: FolderType | null = null
-  switch (featureName) {
-    case "automated-responses":
-      folderType = folderTypes.enum.automatedResponse
-      break
-    case "page-automated-responses":
-      folderType = folderTypes.enum.outboundAutomatedResponse
-      break
-    case "sequences":
-      folderType = folderTypes.enum.sequence
-      break
-    case "flows":
-      folderType = folderTypes.enum.flow
-      break
-    case "custom-fields":
-      folderType = folderTypes.enum.customField
-      break
-    case "tags":
-      folderType = folderTypes.enum.tag
-      break
-    case "triggers":
-      folderType = folderTypes.enum.trigger
-      break
-    case "webhooks":
-      folderType = folderTypes.enum.webhook
-      break
-    case "email-topics":
-      folderType = folderTypes.enum.emailTopic
-      break
-    case "fb-comments":
-      folderType = folderTypes.enum.fbComment
-      break
-    case "ig-comments":
-      folderType = folderTypes.enum.igComment
-      break
-    case "ig-stories":
-      folderType = folderTypes.enum.igStory
-      break
-    default:
-      break
-  }
-  if (!folderType) {
-    return notFound()
-  }
-
+  const { folderType, workspaceId } = props
   const searchParams = await props.searchParams
   const { folderId } = await listFoldersSearchParams.parse(searchParams)
 
   const promises = Promise.all([
     folderId
-      ? getCurrentFolder({
-          id: folderId,
-          workspaceId: props.workspaceId,
-        })
+      ? getCurrentFolder({ id: folderId, workspaceId })
       : Promise.resolve({ folder: null, parents: [] as FolderModel[] }),
     listFolders({
-      workspaceId: props.workspaceId,
+      workspaceId,
       folderType,
       folderId: folderId ?? rootFolderId,
     }),
   ])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-bold text-xl">
-          {t("folders.heading.title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Suspense>
-          <ListFolders
-            folderType={folderType}
-            promises={promises}
-            workspaceId={props.workspaceId}
-          />
-        </Suspense>
-      </CardContent>
-    </Card>
+    <Suspense fallback={<Skeleton className="mb-4 h-8 w-full" />}>
+      <ListFolders
+        folderType={folderType}
+        // Remount per folder so per-level UI state (show more) starts collapsed.
+        key={folderId ?? rootFolderId}
+        promises={promises}
+        workspaceId={workspaceId}
+      />
+    </Suspense>
   )
 }

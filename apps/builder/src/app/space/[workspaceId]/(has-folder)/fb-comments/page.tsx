@@ -1,3 +1,4 @@
+import { folderTypes } from "@chatbotx.io/database/partials"
 import {
   Card,
   CardContent,
@@ -11,6 +12,7 @@ import type { SearchParams } from "nuqs/server"
 import { FbCommentsTable } from "@/features/fb-comments/fb-comments-table"
 import { listFbComments } from "@/features/fb-comments/queries"
 import { listFbCommentsSearchParamsCache } from "@/features/fb-comments/schema/action"
+import SharedFolderSlot from "@/features/folders/shared-folder-slot"
 
 export default async function FbCommentsPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -35,6 +37,11 @@ export default async function FbCommentsPage(props: {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <SharedFolderSlot
+          folderType={folderTypes.enum.fbComment}
+          searchParams={props.searchParams}
+          workspaceId={workspaceId}
+        />
         <FbCommentsTable promises={promises} workspaceId={workspaceId} />
       </CardContent>
     </Card>

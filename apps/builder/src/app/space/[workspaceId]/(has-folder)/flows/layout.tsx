@@ -8,10 +8,8 @@ import { useWorkspaceId } from "@/hooks/routing"
 
 export default function FolderableLayout({
   children,
-  folders,
 }: {
   children: ReactNode
-  folders: ReactNode
 }) {
   const t = useTranslations()
 
@@ -51,7 +49,6 @@ export default function FolderableLayout({
           },
         ]}
       />
-      {folders}
       {children}
     </FolderStoreProvider>
   )

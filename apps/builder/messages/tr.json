@@ -2547,6 +2547,18 @@
     "capiConfigId": {
       "label": "Conversions API Config ID",
       "description": "Conversions API bağlanırken whatsapp_business_manage_events iznini istemek için kullanılan Embedded Signup yapılandırma kimliği."
+    },
+    "outboundAutomatedResponse": {
+      "label": "Sayfa anahtar kelimesi"
+    },
+    "fbComment": {
+      "label": "Facebook yorum otomasyonu"
+    },
+    "igComment": {
+      "label": "Instagram yorum otomasyonu"
+    },
+    "igStory": {
+      "label": "Instagram hikaye otomasyonu"
     }
   },
   "flows": {
@@ -2904,9 +2916,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "Klasörler"
-    }
+    "rootOption": "-- Kök --",
+    "showMore": "+{count}",
+    "showLess": "Daha az göster",
+    "root": "Kök",
+    "viewingFolder": "Görüntülenen klasör: {name}"
   },
   "gemini": {
     "autoReply": {

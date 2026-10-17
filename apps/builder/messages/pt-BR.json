@@ -2401,6 +2401,18 @@
     "capiConfigId": {
       "label": "Config ID da Conversions API",
       "description": "ID de configuração do Embedded Signup usado para solicitar a permissão whatsapp_business_manage_events ao conectar a Conversions API."
+    },
+    "outboundAutomatedResponse": {
+      "label": "Palavra-chave da página"
+    },
+    "fbComment": {
+      "label": "Automação de comentários do Facebook"
+    },
+    "igComment": {
+      "label": "Automação de comentários do Instagram"
+    },
+    "igStory": {
+      "label": "Automação de stories do Instagram"
     }
   },
   "flows": {
@@ -2758,9 +2770,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "Pastas"
-    }
+    "rootOption": "-- Raiz --",
+    "showMore": "+{count}",
+    "showLess": "Mostrar menos",
+    "root": "Raiz",
+    "viewingFolder": "Visualizando pasta: {name}"
   },
   "gemini": {
     "autoReply": {
