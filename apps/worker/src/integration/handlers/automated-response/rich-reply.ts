@@ -58,6 +58,8 @@ export async function handleRichAIReply({
       "[automated-response] processStreamingText threw error",
     )
     await emitStreamFailureAnalytics({
+      channel: props.contactInbox.channel,
+      inboxId: props.contactInbox.inboxId,
       conversationId: conversation.id,
       messageId: props.triggerMessageId,
       modelId,
@@ -147,6 +149,8 @@ export async function handleRichAIReply({
       eventType: "message:bot_received",
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
+      channel: props.contactInbox.channel,
+      inboxId: props.contactInbox.inboxId,
       messageId: executionId,
       occurredAt: new Date(),
       hasResponse: true,
@@ -189,7 +193,9 @@ async function appendAssistantHistory(
 }
 
 async function emitStreamFailureAnalytics(input: {
+  channel: string
   conversationId: string
+  inboxId: string
   messageId?: string
   modelId: string
   provider: ReplyAIProvider
@@ -204,6 +210,8 @@ async function emitStreamFailureAnalytics(input: {
     eventType: "message:bot_received",
     workspaceId: input.workspaceId,
     conversationId: input.conversationId,
+    channel: input.channel,
+    inboxId: input.inboxId,
     messageId: input.messageId,
     occurredAt: new Date(),
     hasResponse: false,

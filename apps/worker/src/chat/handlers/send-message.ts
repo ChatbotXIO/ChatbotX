@@ -444,6 +444,21 @@ export async function sendMessageToChannel(
           triggerType: "message_bot_sent_channel",
         },
       })
+    } else if (message.senderType === "user" && message.senderId) {
+      // A workspace member's message from the inbox composer. `api` and
+      // `system` senders are not human agents and stay out of agent stats.
+      await emitHumanMessageSentEvents({
+        workspaceId: conversation.workspaceId,
+        contactInbox,
+        result,
+        trigger: {
+          triggerHandler: "sendMessageToChannel",
+          triggerType: "message_human_sent_channel",
+        },
+        adminId: message.senderId,
+        messageId: message.id,
+        occurredAt: new Date(message.createdAt),
+      })
     }
 
     return result
@@ -470,6 +485,7 @@ export async function sendMessageToChannel(
         conversationId: conversation.id,
         channel: contactInbox.channel,
         contactInboxId: contactInbox.id,
+        inboxId: contactInbox.inboxId,
         sourceId: contactInbox.sourceId,
       },
       action: {
@@ -802,35 +818,55 @@ export type BotSentTrigger = {
   triggerType: string
 }
 
+type SentEventContactInbox = Pick<
+  ContactInboxModel,
+  "contactId" | "channel" | "inboxId" | "source" | "sourceId"
+>
+
+type SentEventSender =
+  | { kind: "bot" }
+  | {
+      kind: "human"
+      adminId: string
+      /**
+       * Persisted outgoing message: gives each sent part a stable identity, so
+       * a re-run job hits the same row. Without it the stream id is used.
+       */
+      messageId?: string
+      /** The message's own timestamp, so a re-run lands on the same row. */
+      occurredAt: Date
+    }
+
 /**
- * Fires after the channel has already accepted the send — a rejection here
- * must never propagate into the caller's catch block, or a delivered message
- * gets recorded as failed and BullMQ redelivers it, sending it twice.
+ * Emits one `message:*_sent` analytics event per sent part. Runs after the
+ * channel has already accepted the send — a rejection here must never
+ * propagate into the caller's catch block, or a delivered message gets
+ * recorded as failed and BullMQ redelivers it, sending it twice.
+ *
+ * Human events carry a logical id (`<messageId>:<part index>`) and the
+ * message's own timestamp: a re-executed job gets a new Redis stream id, so
+ * stream-id dedup alone would count the same message twice.
  */
-export async function emitBotMessageSentEvents(input: {
+async function emitMessageSentEvents(input: {
   workspaceId: string
-  contactInbox: Pick<
-    ContactInboxModel,
-    "contactId" | "channel" | "source" | "sourceId"
-  >
+  contactInbox: SentEventContactInbox
   result: OutgoingSendResult
   trigger: BotSentTrigger
+  sender: SentEventSender
 }) {
-  const { workspaceId, contactInbox, result, trigger } = input
+  const { workspaceId, contactInbox, result, trigger, sender } = input
   const { sentCount, messageIds } = result
 
   try {
     await Promise.all(
-      Array.from({ length: sentCount }, (_, index) =>
-        emit("analytics:dashboard", {
-          eventType: "message:bot_sent",
+      Array.from({ length: sentCount }, (_, index) => {
+        const base = {
           workspaceId,
           contactId: contactInbox.contactId,
-          senderType: "bot",
-          occurredAt: new Date(),
           source: contactInbox.source,
           sourceId: contactInbox.sourceId,
           channel: contactInbox.channel,
+          inboxId: contactInbox.inboxId,
           metadata: {
             triggerContext: {
               triggerSource: "worker",
@@ -847,15 +883,58 @@ export async function emitBotMessageSentEvents(input: {
                 }
               : {}),
           },
-        }),
-      ),
+        }
+        return sender.kind === "human"
+          ? emit("analytics:dashboard", {
+              ...base,
+              eventType: "message:human_sent",
+              senderType: "human",
+              adminId: sender.adminId,
+              ...(sender.messageId
+                ? { eventId: `${sender.messageId}:${index}` }
+                : {}),
+              occurredAt: sender.occurredAt,
+            })
+          : emit("analytics:dashboard", {
+              ...base,
+              eventType: "message:bot_sent",
+              senderType: "bot",
+              occurredAt: new Date(),
+            })
+      }),
     )
   } catch (err) {
     logger.error(
       { err, workspaceId, contactId: contactInbox.contactId, sentCount },
-      "Failed to emit bot-sent analytics after a successful send",
+      "Failed to emit sent analytics after a successful send",
     )
   }
+}
+
+export function emitBotMessageSentEvents(input: {
+  workspaceId: string
+  contactInbox: SentEventContactInbox
+  result: OutgoingSendResult
+  trigger: BotSentTrigger
+}) {
+  return emitMessageSentEvents({ ...input, sender: { kind: "bot" } })
+}
+
+/** A human agent's send (inbox composer, agent-initiated template). */
+export function emitHumanMessageSentEvents(input: {
+  workspaceId: string
+  contactInbox: SentEventContactInbox
+  result: OutgoingSendResult
+  trigger: BotSentTrigger
+  adminId: string
+  messageId?: string
+  occurredAt: Date
+}) {
+  const { adminId, messageId, occurredAt, ...rest } = input
+  return emitMessageSentEvents({
+    ...rest,
+    sender: { kind: "human", adminId, messageId, occurredAt },
+  })
 }
 
 export async function sendFlowStepToChannel({
@@ -873,6 +952,7 @@ export async function sendFlowStepToChannel({
   sendFrom,
   commentAnchor,
   botSentAnalytics,
+  humanSender,
   isTemplateMessage = false,
 }: {
   conversation: ConversationModel
@@ -890,6 +970,8 @@ export async function sendFlowStepToChannel({
   sendFrom?: "inbox"
   commentAnchor?: CommentAnchor
   botSentAnalytics: BotSentTrigger
+  /** Set when a workspace member triggered the send (see `ProcessWhatsappTemplateParams`). */
+  humanSender?: { adminId: string; occurredAt: Date }
   /**
    * True only for a WhatsApp template send, which any responder may make and
    * which never changes thread ownership. Everything else is a Service send.
@@ -981,12 +1063,25 @@ export async function sendFlowStepToChannel({
     dispatchedAt,
   })
 
-  await emitBotMessageSentEvents({
-    workspaceId: conversation.workspaceId,
-    contactInbox,
-    result,
-    trigger: botSentAnalytics,
-  })
+  // A member's send is always a human message, even without a persisted id.
+  if (humanSender) {
+    await emitHumanMessageSentEvents({
+      workspaceId: conversation.workspaceId,
+      contactInbox,
+      result,
+      trigger: botSentAnalytics,
+      adminId: humanSender.adminId,
+      messageId,
+      occurredAt: humanSender.occurredAt,
+    })
+  } else {
+    await emitBotMessageSentEvents({
+      workspaceId: conversation.workspaceId,
+      contactInbox,
+      result,
+      trigger: botSentAnalytics,
+    })
+  }
 
   return result
 }

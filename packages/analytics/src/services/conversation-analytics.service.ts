@@ -8,7 +8,7 @@ import type {
   ConversationAssignedStats,
   ConversationFollowUpStats,
   ConversationHandoffStats,
-  TimeRangeQuery,
+  FilteredTimeRangeQuery,
   UniqueConversationsByAdminStats,
 } from "../schemas"
 import type { ConversationEventType } from "../schemas/conversation-event"
@@ -21,36 +21,38 @@ export class ConversationAnalyticsService {
     return conversationStatsRepository.insertEvents(payloads, eventType)
   }
 
-  getHandoffsByDay(props: TimeRangeQuery): Promise<ConversationHandoffStats[]> {
+  getHandoffsByDay(
+    props: FilteredTimeRangeQuery,
+  ): Promise<ConversationHandoffStats[]> {
     return conversationStatsRepository.getHandoffsByDay(props)
   }
 
   getFollowUpsByDay(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ConversationFollowUpStats[]> {
     return conversationStatsRepository.getFollowUpsByDay(props)
   }
 
   getArchivedByDay(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ConversationArchivedStats[]> {
     return conversationStatsRepository.getArchivedByDay(props)
   }
 
   getAssignedByDay(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ConversationAssignedStats[]> {
     return conversationStatsRepository.getAssignedByDay(props)
   }
 
   getAssignedByAdmin(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ConversationAssignedByAdminStats[]> {
     return conversationStatsRepository.getAssignedByAdmin(props)
   }
 
   getUniqueConversationsByAdmin(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<UniqueConversationsByAdminStats[]> {
     return conversationStatsRepository.getUniqueConversationsByAdmin(props)
   }

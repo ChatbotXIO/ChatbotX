@@ -1,6 +1,8 @@
 import { ConversationsDashboard } from "@chatbotx.io/analytics-nextjs/components/conversations-dashboard"
+import { inboxService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
+import { AnalyticsChannelFilter } from "@/features/analytics/components/analytics-channel-filter"
 import { AnalyticsNav } from "@/features/analytics/components/analytics-nav"
 import { resolveAdsDashboardChannels } from "@/features/analytics/lib/ads-dashboard-channels"
 import { resolveGoogleAdsDashboardEntry } from "@/features/analytics/lib/google-ads-dashboard-entry"
@@ -36,14 +38,16 @@ export default async function ConversationsAnalyticsPage({
     userAndWorkspace.targetWorkspaceMember.permissions,
     "superAdmin",
   )
-  const [adsChannels, showGoogleAds] = await Promise.all([
+  const [adsChannels, showGoogleAds, filterInboxes] = await Promise.all([
     resolveAdsDashboardChannels({ workspaceId, isSuperAdmin }),
     resolveGoogleAdsDashboardEntry({ workspaceId, isSuperAdmin }),
+    inboxService.listAnalyticsFilterOptions(workspaceId),
   ])
 
   return (
     <div className="flex flex-col gap-4">
       <ConversationsDashboard
+        channelFilter={<AnalyticsChannelFilter options={filterInboxes} />}
         defaultSearchParams={{
           workspaceId,
           timezone,

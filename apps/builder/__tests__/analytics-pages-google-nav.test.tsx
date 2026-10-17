@@ -9,6 +9,14 @@ const mocks = vi.hoisted(() => ({
   resolveEntry: vi.fn(async () => true),
   channels: vi.fn(async () => ["whatsapp"]),
   permissions: vi.fn(() => true),
+  filterOptions: vi.fn(async () => []),
+}))
+
+vi.mock("@chatbotx.io/business", () => ({
+  inboxService: { listAnalyticsFilterOptions: mocks.filterOptions },
+}))
+vi.mock("@/features/analytics/components/analytics-channel-filter", () => ({
+  AnalyticsChannelFilter: () => null,
 }))
 
 vi.mock("next/navigation", () => ({

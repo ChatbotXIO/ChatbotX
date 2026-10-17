@@ -129,4 +129,44 @@ describe("HandoffExecutorService", () => {
       expect.stringContaining("cancel quick reply"),
     )
   })
+
+  test("attributes the event to the channel and inbox the caller knows", async () => {
+    const { HandoffExecutorService } = await import(
+      "../src/trigger/services/handoff-executor.service"
+    )
+
+    await new HandoffExecutorService().execute({
+      channel: "whatsapp",
+      contactId: "contact-1",
+      conversationId: "conv-1",
+      inboxId: "inbox-7",
+      reason: "needs_human",
+      source: "ai_system_tool",
+      workspaceId: "ws-1",
+    })
+
+    expect(emitSpy).toHaveBeenCalledWith(
+      "analytics:dashboard",
+      expect.objectContaining({ channel: "whatsapp", inboxId: "inbox-7" }),
+    )
+  })
+
+  test("never invents a channel when the caller does not know one", async () => {
+    const { HandoffExecutorService } = await import(
+      "../src/trigger/services/handoff-executor.service"
+    )
+
+    await new HandoffExecutorService().execute({
+      contactId: "contact-1",
+      conversationId: "conv-1",
+      reason: "needs_human",
+      source: "ai_system_tool",
+      workspaceId: "ws-1",
+    })
+
+    const [, payload] =
+      emitSpy.mock.calls.find(([type]) => type === "analytics:dashboard") ?? []
+    expect(payload.channel).toBeUndefined()
+    expect(payload.inboxId).toBeUndefined()
+  })
 })

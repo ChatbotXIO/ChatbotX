@@ -459,6 +459,8 @@ describe("replyByAI — rich mode routing", () => {
         messageId: baseProps.triggerMessageId,
         result: "success",
         routeType: "agent",
+        channel: "webchat",
+        inboxId: "channel-inbox-1",
       }),
     )
   })

@@ -283,6 +283,10 @@ export const receiveMessage = async (
   quickReplyAction: string | null
   ref?: string | null
   channelType: "instagram" | "instagramFacebook"
+  /** The inbox the message arrived on, for analytics attribution. */
+  inboxId: string
+  /** That inbox's real channel (`channelType` above is an Instagram-flavored legacy value). */
+  inboxChannel: string
   /** True for a standby (listen-only) delivery: the caller must run no automation. */
   suppressAutomation: boolean
   /**
@@ -861,6 +865,8 @@ export const receiveMessage = async (
     quickReplyAction,
     ref,
     channelType,
+    inboxId: inbox.id,
+    inboxChannel: inbox.channel,
     suppressAutomation,
     standbyCopy,
   }
@@ -2546,6 +2552,8 @@ const createNewContactAndContactInbox = async (props: {
       source: contactInbox.source,
       sourceId: contactInbox.sourceId,
       channel: contactInbox.channel,
+      inboxId: contactInbox.inboxId,
+      language: normalizeLanguage(contactInbox.language) ?? null,
       metadata: {
         triggerContext: {
           triggerSource: "worker",

@@ -5,7 +5,7 @@ import { AllContactsByChannelChart } from "./charts/all-contacts-by-channel-char
 import { BlockedContactsChart } from "./charts/blocked-contacts-chart"
 import { ContactCountsChart } from "./charts/contact-counts-chart"
 import { ContactsByChannelChart } from "./charts/contacts-by-channel-chart"
-import { ContactsByCountryChart } from "./charts/contacts-by-country-chart"
+import { ContactsByLanguageChart } from "./charts/contacts-by-language-chart"
 import { ContactsBySourceChart } from "./charts/contacts-by-source-chart"
 import { NewContactCountsChart } from "./charts/new-contact-counts-chart"
 import { DashboardPanel } from "./dashboard-panel"
@@ -16,11 +16,14 @@ export function ContactsDashboard({
   defaultSearchParams,
   workspaceCreatedAt,
   nav,
+  channelFilter,
 }: {
   defaultSearchParams: AnalysisStoreProviderProps["defaultSearchParams"]
   workspaceCreatedAt?: Date
   /** Optional side navigation, rendered one row below the filter bar. */
   nav?: ReactNode
+  /** Optional Channel / Inbox filter row, rendered below the date range row. */
+  channelFilter?: ReactNode
 }) {
   return (
     <AnalysisStoreProvider
@@ -31,6 +34,7 @@ export function ContactsDashboard({
         defaultPreset="last7"
         workspaceCreatedAt={workspaceCreatedAt}
       />
+      {channelFilter}
 
       <div className="flex flex-col gap-4 md:flex-row md:gap-6">
         {nav}
@@ -53,8 +57,8 @@ export function ContactsDashboard({
             <DashboardPanel action="getContactsBySource">
               <ContactsBySourceChart />
             </DashboardPanel>
-            <DashboardPanel action="getContactsByCountry">
-              <ContactsByCountryChart />
+            <DashboardPanel action="getContactsByLanguage">
+              <ContactsByLanguageChart />
             </DashboardPanel>
             <DashboardPanel action="getBlockedContactCounts">
               <BlockedContactsChart />

@@ -45,6 +45,8 @@ type HandoffReentryOutcome =
 
 type HandoffReentryOutcomeContext = {
   agentId?: string
+  channel?: string
+  inboxId?: string
   conversationId: string
   contactId: string
   messageId: string
@@ -98,6 +100,8 @@ async function completeOutcome(
     eventType: "message:bot_received",
     workspaceId: input.workspaceId,
     conversationId: input.conversationId,
+    channel: input.channel,
+    inboxId: input.inboxId,
     messageId: input.messageId,
     occurredAt: new Date(),
     hasResponse: false,
@@ -130,12 +134,18 @@ export async function processHandoffReentry(
       conversationId: props.conversationId,
       contactInboxId: props.contactInboxId,
     })
+  // Analytics attribution of every outcome event below.
+  const attribution = {
+    channel: contactInbox.channel,
+    inboxId: contactInbox.inboxId,
+  }
 
   const workspace = await workspaceService.findById({
     id: conversation.workspaceId,
   })
   if (!workspaceService.isActiveNow(workspace)) {
     await completeOutcome({
+      ...attribution,
       conversationId: conversation.id,
       contactId: conversation.contactId,
       messageId: props.messageId,
@@ -167,6 +177,7 @@ export async function processHandoffReentry(
       })
       if (triggerMessage?.senderType !== "contact" || !triggerMessage.text) {
         await completeOutcome({
+          ...attribution,
           conversationId: conversation.id,
           contactId: conversation.contactId,
           messageId: props.messageId,
@@ -190,6 +201,7 @@ export async function processHandoffReentry(
       if (!currentConversation || currentConversation.botEnabled) {
         await forwardTriggerMessage()
         await completeOutcome({
+          ...attribution,
           conversationId: conversation.id,
           contactId: conversation.contactId,
           messageId: props.messageId,
@@ -202,6 +214,7 @@ export async function processHandoffReentry(
       const aiAgent = await aiAgentService.findDefault(conversation.workspaceId)
       if (!aiAgent) {
         await completeOutcome({
+          ...attribution,
           conversationId: conversation.id,
           contactId: conversation.contactId,
           messageId: props.messageId,
@@ -228,6 +241,7 @@ export async function processHandoffReentry(
       const rules = parsedRules.success ? eligibleRules(parsedRules.data) : []
       if (rules.length === 0) {
         await completeOutcome({
+          ...attribution,
           agentId: aiAgent.id,
           conversationId: conversation.id,
           contactId: conversation.contactId,
@@ -299,6 +313,7 @@ export async function processHandoffReentry(
             )
           if (!(selectedRule && evidenceIsValid)) {
             await completeOutcome({
+              ...attribution,
               agentId: aiAgent.id,
               conversationId: conversation.id,
               contactId: conversation.contactId,
@@ -316,6 +331,7 @@ export async function processHandoffReentry(
           const actionTool = createAIAgentActionsTool({
             context: {
               channel: contactInbox.channel,
+              inboxId: contactInbox.inboxId,
               contactId: conversation.contactId,
               contactInboxId: contactInbox.id,
               conversationId: conversation.id,
@@ -351,6 +367,7 @@ export async function processHandoffReentry(
             await forwardTriggerMessage()
           }
           await completeOutcome({
+            ...attribution,
             agentId: aiAgent.id,
             conversationId: conversation.id,
             contactId: conversation.contactId,
@@ -379,6 +396,7 @@ export async function processHandoffReentry(
       }
 
       await completeOutcome({
+        ...attribution,
         agentId: aiAgent.id,
         conversationId: conversation.id,
         contactId: conversation.contactId,

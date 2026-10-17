@@ -489,7 +489,7 @@
     "messagesSentByHumanOrBot": "真人客服／机器人发送的消息",
     "newContacts": "新联系人",
     "newContactsByChannel": "依频道分类的新联系人",
-    "newContactsByCountry": "依国家／地区分类的新联系人",
+    "newContactsByLanguage": "按语言统计的新联系人",
     "newContactsBySource": "依来源分类的新联系人",
     "noData": "无数据",
     "errorLogRetentionNotice": "仅保留最近 {days} 天的错误日志。",
@@ -524,7 +524,19 @@
     "message": "消息",
     "searchByDate": "按日期搜索...",
     "publicReply": "公开回复",
-    "privateReply": "私信回复"
+    "privateReply": "私信回复",
+    "filters": {
+      "allChannels": "所有渠道",
+      "allInboxes": "所有收件箱",
+      "searchPlaceholder": "搜索...",
+      "empty": "未找到结果。",
+      "clear": "清除",
+      "close": "关闭",
+      "options": "可用选项",
+      "remove": "移除",
+      "filterHint": "筛选只统计添加筛选功能后记录的事件：较早的事件没有收件箱，较早的机器人和对话事件也没有渠道。“全部”始终统计所有数据。",
+      "tooManyInboxes": "最多选择 {max} 个收件箱，或勾选全部。"
+    }
   },
   "appointmentScheduling": {
     "description": "创建并管理您的预约安排。",

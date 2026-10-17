@@ -30,6 +30,7 @@ export const analyticsMessageEventModel = pgTable(
     senderType: analyticsContactSenderTypeEnum(),
     adminId: bigintAsString(),
     channel: text(),
+    inboxId: bigintAsString(),
     source: text(),
     sourceId: text(),
     metadata: jsonb(),

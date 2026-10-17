@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   sendFlowStep: vi.fn(),
   sendMessageToChannel: vi.fn(),
   sendTypingToChannel: vi.fn(),
+  sendWhatsappTemplateToConversation: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/automated-response", () => ({
@@ -35,6 +36,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
       sendFlowMessage: "sendFlowMessage",
       sendChatMessage: "sendChatMessage",
       sendWhatsappTemplateMessage: "sendWhatsappTemplateMessage",
+      sendWhatsappTemplateToConversation: "sendWhatsappTemplateToConversation",
       sendMessengerTemplateMessage: "sendMessengerTemplateMessage",
       sendTyping: "sendTyping",
       notifyExportResult: "notifyExportResult",
@@ -102,6 +104,7 @@ vi.mock("../src/chat/handlers/send-messenger-template", () => ({
 }))
 vi.mock("../src/chat/handlers/send-whatsapp-template", () => ({
   sendWhatsappTemplateMessage: vi.fn(),
+  sendWhatsappTemplateToConversation: mocks.sendWhatsappTemplateToConversation,
 }))
 
 beforeAll(async () => {
@@ -208,5 +211,40 @@ describe("chat worker bot message quota gate", () => {
         source: "chat:sendFlowMessage",
       }),
     )
+  })
+
+  describe("single-conversation WhatsApp template", () => {
+    const templateJob = (extra: Record<string, unknown>) => ({
+      id: "job-1",
+      attemptsMade: 0,
+      opts: { attempts: 1 },
+      data: {
+        type: "sendWhatsappTemplateToConversation",
+        data: { conversation: {}, contactInbox: {}, templateId: "t", ...extra },
+      },
+    })
+
+    test("a member-initiated send is a human message: not gated by the bot quota", async () => {
+      mocks.isBotMessageQuotaReached.mockResolvedValue(true)
+
+      await mocks.processJob?.(
+        templateJob({ initiatedBy: "user", adminId: "admin-1" }),
+      )
+
+      expect(mocks.isBotMessageQuotaReached).not.toHaveBeenCalled()
+      expect(mocks.sendWhatsappTemplateToConversation).toHaveBeenCalledOnce()
+    })
+
+    test.each([
+      ["a public API send", { initiatedBy: "api" }],
+      ["a job queued before the origin existed", {}],
+      ["a user origin without a member", { initiatedBy: "user" }],
+    ])("%s is still gated by the bot quota", async (_name, extra) => {
+      mocks.isBotMessageQuotaReached.mockResolvedValue(true)
+
+      await mocks.processJob?.(templateJob(extra))
+
+      expect(mocks.sendWhatsappTemplateToConversation).not.toHaveBeenCalled()
+    })
   })
 })

@@ -191,6 +191,8 @@ async function startIntegrationWorker() {
                 quickReplyAction,
                 conversation,
                 channelType,
+                inboxId,
+                inboxChannel,
                 suppressAutomation,
               } = received
 
@@ -289,6 +291,8 @@ async function startIntegrationWorker() {
                   eventType: "message:bot_received",
                   workspaceId: message.workspaceId,
                   conversationId: message.conversationId,
+                  channel: inboxChannel,
+                  inboxId,
                   messageId: message.id,
                   occurredAt: new Date(),
                   hasResponse: false,

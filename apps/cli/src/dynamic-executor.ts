@@ -1,8 +1,25 @@
 import { printResult } from "./commands/utils"
 import type { DynamicTool } from "./openapi-loader"
 
-function buildQueryString(params: Record<string, string>): string {
-  const qs = new URLSearchParams(params).toString()
+/** A CLI argument: one value, or the values of a repeated array flag. */
+export type CliParamValue = string | string[]
+
+/**
+ * Array members use the indexed bracket form (`channels[0]=a&channels[1]=b`),
+ * the same encoding the MCP server sends and the builder's oRPC decodes.
+ */
+function buildQueryString(params: Record<string, CliParamValue>): string {
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (Array.isArray(value)) {
+      for (const [index, item] of value.entries()) {
+        search.append(`${key}[${index}]`, item)
+      }
+      continue
+    }
+    search.append(key, value)
+  }
+  const qs = search.toString()
   return qs ? `?${qs}` : ""
 }
 
@@ -10,20 +27,20 @@ const NO_BODY_METHODS = new Set(["GET", "HEAD"])
 
 export async function executeDynamicCommand(
   tool: DynamicTool,
-  params: Record<string, string>,
+  params: Record<string, CliParamValue>,
   config: { apiKey: string; apiUrl: string },
 ): Promise<void> {
   let path = tool.pathTemplate
 
   for (const paramName of tool.pathParamNames) {
     const value = params[paramName]
-    if (!value) {
+    if (!value || Array.isArray(value)) {
       throw new Error(`Missing required path parameter: ${paramName}`)
     }
     path = path.replace(`{${paramName}}`, encodeURIComponent(value))
   }
 
-  const queryArgs: Record<string, string> = {}
+  const queryArgs: Record<string, CliParamValue> = {}
   for (const key of tool.queryParamNames) {
     const value = params[key]
     if (value !== undefined) {
@@ -34,7 +51,7 @@ export async function executeDynamicCommand(
   const body: Record<string, unknown> = {}
   for (const key of tool.bodyParamNames) {
     const value = params[key]
-    if (value !== undefined) {
+    if (typeof value === "string") {
       const propSchema = tool.inputSchema.properties[key] as
         | { type?: string }
         | undefined

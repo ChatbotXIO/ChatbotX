@@ -469,7 +469,7 @@ describe("analysis store", () => {
         allContactsByChannel: [
           { dimension: "channel:total", uniqueContacts: 7 },
         ],
-        contactsByCountry: [{ dimension: "country", uniqueContacts: 7 }],
+        contactsByLanguage: [{ dimension: "language", uniqueContacts: 7 }],
         contactsBySource: [{ dimension: "source", uniqueContacts: 7 }],
         loading: false,
       })
@@ -727,7 +727,7 @@ describe("analysis store", () => {
       )
       expect(api.contactsByDimensionAnalyticsAPI).toHaveBeenNthCalledWith(
         4,
-        expect.objectContaining({ dimension: "country" }),
+        expect.objectContaining({ dimension: "language" }),
       )
 
       totalContacts.resolve({ data: { count: 4 } })
@@ -1103,6 +1103,196 @@ describe("analysis store", () => {
       expect(api.commentAutomationErrors).toHaveBeenLastCalledWith(
         expect.objectContaining({ keyword: undefined }),
       )
+    })
+  })
+
+  describe("channel / integration filters", () => {
+    const stubDashboard = () => {
+      for (const key of [
+        "contactCountsPerDayAnalyticsAPI",
+        "newContactCountsPerDayAnalyticsAPI",
+        "blockedContactsPerDayAnalyticsAPI",
+        "contactsByDimensionAnalyticsAPI",
+        "botMessagesByResultAnalyticsAPI",
+        "messagesBySenderAnalyticsAPI",
+        "conversationHandoffsAnalyticsAPI",
+        "conversationFollowUpsAnalyticsAPI",
+        "conversationArchivedAnalyticsAPI",
+        "conversationAssignedAnalyticsAPI",
+        "conversationAssignedByAdminAnalyticsAPI",
+        "uniqueConversationsByAdminAnalyticsAPI",
+        "messagesByAdminAnalyticsAPI",
+        "humanAgentStatsAnalyticsAPI",
+      ] as const) {
+        ;(api[key] as ReturnType<typeof vi.fn>).mockResolvedValue({ data: [] })
+      }
+      for (const key of [
+        "contactsCountAnalyticsAPI",
+        "newContactsCountAnalyticsAPI",
+        "activeContactsCountAnalyticsAPI",
+      ] as const) {
+        ;(api[key] as ReturnType<typeof vi.fn>).mockResolvedValue({
+          data: { count: 0 },
+        })
+      }
+    }
+
+    const createStore = (type: "contacts" | "conversations") =>
+      createAnalysisStore({
+        api,
+        type,
+        defaultSearchParams: baseSearchParams,
+        from,
+        to,
+      })
+
+    test("starts with All: no filter keys are sent", async () => {
+      stubDashboard()
+      const store = createStore("contacts")
+
+      await store.getState().initialize()
+
+      expect(store.getState()).toMatchObject({ channels: [], inboxIds: [] })
+      for (const [params] of (
+        api.contactCountsPerDayAnalyticsAPI as ReturnType<typeof vi.fn>
+      ).mock.calls) {
+        expect(params).not.toHaveProperty("channels")
+        expect(params).not.toHaveProperty("inboxIds")
+      }
+    })
+
+    test("setFilters commits channels and inboxes together and reloads every contacts dataset once", async () => {
+      stubDashboard()
+      const store = createStore("contacts")
+      await store.getState().initialize()
+      vi.mocked(api.contactCountsPerDayAnalyticsAPI).mockClear()
+      vi.mocked(api.contactsCountAnalyticsAPI).mockClear()
+
+      await store
+        .getState()
+        .setFilters({ channels: ["messenger"], inboxIds: ["7"] })
+
+      expect(store.getState()).toMatchObject({
+        channels: ["messenger"],
+        inboxIds: ["7"],
+      })
+      expect(api.contactCountsPerDayAnalyticsAPI).toHaveBeenCalledTimes(1)
+      expect(api.contactCountsPerDayAnalyticsAPI).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceId: "ws-1",
+          from: from.toISOString(),
+          to: to.toISOString(),
+          channels: ["messenger"],
+          inboxIds: ["7"],
+        }),
+      )
+      expect(api.contactsCountAnalyticsAPI).toHaveBeenCalledWith(
+        expect.objectContaining({ channels: ["messenger"], inboxIds: ["7"] }),
+      )
+    })
+
+    test("filters reach the language and channel breakdowns", async () => {
+      stubDashboard()
+      const store = createStore("contacts")
+
+      await store
+        .getState()
+        .setFilters({ channels: ["whatsapp"], inboxIds: [] })
+
+      const calls = vi.mocked(api.contactsByDimensionAnalyticsAPI).mock.calls
+      expect(calls.map(([params]) => params.dimension).sort()).toEqual([
+        "channel",
+        "channel",
+        "language",
+        "source",
+      ])
+      for (const [params] of calls) {
+        expect(params).toMatchObject({ channels: ["whatsapp"] })
+        expect(params).not.toHaveProperty("inboxIds")
+      }
+    })
+
+    test("conversations datasets honor the filters too", async () => {
+      stubDashboard()
+      const store = createStore("conversations")
+
+      await store.getState().setFilters({ channels: [], inboxIds: ["3"] })
+
+      expect(api.humanAgentStatsAnalyticsAPI).toHaveBeenCalledWith(
+        expect.objectContaining({ inboxIds: ["3"] }),
+      )
+      expect(api.botMessagesByResultAnalyticsAPI).toHaveBeenCalledWith(
+        expect.objectContaining({ inboxIds: ["3"] }),
+      )
+    })
+
+    test("returning to All stops sending filters", async () => {
+      stubDashboard()
+      const store = createStore("contacts")
+      await store
+        .getState()
+        .setFilters({ channels: ["messenger"], inboxIds: ["7"] })
+      vi.mocked(api.contactCountsPerDayAnalyticsAPI).mockClear()
+
+      await store.getState().setFilters({ channels: [], inboxIds: [] })
+
+      const [params] = vi.mocked(api.contactCountsPerDayAnalyticsAPI).mock
+        .calls[0] ?? [{}]
+      expect(params).not.toHaveProperty("channels")
+      expect(params).not.toHaveProperty("inboxIds")
+    })
+
+    test("a stale response from the previous filter never overwrites the new one", async () => {
+      stubDashboard()
+      let resolveStale: (value: unknown) => void = () => undefined
+      vi.mocked(api.contactCountsPerDayAnalyticsAPI).mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveStale = resolve
+          }),
+      )
+      const store = createStore("contacts")
+      const stale = store.getState().initialize()
+      await Promise.resolve()
+
+      vi.mocked(api.contactCountsPerDayAnalyticsAPI).mockResolvedValue({
+        data: [{ date: "2026-08-01", count: 9 }],
+      })
+      await store
+        .getState()
+        .setFilters({ channels: ["telegram"], inboxIds: [] })
+      resolveStale({ data: [{ date: "2026-08-01", count: 1 }] })
+      await stale
+
+      expect(store.getState().contactCounts).toEqual([
+        { date: "2026-08-01", count: 9 },
+      ])
+    })
+
+    test("reflink requests never carry the filters", async () => {
+      ;(api.refLinkStats as ReturnType<typeof vi.fn>).mockResolvedValue({
+        data: [],
+      })
+      const store = createAnalysisStore({
+        api,
+        type: "reflinks",
+        defaultSearchParams: {
+          ...baseSearchParams,
+          linkId: "l-1",
+          timezone: "UTC",
+        },
+        from,
+        to,
+      })
+      await store
+        .getState()
+        .setFilters({ channels: ["messenger"], inboxIds: ["7"] })
+
+      await store.getState().getRefLinkStats()
+
+      const [params] = vi.mocked(api.refLinkStats).mock.calls.at(-1) ?? [{}]
+      expect(params).not.toHaveProperty("channels")
+      expect(params).not.toHaveProperty("inboxIds")
     })
   })
 })

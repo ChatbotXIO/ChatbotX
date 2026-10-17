@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   conversationFindMany: vi.fn(),
   conversationFindFirst: vi.fn(),
+  latestAttribution: vi.fn(),
   updateSet: vi.fn(),
   updateWhere: vi.fn(),
   updateReturning: vi.fn(),
@@ -88,6 +89,9 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  contactInboxRepository: {
+    listLatestAnalyticsAttribution: mocks.latestAttribution,
+  },
   createMessageRepository: mocks.createMessageRepository,
   getSafeSinceTime: mocks.getSafeSinceTime,
   assignUserIfUnassigned: mocks.assignUserIfUnassigned,
@@ -176,6 +180,8 @@ const { notificationQueue } = await import("@chatbotx.io/worker-config")
 const WORKSPACE_ID = "ws-1"
 
 beforeEach(() => {
+  mocks.latestAttribution.mockReset()
+  mocks.latestAttribution.mockResolvedValue([])
   mocks.conversationFindMany.mockReset()
   mocks.conversationFindFirst.mockReset()
   mocks.updateSet.mockReset()
@@ -1215,5 +1221,108 @@ describe("ConversationService.updateBotEnabled quick-reply follow-up cancel", ()
       expect.objectContaining({ tx: savepoint }),
     )
     expect(invalidateCacheByTags).toHaveBeenCalled()
+  })
+})
+
+describe("ConversationService analytics attribution", () => {
+  const handoff = (conversations: { id: string; contactId: string }[]) =>
+    conversationService.enableBotState({
+      workspaceId: WORKSPACE_ID,
+      conversations,
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "test",
+        triggerType: "test",
+      },
+    })
+
+  const dashboardPayloads = () =>
+    vi
+      .mocked(emit)
+      .mock.calls.filter(([type]) => type === "analytics:dashboard")
+      .map(([, payload]) => payload as Record<string, unknown>)
+
+  beforeEach(() => {
+    vi.mocked(emit).mockClear()
+  })
+
+  test("looks the contacts' latest inboxes up once per call, deduped and workspace-scoped", async () => {
+    await handoff([
+      { id: "cv1", contactId: "c1" },
+      { id: "cv2", contactId: "c1" },
+      { id: "cv3", contactId: "c2" },
+    ])
+
+    expect(mocks.latestAttribution).toHaveBeenCalledExactlyOnceWith({
+      workspaceId: WORKSPACE_ID,
+      contactIds: ["c1", "c2"],
+    })
+  })
+
+  test("stamps channel and inbox on every event, and leaves unmatched contacts unattributed", async () => {
+    mocks.latestAttribution.mockResolvedValue([
+      { contactId: "c1", inboxId: "7", channel: "messenger" },
+    ])
+
+    await handoff([
+      { id: "cv1", contactId: "c1" },
+      { id: "cv3", contactId: "c2" },
+    ])
+
+    const [attributed, unattributed] = dashboardPayloads()
+    expect(attributed).toMatchObject({
+      conversationId: "cv1",
+      channel: "messenger",
+      inboxId: "7",
+    })
+    expect(unattributed?.channel).toBeUndefined()
+    expect(unattributed?.inboxId).toBeUndefined()
+  })
+
+  test("a follow inside a caller's transaction never reads on that transaction", async () => {
+    // A failed read inside a Postgres transaction would abort the caller's own
+    // commit, so the lookup goes through the repository's default client.
+    mocks.latestAttribution.mockResolvedValue([
+      { contactId: "c1", inboxId: "7", channel: "messenger" },
+    ])
+    const tx = {
+      update: () => ({ set: () => ({ where: vi.fn() }) }),
+    }
+
+    await conversationService.updateFollowed({
+      workspaceId: WORKSPACE_ID,
+      id: "cv1",
+      contactId: "c1",
+      followed: false,
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "test",
+        triggerType: "test",
+      },
+      tx: tx as never,
+    })
+
+    expect(mocks.latestAttribution).toHaveBeenCalledExactlyOnceWith({
+      workspaceId: WORKSPACE_ID,
+      contactIds: ["c1"],
+    })
+    expect(dashboardPayloads()[0]).toMatchObject({
+      eventType: "conversation:unfollowed",
+      channel: "messenger",
+      inboxId: "7",
+    })
+  })
+
+  test("a failed attribution lookup still emits the event, unattributed, and never fails the handoff", async () => {
+    mocks.latestAttribution.mockRejectedValue(new Error("db down"))
+
+    await expect(
+      handoff([{ id: "cv1", contactId: "c1" }]),
+    ).resolves.toBeUndefined()
+
+    const [payload] = dashboardPayloads()
+    expect(payload).toMatchObject({ conversationId: "cv1" })
+    expect(payload?.channel).toBeUndefined()
+    expect(payload?.inboxId).toBeUndefined()
   })
 })

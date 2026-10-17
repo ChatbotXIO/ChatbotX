@@ -3,10 +3,10 @@ import {
   messageStatsRepository,
 } from "../repositories/postgres"
 import type {
+  FilteredTimeRangeQuery,
   HumanAgentStats,
   MessagesByAdminStats,
   MessagesBySenderStats,
-  TimeRangeQuery,
   UniqueContactsByAdminStats,
 } from "../schemas"
 import type { MessageEventType, MessageStats } from "../schemas/message-event"
@@ -20,40 +20,44 @@ export class MessageAnalyticsService {
   }
 
   getStatsByMinute(
-    props: TimeRangeQuery & { eventTypes?: MessageEventType[] },
+    props: FilteredTimeRangeQuery & { eventTypes?: MessageEventType[] },
   ): Promise<MessageStats[]> {
     return messageStatsRepository.getStatsByMinute(props)
   }
 
   getStatsByHour(
-    props: TimeRangeQuery & { eventTypes?: MessageEventType[] },
+    props: FilteredTimeRangeQuery & { eventTypes?: MessageEventType[] },
   ): Promise<MessageStats[]> {
     return messageStatsRepository.getStatsByHour(props)
   }
 
   getStatsByDay(
-    props: TimeRangeQuery & { eventTypes?: MessageEventType[] },
+    props: FilteredTimeRangeQuery & { eventTypes?: MessageEventType[] },
   ): Promise<MessageStats[]> {
     return messageStatsRepository.getStatsByDay(props)
   }
 
   getMessagesBySender(
-    props: TimeRangeQuery & { granularity?: "day" | "month" },
+    props: FilteredTimeRangeQuery & { granularity?: "day" | "month" },
   ): Promise<MessagesBySenderStats[]> {
     return messageStatsRepository.getMessagesBySender(props)
   }
 
-  getMessagesByAdmin(props: TimeRangeQuery): Promise<MessagesByAdminStats[]> {
+  getMessagesByAdmin(
+    props: FilteredTimeRangeQuery,
+  ): Promise<MessagesByAdminStats[]> {
     return messageStatsRepository.getMessagesByAdmin(props)
   }
 
   getUniqueContactsByAdmin(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<UniqueContactsByAdminStats[]> {
     return messageStatsRepository.getUniqueContactsByAdmin(props)
   }
 
-  getHumanAgentStats(props: TimeRangeQuery): Promise<HumanAgentStats[]> {
+  getHumanAgentStats(
+    props: FilteredTimeRangeQuery,
+  ): Promise<HumanAgentStats[]> {
     return messageStatsRepository.getHumanAgentStats(props)
   }
 }

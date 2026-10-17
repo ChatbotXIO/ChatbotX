@@ -301,7 +301,7 @@
     "messagesSentByHumanOrBot": "Meddelanden skickade av människa/bot",
     "newContacts": "Nya kontakter",
     "newContactsByChannel": "Nya kontakter per kanal",
-    "newContactsByCountry": "Nya kontakter per land",
+    "newContactsByLanguage": "Nya kontakter efter språk",
     "newContactsBySource": "Nya kontakter per källa",
     "noData": "Inga data",
     "errorLogRetentionNotice": "Endast felloggar från de senaste {days} dagarna sparas.",
@@ -336,7 +336,19 @@
     "message": "Meddelande",
     "searchByDate": "Sök efter datum...",
     "publicReply": "Offentligt svar",
-    "privateReply": "Privat svar"
+    "privateReply": "Privat svar",
+    "filters": {
+      "allChannels": "Alla kanaler",
+      "allInboxes": "Alla inkorgar",
+      "searchPlaceholder": "Sök...",
+      "empty": "Inga resultat hittades.",
+      "clear": "Rensa",
+      "close": "Stäng",
+      "options": "Tillgängliga alternativ",
+      "remove": "Ta bort",
+      "filterHint": "Filter räknar bara händelser som registrerats efter att filtrering lades till: äldre händelser saknar inkorg, och äldre bot- och konversationshändelser saknar även kanal. Alla räknar alltid allt.",
+      "tooManyInboxes": "Välj högst {max} inkorgar, eller markera Alla."
+    }
   },
   "appointmentScheduling": {
     "description": "Skapa och hantera din tidsbokning.",

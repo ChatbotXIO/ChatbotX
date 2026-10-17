@@ -1,14 +1,14 @@
 import {
   botMessageAnalyticsService,
   messageAnalyticsService,
-  timeRangeQueryWithGranularityMHDSchema,
+  timeRangeQueryWithGranularityMHDFilterSchema,
 } from "@chatbotx.io/analytics"
 import {
   getBotMessagesAIProvidersResponseSchema,
   getMessagesBySenderStatsResponseSchema,
   getMessagesStatsResponseSchema,
-  timeRangeQuerySchema,
-  timeRangeQueryWithGranularityDMSchema,
+  timeRangeQueryWithFilterSchema,
+  timeRangeQueryWithGranularityDMFilterSchema,
 } from "@chatbotx.io/analytics/schemas"
 import { os } from "@orpc/server"
 import { logger } from "../lib/log"
@@ -21,7 +21,7 @@ export const analyticsMessageRoutes = os.router({
       summary: "Get bot messages by result",
       tags: ["Analytics"],
     })
-    .input(timeRangeQueryWithGranularityMHDSchema)
+    .input(timeRangeQueryWithGranularityMHDFilterSchema)
     .output(getMessagesStatsResponseSchema)
     .handler(async ({ input }) => {
       try {
@@ -40,7 +40,7 @@ export const analyticsMessageRoutes = os.router({
       summary: "Get bot messages with response",
       tags: ["Analytics"],
     })
-    .input(timeRangeQueryWithGranularityMHDSchema)
+    .input(timeRangeQueryWithGranularityMHDFilterSchema)
     .output(getMessagesStatsResponseSchema)
     .handler(async ({ input }) => {
       try {
@@ -63,7 +63,7 @@ export const analyticsMessageRoutes = os.router({
       summary: "Get bot messages with no response",
       tags: ["Analytics"],
     })
-    .input(timeRangeQueryWithGranularityMHDSchema)
+    .input(timeRangeQueryWithGranularityMHDFilterSchema)
     .output(getMessagesStatsResponseSchema)
     .handler(async ({ input }) => {
       try {
@@ -83,7 +83,7 @@ export const analyticsMessageRoutes = os.router({
       summary: "Get bot messages AI providers",
       tags: ["Analytics"],
     })
-    .input(timeRangeQuerySchema)
+    .input(timeRangeQueryWithFilterSchema)
     .output(getBotMessagesAIProvidersResponseSchema)
     .handler(async ({ input }) => {
       try {
@@ -105,7 +105,7 @@ export const analyticsMessageRoutes = os.router({
       summary: "Get messages by sender",
       tags: ["Analytics"],
     })
-    .input(timeRangeQueryWithGranularityDMSchema)
+    .input(timeRangeQueryWithGranularityDMFilterSchema)
     .output(getMessagesBySenderStatsResponseSchema)
     .handler(async ({ input }) => {
       try {

@@ -17,11 +17,16 @@ import {
   contactActiveHourlyModel,
   contactActiveMonthlyModel,
   contactInboxModel,
+  inboxModel,
   workspaceMacModel,
   workspaceModel,
 } from "@chatbotx.io/database/schema"
 import { logger } from "../../lib/logger"
 import { anchoredPeriod } from "../../lib/mac-period"
+import {
+  type AnalyticsFilter,
+  normalizeAnalyticsFilters,
+} from "../../schemas/common"
 
 export type WorkspaceCounterRow = {
   workspaceMacId: string
@@ -335,9 +340,10 @@ export class MacRepository {
   }
 
   async countActiveContactsByWorkspace(
-    input: { workspaceId: string; from: Date; to: Date },
+    input: { workspaceId: string; from: Date; to: Date } & AnalyticsFilter,
     client: DatabaseClient = db,
   ): Promise<number> {
+    const { channels, inboxIds } = normalizeAnalyticsFilters(input)
     const [row] = await client
       .select({ value: countDistinct(contactActiveHourlyModel.contactId) })
       .from(contactActiveHourlyModel)
@@ -346,6 +352,25 @@ export class MacRepository {
           eq(contactActiveHourlyModel.workspaceId, input.workspaceId),
           gte(contactActiveHourlyModel.hourBucket, input.from),
           lte(contactActiveHourlyModel.hourBucket, input.to),
+          inboxIds.length > 0
+            ? inArray(contactActiveHourlyModel.inboxId, inboxIds)
+            : undefined,
+          // A subquery (not a join) so unfiltered reads keep counting rows of
+          // deleted inboxes; the channel is only resolved when filtered on.
+          channels.length > 0
+            ? inArray(
+                contactActiveHourlyModel.inboxId,
+                client
+                  .select({ id: inboxModel.id })
+                  .from(inboxModel)
+                  .where(
+                    and(
+                      eq(inboxModel.workspaceId, input.workspaceId),
+                      inArray(inboxModel.channel, channels),
+                    ),
+                  ),
+              )
+            : undefined,
         ),
       )
 

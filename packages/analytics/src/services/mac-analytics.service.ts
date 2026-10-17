@@ -3,6 +3,7 @@ import { distributedStore } from "@chatbotx.io/redis"
 import { logger } from "../lib/logger"
 import { calcEndOfDayTtl, workspaceMacCacheKey } from "../lib/mac-period"
 import { macRepository } from "../repositories/postgres/mac.repository"
+import type { AnalyticsFilter } from "../schemas/common"
 import type { ReconcilePeriodInput } from "../schemas/mac"
 
 async function readOrPopulate(
@@ -47,11 +48,13 @@ export class MacAnalyticsService {
     )
   }
 
-  getActiveContactsByWorkspaceForRange(input: {
-    workspaceId: string
-    from: Date
-    to: Date
-  }): Promise<number> {
+  getActiveContactsByWorkspaceForRange(
+    input: {
+      workspaceId: string
+      from: Date
+      to: Date
+    } & AnalyticsFilter,
+  ): Promise<number> {
     return macRepository.countActiveContactsByWorkspace(input)
   }
 

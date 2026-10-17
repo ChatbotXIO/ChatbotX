@@ -12,8 +12,9 @@ import type {
   ContactStats,
   ContactsByDimension,
   ContactsByDimensionQuery,
-  TimeRangeQuery,
+  FilteredTimeRangeQuery,
 } from "../schemas"
+import { analyticsFilterCacheKey } from "../schemas/common"
 import type { ContactEventType } from "../schemas/contact-event"
 
 const USER_BLOCKED_CATEGORY = "user_blocked"
@@ -28,7 +29,7 @@ export class ContactAnalyticsService {
   }
 
   getStatsByMinute(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       eventTypes?: ContactEventType[]
     },
   ): Promise<ContactStats[]> {
@@ -36,7 +37,7 @@ export class ContactAnalyticsService {
   }
 
   getStatsByHour(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       eventTypes?: ContactEventType[]
     },
   ): Promise<ContactStats[]> {
@@ -44,7 +45,7 @@ export class ContactAnalyticsService {
   }
 
   getStatsByDay(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       eventTypes?: ContactEventType[]
     },
   ): Promise<ContactStats[]> {
@@ -52,30 +53,32 @@ export class ContactAnalyticsService {
   }
 
   getContactCountsPerDay(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ContactCountsSchema[]> {
     return contactStatsRepository.getContactCountsPerDay(props)
   }
 
-  getNewContactsPerDay(props: TimeRangeQuery): Promise<ContactCountsSchema[]> {
+  getNewContactsPerDay(
+    props: FilteredTimeRangeQuery,
+  ): Promise<ContactCountsSchema[]> {
     return contactStatsRepository.getNewContactsPerDay(props)
   }
 
-  getNewContactsCount(props: TimeRangeQuery): Promise<number> {
+  getNewContactsCount(props: FilteredTimeRangeQuery): Promise<number> {
     return contactStatsRepository.getNewContactsCount(props)
   }
 
   getBlockedContactsPerDay(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<ContactCountsSchema[]> {
     return contactStatsRepository.getBlockedContactsPerDay(props)
   }
 
-  getBlockedContactsCount(props: TimeRangeQuery): Promise<number> {
+  getBlockedContactsCount(props: FilteredTimeRangeQuery): Promise<number> {
     return contactStatsRepository.getBlockedContactsCount(props)
   }
 
-  getContactsCount(props: TimeRangeQuery): Promise<number> {
+  getContactsCount(props: FilteredTimeRangeQuery): Promise<number> {
     return contactStatsRepository.getContactsCount(props)
   }
 
@@ -89,7 +92,7 @@ export class ContactAnalyticsService {
     // only metric cached. `from` and the timezone do not affect it and stay out
     // of the key; short TTL, no tags, a handful of rows per entry.
     return withCache(
-      `analytics:contacts-by-dimension:total:${props.workspaceId}:${props.dimension}:${props.to.toISOString()}`,
+      `analytics:contacts-by-dimension:total:${props.workspaceId}:${props.dimension}:${props.to.toISOString()}:${analyticsFilterCacheKey(props)}`,
       () => contactStatsRepository.getContactsByDimension(props),
       { ttl: TOTAL_CONTACTS_CACHE_TTL_SECONDS },
     )
@@ -117,6 +120,7 @@ export class ContactAnalyticsService {
         contactId,
         occurredAt: toDate(payload.occurredAt),
         channel: payload.context.channel,
+        inboxId: payload.context.inboxId,
         metadata: {
           triggerContext: {
             triggerSource: "worker",

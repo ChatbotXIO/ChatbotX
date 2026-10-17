@@ -44,6 +44,16 @@ const botSendActions = new Set<ChatJobData["type"]>([
 ])
 
 function isBotSendJob(data: ChatJobData): boolean {
+  // A template a workspace member sends from the inbox is recorded as a human
+  // message, so it neither counts toward nor is blocked by the bot quota.
+  if (
+    data.type === ChatJobAction.sendWhatsappTemplateToConversation &&
+    data.data.initiatedBy === "user" &&
+    data.data.adminId
+  ) {
+    return false
+  }
+
   if (botSendActions.has(data.type)) {
     return true
   }

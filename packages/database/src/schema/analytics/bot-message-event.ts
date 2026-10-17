@@ -47,6 +47,7 @@ export const analyticsBotMessageEventModel = pgTable(
     result: analyticsBotResultEnum(),
     aiProvider: text(),
     channel: text(),
+    inboxId: bigintAsString(),
     source: text(),
     metadata: jsonb(),
     insertedAt: timestamp(timestampConfig).defaultNow().notNull(),

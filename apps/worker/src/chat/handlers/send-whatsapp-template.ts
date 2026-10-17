@@ -95,6 +95,11 @@ export interface ProcessWhatsappTemplateParams {
     versionId?: string
     buttons: SendWaTemplateMessageStepSchema["buttons"]
   }
+  /**
+   * Set when a workspace member triggered this send: the sent analytics are
+   * then recorded as a human agent message instead of a bot message.
+   */
+  humanSender?: { adminId: string }
   isBulkBroadcast?: boolean
   metadata?: MetadataPayload
   step?: SendWaTemplateMessageStepSchema
@@ -189,6 +194,7 @@ export async function processWhatsappTemplate(
     metadata,
     isBulkBroadcast,
     willRetryOnThrow = false,
+    humanSender,
   } = params
   const isBulkOutbound = isBulkOutboundMetadata(
     metadata,
@@ -354,7 +360,13 @@ export async function processWhatsappTemplate(
       isTemplateMessage: true,
       botSentAnalytics: {
         triggerHandler: "processWhatsappTemplate",
-        triggerType: "message_bot_sent_whatsapp_template",
+        triggerType: humanSender
+          ? "message_human_sent_whatsapp_template"
+          : "message_bot_sent_whatsapp_template",
+      },
+      humanSender: humanSender && {
+        ...humanSender,
+        occurredAt: createdMessage.createdAt,
       },
     })
 
@@ -563,8 +575,15 @@ export async function sendWhatsappTemplateToConversation(
   data: ChatJobSendWhatsappTemplateToConversation["data"],
   willRetryOnThrow = false,
 ): Promise<ProcessWhatsappTemplateResult | undefined> {
-  const { conversation, contactInbox, templateId, templateData, metadata } =
-    data
+  const {
+    conversation,
+    contactInbox,
+    templateId,
+    templateData,
+    metadata,
+    initiatedBy,
+    adminId,
+  } = data
 
   try {
     const validated = await validateWhatsappTemplate(
@@ -593,6 +612,7 @@ export async function sendWhatsappTemplateToConversation(
         params: templateParams,
       },
       metadata,
+      humanSender: initiatedBy === "user" && adminId ? { adminId } : undefined,
     })
   } catch (error) {
     logger.error(

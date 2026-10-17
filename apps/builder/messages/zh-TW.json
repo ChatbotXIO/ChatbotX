@@ -2030,7 +2030,7 @@
     "blockedConversationsHelp": "您的帳戶封鎖的對話。",
     "blockedContacts": "已封鎖的聯絡人",
     "blockedContactsHelp": "不希望再接收您帳號訊息的聯絡人",
-    "newContactsByCountry": "依國家／地區分類的新聯絡人",
+    "newContactsByLanguage": "依語言統計的新聯絡人",
     "date": "日期",
     "total": "總計",
     "messagesSent": "已傳送訊息",
@@ -2061,7 +2061,19 @@
     "message": "訊息",
     "searchByDate": "依日期搜尋...",
     "publicReply": "公開回覆",
-    "privateReply": "私訊回覆"
+    "privateReply": "私訊回覆",
+    "filters": {
+      "allChannels": "所有管道",
+      "allInboxes": "所有收件匣",
+      "searchPlaceholder": "搜尋...",
+      "empty": "找不到結果。",
+      "clear": "清除",
+      "close": "關閉",
+      "options": "可用選項",
+      "remove": "移除",
+      "filterHint": "篩選只統計新增篩選功能後記錄的事件：較早的事件沒有收件匣，較早的機器人與對話事件也沒有管道。「全部」一律統計所有資料。",
+      "tooManyInboxes": "最多選擇 {max} 個收件匣，或勾選全部。"
+    }
   },
   "flowAnalytics": {
     "nodes": {

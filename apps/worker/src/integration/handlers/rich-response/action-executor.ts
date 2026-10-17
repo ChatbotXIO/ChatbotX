@@ -157,6 +157,7 @@ async function executeRichAction(
         reason: "user_requested_human",
         source: "ai_system_tool",
         channel: context.channel,
+        inboxId: context.inboxId,
       })
       return
     case "assign_conversation": {

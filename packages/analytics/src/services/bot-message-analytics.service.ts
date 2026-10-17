@@ -5,7 +5,7 @@ import {
 import type {
   BotMessageAIProviderStats,
   BotMessageStats,
-  TimeRangeQuery,
+  FilteredTimeRangeQuery,
 } from "../schemas"
 
 export class BotMessageAnalyticsService {
@@ -14,7 +14,7 @@ export class BotMessageAnalyticsService {
   }
 
   getMessagesByResult(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       granularity: "minute" | "hour" | "day"
     },
   ): Promise<BotMessageStats[]> {
@@ -22,7 +22,7 @@ export class BotMessageAnalyticsService {
   }
 
   getMessagesWithNoResponse(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       granularity: "minute" | "hour" | "day"
     },
   ): Promise<BotMessageStats[]> {
@@ -30,7 +30,7 @@ export class BotMessageAnalyticsService {
   }
 
   getMessagesWithResponse(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       granularity: "minute" | "hour" | "day"
     },
   ): Promise<BotMessageStats[]> {
@@ -38,7 +38,7 @@ export class BotMessageAnalyticsService {
   }
 
   getAIProviderStats(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<BotMessageAIProviderStats[]> {
     return botMessageStatsRepository.getAIProviderStats(props)
   }

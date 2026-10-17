@@ -249,7 +249,7 @@
     "blockedConversationsHelp": "Percakapan yang diblokir oleh akun Anda.",
     "blockedContacts": "Kontak yang diblokir",
     "blockedContactsHelp": "Kontak yang tidak ingin menerima pesan dari akun Anda",
-    "newContactsByCountry": "Kontak baru berdasarkan negara",
+    "newContactsByLanguage": "Kontak baru menurut bahasa",
     "date": "Tanggal",
     "total": "Total",
     "messagesSent": "Pesan Terkirim",
@@ -280,7 +280,19 @@
     "message": "Pesan",
     "searchByDate": "Cari berdasarkan tanggal...",
     "publicReply": "Balasan publik",
-    "privateReply": "Balasan pribadi"
+    "privateReply": "Balasan pribadi",
+    "filters": {
+      "allChannels": "Semua saluran",
+      "allInboxes": "Semua kotak masuk",
+      "searchPlaceholder": "Cari...",
+      "empty": "Hasil tidak ditemukan.",
+      "clear": "Hapus",
+      "close": "Tutup",
+      "options": "Opsi tersedia",
+      "remove": "Hapus",
+      "filterHint": "Filter hanya menghitung peristiwa yang dicatat setelah pemfilteran ditambahkan: peristiwa lama tidak memiliki kotak masuk, dan peristiwa bot serta percakapan lama juga tidak memiliki saluran. Semua selalu menghitung semuanya.",
+      "tooManyInboxes": "Pilih maksimal {max} kotak masuk, atau centang Semua."
+    }
   },
   "flowAnalytics": {
     "nodes": {

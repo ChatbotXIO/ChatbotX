@@ -291,7 +291,7 @@
     "blockedConversationsHelp": "Conversations that your account blocked.",
     "blockedContacts": "Blocked contacts",
     "blockedContactsHelp": "Contacts don't want to receive messages from your account",
-    "newContactsByCountry": "New contacts by country",
+    "newContactsByLanguage": "New contacts by language",
     "date": "Date",
     "total": "Total",
     "messagesSent": "Messages Sent",
@@ -322,7 +322,19 @@
     "message": "Message",
     "searchByDate": "Search by date...",
     "publicReply": "Public reply",
-    "privateReply": "Private reply"
+    "privateReply": "Private reply",
+    "filters": {
+      "allChannels": "All channels",
+      "allInboxes": "All inboxes",
+      "searchPlaceholder": "Search...",
+      "empty": "No results found.",
+      "clear": "Clear",
+      "close": "Close",
+      "options": "Available options",
+      "remove": "Remove",
+      "filterHint": "Filters only count events recorded after filtering was added: older events have no inbox, and older bot and conversation events have no channel either. All always counts everything.",
+      "tooManyInboxes": "Pick at most {max} inboxes, or tick All."
+    }
   },
   "flowAnalytics": {
     "nodes": {

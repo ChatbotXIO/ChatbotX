@@ -52,6 +52,7 @@ describe("sendWhatsappTemplateToConversation", () => {
         workspaceId: "1",
         conversationId: "1",
         request: { ...request, inboxId: "5" },
+        sender: { initiatedBy: "api" },
       }),
     ).rejects.toThrow("no WhatsApp inbox")
     expect(mocks.queueAdd).not.toHaveBeenCalled()
@@ -68,6 +69,7 @@ describe("sendWhatsappTemplateToConversation", () => {
       workspaceId: "1",
       conversationId: "1",
       request,
+      sender: { initiatedBy: "api" },
     })
 
     expect(mocks.queueAdd.mock.calls[0][1].data.contactInbox.id).toBe("w-new")
@@ -84,6 +86,7 @@ describe("sendWhatsappTemplateToConversation", () => {
         workspaceId: "1",
         conversationId: "1",
         request,
+        sender: { initiatedBy: "api" },
       }),
     ).rejects.toThrow("Inbox not found")
     expect(mocks.queueAdd).not.toHaveBeenCalled()
@@ -99,8 +102,46 @@ describe("sendWhatsappTemplateToConversation", () => {
       workspaceId: "1",
       conversationId: "1",
       request: { ...request, inboxId: "7" },
+      sender: { initiatedBy: "api" },
     })
     expect(mocks.queueAdd).toHaveBeenCalledTimes(1)
+  })
+
+  test("a signed-in member's send carries the member as the origin", async () => {
+    mocks.resolveContactInbox.mockResolvedValue({
+      id: "w",
+      channel: "whatsapp",
+    })
+
+    await sendWhatsappTemplateToConversation({
+      workspaceId: "1",
+      conversationId: "1",
+      request: { ...request, inboxId: "7" },
+      sender: { initiatedBy: "user", adminId: "admin-9" },
+    })
+
+    expect(mocks.queueAdd.mock.calls[0][1].data).toMatchObject({
+      initiatedBy: "user",
+      adminId: "admin-9",
+    })
+  })
+
+  test("a workspace-token send is recorded as api, with no member", async () => {
+    mocks.resolveContactInbox.mockResolvedValue({
+      id: "w",
+      channel: "whatsapp",
+    })
+
+    await sendWhatsappTemplateToConversation({
+      workspaceId: "1",
+      conversationId: "1",
+      request: { ...request, inboxId: "7" },
+      sender: { initiatedBy: "api" },
+    })
+
+    const data = mocks.queueAdd.mock.calls[0][1].data
+    expect(data.initiatedBy).toBe("api")
+    expect(data).not.toHaveProperty("adminId")
   })
 })
 

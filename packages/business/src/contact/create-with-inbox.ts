@@ -209,6 +209,7 @@ export const createContactWithInbox = async ({
       source: contactInbox.source,
       sourceId: contactInbox.sourceId,
       channel: inbox.channel,
+      inboxId: inbox.id,
       metadata: {
         triggerContext: {
           triggerSource: "api",

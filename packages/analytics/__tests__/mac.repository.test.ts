@@ -104,6 +104,11 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     id: "ci.id",
     inboxId: "ci.inboxId",
   },
+  inboxModel: {
+    id: "inbox.id",
+    channel: "inbox.channel",
+    workspaceId: "inbox.workspaceId",
+  },
   workspaceModel: { id: "ws.id", ownerId: "ws.ownerId" },
 }))
 
@@ -526,6 +531,42 @@ describe("MacRepository — countActiveContactsByWorkspace", () => {
     expect(gte).toHaveBeenCalledWith("cah.hourBucket", from)
     expect(lte).toHaveBeenCalledWith("cah.hourBucket", to)
     expect(dbExecute).not.toHaveBeenCalled()
+  })
+
+  test("filters by inbox ids and by channel through a workspace-scoped inbox subquery", async () => {
+    queueResult([{ value: "1" }])
+    queueResult([])
+    inArray.mockClear()
+
+    await repo.countActiveContactsByWorkspace({
+      workspaceId: "ws-1",
+      from: new Date("2026-05-10T00:00:00.000Z"),
+      to: new Date("2026-05-20T00:00:00.000Z"),
+      inboxIds: ["9", "3"],
+    })
+    expect(inArray).toHaveBeenCalledWith("cah.inboxId", ["3", "9"])
+
+    inArray.mockClear()
+    await repo.countActiveContactsByWorkspace({
+      workspaceId: "ws-1",
+      from: new Date("2026-05-10T00:00:00.000Z"),
+      to: new Date("2026-05-20T00:00:00.000Z"),
+      channels: ["whatsapp"],
+    })
+    expect(inArray).toHaveBeenCalledWith("inbox.channel", ["whatsapp"])
+    expect(eq).toHaveBeenCalledWith("inbox.workspaceId", "ws-1")
+    expect(inArray).toHaveBeenCalledWith("cah.inboxId", expect.anything())
+  })
+
+  test("adds no inbox predicate when unfiltered", async () => {
+    queueResult([])
+    inArray.mockClear()
+    await repo.countActiveContactsByWorkspace({
+      workspaceId: "ws-1",
+      from: new Date("2026-05-10T00:00:00.000Z"),
+      to: new Date("2026-05-20T00:00:00.000Z"),
+    })
+    expect(inArray).not.toHaveBeenCalled()
   })
 
   test("returns 0 when no hourly rows match the range", async () => {

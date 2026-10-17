@@ -7,6 +7,7 @@ import { resolvedTimezone } from "@chatbotx.io/database/queries/date-bucket"
 import { analyticsBotMessageEventModel } from "@chatbotx.io/database/schema"
 import type { EventBusMessageMetadata } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
+import { buildEventFilter } from "../../lib/event-filter"
 import { logger } from "../../lib/logger"
 import {
   fillBotMessageStatsDaySeries,
@@ -20,8 +21,9 @@ import type {
   BotMessageAIProviderStats,
   BotMessageResult,
   BotMessageStats,
-  TimeRangeQuery,
+  FilteredTimeRangeQuery,
 } from "../../schemas"
+import { hasAnalyticsFilter } from "../../schemas/common"
 import { BaseRepository } from "./base.repository"
 import { getEventBusEventId } from "./event-bus-idempotency"
 
@@ -36,9 +38,24 @@ export type InsertBotMessageEventRow = EventBusMessageMetadata & {
   result?: string | null
   aiProvider?: string | null
   channel?: string | null
+  inboxId?: string | null
   source?: string | null
   metadata?: Record<string, unknown> | null
 }
+
+type BotStatsGranularity = "minute" | "hour" | "day"
+
+/**
+ * Hour reads come from the hourly cagg, which has no inbox (and no channel);
+ * a filtered hour read buckets the raw table instead.
+ */
+const readsHourlyCagg = (
+  props: FilteredTimeRangeQuery & { granularity: BotStatsGranularity },
+): boolean => props.granularity === "hour" && !hasAnalyticsFilter(props)
+
+/** Bucket of the raw-table read: hourly when it stands in for the cagg. */
+const rawBucket = (granularity: BotStatsGranularity) =>
+  granularity === "hour" ? sql`'1 hour'` : sql`'1 minute'`
 
 export class BotMessageStatsRepository extends BaseRepository {
   async insertEvents(payloads: InsertBotMessageEventRow[]): Promise<void> {
@@ -79,6 +96,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       result: p.result ?? null,
       aiProvider: p.aiProvider ?? null,
       channel: p.channel ?? null,
+      inboxId: p.inboxId ?? null,
       source: p.source ?? null,
       metadata: p.metadata ?? null,
     }))
@@ -99,11 +117,12 @@ export class BotMessageStatsRepository extends BaseRepository {
   }
 
   async getMessagesByResult(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       granularity: "minute" | "hour" | "day"
     },
   ): Promise<BotMessageStats[]> {
     const { granularity, workspaceId, from, to, timezone } = props
+    const eventFilter = buildEventFilter(props)
 
     if (granularity === "day" && shouldUseMonthlyGranularity(props)) {
       const result = await db.execute(sql`
@@ -114,7 +133,7 @@ export class BotMessageStatsRepository extends BaseRepository {
           "aiProvider",
           COUNT(*)::int AS count
         FROM "AnalyticsBotMessageEvent"
-        WHERE "workspaceId" = ${workspaceId}
+        WHERE "workspaceId" = ${workspaceId}${eventFilter}
           AND "occurredAt" >= ${from}
           AND "occurredAt" <= ${to}
           AND "result" IS NOT NULL
@@ -155,7 +174,7 @@ export class BotMessageStatsRepository extends BaseRepository {
               "aiProvider",
               COUNT(*)::int AS count
             FROM "AnalyticsBotMessageEvent"
-            WHERE "workspaceId" = ${workspaceId}
+            WHERE "workspaceId" = ${workspaceId}${eventFilter}
               AND "occurredAt" >= ${from}
               AND "occurredAt" <= ${to}
               AND "result" IS NOT NULL
@@ -172,7 +191,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       return fillBotMessageStatsDaySeries({ ...props, rows, results })
     }
 
-    if (granularity === "hour") {
+    if (readsHourlyCagg(props)) {
       const result = await db.execute(sql`
         SELECT
           time_bucket('1 hour', bucket) AS bucket,
@@ -194,13 +213,13 @@ export class BotMessageStatsRepository extends BaseRepository {
 
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 minute', "occurredAt") AS bucket,
+        time_bucket(${rawBucket(granularity)}, "occurredAt") AS bucket,
         "result",
         "responseType",
         "aiProvider",
         COUNT(*)::int AS count
       FROM "AnalyticsBotMessageEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "result" IS NOT NULL
@@ -212,11 +231,12 @@ export class BotMessageStatsRepository extends BaseRepository {
   }
 
   async getMessagesWithNoResponse(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       granularity: "minute" | "hour" | "day"
     },
   ): Promise<BotMessageStats[]> {
     const { granularity, workspaceId, from, to, timezone } = props
+    const eventFilter = buildEventFilter(props)
 
     if (granularity === "day") {
       const query = shouldUseCagg(props)
@@ -241,7 +261,7 @@ export class BotMessageStatsRepository extends BaseRepository {
               "responseType",
               COUNT(*)::int AS count
             FROM "AnalyticsBotMessageEvent"
-            WHERE "workspaceId" = ${workspaceId}
+            WHERE "workspaceId" = ${workspaceId}${eventFilter}
               AND "occurredAt" >= ${from}
               AND "occurredAt" <= ${to}
               AND "hasResponse" = false
@@ -268,7 +288,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       }))
     }
 
-    if (granularity === "hour") {
+    if (readsHourlyCagg(props)) {
       const result = await db.execute(sql`
         SELECT
           time_bucket('1 hour', bucket) AS bucket,
@@ -303,12 +323,12 @@ export class BotMessageStatsRepository extends BaseRepository {
 
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 minute', "occurredAt") AS bucket,
+        time_bucket(${rawBucket(granularity)}, "occurredAt") AS bucket,
         "hasResponse",
         "responseType",
         COUNT(*)::int AS count
       FROM "AnalyticsBotMessageEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "hasResponse" = false
@@ -334,11 +354,12 @@ export class BotMessageStatsRepository extends BaseRepository {
   }
 
   async getMessagesWithResponse(
-    props: TimeRangeQuery & {
+    props: FilteredTimeRangeQuery & {
       granularity: "minute" | "hour" | "day"
     },
   ): Promise<BotMessageStats[]> {
     const { granularity, workspaceId, from, to, timezone } = props
+    const eventFilter = buildEventFilter(props)
 
     if (granularity === "day") {
       const query = shouldUseCagg(props)
@@ -365,7 +386,7 @@ export class BotMessageStatsRepository extends BaseRepository {
               "aiProvider",
               COUNT(*)::int AS count
             FROM "AnalyticsBotMessageEvent"
-            WHERE "workspaceId" = ${workspaceId}
+            WHERE "workspaceId" = ${workspaceId}${eventFilter}
               AND "occurredAt" >= ${from}
               AND "occurredAt" <= ${to}
               AND "hasResponse" = true
@@ -401,7 +422,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       return filled
     }
 
-    if (granularity === "hour") {
+    if (readsHourlyCagg(props)) {
       const result = await db.execute(sql`
         SELECT
           time_bucket('1 hour', bucket) AS bucket,
@@ -427,13 +448,13 @@ export class BotMessageStatsRepository extends BaseRepository {
 
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 minute', "occurredAt") AS bucket,
+        time_bucket(${rawBucket(granularity)}, "occurredAt") AS bucket,
         "responseType",
         "result",
         "aiProvider",
         COUNT(*)::int AS count
       FROM "AnalyticsBotMessageEvent"
-      WHERE "workspaceId" = ${workspaceId}
+      WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "hasResponse" = true
@@ -449,9 +470,10 @@ export class BotMessageStatsRepository extends BaseRepository {
   }
 
   async getAIProviderStats(
-    props: TimeRangeQuery,
+    props: FilteredTimeRangeQuery,
   ): Promise<BotMessageAIProviderStats[]> {
     const { workspaceId, from, to } = props
+    const eventFilter = buildEventFilter(props)
 
     const query = shouldUseCagg(props)
       ? sql`
@@ -474,7 +496,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             "aiProvider",
             COUNT(*)::int AS count
           FROM "AnalyticsBotMessageEvent"
-          WHERE "workspaceId" = ${workspaceId}
+          WHERE "workspaceId" = ${workspaceId}${eventFilter}
             AND "occurredAt" >= ${from}
             AND "occurredAt" <= ${to}
             AND "hasResponse" = true

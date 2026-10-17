@@ -557,7 +557,10 @@ chatbotx ai-mcp-servers delete <id>
 
 All commands take a time range (`--from --to --timezone`); several also take `--granularity`.
 
+The contact, conversation, message and bot-message commands (everything except the flow, broadcast, sequence, MAC, reflink, magic-link and comment-automation stats) can be narrowed with repeatable `--channels <channel>` and `--inboxIds <id>` flags (for example `--channels messenger --channels whatsapp`); omit them for all channels and integrations. Get the ids and channels from `chatbotx analytics filter-options`.
+
 ```bash
+chatbotx analytics filter-options                  # Inboxes (ids, channels, status) to filter by
 chatbotx analytics contact-counts-per-day
 chatbotx analytics new-contact-counts-per-day
 chatbotx analytics blocked-contacts-per-day
@@ -565,7 +568,7 @@ chatbotx analytics blocked-contacts-count
 chatbotx analytics new-contacts-count
 chatbotx analytics contacts-count
 chatbotx analytics active-contacts-count
-chatbotx analytics contacts-by-dimension --dimension <country|channel|source>   # [--metric <new|total>]
+chatbotx analytics contacts-by-dimension --dimension <country|channel|source|language>   # [--metric <new|total>]
 chatbotx analytics messages-by-admin
 chatbotx analytics human-agent-stats
 chatbotx analytics conversation-handoffs
