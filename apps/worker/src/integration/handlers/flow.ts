@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { broadcastService } from "@chatbotx.io/business"
 import { and, db, eq } from "@chatbotx.io/database/client"
@@ -76,6 +77,33 @@ const ROUTING_STATUSES = new Set<StepRoutingStatus>([
   "error",
   "skip",
 ])
+
+/**
+ * A state branch is enqueued after its parent step finishes. Reusing this id
+ * on a parent-job retry prevents the same completed decision/action from
+ * starting the target node twice. Node visits are part of the identity so a
+ * deliberate loop can still revisit the same state in a later iteration.
+ */
+function getStateContinuationJobId(input: {
+  flowExecutionKey: string | undefined
+  nodeVisits: NodeVisits | undefined
+  sourceStepId: string
+  stateId: string
+  targetNodeId: string
+}): string | undefined {
+  if (!isDurableFlowExecutionKey(input.flowExecutionKey)) {
+    return
+  }
+
+  const identity = JSON.stringify({
+    flowExecutionKey: input.flowExecutionKey,
+    nodeVisits: input.nodeVisits,
+    sourceStepId: input.sourceStepId,
+    stateId: input.stateId,
+    targetNodeId: input.targetNodeId,
+  })
+  return `flow-state-${createHash("sha256").update(identity).digest("hex")}`
+}
 
 function findQuickReplyCarrierStep(props: {
   channel: string | null | undefined
@@ -518,6 +546,8 @@ export async function runStepsAndQuickReplies(
           trackingContext: props.trackingContext,
           sendFrom: props.sendFrom,
           nodeVisits,
+          triggerMessageId: props.triggerMessageId,
+          triggerMessageCreatedAt: props.triggerMessageCreatedAt,
           commentAnchor: remainingAnchor,
           // The continuation keeps the parent's key: a retried parent enqueues a
           // second continuation with another job id, and the conversion step
@@ -587,6 +617,8 @@ export async function runStepsAndQuickReplies(
         trackingContext: props.trackingContext,
         sendFrom: props.sendFrom,
         nodeVisits,
+        triggerMessageId: props.triggerMessageId,
+        triggerMessageCreatedAt: props.triggerMessageCreatedAt,
         commentAnchor: remainingAnchor,
         origin: webhookChannelOrigin(),
       },
@@ -697,7 +729,7 @@ async function* executeMultipleStepsGenerator(
           targetState.id,
         )
         if (connectedNodeId) {
-          await integrationQueue.add(IntegrationJobAction.sendFlow, {
+          const job = {
             type: IntegrationJobAction.sendFlow,
             data: {
               conversationId: props.conversation.id,
@@ -713,10 +745,31 @@ async function* executeMultipleStepsGenerator(
               trackingContext: props.trackingContext,
               sendFrom: props.sendFrom,
               nodeVisits: props.nodeVisits,
+              triggerMessageId: props.triggerMessageId,
+              triggerMessageCreatedAt: props.triggerMessageCreatedAt,
               commentAnchor: anchorAvailable,
+              flowExecutionKey: isDurableFlowExecutionKey(
+                props.flowExecutionKey,
+              )
+                ? props.flowExecutionKey
+                : undefined,
               origin: webhookChannelOrigin(),
             },
+          }
+          const jobId = getStateContinuationJobId({
+            flowExecutionKey: props.flowExecutionKey,
+            nodeVisits: props.nodeVisits,
+            sourceStepId: stepWithNodeId.id,
+            stateId: targetState.id,
+            targetNodeId: connectedNodeId,
           })
+          if (jobId) {
+            await integrationQueue.add(IntegrationJobAction.sendFlow, job, {
+              jobId,
+            })
+          } else {
+            await integrationQueue.add(IntegrationJobAction.sendFlow, job)
+          }
           branched = true
         }
       }

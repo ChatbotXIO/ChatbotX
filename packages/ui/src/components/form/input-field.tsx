@@ -9,6 +9,7 @@ type InputFieldProps<T extends FieldValues> = ComponentProps<"input"> & {
   description?: string
   descriptionType?: "inline" | "tooltip"
   formItemClassName?: string
+  hideMessage?: boolean
 }
 
 export function InputField<T extends FieldValues>({
@@ -18,6 +19,7 @@ export function InputField<T extends FieldValues>({
   description,
   descriptionType = "inline",
   formItemClassName,
+  hideMessage,
   ...props
 }: InputFieldProps<T>) {
   return (
@@ -25,6 +27,7 @@ export function InputField<T extends FieldValues>({
       description={description}
       descriptionType={descriptionType}
       formItemClassName={formItemClassName}
+      hideMessage={hideMessage}
       label={label}
       name={name}
       required={required}

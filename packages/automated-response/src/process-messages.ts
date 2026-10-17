@@ -13,10 +13,15 @@ import { dispatchAutomatedResponseReply } from "./dispatch-reply"
 import { logger } from "./lib/logger"
 import { automatedResponseService } from "./utils"
 
+export type AutomatedResponseProcessResult =
+  | { status: "handled" }
+  | { status: "noEligibleMessage" }
+  | { status: "noMatch" }
+
 export const processPendingMessages = async (props: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
-}): Promise<boolean> => {
+}): Promise<AutomatedResponseProcessResult> => {
   const result = await getMessagesFromStoreAndProcess(props)
 
   // Clear the queue after processing
@@ -33,7 +38,7 @@ export const processPendingMessages = async (props: {
 const getMessagesFromStoreAndProcess = async (props: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
-}): Promise<boolean> => {
+}): Promise<AutomatedResponseProcessResult> => {
   const key = getKey({
     conversationId: props.conversation.id,
     contactInboxId: props.contactInbox.id,
@@ -42,7 +47,7 @@ const getMessagesFromStoreAndProcess = async (props: {
   const messageIds = await simpleQueue.getAll(key)
   if (messageIds.length === 0) {
     logger.debug(props, "Automated response queue is empty")
-    return false
+    return { status: "noEligibleMessage" }
   }
 
   // Only process text messages
@@ -60,7 +65,7 @@ const getMessagesFromStoreAndProcess = async (props: {
     .then((data) => data.filter((v) => Boolean(v.text)))
   if (messages.length === 0) {
     logger.debug(props, "No message to process")
-    return false
+    return { status: "noEligibleMessage" }
   }
 
   return replyByAutomatedResponse({
@@ -74,7 +79,7 @@ const replyByAutomatedResponse = async (props: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
   messages: Pick<MessageModel, "id" | "text">[]
-}): Promise<boolean> => {
+}): Promise<AutomatedResponseProcessResult> => {
   const { conversation, contactInbox, messages } = props
   const allAutomatedResponses = await automatedResponseService.getAll(
     conversation.workspaceId,
@@ -96,9 +101,9 @@ const replyByAutomatedResponse = async (props: {
       triggerType: "contact_message_in",
     })
     if (replied) {
-      return true
+      return { status: "handled" }
     }
   }
 
-  return false
+  return { status: "noMatch" }
 }

@@ -10,7 +10,7 @@ type AutomatedResponseTiming = {
 export type AutomatedResponseDelayEligibility = {
   workspaceDelay: unknown
   matchesKeyword: boolean
-  hasAiAgent: boolean
+  hasAsyncResponder: boolean
 }
 
 export const isSmartDelayEligible = (
@@ -18,7 +18,7 @@ export const isSmartDelayEligible = (
 ): boolean =>
   isSmartResponseDelayOption(input.workspaceDelay) &&
   !input.matchesKeyword &&
-  input.hasAiAgent
+  input.hasAsyncResponder
 
 export const resolveAutomatedResponseTiming = (
   workspace:

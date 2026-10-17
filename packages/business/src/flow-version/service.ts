@@ -8,10 +8,12 @@ import {
 } from "@chatbotx.io/database/client"
 import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
 import type { FlowVersionModel } from "@chatbotx.io/database/types"
+import { normalizeFlowGraphDecisionMappings } from "@chatbotx.io/flow-config"
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { conversationService } from "../conversation/service"
+import { decisionProfileService } from "../decision/profile-service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
 import { messengerWelcomeMessageFlowService } from "../messenger-welcome-message-flow/service"
@@ -353,6 +355,7 @@ class FlowVersionService extends BaseService {
     nodes: FlowVersionModel["nodes"]
     edges: FlowVersionModel["edges"]
   }): Promise<void> {
+    const nodes = normalizeFlowGraphDecisionMappings(input.nodes)
     const flowVersion = await db.query.flowVersionModel.findFirst({
       where: {
         id: input.id,
@@ -368,7 +371,7 @@ class FlowVersionService extends BaseService {
     await db
       .update(flowVersionModel)
       .set({
-        nodes: input.nodes,
+        nodes,
         edges: input.edges,
       })
       .where(eq(flowVersionModel.id, flowVersion.id))
@@ -385,6 +388,7 @@ class FlowVersionService extends BaseService {
     nodes: FlowVersionModel["nodes"]
     edges: FlowVersionModel["edges"]
   }): Promise<void> {
+    const nodes = normalizeFlowGraphDecisionMappings(input.nodes)
     const draftVersion = await this.findDraft({
       flowId: input.flowId,
       workspaceId: input.workspaceId,
@@ -397,7 +401,7 @@ class FlowVersionService extends BaseService {
     await db
       .update(flowVersionModel)
       .set({
-        nodes: input.nodes,
+        nodes,
         edges: input.edges,
       })
       .where(eq(flowVersionModel.id, draftVersion.id))
@@ -437,7 +441,12 @@ class FlowVersionService extends BaseService {
     nodes: FlowVersionModel["nodes"]
     edges: FlowVersionModel["edges"]
   }): Promise<void> {
-    assertFlowGraphPublishable({ nodes: input.nodes, edges: input.edges })
+    const nodes = normalizeFlowGraphDecisionMappings(input.nodes)
+    assertFlowGraphPublishable({ nodes, edges: input.edges })
+    await decisionProfileService.assertFlowReferencesPublishable({
+      nodes,
+      workspaceId: input.workspaceId,
+    })
 
     const flow = await db.query.flowModel.findFirst({
       where: {
@@ -477,7 +486,7 @@ class FlowVersionService extends BaseService {
       await tx
         .update(flowVersionModel)
         .set({
-          nodes: input.nodes,
+          nodes,
           edges: input.edges,
         })
         .where(eq(flowVersionModel.id, draftVersion.id))
@@ -488,7 +497,7 @@ class FlowVersionService extends BaseService {
         flowId: flow.id,
         isDraft: false,
         isLatest: true,
-        nodes: input.nodes,
+        nodes,
         edges: input.edges,
         startNodeId: draftVersion.startNodeId,
       })

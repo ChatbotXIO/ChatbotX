@@ -55,7 +55,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
   desc: (...args: unknown[]) => ({ desc: args }),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/database/schema")>()),
   flowModel: { id: "flowModel.id" },
   flowVersionModel: {
     id: "flowVersionModel.id",
@@ -64,7 +65,8 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/redis", () => ({
+vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/redis")>()),
   withCache: (_key: string, fn: () => Promise<unknown>): Promise<unknown> =>
     fn(),
   invalidateCacheByTags: mockInvalidateCacheTags,
@@ -75,7 +77,8 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => ({
   createId: mockCreateId,
 }))
 
-vi.mock("../src/errors", () => ({
+vi.mock("../src/errors", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/errors")>()),
   notFoundException: (message: string) => new Error(message),
 }))
 

@@ -27,7 +27,8 @@ vi.mock("../src/connection/state-service", () => ({
   connectionStateService: {},
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/database/schema")>()),
   integrationMessengerModel: {},
   tagChannelModel: {},
 }))

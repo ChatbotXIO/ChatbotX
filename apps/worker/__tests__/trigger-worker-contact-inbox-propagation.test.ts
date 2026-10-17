@@ -87,6 +87,9 @@ vi.mock("@chatbotx.io/events/context", () => ({
 // needs the exact same key contract to prove the worker wires it correctly.
 const CONTACT_INBOX_METADATA_KEY = "contactInboxId"
 vi.mock("@chatbotx.io/events", () => ({
+  decisionFlowOriginSchema: {
+    safeParse: () => ({ success: false }),
+  },
   extractContactInboxId: (eventData: Record<string, unknown> | undefined) => {
     const value = eventData?.[CONTACT_INBOX_METADATA_KEY]
     return typeof value === "string" && value.length > 0 ? value : undefined
@@ -167,7 +170,12 @@ describe("trigger worker — queue-to-executor contactInboxId propagation", () =
     expect(state.triggerExecute).toHaveBeenCalledTimes(1)
     expect(state.triggerExecute).toHaveBeenCalledWith(
       { id: "trigger-1", workspaceId: "ws-1", actions: [] },
-      { contactId: "contact-1", contactInboxId: "11669088263749632" },
+      expect.objectContaining({
+        contactId: "contact-1",
+        contactInboxId: "11669088263749632",
+        decisionFlowOrigin: undefined,
+        occurrenceId: undefined,
+      }),
     )
   })
 
@@ -176,7 +184,12 @@ describe("trigger worker — queue-to-executor contactInboxId propagation", () =
 
     expect(state.triggerExecute).toHaveBeenCalledWith(
       { id: "trigger-1", workspaceId: "ws-1", actions: [] },
-      { contactId: "contact-1", contactInboxId: undefined },
+      expect.objectContaining({
+        contactId: "contact-1",
+        contactInboxId: undefined,
+        decisionFlowOrigin: undefined,
+        occurrenceId: undefined,
+      }),
     )
   })
 
@@ -185,7 +198,12 @@ describe("trigger worker — queue-to-executor contactInboxId propagation", () =
 
     expect(state.triggerExecute).toHaveBeenCalledWith(
       { id: "trigger-1", workspaceId: "ws-1", actions: [] },
-      { contactId: "contact-1", contactInboxId: undefined },
+      expect.objectContaining({
+        contactId: "contact-1",
+        contactInboxId: undefined,
+        decisionFlowOrigin: undefined,
+        occurrenceId: undefined,
+      }),
     )
   })
 })

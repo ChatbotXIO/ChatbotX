@@ -60,6 +60,7 @@
   "dependencies": {
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/decision-config": "workspace:*",
     "@chatbotx.io/encryption": "workspace:*",
     "@chatbotx.io/event-bus": "workspace:*",
     "@chatbotx.io/events": "workspace:*",
@@ -93,6 +94,7 @@
     "libphonenumber-js": "^1.12.42",
     "qrcode": "^1.5.4",
     "remeda": "^2.37.0",
+    "undici": "^8.11.2",
     "universal-error-normalizer": "^1.0.0",
     "zod": "^4.3.6"
   },

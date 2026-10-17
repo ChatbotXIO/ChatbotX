@@ -31,7 +31,12 @@ import { detectConversationAndContactInbox } from "../../../lib/db"
 import { logger } from "../../../lib/logger"
 import { TRIGGER_MESSAGE_LOOKBACK_MS } from "../shared/trigger-message"
 import { triggerDefaultReplyFlow } from "./default-reply"
-import { replyByAI } from "./replies"
+import {
+  runGlobalRouter,
+  shouldRunGlobalRouterAfterAutomatedResponse,
+  shouldStopAutomatedResponseAfterGlobalRouter,
+} from "./global-router"
+import { runAgentReply } from "./run-agent-reply"
 
 const SUPPORTED_DOCUMENT_MIME_TYPES = new Set<string>([
   ...PDF_MIME_TYPES,
@@ -65,6 +70,12 @@ export async function processAutomatedResponse(
     id: conversation.workspaceId,
   })
   if (!workspaceService.isActiveNow(workspace)) {
+    return
+  }
+  // Smart Delay can leave this job waiting while an agent takes over or an
+  // admin disables the bot. Re-check the freshly loaded conversation before
+  // any automation can create a reply, Flow job, or handoff side effect.
+  if (!conversation.botEnabled) {
     return
   }
   // Robustness against a stale/unmigrated row: fall back to `allTime`
@@ -111,12 +122,50 @@ export async function processAutomatedResponse(
     isSupportedDocumentMimeType(attachment.mimeType),
   )
 
-  const repliedByAutomatedResponse = await automatedResponseService.process({
+  const automatedResponseResult = await automatedResponseService.process({
     conversation,
     contactInbox,
   })
-  if (repliedByAutomatedResponse) {
+  if (automatedResponseResult.status === "handled") {
     return
+  }
+
+  // Keyword/Automated Response has priority only when it handled a message.
+  // An empty debounce queue is not proof that the worker's trigger is invalid.
+  if (
+    shouldRunGlobalRouterAfterAutomatedResponse(automatedResponseResult) &&
+    triggerMessage
+  ) {
+    const globalRouterResult = await runGlobalRouter({
+      contactId: contactInbox.contactId,
+      contactInboxId: contactInbox.id,
+      conversationId: conversation.id,
+      messageCreatedAt: triggerMessage.createdAt,
+      messageId,
+      senderType: triggerMessage.senderType,
+      text: triggerMessage.text,
+      workspaceId: conversation.workspaceId,
+      contactInbox,
+      conversation,
+      defaultReplyFrequency,
+      workspace,
+    })
+    if (shouldStopAutomatedResponseAfterGlobalRouter(globalRouterResult)) {
+      return
+    }
+    if (globalRouterResult === "retryableFailure") {
+      const error = new Error("Global Router dispatch failed before completion")
+      logger.error(
+        {
+          err: normalizeError(error),
+          conversationId: conversation.id,
+          messageId,
+          workspaceId: conversation.workspaceId,
+        },
+        "Global Router dispatch is retryable",
+      )
+      throw error
+    }
   }
 
   try {
@@ -129,6 +178,8 @@ export async function processAutomatedResponse(
         defaultReplyFrequency,
         conversation,
         contactInbox,
+        triggerMessageId: messageId,
+        triggerMessageCreatedAt: triggerMessage?.createdAt,
         trackingContext: messageId
           ? {
               aiProvider: "none",
@@ -281,15 +332,16 @@ export async function processAutomatedResponse(
     const typingIntervalId = setInterval(sendTyping, 4000)
 
     const startTime = Date.now()
-    let aiResult: Awaited<ReturnType<typeof replyByAI>>
+    let aiResult: Awaited<ReturnType<typeof runAgentReply>>
     try {
-      aiResult = await replyByAI({
+      aiResult = await runAgentReply({
         conversation,
         contactInbox,
         channel: contactInbox.channel,
         messages,
         aiAgent,
         triggerMessageId: messageId,
+        triggerMessageCreatedAt: triggerMessage?.createdAt,
         fileOnlyTrigger: isFileOnlyTrigger,
         allowedSystemFunctionIds: isFileOnlyTrigger
           ? getFileOnlySystemFunctionIds({
@@ -350,6 +402,8 @@ export async function processAutomatedResponse(
       defaultReplyFrequency,
       conversation,
       contactInbox,
+      triggerMessageId: messageId,
+      triggerMessageCreatedAt: triggerMessage?.createdAt,
       trackingContext: messageId
         ? {
             aiProvider: "none",

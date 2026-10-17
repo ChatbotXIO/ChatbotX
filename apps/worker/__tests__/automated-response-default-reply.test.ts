@@ -589,6 +589,9 @@ describe("replyByAI — default reply flow fallback", () => {
     expect(sendMessageWithRenderMock).toHaveBeenCalledWith(
       baseProps.conversation.id,
       expect.stringContaining("I've found some data"),
+      expect.objectContaining({
+        triggerType: "bot_response_ai_agent_default_reply_flow",
+      }),
     )
   })
 
@@ -606,6 +609,9 @@ describe("replyByAI — default reply flow fallback", () => {
     expect(sendMessageWithRenderMock).toHaveBeenCalledWith(
       baseProps.conversation.id,
       expect.stringContaining("I've found some data"),
+      expect.objectContaining({
+        triggerType: "bot_response_ai_agent_default_reply_flow",
+      }),
     )
   })
 

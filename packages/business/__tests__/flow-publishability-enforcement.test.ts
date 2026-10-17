@@ -23,7 +23,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   inArray: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/partials", () => ({ rootFolderId: "0" }))
+vi.mock("@chatbotx.io/database/partials", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/database/partials")>()),
+  rootFolderId: "0",
+}))
 vi.mock("../src/messenger-welcome-message-flow/service", () => ({
   messengerWelcomeMessageFlowService: { enqueueSync: vi.fn() },
 }))
@@ -31,7 +34,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   flowRepository: { listIdsByIds: vi.fn(), listPublishedOptions: vi.fn() },
   whatsappMessageTemplateRepository: { listIdsByIntegration: vi.fn() },
 }))
-vi.mock("@chatbotx.io/database/schema", () => ({
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/database/schema")>()),
   flowAnalyticsSessionModel: {},
   flowModel: {},
   flowVersionModel: {},
@@ -47,7 +51,8 @@ vi.mock("../src/bot-field/service", () => ({
 vi.mock("../src/custom-field/service", () => ({
   customFieldService: { resolveByNameAndType: vi.fn() },
 }))
-vi.mock("../src/errors", () => ({
+vi.mock("../src/errors", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/errors")>()),
   notFoundException: (message: string) => new Error(message),
 }))
 vi.mock("../src/folder/service", () => ({

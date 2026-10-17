@@ -44,7 +44,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
   lte: (...args: unknown[]) => ({ lte: args }),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
+vi.mock("@chatbotx.io/database/schema", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/database/schema")>()),
   flowVersionModel: {
     name: "flowVersionModel",
     id: "flowVersionModel.id",
@@ -54,7 +55,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/redis", () => ({ withCache: mockWithCache }))
+vi.mock("@chatbotx.io/redis", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@chatbotx.io/redis")>()),
+  withCache: mockWithCache,
+}))
 vi.mock("../src/smart-delay/service", () => ({ smartDelayService: {} }))
 vi.mock("../src/conversation/service", () => ({ conversationService: {} }))
 vi.mock("../src/messenger-welcome-message-flow/service", () => ({

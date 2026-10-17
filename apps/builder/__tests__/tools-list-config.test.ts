@@ -66,12 +66,16 @@ describe("TOOLS_CONFIG — click-to-message-ads entry", () => {
 })
 
 describe("TOOLS_CONFIG — permission gating", () => {
-  test("only click-to-message-ads and inbound-webhooks declare a permission", () => {
+  test("only click-to-message-ads, decision-profiles, and inbound-webhooks declare a permission", () => {
     const gatedEntries = TOOLS_CONFIG.filter(
       (config) => "permission" in config,
     ).map((config) => config.id)
 
-    expect(gatedEntries).toEqual(["click-to-message-ads", "inbound-webhooks"])
+    expect(gatedEntries).toEqual([
+      "click-to-message-ads",
+      "decision-profiles",
+      "inbound-webhooks",
+    ])
   })
 })
 
@@ -159,15 +163,15 @@ describe("TOOLS_CONFIG — inbound-webhooks entry", () => {
     expect(entry?.getLink("42")).toBe("/space/42/inbound-webhooks")
   })
 
-  test("sits right after bot-simulator", () => {
-    const botSimulatorIndex = TOOLS_CONFIG.findIndex(
-      (config) => config.id === "bot-simulator",
+  test("sits after the decision-profiles card", () => {
+    const decisionProfilesIndex = TOOLS_CONFIG.findIndex(
+      (config) => config.id === "decision-profiles",
     )
     const inboundWebhooksIndex = TOOLS_CONFIG.findIndex(
       (config) => config.id === "inbound-webhooks",
     )
 
-    expect(inboundWebhooksIndex).toBe(botSimulatorIndex + 1)
+    expect(inboundWebhooksIndex).toBe(decisionProfilesIndex + 1)
   })
 
   test("is shown to super admins only", () => {

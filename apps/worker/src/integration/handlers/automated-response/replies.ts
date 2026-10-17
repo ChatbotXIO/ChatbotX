@@ -76,9 +76,17 @@ export type ReplyByAIProps = {
   messages: ModelMessage[]
   aiAgent: AIAgentModel
   triggerMessageId?: string
+  triggerMessageCreatedAt?: Date
   fileOnlyTrigger: boolean
   allowedSystemFunctionIds?: string[]
   summary?: string
+  /**
+   * Allows a caller that is not the legacy default-agent path to retain its
+   * own analytics origin all the way through streamed, rich and fallback
+   * replies.  The normal automated-response path deliberately leaves this
+   * unset to preserve its existing trigger values.
+   */
+  trackingTriggerType?: string
   defaultReplyFlowId?: string | null
   defaultReplyFrequency: DefaultReplyFrequency
   workspaceTimezone?: string
@@ -392,6 +400,8 @@ function createReplyToolset(options: {
             conversationId: conversation.id,
             contactInboxId: options.props.contactInbox.id,
             flowId,
+            triggerMessageId: options.props.triggerMessageId,
+            triggerMessageCreatedAt: options.props.triggerMessageCreatedAt,
             origin: webhookChannelOrigin(),
           },
         })
@@ -715,7 +725,8 @@ async function runAIReply(
             provider,
             responseType: "ai_agent",
             startTime,
-            triggerType: "bot_response_ai_agent_success",
+            triggerType:
+              props.trackingTriggerType ?? "bot_response_ai_agent_success",
             workspaceId: conversation.workspaceId,
           })
         : undefined
@@ -1039,6 +1050,8 @@ async function runAIReply(
         defaultReplyFrequency: props.defaultReplyFrequency,
         conversation,
         contactInbox: props.contactInbox,
+        triggerMessageId: props.triggerMessageId,
+        triggerMessageCreatedAt: props.triggerMessageCreatedAt,
         trackingContext: props.triggerMessageId
           ? {
               aiProvider: provider,
@@ -1046,7 +1059,9 @@ async function runAIReply(
               messageId: props.triggerMessageId,
               responseType: "flow",
               startTime,
-              triggerType: "bot_response_ai_agent_default_reply_flow",
+              triggerType:
+                props.trackingTriggerType ??
+                "bot_response_ai_agent_default_reply_flow",
               workspaceId: conversation.workspaceId,
             }
           : undefined,
@@ -1057,7 +1072,23 @@ async function runAIReply(
       // this contact/channel — stay silent rather than double-message with a
       // canned line on top of a flow that already fired recently.
       if (defaultReplyResult === "skipped") {
-        await sendMessageWithRender(conversation.id, helpTexts.fallbackLookup)
+        await sendMessageWithRender(
+          conversation.id,
+          helpTexts.fallbackLookup,
+          props.triggerMessageId
+            ? {
+                aiProvider: provider,
+                conversationId: conversation.id,
+                messageId: props.triggerMessageId,
+                responseType: "ai_agent",
+                startTime,
+                triggerType:
+                  props.trackingTriggerType ??
+                  "bot_response_ai_agent_default_reply_flow",
+                workspaceId: conversation.workspaceId,
+              }
+            : undefined,
+        )
       }
       return {
         responded: true,

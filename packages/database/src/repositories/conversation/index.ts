@@ -1,1 +1,1 @@
-export { assignUserIfUnassigned } from "./repository"
+export { assignTargetIfUnassigned, assignUserIfUnassigned } from "./repository"

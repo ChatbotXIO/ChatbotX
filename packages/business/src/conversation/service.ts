@@ -16,6 +16,7 @@ import type {
   ConversationQuickReplyChallenge,
 } from "@chatbotx.io/database/partials"
 import {
+  assignTargetIfUnassigned,
   assignUserIfUnassigned,
   contactInboxOperationalColumns,
   createMessageRepository,
@@ -1264,6 +1265,34 @@ class ConversationService extends BaseService {
     })
 
     return claimed
+  }
+
+  async claimAssignmentIfUnassigned(props: {
+    assignedId: `t_${string}` | `u_${string}`
+    conversation: Pick<ConversationModel, "id">
+    triggerContext: TriggerContext
+    workspaceId: string
+  }): Promise<"alreadyAssigned" | "claimed"> {
+    const isTeam = props.assignedId.startsWith("t_")
+    const id = props.assignedId.slice(2)
+    const claimed = await assignTargetIfUnassigned({
+      assignedInboxTeamId: isTeam ? id : null,
+      assignedUserId: isTeam ? null : id,
+      conversationId: props.conversation.id,
+      workspaceId: props.workspaceId,
+    })
+    if (claimed.length === 0) {
+      return "alreadyAssigned"
+    }
+    await this.publishAssignmentChanges({
+      assignedBy: undefined,
+      assignedInboxTeamId: isTeam ? id : null,
+      assignedUserId: isTeam ? null : id,
+      conversations: claimed,
+      triggerContext: props.triggerContext,
+      workspaceId: props.workspaceId,
+    })
+    return "claimed"
   }
 
   async updateBotEnabled(props: {

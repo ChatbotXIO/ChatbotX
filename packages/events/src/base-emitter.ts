@@ -8,6 +8,7 @@ import type {
   ResolvedInboundProductReference,
 } from "@chatbotx.io/sdk"
 import { withContactInboxMetadata } from "./contact-inbox-context"
+import type { DecisionFlowOrigin } from "./decision-flow-lineage"
 
 /** Channel-neutral voice-call event metadata carried to triggers/webhooks. */
 export type CallEventMetadata = { callId: string }
@@ -135,6 +136,7 @@ export abstract class BaseEventEmitter {
     oldValue: unknown,
     newValue: unknown,
     contactInboxId?: string,
+    decisionFlowOrigin?: DecisionFlowOrigin,
   ): Promise<void> {
     await this.emit(triggerEventTypes.enum.customFieldValueChanged, {
       workspaceId,
@@ -146,6 +148,7 @@ export abstract class BaseEventEmitter {
           customFieldName,
           oldValue,
           newValue,
+          ...(decisionFlowOrigin ? { decisionFlowOrigin } : {}),
         },
         contactInboxId,
       ),

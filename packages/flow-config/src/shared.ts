@@ -25,6 +25,7 @@ import { disableMessengerComposerStepSchema } from "./steps/disable-messenger-co
 import { dripSubscribeSubscriberSchema } from "./steps/drip-subscribe-subscriber"
 import { enableBotStepSchema } from "./steps/enable-bot"
 import { enableMessengerComposerStepSchema } from "./steps/enable-messenger-composer"
+import { evaluateDecisionStepSchema } from "./steps/evaluate-decision"
 import { executeJavascriptStepSchema } from "./steps/execute-javascript"
 import { externalRequestStepSchema } from "./steps/external-request"
 import { facebookCustomAudienceSchema } from "./steps/facebook-custom-audience"
@@ -117,6 +118,7 @@ const toolSteps = [
   countCharactersStepSchema,
   externalRequestStepSchema,
   executeJavascriptStepSchema,
+  evaluateDecisionStepSchema,
 ]
 
 const triggerSteps = [makeStepSchema, triggerN8nStepSchema]
