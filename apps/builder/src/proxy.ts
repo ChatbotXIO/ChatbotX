@@ -1,4 +1,5 @@
 import {
+  getPortFromHost,
   getPublicHostFromRequest,
   getPublicOriginFromRequest,
   getPublicProtocolFromRequest,
@@ -62,9 +63,10 @@ export async function proxy(request: NextRequest) {
 
 function attachProxyUrl(request: NextRequest): NextResponse {
   const originUrl = new URL(request.url)
-  originUrl.host = getPublicHostFromRequest(request)
+  const publicHost = getPublicHostFromRequest(request)
+  originUrl.host = publicHost
   originUrl.protocol = getPublicProtocolFromRequest(request)
-  originUrl.port = ""
+  originUrl.port = getPortFromHost(publicHost)
 
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set("x-url", originUrl.toString())

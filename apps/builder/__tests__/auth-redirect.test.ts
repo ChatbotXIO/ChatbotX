@@ -95,6 +95,21 @@ describe("rewriteAuthRedirectToPublicHost", () => {
     )
   })
 
+  test("keeps the port of a branded host that carries one", async () => {
+    mockIsAllowedOrigin.mockResolvedValue(true)
+    const { rewriteAuthRedirectToPublicHost } = await loadModule()
+
+    const response = redirectTo(`${BUILDER_URL}/`)
+    const rewritten = await rewriteAuthRedirectToPublicHost(
+      verifyRequest(`${RESELLER_HOST}:8443`),
+      response,
+    )
+
+    expect(rewritten.headers.get("location")).toBe(
+      `https://${RESELLER_HOST}:8443/`,
+    )
+  })
+
   test("leaves a builder-host request untouched (single-domain no-op)", async () => {
     const { rewriteAuthRedirectToPublicHost } = await loadModule()
 
