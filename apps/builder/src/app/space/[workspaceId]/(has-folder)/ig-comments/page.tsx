@@ -1,3 +1,4 @@
+import { folderTypes } from "@chatbotx.io/database/partials"
 import {
   Card,
   CardContent,
@@ -8,6 +9,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
+import SharedFolderSlot from "@/features/folders/shared-folder-slot"
 import { IgCommentsTable } from "@/features/ig-comments/ig-comments-table"
 import { listIgComments } from "@/features/ig-comments/queries"
 import { listIgCommentsSearchParamsCache } from "@/features/ig-comments/schema/action"
@@ -35,6 +37,11 @@ export default async function IgCommentsPage(props: {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <SharedFolderSlot
+          folderType={folderTypes.enum.igComment}
+          searchParams={props.searchParams}
+          workspaceId={workspaceId}
+        />
         <IgCommentsTable promises={promises} workspaceId={workspaceId} />
       </CardContent>
     </Card>

@@ -1,4 +1,4 @@
-import { rootFolderId } from "@chatbotx.io/database/partials"
+import { folderTypes, rootFolderId } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
@@ -6,6 +6,7 @@ import { Suspense } from "react"
 import { AutomatedResponsesTable } from "@/features/automated-response/automated-response-table"
 import { listAutomatedResponses } from "@/features/automated-response/queries"
 import { listAutomatedResponsesSearchParams } from "@/features/automated-response/schema/query"
+import { WithFolderBar } from "@/features/folders/with-folder-bar"
 
 export default async function PageAutomatedResponsesPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -30,13 +31,19 @@ export default async function PageAutomatedResponsesPage(props: {
   ])
 
   return (
-    <Suspense>
-      <AutomatedResponsesTable
-        basePath="page-automated-responses"
-        promises={promises}
-        type="outbound"
-        workspaceId={workspaceId}
-      />
-    </Suspense>
+    <WithFolderBar
+      folderType={folderTypes.enum.outboundAutomatedResponse}
+      searchParams={props.searchParams}
+      workspaceId={workspaceId}
+    >
+      <Suspense>
+        <AutomatedResponsesTable
+          basePath="page-automated-responses"
+          promises={promises}
+          type="outbound"
+          workspaceId={workspaceId}
+        />
+      </Suspense>
+    </WithFolderBar>
   )
 }

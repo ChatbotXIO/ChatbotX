@@ -1,4 +1,4 @@
-import { rootFolderId } from "@chatbotx.io/database/partials"
+import { folderTypes, rootFolderId } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
@@ -11,6 +11,7 @@ import {
 import { CustomFieldsTable } from "@/features/custom-fields/custom-field-table"
 import { listCustomFieldsRSC } from "@/features/custom-fields/queries"
 import { listCustomFieldsSearchParams } from "@/features/custom-fields/schema/query"
+import { WithFolderBar } from "@/features/folders/with-folder-bar"
 
 export default async function CustomFieldsPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -43,21 +44,27 @@ export default async function CustomFieldsPage(props: {
   ])
 
   return (
-    <div className="flex flex-col gap-6">
-      <Suspense>
-        <CustomFieldsTable
-          folderId={folderId}
-          promises={customFieldsPromises}
-          workspaceId={workspaceId}
-        />
-      </Suspense>
-      <Suspense>
-        <AccountFieldsCard
-          folderId={folderId}
-          promises={botFieldsPromises}
-          workspaceId={workspaceId}
-        />
-      </Suspense>
-    </div>
+    <WithFolderBar
+      folderType={folderTypes.enum.customField}
+      searchParams={props.searchParams}
+      workspaceId={workspaceId}
+    >
+      <div className="flex flex-col gap-6">
+        <Suspense>
+          <CustomFieldsTable
+            folderId={folderId}
+            promises={customFieldsPromises}
+            workspaceId={workspaceId}
+          />
+        </Suspense>
+        <Suspense>
+          <AccountFieldsCard
+            folderId={folderId}
+            promises={botFieldsPromises}
+            workspaceId={workspaceId}
+          />
+        </Suspense>
+      </div>
+    </WithFolderBar>
   )
 }

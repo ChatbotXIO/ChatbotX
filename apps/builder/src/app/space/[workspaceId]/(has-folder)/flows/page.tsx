@@ -1,4 +1,4 @@
-import { rootFolderId } from "@chatbotx.io/database/partials"
+import { folderTypes, rootFolderId } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
@@ -6,6 +6,7 @@ import { Suspense } from "react"
 import { FlowsTable } from "@/features/flows/flows-table"
 import { listFlowsRSC } from "@/features/flows/queries"
 import { listFlowsSearchParams } from "@/features/flows/schema/query"
+import { WithFolderBar } from "@/features/folders/with-folder-bar"
 import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permission"
 
 export default async function FlowsPage(props: {
@@ -31,12 +32,18 @@ export default async function FlowsPage(props: {
   ])
 
   return (
-    <Suspense>
-      <FlowsTable
-        folderId={folderId}
-        promises={promises}
-        workspaceId={workspaceId}
-      />
-    </Suspense>
+    <WithFolderBar
+      folderType={folderTypes.enum.flow}
+      searchParams={props.searchParams}
+      workspaceId={workspaceId}
+    >
+      <Suspense>
+        <FlowsTable
+          folderId={folderId}
+          promises={promises}
+          workspaceId={workspaceId}
+        />
+      </Suspense>
+    </WithFolderBar>
   )
 }

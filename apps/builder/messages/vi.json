@@ -2589,6 +2589,18 @@
     "capiConfigId": {
       "label": "Conversions API Config ID",
       "description": "ID cấu hình Embedded Signup dùng để yêu cầu quyền whatsapp_business_manage_events khi kết nối Conversions API."
+    },
+    "outboundAutomatedResponse": {
+      "label": "Từ khoá trang"
+    },
+    "fbComment": {
+      "label": "Tự động trả lời bình luận Facebook"
+    },
+    "igComment": {
+      "label": "Tự động trả lời bình luận Instagram"
+    },
+    "igStory": {
+      "label": "Tự động trả lời story Instagram"
     }
   },
   "flows": {
@@ -2946,9 +2958,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "Thư mục"
-    }
+    "rootOption": "-- Gốc --",
+    "showMore": "+{count}",
+    "showLess": "Thu gọn",
+    "root": "Gốc",
+    "viewingFolder": "Đang xem thư mục: {name}"
   },
   "gemini": {
     "autoReply": {

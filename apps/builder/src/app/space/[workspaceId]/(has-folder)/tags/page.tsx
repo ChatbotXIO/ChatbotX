@@ -1,8 +1,9 @@
-import { rootFolderId } from "@chatbotx.io/database/partials"
+import { folderTypes, rootFolderId } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+import { WithFolderBar } from "@/features/folders/with-folder-bar"
 import { listTags } from "@/features/tags/queries"
 import { listTagsSearchParamsCache } from "@/features/tags/schema/query"
 import { TagsTable } from "@/features/tags/tags-table"
@@ -29,12 +30,18 @@ export default async function TagsPage(props: {
   ])
 
   return (
-    <Suspense>
-      <TagsTable
-        folderId={folderId}
-        promises={promises}
-        workspaceId={workspaceId}
-      />
-    </Suspense>
+    <WithFolderBar
+      folderType={folderTypes.enum.tag}
+      searchParams={props.searchParams}
+      workspaceId={workspaceId}
+    >
+      <Suspense>
+        <TagsTable
+          folderId={folderId}
+          promises={promises}
+          workspaceId={workspaceId}
+        />
+      </Suspense>
+    </WithFolderBar>
   )
 }

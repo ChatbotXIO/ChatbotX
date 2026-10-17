@@ -3314,6 +3314,18 @@
     "capiConfigId": {
       "label": "Conversions API Config ID",
       "description": "连接 Conversions API 时用于请求 whatsapp_business_manage_events 权限的 Embedded Signup 配置 ID。"
+    },
+    "outboundAutomatedResponse": {
+      "label": "页面关键词"
+    },
+    "fbComment": {
+      "label": "Facebook 评论自动化"
+    },
+    "igComment": {
+      "label": "Instagram 评论自动化"
+    },
+    "igStory": {
+      "label": "Instagram 快拍自动化"
     }
   },
   "flowAnalytics": {
@@ -3684,9 +3696,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "文件夹"
-    }
+    "rootOption": "-- 根目录 --",
+    "showMore": "+{count}",
+    "showLess": "收起",
+    "root": "根目录",
+    "viewingFolder": "正在查看文件夹：{name}"
   },
   "gemini": {
     "autoReply": {

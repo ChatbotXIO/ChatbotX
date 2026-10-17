@@ -650,9 +650,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "תיקיות"
-    }
+    "rootOption": "-- ראשי --",
+    "showMore": "+{count}",
+    "showLess": "הצג פחות",
+    "root": "ראשי",
+    "viewingFolder": "מוצגת תיקייה: {name}"
   },
   "gemini": {
     "autoReply": {
@@ -6049,6 +6051,18 @@
     "capiConfigId": {
       "label": "Conversions API Config ID",
       "description": "מזהה תצורת Embedded Signup המשמש לבקשת ההרשאה whatsapp_business_manage_events בעת חיבור Conversions API."
+    },
+    "outboundAutomatedResponse": {
+      "label": "מילת מפתח לעמוד"
+    },
+    "fbComment": {
+      "label": "אוטומציית תגובות פייסבוק"
+    },
+    "igComment": {
+      "label": "אוטומציית תגובות אינסטגרם"
+    },
+    "igStory": {
+      "label": "אוטומציית סטוריז באינסטגרם"
     }
   },
   "billing": {

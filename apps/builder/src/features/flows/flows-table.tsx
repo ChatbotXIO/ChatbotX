@@ -2,6 +2,7 @@
 
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableRowCard } from "@chatbotx.io/ui/components/data-table/data-table-row-card"
+import { DataTableSkeleton } from "@chatbotx.io/ui/components/data-table/data-table-skeleton"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -16,8 +17,9 @@ import { HistoryIcon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
-import { use, useMemo, useState } from "react"
+import { Suspense, use, useMemo, useState } from "react"
 import { useInvalidateFlows } from "@/features/flows/provider/flow-hook"
+import { FolderBarSlot } from "@/features/folders/folder-bar-slot"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { CreateFlowDialog } from "./create-flow-dialog"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
@@ -35,7 +37,7 @@ type FlowsTableProps = {
   folderId: string | null
 }
 
-export function FlowsTable({
+function FlowsTableContent({
   promises,
   workspaceId,
   folderId,
@@ -68,74 +70,85 @@ export function FlowsTable({
   })
 
   return (
+    <>
+      <DataTable
+        mobileCard={(row) => <DataTableRowCard row={row} />}
+        table={table}
+      >
+        <DataTableToolbar table={table}>
+          <FlowsTableToolbarActions
+            setRowAction={setRowAction}
+            table={table}
+            workspaceId={workspaceId}
+          />
+          <Link
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+            href={`/space/${workspaceId}/flows/import/histories`}
+          >
+            <HistoryIcon className="size-4" />
+            {t("fields.import.histories.title")}
+          </Link>
+          <ImportFlowDialog folderId={folderId} workspaceId={workspaceId} />
+          <CreateFlowDialog folderId={folderId} workspaceId={workspaceId} />
+        </DataTableToolbar>
+      </DataTable>
+
+      <DeleteFlowsDialog
+        flows={rowAction?.row.original ? [rowAction?.row.original] : []}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          rowAction?.row.toggleSelected(false)
+          invalidateFlows()
+          router.refresh()
+        }}
+        open={rowAction?.variant === "delete"}
+        showTrigger={false}
+        workspaceId={workspaceId}
+      />
+
+      <DuplicateFlowDialog
+        flow={rowAction?.row.original || null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          invalidateFlows()
+          router.refresh()
+        }}
+        open={rowAction?.variant === "duplicate"}
+        workspaceId={workspaceId}
+      />
+
+      <RenameFlowDialog
+        flow={rowAction?.row.original || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "rename"}
+      />
+
+      <ChangeFolderDialog
+        currentFolderId={rowAction?.row.original?.folderId || null}
+        folderType="flow"
+        modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={invalidateFlows}
+        open={rowAction?.variant === "move"}
+        workspaceId={workspaceId}
+      />
+    </>
+  )
+}
+
+export function FlowsTable(props: FlowsTableProps) {
+  const t = useTranslations()
+
+  return (
     <Card>
       <CardHeader>
         <CardTitle className="font-bold text-xl">{t("flows.title")}</CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable
-          mobileCard={(row) => <DataTableRowCard row={row} />}
-          table={table}
-        >
-          <DataTableToolbar table={table}>
-            <FlowsTableToolbarActions
-              setRowAction={setRowAction}
-              table={table}
-              workspaceId={workspaceId}
-            />
-            <Link
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-              href={`/space/${workspaceId}/flows/import/histories`}
-            >
-              <HistoryIcon className="size-4" />
-              {t("fields.import.histories.title")}
-            </Link>
-            <ImportFlowDialog folderId={folderId} workspaceId={workspaceId} />
-            <CreateFlowDialog folderId={folderId} workspaceId={workspaceId} />
-          </DataTableToolbar>
-        </DataTable>
-
-        <DeleteFlowsDialog
-          flows={rowAction?.row.original ? [rowAction?.row.original] : []}
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => {
-            rowAction?.row.toggleSelected(false)
-            invalidateFlows()
-            router.refresh()
-          }}
-          open={rowAction?.variant === "delete"}
-          showTrigger={false}
-          workspaceId={workspaceId}
-        />
-
-        <DuplicateFlowDialog
-          flow={rowAction?.row.original || null}
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => {
-            invalidateFlows()
-            router.refresh()
-          }}
-          open={rowAction?.variant === "duplicate"}
-          workspaceId={workspaceId}
-        />
-
-        <RenameFlowDialog
-          flow={rowAction?.row.original || null}
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "rename"}
-        />
-
-        <ChangeFolderDialog
-          currentFolderId={rowAction?.row.original?.folderId || null}
-          folderType="flow"
-          modelIds={
-            rowAction?.row.original ? [rowAction?.row.original.id] : null
-          }
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={invalidateFlows}
-          open={rowAction?.variant === "move"}
-          workspaceId={workspaceId}
-        />
+        <FolderBarSlot />
+        <Suspense fallback={<DataTableSkeleton columnCount={6} />}>
+          <FlowsTableContent {...props} />
+        </Suspense>
       </CardContent>
     </Card>
   )

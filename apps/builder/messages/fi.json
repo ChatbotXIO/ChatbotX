@@ -2401,6 +2401,18 @@
     "capiConfigId": {
       "label": "Conversions API Config ID",
       "description": "Embedded Signup -määrityksen tunnus, jolla pyydetään whatsapp_business_manage_events-oikeus Conversions API:n yhdistämisen yhteydessä."
+    },
+    "outboundAutomatedResponse": {
+      "label": "Sivun avainsana"
+    },
+    "fbComment": {
+      "label": "Facebook-kommenttien automaatio"
+    },
+    "igComment": {
+      "label": "Instagram-kommenttien automaatio"
+    },
+    "igStory": {
+      "label": "Instagram-tarinoiden automaatio"
     }
   },
   "flows": {
@@ -2758,9 +2770,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "Kansiot"
-    }
+    "rootOption": "-- Juuri --",
+    "showMore": "+{count}",
+    "showLess": "Näytä vähemmän",
+    "root": "Juuri",
+    "viewingFolder": "Näytetään kansio: {name}"
   },
   "gemini": {
     "autoReply": {

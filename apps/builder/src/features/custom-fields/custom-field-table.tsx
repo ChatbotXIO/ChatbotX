@@ -3,6 +3,7 @@
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import { DataTableSkeleton } from "@chatbotx.io/ui/components/data-table/data-table-skeleton"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -34,7 +35,8 @@ import {
   Trash2Icon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { use, useMemo, useState } from "react"
+import { Suspense, use, useMemo, useState } from "react"
+import { FolderBarSlot } from "@/features/folders/folder-bar-slot"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import CustomFieldTypeLabel from "./components/custom-field-label"
 import { CreateCustomFieldDialog } from "./create-custom-field"
@@ -51,7 +53,7 @@ type FieldsTableProps = {
   folderId: string | null
 }
 
-export function CustomFieldsTable({
+function CustomFieldsTableContent({
   promises,
   workspaceId,
   folderId,
@@ -253,6 +255,54 @@ export function CustomFieldsTable({
   })
 
   return (
+    <>
+      <DataTable table={table}>
+        <DataTableToolbar table={table}>
+          <CustomFieldsTableToolbarActions
+            table={table}
+            workspaceId={workspaceId}
+            // setRowAction={setRowAction}
+          />
+          <CreateCustomFieldDialog
+            folderId={folderId}
+            workspaceId={workspaceId}
+          />
+        </DataTableToolbar>
+      </DataTable>
+
+      <DeleteFieldsDialog
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        open={rowAction?.variant === "delete"}
+        records={rowAction?.row.original ? [rowAction?.row.original] : []}
+        showTrigger={false}
+        workspaceId={workspaceId}
+      />
+
+      <UpdateCustomFieldDialog
+        customField={rowAction?.row.original || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "update"}
+        workspaceId={workspaceId}
+      />
+
+      <ChangeFolderDialog
+        currentFolderId={rowAction?.row.original?.folderId || null}
+        folderType="customField"
+        modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : null}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={invalidateCustomFields}
+        open={rowAction?.variant === "move"}
+        workspaceId={workspaceId}
+      />
+    </>
+  )
+}
+
+export function CustomFieldsTable(props: FieldsTableProps) {
+  const t = useTranslations()
+
+  return (
     <Card>
       <CardHeader>
         <CardTitle className="font-bold text-xl">
@@ -260,47 +310,10 @@ export function CustomFieldsTable({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <CustomFieldsTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-              // setRowAction={setRowAction}
-            />
-            <CreateCustomFieldDialog
-              folderId={folderId}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
-
-        <DeleteFieldsDialog
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => rowAction?.row.toggleSelected(false)}
-          open={rowAction?.variant === "delete"}
-          records={rowAction?.row.original ? [rowAction?.row.original] : []}
-          showTrigger={false}
-          workspaceId={workspaceId}
-        />
-
-        <UpdateCustomFieldDialog
-          customField={rowAction?.row.original || null}
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "update"}
-          workspaceId={workspaceId}
-        />
-
-        <ChangeFolderDialog
-          currentFolderId={rowAction?.row.original?.folderId || null}
-          folderType="customField"
-          modelIds={
-            rowAction?.row.original ? [rowAction?.row.original.id] : null
-          }
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={invalidateCustomFields}
-          open={rowAction?.variant === "move"}
-          workspaceId={workspaceId}
-        />
+        <FolderBarSlot />
+        <Suspense fallback={<DataTableSkeleton columnCount={5} />}>
+          <CustomFieldsTableContent {...props} />
+        </Suspense>
       </CardContent>
     </Card>
   )

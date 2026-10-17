@@ -5,11 +5,9 @@ import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permissi
 
 export default async function WebhooksLayout({
   children,
-  folders,
   params,
 }: {
   children: ReactNode
-  folders: ReactNode
   params: Promise<{ workspaceId: string }>
 }) {
   const workspaceId = await resolveGuardedWorkspaceId(params, "superAdmin")
@@ -20,7 +18,6 @@ export default async function WebhooksLayout({
       folderType={folderTypes.enum.webhook}
       workspaceId={workspaceId}
     >
-      {folders}
       {children}
     </FolderStoreProvider>
   )

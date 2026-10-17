@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import { DataTableSkeleton } from "@chatbotx.io/ui/components/data-table/data-table-skeleton"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -36,8 +37,9 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import React, { use, useMemo } from "react"
+import React, { Suspense, use, useMemo } from "react"
 import { toast } from "sonner"
+import { FolderBarSlot } from "@/features/folders/folder-bar-slot"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useFlows } from "../flows/provider/flow-hook"
 import { ChangeFolderDialog } from "../folders/change-folder"
@@ -55,7 +57,7 @@ type AutomatedResponseTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listAutomatedResponses>>]>
 }
 
-export function AutomatedResponsesTable({
+function AutomatedResponsesTableContent({
   workspaceId,
   basePath,
   type,
@@ -260,6 +262,49 @@ export function AutomatedResponsesTable({
   })
 
   return (
+    <>
+      <DataTable table={table}>
+        <DataTableToolbar table={table}>
+          <AutomatedResponseTableToolbarActions
+            folderType={folderType}
+            table={table}
+            type={type}
+            workspaceId={workspaceId}
+          />
+          <AddAutomatedResponseButton basePath={basePath} />
+        </DataTableToolbar>
+      </DataTable>
+
+      <DeleteAutomatedResponsesDialog
+        automatedResponses={
+          rowAction?.row.original ? [rowAction?.row.original] : []
+        }
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "delete"}
+        showTrigger={false}
+        type={type}
+        workspaceId={workspaceId}
+      />
+
+      <ChangeFolderDialog
+        currentFolderId={rowAction?.row.original?.folderId || null}
+        folderType={folderType}
+        modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "move"}
+        workspaceId={workspaceId}
+      />
+    </>
+  )
+}
+
+export function AutomatedResponsesTable(props: AutomatedResponseTableProps) {
+  const t = useTranslations()
+
+  return (
     <Card>
       <CardHeader>
         <CardTitle className="font-bold text-xl">
@@ -267,42 +312,10 @@ export function AutomatedResponsesTable({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <AutomatedResponseTableToolbarActions
-              folderType={folderType}
-              table={table}
-              type={type}
-              workspaceId={workspaceId}
-            />
-            <AddAutomatedResponseButton basePath={basePath} />
-          </DataTableToolbar>
-        </DataTable>
-
-        <DeleteAutomatedResponsesDialog
-          automatedResponses={
-            rowAction?.row.original ? [rowAction?.row.original] : []
-          }
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => {
-            router.refresh()
-          }}
-          open={rowAction?.variant === "delete"}
-          showTrigger={false}
-          type={type}
-          workspaceId={workspaceId}
-        />
-
-        <ChangeFolderDialog
-          currentFolderId={rowAction?.row.original?.folderId || null}
-          folderType={folderType}
-          modelIds={
-            rowAction?.row.original ? [rowAction?.row.original.id] : null
-          }
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "move"}
-          workspaceId={workspaceId}
-        />
+        <FolderBarSlot />
+        <Suspense fallback={<DataTableSkeleton columnCount={5} />}>
+          <AutomatedResponsesTableContent {...props} />
+        </Suspense>
       </CardContent>
     </Card>
   )

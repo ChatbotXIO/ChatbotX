@@ -354,9 +354,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "Dosare"
-    }
+    "rootOption": "-- Rădăcină --",
+    "showMore": "+{count}",
+    "showLess": "Arată mai puțin",
+    "root": "Rădăcină",
+    "viewingFolder": "Se afișează dosarul: {name}"
   },
   "gemini": {
     "autoReply": {
@@ -3442,6 +3444,18 @@
     "capiConfigId": {
       "label": "Conversions API Config ID",
       "description": "ID-ul configurației Embedded Signup folosit pentru a cere permisiunea whatsapp_business_manage_events la conectarea Conversions API."
+    },
+    "outboundAutomatedResponse": {
+      "label": "Cuvânt cheie pagină"
+    },
+    "fbComment": {
+      "label": "Automatizare comentarii Facebook"
+    },
+    "igComment": {
+      "label": "Automatizare comentarii Instagram"
+    },
+    "igStory": {
+      "label": "Automatizare stories Instagram"
     }
   },
   "channels": {

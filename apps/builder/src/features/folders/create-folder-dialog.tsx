@@ -85,13 +85,13 @@ export function CreateFolderDialog({
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger
         render={
-          <Button size="sm">
+          <Button className="h-9" size="sm" variant="outline">
             <PlusIcon />
             {t("actions.createFeature", { feature: t("fields.folder.label") })}
           </Button>
         }
       />
-      <DialogContent className={"max-h-screen max-w-md overflow-y-scroll"}>
+      <DialogContent className={"max-h-screen max-w-md overflow-y-auto"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.createFeature", {

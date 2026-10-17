@@ -73,7 +73,7 @@ export function EditFolderDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className={"max-h-screen max-w-5xl overflow-y-scroll"}>
+      <DialogContent className={"max-h-screen max-w-md overflow-y-auto"}>
         <DialogHeader>
           <DialogTitle>
             {t("messages.editFeature", { feature: t("fields.folder.label") })}

@@ -1540,6 +1540,18 @@
     "capiConfigId": {
       "label": "Conversions API Config ID",
       "description": "連接 Conversions API 時用於請求 whatsapp_business_manage_events 權限的 Embedded Signup 設定 ID。"
+    },
+    "outboundAutomatedResponse": {
+      "label": "頁面關鍵字"
+    },
+    "fbComment": {
+      "label": "Facebook 留言自動化"
+    },
+    "igComment": {
+      "label": "Instagram 留言自動化"
+    },
+    "igStory": {
+      "label": "Instagram 限時動態自動化"
     }
   },
   "messages": {
@@ -3130,9 +3142,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "資料夾"
-    }
+    "rootOption": "-- 根目錄 --",
+    "showMore": "+{count}",
+    "showLess": "收合",
+    "root": "根目錄",
+    "viewingFolder": "正在檢視資料夾：{name}"
   },
   "gemini": {
     "autoReply": {

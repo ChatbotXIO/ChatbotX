@@ -2547,6 +2547,18 @@
     "capiConfigId": {
       "label": "معرّف تكوين Conversions API",
       "description": "معرّف تكوين Embedded Signup المستخدم لطلب إذن whatsapp_business_manage_events عند ربط Conversions API."
+    },
+    "outboundAutomatedResponse": {
+      "label": "كلمة مفتاحية للصفحة"
+    },
+    "fbComment": {
+      "label": "أتمتة تعليقات فيسبوك"
+    },
+    "igComment": {
+      "label": "أتمتة تعليقات إنستغرام"
+    },
+    "igStory": {
+      "label": "أتمتة قصص إنستغرام"
     }
   },
   "flows": {
@@ -2904,9 +2916,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "المجلدات"
-    }
+    "rootOption": "-- الجذر --",
+    "showMore": "+{count}",
+    "showLess": "عرض أقل",
+    "root": "الجذر",
+    "viewingFolder": "عرض المجلد: {name}"
   },
   "gemini": {
     "autoReply": {

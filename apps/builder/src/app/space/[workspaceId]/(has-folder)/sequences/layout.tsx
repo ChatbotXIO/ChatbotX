@@ -8,11 +8,9 @@ import { resolveGuardedWorkspaceId } from "@/lib/auth/require-workspace-permissi
 
 export default async function FolderableLayout({
   children,
-  folders,
   params,
 }: {
   children: ReactNode
-  folders: ReactNode
   params: Promise<{ workspaceId: string }>
 }) {
   const workspaceId = await resolveGuardedWorkspaceId(params, "broadcast")
@@ -23,7 +21,6 @@ export default async function FolderableLayout({
       folderType={folderTypes.enum.sequence}
       workspaceId={workspaceId}
     >
-      {folders}
       <Suspense>{children}</Suspense>
     </FolderStoreProvider>
   )

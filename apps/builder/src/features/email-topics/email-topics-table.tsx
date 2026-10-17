@@ -2,6 +2,7 @@
 
 import type { EmailTopicModel } from "@chatbotx.io/database/types"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
+import { DataTableSkeleton } from "@chatbotx.io/ui/components/data-table/data-table-skeleton"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import {
   Card,
@@ -12,7 +13,8 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useTranslations } from "next-intl"
-import React, { useMemo } from "react"
+import React, { Suspense, useMemo } from "react"
+import { FolderBarSlot } from "@/features/folders/folder-bar-slot"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { CreateEmailTopicDialog } from "./create-email-topic-dialog"
 import { DeleteEmailTopicsDialog } from "./delete-email-topic-dialog"
@@ -27,7 +29,7 @@ type EmailTopicsTableProps = {
   folderId: string | null
 }
 
-export function EmailTopicsTable({
+function EmailTopicsTableContent({
   promises,
   workspaceId,
   folderId,
@@ -54,6 +56,52 @@ export function EmailTopicsTable({
   })
 
   return (
+    <>
+      <DataTable table={table}>
+        <DataTableToolbar table={table}>
+          <EmailTopicsTableToolbarActions
+            table={table}
+            workspaceId={workspaceId}
+          />
+          <CreateEmailTopicDialog
+            folderId={folderId}
+            workspaceId={workspaceId}
+          />
+        </DataTableToolbar>
+      </DataTable>
+
+      <DeleteEmailTopicsDialog
+        emailTopics={rowAction?.row.original ? [rowAction.row.original] : []}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        open={rowAction?.variant === "delete"}
+        showTrigger={false}
+        workspaceId={workspaceId}
+      />
+
+      <UpdateEmailTopicDialog
+        emailTopic={rowAction?.row.original ?? null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "update"}
+        workspaceId={workspaceId}
+      />
+
+      <ChangeFolderDialog
+        currentFolderId={rowAction?.row.original?.folderId ?? null}
+        folderType="emailTopic"
+        modelIds={rowAction?.row.original ? [rowAction.row.original.id] : null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "move"}
+        workspaceId={workspaceId}
+      />
+    </>
+  )
+}
+
+export function EmailTopicsTable(props: EmailTopicsTableProps) {
+  const t = useTranslations()
+
+  return (
     <Card>
       <CardHeader>
         <CardTitle className="font-bold text-xl">
@@ -61,45 +109,10 @@ export function EmailTopicsTable({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <EmailTopicsTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-            />
-            <CreateEmailTopicDialog
-              folderId={folderId}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
-
-        <DeleteEmailTopicsDialog
-          emailTopics={rowAction?.row.original ? [rowAction.row.original] : []}
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => rowAction?.row.toggleSelected(false)}
-          open={rowAction?.variant === "delete"}
-          showTrigger={false}
-          workspaceId={workspaceId}
-        />
-
-        <UpdateEmailTopicDialog
-          emailTopic={rowAction?.row.original ?? null}
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "update"}
-          workspaceId={workspaceId}
-        />
-
-        <ChangeFolderDialog
-          currentFolderId={rowAction?.row.original?.folderId ?? null}
-          folderType="emailTopic"
-          modelIds={
-            rowAction?.row.original ? [rowAction.row.original.id] : null
-          }
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "move"}
-          workspaceId={workspaceId}
-        />
+        <FolderBarSlot />
+        <Suspense fallback={<DataTableSkeleton columnCount={4} />}>
+          <EmailTopicsTableContent {...props} />
+        </Suspense>
       </CardContent>
     </Card>
   )

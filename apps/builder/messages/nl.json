@@ -2205,6 +2205,18 @@
     "capiConfigId": {
       "label": "Conversions API Config ID",
       "description": "Embedded Signup-configuratie-ID waarmee de machtiging whatsapp_business_manage_events wordt aangevraagd bij het koppelen van de Conversions API."
+    },
+    "outboundAutomatedResponse": {
+      "label": "Pagina-trefwoord"
+    },
+    "fbComment": {
+      "label": "Facebook-reactieautomatisering"
+    },
+    "igComment": {
+      "label": "Instagram-reactieautomatisering"
+    },
+    "igStory": {
+      "label": "Instagram-verhaalautomatisering"
     }
   },
   "condition": {
@@ -2758,9 +2770,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "Mappen"
-    }
+    "rootOption": "-- Hoofdmap --",
+    "showMore": "+{count}",
+    "showLess": "Minder weergeven",
+    "root": "Hoofdmap",
+    "viewingFolder": "Map bekijken: {name}"
   },
   "gemini": {
     "autoReply": {

@@ -2589,6 +2589,18 @@
     "capiConfigId": {
       "label": "Conversions API Config ID",
       "description": "Conversions API qoşularkən whatsapp_business_manage_events icazəsini tələb etmək üçün istifadə olunan Embedded Signup konfiqurasiya ID-si."
+    },
+    "outboundAutomatedResponse": {
+      "label": "Səhifə açar sözü"
+    },
+    "fbComment": {
+      "label": "Facebook şərh avtomatlaşdırması"
+    },
+    "igComment": {
+      "label": "Instagram şərh avtomatlaşdırması"
+    },
+    "igStory": {
+      "label": "Instagram hekayə avtomatlaşdırması"
     }
   },
   "metaConversions": {
@@ -3586,9 +3598,11 @@
     }
   },
   "folders": {
-    "heading": {
-      "title": "Qovluqlar"
-    }
+    "rootOption": "-- Kök --",
+    "showMore": "+{count}",
+    "showLess": "Daha az göstər",
+    "root": "Kök",
+    "viewingFolder": "Qovluğa baxılır: {name}"
   },
   "gemini": {
     "autoReply": {

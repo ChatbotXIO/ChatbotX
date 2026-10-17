@@ -1,6 +1,9 @@
 "use client"
 
-import type { CustomFieldType } from "@chatbotx.io/database/partials"
+import {
+  type CustomFieldType,
+  rootFolderId,
+} from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
@@ -32,6 +35,7 @@ import {
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  FolderIcon,
   MoreHorizontalIcon,
   PencilIcon,
   SearchIcon,
@@ -44,6 +48,7 @@ import { getBrowserTimezone } from "../contact-filter/lib/timezone"
 import CustomFieldTypeLabel from "../custom-fields/components/custom-field-label"
 import { formatCustomFieldDisplayValue } from "../custom-fields/lib/format-custom-field-display-value"
 import { useInvalidateBotFields } from "../custom-fields/provider/custom-field-hook"
+import { useFolderStore } from "../folders/provider/folder-store-context"
 import { CreateBotFieldDialog } from "./create-bot-field-dialog"
 import { DeleteBotFieldsDialog } from "./delete-bot-fields-dialog"
 import type { listBotFieldsRSC } from "./queries"
@@ -130,6 +135,12 @@ export function AccountFieldsCard({
   const router = useRouter()
   const [{ data }] = use(promises)
   const invalidateBotFields = useInvalidateBotFields()
+  // Bot fields share the custom-field folder filter, so say which folder applies.
+  const currentFolderName = useFolderStore((state) =>
+    folderId && folderId !== rootFolderId
+      ? state.folders.find((folder) => folder.id === folderId)?.name
+      : undefined,
+  )
 
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
@@ -207,6 +218,14 @@ export function AccountFieldsCard({
         <CardTitle className="flex-1 font-bold text-xl">
           {t("accountFields.title")}
         </CardTitle>
+        {currentFolderName && (
+          <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground text-sm">
+            <FolderIcon className="size-4 shrink-0" />
+            <span className="max-w-60 truncate" title={currentFolderName}>
+              {t("folders.viewingFolder", { name: currentFolderName })}
+            </span>
+          </span>
+        )}
       </CardHeader>
 
       <CardContent className="flex flex-col gap-4">
