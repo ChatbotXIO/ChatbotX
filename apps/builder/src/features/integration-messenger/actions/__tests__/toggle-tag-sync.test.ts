@@ -68,6 +68,9 @@ vi.mock("@chatbotx.io/business", () => ({
     }
   }),
   messengerIntegrationService: { updateTagSync },
+  hasEnterpriseFeatures: () => Promise.resolve(true),
+  userQuotaService: { getAccessState: vi.fn(async () => ({ blocked: false })) },
+  quotaEnforcementService: { isAtLimit: vi.fn(async () => false) },
 }))
 
 vi.mock("@chatbotx.io/business/audit", () => ({

@@ -52,7 +52,10 @@ const savedReplyService = {
   update: vi.fn(),
   delete: vi.fn(),
 }
-vi.mock("@chatbotx.io/business", () => ({ savedReplyService }))
+vi.mock("@chatbotx.io/business", () => ({
+  savedReplyService,
+  hasEnterpriseFeatures: () => Promise.resolve(false),
+}))
 
 const listSavedReplies = vi.fn()
 vi.mock("../src/features/saved-replies/queries", () => ({

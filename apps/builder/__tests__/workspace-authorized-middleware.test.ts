@@ -17,6 +17,7 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  hasEnterpriseFeatures: () => Promise.resolve(true),
   workspaceMemberService: { findMembership },
   resolveWorkspaceAccess,
   isWorkspaceScheduledForDeletion,

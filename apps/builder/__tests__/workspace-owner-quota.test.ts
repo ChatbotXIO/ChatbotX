@@ -23,6 +23,7 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  hasEnterpriseFeatures: () => Promise.resolve(isCloud()),
   isPlatformAdmin: vi.fn(),
   isSuperAdmin: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn(() => false),

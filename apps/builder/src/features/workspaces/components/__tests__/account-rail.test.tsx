@@ -38,9 +38,9 @@ vi.mock("@/features/tenant/utils", () => ({
   getTenantSettings: async () => ({ storageUrl: "https://cdn.example.test" }),
 }))
 
-const isCloud: Mock<() => boolean> = vi.fn(() => false)
+const isSaasEdition: Mock<() => boolean> = vi.fn(() => false)
 vi.mock("@/env", () => ({
-  isCloud: () => isCloud(),
+  isSaasEdition: () => isSaasEdition(),
 }))
 
 vi.mock("@/features/auth/sign-out", () => ({
@@ -77,8 +77,8 @@ describe("account rail", () => {
 
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-    isCloud.mockReset()
-    isCloud.mockReturnValue(false)
+    isSaasEdition.mockReset()
+    isSaasEdition.mockReturnValue(false)
     container = document.createElement("div")
     document.body.append(container)
     root = createRoot(container)
@@ -94,11 +94,11 @@ describe("account rail", () => {
       isSuperAdmin: boolean
       isPlatformAdmin: boolean
       isPlatformContext: boolean
-      cloud: boolean
+      saas: boolean
       planName: string | null
     }> = {},
   ) {
-    isCloud.mockReturnValue(props.cloud ?? false)
+    isSaasEdition.mockReturnValue(props.saas ?? false)
     const element = await AccountRail({
       user: BASE_USER,
       isSuperAdmin: props.isSuperAdmin,
@@ -122,51 +122,51 @@ describe("account rail", () => {
   }
 
   it("hides the billing link on community edition", async () => {
-    await render({ cloud: false })
+    await render({ saas: false })
     expect(findLink("/portal/billing")).toBeUndefined()
   })
 
-  it("renders the billing link on cloud edition", async () => {
-    await render({ cloud: true })
+  it("renders the billing link on cloud/enterprise SaaS edition", async () => {
+    await render({ saas: true })
     expect(findLink("/portal/billing")?.textContent).toContain("Billing")
   })
 
-  it("renders the redeem link in platform context on cloud edition", async () => {
-    await render({ cloud: true, isPlatformContext: true })
+  it("renders the redeem link in platform context on SaaS edition", async () => {
+    await render({ saas: true, isPlatformContext: true })
     expect(findLink("/portal/redeem")?.textContent).toContain("Redeem")
   })
 
   it("hides the redeem link outside platform context", async () => {
-    await render({ cloud: true, isPlatformContext: false })
+    await render({ saas: true, isPlatformContext: false })
     expect(findLink("/portal/redeem")).toBeUndefined()
   })
 
   it("hides the redeem link on community edition even in platform context", async () => {
-    await render({ cloud: false, isPlatformContext: true })
+    await render({ saas: false, isPlatformContext: true })
     expect(findLink("/portal/redeem")).toBeUndefined()
   })
 
   it("renders admin but hides manage on community edition", async () => {
-    await render({ isSuperAdmin: true, isPlatformAdmin: true, cloud: false })
+    await render({ isSuperAdmin: true, isPlatformAdmin: true, saas: false })
     expect(findLink("/admin")?.textContent).toContain("Admin")
     expect(findLink("/manage")).toBeUndefined()
   })
 
-  it("renders admin and manage on cloud edition", async () => {
-    await render({ isSuperAdmin: true, isPlatformAdmin: true, cloud: true })
+  it("renders admin and manage on SaaS edition", async () => {
+    await render({ isSuperAdmin: true, isPlatformAdmin: true, saas: true })
     expect(findLink("/admin")?.textContent).toContain("Admin")
     expect(findLink("/manage")?.textContent).toContain("Manage")
   })
 
   it("still renders the menu block on community edition", async () => {
-    await render({ isSuperAdmin: true, cloud: false })
+    await render({ isSuperAdmin: true, saas: false })
 
     expect(findLink("/admin")?.textContent).toContain("Admin")
     expect(findLink("/portal/billing")).toBeUndefined()
   })
 
   it("omits the menu divider when no menu items render on community edition", async () => {
-    await render({ cloud: false })
+    await render({ saas: false })
 
     const menu = container.querySelector("#account-rail-menu")
     expect(menu?.classList.contains("border-t")).toBe(false)
@@ -174,7 +174,7 @@ describe("account rail", () => {
   })
 
   it("keeps the menu divider when the admin link renders on community edition", async () => {
-    await render({ isSuperAdmin: true, cloud: false })
+    await render({ isSuperAdmin: true, saas: false })
 
     const menu = container.querySelector("#account-rail-menu")
     expect(menu?.classList.contains("border-t")).toBe(true)
@@ -189,8 +189,8 @@ describe("account rail", () => {
     expect(mtAutoCount).toBe(1)
   })
 
-  it("renders the current plan label and name on cloud edition", async () => {
-    await render({ cloud: true, planName: "Pro" })
+  it("renders the current plan label and name on SaaS edition", async () => {
+    await render({ saas: true, planName: "Pro" })
 
     const text = planNameText()
     expect(text).toContain("Current plan")
@@ -198,7 +198,7 @@ describe("account rail", () => {
   })
 
   it("falls back to the free plan label when no plan name is set", async () => {
-    await render({ cloud: true, planName: null })
+    await render({ saas: true, planName: null })
 
     const text = planNameText()
     expect(text).toContain("Current plan")

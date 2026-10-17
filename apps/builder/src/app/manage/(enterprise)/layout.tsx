@@ -1,12 +1,12 @@
+import { hasEnterpriseFeatures } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
-import { isCloud } from "@/env"
 
-export default function ManageEnterpriseLayout({
+export default async function ManageEnterpriseLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  if (!isCloud()) {
+  if (!(await hasEnterpriseFeatures())) {
     notFound()
   }
   return <div>{children}</div>

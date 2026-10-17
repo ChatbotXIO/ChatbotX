@@ -1,11 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const isCloud = vi.fn(() => true)
+const isEnterprise = vi.fn(() => false)
 const keys = vi.fn(() => ({ NEXT_PUBLIC_BUILDER_URL: "http://builder.test" }))
-vi.mock("../src/keys", () => ({ isCloud, keys }))
+vi.mock("../src/keys", () => ({ isCloud, isEnterprise, keys }))
 
 const loggerError = vi.fn()
 vi.mock("../src/logger", () => ({ logger: { error: loggerError } }))
+
+const getLicenseStatus = vi.fn(async () => ({ state: "valid" }))
+vi.mock("../src/enterprise/license/service", () => ({ getLicenseStatus }))
 
 const { billingService } = await import("../src/enterprise/billing/service")
 
@@ -14,6 +18,8 @@ const PROVISION_URL = "http://builder.test/portal/api/users/provision"
 describe("billingService.provisionDefaultPlan", () => {
   beforeEach(() => {
     isCloud.mockReturnValue(true)
+    isEnterprise.mockReturnValue(false)
+    getLicenseStatus.mockResolvedValue({ state: "valid" })
     loggerError.mockClear()
   })
 
@@ -21,8 +27,8 @@ describe("billingService.provisionDefaultPlan", () => {
     vi.unstubAllGlobals()
   })
 
-  test("is a no-op off cloud — never calls the portal", async () => {
-    isCloud.mockReturnValue(false)
+  test("is a no-op without a valid enterprise license — never calls the portal", async () => {
+    getLicenseStatus.mockResolvedValue({ state: "missing" })
     const fetchMock = vi.fn()
     vi.stubGlobal("fetch", fetchMock)
 
@@ -31,7 +37,7 @@ describe("billingService.provisionDefaultPlan", () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  test("posts userId and tenantId to the portal on cloud", async () => {
+  test("posts userId and tenantId to the portal on cloud with a valid license", async () => {
     const fetchMock = vi.fn(async () => new Response(null, { status: 200 }))
     vi.stubGlobal("fetch", fetchMock)
 

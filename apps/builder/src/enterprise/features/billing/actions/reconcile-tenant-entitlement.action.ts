@@ -1,8 +1,7 @@
 "use server"
 
-import { tenantService } from "@chatbotx.io/business"
+import { hasEnterpriseFeatures, tenantService } from "@chatbotx.io/business"
 import type { UserModel } from "@chatbotx.io/database/types"
-import { isCloud } from "@/env"
 import { authActionClient } from "@/lib/safe-action"
 
 /**
@@ -13,12 +12,13 @@ import { authActionClient } from "@/lib/safe-action"
  *
  * Best-effort and idempotent: the portal's entitlement write can lag the
  * postMessage, so this may briefly see no white-label flag and do nothing — the
- * worker reconcile is the authority and provisions on its next tick. Cloud-only;
- * other editions have no quota row, so there is nothing to reconcile.
+ * worker reconcile is the authority and provisions on its next tick. Runs
+ * only on cloud and licensed self-hosted enterprise; other editions have no
+ * quota row, so there is nothing to reconcile.
  */
 export const reconcileTenantEntitlementAction = authActionClient.action(
   async ({ ctx }: { ctx: { user: UserModel } }) => {
-    if (!isCloud()) {
+    if (!(await hasEnterpriseFeatures())) {
       return
     }
     await tenantService.reconcileOwnerEntitlement(ctx.user.id)

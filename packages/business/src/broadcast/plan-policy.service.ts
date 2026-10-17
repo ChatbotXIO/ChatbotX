@@ -12,7 +12,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { broadcastRepository } from "@chatbotx.io/database/repositories"
 import { broadcastPlanLimitException } from "../errors"
-import { isCloud } from "../keys"
+import { hasEnterpriseFeatures } from "../user/entitlements"
 import { userQuotaService } from "../user-quota/service"
 import { workspaceService } from "../workspace/service"
 
@@ -37,7 +37,7 @@ class BroadcastPlanPolicyService {
   async resolveForWorkspace(
     workspaceId: string,
   ): Promise<BroadcastPlanContext> {
-    if (!isCloud()) {
+    if (!(await hasEnterpriseFeatures())) {
       return unrestrictedContext()
     }
 

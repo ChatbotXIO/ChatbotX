@@ -51,6 +51,7 @@ vi.mock("@/features/analytics/components/analytics-nav", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  hasEnterpriseFeatures: () => Promise.resolve(true),
   isWorkspaceScheduledForDeletion: (
     workspace:
       | { scheduledDeletionAt?: Date | string | null }

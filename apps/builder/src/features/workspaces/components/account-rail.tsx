@@ -16,7 +16,7 @@ import { getTranslations } from "next-intl/server"
 import type { QuotaMetric } from "@/components/usage-bars"
 import { UsageBars } from "@/components/usage-bars"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
-import { isCloud } from "@/env"
+import { isSaasEdition } from "@/env"
 import { SignOut } from "@/features/auth/sign-out"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { getUserAvatarUrl } from "@/lib/auth/avatar"
@@ -68,7 +68,7 @@ export const AccountRail = async ({
     getTranslations(),
     getTenantSettings(),
   ])
-  const cloud = isCloud()
+  const saas = isSaasEdition()
   const notice = buildPlanNotice(planStatus, trialEndsAt)
   const displayName = user.name?.trim() || user.email
   const initials = displayName.slice(0, 2).toUpperCase()
@@ -103,7 +103,7 @@ export const AccountRail = async ({
           <EditProfileDialog className="absolute inset-e-0 top-0" user={user} />
         </div>
 
-        {cloud && (
+        {saas && (
           <div className="flex flex-col gap-4 border-t pt-5">
             <div className="flex flex-col gap-3">
               <div className="grid gap-0.5">
@@ -159,7 +159,7 @@ export const AccountRail = async ({
             // Community edition with no super admin renders none of the
             // items below — skip the divider so it doesn't float with
             // nothing underneath it.
-            (isSuperAdmin || cloud) && "border-t pt-4",
+            (isSuperAdmin || saas) && "border-t pt-4",
           )}
           id="account-rail-menu"
         >
@@ -169,7 +169,7 @@ export const AccountRail = async ({
               {t("actions.admin")}
             </Link>
           )}
-          {cloud && isPlatformAdmin && (
+          {saas && isPlatformAdmin && (
             <Link className={railMenuItemClassName} href="/manage">
               <Settings2Icon aria-hidden className="size-4" />
               {t("actions.manage")}
@@ -181,13 +181,13 @@ export const AccountRail = async ({
             client-side navigation would fail. Mirrors the portal, where the
             cross-zone dashboard link is a plain anchor.
           */}
-          {cloud && (
+          {saas && (
             <a className={railMenuItemClassName} href="/portal/billing">
               <CreditCardIcon aria-hidden className="size-4" />
               {t("actions.billing")}
             </a>
           )}
-          {cloud && isPlatformContext && (
+          {saas && isPlatformContext && (
             <a className={railMenuItemClassName} href="/portal/redeem">
               <TicketIcon aria-hidden className="size-4" />
               {t("actions.redeem")}

@@ -81,6 +81,7 @@ vi.mock("@chatbotx.io/business", async () => {
     workspaceApiTokenService: { findWorkspaceByTokenHash },
     isWorkspaceScheduledForDeletion,
     userQuotaService: { getAccessState },
+    hasEnterpriseFeatures: () => Promise.resolve(true),
     quotaEnforcementService: { isAtLimit },
     adsConversionService,
     adsAnalyticsService,

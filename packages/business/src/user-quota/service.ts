@@ -34,6 +34,7 @@ import {
   LiveCounterStore,
   type QuotaMetric,
 } from "../quota-shared/live-counter-store"
+import { hasEnterpriseFeatures } from "../user/entitlements"
 
 export type { QuotaMetric } from "../quota-shared/live-counter-store"
 
@@ -233,7 +234,7 @@ class UserQuotaService extends BaseService {
   }
 
   /**
-   * Stamp a real cloud sign-up quota row before the private quota-worker runs.
+   * Stamp a real sign-up quota row before the private quota-worker runs.
    * Idempotent by `UserQuota.userId`; the worker remains authoritative and may
    * overwrite this bootstrap row on its next `publishEntitlements` sync.
    * Surfaces failures to the caller — the sign-up hook swallows them so a stamp
@@ -243,19 +244,25 @@ class UserQuotaService extends BaseService {
     tenantId?: string | null
     userId: string
   }): Promise<void> {
-    if (!isCloud()) {
+    if (!(await hasEnterpriseFeatures())) {
       return
     }
 
     const { tenantId, userId } = input
 
-    const snapshot: BootstrapPlanSnapshot =
-      (await this.readDefaultPlanSnapshot(tenantId)) ?? BOOTSTRAP_TRIAL_FALLBACK
+    const snapshot = await this.readDefaultPlanSnapshot(tenantId)
+    if (!(snapshot || isCloud())) {
+      // Self-hosted: no published default plan means "unlimited". Stamping the
+      // 1-day/all-zero BOOTSTRAP_TRIAL_FALLBACK here would lock the operator
+      // out of their own box the moment the portal is not configured yet.
+      return
+    }
+    const resolved: BootstrapPlanSnapshot = snapshot ?? BOOTSTRAP_TRIAL_FALLBACK
     const now = new Date()
     // Distinguish a malformed snapshot (NaN → 1-day lockdown) from an
     // explicit `0`/negative trial length (a free-forever default plan →
     // `active`, never expires). Only the malformed case falls back.
-    const rawTrialDays = Number(snapshot.trialDays)
+    const rawTrialDays = Number(resolved.trialDays)
     const trialDays = Number.isFinite(rawTrialDays)
       ? Math.max(0, rawTrialDays)
       : BOOTSTRAP_TRIAL_FALLBACK.trialDays
@@ -268,19 +275,19 @@ class UserQuotaService extends BaseService {
       .insert(userQuotaModel)
       .values({
         userId,
-        contactsLimit: snapshot.contactsLimit,
-        workspacesLimit: snapshot.workspacesLimit,
-        channelsLimit: snapshot.channelsLimit,
-        teamMembersLimit: snapshot.teamMembersLimit,
-        macLimit: snapshot.macLimit,
-        botMessagesLimit: snapshot.botMessagesLimit,
+        contactsLimit: resolved.contactsLimit,
+        workspacesLimit: resolved.workspacesLimit,
+        channelsLimit: resolved.channelsLimit,
+        teamMembersLimit: resolved.teamMembersLimit,
+        macLimit: resolved.macLimit,
+        botMessagesLimit: resolved.botMessagesLimit,
         // Additive cross-repo field: an older snapshot omits it, which is
         // deliberately unlimited (fail-open), never an implicit zero cap.
-        monthlyBotMessagesLimit: snapshot.monthlyBotMessagesLimit ?? null,
+        monthlyBotMessagesLimit: resolved.monthlyBotMessagesLimit ?? null,
         whiteLabel: false,
         ssoSaml: false,
         saasMode: false,
-        planName: snapshot.planName,
+        planName: resolved.planName,
         planStatus: isTrial
           ? planStatuses.enum.trial
           : planStatuses.enum.active,
@@ -338,10 +345,10 @@ class UserQuotaService extends BaseService {
     userId: string,
     quota: UserQuotaModel | null,
   ): Promise<UserQuotaModel | null> {
-    // Default-plan snapshots are a cloud concept. Off-cloud, a shared or
-    // stale Redis carrying `entitlements:default-plan` must never impose
-    // cloud limits on a self-hosted install.
-    if (!isCloud()) {
+    // Default-plan snapshots are a SaaS concept, published only by the
+    // operator's portal. Without a valid licence a shared or stale Redis
+    // carrying `entitlements:default-plan` must never impose limits.
+    if (!(await hasEnterpriseFeatures())) {
       return null
     }
 

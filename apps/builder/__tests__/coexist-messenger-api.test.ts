@@ -7,6 +7,7 @@ const { mockDisable, mockEnable } = vi.hoisted(() => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  hasEnterpriseFeatures: () => Promise.resolve(true),
   coexistService: {
     disable: mockDisable,
     enable: mockEnable,
@@ -29,6 +30,12 @@ vi.mock("@chatbotx.io/business", () => ({
       isSupportSession: false,
     }
   }),
+  userQuotaService: {
+    getAccessState: vi.fn(async () => ({ blocked: false })),
+  },
+  quotaEnforcementService: {
+    isAtLimit: vi.fn(async () => false),
+  },
 }))
 
 vi.mock("@/lib/auth/auth", () => ({

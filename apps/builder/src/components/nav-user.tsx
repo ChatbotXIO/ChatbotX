@@ -25,7 +25,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { UpgradePlanDialog } from "@/enterprise/features/billing/upgrade-plan-dialog"
-import { isCloud } from "@/env"
+import { isSaasEdition } from "@/env"
 import { SignOut } from "@/features/auth/sign-out"
 import { EditProfileDialog } from "@/features/workspaces/components/edit-profile-dialog"
 import { RefreshAllChannelTokensButton } from "@/features/workspaces/components/refresh-all-channel-tokens-button"
@@ -56,7 +56,7 @@ export function NavUser({
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        {isCloud() && (
+        {isSaasEdition() && (
           <UpgradePlanDialog onOpenChange={setUpgradeOpen} open={upgradeOpen} />
         )}
         <DropdownMenu>
@@ -114,8 +114,8 @@ export function NavUser({
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            {/* Plan + upgrade is cloud-only; self-hosted editions get everything free. */}
-            {isCloud() && (
+            {/* Plan + upgrade is cloud/enterprise-only; community gets everything free. */}
+            {isSaasEdition() && (
               <>
                 <DropdownMenuGroup>
                   <DropdownMenuLabel className="font-normal text-muted-foreground text-xs">
@@ -187,7 +187,7 @@ export function NavUser({
                       }
                     />
                   )}
-                  {isCloud() && isPlatformAdmin && (
+                  {isSaasEdition() && isPlatformAdmin && (
                     <DropdownMenuItem
                       render={
                         <Link href="/manage">

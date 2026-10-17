@@ -1,5 +1,5 @@
-import { isCloud } from "../keys"
 import { logger } from "../logger"
+import { hasEnterpriseFeatures } from "../user/entitlements"
 import { userQuotaService } from "../user-quota/service"
 import { workspaceService } from "../workspace/service"
 import { resolveWorkspaceFreezeReason } from "./predicates"
@@ -16,11 +16,12 @@ export async function resolveWorkspaceFreezeReasonById(workspaceId: string) {
   // Resolved in two passes on purpose. The Workspace row ALONE decides
   // `missingWorkspace` and `scheduledForDeletion`, so those verdicts never
   // depend on — and can never be broken by — an owner quota read. Only
-  // `ownerBlocked` needs entitlements, and only the cloud edition can produce
-  // it, so self-hosted installs skip the lookup entirely.
+  // `ownerBlocked` needs entitlements, and only cloud/licensed enterprise can
+  // produce it, so self-hosted installs skip the lookup entirely.
   const rowReason = resolveWorkspaceFreezeReason({ workspace })
+  const saas = await hasEnterpriseFeatures()
   const ownerReason =
-    rowReason || !isCloud() || !workspace
+    rowReason || !saas || !workspace
       ? null
       : resolveWorkspaceFreezeReason({
           accessState: await userQuotaService.getAccessState(workspace.ownerId),

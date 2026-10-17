@@ -1,7 +1,7 @@
+import { hasEnterpriseFeatures } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
-import { isCloud } from "@/env"
 import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
 import { listInboxes } from "@/features/inboxes/queries"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
@@ -37,7 +37,7 @@ export default async function DashboardLayout({
   }
   enforcePasswordCurrent(userAndWorkspace.user)
 
-  const cloud = isCloud()
+  const saas = await hasEnterpriseFeatures()
   const { targetWorkspace } = userAndWorkspace
   const [inboxesResult, { blocked, blockReason }] = await Promise.all([
     listInboxes({ workspaceId, includes: ["integration"] }),
@@ -55,9 +55,9 @@ export default async function DashboardLayout({
           full-width above each page's filter bar and content. */}
       <InboxCardList
         allowAddNew={isSuperAdmin}
-        blocked={cloud && blocked}
+        blocked={saas && blocked}
         inboxes={inboxes}
-        reason={cloud ? blockReason : null}
+        reason={saas ? blockReason : null}
         workspaceId={workspaceId}
       />
       {children}

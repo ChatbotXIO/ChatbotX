@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
+import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const DEFAULT_PLAN_ENTITLEMENT_KEY = "entitlements:default-plan"
 
@@ -38,6 +38,11 @@ vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: vi.fn(async () => undefined),
 }))
 
+const hasEnterpriseFeatures = vi.fn(async () => true)
+vi.mock("../src/user/entitlements", () => ({
+  hasEnterpriseFeatures: () => hasEnterpriseFeatures(),
+}))
+
 const { userQuotaService } = await import("../src/user-quota/service")
 
 const USER = "user-1"
@@ -72,12 +77,8 @@ beforeEach(() => {
   findFirstQuota.mockResolvedValue(null)
   // Default: user not found → tenantId null → resolves the global platform key.
   findFirstUser.mockResolvedValue(null)
-  // The default-plan overlay only applies on the cloud edition.
-  process.env.NEXT_PUBLIC_EDITION = "cloud"
-})
-
-afterAll(() => {
-  delete process.env.NEXT_PUBLIC_EDITION
+  // The default-plan overlay only applies with a valid enterprise license.
+  hasEnterpriseFeatures.mockResolvedValue(true)
 })
 
 describe("userQuotaService default-plan overlay (macLimit)", () => {
@@ -232,12 +233,13 @@ describe("userQuotaService per-tenant default-plan resolution", () => {
   })
 })
 
-describe("userQuotaService default-plan overlay off cloud", () => {
+describe("userQuotaService default-plan overlay without enterprise entitlement", () => {
   test.each([
     "community",
     "enterprise",
-  ])("%s edition never reads the Redis snapshot", async (edition) => {
+  ])("%s edition never reads the Redis snapshot when hasEnterpriseFeatures is false", async (edition) => {
     process.env.NEXT_PUBLIC_EDITION = edition
+    hasEnterpriseFeatures.mockResolvedValue(false)
     findFirstQuota.mockResolvedValue(null)
     stubStore(null, snapshot)
 

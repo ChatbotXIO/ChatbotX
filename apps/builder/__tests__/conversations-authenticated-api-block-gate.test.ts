@@ -93,6 +93,7 @@ vi.mock("@chatbotx.io/business", () => ({
     setFollowed: vi.fn(),
     markUnread: vi.fn(),
   },
+  hasEnterpriseFeatures: () => Promise.resolve(isCloud()),
   quotaEnforcementService: { hasReachedLimit },
   userQuotaService: { getForUser },
 }))

@@ -26,7 +26,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
-import { isCloud, isCommunity } from "@/env"
+import { isCommunity, isSaasEdition } from "@/env"
 import { useInvalidateUsers } from "@/features/users/provider/user-hook"
 import { useWorkspaceId } from "@/hooks/routing"
 import { inviteWorkspaceMemberAction } from "../actions/invite-workspace-member.action"
@@ -78,7 +78,7 @@ export function InviteWorkspaceMemberDialog({
               {t("billing.limitReached.teamMembers")}
             </TooltipContent>
           </Tooltip>
-          {isCloud() && (
+          {isSaasEdition() && (
             <UpgradePlanButton size="sm" variant="outline">
               <CrownIcon aria-hidden className="size-4" />
               {t("actions.upgradePlan")}

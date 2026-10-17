@@ -49,6 +49,7 @@ vi.mock("@chatbotx.io/business", () => ({
   quotaEnforcementService: { isAtLimit },
   mediaLibraryService,
   mediaLibraryFileService,
+  hasEnterpriseFeatures: () => Promise.resolve(true),
 }))
 
 vi.mock("@chatbotx.io/business/dynamic-image", () => ({ dynamicImageService }))

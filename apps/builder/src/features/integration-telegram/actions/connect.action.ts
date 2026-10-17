@@ -1,6 +1,7 @@
 "use server"
 
 import {
+  hasEnterpriseFeatures,
   hasWorkspaceAccess,
   telegramIntegrationService,
   userQuotaService,
@@ -10,7 +11,6 @@ import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { redirect } from "next/navigation"
-import { isCloud } from "@/env"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
 import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
@@ -50,7 +50,7 @@ export const connectTelegramAction = authActionClient
           ownerId = workspace.ownerId
         }
 
-        if (!workspaceId && isCloud()) {
+        if (!workspaceId && (await hasEnterpriseFeatures())) {
           const { blocked, reason } = await userQuotaService.getAccessState(
             ctx.user.id,
           )
