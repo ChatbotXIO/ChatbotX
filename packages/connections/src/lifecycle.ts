@@ -294,10 +294,9 @@ export const refresh = async (input: {
       authStore,
       platform: {
         appUrl: "",
-        internalRealtimeUrl: "",
         publicRealtimeUrl: "",
         storageUrl: "",
-        getRealtimeBroadcastAuthHeaders: async () => ({}),
+        publishGuestRealtimeEvent: async () => undefined,
       },
     },
     { force: true },
