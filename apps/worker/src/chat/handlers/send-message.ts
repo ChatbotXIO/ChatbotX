@@ -2,7 +2,8 @@ import {
   contactInboxService,
   contactService,
   conversationService,
-  publishToWorkspaceParty,
+  messageService,
+  queueWorkspaceRealtimeEvent,
   threadControlService,
   whatsappFlowService,
 } from "@chatbotx.io/business"
@@ -14,7 +15,7 @@ import {
   resolveThreadControlState,
   toThreadControlTimestamp,
 } from "@chatbotx.io/database/partials"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
+
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -27,7 +28,11 @@ import {
   messageEventTypeSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  type RealtimeEventData,
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import {
   ChannelError,
   ChannelErrorCategory,
@@ -242,8 +247,7 @@ export async function sendMessageToChannel(
 
     let handlerMessage = message
     if (isComment && message.parentId && message.parentCreatedAt) {
-      const repo = await createMessageRepository()
-      const parentMsg = await repo.findById({
+      const parentMsg = await messageService.findWithAttachments({
         id: message.parentId,
         createdAt: new Date(message.parentCreatedAt),
         workspaceId: conversation.workspaceId,
@@ -330,16 +334,17 @@ export async function sendMessageToChannel(
         // point must never rethrow, or BullMQ retries the whole job and
         // sendComment fires again, posting a second live duplicate reply.
         try {
-          const repo = await createMessageRepository()
-          await repo.updateSourceId(
-            message.id,
-            replyId,
-            conversation.workspaceId,
-            new Date(message.createdAt),
-          )
+          await messageService.updateSourceId({
+            id: message.id,
+            sourceId: replyId,
+            workspaceId: conversation.workspaceId,
+            createdAt: new Date(message.createdAt),
+          })
 
           // Notify the client so edit/delete buttons appear immediately without a refresh.
-          publishToWorkspaceParty(conversation.workspaceId, {
+          await queueConversationScopedMessageEvent({
+            workspaceId: conversation.workspaceId,
+            conversationId: conversation.id,
             eventType: RealtimeEventType.messageIdAssigned,
             data: { messageId: message.id, commentId: replyId },
           })
@@ -350,7 +355,7 @@ export async function sendMessageToChannel(
               message.clientId,
               conversation.workspaceId,
               new Date(message.createdAt),
-              isBulkOutbound,
+              { conversationId: conversation.id, silent: isBulkOutbound },
             )
           }
         } catch (err) {
@@ -379,7 +384,7 @@ export async function sendMessageToChannel(
           message.clientId,
           conversation.workspaceId,
           new Date(message.createdAt),
-          isBulkOutbound,
+          { conversationId: conversation.id, silent: isBulkOutbound },
         )
       }
     }
@@ -505,7 +510,7 @@ export async function sendMessageToChannel(
       conversation.workspaceId,
       message?.createdAt ? new Date(message.createdAt) : undefined,
       errorData.message,
-      isBulkOutbound,
+      { conversationId: conversation.id, silent: isBulkOutbound },
     )
     // Terminal failures only: an attempt that is about to be retried must not
     // put a row in the automation's Error Logs for a reply that still lands.
@@ -530,8 +535,7 @@ export async function deleteMessageFromChannel(
 ) {
   const { conversation, contactInbox, message } = data
 
-  const repository = await createMessageRepository()
-  const found = await repository.findById({
+  const found = await messageService.findWithAttachments({
     id: message.id,
     createdAt: new Date(message.createdAt),
     workspaceId: conversation.workspaceId,
@@ -570,8 +574,7 @@ export async function editMessageFromChannel(
   const { conversation, contactInbox, message, newText, newAttachmentUrl } =
     data
 
-  const repository = await createMessageRepository()
-  const found = await repository.findById({
+  const found = await messageService.findWithAttachments({
     id: message.id,
     createdAt: new Date(message.createdAt),
     workspaceId: conversation.workspaceId,
@@ -609,8 +612,7 @@ export async function changeMessageStateOnChannel(
 ) {
   const { conversation, contactInbox, message, liked, hidden } = data
 
-  const repository = await createMessageRepository()
-  const found = await repository.findById({
+  const found = await messageService.findWithAttachments({
     id: message.id,
     createdAt: new Date(message.createdAt),
     workspaceId: conversation.workspaceId,
@@ -638,12 +640,12 @@ export async function changeMessageStateOnChannel(
     liked: liked === undefined ? (current.liked ?? false) : liked,
     hidden: hidden === undefined ? (current.hidden ?? false) : hidden,
   }
-  await repository.updateMessageAttributes(
-    message.id,
-    conversation.workspaceId,
-    newAttributes,
-    found.createdAt,
-  )
+  await messageService.updateAttributes({
+    id: message.id,
+    workspaceId: conversation.workspaceId,
+    attributes: newAttributes,
+    createdAt: found.createdAt,
+  })
 
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
@@ -729,67 +731,129 @@ export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
   })
 }
 
+const queueConversationScopedMessageEvent = async (input: {
+  workspaceId: string
+  conversationId: string
+  eventType:
+    | typeof RealtimeEventType.messageFailed
+    | typeof RealtimeEventType.messageIdAssigned
+  data:
+    | Extract<
+        RealtimeEventData,
+        { eventType: typeof RealtimeEventType.messageFailed }
+      >["data"]
+    | Extract<
+        RealtimeEventData,
+        { eventType: typeof RealtimeEventType.messageIdAssigned }
+      >["data"]
+}): Promise<void> => {
+  try {
+    const conversation = await conversationService.findBy({
+      where: {
+        id: input.conversationId,
+        workspaceId: input.workspaceId,
+      },
+    })
+    queueWorkspaceRealtimeEvent(input.workspaceId, {
+      data: input.data,
+      eventType: input.eventType,
+      route: routeForConversation(conversation),
+    } as RealtimeEventData)
+  } catch (err) {
+    logger.error(
+      {
+        err,
+        conversationId: input.conversationId,
+        workspaceId: input.workspaceId,
+      },
+      "Failed to resolve current conversation route for realtime event",
+    )
+  }
+}
+
 const MAX_SEND_ERROR_LENGTH = 500
 
-export async function recordMessageSendError(
+const persistMessageSendError = async (input: {
+  clientId: string | undefined
+  conversationId: string
+  createdAt: Date | undefined
+  failureMessage: string
+  messageId: string | undefined
+  sendError: string | null
+  silent?: boolean
+  workspaceId: string
+}): Promise<void> => {
+  if (!(input.messageId && input.createdAt)) {
+    return
+  }
+  try {
+    await messageService.updateSendError({
+      id: input.messageId,
+      sendError: input.sendError,
+      workspaceId: input.workspaceId,
+      createdAt: input.createdAt,
+    })
+    if (input.silent) {
+      return
+    }
+    await queueConversationScopedMessageEvent({
+      workspaceId: input.workspaceId,
+      conversationId: input.conversationId,
+      eventType: RealtimeEventType.messageFailed,
+      data: {
+        messageId: input.messageId,
+        clientId: input.clientId,
+        error: input.sendError,
+      },
+    })
+  } catch (err) {
+    logger.error(
+      {
+        err,
+        messageId: input.messageId,
+        workspaceId: input.workspaceId,
+      },
+      input.failureMessage,
+    )
+  }
+}
+
+export const recordMessageSendError = async (
   messageId: string | undefined,
   clientId: string | undefined,
   workspaceId: string,
   createdAt: Date | undefined,
   errorMessage: string,
-  silent = false,
-) {
-  try {
-    if (!(messageId && createdAt)) {
-      return
-    }
-    const truncatedError = errorMessage.slice(0, MAX_SEND_ERROR_LENGTH)
-    const repo = await createMessageRepository()
-    await repo.updateSendError(
-      messageId,
-      truncatedError,
-      workspaceId,
-      createdAt,
-    )
+  options: { conversationId: string; silent?: boolean },
+): Promise<void> =>
+  persistMessageSendError({
+    clientId,
+    conversationId: options.conversationId,
+    createdAt,
+    failureMessage: "Failed to persist message sendError",
+    messageId,
+    sendError: errorMessage.slice(0, MAX_SEND_ERROR_LENGTH),
+    silent: options.silent,
+    workspaceId,
+  })
 
-    if (!silent) {
-      publishToWorkspaceParty(workspaceId, {
-        eventType: RealtimeEventType.messageFailed,
-        data: { messageId, clientId, error: truncatedError },
-      })
-    }
-  } catch (err) {
-    logger.error(err, "Failed to persist message sendError")
-  }
-}
-
-async function clearMessageSendError(
+const clearMessageSendError = async (
   messageId: string | undefined,
   clientId: string | undefined,
   workspaceId: string,
   createdAt: Date | undefined,
-  silent = false,
-) {
-  try {
-    if (!(messageId && createdAt)) {
-      return
-    }
-    const repo = await createMessageRepository()
-    await repo.updateSendError(messageId, null, workspaceId, createdAt)
-
-    if (!silent) {
-      publishToWorkspaceParty(workspaceId, {
-        eventType: RealtimeEventType.messageFailed,
-        data: { messageId, clientId, error: null },
-      })
-    }
-  } catch (err) {
-    logger.error(
-      err,
-      "Failed to clear message sendError after a retry succeeded",
-    )
-  }
-}
+  options: { conversationId: string; silent?: boolean },
+): Promise<void> =>
+  persistMessageSendError({
+    clientId,
+    conversationId: options.conversationId,
+    createdAt,
+    failureMessage: "Failed to clear message sendError after a retry succeeded",
+    messageId,
+    sendError: null,
+    silent: options.silent,
+    workspaceId,
+  })
 
 async function updateMessageSourceId(
   messageId: string | undefined,
@@ -800,13 +864,12 @@ async function updateMessageSourceId(
   try {
     const firstMessageId = result?.messageIds?.[0]
     if (messageId && firstMessageId && createdAt) {
-      const repo = await createMessageRepository()
-      await repo.updateSourceId(
-        messageId,
-        firstMessageId,
+      await messageService.updateSourceId({
+        id: messageId,
+        sourceId: firstMessageId,
         workspaceId,
         createdAt,
-      )
+      })
     }
   } catch (err) {
     logger.error(err, "Failed to update message sourceId with provider id")

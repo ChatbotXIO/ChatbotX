@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  mockBroadcastToWorkspaceParty,
+  mockQueueWorkspaceRealtimeEvent,
   mockChatQueueAdd,
   mockContactInboxFindBy,
   mockConversationFindByOrFail,
@@ -9,7 +9,7 @@ const {
   mockDeleteBySourceId,
   mockFindById,
 } = vi.hoisted(() => ({
-  mockBroadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
+  mockQueueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
   mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
   mockContactInboxFindBy: vi.fn(),
   mockConversationFindByOrFail: vi.fn(),
@@ -19,9 +19,14 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
+  queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
   contactInboxService: { findBy: mockContactInboxFindBy },
   conversationService: { findByOrFail: mockConversationFindByOrFail },
+  messageService: {
+    delete: ({ sourceId }: { sourceId?: string | null }) =>
+      sourceId ? mockDeleteBySourceId(sourceId) : mockDeleteById(),
+    findWithAttachments: mockFindById,
+  },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -36,8 +41,13 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   }),
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageDeleted: "messageDeleted" },
+  // The mocked conversation below carries no assignedUserId/assignedInboxTeamId,
+  // so the real routeForConversation would resolve to this same empty route —
+  // hardcoding it here keeps this test independent of that function's own
+  // (separately tested) logic.
+  routeForConversation: () => ({ assignedTeamIds: [], assignedUserIds: [] }),
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -64,7 +74,7 @@ const createdAt = new Date("2026-01-01T00:00:00Z")
 describe("deleteMessage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockBroadcastToWorkspaceParty.mockResolvedValue(undefined)
+    mockQueueWorkspaceRealtimeEvent.mockResolvedValue(undefined)
     mockConversationFindByOrFail.mockResolvedValue({
       id: "conv-1",
       workspaceId: "ws-1",
@@ -87,9 +97,10 @@ describe("deleteMessage", () => {
       parsedInput: { id: "msg-1", createdAt },
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageDeleted",
       data: { messageIds: ["msg-1"] },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
   })
 
@@ -110,9 +121,10 @@ describe("deleteMessage", () => {
       parsedInput: { id: "msg-1", createdAt },
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageDeleted",
       data: { messageIds: ["msg-1", "msg-2"] },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
     expect(mockChatQueueAdd).toHaveBeenCalledWith(
       "deleteChannelMessage",
@@ -141,6 +153,6 @@ describe("deleteMessage", () => {
       }),
     ).rejects.toThrow("Comment not found")
 
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 })

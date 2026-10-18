@@ -1,3 +1,4 @@
+import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import {
   DefaultJobAction,
   type DefaultJobData,
@@ -23,6 +24,7 @@ import {
   processInboundWebhookRequest,
   skipBlockedInboundWebhookRequest,
 } from "./handlers/process-inbound-webhook-request"
+import { retryRealtimeMemberRevoke } from "./handlers/retry-realtime-member-revoke"
 import { runImport } from "./handlers/run-import"
 import { sendAppointmentReminder } from "./handlers/send-appointment-reminder"
 import { sendAuditLog } from "./handlers/send-audit-log"
@@ -200,6 +202,21 @@ async function startDefaultWorker() {
           )
           return
         }
+        case DefaultJobAction.retryRealtimeMemberRevoke: {
+          const { data } = job.data
+          try {
+            await retryRealtimeMemberRevoke(data)
+          } catch (err) {
+            if (job.attemptsMade + 1 >= (job.opts.attempts ?? 1)) {
+              logger.error(
+                { err, userId: data.userId, workspaceId: data.workspaceId },
+                "Realtime member connection revoke retry exhausted",
+              )
+            }
+            throw err
+          }
+          return
+        }
         default:
           logger.warn(`Unknown job name: ${job.name}`)
           return
@@ -230,13 +247,21 @@ async function startDefaultWorker() {
       return
     }
     isShuttingDown = true
+    let shutdownFailed = false
     try {
       await worker.close()
-      process.exit(0)
     } catch (err) {
-      logger.error(err, "[DefaultWorker] Error during shutdown")
-      process.exit(1)
+      shutdownFailed = true
+      logger.error(err, "[DefaultWorker] Error closing worker during shutdown")
+    } finally {
+      try {
+        await flushAllPendingWorkspaceRealtimeEvents()
+      } catch (err) {
+        shutdownFailed = true
+        logger.error(err, "[DefaultWorker] Error flushing realtime events")
+      }
     }
+    process.exit(shutdownFailed ? 1 : 0)
   }
   process.once("SIGINT", shutdown)
   process.once("SIGTERM", shutdown)

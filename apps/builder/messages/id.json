@@ -3640,6 +3640,7 @@
       "months": "{count} bln",
       "years": "{count} thn"
     },
+    "realtimeRevokeWarning": "Pencabutan akses tidak dapat dikonfirmasi langsung - akan berlaku saat anggota tersambung kembali berikutnya.",
     "moveFeature": "Pindahkan {feature}",
     "poweredBy": "Didukung oleh {name}",
     "noGiphyApiKey": "Kunci API GIPHY tidak ditemukan. Tambahkan di Pengaturan Platform.",

@@ -1,5 +1,6 @@
 import {
   commentAutomationService,
+  flushAllPendingWorkspaceRealtimeEvents,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import {
@@ -198,6 +199,7 @@ async function startLowWorker() {
         profileSnapshotWorker.close(),
         leaderboardWorker.close(),
       ])
+      await flushAllPendingWorkspaceRealtimeEvents()
       process.exit(0)
     } catch (err) {
       logger.error(err, "[LowWorker] Error during shutdown")

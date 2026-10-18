@@ -41,6 +41,7 @@ import {
 import { platformCredentialService } from "../platform-credential/service"
 import { whatsappBusinessAccountService } from "../whatsapp-business-account/service"
 import { workspaceService } from "../workspace/service"
+import type { WhatsappAuthValue } from "./auth-schema"
 import { whatsappAuthForCapiScopeSchema } from "./auth-schema"
 import {
   type SetCoexistInput,
@@ -351,6 +352,22 @@ class IntegrationWhatsappService extends BaseService {
     input: FindWorkspaceIntegrationInput,
   ): Promise<IntegrationWhatsappModel | null> {
     return integrationWhatsappRepository.findByIdForWorkspace(input)
+  }
+
+  findByInboxIdForWorkspaceOrNull(input: {
+    inboxId: string
+    workspaceId: string
+  }): Promise<IntegrationWhatsappModel | null> {
+    return integrationWhatsappRepository.findByInboxIdForWorkspace(input)
+  }
+
+  async findAuthByInboxIdForWorkspace(props: {
+    inboxId: string
+    workspaceId: string
+  }): Promise<WhatsappAuthValue | null> {
+    const integration =
+      await integrationWhatsappRepository.findAuthByInboxIdForWorkspace(props)
+    return (integration?.auth as WhatsappAuthValue | undefined) ?? null
   }
 
   /**

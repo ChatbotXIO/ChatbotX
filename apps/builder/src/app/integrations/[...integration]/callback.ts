@@ -2,6 +2,7 @@ import {
   appointmentExternalCalendarService,
   hasWorkspaceAccess,
   integrationFacebookAdsService,
+  integrationService,
   integrationThreadsService,
   platformCredentialService,
   workspaceService,
@@ -14,15 +15,10 @@ import {
   connectionService,
   failSession,
 } from "@chatbotx.io/connections"
-import { db } from "@chatbotx.io/database/client"
 import {
   type IntegrationType,
   messagingAdChannelTypes,
 } from "@chatbotx.io/database/partials"
-import {
-  integrationGoogleSheetsModel,
-  integrationModel,
-} from "@chatbotx.io/database/schema"
 import type { ConnectSessionModel } from "@chatbotx.io/database/types"
 import { exchangeCodeForToken as exchangeInstagramCode } from "@chatbotx.io/integration-instagram"
 import { exchangeCodeForToken as exchangeInstagramFacebookCode } from "@chatbotx.io/integration-instagram-facebook"
@@ -33,11 +29,7 @@ import {
 } from "@chatbotx.io/integration-threads"
 import { TiktokMissingScopesError } from "@chatbotx.io/integration-tiktok"
 import type { AuthValue, Oauth2AuthValue } from "@chatbotx.io/sdk"
-import {
-  createId,
-  getPublicUrlFromRequest,
-  zodBigintAsString,
-} from "@chatbotx.io/utils"
+import { getPublicUrlFromRequest, zodBigintAsString } from "@chatbotx.io/utils"
 import {
   appendConnectError,
   type ConnectErrorQueryCode,
@@ -1271,22 +1263,12 @@ export const handleCallback = async (
     return notFound()
   }
 
-  await db.transaction(async (tx) => {
-    const integrationId = createId()
-
-    await tx.insert(integrationModel).values({
-      id: integrationId,
-      workspaceId: workspace.id,
-      integrationType,
-    })
-
-    if (integrationType === "googleSheets" && googleSheetsAuth) {
-      await tx.insert(integrationGoogleSheetsModel).values({
-        workspaceId: workspace.id,
-        integrationId,
-        auth: googleSheetsAuth,
-      })
-    }
+  await integrationService.create({
+    workspaceId: workspace.id,
+    integrationType,
+    ...(integrationType === "googleSheets" && googleSheetsAuth
+      ? { googleSheetsAuth }
+      : {}),
   })
 
   if (integrationType === "googleSheets") {

@@ -99,13 +99,16 @@ export function UpdateWorkspaceMemberForm({
       zodResolver(updateWorkspaceMemberRequest),
       {
         actionProps: {
-          onSuccess: () => {
+          onSuccess: ({ data }) => {
             resetFormAndAction()
             toast.success(
               t("messages.updatedSuccess", {
                 feature: t("fields.workspaceMember.label"),
               }),
             )
+            if (data?.revokeWarning) {
+              toast.warning(t("messages.realtimeRevokeWarning"))
+            }
             submitHandler?.()
           },
           onError: ({ error }) => {

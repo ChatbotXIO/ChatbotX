@@ -8,9 +8,12 @@ import {
   vi,
 } from "vitest"
 
-const { mockMarkReadByOutbound } = vi.hoisted(() => ({
-  mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
-}))
+const { mockMarkReadByOutbound, mockMessageUpdateSourceId } = vi.hoisted(
+  () => ({
+    mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
+    mockMessageUpdateSourceId: vi.fn().mockResolvedValue(undefined),
+  }),
+)
 
 function makeEmptySelectChain(): Promise<never[]> & Record<string, unknown> {
   const chain = Promise.resolve<never[]>([]) as Promise<never[]> &
@@ -96,8 +99,9 @@ vi.mock("@chatbotx.io/variables", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastToWorkspaceParty: vi.fn(),
-  publishToWorkspaceParty: vi.fn(),
+  publishWorkspaceRealtimeEvent: vi.fn(),
+  queueWorkspaceRealtimeEvent: vi.fn(),
+  queueMessageCreatedEvent: vi.fn(),
   contactInboxService: {
     recordSendFailure: vi.fn().mockResolvedValue(undefined),
     invalidateTracking: vi.fn().mockResolvedValue(undefined),
@@ -107,6 +111,14 @@ vi.mock("@chatbotx.io/business", () => ({
     recordOutboundMessageActivity: vi
       .fn()
       .mockResolvedValue({ cacheTags: ["contacts:contact-1:contact-inboxes"] }),
+  },
+  messageService: {
+    create: vi.fn(async (input: Record<string, unknown>) => ({
+      ...input,
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      id: "msg-1",
+    })),
+    updateSourceId: mockMessageUpdateSourceId,
   },
 }))
 
@@ -133,6 +145,7 @@ const { sendFlowStepToChannel } = await import(
 )
 const { validateMessengerTemplate, replaceMessengerTemplateVariables } =
   await import("../src/integration/handlers/messenger-template-handler")
+const { messageService } = await import("@chatbotx.io/business")
 const { db } = await import("@chatbotx.io/database/client")
 const { emit } = await import("@chatbotx.io/event-bus")
 const { enqueueIntegrationJob } = await import("@chatbotx.io/worker-config")
@@ -140,6 +153,7 @@ const { enqueueIntegrationJob } = await import("@chatbotx.io/worker-config")
 const mockSendFlowStep = sendFlowStepToChannel as MockInstance
 const mockValidate = validateMessengerTemplate as MockInstance
 const mockReplace = replaceMessengerTemplateVariables as MockInstance
+const mockMessageCreate = messageService.create as MockInstance
 const mockDbUpdate = db.update as MockInstance
 const mockEmit = emit as MockInstance
 const mockEnqueueIntegrationJob = enqueueIntegrationJob as MockInstance
@@ -196,9 +210,13 @@ describe("processMessengerTemplate — sourceId persistence", () => {
       template: TEMPLATE,
     })
 
-    expect(mockDbUpdate).toHaveBeenCalled()
-    const setCall = mockDbUpdate.mock.results[0].value.set
-    expect(setCall).toHaveBeenCalledWith({ sourceId: PROVIDER_ID })
+    expect(mockMessageUpdateSourceId).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "msg-1",
+        sourceId: PROVIDER_ID,
+        workspaceId: "ws-1",
+      }),
+    )
     // Template sends honour the inbox option like any other bot message.
     expect(mockMarkReadByOutbound).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -345,7 +363,7 @@ describe("processMessengerTemplate — header variable guard", () => {
     })
     // No provider call and no orphan outgoing message row.
     expect(mockSendFlowStep).not.toHaveBeenCalled()
-    expect(db.insert).not.toHaveBeenCalled()
+    expect(mockMessageCreate).not.toHaveBeenCalled()
     expect(mockEmit).toHaveBeenCalledWith(
       "message:failed",
       expect.objectContaining({ willRetry: false }),
@@ -499,10 +517,9 @@ describe("processMessengerTemplate — header variable guard", () => {
       button: [{ sub_type: "url", index: 0, text: "" }],
     })
 
-    const insertedValues = (db.insert as unknown as MockInstance).mock
-      .results[0].value.values as MockInstance
     expect(
-      insertedValues.mock.calls[0][0].contentAttributes.template.params.button,
+      mockMessageCreate.mock.calls[0][0].contentAttributes.template.params
+        .button,
     ).toEqual([{ sub_type: "url", index: 0, text: "{{mini_app_token}}" }])
     expect(sentParams().button).toEqual([
       { sub_type: "url", index: 0, text: "signed-token" },

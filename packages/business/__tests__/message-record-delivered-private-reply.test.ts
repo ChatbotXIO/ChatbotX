@@ -11,7 +11,7 @@ const mockMarkReadByOutbound = vi.fn()
 const mockRecordOutboundMessageSent = vi.fn()
 const mockInvalidateTracking = vi.fn()
 const mockUnblockIfBlocked = vi.fn()
-const mockPublishToWorkspaceParty = vi.fn()
+const mockQueueMessageCreatedEvent = vi.fn()
 const mockLoggerWarn = vi.fn()
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -44,7 +44,7 @@ vi.mock("../src/contact/service", () => ({
 }))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  publishToWorkspaceParty: mockPublishToWorkspaceParty,
+  queueMessageCreatedEvent: mockQueueMessageCreatedEvent,
 }))
 
 vi.mock("../src/logger", () => ({
@@ -132,7 +132,7 @@ describe("recordDeliveredPrivateReply", () => {
     await expect(record()).resolves.toBeNull()
 
     expect(mockRepositoryCreate).not.toHaveBeenCalled()
-    expect(mockPublishToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockQueueMessageCreatedEvent).not.toHaveBeenCalled()
     expect(mockLoggerWarn).toHaveBeenCalled()
   })
 
@@ -168,10 +168,14 @@ describe("recordDeliveredPrivateReply", () => {
       workspaceId: "ws-1",
       id: "contact-1",
     })
-    expect(mockPublishToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
-      eventType: "messageCreated",
-      data: expect.objectContaining({ id: "msg-1" }),
-    })
+    expect(mockQueueMessageCreatedEvent).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({ id: "msg-1" }),
+      {
+        assignedInboxTeamId: undefined,
+        assignedUserId: undefined,
+      },
+    )
   })
 
   test("a failing mark-read or unblock still returns the row and pushes it", async () => {
@@ -181,7 +185,7 @@ describe("recordDeliveredPrivateReply", () => {
     const message = await record()
 
     expect(message).toMatchObject({ id: "msg-1" })
-    expect(mockPublishToWorkspaceParty).toHaveBeenCalled()
+    expect(mockQueueMessageCreatedEvent).toHaveBeenCalled()
   })
 
   test("never throws when the insert fails", async () => {

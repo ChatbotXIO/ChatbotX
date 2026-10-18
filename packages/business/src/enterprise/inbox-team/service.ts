@@ -19,12 +19,20 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../../base.service"
 import { ChatbotXException, notFoundException } from "../../errors"
+import { tryRevokeWorkspaceMemberRealtimeConnections } from "../../platform/realtime-broadcast"
 import { type IdLabel, selectLabelsByIds } from "../../select-labels-by-ids"
 import { workspaceMemberService } from "../../workspace-member/service"
 
 type InboxTeamWithMembers = InboxTeamModel & {
   inboxTeamMembers: (InboxTeamMemberModel & { user: UserModel })[]
 }
+
+type InboxTeamMutationResult = {
+  team: InboxTeamModel
+  revokeWarning: boolean
+}
+
+const REALTIME_REVOKE_BATCH_SIZE = 10
 
 class InboxTeamService extends BaseService {
   // ─── Reads (cached) ─────────────────────────────────────────────────────
@@ -61,6 +69,14 @@ class InboxTeamService extends BaseService {
     inboxTeamId: string
   }): Promise<string[]> {
     return inboxTeamMemberRepository.listUserIdsByTeamId(props)
+  }
+
+  /** Workspace-scoped team ids a member belongs to for assigned-chat routing. */
+  listTeamIdsByUserId(props: {
+    workspaceId: string
+    userId: string
+  }): Promise<string[]> {
+    return inboxTeamMemberRepository.listTeamIdsByUserId(props)
   }
 
   // ─── Reads (NOT cached — write-path guard) ───────────────────────────────
@@ -108,10 +124,47 @@ class InboxTeamService extends BaseService {
     }
   }
 
+  private async revokeMemberRealtimeConnections(
+    workspaceId: string,
+    userIds: Iterable<string>,
+  ): Promise<boolean> {
+    const uniqueUserIds = [...new Set(userIds)]
+    let revokeWarning = false
+
+    for (
+      let startIndex = 0;
+      startIndex < uniqueUserIds.length;
+      startIndex += REALTIME_REVOKE_BATCH_SIZE
+    ) {
+      const batch = uniqueUserIds.slice(
+        startIndex,
+        startIndex + REALTIME_REVOKE_BATCH_SIZE,
+      )
+      const results = await Promise.allSettled(
+        batch.map((userId) =>
+          tryRevokeWorkspaceMemberRealtimeConnections({
+            workspaceId,
+            userId,
+            reason: "reauth",
+            errorMessage:
+              "Failed to revoke inbox team member realtime connections",
+          }),
+        ),
+      )
+      if (
+        results.some((result) => result.status === "rejected" || !result.value)
+      ) {
+        revokeWarning = true
+      }
+    }
+
+    return revokeWarning
+  }
+
   async create(props: {
     workspaceId: string
     data: { name: string; userIds: string[] }
-  }): Promise<InboxTeamModel> {
+  }): Promise<InboxTeamMutationResult> {
     const { workspaceId, data } = props
     await this.assertAllAreWorkspaceMembers({
       workspaceId,
@@ -148,9 +201,13 @@ class InboxTeamService extends BaseService {
       }
       return created
     })
+    const revokeWarning = await this.revokeMemberRealtimeConnections(
+      workspaceId,
+      data.userIds,
+    )
     await this.invalidate({ workspaceId })
     await this.audit("create", `created a new team (#${inboxTeamId})`)
-    return team
+    return { team, revokeWarning }
   }
 
   async update(
@@ -171,7 +228,10 @@ class InboxTeamService extends BaseService {
     return updated ?? team
   }
 
-  async delete(props: { workspaceId: string; ids: string[] }): Promise<void> {
+  async delete(props: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<{ revokeWarning: boolean }> {
     const { workspaceId, ids } = props
 
     const teams = await db.query.inboxTeamModel.findMany({
@@ -181,6 +241,10 @@ class InboxTeamService extends BaseService {
     if (teams.length === 0) {
       throw notFoundException("Inbox team not found")
     }
+    const memberUserIds = await inboxTeamMemberRepository.listUserIdsByTeamIds({
+      workspaceId,
+      inboxTeamIds: teams.map((team) => team.id),
+    })
 
     await db
       .delete(inboxTeamModel)
@@ -190,25 +254,29 @@ class InboxTeamService extends BaseService {
           inArray(inboxTeamModel.id, ids),
         ),
       )
+    const revokeWarning = await this.revokeMemberRealtimeConnections(
+      workspaceId,
+      memberUserIds,
+    )
     await this.invalidate({ workspaceId })
 
-    if (teams.length > 0) {
-      await this.audit(
-        "delete",
-        `deleted team${teams.length > 1 ? "s" : ""} (${teams.map((team) => `#${team.id}`).join(", ")})`,
-      )
-    }
+    await this.audit(
+      "delete",
+      `deleted team${teams.length > 1 ? "s" : ""} (${teams.map((team) => `#${team.id}`).join(", ")})`,
+    )
+    return { revokeWarning }
   }
 
   async addMembers(
     ctx: { workspaceId: string; inboxTeamId: string },
     userIds: string[],
-  ): Promise<InboxTeamModel> {
+  ): Promise<InboxTeamMutationResult> {
     const team = await this.findByIdOrFail(ctx)
     await this.assertAllAreWorkspaceMembers({
       workspaceId: ctx.workspaceId,
       userIds,
     })
+    let addedUserIds: string[] = []
     let addedUsers: Array<{ name: string | null; email: string }> = []
     await db.transaction(async (tx) => {
       const existingMembers = await tx.query.inboxTeamMemberModel.findMany({
@@ -222,6 +290,7 @@ class InboxTeamService extends BaseService {
         existingMembers.map((member) => member.userId),
       )
       const newUserIds = userIds.filter((id) => !existingUserIds.has(id))
+      addedUserIds = newUserIds
       if (newUserIds.length > 0) {
         await tx.insert(inboxTeamMemberModel).values(
           newUserIds.map((userId) => ({
@@ -236,6 +305,10 @@ class InboxTeamService extends BaseService {
         })
       }
     })
+    const revokeWarning = await this.revokeMemberRealtimeConnections(
+      ctx.workspaceId,
+      addedUserIds,
+    )
     await this.invalidate({ workspaceId: ctx.workspaceId })
 
     if (addedUsers.length > 0) {
@@ -244,13 +317,13 @@ class InboxTeamService extends BaseService {
         `added ${addedUsers.map((user) => user.name ?? user.email).join(", ")} to the team (#${team.id})`,
       )
     }
-    return team
+    return { team, revokeWarning }
   }
 
   async removeMembers(
     ctx: { workspaceId: string; inboxTeamId: string },
     memberIds: string[],
-  ): Promise<InboxTeamModel> {
+  ): Promise<InboxTeamMutationResult> {
     const team = await this.findByIdOrFail(ctx)
     const membersToRemove = await db.query.inboxTeamMemberModel.findMany({
       where: {
@@ -269,6 +342,10 @@ class InboxTeamService extends BaseService {
         ),
       )
       .returning({ id: inboxTeamMemberModel.id })
+    const revokeWarning = await this.revokeMemberRealtimeConnections(
+      ctx.workspaceId,
+      membersToRemove.map((member) => member.userId),
+    )
     await this.invalidate({ workspaceId: ctx.workspaceId })
 
     if (deleted.length > 0) {
@@ -277,7 +354,7 @@ class InboxTeamService extends BaseService {
         `removed ${membersToRemove.map((member) => member.user.name ?? member.user.email).join(", ")} from the team (#${team.id})`,
       )
     }
-    return team
+    return { team, revokeWarning }
   }
 
   /**
@@ -289,7 +366,7 @@ class InboxTeamService extends BaseService {
   async removeMembersByUserIds(
     ctx: { workspaceId: string; inboxTeamId: string },
     userIds: string[],
-  ): Promise<InboxTeamModel> {
+  ): Promise<InboxTeamMutationResult> {
     const team = await this.findByIdOrFail(ctx)
     const membersToRemove = await db.query.inboxTeamMemberModel.findMany({
       where: {
@@ -308,6 +385,10 @@ class InboxTeamService extends BaseService {
         ),
       )
       .returning({ id: inboxTeamMemberModel.id })
+    const revokeWarning = await this.revokeMemberRealtimeConnections(
+      ctx.workspaceId,
+      membersToRemove.map((member) => member.userId),
+    )
     await this.invalidate({ workspaceId: ctx.workspaceId })
 
     if (deleted.length > 0) {
@@ -316,7 +397,7 @@ class InboxTeamService extends BaseService {
         `removed ${membersToRemove.map((member) => member.user.name ?? member.user.email).join(", ")} from the team (#${team.id})`,
       )
     }
-    return team
+    return { team, revokeWarning }
   }
 
   // ─── Cache ───────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  mockBroadcastToWorkspaceParty,
+  mockQueueWorkspaceRealtimeEvent,
   mockBulkCreateAttachments,
   mockChatQueueAdd,
   mockContactInboxFindBy,
@@ -10,7 +10,7 @@ const {
   mockFindById,
   mockUpdateMessageText,
 } = vi.hoisted(() => ({
-  mockBroadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
+  mockQueueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
   mockBulkCreateAttachments: vi.fn().mockResolvedValue(undefined),
   mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
   mockContactInboxFindBy: vi.fn(),
@@ -21,9 +21,26 @@ const {
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
+  queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
   contactInboxService: { findBy: mockContactInboxFindBy },
   conversationService: { findByOrFail: mockConversationFindByOrFail },
+  messageService: {
+    findWithAttachments: mockFindById,
+    replaceAttachments: async (input: {
+      attachments: unknown[]
+      messageCreatedAt: Date
+      messageId: string
+    }) => {
+      await mockDeleteAttachmentsByMessageId(
+        input.messageId,
+        input.messageCreatedAt,
+      )
+      if (input.attachments.length > 0) {
+        await mockBulkCreateAttachments(input.attachments)
+      }
+    },
+    updateText: mockUpdateMessageText,
+  },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -44,8 +61,13 @@ vi.mock("@chatbotx.io/filesystem", () => ({
   uploader: { getObject: vi.fn() },
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageUpdated: "messageUpdated" },
+  // The mocked conversation below carries no assignedUserId/assignedInboxTeamId,
+  // so the real routeForConversation would resolve to this same empty route —
+  // hardcoding it here keeps this test independent of that function's own
+  // (separately tested) logic.
+  routeForConversation: () => ({ assignedTeamIds: [], assignedUserIds: [] }),
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -72,7 +94,7 @@ const createdAt = new Date("2026-01-01T00:00:00Z")
 describe("editMessage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockBroadcastToWorkspaceParty.mockResolvedValue(undefined)
+    mockQueueWorkspaceRealtimeEvent.mockResolvedValue(undefined)
     mockConversationFindByOrFail.mockResolvedValue({
       id: "conv-1",
       workspaceId: "ws-1",
@@ -99,7 +121,7 @@ describe("editMessage", () => {
       } as never,
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "messageUpdated",
       data: {
         messageId: "msg-1",
@@ -111,6 +133,7 @@ describe("editMessage", () => {
         newAttachmentHeight: 0,
         removedAttachment: false,
       },
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
   })
 
@@ -126,7 +149,7 @@ describe("editMessage", () => {
       } as never,
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith(
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({
         eventType: "messageUpdated",
@@ -157,6 +180,6 @@ describe("editMessage", () => {
       }),
     ).rejects.toThrow("Message is not an editable comment")
 
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 })

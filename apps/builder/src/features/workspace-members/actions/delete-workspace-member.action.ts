@@ -1,12 +1,10 @@
 "use server"
 
 import {
-  revokeWorkspaceMemberConnections,
+  tryRevokeWorkspaceMemberRealtimeConnections,
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { findOrFail } from "@chatbotx.io/database/client"
-import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
@@ -19,10 +17,9 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
       bindArgsParsedInputs: [workspaceId, id],
     } = props
 
-    const workspaceMember = await findOrFail({
-      table: workspaceMemberModel,
-      where: { id, workspaceId },
-      message: "Workspace member not found",
+    const workspaceMember = await workspaceMemberService.findByIdOrFail({
+      id,
+      workspaceId,
     })
 
     if (workspaceMember.role === "owner") {
@@ -51,14 +48,13 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
     // result, so their access is revoked immediately.
     await workspaceMemberService.delete({ id, workspaceId })
 
-    // Close any realtime sockets the removed member already has open in
-    // this workspace room — their next connect attempt is rejected anyway
-    // (the mint endpoint re-checks membership), but an existing socket
-    // would otherwise keep receiving events until it happens to reconnect.
-    // Best-effort: `revokeWorkspaceMemberConnections` swallows its own
-    // network failures, so this never blocks the deletion.
-    await revokeWorkspaceMemberConnections({
+    const revokeWarning = !(await tryRevokeWorkspaceMemberRealtimeConnections({
       workspaceId,
       userId: workspaceMember.userId,
-    })
+      reason: "deleted",
+      errorMessage: "Failed to revoke removed member realtime connections",
+    }))
+
+
+    return { revokeWarning }
   })

@@ -10,9 +10,8 @@ const createContext = (auth: KlaviyoAuthValue): Context<KlaviyoAuthValue> => ({
   platform: {
     appUrl: "",
     publicRealtimeUrl: "",
-    internalRealtimeUrl: "",
     storageUrl: "",
-    getRealtimeBroadcastAuthHeaders: async () => ({}),
+    publishGuestRealtimeEvent: async () => undefined,
   },
 })
 

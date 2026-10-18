@@ -103,6 +103,7 @@ describe("stepMarkConversationAsUnread", () => {
     expect(mocks.markUnread).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       id: "conv-1",
+      silent: false,
     })
   })
 })

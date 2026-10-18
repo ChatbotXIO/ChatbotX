@@ -1,7 +1,11 @@
 "use server"
 
 import { isDeepStrictEqual } from "node:util"
-import { userService, workspaceMemberService } from "@chatbotx.io/business"
+import {
+  tryRevokeWorkspaceMemberRealtimeConnections,
+  userService,
+  workspaceMemberService,
+} from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { isCommunity } from "@/env"
@@ -70,7 +74,7 @@ export const updateWorkspaceMemberAction = workspaceActionClient
     // schema, it MUST be added to permissionsChanged/notificationsChanged (or
     // diffed separately) below, or it will silently never be persisted.
     if (!(permissionsChanged || notificationsChanged)) {
-      return
+      return { revokeWarning: false }
     }
 
     const updated = await workspaceMemberService.update({
@@ -80,8 +84,16 @@ export const updateWorkspaceMemberAction = workspaceActionClient
     })
 
     if (!updated) {
-      return
+      return { revokeWarning: false }
     }
+    const revokeWarning =
+      permissionsChanged &&
+      !(await tryRevokeWorkspaceMemberRealtimeConnections({
+        userId: workspaceMember.userId,
+        workspaceId,
+        reason: "reauth",
+        errorMessage: "Failed to revoke workspace member realtime connections",
+      }))
 
     // Only a real permissions/role change is in the audit-log spec for this
     // action — a save that only touches notification settings must not be
@@ -96,4 +108,6 @@ export const updateWorkspaceMemberAction = workspaceActionClient
         detail: `changed role of ${targetUser?.name ?? targetUser?.email ?? "a member"} to ${updateInput.permissions.superAdmin ? "admin" : "member"}`,
       })
     }
+
+    return { revokeWarning }
   })

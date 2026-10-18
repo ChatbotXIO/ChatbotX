@@ -43,6 +43,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: mocks.invalidateCacheByTags,
+  bloomFilter: { addMany: vi.fn().mockResolvedValue([]) },
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
@@ -50,10 +51,11 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     threadControlAction: "threadControlAction",
   },
   enqueueIntegrationJob: mocks.enqueueIntegrationJob,
+  PURGE_WORKSPACES_INTERVAL_MINUTES: 30,
 }))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  publishToWorkspaceParty: mocks.publishToWorkspaceParty,
+  queueWorkspaceRealtimeEvent: mocks.publishToWorkspaceParty,
 }))
 
 vi.mock("../src/logger", () => ({

@@ -1,7 +1,11 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { type MessageType, messageTypes } from "@chatbotx.io/database/partials"
 import {
+  type BulkCreateAttachmentInput,
+  type CreateAttachmentInput,
+  type CreateMessageInput,
   createMessageRepository,
+  type FindMessageByIdParams,
   type MessageWithAttachments,
 } from "@chatbotx.io/database/repositories"
 import type { MessageModel } from "@chatbotx.io/database/types"
@@ -118,6 +122,203 @@ class MessageService extends BaseService {
       createdAt,
       workspaceId,
     })
+  }
+
+  async findWithAttachments(
+    props: FindMessageByIdParams & { tx?: DatabaseClient },
+  ): Promise<MessageWithAttachments | null> {
+    const { tx = db, ...params } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.findById(params)
+  }
+
+  async create(
+    props: CreateMessageInput & { tx?: DatabaseClient },
+  ): Promise<MessageModel> {
+    const { tx = db, ...message } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.create(message)
+  }
+
+  async createWithAttachments(props: {
+    attachments: Omit<CreateAttachmentInput, "messageCreatedAt" | "messageId">[]
+    message: CreateMessageInput
+    tx?: DatabaseClient
+  }): Promise<MessageWithAttachments> {
+    const { tx = db, message, attachments } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.createWithAttachments(message, attachments)
+  }
+
+  async delete(
+    props: FindMessageByIdParams & { sourceId?: string; tx?: DatabaseClient },
+  ): Promise<{ id: string }[]> {
+    const { tx = db } = props
+    const repo = await createMessageRepository(tx)
+    return props.sourceId
+      ? await repo.deleteBySourceId(
+          props.sourceId,
+          props.workspaceId,
+          props.createdAt,
+        )
+      : await repo.deleteById(props.id, props.workspaceId, props.createdAt)
+  }
+
+  async updateText(props: {
+    createdAt: Date
+    id: string
+    text: string
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<{ conversationId: string; id: string } | null> {
+    const { tx = db } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.updateMessageText(
+      props.id,
+      props.workspaceId,
+      props.text,
+      props.createdAt,
+    )
+  }
+
+  async replaceAttachments(props: {
+    attachments: Omit<
+      BulkCreateAttachmentInput,
+      "messageCreatedAt" | "messageId"
+    >[]
+    createdAt: Date
+    id: string
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { tx = db } = props
+    const repo = await createMessageRepository(tx)
+    await repo.deleteAttachmentsByMessageId(
+      props.id,
+      props.workspaceId,
+      props.createdAt,
+    )
+    if (props.attachments.length > 0) {
+      await repo.bulkCreateAttachments(
+        props.attachments.map((attachment) => ({
+          ...attachment,
+          messageCreatedAt: props.createdAt,
+          messageId: props.id,
+        })),
+      )
+    }
+  }
+
+  async updateSourceId(props: {
+    createdAt: Date
+    id: string
+    sourceId: string
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<{ id: string } | null> {
+    const { tx = db } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.updateSourceId(
+      props.id,
+      props.sourceId,
+      props.workspaceId,
+      props.createdAt,
+    )
+  }
+
+  async updateSendError(props: {
+    createdAt: Date
+    id: string
+    sendError: string | null
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<{ id: string } | null> {
+    const { tx = db } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.updateSendError(
+      props.id,
+      props.sendError,
+      props.workspaceId,
+      props.createdAt,
+    )
+  }
+
+  async createOrUpdate(
+    props: CreateMessageInput & { tx?: DatabaseClient },
+  ): Promise<{ isNew: boolean; message: MessageModel }> {
+    const { tx = db, ...message } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.createOrUpdate(message)
+  }
+
+  async findBySourceId(props: {
+    conversationId: string
+    sinceTime?: Date
+    sourceId: string
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<MessageModel | null> {
+    const { tx = db } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.findBySourceId(
+      props.sourceId,
+      props.conversationId,
+      props.workspaceId,
+      props.sinceTime,
+    )
+  }
+
+  async mergeContentAttributesBySourceId(props: {
+    overlay: Record<string, unknown>
+    sourceId: string
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<{
+    id: string
+    contentAttributes: Record<string, unknown> | null
+  } | null> {
+    const { tx = db } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.mergeContentAttributesBySourceId(
+      props.sourceId,
+      props.workspaceId,
+      props.overlay,
+    )
+  }
+
+  async updateContentBySourceId(props: {
+    patch: {
+      contentAttributes?: Record<string, unknown> | null
+      text?: string | null
+    }
+    sourceId: string
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<{ id: string } | null> {
+    const { tx = db } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.updateContentBySourceId(
+      props.sourceId,
+      props.workspaceId,
+      props.patch,
+    )
+  }
+
+  async updateAttributes(props: {
+    attributes: { hidden: boolean; liked: boolean }
+    createdAt: Date
+    id: string
+    workspaceId: string
+    tx?: DatabaseClient
+  }): Promise<{ id: string } | null> {
+    const { tx = db } = props
+    const repo = await createMessageRepository(tx)
+    return await repo.updateMessageAttributes(
+      props.id,
+      props.workspaceId,
+      props.attributes,
+      props.createdAt,
+    )
   }
 
   async listLastMessages(props: {

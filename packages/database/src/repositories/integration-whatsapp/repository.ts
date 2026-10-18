@@ -296,6 +296,24 @@ class IntegrationWhatsappRepository {
     return row ?? null
   }
 
+  async findAuthByInboxIdForWorkspace(
+    input: { workspaceId: string; inboxId: string },
+    tx: DatabaseClient = db,
+  ): Promise<Pick<IntegrationWhatsappModel, "auth"> | null> {
+    const [row] = await tx
+      .select({ auth: integrationWhatsappModel.auth })
+      .from(integrationWhatsappModel)
+      .where(
+        and(
+          eq(integrationWhatsappModel.inboxId, input.inboxId),
+          eq(integrationWhatsappModel.workspaceId, input.workspaceId),
+        ),
+      )
+      .limit(1)
+
+    return row ?? null
+  }
+
   /**
    * Same lookup as `findWorkspaceIntegrationByInboxId` but returns the full
    * row. Used by the explicit "Send Meta CAPI Event" action (Meta Conversions

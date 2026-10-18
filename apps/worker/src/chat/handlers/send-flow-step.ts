@@ -6,12 +6,13 @@ import {
 } from "@chatbotx.io/analytics"
 import {
   appointmentCalendarService,
-  broadcastToGuestParty,
   contactInboxService,
   conversationService,
+  messageService,
   type PreparedProductMessage,
   productMessageService,
-  publishToWorkspaceParty,
+  publishGuestRealtimeEvent,
+  queueMessageCreatedEvent,
   resolveMediaUrl,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
@@ -23,10 +24,7 @@ import {
   messageTypes,
   senderTypes,
 } from "@chatbotx.io/database/partials"
-import {
-  createMessageRepository,
-  type MessageWithAttachments,
-} from "@chatbotx.io/database/repositories"
+import type { MessageWithAttachments } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
 import type {
   AttachmentModel,
@@ -54,7 +52,7 @@ import {
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import { logDiagnostic } from "@chatbotx.io/logger"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import {
   IntegrationException,
   type MessageButtonTemplate,
@@ -683,10 +681,9 @@ export async function sendFlowStep({
       flowId,
       metadata,
     })
-    const [repository, tenantSettings] = await Promise.all([
-      createMessageRepository(),
-      resolveTenantSettings({ workspaceId: conversation.workspaceId }),
-    ])
+    const tenantSettings = await resolveTenantSettings({
+      workspaceId: conversation.workspaceId,
+    })
     const { appUrl, storageUrl } = tenantSettings
     // Open Mini App buttons become link buttons first, so everything below
     // (booking signing, the `/go` wrap, every channel encoder) only ever sees
@@ -871,8 +868,8 @@ export async function sendFlowStep({
 
     // Upload file(s) if any
     const attachmentInputs: Parameters<
-      typeof repository.createWithAttachments
-    >[1][0][] = []
+      typeof messageService.createWithAttachments
+    >[0]["attachments"] = []
     if ("url" in stepForSend) {
       const uploadedFile = await uploadFileFromUrl(
         stepForSend.url,
@@ -898,8 +895,11 @@ export async function sendFlowStep({
     }
 
     message = attachmentInputs.length
-      ? await repository.createWithAttachments(messageInput, attachmentInputs)
-      : await repository.create(messageInput)
+      ? await messageService.createWithAttachments({
+          message: messageInput,
+          attachments: attachmentInputs,
+        })
+      : await messageService.create(messageInput)
 
     message = await resolveMessageAttachmentUrls(message, {
       workspaceId: conversation.workspaceId,
@@ -985,10 +985,7 @@ export async function sendFlowStep({
         })
 
     if (!isBulkOutbound) {
-      publishToWorkspaceParty(conversation.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: message,
-      })
+      queueMessageCreatedEvent(conversation.workspaceId, message, conversation)
     }
 
     // The guest webchat widget still needs bulk messages, so this send is
@@ -996,7 +993,7 @@ export async function sendFlowStep({
     const broadcasts: Promise<unknown>[] = []
     if (targetContactInbox.channel === channelTypes.enum.webchat) {
       broadcasts.push(
-        broadcastToGuestParty(
+        publishGuestRealtimeEvent(
           {
             workspaceId: conversation.workspaceId,
             guestConversationId: targetContactInbox.sourceId,
@@ -1005,7 +1002,12 @@ export async function sendFlowStep({
             eventType: RealtimeEventType.messageCreated,
             data: message,
           },
-        ),
+        ).catch((error) => {
+          logger.error(
+            { err: error, workspaceId: conversation.workspaceId },
+            "Failed to publish guest realtime event for flow step",
+          )
+        }),
       )
     }
 
@@ -1100,7 +1102,7 @@ export async function sendFlowStep({
       conversation.workspaceId,
       message?.createdAt,
       parsedError.message,
-      isBulkOutbound,
+      { conversationId: conversation.id, silent: isBulkOutbound },
     )
 
     // Always terminal here, for the same reason the `message:failed` emit above
@@ -1176,13 +1178,14 @@ export const sendChatMessage = async (
   }
 
   try {
-    const [repository, { storageUrl }] = await Promise.all([
-      createMessageRepository(),
-      resolveTenantSettings({ workspaceId: conversation.workspaceId }),
-    ])
+    const { storageUrl } = await resolveTenantSettings({
+      workspaceId: conversation.workspaceId,
+    })
 
     let attachmentInput:
-      | Parameters<typeof repository.createWithAttachments>[1][0]
+      | Parameters<
+          typeof messageService.createWithAttachments
+        >[0]["attachments"][0]
       | undefined
     let messageText = text
 
@@ -1236,8 +1239,11 @@ export const sendChatMessage = async (
     }
 
     const persistedMessage = attachmentInput
-      ? await repository.createWithAttachments(messageInput, [attachmentInput])
-      : await repository.create(messageInput)
+      ? await messageService.createWithAttachments({
+          message: messageInput,
+          attachments: [attachmentInput],
+        })
+      : await messageService.create(messageInput)
 
     const message = await resolveMessageAttachmentUrls(persistedMessage, {
       workspaceId: conversation.workspaceId,
@@ -1267,16 +1273,19 @@ export const sendChatMessage = async (
           message,
           quickReplies,
           metadata,
+          isBulkBroadcast,
         },
         0,
         willRetryOnThrow,
       ),
     ]
     if (!isBulkOutbound) {
-      publishToWorkspaceParty(conversation.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: message,
-      })
+      queueMessageCreatedEvent(
+        conversation.workspaceId,
+        message,
+        conversation,
+        contactInbox.inboxId,
+      )
     }
 
     await Promise.all(promises)

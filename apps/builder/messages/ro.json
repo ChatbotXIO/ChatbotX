@@ -3640,6 +3640,7 @@
       "months": "{count} luni",
       "years": "{count} ani"
     },
+    "realtimeRevokeWarning": "Revocarea accesului nu a putut fi confirmată imediat - va intra în vigoare la următoarea reconectare a membrului.",
     "moveFeature": "Mută {feature}",
     "poweredBy": "Susținut de {name}",
     "noGiphyApiKey": "Nu a fost găsită nicio cheie API GIPHY. Te rugăm să adaugi una în Setările platformei.",

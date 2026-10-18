@@ -48,7 +48,6 @@ export const ChatJobAction = {
   sendMessengerTemplateMessage: "sendMessengerTemplateMessage",
   sendTyping: "sendTyping",
   notifyExportResult: "notifyExportResult",
-  broadcastEvent: "broadcastEvent",
   deleteChannelMessage: "deleteChannelMessage",
   editChannelMessage: "editChannelMessage",
   changeChannelMessageState: "changeChannelMessageState",
@@ -196,14 +195,6 @@ export type ChatJobSendTyping = {
   }
 }
 
-export type ChatJobBroadcastEvent = {
-  type: typeof ChatJobAction.broadcastEvent
-  data: {
-    workspaceId: string
-    event: unknown
-  }
-}
-
 export type ChatJobNotifyExportResult = {
   type: typeof ChatJobAction.notifyExportResult
   data: Record<string, unknown>
@@ -269,7 +260,6 @@ export type ChatJobData =
   | ChatJobSendWhatsappTemplateToConversation
   | ChatJobSendMessengerTemplateMessage
   | ChatJobSendTyping
-  | ChatJobBroadcastEvent
   | ChatJobNotifyExportResult
   | ChatJobDeleteChannelMessage
   | ChatJobEditChannelMessage

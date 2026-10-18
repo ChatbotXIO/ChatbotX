@@ -10,8 +10,6 @@ export async function register() {
     return
   }
 
-  // instrumentation also runs in the edge runtime, where process.exit doesn't
-  // exist — only gate on the license in the nodejs runtime.
   if (process.env.NEXT_RUNTIME === "nodejs") {
     // This node-only module reaches the database, so it cannot be statically
     // traced into the Edge instrumentation bundle.

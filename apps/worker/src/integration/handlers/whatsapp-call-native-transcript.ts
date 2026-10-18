@@ -144,7 +144,10 @@ export const handleWhatsappCallNativeTranscriptFetch = async (
 
   let media: Awaited<ReturnType<typeof downloadCallMedia>>
   try {
-    const auth = await resolveVoipAuthByInboxId(call.inboxId)
+    const auth = await resolveVoipAuthByInboxId({
+      inboxId: call.inboxId,
+      workspaceId: call.workspaceId,
+    })
     media = await downloadCallMedia({
       mediaId: data.documentMediaId,
       url: data.documentUrl,
