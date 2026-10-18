@@ -320,10 +320,7 @@ export async function processMessengerTemplate(
       queueWorkspaceRealtimeEvent(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: newMessage,
-        route: routeForConversation({
-          assignedUserId: conversation.assignedUserId,
-          assignedInboxTeamId: conversation.assignedInboxTeamId,
-        }),
+        route: routeForConversation(conversation),
       })
     }
 

@@ -44,13 +44,16 @@ export function CreateInboxTeamDialog({
       zodResolver(createInboxTeamRequest),
       {
         actionProps: {
-          onSuccess: () => {
+          onSuccess: ({ data }) => {
             toast.success(
               t("messages.createdSuccess", {
                 feature: t("fields.inboxTeam.label"),
               }),
             )
 
+            if (data?.revokeWarning) {
+              toast.warning(t("messages.realtimeRevokeWarning"))
+            }
             setOpen(false)
             resetFormAndAction()
             invalidateUsers()

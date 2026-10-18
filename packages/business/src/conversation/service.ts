@@ -70,9 +70,8 @@ import { contactInboxService } from "../contact-inbox/service"
 import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
-import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
-import { smartDelayService } from "../smart-delay/service"
 import { queueWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
+import { smartDelayService } from "../smart-delay/service"
 import { threadControlService } from "../thread-control/service"
 import { workspaceMemberService } from "../workspace-member/service"
 
@@ -1712,10 +1711,7 @@ class ConversationService extends BaseService {
           conversationIds: [id],
           changes: { agentLastReadAt: agentLastReadAt?.toISOString() ?? null },
         },
-        route: routeForConversation({
-          assignedUserId: updated?.assignedUserId,
-          assignedInboxTeamId: updated?.assignedInboxTeamId,
-        }),
+        route: routeForConversation(updated),
       })
     }
   }
@@ -1777,10 +1773,7 @@ class ConversationService extends BaseService {
           conversationIds: [conversationId],
           changes: { agentLastReadAt: readAt.toISOString() },
         },
-        route: routeForConversation({
-          assignedUserId: updated[0]?.assignedUserId,
-          assignedInboxTeamId: updated[0]?.assignedInboxTeamId,
-        }),
+        route: routeForConversation(updated[0]),
       })
     }
 

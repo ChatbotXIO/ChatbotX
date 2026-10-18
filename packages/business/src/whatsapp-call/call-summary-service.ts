@@ -289,10 +289,7 @@ class WhatsappCallSummaryService {
       await publishWorkspaceRealtimeEvent(call.workspaceId, {
         eventType: RealtimeEventType.messageContentUpdated,
         data: { messageId: merged.id, contentAttributes: entity },
-        route: routeForConversation({
-          assignedUserId: conversation?.assignedUserId,
-          assignedInboxTeamId: conversation?.assignedInboxTeamId,
-        }),
+        route: routeForConversation(conversation),
       })
     } catch (error) {
       logger.warn(

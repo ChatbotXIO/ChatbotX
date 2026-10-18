@@ -281,7 +281,14 @@ describe("realtime stream broadcast", () => {
     queueWorkspaceRealtimeEvent("ws-fail", typingEvent)
     queueWorkspaceRealtimeEvent("ws-ok", typingEvent)
 
-    await expect(flushAllPendingWorkspaceRealtimeEvents()).rejects.toThrow()
+    const drainError = await flushAllPendingWorkspaceRealtimeEvents().catch(
+      (error: unknown) => error,
+    )
+    expect(drainError).toBeInstanceOf(AggregateError)
+    if (!(drainError instanceof AggregateError)) {
+      throw new Error("Expected an AggregateError")
+    }
+    expect(drainError.errors).toEqual([failure])
 
     expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledWith(
       "ws-fail",
@@ -295,5 +302,35 @@ describe("realtime stream broadcast", () => {
       expect.objectContaining({ err: failure, workspaceId: "ws-fail" }),
       "Failed to flush pending realtime events on shutdown",
     )
+    const shutdownLogCalls = loggerError.mock.calls.filter(([, message]) =>
+      String(message).includes("shutdown"),
+    )
+    expect(shutdownLogCalls).toHaveLength(1)
+  })
+
+  test("drains an in-flight append that began before shutdown", async () => {
+    const { promise: append, reject } = Promise.withResolvers<void>()
+    const failure = new Error("ECONNRESET")
+    publishSerializedRealtimeStreamRecord.mockReturnValueOnce(append)
+
+    const delivery = publishWorkspaceRealtimeEvent("ws-in-flight", typingEvent)
+    const deliveryAssertion = expect(delivery).rejects.toBe(failure)
+    await vi.advanceTimersByTimeAsync(25)
+
+    const drain = flushAllPendingWorkspaceRealtimeEvents()
+    reject(failure)
+
+    await deliveryAssertion
+    const drainError = await drain.catch((error: unknown) => error)
+    expect(drainError).toBeInstanceOf(AggregateError)
+    if (!(drainError instanceof AggregateError)) {
+      throw new Error("Expected an AggregateError")
+    }
+    expect(drainError.errors).toEqual([failure])
+    expect(loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: failure, workspaceId: "ws-in-flight" }),
+      "Failed to drain an in-flight realtime append on shutdown",
+    )
+    expect(loggerError).toHaveBeenCalledTimes(1)
   })
 })

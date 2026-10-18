@@ -104,8 +104,11 @@ describe("GET /v1/teams/{id}", () => {
 describe("POST /v1/teams", () => {
   const procedure = findProcedure("POST", "/v1/teams")
 
-  test("delegates to inboxTeamService.create", async () => {
-    inboxTeamService.create.mockResolvedValueOnce({ id: "1" })
+  test("delegates to inboxTeamService.create and returns only the team resource", async () => {
+    inboxTeamService.create.mockResolvedValueOnce({
+      revokeWarning: true,
+      team: { id: "1" },
+    })
 
     const input = { name: "Support", userIds: ["user-1"] }
     const result = await procedure.handler?.({ context, input })
@@ -157,8 +160,11 @@ describe("DELETE /v1/teams/{id}", () => {
 describe("POST /v1/teams/{id}/members", () => {
   const procedure = findProcedure("POST", "/v1/teams/{id}/members")
 
-  test("delegates to inboxTeamService.addMembers and returns its result", async () => {
-    inboxTeamService.addMembers.mockResolvedValueOnce({ id: "1" })
+  test("delegates to inboxTeamService.addMembers and returns only the team resource", async () => {
+    inboxTeamService.addMembers.mockResolvedValueOnce({
+      revokeWarning: true,
+      team: { id: "1" },
+    })
 
     const result = await procedure.handler?.({
       context,
@@ -177,8 +183,11 @@ describe("POST /v1/teams/{id}/members", () => {
 describe("DELETE /v1/teams/{id}/members", () => {
   const procedure = findProcedure("DELETE", "/v1/teams/{id}/members")
 
-  test("delegates to inboxTeamService.removeMembersByUserIds and returns its result", async () => {
-    inboxTeamService.removeMembersByUserIds.mockResolvedValueOnce({ id: "1" })
+  test("delegates to inboxTeamService.removeMembersByUserIds and returns only the team resource", async () => {
+    inboxTeamService.removeMembersByUserIds.mockResolvedValueOnce({
+      revokeWarning: true,
+      team: { id: "1" },
+    })
 
     const result = await procedure.handler?.({
       context,

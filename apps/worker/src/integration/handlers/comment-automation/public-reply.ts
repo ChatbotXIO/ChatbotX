@@ -112,10 +112,7 @@ export async function postPublicCommentReply(props: {
   queueWorkspaceRealtimeEvent(props.workspaceId, {
     eventType: RealtimeEventType.messageCreated,
     data: message,
-    route: routeForConversation({
-      assignedUserId: conversation?.assignedUserId,
-      assignedInboxTeamId: conversation?.assignedInboxTeamId,
-    }),
+    route: routeForConversation(conversation),
   })
   const retryPolicy = commentReplyRetryPolicy(props.contactInbox)
   const queueOptions = withReplayPriority(

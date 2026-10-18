@@ -206,10 +206,7 @@ export async function sendMessageToChannel(
   const isBulkOutbound =
     isBulkOutboundMetadata(metadata, isBulkBroadcast) ||
     isBulkOutboundMetadata(message.contentAttributes?.metadata, isBulkBroadcast)
-  const conversationRoute = routeForConversation({
-    assignedInboxTeamId: conversation.assignedInboxTeamId,
-    assignedUserId: conversation.assignedUserId,
-  })
+  const conversationRoute = routeForConversation(conversation)
 
   // The job carries the contact inbox as it was at enqueue; a routing
   // handover may have landed since. Routing decisions (the gate, the
@@ -358,8 +355,7 @@ export async function sendMessageToChannel(
               message.clientId,
               conversation.workspaceId,
               new Date(message.createdAt),
-              conversationRoute,
-              isBulkOutbound,
+              { route: conversationRoute, silent: isBulkOutbound },
             )
           }
         } catch (err) {
@@ -388,8 +384,7 @@ export async function sendMessageToChannel(
           message.clientId,
           conversation.workspaceId,
           new Date(message.createdAt),
-          conversationRoute,
-          isBulkOutbound,
+          { route: conversationRoute, silent: isBulkOutbound },
         )
       }
     }
@@ -515,8 +510,7 @@ export async function sendMessageToChannel(
       conversation.workspaceId,
       message?.createdAt ? new Date(message.createdAt) : undefined,
       errorData.message,
-      conversationRoute,
-      isBulkOutbound,
+      { route: conversationRoute, silent: isBulkOutbound },
     )
     // Terminal failures only: an attempt that is about to be retried must not
     // put a row in the automation's Error Logs for a reply that still lands.
@@ -745,9 +739,9 @@ export async function recordMessageSendError(
   workspaceId: string,
   createdAt: Date | undefined,
   errorMessage: string,
-  route: RealtimeEventRoute,
-  silent = false,
+  options: { route: RealtimeEventRoute; silent?: boolean },
 ) {
+  const { route, silent = false } = options
   try {
     if (!(messageId && createdAt)) {
       return
@@ -777,9 +771,9 @@ async function clearMessageSendError(
   clientId: string | undefined,
   workspaceId: string,
   createdAt: Date | undefined,
-  route: RealtimeEventRoute,
-  silent = false,
+  options: { route: RealtimeEventRoute; silent?: boolean },
 ) {
+  const { route, silent = false } = options
   try {
     if (!(messageId && createdAt)) {
       return

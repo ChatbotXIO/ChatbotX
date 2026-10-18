@@ -8,10 +8,9 @@ import {
   appointmentCalendarService,
   contactInboxService,
   conversationService,
+  messageService,
   type PreparedProductMessage,
   productMessageService,
-  publishToWorkspaceParty,
-  messageService,
   publishGuestRealtimeEvent,
   queueWorkspaceRealtimeEvent,
   resolveMediaUrl,
@@ -659,10 +658,7 @@ export async function sendFlowStep({
     stepId: step.id,
     nodeId: step.nodeId,
   }
-  const conversationRoute = routeForConversation({
-    assignedUserId: conversation.assignedUserId,
-    assignedInboxTeamId: conversation.assignedInboxTeamId,
-  })
+  const conversationRoute = routeForConversation(conversation)
 
   // getUserData produces an outgoing message through its own handler, so it is
   // deliberately excluded from channel-deliverable steps.
@@ -723,10 +719,9 @@ export async function sendFlowStep({
       flowId,
       metadata,
     })
-    const [repository, tenantSettings] = await Promise.all([
-      createMessageRepository(),
-      resolveTenantSettings({ workspaceId: conversation.workspaceId }),
-    ])
+    const tenantSettings = await resolveTenantSettings({
+      workspaceId: conversation.workspaceId,
+    })
     const { appUrl, storageUrl } = tenantSettings
     const stepWithSignedBookingLinks = await signBookingLinksInStep({
       workspaceId: conversation.workspaceId,
@@ -1125,8 +1120,7 @@ export async function sendFlowStep({
       conversation.workspaceId,
       message?.createdAt,
       parsedError.message,
-      conversationRoute,
-      isBulkOutbound,
+      { route: conversationRoute, silent: isBulkOutbound },
     )
 
     // Always terminal here, for the same reason the `message:failed` emit above
@@ -1196,11 +1190,10 @@ export const sendChatMessage = async (
       `sendChatMessage: contact inbox not found for conversation ${conversation.id}`,
     )
   }
-  const conversationRoute = routeForConversation({
-    assignedUserId: conversation.assignedUserId,
-    assignedInboxTeamId: conversation.assignedInboxTeamId,
-    inboxId: contactInbox.inboxId,
-  })
+  const conversationRoute = routeForConversation(
+    conversation,
+    contactInbox.inboxId,
+  )
 
   if (!(text || url)) {
     return

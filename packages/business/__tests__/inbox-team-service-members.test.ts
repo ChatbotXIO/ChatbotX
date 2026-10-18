@@ -166,7 +166,7 @@ describe("InboxTeamService member validation against duplicate membership rows",
     })
   })
 
-  test("still audits a created team when realtime revocation reports a warning", async () => {
+  test("returns a warning and still audits when realtime revocation cannot be confirmed", async () => {
     mocks.listExistingUserIds.mockResolvedValue([{ userId: "member-1" }])
     mocks.tryRevokeWorkspaceMemberRealtimeConnections.mockResolvedValueOnce(
       false,
@@ -177,7 +177,7 @@ describe("InboxTeamService member validation against duplicate membership rows",
         workspaceId: WORKSPACE_ID,
         data: { name: "Support", userIds: ["member-1"] },
       }),
-    ).resolves.toMatchObject({ id: TEAM_ID })
+    ).resolves.toMatchObject({ team: { id: TEAM_ID }, revokeWarning: true })
 
     expect(mocks.dispatchAuditRecord).toHaveBeenCalledWith(
       expect.objectContaining({ action: "create" }),
@@ -303,7 +303,7 @@ describe("InboxTeamService membership mutation revocation", () => {
         workspaceId: WORKSPACE_ID,
         ids: [TEAM_ID, "team-2"],
       }),
-    ).resolves.toBeUndefined()
+    ).resolves.toEqual({ revokeWarning: true })
 
     expect(
       mocks.tryRevokeWorkspaceMemberRealtimeConnections,
@@ -374,5 +374,25 @@ describe("InboxTeamService membership mutation revocation", () => {
       reason: "reauth",
       errorMessage: "Failed to revoke inbox team member realtime connections",
     })
+  })
+
+  test("returns a warning after revoking members removed by user id", async () => {
+    mocks.teamMemberFindMany.mockResolvedValue([
+      {
+        id: "member-row-1",
+        userId: "member-1",
+        user: { email: "member@example.com", name: "Member" },
+      },
+    ])
+    mocks.tryRevokeWorkspaceMemberRealtimeConnections.mockResolvedValueOnce(
+      false,
+    )
+
+    await expect(
+      inboxTeamService.removeMembersByUserIds(
+        { workspaceId: WORKSPACE_ID, inboxTeamId: TEAM_ID },
+        ["member-1"],
+      ),
+    ).resolves.toMatchObject({ team: { id: TEAM_ID }, revokeWarning: true })
   })
 })

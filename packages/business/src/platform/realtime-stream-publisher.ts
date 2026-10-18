@@ -8,6 +8,11 @@ import { createRedisConnection, type Redis } from "@chatbotx.io/redis"
 import { logger } from "../logger"
 import { resolveRealtimeRedisUrl } from "./settings"
 
+type DirectRealtimeStreamRecord = Exclude<
+  RealtimeStreamRecord,
+  { kind: "workspace-events" }
+>
+
 const REALTIME_STREAM_RETENTION_MS = 5 * 60 * 1000
 
 /**
@@ -25,15 +30,26 @@ const delay = (ms: number): Promise<void> => {
   return promise
 }
 
+const isRedisCommandTimeout = (error: unknown): boolean =>
+  error instanceof Error && error.message === "Command timed out"
+
 export const retryWithLinearBackoff = async <T>(
   fn: () => Promise<T>,
-  options: { attempts: number; baseDelayMs: number; workspaceId: string },
+  options: {
+    attempts: number
+    baseDelayMs: number
+    workspaceId: string
+    shouldRetry?: (error: unknown) => boolean
+  },
 ): Promise<T> => {
   for (let attempt = 1; attempt <= options.attempts; attempt += 1) {
     try {
       return await fn()
     } catch (error) {
-      if (attempt === options.attempts) {
+      if (
+        attempt === options.attempts ||
+        options.shouldRetry?.(error) === false
+      ) {
         throw error
       }
       logger.warn(
@@ -103,6 +119,7 @@ export const publishSerializedRealtimeStreamRecord = async (
     {
       attempts: PUBLISH_RETRY_ATTEMPTS,
       baseDelayMs: PUBLISH_RETRY_DELAY_MS,
+      shouldRetry: (error) => !isRedisCommandTimeout(error),
       workspaceId,
     },
   )
@@ -114,7 +131,7 @@ export const publishSerializedRealtimeStreamRecord = async (
  * a Redis connection.
  */
 export const publishRealtimeStreamRecord = async (
-  record: RealtimeStreamRecord,
+  record: DirectRealtimeStreamRecord,
 ): Promise<void> =>
   await publishSerializedRealtimeStreamRecord(
     record.workspaceId,

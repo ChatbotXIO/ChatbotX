@@ -54,10 +54,7 @@ export async function reconcileCallPermissionAlreadyGranted(
     await publishWorkspaceRealtimeEvent(context.conversation.workspaceId, {
       eventType: RealtimeEventType.whatsappCallPermissionUpdated,
       data: { conversationId: context.conversation.id },
-      route: routeForConversation({
-        assignedInboxTeamId: context.conversation.assignedInboxTeamId,
-        assignedUserId: context.conversation.assignedUserId,
-      }),
+      route: routeForConversation(context.conversation),
     })
   } catch (err) {
     logger.warn(

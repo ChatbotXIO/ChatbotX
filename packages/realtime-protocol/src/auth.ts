@@ -110,6 +110,8 @@ export const verifyRealtimeToken = async (
 const realtimeChatScopes = z.enum(["all", "assigned", "none"])
 type RealtimeChatScope = z.infer<typeof realtimeChatScopes>
 
+const issuedAtMsSchema = z.number().int().nonnegative()
+
 const memberClaimsSchema = z.object({
   userId: z.string().min(1),
   chatScope: realtimeChatScopes,
@@ -117,15 +119,23 @@ const memberClaimsSchema = z.object({
   // Standard JWT "issued at" (seconds since epoch), set automatically by
   // the internal `signRealtimeToken`'s `.setIssuedAt()`.
   iat: z.number(),
-  // Millisecond-precision mint time, set explicitly below (jose's built-in
-  // `iat` floors to whole seconds). The revoke-marker check compares
-  // `revokedAt > iatMs` so a revoke and reconnect in the same second remain
-  // correctly ordered.
-  iatMs: z.number(),
+  // Millisecond-precision issue time captured by the issuer before membership
+  // lookup. A revoke marker invalidates a token when `revokedAt >= iatMs`.
+  iatMs: issuedAtMsSchema,
 })
 
 /** Claims carried by a room-connect token: the verified member's user id. */
 export type RealtimeMemberClaims = z.infer<typeof memberClaimsSchema>
+
+/**
+ * A revoke marker invalidates a token minted at or before it. Equal timestamps
+ * fail closed because millisecond precision cannot establish which operation
+ * occurred first.
+ */
+export const isMemberTokenRevoked = (
+  claims: RealtimeMemberClaims,
+  revokedAtMs: number | null,
+): boolean => revokedAtMs !== null && revokedAtMs >= claims.iatMs
 
 /**
  * Mints a short-lived connect token bound to a member of a workspace room:
@@ -139,14 +149,16 @@ export const signMemberConnectToken = async (
     userId: string
     chatScope: RealtimeChatScope
     teamIds?: string[]
+    issuedAtMs: number
   },
   secret: string,
 ): Promise<string> => {
+  const issuedAtMs = issuedAtMsSchema.parse(member.issuedAtMs)
   const claims: Omit<z.input<typeof memberClaimsSchema>, "iat"> = {
     userId: member.userId,
     chatScope: member.chatScope,
     teamIds: member.teamIds ?? [],
-    iatMs: Date.now(),
+    iatMs: issuedAtMs,
   }
   return await signRealtimeToken(
     { kind: "workspace", id: member.workspaceId },

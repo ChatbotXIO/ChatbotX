@@ -1062,10 +1062,7 @@ class ThreadControlService extends BaseService {
       queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: { ...(written as MessageModel), attachments: [] },
-        route: routeForConversation({
-          assignedUserId: conversation?.assignedUserId,
-          assignedInboxTeamId: conversation?.assignedInboxTeamId,
-        }),
+        route: routeForConversation(conversation),
       })
     } catch (err) {
       logger.warn(

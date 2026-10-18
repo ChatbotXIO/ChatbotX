@@ -72,13 +72,10 @@ const relayWindowIsEmpty = (): boolean =>
 
 const flushRelayWindow = (force: boolean): void => {
   if (
-    !force &&
-    (Date.now() - relayWindow.windowStartedAt < REALTIME_METRIC_WINDOW_MS ||
-      relayWindowIsEmpty())
+    relayWindowIsEmpty() ||
+    (!force &&
+      Date.now() - relayWindow.windowStartedAt < REALTIME_METRIC_WINDOW_MS)
   ) {
-    return
-  }
-  if (relayWindowIsEmpty()) {
     return
   }
   logger.info(
@@ -193,12 +190,23 @@ export const flushAllPendingWorkspaceRealtimeEvents =
         flushPendingWorkspaceRealtimeEvents(workspaceId),
       ),
     )
-    const failures: unknown[] = []
+    const failures = new Map<string, unknown>()
+    const recordFailure = (
+      workspaceId: string,
+      reason: unknown,
+      message: string,
+    ): void => {
+      if (failures.has(workspaceId)) {
+        return
+      }
+      failures.set(workspaceId, reason)
+      logger.error({ err: reason, workspaceId }, message)
+    }
     for (const [index, result] of flushResults.entries()) {
       if (result.status === "rejected") {
-        failures.push(result.reason)
-        logger.error(
-          { err: result.reason, workspaceId: pendingWorkspaceIds[index] },
+        recordFailure(
+          pendingWorkspaceIds[index] ?? "",
+          result.reason,
           "Failed to flush pending realtime events on shutdown",
         )
       }
@@ -209,9 +217,9 @@ export const flushAllPendingWorkspaceRealtimeEvents =
     )
     for (const [index, result] of inFlightResults.entries()) {
       if (result.status === "rejected") {
-        failures.push(result.reason)
-        logger.error(
-          { err: result.reason, workspaceId: inFlightEntries[index]?.[0] },
+        recordFailure(
+          inFlightEntries[index]?.[0] ?? "",
+          result.reason,
           "Failed to drain an in-flight realtime append on shutdown",
         )
       }
@@ -220,10 +228,10 @@ export const flushAllPendingWorkspaceRealtimeEvents =
     // Every workspace above got its own fully-drained attempt and its own log
     // line, while the caller still receives one overall failure after every
     // possible flush has completed.
-    if (failures.length > 0) {
+    if (failures.size > 0) {
       throw new AggregateError(
-        failures,
-        `${failures.length} realtime flush(es) failed during shutdown`,
+        [...failures.values()],
+        `${failures.size} realtime flush(es) failed during shutdown`,
       )
     }
   }

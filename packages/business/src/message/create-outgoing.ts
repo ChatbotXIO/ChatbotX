@@ -339,10 +339,7 @@ export const createOutgoing = async (props: {
       ...messageWithAttachments,
       clientId: parsedInput.clientId,
     },
-    route: routeForConversation({
-      assignedUserId: targetConversation.assignedUserId,
-      assignedInboxTeamId: targetConversation.assignedInboxTeamId,
-    }),
+    route: routeForConversation(targetConversation),
   })
 
   const jobs: {

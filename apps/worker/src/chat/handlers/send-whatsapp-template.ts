@@ -335,10 +335,7 @@ export async function processWhatsappTemplate(
       queueWorkspaceRealtimeEvent(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: newMessage,
-        route: routeForConversation({
-          assignedUserId: conversation.assignedUserId,
-          assignedInboxTeamId: conversation.assignedInboxTeamId,
-        }),
+        route: routeForConversation(conversation),
       })
     }
 

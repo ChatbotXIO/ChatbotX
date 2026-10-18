@@ -40,7 +40,6 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
       sendMessengerTemplateMessage: "sendMessengerTemplateMessage",
       sendTyping: "sendTyping",
       notifyExportResult: "notifyExportResult",
-      broadcastEvent: "broadcastEvent",
       deleteChannelMessage: "deleteChannelMessage",
       editChannelMessage: "editChannelMessage",
       changeChannelMessageState: "changeChannelMessageState",

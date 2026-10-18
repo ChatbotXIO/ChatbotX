@@ -170,6 +170,26 @@ describe("realtime stream publisher Redis connection", () => {
     vi.useRealTimers()
   })
 
+  test("does not retry an xadd command timeout because the append may have succeeded", async () => {
+    const { publishRealtimeStreamRecord } = await import(
+      "../src/platform/realtime-stream-publisher"
+    )
+    const timeout = new Error("Command timed out")
+    xadd.mockRejectedValueOnce(timeout)
+
+    await expect(
+      publishRealtimeStreamRecord({
+        event: typingEvent,
+        guestConversationId: "guest-1",
+        kind: "guest-event",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toBe(timeout)
+
+    expect(xadd).toHaveBeenCalledTimes(1)
+    expect(loggerWarn).not.toHaveBeenCalled()
+  })
+
   test("throws the last stream append error after retries are exhausted", async () => {
     // Load after `vi.resetModules()` to isolate the module-scoped Redis client.
     const { publishRealtimeStreamRecord } = await import(

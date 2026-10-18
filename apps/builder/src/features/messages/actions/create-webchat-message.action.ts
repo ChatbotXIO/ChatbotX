@@ -315,10 +315,7 @@ export async function handleCreateWebchatMessage({
         ...newMessage,
         clientId: parsedInput.clientId,
       },
-      route: routeForConversation({
-        assignedUserId: conversation.assignedUserId,
-        assignedInboxTeamId: conversation.assignedInboxTeamId,
-      }),
+      route: routeForConversation(conversation),
     })
 
     const promises: Promise<unknown>[] = []

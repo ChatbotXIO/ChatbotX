@@ -4,10 +4,8 @@ import { isRealtimeSeqAfter } from "./stream"
 type BatchFrame<TEnvelope> = { batch: TEnvelope[]; seq: string }
 
 export type RealtimeFrameReader<TEnvelope> = {
-  /** The `seq` of the last frame `readFrame` accepted (advanced its cursor
-   * on), or `null` before the first one — a caller that needs to tell a
-   * reconnecting server where it left off (e.g. the workspace socket's
-   * `lastSeq` query param) reads this instead of re-tracking `seq` itself. */
+  /** The resume cursor of the last frame `readFrame` accepted, or `null`
+   * before the first frame. */
   getLastSeq: () => string | null
   /**
    * Parses one wire frame. Returns the batch's envelope array (already

@@ -14,6 +14,9 @@ import {
 const CONVERSATION_SCOPED_ROUTE_ERROR_REGEX =
   /conversation-scoped and requires a route/
 
+const TARGETED_ONLY_EVENT_ERROR_REGEX =
+  /targeted-only and cannot be workspace-broadcast/
+
 describe("realtime batch envelopes", () => {
   const route = { assignedTeamIds: [], assignedUserIds: ["user-1"] }
 
@@ -79,6 +82,20 @@ describe("realtime batch envelopes", () => {
 
     expect(frame.batch).toHaveLength(1)
   })
+})
+
+test("rejects targeted-only events from workspace batches", () => {
+  expect(() =>
+    realtimeBatchEnvelopeSchema.parse({
+      batch: [
+        {
+          data: { attemptId: "attempt-1" },
+          eventType: "whatsappCallTransportIncoming",
+        },
+      ],
+      seq: "123-0",
+    }),
+  ).toThrow(TARGETED_ONLY_EVENT_ERROR_REGEX)
 })
 
 describe("realtime guest batch envelopes", () => {

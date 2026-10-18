@@ -2,6 +2,7 @@ import { SignJWT } from "jose"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
   extractBearerToken,
+  isMemberTokenRevoked,
   REALTIME_MEMBER_REVOKED_TTL_SECONDS,
   REALTIME_TOKEN_PURPOSE,
   signGuestConnectToken,
@@ -83,7 +84,12 @@ describe("signPresenceReportToken / verifyPresenceReportToken (generic sign/veri
 
   it("rejects a token minted for a different purpose — a member-connect token must not verify as a presence-report token (MEDIUM-3)", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
+      {
+        workspaceId: "ws_1",
+        userId: "u_1",
+        chatScope: "all",
+        issuedAtMs: 1_700_000_000_000,
+      },
       SECRET,
     )
 
@@ -106,12 +112,41 @@ describe("signPresenceReportToken / verifyPresenceReportToken (generic sign/veri
   })
 })
 
+describe("isMemberTokenRevoked", () => {
+  const claims = {
+    chatScope: "all" as const,
+    iat: 1_700_000_000,
+    iatMs: 1_700_000_000_123,
+    teamIds: [],
+    userId: "user-1",
+  }
+
+  it("does not revoke when no marker exists or when the token is newer", () => {
+    expect(isMemberTokenRevoked(claims, null)).toBe(false)
+    expect(isMemberTokenRevoked(claims, claims.iatMs - 1)).toBe(false)
+  })
+
+  it("revokes a token issued in the same millisecond as the marker", () => {
+    expect(isMemberTokenRevoked(claims, claims.iatMs)).toBe(true)
+  })
+
+  it("compares millisecond timestamps instead of the JWT's seconds iat", () => {
+    expect(isMemberTokenRevoked(claims, claims.iatMs - 1)).toBe(false)
+    expect(isMemberTokenRevoked(claims, claims.iatMs + 1)).toBe(true)
+  })
+})
+
 describe("signMemberConnectToken / verifyMemberConnectToken", () => {
-  it("verifies a token minted for the same workspace room with millisecond mint time", async () => {
-    const mintedAt = Date.now() + 123
-    const dateNow = vi.spyOn(Date, "now").mockReturnValue(mintedAt)
+  it("preserves the pre-membership-read millisecond issue time", async () => {
+    const issuedAtMs = 1_700_000_000_123
+    const dateNow = vi.spyOn(Date, "now").mockReturnValue(issuedAtMs + 500)
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
+      {
+        workspaceId: "ws_1",
+        userId: "u_1",
+        chatScope: "all",
+        issuedAtMs,
+      },
       SECRET,
     )
     const claims = await verifyMemberConnectToken(token, "ws_1", SECRET)
@@ -122,9 +157,28 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
       chatScope: "all",
       teamIds: [],
       iat: expect.any(Number),
-      iatMs: mintedAt,
+      iatMs: issuedAtMs,
     })
-    expect(claims.iatMs % 1000).toBe(mintedAt % 1000)
+    expect(claims.iatMs % 1000).toBe(issuedAtMs % 1000)
+  })
+
+  it.each([
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    -1,
+    1.5,
+  ])("rejects invalid issuedAtMs %s", async (issuedAtMs) => {
+    await expect(
+      signMemberConnectToken(
+        {
+          workspaceId: "ws_1",
+          userId: "u_1",
+          chatScope: "all",
+          issuedAtMs,
+        },
+        SECRET,
+      ),
+    ).rejects.toThrow()
   })
 
   it("preserves assigned-team scope in a member token", async () => {
@@ -134,6 +188,7 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
         userId: "u_1",
         chatScope: "assigned",
         teamIds: ["team_1", "team_2"],
+        issuedAtMs: 1_700_000_000_000,
       },
       SECRET,
     )
@@ -151,7 +206,12 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
 
   it("rejects a cross-room replay — token minted for a different workspace", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
+      {
+        workspaceId: "ws_1",
+        userId: "u_1",
+        chatScope: "all",
+        issuedAtMs: 1_700_000_000_000,
+      },
       SECRET,
     )
 
@@ -198,7 +258,12 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
 
   it("rejects a token signed with a different secret", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
+      {
+        workspaceId: "ws_1",
+        userId: "u_1",
+        chatScope: "all",
+        issuedAtMs: 1_700_000_000_000,
+      },
       SECRET,
     )
 
@@ -222,7 +287,12 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
 
   it("a freshly minted member-connect token must never verify as a presence report — no cross-purpose confusion despite their shared workspace:<id> audience", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "ws_1", userId: "u_1", chatScope: "all" },
+      {
+        workspaceId: "ws_1",
+        userId: "u_1",
+        chatScope: "all",
+        issuedAtMs: 1_700_000_000_000,
+      },
       SECRET,
     )
 

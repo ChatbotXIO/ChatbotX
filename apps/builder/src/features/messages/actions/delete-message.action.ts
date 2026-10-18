@@ -56,10 +56,7 @@ export const deleteMessage = async (props: {
   queueWorkspaceRealtimeEvent(workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
-    route: routeForConversation({
-      assignedUserId: conversation.assignedUserId,
-      assignedInboxTeamId: conversation.assignedInboxTeamId,
-    }),
+    route: routeForConversation(conversation),
   })
 
   const jobs: Promise<unknown>[] = []

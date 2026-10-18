@@ -27,6 +27,11 @@ type InboxTeamWithMembers = InboxTeamModel & {
   inboxTeamMembers: (InboxTeamMemberModel & { user: UserModel })[]
 }
 
+type InboxTeamMutationResult = {
+  team: InboxTeamModel
+  revokeWarning: boolean
+}
+
 class InboxTeamService extends BaseService {
   // ─── Reads (cached) ─────────────────────────────────────────────────────
   listByWorkspace(props: {
@@ -120,24 +125,27 @@ class InboxTeamService extends BaseService {
   private async revokeMemberRealtimeConnections(
     workspaceId: string,
     userIds: Iterable<string>,
-  ): Promise<void> {
-    await Promise.allSettled(
-      Array.from(new Set(userIds), async (userId) => {
-        await tryRevokeWorkspaceMemberRealtimeConnections({
+  ): Promise<boolean> {
+    const results = await Promise.allSettled(
+      Array.from(new Set(userIds), async (userId) =>
+        tryRevokeWorkspaceMemberRealtimeConnections({
           workspaceId,
           userId,
           reason: "reauth",
           errorMessage:
             "Failed to revoke inbox team member realtime connections",
-        })
-      }),
+        }),
+      ),
+    )
+    return results.some(
+      (result) => result.status === "rejected" || !result.value,
     )
   }
 
   async create(props: {
     workspaceId: string
     data: { name: string; userIds: string[] }
-  }): Promise<InboxTeamModel> {
+  }): Promise<InboxTeamMutationResult> {
     const { workspaceId, data } = props
     await this.assertAllAreWorkspaceMembers({
       workspaceId,
@@ -175,9 +183,12 @@ class InboxTeamService extends BaseService {
       return created
     })
     await this.invalidate({ workspaceId })
-    await this.revokeMemberRealtimeConnections(workspaceId, data.userIds)
+    const revokeWarning = await this.revokeMemberRealtimeConnections(
+      workspaceId,
+      data.userIds,
+    )
     await this.audit("create", `created a new team (#${inboxTeamId})`)
-    return team
+    return { team, revokeWarning }
   }
 
   async update(
@@ -198,7 +209,10 @@ class InboxTeamService extends BaseService {
     return updated ?? team
   }
 
-  async delete(props: { workspaceId: string; ids: string[] }): Promise<void> {
+  async delete(props: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<{ revokeWarning: boolean }> {
     const { workspaceId, ids } = props
 
     const teams = await db.query.inboxTeamModel.findMany({
@@ -230,18 +244,22 @@ class InboxTeamService extends BaseService {
         ),
       )
     await this.invalidate({ workspaceId })
-    await this.revokeMemberRealtimeConnections(workspaceId, memberUserIds)
+    const revokeWarning = await this.revokeMemberRealtimeConnections(
+      workspaceId,
+      memberUserIds,
+    )
 
     await this.audit(
       "delete",
       `deleted team${teams.length > 1 ? "s" : ""} (${teams.map((team) => `#${team.id}`).join(", ")})`,
     )
+    return { revokeWarning }
   }
 
   async addMembers(
     ctx: { workspaceId: string; inboxTeamId: string },
     userIds: string[],
-  ): Promise<InboxTeamModel> {
+  ): Promise<InboxTeamMutationResult> {
     const team = await this.findByIdOrFail(ctx)
     await this.assertAllAreWorkspaceMembers({
       workspaceId: ctx.workspaceId,
@@ -277,7 +295,10 @@ class InboxTeamService extends BaseService {
       }
     })
     await this.invalidate({ workspaceId: ctx.workspaceId })
-    await this.revokeMemberRealtimeConnections(ctx.workspaceId, addedUserIds)
+    const revokeWarning = await this.revokeMemberRealtimeConnections(
+      ctx.workspaceId,
+      addedUserIds,
+    )
 
     if (addedUsers.length > 0) {
       await this.audit(
@@ -285,13 +306,13 @@ class InboxTeamService extends BaseService {
         `added ${addedUsers.map((user) => user.name ?? user.email).join(", ")} to the team (#${team.id})`,
       )
     }
-    return team
+    return { team, revokeWarning }
   }
 
   async removeMembers(
     ctx: { workspaceId: string; inboxTeamId: string },
     memberIds: string[],
-  ): Promise<InboxTeamModel> {
+  ): Promise<InboxTeamMutationResult> {
     const team = await this.findByIdOrFail(ctx)
     const membersToRemove = await db.query.inboxTeamMemberModel.findMany({
       where: {
@@ -311,7 +332,7 @@ class InboxTeamService extends BaseService {
       )
       .returning({ id: inboxTeamMemberModel.id })
     await this.invalidate({ workspaceId: ctx.workspaceId })
-    await this.revokeMemberRealtimeConnections(
+    const revokeWarning = await this.revokeMemberRealtimeConnections(
       ctx.workspaceId,
       membersToRemove.map((member) => member.userId),
     )
@@ -322,7 +343,7 @@ class InboxTeamService extends BaseService {
         `removed ${membersToRemove.map((member) => member.user.name ?? member.user.email).join(", ")} from the team (#${team.id})`,
       )
     }
-    return team
+    return { team, revokeWarning }
   }
 
   /**
@@ -334,7 +355,7 @@ class InboxTeamService extends BaseService {
   async removeMembersByUserIds(
     ctx: { workspaceId: string; inboxTeamId: string },
     userIds: string[],
-  ): Promise<InboxTeamModel> {
+  ): Promise<InboxTeamMutationResult> {
     const team = await this.findByIdOrFail(ctx)
     const membersToRemove = await db.query.inboxTeamMemberModel.findMany({
       where: {
@@ -354,7 +375,7 @@ class InboxTeamService extends BaseService {
       )
       .returning({ id: inboxTeamMemberModel.id })
     await this.invalidate({ workspaceId: ctx.workspaceId })
-    await this.revokeMemberRealtimeConnections(
+    const revokeWarning = await this.revokeMemberRealtimeConnections(
       ctx.workspaceId,
       membersToRemove.map((member) => member.userId),
     )
@@ -365,7 +386,7 @@ class InboxTeamService extends BaseService {
         `removed ${membersToRemove.map((member) => member.user.name ?? member.user.email).join(", ")} from the team (#${team.id})`,
       )
     }
-    return team
+    return { team, revokeWarning }
   }
 
   // ─── Cache ───────────────────────────────────────────────────────────────

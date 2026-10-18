@@ -289,10 +289,7 @@ const publishCallMessageEvent = async (
     })
     await publishWorkspaceRealtimeEvent(call.workspaceId, {
       ...event,
-      route: routeForConversation({
-        assignedUserId: conversation?.assignedUserId,
-        assignedInboxTeamId: conversation?.assignedInboxTeamId,
-      }),
+      route: routeForConversation(conversation),
     })
   } catch (error) {
     logger.warn(

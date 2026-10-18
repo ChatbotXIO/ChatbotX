@@ -45,12 +45,15 @@ export function DeleteInboxTeamMembersDialog({
       teamMember?.inboxTeamId ?? "",
     ),
     {
-      onSuccess: () => {
+      onSuccess: ({ data }) => {
         toast.success(
           t("messages.deletedSuccess", {
             feature: t("fields.inboxTeamMember.label"),
           }),
         )
+        if (data?.revokeWarning) {
+          toast.warning(t("messages.realtimeRevokeWarning"))
+        }
         onOpenChange(false)
         invalidateUsers()
         router.refresh()

@@ -43,6 +43,18 @@ export const CONVERSATION_SCOPED_EVENT_TYPES = Object.fromEntries(
   conversationScopedEventTypes.map((eventType) => [eventType, true]),
 ) as Record<ConversationScopedEventType, true>
 
+const targetedOnlyEventTypes = [
+  RealtimeEventType.whatsappCallTransportIncoming,
+  RealtimeEventType.whatsappCallOutboundAnswer,
+  RealtimeEventType.whatsappCallOutboundStatus,
+] as const
+
+type TargetedOnlyEventType = (typeof targetedOnlyEventTypes)[number]
+
+export const TARGETED_ONLY_EVENT_TYPES = Object.fromEntries(
+  targetedOnlyEventTypes.map((eventType) => [eventType, true]),
+) as Record<TargetedOnlyEventType, true>
+
 /**
  * Shared wire envelope validation. It intentionally validates only the
  * envelope; consumers validate event data against their event-specific schema.
@@ -56,18 +68,26 @@ export const realtimeEventRouteSchema = z.object({
 
 export type RealtimeEventRoute = z.infer<typeof realtimeEventRouteSchema>
 
-export const routeForConversation = ({
-  assignedInboxTeamId,
-  assignedUserId,
-  inboxId,
-}: {
-  assignedInboxTeamId?: null | string
-  assignedUserId?: null | string
-  inboxId?: null | string
-}): RealtimeEventRoute => ({
-  assignedTeamIds: assignedInboxTeamId ? [assignedInboxTeamId] : [],
-  assignedUserIds: assignedUserId ? [assignedUserId] : [],
-  ...(inboxId ? { inboxId } : {}),
+export const routeForConversation = (
+  conversation:
+    | {
+        assignedInboxTeamId?: null | string
+        assignedUserId?: null | string
+        inboxId?: null | string
+      }
+    | null
+    | undefined,
+  inboxId?: null | string,
+): RealtimeEventRoute => ({
+  assignedTeamIds: conversation?.assignedInboxTeamId
+    ? [conversation.assignedInboxTeamId]
+    : [],
+  assignedUserIds: conversation?.assignedUserId
+    ? [conversation.assignedUserId]
+    : [],
+  ...((inboxId ?? conversation?.inboxId)
+    ? { inboxId: inboxId ?? conversation?.inboxId ?? undefined }
+    : {}),
 })
 
 export const routeForAssignment = ({
@@ -116,6 +136,13 @@ export type RealtimeEventEnvelope = z.infer<typeof realtimeEventEnvelopeSchema>
  */
 export const realtimeWorkspaceEventEnvelopeSchema =
   realtimeEventEnvelopeSchema.superRefine((envelope, ctx) => {
+    if (Object.hasOwn(TARGETED_ONLY_EVENT_TYPES, envelope.eventType)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `"${envelope.eventType}" is targeted-only and cannot be workspace-broadcast`,
+        path: ["eventType"],
+      })
+    }
     if (
       Object.hasOwn(CONVERSATION_SCOPED_EVENT_TYPES, envelope.eventType) &&
       !envelope.route
@@ -449,21 +476,6 @@ export type RealtimeConversationScopedEventData =
   | RealtimeEventConversationUpdated
   | RealtimeEventWhatsappCallPermissionUpdated
 
-type ConversationScopedEventTypesMatch = [
-  Exclude<
-    RealtimeConversationScopedEventData["eventType"],
-    ConversationScopedEventType
-  >,
-  Exclude<
-    ConversationScopedEventType,
-    RealtimeConversationScopedEventData["eventType"]
-  >,
-] extends [never, never]
-  ? true
-  : never
-
-const _conversationScopedEventTypesMatch: ConversationScopedEventTypesMatch = true
-
 /**
  * Workspace-wide events may be broadcast to every workspace connection.
  */
@@ -482,6 +494,59 @@ export type RealtimeTargetedOnlyEventData =
   | RealtimeEventWhatsappCallTransportIncoming
   | RealtimeEventWhatsappCallOutboundAnswer
   | RealtimeEventWhatsappCallOutboundStatus
+
+type ConversationScopedEventTypesMatch = [
+  Exclude<
+    RealtimeConversationScopedEventData["eventType"],
+    ConversationScopedEventType
+  >,
+  Exclude<
+    ConversationScopedEventType,
+    RealtimeConversationScopedEventData["eventType"]
+  >,
+] extends [never, never]
+  ? true
+  : never
+
+const _conversationScopedEventTypesMatch: ConversationScopedEventTypesMatch = true
+
+type TargetedOnlyEventTypesMatch = [
+  Exclude<RealtimeTargetedOnlyEventData["eventType"], TargetedOnlyEventType>,
+  Exclude<TargetedOnlyEventType, RealtimeTargetedOnlyEventData["eventType"]>,
+] extends [never, never]
+  ? true
+  : never
+
+const _targetedOnlyEventTypesMatch: TargetedOnlyEventTypesMatch = true
+
+type RealtimeEventTypeValue =
+  (typeof RealtimeEventType)[keyof typeof RealtimeEventType]
+
+type ClassifiedRealtimeEventData =
+  | RealtimeConversationScopedEventData
+  | RealtimeWorkspaceBroadcastEventData
+  | RealtimeTargetedOnlyEventData
+
+type RealtimeEventTypesClassifiedExactlyOnce = [
+  Exclude<RealtimeEventTypeValue, ClassifiedRealtimeEventData["eventType"]>,
+  Exclude<ClassifiedRealtimeEventData["eventType"], RealtimeEventTypeValue>,
+  Extract<
+    RealtimeConversationScopedEventData["eventType"],
+    RealtimeWorkspaceBroadcastEventData["eventType"]
+  >,
+  Extract<
+    RealtimeConversationScopedEventData["eventType"],
+    RealtimeTargetedOnlyEventData["eventType"]
+  >,
+  Extract<
+    RealtimeWorkspaceBroadcastEventData["eventType"],
+    RealtimeTargetedOnlyEventData["eventType"]
+  >,
+] extends [never, never, never, never, never]
+  ? true
+  : never
+
+const _realtimeEventTypesClassifiedExactlyOnce: RealtimeEventTypesClassifiedExactlyOnce = true
 
 type Routed<T> = T & { route: RealtimeEventRoute }
 type MaybeRouted<T> = T & { route?: RealtimeEventRoute }

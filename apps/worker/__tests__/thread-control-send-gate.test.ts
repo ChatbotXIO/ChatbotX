@@ -93,7 +93,6 @@ vi.mock("../src/services/integrations", () => ({
 }))
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  ChatJobAction: { broadcastEvent: "broadcastEvent" },
   chatQueue: { add: vi.fn() },
 }))
 

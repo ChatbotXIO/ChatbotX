@@ -36,11 +36,9 @@ export const getRealtimeMemberRevokedKey = (
 ): string => `realtime:revoked:${workspaceId}:${userId}`
 
 /**
- * Redis Stream id ordering (`<ms>-<sequence>`). `true` when `candidate` is
- * strictly newer than `previous`. Returns `false` — never throws — for a
- * malformed id on either side: callers that accept external input (a
- * connect's `lastSeq`, a replayed stream entry) must not be able to crash
- * this comparison with a non-numeric string.
+ * Compares resume cursors. Returns `true` when `candidate` is strictly newer
+ * than `previous`; returns `false` — never throws — for malformed ids so a
+ * non-numeric cursor cannot crash comparison.
  */
 export const isRealtimeSeqAfter = (
   candidate: string,

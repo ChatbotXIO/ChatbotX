@@ -144,6 +144,7 @@ const { sendFlowStepToChannel } = await import(
 )
 const { validateMessengerTemplate, replaceMessengerTemplateVariables } =
   await import("../src/integration/handlers/messenger-template-handler")
+const { messageService } = await import("@chatbotx.io/business")
 const { db } = await import("@chatbotx.io/database/client")
 const { emit } = await import("@chatbotx.io/event-bus")
 const { enqueueIntegrationJob } = await import("@chatbotx.io/worker-config")
@@ -151,6 +152,7 @@ const { enqueueIntegrationJob } = await import("@chatbotx.io/worker-config")
 const mockSendFlowStep = sendFlowStepToChannel as MockInstance
 const mockValidate = validateMessengerTemplate as MockInstance
 const mockReplace = replaceMessengerTemplateVariables as MockInstance
+const mockMessageCreate = messageService.create as MockInstance
 const mockDbUpdate = db.update as MockInstance
 const mockEmit = emit as MockInstance
 const mockEnqueueIntegrationJob = enqueueIntegrationJob as MockInstance
@@ -360,7 +362,7 @@ describe("processMessengerTemplate — header variable guard", () => {
     })
     // No provider call and no orphan outgoing message row.
     expect(mockSendFlowStep).not.toHaveBeenCalled()
-    expect(db.insert).not.toHaveBeenCalled()
+    expect(mockMessageCreate).not.toHaveBeenCalled()
     expect(mockEmit).toHaveBeenCalledWith(
       "message:failed",
       expect.objectContaining({ willRetry: false }),
@@ -514,10 +516,9 @@ describe("processMessengerTemplate — header variable guard", () => {
       button: [{ sub_type: "url", index: 0, text: "" }],
     })
 
-    const insertedValues = (db.insert as unknown as MockInstance).mock
-      .results[0].value.values as MockInstance
     expect(
-      insertedValues.mock.calls[0][0].contentAttributes.template.params.button,
+      mockMessageCreate.mock.calls[0][0].contentAttributes.template.params
+        .button,
     ).toEqual([{ sub_type: "url", index: 0, text: "{{mini_app_token}}" }])
     expect(sentParams().button).toEqual([
       { sub_type: "url", index: 0, text: "signed-token" },

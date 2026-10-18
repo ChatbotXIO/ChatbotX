@@ -250,18 +250,21 @@ vi.mock("@chatbotx.io/event-bus", () => ({
 vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
   routeForConversation: vi.fn(
-    ({
-      assignedInboxTeamId,
-      assignedUserId,
-      inboxId,
-    }: {
-      assignedInboxTeamId?: string | null
-      assignedUserId?: string | null
-      inboxId?: string | null
-    }) => ({
-      assignedTeamIds: assignedInboxTeamId ? [assignedInboxTeamId] : [],
-      assignedUserIds: assignedUserId ? [assignedUserId] : [],
-      inboxId,
+    (
+      conversation: {
+        assignedInboxTeamId?: string | null
+        assignedUserId?: string | null
+        inboxId?: string | null
+      },
+      inboxId?: string | null,
+    ) => ({
+      assignedTeamIds: conversation.assignedInboxTeamId
+        ? [conversation.assignedInboxTeamId]
+        : [],
+      assignedUserIds: conversation.assignedUserId
+        ? [conversation.assignedUserId]
+        : [],
+      inboxId: inboxId ?? conversation.inboxId,
     }),
   ),
 }))

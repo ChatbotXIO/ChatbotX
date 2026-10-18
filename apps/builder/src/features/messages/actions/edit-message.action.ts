@@ -131,10 +131,7 @@ export const editMessage = async (props: {
       newAttachmentHeight: resolvedHeight,
       removedAttachment: removeAttachment ?? false,
     },
-    route: routeForConversation({
-      assignedUserId: conversation.assignedUserId,
-      assignedInboxTeamId: conversation.assignedInboxTeamId,
-    }),
+    route: routeForConversation(conversation),
   })
 
   await Promise.allSettled([

@@ -81,10 +81,11 @@ export const inboxTeamsPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
-      return await inboxTeamService.create({
+      const { team } = await inboxTeamService.create({
         workspaceId: context.workspace.id,
         data: input,
       })
+      return team
     }),
 
   update: workspaceTokenAuthAPI
@@ -141,10 +142,11 @@ export const inboxTeamsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
-      return await inboxTeamService.addMembers(
+      const { team } = await inboxTeamService.addMembers(
         { workspaceId: context.workspace.id, inboxTeamId: input.id },
         input.userIds,
       )
+      return team
     }),
 
   removeMembers: workspaceTokenAuthAPI
@@ -159,10 +161,11 @@ export const inboxTeamsPublicRouter = {
     .input(addInboxTeamMemberRequest.and(inboxTeamIdPathParam))
     .output(inboxTeamResource)
     .errors(possibleErrorsOnMutatingResource)
-    .handler(async ({ context, input }) =>
-      inboxTeamService.removeMembersByUserIds(
+    .handler(async ({ context, input }) => {
+      const { team } = await inboxTeamService.removeMembersByUserIds(
         { workspaceId: context.workspace.id, inboxTeamId: input.id },
         input.userIds,
-      ),
-    ),
+      )
+      return team
+    }),
 }

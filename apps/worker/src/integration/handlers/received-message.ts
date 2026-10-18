@@ -1308,10 +1308,7 @@ const persistMessage = async (
     queueWorkspaceRealtimeEvent(inbox.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: message,
-      route: routeForConversation({
-        assignedUserId: conversation.assignedUserId,
-        assignedInboxTeamId: conversation.assignedInboxTeamId,
-      }),
+      route: routeForConversation(conversation),
     })
   }
 
@@ -1967,6 +1964,15 @@ export const updateIncomingComment = async (
   const conversation = await conversationService.findBy({
     where: { id: updated.conversationId, workspaceId: inbox.workspaceId },
   })
+  if (!conversation) {
+    logger.warn(
+      {
+        conversationId: updated.conversationId,
+        workspaceId: inbox.workspaceId,
+      },
+      "updateIncomingComment: conversation not found for realtime route",
+    )
+  }
   queueWorkspaceRealtimeEvent(inbox.workspaceId, {
     eventType: RealtimeEventType.messageUpdated,
     data: {
@@ -1974,10 +1980,7 @@ export const updateIncomingComment = async (
       newText,
       removedAttachment: false,
     },
-    route: routeForConversation({
-      assignedUserId: conversation?.assignedUserId,
-      assignedInboxTeamId: conversation?.assignedInboxTeamId,
-    }),
+    route: routeForConversation(conversation),
   })
 }
 
@@ -2010,13 +2013,19 @@ export const deleteIncomingComment = async (
   const conversation = await conversationService.findBy({
     where: { id: deleted[0].conversationId, workspaceId: inbox.workspaceId },
   })
+  if (!conversation) {
+    logger.warn(
+      {
+        conversationId: deleted[0].conversationId,
+        workspaceId: inbox.workspaceId,
+      },
+      "deleteIncomingComment: conversation not found for realtime route",
+    )
+  }
   queueWorkspaceRealtimeEvent(inbox.workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
-    route: routeForConversation({
-      assignedUserId: conversation?.assignedUserId,
-      assignedInboxTeamId: conversation?.assignedInboxTeamId,
-    }),
+    route: routeForConversation(conversation),
   })
 }
 
@@ -2051,13 +2060,19 @@ export const deleteIncomingMessage = async (
   const conversation = await conversationService.findBy({
     where: { id: deleted[0].conversationId, workspaceId: inbox.workspaceId },
   })
+  if (!conversation) {
+    logger.warn(
+      {
+        conversationId: deleted[0].conversationId,
+        workspaceId: inbox.workspaceId,
+      },
+      "deleteIncomingMessage: conversation not found for realtime route",
+    )
+  }
   queueWorkspaceRealtimeEvent(inbox.workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
-    route: routeForConversation({
-      assignedUserId: conversation?.assignedUserId,
-      assignedInboxTeamId: conversation?.assignedInboxTeamId,
-    }),
+    route: routeForConversation(conversation),
   })
 }
 
@@ -2149,10 +2164,7 @@ export const processMessageReaction = async (
     queueWorkspaceRealtimeEvent(inbox.workspaceId, {
       eventType: RealtimeEventType.messageCreated,
       data: reactionRow,
-      route: routeForConversation({
-        assignedUserId: conversation.assignedUserId,
-        assignedInboxTeamId: conversation.assignedInboxTeamId,
-      }),
+      route: routeForConversation(conversation),
     })
     await awardReactionLeaderboard({
       inbox,
@@ -2179,10 +2191,7 @@ export const processMessageReaction = async (
           newText: reactionText,
           removedAttachment: false,
         },
-        route: routeForConversation({
-          assignedUserId: conversation.assignedUserId,
-          assignedInboxTeamId: conversation.assignedInboxTeamId,
-        }),
+        route: routeForConversation(conversation),
       })
     }
   }
