@@ -172,7 +172,10 @@ describe("realtime delivery", () => {
     expect(socket.sent).toHaveLength(1)
   })
 
-  test("closes every targeted member socket on revoke", () => {
+  test.each([
+    ["deleted", { code: 4001, reason: "revoked" }],
+    ["reauth", { code: 4004, reason: "reauth" }],
+  ] as const)("closes a targeted member socket with the $0 code", (reason, expectedClose) => {
     const { delivery } = createDelivery()
     const socket = createSocket()
     delivery.addWorkspaceSocket(socket)
@@ -181,33 +184,13 @@ describe("realtime delivery", () => {
       id: "3-0",
       record: {
         kind: "member-revoke",
-        reason: "deleted",
+        reason,
         userId: "user-1",
         workspaceId: "workspace-1",
       },
     })
 
-    expect(socket.closed).toEqual({ code: 4001, reason: "revoked" })
-  })
-
-  test("closes a targeted member socket with the non-terminal reauth code when the revoke reason is reauth", () => {
-    // Regression for PR #1349 finding #1: a permission/team change must not
-    // use the terminal `revoked` code — the client would never reconnect.
-    const { delivery } = createDelivery()
-    const socket = createSocket()
-    delivery.addWorkspaceSocket(socket)
-
-    delivery.dispatch({
-      id: "3-0",
-      record: {
-        kind: "member-revoke",
-        reason: "reauth",
-        userId: "user-1",
-        workspaceId: "workspace-1",
-      },
-    })
-
-    expect(socket.closed).toEqual({ code: 4004, reason: "reauth" })
+    expect(socket.closed).toEqual(expectedClose)
   })
 
   test("replay never closes on a member-revoke entry — revocation is checked once at connect, not re-derived from stream-entry clocks", () => {
@@ -240,58 +223,34 @@ describe("realtime delivery", () => {
     expect(socket.closed).toBeNull()
   })
 
-  test("publishes a guest event to a topic scoped by workspace, not just the guest conversation id", () => {
+  test.each([
+    {
+      expectedTopics: ["guest:workspace-1:12345"],
+      name: "a guest event to its workspace-scoped topic",
+      workspaceIds: ["workspace-1"],
+    },
+    {
+      expectedTopics: ["guest:workspace-1:12345", "guest:workspace-2:12345"],
+      name: "legacy guest conversation ids independently per workspace",
+      workspaceIds: ["workspace-1", "workspace-2"],
+    },
+  ])("publishes $name", ({ expectedTopics, workspaceIds }) => {
     const { delivery, published } = createDelivery()
-
-    delivery.dispatch({
-      id: "4-0",
-      record: {
-        event: { data: {}, eventType: "messageCreated" },
-        guestConversationId: "12345",
-        kind: "guest-event",
-        workspaceId: "workspace-1",
-      },
-    })
-
-    expect(published).toEqual([
-      {
-        message: JSON.stringify({
-          batch: [{ data: {}, eventType: "messageCreated" }],
-          seq: "4-0",
-        }),
-        topic: "guest:workspace-1:12345",
-      },
-    ])
-  })
-
-  test("isolates guest events between workspaces that share the same legacy guestConversationId", () => {
-    const { delivery, published } = createDelivery()
-
-    delivery.dispatch({
-      id: "5-0",
-      record: {
-        event: { data: {}, eventType: "messageCreated" },
-        guestConversationId: "12345",
-        kind: "guest-event",
-        workspaceId: "workspace-1",
-      },
-    })
-    delivery.dispatch({
-      id: "6-0",
-      record: {
-        event: { data: {}, eventType: "messageCreated" },
-        guestConversationId: "12345",
-        kind: "guest-event",
-        workspaceId: "workspace-2",
-      },
-    })
+    for (const [index, workspaceId] of workspaceIds.entries()) {
+      delivery.dispatch({
+        id: `${index + 4}-0`,
+        record: {
+          event: { data: {}, eventType: "messageCreated" },
+          guestConversationId: "12345",
+          kind: "guest-event",
+          workspaceId,
+        },
+      })
+    }
 
     const topics = published.map((entry) => entry.topic)
-    expect(topics).toEqual([
-      "guest:workspace-1:12345",
-      "guest:workspace-2:12345",
-    ])
-    expect(new Set(topics).size).toBe(2)
+    expect(topics).toEqual(expectedTopics)
+    expect(new Set(topics).size).toBe(expectedTopics.length)
   })
 
   test("closes a socket on a backpressure drop and does not close it a second time once already closed", () => {
@@ -367,6 +326,35 @@ describe("realtime delivery", () => {
     ).toBe(false)
   })
 
+  test("continues restricted fan-out after a socket closes during send", () => {
+    const { delivery } = createDelivery()
+    const closingSocket = createSocket({
+      chatScope: "assigned",
+      teamIds: ["team-1"],
+    })
+    const receivingSocket = createSocket({
+      chatScope: "assigned",
+      teamIds: ["team-1"],
+    })
+    closingSocket.send = () => {
+      closingSocket.getUserData().closed = true
+      return 2
+    }
+    delivery.addWorkspaceSocket(closingSocket)
+    delivery.addWorkspaceSocket(receivingSocket)
+
+    delivery.dispatch(
+      workspaceEntry([
+        {
+          data: {},
+          eventType: "messageCreated",
+          route: { assignedTeamIds: ["team-1"], assignedUserIds: [] },
+        },
+      ]),
+    )
+
+    expect(receivingSocket.sent).toHaveLength(1)
+  })
   test("resyncWorkspace closes every registered member and guest socket of that workspace, and only that workspace", () => {
     // Regression for PR #1349 finding #4: a stream record the gateway
     // couldn't fully parse must force a resync on every local socket that

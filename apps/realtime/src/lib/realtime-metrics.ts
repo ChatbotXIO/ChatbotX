@@ -15,7 +15,7 @@ export type RealtimeServerCounters = {
   upgrades: number
 }
 
-export type RealtimeServerWindow = RealtimeServerCounters & {
+type RealtimeServerWindow = RealtimeServerCounters & {
   connections: number
   maxConnections: number
   shards: number

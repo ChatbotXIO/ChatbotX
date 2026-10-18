@@ -1,4 +1,7 @@
-import { getRealtimeStreamShard } from "@chatbotx.io/realtime-protocol"
+import {
+  getRealtimeStreamKey,
+  getRealtimeStreamShard,
+} from "@chatbotx.io/realtime-protocol"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 const { loggerErrorMock, loggerWarnMock } = vi.hoisted(() => ({
@@ -323,5 +326,109 @@ describe("stream reader", () => {
     // the failed-then-successful read pair.
     expect(dispatched).toEqual(["1-0"])
     expect(recoveredCount).toBe(1)
+  })
+  test("does not report a recent-entry gap when every evicted entry was already seen", async () => {
+    const workspaceId = "workspace-1"
+    const entries = Array.from({ length: 513 }, (_, index) => [
+      `${index + 1}-0`,
+      [
+        "record",
+        JSON.stringify({
+          events: [{ data: {}, eventType: "messageCreated" }],
+          kind: "workspace-events",
+          workspaceId,
+        }),
+      ],
+    ])
+    const { promise: idleRead, resolve: resolveIdleRead } =
+      Promise.withResolvers<null>()
+    const { promise: dispatched, resolve: resolveDispatched } =
+      Promise.withResolvers<void>()
+    let reads = 0
+    const reader = {
+      call: vi.fn(async () => {
+        reads += 1
+        if (reads === 1) {
+          return [[getRealtimeStreamKey(workspaceId), entries]]
+        }
+        return await idleRead
+      }) as RedisCall,
+      disconnect: vi.fn(() => resolveIdleRead(null)),
+    }
+    const streamReader = createStreamReader({
+      onEntries: () => resolveDispatched(),
+      onError: (error) => {
+        throw error
+      },
+      onInvalidRecord: () => undefined,
+      onReady: () => undefined,
+      onRecovered: () => undefined,
+      redis: {
+        duplicate: () => reader,
+        xrevrange: vi.fn().mockResolvedValue([]),
+      } as never,
+    })
+
+    await streamReader.activateWorkspace(workspaceId)
+    streamReader.start()
+    await dispatched
+    expect(streamReader.hasRecentEntriesGap(workspaceId, "1-0")).toBe(false)
+    await streamReader.close()
+  })
+
+  test("resyncs after an ioredis reconnect that transparently resumes XREAD", async () => {
+    const { promise: initialRead, resolve: resolveInitialRead } =
+      Promise.withResolvers<null>()
+    const { promise: idleRead, resolve: resolveIdleRead } =
+      Promise.withResolvers<null>()
+    const { promise: recovered, resolve: resolveRecovered } =
+      Promise.withResolvers<void>()
+    let reconnectHandler: (() => void) | undefined
+    let reads = 0
+    let reconnects = 0
+    let recoveries = 0
+    const reader = {
+      call: vi.fn(async () => {
+        reads += 1
+        if (reads === 1) {
+          return await initialRead
+        }
+        return await idleRead
+      }) as RedisCall,
+      disconnect: vi.fn(() => resolveIdleRead(null)),
+      on: vi.fn((event: string, handler: () => void) => {
+        if (event === "reconnecting") {
+          reconnectHandler = handler
+        }
+      }),
+    }
+    const streamReader = createStreamReader({
+      onEntries: () => undefined,
+      onError: () => undefined,
+      onInvalidRecord: () => undefined,
+      onReady: () => undefined,
+      onReconnect: () => {
+        reconnects += 1
+      },
+      onRecovered: () => {
+        recoveries += 1
+        resolveRecovered()
+      },
+      redis: {
+        duplicate: () => reader,
+        xrevrange: vi.fn().mockResolvedValue([]),
+      } as never,
+    })
+
+    await streamReader.activateWorkspace("workspace-1")
+    streamReader.start()
+    await vi.waitFor(() => expect(reconnectHandler).toBeDefined())
+    reconnectHandler?.()
+    resolveInitialRead(null)
+    await recovered
+    await streamReader.close()
+
+    expect(reconnects).toBe(1)
+    expect(recoveries).toBe(1)
   })
 })

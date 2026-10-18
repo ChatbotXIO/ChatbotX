@@ -96,129 +96,106 @@ beforeEach(() => {
 })
 
 describe("POST /api/workspace-presence/report", () => {
-  test("rejects with 401 when there is no bearer token — never touches Redis", async () => {
-    const response = await POST(makeRequest("1", { userIds: ["2"] }))
-
-    expect(response.status).toBe(401)
-    expect(mocks.heartbeatMany).not.toHaveBeenCalled()
-  })
-
-  test("rejects with 400 when the workspaceId query param is missing — before verifying/parsing anything", async () => {
-    const response = await POST(
-      makeRequest(null, { userIds: ["2"] }, "Bearer whatever"),
-    )
-
-    expect(response.status).toBe(400)
-    expect(mocks.heartbeatMany).not.toHaveBeenCalled()
-  })
-
-  test("rejects with 400 when the workspaceId query param is not all-digits (LOW: zodBigintAsString shape check)", async () => {
-    const response = await POST(
-      makeRequest("not-a-bigint", { userIds: ["2"] }, "Bearer whatever"),
-    )
-
-    expect(response.status).toBe(400)
-    expect(mocks.heartbeatMany).not.toHaveBeenCalled()
-  })
-
-  test("verifies the signature BEFORE parsing the JSON body — a malformed body never blocks the 401", async () => {
-    const response = await POST(
-      new Request(
-        "http://localhost/api/workspace-presence/report?workspaceId=1",
-        {
-          method: "POST",
-          headers: { Authorization: "Bearer garbage-token" },
-          body: "{not json",
-        },
-      ) as unknown as Parameters<typeof POST>[0],
-    )
-
-    expect(response.status).toBe(401)
-    expect(mocks.heartbeatMany).not.toHaveBeenCalled()
-  })
-
-  test("rejects with 401 when the token was minted for a different workspace (cross-workspace replay, MEDIUM-3)", async () => {
-    const token = await signPresenceToken({
-      workspaceId: "other-workspace",
-      userIds: ["2"],
-    })
-
-    const response = await POST(
-      makeRequest("1", { userIds: ["2"] }, `Bearer ${token}`),
-    )
-
-    expect(response.status).toBe(401)
-    expect(mocks.heartbeatMany).not.toHaveBeenCalled()
-  })
-
-  test("rejects with 401 when the token's purpose is not presence-report (a member-connect token must not work here, MEDIUM-3)", async () => {
-    const token = await signMemberConnectToken(
-      {
-        workspaceId: "1",
-        userId: "u_1",
-        chatScope: "all",
-        issuedAtMs: Date.now(),
+  test.each([
+    {
+      createRequest: async () => makeRequest("1", { userIds: ["2"] }),
+      name: "no bearer token",
+    },
+    {
+      createRequest: async () =>
+        new Request(
+          "http://localhost/api/workspace-presence/report?workspaceId=1",
+          {
+            method: "POST",
+            headers: { Authorization: "Bearer garbage-token" },
+            body: "{not json",
+          },
+        ) as unknown as Parameters<typeof POST>[0],
+      name: "a malformed body with an invalid signature",
+    },
+    {
+      createRequest: async () => {
+        const token = await signPresenceToken({
+          workspaceId: "other-workspace",
+          userIds: ["2"],
+        })
+        return makeRequest("1", { userIds: ["2"] }, `Bearer ${token}`)
       },
-      SECRET,
-    )
-
-    const response = await POST(
-      makeRequest("1", { userIds: ["2"] }, `Bearer ${token}`),
-    )
+      name: "a token minted for another workspace",
+    },
+    {
+      createRequest: async () => {
+        const token = await signMemberConnectToken(
+          {
+            workspaceId: "1",
+            userId: "u_1",
+            chatScope: "all",
+            issuedAtMs: Date.now(),
+          },
+          SECRET,
+        )
+        return makeRequest("1", { userIds: ["2"] }, `Bearer ${token}`)
+      },
+      name: "a member-connect token with the wrong purpose",
+    },
+    {
+      createRequest: async () => {
+        const token = await signPresenceTokenWithNoPurposeClaim({
+          workspaceId: "1",
+          userIds: ["2"],
+        })
+        return makeRequest("1", { userIds: ["2"] }, `Bearer ${token}`)
+      },
+      name: "a token with no purpose claim",
+    },
+    {
+      createRequest: async () => {
+        const token = await signPresenceToken({
+          workspaceId: "1",
+          userIds: ["2"],
+          secret: "b".repeat(32),
+        })
+        return makeRequest("1", { userIds: ["2"] }, `Bearer ${token}`)
+      },
+      name: "a token signed with another secret",
+    },
+    {
+      createRequest: async () => {
+        const token = await signPresenceToken({
+          workspaceId: "1",
+          userIds: ["2", "3"],
+        })
+        return makeRequest("1", { userIds: ["2", "4"] }, `Bearer ${token}`)
+      },
+      name: "a request body that does not match the token hash",
+    },
+  ])("rejects with 401 for $name", async ({ createRequest }) => {
+    const response = await POST(await createRequest())
 
     expect(response.status).toBe(401)
     expect(mocks.heartbeatMany).not.toHaveBeenCalled()
   })
 
-  test("rejects with 401 when the token carries no purpose claim at all", async () => {
-    const token = await signPresenceTokenWithNoPurposeClaim({
-      workspaceId: "1",
-      userIds: ["2"],
-    })
-
-    const response = await POST(
-      makeRequest("1", { userIds: ["2"] }, `Bearer ${token}`),
-    )
-
-    expect(response.status).toBe(401)
-    expect(mocks.heartbeatMany).not.toHaveBeenCalled()
-  })
-
-  test("rejects with 401 when signed with a different secret", async () => {
-    const token = await signPresenceToken({
-      workspaceId: "1",
-      userIds: ["2"],
-      secret: "b".repeat(32),
-    })
-
-    const response = await POST(
-      makeRequest("1", { userIds: ["2"] }, `Bearer ${token}`),
-    )
-
-    expect(response.status).toBe(401)
-    expect(mocks.heartbeatMany).not.toHaveBeenCalled()
-  })
-
-  test("rejects with 401 when the body's userIds do not match the token's bodyHash (tampered body, MEDIUM-3)", async () => {
-    const token = await signPresenceToken({
-      workspaceId: "1",
-      userIds: ["2", "3"],
-    })
-
-    const response = await POST(
-      makeRequest("1", { userIds: ["2", "4"] }, `Bearer ${token}`),
-    )
-
-    expect(response.status).toBe(401)
-    expect(mocks.heartbeatMany).not.toHaveBeenCalled()
-  })
-
-  test("rejects with 400 on an invalid body shape", async () => {
-    const token = await signPresenceToken({ workspaceId: "1", userIds: [] })
-
-    const response = await POST(
-      makeRequest("1", { userIds: "not-an-array" }, `Bearer ${token}`),
-    )
+  test.each([
+    {
+      createRequest: async () =>
+        makeRequest(null, { userIds: ["2"] }, "Bearer whatever"),
+      name: "a missing workspaceId query parameter",
+    },
+    {
+      createRequest: async () =>
+        makeRequest("not-a-bigint", { userIds: ["2"] }, "Bearer whatever"),
+      name: "a malformed workspaceId query parameter",
+    },
+    {
+      createRequest: async () => {
+        const token = await signPresenceToken({ workspaceId: "1", userIds: [] })
+        return makeRequest("1", { userIds: "not-an-array" }, `Bearer ${token}`)
+      },
+      name: "an invalid request body",
+    },
+  ])("rejects with 400 for $name", async ({ createRequest }) => {
+    const response = await POST(await createRequest())
 
     expect(response.status).toBe(400)
     expect(mocks.heartbeatMany).not.toHaveBeenCalled()

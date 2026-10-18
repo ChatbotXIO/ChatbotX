@@ -10,6 +10,7 @@ import {
 import { SignJWT } from "jose"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import { createRealtimeGateway, type RealtimeGateway } from "../src/gateway"
+import { testGatewayOptions } from "./helpers/gateway-options"
 
 const { reportWorkspacePresenceMock } = vi.hoisted(() => ({
   reportWorkspacePresenceMock: vi.fn().mockResolvedValue(undefined),
@@ -29,14 +30,15 @@ const signMemberToken = async (
 ): Promise<string> =>
   await signMemberConnectToken({ ...member, issuedAtMs: Date.now() }, secret)
 
-// `createStreamReader` only touches `redis.duplicate()`/`.call()` once a
-// workspace is activated and its XREAD poll loop runs; none of the tests
-// below activate a workspace (auth rejections return before that point, and
-// the capacity tests close sockets within the same poll tick), so this fake
-// never needs to answer XREAD.
 const createFakeRedis = () => ({
   disconnect: vi.fn(),
-  duplicate: () => ({ disconnect: vi.fn() }),
+  duplicate: () => {
+    const { promise, resolve } = Promise.withResolvers<null>()
+    return {
+      call: vi.fn(() => promise),
+      disconnect: vi.fn(() => resolve(null)),
+    }
+  },
   // Default "not revoked" — a real revoke marker is set via `set` and read
   // back here by `getRealtimeMemberRevokedKey`; `mockResolvedValue(null)`
   // matches Redis's own `GET` miss response.
@@ -150,6 +152,26 @@ const requestUpgrade = (
   socket.on("error", reject)
   return promise
 }
+const startUpgrade = (port: number, path: string): Promise<net.Socket> => {
+  const { promise, reject, resolve } = Promise.withResolvers<net.Socket>()
+  const socket = net.connect(port, "127.0.0.1", () => {
+    socket.write(
+      [
+        `GET ${path} HTTP/1.1`,
+        "Host: 127.0.0.1",
+        "Connection: Upgrade",
+        "Upgrade: websocket",
+        "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==",
+        "Sec-WebSocket-Version: 13",
+        "",
+        "",
+      ].join("\r\n"),
+    )
+    resolve(socket)
+  })
+  socket.once("error", reject)
+  return promise
+}
 
 const waitForOpen = (socket: WebSocket): Promise<void> => {
   const { promise, resolve, reject } = Promise.withResolvers<void>()
@@ -188,6 +210,18 @@ const delay = (ms: number): Promise<void> => {
   setTimeout(resolve, ms)
   return promise
 }
+const withTestGateway = async (
+  options: Parameters<typeof createRealtimeGateway>[0],
+  callback: (gateway: RealtimeGateway) => Promise<void>,
+): Promise<void> => {
+  const gateway = createRealtimeGateway(options)
+
+  try {
+    await callback(gateway)
+  } finally {
+    await gateway.close()
+  }
+}
 
 describe("createRealtimeGateway (live)", () => {
   let gateway: RealtimeGateway | undefined
@@ -198,145 +232,131 @@ describe("createRealtimeGateway (live)", () => {
     reportWorkspacePresenceMock.mockClear()
   })
 
-  test("returns 401 for a member token forged with the wrong secret", async () => {
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
-    })
+  test.each([
+    {
+      description: "a member token forged with the wrong secret",
+      requestPath: async () =>
+        `/rt/workspaces/ws-1?token=${await signMemberToken(
+          { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+          "wrong-secret",
+        )}`,
+    },
+    {
+      description: "an expired member token",
+      requestPath: async () =>
+        `/rt/workspaces/ws-1?token=${await signExpiredMemberToken(
+          "ws-1",
+          SECRET,
+        )}`,
+    },
+    {
+      description: "a member token minted for a different workspace",
+      requestPath: async () =>
+        `/rt/workspaces/ws-1?token=${await signMemberToken(
+          { chatScope: "all", userId: "user-1", workspaceId: "ws-other" },
+          SECRET,
+        )}`,
+    },
+    {
+      description: "a forged guest token",
+      requestPath: async () =>
+        `/rt/guests/guest-1?token=${await signGuestConnectToken(
+          { guestConversationId: "guest-1", workspaceId: "ws-1" },
+          "wrong-secret",
+        )}`,
+    },
+    {
+      description: "an expired guest token",
+      requestPath: async () =>
+        `/rt/guests/guest-1?token=${await signExpiredGuestToken(
+          "guest-1",
+          "ws-1",
+          SECRET,
+        )}`,
+    },
+    {
+      description: "a guest token minted for a different guest conversation",
+      requestPath: async () =>
+        `/rt/guests/ws-1:guest-a?token=${await signGuestConnectToken(
+          {
+            guestConversationId: "ws-other:guest-a",
+            workspaceId: "ws-other",
+          },
+          SECRET,
+        )}`,
+    },
+    {
+      description: "a member-connect token used against the guest route",
+      requestPath: async () =>
+        `/rt/guests/ws-1?token=${await signMemberToken(
+          { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+          SECRET,
+        )}`,
+    },
+    {
+      description: "a guest-connect token used against the member route",
+      requestPath: async () =>
+        `/rt/workspaces/ws-1?token=${await signGuestConnectToken(
+          { guestConversationId: "ws-1:guest-a", workspaceId: "ws-1" },
+          SECRET,
+        )}`,
+    },
+  ])("returns 401 for $description", async ({ requestPath }) => {
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: createFakeRedis() as never,
+        secret: SECRET,
+      }),
+    )
     const port = await gateway.listen("127.0.0.1", 0)
-    const forgedToken = await signMemberToken(
-      { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
-      "wrong-secret",
-    )
 
-    const response = await requestUpgrade(
-      port,
-      `/rt/workspaces/ws-1?token=${forgedToken}`,
-    )
+    const response = await requestUpgrade(port, await requestPath())
 
     expect(response.statusCode).toBe(401)
   })
 
-  test("returns 401 for an expired member token", async () => {
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
-    })
-    const port = await gateway.listen("127.0.0.1", 0)
-    const expiredToken = await signExpiredMemberToken("ws-1", SECRET)
-
-    const response = await requestUpgrade(
-      port,
-      `/rt/workspaces/ws-1?token=${expiredToken}`,
-    )
-
-    expect(response.statusCode).toBe(401)
-  })
-
-  test("returns 401 for a member token minted for a different workspace", async () => {
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
-    })
-    const port = await gateway.listen("127.0.0.1", 0)
-    const tokenForOtherWorkspace = await signMemberToken(
-      { chatScope: "all", userId: "user-1", workspaceId: "ws-other" },
-      SECRET,
-    )
-
-    const response = await requestUpgrade(
-      port,
-      `/rt/workspaces/ws-1?token=${tokenForOtherWorkspace}`,
-    )
-
-    expect(response.statusCode).toBe(401)
-  })
-
-  test("returns 401 for a forged guest token", async () => {
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
-    })
-    const port = await gateway.listen("127.0.0.1", 0)
-    const forgedToken = await signGuestConnectToken(
-      { guestConversationId: "guest-1", workspaceId: "ws-1" },
-      "wrong-secret",
-    )
-
-    const response = await requestUpgrade(
-      port,
-      `/rt/guests/guest-1?token=${forgedToken}`,
-    )
-
-    expect(response.statusCode).toBe(401)
-  })
-
-  test("caps a workspace's total guest connections across distinct guest conversation ids", async () => {
+  test.concurrent("caps a workspace's total guest connections across distinct guest conversation ids", async () => {
     // Regression for PR #1349 finding #5: `maxConnectionsPerGuest` only caps
     // one `guestConversationId`. Without a separate per-workspace guest cap,
     // one tenant's webchat can open unlimited *distinct* guest conversations
     // and exhaust the global `maxGuestConnections` pool for every other
     // tenant.
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      maxGuestConnectionsPerWorkspace: 1,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
-    })
-    const port = await gateway.listen("127.0.0.1", 0)
-    const tokenA = await signGuestConnectToken(
-      { guestConversationId: "guest-a", workspaceId: "ws-1" },
-      SECRET,
+    await withTestGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        maxGuestConnectionsPerWorkspace: 1,
+        redis: createFakeRedis() as never,
+        secret: SECRET,
+      }),
+      async (testGateway) => {
+        const port = await testGateway.listen("127.0.0.1", 0)
+        const tokenA = await signGuestConnectToken(
+          { guestConversationId: "guest-a", workspaceId: "ws-1" },
+          SECRET,
+        )
+        const tokenB = await signGuestConnectToken(
+          { guestConversationId: "guest-b", workspaceId: "ws-1" },
+          SECRET,
+        )
+
+        const first = new WebSocket(
+          `ws://127.0.0.1:${port}/rt/guests/guest-a?token=${tokenA}`,
+        )
+        await waitForOpen(first)
+
+        const second = new WebSocket(
+          `ws://127.0.0.1:${port}/rt/guests/guest-b?token=${tokenB}`,
+        )
+        const closePromise = waitForClose(second)
+        await waitForOpen(second)
+
+        expect((await closePromise).code).toBe(REALTIME_CLOSE_CODE.overloaded)
+
+        first.close()
+        await waitForClose(first)
+      },
     )
-    const tokenB = await signGuestConnectToken(
-      { guestConversationId: "guest-b", workspaceId: "ws-1" },
-      SECRET,
-    )
-
-    const first = new WebSocket(
-      `ws://127.0.0.1:${port}/rt/guests/guest-a?token=${tokenA}`,
-    )
-    await waitForOpen(first)
-
-    const second = new WebSocket(
-      `ws://127.0.0.1:${port}/rt/guests/guest-b?token=${tokenB}`,
-    )
-    await waitForOpen(second)
-    const closeEvent = await waitForClose(second)
-    expect(closeEvent.code).toBe(REALTIME_CLOSE_CODE.overloaded)
-
-    first.close()
-    await waitForClose(first)
-  })
-
-  test("rejects a workspace's second connection as overloaded while the first still holds the slot", async () => {
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      maxConnectionsPerWorkspace: 1,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
-    })
-    const port = await gateway.listen("127.0.0.1", 0)
-    const token = await signMemberToken(
-      { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
-      SECRET,
-    )
-    const url = `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`
-
-    const first = new WebSocket(url)
-    await waitForOpen(first)
-
-    const second = new WebSocket(url)
-    await waitForOpen(second)
-    const closeEvent = await waitForClose(second)
-    expect(closeEvent.code).toBe(REALTIME_CLOSE_CODE.overloaded)
-
-    first.close()
-    await waitForClose(first)
   })
 
   test("N+k parallel upgrades against the cap: exactly N succeed", async () => {
@@ -347,12 +367,14 @@ describe("createRealtimeGateway (live)", () => {
     // pre-upgrade count and all pass, breaching the cap.
     const CAP = 3
     const EXTRA = 2
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      maxConnectionsPerWorkspace: CAP,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
-    })
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        maxConnectionsPerWorkspace: CAP,
+        redis: createFakeRedis() as never,
+        secret: SECRET,
+      }),
+    )
     const port = await gateway.listen("127.0.0.1", 0)
     const token = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
@@ -401,12 +423,14 @@ describe("createRealtimeGateway (live)", () => {
   })
 
   test("releases a workspace's connection slot once its socket closes", async () => {
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      maxConnectionsPerWorkspace: 1,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
-    })
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        maxConnectionsPerWorkspace: 1,
+        redis: createFakeRedis() as never,
+        secret: SECRET,
+      }),
+    )
     const port = await gateway.listen("127.0.0.1", 0)
     const token = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
@@ -434,53 +458,165 @@ describe("createRealtimeGateway (live)", () => {
     second.close()
     await waitForClose(second)
   })
+  test("releases a guest connection slot once its socket closes", async () => {
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        maxGuestConnectionsPerWorkspace: 1,
+        redis: createFakeRedis() as never,
+        secret: SECRET,
+      }),
+    )
+    const port = await gateway.listen("127.0.0.1", 0)
+    const firstToken = await signGuestConnectToken(
+      { guestConversationId: "guest-1", workspaceId: "ws-1" },
+      SECRET,
+    )
+    const first = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/guests/guest-1?token=${firstToken}`,
+    )
+    await waitForOpen(first)
+    first.close()
+    await waitForClose(first)
 
-  test("forces a member socket to reauth (not resync) once its connection lifetime elapses", async () => {
-    // Regression for PR #1349 finding #2: the lifetime close used to reuse
-    // the `resync` code, forcing every tab through a full cache invalidation
-    // every `connectionLifetimeMs` even though nothing was actually lost.
-    gateway = createRealtimeGateway({
-      connectionLifetimeMs: 50,
-      maxConnections: 10,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
+    const secondToken = await signGuestConnectToken(
+      { guestConversationId: "guest-2", workspaceId: "ws-1" },
+      SECRET,
+    )
+    const second = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/guests/guest-2?token=${secondToken}`,
+    )
+    await waitForOpen(second)
+    await delay(50)
+
+    expect(second.readyState).toBe(WebSocket.OPEN)
+
+    second.close()
+    await waitForClose(second)
+  })
+  test("releases a member pending-upgrade slot and stream reference when the request aborts during revoke recheck", async () => {
+    const { promise: recheck, resolve: resolveRecheck } = Promise.withResolvers<
+      string | null
+    >()
+    const { promise: recheckStarted, resolve: resolveRecheckStarted } =
+      Promise.withResolvers<void>()
+    let revokeChecks = 0
+    const redis = createFakeRedis()
+    redis.get.mockImplementation(async () => {
+      revokeChecks += 1
+      if (revokeChecks === 2) {
+        resolveRecheckStarted()
+        return await recheck
+      }
+      return null
     })
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        maxConnectionsPerWorkspace: 1,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
     const port = await gateway.listen("127.0.0.1", 0)
     const token = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       SECRET,
     )
+    const abortedRequest = await startUpgrade(
+      port,
+      `/rt/workspaces/ws-1?token=${token}`,
+    )
+    await recheckStarted
+    abortedRequest.destroy()
+    resolveRecheck(null)
+    await delay(50)
+
     const socket = new WebSocket(
       `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`,
     )
     await waitForOpen(socket)
 
-    const closeEvent = await waitForClose(socket)
-    expect(closeEvent).toEqual({
-      code: REALTIME_CLOSE_CODE.reauth,
-      reason: "connection-lifetime-exceeded",
-    })
+    expect(socket.readyState).toBe(WebSocket.OPEN)
+
+    socket.close()
+    await waitForClose(socket)
   })
 
-  test("forces a guest socket to reauth (not resync) once its connection lifetime elapses", async () => {
-    gateway = createRealtimeGateway({
-      connectionLifetimeMs: 50,
-      maxConnections: 10,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
+  test("releases a guest pending-upgrade slot and stream reference when the request aborts", async () => {
+    const { promise: activation, resolve: resolveActivation } =
+      Promise.withResolvers<unknown[]>()
+    const { promise: activationStarted, resolve: resolveActivationStarted } =
+      Promise.withResolvers<void>()
+    const redis = createFakeRedis()
+    redis.xrevrange.mockImplementationOnce(async () => {
+      resolveActivationStarted()
+      return await activation
     })
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        maxGuestConnectionsPerWorkspace: 1,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
     const port = await gateway.listen("127.0.0.1", 0)
     const token = await signGuestConnectToken(
       { guestConversationId: "guest-1", workspaceId: "ws-1" },
       SECRET,
     )
+    const abortedRequest = await startUpgrade(
+      port,
+      `/rt/guests/guest-1?token=${token}`,
+    )
+    await activationStarted
+    abortedRequest.destroy()
+    resolveActivation([])
+    await delay(50)
+
     const socket = new WebSocket(
       `ws://127.0.0.1:${port}/rt/guests/guest-1?token=${token}`,
     )
     await waitForOpen(socket)
 
-    const closeEvent = await waitForClose(socket)
-    expect(closeEvent).toEqual({
+    expect(socket.readyState).toBe(WebSocket.OPEN)
+
+    socket.close()
+    await waitForClose(socket)
+  })
+
+  test.each([
+    "member",
+    "guest",
+  ] as const)("forces a $0 socket to reauth once its connection lifetime elapses", async (kind) => {
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        connectionLifetimeMs: 50,
+        maxConnections: 10,
+        redis: createFakeRedis() as never,
+        secret: SECRET,
+      }),
+    )
+    const port = await gateway.listen("127.0.0.1", 0)
+    const token =
+      kind === "member"
+        ? await signMemberToken(
+            { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+            SECRET,
+          )
+        : await signGuestConnectToken(
+            { guestConversationId: "guest-1", workspaceId: "ws-1" },
+            SECRET,
+          )
+    const path =
+      kind === "member"
+        ? `/rt/workspaces/ws-1?token=${token}`
+        : `/rt/guests/guest-1?token=${token}`
+    const socket = new WebSocket(`ws://127.0.0.1:${port}${path}`)
+    await waitForOpen(socket)
+
+    expect(await waitForClose(socket)).toEqual({
       code: REALTIME_CLOSE_CODE.reauth,
       reason: "connection-lifetime-exceeded",
     })
@@ -494,11 +630,13 @@ describe("createRealtimeGateway (live)", () => {
     // cache invalidation on every quiet-tab lifetime rotation. Sending this
     // cursor up front on every open means a connection always has a real
     // one, even if it never receives a single live batch.
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
-    })
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: createFakeRedis() as never,
+        secret: SECRET,
+      }),
+    )
     const port = await gateway.listen("127.0.0.1", 0)
     const token = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
@@ -517,85 +655,105 @@ describe("createRealtimeGateway (live)", () => {
     await waitForClose(socket)
   })
 
-  test("returns 401 for an expired guest token", async () => {
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
-    })
-    const port = await gateway.listen("127.0.0.1", 0)
-    const expiredToken = await signExpiredGuestToken("guest-1", "ws-1", SECRET)
+  test.concurrent.each([
+    ["malformed", "not-a-stream-id", "invalid-last-seq"],
+    ["stale", "1-0", "replay-cursor-ahead"],
+  ])("closes with resync for a $0 lastSeq", async (_description, lastSeq, reason) => {
+    await withTestGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: createFakeRedis() as never,
+        secret: SECRET,
+      }),
+      async (testGateway) => {
+        const port = await testGateway.listen("127.0.0.1", 0)
+        const token = await signMemberToken(
+          { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+          SECRET,
+        )
+        const socket = new WebSocket(
+          `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}&lastSeq=${lastSeq}`,
+        )
+        const closePromise = waitForClose(socket)
 
-    const response = await requestUpgrade(
-      port,
-      `/rt/guests/guest-1?token=${expiredToken}`,
+        await waitForOpen(socket)
+
+        expect(await closePromise).toEqual({
+          code: REALTIME_CLOSE_CODE.resync,
+          reason,
+        })
+      },
     )
-
-    expect(response.statusCode).toBe(401)
   })
 
-  test("returns 401 for a guest token minted for a different guest conversation id (cross-workspace-room binding)", async () => {
-    // The guest route path only carries `guestConversationId`, not
-    // `workspaceId` — the token's `aud` binding to the conversation it was
-    // actually minted for is the only thing standing between one
-    // workspace's guest room and another's.
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
-    })
+  test("closes a workspace socket with resync when its recent-entry buffer has evicted unseen records", async () => {
+    const workspaceId = "ws-recent-gap"
+    const entries = Array.from({ length: 513 }, (_, index) => [
+      `${index + 1}-0`,
+      [
+        "record",
+        JSON.stringify({
+          events: [{ data: {}, eventType: "messageCreated" }],
+          kind: "workspace-events",
+          workspaceId,
+        }),
+      ],
+    ])
+    const { promise: initialReplayRead, resolve: resolveInitialReplayRead } =
+      Promise.withResolvers<unknown>()
+    const { promise: idleRead, resolve: resolveIdleRead } =
+      Promise.withResolvers<null>()
+    let xrangeCalls = 0
+    let xreadCalls = 0
+    const redis = {
+      ...createFakeRedis(),
+      duplicate: () => ({
+        call: vi.fn(async () => {
+          xreadCalls += 1
+          if (xreadCalls === 1) {
+            resolveInitialReplayRead([])
+            return [[getRealtimeStreamKey(workspaceId), entries]]
+          }
+          return await idleRead
+        }),
+        disconnect: vi.fn(() => resolveIdleRead(null)),
+      }),
+      xrange: vi.fn(async (...args: string[]) => {
+        if (args[1] !== "-") {
+          return []
+        }
+        xrangeCalls += 1
+        if (xrangeCalls === 1) {
+          return await initialReplayRead
+        }
+        return []
+      }),
+      xrevrange: vi.fn().mockResolvedValue([["0-0", []]]),
+    }
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
     const port = await gateway.listen("127.0.0.1", 0)
-    const tokenForOtherConversation = await signGuestConnectToken(
-      { guestConversationId: "ws-other:guest-a", workspaceId: "ws-other" },
+    const token = await signMemberToken(
+      { chatScope: "all", userId: "user-1", workspaceId },
       SECRET,
     )
-
-    const response = await requestUpgrade(
-      port,
-      `/rt/guests/ws-1:guest-a?token=${tokenForOtherConversation}`,
+    const socket = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/workspaces/${workspaceId}?token=${token}&lastSeq=0-0`,
     )
+    const closePromise = waitForClose(socket)
 
-    expect(response.statusCode).toBe(401)
-  })
+    await waitForOpen(socket)
+    const closeEvent = await closePromise
 
-  test("returns 401 when a member-connect token is used against the guest route", async () => {
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
+    expect(closeEvent).toEqual({
+      code: REALTIME_CLOSE_CODE.resync,
+      reason: "recent-entries-expired",
     })
-    const port = await gateway.listen("127.0.0.1", 0)
-    const memberToken = await signMemberToken(
-      { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
-      SECRET,
-    )
-
-    const response = await requestUpgrade(
-      port,
-      `/rt/guests/ws-1?token=${memberToken}`,
-    )
-
-    expect(response.statusCode).toBe(401)
-  })
-
-  test("returns 401 when a guest-connect token is used against the member route", async () => {
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: createFakeRedis() as never,
-      secret: SECRET,
-    })
-    const port = await gateway.listen("127.0.0.1", 0)
-    const guestToken = await signGuestConnectToken(
-      { guestConversationId: "ws-1:guest-a", workspaceId: "ws-1" },
-      SECRET,
-    )
-
-    const response = await requestUpgrade(
-      port,
-      `/rt/workspaces/ws-1?token=${guestToken}`,
-    )
-
-    expect(response.statusCode).toBe(401)
   })
 
   test("rejects a connect whose token was minted before a revoke was recorded, even with no lastSeq to replay through", async () => {
@@ -606,11 +764,13 @@ describe("createRealtimeGateway (live)", () => {
     // token could connect regardless.
     const redis = createFakeRedis()
     redis.get.mockResolvedValue(String(Date.now() + 60_000))
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: redis as never,
-      secret: SECRET,
-    })
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
     const port = await gateway.listen("127.0.0.1", 0)
     const token = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
@@ -632,103 +792,59 @@ describe("createRealtimeGateway (live)", () => {
     // rejecting a legitimate reconnect minted within that second. `iatMs`
     // carries the real millisecond mint time instead.
 
-    test("rejects a token minted strictly before the revoke marker", async () => {
+    test.each([
+      {
+        expectedStatus: 401,
+        iatOffset: -1,
+        marker: true,
+        name: "a token minted before the revoke marker",
+      },
+      {
+        expectedStatus: undefined,
+        iatOffset: 0,
+        marker: true,
+        name: "a token minted exactly at the revoke marker",
+      },
+      {
+        expectedStatus: undefined,
+        iatOffset: 1,
+        marker: true,
+        name: "a token minted after the revoke marker",
+      },
+      {
+        expectedStatus: undefined,
+        iatOffset: 0,
+        marker: false,
+        name: "a token with no revoke marker",
+      },
+    ])("handles $name", async ({ expectedStatus, iatOffset, marker }) => {
       const revokedAt = Date.now()
       const redis = createFakeRedis()
-      redis.get.mockResolvedValue(String(revokedAt))
-      gateway = createRealtimeGateway({
-        maxConnections: 10,
-        redis: redis as never,
-        secret: SECRET,
-      })
+      if (marker) {
+        redis.get.mockResolvedValue(String(revokedAt))
+      }
+      gateway = createRealtimeGateway(
+        testGatewayOptions({
+          maxConnections: 10,
+          redis: redis as never,
+          secret: SECRET,
+        }),
+      )
       const port = await gateway.listen("127.0.0.1", 0)
       const token = await signMemberTokenWithIatMs(
         "ws-1",
         "user-1",
-        revokedAt - 1,
+        revokedAt + iatOffset,
         SECRET,
       )
-
-      const response = await requestUpgrade(
-        port,
-        `/rt/workspaces/ws-1?token=${token}`,
-      )
-
-      expect(response.statusCode).toBe(401)
-    })
-
-    test("accepts a token whose iatMs exactly equals the revoke marker (strict > , not >=)", async () => {
-      const revokedAt = Date.now()
-      const redis = createFakeRedis()
-      redis.get.mockResolvedValue(String(revokedAt))
-      gateway = createRealtimeGateway({
-        maxConnections: 10,
-        redis: redis as never,
-        secret: SECRET,
-      })
-      const port = await gateway.listen("127.0.0.1", 0)
-      const token = await signMemberTokenWithIatMs(
-        "ws-1",
-        "user-1",
-        revokedAt,
-        SECRET,
-      )
-
-      const socket = new WebSocket(
-        `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`,
-      )
-      await waitForOpen(socket)
-      expect(socket.readyState).toBe(WebSocket.OPEN)
-
-      socket.close()
-      await waitForClose(socket)
-    })
-
-    test("accepts a token minted strictly after the revoke marker", async () => {
-      const revokedAt = Date.now()
-      const redis = createFakeRedis()
-      redis.get.mockResolvedValue(String(revokedAt))
-      gateway = createRealtimeGateway({
-        maxConnections: 10,
-        redis: redis as never,
-        secret: SECRET,
-      })
-      const port = await gateway.listen("127.0.0.1", 0)
-      const token = await signMemberTokenWithIatMs(
-        "ws-1",
-        "user-1",
-        revokedAt + 1,
-        SECRET,
-      )
-
-      const socket = new WebSocket(
-        `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`,
-      )
-      await waitForOpen(socket)
-      expect(socket.readyState).toBe(WebSocket.OPEN)
-
-      socket.close()
-      await waitForClose(socket)
-    })
-
-    test("accepts a token when no revoke marker exists at all", async () => {
-      const redis = createFakeRedis()
-      gateway = createRealtimeGateway({
-        maxConnections: 10,
-        redis: redis as never,
-        secret: SECRET,
-      })
-      const port = await gateway.listen("127.0.0.1", 0)
-      const token = await signMemberTokenWithIatMs(
-        "ws-1",
-        "user-1",
-        Date.now(),
-        SECRET,
-      )
-
-      const socket = new WebSocket(
-        `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`,
-      )
+      const path = `/rt/workspaces/ws-1?token=${token}`
+      if (expectedStatus) {
+        expect((await requestUpgrade(port, path)).statusCode).toBe(
+          expectedStatus,
+        )
+        return
+      }
+      const socket = new WebSocket(`ws://127.0.0.1:${port}${path}`)
       await waitForOpen(socket)
       expect(socket.readyState).toBe(WebSocket.OPEN)
 
@@ -737,7 +853,7 @@ describe("createRealtimeGateway (live)", () => {
     })
   })
 
-  test("forces a 4002 resync when replay drops an entry for this workspace, not just a metric bump", async () => {
+  test.concurrent("forces a 4002 resync when replay drops an entry for this workspace, not just a metric bump", async () => {
     // Regression for PR #1349 round-4 finding #6: a reconnect whose replay
     // window contains a malformed entry for ITS OWN workspace used to open
     // normally with a silent, permanent gap — the live dispatch path only
@@ -756,25 +872,30 @@ describe("createRealtimeGateway (live)", () => {
       .mockResolvedValueOnce([["2-0", ["record", bogusRecord]]]) // replay page
       .mockResolvedValueOnce([["1-0", []]]) // post-loop oldest re-check
 
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: redis as never,
-      secret: SECRET,
-    })
-    const port = await gateway.listen("127.0.0.1", 0)
-    const token = await signMemberToken(
-      { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
-      SECRET,
-    )
-    const socket = new WebSocket(
-      `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}&lastSeq=1-0`,
-    )
+    await withTestGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+      async (testGateway) => {
+        const port = await testGateway.listen("127.0.0.1", 0)
+        const token = await signMemberToken(
+          { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+          SECRET,
+        )
+        const socket = new WebSocket(
+          `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}&lastSeq=1-0`,
+        )
+        const closePromise = waitForClose(socket)
+        await waitForOpen(socket)
 
-    await waitForOpen(socket)
-    const closeEvent = await waitForClose(socket)
-
-    expect(closeEvent.code).toBe(REALTIME_CLOSE_CODE.resync)
-    expect(closeEvent.reason).toBe("replay-entries-dropped")
+        expect(await closePromise).toEqual({
+          code: REALTIME_CLOSE_CODE.resync,
+          reason: "replay-entries-dropped",
+        })
+      },
+    )
   })
 
   test("closes an invalid-record-tainted shard's sockets only for workspaces hashed to that shard, leaving other shards' sockets open", async () => {
@@ -807,11 +928,13 @@ describe("createRealtimeGateway (live)", () => {
       duplicate: () => ({ call: xreadMock, disconnect: vi.fn() }),
     }
 
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: redis as never,
-      secret: SECRET,
-    })
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
     const port = await gateway.listen("127.0.0.1", 0)
     const token1 = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
@@ -873,11 +996,13 @@ describe("createRealtimeGateway (live)", () => {
       duplicate: () => ({ call: xreadMock, disconnect: vi.fn() }),
     }
 
-    gateway = createRealtimeGateway({
-      maxConnections: 10,
-      redis: redis as never,
-      secret: SECRET,
-    })
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
     const port = await gateway.listen("127.0.0.1", 0)
     const token1 = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
@@ -922,12 +1047,14 @@ describe("createRealtimeGateway (live)", () => {
       // 1000ms default) keeps this real-socket test fast and avoids the
       // resource-exhaustion flakiness a 1100ms real-clock wait hit when run
       // after many other real-socket "live" tests earlier in this file.
-      gateway = createRealtimeGateway({
-        maxConnections: 10,
-        presenceReportCoalesceMs: 30,
-        redis: createFakeRedis() as never,
-        secret: SECRET,
-      })
+      gateway = createRealtimeGateway(
+        testGatewayOptions({
+          maxConnections: 10,
+          presenceReportCoalesceMs: 30,
+          redis: createFakeRedis() as never,
+          secret: SECRET,
+        }),
+      )
       const port = await gateway.listen("127.0.0.1", 0)
       const tokenA = await signMemberToken(
         { chatScope: "all", userId: "user-a", workspaceId: "ws-presence-1" },
@@ -974,11 +1101,15 @@ describe("createRealtimeGateway (live)", () => {
   test(
     "presence: reports empty presence when the last tab closes, not just silence",
     async () => {
-      gateway = createRealtimeGateway({
-        maxConnections: 10,
-        redis: createFakeRedis() as never,
-        secret: SECRET,
-      })
+      gateway = createRealtimeGateway(
+        testGatewayOptions({
+          maxConnections: 10,
+          presenceReportCoalesceMs: 30,
+          presenceReportIntervalMs: 50,
+          redis: createFakeRedis() as never,
+          secret: SECRET,
+        }),
+      )
       const port = await gateway.listen("127.0.0.1", 0)
       const token = await signMemberToken(
         { chatScope: "all", userId: "user-1", workspaceId: "ws-presence-2" },
@@ -988,60 +1119,24 @@ describe("createRealtimeGateway (live)", () => {
         `ws://127.0.0.1:${port}/rt/workspaces/ws-presence-2?token=${token}`,
       )
       await waitForOpen(socket)
-      await delay(1100)
-      expect(reportWorkspacePresenceMock).toHaveBeenCalledWith(
-        "ws-presence-2",
-        ["user-1"],
-        "",
-        SECRET,
+      await delay(150)
+      const connectedCalls = reportWorkspacePresenceMock.mock.calls.filter(
+        ([workspaceId]) => workspaceId === "ws-presence-2",
       )
+      expect(connectedCalls.length).toBeGreaterThanOrEqual(2)
+      expect(connectedCalls[0]?.[1]).toEqual(["user-1"])
       reportWorkspacePresenceMock.mockClear()
 
       socket.close()
       await waitForClose(socket)
-      await delay(1100)
+      await delay(150)
 
       expect(reportWorkspacePresenceMock).toHaveBeenCalledWith(
         "ws-presence-2",
         [],
-        "",
+        "http://builder.test",
         SECRET,
       )
-    },
-    PRESENCE_TEST_TIMEOUT_MS,
-  )
-
-  test(
-    "presence: re-reports periodically even with no new connect/disconnect activity",
-    async () => {
-      gateway = createRealtimeGateway({
-        maxConnections: 10,
-        presenceReportIntervalMs: 50,
-        redis: createFakeRedis() as never,
-        secret: SECRET,
-      })
-      const port = await gateway.listen("127.0.0.1", 0)
-      const token = await signMemberToken(
-        { chatScope: "all", userId: "user-1", workspaceId: "ws-presence-4" },
-        SECRET,
-      )
-      const socket = new WebSocket(
-        `ws://127.0.0.1:${port}/rt/workspaces/ws-presence-4?token=${token}`,
-      )
-      await waitForOpen(socket)
-      await delay(1100) // let the connect's own coalesced dirty-report settle
-      reportWorkspacePresenceMock.mockClear()
-
-      await delay(150) // several presenceReportIntervalMs ticks, no activity
-
-      const callsForWorkspace = reportWorkspacePresenceMock.mock.calls.filter(
-        ([workspaceId]) => workspaceId === "ws-presence-4",
-      )
-      expect(callsForWorkspace.length).toBeGreaterThanOrEqual(2)
-      expect(callsForWorkspace[0]?.[1]).toEqual(["user-1"])
-
-      socket.close()
-      await waitForClose(socket)
     },
     PRESENCE_TEST_TIMEOUT_MS,
   )

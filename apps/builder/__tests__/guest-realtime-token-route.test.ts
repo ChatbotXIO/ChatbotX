@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   integrationWebchatServiceFindByIdForWorkspaceOrNull: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn(),
   resolveBroadcastSecret: vi.fn(),
+  serverErrorHandler: vi.fn(),
   signGuestConnectToken: vi.fn(),
   verifyWebchatAccessToken: vi.fn(),
   workspaceServiceFind: vi.fn(),
@@ -44,6 +45,9 @@ vi.mock("@/lib/rate-limit/api-rate-limit", () => ({
 }))
 vi.mock("@/lib/domain", () => ({
   getDomainFromHeader: () => "builder.test",
+}))
+vi.mock("@/lib/errors/server-handler", () => ({
+  serverErrorHandler: mocks.serverErrorHandler,
 }))
 
 // Dynamic import required: the route module must load after the vi.mock
@@ -99,6 +103,11 @@ describe("POST /api/guest/realtime-token", () => {
     mocks.workspaceServiceFind.mockResolvedValue(null)
     mocks.resolveBroadcastSecret.mockReturnValue("broadcast-secret")
     mocks.signGuestConnectToken.mockResolvedValue("signed-guest-token")
+    mocks.serverErrorHandler.mockReturnValue(
+      new Response(JSON.stringify({ error: "Internal Server Error" }), {
+        status: 500,
+      }),
+    )
   })
 
   test("returns 429 with Retry-After when rate limited by IP, without looking up the webchat", async () => {
@@ -115,7 +124,6 @@ describe("POST /api/guest/realtime-token", () => {
       mocks.integrationWebchatServiceFindByIdForWorkspaceOrNull,
     ).not.toHaveBeenCalled()
   })
-
   test("returns 404 when the webchat cannot be found for the workspace", async () => {
     mocks.integrationWebchatServiceFindByIdForWorkspaceOrNull.mockResolvedValue(
       undefined,
@@ -126,24 +134,17 @@ describe("POST /api/guest/realtime-token", () => {
     expect(response.status).toBe(404)
   })
 
-  test("returns 400 for a legacy digits-only guest conversation id", async () => {
-    const response = await POST(
-      buildRequest(
-        baseBody({ guestConversationId: LEGACY_GUEST_CONVERSATION_ID }),
-      ),
-    )
-
-    expect(response.status).toBe(400)
-  })
-
-  test("returns 400 for a new-format guest conversation id whose workspace prefix mismatches the request", async () => {
-    const response = await POST(
-      buildRequest(
-        baseBody({
-          guestConversationId: "99999:3f6a2f2a-1b1a-4e9a-9b1a-7c3a2f2a1b1a",
-        }),
-      ),
-    )
+  test.each([
+    {
+      guestConversationId: LEGACY_GUEST_CONVERSATION_ID,
+      name: "a legacy digits-only guest conversation id",
+    },
+    {
+      guestConversationId: "99999:3f6a2f2a-1b1a-4e9a-9b1a-7c3a2f2a1b1a",
+      name: "a new-format guest conversation id with a mismatched workspace prefix",
+    },
+  ])("returns 400 for $name", async ({ guestConversationId }) => {
+    const response = await POST(buildRequest(baseBody({ guestConversationId })))
 
     expect(response.status).toBe(400)
   })
@@ -208,5 +209,24 @@ describe("POST /api/guest/realtime-token", () => {
     expect(response.headers.get("Retry-After")).toBe("7")
     expect(mocks.verifyWebchatAccessToken).toHaveBeenCalled()
     expect(mocks.signGuestConnectToken).not.toHaveBeenCalled()
+  })
+  test("returns 403 when the workspace is scheduled for deletion", async () => {
+    mocks.workspaceServiceFind.mockResolvedValue({ id: WORKSPACE_ID })
+    mocks.isWorkspaceScheduledForDeletion.mockReturnValue(true)
+
+    const response = await POST(buildRequest(baseBody()))
+
+    expect(response.status).toBe(403)
+    expect(mocks.signGuestConnectToken).not.toHaveBeenCalled()
+  })
+
+  test("returns the server error handler response when a dependency throws", async () => {
+    const error = new Error("rate limit unavailable")
+    mocks.checkGuestRateLimit.mockRejectedValue(error)
+
+    const response = await POST(buildRequest(baseBody()))
+
+    expect(mocks.serverErrorHandler).toHaveBeenCalledWith(error)
+    expect(response.status).toBe(500)
   })
 })

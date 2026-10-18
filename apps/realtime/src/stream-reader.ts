@@ -25,6 +25,7 @@ type StreamReadResult = [string, StreamEntry[]][]
 
 type ActiveShard = {
   deactivateTimer: NodeJS.Timeout | null
+  lastEvictedId?: string
   lastId: string
   recentEntries: StreamRecordEntry[]
   recentEntryCount: number
@@ -168,37 +169,25 @@ const getLatestStreamId = async (
   )) as StreamEntry[]
   return entries[0]?.[0] ?? "0-0"
 }
-
 export const createStreamReader = ({
   onEntries,
   onError,
   onInvalidRecord,
   onReady,
   onRecovered,
+  onReconnect,
   redis,
 }: {
   onEntries: (entries: StreamRecordEntry[]) => void
   onError: (error: unknown) => void
-  /** Called once per entry whose record couldn't be fully parsed — the
-   * gateway uses this to bump a metric and force an affected workspace's
-   * sockets to resync instead of silently running with a permanent gap. */
   onInvalidRecord: (info: {
     id: string
     shard: number
     workspaceId?: string
   }) => void
   onReady: () => void
-  /** Called once when an `XREAD` succeeds right after a PRECEDING `XREAD`
-   * failed (not on every ordinary successful read) — i.e. the reader is
-   * recovering from an outage. The single Redis connection this reader uses
-   * blocks on every active shard at once, so one failed read means every
-   * active shard's last-known position is now stale by an unknown amount:
-   * if the outage outlasted the stream's 5-minute `MINID` retention, some
-   * entries were trimmed before this reader ever saw them, and `XREAD`
-   * resuming from the old `lastId` silently skips the gap instead of
-   * erroring. The gateway uses this to force every currently-connected
-   * socket to resync. See PR #1349 round-4 medium finding (Redis outage). */
   onRecovered: () => void
+  onReconnect?: () => void
   redis: Redis
 }): StreamReader => {
   const activeShards = new Map<number, ActiveShard>()
@@ -233,6 +222,7 @@ export const createStreamReader = ({
       activeShard.recentEntryCount += 1
       return
     }
+    activeShard.lastEvictedId = recentEntries[activeShard.recentEntryStart]?.id
     recentEntries[activeShard.recentEntryStart] = entry
     activeShard.recentEntryStart =
       (activeShard.recentEntryStart + 1) % RECENT_ENTRY_LIMIT
@@ -367,6 +357,13 @@ export const createStreamReader = ({
   const run = async (): Promise<void> => {
     reader = redis.duplicate()
     let recoveringFromError = false
+    reader.on?.("reconnecting", () => {
+      if (recoveringFromError) {
+        return
+      }
+      recoveringFromError = true
+      onReconnect?.()
+    })
     try {
       while (!stopped) {
         const activeShardsSnapshot = getActiveShards()
@@ -450,12 +447,10 @@ export const createStreamReader = ({
         return false
       }
       const activeShard = activeShards.get(getRealtimeStreamShard(workspaceId))
-      if (!activeShard || activeShard.recentEntryCount < RECENT_ENTRY_LIMIT) {
+      if (!activeShard?.lastEvictedId) {
         return false
       }
-      const oldestEntry =
-        activeShard.recentEntries[activeShard.recentEntryStart]
-      return !!oldestEntry && isRealtimeSeqAfter(oldestEntry.id, afterId)
+      return isRealtimeSeqAfter(activeShard.lastEvictedId, afterId)
     },
     getTaintedUpToId: (workspaceId) =>
       activeShards.get(getRealtimeStreamShard(workspaceId))?.taintedUpToId,

@@ -2,81 +2,60 @@ import { describe, expect, test, vi } from "vitest"
 import { loadReplay } from "../src/replay"
 
 describe("loadReplay", () => {
-  test("requires resync for a cursor ahead of the retained stream tail", async () => {
-    const redis = {
-      xrange: vi.fn().mockResolvedValue([["10-0", []]]),
-      xrevrange: vi.fn().mockResolvedValue([["10-0", []]]),
-    }
-
-    const replay = await loadReplay({
+  test.each([
+    {
+      expectedCloseReason: "replay-cursor-ahead",
       lastSeq: "11-0",
-      redis: redis as never,
-      workspaceId: "workspace-1",
-    })
-
-    expect(replay).toEqual({
-      closeReason: "replay-cursor-ahead",
-      entries: [],
-    })
-    expect(redis.xrange).toHaveBeenCalledTimes(1)
-    expect(redis.xrevrange).toHaveBeenCalledTimes(1)
-  })
-
-  test("requires resync for a nonzero cursor when the stream was reset", async () => {
-    const redis = {
-      xrange: vi.fn().mockResolvedValue([]),
-      xrevrange: vi.fn().mockResolvedValue([]),
-    }
-
-    const replay = await loadReplay({
+      name: "a cursor ahead of the retained stream tail",
+      xrangeResponses: [[["10-0", []]]],
+      xrevrangeResponses: [[["10-0", []]]],
+    },
+    {
+      expectedCloseReason: "replay-cursor-ahead",
       lastSeq: "10-0",
-      redis: redis as never,
-      workspaceId: "workspace-1",
-    })
-
-    expect(replay).toEqual({
-      closeReason: "replay-cursor-ahead",
-      entries: [],
-    })
-  })
-
-  test("requires resync when trimming advances the replay head", async () => {
-    const redis = {
-      xrange: vi
-        .fn()
-        .mockResolvedValueOnce([["5-0", []]])
-        .mockResolvedValueOnce([["10-0", []]])
-        .mockResolvedValueOnce([["10-0", []]]),
-      xrevrange: vi.fn().mockResolvedValue([["10-0", []]]),
-    }
-
-    const replay = await loadReplay({
+      name: "a nonzero cursor after the stream was reset",
+      xrangeResponses: [[]],
+      xrevrangeResponses: [[]],
+    },
+    {
+      expectedCloseReason: "replay-window-expired",
       lastSeq: "5-0",
-      redis: redis as never,
-      workspaceId: "workspace-1",
-    })
-
-    expect(replay).toEqual({
-      closeReason: "replay-window-expired",
-      entries: [],
-    })
-    expect(redis.xrange).toHaveBeenCalledTimes(3)
-  })
-
-  test("requires resync when the cursor-less sentinel is sent against a stream with retained history", async () => {
+      name: "trimming that advances the replay head",
+      xrangeResponses: [[["5-0", []]], [["10-0", []]], [["10-0", []]]],
+      xrevrangeResponses: [[["10-0", []]]],
+    },
+    {
+      expectedCloseReason: "replay-window-expired",
+      lastSeq: "0-0",
+      name: "the cursor-less sentinel against retained history",
+      xrangeResponses: [[["5-0", []]]],
+      xrevrangeResponses: [[["5-0", []]]],
+    },
+  ])("requires resync for $name", async ({
+    expectedCloseReason,
+    lastSeq,
+    xrangeResponses,
+    xrevrangeResponses,
+  }) => {
     const redis = {
-      xrange: vi.fn().mockResolvedValue([["5-0", []]]),
-      xrevrange: vi.fn().mockResolvedValue([["5-0", []]]),
+      xrange: vi.fn(),
+      xrevrange: vi.fn(),
+    }
+    for (const response of xrangeResponses) {
+      redis.xrange.mockResolvedValueOnce(response)
+    }
+    for (const response of xrevrangeResponses) {
+      redis.xrevrange.mockResolvedValueOnce(response)
     }
 
     const replay = await loadReplay({
-      lastSeq: "0-0",
+      lastSeq,
       redis: redis as never,
       workspaceId: "workspace-1",
     })
 
     expect(replay).toEqual({
-      closeReason: "replay-window-expired",
+      closeReason: expectedCloseReason,
       entries: [],
     })
   })

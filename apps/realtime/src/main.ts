@@ -4,17 +4,11 @@ import { resolveRealtimeGatewayConfig } from "./gateway-config"
 import { logger } from "./logger"
 
 const main = async (): Promise<void> => {
-  const config = resolveRealtimeGatewayConfig()
+  const { host, port, redisUrl, ...gatewayConfig } =
+    resolveRealtimeGatewayConfig()
   const gateway = createRealtimeGateway({
-    builderUrl: config.builderUrl,
-    connectionLifetimeMs: config.connectionLifetimeMs,
-    maxConnections: config.maxConnections,
-    maxConnectionsPerGuest: config.maxConnectionsPerGuest,
-    maxConnectionsPerWorkspace: config.maxConnectionsPerWorkspace,
-    maxGuestConnections: config.maxGuestConnections,
-    maxGuestConnectionsPerWorkspace: config.maxGuestConnectionsPerWorkspace,
-    redis: createRedisConnection(config.redisUrl),
-    secret: config.secret,
+    ...gatewayConfig,
+    redis: createRedisConnection(redisUrl),
   })
   let shuttingDown = false
 
@@ -38,14 +32,9 @@ const main = async (): Promise<void> => {
   process.once("SIGTERM", shutdown.bind(null, "SIGTERM"))
 
   try {
-    await gateway.listen(config.host, config.port)
+    await gateway.listen(host, port)
   } catch (error) {
     logger.error({ err: error }, "Realtime gateway failed to start")
-    // The gateway's streamReader/redis connections otherwise keep the event
-    // loop alive forever after a failed `listen()` — `exitCode` alone just
-    // sets the eventual code and waits for those handles to drain, which
-    // they never do on their own. Close them, then force the exit. See PR
-    // #1349 finding #5.
     try {
       await gateway.close()
     } catch (closeError) {
@@ -58,8 +47,8 @@ const main = async (): Promise<void> => {
   }
   logger.info(
     {
-      host: config.host,
-      port: config.port,
+      host,
+      port,
     },
     "Realtime gateway listening",
   )

@@ -1,19 +1,25 @@
 import type { WebSocketBehavior } from "uWebSockets.js"
 import {
-  isRealtimeSeqAfter,
   REALTIME_CLOSE_CODE,
-  type RealtimeGuestClaims,
   verifyGuestConnectToken,
 } from "@chatbotx.io/realtime-protocol"
 import type { GuestSocketData, RealtimeDelivery } from "./delivery"
 import {
   acquireSlot,
   armLifetimeTimer,
+  baseBehavior,
+  clearLifetimeTimer,
+  closeIfOverloadedOnOpen,
+  closeIfTainted,
+  createPendingUpgrade,
   type GatewayConnectionState,
   nextOverloadRetryAfterMs,
   readUpgradeRequest,
   releaseSlot,
-  SLOW_CONSUMER_BUFFER_BYTES,
+  upgradeAsOverloaded,
+  upgradeSocket,
+  verifyConnectToken,
+  writeUnauthorized,
 } from "./gateway-shared"
 import type { RealtimeServerCounters } from "./lib/realtime-metrics"
 import { logger } from "./logger"
@@ -51,10 +57,7 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
   state,
   streamReader,
 }: GuestSocketDeps<WorkspaceSocketData>): WebSocketBehavior<GuestSocketData> => ({
-  closeOnBackpressureLimit: true,
-  idleTimeout: 60,
-  maxBackpressure: SLOW_CONSUMER_BUFFER_BYTES,
-  sendPingsAutomatically: true,
+  ...baseBehavior,
   upgrade: (res, req, context) => {
     let aborted = false
     res.onAborted(() => {
@@ -62,32 +65,24 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
     })
     const guestConversationId = req.getParameter("guestConversationId")
     const token = req.getQuery("token")
-    const { websocketExtensions, websocketKey, websocketProtocol } =
-      readUpgradeRequest(req)
+    const requestHeaders = readUpgradeRequest(req)
     if (!(guestConversationId && token)) {
       counters.tokenRejections += 1
-      res.cork(() => {
-        res.writeStatus("401 Unauthorized").end()
-      })
+      writeUnauthorized(res)
       return
     }
 
     ;(async () => {
-      let claims: RealtimeGuestClaims
-      try {
-        claims = await verifyGuestConnectToken(
-          token,
-          guestConversationId,
-          secret,
-        )
-      } catch (error) {
-        if (!aborted) {
-          counters.tokenRejections += 1
-          logTokenRejection({ guestConversationId }, error)
-          res.cork(() => {
-            res.writeStatus("401 Unauthorized").end()
-          })
-        }
+      const claims = await verifyConnectToken({
+        aborted: () => aborted,
+        counters,
+        logTokenRejection,
+        rejectionContext: { guestConversationId },
+        res,
+        verify: () =>
+          verifyGuestConnectToken(token, guestConversationId, secret),
+      })
+      if (!claims) {
         return
       }
 
@@ -111,38 +106,35 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
         workspaceGuestConnectionCount + workspaceGuestPendingCount >=
           maxGuestConnectionsPerWorkspace
       if (overloaded) {
-        if (aborted) {
-          return
-        }
-        state.pendingUpgrades += 1
-        state.pendingGuestUpgrades += 1
-        res.cork(() => {
-          res.upgrade(
-            {
-              ...claims,
-              closed: false,
-              overloadRetryAfterMs: nextOverloadRetryAfterMs(),
-              replayCutoff: "0-0",
-              replayEntries: [],
-            },
-            websocketKey,
-            websocketProtocol,
-            websocketExtensions,
-            context,
-          )
+        upgradeAsOverloaded({
+          aborted,
+          context,
+          isGuest: true,
+          requestHeaders,
+          res,
+          socketData: {
+            ...claims,
+            closed: false,
+            overloadRetryAfterMs: nextOverloadRetryAfterMs(),
+            replayCutoff: "0-0",
+            replayEntries: [],
+          },
+          state,
         })
         return
       }
-      state.pendingUpgrades += 1
-      state.pendingGuestUpgrades += 1
-      acquireSlot([
-        { key: guestKey, map: state.guestPendingUpgradesByKey },
-        {
-          key: claims.workspaceId,
-          map: state.guestPendingUpgradesByWorkspace,
-        },
-      ])
 
+      const pendingUpgrade = createPendingUpgrade(
+        state,
+        [
+          { key: guestKey, map: state.guestPendingUpgradesByKey },
+          {
+            key: claims.workspaceId,
+            map: state.guestPendingUpgradesByWorkspace,
+          },
+        ],
+        true,
+      )
       let activated = false
       try {
         const activationLastId = await streamReader.activateWorkspace(
@@ -150,47 +142,24 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
         )
         activated = true
         if (aborted) {
-          state.pendingUpgrades -= 1
-          state.pendingGuestUpgrades -= 1
-          releaseSlot([
-            { key: guestKey, map: state.guestPendingUpgradesByKey },
-            {
-              key: claims.workspaceId,
-              map: state.guestPendingUpgradesByWorkspace,
-            },
-          ])
+          pendingUpgrade.release()
           streamReader.releaseWorkspace(claims.workspaceId)
           return
         }
-        res.cork(() => {
-          res.upgrade(
-            {
-              ...claims,
-              closed: false,
-              replayCutoff: activationLastId,
-              replayEntries: [],
-            },
-            websocketKey,
-            websocketProtocol,
-            websocketExtensions,
-            context,
-          )
+        upgradeSocket({
+          context,
+          headers: requestHeaders,
+          res,
+          socketData: {
+            ...claims,
+            closed: false,
+            pendingUpgrade,
+            replayCutoff: activationLastId,
+            replayEntries: [],
+          },
         })
       } catch (error) {
-        state.pendingUpgrades -= 1
-        state.pendingGuestUpgrades -= 1
-        releaseSlot([
-          { key: guestKey, map: state.guestPendingUpgradesByKey },
-          {
-            key: claims.workspaceId,
-            map: state.guestPendingUpgradesByWorkspace,
-          },
-        ])
-        // `res.upgrade()` above can itself throw (a known uWS footgun
-        // when the response aborts mid-call) *after* activation already
-        // incremented the shard's `socketCount` — without this, that
-        // socketCount would never come back down, pinning the shard's
-        // XREAD active forever. See PR #1349 finding #10.
+        pendingUpgrade.release()
         if (activated) {
           streamReader.releaseWorkspace(claims.workspaceId)
         }
@@ -199,11 +168,9 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
         }
         logger.warn(
           { err: error, guestConversationId },
-          "Realtime guest socket activation failed",
+          "Realtime guest socket activation or upgrade failed",
         )
-        res.cork(() => {
-          res.writeStatus("401 Unauthorized").end()
-        })
+        writeUnauthorized(res)
       }
     })().catch((error) => {
       logger.error(
@@ -214,35 +181,24 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
   },
   open: (socket) => {
     const socketData = socket.getUserData()
-    state.pendingUpgrades -= 1
-    state.pendingGuestUpgrades -= 1
-    if (socketData.overloadRetryAfterMs !== undefined) {
-      counters.overloadCloses += 1
-      socketData.closed = true
-      socket.end(
-        REALTIME_CLOSE_CODE.overloaded,
-        JSON.stringify({ retryAfter: socketData.overloadRetryAfterMs }),
-      )
+    if (
+      closeIfOverloadedOnOpen({
+        counters,
+        onAccepted: () => {
+          state.activeGuestConnections += 1
+        },
+        socket,
+        socketData,
+        state,
+      })
+    ) {
       return
     }
-    state.activeConnections += 1
-    state.activeGuestConnections += 1
-    state.peakConnections = Math.max(
-      state.peakConnections,
-      state.activeConnections,
-    )
     counters.upgrades += 1
     const guestKey = guestConnectionKey(
       socketData.workspaceId,
       socketData.guestConversationId,
     )
-    releaseSlot([
-      { key: guestKey, map: state.guestPendingUpgradesByKey },
-      {
-        key: socketData.workspaceId,
-        map: state.guestPendingUpgradesByWorkspace,
-      },
-    ])
     acquireSlot([
       { key: guestKey, map: state.guestConnectionCountByKey },
       {
@@ -272,21 +228,9 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
     if (!delivery.replayGuestSocket(socket, gapEntries)) {
       return
     }
-    // Same pending-upgrade-gap rationale as the workspace socket: an
-    // invalid record on this shard can arrive while this guest socket's
-    // upgrade was still pending, after `onInvalidRecord`'s resync had
-    // already run (and so never reached this not-yet-registered
-    // socket). See PR #1349 round-5 finding (pending-upgrade gap).
-    const taintedUpToId = streamReader.getTaintedUpToId(socketData.workspaceId)
-    if (
-      taintedUpToId &&
-      isRealtimeSeqAfter(taintedUpToId, socketData.replayCutoff)
-    ) {
-      socketData.closed = true
-      socket.end(REALTIME_CLOSE_CODE.resync, "malformed-stream-record")
+    if (closeIfTainted({ socket, socketData, streamReader })) {
       return
     }
-    // See PR #1349 finding #6 — same rationale as the workspace socket.
     socketData.replayEntries = []
     armLifetimeTimer(
       state.guestLifetimeTimers,
@@ -298,6 +242,7 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
   close: (socket) => {
     const socketData = socket.getUserData()
     socketData.closed = true
+    socketData.pendingUpgrade?.release()
     if (socketData.overloadRetryAfterMs !== undefined) {
       return
     }
@@ -316,9 +261,7 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
         map: state.guestConnectionCountByWorkspace,
       },
     ])
-    const lifetimeTimer = state.guestLifetimeTimers.get(socketData)
-    clearTimeout(lifetimeTimer)
-    state.guestLifetimeTimers.delete(socketData)
+    clearLifetimeTimer(state.guestLifetimeTimers, socketData)
     delivery.removeGuestSocket(socket)
     streamReader.releaseWorkspace(socketData.workspaceId)
   },

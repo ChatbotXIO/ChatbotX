@@ -1,7 +1,10 @@
+import { PRESENCE_REPORT_INTERVAL_MS } from "@chatbotx.io/realtime-protocol/presence"
 import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 
-const gatewayEnv = () =>
+const PRESENCE_REPORT_COALESCE_MS = 1000
+
+const gatewayEnv = (runtimeEnv: NodeJS.ProcessEnv) =>
   createEnv({
     server: {
       REALTIME_HOST: z.string().min(1).default("0.0.0.0"),
@@ -36,26 +39,33 @@ const gatewayEnv = () =>
       NEXT_PUBLIC_BUILDER_URL: z.url(),
       REDIS_URL: z.url(),
     },
-    runtimeEnv: process.env,
-    skipValidation: process.env.SKIP_ENV_CHECK === "true",
+    runtimeEnv,
+    skipValidation: runtimeEnv.SKIP_ENV_CHECK === "true",
   })
 
-type RealtimeGatewayConfig = {
+export type RealtimeGatewayConfig = {
   builderUrl: string
   connectionLifetimeMs: number
-  host: string
   maxConnections: number
   maxConnectionsPerGuest: number
   maxConnectionsPerWorkspace: number
   maxGuestConnections: number
   maxGuestConnectionsPerWorkspace: number
-  port: number
-  redisUrl: string
+  presenceReportCoalesceMs: number
+  presenceReportIntervalMs: number
   secret: string
 }
 
-export const resolveRealtimeGatewayConfig = (): RealtimeGatewayConfig => {
-  const environment = gatewayEnv()
+type RealtimeRuntimeConfig = RealtimeGatewayConfig & {
+  host: string
+  port: number
+  redisUrl: string
+}
+
+export const resolveRealtimeGatewayConfig = (
+  runtimeEnv: NodeJS.ProcessEnv = process.env,
+): RealtimeRuntimeConfig => {
+  const environment = gatewayEnv(runtimeEnv)
   return {
     builderUrl: environment.NEXT_PUBLIC_BUILDER_URL,
     connectionLifetimeMs: environment.REALTIME_CONNECTION_LIFETIME_MS,
@@ -68,6 +78,8 @@ export const resolveRealtimeGatewayConfig = (): RealtimeGatewayConfig => {
     maxGuestConnectionsPerWorkspace:
       environment.REALTIME_MAX_GUEST_CONNECTIONS_PER_WORKSPACE,
     port: environment.PORT,
+    presenceReportCoalesceMs: PRESENCE_REPORT_COALESCE_MS,
+    presenceReportIntervalMs: PRESENCE_REPORT_INTERVAL_MS,
     redisUrl: environment.REDIS_URL,
     secret: environment.REALTIME_BROADCAST_SECRET,
   }

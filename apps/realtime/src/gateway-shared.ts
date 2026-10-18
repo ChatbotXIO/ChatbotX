@@ -1,10 +1,35 @@
-import type { HttpRequest } from "uWebSockets.js"
-import { REALTIME_CLOSE_CODE } from "@chatbotx.io/realtime-protocol"
+import type {
+  HttpRequest,
+  HttpResponse,
+  us_socket_context_t,
+  WebSocketBehavior,
+} from "uWebSockets.js"
+import { SHARED_COMPRESSOR } from "uWebSockets.js"
+import {
+  isRealtimeSeqAfter,
+  REALTIME_CLOSE_CODE,
+} from "@chatbotx.io/realtime-protocol"
 import { decrementKeyedCount, incrementKeyedCount } from "./lib/keyed-count"
+import type { StreamReader } from "./stream-reader"
 
 const OVERLOAD_RETRY_AFTER_MIN_MS = 1000
 const OVERLOAD_RETRY_AFTER_SPREAD_MS = 4000
-export const SLOW_CONSUMER_BUFFER_BYTES = 512_000
+const SLOW_CONSUMER_BUFFER_BYTES = 512_000
+
+export const baseBehavior = {
+  closeOnBackpressureLimit: true,
+  compression: SHARED_COMPRESSOR,
+  idleTimeout: 60,
+  maxBackpressure: SLOW_CONSUMER_BUFFER_BYTES,
+  sendPingsAutomatically: true,
+} satisfies Pick<
+  WebSocketBehavior<object>,
+  | "closeOnBackpressureLimit"
+  | "compression"
+  | "idleTimeout"
+  | "maxBackpressure"
+  | "sendPingsAutomatically"
+>
 
 /**
  * Jittered retry hint for an overloaded connection. The spread keeps a mass
@@ -33,11 +58,6 @@ export type GatewayConnectionState<
   guestPendingUpgradesByKey: Map<string, number>
   guestPendingUpgradesByWorkspace: Map<string, number>
   memberConnectionCountByWorkspace: Map<string, number>
-  // Pending (not-yet-open) upgrades per key, incremented synchronously next
-  // to the capacity check and before the `await` that lets concurrent
-  // upgrades for the same key race past it — without this, a burst of
-  // parallel connects all read the same pre-upgrade count and all pass.
-  // See PR #1349 finding #3.
   memberPendingUpgradesByWorkspace: Map<string, number>
   peakConnections: number
   pendingGuestUpgrades: number
@@ -64,28 +84,20 @@ export const createGatewayConnectionState = <
   workspaceLifetimeTimers: new WeakMap(),
 })
 
-/** One keyed counter to move in lockstep with its siblings — see
- * `acquireSlot`/`releaseSlot`. */
 type KeyedSlot = { key: string; map: Map<string, number> }
 
-/** Increments every keyed counter in `slots` together — used when a pending
- * upgrade is admitted, so a per-key/per-workspace pending count never drifts
- * out of lockstep with its sibling counters (e.g. a guest connect's
- * per-guest-conversation AND per-workspace pending counts). */
 export const acquireSlot = (slots: KeyedSlot[]): void => {
   for (const slot of slots) {
     incrementKeyedCount(slot.map, slot.key)
   }
 }
 
-/** Decrements every keyed counter in `slots` together — the inverse of
- * `acquireSlot`, used whether the slot is released before ever opening
- * (abort/error) or promoted to (and later released from) the active set. */
 export const releaseSlot = (slots: KeyedSlot[]): void => {
   for (const slot of slots) {
     decrementKeyedCount(slot.map, slot.key)
   }
 }
+
 export type PendingUpgrade = { release: () => void }
 
 export const createPendingUpgrade = <
@@ -118,9 +130,6 @@ export const createPendingUpgrade = <
   }
 }
 
-/** The handful of upgrade-request headers uWS needs verbatim to complete
- * `res.upgrade(...)` — read once per connect by both the workspace and
- * guest upgrade handlers. */
 type UpgradeRequestHeaders = {
   websocketExtensions: string
   websocketKey: string
@@ -135,25 +144,175 @@ export const readUpgradeRequest = (
   websocketProtocol: req.getHeader("sec-websocket-protocol"),
 })
 
-/** Minimal socket shape `armLifetimeTimer` needs — satisfied by both
- * `WorkspaceSocket` and `GuestSocket`. */
+export const upgradeSocket = <SocketData extends object>({
+  context,
+  headers,
+  res,
+  socketData,
+}: {
+  context: us_socket_context_t
+  headers: UpgradeRequestHeaders
+  res: HttpResponse
+  socketData: SocketData
+}): void => {
+  res.cork(() => {
+    res.upgrade(
+      socketData,
+      headers.websocketKey,
+      headers.websocketProtocol,
+      headers.websocketExtensions,
+      context,
+    )
+  })
+}
+
+export const writeStatus = (res: HttpResponse, status: string): void => {
+  res.cork(() => {
+    res.writeStatus(status).end()
+  })
+}
+
+export const writeUnauthorized = (res: HttpResponse): void => {
+  writeStatus(res, "401 Unauthorized")
+}
+
+export const verifyConnectToken = async <Claims>({
+  aborted,
+  counters,
+  logTokenRejection,
+  rejectionContext,
+  res,
+  verify,
+}: {
+  aborted: () => boolean
+  counters: { tokenRejections: number }
+  logTokenRejection: (context: Record<string, unknown>, error: unknown) => void
+  rejectionContext: Record<string, unknown>
+  res: HttpResponse
+  verify: () => Promise<Claims>
+}): Promise<Claims | undefined> => {
+  try {
+    return await verify()
+  } catch (error) {
+    if (!aborted()) {
+      counters.tokenRejections += 1
+      logTokenRejection(rejectionContext, error)
+      writeUnauthorized(res)
+    }
+    return
+  }
+}
+
+export const upgradeAsOverloaded = <
+  WorkspaceSocketData extends object,
+  GuestSocketData extends object,
+  SocketData extends { closed: boolean; pendingUpgrade?: PendingUpgrade },
+>({
+  aborted,
+  context,
+  isGuest = false,
+  requestHeaders,
+  res,
+  socketData,
+  state,
+}: {
+  aborted: boolean
+  context: us_socket_context_t
+  isGuest?: boolean
+  requestHeaders: UpgradeRequestHeaders
+  res: HttpResponse
+  socketData: SocketData
+  state: GatewayConnectionState<WorkspaceSocketData, GuestSocketData>
+}): void => {
+  if (aborted) {
+    return
+  }
+  const pendingUpgrade = createPendingUpgrade(state, [], isGuest)
+  try {
+    upgradeSocket({
+      context,
+      headers: requestHeaders,
+      res,
+      socketData: { ...socketData, pendingUpgrade },
+    })
+  } catch (error) {
+    pendingUpgrade.release()
+    throw error
+  }
+}
+
+export const closeIfOverloadedOnOpen = <
+  WorkspaceSocketData extends object,
+  GuestSocketData extends object,
+  SocketData extends {
+    closed: boolean
+    overloadRetryAfterMs?: number
+    pendingUpgrade?: PendingUpgrade
+  },
+  Socket extends { end: (code?: number, reason?: string) => void },
+>({
+  counters,
+  onAccepted,
+  socket,
+  socketData,
+  state,
+}: {
+  counters: { overloadCloses: number }
+  onAccepted?: () => void
+  socket: Socket
+  socketData: SocketData
+  state: GatewayConnectionState<WorkspaceSocketData, GuestSocketData>
+}): boolean => {
+  socketData.pendingUpgrade?.release()
+  if (socketData.overloadRetryAfterMs !== undefined) {
+    counters.overloadCloses += 1
+    socketData.closed = true
+    socket.end(
+      REALTIME_CLOSE_CODE.overloaded,
+      JSON.stringify({ retryAfter: socketData.overloadRetryAfterMs }),
+    )
+    return true
+  }
+  state.activeConnections += 1
+  state.peakConnections = Math.max(
+    state.peakConnections,
+    state.activeConnections,
+  )
+  onAccepted?.()
+  return false
+}
+
+export const closeIfTainted = ({
+  socket,
+  socketData,
+  streamReader,
+}: {
+  socket: { end: (code?: number, reason?: string) => void }
+  socketData: { closed: boolean; replayCutoff?: string; workspaceId: string }
+  streamReader: Pick<StreamReader, "getTaintedUpToId">
+}): boolean => {
+  const taintedUpToId = streamReader.getTaintedUpToId(socketData.workspaceId)
+  if (
+    !taintedUpToId ||
+    (socketData.replayCutoff &&
+      !isRealtimeSeqAfter(taintedUpToId, socketData.replayCutoff))
+  ) {
+    return false
+  }
+  socketData.closed = true
+  socket.end(REALTIME_CLOSE_CODE.resync, "malformed-stream-record")
+  return true
+}
+
+/** Minimal socket shape `armLifetimeTimer` needs — satisfied by both socket types. */
 type LifetimeSocket = {
   end: (code?: number, reason?: string) => void
 }
 
-/** Minimal per-socket data shape `armLifetimeTimer` needs — satisfied by
- * both `WorkspaceSocketData` and `GuestSocketData`. */
 type LifetimeSocketData = {
   closed: boolean
 }
 
-/**
- * Forces every connection to periodically re-handshake (fresh token mint,
- * re-checked membership/permissions) instead of living forever once open —
- * the only way a revoked member, a disabled support-access session, or an
- * expired grant stops receiving events short of an explicit revoke event.
- * Shared by the workspace and guest socket `open` handlers.
- */
 export const armLifetimeTimer = <
   SocketData extends LifetimeSocketData,
   Socket extends LifetimeSocket,
@@ -173,4 +332,12 @@ export const armLifetimeTimer = <
       socket.end(REALTIME_CLOSE_CODE.reauth, "connection-lifetime-exceeded")
     }, lifetimeMs),
   )
+}
+
+export const clearLifetimeTimer = <SocketData extends object>(
+  timers: WeakMap<SocketData, NodeJS.Timeout>,
+  socketData: SocketData,
+): void => {
+  clearTimeout(timers.get(socketData))
+  timers.delete(socketData)
 }

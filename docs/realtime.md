@@ -21,6 +21,7 @@ back-to-back, then deploy Builder, Worker, and Realtime together:
 Deploying only the publisher PR silently stops realtime delivery because no
 consumer reads the stream. A rollback must restore the whole deployment unit,
 not one service.
+
 ## Gateway runtime, local development, and authentication
 
 `apps/realtime` runs a uWebSockets.js gateway. It consumes durable Redis
@@ -48,7 +49,6 @@ REDIS_URL=redis://localhost:6379
 
 Start Redis and Builder with Docker, then run `pnpm --filter realtime dev`.
 Use `REALTIME_HOST`, not `HOSTNAME`: Docker owns `HOSTNAME`.
-
 
 ## Subscribing to events
 
