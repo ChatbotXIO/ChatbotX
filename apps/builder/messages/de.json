@@ -3625,6 +3625,7 @@
       "months": "{count} Mon.",
       "years": "{count} J."
     },
+    "realtimeRevokeWarning": "Der Zugriffswiderruf konnte nicht sofort bestätigt werden – er wird beim nächsten erneuten Verbinden des Mitglieds wirksam.",
     "moveFeature": "{feature} verschieben",
     "poweredBy": "Bereitgestellt von {name}",
     "noGiphyApiKey": "Kein GIPHY-API-Schlüssel gefunden. Fügen Sie einen in den Plattformeinstellungen hinzu.",

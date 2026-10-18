@@ -83,9 +83,12 @@ vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheByTags: vi.fn(async () => undefined),
   createRedisConnection: vi.fn(() => ({ on: vi.fn() })),
 }))
+vi.mock("@chatbotx.io/analytics", () => ({
+  macAnalyticsService: {},
+}))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  broadcastToWorkspaceParty: vi.fn(),
+  queueWorkspaceRealtimeEvent: vi.fn(),
 }))
 
 vi.mock("../src/contact/service", () => ({

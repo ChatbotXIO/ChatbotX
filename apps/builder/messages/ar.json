@@ -3625,6 +3625,7 @@
       "months": "{count} ش",
       "years": "{count} سنة"
     },
+    "realtimeRevokeWarning": "تعذّر تأكيد إلغاء الوصول فورًا - سيُطبَّق عند إعادة اتصال العضو التالية.",
     "moveFeature": "نقل {feature}",
     "poweredBy": "مدعوم من {name}",
     "noGiphyApiKey": "لم يتم العثور على مفتاح GIPHY API. يُرجى إضافته في إعدادات المنصة.",

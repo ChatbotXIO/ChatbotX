@@ -1,0 +1,229 @@
+import {
+  getRealtimeMemberRevokedKey,
+  getRealtimeStreamKey,
+  REALTIME_MEMBER_REVOKED_TTL_SECONDS,
+  type RealtimeStreamRecord,
+  realtimeStreamRecordSchema,
+} from "@chatbotx.io/realtime-protocol"
+import { createRedisConnection, type Redis } from "@chatbotx.io/redis"
+import { logger } from "../logger"
+import { resolveRealtimeRedisUrl } from "./settings"
+
+type DirectRealtimeStreamRecord = Exclude<
+  RealtimeStreamRecord,
+  { kind: "workspace-events" }
+>
+
+const REALTIME_STREAM_RETENTION_MS = 5 * 60 * 1000
+// A capped shard is replay best-effort; clients must tolerate missed records.
+const REALTIME_STREAM_MAX_LEN = 10_000
+
+/**
+ * A transient Redis blip must not permanently drop a realtime event with no
+ * gap signal to clients. Bounded retries still fail fast during an outage.
+ */
+const PUBLISH_RETRY_ATTEMPTS = 3
+const PUBLISH_RETRY_DELAY_MS = 100
+
+const MARK_REALTIME_MEMBER_REVOKED_LUA = `
+local existing = tonumber(redis.call("GET", KEYS[1]))
+local next = tonumber(ARGV[1])
+if not existing or next > existing then
+  redis.call("SET", KEYS[1], ARGV[1], "EX", ARGV[2])
+end
+return existing or 0
+`
+
+let realtimeStreamConnectionPromise: Promise<Redis> | null = null
+
+const delay = (ms: number): Promise<void> => {
+  const { promise, resolve } = Promise.withResolvers<void>()
+  setTimeout(resolve, ms)
+  return promise
+}
+
+const isRedisCommandTimeout = (error: unknown): boolean =>
+  error instanceof Error && error.message === "Command timed out"
+
+export const retryWithLinearBackoff = async <T>(
+  fn: () => Promise<T>,
+  options: {
+    attempts: number
+    baseDelayMs: number
+    workspaceId: string
+    shouldRetry?: (error: unknown) => boolean
+  },
+): Promise<T> => {
+  for (let attempt = 1; attempt <= options.attempts; attempt += 1) {
+    try {
+      return await fn()
+    } catch (error) {
+      if (
+        attempt === options.attempts ||
+        options.shouldRetry?.(error) === false
+      ) {
+        throw error
+      }
+      logger.warn(
+        { attempt, err: error, workspaceId: options.workspaceId },
+        "Realtime stream operation failed; retrying",
+      )
+      await delay(options.baseDelayMs * attempt)
+    }
+  }
+  throw new Error("Realtime retry attempts exhausted")
+}
+
+const getRealtimeStreamConnection = async (): Promise<Redis> => {
+  if (realtimeStreamConnectionPromise) {
+    return await realtimeStreamConnectionPromise
+  }
+
+  const connection = createRedisConnection(
+    resolveRealtimeRedisUrl(),
+    // A hung `xadd` during a Redis outage would stall this package's publish
+    // path forever: ioredis's default `maxRetriesPerRequest: null` queues the
+    // command indefinitely instead of rejecting it. Fail fast so callers that
+    // await a publish (whatsapp call/VoIP signaling, guest publish) and
+    // fire-and-forget callers (`queueWorkspaceRealtimeEvent`'s `.catch`) both
+    // observe the failure instead of hanging.
+    {
+      commandTimeout: 2000,
+      enableOfflineQueue: false,
+      lazyConnect: true,
+      maxRetriesPerRequest: 1,
+    },
+  )
+  const connectionPromise = connection.connect().then(() => connection)
+  realtimeStreamConnectionPromise = connectionPromise
+  try {
+    return await connectionPromise
+  } catch (error) {
+    if (realtimeStreamConnectionPromise === connectionPromise) {
+      realtimeStreamConnectionPromise = null
+      connection.disconnect()
+    }
+    throw error
+  }
+}
+
+const inFlightRealtimeStreamPublishes = new Set<Promise<void>>()
+
+/**
+ * Appends a pre-serialized protocol record to its workspace shard. Callers that
+ * batch events supply this form so each event is serialized exactly once.
+ */
+export const publishSerializedRealtimeStreamRecord = (
+  workspaceId: string,
+  serializedRecord: string,
+): Promise<void> => {
+  const publish = retryWithLinearBackoff(
+    async () => {
+      const connection = await getRealtimeStreamConnection()
+      const streamKey = getRealtimeStreamKey(workspaceId)
+      const trimResults = await connection
+        .multi()
+        .xadd(
+          streamKey,
+          "MAXLEN",
+          "~",
+          REALTIME_STREAM_MAX_LEN,
+          "*",
+          "record",
+          serializedRecord,
+        )
+        .xtrim(
+          streamKey,
+          "MINID",
+          "~",
+          `${Date.now() - REALTIME_STREAM_RETENTION_MS}-0`,
+        )
+        .exec()
+      const xaddError = trimResults?.[0]?.[0]
+      if (xaddError) {
+        throw xaddError
+      }
+      const trimError = trimResults?.[1]?.[0]
+      if (trimError) {
+        logger.warn(
+          { err: trimError, workspaceId },
+          "Failed to trim the realtime stream after append",
+        )
+      }
+    },
+    {
+      attempts: PUBLISH_RETRY_ATTEMPTS,
+      baseDelayMs: PUBLISH_RETRY_DELAY_MS,
+      shouldRetry: (error) => !isRedisCommandTimeout(error),
+      workspaceId,
+    },
+  )
+  inFlightRealtimeStreamPublishes.add(publish)
+  publish.then(
+    () => {
+      inFlightRealtimeStreamPublishes.delete(publish)
+    },
+    () => {
+      inFlightRealtimeStreamPublishes.delete(publish)
+    },
+  )
+  return publish
+}
+
+export const drainInFlightRealtimeStreamPublishes = async (): Promise<void> => {
+  const failures: unknown[] = []
+  while (inFlightRealtimeStreamPublishes.size > 0) {
+    const results = await Promise.allSettled(inFlightRealtimeStreamPublishes)
+    failures.push(
+      ...results.flatMap((result) =>
+        result.status === "rejected" ? [result.reason] : [],
+      ),
+    )
+  }
+  if (failures.length > 0) {
+    throw new AggregateError(
+      failures,
+      `${failures.length} realtime publish(es) failed during shutdown`,
+    )
+  }
+}
+
+/**
+ * Appends one protocol record to its workspace shard. Connection creation is
+ * deferred until the first publish so importing business services never opens
+ * a Redis connection.
+ */
+export const publishRealtimeStreamRecord = async (
+  record: DirectRealtimeStreamRecord,
+): Promise<void> => {
+  const parsedRecord = realtimeStreamRecordSchema.parse(record)
+  await publishSerializedRealtimeStreamRecord(
+    parsedRecord.workspaceId,
+    JSON.stringify(parsedRecord),
+  )
+}
+
+/**
+ * Advances the member revoke marker atomically so delayed retries cannot make
+ * a stale token valid again. The TTL outlives every still-valid pre-revoke
+ * token.
+ */
+export const markRealtimeMemberRevoked = async (
+  workspaceId: string,
+  userId: string,
+  revokedAtMs = Date.now(),
+): Promise<void> => {
+  const connection = await getRealtimeStreamConnection()
+  await connection.eval(
+    MARK_REALTIME_MEMBER_REVOKED_LUA,
+    1,
+    getRealtimeMemberRevokedKey(workspaceId, userId),
+    `${revokedAtMs}`,
+    `${REALTIME_MEMBER_REVOKED_TTL_SECONDS}`,
+  )
+}
+
+export const resetRealtimeStreamPublisherForTests = (): void => {
+  realtimeStreamConnectionPromise = null
+  inFlightRealtimeStreamPublishes.clear()
+}

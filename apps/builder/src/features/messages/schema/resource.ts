@@ -10,6 +10,13 @@ export const messageResource = createSelectSchema(messageModel, {
   conversationId: z.string(),
   workspaceId: z.string(),
   contactInboxId: z.string(),
+  // `z.coerce.date()` accepts a real `Date` (every server-side caller
+  // selecting straight from the DB) exactly like `z.date()` would, but also
+  // accepts the ISO string a `Date` becomes after a JSON.stringify/parse
+  // round trip — e.g. a realtime `messageCreated` wire frame. Without this,
+  // parsing that wire payload against this schema rejects every message.
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 }).and(
   z.object({
     clientId: zodBigintAsString().optional(),

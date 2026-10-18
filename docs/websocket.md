@@ -1,37 +1,27 @@
-# Implement websocket
+# Workspace realtime relay
 
-### Browser connect websocket
-
-```mermaid
-sequenceDiagram
-  participant Browser
-  participant NextServer
-  participant Partysocket
-
-  Browser->>Partysocket: connect
-  Partysocket->>NextServer: GET /api/auth/session <br/> Cookie: xxxxxxxxxxxxx
-  NextServer-->>Partysocket: return Session | null
-  critical has Session
-    Partysocket-->>Browser: connected
-  option Session not found
-    Partysocket-->>Browser: not connected
-  end
-```
-
-### Broadcast messages
+Workspace browsers connect to the Realtime service with a short-lived,
+purpose-bound JWT. Builder mints member tokens after resolving membership and
+scope; Realtime validates the workspace audience, purpose, expiry, and the
+`realtime:revoked:<workspaceId>:<userId>` cutoff before accepting a socket.
 
 ```mermaid
 sequenceDiagram
+  participant Publisher as Builder / Worker
+  participant Redis
+  participant Realtime
   participant Browser
-  participant NextServer
-  participant Partysocket
 
-  NextServer->>NextServer: sign 60s JWT, reused up to 45s per audience <br> aud=room:id, HS256(REALTIME_BROADCAST_SECRET)
-  NextServer->>Partysocket: POST /parties/xxx <br> Authorization: Bearer <jwt>
-  critical JWT verifies and aud matches room
-    Partysocket-->>Browser: return ok
-    Partysocket->>Browser: broadcast messages
-  option JWT invalid, expired, or wrong audience
-    Partysocket-->>NextServer: 401 Unauthorized
-  end
+  Publisher->>Redis: XADD rt:{shard} record
+  Realtime->>Redis: XREADGROUP records
+  Realtime->>Browser: deliver matching workspace, member, or guest event
+  Realtime->>Redis: XACK record
 ```
+
+Records are retained for approximately five minutes and capped at 10,000
+entries per shard. Replay is best-effort; clients must recover authoritative
+state through their normal data queries after reconnecting.
+
+Workspace events coalesce for 25 ms before publishing. Member revocations are
+not coalesced: the record includes `revokedAtMs`, so a socket with a newer
+`iatMs` is not closed by a delayed retry.

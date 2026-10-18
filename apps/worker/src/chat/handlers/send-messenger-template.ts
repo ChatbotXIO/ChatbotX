@@ -2,9 +2,9 @@ import {
   contactInboxService,
   conversationService,
   flowService,
-  publishToWorkspaceParty,
+  messageService,
+  queueMessageCreatedEvent,
 } from "@chatbotx.io/business"
-import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type { messageModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -27,7 +27,6 @@ import {
   startExternalFlowStepDefaultFn,
   stepTypes,
 } from "@chatbotx.io/flow-config"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
   ChannelError,
   ChannelErrorCategory,
@@ -286,8 +285,7 @@ export async function processMessengerTemplate(
       metadata,
     }
 
-    const messageRepository = await createMessageRepository()
-    newMessage = await messageRepository.create({
+    newMessage = await messageService.create({
       id: createId(),
       contactInboxId: contactInbox.id,
       workspaceId: conversation.workspaceId,
@@ -315,10 +313,11 @@ export async function processMessengerTemplate(
     }
 
     if (!isBulkOutbound) {
-      publishToWorkspaceParty(conversation.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: newMessage,
-      })
+      queueMessageCreatedEvent(
+        conversation.workspaceId,
+        newMessage,
+        conversation,
+      )
     }
 
     const result = await sendFlowStepToChannel({
@@ -378,12 +377,12 @@ export async function processMessengerTemplate(
 
     if (providerMessageId) {
       try {
-        await messageRepository.updateSourceId(
-          newMessage.id,
-          providerMessageId,
-          conversation.workspaceId,
-          newMessage.createdAt,
-        )
+        await messageService.updateSourceId({
+          id: newMessage.id,
+          sourceId: providerMessageId,
+          workspaceId: conversation.workspaceId,
+          createdAt: newMessage.createdAt,
+        })
       } catch (err) {
         logger.error(
           err,

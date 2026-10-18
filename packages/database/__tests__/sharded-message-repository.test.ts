@@ -1974,6 +1974,43 @@ describe("ShardedMessageRepository.deleteBySourceId", () => {
     // fallback scan when the hint already found the row.
     expect(getShardsForTimeRange).toHaveBeenCalledTimes(2)
   })
+
+  test("returns conversation IDs and deduplicates a row reached through multiple shards", async () => {
+    const createdAt = new Date("2026-06-01T00:00:00Z")
+    const firstShard = makeShardInfo("tr:first", "first")
+    const secondShard = makeShardInfo("tr:second", "second")
+    const parentSelectChain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{ id: "msg-1", createdAt }]),
+    }
+    const makeShardClient = () => ({
+      select: vi.fn().mockReturnValue(parentSelectChain),
+      update: vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnThis(),
+        where: vi.fn().mockReturnThis(),
+        returning: vi
+          .fn()
+          .mockResolvedValue([{ conversationId: "conv-1", id: "msg-1" }]),
+      }),
+    })
+    const firstClient = makeShardClient()
+    const secondClient = makeShardClient()
+    const shardManager = {
+      getShardsForTimeRange: vi
+        .fn()
+        .mockResolvedValue([firstShard, secondShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      getShardClient: vi.fn((shard: { id: string }) =>
+        Promise.resolve(shard.id === "first" ? firstClient : secondClient),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await expect(
+      repo.deleteBySourceId("src-1", "ws-1", createdAt),
+    ).resolves.toEqual([{ conversationId: "conv-1", id: "msg-1" }])
+  })
 })
 
 // ---------------------------------------------------------------------------

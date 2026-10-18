@@ -48,6 +48,10 @@ export const workspaceMemberCacheTag = (userId: string) =>
   `users:${userId}:workspace-members`
 
 export class WorkspaceMemberService extends BaseService {
+  invalidateMembershipCache(userId: string): Promise<void> {
+    return this.invalidateCacheTags(workspaceMemberCacheTag(userId))
+  }
+
   async create(props: {
     tx?: DatabaseClient
     data: typeof workspaceMemberModel.$inferInsert

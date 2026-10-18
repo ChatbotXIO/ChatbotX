@@ -37,6 +37,8 @@ const settleSucceeded = async (props: {
       const recorded = await recordDeliveredDirectMessage({
         workspaceId: run.workspaceId,
         conversationId: row.conversationId,
+        assignedInboxTeamId: row.assignedInboxTeamId,
+        assignedUserId: row.assignedUserId,
         contactInbox: row,
         text: run.message,
         sourceId: result.messageSourceId,

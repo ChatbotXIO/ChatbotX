@@ -1,4 +1,4 @@
-import { flushAllPendingWorkspaceBroadcasts } from "@chatbotx.io/business"
+import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import {
   decisionFlowOriginSchema,
   extractContactInboxId,
@@ -123,16 +123,21 @@ async function startTriggerWorker() {
       return
     }
     isShuttingDown = true
+    let shutdownFailed = false
     try {
       await worker.close()
-      // After close(): drains events published by jobs that finished during
-      // the close drain, whose coalesce timers would never fire past exit.
-      await flushAllPendingWorkspaceBroadcasts()
-      process.exit(0)
     } catch (err) {
-      logger.error(err, "[TriggerWorker] Error during shutdown")
-      process.exit(1)
+      shutdownFailed = true
+      logger.error(err, "[TriggerWorker] Error closing worker during shutdown")
+    } finally {
+      try {
+        await flushAllPendingWorkspaceRealtimeEvents()
+      } catch (err) {
+        shutdownFailed = true
+        logger.error(err, "[TriggerWorker] Error flushing realtime events")
+      }
     }
+    process.exit(shutdownFailed ? 1 : 0)
   }
   process.once("SIGINT", shutdown)
   process.once("SIGTERM", shutdown)

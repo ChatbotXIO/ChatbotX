@@ -554,7 +554,7 @@ export class ShardedMessageRepository implements IMessageRepository {
     workspaceId: string,
     newText: string,
     createdAt: Date,
-  ): Promise<{ id: string } | null> {
+  ): Promise<{ conversationId: string; id: string } | null> {
     return this.updateAcrossShards(
       messageId,
       workspaceId,
@@ -568,7 +568,7 @@ export class ShardedMessageRepository implements IMessageRepository {
     sourceId: string,
     workspaceId: string,
     newText: string,
-  ): Promise<{ id: string } | null> {
+  ): Promise<{ conversationId: string; id: string } | null> {
     return await this.patchBySourceId(
       sourceId,
       workspaceId,
@@ -598,7 +598,7 @@ export class ShardedMessageRepository implements IMessageRepository {
     workspaceId: string,
     patch: Partial<typeof messageModel.$inferInsert>,
     caller: string,
-  ): Promise<{ id: string } | null> {
+  ): Promise<{ conversationId: string; id: string } | null> {
     // sourceId-based update: scan shards from the last 90 days (same window
     // used by findBySourceId for parent-comment lookups).
     const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
@@ -618,9 +618,12 @@ export class ShardedMessageRepository implements IMessageRepository {
               eq(messageModel.workspaceId, workspaceId),
             ),
           )
-          .returning({ id: messageModel.id })
+          .returning({
+            conversationId: messageModel.conversationId,
+            id: messageModel.id,
+          })
         if (row) {
-          return row as { id: string }
+          return row
         }
       } catch (error) {
         logger.warn(
@@ -723,7 +726,7 @@ export class ShardedMessageRepository implements IMessageRepository {
     caller: string,
     createdAt: Date,
     extraWhere?: SQL,
-  ): Promise<{ id: string } | null> {
+  ): Promise<{ conversationId: string; id: string } | null> {
     const timeRangeShards = await this.getShardsForRange(createdAt, createdAt)
     const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
     const shards = this.mergeWriteShard(timeRangeShards, writeShard)
@@ -746,7 +749,10 @@ export class ShardedMessageRepository implements IMessageRepository {
                 extraWhere,
               ),
             )
-            .returning({ id: messageModel.id })
+            .returning({
+              conversationId: messageModel.conversationId,
+              id: messageModel.id,
+            })
         } catch (error) {
           logger.warn(
             { err: error, shardId: shardInfo.shard.id },
@@ -825,7 +831,7 @@ export class ShardedMessageRepository implements IMessageRepository {
     sourceId: string,
     workspaceId: string,
     createdAt: Date,
-  ): Promise<{ id: string }[]> {
+  ): Promise<{ conversationId: string; id: string }[]> {
     const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
 
     // Step 1: find parent DB id — search in createdAt shard + write shard first.
@@ -943,7 +949,10 @@ export class ShardedMessageRepository implements IMessageRepository {
                 ),
               ),
             )
-            .returning({ id: messageModel.id })
+            .returning({
+              conversationId: messageModel.conversationId,
+              id: messageModel.id,
+            })
         } catch (error) {
           logger.warn(
             { err: error, shardId: shardInfo.shard.id },
@@ -954,13 +963,16 @@ export class ShardedMessageRepository implements IMessageRepository {
       }),
     )
 
-    const ids = new Set<string>()
+    const deletedById = new Map<
+      string,
+      { conversationId: string; id: string }
+    >()
     for (const rows of perShard) {
       for (const row of rows) {
-        ids.add(row.id)
+        deletedById.set(row.id, row)
       }
     }
-    return [...ids].map((id) => ({ id }))
+    return [...deletedById.values()]
   }
 
   async deleteById(
