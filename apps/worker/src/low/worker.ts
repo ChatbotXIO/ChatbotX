@@ -1,5 +1,6 @@
 import {
   commentAutomationService,
+  flushAllPendingWorkspaceRealtimeEvents,
   withBlockedOwnerGuard,
 } from "@chatbotx.io/business"
 import {
@@ -20,7 +21,6 @@ import { receiveComment } from "../integration/handlers/received-message"
 import { processLeaderboardJob } from "../leaderboard/process-job"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
-import { flushAllPendingWorkspaceRealtimeEvents } from "../lib/realtime-drain"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 
 /**

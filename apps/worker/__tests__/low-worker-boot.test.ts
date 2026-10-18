@@ -76,6 +76,8 @@ vi.mock("@chatbotx.io/business", () => ({
   commentAutomationService: {
     finishMissedCommentReplay: workerState.finishMissedCommentReplay,
   },
+  flushAllPendingWorkspaceRealtimeEvents:
+    workerState.flushAllPendingWorkspaceRealtimeEvents,
   withBlockedOwnerGuard: workerState.withBlockedOwnerGuard,
 }))
 
@@ -93,11 +95,6 @@ vi.mock("../src/lib/bootstrap", () => ({
 
 vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
-}))
-
-vi.mock("../src/lib/realtime-drain", () => ({
-  flushAllPendingWorkspaceRealtimeEvents:
-    workerState.flushAllPendingWorkspaceRealtimeEvents,
 }))
 
 vi.mock("../src/lib/run-job-with-audit-context", () => ({

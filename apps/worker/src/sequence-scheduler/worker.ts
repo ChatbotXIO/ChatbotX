@@ -1,9 +1,10 @@
+import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
+
 import { sequenceDispatchRepository } from "@chatbotx.io/database/repositories"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
-import { flushAllPendingWorkspaceRealtimeEvents } from "../lib/realtime-drain"
 import { getAssignedBuckets } from "./buckets"
 
 const BOOTSTRAP_WINDOW_HOURS = 24
