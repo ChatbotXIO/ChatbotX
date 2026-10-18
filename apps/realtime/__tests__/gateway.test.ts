@@ -23,6 +23,12 @@ const HTTP_STATUS_LINE_PATTERN = /^HTTP\/1\.1 (\d{3})/
 
 const SECRET = "gateway-test-secret"
 
+const signMemberToken = async (
+  member: Omit<Parameters<typeof signMemberConnectToken>[0], "issuedAtMs">,
+  secret: string,
+): Promise<string> =>
+  await signMemberConnectToken({ ...member, issuedAtMs: Date.now() }, secret)
+
 // `createStreamReader` only touches `redis.duplicate()`/`.call()` once a
 // workspace is activated and its XREAD poll loop runs; none of the tests
 // below activate a workspace (auth rejections return before that point, and
@@ -199,7 +205,7 @@ describe("createRealtimeGateway (live)", () => {
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const forgedToken = await signMemberConnectToken(
+    const forgedToken = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       "wrong-secret",
     )
@@ -236,7 +242,7 @@ describe("createRealtimeGateway (live)", () => {
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const tokenForOtherWorkspace = await signMemberConnectToken(
+    const tokenForOtherWorkspace = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-other" },
       SECRET,
     )
@@ -315,7 +321,7 @@ describe("createRealtimeGateway (live)", () => {
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const token = await signMemberConnectToken(
+    const token = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       SECRET,
     )
@@ -348,7 +354,7 @@ describe("createRealtimeGateway (live)", () => {
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const token = await signMemberConnectToken(
+    const token = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       SECRET,
     )
@@ -402,7 +408,7 @@ describe("createRealtimeGateway (live)", () => {
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const token = await signMemberConnectToken(
+    const token = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       SECRET,
     )
@@ -440,7 +446,7 @@ describe("createRealtimeGateway (live)", () => {
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const token = await signMemberConnectToken(
+    const token = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       SECRET,
     )
@@ -494,7 +500,7 @@ describe("createRealtimeGateway (live)", () => {
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const token = await signMemberConnectToken(
+    const token = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       SECRET,
     )
@@ -559,7 +565,7 @@ describe("createRealtimeGateway (live)", () => {
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const memberToken = await signMemberConnectToken(
+    const memberToken = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       SECRET,
     )
@@ -606,7 +612,7 @@ describe("createRealtimeGateway (live)", () => {
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const token = await signMemberConnectToken(
+    const token = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       SECRET,
     )
@@ -756,7 +762,7 @@ describe("createRealtimeGateway (live)", () => {
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const token = await signMemberConnectToken(
+    const token = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       SECRET,
     )
@@ -807,11 +813,11 @@ describe("createRealtimeGateway (live)", () => {
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const token1 = await signMemberConnectToken(
+    const token1 = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       SECRET,
     )
-    const token2 = await signMemberConnectToken(
+    const token2 = await signMemberToken(
       { chatScope: "all", userId: "user-2", workspaceId: "ws-2" },
       SECRET,
     )
@@ -873,11 +879,11 @@ describe("createRealtimeGateway (live)", () => {
       secret: SECRET,
     })
     const port = await gateway.listen("127.0.0.1", 0)
-    const token1 = await signMemberConnectToken(
+    const token1 = await signMemberToken(
       { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
       SECRET,
     )
-    const token2 = await signMemberConnectToken(
+    const token2 = await signMemberToken(
       { chatScope: "all", userId: "user-2", workspaceId: "ws-2" },
       SECRET,
     )
@@ -923,11 +929,11 @@ describe("createRealtimeGateway (live)", () => {
         secret: SECRET,
       })
       const port = await gateway.listen("127.0.0.1", 0)
-      const tokenA = await signMemberConnectToken(
+      const tokenA = await signMemberToken(
         { chatScope: "all", userId: "user-a", workspaceId: "ws-presence-1" },
         SECRET,
       )
-      const tokenB = await signMemberConnectToken(
+      const tokenB = await signMemberToken(
         { chatScope: "all", userId: "user-b", workspaceId: "ws-presence-1" },
         SECRET,
       )
@@ -974,7 +980,7 @@ describe("createRealtimeGateway (live)", () => {
         secret: SECRET,
       })
       const port = await gateway.listen("127.0.0.1", 0)
-      const token = await signMemberConnectToken(
+      const token = await signMemberToken(
         { chatScope: "all", userId: "user-1", workspaceId: "ws-presence-2" },
         SECRET,
       )
@@ -1011,7 +1017,7 @@ describe("createRealtimeGateway (live)", () => {
         secret: SECRET,
       })
       const port = await gateway.listen("127.0.0.1", 0)
-      const token = await signMemberConnectToken(
+      const token = await signMemberToken(
         { chatScope: "all", userId: "user-1", workspaceId: "ws-presence-4" },
         SECRET,
       )

@@ -64,6 +64,7 @@ export const realtimeAuthenticatedAPI = {
             userId: context.user.id,
             chatScope,
             teamIds,
+            issuedAtMs: context.requestIssuedAtMs,
           },
           resolveBroadcastSecret(),
         ),

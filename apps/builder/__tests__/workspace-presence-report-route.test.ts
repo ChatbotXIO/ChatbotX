@@ -153,7 +153,12 @@ describe("POST /api/workspace-presence/report", () => {
 
   test("rejects with 401 when the token's purpose is not presence-report (a member-connect token must not work here, MEDIUM-3)", async () => {
     const token = await signMemberConnectToken(
-      { workspaceId: "1", userId: "u_1", chatScope: "all" },
+      {
+        workspaceId: "1",
+        userId: "u_1",
+        chatScope: "all",
+        issuedAtMs: Date.now(),
+      },
       SECRET,
     )
 
