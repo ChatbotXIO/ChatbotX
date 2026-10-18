@@ -992,6 +992,8 @@ describe("createRealtimeGateway (live)", () => {
       expect(reportWorkspacePresenceMock).toHaveBeenCalledWith(
         "ws-presence-2",
         ["user-1"],
+        "",
+        SECRET,
       )
       reportWorkspacePresenceMock.mockClear()
 
@@ -1002,6 +1004,8 @@ describe("createRealtimeGateway (live)", () => {
       expect(reportWorkspacePresenceMock).toHaveBeenCalledWith(
         "ws-presence-2",
         [],
+        "",
+        SECRET,
       )
     },
     PRESENCE_TEST_TIMEOUT_MS,

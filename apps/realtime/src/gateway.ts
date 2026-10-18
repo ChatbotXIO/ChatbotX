@@ -50,6 +50,7 @@ export type RealtimeGateway = {
 }
 
 export const createRealtimeGateway = ({
+  builderUrl,
   connectionLifetimeMs = DEFAULT_CONNECTION_LIFETIME_MS,
   maxConnections,
   maxConnectionsPerGuest = DEFAULT_MAX_CONNECTIONS_PER_GUEST,
@@ -63,6 +64,7 @@ export const createRealtimeGateway = ({
   redis,
   secret,
 }: {
+  builderUrl?: string
   connectionLifetimeMs?: number
   maxConnections: number
   maxConnectionsPerGuest?: number
@@ -139,15 +141,21 @@ export const createRealtimeGateway = ({
           .slice(index, index + PRESENCE_REPORT_CONCURRENCY)
           .map(
             async (workspaceId) =>
-              await reportWorkspacePresence(workspaceId, [
-                ...(connectedUsersByWorkspace.get(workspaceId) ?? []),
-              ]),
+              await reportWorkspacePresence(
+                workspaceId,
+                [...(connectedUsersByWorkspace.get(workspaceId) ?? [])],
+                builderUrl ?? "",
+                secret,
+              ),
           ),
       )
     }
   }
 
   const markPresenceDirty = (workspaceId: string): void => {
+    if (stopped) {
+      return
+    }
     clearTimeout(presenceTimers.get(workspaceId))
     presenceTimers.set(
       workspaceId,

@@ -90,6 +90,10 @@ describe("mintWorkspaceConnectTokenAuthenticatedAPI", () => {
       },
     })
 
+    expect(mocks.state.routeConfig).toMatchObject({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/realtime/connect-token",
+    })
     expect(mocks.signMemberConnectToken).toHaveBeenCalledWith(
       {
         workspaceId: "ws_1",
@@ -101,13 +105,6 @@ describe("mintWorkspaceConnectTokenAuthenticatedAPI", () => {
     )
     expect(mocks.resolveBroadcastSecret).toHaveBeenCalledWith()
     expect(result).toEqual({ token: "signed-token" })
-  })
-
-  test("route is registered under the expected workspace-scoped path", () => {
-    expect(mocks.state.routeConfig).toMatchObject({
-      method: "GET",
-      path: "/workspaces/{workspaceId}/realtime/connect-token",
-    })
   })
 
   test("stays a read method so a trial-expired or MAC-limited cloud workspace can still open its inbox socket", async () => {

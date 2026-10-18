@@ -3,17 +3,22 @@ import { describe, expect, test } from "vitest"
 import {
   createRealtimeDelivery,
   type GuestSocketData,
-  type WorkspaceSocket,
   type WorkspaceSocketData,
 } from "../src/delivery"
 import { createRealtimeServerCounters } from "../src/lib/realtime-metrics"
 
+type TestWorkspaceSocket = {
+  closed: { code?: number; reason?: string } | null
+  end: (code?: number, reason?: string) => void
+  getUserData: () => WorkspaceSocketData
+  send: (data: string) => number
+  sent: string[]
+  subscribe: (topic: string) => void
+}
+
 const createSocket = (
   overrides: Partial<WorkspaceSocketData> = {},
-): WorkspaceSocket & {
-  closed: { code?: number; reason?: string } | null
-  sent: string[]
-} => {
+): TestWorkspaceSocket => {
   const data: WorkspaceSocketData = {
     chatScope: "all",
     closed: false,
@@ -320,6 +325,46 @@ describe("realtime delivery", () => {
     })
     expect(socket.getUserData().closed).toBe(true)
     expect(socket.endCalls).toBe(1)
+  })
+
+  test("stops replay without reading socket data after send closes the socket", () => {
+    const { delivery } = createDelivery()
+    const socketData: GuestSocketData = {
+      closed: false,
+      guestConversationId: "guest-1",
+      replayCutoff: "0-0",
+      replayEntries: [],
+      workspaceId: "workspace-1",
+    }
+    let sent = false
+    const socket = {
+      end: () => undefined,
+      getUserData: () => {
+        if (sent) {
+          throw new Error("uWS socket data is unavailable after send")
+        }
+        return socketData
+      },
+      send: () => {
+        sent = true
+        socketData.closed = true
+        return 2
+      },
+    }
+
+    expect(
+      delivery.replayGuestSocket(socket, [
+        {
+          id: "9-0",
+          record: {
+            event: { data: {}, eventType: "messageCreated" },
+            guestConversationId: "guest-1",
+            kind: "guest-event",
+            workspaceId: "workspace-1",
+          },
+        },
+      ]),
+    ).toBe(false)
   })
 
   test("resyncWorkspace closes every registered member and guest socket of that workspace, and only that workspace", () => {

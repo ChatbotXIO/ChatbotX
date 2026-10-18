@@ -13,19 +13,18 @@ import {
   nextOverloadRetryAfterMs,
   readUpgradeRequest,
   releaseSlot,
+  SLOW_CONSUMER_BUFFER_BYTES,
 } from "./gateway-shared"
 import type { RealtimeServerCounters } from "./lib/realtime-metrics"
 import { logger } from "./logger"
 import type { StreamReader } from "./stream-reader"
-
-const SLOW_CONSUMER_BUFFER_BYTES = 512_000
 
 const guestConnectionKey = (
   workspaceId: string,
   guestConversationId: string,
 ): string => `${workspaceId}:${guestConversationId}`
 
-export type GuestSocketDeps<WorkspaceSocketData extends object> = {
+type GuestSocketDeps<WorkspaceSocketData extends object> = {
   counters: RealtimeServerCounters
   delivery: RealtimeDelivery
   jitteredConnectionLifetimeMs: () => number
@@ -115,6 +114,8 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
         if (aborted) {
           return
         }
+        state.pendingUpgrades += 1
+        state.pendingGuestUpgrades += 1
         res.cork(() => {
           res.upgrade(
             {
@@ -130,8 +131,6 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
             context,
           )
         })
-        state.pendingUpgrades += 1
-        state.pendingGuestUpgrades += 1
         return
       }
       state.pendingUpgrades += 1
@@ -253,16 +252,26 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
     ])
     delivery.addGuestSocket(socket)
     delivery.subscribeGuestSocket(socket)
-    delivery.replayGuestSocket(socket)
-    const gapEntries = streamReader
-      .getRecentEntries(socketData.workspaceId, socketData.replayCutoff)
-      .filter(
-        (entry) =>
-          entry.record.kind === "guest-event" &&
-          entry.record.workspaceId === socketData.workspaceId &&
-          entry.record.guestConversationId === socketData.guestConversationId,
+    if (!delivery.replayGuestSocket(socket)) {
+      return
+    }
+    if (
+      streamReader.hasRecentEntriesGap(
+        socketData.workspaceId,
+        socketData.replayCutoff,
       )
-    delivery.replayGuestSocket(socket, gapEntries)
+    ) {
+      socketData.closed = true
+      socket.end(REALTIME_CLOSE_CODE.resync, "recent-entries-expired")
+      return
+    }
+    const gapEntries = streamReader.getRecentEntries(
+      socketData.workspaceId,
+      socketData.replayCutoff,
+    )
+    if (!delivery.replayGuestSocket(socket, gapEntries)) {
+      return
+    }
     // Same pending-upgrade-gap rationale as the workspace socket: an
     // invalid record on this shard can arrive while this guest socket's
     // upgrade was still pending, after `onInvalidRecord`'s resync had

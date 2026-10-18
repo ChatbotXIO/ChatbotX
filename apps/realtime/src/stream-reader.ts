@@ -9,6 +9,7 @@ import {
 } from "@chatbotx.io/realtime-protocol"
 import type { Redis } from "@chatbotx.io/redis"
 import { z } from "zod"
+import type { StreamRecordEntry } from "./delivery"
 import { logger } from "./logger"
 
 const STREAM_READ_BLOCK_MS = 1000
@@ -26,6 +27,8 @@ type ActiveShard = {
   deactivateTimer: NodeJS.Timeout | null
   lastId: string
   recentEntries: StreamRecordEntry[]
+  recentEntryCount: number
+  recentEntryStart: number
   shard: number
   socketCount: number
   streamKey: string
@@ -39,11 +42,6 @@ type ActiveShard = {
    * finding (pending-upgrade gap).
    */
   taintedUpToId?: string
-}
-
-export type StreamRecordEntry = {
-  id: string
-  record: RealtimeStreamRecord
 }
 
 export type StreamReader = {
@@ -61,6 +59,7 @@ export type StreamReader = {
   getTaintedUpToId: (workspaceId: string) => string | undefined
   releaseWorkspace: (workspaceId: string) => void
   start: () => void
+  hasRecentEntriesGap: (workspaceId: string, afterId?: string) => boolean
 }
 
 const toFieldMap = (fields: StreamFieldList): Map<string, string> => {
@@ -92,7 +91,7 @@ const looseStreamRecordShapeSchema = z.object({
   workspaceId: z.string().min(1),
 })
 
-export type ParsedStreamRecord =
+type ParsedStreamRecord =
   | { droppedCount?: number; ok: true; record: RealtimeStreamRecord }
   | { error: unknown; ok: false; workspaceId?: string }
 
@@ -225,10 +224,18 @@ export const createStreamReader = ({
     activeShard: ActiveShard,
     entry: StreamRecordEntry,
   ): void => {
-    activeShard.recentEntries.push(entry)
-    if (activeShard.recentEntries.length > RECENT_ENTRY_LIMIT) {
-      activeShard.recentEntries.shift()
+    const { recentEntries } = activeShard
+    if (activeShard.recentEntryCount < RECENT_ENTRY_LIMIT) {
+      const index =
+        (activeShard.recentEntryStart + activeShard.recentEntryCount) %
+        RECENT_ENTRY_LIMIT
+      recentEntries[index] = entry
+      activeShard.recentEntryCount += 1
+      return
     }
+    recentEntries[activeShard.recentEntryStart] = entry
+    activeShard.recentEntryStart =
+      (activeShard.recentEntryStart + 1) % RECENT_ENTRY_LIMIT
   }
 
   const activateWorkspace = async (workspaceId: string): Promise<string> => {
@@ -256,6 +263,8 @@ export const createStreamReader = ({
         deactivateTimer: null,
         lastId: await getLatestStreamId(redis, streamKey),
         recentEntries: [],
+        recentEntryCount: 0,
+        recentEntryStart: 0,
         shard,
         socketCount: 1,
         streamKey,
@@ -288,12 +297,13 @@ export const createStreamReader = ({
     )
   }
 
-  const dispatchEntries = (response: StreamReadResult): void => {
+  const dispatchEntries = (
+    response: StreamReadResult,
+    activeShardsByStreamKey: Map<string, ActiveShard>,
+  ): void => {
     const dispatchedEntries: StreamRecordEntry[] = []
     for (const [streamKey, entries] of response) {
-      const activeShard = getActiveShards().find(
-        (candidate) => candidate.streamKey === streamKey,
-      )
+      const activeShard = activeShardsByStreamKey.get(streamKey)
       if (!activeShard) {
         continue
       }
@@ -364,6 +374,12 @@ export const createStreamReader = ({
           await delay(IDLE_RETRY_MS)
           continue
         }
+        const activeShardsByStreamKey = new Map(
+          activeShardsSnapshot.map((activeShard) => [
+            activeShard.streamKey,
+            activeShard,
+          ]),
+        )
 
         try {
           const response = (await reader.call(
@@ -382,7 +398,7 @@ export const createStreamReader = ({
             onRecovered()
           }
           if (response) {
-            dispatchEntries(response)
+            dispatchEntries(response, activeShardsByStreamKey)
           }
         } catch (error) {
           recoveringFromError = true
@@ -415,15 +431,39 @@ export const createStreamReader = ({
       if (!activeShard) {
         return []
       }
-      return activeShard.recentEntries.filter(
-        (entry) => !afterId || isRealtimeSeqAfter(entry.id, afterId),
-      )
+      const entries: StreamRecordEntry[] = []
+      for (let offset = 0; offset < activeShard.recentEntryCount; offset += 1) {
+        const index =
+          (activeShard.recentEntryStart + offset) % RECENT_ENTRY_LIMIT
+        const entry = activeShard.recentEntries[index]
+        if (
+          entry?.record.workspaceId === workspaceId &&
+          (!afterId || isRealtimeSeqAfter(entry.id, afterId))
+        ) {
+          entries.push(entry)
+        }
+      }
+      return entries
+    },
+    hasRecentEntriesGap: (workspaceId, afterId) => {
+      if (!afterId) {
+        return false
+      }
+      const activeShard = activeShards.get(getRealtimeStreamShard(workspaceId))
+      if (!activeShard || activeShard.recentEntryCount < RECENT_ENTRY_LIMIT) {
+        return false
+      }
+      const oldestEntry =
+        activeShard.recentEntries[activeShard.recentEntryStart]
+      return !!oldestEntry && isRealtimeSeqAfter(oldestEntry.id, afterId)
     },
     getTaintedUpToId: (workspaceId) =>
       activeShards.get(getRealtimeStreamShard(workspaceId))?.taintedUpToId,
     releaseWorkspace,
     start: () => {
-      loop ??= run()
+      loop ??= run().catch((err) => {
+        logger.error({ err }, "Realtime stream reader stopped unexpectedly")
+      })
     },
   }
 }

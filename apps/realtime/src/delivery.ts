@@ -13,6 +13,7 @@ export type WorkspaceSocketData = RealtimeMemberClaims & {
   overloadRetryAfterMs?: number
   replayCutoff?: string
   replayEntries: StreamRecordEntry[]
+  pendingUpgrade?: { release: () => void }
   workspaceId: string
 }
 export type GuestSocketData = {
@@ -21,6 +22,7 @@ export type GuestSocketData = {
   overloadRetryAfterMs?: number
   replayCutoff: string
   replayEntries: StreamRecordEntry[]
+  pendingUpgrade?: { release: () => void }
   workspaceId: string
 }
 
@@ -29,7 +31,7 @@ export type StreamRecordEntry = {
   record: RealtimeStreamRecord
 }
 
-export type WorkspaceSocket = {
+type WorkspaceSocket = {
   end: (code?: number, reason?: string) => void
   getUserData: () => WorkspaceSocketData
   send: (data: string) => number
@@ -39,7 +41,7 @@ export type WorkspaceSocket = {
 /** Minimal closable reference kept per-workspace so a server-detected gap
  * (e.g. a malformed stream record) can force every affected guest socket to
  * resync, not just the member sockets `WorkspaceSocket` already covers. */
-export type GuestSocket = {
+type GuestSocket = {
   end: (code?: number, reason?: string) => void
   getUserData: () => GuestSocketData
 }
@@ -50,6 +52,11 @@ type PublishApp = {
 
 type WorkspaceEvent = {
   route?: RealtimeEventRoute
+}
+type RestrictedAudience = {
+  sockets: Set<WorkspaceSocket>
+  teamIds: Set<string>
+  userId: string
 }
 
 const memberKey = (workspaceId: string, userId: string): string =>
@@ -100,7 +107,6 @@ const filterWorkspaceEvents = <Event extends WorkspaceEvent>(
   if (chatScope === "none") {
     return []
   }
-
   const teams = new Set(teamIds)
   return events.filter((event) => hasRouteMatch(event, userId, teams))
 }
@@ -118,7 +124,7 @@ export type RealtimeDelivery = {
       send: (data: string) => number
     },
     entries?: StreamRecordEntry[],
-  ) => void
+  ) => boolean
   replayWorkspaceSocket: (
     socket: WorkspaceSocket,
     entries?: StreamRecordEntry[],
@@ -145,14 +151,17 @@ export const createRealtimeDelivery = (
   counters: RealtimeServerCounters,
 ): RealtimeDelivery => {
   const connectionsByMember = new Map<string, Set<WorkspaceSocket>>()
-  const restrictedByWorkspace = new Map<string, Set<WorkspaceSocket>>()
+  const restrictedByWorkspace = new Map<
+    string,
+    Map<string, RestrictedAudience>
+  >()
   const memberSocketsByWorkspace = new Map<string, Set<WorkspaceSocket>>()
   const guestSocketsByWorkspace = new Map<string, Set<GuestSocket>>()
 
   const recordPublish = (topic: string, frame: string): void => {
     app.publish(topic, frame)
     counters.publishes += 1
-    counters.publishBytes += frame.length
+    counters.publishBytes += Buffer.byteLength(frame)
   }
 
   const recordSend = (
@@ -163,23 +172,46 @@ export const createRealtimeDelivery = (
     },
     frame: string,
   ): void => {
+    // `closeOnBackpressureLimit` lets uWS close a socket from `send()`.
+    // Retain its user data before that call so a drop cannot throw while
+    // attempting to resync the remaining fan-out recipients.
+    const socketData = socket.getUserData()
     const result = socket.send(frame)
     counters.sends += 1
-    counters.sendBytes += frame.length
+    counters.sendBytes += Buffer.byteLength(frame)
     if (result !== 2) {
       return
     }
-    // uWS returned "dropped" (backpressure/connection gone): the client is
-    // now missing this event and has no way to detect the gap on its own.
-    // Force a resync close so it reconnects and gets a fresh replay instead
-    // of silently running with a hole in its event stream.
     counters.drops += 1
-    const socketData = socket.getUserData()
     if (socketData.closed) {
       return
     }
     socketData.closed = true
     socket.end(REALTIME_CLOSE_CODE.resync, "backpressure-drop")
+  }
+
+  const sendWithResync = (
+    socket: {
+      end: (code?: number, reason?: string) => void
+      getUserData: () => { closed: boolean }
+      send: (data: string) => number
+    },
+    frame: string,
+  ): void => {
+    try {
+      recordSend(socket, frame)
+    } catch {
+      try {
+        const socketData = socket.getUserData()
+        if (socketData.closed) {
+          return
+        }
+        socketData.closed = true
+        socket.end(REALTIME_CLOSE_CODE.resync, "send-failed")
+      } catch {
+        // uWS may have invalidated the socket while reporting the send error.
+      }
+    }
   }
 
   const sendWorkspaceRecord = (
@@ -197,7 +229,7 @@ export const createRealtimeDelivery = (
       socket.getUserData(),
     )
     if (events.length > 0) {
-      recordSend(socket, encodeBatch(events, entry.id))
+      sendWithResync(socket, encodeBatch(events, entry.id))
     }
   }
 
@@ -208,7 +240,7 @@ export const createRealtimeDelivery = (
     if (socket.getUserData().closed || entry.record.kind !== "member-send") {
       return
     }
-    recordSend(socket, encodeBatch([entry.record.event], entry.id))
+    sendWithResync(socket, encodeBatch([entry.record.event], entry.id))
   }
 
   const dispatch = (entry: StreamRecordEntry): void => {
@@ -219,31 +251,25 @@ export const createRealtimeDelivery = (
           `ws:${record.workspaceId}:all`,
           encodeBatch(record.events, entry.id),
         )
-        const restrictedSockets = restrictedByWorkspace.get(record.workspaceId)
-        if (!restrictedSockets) {
+        const restrictedAudiences = restrictedByWorkspace.get(
+          record.workspaceId,
+        )
+        if (!restrictedAudiences) {
           return
         }
-        const framesByAudience = new Map<string, string | null>()
-        for (const socket of restrictedSockets) {
-          if (socket.getUserData().closed) {
+        for (const audience of restrictedAudiences.values()) {
+          const events = record.events.filter((event) =>
+            hasRouteMatch(event, audience.userId, audience.teamIds),
+          )
+          if (events.length === 0) {
             continue
           }
-          const { teamIds, userId } = socket.getUserData()
-          const audienceKey = `${userId}|${teamKey(teamIds)}`
-          const frame = framesByAudience.get(audienceKey)
-          if (frame === undefined) {
-            const events = filterWorkspaceEvents(
-              record.events,
-              socket.getUserData(),
-            )
-            framesByAudience.set(
-              audienceKey,
-              events.length > 0 ? encodeBatch(events, entry.id) : null,
-            )
-          }
-          const resolvedFrame = framesByAudience.get(audienceKey)
-          if (resolvedFrame) {
-            recordSend(socket, resolvedFrame)
+          const frame = encodeBatch(events, entry.id)
+          for (const socket of audience.sockets) {
+            if (socket.getUserData().closed) {
+              continue
+            }
+            sendWithResync(socket, frame)
           }
         }
         return
@@ -298,7 +324,7 @@ export const createRealtimeDelivery = (
       guestSocketsByWorkspace.set(workspaceId, sockets)
     },
     addWorkspaceSocket: (socket) => {
-      const { chatScope, userId, workspaceId } = socket.getUserData()
+      const { chatScope, teamIds, userId, workspaceId } = socket.getUserData()
       const key = memberKey(workspaceId, userId)
       const sockets = connectionsByMember.get(key) ?? new Set<WorkspaceSocket>()
       const firstSocket = sockets.size === 0
@@ -309,10 +335,18 @@ export const createRealtimeDelivery = (
       workspaceSockets.add(socket)
       memberSocketsByWorkspace.set(workspaceId, workspaceSockets)
       if (chatScope === "assigned") {
-        const restrictedSockets =
-          restrictedByWorkspace.get(workspaceId) ?? new Set<WorkspaceSocket>()
-        restrictedSockets.add(socket)
-        restrictedByWorkspace.set(workspaceId, restrictedSockets)
+        const audienceKey = `${userId}|${teamKey(teamIds)}`
+        const audiences =
+          restrictedByWorkspace.get(workspaceId) ??
+          new Map<string, RestrictedAudience>()
+        const audience = audiences.get(audienceKey) ?? {
+          sockets: new Set<WorkspaceSocket>(),
+          teamIds: new Set(teamIds),
+          userId,
+        }
+        audience.sockets.add(socket)
+        audiences.set(audienceKey, audience)
+        restrictedByWorkspace.set(workspaceId, audiences)
       }
       return firstSocket
     },
@@ -329,7 +363,7 @@ export const createRealtimeDelivery = (
       }
     },
     removeWorkspaceSocket: (socket) => {
-      const { chatScope, userId, workspaceId } = socket.getUserData()
+      const { chatScope, teamIds, userId, workspaceId } = socket.getUserData()
       const key = memberKey(workspaceId, userId)
       const sockets = connectionsByMember.get(key)
       const workspaceSockets = memberSocketsByWorkspace.get(workspaceId)
@@ -342,9 +376,14 @@ export const createRealtimeDelivery = (
       }
       sockets.delete(socket)
       if (chatScope === "assigned") {
-        const restrictedSockets = restrictedByWorkspace.get(workspaceId)
-        restrictedSockets?.delete(socket)
-        if (restrictedSockets?.size === 0) {
+        const audiences = restrictedByWorkspace.get(workspaceId)
+        const audienceKey = `${userId}|${teamKey(teamIds)}`
+        const audience = audiences?.get(audienceKey)
+        audience?.sockets.delete(socket)
+        if (audience?.sockets.size === 0) {
+          audiences?.delete(audienceKey)
+        }
+        if (audiences?.size === 0) {
           restrictedByWorkspace.delete(workspaceId)
         }
       }
@@ -358,23 +397,32 @@ export const createRealtimeDelivery = (
       socket,
       entries = socket.getUserData().replayEntries,
     ) => {
-      const { guestConversationId, workspaceId } = socket.getUserData()
+      const socketData = socket.getUserData()
+      const { guestConversationId, workspaceId } = socketData
       for (const entry of entries) {
+        if (socketData.closed) {
+          return false
+        }
         if (
           entry.record.kind === "guest-event" &&
           entry.record.workspaceId === workspaceId &&
           entry.record.guestConversationId === guestConversationId
         ) {
-          recordSend(socket, encodeBatch([entry.record.event], entry.id))
+          sendWithResync(socket, encodeBatch([entry.record.event], entry.id))
         }
       }
+      return !socketData.closed
     },
     replayWorkspaceSocket: (
       socket,
       entries = socket.getUserData().replayEntries,
     ) => {
-      const { workspaceId } = socket.getUserData()
+      const socketData = socket.getUserData()
+      const { userId, workspaceId } = socketData
       for (const entry of entries) {
+        if (socketData.closed) {
+          return false
+        }
         if (entry.record.workspaceId !== workspaceId) {
           continue
         }
@@ -383,7 +431,7 @@ export const createRealtimeDelivery = (
             sendWorkspaceRecord(socket, entry)
             break
           case "member-send":
-            if (entry.record.userId === socket.getUserData().userId) {
+            if (entry.record.userId === userId) {
               sendMemberRecord(socket, entry)
             }
             break
@@ -398,7 +446,7 @@ export const createRealtimeDelivery = (
             break
         }
       }
-      return true
+      return !socketData.closed
     },
     resyncWorkspace: (workspaceId, reason) => {
       for (const socket of memberSocketsByWorkspace.get(workspaceId) ?? []) {
@@ -422,7 +470,7 @@ export const createRealtimeDelivery = (
       if (socket.getUserData().closed) {
         return
       }
-      recordSend(socket, encodeBatch([], seq))
+      sendWithResync(socket, encodeBatch([], seq))
     },
     subscribeGuestSocket: (socket) => {
       const { guestConversationId, workspaceId } = socket.getUserData()

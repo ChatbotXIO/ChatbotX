@@ -4,7 +4,7 @@ import { z } from "zod"
 const gatewayEnv = () =>
   createEnv({
     server: {
-      HOSTNAME: z.string().min(1).default("0.0.0.0"),
+      REALTIME_HOST: z.string().min(1).default("0.0.0.0"),
       PORT: z.coerce.number().int().min(1).max(65_535).default(1999),
       REALTIME_BROADCAST_SECRET: z.string().min(32),
       REALTIME_CONNECTION_LIFETIME_MS: z.coerce
@@ -33,13 +33,15 @@ const gatewayEnv = () =>
         .int()
         .min(1)
         .default(1000),
+      NEXT_PUBLIC_BUILDER_URL: z.url(),
       REDIS_URL: z.url(),
     },
     runtimeEnv: process.env,
     skipValidation: process.env.SKIP_ENV_CHECK === "true",
   })
 
-export type RealtimeGatewayConfig = {
+type RealtimeGatewayConfig = {
+  builderUrl: string
   connectionLifetimeMs: number
   host: string
   maxConnections: number
@@ -55,8 +57,9 @@ export type RealtimeGatewayConfig = {
 export const resolveRealtimeGatewayConfig = (): RealtimeGatewayConfig => {
   const environment = gatewayEnv()
   return {
+    builderUrl: environment.NEXT_PUBLIC_BUILDER_URL,
     connectionLifetimeMs: environment.REALTIME_CONNECTION_LIFETIME_MS,
-    host: environment.HOSTNAME,
+    host: environment.REALTIME_HOST,
     maxConnections: environment.REALTIME_MAX_CONNECTIONS,
     maxConnectionsPerGuest: environment.REALTIME_MAX_CONNECTIONS_PER_GUEST,
     maxConnectionsPerWorkspace:

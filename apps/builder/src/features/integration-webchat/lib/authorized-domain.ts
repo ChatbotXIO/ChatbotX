@@ -95,6 +95,14 @@ export const isFirstPartyOrigin = (
   return !!originHost && !!appHost && originHost === appHost.toLowerCase()
 }
 
+export const isAllowedGuestOrigin = (
+  parentOrigin: string | undefined,
+  authorizedDomains: string[],
+  appHost: string,
+): boolean =>
+  isEmbedOriginAllowed(parentOrigin, authorizedDomains) ||
+  isFirstPartyOrigin(parentOrigin, appHost)
+
 export const getParentOriginFromUrl = (url: string | null | undefined) => {
   if (!url) {
     return null

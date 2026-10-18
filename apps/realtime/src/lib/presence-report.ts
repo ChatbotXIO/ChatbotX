@@ -4,7 +4,6 @@ import {
   truncatePresenceUserIds,
 } from "@chatbotx.io/realtime-protocol/presence"
 import ky from "ky"
-import { env } from "../env"
 import { logger } from "../logger"
 
 /**
@@ -17,6 +16,8 @@ import { logger } from "../logger"
 export async function reportWorkspacePresence(
   workspaceId: string,
   userIds: string[],
+  builderUrl: string,
+  secret: string,
 ): Promise<void> {
   try {
     // Bounded here, before hashing/sending, not left for the route to reject —
@@ -32,12 +33,9 @@ export async function reportWorkspacePresence(
     const bodyHash = await hashPresenceUserIds(boundedUserIds)
     const token = await signPresenceReportToken(
       { workspaceId, bodyHash },
-      env.REALTIME_BROADCAST_SECRET,
+      secret,
     )
-    const url = new URL(
-      "/api/workspace-presence/report",
-      env.NEXT_PUBLIC_BUILDER_URL,
-    )
+    const url = new URL("/api/workspace-presence/report", builderUrl)
     url.searchParams.set("workspaceId", workspaceId)
     await ky.post(url.toString(), {
       headers: { Authorization: `Bearer ${token}` },

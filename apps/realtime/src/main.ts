@@ -3,9 +3,10 @@ import { createRealtimeGateway } from "./gateway"
 import { resolveRealtimeGatewayConfig } from "./gateway-config"
 import { logger } from "./logger"
 
-export const main = async (): Promise<void> => {
+const main = async (): Promise<void> => {
   const config = resolveRealtimeGatewayConfig()
   const gateway = createRealtimeGateway({
+    builderUrl: config.builderUrl,
     connectionLifetimeMs: config.connectionLifetimeMs,
     maxConnections: config.maxConnections,
     maxConnectionsPerGuest: config.maxConnectionsPerGuest,

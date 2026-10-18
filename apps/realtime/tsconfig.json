@@ -1,7 +1,7 @@
 {
   "extends": "@chatbotx.io/typescript-config/base.json",
   "compilerOptions": {
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ESNext"],
     "types": ["node"]
   },
   "include": ["src/**/*.ts"]

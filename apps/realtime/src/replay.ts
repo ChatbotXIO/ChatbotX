@@ -9,7 +9,7 @@ import { logger } from "./logger"
 import { parseStreamRecord, type StreamEntry } from "./stream-reader"
 
 /** Replay window cap — also the "too large, just resync" threshold. */
-export const MAX_REPLAY_ENTRIES = 500
+const MAX_REPLAY_ENTRIES = 500
 
 const REPLAY_PAGE_SIZE = MAX_REPLAY_ENTRIES + 1
 /** A shard's stream is shared by every workspace hashed to it (~1/256 of
@@ -23,7 +23,7 @@ const REPLAY_PAGE_SIZE = MAX_REPLAY_ENTRIES + 1
  */
 const MAX_REPLAY_SCAN_ENTRIES = REPLAY_PAGE_SIZE * 20
 
-export type ReplayResult = {
+type ReplayResult = {
   closeReason?: string
   /** Entries whose record (or part of it) couldn't be parsed during replay,
    * attributed to THIS workspace only (a shard is shared by every

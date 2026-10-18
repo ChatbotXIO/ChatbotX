@@ -2,8 +2,9 @@ import type { HttpRequest } from "uWebSockets.js"
 import { REALTIME_CLOSE_CODE } from "@chatbotx.io/realtime-protocol"
 import { decrementKeyedCount, incrementKeyedCount } from "./lib/keyed-count"
 
-export const OVERLOAD_RETRY_AFTER_MIN_MS = 1000
-export const OVERLOAD_RETRY_AFTER_SPREAD_MS = 4000
+const OVERLOAD_RETRY_AFTER_MIN_MS = 1000
+const OVERLOAD_RETRY_AFTER_SPREAD_MS = 4000
+export const SLOW_CONSUMER_BUFFER_BYTES = 512_000
 
 /**
  * Jittered retry hint for an overloaded connection. The spread keeps a mass
@@ -65,7 +66,7 @@ export const createGatewayConnectionState = <
 
 /** One keyed counter to move in lockstep with its siblings — see
  * `acquireSlot`/`releaseSlot`. */
-export type KeyedSlot = { key: string; map: Map<string, number> }
+type KeyedSlot = { key: string; map: Map<string, number> }
 
 /** Increments every keyed counter in `slots` together — used when a pending
  * upgrade is admitted, so a per-key/per-workspace pending count never drifts
@@ -85,11 +86,42 @@ export const releaseSlot = (slots: KeyedSlot[]): void => {
     decrementKeyedCount(slot.map, slot.key)
   }
 }
+export type PendingUpgrade = { release: () => void }
+
+export const createPendingUpgrade = <
+  WorkspaceSocketData extends object,
+  GuestSocketData extends object,
+>(
+  state: GatewayConnectionState<WorkspaceSocketData, GuestSocketData>,
+  slots: KeyedSlot[],
+  isGuest = false,
+): PendingUpgrade => {
+  state.pendingUpgrades += 1
+  if (isGuest) {
+    state.pendingGuestUpgrades += 1
+  }
+  acquireSlot(slots)
+  let released = false
+
+  return {
+    release: () => {
+      if (released) {
+        return
+      }
+      released = true
+      state.pendingUpgrades -= 1
+      if (isGuest) {
+        state.pendingGuestUpgrades -= 1
+      }
+      releaseSlot(slots)
+    },
+  }
+}
 
 /** The handful of upgrade-request headers uWS needs verbatim to complete
  * `res.upgrade(...)` — read once per connect by both the workspace and
  * guest upgrade handlers. */
-export type UpgradeRequestHeaders = {
+type UpgradeRequestHeaders = {
   websocketExtensions: string
   websocketKey: string
   websocketProtocol: string

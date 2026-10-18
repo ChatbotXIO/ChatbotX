@@ -7,9 +7,11 @@ const mocks = vi.hoisted(() => ({
   checkApiRateLimit: vi.fn(),
   checkGuestRateLimit: vi.fn(),
   integrationWebchatServiceFindByIdForWorkspaceOrNull: vi.fn(),
+  isWorkspaceScheduledForDeletion: vi.fn(),
   resolveBroadcastSecret: vi.fn(),
   signGuestConnectToken: vi.fn(),
   verifyWebchatAccessToken: vi.fn(),
+  workspaceServiceFind: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
@@ -17,7 +19,9 @@ vi.mock("@chatbotx.io/business", () => ({
     findByIdForWorkspaceOrNull:
       mocks.integrationWebchatServiceFindByIdForWorkspaceOrNull,
   },
+  isWorkspaceScheduledForDeletion: mocks.isWorkspaceScheduledForDeletion,
   resolveBroadcastSecret: mocks.resolveBroadcastSecret,
+  workspaceService: { find: mocks.workspaceServiceFind },
 }))
 
 vi.mock("@chatbotx.io/realtime-protocol", () => ({
@@ -37,6 +41,9 @@ vi.mock("@/lib/rate-limit/guest-rate-limit", () => ({
 
 vi.mock("@/lib/rate-limit/api-rate-limit", () => ({
   checkApiRateLimit: mocks.checkApiRateLimit,
+}))
+vi.mock("@/lib/domain", () => ({
+  getDomainFromHeader: () => "builder.test",
 }))
 
 // Dynamic import required: the route module must load after the vi.mock
@@ -88,7 +95,9 @@ describe("POST /api/guest/realtime-token", () => {
       webchat(),
     )
     mocks.verifyWebchatAccessToken.mockResolvedValue({ authorized: true })
-    mocks.resolveBroadcastSecret.mockResolvedValue("broadcast-secret")
+    mocks.isWorkspaceScheduledForDeletion.mockReturnValue(false)
+    mocks.workspaceServiceFind.mockResolvedValue(null)
+    mocks.resolveBroadcastSecret.mockReturnValue("broadcast-secret")
     mocks.signGuestConnectToken.mockResolvedValue("signed-guest-token")
   })
 
@@ -159,6 +168,18 @@ describe("POST /api/guest/realtime-token", () => {
 
     expect(response.status).toBe(403)
     expect(mocks.checkApiRateLimit).not.toHaveBeenCalled()
+  })
+
+  test("accepts the first-party origin even when the webchat has an allowlist", async () => {
+    mocks.integrationWebchatServiceFindByIdForWorkspaceOrNull.mockResolvedValue(
+      webchat({ authorizedDomains: ["allowed.example"] }),
+    )
+
+    const response = await POST(
+      buildRequest(baseBody({ parentOrigin: "https://builder.test" })),
+    )
+
+    expect(response.status).toBe(200)
   })
 
   test("returns 200 with a token for an authorized request within all rate limits", async () => {
