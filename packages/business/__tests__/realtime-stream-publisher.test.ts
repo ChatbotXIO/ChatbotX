@@ -4,6 +4,7 @@ const {
   connect,
   createRedisConnection,
   disconnect,
+  eval: evaluate,
   exec,
   loggerError,
   loggerWarn,
@@ -15,6 +16,7 @@ const {
   connect: vi.fn(),
   createRedisConnection: vi.fn(),
   disconnect: vi.fn(),
+  eval: vi.fn(),
   exec: vi.fn(),
   loggerError: vi.fn(),
   loggerWarn: vi.fn(),
@@ -58,6 +60,7 @@ beforeEach(() => {
   createRedisConnection.mockReturnValue({
     connect,
     disconnect,
+    eval: evaluate,
     multi,
     set,
   })
@@ -72,6 +75,8 @@ beforeEach(() => {
   multi.mockReset()
   multi.mockReturnValue({ exec, xadd, xtrim })
   set.mockReset()
+  evaluate.mockReset()
+  evaluate.mockResolvedValue(0)
   set.mockResolvedValue("OK")
   xadd.mockReset()
   xadd.mockReturnValue({ exec, xadd, xtrim })
@@ -148,12 +153,14 @@ describe("realtime stream publisher Redis connection", () => {
       .mockReturnValueOnce({
         connect: initialConnect,
         disconnect,
+        eval: evaluate,
         multi,
         set,
       })
       .mockReturnValueOnce({
         connect: retryConnect,
         disconnect,
+        eval: evaluate,
         multi,
         set,
       })
@@ -301,11 +308,41 @@ describe("realtime stream publisher Redis connection", () => {
     })
   })
 
-  test("writes a numeric revoked-at marker and appends with the Redis stream retention arguments", async () => {
-    const { getRealtimeMemberRevokedKey, getRealtimeStreamKey } = await import(
+  test("advances a revoke marker through an atomic compare-and-set", async () => {
+    const { getRealtimeMemberRevokedKey } = await import(
       "@chatbotx.io/realtime-protocol"
     )
-    const { retryWorkspaceMemberRealtimeConnections } = await import(
+    const { markRealtimeMemberRevoked } = await import(
+      "../src/platform/realtime-stream-publisher"
+    )
+
+    await markRealtimeMemberRevoked("ws-1", "user-1", 2000)
+    await markRealtimeMemberRevoked("ws-1", "user-1", 1000)
+
+    expect(evaluate).toHaveBeenCalledTimes(2)
+    expect(evaluate).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining("next > existing"),
+      1,
+      getRealtimeMemberRevokedKey("ws-1", "user-1"),
+      "2000",
+      "65",
+    )
+    expect(evaluate).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining("next > existing"),
+      1,
+      getRealtimeMemberRevokedKey("ws-1", "user-1"),
+      "1000",
+      "65",
+    )
+  })
+
+  test("appends with the Redis stream retention arguments", async () => {
+    const { getRealtimeStreamKey } = await import(
+      "@chatbotx.io/realtime-protocol"
+    )
+    const { revokeWorkspaceMemberRealtimeConnections } = await import(
       "../src/platform/realtime-broadcast"
     )
     exec.mockResolvedValue([
@@ -313,19 +350,12 @@ describe("realtime stream publisher Redis connection", () => {
       [null, 0],
     ])
 
-    await retryWorkspaceMemberRealtimeConnections({
+    await revokeWorkspaceMemberRealtimeConnections({
       reason: "deleted",
       userId: "user-1",
       workspaceId: "ws-1",
     })
 
-    expect(set).toHaveBeenCalledWith(
-      getRealtimeMemberRevokedKey("ws-1", "user-1"),
-      expect.any(String),
-      "EX",
-      65,
-    )
-    expect(Number(set.mock.calls[0]?.[1])).toBeGreaterThan(0)
     expect(xadd).toHaveBeenCalledWith(
       getRealtimeStreamKey("ws-1"),
       "MAXLEN",

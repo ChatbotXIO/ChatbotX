@@ -124,13 +124,18 @@ const memberClaimsSchema = z.object({
   iatMs: issuedAtMsSchema,
 })
 
-/** Claims carried by a member realtime-connect token: the verified user id. */
+/**
+ * Claims carried by a member realtime-connect token: the verified user id,
+ * chat scope, assigned team ids, and the millisecond-precision issuance time
+ * used by revocation checks.
+ */
 export type RealtimeMemberClaims = z.infer<typeof memberClaimsSchema>
 
 /**
  * Mints a short-lived connect token bound to a member of a workspace connection:
- * `aud` carries the workspace id and the payload carries the verified `userId`.
- * Only the issuer (Builder, after checking workspace membership) should call this.
+ * `aud` carries the workspace id; the payload carries the verified `userId`,
+ * `chatScope`, `teamIds`, and `iatMs`. Only the issuer (Builder, after checking
+ * workspace membership) should call this.
  */
 export const signMemberConnectToken = async (
   member: {
@@ -160,7 +165,7 @@ export const signMemberConnectToken = async (
 /**
  * Verifies a workspace connection token minted by `signMemberConnectToken`.
  * Throws on a bad/expired signature, an `aud` that doesn't match `workspaceId`,
- * or a missing/malformed `userId` claim.
+ * or missing/malformed `userId`, `chatScope`, `teamIds`, or `iatMs` claims.
  */
 export const verifyMemberConnectToken = async (
   token: string,

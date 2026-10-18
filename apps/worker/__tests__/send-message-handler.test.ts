@@ -15,6 +15,7 @@ const {
   mockQueueWorkspaceRealtimeEvent,
   mockRecordPermanentGrant,
   mockMarkReadByOutbound,
+  mockFindConversation,
 } = vi.hoisted(() => {
   const updateChain = {
     set: vi.fn().mockReturnThis(),
@@ -45,6 +46,7 @@ const {
     mockQueueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
     mockRecordPermanentGrant: vi.fn().mockResolvedValue(undefined),
     mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
+    mockFindConversation: vi.fn(),
   }
 })
 
@@ -60,7 +62,10 @@ vi.mock("@chatbotx.io/business", () => ({
     recordSendFailure: mockRecordSendFailure,
   },
   contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
-  conversationService: { markReadByOutbound: mockMarkReadByOutbound },
+  conversationService: {
+    findBy: mockFindConversation,
+    markReadByOutbound: mockMarkReadByOutbound,
+  },
   publishWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
   queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
   messageService: {
@@ -194,6 +199,7 @@ describe("chat send-message handlers", () => {
         runChannelHandler: mockRunChannelHandler,
       },
     })
+    mockFindConversation.mockResolvedValue(conversation)
   })
 
   test("passes sendFrom to sendMessage channel handler", async () => {
@@ -1043,6 +1049,7 @@ describe("chat send-message handlers", () => {
       assignedUserId: "user-42",
       assignedInboxTeamId: "team-7",
     }
+    mockFindConversation.mockResolvedValue(assignedConversation)
 
     await sendMessageToChannel({
       conversation: assignedConversation as never,
@@ -1064,6 +1071,53 @@ describe("chat send-message handlers", () => {
       eventType: "messageFailed",
       data: { messageId: "msg-1", error: "sdk error" },
       route: { assignedTeamIds: ["team-7"], assignedUserIds: ["user-42"] },
+    })
+  })
+
+  test("routes a send failure using the conversation's assignment at emission time", async () => {
+    mockRunChannelHandler.mockRejectedValueOnce(
+      new ChannelError(
+        "expired human agent window",
+        ChannelErrorCategory.PAYLOAD_INVALID,
+        { code: "messenger_human_agent_window_expired" },
+      ),
+    )
+    mockFindConversation.mockResolvedValue({
+      ...conversation,
+      assignedInboxTeamId: "team-current",
+      assignedUserId: "user-current",
+    })
+
+    await sendMessageToChannel({
+      conversation: {
+        ...conversation,
+        assignedInboxTeamId: "team-queued",
+        assignedUserId: "user-queued",
+      } as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        text: "hello",
+        createdAt: new Date("2026-07-09T08:37:21.108Z"),
+      } as never,
+    })
+
+    expect(mockFindConversation).toHaveBeenCalledWith({
+      where: { id: "conv-1", workspaceId: "ws-1" },
+    })
+    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
+      eventType: "messageFailed",
+      data: { messageId: "msg-1", error: "sdk error" },
+      route: {
+        assignedTeamIds: ["team-current"],
+        assignedUserIds: ["user-current"],
+      },
     })
   })
 
@@ -1111,6 +1165,7 @@ describe("chat send-message handlers", () => {
       assignedUserId: "user-42",
       assignedInboxTeamId: "team-7",
     }
+    mockFindConversation.mockResolvedValue(assignedConversation)
 
     await sendMessageToChannel({
       conversation: assignedConversation as never,

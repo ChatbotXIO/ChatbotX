@@ -7,7 +7,6 @@ const mocks = vi.hoisted(() => ({
   isBotMessageQuotaReached: vi.fn(),
   processJob: undefined as undefined | ((job: unknown) => Promise<void>),
   resolveWorkspaceId: vi.fn(),
-  publishWorkspaceRealtimeEvent: vi.fn(),
   sendFlowStep: vi.fn(),
   sendMessageToChannel: vi.fn(),
   sendTypingToChannel: vi.fn(),
@@ -19,7 +18,6 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 vi.mock("@chatbotx.io/business", () => ({
   flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
-  publishWorkspaceRealtimeEvent: mocks.publishWorkspaceRealtimeEvent,
 }))
 vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/sdk")>()
@@ -42,7 +40,6 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
       sendMessengerTemplateMessage: "sendMessengerTemplateMessage",
       sendTyping: "sendTyping",
       notifyExportResult: "notifyExportResult",
-      broadcastEvent: "broadcastEvent",
       deleteChannelMessage: "deleteChannelMessage",
       editChannelMessage: "editChannelMessage",
       changeChannelMessageState: "changeChannelMessageState",
@@ -156,27 +153,6 @@ describe("chat worker bot message quota gate", () => {
 
     expect(mocks.isBotMessageQuotaReached).not.toHaveBeenCalled()
     expect(mocks.sendTypingToChannel).toHaveBeenCalledOnce()
-  })
-
-  test("forwards a legacy broadcast job to the realtime stream publisher", async () => {
-    const event = {
-      data: { typing: true },
-      eventType: "typing",
-      route: { assignedTeamIds: [], assignedUserIds: ["user-1"] },
-    }
-
-    await mocks.processJob?.({
-      id: "job-1",
-      data: {
-        type: "broadcastEvent",
-        data: { event, workspaceId: "workspace-1" },
-      },
-    })
-
-    expect(mocks.publishWorkspaceRealtimeEvent).toHaveBeenCalledWith(
-      "workspace-1",
-      event,
-    )
   })
 
   test("does not invoke a bot channel-message handler when the quota is reached", async () => {

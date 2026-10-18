@@ -25,6 +25,15 @@ const REALTIME_STREAM_MAX_LEN = 10_000
 const PUBLISH_RETRY_ATTEMPTS = 3
 const PUBLISH_RETRY_DELAY_MS = 100
 
+const MARK_REALTIME_MEMBER_REVOKED_LUA = `
+local existing = tonumber(redis.call("GET", KEYS[1]))
+local next = tonumber(ARGV[1])
+if not existing or next > existing then
+  redis.call("SET", KEYS[1], ARGV[1], "EX", ARGV[2])
+end
+return existing or 0
+`
+
 let realtimeStreamConnectionPromise: Promise<Redis> | null = null
 
 const delay = (ms: number): Promise<void> => {
@@ -195,9 +204,9 @@ export const publishRealtimeStreamRecord = async (
 }
 
 /**
- * Records that a member's realtime connections were just revoked, so the
- * gateway can reject a reconnect from a still-unexpired token minted before
- * this moment. The TTL outlives every still-valid token minted before it.
+ * Advances the member revoke marker atomically so delayed retries cannot make
+ * a stale token valid again. The TTL outlives every still-valid pre-revoke
+ * token.
  */
 export const markRealtimeMemberRevoked = async (
   workspaceId: string,
@@ -205,11 +214,12 @@ export const markRealtimeMemberRevoked = async (
   revokedAtMs = Date.now(),
 ): Promise<void> => {
   const connection = await getRealtimeStreamConnection()
-  await connection.set(
+  await connection.eval(
+    MARK_REALTIME_MEMBER_REVOKED_LUA,
+    1,
     getRealtimeMemberRevokedKey(workspaceId, userId),
     `${revokedAtMs}`,
-    "EX",
-    REALTIME_MEMBER_REVOKED_TTL_SECONDS,
+    `${REALTIME_MEMBER_REVOKED_TTL_SECONDS}`,
   )
 }
 

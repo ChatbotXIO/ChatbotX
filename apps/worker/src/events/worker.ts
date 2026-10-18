@@ -35,14 +35,21 @@ async function shutdown(signal: "SIGINT" | "SIGTERM") {
 
   isShuttingDown = true
 
+  let shutdownFailed = false
   try {
     await stopWorker()
-    await flushAllPendingWorkspaceRealtimeEvents()
-    process.exit(0)
   } catch (err) {
-    logger.error({ err }, "Event worker error during shutdown")
-    process.exit(1)
+    shutdownFailed = true
+    logger.error({ err }, "Event worker error stopping during shutdown")
+  } finally {
+    try {
+      await flushAllPendingWorkspaceRealtimeEvents()
+    } catch (err) {
+      shutdownFailed = true
+      logger.error({ err }, "Event worker error flushing realtime events")
+    }
   }
+  process.exit(shutdownFailed ? 1 : 0)
 }
 
 process.once("SIGINT", shutdown)

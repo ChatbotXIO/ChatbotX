@@ -293,6 +293,40 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
   })
 })
 
+it("rejects an expired member token", async () => {
+  const token = await new SignJWT({
+    chatScope: "all",
+    iatMs: Date.now(),
+    purpose: REALTIME_TOKEN_PURPOSE.memberConnect,
+    teamIds: [],
+    userId: "u_1",
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setAudience("workspace:ws_1")
+    .setExpirationTime("-10s")
+    .sign(new TextEncoder().encode(SECRET))
+
+  await expect(
+    verifyMemberConnectToken(token, "ws_1", SECRET),
+  ).rejects.toThrow()
+})
+
+it("rejects an expired presence-report token", async () => {
+  const token = await new SignJWT({
+    bodyHash: "hash-1",
+    purpose: REALTIME_TOKEN_PURPOSE.presenceReport,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setAudience("workspace:ws_1")
+    .setExpirationTime("-10s")
+    .sign(new TextEncoder().encode(SECRET))
+
+  await expect(
+    verifyPresenceReportToken(token, "ws_1", SECRET),
+  ).rejects.toThrow()
+})
+
 describe("signGuestConnectToken / verifyGuestConnectToken", () => {
   it("binds the guest token to its conversation and workspace", async () => {
     const token = await signGuestConnectToken(

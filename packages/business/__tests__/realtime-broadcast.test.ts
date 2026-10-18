@@ -6,7 +6,7 @@ import {
   publishWorkspaceRealtimeEvent,
   queueWorkspaceRealtimeEvent,
   resetRealtimePublishStateForTests,
-  retryWorkspaceMemberRealtimeConnections,
+  revokeWorkspaceMemberRealtimeConnections,
   tryRevokeWorkspaceMemberRealtimeConnections,
 } from "../src/platform/realtime-broadcast"
 
@@ -261,7 +261,7 @@ describe("realtime stream broadcast", () => {
       ),
     ).resolves.toBeUndefined()
     await expect(
-      retryWorkspaceMemberRealtimeConnections({
+      revokeWorkspaceMemberRealtimeConnections({
         userId: "user_1",
         workspaceId: "workspace_1",
         reason: "deleted",
@@ -307,7 +307,7 @@ describe("realtime stream broadcast", () => {
       .mockRejectedValueOnce(new Error("ECONNRESET"))
       .mockResolvedValueOnce(undefined)
 
-    const revoke = retryWorkspaceMemberRealtimeConnections({
+    const revoke = revokeWorkspaceMemberRealtimeConnections({
       revokedAtMs: 1000,
       userId: "user_1",
       workspaceId: "workspace_1",
@@ -336,7 +336,7 @@ describe("realtime stream broadcast", () => {
     const persistentError = new Error("ECONNREFUSED")
     publishRealtimeStreamRecord.mockRejectedValue(persistentError)
 
-    const revoke = retryWorkspaceMemberRealtimeConnections({
+    const revoke = revokeWorkspaceMemberRealtimeConnections({
       userId: "user_1",
       workspaceId: "workspace_1",
       reason: "deleted",
@@ -377,7 +377,7 @@ describe("realtime stream broadcast", () => {
         },
       },
       {
-        attempts: 5,
+        attempts: 8,
         backoff: { delay: 1000, type: "exponential" },
         removeOnComplete: true,
       },

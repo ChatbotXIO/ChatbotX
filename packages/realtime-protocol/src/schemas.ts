@@ -26,7 +26,7 @@ type RealtimeEventTypeValue =
 
 type RealtimeEventDelivery = "conversation" | "workspace" | "targeted"
 
-const EVENT_DELIVERY = {
+export const EVENT_DELIVERY = {
   [RealtimeEventType.messageCreated]: "conversation",
   [RealtimeEventType.messageDeleted]: "conversation",
   [RealtimeEventType.messageUpdated]: "conversation",
@@ -46,6 +46,16 @@ const EVENT_DELIVERY = {
   [RealtimeEventType.whatsappCallPermissionUpdated]: "conversation",
   [RealtimeEventType.contactInboxThreadControlUpdated]: "workspace",
 } as const satisfies Record<RealtimeEventTypeValue, RealtimeEventDelivery>
+
+const guestRealtimeEventTypes = new Set<RealtimeEventTypeValue>([
+  RealtimeEventType.messageCreated,
+  RealtimeEventType.messageDeleted,
+  RealtimeEventType.messageUpdated,
+  RealtimeEventType.messageContentUpdated,
+  RealtimeEventType.messageIdAssigned,
+  RealtimeEventType.messageFailed,
+  RealtimeEventType.typing,
+])
 
 type RealtimeEventTypesForDelivery<T extends RealtimeEventDelivery> = {
   [EventType in keyof typeof EVENT_DELIVERY]: (typeof EVENT_DELIVERY)[EventType] extends T
@@ -137,7 +147,7 @@ export const routeForAssignment = ({
  * rule, scoped to the one delivery kind it actually applies to.
  */
 export const realtimeEventEnvelopeSchema = z.object({
-  eventType: z.string(),
+  eventType: z.enum(RealtimeEventType),
   data: z.unknown(),
   route: realtimeEventRouteSchema.optional(),
 })
@@ -189,11 +199,20 @@ export const realtimeMemberBatchEnvelopeSchema = batchOf(
 )
 
 /**
- * Guest-socket delivery is never route-filtered, so it accepts routeless
- * conversation-scoped events.
+ * Guest-socket delivery is never route-filtered, but guests only receive
+ * message updates and their own ephemeral typing signal.
  */
+export const realtimeGuestEventEnvelopeSchema =
+  realtimeEventEnvelopeSchema.refine(
+    (event) => guestRealtimeEventTypes.has(event.eventType),
+    {
+      message: "Event type is not allowed for guest delivery",
+      path: ["eventType"],
+    },
+  )
+
 export const realtimeGuestBatchEnvelopeSchema = batchOf(
-  realtimeEventEnvelopeSchema,
+  realtimeGuestEventEnvelopeSchema,
 )
 
 export type RealtimeEventCreateMessage = {
@@ -530,12 +549,32 @@ export type RealtimeTargetedEventData = MaybeRouted<
   | RealtimeWorkspaceBroadcastEventData
 >
 
-/**
- * Guest widgets receive conversation-targeted updates plus their own ephemeral
- * typing signal, which intentionally has no persisted conversation id.
- */
+type RealtimeGuestMessageEventType =
+  | typeof RealtimeEventType.messageCreated
+  | typeof RealtimeEventType.messageDeleted
+  | typeof RealtimeEventType.messageUpdated
+  | typeof RealtimeEventType.messageContentUpdated
+  | typeof RealtimeEventType.messageIdAssigned
+  | typeof RealtimeEventType.messageFailed
+
+type RealtimeGuestMessageEventData = Extract<
+  AllRealtimeEventData,
+  { eventType: RealtimeGuestMessageEventType }
+>
+
+type Assert<T extends true> = T
+type RealtimeEventDataMatchesDelivery = [
+  AllRealtimeEventData["eventType"],
+] extends [keyof typeof EVENT_DELIVERY]
+  ? [keyof typeof EVENT_DELIVERY] extends [AllRealtimeEventData["eventType"]]
+    ? true
+    : false
+  : false
+export type RealtimeEventDataMatchesDeliveryAssertion =
+  Assert<RealtimeEventDataMatchesDelivery>
+
 export type RealtimeGuestEventData =
-  | RealtimeTargetedEventData
+  | MaybeRouted<RealtimeGuestMessageEventData>
   | {
       eventType: typeof RealtimeEventType.typing
       data: { typing: boolean }

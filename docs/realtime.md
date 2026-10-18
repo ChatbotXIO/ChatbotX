@@ -174,11 +174,11 @@ covering a gap the other two cannot:
 
 1. **`onConnect`** — a new connection (every realtime redeploy, every tab
    opening the inbox).
-2. **`onRequest`** — any inbound workspace-wide broadcast/targeted-send/
-   revoke request from the builder; it arms through the same serialized lock
-   in the background and never delays the request response.
+2. **`onRequest`** — an internal stream-relay delivery request; it arms
+   through the same serialized lock in the background and never delays the
+   request response.
 3. **`onMessage` (client keep-alive ping)** — a QUIET room (an
-   already-open tab, no new connection, no inbound broadcast) has neither
+   already-open tab, no new connection, no inbound delivery) has neither
    of the other two triggers. The builder client
    (`WorkspaceRealtimeProvider`,
    `apps/builder/src/features/realtime/workspace-realtime-provider.tsx`)
@@ -207,13 +207,13 @@ covering a gap the other two cannot:
    essentially nothing beyond the frames themselves in the common case
    where the loop is already healthy.
 
-`PRESENCE_REPORT_INTERVAL_MS` and `PRESENCE_TTL_MS` are owned together in
-ONE place, `@chatbotx.io/partysocket-config/presence` (imported by both
-`apps/realtime` and `packages/business`), specifically so they cannot drift
-apart again: the report interval (10s) is HALF the TTL (20s), enforced by
-both a guard test and an import-time assertion, so a single slow or lost
-report always leaves a full report interval's worth of margin before the
-Redis entry would expire.
+`PRESENCE_REPORT_INTERVAL_MS` and `PRESENCE_TTL_MS` are maintained in both
+`@chatbotx.io/realtime-protocol/presence` and
+`@chatbotx.io/partysocket-config/presence`. The two transport-facing modules
+must stay aligned: the report interval (10s) is HALF the TTL (20s), enforced
+by guard tests and import-time assertions, so a single slow or lost report
+always leaves a full report interval's worth of margin before the Redis entry
+would expire.
 
 The report is authenticated the same JWT scheme the party already uses to
 authenticate INBOUND broadcast requests FROM the builder

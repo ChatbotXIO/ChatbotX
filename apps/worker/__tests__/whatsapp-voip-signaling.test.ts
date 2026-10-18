@@ -228,6 +228,29 @@ describe("handleWhatsappVoipSignalingJob: handleConnect", () => {
     )
   })
 
+  test("logs an error when the offer cannot reach any selected agent", async () => {
+    mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
+    mocks.selectRingTargetsForCall.mockResolvedValue(ringSelection)
+    mocks.publishWorkspaceMemberRealtimeEvent.mockRejectedValue(
+      new Error("stream down"),
+    )
+
+    await handleWhatsappVoipSignalingJob({
+      type: "handleConnect",
+      data: {
+        receivedAt: RECEIVED_AT,
+        wacid: "wacid.ABC",
+        deadlineAt: 2000,
+        phoneNumberId: "phone-1",
+      },
+    })
+
+    expect(mocks.logger.error).toHaveBeenCalledWith(
+      { targetCount: 2, wacid: "wacid.ABC" },
+      "Whatsapp VoIP: unable to publish the offer realtime event to any target",
+    )
+  })
+
   test("no eligible agent (empty selection): Meta-rejects and finalizes as rejected, ending the already-reserved control", async () => {
     mocks.readOffer.mockResolvedValue({ sdp: "v=0...", deadlineAt: 2000 })
     mocks.selectRingTargetsForCall.mockResolvedValue({

@@ -51,10 +51,7 @@ import {
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import { logDiagnostic } from "@chatbotx.io/logger"
-import {
-  RealtimeEventType,
-  routeForConversation,
-} from "@chatbotx.io/realtime-protocol"
+import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import {
   IntegrationException,
   type MessageButtonTemplate,
@@ -658,7 +655,6 @@ export async function sendFlowStep({
     stepId: step.id,
     nodeId: step.nodeId,
   }
-  const conversationRoute = routeForConversation(conversation)
 
   // getUserData produces an outgoing message through its own handler, so it is
   // deliberately excluded from channel-deliverable steps.
@@ -1116,7 +1112,7 @@ export async function sendFlowStep({
       conversation.workspaceId,
       message?.createdAt,
       parsedError.message,
-      { route: conversationRoute, silent: isBulkOutbound },
+      { conversationId: conversation.id, silent: isBulkOutbound },
     )
 
     // Always terminal here, for the same reason the `message:failed` emit above

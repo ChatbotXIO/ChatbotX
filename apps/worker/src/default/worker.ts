@@ -203,10 +203,18 @@ async function startDefaultWorker() {
           return
         }
         case DefaultJobAction.retryRealtimeMemberRevoke: {
-          const { type, data } = job.data
-          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
-            retryRealtimeMemberRevoke(data),
-          )
+          const { data } = job.data
+          try {
+            await retryRealtimeMemberRevoke(data)
+          } catch (err) {
+            if (job.attemptsMade + 1 >= (job.opts.attempts ?? 1)) {
+              logger.error(
+                { err, userId: data.userId, workspaceId: data.workspaceId },
+                "Realtime member connection revoke retry exhausted",
+              )
+            }
+            throw err
+          }
           return
         }
         default:

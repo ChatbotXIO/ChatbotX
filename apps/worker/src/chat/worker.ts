@@ -1,8 +1,4 @@
-import {
-  flushAllPendingWorkspaceRealtimeEvents,
-  publishWorkspaceRealtimeEvent,
-} from "@chatbotx.io/business"
-import type { RealtimeEventData } from "@chatbotx.io/realtime-protocol"
+import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
   ChatJobAction,
@@ -143,14 +139,6 @@ async function startChatWorker() {
               logger.warn(
                 { jobId: job.id },
                 "notifyExportResult job received but no handler is implemented",
-              )
-              return
-            // Compatibility only: jobs queued by pods before the Redis-stream
-            // cutover must still be delivered while the queue drains.
-            case ChatJobAction.broadcastEvent:
-              await publishWorkspaceRealtimeEvent(
-                job.data.data.workspaceId,
-                job.data.data.event as RealtimeEventData,
               )
               return
             case ChatJobAction.checkOutboundAutomatedResponse:

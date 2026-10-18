@@ -206,6 +206,7 @@ const triggerFailed = async (
 const processDefaultJob = async (
   data: DefaultJobData,
   attemptsMade = 0,
+  attempts = 8,
 ): Promise<void> => {
   if (!workerState.processor) {
     throw new Error("Default worker processor was not captured")
@@ -216,6 +217,7 @@ const processDefaultJob = async (
     data,
     id: "job-1",
     name: data.type,
+    opts: { attempts },
   })
 }
 
@@ -323,6 +325,47 @@ describe("default worker", () => {
 
     expect(workerState.retryRealtimeMemberRevoke).toHaveBeenCalledWith(
       jobData.data,
+    )
+  })
+
+  test("retries member revocations for blocked workspaces", async () => {
+    workerState.isBlockedWorkspace.mockResolvedValue(true)
+    const jobData: DefaultJobData = {
+      type: "retryRealtimeMemberRevoke",
+      data: {
+        reason: "deleted",
+        revokedAtMs: 1000,
+        userId: "user-1",
+        workspaceId: "workspace-1",
+      },
+    }
+
+    await processDefaultJob(jobData)
+
+    expect(workerState.isBlockedWorkspace).not.toHaveBeenCalled()
+    expect(workerState.retryRealtimeMemberRevoke).toHaveBeenCalledWith(
+      jobData.data,
+    )
+  })
+
+  test("logs a durable signal when the final revoke retry fails", async () => {
+    const error = new Error("Redis unavailable")
+    workerState.retryRealtimeMemberRevoke.mockRejectedValueOnce(error)
+    const jobData: DefaultJobData = {
+      type: "retryRealtimeMemberRevoke",
+      data: {
+        reason: "deleted",
+        revokedAtMs: 1000,
+        userId: "user-1",
+        workspaceId: "workspace-1",
+      },
+    }
+
+    await expect(processDefaultJob(jobData, 7)).rejects.toThrow(error)
+
+    expect(workerState.loggerError).toHaveBeenCalledWith(
+      { err: error, userId: "user-1", workspaceId: "workspace-1" },
+      "Realtime member connection revoke retry exhausted",
     )
   })
 

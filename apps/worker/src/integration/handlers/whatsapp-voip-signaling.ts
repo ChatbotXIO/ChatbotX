@@ -289,6 +289,42 @@ const endedStatusOf = (
       (call.status as RealtimeEventWhatsappCallTransportEnded["data"]["status"])
     : null
 
+const publishToMembers = async (input: {
+  event:
+    | RealtimeEventWhatsappCallTransportIncoming
+    | RealtimeEventWhatsappCallTransportEnded
+  failureMessage: string
+  targets: string[]
+  wacid: string
+  workspaceId: string
+}): Promise<number> => {
+  const results = await Promise.allSettled(
+    input.targets.map((userId) =>
+      publishWorkspaceMemberRealtimeEvent(
+        { workspaceId: input.workspaceId, userId },
+        input.event,
+      ),
+    ),
+  )
+  let failureCount = 0
+  for (const [index, result] of results.entries()) {
+    if (result.status !== "rejected") {
+      continue
+    }
+    failureCount += 1
+    logger.warn(
+      {
+        err: result.reason,
+        userId: input.targets[index],
+        wacid: input.wacid,
+        workspaceId: input.workspaceId,
+      },
+      input.failureMessage,
+    )
+  }
+  return failureCount
+}
+
 /**
  * Delivers the incoming offer to every selected agent. A failed stream append
  * is logged per target without preventing other offers from being published.
@@ -298,21 +334,19 @@ const ringAgents = async (input: {
   targets: string[]
   event: RealtimeEventWhatsappCallTransportIncoming
 }): Promise<void> => {
-  await Promise.all(
-    input.targets.map(async (userId) => {
-      try {
-        await publishWorkspaceMemberRealtimeEvent(
-          { workspaceId: input.workspaceId, userId },
-          input.event,
-        )
-      } catch (err) {
-        logger.warn(
-          { err, wacid: input.event.data.wacid, userId },
-          "Whatsapp VoIP: unable to publish the offer realtime event",
-        )
-      }
-    }),
-  )
+  const failureCount = await publishToMembers({
+    event: input.event,
+    failureMessage: "Whatsapp VoIP: unable to publish the offer realtime event",
+    targets: input.targets,
+    wacid: input.event.data.wacid,
+    workspaceId: input.workspaceId,
+  })
+  if (failureCount === input.targets.length && input.targets.length > 0) {
+    logger.error(
+      { targetCount: input.targets.length, wacid: input.event.data.wacid },
+      "Whatsapp VoIP: unable to publish the offer realtime event to any target",
+    )
+  }
 }
 
 /**
@@ -339,27 +373,14 @@ const notifyRungAgentsIfEnded = async (input: {
       status,
     },
   }
-  const results = await Promise.allSettled(
-    input.targets.map((userId) =>
-      publishWorkspaceMemberRealtimeEvent(
-        { workspaceId: input.workspaceId, userId },
-        event,
-      ),
-    ),
-  )
-  for (const [index, result] of results.entries()) {
-    if (result.status === "rejected") {
-      logger.warn(
-        {
-          err: result.reason,
-          userId: input.targets[index],
-          workspaceId: input.workspaceId,
-          wacid: input.wacid,
-        },
-        "Whatsapp VoIP: unable to publish the ended event to a previously rung agent",
-      )
-    }
-  }
+  await publishToMembers({
+    event,
+    failureMessage:
+      "Whatsapp VoIP: unable to publish the ended event to a previously rung agent",
+    targets: input.targets,
+    wacid: input.wacid,
+    workspaceId: input.workspaceId,
+  })
 }
 
 /**

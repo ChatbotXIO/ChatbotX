@@ -1,6 +1,7 @@
 import { z } from "zod"
 import {
   realtimeEventEnvelopeSchema,
+  realtimeGuestEventEnvelopeSchema,
   realtimeWorkspaceEventEnvelopeSchema,
 } from "./schemas"
 
@@ -69,7 +70,7 @@ const realtimeWorkspaceEventsStreamRecordSchema = z.object({
 })
 
 const realtimeGuestEventStreamRecordSchema = z.object({
-  event: realtimeEventEnvelopeSchema,
+  event: realtimeGuestEventEnvelopeSchema,
   guestConversationId: z.string().min(1),
   kind: z.literal("guest-event"),
   workspaceId: z.string().min(1),

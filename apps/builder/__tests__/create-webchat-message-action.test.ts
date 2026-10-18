@@ -324,7 +324,6 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
 })
 
 vi.mock("@chatbotx.io/worker-config", () => ({
-  ChatJobAction: { broadcastEvent: "broadcastEvent" },
   chatQueue: { add: mockChatQueueAdd },
   IntegrationJobAction: {
     runChallenge: "runChallenge",

@@ -335,7 +335,7 @@ export const publishWorkspaceMemberRealtimeEvent = async (
 
 const REVOKE_RETRY_ATTEMPTS = 3
 const REVOKE_RETRY_DELAY_MS = 250
-const REVOKE_RETRY_JOB_ATTEMPTS = 5
+const REVOKE_RETRY_JOB_ATTEMPTS = 8
 const REVOKE_RETRY_JOB_DELAY_MS = 1000
 
 type WorkspaceMemberRealtimeConnectionRevocationArgs = {
@@ -349,7 +349,7 @@ type WorkspaceMemberRealtimeConnectionRevocationArgs = {
  * Records the reconnect marker and sends a control record to close current
  * connections. Throws after its bounded Redis retry budget is exhausted.
  */
-const revokeWorkspaceMemberRealtimeConnections = async (
+export const revokeWorkspaceMemberRealtimeConnections = async (
   args: WorkspaceMemberRealtimeConnectionRevocationArgs,
 ): Promise<void> => {
   const revokedAtMs = args.revokedAtMs ?? Date.now()
@@ -374,16 +374,6 @@ const revokeWorkspaceMemberRealtimeConnections = async (
       workspaceId: args.workspaceId,
     },
   )
-}
-
-/**
- * Runs the durable-retry attempt. It intentionally throws so BullMQ retries
- * the job instead of enqueuing a recursive replacement job.
- */
-export const retryWorkspaceMemberRealtimeConnections = async (
-  args: WorkspaceMemberRealtimeConnectionRevocationArgs,
-): Promise<void> => {
-  await revokeWorkspaceMemberRealtimeConnections(args)
 }
 
 const enqueueWorkspaceMemberRealtimeConnectionRevocationRetry = async (
@@ -432,7 +422,7 @@ export const tryRevokeWorkspaceMemberRealtimeConnections = async (
     revokedAtMs: Date.now(),
   }
   try {
-    await retryWorkspaceMemberRealtimeConnections(revocationArgs)
+    await revokeWorkspaceMemberRealtimeConnections(revocationArgs)
     return true
   } catch (error) {
     logger.error(

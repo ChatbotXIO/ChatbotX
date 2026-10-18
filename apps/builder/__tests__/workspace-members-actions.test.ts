@@ -472,6 +472,26 @@ describe("updateWorkspaceMemberAction", () => {
     expect(mockFindNameAndEmail).not.toHaveBeenCalled()
     expect(mockAuditRecord).not.toHaveBeenCalled()
   })
+
+  test("returns revokeWarning when permission reauthentication cannot close sockets", async () => {
+    mockRevokeWorkspaceMemberConnections.mockResolvedValueOnce(false)
+
+    await expect(
+      (updateWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+        updateActionCtx(),
+      ),
+    ).resolves.toEqual({ revokeWarning: true })
+  })
+
+  test("returns no revokeWarning when permission reauthentication closes sockets", async () => {
+    mockRevokeWorkspaceMemberConnections.mockResolvedValueOnce(true)
+
+    await expect(
+      (updateWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+        updateActionCtx(),
+      ),
+    ).resolves.toEqual({ revokeWarning: false })
+  })
 })
 
 function deleteActionCtx() {
@@ -561,5 +581,25 @@ describe("deleteWorkspaceMemberAction", () => {
 
     expect(mockWorkspaceMemberServiceDelete).toHaveBeenCalledOnce()
     expect(mockInvalidateMembershipCache).toHaveBeenCalledWith(MEMBER_USER_ID)
+  })
+
+  test("returns revokeWarning when a deleted member's socket revoke is deferred", async () => {
+    mockRevokeWorkspaceMemberConnections.mockResolvedValueOnce(false)
+
+    await expect(
+      (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+        deleteActionCtx(),
+      ),
+    ).resolves.toEqual({ revokeWarning: true })
+  })
+
+  test("returns no revokeWarning when a deleted member's sockets are closed", async () => {
+    mockRevokeWorkspaceMemberConnections.mockResolvedValueOnce(true)
+
+    await expect(
+      (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+        deleteActionCtx(),
+      ),
+    ).resolves.toEqual({ revokeWarning: false })
   })
 })

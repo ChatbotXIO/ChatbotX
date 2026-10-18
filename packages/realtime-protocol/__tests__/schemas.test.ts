@@ -1,10 +1,13 @@
 import { describe, expect, test } from "vitest"
 import {
+  EVENT_DELIVERY,
+  RealtimeEventType,
   realtimeBatchEnvelopeSchema,
   realtimeCallTransportEndedSchema,
   realtimeCallTransportIncomingSchema,
   realtimeCallTransportOutboundAnswerVoipSchema,
   realtimeCallTransportOutboundStatusVoipSchema,
+  realtimeEventEnvelopeSchema,
   realtimeGuestBatchEnvelopeSchema,
   realtimeMemberBatchEnvelopeSchema,
   routeForAssignment,
@@ -85,6 +88,41 @@ describe("realtime batch envelopes", () => {
   })
 })
 
+test.each(
+  Object.entries(EVENT_DELIVERY),
+)("enforces delivery requirements for %s", (eventType, delivery) => {
+  const parsed = realtimeBatchEnvelopeSchema.safeParse({
+    batch: [{ data: {}, eventType }],
+    seq: "123-0",
+  })
+
+  expect(parsed.success).toBe(delivery === "workspace")
+})
+
+test("allows a conversation route with no assigned recipients", () => {
+  expect(
+    realtimeBatchEnvelopeSchema.safeParse({
+      batch: [
+        {
+          data: {},
+          eventType: RealtimeEventType.messageCreated,
+          route: { assignedTeamIds: [], assignedUserIds: [] },
+        },
+      ],
+      seq: "123-0",
+    }).success,
+  ).toBe(true)
+})
+
+test("rejects unknown realtime event types", () => {
+  expect(
+    realtimeEventEnvelopeSchema.safeParse({
+      data: {},
+      eventType: "unknown",
+    }).success,
+  ).toBe(false)
+})
+
 test("rejects targeted-only events from workspace batches", () => {
   expect(() =>
     realtimeBatchEnvelopeSchema.parse({
@@ -99,7 +137,7 @@ test("rejects targeted-only events from workspace batches", () => {
   ).toThrow(TARGETED_ONLY_EVENT_ERROR_REGEX)
 })
 
-test("accepts targeted events through member and guest readers only", () => {
+test("rejects targeted-only events from guest readers", () => {
   const targetedFrame = {
     batch: [
       {
@@ -113,9 +151,9 @@ test("accepts targeted events through member and guest readers only", () => {
   expect(realtimeMemberBatchEnvelopeSchema.parse(targetedFrame)).toEqual(
     targetedFrame,
   )
-  expect(realtimeGuestBatchEnvelopeSchema.parse(targetedFrame)).toEqual(
-    targetedFrame,
-  )
+  expect(
+    realtimeGuestBatchEnvelopeSchema.safeParse(targetedFrame).success,
+  ).toBe(false)
   expect(realtimeBatchEnvelopeSchema.safeParse(targetedFrame).success).toBe(
     false,
   )
@@ -131,6 +169,17 @@ describe("realtime guest batch envelopes", () => {
     })
 
     expect(frame.batch).toHaveLength(1)
+  })
+
+  test("allows the guest-only typing payload", () => {
+    expect(
+      realtimeGuestBatchEnvelopeSchema.safeParse({
+        batch: [
+          { data: { typing: true }, eventType: RealtimeEventType.typing },
+        ],
+        seq: "123-0",
+      }).success,
+    ).toBe(true)
   })
 })
 
