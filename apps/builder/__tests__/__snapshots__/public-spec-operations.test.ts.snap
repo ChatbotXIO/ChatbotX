@@ -1294,6 +1294,66 @@ exports[`public API spec — operation naming guard > operation list (operationI
   },
   {
     "method": "POST",
+    "operationId": "decisionConnections.create",
+    "path": "/v1/decision-connections",
+  },
+  {
+    "method": "GET",
+    "operationId": "decisionConnections.list",
+    "path": "/v1/decision-connections",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "decisionConnections.setEnabled",
+    "path": "/v1/decision-connections/{id}/status",
+  },
+  {
+    "method": "POST",
+    "operationId": "decisionConnections.test",
+    "path": "/v1/decision-connections/{id}/test",
+  },
+  {
+    "method": "PUT",
+    "operationId": "decisionConnections.update",
+    "path": "/v1/decision-connections/{id}",
+  },
+  {
+    "method": "POST",
+    "operationId": "decisionProfiles.create",
+    "path": "/v1/decision-profiles",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "decisionProfiles.deleteMany",
+    "path": "/v1/decision-profiles",
+  },
+  {
+    "method": "GET",
+    "operationId": "decisionProfiles.get",
+    "path": "/v1/decision-profiles/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "decisionProfiles.list",
+    "path": "/v1/decision-profiles",
+  },
+  {
+    "method": "GET",
+    "operationId": "decisionProfiles.listGlobalRouterDestinations",
+    "path": "/v1/decision-profiles/global-router-destinations",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "decisionProfiles.setEnabled",
+    "path": "/v1/decision-profiles/{id}/status",
+  },
+  {
+    "method": "PUT",
+    "operationId": "decisionProfiles.update",
+    "path": "/v1/decision-profiles/{id}",
+  },
+  {
+    "method": "POST",
     "operationId": "dynamicImages.create",
     "path": "/v1/dynamic-images",
   },
