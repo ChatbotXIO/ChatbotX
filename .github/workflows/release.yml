@@ -181,17 +181,39 @@ jobs:
       # The builder's Turbopack compile is native code, so NODE_OPTIONS does not
       # bound it, and its peak sits close to the ~16GB of an ubuntu-latest
       # runner: `next build` was killed with exit 137 ("cannot allocate
-      # memory"). A larger swap absorbs the spike instead of the kernel killing
-      # the build. Step-level `if` may read `matrix` (the job-level one may not).
-      - name: Enlarge swap for the builder compile
+      # memory"). Extra swap absorbs the spike instead of the kernel killing
+      # the build. The runner layout is not guaranteed (`/mnt` may be a small
+      # temp disk or tmpfs), so the swapfile goes on the first disk-backed
+      # filesystem with room to spare, is added next to any existing swap, and a
+      # failure only warns: the build then runs exactly as before.
+      # Step-level `if` may read `matrix` (the job-level one may not).
+      - name: Add swap for the builder compile
         if: matrix.label == 'builder'
+        continue-on-error: true
         run: |
-          sudo swapoff -a
-          sudo rm -f /mnt/swapfile
-          sudo fallocate -l 16G /mnt/swapfile
-          sudo chmod 600 /mnt/swapfile
-          sudo mkswap /mnt/swapfile
-          sudo swapon /mnt/swapfile
+          set -euo pipefail
+          swap_gb=16
+          # Headroom left for the Docker build layers on the same disk.
+          reserve_gb=20
+          swapfile=""
+          for dir in /mnt /; do
+            [ -d "$dir" ] || continue
+            fstype=$(findmnt -n -o FSTYPE -T "$dir")
+            free_gb=$(df -BG --output=avail "$dir" | tail -1 | tr -dc '0-9')
+            if [ "$fstype" != "tmpfs" ] && [ "$free_gb" -ge $((swap_gb + reserve_gb)) ]; then
+              swapfile="${dir%/}/ci-build.swap"
+              break
+            fi
+          done
+          if [ -z "$swapfile" ]; then
+            echo "::warning::No disk with room for a ${swap_gb}G swapfile; building without extra swap"
+            exit 0
+          fi
+          sudo fallocate -l "${swap_gb}G" "$swapfile"
+          sudo chmod 600 "$swapfile"
+          sudo mkswap "$swapfile"
+          sudo swapon "$swapfile"
+          swapon --show
           free -h
 
       - name: Set up Docker Buildx
