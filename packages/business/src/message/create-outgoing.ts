@@ -16,10 +16,6 @@ import {
   uploadMultipleFiles,
 } from "@chatbotx.io/filesystem"
 import type { SendProductsContent } from "@chatbotx.io/flow-config"
-import {
-  RealtimeEventType,
-  routeForConversation,
-} from "@chatbotx.io/realtime-protocol"
 import { createId } from "@chatbotx.io/utils"
 import {
   ChatJobAction,
@@ -35,7 +31,7 @@ import {
   validationException,
 } from "../errors"
 import { logger } from "../logger"
-import { queueWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
+import { queueMessageCreatedEvent } from "../platform/realtime-broadcast"
 import { resolveTenantSettings } from "../platform/settings"
 import { productMessageService } from "../product-message/service"
 import { getPublicFileUrl } from "../utils"
@@ -333,14 +329,14 @@ export const createOutgoing = async (props: {
     })),
   }
 
-  queueWorkspaceRealtimeEvent(messageWithAttachments.workspaceId, {
-    eventType: RealtimeEventType.messageCreated,
-    data: {
+  queueMessageCreatedEvent(
+    messageWithAttachments.workspaceId,
+    {
       ...messageWithAttachments,
       clientId: parsedInput.clientId,
     },
-    route: routeForConversation(targetConversation),
-  })
+    targetConversation,
+  )
 
   const jobs: {
     jobType: (typeof ChatJobAction)[keyof typeof ChatJobAction]

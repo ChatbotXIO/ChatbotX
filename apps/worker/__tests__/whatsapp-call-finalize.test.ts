@@ -25,6 +25,11 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   publishWorkspaceRealtimeEvent: mocks.publishWorkspaceRealtimeEvent,
+  queueWorkspaceRealtimeEvent: (...args: unknown[]) => {
+    Promise.resolve(mocks.publishWorkspaceRealtimeEvent(...args)).catch(
+      () => undefined,
+    )
+  },
   publishWorkspaceMemberRealtimeEvent:
     mocks.publishWorkspaceMemberRealtimeEvent,
   contactInboxService: {
@@ -671,7 +676,7 @@ describe("finalizeCallSideEffects", () => {
     expect(mocks.emitCallEnded).not.toHaveBeenCalled()
   })
 
-  test("a realtime broadcast failure is swallowed, never thrown", async () => {
+  test("does not let a fire-and-forget realtime enqueue failure throw", async () => {
     mocks.publishWorkspaceRealtimeEvent.mockRejectedValueOnce(new Error("down"))
 
     await expect(
@@ -685,7 +690,7 @@ describe("finalizeCallSideEffects", () => {
       }),
     ).resolves.toBeUndefined()
 
-    expect(mocks.logger.warn).toHaveBeenCalled()
+    expect(mocks.logger.warn).not.toHaveBeenCalled()
   })
 })
 
@@ -1219,7 +1224,7 @@ describe("enrichCallActivityMessage", () => {
     expect(mocks.logger.warn).toHaveBeenCalled()
   })
 
-  test("a realtime broadcast failure is swallowed, never thrown", async () => {
+  test("does not let a fire-and-forget realtime enqueue failure throw", async () => {
     mocks.mergeContentAttributesBySourceId.mockResolvedValue({
       id: "msg-1",
       contentAttributes: { type: "whatsapp_call", hasRecording: true },
@@ -1233,6 +1238,6 @@ describe("enrichCallActivityMessage", () => {
       }),
     ).resolves.toBeUndefined()
 
-    expect(mocks.logger.warn).toHaveBeenCalled()
+    expect(mocks.logger.warn).not.toHaveBeenCalled()
   })
 })

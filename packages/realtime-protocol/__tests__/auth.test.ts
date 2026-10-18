@@ -2,7 +2,6 @@ import { SignJWT } from "jose"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
   extractBearerToken,
-  isMemberTokenRevoked,
   REALTIME_MEMBER_REVOKED_TTL_SECONDS,
   REALTIME_TOKEN_PURPOSE,
   signGuestConnectToken,
@@ -109,30 +108,6 @@ describe("signPresenceReportToken / verifyPresenceReportToken (generic sign/veri
     await expect(
       verifyPresenceReportToken(legacyToken, "ws_1", SECRET),
     ).rejects.toThrow()
-  })
-})
-
-describe("isMemberTokenRevoked", () => {
-  const claims = {
-    chatScope: "all" as const,
-    iat: 1_700_000_000,
-    iatMs: 1_700_000_000_123,
-    teamIds: [],
-    userId: "user-1",
-  }
-
-  it("does not revoke when no marker exists or when the token is newer", () => {
-    expect(isMemberTokenRevoked(claims, null)).toBe(false)
-    expect(isMemberTokenRevoked(claims, claims.iatMs - 1)).toBe(false)
-  })
-
-  it("revokes a token issued in the same millisecond as the marker", () => {
-    expect(isMemberTokenRevoked(claims, claims.iatMs)).toBe(true)
-  })
-
-  it("compares millisecond timestamps instead of the JWT's seconds iat", () => {
-    expect(isMemberTokenRevoked(claims, claims.iatMs - 1)).toBe(false)
-    expect(isMemberTokenRevoked(claims, claims.iatMs + 1)).toBe(true)
   })
 })
 

@@ -8,7 +8,7 @@ import {
   integrationWebchatService,
   isWorkspaceScheduledForDeletion,
   messageService,
-  queueWorkspaceRealtimeEvent,
+  queueMessageCreatedEvent,
   resolveTenantSettings,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -25,10 +25,6 @@ import { emit } from "@chatbotx.io/event-bus"
 import { setWebhookExecutionContext } from "@chatbotx.io/events/context"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
-import {
-  RealtimeEventType,
-  routeForConversation,
-} from "@chatbotx.io/realtime-protocol"
 import {
   IntegrationJobAction,
   integrationQueue,
@@ -74,7 +70,10 @@ export async function handleCreateWebchatMessage({
   const workspace = await workspaceService.find({
     where: { id: parsedInput.workspaceId },
   })
-  if (workspace && isWorkspaceScheduledForDeletion(workspace)) {
+  if (!workspace) {
+    throw new ChatbotXException("Workspace not found")
+  }
+  if (isWorkspaceScheduledForDeletion(workspace)) {
     const t = await getTranslations("webchat")
     throw new ChatbotXException(
       t("workspaceUnavailable"),
@@ -137,7 +136,7 @@ export async function handleCreateWebchatMessage({
   }
 
   const { conversation, isNewContact, contact, contactInbox } =
-    await getConversationFromInput(parsedInput, integrationWebchat)
+    await getConversationFromInput(parsedInput, integrationWebchat, workspace)
 
   if (
     "init" in parsedInput &&
@@ -309,14 +308,14 @@ export async function handleCreateWebchatMessage({
       sourceId: newMessage.sourceId ?? undefined,
     })
 
-    queueWorkspaceRealtimeEvent(newMessage.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: {
+    queueMessageCreatedEvent(
+      newMessage.workspaceId,
+      {
         ...newMessage,
         clientId: parsedInput.clientId,
       },
-      route: routeForConversation(conversation),
-    })
+      conversation,
+    )
 
     const promises: Promise<unknown>[] = []
 
@@ -405,6 +404,7 @@ export async function handleCreateWebchatMessage({
 async function getConversationFromInput(
   parsedInput: CreateWebchatMessageRequest,
   integrationWebchat: IntegrationWebchatModel,
+  workspace: { ownerId: string },
 ) {
   const existingContactInbox = await contactInboxService.findLatestBySource({
     inboxId: integrationWebchat.inboxId,
@@ -441,10 +441,11 @@ async function getConversationFromInput(
   const created = await integrationWebchatService.findOrCreateGuestConversation(
     {
       guestConversationId: parsedInput.guestConversationId,
+      integration: integrationWebchat,
       locale: parsedInput.locale,
       parentUrl: parsedInput.parentUrl,
       timezone: parsedInput.timezone,
-      webchatId: integrationWebchat.id,
+      workspace,
       workspaceId: parsedInput.workspaceId,
     },
   )

@@ -124,6 +124,28 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
+  queueMessageCreatedEvent: (
+    workspaceId: string,
+    data: unknown,
+    conversation: {
+      assignedInboxTeamId?: string | null
+      assignedUserId?: string | null
+      inboxId?: string | null
+    },
+  ) =>
+    mockQueueWorkspaceRealtimeEvent(workspaceId, {
+      eventType: "messageCreated",
+      data,
+      route: {
+        assignedTeamIds: conversation.assignedInboxTeamId
+          ? [conversation.assignedInboxTeamId]
+          : [],
+        assignedUserIds: conversation.assignedUserId
+          ? [conversation.assignedUserId]
+          : [],
+        ...(conversation.inboxId ? { inboxId: conversation.inboxId } : {}),
+      },
+    }),
   isWorkspaceScheduledForDeletion: (
     workspace:
       | { scheduledDeletionAt?: Date | string | null }
@@ -744,7 +766,8 @@ describe("handleCreateWebchatMessage — MAC quota", () => {
     expect(mockFindOrCreateGuestConversation).toHaveBeenCalledWith(
       expect.objectContaining({
         guestConversationId: "guest-1",
-        webchatId: "webchat-1",
+        integration: expect.objectContaining({ id: "webchat-1" }),
+        workspace: { ownerId: "owner-1" },
         workspaceId: "ws-1",
       }),
     )

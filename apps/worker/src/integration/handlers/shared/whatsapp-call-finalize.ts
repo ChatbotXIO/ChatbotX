@@ -5,6 +5,7 @@ import {
   messageService,
   publishWorkspaceMemberRealtimeEvent,
   publishWorkspaceRealtimeEvent,
+  queueWorkspaceRealtimeEvent,
   userService,
   whatsappVoipCallService,
   whatsappVoipSignalingService,
@@ -287,7 +288,7 @@ const publishCallMessageEvent = async (
     const conversation = await conversationService.findBy({
       where: { id: call.conversationId, workspaceId: call.workspaceId },
     })
-    await publishWorkspaceRealtimeEvent(call.workspaceId, {
+    queueWorkspaceRealtimeEvent(call.workspaceId, {
       ...event,
       route: routeForConversation(conversation),
     })

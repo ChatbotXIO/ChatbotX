@@ -21,46 +21,58 @@ export const RealtimeEventType = {
   contactInboxThreadControlUpdated: "contactInboxThreadControlUpdated",
 } as const
 
-/**
- * Event types scoped to a conversation must carry a `route` so
- * `hasRouteMatch` can deliver them to assigned-scope members.
- */
-const conversationScopedEventTypes = [
-  RealtimeEventType.messageCreated,
-  RealtimeEventType.messageDeleted,
-  RealtimeEventType.messageIdAssigned,
-  RealtimeEventType.messageUpdated,
-  RealtimeEventType.messageContentUpdated,
-  RealtimeEventType.messageFailed,
-  RealtimeEventType.conversationAssigned,
-  RealtimeEventType.conversationUpdated,
-  RealtimeEventType.whatsappCallPermissionUpdated,
-] as const
+type RealtimeEventTypeValue =
+  (typeof RealtimeEventType)[keyof typeof RealtimeEventType]
 
-type ConversationScopedEventType = (typeof conversationScopedEventTypes)[number]
+type RealtimeEventDelivery = "conversation" | "workspace" | "targeted"
 
-export const CONVERSATION_SCOPED_EVENT_TYPES = Object.fromEntries(
-  conversationScopedEventTypes.map((eventType) => [eventType, true]),
-) as Record<ConversationScopedEventType, true>
+const EVENT_DELIVERY = {
+  [RealtimeEventType.messageCreated]: "conversation",
+  [RealtimeEventType.messageDeleted]: "conversation",
+  [RealtimeEventType.messageUpdated]: "conversation",
+  [RealtimeEventType.messageContentUpdated]: "conversation",
+  [RealtimeEventType.messageIdAssigned]: "conversation",
+  [RealtimeEventType.messageFailed]: "conversation",
+  [RealtimeEventType.typing]: "workspace",
+  [RealtimeEventType.contactBlocked]: "workspace",
+  [RealtimeEventType.contactUnblocked]: "workspace",
+  [RealtimeEventType.conversationAssigned]: "conversation",
+  [RealtimeEventType.conversationUpdated]: "conversation",
+  [RealtimeEventType.whatsappCallTransportIncoming]: "targeted",
+  [RealtimeEventType.whatsappCallTransportEnded]: "workspace",
+  [RealtimeEventType.whatsappCallClaimedElsewhere]: "workspace",
+  [RealtimeEventType.whatsappCallOutboundAnswer]: "targeted",
+  [RealtimeEventType.whatsappCallOutboundStatus]: "targeted",
+  [RealtimeEventType.whatsappCallPermissionUpdated]: "conversation",
+  [RealtimeEventType.contactInboxThreadControlUpdated]: "workspace",
+} as const satisfies Record<RealtimeEventTypeValue, RealtimeEventDelivery>
 
-const targetedOnlyEventTypes = [
-  RealtimeEventType.whatsappCallTransportIncoming,
-  RealtimeEventType.whatsappCallOutboundAnswer,
-  RealtimeEventType.whatsappCallOutboundStatus,
-] as const
+type RealtimeEventTypesForDelivery<T extends RealtimeEventDelivery> = {
+  [EventType in keyof typeof EVENT_DELIVERY]: (typeof EVENT_DELIVERY)[EventType] extends T
+    ? EventType
+    : never
+}[keyof typeof EVENT_DELIVERY]
 
-type TargetedOnlyEventType = (typeof targetedOnlyEventTypes)[number]
+type ConversationScopedEventType = RealtimeEventTypesForDelivery<"conversation">
+type TargetedOnlyEventType = RealtimeEventTypesForDelivery<"targeted">
 
-export const TARGETED_ONLY_EVENT_TYPES = Object.fromEntries(
-  targetedOnlyEventTypes.map((eventType) => [eventType, true]),
-) as Record<TargetedOnlyEventType, true>
+const conversationScopedEventTypes = new Set(
+  Object.entries(EVENT_DELIVERY)
+    .filter(([, delivery]) => delivery === "conversation")
+    .map(([eventType]) => eventType),
+)
+const targetedOnlyEventTypes = new Set(
+  Object.entries(EVENT_DELIVERY)
+    .filter(([, delivery]) => delivery === "targeted")
+    .map(([eventType]) => eventType),
+)
 
 /**
  * Shared wire envelope validation. It intentionally validates only the
  * envelope; consumers validate event data against their event-specific schema.
  */
 
-export const realtimeEventRouteSchema = z.object({
+const realtimeEventRouteSchema = z.object({
   assignedTeamIds: z.array(z.string()).default([]),
   assignedUserIds: z.array(z.string()),
   inboxId: z.string().optional(),
@@ -136,7 +148,7 @@ export type RealtimeEventEnvelope = z.infer<typeof realtimeEventEnvelopeSchema>
  */
 export const realtimeWorkspaceEventEnvelopeSchema =
   realtimeEventEnvelopeSchema.superRefine((envelope, ctx) => {
-    if (Object.hasOwn(TARGETED_ONLY_EVENT_TYPES, envelope.eventType)) {
+    if (targetedOnlyEventTypes.has(envelope.eventType)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `"${envelope.eventType}" is targeted-only and cannot be workspace-broadcast`,
@@ -144,7 +156,7 @@ export const realtimeWorkspaceEventEnvelopeSchema =
       })
     }
     if (
-      Object.hasOwn(CONVERSATION_SCOPED_EVENT_TYPES, envelope.eventType) &&
+      conversationScopedEventTypes.has(envelope.eventType) &&
       !envelope.route
     ) {
       ctx.addIssue({
@@ -155,8 +167,8 @@ export const realtimeWorkspaceEventEnvelopeSchema =
     }
   })
 
-export const STREAM_ID_PATTERN = /^\d+-\d+$/
-export const realtimeStreamIdSchema = z.string().regex(STREAM_ID_PATTERN)
+const STREAM_ID_PATTERN = /^\d+-\d+$/
+const realtimeStreamIdSchema = z.string().regex(STREAM_ID_PATTERN)
 
 const batchOf = <T extends z.ZodType>(eventSchema: T) =>
   z.object({
@@ -306,7 +318,7 @@ export const realtimeCallTransportIncomingSchema = z.object({
   /**
    * The SDP offer — safe to include here ONLY because this event is sent
    * exclusively to the reserved agent's own connections, never broadcast to the
-   * workspace room.
+   * workspace audience.
    */
   offer: z.object({
     sdpType: z.literal("offer"),
@@ -409,11 +421,10 @@ export type RealtimeEventWhatsappCallOutboundStatus = {
 
 /**
  * Fires when Meta 138017 (consumer already granted permanent permission) is
- * reconciled into a local grant with no inbound message to invalidate on.
- * Tells open threads to refetch `useOutboundCallMode`; carries no permission
- * detail. Conversation-scoped (see `CONVERSATION_SCOPED_EVENT_TYPES`): only
- * whoever is assigned to (or has full-scope access to) this conversation
- * needs it, unlike a ringing/active call's workspace-wide broadcast.
+ * reconciled into a local grant with no inbound message to invalidate.
+ * Conversation-scoped: only whoever is assigned to (or has full-scope access
+ * to) this conversation needs it, unlike a ringing/active call's workspace-wide
+ * broadcast.
  */
 export const whatsappCallPermissionUpdatedSchema = z.object({
   conversationId: z.string(),
@@ -431,7 +442,7 @@ export type RealtimeEventWhatsappCallPermissionUpdated = {
  * A conversation thread's routing owner changed (conversation routing / thread
  * control). Carries the same snapshot the take/release/pass action returns, so
  * a client patches the matching contact inbox without a refetch and ignores a
- * snapshot older than the one it holds. Broadcast to the workspace room.
+ * snapshot older than the one it holds. Broadcast to the workspace audience.
  */
 export const contactInboxThreadControlUpdatedSchema = z.object({
   conversationId: z.string(),
@@ -462,91 +473,37 @@ export type RealtimeEventContactInboxThreadControlUpdated = {
   data: ContactInboxThreadControlUpdatedData
 }
 
-/**
- * Conversation-scoped event data must include a route for workspace delivery.
- */
-export type RealtimeConversationScopedEventData =
+type AllRealtimeEventData =
   | RealtimeEventCreateMessage
   | RealtimeEventMessageDeleted
   | RealtimeEventMessageIdAssigned
   | RealtimeEventMessageUpdated
   | RealtimeEventMessageContentUpdated
   | RealtimeEventMessageFailed
+  | RealtimeEventTyping
+  | RealtimeEventContactCommon
   | RealtimeEventConversationAssigned
   | RealtimeEventConversationUpdated
-  | RealtimeEventWhatsappCallPermissionUpdated
-
-/**
- * Workspace-wide events may be broadcast to every workspace connection.
- */
-export type RealtimeWorkspaceBroadcastEventData =
-  | RealtimeEventContactCommon
-  | RealtimeEventTyping
+  | RealtimeEventWhatsappCallTransportIncoming
   | RealtimeEventWhatsappCallTransportEnded
   | RealtimeEventWhatsappCallClaimedElsewhere
-  | RealtimeEventContactInboxThreadControlUpdated
-
-/**
- * These events carry call signaling and MUST be sent only to one member or
- * guest connection, never to the workspace broadcast stream.
- */
-export type RealtimeTargetedOnlyEventData =
-  | RealtimeEventWhatsappCallTransportIncoming
   | RealtimeEventWhatsappCallOutboundAnswer
   | RealtimeEventWhatsappCallOutboundStatus
+  | RealtimeEventWhatsappCallPermissionUpdated
+  | RealtimeEventContactInboxThreadControlUpdated
 
-type ConversationScopedEventTypesMatch = [
-  Exclude<
-    RealtimeConversationScopedEventData["eventType"],
-    ConversationScopedEventType
-  >,
-  Exclude<
-    ConversationScopedEventType,
-    RealtimeConversationScopedEventData["eventType"]
-  >,
-] extends [never, never]
-  ? true
-  : never
-
-const _conversationScopedEventTypesMatch: ConversationScopedEventTypesMatch = true
-
-type TargetedOnlyEventTypesMatch = [
-  Exclude<RealtimeTargetedOnlyEventData["eventType"], TargetedOnlyEventType>,
-  Exclude<TargetedOnlyEventType, RealtimeTargetedOnlyEventData["eventType"]>,
-] extends [never, never]
-  ? true
-  : never
-
-const _targetedOnlyEventTypesMatch: TargetedOnlyEventTypesMatch = true
-
-type RealtimeEventTypeValue =
-  (typeof RealtimeEventType)[keyof typeof RealtimeEventType]
-
-type ClassifiedRealtimeEventData =
-  | RealtimeConversationScopedEventData
-  | RealtimeWorkspaceBroadcastEventData
-  | RealtimeTargetedOnlyEventData
-
-type RealtimeEventTypesClassifiedExactlyOnce = [
-  Exclude<RealtimeEventTypeValue, ClassifiedRealtimeEventData["eventType"]>,
-  Exclude<ClassifiedRealtimeEventData["eventType"], RealtimeEventTypeValue>,
-  Extract<
-    RealtimeConversationScopedEventData["eventType"],
-    RealtimeWorkspaceBroadcastEventData["eventType"]
-  >,
-  Extract<
-    RealtimeConversationScopedEventData["eventType"],
-    RealtimeTargetedOnlyEventData["eventType"]
-  >,
-  Extract<
-    RealtimeWorkspaceBroadcastEventData["eventType"],
-    RealtimeTargetedOnlyEventData["eventType"]
-  >,
-] extends [never, never, never, never, never]
-  ? true
-  : never
-
-const _realtimeEventTypesClassifiedExactlyOnce: RealtimeEventTypesClassifiedExactlyOnce = true
+type RealtimeConversationScopedEventData = Extract<
+  AllRealtimeEventData,
+  { eventType: ConversationScopedEventType }
+>
+type RealtimeWorkspaceBroadcastEventData = Extract<
+  AllRealtimeEventData,
+  { eventType: RealtimeEventTypesForDelivery<"workspace"> }
+>
+type RealtimeTargetedOnlyEventData = Extract<
+  AllRealtimeEventData,
+  { eventType: TargetedOnlyEventType }
+>
 
 type Routed<T> = T & { route: RealtimeEventRoute }
 type MaybeRouted<T> = T & { route?: RealtimeEventRoute }
@@ -564,3 +521,14 @@ export type RealtimeTargetedEventData = MaybeRouted<
   | RealtimeTargetedOnlyEventData
   | RealtimeWorkspaceBroadcastEventData
 >
+
+/**
+ * Guest widgets receive conversation-targeted updates plus their own ephemeral
+ * typing signal, which intentionally has no persisted conversation id.
+ */
+export type RealtimeGuestEventData =
+  | RealtimeTargetedEventData
+  | {
+      eventType: typeof RealtimeEventType.typing
+      data: { typing: boolean }
+    }

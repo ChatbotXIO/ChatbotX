@@ -20,6 +20,7 @@ import { receiveComment } from "../integration/handlers/received-message"
 import { processLeaderboardJob } from "../leaderboard/process-job"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { flushAllPendingWorkspaceRealtimeEvents } from "../lib/realtime-drain"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 
 /**
@@ -198,6 +199,7 @@ async function startLowWorker() {
         profileSnapshotWorker.close(),
         leaderboardWorker.close(),
       ])
+      await flushAllPendingWorkspaceRealtimeEvents()
       process.exit(0)
     } catch (err) {
       logger.error(err, "[LowWorker] Error during shutdown")

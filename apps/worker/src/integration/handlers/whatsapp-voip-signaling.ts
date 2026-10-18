@@ -170,16 +170,18 @@ export const inboundCallRefusal = (
  * Outbound counterpart of `resolveVoipIntegration`: the expiry job has no
  * `phoneNumberId`, only the row's `inboxId`.
  */
-export const resolveVoipAuthByInboxId = async (
-  inboxId: string,
-): Promise<WhatsappAuthValue> => {
-  const auth = await integrationWhatsappService.findAuthByInboxId(inboxId)
+export const resolveVoipAuthByInboxId = async (props: {
+  inboxId: string
+  workspaceId: string
+}): Promise<WhatsappAuthValue> => {
+  const auth =
+    await integrationWhatsappService.findAuthByInboxIdForWorkspace(props)
   if (!auth) {
     throw new Error(
-      `Whatsapp VoIP: no IntegrationWhatsapp row for inboxId ${inboxId}`,
+      `Whatsapp VoIP: no IntegrationWhatsapp row for inboxId ${props.inboxId}`,
     )
   }
-  return auth as WhatsappAuthValue
+  return auth
 }
 
 /**
@@ -590,6 +592,7 @@ const handleOutboundAnswer = async (
       { attemptId, err, userId: initiatorUserId },
       "Whatsapp VoIP: unable to publish the outbound answer realtime event",
     )
+    throw err
   }
 
   await whatsappVoipSignalingService.deleteOutboundAnswer(attemptId)
@@ -639,7 +642,10 @@ const handleExpireOutboundDial = async (
     return
   }
 
-  const auth = await resolveVoipAuthByInboxId(call.inboxId)
+  const auth = await resolveVoipAuthByInboxId({
+    inboxId: call.inboxId,
+    workspaceId: call.workspaceId,
+  })
   const handled = await endReservedCall({ wacid, auth })
   if (!handled) {
     await forceEndNoAnswerOutboundDial({ wacid, auth })

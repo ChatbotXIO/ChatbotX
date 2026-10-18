@@ -2,9 +2,9 @@ import { z } from "zod"
 import {
   realtimeEventEnvelopeSchema,
   realtimeWorkspaceEventEnvelopeSchema,
-  STREAM_ID_PATTERN,
 } from "./schemas"
 
+const STREAM_ID_PATTERN = /^\d+-\d+$/
 const REALTIME_STREAM_SHARD_COUNT = 256
 
 const hashWorkspaceId = (workspaceId: string): number => {

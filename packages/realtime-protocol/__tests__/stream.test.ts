@@ -1,6 +1,18 @@
 import { describe, expect, test } from "vitest"
-import { isRealtimeSeqAfter } from "../src/stream"
+import {
+  getRealtimeStreamKey,
+  getRealtimeStreamShard,
+  isRealtimeSeqAfter,
+} from "../src/stream"
 
+describe("workspace stream sharding", () => {
+  test("keeps established workspace IDs on stable Redis hash-tagged shards", () => {
+    expect(getRealtimeStreamShard("workspace-1")).toBe(249)
+    expect(getRealtimeStreamKey("workspace-1")).toBe("rt:{249}")
+    expect(getRealtimeStreamShard("workspace-abc")).toBe(42)
+    expect(getRealtimeStreamKey("ws-1")).toBe("rt:{128}")
+  })
+})
 describe("isRealtimeSeqAfter", () => {
   test("a newer millisecond component wins regardless of sequence", () => {
     expect(isRealtimeSeqAfter("11-0", "10-5")).toBe(true)

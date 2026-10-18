@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { findFirstMock, repositoryMock } = vi.hoisted(() => ({
-  findFirstMock: vi.fn(),
+const { repositoryMock } = vi.hoisted(() => ({
   repositoryMock: {
+    findAuthByInboxIdForWorkspace: vi.fn(),
     updateCallSettings: vi.fn(),
   },
 }))
@@ -18,9 +18,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   and: vi.fn(),
   db: {
     query: {
-      integrationWhatsappModel: {
-        findFirst: findFirstMock,
-      },
+      integrationWhatsappModel: {},
     },
   },
   eq: vi.fn(),
@@ -113,29 +111,35 @@ describe("integrationWhatsappService.updateCallSettings", () => {
   })
 })
 
-describe("integrationWhatsappService.findAuthByInboxId", () => {
+describe("integrationWhatsappService.findAuthByInboxIdForWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  test("returns only the raw auth value for an inbox", async () => {
+  test("returns only the workspace-scoped raw auth value", async () => {
     const auth = { tokens: { accessToken: "secret" } }
-    findFirstMock.mockResolvedValue({ auth })
+    repositoryMock.findAuthByInboxIdForWorkspace.mockResolvedValue({ auth })
 
     await expect(
-      integrationWhatsappService.findAuthByInboxId("inbox-1"),
+      integrationWhatsappService.findAuthByInboxIdForWorkspace({
+        inboxId: "inbox-1",
+        workspaceId: "workspace-1",
+      }),
     ).resolves.toBe(auth)
-    expect(findFirstMock).toHaveBeenCalledWith({
-      columns: { auth: true },
-      where: { inboxId: "inbox-1" },
+    expect(repositoryMock.findAuthByInboxIdForWorkspace).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      workspaceId: "workspace-1",
     })
   })
 
-  test("returns null when the inbox has no WhatsApp integration", async () => {
-    findFirstMock.mockResolvedValue(undefined)
+  test("returns null when the workspace has no WhatsApp integration", async () => {
+    repositoryMock.findAuthByInboxIdForWorkspace.mockResolvedValue(null)
 
     await expect(
-      integrationWhatsappService.findAuthByInboxId("inbox-1"),
+      integrationWhatsappService.findAuthByInboxIdForWorkspace({
+        inboxId: "inbox-1",
+        workspaceId: "workspace-1",
+      }),
     ).resolves.toBeNull()
   })
 })

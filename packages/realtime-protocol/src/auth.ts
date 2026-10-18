@@ -29,9 +29,9 @@ export const REALTIME_MEMBER_REVOKED_TTL_SECONDS =
  * against another.
  */
 export const REALTIME_TOKEN_PURPOSE = {
-  /** A member's short-lived room-connect token (`signMemberConnectToken`). */
+  /** A member's short-lived realtime-connect token (`signMemberConnectToken`). */
   memberConnect: "member-connect",
-  /** A guest's short-lived room-connect token. */
+  /** A guest's short-lived realtime-connect token. */
   guestConnect: "guest-connect",
   /** The realtime server's periodic presence report to the builder. */
   presenceReport: "presence-report",
@@ -86,9 +86,9 @@ const signRealtimeToken = async (
     .sign(encodeSecret(secret))
 
 /**
- * Verifies signature, expiry, `aud` (the room binding every caller relies on)
- * and `purpose`, then returns the decoded payload so callers can read their own
- * extra claims. `CLOCK_TOLERANCE_SECONDS` absorbs deploy-to-deploy clock drift.
+ * Verifies signature, expiry, `aud` (the realtime audience binding every caller
+ * relies on) and `purpose`, then returns decoded claims for caller-specific use.
+ * `CLOCK_TOLERANCE_SECONDS` absorbs deploy-to-deploy clock drift.
  */
 export const verifyRealtimeToken = async (
   token: string,
@@ -124,24 +124,13 @@ const memberClaimsSchema = z.object({
   iatMs: issuedAtMsSchema,
 })
 
-/** Claims carried by a room-connect token: the verified member's user id. */
+/** Claims carried by a member realtime-connect token: the verified user id. */
 export type RealtimeMemberClaims = z.infer<typeof memberClaimsSchema>
 
 /**
- * A revoke marker invalidates a token minted at or before it. Equal timestamps
- * fail closed because millisecond precision cannot establish which operation
- * occurred first.
- */
-export const isMemberTokenRevoked = (
-  claims: RealtimeMemberClaims,
-  revokedAtMs: number | null,
-): boolean => revokedAtMs !== null && revokedAtMs >= claims.iatMs
-
-/**
- * Mints a short-lived connect token bound to a member of a workspace room:
- * `aud` carries the workspace room id (verified against `room.id` on connect)
- * and the payload carries the verified `userId`. Only the issuer (Builder,
- * after checking workspace membership) should call this.
+ * Mints a short-lived connect token bound to a member of a workspace connection:
+ * `aud` carries the workspace id and the payload carries the verified `userId`.
+ * Only the issuer (Builder, after checking workspace membership) should call this.
  */
 export const signMemberConnectToken = async (
   member: {
@@ -169,9 +158,9 @@ export const signMemberConnectToken = async (
 }
 
 /**
- * Verifies a room-connect token minted by `signMemberConnectToken`. Throws on a
- * bad/expired signature, an `aud` that doesn't match `workspaceId`, or a
- * missing/malformed `userId` claim.
+ * Verifies a workspace connection token minted by `signMemberConnectToken`.
+ * Throws on a bad/expired signature, an `aud` that doesn't match `workspaceId`,
+ * or a missing/malformed `userId` claim.
  */
 export const verifyMemberConnectToken = async (
   token: string,

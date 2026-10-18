@@ -29,6 +29,7 @@ const workerState = vi.hoisted(() => ({
     async (_workspaceId: unknown, fn: () => Promise<unknown>) => await fn(),
   ),
   workerClose: vi.fn(async () => undefined),
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(async () => undefined),
   workerOn: vi.fn(),
 }))
 
@@ -92,6 +93,11 @@ vi.mock("../src/lib/bootstrap", () => ({
 
 vi.mock("../src/lib/logger", () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+}))
+
+vi.mock("../src/lib/realtime-drain", () => ({
+  flushAllPendingWorkspaceRealtimeEvents:
+    workerState.flushAllPendingWorkspaceRealtimeEvents,
 }))
 
 vi.mock("../src/lib/run-job-with-audit-context", () => ({

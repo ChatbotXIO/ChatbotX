@@ -15,10 +15,7 @@ type PublishGuestRealtimeEvent =
 const buildPublishGuestRealtimeEvent =
   (workspaceId: string): PublishGuestRealtimeEvent =>
   async (guestConversationId, event) => {
-    await publishGuestRealtimeEvent(
-      { guestConversationId, workspaceId },
-      event as Parameters<typeof publishGuestRealtimeEvent>[1],
-    )
+    await publishGuestRealtimeEvent({ guestConversationId, workspaceId }, event)
   }
 
 export type PlatformData = {

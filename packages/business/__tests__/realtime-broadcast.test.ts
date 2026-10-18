@@ -10,12 +10,14 @@ import {
 } from "../src/platform/realtime-broadcast"
 
 const {
+  drainInFlightRealtimeStreamPublishes,
   loggerError,
   markRealtimeMemberRevoked,
   publishRealtimeStreamRecord,
   publishSerializedRealtimeStreamRecord,
   retryWithLinearBackoff,
 } = vi.hoisted(() => ({
+  drainInFlightRealtimeStreamPublishes: vi.fn(),
   loggerError: vi.fn(),
   markRealtimeMemberRevoked: vi.fn(),
   publishRealtimeStreamRecord: vi.fn(),
@@ -43,6 +45,7 @@ vi.mock("../src/logger", () => ({
 }))
 
 vi.mock("../src/platform/realtime-stream-publisher", () => ({
+  drainInFlightRealtimeStreamPublishes,
   markRealtimeMemberRevoked,
   publishRealtimeStreamRecord,
   publishSerializedRealtimeStreamRecord,
@@ -57,9 +60,10 @@ const typingEvent = {
 
 beforeEach(() => {
   vi.useFakeTimers()
-  loggerError.mockReset()
+  drainInFlightRealtimeStreamPublishes.mockReset()
   markRealtimeMemberRevoked.mockReset()
   markRealtimeMemberRevoked.mockResolvedValue(undefined)
+  drainInFlightRealtimeStreamPublishes.mockResolvedValue(undefined)
   publishRealtimeStreamRecord.mockReset()
   publishRealtimeStreamRecord.mockResolvedValue(undefined)
   publishSerializedRealtimeStreamRecord.mockReset()
@@ -117,6 +121,7 @@ describe("realtime stream broadcast", () => {
     await expect(delivery).resolves.toBeUndefined()
 
     expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledTimes(1)
+    expect(drainInFlightRealtimeStreamPublishes).toHaveBeenCalledTimes(1)
   })
 
   test("splits workspace batches at 64 events", async () => {
@@ -180,6 +185,37 @@ describe("realtime stream broadcast", () => {
     await expect(delivery).resolves.toBeUndefined()
 
     expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledTimes(1)
+  })
+
+  test("rejects new workspace appends once the ordered append chain reaches its cap", async () => {
+    const appends = Array.from({ length: 8 }, () =>
+      Promise.withResolvers<void>(),
+    )
+    let appendIndex = 0
+    publishSerializedRealtimeStreamRecord.mockImplementation(
+      () => appends[appendIndex++]?.promise,
+    )
+    const assignmentEvent = {
+      data: {
+        assignedInboxTeamId: null,
+        assignedUserId: "user_1",
+        conversationIds: ["conversation_1"],
+      },
+      eventType: "conversationAssigned",
+      route: { assignedTeamIds: [], assignedUserIds: ["user_1"] },
+    } as const
+    const deliveries = Array.from({ length: 8 }, () =>
+      publishWorkspaceRealtimeEvent("workspace_1", assignmentEvent),
+    )
+
+    await expect(
+      publishWorkspaceRealtimeEvent("workspace_1", assignmentEvent),
+    ).rejects.toThrow("Realtime workspace append backlog exceeded")
+
+    for (const append of appends) {
+      append.resolve()
+    }
+    await expect(Promise.all(deliveries)).resolves.toHaveLength(8)
   })
 
   test("publishes directed member, revocation, and guest records directly", async () => {

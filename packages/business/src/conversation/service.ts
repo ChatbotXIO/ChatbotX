@@ -1074,9 +1074,8 @@ class ConversationService extends BaseService {
     assignedId: string | null | undefined
     assignedBy?: string
     triggerContext: Omit<TriggerContext, "triggerType">
-    tx?: DatabaseClient
   }): Promise<void> {
-    const { workspaceId, contactIds, assignedId, assignedBy, tx } = props
+    const { workspaceId, contactIds, assignedId, assignedBy } = props
 
     const updatedData = await this.resolveAssignmentTarget(
       workspaceId,
@@ -1086,7 +1085,6 @@ class ConversationService extends BaseService {
     const conversations = await this.findManyByContactIds({
       workspaceId,
       contactIds,
-      tx,
     })
     if (conversations.length === 0) {
       return
@@ -1105,7 +1103,6 @@ class ConversationService extends BaseService {
             ? "conversation_assigned"
             : "conversation_unassigned",
       },
-      tx,
     })
   }
 
@@ -1119,9 +1116,8 @@ class ConversationService extends BaseService {
     assignedId: string | null | undefined
     assignedBy?: string
     triggerContext: Omit<TriggerContext, "triggerType">
-    tx?: DatabaseClient
   }): Promise<void> {
-    const { workspaceId, conversation, assignedId, assignedBy, tx } = props
+    const { workspaceId, conversation, assignedId, assignedBy } = props
 
     const updatedData = await this.resolveAssignmentTarget(
       workspaceId,
@@ -1141,7 +1137,6 @@ class ConversationService extends BaseService {
             ? "conversation_assigned"
             : "conversation_unassigned",
       },
-      tx,
     })
   }
 
@@ -1164,16 +1159,9 @@ class ConversationService extends BaseService {
     assignedId: string
     silent?: boolean
     triggerContext: TriggerContext
-    tx?: DatabaseClient
   }): Promise<void> {
-    const {
-      workspaceId,
-      conversation,
-      assignedId,
-      silent,
-      triggerContext,
-      tx,
-    } = props
+    const { workspaceId, conversation, assignedId, silent, triggerContext } =
+      props
 
     const updatedData = await this.resolveAssignmentTarget(
       workspaceId,
@@ -1192,7 +1180,6 @@ class ConversationService extends BaseService {
       assignedInboxTeamId: updatedData.assignedInboxTeamId,
       silent,
       triggerContext,
-      tx,
     })
   }
 
@@ -1204,7 +1191,6 @@ class ConversationService extends BaseService {
     assignedBy?: string
     silent?: boolean
     triggerContext: TriggerContext
-    tx?: DatabaseClient
   }): Promise<ConversationModel[]> {
     const {
       workspaceId,
@@ -1214,7 +1200,6 @@ class ConversationService extends BaseService {
       assignedBy,
       silent,
       triggerContext,
-      tx,
     } = props
     if (conversations.length === 0) {
       return []
@@ -1261,9 +1246,7 @@ class ConversationService extends BaseService {
         updated,
       }
     }
-    const result = tx
-      ? await updateInTransaction(tx)
-      : await db.transaction(updateInTransaction)
+    const result = await db.transaction(updateInTransaction)
     await this.publishAssignmentChanges({
       workspaceId,
       conversations: result.updated.map((conversation) => {
@@ -1598,12 +1581,10 @@ class ConversationService extends BaseService {
     workspaceId: string
     id: string
     silent?: boolean
-    tx?: DatabaseClient
   }): Promise<{ agentLastReadAt: Date | null }> {
-    const { workspaceId, id, silent, tx } = props
+    const { workspaceId, id, silent } = props
     const conversation = await this.findByOrFail({
       where: { id, workspaceId },
-      tx,
     })
 
     const messageRepository = await createMessageRepository()
@@ -1637,7 +1618,6 @@ class ConversationService extends BaseService {
       id,
       agentLastReadAt,
       silent,
-      tx,
     })
 
     return { agentLastReadAt }
@@ -1687,10 +1667,9 @@ class ConversationService extends BaseService {
     id: string
     agentLastReadAt: Date | null
     silent?: boolean
-    tx?: DatabaseClient
   }): Promise<void> {
-    const { workspaceId, id, agentLastReadAt, silent, tx = db } = props
-    const [updated] = await tx
+    const { workspaceId, id, agentLastReadAt, silent } = props
+    const [updated] = await db
       .update(conversationModel)
       .set({ agentLastReadAt })
       .where(
@@ -1709,7 +1688,9 @@ class ConversationService extends BaseService {
         eventType: RealtimeEventType.conversationUpdated,
         data: {
           conversationIds: [id],
-          changes: { agentLastReadAt: agentLastReadAt?.toISOString() ?? null },
+          changes: {
+            agentLastReadAt: agentLastReadAt?.toISOString() ?? null,
+          },
         },
         route: routeForConversation(updated),
       })
@@ -1901,6 +1882,7 @@ class ConversationService extends BaseService {
     currentStep?: string | null
     lastActivityAt?: Date
     lastStep?: string | null
+    contactLastReadAt?: Date
     contactRepliedAt?: Date
     tx?: DatabaseClient
   }): Promise<void> {
@@ -1919,6 +1901,9 @@ class ConversationService extends BaseService {
       // an already-seen unread message). Postgres GREATEST ignores NULLs;
       // the COALESCE is kept only for readability.
       data.contactRepliedAt = sql`GREATEST(COALESCE(${conversationModel.contactRepliedAt}, ${props.contactRepliedAt}), ${props.contactRepliedAt})`
+    }
+    if ("contactLastReadAt" in props && props.contactLastReadAt) {
+      data.contactLastReadAt = props.contactLastReadAt
     }
     if ("lastStep" in props) {
       data.lastStep = props.lastStep
@@ -2173,20 +2158,9 @@ class ConversationService extends BaseService {
         workspaceId,
         conversationId,
         lastActivityAt: at,
+        ...(contactLastReadAt ? { contactLastReadAt } : {}),
         ...(contactRepliedAt ? { contactRepliedAt } : {}),
       })
-
-      if (contactLastReadAt) {
-        await tx
-          .update(conversationModel)
-          .set({ contactLastReadAt })
-          .where(
-            and(
-              eq(conversationModel.id, conversationId),
-              eq(conversationModel.workspaceId, workspaceId),
-            ),
-          )
-      }
 
       return invalidation
     })

@@ -93,6 +93,28 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   publishWorkspaceRealtimeEvent: mockBroadcast,
   queueWorkspaceRealtimeEvent: mockBroadcast,
+  queueMessageCreatedEvent: (
+    workspaceId: string,
+    data: unknown,
+    conversation: {
+      assignedInboxTeamId?: string | null
+      assignedUserId?: string | null
+      inboxId?: string | null
+    },
+  ) =>
+    mockBroadcast(workspaceId, {
+      eventType: "messageCreated",
+      data,
+      route: {
+        assignedTeamIds: conversation.assignedInboxTeamId
+          ? [conversation.assignedInboxTeamId]
+          : [],
+        assignedUserIds: conversation.assignedUserId
+          ? [conversation.assignedUserId]
+          : [],
+        ...(conversation.inboxId ? { inboxId: conversation.inboxId } : {}),
+      },
+    }),
   contactInboxService: {
     recordSendFailure: mockRecordSendFailure,
     invalidateTracking: mockInvalidateTracking,

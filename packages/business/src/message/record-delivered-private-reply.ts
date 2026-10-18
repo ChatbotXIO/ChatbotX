@@ -3,15 +3,11 @@ import type {
   ContactInboxModel,
   MessageModel,
 } from "@chatbotx.io/database/types"
-import {
-  RealtimeEventType,
-  routeForConversation,
-} from "@chatbotx.io/realtime-protocol"
 import { contactService } from "../contact/service"
 import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { logger } from "../logger"
-import { queueWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
+import { queueMessageCreatedEvent } from "../platform/realtime-broadcast"
 
 /**
  * The contact's DM conversation (`sourceId IS NULL`), created when this is
@@ -154,10 +150,9 @@ export const recordDeliveredDirectMessage = async (props: {
       at: message.createdAt,
     })
 
-    queueWorkspaceRealtimeEvent(workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: message,
-      route: routeForConversation({ assignedUserId, assignedInboxTeamId }),
+    queueMessageCreatedEvent(workspaceId, message, {
+      assignedUserId,
+      assignedInboxTeamId,
     })
 
     return message

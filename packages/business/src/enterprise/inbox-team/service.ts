@@ -32,6 +32,8 @@ type InboxTeamMutationResult = {
   revokeWarning: boolean
 }
 
+const REALTIME_REVOKE_BATCH_SIZE = 10
+
 class InboxTeamService extends BaseService {
   // ─── Reads (cached) ─────────────────────────────────────────────────────
   listByWorkspace(props: {
@@ -126,20 +128,37 @@ class InboxTeamService extends BaseService {
     workspaceId: string,
     userIds: Iterable<string>,
   ): Promise<boolean> {
-    const results = await Promise.allSettled(
-      Array.from(new Set(userIds), async (userId) =>
-        tryRevokeWorkspaceMemberRealtimeConnections({
-          workspaceId,
-          userId,
-          reason: "reauth",
-          errorMessage:
-            "Failed to revoke inbox team member realtime connections",
-        }),
-      ),
-    )
-    return results.some(
-      (result) => result.status === "rejected" || !result.value,
-    )
+    const uniqueUserIds = [...new Set(userIds)]
+    let revokeWarning = false
+
+    for (
+      let startIndex = 0;
+      startIndex < uniqueUserIds.length;
+      startIndex += REALTIME_REVOKE_BATCH_SIZE
+    ) {
+      const batch = uniqueUserIds.slice(
+        startIndex,
+        startIndex + REALTIME_REVOKE_BATCH_SIZE,
+      )
+      const results = await Promise.allSettled(
+        batch.map((userId) =>
+          tryRevokeWorkspaceMemberRealtimeConnections({
+            workspaceId,
+            userId,
+            reason: "reauth",
+            errorMessage:
+              "Failed to revoke inbox team member realtime connections",
+          }),
+        ),
+      )
+      if (
+        results.some((result) => result.status === "rejected" || !result.value)
+      ) {
+        revokeWarning = true
+      }
+    }
+
+    return revokeWarning
   }
 
   async create(props: {
@@ -222,18 +241,10 @@ class InboxTeamService extends BaseService {
     if (teams.length === 0) {
       throw notFoundException("Inbox team not found")
     }
-    const memberUserIds = new Set(
-      (
-        await Promise.all(
-          teams.map((team) =>
-            inboxTeamMemberRepository.listUserIdsByTeamId({
-              workspaceId,
-              inboxTeamId: team.id,
-            }),
-          ),
-        )
-      ).flat(),
-    )
+    const memberUserIds = await inboxTeamMemberRepository.listUserIdsByTeamIds({
+      workspaceId,
+      inboxTeamIds: teams.map((team) => team.id),
+    })
 
     await db
       .delete(inboxTeamModel)

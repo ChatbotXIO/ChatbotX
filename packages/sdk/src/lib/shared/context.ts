@@ -1,4 +1,5 @@
 import type { Readable } from "node:stream"
+import type { RealtimeGuestEventData } from "@chatbotx.io/realtime-protocol"
 import type { AuthValue } from "../auth"
 
 export type ContextUploader = {
@@ -58,7 +59,7 @@ export type Context<AO extends AuthValue, ID = Record<string, unknown>> = {
      */
     publishGuestRealtimeEvent: (
       guestConversationId: string,
-      event: { data: unknown; eventType: string },
+      event: RealtimeGuestEventData,
     ) => Promise<void>
   }
 }

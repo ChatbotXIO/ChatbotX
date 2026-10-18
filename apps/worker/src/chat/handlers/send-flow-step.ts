@@ -12,7 +12,7 @@ import {
   type PreparedProductMessage,
   productMessageService,
   publishGuestRealtimeEvent,
-  queueWorkspaceRealtimeEvent,
+  queueMessageCreatedEvent,
   resolveMediaUrl,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
@@ -999,11 +999,7 @@ export async function sendFlowStep({
         })
 
     if (!isBulkOutbound) {
-      queueWorkspaceRealtimeEvent(conversation.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: message,
-        route: conversationRoute,
-      })
+      queueMessageCreatedEvent(conversation.workspaceId, message, conversation)
     }
 
     // The guest webchat widget still needs bulk messages, so this send is
@@ -1190,10 +1186,6 @@ export const sendChatMessage = async (
       `sendChatMessage: contact inbox not found for conversation ${conversation.id}`,
     )
   }
-  const conversationRoute = routeForConversation(
-    conversation,
-    contactInbox.inboxId,
-  )
 
   if (!(text || url)) {
     return
@@ -1301,11 +1293,12 @@ export const sendChatMessage = async (
       ),
     ]
     if (!isBulkOutbound) {
-      queueWorkspaceRealtimeEvent(conversation.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: message,
-        route: conversationRoute,
-      })
+      queueMessageCreatedEvent(
+        conversation.workspaceId,
+        message,
+        conversation,
+        contactInbox.inboxId,
+      )
     }
 
     await Promise.all(promises)

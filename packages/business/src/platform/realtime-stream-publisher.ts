@@ -14,6 +14,7 @@ type DirectRealtimeStreamRecord = Exclude<
 >
 
 const REALTIME_STREAM_RETENTION_MS = 5 * 60 * 1000
+const REALTIME_STREAM_MAX_LEN = 10_000
 
 /**
  * A transient Redis blip must not permanently drop a realtime event with no
@@ -95,26 +96,42 @@ const getRealtimeStreamConnection = async (): Promise<Redis> => {
   }
 }
 
+const inFlightRealtimeStreamPublishes = new Set<Promise<void>>()
+
 /**
  * Appends a pre-serialized protocol record to its workspace shard. Callers that
  * batch events supply this form so each event is serialized exactly once.
  */
-export const publishSerializedRealtimeStreamRecord = async (
+export const publishSerializedRealtimeStreamRecord = (
   workspaceId: string,
   serializedRecord: string,
 ): Promise<void> => {
-  await retryWithLinearBackoff(
+  const publish = retryWithLinearBackoff(
     async () => {
       const connection = await getRealtimeStreamConnection()
-      await connection.xadd(
-        getRealtimeStreamKey(workspaceId),
-        "MINID",
-        "~",
-        `${Date.now() - REALTIME_STREAM_RETENTION_MS}-0`,
-        "*",
-        "record",
-        serializedRecord,
-      )
+      const streamKey = getRealtimeStreamKey(workspaceId)
+      const trimResults = await connection
+        .multi()
+        .xadd(
+          streamKey,
+          "MAXLEN",
+          "~",
+          REALTIME_STREAM_MAX_LEN,
+          "*",
+          "record",
+          serializedRecord,
+        )
+        .xtrim(
+          streamKey,
+          "MINID",
+          "~",
+          `${Date.now() - REALTIME_STREAM_RETENTION_MS}-0`,
+        )
+        .exec()
+      const trimError = trimResults?.find(([error]) => error)?.[0]
+      if (trimError) {
+        throw trimError
+      }
     },
     {
       attempts: PUBLISH_RETRY_ATTEMPTS,
@@ -123,6 +140,34 @@ export const publishSerializedRealtimeStreamRecord = async (
       workspaceId,
     },
   )
+  inFlightRealtimeStreamPublishes.add(publish)
+  publish.then(
+    () => {
+      inFlightRealtimeStreamPublishes.delete(publish)
+    },
+    () => {
+      inFlightRealtimeStreamPublishes.delete(publish)
+    },
+  )
+  return publish
+}
+
+export const drainInFlightRealtimeStreamPublishes = async (): Promise<void> => {
+  const failures: unknown[] = []
+  while (inFlightRealtimeStreamPublishes.size > 0) {
+    const results = await Promise.allSettled(inFlightRealtimeStreamPublishes)
+    failures.push(
+      ...results.flatMap((result) =>
+        result.status === "rejected" ? [result.reason] : [],
+      ),
+    )
+  }
+  if (failures.length > 0) {
+    throw new AggregateError(
+      failures,
+      `${failures.length} direct realtime publish(es) failed during shutdown`,
+    )
+  }
 }
 
 /**
@@ -158,4 +203,5 @@ export const markRealtimeMemberRevoked = async (
 
 export const resetRealtimeStreamPublisherForTests = (): void => {
   realtimeStreamConnectionPromise = null
+  inFlightRealtimeStreamPublishes.clear()
 }

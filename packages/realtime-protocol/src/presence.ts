@@ -25,7 +25,7 @@ if (PRESENCE_REPORT_INTERVAL_MS * 2 > PRESENCE_TTL_MS) {
 
 /**
  * Cap on user ids per report. Both ends truncate rather than reject, so an
- * oversized room reports its first N members instead of going dark.
+ * oversized connection set reports its first N members instead of going dark.
  */
 export const MAX_PRESENCE_USER_IDS_PER_REPORT = 5000
 

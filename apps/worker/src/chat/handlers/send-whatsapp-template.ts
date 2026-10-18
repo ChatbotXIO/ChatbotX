@@ -2,7 +2,7 @@ import {
   contactInboxService,
   conversationService,
   messageService,
-  queueWorkspaceRealtimeEvent,
+  queueMessageCreatedEvent,
 } from "@chatbotx.io/business"
 import type { messageModel } from "@chatbotx.io/database/schema"
 import type {
@@ -20,10 +20,6 @@ import {
   stepTypes,
   type TemplateComponent,
 } from "@chatbotx.io/flow-config"
-import {
-  RealtimeEventType,
-  routeForConversation,
-} from "@chatbotx.io/realtime-protocol"
 import {
   ChannelError,
   ChannelErrorCategory,
@@ -332,11 +328,11 @@ export async function processWhatsappTemplate(
     }
 
     if (!isBulkOutbound) {
-      queueWorkspaceRealtimeEvent(conversation.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: newMessage,
-        route: routeForConversation(conversation),
-      })
+      queueMessageCreatedEvent(
+        conversation.workspaceId,
+        newMessage,
+        conversation,
+      )
     }
 
     const result = await sendFlowStepToChannel({

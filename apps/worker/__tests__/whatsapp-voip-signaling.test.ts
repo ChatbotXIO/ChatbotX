@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
   resolveWhatsappCallerName: vi.fn(),
   findByWacid: vi.fn(),
   findByAttemptId: vi.fn(),
-  findAuthByInboxId: vi.fn(),
+  findAuthByInboxIdForWorkspace: vi.fn(),
   rejectCall: vi.fn(),
   terminateCall: vi.fn(),
   finalizeCallSideEffects: vi.fn(),
@@ -30,13 +30,7 @@ vi.mock("@chatbotx.io/business", () => ({
     mocks.publishWorkspaceMemberRealtimeEvent,
   resolveWhatsappCallerName: mocks.resolveWhatsappCallerName,
   integrationWhatsappService: {
-    findAuthByInboxId: async (inboxId: string) => {
-      const row = await mocks.findAuthByInboxId({
-        modelName: "IntegrationWhatsapp",
-        inboxId,
-      })
-      return row?.auth ?? row
-    },
+    findAuthByInboxIdForWorkspace: mocks.findAuthByInboxIdForWorkspace,
   },
   whatsappVoipCallService: {
     reserveIncomingCall: mocks.reserveIncomingCall,
@@ -53,16 +47,6 @@ vi.mock("@chatbotx.io/business", () => ({
     deleteOffer: mocks.deleteOffer,
     readOutboundAnswer: mocks.readOutboundAnswer,
     deleteOutboundAnswer: mocks.deleteOutboundAnswer,
-  },
-}))
-
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  whatsappCallRepository: {
-    findByWacid: mocks.findByWacid,
-    findByAttemptId: mocks.findByAttemptId,
-  },
-  integrationLookupRepository: {
-    findAuthByInboxId: mocks.findAuthByInboxId,
   },
 }))
 
@@ -140,6 +124,7 @@ const outboundCallRow = {
   conversationId: "conv-2",
   contactInboxId: "ci-2",
   inboxId: "inbox-1",
+  workspaceId: "ws-1",
   answeredByUserId: "initiator-1" as string | null,
 }
 
@@ -160,7 +145,7 @@ beforeEach(() => {
   mocks.claimUnreachable.mockResolvedValue(true)
   mocks.findByWacid.mockResolvedValue(callRow)
   mocks.findByAttemptId.mockResolvedValue(undefined)
-  mocks.findAuthByInboxId.mockResolvedValue({ auth: integrationRow.auth })
+  mocks.findAuthByInboxIdForWorkspace.mockResolvedValue(integrationRow.auth)
   mocks.resolveWhatsappCallerName.mockResolvedValue("Hung Phan")
   mocks.rejectCall.mockResolvedValue(undefined)
   mocks.terminateCall.mockResolvedValue(undefined)
@@ -945,28 +930,30 @@ describe("handleWhatsappVoipSignalingJob: handleOutboundAnswer", () => {
     expect(mocks.logger.warn).toHaveBeenCalled()
   })
 
-  test("a per-recipient delivery failure is logged, but the stored answer is still deleted", async () => {
+  test("rethrows delivery failures and preserves the stored answer for retry", async () => {
     mocks.findByAttemptId.mockResolvedValue(outboundCallRow)
     mocks.readOutboundAnswer.mockResolvedValue({ sdp: "v=0...answer" })
     mocks.publishWorkspaceMemberRealtimeEvent.mockRejectedValue(
       new Error("stream down"),
     )
 
-    await handleWhatsappVoipSignalingJob({
-      type: "handleOutboundAnswer",
-      data: {
-        attemptId: "att-1",
-        whatsappCallId: "call-out-1",
-        wacid: "wacid.OUT",
-        workspaceId: "ws-1",
-      },
-    })
+    await expect(
+      handleWhatsappVoipSignalingJob({
+        type: "handleOutboundAnswer",
+        data: {
+          attemptId: "att-1",
+          whatsappCallId: "call-out-1",
+          wacid: "wacid.OUT",
+          workspaceId: "ws-1",
+        },
+      }),
+    ).rejects.toThrow("stream down")
 
     expect(mocks.logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ attemptId: "att-1" }),
       expect.stringContaining("unable to publish"),
     )
-    expect(mocks.deleteOutboundAnswer).toHaveBeenCalledWith("att-1")
+    expect(mocks.deleteOutboundAnswer).not.toHaveBeenCalled()
   })
 
   test("row not ready yet (retried against the connect/answer race): throws so BullMQ retries", async () => {
@@ -1015,9 +1002,9 @@ describe("handleWhatsappVoipSignalingJob: expireOutboundDial", () => {
       wacid: "wacid.OUT",
       allowFromAccepted: false,
     })
-    expect(mocks.findAuthByInboxId).toHaveBeenCalledWith({
-      modelName: "IntegrationWhatsapp",
+    expect(mocks.findAuthByInboxIdForWorkspace).toHaveBeenCalledWith({
       inboxId: "inbox-1",
+      workspaceId: "ws-1",
     })
     expect(mocks.terminateCall).toHaveBeenCalledWith({
       auth: integrationRow.auth,

@@ -13,7 +13,10 @@ import {
   conversationModel,
   integrationWebchatModel,
 } from "@chatbotx.io/database/schema"
-import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
+import type {
+  IntegrationWebchatModel,
+  WorkspaceModel,
+} from "@chatbotx.io/database/types"
 import { parsePagination } from "@chatbotx.io/database/utils"
 import { emitContactCreated } from "@chatbotx.io/events"
 import type { AuthValue } from "@chatbotx.io/sdk"
@@ -370,22 +373,14 @@ class IntegrationWebchatService extends BaseService {
 
   async findOrCreateGuestConversation(input: {
     guestConversationId: string
+    integration: Pick<IntegrationWebchatModel, "inboxId">
     locale?: string | null
     parentUrl?: string | null
     timezone?: string | null
-    webchatId: string
+    workspace: Pick<WorkspaceModel, "ownerId">
     workspaceId: string
   }) {
-    const [integration, workspace] = await Promise.all([
-      this.findByIdForWorkspace({
-        id: input.webchatId,
-        workspaceId: input.workspaceId,
-      }),
-      workspaceService.findById({ id: input.workspaceId }),
-    ])
-    if (!workspace) {
-      throw notFoundException("Workspace not found")
-    }
+    const { integration, workspace } = input
 
     const result = await quotaEnforcementService.createNewContactWithMac({
       ownerId: workspace.ownerId,

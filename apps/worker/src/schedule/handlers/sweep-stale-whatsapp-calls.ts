@@ -28,13 +28,16 @@ const STALE_RINGING_SWEEP_LIMIT = 200
  * control record, or a failed auth lookup, falls back to a direct terminal-status write.
  */
 const endViaCallControlIfLive = async (
-  call: Pick<WhatsappCallModel, "id" | "wacid" | "inboxId">,
+  call: Pick<WhatsappCallModel, "id" | "wacid" | "inboxId" | "workspaceId">,
 ): Promise<boolean> => {
   if (!call.wacid) {
     return false
   }
   try {
-    const auth = await resolveVoipAuthByInboxId(call.inboxId)
+    const auth = await resolveVoipAuthByInboxId({
+      inboxId: call.inboxId,
+      workspaceId: call.workspaceId,
+    })
     return await endReservedCall({ wacid: call.wacid, auth })
   } catch (err) {
     log.warn(

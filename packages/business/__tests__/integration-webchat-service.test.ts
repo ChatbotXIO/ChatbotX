@@ -646,7 +646,8 @@ describe("integrationWebchatService.findOrCreateGuestConversation", () => {
     await expect(
       integrationWebchatService.findOrCreateGuestConversation({
         guestConversationId: "guest-1",
-        webchatId: "webchat-1",
+        integration: { inboxId: "inbox-1" },
+        workspace: { ownerId: "owner-1" },
         workspaceId: "ws-1",
       }),
     ).resolves.toBeNull()
@@ -708,10 +709,11 @@ describe("integrationWebchatService.findOrCreateGuestConversation", () => {
     await expect(
       integrationWebchatService.findOrCreateGuestConversation({
         guestConversationId: "guest-1",
+        integration: { inboxId: "inbox-1" },
         locale: "vi-VN",
         parentUrl: "https://example.com/chat",
         timezone: "Asia/Ho_Chi_Minh",
-        webchatId: "webchat-1",
+        workspace: { ownerId: "owner-1" },
         workspaceId: "ws-1",
       }),
     ).resolves.toEqual({ contact, contactInbox, conversation })

@@ -11,7 +11,7 @@ const mockIntegrationQueueAdd = vi.fn()
 const mockFlowExists = vi.fn()
 const mockFindOrCreate = vi.fn()
 const mockPrepareProductMessage = vi.fn()
-const mockQueueWorkspaceRealtimeEvent = vi.fn()
+const mockQueueMessageCreatedEvent = vi.fn()
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
@@ -74,7 +74,7 @@ vi.mock("../src/platform/settings", () => ({
 }))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
+  queueMessageCreatedEvent: mockQueueMessageCreatedEvent,
 }))
 
 vi.mock("../src/utils", () => ({
@@ -116,7 +116,7 @@ describe("messageService.createOutgoing", () => {
       createWithAttachments: vi.fn(),
     })
     mockChatQueueAdd.mockResolvedValue(undefined)
-    mockQueueWorkspaceRealtimeEvent.mockResolvedValue(undefined)
+    mockQueueMessageCreatedEvent.mockResolvedValue(undefined)
   })
 
   test("uses one shared timestamp for the message and conversation agent-replied fields", async () => {
@@ -165,12 +165,13 @@ describe("messageService.createOutgoing", () => {
       input: { text: "hello", clientId: "client-1" },
     })
 
-    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith(
+    expect(mockQueueMessageCreatedEvent).toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({
-        eventType: "messageCreated",
-        data: expect.objectContaining({ clientId: "client-1", id: "msg-1" }),
+        clientId: "client-1",
+        id: "msg-1",
       }),
+      expect.objectContaining({ id: "conv-1" }),
     )
   })
 
@@ -311,13 +312,13 @@ describe("messageService.createOutgoing with products", () => {
       createWithAttachments: vi.fn(),
     })
     mockChatQueueAdd.mockResolvedValue(undefined)
-    mockQueueWorkspaceRealtimeEvent.mockResolvedValue(undefined)
+    mockQueueMessageCreatedEvent.mockResolvedValue(undefined)
     mockPrepareProductMessage.mockResolvedValue(prepared)
   })
 
   const expectNothingCreated = () => {
     expect(mockRepositoryCreate).not.toHaveBeenCalled()
-    expect(mockQueueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+    expect(mockQueueMessageCreatedEvent).not.toHaveBeenCalled()
     expect(mockChatQueueAdd).not.toHaveBeenCalled()
   }
 
@@ -337,7 +338,7 @@ describe("messageService.createOutgoing with products", () => {
         contentAttributes: prepared.contentAttributes,
       }),
     )
-    expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledTimes(1)
+    expect(mockQueueMessageCreatedEvent).toHaveBeenCalledTimes(1)
     expect(mockChatQueueAdd).toHaveBeenCalledWith(
       "sendChannelMessage",
       expect.objectContaining({

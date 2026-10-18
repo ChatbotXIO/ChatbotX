@@ -10,6 +10,7 @@ import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { flushAllPendingWorkspaceRealtimeEvents } from "../lib/realtime-drain"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { WebhookMatcherService } from "./services/webhook-matcher.service"
 
@@ -67,6 +68,7 @@ async function startWebhookWorker() {
     isShuttingDown = true
     try {
       await worker.close()
+      await flushAllPendingWorkspaceRealtimeEvents()
       process.exit(0)
     } catch (err) {
       logger.error(err, "[WebhookWorker] Error during shutdown")

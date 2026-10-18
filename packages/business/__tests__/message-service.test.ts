@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => {
   const repo = {
+    createWithAttachments: vi.fn(),
     bulkCreateAttachments: vi.fn(),
     create: vi.fn(),
     deleteAttachmentsByMessageId: vi.fn(),
@@ -257,6 +258,70 @@ describe("messageService", () => {
       "provider unavailable",
       "ws-1",
       createdAt,
+    )
+  })
+
+  test("preserves attachment replacement timestamps and skips an empty insert", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    await messageService.replaceAttachments({
+      attachments: [],
+      createdAt,
+      id: "message-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.repo.deleteAttachmentsByMessageId).toHaveBeenCalledWith(
+      "message-1",
+      "ws-1",
+      createdAt,
+    )
+    expect(mocks.repo.bulkCreateAttachments).not.toHaveBeenCalled()
+
+    await messageService.replaceAttachments({
+      attachments: [{ path: "file.png" }] as never,
+      createdAt,
+      id: "message-1",
+      workspaceId: "ws-1",
+    })
+    expect(mocks.repo.bulkCreateAttachments).toHaveBeenCalledWith([
+      expect.objectContaining({
+        messageCreatedAt: createdAt,
+        messageId: "message-1",
+        path: "file.png",
+      }),
+    ])
+  })
+
+  test("passes text update arguments in repository order", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    await messageService.updateText({
+      createdAt,
+      id: "message-1",
+      text: "updated",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.repo.updateMessageText).toHaveBeenCalledWith(
+      "message-1",
+      "ws-1",
+      "updated",
+      createdAt,
+    )
+  })
+
+  test("passes messages and attachments unchanged to the combined repository write", async () => {
+    const message = { id: "message-1", workspaceId: "ws-1" }
+    const attachments = [{ path: "file.png" }]
+    mocks.repo.createWithAttachments.mockResolvedValue({ message, attachments })
+
+    await messageService.createWithAttachments({
+      attachments: attachments as never,
+      message: message as never,
+    })
+
+    expect(mocks.repo.createWithAttachments).toHaveBeenCalledWith(
+      message,
+      attachments,
     )
   })
 })

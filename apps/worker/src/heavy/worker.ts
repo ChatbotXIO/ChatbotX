@@ -23,6 +23,7 @@ import { detectConversationAndContactInbox } from "../lib/db"
 import { recordHeavyMetric } from "../lib/heavy-metrics"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
+import { flushAllPendingWorkspaceRealtimeEvents } from "../lib/realtime-drain"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { analyzeImage } from "./handlers/analyze-image"
@@ -406,6 +407,7 @@ async function startHeavyWorker() {
     isShuttingDown = true
     try {
       await worker.close()
+      await flushAllPendingWorkspaceRealtimeEvents()
       process.exit(0)
     } catch (err) {
       logger.error(

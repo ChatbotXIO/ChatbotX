@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   teamMemberFindMany: vi.fn(),
   userFindMany: vi.fn(),
   listUserIdsByTeamId: vi.fn(),
+  listUserIdsByTeamIds: vi.fn(),
   dispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
   tryRevokeWorkspaceMemberRealtimeConnections: vi.fn().mockResolvedValue(true),
 }))
@@ -72,6 +73,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   inboxTeamMemberRepository: {
     listUserIdsByTeamId: mocks.listUserIdsByTeamId,
+    listUserIdsByTeamIds: mocks.listUserIdsByTeamIds,
   },
 }))
 
@@ -106,6 +108,7 @@ beforeEach(() => {
   mocks.deleteReturning.mockResolvedValue([{ id: "member-row-1" }])
   mocks.teamFindMany.mockResolvedValue([{ id: TEAM_ID }])
   mocks.listUserIdsByTeamId.mockResolvedValue(["member-1"])
+  mocks.listUserIdsByTeamIds.mockResolvedValue(["member-1"])
 })
 
 describe("InboxTeamService member validation against duplicate membership rows", () => {
@@ -287,13 +290,20 @@ describe("InboxTeamService membership mutation revocation", () => {
       reason: "reauth",
       errorMessage: "Failed to revoke inbox team member realtime connections",
     })
+    expect(mocks.listUserIdsByTeamIds).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      inboxTeamIds: [TEAM_ID],
+    })
   })
 
   test("deduplicates multi-team members and continues revocations after one failure", async () => {
     mocks.teamFindMany.mockResolvedValue([{ id: TEAM_ID }, { id: "team-2" }])
-    mocks.listUserIdsByTeamId
-      .mockResolvedValueOnce(["member-1", "member-2"])
-      .mockResolvedValueOnce(["member-1", "member-3"])
+    mocks.listUserIdsByTeamIds.mockResolvedValue([
+      "member-1",
+      "member-2",
+      "member-1",
+      "member-3",
+    ])
     mocks.tryRevokeWorkspaceMemberRealtimeConnections
       .mockRejectedValueOnce(new Error("Redis unavailable"))
       .mockResolvedValue(true)

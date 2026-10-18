@@ -15,6 +15,7 @@ import {
   hasRealAvatar,
   isUnpromotedStandbyCopy,
   messageCleanupService,
+  queueMessageCreatedEvent,
   queueWorkspaceRealtimeEvent,
   quotaEnforcementService,
   recordProfileRefreshFailure,
@@ -1305,11 +1306,7 @@ const persistMessage = async (
   }
 
   if (isNew && !isOwnSendEcho) {
-    queueWorkspaceRealtimeEvent(inbox.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: message,
-      route: routeForConversation(conversation),
-    })
+    queueMessageCreatedEvent(inbox.workspaceId, message, conversation)
   }
 
   if (isNew && inbound) {
@@ -2161,11 +2158,7 @@ export const processMessageReaction = async (
   })
 
   if (isNew) {
-    queueWorkspaceRealtimeEvent(inbox.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: reactionRow,
-      route: routeForConversation(conversation),
-    })
+    queueMessageCreatedEvent(inbox.workspaceId, reactionRow, conversation)
     await awardReactionLeaderboard({
       inbox,
       contactId: existingContactInbox.contactId,

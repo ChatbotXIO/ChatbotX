@@ -22,10 +22,7 @@ import type {
   InboxModel,
   MessageModel,
 } from "@chatbotx.io/database/types"
-import {
-  RealtimeEventType,
-  routeForConversation,
-} from "@chatbotx.io/realtime-protocol"
+import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
 import type {
   ThreadControlContext,
   ThreadControlDelivery,
@@ -42,7 +39,10 @@ import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
-import { queueWorkspaceRealtimeEvent } from "../platform/realtime-broadcast"
+import {
+  queueMessageCreatedEvent,
+  queueWorkspaceRealtimeEvent,
+} from "../platform/realtime-broadcast"
 import {
   isRoutingTraffic,
   resolveThreadControlActivityText,
@@ -1059,11 +1059,11 @@ class ThreadControlService extends BaseService {
       const conversation = await conversationService.findBy({
         where: { id: input.conversationId, workspaceId },
       })
-      queueWorkspaceRealtimeEvent(workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: { ...(written as MessageModel), attachments: [] },
-        route: routeForConversation(conversation),
-      })
+      queueMessageCreatedEvent(
+        workspaceId,
+        { ...(written as MessageModel), attachments: [] },
+        conversation,
+      )
     } catch (err) {
       logger.warn(
         { err, contactInboxId: contactInbox.id },

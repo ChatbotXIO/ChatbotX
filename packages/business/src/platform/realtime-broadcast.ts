@@ -1,10 +1,23 @@
 import type {
   RealtimeEventData,
+  RealtimeGuestEventData,
   RealtimeTargetedEventData,
 } from "@chatbotx.io/realtime-protocol"
-import { RealtimeEventType } from "@chatbotx.io/realtime-protocol"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import { logger } from "../logger"
 import {
+  flushRealtimeRelayMetrics,
+  recordRealtimeRelayBackpressure,
+  recordRealtimeRelayError,
+  recordRealtimeRelayEvent,
+  recordRealtimeRelayFlush,
+  resetRealtimeRelayMetricsForTests,
+} from "./realtime-relay-metrics"
+import {
+  drainInFlightRealtimeStreamPublishes,
   markRealtimeMemberRevoked,
   publishRealtimeStreamRecord,
   publishSerializedRealtimeStreamRecord,
@@ -15,7 +28,7 @@ import {
 const WORKSPACE_REALTIME_COALESCE_MS = 25
 const WORKSPACE_REALTIME_MAX_EVENTS = 64
 const WORKSPACE_REALTIME_MAX_BYTES = 256 * 1024
-const REALTIME_METRIC_WINDOW_MS = 10_000
+const WORKSPACE_REALTIME_MAX_APPEND_DEPTH = 8
 
 const serializeWorkspaceEventsRecord = (
   workspaceId: string,
@@ -42,48 +55,7 @@ type PendingWorkspaceRealtimeEvents = {
 
 const pendingByWorkspace = new Map<string, PendingWorkspaceRealtimeEvents>()
 const inFlightByWorkspace = new Map<string, Promise<void>>()
-
-const createEmptyRelayWindow = (): RealtimeRelayWindow => ({
-  bytes: 0,
-  errors: 0,
-  eventTypes: {},
-  events: 0,
-  flushes: 0,
-  maxBatchEvents: 0,
-  windowStartedAt: Date.now(),
-})
-
-type RealtimeRelayWindow = {
-  bytes: number
-  errors: number
-  eventTypes: Record<string, number>
-  events: number
-  flushes: number
-  maxBatchEvents: number
-  windowStartedAt: number
-}
-
-let relayWindow = createEmptyRelayWindow()
-
-const relayWindowIsEmpty = (): boolean =>
-  relayWindow.events === 0 &&
-  relayWindow.flushes === 0 &&
-  relayWindow.errors === 0
-
-const flushRelayWindow = (force: boolean): void => {
-  if (
-    relayWindowIsEmpty() ||
-    (!force &&
-      Date.now() - relayWindow.windowStartedAt < REALTIME_METRIC_WINDOW_MS)
-  ) {
-    return
-  }
-  logger.info(
-    { metric: "realtime_relay", ...relayWindow },
-    "realtime_relay_metric",
-  )
-  relayWindow = createEmptyRelayWindow()
-}
+const appendDepthByWorkspace = new Map<string, number>()
 
 const createPendingWorkspaceRealtimeEvents = (
   workspaceId: string,
@@ -123,14 +95,14 @@ const flushPendingWorkspaceRealtimeEvents = (
     return Promise.resolve()
   }
 
-  relayWindow.flushes += 1
-  relayWindow.maxBatchEvents = Math.max(
-    relayWindow.maxBatchEvents,
-    pending.serializedEvents.length,
-  )
+  recordRealtimeRelayFlush(pending.serializedEvents.length)
 
   const previousAppend =
     inFlightByWorkspace.get(workspaceId) ?? Promise.resolve()
+  appendDepthByWorkspace.set(
+    workspaceId,
+    (appendDepthByWorkspace.get(workspaceId) ?? 0) + 1,
+  )
   const append = previousAppend
     .catch(() => undefined)
     .then(() =>
@@ -144,22 +116,21 @@ const flushPendingWorkspaceRealtimeEvents = (
       pending.delivery.resolve()
     },
     (error) => {
-      relayWindow.errors += 1
+      recordRealtimeRelayError()
       pending.delivery.reject(error)
     },
   )
 
-  // Stores the RAW `append` (not a `.catch`-wrapped copy): the shutdown
-  // drain's `Promise.allSettled` reads straight from this map, and a wrapped
-  // promise that never rejects would make every in-flight append look like
-  // it succeeded there even when Redis genuinely failed it. Map-cleanup uses
-  // its own derived, always-settling chain instead, so a rejection here is
-  // still observed exactly once (by the waiter-settling `.then` above) and
-  // never surfaces as a second, unhandled rejection from this cleanup chain.
   inFlightByWorkspace.set(workspaceId, append)
   append
     .catch(() => undefined)
     .then(() => {
+      const remainingDepth = (appendDepthByWorkspace.get(workspaceId) ?? 1) - 1
+      if (remainingDepth === 0) {
+        appendDepthByWorkspace.delete(workspaceId)
+      } else {
+        appendDepthByWorkspace.set(workspaceId, remainingDepth)
+      }
       if (inFlightByWorkspace.get(workspaceId) === append) {
         inFlightByWorkspace.delete(workspaceId)
       }
@@ -174,8 +145,9 @@ export const resetRealtimePublishStateForTests = (): void => {
   }
   pendingByWorkspace.clear()
   inFlightByWorkspace.clear()
+  appendDepthByWorkspace.clear()
   resetRealtimeStreamPublisherForTests()
-  relayWindow = createEmptyRelayWindow()
+  resetRealtimeRelayMetricsForTests()
 }
 
 /**
@@ -184,12 +156,6 @@ export const resetRealtimePublishStateForTests = (): void => {
  */
 export const flushAllPendingWorkspaceRealtimeEvents =
   async (): Promise<void> => {
-    const pendingWorkspaceIds = [...pendingByWorkspace.keys()]
-    const flushResults = await Promise.allSettled(
-      pendingWorkspaceIds.map((workspaceId) =>
-        flushPendingWorkspaceRealtimeEvents(workspaceId),
-      ),
-    )
     const failures = new Map<string, unknown>()
     const recordFailure = (
       workspaceId: string,
@@ -202,32 +168,49 @@ export const flushAllPendingWorkspaceRealtimeEvents =
       failures.set(workspaceId, reason)
       logger.error({ err: reason, workspaceId }, message)
     }
-    for (const [index, result] of flushResults.entries()) {
-      if (result.status === "rejected") {
-        recordFailure(
-          pendingWorkspaceIds[index] ?? "",
-          result.reason,
-          "Failed to flush pending realtime events on shutdown",
-        )
+
+    while (pendingByWorkspace.size > 0 || inFlightByWorkspace.size > 0) {
+      const pendingWorkspaceIds = [...pendingByWorkspace.keys()]
+      const flushResults = await Promise.allSettled(
+        pendingWorkspaceIds.map((workspaceId) =>
+          flushPendingWorkspaceRealtimeEvents(workspaceId),
+        ),
+      )
+      for (const [index, result] of flushResults.entries()) {
+        if (result.status === "rejected") {
+          recordFailure(
+            pendingWorkspaceIds[index] ?? "",
+            result.reason,
+            "Failed to flush pending realtime events on shutdown",
+          )
+        }
+      }
+
+      const inFlightEntries = [...inFlightByWorkspace.entries()]
+      const inFlightResults = await Promise.allSettled(
+        inFlightEntries.map(([, append]) => append),
+      )
+      for (const [index, result] of inFlightResults.entries()) {
+        if (result.status === "rejected") {
+          recordFailure(
+            inFlightEntries[index]?.[0] ?? "",
+            result.reason,
+            "Failed to drain an in-flight realtime append on shutdown",
+          )
+        }
       }
     }
-    const inFlightEntries = [...inFlightByWorkspace.entries()]
-    const inFlightResults = await Promise.allSettled(
-      inFlightEntries.map(([, append]) => append),
-    )
-    for (const [index, result] of inFlightResults.entries()) {
-      if (result.status === "rejected") {
-        recordFailure(
-          inFlightEntries[index]?.[0] ?? "",
-          result.reason,
-          "Failed to drain an in-flight realtime append on shutdown",
-        )
-      }
+
+    try {
+      await drainInFlightRealtimeStreamPublishes()
+    } catch (error) {
+      recordFailure(
+        "direct",
+        error,
+        "Failed to drain direct realtime publishes on shutdown",
+      )
     }
-    flushRelayWindow(true)
-    // Every workspace above got its own fully-drained attempt and its own log
-    // line, while the caller still receives one overall failure after every
-    // possible flush has completed.
+    flushRealtimeRelayMetrics(true)
     if (failures.size > 0) {
       throw new AggregateError(
         [...failures.values()],
@@ -244,17 +227,26 @@ export const publishWorkspaceRealtimeEvent = (
   workspaceId: string,
   event: RealtimeEventData,
 ): Promise<void> => {
-  flushRelayWindow(false)
+  flushRealtimeRelayMetrics(false)
+  if (
+    (appendDepthByWorkspace.get(workspaceId) ?? 0) >=
+    WORKSPACE_REALTIME_MAX_APPEND_DEPTH
+  ) {
+    const error = new Error("Realtime workspace append backlog exceeded")
+    if (recordRealtimeRelayBackpressure()) {
+      logger.warn(
+        { appendDepth: appendDepthByWorkspace.get(workspaceId), workspaceId },
+        "Realtime workspace append backlog exceeded",
+      )
+    }
+    return Promise.reject(error)
+  }
   let pending =
     pendingByWorkspace.get(workspaceId) ??
     createPendingWorkspaceRealtimeEvents(workspaceId)
-
   const serializedEvent = JSON.stringify(event)
   const serializedEventBytes = Buffer.byteLength(serializedEvent)
-  relayWindow.events += 1
-  relayWindow.bytes += serializedEventBytes
-  relayWindow.eventTypes[event.eventType] =
-    (relayWindow.eventTypes[event.eventType] ?? 0) + 1
+  recordRealtimeRelayEvent(event.eventType, serializedEventBytes)
   const separatorBytes = pending.serializedEvents.length > 0 ? 1 : 0
   const wouldExceedBytes =
     pending.byteLength + separatorBytes + serializedEventBytes >
@@ -279,6 +271,22 @@ export const publishWorkspaceRealtimeEvent = (
     flushPendingWorkspaceRealtimeEvents(workspaceId).catch(() => undefined)
   }
   return delivery
+}
+
+export const queueMessageCreatedEvent = (
+  workspaceId: string,
+  message: Extract<
+    RealtimeEventData,
+    { eventType: typeof RealtimeEventType.messageCreated }
+  >["data"],
+  conversation: Parameters<typeof routeForConversation>[0],
+  inboxId?: string,
+): void => {
+  queueWorkspaceRealtimeEvent(workspaceId, {
+    eventType: RealtimeEventType.messageCreated,
+    data: message,
+    route: routeForConversation(conversation, inboxId),
+  })
 }
 
 /**
@@ -371,7 +379,7 @@ export const tryRevokeWorkspaceMemberRealtimeConnections = async (
 /** Publishes an event to a guest conversation's active realtime connections. */
 export const publishGuestRealtimeEvent = async (
   args: { workspaceId: string; guestConversationId: string },
-  event: RealtimeTargetedEventData,
+  event: RealtimeGuestEventData,
 ): Promise<void> => {
   await publishRealtimeStreamRecord({
     event,

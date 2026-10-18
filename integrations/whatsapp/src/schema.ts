@@ -1,9 +1,5 @@
-import type {
-  BaseConfig,
-  Context,
-  Handler,
-  Oauth2AuthValue,
-} from "@chatbotx.io/sdk"
+import type { WhatsappAuthValue as BusinessWhatsappAuthValue } from "@chatbotx.io/business/integration-whatsapp/auth-schema"
+import type { BaseConfig, Context, Handler } from "@chatbotx.io/sdk"
 import type { ServerMessage } from "whatsapp-api-js/types"
 import z from "zod"
 import type { WhatsappCallingSettings } from "./api/calling"
@@ -41,17 +37,7 @@ export type WhatsappConfig = BaseConfig & {
   phoneNumberId?: string
 }
 
-export type WhatsappAuthValue = Oauth2AuthValue & {
-  metadata: {
-    wabaId: string
-    businessId: string
-    phoneNumber: WhatsappPhoneNumber
-    webhookUrl: string
-    isManual?: boolean
-    webhookVerifiedAt?: string
-    subscribeOverrideOk?: boolean
-  }
-}
+export type WhatsappAuthValue = BusinessWhatsappAuthValue
 
 export type WhatsappPagination = {
   cursors: {

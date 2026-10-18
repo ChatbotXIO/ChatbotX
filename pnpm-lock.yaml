@@ -3222,6 +3222,9 @@ importers:
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger
+      '@chatbotx.io/realtime-protocol':
+        specifier: workspace:*
+        version: link:../realtime-protocol
       '@chatbotx.io/utils':
         specifier: workspace:*
         version: link:../utils

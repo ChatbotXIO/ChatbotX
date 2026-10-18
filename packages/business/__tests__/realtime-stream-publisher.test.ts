@@ -1,21 +1,27 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  createRedisConnection,
   connect,
+  createRedisConnection,
   disconnect,
+  exec,
   loggerError,
   loggerWarn,
+  multi,
   set,
   xadd,
+  xtrim,
 } = vi.hoisted(() => ({
   connect: vi.fn(),
   createRedisConnection: vi.fn(),
   disconnect: vi.fn(),
+  exec: vi.fn(),
   loggerError: vi.fn(),
   loggerWarn: vi.fn(),
+  multi: vi.fn(),
   set: vi.fn(),
   xadd: vi.fn(),
+  xtrim: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
@@ -41,13 +47,28 @@ beforeEach(() => {
   connect.mockReset()
   connect.mockResolvedValue(undefined)
   createRedisConnection.mockReset()
-  createRedisConnection.mockReturnValue({ connect, disconnect, set, xadd })
+  createRedisConnection.mockReturnValue({
+    connect,
+    disconnect,
+    multi,
+    set,
+  })
   disconnect.mockReset()
+  exec.mockReset()
+  exec.mockResolvedValue([
+    [null, "1-0"],
+    [null, 0],
+  ])
   loggerError.mockReset()
   loggerWarn.mockReset()
+  multi.mockReset()
+  multi.mockReturnValue({ exec, xadd, xtrim })
   set.mockReset()
   set.mockResolvedValue("OK")
   xadd.mockReset()
+  xadd.mockReturnValue({ exec, xadd, xtrim })
+  xtrim.mockReset()
+  xtrim.mockReturnValue({ exec, xadd, xtrim })
 })
 
 afterEach(async () => {
@@ -63,7 +84,10 @@ describe("realtime stream publisher Redis connection", () => {
     const { publishRealtimeStreamRecord } = await import(
       "../src/platform/realtime-stream-publisher"
     )
-    xadd.mockResolvedValue("1-0")
+    exec.mockResolvedValue([
+      [null, "1-0"],
+      [null, 0],
+    ])
 
     await publishRealtimeStreamRecord({
       event: typingEvent,
@@ -86,7 +110,10 @@ describe("realtime stream publisher Redis connection", () => {
   test("waits for the initial connection before appending to the stream", async () => {
     const { promise, resolve } = Promise.withResolvers<void>()
     connect.mockReturnValueOnce(promise)
-    xadd.mockResolvedValue("1-0")
+    exec.mockResolvedValue([
+      [null, "1-0"],
+      [null, 0],
+    ])
     const { publishRealtimeStreamRecord } = await import(
       "../src/platform/realtime-stream-publisher"
     )
@@ -113,16 +140,19 @@ describe("realtime stream publisher Redis connection", () => {
       .mockReturnValueOnce({
         connect: initialConnect,
         disconnect,
+        multi,
         set,
-        xadd,
       })
       .mockReturnValueOnce({
         connect: retryConnect,
         disconnect,
+        multi,
         set,
-        xadd,
       })
-    xadd.mockResolvedValue("1-0")
+    exec.mockResolvedValue([
+      [null, "1-0"],
+      [null, 0],
+    ])
     vi.useFakeTimers()
     const { publishRealtimeStreamRecord } = await import(
       "../src/platform/realtime-stream-publisher"
@@ -150,7 +180,10 @@ describe("realtime stream publisher Redis connection", () => {
     const { publishRealtimeStreamRecord } = await import(
       "../src/platform/realtime-stream-publisher"
     )
-    xadd.mockRejectedValueOnce(new Error("ECONNRESET")).mockResolvedValue("1-0")
+    exec.mockRejectedValueOnce(new Error("ECONNRESET")).mockResolvedValue([
+      [null, "1-0"],
+      [null, 0],
+    ])
     vi.useFakeTimers()
 
     const publish = publishRealtimeStreamRecord({
@@ -175,7 +208,7 @@ describe("realtime stream publisher Redis connection", () => {
       "../src/platform/realtime-stream-publisher"
     )
     const timeout = new Error("Command timed out")
-    xadd.mockRejectedValueOnce(timeout)
+    exec.mockRejectedValueOnce(timeout)
 
     await expect(
       publishRealtimeStreamRecord({
@@ -196,7 +229,7 @@ describe("realtime stream publisher Redis connection", () => {
       "../src/platform/realtime-stream-publisher"
     )
     const failure = new Error("ECONNREFUSED")
-    xadd.mockRejectedValue(failure)
+    exec.mockRejectedValue(failure)
     vi.useFakeTimers()
 
     const publish = publishRealtimeStreamRecord({
@@ -218,7 +251,7 @@ describe("realtime stream publisher Redis connection", () => {
       queueWorkspaceRealtimeEvent,
       flushAllPendingWorkspaceRealtimeEvents,
     } = await import("../src/platform/realtime-broadcast")
-    xadd.mockRejectedValue(new Error("ECONNREFUSED"))
+    exec.mockRejectedValue(new Error("ECONNREFUSED"))
 
     queueWorkspaceRealtimeEvent("ws-1", typingEvent)
     await flushAllPendingWorkspaceRealtimeEvents().catch(() => undefined)
@@ -241,7 +274,10 @@ describe("realtime stream publisher Redis connection", () => {
     const { revokeWorkspaceMemberRealtimeConnections } = await import(
       "../src/platform/realtime-broadcast"
     )
-    xadd.mockResolvedValue("1-0")
+    exec.mockResolvedValue([
+      [null, "1-0"],
+      [null, 0],
+    ])
 
     await revokeWorkspaceMemberRealtimeConnections({
       reason: "deleted",
@@ -258,12 +294,18 @@ describe("realtime stream publisher Redis connection", () => {
     expect(Number(set.mock.calls[0]?.[1])).toBeGreaterThan(0)
     expect(xadd).toHaveBeenCalledWith(
       getRealtimeStreamKey("ws-1"),
-      "MINID",
+      "MAXLEN",
       "~",
-      expect.stringMatching(STREAM_MIN_ID_PATTERN),
+      10_000,
       "*",
       "record",
       expect.any(String),
+    )
+    expect(xtrim).toHaveBeenCalledWith(
+      getRealtimeStreamKey("ws-1"),
+      "MINID",
+      "~",
+      expect.stringMatching(STREAM_MIN_ID_PATTERN),
     )
   })
 })

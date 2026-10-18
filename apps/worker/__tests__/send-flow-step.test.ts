@@ -191,6 +191,31 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   publishWorkspaceRealtimeEvent: mockBroadcast,
   queueWorkspaceRealtimeEvent: mockBroadcast,
+  queueMessageCreatedEvent: (
+    workspaceId: string,
+    data: unknown,
+    conversation: {
+      assignedInboxTeamId?: string | null
+      assignedUserId?: string | null
+      inboxId?: string | null
+    },
+    inboxId?: string,
+  ) => {
+    const resolvedInboxId = inboxId ?? conversation.inboxId
+    return mockBroadcast(workspaceId, {
+      eventType: "messageCreated",
+      data,
+      route: {
+        assignedTeamIds: conversation.assignedInboxTeamId
+          ? [conversation.assignedInboxTeamId]
+          : [],
+        assignedUserIds: conversation.assignedUserId
+          ? [conversation.assignedUserId]
+          : [],
+        ...(resolvedInboxId ? { inboxId: resolvedInboxId } : {}),
+      },
+    })
+  },
   publishGuestRealtimeEvent: vi.fn().mockResolvedValue(undefined),
   contactInboxService: {
     findByUncached: mockFindContactInbox,

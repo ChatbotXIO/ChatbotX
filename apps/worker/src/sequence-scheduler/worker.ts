@@ -3,6 +3,7 @@ import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { flushAllPendingWorkspaceRealtimeEvents } from "../lib/realtime-drain"
 import { getAssignedBuckets } from "./buckets"
 
 const BOOTSTRAP_WINDOW_HOURS = 24
@@ -308,7 +309,9 @@ if (shouldAutoStart) {
   })
 }
 
-const handleShutdownSignal = (signal: "SIGINT" | "SIGTERM") => {
+const handleShutdownSignal = async (
+  signal: "SIGINT" | "SIGTERM",
+): Promise<void> => {
   if (isShuttingDown) {
     return
   }
@@ -318,19 +321,24 @@ const handleShutdownSignal = (signal: "SIGINT" | "SIGTERM") => {
 
   try {
     stopReconcileWorker()
+    await flushAllPendingWorkspaceRealtimeEvents()
     process.exit(0)
   } catch (error) {
-    logger.error(error, "Error during reconcile worker shutdown")
+    logger.error({ err: error }, "Error during reconcile worker shutdown")
     process.exit(1)
   }
 }
 
 if (shouldAutoStart) {
   process.on("SIGINT", () => {
-    handleShutdownSignal("SIGINT")
+    handleShutdownSignal("SIGINT").catch((error) => {
+      logger.error({ err: error }, "Unhandled reconcile worker shutdown error")
+    })
   })
 
   process.on("SIGTERM", () => {
-    handleShutdownSignal("SIGTERM")
+    handleShutdownSignal("SIGTERM").catch((error) => {
+      logger.error({ err: error }, "Unhandled reconcile worker shutdown error")
+    })
   })
 }

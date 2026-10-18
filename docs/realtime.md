@@ -382,12 +382,6 @@ just a count), one broadcast.
   results including the targeted recipient's identity) is in the
   scratchpad as `realtime-load-test-container.log`, not committed here.
 
-## Server-to-server broadcast endpoint
-
-Set `REALTIME_INTERNAL_URL` to the realtime HTTP base URL reachable from both
-the builder and worker. It is deployment-wide and MUST NOT use a tenant custom
-domain. When unset, broadcasts use the deployment's `NEXT_PUBLIC_BUILDER_URL`
-websocket path.
 
 ## Deployment: reverse proxy header requirements
 

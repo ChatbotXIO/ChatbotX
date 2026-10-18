@@ -74,6 +74,26 @@ describe("inboxTeamMemberRepository workspace scoping", () => {
     )
   })
 
+  test("returns member ids for all workspace-scoped team ids in one query", async () => {
+    const { tx, innerJoin, where } = createSelectTx([
+      { userId: "user-1" },
+      { userId: "user-2" },
+    ])
+
+    await expect(
+      inboxTeamMemberRepository.listUserIdsByTeamIds({
+        workspaceId: "workspace-1",
+        inboxTeamIds: ["team-1", "team-2"],
+        tx,
+      }),
+    ).resolves.toEqual(["user-1", "user-2"])
+
+    expect(innerJoin).toHaveBeenCalledWith(inboxTeamModel, expect.anything())
+    expect(renderPredicate(where.mock.calls[0]?.[0])).toContain(
+      '"workspaceId" = workspace-1',
+    )
+  })
+
   test("returns only team ids selected through the workspace-scoped member join", async () => {
     const { tx, innerJoin, where } = createSelectTx([{ inboxTeamId: "team-1" }])
 

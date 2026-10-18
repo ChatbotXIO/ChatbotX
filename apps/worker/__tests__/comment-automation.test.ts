@@ -110,6 +110,7 @@ vi.mock("@chatbotx.io/analytics", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   publishWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
   queueWorkspaceRealtimeEvent: vi.fn(),
+  queueMessageCreatedEvent: vi.fn(),
   logProviderError: mockLogProviderError,
   flowService: { findBy: mockFlowFindBy },
   buildContext: vi.fn().mockResolvedValue({}),

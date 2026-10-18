@@ -1,7 +1,6 @@
 import {
   and,
   type DatabaseClient,
-  db,
   eq,
   inArray,
 } from "@chatbotx.io/database/client"
@@ -42,6 +41,7 @@ import {
 import { platformCredentialService } from "../platform-credential/service"
 import { whatsappBusinessAccountService } from "../whatsapp-business-account/service"
 import { workspaceService } from "../workspace/service"
+import type { WhatsappAuthValue } from "./auth-schema"
 import { whatsappAuthForCapiScopeSchema } from "./auth-schema"
 import {
   type SetCoexistInput,
@@ -361,12 +361,13 @@ class IntegrationWhatsappService extends BaseService {
     return integrationWhatsappRepository.findByInboxIdForWorkspace(input)
   }
 
-  async findAuthByInboxId(inboxId: string): Promise<unknown | null> {
-    const integration = await db.query.integrationWhatsappModel.findFirst({
-      columns: { auth: true },
-      where: { inboxId },
-    })
-    return integration?.auth ?? null
+  async findAuthByInboxIdForWorkspace(props: {
+    inboxId: string
+    workspaceId: string
+  }): Promise<WhatsappAuthValue | null> {
+    const integration =
+      await integrationWhatsappRepository.findAuthByInboxIdForWorkspace(props)
+    return (integration?.auth as WhatsappAuthValue | undefined) ?? null
   }
 
   /**
