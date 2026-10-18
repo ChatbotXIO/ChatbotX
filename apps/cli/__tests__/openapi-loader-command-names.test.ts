@@ -268,6 +268,47 @@ describe("pathAndMethodToCommandName — products imports collection", () => {
   })
 })
 
+describe("pathAndMethodToCommandName — AI Router", () => {
+  test("each connection and profile operation keeps a distinct CLI command", () => {
+    const names = [
+      pathAndMethodToCommandName("/v1/decision-connections", "GET"),
+      pathAndMethodToCommandName("/v1/decision-connections", "POST"),
+      pathAndMethodToCommandName("/v1/decision-connections/{id}", "PUT"),
+      pathAndMethodToCommandName(
+        "/v1/decision-connections/{id}/status",
+        "PATCH",
+      ),
+      pathAndMethodToCommandName("/v1/decision-connections/{id}/test", "POST"),
+      pathAndMethodToCommandName("/v1/decision-profiles", "GET"),
+      pathAndMethodToCommandName("/v1/decision-profiles", "POST"),
+      pathAndMethodToCommandName("/v1/decision-profiles", "DELETE"),
+      pathAndMethodToCommandName("/v1/decision-profiles/{id}", "GET"),
+      pathAndMethodToCommandName("/v1/decision-profiles/{id}", "PUT"),
+      pathAndMethodToCommandName("/v1/decision-profiles/{id}/status", "PATCH"),
+      pathAndMethodToCommandName(
+        "/v1/decision-profiles/global-router-destinations",
+        "GET",
+      ),
+    ]
+
+    expect(names).toEqual([
+      "decision-connections:list",
+      "decision-connections:create",
+      "decision-connections:update",
+      "decision-connections:status:update",
+      "decision-connections:test",
+      "decision-profiles:list",
+      "decision-profiles:create",
+      "decision-profiles:delete",
+      "decision-profiles:get",
+      "decision-profiles:update",
+      "decision-profiles:status:update",
+      "decision-profiles:global-router-destinations",
+    ])
+    expect(new Set(names)).toHaveLength(names.length)
+  })
+})
+
 describe("pathAndMethodToCommandName — meta catalog singleton", () => {
   test("GET (state) and POST (create) get distinct commands", () => {
     expect(pathAndMethodToCommandName("/v1/products/meta-catalog", "GET")).toBe(

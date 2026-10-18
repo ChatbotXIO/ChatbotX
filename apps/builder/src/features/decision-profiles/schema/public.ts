@@ -1,21 +1,10 @@
-import { z } from "zod"
+import { decisionProfileFormSchema } from "@chatbotx.io/decision-config"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 
 /**
- * Safe public projection. Never use DecisionConnectionModel here: it carries
- * credential-bearing fields that must not cross an API boundary.
+ * A profile is returned in the same authoring shape it accepts on create and
+ * update. The persistence-only provider contract is deliberately omitted.
  */
-export const publicDecisionProfileSchema = z
-  .object({
-    connectionId: z.string(),
-    description: z.string().nullable(),
-    globalRouterEnabled: z.boolean(),
-    id: z.string(),
-    model: z.string(),
-    name: z.string(),
-    status: z.enum(["enabled", "disabled"]),
-  })
-  .strict()
-
-export const publicDecisionProfileListSchema = z.array(
-  publicDecisionProfileSchema,
-)
+export const publicDecisionProfileSchema = decisionProfileFormSchema.extend({
+  id: zodBigintAsString().describe("AI Router profile id."),
+})

@@ -1,19 +1,17 @@
 import {
-  aiAgentService,
-  customFieldService,
   decisionProfileContractSchema,
   decisionProfileService,
-  flowService,
-  inboxTeamService,
-  workspaceMemberService,
 } from "@chatbotx.io/business"
 import { ORPCError } from "@orpc/server"
 import { z } from "zod"
-import { loadAllActionOptions } from "@/features/ai-agents/lib/load-action-options"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import {
+  globalRouterDestinationsSchema,
+  listGlobalRouterDestinations,
+} from "../lib/list-global-router-destinations"
 
 const activeDecisionProfileSchema = z
   .object({
@@ -36,21 +34,7 @@ export const decisionProfilesAuthenticatedAPI = {
     })
     .input(withWorkspaceIdSchema)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(
-      z.object({
-        agents: z.array(z.object({ id: z.string(), name: z.string() })),
-        customFields: z.array(
-          z.object({
-            id: z.string(),
-            name: z.string(),
-            type: z.enum(["longText", "number", "shortText"]),
-          }),
-        ),
-        flows: z.array(z.object({ id: z.string(), name: z.string() })),
-        teams: z.array(z.object({ id: z.string(), name: z.string() })),
-        users: z.array(z.object({ id: z.string(), name: z.string() })),
-      }),
-    )
+    .output(globalRouterDestinationsSchema)
     .handler(async ({ input, context }) => {
       if (
         !hasWorkspacePermission(
@@ -60,47 +44,7 @@ export const decisionProfilesAuthenticatedAPI = {
       ) {
         throw new ORPCError("FORBIDDEN")
       }
-      const [flows, agents, customFields, members, teams] = await Promise.all([
-        flowService.listPublishedOptions({ workspaceId: input.workspaceId }),
-        loadAllActionOptions((page) =>
-          aiAgentService.listAIAgents({
-            page,
-            perPage: 100,
-            sort: [],
-            workspaceId: input.workspaceId,
-          }),
-        ),
-        loadAllActionOptions((page) =>
-          customFieldService.list({
-            page,
-            perPage: 100,
-            workspaceId: input.workspaceId,
-          }),
-        ),
-        workspaceMemberService.listByWorkspaceId({
-          workspaceId: input.workspaceId,
-        }),
-        inboxTeamService.listByWorkspace({ workspaceId: input.workspaceId }),
-      ])
-      return {
-        agents: agents.map((agent) => ({
-          id: agent.id,
-          name: agent.name,
-        })),
-        customFields: customFields.flatMap((field) =>
-          field.type === "shortText" ||
-          field.type === "longText" ||
-          field.type === "number"
-            ? [{ id: field.id, name: field.name, type: field.type }]
-            : [],
-        ),
-        flows,
-        teams: teams.map((team) => ({ id: team.id, name: team.name })),
-        users: members.map((member) => ({
-          id: member.userId,
-          name: member.user.name ?? member.user.email,
-        })),
-      }
+      return await listGlobalRouterDestinations(input.workspaceId)
     }),
   listActiveForFlow: authorizedAPI
     .route({

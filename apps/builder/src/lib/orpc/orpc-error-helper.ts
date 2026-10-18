@@ -180,6 +180,58 @@ export const possibleErrorsOnMutatingResource = {
   ...possibleIdempotencyErrors,
 } satisfies ErrorMap
 
+const decisionValidationErrors = {
+  invalidDecisionContract: {
+    message: "The AI Router decision contract is invalid",
+    status: 400,
+  },
+  invalidDecisionEndpoint: {
+    message: "The AI Router provider endpoint is invalid",
+    status: 400,
+  },
+  invalidDecisionModel: {
+    message: "The AI Router model configuration is invalid",
+    status: 400,
+  },
+  invalidDecisionReference: {
+    message: "An AI Router configuration reference is unavailable or invalid",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingDecisionConnection = {
+  ...decisionValidationErrors,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingDecisionConnection = {
+  notFound,
+  ...decisionValidationErrors,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnTestingDecisionConnection = {
+  notFound,
+  invalidDecisionModel: decisionValidationErrors.invalidDecisionModel,
+  decisionConnectionTestThrottled: {
+    message:
+      "An AI Router connection test is already running or was run recently",
+    status: 429,
+  },
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingDecisionProfile = {
+  ...decisionValidationErrors,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingDecisionProfile = {
+  notFound,
+  ...decisionValidationErrors,
+  ...possibleIdempotencyErrors,
+} satisfies ErrorMap
+
 /** Sending a message that may carry products (`contacts.sendMessage`). */
 export const possibleErrorsOnSendingMessage = {
   ...possibleErrorsOnMutatingResource,
