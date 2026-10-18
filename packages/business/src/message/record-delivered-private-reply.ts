@@ -150,7 +150,7 @@ export const recordDeliveredDirectMessage = async (props: {
       at: message.createdAt,
     })
 
-    queueMessageCreatedEvent(workspaceId, message, {
+    await queueMessageCreatedEvent(workspaceId, message, {
       assignedUserId,
       assignedInboxTeamId,
     })

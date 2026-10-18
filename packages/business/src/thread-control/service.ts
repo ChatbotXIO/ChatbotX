@@ -957,7 +957,7 @@ class ThreadControlService extends BaseService {
     await this.invalidateCacheTags([
       `contacts:${input.contactInbox.contactId}:contact-inboxes`,
     ])
-    queueWorkspaceRealtimeEvent(input.workspaceId, {
+    await queueWorkspaceRealtimeEvent(input.workspaceId, {
       eventType: RealtimeEventType.contactInboxThreadControlUpdated,
       data: {
         conversationId: input.conversationId,
@@ -1059,7 +1059,7 @@ class ThreadControlService extends BaseService {
       const conversation = await conversationService.findBy({
         where: { id: input.conversationId, workspaceId },
       })
-      queueMessageCreatedEvent(
+      await queueMessageCreatedEvent(
         workspaceId,
         { ...(written as MessageModel), attachments: [] },
         conversation,

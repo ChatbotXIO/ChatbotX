@@ -1307,7 +1307,7 @@ class ConversationService extends BaseService {
     await this.invalidate({ workspaceId, ids })
 
     if (!silent) {
-      queueWorkspaceRealtimeEvent(workspaceId, {
+      await queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.conversationAssigned,
         data: { conversationIds: ids, assignedUserId, assignedInboxTeamId },
         route: routeForAssignment({
@@ -1684,7 +1684,7 @@ class ConversationService extends BaseService {
       })
     await this.invalidate({ workspaceId, ids: [id] })
     if (!silent) {
-      queueWorkspaceRealtimeEvent(workspaceId, {
+      await queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.conversationUpdated,
         data: {
           conversationIds: [id],
@@ -1748,7 +1748,7 @@ class ConversationService extends BaseService {
 
     await this.invalidate({ workspaceId, ids: [conversationId] })
     if (!silent) {
-      queueWorkspaceRealtimeEvent(workspaceId, {
+      await queueWorkspaceRealtimeEvent(workspaceId, {
         eventType: RealtimeEventType.conversationUpdated,
         data: {
           conversationIds: [conversationId],

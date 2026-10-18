@@ -107,13 +107,21 @@ describe("contactInboxRepository bulk queries", () => {
       innerJoin,
       orderBy,
       limit,
+      select,
       where,
     }
   }
 
   test("a page joins the direct-message conversation of the workspace and is id-ordered", async () => {
-    const rows = [{ id: "ci-1", conversationId: "conv-1" }]
-    const { tx, innerJoin, limit } = selectTx(rows)
+    const rows = [
+      {
+        assignedInboxTeamId: "team-1",
+        assignedUserId: "user-1",
+        conversationId: "conv-1",
+        id: "ci-1",
+      },
+    ]
+    const { tx, innerJoin, limit, select } = selectTx(rows)
 
     const page = await contactInboxRepository.listBulkAiPage(
       {
@@ -128,6 +136,13 @@ describe("contactInboxRepository bulk queries", () => {
 
     expect(page).toBe(rows)
     expect(limit).toHaveBeenCalledWith(50)
+    expect(select).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assignedInboxTeamId: expect.anything(),
+        assignedUserId: expect.anything(),
+        conversationId: expect.anything(),
+      }),
+    )
     const join = dialect.sqlToQuery(innerJoin.mock.calls[0][1])
     expect(join.sql).toContain('"sourceId" is null')
     expect(join.params).toContain("ws-1")

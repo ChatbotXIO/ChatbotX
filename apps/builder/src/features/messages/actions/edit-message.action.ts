@@ -119,7 +119,7 @@ export const editMessage = async (props: {
     })
   }
 
-  queueWorkspaceRealtimeEvent(workspaceId, {
+  await queueWorkspaceRealtimeEvent(workspaceId, {
     eventType: RealtimeEventType.messageUpdated,
     data: {
       messageId,

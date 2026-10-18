@@ -308,7 +308,7 @@ export async function handleCreateWebchatMessage({
       sourceId: newMessage.sourceId ?? undefined,
     })
 
-    queueMessageCreatedEvent(
+    await queueMessageCreatedEvent(
       newMessage.workspaceId,
       {
         ...newMessage,

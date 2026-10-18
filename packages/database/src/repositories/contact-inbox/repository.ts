@@ -55,6 +55,8 @@ import type {
  * would be an N+1.
  */
 export type BulkAiContactInboxRow = ContactInboxModel & {
+  assignedInboxTeamId: string | null
+  assignedUserId: string | null
   conversationId: string
 }
 
@@ -1252,6 +1254,8 @@ export const contactInboxRepository = {
     return await tx
       .select({
         ...getTableColumns(contactInboxModel),
+        assignedInboxTeamId: conversationModel.assignedInboxTeamId,
+        assignedUserId: conversationModel.assignedUserId,
         conversationId: conversationModel.id,
       })
       .from(contactInboxModel)

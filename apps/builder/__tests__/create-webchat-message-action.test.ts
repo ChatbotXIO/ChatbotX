@@ -418,8 +418,16 @@ describe("handleCreateWebchatMessage", () => {
     mockContactInboxFindLatest.mockResolvedValue(contactInbox)
   })
 
-  test("broadcasts the created message with the client's clientId for optimistic reconciliation", async () => {
-    await handleCreateWebchatMessage({
+  test("waits for the created-message event before resolving", async () => {
+    let resolveRealtimeDelivery: () => void = () => undefined
+    mockQueueWorkspaceRealtimeEvent.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveRealtimeDelivery = resolve
+        }),
+    )
+
+    const action = handleCreateWebchatMessage({
       parsedInput: {
         text: "hello",
         workspaceId: "ws-1",
@@ -428,6 +436,20 @@ describe("handleCreateWebchatMessage", () => {
         clientId: "client-1",
       },
     })
+
+    await vi.waitFor(() => {
+      expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalled()
+    })
+
+    let resolved = false
+    const completion = action.then(() => {
+      resolved = true
+    })
+    await Promise.resolve()
+    expect(resolved).toBe(false)
+
+    resolveRealtimeDelivery()
+    await completion
 
     expect(mockQueueWorkspaceRealtimeEvent).toHaveBeenCalledWith(
       "ws-1",

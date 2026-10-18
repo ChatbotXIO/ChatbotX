@@ -422,7 +422,11 @@ describe("disable", () => {
 
   test("sends the tagged text, shows it in the inbox with the sent message id, and records an implicit takeover", async () => {
     mocks.listEligiblePage.mockResolvedValueOnce([
-      row("ci-1", { threadOwnerAppId: "app-bot" }),
+      row("ci-1", {
+        assignedInboxTeamId: "team-1",
+        assignedUserId: "user-1",
+        threadOwnerAppId: "app-bot",
+      }),
     ])
     runnerSucceeds()
 
@@ -434,6 +438,8 @@ describe("disable", () => {
     })
     expect(mocks.recordDelivered).toHaveBeenCalledWith(
       expect.objectContaining({
+        assignedInboxTeamId: "team-1",
+        assignedUserId: "user-1",
         conversationId: "conv-ci-1",
         text: "A person is here",
         sourceId: "m_ci-1",

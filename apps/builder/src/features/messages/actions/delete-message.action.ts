@@ -53,7 +53,7 @@ export const deleteMessage = async (props: {
   })
   const messageIds = deleted.map((row) => row.id)
 
-  queueWorkspaceRealtimeEvent(workspaceId, {
+  await queueWorkspaceRealtimeEvent(workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
     route: routeForConversation(conversation),

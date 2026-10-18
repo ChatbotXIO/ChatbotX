@@ -293,29 +293,27 @@ export const queueMessageCreatedEvent = (
   >["data"],
   conversation: Parameters<typeof routeForConversation>[0],
   inboxId?: string,
-): void => {
+): Promise<void> =>
   queueWorkspaceRealtimeEvent(workspaceId, {
     eventType: RealtimeEventType.messageCreated,
     data: message,
     route: routeForConversation(conversation, inboxId),
   })
-}
 
 /**
- * Queues a workspace event without making the caller wait for stream delivery.
- * Redis append failures remain visible in logs.
+ * Queues a workspace event. The returned best-effort promise can be awaited
+ * before completing an HTTP request; Redis append failures remain visible in logs.
  */
 export const queueWorkspaceRealtimeEvent = (
   workspaceId: string,
   event: RealtimeEventData,
-): void => {
+): Promise<void> =>
   publishWorkspaceRealtimeEvent(workspaceId, event).catch((error) => {
     logger.error(
       { err: error, eventType: event.eventType, workspaceId },
       "Failed to publish realtime event",
     )
   })
-}
 
 /**
  * Delivers an event to one workspace member's active realtime connections.

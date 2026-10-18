@@ -676,7 +676,7 @@ describe("finalizeCallSideEffects", () => {
     expect(mocks.emitCallEnded).not.toHaveBeenCalled()
   })
 
-  test("does not let a fire-and-forget realtime enqueue failure throw", async () => {
+  test("logs but does not fail finalization when the realtime publish fails", async () => {
     mocks.publishWorkspaceRealtimeEvent.mockRejectedValueOnce(new Error("down"))
 
     await expect(
@@ -690,7 +690,10 @@ describe("finalizeCallSideEffects", () => {
       }),
     ).resolves.toBeUndefined()
 
-    expect(mocks.logger.warn).not.toHaveBeenCalled()
+    expect(mocks.logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      "Whatsapp call: unable to emit realtime message event",
+    )
   })
 })
 
@@ -1224,7 +1227,7 @@ describe("enrichCallActivityMessage", () => {
     expect(mocks.logger.warn).toHaveBeenCalled()
   })
 
-  test("does not let a fire-and-forget realtime enqueue failure throw", async () => {
+  test("logs a realtime publish failure without failing the enrichment", async () => {
     mocks.mergeContentAttributesBySourceId.mockResolvedValue({
       id: "msg-1",
       contentAttributes: { type: "whatsapp_call", hasRecording: true },
@@ -1238,6 +1241,6 @@ describe("enrichCallActivityMessage", () => {
       }),
     ).resolves.toBeUndefined()
 
-    expect(mocks.logger.warn).not.toHaveBeenCalled()
+    expect(mocks.logger.warn).toHaveBeenCalled()
   })
 })

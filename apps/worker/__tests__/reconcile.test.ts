@@ -35,6 +35,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
+  bloomFilter: {},
   sequenceConnections: {
     useExisting: vi.fn().mockResolvedValue({}),
   },

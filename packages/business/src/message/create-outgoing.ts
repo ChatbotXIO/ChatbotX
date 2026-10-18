@@ -329,7 +329,7 @@ export const createOutgoing = async (props: {
     })),
   }
 
-  queueMessageCreatedEvent(
+  await queueMessageCreatedEvent(
     messageWithAttachments.workspaceId,
     {
       ...messageWithAttachments,

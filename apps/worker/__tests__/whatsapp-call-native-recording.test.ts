@@ -214,7 +214,10 @@ describe("handleWhatsappCallNativeRecordingFetch", () => {
   test("downloads via the media-id path, stores the recording, and enriches the finalize activity message in place", async () => {
     await handleWhatsappCallNativeRecordingFetch(jobData)
 
-    expect(mocks.resolveVoipAuthByInboxId).toHaveBeenCalledWith("inbox-1")
+    expect(mocks.resolveVoipAuthByInboxId).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+    })
     expect(mocks.downloadCallMedia).toHaveBeenCalledWith(
       expect.objectContaining({
         mediaId: "media-1",
