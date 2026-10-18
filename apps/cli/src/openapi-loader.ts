@@ -194,6 +194,7 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "PATCH /v1/inboxes/{inboxId}/ai-handover/settings": "inboxes:settings:edit",
   "PATCH /v1/bot-fields/{idOrName}": "bot-fields:edit",
   "DELETE /v1/analytics/flows/{flowId}/stats": "analytics:reset-flow-stats",
+  "POST /v1/decision-connections/{id}/test": "decision-connections:test",
   "POST /v1/ads/campaigns": "ads:create-campaign",
   "POST /v1/ads/conversion-rules": "ads:create-conversion-rule",
   "PATCH /v1/ads/conversion-rules/{id}": "ads:update-conversion-rule",
