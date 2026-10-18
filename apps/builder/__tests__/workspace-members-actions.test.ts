@@ -16,21 +16,33 @@ const {
   mockUpdateMember,
   mockWorkspaceFindById,
   mockWorkspaceMemberServiceDelete,
-} = vi.hoisted(() => ({
-  mockAuditRecord: vi.fn(),
-  mockFindOrFail: vi.fn(),
-  mockFindByIdOrFail: vi.fn(),
-  mockFindNameAndEmail: vi.fn(),
-  mockGetCurrentUserAndTargetWorkspace: vi.fn(),
-  mockInvitationCreate: vi.fn(),
-  mockWorkspaceMemberServiceDelete: vi.fn(),
-  mockInvalidateCacheByTags: vi.fn(),
-  mockIsCommunity: vi.fn(),
-  mockQuotaHasReachedLimit: vi.fn(),
-  mockRevokeWorkspaceMemberConnections: vi.fn(),
-  mockUpdateMember: vi.fn(),
-  mockWorkspaceFindById: vi.fn(),
-}))
+  mockInvalidateMembershipCache,
+  mockDbInsert,
+} = vi.hoisted(() => {
+  const mockInsertReturning = vi.fn()
+  const mockInsertValues = vi.fn(() => ({ returning: mockInsertReturning }))
+  const mockDbInsert = vi.fn(() => ({ values: mockInsertValues }))
+
+  return {
+    mockAuditRecord: vi.fn(),
+    mockDbInsert,
+    mockFindOrFail: vi.fn(),
+    mockFindByIdOrFail: vi.fn(),
+    mockFindNameAndEmail: vi.fn(),
+    mockGetCurrentUserAndTargetWorkspace: vi.fn(),
+    mockInsertReturning,
+    mockInvitationCreate: vi.fn(),
+    mockWorkspaceMemberServiceDelete: vi.fn(),
+    mockInsertValues,
+    mockInvalidateCacheByTags: vi.fn(),
+    mockIsCommunity: vi.fn(),
+    mockQuotaHasReachedLimit: vi.fn(),
+    mockRevokeWorkspaceMemberConnections: vi.fn().mockResolvedValue(true),
+    mockUpdateMember: vi.fn(),
+    mockWorkspaceFindById: vi.fn(),
+    mockInvalidateMembershipCache: vi.fn(),
+  }
+})
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -60,13 +72,15 @@ vi.mock("@chatbotx.io/business", () => ({
   quotaEnforcementService: {
     hasReachedLimit: mockQuotaHasReachedLimit,
   },
-  revokeWorkspaceMemberConnections: mockRevokeWorkspaceMemberConnections,
+  tryRevokeWorkspaceMemberRealtimeConnections:
+    mockRevokeWorkspaceMemberConnections,
   userService: {
     findNameAndEmail: mockFindNameAndEmail,
   },
   workspaceMemberService: {
     delete: mockWorkspaceMemberServiceDelete,
     findByIdOrFail: mockFindByIdOrFail,
+    invalidateMembershipCache: mockInvalidateMembershipCache,
     update: mockUpdateMember,
   },
   workspaceService: {
@@ -75,6 +89,9 @@ vi.mock("@chatbotx.io/business", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
+  db: {
+    insert: mockDbInsert,
+  },
   eq: (col: unknown, val: unknown) => ({ eq: [col, val] }),
   findOrFail: mockFindOrFail,
 }))
@@ -455,6 +472,26 @@ describe("updateWorkspaceMemberAction", () => {
     expect(mockFindNameAndEmail).not.toHaveBeenCalled()
     expect(mockAuditRecord).not.toHaveBeenCalled()
   })
+
+  test("returns revokeWarning when permission reauthentication cannot close sockets", async () => {
+    mockRevokeWorkspaceMemberConnections.mockResolvedValueOnce(false)
+
+    await expect(
+      (updateWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+        updateActionCtx(),
+      ),
+    ).resolves.toEqual({ revokeWarning: true })
+  })
+
+  test("returns no revokeWarning when permission reauthentication closes sockets", async () => {
+    mockRevokeWorkspaceMemberConnections.mockResolvedValueOnce(true)
+
+    await expect(
+      (updateWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+        updateActionCtx(),
+      ),
+    ).resolves.toEqual({ revokeWarning: false })
+  })
 })
 
 function deleteActionCtx() {
@@ -466,7 +503,7 @@ function deleteActionCtx() {
 describe("deleteWorkspaceMemberAction", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFindOrFail.mockResolvedValue({
+    mockFindByIdOrFail.mockResolvedValue({
       id: MEMBER_ID,
       userId: MEMBER_USER_ID,
       workspaceId: WORKSPACE_ID,
@@ -476,7 +513,7 @@ describe("deleteWorkspaceMemberAction", () => {
   })
 
   test("rejects deleting the workspace owner", async () => {
-    mockFindOrFail.mockResolvedValue({
+    mockFindByIdOrFail.mockResolvedValue({
       id: MEMBER_ID,
       userId: MEMBER_USER_ID,
       workspaceId: WORKSPACE_ID,
@@ -515,9 +552,26 @@ describe("deleteWorkspaceMemberAction", () => {
       id: MEMBER_ID,
       workspaceId: WORKSPACE_ID,
     })
-    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
-      `users:${MEMBER_USER_ID}:workspace-members`,
-    ])
+    expect(mockInvalidateMembershipCache).toHaveBeenCalledWith(MEMBER_USER_ID)
+  })
+
+  test("revokes the removed member before a cache invalidation failure", async () => {
+    mockInvalidateMembershipCache.mockRejectedValueOnce(
+      new Error("Redis unavailable"),
+    )
+
+    await expect(
+      (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+        deleteActionCtx(),
+      ),
+    ).rejects.toThrow("Redis unavailable")
+
+    expect(mockRevokeWorkspaceMemberConnections).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: MEMBER_USER_ID,
+      reason: "deleted",
+      errorMessage: "Failed to revoke removed member realtime connections",
+    })
   })
 
   test("deletes the member without mutating team-member quota", async () => {
@@ -526,8 +580,26 @@ describe("deleteWorkspaceMemberAction", () => {
     )
 
     expect(mockWorkspaceMemberServiceDelete).toHaveBeenCalledOnce()
-    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
-      `users:${MEMBER_USER_ID}:workspace-members`,
-    ])
+    expect(mockInvalidateMembershipCache).toHaveBeenCalledWith(MEMBER_USER_ID)
+  })
+
+  test("returns revokeWarning when a deleted member's socket revoke is deferred", async () => {
+    mockRevokeWorkspaceMemberConnections.mockResolvedValueOnce(false)
+
+    await expect(
+      (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+        deleteActionCtx(),
+      ),
+    ).resolves.toEqual({ revokeWarning: true })
+  })
+
+  test("returns no revokeWarning when a deleted member's sockets are closed", async () => {
+    mockRevokeWorkspaceMemberConnections.mockResolvedValueOnce(true)
+
+    await expect(
+      (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+        deleteActionCtx(),
+      ),
+    ).resolves.toEqual({ revokeWarning: false })
   })
 })

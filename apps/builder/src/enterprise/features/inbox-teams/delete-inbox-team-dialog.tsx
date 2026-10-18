@@ -36,12 +36,15 @@ export function DeleteInboxTeamDialog({
   const { execute, isPending } = useAction(
     deleteInboxTeamAction.bind(null, workspaceId),
     {
-      onSuccess: () => {
+      onSuccess: ({ data }) => {
         toast.success(
           t("messages.deletedSuccess", {
             feature: t("fields.inboxTeam.label"),
           }),
         )
+        if (data?.revokeWarning) {
+          toast.warning(t("messages.realtimeRevokeWarning"))
+        }
         onOpenChange(false)
         invalidateUsers()
         router.refresh()

@@ -7,13 +7,13 @@ const mockRepositoryCreate = vi.fn()
 const mockCreateMessageRepository = vi.fn()
 const mockChatQueueAdd = vi.fn()
 const mockResolveTenantSettings = vi.fn()
-const mockBroadcastToWorkspaceParty = vi.fn()
 const mockIntegrationQueueAdd = vi.fn()
 const mockFlowExists = vi.fn()
 const mockFindOrCreate = vi.fn()
 const mockPrepareProductMessage = vi.fn()
 const mockFindMediaFilesByIds = vi.fn()
 const mockCopyObject = vi.fn()
+const mockQueueMessageCreatedEvent = vi.fn()
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
@@ -32,8 +32,12 @@ vi.mock("@chatbotx.io/filesystem", () => ({
   uploadMultipleFiles: vi.fn(async () => []),
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
+  routeForConversation: vi.fn(() => ({
+    assignedTeamIds: [],
+    assignedUserIds: [],
+  })),
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
@@ -43,7 +47,6 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
 
 vi.mock("@chatbotx.io/worker-config", () => ({
   ChatJobAction: {
-    broadcastEvent: "broadcastEvent",
     sendChannelMessage: "sendChannelMessage",
     checkOutboundAutomatedResponse: "checkOutboundAutomatedResponse",
   },
@@ -77,8 +80,7 @@ vi.mock("../src/platform/settings", () => ({
 }))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  broadcastToWorkspaceParty: mockBroadcastToWorkspaceParty,
-  publishToWorkspaceParty: mockBroadcastToWorkspaceParty,
+  queueMessageCreatedEvent: mockQueueMessageCreatedEvent,
 }))
 
 vi.mock("../src/utils", () => ({
@@ -120,7 +122,7 @@ describe("messageService.createOutgoing", () => {
       createWithAttachments: vi.fn(),
     })
     mockChatQueueAdd.mockResolvedValue(undefined)
-    mockBroadcastToWorkspaceParty.mockResolvedValue(undefined)
+    mockQueueMessageCreatedEvent.mockResolvedValue(undefined)
   })
 
   test("uses one shared timestamp for the message and conversation agent-replied fields", async () => {
@@ -169,12 +171,13 @@ describe("messageService.createOutgoing", () => {
       input: { text: "hello", clientId: "client-1" },
     })
 
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledWith(
+    expect(mockQueueMessageCreatedEvent).toHaveBeenCalledWith(
       "ws-1",
       expect.objectContaining({
-        eventType: "messageCreated",
-        data: expect.objectContaining({ clientId: "client-1", id: "msg-1" }),
+        clientId: "client-1",
+        id: "msg-1",
       }),
+      expect.objectContaining({ id: "conv-1" }),
     )
   })
 
@@ -315,13 +318,13 @@ describe("messageService.createOutgoing with products", () => {
       createWithAttachments: vi.fn(),
     })
     mockChatQueueAdd.mockResolvedValue(undefined)
-    mockBroadcastToWorkspaceParty.mockResolvedValue(undefined)
+    mockQueueMessageCreatedEvent.mockResolvedValue(undefined)
     mockPrepareProductMessage.mockResolvedValue(prepared)
   })
 
   const expectNothingCreated = () => {
     expect(mockRepositoryCreate).not.toHaveBeenCalled()
-    expect(mockBroadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mockQueueMessageCreatedEvent).not.toHaveBeenCalled()
     expect(mockChatQueueAdd).not.toHaveBeenCalled()
   }
 
@@ -341,7 +344,7 @@ describe("messageService.createOutgoing with products", () => {
         contentAttributes: prepared.contentAttributes,
       }),
     )
-    expect(mockBroadcastToWorkspaceParty).toHaveBeenCalledTimes(1)
+    expect(mockQueueMessageCreatedEvent).toHaveBeenCalledTimes(1)
     expect(mockChatQueueAdd).toHaveBeenCalledWith(
       "sendChannelMessage",
       expect.objectContaining({

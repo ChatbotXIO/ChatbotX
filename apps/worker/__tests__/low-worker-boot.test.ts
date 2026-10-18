@@ -29,6 +29,7 @@ const workerState = vi.hoisted(() => ({
     async (_workspaceId: unknown, fn: () => Promise<unknown>) => await fn(),
   ),
   workerClose: vi.fn(async () => undefined),
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(async () => undefined),
   workerOn: vi.fn(),
 }))
 
@@ -75,6 +76,8 @@ vi.mock("@chatbotx.io/business", () => ({
   commentAutomationService: {
     finishMissedCommentReplay: workerState.finishMissedCommentReplay,
   },
+  flushAllPendingWorkspaceRealtimeEvents:
+    workerState.flushAllPendingWorkspaceRealtimeEvents,
   withBlockedOwnerGuard: workerState.withBlockedOwnerGuard,
 }))
 

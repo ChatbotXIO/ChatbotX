@@ -1,70 +1,119 @@
-// @vitest-environment node
+import { describe, expect, test, vi } from "vitest"
+import type { DatabaseClient } from "../src/client"
+import { inboxTeamMemberRepository } from "../src/repositories/inbox-team-member/repository"
+import { inboxTeamModel } from "../src/schema"
 
-import { beforeEach, describe, expect, test, vi } from "vitest"
+const renderPredicate = (clause: unknown): string => {
+  const parts: string[] = []
+  const walk = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      for (const child of node) {
+        walk(child)
+      }
+      return
+    }
+    if (typeof node === "string" || typeof node === "number") {
+      parts.push(String(node))
+      return
+    }
+    if (!node || typeof node !== "object") {
+      return
+    }
+    if ("name" in node && "table" in node && typeof node.name === "string") {
+      parts.push(`"${node.name}"`)
+      return
+    }
+    if ("queryChunks" in node && Array.isArray(node.queryChunks)) {
+      walk(node.queryChunks)
+      return
+    }
+    if ("value" in node) {
+      parts.push(String(node.value))
+    }
+  }
+  walk(clause)
+  return parts.join("").replace(/[()]/g, "").replace(/\s+/g, " ").trim()
+}
 
-const mocks = vi.hoisted(() => ({
-  select: vi.fn(),
-  from: vi.fn(),
-  innerJoin: vi.fn(),
-  where: vi.fn(),
-}))
+const createSelectTx = <T>(rows: T[]) => {
+  const select = vi.fn()
+  const from = vi.fn()
+  const innerJoin = vi.fn()
+  const where = vi.fn().mockResolvedValue(rows)
+  select.mockReturnValue({ from })
+  from.mockReturnValue({ innerJoin })
+  innerJoin.mockReturnValue({ where })
+  return {
+    tx: { select } as unknown as DatabaseClient,
+    innerJoin,
+    where,
+  }
+}
 
-vi.mock("../src/client", () => ({
-  db: {
-    select: mocks.select,
-  },
-  eq: (...args: unknown[]) => ({ op: "eq", args }),
-  and: (...args: unknown[]) => ({ op: "and", args }),
-}))
+describe("inboxTeamMemberRepository workspace scoping", () => {
+  test("returns only member ids selected through the workspace-scoped team join", async () => {
+    const { tx, innerJoin, where } = createSelectTx([{ userId: "user-1" }])
 
-vi.mock("../src/schema", () => ({
-  inboxTeamMemberModel: { inboxTeamId: "inboxTeamId", userId: "userId" },
-  inboxTeamModel: { id: "id", workspaceId: "workspaceId" },
-}))
+    await expect(
+      inboxTeamMemberRepository.listUserIdsByTeamId({
+        workspaceId: "workspace-1",
+        inboxTeamId: "team-1",
+        tx,
+      }),
+    ).resolves.toEqual(["user-1"])
 
-const { inboxTeamMemberRepository } = await import(
-  "../src/repositories/inbox-team-member/repository"
-)
+    expect(innerJoin).toHaveBeenCalledWith(inboxTeamModel, expect.anything())
+    const joinCall = innerJoin.mock.calls[0]
+    if (!joinCall) {
+      throw new Error("Expected InboxTeam join")
+    }
+    expect(renderPredicate(joinCall[1])).toContain('"inboxTeamId" = "id"')
 
-describe("inboxTeamMemberRepository.listUserIdsByTeamId", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mocks.select.mockReturnValue({ from: mocks.from })
-    mocks.from.mockReturnValue({ innerJoin: mocks.innerJoin })
-    mocks.innerJoin.mockReturnValue({ where: mocks.where })
-  })
-
-  test("joins InboxTeam to scope by workspaceId AND filters by inboxTeamId", async () => {
-    mocks.where.mockResolvedValue([{ userId: "u1" }, { userId: "u2" }])
-
-    const result = await inboxTeamMemberRepository.listUserIdsByTeamId({
-      workspaceId: "ws-1",
-      inboxTeamId: "team-1",
-    })
-
-    expect(result).toEqual(["u1", "u2"])
-    expect(mocks.innerJoin).toHaveBeenCalledWith(
-      { id: "id", workspaceId: "workspaceId" },
-      { op: "eq", args: ["inboxTeamId", "id"] },
+    expect(renderPredicate(where.mock.calls[0]?.[0])).toContain(
+      '"workspaceId" = workspace-1 and "inboxTeamId" = team-1',
     )
-    const [whereArg] = mocks.where.mock.calls[0]
-    expect(whereArg).toEqual({
-      op: "and",
-      args: [
-        { op: "eq", args: ["workspaceId", "ws-1"] },
-        { op: "eq", args: ["inboxTeamId", "team-1"] },
-      ],
-    })
   })
 
-  test("returns [] when the team has no members", async () => {
-    mocks.where.mockResolvedValue([])
+  test("returns member ids for all workspace-scoped team ids in one query", async () => {
+    const { tx, innerJoin, where } = createSelectTx([
+      { userId: "user-1" },
+      { userId: "user-2" },
+    ])
 
-    const result = await inboxTeamMemberRepository.listUserIdsByTeamId({
-      workspaceId: "ws-1",
-      inboxTeamId: "team-1",
-    })
+    await expect(
+      inboxTeamMemberRepository.listUserIdsByTeamIds({
+        workspaceId: "workspace-1",
+        inboxTeamIds: ["team-1", "team-2"],
+        tx,
+      }),
+    ).resolves.toEqual(["user-1", "user-2"])
 
-    expect(result).toEqual([])
+    expect(innerJoin).toHaveBeenCalledWith(inboxTeamModel, expect.anything())
+    expect(renderPredicate(where.mock.calls[0]?.[0])).toContain(
+      '"workspaceId" = workspace-1',
+    )
+  })
+
+  test("returns only team ids selected through the workspace-scoped member join", async () => {
+    const { tx, innerJoin, where } = createSelectTx([{ inboxTeamId: "team-1" }])
+
+    await expect(
+      inboxTeamMemberRepository.listTeamIdsByUserId({
+        workspaceId: "workspace-1",
+        userId: "user-1",
+        tx,
+      }),
+    ).resolves.toEqual(["team-1"])
+
+    expect(innerJoin).toHaveBeenCalledWith(inboxTeamModel, expect.anything())
+    const joinCall = innerJoin.mock.calls[0]
+    if (!joinCall) {
+      throw new Error("Expected InboxTeam join")
+    }
+    expect(renderPredicate(joinCall[1])).toContain('"inboxTeamId" = "id"')
+
+    expect(renderPredicate(where.mock.calls[0]?.[0])).toContain(
+      '"workspaceId" = workspace-1 and "userId" = user-1',
+    )
   })
 })

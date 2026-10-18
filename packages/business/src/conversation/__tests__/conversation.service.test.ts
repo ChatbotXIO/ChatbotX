@@ -2,6 +2,7 @@ import { sql } from "@chatbotx.io/database/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  assignmentSelectForUpdate: vi.fn(),
   conversationFindMany: vi.fn(),
   conversationFindFirst: vi.fn(),
   latestAttribution: vi.fn(),
@@ -17,7 +18,7 @@ const mocks = vi.hoisted(() => ({
   findInboxTeamByIdOrFail: vi.fn(),
   inboxTeamExists: vi.fn(),
   assignUserIfUnassigned: vi.fn(),
-  broadcastToWorkspaceParty: vi.fn(),
+  publishWorkspaceRealtimeEvent: vi.fn(),
   releaseOwnedThreadsForContacts: vi.fn(),
   // Captures tagged-template calls (`sql\`GREATEST(${a}, ${b})\``) as a plain
   // `{ strings, values }` fragment so tests can assert both the emitted SQL
@@ -29,39 +30,45 @@ const mocks = vi.hoisted(() => ({
   cancelQuickReplyFollowUps: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    query: {
-      conversationModel: {
-        findMany: mocks.conversationFindMany,
-        findFirst: mocks.conversationFindFirst,
-      },
+vi.mock("@chatbotx.io/database/client", () => {
+  const update = (..._args: unknown[]) => ({
+    set: (values: unknown) => {
+      mocks.updateSet(values)
+      return {
+        where: (condition: unknown) => {
+          mocks.updateWhere(condition)
+          return {
+            returning: (...returningArgs: unknown[]) =>
+              mocks.updateReturning(...returningArgs),
+          }
+        },
+      }
     },
-    // Tagged plain objects (not bare `vi.fn()`) so `.where(cond)` can be
-    // asserted on directly — mirrors `tag-service-soft-delete.test.ts`.
-    // This is what lets `updateAssignment`'s test below prove the
-    // `eq(workspaceId)` clause is actually present in the WHERE, not just
-    // that *some* condition was passed.
-    update: (..._args: unknown[]) => ({
-      set: (values: unknown) => {
-        mocks.updateSet(values)
-        return {
-          where: (cond: unknown) => {
-            mocks.updateWhere(cond)
-            return {
-              returning: (...rArgs: unknown[]) =>
-                mocks.updateReturning(...rArgs),
-            }
-          },
-        }
-      },
+  })
+  const select = () => ({
+    from: () => ({
+      where: () => ({ for: mocks.assignmentSelectForUpdate }),
     }),
-  },
-  and: (...args: unknown[]) => ({ and: args }),
-  eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
-  inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
-  sql: mocks.sql,
-}))
+  })
+  return {
+    db: {
+      query: {
+        conversationModel: {
+          findMany: mocks.conversationFindMany,
+          findFirst: mocks.conversationFindFirst,
+        },
+      },
+      select,
+      transaction: (callback: (tx: unknown) => unknown) =>
+        callback({ select, update }),
+      update,
+    },
+    and: (...args: unknown[]) => ({ and: args }),
+    eq: (a: unknown, b: unknown) => ({ eq: [a, b] }),
+    inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
+    sql: mocks.sql,
+  }
+})
 
 // Plain object stubs only — importing the real schema opens a database
 // connection through the sharding client. The extra models come from
@@ -106,17 +113,25 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
   }
 })
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: {
     conversationCreated: "conversationCreated",
     conversationUpdated: "conversationUpdated",
     conversationAssigned: "conversationAssigned",
   },
+  routeForAssignment: vi.fn(() => ({
+    assignedTeamIds: [],
+    assignedUserIds: [],
+  })),
+  routeForConversation: vi.fn(() => ({
+    assignedTeamIds: [],
+    assignedUserIds: [],
+  })),
 }))
 
 vi.mock("../../platform/realtime-broadcast", () => ({
-  broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
-  publishToWorkspaceParty: mocks.broadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent: mocks.publishWorkspaceRealtimeEvent,
+  queueWorkspaceRealtimeEvent: mocks.publishWorkspaceRealtimeEvent,
 }))
 
 // `conversationService` now imports `contactService` (for the location write
@@ -182,6 +197,8 @@ const WORKSPACE_ID = "ws-1"
 beforeEach(() => {
   mocks.latestAttribution.mockReset()
   mocks.latestAttribution.mockResolvedValue([])
+  mocks.assignmentSelectForUpdate.mockReset()
+  mocks.assignmentSelectForUpdate.mockResolvedValue([])
   mocks.conversationFindMany.mockReset()
   mocks.conversationFindFirst.mockReset()
   mocks.updateSet.mockReset()
@@ -201,7 +218,7 @@ beforeEach(() => {
   mocks.inboxTeamExists.mockReset()
   mocks.assignUserIfUnassigned.mockReset()
   vi.mocked(invalidateCacheByTags).mockReset()
-  mocks.broadcastToWorkspaceParty.mockReset()
+  mocks.publishWorkspaceRealtimeEvent.mockReset()
   vi.mocked(notificationQueue.addBulk).mockReset()
   vi.mocked(emitConversationAssigned).mockReset()
   vi.mocked(emit).mockReset()
@@ -470,7 +487,7 @@ describe("ConversationService.updateAssignment", () => {
       order.push("invalidate")
       return Promise.resolve()
     })
-    mocks.broadcastToWorkspaceParty.mockImplementation(() => {
+    mocks.publishWorkspaceRealtimeEvent.mockImplementation(() => {
       order.push("broadcast")
       return Promise.resolve()
     })
@@ -517,14 +534,17 @@ describe("ConversationService.updateAssignment", () => {
       `conversations:${WORKSPACE_ID}`,
       "conversations:conv-1",
     ])
-    expect(mocks.broadcastToWorkspaceParty).toHaveBeenCalledWith(WORKSPACE_ID, {
-      eventType: "conversationAssigned",
-      data: {
-        conversationIds: ["conv-1"],
-        assignedUserId: "user-2",
-        assignedInboxTeamId: null,
-      },
-    })
+    expect(mocks.publishWorkspaceRealtimeEvent).toHaveBeenCalledWith(
+      WORKSPACE_ID,
+      expect.objectContaining({
+        eventType: "conversationAssigned",
+        data: {
+          conversationIds: ["conv-1"],
+          assignedUserId: "user-2",
+          assignedInboxTeamId: null,
+        },
+      }),
+    )
     expect(notificationQueue.addBulk).toHaveBeenCalledWith([
       {
         name: "notifyConversationAssigned",
@@ -571,7 +591,7 @@ describe("ConversationService.updateAssignment", () => {
 
     expect(result).toEqual([])
     expect(invalidateCacheByTags).not.toHaveBeenCalled()
-    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceRealtimeEvent).not.toHaveBeenCalled()
     expect(notificationQueue.addBulk).not.toHaveBeenCalled()
     expect(emitConversationAssigned).not.toHaveBeenCalled()
     expect(emit).not.toHaveBeenCalled()
@@ -646,7 +666,7 @@ describe("ConversationService.claimForCallAgent", () => {
     })
 
     expect(result).toEqual([])
-    expect(mocks.broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(mocks.publishWorkspaceRealtimeEvent).not.toHaveBeenCalled()
     expect(notificationQueue.addBulk).not.toHaveBeenCalled()
     expect(emitConversationAssigned).not.toHaveBeenCalled()
     expect(emit).not.toHaveBeenCalled()

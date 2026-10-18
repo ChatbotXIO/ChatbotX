@@ -3628,6 +3628,7 @@
       "months": "{count} kk",
       "years": "{count} v"
     },
+    "realtimeRevokeWarning": "Käyttöoikeuden peruutusta ei voitu vahvistaa heti – se tulee voimaan jäsenen seuraavalla uudelleenyhteydellä.",
     "moveFeature": "Siirrä {feature}",
     "poweredBy": "Palvelun tarjoaa {name}",
     "noGiphyApiKey": "GIPHY-API-avainta ei löytynyt. Lisää se alusta-asetuksissa.",

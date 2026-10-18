@@ -60,9 +60,8 @@ const makeContext = (auth: Oauth2AuthValue) => {
     platform: {
       appUrl: "https://app.test",
       publicRealtimeUrl: "wss://public.test",
-      internalRealtimeUrl: "wss://internal.test",
       storageUrl: "https://storage.test",
-      getRealtimeBroadcastAuthHeaders: async () => ({}),
+      publishGuestRealtimeEvent: async () => undefined,
     },
   }
   return { ctx, save, markOffline }
@@ -81,9 +80,8 @@ const makeNonOauthContext = (): Context<AuthValue> => ({
   platform: {
     appUrl: "https://app.test",
     publicRealtimeUrl: "wss://public.test",
-    internalRealtimeUrl: "wss://internal.test",
     storageUrl: "https://storage.test",
-    getRealtimeBroadcastAuthHeaders: async () => ({}),
+    publishGuestRealtimeEvent: async () => undefined,
   },
 })
 

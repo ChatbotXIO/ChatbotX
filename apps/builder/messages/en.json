@@ -4310,6 +4310,7 @@
       "months": "{count}mo",
       "years": "{count}y"
     },
+    "realtimeRevokeWarning": "The access revoke couldn't be confirmed right away — it will take effect on the member's next reconnect.",
     "moveFeature": "Move {feature}",
     "poweredBy": "Powered by {name}",
     "noGiphyApiKey": "No GIPHY API key found. Please add one in Platform Settings.",

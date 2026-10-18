@@ -3607,6 +3607,7 @@
       "months": "{count}か月",
       "years": "{count}年"
     },
+    "realtimeRevokeWarning": "アクセスの取り消しをすぐに確認できませんでした。メンバーの次回の再接続時に反映されます。",
     "moveFeature": "{feature}を移動",
     "poweredBy": "{name}を利用",
     "noGiphyApiKey": "GIPHY APIキーが見つかりません。プラットフォーム設定で追加してください。",

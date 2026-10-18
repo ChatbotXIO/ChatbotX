@@ -15,7 +15,8 @@ import {
   hasRealAvatar,
   isUnpromotedStandbyCopy,
   messageCleanupService,
-  publishToWorkspaceParty,
+  queueMessageCreatedEvent,
+  queueWorkspaceRealtimeEvent,
   quotaEnforcementService,
   recordProfileRefreshFailure,
   resolveTenantSettings,
@@ -74,7 +75,10 @@ import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import type { ThreadsAuthValue } from "@chatbotx.io/integration-threads"
 import type { TiktokAuthValue } from "@chatbotx.io/integration-tiktok"
 import { toLogSafeError } from "@chatbotx.io/logger"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import { distributedLock, isLockAcquisitionError } from "@chatbotx.io/redis"
 import type {
   ChannelPostDetails,
@@ -1302,10 +1306,7 @@ const persistMessage = async (
   }
 
   if (isNew && !isOwnSendEcho) {
-    publishToWorkspaceParty(inbox.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: message,
-    })
+    queueMessageCreatedEvent(inbox.workspaceId, message, conversation)
   }
 
   if (isNew && inbound) {
@@ -1957,13 +1958,26 @@ export const updateIncomingComment = async (
     return
   }
 
-  publishToWorkspaceParty(inbox.workspaceId, {
+  const conversation = await conversationService.findBy({
+    where: { id: updated.conversationId, workspaceId: inbox.workspaceId },
+  })
+  if (!conversation) {
+    logger.warn(
+      {
+        conversationId: updated.conversationId,
+        workspaceId: inbox.workspaceId,
+      },
+      "updateIncomingComment: conversation not found for realtime route",
+    )
+  }
+  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
     eventType: RealtimeEventType.messageUpdated,
     data: {
       messageId: updated.id,
       newText,
       removedAttachment: false,
     },
+    route: routeForConversation(conversation),
   })
 }
 
@@ -1993,9 +2007,22 @@ export const deleteIncomingComment = async (
   }
 
   const messageIds = deleted.map((row) => row.id)
-  publishToWorkspaceParty(inbox.workspaceId, {
+  const conversation = await conversationService.findBy({
+    where: { id: deleted[0].conversationId, workspaceId: inbox.workspaceId },
+  })
+  if (!conversation) {
+    logger.warn(
+      {
+        conversationId: deleted[0].conversationId,
+        workspaceId: inbox.workspaceId,
+      },
+      "deleteIncomingComment: conversation not found for realtime route",
+    )
+  }
+  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
+    route: routeForConversation(conversation),
   })
 }
 
@@ -2027,9 +2054,22 @@ export const deleteIncomingMessage = async (
   }
 
   const messageIds = deleted.map((row) => row.id)
-  publishToWorkspaceParty(inbox.workspaceId, {
+  const conversation = await conversationService.findBy({
+    where: { id: deleted[0].conversationId, workspaceId: inbox.workspaceId },
+  })
+  if (!conversation) {
+    logger.warn(
+      {
+        conversationId: deleted[0].conversationId,
+        workspaceId: inbox.workspaceId,
+      },
+      "deleteIncomingMessage: conversation not found for realtime route",
+    )
+  }
+  queueWorkspaceRealtimeEvent(inbox.workspaceId, {
     eventType: RealtimeEventType.messageDeleted,
     data: { messageIds },
+    route: routeForConversation(conversation),
   })
 }
 
@@ -2118,10 +2158,7 @@ export const processMessageReaction = async (
   })
 
   if (isNew) {
-    publishToWorkspaceParty(inbox.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
-      data: reactionRow,
-    })
+    queueMessageCreatedEvent(inbox.workspaceId, reactionRow, conversation)
     await awardReactionLeaderboard({
       inbox,
       contactId: existingContactInbox.contactId,
@@ -2140,13 +2177,14 @@ export const processMessageReaction = async (
       reactionRow.createdAt,
     )
     if (updated) {
-      publishToWorkspaceParty(inbox.workspaceId, {
+      queueWorkspaceRealtimeEvent(inbox.workspaceId, {
         eventType: RealtimeEventType.messageUpdated,
         data: {
           messageId: updated.id,
           newText: reactionText,
           removedAttachment: false,
         },
+        route: routeForConversation(conversation),
       })
     }
   }

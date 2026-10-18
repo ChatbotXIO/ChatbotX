@@ -14,8 +14,9 @@ export const deleteTeamMembersAction = workspaceActionClient
       parsedInput,
     } = props
 
-    return await inboxTeamService.removeMembers(
+    const { revokeWarning } = await inboxTeamService.removeMembers(
       { workspaceId, inboxTeamId },
       parsedInput.ids,
     )
+    return { revokeWarning }
   })

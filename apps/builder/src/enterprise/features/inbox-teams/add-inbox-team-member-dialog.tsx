@@ -45,12 +45,15 @@ export function AddInboxTeamMemberDialog({
     zodResolver(addInboxTeamMemberRequest),
     {
       actionProps: {
-        onSuccess: () => {
+        onSuccess: ({ data }) => {
           toast.success(
             t("messages.createdSuccess", {
               feature: t("fields.inboxTeamMember.label"),
             }),
           )
+          if (data?.revokeWarning) {
+            toast.warning(t("messages.realtimeRevokeWarning"))
+          }
           onOpenChange(false)
           invalidateUsers()
           router.refresh()

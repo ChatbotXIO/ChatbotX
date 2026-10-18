@@ -283,8 +283,30 @@ vi.mock("@chatbotx.io/business", () => ({
   appointmentService: {
     cancelAppointmentByToken: mockAppointmentCancelByToken,
   },
-  broadcastToWorkspaceParty: mockBroadcast,
-  publishToWorkspaceParty: mockBroadcast,
+  publishWorkspaceRealtimeEvent: mockBroadcast,
+  queueWorkspaceRealtimeEvent: mockBroadcast,
+  queueMessageCreatedEvent: (
+    workspaceId: string,
+    data: unknown,
+    conversation: {
+      assignedInboxTeamId?: string | null
+      assignedUserId?: string | null
+      inboxId?: string | null
+    },
+  ) =>
+    mockBroadcast(workspaceId, {
+      eventType: "messageCreated",
+      data,
+      route: {
+        assignedTeamIds: conversation.assignedInboxTeamId
+          ? [conversation.assignedInboxTeamId]
+          : [],
+        assignedUserIds: conversation.assignedUserId
+          ? [conversation.assignedUserId]
+          : [],
+        ...(conversation.inboxId ? { inboxId: conversation.inboxId } : {}),
+      },
+    }),
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
   updateContactFromMessage: mockUpdateContactFromMessage,
@@ -390,8 +412,9 @@ vi.mock("@chatbotx.io/events", () => ({
   setWebhookExecutionContext: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
   RealtimeEventType: { messageCreated: "messageCreated" },
+  routeForConversation: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/sdk", () => ({
@@ -1138,6 +1161,7 @@ describe("receiveMessage — message repository branch", () => {
         id: fakeCreatedMessage.id,
         messageType: "outgoing",
       }),
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
   })
 
@@ -1242,6 +1266,7 @@ describe("receiveMessage — message repository branch", () => {
         id: fakeCreatedMessage.id,
         messageType: "outgoing",
       }),
+      route: { assignedTeamIds: [], assignedUserIds: [] },
     })
   })
 

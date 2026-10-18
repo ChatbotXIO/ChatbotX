@@ -82,9 +82,11 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
    `selectRingTargetsForCall` then resolves the ring tier (assignee → assigned team →
    every eligible agent with an online workspace tab —
    `workspacePresenceService.listOnlineMembers`) capped at `MAX_VOIP_RING_TARGETS`. The
-   worker's `handleConnect` delivers the SDP offer to every one of
-   those agents via `sendToWorkspaceMember` (never a broadcast). Call control lives in
-   Redis `voip:ctrl:<wacid>` = `{ reservedUserId, phase, deadlineAt, fenceToken }`,
+   worker's `handleConnect` sends each SDP offer through
+   `publishWorkspaceMemberRealtimeEvent`; the publisher appends the targeted
+   event to the durable realtime Redis stream, which the Realtime service delivers only to
+   that member's connections. Call control lives in Redis
+   `voip:ctrl:<wacid>` = `{ reservedUserId, phase, deadlineAt, fenceToken }`,
    `phase: "reserved" | "answering" | "accepted" | "terminated"`. Transitions are
    single atomic Redis **Lua CAS** ops:
    - `claimForAnswer` — `reserved (reservedUserId:"") → answering (reservedUserId:userId)`.
@@ -115,11 +117,11 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
    **Who receives which "ended" event:** `finalizeCallSideEffects`'s VoIP branch reads
    the control BEFORE tearing it down: if `reservedUserId` is set (someone claimed
    it), `whatsappCallTransportEnded` is sent ONLY to that agent via
-   `sendToWorkspaceMember` (offer-adjacent, targeted). If the call ends while still
+   `publishWorkspaceMemberRealtimeEvent` (offer-adjacent, targeted). If the call ends while still
    UNCLAIMED (`reservedUserId === ""` — the caller hung up mid-ring, or the offer/CAS
    never got claimed before expiry), there is no single agent to target — every rung
    agent's dialog is still ringing — so the SAME event is instead BROADCAST to the
-   whole workspace party via `broadcastToWorkspaceParty`; the client's `handleEnded`
+   whole workspace party via `publishWorkspaceRealtimeEvent`; the client's `handleEnded`
    already clears any dialog it doesn't recognize as its own, so agents who were never
    rung are unaffected. No control record at all means nobody was ever rung, so
    nothing is sent either way.
