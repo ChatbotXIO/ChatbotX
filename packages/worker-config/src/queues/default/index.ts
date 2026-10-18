@@ -45,6 +45,7 @@ export const DefaultJobAction = {
   syncWelcomeMessageFlows: "syncWelcomeMessageFlows",
   deleteWelcomeMessageFlows: "deleteWelcomeMessageFlows",
   processInboundWebhookRequest: "processInboundWebhookRequest",
+  retryRealtimeMemberRevoke: "retryRealtimeMemberRevoke",
 } as const
 
 export const syncExternalCalendarEventJobId = (
@@ -354,7 +355,18 @@ export const enqueueProcessInboundWebhookRequest = async (
   )
 }
 
+export type JobRetryRealtimeMemberRevoke = {
+  type: typeof DefaultJobAction.retryRealtimeMemberRevoke
+  data: {
+    reason: "deleted" | "reauth"
+    revokedAtMs: number
+    userId: string
+    workspaceId: string
+  }
+}
+
 export type DefaultJobData =
+  | JobRetryRealtimeMemberRevoke
   | JobProcessInboundWebhookRequest
   | JobSyncWelcomeMessageFlows
   | JobDeleteWelcomeMessageFlows

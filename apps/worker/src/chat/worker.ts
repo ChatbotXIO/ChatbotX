@@ -1,4 +1,8 @@
-import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
+import {
+  flushAllPendingWorkspaceRealtimeEvents,
+  publishWorkspaceRealtimeEvent,
+} from "@chatbotx.io/business"
+import type { RealtimeEventData } from "@chatbotx.io/realtime-protocol"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
   ChatJobAction,
@@ -141,6 +145,14 @@ async function startChatWorker() {
                 "notifyExportResult job received but no handler is implemented",
               )
               return
+            // Compatibility only: jobs queued by pods before the Redis-stream
+            // cutover must still be delivered while the queue drains.
+            case ChatJobAction.broadcastEvent:
+              await publishWorkspaceRealtimeEvent(
+                job.data.data.workspaceId,
+                job.data.data.event as RealtimeEventData,
+              )
+              return
             case ChatJobAction.checkOutboundAutomatedResponse:
               await checkOutboundAutomatedResponse(job.data.data)
               return
@@ -169,16 +181,23 @@ async function startChatWorker() {
       return
     }
     isShuttingDown = true
+    let shutdownFailed = false
     try {
       await worker.close()
-      // After close(): drains events published by jobs that finished during
-      // the close drain, whose coalesce timers would never fire past exit.
-      await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
     } catch (err) {
-      logger.error(err, "[ChatWorker] Error during shutdown")
-      process.exit(1)
+      shutdownFailed = true
+      logger.error(err, "[ChatWorker] Error closing worker during shutdown")
+    } finally {
+      try {
+        // After close(): drains events published by jobs that finished during
+        // the close drain, whose coalesce timers would never fire past exit.
+        await flushAllPendingWorkspaceRealtimeEvents()
+      } catch (err) {
+        shutdownFailed = true
+        logger.error(err, "[ChatWorker] Error flushing realtime events")
+      }
     }
+    process.exit(shutdownFailed ? 1 : 0)
   }
   process.once("SIGINT", shutdown)
   process.once("SIGTERM", shutdown)

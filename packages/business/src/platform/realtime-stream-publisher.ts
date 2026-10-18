@@ -3,6 +3,7 @@ import {
   getRealtimeStreamKey,
   REALTIME_MEMBER_REVOKED_TTL_SECONDS,
   type RealtimeStreamRecord,
+  realtimeStreamRecordSchema,
 } from "@chatbotx.io/realtime-protocol"
 import { createRedisConnection, type Redis } from "@chatbotx.io/redis"
 import { logger } from "../logger"
@@ -14,6 +15,7 @@ type DirectRealtimeStreamRecord = Exclude<
 >
 
 const REALTIME_STREAM_RETENTION_MS = 5 * 60 * 1000
+// A capped shard is replay best-effort; clients must tolerate missed records.
 const REALTIME_STREAM_MAX_LEN = 10_000
 
 /**
@@ -128,9 +130,16 @@ export const publishSerializedRealtimeStreamRecord = (
           `${Date.now() - REALTIME_STREAM_RETENTION_MS}-0`,
         )
         .exec()
-      const trimError = trimResults?.find(([error]) => error)?.[0]
+      const xaddError = trimResults?.[0]?.[0]
+      if (xaddError) {
+        throw xaddError
+      }
+      const trimError = trimResults?.[1]?.[0]
       if (trimError) {
-        throw trimError
+        logger.warn(
+          { err: trimError, workspaceId },
+          "Failed to trim the realtime stream after append",
+        )
       }
     },
     {
@@ -165,7 +174,7 @@ export const drainInFlightRealtimeStreamPublishes = async (): Promise<void> => {
   if (failures.length > 0) {
     throw new AggregateError(
       failures,
-      `${failures.length} direct realtime publish(es) failed during shutdown`,
+      `${failures.length} realtime publish(es) failed during shutdown`,
     )
   }
 }
@@ -177,11 +186,13 @@ export const drainInFlightRealtimeStreamPublishes = async (): Promise<void> => {
  */
 export const publishRealtimeStreamRecord = async (
   record: DirectRealtimeStreamRecord,
-): Promise<void> =>
+): Promise<void> => {
+  const parsedRecord = realtimeStreamRecordSchema.parse(record)
   await publishSerializedRealtimeStreamRecord(
-    record.workspaceId,
-    JSON.stringify(record),
+    parsedRecord.workspaceId,
+    JSON.stringify(parsedRecord),
   )
+}
 
 /**
  * Records that a member's realtime connections were just revoked, so the
@@ -191,11 +202,12 @@ export const publishRealtimeStreamRecord = async (
 export const markRealtimeMemberRevoked = async (
   workspaceId: string,
   userId: string,
+  revokedAtMs = Date.now(),
 ): Promise<void> => {
   const connection = await getRealtimeStreamConnection()
   await connection.set(
     getRealtimeMemberRevokedKey(workspaceId, userId),
-    `${Date.now()}`,
+    `${revokedAtMs}`,
     "EX",
     REALTIME_MEMBER_REVOKED_TTL_SECONDS,
   )

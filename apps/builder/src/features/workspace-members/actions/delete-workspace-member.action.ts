@@ -46,18 +46,18 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
 
     await workspaceMemberService.delete({ id, workspaceId })
 
-    // The removed member's cached `listByUserId` result still lists this
-    // workspace; bust it so their access is revoked immediately.
-    await workspaceMemberService.invalidateMembershipCache(
-      workspaceMember.userId,
-    )
-
     const revokeWarning = !(await tryRevokeWorkspaceMemberRealtimeConnections({
       workspaceId,
       userId: workspaceMember.userId,
       reason: "deleted",
       errorMessage: "Failed to revoke removed member realtime connections",
     }))
+
+    // The removed member's cached `listByUserId` result still lists this
+    // workspace; bust it so their access is revoked immediately.
+    await workspaceMemberService.invalidateMembershipCache(
+      workspaceMember.userId,
+    )
 
     return { revokeWarning }
   })

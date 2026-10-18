@@ -6,6 +6,7 @@ import {
   realtimeCallTransportOutboundAnswerVoipSchema,
   realtimeCallTransportOutboundStatusVoipSchema,
   realtimeGuestBatchEnvelopeSchema,
+  realtimeMemberBatchEnvelopeSchema,
   routeForAssignment,
   routeForConversation,
   whatsappCallClaimedElsewhereSchema,
@@ -96,6 +97,28 @@ test("rejects targeted-only events from workspace batches", () => {
       seq: "123-0",
     }),
   ).toThrow(TARGETED_ONLY_EVENT_ERROR_REGEX)
+})
+
+test("accepts targeted events through member and guest readers only", () => {
+  const targetedFrame = {
+    batch: [
+      {
+        data: { attemptId: "attempt-1" },
+        eventType: "whatsappCallTransportIncoming",
+      },
+    ],
+    seq: "123-0",
+  }
+
+  expect(realtimeMemberBatchEnvelopeSchema.parse(targetedFrame)).toEqual(
+    targetedFrame,
+  )
+  expect(realtimeGuestBatchEnvelopeSchema.parse(targetedFrame)).toEqual(
+    targetedFrame,
+  )
+  expect(realtimeBatchEnvelopeSchema.safeParse(targetedFrame).success).toBe(
+    false,
+  )
 })
 
 describe("realtime guest batch envelopes", () => {

@@ -6,10 +6,12 @@ import {
   publishWorkspaceRealtimeEvent,
   queueWorkspaceRealtimeEvent,
   resetRealtimePublishStateForTests,
-  revokeWorkspaceMemberRealtimeConnections,
+  retryWorkspaceMemberRealtimeConnections,
+  tryRevokeWorkspaceMemberRealtimeConnections,
 } from "../src/platform/realtime-broadcast"
 
 const {
+  defaultQueueAdd,
   drainInFlightRealtimeStreamPublishes,
   loggerError,
   markRealtimeMemberRevoked,
@@ -17,6 +19,7 @@ const {
   publishSerializedRealtimeStreamRecord,
   retryWithLinearBackoff,
 } = vi.hoisted(() => ({
+  defaultQueueAdd: vi.fn(),
   drainInFlightRealtimeStreamPublishes: vi.fn(),
   loggerError: vi.fn(),
   markRealtimeMemberRevoked: vi.fn(),
@@ -44,6 +47,13 @@ vi.mock("../src/logger", () => ({
   logger: { error: loggerError, info: vi.fn(), warn: vi.fn() },
 }))
 
+vi.mock("@chatbotx.io/worker-config", () => ({
+  defaultQueue: { add: defaultQueueAdd },
+  DefaultJobAction: {
+    retryRealtimeMemberRevoke: "retryRealtimeMemberRevoke",
+  },
+}))
+
 vi.mock("../src/platform/realtime-stream-publisher", () => ({
   drainInFlightRealtimeStreamPublishes,
   markRealtimeMemberRevoked,
@@ -56,10 +66,12 @@ vi.mock("../src/platform/realtime-stream-publisher", () => ({
 const typingEvent = {
   data: { typing: true },
   eventType: "typing",
+  route: { assignedTeamIds: [], assignedUserIds: ["user_1"] },
 } as const
 
 beforeEach(() => {
   vi.useFakeTimers()
+  defaultQueueAdd.mockReset()
   drainInFlightRealtimeStreamPublishes.mockReset()
   markRealtimeMemberRevoked.mockReset()
   markRealtimeMemberRevoked.mockResolvedValue(undefined)
@@ -89,7 +101,30 @@ describe("realtime stream broadcast", () => {
 
     expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledWith(
       "workspace_1",
-      '{"events":[{"data":{"typing":true},"eventType":"typing"},{"data":{"typing":true},"eventType":"typing"}],"kind":"workspace-events","workspaceId":"workspace_1"}',
+      '{"events":[{"data":{"typing":true},"eventType":"typing","route":{"assignedTeamIds":[],"assignedUserIds":["user_1"]}},{"data":{"typing":true},"eventType":"typing","route":{"assignedTeamIds":[],"assignedUserIds":["user_1"]}}],"kind":"workspace-events","workspaceId":"workspace_1"}',
+    )
+  })
+
+  test("rejects an invalid workspace event without delaying valid events", async () => {
+    const invalidEvent = {
+      data: { messageIds: ["message-1"] },
+      eventType: "messageDeleted",
+    } as never
+
+    await expect(
+      publishWorkspaceRealtimeEvent("workspace_1", invalidEvent),
+    ).rejects.toThrow("Invalid workspace realtime event")
+
+    const validDelivery = publishWorkspaceRealtimeEvent(
+      "workspace_1",
+      typingEvent,
+    )
+    await vi.advanceTimersByTimeAsync(25)
+    await expect(validDelivery).resolves.toBeUndefined()
+
+    expect(publishSerializedRealtimeStreamRecord).toHaveBeenCalledWith(
+      "workspace_1",
+      expect.stringContaining('"events":[{"data":{"typing":true}'),
     )
   })
 
@@ -226,7 +261,7 @@ describe("realtime stream broadcast", () => {
       ),
     ).resolves.toBeUndefined()
     await expect(
-      revokeWorkspaceMemberRealtimeConnections({
+      retryWorkspaceMemberRealtimeConnections({
         userId: "user_1",
         workspaceId: "workspace_1",
         reason: "deleted",
@@ -255,6 +290,7 @@ describe("realtime stream broadcast", () => {
     expect(publishRealtimeStreamRecord).toHaveBeenNthCalledWith(2, {
       kind: "member-revoke",
       reason: "deleted",
+      revokedAtMs: expect.any(Number),
       userId: "user_1",
       workspaceId: "workspace_1",
     })
@@ -271,7 +307,8 @@ describe("realtime stream broadcast", () => {
       .mockRejectedValueOnce(new Error("ECONNRESET"))
       .mockResolvedValueOnce(undefined)
 
-    const revoke = revokeWorkspaceMemberRealtimeConnections({
+    const revoke = retryWorkspaceMemberRealtimeConnections({
+      revokedAtMs: 1000,
       userId: "user_1",
       workspaceId: "workspace_1",
       reason: "deleted",
@@ -280,6 +317,18 @@ describe("realtime stream broadcast", () => {
 
     await expect(revoke).resolves.toBeUndefined()
     expect(markRealtimeMemberRevoked).toHaveBeenCalledTimes(2)
+    expect(markRealtimeMemberRevoked).toHaveBeenNthCalledWith(
+      1,
+      "workspace_1",
+      "user_1",
+      1000,
+    )
+    expect(markRealtimeMemberRevoked).toHaveBeenNthCalledWith(
+      2,
+      "workspace_1",
+      "user_1",
+      1000,
+    )
     expect(publishRealtimeStreamRecord).toHaveBeenCalledTimes(2)
   })
 
@@ -287,7 +336,7 @@ describe("realtime stream broadcast", () => {
     const persistentError = new Error("ECONNREFUSED")
     publishRealtimeStreamRecord.mockRejectedValue(persistentError)
 
-    const revoke = revokeWorkspaceMemberRealtimeConnections({
+    const revoke = retryWorkspaceMemberRealtimeConnections({
       userId: "user_1",
       workspaceId: "workspace_1",
       reason: "deleted",
@@ -301,6 +350,38 @@ describe("realtime stream broadcast", () => {
 
     await assertion
     expect(publishRealtimeStreamRecord).toHaveBeenCalledTimes(3)
+  })
+
+  test("enqueues a durable retry after immediate member revocation fails", async () => {
+    const persistentError = new Error("ECONNREFUSED")
+    publishRealtimeStreamRecord.mockRejectedValue(persistentError)
+
+    await expect(
+      tryRevokeWorkspaceMemberRealtimeConnections({
+        errorMessage: "Failed to revoke member realtime connections",
+        reason: "deleted",
+        userId: "user_1",
+        workspaceId: "workspace_1",
+      }),
+    ).resolves.toBe(false)
+
+    expect(defaultQueueAdd).toHaveBeenCalledWith(
+      "retryRealtimeMemberRevoke",
+      {
+        type: "retryRealtimeMemberRevoke",
+        data: {
+          reason: "deleted",
+          revokedAtMs: expect.any(Number),
+          userId: "user_1",
+          workspaceId: "workspace_1",
+        },
+      },
+      {
+        attempts: 5,
+        backoff: { delay: 1000, type: "exponential" },
+        removeOnComplete: true,
+      },
+    )
   })
 
   test("drains every workspace's shutdown flush independently, even when one workspace's append rejects", async () => {

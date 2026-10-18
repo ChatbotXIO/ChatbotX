@@ -3,6 +3,7 @@ import {
   getRealtimeStreamKey,
   getRealtimeStreamShard,
   isRealtimeSeqAfter,
+  realtimeStreamRecordSchema,
 } from "../src/stream"
 
 describe("workspace stream sharding", () => {
@@ -11,6 +12,26 @@ describe("workspace stream sharding", () => {
     expect(getRealtimeStreamKey("workspace-1")).toBe("rt:{249}")
     expect(getRealtimeStreamShard("workspace-abc")).toBe(42)
     expect(getRealtimeStreamKey("ws-1")).toBe("rt:{128}")
+  })
+})
+
+describe("member revoke stream records", () => {
+  test("requires the original revocation cutoff", () => {
+    const record = {
+      kind: "member-revoke",
+      reason: "reauth",
+      revokedAtMs: 1000,
+      userId: "user-1",
+      workspaceId: "workspace-1",
+    }
+
+    expect(realtimeStreamRecordSchema.parse(record)).toEqual(record)
+    expect(() =>
+      realtimeStreamRecordSchema.parse({
+        ...record,
+        revokedAtMs: undefined,
+      }),
+    ).toThrow()
   })
 })
 describe("isRealtimeSeqAfter", () => {

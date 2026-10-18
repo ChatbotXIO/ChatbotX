@@ -201,11 +201,11 @@ class InboxTeamService extends BaseService {
       }
       return created
     })
-    await this.invalidate({ workspaceId })
     const revokeWarning = await this.revokeMemberRealtimeConnections(
       workspaceId,
       data.userIds,
     )
+    await this.invalidate({ workspaceId })
     await this.audit("create", `created a new team (#${inboxTeamId})`)
     return { team, revokeWarning }
   }
@@ -254,11 +254,11 @@ class InboxTeamService extends BaseService {
           inArray(inboxTeamModel.id, ids),
         ),
       )
-    await this.invalidate({ workspaceId })
     const revokeWarning = await this.revokeMemberRealtimeConnections(
       workspaceId,
       memberUserIds,
     )
+    await this.invalidate({ workspaceId })
 
     await this.audit(
       "delete",
@@ -305,11 +305,11 @@ class InboxTeamService extends BaseService {
         })
       }
     })
-    await this.invalidate({ workspaceId: ctx.workspaceId })
     const revokeWarning = await this.revokeMemberRealtimeConnections(
       ctx.workspaceId,
       addedUserIds,
     )
+    await this.invalidate({ workspaceId: ctx.workspaceId })
 
     if (addedUsers.length > 0) {
       await this.audit(
@@ -342,11 +342,11 @@ class InboxTeamService extends BaseService {
         ),
       )
       .returning({ id: inboxTeamMemberModel.id })
-    await this.invalidate({ workspaceId: ctx.workspaceId })
     const revokeWarning = await this.revokeMemberRealtimeConnections(
       ctx.workspaceId,
       membersToRemove.map((member) => member.userId),
     )
+    await this.invalidate({ workspaceId: ctx.workspaceId })
 
     if (deleted.length > 0) {
       await this.audit(
@@ -385,11 +385,11 @@ class InboxTeamService extends BaseService {
         ),
       )
       .returning({ id: inboxTeamMemberModel.id })
-    await this.invalidate({ workspaceId: ctx.workspaceId })
     const revokeWarning = await this.revokeMemberRealtimeConnections(
       ctx.workspaceId,
       membersToRemove.map((member) => member.userId),
     )
+    await this.invalidate({ workspaceId: ctx.workspaceId })
 
     if (deleted.length > 0) {
       await this.audit(

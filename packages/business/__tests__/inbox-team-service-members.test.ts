@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   userFindMany: vi.fn(),
   listUserIdsByTeamId: vi.fn(),
   listUserIdsByTeamIds: vi.fn(),
+  invalidateCacheByTags: vi.fn(),
   dispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
   tryRevokeWorkspaceMemberRealtimeConnections: vi.fn().mockResolvedValue(true),
 }))
@@ -67,7 +68,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn(),
-  invalidateCacheByTags: vi.fn(),
+  invalidateCacheByTags: mocks.invalidateCacheByTags,
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -342,6 +343,25 @@ describe("InboxTeamService membership mutation revocation", () => {
         workspaceId: WORKSPACE_ID,
       }),
     )
+  })
+
+  test("revokes deleted-team members before cache invalidation fails", async () => {
+    mocks.invalidateCacheByTags.mockRejectedValueOnce(
+      new Error("Redis unavailable"),
+    )
+
+    await expect(
+      inboxTeamService.delete({ workspaceId: WORKSPACE_ID, ids: [TEAM_ID] }),
+    ).rejects.toThrow("Redis unavailable")
+
+    expect(
+      mocks.tryRevokeWorkspaceMemberRealtimeConnections,
+    ).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "member-1",
+      reason: "reauth",
+      errorMessage: "Failed to revoke inbox team member realtime connections",
+    })
   })
 
   test("revokes newly added members", async () => {

@@ -181,6 +181,14 @@ export const realtimeBatchEnvelopeSchema = batchOf(
 )
 
 /**
+ * A member is already pinned to one recipient, so targeted-only events are
+ * valid even though workspace-wide readers must reject them.
+ */
+export const realtimeMemberBatchEnvelopeSchema = batchOf(
+  realtimeEventEnvelopeSchema,
+)
+
+/**
  * Guest-socket delivery is never route-filtered, so it accepts routeless
  * conversation-scoped events.
  */

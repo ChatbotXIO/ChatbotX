@@ -22,6 +22,7 @@ const workerState = vi.hoisted(() => ({
   loggerWarn: vi.fn(),
   processor: undefined as DefaultWorkerProcessor | undefined,
   resolveWorkspaceId: vi.fn(),
+  retryRealtimeMemberRevoke: vi.fn(),
   sendAppointmentReminder: vi.fn(),
   submitMetaCatalogSync: vi.fn(),
   syncWelcomeMessageFlows: vi.fn(),
@@ -75,6 +76,7 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
       submitMetaCatalogSync: "submitMetaCatalogSync",
       syncWelcomeMessageFlows: "syncWelcomeMessageFlows",
       deleteWelcomeMessageFlows: "deleteWelcomeMessageFlows",
+      retryRealtimeMemberRevoke: "retryRealtimeMemberRevoke",
     },
     defaultQueue: {
       add: (...args: unknown[]) => workerState.defaultQueueAdd(...args),
@@ -156,6 +158,9 @@ vi.mock("../src/default/handlers/sync-tag", () => ({
   handleSyncTag: vi.fn(),
 }))
 
+vi.mock("../src/default/handlers/retry-realtime-member-revoke", () => ({
+  retryRealtimeMemberRevoke: workerState.retryRealtimeMemberRevoke,
+}))
 vi.mock("../src/default/handlers/welcome-message-flows", () => ({
   syncWelcomeMessageFlows: workerState.syncWelcomeMessageFlows,
   deleteWelcomeMessageFlows: workerState.deleteWelcomeMessageFlows,
@@ -224,6 +229,7 @@ beforeEach(() => {
   workerState.loggerInfo.mockReset()
   workerState.loggerWarn.mockReset()
   workerState.resolveWorkspaceId.mockReset()
+  workerState.retryRealtimeMemberRevoke.mockReset()
   workerState.sendAppointmentReminder.mockReset()
   workerState.submitMetaCatalogSync.mockReset()
   workerState.syncWelcomeMessageFlows.mockReset()
@@ -298,6 +304,24 @@ describe("default worker", () => {
     expect(workerState.resolveWorkspaceId).toHaveBeenCalledWith(jobData.data)
     expect(workerState.isBlockedWorkspace).toHaveBeenCalledWith("workspace-1")
     expect(workerState.sendAppointmentReminder).toHaveBeenCalledWith(
+      jobData.data,
+    )
+  })
+
+  test("retries failed realtime member revocations through the default worker", async () => {
+    const jobData: DefaultJobData = {
+      type: "retryRealtimeMemberRevoke",
+      data: {
+        reason: "deleted",
+        revokedAtMs: 1000,
+        userId: "user-1",
+        workspaceId: "workspace-1",
+      },
+    }
+
+    await processDefaultJob(jobData)
+
+    expect(workerState.retryRealtimeMemberRevoke).toHaveBeenCalledWith(
       jobData.data,
     )
   })

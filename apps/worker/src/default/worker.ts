@@ -1,3 +1,4 @@
+import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
 import {
   DefaultJobAction,
   type DefaultJobData,
@@ -9,7 +10,6 @@ import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { isBlockedWorkspace } from "../lib/is-blocked-workspace"
 import { logger } from "../lib/logger"
-import { flushAllPendingWorkspaceRealtimeEvents } from "../lib/realtime-drain"
 import { resolveWorkspaceId } from "../lib/resolve-workspace-id"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
 import { handleBulkTagContacts } from "./handlers/bulk-tag-contacts"
@@ -24,6 +24,7 @@ import {
   processInboundWebhookRequest,
   skipBlockedInboundWebhookRequest,
 } from "./handlers/process-inbound-webhook-request"
+import { retryRealtimeMemberRevoke } from "./handlers/retry-realtime-member-revoke"
 import { runImport } from "./handlers/run-import"
 import { sendAppointmentReminder } from "./handlers/send-appointment-reminder"
 import { sendAuditLog } from "./handlers/send-audit-log"
@@ -201,6 +202,13 @@ async function startDefaultWorker() {
           )
           return
         }
+        case DefaultJobAction.retryRealtimeMemberRevoke: {
+          const { type, data } = job.data
+          await runGuardedDefaultJob(data, { source: `default:${type}` }, () =>
+            retryRealtimeMemberRevoke(data),
+          )
+          return
+        }
         default:
           logger.warn(`Unknown job name: ${job.name}`)
           return
@@ -231,14 +239,21 @@ async function startDefaultWorker() {
       return
     }
     isShuttingDown = true
+    let shutdownFailed = false
     try {
       await worker.close()
-      await flushAllPendingWorkspaceRealtimeEvents()
-      process.exit(0)
     } catch (err) {
-      logger.error(err, "[DefaultWorker] Error during shutdown")
-      process.exit(1)
+      shutdownFailed = true
+      logger.error(err, "[DefaultWorker] Error closing worker during shutdown")
+    } finally {
+      try {
+        await flushAllPendingWorkspaceRealtimeEvents()
+      } catch (err) {
+        shutdownFailed = true
+        logger.error(err, "[DefaultWorker] Error flushing realtime events")
+      }
     }
+    process.exit(shutdownFailed ? 1 : 0)
   }
   process.once("SIGINT", shutdown)
   process.once("SIGTERM", shutdown)

@@ -8,6 +8,21 @@ mounted once, around `{children}`, in
 through the hooks below instead. The guest webchat (`guests` party) is a
 separate, unrelated socket and is out of scope here.
 
+## Redis-stream relay release gate
+
+The Redis-stream relay is a single deployment unit split across three pull
+requests for review. **Never deploy or merge only a subset.** Merge all three
+back-to-back, then deploy Builder, Worker, and Realtime together:
+
+1. publishers append protocol records to `rt:{shard}`;
+2. Realtime consumes those records and delivers them to sockets; and
+3. Builder mints the v2 member tokens (`iatMs`, `chatScope`) the gateway
+   validates.
+
+Deploying only the publisher PR silently stops realtime delivery because no
+consumer reads the stream. A rollback must restore the whole deployment unit,
+not one service.
+
 ## Subscribing to events
 
 ```tsx
@@ -49,14 +64,14 @@ An event is only dispatched to subscribers if:
    ignored — this keeps staggered deploys forward-compatible).
 2. When a zod schema exists for that event in
    `features/realtime/realtime-event-validation.ts` (sourced from
-   `@chatbotx.io/partysocket-config`), the payload passes it. A schema
-   failure is logged (`logger.warn`) and the event is dropped — your
-   handler is never called with a payload that failed validation.
+   `@chatbotx.io/realtime-protocol`), the payload passes it. A schema failure
+   is logged (`logger.warn`) and the event is dropped — your handler is never
+   called with a payload that failed validation.
 
 Not every event has a schema today (e.g. `messageCreated` carries
 `data: unknown`) — narrow it yourself in your handler. Never invent a new
 schema in `features/realtime/`; only reuse schemas that already exist in
-`partysocket-config`.
+`realtime-protocol`.
 
 ## What lives where
 
@@ -236,15 +251,14 @@ realtime server's own caller has no retry logic either, since the next
 report supersedes a lost one, so a 5xx here would only risk a pointless
 retry storm.
 
-A member removed from a workspace mid-session is still covered by the
-EXISTING `?action=revoke` connection-close path
-(`revokeWorkspaceMemberConnections`, called on membership removal) — that
-closes their tagged sockets immediately, which is what stops that user
-from being counted in the NEXT presence report (or any report at all, once
-their last socket in the room closes and, if they were the last connection
-overall, the alarm loop stops). Presence itself never re-implements
-membership revocation; it only reports whoever the realtime layer already
-considers connected.
+A member removed from a workspace mid-session is covered by the durable
+`member-revoke` stream record emitted by
+`revokeWorkspaceMemberRealtimeConnections`. Realtime closes only connections
+whose token `iatMs` is not newer than its `revokedAtMs` cutoff; a
+newly-authenticated connection is retained. The matching Redis revocation
+marker rejects stale reconnects while the old token can still verify. Presence
+does not re-implement membership revocation; it only reports whoever the
+realtime layer considers connected.
 
 Multi-pod / multiple Durable Object instances for the same room cannot
 happen in this deployment: `workspaces` rooms are keyed by workspace id
@@ -343,11 +357,10 @@ replaces it.
 ### Purpose-bound realtime tokens
 
 Every realtime token includes a `purpose` claim and
-`verifyRealtimeToken` (`packages/partysocket-config/src/auth.ts`) requires
-it to exactly match the requested operation. This prevents replay between
-the broadcast, member-connect, and presence-report paths, including the
-broadcast and member-connect paths that share a `workspace:<id>` audience
-and `REALTIME_BROADCAST_SECRET`.
+`verifyRealtimeToken` (`packages/realtime-protocol/src/auth.ts`) requires it
+to exactly match the requested operation. This prevents replay between member
+connect and presence-report paths that share a `workspace:<id>` audience and
+`REALTIME_BROADCAST_SECRET`.
 
 ### §3.3 connection-count load test — result
 

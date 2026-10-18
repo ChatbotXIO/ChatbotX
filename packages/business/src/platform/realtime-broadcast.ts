@@ -5,8 +5,10 @@ import type {
 } from "@chatbotx.io/realtime-protocol"
 import {
   RealtimeEventType,
+  realtimeWorkspaceEventEnvelopeSchema,
   routeForConversation,
 } from "@chatbotx.io/realtime-protocol"
+import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { logger } from "../logger"
 import {
   flushRealtimeRelayMetrics,
@@ -227,6 +229,16 @@ export const publishWorkspaceRealtimeEvent = (
   workspaceId: string,
   event: RealtimeEventData,
 ): Promise<void> => {
+  const parseResult = realtimeWorkspaceEventEnvelopeSchema.safeParse(event)
+  if (!parseResult.success) {
+    const error = new Error("Invalid workspace realtime event")
+    logger.warn(
+      { err: error, issues: parseResult.error.issues, workspaceId },
+      "Rejected invalid workspace realtime event",
+    )
+    return Promise.reject(error)
+  }
+
   flushRealtimeRelayMetrics(false)
   if (
     (appendDepthByWorkspace.get(workspaceId) ?? 0) >=
@@ -323,26 +335,35 @@ export const publishWorkspaceMemberRealtimeEvent = async (
 
 const REVOKE_RETRY_ATTEMPTS = 3
 const REVOKE_RETRY_DELAY_MS = 250
+const REVOKE_RETRY_JOB_ATTEMPTS = 5
+const REVOKE_RETRY_JOB_DELAY_MS = 1000
 
 type WorkspaceMemberRealtimeConnectionRevocationArgs = {
   reason: "deleted" | "reauth"
+  revokedAtMs?: number
   userId: string
   workspaceId: string
 }
 
 /**
- * Immediately revokes existing realtime connections and prevents reconnects
- * with tokens minted before the revoke marker.
+ * Records the reconnect marker and sends a control record to close current
+ * connections. Throws after its bounded Redis retry budget is exhausted.
  */
-export const revokeWorkspaceMemberRealtimeConnections = async (
+const revokeWorkspaceMemberRealtimeConnections = async (
   args: WorkspaceMemberRealtimeConnectionRevocationArgs,
 ): Promise<void> => {
+  const revokedAtMs = args.revokedAtMs ?? Date.now()
   await retryWithLinearBackoff(
     async () => {
-      await markRealtimeMemberRevoked(args.workspaceId, args.userId)
+      await markRealtimeMemberRevoked(
+        args.workspaceId,
+        args.userId,
+        revokedAtMs,
+      )
       await publishRealtimeStreamRecord({
         kind: "member-revoke",
         reason: args.reason,
+        revokedAtMs,
         workspaceId: args.workspaceId,
         userId: args.userId,
       })
@@ -356,21 +377,70 @@ export const revokeWorkspaceMemberRealtimeConnections = async (
 }
 
 /**
- * Best-effort revocation that never throws. Returns `false` only when all
- * retries fail.
+ * Runs the durable-retry attempt. It intentionally throws so BullMQ retries
+ * the job instead of enqueuing a recursive replacement job.
+ */
+export const retryWorkspaceMemberRealtimeConnections = async (
+  args: WorkspaceMemberRealtimeConnectionRevocationArgs,
+): Promise<void> => {
+  await revokeWorkspaceMemberRealtimeConnections(args)
+}
+
+const enqueueWorkspaceMemberRealtimeConnectionRevocationRetry = async (
+  args: WorkspaceMemberRealtimeConnectionRevocationArgs,
+): Promise<void> => {
+  try {
+    await defaultQueue.add(
+      DefaultJobAction.retryRealtimeMemberRevoke,
+      {
+        type: DefaultJobAction.retryRealtimeMemberRevoke,
+        data: {
+          reason: args.reason,
+          revokedAtMs: args.revokedAtMs ?? Date.now(),
+          userId: args.userId,
+          workspaceId: args.workspaceId,
+        },
+      },
+      {
+        attempts: REVOKE_RETRY_JOB_ATTEMPTS,
+        backoff: {
+          type: "exponential",
+          delay: REVOKE_RETRY_JOB_DELAY_MS,
+        },
+        removeOnComplete: true,
+      },
+    )
+  } catch (error) {
+    logger.error(
+      { err: error, userId: args.userId, workspaceId: args.workspaceId },
+      "Failed to enqueue realtime member connection revoke retry",
+    )
+  }
+}
+
+/**
+ * Best-effort revocation that never throws. A failed immediate revoke is
+ * retried durably by the default worker.
  */
 export const tryRevokeWorkspaceMemberRealtimeConnections = async (
   args: WorkspaceMemberRealtimeConnectionRevocationArgs & {
     errorMessage: string
   },
 ): Promise<boolean> => {
+  const revocationArgs = {
+    ...args,
+    revokedAtMs: Date.now(),
+  }
   try {
-    await revokeWorkspaceMemberRealtimeConnections(args)
+    await retryWorkspaceMemberRealtimeConnections(revocationArgs)
     return true
   } catch (error) {
     logger.error(
       { err: error, userId: args.userId, workspaceId: args.workspaceId },
       args.errorMessage,
+    )
+    await enqueueWorkspaceMemberRealtimeConnectionRevocationRetry(
+      revocationArgs,
     )
     return false
   }

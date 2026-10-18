@@ -15,6 +15,7 @@ import { listInboxTeams } from "../queries"
 import {
   addInboxTeamMemberRequest,
   createInboxTeamRequest,
+  inboxTeamMutationResource,
   publicListInboxTeamsResponse,
   updateInboxTeamRequest,
 } from "../schema/action"
@@ -77,15 +78,15 @@ export const inboxTeamsPublicRouter = {
       tags: ["Teams"],
     })
     .input(createInboxTeamRequest)
-    .output(inboxTeamResource)
+    .output(inboxTeamMutationResource)
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
-      const { team } = await inboxTeamService.create({
+      const { revokeWarning, team } = await inboxTeamService.create({
         workspaceId: context.workspace.id,
         data: input,
       })
-      return team
+      return { ...team, revokeWarning }
     }),
 
   update: workspaceTokenAuthAPI
@@ -138,15 +139,15 @@ export const inboxTeamsPublicRouter = {
       tags: ["Teams"],
     })
     .input(addInboxTeamMemberRequest.and(inboxTeamIdPathParam))
-    .output(inboxTeamResource)
+    .output(inboxTeamMutationResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
-      const { team } = await inboxTeamService.addMembers(
+      const { revokeWarning, team } = await inboxTeamService.addMembers(
         { workspaceId: context.workspace.id, inboxTeamId: input.id },
         input.userIds,
       )
-      return team
+      return { ...team, revokeWarning }
     }),
 
   removeMembers: workspaceTokenAuthAPI
@@ -159,13 +160,14 @@ export const inboxTeamsPublicRouter = {
       tags: ["Teams"],
     })
     .input(addInboxTeamMemberRequest.and(inboxTeamIdPathParam))
-    .output(inboxTeamResource)
+    .output(inboxTeamMutationResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const { team } = await inboxTeamService.removeMembersByUserIds(
-        { workspaceId: context.workspace.id, inboxTeamId: input.id },
-        input.userIds,
-      )
-      return team
+      const { revokeWarning, team } =
+        await inboxTeamService.removeMembersByUserIds(
+          { workspaceId: context.workspace.id, inboxTeamId: input.id },
+          input.userIds,
+        )
+      return { ...team, revokeWarning }
     }),
 }

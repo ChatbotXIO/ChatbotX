@@ -92,6 +92,7 @@ const realtimeMemberSendStreamRecordSchema = z.object({
 const realtimeMemberRevokeStreamRecordSchema = z.object({
   kind: z.literal("member-revoke"),
   reason: z.enum(["deleted", "reauth"]),
+  revokedAtMs: z.number().int().nonnegative(),
   userId: z.string().min(1),
   workspaceId: z.string().min(1),
 })

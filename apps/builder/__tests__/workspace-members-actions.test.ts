@@ -535,6 +535,25 @@ describe("deleteWorkspaceMemberAction", () => {
     expect(mockInvalidateMembershipCache).toHaveBeenCalledWith(MEMBER_USER_ID)
   })
 
+  test("revokes the removed member before a cache invalidation failure", async () => {
+    mockInvalidateMembershipCache.mockRejectedValueOnce(
+      new Error("Redis unavailable"),
+    )
+
+    await expect(
+      (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
+        deleteActionCtx(),
+      ),
+    ).rejects.toThrow("Redis unavailable")
+
+    expect(mockRevokeWorkspaceMemberConnections).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: MEMBER_USER_ID,
+      reason: "deleted",
+      errorMessage: "Failed to revoke removed member realtime connections",
+    })
+  })
+
   test("deletes the member without mutating team-member quota", async () => {
     await (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
       deleteActionCtx(),

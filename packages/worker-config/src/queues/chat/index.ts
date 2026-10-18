@@ -48,6 +48,9 @@ export const ChatJobAction = {
   sendMessengerTemplateMessage: "sendMessengerTemplateMessage",
   sendTyping: "sendTyping",
   notifyExportResult: "notifyExportResult",
+  // Keep this legacy action until every job queued before the realtime stream
+  // cutover has drained.
+  broadcastEvent: "broadcastEvent",
   deleteChannelMessage: "deleteChannelMessage",
   editChannelMessage: "editChannelMessage",
   changeChannelMessageState: "changeChannelMessageState",
@@ -195,6 +198,18 @@ export type ChatJobSendTyping = {
   }
 }
 
+/**
+ * Compatibility action for realtime jobs queued before the Redis-stream
+ * cutover. New publishers append directly to the stream.
+ */
+export type ChatJobBroadcastEvent = {
+  type: typeof ChatJobAction.broadcastEvent
+  data: {
+    event: unknown
+    workspaceId: string
+  }
+}
+
 export type ChatJobNotifyExportResult = {
   type: typeof ChatJobAction.notifyExportResult
   data: Record<string, unknown>
@@ -260,6 +275,7 @@ export type ChatJobData =
   | ChatJobSendWhatsappTemplateToConversation
   | ChatJobSendMessengerTemplateMessage
   | ChatJobSendTyping
+  | ChatJobBroadcastEvent
   | ChatJobNotifyExportResult
   | ChatJobDeleteChannelMessage
   | ChatJobEditChannelMessage

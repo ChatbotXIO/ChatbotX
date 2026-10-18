@@ -36,9 +36,17 @@ vi.mock("../src/platform/settings", () => ({
   resolveRealtimeRedisUrl: () => "redis://realtime.test",
 }))
 
+vi.mock("@chatbotx.io/worker-config", () => ({
+  defaultQueue: { add: vi.fn() },
+  DefaultJobAction: {
+    retryRealtimeMemberRevoke: "retryRealtimeMemberRevoke",
+  },
+}))
+
 const typingEvent = {
   data: { typing: true },
   eventType: "typing",
+  route: { assignedTeamIds: [], assignedUserIds: ["user-1"] },
 } as const
 
 const STREAM_MIN_ID_PATTERN = /^\d+-0$/
@@ -223,6 +231,32 @@ describe("realtime stream publisher Redis connection", () => {
     expect(loggerWarn).not.toHaveBeenCalled()
   })
 
+  test("does not retry or double-append when the post-append trim fails", async () => {
+    const { publishRealtimeStreamRecord } = await import(
+      "../src/platform/realtime-stream-publisher"
+    )
+    const trimError = new Error("trim failed")
+    exec.mockResolvedValue([
+      [null, "1-0"],
+      [trimError, null],
+    ])
+
+    await expect(
+      publishRealtimeStreamRecord({
+        event: typingEvent,
+        guestConversationId: "guest-1",
+        kind: "guest-event",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(xadd).toHaveBeenCalledTimes(1)
+    expect(loggerWarn).toHaveBeenCalledWith(
+      { err: trimError, workspaceId: "ws-1" },
+      "Failed to trim the realtime stream after append",
+    )
+  })
+
   test("throws the last stream append error after retries are exhausted", async () => {
     // Load after `vi.resetModules()` to isolate the module-scoped Redis client.
     const { publishRealtimeStreamRecord } = await import(
@@ -271,7 +305,7 @@ describe("realtime stream publisher Redis connection", () => {
     const { getRealtimeMemberRevokedKey, getRealtimeStreamKey } = await import(
       "@chatbotx.io/realtime-protocol"
     )
-    const { revokeWorkspaceMemberRealtimeConnections } = await import(
+    const { retryWorkspaceMemberRealtimeConnections } = await import(
       "../src/platform/realtime-broadcast"
     )
     exec.mockResolvedValue([
@@ -279,7 +313,7 @@ describe("realtime stream publisher Redis connection", () => {
       [null, 0],
     ])
 
-    await revokeWorkspaceMemberRealtimeConnections({
+    await retryWorkspaceMemberRealtimeConnections({
       reason: "deleted",
       userId: "user-1",
       workspaceId: "ws-1",

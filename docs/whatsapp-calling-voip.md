@@ -82,9 +82,11 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
    `selectRingTargetsForCall` then resolves the ring tier (assignee → assigned team →
    every eligible agent with an online workspace tab —
    `workspacePresenceService.listOnlineMembers`) capped at `MAX_VOIP_RING_TARGETS`. The
-   worker's `handleConnect` delivers the SDP offer to every one of
-   those agents via `sendToWorkspaceMember` (never a broadcast). Call control lives in
-   Redis `voip:ctrl:<wacid>` = `{ reservedUserId, phase, deadlineAt, fenceToken }`,
+   worker's `handleConnect` sends each SDP offer through
+   `sendToWorkspaceMember`; the publisher appends the targeted event to the
+   durable realtime Redis stream, which the Realtime service delivers only to
+   that member's connections. Call control lives in Redis
+   `voip:ctrl:<wacid>` = `{ reservedUserId, phase, deadlineAt, fenceToken }`,
    `phase: "reserved" | "answering" | "accepted" | "terminated"`. Transitions are
    single atomic Redis **Lua CAS** ops:
    - `claimForAnswer` — `reserved (reservedUserId:"") → answering (reservedUserId:userId)`.
