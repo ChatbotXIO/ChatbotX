@@ -178,6 +178,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      # The builder's Turbopack compile is native code, so NODE_OPTIONS does not
+      # bound it, and its peak sits close to the ~16GB of an ubuntu-latest
+      # runner: `next build` was killed with exit 137 ("cannot allocate
+      # memory"). A larger swap absorbs the spike instead of the kernel killing
+      # the build. Step-level `if` may read `matrix` (the job-level one may not).
+      - name: Enlarge swap for the builder compile
+        if: matrix.label == 'builder'
+        run: |
+          sudo swapoff -a
+          sudo rm -f /mnt/swapfile
+          sudo fallocate -l 16G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          free -h
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
