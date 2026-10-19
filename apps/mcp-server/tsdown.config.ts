@@ -11,7 +11,7 @@ export default defineConfig({
     alwaysBundle: [/(.*)/],
   },
   clean: true,
-  // target: 'node20',
+  target: "node24",
   platform: "node",
   minify: true,
   unbundle: false,
