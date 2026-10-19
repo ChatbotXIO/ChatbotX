@@ -218,9 +218,9 @@
     "averageFirstResponseTimeByAdmin": "Tempo médio da primeira resposta por agentes humanos (minutos)",
     "averageFirstResponseTimeByAdminHelp": "O tempo médio que um agente humano demora a dar a primeira resposta à mensagem de um cliente.",
     "averageResponseTimeByAdmin": "Tempo médio de resposta por agentes humanos (minutos)",
-    "withinWorkingHoursHelp": "Conta apenas o tempo dentro do horário de trabalho do agente; o tempo fora do seu horário é excluído.",
+    "withinWorkingHoursHelp": "Conta só o tempo dentro do horário do agente.",
     "withinWorkingHoursLabel": "Dentro do horário de trabalho",
-    "noResponseData": "Sem dados: o agente não tem respostas neste período ou não tem um horário de trabalho atribuído.",
+    "noResponseData": "Sem respostas neste período ou sem escala atribuída.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Tempo médio da primeira resposta dentro do horário de trabalho por agentes humanos (minutos)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "O tempo médio, dentro do horário de trabalho, que um agente humano demora a dar a primeira resposta à mensagem de um cliente.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "Tempo médio de resposta dentro do horário de trabalho por agentes humanos (minutos)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Horário de trabalho",
     "label": "Horário de trabalho",
-    "description": "Defina quando a sua equipa está disponível. Os tempos de resposta são medidos apenas dentro destes horários.",
+    "description": "Os tempos de resposta contam só dentro destes horários.",
     "employees": "Colaboradores",
-    "empty": "Ainda não há horários de trabalho. Adicione um horário para medir os tempos de resposta apenas dentro do horário de trabalho.",
-    "deleteDescription": "Eliminar \"{name}\"? Os colaboradores associados voltarão a ser medidos em tempo real. Esta ação não pode ser anulada.",
+    "empty": "Ainda sem escalas.",
+    "deleteDescription": "Eliminar \"{name}\"? Os funcionários voltam ao tempo real.",
     "create": {
       "title": "Adicionar horário de trabalho",
       "description": "Dê um nome ao horário. Em seguida, definirá os dias e as horas."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Aplicar horário de trabalho aos colaboradores",
       "description": "Escolha os colaboradores que seguem este horário.",
-      "moveHelp": "Um colaborador só pode seguir um horário. Quem já estiver noutro horário será movido para este.",
+      "moveHelp": "Cada funcionário tem uma escala; adicioná-lo move-o para aqui.",
       "placeholder": "Selecionar colaboradores",
       "search": "Pesquisar colaboradores...",
       "searchAria": "Pesquisar entre os colaboradores",
@@ -8983,7 +8983,55 @@
       "endTime": "Hora de fim",
       "removeRange": "Remover intervalo",
       "errorOverlap": "Estes intervalos sobrepõem-se. Ajuste-os para guardar.",
-      "errorOrder": "A hora de fim tem de ser posterior à hora de início."
+      "errorOrder": "A hora de fim tem de ser posterior à hora de início.",
+      "routingNote": "Também usado por Auto Assign, Global Router e Condição."
+    },
+    "condition": {
+      "assignedAgent": "Turno do agente atribuído"
+    },
+    "holidays": {
+      "label": "Feriados",
+      "title": "Feriados",
+      "description": "Substitui o horário semanal de todas as escalas nessa data.",
+      "add": "Adicionar feriado",
+      "empty": "Ainda não há feriados.",
+      "deleteDescription": "Eliminar o feriado de {date}?"
+    },
+    "dateOverrides": {
+      "title": "Exceções de data",
+      "description": "Substitui o horário desta escala nessa data; prevalece sobre feriados.",
+      "add": "Adicionar exceção",
+      "empty": "Sem exceções."
+    },
+    "dateDialog": {
+      "addTitle": "Adicionar data",
+      "editTitle": "Editar data",
+      "date": "Data",
+      "name": "Nome (opcional)",
+      "closedAllDay": "Fechado todo o dia",
+      "duplicate": "Esta data já está na lista.",
+      "hours": "Horário",
+      "closed": "Fechado"
     }
+  },
+  "responseSla": {
+    "label": "SLA de resposta",
+    "title": "SLA de resposta",
+    "description": "Tempo máximo que uma mensagem do cliente pode esperar por resposta humana.",
+    "firstTarget": "Objetivo da primeira resposta (minutos)",
+    "nextTarget": "Objetivo das respostas seguintes (minutos)",
+    "nextPlaceholder": "Sem SLA nas respostas seguintes",
+    "threshold": "Limiar de risco (% do objetivo restante)",
+    "thresholdHelp": "Marcada em risco quando resta este % do objetivo.",
+    "workingTimeNote": "Contado no horário do agente atribuído; senão, em tempo real.",
+    "overdue": "Atrasado",
+    "due": "Prazo {time}",
+    "breaching": "SLA em risco",
+    "breached": "SLA falhado",
+    "firstMetColumn": "SLA da primeira resposta cumprido",
+    "metColumn": "SLA cumprido",
+    "metHelp": "Parte das respostas com SLA que o cumpriram.",
+    "eligibleCount": "{count} respostas tinham SLA",
+    "enable": "Ativar SLA de resposta"
   }
 }

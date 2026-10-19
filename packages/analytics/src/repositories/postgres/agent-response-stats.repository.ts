@@ -27,6 +27,8 @@ export type InsertAgentResponseEventRow = EventBusMessageMetadata & {
   workingResponseSeconds?: number | null
   isFirstResponse: boolean
   workingHoursId?: string | null
+  slaTargetSeconds?: number | null
+  slaMet?: boolean | null
   channel?: string | null
   inboxId?: string | null
   metadata?: Record<string, unknown> | null
@@ -40,6 +42,10 @@ type AveragesRow = {
   avgWorkingFirstResponseSeconds: number | null
   responseCount: number
   firstResponseCount: number
+  responseSlaEligibleCount: number
+  responseSlaMetCount: number
+  firstResponseSlaEligibleCount: number
+  firstResponseSlaMetCount: number
 }
 
 const toDate = (value: Date | string | number): Date =>
@@ -48,7 +54,16 @@ const toDate = (value: Date | string | number): Date =>
 const toNullableNumber = (value: number | string | null): number | null =>
   value === null || value === undefined ? null : Number(value)
 
+const slaPercent = (met: number, eligible: number): number | null =>
+  eligible === 0 ? null : Math.round((met / eligible) * 1000) / 10
+
 function mapAverages(row: AveragesRow): AgentResponseAverages {
+  const responseSlaEligibleCount = Number(row.responseSlaEligibleCount)
+  const responseSlaMetCount = Number(row.responseSlaMetCount)
+  const firstResponseSlaEligibleCount = Number(
+    row.firstResponseSlaEligibleCount,
+  )
+  const firstResponseSlaMetCount = Number(row.firstResponseSlaMetCount)
   return {
     adminId: String(row.adminId),
     avgResponseSeconds: toNullableNumber(row.avgResponseSeconds),
@@ -59,18 +74,38 @@ function mapAverages(row: AveragesRow): AgentResponseAverages {
     ),
     responseCount: Number(row.responseCount),
     firstResponseCount: Number(row.firstResponseCount),
+    responseSlaEligibleCount,
+    responseSlaMetCount,
+    responseSlaMetPercent: slaPercent(
+      responseSlaMetCount,
+      responseSlaEligibleCount,
+    ),
+    firstResponseSlaEligibleCount,
+    firstResponseSlaMetCount,
+    firstResponseSlaMetPercent: slaPercent(
+      firstResponseSlaMetCount,
+      firstResponseSlaEligibleCount,
+    ),
   }
 }
 
-/** The six measures shared by both reads; parameter-free. A function so `sql` is not evaluated at module scope. */
-const measuresSql = () => sql`
+/** The measures shared by both reads, scoped to one workspace. A function so `sql` is not evaluated at module scope. */
+const measuresSql = (workspaceId: string) => {
+  // SLA stats are only reported while the workspace's policy is switched on.
+  const slaOn = sql`EXISTS (SELECT 1 FROM "ResponseSlaPolicy" WHERE "ResponseSlaPolicy"."workspaceId" = ${workspaceId} AND "ResponseSlaPolicy"."enabled")`
+  return sql`
   ROUND(AVG("responseSeconds"))::int AS "avgResponseSeconds",
   ROUND(AVG("workingResponseSeconds"))::int AS "avgWorkingResponseSeconds",
   ROUND(AVG("responseSeconds") FILTER (WHERE "isFirstResponse"))::int AS "avgFirstResponseSeconds",
   ROUND(AVG("workingResponseSeconds") FILTER (WHERE "isFirstResponse"))::int AS "avgWorkingFirstResponseSeconds",
   COUNT(*)::int AS "responseCount",
-  COUNT(*) FILTER (WHERE "isFirstResponse")::int AS "firstResponseCount"
+  COUNT(*) FILTER (WHERE "isFirstResponse")::int AS "firstResponseCount",
+  COUNT(*) FILTER (WHERE "slaMet" IS NOT NULL AND ${slaOn})::int AS "responseSlaEligibleCount",
+  COUNT(*) FILTER (WHERE "slaMet" AND ${slaOn})::int AS "responseSlaMetCount",
+  COUNT(*) FILTER (WHERE "isFirstResponse" AND "slaMet" IS NOT NULL AND ${slaOn})::int AS "firstResponseSlaEligibleCount",
+  COUNT(*) FILTER (WHERE "isFirstResponse" AND "slaMet" AND ${slaOn})::int AS "firstResponseSlaMetCount"
 `
+}
 
 export class AgentResponseStatsRepository extends BaseRepository {
   async insertEvents(payloads: InsertAgentResponseEventRow[]): Promise<void> {
@@ -90,6 +125,8 @@ export class AgentResponseStatsRepository extends BaseRepository {
       workingResponseSeconds: p.workingResponseSeconds ?? null,
       isFirstResponse: p.isFirstResponse,
       workingHoursId: p.workingHoursId ?? null,
+      slaTargetSeconds: p.slaTargetSeconds ?? null,
+      slaMet: p.slaMet ?? null,
       channel: p.channel ?? null,
       inboxId: p.inboxId ?? null,
       metadata: p.metadata ?? null,
@@ -108,7 +145,7 @@ export class AgentResponseStatsRepository extends BaseRepository {
     const result = await db.execute(sql`
       SELECT
         "adminId",
-        ${measuresSql()}
+        ${measuresSql(workspaceId)}
       FROM "AnalyticsAgentResponseEvent"
       WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}
@@ -128,7 +165,7 @@ export class AgentResponseStatsRepository extends BaseRepository {
       SELECT
         "adminId",
         ${zonedDateKey(analyticsAgentResponseEventModel.occurredAt, timezone)} AS "date",
-        ${measuresSql()}
+        ${measuresSql(workspaceId)}
       FROM "AnalyticsAgentResponseEvent"
       WHERE "workspaceId" = ${workspaceId}${eventFilter}
         AND "occurredAt" >= ${from}

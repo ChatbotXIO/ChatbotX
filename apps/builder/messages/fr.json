@@ -218,9 +218,9 @@
     "averageFirstResponseTimeByAdmin": "Délai moyen de première réponse des agents humains (minutes)",
     "averageFirstResponseTimeByAdminHelp": "Temps moyen nécessaire à un agent humain pour fournir la première réponse au message d’un client.",
     "averageResponseTimeByAdmin": "Temps de réponse moyen des agents humains (minutes)",
-    "withinWorkingHoursHelp": "Ne compte que le temps pendant les heures de travail de l'agent ; le temps hors de son planning est exclu.",
+    "withinWorkingHoursHelp": "Ne compte que le temps dans les heures de travail de l'agent.",
     "withinWorkingHoursLabel": "Pendant les heures de travail",
-    "noResponseData": "Aucune donnée : l'agent n'a pas répondu sur cette période ou aucun planning d'heures de travail ne lui est attribué.",
+    "noResponseData": "Aucune réponse sur la période, ou aucun planning assigné.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Temps de première réponse moyen pendant les heures de travail par agent humain (minutes)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Le temps moyen, pendant les heures de travail, qu'un agent humain met pour envoyer la première réponse au message d'un client.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "Temps de réponse moyen pendant les heures de travail par agent humain (minutes)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Heures de travail",
     "label": "Heures de travail",
-    "description": "Définissez quand votre équipe est disponible. Les temps de réponse sont mesurés uniquement pendant ces heures.",
+    "description": "Les temps de réponse ne comptent que dans ces heures.",
     "employees": "Employés",
-    "empty": "Aucune heure de travail pour le moment. Ajoutez un horaire pour mesurer les temps de réponse uniquement pendant les heures de travail.",
-    "deleteDescription": "Supprimer \"{name}\" ? Ses employés seront de nouveau mesurés en temps réel. Cette action est irréversible.",
+    "empty": "Aucun planning pour l'instant.",
+    "deleteDescription": "Supprimer \"{name}\" ? Ses employés repassent en temps réel.",
     "create": {
       "title": "Ajouter des heures de travail",
       "description": "Donnez un nom à l'horaire. Vous définirez ensuite les jours et les heures."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Appliquer les heures de travail aux employés",
       "description": "Choisissez les employés qui suivent cet horaire.",
-      "moveHelp": "Un employé ne peut suivre qu'un seul horaire. Toute personne déjà sur un autre horaire est déplacée vers celui-ci.",
+      "moveHelp": "Chaque employé a un planning ; l'ajouter le déplace ici.",
       "placeholder": "Sélectionner des employés",
       "search": "Rechercher des employés...",
       "searchAria": "Rechercher parmi les employés",
@@ -8983,7 +8983,55 @@
       "endTime": "Heure de fin",
       "removeRange": "Supprimer la plage horaire",
       "errorOverlap": "Ces plages horaires se chevauchent. Ajustez-les pour enregistrer.",
-      "errorOrder": "L'heure de fin doit être postérieure à l'heure de début."
+      "errorOrder": "L'heure de fin doit être postérieure à l'heure de début.",
+      "routingNote": "Aussi utilisé par Auto Assign, Global Router et Condition."
+    },
+    "condition": {
+      "assignedAgent": "Plage horaire de l'agent assigné"
+    },
+    "holidays": {
+      "label": "Jours fériés",
+      "title": "Jours fériés",
+      "description": "Remplace les horaires hebdomadaires de tous les plannings ce jour-là.",
+      "add": "Ajouter un jour férié",
+      "empty": "Aucun jour férié pour l'instant.",
+      "deleteDescription": "Supprimer le jour férié du {date} ?"
+    },
+    "dateOverrides": {
+      "title": "Exceptions par date",
+      "description": "Remplace les horaires de ce planning ce jour-là ; prime sur les jours fériés.",
+      "add": "Ajouter une exception",
+      "empty": "Aucune exception."
+    },
+    "dateDialog": {
+      "addTitle": "Ajouter une date",
+      "editTitle": "Modifier la date",
+      "date": "Date",
+      "name": "Nom (facultatif)",
+      "closedAllDay": "Fermé toute la journée",
+      "duplicate": "Cette date figure déjà dans la liste.",
+      "hours": "Horaires",
+      "closed": "Fermé"
     }
+  },
+  "responseSla": {
+    "label": "SLA de réponse",
+    "title": "SLA de réponse",
+    "description": "Durée maximale d'attente d'un message client avant une réponse humaine.",
+    "firstTarget": "Objectif de première réponse (minutes)",
+    "nextTarget": "Objectif des réponses suivantes (minutes)",
+    "nextPlaceholder": "Pas de SLA sur les réponses suivantes",
+    "threshold": "Seuil de risque (% de l'objectif restant)",
+    "thresholdHelp": "Marqué à risque quand il reste ce % de l'objectif.",
+    "workingTimeNote": "Compté dans les heures de travail de l'agent assigné ; sinon en temps réel.",
+    "overdue": "En retard",
+    "due": "Échéance {time}",
+    "breaching": "SLA à risque",
+    "breached": "SLA dépassé",
+    "firstMetColumn": "SLA de première réponse respecté",
+    "metColumn": "SLA respecté",
+    "metHelp": "Part des réponses avec SLA qui l'ont respecté.",
+    "eligibleCount": "{count} réponses avaient un SLA",
+    "enable": "Activer le SLA de réponse"
   }
 }

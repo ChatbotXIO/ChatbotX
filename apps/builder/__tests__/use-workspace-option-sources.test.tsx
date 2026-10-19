@@ -89,6 +89,13 @@ vi.mock("@/features/inboxes/provider/inbox-hook", () => {
   }
 })
 
+vi.mock("@/features/working-hours/provider/working-hours-hook", () => {
+  const options: never[] = []
+  return {
+    useWorkingHoursOptions: () => options,
+  }
+})
+
 vi.mock("@/features/sequences/provider/sequence-hook", () => {
   const options: never[] = []
   return {

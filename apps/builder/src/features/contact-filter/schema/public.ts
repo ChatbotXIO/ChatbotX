@@ -1,5 +1,15 @@
 import { formFieldTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
+import { CONTACT_FILTER_SURFACES } from "./definitions"
+
+export const listContactFilterFieldsPublicRequest = z.object({
+  surface: z
+    .enum(CONTACT_FILTER_SURFACES)
+    .optional()
+    .describe(
+      "Where the filter will be used. `contacts` (default) = contacts, conversations and broadcast audiences; `flowCondition` = the flow Condition step, which also accepts runtime-only fields such as `isWithinWorkingHours`.",
+    ),
+})
 
 const contactFilterFieldPublicResource = z.object({
   field: z.string(),

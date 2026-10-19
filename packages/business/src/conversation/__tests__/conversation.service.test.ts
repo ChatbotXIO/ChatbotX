@@ -2,6 +2,7 @@ import { sql } from "@chatbotx.io/database/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  isUserOnShift: vi.fn(),
   conversationFindMany: vi.fn(),
   conversationFindFirst: vi.fn(),
   latestAttribution: vi.fn(),
@@ -28,6 +29,7 @@ const mocks = vi.hoisted(() => ({
   })),
   cancelQuickReplyFollowUps: vi.fn(),
   closeHumanReplyWindow: vi.fn(),
+  trackWindow: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -68,6 +70,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 // connection through the sharding client. The extra models come from
 // `contactService`, now in `conversationService`'s import chain.
 vi.mock("@chatbotx.io/database/schema", () => ({
+  workingHoursDateOverrideModel: {},
   contactInboxModel: {},
   workspaceUsageModel: {},
   userQuotaModel: {},
@@ -143,6 +146,23 @@ vi.mock("@chatbotx.io/events", () => ({
   emitConversationUnassigned: vi.fn(),
 }))
 
+vi.mock("../../working-hours/on-shift", () => ({
+  isUserOnShift: mocks.isUserOnShift,
+}))
+
+vi.mock("../../response-sla/service", () => ({
+  responseSlaService: {
+    // No policy: the statement just runs on the given client.
+    trackWindow: async (
+      props: { tx?: unknown },
+      run: (client: unknown) => Promise<unknown>,
+    ) => {
+      mocks.trackWindow(props)
+      return run(props.tx ?? (await import("@chatbotx.io/database/client")).db)
+    },
+  },
+}))
+
 vi.mock("../../thread-control/service", () => ({
   threadControlService: {
     releaseOwnedThreadsForContacts: mocks.releaseOwnedThreadsForContacts,
@@ -182,6 +202,8 @@ const { notificationQueue } = await import("@chatbotx.io/worker-config")
 const WORKSPACE_ID = "ws-1"
 
 beforeEach(() => {
+  mocks.isUserOnShift.mockReset()
+  mocks.isUserOnShift.mockResolvedValue(true)
   mocks.latestAttribution.mockReset()
   mocks.latestAttribution.mockResolvedValue([])
   mocks.conversationFindMany.mockReset()
@@ -633,7 +655,7 @@ describe("ConversationService.claimForCallAgent", () => {
         conversationId: "conv-1",
         userId: "agent-1",
       },
-      undefined,
+      expect.anything(),
     )
     expect(result).toEqual([{ id: "conv-1", contactId: "contact-1" }])
   })
@@ -958,6 +980,50 @@ describe("ConversationService.assignOneOrSkip", () => {
     })
   })
 
+  test("skips an agent who is off shift", async () => {
+    mocks.findByWorkspaceIdAndUserId.mockResolvedValue({
+      userId: "user-1",
+      workspaceId: WORKSPACE_ID,
+    })
+    mocks.isUserOnShift.mockResolvedValue(false)
+
+    await conversationService.assignOneOrSkip({
+      workspaceId: WORKSPACE_ID,
+      conversation,
+      assignedId: "u_user-1",
+      triggerContext: {
+        triggerSource: "worker",
+        triggerHandler: "test",
+        triggerType: "trigger_action",
+      },
+    })
+
+    expect(mocks.isUserOnShift).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "user-1",
+    })
+    expect(mocks.updateSet).not.toHaveBeenCalled()
+  })
+
+  test("does not check shifts for a team target", async () => {
+    mocks.inboxTeamExists.mockResolvedValue(true)
+    mocks.isUserOnShift.mockResolvedValue(false)
+
+    await conversationService.assignOneOrSkip({
+      workspaceId: WORKSPACE_ID,
+      conversation,
+      assignedId: "t_team-1",
+      triggerContext: {
+        triggerSource: "worker",
+        triggerHandler: "test",
+        triggerType: "trigger_action",
+      },
+    })
+
+    expect(mocks.isUserOnShift).not.toHaveBeenCalled()
+    expect(mocks.updateSet).toHaveBeenCalled()
+  })
+
   // Regression: `assignOneOrSkip` must forward the caller's own
   // `triggerType` ("trigger_action"/"flow_action" — how the assignment
   // fired) into the analytics event untouched, not overwrite it with the
@@ -1054,6 +1120,9 @@ describe("ConversationService.updateArchived — conversation routing release", 
       archivedAt: expect.any(Date),
       awaitingHumanReplySince: expect.anything(),
       awaitingHumanReplyClosedAt: expect.anything(),
+      responseDueAt: expect.anything(),
+      responseSlaBreachingAt: expect.anything(),
+      responseSlaTargetSeconds: expect.anything(),
     })
   })
 })
@@ -1444,6 +1513,24 @@ describe("ConversationService human-reply-window writers", () => {
     })
 
     expect(lastSet()).not.toHaveProperty("awaitingHumanReplySince")
+    // No window is reopened, so the response SLA has nothing to track.
+    expect(mocks.trackWindow).not.toHaveBeenCalled()
+  })
+
+  test("a handoff that reopens the window is tracked for the response SLA", async () => {
+    mocks.updateReturning.mockResolvedValueOnce([{ id: "conv-1" }])
+
+    await conversationService.handOffIfBotEnabled({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      reopenUnansweredHumanReplyWindow: true,
+    })
+
+    expect(mocks.trackWindow).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      conversationIds: ["conv-1"],
+      tx: undefined,
+    })
   })
 
   test("handOffIfBotEnabled is workspace-scoped, guarded by botEnabled and reopens on opt-in", async () => {

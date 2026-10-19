@@ -12,6 +12,7 @@ const {
   mockHandoffExecute,
   mockFindActiveFlow,
   mockFindAgent,
+  mockListOnShiftUserIds,
 } = vi.hoisted(() => ({
   mockEmit: vi.fn(),
   mockEvaluateInboundMessage: vi.fn(),
@@ -24,6 +25,7 @@ const {
   mockHandoffExecute: vi.fn(),
   mockFindActiveFlow: vi.fn(),
   mockFindAgent: vi.fn(),
+  mockListOnShiftUserIds: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/ai", () => ({
@@ -44,6 +46,18 @@ vi.mock("@chatbotx.io/business", () => ({
   },
   inboxTeamService: { exists: vi.fn() },
   logProviderErrorForChannel: mockLogProviderError,
+  isUserOnShift: async (props: {
+    workspaceId: string
+    userId: string
+    at?: Date
+  }) =>
+    (
+      await mockListOnShiftUserIds({
+        workspaceId: props.workspaceId,
+        userIds: [props.userId],
+        at: props.at,
+      })
+    ).has(props.userId),
   workspaceMemberService: { findMembership: vi.fn() },
 }))
 
@@ -98,6 +112,9 @@ describe("Global Router worker boundary", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockRunExclusive.mockImplementation(async ({ fn }) => fn())
+    mockListOnShiftUserIds.mockImplementation(
+      async ({ userIds }: { userIds: string[] }) => new Set(userIds),
+    )
   })
 
   test("only accepts latest contact text containing a letter or number", () => {
@@ -406,5 +423,41 @@ describe("Global Router worker boundary", () => {
     expect(mockHandoffExecute).toHaveBeenCalledWith(
       expect.objectContaining({ channel: "webchat" }),
     )
+  })
+  test("routes to the fallback without a handoff when the user destination is off shift", async () => {
+    const business = await import("@chatbotx.io/business")
+    vi.mocked(business.workspaceMemberService.findMembership).mockResolvedValue(
+      {} as never,
+    )
+    mockListOnShiftUserIds.mockResolvedValue(new Set())
+    mockFindActiveFlow.mockResolvedValue({ currentVersionId: "version-1" })
+    mockFindEnabledForWorkspace.mockResolvedValue({
+      config: {
+        fallback: { id: "fallback-flow", type: "flow" },
+        routes: [
+          {
+            destination: { id: "user-1", type: "user" },
+            type: "choice",
+            value: "buy",
+          },
+        ],
+      },
+      connection: {},
+      profile: { id: "profile-1" },
+      status: "usable",
+    })
+    mockEvaluateInboundMessage.mockResolvedValue({
+      answer: { choice: "buy", confidence: 1, type: "choice" },
+      status: "answer",
+    })
+    mockResolveRoute.mockReturnValue({
+      destination: { id: "user-1", type: "user" },
+    })
+    mockWriteMetadata.mockResolvedValue({ status: "skipped" })
+
+    await expect(runGlobalRouter(routerInput as never)).resolves.toBe("success")
+
+    expect(mockHandoffExecute).not.toHaveBeenCalled()
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledTimes(1)
   })
 })

@@ -229,6 +229,20 @@ describe("pathAndMethodToCommandName — bot field reset", () => {
   })
 })
 
+describe("pathAndMethodToCommandName — response SLA singleton", () => {
+  test("reads, replaces and deletes the one policy without colliding", () => {
+    expect(pathAndMethodToCommandName("/v1/response-sla", "get")).toBe(
+      "response-sla:get",
+    )
+    expect(pathAndMethodToCommandName("/v1/response-sla", "put")).toBe(
+      "response-sla:update",
+    )
+    expect(pathAndMethodToCommandName("/v1/response-sla", "delete")).toBe(
+      "response-sla:delete",
+    )
+  })
+})
+
 describe("pathAndMethodToCommandName — workspace settings singleton", () => {
   test("GET and PATCH on the same path get distinct commands", () => {
     expect(pathAndMethodToCommandName("/v1/workspace/settings", "GET")).toBe(

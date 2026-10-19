@@ -44,6 +44,10 @@ const workingHoursService = {
   update: vi.fn(),
   delete: vi.fn(),
   replaceMembers: vi.fn(),
+  listDateOverrides: vi.fn(),
+  addHoliday: vi.fn(),
+  updateHoliday: vi.fn(),
+  deleteHoliday: vi.fn(),
 }
 vi.mock("@chatbotx.io/business", () => ({ workingHoursService }))
 
@@ -89,13 +93,33 @@ const resource = {
   updatedAt: now,
 }
 
+const holidayRow = {
+  id: "7",
+  workspaceId: "ws-1",
+  workingHoursId: null,
+  date: "2030-01-01",
+  name: "New year",
+  ranges: [],
+  createdAt: now,
+  updatedAt: now,
+}
+const holidayResource = {
+  id: "7",
+  date: "2030-01-01",
+  name: "New year",
+  ranges: [],
+  createdAt: now,
+  updatedAt: now,
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
+  workingHoursService.listDateOverrides.mockResolvedValue([])
 })
 
 test("uses the inbox scope and tags every route 'Working Hours'", () => {
   expect(scopeAtImport).toBe("inbox")
-  expect(captured).toHaveLength(6)
+  expect(captured).toHaveLength(10)
   expect(captured.every((p) => p.route.tags[0] === "Working Hours")).toBe(true)
 })
 
@@ -123,7 +147,11 @@ describe("reads", () => {
       workspaceId: "ws-1",
       workingHoursId: "9",
     })
-    expect(result).toEqual(resource)
+    expect(workingHoursService.listDateOverrides).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      workingHoursId: "9",
+    })
+    expect(result).toEqual({ ...resource, dateOverrides: [] })
   })
 
   test("get propagates not-found for a foreign or unknown id", async () => {
@@ -166,7 +194,7 @@ describe("mutations", () => {
       workingHoursId: "9",
       data: { name: "Office" },
     })
-    expect(result).toEqual(resource)
+    expect(result).toEqual({ ...resource, dateOverrides: [] })
   })
 
   test("setMembers replaces members and returns the resource", async () => {
@@ -222,5 +250,68 @@ describe("mutations", () => {
       }),
     ).rejects.toThrow("blocked")
     expect(workingHoursService.create).not.toHaveBeenCalled()
+  })
+})
+
+describe("holidays", () => {
+  test("listHolidays reads the workspace scope (null schedule) and paginates", async () => {
+    workingHoursService.listDateOverrides.mockResolvedValueOnce([holidayRow])
+    const result = (await find("GET", "/v1/working-hours-holidays").handler({
+      context,
+      input: { page: 1, perPage: 10 },
+    })) as { data: unknown[] }
+    expect(workingHoursService.listDateOverrides).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      workingHoursId: null,
+    })
+    expect(result.data).toEqual([holidayResource])
+  })
+
+  test("createHoliday returns 201 after the blocked-owner guard", async () => {
+    workingHoursService.addHoliday.mockResolvedValueOnce(holidayRow)
+    const procedure = find("POST", "/v1/working-hours-holidays")
+    const input = { date: "2030-01-01", name: "New year", ranges: [] }
+    const result = await procedure.handler({ context, input })
+    expect(procedure.route.successStatus).toBe(201)
+    expect(assertWorkspaceNotBlocked).toHaveBeenCalledWith("owner-1")
+    expect(workingHoursService.addHoliday).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      data: input,
+    })
+    expect(result).toEqual(holidayResource)
+  })
+
+  test("updateHoliday passes the id and only the changed fields", async () => {
+    workingHoursService.updateHoliday.mockResolvedValueOnce(holidayRow)
+    await find("PATCH", "/v1/working-hours-holidays/{id}").handler({
+      context,
+      input: { id: "7", name: "New year" },
+    })
+    expect(workingHoursService.updateHoliday).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "7",
+      data: { name: "New year" },
+    })
+  })
+
+  test("deleteHoliday returns 204 and calls the service", async () => {
+    const procedure = find("DELETE", "/v1/working-hours-holidays/{id}")
+    await procedure.handler({ context, input: { id: "7" } })
+    expect(procedure.route.successStatus).toBe(204)
+    expect(workingHoursService.deleteHoliday).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "7",
+    })
+  })
+
+  test("a blocked owner stops holiday writes before the service runs", async () => {
+    assertWorkspaceNotBlocked.mockRejectedValueOnce(new Error("blocked"))
+    await expect(
+      find("POST", "/v1/working-hours-holidays").handler({
+        context,
+        input: { date: "2030-01-01", ranges: [] },
+      }),
+    ).rejects.toThrow("blocked")
+    expect(workingHoursService.addHoliday).not.toHaveBeenCalled()
   })
 })

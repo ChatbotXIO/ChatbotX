@@ -218,9 +218,9 @@
     "averageFirstResponseTimeByAdmin": "有人エージェント別の平均初回応答時間（分）",
     "averageFirstResponseTimeByAdminHelp": "有人エージェントが顧客のメッセージに最初の返信をするまでの平均時間です。",
     "averageResponseTimeByAdmin": "有人エージェント別の平均応答時間（分）",
-    "withinWorkingHoursHelp": "エージェントの勤務時間内の時間のみを集計し、スケジュール外の時間は除外されます。",
+    "withinWorkingHoursHelp": "エージェントの勤務時間内のみ計測します。",
     "withinWorkingHoursLabel": "勤務時間内",
-    "noResponseData": "データなし：この期間に返信がないか、勤務時間スケジュールが割り当てられていません。",
+    "noResponseData": "この期間に返信がないか、スケジュールが未割り当てです。",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "有人エージェント別の勤務時間内の平均初回応答時間（分）",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "有人エージェントが顧客のメッセージに最初の返信をするまでにかかった勤務時間内の平均時間。",
     "averageResponseTimeWithinWorkingHoursByAdmin": "有人エージェント別の勤務時間内の平均応答時間（分）",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "勤務時間",
     "label": "勤務時間",
-    "description": "チームが対応可能な時間を設定します。返信時間はこの時間内のみ計測されます。",
+    "description": "返信時間はこの時間帯内のみ計測します。",
     "employees": "従業員",
-    "empty": "勤務時間はまだありません。スケジュールを追加すると、勤務時間内のみ返信時間を計測できます。",
-    "deleteDescription": "「{name}」を削除しますか？所属する従業員は再び実時間で計測されます。この操作は元に戻せません。",
+    "empty": "スケジュールはまだありません。",
+    "deleteDescription": "「{name}」を削除しますか？従業員は実時間計測に戻ります。",
     "create": {
       "title": "勤務時間を追加",
       "description": "スケジュールに名前を付けてください。曜日と時間は次に設定します。"
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "従業員に勤務時間を適用",
       "description": "このスケジュールに従う従業員を選択してください。",
-      "moveHelp": "従業員は1つのスケジュールにのみ所属できます。すでに別のスケジュールにいる場合は、こちらに移動されます。",
+      "moveHelp": "従業員のスケジュールは1つです。追加するとここに移ります。",
       "placeholder": "従業員を選択",
       "search": "従業員を検索...",
       "searchAria": "従業員を検索します",
@@ -8983,7 +8983,55 @@
       "endTime": "終了時刻",
       "removeRange": "時間帯を削除",
       "errorOverlap": "これらの時間帯が重複しています。保存するには修正してください。",
-      "errorOrder": "終了時刻は開始時刻より後にしてください。"
+      "errorOrder": "終了時刻は開始時刻より後にしてください。",
+      "routingNote": "Auto Assign、Global Router、条件でも使用されます。"
+    },
+    "condition": {
+      "assignedAgent": "担当エージェントのシフト"
+    },
+    "holidays": {
+      "label": "休日",
+      "title": "休日",
+      "description": "その日、すべてのスケジュールの週間時間を置き換えます。",
+      "add": "休日を追加",
+      "empty": "休日はまだありません。",
+      "deleteDescription": "{date} の休日を削除しますか？"
+    },
+    "dateOverrides": {
+      "title": "日付の例外",
+      "description": "その日、このスケジュールの時間を置き換えます。休日より優先されます。",
+      "add": "日付の例外を追加",
+      "empty": "日付の例外はありません。"
+    },
+    "dateDialog": {
+      "addTitle": "日付を追加",
+      "editTitle": "日付を編集",
+      "date": "日付",
+      "name": "名前（任意）",
+      "closedAllDay": "終日休業",
+      "duplicate": "この日付はすでにリストにあります。",
+      "hours": "時間",
+      "closed": "休業"
     }
+  },
+  "responseSla": {
+    "label": "応答SLA",
+    "title": "応答SLA",
+    "description": "お客様のメッセージが人間の返信を待てる最大時間です。",
+    "firstTarget": "初回応答の目標（分）",
+    "nextTarget": "以降の応答の目標（分）",
+    "nextPlaceholder": "以降の返信にはSLAなし",
+    "threshold": "違反間近のしきい値（目標の残り％）",
+    "thresholdHelp": "目標の残りがこの%になると違反間近になります。",
+    "workingTimeNote": "担当エージェントの勤務時間で計測。それ以外は実時間。",
+    "overdue": "期限超過",
+    "due": "期限 {time}",
+    "breaching": "SLA違反間近",
+    "breached": "SLA違反",
+    "firstMetColumn": "初回応答SLA達成",
+    "metColumn": "SLA達成",
+    "metHelp": "SLAのある返信のうち達成した割合。",
+    "eligibleCount": "{count} 件の返信にSLAがありました",
+    "enable": "応答SLAを有効にする"
   }
 }

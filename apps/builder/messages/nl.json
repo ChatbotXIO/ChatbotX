@@ -218,9 +218,9 @@
     "averageFirstResponseTimeByAdmin": "Gemiddelde tijd tot eerste reactie door menselijke agents (minuten)",
     "averageFirstResponseTimeByAdminHelp": "De gemiddelde tijd die een menselijke agent nodig heeft om het eerste antwoord op een bericht van een klant te geven.",
     "averageResponseTimeByAdmin": "Gemiddelde reactietijd door menselijke agents (minuten)",
-    "withinWorkingHoursHelp": "Telt alleen de tijd binnen de werktijden van de medewerker; tijd buiten zijn rooster wordt niet meegeteld.",
+    "withinWorkingHoursHelp": "Telt alleen tijd binnen de werktijd van de medewerker.",
     "withinWorkingHoursLabel": "Binnen werktijd",
-    "noResponseData": "Geen gegevens: de medewerker heeft in deze periode geen antwoorden gegeven of heeft geen werktijdenrooster toegewezen gekregen.",
+    "noResponseData": "Geen reacties in deze periode of geen rooster toegewezen.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Gemiddelde eerste reactietijd binnen werktijd per menselijke medewerker (minuten)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "De gemiddelde tijd binnen werktijd die een menselijke medewerker nodig heeft voor het eerste antwoord op het bericht van een klant.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "Gemiddelde reactietijd binnen werktijd per menselijke medewerker (minuten)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Werktijden",
     "label": "Werktijden",
-    "description": "Bepaal wanneer je team beschikbaar is. Reactietijden worden alleen binnen deze uren gemeten.",
+    "description": "Reactietijden tellen alleen binnen deze uren.",
     "employees": "Medewerkers",
-    "empty": "Nog geen werktijden. Voeg een rooster toe om reactietijden alleen binnen werktijd te meten.",
-    "deleteDescription": "\"{name}\" verwijderen? De medewerkers worden weer op kloktijd gemeten. Dit kan niet ongedaan worden gemaakt.",
+    "empty": "Nog geen roosters.",
+    "deleteDescription": "\"{name}\" verwijderen? Medewerkers gaan terug naar klokkentijd.",
     "create": {
       "title": "Werktijden toevoegen",
       "description": "Geef het rooster een naam. Daarna stel je de dagen en uren in."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Werktijden toepassen op medewerkers",
       "description": "Kies de medewerkers die dit rooster volgen.",
-      "moveHelp": "Een medewerker kan maar één rooster volgen. Wie al op een ander rooster staat, wordt naar dit rooster verplaatst.",
+      "moveHelp": "Elke medewerker heeft één rooster; toevoegen verplaatst hem hierheen.",
       "placeholder": "Medewerkers selecteren",
       "search": "Medewerkers zoeken...",
       "searchAria": "Zoeken tussen medewerkers",
@@ -8983,7 +8983,55 @@
       "endTime": "Eindtijd",
       "removeRange": "Tijdsbereik verwijderen",
       "errorOverlap": "Deze tijdsbereiken overlappen. Pas ze aan om op te slaan.",
-      "errorOrder": "De eindtijd moet na de starttijd liggen."
+      "errorOrder": "De eindtijd moet na de starttijd liggen.",
+      "routingNote": "Ook gebruikt door Auto Assign, Global Router en Voorwaarde."
+    },
+    "condition": {
+      "assignedAgent": "Dienst van de toegewezen medewerker"
+    },
+    "holidays": {
+      "label": "Feestdagen",
+      "title": "Feestdagen",
+      "description": "Vervangt op die datum de weekuren van alle roosters.",
+      "add": "Feestdag toevoegen",
+      "empty": "Nog geen feestdagen.",
+      "deleteDescription": "Feestdag op {date} verwijderen?"
+    },
+    "dateOverrides": {
+      "title": "Datumuitzonderingen",
+      "description": "Vervangt op die datum de uren van dit rooster; gaat voor op feestdagen.",
+      "add": "Uitzondering toevoegen",
+      "empty": "Geen datumuitzonderingen."
+    },
+    "dateDialog": {
+      "addTitle": "Datum toevoegen",
+      "editTitle": "Datum bewerken",
+      "date": "Datum",
+      "name": "Naam (optioneel)",
+      "closedAllDay": "De hele dag gesloten",
+      "duplicate": "Deze datum staat al in de lijst.",
+      "hours": "Uren",
+      "closed": "Gesloten"
     }
+  },
+  "responseSla": {
+    "label": "Reactie-SLA",
+    "title": "Reactie-SLA",
+    "description": "Maximale tijd dat een klantbericht op een menselijke reactie mag wachten.",
+    "firstTarget": "Doel eerste reactie (minuten)",
+    "nextTarget": "Doel latere reacties (minuten)",
+    "nextPlaceholder": "Geen SLA op latere reacties",
+    "threshold": "Drempel bijna-schending (% van het doel over)",
+    "thresholdHelp": "Gemarkeerd als bijna geschonden als dit % van het doel over is.",
+    "workingTimeNote": "Geteld in de werktijd van de toegewezen medewerker; anders klokkentijd.",
+    "overdue": "Te laat",
+    "due": "Deadline {time}",
+    "breaching": "SLA bijna geschonden",
+    "breached": "SLA geschonden",
+    "firstMetColumn": "SLA eerste reactie gehaald",
+    "metColumn": "SLA gehaald",
+    "metHelp": "Aandeel reacties met SLA dat die haalde.",
+    "eligibleCount": "{count} reacties hadden een SLA",
+    "enable": "Reactie-SLA inschakelen"
   }
 }

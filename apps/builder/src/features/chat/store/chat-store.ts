@@ -39,6 +39,12 @@ const CONVERSATION_HEAD_REFRESH_THROTTLE_MS = 5000
 const latestDate = (current: Date | string | null, next: Date): Date =>
   current && new Date(current) > next ? new Date(current) : next
 
+/** A reply typed by a person in the inbox or sent through the API (never a bot). */
+const isAgentReplyMessage = (message: MessageResourceWithRelations): boolean =>
+  message.messageType === "outgoing" &&
+  ((message.senderType === "user" && message.senderId !== null) ||
+    message.senderType === "api")
+
 /**
  * What a newly arrived message changes on its conversation, or null for
  * nothing: a contact's own message marks them as replied, and any message that
@@ -55,6 +61,31 @@ const conversationPatchForMessage = (
       ? {
           contactRepliedAt: message.createdAt,
           contactLastReadAt: message.createdAt,
+        }
+      : {}
+
+  // A human/API reply closes the waiting window on the server, which clears
+  // the response-SLA snapshot; mirror it (same rules) so the pill and SLA
+  // filters update without a refetch.
+  // An older reply arriving late must not clear a newer customer window.
+  const repliesToLatestCustomerMessage =
+    !conversation?.contactRepliedAt ||
+    new Date(message.createdAt) >= new Date(conversation.contactRepliedAt)
+  const isHumanReply = isAgentReplyMessage(message)
+  // A bot send also closes the window, but only while the bot is enabled.
+  // A WhatsApp template is proactive: the server keeps the window open for it.
+  const isEnabledBotReply =
+    message.messageType === "outgoing" &&
+    message.senderType === "bot" &&
+    conversation?.botEnabled === true &&
+    (message.contentAttributes as { type?: string } | null)?.type !==
+      "whatsapp_template"
+  const slaClearedPatch =
+    repliesToLatestCustomerMessage && (isHumanReply || isEnabledBotReply)
+      ? {
+          responseDueAt: null,
+          responseSlaBreachingAt: null,
+          responseSlaTargetSeconds: null,
         }
       : {}
 
@@ -76,7 +107,7 @@ const conversationPatchForMessage = (
         }
       : {}
 
-  const patch = { ...repliedPatch, ...windowPatch }
+  const patch = { ...repliedPatch, ...slaClearedPatch, ...windowPatch }
   return Object.keys(patch).length > 0 ? patch : null
 }
 
@@ -84,11 +115,7 @@ const readStatePatchForMessage = (
   conversation: ListConversationsResponse["data"][number],
   message: MessageResourceWithRelations,
 ): Partial<ConversationResource> => {
-  const isAgentReply =
-    message.messageType === "outgoing" &&
-    ((message.senderType === "user" && message.senderId !== null) ||
-      message.senderType === "api")
-  if (!isAgentReply) {
+  if (!isAgentReplyMessage(message)) {
     return {}
   }
   const readAt = latestDate(
@@ -107,7 +134,7 @@ export type ConversationFilters = {
   channel?: ChannelType
   status?: ConversationStatus[]
   keyword?: string
-  tags?: ("noAdminReply" | "unread" | "followUp" | "archived" | "blocked")[]
+  tags?: ConversationStatus[]
   contactFilter?: ContactFilterRequest["contactFilter"]
 }
 
@@ -617,11 +644,37 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                   return true
                 },
               )
-              if (newConversations.length === 0) {
+              // Rows already loaded only take the SLA snapshot from the head:
+              // a window opened (or cleared) elsewhere never reached them.
+              const headById = new Map(
+                headConversations.map((conversation) => [
+                  conversation.id,
+                  conversation,
+                ]),
+              )
+              let refreshedSla = false
+              const conversations = state.conversations.map((conversation) => {
+                const head = headById.get(conversation.id)
+                if (
+                  !head ||
+                  (head.responseDueAt?.getTime() ?? null) ===
+                    (conversation.responseDueAt?.getTime() ?? null)
+                ) {
+                  return conversation
+                }
+                refreshedSla = true
+                return {
+                  ...conversation,
+                  responseDueAt: head.responseDueAt,
+                  responseSlaBreachingAt: head.responseSlaBreachingAt,
+                  responseSlaTargetSeconds: head.responseSlaTargetSeconds,
+                }
+              })
+              if (newConversations.length === 0 && !refreshedSla) {
                 return state
               }
               return {
-                conversations: [...newConversations, ...state.conversations],
+                conversations: [...newConversations, ...conversations],
               }
             })
           } catch (error) {

@@ -1,5 +1,8 @@
 import { sql } from "@chatbotx.io/database/client"
-import { channelTypes } from "@chatbotx.io/database/partials"
+import {
+  type ConversationStatus,
+  channelTypes,
+} from "@chatbotx.io/database/partials"
 import {
   applyContactFilter,
   buildSmartKeywordWhere,
@@ -75,6 +78,31 @@ export const appendUnreadWhere = (where: QueryWhere): void => {
     ...(Array.isArray(where.AND) ? where.AND : []),
     conversationUnreadWhere,
   ]
+}
+
+/**
+ * Response-SLA statuses read the window snapshot on the conversation row (set
+ * only while an SLA window is open), so a row without one never matches and no
+ * policy lookup is needed here. Breached = past the deadline; breaching = past
+ * the working-time breaching instant but not yet overdue.
+ */
+const appendSlaWhere = (
+  where: QueryWhere,
+  tags: readonly ConversationStatus[],
+): void => {
+  const now = new Date()
+  const clauses = [
+    ...(tags.includes("slaBreached") ? [{ responseDueAt: { lte: now } }] : []),
+    ...(tags.includes("slaBreaching")
+      ? [
+          { responseSlaBreachingAt: { lte: now } },
+          { responseDueAt: { gt: now } },
+        ]
+      : []),
+  ]
+  if (clauses.length > 0) {
+    where.AND = [...(Array.isArray(where.AND) ? where.AND : []), ...clauses]
+  }
 }
 
 export function buildConversationWhere(
@@ -187,6 +215,7 @@ export function buildConversationWhere(
   if (tags.includes("blocked")) {
     addContactWhere(where, { blockedAt: { isNotNull: true } })
   }
+  appendSlaWhere(where, tags)
 
   // ── contactFilter (complex filter builder) ───────────────────────────────
   const contactFilter = pruneEmailPhoneFilterConditions(

@@ -22,7 +22,10 @@ import {
   customFieldConditionSchema,
 } from "./custom-field-filter"
 import { datetimeOperators } from "./datetime-filter"
-import { contactFilterConditionSchemas } from "./definitions"
+import {
+  contactFilterConditionSchemas,
+  flowConditionFilterConditionSchemas,
+} from "./definitions"
 import {
   type LeaderboardScoreCondition,
   leaderboardScoreConditionSchema,
@@ -55,10 +58,14 @@ export {
 } from "./custom-field-filter"
 export {
   CONTACT_FILTER_FIELD_DEFINITIONS,
+  CONTACT_FILTER_SURFACES,
   type ContactFilterFieldDefinition,
   type ContactFilterOptionSource,
   type ContactFilterSchemaKind,
+  type ContactFilterSurface,
   contactFilterConditionSchemas,
+  flowConditionFilterConditionSchemas,
+  isFieldOnSurface,
 } from "./definitions"
 export {
   type LeaderboardScoreCondition,
@@ -82,51 +89,80 @@ export type ContactFilterCondition =
   | LeaderboardScoreCondition
   | CtwaRetargetCondition
 
-/** One validated condition row (matches `conditions` elements in {@link contactFilterCriteriaSchema}). */
+const dynamicConditionSchemas = [
+  customFieldConditionSchema,
+  botFieldConditionSchema,
+  couponTopicConditionSchema,
+  leaderboardScoreConditionSchema,
+  ctwaRetargetConditionSchema,
+] as const
+
 // Static fields are a discriminated union on `field`; dynamic custom fields and
 // coupon-topic fields each go through their own single-branch schema (`field`
 // literal "customField" / "couponTopic" + a runtime id). The trailing cast keeps
 // `z.infer` aligned with the value the resolver derives — without it, Zod v4
 // widens the dynamic-array discriminated union output to `unknown`, diverging
 // from react-hook-form's inferred field type.
-export const singleContactFilterConditionSchema = z.union([
-  z.discriminatedUnion(
-    "field",
-    // Zod v4 narrows discriminatedUnion options tighter than inferred schema tuples.
-    // @ts-expect-error Expected readonly [$ZodTypeDiscriminable, ...]; runtime union is correct.
-    contactFilterConditionSchemas,
-  ),
-  customFieldConditionSchema,
-  botFieldConditionSchema,
-  couponTopicConditionSchema,
-  leaderboardScoreConditionSchema,
-  ctwaRetargetConditionSchema,
-]) as unknown as z.ZodType<ContactFilterCondition>
+const buildConditionSchema = (
+  staticSchemas: typeof contactFilterConditionSchemas,
+) =>
+  z.union([
+    z.discriminatedUnion(
+      "field",
+      // Zod v4 narrows discriminatedUnion options tighter than inferred schema tuples.
+      // @ts-expect-error Expected readonly [$ZodTypeDiscriminable, ...]; runtime union is correct.
+      staticSchemas,
+    ),
+    ...dynamicConditionSchemas,
+  ]) as unknown as z.ZodType<ContactFilterCondition>
 
-export const contactFilterCriteriaSchema = z.object({
-  operator: z
-    .enum(["and", "or"])
-    .describe(
-      "How conditions combine: `and` = contact must match all, `or` = any.",
-    ),
-  conditions: z
-    .array(singleContactFilterConditionSchema)
-    .describe(
-      "Conditions to combine. Each has `field`, `operator` and usually `value`; dynamic fields use `field: customField|botField|couponTopic|leaderboardScore` with their id. See `contacts.listFilterFields`.",
-    ),
-  /**
-   * IANA timezone (the browser's local zone, captured at build/save time) used
-   * to interpret naive date/datetime condition values. The backend defaults to
-   * UTC when this is absent or unrecognized.
-   */
-  timezone: z
-    .string()
-    .max(64)
-    .optional()
-    .describe(
-      "IANA timezone (e.g. `Asia/Ho_Chi_Minh`) used to interpret date/datetime values without an offset. Defaults to UTC.",
-    ),
-})
+const CRITERIA_OPERATOR_DESCRIPTION =
+  "How conditions combine: `and` = contact must match all, `or` = any."
+const CRITERIA_CONDITIONS_DESCRIPTION =
+  "Conditions to combine. Each has `field`, `operator` and usually `value`; dynamic fields use `field: customField|botField|couponTopic|leaderboardScore` with their id. See `contacts.listFilterFields`."
+const CRITERIA_TIMEZONE_DESCRIPTION =
+  "IANA timezone (e.g. `Asia/Ho_Chi_Minh`) used to interpret date/datetime values without an offset. Defaults to UTC."
+
+const buildCriteriaSchema = (
+  conditionSchema: z.ZodType<ContactFilterCondition>,
+) =>
+  z.object({
+    operator: z.enum(["and", "or"]).describe(CRITERIA_OPERATOR_DESCRIPTION),
+    conditions: z
+      .array(conditionSchema)
+      .describe(CRITERIA_CONDITIONS_DESCRIPTION),
+    /**
+     * IANA timezone (the browser's local zone, captured at build/save time) used
+     * to interpret naive date/datetime condition values. The backend defaults to
+     * UTC when this is absent or unrecognized.
+     */
+    timezone: z
+      .string()
+      .max(64)
+      .optional()
+      .describe(CRITERIA_TIMEZONE_DESCRIPTION),
+  })
+
+/** One validated condition row (matches `conditions` elements in {@link contactFilterCriteriaSchema}). */
+export const singleContactFilterConditionSchema = buildConditionSchema(
+  contactFilterConditionSchemas,
+)
+
+/**
+ * Superset accepted by the flow Condition step only: also allows fields limited
+ * to the `flowCondition` surface (e.g. `isWithinWorkingHours`).
+ */
+export const singleFlowConditionFilterConditionSchema = buildConditionSchema(
+  flowConditionFilterConditionSchemas,
+)
+
+export const contactFilterCriteriaSchema = buildCriteriaSchema(
+  singleContactFilterConditionSchema,
+)
+
+export const flowConditionFilterCriteriaSchema = buildCriteriaSchema(
+  singleFlowConditionFilterConditionSchema,
+)
 
 export type ContactFilterCriteria = z.infer<typeof contactFilterCriteriaSchema>
 

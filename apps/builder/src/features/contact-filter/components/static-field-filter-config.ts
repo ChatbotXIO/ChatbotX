@@ -243,7 +243,7 @@ export const staticFieldRules: Record<string, StaticFieldRule> = {
     intervalInput: "none",
   },
   isWithinWorkingHours: {
-    enabledOperators: BASE_OPERATORS,
+    enabledOperators: [operatorTypes.enum.in, operatorTypes.enum.notIn],
     singleInput: "field",
   },
   lastUserInputType: {

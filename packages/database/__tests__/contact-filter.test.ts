@@ -4443,3 +4443,54 @@ describe("applyContactFilter — leaderboardScore (dynamic per-leaderboard field
     }
   })
 })
+
+describe("isWithinWorkingHours predicate", () => {
+  const filterWith = (operator: string, value: unknown) => ({
+    operator: "and" as const,
+    conditions: [{ field: "isWithinWorkingHours", operator, value }],
+  })
+
+  test("no-ops without a workspace scope", () => {
+    expect(applyContactFilter(filterWith("in", ["1"]))).toEqual({})
+  })
+
+  test("no-ops for unsupported operators and unusable selections", () => {
+    expect(applyContactFilter(filterWith("eq", ["1"]), "ws-1")).toEqual({})
+    expect(applyContactFilter(filterWith("in", ["abc"]), "ws-1")).toEqual({})
+    expect(applyContactFilter(filterWith("in", []), "ws-1")).toEqual({})
+  })
+
+  test("parameterises schedule ids and the workspace instead of inlining them", () => {
+    const where = applyContactFilter(filterWith("in", ["42", "43"]), "ws-1")
+    const { sql: text, params } = renderFirstRawCondition(where)
+
+    expect(text).toContain("AT TIME ZONE")
+    expect(text).not.toContain("pg_timezone_names")
+    expect(text).not.toContain("ws-1")
+    expect(params).toEqual(expect.arrayContaining(["ws-1", "42", "43", "UTC"]))
+  })
+
+  test("binds the caller-resolved workspace timezone as a parameter", () => {
+    const where = applyContactFilter(
+      {
+        ...filterWith("in", ["42"]),
+        workingHoursTimezone: "Asia/Ho_Chi_Minh",
+      },
+      "ws-1",
+    )
+    const { params } = renderFirstRawCondition(where)
+
+    expect(params).toContain("Asia/Ho_Chi_Minh")
+  })
+
+  test("notIn negates the whole selection and assignedAgent is correlated to the contact", () => {
+    const where = applyContactFilter(
+      filterWith("notIn", ["assignedAgent"]),
+      "ws-1",
+    )
+    const { sql: text } = renderFirstRawCondition(where)
+
+    expect(text.startsWith("NOT (")).toBe(true)
+    expect(text).toContain('"Conversation"."contactId" = "Contact"."id"')
+  })
+})

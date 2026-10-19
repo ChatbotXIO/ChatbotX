@@ -19,6 +19,7 @@ import {
   assignUserIfUnassigned,
   closeHumanReplyWindow,
 } from "../../src/repositories/conversation/repository"
+import { responseSlaRepository } from "../../src/repositories/response-sla/repository"
 // biome-ignore lint/performance/noNamespaceImport: mirrors how src/client.ts builds the db
 import * as schema from "../../src/schema"
 import { realDatabaseUrl } from "./database-url"
@@ -264,6 +265,256 @@ describe.skipIf(!databaseUrl)(
       expect((await read(withUser))?.assignedUserAt?.getTime()).toBe(
         at(20).getTime(),
       )
+    })
+
+    describe("response SLA snapshot", () => {
+      const snapshot = {
+        responseDueAt: at(3600),
+        responseSlaBreachingAt: at(2700),
+        responseSlaTargetSeconds: 3600,
+      }
+      const read = async (id: string) =>
+        (
+          await dbA
+            .select()
+            .from(schema.conversationModel)
+            .where(eq(schema.conversationModel.id, id))
+        )[0]
+
+      // The snapshot write only lands while the workspace's policy is on (the
+      // workspace delete in afterAll cascades the policy away).
+      beforeAll(async () => {
+        await dbA.insert(schema.responseSlaPolicyModel).values({
+          workspaceId,
+          enabled: true,
+          firstResponseTargetSeconds: 3600,
+          nextResponseTargetSeconds: null,
+          breachingThresholdPercent: 25,
+        })
+      })
+
+      test("no snapshot is written while the policy is switched off", async () => {
+        const id = await newConversation({ awaitingHumanReplySince: at(0) })
+        const write = () =>
+          responseSlaRepository.setSnapshotIfWindowUnchanged(
+            { workspaceId, id, expectedSince: at(0), snapshot },
+            dbA,
+          )
+        const setEnabled = (enabled: boolean) =>
+          dbA
+            .update(schema.responseSlaPolicyModel)
+            .set({ enabled })
+            .where(eq(schema.responseSlaPolicyModel.workspaceId, workspaceId))
+
+        await setEnabled(false)
+        expect(await write()).toBe(false)
+        expect((await read(id)).responseDueAt).toBeNull()
+
+        await setEnabled(true)
+        expect(await write()).toBe(true)
+      })
+
+      test("closing the window clears all three snapshot fields and returns the closed due/target", async () => {
+        const id = await newConversation({
+          awaitingHumanReplySince: at(0),
+          ...snapshot,
+        })
+
+        const claim = await closeHumanReplyWindow(
+          { workspaceId, conversationId: id, repliedAt: at(600) },
+          dbA,
+        )
+
+        expect(claim?.closedResponseDueAt).toEqual(snapshot.responseDueAt)
+        expect(claim?.closedResponseSlaTargetSeconds).toBe(3600)
+        const row = await read(id)
+        expect(row.responseDueAt).toBeNull()
+        expect(row.responseSlaBreachingAt).toBeNull()
+        expect(row.responseSlaTargetSeconds).toBeNull()
+      })
+
+      test("a window opened after the reply keeps its snapshot and reports nothing closed", async () => {
+        const id = await newConversation({
+          awaitingHumanReplySince: at(900),
+          ...snapshot,
+        })
+
+        const claim = await closeHumanReplyWindow(
+          { workspaceId, conversationId: id, repliedAt: at(600) },
+          dbA,
+        )
+
+        expect(claim?.closedResponseDueAt).toBeNull()
+        const row = await read(id)
+        expect(row.responseDueAt).toEqual(snapshot.responseDueAt)
+        expect(row.responseSlaTargetSeconds).toBe(3600)
+      })
+
+      test("the snapshot is written only while the window is the one it was computed for", async () => {
+        const id = await newConversation({ awaitingHumanReplySince: at(0) })
+        const write = (expectedSince: Date) =>
+          responseSlaRepository.setSnapshotIfWindowUnchanged(
+            { workspaceId, id, expectedSince, snapshot },
+            dbA,
+          )
+
+        expect(await write(at(5))).toBe(false)
+        expect(await write(at(0))).toBe(true)
+        expect((await read(id)).responseDueAt).toEqual(snapshot.responseDueAt)
+
+        // A close that raced in leaves no stale deadline: the guard fails.
+        await closeHumanReplyWindow(
+          { workspaceId, conversationId: id, repliedAt: at(60) },
+          dbA,
+        )
+        expect(await write(at(0))).toBe(false)
+        expect((await read(id)).responseDueAt).toBeNull()
+      })
+
+      test("a concurrent reply waits for the lock-holding SLA write, then closes and reports the snapshot it set", async () => {
+        const id = await newConversation({ awaitingHumanReplySince: at(0) })
+        let closeSettled = false
+        let closing: Promise<unknown> | undefined
+
+        await dbA.transaction(async (tx) => {
+          // Lock BEFORE the opening statement, exactly like trackWindow.
+          await responseSlaRepository.readWindowStates(
+            { workspaceId, ids: [id], lock: true },
+            tx,
+          )
+          closing = closeHumanReplyWindow(
+            { workspaceId, conversationId: id, repliedAt: at(600) },
+            dbB,
+          ).then((result) => {
+            closeSettled = true
+            return result
+          })
+          // Give the second connection time to run into the held lock.
+          await new Promise((resolve) => setTimeout(resolve, 300))
+          expect(closeSettled).toBe(false)
+
+          expect(
+            await responseSlaRepository.setSnapshotIfWindowUnchanged(
+              { workspaceId, id, expectedSince: at(0), snapshot },
+              tx,
+            ),
+          ).toBe(true)
+        })
+
+        const claim = (await closing) as Awaited<
+          ReturnType<typeof closeHumanReplyWindow>
+        >
+        // The close ran after the SLA write committed, so it saw and cleared it.
+        expect(claim?.closedResponseDueAt).toEqual(snapshot.responseDueAt)
+        const row = await read(id)
+        expect(row.responseDueAt).toBeNull()
+        expect(row.responseSlaTargetSeconds).toBeNull()
+      })
+
+      test("clearWorkspaceSnapshots drops every snapshot of the workspace only", async () => {
+        const mine = await newConversation({
+          awaitingHumanReplySince: at(0),
+          ...snapshot,
+        })
+
+        await responseSlaRepository.clearWorkspaceSnapshots(
+          { workspaceId },
+          dbA,
+        )
+
+        const row = await read(mine)
+        expect(row.responseDueAt).toBeNull()
+        expect(row.responseSlaBreachingAt).toBeNull()
+        expect(row.responseSlaTargetSeconds).toBeNull()
+        // The window itself is untouched: only the SLA snapshot goes.
+        expect(row.awaitingHumanReplySince).toEqual(at(0))
+      })
+
+      test("a comment thread never receives a snapshot", async () => {
+        const id = await newConversation({
+          awaitingHumanReplySince: at(0),
+          sourceId: "post-1",
+        })
+
+        expect(
+          await responseSlaRepository.setSnapshotIfWindowUnchanged(
+            { workspaceId, id, expectedSince: at(0), snapshot },
+            dbA,
+          ),
+        ).toBe(false)
+      })
+
+      test("window states are read in id order and scoped to the workspace", async () => {
+        const first = await newConversation()
+        const second = await newConversation()
+
+        const states = await dbA.transaction((tx) =>
+          responseSlaRepository.readWindowStates(
+            { workspaceId, ids: [second, first], lock: true },
+            tx,
+          ),
+        )
+        const foreign = await responseSlaRepository.readWindowStates(
+          { workspaceId: otherWorkspaceId, ids: [first], lock: false },
+          dbA,
+        )
+
+        expect(states.map((state) => state.id)).toEqual([first, second].sort())
+        expect(foreign).toEqual([])
+      })
+
+      test("policy upsert keeps one row per workspace and validates through the CHECKs", async () => {
+        await responseSlaRepository.upsertPolicy(
+          {
+            workspaceId,
+            data: {
+              enabled: true,
+              firstResponseTargetSeconds: 300,
+              nextResponseTargetSeconds: null,
+              breachingThresholdPercent: 25,
+            },
+          },
+          dbA,
+        )
+        const updated = await responseSlaRepository.upsertPolicy(
+          {
+            workspaceId,
+            data: {
+              enabled: false,
+              firstResponseTargetSeconds: 600,
+              nextResponseTargetSeconds: 900,
+              breachingThresholdPercent: 10,
+            },
+          },
+          dbA,
+        )
+
+        expect(updated.firstResponseTargetSeconds).toBe(600)
+        expect(updated.enabled).toBe(false)
+        expect(
+          await dbA.$count(
+            schema.responseSlaPolicyModel,
+            eq(schema.responseSlaPolicyModel.workspaceId, workspaceId),
+          ),
+        ).toBe(1)
+        await expect(
+          responseSlaRepository.upsertPolicy(
+            {
+              workspaceId,
+              data: {
+                enabled: true,
+                firstResponseTargetSeconds: 0,
+                nextResponseTargetSeconds: null,
+                breachingThresholdPercent: 25,
+              },
+            },
+            dbA,
+          ),
+        ).rejects.toThrow()
+        expect(
+          await responseSlaRepository.deletePolicy({ workspaceId }, dbA),
+        ).toBe(true)
+      })
     })
   },
 )

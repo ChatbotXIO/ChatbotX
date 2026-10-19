@@ -218,9 +218,9 @@
     "averageFirstResponseTimeByAdmin": "זמן תגובה ראשונה ממוצע לפי נציגים אנושיים (דקות)",
     "averageFirstResponseTimeByAdminHelp": "הזמן הממוצע שלוקח לנציג אנושי לספק את התגובה הראשונית להודעה של לקוח.",
     "averageResponseTimeByAdmin": "זמן תגובה ממוצע לפי נציגים אנושיים (דקות)",
-    "withinWorkingHoursHelp": "סופר רק זמן בתוך שעות העבודה של הנציג; זמן מחוץ ללוח הזמנים שלו אינו נכלל.",
+    "withinWorkingHoursHelp": "סופר רק זמן בשעות העבודה של הנציג.",
     "withinWorkingHoursLabel": "בתוך שעות העבודה",
-    "noResponseData": "אין נתונים: לנציג אין תגובות בתקופה זו או שלא הוקצה לו לוח שעות עבודה.",
+    "noResponseData": "אין תגובות בתקופה זו, או שלא שויך לוח.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "זמן תגובה ראשונה ממוצע בתוך שעות העבודה לפי נציגים אנושיים (דקות)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "הזמן הממוצע בתוך שעות העבודה שלוקח לנציג אנושי לספק את התגובה הראשונה להודעת לקוח.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "זמן תגובה ממוצע בתוך שעות העבודה לפי נציגים אנושיים (דקות)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "שעות עבודה",
     "label": "שעות עבודה",
-    "description": "הגדירו מתי הצוות שלכם זמין. זמני תגובה נמדדים רק בתוך שעות אלה.",
+    "description": "זמני התגובה נספרים רק בשעות אלה.",
     "employees": "עובדים",
-    "empty": "עדיין אין שעות עבודה. הוסיפו לוח זמנים כדי למדוד זמני תגובה רק בתוך שעות העבודה.",
-    "deleteDescription": "למחוק את \"{name}\"? העובדים שלו ימדדו שוב לפי זמן רגיל. לא ניתן לבטל פעולה זו.",
+    "empty": "אין לוחות עדיין.",
+    "deleteDescription": "למחוק את \"{name}\"? העובדים יחזרו לזמן שעון.",
     "create": {
       "title": "הוספת שעות עבודה",
       "description": "תנו שם ללוח הזמנים. את הימים והשעות תגדירו בשלב הבא."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "החלת שעות עבודה על עובדים",
       "description": "בחרו את העובדים שעובדים לפי לוח זמנים זה.",
-      "moveHelp": "עובד יכול לעבוד לפי לוח זמנים אחד בלבד. מי שכבר משויך ללוח זמנים אחר יועבר לזה.",
+      "moveHelp": "לכל עובד לוח אחד; הוספה מעבירה אותו לכאן.",
       "placeholder": "בחירת עובדים",
       "search": "חיפוש עובדים...",
       "searchAria": "חיפוש בין העובדים",
@@ -8983,7 +8983,55 @@
       "endTime": "שעת סיום",
       "removeRange": "הסרת טווח שעות",
       "errorOverlap": "טווחי השעות חופפים. תקנו אותם כדי לשמור.",
-      "errorOrder": "שעת הסיום חייבת להיות אחרי שעת ההתחלה."
+      "errorOrder": "שעת הסיום חייבת להיות אחרי שעת ההתחלה.",
+      "routingNote": "משמש גם את Auto Assign, Global Router והתנאי."
+    },
+    "condition": {
+      "assignedAgent": "משמרת הנציג המשויך"
+    },
+    "holidays": {
+      "label": "חגים",
+      "title": "חגים",
+      "description": "מחליף את השעות השבועיות של כל הלוחות בתאריך זה.",
+      "add": "הוספת חג",
+      "empty": "אין חגים עדיין.",
+      "deleteDescription": "למחוק את החג בתאריך {date}?"
+    },
+    "dateOverrides": {
+      "title": "חריגי תאריך",
+      "description": "מחליף את שעות הלוח בתאריך זה; גובר על חגים.",
+      "add": "הוספת חריג",
+      "empty": "אין חריגים."
+    },
+    "dateDialog": {
+      "addTitle": "הוספת תאריך",
+      "editTitle": "עריכת תאריך",
+      "date": "תאריך",
+      "name": "שם (אופציונלי)",
+      "closedAllDay": "סגור כל היום",
+      "duplicate": "התאריך הזה כבר ברשימה.",
+      "hours": "שעות",
+      "closed": "סגור"
     }
+  },
+  "responseSla": {
+    "label": "SLA תגובה",
+    "title": "SLA תגובה",
+    "description": "הזמן המרבי שהודעת לקוח יכולה להמתין לתגובה אנושית.",
+    "firstTarget": "יעד לתגובה הראשונה (דקות)",
+    "nextTarget": "יעד לתגובות הבאות (דקות)",
+    "nextPlaceholder": "אין SLA לתגובות הבאות",
+    "threshold": "סף סיכון (% מהיעד שנותר)",
+    "thresholdHelp": "מסומן כבסיכון כשנותר % זה מהיעד.",
+    "workingTimeNote": "נספר בשעות העבודה של הנציג המשויך; אחרת בזמן שעון.",
+    "overdue": "באיחור",
+    "due": "יעד {time}",
+    "breaching": "SLA בסיכון",
+    "breached": "SLA הופר",
+    "firstMetColumn": "תגובה ראשונה עמדה ב-SLA",
+    "metColumn": "עמידה ב-SLA",
+    "metHelp": "שיעור התגובות עם SLA שעמדו בו.",
+    "eligibleCount": "ל-{count} תגובות היה SLA",
+    "enable": "הפעלת SLA תגובה"
   }
 }

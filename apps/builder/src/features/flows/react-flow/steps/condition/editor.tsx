@@ -49,6 +49,7 @@ const ConditionStepEditor = ({ parentName }: ConditionStepEditorProps) => {
               excludeFields={CONDITION_EXCLUDED_FILTER_FIELDS}
               includeBotFields
               parentName={`${parentName}.cases.${index}`}
+              surface="flowCondition"
             />
           </CardContent>
         </Card>

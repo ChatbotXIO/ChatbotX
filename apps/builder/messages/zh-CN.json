@@ -462,9 +462,9 @@
     "averageFirstResponseTimeByAdminHelp": "真人客服对客户消息进行初步回复所需的平均时间。",
     "averageResponseTime": "平均回应时间（分钟）",
     "averageResponseTimeByAdmin": "真人客服的平均回应时间（分钟）",
-    "withinWorkingHoursHelp": "仅统计客服工作时间内的时长，排班之外的时间不计入。",
+    "withinWorkingHoursHelp": "仅计算客服工作时间内的时长。",
     "withinWorkingHoursLabel": "工作时间内",
-    "noResponseData": "无数据：该客服在此期间没有回复，或未分配工作时间表。",
+    "noResponseData": "本期无回复，或未分配排班。",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "按人工客服统计的工作时间内平均首次响应时间（分钟）",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "人工客服在工作时间内首次回复客户消息所用的平均时间。",
     "averageResponseTimeWithinWorkingHoursByAdmin": "按人工客服统计的工作时间内平均响应时间（分钟）",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "工作时间",
     "label": "工作时间",
-    "description": "设置团队的在线时间。回复时间仅在这些时间段内计算。",
+    "description": "回复时间仅在这些时段内计算。",
     "employees": "员工",
-    "empty": "暂无工作时间。添加排班后，回复时间将仅在工作时间内计算。",
-    "deleteDescription": "删除“{name}”？其员工将重新按实际时间计算。此操作无法撤销。",
+    "empty": "暂无排班。",
+    "deleteDescription": "删除“{name}”？其员工将恢复按自然时间计算。",
     "create": {
       "title": "添加工作时间",
       "description": "为排班命名，接下来设置日期和时间。"
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "将工作时间应用到员工",
       "description": "选择遵循此排班的员工。",
-      "moveHelp": "每位员工只能遵循一个排班。已在其他排班中的员工将被移到此排班。",
+      "moveHelp": "每位员工只有一个排班；添加会将其移到此处。",
       "placeholder": "选择员工",
       "search": "搜索员工...",
       "searchAria": "在员工中搜索",
@@ -8983,7 +8983,55 @@
       "endTime": "结束时间",
       "removeRange": "删除时间段",
       "errorOverlap": "这些时间段存在重叠。请调整后再保存。",
-      "errorOrder": "结束时间必须晚于开始时间。"
+      "errorOrder": "结束时间必须晚于开始时间。",
+      "routingNote": "自动分配、全局路由和条件也会使用。"
+    },
+    "condition": {
+      "assignedAgent": "已分配客服的班次"
+    },
+    "holidays": {
+      "label": "节假日",
+      "title": "节假日",
+      "description": "当天替换所有排班的每周时间。",
+      "add": "添加节假日",
+      "empty": "暂无节假日。",
+      "deleteDescription": "删除 {date} 的节假日？"
+    },
+    "dateOverrides": {
+      "title": "日期例外",
+      "description": "当天替换此排班的时间；优先于节假日。",
+      "add": "添加日期例外",
+      "empty": "暂无日期例外。"
+    },
+    "dateDialog": {
+      "addTitle": "添加日期",
+      "editTitle": "编辑日期",
+      "date": "日期",
+      "name": "名称（可选）",
+      "closedAllDay": "全天休息",
+      "duplicate": "该日期已在列表中。",
+      "hours": "时间",
+      "closed": "休息"
     }
+  },
+  "responseSla": {
+    "label": "响应 SLA",
+    "title": "响应 SLA",
+    "description": "客户消息等待人工回复的最长时间。",
+    "firstTarget": "首次响应目标（分钟）",
+    "nextTarget": "后续响应目标（分钟）",
+    "nextPlaceholder": "后续回复不设 SLA",
+    "threshold": "即将违约阈值（剩余目标 %）",
+    "thresholdHelp": "剩余目标的此 % 时标记为即将违约。",
+    "workingTimeNote": "按所分配客服的工作时间计算；否则按自然时间。",
+    "overdue": "已超时",
+    "due": "截止 {time}",
+    "breaching": "SLA 即将违约",
+    "breached": "SLA 已违约",
+    "firstMetColumn": "首次响应 SLA 达标",
+    "metColumn": "SLA 达标",
+    "metHelp": "设有 SLA 的回复中达标的占比。",
+    "eligibleCount": "{count} 条回复设有 SLA",
+    "enable": "启用响应 SLA"
   }
 }

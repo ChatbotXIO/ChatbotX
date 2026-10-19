@@ -274,9 +274,9 @@
     "averageFirstResponseTimeByAdminHelp": "Den genomsnittliga tiden det tar för en mänsklig agent att ge det första svaret på en kunds meddelande.",
     "averageResponseTime": "Genomsnittlig svarstid (minuter)",
     "averageResponseTimeByAdmin": "Genomsnittlig svarstid per mänsklig agent (minuter)",
-    "withinWorkingHoursHelp": "Räknar bara tid inom medarbetarens arbetstid; tid utanför schemat undantas.",
+    "withinWorkingHoursHelp": "Räknar bara tid inom agentens arbetstid.",
     "withinWorkingHoursLabel": "Inom arbetstid",
-    "noResponseData": "Inga data: medarbetaren har inga svar under perioden eller har inget arbetstidsschema tilldelat.",
+    "noResponseData": "Inga svar i perioden eller inget schema tilldelat.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Genomsnittlig första svarstid inom arbetstid per mänsklig medarbetare (minuter)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Den genomsnittliga tid inom arbetstid som en mänsklig medarbetare behöver för att ge det första svaret på en kunds meddelande.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "Genomsnittlig svarstid inom arbetstid per mänsklig medarbetare (minuter)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Arbetstider",
     "label": "Arbetstider",
-    "description": "Ange när ditt team är tillgängligt. Svarstider mäts bara inom dessa tider.",
+    "description": "Svarstider räknas bara inom dessa tider.",
     "employees": "Medarbetare",
-    "empty": "Inga arbetstider ännu. Lägg till ett schema för att mäta svarstider bara inom arbetstid.",
-    "deleteDescription": "Ta bort \"{name}\"? Dess medarbetare mäts åter på klocktid. Det går inte att ångra.",
+    "empty": "Inga scheman än.",
+    "deleteDescription": "Ta bort \"{name}\"? Medarbetarna går tillbaka till klocktid.",
     "create": {
       "title": "Lägg till arbetstider",
       "description": "Ge schemat ett namn. Du anger dagar och tider nästa steg."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Tillämpa arbetstider på medarbetare",
       "description": "Välj de medarbetare som följer detta schema.",
-      "moveHelp": "En medarbetare kan bara följa ett schema. Den som redan har ett annat schema flyttas hit.",
+      "moveHelp": "Varje medarbetare har ett schema; att lägga till flyttar hit.",
       "placeholder": "Välj medarbetare",
       "search": "Sök medarbetare...",
       "searchAria": "Sök bland medarbetare",
@@ -8983,7 +8983,55 @@
       "endTime": "Sluttid",
       "removeRange": "Ta bort tidsintervall",
       "errorOverlap": "Dessa tidsintervall överlappar. Justera dem för att spara.",
-      "errorOrder": "Sluttiden måste vara efter starttiden."
+      "errorOrder": "Sluttiden måste vara efter starttiden.",
+      "routingNote": "Används även av Auto Assign, Global Router och villkor."
+    },
+    "condition": {
+      "assignedAgent": "Tilldelad agents pass"
+    },
+    "holidays": {
+      "label": "Helgdagar",
+      "title": "Helgdagar",
+      "description": "Ersätter alla schemans veckotider det datumet.",
+      "add": "Lägg till helgdag",
+      "empty": "Inga helgdagar än.",
+      "deleteDescription": "Ta bort helgdagen {date}?"
+    },
+    "dateOverrides": {
+      "title": "Datumundantag",
+      "description": "Ersätter det här schemats tider det datumet; går före helgdagar.",
+      "add": "Lägg till datumundantag",
+      "empty": "Inga datumundantag."
+    },
+    "dateDialog": {
+      "addTitle": "Lägg till datum",
+      "editTitle": "Redigera datum",
+      "date": "Datum",
+      "name": "Namn (valfritt)",
+      "closedAllDay": "Stängt hela dagen",
+      "duplicate": "Datumet finns redan i listan.",
+      "hours": "Tider",
+      "closed": "Stängt"
     }
+  },
+  "responseSla": {
+    "label": "Svars-SLA",
+    "title": "Svars-SLA",
+    "description": "Längsta tid ett kundmeddelande får vänta på ett mänskligt svar.",
+    "firstTarget": "Mål för första svaret (minuter)",
+    "nextTarget": "Mål för senare svar (minuter)",
+    "nextPlaceholder": "Ingen SLA på senare svar",
+    "threshold": "Tröskel för nära brott (% av målet kvar)",
+    "thresholdHelp": "Markeras som nära brott när denna % av målet återstår.",
+    "workingTimeNote": "Räknas i den tilldelade agentens arbetstid; annars klocktid.",
+    "overdue": "Försenad",
+    "due": "Frist {time}",
+    "breaching": "SLA nära brott",
+    "breached": "SLA brutet",
+    "firstMetColumn": "Första svaret höll SLA",
+    "metColumn": "SLA hållen",
+    "metHelp": "Andel svar med SLA som höll den.",
+    "eligibleCount": "{count} svar hade SLA",
+    "enable": "Aktivera svars-SLA"
   }
 }

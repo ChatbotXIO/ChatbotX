@@ -177,6 +177,10 @@ export const agentRepliedEventSchema = z.object({
   responseSeconds: z.number().int().nonnegative(),
   workingResponseSeconds: z.number().int().nonnegative().nullable(),
   workingHoursId: z.string().nullable(),
+  /** Target of the window's SLA snapshot; null/absent when no SLA applied. */
+  slaTargetSeconds: z.number().int().positive().nullish(),
+  /** Reply was at or before the SLA deadline; null/absent when no SLA applied. */
+  slaMet: z.boolean().nullish(),
   isFirstResponse: z.boolean(),
   channel: z.string().nullish(),
   inboxId: z.string().nullish(),

@@ -218,9 +218,9 @@
     "averageFirstResponseTimeByAdmin": "İnsan temsilcilerin ortalama ilk yanıt süresi (Dakika)",
     "averageFirstResponseTimeByAdminHelp": "Bir insan temsilcinin müşterinin mesajına ilk yanıtı vermesi için geçen ortalama süre.",
     "averageResponseTimeByAdmin": "İnsan temsilcilerin ortalama yanıt süresi (Dakika)",
-    "withinWorkingHoursHelp": "Yalnızca temsilcinin çalışma saatleri içindeki süreyi sayar; programı dışındaki süre hariç tutulur.",
+    "withinWorkingHoursHelp": "Yalnızca temsilcinin çalışma saatlerindeki süreyi sayar.",
     "withinWorkingHoursLabel": "Çalışma saatleri içinde",
-    "noResponseData": "Veri yok: temsilcinin bu dönemde yanıtı yok veya kendisine çalışma saatleri programı atanmamış.",
+    "noResponseData": "Bu dönemde yanıt yok ya da çizelge atanmamış.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "İnsan temsilcilere göre çalışma saatleri içinde ortalama ilk yanıt süresi (dakika)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Bir insan temsilcinin müşterinin mesajına ilk yanıtı vermesi için çalışma saatleri içinde harcadığı ortalama süre.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "İnsan temsilcilere göre çalışma saatleri içinde ortalama yanıt süresi (dakika)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Çalışma saatleri",
     "label": "Çalışma saatleri",
-    "description": "Ekibinizin ne zaman müsait olduğunu belirleyin. Yanıt süreleri yalnızca bu saatler içinde ölçülür.",
+    "description": "Yanıt süreleri yalnızca bu saatlerde sayılır.",
     "employees": "Çalışanlar",
-    "empty": "Henüz çalışma saati yok. Yanıt sürelerini yalnızca çalışma saatleri içinde ölçmek için bir program ekleyin.",
-    "deleteDescription": "\"{name}\" silinsin mi? Çalışanları yeniden gerçek zamanla ölçülecek. Bu işlem geri alınamaz.",
+    "empty": "Henüz çizelge yok.",
+    "deleteDescription": "\"{name}\" silinsin mi? Çalışanlar saat süresine döner.",
     "create": {
       "title": "Çalışma saatleri ekle",
       "description": "Programa bir ad verin. Günleri ve saatleri bir sonraki adımda belirleyeceksiniz."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Çalışma saatlerini çalışanlara uygula",
       "description": "Bu programı izleyen çalışanları seçin.",
-      "moveHelp": "Bir çalışan yalnızca bir programı izleyebilir. Başka bir programda olanlar bu programa taşınır.",
+      "moveHelp": "Her çalışanın tek çizelgesi vardır; eklemek onu buraya taşır.",
       "placeholder": "Çalışanları seçin",
       "search": "Çalışan ara...",
       "searchAria": "Çalışanlar arasında ara",
@@ -8983,7 +8983,55 @@
       "endTime": "Bitiş saati",
       "removeRange": "Zaman aralığını kaldır",
       "errorOverlap": "Bu zaman aralıkları çakışıyor. Kaydetmek için düzenleyin.",
-      "errorOrder": "Bitiş saati başlangıç saatinden sonra olmalıdır."
+      "errorOrder": "Bitiş saati başlangıç saatinden sonra olmalıdır.",
+      "routingNote": "Auto Assign, Global Router ve Koşul tarafından da kullanılır."
+    },
+    "condition": {
+      "assignedAgent": "Atanan temsilcinin vardiyası"
+    },
+    "holidays": {
+      "label": "Tatiller",
+      "title": "Tatiller",
+      "description": "O tarihte tüm çizelgelerin haftalık saatlerinin yerine geçer.",
+      "add": "Tatil ekle",
+      "empty": "Henüz tatil yok.",
+      "deleteDescription": "{date} tarihli tatil silinsin mi?"
+    },
+    "dateOverrides": {
+      "title": "Tarih istisnaları",
+      "description": "O tarihte bu çizelgenin saatlerinin yerine geçer; tatilden önceliklidir.",
+      "add": "İstisna ekle",
+      "empty": "İstisna yok."
+    },
+    "dateDialog": {
+      "addTitle": "Tarih ekle",
+      "editTitle": "Tarihi düzenle",
+      "date": "Tarih",
+      "name": "Ad (isteğe bağlı)",
+      "closedAllDay": "Tüm gün kapalı",
+      "duplicate": "Bu tarih listede zaten var.",
+      "hours": "Saatler",
+      "closed": "Kapalı"
     }
+  },
+  "responseSla": {
+    "label": "Yanıt SLA'sı",
+    "title": "Yanıt SLA'sı",
+    "description": "Bir müşteri mesajının insan yanıtı için bekleyebileceği azami süre.",
+    "firstTarget": "İlk yanıt hedefi (dakika)",
+    "nextTarget": "Sonraki yanıt hedefi (dakika)",
+    "nextPlaceholder": "Sonraki yanıtlarda SLA yok",
+    "threshold": "İhlal eşiği (hedeften kalan %)",
+    "thresholdHelp": "Hedefin bu %'si kaldığında ihlal üzere işaretlenir.",
+    "workingTimeNote": "Atanan temsilcinin çalışma saatlerinde sayılır; aksi halde saat süresi.",
+    "overdue": "Gecikti",
+    "due": "Son tarih {time}",
+    "breaching": "SLA ihlal üzere",
+    "breached": "SLA ihlal edildi",
+    "firstMetColumn": "İlk yanıt SLA'sı karşılandı",
+    "metColumn": "SLA karşılandı",
+    "metHelp": "SLA'sı olan yanıtlardan SLA'yı karşılayanların oranı.",
+    "eligibleCount": "{count} yanıtın SLA'sı vardı",
+    "enable": "Yanıt SLA'sını etkinleştir"
   }
 }

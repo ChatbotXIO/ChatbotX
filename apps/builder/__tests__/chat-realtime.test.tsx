@@ -31,6 +31,7 @@ const chatStoreState = {
   openConversation: openConversationMock,
   patchContactInboxThreadControl: vi.fn(),
   resumeConversationHeadRefresh: vi.fn(),
+  scheduleConversationHeadRefresh: vi.fn(),
 }
 const wholeStoreSelectionMock = vi.fn()
 vi.mock("@/features/chat/store/chat-store-provider", () => ({
@@ -41,6 +42,11 @@ vi.mock("@/features/chat/store/chat-store-provider", () => ({
     }
     return selection
   },
+}))
+
+const responseSlaState = { enabled: false }
+vi.mock("@/features/response-sla/provider/response-sla-hook", () => ({
+  useResponseSlaEnabled: () => responseSlaState.enabled,
 }))
 
 const conversationIdParamMock = { set: vi.fn(), clear: vi.fn() }
@@ -243,6 +249,69 @@ describe("ChatRealtime — chat event parity", () => {
         assignedInboxTeam: null,
       },
     )
+  })
+
+  test("an assignment refreshes the list head only while the SLA is on (the deadline may move)", async () => {
+    await render()
+    const assigned = {
+      conversationIds: ["conv-1"],
+      assignedUserId: "user-1",
+      assignedInboxTeamId: null,
+    }
+
+    act(() => emit("conversationAssigned", assigned))
+    expect(
+      chatStoreState.scheduleConversationHeadRefresh,
+    ).not.toHaveBeenCalled()
+
+    responseSlaState.enabled = true
+    await render()
+    act(() => emit("conversationAssigned", assigned))
+    expect(chatStoreState.scheduleConversationHeadRefresh).toHaveBeenCalledWith(
+      "workspace-1",
+    )
+    responseSlaState.enabled = false
+  })
+
+  test("a customer message refreshes the list head only while the SLA is on", async () => {
+    const customerMessage = {
+      id: "message-9",
+      conversationId: "conversation-9",
+      messageType: "incoming",
+    }
+    const agentMessage = {
+      ...customerMessage,
+      id: "message-10",
+      messageType: "outgoing",
+    }
+
+    await render()
+    await act(async () => {
+      emit("messageCreated", customerMessage)
+      await Promise.resolve()
+    })
+    expect(
+      chatStoreState.scheduleConversationHeadRefresh,
+    ).not.toHaveBeenCalled()
+
+    responseSlaState.enabled = true
+    await render()
+    await act(async () => {
+      emit("messageCreated", agentMessage)
+      await Promise.resolve()
+    })
+    expect(
+      chatStoreState.scheduleConversationHeadRefresh,
+    ).not.toHaveBeenCalled()
+
+    await act(async () => {
+      emit("messageCreated", customerMessage)
+      await Promise.resolve()
+    })
+    expect(chatStoreState.scheduleConversationHeadRefresh).toHaveBeenCalledWith(
+      "workspace-1",
+    )
+    responseSlaState.enabled = false
   })
 
   test("conversationUpdated applies a valid agent read timestamp", async () => {

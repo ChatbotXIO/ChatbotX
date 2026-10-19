@@ -45,6 +45,106 @@ Code: schema in `packages/database/src/schema/working-hours*.ts` and `schema/ana
 
 Existing rows start with `NULL` columns; measurement begins at the next contact message / assignment. No backfill.
 
+## Routing and flow conditions
+
+Schedules also decide who is offered conversations. All checks read the cached
+schedules once (`listOnShiftUserIds` / `isUserOnShift` in `working-hours/on-shift.ts`); a user without a
+schedule always counts as on shift.
+
+- **Auto Assign step**: candidates on shift are preferred. When none is on
+  shift and no team is a candidate the full list is used, so a conversation is
+  never left unassigned by this feature; a candidate team counts as available,
+  so off-shift users are dropped when one is present. Load is counted per
+  workspace.
+- **Fixed-agent assignment from automation**: the flow "Assign conversation"
+  step, trigger action, AI action and rich-response button skip the assignment
+  (nothing changes, debug log) when the target agent is off shift
+  (`conversationService.assignOneOrSkip` / `isUserOnShift`). Team targets are
+  not checked.
+- **Global Router**: a `user` destination that is off shift resolves to
+  `unavailable` *before* the handoff (which cannot be undone), so the route's
+  fallback runs. Team destinations are unchanged.
+- **Never checked**: a person assigning by hand (inbox, public
+  `conversations.assign`) and an agent claiming a call they answer.
+- **Flow Condition field `isWithinWorkingHours`** (operators `in` / `notIn`):
+  values are schedule ids (open now in the workspace timezone) and the sentinel
+  `assignedAgent` (the contact's DM conversation is assigned to an agent on
+  shift). Values combine with OR; `notIn` negates the whole selection. The field
+  only exists on the `flowCondition` surface (`surfaces` in the field
+  definitions): the contacts, conversations and broadcast-audience schemas and
+  their public APIs reject it with a 422, and `GET /v1/contacts/filter-fields`
+  lists it only with `surface=flowCondition`.
+
+## Holidays and date overrides
+
+A calendar date can replace the weekly intervals. Precedence for a local date
+(workspace timezone): the schedule's own **date override** → the **workspace
+holiday** → the weekly intervals of that weekday. `ranges: []` means closed all
+day; ranges replace the whole day. Table `WorkingHoursDateOverride`
+(`workingHoursId` NULL = workspace holiday), unique per (scope, date), at most
+400 rows per scope. Every write (create / update / delete / full replace and the
+limit check) runs under the schedule row lock, or a workspace advisory lock for
+holidays, so concurrent writers cannot exceed the limit or interleave.
+
+Agents without a schedule are measured on wall-clock time, so holidays only
+affect scheduled agents. Public API: `workingHours.listHolidays/createHoliday/
+updateHoliday/deleteHoliday` (`/v1/working-hours-holidays`) and `dateOverrides`
+on `workingHours.get` / `workingHours.update`.
+
+**Cache.** Routing and conditions read overrides from one cached window per
+workspace (now ± 60 days, tag `working-hours:<ws>`, same TTL, invalidated by
+every write). A computation whose span leaves that window — e.g. a reply after
+a very long wait — does one uncached ranged read
+(`findDateOverridesForSchedules`) instead of using a truncated map.
+
+## Response SLA
+
+`ResponseSlaPolicy` (one row per workspace; public `responseSla.get/update/delete`,
+Settings → Inbox Teams card with an Enable switch: off keeps the targets but tracks
+nothing, and a workspace that never saved a policy is simply off) sets how long a customer message may wait for a
+human reply: `firstResponseTargetSeconds`, optional `nextResponseTargetSeconds`
+(null = no SLA on later replies) and `breachingThresholdPercent` (default 25).
+
+**Clock.** Counted in the assigned agent's **working time** (schedule, date
+overrides, holidays); an unassigned conversation or an agent without a schedule
+uses clock time. The start is the customer's message, or the assignment instant
+when the conversation was assigned to that agent after it (same rule as the
+reply metric). `addWorkingSeconds` walks at most 366 local dates; a deadline not
+reached in that span sets no SLA (and logs a warning) instead of a wrong one.
+
+**Snapshot on the conversation.** `responseDueAt`, `responseSlaBreachingAt` (the
+instant the threshold of the target is left, also in working time, so nights and
+weekends never read as "about to breach") and `responseSlaTargetSeconds`, set and
+cleared together with `awaitingHumanReplySince`:
+
+- *Clearing is atomic*: every close expression (`humanReplyWindowSet` for bot /
+  external-human / archive closes, and the reply claim `closeHumanReplyWindow`)
+  nulls all three in the same `SET` under the same `CASE` as the window; the claim
+  returns the closed deadline and target, so the reply event needs no extra read.
+- *Setting* goes through `responseSlaService.trackWindow`: for workspaces **with** a
+  policy it takes a row lock BEFORE the statement that can open the window (inbound
+  contact message, webchat message, bot pause that reopens) or change the assignee
+  (`updateAssignment`, call claim, `claimAssignmentIfUnassigned`), compares the
+  before/after state, and writes the snapshot with a compare-and-set on the window
+  start, in the same transaction. A window that was already open is never given a
+  deadline retroactively, and only a real assignee change recomputes one. Workspaces
+  without a policy pay one cached read.
+- Changing targets only affects windows that open afterwards; open windows keep the target they started with. Editing a schedule, a holiday or a membership does not recompute the deadlines of open windows either.
+- Switching the policy off (`enabled: false`) or deleting it clears the deadline of every open window at once and hides the SLA dashboard measures for the whole history. Switching it back on tracks only windows that open afterwards.
+
+**Inbox and analytics.** Conversations tags `slaBreaching` (past the breaching
+instant, not yet due) and `slaBreached` (past the deadline) read the snapshot
+columns through a partial index (`Conversation_workspaceId_responseDueAt_idx`,
+created CONCURRENTLY in its own migration); the conversation row shows an
+"Overdue" / "Due in …" pill. `AnalyticsAgentResponseEvent.slaTargetSeconds` /
+`slaMet` (null when no SLA applied) are copied from the closed window, and the
+agent stats expose eligible / met counts and `…SlaMetPercent` (null when nothing
+was eligible; replies without an SLA are never misses).
+
+Not included: push alerts on breach (a delayed job + scanner like the appointment
+reminder would be the seam), per-inbox / per-team targets (the table is keyed by
+workspace so rows can be added).
+
 ## Measurement semantics
 
 - **First response**: the reply that closes a window on a conversation whose `adminRepliedAt` was `NULL` (never answered by a human/API). It is not reset when a conversation is unarchived.
@@ -96,7 +196,7 @@ Settings -> Inbox Teams, a Working Hours card under the Inbox Team card (list, c
 - R8: customer-placed WhatsApp calls open no window, but pausing the bot afterwards can reopen one from the call's `contactRepliedAt`.
 - R9: bot closes do not advance `awaitingHumanReplyClosedAt` (so bot message then pause still measures), so a delayed older contact message processed after a bot close is not stale-guarded and can reopen a window; human closes stay guarded.
 - R10: a bot close leaves no marker, so reopen-on-pause is opt-in. A manual pause (or trigger-action / handback pause, or a Disable Bot step in a broadcast, sequence, trigger-started, delay- or heavy-step-resumed or otherwise unflagged flow run) after the bot already answered does not reopen the window, so the following agent reply is not measured; if the bot never answered, the window is still open anyway.
-- Not measured: comment threads, agent-initiated template sends, history (no backfill). No per-schedule timezone, no overnight intervals in one row. Not wired to routing, SLA, auto-reply or a contact filter.
+- Not measured: comment threads, agent-initiated template sends, history (no backfill). No per-schedule timezone, no overnight intervals in one row. Auto-reply (away message) is not built in; use a flow Condition (`isWithinWorkingHours`) → Send message.
 
 ## Operations
 
@@ -104,3 +204,11 @@ Settings -> Inbox Teams, a Working Hours card under the Inbox Team card (list, c
 - The three new `Conversation` columns are nullable (metadata-only change).
 - Cache: `working-hours:<workspaceId>` tag; the schedule lookup per agent is cached and invalidated on writes and member deletion.
 - Migration `packages/database/drizzle/20261019032527_workspace_member_workspace_user_index/` adds the non-unique index `WorkspaceMember_workspaceId_userId_idx` on `(workspaceId, userId)` (auth membership lookups, the working-hours member check, the roster list), built with `CREATE INDEX CONCURRENTLY IF NOT EXISTS`; if a run dies midway, check `pg_index.indisvalid` and drop the invalid index before re-running.
+
+## Known limitation
+
+On a DST fall-back day, a range that lies entirely inside the repeated hour is
+counted once by the duration helpers (the first occurrence of the wall-clock
+time) while the on-shift check and the contact-filter SQL compare the local
+clock minute and so report open during both occurrences. It only affects ranges
+inside that single hour once a year in zones that observe DST.

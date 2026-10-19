@@ -260,9 +260,9 @@
     "averageFirstResponseTimeByAdmin": "Operatorların orta ilk cavab müddəti (dəqiqə)",
     "averageFirstResponseTimeByAdminHelp": "Operatorun müştərinin mesajına ilk cavabı verməsi üçün sərf etdiyi orta müddət.",
     "averageResponseTimeByAdmin": "Operatorların orta cavab müddəti (dəqiqə)",
-    "withinWorkingHoursHelp": "Yalnız əməkdaşın iş saatları daxilindəki vaxtı sayır; cədvəlindən kənar vaxt nəzərə alınmır.",
+    "withinWorkingHoursHelp": "Yalnız əməkdaşın iş saatları daxilindəki vaxtı hesablayır.",
     "withinWorkingHoursLabel": "İş saatları daxilində",
-    "noResponseData": "Məlumat yoxdur: əməkdaşın bu dövrdə cavabı yoxdur və ya ona iş saatları cədvəli təyin edilməyib.",
+    "noResponseData": "Bu dövrdə cavab yoxdur və ya cədvəl təyin olunmayıb.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "İnsan əməkdaşlar üzrə iş saatları daxilində orta ilk cavab vaxtı (dəqiqə)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "İnsan əməkdaşın müştərinin mesajına ilk cavabı verməsi üçün iş saatları daxilində sərf etdiyi orta vaxt.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "İnsan əməkdaşlar üzrə iş saatları daxilində orta cavab vaxtı (dəqiqə)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "İş saatları",
     "label": "İş saatları",
-    "description": "Komandanızın əlçatan olduğu vaxtı müəyyən edin. Cavab vaxtı yalnız bu saatlar daxilində ölçülür.",
+    "description": "Cavab vaxtı yalnız bu saatlar daxilində hesablanır.",
     "employees": "İşçilər",
-    "empty": "Hələ iş saatı yoxdur. Cavab vaxtını yalnız iş vaxtı daxilində ölçmək üçün cədvəl əlavə edin.",
-    "deleteDescription": "\"{name}\" silinsin? Onun işçiləri yenidən real vaxtla ölçüləcək. Bu əməliyyatı geri qaytarmaq olmaz.",
+    "empty": "Hələ cədvəl yoxdur.",
+    "deleteDescription": "\"{name}\" silinsin? Əməkdaşlar real vaxta qayıdır.",
     "create": {
       "title": "İş saatları əlavə et",
       "description": "Cədvələ ad verin. Günləri və saatları növbəti addımda təyin edəcəksiniz."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "İş saatlarını işçilərə tətbiq et",
       "description": "Bu cədvəli izləyən işçiləri seçin.",
-      "moveHelp": "İşçi yalnız bir cədvəli izləyə bilər. Başqa cədvəldə olanlar bu cədvələ keçirilir.",
+      "moveHelp": "Hər əməkdaşın bir cədvəli var; əlavə etmək onu bura keçirir.",
       "placeholder": "İşçiləri seçin",
       "search": "İşçiləri axtar...",
       "searchAria": "İşçilər arasında axtar",
@@ -8983,7 +8983,55 @@
       "endTime": "Bitmə vaxtı",
       "removeRange": "Vaxt aralığını sil",
       "errorOverlap": "Bu vaxt aralıqları üst-üstə düşür. Saxlamaq üçün onları dəyişin.",
-      "errorOrder": "Bitmə vaxtı başlama vaxtından sonra olmalıdır."
+      "errorOrder": "Bitmə vaxtı başlama vaxtından sonra olmalıdır.",
+      "routingNote": "Auto Assign, Global Router və Condition üçün də istifadə olunur."
+    },
+    "condition": {
+      "assignedAgent": "Təyin olunmuş əməkdaşın növbəsi"
+    },
+    "holidays": {
+      "label": "Bayramlar",
+      "title": "Bayramlar",
+      "description": "Həmin tarixdə bütün cədvəllərin həftəlik saatlarını əvəz edir.",
+      "add": "Bayram əlavə et",
+      "empty": "Hələ bayram yoxdur.",
+      "deleteDescription": "{date} tarixli bayram silinsin?"
+    },
+    "dateOverrides": {
+      "title": "Tarix istisnaları",
+      "description": "Həmin tarixdə bu cədvəlin saatlarını əvəz edir; bayramdan üstündür.",
+      "add": "İstisna əlavə et",
+      "empty": "İstisna yoxdur."
+    },
+    "dateDialog": {
+      "addTitle": "Tarix əlavə et",
+      "editTitle": "Tarixi redaktə et",
+      "date": "Tarix",
+      "name": "Ad (könüllü)",
+      "closedAllDay": "Bütün gün bağlı",
+      "duplicate": "Bu tarix artıq siyahıdadır.",
+      "hours": "Saatlar",
+      "closed": "Bağlı"
     }
+  },
+  "responseSla": {
+    "label": "Cavab SLA",
+    "title": "Cavab SLA",
+    "description": "Müştəri mesajının insan cavabını gözləyə biləcəyi maksimal müddət.",
+    "firstTarget": "İlk cavab hədəfi (dəqiqə)",
+    "nextTarget": "Sonrakı cavab hədəfi (dəqiqə)",
+    "nextPlaceholder": "Sonrakı cavablara SLA yoxdur",
+    "threshold": "Pozulma həddi (hədəfdən qalan %)",
+    "thresholdHelp": "Hədəfin bu % qaldıqda pozulmaq üzrə kimi qeyd olunur.",
+    "workingTimeNote": "Təyin olunmuş əməkdaşın iş saatlarına görə; əks halda real vaxtla.",
+    "overdue": "Gecikib",
+    "due": "Son tarix {time}",
+    "breaching": "SLA pozulmaq üzrə",
+    "breached": "SLA pozulub",
+    "firstMetColumn": "İlk cavab SLA-ya uyğun",
+    "metColumn": "SLA-ya uyğun",
+    "metHelp": "SLA-sı olan cavablar arasında SLA-ya uyğun olanların payı.",
+    "eligibleCount": "{count} cavabın SLA-sı var",
+    "enable": "Cavab SLA-nı aktiv et"
   }
 }

@@ -28,6 +28,7 @@ const findByWorkspaceIdAndUserIdMock = vi.hoisted(() =>
   vi.fn(async () => ({ userId: "admin-1" })),
 )
 const updateAssignmentMock = vi.hoisted(() => vi.fn(async () => undefined))
+const isUserOnShiftMock = vi.hoisted(() => vi.fn(async () => true))
 const handoffExecuteMock = vi.hoisted(() => vi.fn(async () => undefined))
 
 // ---------------------------------------------------------------------------
@@ -48,6 +49,7 @@ vi.mock("@chatbotx.io/business", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/business")>()
   return {
     ...actual,
+    isUserOnShift: isUserOnShiftMock,
     contactService: {
       setRichSystemFieldByKey: setRichSystemFieldByKeyMock,
       unsetRichSystemFieldByKey: unsetRichSystemFieldByKeyMock,
@@ -87,6 +89,7 @@ vi.mock("../src/lib/logger", () => ({
     warn: loggerWarnMock,
     error: vi.fn(),
     info: vi.fn(),
+    debug: vi.fn(),
   },
 }))
 
@@ -668,6 +671,22 @@ describe("executeRichActions", () => {
         assignedInboxTeamId: null,
       }),
     )
+  })
+
+  test("assign_conversation skips an agent who is off shift", async () => {
+    isUserOnShiftMock.mockResolvedValueOnce(false)
+
+    const result = await executeRichActions(
+      [{ action: "assign_conversation", admin_id: "admin-1" }],
+      ctx,
+    )
+
+    expect(isUserOnShiftMock).toHaveBeenCalledWith({
+      workspaceId: ctx.workspaceId,
+      userId: "admin-1",
+    })
+    expect(updateAssignmentMock).not.toHaveBeenCalled()
+    expect(result.failed).toHaveLength(0)
   })
 
   test("assign_conversation throws when admin not in workspace", async () => {

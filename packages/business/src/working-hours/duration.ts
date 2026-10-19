@@ -12,6 +12,15 @@ export type WorkingInterval = {
   endMinute: number
 }
 
+/** A day's open ranges (`[]` = closed all day) replacing the weekly intervals for that local date. */
+export type WorkingDateRanges = readonly {
+  startMinute: number
+  endMinute: number
+}[]
+
+/** Local date (`YYYY-MM-DD` in the schedule timezone) -> that date's ranges. */
+export type WorkingDateOverrides = ReadonlyMap<string, WorkingDateRanges>
+
 const formatters = new Map<string, Intl.DateTimeFormat>()
 
 /**
@@ -119,31 +128,66 @@ function addDays(date: LocalDate, days: number): LocalDate {
   }
 }
 
+const dateKeyOf = (date: LocalDate): string =>
+  `${String(date.year).padStart(4, "0")}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`
+
+/**
+ * The intervals in force on one local date: that date's override (which may be
+ * empty = closed) when there is one, else the weekly intervals of its weekday.
+ */
+const intervalsForDate = (
+  date: LocalDate,
+  weekly: ReadonlyMap<number, WorkingInterval[]>,
+  dateOverrides: WorkingDateOverrides | undefined,
+): readonly WorkingInterval[] | undefined => {
+  const weekday = weekdayOf(date)
+  const override = dateOverrides?.get(dateKeyOf(date))
+  if (!override) {
+    return weekly.get(weekday)
+  }
+  return [...override]
+    .sort((a, b) => a.startMinute - b.startMinute)
+    .map((range) => ({ weekday, ...range }))
+}
+
 const weekdayOf = (date: LocalDate): number =>
   new Date(Date.UTC(date.year, date.month - 1, date.day)).getUTCDay()
 
 /**
- * Seconds inside the weekly intervals between `from` and `to` (half-open),
- * stepping by local calendar date in `timezone`. Pure; no clamp.
- * Intervals must not overlap (validated at write time).
+ * Whether `at` falls inside the intervals in force on its local date in
+ * `timezone` (a date override replaces the weekly intervals of that date;
+ * `start <= minute < end`, 1440 covers the end of the local day). Pure; no
+ * intervals means never "within".
  */
-export function workingSecondsBetween(props: {
-  from: Date
-  to: Date
+export function isWithinWorkingHours(props: {
+  at: Date
   intervals: readonly WorkingInterval[]
   timezone: string
-}): number {
-  const { from, to, intervals, timezone } = props
-  const fromMs = from.getTime()
-  const toMs = to.getTime()
-  if (
-    !(Number.isFinite(fromMs) && Number.isFinite(toMs)) ||
-    toMs <= fromMs ||
-    intervals.length === 0
-  ) {
-    return 0
+  dateOverrides?: WorkingDateOverrides
+}): boolean {
+  const { at, intervals, timezone, dateOverrides } = props
+  if (!Number.isFinite(at.getTime())) {
+    return false
   }
+  const date = localDateOf(at, timezone)
+  const weekly = groupByWeekday(intervals)
+  const day = intervalsForDate(date, weekly, dateOverrides)
+  if (!day || day.length === 0) {
+    return false
+  }
+  const [hour, minute] = formatInTimeZone(at, timezone, "HH:mm")
+    .split(":")
+    .map(Number)
+  const minuteOfDay = hour * 60 + minute
+  return day.some(
+    (interval) =>
+      interval.startMinute <= minuteOfDay && minuteOfDay < interval.endMinute,
+  )
+}
 
+const groupByWeekday = (
+  intervals: readonly WorkingInterval[],
+): Map<number, WorkingInterval[]> => {
   const byWeekday = new Map<number, WorkingInterval[]>()
   for (const interval of intervals) {
     byWeekday.set(interval.weekday, [
@@ -157,6 +201,34 @@ export function workingSecondsBetween(props: {
       [...day].sort((a, b) => a.startMinute - b.startMinute),
     )
   }
+  return byWeekday
+}
+
+/**
+ * Seconds inside the working intervals between `from` and `to` (half-open),
+ * stepping by local calendar date in `timezone`; a date override replaces the
+ * weekly intervals of its date. Pure; no clamp. Intervals must not overlap
+ * (validated at write time).
+ */
+export function workingSecondsBetween(props: {
+  from: Date
+  to: Date
+  intervals: readonly WorkingInterval[]
+  timezone: string
+  dateOverrides?: WorkingDateOverrides
+}): number {
+  const { from, to, intervals, timezone, dateOverrides } = props
+  const fromMs = from.getTime()
+  const toMs = to.getTime()
+  if (
+    !(Number.isFinite(fromMs) && Number.isFinite(toMs)) ||
+    toMs <= fromMs ||
+    (intervals.length === 0 && !dateOverrides?.size)
+  ) {
+    return 0
+  }
+
+  const byWeekday = groupByWeekday(intervals)
 
   const lastDate = localDateOf(to, timezone)
   const lastKey = Date.UTC(lastDate.year, lastDate.month - 1, lastDate.day)
@@ -184,7 +256,7 @@ export function workingSecondsBetween(props: {
       break
     }
     offsets.delete(dayKey - 2 * MS_PER_DAY)
-    const day = byWeekday.get(weekdayOf(date))
+    const day = intervalsForDate(date, byWeekday, dateOverrides)
     if (day) {
       const offsetBefore = sampledOffset(dayKey - MS_PER_DAY)
       const constantOffset =
@@ -213,4 +285,68 @@ export function workingSecondsBetween(props: {
   }
   // Floor, like the raw reply duration, so working seconds never exceed total.
   return Math.floor(totalMs / 1000)
+}
+
+/** Longest walk `addWorkingSeconds` makes before giving up on a deadline. */
+export const MAX_WORKING_WALK_DAYS = 366
+
+/**
+ * The instant `seconds` of working time after `from`: walks the local dates in
+ * `timezone` (date overrides replace the weekly intervals of their date) and
+ * consumes each open range from the first instant at or after `from`. `null`
+ * when the time is not reached within `maxDays` local dates (an empty
+ * schedule, or a target longer than the calendar can supply). Pure.
+ */
+export function addWorkingSeconds(props: {
+  from: Date
+  seconds: number
+  intervals: readonly WorkingInterval[]
+  timezone: string
+  dateOverrides?: WorkingDateOverrides
+  maxDays?: number
+}): Date | null {
+  const {
+    from,
+    seconds,
+    intervals,
+    timezone,
+    dateOverrides,
+    maxDays = MAX_WORKING_WALK_DAYS,
+  } = props
+  const fromMs = from.getTime()
+  if (!(Number.isFinite(fromMs) && Number.isFinite(seconds)) || seconds < 0) {
+    return null
+  }
+  if (seconds === 0) {
+    return new Date(fromMs)
+  }
+  if (intervals.length === 0 && !dateOverrides?.size) {
+    return null
+  }
+
+  const weekly = groupByWeekday(intervals)
+  let remainingMs = seconds * 1000
+  let date = localDateOf(from, timezone)
+  for (let walked = 0; walked <= maxDays; walked++) {
+    const day = intervalsForDate(date, weekly, dateOverrides)
+    const next = addDays(date, 1)
+    for (const interval of day ?? []) {
+      const startMs = wallMinuteToInstant(date, interval.startMinute, timezone)
+      const endMs =
+        interval.endMinute >= MINUTES_PER_DAY
+          ? wallMinuteToInstant(next, 0, timezone)
+          : wallMinuteToInstant(date, interval.endMinute, timezone)
+      const usableStart = Math.max(startMs, fromMs)
+      const available = endMs - usableStart
+      if (available <= 0) {
+        continue
+      }
+      if (available >= remainingMs) {
+        return new Date(usableStart + remainingMs)
+      }
+      remainingMs -= available
+    }
+    date = next
+  }
+  return null
 }

@@ -3,19 +3,29 @@ import {
   type DatabaseClient,
   db,
   eq,
+  gte,
   inArray,
+  isNull,
+  lte,
   ne,
   notInArray,
   sql,
 } from "../../client"
-import type { WorkingHoursIntervalInput } from "../../partials/working-hours"
 import {
+  WORKING_HOURS_MAX_DATE_OVERRIDES,
+  type WorkingHoursDateOverrideInput,
+  type WorkingHoursDateRanges,
+  type WorkingHoursIntervalInput,
+} from "../../partials/working-hours"
+import {
+  workingHoursDateOverrideModel,
   workingHoursIntervalModel,
   workingHoursMemberModel,
   workingHoursModel,
   workspaceMemberModel,
 } from "../../schema"
 import type {
+  WorkingHoursDateOverrideModel,
   WorkingHoursIntervalModel,
   WorkingHoursMemberModel,
   WorkingHoursModel,
@@ -91,6 +101,51 @@ async function touchSchedules(
       ),
     )
 }
+
+/**
+ * Serializes every write to one override scope (a schedule's date overrides,
+ * or the workspace holidays) so the row limit and full replacement cannot
+ * interleave. A schedule scope takes the parent row lock (the same lock the
+ * weekly intervals use); the workspace scope has no parent row, so it takes a
+ * transaction-level advisory lock. Returns `false` when the schedule does not
+ * exist in the workspace.
+ */
+async function lockDateOverrideScope(
+  tx: DatabaseClient,
+  props: { workspaceId: string; workingHoursId: string | null },
+): Promise<boolean> {
+  if (props.workingHoursId) {
+    return await lockParent(tx, {
+      workspaceId: props.workspaceId,
+      workingHoursId: props.workingHoursId,
+    })
+  }
+  await tx.execute(
+    sql`SELECT pg_advisory_xact_lock(hashtextextended('working-hours-holidays:' || ${props.workspaceId}::text, 0))`,
+  )
+  return true
+}
+
+const scopeWhere = (props: {
+  workspaceId: string
+  workingHoursId: string | null
+}) =>
+  and(
+    eq(workingHoursDateOverrideModel.workspaceId, props.workspaceId),
+    props.workingHoursId
+      ? eq(workingHoursDateOverrideModel.workingHoursId, props.workingHoursId)
+      : isNull(workingHoursDateOverrideModel.workingHoursId),
+  )
+
+export type AddDateOverrideResult =
+  | { status: "ok"; override: WorkingHoursDateOverrideModel }
+  | { status: "notFound" }
+  | { status: "duplicate" }
+  | { status: "limitReached" }
+
+export type UpdateDateOverrideResult =
+  | { status: "ok"; override: WorkingHoursDateOverrideModel }
+  | { status: "notFound" }
 
 type WorkingHoursForAgent = {
   id: string
@@ -338,6 +393,158 @@ export const workingHoursRepository = {
           })
       }
       return { status: "ok" }
+    })
+  },
+
+  /** Rows of one scope (a schedule, or the workspace holidays when `workingHoursId` is null), by date. */
+  async listDateOverrides(
+    props: { workspaceId: string; workingHoursId: string | null },
+    client: DatabaseClient = db,
+  ): Promise<WorkingHoursDateOverrideModel[]> {
+    return await client
+      .select()
+      .from(workingHoursDateOverrideModel)
+      .where(scopeWhere(props))
+      .orderBy(workingHoursDateOverrideModel.date)
+  },
+
+  /** Every schedule's and holiday row inside `[from, to]` — one read for the cached routing window. */
+  async listDateOverridesInRange(
+    props: { workspaceId: string; from: string; to: string },
+    client: DatabaseClient = db,
+  ): Promise<WorkingHoursDateOverrideModel[]> {
+    return await client
+      .select()
+      .from(workingHoursDateOverrideModel)
+      .where(
+        and(
+          eq(workingHoursDateOverrideModel.workspaceId, props.workspaceId),
+          gte(workingHoursDateOverrideModel.date, props.from),
+          lte(workingHoursDateOverrideModel.date, props.to),
+        ),
+      )
+      .orderBy(workingHoursDateOverrideModel.date)
+  },
+
+  /** Full replacement of one scope. `notFound` when the schedule is not in the workspace. */
+  async replaceDateOverrides(
+    props: {
+      workspaceId: string
+      workingHoursId: string | null
+      overrides: WorkingHoursDateOverrideInput[]
+    },
+    client: DatabaseClient = db,
+  ): Promise<{ status: "ok" } | { status: "notFound" }> {
+    return await client.transaction(async (tx) => {
+      if (!(await lockDateOverrideScope(tx, props))) {
+        return { status: "notFound" }
+      }
+      await tx.delete(workingHoursDateOverrideModel).where(scopeWhere(props))
+      if (props.overrides.length > 0) {
+        await tx.insert(workingHoursDateOverrideModel).values(
+          props.overrides.map((override) => ({
+            workspaceId: props.workspaceId,
+            workingHoursId: props.workingHoursId,
+            date: override.date,
+            name: override.name ?? null,
+            ranges: override.ranges,
+          })),
+        )
+      }
+      return { status: "ok" }
+    })
+  },
+
+  /** Adds one date to a scope under the scope lock; the 400-row limit is checked inside it. */
+  async addDateOverride(
+    props: {
+      workspaceId: string
+      workingHoursId: string | null
+      override: WorkingHoursDateOverrideInput
+    },
+    client: DatabaseClient = db,
+  ): Promise<AddDateOverrideResult> {
+    return await client.transaction(async (tx) => {
+      if (!(await lockDateOverrideScope(tx, props))) {
+        return { status: "notFound" }
+      }
+      const count = await tx.$count(
+        workingHoursDateOverrideModel,
+        scopeWhere(props),
+      )
+      if (count >= WORKING_HOURS_MAX_DATE_OVERRIDES) {
+        return { status: "limitReached" }
+      }
+      const [row] = await tx
+        .insert(workingHoursDateOverrideModel)
+        .values({
+          workspaceId: props.workspaceId,
+          workingHoursId: props.workingHoursId,
+          date: props.override.date,
+          name: props.override.name ?? null,
+          ranges: props.override.ranges,
+        })
+        .onConflictDoNothing()
+        .returning()
+      return row ? { status: "ok", override: row } : { status: "duplicate" }
+    })
+  },
+
+  /** Changes the name/ranges of a holiday or override; the date is immutable (delete and add to move it). */
+  async updateDateOverride(
+    props: {
+      workspaceId: string
+      workingHoursId: string | null
+      id: string
+      name?: string | null
+      ranges?: WorkingHoursDateRanges
+    },
+    client: DatabaseClient = db,
+  ): Promise<UpdateDateOverrideResult> {
+    return await client.transaction(async (tx) => {
+      if (!(await lockDateOverrideScope(tx, props))) {
+        return { status: "notFound" }
+      }
+      const [row] = await tx
+        .update(workingHoursDateOverrideModel)
+        .set({
+          ...(props.name === undefined ? {} : { name: props.name }),
+          ...(props.ranges === undefined ? {} : { ranges: props.ranges }),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            scopeWhere(props),
+            eq(workingHoursDateOverrideModel.id, props.id),
+          ),
+        )
+        .returning()
+      return row ? { status: "ok", override: row } : { status: "notFound" }
+    })
+  },
+
+  async deleteDateOverride(
+    props: {
+      workspaceId: string
+      workingHoursId: string | null
+      id: string
+    },
+    client: DatabaseClient = db,
+  ): Promise<boolean> {
+    return await client.transaction(async (tx) => {
+      if (!(await lockDateOverrideScope(tx, props))) {
+        return false
+      }
+      const rows = await tx
+        .delete(workingHoursDateOverrideModel)
+        .where(
+          and(
+            scopeWhere(props),
+            eq(workingHoursDateOverrideModel.id, props.id),
+          ),
+        )
+        .returning({ id: workingHoursDateOverrideModel.id })
+      return rows.length > 0
     })
   },
 

@@ -18,8 +18,10 @@ import {
   ArchiveIcon,
   CornerUpLeftIcon,
   FilterIcon,
+  HourglassIcon,
   MailIcon,
   StarIcon,
+  TimerOffIcon,
   UserLockIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -29,6 +31,7 @@ import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactFilterDialog } from "../contact-filter"
 import { EMAIL_PHONE_RESTRICTED_FILTER_FIELDS } from "../contact-filter/lib/restricted-fields"
 import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
+import { useResponseSlaEnabled } from "../response-sla/provider/response-sla-hook"
 import { useContactAssigneeOptions } from "../users/provider/user-hook"
 
 // Channel is picked in the top-level filter above, so the contact filter's own
@@ -67,6 +70,12 @@ export function ConversationFilter({
     enabled: open,
   })
 
+  const slaEnabled = useResponseSlaEnabled()
+  const selectedTags = useWatch({ control, name: "tags" }) as
+    | string[]
+    | undefined
+  const slaTagVisible = (tag: string) =>
+    slaEnabled || (selectedTags?.includes(tag) ?? false)
   const conversationStatusOptions = [
     {
       label: t("condition.fields.noAdminReply"),
@@ -93,7 +102,25 @@ export function ConversationFilter({
       value: conversationStatuses.enum.blocked,
       icon: UserLockIcon,
     },
-  ]
+    // SLA filters are offered only while the SLA is on; one already selected
+    // stays listed so it can still be deselected.
+    {
+      label: t("responseSla.breaching"),
+      value: conversationStatuses.enum.slaBreaching,
+      icon: HourglassIcon,
+    },
+    {
+      label: t("responseSla.breached"),
+      value: conversationStatuses.enum.slaBreached,
+      icon: TimerOffIcon,
+    },
+  ].filter(
+    (option) =>
+      !(
+        option.value === conversationStatuses.enum.slaBreaching ||
+        option.value === conversationStatuses.enum.slaBreached
+      ) || slaTagVisible(option.value),
+  )
 
   return (
     <Popover onOpenChange={setOpen} open={open}>

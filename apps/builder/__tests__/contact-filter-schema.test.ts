@@ -743,3 +743,49 @@ describe("leaderboardScoreConditionSchema", () => {
     ).toBe(true)
   })
 })
+
+describe("flow-only contact filter fields", () => {
+  const workingHoursCriteria = {
+    operator: "and",
+    conditions: [
+      {
+        field: "isWithinWorkingHours",
+        operator: "in",
+        value: ["assignedAgent"],
+      },
+    ],
+  }
+
+  test("are rejected by the list/audience criteria schema", async () => {
+    const { contactFilterCriteriaSchema } = await import(
+      "@/features/contact-filter/schema"
+    )
+    expect(
+      contactFilterCriteriaSchema.safeParse(workingHoursCriteria).success,
+    ).toBe(false)
+  })
+
+  test("are accepted by the flow Condition criteria schema", async () => {
+    const { flowConditionFilterCriteriaSchema } = await import(
+      "@/features/contact-filter/schema"
+    )
+    expect(
+      flowConditionFilterCriteriaSchema.safeParse(workingHoursCriteria).success,
+    ).toBe(true)
+  })
+
+  test("only allow in / notIn with a value", async () => {
+    const { flowConditionFilterCriteriaSchema } = await import(
+      "@/features/contact-filter/schema"
+    )
+    const withCondition = (condition: Record<string, unknown>) =>
+      flowConditionFilterCriteriaSchema.safeParse({
+        operator: "and",
+        conditions: [{ field: "isWithinWorkingHours", ...condition }],
+      }).success
+
+    expect(withCondition({ operator: "notIn", value: ["1"] })).toBe(true)
+    expect(withCondition({ operator: "eq", value: "1" })).toBe(false)
+    expect(withCondition({ operator: "in" })).toBe(false)
+  })
+})

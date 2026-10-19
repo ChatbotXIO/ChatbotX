@@ -34,6 +34,12 @@ const row = {
   avgWorkingFirstResponseSeconds: null,
   responseCount: 3,
   firstResponseCount: 1,
+  responseSlaEligibleCount: 2,
+  responseSlaMetCount: 1,
+  responseSlaMetPercent: 50,
+  firstResponseSlaEligibleCount: 0,
+  firstResponseSlaMetCount: 0,
+  firstResponseSlaMetPercent: null,
 }
 
 beforeEach(() => {

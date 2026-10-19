@@ -29,6 +29,11 @@ const PRESENCE_SET_OPERATORS = [
   operatorTypes.enum.isEmpty,
 ] as const satisfies readonly OperatorType[]
 
+const IN_OPERATORS = [
+  operatorTypes.enum.in,
+  operatorTypes.enum.notIn,
+] as const satisfies readonly OperatorType[]
+
 const BOOLEAN_OPERATORS = [
   operatorTypes.enum.eq,
   operatorTypes.enum.isEmpty,
@@ -90,6 +95,7 @@ const STATIC_OPERATOR_RULES: Record<string, readonly OperatorType[]> = {
   subscribedToDripCampaign: SET_OPERATORS,
   entryPointsLinks: SET_OPERATORS,
   conversationAssigned: SET_OPERATORS,
+  isWithinWorkingHours: IN_OPERATORS,
   contactCreatedDateMinutesAgo: NUMBER_OPERATORS,
   lastSeenMinutesAgo: NUMBER_OPERATORS,
   lastInteractionMinutesAgo: NUMBER_OPERATORS,

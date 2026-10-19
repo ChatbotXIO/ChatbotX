@@ -20,6 +20,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateWorkingHoursAction } from "../actions/update-working-hours.action"
+import { useInvalidateWorkingHoursOptions } from "../provider/working-hours-hook"
 import { updateWorkingHoursRequest } from "../schema/action"
 import type { WorkingHoursResource } from "../schema/resource"
 
@@ -36,6 +37,7 @@ export function RenameWorkingHoursDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateOptions = useInvalidateWorkingHoursOptions()
 
   const {
     form,
@@ -47,6 +49,7 @@ export function RenameWorkingHoursDialog({
     {
       actionProps: {
         onSuccess: () => {
+          invalidateOptions()
           toast.success(
             t("messages.updatedSuccess", { feature: t("workingHours.label") }),
           )

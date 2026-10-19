@@ -102,6 +102,9 @@ describe("AgentResponseStatsRepository.insertEvents", () => {
   })
 })
 
+// The four SLA measures each check that the workspace's policy is switched on.
+const SLA_POLICY_PARAMS = ["ws-1", "ws-1", "ws-1", "ws-1"]
+
 describe("AgentResponseStatsRepository.getAveragesByAdmin", () => {
   test("emits int-cast averages, FILTER measures, workspace scope and grouping", async () => {
     await repository.getAveragesByAdmin(range)
@@ -121,7 +124,8 @@ describe("AgentResponseStatsRepository.getAveragesByAdmin", () => {
     expect(text).toContain('WHERE "workspaceId" = ?')
     expect(text).toContain('"occurredAt" >= ? AND "occurredAt" <= ?')
     expect(text).toContain('GROUP BY "adminId"')
-    expect(params).toEqual(["ws-1", range.from, range.to])
+    expect(text).toContain('"ResponseSlaPolicy"."enabled"')
+    expect(params).toEqual([...SLA_POLICY_PARAMS, "ws-1", range.from, range.to])
   })
 
   test("applies channel and inbox filters as bound parameters", async () => {
@@ -133,7 +137,14 @@ describe("AgentResponseStatsRepository.getAveragesByAdmin", () => {
     const { text, params } = lastQuery()
 
     expect(text).toContain('"channel" IN (?) AND "inboxId" IN (?)')
-    expect(params).toEqual(["ws-1", "messenger", "7", range.from, range.to])
+    expect(params).toEqual([
+      ...SLA_POLICY_PARAMS,
+      "ws-1",
+      "messenger",
+      "7",
+      range.from,
+      range.to,
+    ])
   })
 
   test("maps rows, keeping null averages null and numbers numeric", async () => {
@@ -147,6 +158,10 @@ describe("AgentResponseStatsRepository.getAveragesByAdmin", () => {
           avgWorkingFirstResponseSeconds: null,
           responseCount: "3",
           firstResponseCount: 0,
+          responseSlaEligibleCount: "4",
+          responseSlaMetCount: "3",
+          firstResponseSlaEligibleCount: 0,
+          firstResponseSlaMetCount: 0,
         },
       ],
     })
@@ -160,6 +175,13 @@ describe("AgentResponseStatsRepository.getAveragesByAdmin", () => {
         avgWorkingFirstResponseSeconds: null,
         responseCount: 3,
         firstResponseCount: 0,
+        responseSlaEligibleCount: 4,
+        responseSlaMetCount: 3,
+        // 3 of 4 eligible replies, one decimal; nothing eligible stays null.
+        responseSlaMetPercent: 75,
+        firstResponseSlaEligibleCount: 0,
+        firstResponseSlaMetCount: 0,
+        firstResponseSlaMetPercent: null,
       },
     ])
   })
@@ -189,7 +211,13 @@ describe("AgentResponseStatsRepository.getDailyAveragesByAdmin", () => {
     expect(text).toContain("GROUP BY 1, 2")
     expect(text).toContain('COUNT(*) FILTER (WHERE "isFirstResponse")::int')
     expect(text).toContain('WHERE "workspaceId" = ?')
-    expect(params).toEqual(["Asia/Ho_Chi_Minh", "ws-1", range.from, range.to])
+    expect(params).toEqual([
+      "Asia/Ho_Chi_Minh",
+      ...SLA_POLICY_PARAMS,
+      "ws-1",
+      range.from,
+      range.to,
+    ])
     expect(rows).toEqual([
       expect.objectContaining({ adminId: "u-1", date: "2026-01-02" }),
     ])

@@ -163,3 +163,65 @@ export function buildResponseTimeColumns(
     sortUndefined: "last",
   }))
 }
+
+type SlaKey = "firstResponseSlaMetPercent" | "responseSlaMetPercent"
+
+const SLA_COLUMN_SPECS = [
+  {
+    key: "firstResponseSlaMetPercent",
+    eligibleKey: "firstResponseSlaEligibleCount",
+    titleKey: "responseSla.firstMetColumn",
+  },
+  {
+    key: "responseSlaMetPercent",
+    eligibleKey: "responseSlaEligibleCount",
+    titleKey: "responseSla.metColumn",
+  },
+] as const satisfies readonly {
+  key: SlaKey
+  eligibleKey: keyof HumanAgentStats
+  titleKey: string
+}[]
+
+/**
+ * SLA columns: the share of replies that met the response SLA, over the
+ * replies that had one (replies with no SLA are not counted as misses). `—`
+ * when nothing was eligible.
+ */
+export function buildResponseSlaColumns(
+  t: Translate,
+): ColumnDef<HumanAgentStats>[] {
+  return SLA_COLUMN_SPECS.map((spec) => ({
+    id: spec.key,
+    accessorFn: (row: HumanAgentStats) => row[spec.key] ?? undefined,
+    header: ({ column }) => (
+      <div className="flex items-center gap-1">
+        <DataTableColumnHeader column={column} title={t(spec.titleKey)} />
+        <HelpIcon
+          icon={InfoIcon}
+          label={t(spec.titleKey)}
+          text={t("responseSla.metHelp")}
+        />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const percent = row.original[spec.key]
+      if (percent === null || percent === undefined) {
+        return <span aria-hidden>—</span>
+      }
+      return (
+        <span
+          className="tabular-nums"
+          title={t("responseSla.eligibleCount", {
+            count: row.original[spec.eligibleKey],
+          })}
+        >
+          {percent}%
+        </span>
+      )
+    },
+    enableSorting: true,
+    enableHiding: false,
+    sortUndefined: "last",
+  }))
+}

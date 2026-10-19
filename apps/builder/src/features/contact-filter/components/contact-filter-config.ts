@@ -29,9 +29,11 @@ import {
   type ContactFilterFieldDefinition,
   type ContactFilterOptionSource,
   type ContactFilterSchemaKind,
+  type ContactFilterSurface,
   type CtwaRetargetCondition,
   type CtwaRetargetSegment,
   convertCustomFieldTypeToConditionType,
+  isFieldOnSurface,
 } from "../schema"
 import type { ResolveFilterValueLabelsResponse } from "../schema/value-labels"
 
@@ -229,6 +231,7 @@ const resolveContactFilterOptions = (
     reflinkOptions: SelectOption[]
     assigneeOptions: SelectOption[]
     channelPostOptions: SelectOption[]
+    workingHourOptions: SelectOption[]
   },
 ): SelectOption[] | undefined => {
   switch (optionSource) {
@@ -275,6 +278,8 @@ const resolveContactFilterOptions = (
       return ctx.assigneeOptions
     case "channelPosts":
       return ctx.channelPostOptions
+    case "workingHours":
+      return ctx.workingHourOptions
     case "ctwaConversionTypes":
       return [
         {
@@ -425,10 +430,12 @@ export const getFieldConfigs = ({
   reflinkOptions = [],
   assigneeOptions = [],
   channelPostOptions = [],
+  workingHourOptions = [],
   couponTopicOptions = [],
   leaderboardOptions = [],
   botFields = [],
   includeBotFields = false,
+  surface = "contacts",
   filterValueLabels,
 }: {
   t: (key: string) => string
@@ -441,6 +448,8 @@ export const getFieldConfigs = ({
   reflinkOptions?: SelectOption[]
   assigneeOptions?: SelectOption[]
   channelPostOptions?: SelectOption[]
+  /** Schedules (+ the assigned-agent choice) for the flow-only working-hours field. */
+  workingHourOptions?: SelectOption[]
   couponTopicOptions?: SelectOption[]
   /** Workspace leaderboards, each offered as a "Gamification scores" field. */
   leaderboardOptions?: SelectOption[]
@@ -455,6 +464,8 @@ export const getFieldConfigs = ({
    * fields alongside per-contact ones.
    */
   includeBotFields?: boolean
+  /** Which surface the configs are for; fields limited to another surface are left out. */
+  surface?: ContactFilterSurface
   /** Names for the ids the current filter references; `undefined` until loaded. */
   filterValueLabels?: ResolveFilterValueLabelsResponse
 }): FieldConfig[] => {
@@ -476,35 +487,36 @@ export const getFieldConfigs = ({
     }
   }
 
-  const staticConfigs: FieldConfig[] = CONTACT_FILTER_FIELD_DEFINITIONS.map(
-    (def: ContactFilterFieldDefinition) => {
-      const formField = schemaKindToFormField(def.schemaKind)
-      const options =
-        resolveContactFilterOptions(def.optionSource, {
-          t,
-          channelOptions,
-          inboxOptions,
-          tagOptions,
-          flowVersionOptions,
-          broadcastOptions,
-          sequenceOptions,
-          reflinkOptions,
-          assigneeOptions,
-          channelPostOptions,
-        }) ?? booleanOptionsFor(formField)
-      return {
-        name: def.field,
-        formField,
-        group: getContactFilterFieldGroup(def.field),
-        hidden: def.hidden,
-        optionSource: def.optionSource,
-        options,
-        valueLabels: filterValueLabels
-          ? buildFilterValueLabels(def.optionSource, filterValueLabels, options)
-          : undefined,
-      }
-    },
-  )
+  const staticConfigs: FieldConfig[] = CONTACT_FILTER_FIELD_DEFINITIONS.filter(
+    (def) => isFieldOnSurface(def, surface),
+  ).map((def: ContactFilterFieldDefinition) => {
+    const formField = schemaKindToFormField(def.schemaKind)
+    const options =
+      resolveContactFilterOptions(def.optionSource, {
+        t,
+        channelOptions,
+        inboxOptions,
+        tagOptions,
+        flowVersionOptions,
+        broadcastOptions,
+        sequenceOptions,
+        reflinkOptions,
+        assigneeOptions,
+        channelPostOptions,
+        workingHourOptions,
+      }) ?? booleanOptionsFor(formField)
+    return {
+      name: def.field,
+      formField,
+      group: getContactFilterFieldGroup(def.field),
+      hidden: def.hidden,
+      optionSource: def.optionSource,
+      options,
+      valueLabels: filterValueLabels
+        ? buildFilterValueLabels(def.optionSource, filterValueLabels, options)
+        : undefined,
+    }
+  })
 
   // Each workspace custom field becomes its own filter field, value-typed by the
   // custom field's type. Encoded as `customField:<id>` so the form/row can map

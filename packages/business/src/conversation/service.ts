@@ -68,8 +68,10 @@ import { inboxTeamService } from "../enterprise/inbox-team/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
+import { responseSlaService } from "../response-sla/service"
 import { smartDelayService } from "../smart-delay/service"
 import { threadControlService } from "../thread-control/service"
+import { isUserOnShift } from "../working-hours/on-shift"
 import { workspaceMemberService } from "../workspace-member/service"
 import {
   type HumanReplyWindowTransition,
@@ -217,6 +219,9 @@ class ConversationService extends BaseService {
     isFirstResponse: boolean
     assignedUserId: string | null
     assignedUserAt: Date | null
+    /** SLA snapshot of the window this reply closed; `null` when no SLA applied. */
+    slaDueAt: Date | null
+    slaTargetSeconds: number | null
   } | null> {
     const claim = await closeHumanReplyWindow({
       workspaceId: input.workspaceId,
@@ -232,6 +237,8 @@ class ConversationService extends BaseService {
       isFirstResponse: claim.previousAdminRepliedAt === null,
       assignedUserId: claim.assignedUserId,
       assignedUserAt: claim.assignedUserAt,
+      slaDueAt: claim.closedResponseDueAt,
+      slaTargetSeconds: claim.closedResponseSlaTargetSeconds,
     }
   }
   protected readonly cachePrefix: string = "conversations"
@@ -1247,6 +1254,22 @@ class ConversationService extends BaseService {
       return
     }
 
+    // Automated paths never hand a conversation to an agent who is off shift
+    // (a person assigning in the inbox goes through `assignOne`, unchecked).
+    if (
+      updatedData.assignedUserId &&
+      !(await isUserOnShift({
+        workspaceId,
+        userId: updatedData.assignedUserId,
+      }))
+    ) {
+      logger.debug(
+        { workspaceId, conversationId: conversation.id },
+        "Assignment skipped: the target agent is off shift",
+      )
+      return
+    }
+
     await this.updateAssignment({
       workspaceId,
       conversations: [conversation],
@@ -1273,26 +1296,36 @@ class ConversationService extends BaseService {
       assignedInboxTeamId,
       assignedBy,
       triggerContext,
-      tx = db,
     } = props
     const ids = conversations.map((c) => c.id)
     const assignedAt = new Date()
-    const updated = await tx
-      .update(conversationModel)
-      .set({
-        assignedUserId,
-        assignedInboxTeamId,
-        // Instant the assignee last changed to a user: the same user keeps it,
-        // unassigning clears it.
-        assignedUserAt: sql`CASE WHEN ${assignedUserId}::bigint IS NULL THEN NULL WHEN "assignedUserId" IS DISTINCT FROM ${assignedUserId}::bigint THEN ${assignedAt.toISOString()}::timestamptz ELSE "assignedUserAt" END`,
-      })
-      .where(
-        and(
-          eq(conversationModel.workspaceId, workspaceId),
-          inArray(conversationModel.id, ids),
-        ),
-      )
-      .returning()
+    // The response SLA follows the assignee, so a real change re-targets an
+    // open window (inside the same transaction as the assignment).
+    const updated = await responseSlaService.trackWindow(
+      {
+        workspaceId,
+        conversationIds: ids,
+        assigneeHints: [assignedUserId],
+        tx: props.tx,
+      },
+      (client) =>
+        client
+          .update(conversationModel)
+          .set({
+            assignedUserId,
+            assignedInboxTeamId,
+            // Instant the assignee last changed to a user: the same user keeps it,
+            // unassigning clears it.
+            assignedUserAt: sql`CASE WHEN ${assignedUserId}::bigint IS NULL THEN NULL WHEN "assignedUserId" IS DISTINCT FROM ${assignedUserId}::bigint THEN ${assignedAt.toISOString()}::timestamptz ELSE "assignedUserAt" END`,
+          })
+          .where(
+            and(
+              eq(conversationModel.workspaceId, workspaceId),
+              inArray(conversationModel.id, ids),
+            ),
+          )
+          .returning(),
+    )
 
     await this.publishAssignmentChanges({
       workspaceId,
@@ -1416,9 +1449,15 @@ class ConversationService extends BaseService {
     tx?: DatabaseClient
   }): Promise<ConversationModel[]> {
     const { workspaceId, conversationId, userId, triggerHandler, tx } = props
-    const claimed = await assignUserIfUnassigned(
-      { workspaceId, conversationId, userId },
-      tx,
+    const claimed = await responseSlaService.trackWindow(
+      {
+        workspaceId,
+        conversationIds: [conversationId],
+        assigneeHints: [userId],
+        tx,
+      },
+      (client) =>
+        assignUserIfUnassigned({ workspaceId, conversationId, userId }, client),
     )
 
     await this.publishAssignmentChanges({
@@ -1445,12 +1484,23 @@ class ConversationService extends BaseService {
   }): Promise<"alreadyAssigned" | "claimed"> {
     const isTeam = props.assignedId.startsWith("t_")
     const id = props.assignedId.slice(2)
-    const claimed = await assignTargetIfUnassigned({
-      assignedInboxTeamId: isTeam ? id : null,
-      assignedUserId: isTeam ? null : id,
-      conversationId: props.conversation.id,
-      workspaceId: props.workspaceId,
-    })
+    const claimed = await responseSlaService.trackWindow(
+      {
+        workspaceId: props.workspaceId,
+        conversationIds: [props.conversation.id],
+        assigneeHints: [isTeam ? null : id],
+      },
+      (client) =>
+        assignTargetIfUnassigned(
+          {
+            assignedInboxTeamId: isTeam ? id : null,
+            assignedUserId: isTeam ? null : id,
+            conversationId: props.conversation.id,
+            workspaceId: props.workspaceId,
+          },
+          client,
+        ),
+    )
     if (claimed.length === 0) {
       return "alreadyAssigned"
     }
@@ -1474,19 +1524,29 @@ class ConversationService extends BaseService {
     },
   ): Promise<void> {
     const { workspaceId, ids, botEnabled, tx = db } = props
-    await tx
-      .update(conversationModel)
-      .set(
-        botEnabled
-          ? { botEnabled, botResumeAt: props.botResumeAt ?? null }
-          : botPauseSet(props),
+    const update = (client: DatabaseClient) =>
+      client
+        .update(conversationModel)
+        .set(
+          botEnabled
+            ? { botEnabled, botResumeAt: props.botResumeAt ?? null }
+            : botPauseSet(props),
+        )
+        .where(
+          and(
+            eq(conversationModel.workspaceId, workspaceId),
+            inArray(conversationModel.id, ids),
+          ),
+        )
+    // Only a pause that reopens the waiting window can start an SLA.
+    if (!botEnabled && props.reopenUnansweredHumanReplyWindow) {
+      await responseSlaService.trackWindow(
+        { workspaceId, conversationIds: ids, tx: props.tx },
+        update,
       )
-      .where(
-        and(
-          eq(conversationModel.workspaceId, workspaceId),
-          inArray(conversationModel.id, ids),
-        ),
-      )
+    } else {
+      await update(tx)
+    }
     if (!botEnabled) {
       // Best-effort: fire-time `ensureActive` already skips a follow-up on a
       // paused conversation, so a failed cancel must never fail the pause (or
@@ -1528,23 +1588,31 @@ class ConversationService extends BaseService {
       tx?: DatabaseClient
     },
   ): Promise<boolean> {
-    const { workspaceId, conversationId, tx = db } = props
-    const updated = await tx
-      .update(conversationModel)
-      .set(
-        botPauseSet({
-          reopenUnansweredHumanReplyWindow:
-            props.reopenUnansweredHumanReplyWindow,
-        }),
-      )
-      .where(
-        and(
-          eq(conversationModel.id, conversationId),
-          eq(conversationModel.workspaceId, workspaceId),
-          eq(conversationModel.botEnabled, true),
-        ),
-      )
-      .returning({ id: conversationModel.id })
+    const { workspaceId, conversationId } = props
+    const handOff = (client: DatabaseClient) =>
+      client
+        .update(conversationModel)
+        .set(
+          botPauseSet({
+            reopenUnansweredHumanReplyWindow:
+              props.reopenUnansweredHumanReplyWindow,
+          }),
+        )
+        .where(
+          and(
+            eq(conversationModel.id, conversationId),
+            eq(conversationModel.workspaceId, workspaceId),
+            eq(conversationModel.botEnabled, true),
+          ),
+        )
+        .returning({ id: conversationModel.id })
+    // A handoff that reopens the unanswered window starts the response SLA.
+    const updated = props.reopenUnansweredHumanReplyWindow
+      ? await responseSlaService.trackWindow(
+          { workspaceId, conversationIds: [conversationId], tx: props.tx },
+          handOff,
+        )
+      : await handOff(props.tx ?? db)
     if (updated.length === 0) {
       return false
     }
@@ -1946,15 +2014,25 @@ class ConversationService extends BaseService {
       return
     }
 
-    await tx
-      .update(conversationModel)
-      .set(data)
-      .where(
-        and(
-          eq(conversationModel.id, conversationId),
-          eq(conversationModel.workspaceId, workspaceId),
-        ),
+    const update = (client: DatabaseClient) =>
+      client
+        .update(conversationModel)
+        .set(data)
+        .where(
+          and(
+            eq(conversationModel.id, conversationId),
+            eq(conversationModel.workspaceId, workspaceId),
+          ),
+        )
+    // A contact message opening the window starts the response SLA.
+    if (props.humanReplyWindow && "open" in props.humanReplyWindow) {
+      await responseSlaService.trackWindow(
+        { workspaceId, conversationIds: [conversationId], tx: props.tx },
+        update,
       )
+    } else {
+      await update(tx)
+    }
     if (!props.tx) {
       await this.invalidate({ workspaceId, ids: [conversationId] })
     }
@@ -2330,6 +2408,7 @@ class ConversationService extends BaseService {
    * avoid a larger move of `filterConversationConditions` construction.
    */
   async countByAssignee(props: {
+    workspaceId: string
     filterConditions: SQL[]
     userIds: string[]
     inboxTeamIds: string[]
@@ -2341,7 +2420,13 @@ class ConversationService extends BaseService {
       conversationsCount: number
     }>
   > {
-    const { filterConditions, userIds, inboxTeamIds, tx = db } = props
+    const {
+      workspaceId,
+      filterConditions,
+      userIds,
+      inboxTeamIds,
+      tx = db,
+    } = props
     return await tx
       .select({
         assignedUserId: conversationModel.assignedUserId,
@@ -2355,6 +2440,7 @@ class ConversationService extends BaseService {
       )
       .where(
         and(
+          eq(conversationModel.workspaceId, workspaceId),
           ...filterConditions,
           and(
             or(

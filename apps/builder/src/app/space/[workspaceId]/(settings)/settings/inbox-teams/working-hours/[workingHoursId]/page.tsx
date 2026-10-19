@@ -24,10 +24,11 @@ export default async function WorkingHoursEditorPage(props: {
 
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
-  const [t, current, rows] = await Promise.all([
+  const [t, current, rows, dateOverrides] = await Promise.all([
     getTranslations(),
     getCurrentUserAndTargetWorkspace(workspaceId),
     workingHoursService.listByWorkspace({ workspaceId }),
+    workingHoursService.listDateOverrides({ workspaceId, workingHoursId }),
   ])
   // Workspace-scoped list: a foreign or unknown id is simply absent.
   const row = rows.find((candidate) => candidate.id === workingHoursId)
@@ -53,7 +54,7 @@ export default async function WorkingHoursEditorPage(props: {
       <Suspense>
         <WorkingHoursScheduleForm
           timezone={current.targetWorkspace.timezone}
-          workingHours={toWorkingHoursResource(row)}
+          workingHours={toWorkingHoursResource(row, dateOverrides)}
           workspaceId={workspaceId}
         />
       </Suspense>
