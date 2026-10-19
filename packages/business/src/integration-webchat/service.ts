@@ -7,6 +7,7 @@ import {
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
 import type { WebchatPersistentMenu } from "@chatbotx.io/database/partials"
+import { connectionRepository } from "@chatbotx.io/database/repositories"
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import type {
   ConnectionModel,
@@ -420,7 +421,14 @@ class IntegrationWebchatService extends BaseService {
     data: UpdateWebchatData
     tx?: DatabaseClient
   }): Promise<void> {
-    const { workspaceId, id, data, tx = db } = input
+    if (!input.tx) {
+      await db.transaction(async (tx) => {
+        await this.update({ ...input, tx })
+      })
+      return
+    }
+
+    const { workspaceId, id, data, tx } = input
 
     // `welcomeFlowId` is normalized (falsy -> null) and validated as
     // workspace-owned here — not by callers — so the public API and the
@@ -460,6 +468,29 @@ class IntegrationWebchatService extends BaseService {
           eq(integrationWebchatModel.workspaceId, workspaceId),
         ),
       )
+
+    if (data.name === undefined) {
+      return
+    }
+
+    const connection = await connectionRepository.findByProviderSourceId(
+      {
+        workspaceId,
+        provider: "webchat",
+        sourceId: id,
+      },
+      tx,
+    )
+    if (!connection) {
+      return
+    }
+
+    await connectionStateService.updateDisplayName({
+      id: connection.id,
+      workspaceId,
+      displayName: data.name,
+      tx,
+    })
   }
 }
 

@@ -111,7 +111,6 @@ export const connectionsPublicRouter = {
       description:
         "Every channel and integration connection in the workspace — the unified successor to /v1/integrations and the channel-specific list endpoints. Ordered by kind, then provider, then display name. Call `connectionProviders.list` to see what can still be connected, or `connections.create` to connect one.",
       tags: ["Connections"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(withPublicPaging(listConnectionsRequest))
     .output(publicListResponse(connectionResource))
@@ -345,7 +344,6 @@ export const connectSessionsPublicRouter = {
       description:
         "Finishes a multi-account OAuth connect: claims and connects each requested target, one outcome per target (`connected`/`duplicated`/`limitReached`/`failed` — never throws for a single target's failure). A `connected` outcome whose matching `connections[]` entry has `status: \"degraded\"` means the connection was created but the provider's webhook subscription failed (see `detail`); retry via `connections.verify` or `connections.refresh`. 400 if the session is not `awaiting_selection`.",
       tags: ["Connections"],
-      spec: mcpSpec({ visibility: "default" }),
     })
     .input(connectSessionTargetsRequest)
     .output(connectSessionTargetsResource)

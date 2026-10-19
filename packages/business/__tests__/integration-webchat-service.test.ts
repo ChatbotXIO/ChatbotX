@@ -12,6 +12,8 @@ const {
   mockIsCommunity,
   mockCount,
   mockCreateId,
+  mockConnectionFindByProviderSourceId,
+  mockConnectionUpdateDisplayName,
   mockDispatchAuditRecord,
   mockFindActiveFlowById,
   mockFindFirst,
@@ -36,6 +38,8 @@ const {
   const mockFindFirst = vi.fn()
 
   return {
+    mockConnectionFindByProviderSourceId: vi.fn(),
+    mockConnectionUpdateDisplayName: vi.fn(),
     mockUpdate,
     mockUpdateSet,
     mockUpdateWhere,
@@ -59,6 +63,7 @@ const {
     mockResolveWorkspaceAppUrl: vi.fn(async () => "https://app.example.com"),
     mockTransaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
       callback({
+        update: mockUpdate,
         query: { integrationWebchatModel: { findFirst: mockFindFirst } },
       }),
     ),
@@ -96,6 +101,12 @@ vi.mock("@chatbotx.io/database/client", () => ({
     return row
   }),
   relationsFilterToSQL: mockRelationsFilterToSQL,
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  connectionRepository: {
+    findByProviderSourceId: mockConnectionFindByProviderSourceId,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -144,7 +155,10 @@ vi.mock("../src/inbox/service", () => ({
 }))
 
 vi.mock("../src/connection/state-service", () => ({
-  connectionStateService: { disconnectInbox: vi.fn() },
+  connectionStateService: {
+    disconnectInbox: vi.fn(),
+    updateDisplayName: mockConnectionUpdateDisplayName,
+  },
 }))
 
 vi.mock("../src/quota-enforcement/service", () => ({
@@ -196,6 +210,7 @@ describe("integrationWebchatService.createWithWorkspace", () => {
     mockTransaction.mockImplementation(
       async (callback: (tx: unknown) => unknown) =>
         callback({
+          update: mockUpdate,
           query: { integrationWebchatModel: { findFirst: mockFindFirst } },
         }),
     )
@@ -554,6 +569,23 @@ describe("integrationWebchatService.update", () => {
     expect(mockUpdateSet).toHaveBeenCalledWith(
       expect.objectContaining({ name: "Support" }),
     )
+  })
+
+  test("synchronizes the connection display name when the webchat is renamed", async () => {
+    mockConnectionFindByProviderSourceId.mockResolvedValue({ id: "conn-1" })
+
+    await integrationWebchatService.update({
+      workspaceId: "ws-1",
+      id: "webchat-1",
+      data: { name: "Support" },
+    })
+
+    expect(mockConnectionUpdateDisplayName).toHaveBeenCalledWith({
+      id: "conn-1",
+      workspaceId: "ws-1",
+      displayName: "Support",
+      tx: expect.anything(),
+    })
   })
 
   // The public API handler spreads a partial update straight through, so an

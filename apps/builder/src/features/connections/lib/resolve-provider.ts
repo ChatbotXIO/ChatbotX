@@ -153,6 +153,8 @@ const resolveOneProvider = async (input: {
             fields: field.items.fields ? [...field.items.fields] : undefined,
           }
         : undefined,
+      format: field.format,
+      pattern: field.pattern,
       description: field.description,
     }),
   )

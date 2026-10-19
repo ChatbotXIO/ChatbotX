@@ -44,10 +44,17 @@ vi.mock("@chatbotx.io/connections", () => ({
         multiInstance: true,
         configFields: [
           {
-            name: "authorizedDomains",
-            type: "array",
+            name: "welcomeFlowId",
+            type: "string",
             required: false,
-            items: { type: "string" },
+            format: "bigint-string",
+            pattern: "^\\d+$",
+          },
+          {
+            name: "brandColor",
+            type: "string",
+            required: false,
+            pattern: "^#[0-9A-Fa-f]{6}$",
           },
         ],
       },
@@ -184,9 +191,15 @@ describe("listConnectionProviderResources", () => {
       multiInstance: true,
       configFields: [
         {
-          name: "authorizedDomains",
-          type: "array",
-          items: { type: "string" },
+          name: "welcomeFlowId",
+          type: "string",
+          format: "bigint-string",
+          pattern: "^\\d+$",
+        },
+        {
+          name: "brandColor",
+          type: "string",
+          pattern: "^#[0-9A-Fa-f]{6}$",
         },
       ],
     })

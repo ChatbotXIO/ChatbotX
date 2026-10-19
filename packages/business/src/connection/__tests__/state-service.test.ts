@@ -1035,4 +1035,33 @@ describe("ConnectionStateService workspace-scoped reads and display name", () =>
       values: { displayName: "Renamed" },
     })
   })
+
+  test("uses the caller transaction for a display-name update", async () => {
+    const tx = {} as never
+    const existing = baseConnection()
+    const updated = baseConnection({ displayName: "Renamed" })
+    mocks.findByIdForWorkspace.mockResolvedValueOnce(existing)
+    mocks.update.mockResolvedValueOnce(updated)
+
+    await expect(
+      connectionStateService.updateDisplayName({
+        id: "conn-1",
+        workspaceId: "ws-1",
+        displayName: "Renamed",
+        tx,
+      }),
+    ).resolves.toEqual(updated)
+    expect(mocks.findByIdForWorkspace).toHaveBeenCalledWith(
+      { id: "conn-1", workspaceId: "ws-1" },
+      tx,
+    )
+    expect(mocks.update).toHaveBeenCalledWith(
+      {
+        id: "conn-1",
+        workspaceId: "ws-1",
+        values: { displayName: "Renamed" },
+      },
+      tx,
+    )
+  })
 })

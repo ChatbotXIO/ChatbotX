@@ -87,11 +87,9 @@ Tool names are derived from the OpenAPI `operationId` converted to `snake_case` 
 
 | Tool | Description |
 |---|---|
-| `connections_list` | List connections |
 | `connections_create` | Connect channel or integration |
 | `connection_providers_list` | List connection providers |
 | `connect_sessions_get` | Get connect session |
-| `connect_sessions_connect_targets` | Connect selected targets of awaiting_selection session |
 
 For `connections_create` with `provider: "api"`, the response includes a one-time `secret.token`. Store it before discarding the response; it is never retrievable again.
 
