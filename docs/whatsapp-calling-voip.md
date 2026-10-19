@@ -64,16 +64,13 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
    still unanswered it `reject`/`terminate`s Meta and finalizes the DB row (never
    relying on TTL expiry alone).
 
-4. **Realtime targeted, room-bound delivery.** Builder mints a one-time token bound to a
-   verified `{ userId, workspaceId }` (member-only). The `workspaces` party rejects the
-   upgrade when `workspaceId !== room.id` (mirror the privileged room-claim check in
-   `apps/realtime/src/lib/realtime-auth.ts`), tags the connection by verified `userId`
-   (PartyKit `getConnectionTags`), and the server delivers the offer only via
-   `room.getConnections(userTag).send()` — never `broadcast`. Ring-all (#5) delivers
-   the SAME offer to every live rung agent this way — one targeted send per agent, in
-   parallel — never a single workspace-wide broadcast of the SDP. On membership
-   removal the user's tagged sockets are closed; the ≤60 s offer TTL bounds residual
-   exposure. Remove the two realtime token log leaks (`apps/realtime/src/lib/auth.ts`).
+4. **Realtime targeted, workspace-bound delivery.** Builder mints a short-lived
+   token bound to verified `{ userId, workspaceId }` member claims. The uWS
+   gateway verifies the path workspace against the token audience and dispatches
+   the offer only to the targeted member’s local sockets. Ring-all (#5) emits
+   one durable `member-send` record per eligible agent; it never broadcasts SDP
+   to the whole workspace. Member removal emits a revoke record and the
+   short-lived token further bounds stale reconnects.
 
 5. **Ring-all + fenced claim/accept.** Shipped as RING-ALL, not single-agent
    reservation: `whatsappVoipCallService.reserveIncomingCall` creates (or observes, on
