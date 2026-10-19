@@ -5,6 +5,7 @@ import {
   type RealtimeStreamRecord,
 } from "@chatbotx.io/realtime-protocol"
 import type { RealtimeServerCounters } from "./lib/realtime-metrics"
+import { logger } from "./logger"
 
 export type WorkspaceSocketData = RealtimeMemberClaims & {
   activated?: boolean
@@ -167,7 +168,7 @@ export const createRealtimeDelivery = (
   const recordSend = (
     socket: {
       end: (code?: number, reason?: string) => void
-      getUserData: () => { closed: boolean }
+      getUserData: () => { closed: boolean; workspaceId: string }
       send: (data: string) => number
     },
     frame: string,
@@ -193,16 +194,21 @@ export const createRealtimeDelivery = (
   const sendWithResync = (
     socket: {
       end: (code?: number, reason?: string) => void
-      getUserData: () => { closed: boolean }
+      getUserData: () => { closed: boolean; workspaceId: string }
       send: (data: string) => number
     },
     frame: string,
   ): void => {
     try {
       recordSend(socket, frame)
-    } catch {
+    } catch (error) {
+      counters.sendFailures += 1
       try {
         const socketData = socket.getUserData()
+        logger.warn(
+          { err: error, workspaceId: socketData.workspaceId },
+          "Realtime send failed",
+        )
         if (socketData.closed) {
           return
         }

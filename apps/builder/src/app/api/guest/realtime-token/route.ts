@@ -4,6 +4,7 @@ import {
   resolveBroadcastSecret,
   workspaceService,
 } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   extractBearerToken,
   signGuestConnectToken,
@@ -16,6 +17,7 @@ import { zodGuestConversationId } from "@/features/integration-webchat/lib/guest
 import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
 import { getDomainFromHeader } from "@/lib/domain"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
+import { logger } from "@/lib/log"
 import { checkApiRateLimit } from "@/lib/rate-limit/api-rate-limit"
 import {
   checkGuestRateLimit,
@@ -42,6 +44,7 @@ const getBearerToken = (request: NextRequest): string | null =>
   extractBearerToken(request.headers.get("authorization"))
 
 export const POST = async (request: NextRequest) => {
+  let loggedWorkspaceId: string | undefined
   try {
     const input = requestSchema.safeParse(
       await request.json().catch(() => null),
@@ -52,7 +55,7 @@ export const POST = async (request: NextRequest) => {
 
     const { guestConversationId, parentOrigin, webchatId, workspaceId } =
       input.data
-
+    loggedWorkspaceId = workspaceId
     const rateLimit = await checkGuestRateLimit({
       clientIp: getGuestClientIp(request.headers),
       guestConversationId,
@@ -127,6 +130,13 @@ export const POST = async (request: NextRequest) => {
     )
     return NextResponse.json({ token })
   } catch (error) {
-    return serverErrorHandler(error)
+    if (error instanceof ChatbotXException || error instanceof z.ZodError) {
+      return serverErrorHandler(error)
+    }
+    logger.error(
+      { err: error, workspaceId: loggedWorkspaceId },
+      "Failed to issue guest realtime token",
+    )
+    return new NextResponse(null, { status: 503 })
   }
 }

@@ -1,13 +1,15 @@
 // @vitest-environment node
-
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { NextRequest } from "next/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { z } from "zod"
 
 const mocks = vi.hoisted(() => ({
   checkApiRateLimit: vi.fn(),
   checkGuestRateLimit: vi.fn(),
   integrationWebchatServiceFindByIdForWorkspaceOrNull: vi.fn(),
   isWorkspaceScheduledForDeletion: vi.fn(),
+  loggerError: vi.fn(),
   resolveBroadcastSecret: vi.fn(),
   serverErrorHandler: vi.fn(),
   signGuestConnectToken: vi.fn(),
@@ -48,6 +50,9 @@ vi.mock("@/lib/domain", () => ({
 }))
 vi.mock("@/lib/errors/server-handler", () => ({
   serverErrorHandler: mocks.serverErrorHandler,
+}))
+vi.mock("@/lib/log", () => ({
+  logger: { error: mocks.loggerError },
 }))
 
 // Dynamic import required: the route module must load after the vi.mock
@@ -234,9 +239,42 @@ describe("POST /api/guest/realtime-token", () => {
     expect(mocks.signGuestConnectToken).not.toHaveBeenCalled()
   })
 
-  test("returns the server error handler response when a dependency throws", async () => {
-    const error = new Error("rate limit unavailable")
-    mocks.checkGuestRateLimit.mockRejectedValue(error)
+  test("returns 503 without an error body when workspace lookup fails", async () => {
+    const error = new Error("db down")
+    mocks.workspaceServiceFind.mockRejectedValue(error)
+
+    const response = await POST(buildRequest(baseBody()))
+
+    expect(response.status).toBe(503)
+    await expect(response.text()).resolves.toBe("")
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      { err: error, workspaceId: WORKSPACE_ID },
+      "Failed to issue guest realtime token",
+    )
+    expect(mocks.serverErrorHandler).not.toHaveBeenCalled()
+  })
+
+  test("returns 503 without an error body when signing secret resolution fails", async () => {
+    const error = new Error("secret unavailable")
+    mocks.resolveBroadcastSecret.mockImplementation(() => {
+      throw error
+    })
+
+    const response = await POST(buildRequest(baseBody()))
+
+    expect(response.status).toBe(503)
+    await expect(response.text()).resolves.toBe("")
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      { err: error, workspaceId: WORKSPACE_ID },
+      "Failed to issue guest realtime token",
+    )
+  })
+
+  test.each([
+    new ChatbotXException("Known error", "knownError", 400),
+    new z.ZodError([]),
+  ])("delegates expected errors to the server error handler", async (error) => {
+    mocks.workspaceServiceFind.mockRejectedValue(error)
 
     const response = await POST(buildRequest(baseBody()))
 

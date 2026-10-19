@@ -1,5 +1,14 @@
 import { REALTIME_CLOSE_CODE } from "@chatbotx.io/realtime-protocol"
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
+
+const { loggerWarnMock } = vi.hoisted(() => ({
+  loggerWarnMock: vi.fn(),
+}))
+
+vi.mock("../src/logger", () => ({
+  logger: { warn: loggerWarnMock },
+}))
+
 import {
   createRealtimeDelivery,
   type GuestSocketData,
@@ -77,6 +86,7 @@ const createGuestSocket = (
 
 const createDelivery = () => {
   const published: { message: string; topic: string }[] = []
+  const counters = createRealtimeServerCounters()
   const delivery = createRealtimeDelivery(
     {
       publish: (topic, message) => {
@@ -84,9 +94,9 @@ const createDelivery = () => {
         return true
       },
     },
-    createRealtimeServerCounters(),
+    counters,
   )
-  return { delivery, published }
+  return { counters, delivery, published }
 }
 
 const workspaceEntry = (events: unknown[]) => ({
@@ -121,6 +131,30 @@ describe("realtime delivery", () => {
         topic: "ws:workspace-1:all",
       },
     ])
+  })
+
+  test("records, logs, and resyncs a socket when sending fails", () => {
+    const { counters, delivery } = createDelivery()
+    const error = new Error("socket write failed")
+    const socket = createSocket()
+    socket.send = () => {
+      throw error
+    }
+    expect(
+      delivery.replayWorkspaceSocket(socket, [
+        workspaceEntry([{ data: {}, eventType: "messageCreated" }]),
+      ]),
+    ).toBe(false)
+
+    expect(counters.sendFailures).toBe(1)
+    expect(socket.closed).toEqual({
+      code: REALTIME_CLOSE_CODE.resync,
+      reason: "send-failed",
+    })
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      { err: error, workspaceId: "workspace-1" },
+      "Realtime send failed",
+    )
   })
 
   test("delivers one filtered copy to an assigned user who is also on the team", () => {

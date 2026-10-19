@@ -24,6 +24,35 @@ afterEach(() => {
 })
 
 describe("stream reader", () => {
+  test("probes Redis and becomes ready on the first idle start without recovering", async () => {
+    const { promise: ready, resolve: resolveReady } =
+      Promise.withResolvers<void>()
+    const reader = {
+      call: vi.fn().mockResolvedValue("PONG"),
+      disconnect: vi.fn(),
+    }
+    const onReady = vi.fn(() => resolveReady())
+    const onRecovered = vi.fn()
+    const streamReader = createStreamReader({
+      onEntries: () => undefined,
+      onError: () => undefined,
+      onInvalidRecord: () => undefined,
+      onReady,
+      onRecovered,
+      redis: {
+        duplicate: () => reader,
+        xrevrange: vi.fn().mockResolvedValue([]),
+      } as never,
+    })
+
+    streamReader.start()
+    await ready
+    await streamReader.close()
+
+    expect(reader.call).toHaveBeenCalledWith("PING")
+    expect(onReady).toHaveBeenCalledOnce()
+    expect(onRecovered).not.toHaveBeenCalled()
+  })
   test("advances active shard cursors across keys and ignores a stale response", async () => {
     const dispatched: string[] = []
     const { promise: idleRead, resolve: resolveIdleRead } =

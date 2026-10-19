@@ -349,10 +349,12 @@ describe("createRealtimeGateway (live)", () => {
     expect(response.statusCode).toBe(401)
   })
 
-  test("keeps health live and restores readiness after an idle Redis reconnect", async () => {
+  test("keeps health live and becomes ready after the initial Redis probe", async () => {
+    const { promise: initialProbe, resolve: resolveInitialProbe } =
+      Promise.withResolvers<string>()
     let reconnect: (() => void) | undefined
     const reader = {
-      call: vi.fn().mockResolvedValue("PONG"),
+      call: vi.fn(() => initialProbe),
       disconnect: vi.fn(),
       on: vi.fn((event: string, listener: () => void) => {
         if (event === "reconnecting") {
@@ -377,7 +379,13 @@ describe("createRealtimeGateway (live)", () => {
       statusCode: 200,
     })
     await expect(requestHttp(port, "/ready")).resolves.toEqual({
-      statusCode: 200,
+      statusCode: 503,
+    })
+    resolveInitialProbe("PONG")
+    await vi.waitFor(async () => {
+      await expect(requestHttp(port, "/ready")).resolves.toEqual({
+        statusCode: 200,
+      })
     })
     await vi.waitFor(() => expect(reconnect).toBeDefined())
     reconnect?.()
@@ -457,6 +465,103 @@ describe("createRealtimeGateway (live)", () => {
     )
 
     expect(response.statusCode).toBe(503)
+  })
+
+  test("returns 503 and releases admission state when member replay fails", async () => {
+    const redis = createFakeRedis()
+    redis.xrange.mockRejectedValueOnce(new Error("Redis unavailable"))
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        maxConnectionsPerWorkspace: 1,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
+    const port = await gateway.listen("127.0.0.1", 0)
+    const token = await signMemberToken(
+      { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+      SECRET,
+    )
+
+    const response = await requestUpgrade(
+      port,
+      `/rt/workspaces/ws-1?token=${token}&lastSeq=1-0`,
+    )
+
+    expect(response.statusCode).toBe(503)
+
+    const socket = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`,
+    )
+    await waitForOpen(socket)
+    await delay(50)
+    expect(socket.readyState).toBe(WebSocket.OPEN)
+    socket.close()
+    await waitForClose(socket)
+  })
+
+  test("returns 503 and releases admission state when member activation fails", async () => {
+    const redis = createFakeRedis()
+    redis.xrevrange.mockRejectedValueOnce(new Error("Redis unavailable"))
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        maxConnectionsPerWorkspace: 1,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
+    const port = await gateway.listen("127.0.0.1", 0)
+    const token = await signMemberToken(
+      { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+      SECRET,
+    )
+
+    const response = await requestUpgrade(
+      port,
+      `/rt/workspaces/ws-1?token=${token}`,
+    )
+
+    expect(response.statusCode).toBe(503)
+
+    const socket = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`,
+    )
+    await waitForOpen(socket)
+    await delay(50)
+    expect(socket.readyState).toBe(WebSocket.OPEN)
+    socket.close()
+    await waitForClose(socket)
+  })
+
+  test("disconnects Redis when the stream reader fails to close", async () => {
+    const { promise: pendingRead } = Promise.withResolvers<null>()
+    const reader = {
+      call: vi.fn(() => pendingRead),
+      disconnect: vi.fn(() => {
+        throw new Error("reader disconnect failed")
+      }),
+    }
+    const redis = {
+      ...createFakeRedis(),
+      duplicate: () => reader,
+    }
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
+    const port = await gateway.listen("127.0.0.1", 0)
+
+    await expect(requestHttp(port, "/ready")).resolves.toEqual({
+      statusCode: 503,
+    })
+    await expect(gateway.close()).rejects.toThrow("reader disconnect failed")
+
+    expect(redis.disconnect).toHaveBeenCalledTimes(1)
   })
 
   test("closes the Redis connection exactly once", async () => {
@@ -868,7 +973,10 @@ describe("createRealtimeGateway (live)", () => {
     const redis = {
       ...createFakeRedis(),
       duplicate: () => ({
-        call: vi.fn(async () => {
+        call: vi.fn(async (...arguments_: string[]) => {
+          if (arguments_[0] === "PING") {
+            return "PONG"
+          }
           xreadCalls += 1
           if (xreadCalls === 1) {
             resolveInitialReplayRead([])
@@ -939,10 +1047,72 @@ describe("createRealtimeGateway (live)", () => {
 
     const response = await requestUpgrade(
       port,
+
       `/rt/workspaces/ws-1?token=${token}`,
     )
 
     expect(response.statusCode).toBe(401)
+  })
+
+  test("fails closed when the initial revoke check cannot read Redis", async () => {
+    const redis = createFakeRedis()
+    redis.get.mockRejectedValueOnce(new Error("Redis unavailable"))
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
+    const port = await gateway.listen("127.0.0.1", 0)
+    const token = await signMemberToken(
+      { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+      SECRET,
+    )
+
+    const response = await requestUpgrade(
+      port,
+      `/rt/workspaces/ws-1?token=${token}`,
+    )
+
+    expect(response.statusCode).toBe(503)
+    expect(redis.xrevrange).not.toHaveBeenCalled()
+  })
+
+  test("fails closed and releases admission state when the revoke recheck cannot read Redis", async () => {
+    const redis = createFakeRedis()
+    redis.get
+      .mockResolvedValueOnce(null)
+      .mockRejectedValueOnce(new Error("Redis unavailable"))
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        maxConnectionsPerWorkspace: 1,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
+    const port = await gateway.listen("127.0.0.1", 0)
+    const token = await signMemberToken(
+      { chatScope: "all", userId: "user-1", workspaceId: "ws-1" },
+      SECRET,
+    )
+
+    const response = await requestUpgrade(
+      port,
+      `/rt/workspaces/ws-1?token=${token}`,
+    )
+
+    expect(response.statusCode).toBe(503)
+
+    const socket = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/workspaces/ws-1?token=${token}`,
+    )
+    await waitForOpen(socket)
+    await delay(50)
+    expect(socket.readyState).toBe(WebSocket.OPEN)
+    socket.close()
+    await waitForClose(socket)
   })
 
   describe("revoke-marker iatMs boundary", () => {

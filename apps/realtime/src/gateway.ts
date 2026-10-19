@@ -238,6 +238,7 @@ export const createRealtimeGateway = ({
     counters.publishes = 0
     counters.records = 0
     counters.sendBytes = 0
+    counters.sendFailures = 0
     counters.sends = 0
     counters.tokenRejections = 0
     counters.upgrades = 0
@@ -312,8 +313,11 @@ export const createRealtimeGateway = ({
       }
       presenceTimers.clear()
       app.close()
-      await streamReader.close()
-      redis.disconnect()
+      try {
+        await streamReader.close()
+      } finally {
+        redis.disconnect()
+      }
     },
     listen: async (host, port) => {
       const { promise, reject, resolve } = Promise.withResolvers<number>()
@@ -325,7 +329,6 @@ export const createRealtimeGateway = ({
         resolve(uWS.us_socket_local_port(listenSocket))
       })
       const boundPort = await promise
-      ready = true
       heartbeat = setInterval(() => {
         app.publish("hb", HEARTBEAT_FRAME)
       }, 25_000)

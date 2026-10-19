@@ -198,6 +198,7 @@ export const createStreamReader = ({
   let stopped = false
   let loop: Promise<void> | null = null
   let nextRunNeedsIdleProbe = false
+  let hasProbedOnce = false
   const getActiveShards = (): ActiveShard[] => [...activeShards.values()]
 
   const deactivateShard = (shard: number): void => {
@@ -369,8 +370,9 @@ export const createStreamReader = ({
   const run = async (): Promise<void> => {
     reader = redis.duplicate()
     let recoveringFromError = nextRunNeedsIdleProbe
-    let idleProbeNeeded = nextRunNeedsIdleProbe
+    let idleProbeNeeded = nextRunNeedsIdleProbe || !hasProbedOnce
     const markReady = (): void => {
+      hasProbedOnce = true
       onReady()
       if (!recoveringFromError) {
         return

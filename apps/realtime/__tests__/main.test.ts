@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 
 const logger = vi.hoisted(() => ({
   error: vi.fn(),
@@ -9,8 +9,17 @@ vi.mock("../src/logger", () => ({ logger }))
 
 import { createShutdownHandler } from "../src/shutdown"
 
+afterEach(() => {
+  vi.useRealTimers()
+  vi.restoreAllMocks()
+})
+
 describe("realtime gateway shutdown", () => {
   test("closes the gateway once when SIGTERM arrives", async () => {
+    vi.useFakeTimers()
+    const processExit = vi
+      .spyOn(process, "exit")
+      .mockImplementation(() => undefined as never)
     const close = vi.fn().mockResolvedValue(undefined)
     const shutdown = createShutdownHandler({ close })
 
@@ -21,19 +30,35 @@ describe("realtime gateway shutdown", () => {
       { signal: "SIGTERM" },
       "Stopping realtime gateway",
     )
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(processExit).toHaveBeenCalledWith(0)
   })
 
-  test("logs a close failure without rejecting the signal handler", async () => {
+  test("logs a close failure, sets a failing exit code, and forces process exit", async () => {
+    vi.useFakeTimers()
+    const originalExitCode = process.exitCode
+    const processExit = vi
+      .spyOn(process, "exit")
+      .mockImplementation(() => undefined as never)
     const error = new Error("close failed")
     const shutdown = createShutdownHandler({
       close: vi.fn().mockRejectedValue(error),
     })
 
-    await expect(shutdown("SIGINT")).resolves.toBeUndefined()
+    try {
+      await expect(shutdown("SIGINT")).resolves.toBeUndefined()
 
-    expect(logger.error).toHaveBeenCalledWith(
-      { err: error, signal: "SIGINT" },
-      "Error while stopping realtime gateway",
-    )
+      expect(process.exitCode).toBe(1)
+      expect(logger.error).toHaveBeenCalledWith(
+        { err: error, signal: "SIGINT" },
+        "Error while stopping realtime gateway",
+      )
+
+      await vi.advanceTimersByTimeAsync(10_000)
+
+      expect(processExit).toHaveBeenCalledWith(1)
+    } finally {
+      process.exitCode = originalExitCode
+    }
   })
 })

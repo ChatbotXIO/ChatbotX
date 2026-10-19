@@ -10,6 +10,7 @@ export type RealtimeServerCounters = {
   publishes: number
   records: number
   sendBytes: number
+  sendFailures: number
   sends: number
   tokenRejections: number
   upgrades: number
@@ -30,6 +31,7 @@ export const createRealtimeServerCounters = (): RealtimeServerCounters => ({
   publishes: 0,
   records: 0,
   sendBytes: 0,
+  sendFailures: 0,
   sends: 0,
   tokenRejections: 0,
   upgrades: 0,

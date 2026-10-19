@@ -238,38 +238,11 @@ export const createWorkspaceSocketBehavior = <GuestSocketData extends object>({
         if (aborted) {
           return
         }
-        logger.warn(
+        logger.error(
           { err: error, workspaceId },
           "Realtime socket replay or upgrade failed",
         )
-        const fallbackPendingUpgrade = createPendingUpgrade(state, [
-          {
-            key: workspaceId,
-            map: state.memberPendingUpgradesByWorkspace,
-          },
-        ])
-        try {
-          upgradeSocket({
-            context,
-            headers: requestHeaders,
-            res,
-            socketData: {
-              ...claims,
-              activated: false,
-              closeReason: "replay-failed",
-              closed: false,
-              pendingUpgrade: fallbackPendingUpgrade,
-              replayEntries: [],
-              workspaceId,
-            },
-          })
-        } catch (upgradeError) {
-          fallbackPendingUpgrade.release()
-          logger.warn(
-            { err: upgradeError, workspaceId },
-            "Realtime socket upgrade after a replay failure also failed",
-          )
-        }
+        writeStatus(res, "503 Service Unavailable")
       }
     })().catch((error) => {
       logger.error(
