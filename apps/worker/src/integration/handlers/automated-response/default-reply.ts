@@ -88,6 +88,7 @@ export async function triggerDefaultReplyFlow(props: {
         flowId: flow.id,
         triggerMessageId,
         triggerMessageCreatedAt,
+        startedByContactMessage: true,
         origin: webhookChannelOrigin(),
         trackingContext,
       },

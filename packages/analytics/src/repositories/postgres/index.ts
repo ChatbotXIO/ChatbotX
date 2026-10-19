@@ -1,3 +1,4 @@
+export * from "./agent-response-stats.repository"
 export * from "./bot-message-stats.repository"
 export * from "./broadcast-stats.repository"
 export * from "./comment-automation-miss.repository"

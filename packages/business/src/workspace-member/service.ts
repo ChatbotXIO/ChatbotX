@@ -24,6 +24,8 @@ import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
+import { workingHoursCacheTag } from "../working-hours/cache-tag"
+import { workingHoursService } from "../working-hours/service"
 import { workspaceUsageService } from "../workspace-usage/service"
 
 type ListWorkspaceMembersInput = {
@@ -46,6 +48,24 @@ type WorkspaceMemberWithWorkspace = WorkspaceMemberModel & {
 
 export const workspaceMemberCacheTag = (userId: string) =>
   `users:${userId}:workspace-members`
+
+/** Tag of the cached workspace roster (`listByWorkspaceId` and the owner lookup). */
+export const workspaceRosterCacheTag = (workspaceId: string) =>
+  `workspaces:${workspaceId}:workspace-members`
+
+/**
+ * Every cache tag a member removal makes stale. `delete()` invalidates them
+ * after its own commit; a caller that passes its own `tx` must invalidate this
+ * same set after ITS commit (invalidating earlier would race the commit).
+ */
+export const workspaceMemberDeleteCacheTags = (
+  workspaceId: string,
+  userId: string | undefined,
+): string[] => [
+  workingHoursCacheTag(workspaceId),
+  workspaceRosterCacheTag(workspaceId),
+  ...(userId ? [workspaceMemberCacheTag(userId)] : []),
+]
 
 export class WorkspaceMemberService extends BaseService {
   async create(props: {
@@ -104,14 +124,36 @@ export class WorkspaceMemberService extends BaseService {
       with: { user: true },
     })
 
-    await tx
-      .delete(workspaceMemberModel)
-      .where(
-        and(
-          eq(workspaceMemberModel.id, id),
-          eq(workspaceMemberModel.workspaceId, workspaceId),
-        ),
+    // A removed member must not stay on a working-hours schedule (that row has
+    // no FK to WorkspaceMember). Delete both in one transaction: the caller's
+    // when given, otherwise a fresh one.
+    const removeMember = async (client: DatabaseClient) => {
+      await client
+        .delete(workspaceMemberModel)
+        .where(
+          and(
+            eq(workspaceMemberModel.id, id),
+            eq(workspaceMemberModel.workspaceId, workspaceId),
+          ),
+        )
+      if (member) {
+        await workingHoursService.removeMembersForUsers({
+          workspaceId,
+          userIds: [member.userId],
+          tx: client,
+        })
+      }
+    }
+    if (props.tx) {
+      await removeMember(props.tx)
+    } else {
+      await db.transaction(removeMember)
+      // Invalidate only after commit. With a caller-owned `tx` the caller must
+      // invalidate `workspaceMemberDeleteCacheTags(...)` after its own commit.
+      await this.invalidateCacheTags(
+        workspaceMemberDeleteCacheTags(workspaceId, member?.userId),
       )
+    }
 
     await workspaceUsageService
       .decrement(workspaceId, "teamMembers")
@@ -186,7 +228,7 @@ export class WorkspaceMemberService extends BaseService {
       {
         tags: [
           `workspaces:${workspaceId}`,
-          `workspaces:${workspaceId}:workspace-members`,
+          workspaceRosterCacheTag(workspaceId),
         ],
       },
     )
@@ -249,7 +291,7 @@ export class WorkspaceMemberService extends BaseService {
     workspaceId: string
   }): Promise<(WorkspaceMemberModel & { user: UserModel })[]> {
     const { tx = db, workspaceId } = props
-    const key = `workspaces:${workspaceId}:workspace-members`
+    const key = workspaceRosterCacheTag(workspaceId)
 
     return await withCache(
       key,
@@ -264,7 +306,7 @@ export class WorkspaceMemberService extends BaseService {
       {
         tags: [
           `workspaces:${workspaceId}`,
-          `workspaces:${workspaceId}:workspace-members`,
+          workspaceRosterCacheTag(workspaceId),
         ],
       },
     )
@@ -395,7 +437,10 @@ export class WorkspaceMemberService extends BaseService {
 
     // The member's permissions/nav are served from the cached
     // `listByUserId` result; bust it so the change takes effect immediately.
-    await this.invalidateCacheTags(workspaceMemberCacheTag(row.userId))
+    await this.invalidateCacheTags([
+      workspaceMemberCacheTag(row.userId),
+      workspaceRosterCacheTag(workspaceId),
+    ])
 
     return { id: row.id }
   }

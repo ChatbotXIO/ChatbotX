@@ -447,6 +447,7 @@ describe("processWhatsappTemplate", () => {
       contactId: undefined,
       at: createdAt,
       bumpActivity: true,
+      closeHumanReplyWindow: false,
     })
     expect(mockInvalidateTracking).toHaveBeenCalledWith({
       cacheTags: ["contacts:contact-1:contact-inboxes"],

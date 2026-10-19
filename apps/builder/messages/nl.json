@@ -218,6 +218,13 @@
     "averageFirstResponseTimeByAdmin": "Gemiddelde tijd tot eerste reactie door menselijke agents (minuten)",
     "averageFirstResponseTimeByAdminHelp": "De gemiddelde tijd die een menselijke agent nodig heeft om het eerste antwoord op een bericht van een klant te geven.",
     "averageResponseTimeByAdmin": "Gemiddelde reactietijd door menselijke agents (minuten)",
+    "withinWorkingHoursHelp": "Telt alleen de tijd binnen de werktijden van de medewerker; tijd buiten zijn rooster wordt niet meegeteld.",
+    "withinWorkingHoursLabel": "Binnen werktijd",
+    "noResponseData": "Geen gegevens: de medewerker heeft in deze periode geen antwoorden gegeven of heeft geen werktijdenrooster toegewezen gekregen.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Gemiddelde eerste reactietijd binnen werktijd per menselijke medewerker (minuten)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "De gemiddelde tijd binnen werktijd die een menselijke medewerker nodig heeft voor het eerste antwoord op het bericht van een klant.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "Gemiddelde reactietijd binnen werktijd per menselijke medewerker (minuten)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "De gemiddelde tijd binnen werktijd die een menselijke medewerker nodig heeft om op het bericht van een klant te antwoorden.",
     "averageDurationOfConversation": "Gemiddelde gespreksduur (minuten)",
     "averageDurationOfConversationHelp": "De gemiddelde tijd waarin een gesprek door een mens is behandeld voordat het naar de bot werd verplaatst.",
     "success": "Succes",
@@ -8942,6 +8949,41 @@
       "showAll": "{count} meer tonen",
       "showLess": "Minder tonen",
       "clearAll": "Alles wissen"
+    }
+  },
+  "workingHours": {
+    "title": "Werktijden",
+    "label": "Werktijden",
+    "description": "Bepaal wanneer je team beschikbaar is. Reactietijden worden alleen binnen deze uren gemeten.",
+    "employees": "Medewerkers",
+    "empty": "Nog geen werktijden. Voeg een rooster toe om reactietijden alleen binnen werktijd te meten.",
+    "deleteDescription": "\"{name}\" verwijderen? De medewerkers worden weer op kloktijd gemeten. Dit kan niet ongedaan worden gemaakt.",
+    "create": {
+      "title": "Werktijden toevoegen",
+      "description": "Geef het rooster een naam. Daarna stel je de dagen en uren in."
+    },
+    "employeesDialog": {
+      "title": "Werktijden toepassen op medewerkers",
+      "description": "Kies de medewerkers die dit rooster volgen.",
+      "moveHelp": "Een medewerker kan maar één rooster volgen. Wie al op een ander rooster staat, wordt naar dit rooster verplaatst.",
+      "placeholder": "Medewerkers selecteren",
+      "search": "Medewerkers zoeken...",
+      "searchAria": "Zoeken tussen medewerkers",
+      "empty": "Geen medewerkers gevonden.",
+      "close": "Sluiten",
+      "selectAll": "(Alles selecteren)",
+      "clearAllAria": "{count, plural, one {Geselecteerde medewerker wissen} other {Alle {count} geselecteerde medewerkers wissen}}",
+      "removeAria": "{name} uit de selectie verwijderen"
+    },
+    "editor": {
+      "timezoneNote": "Tijden gebruiken de tijdzone van de werkruimte: {timezone}.",
+      "notWorking": "Werkt niet",
+      "dayToggle": "Werkt op {day}",
+      "startTime": "Starttijd",
+      "endTime": "Eindtijd",
+      "removeRange": "Tijdsbereik verwijderen",
+      "errorOverlap": "Deze tijdsbereiken overlappen. Pas ze aan om op te slaan.",
+      "errorOrder": "De eindtijd moet na de starttijd liggen."
     }
   }
 }

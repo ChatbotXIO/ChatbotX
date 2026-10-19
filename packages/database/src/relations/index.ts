@@ -9,6 +9,7 @@ import { aiHandoverBulkRunRelations } from "./ai-handover-bulk-run"
 import { aiHandoverSettingsRelations } from "./ai-handover-settings"
 import { aiMCPServerRelations } from "./ai-mcp-server"
 import {
+  analyticsAgentResponseEventRelations,
   analyticsBotMessageEventRelations,
   analyticsBroadcastEventRelations,
   analyticsContactEventRelations,
@@ -163,6 +164,7 @@ import { whatsappCallPermissionRelations } from "./whatsapp-call-permission"
 import { whatsappFlowRelations } from "./whatsapp-flow"
 import { whatsappMessageTemplateRelations } from "./whatsapp-message-template"
 import { whatsappSignupSessionRelations } from "./whatsapp-signup-session"
+import { workingHoursRelations } from "./working-hours"
 import { workspaceRelations } from "./workspace"
 import { workspaceApiTokenRelations } from "./workspace-api-token"
 import { workspaceMemberRelations } from "./workspace-member"
@@ -334,4 +336,6 @@ export const relations = {
   ...leaderboardRelations,
   ...leaderboardParticipantRelations,
   ...leaderboardAuditLogRelations,
+  ...workingHoursRelations,
+  ...analyticsAgentResponseEventRelations,
 }

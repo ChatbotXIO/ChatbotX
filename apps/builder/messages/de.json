@@ -218,6 +218,13 @@
     "averageFirstResponseTimeByAdmin": "Durchschnittliche erste Antwortzeit menschlicher Agenten (Minuten)",
     "averageFirstResponseTimeByAdminHelp": "Die durchschnittliche Zeit, die ein menschlicher Agent für die erste Antwort auf die Nachricht eines Kunden benötigt.",
     "averageResponseTimeByAdmin": "Durchschnittliche Antwortzeit menschlicher Agenten (Minuten)",
+    "withinWorkingHoursHelp": "Zählt nur die Zeit innerhalb der Arbeitszeiten des Mitarbeiters; Zeit außerhalb seines Zeitplans wird nicht berücksichtigt.",
+    "withinWorkingHoursLabel": "Innerhalb der Arbeitszeit",
+    "noResponseData": "Keine Daten: Der Mitarbeiter hat in diesem Zeitraum keine Antworten gesendet oder ihm ist kein Arbeitszeitplan zugewiesen.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Durchschnittliche erste Antwortzeit innerhalb der Arbeitszeit nach menschlichen Mitarbeitern (Minuten)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Die durchschnittliche Arbeitszeit, die ein menschlicher Mitarbeiter für die erste Antwort auf die Nachricht eines Kunden benötigt.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "Durchschnittliche Antwortzeit innerhalb der Arbeitszeit nach menschlichen Mitarbeitern (Minuten)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "Die durchschnittliche Arbeitszeit, die ein menschlicher Mitarbeiter für die Antwort auf die Nachricht eines Kunden benötigt.",
     "averageDurationOfConversation": "Durchschnittliche Dauer einer Unterhaltung (Minuten)",
     "averageDurationOfConversationHelp": "Die durchschnittliche Zeit, die eine Unterhaltung von einem Menschen bearbeitet wurde, bevor sie an den Bot übergeben wurde.",
     "success": "Erfolg",
@@ -8942,6 +8949,41 @@
       "showAll": "{count} weitere anzeigen",
       "showLess": "Weniger anzeigen",
       "clearAll": "Alle löschen"
+    }
+  },
+  "workingHours": {
+    "title": "Arbeitszeiten",
+    "label": "Arbeitszeiten",
+    "description": "Legen Sie fest, wann Ihr Team erreichbar ist. Antwortzeiten werden nur innerhalb dieser Zeiten gemessen.",
+    "employees": "Mitarbeiter",
+    "empty": "Noch keine Arbeitszeiten. Fügen Sie einen Zeitplan hinzu, um Antwortzeiten nur innerhalb der Arbeitszeit zu messen.",
+    "deleteDescription": "\"{name}\" löschen? Die zugehörigen Mitarbeiter werden wieder nach Echtzeit gemessen. Dies kann nicht rückgängig gemacht werden.",
+    "create": {
+      "title": "Arbeitszeiten hinzufügen",
+      "description": "Geben Sie dem Zeitplan einen Namen. Tage und Uhrzeiten legen Sie als Nächstes fest."
+    },
+    "employeesDialog": {
+      "title": "Arbeitszeiten auf Mitarbeiter anwenden",
+      "description": "Wählen Sie die Mitarbeiter, die diesem Zeitplan folgen.",
+      "moveHelp": "Ein Mitarbeiter kann nur einem Zeitplan folgen. Wer bereits einem anderen Zeitplan zugeordnet ist, wird hierher verschoben.",
+      "placeholder": "Mitarbeiter auswählen",
+      "search": "Mitarbeiter suchen...",
+      "searchAria": "Mitarbeiter durchsuchen",
+      "empty": "Keine Mitarbeiter gefunden.",
+      "close": "Schließen",
+      "selectAll": "(Alle auswählen)",
+      "clearAllAria": "{count, plural, one {Ausgewählten Mitarbeiter entfernen} other {Alle {count} ausgewählten Mitarbeiter entfernen}}",
+      "removeAria": "{name} aus der Auswahl entfernen"
+    },
+    "editor": {
+      "timezoneNote": "Die Zeiten verwenden die Zeitzone des Workspaces: {timezone}.",
+      "notWorking": "Arbeitet nicht",
+      "dayToggle": "Arbeitet am {day}",
+      "startTime": "Startzeit",
+      "endTime": "Endzeit",
+      "removeRange": "Zeitraum entfernen",
+      "errorOverlap": "Diese Zeiträume überschneiden sich. Passen Sie sie zum Speichern an.",
+      "errorOrder": "Die Endzeit muss nach der Startzeit liegen."
     }
   }
 }

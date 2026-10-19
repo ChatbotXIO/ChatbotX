@@ -44,6 +44,7 @@ import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
 import { resolveTenantSettings } from "../platform/settings"
 import { productMessageService } from "../product-message/service"
 import { getPublicFileUrl } from "../utils"
+import { recordAgentReply } from "../working-hours/agent-reply-metric"
 
 type CreateOutgoingInput = (
   | { flowId: string; nodeId?: string }
@@ -226,6 +227,9 @@ export const createOutgoing = async (props: {
   user?: UserModel
 }) => {
   const { conversation, input: parsedInput, user, contactInbox } = props
+  const sender = user
+    ? ({ kind: "agent", userId: user.id } as const)
+    : ({ kind: "other" } as const)
 
   if ("flowId" in parsedInput) {
     // The worker resolves the flow inside the conversation's workspace and
@@ -248,6 +252,16 @@ export const createOutgoing = async (props: {
         nodeId: parsedInput.nodeId,
         sendFrom: "inbox",
       },
+    })
+    // Claimed only after a successful enqueue so a failed send keeps the
+    // window open. An inbox "send flow" counts as a human reply.
+    await recordAgentReply({
+      conversationId: conversation.id,
+      workspaceId: conversation.workspaceId,
+      contactInbox,
+      at: new Date(),
+      sender,
+      eventId: `reply:flow:${createId()}`,
     })
     return null
   }
@@ -371,12 +385,6 @@ export const createOutgoing = async (props: {
       ? await repository.createWithAttachments(messageInput, attachmentInputs)
       : await repository.create(messageInput)
 
-  await conversationService.markAgentReplied({
-    id: targetConversation.id,
-    workspaceId: conversation.workspaceId,
-    at: now,
-  })
-
   await contactInboxService.updateTracking({
     contactInboxId: contactInbox.id,
     contactId: contactInbox.contactId,
@@ -481,6 +489,15 @@ export const createOutgoing = async (props: {
   if (sendChannelMessageError !== undefined) {
     throw sendChannelMessageError
   }
+
+  await recordAgentReply({
+    conversationId: targetConversation.id,
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+    at: now,
+    sender,
+    eventId: `reply:${message.id}`,
+  })
 
   return messageWithAttachments
 }

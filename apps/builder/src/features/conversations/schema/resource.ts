@@ -18,6 +18,9 @@ export const conversationResource = createSelectSchema(conversationModel, {
   id: z.string(),
   contactId: z.string(),
   workspaceId: z.string(),
+}).omit({
+  // Bookkeeping-only column for the human-reply window; not part of the API.
+  awaitingHumanReplyClosedAt: true,
 })
 export type ConversationResource = z.infer<typeof conversationResource>
 

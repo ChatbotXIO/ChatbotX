@@ -368,6 +368,7 @@ describe("triggerDefaultReplyFlow", () => {
           conversationId: conversation.id,
           contactInboxId: contactInbox.id,
           flowId: "flow-1",
+          startedByContactMessage: true,
         }),
       }),
     )

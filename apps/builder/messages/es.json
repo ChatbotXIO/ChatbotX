@@ -218,6 +218,13 @@
     "averageFirstResponseTimeByAdmin": "Tiempo medio de primera respuesta de los agentes humanos (minutos)",
     "averageFirstResponseTimeByAdminHelp": "El tiempo medio que tarda un agente humano en dar la primera respuesta al mensaje de un cliente.",
     "averageResponseTimeByAdmin": "Tiempo medio de respuesta de los agentes humanos (minutos)",
+    "withinWorkingHoursHelp": "Cuenta solo el tiempo dentro del horario laboral del agente; el tiempo fuera de su horario se excluye.",
+    "withinWorkingHoursLabel": "Dentro del horario laboral",
+    "noResponseData": "Sin datos: el agente no tiene respuestas en este periodo o no tiene un horario laboral asignado.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Tiempo medio de primera respuesta dentro del horario laboral por agentes humanos (minutos)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "El tiempo medio, dentro del horario laboral, que tarda un agente humano en dar la primera respuesta al mensaje de un cliente.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "Tiempo medio de respuesta dentro del horario laboral por agentes humanos (minutos)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "El tiempo medio, dentro del horario laboral, que tarda un agente humano en responder al mensaje de un cliente.",
     "averageDurationOfConversation": "Duración media de una conversación (minutos)",
     "averageDurationOfConversationHelp": "Es el tiempo medio durante el que una conversación ha sido atendida por una persona antes de volver al bot.",
     "success": "Éxito",
@@ -8942,6 +8949,41 @@
       "showAll": "Mostrar {count} más",
       "showLess": "Mostrar menos",
       "clearAll": "Borrar todo"
+    }
+  },
+  "workingHours": {
+    "title": "Horario laboral",
+    "label": "Horario laboral",
+    "description": "Define cuándo está disponible tu equipo. Los tiempos de respuesta solo se miden dentro de estas horas.",
+    "employees": "Empleados",
+    "empty": "Aún no hay horarios laborales. Añade un horario para medir los tiempos de respuesta solo dentro del horario laboral.",
+    "deleteDescription": "¿Eliminar \"{name}\"? Sus empleados volverán a medirse en tiempo real. Esta acción no se puede deshacer.",
+    "create": {
+      "title": "Añadir horario laboral",
+      "description": "Ponle un nombre al horario. A continuación definirás los días y las horas."
+    },
+    "employeesDialog": {
+      "title": "Aplicar horario laboral a empleados",
+      "description": "Elige los empleados que siguen este horario.",
+      "moveHelp": "Un empleado solo puede seguir un horario. Quien ya esté en otro horario se moverá a este.",
+      "placeholder": "Seleccionar empleados",
+      "search": "Buscar empleados...",
+      "searchAria": "Buscar entre los empleados",
+      "empty": "No se encontraron empleados.",
+      "close": "Cerrar",
+      "selectAll": "(Seleccionar todo)",
+      "clearAllAria": "{count, plural, one {Quitar el empleado seleccionado} other {Quitar los {count} empleados seleccionados}}",
+      "removeAria": "Quitar a {name} de la selección"
+    },
+    "editor": {
+      "timezoneNote": "Las horas usan la zona horaria del espacio de trabajo: {timezone}.",
+      "notWorking": "No trabaja",
+      "dayToggle": "Trabaja el {day}",
+      "startTime": "Hora de inicio",
+      "endTime": "Hora de fin",
+      "removeRange": "Quitar intervalo",
+      "errorOverlap": "Estos intervalos se solapan. Ajústalos para guardar.",
+      "errorOrder": "La hora de fin debe ser posterior a la hora de inicio."
     }
   }
 }

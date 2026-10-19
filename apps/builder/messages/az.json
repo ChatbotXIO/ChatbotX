@@ -260,6 +260,13 @@
     "averageFirstResponseTimeByAdmin": "Operatorların orta ilk cavab müddəti (dəqiqə)",
     "averageFirstResponseTimeByAdminHelp": "Operatorun müştərinin mesajına ilk cavabı verməsi üçün sərf etdiyi orta müddət.",
     "averageResponseTimeByAdmin": "Operatorların orta cavab müddəti (dəqiqə)",
+    "withinWorkingHoursHelp": "Yalnız əməkdaşın iş saatları daxilindəki vaxtı sayır; cədvəlindən kənar vaxt nəzərə alınmır.",
+    "withinWorkingHoursLabel": "İş saatları daxilində",
+    "noResponseData": "Məlumat yoxdur: əməkdaşın bu dövrdə cavabı yoxdur və ya ona iş saatları cədvəli təyin edilməyib.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "İnsan əməkdaşlar üzrə iş saatları daxilində orta ilk cavab vaxtı (dəqiqə)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "İnsan əməkdaşın müştərinin mesajına ilk cavabı verməsi üçün iş saatları daxilində sərf etdiyi orta vaxt.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "İnsan əməkdaşlar üzrə iş saatları daxilində orta cavab vaxtı (dəqiqə)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "İnsan əməkdaşın müştərinin mesajına cavab verməsi üçün iş saatları daxilində sərf etdiyi orta vaxt.",
     "averageDurationOfConversation": "Söhbətin orta müddəti (dəqiqə)",
     "averageDurationOfConversationHelp": "Söhbət bota ötürülənədək operatorun onu idarə etdiyi orta müddət.",
     "success": "Uğurlu",
@@ -8942,6 +8949,41 @@
       "showAll": "Daha {count} göstər",
       "showLess": "Az göstər",
       "clearAll": "Hamısını təmizlə"
+    }
+  },
+  "workingHours": {
+    "title": "İş saatları",
+    "label": "İş saatları",
+    "description": "Komandanızın əlçatan olduğu vaxtı müəyyən edin. Cavab vaxtı yalnız bu saatlar daxilində ölçülür.",
+    "employees": "İşçilər",
+    "empty": "Hələ iş saatı yoxdur. Cavab vaxtını yalnız iş vaxtı daxilində ölçmək üçün cədvəl əlavə edin.",
+    "deleteDescription": "\"{name}\" silinsin? Onun işçiləri yenidən real vaxtla ölçüləcək. Bu əməliyyatı geri qaytarmaq olmaz.",
+    "create": {
+      "title": "İş saatları əlavə et",
+      "description": "Cədvələ ad verin. Günləri və saatları növbəti addımda təyin edəcəksiniz."
+    },
+    "employeesDialog": {
+      "title": "İş saatlarını işçilərə tətbiq et",
+      "description": "Bu cədvəli izləyən işçiləri seçin.",
+      "moveHelp": "İşçi yalnız bir cədvəli izləyə bilər. Başqa cədvəldə olanlar bu cədvələ keçirilir.",
+      "placeholder": "İşçiləri seçin",
+      "search": "İşçiləri axtar...",
+      "searchAria": "İşçilər arasında axtar",
+      "empty": "İşçi tapılmadı.",
+      "close": "Bağla",
+      "selectAll": "(Hamısını seç)",
+      "clearAllAria": "{count, plural, one {Seçilmiş işçini təmizlə} other {Seçilmiş {count} işçinin hamısını təmizlə}}",
+      "removeAria": "{name} seçimdən çıxar"
+    },
+    "editor": {
+      "timezoneNote": "Vaxtlar iş sahəsinin saat qurşağını istifadə edir: {timezone}.",
+      "notWorking": "İşləmir",
+      "dayToggle": "{day} günü işləyir",
+      "startTime": "Başlama vaxtı",
+      "endTime": "Bitmə vaxtı",
+      "removeRange": "Vaxt aralığını sil",
+      "errorOverlap": "Bu vaxt aralıqları üst-üstə düşür. Saxlamaq üçün onları dəyişin.",
+      "errorOrder": "Bitmə vaxtı başlama vaxtından sonra olmalıdır."
     }
   }
 }

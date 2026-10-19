@@ -63,6 +63,16 @@ vi.mock("../src/conversation/service", () => ({
   },
 }))
 
+vi.mock("../src/workspace/service", () => ({
+  workspaceService: { find: vi.fn() },
+}))
+
+vi.mock("../src/working-hours/service", () => ({
+  workingHoursService: { findForAgent: vi.fn() },
+}))
+
+vi.mock("@chatbotx.io/event-bus", () => ({ emit: vi.fn() }))
+
 vi.mock("../src/product-message/service", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../src/product-message/service")>()

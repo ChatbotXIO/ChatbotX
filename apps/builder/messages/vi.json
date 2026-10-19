@@ -260,6 +260,13 @@
     "averageFirstResponseTimeByAdmin": "Thời gian phản hồi đầu tiên trung bình của nhân viên hỗ trợ (Phút)",
     "averageFirstResponseTimeByAdminHelp": "Thời gian trung bình mà một nhân viên mất để cung cấp phản hồi ban đầu cho tin nhắn của khách hàng.",
     "averageResponseTimeByAdmin": "Thời gian phản hồi trung bình của nhân viên hỗ trợ (Phút)",
+    "withinWorkingHoursHelp": "Chỉ tính thời gian nằm trong giờ làm việc của nhân viên; thời gian ngoài lịch làm việc không được tính.",
+    "withinWorkingHoursLabel": "Trong giờ làm việc",
+    "noResponseData": "Không có dữ liệu: nhân viên chưa có phản hồi nào trong kỳ này hoặc chưa được gán lịch giờ làm việc.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Thời gian phản hồi đầu tiên trung bình trong giờ làm việc của nhân viên hỗ trợ (Phút)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Thời gian trung bình trong giờ làm việc mà nhân viên hỗ trợ mất để gửi phản hồi đầu tiên cho tin nhắn của khách hàng.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "Thời gian phản hồi trung bình trong giờ làm việc của nhân viên hỗ trợ (Phút)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "Thời gian trung bình trong giờ làm việc mà nhân viên hỗ trợ mất để trả lời tin nhắn của khách hàng.",
     "averageDurationOfConversation": "Thời lượng trung bình của cuộc trò chuyện (Phút)",
     "averageDurationOfConversationHelp": "Đây là thời gian trung bình mà một cuộc trò chuyện được xử lý bởi con người trước khi được chuyển cho bot.",
     "success": "Thành công",
@@ -8942,6 +8949,41 @@
       "showAll": "Xem thêm {count} ngày",
       "showLess": "Thu gọn",
       "clearAll": "Xoá tất cả"
+    }
+  },
+  "workingHours": {
+    "title": "Giờ làm việc",
+    "label": "Giờ làm việc",
+    "description": "Xác định thời gian đội ngũ của bạn có mặt. Thời gian phản hồi chỉ được tính trong các khung giờ này.",
+    "employees": "Nhân viên",
+    "empty": "Chưa có giờ làm việc nào. Hãy thêm lịch để chỉ đo thời gian phản hồi trong giờ làm việc.",
+    "deleteDescription": "Xóa \"{name}\"? Nhân viên thuộc lịch này sẽ được đo theo thời gian thực như trước. Hành động này không thể hoàn tác.",
+    "create": {
+      "title": "Thêm giờ làm việc",
+      "description": "Đặt tên cho lịch. Bạn sẽ thiết lập ngày và giờ ở bước tiếp theo."
+    },
+    "employeesDialog": {
+      "title": "Áp dụng giờ làm việc cho nhân viên",
+      "description": "Chọn những nhân viên làm theo lịch này.",
+      "moveHelp": "Mỗi nhân viên chỉ theo một lịch. Người đang ở lịch khác sẽ được chuyển sang lịch này.",
+      "placeholder": "Chọn nhân viên",
+      "search": "Tìm nhân viên...",
+      "searchAria": "Tìm trong danh sách nhân viên",
+      "empty": "Không tìm thấy nhân viên.",
+      "close": "Đóng",
+      "selectAll": "(Chọn tất cả)",
+      "clearAllAria": "{count, plural, one {Bỏ chọn nhân viên đã chọn} other {Bỏ chọn tất cả {count} nhân viên đã chọn}}",
+      "removeAria": "Bỏ {name} khỏi lựa chọn"
+    },
+    "editor": {
+      "timezoneNote": "Giờ được tính theo múi giờ của workspace: {timezone}.",
+      "notWorking": "Không làm việc",
+      "dayToggle": "Làm việc vào {day}",
+      "startTime": "Giờ bắt đầu",
+      "endTime": "Giờ kết thúc",
+      "removeRange": "Xóa khung giờ",
+      "errorOverlap": "Các khung giờ này bị chồng lấn. Hãy chỉnh lại để lưu.",
+      "errorOrder": "Giờ kết thúc phải sau giờ bắt đầu."
     }
   }
 }

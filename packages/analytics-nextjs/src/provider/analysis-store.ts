@@ -1,4 +1,5 @@
 import type {
+  AgentResponseSeriesRow,
   BotMessageStats,
   CommentAutomationTimeseriesRow,
   ContactCountsSchema,
@@ -79,6 +80,7 @@ export type AnalysisState = {
   uniqueConversationsByAdmin: UniqueConversationsByAdminStats[]
   messagesByAdmin: MessagesByAdminStats[]
   humanAgentStats: HumanAgentStats[]
+  agentResponseSeries: AgentResponseSeriesRow[]
 
   // reflink stats
   refLinkStats: RefLinkTimeseriesRow[]
@@ -142,6 +144,7 @@ export type AnalysisActions = {
   getUniqueConversationsByAdmin: () => Promise<void>
   getMessagesByAdmin: () => Promise<void>
   getHumanAgentStats: () => Promise<void>
+  getAgentResponseSeries: () => Promise<void>
 
   getRefLinkStats: () => Promise<void>
   getReflinkContacts: () => Promise<void>
@@ -195,6 +198,7 @@ const DASHBOARD_LOAD_ACTIONS = {
     "getMessagesBySender",
     "getConversationHandoffs",
     "getHumanAgentStats",
+    "getAgentResponseSeries",
     "getUniqueConversationsByAdmin",
     "getMessagesByAdmin",
     "getConversationAssignedByAdmin",
@@ -295,6 +299,7 @@ export const createAnalysisStore = (
       uniqueConversationsByAdmin: [],
       messagesByAdmin: [],
       humanAgentStats: [],
+      agentResponseSeries: [],
 
       // Default reflink stats
       refLinkStats: [],
@@ -627,6 +632,13 @@ export const createAnalysisStore = (
           "getHumanAgentStats",
           () => get().api.humanAgentStatsAnalyticsAPI(rangeParams()),
           ({ data: humanAgentStats }) => ({ humanAgentStats }),
+        ),
+
+      getAgentResponseSeries: () =>
+        runGuarded(
+          "getAgentResponseSeries",
+          () => get().api.agentResponseSeriesAnalyticsAPI(rangeParams()),
+          ({ data: agentResponseSeries }) => ({ agentResponseSeries }),
         ),
 
       // `linkId`/`timezone` are only present in `defaultSearchParams` when the

@@ -22,6 +22,7 @@ export const analyticsDashboardEventTypeSchema = z.enum([
   "conversation:archived",
   "conversation:unarchived",
   "message:bot_received",
+  "agent:replied",
 ])
 export type AnalyticsDashboardEventType = z.infer<
   typeof analyticsDashboardEventTypeSchema
@@ -157,6 +158,31 @@ export type MessageBotReceivedEventPayload = z.infer<
   typeof messageBotReceivedEventSchema
 >
 
+/**
+ * A human agent's reply closed a conversation's waiting window. Computed at
+ * the source (working-hours schedule in force at reply time); the consumer is
+ * a plain insert.
+ */
+export const agentRepliedEventSchema = z.object({
+  eventType: z.literal("agent:replied"),
+  /** `reply:<messageId>` or `reply:flow:<id>`; dedupes redelivery. */
+  eventId: z.string(),
+  workspaceId: z.string(),
+  conversationId: z.string(),
+  contactId: z.string(),
+  adminId: z.string(),
+  occurredAt: z.union([z.date(), z.string(), z.number()]),
+  awaitingSince: z.union([z.date(), z.string(), z.number()]),
+  measuredFrom: z.union([z.date(), z.string(), z.number()]),
+  responseSeconds: z.number().int().nonnegative(),
+  workingResponseSeconds: z.number().int().nonnegative().nullable(),
+  workingHoursId: z.string().nullable(),
+  isFirstResponse: z.boolean(),
+  channel: z.string().nullish(),
+  inboxId: z.string().nullish(),
+})
+export type AgentRepliedEventPayload = z.infer<typeof agentRepliedEventSchema>
+
 export const analyticsDashboardEventSchema = z.discriminatedUnion("eventType", [
   contactCreatedEventSchema,
   contactDeletedEventSchema,
@@ -173,6 +199,7 @@ export const analyticsDashboardEventSchema = z.discriminatedUnion("eventType", [
   conversationArchivedEventSchema,
   conversationUnarchivedEventSchema,
   messageBotReceivedEventSchema,
+  agentRepliedEventSchema,
 ])
 export type AnalyticsDashboardEvent = z.infer<
   typeof analyticsDashboardEventSchema

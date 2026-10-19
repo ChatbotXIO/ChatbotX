@@ -324,6 +324,8 @@ export async function processWhatsappTemplate(
         contactId: contactInbox.contactId,
         at: createdMessage.createdAt,
         bumpActivity: !isBulkOutbound,
+        // Template sends are proactive, never a reply to the last message.
+        closeHumanReplyWindow: false,
       })
     if (trackingInvalidation) {
       await contactInboxService.invalidateTracking(trackingInvalidation)

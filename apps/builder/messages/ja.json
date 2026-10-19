@@ -218,6 +218,13 @@
     "averageFirstResponseTimeByAdmin": "有人エージェント別の平均初回応答時間（分）",
     "averageFirstResponseTimeByAdminHelp": "有人エージェントが顧客のメッセージに最初の返信をするまでの平均時間です。",
     "averageResponseTimeByAdmin": "有人エージェント別の平均応答時間（分）",
+    "withinWorkingHoursHelp": "エージェントの勤務時間内の時間のみを集計し、スケジュール外の時間は除外されます。",
+    "withinWorkingHoursLabel": "勤務時間内",
+    "noResponseData": "データなし：この期間に返信がないか、勤務時間スケジュールが割り当てられていません。",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "有人エージェント別の勤務時間内の平均初回応答時間（分）",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "有人エージェントが顧客のメッセージに最初の返信をするまでにかかった勤務時間内の平均時間。",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "有人エージェント別の勤務時間内の平均応答時間（分）",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "有人エージェントが顧客のメッセージに返信するまでにかかった勤務時間内の平均時間。",
     "averageDurationOfConversation": "会話の平均時間（分）",
     "averageDurationOfConversationHelp": "会話がボットに戻されるまでに有人対応された平均時間です。",
     "success": "成功",
@@ -8942,6 +8949,41 @@
       "showAll": "さらに{count}件を表示",
       "showLess": "表示を減らす",
       "clearAll": "すべてクリア"
+    }
+  },
+  "workingHours": {
+    "title": "勤務時間",
+    "label": "勤務時間",
+    "description": "チームが対応可能な時間を設定します。返信時間はこの時間内のみ計測されます。",
+    "employees": "従業員",
+    "empty": "勤務時間はまだありません。スケジュールを追加すると、勤務時間内のみ返信時間を計測できます。",
+    "deleteDescription": "「{name}」を削除しますか？所属する従業員は再び実時間で計測されます。この操作は元に戻せません。",
+    "create": {
+      "title": "勤務時間を追加",
+      "description": "スケジュールに名前を付けてください。曜日と時間は次に設定します。"
+    },
+    "employeesDialog": {
+      "title": "従業員に勤務時間を適用",
+      "description": "このスケジュールに従う従業員を選択してください。",
+      "moveHelp": "従業員は1つのスケジュールにのみ所属できます。すでに別のスケジュールにいる場合は、こちらに移動されます。",
+      "placeholder": "従業員を選択",
+      "search": "従業員を検索...",
+      "searchAria": "従業員を検索します",
+      "empty": "従業員が見つかりません。",
+      "close": "閉じる",
+      "selectAll": "（すべて選択）",
+      "clearAllAria": "{count, plural, one {選択中の従業員を解除} other {選択中の{count}人の従業員をすべて解除}}",
+      "removeAria": "{name}を選択から外す"
+    },
+    "editor": {
+      "timezoneNote": "時間はワークスペースのタイムゾーン（{timezone}）で表示されます。",
+      "notWorking": "勤務なし",
+      "dayToggle": "{day}に勤務",
+      "startTime": "開始時刻",
+      "endTime": "終了時刻",
+      "removeRange": "時間帯を削除",
+      "errorOverlap": "これらの時間帯が重複しています。保存するには修正してください。",
+      "errorOrder": "終了時刻は開始時刻より後にしてください。"
     }
   }
 }

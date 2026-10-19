@@ -1,5 +1,9 @@
-import { conversationAnalyticsService } from "@chatbotx.io/analytics"
 import {
+  agentResponseAnalyticsService,
+  conversationAnalyticsService,
+} from "@chatbotx.io/analytics"
+import {
+  getAgentResponseSeriesResponseSchema,
   getConversationArchivedResponseSchema,
   getConversationAssignedByAdminResponseSchema,
   getConversationAssignedResponseSchema,
@@ -12,6 +16,25 @@ import { os } from "@orpc/server"
 import { logger } from "../lib/log"
 
 export const analyticsConversationRoutes = os.router({
+  agentResponseSeriesAnalyticsAPI: os
+    .route({
+      method: "GET",
+      path: "/analytics/agent-response-series",
+      summary: "Get agent response time series",
+      tags: ["Analytics"],
+    })
+    .input(timeRangeQueryWithFilterSchema)
+    .output(getAgentResponseSeriesResponseSchema)
+    .handler(async ({ input }) => {
+      try {
+        const data =
+          await agentResponseAnalyticsService.getAgentResponseSeries(input)
+        return { data }
+      } catch (error) {
+        logger.error({ err: error }, "[analytics:agentResponseSeries] failed")
+        throw error
+      }
+    }),
   conversationHandoffsAnalyticsAPI: os
     .route({
       method: "GET",

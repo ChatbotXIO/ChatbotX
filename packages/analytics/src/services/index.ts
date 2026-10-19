@@ -1,3 +1,4 @@
+export * from "./agent-response-analytics.service"
 export * from "./bot-message-analytics.service"
 export * from "./broadcast-analytics.service"
 export * from "./comment-automation-analytics.service"

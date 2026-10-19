@@ -218,6 +218,13 @@
     "averageFirstResponseTimeByAdmin": "Ihmisagenttien ensimmäisen vastauksen keskimääräinen aika (minuuttia)",
     "averageFirstResponseTimeByAdminHelp": "Keskimääräinen aika, joka ihmisagentilta kuluu ensimmäisen vastauksen antamiseen asiakkaan viestiin.",
     "averageResponseTimeByAdmin": "Ihmisagenttien keskimääräinen vastausaika (minuuttia)",
+    "withinWorkingHoursHelp": "Laskee vain työntekijän työaikaan kuuluvan ajan; aikataulun ulkopuolinen aika jätetään pois.",
+    "withinWorkingHoursLabel": "Työajan sisällä",
+    "noResponseData": "Ei tietoja: työntekijällä ei ole vastauksia tällä jaksolla tai hänelle ei ole määritetty työaikataulua.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Keskimääräinen ensimmäinen vastausaika työajan sisällä ihmistyöntekijöittäin (minuuttia)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Keskimääräinen työajan sisällä kuluva aika, jonka ihmistyöntekijä tarvitsee asiakkaan viestiin annettavaan ensimmäiseen vastaukseen.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "Keskimääräinen vastausaika työajan sisällä ihmistyöntekijöittäin (minuuttia)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "Keskimääräinen työajan sisällä kuluva aika, jonka ihmistyöntekijä tarvitsee vastatakseen asiakkaan viestiin.",
     "averageDurationOfConversation": "Keskustelun keskimääräinen kesto (minuuttia)",
     "averageDurationOfConversationHelp": "Keskimääräinen aika, jonka ihminen on käsitellyt keskustelua ennen sen siirtämistä botille.",
     "success": "Onnistui",
@@ -8942,6 +8949,41 @@
       "showAll": "Näytä {count} lisää",
       "showLess": "Näytä vähemmän",
       "clearAll": "Tyhjennä kaikki"
+    }
+  },
+  "workingHours": {
+    "title": "Työajat",
+    "label": "Työajat",
+    "description": "Määritä, milloin tiimisi on tavoitettavissa. Vasteajat mitataan vain näiden aikojen sisällä.",
+    "employees": "Työntekijät",
+    "empty": "Työaikoja ei ole vielä. Lisää aikataulu, jotta vasteajat mitataan vain työajan sisällä.",
+    "deleteDescription": "Poistetaanko \"{name}\"? Sen työntekijöiden vasteaika mitataan jälleen kellonajan mukaan. Toimintoa ei voi perua.",
+    "create": {
+      "title": "Lisää työajat",
+      "description": "Anna aikataululle nimi. Päivät ja kellonajat asetetaan seuraavaksi."
+    },
+    "employeesDialog": {
+      "title": "Käytä työaikoja työntekijöille",
+      "description": "Valitse työntekijät, jotka noudattavat tätä aikataulua.",
+      "moveHelp": "Työntekijä voi noudattaa vain yhtä aikataulua. Toisessa aikataulussa oleva siirretään tähän.",
+      "placeholder": "Valitse työntekijät",
+      "search": "Hae työntekijöitä...",
+      "searchAria": "Hae työntekijöiden joukosta",
+      "empty": "Työntekijöitä ei löytynyt.",
+      "close": "Sulje",
+      "selectAll": "(Valitse kaikki)",
+      "clearAllAria": "{count, plural, one {Tyhjennä valittu työntekijä} other {Tyhjennä kaikki {count} valittua työntekijää}}",
+      "removeAria": "Poista {name} valinnasta"
+    },
+    "editor": {
+      "timezoneNote": "Ajat käyttävät työtilan aikavyöhykettä: {timezone}.",
+      "notWorking": "Ei töissä",
+      "dayToggle": "Työskentelee: {day}",
+      "startTime": "Alkamisaika",
+      "endTime": "Päättymisaika",
+      "removeRange": "Poista aikaväli",
+      "errorOverlap": "Nämä aikavälit menevät päällekkäin. Muokkaa niitä tallentaaksesi.",
+      "errorOrder": "Päättymisajan on oltava alkamisajan jälkeen."
     }
   }
 }

@@ -155,6 +155,7 @@ async function executeRichAction(
         conversationId: context.conversationId,
         contactId: context.contactId,
         reason: "user_requested_human",
+        reopenUnansweredHumanReplyWindow: true,
         source: "ai_system_tool",
         channel: context.channel,
         inboxId: context.inboxId,

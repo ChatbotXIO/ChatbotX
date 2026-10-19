@@ -218,6 +218,13 @@
     "averageFirstResponseTimeByAdmin": "متوسط وقت الرد الأول من قبل الموظفين البشريين (بالدقائق)",
     "averageFirstResponseTimeByAdminHelp": "متوسط الوقت الذي يستغرقه الموظف البشري لتقديم الرد الأولي على رسالة العميل.",
     "averageResponseTimeByAdmin": "متوسط وقت الرد من قبل الموظفين البشريين (بالدقائق)",
+    "withinWorkingHoursHelp": "يحتسب فقط الوقت ضمن ساعات عمل الموظف؛ أما الوقت خارج جدوله فلا يُحتسب.",
+    "withinWorkingHoursLabel": "ضمن ساعات العمل",
+    "noResponseData": "لا توجد بيانات: ليس لدى الموظف ردود في هذه الفترة أو لم يتم تعيين جدول ساعات عمل له.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "متوسط وقت الاستجابة الأولى ضمن ساعات العمل حسب الموظفين البشر (بالدقائق)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "متوسط الوقت ضمن ساعات العمل الذي يستغرقه الموظف البشري لتقديم الرد الأول على رسالة العميل.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "متوسط وقت الاستجابة ضمن ساعات العمل حسب الموظفين البشر (بالدقائق)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "متوسط الوقت ضمن ساعات العمل الذي يستغرقه الموظف البشري للرد على رسالة العميل.",
     "averageDurationOfConversation": "متوسط مدة المحادثة (بالدقائق)",
     "averageDurationOfConversationHelp": "هو متوسط الوقت الذي تتم فيه معالجة المحادثة من قبل شخص قبل نقلها إلى البوت.",
     "success": "نجاح",
@@ -8942,6 +8949,41 @@
       "showAll": "عرض {count} أخرى",
       "showLess": "عرض أقل",
       "clearAll": "مسح الكل"
+    }
+  },
+  "workingHours": {
+    "title": "ساعات العمل",
+    "label": "ساعات العمل",
+    "description": "حدّد الأوقات التي يكون فيها فريقك متاحًا. يتم قياس أوقات الرد ضمن هذه الساعات فقط.",
+    "employees": "الموظفون",
+    "empty": "لا توجد ساعات عمل بعد. أضف جدولًا لقياس أوقات الرد ضمن ساعات العمل فقط.",
+    "deleteDescription": "هل تريد حذف \"{name}\"؟ سيتم قياس موظفيه مجددًا حسب الوقت الفعلي. لا يمكن التراجع عن هذا الإجراء.",
+    "create": {
+      "title": "إضافة ساعات عمل",
+      "description": "أعطِ الجدول اسمًا. ستحدد الأيام والساعات في الخطوة التالية."
+    },
+    "employeesDialog": {
+      "title": "تطبيق ساعات العمل على الموظفين",
+      "description": "اختر الموظفين الذين يتبعون هذا الجدول.",
+      "moveHelp": "يمكن للموظف اتباع جدول واحد فقط. سيتم نقل أي شخص موجود في جدول آخر إلى هذا الجدول.",
+      "placeholder": "اختر الموظفين",
+      "search": "ابحث عن الموظفين...",
+      "searchAria": "البحث في الموظفين",
+      "empty": "لم يتم العثور على موظفين.",
+      "close": "إغلاق",
+      "selectAll": "(تحديد الكل)",
+      "clearAllAria": "{count, plural, one {مسح الموظف المحدد} other {مسح جميع الموظفين المحددين ({count})}}",
+      "removeAria": "إزالة {name} من التحديد"
+    },
+    "editor": {
+      "timezoneNote": "تستخدم الأوقات المنطقة الزمنية لمساحة العمل: {timezone}.",
+      "notWorking": "غير متاح للعمل",
+      "dayToggle": "العمل يوم {day}",
+      "startTime": "وقت البدء",
+      "endTime": "وقت الانتهاء",
+      "removeRange": "إزالة النطاق الزمني",
+      "errorOverlap": "هذه النطاقات الزمنية متداخلة. عدّلها للحفظ.",
+      "errorOrder": "يجب أن يكون وقت الانتهاء بعد وقت البدء."
     }
   }
 }

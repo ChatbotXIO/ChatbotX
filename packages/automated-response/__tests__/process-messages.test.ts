@@ -72,6 +72,7 @@ describe("processPendingMessages", () => {
         messageId: "message-1",
         text: "price",
         triggerType: "contact_message_in",
+        startedByContactMessage: true,
       }),
     )
   })

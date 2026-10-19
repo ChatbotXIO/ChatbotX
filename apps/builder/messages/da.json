@@ -218,6 +218,13 @@
     "averageFirstResponseTimeByAdmin": "Menneskelige agenters gennemsnitlige tid til første svar (minutter)",
     "averageFirstResponseTimeByAdminHelp": "Den gennemsnitlige tid, det tager en menneskelig agent at give det første svar på en kundes besked.",
     "averageResponseTimeByAdmin": "Menneskelige agenters gennemsnitlige svartid (minutter)",
+    "withinWorkingHoursHelp": "Tæller kun tid inden for medarbejderens arbejdstid; tid uden for vedkommendes skema er udeladt.",
+    "withinWorkingHoursLabel": "Inden for arbejdstid",
+    "noResponseData": "Ingen data: medarbejderen har ingen svar i denne periode, eller der er ikke tildelt et arbejdstidsskema.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Gennemsnitlig første svartid inden for arbejdstid pr. menneskelig medarbejder (minutter)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Den gennemsnitlige tid inden for arbejdstid, som en menneskelig medarbejder bruger på at give det første svar på en kundes besked.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "Gennemsnitlig svartid inden for arbejdstid pr. menneskelig medarbejder (minutter)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "Den gennemsnitlige tid inden for arbejdstid, som en menneskelig medarbejder bruger på at svare på en kundes besked.",
     "averageDurationOfConversation": "Gennemsnitlig samtalevarighed (minutter)",
     "averageDurationOfConversationHelp": "Den gennemsnitlige tid, en samtale er blevet håndteret af et menneske, før den flyttes til botten.",
     "success": "Succes",
@@ -8942,6 +8949,41 @@
       "showAll": "Vis {count} flere",
       "showLess": "Vis færre",
       "clearAll": "Ryd alle"
+    }
+  },
+  "workingHours": {
+    "title": "Arbejdstider",
+    "label": "Arbejdstider",
+    "description": "Angiv, hvornår dit team er tilgængeligt. Svartider måles kun inden for disse timer.",
+    "employees": "Medarbejdere",
+    "empty": "Ingen arbejdstider endnu. Tilføj en plan for kun at måle svartider inden for arbejdstiden.",
+    "deleteDescription": "Slet \"{name}\"? Dens medarbejdere bliver igen målt på almindelig tid. Dette kan ikke fortrydes.",
+    "create": {
+      "title": "Tilføj arbejdstider",
+      "description": "Giv planen et navn. Du angiver dage og tidspunkter næste gang."
+    },
+    "employeesDialog": {
+      "title": "Anvend arbejdstider på medarbejdere",
+      "description": "Vælg de medarbejdere, der følger denne plan.",
+      "moveHelp": "En medarbejder kan kun følge én plan. Alle, der allerede er på en anden plan, flyttes til denne.",
+      "placeholder": "Vælg medarbejdere",
+      "search": "Søg medarbejdere...",
+      "searchAria": "Søg blandt medarbejdere",
+      "empty": "Ingen medarbejdere fundet.",
+      "close": "Luk",
+      "selectAll": "(Vælg alle)",
+      "clearAllAria": "{count, plural, one {Ryd den valgte medarbejder} other {Ryd alle {count} valgte medarbejdere}}",
+      "removeAria": "Fjern {name} fra valget"
+    },
+    "editor": {
+      "timezoneNote": "Tidspunkter bruger arbejdsområdets tidszone: {timezone}.",
+      "notWorking": "Arbejder ikke",
+      "dayToggle": "Arbejder {day}",
+      "startTime": "Starttidspunkt",
+      "endTime": "Sluttidspunkt",
+      "removeRange": "Fjern tidsrum",
+      "errorOverlap": "Disse tidsrum overlapper. Juster dem for at gemme.",
+      "errorOrder": "Sluttidspunktet skal være efter starttidspunktet."
     }
   }
 }

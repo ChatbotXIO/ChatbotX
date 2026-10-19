@@ -143,3 +143,37 @@ describe("dispatchAutomatedResponseReply leaderboard keywords rule", () => {
     expect(mockEnqueueLeaderboardAward).not.toHaveBeenCalled()
   })
 })
+
+describe("dispatchAutomatedResponseReply flow rule start flag", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    const { db } = await import("@chatbotx.io/database/client")
+    vi.mocked(db.query.flowModel.findFirst).mockResolvedValue({
+      id: "flow-1",
+    } as never)
+  })
+
+  test.each([
+    [true, true],
+    [undefined, undefined],
+  ])("enqueues the flow with startedByContactMessage=%s -> %s", async (flag, expected) => {
+    const { integrationQueue } = await import("@chatbotx.io/worker-config")
+
+    await dispatchAutomatedResponseReply({
+      conversation,
+      contactInbox: contactInbox("messenger"),
+      messageId: createId(),
+      text: "hello there",
+      rules: [rule({ flowId: "flow-1", text: null })],
+      triggerType: "contact_message_in",
+      ...(flag === undefined ? {} : { startedByContactMessage: flag }),
+    })
+
+    const [, job] = vi.mocked(integrationQueue.add).mock
+      .calls[0] as unknown as [
+      string,
+      { data: { startedByContactMessage?: boolean } },
+    ]
+    expect(job.data.startedByContactMessage).toBe(expected)
+  })
+})

@@ -1,4 +1,5 @@
 export type {
+  AgentRepliedEventPayload,
   AnalyticsDashboardEvent,
   AnalyticsDashboardEventMap,
   AnalyticsDashboardEventType,

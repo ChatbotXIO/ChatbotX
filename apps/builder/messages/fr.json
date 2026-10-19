@@ -218,6 +218,13 @@
     "averageFirstResponseTimeByAdmin": "Délai moyen de première réponse des agents humains (minutes)",
     "averageFirstResponseTimeByAdminHelp": "Temps moyen nécessaire à un agent humain pour fournir la première réponse au message d’un client.",
     "averageResponseTimeByAdmin": "Temps de réponse moyen des agents humains (minutes)",
+    "withinWorkingHoursHelp": "Ne compte que le temps pendant les heures de travail de l'agent ; le temps hors de son planning est exclu.",
+    "withinWorkingHoursLabel": "Pendant les heures de travail",
+    "noResponseData": "Aucune donnée : l'agent n'a pas répondu sur cette période ou aucun planning d'heures de travail ne lui est attribué.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Temps de première réponse moyen pendant les heures de travail par agent humain (minutes)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Le temps moyen, pendant les heures de travail, qu'un agent humain met pour envoyer la première réponse au message d'un client.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "Temps de réponse moyen pendant les heures de travail par agent humain (minutes)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "Le temps moyen, pendant les heures de travail, qu'un agent humain met pour répondre au message d'un client.",
     "averageDurationOfConversation": "Durée moyenne d’une conversation (minutes)",
     "averageDurationOfConversationHelp": "Temps moyen pendant lequel une conversation est traitée par un humain avant d’être transférée au bot.",
     "success": "Réussite",
@@ -8942,6 +8949,41 @@
       "showAll": "Afficher {count} de plus",
       "showLess": "Afficher moins",
       "clearAll": "Tout effacer"
+    }
+  },
+  "workingHours": {
+    "title": "Heures de travail",
+    "label": "Heures de travail",
+    "description": "Définissez quand votre équipe est disponible. Les temps de réponse sont mesurés uniquement pendant ces heures.",
+    "employees": "Employés",
+    "empty": "Aucune heure de travail pour le moment. Ajoutez un horaire pour mesurer les temps de réponse uniquement pendant les heures de travail.",
+    "deleteDescription": "Supprimer \"{name}\" ? Ses employés seront de nouveau mesurés en temps réel. Cette action est irréversible.",
+    "create": {
+      "title": "Ajouter des heures de travail",
+      "description": "Donnez un nom à l'horaire. Vous définirez ensuite les jours et les heures."
+    },
+    "employeesDialog": {
+      "title": "Appliquer les heures de travail aux employés",
+      "description": "Choisissez les employés qui suivent cet horaire.",
+      "moveHelp": "Un employé ne peut suivre qu'un seul horaire. Toute personne déjà sur un autre horaire est déplacée vers celui-ci.",
+      "placeholder": "Sélectionner des employés",
+      "search": "Rechercher des employés...",
+      "searchAria": "Rechercher parmi les employés",
+      "empty": "Aucun employé trouvé.",
+      "close": "Fermer",
+      "selectAll": "(Tout sélectionner)",
+      "clearAllAria": "{count, plural, one {Effacer l'employé sélectionné} other {Effacer les {count} employés sélectionnés}}",
+      "removeAria": "Retirer {name} de la sélection"
+    },
+    "editor": {
+      "timezoneNote": "Les heures utilisent le fuseau horaire de l'espace de travail : {timezone}.",
+      "notWorking": "Ne travaille pas",
+      "dayToggle": "Travaille le {day}",
+      "startTime": "Heure de début",
+      "endTime": "Heure de fin",
+      "removeRange": "Supprimer la plage horaire",
+      "errorOverlap": "Ces plages horaires se chevauchent. Ajustez-les pour enregistrer.",
+      "errorOrder": "L'heure de fin doit être postérieure à l'heure de début."
     }
   }
 }

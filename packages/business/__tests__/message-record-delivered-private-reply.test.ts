@@ -140,7 +140,12 @@ describe("recordDeliveredPrivateReply", () => {
     await record()
 
     expect(mockRecordOutboundMessageActivity).toHaveBeenCalledWith(
-      expect.objectContaining({ conversationId: "dm-1", at: createdAt }),
+      expect.objectContaining({
+        conversationId: "dm-1",
+        at: createdAt,
+        // Proactive private reply: must not close the waiting-for-human window.
+        closeHumanReplyWindow: false,
+      }),
     )
     expect(mockInvalidateTracking).toHaveBeenCalledWith({ contactId: "c" })
     expect(mockConversationInvalidate).toHaveBeenCalledWith({

@@ -147,6 +147,29 @@ describe("handleCondition", () => {
     })
   })
 
+  test.each([
+    ["matched", true, true],
+    ["matched", undefined, undefined],
+    ["otherwise", true, true],
+    ["otherwise", undefined, undefined],
+  ] as const)("%s branch forwards startedByContactMessage=%s", async (branch, flag, expected) => {
+    matchesContactFilter.mockResolvedValue(branch === "matched")
+    const props = makeProps(makeStep(), [
+      { sourceHandle: "first-case", target: "first-target" },
+      { sourceHandle: "otherwise-handle", target: "otherwise-target" },
+    ] as EdgeSchema[])
+
+    await handleCondition(
+      flag === undefined ? props : { ...props, startedByContactMessage: flag },
+    )
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { startedByContactMessage?: boolean } },
+    ]
+    expect(job.data.startedByContactMessage).toBe(expected)
+  })
+
   test("routes to otherwise when no case matches", async () => {
     matchesContactFilter.mockResolvedValue(false)
 

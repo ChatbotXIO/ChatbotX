@@ -99,6 +99,7 @@ const replyByAutomatedResponse = async (props: {
       text: message.text,
       rules: inboundAutomatedResponses,
       triggerType: "contact_message_in",
+      startedByContactMessage: true,
     })
     if (replied) {
       return { status: "handled" }

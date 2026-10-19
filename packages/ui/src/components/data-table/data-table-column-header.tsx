@@ -13,9 +13,9 @@ import {
 import { cn } from "@chatbotx.io/ui/lib/utils"
 
 interface DataTableColumnHeaderProps<TData, TValue>
-  extends React.ComponentProps<typeof DropdownMenuTrigger> {
+  extends Omit<React.ComponentProps<typeof DropdownMenuTrigger>, "title"> {
   column: Column<TData, TValue>
-  title: string
+  title: React.ReactNode
 }
 
 export function DataTableColumnHeader<TData, TValue>({

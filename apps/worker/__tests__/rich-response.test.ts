@@ -706,6 +706,7 @@ describe("executeRichActions", () => {
         contactId: ctx.contactId,
         reason: "user_requested_human",
         source: "ai_system_tool",
+        reopenUnansweredHumanReplyWindow: true,
       }),
     )
   })

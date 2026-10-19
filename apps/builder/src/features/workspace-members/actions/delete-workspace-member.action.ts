@@ -2,13 +2,11 @@
 
 import {
   revokeWorkspaceMemberConnections,
-  workspaceMemberCacheTag,
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
-import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
@@ -49,13 +47,9 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
       )
     }
 
+    // The service also busts the removed member's cached `listByUserId`
+    // result, so their access is revoked immediately.
     await workspaceMemberService.delete({ id, workspaceId })
-
-    // The removed member's cached `listByUserId` result still lists this
-    // workspace; bust it so their access is revoked immediately.
-    await invalidateCacheByTags([
-      workspaceMemberCacheTag(workspaceMember.userId),
-    ])
 
     // Close any realtime sockets the removed member already has open in
     // this workspace room — their next connect attempt is rejected anyway

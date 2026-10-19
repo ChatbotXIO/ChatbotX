@@ -110,6 +110,9 @@ vi.mock("@chatbotx.io/analytics", () => ({
 }))
 
 const { conversationService } = await import("../src/conversation/service")
+const { humanReplyWindowSet, reopenIfUnansweredSince } = await import(
+  "../src/conversation/human-reply-window"
+)
 
 /**
  * Shared recursive, WeakSet-guarded traversal of a Drizzle SQL object tree.
@@ -702,6 +705,7 @@ describe("conversationService outbound activity bump", () => {
     await conversationService.recordOutboundMessageActivity({
       ...baseProps,
       bumpActivity: false,
+      closeHumanReplyWindow: false,
     })
 
     expect(update).not.toHaveBeenCalled()
@@ -711,6 +715,7 @@ describe("conversationService outbound activity bump", () => {
     await conversationService.recordOutboundFlowStep({
       ...baseProps,
       bumpActivity: false,
+      closeHumanReplyWindow: false,
       lastStep: "step-1",
       currentStep: "step-2",
     })
@@ -719,5 +724,179 @@ describe("conversationService outbound activity bump", () => {
       currentStep: "step-2",
       lastStep: "step-1",
     })
+  })
+})
+
+describe("human-reply-window SQL fragments", () => {
+  const at = new Date("2026-10-18T09:00:00.000Z")
+
+  test("open is DM-only, stale-event guarded and keeps the earliest start", () => {
+    const set = humanReplyWindowSet({ open: at })
+
+    const text = collectSqlText(set.awaitingHumanReplySince)
+    expect(text).toContain(`"sourceId" IS NOT NULL`)
+    expect(text).toContain(`"awaitingHumanReplyClosedAt"`)
+    expect(text).toContain("LEAST(COALESCE")
+    expect(text).not.toContain("botEnabled")
+    expect(collectSqlParams(set.awaitingHumanReplySince)).toContain(
+      at.toISOString(),
+    )
+    expect(set.awaitingHumanReplyClosedAt).toBeUndefined()
+  })
+
+  test.each([
+    "externalHuman",
+    "archive",
+  ] as const)("close by %s is DM-only and ignores botEnabled", (actor) => {
+    const set = humanReplyWindowSet({ close: at, actor })
+
+    for (const fragment of [
+      set.awaitingHumanReplySince,
+      set.awaitingHumanReplyClosedAt,
+    ]) {
+      const text = collectSqlText(fragment)
+      expect(text).toContain(`"sourceId" IS NULL`)
+      expect(text).not.toContain("botEnabled")
+    }
+    expect(collectSqlText(set.awaitingHumanReplyClosedAt)).toContain("GREATEST")
+  })
+
+  test("close by the bot is guarded by botEnabled and never advances the stale-event marker", () => {
+    const set = humanReplyWindowSet({ close: at, actor: "bot" })
+
+    expect(collectSqlText(set.awaitingHumanReplySince)).toContain(
+      `"botEnabled"`,
+    )
+    expect(set.awaitingHumanReplyClosedAt).toBeUndefined()
+  })
+
+  test("close only clears a window that started at or before the close instant", () => {
+    const set = humanReplyWindowSet({ close: at, actor: "archive" })
+
+    expect(collectSqlText(set.awaitingHumanReplySince)).toContain(
+      `"awaitingHumanReplySince" <= `,
+    )
+    expect(collectSqlParams(set.awaitingHumanReplySince)).toContain(
+      at.toISOString(),
+    )
+  })
+
+  test("reopen only fires for an unanswered, unclosed DM message", () => {
+    const text = collectSqlText(reopenIfUnansweredSince())
+
+    expect(text).toContain(`"awaitingHumanReplySince" IS NULL`)
+    expect(text).toContain(`"sourceId" IS NULL`)
+    expect(text).toContain(`"contactRepliedAt" > COALESCE("adminRepliedAt"`)
+    expect(text).toContain(
+      `"contactRepliedAt" > COALESCE("awaitingHumanReplyClosedAt"`,
+    )
+  })
+})
+
+describe("conversationService window transitions on existing UPDATEs", () => {
+  const baseProps = {
+    workspaceId: "ws-1",
+    conversationId: "conv-1",
+    contactInboxId: "ci-1",
+    contactId: "contact-1",
+    tracking: {},
+  }
+  const at = new Date("2026-10-18T09:00:00.000Z")
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const lastSet = () => set.mock.calls.at(-1)?.[0] as Record<string, unknown>
+
+  test("a contact message opens the window at the message time", async () => {
+    await conversationService.recordInboundActivity({
+      ...baseProps,
+      at,
+      contactRepliedAt: at,
+    })
+
+    const setArg = lastSet()
+    expect(collectSqlText(setArg.awaitingHumanReplySince)).toContain("LEAST")
+    expect(collectSqlParams(setArg.awaitingHumanReplySince)).toContain(
+      at.toISOString(),
+    )
+    expect(setArg).not.toHaveProperty("awaitingHumanReplyClosedAt")
+  })
+
+  test("a native-app outgoing echo closes as externalHuman without opening", async () => {
+    await conversationService.recordInboundActivity({
+      ...baseProps,
+      at,
+      isExternalHumanEcho: true,
+    })
+
+    const setArg = lastSet()
+    expect(setArg).not.toHaveProperty("contactRepliedAt")
+    expect(collectSqlText(setArg.awaitingHumanReplySince)).toContain(
+      "THEN NULL",
+    )
+    expect(collectSqlText(setArg.awaitingHumanReplySince)).not.toContain(
+      "botEnabled",
+    )
+    expect(setArg).toHaveProperty("awaitingHumanReplyClosedAt")
+  })
+
+  test("an inbound write that is neither touches no window column", async () => {
+    await conversationService.recordInboundActivity({ ...baseProps, at })
+
+    expect(lastSet()).not.toHaveProperty("awaitingHumanReplySince")
+  })
+
+  test("bot sends close the window by default and not when the caller opts out", async () => {
+    await conversationService.recordOutboundMessageActivity({
+      ...baseProps,
+      at,
+    })
+    expect(collectSqlText(lastSet().awaitingHumanReplySince)).toContain(
+      `"botEnabled"`,
+    )
+    expect(lastSet()).not.toHaveProperty("awaitingHumanReplyClosedAt")
+
+    await conversationService.recordOutboundMessageActivity({
+      ...baseProps,
+      at,
+      closeHumanReplyWindow: false,
+    })
+    expect(lastSet()).not.toHaveProperty("awaitingHumanReplySince")
+    expect(lastSet()).not.toHaveProperty("awaitingHumanReplyClosedAt")
+  })
+
+  test("flow-step sends close the window unless closeHumanReplyWindow is false", async () => {
+    await conversationService.recordOutboundFlowStep({
+      ...baseProps,
+      at,
+      currentStep: "s2",
+    })
+    expect(lastSet()).toHaveProperty("awaitingHumanReplySince")
+    expect(lastSet()).not.toHaveProperty("awaitingHumanReplyClosedAt")
+
+    await conversationService.recordOutboundFlowStep({
+      ...baseProps,
+      at,
+      currentStep: "s3",
+      closeHumanReplyWindow: false,
+    })
+    expect(lastSet()).toEqual({
+      currentStep: "s3",
+      lastActivityAt: expect.anything(),
+    })
+  })
+
+  test("updateFlowStepState applies contactLastReadAt and an explicit transition", async () => {
+    await conversationService.updateFlowStepState({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      contactLastReadAt: at,
+      humanReplyWindow: { open: at },
+    })
+
+    expect(lastSet().contactLastReadAt).toBe(at)
+    expect(lastSet()).toHaveProperty("awaitingHumanReplySince")
   })
 })

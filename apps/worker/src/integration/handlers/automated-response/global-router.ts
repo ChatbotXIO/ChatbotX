@@ -164,6 +164,7 @@ async function dispatchDestination(input: {
             },
             triggerMessageCreatedAt: router.messageCreatedAt,
             triggerMessageId: router.messageId,
+            startedByContactMessage: true,
           },
         },
         {
@@ -192,6 +193,7 @@ async function dispatchDestination(input: {
         conversationId: router.conversationId,
         metadata: { profileId: enabled.profile.id },
         reason: "global_router_route",
+        reopenUnansweredHumanReplyWindow: true,
         source: "global_router",
         workspaceId: router.workspaceId,
       })

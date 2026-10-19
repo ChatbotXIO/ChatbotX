@@ -1779,6 +1779,13 @@
     "averageFirstResponseTimeByAdmin": "Tempo medio della prima risposta degli agenti umani (minuti)",
     "averageFirstResponseTimeByAdminHelp": "Il tempo medio impiegato da un agente umano per fornire la prima risposta al messaggio di un cliente.",
     "averageResponseTimeByAdmin": "Tempo medio di risposta degli agenti umani (minuti)",
+    "withinWorkingHoursHelp": "Conta solo il tempo all'interno dell'orario di lavoro dell'agente; il tempo fuori dal suo programma è escluso.",
+    "withinWorkingHoursLabel": "Entro l'orario di lavoro",
+    "noResponseData": "Nessun dato: l'agente non ha risposte in questo periodo o non ha un orario di lavoro assegnato.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Tempo medio di prima risposta entro l'orario di lavoro per agenti umani (minuti)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Il tempo medio, entro l'orario di lavoro, che un agente umano impiega per dare la prima risposta al messaggio di un cliente.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "Tempo medio di risposta entro l'orario di lavoro per agenti umani (minuti)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "Il tempo medio, entro l'orario di lavoro, che un agente umano impiega per rispondere al messaggio di un cliente.",
     "averageDurationOfConversation": "Durata media di una conversazione (minuti)",
     "averageDurationOfConversationHelp": "Il tempo medio durante il quale una conversazione viene gestita da un operatore prima di essere trasferita al bot.",
     "success": "Successo",
@@ -8942,6 +8949,41 @@
       "showAll": "Mostra altre {count}",
       "showLess": "Mostra meno",
       "clearAll": "Cancella tutto"
+    }
+  },
+  "workingHours": {
+    "title": "Orari di lavoro",
+    "label": "Orari di lavoro",
+    "description": "Definisci quando il tuo team è disponibile. I tempi di risposta vengono misurati solo entro questi orari.",
+    "employees": "Dipendenti",
+    "empty": "Nessun orario di lavoro per ora. Aggiungi un programma per misurare i tempi di risposta solo durante l'orario di lavoro.",
+    "deleteDescription": "Eliminare \"{name}\"? I suoi dipendenti verranno di nuovo misurati in tempo reale. Questa azione non può essere annullata.",
+    "create": {
+      "title": "Aggiungi orari di lavoro",
+      "description": "Dai un nome al programma. Imposterai giorni e orari nel passaggio successivo."
+    },
+    "employeesDialog": {
+      "title": "Applica gli orari di lavoro ai dipendenti",
+      "description": "Scegli i dipendenti che seguono questo programma.",
+      "moveHelp": "Un dipendente può seguire un solo programma. Chi è già in un altro programma verrà spostato in questo.",
+      "placeholder": "Seleziona dipendenti",
+      "search": "Cerca dipendenti...",
+      "searchAria": "Cerca tra i dipendenti",
+      "empty": "Nessun dipendente trovato.",
+      "close": "Chiudi",
+      "selectAll": "(Seleziona tutto)",
+      "clearAllAria": "{count, plural, one {Rimuovi il dipendente selezionato} other {Rimuovi tutti i {count} dipendenti selezionati}}",
+      "removeAria": "Rimuovi {name} dalla selezione"
+    },
+    "editor": {
+      "timezoneNote": "Gli orari usano il fuso orario dello spazio di lavoro: {timezone}.",
+      "notWorking": "Non lavora",
+      "dayToggle": "Lavora il giorno {day}",
+      "startTime": "Ora di inizio",
+      "endTime": "Ora di fine",
+      "removeRange": "Rimuovi intervallo",
+      "errorOverlap": "Questi intervalli si sovrappongono. Modificali per salvare.",
+      "errorOrder": "L'ora di fine deve essere successiva all'ora di inizio."
     }
   }
 }

@@ -47,6 +47,7 @@ export type ExecuteMultipleStepsProps = {
   nodeVisits?: NodeVisits
   triggerMessageId?: string
   triggerMessageCreatedAt?: Date
+  startedByContactMessage?: boolean
   commentAnchor?: CommentAnchor
   appointmentId?: string
   flowExecutionKey?: string
@@ -304,6 +305,7 @@ export async function sendFlow(
           nodeVisits: props.nodeVisits,
           triggerMessageId: props.triggerMessageId,
           triggerMessageCreatedAt: props.triggerMessageCreatedAt,
+          startedByContactMessage: props.startedByContactMessage,
           commentAnchor: props.commentAnchor,
           origin: webhookChannelOrigin(),
         },

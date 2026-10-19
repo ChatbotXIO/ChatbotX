@@ -159,6 +159,7 @@ async function splitTraffic({
   appointmentId,
   triggerMessageId,
   triggerMessageCreatedAt,
+  startedByContactMessage,
 }: ExecuteStepProps<SplitTrafficStepSchema>) {
   if (!(targetId && step.cases.length)) {
     return
@@ -199,6 +200,7 @@ async function splitTraffic({
         nodeVisits,
         triggerMessageId,
         triggerMessageCreatedAt,
+        startedByContactMessage,
         commentAnchor,
         appointmentId,
         origin: webhookChannelOrigin(),
@@ -320,6 +322,7 @@ async function startAnotherNode(
       nodeVisits: props.nodeVisits,
       triggerMessageId: props.triggerMessageId,
       triggerMessageCreatedAt: props.triggerMessageCreatedAt,
+      startedByContactMessage: props.startedByContactMessage,
       commentAnchor: props.commentAnchor,
       origin: webhookChannelOrigin(),
     },
@@ -338,6 +341,7 @@ async function startExternalFlow({
   appointmentId,
   triggerMessageId,
   triggerMessageCreatedAt,
+  startedByContactMessage,
 }: ExecuteStepProps<StartExternalFlowStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -352,6 +356,7 @@ async function startExternalFlow({
       nodeVisits,
       triggerMessageId,
       triggerMessageCreatedAt,
+      startedByContactMessage,
       commentAnchor,
       origin: webhookChannelOrigin(),
     },
@@ -370,6 +375,7 @@ async function startExternalNode({
   appointmentId,
   triggerMessageId,
   triggerMessageCreatedAt,
+  startedByContactMessage,
 }: ExecuteStepProps<StartExternalNodeStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -385,6 +391,7 @@ async function startExternalNode({
       nodeVisits,
       triggerMessageId,
       triggerMessageCreatedAt,
+      startedByContactMessage,
       commentAnchor,
       origin: webhookChannelOrigin(),
     },

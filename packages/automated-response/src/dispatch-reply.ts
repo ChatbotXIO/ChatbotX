@@ -68,6 +68,8 @@ export const dispatchAutomatedResponseReply = async (props: {
     "id" | "keywords" | "flowId" | "text" | "type"
   >[]
   triggerType: string
+  /** The rule fired for a contact's inbound message (not an outbound echo). */
+  startedByContactMessage?: boolean
 }): Promise<boolean> => {
   const { conversation, contactInbox, messageId, text, rules, triggerType } =
     props
@@ -126,6 +128,7 @@ export const dispatchAutomatedResponseReply = async (props: {
             conversationId: conversation.id,
             contactInboxId: contactInbox.id,
             flowId: flow.id,
+            startedByContactMessage: props.startedByContactMessage,
             trackingContext: {
               aiProvider: "none",
               messageId,

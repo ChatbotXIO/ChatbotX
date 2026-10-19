@@ -1,1 +1,6 @@
-export { assignTargetIfUnassigned, assignUserIfUnassigned } from "./repository"
+export {
+  assignTargetIfUnassigned,
+  assignUserIfUnassigned,
+  type CloseHumanReplyWindowResult,
+  closeHumanReplyWindow,
+} from "./repository"

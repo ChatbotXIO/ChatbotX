@@ -93,6 +93,7 @@ import { triggersPublicRouter } from "@/features/triggers/api/public"
 import { userPersistentMenusPublicRouter } from "@/features/user-persistent-menus/api/public"
 import { webhooksPublicRouter } from "@/features/webhooks/api/public"
 import { whatsappCallsPublicRouter } from "@/features/whatsapp-calls/api/public"
+import { workingHoursPublicRouter } from "@/features/working-hours/api/public"
 import { workspaceMembersPublicRouter } from "@/features/workspace-members/api/public"
 import { workspaceSettingsPublicRouter } from "@/features/workspaces/api/public"
 
@@ -191,6 +192,7 @@ export const publicRouter = {
     ...whatsappCallingPublicRouter,
   },
   whatsappTemplates: whatsappTemplatesPublicRouter,
+  workingHours: workingHoursPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,
   workspaceSettings: workspaceSettingsPublicRouter,
   zaloChannels: zaloChannelsPublicRouter,

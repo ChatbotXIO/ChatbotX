@@ -42,6 +42,9 @@ vi.mock("@chatbotx.io/partysocket-config", () => ({}))
 vi.mock("@chatbotx.io/worker-config", () => ({}))
 vi.mock("../src/contact-inbox/service", () => ({ contactInboxService: {} }))
 vi.mock("../src/conversation/service", () => ({ conversationService: {} }))
+vi.mock("../src/working-hours/agent-reply-metric", () => ({
+  recordAgentReply: vi.fn(),
+}))
 vi.mock("../src/platform/settings", () => ({ resolveTenantSettings: vi.fn() }))
 
 const { messageService } = await import("../src/message/service")

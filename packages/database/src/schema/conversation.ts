@@ -58,6 +58,16 @@ export const conversationModel = pgTable(
     currentStep: text(),
     adminRepliedAt: timestamp(timestampConfig),
     contactRepliedAt: timestamp(timestampConfig),
+    /** Start of the open window in which a human reply is owed (DM only). */
+    awaitingHumanReplySince: timestamp(timestampConfig),
+    /**
+     * Last instant a HUMAN closed the reply window (agent reply claim, an
+     * external native-app echo, archive); stale inbound events are ignored.
+     * Bot closes do not advance it.
+     */
+    awaitingHumanReplyClosedAt: timestamp(timestampConfig),
+    /** Instant `assignedUserId` last changed to a non-null user. */
+    assignedUserAt: timestamp(timestampConfig),
   },
   (table) => [
     uniqueIndex("Conversation_contactId_sourceId_key")

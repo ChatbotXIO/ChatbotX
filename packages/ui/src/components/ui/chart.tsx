@@ -105,6 +105,19 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
+/** Numbers use `locale` (browser locale when undefined); other values as text. */
+function formatChartValue(value: unknown, locale?: string): string {
+  if (typeof value !== "number") {
+    return String(value)
+  }
+  try {
+    return value.toLocaleString(locale)
+  } catch {
+    // An invalid locale tag must never break the tooltip.
+    return value.toLocaleString()
+  }
+}
+
 function ChartTooltipContent({
   active,
   className,
@@ -117,6 +130,7 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
+  locale,
   payload,
   label,
 }: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
@@ -126,6 +140,8 @@ function ChartTooltipContent({
     indicator?: "line" | "dot" | "dashed"
     nameKey?: string
     labelKey?: string
+    /** Locale for numeric values (default: the browser locale). */
+    locale?: string
   } & Omit<
     RechartsPrimitive.DefaultTooltipContentProps<ValueType, NameType>,
     "accessibilityLayer"
@@ -226,9 +242,7 @@ function ChartTooltipContent({
                     </div>
                     {item.value != null && (
                       <span className="font-mono font-medium text-foreground tabular-nums">
-                        {typeof item.value === "number"
-                          ? item.value.toLocaleString()
-                          : String(item.value)}
+                        {formatChartValue(item.value, locale)}
                       </span>
                     )}
                   </div>
@@ -324,6 +338,7 @@ function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key:
 }
 
 export {
+  formatChartValue,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,

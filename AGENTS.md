@@ -224,6 +224,7 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - Product messages (`sendProducts` flow step: sendable products, per-channel display rules, WhatsApp catalog payloads, adding a channel): `docs/product-messages.md`
 - WhatsApp Conversation Routing (thread control with Meta AI / other partners: webhook backfill, send gate, handover, archive release): `docs/whatsapp-conversation-routing.md`
 - Inbound Webhooks (external systems POST JSON to a tokenised URL → find/create a contact on a chosen inbox, map payload values, run trigger actions; outbox/claim/lease processing, per-channel inbox identifiers, request log, public API): `docs/inbound-webhooks.md`
+- Working Hours (agent schedules, waiting-window state machine, response time and first response time within working hours, `agent:replied` analytics pipeline, public API): `docs/working-hours.md`
 - Messenger welcome message flows (publish/rename/delete sync of a flow's starting step to Meta Click-to-Messenger welcome flows, ad-locked behavior, table/jobs/lock): `docs/messenger-welcome-message-flows.md`
 
 When unsure, search the codebase for an existing feature that resembles the request and mirror its structure, imports, and error-handling style.
