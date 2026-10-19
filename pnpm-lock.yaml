@@ -2329,9 +2329,6 @@ importers:
       '@chatbotx.io/mini-app':
         specifier: workspace:*
         version: link:../mini-app
-      '@chatbotx.io/partysocket-config':
-        specifier: workspace:*
-        version: link:../partysocket-config
       '@chatbotx.io/realtime-protocol':
         specifier: workspace:*
         version: link:../realtime-protocol
@@ -11041,8 +11038,6 @@ packages:
     resolution: {integrity: sha512-u4UB2/IrKdU6lFxumHmmo1a3fCQO5tzQllRorfoRS63txhrB7xTpSn1PftwC4qEHkOaqP95fCWW4lJzwErwzhQ==}
     engines: {node: '>=22.19.0'}
 
-  unenv@2.0.0-rc.0:
-    resolution: {integrity: sha512-H0kl2w8jFL/FAk0xvjVing4bS3jd//mbg1QChDnn58l9Sc5RtduaKmLAL8n+eBw5jJo8ZjYV7CrEGage5LAOZQ==}
   universal-error-normalizer@1.0.0:
     resolution: {integrity: sha512-H1vCPybK3DK8QWFDKI4SKzXhPi6eLzB3DWKvfXRUR+OeLHmmM/cbe1PPmah9aCPsHpiskiNi+LZUBh42p7azlA==}
     engines: {node: '>=16.0.0'}
@@ -18956,13 +18951,6 @@ snapshots:
 
   undici@8.11.2: {}
 
-  unenv@2.0.0-rc.0:
-    dependencies:
-      defu: 6.1.7
-      mlly: 1.8.2
-      ohash: 1.1.6
-      pathe: 1.1.2
-      ufo: 1.6.4
   universal-error-normalizer@1.0.0: {}
 
   universalify@2.0.1: {}

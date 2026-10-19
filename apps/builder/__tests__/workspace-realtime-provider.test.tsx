@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/client"
 import { act, type ReactNode } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
@@ -207,6 +208,69 @@ describe("WorkspaceRealtimeProvider", () => {
       vi.useRealTimers()
     }
   })
+
+  test("uses the cursor from the open-time frame when reconnecting", async () => {
+    vi.useFakeTimers()
+    try {
+      await render(null)
+      const firstSocket = await waitForSocket()
+      act(() => {
+        firstSocket.open()
+        firstSocket.receive(JSON.stringify({ batch: [], seq: "5-0" }))
+        firstSocket.close()
+      })
+      await act(async () => {
+        await vi.runAllTimersAsync()
+      })
+
+      const reconnectSocket = await waitForSocket()
+      expect(reconnectSocket.url).toContain("lastSeq=5-0")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("clears the replay cursor after a 4002 resync close", async () => {
+    vi.useFakeTimers()
+    try {
+      await render(null)
+      const firstSocket = await waitForSocket()
+      act(() => {
+        firstSocket.open()
+        firstSocket.receive(JSON.stringify({ batch: [], seq: "5-0" }))
+        firstSocket.close(4002, "resync")
+      })
+      await act(async () => {
+        await vi.runAllTimersAsync()
+      })
+
+      const reconnectSocket = await waitForSocket()
+      expect(reconnectSocket.url).not.toContain("lastSeq=")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("keeps the replay cursor after a 4004 reauthentication close", async () => {
+    vi.useFakeTimers()
+    try {
+      await render(null)
+      const firstSocket = await waitForSocket()
+      act(() => {
+        firstSocket.open()
+        firstSocket.receive(JSON.stringify({ batch: [], seq: "5-0" }))
+        firstSocket.close(4004, "reauth")
+      })
+      await act(async () => {
+        await vi.runAllTimersAsync()
+      })
+
+      const reconnectSocket = await waitForSocket()
+      expect(reconnectSocket.url).toContain("lastSeq=5-0")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
   test("defers the resync count bump until the reconnect opens, not the close", async () => {
     // Regression for PR #1349 finding #2: bumping `resyncCount` (which
     // drives a full `invalidateQueries()`) at close time, before the new
@@ -242,6 +306,63 @@ describe("WorkspaceRealtimeProvider", () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  test("marks the workspace connection closed after a 4001 revoked close", async () => {
+    const statuses: string[] = []
+    function StatusReader() {
+      const { status } = useWorkspaceRealtimeContext()
+      statuses.push(status)
+      return null
+    }
+
+    await render(<StatusReader />)
+    const socket = await waitForSocket()
+    act(() => socket.close(4001, "revoked"))
+
+    expect(statuses.at(-1)).toBe("closed")
+  })
+
+  test("marks the workspace connection closed when minting is unauthorized", async () => {
+    const statuses: string[] = []
+    function StatusReader() {
+      const { status } = useWorkspaceRealtimeContext()
+      statuses.push(status)
+      return null
+    }
+    mintWorkspaceToken.mockRejectedValueOnce(new ORPCError("UNAUTHORIZED"))
+
+    await render(<StatusReader />)
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(statuses.at(-1)).toBe("closed")
+    expect(FakeWebSocket.instances).toHaveLength(0)
+  })
+
+  test("reconnects when the tab returns online or visible", async () => {
+    const visibilitySpy = vi
+      .spyOn(document, "visibilityState", "get")
+      .mockReturnValue("visible")
+
+    await render(null)
+    const firstSocket = await waitForSocket()
+    act(() => firstSocket.close(1006, "network"))
+    act(() => window.dispatchEvent(new Event("online")))
+    await waitForSocket()
+
+    const secondSocket = FakeWebSocket.instances.at(-1)
+    if (!secondSocket) {
+      throw new Error("Expected a second native WebSocket connection")
+    }
+    act(() => secondSocket.close(1006, "network"))
+    act(() => document.dispatchEvent(new Event("visibilitychange")))
+    await waitForSocket()
+
+    expect(mintWorkspaceToken).toHaveBeenCalledTimes(3)
+    visibilitySpy.mockRestore()
   })
 
   test("keeps malformed gateway frames out of subscribers", async () => {

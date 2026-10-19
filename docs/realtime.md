@@ -66,10 +66,10 @@ or oversized replay window.
 | 4003 | Gateway capacity limit | Reconnect after the JSON `retryAfter` hint. |
 | 4004 | Connection lifetime, membership, permission, or team change | Mint a fresh token and reconnect with the existing replay cursor. |
 `4002` is raised for `invalid-last-seq`, `replay-cursor-ahead`,
-`replay-window-expired`, `replay-window-too-large`, `replay-failed`,
-`backpressure-drop`, `replay-entries-dropped`, `malformed-stream-record`, and
-`stream-reader-recovered`. Each reason requires the same authoritative resync;
-the gateway logs the specific cause for diagnosis.
+`replay-window-expired`, `replay-window-too-large`, `backpressure-drop`,
+`replay-entries-dropped`, `malformed-stream-record`, `stream-reader-recovered`,
+`send-failed`, and `recent-entries-expired`. Each reason requires the same
+authoritative resync; the gateway logs the specific cause for diagnosis.
 
 
 ## Connection and delivery
@@ -77,6 +77,10 @@ the gateway logs the specific cause for diagnosis.
 - Member tabs connect to `/rt/workspaces/:workspaceId` with a short-lived
   workspace-bound token. Guest tabs connect to `/rt/guests/:guestConversationId`
   with a token bound to both the conversation and its workspace.
+- On every workspace-socket open, the gateway first sends an empty cursor frame
+  (`{"batch":[],"seq":"<stream-id>"}`). The client adopts this cursor before
+  handling live deliveries; if a reconnect closes before that frame arrives,
+  it falls back to `lastSeq=0-0` so the gateway can force a safe resync.
 - Full-access members receive one `{"batch":[…],"seq":"<stream-id>"}` frame per
   workspace record. Assigned-only members receive one filtered frame per record;
   unrouted events are full-access only. Directed member events use the local
@@ -107,6 +111,8 @@ consumer group is used. Every replica therefore observes the same records, so
 load-balancer workspace affinity is an optional efficiency optimization, not a
 correctness requirement.
 
+### `useWorkspaceRealtimeEvents`
+
 - Pass a `RealtimeHandlerMap` (`features/realtime/types.ts`): at most one
   handler per `RealtimeEventName`.
 - The SET of event names you subscribe to should stay stable across
@@ -116,7 +122,8 @@ correctness requirement.
 - Unregisters automatically on unmount.
 - Never open another workspace socket yourself. If you need the connection's
   lifecycle (for example, to show “reconnecting…”), use
-  `useWorkspaceRealtimeStatus()`; it never gates subscription registration.
+  `useWorkspaceRealtimeContext().status`; it never gates subscription
+  registration.
 
 If the reader's single Redis connection errors (any active shard), the first
 successful read after it recovers forces every locally-connected socket to
@@ -143,6 +150,9 @@ schema in `features/realtime/`; only reuse schemas that already exist in
 The gateway reports presence after a user's first local socket opens or last
 local socket closes. Reports are coalesced per workspace for one second, and
 the periodic report is concurrency-bounded.
+
+Guest sockets deliberately ignore `lastSeq`: each opens from the activation
+cursor, and the webchat client refetches its newest message page after a reopen.
 
 ## Limits
 

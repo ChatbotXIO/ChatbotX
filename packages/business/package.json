@@ -74,7 +74,6 @@
     "@chatbotx.io/javascript-sandbox": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/mini-app": "workspace:*",
-    "@chatbotx.io/partysocket-config": "workspace:*",
     "@chatbotx.io/realtime-protocol": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/scheduler": "workspace:*",

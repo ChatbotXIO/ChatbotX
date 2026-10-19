@@ -638,22 +638,66 @@ describe("chat store conversation updates", () => {
     expect(store.getState().conversations).toEqual([fetched, duplicate])
   })
 
-  test("resyncRealtime refreshes the conversation head and replaces the active thread's first page", async () => {
+  test("resyncRealtime merges a refreshed first page without dropping older or failed local messages", async () => {
     const store = createChatStore()
-    const staleMessage = makeMessage("conv-1", new Date("2026-01-01T00:00:00Z"))
-    const freshMessage = makeMessage("conv-1", new Date("2026-01-02T00:00:00Z"))
+    const olderMessage = {
+      ...makeMessage("conv-1", new Date("2026-01-01T00:00:00Z")),
+      id: "older-message",
+    }
+    const locallyEditedMessage = {
+      ...makeMessage("conv-1", new Date("2026-01-02T00:00:00Z")),
+      id: "locally-edited-message",
+      text: "local edit",
+    }
+    const failedOptimisticMessage = {
+      ...makeMessage("conv-1", new Date("2026-01-03T00:00:00Z")),
+      id: "optimistic-message",
+      clientId: "client-1",
+      sendError: "Failed to send",
+    }
+    const refreshedMessage = {
+      ...makeMessage("conv-1", new Date("2026-01-02T00:00:00Z")),
+      id: "locally-edited-message",
+      text: "server copy",
+    }
+    const refreshedPage = Promise.withResolvers<{
+      data: TestMessage[]
+      nextCursor: string | null
+    }>()
     store.setState({
       activeConversationId: "conv-1",
-      messages: [staleMessage] as never,
+      hasNextMessagePage: true,
+      messages: [
+        olderMessage,
+        locallyEditedMessage,
+        failedOptimisticMessage,
+      ] as never,
       messagesConversationId: "conv-1",
+      nextCursorMessage: "older-cursor",
     })
     mockConversationPage([])
-    mockListMessagesAuthenticatedAPI.mockResolvedValue({
-      data: [freshMessage],
-      nextCursor: "cursor-1",
-    })
+    mockListMessagesAuthenticatedAPI.mockImplementationOnce(
+      () => refreshedPage.promise,
+    )
 
-    await store.getState().resyncRealtime("ws-1")
+    const resyncPromise = store.getState().resyncRealtime("ws-1")
+    await Promise.resolve()
+    const locallyEditedDuringResync = {
+      ...locallyEditedMessage,
+      text: "local edit during resync",
+    }
+    store.setState({
+      messages: [
+        olderMessage,
+        locallyEditedDuringResync,
+        failedOptimisticMessage,
+      ] as never,
+    })
+    refreshedPage.resolve({
+      data: [refreshedMessage],
+      nextCursor: "refreshed-cursor",
+    })
+    await resyncPromise
 
     expect(mockListMessagesAuthenticatedAPI).toHaveBeenCalledWith({
       workspaceId: "ws-1",
@@ -661,8 +705,150 @@ describe("chat store conversation updates", () => {
       cursor: "",
       conversationId: "conv-1",
     })
-    expect(store.getState().messages).toEqual([freshMessage])
-    expect(store.getState().nextCursorMessage).toBe("cursor-1")
+    expect(store.getState().messages).toEqual([
+      olderMessage,
+      locallyEditedDuringResync,
+      failedOptimisticMessage,
+    ])
+    expect(store.getState().nextCursorMessage).toBe("older-cursor")
+    expect(store.getState().hasNextMessagePage).toBe(true)
+  })
+
+  test("queues a resync that arrives while loading an older page", async () => {
+    const store = createChatStore()
+    const olderPage = Promise.withResolvers<{
+      data: TestMessage[]
+      nextCursor: string | null
+    }>()
+    store.setState({
+      activeConversationId: "conv-1",
+      hasNextMessagePage: true,
+      nextCursorMessage: "older-cursor",
+    })
+    mockConversationPage([])
+    mockListMessagesAuthenticatedAPI
+      .mockImplementationOnce(() => olderPage.promise)
+      .mockResolvedValueOnce({
+        data: [makeMessage("conv-1", new Date("2026-01-02T00:00:00Z"))],
+        nextCursor: null,
+      })
+
+    const loadMorePromise = store.getState().loadMoreMessages("ws-1", 20)
+    await Promise.resolve()
+    await store.getState().resyncRealtime("ws-1")
+    expect(mockListMessagesAuthenticatedAPI).toHaveBeenCalledTimes(1)
+
+    olderPage.resolve({
+      data: [makeMessage("conv-1", new Date("2026-01-01T00:00:00Z"))],
+      nextCursor: null,
+    })
+    await loadMorePromise
+
+    expect(mockListMessagesAuthenticatedAPI).toHaveBeenCalledTimes(2)
+  })
+
+  test("does not apply a stale resync response after the active conversation changes", async () => {
+    const store = createChatStore()
+    const response = Promise.withResolvers<{
+      data: TestMessage[]
+      nextCursor: string | null
+    }>()
+    const secondConversationMessage = makeMessage(
+      "conv-2",
+      new Date("2026-01-03T00:00:00Z"),
+    )
+    store.setState({
+      activeConversationId: "conv-1",
+      messages: [
+        makeMessage("conv-1", new Date("2026-01-01T00:00:00Z")),
+      ] as never,
+    })
+    mockConversationPage([])
+    mockListMessagesAuthenticatedAPI.mockImplementationOnce(
+      () => response.promise,
+    )
+
+    const resyncPromise = store.getState().resyncRealtime("ws-1")
+    await Promise.resolve()
+    store
+      .getState()
+      .handleNewMessages([
+        makeMessage("conv-1", new Date("2026-01-02T00:00:00Z")) as never,
+      ])
+    store.setState({
+      activeConversationId: "conv-2",
+      messages: [secondConversationMessage] as never,
+    })
+    response.resolve({
+      data: [makeMessage("conv-1", new Date("2026-01-04T00:00:00Z"))],
+      nextCursor: null,
+    })
+
+    await resyncPromise
+
+    expect(store.getState().messages).toEqual([secondConversationMessage])
+  })
+
+  test("head refresh keeps a newer local conversation at its existing position", async () => {
+    const store = createChatStore()
+    const localConversation = makeConversation(
+      "conv-local",
+      new Date("2026-01-03T00:00:00Z"),
+    )
+    const olderConversation = makeConversation(
+      "conv-server-first",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    store.setState({
+      conversations: [localConversation, olderConversation] as never,
+    })
+    mockConversationPage([
+      {
+        ...olderConversation,
+        lastActivityAt: new Date("2026-01-04T00:00:00Z"),
+      },
+      {
+        ...localConversation,
+        lastActivityAt: new Date("2026-01-02T00:00:00Z"),
+      },
+    ])
+
+    store.getState().scheduleConversationHeadRefresh("ws-1")
+
+    await vi.waitFor(() =>
+      expect(store.getState().conversations.map((item) => item.id)).toEqual([
+        "conv-local",
+        "conv-server-first",
+      ]),
+    )
+  })
+
+  test("head refresh resets its backoff after a failed in-flight refresh", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(10_000)
+    try {
+      const store = createChatStore()
+      const firstResponse = Promise.withResolvers<{
+        data: TestConversation[]
+      }>()
+      mockListConversationsByPOSTAuthenticatedAPI.mockImplementationOnce(
+        () => firstResponse.promise,
+      )
+
+      store.getState().scheduleConversationHeadRefresh("ws-1")
+      store.getState().scheduleConversationHeadRefresh("ws-1")
+      firstResponse.reject(new Error("refresh failed"))
+      await vi.advanceTimersByTimeAsync(0)
+
+      store.getState().scheduleConversationHeadRefresh("ws-1")
+      await vi.advanceTimersByTimeAsync(5000)
+
+      expect(mockListConversationsByPOSTAuthenticatedAPI).toHaveBeenCalledTimes(
+        2,
+      )
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   test("missing conversation updates schedule one trailing head refresh at the end of the throttle window", async () => {

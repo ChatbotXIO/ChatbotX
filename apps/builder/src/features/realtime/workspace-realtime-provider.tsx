@@ -38,7 +38,7 @@ import type {
 /**
  * Connection lifecycle of the single workspace socket.
  */
-export type WorkspaceRealtimeConnectionStatus =
+type WorkspaceRealtimeConnectionStatus =
   | "connecting"
   | "open"
   | "closed"
@@ -98,7 +98,7 @@ const logRealtimeWarning = ({
   )
 }
 
-export type WorkspaceRealtimeSubscribe = <K extends RealtimeEventName>(
+type WorkspaceRealtimeSubscribe = <K extends RealtimeEventName>(
   eventType: K,
   listener: (event: RealtimeEvent<K>) => void,
 ) => () => void
@@ -297,12 +297,9 @@ export function WorkspaceRealtimeProvider({
           publicRealtimeUrl,
         )
         socketUrl.searchParams.set("token", token)
-        // A reconnect that never processed a single batch still has no
-        // cursor of its own — sending none would make the server treat it as
-        // a brand-new connection and skip replay entirely, silently losing
-        // whatever happened during the gap. `"0-0"` is a known-ancient
-        // cursor: the server resyncs us (closeReason) unless the stream is
-        // genuinely empty, which is exactly the safe behavior here.
+        // The gateway sends an empty cursor frame as soon as the socket opens.
+        // `"0-0"` is only the safe fallback when this reconnect closes before
+        // that initial frame arrives.
         const lastSeq =
           frameReaderRef.current?.getLastSeq() ??
           (hasConnectedOnceRef.current ? "0-0" : null)

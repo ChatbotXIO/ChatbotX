@@ -13,9 +13,8 @@ sequenceDiagram
   participant Browser
 
   Publisher->>Redis: XADD rt:{shard} record
-  Realtime->>Redis: XREADGROUP records
+  Realtime->>Redis: XREAD records
   Realtime->>Browser: deliver matching workspace, member, or guest event
-  Realtime->>Redis: XACK record
 ```
 
 Records are retained for approximately five minutes and capped at 10,000

@@ -7,7 +7,6 @@ import type { CreateWebchatMessageRequest } from "@/features/messages/schema/mut
 import { listMessagesResponse } from "@/features/messages/schema/query"
 import type { MessageResource } from "@/features/messages/schema/resource"
 import type { UserResource } from "@/features/users/schema/resource"
-import { logger } from "@/lib/log"
 import { getWebchatProfileFields } from "../../browser-profile-fields"
 import { getClientEmbeddingOrigin } from "../../lib/authorized-domain"
 import {
@@ -81,6 +80,43 @@ export type GuestSessionActions = {
 }
 
 export type GuestSessionStore = GuestSessionState & GuestSessionActions
+
+type FetchGuestMessagesPageArgs = {
+  accessToken: string | null
+  config: WebchatClientConfig
+  cursor: string
+  guestConversationId: string
+  perPage: number
+}
+
+const fetchGuestMessagesPage = async ({
+  accessToken,
+  config,
+  cursor,
+  guestConversationId,
+  perPage,
+}: FetchGuestMessagesPageArgs) => {
+  const params = new URLSearchParams({
+    perPage: `${perPage}`,
+    cursor,
+    guestConversationId,
+    workspaceId: config.workspaceId,
+    webchatId: config.id,
+  })
+  const parentOrigin = getClientEmbeddingOrigin()
+  if (parentOrigin) {
+    params.set("parentOrigin", parentOrigin)
+  }
+
+  const raw = await ky
+    .get(`/api/guest/messages?${params.toString()}`, {
+      headers: accessToken
+        ? { Authorization: `Bearer ${accessToken}` }
+        : undefined,
+    })
+    .json()
+  return listMessagesResponse.parse(raw)
+}
 
 export const createGuestSessionStore = (
   props: WebchatClientConfig,
@@ -163,36 +199,23 @@ export const createGuestSessionStore = (
       set({ isLoadMoreMessage: true })
 
       try {
-        const params = new URLSearchParams({
-          perPage: `${perPage}`,
+        const { data, nextCursor } = await fetchGuestMessagesPage({
+          accessToken,
+          config,
           cursor: nextCursorMessage ?? "",
           guestConversationId,
-          workspaceId: config.workspaceId,
-          webchatId: config.id,
+          perPage,
         })
-        const parentOrigin = getClientEmbeddingOrigin()
-        if (parentOrigin) {
-          params.set("parentOrigin", parentOrigin)
-        }
-
-        const raw = await ky
-          .get(`/api/guest/messages?${params.toString()}`, {
-            headers: accessToken
-              ? { Authorization: `Bearer ${accessToken}` }
-              : undefined,
-          })
-          .json()
-        const { data, nextCursor } = listMessagesResponse.parse(raw)
+        const pageMessages: MessageResource[] = [...data]
 
         set({
-          messages: [...data.reverse(), ...messages],
+          messages: pageMessages.reverse().concat(messages),
           nextCursorMessage: nextCursor,
           hasNextMessagePage: Boolean(nextCursor),
           isLoadMoreMessage: false,
         })
       } catch (error) {
         set({ isLoadMoreMessage: false })
-        console.error("Failed to load more messages:", error)
         throw error
       }
     },
@@ -202,56 +225,59 @@ export const createGuestSessionStore = (
       if (!guestConversationId) {
         return
       }
+      const { data } = await fetchGuestMessagesPage({
+        accessToken,
+        config,
+        cursor: "",
+        guestConversationId,
+        perPage,
+      })
 
-      try {
-        const params = new URLSearchParams({
-          perPage: `${perPage}`,
-          cursor: "",
-          guestConversationId,
-          workspaceId: config.workspaceId,
-          webchatId: config.id,
-        })
-        const parentOrigin = getClientEmbeddingOrigin()
-        if (parentOrigin) {
-          params.set("parentOrigin", parentOrigin)
-        }
-
-        const raw = await ky
-          .get(`/api/guest/messages?${params.toString()}`, {
-            headers: accessToken
-              ? { Authorization: `Bearer ${accessToken}` }
-              : undefined,
-          })
-          .json()
-        const { data } = listMessagesResponse.parse(raw)
-
-        // Only append messages the socket hasn't already delivered — this
-        // recovers the common "missed a few messages during a brief
-        // reconnect" gap, not a true replay: a gap wider than one page of
-        // history still isn't fully backfilled (the guest socket has no
-        // stream cursor to resume from, unlike the workspace socket).
-        set((state) => {
-          const seenIds = new Set(
-            state.messages.map((message) => message.id).filter(Boolean),
-          )
-          const freshMessages = [...data]
-            .reverse()
-            .filter((message) => !seenIds.has(message.id))
-          return freshMessages.length > 0
-            ? {
-                messages: [...state.messages, ...freshMessages].sort(
-                  (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-                ),
-              }
-            : {}
-        })
-      } catch (error) {
-        logger.warn(
-          { err: error },
-          "Failed to refetch messages after reconnect",
+      // Only append messages the socket hasn't already delivered — this
+      // recovers the common "missed a few messages during a brief
+      // reconnect" gap, not a true replay: a gap wider than one page of
+      // history still isn't fully backfilled (the guest socket has no
+      // stream cursor to resume from, unlike the workspace socket).
+      set((state) => {
+        const messages = [...state.messages]
+        const messageIndexById = new Map(
+          messages.map((message, index) => [message.id, index]),
         )
-        throw error
-      }
+        const messageIndexByClientId = new Map(
+          messages.flatMap((message, index) =>
+            message.clientId ? [[message.clientId, index] as const] : [],
+          ),
+        )
+        for (const message of [...data].reverse()) {
+          const matchingClientMessageIndex = message.clientId
+            ? messageIndexByClientId.get(message.clientId)
+            : undefined
+          if (matchingClientMessageIndex !== undefined) {
+            const currentMessage = messages[matchingClientMessageIndex]
+            messages[matchingClientMessageIndex] = {
+              ...currentMessage,
+              ...message,
+            }
+            messageIndexById.delete(currentMessage.id)
+            messageIndexById.set(message.id, matchingClientMessageIndex)
+            continue
+          }
+          if (messageIndexById.has(message.id)) {
+            continue
+          }
+          messageIndexById.set(message.id, messages.length)
+          if (message.clientId) {
+            messageIndexByClientId.set(message.clientId, messages.length)
+          }
+          messages.push(message)
+        }
+        return {
+          messages: messages.sort(
+            (left, right) =>
+              left.createdAt.getTime() - right.createdAt.getTime(),
+          ),
+        }
+      })
     },
 
     handleNewMessage: (message: MessageResource) => {

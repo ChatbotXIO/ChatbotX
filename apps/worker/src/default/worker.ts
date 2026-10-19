@@ -203,6 +203,7 @@ async function startDefaultWorker() {
           return
         }
         case DefaultJobAction.retryRealtimeMemberRevoke: {
+          // Member removal must revoke existing sockets even for a blocked owner.
           const { data } = job.data
           try {
             await retryRealtimeMemberRevoke(data)
