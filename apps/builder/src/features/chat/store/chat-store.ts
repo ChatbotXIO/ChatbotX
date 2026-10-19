@@ -515,6 +515,9 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   let pendingConversationHeadRefreshWorkspaceId: string | null = null
   let conversationHeadRefreshThrottleMs =
     CONVERSATION_HEAD_REFRESH_MIN_THROTTLE_MS
+  let resyncInFlight = false
+  let resyncQueued = false
+  let queuedResyncWorkspaceId: string | null = null
   const { messagesSeed, ...restInitialState } = initialState
 
   return createStore<ChatStore>((set, get, store) => {
@@ -529,6 +532,21 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           }
         })
       })
+
+    const runQueuedResync = async (): Promise<void> => {
+      if (
+        !resyncQueued ||
+        resyncInFlight ||
+        get().isLoadMoreMessage ||
+        !queuedResyncWorkspaceId
+      ) {
+        return
+      }
+      const workspaceId = queuedResyncWorkspaceId
+      queuedResyncWorkspaceId = null
+      resyncQueued = false
+      await get().resyncRealtime(workspaceId)
+    }
 
     return {
       ...conversationListDefaults(),
@@ -616,9 +634,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                   (conversation) => [conversation.id, conversation] as const,
                 ),
               )
-              const headConversationIds = new Set<string>()
+              const newerLocalConversationIds = new Set<string>()
               const reconciledHead = headConversations.map((conversation) => {
-                headConversationIds.add(conversation.id)
                 const currentConversation = currentConversationsById.get(
                   conversation.id,
                 )
@@ -628,12 +645,38 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                   new Date(currentConversation.lastActivityAt).getTime() >
                     new Date(conversation.lastActivityAt).getTime()
                 ) {
+                  newerLocalConversationIds.add(conversation.id)
                   return currentConversation
                 }
                 return conversation
               })
-              conversationHeadRefreshThrottleMs =
-                CONVERSATION_HEAD_REFRESH_MIN_THROTTLE_MS
+              for (const [
+                localIndex,
+                conversation,
+              ] of state.conversations.entries()) {
+                if (!newerLocalConversationIds.has(conversation.id)) {
+                  continue
+                }
+                const reconciledIndex = reconciledHead.findIndex(
+                  (reconciledConversation) =>
+                    reconciledConversation.id === conversation.id,
+                )
+                if (reconciledIndex === -1 || reconciledIndex === localIndex) {
+                  continue
+                }
+                const [reconciledConversation] = reconciledHead.splice(
+                  reconciledIndex,
+                  1,
+                )
+                reconciledHead.splice(
+                  Math.min(localIndex, reconciledHead.length),
+                  0,
+                  reconciledConversation,
+                )
+              }
+              const headConversationIds = new Set(
+                reconciledHead.map((conversation) => conversation.id),
+              )
               return {
                 conversations: [
                   ...reconciledHead,
@@ -650,6 +693,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             )
           } finally {
             conversationHeadRefreshInFlight = null
+            conversationHeadRefreshThrottleMs =
+              CONVERSATION_HEAD_REFRESH_MIN_THROTTLE_MS
             const pendingWorkspaceId = pendingConversationHeadRefreshWorkspaceId
             if (conversationHeadRefreshPending && pendingWorkspaceId) {
               get().scheduleConversationHeadRefresh(pendingWorkspaceId)
@@ -1143,16 +1188,18 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
               conversationId: activeConversationId ?? undefined,
             })
           set({
-            messages: [...data.reverse(), ...messages],
+            messages: [...[...data].reverse(), ...messages],
             nextCursorMessage: nextCursor,
             hasNextMessagePage: nextCursor !== null,
             isLoadMoreMessage: false,
             messagesConversationId: activeConversationId,
           })
+          await runQueuedResync()
         } catch (error) {
           // Reset the in-flight flag or the `isLoadMoreMessage` guard above
           // would block every later scroll-up load for this store instance.
           set({ isLoadMoreMessage: false })
+          await runQueuedResync()
           throw error
         }
       },
@@ -1171,16 +1218,21 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
 
       resyncRealtime: async (workspaceId: string) => {
         get().scheduleConversationHeadRefresh(workspaceId)
-        const { activeConversationId, isLoadMoreMessage, messages } = get()
-        if (!activeConversationId || isLoadMoreMessage) {
+        if (resyncInFlight || get().isLoadMoreMessage) {
+          resyncQueued = true
+          queuedResyncWorkspaceId = workspaceId
           return
         }
-        const messagesBeforeResync = new Map(
-          messages.map((message) => [message.id, message]),
-        )
 
-        set({ isLoadMoreMessage: true })
+        resyncInFlight = true
         try {
+          const { activeConversationId, messages } = get()
+          if (!activeConversationId) {
+            return
+          }
+          const messagesBeforeResync = new Map(
+            messages.map((message) => [message.id, message]),
+          )
           const { data, nextCursor } =
             await client.messagesAPI.listMessagesAuthenticatedAPI({
               workspaceId,
@@ -1189,52 +1241,99 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
               conversationId: activeConversationId,
             })
           if (get().activeConversationId !== activeConversationId) {
-            set({ isLoadMoreMessage: false })
             return
           }
-          const refreshedMessages = data.reverse()
+          const refreshedMessages = [...data].reverse()
           set((state) => {
-            const currentMessagesById = new Map(
-              state.messages.map((message) => [message.id, message]),
+            const messages = [...state.messages]
+            const messageIndexById = new Map(
+              messages.map((message, index) => [message.id, index]),
+            )
+            const messageIndexByClientId = new Map(
+              messages.flatMap((message, index) =>
+                message.clientId ? [[message.clientId, index] as const] : [],
+              ),
             )
             const refreshedMessageIds = new Set(
               refreshedMessages.map((message) => message.id),
             )
-            const messagesReceivedDuringResync = state.messages.filter(
-              (message) =>
-                !(
-                  messagesBeforeResync.has(message.id) ||
-                  refreshedMessageIds.has(message.id)
-                ),
-            )
-            const messages = [
-              ...refreshedMessages.map((message) => {
-                const previousMessage = messagesBeforeResync.get(message.id)
-                const currentMessage = currentMessagesById.get(message.id)
-                return currentMessage && currentMessage !== previousMessage
-                  ? currentMessage
-                  : message
-              }),
-              ...messagesReceivedDuringResync,
-            ].sort(
-              (left, right) =>
-                new Date(left.createdAt).getTime() -
-                new Date(right.createdAt).getTime(),
-            )
+
+            for (const refreshedMessage of refreshedMessages) {
+              const matchingIndex =
+                (refreshedMessage.clientId
+                  ? messageIndexByClientId.get(refreshedMessage.clientId)
+                  : undefined) ?? messageIndexById.get(refreshedMessage.id)
+              if (matchingIndex === undefined) {
+                messageIndexById.set(refreshedMessage.id, messages.length)
+                if (refreshedMessage.clientId) {
+                  messageIndexByClientId.set(
+                    refreshedMessage.clientId,
+                    messages.length,
+                  )
+                }
+                messages.push(refreshedMessage)
+                continue
+              }
+
+              const currentMessage = messages[matchingIndex]
+              const messageBeforeResync = messagesBeforeResync.get(
+                currentMessage.id,
+              )
+              const keepLocalMessage =
+                Boolean(currentMessage.sendError) ||
+                !currentMessage.id ||
+                (currentMessage.id === refreshedMessage.id &&
+                  currentMessage !== messageBeforeResync)
+              if (keepLocalMessage) {
+                continue
+              }
+
+              messageIndexById.delete(currentMessage.id)
+              if (currentMessage.clientId) {
+                messageIndexByClientId.delete(currentMessage.clientId)
+              }
+              messages[matchingIndex] = refreshedMessage
+              messageIndexById.set(refreshedMessage.id, matchingIndex)
+              if (refreshedMessage.clientId) {
+                messageIndexByClientId.set(
+                  refreshedMessage.clientId,
+                  matchingIndex,
+                )
+              }
+            }
+
+            const oldestRefreshedMessage = refreshedMessages[0]
+            const keepsOlderPage =
+              oldestRefreshedMessage !== undefined &&
+              messages.some(
+                (message) =>
+                  !refreshedMessageIds.has(message.id) &&
+                  new Date(message.createdAt).getTime() <
+                    new Date(oldestRefreshedMessage.createdAt).getTime(),
+              )
             return {
-              messages,
-              nextCursorMessage: nextCursor,
-              hasNextMessagePage: nextCursor !== null,
-              isLoadMoreMessage: false,
+              messages: messages.sort(
+                (left, right) =>
+                  new Date(left.createdAt).getTime() -
+                  new Date(right.createdAt).getTime(),
+              ),
+              ...(keepsOlderPage
+                ? {}
+                : {
+                    nextCursorMessage: nextCursor,
+                    hasNextMessagePage: nextCursor !== null,
+                  }),
               messagesConversationId: activeConversationId,
             }
           })
         } catch (error) {
-          set({ isLoadMoreMessage: false })
           logger.warn(
-            { err: error, workspaceId, conversationId: activeConversationId },
+            { err: error, workspaceId },
             "resyncRealtime: failed to refresh active conversation",
           )
+        } finally {
+          resyncInFlight = false
+          await runQueuedResync()
         }
       },
 

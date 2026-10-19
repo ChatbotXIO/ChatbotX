@@ -200,6 +200,31 @@ describe("RealtimeSocket", () => {
     expect(getUrl).toHaveBeenCalledTimes(2)
   })
 
+  it("ignores reconnectNow during a server-directed retryAfter backoff", async () => {
+    const getUrl = vi.fn().mockResolvedValue("ws://test")
+    let webSocket: FakeWebSocket | undefined
+    const socket = new RealtimeSocket({
+      getUrl,
+      onMessage: vi.fn(),
+      random: () => 0,
+      webSocketFactory: () => {
+        webSocket = new FakeWebSocket()
+        return webSocket
+      },
+    })
+
+    socket.connect()
+    await vi.runAllTimersAsync()
+    webSocket?.open()
+    webSocket?.close(REALTIME_CLOSE_CODE.overloaded, '{"retryAfter":1000}')
+    socket.reconnectNow()
+    await vi.advanceTimersByTimeAsync(999)
+
+    expect(getUrl).toHaveBeenCalledOnce()
+    await vi.advanceTimersByTimeAsync(1)
+    expect(getUrl).toHaveBeenCalledTimes(2)
+  })
+
   it("deduplicates concurrent connection attempts before URL minting resolves", async () => {
     const getUrl = vi.fn<() => Promise<string>>().mockResolvedValue("ws://test")
     const socket = new RealtimeSocket({

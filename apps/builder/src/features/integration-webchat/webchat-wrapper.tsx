@@ -3,7 +3,8 @@
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { RefreshCwIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import type { CSSProperties } from "react"
+import { type CSSProperties, useCallback } from "react"
+import { useShallow } from "zustand/react/shallow"
 import WebchatRef from "./components/webchat-ref"
 import { readableForeground } from "./lib/brand-color"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
@@ -21,7 +22,15 @@ export const WebchatWrapper = ({
 }) => {
   const t = useTranslations("realtime.connectionBanner")
   const { guestConversationId, accessToken, config, connectionStatus } =
-    useGuestSessionStore((state) => state)
+    useGuestSessionStore(
+      useShallow((state) => ({
+        accessToken: state.accessToken,
+        config: state.config,
+        connectionStatus: state.connectionStatus,
+        guestConversationId: state.guestConversationId,
+      })),
+    )
+  const handleReload = useCallback(() => window.location.reload(), [])
 
   const brandColorStyle = {
     "--primary": config.brandColor,
@@ -36,7 +45,7 @@ export const WebchatWrapper = ({
           <span>{t("closedDescription")}</span>
           <Button
             aria-label={t("reload")}
-            onClick={() => window.location.reload()}
+            onClick={handleReload}
             size="sm"
             variant="outline"
           >

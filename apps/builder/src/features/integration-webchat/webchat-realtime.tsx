@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  REALTIME_CLOSE_CODE,
   RealtimeFatalError,
   RealtimeSocket,
 } from "@chatbotx.io/realtime-protocol"
@@ -21,17 +22,13 @@ type WebchatRealtimeProps = {
 const RECONNECT_REFETCH_PAGE_SIZE = 50
 
 // Past this many consecutive non-fatal close/retry cycles, or this long
-// without a single successful open, the widget stops silently retrying in
-// the UI's eyes and tells the guest the connection is down — otherwise a
-// sustained outage (not a 401/403, which is already fatal) leaves the
-// widget showing "connecting" forever with no signal anything is wrong.
+// without a received frame, the widget stops silently retrying in the UI's
+// eyes and tells the guest the connection is down — otherwise a sustained
+// outage (not a 401/403, which is already fatal) leaves the widget showing
+// "connecting" forever with no signal anything is wrong.
 // See PR #1349 finding #9.
 const MAX_CONSECUTIVE_CONNECT_FAILURES = 5
 const MAX_CONNECTING_DURATION_MS = 30_000
-
-// Leading-edge throttle: several malformed frames in a row should trigger
-// at most one refetch per window instead of hammering the REST endpoint.
-const RESYNC_REFETCH_THROTTLE_MS = 2000
 
 export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
   const { publicRealtimeUrl } = useTenantSettings()
@@ -60,19 +57,34 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
     let hasConnectedOnce = false
     let consecutiveFailureCount = 0
     let firstFailureAtMs: number | null = null
-    let lastResyncRefetchAtMs = 0
-    const recordConnectFailure = (): boolean => {
+    let connectingDurationTimer: number | null = null
+    let hasReceivedFrameSinceOpen = false
+    const clearConnectingDurationTimer = () => {
+      if (connectingDurationTimer !== null) {
+        window.clearTimeout(connectingDurationTimer)
+        connectingDurationTimer = null
+      }
+    }
+    const armConnectingDurationTimer = () => {
+      connectingDurationTimer = window.setTimeout(() => {
+        connectingDurationTimer = null
+        setConnectionStatus("closed")
+      }, MAX_CONNECTING_DURATION_MS)
+    }
+    const recordConnectFailure = () => {
       consecutiveFailureCount += 1
       firstFailureAtMs ??= Date.now()
       if (
         consecutiveFailureCount >= MAX_CONSECUTIVE_CONNECT_FAILURES ||
         Date.now() - firstFailureAtMs >= MAX_CONNECTING_DURATION_MS
       ) {
+        clearConnectingDurationTimer()
         setConnectionStatus("closed")
         return true
       }
       return false
     }
+    armConnectingDurationTimer()
     setConnectionStatus("connecting")
     const frameHandler = createWebchatFrameHandler({
       onMessage: handleNewMessage,
@@ -80,11 +92,6 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
         logger.warn({ err: error }, "Unable to parse realtime message")
       },
       onResyncNeeded: () => {
-        const now = Date.now()
-        if (now - lastResyncRefetchAtMs < RESYNC_REFETCH_THROTTLE_MS) {
-          return
-        }
-        lastResyncRefetchAtMs = now
         refetchLatestMessages(RECONNECT_REFETCH_PAGE_SIZE).catch((error) => {
           logger.warn(
             { err: error },
@@ -96,9 +103,6 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
     })
     const socket = new RealtimeSocket({
       getUrl: async () => {
-        if (!accessToken) {
-          throw new Error("Webchat access token is required for realtime")
-        }
         const response = await fetch("/api/guest/realtime-token", {
           method: "POST",
           headers: {
@@ -133,6 +137,11 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
       },
       onClose: ({ code, reason }) => {
         logger.warn({ code, reason }, "Webchat realtime connection closed")
+        if (code === REALTIME_CLOSE_CODE.revoked) {
+          clearConnectingDurationTimer()
+          setConnectionStatus("closed")
+          return
+        }
         if (!recordConnectFailure()) {
           setConnectionStatus("connecting")
         }
@@ -140,15 +149,23 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
       onError: (error) => {
         logger.warn({ err: error }, "Webchat realtime connection failed")
         if (error instanceof RealtimeFatalError) {
+          clearConnectingDurationTimer()
           setConnectionStatus("closed")
         } else {
           recordConnectFailure()
         }
       },
-      onMessage: frameHandler.handleFrame,
+      onMessage: (data) => {
+        if (!hasReceivedFrameSinceOpen) {
+          hasReceivedFrameSinceOpen = true
+          clearConnectingDurationTimer()
+          consecutiveFailureCount = 0
+          firstFailureAtMs = null
+        }
+        frameHandler.handleFrame(data)
+      },
       onOpen: () => {
-        consecutiveFailureCount = 0
-        firstFailureAtMs = null
+        hasReceivedFrameSinceOpen = false
         frameHandler.reset()
         setConnectionStatus("open")
         // A guest socket carries no stream cursor (unlike the workspace
@@ -168,7 +185,10 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
     })
     socket.connect()
 
-    return () => socket.close()
+    return () => {
+      clearConnectingDurationTimer()
+      socket.close()
+    }
   }, [
     accessToken,
     config.id,

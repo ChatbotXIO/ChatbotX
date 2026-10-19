@@ -114,6 +114,35 @@ describe("guest session store — ky response parsing", () => {
     expect(localMessage.createdAt).toBeInstanceOf(Date)
   })
 
+  test("refetchLatestMessages replaces an optimistic message with its server copy by clientId", async () => {
+    const serverMessage = makeWireMessage({
+      clientId: "1",
+      id: "2",
+      text: "sent",
+    })
+    vi.mocked(ky.get).mockReturnValue({
+      json: () =>
+        Promise.resolve({
+          data: [serverMessage],
+          nextCursor: null,
+          prevCursor: null,
+        }),
+    } as never)
+    const store = createGuestSessionStore(createWebchatConfig())
+    store.getState().initGuestSession("workspace-1:server-guest")
+    store.getState().appendMessage({
+      clientId: "1",
+      id: "3",
+      text: "sending",
+    })
+
+    await store.getState().refetchLatestMessages(50)
+
+    expect(store.getState().messages).toMatchObject([
+      { clientId: "1", id: "2", text: "sent" },
+    ])
+  })
+
   test("loadMoreMessages resolves and stores real Date instances from string-dated wire data", async () => {
     const olderMessage = makeWireMessage({
       id: "older-msg",

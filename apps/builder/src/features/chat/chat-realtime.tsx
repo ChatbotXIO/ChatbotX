@@ -68,6 +68,7 @@ export function ChatRealtime() {
 
   const pendingCreatedMessagesRef = useRef<MessageResourceWithRelations[]>([])
   const isMessageFlushQueuedRef = useRef(false)
+  const lastHandledResyncCountRef = useRef(resyncCount)
   const flushPendingCreatedMessages = (): void => {
     if (!isMessageFlushQueuedRef.current) {
       return
@@ -95,9 +96,10 @@ export function ChatRealtime() {
   }
 
   useEffect(() => {
-    if (resyncCount === 0) {
+    if (resyncCount === lastHandledResyncCountRef.current) {
       return
     }
+    lastHandledResyncCountRef.current = resyncCount
     resyncRealtime(workspaceId)
   }, [resyncCount, resyncRealtime, workspaceId])
 

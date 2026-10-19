@@ -12,14 +12,12 @@ const SECRET = "a".repeat(32)
 const mocks = vi.hoisted(() => ({
   heartbeatMany: vi.fn(),
   loggerError: vi.fn(),
+  resolveBroadcastSecret: vi.fn(() => SECRET),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  resolveBroadcastSecret: mocks.resolveBroadcastSecret,
   workspacePresenceService: { heartbeatMany: mocks.heartbeatMany },
-}))
-
-vi.mock("@/env", () => ({
-  env: { REALTIME_BROADCAST_SECRET: SECRET },
 }))
 
 vi.mock("@/lib/log", () => ({
@@ -213,6 +211,7 @@ describe("POST /api/workspace-presence/report", () => {
       workspaceId: "1",
       userIds,
     })
+    expect(mocks.resolveBroadcastSecret).toHaveBeenCalledOnce()
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toEqual({ ok: true })
   })

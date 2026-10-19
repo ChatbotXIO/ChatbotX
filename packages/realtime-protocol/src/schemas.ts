@@ -519,6 +519,17 @@ type AllRealtimeEventData =
   | RealtimeEventWhatsappCallPermissionUpdated
   | RealtimeEventContactInboxThreadControlUpdated
 
+type Assert<T extends true> = T
+type RealtimeEventDataMatchesDelivery = [
+  AllRealtimeEventData["eventType"],
+] extends [keyof typeof EVENT_DELIVERY]
+  ? [keyof typeof EVENT_DELIVERY] extends [AllRealtimeEventData["eventType"]]
+    ? true
+    : false
+  : false
+type RealtimeEventDataMatchesDeliveryAssertion =
+  Assert<RealtimeEventDataMatchesDelivery>
+
 type RealtimeConversationScopedEventData = Extract<
   AllRealtimeEventData,
   { eventType: ConversationScopedEventType }
@@ -536,8 +547,11 @@ type Routed<T> = T & { route: RealtimeEventRoute }
 type MaybeRouted<T> = T & { route?: RealtimeEventRoute }
 
 export type RealtimeEventData =
-  | Routed<RealtimeConversationScopedEventData>
-  | MaybeRouted<RealtimeWorkspaceBroadcastEventData>
+  RealtimeEventDataMatchesDeliveryAssertion extends true
+    ?
+        | Routed<RealtimeConversationScopedEventData>
+        | MaybeRouted<RealtimeWorkspaceBroadcastEventData>
+    : never
 
 /**
  * A guest conversation or one member is already pinned to the recipient, so
@@ -561,17 +575,6 @@ type RealtimeGuestMessageEventData = Extract<
   AllRealtimeEventData,
   { eventType: RealtimeGuestMessageEventType }
 >
-
-type Assert<T extends true> = T
-type RealtimeEventDataMatchesDelivery = [
-  AllRealtimeEventData["eventType"],
-] extends [keyof typeof EVENT_DELIVERY]
-  ? [keyof typeof EVENT_DELIVERY] extends [AllRealtimeEventData["eventType"]]
-    ? true
-    : false
-  : false
-export type RealtimeEventDataMatchesDeliveryAssertion =
-  Assert<RealtimeEventDataMatchesDelivery>
 
 export type RealtimeGuestEventData =
   | MaybeRouted<RealtimeGuestMessageEventData>

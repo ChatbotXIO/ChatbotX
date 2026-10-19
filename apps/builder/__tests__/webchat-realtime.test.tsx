@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import ky from "ky"
 import { act } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
@@ -9,6 +10,9 @@ vi.mock("@/features/tenant", () => ({
 }))
 
 const loggerMock = { warn: vi.fn() }
+vi.mock("ky", () => ({
+  default: { get: vi.fn() },
+}))
 vi.mock("@/lib/log", () => ({ logger: loggerMock }))
 
 type FakeCloseEvent = { code: number; reason: string }
@@ -33,6 +37,10 @@ class FakeWebSocket {
 
   open(): void {
     this.onopen?.()
+  }
+
+  receive(data: string): void {
+    this.onmessage?.({ data })
   }
 }
 
@@ -97,6 +105,14 @@ describe("WebchatRealtime connection status", () => {
     )
     FakeWebSocket.instances = []
     loggerMock.warn.mockClear()
+    vi.mocked(ky.get).mockReturnValue({
+      json: () =>
+        Promise.resolve({
+          data: [],
+          nextCursor: null,
+          prevCursor: null,
+        }),
+    } as never)
     statuses = []
     container = document.createElement("div")
     document.body.appendChild(container)
@@ -183,6 +199,48 @@ describe("WebchatRealtime connection status", () => {
     expect(statuses.at(-1)).toBe("connecting")
   })
 
+  test("closes after 30 seconds without a received frame", async () => {
+    vi.useFakeTimers()
+    try {
+      await render()
+
+      const socket = await waitForSocket()
+      act(() => socket.open())
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000)
+      })
+
+      expect(statuses.at(-1)).toBe("closed")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("closes after 30 seconds when token mint never resolves", async () => {
+    vi.useFakeTimers()
+    try {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(
+          () =>
+            new Promise<Response>(() => {
+              // Intentionally leave the mint request pending.
+            }),
+        ),
+      )
+
+      await render()
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000)
+      })
+
+      expect(statuses.at(-1)).toBe("closed")
+      expect(FakeWebSocket.instances).toHaveLength(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   test("flips to closed after enough consecutive non-fatal getUrl failures, even though no socket is ever created", async () => {
     // Regression for PR #1349 finding #9 (remaining gap): when getUrl()
     // itself rejects non-fatally (e.g. the mint fetch throws, or returns a
@@ -218,16 +276,52 @@ describe("WebchatRealtime connection status", () => {
     }
   })
 
-  test("stops retrying after a 4001 (revoked) close, consistent with RealtimeSocket's terminal-code contract", async () => {
-    // Test gap flagged in PR #1349 round-4 review (criticality 7). Guest
-    // tokens are never actually revoked by this server (`member-revoke` only
-    // targets member sockets — see delivery.ts's `connectionsByMember`), so
-    // a webchat socket can't receive `4001` in production; this still
-    // verifies the shared `RealtimeSocket` contract holds through webchat's
-    // own integration: unlike `4003`/transient codes, a `4001` close never
-    // schedules a reconnect (`#scheduleReconnect` returns early for
-    // `REALTIME_CLOSE_CODE.revoked`), so no new socket is ever created
-    // afterward, however long the test waits.
+  test("marks the widget closed when the realtime-token mint is unauthorized", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        json: async () => ({}),
+        ok: false,
+        status: 401,
+      }),
+    )
+
+    await render()
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(statuses.at(-1)).toBe("closed")
+    expect(FakeWebSocket.instances).toHaveLength(0)
+  })
+
+  test("refetches the latest message page after a reconnect", async () => {
+    vi.useFakeTimers()
+    try {
+      await render()
+      const firstSocket = await waitForSocket()
+      act(() => {
+        firstSocket.open()
+        firstSocket.close(1006, "network")
+      })
+      await act(async () => {
+        await vi.runAllTimersAsync()
+      })
+
+      const reconnectSocket = await waitForSocket()
+      act(() => reconnectSocket.open())
+      await act(async () => {
+        await Promise.resolve()
+      })
+
+      expect(ky.get).toHaveBeenCalledOnce()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("marks the widget closed after a 4001 revoked close", async () => {
     vi.useFakeTimers()
     try {
       await render()
@@ -238,7 +332,28 @@ describe("WebchatRealtime connection status", () => {
         await vi.advanceTimersByTimeAsync(40_000)
       })
 
+      expect(statuses.at(-1)).toBe("closed")
       expect(FakeWebSocket.instances).toHaveLength(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test("does not reset failure tracking until the socket receives a frame", async () => {
+    vi.useFakeTimers()
+    try {
+      await render()
+
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const socket = await waitForSocket()
+        act(() => socket.open())
+        act(() => socket.close(1006, "immediate close"))
+        await act(async () => {
+          await vi.runAllTimersAsync()
+        })
+      }
+
+      expect(statuses.at(-1)).toBe("closed")
     } finally {
       vi.useRealTimers()
     }

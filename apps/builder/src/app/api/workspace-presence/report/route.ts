@@ -1,4 +1,7 @@
-import { workspacePresenceService } from "@chatbotx.io/business"
+import {
+  resolveBroadcastSecret,
+  workspacePresenceService,
+} from "@chatbotx.io/business"
 import {
   extractBearerToken,
   verifyPresenceReportToken,
@@ -10,7 +13,6 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { env } from "@/env"
 import { logger } from "@/lib/log"
 
 const WORKSPACE_ID_QUERY_PARAM = "workspaceId"
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
     claims = await verifyPresenceReportToken(
       token,
       workspaceId,
-      env.REALTIME_BROADCAST_SECRET,
+      resolveBroadcastSecret(),
     )
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
