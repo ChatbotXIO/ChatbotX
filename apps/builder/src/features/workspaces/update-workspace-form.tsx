@@ -9,9 +9,11 @@ import { UpdateWorkspaceBasicForm } from "./update-workspace-basic-form"
 export function UpdateWorkspaceForm({
   workspace,
   canManageSupportAccess,
+  consentRequired,
 }: {
   workspace: WorkspaceResource
   canManageSupportAccess: boolean
+  consentRequired: boolean
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -19,6 +21,7 @@ export function UpdateWorkspaceForm({
       <UpdateWorkspaceAdvancedForm workspace={workspace} />
       <SupportAccessCard
         canManage={canManageSupportAccess}
+        consentRequired={consentRequired}
         workspace={{
           id: workspace.id,
           supportAccessUntil: workspace.supportAccessUntil,

@@ -21,7 +21,9 @@ export const previewEmailTemplateAction = authActionClient
       parsedInput: { body: string }
     }) => {
       await assertEnterpriseFeatures()
-      if (!(isSuperAdmin(ctx.user) || (await isPlatformAdmin(ctx.user)))) {
+      if (
+        !((await isSuperAdmin(ctx.user)) || (await isPlatformAdmin(ctx.user)))
+      ) {
         throw new Error("Unauthorized")
       }
       return compileEmailPreview(parsedInput.body)

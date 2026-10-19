@@ -12,7 +12,7 @@ export const updateZaloSettingsAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .inputSchema(zaloCredentialUpdateSchema)
   .action(async ({ ctx, bindArgsParsedInputs: [scope], parsedInput }) => {
-    const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
+    const scopedUserId = await resolveCredentialScopedUserId(ctx.user, scope)
     const config: ZaloCredential = {
       clientId: parsedInput.clientId,
       version: parsedInput.version,

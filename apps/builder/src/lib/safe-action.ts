@@ -114,12 +114,14 @@ export const platformAdminActionClient = authActionClient.use(
   },
 )
 
-export const superAdminActionClient = authActionClient.use(({ ctx, next }) => {
-  if (!isSuperAdmin(ctx.user)) {
-    throw new Error("Unauthorized")
-  }
-  return next({ ctx })
-})
+export const superAdminActionClient = authActionClient.use(
+  async ({ ctx, next }) => {
+    if (!(await isSuperAdmin(ctx.user))) {
+      throw new Error("Unauthorized")
+    }
+    return next({ ctx })
+  },
+)
 
 export const workspaceActionClientAllowExpired = authActionClient.use(
   async ({ bindArgsClientInputs, ctx, next }) => {

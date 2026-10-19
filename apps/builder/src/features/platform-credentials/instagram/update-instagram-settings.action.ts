@@ -13,7 +13,7 @@ export const updateInstagramSettingAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .inputSchema(instagramCredentialUpdateSchema)
   .action(async ({ ctx, bindArgsParsedInputs: [scope], parsedInput }) => {
-    const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
+    const scopedUserId = await resolveCredentialScopedUserId(ctx.user, scope)
     const config: InstagramCredential = {
       clientId: parsedInput.clientId,
       version: parsedInput.version,

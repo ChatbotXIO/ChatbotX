@@ -48,7 +48,7 @@ export const updateWhatsappSettingsAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .inputSchema(whatsappCredentialUpdateSchema)
   .action(async ({ ctx, bindArgsParsedInputs: [scope], parsedInput }) => {
-    const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
+    const scopedUserId = await resolveCredentialScopedUserId(ctx.user, scope)
 
     // A blank secret keeps the stored one, so the existing credential is only
     // read then — `strict` so a transient read/decrypt failure aborts the save

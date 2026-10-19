@@ -16,7 +16,7 @@ import { credentialScopeSchema, resolveCredentialScopedUserId } from "../scope"
 export const clearGoogleAdsDeveloperTokenAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .action(async ({ ctx, bindArgsParsedInputs: [scope] }) => {
-    const userId = resolveCredentialScopedUserId(ctx.user, scope)
+    const userId = await resolveCredentialScopedUserId(ctx.user, scope)
 
     const stored = (
       await platformCredentialService.findDecrypted({

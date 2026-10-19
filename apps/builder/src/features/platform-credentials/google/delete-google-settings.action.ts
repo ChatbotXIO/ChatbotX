@@ -8,7 +8,7 @@ import { credentialScopeSchema, resolveCredentialScopedUserId } from "../scope"
 export const deleteGoogleSettingsAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .action(async ({ ctx, bindArgsParsedInputs: [scope] }) => {
-    const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
+    const scopedUserId = await resolveCredentialScopedUserId(ctx.user, scope)
     await platformCredentialService.remove({
       userId: scopedUserId,
       type: "google",

@@ -10,6 +10,7 @@ export const keys = () =>
       NEXT_PUBLIC_BUILDER_URL: z.url().default("http://localhost:3123"),
       PLATFORM_ADMIN_EMAIL: z.email().optional(),
       LICENSE_KEY: z.string().optional(),
+      SUPPORT_ACCESS_REQUIRE_CONSENT: z.stringbool().default(true),
     },
     runtimeEnv: process.env,
   })

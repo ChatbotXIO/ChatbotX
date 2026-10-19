@@ -14,12 +14,12 @@ export type CredentialScope = z.infer<typeof credentialScopeSchema>
  *                  credentials when self-hosted. Preserves the historical
  *                  white-label `/manage` behavior.
  */
-export function resolveCredentialScopedUserId(
+export const resolveCredentialScopedUserId = async (
   user: UserModel,
   scope: CredentialScope,
-): string | undefined {
+): Promise<string | undefined> => {
   if (scope === "platform") {
-    if (!isSuperAdmin(user)) {
+    if (!(await isSuperAdmin(user))) {
       throw new Error("Unauthorized")
     }
     return

@@ -9,8 +9,8 @@ export type HelpItemScope = z.infer<typeof helpItemScopeSchema>
 /**
  * Resolve the tenantId for a help-item action.
  *
- * - `"platform"` → `ROOT_TENANT_ID`. Requires the caller to be a super admin
- *   (`PLATFORM_ADMIN_EMAIL`). Used by the `/admin` console.
+ * - `"platform"` → `ROOT_TENANT_ID`. Requires a persisted platform super
+ *   admin. Used by the `/admin` console.
  * - `"tenant"` → the caller's own active cloud tenant. Cloud-only: throws
  *   Unauthorized for self-hosted users (no active cloud tenant). Used by
  *   `/manage`.
@@ -22,7 +22,7 @@ export const resolveHelpItemTenantId = async (
   scope: HelpItemScope,
 ): Promise<string> => {
   if (scope === "platform") {
-    if (!isSuperAdmin(user)) {
+    if (!(await isSuperAdmin(user))) {
       throw new Error("Unauthorized")
     }
     return ROOT_TENANT_ID

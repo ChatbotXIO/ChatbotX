@@ -3,16 +3,22 @@
 import type { AuthCreatedUser } from "@chatbotx.io/auth/server"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { ensureBootstrapPlan, isCloud, loggerWarn, quotaQueueAdd } = vi.hoisted(
-  () => ({
-    ensureBootstrapPlan: vi.fn(async () => undefined),
-    isCloud: vi.fn(() => true),
-    loggerWarn: vi.fn(),
-    quotaQueueAdd: vi.fn(async () => undefined),
-  }),
-)
+const {
+  ensureBootstrapPlan,
+  isCloud,
+  loggerWarn,
+  provisionBootstrapAdmin,
+  quotaQueueAdd,
+} = vi.hoisted(() => ({
+  ensureBootstrapPlan: vi.fn(async () => undefined),
+  isCloud: vi.fn(() => true),
+  loggerWarn: vi.fn(),
+  provisionBootstrapAdmin: vi.fn(async () => false),
+  quotaQueueAdd: vi.fn(async () => undefined),
+}))
 
 vi.mock("@chatbotx.io/business", () => ({
+  platformAdminService: { provisionBootstrapAdmin },
   userQuotaService: { ensureBootstrapPlan },
 }))
 
@@ -28,6 +34,7 @@ const { onUserCreated } = await import("@/lib/auth/on-user-created")
 
 const user = (overrides: Partial<AuthCreatedUser> = {}) =>
   ({
+    email: "user@example.com",
     id: "user-1",
     isAnonymous: false,
     ...overrides,
@@ -37,7 +44,30 @@ beforeEach(() => {
   vi.clearAllMocks()
   isCloud.mockReturnValue(true)
   ensureBootstrapPlan.mockResolvedValue(undefined)
+  provisionBootstrapAdmin.mockResolvedValue(false)
   quotaQueueAdd.mockResolvedValue(undefined)
+})
+
+describe("onUserCreated platform admin bootstrap", () => {
+  test("provisions the matching root user even outside cloud", async () => {
+    isCloud.mockReturnValue(false)
+    const createdUser = user({
+      email: "admin@example.com",
+      tenantId: "1",
+    })
+
+    await onUserCreated(createdUser)
+
+    expect(provisionBootstrapAdmin).toHaveBeenCalledWith(createdUser)
+    expect(ensureBootstrapPlan).not.toHaveBeenCalled()
+    expect(quotaQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("skips platform administration provisioning for anonymous users", async () => {
+    await onUserCreated(user({ isAnonymous: true }))
+
+    expect(provisionBootstrapAdmin).not.toHaveBeenCalled()
+  })
 })
 
 describe("onUserCreated quota bootstrap", () => {
@@ -76,7 +106,6 @@ describe("onUserCreated quota bootstrap", () => {
 
   test("skips bootstrap and enqueue for anonymous users", async () => {
     await onUserCreated(user({ isAnonymous: true }))
-
     expect(ensureBootstrapPlan).not.toHaveBeenCalled()
     expect(quotaQueueAdd).not.toHaveBeenCalled()
   })

@@ -1053,6 +1053,7 @@
       "permissionRequired": "Platforma dəstəyinin girişini dəyişmək üçün super administrator olmalısınız.",
       "enabledToast": "Platforma dəstəyinin girişi aktivləşdirildi.",
       "disabledToast": "Platforma dəstəyinin girişi deaktivdir.",
+      "consentDisabled": "Platform support access is available to platform administrators without this setting.",
       "toggleError": "Xəta baş verdi. Yenidən cəhd edin."
     }
   },
@@ -7032,7 +7033,24 @@
       "openAsSupport": "Dəstək əməkdaşı kimi aç",
       "supportEnabledUntil": "{time} vaxtınadək aktivdir",
       "supportOff": "Deaktiv",
-      "searchPlaceholder": "Ada, sahibin e-poçtuna və ya ID-yə görə axtarış"
+      "searchPlaceholder": "Ada, sahibin e-poçtuna və ya ID-yə görə axtarış",
+      "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
+      "supportAccessible": "Accessible"
+    },
+    "admins": {
+      "title": "Platform administrators",
+      "description": "Manage users who can access the platform administration console.",
+      "addTitle": "Add platform administrator",
+      "addDescription": "Grant platform administration access to a root-tenant user.",
+      "addButton": "Add administrator",
+      "role": "Role",
+      "bootstrap": "Environment bootstrap administrator",
+      "remove": "Remove administrator",
+      "empty": "No platform administrators are configured.",
+      "added": "Platform administrator added.",
+      "removed": "Platform administrator removed.",
+      "addError": "Could not add the platform administrator.",
+      "removeError": "Could not remove the platform administrator."
     }
   },
   "platformCredentials": {

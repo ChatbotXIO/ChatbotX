@@ -5265,7 +5265,24 @@
       "openAsSupport": "Öppna som support",
       "supportEnabledUntil": "Aktiverad till {time}",
       "supportOff": "Av",
-      "searchPlaceholder": "Sök efter namn, ägarens e-post eller ID"
+      "searchPlaceholder": "Sök efter namn, ägarens e-post eller ID",
+      "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
+      "supportAccessible": "Accessible"
+    },
+    "admins": {
+      "title": "Platform administrators",
+      "description": "Manage users who can access the platform administration console.",
+      "addTitle": "Add platform administrator",
+      "addDescription": "Grant platform administration access to a root-tenant user.",
+      "addButton": "Add administrator",
+      "role": "Role",
+      "bootstrap": "Environment bootstrap administrator",
+      "remove": "Remove administrator",
+      "empty": "No platform administrators are configured.",
+      "added": "Platform administrator added.",
+      "removed": "Platform administrator removed.",
+      "addError": "Could not add the platform administrator.",
+      "removeError": "Could not remove the platform administrator."
     }
   },
   "platformBranding": {
@@ -6701,6 +6718,7 @@
       "permissionRequired": "Du måste vara superadministratör för att ändra plattformens supportåtkomst.",
       "enabledToast": "Plattformens supportåtkomst aktiverad.",
       "disabledToast": "Plattformens supportåtkomst inaktiverad.",
+      "consentDisabled": "Platform support access is available to platform administrators without this setting.",
       "toggleError": "Något gick fel. Försök igen."
     }
   },

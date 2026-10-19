@@ -50,6 +50,7 @@
     "./open-link": "./src/open-link/index.ts",
     "./smart-delay": "./src/smart-delay/index.ts",
     "./errors": "./src/errors.ts",
+    "./platform-admin/startup": "./src/platform-admin/startup.ts",
     "./referral": "./src/referral/index.ts",
     "./sequence": "./src/sequence/index.ts",
     "./system-field": "./src/system-field/index.ts",

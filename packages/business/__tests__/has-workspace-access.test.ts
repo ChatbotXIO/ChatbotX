@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import { hasWorkspaceAccess } from "../src/workspace-support-access/resolve-access"
 
 const mocks = vi.hoisted(() => ({
   isSuperAdmin: vi.fn(),
@@ -17,10 +18,6 @@ vi.mock("../src/workspace/service", () => ({
 vi.mock("../src/workspace-member/service", () => ({
   workspaceMemberService: { findMembership: mocks.findMembership },
 }))
-
-const { hasWorkspaceAccess } = await import(
-  "../src/workspace-support-access/resolve-access"
-)
 
 const user = { id: "user-1", email: "admin@chatbotx.io" }
 
@@ -47,7 +44,7 @@ describe("hasWorkspaceAccess", () => {
 
   test("returns true for a super admin when support access is enabled", async () => {
     mocks.findMembership.mockResolvedValue(undefined)
-    mocks.isSuperAdmin.mockReturnValue(true)
+    mocks.isSuperAdmin.mockResolvedValue(true)
     mocks.findForAuth.mockResolvedValue({
       id: "workspace-1",
       supportAccessUntil: new Date(Date.now() + 60_000),
@@ -63,7 +60,7 @@ describe("hasWorkspaceAccess", () => {
 
   test("returns false when neither a real member nor an active support session exists", async () => {
     mocks.findMembership.mockResolvedValue(undefined)
-    mocks.isSuperAdmin.mockReturnValue(false)
+    mocks.isSuperAdmin.mockResolvedValue(false)
     mocks.findForAuth.mockResolvedValue({
       id: "workspace-1",
       supportAccessUntil: null,

@@ -2806,6 +2806,7 @@
       "permissionRequired": "您需要是超級管理員才能變更平台支援存取權限。",
       "enabledToast": "已啟用平台支援存取。",
       "disabledToast": "已停用平台支援存取。",
+      "consentDisabled": "Platform support access is available to platform administrators without this setting.",
       "toggleError": "發生錯誤，請重試。"
     }
   },
@@ -6196,7 +6197,24 @@
       "openAsSupport": "以支援身分開啟",
       "supportEnabledUntil": "已啟用，至 {time}",
       "supportOff": "已關閉",
-      "searchPlaceholder": "依名稱、擁有者電子郵件或 ID 搜尋"
+      "searchPlaceholder": "依名稱、擁有者電子郵件或 ID 搜尋",
+      "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
+      "supportAccessible": "Accessible"
+    },
+    "admins": {
+      "title": "Platform administrators",
+      "description": "Manage users who can access the platform administration console.",
+      "addTitle": "Add platform administrator",
+      "addDescription": "Grant platform administration access to a root-tenant user.",
+      "addButton": "Add administrator",
+      "role": "Role",
+      "bootstrap": "Environment bootstrap administrator",
+      "remove": "Remove administrator",
+      "empty": "No platform administrators are configured.",
+      "added": "Platform administrator added.",
+      "removed": "Platform administrator removed.",
+      "addError": "Could not add the platform administrator.",
+      "removeError": "Could not remove the platform administrator."
     }
   },
   "platformCredentials": {

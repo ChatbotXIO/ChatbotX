@@ -1053,6 +1053,7 @@
       "permissionRequired": "Bạn cần là quản trị viên cấp cao để thay đổi quyền truy cập hỗ trợ nền tảng.",
       "enabledToast": "Đã bật quyền truy cập hỗ trợ nền tảng.",
       "disabledToast": "Đã tắt quyền truy cập hỗ trợ nền tảng.",
+      "consentDisabled": "Platform support access is available to platform administrators without this setting.",
       "toggleError": "Đã xảy ra lỗi. Vui lòng thử lại."
     }
   },
@@ -6392,7 +6393,24 @@
       "openAsSupport": "Mở với vai trò hỗ trợ",
       "supportEnabledUntil": "Đã bật đến {time}",
       "supportOff": "Tắt",
-      "searchPlaceholder": "Tìm kiếm theo tên, email chủ sở hữu hoặc ID"
+      "searchPlaceholder": "Tìm kiếm theo tên, email chủ sở hữu hoặc ID",
+      "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
+      "supportAccessible": "Accessible"
+    },
+    "admins": {
+      "title": "Platform administrators",
+      "description": "Manage users who can access the platform administration console.",
+      "addTitle": "Add platform administrator",
+      "addDescription": "Grant platform administration access to a root-tenant user.",
+      "addButton": "Add administrator",
+      "role": "Role",
+      "bootstrap": "Environment bootstrap administrator",
+      "remove": "Remove administrator",
+      "empty": "No platform administrators are configured.",
+      "added": "Platform administrator added.",
+      "removed": "Platform administrator removed.",
+      "addError": "Could not add the platform administrator.",
+      "removeError": "Could not remove the platform administrator."
     }
   },
   "platformCredentials": {

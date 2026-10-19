@@ -1,7 +1,8 @@
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { tenantService } from "../enterprise/tenant/service"
-import { isCloud, keys } from "../keys"
+import { isCloud } from "../keys"
+import { isSuperAdmin } from "./utils"
 
 type AdminUser = Pick<UserModel, "id" | "email">
 
@@ -18,9 +19,8 @@ export async function resolveAdminTenantId(
       return null
     }
   }
-  // Self-hosted: only the platform admin (PLATFORM_ADMIN_EMAIL) may target the root tenant
-  const { PLATFORM_ADMIN_EMAIL } = keys()
-  if (!(PLATFORM_ADMIN_EMAIL && user.email === PLATFORM_ADMIN_EMAIL)) {
+  // Self-hosted: only a platform super admin may target the root tenant.
+  if (!(await isSuperAdmin(user))) {
     return null
   }
   return ROOT_TENANT_ID

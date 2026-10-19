@@ -38,13 +38,14 @@ export default async function MainPage() {
   // community/enterprise installs use every feature freely — no quota gating.
   const cloud = isCloud()
   const domain = await getDomainFromHeader()
-  const [usageSummary, atLimit, quota, platformAdmin, tenantId] =
+  const [usageSummary, atLimit, quota, platformAdmin, tenantId, superAdmin] =
     await Promise.all([
       cloud ? quotaEnforcementService.getUsageSummary(user.id) : null,
       cloud ? quotaEnforcementService.getAtLimitMap(user.id) : null,
       cloud ? userQuotaService.getForUser(user.id) : null,
       isPlatformAdmin(user),
       resolveTenantByDomain(domain),
+      isSuperAdmin(user),
     ])
   // "Served with platform identity" — not the same claim as user.tenantId,
   // which the session never carries (see SessionUser in lib/auth/utils.ts).
@@ -78,7 +79,7 @@ export default async function MainPage() {
         <AccountRail
           isPlatformAdmin={platformAdmin}
           isPlatformContext={isPlatformContext}
-          isSuperAdmin={isSuperAdmin(user)}
+          isSuperAdmin={superAdmin}
           metrics={buildQuotaMetrics(usageSummary)}
           planName={quota?.planName ?? null}
           planStatus={quota?.planStatus ?? null}

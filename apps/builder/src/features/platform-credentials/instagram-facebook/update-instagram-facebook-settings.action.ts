@@ -13,7 +13,7 @@ export const updateInstagramFacebookSettingAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .inputSchema(instagramFacebookCredentialUpdateSchema)
   .action(async ({ ctx, bindArgsParsedInputs: [scope], parsedInput }) => {
-    const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
+    const scopedUserId = await resolveCredentialScopedUserId(ctx.user, scope)
     const config: InstagramFacebookCredential = {
       clientId: parsedInput.clientId,
       version: parsedInput.version,

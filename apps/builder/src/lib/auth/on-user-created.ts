@@ -1,5 +1,5 @@
 import type { AuthCreatedUser } from "@chatbotx.io/auth/server"
-import { userQuotaService } from "@chatbotx.io/business"
+import { platformAdminService, userQuotaService } from "@chatbotx.io/business"
 import { QuotaJobAction, quotaQueue } from "@chatbotx.io/worker-config"
 import { isCloud } from "@/env"
 import { logger } from "@/lib/log"
@@ -21,7 +21,20 @@ import { logger } from "@/lib/log"
  * sign-up. The backfill job reconciles anything missed here.
  */
 export async function onUserCreated(user: AuthCreatedUser): Promise<void> {
-  if (!isCloud() || user.isAnonymous) {
+  if (user.isAnonymous) {
+    return
+  }
+
+  try {
+    await platformAdminService.provisionBootstrapAdmin(user)
+  } catch (err) {
+    logger.warn(
+      { err, userId: user.id },
+      "Failed to provision platform bootstrap administrator on sign-up",
+    )
+  }
+
+  if (!isCloud()) {
     return
   }
 

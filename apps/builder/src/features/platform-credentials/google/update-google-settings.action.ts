@@ -13,7 +13,7 @@ export const updateGoogleSettingsAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .inputSchema(googleCredentialUpdateSchema)
   .action(async ({ ctx, bindArgsParsedInputs: [scope], parsedInput }) => {
-    const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
+    const scopedUserId = await resolveCredentialScopedUserId(ctx.user, scope)
 
     const config: GoogleCredential = {
       clientId: parsedInput.clientId,

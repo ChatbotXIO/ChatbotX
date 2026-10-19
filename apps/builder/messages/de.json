@@ -3616,6 +3616,7 @@
       "permissionRequired": "Du musst Super-Administrator sein, um den Plattform-Support-Zugriff zu ändern.",
       "enabledToast": "Plattform-Support-Zugriff aktiviert.",
       "disabledToast": "Plattform-Support-Zugriff deaktiviert.",
+      "consentDisabled": "Platform support access is available to platform administrators without this setting.",
       "toggleError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
     }
   },
@@ -6163,7 +6164,24 @@
       "openAsSupport": "Als Support öffnen",
       "supportEnabledUntil": "Aktiviert bis {time}",
       "supportOff": "Aus",
-      "searchPlaceholder": "Suche nach Name, Besitzer-E-Mail oder ID"
+      "searchPlaceholder": "Suche nach Name, Besitzer-E-Mail oder ID",
+      "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
+      "supportAccessible": "Accessible"
+    },
+    "admins": {
+      "title": "Platform administrators",
+      "description": "Manage users who can access the platform administration console.",
+      "addTitle": "Add platform administrator",
+      "addDescription": "Grant platform administration access to a root-tenant user.",
+      "addButton": "Add administrator",
+      "role": "Role",
+      "bootstrap": "Environment bootstrap administrator",
+      "remove": "Remove administrator",
+      "empty": "No platform administrators are configured.",
+      "added": "Platform administrator added.",
+      "removed": "Platform administrator removed.",
+      "addError": "Could not add the platform administrator.",
+      "removeError": "Could not remove the platform administrator."
     }
   },
   "platformCredentials": {

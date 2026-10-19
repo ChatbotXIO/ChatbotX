@@ -1,3 +1,4 @@
+import { isSupportConsentRequired } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 
@@ -13,7 +14,10 @@ export default async function GeneralPage(props: {
     return notFound()
   }
 
-  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
+  const [userAndWorkspace, consentRequired] = await Promise.all([
+    getCurrentUserAndTargetWorkspace(workspaceId),
+    isSupportConsentRequired(),
+  ])
   if (!userAndWorkspace) {
     return notFound()
   }
@@ -26,6 +30,7 @@ export default async function GeneralPage(props: {
           "superAdmin",
         ) && !userAndWorkspace.isSupportSession
       }
+      consentRequired={consentRequired}
       workspace={userAndWorkspace.targetWorkspace}
     />
   )

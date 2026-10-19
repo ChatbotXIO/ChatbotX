@@ -14,6 +14,7 @@ import {
   MailIcon,
   PaletteIcon,
   RadioTowerIcon,
+  ShieldCheckIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
@@ -58,6 +59,15 @@ export function AdminSidebar({
       url: "/admin/platform-channels",
       icon: RadioTowerIcon,
     },
+    ...(showEnterpriseItems
+      ? [
+          {
+            title: t("platformAdmin.admins.title"),
+            url: "/admin/admins",
+            icon: ShieldCheckIcon,
+          },
+        ]
+      : []),
     ...(showEnterpriseItems && !isCloud()
       ? [
           {

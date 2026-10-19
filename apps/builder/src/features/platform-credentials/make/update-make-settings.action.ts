@@ -13,7 +13,7 @@ export const updateMakeSettingsAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .inputSchema(makeCredentialUpdateSchema)
   .action(async ({ ctx, bindArgsParsedInputs: [scope], parsedInput }) => {
-    const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
+    const scopedUserId = await resolveCredentialScopedUserId(ctx.user, scope)
 
     const config: MakeCredential = { inviteUrl: parsedInput.inviteUrl }
 
