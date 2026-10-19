@@ -506,7 +506,7 @@ describe("deleteWorkspaceMemberAction", () => {
     expect(mockWorkspaceMemberServiceDelete).not.toHaveBeenCalled()
   })
 
-  test("invalidates the removed member's cached workspace list", async () => {
+  test("leaves cache invalidation of the removed member to the service", async () => {
     await (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
       deleteActionCtx(),
     )
@@ -515,9 +515,8 @@ describe("deleteWorkspaceMemberAction", () => {
       id: MEMBER_ID,
       workspaceId: WORKSPACE_ID,
     })
-    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
-      `users:${MEMBER_USER_ID}:workspace-members`,
-    ])
+    // Cache invalidation (user, roster and schedule tags) is the service's job.
+    expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
   })
 
   test("deletes the member without mutating team-member quota", async () => {
@@ -526,8 +525,7 @@ describe("deleteWorkspaceMemberAction", () => {
     )
 
     expect(mockWorkspaceMemberServiceDelete).toHaveBeenCalledOnce()
-    expect(mockInvalidateCacheByTags).toHaveBeenCalledWith([
-      `users:${MEMBER_USER_ID}:workspace-members`,
-    ])
+    // Cache invalidation (user, roster and schedule tags) is the service's job.
+    expect(mockInvalidateCacheByTags).not.toHaveBeenCalled()
   })
 })

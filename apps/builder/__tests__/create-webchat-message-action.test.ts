@@ -18,6 +18,7 @@ const {
   mockCreateMessageRepository,
   mockCreateNewContactWithMac,
   mockDbUpdate,
+  mockUpdateFlowStepState,
   mockEmit,
   mockEmitContactCreated,
   mockFindOrFail,
@@ -84,6 +85,7 @@ const {
       },
     ),
     mockDbUpdate: vi.fn().mockReturnValue(updateBuilder),
+    mockUpdateFlowStepState: vi.fn().mockResolvedValue(undefined),
     mockEmit: vi.fn(),
     mockEmitContactCreated: vi.fn().mockResolvedValue(undefined),
     mockFindOrFail: vi.fn(),
@@ -138,6 +140,7 @@ vi.mock("@chatbotx.io/business", () => ({
   conversationService: {
     ensureActive: mockConversationEnsureActive,
     findBy: mockConversationFindBy,
+    updateFlowStepState: mockUpdateFlowStepState,
   },
   quotaEnforcementService: {
     increment: mockQuotaIncrement,
@@ -375,7 +378,7 @@ describe("handleCreateWebchatMessage", () => {
     mockContactInboxFindLatest.mockResolvedValue(contactInbox)
   })
 
-  test("updates conversation read and activity timestamps from the created webchat message", async () => {
+  test("records the contact message through the conversation service, workspace-scoped, without a direct db write", async () => {
     await handleCreateWebchatMessage({
       parsedInput: {
         text: "hello",
@@ -388,11 +391,15 @@ describe("handleCreateWebchatMessage", () => {
     const messageInput = mockRepositoryCreate.mock.calls[0]?.[0] as {
       createdAt: Date
     }
-    expect(updateBuilder.set).toHaveBeenNthCalledWith(1, {
-      contactLastReadAt: messageInput.createdAt,
+    expect(mockUpdateFlowStepState).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: expect.any(String),
+      contactLastReadAt: expect.any(Date),
       lastActivityAt: messageInput.createdAt,
       contactRepliedAt: messageInput.createdAt,
+      humanReplyWindow: { open: messageInput.createdAt },
     })
+    expect(mockDbUpdate).not.toHaveBeenCalled()
   })
 
   test("broadcasts the created message with the client's clientId for optimistic reconciliation", async () => {

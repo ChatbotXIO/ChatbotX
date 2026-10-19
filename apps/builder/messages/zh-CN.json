@@ -462,6 +462,13 @@
     "averageFirstResponseTimeByAdminHelp": "真人客服对客户消息进行初步回复所需的平均时间。",
     "averageResponseTime": "平均回应时间（分钟）",
     "averageResponseTimeByAdmin": "真人客服的平均回应时间（分钟）",
+    "withinWorkingHoursHelp": "仅统计客服工作时间内的时长，排班之外的时间不计入。",
+    "withinWorkingHoursLabel": "工作时间内",
+    "noResponseData": "无数据：该客服在此期间没有回复，或未分配工作时间表。",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "按人工客服统计的工作时间内平均首次响应时间（分钟）",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "人工客服在工作时间内首次回复客户消息所用的平均时间。",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "按人工客服统计的工作时间内平均响应时间（分钟）",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "人工客服在工作时间内回复客户消息所用的平均时间。",
     "averageResponseTimeHelp": "真人客服回复客户消息所需的平均时间。",
     "blockedContacts": "已封锁的联系人",
     "blockedContactsHelp": "不希望再接收您帐号消息的联系人",
@@ -8937,6 +8944,41 @@
       "showAll": "再显示 {count} 个",
       "showLess": "收起",
       "clearAll": "全部清除"
+    }
+  },
+  "workingHours": {
+    "title": "工作时间",
+    "label": "工作时间",
+    "description": "设置团队的在线时间。回复时间仅在这些时间段内计算。",
+    "employees": "员工",
+    "empty": "暂无工作时间。添加排班后，回复时间将仅在工作时间内计算。",
+    "deleteDescription": "删除“{name}”？其员工将重新按实际时间计算。此操作无法撤销。",
+    "create": {
+      "title": "添加工作时间",
+      "description": "为排班命名，接下来设置日期和时间。"
+    },
+    "employeesDialog": {
+      "title": "将工作时间应用到员工",
+      "description": "选择遵循此排班的员工。",
+      "moveHelp": "每位员工只能遵循一个排班。已在其他排班中的员工将被移到此排班。",
+      "placeholder": "选择员工",
+      "search": "搜索员工...",
+      "searchAria": "在员工中搜索",
+      "empty": "未找到员工。",
+      "close": "关闭",
+      "selectAll": "（全选）",
+      "clearAllAria": "{count, plural, one {清除已选员工} other {清除全部 {count} 位已选员工}}",
+      "removeAria": "从选择中移除 {name}"
+    },
+    "editor": {
+      "timezoneNote": "时间使用工作区时区：{timezone}。",
+      "notWorking": "不工作",
+      "dayToggle": "{day}上班",
+      "startTime": "开始时间",
+      "endTime": "结束时间",
+      "removeRange": "删除时间段",
+      "errorOverlap": "这些时间段存在重叠。请调整后再保存。",
+      "errorOrder": "结束时间必须晚于开始时间。"
     }
   }
 }

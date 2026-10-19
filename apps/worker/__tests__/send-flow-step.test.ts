@@ -776,10 +776,51 @@ describe("sendFlowStep", () => {
       expect.objectContaining({ eventType: "messageCreated" }),
     )
     expect(mockRecordOutboundFlowStep).toHaveBeenCalledWith(
-      expect.objectContaining({ bumpActivity: true }),
+      expect.objectContaining({
+        bumpActivity: true,
+        // Proactive broadcast sends never close the waiting window.
+        closeHumanReplyWindow: false,
+      }),
     )
     expect(mockMarkReadByOutbound).toHaveBeenCalledWith(
       expect.objectContaining({ silent: false }),
+    )
+  })
+
+  test("a plain bot flow step closes the human reply window", async () => {
+    await sendFlowStep(baseParams)
+
+    expect(mockRecordOutboundFlowStep).toHaveBeenCalledWith(
+      expect.objectContaining({ closeHumanReplyWindow: true }),
+    )
+  })
+
+  test("an inbox-originated flow step leaves the window to the producer claim", async () => {
+    await sendFlowStep({ ...baseParams, sendFrom: "inbox" })
+
+    expect(mockRecordOutboundFlowStep).toHaveBeenCalledWith(
+      expect.objectContaining({ closeHumanReplyWindow: false }),
+    )
+  })
+
+  test("sequence schedule and bulk broadcast steps keep the window open", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      metadata: { type: "sequenceSchedule" },
+    })
+    await sendFlowStep({
+      ...baseParams,
+      isBulkBroadcast: true,
+      metadata: { type: "broadcast", broadcastId: "b", contactInboxId: "ci-1" },
+    })
+
+    expect(mockRecordOutboundFlowStep).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ closeHumanReplyWindow: false }),
+    )
+    expect(mockRecordOutboundFlowStep).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ closeHumanReplyWindow: false }),
     )
   })
 
@@ -1607,6 +1648,7 @@ describe("sendFlowStep", () => {
       contactId: "contact-1",
       at: createdMessage.createdAt,
       bumpActivity: true,
+      closeHumanReplyWindow: true,
       lastStep: undefined,
       currentStep: "step-1",
     })
@@ -1872,6 +1914,7 @@ describe("sendChatMessage", () => {
       contactId: "contact-1",
       at: createdMessage.createdAt,
       bumpActivity: true,
+      closeHumanReplyWindow: true,
     })
     expect(mockInvalidateTracking).toHaveBeenCalledWith({
       cacheTags: ["contacts:contact-1:contact-inboxes"],

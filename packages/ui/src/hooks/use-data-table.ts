@@ -48,7 +48,6 @@ interface UseDataTableProps<TData>
       | "getCoreRowModel"
       | "manualFiltering"
       | "manualPagination"
-      | "manualSorting"
     >,
     Required<Pick<TableOptions<TData>, "pageCount">> {
   initialState?: Omit<Partial<TableState>, "sorting"> & {
@@ -314,7 +313,8 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
     manualPagination: true,
-    manualSorting: true,
+    // Server-side sorting by default; a client-sorted table opts out.
+    manualSorting: tableProps.manualSorting ?? true,
     manualFiltering: true,
   })
 

@@ -2009,6 +2009,13 @@
     "averageFirstResponseTimeByAdmin": "真人客服的平均首次回應時間（分鐘）",
     "averageFirstResponseTimeByAdminHelp": "真人客服對客戶訊息進行初步回覆所需的平均時間。",
     "averageResponseTimeByAdmin": "真人客服的平均回應時間（分鐘）",
+    "withinWorkingHoursHelp": "僅計算客服工作時間內的時長，排班之外的時間不計入。",
+    "withinWorkingHoursLabel": "工作時間內",
+    "noResponseData": "無資料：該客服在此期間沒有回覆，或未指派工作時間表。",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "依真人客服統計的工作時間內平均首次回應時間（分鐘）",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "真人客服在工作時間內首次回覆客戶訊息所花費的平均時間。",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "依真人客服統計的工作時間內平均回應時間（分鐘）",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "真人客服在工作時間內回覆客戶訊息所花費的平均時間。",
     "averageDurationOfConversation": "對話的平均持續時間（分鐘）",
     "averageDurationOfConversationHelp": "這是對話在轉移到機器人之前由人類處理的平均時間。",
     "success": "成功",
@@ -8937,6 +8944,41 @@
       "showAll": "再顯示 {count} 個",
       "showLess": "收合",
       "clearAll": "全部清除"
+    }
+  },
+  "workingHours": {
+    "title": "工作時間",
+    "label": "工作時間",
+    "description": "設定團隊的上線時間。回覆時間僅在這些時段內計算。",
+    "employees": "員工",
+    "empty": "尚無工作時間。新增排班後，回覆時間將僅在工作時間內計算。",
+    "deleteDescription": "刪除「{name}」？其員工將重新依實際時間計算。此操作無法復原。",
+    "create": {
+      "title": "新增工作時間",
+      "description": "為排班命名，接著設定日期與時間。"
+    },
+    "employeesDialog": {
+      "title": "將工作時間套用至員工",
+      "description": "選擇遵循此排班的員工。",
+      "moveHelp": "每位員工只能遵循一個排班。已在其他排班中的員工將移至此排班。",
+      "placeholder": "選擇員工",
+      "search": "搜尋員工...",
+      "searchAria": "在員工中搜尋",
+      "empty": "找不到員工。",
+      "close": "關閉",
+      "selectAll": "（全選）",
+      "clearAllAria": "{count, plural, one {清除已選員工} other {清除全部 {count} 位已選員工}}",
+      "removeAria": "從選擇中移除 {name}"
+    },
+    "editor": {
+      "timezoneNote": "時間使用工作區時區：{timezone}。",
+      "notWorking": "不工作",
+      "dayToggle": "{day}上班",
+      "startTime": "開始時間",
+      "endTime": "結束時間",
+      "removeRange": "移除時段",
+      "errorOverlap": "這些時段有重疊。請調整後再儲存。",
+      "errorOrder": "結束時間必須晚於開始時間。"
     }
   }
 }

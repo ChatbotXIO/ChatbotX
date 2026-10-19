@@ -22,6 +22,7 @@ const buildApi = (): AnalyticsApi =>
     uniqueConversationsByAdminAnalyticsAPI: vi.fn(),
     messagesByAdminAnalyticsAPI: vi.fn(),
     humanAgentStatsAnalyticsAPI: vi.fn(),
+    agentResponseSeriesAnalyticsAPI: vi.fn(),
     refLinkStats: vi.fn(),
     refLinkContacts: vi.fn(),
     magicLinkStats: vi.fn(),
@@ -367,6 +368,45 @@ describe("analysis store", () => {
     })
   })
 
+  describe("getAgentResponseSeries", () => {
+    test("calls agentResponseSeriesAnalyticsAPI with the range and stores the rows", async () => {
+      const rows = [
+        {
+          adminId: "5",
+          workspaceId: "ws-1",
+          date: "2026-08-02",
+          avgResponseSeconds: 30,
+          avgWorkingResponseSeconds: null,
+          avgFirstResponseSeconds: 40,
+          avgWorkingFirstResponseSeconds: null,
+          responseCount: 3,
+          firstResponseCount: 1,
+        },
+      ]
+      ;(
+        api.agentResponseSeriesAnalyticsAPI as ReturnType<typeof vi.fn>
+      ).mockResolvedValue({ data: rows })
+      const store = createAnalysisStore({
+        api,
+        type: "conversations",
+        defaultSearchParams: baseSearchParams,
+        from,
+        to,
+      })
+
+      await store.getState().getAgentResponseSeries()
+
+      expect(api.agentResponseSeriesAnalyticsAPI).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workspaceId: "ws-1",
+          from: from.toISOString(),
+          to: to.toISOString(),
+        }),
+      )
+      expect(store.getState().agentResponseSeries).toEqual(rows)
+    })
+  })
+
   describe("loadAnalysisData / setRange", () => {
     const selectedContactApiKeys = [
       "contactCountsPerDayAnalyticsAPI",
@@ -383,6 +423,7 @@ describe("analysis store", () => {
       "messagesBySenderAnalyticsAPI",
       "conversationHandoffsAnalyticsAPI",
       "humanAgentStatsAnalyticsAPI",
+      "agentResponseSeriesAnalyticsAPI",
       "uniqueConversationsByAdminAnalyticsAPI",
       "messagesByAdminAnalyticsAPI",
       "conversationAssignedByAdminAnalyticsAPI",
@@ -543,7 +584,7 @@ describe("analysis store", () => {
       expect(store.getState().allContactsByChannel).toEqual([])
     })
 
-    test("loads only the ten visible conversation datasets until their required work settles", async () => {
+    test("loads only the eleven visible conversation datasets until their required work settles", async () => {
       stubConversationsApi()
       const botMessagesResult = Promise.withResolvers<{
         data: [{ id: string }]
@@ -576,6 +617,9 @@ describe("analysis store", () => {
       expect(store.getState().loading).toBe(false)
       expect(store.getState().humanAgentStats).toEqual([
         { id: "humanAgentStatsAnalyticsAPI" },
+      ])
+      expect(store.getState().agentResponseSeries).toEqual([
+        { id: "agentResponseSeriesAnalyticsAPI" },
       ])
       for (const key of selectedConversationApiKeys) {
         expect(api[key]).toHaveBeenCalledTimes(1)
@@ -1123,6 +1167,7 @@ describe("analysis store", () => {
         "uniqueConversationsByAdminAnalyticsAPI",
         "messagesByAdminAnalyticsAPI",
         "humanAgentStatsAnalyticsAPI",
+        "agentResponseSeriesAnalyticsAPI",
       ] as const) {
         ;(api[key] as ReturnType<typeof vi.fn>).mockResolvedValue({ data: [] })
       }

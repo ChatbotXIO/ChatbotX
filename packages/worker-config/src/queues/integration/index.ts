@@ -297,6 +297,15 @@ export type IntegrationJobRunFlowNode = {
     isBulkBroadcast?: boolean
     appointmentId?: string
     sendFrom?: "inbox"
+    /**
+     * Positive identification of a flow run that reacts to a contact's inbound
+     * message (keyword / default-reply / AI / router flows, button and quick
+     * reply taps, challenge answers). Lets the Disable Bot step reopen the
+     * waiting-for-human window. Absent means false: broadcast, sequence,
+     * trigger, wait/smart-delay resumes and every unknown origin never set it,
+     * and continuations that stay in the same message-driven run forward it.
+     */
+    startedByContactMessage?: boolean
     origin?: "channel"
     /** See {@link CommentAnchor}. */
     commentAnchor?: CommentAnchor

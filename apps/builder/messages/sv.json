@@ -274,6 +274,13 @@
     "averageFirstResponseTimeByAdminHelp": "Den genomsnittliga tiden det tar för en mänsklig agent att ge det första svaret på en kunds meddelande.",
     "averageResponseTime": "Genomsnittlig svarstid (minuter)",
     "averageResponseTimeByAdmin": "Genomsnittlig svarstid per mänsklig agent (minuter)",
+    "withinWorkingHoursHelp": "Räknar bara tid inom medarbetarens arbetstid; tid utanför schemat undantas.",
+    "withinWorkingHoursLabel": "Inom arbetstid",
+    "noResponseData": "Inga data: medarbetaren har inga svar under perioden eller har inget arbetstidsschema tilldelat.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Genomsnittlig första svarstid inom arbetstid per mänsklig medarbetare (minuter)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Den genomsnittliga tid inom arbetstid som en mänsklig medarbetare behöver för att ge det första svaret på en kunds meddelande.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "Genomsnittlig svarstid inom arbetstid per mänsklig medarbetare (minuter)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "Den genomsnittliga tid inom arbetstid som en mänsklig medarbetare behöver för att svara på en kunds meddelande.",
     "averageResponseTimeHelp": "Den genomsnittliga tiden det tar för en mänsklig agent att svara på en kunds meddelande.",
     "blockedContacts": "Blockerade kontakter",
     "blockedContactsHelp": "Kontakter som inte vill ta emot meddelanden från ditt konto",
@@ -8937,6 +8944,41 @@
       "showAll": "Visa {count} till",
       "showLess": "Visa färre",
       "clearAll": "Rensa alla"
+    }
+  },
+  "workingHours": {
+    "title": "Arbetstider",
+    "label": "Arbetstider",
+    "description": "Ange när ditt team är tillgängligt. Svarstider mäts bara inom dessa tider.",
+    "employees": "Medarbetare",
+    "empty": "Inga arbetstider ännu. Lägg till ett schema för att mäta svarstider bara inom arbetstid.",
+    "deleteDescription": "Ta bort \"{name}\"? Dess medarbetare mäts åter på klocktid. Det går inte att ångra.",
+    "create": {
+      "title": "Lägg till arbetstider",
+      "description": "Ge schemat ett namn. Du anger dagar och tider nästa steg."
+    },
+    "employeesDialog": {
+      "title": "Tillämpa arbetstider på medarbetare",
+      "description": "Välj de medarbetare som följer detta schema.",
+      "moveHelp": "En medarbetare kan bara följa ett schema. Den som redan har ett annat schema flyttas hit.",
+      "placeholder": "Välj medarbetare",
+      "search": "Sök medarbetare...",
+      "searchAria": "Sök bland medarbetare",
+      "empty": "Inga medarbetare hittades.",
+      "close": "Stäng",
+      "selectAll": "(Markera alla)",
+      "clearAllAria": "{count, plural, one {Rensa vald medarbetare} other {Rensa alla {count} valda medarbetare}}",
+      "removeAria": "Ta bort {name} från urvalet"
+    },
+    "editor": {
+      "timezoneNote": "Tiderna använder arbetsytans tidszon: {timezone}.",
+      "notWorking": "Arbetar inte",
+      "dayToggle": "Arbetar {day}",
+      "startTime": "Starttid",
+      "endTime": "Sluttid",
+      "removeRange": "Ta bort tidsintervall",
+      "errorOverlap": "Dessa tidsintervall överlappar. Justera dem för att spara.",
+      "errorOrder": "Sluttiden måste vara efter starttiden."
     }
   }
 }

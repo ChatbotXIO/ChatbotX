@@ -1,4 +1,5 @@
 import {
+  agentResponseSeriesRowSchema,
   botMessageStatsSchema,
   commentAutomationTimeseriesRow,
   contactsByDimensionFields,
@@ -79,6 +80,10 @@ export const messagesByAdminPublicResponse = z.object({
 
 export const humanAgentStatsPublicResponse = z.object({
   data: z.array(humanAgentStatsSchema.omit({ workspaceId: true })),
+})
+
+export const agentResponseSeriesPublicResponse = z.object({
+  data: z.array(agentResponseSeriesRowSchema.omit({ workspaceId: true })),
 })
 
 export const messagesBySenderPublicResponse = z.object({

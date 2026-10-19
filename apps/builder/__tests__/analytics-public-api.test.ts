@@ -23,6 +23,7 @@ type RouteConfig = {
   method: string
   path: string
   summary: string
+  description?: string
   tags: string[]
   successStatus?: number
 }
@@ -86,6 +87,10 @@ const messageAnalyticsService = {
   getMessagesBySender: vi.fn(),
 }
 
+const agentResponseAnalyticsService = {
+  getAgentResponseSeries: vi.fn(),
+}
+
 const conversationAnalyticsService = {
   getHandoffsByDay: vi.fn(),
   getFollowUpsByDay: vi.fn(),
@@ -133,6 +138,7 @@ const commentAutomationAnalyticsService = {
 }
 
 vi.mock("@chatbotx.io/analytics", () => ({
+  agentResponseAnalyticsService,
   commentAutomationAnalyticsService,
   contactAnalyticsService,
   macAnalyticsService,
@@ -281,6 +287,88 @@ describe("GET /v1/analytics/conversation-handoffs", () => {
     expect(conversationAnalyticsService.getHandoffsByDay).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: "workspace-1" }),
     )
+  })
+})
+
+describe("GET /v1/analytics/human-agent-stats", () => {
+  const procedure = findProcedure("GET", "/v1/analytics/human-agent-stats")
+
+  test("documents response-time fields instead of denying them", () => {
+    const description = procedure.route.description ?? ""
+    expect(description).not.toContain("no response-time metric")
+    expect(description).toContain("avgWorkingFirstResponseSeconds")
+    expect(description).toContain("SECONDS")
+    expect(description).toContain("`null`")
+  })
+
+  test("returns response-time measures and strips workspaceId", async () => {
+    messageAnalyticsService.getHumanAgentStats.mockResolvedValueOnce([
+      {
+        workspaceId: "workspace-1",
+        adminId: "5",
+        assignedConversations: 1,
+        messagesSent: 2,
+        uniqueContacts: 1,
+        avgResponseSeconds: 30,
+        avgWorkingResponseSeconds: null,
+        avgFirstResponseSeconds: 40,
+        avgWorkingFirstResponseSeconds: null,
+        responseCount: 3,
+        firstResponseCount: 1,
+      },
+    ])
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { from: new Date(), to: new Date(), timezone: "UTC" },
+    })
+
+    expect(result).toMatchObject({
+      data: [{ adminId: "5", avgResponseSeconds: 30, responseCount: 3 }],
+    })
+  })
+})
+
+describe("GET /v1/analytics/agent-response-series", () => {
+  const procedure = findProcedure("GET", "/v1/analytics/agent-response-series")
+
+  test("sources workspaceId from context, not input, and returns the service rows", async () => {
+    const row = {
+      adminId: "5",
+      workspaceId: "workspace-1",
+      date: "2026-01-02",
+      userName: "Ann",
+      userEmail: "ann@example.com",
+      avgResponseSeconds: 30,
+      avgWorkingResponseSeconds: null,
+      avgFirstResponseSeconds: 40,
+      avgWorkingFirstResponseSeconds: null,
+      responseCount: 3,
+      firstResponseCount: 1,
+    }
+    agentResponseAnalyticsService.getAgentResponseSeries.mockResolvedValueOnce([
+      row,
+    ])
+
+    const result = await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { from: new Date(), to: new Date(), timezone: "UTC" },
+    })
+
+    expect(
+      agentResponseAnalyticsService.getAgentResponseSeries,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "workspace-1", timezone: "UTC" }),
+    )
+    expect(result).toEqual({ data: [row] })
+  })
+
+  test("description states units, null semantics and timezone", () => {
+    const description = procedure.route.description ?? ""
+    expect(description).toContain("SECONDS")
+    expect(description).toContain("`null`")
+    expect(description).toContain("timezone")
+    expect(description).toContain("analytics.humanAgentStats")
   })
 })
 

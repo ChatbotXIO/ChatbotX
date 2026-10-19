@@ -2,6 +2,10 @@ import type { ReactNode } from "react"
 import type { AnalysisStoreProviderProps } from "../provider/analysis-store-context"
 import { AnalysisStoreProvider } from "../provider/analysis-store-context"
 import { AdminsAnalysis } from "./charts/admins-analysis"
+import {
+  AverageFirstResponseTimeWithinWorkingHoursChart,
+  AverageResponseTimeWithinWorkingHoursChart,
+} from "./charts/agent-response-time-charts"
 import { ArchivedConversationChart } from "./charts/archived-conversation-chart"
 import { AssignedConversationsByAdminChart } from "./charts/assigned-conversations-by-admin-chart"
 import { AssignedConversationsChart } from "./charts/assigned-conversations-chart"
@@ -55,6 +59,12 @@ export function ConversationsDashboard({
             className="w-full md:col-span-2"
           >
             <AdminsAnalysis />
+          </DashboardPanel>
+          <DashboardPanel action="getAgentResponseSeries">
+            <AverageFirstResponseTimeWithinWorkingHoursChart />
+          </DashboardPanel>
+          <DashboardPanel action="getAgentResponseSeries">
+            <AverageResponseTimeWithinWorkingHoursChart />
           </DashboardPanel>
           <DashboardPanel action="getUniqueConversationsByAdmin">
             <UniqueConversationsByAdminChart />

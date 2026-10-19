@@ -155,6 +155,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   nodeVisits?: NodeVisits
   triggerMessageId?: string
   triggerMessageCreatedAt?: Date
+  startedByContactMessage?: boolean
   commentAnchor?: CommentAnchor
   appointmentId?: string
   flowExecutionKey?: string
@@ -334,6 +335,7 @@ export const runFlowNode = async (
       isBulkBroadcast:
         props.isBulkBroadcast ?? props.initialBroadcastDispatch === true,
       sendFrom,
+      startedByContactMessage: props.startedByContactMessage,
       nodeVisits: props.nodeVisits,
       commentAnchor,
       appointmentId: props.appointmentId,
@@ -548,6 +550,7 @@ export async function runStepsAndQuickReplies(
           nodeVisits,
           triggerMessageId: props.triggerMessageId,
           triggerMessageCreatedAt: props.triggerMessageCreatedAt,
+          startedByContactMessage: props.startedByContactMessage,
           commentAnchor: remainingAnchor,
           // The continuation keeps the parent's key: a retried parent enqueues a
           // second continuation with another job id, and the conversion step
@@ -619,6 +622,7 @@ export async function runStepsAndQuickReplies(
         nodeVisits,
         triggerMessageId: props.triggerMessageId,
         triggerMessageCreatedAt: props.triggerMessageCreatedAt,
+        startedByContactMessage: props.startedByContactMessage,
         commentAnchor: remainingAnchor,
         origin: webhookChannelOrigin(),
       },
@@ -747,6 +751,7 @@ async function* executeMultipleStepsGenerator(
               nodeVisits: props.nodeVisits,
               triggerMessageId: props.triggerMessageId,
               triggerMessageCreatedAt: props.triggerMessageCreatedAt,
+              startedByContactMessage: props.startedByContactMessage,
               commentAnchor: anchorAvailable,
               flowExecutionKey: isDurableFlowExecutionKey(
                 props.flowExecutionKey,
@@ -1112,6 +1117,9 @@ async function runFlowAction(
       ctx: {
         variables: initVariables(),
       },
+      // A tap is the contact's message; a delivery-status webhook is not.
+      startedByContactMessage:
+        data.webhookType !== IntegrationJobAction.messageStatus,
       flowExecutionKey,
     })
     if (data.messageId) {

@@ -1,4 +1,5 @@
 import {
+  agentResponseAnalyticsService,
   botMessageAnalyticsService,
   broadcastAnalyticsService,
   commentAutomationAnalyticsService,
@@ -30,6 +31,7 @@ import {
 } from "@/lib/orpc/orpc-error-helper"
 import { workspaceTokenAuthAPIForScope } from "@/orpc"
 import {
+  agentResponseSeriesPublicResponse,
   botMessagesAIProvidersPublicResponse,
   botMessagesPublicResponse,
   broadcastStatsPublicRequest,
@@ -333,7 +335,7 @@ export const analyticsPublicRouter = {
       path: "/v1/analytics/human-agent-stats",
       summary: "Get human agent statistics",
       description:
-        "Returns volume statistics per human agent over a requested time range: messages sent, unique contacts messaged and conversations assigned. It has no response-time metric.",
+        "Returns statistics per current workspace member (agents who left the workspace are omitted) over a requested time range: messages sent, unique contacts messaged, conversations assigned, and response times. Response-time fields are in SECONDS, rounded to whole seconds: `avgResponseSeconds` (every human reply to a customer message), `avgFirstResponseSeconds` (only the first human reply in a conversation, i.e. the first reply after the customer's message when no human had yet replied), and `avgWorkingResponseSeconds` / `avgWorkingFirstResponseSeconds`, which count only the time that falls within the replying agent's working-hours schedule (outside-hours waiting is excluded; null when the agent has no schedule). An average is `null` (not 0) when the agent has no matching replies in the range; `responseCount` and `firstResponseCount` give the number of replies behind the all-replies and first-response averages (0 when none). For per-day trends use `analytics.agentResponseSeries`.",
       tags: ["Analytics"],
     })
     .input(timeRangePublicRequest)
@@ -341,6 +343,26 @@ export const analyticsPublicRouter = {
     .errors(possibleErrorsOnListingResource)
     .handler(async ({ context, input }) => {
       const data = await messageAnalyticsService.getHumanAgentStats({
+        ...input,
+        workspaceId: context.workspace.id,
+      })
+      return { data }
+    }),
+
+  agentResponseSeries: workspaceTokenAuthAPI
+    .route({
+      method: "GET",
+      path: "/v1/analytics/agent-response-series",
+      summary: "Get agent response time series",
+      description:
+        "Returns human-agent response times per agent per day over a requested time range, for charting trends. One row per (agent, day) that has at least one reply; days are `YYYY-MM-DD` bucketed in the request `timezone` (IANA). `adminId` is the user id of a current workspace member: get ids, names and emails from the same agents listed by `analytics.humanAgentStats` (`adminId`); agents who left the workspace are omitted. Averages are in SECONDS, rounded to whole seconds: `avgResponseSeconds` (all replies), `avgFirstResponseSeconds` (first human reply in a conversation only), and `avgWorkingResponseSeconds` / `avgWorkingFirstResponseSeconds`, which count only time within the replying agent's working-hours schedule (null when the agent has no schedule). An average is `null` (not 0) when no matching replies exist for that agent and day; `responseCount` and `firstResponseCount` are the replies behind them.",
+      tags: ["Analytics"],
+    })
+    .input(timeRangePublicRequest)
+    .output(agentResponseSeriesPublicResponse)
+    .errors(possibleErrorsOnListingResource)
+    .handler(async ({ context, input }) => {
+      const data = await agentResponseAnalyticsService.getAgentResponseSeries({
         ...input,
         workspaceId: context.workspace.id,
       })

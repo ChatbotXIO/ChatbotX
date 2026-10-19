@@ -218,6 +218,13 @@
     "averageFirstResponseTimeByAdmin": "Waktu respons pertama rata-rata oleh agen manusia (Menit)",
     "averageFirstResponseTimeByAdminHelp": "Waktu rata-rata yang diperlukan agen manusia untuk memberikan balasan awal kepada pesan pelanggan.",
     "averageResponseTimeByAdmin": "Waktu respons rata-rata oleh agen manusia (Menit)",
+    "withinWorkingHoursHelp": "Hanya menghitung waktu dalam jam kerja agen; waktu di luar jadwalnya tidak dihitung.",
+    "withinWorkingHoursLabel": "Dalam jam kerja",
+    "noResponseData": "Tidak ada data: agen tidak memiliki balasan pada periode ini atau belum diberi jadwal jam kerja.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Rata-rata waktu respons pertama dalam jam kerja per agen manusia (menit)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Rata-rata waktu dalam jam kerja yang dibutuhkan agen manusia untuk memberikan balasan pertama atas pesan pelanggan.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "Rata-rata waktu respons dalam jam kerja per agen manusia (menit)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "Rata-rata waktu dalam jam kerja yang dibutuhkan agen manusia untuk membalas pesan pelanggan.",
     "averageDurationOfConversation": "Durasi rata-rata percakapan (Menit)",
     "averageDurationOfConversationHelp": "Waktu rata-rata percakapan ditangani oleh manusia sebelum dipindahkan ke bot.",
     "success": "Berhasil",
@@ -8937,6 +8944,41 @@
       "showAll": "Tampilkan {count} lagi",
       "showLess": "Tampilkan lebih sedikit",
       "clearAll": "Hapus semua"
+    }
+  },
+  "workingHours": {
+    "title": "Jam Kerja",
+    "label": "Jam kerja",
+    "description": "Tentukan kapan tim Anda tersedia. Waktu balasan hanya diukur dalam jam-jam ini.",
+    "employees": "Karyawan",
+    "empty": "Belum ada jam kerja. Tambahkan jadwal untuk mengukur waktu balasan hanya selama jam kerja.",
+    "deleteDescription": "Hapus \"{name}\"? Karyawannya akan kembali diukur berdasarkan waktu nyata. Tindakan ini tidak dapat dibatalkan.",
+    "create": {
+      "title": "Tambah jam kerja",
+      "description": "Beri nama jadwal. Anda akan mengatur hari dan jam berikutnya."
+    },
+    "employeesDialog": {
+      "title": "Terapkan jam kerja ke karyawan",
+      "description": "Pilih karyawan yang mengikuti jadwal ini.",
+      "moveHelp": "Satu karyawan hanya dapat mengikuti satu jadwal. Siapa pun yang sudah di jadwal lain akan dipindahkan ke jadwal ini.",
+      "placeholder": "Pilih karyawan",
+      "search": "Cari karyawan...",
+      "searchAria": "Cari di antara karyawan",
+      "empty": "Karyawan tidak ditemukan.",
+      "close": "Tutup",
+      "selectAll": "(Pilih semua)",
+      "clearAllAria": "{count, plural, one {Hapus karyawan terpilih} other {Hapus semua {count} karyawan terpilih}}",
+      "removeAria": "Hapus {name} dari pilihan"
+    },
+    "editor": {
+      "timezoneNote": "Waktu menggunakan zona waktu workspace: {timezone}.",
+      "notWorking": "Tidak bekerja",
+      "dayToggle": "Bekerja pada hari {day}",
+      "startTime": "Waktu mulai",
+      "endTime": "Waktu selesai",
+      "removeRange": "Hapus rentang waktu",
+      "errorOverlap": "Rentang waktu ini tumpang tindih. Sesuaikan untuk menyimpan.",
+      "errorOrder": "Waktu selesai harus setelah waktu mulai."
     }
   }
 }

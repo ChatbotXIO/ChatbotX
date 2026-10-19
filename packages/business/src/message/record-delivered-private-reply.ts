@@ -114,6 +114,9 @@ export const recordDeliveredDirectMessage = async (props: {
         contactInboxId: contactInbox.id,
         contactId: contactInbox.contactId,
         at: message.createdAt,
+        // Both callers (comment private reply, AI-handover bulk settle) are
+        // proactive: they are not a bot reply to the contact's last DM.
+        closeHumanReplyWindow: false,
       })
     await Promise.all([
       trackingInvalidation

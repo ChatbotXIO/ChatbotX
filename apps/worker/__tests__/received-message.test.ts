@@ -1107,6 +1107,8 @@ describe("receiveMessage — message repository branch", () => {
       },
       contactLocation: null,
       at: fakeCreatedMessage.createdAt,
+      // Native-app echo closes the waiting window as an external human reply.
+      isExternalHumanEcho: true,
     })
     expect(mockRecordInboundActivity).not.toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1167,6 +1169,64 @@ describe("receiveMessage — message repository branch", () => {
     // agent is nudged to monitor the AI (Integration Guide §5.3).
     expect(mockRecordInboundActivity).toHaveBeenCalled()
     expect(mockMarkReadByOutbound).not.toHaveBeenCalled()
+  })
+
+  describe("outgoing echo and the human reply window", () => {
+    const mockEcho = (extra: Record<string, unknown>) => {
+      mockFindLastByConversation.mockResolvedValueOnce([])
+      mockFindContactInbox.mockResolvedValue({
+        ...fakeContactInbox,
+        contact: fakeContact,
+      })
+      mockRunChannelHandler.mockResolvedValue({
+        message: {
+          ...baseIncomingMessage,
+          messageType: "outgoing",
+          attachments: [],
+        },
+        contact: { sourceId: "psid-123", firstName: "Test" },
+        postbackAction: null,
+        quickReplyAction: null,
+        ref: null,
+        ...extra,
+      })
+      mockCreateOrUpdate.mockResolvedValue({
+        message: { ...fakeCreatedMessage, messageType: "outgoing" },
+        isNew: true,
+      })
+    }
+
+    test("a first-party native-app echo closes the window", async () => {
+      mockEcho({ echoOrigin: "firstParty" })
+
+      await receiveMessage(baseProps)
+
+      expect(mockRecordInboundActivity).toHaveBeenCalledWith(
+        expect.objectContaining({ isExternalHumanEcho: true }),
+      )
+    })
+
+    test("a Business-AI standby echo (keepUnread) does not close the window", async () => {
+      mockEcho({
+        threadControl: { delivery: "standby", ownerRole: "ai_agent" },
+      })
+
+      await receiveMessage(baseProps)
+
+      expect(mockRecordInboundActivity).toHaveBeenCalledWith(
+        expect.objectContaining({ isExternalHumanEcho: false }),
+      )
+    })
+
+    test("a third-party app echo does not close the window", async () => {
+      mockEcho({ echoOrigin: "thirdParty" })
+
+      await receiveMessage(baseProps)
+
+      expect(mockRecordInboundActivity).toHaveBeenCalledWith(
+        expect.objectContaining({ isExternalHumanEcho: false }),
+      )
+    })
   })
 
   test("logs and swallows mark-read failures for outgoing echoes", async () => {

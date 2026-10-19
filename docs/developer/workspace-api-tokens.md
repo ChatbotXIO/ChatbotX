@@ -42,7 +42,17 @@ plain `text[]`, so adding a scope is an enum change, never a migration.
 The `analytics` scope covers both `/v1/error-logs`
 (`apps/builder/src/features/error-logs/api/public.ts`) and, as of the public
 analytics router, every `/v1/analytics/*` route
-(`apps/builder/src/features/analytics/api/public.ts`).
+(`apps/builder/src/features/analytics/api/public.ts`), including
+`analytics.agentResponseSeries` (`GET /v1/analytics/agent-response-series`,
+per-agent daily reply-time averages) and the response-time fields of
+`analytics.humanAgentStats`.
+
+The `inbox` scope also covers the Working Hours routes
+(`apps/builder/src/features/working-hours/api/public.ts`, router key
+`workingHours`: `GET/POST /v1/working-hours`, `GET/PATCH/DELETE
+/v1/working-hours/{id}`, `PUT /v1/working-hours/{id}/members`), next to
+Inbox Teams. A token without `inbox` gets 403; a `read_only` token is blocked
+on the mutations. See `docs/working-hours.md`.
 
 The `appointments` scope existed in the enum and UI registry for some time
 before any endpoint used it — see "Appointments scope — endpoint-to-scope

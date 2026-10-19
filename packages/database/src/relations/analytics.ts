@@ -38,6 +38,18 @@ export const analyticsConversationEventRelations = defineRelationsPart(
   }),
 )
 
+export const analyticsAgentResponseEventRelations = defineRelationsPart(
+  schema,
+  (r) => ({
+    analyticsAgentResponseEventModel: {
+      workspace: r.one.workspaceModel({
+        from: r.analyticsAgentResponseEventModel.workspaceId,
+        to: r.workspaceModel.id,
+      }),
+    },
+  }),
+)
+
 export const analyticsBroadcastEventRelations = defineRelationsPart(
   schema,
   (r) => ({

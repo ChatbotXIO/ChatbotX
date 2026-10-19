@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({
     values,
   })),
   cancelQuickReplyFollowUps: vi.fn(),
+  closeHumanReplyWindow: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -95,6 +96,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mocks.createMessageRepository,
   getSafeSinceTime: mocks.getSafeSinceTime,
   assignUserIfUnassigned: mocks.assignUserIfUnassigned,
+  closeHumanReplyWindow: mocks.closeHumanReplyWindow,
 }))
 
 vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
@@ -211,6 +213,7 @@ beforeEach(() => {
   mocks.cancelQuickReplyFollowUps.mockResolvedValue(undefined)
   vi.mocked(emitConversationTransferredToHuman).mockReset()
   mocks.sql.mockClear()
+  mocks.closeHumanReplyWindow.mockReset()
 })
 
 describe("ConversationService.updateFlowStepState lastActivityAt monotonicity", () => {
@@ -951,6 +954,7 @@ describe("ConversationService.assignOneOrSkip", () => {
     expect(mocks.updateSet).toHaveBeenCalledWith({
       assignedUserId: "user-1",
       assignedInboxTeamId: null,
+      assignedUserAt: expect.anything(),
     })
   })
 
@@ -1048,6 +1052,8 @@ describe("ConversationService.updateArchived — conversation routing release", 
     ).resolves.toBeUndefined()
     expect(mocks.updateSet).toHaveBeenCalledWith({
       archivedAt: expect.any(Date),
+      awaitingHumanReplySince: expect.anything(),
+      awaitingHumanReplyClosedAt: expect.anything(),
     })
   })
 })
@@ -1324,5 +1330,225 @@ describe("ConversationService analytics attribution", () => {
     expect(payload).toMatchObject({ conversationId: "cv1" })
     expect(payload?.channel).toBeUndefined()
     expect(payload?.inboxId).toBeUndefined()
+  })
+})
+
+const fragmentText = (fragment: unknown): string => JSON.stringify(fragment)
+
+describe("ConversationService human-reply-window writers", () => {
+  const triggerContext = {
+    triggerSource: "test",
+    triggerHandler: "test",
+    triggerType: "test",
+  }
+  const lastSet = () => mocks.updateSet.mock.calls.at(-1)?.[0]
+
+  test("updateAssignment keeps assignedUserAt for the same user and clears it on unassign", async () => {
+    await conversationService.updateAssignment({
+      workspaceId: WORKSPACE_ID,
+      conversations: [{ id: "conv-1", contactId: "contact-1" }],
+      assignedUserId: "user-1",
+      assignedInboxTeamId: null,
+      triggerContext,
+    })
+    const assign = fragmentText(lastSet().assignedUserAt)
+    expect(assign).toContain("IS DISTINCT FROM")
+    expect(assign).toContain('ELSE \\"assignedUserAt\\" END')
+    expect(lastSet().assignedUserAt.values).toContain("user-1")
+
+    await conversationService.updateAssignment({
+      workspaceId: WORKSPACE_ID,
+      conversations: [{ id: "conv-1", contactId: "contact-1" }],
+      assignedUserId: null,
+      assignedInboxTeamId: "team-1",
+      triggerContext,
+    })
+    expect(lastSet().assignedUserAt.values[0]).toBeNull()
+    expect(fragmentText(lastSet().assignedUserAt)).toContain("THEN NULL")
+  })
+
+  test("archiving closes the window as archive and unarchiving does not touch it", async () => {
+    await conversationService.updateArchived({
+      workspaceId: WORKSPACE_ID,
+      conversations: [{ id: "conv-1", contactId: "contact-1" }],
+      archivedAt: new Date(),
+      triggerContext,
+    })
+    expect(lastSet()).toHaveProperty("awaitingHumanReplyClosedAt")
+    expect(fragmentText(lastSet().awaitingHumanReplySince)).not.toContain(
+      "botEnabled",
+    )
+
+    await conversationService.updateArchived({
+      workspaceId: WORKSPACE_ID,
+      conversations: [{ id: "conv-1", contactId: "contact-1" }],
+      archivedAt: null,
+      triggerContext,
+    })
+    expect(lastSet()).toEqual({ archivedAt: null })
+  })
+
+  test("pausing reopens the window only when the caller opts in; enabling never does", async () => {
+    await conversationService.updateBotEnabled({
+      workspaceId: WORKSPACE_ID,
+      ids: ["conv-1"],
+      botEnabled: false,
+    })
+    expect(lastSet()).not.toHaveProperty("awaitingHumanReplySince")
+
+    await conversationService.updateBotEnabled({
+      workspaceId: WORKSPACE_ID,
+      ids: ["conv-1"],
+      botEnabled: false,
+      reopenUnansweredHumanReplyWindow: true,
+    })
+    const reopen = fragmentText(lastSet().awaitingHumanReplySince)
+    expect(reopen).toContain("IS NULL AND")
+    expect(reopen).toContain("contactRepliedAt")
+
+    await conversationService.updateBotEnabled({
+      workspaceId: WORKSPACE_ID,
+      ids: ["conv-1"],
+      botEnabled: true,
+      reopenUnansweredHumanReplyWindow: true,
+    })
+    expect(lastSet()).not.toHaveProperty("awaitingHumanReplySince")
+  })
+
+  test("disableBotState forwards the reopen opt-in", async () => {
+    const conversations = [{ id: "conv-1", contactId: "contact-1" }]
+    mocks.conversationFindMany.mockResolvedValue(conversations)
+
+    await conversationService.disableBotState({
+      workspaceId: WORKSPACE_ID,
+      conversations,
+      triggerContext,
+      reopenUnansweredHumanReplyWindow: true,
+    })
+    expect(lastSet()).toHaveProperty("awaitingHumanReplySince")
+
+    await conversationService.disableBotState({
+      workspaceId: WORKSPACE_ID,
+      conversations,
+      triggerContext,
+    })
+    expect(lastSet()).not.toHaveProperty("awaitingHumanReplySince")
+  })
+
+  test("handOffIfBotEnabled without the opt-in does not touch the window", async () => {
+    mocks.updateReturning.mockResolvedValueOnce([{ id: "conv-1" }])
+
+    await conversationService.handOffIfBotEnabled({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+    })
+
+    expect(lastSet()).not.toHaveProperty("awaitingHumanReplySince")
+  })
+
+  test("handOffIfBotEnabled is workspace-scoped, guarded by botEnabled and reopens on opt-in", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"))
+    mocks.updateReturning.mockResolvedValueOnce([{ id: "conv-1" }])
+
+    let handedOff: boolean
+    try {
+      handedOff = await conversationService.handOffIfBotEnabled({
+        workspaceId: WORKSPACE_ID,
+        conversationId: "conv-1",
+        reopenUnansweredHumanReplyWindow: true,
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+
+    expect(handedOff).toBe(true)
+    expect(lastSet()).toMatchObject({
+      botEnabled: false,
+      botResumeAt: new Date("2026-01-02T00:00:00.000Z"),
+      awaitingHumanReplySince: expect.anything(),
+    })
+    expect(mocks.updateWhere).toHaveBeenCalledWith({
+      and: [
+        { eq: [undefined, "conv-1"] },
+        { eq: [undefined, WORKSPACE_ID] },
+        { eq: [undefined, true] },
+      ],
+    })
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+  })
+
+  test("handOffIfBotEnabled reports false and does not invalidate when already handed off", async () => {
+    mocks.updateReturning.mockResolvedValueOnce([])
+
+    const handedOff = await conversationService.handOffIfBotEnabled({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+    })
+
+    expect(handedOff).toBe(false)
+    expect(invalidateCacheByTags).not.toHaveBeenCalled()
+  })
+
+  test("markAgentReplied returns the claim with isFirstResponse from the previous adminRepliedAt", async () => {
+    const at = new Date("2026-10-18T09:05:00.000Z")
+    const since = new Date("2026-10-18T09:00:00.000Z")
+    mocks.closeHumanReplyWindow.mockResolvedValueOnce({
+      closedAwaitingSince: since,
+      previousAdminRepliedAt: null,
+      assignedUserId: "user-1",
+      assignedUserAt: null,
+    })
+
+    const result = await conversationService.markAgentReplied({
+      id: "conv-1",
+      workspaceId: WORKSPACE_ID,
+      at,
+    })
+
+    expect(mocks.closeHumanReplyWindow).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      conversationId: "conv-1",
+      repliedAt: at,
+    })
+    expect(result).toEqual({
+      closedAwaitingSince: since,
+      isFirstResponse: true,
+      assignedUserId: "user-1",
+      assignedUserAt: null,
+    })
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+  })
+
+  test("markAgentReplied is not a first response once a human replied before", async () => {
+    mocks.closeHumanReplyWindow.mockResolvedValueOnce({
+      closedAwaitingSince: null,
+      previousAdminRepliedAt: new Date("2026-10-17T00:00:00.000Z"),
+      assignedUserId: null,
+      assignedUserAt: null,
+    })
+
+    const result = await conversationService.markAgentReplied({
+      id: "conv-1",
+      workspaceId: WORKSPACE_ID,
+      at: new Date(),
+    })
+
+    expect(result).toMatchObject({
+      closedAwaitingSince: null,
+      isFirstResponse: false,
+    })
+  })
+
+  test("markAgentReplied returns null for a conversation outside the workspace", async () => {
+    mocks.closeHumanReplyWindow.mockResolvedValueOnce(null)
+
+    await expect(
+      conversationService.markAgentReplied({
+        id: "conv-x",
+        workspaceId: WORKSPACE_ID,
+        at: new Date(),
+      }),
+    ).resolves.toBeNull()
   })
 })

@@ -108,6 +108,24 @@ chatbotx teams member delete <id> --userIds <userIds> # Remove members from team
 
 ---
 
+### `working-hours` (scope `inbox`)
+
+Weekly schedules used to measure agent reply time within working hours. Intervals are in the workspace timezone: `weekday` 0=Sunday..6=Saturday, `startMinute`/`endMinute` are minutes since midnight, end-exclusive (`24:00` = 1440). A member belongs to at most one schedule. Get user ids from `chatbotx members list`. See `docs/working-hours.md`.
+
+```bash
+chatbotx working-hours list                          # List schedules
+                                                     # [--page --perPage]
+chatbotx working-hours get <id>                      # Get schedule (intervals + memberUserIds)
+chatbotx working-hours create --name <name>          # Create schedule
+                                                     # [--intervals <json>]  JSON array of {weekday,startMinute,endMinute}
+                                                     # [--userIds <json>]    JSON array of user id strings
+chatbotx working-hours update <id>                   # [--name] [--intervals <json>] — JSON array of {weekday,startMinute,endMinute}; fully replaces
+chatbotx working-hours delete <id>                   # Delete schedule (members go back to wall-clock timing)
+chatbotx working-hours members update <id> --userIds <json>   # JSON array of user id strings; fully replaces members, moves users from other schedules
+```
+
+---
+
 ### `tags`
 
 ```bash
@@ -576,7 +594,8 @@ chatbotx analytics contacts-count
 chatbotx analytics active-contacts-count
 chatbotx analytics contacts-by-dimension --dimension <country|channel|source|language>   # [--metric <new|total>]
 chatbotx analytics messages-by-admin
-chatbotx analytics human-agent-stats
+chatbotx analytics human-agent-stats               # Per agent: messages, contacts, assignments + avg response / first-response seconds (raw and within working hours; null when no data or no schedule)
+chatbotx analytics agent-response-series           # Per agent per day (YYYY-MM-DD in --timezone): the same four averages + reply counts
 chatbotx analytics conversation-handoffs
 chatbotx analytics conversation-followups
 chatbotx analytics conversation-archived

@@ -19,7 +19,7 @@ import {
 } from "@chatbotx.io/business/contact-locale"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { findOrFail } from "@chatbotx.io/database/client"
 import {
   type ConversationAttributes,
   channelTypes,
@@ -273,14 +273,14 @@ export async function handleCreateWebchatMessage({
       })),
     }
 
-    await db
-      .update(conversationModel)
-      .set({
-        contactLastReadAt: now,
-        lastActivityAt: message.createdAt,
-        contactRepliedAt: message.createdAt,
-      })
-      .where(eq(conversationModel.id, conversation.id))
+    await conversationService.updateFlowStepState({
+      workspaceId: conversation.workspaceId,
+      conversationId: conversation.id,
+      contactLastReadAt: now,
+      lastActivityAt: message.createdAt,
+      contactRepliedAt: message.createdAt,
+      humanReplyWindow: { open: message.createdAt },
+    })
 
     await contactInboxService.updateTracking({
       contactInboxId: contactInbox.id,

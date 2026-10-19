@@ -136,6 +136,12 @@ export const humanAgentStatsSchema = z.object({
   uniqueContacts: z.number(),
   userEmail: z.string().optional(),
   userName: z.string().optional(),
+  avgResponseSeconds: z.number().nullable(),
+  avgWorkingResponseSeconds: z.number().nullable(),
+  avgFirstResponseSeconds: z.number().nullable(),
+  avgWorkingFirstResponseSeconds: z.number().nullable(),
+  responseCount: z.number(),
+  firstResponseCount: z.number(),
 })
 export type HumanAgentStats = z.infer<typeof humanAgentStatsSchema>
 

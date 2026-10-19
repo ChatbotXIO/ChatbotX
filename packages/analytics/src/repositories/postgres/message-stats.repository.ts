@@ -26,6 +26,7 @@ import type {
   MessageEventType,
   MessageStats,
 } from "../../schemas/message-event"
+import { agentResponseStatsRepository } from "./agent-response-stats.repository"
 import { BaseRepository } from "./base.repository"
 import { conversationStatsRepository } from "./conversation-stats.repository"
 import { getEventBusEventId } from "./event-bus-idempotency"
@@ -367,7 +368,7 @@ export class MessageStatsRepository extends BaseRepository {
     }))
   }
 
-  private fetchWorkspaceMembers(workspaceId: string) {
+  fetchWorkspaceMembers(workspaceId: string) {
     return db.query.workspaceMemberModel.findMany({
       where: { workspaceId },
       with: {
@@ -475,27 +476,48 @@ export class MessageStatsRepository extends BaseRepository {
   ): Promise<HumanAgentStats[]> {
     const { workspaceId } = props
 
-    const [messageCount, contactCount, assignedByAdmin, members] =
-      await Promise.all([
-        this.getMessagesByAdminCounts(props),
-        this.getUniqueContactsByAdminCounts(props),
-        conversationStatsRepository.getAssignedByAdmin(props),
-        this.fetchWorkspaceMembers(workspaceId),
-      ])
+    const [
+      messageCount,
+      contactCount,
+      assignedByAdmin,
+      responseByAdmin,
+      members,
+    ] = await Promise.all([
+      this.getMessagesByAdminCounts(props),
+      this.getUniqueContactsByAdminCounts(props),
+      conversationStatsRepository.getAssignedByAdmin(props),
+      agentResponseStatsRepository.getAveragesByAdmin(props),
+      this.fetchWorkspaceMembers(workspaceId),
+    ])
+    const responseStats = new Map(responseByAdmin.map((r) => [r.adminId, r]))
 
     const assignedCount = new Map(
       assignedByAdmin.map((s) => [s.toAssignee, s.count]),
     )
 
-    return members.map((member) => ({
-      workspaceId,
-      adminId: String(member.userId),
-      messagesSent: messageCount.get(String(member.userId)) ?? 0,
-      uniqueContacts: contactCount.get(String(member.userId)) ?? 0,
-      assignedConversations: assignedCount.get(String(member.userId)) ?? 0,
-      userName: member.user?.name ?? undefined,
-      userEmail: member.user?.email ?? undefined,
-    }))
+    // Rows are built from the CURRENT workspace members: an agent who has left
+    // the workspace drops out, along with their response-time data. Members
+    // with no response events get null averages and zero counts.
+    return members.map((member) => {
+      const adminId = String(member.userId)
+      const response = responseStats.get(adminId)
+      return {
+        workspaceId,
+        adminId,
+        avgResponseSeconds: response?.avgResponseSeconds ?? null,
+        avgWorkingResponseSeconds: response?.avgWorkingResponseSeconds ?? null,
+        avgFirstResponseSeconds: response?.avgFirstResponseSeconds ?? null,
+        avgWorkingFirstResponseSeconds:
+          response?.avgWorkingFirstResponseSeconds ?? null,
+        responseCount: response?.responseCount ?? 0,
+        firstResponseCount: response?.firstResponseCount ?? 0,
+        messagesSent: messageCount.get(adminId) ?? 0,
+        uniqueContacts: contactCount.get(adminId) ?? 0,
+        assignedConversations: assignedCount.get(adminId) ?? 0,
+        userName: member.user?.name ?? undefined,
+        userEmail: member.user?.email ?? undefined,
+      }
+    })
   }
 }
 

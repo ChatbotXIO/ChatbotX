@@ -478,6 +478,31 @@ describe("flow action target resolution", () => {
     expectAdvancedToNextNode()
   })
 
+  test.each([
+    ["runFlowPostback", runFlowPostback, undefined, true],
+    ["runFlowQuickReply", runFlowQuickReply, undefined, true],
+    ["runFlowPostback", runFlowPostback, "messageStatus", false],
+  ] as const)("%s marks the run message-driven only for a real tap (webhookType %s -> %s)", async (_name, run, webhookType, expected) => {
+    mockFlowWithReply({
+      steps: [],
+      quickReplies: [makeQuickReply(REPLY_ID, "Yes")],
+    })
+
+    await run({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: replyAction(),
+      ref: null,
+      ...(webhookType ? { webhookType } : {}),
+    } as never)
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { startedByContactMessage?: boolean } },
+    ]
+    expect(job.data.startedByContactMessage).toBe(expected)
+  })
+
   test("runFlowPostback still advances the flow for a step button", async () => {
     mockFlowWithReply({
       steps: [
@@ -1014,6 +1039,43 @@ describe("runStepsAndQuickReplies — default edge enqueues a new job (Part 1)",
     expect(job.data.nodeId).toBe("node-2")
     expect(job.data.flowId).toBe("flow-1")
     expect(job.data.sendFrom).toBe("inbox")
+  })
+})
+
+describe("runStepsAndQuickReplies — message-driven flag continuation", () => {
+  beforeEach(() => integrationQueueAdd.mockClear())
+
+  test.each([
+    [true, true],
+    [undefined, undefined],
+  ])("the next-node continuation forwards startedByContactMessage=%s", async (flag, expected) => {
+    const nextNode: FlowNode = {
+      id: "node-2",
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: { name: "Next", isStartNode: false, details: { steps: [] } },
+    }
+    const edges: EdgeSchema[] = [
+      {
+        id: "e1",
+        source: "node-1",
+        sourceHandle: "node-1",
+        target: "node-2",
+        targetHandle: "input",
+      },
+    ]
+    await runStepsAndQuickReplies({
+      ...makeBaseProps(makeFlowVersion([nextNode], edges)),
+      details: { steps: [] },
+      triggerNextNode: true,
+      ...(flag === undefined ? {} : { startedByContactMessage: flag }),
+    })
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { startedByContactMessage?: boolean } },
+    ]
+    expect(job.data.startedByContactMessage).toBe(expected)
   })
 })
 

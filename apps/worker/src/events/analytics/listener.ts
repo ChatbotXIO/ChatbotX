@@ -6,6 +6,7 @@ import type {
 } from "@chatbotx.io/event-bus"
 import { EVENT_BUS_MESSAGE_ID } from "@chatbotx.io/event-bus"
 import { logger } from "../../lib/logger"
+import { handleAgentReplied } from "./agent-response"
 import { handleMessageBotReceived } from "./bot-message"
 import {
   handleContactBlocked,
@@ -219,6 +220,14 @@ export const analyticsDashboardListeners: Partial<
             handleMessageBotReceived,
             grouped.get("message:bot_received") as Parameters<
               typeof handleMessageBotReceived
+            >[0],
+            signal,
+          ),
+          runHandler(
+            "agent:replied",
+            handleAgentReplied,
+            grouped.get("agent:replied") as Parameters<
+              typeof handleAgentReplied
             >[0],
             signal,
           ),

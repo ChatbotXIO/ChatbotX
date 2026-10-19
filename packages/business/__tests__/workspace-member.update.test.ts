@@ -91,6 +91,7 @@ describe("workspaceMemberService.update", () => {
     expect(result).toEqual({ id: "member-1" })
     expect(mocks.invalidateCacheByTags).toHaveBeenCalledWith([
       workspaceMemberCacheTag("user-1"),
+      "workspaces:ws-1:workspace-members",
     ])
   })
 

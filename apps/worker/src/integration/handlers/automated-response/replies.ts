@@ -402,6 +402,7 @@ function createReplyToolset(options: {
             flowId,
             triggerMessageId: options.props.triggerMessageId,
             triggerMessageCreatedAt: options.props.triggerMessageCreatedAt,
+            startedByContactMessage: true,
             origin: webhookChannelOrigin(),
           },
         })
@@ -418,6 +419,7 @@ function createReplyToolset(options: {
           conversationId: context.conversationId,
           contactId: context.contactId,
           reason: args.reason,
+          reopenUnansweredHumanReplyWindow: true,
           source: "ai_system_tool",
           channel: context.channel,
           inboxId: options.props.contactInbox.inboxId,

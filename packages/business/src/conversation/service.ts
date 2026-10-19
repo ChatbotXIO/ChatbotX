@@ -18,6 +18,7 @@ import type {
 import {
   assignTargetIfUnassigned,
   assignUserIfUnassigned,
+  closeHumanReplyWindow,
   contactInboxOperationalColumns,
   contactInboxRepository,
   createMessageRepository,
@@ -70,6 +71,27 @@ import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
 import { smartDelayService } from "../smart-delay/service"
 import { threadControlService } from "../thread-control/service"
 import { workspaceMemberService } from "../workspace-member/service"
+import {
+  type HumanReplyWindowTransition,
+  humanReplyWindowSet,
+  reopenIfUnansweredSince,
+} from "./human-reply-window"
+
+// Contact-authored message opens the DM waiting window; a native-app outgoing
+// echo (a human replied outside the product) closes it; anything else leaves it.
+const resolveInboundWindow = (props: {
+  at: Date
+  contactRepliedAt?: Date
+  isExternalHumanEcho?: boolean
+}): HumanReplyWindowTransition | undefined => {
+  if (props.contactRepliedAt) {
+    return { open: props.contactRepliedAt }
+  }
+  if (props.isExternalHumanEcho) {
+    return { close: props.at, actor: "externalHuman" }
+  }
+  return
+}
 
 export const BOT_DISABLE_DURATION_MS = 24 * 60 * 60 * 1000
 
@@ -151,22 +173,66 @@ const setChallenge = (
 export const sqlDropQuickReplyChallenge = () =>
   sql`CASE WHEN ${isQuickReplyChallenge()} THEN ${dropChallenge()} ELSE ${conversationModel.additionalAttributes} END`
 
+type ReopenWindowOption = {
+  /**
+   * Reopen the DM waiting window at the contact's unanswered last message.
+   * Opt-in: only a pause that runs as an immediate reaction to that message
+   * passes true. A bot close leaves no marker, so a later manual pause must
+   * not resurrect a window the bot already answered.
+   */
+  reopenUnansweredHumanReplyWindow?: boolean
+}
+
+type BotPauseOptions = ReopenWindowOption & {
+  /** `undefined` pauses for the default duration; `null` pauses indefinitely. */
+  botResumeAt?: Date | null
+}
+
+/** The one SET clause every bot pause writes (identical for all pause paths). */
+const botPauseSet = (options: BotPauseOptions) => ({
+  botEnabled: false,
+  botResumeAt:
+    options.botResumeAt === undefined
+      ? new Date(Date.now() + BOT_DISABLE_DURATION_MS)
+      : options.botResumeAt,
+  additionalAttributes: sqlDropQuickReplyChallenge(),
+  ...(options.reopenUnansweredHumanReplyWindow
+    ? { awaitingHumanReplySince: reopenIfUnansweredSince() }
+    : {}),
+})
+
 class ConversationService extends BaseService {
-  async markAgentReplied(input: { id: string; workspaceId: string; at: Date }) {
-    await db
-      .update(conversationModel)
-      .set({
-        agentLastReadAt: input.at,
-        lastActivityAt: input.at,
-        adminRepliedAt: input.at,
-      })
-      .where(
-        and(
-          eq(conversationModel.id, input.id),
-          eq(conversationModel.workspaceId, input.workspaceId),
-        ),
-      )
+  /**
+   * Records a human reply and closes the DM waiting window in one serialized
+   * claim (see `closeHumanReplyWindow`). `isFirstResponse` is true when the
+   * conversation had never been answered by a human/API before this reply.
+   * Returns `null` when the conversation is not in the workspace.
+   */
+  async markAgentReplied(input: {
+    id: string
+    workspaceId: string
+    at: Date
+  }): Promise<{
+    closedAwaitingSince: Date | null
+    isFirstResponse: boolean
+    assignedUserId: string | null
+    assignedUserAt: Date | null
+  } | null> {
+    const claim = await closeHumanReplyWindow({
+      workspaceId: input.workspaceId,
+      conversationId: input.id,
+      repliedAt: input.at,
+    })
     await this.invalidate({ workspaceId: input.workspaceId, ids: [input.id] })
+    if (!claim) {
+      return null
+    }
+    return {
+      closedAwaitingSince: claim.closedAwaitingSince,
+      isFirstResponse: claim.previousAdminRepliedAt === null,
+      assignedUserId: claim.assignedUserId,
+      assignedUserAt: claim.assignedUserAt,
+    }
   }
   protected readonly cachePrefix: string = "conversations"
 
@@ -865,7 +931,15 @@ class ConversationService extends BaseService {
     const ids = conversations.map((c) => c.id)
     await tx
       .update(conversationModel)
-      .set({ archivedAt })
+      .set({
+        archivedAt,
+        ...(archivedAt
+          ? humanReplyWindowSet({
+              close: archivedAt,
+              actor: "archive",
+            })
+          : {}),
+      })
       .where(
         and(
           eq(conversationModel.workspaceId, workspaceId),
@@ -1202,9 +1276,16 @@ class ConversationService extends BaseService {
       tx = db,
     } = props
     const ids = conversations.map((c) => c.id)
+    const assignedAt = new Date()
     const updated = await tx
       .update(conversationModel)
-      .set({ assignedUserId, assignedInboxTeamId })
+      .set({
+        assignedUserId,
+        assignedInboxTeamId,
+        // Instant the assignee last changed to a user: the same user keeps it,
+        // unassigning clears it.
+        assignedUserAt: sql`CASE WHEN ${assignedUserId}::bigint IS NULL THEN NULL WHEN "assignedUserId" IS DISTINCT FROM ${assignedUserId}::bigint THEN ${assignedAt.toISOString()}::timestamptz ELSE "assignedUserAt" END`,
+      })
       .where(
         and(
           eq(conversationModel.workspaceId, workspaceId),
@@ -1384,31 +1465,22 @@ class ConversationService extends BaseService {
     return "claimed"
   }
 
-  async updateBotEnabled(props: {
-    workspaceId: string
-    ids: string[]
-    botEnabled: boolean
-    botResumeAt?: Date | null
-    tx?: DatabaseClient
-  }): Promise<void> {
+  async updateBotEnabled(
+    props: BotPauseOptions & {
+      workspaceId: string
+      ids: string[]
+      botEnabled: boolean
+      tx?: DatabaseClient
+    },
+  ): Promise<void> {
     const { workspaceId, ids, botEnabled, tx = db } = props
-    let botResumeAt: Date | null
-    if (props.botResumeAt !== undefined) {
-      botResumeAt = props.botResumeAt
-    } else if (botEnabled) {
-      botResumeAt = null
-    } else {
-      botResumeAt = new Date(Date.now() + BOT_DISABLE_DURATION_MS)
-    }
     await tx
       .update(conversationModel)
-      .set({
-        botEnabled,
-        botResumeAt,
-        ...(botEnabled
-          ? {}
-          : { additionalAttributes: sqlDropQuickReplyChallenge() }),
-      })
+      .set(
+        botEnabled
+          ? { botEnabled, botResumeAt: props.botResumeAt ?? null }
+          : botPauseSet(props),
+      )
       .where(
         and(
           eq(conversationModel.workspaceId, workspaceId),
@@ -1440,6 +1512,44 @@ class ConversationService extends BaseService {
       }
     }
     await this.invalidate({ workspaceId, ids })
+  }
+
+  /**
+   * Atomic handoff to a human: pauses the bot only while it is still enabled
+   * (the WHERE guard is the idempotency check, so concurrent handoffs cannot
+   * both win). With `reopenUnansweredHumanReplyWindow` it reopens the DM
+   * waiting window when the contact's last message is unanswered. Returns
+   * whether this call performed the handoff.
+   */
+  async handOffIfBotEnabled(
+    props: ReopenWindowOption & {
+      workspaceId: string
+      conversationId: string
+      tx?: DatabaseClient
+    },
+  ): Promise<boolean> {
+    const { workspaceId, conversationId, tx = db } = props
+    const updated = await tx
+      .update(conversationModel)
+      .set(
+        botPauseSet({
+          reopenUnansweredHumanReplyWindow:
+            props.reopenUnansweredHumanReplyWindow,
+        }),
+      )
+      .where(
+        and(
+          eq(conversationModel.id, conversationId),
+          eq(conversationModel.workspaceId, workspaceId),
+          eq(conversationModel.botEnabled, true),
+        ),
+      )
+      .returning({ id: conversationModel.id })
+    if (updated.length === 0) {
+      return false
+    }
+    await this.invalidate({ workspaceId, ids: [conversationId] })
+    return true
   }
 
   async updateFollowed(props: {
@@ -1801,6 +1911,9 @@ class ConversationService extends BaseService {
     lastActivityAt?: Date
     lastStep?: string | null
     contactRepliedAt?: Date
+    contactLastReadAt?: Date
+    /** DM waiting-window transition applied in this same UPDATE. */
+    humanReplyWindow?: HumanReplyWindowTransition
     tx?: DatabaseClient
   }): Promise<void> {
     const { workspaceId, conversationId, tx = db } = props
@@ -1821,6 +1934,12 @@ class ConversationService extends BaseService {
     }
     if ("lastStep" in props) {
       data.lastStep = props.lastStep
+    }
+    if (props.contactLastReadAt !== undefined) {
+      data.contactLastReadAt = props.contactLastReadAt
+    }
+    if (props.humanReplyWindow) {
+      Object.assign(data, humanReplyWindowSet(props.humanReplyWindow))
     }
 
     if (Object.keys(data).length === 0) {
@@ -1843,17 +1962,20 @@ class ConversationService extends BaseService {
 
   // ─── Bot state helpers ───────────────────────────────────────────────────
 
-  async disableBotState(props: {
-    workspaceId: string
-    conversations: { id: string; contactId: string }[]
-    userId?: string
-    triggerContext: TriggerContext
-    tx?: DatabaseClient
-  }): Promise<void> {
+  async disableBotState(
+    props: ReopenWindowOption & {
+      workspaceId: string
+      conversations: { id: string; contactId: string }[]
+      userId?: string
+      triggerContext: TriggerContext
+      tx?: DatabaseClient
+    },
+  ): Promise<void> {
     await this.updateBotEnabled({
       workspaceId: props.workspaceId,
       ids: props.conversations.map((c) => c.id),
       botEnabled: false,
+      reopenUnansweredHumanReplyWindow: props.reopenUnansweredHumanReplyWindow,
       tx: props.tx,
     })
 
@@ -2035,6 +2157,11 @@ class ConversationService extends BaseService {
     at: Date
     /** Set only for contact-authored messages; drives the "No admin reply" filter. */
     contactRepliedAt?: Date
+    /**
+     * Native-app outgoing echo (a human replied outside the product): closes
+     * the DM waiting window without emitting a response event.
+     */
+    isExternalHumanEcho?: boolean
   }): Promise<ContactInboxTrackingInvalidation | null> {
     const {
       workspaceId,
@@ -2045,7 +2172,13 @@ class ConversationService extends BaseService {
       contactLocation,
       at,
       contactRepliedAt,
+      isExternalHumanEcho,
     } = props
+    const humanReplyWindow = resolveInboundWindow({
+      at,
+      contactRepliedAt,
+      isExternalHumanEcho,
+    })
 
     return await db.transaction(async (tx) => {
       const invalidation = await contactInboxService.updateTracking({
@@ -2070,6 +2203,7 @@ class ConversationService extends BaseService {
         conversationId,
         lastActivityAt: at,
         ...(contactRepliedAt ? { contactRepliedAt } : {}),
+        ...(humanReplyWindow ? { humanReplyWindow } : {}),
       })
 
       return invalidation
@@ -2091,6 +2225,8 @@ class ConversationService extends BaseService {
     bumpActivity?: boolean
     lastStep?: string | null
     currentStep?: string | null
+    /** Bot send closes the DM waiting window unless false (bulk/proactive). */
+    closeHumanReplyWindow?: boolean
   }): Promise<ContactInboxTrackingInvalidation | null> {
     const {
       workspaceId,
@@ -2101,6 +2237,7 @@ class ConversationService extends BaseService {
       bumpActivity = true,
       lastStep,
       currentStep,
+      closeHumanReplyWindow: shouldCloseWindow = true,
     } = props
 
     return await db.transaction(async (tx) => {
@@ -2120,6 +2257,9 @@ class ConversationService extends BaseService {
         ...(bumpActivity ? { lastActivityAt: at } : {}),
         lastStep,
         currentStep,
+        ...(shouldCloseWindow
+          ? { humanReplyWindow: { close: at, actor: "bot" as const } }
+          : {}),
       })
 
       return invalidation
@@ -2145,6 +2285,8 @@ class ConversationService extends BaseService {
     contactId: string
     at: Date
     bumpActivity?: boolean
+    /** Bot send closes the DM waiting window unless false (bulk/proactive). */
+    closeHumanReplyWindow?: boolean
   }): Promise<ContactInboxTrackingInvalidation | null> {
     const {
       workspaceId,
@@ -2153,6 +2295,7 @@ class ConversationService extends BaseService {
       contactId,
       at,
       bumpActivity = true,
+      closeHumanReplyWindow: shouldCloseWindow = true,
     } = props
 
     return await db.transaction(async (tx) => {
@@ -2170,6 +2313,9 @@ class ConversationService extends BaseService {
         workspaceId,
         conversationId,
         ...(bumpActivity ? { lastActivityAt: at } : {}),
+        ...(shouldCloseWindow
+          ? { humanReplyWindow: { close: at, actor: "bot" as const } }
+          : {}),
       })
 
       return invalidation

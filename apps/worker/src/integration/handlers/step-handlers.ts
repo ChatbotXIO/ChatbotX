@@ -18,6 +18,7 @@ import {
   type DisableBotStepSchema,
   type EnableBotStepSchema,
   type FollowConversationStepSchema,
+  isProactiveOutboundMetadata,
   type MarkConversationAsReadStepSchema,
   type MarkConversationAsUnreadStepSchema,
   type ThreadControlStepSchema,
@@ -425,10 +426,22 @@ export async function stepUnfollowConversation({
 
 export async function stepDisableBot({
   conversation,
+  startedByContactMessage,
+  isBulkBroadcast,
+  metadata,
 }: ExecuteStepProps<DisableBotStepSchema>) {
+  // Only a run positively known to react to the contact's message may reopen
+  // the waiting-for-human window; broadcast, sequence, trigger-started and
+  // delay-resumed runs (and any unknown origin) must not, or a pause days
+  // later would fabricate a response time from the old message.
+  const reactsToContactMessage =
+    startedByContactMessage === true &&
+    !isBulkBroadcast &&
+    !isProactiveOutboundMetadata(metadata)
   await conversationService.disableBotState({
     workspaceId: conversation.workspaceId,
     conversations: [conversation],
+    reopenUnansweredHumanReplyWindow: reactsToContactMessage,
     triggerContext: {
       triggerSource: "worker",
       triggerHandler: "stepDisableBot",

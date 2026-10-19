@@ -34,6 +34,7 @@ vi.mock("../src/client", () => ({
   and: mocks.and,
   eq: mocks.eq,
   isNull: mocks.isNull,
+  sql: vi.fn(),
 }))
 
 vi.mock("../src/schema", () => ({
@@ -45,7 +46,7 @@ vi.mock("../src/schema", () => ({
   },
 }))
 
-const { assignUserIfUnassigned } = await import(
+const { assignTargetIfUnassigned, assignUserIfUnassigned } = await import(
   "../src/repositories/conversation/repository"
 )
 
@@ -63,6 +64,7 @@ describe("conversationRepository.assignUserIfUnassigned", () => {
 
     expect(mocks.updateSet).toHaveBeenCalledWith({
       assignedUserId: "user-1",
+      assignedUserAt: expect.any(Date),
     })
     expect(mocks.updateWhere).toHaveBeenCalledWith({
       and: [
@@ -77,6 +79,23 @@ describe("conversationRepository.assignUserIfUnassigned", () => {
     ])
   })
 
+  test("stamps assignedUserAt with the supplied instant", async () => {
+    mocks.updateReturning.mockResolvedValue([])
+    const assignedAt = new Date("2026-10-18T09:00:00.000Z")
+
+    await assignUserIfUnassigned({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      userId: "user-1",
+      assignedAt,
+    })
+
+    expect(mocks.updateSet).toHaveBeenCalledWith({
+      assignedUserId: "user-1",
+      assignedUserAt: assignedAt,
+    })
+  })
+
   test("returns an empty array when the guard excludes the row (already assigned)", async () => {
     mocks.updateReturning.mockResolvedValue([])
 
@@ -87,5 +106,44 @@ describe("conversationRepository.assignUserIfUnassigned", () => {
     })
 
     expect(result).toEqual([])
+  })
+})
+
+describe("conversationRepository.assignTargetIfUnassigned", () => {
+  test("sets assignedUserAt when a user is assigned", async () => {
+    mocks.updateSet.mockClear()
+    mocks.updateReturning.mockResolvedValue([])
+    const assignedAt = new Date("2026-10-18T09:00:00.000Z")
+
+    await assignTargetIfUnassigned({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      assignedUserId: "user-1",
+      assignedAt,
+    })
+
+    expect(mocks.updateSet).toHaveBeenCalledWith({
+      assignedInboxTeamId: null,
+      assignedUserId: "user-1",
+      assignedUserAt: assignedAt,
+    })
+  })
+
+  test("does not touch assignedUserAt for a team-only assignment", async () => {
+    mocks.updateSet.mockClear()
+    mocks.updateReturning.mockResolvedValue([])
+
+    await assignTargetIfUnassigned({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      assignedInboxTeamId: "team-1",
+    })
+
+    const values = mocks.updateSet.mock.calls[0][0] as Record<string, unknown>
+    expect(values).toEqual({
+      assignedInboxTeamId: "team-1",
+      assignedUserId: null,
+    })
+    expect("assignedUserAt" in values).toBe(false)
   })
 })

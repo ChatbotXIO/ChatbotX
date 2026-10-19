@@ -129,6 +129,13 @@ export const isBulkOutboundMetadata = (
   (metadata.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE ||
     (metadata.type === BROADCAST_PAYLOAD_TYPE && isBulkBroadcast))
 
+/**
+ * Proactive sends (broadcast / sequence schedule) are not replies to the
+ * contact's last message, so they must not close the waiting-for-human window.
+ */
+export const isProactiveOutboundMetadata = (metadata: unknown): boolean =>
+  isBulkOutboundMetadata(metadata, true)
+
 export const COMMENT_AUTOMATION_PAYLOAD_TYPE = "commentAutomation"
 export const UPDATE_STATUS_PAYLOAD_TYPE = "updateStatus"
 export const FLOW_NODE_PAYLOAD_TYPE = "flowNode"

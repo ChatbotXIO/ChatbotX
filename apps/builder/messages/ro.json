@@ -1261,6 +1261,13 @@
     "averageFirstResponseTimeByAdmin": "Timp mediu al primului răspuns al agenților umani (minute)",
     "averageFirstResponseTimeByAdminHelp": "Timpul mediu necesar unui agent uman pentru a oferi răspunsul inițial la mesajul unui client.",
     "averageResponseTimeByAdmin": "Timp mediu de răspuns al agenților umani (minute)",
+    "withinWorkingHoursHelp": "Numără doar timpul din programul de lucru al agentului; timpul din afara programului este exclus.",
+    "withinWorkingHoursLabel": "În timpul programului",
+    "noResponseData": "Fără date: agentul nu are răspunsuri în această perioadă sau nu are un program de lucru atribuit.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Timpul mediu de primă răspuns în timpul programului, pe agenți umani (minute)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Timpul mediu, în timpul programului de lucru, necesar unui agent uman pentru a oferi primul răspuns la mesajul unui client.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "Timpul mediu de răspuns în timpul programului, pe agenți umani (minute)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "Timpul mediu, în timpul programului de lucru, necesar unui agent uman pentru a răspunde la mesajul unui client.",
     "averageDurationOfConversation": "Durata medie a unei conversații (minute)",
     "averageDurationOfConversationHelp": "Timpul mediu în care o conversație a fost gestionată de un om înainte de a fi mutată la bot.",
     "success": "Succes",
@@ -8937,6 +8944,41 @@
       "showAll": "Arată încă {count}",
       "showLess": "Arată mai puține",
       "clearAll": "Șterge tot"
+    }
+  },
+  "workingHours": {
+    "title": "Program de lucru",
+    "label": "Program de lucru",
+    "description": "Stabilește când este disponibilă echipa ta. Timpii de răspuns sunt măsurați doar în aceste ore.",
+    "employees": "Angajați",
+    "empty": "Încă nu există program de lucru. Adaugă un program pentru a măsura timpii de răspuns doar în timpul orelor de lucru.",
+    "deleteDescription": "Ștergi \"{name}\"? Angajații săi vor fi din nou măsurați în timp real. Această acțiune nu poate fi anulată.",
+    "create": {
+      "title": "Adaugă program de lucru",
+      "description": "Dă un nume programului. Vei seta zilele și orele în pasul următor."
+    },
+    "employeesDialog": {
+      "title": "Aplică programul de lucru angajaților",
+      "description": "Alege angajații care urmează acest program.",
+      "moveHelp": "Un angajat poate urma un singur program. Cine este deja pe alt program va fi mutat pe acesta.",
+      "placeholder": "Selectează angajați",
+      "search": "Caută angajați...",
+      "searchAria": "Caută printre angajați",
+      "empty": "Nu s-a găsit niciun angajat.",
+      "close": "Închide",
+      "selectAll": "(Selectează tot)",
+      "clearAllAria": "{count, plural, one {Șterge angajatul selectat} other {Șterge toți cei {count} angajați selectați}}",
+      "removeAria": "Elimină {name} din selecție"
+    },
+    "editor": {
+      "timezoneNote": "Orele folosesc fusul orar al spațiului de lucru: {timezone}.",
+      "notWorking": "Nu lucrează",
+      "dayToggle": "Lucrează {day}",
+      "startTime": "Ora de început",
+      "endTime": "Ora de sfârșit",
+      "removeRange": "Elimină intervalul orar",
+      "errorOverlap": "Aceste intervale orare se suprapun. Ajustează-le pentru a salva.",
+      "errorOrder": "Ora de sfârșit trebuie să fie după ora de început."
     }
   }
 }

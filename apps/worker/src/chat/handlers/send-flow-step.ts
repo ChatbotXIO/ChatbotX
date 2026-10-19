@@ -47,6 +47,7 @@ import {
   extractMetadata,
   getChannelFlowPolicy,
   isBulkOutboundMetadata,
+  isProactiveOutboundMetadata,
   messageEventTypeSchema,
   type SendCardStepSchema,
   stepSupport,
@@ -932,6 +933,12 @@ export async function sendFlowStep({
         contactId: targetContactInbox.contactId,
         at: createdMessage.createdAt,
         bumpActivity: !isBulkOutbound,
+        // An inbox-originated flow send is an agent reply: createOutgoing's
+        // producer claim owns the close and the measurement, so the worker
+        // must not consume the window first.
+        closeHumanReplyWindow: !(
+          sendFrom === "inbox" || isProactiveOutboundMetadata(metadata)
+        ),
         lastStep: conversation.currentStep,
         currentStep: resolvedStep.id,
       })
@@ -1263,6 +1270,7 @@ export const sendChatMessage = async (
         contactId: contactInbox.contactId,
         at: message.createdAt,
         bumpActivity: !isBulkOutbound,
+        closeHumanReplyWindow: !isProactiveOutboundMetadata(metadata),
       })
     if (trackingInvalidation) {
       await contactInboxService.invalidateTracking(trackingInvalidation)

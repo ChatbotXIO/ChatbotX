@@ -11,6 +11,10 @@ const mocks = vi.hoisted(() => {
     findFirst: vi.fn(),
     listPermissionsByUserIds: vi.fn(),
     markOnlineBulk: vi.fn(),
+    deleteMembersForUsers: vi.fn(async () => undefined),
+    order: [] as string[],
+    txClient: { delete: () => ({ where: async () => undefined }) },
+    invalidateCacheByTags: vi.fn(async () => undefined),
   }
 })
 
@@ -22,6 +26,12 @@ const makeClient = () => ({
     values: vi.fn(() => ({ returning: mocks.insertReturning })),
   })),
   delete: vi.fn(() => ({ where: mocks.deleteWhere })),
+  transaction: vi.fn(async (fn: (client: unknown) => Promise<unknown>) => {
+    mocks.order.push("begin")
+    const result = await fn(mocks.txClient)
+    mocks.order.push("commit")
+    return result
+  }),
 })
 
 vi.mock("../src/audit/dispatcher", () => ({
@@ -52,6 +62,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
+vi.mock("../src/working-hours/service", () => ({
+  workingHoursService: { removeMembersForUsers: mocks.deleteMembersForUsers },
+}))
+
 vi.mock("@chatbotx.io/database/repositories", () => ({
   workspaceMemberRepository: {
     listPermissionsByUserIds: mocks.listPermissionsByUserIds,
@@ -61,11 +75,29 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
 
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn(),
+  invalidateCacheByTags: mocks.invalidateCacheByTags,
 }))
 
-const { workspaceMemberService } = await import(
+const { workspaceMemberDeleteCacheTags, workspaceMemberService } = await import(
   "../src/workspace-member/service"
 )
+
+describe("workspaceMemberDeleteCacheTags", () => {
+  test("lists the schedule, roster and user tags a removal makes stale", () => {
+    expect(workspaceMemberDeleteCacheTags("ws-1", "user-1")).toEqual([
+      "working-hours:ws-1",
+      "workspaces:ws-1:workspace-members",
+      "users:user-1:workspace-members",
+    ])
+  })
+
+  test("omits the user tag when the member did not exist", () => {
+    expect(workspaceMemberDeleteCacheTags("ws-1", undefined)).toEqual([
+      "working-hours:ws-1",
+      "workspaces:ws-1:workspace-members",
+    ])
+  })
+})
 
 describe("workspaceMemberService.create", () => {
   beforeEach(() => {
@@ -144,8 +176,62 @@ describe("workspaceMemberService.delete", () => {
     mocks.decrement.mockResolvedValue(undefined)
     mocks.findFirst.mockResolvedValue({
       id: "member-1",
+      userId: "user-1",
       user: { name: "Ada", email: "ada@example.com" },
     })
+  })
+
+  test("on a caller tx, deletes the schedule row on that tx and leaves invalidation to the caller", async () => {
+    const tx = makeClient()
+
+    await workspaceMemberService.delete({
+      id: "member-1",
+      workspaceId: "workspace-1",
+      tx: tx as never,
+    })
+
+    expect(mocks.deleteMembersForUsers).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      userIds: ["user-1"],
+      tx,
+    })
+    expect(mocks.invalidateCacheByTags).not.toHaveBeenCalled()
+  })
+
+  test("without a tx, deletes member and schedule row in one transaction and invalidates after commit", async () => {
+    mocks.order.length = 0
+    mocks.invalidateCacheByTags.mockImplementationOnce(() => {
+      mocks.order.push("invalidate")
+      return Promise.resolve()
+    })
+
+    await workspaceMemberService.delete({
+      id: "member-1",
+      workspaceId: "workspace-1",
+    })
+
+    expect(mocks.deleteMembersForUsers).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      userIds: ["user-1"],
+      tx: mocks.txClient,
+    })
+    expect(mocks.invalidateCacheByTags).toHaveBeenCalledWith([
+      "working-hours:workspace-1",
+      "workspaces:workspace-1:workspace-members",
+      "users:user-1:workspace-members",
+    ])
+    expect(mocks.order).toEqual(["begin", "commit", "invalidate"])
+  })
+
+  test("skips the working-hours cleanup when the member does not exist", async () => {
+    mocks.findFirst.mockResolvedValue(undefined)
+
+    await workspaceMemberService.delete({
+      id: "missing",
+      workspaceId: "workspace-1",
+    })
+
+    expect(mocks.deleteMembersForUsers).not.toHaveBeenCalled()
   })
 
   test("does not audit inside a caller-owned transaction", async () => {

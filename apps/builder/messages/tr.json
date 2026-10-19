@@ -218,6 +218,13 @@
     "averageFirstResponseTimeByAdmin": "İnsan temsilcilerin ortalama ilk yanıt süresi (Dakika)",
     "averageFirstResponseTimeByAdminHelp": "Bir insan temsilcinin müşterinin mesajına ilk yanıtı vermesi için geçen ortalama süre.",
     "averageResponseTimeByAdmin": "İnsan temsilcilerin ortalama yanıt süresi (Dakika)",
+    "withinWorkingHoursHelp": "Yalnızca temsilcinin çalışma saatleri içindeki süreyi sayar; programı dışındaki süre hariç tutulur.",
+    "withinWorkingHoursLabel": "Çalışma saatleri içinde",
+    "noResponseData": "Veri yok: temsilcinin bu dönemde yanıtı yok veya kendisine çalışma saatleri programı atanmamış.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "İnsan temsilcilere göre çalışma saatleri içinde ortalama ilk yanıt süresi (dakika)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Bir insan temsilcinin müşterinin mesajına ilk yanıtı vermesi için çalışma saatleri içinde harcadığı ortalama süre.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "İnsan temsilcilere göre çalışma saatleri içinde ortalama yanıt süresi (dakika)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "Bir insan temsilcinin müşterinin mesajını yanıtlaması için çalışma saatleri içinde harcadığı ortalama süre.",
     "averageDurationOfConversation": "Ortalama görüşme süresi (Dakika)",
     "averageDurationOfConversationHelp": "Bir görüşmenin bota taşınmadan önce bir insan tarafından ele alındığı ortalama süredir.",
     "success": "Başarılı",
@@ -8937,6 +8944,41 @@
       "showAll": "{count} tane daha göster",
       "showLess": "Daha az göster",
       "clearAll": "Tümünü temizle"
+    }
+  },
+  "workingHours": {
+    "title": "Çalışma saatleri",
+    "label": "Çalışma saatleri",
+    "description": "Ekibinizin ne zaman müsait olduğunu belirleyin. Yanıt süreleri yalnızca bu saatler içinde ölçülür.",
+    "employees": "Çalışanlar",
+    "empty": "Henüz çalışma saati yok. Yanıt sürelerini yalnızca çalışma saatleri içinde ölçmek için bir program ekleyin.",
+    "deleteDescription": "\"{name}\" silinsin mi? Çalışanları yeniden gerçek zamanla ölçülecek. Bu işlem geri alınamaz.",
+    "create": {
+      "title": "Çalışma saatleri ekle",
+      "description": "Programa bir ad verin. Günleri ve saatleri bir sonraki adımda belirleyeceksiniz."
+    },
+    "employeesDialog": {
+      "title": "Çalışma saatlerini çalışanlara uygula",
+      "description": "Bu programı izleyen çalışanları seçin.",
+      "moveHelp": "Bir çalışan yalnızca bir programı izleyebilir. Başka bir programda olanlar bu programa taşınır.",
+      "placeholder": "Çalışanları seçin",
+      "search": "Çalışan ara...",
+      "searchAria": "Çalışanlar arasında ara",
+      "empty": "Çalışan bulunamadı.",
+      "close": "Kapat",
+      "selectAll": "(Tümünü seç)",
+      "clearAllAria": "{count, plural, one {Seçili çalışanı temizle} other {Seçili {count} çalışanın tümünü temizle}}",
+      "removeAria": "{name} kişisini seçimden kaldır"
+    },
+    "editor": {
+      "timezoneNote": "Saatler çalışma alanının saat dilimini kullanır: {timezone}.",
+      "notWorking": "Çalışmıyor",
+      "dayToggle": "{day} günü çalışıyor",
+      "startTime": "Başlangıç saati",
+      "endTime": "Bitiş saati",
+      "removeRange": "Zaman aralığını kaldır",
+      "errorOverlap": "Bu zaman aralıkları çakışıyor. Kaydetmek için düzenleyin.",
+      "errorOrder": "Bitiş saati başlangıç saatinden sonra olmalıdır."
     }
   }
 }

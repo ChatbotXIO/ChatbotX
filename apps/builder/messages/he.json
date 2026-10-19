@@ -218,6 +218,13 @@
     "averageFirstResponseTimeByAdmin": "זמן תגובה ראשונה ממוצע לפי נציגים אנושיים (דקות)",
     "averageFirstResponseTimeByAdminHelp": "הזמן הממוצע שלוקח לנציג אנושי לספק את התגובה הראשונית להודעה של לקוח.",
     "averageResponseTimeByAdmin": "זמן תגובה ממוצע לפי נציגים אנושיים (דקות)",
+    "withinWorkingHoursHelp": "סופר רק זמן בתוך שעות העבודה של הנציג; זמן מחוץ ללוח הזמנים שלו אינו נכלל.",
+    "withinWorkingHoursLabel": "בתוך שעות העבודה",
+    "noResponseData": "אין נתונים: לנציג אין תגובות בתקופה זו או שלא הוקצה לו לוח שעות עבודה.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "זמן תגובה ראשונה ממוצע בתוך שעות העבודה לפי נציגים אנושיים (דקות)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "הזמן הממוצע בתוך שעות העבודה שלוקח לנציג אנושי לספק את התגובה הראשונה להודעת לקוח.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "זמן תגובה ממוצע בתוך שעות העבודה לפי נציגים אנושיים (דקות)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "הזמן הממוצע בתוך שעות העבודה שלוקח לנציג אנושי להשיב להודעת לקוח.",
     "averageDurationOfConversation": "משך שיחה ממוצע (דקות)",
     "averageDurationOfConversationHelp": "הזמן הממוצע שבו שיחה טופלה על ידי אדם לפני שהועברה לבוט.",
     "success": "הצלחה",
@@ -8937,6 +8944,41 @@
       "showAll": "הצג עוד {count}",
       "showLess": "הצג פחות",
       "clearAll": "נקה הכול"
+    }
+  },
+  "workingHours": {
+    "title": "שעות עבודה",
+    "label": "שעות עבודה",
+    "description": "הגדירו מתי הצוות שלכם זמין. זמני תגובה נמדדים רק בתוך שעות אלה.",
+    "employees": "עובדים",
+    "empty": "עדיין אין שעות עבודה. הוסיפו לוח זמנים כדי למדוד זמני תגובה רק בתוך שעות העבודה.",
+    "deleteDescription": "למחוק את \"{name}\"? העובדים שלו ימדדו שוב לפי זמן רגיל. לא ניתן לבטל פעולה זו.",
+    "create": {
+      "title": "הוספת שעות עבודה",
+      "description": "תנו שם ללוח הזמנים. את הימים והשעות תגדירו בשלב הבא."
+    },
+    "employeesDialog": {
+      "title": "החלת שעות עבודה על עובדים",
+      "description": "בחרו את העובדים שעובדים לפי לוח זמנים זה.",
+      "moveHelp": "עובד יכול לעבוד לפי לוח זמנים אחד בלבד. מי שכבר משויך ללוח זמנים אחר יועבר לזה.",
+      "placeholder": "בחירת עובדים",
+      "search": "חיפוש עובדים...",
+      "searchAria": "חיפוש בין העובדים",
+      "empty": "לא נמצאו עובדים.",
+      "close": "סגירה",
+      "selectAll": "(בחירת הכול)",
+      "clearAllAria": "{count, plural, one {ניקוי העובד שנבחר} other {ניקוי כל {count} העובדים שנבחרו}}",
+      "removeAria": "הסרת {name} מהבחירה"
+    },
+    "editor": {
+      "timezoneNote": "השעות נקבעות לפי אזור הזמן של סביבת העבודה: {timezone}.",
+      "notWorking": "לא עובד",
+      "dayToggle": "עובד ביום {day}",
+      "startTime": "שעת התחלה",
+      "endTime": "שעת סיום",
+      "removeRange": "הסרת טווח שעות",
+      "errorOverlap": "טווחי השעות חופפים. תקנו אותם כדי לשמור.",
+      "errorOrder": "שעת הסיום חייבת להיות אחרי שעת ההתחלה."
     }
   }
 }

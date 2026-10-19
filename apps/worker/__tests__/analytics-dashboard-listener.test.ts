@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  handleAgentReplied: vi.fn(async () => undefined),
   handleBotMessageSent: vi.fn(async () => undefined),
   handleContactBlocked: vi.fn(async () => undefined),
   handleContactCreated: vi.fn(async () => undefined),
@@ -53,6 +54,10 @@ vi.mock("../src/events/analytics/conversation", () => ({
 vi.mock("../src/events/analytics/message", () => ({
   handleBotMessageSent: mocks.handleBotMessageSent,
   handleHumanMessageSent: mocks.handleHumanMessageSent,
+}))
+
+vi.mock("../src/events/analytics/agent-response", () => ({
+  handleAgentReplied: mocks.handleAgentReplied,
 }))
 
 vi.mock("../src/events/analytics/bot-message", () => ({
@@ -114,6 +119,20 @@ describe("analyticsDashboardListeners", () => {
     expect(result).toEqual({ failedMessageIds: ["1-0"] })
     expect(mocks.handleContactCreated).toHaveBeenCalledTimes(1)
     expect(mocks.handleHumanMessageSent).toHaveBeenCalledTimes(1)
+  })
+
+  test("routes agent:replied to its handler and isolates its failure", async () => {
+    mocks.handleAgentReplied.mockRejectedValueOnce(new Error("insert failed"))
+    const listener = analyticsDashboardListeners["analytics:dashboard"]?.[0]
+
+    const result = await listener?.handler?.([
+      { __eventBusMessageId: "4-0", eventType: "agent:replied" } as never,
+      { __eventBusMessageId: "5-0", eventType: "contact:created" } as never,
+    ])
+
+    expect(result).toEqual({ failedMessageIds: ["4-0"] })
+    expect(mocks.handleAgentReplied).toHaveBeenCalledTimes(1)
+    expect(mocks.handleContactCreated).toHaveBeenCalledTimes(1)
   })
 
   test("observes an already-aborted signal before starting a sub-handler", async () => {

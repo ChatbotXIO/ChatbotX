@@ -547,6 +547,7 @@ export const receiveMessage = async (
         // A Business-AI (Meta AI) reply on standby keeps the conversation
         // unread so a human agent monitors the AI (Integration Guide §5.3).
         keepUnread: threadControl?.ownerRole === "ai_agent",
+        echoOrigin: parsedMessage.echoOrigin,
         ...systemFieldUpdates,
       })
 
@@ -1103,6 +1104,8 @@ type SaveAndBroadcastMessageProps = {
    * mark-read below.
    */
   keepUnread?: boolean
+  /** Channel-parser classification of an outgoing echo (who sent it). */
+  echoOrigin?: EchoOrigin | null
 }
 
 type MessageInput = CreateMessageInput & {
@@ -1367,6 +1370,20 @@ const saveAndBroadcastMessage = async (
   }
 }
 
+/**
+ * Only a first-party/unclassified native-app echo is a human reply that closes
+ * the waiting window. Third-party app echoes and Business-AI (Meta AI) standby
+ * echoes (`keepUnread`) are not the page owner's human agent answering.
+ */
+const isHumanNativeAppEcho = (props: {
+  incomingMessage: IncomingMessage
+  keepUnread?: boolean
+  echoOrigin?: EchoOrigin | null
+}): boolean =>
+  props.incomingMessage.messageType === "outgoing" &&
+  !props.keepUnread &&
+  props.echoOrigin !== echoOrigins.enum.thirdParty
+
 const persistNewMessageSideEffects = async (props: {
   inbox: InboxModel
   contactInbox: ContactInboxModel
@@ -1376,6 +1393,8 @@ const persistNewMessageSideEffects = async (props: {
   storageUrl: string
   contactInboxTracking?: ContactInboxTracking
   contactLocation?: ContactLocation | null
+  keepUnread?: boolean
+  echoOrigin?: EchoOrigin | null
 }): Promise<void> => {
   const {
     inbox,
@@ -1402,7 +1421,7 @@ const persistNewMessageSideEffects = async (props: {
     // Contact-authored (DM or comment) — drives the inbox unread rule.
     // Outgoing echoes (agent replies from the native app) must not count.
     ...(incomingMessage.messageType === "outgoing"
-      ? {}
+      ? { isExternalHumanEcho: isHumanNativeAppEcho(props) }
       : { contactRepliedAt: message.createdAt }),
   })
 

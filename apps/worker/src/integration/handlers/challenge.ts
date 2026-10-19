@@ -84,6 +84,7 @@ export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
       },
       triggerMessageId: messageId,
       triggerMessageCreatedAt: messageCreatedAt,
+      startedByContactMessage: true,
       appointmentId: challenge.data.appointmentId,
     })
 

@@ -260,6 +260,13 @@
     "averageFirstResponseTimeByAdmin": "Average first response time by human agents (Minutes)",
     "averageFirstResponseTimeByAdminHelp": "The average time a human agent takes to provide the initial reply to a customer's message.",
     "averageResponseTimeByAdmin": "Average response time by human agents (Minutes)",
+    "withinWorkingHoursHelp": "Counts only time inside the agent's working hours; time outside their schedule is excluded.",
+    "withinWorkingHoursLabel": "Within working hours",
+    "noResponseData": "No data: the agent has no replies in this period, or no working hours schedule is assigned.",
+    "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Average first response time within working hours by human agents (Minutes)",
+    "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "The average working-hours time a human agent takes to provide the initial reply to a customer's message.",
+    "averageResponseTimeWithinWorkingHoursByAdmin": "Average response time within working hours by human agents (Minutes)",
+    "averageResponseTimeWithinWorkingHoursByAdminHelp": "The average working-hours time a human agent takes to reply to a customer's message.",
     "averageDurationOfConversation": "Average duration of a conversation (Minutes)",
     "averageDurationOfConversationHelp": "It is the average time a conversation has been handled by a human before being moved to the bot.",
     "success": "Success",
@@ -8937,6 +8944,41 @@
       "showAll": "Show {count} more",
       "showLess": "Show less",
       "clearAll": "Clear all"
+    }
+  },
+  "workingHours": {
+    "title": "Working Hours",
+    "label": "Working hours",
+    "description": "Define when your team is available. Reply times are measured only within these hours.",
+    "employees": "Employees",
+    "empty": "No working hours yet. Add a schedule to measure reply times only within working time.",
+    "deleteDescription": "Delete \"{name}\"? Its employees will be measured on wall-clock time again. This cannot be undone.",
+    "create": {
+      "title": "Add working hours",
+      "description": "Give the schedule a name. You will set the days and hours next."
+    },
+    "employeesDialog": {
+      "title": "Apply working hours to employees",
+      "description": "Choose the employees who follow this schedule.",
+      "moveHelp": "An employee can follow only one schedule. Anyone already on another schedule is moved to this one.",
+      "placeholder": "Select employees",
+      "search": "Search employees...",
+      "searchAria": "Search through employees",
+      "empty": "No employees found.",
+      "close": "Close",
+      "selectAll": "(Select all)",
+      "clearAllAria": "{count, plural, one {Clear the selected employee} other {Clear all {count} selected employees}}",
+      "removeAria": "Remove {name} from selection"
+    },
+    "editor": {
+      "timezoneNote": "Times use the workspace timezone: {timezone}.",
+      "notWorking": "Not working",
+      "dayToggle": "Working on {day}",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "removeRange": "Remove time range",
+      "errorOverlap": "These time ranges overlap. Adjust them to save.",
+      "errorOrder": "End time must be after start time."
     }
   }
 }
