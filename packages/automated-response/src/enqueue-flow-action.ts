@@ -64,11 +64,11 @@ const addFlowActionJob = async (props: {
   job: FlowActionJob
   data: FlowActionJobData
   debounceEligible: boolean
-}) => {
+}): Promise<boolean> => {
   try {
     if (!props.debounceEligible) {
       await integrationQueue.add(props.jobAction, props.job)
-      return
+      return true
     }
 
     const timing = resolveAutomatedResponseTiming(null)
@@ -82,15 +82,20 @@ const addFlowActionJob = async (props: {
       },
       delay: timing.delaySeconds * 1000,
     })
+    return true
   } catch (error) {
     logger.error(error, "Unable to trigger flow action")
+    return false
   }
 }
 
-export const enqueueFlowAction = async (input: FlowActionJobInput) => {
+/** Resolves `false` when the job could not be queued (the error is logged). */
+export const enqueueFlowAction = async (
+  input: FlowActionJobInput,
+): Promise<boolean> => {
   switch (input.kind) {
     case "postback":
-      await addFlowActionJob({
+      return await addFlowActionJob({
         jobAction: flowActionJobConfigs.postback.jobAction,
         job: flowActionJobConfigs.postback.createJob(input.data),
         data: input.data,
@@ -98,9 +103,8 @@ export const enqueueFlowAction = async (input: FlowActionJobInput) => {
           input.data,
         ),
       })
-      return
     case "quickReply":
-      await addFlowActionJob({
+      return await addFlowActionJob({
         jobAction: flowActionJobConfigs.quickReply.jobAction,
         job: flowActionJobConfigs.quickReply.createJob(input.data),
         data: input.data,
@@ -108,7 +112,6 @@ export const enqueueFlowAction = async (input: FlowActionJobInput) => {
           input.data,
         ),
       })
-      return
     default:
       return input satisfies never
   }

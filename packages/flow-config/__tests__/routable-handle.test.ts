@@ -7,6 +7,7 @@ import {
   buttonTypes,
   emailStepDefaultFn,
   getNodeFromButton,
+  openMiniAppStepDefaultFn,
   pageElementTypes,
   quickReplySettingsDefaultFn,
   sendCardStepDefaultFn,
@@ -227,6 +228,29 @@ const makeMailNode = (id: string, buttonId: string): FlowNode => {
 }
 
 describe("applyRouteInNode", () => {
+  test("keeps an Open Mini App button's action when its edge is drawn or dropped", () => {
+    const button = {
+      ...makeButton("mini-app-button"),
+      buttonType: buttonTypes.enum.openMiniApp,
+      beforeStep: openMiniAppStepDefaultFn({ miniAppId: "7" }),
+    }
+    const node = makeMessageNode("owner-node", {
+      steps: [sendTextStepDefaultFn({ buttons: [button], text: "Target" })],
+    })
+
+    const connected = applyRouteInNode(node, button.id, {
+      targetNodeId: "target-node",
+    }) as FlowNode
+    expect(getNodeFromButton([connected], button.id).button).toEqual(button)
+
+    const disconnected = applyRouteInNode(
+      connected,
+      button.id,
+      null,
+    ) as FlowNode
+    expect(getNodeFromButton([disconnected], button.id).button).toEqual(button)
+  })
+
   test("connects and disconnects a top-level button immutably", () => {
     const button = makeButton("button")
     const untouchedStep = sendTextStepDefaultFn({ text: "Untouched" })

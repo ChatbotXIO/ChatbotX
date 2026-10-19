@@ -2616,6 +2616,9 @@
     },
     "images": {
       "label": "Hình ảnh"
+    },
+    "miniApp": {
+      "label": "Mini App"
     }
   },
   "flows": {
@@ -2745,6 +2748,7 @@
       "whatsappOptionList": "Danh sách tùy chọn",
       "setCustomField": "Thiết lập trường tùy chỉnh",
       "startAnotherNode": "Bắt đầu nút khác",
+      "openMiniApp": "Mở Mini App",
       "startExternalFlow": "Bắt đầu luồng bên ngoài",
       "startExternalNode": "Bắt đầu nút bên ngoài",
       "startFlow": "Bắt đầu luồng",
@@ -3795,6 +3799,7 @@
     "whatsappFlowIncomplete": "Mở nút và chọn WhatsApp Flow cùng màn hình bắt đầu.",
     "whatsappCarouselButtonsMismatch": "Với WhatsApp, mọi thẻ trong một carousel phải có nút giống nhau: hoặc mỗi thẻ đúng một nút mở liên kết, hoặc mỗi thẻ cùng số nút trả lời",
     "whatsappCarouselLinkButtonNotAlone": "Với WhatsApp, thẻ carousel có nút mở liên kết thì không được có nút nào khác. Hãy xoá các nút còn lại trên thẻ đó, hoặc đổi nút mở liên kết sang hành động khác.",
+    "templateButtonOpenMiniAppUnsupported": "Nút của template không mở được Mini App. Hãy chọn hành động khác cho nút này.",
     "duplicateNodeError": "Không thể nhân bản khối. Vui lòng thử lại.",
     "deleteNodeError": "Không thể xoá khối. Vui lòng thử lại.",
     "redoHistoryCleared": "Đã xoá lịch sử làm lại",

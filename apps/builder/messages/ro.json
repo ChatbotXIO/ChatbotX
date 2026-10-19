@@ -127,6 +127,7 @@
       "noFlowsAvailable": "Nu există fluxuri disponibile",
       "setCustomField": "Setează câmpul personalizat",
       "startAnotherNode": "Pornește alt nod",
+      "openMiniApp": "Deschide Mini App",
       "startExternalFlow": "Pornește un flux extern",
       "startExternalNode": "Pornește un nod extern",
       "startFlow": "Pornește fluxul",
@@ -3471,6 +3472,9 @@
     },
     "images": {
       "label": "Imagini"
+    },
+    "miniApp": {
+      "label": "Mini App"
     }
   },
   "channels": {
@@ -3753,6 +3757,7 @@
     "whatsappFlowIncomplete": "Deschide butonul și alege un WhatsApp Flow și ecranul său de start.",
     "whatsappCarouselButtonsMismatch": "Pe WhatsApp, un carusel are nevoie de aceleași butoane pe fiecare card: fie un singur buton de link pe fiecare card, fie același număr de butoane de răspuns pe fiecare card",
     "whatsappCarouselLinkButtonNotAlone": "Pe WhatsApp, un card de carusel cu un buton de link nu poate avea alte butoane. Elimină celelalte butoane de pe acel card sau schimbă butonul de link cu o altă acțiune.",
+    "templateButtonOpenMiniAppUnsupported": "Butoanele de șablon nu pot deschide o Mini App. Alege altă acțiune pentru acest buton.",
     "duplicateNodeError": "Blocul nu a putut fi duplicat. Te rugăm să încerci din nou.",
     "deleteNodeError": "Blocul nu a putut fi șters. Te rugăm să încerci din nou.",
     "redoHistoryCleared": "Istoricul de refacere a fost șters",

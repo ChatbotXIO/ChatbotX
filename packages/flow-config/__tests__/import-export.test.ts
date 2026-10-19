@@ -9,6 +9,7 @@ import {
   conditionNodeDefaultFn,
   FLOW_EXPORT_FORMAT_VERSION,
   type FlowExportedFlow,
+  openMiniAppStepDefaultFn,
   openWebsiteStepDefaultFn,
   parseFlowExport,
   remapCustomFieldReferences,
@@ -298,6 +299,35 @@ describe("collectFlowReferenceWarnings", () => {
     )
     expect(warnings).toContainEqual(
       expect.objectContaining({ entityKind: "flow", value: "999" }),
+    )
+  })
+
+  test("flags the Mini App an Open Mini App button opens", () => {
+    const sendMessageNode = sendMessageNodeDefaultFn({
+      labelVersion: 1,
+      nodeProps: { id: "1" },
+      detailProps: {
+        quickReplies: [
+          {
+            ...buttonStepDefaultFn({ label: "Form" }),
+            id: "11",
+            buttonType: buttonTypes.enum.openMiniApp,
+            beforeStep: openMiniAppStepDefaultFn({ id: "12", miniAppId: "77" }),
+          },
+        ],
+      },
+    })
+    const flow: FlowExportedFlow = {
+      name: "Mini App flow",
+      active: true,
+      enableInInbox: true,
+      startNodeId: sendMessageNode.id,
+      nodes: [sendMessageNode],
+      edges: [],
+    }
+
+    expect(collectFlowReferenceWarnings(flow)).toContainEqual(
+      expect.objectContaining({ entityKind: "miniApp", value: "77" }),
     )
   })
 

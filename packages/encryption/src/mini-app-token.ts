@@ -40,3 +40,45 @@ export async function verifyMiniAppToken(
     miniAppTokenPayloadSchema,
   )
 }
+
+const RESUME_TOKEN_AAD = "mini-app-resume-token"
+
+export const miniAppResumeTokenPayloadSchema = z.object({
+  workspaceId: z.string().min(1),
+  contactId: z.string().min(1),
+  miniAppId: z.string().min(1),
+  conversationId: z.string().min(1),
+  contactInboxId: z.string().min(1),
+  /** The flow button the link was sent on, as `encodeButtonPayload` builds it. */
+  buttonPayload: z.string().min(1),
+  expiresAt: z.number(),
+})
+
+export type MiniAppResumeTokenPayload = z.infer<
+  typeof miniAppResumeTokenPayloadSchema
+>
+
+/**
+ * Signs where a flow continues once the contact submits the Mini App opened
+ * from an "Open Mini App" button: the button (and so its edge) plus the
+ * conversation it was sent in.
+ */
+export async function signMiniAppResumeToken(
+  payload: Omit<MiniAppResumeTokenPayload, "expiresAt">,
+  ttlMs = DEFAULT_TOKEN_TTL_MS,
+): Promise<string> {
+  return await signAppointmentToken(
+    { ...payload, expiresAt: Date.now() + ttlMs },
+    RESUME_TOKEN_AAD,
+  )
+}
+
+export async function verifyMiniAppResumeToken(
+  token: string,
+): Promise<MiniAppResumeTokenPayload> {
+  return await verifyAppointmentToken(
+    token,
+    RESUME_TOKEN_AAD,
+    miniAppResumeTokenPayloadSchema,
+  )
+}

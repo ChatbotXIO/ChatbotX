@@ -95,6 +95,7 @@ export const stepTypes = z.enum([
 
   // External/Others (X_)
   "openWebsite",
+  "openMiniApp",
   "addNotes",
 
   // Broadcast Operations (B_)

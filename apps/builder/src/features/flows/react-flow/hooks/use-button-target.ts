@@ -5,7 +5,9 @@ import {
   buttonTypes,
   type FlowNode,
   nodeTypeSchema,
+  type OpenMiniAppStepSchema,
   type OpenWebsiteStepSchema,
+  openMiniAppStepDefaultFn,
   openWebsiteStepDefaultFn,
   performActionNodeDefaultFn,
   type StartAnotherNodeStepSchema,
@@ -23,6 +25,7 @@ import { useCallback } from "react"
 export type ButtonTargetBeforeStep =
   | StartAnotherNodeStepSchema
   | OpenWebsiteStepSchema
+  | OpenMiniAppStepSchema
   | StartExternalFlowStepSchema
   | StartExternalNodeStepSchema
 
@@ -126,6 +129,9 @@ export function useCreateButtonTarget() {
           break
         case buttonTypes.enum.startAnotherNode:
           beforeStep = startAnotherNodeStepDefaultFn()
+          break
+        case buttonTypes.enum.openMiniApp:
+          beforeStep = openMiniAppStepDefaultFn()
           break
         default:
           return null

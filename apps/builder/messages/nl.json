@@ -2232,6 +2232,9 @@
     },
     "images": {
       "label": "Afbeeldingen"
+    },
+    "miniApp": {
+      "label": "Mini-app"
     }
   },
   "condition": {
@@ -2558,6 +2561,7 @@
       "noFlowsAvailable": "Geen flows beschikbaar",
       "setCustomField": "Aangepast veld instellen",
       "startAnotherNode": "Ander knooppunt starten",
+      "openMiniApp": "Mini-app openen",
       "startExternalFlow": "Externe flow starten",
       "startExternalNode": "Extern knooppunt starten",
       "startFlow": "Flow starten",
@@ -3753,6 +3757,7 @@
     "whatsappFlowIncomplete": "Open de knop en kies een WhatsApp Flow en het startscherm ervan.",
     "whatsappCarouselButtonsMismatch": "Op WhatsApp moet een carrousel op elke kaart dezelfde knoppen hebben: één linkknop op elke kaart, of hetzelfde aantal antwoordknoppen op elke kaart",
     "whatsappCarouselLinkButtonNotAlone": "Op WhatsApp mag een carrouselkaart met een linkknop geen andere knoppen hebben. Verwijder de andere knoppen op die kaart, of wijzig de linkknop in een andere actie.",
+    "templateButtonOpenMiniAppUnsupported": "Sjabloonknoppen kunnen geen mini-app openen. Kies een andere actie voor deze knop.",
     "duplicateNodeError": "Het blok kon niet worden gedupliceerd. Probeer het opnieuw.",
     "deleteNodeError": "Het blok kon niet worden verwijderd. Probeer het opnieuw.",
     "redoHistoryCleared": "Geschiedenis voor opnieuw uitvoeren gewist",

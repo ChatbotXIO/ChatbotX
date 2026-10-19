@@ -51,6 +51,7 @@ import { markConversationAsReadStep } from "./mark-conversation-as-read"
 import { markConversationAsUnreadStep } from "./mark-conversation-as-unread"
 import { markEmailVerifiedStep } from "./mark-email-verified"
 import { moosendCreateContactStep } from "./moosend-create-contact"
+import { openMiniAppStep } from "./open-mini-app"
 import { openWebsiteStep } from "./open-website"
 import { optInEmailStep } from "./opt-in-email"
 import { optOutEmailStep } from "./opt-out-email"
@@ -167,6 +168,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.followUp]: followUpStep,
   [stepTypes.enum.performAction]: undefined,
   [stepTypes.enum.openWebsite]: openWebsiteStep,
+  [stepTypes.enum.openMiniApp]: openMiniAppStep,
   [stepTypes.enum.setCustomField]: setCustomFieldStep,
   [stepTypes.enum.clearCustomField]: clearCustomFieldStep,
   [stepTypes.enum.landingPage]: undefined,

@@ -87,6 +87,7 @@ const stepExecutionKinds = {
   startExternalFlow: "worker",
   startExternalNode: "worker",
   openWebsite: "worker",
+  openMiniApp: "worker",
   addNotes: "worker",
   subscribeBroadcast: "worker",
   unsubscribeBroadcast: "worker",

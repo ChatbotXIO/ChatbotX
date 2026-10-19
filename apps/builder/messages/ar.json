@@ -2574,6 +2574,9 @@
     },
     "images": {
       "label": "الصور"
+    },
+    "miniApp": {
+      "label": "التطبيق المصغر"
     }
   },
   "flows": {
@@ -2704,6 +2707,7 @@
       "noFlowsAvailable": "لا تتوفر مسارات",
       "setCustomField": "تعيين حقل مخصص",
       "startAnotherNode": "بدء عقدة أخرى",
+      "openMiniApp": "فتح التطبيق المصغر",
       "startExternalFlow": "بدء مسار خارجي",
       "startExternalNode": "بدء عقدة خارجية",
       "startFlow": "بدء المسار",
@@ -3753,6 +3757,7 @@
     "whatsappFlowIncomplete": "افتح الزر واختر WhatsApp Flow وشاشة البدء الخاصة به.",
     "whatsappCarouselButtonsMismatch": "في واتساب، يجب أن يحتوي العرض الدوّار على الأزرار نفسها في كل بطاقة: إما زر رابط واحد في كل بطاقة، أو العدد نفسه من أزرار الرد في كل بطاقة",
     "whatsappCarouselLinkButtonNotAlone": "في واتساب، لا يمكن أن تحتوي بطاقة العرض الدوّار التي تتضمن زر رابط على أي أزرار أخرى. أزل الأزرار الأخرى من تلك البطاقة، أو غيّر زر الرابط إلى إجراء آخر.",
+    "templateButtonOpenMiniAppUnsupported": "لا يمكن لأزرار القالب فتح تطبيق مصغر. اختر إجراءً آخر لهذا الزر.",
     "duplicateNodeError": "تعذّر تكرار الكتلة. يُرجى المحاولة مرة أخرى.",
     "deleteNodeError": "تعذّر حذف الكتلة. يُرجى المحاولة مرة أخرى.",
     "redoHistoryCleared": "تم مسح سجل الإعادة",

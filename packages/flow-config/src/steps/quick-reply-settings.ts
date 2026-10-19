@@ -24,9 +24,13 @@ export const QUICK_REPLY_DEFAULT_RETRIES = 3
 export const QUICK_REPLY_RETRY_MESSAGE_MAX = 255
 const FOLLOW_UP_MAX_DELAY_MS = FOLLOW_UP_MAX_DELAY_DAYS * 86_400_000
 
-/** Open Website needs a click and an option list is WhatsApp-only UI. */
+/**
+ * Open Website / Open Mini App need a click and an option list is
+ * WhatsApp-only UI.
+ */
 export const quickReplyNextStepHiddenButtonTypes: ButtonType[] = [
   buttonTypes.enum.openWebsite,
+  buttonTypes.enum.openMiniApp,
   buttonTypes.enum.whatsappOptionList,
 ]
 

@@ -1482,7 +1482,7 @@ exports[`component catalog > keeps each component's settings 1`] = `
     "defaultProps": {
       "alt-text": "imageAlt",
       "height": 120,
-      "scale-type": "cover",
+      "scale-type": "contain",
       "src": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4//8/AAX+Av4N70a4AAAAAElFTkSuQmCC",
     },
     "isInput": false,

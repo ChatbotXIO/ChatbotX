@@ -75,6 +75,8 @@ import {
   settleCommentAutomationFailure,
 } from "../../lib/comment-automation-anchor"
 import { logger } from "../../lib/logger"
+import { resolveMiniAppLinks } from "../utils/mini-app-buttons"
+import { mapStepButtons } from "../utils/step-buttons"
 import { resolveStoredStepContent } from "../utils/stored-step-content"
 import {
   isDeliveredDirectMessage,
@@ -306,34 +308,16 @@ const signBookingLinksInStep = async (props: {
   executedFlowVersionId?: string
   appUrl: string
   step: SendFlowStepData
-}): Promise<SendFlowStepData> => {
-  let step = props.step
-  if ("buttons" in step && step.buttons.length > 0) {
-    const buttons = await signBookingButtonsIfNeeded({
-      ...props,
-      stepId: step.id,
-      buttons: step.buttons,
-    })
-    step = { ...step, buttons: buttons ?? [] } as SendFlowStepData
-  }
-  if (!("cards" in step) || step.cards.length === 0) {
-    return step
-  }
-  const cards = await Promise.all(
-    step.cards.map(async (card) => {
-      if (!("buttons" in card) || card.buttons.length === 0) {
-        return card
-      }
-      const buttons = await signBookingButtonsIfNeeded({
+}): Promise<SendFlowStepData> =>
+  await mapStepButtons(
+    props.step,
+    async (buttons) =>
+      (await signBookingButtonsIfNeeded({
         ...props,
-        stepId: step.id,
-        buttons: card.buttons,
-      })
-      return { ...card, buttons: buttons ?? [] } as SendCardStepSchema
-    }),
+        stepId: props.step.id,
+        buttons,
+      })) ?? [],
   )
-  return { ...step, cards } as SendFlowStepData
-}
 
 /**
  * Route an `openWebsite` button's destination through the `/go` interstitial.
@@ -389,35 +373,16 @@ const wrapOpenLinkButtonsIfNeeded = (props: {
   )
 }
 
-const wrapOpenLinksInStep = (props: {
+const wrapOpenLinksInStep = async (props: {
   workspaceId: string
   appUrl: string
   channel: string
   step: SendFlowStepData
-}): SendFlowStepData => {
-  let step = props.step
-  if ("buttons" in step && step.buttons.length > 0) {
-    const buttons = wrapOpenLinkButtonsIfNeeded({
-      ...props,
-      buttons: step.buttons,
-    })
-    step = { ...step, buttons: buttons ?? [] } as SendFlowStepData
-  }
-  if (!("cards" in step) || step.cards.length === 0) {
-    return step
-  }
-  const cards = step.cards.map((card) => {
-    if (!("buttons" in card) || card.buttons.length === 0) {
-      return card
-    }
-    const buttons = wrapOpenLinkButtonsIfNeeded({
-      ...props,
-      buttons: card.buttons,
-    })
-    return { ...card, buttons: buttons ?? [] } as SendCardStepSchema
-  })
-  return { ...step, cards } as SendFlowStepData
-}
+}): Promise<SendFlowStepData> =>
+  await mapStepButtons(
+    props.step,
+    (buttons) => wrapOpenLinkButtonsIfNeeded({ ...props, buttons }) ?? [],
+  )
 
 const convertCardsToTemplate = (props: {
   flowId: string
@@ -722,6 +687,24 @@ export async function sendFlowStep({
       resolveTenantSettings({ workspaceId: conversation.workspaceId }),
     ])
     const { appUrl, storageUrl } = tenantSettings
+    // Open Mini App buttons become link buttons first, so everything below
+    // (booking signing, the `/go` wrap, every channel encoder) only ever sees
+    // `openWebsite`. The Mini App URL is same-origin, so `/go` leaves it alone.
+    const {
+      step: stepWithMiniAppLinks,
+      quickReplies: quickRepliesWithMiniAppLinks,
+    } = await resolveMiniAppLinks({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      conversationId: conversation.id,
+      contactInboxId: targetContactInbox.id,
+      flowId,
+      flowVersionId,
+      metadata,
+      appUrl,
+      step: resolvedStep as SendFlowStepData,
+      quickReplies,
+    })
     const stepWithSignedBookingLinks = await signBookingLinksInStep({
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
@@ -732,7 +715,7 @@ export async function sendFlowStep({
       flowVersionId,
       executedFlowVersionId,
       appUrl,
-      step: resolvedStep as SendFlowStepData,
+      step: stepWithMiniAppLinks,
     })
     const quickRepliesWithSignedBookingLinks = await signBookingButtonsIfNeeded(
       {
@@ -746,7 +729,7 @@ export async function sendFlowStep({
         executedFlowVersionId,
         stepId: stepWithSignedBookingLinks.id,
         appUrl,
-        buttons: quickReplies,
+        buttons: quickRepliesWithMiniAppLinks,
       },
     )
 
@@ -758,7 +741,7 @@ export async function sendFlowStep({
       appUrl,
       channel: targetContactInbox.channel,
     }
-    const stepForSend = wrapOpenLinksInStep({
+    const stepForSend = await wrapOpenLinksInStep({
       ...openLinkProps,
       step: stepWithSignedBookingLinks,
     })

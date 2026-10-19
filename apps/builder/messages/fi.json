@@ -2428,6 +2428,9 @@
     },
     "images": {
       "label": "Kuvat"
+    },
+    "miniApp": {
+      "label": "Minisovellus"
     }
   },
   "flows": {
@@ -2558,6 +2561,7 @@
       "noFlowsAvailable": "Flow'ita ei ole saatavilla",
       "setCustomField": "Aseta mukautettu kenttä",
       "startAnotherNode": "Käynnistä toinen solmu",
+      "openMiniApp": "Avaa minisovellus",
       "startExternalFlow": "Käynnistä ulkoinen flow",
       "startExternalNode": "Käynnistä ulkoinen solmu",
       "startFlow": "Käynnistä flow",
@@ -3753,6 +3757,7 @@
     "whatsappFlowIncomplete": "Avaa painike ja valitse WhatsApp Flow sekä sen aloitusnäkymä.",
     "whatsappCarouselButtonsMismatch": "WhatsAppissa karusellin jokaisella kortilla on oltava samat painikkeet: joko yksi linkkipainike jokaisella kortilla tai sama määrä vastauspainikkeita jokaisella kortilla",
     "whatsappCarouselLinkButtonNotAlone": "WhatsAppissa linkkipainikkeen sisältävällä karusellikortilla ei voi olla muita painikkeita. Poista kortin muut painikkeet tai vaihda linkkipainike toiseen toimintoon.",
+    "templateButtonOpenMiniAppUnsupported": "Mallipohjan painikkeet eivät voi avata minisovellusta. Valitse tälle painikkeelle toinen toiminto.",
     "duplicateNodeError": "Lohkoa ei voitu monistaa. Yritä uudelleen.",
     "deleteNodeError": "Lohkoa ei voitu poistaa. Yritä uudelleen.",
     "redoHistoryCleared": "Uudelleentekohistoria tyhjennetty",

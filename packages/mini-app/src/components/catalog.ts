@@ -339,7 +339,7 @@ const definitions: MiniAppComponentDefinition[] = [
     defaultProps: (text) => ({
       src: MINI_APP_PLACEHOLDER_IMAGE,
       height: 120,
-      "scale-type": "cover",
+      "scale-type": "contain",
       "alt-text": text("imageAlt"),
     }),
   },
