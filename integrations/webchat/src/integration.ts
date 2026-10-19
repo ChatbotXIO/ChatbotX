@@ -1,4 +1,4 @@
-import { webchatConnectConfigSchema } from "@chatbotx.io/business/integration-webchat/schema"
+import { webchatConnectConfigSchema } from "@chatbotx.io/business/integration-webchat/connect-config"
 import {
   type BaseConfig,
   type HandleRequestProps,
