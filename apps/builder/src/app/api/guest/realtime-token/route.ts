@@ -66,11 +66,9 @@ export const POST = async (request: NextRequest) => {
     }
 
     if (
-      !(
-        guestConversationId.includes(":") &&
-        guestConversationId.startsWith(
-          workspaceGuestConversationPrefix(workspaceId),
-        )
+      guestConversationId.includes(":") &&
+      !guestConversationId.startsWith(
+        workspaceGuestConversationPrefix(workspaceId),
       )
     ) {
       return new NextResponse(null, { status: 400 })

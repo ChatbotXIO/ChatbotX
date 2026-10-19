@@ -152,6 +152,39 @@ const requestUpgrade = (
   socket.on("error", reject)
   return promise
 }
+
+const requestHttp = (
+  port: number,
+  path: string,
+): Promise<{ statusCode: number }> => {
+  const { promise, resolve, reject } = Promise.withResolvers<{
+    statusCode: number
+  }>()
+  const socket = net.connect(port, "127.0.0.1", () => {
+    socket.write(
+      [
+        `GET ${path} HTTP/1.1`,
+        "Host: 127.0.0.1",
+        "Connection: close",
+        "",
+        "",
+      ].join("\r\n"),
+    )
+  })
+  let buffer = ""
+  socket.on("data", (chunk: Buffer) => {
+    buffer += chunk.toString("utf8")
+    const statusLine = buffer.slice(0, buffer.indexOf("\r\n"))
+    const match = HTTP_STATUS_LINE_PATTERN.exec(statusLine)
+    if (!match?.[1]) {
+      return
+    }
+    socket.destroy()
+    resolve({ statusCode: Number(match[1]) })
+  })
+  socket.on("error", reject)
+  return promise
+}
 const startUpgrade = (port: number, path: string): Promise<net.Socket> => {
   const { promise, reject, resolve } = Promise.withResolvers<net.Socket>()
   const socket = net.connect(port, "127.0.0.1", () => {
@@ -314,6 +347,133 @@ describe("createRealtimeGateway (live)", () => {
     const response = await requestUpgrade(port, await requestPath())
 
     expect(response.statusCode).toBe(401)
+  })
+
+  test("keeps health live and restores readiness after an idle Redis reconnect", async () => {
+    let reconnect: (() => void) | undefined
+    const reader = {
+      call: vi.fn().mockResolvedValue("PONG"),
+      disconnect: vi.fn(),
+      on: vi.fn((event: string, listener: () => void) => {
+        if (event === "reconnecting") {
+          reconnect = listener
+        }
+      }),
+    }
+    const redis = {
+      ...createFakeRedis(),
+      duplicate: () => reader,
+    }
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
+    const port = await gateway.listen("127.0.0.1", 0)
+
+    await expect(requestHttp(port, "/health")).resolves.toEqual({
+      statusCode: 200,
+    })
+    await expect(requestHttp(port, "/ready")).resolves.toEqual({
+      statusCode: 200,
+    })
+    await vi.waitFor(() => expect(reconnect).toBeDefined())
+    reconnect?.()
+
+    await expect(requestHttp(port, "/ready")).resolves.toEqual({
+      statusCode: 503,
+    })
+    await vi.waitFor(async () => {
+      await expect(requestHttp(port, "/ready")).resolves.toEqual({
+        statusCode: 200,
+      })
+    })
+    expect(reader.call).toHaveBeenCalledWith("PING")
+  })
+
+  test("restores readiness after restarting a failed reader", async () => {
+    const { promise: idleProbe, resolve: resolveIdleProbe } =
+      Promise.withResolvers<string>()
+    const replacementReader = {
+      call: vi.fn(() => idleProbe),
+      disconnect: vi.fn(),
+    }
+    const redis = {
+      ...createFakeRedis(),
+      duplicate: vi
+        .fn()
+        .mockImplementationOnce(() => {
+          throw new Error("reader failed")
+        })
+        .mockReturnValue(replacementReader),
+    }
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
+    const port = await gateway.listen("127.0.0.1", 0)
+
+    await vi.waitFor(async () => {
+      await expect(requestHttp(port, "/ready")).resolves.toEqual({
+        statusCode: 503,
+      })
+    })
+    await vi.waitFor(
+      () => expect(replacementReader.call).toHaveBeenCalledWith("PING"),
+      { timeout: 2000 },
+    )
+    resolveIdleProbe("PONG")
+    await vi.waitFor(async () => {
+      await expect(requestHttp(port, "/ready")).resolves.toEqual({
+        statusCode: 200,
+      })
+    })
+  })
+
+  test("returns 503 when guest activation cannot read Redis", async () => {
+    const redis = createFakeRedis()
+    redis.xrevrange.mockRejectedValueOnce(new Error("Redis unavailable"))
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
+    const port = await gateway.listen("127.0.0.1", 0)
+    const token = await signGuestConnectToken(
+      { guestConversationId: "guest-1", workspaceId: "ws-1" },
+      SECRET,
+    )
+
+    const response = await requestUpgrade(
+      port,
+      `/rt/guests/guest-1?token=${token}`,
+    )
+
+    expect(response.statusCode).toBe(503)
+  })
+
+  test("closes the Redis connection exactly once", async () => {
+    const redis = createFakeRedis()
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: redis as never,
+        secret: SECRET,
+      }),
+    )
+    await gateway.listen("127.0.0.1", 0)
+
+    await gateway.close()
+    await gateway.close()
+
+    expect(redis.disconnect).toHaveBeenCalledTimes(1)
   })
 
   test.concurrent("caps a workspace's total guest connections across distinct guest conversation ids", async () => {

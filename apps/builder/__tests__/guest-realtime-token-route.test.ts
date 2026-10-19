@@ -134,19 +134,33 @@ describe("POST /api/guest/realtime-token", () => {
     expect(response.status).toBe(404)
   })
 
-  test.each([
-    {
-      guestConversationId: LEGACY_GUEST_CONVERSATION_ID,
-      name: "a legacy digits-only guest conversation id",
-    },
-    {
-      guestConversationId: "99999:3f6a2f2a-1b1a-4e9a-9b1a-7c3a2f2a1b1a",
-      name: "a new-format guest conversation id with a mismatched workspace prefix",
-    },
-  ])("returns 400 for $name", async ({ guestConversationId }) => {
-    const response = await POST(buildRequest(baseBody({ guestConversationId })))
+  test("returns 400 for a new-format guest conversation id with a mismatched workspace prefix", async () => {
+    const response = await POST(
+      buildRequest(
+        baseBody({
+          guestConversationId: "99999:3f6a2f2a-1b1a-4e9a-9b1a-7c3a2f2a1b1a",
+        }),
+      ),
+    )
 
     expect(response.status).toBe(400)
+  })
+
+  test("accepts a legacy digits-only guest conversation id after webchat authorization", async () => {
+    const response = await POST(
+      buildRequest(
+        baseBody({ guestConversationId: LEGACY_GUEST_CONVERSATION_ID }),
+      ),
+    )
+
+    expect(response.status).toBe(200)
+    expect(mocks.signGuestConnectToken).toHaveBeenCalledWith(
+      {
+        guestConversationId: LEGACY_GUEST_CONVERSATION_ID,
+        workspaceId: WORKSPACE_ID,
+      },
+      "broadcast-secret",
+    )
   })
 
   test("returns 403 without ever checking the workspace-wide mint rate limit when the access token is unauthorized", async () => {

@@ -19,6 +19,7 @@ import {
   upgradeAsOverloaded,
   upgradeSocket,
   verifyConnectToken,
+  writeStatus,
   writeUnauthorized,
 } from "./gateway-shared"
 import type { RealtimeServerCounters } from "./lib/realtime-metrics"
@@ -166,11 +167,11 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
         if (aborted) {
           return
         }
-        logger.warn(
+        logger.error(
           { err: error, guestConversationId },
           "Realtime guest socket activation or upgrade failed",
         )
-        writeUnauthorized(res)
+        writeStatus(res, "503 Service Unavailable")
       }
     })().catch((error) => {
       logger.error(

@@ -177,17 +177,19 @@ export const createRealtimeGateway = ({
   }
 
   const streamReader = createStreamReader({
+    onDispatchError: (error, workspaceIds) => {
+      logger.error(
+        { err: error, workspaceIds },
+        "Realtime stream dispatch failed",
+      )
+      for (const workspaceId of workspaceIds) {
+        delivery.resyncWorkspace(workspaceId, "stream-dispatch-failed")
+      }
+    },
     onEntries: (entries) => {
       counters.records += entries.length
       for (const entry of entries) {
-        try {
-          delivery.dispatch(entry)
-        } catch (error) {
-          logger.error(
-            { err: error, id: entry.id, kind: entry.record.kind },
-            "Failed to dispatch realtime stream entry",
-          )
-        }
+        delivery.dispatch(entry)
       }
     },
     onError: (error) => {
@@ -297,6 +299,9 @@ export const createRealtimeGateway = ({
 
   return {
     close: async () => {
+      if (stopped) {
+        return
+      }
       stopped = true
       ready = false
       clearInterval(heartbeat)

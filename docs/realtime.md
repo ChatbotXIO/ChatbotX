@@ -50,6 +50,22 @@ REDIS_URL=redis://localhost:6379
 Start Redis and Builder with Docker, then run `pnpm --filter realtime dev`.
 Use `REALTIME_HOST`, not `HOSTNAME`: Docker owns `HOSTNAME`.
 
+## Stream retention, replay, and close codes
+
+Each `rt:{shard}` stream retains entries for approximately five minutes and
+is also capped at approximately 10,000 entries. Replay is therefore
+best-effort, not durable delivery: a client reconnects with its last `seq`,
+and must resync its cached data when the gateway reports an expired, invalid,
+or oversized replay window.
+
+| Code | Meaning | Client action |
+| --- | --- | --- |
+| 4000 | Heartbeat timeout detected by the client | Reconnect normally. |
+| 4001 | Membership revoked or workspace deleted | Stop reconnecting. |
+| 4002 | Replay or live-stream gap | Invalidate and refetch realtime-backed data, then reconnect. |
+| 4003 | Gateway capacity limit | Reconnect after the JSON `retryAfter` hint. |
+| 4004 | Connection lifetime, membership, permission, or team change | Mint a fresh token and reconnect with the existing replay cursor. |
+
 ## Subscribing to events
 
 ```tsx

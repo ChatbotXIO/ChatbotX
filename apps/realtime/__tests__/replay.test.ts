@@ -76,15 +76,7 @@ describe("loadReplay", () => {
     expect(replay.entries).toEqual([])
   })
 
-  test("does not attribute an entirely-unparseable entry (no recoverable workspaceId) to an unrelated workspace's replay", async () => {
-    // Regression for PR #1349 round-4 finding #4: a shard is shared by
-    // every workspace hashed to it, so a malformed entry whose workspace
-    // can't even be guessed must never count against whoever happens to be
-    // replaying when it's encountered — the live dispatch path already
-    // forced a shard-wide resync the one time this entry was ever new (see
-    // `onInvalidRecord`'s `shard` fallback in stream-reader.ts), so replay
-    // re-flagging it here for an unrelated workspace would just be a false
-    // positive with no real gap behind it.
+  test("reports droppedCount for an entirely-unparseable entry because it can taint every replaying workspace on its shard", async () => {
     const redis = {
       xrange: vi
         .fn()
@@ -101,7 +93,7 @@ describe("loadReplay", () => {
     })
 
     expect(replay.entries).toEqual([])
-    expect(replay.droppedCount).toBeUndefined()
+    expect(replay.droppedCount).toBe(1)
   })
 
   test("reports droppedCount only for a malformed entry whose recoverable workspaceId matches this replay's own workspace", async () => {

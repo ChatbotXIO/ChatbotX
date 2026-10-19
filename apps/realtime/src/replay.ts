@@ -25,16 +25,16 @@ const MAX_REPLAY_SCAN_ENTRIES = REPLAY_PAGE_SIZE * 20
 
 type ReplayResult = {
   closeReason?: string
-  /** Entries whose record (or part of it) couldn't be parsed during replay,
-   * attributed to THIS workspace only (a shard is shared by every
-   * workspace hashed to it — see `getRealtimeStreamShard` — so a malformed
-   * entry belonging to a different workspace must never count against this
-   * one). Bumped into `counters.malformedRecords` by the caller, which also
-   * forces this connect to resync (`closeReason`) instead of silently
-   * opening with a confirmed gap: the live dispatch path only resyncs
-   * sockets that were already connected when the record first arrived, not
-   * one reconnecting now with a `lastSeq` from before that point. See
-   * PR #1349 round-4 finding #6.
+  /** Entries whose record (or part of it) couldn't be parsed during replay.
+   * An attributable malformed entry affects only that workspace. An entry
+   * with no recoverable workspace id taints every replaying workspace on the
+   * shared shard, matching the live reader's shard-wide resync. Bumped into
+   * `counters.malformedRecords` by the caller, which also forces this
+   * connect to resync (`closeReason`) instead of silently opening with a
+   * confirmed gap: the live dispatch path only resyncs sockets that were
+   * already connected when the record first arrived, not one reconnecting
+   * now with a `lastSeq` from before that point. See PR #1349 round-4
+   * finding #6.
    */
   droppedCount?: number
   entries: StreamRecordEntry[]
@@ -96,18 +96,18 @@ export const loadReplay = async ({
       lastScannedId = id
       scannedCount += 1
       const parsed = parseStreamRecord(fields)
-      const entryWorkspaceId = parsed.ok
-        ? parsed.record.workspaceId
-        : parsed.workspaceId
-      if (entryWorkspaceId !== workspaceId) {
-        continue
-      }
       if (!parsed.ok) {
+        if (parsed.workspaceId && parsed.workspaceId !== workspaceId) {
+          continue
+        }
         droppedCount += 1
         logger.error(
           { err: parsed.error, id, workspaceId },
           "Ignoring invalid realtime stream entry during replay",
         )
+        continue
+      }
+      if (parsed.record.workspaceId !== workspaceId) {
         continue
       }
       if (parsed.droppedCount) {

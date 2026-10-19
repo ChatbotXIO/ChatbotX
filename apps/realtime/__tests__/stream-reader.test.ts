@@ -89,6 +89,70 @@ describe("stream reader", () => {
     expect(reader.call).toHaveBeenCalledTimes(3)
   })
 
+  test("resyncs only dispatched workspaces when an entry callback throws", async () => {
+    const dispatchError = new Error("delivery failed")
+    const { promise: idleRead, resolve: resolveIdleRead } =
+      Promise.withResolvers<null>()
+    const { promise: handled, resolve: resolveHandled } =
+      Promise.withResolvers<void>()
+    let reads = 0
+    const reader = {
+      call: vi.fn(async (...arguments_: string[]) => {
+        reads += 1
+        if (reads > 1) {
+          return await idleRead
+        }
+        const streamIndex = arguments_.indexOf("STREAMS")
+        const [streamKey] = arguments_.slice(streamIndex + 1, streamIndex + 2)
+        return [
+          [
+            streamKey,
+            [
+              [
+                "1-0",
+                [
+                  "record",
+                  JSON.stringify({
+                    events: [{ data: {}, eventType: "messageCreated" }],
+                    kind: "workspace-events",
+                    workspaceId: "workspace-1",
+                  }),
+                ],
+              ],
+            ],
+          ],
+        ]
+      }) as RedisCall,
+      disconnect: vi.fn(() => resolveIdleRead(null)),
+    }
+    const onError = vi.fn()
+    const streamReader = createStreamReader({
+      onDispatchError: (error, workspaceIds) => {
+        expect(error).toBe(dispatchError)
+        expect(workspaceIds).toEqual(["workspace-1"])
+        resolveHandled()
+      },
+      onEntries: () => {
+        throw dispatchError
+      },
+      onError,
+      onInvalidRecord: () => undefined,
+      onReady: () => undefined,
+      onRecovered: () => undefined,
+      redis: {
+        duplicate: () => reader,
+        xrevrange: vi.fn().mockResolvedValue([]),
+      } as never,
+    })
+
+    await streamReader.activateWorkspace("workspace-1")
+    streamReader.start()
+    await handled
+    await streamReader.close()
+
+    expect(onError).not.toHaveBeenCalled()
+  })
+
   test("skips a malformed entry but still dispatches the valid entry in the same batch, logging an error", async () => {
     const dispatched: string[] = []
     const { promise: idleRead, resolve: resolveIdleRead } =
@@ -430,5 +494,44 @@ describe("stream reader", () => {
 
     expect(reconnects).toBe(1)
     expect(recoveries).toBe(1)
+  })
+
+  test("restarts after an unexpected reader-loop failure", async () => {
+    vi.useFakeTimers()
+    const duplicateError = new Error("duplicate failed")
+    const reader = {
+      call: vi.fn(),
+      disconnect: vi.fn(),
+    }
+    const redis = {
+      duplicate: vi
+        .fn()
+        .mockImplementationOnce(() => {
+          throw duplicateError
+        })
+        .mockReturnValue(reader),
+      xrevrange: vi.fn().mockResolvedValue([]),
+    }
+    const onError = vi.fn()
+    const onRecovered = vi.fn()
+    const streamReader = createStreamReader({
+      onEntries: () => undefined,
+      onError,
+      onInvalidRecord: () => undefined,
+      onReady: () => undefined,
+      onRecovered,
+      redis: redis as never,
+    })
+
+    streamReader.start()
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(onError).toHaveBeenCalledWith(duplicateError)
+    expect(onRecovered).toHaveBeenCalledTimes(1)
+    expect(redis.duplicate).toHaveBeenCalledTimes(2)
+
+    const closing = streamReader.close()
+    await vi.advanceTimersByTimeAsync(250)
+    await closing
+    vi.useRealTimers()
   })
 })

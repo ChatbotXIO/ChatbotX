@@ -2,6 +2,7 @@ import { createRedisConnection } from "@chatbotx.io/redis"
 import { createRealtimeGateway } from "./gateway"
 import { resolveRealtimeGatewayConfig } from "./gateway-config"
 import { logger } from "./logger"
+import { createShutdownHandler } from "./shutdown"
 
 const main = async (): Promise<void> => {
   const { host, port, redisUrl, ...gatewayConfig } =
@@ -10,23 +11,7 @@ const main = async (): Promise<void> => {
     ...gatewayConfig,
     redis: createRedisConnection(redisUrl),
   })
-  let shuttingDown = false
-
-  const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
-    if (shuttingDown) {
-      return
-    }
-    shuttingDown = true
-    logger.info({ signal }, "Stopping realtime gateway")
-    try {
-      await gateway.close()
-    } catch (error) {
-      logger.error(
-        { err: error, signal },
-        "Error while stopping realtime gateway",
-      )
-    }
-  }
+  const shutdown = createShutdownHandler(gateway)
 
   process.once("SIGINT", shutdown.bind(null, "SIGINT"))
   process.once("SIGTERM", shutdown.bind(null, "SIGTERM"))
