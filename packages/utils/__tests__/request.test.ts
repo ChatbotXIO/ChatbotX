@@ -129,4 +129,52 @@ describe("getPublicUrlFromRequest", () => {
         .protocol,
     ).toBe("https:")
   })
+
+  test("keeps the port when the public host carries one", () => {
+    delete process.env.FORCE_PUBLIC_HTTPS
+
+    expect(
+      getPublicUrlFromRequest(
+        new Request("http://internal.test:3000/callback", {
+          headers: { "x-forwarded-host": "localhost:3123" },
+        }),
+      ).toString(),
+    ).toBe("http://localhost:3123/callback")
+  })
+
+  test("drops the internal port when the public host carries none", () => {
+    delete process.env.FORCE_PUBLIC_HTTPS
+
+    expect(
+      getPublicUrlFromRequest(
+        new Request("http://internal.test:3000/callback", {
+          headers: { "x-forwarded-host": "app.example.com" },
+        }),
+      ).toString(),
+    ).toBe("http://app.example.com/callback")
+  })
+
+  test("does not mistake a bracketed IPv6 host for one carrying a port", () => {
+    delete process.env.FORCE_PUBLIC_HTTPS
+
+    expect(
+      getPublicUrlFromRequest(
+        new Request("http://internal.test:3000/callback", {
+          headers: { "x-forwarded-host": "[::1]" },
+        }),
+      ).toString(),
+    ).toBe("http://[::1]/callback")
+  })
+
+  test("keeps the port of a bracketed IPv6 host that carries one", () => {
+    delete process.env.FORCE_PUBLIC_HTTPS
+
+    expect(
+      getPublicUrlFromRequest(
+        new Request("http://internal.test:3000/callback", {
+          headers: { "x-forwarded-host": "[::1]:3123" },
+        }),
+      ).toString(),
+    ).toBe("http://[::1]:3123/callback")
+  })
 })
