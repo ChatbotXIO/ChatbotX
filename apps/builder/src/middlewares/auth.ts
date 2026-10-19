@@ -11,10 +11,10 @@ import { assertWorkspaceOwnerAccessForMethod } from "@/lib/workspace/authorize-w
 import { base } from "./context"
 
 export const authMiddleware = base.middleware(async ({ context, next }) => {
+  const requestIssuedAtMs = Date.now()
   const sessionData = await auth.api.getSession({
     headers: context.headers,
   })
-
   if (!(sessionData?.session && sessionData?.user)) {
     throw new ORPCError("UNAUTHORIZED")
   }
@@ -32,6 +32,7 @@ export const authMiddleware = base.middleware(async ({ context, next }) => {
   // Adds session and user to the context
   return next({
     context: {
+      requestIssuedAtMs,
       session: sessionData.session,
       user: {
         ...sessionData.user,
