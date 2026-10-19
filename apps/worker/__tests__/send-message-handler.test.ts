@@ -81,10 +81,15 @@ vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  messageModel: { id: "id", sourceId: "sourceId" },
-  whatsappFlowModel: { id: "id", sourceId: "sourceId" },
-}))
+vi.mock("@chatbotx.io/database/schema", () => {
+  const schema = { pick: vi.fn(() => schema) }
+  return {
+    createSelectSchema: vi.fn(() => schema),
+    integrationWebchatModel: {},
+    messageModel: { id: "id", sourceId: "sourceId" },
+    whatsappFlowModel: { id: "id", sourceId: "sourceId" },
+  }
+})
 
 vi.mock("@chatbotx.io/event-bus", () => ({
   emit: mockEmit,

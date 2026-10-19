@@ -21,7 +21,10 @@ vi.mock("@chatbotx.io/database/client", () => ({ findOrFail }))
 // module scope. A Proxy sentinel satisfies vitest's "does this export
 // exist" check for any table name without listing the whole schema.
 vi.mock("@chatbotx.io/database/schema", () => {
+  const schema = { pick: vi.fn(() => schema) }
   const overrides = {
+    createSelectSchema: vi.fn(() => schema),
+    integrationWebchatModel: {},
     flowModel: { id: "flowModel.id" },
     flowVersionModel: { id: "flowVersionModel.id" },
     reflinkModel: { id: "reflinkModel.id" },
