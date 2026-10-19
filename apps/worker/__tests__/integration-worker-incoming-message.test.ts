@@ -316,22 +316,27 @@ vi.mock("@chatbotx.io/database/client", () => ({
   isUniqueViolationError: mockIsUniqueViolationError,
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  CONTACT_INBOX_SOURCE_ID_KEY: "ContactInbox_inboxId_sourceId_key",
-  CONTACT_INBOX_SOURCE_USER_ID_KEY: "ContactInbox_inboxId_sourceUserId_key",
-  contactInboxModel: {
-    id: "id",
-    lastMessageAt: "lastMessageAt",
-    lastIncomingMessageAt: "lastIncomingMessageAt",
-  },
-  contactModel: { id: "id" },
-  conversationModel: {
-    id: "id",
-    lastActivityAt: "lastActivityAt",
-    sourceId: "sourceId",
-    workspaceId: "workspaceId",
-  },
-}))
+vi.mock("@chatbotx.io/database/schema", () => {
+  const schema = { pick: vi.fn(() => schema) }
+  return {
+    createSelectSchema: vi.fn(() => schema),
+    integrationWebchatModel: {},
+    CONTACT_INBOX_SOURCE_ID_KEY: "ContactInbox_inboxId_sourceId_key",
+    CONTACT_INBOX_SOURCE_USER_ID_KEY: "ContactInbox_inboxId_sourceUserId_key",
+    contactInboxModel: {
+      id: "id",
+      lastMessageAt: "lastMessageAt",
+      lastIncomingMessageAt: "lastIncomingMessageAt",
+    },
+    contactModel: { id: "id" },
+    conversationModel: {
+      id: "id",
+      lastActivityAt: "lastActivityAt",
+      sourceId: "sourceId",
+      workspaceId: "workspaceId",
+    },
+  }
+})
 
 // Mirror of the real capability table
 // (packages/business/src/contact/profile-refresh/rules.ts), matching the

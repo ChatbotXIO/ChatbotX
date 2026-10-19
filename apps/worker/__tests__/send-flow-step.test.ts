@@ -179,11 +179,16 @@ vi.mock("@chatbotx.io/analytics", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({
-  messageModel: { id: "id", sourceId: "sourceId" },
-  contactInboxModel: { id: "id" },
-  conversationModel: { id: "id", lastActivityAt: "lastActivityAt" },
-}))
+vi.mock("@chatbotx.io/database/schema", () => {
+  const schema = { pick: vi.fn(() => schema) }
+  return {
+    createSelectSchema: vi.fn(() => schema),
+    integrationWebchatModel: {},
+    messageModel: { id: "id", sourceId: "sourceId" },
+    contactInboxModel: { id: "id" },
+    conversationModel: { id: "id", lastActivityAt: "lastActivityAt" },
+  }
+})
 
 vi.mock("@chatbotx.io/business", () => ({
   appointmentCalendarService: {

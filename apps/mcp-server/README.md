@@ -166,7 +166,7 @@ Everything else — deletes, less-common resources (coupons, products, webhooks,
 
 ## Prerequisites
 
-- Node.js >= 18
+- Node.js >= 24
 - A ChatbotX workspace token (`Settings → Developer → API Keys`)
 
 ## Quick start
