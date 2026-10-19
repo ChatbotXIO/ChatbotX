@@ -7,6 +7,7 @@ import { connectTargets } from "./connect-targets"
 import { connectFromCredentials, reconnect } from "./credentials"
 import { attachIntegrationConnectionRow } from "./internal"
 import { disconnect, refresh, verify } from "./lifecycle"
+import { connectSelfServeChannel } from "./self-serve"
 
 /**
  * Registry-aware orchestration over the `Connection` domain: provider-side
@@ -22,14 +23,14 @@ import { disconnect, refresh, verify } from "./lifecycle"
  *   imported directly from there by every sibling module below.
  * - `lifecycle.ts` — `disconnect`/`refresh`/`verify`.
  * - `credentials.ts` — `connectFromCredentials`/`reconnect`.
+ * - `self-serve.ts` — `connectSelfServeChannel`.
  * - `connect-session-flow.ts` — `startSession`/`completeAuthorization`/
  *   `listAndAttachCandidates` plus the private `completeReconnect` helper.
  * - `connect-targets.ts` — `connectTargets` plus its private
  *   `connectCandidate`/`failSession`/`toFailureOutcome` helpers.
  *
  * This object is the one public surface (`connectionService`) every caller
- * imports; the split above is purely a file-organization concern; behavior
- * is unchanged.
+ * imports; the split above is purely a file-organization concern.
  */
 export const connectionService = {
   disconnect,
@@ -37,6 +38,7 @@ export const connectionService = {
   verify,
   connectFromCredentials,
   reconnect,
+  connectSelfServeChannel,
   startSession,
   completeAuthorization,
   listAndAttachCandidates,

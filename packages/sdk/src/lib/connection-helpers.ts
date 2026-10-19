@@ -319,6 +319,7 @@ export const apiKeyConnection = <IAuth extends AuthValue, IConfig>(
 type SelfServeConnectionOptions<IAuth extends AuthValue> = {
   displayName: string
   multiAccount: false
+  multiInstance?: boolean
   configFields?: readonly ConnectionConfigField[]
   kind?: ConnectionKind
   describe?: (auth: IAuth) => ConnectionDescriptor
@@ -330,6 +331,7 @@ export const selfServeConnection = <IAuth extends AuthValue>(
   kind: options.kind ?? "channel",
   strategy: "self_serve",
   multiAccount: options.multiAccount,
+  multiInstance: options.multiInstance,
   configFields: options.configFields ?? [],
   describe:
     options.describe ??

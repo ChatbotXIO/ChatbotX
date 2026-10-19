@@ -10,6 +10,7 @@ import type {
   Integration,
   IntegrationDefinition,
 } from "@chatbotx.io/sdk"
+import type { SelfServeSecret } from "@chatbotx.io/utils/connection"
 import type { ConnectionStoreBinding } from "./store-bindings"
 
 export type ConnectionTeardownResult = {
@@ -22,6 +23,19 @@ export type ConnectionTeardownHook = (input: {
   connection: ConnectionModel
   auth: AuthValue
 }) => Promise<ConnectionTeardownResult>
+
+export type { SelfServeSecret } from "@chatbotx.io/utils/connection"
+
+export type SelfServeConnectActor =
+  | { actorUserId: string; actorTokenId?: never }
+  | { actorTokenId: string; actorUserId?: never }
+
+export type SelfServeConnectHandler = (input: {
+  workspaceId: string
+  ownerId: string
+  actor: SelfServeConnectActor
+  config: Record<string, unknown>
+}) => Promise<{ connection: ConnectionModel; secret?: SelfServeSecret }>
 
 /**
  * Everything the Connection domain needs for one `IntegrationType`: the
@@ -73,6 +87,11 @@ export type ConnectionAdapter = {
    * `MetaCapiEvent`/tag rows the generic store binding doesn't know about.
    */
   teardown?: ConnectionTeardownHook
+  /**
+   * Provisions the channel rows for a `self_serve` provider from its parsed
+   * `config`, returning a one-time `secret` when the channel mints one.
+   */
+  connect?: SelfServeConnectHandler
 }
 
 export type ConnectionRegistry = Record<

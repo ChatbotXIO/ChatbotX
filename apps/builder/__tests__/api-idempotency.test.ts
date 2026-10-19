@@ -111,6 +111,35 @@ describe("API idempotency store", () => {
     })
   })
 
+  test("never stores or replays a one-time secret", async () => {
+    const { store, records } = createStore()
+    const fingerprint = await fingerprintInput({ provider: "api" })
+    const first = await claimIdempotencyKey({ ...scope, fingerprint, store })
+    if (first.kind !== "claimed") {
+      throw new Error("expected claim")
+    }
+
+    await completeIdempotencyKey({
+      ...scope,
+      fingerprint,
+      claimId: first.claimId,
+      output: {
+        connection: { id: "conn-1" },
+        session: null,
+        secret: { kind: "api_channel_token", token: "cbx_plaintext" },
+      },
+      store,
+    })
+
+    expect(JSON.stringify([...records.values()])).not.toContain("cbx_plaintext")
+    await expect(
+      claimIdempotencyKey({ ...scope, fingerprint, store }),
+    ).resolves.toEqual({
+      kind: "replay",
+      output: { connection: { id: "conn-1" }, session: null, secret: null },
+    })
+  })
+
   test("rejects a key reused with a different payload", async () => {
     const { store } = createStore()
     const first = await claimIdempotencyKey({

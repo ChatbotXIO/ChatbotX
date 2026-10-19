@@ -1,7 +1,10 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { integrationTypes } from "@chatbotx.io/database/partials"
 import { integrationApiRepository } from "@chatbotx.io/database/repositories"
-import type { IntegrationApiModel } from "@chatbotx.io/database/types"
+import type {
+  ConnectionModel,
+  IntegrationApiModel,
+} from "@chatbotx.io/database/types"
 import type { AuthValue } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { dispatchAuditRecord } from "../audit/dispatcher"
@@ -13,12 +16,18 @@ import {
   withQuotaCompensation,
 } from "../connection"
 import { connectionStateService } from "../connection/state-service"
+import { ChatbotXException } from "../errors"
 import { inboxService } from "../inbox/service"
+import { assertPublicUrl } from "../net/ssrf-guard"
 import type { WorkspaceQuotaConsumption } from "../workspace/quota-consumption"
+import {
+  generateApiChannelToken,
+  generateSigningSecret,
+} from "../workspace-api-token/credentials"
 
 type ConnectIntegrationApiInput = {
   ownerId: string
-  actorUserId: string
+  actorUserId?: string
   workspaceId?: string
   name: string
   auth: AuthValue
@@ -32,6 +41,15 @@ type ConnectIntegrationApiInput = {
   ) => Promise<string>
 }
 
+type CreateApiWithTokenInput = {
+  ownerId: string
+  actorUserId?: string
+  workspaceId?: string
+  name: string
+  callbackUrl?: string | null
+  createWorkspace?: ConnectIntegrationApiInput["createWorkspace"]
+}
+
 type DisconnectIntegrationApiInput = {
   id: string
   inboxId: string
@@ -40,9 +58,11 @@ type DisconnectIntegrationApiInput = {
 }
 
 class IntegrationApiService extends BaseService {
-  async connect(
-    input: ConnectIntegrationApiInput,
-  ): Promise<{ workspaceId: string; inbox: IntegrationApiModel }> {
+  async connect(input: ConnectIntegrationApiInput): Promise<{
+    workspaceId: string
+    inbox: IntegrationApiModel
+    connection: ConnectionModel
+  }> {
     const quotaConsumption: ConnectionQuotaConsumption = {
       consumed: false,
       workspaceUsageIncremented: false,
@@ -87,7 +107,7 @@ class IntegrationApiService extends BaseService {
           // `identityColumn: "id"` (`store-bindings.ts`) sets `IntegrationApi
           // .id` to this same `apiId` on insert, keeping one id for the
           // inbox, the integration row, and the connection's sourceId.
-          await upsertConnectionRow({
+          const connection = await upsertConnectionRow({
             tx,
             workspaceId,
             provider: "api",
@@ -119,14 +139,21 @@ class IntegrationApiService extends BaseService {
             )
           }
 
-          return { workspaceId, inbox: integration, workspaceCreated }
+          return {
+            workspaceId,
+            inbox: integration,
+            connection,
+            workspaceCreated,
+          }
         }),
     )
 
     // Sanctioned exception: `connect()` is reachable from `authActionClient`
     // (create-api.action.ts), which never puts `workspaceId` into the ALS
-    // actor — only workspace-scoped action clients do. this.audit() would
-    // silently no-op here, so bypass it with an explicit override.
+    // actor, so `this.audit()` would no-op. That session caller passes its
+    // user explicitly; the workspace-token caller (`connections.create` via
+    // `createWithToken`) omits it so `auditService.record` falls back to the
+    // token middleware's audit actor and keeps the token source.
     if (result.workspaceCreated) {
       // Matches the other 5 "connect channel creates a new workspace" flows
       // (WhatsApp/Instagram x2/Messenger/Telegram/Webchat) — API channel is
@@ -146,6 +173,48 @@ class IntegrationApiService extends BaseService {
     })
 
     return result
+  }
+
+  async createWithToken(input: CreateApiWithTokenInput): Promise<{
+    workspaceId: string
+    inboxId: string
+    token: string
+    connection: ConnectionModel
+  }> {
+    const callbackUrl = input.callbackUrl ?? null
+    if (callbackUrl) {
+      try {
+        await assertPublicUrl(callbackUrl, "API channel callback URL")
+      } catch (error) {
+        throw new ChatbotXException(
+          error instanceof Error
+            ? error.message
+            : "Invalid API channel callback URL",
+          "invalidRequestData",
+          422,
+        )
+      }
+    }
+
+    const { token, tokenHash, tokenPrefix } = await generateApiChannelToken()
+    const result = await this.connect({
+      ...input,
+      auth: {
+        authType: "custom",
+        callbackUrl,
+        signingSecret: generateSigningSecret(),
+      },
+      tokenHash,
+      tokenPrefix,
+      callbackUrl,
+    })
+
+    return {
+      workspaceId: result.workspaceId,
+      inboxId: result.inbox.id,
+      token,
+      connection: result.connection,
+    }
   }
 
   async disconnect(input: DisconnectIntegrationApiInput): Promise<void> {

@@ -15,16 +15,18 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   connectFromCredentials: vi.fn(),
-  startSession: vi.fn(),
+  connectSelfServeChannel: vi.fn(),
   reconnect: vi.fn(),
+  resolveChannelPolicy: vi.fn(async () => null),
   resolveOAuthCredential: vi.fn(),
   sanitizeOptionalReturnUrl: vi.fn(async (url?: string) => url),
-  resolveChannelPolicy: vi.fn(async () => null),
+  startSession: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/connections", () => ({
   connectionService: {
     connectFromCredentials: mocks.connectFromCredentials,
+    connectSelfServeChannel: mocks.connectSelfServeChannel,
     startSession: mocks.startSession,
     reconnect: mocks.reconnect,
   },
@@ -39,6 +41,10 @@ vi.mock("@chatbotx.io/connections", () => ({
     messenger: {
       credentialType: "messenger",
       provider: { strategy: "oauth_redirect", kind: "channel" },
+    },
+    webchat: {
+      provider: { strategy: "self_serve", kind: "channel" },
+      connect: vi.fn(),
     },
   },
 }))
@@ -123,7 +129,44 @@ describe("startConnect — facebookAds", () => {
       actor: { actorUserId: "user-1" },
     })
 
-    expect(result).toEqual({ connection: null, session: { id: "session-1" } })
+    expect(result).toEqual({
+      connection: null,
+      session: { id: "session-1" },
+      secret: null,
+    })
     expect(mocks.startSession).toHaveBeenCalled()
+  })
+})
+
+describe("startConnect — self serve", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.resolveChannelPolicy.mockResolvedValue(null)
+  })
+
+  test("resolves the workspace owner inside the self-serve service", async () => {
+    const connection = { id: "connection-1" }
+    mocks.connectSelfServeChannel.mockResolvedValue({
+      connection,
+      secret: null,
+    })
+
+    await expect(
+      startConnect({
+        workspaceId: "ws-1",
+        provider: "webchat",
+        config: { name: "Support" },
+        redirectUrl: undefined,
+        ownerId: "platform-credential-owner",
+        actor: { actorUserId: "user-1" },
+      }),
+    ).resolves.toEqual({ connection, session: null, secret: null })
+
+    expect(mocks.connectSelfServeChannel).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      provider: "webchat",
+      config: { name: "Support" },
+      actor: { actorUserId: "user-1" },
+    })
   })
 })

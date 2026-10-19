@@ -1,27 +1,17 @@
 "use server"
 
 import {
-  assertPublicUrl,
   hasWorkspaceAccess,
   integrationApiService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import {
-  generateApiChannelToken,
-  generateSigningSecret,
-} from "@chatbotx.io/business/workspace-api-token/credentials"
-import type { ApiAuthValue } from "@chatbotx.io/integration-api"
 import { authActionClient } from "@/lib/safe-action"
 import { createApiRequest } from "../schema/mutation"
 
 export const createApiAction = authActionClient
   .inputSchema(createApiRequest)
   .action(async ({ parsedInput, ctx }) => {
-    if (parsedInput.callbackUrl) {
-      await assertPublicUrl(parsedInput.callbackUrl, "API channel callback URL")
-    }
-
     const workspaceId = parsedInput.workspaceId ?? undefined
     let ownerId = ctx.user.id
 
@@ -35,23 +25,12 @@ export const createApiAction = authActionClient
       ownerId = workspace.ownerId
     }
 
-    const { token, tokenHash, tokenPrefix } = await generateApiChannelToken()
-    const signingSecret = generateSigningSecret()
-    const auth: ApiAuthValue = {
-      authType: "custom",
-      callbackUrl: parsedInput.callbackUrl ?? null,
-      signingSecret,
-    }
-
-    const result = await integrationApiService.connect({
+    const result = await integrationApiService.createWithToken({
       ownerId,
       actorUserId: ctx.user.id,
       workspaceId,
       name: parsedInput.name,
-      auth,
-      tokenHash,
-      tokenPrefix,
-      callbackUrl: parsedInput.callbackUrl ?? null,
+      callbackUrl: parsedInput.callbackUrl,
       createWorkspace: async (tx, quotaConsumption) => {
         const workspace = await workspaceService.create({
           tx,
@@ -67,5 +46,5 @@ export const createApiAction = authActionClient
       },
     })
 
-    return { workspaceId: result.workspaceId, token }
+    return { workspaceId: result.workspaceId, token: result.token }
   })

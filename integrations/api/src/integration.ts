@@ -1,3 +1,4 @@
+import { apiConnectConfigSchema } from "@chatbotx.io/business/integration-api/schema"
 import {
   type BaseConfig,
   type HandleRequestProps,
@@ -6,6 +7,7 @@ import {
   type Oauth2AuthValue,
   selfServeConnection,
 } from "@chatbotx.io/sdk"
+import { zodToConfigFields } from "@chatbotx.io/utils/connection"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
 import type { ApiActions, ApiAuthValue } from "./schema"
@@ -22,6 +24,8 @@ const config: IntegrationDefinition<BaseConfig, ApiAuthValue, ApiActions> = {
   connection: selfServeConnection<ApiAuthValue>({
     displayName: "API channel",
     multiAccount: false,
+    multiInstance: true,
+    configFields: zodToConfigFields(apiConnectConfigSchema),
   }),
   handleRequest(
     _props: HandleRequestProps<BaseConfig>,

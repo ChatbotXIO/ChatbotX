@@ -6,9 +6,7 @@ import {
 } from "@chatbotx.io/business"
 import { auditService } from "@chatbotx.io/business/audit"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { getTenantSettings } from "@/features/tenant/utils"
 import { authActionClient } from "@/lib/safe-action"
-import { applyWebchatBranding } from "../lib"
 import { createWebchatRequest } from "../schema/mutation"
 
 export const createWebchatAction = authActionClient
@@ -26,18 +24,13 @@ export const createWebchatAction = authActionClient
       throw new ChatbotXException("Workspace not found", "notFound", 404)
     }
 
-    const persistentMenus = applyWebchatBranding(
-      rest.persistentMenus,
-      (await getTenantSettings()).appUrl,
-    )
-
     const result = await integrationWebchatService.createWithWorkspace({
       workspaceId: parsedInput.workspaceId ?? undefined,
       createdBy: ctx.user.id,
+      actorUserId: ctx.user.id,
       workspaceName: parsedInput.name,
       data: {
         ...rest,
-        persistentMenus,
         authorizedDomains: authorizedDomains.map((domain) => domain.value),
         auth: {},
         customCss: rest.customCss ?? null,

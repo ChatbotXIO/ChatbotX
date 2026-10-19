@@ -47,6 +47,7 @@ export type EvalCase = {
     includesAll?: string[]
     includesAny?: string[]
     numbers?: number[]
+    occurrences?: Array<{ count: number; value: string }>
   }
   forbiddenTools: string[]
   family: string
@@ -814,6 +815,138 @@ const families: CaseFamily[] = [
       colloquial: "contacts by channel",
       en: "Contacts by channel this week",
       mixed: "contacts theo channel tuần này",
+    },
+  }),
+  complete({
+    domain: "connections",
+    family: "connection-list",
+    expectedTools: ["connections_list"],
+    argumentPredicates: [],
+    forbiddenTools: [],
+    prompts: {
+      vi: "Workspace hiện đang kết nối những channel và integration nào?",
+      "vi-unaccented":
+        "Workspace hien dang ket noi nhung channel va integration nao?",
+      colloquial: "coi workspace đang connect gì",
+      en: "What channels and integrations are connected to this workspace?",
+      mixed: "show workspace đang connect channel và integration nào",
+    },
+  }),
+  complete({
+    domain: "connections",
+    family: "connection-providers",
+    expectedTools: ["connection_providers_list"],
+    argumentPredicates: [],
+    forbiddenTools: [],
+    prompts: {
+      vi: "Tôi có thể kết nối channel hoặc integration mới nào?",
+      "vi-unaccented": "Toi co the ket noi channel hoac integration moi nao?",
+      colloquial: "có gì connect được không",
+      en: "What new channels or integrations can I connect?",
+      mixed: "list channel và integration có thể connect",
+    },
+  }),
+  complete({
+    allowedWriteTools: ["connections_create"],
+    argumentPredicates: [{ key: "provider", value: "messenger" }],
+    domain: "connections",
+    family: "connection-messenger-start",
+    expectedTools: ["connections_create"],
+    forbiddenTools: [],
+    sequence: ["connection_providers_list", "connections_create"],
+    stateAssertions: [
+      { equals: "pending", pointer: "/connectSessions/0/status" },
+    ],
+    writeAssertions: [{ count: 1, operations: ["connections_create"] }],
+    prompts: {
+      vi: "Kết nối Messenger cho tôi.",
+      "vi-unaccented": "Ket noi Messenger cho toi.",
+      colloquial: "connect Messenger đi",
+      en: "Connect Messenger for me.",
+      mixed: "connect Messenger cho workspace",
+    },
+  }),
+  complete({
+    allowedWriteTools: ["connections_create"],
+    argumentPredicates: [
+      { key: "provider", value: "claude" },
+      { includes: "sk-eval-claude-key", key: "config" },
+    ],
+    domain: "connections",
+    family: "connection-claude-connect",
+    expectedTools: ["connections_create"],
+    forbiddenTools: [],
+    sequence: ["connection_providers_list", "connections_create"],
+    stateAssertions: [{ equals: "claude", pointer: "/connections/0/provider" }],
+    writeAssertions: [{ count: 1, operations: ["connections_create"] }],
+    prompts: {
+      vi: "Kết nối integration Claude với API key sk-eval-claude-key.",
+      "vi-unaccented":
+        "Ket noi integration Claude voi API key sk-eval-claude-key.",
+      colloquial: "connect Claude key sk-eval-claude-key",
+      en: "Connect the Claude integration with API key sk-eval-claude-key.",
+      mixed: "connect integration Claude với key sk-eval-claude-key",
+    },
+  }),
+  complete({
+    allowedWriteTools: ["connections_create"],
+    argumentPredicates: [
+      { key: "provider", value: "api" },
+      { includes: "Orders API", key: "config" },
+    ],
+    domain: "connections",
+    family: "connection-api-channel-connect",
+    expectedTools: ["connections_create"],
+    finalAssertions: {
+      occurrences: [{ count: 1, value: "cbx_api_eval-token" }],
+    },
+    forbiddenTools: [],
+    sequence: ["connection_providers_list", "connections_create"],
+    stateAssertions: [{ equals: "api", pointer: "/connections/0/provider" }],
+    writeAssertions: [{ count: 1, operations: ["connections_create"] }],
+    prompts: {
+      vi: "Tạo API channel tên Orders API và cho tôi token.",
+      "vi-unaccented": "Tao API channel ten Orders API va cho toi token.",
+      colloquial: "tạo API channel Orders API, đưa token nhé",
+      en: "Create an API channel named Orders API and show me its token.",
+      mixed: "create API channel Orders API và show token",
+    },
+  }),
+  complete({
+    allowedWriteTools: ["connect_sessions_connect_targets"],
+    argumentPredicates: [
+      {
+        includes: "messenger-page-sales",
+        key: "targetIds",
+      },
+    ],
+    bindings: [
+      {
+        argument: "targetIds",
+        sourcePointer: "/targets/0/id",
+        sourceTools: ["connect_sessions_get"],
+        tool: "connect_sessions_connect_targets",
+      },
+    ],
+    domain: "connections",
+    family: "connection-messenger-finish",
+    expectedTools: ["connect_sessions_connect_targets"],
+    forbiddenTools: [],
+    sequence: ["connect_sessions_get", "connect_sessions_connect_targets"],
+    stateAssertions: [
+      { equals: "completed", pointer: "/connectSessions/0/status" },
+      { equals: "messenger", pointer: "/connections/0/provider" },
+    ],
+    writeAssertions: [
+      { count: 1, operations: ["connect_sessions_connect_targets"] },
+    ],
+    prompts: {
+      vi: "Tôi đã xác thực Messenger rồi. Hãy hoàn tất connect session connect-session-messenger.",
+      "vi-unaccented":
+        "Toi da xac thuc Messenger roi. Hay hoan tat connect session connect-session-messenger.",
+      colloquial: "đã auth Messenger, finish session connect-session-messenger",
+      en: "I finished Messenger authorization. Complete connect session connect-session-messenger.",
+      mixed: "đã authorize Messenger, finish connect-session-messenger",
     },
   }),
 ]

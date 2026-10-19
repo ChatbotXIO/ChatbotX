@@ -93,19 +93,27 @@ class ConnectionStateService extends BaseService {
     id: string
     workspaceId: string
     displayName: string
+    tx?: DatabaseClient
   }): Promise<ConnectionModel | undefined> {
-    const existing = await connectionRepository.findByIdForWorkspace({
+    const lookup = {
       id: input.id,
       workspaceId: input.workspaceId,
-    })
+    }
+    const existing = input.tx
+      ? await connectionRepository.findByIdForWorkspace(lookup, input.tx)
+      : await connectionRepository.findByIdForWorkspace(lookup)
     if (!existing) {
       return
     }
-    return await connectionRepository.update({
+
+    const update = {
       id: existing.id,
       workspaceId: existing.workspaceId,
       values: { displayName: input.displayName },
-    })
+    }
+    return input.tx
+      ? await connectionRepository.update(update, input.tx)
+      : await connectionRepository.update(update)
   }
 
   /**
