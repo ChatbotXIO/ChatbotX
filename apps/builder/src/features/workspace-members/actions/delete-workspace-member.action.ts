@@ -55,6 +55,5 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
       errorMessage: "Failed to revoke removed member realtime connections",
     }))
 
-
     return { revokeWarning }
   })

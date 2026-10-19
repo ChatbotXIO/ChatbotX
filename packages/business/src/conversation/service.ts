@@ -2057,7 +2057,6 @@ class ConversationService extends BaseService {
     lastStep?: string | null
     contactLastReadAt?: Date
     contactRepliedAt?: Date
-    contactLastReadAt?: Date
     /** DM waiting-window transition applied in this same UPDATE. */
     humanReplyWindow?: HumanReplyWindowTransition
     tx?: DatabaseClient
@@ -2077,9 +2076,6 @@ class ConversationService extends BaseService {
       // an already-seen unread message). Postgres GREATEST ignores NULLs;
       // the COALESCE is kept only for readability.
       data.contactRepliedAt = sql`GREATEST(COALESCE(${conversationModel.contactRepliedAt}, ${props.contactRepliedAt}), ${props.contactRepliedAt})`
-    }
-    if ("contactLastReadAt" in props && props.contactLastReadAt) {
-      data.contactLastReadAt = props.contactLastReadAt
     }
     if ("lastStep" in props) {
       data.lastStep = props.lastStep

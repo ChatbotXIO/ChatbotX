@@ -11,6 +11,7 @@ const mockFindForAgent = vi.fn()
 const mockWorkspaceFind = vi.fn()
 const mockEmit = vi.fn()
 const mockLoggerError = vi.fn()
+const mockQueueMessageCreatedEvent = vi.fn()
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: async () => ({
@@ -85,6 +86,7 @@ vi.mock("../src/platform/settings", () => ({
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
   publishToWorkspaceParty: vi.fn(),
+  queueMessageCreatedEvent: mockQueueMessageCreatedEvent,
 }))
 
 vi.mock("../src/utils", () => ({

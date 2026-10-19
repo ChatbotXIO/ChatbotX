@@ -100,6 +100,11 @@ services:
       dockerfile: apps/realtime/docker/Dockerfile
     ports:
       - "1999:1999"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_URL: redis://redis:6379
 
 networks:
   javascript-executor-network:

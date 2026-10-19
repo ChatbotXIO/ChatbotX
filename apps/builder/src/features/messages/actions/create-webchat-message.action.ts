@@ -294,7 +294,7 @@ export async function handleCreateWebchatMessage({
       )
     } catch (error) {
       logger.warn(
-        { error, contactId: contactInbox.contactId, channel: "webchat" },
+        { err: error, contactId: contactInbox.contactId, channel: "webchat" },
         "Auto-unblock on webchat inbound message failed",
       )
     }

@@ -1,18 +1,14 @@
-import {
-  REALTIME_TOKEN_PURPOSE,
-  signRealtimeToken,
-} from "@chatbotx.io/partysocket-config/auth"
+import { signPresenceReportToken } from "@chatbotx.io/realtime-protocol/auth"
 import {
   hashPresenceUserIds,
   truncatePresenceUserIds,
-} from "@chatbotx.io/partysocket-config/presence"
+} from "@chatbotx.io/realtime-protocol/presence"
 import ky from "ky"
-import { env } from "../env"
 import { logger } from "../logger"
 
 /**
  * Periodic mirror of connected user ids into Redis, authenticated with the
- * same shared secret/JWT scheme (signRealtimeToken) used in reverse for
+ * same shared secret/JWT scheme (signPresenceReportToken) used in reverse for
  * inbound broadcast requests. Best-effort: failures are logged and
  * swallowed, never thrown or retried — the next interval supersedes a lost
  * report.
@@ -20,6 +16,8 @@ import { logger } from "../logger"
 export async function reportWorkspacePresence(
   workspaceId: string,
   userIds: string[],
+  builderUrl: string,
+  secret: string,
 ): Promise<void> {
   try {
     // Bounded here, before hashing/sending, not left for the route to reject —
@@ -33,16 +31,11 @@ export async function reportWorkspacePresence(
     // list. workspaceId travels as a query param, not in the JSON body, so the
     // route can verify the token's signature before parsing the body.
     const bodyHash = await hashPresenceUserIds(boundedUserIds)
-    const token = await signRealtimeToken(
-      { kind: "workspace", id: workspaceId },
-      REALTIME_TOKEN_PURPOSE.presenceReport,
-      env.REALTIME_BROADCAST_SECRET,
-      { bodyHash },
+    const token = await signPresenceReportToken(
+      { workspaceId, bodyHash },
+      secret,
     )
-    const url = new URL(
-      "/api/workspace-presence/report",
-      env.NEXT_PUBLIC_BUILDER_URL,
-    )
+    const url = new URL("/api/workspace-presence/report", builderUrl)
     url.searchParams.set("workspaceId", workspaceId)
     await ky.post(url.toString(), {
       headers: { Authorization: `Bearer ${token}` },

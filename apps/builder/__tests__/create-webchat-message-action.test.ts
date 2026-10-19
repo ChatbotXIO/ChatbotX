@@ -19,7 +19,6 @@ const {
   mockCreateMessageRepository,
   mockCreateNewContactWithMac,
   mockDbUpdate,
-  mockUpdateFlowStepState,
   mockEmit,
   mockEmitContactCreated,
   mockFindOrCreateGuestConversation,
@@ -88,7 +87,6 @@ const {
       },
     ),
     mockDbUpdate: vi.fn().mockReturnValue(updateBuilder),
-    mockUpdateFlowStepState: vi.fn().mockResolvedValue(undefined),
     mockEmit: vi.fn(),
     mockEmitContactCreated: vi.fn().mockResolvedValue(undefined),
     mockFindOrCreateGuestConversation: vi.fn(),
@@ -418,6 +416,36 @@ describe("handleCreateWebchatMessage", () => {
   beforeEach(() => {
     resetCommonMocks()
     mockContactInboxFindLatest.mockResolvedValue(contactInbox)
+  })
+
+  test("records inbound activity through the conversation service, workspace-scoped, without a direct db write", async () => {
+    await handleCreateWebchatMessage({
+      parsedInput: {
+        text: "hello",
+        workspaceId: "ws-1",
+        webchatId: "webchat-1",
+        guestConversationId: "guest-1",
+      },
+    })
+
+    const messageInput = mockRepositoryCreate.mock.calls[0]?.[0] as {
+      createdAt: Date
+    }
+    expect(mockRecordInboundActivity).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      contactId: "contact-1",
+      at: messageInput.createdAt,
+      contactRepliedAt: messageInput.createdAt,
+      contactLastReadAt: expect.any(Date),
+      tracking: expect.objectContaining({
+        firstInteractionAt: messageInput.createdAt,
+        lastIncomingMessageAt: messageInput.createdAt,
+        lastMessageAt: messageInput.createdAt,
+      }),
+    })
+    expect(mockDbUpdate).not.toHaveBeenCalled()
   })
 
   test("waits for the created-message event before resolving", async () => {
