@@ -266,6 +266,16 @@ export const router = {
       default: m.facebookMarketingMessagesAPI,
     })),
   ),
+  responseSlaAPI: lazy(() =>
+    import("@/features/response-sla/api/private").then((m) => ({
+      default: m.responseSlaAPI,
+    })),
+  ),
+  workingHoursAPI: lazy(() =>
+    import("@/features/working-hours/api/private").then((m) => ({
+      default: m.workingHoursAPI,
+    })),
+  ),
   sequencesAPI: lazy(() =>
     import("@/features/sequences/api").then((m) => ({
       default: m.sequencesAPI,

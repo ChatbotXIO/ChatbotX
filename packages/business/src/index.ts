@@ -128,6 +128,7 @@ export * from "./quota-enforcement"
 export { parseLiveCount } from "./quota-shared/live-counter-store"
 export * from "./referral"
 export * from "./reflink"
+export * from "./response-sla"
 export * from "./saved-reply"
 // Not barrel-exported: `sequenceService.upsertStep`/`deleteStep` reach
 // sequence-scheduler's `createDispatch`, which hashes with Node's `crypto`.

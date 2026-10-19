@@ -23,6 +23,7 @@ import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createWorkingHoursAction } from "../actions/create-working-hours.action"
 import { workingHoursEditorHref } from "../lib/routes"
+import { useInvalidateWorkingHoursOptions } from "../provider/working-hours-hook"
 import { createWorkingHoursRequest } from "../schema/action"
 
 export function CreateWorkingHoursDialog({
@@ -32,6 +33,7 @@ export function CreateWorkingHoursDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateOptions = useInvalidateWorkingHoursOptions()
   const [open, setOpen] = useState(false)
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
@@ -41,6 +43,7 @@ export function CreateWorkingHoursDialog({
       {
         actionProps: {
           onSuccess: ({ data }) => {
+            invalidateOptions()
             toast.success(
               t("messages.createdSuccess", {
                 feature: t("workingHours.label"),

@@ -120,8 +120,25 @@ chatbotx working-hours create --name <name>          # Create schedule
                                                      # [--intervals <json>]  JSON array of {weekday,startMinute,endMinute}
                                                      # [--userIds <json>]    JSON array of user id strings
 chatbotx working-hours update <id>                   # [--name] [--intervals <json>] — JSON array of {weekday,startMinute,endMinute}; fully replaces
+                                                     # [--dateOverrides <json>] — JSON array of {date,name?,ranges}; fully replaces this schedule's date overrides
+                                                     #   (ranges [] = closed all day; a date override wins over a workspace holiday)
 chatbotx working-hours delete <id>                   # Delete schedule (members go back to wall-clock timing)
 chatbotx working-hours members update <id> --userIds <json>   # JSON array of user id strings; fully replaces members, moves users from other schedules
+chatbotx working-hours-holidays list                 # Workspace-wide holidays: dates that replace every schedule's weekly hours
+chatbotx working-hours-holidays create --date <YYYY-MM-DD> --ranges <json>   # [--name]; ranges [] = closed all day, else [{startMinute,endMinute}]
+chatbotx working-hours-holidays update <id>          # [--name] [--ranges <json>]; the date cannot change (delete + create)
+chatbotx working-hours-holidays delete <id>          # Delete a holiday
+```
+
+### `response-sla` (scope `inbox`)
+
+How long a customer message may wait for a human reply, counted in the assigned agent's working hours (clock time for unassigned conversations and agents without a schedule). Filter the inbox with `chatbotx conversations list --tags '["slaBreaching"]'` / `slaBreached`; the share of replies that met it is in `chatbotx analytics human-agent-stats` (`responseSlaMetPercent`). See `docs/working-hours.md`.
+
+```bash
+chatbotx response-sla get                            # The policy, or null when none is set
+chatbotx response-sla update --firstResponseTargetSeconds <n> --nextResponseTargetSeconds <n|null> --enabled <true|false>  # enabled defaults to true
+                                                     # [--breachingThresholdPercent <1-99>] — full replacement; targets are 60..2592000 seconds
+chatbotx response-sla delete                         # Stop tracking; open deadlines are cleared
 ```
 
 ---
@@ -192,6 +209,7 @@ chatbotx contacts import --fileId <fileId> --channel <channel> --inboxId <inboxI
 chatbotx contacts block <identifier>
 chatbotx contacts unblock <identifier>
 chatbotx contacts filter-fields                      # Field/operator reference for --contactFilter
+                                                     # [--surface flowCondition] also lists flow-only fields (isWithinWorkingHours)
 
 # Discover IDs accepted by contactFilter.commentedOnPost
 chatbotx channel-posts list                           # [--limit --search --cursor]

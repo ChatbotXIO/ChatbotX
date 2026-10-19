@@ -84,6 +84,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
+  workingHoursDateOverrideModel: {},
   workspaceUsageModel: {},
   userQuotaModel: {},
   questionnaireSubmissionModel: {},

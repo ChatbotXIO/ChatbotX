@@ -30,6 +30,10 @@ export const analyticsAgentResponseEventModel = pgTable(
     workingResponseSeconds: integer(),
     isFirstResponse: boolean().notNull(),
     workingHoursId: bigintAsString(),
+    /** Target of the window's SLA snapshot; NULL when no SLA applied. */
+    slaTargetSeconds: integer(),
+    /** Reply met the SLA deadline; NULL when no SLA applied. */
+    slaMet: boolean(),
     channel: text(),
     inboxId: bigintAsString(),
     metadata: jsonb(),

@@ -6,7 +6,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import { toWorkingHoursResource } from "../lib/to-resource"
 import { updateWorkingHoursRequest } from "../schema/action"
 
-/** Renames and/or replaces the weekly intervals (same service as the public API). */
+/** Renames and/or replaces the weekly intervals and date overrides (same service as the public API). */
 export const updateWorkingHoursAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .inputSchema(updateWorkingHoursRequest)

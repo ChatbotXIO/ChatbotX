@@ -7,6 +7,7 @@ import {
   flowService,
   globalRouterService,
   inboxTeamService,
+  isUserOnShift,
   logProviderErrorForChannel,
   workspaceMemberService,
 } from "@chatbotx.io/business"
@@ -185,6 +186,17 @@ async function dispatchDestination(input: {
               workspaceId: router.workspaceId,
             })
       if (!available) {
+        return { status: "unavailable" }
+      }
+      // Checked BEFORE the handoff: it is irreversible, so an off-shift user
+      // must resolve to `unavailable` and take the route's fallback instead.
+      if (
+        destination.type === "user" &&
+        !(await isUserOnShift({
+          workspaceId: router.workspaceId,
+          userId: destination.id,
+        }))
+      ) {
         return { status: "unavailable" }
       }
       const handoff = await handoffExecutorService.execute({

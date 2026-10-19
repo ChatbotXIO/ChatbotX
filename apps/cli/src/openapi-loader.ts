@@ -111,7 +111,7 @@ const POST_VERB_OVERRIDES: Record<string, string> = {
 // Sub-paths that are actions themselves (not nouns), collapse to group:action (2-level)
 const ACTION_SUBPATHS = new Set(["block", "unblock", "reset"])
 // Singleton resources — GET on the collection returns a single object, use "get" not "list"
-const SINGLETON_RESOURCES = new Set(["workspaces"])
+const SINGLETON_RESOURCES = new Set(["workspaces", "response-sla"])
 // Two-segment singleton resources that have a read AND a write route on the
 // same path (`GET`/`PATCH /v1/workspace/settings`): the method picks the verb,
 // otherwise both would derive the same command name and one would be dropped.

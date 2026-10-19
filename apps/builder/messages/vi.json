@@ -260,9 +260,9 @@
     "averageFirstResponseTimeByAdmin": "Thời gian phản hồi đầu tiên trung bình của nhân viên hỗ trợ (Phút)",
     "averageFirstResponseTimeByAdminHelp": "Thời gian trung bình mà một nhân viên mất để cung cấp phản hồi ban đầu cho tin nhắn của khách hàng.",
     "averageResponseTimeByAdmin": "Thời gian phản hồi trung bình của nhân viên hỗ trợ (Phút)",
-    "withinWorkingHoursHelp": "Chỉ tính thời gian nằm trong giờ làm việc của nhân viên; thời gian ngoài lịch làm việc không được tính.",
+    "withinWorkingHoursHelp": "Chỉ tính thời gian trong giờ làm việc của nhân viên.",
     "withinWorkingHoursLabel": "Trong giờ làm việc",
-    "noResponseData": "Không có dữ liệu: nhân viên chưa có phản hồi nào trong kỳ này hoặc chưa được gán lịch giờ làm việc.",
+    "noResponseData": "Không có phản hồi trong kỳ này, hoặc chưa gán lịch.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Thời gian phản hồi đầu tiên trung bình trong giờ làm việc của nhân viên hỗ trợ (Phút)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Thời gian trung bình trong giờ làm việc mà nhân viên hỗ trợ mất để gửi phản hồi đầu tiên cho tin nhắn của khách hàng.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "Thời gian phản hồi trung bình trong giờ làm việc của nhân viên hỗ trợ (Phút)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Giờ làm việc",
     "label": "Giờ làm việc",
-    "description": "Xác định thời gian đội ngũ của bạn có mặt. Thời gian phản hồi chỉ được tính trong các khung giờ này.",
+    "description": "Thời gian phản hồi chỉ tính trong các giờ này.",
     "employees": "Nhân viên",
-    "empty": "Chưa có giờ làm việc nào. Hãy thêm lịch để chỉ đo thời gian phản hồi trong giờ làm việc.",
-    "deleteDescription": "Xóa \"{name}\"? Nhân viên thuộc lịch này sẽ được đo theo thời gian thực như trước. Hành động này không thể hoàn tác.",
+    "empty": "Chưa có lịch nào.",
+    "deleteDescription": "Xóa \"{name}\"? Nhân viên sẽ quay về tính giờ thực.",
     "create": {
       "title": "Thêm giờ làm việc",
       "description": "Đặt tên cho lịch. Bạn sẽ thiết lập ngày và giờ ở bước tiếp theo."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Áp dụng giờ làm việc cho nhân viên",
       "description": "Chọn những nhân viên làm theo lịch này.",
-      "moveHelp": "Mỗi nhân viên chỉ theo một lịch. Người đang ở lịch khác sẽ được chuyển sang lịch này.",
+      "moveHelp": "Mỗi nhân viên chỉ có một lịch; thêm vào đây sẽ chuyển họ sang.",
       "placeholder": "Chọn nhân viên",
       "search": "Tìm nhân viên...",
       "searchAria": "Tìm trong danh sách nhân viên",
@@ -8983,7 +8983,55 @@
       "endTime": "Giờ kết thúc",
       "removeRange": "Xóa khung giờ",
       "errorOverlap": "Các khung giờ này bị chồng lấn. Hãy chỉnh lại để lưu.",
-      "errorOrder": "Giờ kết thúc phải sau giờ bắt đầu."
+      "errorOrder": "Giờ kết thúc phải sau giờ bắt đầu.",
+      "routingNote": "Cũng dùng cho Auto Assign, Global Router và Condition."
+    },
+    "condition": {
+      "assignedAgent": "Ca làm việc của nhân viên được gán"
+    },
+    "holidays": {
+      "label": "Ngày nghỉ",
+      "title": "Ngày nghỉ lễ",
+      "description": "Thay giờ hằng tuần của mọi lịch vào ngày đó.",
+      "add": "Thêm ngày nghỉ",
+      "empty": "Chưa có ngày nghỉ nào.",
+      "deleteDescription": "Xóa ngày nghỉ {date}?"
+    },
+    "dateOverrides": {
+      "title": "Ngoại lệ theo ngày",
+      "description": "Thay giờ của lịch này vào ngày đó; ưu tiên hơn ngày nghỉ.",
+      "add": "Thêm ngoại lệ",
+      "empty": "Chưa có ngoại lệ nào."
+    },
+    "dateDialog": {
+      "addTitle": "Thêm ngày",
+      "editTitle": "Sửa ngày",
+      "date": "Ngày",
+      "name": "Tên (không bắt buộc)",
+      "closedAllDay": "Nghỉ cả ngày",
+      "duplicate": "Ngày này đã có trong danh sách.",
+      "hours": "Giờ làm",
+      "closed": "Nghỉ"
     }
+  },
+  "responseSla": {
+    "label": "SLA phản hồi",
+    "title": "SLA phản hồi",
+    "description": "Thời gian tối đa tin nhắn của khách được chờ nhân viên trả lời.",
+    "firstTarget": "Mục tiêu phản hồi đầu tiên (phút)",
+    "nextTarget": "Mục tiêu phản hồi tiếp theo (phút)",
+    "nextPlaceholder": "Không áp SLA cho các lần trả lời sau",
+    "threshold": "Ngưỡng sắp vi phạm (% thời gian còn lại)",
+    "thresholdHelp": "Đánh dấu sắp vi phạm khi còn lại % mục tiêu này.",
+    "workingTimeNote": "Tính theo giờ làm việc của nhân viên được gán; nếu không thì giờ thực.",
+    "overdue": "Quá hạn",
+    "due": "Hạn {time}",
+    "breaching": "SLA sắp vi phạm",
+    "breached": "SLA đã vi phạm",
+    "firstMetColumn": "Đạt SLA phản hồi đầu tiên",
+    "metColumn": "Đạt SLA",
+    "metHelp": "Tỷ lệ phản hồi đạt SLA trong số phản hồi có SLA.",
+    "eligibleCount": "{count} phản hồi có SLA",
+    "enable": "Bật SLA phản hồi"
   }
 }

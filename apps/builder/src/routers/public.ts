@@ -81,6 +81,7 @@ import { productsPublicRouter } from "@/features/products/api/public"
 import { qrCodesPublicRouter } from "@/features/qr-codes/api/public"
 import { questionnairesPublicRouter } from "@/features/questionnaires/api/public"
 import { reflinksPublicRouter } from "@/features/reflinks/api/public"
+import { responseSlaPublicRouter } from "@/features/response-sla/api/public"
 import { savedRepliesPublicRouter } from "@/features/saved-replies/api/public"
 import { sequencesPublicRouter } from "@/features/sequences/api/public"
 import { commentAutomationsPublicRouter } from "@/features/shared/comment-automation/api/public"
@@ -192,6 +193,7 @@ export const publicRouter = {
     ...whatsappCallingPublicRouter,
   },
   whatsappTemplates: whatsappTemplatesPublicRouter,
+  responseSla: responseSlaPublicRouter,
   workingHours: workingHoursPublicRouter,
   workspaceMembers: workspaceMembersPublicRouter,
   workspaceSettings: workspaceSettingsPublicRouter,

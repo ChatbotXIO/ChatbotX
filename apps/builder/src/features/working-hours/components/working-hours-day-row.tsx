@@ -38,7 +38,7 @@ type WorkingHoursDayRowProps = {
   ) => void
 }
 
-function MinuteSelect({
+export function MinuteSelect({
   items,
   value,
   label,

@@ -52,6 +52,11 @@ export type ContactFilterCriteriaInput = {
    * absent or unrecognized. See {@link ./timezone.resolveFilterTimezone}.
    */
   timezone?: string
+  /**
+   * IANA zone `isWithinWorkingHours` is evaluated in (the workspace timezone,
+   * resolved by the caller). Defaults to UTC.
+   */
+  workingHoursTimezone?: string
 }
 
 export type ContactWhere = Record<string, unknown>

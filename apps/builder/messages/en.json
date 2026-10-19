@@ -260,9 +260,9 @@
     "averageFirstResponseTimeByAdmin": "Average first response time by human agents (Minutes)",
     "averageFirstResponseTimeByAdminHelp": "The average time a human agent takes to provide the initial reply to a customer's message.",
     "averageResponseTimeByAdmin": "Average response time by human agents (Minutes)",
-    "withinWorkingHoursHelp": "Counts only time inside the agent's working hours; time outside their schedule is excluded.",
+    "withinWorkingHoursHelp": "Counts only time within the agent's working hours.",
     "withinWorkingHoursLabel": "Within working hours",
-    "noResponseData": "No data: the agent has no replies in this period, or no working hours schedule is assigned.",
+    "noResponseData": "No replies in this period, or no schedule assigned.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Average first response time within working hours by human agents (Minutes)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "The average working-hours time a human agent takes to provide the initial reply to a customer's message.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "Average response time within working hours by human agents (Minutes)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Working Hours",
     "label": "Working hours",
-    "description": "Define when your team is available. Reply times are measured only within these hours.",
+    "description": "Reply times are counted only within these hours.",
     "employees": "Employees",
-    "empty": "No working hours yet. Add a schedule to measure reply times only within working time.",
-    "deleteDescription": "Delete \"{name}\"? Its employees will be measured on wall-clock time again. This cannot be undone.",
+    "empty": "No schedules yet.",
+    "deleteDescription": "Delete \"{name}\"? Its employees go back to clock time.",
     "create": {
       "title": "Add working hours",
       "description": "Give the schedule a name. You will set the days and hours next."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Apply working hours to employees",
       "description": "Choose the employees who follow this schedule.",
-      "moveHelp": "An employee can follow only one schedule. Anyone already on another schedule is moved to this one.",
+      "moveHelp": "Each employee has one schedule; adding moves them here.",
       "placeholder": "Select employees",
       "search": "Search employees...",
       "searchAria": "Search through employees",
@@ -8983,7 +8983,55 @@
       "endTime": "End time",
       "removeRange": "Remove time range",
       "errorOverlap": "These time ranges overlap. Adjust them to save.",
-      "errorOrder": "End time must be after start time."
+      "errorOrder": "End time must be after start time.",
+      "routingNote": "Also used by Auto Assign, Global Router and Condition."
+    },
+    "condition": {
+      "assignedAgent": "Assigned agent's shift"
+    },
+    "holidays": {
+      "label": "Holidays",
+      "title": "Holidays",
+      "description": "Replaces every schedule's weekly hours on that date.",
+      "add": "Add holiday",
+      "empty": "No holidays yet.",
+      "deleteDescription": "Delete the holiday on {date}?"
+    },
+    "dateOverrides": {
+      "title": "Date overrides",
+      "description": "Replaces this schedule's hours on that date; wins over holidays.",
+      "add": "Add date override",
+      "empty": "No date overrides."
+    },
+    "dateDialog": {
+      "addTitle": "Add date",
+      "editTitle": "Edit date",
+      "date": "Date",
+      "name": "Name (optional)",
+      "closedAllDay": "Closed all day",
+      "duplicate": "This date is already in the list.",
+      "hours": "Hours",
+      "closed": "Closed"
     }
+  },
+  "responseSla": {
+    "label": "Response SLA",
+    "title": "Response SLA",
+    "description": "Max time a customer message may wait for a human reply.",
+    "firstTarget": "First response target (minutes)",
+    "nextTarget": "Next response target (minutes)",
+    "nextPlaceholder": "No SLA on later replies",
+    "threshold": "Breaching threshold (% of the target left)",
+    "thresholdHelp": "Marked as breaching when this % of the target is left.",
+    "workingTimeNote": "Counted in the assigned agent's working hours; otherwise clock time.",
+    "overdue": "Overdue",
+    "due": "Due {time}",
+    "breaching": "SLA breaching",
+    "breached": "SLA breached",
+    "firstMetColumn": "First response SLA met",
+    "metColumn": "SLA met",
+    "metHelp": "Share of replies with an SLA that met it.",
+    "eligibleCount": "{count} replies had an SLA",
+    "enable": "Enable response SLA"
   }
 }

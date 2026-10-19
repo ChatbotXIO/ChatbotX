@@ -82,6 +82,16 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
     await importOriginal<typeof import("@chatbotx.io/worker-config")>()
   return { ...original, chatQueue: { add: chatQueueAdd } }
 })
+vi.mock("../src/response-sla/service", () => ({
+  responseSlaService: {
+    // No policy: the statement just runs on the given client.
+    trackWindow: async (
+      props: { tx?: unknown },
+      run: (client: unknown) => Promise<unknown>,
+    ) => run(props.tx ?? (await import("@chatbotx.io/database/client")).db),
+  },
+}))
+
 vi.mock("../src/contact-inbox/service", () => ({
   contactInboxService: {
     invalidateTracking,

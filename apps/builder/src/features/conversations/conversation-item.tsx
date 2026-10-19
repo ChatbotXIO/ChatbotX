@@ -35,6 +35,7 @@ import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { useWhatsappVoipCallStore } from "../integration-whatsapp/calling/voip/voip-call-store"
 import { useOptionalWhatsappVoipCallContext } from "../integration-whatsapp/calling/voip/whatsapp-voip-call-context"
 import { useTenantSettings } from "../tenant/tenant-settings-provider"
+import { SlaPill } from "./components/sla-pill"
 import { ThreadControlPill } from "./components/thread-control-pill"
 import { useMarkConversationRead } from "./hooks/use-mark-conversation-read"
 import { isConversationUnread } from "./lib/is-conversation-unread"
@@ -401,6 +402,10 @@ export default function ConversationItem({
                 />
               )}
               <ThreadControlPill conversation={conversation} />
+              <SlaPill
+                responseDueAt={conversation.responseDueAt}
+                responseSlaBreachingAt={conversation.responseSlaBreachingAt}
+              />
             </div>
             <span className="text-neutral-400" suppressHydrationWarning>
               {conversation.lastActivityAt ? (

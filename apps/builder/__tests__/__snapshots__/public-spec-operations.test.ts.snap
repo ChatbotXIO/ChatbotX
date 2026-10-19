@@ -2613,6 +2613,21 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/ref-links/{id}/chat-widget",
   },
   {
+    "method": "DELETE",
+    "operationId": "responseSla.delete",
+    "path": "/v1/response-sla",
+  },
+  {
+    "method": "GET",
+    "operationId": "responseSla.get",
+    "path": "/v1/response-sla",
+  },
+  {
+    "method": "PUT",
+    "operationId": "responseSla.update",
+    "path": "/v1/response-sla",
+  },
+  {
     "method": "POST",
     "operationId": "savedReplies.create",
     "path": "/v1/saved-replies",
@@ -3128,9 +3143,19 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/working-hours",
   },
   {
+    "method": "POST",
+    "operationId": "workingHours.createHoliday",
+    "path": "/v1/working-hours-holidays",
+  },
+  {
     "method": "DELETE",
     "operationId": "workingHours.delete",
     "path": "/v1/working-hours/{id}",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "workingHours.deleteHoliday",
+    "path": "/v1/working-hours-holidays/{id}",
   },
   {
     "method": "GET",
@@ -3143,6 +3168,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/working-hours",
   },
   {
+    "method": "GET",
+    "operationId": "workingHours.listHolidays",
+    "path": "/v1/working-hours-holidays",
+  },
+  {
     "method": "PUT",
     "operationId": "workingHours.setMembers",
     "path": "/v1/working-hours/{id}/members",
@@ -3151,6 +3181,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "method": "PATCH",
     "operationId": "workingHours.update",
     "path": "/v1/working-hours/{id}",
+  },
+  {
+    "method": "PATCH",
+    "operationId": "workingHours.updateHoliday",
+    "path": "/v1/working-hours-holidays/{id}",
   },
   {
     "method": "GET",

@@ -16,6 +16,23 @@ export const workingHoursRelations = defineRelationsPart(schema, (r) => ({
       from: r.workingHoursModel.id,
       to: r.workingHoursMemberModel.workingHoursId,
     }),
+    dateOverrides: r.many.workingHoursDateOverrideModel({
+      from: r.workingHoursModel.id,
+      to: r.workingHoursDateOverrideModel.workingHoursId,
+    }),
+  },
+  workingHoursDateOverrideModel: {
+    workingHours: r.one.workingHoursModel({
+      from: r.workingHoursDateOverrideModel.workingHoursId,
+      to: r.workingHoursModel.id,
+    }),
+  },
+  responseSlaPolicyModel: {
+    workspace: r.one.workspaceModel({
+      from: r.responseSlaPolicyModel.workspaceId,
+      to: r.workspaceModel.id,
+      optional: false,
+    }),
   },
   workingHoursIntervalModel: {
     workingHours: r.one.workingHoursModel({

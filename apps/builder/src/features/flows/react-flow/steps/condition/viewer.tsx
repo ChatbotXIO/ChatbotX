@@ -79,6 +79,7 @@ const ConditionStepViewerContent = ({ data }: ConditionStepViewerProps) => {
     undefined,
     true,
     data.cases.flatMap((conditionCase) => conditionCase.conditions),
+    "flowCondition",
   )
 
   return (

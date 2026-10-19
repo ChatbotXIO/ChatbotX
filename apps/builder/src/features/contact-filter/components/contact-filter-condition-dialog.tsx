@@ -37,7 +37,7 @@ import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-fiel
 import { FieldValuePickerPopover } from "@/features/custom-fields/components/field-value-picker-popover"
 import {
   type ContactFilterCondition,
-  singleContactFilterConditionSchema,
+  singleFlowConditionFilterConditionSchema,
 } from "../schema"
 import {
   type ConditionOption,
@@ -88,7 +88,7 @@ const getFirstEnabledOperator = (
 
 /**
  * Maps a raw form draft to the condition shape validated by
- * `singleContactFilterConditionSchema`. Static fields pass through unchanged;
+ * `singleFlowConditionFilterConditionSchema`. Static fields pass through unchanged;
  * a custom-field config (`customField:<id>`) becomes the dynamic
  * `{ field: "customField", customFieldId, valueType }` branch; a bot-field
  * config (`botField:<id>`) becomes `{ field: "botField", botFieldId, valueType }`;
@@ -452,7 +452,7 @@ const parseSaveableCondition = ({
   config: FieldConfig | undefined
   valueInputKind: ValueInputKind
 }): ContactFilterCondition | null => {
-  const parsed = singleContactFilterConditionSchema.safeParse(
+  const parsed = singleFlowConditionFilterConditionSchema.safeParse(
     buildConditionDraft(draft, config),
   )
   if (!parsed.success) {

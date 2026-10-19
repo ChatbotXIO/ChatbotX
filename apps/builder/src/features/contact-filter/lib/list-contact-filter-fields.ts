@@ -5,7 +5,9 @@ import {
 } from "@chatbotx.io/business"
 import {
   CONTACT_FILTER_FIELD_DEFINITIONS,
+  type ContactFilterSurface,
   convertCustomFieldTypeToConditionType,
+  isFieldOnSurface,
 } from "@/features/contact-filter/schema"
 import type { ListContactFilterFieldsPublicResponse } from "@/features/contact-filter/schema/public"
 import { enabledOperatorsForStaticField } from "@/features/contact-filter/schema/static-field-filter"
@@ -21,8 +23,9 @@ import { enabledOperatorsForStaticField } from "@/features/contact-filter/schema
  */
 export async function listContactFilterFieldsForAPI(props: {
   workspaceId: string
+  surface?: ContactFilterSurface
 }): Promise<ListContactFilterFieldsPublicResponse> {
-  const { workspaceId } = props
+  const { workspaceId, surface = "contacts" } = props
 
   const [customFields, botFields, tags] = await Promise.all([
     customFieldService.list({ workspaceId }).then((result) => result.data),
@@ -43,7 +46,7 @@ export async function listContactFilterFieldsForAPI(props: {
 
   const staticFields = CONTACT_FILTER_FIELD_DEFINITIONS.filter(
     (def): def is typeof def & { hidden?: false } =>
-      !("hidden" in def && def.hidden),
+      !("hidden" in def && def.hidden) && isFieldOnSurface(def, surface),
   ).map((def) => ({
     field: def.field as string,
     schemaKind: def.schemaKind,

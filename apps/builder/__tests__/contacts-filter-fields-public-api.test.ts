@@ -92,11 +92,13 @@ describe("GET /v1/contacts/filter-fields", () => {
     await expect(
       procedure.handler?.({
         context: { workspace: { id: "workspace-1" } },
+        input: { surface: "flowCondition" },
       }),
     ).resolves.toEqual(response)
 
     expect(listContactFilterFieldsForAPI).toHaveBeenCalledWith({
       workspaceId: "workspace-1",
+      surface: "flowCondition",
     })
   })
 })

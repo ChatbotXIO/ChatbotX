@@ -75,6 +75,9 @@ export type CloseHumanReplyWindowResult = {
   previousAdminRepliedAt: Date | null
   assignedUserId: string | null
   assignedUserAt: Date | null
+  /** SLA snapshot of the window this statement closed (`null` when none, or no SLA applied). */
+  closedResponseDueAt: Date | null
+  closedResponseSlaTargetSeconds: number | null
 }
 
 type CloseHumanReplyWindowRow = {
@@ -82,6 +85,8 @@ type CloseHumanReplyWindowRow = {
   previousAdminRepliedAt: string | Date | null
   assignedUserId: string | null
   assignedUserAt: string | Date | null
+  closedResponseDueAt: string | Date | null
+  closedResponseSlaTargetSeconds: number | null
 }
 
 const toDateOrNull = (value: string | Date | null): Date | null =>
@@ -102,7 +107,8 @@ export async function closeHumanReplyWindow(
   const repliedAt = params.repliedAt.toISOString()
   const result = await tx.execute<CloseHumanReplyWindowRow>(sql`
     WITH old AS (
-      SELECT id, "awaitingHumanReplySince", "adminRepliedAt", "assignedUserId", "assignedUserAt"
+      SELECT id, "awaitingHumanReplySince", "adminRepliedAt", "assignedUserId", "assignedUserAt",
+        "responseDueAt", "responseSlaTargetSeconds"
       FROM "Conversation"
       WHERE id = ${params.conversationId} AND "workspaceId" = ${params.workspaceId}
       FOR NO KEY UPDATE
@@ -115,6 +121,18 @@ export async function closeHumanReplyWindow(
           WHEN old."awaitingHumanReplySince" IS NOT NULL
             AND old."awaitingHumanReplySince" <= ${repliedAt}::timestamptz THEN NULL
           ELSE old."awaitingHumanReplySince" END,
+        "responseDueAt" = CASE
+          WHEN old."awaitingHumanReplySince" IS NOT NULL
+            AND old."awaitingHumanReplySince" <= ${repliedAt}::timestamptz THEN NULL
+          ELSE old."responseDueAt" END,
+        "responseSlaBreachingAt" = CASE
+          WHEN old."awaitingHumanReplySince" IS NOT NULL
+            AND old."awaitingHumanReplySince" <= ${repliedAt}::timestamptz THEN NULL
+          ELSE c."responseSlaBreachingAt" END,
+        "responseSlaTargetSeconds" = CASE
+          WHEN old."awaitingHumanReplySince" IS NOT NULL
+            AND old."awaitingHumanReplySince" <= ${repliedAt}::timestamptz THEN NULL
+          ELSE old."responseSlaTargetSeconds" END,
         "awaitingHumanReplyClosedAt" = GREATEST(
           COALESCE(c."awaitingHumanReplyClosedAt", '-infinity'::timestamptz),
           ${repliedAt}::timestamptz)
@@ -126,7 +144,13 @@ export async function closeHumanReplyWindow(
         THEN old."awaitingHumanReplySince" END) AS "closedAwaitingSince",
       old."adminRepliedAt" AS "previousAdminRepliedAt",
       old."assignedUserId" AS "assignedUserId",
-      old."assignedUserAt" AS "assignedUserAt"
+      old."assignedUserAt" AS "assignedUserAt",
+      (CASE WHEN old."awaitingHumanReplySince" IS NOT NULL
+        AND old."awaitingHumanReplySince" <= ${repliedAt}::timestamptz
+        THEN old."responseDueAt" END) AS "closedResponseDueAt",
+      (CASE WHEN old."awaitingHumanReplySince" IS NOT NULL
+        AND old."awaitingHumanReplySince" <= ${repliedAt}::timestamptz
+        THEN old."responseSlaTargetSeconds" END) AS "closedResponseSlaTargetSeconds"
   `)
   const row = result.rows[0]
   if (!row) {
@@ -137,5 +161,7 @@ export async function closeHumanReplyWindow(
     previousAdminRepliedAt: toDateOrNull(row.previousAdminRepliedAt),
     assignedUserId: row.assignedUserId,
     assignedUserAt: toDateOrNull(row.assignedUserAt),
+    closedResponseDueAt: toDateOrNull(row.closedResponseDueAt),
+    closedResponseSlaTargetSeconds: row.closedResponseSlaTargetSeconds,
   }
 }

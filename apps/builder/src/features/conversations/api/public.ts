@@ -99,12 +99,10 @@ const listConversationsQueryRequest = z.object({
     .describe("Restrict to conversations with the bot enabled or disabled."),
   tags: jsonQueryParam(
     z
-      .array(
-        z.enum(["noAdminReply", "unread", "followUp", "archived", "blocked"]),
-      )
+      .array(conversationStatuses)
       .optional()
       .describe(
-        "Restrict to conversations matching one of these system tags. Sent as a JSON-encoded array.",
+        "Restrict to conversations matching these system tags (all of them). Sent as a JSON-encoded array. `slaBreaching` = an open response-SLA window within its breaching threshold, `slaBreached` = an open window past its deadline; they are mutually exclusive and need a response SLA policy (`responseSla.get`).",
       ),
   ),
   contactFilter: jsonQueryParam(

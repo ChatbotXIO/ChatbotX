@@ -1,18 +1,24 @@
 "use client"
 
+import { WORKING_HOURS_MAX_DATE_OVERRIDES } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { ClockIcon, Loader2Icon } from "lucide-react"
+import { ClockIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { buildWeekdayOptions } from "@/components/recurrence/weekday-options"
 import { updateWorkingHoursAction } from "../actions/update-working-hours.action"
+import {
+  type DateOverrideDraft,
+  sortByDate,
+  toDateOverrideDraft,
+} from "../lib/date-override-state"
 import { workingHoursListHref } from "../lib/routes"
 import {
   addInterval,
@@ -25,8 +31,14 @@ import {
   toggleWeekday,
   validateSchedule,
 } from "../lib/schedule-state"
+import { useInvalidateWorkingHoursOptions } from "../provider/working-hours-hook"
 import { updateWorkingHoursRequest } from "../schema/action"
-import type { WorkingHoursResource } from "../schema/resource"
+import type {
+  WorkingHoursDateOverrideResource,
+  WorkingHoursResource,
+} from "../schema/resource"
+import { DateOverrideDialog } from "./date-override-dialog"
+import { DateOverrideTable } from "./date-override-table"
 import { WorkingHoursDayRow } from "./working-hours-day-row"
 
 export function WorkingHoursScheduleForm({
@@ -41,6 +53,7 @@ export function WorkingHoursScheduleForm({
   const t = useTranslations()
   const locale = useLocale()
   const router = useRouter()
+  const invalidateOptions = useInvalidateWorkingHoursOptions()
   const listHref = workingHoursListHref(workspaceId)
 
   const { form, action } = useHookFormAction(
@@ -49,6 +62,7 @@ export function WorkingHoursScheduleForm({
     {
       actionProps: {
         onSuccess: () => {
+          invalidateOptions()
           toast.success(
             t("messages.updatedSuccess", { feature: t("workingHours.label") }),
           )
@@ -61,7 +75,10 @@ export function WorkingHoursScheduleForm({
         },
       },
       formProps: {
-        defaultValues: { intervals: workingHours.intervals },
+        defaultValues: {
+          intervals: workingHours.intervals,
+          dateOverrides: workingHours.dateOverrides ?? [],
+        },
       },
       errorMapProps: {},
     },
@@ -84,11 +101,47 @@ export function WorkingHoursScheduleForm({
   const setIntervals = (next: ScheduleInterval[]) =>
     form.setValue("intervals", next, { shouldDirty: true })
 
+  const watchedOverrides = useWatch({
+    control: form.control,
+    name: "dateOverrides",
+  })
+  const dateOverrides: WorkingHoursDateOverrideResource[] = sortByDate(
+    watchedOverrides ?? [],
+  ).map((row) => ({
+    date: row.date,
+    name: row.name ?? null,
+    ranges: row.ranges,
+  }))
+  const [overrideDialog, setOverrideDialog] = useState<
+    { mode: "closed" } | { mode: "add" } | { mode: "edit"; date: string }
+  >({ mode: "closed" })
+  const editingOverride =
+    overrideDialog.mode === "edit"
+      ? dateOverrides.find((row) => row.date === overrideDialog.date)
+      : undefined
+
+  const saveOverride = (draft: DateOverrideDraft) => {
+    const next: WorkingHoursDateOverrideResource = {
+      date: draft.date,
+      name: draft.name.trim() || null,
+      ranges: draft.closed ? [] : [...draft.ranges],
+    }
+    form.setValue(
+      "dateOverrides",
+      [...dateOverrides.filter((row) => row.date !== next.date), next],
+      { shouldDirty: true },
+    )
+    setOverrideDialog({ mode: "closed" })
+  }
+
   const isPending = action.isPending
   const hasErrors = errors.size > 0
 
   const onSubmit = form.handleSubmit((values) => {
-    action.execute({ intervals: sortIntervals(values.intervals ?? []) })
+    action.execute({
+      intervals: sortIntervals(values.intervals ?? []),
+      dateOverrides: sortByDate(values.dateOverrides ?? []),
+    })
   })
 
   return (
@@ -102,6 +155,9 @@ export function WorkingHoursScheduleForm({
             <p className="flex items-center gap-1.5 text-muted-foreground text-sm">
               <ClockIcon className="size-3.5" />
               {t("workingHours.editor.timezoneNote", { timezone })}
+            </p>
+            <p className="text-muted-foreground text-xs">
+              {t("workingHours.editor.routingNote")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -144,6 +200,64 @@ export function WorkingHoursScheduleForm({
             />
           ))}
         </div>
+
+        <section className="mt-6 flex flex-col gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-col gap-1">
+              <h2 className="font-semibold text-lg">
+                {t("workingHours.dateOverrides.title")}
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                {t("workingHours.dateOverrides.description")}
+              </p>
+            </div>
+            <Button
+              disabled={
+                isPending ||
+                dateOverrides.length >= WORKING_HOURS_MAX_DATE_OVERRIDES
+              }
+              onClick={() => setOverrideDialog({ mode: "add" })}
+              type="button"
+              variant="outline"
+            >
+              <PlusIcon />
+              {t("workingHours.dateOverrides.add")}
+            </Button>
+          </div>
+          <DateOverrideTable
+            disabled={isPending}
+            emptyLabel={t("workingHours.dateOverrides.empty")}
+            onDelete={(row) =>
+              form.setValue(
+                "dateOverrides",
+                dateOverrides.filter((current) => current.date !== row.date),
+                { shouldDirty: true },
+              )
+            }
+            onEdit={(row) =>
+              setOverrideDialog({ mode: "edit", date: row.date })
+            }
+            rows={dateOverrides}
+          />
+        </section>
+
+        <DateOverrideDialog
+          initial={
+            editingOverride ? toDateOverrideDraft(editingOverride) : null
+          }
+          onOpenChange={(open) =>
+            !open && setOverrideDialog({ mode: "closed" })
+          }
+          onSubmit={saveOverride}
+          open={overrideDialog.mode !== "closed"}
+          pending={false}
+          takenDates={dateOverrides.map((row) => row.date)}
+          title={
+            editingOverride
+              ? t("workingHours.dateDialog.editTitle")
+              : t("workingHours.dateDialog.addTitle")
+          }
+        />
       </form>
     </Form>
   )

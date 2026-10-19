@@ -1414,6 +1414,132 @@ describe("chat store handleNewMessages messaging window", () => {
   })
 })
 
+describe("chat store handleNewMessages response SLA snapshot", () => {
+  const makeSlaStore = () => {
+    const store = createChatStore()
+    store.setState({
+      conversations: [
+        {
+          ...makeConversation("conv-1", new Date("2026-09-17T08:00:00Z")),
+          responseDueAt: new Date("2026-09-17T09:00:00Z"),
+          responseSlaBreachingAt: new Date("2026-09-17T08:45:00Z"),
+          responseSlaTargetSeconds: 3600,
+          contactInboxes: [{ id: "ci-1", lastIncomingMessageAt: null }],
+        },
+      ] as never,
+    })
+    return store
+  }
+  const slaOf = (store: ReturnType<typeof createChatStore>) =>
+    store.getState().conversations[0] as unknown as {
+      responseDueAt: Date | null
+      responseSlaBreachingAt: Date | null
+      responseSlaTargetSeconds: number | null
+    }
+  const outgoing = (senderType: string, senderId: string | null) =>
+    ({
+      ...makeMessage("conv-1", new Date("2026-09-17T09:30:00Z")),
+      id: `msg-${senderType}`,
+      messageType: "outgoing",
+      senderType,
+      senderId,
+    }) as never
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setConversationUrl(null)
+  })
+
+  test("an agent reply clears the snapshot so the pill and SLA filters update without a refetch", async () => {
+    const store = makeSlaStore()
+
+    await store.getState().handleNewMessages([outgoing("user", "agent-1")])
+
+    expect(slaOf(store)).toMatchObject({
+      responseDueAt: null,
+      responseSlaBreachingAt: null,
+      responseSlaTargetSeconds: null,
+    })
+  })
+
+  test("a bot reply clears it only while the bot is enabled (mirrors the server close rule)", async () => {
+    const enabled = makeSlaStore()
+    enabled.setState({
+      conversations: enabled
+        .getState()
+        .conversations.map((c) => ({ ...c, botEnabled: true })),
+    })
+    await enabled.getState().handleNewMessages([outgoing("bot", null)])
+    expect(slaOf(enabled).responseDueAt).toBeNull()
+
+    const paused = makeSlaStore()
+    paused.setState({
+      conversations: paused
+        .getState()
+        .conversations.map((c) => ({ ...c, botEnabled: false })),
+    })
+    await paused.getState().handleNewMessages([outgoing("bot", null)])
+    expect(slaOf(paused).responseSlaTargetSeconds).toBe(3600)
+  })
+
+  test("a reply older than the latest customer message keeps the newer window's snapshot", async () => {
+    const store = makeSlaStore()
+    store.setState({
+      conversations: store.getState().conversations.map((c) => ({
+        ...c,
+        contactRepliedAt: new Date("2026-09-17T09:45:00Z"),
+      })),
+    })
+
+    // `outgoing` is stamped 09:30, before the 09:45 customer message.
+    await store.getState().handleNewMessages([outgoing("user", "agent-1")])
+
+    expect(slaOf(store).responseSlaTargetSeconds).toBe(3600)
+  })
+
+  test("a reply after the latest customer message clears it", async () => {
+    const store = makeSlaStore()
+    store.setState({
+      conversations: store.getState().conversations.map((c) => ({
+        ...c,
+        contactRepliedAt: new Date("2026-09-17T09:15:00Z"),
+      })),
+    })
+
+    await store.getState().handleNewMessages([outgoing("user", "agent-1")])
+
+    expect(slaOf(store).responseDueAt).toBeNull()
+  })
+
+  test("a proactive WhatsApp template keeps the snapshot (the server keeps the window open)", async () => {
+    const store = makeSlaStore()
+    store.setState({
+      conversations: store
+        .getState()
+        .conversations.map((c) => ({ ...c, botEnabled: true })),
+    })
+    await store.getState().handleNewMessages([
+      {
+        ...(outgoing("bot", null) as object),
+        contentAttributes: { type: "whatsapp_template" },
+      } as never,
+    ])
+    expect(slaOf(store).responseSlaTargetSeconds).toBe(3600)
+  })
+
+  test("a contact message leaves the snapshot alone", async () => {
+    const store = makeSlaStore()
+
+    await store
+      .getState()
+      .handleNewMessages([
+        makeMessage("conv-1", new Date("2026-09-17T09:40:00Z")) as never,
+      ])
+
+    expect(slaOf(store).responseSlaTargetSeconds).toBe(3600)
+  })
+})
+
 describe("chat store loadMoreMessages", () => {
   test("prepends the older page and advances the message cursor", async () => {
     const store = createChatStore()

@@ -48,6 +48,7 @@ import { NO_AVATAR_SENTINEL_KEY } from "../media/no-avatar-sentinel"
 import { messageCleanupService } from "../message-cleanup/service"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { userQuotaService } from "../user-quota/service"
+import { resolveWorkingHoursTimezone } from "../working-hours/timezone"
 import { workspaceService } from "../workspace/service"
 import { workspaceUsageService } from "../workspace-usage/service"
 import { emitContactInfoChangeEvents } from "./contact-info-changes"
@@ -375,13 +376,46 @@ class ContactService extends BaseService {
       return false
     }
 
-    const where = buildContactWhere({ workspaceId, contactFilter })
+    const where = buildContactWhere({
+      workspaceId,
+      contactFilter: await this.withWorkingHoursTimezone(
+        workspaceId,
+        contactFilter,
+      ),
+    })
     const match = await db.query.contactModel.findFirst({
       columns: { id: true },
       where: { ...where, id: contactId },
     })
 
     return Boolean(match)
+  }
+
+  /**
+   * `isWithinWorkingHours` reads `now()` in the workspace timezone; resolve it
+   * here (cached workspace row, same rule as routing) instead of looking the
+   * zone up in SQL. Only paid when the filter actually uses the field.
+   */
+  private async withWorkingHoursTimezone(
+    workspaceId: string,
+    contactFilter: ContactFilterCriteriaInput,
+  ): Promise<ContactFilterCriteriaInput> {
+    const usesWorkingHours = contactFilter.conditions.some(
+      (condition) =>
+        (condition as { field?: string }).field === "isWithinWorkingHours",
+    )
+    if (!usesWorkingHours) {
+      return contactFilter
+    }
+    const workspace = await workspaceService.find({
+      where: { id: workspaceId },
+    })
+    return {
+      ...contactFilter,
+      workingHoursTimezone: resolveWorkingHoursTimezone(
+        workspace ?? { id: workspaceId },
+      ),
+    }
   }
 
   // ─── Reads (NO cache — write-path only) ─────────────────────────────────

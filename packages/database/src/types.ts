@@ -143,7 +143,11 @@ export type PlatformCredentialModel =
   typeof schema.platformCredentialModel.$inferSelect
 export type ContactNoteModel = typeof schema.contactNoteModel.$inferSelect
 export type InboxTeamModel = typeof schema.inboxTeamModel.$inferSelect
+export type ResponseSlaPolicyModel =
+  typeof schema.responseSlaPolicyModel.$inferSelect
 export type WorkingHoursModel = typeof schema.workingHoursModel.$inferSelect
+export type WorkingHoursDateOverrideModel =
+  typeof schema.workingHoursDateOverrideModel.$inferSelect
 export type WorkingHoursIntervalModel =
   typeof schema.workingHoursIntervalModel.$inferSelect
 export type WorkingHoursMemberModel =

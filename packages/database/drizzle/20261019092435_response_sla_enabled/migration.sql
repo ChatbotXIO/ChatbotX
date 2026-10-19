@@ -1,0 +1,1 @@
+ALTER TABLE "ResponseSlaPolicy" ADD COLUMN "enabled" boolean DEFAULT true NOT NULL;

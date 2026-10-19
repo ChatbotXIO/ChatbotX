@@ -218,9 +218,9 @@
     "averageFirstResponseTimeByAdmin": "Ihmisagenttien ensimmäisen vastauksen keskimääräinen aika (minuuttia)",
     "averageFirstResponseTimeByAdminHelp": "Keskimääräinen aika, joka ihmisagentilta kuluu ensimmäisen vastauksen antamiseen asiakkaan viestiin.",
     "averageResponseTimeByAdmin": "Ihmisagenttien keskimääräinen vastausaika (minuuttia)",
-    "withinWorkingHoursHelp": "Laskee vain työntekijän työaikaan kuuluvan ajan; aikataulun ulkopuolinen aika jätetään pois.",
+    "withinWorkingHoursHelp": "Laskee vain ajan agentin työaikana.",
     "withinWorkingHoursLabel": "Työajan sisällä",
-    "noResponseData": "Ei tietoja: työntekijällä ei ole vastauksia tällä jaksolla tai hänelle ei ole määritetty työaikataulua.",
+    "noResponseData": "Ei vastauksia jaksolla tai aikataulua ei ole määritetty.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Keskimääräinen ensimmäinen vastausaika työajan sisällä ihmistyöntekijöittäin (minuuttia)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Keskimääräinen työajan sisällä kuluva aika, jonka ihmistyöntekijä tarvitsee asiakkaan viestiin annettavaan ensimmäiseen vastaukseen.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "Keskimääräinen vastausaika työajan sisällä ihmistyöntekijöittäin (minuuttia)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Työajat",
     "label": "Työajat",
-    "description": "Määritä, milloin tiimisi on tavoitettavissa. Vasteajat mitataan vain näiden aikojen sisällä.",
+    "description": "Vastausajat lasketaan vain näinä tunteina.",
     "employees": "Työntekijät",
-    "empty": "Työaikoja ei ole vielä. Lisää aikataulu, jotta vasteajat mitataan vain työajan sisällä.",
-    "deleteDescription": "Poistetaanko \"{name}\"? Sen työntekijöiden vasteaika mitataan jälleen kellonajan mukaan. Toimintoa ei voi perua.",
+    "empty": "Ei vielä aikatauluja.",
+    "deleteDescription": "Poistetaanko \"{name}\"? Työntekijät siirtyvät kellonaikaan.",
     "create": {
       "title": "Lisää työajat",
       "description": "Anna aikataululle nimi. Päivät ja kellonajat asetetaan seuraavaksi."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Käytä työaikoja työntekijöille",
       "description": "Valitse työntekijät, jotka noudattavat tätä aikataulua.",
-      "moveHelp": "Työntekijä voi noudattaa vain yhtä aikataulua. Toisessa aikataulussa oleva siirretään tähän.",
+      "moveHelp": "Työntekijällä on yksi aikataulu; lisääminen siirtää hänet tähän.",
       "placeholder": "Valitse työntekijät",
       "search": "Hae työntekijöitä...",
       "searchAria": "Hae työntekijöiden joukosta",
@@ -8983,7 +8983,55 @@
       "endTime": "Päättymisaika",
       "removeRange": "Poista aikaväli",
       "errorOverlap": "Nämä aikavälit menevät päällekkäin. Muokkaa niitä tallentaaksesi.",
-      "errorOrder": "Päättymisajan on oltava alkamisajan jälkeen."
+      "errorOrder": "Päättymisajan on oltava alkamisajan jälkeen.",
+      "routingNote": "Käytössä myös Auto Assignissa, Global Routerissa ja ehdossa."
+    },
+    "condition": {
+      "assignedAgent": "Määritetyn agentin työvuoro"
+    },
+    "holidays": {
+      "label": "Pyhäpäivät",
+      "title": "Pyhäpäivät",
+      "description": "Korvaa kaikkien aikataulujen viikkotunnit kyseisenä päivänä.",
+      "add": "Lisää pyhäpäivä",
+      "empty": "Ei vielä pyhäpäiviä.",
+      "deleteDescription": "Poistetaanko pyhäpäivä {date}?"
+    },
+    "dateOverrides": {
+      "title": "Päivämääräpoikkeukset",
+      "description": "Korvaa tämän aikataulun tunnit kyseisenä päivänä; ohittaa pyhäpäivät.",
+      "add": "Lisää poikkeus",
+      "empty": "Ei poikkeuksia."
+    },
+    "dateDialog": {
+      "addTitle": "Lisää päivämäärä",
+      "editTitle": "Muokkaa päivämäärää",
+      "date": "Päivämäärä",
+      "name": "Nimi (valinnainen)",
+      "closedAllDay": "Suljettu koko päivän",
+      "duplicate": "Tämä päivämäärä on jo luettelossa.",
+      "hours": "Tunnit",
+      "closed": "Suljettu"
     }
+  },
+  "responseSla": {
+    "label": "Vastaus-SLA",
+    "title": "Vastaus-SLA",
+    "description": "Pisin aika, jonka asiakkaan viesti saa odottaa ihmisen vastausta.",
+    "firstTarget": "Ensimmäisen vastauksen tavoite (minuuttia)",
+    "nextTarget": "Myöhempien vastausten tavoite (minuuttia)",
+    "nextPlaceholder": "Ei SLA:ta myöhemmille vastauksille",
+    "threshold": "Rikkoutumisraja (% tavoitteesta jäljellä)",
+    "thresholdHelp": "Merkitään rikkoutumassa, kun tästä tavoitteesta on jäljellä tämä %.",
+    "workingTimeNote": "Lasketaan määritetyn agentin työajassa; muuten kellonajassa.",
+    "overdue": "Myöhässä",
+    "due": "Määräaika {time}",
+    "breaching": "SLA rikkoutumassa",
+    "breached": "SLA rikottu",
+    "firstMetColumn": "Ensimmäinen vastaus täytti SLA:n",
+    "metColumn": "SLA täytetty",
+    "metHelp": "SLA:n täyttäneiden vastausten osuus SLA:lla olevista.",
+    "eligibleCount": "{count} vastauksella oli SLA",
+    "enable": "Ota vastaus-SLA käyttöön"
   }
 }

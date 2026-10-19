@@ -1,5 +1,6 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { agentResponseSlaStatsShape } from "./agent-response"
 import { analyticsFilterFields, timeRangeQuerySchema } from "./common"
 import { contactEventTypes, contactSenderTypes } from "./contact-event"
 
@@ -142,6 +143,7 @@ export const humanAgentStatsSchema = z.object({
   avgWorkingFirstResponseSeconds: z.number().nullable(),
   responseCount: z.number(),
   firstResponseCount: z.number(),
+  ...agentResponseSlaStatsShape,
 })
 export type HumanAgentStats = z.infer<typeof humanAgentStatsSchema>
 

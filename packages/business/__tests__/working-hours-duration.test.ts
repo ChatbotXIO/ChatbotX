@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest"
 import {
+  addWorkingSeconds,
+  isWithinWorkingHours,
   type WorkingInterval,
   workingSecondsBetween,
 } from "../src/working-hours/duration"
@@ -349,5 +351,293 @@ describe("workingSecondsBetween equivalence and performance", () => {
     const elapsedMs = performance.now() - started
     expect(seconds).toBeGreaterThan(0)
     expect(elapsedMs).toBeLessThan(250)
+  })
+})
+
+describe("isWithinWorkingHours", () => {
+  const monday9to17: WorkingInterval[] = [
+    { weekday: 1, startMinute: 540, endMinute: 1020 },
+  ]
+  const check = (iso: string, intervals = monday9to17, timezone = "UTC") =>
+    isWithinWorkingHours({ at: z(iso), intervals, timezone })
+
+  test("start is inclusive, end is exclusive", () => {
+    expect(check("2026-06-01T09:00:00Z")).toBe(true)
+    expect(check("2026-06-01T08:59:59Z")).toBe(false)
+    expect(check("2026-06-01T16:59:59Z")).toBe(true)
+    expect(check("2026-06-01T17:00:00Z")).toBe(false)
+  })
+
+  test("only the matching weekday counts", () => {
+    expect(check("2026-06-02T10:00:00Z")).toBe(false)
+  })
+
+  test("empty intervals are never within", () => {
+    expect(check("2026-06-01T10:00:00Z", [])).toBe(false)
+  })
+
+  test("1440 covers the last minute of the local day", () => {
+    const allDay: WorkingInterval[] = [
+      { weekday: 1, startMinute: 0, endMinute: 1440 },
+    ]
+    expect(check("2026-06-01T23:59:59Z", allDay)).toBe(true)
+    expect(check("2026-06-02T00:00:00Z", allDay)).toBe(false)
+  })
+
+  test("reads the local weekday and minute in the timezone", () => {
+    // 2026-06-01T23:30Z is Tuesday 06:30 in Asia/Ho_Chi_Minh (UTC+7).
+    const tuesdayMorning: WorkingInterval[] = [
+      { weekday: 2, startMinute: 360, endMinute: 420 },
+    ]
+    expect(
+      check("2026-06-01T23:30:00Z", tuesdayMorning, "Asia/Ho_Chi_Minh"),
+    ).toBe(true)
+    expect(check("2026-06-01T23:30:00Z", tuesdayMorning, "UTC")).toBe(false)
+  })
+
+  test("DST: wall-clock minute follows the zone offset on either side of a transition", () => {
+    const nineToFive = [1, 2, 3, 4, 5, 6, 0].map((weekday) => ({
+      weekday,
+      startMinute: 540,
+      endMinute: 1020,
+    }))
+    // New York springs forward on 2026-03-08 (EST -> EDT).
+    expect(check("2026-03-07T14:00:00Z", nineToFive, "America/New_York")).toBe(
+      true,
+    ) // 09:00 EST
+    expect(check("2026-03-08T13:00:00Z", nineToFive, "America/New_York")).toBe(
+      true,
+    ) // 09:00 EDT
+    expect(check("2026-03-08T12:59:00Z", nineToFive, "America/New_York")).toBe(
+      false,
+    ) // 08:59 EDT
+  })
+})
+
+describe("date overrides", () => {
+  const monday9to17: WorkingInterval[] = [
+    { weekday: 1, startMinute: 540, endMinute: 1020 },
+  ]
+  const overrides = (
+    entries: [string, { startMinute: number; endMinute: number }[]][],
+  ) => new Map(entries)
+
+  test("a closed override removes the day's working seconds", () => {
+    const base = {
+      from: z("2026-06-01T00:00:00Z"),
+      to: z("2026-06-02T00:00:00Z"),
+      intervals: monday9to17,
+      timezone: "UTC",
+    }
+    expect(workingSecondsBetween(base)).toBe(8 * 3600)
+    expect(
+      workingSecondsBetween({
+        ...base,
+        dateOverrides: overrides([["2026-06-01", []]]),
+      }),
+    ).toBe(0)
+  })
+
+  test("a custom override replaces the weekly ranges of that date only", () => {
+    const seconds = workingSecondsBetween({
+      from: z("2026-06-01T00:00:00Z"),
+      to: z("2026-06-09T00:00:00Z"),
+      intervals: monday9to17,
+      timezone: "UTC",
+      dateOverrides: overrides([
+        ["2026-06-01", [{ startMinute: 600, endMinute: 660 }]],
+      ]),
+    })
+    // Monday 1st: 1h override; Monday 8th: the regular 8h.
+    expect(seconds).toBe(3600 + 8 * 3600)
+  })
+
+  test("an override can open a date the weekly intervals leave closed (and an empty weekly list)", () => {
+    expect(
+      workingSecondsBetween({
+        from: z("2026-06-02T00:00:00Z"),
+        to: z("2026-06-03T00:00:00Z"),
+        intervals: [],
+        timezone: "UTC",
+        dateOverrides: overrides([
+          ["2026-06-02", [{ startMinute: 0, endMinute: 120 }]],
+        ]),
+      }),
+    ).toBe(2 * 3600)
+  })
+
+  test("the override date is the LOCAL date in the timezone", () => {
+    // 2026-06-01T20:00Z is 2026-06-02 03:00 in Asia/Ho_Chi_Minh.
+    const inLocalTuesday = isWithinWorkingHours({
+      at: z("2026-06-01T20:00:00Z"),
+      intervals: [],
+      timezone: "Asia/Ho_Chi_Minh",
+      dateOverrides: overrides([
+        ["2026-06-02", [{ startMinute: 0, endMinute: 1440 }]],
+      ]),
+    })
+    const notUtcDate = isWithinWorkingHours({
+      at: z("2026-06-01T20:00:00Z"),
+      intervals: [],
+      timezone: "Asia/Ho_Chi_Minh",
+      dateOverrides: overrides([
+        ["2026-06-01", [{ startMinute: 0, endMinute: 1440 }]],
+      ]),
+    })
+    expect(inLocalTuesday).toBe(true)
+    expect(notUtcDate).toBe(false)
+  })
+
+  test("isWithinWorkingHours honours a closed override and ranges inside one", () => {
+    const at = z("2026-06-01T10:00:00Z")
+    expect(
+      isWithinWorkingHours({
+        at,
+        intervals: monday9to17,
+        timezone: "UTC",
+        dateOverrides: overrides([["2026-06-01", []]]),
+      }),
+    ).toBe(false)
+    expect(
+      isWithinWorkingHours({
+        at,
+        intervals: monday9to17,
+        timezone: "UTC",
+        dateOverrides: overrides([
+          ["2026-06-01", [{ startMinute: 660, endMinute: 720 }]],
+        ]),
+      }),
+    ).toBe(false)
+    expect(
+      isWithinWorkingHours({
+        at,
+        intervals: monday9to17,
+        timezone: "UTC",
+        dateOverrides: overrides([
+          ["2026-06-01", [{ startMinute: 600, endMinute: 660 }]],
+        ]),
+      }),
+    ).toBe(true)
+  })
+
+  test("DST day: an override's wall-clock range follows the zone offset", () => {
+    // New York spring-forward day (2026-03-08): 09:00 local is 13:00Z (EDT).
+    const seconds = workingSecondsBetween({
+      from: z("2026-03-08T00:00:00Z"),
+      to: z("2026-03-09T12:00:00Z"),
+      intervals: [],
+      timezone: "America/New_York",
+      dateOverrides: overrides([
+        ["2026-03-08", [{ startMinute: 540, endMinute: 600 }]],
+      ]),
+    })
+    expect(seconds).toBe(3600)
+  })
+})
+
+describe("addWorkingSeconds", () => {
+  const monday9to17: WorkingInterval[] = [
+    { weekday: 1, startMinute: 540, endMinute: 1020 },
+  ]
+  const add = (
+    from: string,
+    seconds: number,
+    extra: Partial<Parameters<typeof addWorkingSeconds>[0]> = {},
+  ) =>
+    addWorkingSeconds({
+      from: z(from),
+      seconds,
+      intervals: monday9to17,
+      timezone: "UTC",
+      ...extra,
+    })?.toISOString() ?? null
+
+  test("zero seconds returns the start; negative or non-finite is rejected", () => {
+    expect(add("2026-06-01T03:00:00Z", 0)).toBe("2026-06-01T03:00:00.000Z")
+    expect(add("2026-06-01T03:00:00Z", -1)).toBeNull()
+    expect(add("2026-06-01T03:00:00Z", Number.NaN)).toBeNull()
+  })
+
+  test("starts counting at the next open instant", () => {
+    // Before opening: counted from 09:00.
+    expect(add("2026-06-01T03:00:00Z", 3600)).toBe("2026-06-01T10:00:00.000Z")
+    // Inside the range: counted from the start itself.
+    expect(add("2026-06-01T10:30:00Z", 1800)).toBe("2026-06-01T11:00:00.000Z")
+  })
+
+  test("rolls over the night and the weekend to the next open day", () => {
+    // Friday 16:30 with a Mon-Fri 09-17 schedule: 30 min today, 30 min next Monday.
+    const weekdays: WorkingInterval[] = [1, 2, 3, 4, 5].map((weekday) => ({
+      weekday,
+      startMinute: 540,
+      endMinute: 1020,
+    }))
+    expect(add("2026-06-05T16:30:00Z", 3600, { intervals: weekdays })).toBe(
+      "2026-06-08T09:30:00.000Z",
+    )
+  })
+
+  test("a deadline exactly at the end of a range stays inside it", () => {
+    expect(add("2026-06-01T16:00:00Z", 3600)).toBe("2026-06-01T17:00:00.000Z")
+  })
+
+  test("is the inverse of workingSecondsBetween", () => {
+    const from = z("2026-06-01T08:00:00Z")
+    const due = addWorkingSeconds({
+      from,
+      seconds: 20 * 3600,
+      intervals: monday9to17,
+      timezone: "UTC",
+    }) as Date
+    expect(
+      workingSecondsBetween({
+        from,
+        to: due,
+        intervals: monday9to17,
+        timezone: "UTC",
+      }),
+    ).toBe(20 * 3600)
+  })
+
+  test("a closed override skips its date and an override with ranges adds one", () => {
+    expect(
+      add("2026-06-01T08:00:00Z", 3600, {
+        dateOverrides: new Map([["2026-06-01", []]]),
+      }),
+    ).toBe("2026-06-08T10:00:00.000Z")
+    expect(
+      add("2026-06-02T00:00:00Z", 1800, {
+        dateOverrides: new Map([
+          ["2026-06-02", [{ startMinute: 600, endMinute: 660 }]],
+        ]),
+      }),
+    ).toBe("2026-06-02T10:30:00.000Z")
+  })
+
+  test("gives up (null) for an empty schedule or when the walk limit is hit", () => {
+    expect(add("2026-06-01T08:00:00Z", 60, { intervals: [] })).toBeNull()
+    expect(
+      add("2026-06-01T08:00:00Z", 60, {
+        maxDays: 3,
+        dateOverrides: new Map([["2026-06-01", []]]),
+      }),
+    ).toBeNull()
+    // More working time than one year of Mondays can hold.
+    expect(add("2026-06-01T08:00:00Z", 60 * 8 * 3600)).toBeNull()
+  })
+
+  test("DST: a wall-clock range keeps its local meaning across the spring-forward day", () => {
+    const sundayNine: WorkingInterval[] = [
+      { weekday: 0, startMinute: 540, endMinute: 600 },
+    ]
+    // 2026-03-08 is the New York spring-forward Sunday: 09:00 local = 13:00Z.
+    expect(
+      addWorkingSeconds({
+        from: z("2026-03-08T00:00:00Z"),
+        seconds: 1800,
+        intervals: sundayNine,
+        timezone: "America/New_York",
+      })?.toISOString(),
+    ).toBe("2026-03-08T13:30:00.000Z")
   })
 })

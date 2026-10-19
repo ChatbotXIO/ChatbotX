@@ -218,9 +218,9 @@
     "averageFirstResponseTimeByAdmin": "Menneskelige agenters gennemsnitlige tid til første svar (minutter)",
     "averageFirstResponseTimeByAdminHelp": "Den gennemsnitlige tid, det tager en menneskelig agent at give det første svar på en kundes besked.",
     "averageResponseTimeByAdmin": "Menneskelige agenters gennemsnitlige svartid (minutter)",
-    "withinWorkingHoursHelp": "Tæller kun tid inden for medarbejderens arbejdstid; tid uden for vedkommendes skema er udeladt.",
+    "withinWorkingHoursHelp": "Tæller kun tid inden for medarbejderens arbejdstid.",
     "withinWorkingHoursLabel": "Inden for arbejdstid",
-    "noResponseData": "Ingen data: medarbejderen har ingen svar i denne periode, eller der er ikke tildelt et arbejdstidsskema.",
+    "noResponseData": "Ingen svar i perioden, eller intet skema tildelt.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Gennemsnitlig første svartid inden for arbejdstid pr. menneskelig medarbejder (minutter)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Den gennemsnitlige tid inden for arbejdstid, som en menneskelig medarbejder bruger på at give det første svar på en kundes besked.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "Gennemsnitlig svartid inden for arbejdstid pr. menneskelig medarbejder (minutter)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Arbejdstider",
     "label": "Arbejdstider",
-    "description": "Angiv, hvornår dit team er tilgængeligt. Svartider måles kun inden for disse timer.",
+    "description": "Svartider tælles kun inden for disse timer.",
     "employees": "Medarbejdere",
-    "empty": "Ingen arbejdstider endnu. Tilføj en plan for kun at måle svartider inden for arbejdstiden.",
-    "deleteDescription": "Slet \"{name}\"? Dens medarbejdere bliver igen målt på almindelig tid. Dette kan ikke fortrydes.",
+    "empty": "Ingen skemaer endnu.",
+    "deleteDescription": "Slet \"{name}\"? Medarbejderne går tilbage til almindelig tid.",
     "create": {
       "title": "Tilføj arbejdstider",
       "description": "Giv planen et navn. Du angiver dage og tidspunkter næste gang."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Anvend arbejdstider på medarbejdere",
       "description": "Vælg de medarbejdere, der følger denne plan.",
-      "moveHelp": "En medarbejder kan kun følge én plan. Alle, der allerede er på en anden plan, flyttes til denne.",
+      "moveHelp": "Hver medarbejder har ét skema; tilføjelse flytter dem hertil.",
       "placeholder": "Vælg medarbejdere",
       "search": "Søg medarbejdere...",
       "searchAria": "Søg blandt medarbejdere",
@@ -8983,7 +8983,55 @@
       "endTime": "Sluttidspunkt",
       "removeRange": "Fjern tidsrum",
       "errorOverlap": "Disse tidsrum overlapper. Juster dem for at gemme.",
-      "errorOrder": "Sluttidspunktet skal være efter starttidspunktet."
+      "errorOrder": "Sluttidspunktet skal være efter starttidspunktet.",
+      "routingNote": "Bruges også af Auto Assign, Global Router og betingelser."
+    },
+    "condition": {
+      "assignedAgent": "Tildelt medarbejders vagt"
+    },
+    "holidays": {
+      "label": "Helligdage",
+      "title": "Helligdage",
+      "description": "Erstatter alle skemaers ugentlige timer den dato.",
+      "add": "Tilføj helligdag",
+      "empty": "Ingen helligdage endnu.",
+      "deleteDescription": "Slet helligdagen {date}?"
+    },
+    "dateOverrides": {
+      "title": "Datoundtagelser",
+      "description": "Erstatter dette skemas timer den dato; vejer tungere end helligdage.",
+      "add": "Tilføj datoundtagelse",
+      "empty": "Ingen datoundtagelser."
+    },
+    "dateDialog": {
+      "addTitle": "Tilføj dato",
+      "editTitle": "Rediger dato",
+      "date": "Dato",
+      "name": "Navn (valgfrit)",
+      "closedAllDay": "Lukket hele dagen",
+      "duplicate": "Datoen findes allerede på listen.",
+      "hours": "Timer",
+      "closed": "Lukket"
     }
+  },
+  "responseSla": {
+    "label": "Svar-SLA",
+    "title": "Svar-SLA",
+    "description": "Maks. tid en kundebesked må vente på et menneskeligt svar.",
+    "firstTarget": "Mål for første svar (minutter)",
+    "nextTarget": "Mål for senere svar (minutter)",
+    "nextPlaceholder": "Ingen SLA på senere svar",
+    "threshold": "Tærskel for tæt på brud (% af målet tilbage)",
+    "thresholdHelp": "Markeres som tæt på brud, når denne % af målet er tilbage.",
+    "workingTimeNote": "Tælles i den tildelte medarbejders arbejdstid; ellers almindelig tid.",
+    "overdue": "Forfalden",
+    "due": "Frist {time}",
+    "breaching": "SLA tæt på brud",
+    "breached": "SLA brudt",
+    "firstMetColumn": "Første svar overholdt SLA",
+    "metColumn": "SLA overholdt",
+    "metHelp": "Andel af svar med SLA der overholdt den.",
+    "eligibleCount": "{count} svar havde en SLA",
+    "enable": "Aktivér svar-SLA"
   }
 }

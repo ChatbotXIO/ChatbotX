@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { findFirst } = vi.hoisted(() => ({
+const { findFirst, findWorkspace } = vi.hoisted(() => ({
   findFirst: vi.fn(),
+  findWorkspace: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -50,7 +51,7 @@ vi.mock("../src/user-quota/service", () => ({
 }))
 
 vi.mock("../src/workspace/service", () => ({
-  workspaceService: {},
+  workspaceService: { find: findWorkspace },
 }))
 
 const { contactService } = await import("../src/contact/service")
@@ -138,5 +139,29 @@ describe("contactService.matchesContactFilter", () => {
     ).resolves.toBe(true)
 
     expect(findFirst).toHaveBeenCalled()
+  })
+
+  test("resolves the workspace timezone only for isWithinWorkingHours filters", async () => {
+    findFirst.mockResolvedValue({ id: "contact-1" })
+    findWorkspace.mockResolvedValue({ id: "ws-1", timezone: "Asia/Tokyo" })
+    const filterWith = (field: string, operator: string, value: string[]) => ({
+      operator: "and" as const,
+      conditions: [{ field, operator, value }],
+    })
+
+    await contactService.matchesContactFilter({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      contactFilter: filterWith("isWithinWorkingHours", "in", ["42"]),
+    })
+    expect(findWorkspace).toHaveBeenCalledWith({ where: { id: "ws-1" } })
+
+    findWorkspace.mockClear()
+    await contactService.matchesContactFilter({
+      workspaceId: "ws-1",
+      contactId: "contact-1",
+      contactFilter: filterWith("fullName", "contains", ["Ada"]),
+    })
+    expect(findWorkspace).not.toHaveBeenCalled()
   })
 })

@@ -1,5 +1,9 @@
 import { publicListResponse } from "@/lib/public-api/list"
-import { workingHoursResource } from "./resource"
+import { workingHoursHolidayResource, workingHoursResource } from "./resource"
 
 export const publicListWorkingHoursResponse =
   publicListResponse(workingHoursResource)
+
+export const publicListHolidaysResponse = publicListResponse(
+  workingHoursHolidayResource,
+)

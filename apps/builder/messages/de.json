@@ -218,9 +218,9 @@
     "averageFirstResponseTimeByAdmin": "Durchschnittliche erste Antwortzeit menschlicher Agenten (Minuten)",
     "averageFirstResponseTimeByAdminHelp": "Die durchschnittliche Zeit, die ein menschlicher Agent für die erste Antwort auf die Nachricht eines Kunden benötigt.",
     "averageResponseTimeByAdmin": "Durchschnittliche Antwortzeit menschlicher Agenten (Minuten)",
-    "withinWorkingHoursHelp": "Zählt nur die Zeit innerhalb der Arbeitszeiten des Mitarbeiters; Zeit außerhalb seines Zeitplans wird nicht berücksichtigt.",
+    "withinWorkingHoursHelp": "Zählt nur Zeit innerhalb der Arbeitszeit des Mitarbeiters.",
     "withinWorkingHoursLabel": "Innerhalb der Arbeitszeit",
-    "noResponseData": "Keine Daten: Der Mitarbeiter hat in diesem Zeitraum keine Antworten gesendet oder ihm ist kein Arbeitszeitplan zugewiesen.",
+    "noResponseData": "Keine Antworten in diesem Zeitraum oder kein Zeitplan zugewiesen.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Durchschnittliche erste Antwortzeit innerhalb der Arbeitszeit nach menschlichen Mitarbeitern (Minuten)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Die durchschnittliche Arbeitszeit, die ein menschlicher Mitarbeiter für die erste Antwort auf die Nachricht eines Kunden benötigt.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "Durchschnittliche Antwortzeit innerhalb der Arbeitszeit nach menschlichen Mitarbeitern (Minuten)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Arbeitszeiten",
     "label": "Arbeitszeiten",
-    "description": "Legen Sie fest, wann Ihr Team erreichbar ist. Antwortzeiten werden nur innerhalb dieser Zeiten gemessen.",
+    "description": "Antwortzeiten zählen nur innerhalb dieser Zeiten.",
     "employees": "Mitarbeiter",
-    "empty": "Noch keine Arbeitszeiten. Fügen Sie einen Zeitplan hinzu, um Antwortzeiten nur innerhalb der Arbeitszeit zu messen.",
-    "deleteDescription": "\"{name}\" löschen? Die zugehörigen Mitarbeiter werden wieder nach Echtzeit gemessen. Dies kann nicht rückgängig gemacht werden.",
+    "empty": "Noch keine Zeitpläne.",
+    "deleteDescription": "„{name}“ löschen? Die Mitarbeiter gehen zurück auf Uhrzeit.",
     "create": {
       "title": "Arbeitszeiten hinzufügen",
       "description": "Geben Sie dem Zeitplan einen Namen. Tage und Uhrzeiten legen Sie als Nächstes fest."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Arbeitszeiten auf Mitarbeiter anwenden",
       "description": "Wählen Sie die Mitarbeiter, die diesem Zeitplan folgen.",
-      "moveHelp": "Ein Mitarbeiter kann nur einem Zeitplan folgen. Wer bereits einem anderen Zeitplan zugeordnet ist, wird hierher verschoben.",
+      "moveHelp": "Jeder Mitarbeiter hat einen Zeitplan; Hinzufügen verschiebt ihn hierher.",
       "placeholder": "Mitarbeiter auswählen",
       "search": "Mitarbeiter suchen...",
       "searchAria": "Mitarbeiter durchsuchen",
@@ -8983,7 +8983,55 @@
       "endTime": "Endzeit",
       "removeRange": "Zeitraum entfernen",
       "errorOverlap": "Diese Zeiträume überschneiden sich. Passen Sie sie zum Speichern an.",
-      "errorOrder": "Die Endzeit muss nach der Startzeit liegen."
+      "errorOrder": "Die Endzeit muss nach der Startzeit liegen.",
+      "routingNote": "Wird auch von Auto Assign, Global Router und Bedingung genutzt."
+    },
+    "condition": {
+      "assignedAgent": "Schicht des zugewiesenen Mitarbeiters"
+    },
+    "holidays": {
+      "label": "Feiertage",
+      "title": "Feiertage",
+      "description": "Ersetzt an diesem Datum die Wochenzeiten aller Zeitpläne.",
+      "add": "Feiertag hinzufügen",
+      "empty": "Noch keine Feiertage.",
+      "deleteDescription": "Feiertag am {date} löschen?"
+    },
+    "dateOverrides": {
+      "title": "Datumsausnahmen",
+      "description": "Ersetzt an diesem Datum die Zeiten dieses Zeitplans; hat Vorrang vor Feiertagen.",
+      "add": "Datumsausnahme hinzufügen",
+      "empty": "Keine Datumsausnahmen."
+    },
+    "dateDialog": {
+      "addTitle": "Datum hinzufügen",
+      "editTitle": "Datum bearbeiten",
+      "date": "Datum",
+      "name": "Name (optional)",
+      "closedAllDay": "Ganztägig geschlossen",
+      "duplicate": "Dieses Datum steht bereits in der Liste.",
+      "hours": "Zeiten",
+      "closed": "Geschlossen"
     }
+  },
+  "responseSla": {
+    "label": "Antwort-SLA",
+    "title": "Antwort-SLA",
+    "description": "Maximale Wartezeit einer Kundennachricht auf eine menschliche Antwort.",
+    "firstTarget": "Ziel für die erste Antwort (Minuten)",
+    "nextTarget": "Ziel für weitere Antworten (Minuten)",
+    "nextPlaceholder": "Keine SLA für spätere Antworten",
+    "threshold": "Schwelle „kurz vor Verletzung“ (% des Ziels übrig)",
+    "thresholdHelp": "Als kurz vor Verletzung markiert, wenn dieser % des Ziels übrig ist.",
+    "workingTimeNote": "Gezählt in der Arbeitszeit des zugewiesenen Mitarbeiters; sonst Uhrzeit.",
+    "overdue": "Überfällig",
+    "due": "Fällig {time}",
+    "breaching": "SLA kurz vor Verletzung",
+    "breached": "SLA verletzt",
+    "firstMetColumn": "Erste Antwort SLA eingehalten",
+    "metColumn": "SLA eingehalten",
+    "metHelp": "Anteil der Antworten mit SLA, die sie einhielten.",
+    "eligibleCount": "{count} Antworten hatten eine SLA",
+    "enable": "Antwort-SLA aktivieren"
   }
 }

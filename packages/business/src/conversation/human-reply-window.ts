@@ -25,6 +25,10 @@ export type HumanReplyWindowTransition =
 type HumanReplyWindowSet = {
   awaitingHumanReplySince: SQL
   awaitingHumanReplyClosedAt?: SQL
+  /** Response SLA snapshot; cleared together with the window (set only on a close). */
+  responseDueAt?: SQL
+  responseSlaBreachingAt?: SQL
+  responseSlaTargetSeconds?: SQL
 }
 
 const ts = (at: Date): SQL => sql`${at.toISOString()}::timestamptz`
@@ -51,13 +55,22 @@ const buildClose = (
   at: Date,
   actor: HumanReplyWindowCloseActor,
 ): HumanReplyWindowSet => {
-  const awaitingHumanReplySince = sql`CASE WHEN ${closeGuard(actor)} AND "awaitingHumanReplySince" IS NOT NULL AND "awaitingHumanReplySince" <= ${ts(at)} THEN NULL ELSE "awaitingHumanReplySince" END`
+  // The same condition decides whether the window closes and whether the SLA
+  // snapshot is cleared, so the two can never disagree.
+  const closes = sql`${closeGuard(actor)} AND "awaitingHumanReplySince" IS NOT NULL AND "awaitingHumanReplySince" <= ${ts(at)}`
+  const awaitingHumanReplySince = sql`CASE WHEN ${closes} THEN NULL ELSE "awaitingHumanReplySince" END`
+  const slaCleared = {
+    responseDueAt: sql`CASE WHEN ${closes} THEN NULL ELSE "responseDueAt" END`,
+    responseSlaBreachingAt: sql`CASE WHEN ${closes} THEN NULL ELSE "responseSlaBreachingAt" END`,
+    responseSlaTargetSeconds: sql`CASE WHEN ${closes} THEN NULL ELSE "responseSlaTargetSeconds" END`,
+  }
   if (actor === "bot") {
-    return { awaitingHumanReplySince }
+    return { awaitingHumanReplySince, ...slaCleared }
   }
   return {
     awaitingHumanReplySince,
     awaitingHumanReplyClosedAt: sql`CASE WHEN ${closeGuard(actor)} THEN GREATEST(COALESCE("awaitingHumanReplyClosedAt", '-infinity'::timestamptz), ${ts(at)}) ELSE "awaitingHumanReplyClosedAt" END`,
+    ...slaCleared,
   }
 }
 

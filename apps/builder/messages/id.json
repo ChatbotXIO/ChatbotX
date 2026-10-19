@@ -218,9 +218,9 @@
     "averageFirstResponseTimeByAdmin": "Waktu respons pertama rata-rata oleh agen manusia (Menit)",
     "averageFirstResponseTimeByAdminHelp": "Waktu rata-rata yang diperlukan agen manusia untuk memberikan balasan awal kepada pesan pelanggan.",
     "averageResponseTimeByAdmin": "Waktu respons rata-rata oleh agen manusia (Menit)",
-    "withinWorkingHoursHelp": "Hanya menghitung waktu dalam jam kerja agen; waktu di luar jadwalnya tidak dihitung.",
+    "withinWorkingHoursHelp": "Hanya menghitung waktu dalam jam kerja agen.",
     "withinWorkingHoursLabel": "Dalam jam kerja",
-    "noResponseData": "Tidak ada data: agen tidak memiliki balasan pada periode ini atau belum diberi jadwal jam kerja.",
+    "noResponseData": "Tidak ada balasan pada periode ini, atau jadwal belum ditetapkan.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Rata-rata waktu respons pertama dalam jam kerja per agen manusia (menit)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Rata-rata waktu dalam jam kerja yang dibutuhkan agen manusia untuk memberikan balasan pertama atas pesan pelanggan.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "Rata-rata waktu respons dalam jam kerja per agen manusia (menit)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Jam Kerja",
     "label": "Jam kerja",
-    "description": "Tentukan kapan tim Anda tersedia. Waktu balasan hanya diukur dalam jam-jam ini.",
+    "description": "Waktu respons dihitung hanya dalam jam ini.",
     "employees": "Karyawan",
-    "empty": "Belum ada jam kerja. Tambahkan jadwal untuk mengukur waktu balasan hanya selama jam kerja.",
-    "deleteDescription": "Hapus \"{name}\"? Karyawannya akan kembali diukur berdasarkan waktu nyata. Tindakan ini tidak dapat dibatalkan.",
+    "empty": "Belum ada jadwal.",
+    "deleteDescription": "Hapus \"{name}\"? Karyawannya kembali ke waktu jam.",
     "create": {
       "title": "Tambah jam kerja",
       "description": "Beri nama jadwal. Anda akan mengatur hari dan jam berikutnya."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Terapkan jam kerja ke karyawan",
       "description": "Pilih karyawan yang mengikuti jadwal ini.",
-      "moveHelp": "Satu karyawan hanya dapat mengikuti satu jadwal. Siapa pun yang sudah di jadwal lain akan dipindahkan ke jadwal ini.",
+      "moveHelp": "Setiap karyawan punya satu jadwal; menambahkan memindahkannya ke sini.",
       "placeholder": "Pilih karyawan",
       "search": "Cari karyawan...",
       "searchAria": "Cari di antara karyawan",
@@ -8983,7 +8983,55 @@
       "endTime": "Waktu selesai",
       "removeRange": "Hapus rentang waktu",
       "errorOverlap": "Rentang waktu ini tumpang tindih. Sesuaikan untuk menyimpan.",
-      "errorOrder": "Waktu selesai harus setelah waktu mulai."
+      "errorOrder": "Waktu selesai harus setelah waktu mulai.",
+      "routingNote": "Juga dipakai Auto Assign, Global Router, dan Kondisi."
+    },
+    "condition": {
+      "assignedAgent": "Shift agen yang ditugaskan"
+    },
+    "holidays": {
+      "label": "Hari libur",
+      "title": "Hari libur",
+      "description": "Menggantikan jam mingguan semua jadwal pada tanggal itu.",
+      "add": "Tambah hari libur",
+      "empty": "Belum ada hari libur.",
+      "deleteDescription": "Hapus hari libur pada {date}?"
+    },
+    "dateOverrides": {
+      "title": "Pengecualian tanggal",
+      "description": "Menggantikan jam jadwal ini pada tanggal itu; diutamakan daripada hari libur.",
+      "add": "Tambah pengecualian",
+      "empty": "Belum ada pengecualian."
+    },
+    "dateDialog": {
+      "addTitle": "Tambah tanggal",
+      "editTitle": "Ubah tanggal",
+      "date": "Tanggal",
+      "name": "Nama (opsional)",
+      "closedAllDay": "Tutup sepanjang hari",
+      "duplicate": "Tanggal ini sudah ada di daftar.",
+      "hours": "Jam",
+      "closed": "Tutup"
     }
+  },
+  "responseSla": {
+    "label": "SLA respons",
+    "title": "SLA respons",
+    "description": "Waktu maksimal pesan pelanggan menunggu balasan manusia.",
+    "firstTarget": "Target respons pertama (menit)",
+    "nextTarget": "Target respons berikutnya (menit)",
+    "nextPlaceholder": "Tanpa SLA untuk balasan berikutnya",
+    "threshold": "Ambang hampir melanggar (% target tersisa)",
+    "thresholdHelp": "Ditandai hampir melanggar saat % target ini tersisa.",
+    "workingTimeNote": "Dihitung dalam jam kerja agen yang ditugaskan; selain itu waktu jam.",
+    "overdue": "Terlambat",
+    "due": "Batas {time}",
+    "breaching": "SLA hampir dilanggar",
+    "breached": "SLA dilanggar",
+    "firstMetColumn": "SLA respons pertama terpenuhi",
+    "metColumn": "SLA terpenuhi",
+    "metHelp": "Persentase balasan ber-SLA yang memenuhinya.",
+    "eligibleCount": "{count} balasan memiliki SLA",
+    "enable": "Aktifkan SLA respons"
   }
 }

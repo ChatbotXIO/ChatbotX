@@ -511,6 +511,14 @@ export class MessageStatsRepository extends BaseRepository {
           response?.avgWorkingFirstResponseSeconds ?? null,
         responseCount: response?.responseCount ?? 0,
         firstResponseCount: response?.firstResponseCount ?? 0,
+        responseSlaEligibleCount: response?.responseSlaEligibleCount ?? 0,
+        responseSlaMetCount: response?.responseSlaMetCount ?? 0,
+        responseSlaMetPercent: response?.responseSlaMetPercent ?? null,
+        firstResponseSlaEligibleCount:
+          response?.firstResponseSlaEligibleCount ?? 0,
+        firstResponseSlaMetCount: response?.firstResponseSlaMetCount ?? 0,
+        firstResponseSlaMetPercent:
+          response?.firstResponseSlaMetPercent ?? null,
         messagesSent: messageCount.get(adminId) ?? 0,
         uniqueContacts: contactCount.get(adminId) ?? 0,
         assignedConversations: assignedCount.get(adminId) ?? 0,

@@ -69,6 +69,12 @@ export async function recordAgentReply(props: {
           timezone: resolveWorkingHoursTimezone(
             workspace ?? { id: workspaceId },
           ),
+          dateOverrides: await workingHoursService.findDateOverridesFor({
+            workspaceId,
+            workingHoursId: schedule.workingHoursId,
+            from: measuredFrom,
+            to: at,
+          }),
         })
       : null
 
@@ -88,6 +94,10 @@ export async function recordAgentReply(props: {
         responseSeconds,
         workingResponseSeconds,
         workingHoursId: schedule?.workingHoursId ?? null,
+        slaTargetSeconds: claim.slaTargetSeconds ?? null,
+        slaMet: claim.slaDueAt
+          ? at.getTime() <= claim.slaDueAt.getTime()
+          : null,
         isFirstResponse: claim.isFirstResponse,
         channel: contactInbox.channel,
         inboxId: contactInbox.inboxId,

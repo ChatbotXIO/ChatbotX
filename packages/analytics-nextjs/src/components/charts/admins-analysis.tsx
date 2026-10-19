@@ -10,7 +10,10 @@ import type { ColumnDef } from "@chatbotx.io/ui/types/data-table"
 import { useLocale, useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useAnalysisStore } from "../../provider/analysis-store-context"
-import { buildResponseTimeColumns } from "./admins-response-time-columns"
+import {
+  buildResponseSlaColumns,
+  buildResponseTimeColumns,
+} from "./admins-response-time-columns"
 
 type AdminsAnalysisData = HumanAgentStats
 
@@ -24,6 +27,17 @@ export function AdminsAnalysis() {
   const responseTimeColumns = useMemo(
     () => buildResponseTimeColumns(t, locale),
     [t, locale],
+  )
+
+  // The SLA columns only appear once some reply in the range had an SLA, so a
+  // workspace without a policy keeps today's table.
+  const hasSlaData = useMemo(
+    () => data.some((row) => row.responseSlaEligibleCount > 0),
+    [data],
+  )
+  const responseSlaColumns = useMemo(
+    () => (hasSlaData ? buildResponseSlaColumns(t) : []),
+    [hasSlaData, t],
   )
 
   const columns = useMemo<ColumnDef<AdminsAnalysisData>[]>(
@@ -72,6 +86,7 @@ export function AdminsAnalysis() {
         enableHiding: false,
       },
       ...responseTimeColumns,
+      ...responseSlaColumns,
       {
         id: "assignedConversations",
         accessorKey: "assignedConversations",
@@ -85,7 +100,7 @@ export function AdminsAnalysis() {
         enableHiding: false,
       },
     ],
-    [t, responseTimeColumns],
+    [t, responseTimeColumns, responseSlaColumns],
   )
 
   const { table } = useDataTable({

@@ -1262,9 +1262,9 @@
     "averageFirstResponseTimeByAdmin": "Timp mediu al primului răspuns al agenților umani (minute)",
     "averageFirstResponseTimeByAdminHelp": "Timpul mediu necesar unui agent uman pentru a oferi răspunsul inițial la mesajul unui client.",
     "averageResponseTimeByAdmin": "Timp mediu de răspuns al agenților umani (minute)",
-    "withinWorkingHoursHelp": "Numără doar timpul din programul de lucru al agentului; timpul din afara programului este exclus.",
+    "withinWorkingHoursHelp": "Numără doar timpul din programul agentului.",
     "withinWorkingHoursLabel": "În timpul programului",
-    "noResponseData": "Fără date: agentul nu are răspunsuri în această perioadă sau nu are un program de lucru atribuit.",
+    "noResponseData": "Niciun răspuns în această perioadă sau niciun program alocat.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Timpul mediu de primă răspuns în timpul programului, pe agenți umani (minute)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "Timpul mediu, în timpul programului de lucru, necesar unui agent uman pentru a oferi primul răspuns la mesajul unui client.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "Timpul mediu de răspuns în timpul programului, pe agenți umani (minute)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Program de lucru",
     "label": "Program de lucru",
-    "description": "Stabilește când este disponibilă echipa ta. Timpii de răspuns sunt măsurați doar în aceste ore.",
+    "description": "Timpii de răspuns se numără doar în aceste ore.",
     "employees": "Angajați",
-    "empty": "Încă nu există program de lucru. Adaugă un program pentru a măsura timpii de răspuns doar în timpul orelor de lucru.",
-    "deleteDescription": "Ștergi \"{name}\"? Angajații săi vor fi din nou măsurați în timp real. Această acțiune nu poate fi anulată.",
+    "empty": "Niciun program încă.",
+    "deleteDescription": "Ștergi \"{name}\"? Angajații revin la timp real.",
     "create": {
       "title": "Adaugă program de lucru",
       "description": "Dă un nume programului. Vei seta zilele și orele în pasul următor."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Aplică programul de lucru angajaților",
       "description": "Alege angajații care urmează acest program.",
-      "moveHelp": "Un angajat poate urma un singur program. Cine este deja pe alt program va fi mutat pe acesta.",
+      "moveHelp": "Fiecare angajat are un program; adăugarea îl mută aici.",
       "placeholder": "Selectează angajați",
       "search": "Caută angajați...",
       "searchAria": "Caută printre angajați",
@@ -8983,7 +8983,55 @@
       "endTime": "Ora de sfârșit",
       "removeRange": "Elimină intervalul orar",
       "errorOverlap": "Aceste intervale orare se suprapun. Ajustează-le pentru a salva.",
-      "errorOrder": "Ora de sfârșit trebuie să fie după ora de început."
+      "errorOrder": "Ora de sfârșit trebuie să fie după ora de început.",
+      "routingNote": "Folosit și de Auto Assign, Global Router și Condiție."
+    },
+    "condition": {
+      "assignedAgent": "Tura agentului alocat"
+    },
+    "holidays": {
+      "label": "Sărbători",
+      "title": "Sărbători",
+      "description": "Înlocuiește programul săptămânal al tuturor programelor în acea zi.",
+      "add": "Adaugă sărbătoare",
+      "empty": "Nicio sărbătoare încă.",
+      "deleteDescription": "Ștergi sărbătoarea din {date}?"
+    },
+    "dateOverrides": {
+      "title": "Excepții pe dată",
+      "description": "Înlocuiește orele acestui program în acea zi; are prioritate față de sărbători.",
+      "add": "Adaugă excepție",
+      "empty": "Nicio excepție."
+    },
+    "dateDialog": {
+      "addTitle": "Adaugă dată",
+      "editTitle": "Editează data",
+      "date": "Data",
+      "name": "Nume (opțional)",
+      "closedAllDay": "Închis toată ziua",
+      "duplicate": "Această dată este deja în listă.",
+      "hours": "Ore",
+      "closed": "Închis"
     }
+  },
+  "responseSla": {
+    "label": "SLA de răspuns",
+    "title": "SLA de răspuns",
+    "description": "Timpul maxim în care un mesaj al clientului poate aștepta un răspuns uman.",
+    "firstTarget": "Țintă primul răspuns (minute)",
+    "nextTarget": "Țintă răspunsuri următoare (minute)",
+    "nextPlaceholder": "Fără SLA pe răspunsurile următoare",
+    "threshold": "Prag de risc (% din țintă rămas)",
+    "thresholdHelp": "Marcat la risc când rămâne acest % din țintă.",
+    "workingTimeNote": "Calculat în programul agentului alocat; altfel timp real.",
+    "overdue": "Întârziat",
+    "due": "Termen {time}",
+    "breaching": "SLA la risc",
+    "breached": "SLA depășit",
+    "firstMetColumn": "SLA primul răspuns respectat",
+    "metColumn": "SLA respectat",
+    "metHelp": "Ponderea răspunsurilor cu SLA care l-au respectat.",
+    "eligibleCount": "{count} răspunsuri aveau SLA",
+    "enable": "Activează SLA de răspuns"
   }
 }

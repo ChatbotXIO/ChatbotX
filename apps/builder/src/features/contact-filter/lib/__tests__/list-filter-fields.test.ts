@@ -93,4 +93,19 @@ describe("listContactFilterFieldsForAPI", () => {
     ])
     expect(result.tags).toEqual([{ id: "tag-1", name: "VIP" }])
   })
+  test("lists the flow-only working-hours field on the flowCondition surface only", async () => {
+    customFieldList.mockResolvedValue({ data: [] })
+    botFieldList.mockResolvedValue({ data: [] })
+    tagListActive.mockResolvedValue([])
+
+    const names = async (surface?: "contacts" | "flowCondition") =>
+      (
+        await listContactFilterFieldsForAPI({ workspaceId: "ws-1", surface })
+      ).staticFields.map((f: { field: string }) => f.field)
+
+    expect(await names()).not.toContain("isWithinWorkingHours")
+    expect(await names("contacts")).not.toContain("isWithinWorkingHours")
+    expect(await names("flowCondition")).toContain("isWithinWorkingHours")
+    expect(await names("flowCondition")).toContain("email")
+  })
 })

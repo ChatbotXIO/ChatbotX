@@ -54,6 +54,7 @@ import type {
   ContactFilterCriteriaInput as FilterCriteriaInput,
   ContactWhereInput as FilterWhereInput,
 } from "./types"
+import { buildIsWithinWorkingHoursWhere } from "./working-hours-predicates"
 
 export {
   parseConversationAssigneeValues,
@@ -127,6 +128,7 @@ export const contactFilterHasPredicate = (
 
 type ContactFilterContext = {
   timezone: string
+  workingHoursTimezone: string
   /** Optional workspace scope, read only by the `ctwaRetarget` case. */
   workspaceId?: string
 }
@@ -401,6 +403,7 @@ export function applyContactFilter(
 
   const context: ContactFilterContext = {
     timezone: resolveFilterTimezone(criteria.timezone),
+    workingHoursTimezone: resolveFilterTimezone(criteria.workingHoursTimezone),
     workspaceId,
   }
   const conditionWheres = conditions
@@ -677,6 +680,14 @@ function buildConditionWhere(
 
     case "customField":
       return buildCustomFieldWhere({ ...condition, timezone })
+
+    case "isWithinWorkingHours":
+      return buildIsWithinWorkingHoursWhere({
+        operator,
+        value,
+        workspaceId: context.workspaceId,
+        timezone: context.workingHoursTimezone,
+      })
 
     case "botField":
       return buildBotFieldWhere({

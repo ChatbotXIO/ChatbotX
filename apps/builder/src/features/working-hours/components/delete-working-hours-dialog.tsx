@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { deleteWorkingHoursAction } from "../actions/delete-working-hours.action"
+import { useInvalidateWorkingHoursOptions } from "../provider/working-hours-hook"
 import type { WorkingHoursResource } from "../schema/resource"
 
 export function DeleteWorkingHoursDialog({
@@ -30,11 +31,13 @@ export function DeleteWorkingHoursDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateOptions = useInvalidateWorkingHoursOptions()
 
   const { execute, isPending } = useAction(
     deleteWorkingHoursAction.bind(null, workspaceId, workingHours?.id ?? ""),
     {
       onSuccess: () => {
+        invalidateOptions()
         toast.success(
           t("messages.deletedSuccess", { feature: t("workingHours.label") }),
         )

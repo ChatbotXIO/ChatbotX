@@ -218,9 +218,9 @@
     "averageFirstResponseTimeByAdmin": "Tiempo medio de primera respuesta de los agentes humanos (minutos)",
     "averageFirstResponseTimeByAdminHelp": "El tiempo medio que tarda un agente humano en dar la primera respuesta al mensaje de un cliente.",
     "averageResponseTimeByAdmin": "Tiempo medio de respuesta de los agentes humanos (minutos)",
-    "withinWorkingHoursHelp": "Cuenta solo el tiempo dentro del horario laboral del agente; el tiempo fuera de su horario se excluye.",
+    "withinWorkingHoursHelp": "Cuenta solo el tiempo dentro del horario del agente.",
     "withinWorkingHoursLabel": "Dentro del horario laboral",
-    "noResponseData": "Sin datos: el agente no tiene respuestas en este periodo o no tiene un horario laboral asignado.",
+    "noResponseData": "Sin respuestas en este periodo o sin horario asignado.",
     "averageFirstResponseTimeWithinWorkingHoursByAdmin": "Tiempo medio de primera respuesta dentro del horario laboral por agentes humanos (minutos)",
     "averageFirstResponseTimeWithinWorkingHoursByAdminHelp": "El tiempo medio, dentro del horario laboral, que tarda un agente humano en dar la primera respuesta al mensaje de un cliente.",
     "averageResponseTimeWithinWorkingHoursByAdmin": "Tiempo medio de respuesta dentro del horario laboral por agentes humanos (minutos)",
@@ -8954,10 +8954,10 @@
   "workingHours": {
     "title": "Horario laboral",
     "label": "Horario laboral",
-    "description": "Define cuándo está disponible tu equipo. Los tiempos de respuesta solo se miden dentro de estas horas.",
+    "description": "Los tiempos de respuesta cuentan solo dentro de estas horas.",
     "employees": "Empleados",
-    "empty": "Aún no hay horarios laborales. Añade un horario para medir los tiempos de respuesta solo dentro del horario laboral.",
-    "deleteDescription": "¿Eliminar \"{name}\"? Sus empleados volverán a medirse en tiempo real. Esta acción no se puede deshacer.",
+    "empty": "Aún no hay horarios.",
+    "deleteDescription": "¿Eliminar \"{name}\"? Sus empleados vuelven al tiempo real.",
     "create": {
       "title": "Añadir horario laboral",
       "description": "Ponle un nombre al horario. A continuación definirás los días y las horas."
@@ -8965,7 +8965,7 @@
     "employeesDialog": {
       "title": "Aplicar horario laboral a empleados",
       "description": "Elige los empleados que siguen este horario.",
-      "moveHelp": "Un empleado solo puede seguir un horario. Quien ya esté en otro horario se moverá a este.",
+      "moveHelp": "Cada empleado tiene un horario; añadirlo lo mueve aquí.",
       "placeholder": "Seleccionar empleados",
       "search": "Buscar empleados...",
       "searchAria": "Buscar entre los empleados",
@@ -8983,7 +8983,55 @@
       "endTime": "Hora de fin",
       "removeRange": "Quitar intervalo",
       "errorOverlap": "Estos intervalos se solapan. Ajústalos para guardar.",
-      "errorOrder": "La hora de fin debe ser posterior a la hora de inicio."
+      "errorOrder": "La hora de fin debe ser posterior a la hora de inicio.",
+      "routingNote": "También lo usan Auto Assign, Global Router y Condición."
+    },
+    "condition": {
+      "assignedAgent": "Turno del agente asignado"
+    },
+    "holidays": {
+      "label": "Festivos",
+      "title": "Festivos",
+      "description": "Reemplaza el horario semanal de todos los horarios ese día.",
+      "add": "Añadir festivo",
+      "empty": "Aún no hay festivos.",
+      "deleteDescription": "¿Eliminar el festivo del {date}?"
+    },
+    "dateOverrides": {
+      "title": "Excepciones por fecha",
+      "description": "Reemplaza el horario de este horario ese día; prevalece sobre los festivos.",
+      "add": "Añadir excepción",
+      "empty": "No hay excepciones."
+    },
+    "dateDialog": {
+      "addTitle": "Añadir fecha",
+      "editTitle": "Editar fecha",
+      "date": "Fecha",
+      "name": "Nombre (opcional)",
+      "closedAllDay": "Cerrado todo el día",
+      "duplicate": "Esta fecha ya está en la lista.",
+      "hours": "Horario",
+      "closed": "Cerrado"
     }
+  },
+  "responseSla": {
+    "label": "SLA de respuesta",
+    "title": "SLA de respuesta",
+    "description": "Tiempo máximo que un mensaje del cliente puede esperar respuesta humana.",
+    "firstTarget": "Objetivo de primera respuesta (minutos)",
+    "nextTarget": "Objetivo de respuestas posteriores (minutos)",
+    "nextPlaceholder": "Sin SLA en respuestas posteriores",
+    "threshold": "Umbral de riesgo (% del objetivo restante)",
+    "thresholdHelp": "Se marca en riesgo cuando queda este % del objetivo.",
+    "workingTimeNote": "Se cuenta en el horario del agente asignado; si no, en tiempo real.",
+    "overdue": "Vencido",
+    "due": "Vence {time}",
+    "breaching": "SLA en riesgo",
+    "breached": "SLA incumplido",
+    "firstMetColumn": "SLA de primera respuesta cumplido",
+    "metColumn": "SLA cumplido",
+    "metHelp": "Proporción de respuestas con SLA que lo cumplieron.",
+    "eligibleCount": "{count} respuestas tenían SLA",
+    "enable": "Activar SLA de respuesta"
   }
 }

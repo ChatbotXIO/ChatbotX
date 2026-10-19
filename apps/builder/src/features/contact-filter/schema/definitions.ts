@@ -38,6 +38,17 @@ export type ContactFilterOptionSource =
   | "assignees"
   | "ctwaConversionTypes"
   | "channelPosts"
+  | "workingHours"
+
+/**
+ * Where a contact-filter field may be used. `contacts` is every list/audience
+ * surface (contacts, conversations, broadcast audience and their public APIs);
+ * `flowCondition` is the flow Condition step, which evaluates the filter at
+ * runtime. A field limited to `flowCondition` is rejected by the schemas of
+ * every other surface, not just hidden from their pickers.
+ */
+export const CONTACT_FILTER_SURFACES = ["contacts", "flowCondition"] as const
+export type ContactFilterSurface = (typeof CONTACT_FILTER_SURFACES)[number]
 
 export type ContactFilterFieldDefinition = {
   field: ContactFilterField
@@ -49,7 +60,14 @@ export type ContactFilterFieldDefinition = {
    * (e.g. superseded by another) without breaking saved filters/broadcasts.
    */
   hidden?: boolean
+  /** Surfaces that accept this field. Omitted = every surface. */
+  surfaces?: readonly ContactFilterSurface[]
 }
+
+export const isFieldOnSurface = (
+  def: ContactFilterFieldDefinition,
+  surface: ContactFilterSurface,
+): boolean => !def.surfaces || def.surfaces.includes(surface)
 
 const conditionSchemaForDef = (def: ContactFilterFieldDefinition) =>
   staticFieldFilter(def.field)
@@ -342,6 +360,13 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
   },
   // --- System fields ---
   {
+    field: contactFilterFields.enum.isWithinWorkingHours,
+    schemaKind: "multiSelect",
+    optionSource: "workingHours",
+    // Evaluated against `now()`, so it only means something at runtime.
+    surfaces: ["flowCondition"],
+  },
+  {
     field: contactFilterFields.enum.lastUserInput,
     schemaKind: "text",
     optionSource: "none",
@@ -353,5 +378,14 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
   },
 ] as const satisfies readonly ContactFilterFieldDefinition[]
 
+/** Condition schemas accepted on `surface` (field definitions filtered by `surfaces`). */
+const conditionSchemasForSurface = (surface: ContactFilterSurface) =>
+  CONTACT_FILTER_FIELD_DEFINITIONS.filter((def) =>
+    isFieldOnSurface(def, surface),
+  ).map((def) => conditionSchemaForDef(def))
+
 export const contactFilterConditionSchemas =
-  CONTACT_FILTER_FIELD_DEFINITIONS.map((def) => conditionSchemaForDef(def))
+  conditionSchemasForSurface("contacts")
+
+export const flowConditionFilterConditionSchemas =
+  conditionSchemasForSurface("flowCondition")

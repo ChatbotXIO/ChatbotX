@@ -69,7 +69,10 @@ vi.mock("../src/workspace/service", () => ({
 }))
 
 vi.mock("../src/working-hours/service", () => ({
-  workingHoursService: { findForAgent: mockFindForAgent },
+  workingHoursService: {
+    findForAgent: mockFindForAgent,
+    findDateOverridesFor: vi.fn(async () => new Map()),
+  },
 }))
 
 vi.mock("../src/product-message/service", () => ({
@@ -150,9 +153,45 @@ describe("createOutgoing agent:replied", () => {
       responseSeconds: 300,
       workingResponseSeconds: null,
       workingHoursId: null,
+      slaTargetSeconds: null,
+      slaMet: null,
       isFirstResponse: true,
       channel: "messenger",
       inboxId: "inbox-1",
+    })
+  })
+
+  test.each([
+    ["a reply before the deadline is met", "2026-10-19T02:05:00.001Z", true],
+    [
+      "a reply exactly at the deadline is met",
+      "2026-10-19T02:05:00.000Z",
+      true,
+    ],
+    ["a reply after the deadline is missed", "2026-10-19T02:04:59.999Z", false],
+  ])("SLA: %s", async (_label, slaDueAt, expected) => {
+    mockMarkAgentReplied.mockResolvedValue({
+      ...claim,
+      slaDueAt: new Date(slaDueAt),
+      slaTargetSeconds: 3600,
+    })
+
+    await sendText()
+
+    expect(mockEmit.mock.calls[0]?.[1]).toMatchObject({
+      slaTargetSeconds: 3600,
+      slaMet: expected,
+    })
+  })
+
+  test("a window without an SLA is neither met nor missed", async () => {
+    mockMarkAgentReplied.mockResolvedValue({ ...claim, slaDueAt: null })
+
+    await sendText()
+
+    expect(mockEmit.mock.calls[0]?.[1]).toMatchObject({
+      slaTargetSeconds: null,
+      slaMet: null,
     })
   })
 

@@ -21,6 +21,10 @@ export const conversationStatuses = z.enum([
   "followUp",
   "archived",
   "blocked",
+  /** Open response-SLA window within its breaching threshold, not yet overdue. */
+  "slaBreaching",
+  /** Open response-SLA window past its deadline. */
+  "slaBreached",
 ])
 export type ConversationStatus = z.infer<typeof conversationStatuses>
 

@@ -88,6 +88,20 @@ vi.mock("../src/platform/realtime-broadcast", () => ({
   broadcastToWorkspaceParty: vi.fn(),
 }))
 
+vi.mock("../src/working-hours/on-shift", () => ({
+  isUserOnShift: vi.fn(async () => true),
+}))
+
+vi.mock("../src/response-sla/service", () => ({
+  responseSlaService: {
+    // No policy: the statement just runs on the given client.
+    trackWindow: async (
+      props: { tx?: unknown },
+      run: (client: unknown) => Promise<unknown>,
+    ) => run(props.tx ?? (await import("@chatbotx.io/database/client")).db),
+  },
+}))
+
 vi.mock("../src/contact/service", () => ({
   contactService: {
     setRichSystemFieldByKey: vi.fn(async () => undefined),

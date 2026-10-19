@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import type { ListConversationItemResource } from "@/features/conversations/schema/resource"
 import { useWhatsappVoipCallStore } from "@/features/integration-whatsapp/calling/voip/voip-call-store"
 
+vi.mock("@/features/response-sla/provider/response-sla-hook", () => ({
+  useResponseSlaEnabled: () => true,
+}))
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: { count?: number }) =>
     values?.count === undefined ? key : `${key}:${values.count}`,
