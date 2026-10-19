@@ -40,9 +40,7 @@ export default async function AIAgentsPage(props: AIAgentsPageProps) {
     workspaceService.findById({ id: workspaceId }),
     Promise.all([
       flowService.listPublishedOptions({ workspaceId }),
-      loadAllActionOptions((page) =>
-        tagService.list({ workspaceId, page, perPage: 100 }),
-      ),
+      tagService.listActive({ workspaceId }),
       loadAllActionOptions((page) =>
         customFieldService.list({ workspaceId, page, perPage: 100 }),
       ),
