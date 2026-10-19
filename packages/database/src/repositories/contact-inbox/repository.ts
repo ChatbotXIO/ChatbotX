@@ -521,6 +521,15 @@ export const contactInboxRepository = {
     return row ?? null
   },
 
+  async findFullByIdForWorkspace(
+    input: { id: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxModel | undefined> {
+    return await tx.query.contactInboxModel.findFirst({
+      where: { id: input.id, inbox: { workspaceId: input.workspaceId } },
+    })
+  },
+
   /**
    * Single-row, workspace- AND contact-scoped load of a contact inbox by id —
    * used by `resolveActionContactInbox` to validate a `contactInboxId`

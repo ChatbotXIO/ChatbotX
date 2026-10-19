@@ -77,12 +77,13 @@ const signRealtimeToken = async (
   purpose: RealtimeTokenPurpose,
   secret: string,
   claims: RealtimeTokenClaims = {},
+  issuedAtSeconds = Math.floor(Date.now() / 1000),
 ): Promise<string> =>
   await new SignJWT({ ...claims, purpose })
     .setProtectedHeader({ alg: ALGORITHM })
-    .setIssuedAt()
+    .setIssuedAt(issuedAtSeconds)
     .setAudience(formatAudience(audience))
-    .setExpirationTime(`${REALTIME_TOKEN_TTL_SECONDS}s`)
+    .setExpirationTime(issuedAtSeconds + REALTIME_TOKEN_TTL_SECONDS)
     .sign(encodeSecret(secret))
 
 /**
@@ -120,7 +121,7 @@ const memberClaimsSchema = z.object({
   // the internal `signRealtimeToken`'s `.setIssuedAt()`.
   iat: z.number(),
   // Millisecond-precision issue time captured by the issuer before membership
-  // lookup. A revoke marker invalidates a token when `revokedAt >= iatMs`.
+  // lookup. A revoke marker invalidates a token when `revokedAt > iatMs`.
   iatMs: issuedAtMsSchema,
 })
 
@@ -159,6 +160,7 @@ export const signMemberConnectToken = async (
     REALTIME_TOKEN_PURPOSE.memberConnect,
     secret,
     claims,
+    Math.floor(issuedAtMs / 1000),
   )
 }
 

@@ -8,7 +8,10 @@ import {
 } from "./delivery"
 import type { RealtimeGatewayConfig } from "./gateway-config"
 import { createGuestSocketBehavior } from "./gateway-guest-socket"
-import { createGatewayConnectionState } from "./gateway-shared"
+import {
+  createGatewayConnectionState,
+  nextOverloadRetryAfterMs,
+} from "./gateway-shared"
 import { createWorkspaceSocketBehavior } from "./gateway-workspace-socket"
 import { reportWorkspacePresence } from "./lib/presence-report"
 import {
@@ -43,6 +46,7 @@ export const createRealtimeGateway = ({
   maxGuestConnectionsPerWorkspace,
   presenceReportCoalesceMs,
   presenceReportIntervalMs,
+  shutdownDrainMs,
   redis,
   secret,
 }: RealtimeGatewayOptions): RealtimeGateway => {
@@ -68,6 +72,13 @@ export const createRealtimeGateway = ({
   let ready = false
   let stopped = false
   let windowStartedAt = Date.now()
+  let isPresenceReportRunning = false
+
+  const waitForShutdownDrain = (): Promise<void> => {
+    const { promise, resolve } = Promise.withResolvers<void>()
+    setTimeout(resolve, shutdownDrainMs)
+    return promise
+  }
 
   const TOKEN_REJECTION_LOG_WINDOW_MS = 10_000
   let lastTokenRejectionLogAt = 0
@@ -148,7 +159,8 @@ export const createRealtimeGateway = ({
     if (users.size === 0) {
       connectedUsersByWorkspace.delete(workspaceId)
     }
-    markPresenceDirty(workspaceId)
+    // Let the last successful report expire rather than emitting an immediate
+    // empty presence state for a transient socket disconnect.
   }
 
   const allConnectedWorkspaceIds = (): Set<string> => {
@@ -278,6 +290,7 @@ export const createRealtimeGateway = ({
         maxConnectionsPerGuest,
         maxGuestConnections,
         maxGuestConnectionsPerWorkspace,
+        redis,
         secret,
         state,
         streamReader,
@@ -312,6 +325,8 @@ export const createRealtimeGateway = ({
         clearTimeout(timer)
       }
       presenceTimers.clear()
+      await waitForShutdownDrain()
+      delivery.closeAll(nextOverloadRetryAfterMs())
       app.close()
       try {
         await streamReader.close()
@@ -333,11 +348,17 @@ export const createRealtimeGateway = ({
         app.publish("hb", HEARTBEAT_FRAME)
       }, 25_000)
       presenceHeartbeat = setInterval(() => {
-        reportLocalPresence([...connectedUsersByWorkspace.keys()]).catch(
-          (error) => {
+        if (isPresenceReportRunning) {
+          return
+        }
+        isPresenceReportRunning = true
+        reportLocalPresence([...connectedUsersByWorkspace.keys()])
+          .catch((error) => {
             logger.error({ err: error }, "Failed to report workspace presence")
-          },
-        )
+          })
+          .finally(() => {
+            isPresenceReportRunning = false
+          })
       }, presenceReportIntervalMs)
       metricsTimer = setInterval(flushMetrics, REALTIME_METRIC_WINDOW_MS)
       streamReader.start()

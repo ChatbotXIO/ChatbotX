@@ -2,4 +2,4 @@
 
 cd /app/apps/realtime
 umask 077
-exec pnpm start
+exec ./node_modules/.bin/tsx src/main.ts

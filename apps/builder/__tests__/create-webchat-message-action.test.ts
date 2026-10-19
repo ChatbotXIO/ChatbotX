@@ -197,9 +197,6 @@ vi.mock("@/features/integration-webchat/lib/webchat-access-token", () => ({
   verifyWebchatAccessToken: mockVerifyWebchatAccessToken,
 }))
 
-const PROTOCOL_PREFIX_REGEX = /^https?:\/\//
-const HOST_DELIMITER_REGEX = /[/:?#]/
-
 const { mockHeaders } = vi.hoisted(() => ({
   mockHeaders: vi.fn(() => Promise.resolve(new Headers())),
 }))
@@ -208,30 +205,12 @@ vi.mock("next/headers", () => ({
   headers: mockHeaders,
 }))
 
-vi.mock("@/features/integration-webchat/lib/authorized-domain", async () => ({
-  isFirstPartyOrigin: (
-    await vi.importActual<
-      typeof import("@/features/integration-webchat/lib/authorized-domain")
-    >("@/features/integration-webchat/lib/authorized-domain")
-  ).isFirstPartyOrigin,
-  isOriginAuthorized: (
-    origin: string | null | undefined,
-    authorizedDomains: string[],
-  ) => {
-    if (!origin) {
-      return true
-    }
-    if (authorizedDomains.length === 0) {
-      return false
-    }
-    const host = origin
-      .replace(PROTOCOL_PREFIX_REGEX, "")
-      .split(HOST_DELIMITER_REGEX)[0]
-    return authorizedDomains.some(
-      (domain) => host === domain || host?.endsWith(`.${domain}`),
-    )
-  },
-}))
+vi.mock("@/features/integration-webchat/lib/authorized-domain", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/features/integration-webchat/lib/authorized-domain")
+  >("@/features/integration-webchat/lib/authorized-domain")
+  return { isAllowedGuestOrigin: actual.isAllowedGuestOrigin }
+})
 
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn((namespace?: string) => {
@@ -628,7 +607,7 @@ describe("handleCreateWebchatMessage", () => {
       inboxId: "inbox-1",
       authorizedDomains: ["example.com"],
     })
-    mockHeaders.mockResolvedValueOnce(
+    mockHeaders.mockResolvedValue(
       new Headers({ "x-domain": "app.chatbotx.test" }),
     )
 
@@ -650,7 +629,7 @@ describe("handleCreateWebchatMessage", () => {
       inboxId: "inbox-1",
       authorizedDomains: ["example.com"],
     })
-    mockHeaders.mockResolvedValueOnce(
+    mockHeaders.mockResolvedValue(
       new Headers({ "x-domain": "app.chatbotx.test" }),
     )
 

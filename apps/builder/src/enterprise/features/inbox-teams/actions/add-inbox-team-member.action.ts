@@ -14,9 +14,8 @@ export const addInboxTeamMemberAction = workspaceActionClient
       parsedInput,
     } = props
 
-    const { revokeWarning } = await inboxTeamService.addMembers(
+    await inboxTeamService.addMembers(
       { workspaceId, inboxTeamId },
       parsedInput.userIds,
     )
-    return { revokeWarning }
   })

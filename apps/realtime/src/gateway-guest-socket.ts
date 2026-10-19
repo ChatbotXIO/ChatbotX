@@ -3,6 +3,7 @@ import {
   REALTIME_CLOSE_CODE,
   verifyGuestConnectToken,
 } from "@chatbotx.io/realtime-protocol"
+import type { Redis } from "@chatbotx.io/redis"
 import type { GuestSocketData, RealtimeDelivery } from "./delivery"
 import {
   acquireSlot,
@@ -24,6 +25,7 @@ import {
 } from "./gateway-shared"
 import type { RealtimeServerCounters } from "./lib/realtime-metrics"
 import { logger } from "./logger"
+import { loadReplay } from "./replay"
 import type { StreamReader } from "./stream-reader"
 
 const guestConnectionKey = (
@@ -40,6 +42,7 @@ type GuestSocketDeps<WorkspaceSocketData extends object> = {
   maxConnectionsPerGuest: number
   maxGuestConnections: number
   maxGuestConnectionsPerWorkspace: number
+  redis: Redis
   secret: string
   state: GatewayConnectionState<WorkspaceSocketData, GuestSocketData>
   streamReader: StreamReader
@@ -54,6 +57,7 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
   maxConnectionsPerGuest,
   maxGuestConnections,
   maxGuestConnectionsPerWorkspace,
+  redis,
   secret,
   state,
   streamReader,
@@ -66,6 +70,7 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
     })
     const guestConversationId = req.getParameter("guestConversationId")
     const token = req.getQuery("token")
+    const lastSeq = req.getQuery("lastSeq")
     const requestHeaders = readUpgradeRequest(req)
     if (!(guestConversationId && token)) {
       counters.tokenRejections += 1
@@ -142,6 +147,14 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
           claims.workspaceId,
         )
         activated = true
+        const replay = await loadReplay({
+          lastSeq,
+          redis,
+          workspaceId: claims.workspaceId,
+        })
+        if (replay.droppedCount) {
+          counters.malformedRecords += replay.droppedCount
+        }
         if (aborted) {
           pendingUpgrade.release()
           streamReader.releaseWorkspace(claims.workspaceId)
@@ -153,10 +166,13 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
           res,
           socketData: {
             ...claims,
+            closeReason:
+              replay.closeReason ??
+              (replay.droppedCount ? "replay-entries-dropped" : undefined),
             closed: false,
             pendingUpgrade,
-            replayCutoff: activationLastId,
-            replayEntries: [],
+            replayCutoff: replay.lastStreamId ?? activationLastId,
+            replayEntries: replay.entries,
           },
         })
       } catch (error) {
@@ -209,6 +225,11 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
     ])
     delivery.addGuestSocket(socket)
     delivery.subscribeGuestSocket(socket)
+    if (socketData.closeReason) {
+      socketData.closed = true
+      socket.end(REALTIME_CLOSE_CODE.resync, socketData.closeReason)
+      return
+    }
     if (!delivery.replayGuestSocket(socket)) {
       return
     }

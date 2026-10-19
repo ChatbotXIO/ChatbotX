@@ -253,7 +253,7 @@ and that call). Transport-tagged `ended` realtime event closes the peer.
   changes for any other number are dropped before enqueue.
 
 ## Realtime event contract
-The transport-tagged payload lives in `packages/partysocket-config/src/schemas.ts`
+The transport-tagged payload lives in `packages/realtime-protocol/src/schemas.ts`
 (`transport: z.literal("voip")` — kept as a literal, not stripped, so existing
 clients keep parsing the payload unchanged; browser WebRTC is the only transport).
 Variants carry `whatsappCallId`/`wacid` and **no `rootUuid`**. `ChatRealtime` and

@@ -36,6 +36,7 @@ const gatewayEnv = (runtimeEnv: NodeJS.ProcessEnv) =>
         .int()
         .min(1)
         .default(1000),
+      REALTIME_SHUTDOWN_DRAIN_MS: z.coerce.number().int().min(0).default(5000),
       NEXT_PUBLIC_BUILDER_URL: z.url(),
       REDIS_URL: z.url(),
     },
@@ -53,6 +54,7 @@ export type RealtimeGatewayConfig = {
   maxGuestConnectionsPerWorkspace: number
   presenceReportCoalesceMs: number
   presenceReportIntervalMs: number
+  shutdownDrainMs: number
   secret: string
 }
 
@@ -81,6 +83,7 @@ export const resolveRealtimeGatewayConfig = (
     presenceReportCoalesceMs: PRESENCE_REPORT_COALESCE_MS,
     presenceReportIntervalMs: PRESENCE_REPORT_INTERVAL_MS,
     redisUrl: environment.REDIS_URL,
+    shutdownDrainMs: environment.REALTIME_SHUTDOWN_DRAIN_MS,
     secret: environment.REALTIME_BROADCAST_SECRET,
   }
 }

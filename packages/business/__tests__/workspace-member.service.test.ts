@@ -72,6 +72,9 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     markOnlineBulk: mocks.markOnlineBulk,
   },
 }))
+vi.mock("../src/platform/realtime-broadcast", () => ({
+  tryRevokeWorkspaceMemberRealtimeConnections: vi.fn().mockResolvedValue(true),
+}))
 
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn(),

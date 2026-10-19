@@ -104,9 +104,8 @@ describe("GET /v1/teams/{id}", () => {
 describe("POST /v1/teams", () => {
   const procedure = findProcedure("POST", "/v1/teams")
 
-  test("delegates to inboxTeamService.create and returns its revoke warning", async () => {
+  test("delegates to inboxTeamService.create and returns its team", async () => {
     inboxTeamService.create.mockResolvedValueOnce({
-      revokeWarning: true,
       team: { id: "1" },
     })
 
@@ -117,7 +116,7 @@ describe("POST /v1/teams", () => {
       workspaceId: "ws-1",
       data: input,
     })
-    expect(result).toEqual({ id: "1", revokeWarning: true })
+    expect(result).toEqual({ id: "1" })
   })
 })
 
@@ -160,9 +159,8 @@ describe("DELETE /v1/teams/{id}", () => {
 describe("POST /v1/teams/{id}/members", () => {
   const procedure = findProcedure("POST", "/v1/teams/{id}/members")
 
-  test("delegates to inboxTeamService.addMembers and returns its revoke warning", async () => {
+  test("delegates to inboxTeamService.addMembers and returns its team", async () => {
     inboxTeamService.addMembers.mockResolvedValueOnce({
-      revokeWarning: true,
       team: { id: "1" },
     })
 
@@ -176,16 +174,15 @@ describe("POST /v1/teams/{id}/members", () => {
       ["user-1", "user-2"],
     )
     expect(inboxTeamService.findByIdOrFail).not.toHaveBeenCalled()
-    expect(result).toEqual({ id: "1", revokeWarning: true })
+    expect(result).toEqual({ id: "1" })
   })
 })
 
 describe("DELETE /v1/teams/{id}/members", () => {
   const procedure = findProcedure("DELETE", "/v1/teams/{id}/members")
 
-  test("delegates to inboxTeamService.removeMembersByUserIds and returns its revoke warning", async () => {
-    inboxTeamService.removeMembersByUserIds.mockResolvedValueOnce({
-      revokeWarning: true,
+  test("delegates to inboxTeamService.removeMembers and returns its team", async () => {
+    inboxTeamService.removeMembers.mockResolvedValueOnce({
       team: { id: "1" },
     })
 
@@ -194,11 +191,11 @@ describe("DELETE /v1/teams/{id}/members", () => {
       input: { id: "1", userIds: ["user-1"] },
     })
 
-    expect(inboxTeamService.removeMembersByUserIds).toHaveBeenCalledWith(
+    expect(inboxTeamService.removeMembers).toHaveBeenCalledWith(
       { workspaceId: "ws-1", inboxTeamId: "1" },
       ["user-1"],
     )
     expect(inboxTeamService.findByIdOrFail).not.toHaveBeenCalled()
-    expect(result).toEqual({ id: "1", revokeWarning: true })
+    expect(result).toEqual({ id: "1" })
   })
 })

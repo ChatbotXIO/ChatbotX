@@ -314,7 +314,10 @@ describe("updateWorkspaceMemberAction", () => {
       name: "Target User",
       email: "target@example.com",
     })
-    mockUpdateMember.mockResolvedValue({ id: MEMBER_ID })
+    mockUpdateMember.mockResolvedValue({
+      id: MEMBER_ID,
+      revokeWarning: false,
+    })
   })
 
   test("records a role_change audit event with the target member's name", async () => {
@@ -345,6 +348,7 @@ describe("updateWorkspaceMemberAction", () => {
       id: MEMBER_ID,
       workspaceId: WORKSPACE_ID,
       data: { ...updateInput, permissions: fullPermissions },
+      revokeRealtime: true,
     })
   })
 
@@ -357,6 +361,7 @@ describe("updateWorkspaceMemberAction", () => {
       id: MEMBER_ID,
       workspaceId: WORKSPACE_ID,
       data: { ...updateInput, permissions: normalizedGranularPermissions },
+      revokeRealtime: true,
     })
   })
 
@@ -369,6 +374,7 @@ describe("updateWorkspaceMemberAction", () => {
       id: MEMBER_ID,
       workspaceId: WORKSPACE_ID,
       data: { ...updateInput, permissions: assignedOnlyPermissions },
+      revokeRealtime: true,
     })
   })
 
@@ -385,6 +391,7 @@ describe("updateWorkspaceMemberAction", () => {
       id: MEMBER_ID,
       workspaceId: WORKSPACE_ID,
       data: { ...updateInput, permissions: normalizedGranularPermissions },
+      revokeRealtime: true,
     })
   })
 
@@ -437,6 +444,7 @@ describe("updateWorkspaceMemberAction", () => {
       id: MEMBER_ID,
       workspaceId: WORKSPACE_ID,
       data: { ...updateInput, permissions: normalizedGranularPermissions },
+      revokeRealtime: false,
     })
     // Permissions didn't actually change, so this must not be recorded as
     // a "changed role" audit event.
@@ -453,6 +461,7 @@ describe("updateWorkspaceMemberAction", () => {
       id: MEMBER_ID,
       workspaceId: WORKSPACE_ID,
       data: { ...updateInput, permissions: normalizedGranularPermissions },
+      revokeRealtime: true,
     })
     expect(mockAuditRecord).toHaveBeenCalledWith({
       action: "role_change",
@@ -474,7 +483,10 @@ describe("updateWorkspaceMemberAction", () => {
   })
 
   test("returns revokeWarning when permission reauthentication cannot close sockets", async () => {
-    mockRevokeWorkspaceMemberConnections.mockResolvedValueOnce(false)
+    mockUpdateMember.mockResolvedValueOnce({
+      id: MEMBER_ID,
+      revokeWarning: true,
+    })
 
     await expect(
       (updateWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
@@ -484,8 +496,6 @@ describe("updateWorkspaceMemberAction", () => {
   })
 
   test("returns no revokeWarning when permission reauthentication closes sockets", async () => {
-    mockRevokeWorkspaceMemberConnections.mockResolvedValueOnce(true)
-
     await expect(
       (updateWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
         updateActionCtx(),
@@ -510,6 +520,7 @@ describe("deleteWorkspaceMemberAction", () => {
       role: "agent",
     })
     mockCurrentMember()
+    mockWorkspaceMemberServiceDelete.mockResolvedValue({ revokeWarning: false })
   })
 
   test("rejects deleting the workspace owner", async () => {
@@ -569,7 +580,9 @@ describe("deleteWorkspaceMemberAction", () => {
   })
 
   test("returns revokeWarning when a deleted member's socket revoke is deferred", async () => {
-    mockRevokeWorkspaceMemberConnections.mockResolvedValueOnce(false)
+    mockWorkspaceMemberServiceDelete.mockResolvedValueOnce({
+      revokeWarning: true,
+    })
 
     await expect(
       (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(
@@ -579,7 +592,9 @@ describe("deleteWorkspaceMemberAction", () => {
   })
 
   test("returns no revokeWarning when a deleted member's sockets are closed", async () => {
-    mockRevokeWorkspaceMemberConnections.mockResolvedValueOnce(true)
+    mockWorkspaceMemberServiceDelete.mockResolvedValueOnce({
+      revokeWarning: false,
+    })
 
     await expect(
       (deleteWorkspaceMemberAction as (props: unknown) => Promise<unknown>)(

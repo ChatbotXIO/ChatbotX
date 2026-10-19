@@ -328,7 +328,7 @@ describe("default worker", () => {
     )
   })
 
-  test("retries member revocations for blocked workspaces", async () => {
+  test("skips member revocations for blocked workspaces", async () => {
     workerState.isBlockedWorkspace.mockResolvedValue(true)
     const jobData: DefaultJobData = {
       type: "retryRealtimeMemberRevoke",
@@ -342,10 +342,8 @@ describe("default worker", () => {
 
     await processDefaultJob(jobData)
 
-    expect(workerState.isBlockedWorkspace).not.toHaveBeenCalled()
-    expect(workerState.retryRealtimeMemberRevoke).toHaveBeenCalledWith(
-      jobData.data,
-    )
+    expect(workerState.isBlockedWorkspace).toHaveBeenCalledWith("workspace-1")
+    expect(workerState.retryRealtimeMemberRevoke).not.toHaveBeenCalled()
   })
 
   test("logs a durable signal when the final revoke retry fails", async () => {

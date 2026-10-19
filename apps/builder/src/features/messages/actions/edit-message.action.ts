@@ -53,18 +53,13 @@ export const editMessage = async (props: {
     throw new ChatbotXException("Message is not an editable comment")
   }
 
-  const contactInbox = await contactInboxService.findBy({
-    where: { id: message.contactInboxId },
+  const contactInbox = await contactInboxService.findByIdForWorkspace({
+    id: message.contactInboxId,
+    workspaceId,
   })
   if (!contactInbox) {
     throw new ChatbotXException("Inbox not found")
   }
-  await messageService.updateText({
-    id: messageId,
-    workspaceId,
-    text: newText,
-    createdAt: message.createdAt,
-  })
 
   const attachments: Parameters<
     typeof messageService.replaceAttachments
@@ -110,14 +105,14 @@ export const editMessage = async (props: {
     })
   }
 
-  if (removeAttachment || newAttachmentPath) {
-    await messageService.replaceAttachments({
-      id: messageId,
-      workspaceId,
-      createdAt: message.createdAt,
-      attachments,
-    })
-  }
+  await messageService.edit({
+    id: messageId,
+    workspaceId,
+    text: newText,
+    createdAt: message.createdAt,
+    attachments,
+    replaceAttachments: Boolean(removeAttachment || newAttachmentPath),
+  })
 
   await queueWorkspaceRealtimeEvent(workspaceId, {
     eventType: RealtimeEventType.messageUpdated,

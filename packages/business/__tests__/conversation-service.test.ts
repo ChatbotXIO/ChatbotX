@@ -502,6 +502,29 @@ describe("conversationService.updateReadStatus", () => {
       route: { assignedTeamIds: ["team-1"], assignedUserIds: ["user-1"] },
     })
   })
+
+  test("defers cache invalidation and realtime publication until the transaction commits", async () => {
+    const agentLastReadAt = new Date("2026-09-23T12:00:00.000Z")
+    returning.mockResolvedValueOnce([
+      { assignedInboxTeamId: "team-1", assignedUserId: "user-1" },
+    ])
+    let afterCommit: (() => Promise<void>) | undefined
+
+    await conversationService.updateReadStatus({
+      workspaceId: "ws-1",
+      id: "conv-1",
+      agentLastReadAt,
+      tx: { update } as never,
+      afterCommit: (callback) => {
+        afterCommit = callback
+      },
+    })
+
+    expect(afterCommit).toBeDefined()
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+    await afterCommit?.()
+    expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe("conversationService.markReadByOutbound", () => {
@@ -1018,6 +1041,35 @@ describe("conversationService.updateAssignment", () => {
     ])
     expect(chatQueueAdd).toHaveBeenCalledTimes(1)
     expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+  })
+
+  test("defers assignment effects until the transaction commits", async () => {
+    let afterCommit: (() => Promise<void>) | undefined
+    const tx = {
+      select: () => ({
+        from: () => ({
+          where: () => ({ for: selectForUpdate }),
+        }),
+      }),
+      update,
+    }
+
+    await conversationService.updateAssignment({
+      workspaceId: "ws-1",
+      conversations: [{ contactId: "contact-1", id: "conv-1" }],
+      assignedInboxTeamId: "team-after",
+      assignedUserId: "user-after",
+      triggerContext: { triggerType: "flow_action" },
+      tx: tx as never,
+      afterCommit: (callback) => {
+        afterCommit = callback
+      },
+    })
+
+    expect(afterCommit).toBeDefined()
+    expect(invalidateCacheByTags).not.toHaveBeenCalled()
+    await afterCommit?.()
+    expect(invalidateCacheByTags).toHaveBeenCalled()
   })
 
   test("routes an unassignment to the prior assignee and team from the locked database row", async () => {

@@ -128,22 +128,6 @@ export const createWorkspaceSocketBehavior = <GuestSocketData extends object>({
         return
       }
 
-      const revokeCheck = await checkMemberRevoked(redis, workspaceId, claims)
-      if (revokeCheck !== "ok") {
-        if (!aborted) {
-          if (revokeCheck === "revoked") {
-            counters.tokenRejections += 1
-          }
-          writeStatus(
-            res,
-            revokeCheck === "redis-error"
-              ? "503 Service Unavailable"
-              : "401 Unauthorized",
-          )
-        }
-        return
-      }
-
       const workspaceConnectionCount =
         state.memberConnectionCountByWorkspace.get(workspaceId) ?? 0
       const workspacePendingCount =
@@ -173,8 +157,26 @@ export const createWorkspaceSocketBehavior = <GuestSocketData extends object>({
       const pendingUpgrade = createPendingUpgrade(state, [
         { key: workspaceId, map: state.memberPendingUpgradesByWorkspace },
       ])
+
       let activated = false
       try {
+        const revokeCheck = await checkMemberRevoked(redis, workspaceId, claims)
+        if (revokeCheck !== "ok") {
+          pendingUpgrade.release()
+          if (!aborted) {
+            if (revokeCheck === "revoked") {
+              counters.tokenRejections += 1
+            }
+            writeStatus(
+              res,
+              revokeCheck === "redis-error"
+                ? "503 Service Unavailable"
+                : "401 Unauthorized",
+            )
+          }
+          return
+        }
+
         const activationLastId =
           await streamReader.activateWorkspace(workspaceId)
         activated = true

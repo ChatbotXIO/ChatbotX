@@ -19,7 +19,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../../base.service"
 import { ChatbotXException, notFoundException } from "../../errors"
-import { tryRevokeWorkspaceMemberRealtimeConnections } from "../../platform/realtime-broadcast"
+import { enqueueWorkspaceMemberRealtimeConnectionRevocationRetry } from "../../platform/realtime-broadcast"
 import { type IdLabel, selectLabelsByIds } from "../../select-labels-by-ids"
 import { workspaceMemberService } from "../../workspace-member/service"
 
@@ -29,10 +29,7 @@ type InboxTeamWithMembers = InboxTeamModel & {
 
 type InboxTeamMutationResult = {
   team: InboxTeamModel
-  revokeWarning: boolean
 }
-
-const REALTIME_REVOKE_BATCH_SIZE = 10
 
 class InboxTeamService extends BaseService {
   // ─── Reads (cached) ─────────────────────────────────────────────────────
@@ -124,41 +121,19 @@ class InboxTeamService extends BaseService {
     }
   }
 
-  private async revokeMemberRealtimeConnections(
+  private async enqueueMemberRealtimeConnectionRevocations(
     workspaceId: string,
     userIds: Iterable<string>,
-  ): Promise<boolean> {
-    const uniqueUserIds = [...new Set(userIds)]
-    let revokeWarning = false
-
-    for (
-      let startIndex = 0;
-      startIndex < uniqueUserIds.length;
-      startIndex += REALTIME_REVOKE_BATCH_SIZE
-    ) {
-      const batch = uniqueUserIds.slice(
-        startIndex,
-        startIndex + REALTIME_REVOKE_BATCH_SIZE,
-      )
-      const results = await Promise.allSettled(
-        batch.map((userId) =>
-          tryRevokeWorkspaceMemberRealtimeConnections({
-            workspaceId,
-            userId,
-            reason: "reauth",
-            errorMessage:
-              "Failed to revoke inbox team member realtime connections",
-          }),
-        ),
-      )
-      if (
-        results.some((result) => result.status === "rejected" || !result.value)
-      ) {
-        revokeWarning = true
-      }
-    }
-
-    return revokeWarning
+  ): Promise<void> {
+    await Promise.all(
+      [...new Set(userIds)].map(async (userId) => {
+        await enqueueWorkspaceMemberRealtimeConnectionRevocationRetry({
+          workspaceId,
+          userId,
+          reason: "reauth",
+        })
+      }),
+    )
   }
 
   async create(props: {
@@ -201,13 +176,13 @@ class InboxTeamService extends BaseService {
       }
       return created
     })
-    const revokeWarning = await this.revokeMemberRealtimeConnections(
+    await this.invalidate({ workspaceId })
+    await this.enqueueMemberRealtimeConnectionRevocations(
       workspaceId,
       data.userIds,
     )
-    await this.invalidate({ workspaceId })
     await this.audit("create", `created a new team (#${inboxTeamId})`)
-    return { team, revokeWarning }
+    return { team }
   }
 
   async update(
@@ -228,43 +203,41 @@ class InboxTeamService extends BaseService {
     return updated ?? team
   }
 
-  async delete(props: {
-    workspaceId: string
-    ids: string[]
-  }): Promise<{ revokeWarning: boolean }> {
+  async delete(props: { workspaceId: string; ids: string[] }): Promise<void> {
     const { workspaceId, ids } = props
-
-    const teams = await db.query.inboxTeamModel.findMany({
-      where: { workspaceId, id: { in: ids } },
-      columns: { id: true },
+    const { memberUserIds, teams } = await db.transaction(async (tx) => {
+      const teams = await tx.query.inboxTeamModel.findMany({
+        where: { workspaceId, id: { in: ids } },
+        columns: { id: true },
+      })
+      if (teams.length === 0) {
+        throw notFoundException("Inbox team not found")
+      }
+      const memberUserIds =
+        await inboxTeamMemberRepository.listUserIdsByTeamIds({
+          workspaceId,
+          inboxTeamIds: teams.map((team) => team.id),
+          tx,
+        })
+      await tx
+        .delete(inboxTeamModel)
+        .where(
+          and(
+            eq(inboxTeamModel.workspaceId, workspaceId),
+            inArray(inboxTeamModel.id, ids),
+          ),
+        )
+      return { memberUserIds, teams }
     })
-    if (teams.length === 0) {
-      throw notFoundException("Inbox team not found")
-    }
-    const memberUserIds = await inboxTeamMemberRepository.listUserIdsByTeamIds({
-      workspaceId,
-      inboxTeamIds: teams.map((team) => team.id),
-    })
-
-    await db
-      .delete(inboxTeamModel)
-      .where(
-        and(
-          eq(inboxTeamModel.workspaceId, workspaceId),
-          inArray(inboxTeamModel.id, ids),
-        ),
-      )
-    const revokeWarning = await this.revokeMemberRealtimeConnections(
+    await this.invalidate({ workspaceId })
+    await this.enqueueMemberRealtimeConnectionRevocations(
       workspaceId,
       memberUserIds,
     )
-    await this.invalidate({ workspaceId })
-
     await this.audit(
       "delete",
       `deleted team${teams.length > 1 ? "s" : ""} (${teams.map((team) => `#${team.id}`).join(", ")})`,
     )
-    return { revokeWarning }
   }
 
   async addMembers(
@@ -305,11 +278,11 @@ class InboxTeamService extends BaseService {
         })
       }
     })
-    const revokeWarning = await this.revokeMemberRealtimeConnections(
+    await this.invalidate({ workspaceId: ctx.workspaceId })
+    await this.enqueueMemberRealtimeConnectionRevocations(
       ctx.workspaceId,
       addedUserIds,
     )
-    await this.invalidate({ workspaceId: ctx.workspaceId })
 
     if (addedUsers.length > 0) {
       await this.audit(
@@ -317,53 +290,10 @@ class InboxTeamService extends BaseService {
         `added ${addedUsers.map((user) => user.name ?? user.email).join(", ")} to the team (#${team.id})`,
       )
     }
-    return { team, revokeWarning }
+    return { team }
   }
 
   async removeMembers(
-    ctx: { workspaceId: string; inboxTeamId: string },
-    memberIds: string[],
-  ): Promise<InboxTeamMutationResult> {
-    const team = await this.findByIdOrFail(ctx)
-    const membersToRemove = await db.query.inboxTeamMemberModel.findMany({
-      where: {
-        id: { in: memberIds },
-        inboxTeamId: team.id,
-      },
-      with: { user: true },
-    })
-
-    const deleted = await db
-      .delete(inboxTeamMemberModel)
-      .where(
-        and(
-          eq(inboxTeamMemberModel.inboxTeamId, team.id),
-          inArray(inboxTeamMemberModel.id, memberIds),
-        ),
-      )
-      .returning({ id: inboxTeamMemberModel.id })
-    const revokeWarning = await this.revokeMemberRealtimeConnections(
-      ctx.workspaceId,
-      membersToRemove.map((member) => member.userId),
-    )
-    await this.invalidate({ workspaceId: ctx.workspaceId })
-
-    if (deleted.length > 0) {
-      await this.audit(
-        "update",
-        `removed ${membersToRemove.map((member) => member.user.name ?? member.user.email).join(", ")} from the team (#${team.id})`,
-      )
-    }
-    return { team, revokeWarning }
-  }
-
-  /**
-   * Removes members by userId rather than membership-row id. The public API
-   * only ever hands clients userIds (addMembers takes userIds and the bare
-   * team resource has no members array to read row ids back from), so it
-   * calls this instead of removeMembers.
-   */
-  async removeMembersByUserIds(
     ctx: { workspaceId: string; inboxTeamId: string },
     userIds: string[],
   ): Promise<InboxTeamMutationResult> {
@@ -375,7 +305,6 @@ class InboxTeamService extends BaseService {
       },
       with: { user: true },
     })
-
     const deleted = await db
       .delete(inboxTeamMemberModel)
       .where(
@@ -385,11 +314,11 @@ class InboxTeamService extends BaseService {
         ),
       )
       .returning({ id: inboxTeamMemberModel.id })
-    const revokeWarning = await this.revokeMemberRealtimeConnections(
+    await this.invalidate({ workspaceId: ctx.workspaceId })
+    await this.enqueueMemberRealtimeConnectionRevocations(
       ctx.workspaceId,
       membersToRemove.map((member) => member.userId),
     )
-    await this.invalidate({ workspaceId: ctx.workspaceId })
 
     if (deleted.length > 0) {
       await this.audit(
@@ -397,7 +326,7 @@ class InboxTeamService extends BaseService {
         `removed ${membersToRemove.map((member) => member.user.name ?? member.user.email).join(", ")} from the team (#${team.id})`,
       )
     }
-    return { team, revokeWarning }
+    return { team }
   }
 
   // ─── Cache ───────────────────────────────────────────────────────────────

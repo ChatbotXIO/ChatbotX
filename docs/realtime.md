@@ -119,7 +119,7 @@ schema in `features/realtime/`; only reuse schemas that already exist in
 
 - `features/realtime/` is channel-agnostic: it must never import chat or
   WhatsApp code. It only knows about `RealtimeEventName`/`RealtimeEventData`
-  from `@chatbotx.io/partysocket-config`.
+  from `@chatbotx.io/realtime-protocol`.
 - Chat's subscriber: `features/chat/chat-realtime.tsx` (`ChatRealtime`).
 - WhatsApp calling's subscriber:
   `features/integration-whatsapp/calling/voip/whatsapp-call-realtime.tsx`

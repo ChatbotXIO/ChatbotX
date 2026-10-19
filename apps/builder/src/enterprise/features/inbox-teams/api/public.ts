@@ -82,11 +82,11 @@ export const inboxTeamsPublicRouter = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
-      const { revokeWarning, team } = await inboxTeamService.create({
+      const { team } = await inboxTeamService.create({
         workspaceId: context.workspace.id,
         data: input,
       })
-      return { ...team, revokeWarning }
+      return team
     }),
 
   update: workspaceTokenAuthAPI
@@ -143,11 +143,11 @@ export const inboxTeamsPublicRouter = {
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
       await assertWorkspaceNotBlocked(context.workspace.ownerId)
-      const { revokeWarning, team } = await inboxTeamService.addMembers(
+      const { team } = await inboxTeamService.addMembers(
         { workspaceId: context.workspace.id, inboxTeamId: input.id },
         input.userIds,
       )
-      return { ...team, revokeWarning }
+      return team
     }),
 
   removeMembers: workspaceTokenAuthAPI
@@ -163,11 +163,10 @@ export const inboxTeamsPublicRouter = {
     .output(inboxTeamMutationResource)
     .errors(possibleErrorsOnMutatingResource)
     .handler(async ({ context, input }) => {
-      const { revokeWarning, team } =
-        await inboxTeamService.removeMembersByUserIds(
-          { workspaceId: context.workspace.id, inboxTeamId: input.id },
-          input.userIds,
-        )
-      return { ...team, revokeWarning }
+      const { team } = await inboxTeamService.removeMembers(
+        { workspaceId: context.workspace.id, inboxTeamId: input.id },
+        input.userIds,
+      )
+      return team
     }),
 }

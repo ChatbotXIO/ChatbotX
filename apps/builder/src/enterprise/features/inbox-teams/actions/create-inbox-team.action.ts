@@ -14,12 +14,11 @@ export const createInboxTeamAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
     } = props
 
-    const { revokeWarning } = await inboxTeamService.create({
+    await inboxTeamService.create({
       workspaceId,
       data: {
         name: parsedInput.name,
         userIds: parsedInput.userIds,
       },
     })
-    return { revokeWarning }
   })

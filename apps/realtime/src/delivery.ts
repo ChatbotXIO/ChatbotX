@@ -19,6 +19,7 @@ export type WorkspaceSocketData = RealtimeMemberClaims & {
 }
 export type GuestSocketData = {
   closed: boolean
+  closeReason?: string
   guestConversationId: string
   overloadRetryAfterMs?: number
   replayCutoff: string
@@ -35,7 +36,7 @@ export type StreamRecordEntry = {
 type WorkspaceSocket = {
   end: (code?: number, reason?: string) => void
   getUserData: () => WorkspaceSocketData
-  send: (data: string) => number
+  send: (data: string, isBinary?: boolean, compress?: boolean) => number
   subscribe: (topic: string) => void
 }
 
@@ -48,7 +49,13 @@ type GuestSocket = {
 }
 
 type PublishApp = {
-  publish: (topic: string, message: string) => boolean
+  numSubscribers?: (topic: string) => number
+  publish: (
+    topic: string,
+    message: string,
+    isBinary?: boolean,
+    compress?: boolean,
+  ) => boolean
 }
 
 type WorkspaceEvent = {
@@ -86,7 +93,7 @@ const hasRouteMatch = (
   teamIds: Set<string>,
 ): boolean => {
   if (!event.route) {
-    return false
+    return true
   }
   if (event.route.assignedUserIds.includes(userId)) {
     return true
@@ -114,15 +121,16 @@ const filterWorkspaceEvents = <Event extends WorkspaceEvent>(
 
 export type RealtimeDelivery = {
   addGuestSocket: (socket: GuestSocket) => void
+  removeWorkspaceSocket: (socket: WorkspaceSocket) => boolean
   addWorkspaceSocket: (socket: WorkspaceSocket) => boolean
+  closeAll: (retryAfterMs: number) => void
   dispatch: (entry: StreamRecordEntry) => void
   removeGuestSocket: (socket: GuestSocket) => void
-  removeWorkspaceSocket: (socket: WorkspaceSocket) => boolean
   replayGuestSocket: (
     socket: {
       end: (code?: number, reason?: string) => void
       getUserData: () => GuestSocketData
-      send: (data: string) => number
+      send: (data: string, isBinary?: boolean, compress?: boolean) => number
     },
     entries?: StreamRecordEntry[],
   ) => boolean
@@ -160,16 +168,17 @@ export const createRealtimeDelivery = (
   const guestSocketsByWorkspace = new Map<string, Set<GuestSocket>>()
 
   const recordPublish = (topic: string, frame: string): void => {
-    app.publish(topic, frame)
+    const byteLength = Buffer.byteLength(frame)
+    app.publish(topic, frame, false, byteLength > 1024)
     counters.publishes += 1
-    counters.publishBytes += Buffer.byteLength(frame)
+    counters.publishBytes += byteLength
   }
 
   const recordSend = (
     socket: {
       end: (code?: number, reason?: string) => void
       getUserData: () => { closed: boolean; workspaceId: string }
-      send: (data: string) => number
+      send: (data: string, isBinary?: boolean, compress?: boolean) => number
     },
     frame: string,
   ): void => {
@@ -177,9 +186,10 @@ export const createRealtimeDelivery = (
     // Retain its user data before that call so a drop cannot throw while
     // attempting to resync the remaining fan-out recipients.
     const socketData = socket.getUserData()
-    const result = socket.send(frame)
+    const byteLength = Buffer.byteLength(frame)
+    const result = socket.send(frame, false, byteLength > 1024)
     counters.sends += 1
-    counters.sendBytes += Buffer.byteLength(frame)
+    counters.sendBytes += byteLength
     if (result !== 2) {
       return
     }
@@ -195,7 +205,7 @@ export const createRealtimeDelivery = (
     socket: {
       end: (code?: number, reason?: string) => void
       getUserData: () => { closed: boolean; workspaceId: string }
-      send: (data: string) => number
+      send: (data: string, isBinary?: boolean, compress?: boolean) => number
     },
     frame: string,
   ): void => {
@@ -253,10 +263,10 @@ export const createRealtimeDelivery = (
     const { record } = entry
     switch (record.kind) {
       case "workspace-events": {
-        recordPublish(
-          `ws:${record.workspaceId}:all`,
-          encodeBatch(record.events, entry.id),
-        )
+        const topic = `ws:${record.workspaceId}:all`
+        if (app.numSubscribers?.(topic) !== 0) {
+          recordPublish(topic, encodeBatch(record.events, entry.id))
+        }
         const restrictedAudiences = restrictedByWorkspace.get(
           record.workspaceId,
         )
@@ -280,12 +290,13 @@ export const createRealtimeDelivery = (
         }
         return
       }
-      case "guest-event":
-        recordPublish(
-          `guest:${record.workspaceId}:${record.guestConversationId}`,
-          encodeBatch([record.event], entry.id),
-        )
+      case "guest-event": {
+        const topic = `guest:${record.workspaceId}:${record.guestConversationId}`
+        if (app.numSubscribers?.(topic) !== 0) {
+          recordPublish(topic, encodeBatch([record.event], entry.id))
+        }
         return
+      }
       case "member-send": {
         const sockets = connectionsByMember.get(
           memberKey(record.workspaceId, record.userId),
@@ -308,7 +319,7 @@ export const createRealtimeDelivery = (
         const { closeCode, closeReason } = closeCodeForRevoke(record.reason)
         for (const socket of sockets) {
           const socketData = socket.getUserData()
-          if (socketData.closed) {
+          if (socketData.closed || socketData.iatMs >= record.revokedAtMs) {
             continue
           }
           socketData.closed = true
@@ -355,6 +366,29 @@ export const createRealtimeDelivery = (
         restrictedByWorkspace.set(workspaceId, audiences)
       }
       return firstSocket
+    },
+    closeAll: (retryAfterMs) => {
+      const reason = JSON.stringify({ retryAfter: retryAfterMs })
+      for (const sockets of memberSocketsByWorkspace.values()) {
+        for (const socket of sockets) {
+          const socketData = socket.getUserData()
+          if (socketData.closed) {
+            continue
+          }
+          socketData.closed = true
+          socket.end(REALTIME_CLOSE_CODE.overloaded, reason)
+        }
+      }
+      for (const sockets of guestSocketsByWorkspace.values()) {
+        for (const socket of sockets) {
+          const socketData = socket.getUserData()
+          if (socketData.closed) {
+            continue
+          }
+          socketData.closed = true
+          socket.end(REALTIME_CLOSE_CODE.overloaded, reason)
+        }
+      }
     },
     dispatch,
     removeGuestSocket: (socket) => {

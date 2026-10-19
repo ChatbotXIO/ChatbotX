@@ -2,58 +2,34 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
   mockQueueWorkspaceRealtimeEvent,
-  mockBulkCreateAttachments,
   mockChatQueueAdd,
-  mockContactInboxFindBy,
+  mockContactInboxFindByIdForWorkspace,
   mockConversationFindByOrFail,
-  mockDeleteAttachmentsByMessageId,
+  mockEditMessage,
   mockFindById,
-  mockUpdateMessageText,
 } = vi.hoisted(() => ({
   mockQueueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
-  mockBulkCreateAttachments: vi.fn().mockResolvedValue(undefined),
   mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
-  mockContactInboxFindBy: vi.fn(),
+  mockContactInboxFindByIdForWorkspace: vi.fn(),
   mockConversationFindByOrFail: vi.fn(),
-  mockDeleteAttachmentsByMessageId: vi.fn().mockResolvedValue(undefined),
+  mockEditMessage: vi.fn().mockResolvedValue({ id: "msg-1" }),
   mockFindById: vi.fn(),
-  mockUpdateMessageText: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
   queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
-  contactInboxService: { findBy: mockContactInboxFindBy },
+  contactInboxService: {
+    findByIdForWorkspace: mockContactInboxFindByIdForWorkspace,
+  },
   conversationService: { findByOrFail: mockConversationFindByOrFail },
   messageService: {
+    edit: mockEditMessage,
     findWithAttachments: mockFindById,
-    replaceAttachments: async (input: {
-      attachments: unknown[]
-      messageCreatedAt: Date
-      messageId: string
-    }) => {
-      await mockDeleteAttachmentsByMessageId(
-        input.messageId,
-        input.messageCreatedAt,
-      )
-      if (input.attachments.length > 0) {
-        await mockBulkCreateAttachments(input.attachments)
-      }
-    },
-    updateText: mockUpdateMessageText,
   },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
   ChatbotXException: class ChatbotXException extends Error {},
-}))
-
-vi.mock("@chatbotx.io/database/repositories", () => ({
-  createMessageRepository: vi.fn().mockResolvedValue({
-    findById: mockFindById,
-    updateMessageText: mockUpdateMessageText,
-    deleteAttachmentsByMessageId: mockDeleteAttachmentsByMessageId,
-    bulkCreateAttachments: mockBulkCreateAttachments,
-  }),
 }))
 
 vi.mock("@chatbotx.io/filesystem", () => ({
@@ -99,7 +75,7 @@ describe("editMessage", () => {
       id: "conv-1",
       workspaceId: "ws-1",
     })
-    mockContactInboxFindBy.mockResolvedValue({ id: "ci-1" })
+    mockContactInboxFindByIdForWorkspace.mockResolvedValue({ id: "ci-1" })
     mockFindById.mockResolvedValue({
       id: "msg-1",
       conversationId: "conv-1",
@@ -134,6 +110,15 @@ describe("editMessage", () => {
         removedAttachment: false,
       },
       route: { assignedTeamIds: [], assignedUserIds: [] },
+    })
+
+    expect(mockEditMessage).toHaveBeenCalledWith({
+      id: "msg-1",
+      workspaceId: "ws-1",
+      text: "updated text",
+      createdAt,
+      attachments: [],
+      replaceAttachments: false,
     })
   })
 

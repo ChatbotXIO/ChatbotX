@@ -32,12 +32,10 @@ import {
 } from "@chatbotx.io/worker-config"
 import { headers } from "next/headers"
 import { getTranslations } from "next-intl/server"
-import {
-  isFirstPartyOrigin,
-  isOriginAuthorized,
-} from "@/features/integration-webchat/lib/authorized-domain"
+import { isAllowedGuestOrigin } from "@/features/integration-webchat/lib/authorized-domain"
 import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
 import { shouldRunWebchatChallenge } from "@/features/messages/lib/should-run-webchat-challenge"
+import { getDomainFromHeader } from "@/lib/domain"
 import { logger } from "@/lib/log"
 import {
   checkGuestRateLimit,
@@ -53,7 +51,7 @@ export const createWebchatMessageAction = actionClient
   .inputSchema(createWebchatMessageRequest)
   .action(handleCreateWebchatMessage)
 
-async function getRequestHeaders() {
+async function _getRequestHeaders() {
   try {
     return await headers()
   } catch {
@@ -106,16 +104,13 @@ export async function handleCreateWebchatMessage({
     throw new ChatbotXException(t("description"), "forbidden", 403)
   }
 
-  const requestHeaders = await getRequestHeaders()
+  const requestHeaders = await _getRequestHeaders()
+
   if (
-    integrationWebchat.authorizedDomains.length > 0 &&
-    !isFirstPartyOrigin(
-      parsedInput.parentOrigin,
-      requestHeaders.get("x-domain") ?? "",
-    ) &&
-    !isOriginAuthorized(
+    !isAllowedGuestOrigin(
       parsedInput.parentOrigin,
       integrationWebchat.authorizedDomains,
+      await getDomainFromHeader(),
     )
   ) {
     const t = await getTranslations("webchat.unauthorizedDomain")

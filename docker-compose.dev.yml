@@ -105,6 +105,8 @@ services:
         condition: service_healthy
     environment:
       REDIS_URL: redis://redis:6379
+      NEXT_PUBLIC_BUILDER_URL: http://builder:3000
+      REALTIME_BUILDER_URL: http://builder:3000
 
 networks:
   javascript-executor-network:

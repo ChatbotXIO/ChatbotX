@@ -62,8 +62,9 @@ export const deleteMessage = async (props: {
   const jobs: Promise<unknown>[] = []
 
   if (message.sourceId && message.contactInboxId) {
-    const contactInbox = await contactInboxService.findBy({
-      where: { id: message.contactInboxId },
+    const contactInbox = await contactInboxService.findByIdForWorkspace({
+      id: message.contactInboxId,
+      workspaceId,
     })
     if (contactInbox) {
       jobs.push(

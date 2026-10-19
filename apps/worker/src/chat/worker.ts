@@ -144,6 +144,12 @@ async function startChatWorker() {
             case ChatJobAction.checkOutboundAutomatedResponse:
               await checkOutboundAutomatedResponse(job.data.data)
               return
+            case "broadcastEvent" as never:
+              logger.info(
+                { jobId: job.id },
+                "Ignoring legacy broadcastEvent job during realtime v2 rollout",
+              )
+              return
             default:
               throw new SdkException("ChatJobAction action is not defined")
           }

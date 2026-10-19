@@ -33,9 +33,7 @@ export type AddInboxTeamMemberRequest = z.infer<
   typeof addInboxTeamMemberRequest
 >
 
-export const inboxTeamMutationResource = inboxTeamResource.extend({
-  revokeWarning: z.boolean(),
-})
+export const inboxTeamMutationResource = inboxTeamResource
 
 export const listInboxTeamsRequest = z.object({
   workspaceId: zodBigintAsString(),

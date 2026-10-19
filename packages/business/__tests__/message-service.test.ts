@@ -17,7 +17,11 @@ const mocks = vi.hoisted(() => {
     updateSourceId: vi.fn(),
   }
   return {
-    db: { query: { messageModel: { findFirst: vi.fn(), findMany: vi.fn() } } },
+    db: {
+      query: { messageModel: { findFirst: vi.fn(), findMany: vi.fn() } },
+      transaction: async (callback: (tx: unknown) => Promise<unknown>) =>
+        await callback({}),
+    },
     repo,
     createMessageRepository: vi.fn().mockResolvedValue(repo),
     withCache: vi.fn(
@@ -310,6 +314,49 @@ describe("messageService", () => {
       "updated",
       createdAt,
     )
+  })
+
+  test("updates text and replaces attachments in one transaction", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    mocks.repo.updateMessageText.mockResolvedValue({
+      conversationId: "conversation-1",
+      id: "message-1",
+    })
+
+    await expect(
+      messageService.edit({
+        attachments: [{ path: "file.png" }] as never,
+        createdAt,
+        id: "message-1",
+        replaceAttachments: true,
+        text: "updated",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toEqual({ conversationId: "conversation-1", id: "message-1" })
+
+    expect(mocks.repo.deleteAttachmentsByMessageId).toHaveBeenCalledWith(
+      "message-1",
+      "ws-1",
+      createdAt,
+    )
+    expect(mocks.repo.bulkCreateAttachments).toHaveBeenCalledTimes(1)
+  })
+
+  test("does not replace attachments when the text update finds no message", async () => {
+    mocks.repo.updateMessageText.mockResolvedValue(null)
+
+    await expect(
+      messageService.edit({
+        attachments: [{ path: "file.png" }] as never,
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+        id: "missing",
+        replaceAttachments: true,
+        text: "updated",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("Message not found")
+
+    expect(mocks.repo.deleteAttachmentsByMessageId).not.toHaveBeenCalled()
   })
 
   test("passes messages and attachments unchanged to the combined repository write", async () => {

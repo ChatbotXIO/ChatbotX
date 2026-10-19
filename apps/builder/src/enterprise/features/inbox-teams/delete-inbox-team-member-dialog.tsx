@@ -45,15 +45,12 @@ export function DeleteInboxTeamMembersDialog({
       teamMember?.inboxTeamId ?? "",
     ),
     {
-      onSuccess: ({ data }) => {
+      onSuccess: () => {
         toast.success(
           t("messages.deletedSuccess", {
             feature: t("fields.inboxTeamMember.label"),
           }),
         )
-        if (data?.revokeWarning) {
-          toast.warning(t("messages.realtimeRevokeWarning"))
-        }
         onOpenChange(false)
         invalidateUsers()
         router.refresh()
@@ -97,7 +94,7 @@ export function DeleteInboxTeamMembersDialog({
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
-            onClick={() => execute({ ids: [teamMember?.id ?? ""] })}
+            onClick={() => execute({ userIds: [teamMember?.userId ?? ""] })}
             size="sm"
             variant="destructive"
           >

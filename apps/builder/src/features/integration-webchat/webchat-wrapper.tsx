@@ -45,8 +45,14 @@ export const WebchatWrapper = ({
         webchatId={config.id}
         workspaceId={config.workspaceId}
       />
-      {!!guestConversationId && (
-        <WebchatRealtime guestConversationId={guestConversationId} />
+      {!!guestConversationId && !!accessToken && (
+        <WebchatRealtime
+          accessToken={accessToken}
+          guestConversationId={guestConversationId}
+          parentOrigin={parentOrigin}
+          webchatId={config.id}
+          workspaceId={config.workspaceId}
+        />
       )}
     </div>
   )

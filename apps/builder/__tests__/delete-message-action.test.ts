@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const {
   mockQueueWorkspaceRealtimeEvent,
   mockChatQueueAdd,
-  mockContactInboxFindBy,
+  mockContactInboxFindByIdForWorkspace,
   mockConversationFindByOrFail,
   mockDeleteById,
   mockDeleteBySourceId,
@@ -11,7 +11,7 @@ const {
 } = vi.hoisted(() => ({
   mockQueueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
   mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
-  mockContactInboxFindBy: vi.fn(),
+  mockContactInboxFindByIdForWorkspace: vi.fn(),
   mockConversationFindByOrFail: vi.fn(),
   mockDeleteById: vi.fn(),
   mockDeleteBySourceId: vi.fn(),
@@ -20,7 +20,9 @@ const {
 
 vi.mock("@chatbotx.io/business", () => ({
   queueWorkspaceRealtimeEvent: mockQueueWorkspaceRealtimeEvent,
-  contactInboxService: { findBy: mockContactInboxFindBy },
+  contactInboxService: {
+    findByIdForWorkspace: mockContactInboxFindByIdForWorkspace,
+  },
   conversationService: { findByOrFail: mockConversationFindByOrFail },
   messageService: {
     delete: ({ sourceId }: { sourceId?: string | null }) =>
@@ -113,7 +115,7 @@ describe("deleteMessage", () => {
       contactInboxId: "ci-1",
     })
     mockDeleteBySourceId.mockResolvedValue([{ id: "msg-1" }, { id: "msg-2" }])
-    mockContactInboxFindBy.mockResolvedValue({ id: "ci-1" })
+    mockContactInboxFindByIdForWorkspace.mockResolvedValue({ id: "ci-1" })
 
     await deleteMessage({
       workspaceId: "ws-1",

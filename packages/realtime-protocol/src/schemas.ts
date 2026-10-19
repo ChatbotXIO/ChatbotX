@@ -532,8 +532,10 @@ type RealtimeTargetedOnlyEventData = Extract<
   { eventType: TargetedOnlyEventType }
 >
 
-type Routed<T> = T & { route: RealtimeEventRoute }
-type MaybeRouted<T> = T & { route?: RealtimeEventRoute }
+type Routed<T> = T extends unknown ? T & { route: RealtimeEventRoute } : never
+type MaybeRouted<T> = T extends unknown
+  ? T & { route?: RealtimeEventRoute }
+  : never
 
 export type RealtimeEventData =
   | Routed<RealtimeConversationScopedEventData>

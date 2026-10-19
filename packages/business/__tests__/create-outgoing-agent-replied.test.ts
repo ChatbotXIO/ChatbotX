@@ -29,10 +29,6 @@ vi.mock("@chatbotx.io/filesystem", () => ({
   uploadMultipleFiles: vi.fn(async () => []),
 }))
 
-vi.mock("@chatbotx.io/partysocket-config", () => ({
-  RealtimeEventType: { messageCreated: "messageCreated" },
-}))
-
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
   return { ...actual, createId: () => "generated-id" }

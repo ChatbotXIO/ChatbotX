@@ -374,7 +374,7 @@ export const revokeWorkspaceMemberRealtimeConnections = async (
   )
 }
 
-const enqueueWorkspaceMemberRealtimeConnectionRevocationRetry = async (
+export const enqueueWorkspaceMemberRealtimeConnectionRevocationRetry = async (
   args: WorkspaceMemberRealtimeConnectionRevocationArgs,
 ): Promise<void> => {
   try {
@@ -417,7 +417,7 @@ export const tryRevokeWorkspaceMemberRealtimeConnections = async (
 ): Promise<boolean> => {
   const revocationArgs = {
     ...args,
-    revokedAtMs: Date.now(),
+    revokedAtMs: args.revokedAtMs ?? Date.now(),
   }
   try {
     await revokeWorkspaceMemberRealtimeConnections(revocationArgs)

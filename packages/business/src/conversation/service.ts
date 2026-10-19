@@ -1095,6 +1095,7 @@ class ConversationService extends BaseService {
     workspaceId: string,
     assignedId: string | null | undefined,
     onInvalid: "throw" | "ignore" = "throw",
+    tx?: DatabaseClient,
   ): Promise<{
     assignedUserId: string | null
     assignedInboxTeamId: string | null
@@ -1113,6 +1114,7 @@ class ConversationService extends BaseService {
         await workspaceMemberService.findByWorkspaceIdAndUserId({
           workspaceId,
           userId,
+          tx,
         })
       if (workspaceMember) {
         updatedData.assignedUserId = workspaceMember.userId
@@ -1125,12 +1127,14 @@ class ConversationService extends BaseService {
         const inboxTeam = await inboxTeamService.findByIdOrFail({
           workspaceId,
           inboxTeamId,
+          tx,
         })
         updatedData.assignedInboxTeamId = inboxTeam.id
       } else {
         const teamExists = await inboxTeamService.exists({
           workspaceId,
           id: inboxTeamId,
+          tx,
         })
         if (teamExists) {
           updatedData.assignedInboxTeamId = inboxTeamId
@@ -1197,12 +1201,15 @@ class ConversationService extends BaseService {
     assignedId: string | null | undefined
     assignedBy?: string
     triggerContext: Omit<TriggerContext, "triggerType">
+    tx?: DatabaseClient
+    afterCommit?: (callback: () => Promise<void>) => void
   }): Promise<void> {
     const { workspaceId, conversation, assignedId, assignedBy } = props
-
     const updatedData = await this.resolveAssignmentTarget(
       workspaceId,
       assignedId,
+      "throw",
+      props.tx,
     )
 
     await this.updateAssignment({
@@ -1218,6 +1225,8 @@ class ConversationService extends BaseService {
             ? "conversation_assigned"
             : "conversation_unassigned",
       },
+      tx: props.tx,
+      afterCommit: props.afterCommit,
     })
   }
 
@@ -1288,6 +1297,8 @@ class ConversationService extends BaseService {
     assignedBy?: string
     silent?: boolean
     triggerContext: TriggerContext
+    tx?: DatabaseClient
+    afterCommit?: (callback: () => Promise<void>) => void
   }): Promise<ConversationModel[]> {
     const {
       workspaceId,
@@ -1298,6 +1309,12 @@ class ConversationService extends BaseService {
       silent,
       triggerContext,
     } = props
+
+    if (props.tx && !props.afterCommit) {
+      throw new Error(
+        "updateAssignment with tx requires an afterCommit callback",
+      )
+    }
     if (conversations.length === 0) {
       return []
     }
@@ -1353,28 +1370,36 @@ class ConversationService extends BaseService {
         workspaceId,
         conversationIds: ids,
         assigneeHints: [assignedUserId],
+        tx: props.tx,
       },
       updateInTransaction,
     )
-    await this.publishAssignmentChanges({
-      workspaceId,
-      conversations: result.updated.map((conversation) => {
-        const previousAssignment = result.previousAssignments.get(
-          conversation.id,
-        )
-        return {
-          id: conversation.id,
-          contactId: conversation.contactId,
-          previousAssignedInboxTeamId: previousAssignment?.assignedInboxTeamId,
-          previousAssignedUserId: previousAssignment?.assignedUserId,
-        }
-      }),
-      assignedUserId,
-      assignedInboxTeamId,
-      assignedBy,
-      silent,
-      triggerContext,
-    })
+    const publish = async () =>
+      await this.publishAssignmentChanges({
+        workspaceId,
+        conversations: result.updated.map((conversation) => {
+          const previousAssignment = result.previousAssignments.get(
+            conversation.id,
+          )
+          return {
+            id: conversation.id,
+            contactId: conversation.contactId,
+            previousAssignedInboxTeamId:
+              previousAssignment?.assignedInboxTeamId,
+            previousAssignedUserId: previousAssignment?.assignedUserId,
+          }
+        }),
+        assignedUserId,
+        assignedInboxTeamId,
+        assignedBy,
+        silent,
+        triggerContext,
+      })
+    if (props.tx) {
+      props.afterCommit?.(publish)
+    } else {
+      await publish()
+    }
 
     return result.updated
   }
@@ -1754,13 +1779,16 @@ class ConversationService extends BaseService {
     workspaceId: string
     id: string
     silent?: boolean
+    tx?: DatabaseClient
+    afterCommit?: (callback: () => Promise<void>) => void
   }): Promise<{ agentLastReadAt: Date | null }> {
-    const { workspaceId, id, silent } = props
+    const { workspaceId, id, silent, tx } = props
     const conversation = await this.findByOrFail({
       where: { id, workspaceId },
+      tx,
     })
 
-    const messageRepository = await createMessageRepository()
+    const messageRepository = await createMessageRepository(tx)
     const last2Messages = await messageRepository.findLastByConversation(
       conversation.id,
       {
@@ -1791,6 +1819,8 @@ class ConversationService extends BaseService {
       id,
       agentLastReadAt,
       silent,
+      tx,
+      afterCommit: props.afterCommit,
     })
 
     return { agentLastReadAt }
@@ -1840,9 +1870,17 @@ class ConversationService extends BaseService {
     id: string
     agentLastReadAt: Date | null
     silent?: boolean
+    tx?: DatabaseClient
+    afterCommit?: (callback: () => Promise<void>) => void
   }): Promise<void> {
-    const { workspaceId, id, agentLastReadAt, silent } = props
-    const [updated] = await db
+    const { workspaceId, id, agentLastReadAt, silent, tx = db } = props
+
+    if (props.tx && !props.afterCommit) {
+      throw new Error(
+        "updateReadStatus with tx requires an afterCommit callback",
+      )
+    }
+    const [updated] = await tx
       .update(conversationModel)
       .set({ agentLastReadAt })
       .where(
@@ -1855,19 +1893,30 @@ class ConversationService extends BaseService {
         assignedInboxTeamId: conversationModel.assignedInboxTeamId,
         assignedUserId: conversationModel.assignedUserId,
       })
-    await this.invalidate({ workspaceId, ids: [id] })
-    if (!silent) {
-      await queueWorkspaceRealtimeEvent(workspaceId, {
-        eventType: RealtimeEventType.conversationUpdated,
-        data: {
-          conversationIds: [id],
-          changes: {
-            agentLastReadAt: agentLastReadAt?.toISOString() ?? null,
-          },
-        },
-        route: routeForConversation(updated),
-      })
+    if (!updated) {
+      return
     }
+
+    const publish = async () => {
+      await this.invalidate({ workspaceId, ids: [id] })
+      if (!silent) {
+        await queueWorkspaceRealtimeEvent(workspaceId, {
+          eventType: RealtimeEventType.conversationUpdated,
+          data: {
+            conversationIds: [id],
+            changes: {
+              agentLastReadAt: agentLastReadAt?.toISOString() ?? null,
+            },
+          },
+          route: routeForConversation(updated),
+        })
+      }
+    }
+    if (props.tx) {
+      props.afterCommit?.(publish)
+      return
+    }
+    await publish()
   }
 
   /**

@@ -2,21 +2,20 @@
 
 import { inboxTeamService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { bulkUpdateIdsRequest } from "@/features/common/schema"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { addInboxTeamMemberRequest } from "../schema/action"
 
 export const deleteTeamMembersAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
-  .inputSchema(bulkUpdateIdsRequest)
+  .inputSchema(addInboxTeamMemberRequest)
   .action(async (props) => {
     const {
       bindArgsClientInputs: [workspaceId, inboxTeamId],
       parsedInput,
     } = props
 
-    const { revokeWarning } = await inboxTeamService.removeMembers(
+    await inboxTeamService.removeMembers(
       { workspaceId, inboxTeamId },
-      parsedInput.ids,
+      parsedInput.userIds,
     )
-    return { revokeWarning }
   })

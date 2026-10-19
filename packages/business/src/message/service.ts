@@ -11,6 +11,7 @@ import {
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
+import { ChatbotXException } from "../errors"
 import { createOutgoing } from "./create-outgoing"
 import {
   findByIdWithUrls,
@@ -179,6 +180,34 @@ class MessageService extends BaseService {
       props.text,
       props.createdAt,
     )
+  }
+
+  async edit(props: {
+    attachments: Omit<
+      BulkCreateAttachmentInput,
+      "messageCreatedAt" | "messageId"
+    >[]
+    createdAt: Date
+    id: string
+    replaceAttachments: boolean
+    text: string
+    tx?: DatabaseClient
+    workspaceId: string
+  }): Promise<{ conversationId: string; id: string }> {
+    const editMessage = async (tx: DatabaseClient) => {
+      const updated = await this.updateText({ ...props, tx })
+      if (!updated) {
+        throw new ChatbotXException("Message not found")
+      }
+      if (props.replaceAttachments) {
+        await this.replaceAttachments({ ...props, tx })
+      }
+      return updated
+    }
+    if (props.tx) {
+      return await editMessage(props.tx)
+    }
+    return await db.transaction(editMessage)
   }
 
   async replaceAttachments(props: {

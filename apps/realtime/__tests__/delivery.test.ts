@@ -33,6 +33,7 @@ const createSocket = (
     closed: false,
     iat: 0,
     replayEntries: [],
+    iatMs: 0,
     teamIds: [],
     userId: "user-1",
     workspaceId: "workspace-1",
@@ -175,7 +176,7 @@ describe("realtime delivery", () => {
     expect(socket.sent).toHaveLength(1)
   })
 
-  test("sends unrouted events only through the full-access topic", () => {
+  test("delivers route-less workspace events to assigned members", () => {
     const { delivery, published } = createDelivery()
     const socket = createSocket({ chatScope: "assigned" })
     delivery.addWorkspaceSocket(socket)
@@ -184,7 +185,7 @@ describe("realtime delivery", () => {
       workspaceEntry([{ data: {}, eventType: "messageCreated" }]),
     )
 
-    expect(socket.sent).toEqual([])
+    expect(socket.sent).toHaveLength(1)
     expect(published[0]?.topic).toBe("ws:workspace-1:all")
   })
 
@@ -218,6 +219,7 @@ describe("realtime delivery", () => {
       id: "3-0",
       record: {
         kind: "member-revoke",
+        revokedAtMs: 1,
         reason,
         userId: "user-1",
         workspaceId: "workspace-1",
@@ -225,6 +227,28 @@ describe("realtime delivery", () => {
     })
 
     expect(socket.closed).toEqual(expectedClose)
+  })
+
+  test("ignores a stale revoke and closes a socket minted before the revoke", () => {
+    const { delivery } = createDelivery()
+    const freshSocket = createSocket({ iatMs: 200 })
+    const staleSocket = createSocket({ iatMs: 100 })
+    delivery.addWorkspaceSocket(freshSocket)
+    delivery.addWorkspaceSocket(staleSocket)
+
+    delivery.dispatch({
+      id: "3-1",
+      record: {
+        kind: "member-revoke",
+        reason: "reauth",
+        revokedAtMs: 150,
+        userId: "user-1",
+        workspaceId: "workspace-1",
+      },
+    })
+
+    expect(freshSocket.closed).toBeNull()
+    expect(staleSocket.closed).toEqual({ code: 4004, reason: "reauth" })
   })
 
   test("replay never closes on a member-revoke entry — revocation is checked once at connect, not re-derived from stream-entry clocks", () => {
@@ -246,6 +270,7 @@ describe("realtime delivery", () => {
         id: "11000-0",
         record: {
           kind: "member-revoke",
+          revokedAtMs: 1,
           reason: "deleted",
           userId: "user-1",
           workspaceId: "workspace-1",

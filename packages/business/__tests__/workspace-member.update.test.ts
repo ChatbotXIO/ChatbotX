@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   updateSet: vi.fn(),
   update: vi.fn(),
   invalidateCacheByTags: vi.fn(),
+  revokeRealtime: vi.fn().mockResolvedValue(true),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -44,6 +45,9 @@ vi.mock("@chatbotx.io/redis", () => ({
 
 vi.mock("../src/audit/dispatcher", () => ({
   dispatchAuditRecord: vi.fn(),
+}))
+vi.mock("../src/platform/realtime-broadcast", () => ({
+  tryRevokeWorkspaceMemberRealtimeConnections: mocks.revokeRealtime,
 }))
 
 vi.mock("../src/workspace-usage/service", () => ({
@@ -88,11 +92,48 @@ describe("workspaceMemberService.update", () => {
       data: { permissions: { superAdmin: true } },
     })
 
-    expect(result).toEqual({ id: "member-1" })
+    expect(result).toEqual({ id: "member-1", revokeWarning: false })
     expect(mocks.invalidateCacheByTags).toHaveBeenCalledWith([
       workspaceMemberCacheTag("user-1"),
       "workspaces:ws-1:workspace-members",
     ])
+  })
+
+  test("revokes realtime connections after a permission update", async () => {
+    mocks.updateReturning.mockResolvedValue([
+      { id: "member-1", userId: "user-1" },
+    ])
+
+    const result = await workspaceMemberService.update({
+      id: "member-1",
+      workspaceId: "ws-1",
+      data: { permissions: { superAdmin: true } },
+      revokeRealtime: true,
+    })
+
+    expect(result).toEqual({ id: "member-1", revokeWarning: false })
+    expect(mocks.revokeRealtime).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      userId: "user-1",
+      reason: "reauth",
+      errorMessage: "Failed to revoke workspace member realtime connections",
+    })
+  })
+
+  test("surfaces a realtime revoke warning without failing the update", async () => {
+    mocks.updateReturning.mockResolvedValue([
+      { id: "member-1", userId: "user-1" },
+    ])
+    mocks.revokeRealtime.mockResolvedValueOnce(false)
+
+    const result = await workspaceMemberService.update({
+      id: "member-1",
+      workspaceId: "ws-1",
+      data: { permissions: { superAdmin: true } },
+      revokeRealtime: true,
+    })
+
+    expect(result).toEqual({ id: "member-1", revokeWarning: true })
   })
 
   // Defense-in-depth: today's only caller pre-validates via

@@ -1429,13 +1429,13 @@ describe("createRealtimeGateway (live)", () => {
   )
 
   test(
-    "presence: reports empty presence when the last tab closes, not just silence",
+    "presence: lets the last presence report expire after the final tab closes",
     async () => {
       gateway = createRealtimeGateway(
         testGatewayOptions({
           maxConnections: 10,
           presenceReportCoalesceMs: 30,
-          presenceReportIntervalMs: 50,
+          presenceReportIntervalMs: 10_000,
           redis: createFakeRedis() as never,
           secret: SECRET,
         }),
@@ -1449,24 +1449,20 @@ describe("createRealtimeGateway (live)", () => {
         `ws://127.0.0.1:${port}/rt/workspaces/ws-presence-2?token=${token}`,
       )
       await waitForOpen(socket)
-      await delay(150)
-      const connectedCalls = reportWorkspacePresenceMock.mock.calls.filter(
-        ([workspaceId]) => workspaceId === "ws-presence-2",
+      const previousPresenceReportCount =
+        reportWorkspacePresenceMock.mock.calls.length
+      await vi.waitFor(() =>
+        expect(reportWorkspacePresenceMock.mock.calls.length).toBeGreaterThan(
+          previousPresenceReportCount,
+        ),
       )
-      expect(connectedCalls.length).toBeGreaterThanOrEqual(2)
-      expect(connectedCalls[0]?.[1]).toEqual(["user-1"])
       reportWorkspacePresenceMock.mockClear()
 
       socket.close()
       await waitForClose(socket)
       await delay(150)
 
-      expect(reportWorkspacePresenceMock).toHaveBeenCalledWith(
-        "ws-presence-2",
-        [],
-        "http://builder.test",
-        SECRET,
-      )
+      expect(reportWorkspacePresenceMock).not.toHaveBeenCalled()
     },
     PRESENCE_TEST_TIMEOUT_MS,
   )

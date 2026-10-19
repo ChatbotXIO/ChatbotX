@@ -1,9 +1,6 @@
 "use server"
 
-import {
-  tryRevokeWorkspaceMemberRealtimeConnections,
-  workspaceMemberService,
-} from "@chatbotx.io/business"
+import { workspaceMemberService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { hasWorkspacePermission } from "@/lib/auth/permission-routes"
@@ -44,16 +41,5 @@ export const deleteWorkspaceMemberAction = workspaceActionClientAllowExpired
       )
     }
 
-    // The service also busts the removed member's cached `listByUserId`
-    // result, so their access is revoked immediately.
-    await workspaceMemberService.delete({ id, workspaceId })
-
-    const revokeWarning = !(await tryRevokeWorkspaceMemberRealtimeConnections({
-      workspaceId,
-      userId: workspaceMember.userId,
-      reason: "deleted",
-      errorMessage: "Failed to revoke removed member realtime connections",
-    }))
-
-    return { revokeWarning }
+    return await workspaceMemberService.delete({ id, workspaceId })
   })
