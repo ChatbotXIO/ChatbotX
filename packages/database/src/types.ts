@@ -308,3 +308,5 @@ export type MediaLibraryFolderModel =
   typeof schema.mediaLibraryFolderModel.$inferSelect
 export type MediaLibraryFileModel =
   typeof schema.mediaLibraryFileModel.$inferSelect
+export type SavedReplyImageModel =
+  typeof schema.savedReplyImageModel.$inferSelect

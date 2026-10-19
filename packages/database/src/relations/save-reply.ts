@@ -9,5 +9,9 @@ export const savedReplyRelations = defineRelationsPart(schema, (r) => ({
       to: r.workspaceModel.id,
       optional: false,
     }),
+    images: r.many.savedReplyImageModel({
+      from: r.savedReplyModel.id,
+      to: r.savedReplyImageModel.savedReplyId,
+    }),
   },
 }))

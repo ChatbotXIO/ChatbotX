@@ -2613,6 +2613,9 @@
     },
     "igStory": {
       "label": "Instagram hekayə avtomatlaşdırması"
+    },
+    "images": {
+      "label": "Şəkillər"
     }
   },
   "metaConversions": {
@@ -4489,7 +4492,14 @@
     },
     "referredProduct": {
       "askedAbout": "Bu məhsul haqqında soruşdu"
-    }
+    },
+    "savedReplyTextOrImageRequired": "Mətn və ya ən azı bir şəkil əlavə edin",
+    "imagesNotSupportedOnChannel": "{channel} bu söhbətdə şəkil göndərə bilmir",
+    "tooManyImagesOnChannel": "{channel} bu söhbətdə ən çox {max} şəkil göndərə bilər",
+    "savedReplyImagesRemoved": "Burada göndərilə bilməyən şəkillər silindi",
+    "onlyImagesAllowed": "Yalnız şəkil əlavə etmək olar",
+    "tooManySavedReplyImages": "Saxlanmış cavabda ən çox {max} şəkil ola bilər",
+    "savedReplyImagesNotSentHere": "Şəkillər burada göndərilməyəcək"
   },
   "instagram": {
     "description": "Bu inteqrasiya Instagram botları yaratmağa imkan verir.",

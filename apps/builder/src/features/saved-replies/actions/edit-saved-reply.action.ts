@@ -19,6 +19,7 @@ export const editSavedReplyAction = workspaceActionClient
       {
         shortcut: parsedInput.shortcut,
         text: parsedInput.text,
+        imageFileIds: parsedInput.imageFileIds,
       },
     )
   })

@@ -18,6 +18,13 @@ import {
 import type { SendProductsContent } from "@chatbotx.io/flow-config"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { createId } from "@chatbotx.io/utils"
+import { channelTypes } from "@chatbotx.io/utils/channel"
+import {
+  checkInboxImages,
+  type InboxReplyKind,
+  isImageMimeType,
+  resolveInboxReplyKind,
+} from "@chatbotx.io/utils/inbox-image-support"
 import {
   ChatJobAction,
   chatQueue,
@@ -28,6 +35,7 @@ import { contactInboxService } from "../contact-inbox/service"
 import { conversationService } from "../conversation/service"
 import {
   ChatbotXException,
+  ImagesNotSupportedOnChannelError,
   notFoundException,
   validationException,
 } from "../errors"
@@ -107,6 +115,92 @@ const copyMediaLibraryFileToConversationAttachment = async (props: {
   }
 }
 
+/**
+ * Loads the Media Library rows a send refers to (by path, id or ids), each
+ * scoped to the workspace so a caller can't reference another workspace's
+ * storage object.
+ */
+const resolveMediaLibraryFiles = async (
+  workspaceId: string,
+  input: CreateOutgoingInput,
+): Promise<CopyableMediaLibraryFile[]> => {
+  if ("mediaFile" in input && input.mediaFile) {
+    // Legacy path-based selection, still used by public oRPC APIs.
+    const mediaLibraryFile = await mediaLibraryFileRepository.findByPath({
+      workspaceId,
+      path: input.mediaFile.path,
+    })
+    if (!mediaLibraryFile) {
+      throw new ChatbotXException("Media library file not found")
+    }
+    return [mediaLibraryFile]
+  }
+
+  let mediaFileIds: string[] = []
+  if ("mediaFileId" in input && input.mediaFileId) {
+    mediaFileIds = [input.mediaFileId]
+  } else if ("mediaFileIds" in input && input.mediaFileIds) {
+    mediaFileIds = input.mediaFileIds
+  }
+  if (mediaFileIds.length === 0) {
+    return []
+  }
+
+  const files = await mediaLibraryFileRepository.findByIds({
+    workspaceId,
+    ids: mediaFileIds,
+  })
+  const filesById = new Map(files.map((file) => [file.id, file]))
+  // Kept in the caller's order — it is the order the attachments are sent.
+  return mediaFileIds.map((mediaFileId) => {
+    const mediaLibraryFile = filesById.get(mediaFileId)
+    if (!mediaLibraryFile) {
+      throw new ChatbotXException("Media library file not found")
+    }
+    return mediaLibraryFile
+  })
+}
+
+const hasDeviceFiles = (input: CreateOutgoingInput): boolean =>
+  "files" in input && Boolean(input.files) && (input.files?.length ?? 0) > 0
+
+const countImages = (
+  input: CreateOutgoingInput,
+  mediaLibraryFiles: CopyableMediaLibraryFile[],
+): number => {
+  if ("files" in input && input.files && input.files.length > 0) {
+    return input.files.filter((file) => isImageMimeType(file.type)).length
+  }
+  return mediaLibraryFiles.filter((file) => isImageMimeType(file.mimeType))
+    .length
+}
+
+/**
+ * Refuses images where the channel can't deliver them (Threads, Instagram
+ * and TikTok comment replies) or more than it can carry (one on a Messenger
+ * comment reply), instead of letting the send handler drop them silently.
+ */
+const assertChannelAcceptsImages = (props: {
+  channel: string
+  kind: InboxReplyKind
+  imageCount: number
+}) => {
+  const channel = channelTypes.safeParse(props.channel)
+  // A channel string outside the enum has no known limits — let the send
+  // handler decide, as before.
+  if (!channel.success) {
+    return
+  }
+  const result = checkInboxImages({ ...props, channel: channel.data })
+  if (!result.ok) {
+    throw new ImagesNotSupportedOnChannelError({
+      reason: result.reason,
+      channel: props.channel,
+      max: result.max,
+    })
+  }
+}
+
 /** Carries the bypass flag to the send worker via `metadata`. */
 const withBypassThreadControlLock = (
   contentAttributes: Record<string, unknown> | null,
@@ -182,6 +276,22 @@ export const createOutgoing = async (props: {
         })
       : undefined
 
+  // Resolved and checked before any row or object exists, so a send the
+  // channel cannot deliver is refused instead of silently losing its images.
+  // Device files win over media library ids (as the upload branch below
+  // does), so ids sent alongside files are never looked up.
+  const mediaLibraryFiles = hasDeviceFiles(parsedInput)
+    ? []
+    : await resolveMediaLibraryFiles(conversation.workspaceId, parsedInput)
+  assertChannelAcceptsImages({
+    channel: contactInbox.channel,
+    kind: resolveInboxReplyKind({
+      hasReplyTarget: Boolean(parsedInput.replyToMessageId),
+      isPrivateReply: Boolean(parsedInput.isPrivateReply),
+    }),
+    imageCount: countImages(parsedInput, mediaLibraryFiles),
+  })
+
   const { storageUrl } = await resolveTenantSettings({
     workspaceId: conversation.workspaceId,
   })
@@ -209,56 +319,15 @@ export const createOutgoing = async (props: {
       parsedInput.files,
       `public/space/${conversation.workspaceId}/conversations/${targetConversation.id}`,
     )
-  } else if ("mediaFile" in parsedInput && parsedInput.mediaFile) {
-    // Legacy path-based selection, still used by public oRPC APIs.
-    const mediaLibraryFile = await mediaLibraryFileRepository.findByPath({
-      workspaceId: conversation.workspaceId,
-      path: parsedInput.mediaFile.path,
-    })
-    if (!mediaLibraryFile) {
-      throw new ChatbotXException("Media library file not found")
-    }
-
-    uploadedFiles = [
-      await copyMediaLibraryFileToConversationAttachment({
-        mediaLibraryFile,
-        workspaceId: conversation.workspaceId,
-        conversationId: targetConversation.id,
-      }),
-    ]
-  } else if ("mediaFileId" in parsedInput && parsedInput.mediaFileId) {
-    const mediaLibraryFile = await mediaLibraryFileRepository.findById({
-      workspaceId: conversation.workspaceId,
-      id: parsedInput.mediaFileId,
-    })
-    if (!mediaLibraryFile) {
-      throw new ChatbotXException("Media library file not found")
-    }
-
-    uploadedFiles = [
-      await copyMediaLibraryFileToConversationAttachment({
-        mediaLibraryFile,
-        workspaceId: conversation.workspaceId,
-        conversationId: targetConversation.id,
-      }),
-    ]
-  } else if ("mediaFileIds" in parsedInput && parsedInput.mediaFileIds) {
+  } else if (mediaLibraryFiles.length > 0) {
     uploadedFiles = await Promise.all(
-      parsedInput.mediaFileIds.map(async (mediaFileId) => {
-        const mediaLibraryFile = await mediaLibraryFileRepository.findById({
-          workspaceId: conversation.workspaceId,
-          id: mediaFileId,
-        })
-        if (!mediaLibraryFile) {
-          throw new ChatbotXException("Media library file not found")
-        }
-
-        return copyMediaLibraryFileToConversationAttachment({
+      mediaLibraryFiles.map((mediaLibraryFile) =>
+        copyMediaLibraryFileToConversationAttachment({
           mediaLibraryFile,
           workspaceId: conversation.workspaceId,
           conversationId: targetConversation.id,
-        })
-      }),
+        }),
+      ),
     )
   }
 

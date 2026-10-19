@@ -56,6 +56,12 @@ export const listMediaLibraryFilesPublicRequest = publicListRequest.extend({
     .describe(
       "`all` and `recent` span every folder (differing only in sort); `favourite` spans every folder and ignores `folderId`. Omit both `filter` and `folderId` to list root-level files only.",
     ),
+  fileType: z
+    .enum(["image"])
+    .optional()
+    .describe(
+      "Only return files of this kind. `image` keeps files whose MIME type starts with `image/` — use it to find ids for `savedReplies.create` `imageFileIds`.",
+    ),
 })
 
 export const listMediaLibraryFilesPublicResponse = publicListResponse(

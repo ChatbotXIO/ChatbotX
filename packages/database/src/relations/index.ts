@@ -136,6 +136,7 @@ import { productCategoryRelations } from "./product-category"
 import { questionnaireRelations } from "./questionnaire"
 import { reflinkRelations } from "./reflink"
 import { savedReplyRelations } from "./save-reply"
+import { savedReplyImageRelations } from "./saved-reply-image"
 import { sequenceRelations } from "./sequence"
 import { sequenceDispatchRelations } from "./sequence-dispatch"
 import { sequenceStepRelations } from "./sequence-step"
@@ -295,6 +296,7 @@ export const relations = {
   ...mediaLibraryFolderRelations,
   ...mediaLibraryFileRelations,
   ...savedReplyRelations,
+  ...savedReplyImageRelations,
   ...integrationTelegramRelations,
   ...integrationTiktokRelations,
   ...integrationInstagramRelations,

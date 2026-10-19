@@ -2425,6 +2425,9 @@
     },
     "igStory": {
       "label": "Automatisation des stories Instagram"
+    },
+    "images": {
+      "label": "Images"
     }
   },
   "flows": {
@@ -3807,7 +3810,14 @@
     },
     "referredProduct": {
       "askedAbout": "A posé une question sur ce produit"
-    }
+    },
+    "savedReplyTextOrImageRequired": "Ajoutez du texte ou au moins une image",
+    "imagesNotSupportedOnChannel": "{channel} ne peut pas envoyer d'images dans cette conversation",
+    "tooManyImagesOnChannel": "{channel} peut envoyer au maximum {max} image(s) dans cette conversation",
+    "savedReplyImagesRemoved": "Les images qui ne peuvent pas être envoyées ici ont été retirées",
+    "onlyImagesAllowed": "Seules les images peuvent être ajoutées",
+    "tooManySavedReplyImages": "Une réponse enregistrée peut contenir au maximum {max} images",
+    "savedReplyImagesNotSentHere": "Les images ne seront pas envoyées ici"
   },
   "instagram": {
     "description": "Cette intégration permet de créer des bots Instagram.",

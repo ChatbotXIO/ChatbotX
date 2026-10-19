@@ -32,7 +32,7 @@ export const savedRepliesPublicRouter = {
       path: "/v1/saved-replies",
       summary: "List saved replies",
       description:
-        "Use this to find saved-reply shortcuts before inspecting one with `savedReplies.get` or adding one with `savedReplies.create`. Returns the shortcuts available in this workspace.",
+        "Use this to find saved-reply shortcuts before inspecting one with `savedReplies.get` or adding one with `savedReplies.create`. Returns the shortcuts available in this workspace, each with its text and ordered `images`. To send one, call `messages.create` with its `text` and `mediaFileIds` set to its `images[].mediaLibraryFileId`; channels that can't carry images there answer `imagesNotSupportedOnChannel`.",
       tags: ["Saved Replies"],
     })
     .input(publicListRequest)
@@ -77,7 +77,7 @@ export const savedRepliesPublicRouter = {
       path: "/v1/saved-replies",
       summary: "Create saved reply",
       description:
-        "Adds a shortcut-triggered text snippet agents can insert into a reply. Use `savedReplies.list` first to avoid duplicating a shortcut.",
+        "Adds a shortcut-triggered reply agents can insert: text, up to 10 images, or both. Image ids come from `mediaLibrary.listFiles` with `fileType=image` (upload new ones with `mediaLibrary.createUploadUrl` + `mediaLibrary.createFile`). Use `savedReplies.list` first to avoid duplicating a shortcut.",
       successStatus: 201,
       tags: ["Saved Replies"],
     })
@@ -90,6 +90,7 @@ export const savedRepliesPublicRouter = {
         workspaceId: context.workspace.id,
         shortcut: input.shortcut,
         text: input.text,
+        imageFileIds: input.imageFileIds,
       })
     }),
 
@@ -99,7 +100,7 @@ export const savedRepliesPublicRouter = {
       path: "/v1/saved-replies/{id}",
       summary: "Update saved reply",
       description:
-        "Changes a saved reply's shortcut and/or text. Call `savedReplies.get` to inspect current values first.",
+        "Changes a saved reply's shortcut, text and images. A field left out keeps its current value: omit `text` to keep the text, omit `imageFileIds` to keep the images (pass `[]` to remove them). The result must still have text or at least one image. Call `savedReplies.get` to inspect current values first.",
       tags: ["Saved Replies"],
     })
     .input(

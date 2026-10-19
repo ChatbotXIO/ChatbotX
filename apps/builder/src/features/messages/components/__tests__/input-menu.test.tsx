@@ -58,8 +58,10 @@ afterEach(() => {
   container.remove()
 })
 
-const render = (props: Parameters<typeof InputMenu>[0]) =>
-  act(() => root.render(<InputMenu {...props} />))
+const render = (
+  props: Omit<Parameters<typeof InputMenu>[0], "onSelectSavedReply">,
+) =>
+  act(() => root.render(<InputMenu onSelectSavedReply={vi.fn()} {...props} />))
 const sendProducts = () =>
   container.querySelector<HTMLElement>('[data-testid="send-products"]')
 

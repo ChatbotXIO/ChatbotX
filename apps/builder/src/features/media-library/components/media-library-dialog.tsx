@@ -63,6 +63,10 @@ type ActiveSection = "recent" | "favourite" | { folderId: string }
 
 const FILE_GRID_SCROLL_THRESHOLD = 200
 
+const IMAGE_UPLOAD_ACCEPT = "image/png,image/jpeg,image/gif,image/webp"
+
+export type MediaLibraryFileType = "image"
+
 export type MediaLibraryDialogProps = Omit<
   ComponentPropsWithoutRef<typeof Dialog>,
   "onOpenChange"
@@ -74,6 +78,9 @@ export type MediaLibraryDialogProps = Omit<
   // appended below). Defaults to the shared media-library prefix — pass this
   // to keep a caller's uploads under its own feature-specific path.
   uploadPath?: string
+  // Restricts uploads to this media kind. The caller filters the listed
+  // `files` itself (the trigger passes it to the list request).
+  fileType?: MediaLibraryFileType
   onSelect?: (file: MediaFile) => void
   // When set, "Done" confirms every checked file via `onSelectMultiple`
   // instead of requiring exactly one via `onSelect`.
@@ -142,6 +149,7 @@ export function MediaLibraryDialog({
   folders,
   files,
   uploadPath,
+  fileType,
   onSelect,
   multiple = false,
   onSelectMultiple,
@@ -788,7 +796,11 @@ export function MediaLibraryDialog({
           <DialogFooter className="mx-0 mb-0 border-t px-6 py-3">
             <div className="flex w-full items-center justify-between">
               <DirectUploadButton
-                accept="image/png,image/jpeg,image/gif,video/mp4,audio/*,application/*"
+                accept={
+                  fileType === "image"
+                    ? IMAGE_UPLOAD_ACCEPT
+                    : "image/png,image/jpeg,image/gif,video/mp4,audio/*,application/*"
+                }
                 label={t("upload")}
                 maxSize={52_428_800} // 50MB
                 multiple

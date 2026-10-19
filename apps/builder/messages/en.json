@@ -2613,6 +2613,9 @@
     },
     "igStory": {
       "label": "Instagram Story Automation"
+    },
+    "images": {
+      "label": "Images"
     }
   },
   "metaConversions": {
@@ -4489,7 +4492,14 @@
     },
     "referredProduct": {
       "askedAbout": "Asked about this product"
-    }
+    },
+    "savedReplyTextOrImageRequired": "Add text or at least one image",
+    "imagesNotSupportedOnChannel": "{channel} can't send images in this conversation",
+    "tooManyImagesOnChannel": "{channel} can send at most {max} image(s) in this conversation",
+    "savedReplyImagesRemoved": "Images that can't be sent here were removed",
+    "onlyImagesAllowed": "Only images can be added",
+    "tooManySavedReplyImages": "A saved reply can have at most {max} images",
+    "savedReplyImagesNotSentHere": "Images won't be sent here"
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

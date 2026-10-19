@@ -1,6 +1,8 @@
 import { BROADCAST_PLAN_LIMIT_CODE } from "@chatbotx.io/business/errors"
 import {
   broadcastPlanLimitDataSchema,
+  IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE,
+  imagesNotSupportedOnChannelDataSchema,
   PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
   productMessageUnresolvableDataSchema,
 } from "@chatbotx.io/database/partials"
@@ -34,9 +36,21 @@ export const productMessageUnresolvable = {
   data: productMessageUnresolvableDataSchema,
 }
 
+/**
+ * The conversation's channel can't carry the message's images (Threads,
+ * Instagram/TikTok comment replies) or not that many (a Messenger comment
+ * reply takes one). `data.reason` and `data.max` say which.
+ */
+export const imagesNotSupportedOnChannel = {
+  message: "The channel can't send these images",
+  status: 422,
+  data: imagesNotSupportedOnChannelDataSchema,
+}
+
 export const STRUCTURED_ERROR_CODES: ReadonlySet<string> = new Set([
   BROADCAST_PLAN_LIMIT_CODE,
   PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
+  IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE,
 ])
 
 /**
@@ -236,6 +250,7 @@ export const possibleErrorsOnMutatingDecisionProfile = {
 export const possibleErrorsOnSendingMessage = {
   ...possibleErrorsOnMutatingResource,
   [PRODUCT_MESSAGE_UNRESOLVABLE_CODE]: productMessageUnresolvable,
+  [IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE]: imagesNotSupportedOnChannel,
 } satisfies ErrorMap
 
 /** WhatsApp calling settings/hours: Meta or the local mirror failing is a 502. */

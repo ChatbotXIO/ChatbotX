@@ -2425,6 +2425,9 @@
     },
     "igStory": {
       "label": "Instagramストーリー自動化"
+    },
+    "images": {
+      "label": "画像"
     }
   },
   "flows": {
@@ -3786,7 +3789,14 @@
     },
     "referredProduct": {
       "askedAbout": "この商品について質問しました"
-    }
+    },
+    "savedReplyTextOrImageRequired": "テキストまたは画像を1枚以上追加してください",
+    "imagesNotSupportedOnChannel": "{channel} はこの会話で画像を送信できません",
+    "tooManyImagesOnChannel": "{channel} はこの会話で最大 {max} 枚の画像を送信できます",
+    "savedReplyImagesRemoved": "ここで送信できない画像を削除しました",
+    "onlyImagesAllowed": "追加できるのは画像のみです",
+    "tooManySavedReplyImages": "保存済み返信の画像は最大 {max} 枚です",
+    "savedReplyImagesNotSentHere": "ここでは画像は送信されません"
   },
   "instagram": {
     "description": "この連携を使用すると、Instagramボットを作成できます。",

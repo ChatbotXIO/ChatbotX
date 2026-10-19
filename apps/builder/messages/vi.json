@@ -2613,6 +2613,9 @@
     },
     "igStory": {
       "label": "Tự động trả lời story Instagram"
+    },
+    "images": {
+      "label": "Hình ảnh"
     }
   },
   "flows": {
@@ -3849,7 +3852,14 @@
     },
     "referredProduct": {
       "askedAbout": "Đã hỏi về sản phẩm này"
-    }
+    },
+    "savedReplyTextOrImageRequired": "Hãy nhập chữ hoặc thêm ít nhất một ảnh",
+    "imagesNotSupportedOnChannel": "{channel} không gửi được hình ảnh trong cuộc trò chuyện này",
+    "tooManyImagesOnChannel": "{channel} chỉ gửi được tối đa {max} ảnh trong cuộc trò chuyện này",
+    "savedReplyImagesRemoved": "Đã bỏ những ảnh không gửi được ở đây",
+    "onlyImagesAllowed": "Chỉ được thêm hình ảnh",
+    "tooManySavedReplyImages": "Một câu trả lời nhanh có tối đa {max} ảnh",
+    "savedReplyImagesNotSentHere": "Ảnh sẽ không được gửi ở đây"
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",
