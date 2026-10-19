@@ -32,6 +32,27 @@ export const productMessageUnresolvableReasons = [
 export type ProductMessageUnresolvableReason =
   (typeof productMessageUnresolvableReasons)[number]
 
+export const IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE =
+  "imagesNotSupportedOnChannel"
+
+export const imagesNotSupportedOnChannelReasons = [
+  "imagesNotSupported",
+  "tooManyImages",
+] as const
+export type ImagesNotSupportedOnChannelReason =
+  (typeof imagesNotSupportedOnChannelReasons)[number]
+
+/** The `data` an API caller gets when a channel refuses a message's images. */
+export const imagesNotSupportedOnChannelDataSchema = z.object({
+  reason: z
+    .enum(imagesNotSupportedOnChannelReasons)
+    .describe(
+      "`imagesNotSupported`: this channel (or comment reply) can't carry images at all. `tooManyImages`: it carries at most `max` images.",
+    ),
+  channel: z.string().describe("Channel of the conversation's inbox."),
+  max: z.number().int().describe("Most images allowed here (0 = none)."),
+})
+
 export const PRODUCT_MESSAGE_UNRESOLVABLE_CODE = "productMessageUnresolvable"
 
 /** The `data` an API caller gets with a refused product message, so it can branch on `reason`. */

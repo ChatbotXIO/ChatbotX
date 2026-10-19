@@ -2425,6 +2425,9 @@
     },
     "igStory": {
       "label": "Instagram-historieautomatisering"
+    },
+    "images": {
+      "label": "Billeder"
     }
   },
   "flows": {
@@ -3807,7 +3810,14 @@
     },
     "referredProduct": {
       "askedAbout": "Spurgte om dette produkt"
-    }
+    },
+    "savedReplyTextOrImageRequired": "Tilføj tekst eller mindst ét billede",
+    "imagesNotSupportedOnChannel": "{channel} kan ikke sende billeder i denne samtale",
+    "tooManyImagesOnChannel": "{channel} kan højst sende {max} billede(r) i denne samtale",
+    "savedReplyImagesRemoved": "Billeder, der ikke kan sendes her, blev fjernet",
+    "onlyImagesAllowed": "Kun billeder kan tilføjes",
+    "tooManySavedReplyImages": "Et gemt svar kan højst have {max} billeder",
+    "savedReplyImagesNotSentHere": "Billeder bliver ikke sendt her"
   },
   "instagram": {
     "description": "Denne integration lets du opret Instagram bots.",

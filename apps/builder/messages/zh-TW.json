@@ -1552,6 +1552,9 @@
     },
     "igStory": {
       "label": "Instagram 限時動態自動化"
+    },
+    "images": {
+      "label": "圖片"
     }
   },
   "messages": {
@@ -1745,7 +1748,14 @@
     },
     "referredProduct": {
       "askedAbout": "詢問了此商品"
-    }
+    },
+    "savedReplyTextOrImageRequired": "請新增文字或至少一張圖片",
+    "imagesNotSupportedOnChannel": "{channel} 無法在此對話中傳送圖片",
+    "tooManyImagesOnChannel": "{channel} 在此對話中最多只能傳送 {max} 張圖片",
+    "savedReplyImagesRemoved": "已移除無法在此傳送的圖片",
+    "onlyImagesAllowed": "只能新增圖片",
+    "tooManySavedReplyImages": "一則快速回覆最多包含 {max} 張圖片",
+    "savedReplyImagesNotSentHere": "圖片不會在此傳送"
   },
   "productCategories": {
     "deleteDescription": "{count, plural, =0 {此分類尚未指派任何商品。} one {# 項商品將移至未分類。} other {# 項商品將移至未分類。}}",

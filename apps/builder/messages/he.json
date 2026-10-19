@@ -1687,7 +1687,14 @@
     },
     "referredProduct": {
       "askedAbout": "שאל על מוצר זה"
-    }
+    },
+    "savedReplyTextOrImageRequired": "הוסיפו טקסט או לפחות תמונה אחת",
+    "imagesNotSupportedOnChannel": "{channel} לא יכול לשלוח תמונות בשיחה הזו",
+    "tooManyImagesOnChannel": "{channel} יכול לשלוח עד {max} תמונות בשיחה הזו",
+    "savedReplyImagesRemoved": "תמונות שלא ניתן לשלוח כאן הוסרו",
+    "onlyImagesAllowed": "ניתן להוסיף תמונות בלבד",
+    "tooManySavedReplyImages": "תשובה שמורה יכולה לכלול עד {max} תמונות",
+    "savedReplyImagesNotSentHere": "התמונות לא יישלחו כאן"
   },
   "instagram": {
     "description": "שילוב זה מאפשר ליצור בוטים ל-Instagram.",
@@ -6154,6 +6161,9 @@
     },
     "igStory": {
       "label": "אוטומציית סטוריז באינסטגרם"
+    },
+    "images": {
+      "label": "תמונות"
     }
   },
   "billing": {

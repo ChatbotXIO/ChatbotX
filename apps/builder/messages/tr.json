@@ -2571,6 +2571,9 @@
     },
     "igStory": {
       "label": "Instagram hikaye otomasyonu"
+    },
+    "images": {
+      "label": "Görseller"
     }
   },
   "flows": {
@@ -3807,7 +3810,14 @@
     },
     "referredProduct": {
       "askedAbout": "Bu ürün hakkında soru sordu"
-    }
+    },
+    "savedReplyTextOrImageRequired": "Metin veya en az bir görsel ekleyin",
+    "imagesNotSupportedOnChannel": "{channel} bu konuşmada görsel gönderemez",
+    "tooManyImagesOnChannel": "{channel} bu konuşmada en fazla {max} görsel gönderebilir",
+    "savedReplyImagesRemoved": "Burada gönderilemeyen görseller kaldırıldı",
+    "onlyImagesAllowed": "Yalnızca görsel eklenebilir",
+    "tooManySavedReplyImages": "Kayıtlı bir yanıtta en fazla {max} görsel olabilir",
+    "savedReplyImagesNotSentHere": "Görseller burada gönderilmeyecek"
   },
   "instagram": {
     "description": "Bu entegrasyon, Instagram botları oluşturmanızı sağlar.",

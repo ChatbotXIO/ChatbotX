@@ -2571,6 +2571,9 @@
     },
     "igStory": {
       "label": "أتمتة قصص إنستغرام"
+    },
+    "images": {
+      "label": "الصور"
     }
   },
   "flows": {
@@ -3807,7 +3810,14 @@
     },
     "referredProduct": {
       "askedAbout": "سأل عن هذا المنتج"
-    }
+    },
+    "savedReplyTextOrImageRequired": "أضف نصًا أو صورة واحدة على الأقل",
+    "imagesNotSupportedOnChannel": "لا يمكن لـ {channel} إرسال الصور في هذه المحادثة",
+    "tooManyImagesOnChannel": "يمكن لـ {channel} إرسال {max} صورة كحد أقصى في هذه المحادثة",
+    "savedReplyImagesRemoved": "تمت إزالة الصور التي لا يمكن إرسالها هنا",
+    "onlyImagesAllowed": "يمكن إضافة الصور فقط",
+    "tooManySavedReplyImages": "يمكن أن يحتوي الرد المحفوظ على {max} صور كحد أقصى",
+    "savedReplyImagesNotSentHere": "لن يتم إرسال الصور هنا"
   },
   "instagram": {
     "description": "يتيح لك هذا التكامل إنشاء بوتات Instagram.",

@@ -2229,6 +2229,9 @@
     },
     "igStory": {
       "label": "Instagram-verhaalautomatisering"
+    },
+    "images": {
+      "label": "Afbeeldingen"
     }
   },
   "condition": {
@@ -3807,7 +3810,14 @@
     },
     "referredProduct": {
       "askedAbout": "Vroeg naar dit product"
-    }
+    },
+    "savedReplyTextOrImageRequired": "Voeg tekst of minstens één afbeelding toe",
+    "imagesNotSupportedOnChannel": "{channel} kan in dit gesprek geen afbeeldingen versturen",
+    "tooManyImagesOnChannel": "{channel} kan in dit gesprek maximaal {max} afbeelding(en) versturen",
+    "savedReplyImagesRemoved": "Afbeeldingen die hier niet verstuurd kunnen worden, zijn verwijderd",
+    "onlyImagesAllowed": "Alleen afbeeldingen kunnen worden toegevoegd",
+    "tooManySavedReplyImages": "Een opgeslagen antwoord kan maximaal {max} afbeeldingen bevatten",
+    "savedReplyImagesNotSentHere": "Afbeeldingen worden hier niet verstuurd"
   },
   "instagram": {
     "description": "Met deze integratie kun je Instagram-bots maken.",

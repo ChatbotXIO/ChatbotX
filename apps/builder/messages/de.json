@@ -2425,6 +2425,9 @@
     },
     "igStory": {
       "label": "Instagram-Story-Automatisierung"
+    },
+    "images": {
+      "label": "Bilder"
     }
   },
   "flows": {
@@ -3807,7 +3810,14 @@
     },
     "referredProduct": {
       "askedAbout": "Hat nach diesem Produkt gefragt"
-    }
+    },
+    "savedReplyTextOrImageRequired": "Füge Text oder mindestens ein Bild hinzu",
+    "imagesNotSupportedOnChannel": "{channel} kann in dieser Unterhaltung keine Bilder senden",
+    "tooManyImagesOnChannel": "{channel} kann in dieser Unterhaltung höchstens {max} Bild(er) senden",
+    "savedReplyImagesRemoved": "Bilder, die hier nicht gesendet werden können, wurden entfernt",
+    "onlyImagesAllowed": "Es können nur Bilder hinzugefügt werden",
+    "tooManySavedReplyImages": "Eine gespeicherte Antwort kann höchstens {max} Bilder enthalten",
+    "savedReplyImagesNotSentHere": "Bilder werden hier nicht gesendet"
   },
   "instagram": {
     "description": "Mit dieser Integration können Sie Instagram-Bots erstellen.",

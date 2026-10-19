@@ -73,6 +73,8 @@ vi.mock("@chatbotx.io/database/partials", async () => {
     broadcastPlanLimitDataSchema: z.object({}),
     PRODUCT_MESSAGE_UNRESOLVABLE_CODE: "productMessageUnresolvable",
     productMessageUnresolvableDataSchema: z.object({}),
+    IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE: "imagesNotSupportedOnChannel",
+    imagesNotSupportedOnChannelDataSchema: z.object({}),
     commentIncludeKeywordsSchema: z.boolean(),
     commentReplySchema: z.object({}),
     igStoryAutomationTriggers: z.enum(["storyReply", "storyMention"]),

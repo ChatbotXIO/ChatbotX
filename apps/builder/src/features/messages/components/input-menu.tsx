@@ -6,12 +6,15 @@ import { useTranslations } from "next-intl"
 import type { ReactElement } from "react"
 import { SelectFlowDialog } from "@/features/flows/components/select-flow-dialog"
 import SavedReplyManage from "@/features/saved-replies/saved-reply-manage"
+import type { SavedReplyResource } from "@/features/saved-replies/schema/resource"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import EmojiPicker from "./emoji-picker"
 import { SendProductsDialogTrigger } from "./send-products-trigger"
 
 type InputMenuProps = {
   setContent: (text: string, insert?: boolean) => void
+  /** Fills the composer with a saved reply's text and images. */
+  onSelectSavedReply: (savedReply: SavedReplyResource) => void
   /** The inbox the composer sends through; decides which tools it offers. */
   contactInbox?: { channel: string; inboxId: string }
   bypassThreadControlLock?: boolean
@@ -51,6 +54,7 @@ export const SendFlowDialogTrigger = ({
  */
 export const InputMenu = ({
   setContent,
+  onSelectSavedReply,
   contactInbox,
   bypassThreadControlLock,
 }: InputMenuProps) => {
@@ -79,7 +83,7 @@ export const InputMenu = ({
         />
       )}
       <EmojiPicker onSelectEmoji={(emoji) => setContent(emoji, true)} />
-      <SavedReplyManage onSelect={setContent} />
+      <SavedReplyManage onSelect={onSelectSavedReply} />
     </>
   )
 }

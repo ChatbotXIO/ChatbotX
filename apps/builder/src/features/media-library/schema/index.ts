@@ -66,6 +66,7 @@ export const listFilesRequest = z.object({
   folderId: zodBigintAsString().nullish(),
   search: z.string().optional(),
   filter: z.enum(["recent", "favourite"]).optional(),
+  fileType: z.enum(["image"]).optional(),
   page: z.number().int().min(1).optional(),
 })
 export type ListFilesRequest = z.infer<typeof listFilesRequest>

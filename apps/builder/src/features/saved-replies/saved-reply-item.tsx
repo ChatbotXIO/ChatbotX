@@ -5,6 +5,7 @@ import { PencilIcon, Trash2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { deleteSavedReplyAction } from "./actions/delete-saved-reply.action"
+import { SavedReplyImagesSummary } from "./saved-reply-image-thumbnails"
 import type { SavedReplyResource } from "./schema/resource"
 
 type SavedReplyItemProps = {
@@ -52,6 +53,7 @@ export const SavedReplyItem = ({
         <p className="wrap-break-word line-clamp-2 whitespace-normal text-muted-foreground text-sm">
           {item.text}
         </p>
+        <SavedReplyImagesSummary images={item.images} />
       </div>
 
       <div className="flex items-center gap-1">

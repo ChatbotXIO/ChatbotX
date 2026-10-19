@@ -31,6 +31,7 @@
     "./graph-error": "./src/graph-error.ts",
     "./id": "./src/id.ts",
     "./inbound-webhook-channel": "./src/inbound-webhook-channel.ts",
+    "./inbox-image-support": "./src/inbox-image-support.ts",
     "./json-path": "./src/json-path.ts",
     "./media-download": "./src/media-download.ts",
     "./meta-capi": "./src/meta-capi.ts",

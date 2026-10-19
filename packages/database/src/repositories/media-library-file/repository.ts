@@ -50,11 +50,30 @@ export const mediaLibraryFileRepository = {
     return file ?? null
   },
 
+  findByIds(
+    input: { ids: string[]; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<MediaLibraryFileModel[]> {
+    if (input.ids.length === 0) {
+      return Promise.resolve([])
+    }
+    return tx
+      .select()
+      .from(mediaLibraryFileModel)
+      .where(
+        and(
+          eq(mediaLibraryFileModel.workspaceId, input.workspaceId),
+          inArray(mediaLibraryFileModel.id, input.ids),
+        ),
+      )
+  },
+
   async list(input: {
     workspaceId: string
     filter?: string | null
     folderId?: string | null
     search?: string | null
+    fileType?: "image" | null
     page?: number
     perPage: number
   }): Promise<{ data: MediaLibraryFileModel[]; total: number }> {
@@ -75,6 +94,10 @@ export const mediaLibraryFileRepository = {
 
     if (input.search) {
       conditions.push(ilike(mediaLibraryFileModel.name, `%${input.search}%`))
+    }
+
+    if (input.fileType === "image") {
+      conditions.push(ilike(mediaLibraryFileModel.mimeType, "image/%"))
     }
 
     const whereSQL = and(...conditions)

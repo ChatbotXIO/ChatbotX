@@ -3338,6 +3338,9 @@
     },
     "igStory": {
       "label": "Instagram 快拍自动化"
+    },
+    "images": {
+      "label": "图片"
     }
   },
   "flowAnalytics": {
@@ -4865,7 +4868,14 @@
     },
     "referredProduct": {
       "askedAbout": "询问了此商品"
-    }
+    },
+    "savedReplyTextOrImageRequired": "请添加文字或至少一张图片",
+    "imagesNotSupportedOnChannel": "{channel} 无法在此对话中发送图片",
+    "tooManyImagesOnChannel": "{channel} 在此对话中最多只能发送 {max} 张图片",
+    "savedReplyImagesRemoved": "已移除无法在此发送的图片",
+    "onlyImagesAllowed": "只能添加图片",
+    "tooManySavedReplyImages": "一条快捷回复最多包含 {max} 张图片",
+    "savedReplyImagesNotSentHere": "图片不会在此发送"
   },
   "messenger": {
     "botProfile": "机器人个人数据",

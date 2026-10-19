@@ -14,16 +14,24 @@ import {
 } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useSavedReplies } from "./provider/saved-reply-hook"
+import { SavedReplyImagesSummary } from "./saved-reply-image-thumbnails"
+import type { SavedReplyResource } from "./schema/resource"
 
 type SavedReplySlashPopoverProps = {
   inputValue: string
-  onSelect: (text: string) => void
+  onSelect: (savedReply: SavedReplyResource) => void
+  /**
+   * Most images the current conversation can send. A reply carrying more
+   * shows a warning, since its extra images will be dropped on select.
+   */
+  imageLimit?: number
   children: ReactElement
 }
 
 export const QuickRepliesPopover = ({
   inputValue,
   onSelect,
+  imageLimit,
   children,
 }: SavedReplySlashPopoverProps) => {
   const t = useTranslations()
@@ -118,7 +126,7 @@ export const QuickRepliesPopover = ({
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault()
           event.stopPropagation()
-          onSelect(filteredSavedReplies[activeIndex].text)
+          onSelect(filteredSavedReplies[activeIndex])
           setOpen(false)
           setActiveIndex(0)
           return
@@ -170,7 +178,7 @@ export const QuickRepliesPopover = ({
                   }`}
                   key={reply.id}
                   onClick={() => {
-                    onSelect(reply.text)
+                    onSelect(reply)
                     setOpen(false)
                     setActiveIndex(0)
                   }}
@@ -186,6 +194,13 @@ export const QuickRepliesPopover = ({
                   <p className="wrap-break-word line-clamp-2 whitespace-normal text-muted-foreground text-xs">
                     {reply.text}
                   </p>
+                  <SavedReplyImagesSummary images={reply.images} />
+                  {imageLimit !== undefined &&
+                  reply.images.length > imageLimit ? (
+                    <p className="text-amber-600 text-xs dark:text-amber-500">
+                      {t("messages.savedReplyImagesNotSentHere")}
+                    </p>
+                  ) : null}
                 </Button>
               ))}
         </PopoverContent>

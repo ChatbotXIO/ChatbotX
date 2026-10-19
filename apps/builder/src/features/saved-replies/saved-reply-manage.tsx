@@ -24,7 +24,9 @@ type ViewState =
   | { type: "create" }
   | { type: "edit"; item: SavedReplyResource }
 
-const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
+const SavedReplyManage = (props: {
+  onSelect: (savedReply: SavedReplyResource) => void
+}) => {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
 
@@ -42,7 +44,7 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
   )
 
   const onSelectSavedReply = (item: SavedReplyResource) => {
-    props.onSelect(item.text)
+    props.onSelect(item)
     setOpen(false)
     setView({ type: "list" })
   }

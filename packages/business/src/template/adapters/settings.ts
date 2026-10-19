@@ -1,7 +1,13 @@
 import { db } from "@chatbotx.io/database/client"
+import {
+  mediaLibraryFileRepository,
+  savedReplyImageRepository,
+} from "@chatbotx.io/database/repositories"
 import { savedReplyModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
+import { uploader } from "@chatbotx.io/filesystem"
+import { createId, mapWithConcurrency } from "@chatbotx.io/utils"
 import { botFieldService } from "../../bot-field/service"
+import { logger } from "../../logger"
 import type {
   PatchTask,
   ResourceAdapter,
@@ -9,10 +15,107 @@ import type {
   TemplateInstallContext,
 } from "./types"
 
+type TemplateSavedReplyImage = {
+  path: string
+  name: string
+  mimeType: string
+  size: number
+}
+
 type TemplateSavedReplyEntry = {
   sourceId: string
   shortcut: string
   text: string
+  // Absent on templates saved before saved replies carried images.
+  images?: TemplateSavedReplyImage[]
+}
+
+/**
+ * Only public media library objects may be copied into the installing
+ * workspace. The template payload is data, so a path outside that prefix
+ * (another workspace's private object) is never read.
+ */
+const COPYABLE_IMAGE_PATH = /^public\/space\/\d+\/media-library\/[^/].*$/
+
+const isCopyableImage = (image: unknown): image is TemplateSavedReplyImage => {
+  if (typeof image !== "object" || image === null) {
+    return false
+  }
+  const candidate = image as Partial<TemplateSavedReplyImage>
+  return (
+    typeof candidate.path === "string" &&
+    COPYABLE_IMAGE_PATH.test(candidate.path) &&
+    !candidate.path.includes("..") &&
+    typeof candidate.name === "string" &&
+    typeof candidate.mimeType === "string" &&
+    candidate.mimeType.startsWith("image/") &&
+    typeof candidate.size === "number"
+  )
+}
+
+/** Parallel storage copies per saved reply, to keep the install tx short. */
+const IMAGE_COPY_CONCURRENCY = 4
+
+/**
+ * Copies a saved reply's images into the installing workspace's media
+ * library and returns the new file ids, in order. An image whose source
+ * object is gone (or whose path isn't a public media library object) is
+ * skipped with a warning instead of failing the install.
+ */
+const installSavedReplyImages = async (
+  ctx: TemplateInstallContext,
+  entry: TemplateSavedReplyEntry,
+): Promise<string[]> => {
+  const images = entry.images ?? []
+  const copies = await mapWithConcurrency(
+    images,
+    IMAGE_COPY_CONCURRENCY,
+    async (image) => {
+      if (!isCopyableImage(image)) {
+        return null
+      }
+      const targetPath = `public/space/${ctx.workspaceId}/media-library/${createId()}`
+      await uploader.copyObject(image.path, targetPath)
+      ctx.trackCopiedObject?.(targetPath)
+      return { image, targetPath }
+    },
+  )
+
+  const fileIds: string[] = []
+  for (const [index, copy] of copies.entries()) {
+    const source = images[index] as unknown
+    if (copy.status === "rejected" || copy.value === null) {
+      if (copy.status === "rejected") {
+        logger.warn(
+          { err: copy.reason },
+          "Template install: saved reply image could not be copied",
+        )
+      }
+      ctx.warn({
+        category: "settings",
+        entityKind: "savedReplyImage",
+        path: `settings.savedReplies.${entry.sourceId}.images.${index}`,
+        value: String((source as { path?: unknown } | null)?.path ?? ""),
+      })
+      continue
+    }
+
+    const { image, targetPath } = copy.value
+    const file = await mediaLibraryFileRepository.create(
+      {
+        id: createId(),
+        workspaceId: ctx.workspaceId,
+        folderId: null,
+        name: image.name,
+        path: targetPath,
+        mimeType: image.mimeType,
+        size: image.size,
+      },
+      ctx.tx,
+    )
+    fileIds.push(file.id)
+  }
+  return fileIds
 }
 
 type TemplateBotFieldEntry = {
@@ -50,6 +153,19 @@ export const settingsAdapter: ResourceAdapter = {
         | (TemplateBotFieldEntry & { kind: "botField" })
 
       if (entry.kind === "savedReply") {
+        const imageFileIds = await installSavedReplyImages(ctx, entry)
+        // An image-only reply that lost every image would install empty,
+        // which a saved reply may never be — skip it with a warning.
+        if (!entry.text?.trim() && imageFileIds.length === 0) {
+          ctx.warn({
+            category: "settings",
+            entityKind: "savedReply",
+            path: `settings.savedReplies.${entry.sourceId}`,
+            value: entry.shortcut,
+          })
+          continue
+        }
+
         const [created] = await ctx.tx
           .insert(savedReplyModel)
           .values({
@@ -59,6 +175,14 @@ export const settingsAdapter: ResourceAdapter = {
             text: entry.text,
           })
           .returning()
+        await savedReplyImageRepository.replaceForSavedReply(
+          {
+            workspaceId: ctx.workspaceId,
+            savedReplyId: created.id,
+            mediaLibraryFileIds: imageFileIds,
+          },
+          ctx.tx,
+        )
         ctx.track({
           category: "settings",
           resourceKind: "savedReply",
@@ -155,12 +279,27 @@ export const settingsAdapter: ResourceAdapter = {
           where: { workspaceId, id: { in: uniqueIds } },
         }),
       ])
+      const savedReplyImages =
+        await savedReplyImageRepository.listBySavedReplyIds({
+          workspaceId,
+          savedReplyIds: savedReplies.map((row) => row.id),
+        })
 
       const savedReplyEntries = savedReplies.map((row) => ({
         sourceId: row.id,
         kind: "savedReply" as const,
         shortcut: row.shortcut,
         text: row.text,
+        images: savedReplyImages
+          .filter((image) => image.savedReplyId === row.id)
+          .map(
+            (image): TemplateSavedReplyImage => ({
+              path: image.file.path,
+              name: image.file.name,
+              mimeType: image.file.mimeType,
+              size: image.file.size,
+            }),
+          ),
       }))
       const botFieldEntries = botFields.map((row) => ({
         sourceId: row.id,

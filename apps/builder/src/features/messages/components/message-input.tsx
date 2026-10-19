@@ -5,6 +5,14 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { createId } from "@chatbotx.io/utils"
+import { channelTypes } from "@chatbotx.io/utils/channel"
+import {
+  checkInboxImages,
+  getInboxImageLimit,
+  type InboxImageCheckResult,
+  isImageMimeType,
+  resolveInboxReplyKind,
+} from "@chatbotx.io/utils/inbox-image-support"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import {
@@ -38,6 +46,7 @@ import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { MediaLibraryTrigger } from "@/features/media-library/components/media-library-trigger"
 import type { ListFilesResponse } from "@/features/media-library/schema"
 import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popover"
+import type { SavedReplyResource } from "@/features/saved-replies/schema/resource"
 import { authClient } from "@/lib/auth/auth-client"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
@@ -118,6 +127,38 @@ export const MessageInput = () => {
 
   const channel = conversation?.contactInboxes[0]?.channel
   const threadControl = useThreadControl(conversation, channel)
+
+  // A send with a reply target (picked, or the last contact comment that
+  // `sendMessage` falls back to) goes out as a comment reply, which carries
+  // fewer images than a message thread on most channels. A private reply is
+  // a DM to the commenter instead, so it gets the DM-like limit.
+  const replyKind = resolveInboxReplyKind({
+    hasReplyTarget: Boolean(replyToMessage ?? lastContactComment),
+    isPrivateReply: Boolean(replyToMessage && isPrivateReply),
+  })
+  // A plain string (not the safeParse result object), so callbacks depending
+  // on it keep their identity across keystrokes.
+  const channelType = useMemo(() => {
+    const parsed = channelTypes.safeParse(channel)
+    return parsed.success ? parsed.data : undefined
+  }, [channel])
+  const imageLimit = channelType
+    ? getInboxImageLimit({ channel: channelType, kind: replyKind })
+    : undefined
+  const channelLabel = channelType
+    ? t(`fields.${channelType}.label`)
+    : (channel ?? "")
+
+  const imageLimitMessage = useCallback(
+    (result: Exclude<InboxImageCheckResult, { ok: true }>) =>
+      result.reason === "imagesNotSupported"
+        ? t("messages.imagesNotSupportedOnChannel", { channel: channelLabel })
+        : t("messages.tooManyImagesOnChannel", {
+            channel: channelLabel,
+            max: result.max,
+          }),
+    [channelLabel, t],
+  )
 
   // The agent dismissed the standby lock (stored routing state may be stale):
   // the next send bypasses the worker's thread-control gate.
@@ -271,6 +312,62 @@ export const MessageInput = () => {
     [form],
   )
 
+  // Fills the composer with a saved reply: its text replaces the draft and
+  // its images replace any picked attachment. Images the conversation can't
+  // send are dropped up front, with a toast saying why.
+  const applySavedReply = useCallback(
+    (savedReply: SavedReplyResource) => {
+      setContent(savedReply.text)
+      if (savedReply.images.length === 0) {
+        return
+      }
+
+      const keptImages = savedReply.images.slice(
+        0,
+        imageLimit ?? savedReply.images.length,
+      )
+      if (keptImages.length < savedReply.images.length && channelType) {
+        const result = checkInboxImages({
+          channel: channelType,
+          kind: replyKind,
+          imageCount: savedReply.images.length,
+        })
+        if (!result.ok) {
+          toast.error(imageLimitMessage(result), {
+            description: t("messages.savedReplyImagesRemoved"),
+          })
+        }
+      }
+      if (keptImages.length === 0) {
+        return
+      }
+
+      form.setValue("files", [])
+      setSelectedMediaFiles(
+        keptImages.map((image) => ({
+          id: image.mediaLibraryFileId,
+          url: image.url,
+          mimeType: image.mimeType,
+          name: image.name,
+        })),
+      )
+      form.setValue(
+        "mediaFileIds",
+        keptImages.map((image) => image.mediaLibraryFileId),
+        { shouldValidate: true },
+      )
+    },
+    [
+      channelType,
+      form,
+      imageLimit,
+      imageLimitMessage,
+      replyKind,
+      setContent,
+      t,
+    ],
+  )
+
   // Memoize attachment click handler
   const onClickAttachment = useCallback(() => {
     if (fileUploadRef.current) {
@@ -289,6 +386,27 @@ export const MessageInput = () => {
       : undefined
 
   const sendMessage = useCallback(() => {
+    // Same check as the server, done here so the agent sees which channel
+    // refuses the images before anything is sent.
+    if (channelType) {
+      const attachedFiles = form.getValues("files")
+      const imageCount =
+        selectedMediaFiles.filter((file) => isImageMimeType(file.mimeType))
+          .length +
+        (Array.isArray(attachedFiles)
+          ? attachedFiles.filter((file) => isImageMimeType(file.type)).length
+          : 0)
+      const result = checkInboxImages({
+        channel: channelType,
+        kind: replyKind,
+        imageCount,
+      })
+      if (!result.ok) {
+        toast.error(imageLimitMessage(result))
+        return
+      }
+    }
+
     if (!replyToMessage && lastContactComment) {
       form.setValue("replyToMessageId", lastContactComment.id)
       form.setValue(
@@ -304,6 +422,10 @@ export const MessageInput = () => {
     form,
     handleSubmitWithAction,
     bypassThreadControlLock,
+    channelType,
+    selectedMediaFiles,
+    replyKind,
+    imageLimitMessage,
   ])
 
   // Memoize keyboard handler
@@ -512,8 +634,9 @@ export const MessageInput = () => {
               name="text"
               render={({ field }) => (
                 <QuickRepliesPopover
+                  imageLimit={imageLimit}
                   inputValue={field.value ?? ""}
-                  onSelect={setContent}
+                  onSelect={applySavedReply}
                 >
                   <Textarea
                     aria-label={t("actions.typeMessage")}
@@ -575,6 +698,7 @@ export const MessageInput = () => {
                 <InputMenu
                   bypassThreadControlLock={bypassThreadControlLock}
                   contactInbox={conversation?.contactInboxes[0]}
+                  onSelectSavedReply={applySavedReply}
                   setContent={setContent}
                 />
               )}

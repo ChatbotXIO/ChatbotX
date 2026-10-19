@@ -10,6 +10,8 @@ export type ListMediaLibraryFilesInput = {
   folderId?: string | null
   search?: string | null
   filter?: string | null
+  /** Restricts the listing to one media kind; only images today. */
+  fileType?: "image" | null
   page?: number
   perPage?: number
 }

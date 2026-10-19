@@ -18,5 +18,6 @@ export const createSavedReplyAction = workspaceActionClient
       workspaceId,
       shortcut: parsedInput.shortcut,
       text: parsedInput.text,
+      imageFileIds: parsedInput.imageFileIds,
     })
   })

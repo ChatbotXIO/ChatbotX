@@ -2425,6 +2425,9 @@
     },
     "igStory": {
       "label": "Otomatisasi story Instagram"
+    },
+    "images": {
+      "label": "Gambar"
     }
   },
   "flows": {
@@ -3807,7 +3810,14 @@
     },
     "referredProduct": {
       "askedAbout": "Bertanya tentang produk ini"
-    }
+    },
+    "savedReplyTextOrImageRequired": "Tambahkan teks atau setidaknya satu gambar",
+    "imagesNotSupportedOnChannel": "{channel} tidak dapat mengirim gambar di percakapan ini",
+    "tooManyImagesOnChannel": "{channel} dapat mengirim maksimal {max} gambar di percakapan ini",
+    "savedReplyImagesRemoved": "Gambar yang tidak bisa dikirim di sini telah dihapus",
+    "onlyImagesAllowed": "Hanya gambar yang dapat ditambahkan",
+    "tooManySavedReplyImages": "Balasan tersimpan dapat memiliki maksimal {max} gambar",
+    "savedReplyImagesNotSentHere": "Gambar tidak akan dikirim di sini"
   },
   "instagram": {
     "description": "Integrasi ini memungkinkan Anda membuat bot Instagram.",

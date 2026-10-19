@@ -8,17 +8,19 @@ import {
   templateInstalledResourceModel,
 } from "@chatbotx.io/database/schema"
 import { updateTriggerCache } from "@chatbotx.io/events"
+import { uploader } from "@chatbotx.io/filesystem"
 import type {
   TemplateExport,
   TemplateFolderManifestEntry,
 } from "@chatbotx.io/flow-config"
-import { createId } from "@chatbotx.io/utils"
+import { createId, mapWithConcurrency } from "@chatbotx.io/utils"
 import { aiAgentService } from "../ai-agent/service"
 import { automatedResponseService } from "../automated-response/service"
 import { botFieldService } from "../bot-field/service"
 import { customFieldService } from "../custom-field/service"
 import { toPublicErrorMessage } from "../errors"
 import { folderService } from "../folder"
+import { logger } from "../logger"
 import { resolveCustomFieldManifest } from "./adapters/manifests/custom-fields"
 import { resolveFolderManifest } from "./adapters/manifests/folders"
 import { resolveProductCategoryManifest } from "./adapters/manifests/product-categories"
@@ -123,6 +125,7 @@ const createInstallContext = (
   tx: DatabaseClient,
   installationId: string,
   workspaceId: string,
+  copiedObjectPaths: string[],
 ): {
   ctx: TemplateInstallContext
   tracked: TrackedResource[]
@@ -146,6 +149,9 @@ const createInstallContext = (
       if (warnings.length < MAX_STORED_WARNINGS) {
         warnings.push(warning)
       }
+    },
+    trackCopiedObject: (path) => {
+      copiedObjectPaths.push(path)
     },
   }
 
@@ -264,6 +270,25 @@ const nestManifestUnderInstallFolders = async (
  * webchat's quota exhaustion, an unresolved reference) degrade to a
  * `warnings` entry instead of throwing.
  */
+/**
+ * Best-effort cleanup of storage objects an aborted install copied: the
+ * transaction rolled their rows back, so nothing references them anymore.
+ * A failed delete is only logged — it must not mask the install error.
+ */
+const deleteCopiedObjects = async (paths: string[]): Promise<void> => {
+  const results = await mapWithConcurrency(paths, 4, (path) =>
+    uploader.deleteObject(path),
+  )
+  for (const [index, result] of results.entries()) {
+    if (result.status === "rejected") {
+      logger.warn(
+        { err: result.reason, path: paths[index] },
+        "Template install: could not delete a copied object after rollback",
+      )
+    }
+  }
+}
+
 const runInstall = async (
   tx: DatabaseClient,
   input: {
@@ -273,11 +298,13 @@ const runInstall = async (
     templateName: string
     createInstallFolder: boolean
   },
+  copiedObjectPaths: string[],
 ): Promise<RunInstallResult> => {
   const { ctx, tracked, warnings, resourceCount } = createInstallContext(
     tx,
     input.installationId,
     input.workspaceId,
+    copiedObjectPaths,
   )
 
   let installFolderId: string | null = null
@@ -372,6 +399,7 @@ export const templateInstallService = {
     templateName: string
     createInstallFolder: boolean
   }): Promise<void> {
+    const copiedObjectPaths: string[] = []
     try {
       await db.transaction(async (tx) => {
         await tx
@@ -379,7 +407,7 @@ export const templateInstallService = {
           .set({ status: "installing" })
           .where(eq(templateInstallationModel.id, input.installationId))
 
-        const outcome = await runInstall(tx, input)
+        const outcome = await runInstall(tx, input, copiedObjectPaths)
 
         await tx
           .update(templateInstallationModel)
@@ -396,6 +424,7 @@ export const templateInstallService = {
 
       await invalidateAfterCommit(input.workspaceId)
     } catch (error) {
+      await deleteCopiedObjects(copiedObjectPaths)
       await db
         .update(templateInstallationModel)
         .set({

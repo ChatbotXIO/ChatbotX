@@ -11,7 +11,8 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { editSavedReplyAction } from "./actions/edit-saved-reply.action"
-import { editSavedReplyRequest } from "./schema/mutation"
+import { SavedReplyImagesField } from "./saved-reply-images-field"
+import { buildSavedReplyFormSchema } from "./schema/mutation"
 import type { SavedReplyResource } from "./schema/resource"
 
 type SavedReplyEditFormProps = {
@@ -35,16 +36,14 @@ const SavedReplyEditForm = ({
     resetFormAndAction: resetForm,
   } = useHookFormAction(
     editSavedReplyAction.bind(null, workspaceId, editingSavedReply.id),
-    zodResolver(editSavedReplyRequest),
+    zodResolver(
+      buildSavedReplyFormSchema(t("messages.savedReplyTextOrImageRequired")),
+    ),
     {
       actionProps: {
         onSuccess: ({ data }) => {
           if (data) {
-            onSaved({
-              ...editingSavedReply,
-              shortcut: data.shortcut,
-              text: data.text,
-            })
+            onSaved(data)
           }
 
           toast.success(t("messages.savedSuccessfully"))
@@ -62,6 +61,7 @@ const SavedReplyEditForm = ({
         defaultValues: {
           shortcut: "",
           text: "",
+          imageFileIds: [],
         },
       },
       errorMapProps: {},
@@ -72,6 +72,9 @@ const SavedReplyEditForm = ({
     form.reset({
       shortcut: editingSavedReply.shortcut,
       text: editingSavedReply.text,
+      imageFileIds: editingSavedReply.images.map(
+        (image) => image.mediaLibraryFileId,
+      ),
     })
   }, [editingSavedReply, form])
 
@@ -89,7 +92,11 @@ const SavedReplyEditForm = ({
           label={t("fields.messages.label")}
           name="text"
           placeholder="..."
-          required
+        />
+
+        <SavedReplyImagesField
+          initialImages={editingSavedReply.images}
+          workspaceId={workspaceId}
         />
 
         <div className="flex items-center justify-between pt-2">

@@ -12,17 +12,23 @@ const mockIntegrationQueueAdd = vi.fn()
 const mockFlowExists = vi.fn()
 const mockFindOrCreate = vi.fn()
 const mockPrepareProductMessage = vi.fn()
+const mockFindMediaFilesByIds = vi.fn()
+const mockCopyObject = vi.fn()
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: mockCreateMessageRepository,
   flowRepository: { existsInWorkspace: mockFlowExists },
-  mediaLibraryFileRepository: { findByPath: vi.fn(), findById: vi.fn() },
+  mediaLibraryFileRepository: {
+    findByPath: vi.fn(),
+    findById: vi.fn(),
+    findByIds: mockFindMediaFilesByIds,
+  },
 }))
 
 vi.mock("@chatbotx.io/filesystem", () => ({
   guessFileTypeFromMimeType: vi.fn(() => "image"),
   pathJoin: (...parts: string[]) => parts.join("/"),
-  uploader: { copyObject: vi.fn(), getPresignedDownload: vi.fn() },
+  uploader: { copyObject: mockCopyObject, getPresignedDownload: vi.fn() },
   uploadMultipleFiles: vi.fn(async () => []),
 }))
 
@@ -428,5 +434,134 @@ describe("messageService.createOutgoing with products", () => {
     expect(mockChatQueueAdd.mock.calls.map(([name]) => name)).toContain(
       "checkOutboundAutomatedResponse",
     )
+  })
+})
+
+describe("messageService.createOutgoing image limits per channel", () => {
+  const imageFile = (id: string) => ({
+    id,
+    name: `${id}.png`,
+    path: `public/space/ws-1/media-library/${id}.png`,
+    mimeType: "image/png",
+    size: 10,
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockResolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://storage.example.com",
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      create: mockRepositoryCreate,
+      createWithAttachments: vi.fn(async (input) => ({
+        id: "msg-1",
+        ...input,
+        attachments: [],
+      })),
+    })
+    mockChatQueueAdd.mockResolvedValue(undefined)
+    mockFindMediaFilesByIds.mockImplementation(({ ids }: { ids: string[] }) =>
+      Promise.resolve([...ids].reverse().map(imageFile)),
+    )
+    mockFindOrCreate.mockResolvedValue({ id: "dm-conv", workspaceId: "ws-1" })
+  })
+
+  const send = (channel: string, input: Record<string, unknown>) =>
+    createOutgoing({
+      conversation: conversation as never,
+      contactInbox: { ...contactInbox, channel } as never,
+      input: input as never,
+    })
+
+  test("refuses images on a threads conversation", async () => {
+    await expect(
+      send("threads", { text: "hi", mediaFileIds: ["f1"] }),
+    ).rejects.toMatchObject({
+      code: "imagesNotSupportedOnChannel",
+      data: { reason: "imagesNotSupported", channel: "threads", max: 0 },
+    })
+    expect(mockChatQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("refuses images on an instagram comment reply", async () => {
+    await expect(
+      send("instagram", {
+        text: "hi",
+        mediaFileIds: ["f1"],
+        replyToMessageId: "parent-1",
+      }),
+    ).rejects.toMatchObject({ code: "imagesNotSupportedOnChannel" })
+  })
+
+  test("refuses a second image on a messenger comment reply", async () => {
+    await expect(
+      send("messenger", {
+        text: "hi",
+        mediaFileIds: ["f1", "f2"],
+        replyToMessageId: "parent-1",
+      }),
+    ).rejects.toMatchObject({
+      code: "imagesNotSupportedOnChannel",
+      data: { reason: "tooManyImages", max: 1 },
+    })
+  })
+
+  test("sends images on an instagram private reply, which lands in the DMs", async () => {
+    await expect(
+      send("instagram", {
+        text: "hi",
+        mediaFileIds: ["f1"],
+        replyToMessageId: "parent-1",
+        isPrivateReply: true,
+      }),
+    ).resolves.toMatchObject({ id: "msg-1" })
+  })
+
+  test("sends several images on a messenger private reply", async () => {
+    await expect(
+      send("messenger", {
+        text: "hi",
+        mediaFileIds: ["f1", "f2", "f3"],
+        replyToMessageId: "parent-1",
+        isPrivateReply: true,
+      }),
+    ).resolves.toMatchObject({ id: "msg-1" })
+  })
+
+  test("refuses images on a tiktok private reply", async () => {
+    await expect(
+      send("tiktok", {
+        text: "hi",
+        mediaFileIds: ["f1"],
+        replyToMessageId: "parent-1",
+        isPrivateReply: true,
+      }),
+    ).rejects.toMatchObject({ code: "imagesNotSupportedOnChannel" })
+  })
+
+  test("loads every media file in one query and keeps the caller's order", async () => {
+    await send("messenger", { text: "hi", mediaFileIds: ["f1", "f2", "f3"] })
+
+    expect(mockFindMediaFilesByIds).toHaveBeenCalledTimes(1)
+    expect(mockCopyObject.mock.calls.map((call) => call[0])).toEqual([
+      "public/space/ws-1/media-library/f1.png",
+      "public/space/ws-1/media-library/f2.png",
+      "public/space/ws-1/media-library/f3.png",
+    ])
+  })
+
+  test("fails when one media file is missing", async () => {
+    mockFindMediaFilesByIds.mockResolvedValue([imageFile("f1")])
+
+    await expect(
+      send("messenger", { text: "hi", mediaFileIds: ["f1", "f2"] }),
+    ).rejects.toThrow("Media library file not found")
+  })
+
+  test("sends images in a messenger message thread", async () => {
+    await expect(
+      send("messenger", { text: "hi", mediaFileIds: ["f1", "f2"] }),
+    ).resolves.toMatchObject({ id: "msg-1" })
+    expect(mockChatQueueAdd).toHaveBeenCalled()
   })
 })

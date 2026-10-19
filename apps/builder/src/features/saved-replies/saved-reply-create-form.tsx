@@ -10,8 +10,11 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { createSavedReplyAction } from "./actions/create-saved-reply.action"
-import { createSavedReplyRequest } from "./schema/mutation"
+import { SavedReplyImagesField } from "./saved-reply-images-field"
+import { buildSavedReplyFormSchema } from "./schema/mutation"
 import type { SavedReplyResource } from "./schema/resource"
+
+const NO_IMAGES: never[] = []
 
 type SavedReplyCreateFormProps = {
   workspaceId: string
@@ -32,7 +35,9 @@ const SavedReplyCreateForm = ({
     resetFormAndAction: resetForm,
   } = useHookFormAction(
     createSavedReplyAction.bind(null, workspaceId),
-    zodResolver(createSavedReplyRequest),
+    zodResolver(
+      buildSavedReplyFormSchema(t("messages.savedReplyTextOrImageRequired")),
+    ),
     {
       actionProps: {
         onSuccess: ({ data }) => {
@@ -40,7 +45,11 @@ const SavedReplyCreateForm = ({
             onSaved(data)
           }
 
-          toast.success(t("messages.createdSuccess"))
+          toast.success(
+            t("messages.createdSuccess", {
+              feature: t("fields.savedReplies.label"),
+            }),
+          )
           resetForm()
           onCancel()
         },
@@ -55,6 +64,7 @@ const SavedReplyCreateForm = ({
         defaultValues: {
           shortcut: "",
           text: "",
+          imageFileIds: [],
         },
       },
       errorMapProps: {},
@@ -75,7 +85,11 @@ const SavedReplyCreateForm = ({
           label={t("fields.messages.label")}
           name="text"
           placeholder="..."
-          required
+        />
+
+        <SavedReplyImagesField
+          initialImages={NO_IMAGES}
+          workspaceId={workspaceId}
         />
 
         <div className="flex items-center justify-between pt-2">

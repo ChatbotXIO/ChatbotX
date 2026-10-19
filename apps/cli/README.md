@@ -362,8 +362,14 @@ chatbotx sequences contacts list <id> <stepId> --eventType <eventType>  # Recipi
 ```bash
 chatbotx saved-replies list
 chatbotx saved-replies get <id>
-chatbotx saved-replies create --shortcut <shortcut> --text <text>
-chatbotx saved-replies update <id> --shortcut <shortcut> --text <text>
+chatbotx saved-replies create --shortcut <shortcut> [--text <text>] [--imageFileIds <ids>]
+                                                     # imageFileIds: JSON array of media library image ids
+                                                     # (max 10, from `media-library files --fileType image`);
+                                                     # text or at least one image is required
+chatbotx saved-replies update <id> --shortcut <shortcut> [--text <text>] [--imageFileIds <ids>]
+                                                     # a flag left out keeps its value: omit --text to
+                                                     # keep the text, --imageFileIds to keep the images
+                                                     # ([] removes them)
 chatbotx saved-replies delete <id>
 ```
 
@@ -878,6 +884,7 @@ chatbotx media-library folders                        # List (GET) / create (POS
 chatbotx media-library find-by-folders <folderId>      # Rename (PUT) / delete+contents (DELETE), collide, see note
 chatbotx media-library files-upload-url --fileName <fileName> --mimeType <mimeType>  # Get presigned upload URL
 chatbotx media-library files                           # List (GET) / register uploaded file (POST), collide, see note
+                                                     # list: [--fileType image] to return images only
 chatbotx media-library find-by-files <fileId>          # Get (GET) / delete (DELETE) file, collide, see note
 chatbotx media-library files-favourite <fileId> --isFavourite <isFavourite>
 chatbotx media-library files-access <fileId>           # Record file access

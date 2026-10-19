@@ -3335,6 +3335,9 @@
     },
     "igStory": {
       "label": "Automatisering av Instagram-stories"
+    },
+    "images": {
+      "label": "Bilder"
     }
   },
   "flowAnalytics": {
@@ -4865,7 +4868,14 @@
     },
     "referredProduct": {
       "askedAbout": "Frågade om den här produkten"
-    }
+    },
+    "savedReplyTextOrImageRequired": "Lägg till text eller minst en bild",
+    "imagesNotSupportedOnChannel": "{channel} kan inte skicka bilder i den här konversationen",
+    "tooManyImagesOnChannel": "{channel} kan skicka högst {max} bild(er) i den här konversationen",
+    "savedReplyImagesRemoved": "Bilder som inte kan skickas här har tagits bort",
+    "onlyImagesAllowed": "Endast bilder kan läggas till",
+    "tooManySavedReplyImages": "Ett sparat svar kan ha högst {max} bilder",
+    "savedReplyImagesNotSentHere": "Bilder skickas inte här"
   },
   "messenger": {
     "botProfile": "Botprofil",

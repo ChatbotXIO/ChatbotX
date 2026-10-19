@@ -1,6 +1,8 @@
 import type {
   BroadcastPlanLimitData,
   BroadcastPlanLimitReason,
+  IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE,
+  ImagesNotSupportedOnChannelReason,
   PRODUCT_MESSAGE_UNRESOLVABLE_CODE,
   ProductMessageUnresolvableReason,
   RestrictedBroadcastPlanPolicy,
@@ -539,6 +541,38 @@ export class ProductMessageUnresolvableError extends ChatbotXException {
     this.data = {
       reason,
       ...(productIds ? { productIds: productIds.join(",") } : {}),
+    }
+  }
+}
+
+const imagesNotSupportedOnChannelCode: typeof IMAGES_NOT_SUPPORTED_ON_CHANNEL_CODE =
+  "imagesNotSupportedOnChannel"
+
+/**
+ * The channel can't deliver the images on this send (Threads, Instagram or
+ * TikTok comment replies) or more images than it carries. Refused before any
+ * row exists instead of letting the channel handler drop them silently.
+ */
+export class ImagesNotSupportedOnChannelError extends ChatbotXException {
+  readonly reason: ImagesNotSupportedOnChannelReason
+
+  constructor(props: {
+    reason: ImagesNotSupportedOnChannelReason
+    channel: string
+    max: number
+  }) {
+    super(
+      props.reason === "imagesNotSupported"
+        ? `The ${props.channel} channel can't send images here`
+        : `The ${props.channel} channel can send at most ${props.max} image(s) here`,
+      imagesNotSupportedOnChannelCode,
+      422,
+    )
+    this.reason = props.reason
+    this.data = {
+      reason: props.reason,
+      channel: props.channel,
+      max: props.max,
     }
   }
 }

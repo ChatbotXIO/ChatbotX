@@ -48,6 +48,12 @@ export type TemplateInstallContext = {
     wasExisting: boolean
   }) => void
   warn: (warning: TemplateInstallWarning) => void
+  /**
+   * Records a storage object copied for this install. Storage is outside the
+   * install transaction, so on a rollback the install service deletes every
+   * recorded object instead of leaving it orphaned.
+   */
+  trackCopiedObject?: (path: string) => void
 }
 
 /**

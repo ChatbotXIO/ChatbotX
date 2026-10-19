@@ -2,12 +2,16 @@
 
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { isImageMimeType } from "@chatbotx.io/utils/inbox-image-support"
 import { ImageIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useRef, useState, useTransition } from "react"
 import { client } from "@/lib/orpc/orpc"
 import type { ListFilesResponse, ListFoldersResponse } from "../schema"
-import { MediaLibraryDialog } from "./media-library-dialog"
+import {
+  MediaLibraryDialog,
+  type MediaLibraryFileType,
+} from "./media-library-dialog"
 
 type MediaFile = ListFilesResponse["data"][number]
 type MediaSection = "recent" | "favourite" | { folderId: string }
@@ -23,6 +27,8 @@ type MediaLibraryTriggerProps = {
   // Base storage prefix new uploads made from this trigger are saved under.
   // Defaults to the shared media-library prefix inside MediaLibraryDialog.
   uploadPath?: string
+  // Only list (and allow uploading) files of this kind.
+  fileType?: MediaLibraryFileType
   // The trigger merges its open behavior onto this element instead of
   // wrapping it, so it must not itself be a <button> nested elsewhere.
   children?: React.ReactElement
@@ -34,6 +40,7 @@ export function MediaLibraryTrigger({
   multiple = false,
   onSelectMultiple,
   uploadPath,
+  fileType,
   children,
 }: MediaLibraryTriggerProps) {
   const t = useTranslations("mediaLibrary")
@@ -63,11 +70,12 @@ export function MediaLibraryTrigger({
         workspaceId,
         filter: filterValue,
         folderId: folderIdValue,
+        fileType,
         page,
         search,
       })
     },
-    [workspaceId],
+    [fileType, workspaceId],
   )
 
   const loadSection = useCallback(
@@ -139,6 +147,7 @@ export function MediaLibraryTrigger({
 
       <MediaLibraryDialog
         files={files}
+        fileType={fileType}
         folders={folders}
         hasMoreFiles={hasMoreFiles}
         isLoading={isPending}
@@ -156,7 +165,11 @@ export function MediaLibraryTrigger({
           })
         }
         onFileCreated={(file) => {
-          setFiles((current) => [file, ...current])
+          const matchesFileType =
+            fileType !== "image" || isImageMimeType(file.mimeType)
+          if (matchesFileType) {
+            setFiles((current) => [file, ...current])
+          }
           if (file.folderId) {
             setFolders((current) =>
               current.map((f) =>

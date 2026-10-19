@@ -3468,6 +3468,9 @@
     },
     "igStory": {
       "label": "Automatizare stories Instagram"
+    },
+    "images": {
+      "label": "Imagini"
     }
   },
   "channels": {
@@ -3807,7 +3810,14 @@
     },
     "referredProduct": {
       "askedAbout": "A întrebat despre acest produs"
-    }
+    },
+    "savedReplyTextOrImageRequired": "Adaugă text sau cel puțin o imagine",
+    "imagesNotSupportedOnChannel": "{channel} nu poate trimite imagini în această conversație",
+    "tooManyImagesOnChannel": "{channel} poate trimite cel mult {max} imagine/imagini în această conversație",
+    "savedReplyImagesRemoved": "Imaginile care nu pot fi trimise aici au fost eliminate",
+    "onlyImagesAllowed": "Se pot adăuga doar imagini",
+    "tooManySavedReplyImages": "Un răspuns salvat poate avea cel mult {max} imagini",
+    "savedReplyImagesNotSentHere": "Imaginile nu vor fi trimise aici"
   },
   "instagram": {
     "description": "Această integrare îți permite să creezi boți Instagram.",

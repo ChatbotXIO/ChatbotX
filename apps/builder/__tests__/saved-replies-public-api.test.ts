@@ -118,6 +118,87 @@ describe("POST /v1/saved-replies", () => {
   })
 })
 
+describe("POST /v1/saved-replies with images", () => {
+  const procedure = findProcedure("POST", "/v1/saved-replies")
+
+  test("passes the ordered image ids to the service", async () => {
+    savedReplyService.create.mockResolvedValueOnce({ id: "1", images: [] })
+
+    await procedure.handler?.({
+      context,
+      input: { shortcut: "sp", text: "", imageFileIds: ["11", "12"] },
+    })
+
+    expect(savedReplyService.create).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      shortcut: "sp",
+      text: "",
+      imageFileIds: ["11", "12"],
+    })
+  })
+})
+
+describe("createSavedReplyRequest", () => {
+  test("accepts images without text", async () => {
+    const { createSavedReplyRequest } = await import(
+      "@/features/saved-replies/schema/mutation"
+    )
+    expect(
+      createSavedReplyRequest.safeParse({
+        shortcut: "sp",
+        text: "",
+        imageFileIds: ["11"],
+      }).success,
+    ).toBe(true)
+  })
+
+  test("rejects a reply with neither text nor images", async () => {
+    const { createSavedReplyRequest } = await import(
+      "@/features/saved-replies/schema/mutation"
+    )
+    expect(
+      createSavedReplyRequest.safeParse({ shortcut: "sp", text: " " }).success,
+    ).toBe(false)
+  })
+
+  test("rejects more than 10 images", async () => {
+    const { createSavedReplyRequest } = await import(
+      "@/features/saved-replies/schema/mutation"
+    )
+    expect(
+      createSavedReplyRequest.safeParse({
+        shortcut: "sp",
+        imageFileIds: Array.from({ length: 11 }, (_, index) => `${index + 1}`),
+      }).success,
+    ).toBe(false)
+  })
+})
+
+describe("editSavedReplyRequest", () => {
+  test("accepts a rename that leaves text and images out", async () => {
+    const { editSavedReplyRequest } = await import(
+      "@/features/saved-replies/schema/mutation"
+    )
+    const parsed = editSavedReplyRequest.safeParse({ shortcut: "renamed" })
+    expect(parsed.success).toBe(true)
+    expect(parsed.data).toEqual({ shortcut: "renamed" })
+  })
+})
+
+describe("buildSavedReplyFormSchema", () => {
+  test("reports a missing text or image with the given message", async () => {
+    const { buildSavedReplyFormSchema } = await import(
+      "@/features/saved-replies/schema/mutation"
+    )
+    const parsed = buildSavedReplyFormSchema("Thiếu chữ hoặc ảnh").safeParse({
+      shortcut: "sp",
+      text: "",
+      imageFileIds: [],
+    })
+    expect(parsed.error?.issues[0]?.message).toBe("Thiếu chữ hoặc ảnh")
+  })
+})
+
 describe("PUT /v1/saved-replies/{id}", () => {
   const procedure = findProcedure("PUT", "/v1/saved-replies/{id}")
 

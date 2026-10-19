@@ -31,6 +31,7 @@ const createSavedReply = (id: string, text: string): SavedReplyResource => ({
   workspaceId: "workspace-1",
   shortcut: `/${id}`,
   text,
+  images: [],
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
 })
