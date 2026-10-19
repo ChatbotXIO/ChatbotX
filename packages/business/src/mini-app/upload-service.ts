@@ -1,4 +1,3 @@
-import { randomBytes } from "node:crypto"
 import {
   and,
   type DatabaseClient,
@@ -27,8 +26,16 @@ import { findVisitorContactId } from "./visitor-contact"
 
 const MAX_ORIGINAL_NAME_LENGTH = 200
 
-/** 16 random bytes, base64url (22 chars): unguessable, unlike snowflake ids. */
-const randomToken = () => randomBytes(16).toString("base64url")
+/**
+ * 16 random bytes, base64url (22 chars): unguessable, unlike snowflake ids.
+ * Web Crypto + `btoa` rather than `node:crypto`, because this module is also
+ * traced into the Edge instrumentation bundle (via the builder's oRPC router).
+ */
+const randomToken = () =>
+  btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "")
 
 export type MiniAppUploadErrorCode = MiniAppUploadRejection | "unknown_input"
 

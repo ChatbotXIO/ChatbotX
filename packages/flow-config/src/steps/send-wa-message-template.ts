@@ -1,7 +1,11 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { baseStepSchema } from "./base"
-import { buttonStepDefaultFn, buttonStepSchema } from "./button"
+import {
+  buttonStepDefaultFn,
+  buttonStepSchema,
+  refineNoOpenMiniAppButtons,
+} from "./button"
 import { stepTypes } from "./step-action"
 import { whatsappFlowFieldMappingSchema } from "./whatsapp-flow"
 
@@ -491,6 +495,7 @@ export const sendWaTemplateMessageStepSchema = baseStepSchema.extend({
   }),
   buttons: z
     .array(buttonStepSchema)
+    .superRefine(refineNoOpenMiniAppButtons)
     .default([])
     // Buttons are kept as-is: the leading pair are the delivery status
     // branches, and any tail buttons are template quick replies whose

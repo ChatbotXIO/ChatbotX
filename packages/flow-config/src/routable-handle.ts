@@ -109,21 +109,34 @@ const createRouteFields = (route: FlowRoute) =>
         beforeStep: null,
       }
 
+/**
+ * An Open Mini App button keeps its action when its edge is drawn or dropped:
+ * the edge only says where the flow continues after the Mini App is submitted.
+ */
+const keepsActionOnRouteChange = (button: { buttonType: string | null }) =>
+  button.buttonType === buttonTypes.enum.openMiniApp
+
 const updateButtonRoute = (
   button: ButtonStepProps,
   route: FlowRoute,
-): ButtonStepProps => ({
-  ...button,
-  ...createRouteFields(route),
-})
+): ButtonStepProps =>
+  keepsActionOnRouteChange(button)
+    ? button
+    : {
+        ...button,
+        ...createRouteFields(route),
+      }
 
 const updatePageButtonRoute = (
   button: PageButtonElement,
   route: FlowRoute,
-): PageButtonElement => ({
-  ...button,
-  ...createRouteFields(route),
-})
+): PageButtonElement =>
+  keepsActionOnRouteChange(button)
+    ? button
+    : {
+        ...button,
+        ...createRouteFields(route),
+      }
 
 /**
  * Rewrites the first step that `updateStep` claims and rebuilds the node around

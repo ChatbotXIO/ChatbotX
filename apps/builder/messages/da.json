@@ -2428,6 +2428,9 @@
     },
     "images": {
       "label": "Billeder"
+    },
+    "miniApp": {
+      "label": "Mini App"
     }
   },
   "flows": {
@@ -2558,6 +2561,7 @@
       "noFlowsAvailable": "Nej flows tilgængelig",
       "setCustomField": "Angiv brugerdefineret felt",
       "startAnotherNode": "Start Another Node",
+      "openMiniApp": "Åbn Mini App",
       "startExternalFlow": "Start External Flow",
       "startExternalNode": "Start External Node",
       "startFlow": "Start Flow",
@@ -3753,6 +3757,7 @@
     "whatsappFlowIncomplete": "Åbn knappen, og vælg et WhatsApp Flow og dets startskærm.",
     "whatsappCarouselButtonsMismatch": "På WhatsApp skal en karrusel have de samme knapper på hvert kort: enten en enkelt linkknap på hvert kort eller det samme antal svarknapper på hvert kort",
     "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan et karruselkort med en linkknap ikke have andre knapper. Fjern de andre knapper på kortet, eller skift linkknappen til en anden handling.",
+    "templateButtonOpenMiniAppUnsupported": "Skabelonknapper kan ikke åbne en Mini App. Vælg en anden handling for denne knap.",
     "duplicateNodeError": "Could ikke dupliker den blokér. Prøv igen.",
     "deleteNodeError": "Could ikke slet den blokér. Prøv igen.",
     "redoHistoryCleared": "Gentag historik cleared",

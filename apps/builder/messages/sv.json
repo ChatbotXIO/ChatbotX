@@ -3338,6 +3338,9 @@
     },
     "images": {
       "label": "Bilder"
+    },
+    "miniApp": {
+      "label": "Miniapp"
     }
   },
   "flowAnalytics": {
@@ -3442,6 +3445,7 @@
       "spreadsheetSendData": "Skicka data",
       "spreadsheetUpdateRow": "Uppdatera rad",
       "startAnotherNode": "Starta en annan nod",
+      "openMiniApp": "Öppna miniapp",
       "startExternalFlow": "Starta externt flöde",
       "startExternalNode": "Starta extern nod",
       "startFlow": "Starta flöde",
@@ -4757,6 +4761,7 @@
     "whatsappFlowIncomplete": "Öppna knappen och välj ett WhatsApp Flow och dess startskärm.",
     "whatsappCarouselButtonsMismatch": "På WhatsApp måste ett karusellkort ha samma knappar på varje kort: antingen en enda länkknapp på varje kort, eller samma antal svarsknappar på varje kort",
     "whatsappCarouselLinkButtonNotAlone": "På WhatsApp kan ett karusellkort med en länkknapp inte ha några andra knappar. Ta bort de andra knapparna på det kortet, eller ändra länkknappen till en annan åtgärd.",
+    "templateButtonOpenMiniAppUnsupported": "Mallknappar kan inte öppna en miniapp. Välj en annan åtgärd för den här knappen.",
     "historyDepth": "({count})",
     "humanAgentWindowExpired": "Meddelandeperioden har löpt ut. Kontakten måste skicka ett meddelande först för att öppna konversationen igen.",
     "leaveEmptyToKeepSecret": "Lämna tomt för att behålla den nuvarande hemligheten",

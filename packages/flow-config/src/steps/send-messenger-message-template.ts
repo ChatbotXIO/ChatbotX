@@ -6,6 +6,7 @@ import {
   buttonStepDefaultFn,
   buttonStepSchema,
   mergeTemplateButtonsWithExisting,
+  refineNoOpenMiniAppButtons,
 } from "./button"
 import { stepTypes } from "./step-action"
 import type { ParameterInfo } from "./wa-template-utils"
@@ -117,7 +118,10 @@ export const sendMessengerTemplateMessageStepSchema = baseStepSchema.extend({
   // Messenger utility messages have no delivery-status webhook, so this step
   // behaves like a normal send (linear continuation) — no Delivered/Failed
   // branching. Optional buttons mirror other send steps (e.g. sendText).
-  buttons: z.array(buttonStepSchema).default([]),
+  buttons: z
+    .array(buttonStepSchema)
+    .superRefine(refineNoOpenMiniAppButtons)
+    .default([]),
 })
 
 export type SendMessengerTemplateMessageStepSchema = z.infer<

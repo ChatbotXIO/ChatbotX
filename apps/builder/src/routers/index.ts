@@ -57,6 +57,11 @@ export const router = {
       default: m.conversationsAPI,
     })),
   ),
+  miniAppsAPI: lazy(() =>
+    import("@/features/mini-apps/api").then((m) => ({
+      default: m.miniAppsAPI,
+    })),
+  ),
   couponsAPI: lazy(() =>
     import("@/features/coupons/api").then((m) => ({ default: m.couponsAPI })),
   ),

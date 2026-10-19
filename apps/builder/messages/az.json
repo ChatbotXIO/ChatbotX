@@ -2616,6 +2616,9 @@
     },
     "images": {
       "label": "Şəkillər"
+    },
+    "miniApp": {
+      "label": "Mini Tətbiq"
     }
   },
   "metaConversions": {
@@ -3389,6 +3392,7 @@
       "noFlowsAvailable": "Axın yoxdur",
       "setCustomField": "Fərdi sahəni təyin et",
       "startAnotherNode": "Başqa düyünü başlat",
+      "openMiniApp": "Mini Tətbiqi aç",
       "startExternalFlow": "Xarici axını başlat",
       "startExternalNode": "Xarici düyünü başlat",
       "startFlow": "Axını başlat",
@@ -4435,6 +4439,7 @@
     "whatsappFlowIncomplete": "Düyməni açın və WhatsApp Flow ilə onun başlanğıc ekranını seçin.",
     "whatsappCarouselButtonsMismatch": "WhatsApp-da karuselin bütün kartlarında eyni düymələr olmalıdır: hər kartda ya tək keçid düyməsi, ya da eyni sayda cavab düyməsi olmalıdır",
     "whatsappCarouselLinkButtonNotAlone": "WhatsApp-da keçid düyməsi olan karusel kartında başqa düymə ola bilməz. Həmin kartdakı digər düymələri çıxarın və ya keçid düyməsini başqa əməliyyata dəyişin.",
+    "templateButtonOpenMiniAppUnsupported": "Şablon düymələri Mini Tətbiqi aça bilməz. Bu düymə üçün başqa əməliyyat seçin.",
     "duplicateNodeError": "Blokun surətini yaratmaq mümkün olmadı. Yenidən cəhd edin.",
     "deleteNodeError": "Bloku silmək mümkün olmadı. Yenidən cəhd edin.",
     "redoHistoryCleared": "Yenidən icra tarixçəsi təmizləndi",

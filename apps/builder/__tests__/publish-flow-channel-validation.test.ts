@@ -2,6 +2,7 @@ import {
   buttonStepDefaultFn,
   chooseChannelStepDefaultFn,
   flowValidationCodes,
+  openMiniAppStepDefaultFn,
   openWebsiteStepDefaultFn,
   sendCardStepDefaultFn,
   sendCarouselStepDefaultFn,
@@ -19,6 +20,14 @@ const makeWebsiteButton = (label: string) => ({
   ...buttonStepDefaultFn({ label }),
   buttonType: "openWebsite" as const,
   beforeStep: { ...openWebsiteStepDefaultFn(), url: "https://example.com" },
+})
+
+// Sent as a link (the worker turns it into `openWebsite`), so the carousel
+// rules must treat it as one at publish too.
+const makeMiniAppButton = (label: string) => ({
+  ...buttonStepDefaultFn({ label }),
+  buttonType: "openMiniApp" as const,
+  beforeStep: openMiniAppStepDefaultFn({ miniAppId: "7" }),
 })
 
 const makeWaitNode = () =>
@@ -91,6 +100,37 @@ describe("publishFlowSchema — per-channel step validation", () => {
   test("allows a link button that is the only button on every card", () => {
     const node = makeCarouselNode({
       cardButtons: [[makeWebsiteButton("Open")], [makeWebsiteButton("Visit")]],
+    })
+
+    expect(publish([node]).success).toBe(true)
+  })
+
+  test("rejects a WhatsApp carousel card that mixes an Open Mini App button with a reply", () => {
+    const node = makeCarouselNode({
+      cardButtons: [
+        [makeMiniAppButton("Form"), makeReplyButton("One")],
+        [makeMiniAppButton("Form"), makeReplyButton("Two")],
+      ],
+    })
+
+    expect(firstIssueMessage([node])).toBe(
+      flowValidationCodes.whatsappCarouselLinkButtonNotAlone,
+    )
+  })
+
+  test("rejects a carousel mixing an Open Mini App card with a single-reply card", () => {
+    const node = makeCarouselNode({
+      cardButtons: [[makeMiniAppButton("Form")], [makeReplyButton("One")]],
+    })
+
+    expect(firstIssueMessage([node])).toBe(
+      flowValidationCodes.whatsappCarouselButtonsMismatch,
+    )
+  })
+
+  test("accepts Open Mini App and Open Website cards side by side", () => {
+    const node = makeCarouselNode({
+      cardButtons: [[makeMiniAppButton("Form")], [makeWebsiteButton("Visit")]],
     })
 
     expect(publish([node]).success).toBe(true)

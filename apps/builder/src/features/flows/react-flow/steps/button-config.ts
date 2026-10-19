@@ -1,5 +1,6 @@
 import { type ButtonType, buttonTypes } from "@chatbotx.io/flow-config"
 import {
+  AppWindowIcon,
   LinkIcon,
   type LucideIcon,
   MessageCircleIcon,
@@ -45,5 +46,10 @@ export const allButtonsConfig = (t: TranslationFn): IButtonConfig[] => [
     buttonType: buttonTypes.enum.startAnotherNode,
     icon: SquareArrowOutUpRightIcon,
     label: t("flows.actions.startAnotherNode"),
+  },
+  {
+    buttonType: buttonTypes.enum.openMiniApp,
+    icon: AppWindowIcon,
+    label: t("flows.actions.openMiniApp"),
   },
 ]

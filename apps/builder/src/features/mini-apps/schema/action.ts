@@ -50,15 +50,20 @@ export type PublishMiniAppWhatsappRequest = z.infer<
   typeof publishMiniAppWhatsappRequest
 >
 
-export const submitMiniAppRequest = z.object({
+const miniAppVisitorRequest = z.object({
   miniAppId: zodBigintAsString(),
   token: z.string().max(4096).optional(),
   answers: z.record(z.string(), z.unknown()),
   timezone: z.string().max(64).optional(),
 })
+
+export const submitMiniAppRequest = miniAppVisitorRequest.extend({
+  /** Signed by an "Open Mini App" flow button: the flow to continue on submit. */
+  resume: z.string().max(4096).optional(),
+})
 export type SubmitMiniAppRequest = z.infer<typeof submitMiniAppRequest>
 
-export const saveMiniAppScreenRequest = submitMiniAppRequest.extend({
+export const saveMiniAppScreenRequest = miniAppVisitorRequest.extend({
   screenKey: z.string().min(1).max(64),
 })
 export type SaveMiniAppScreenRequest = z.infer<typeof saveMiniAppScreenRequest>

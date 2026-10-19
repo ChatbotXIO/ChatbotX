@@ -37,6 +37,7 @@ export const flowValidationCodes = {
   sendProductsProductCountOutOfRange: "sendProductsProductCountOutOfRange",
   sendProductsSectionCountOutOfRange: "sendProductsSectionCountOutOfRange",
   sendProductsDuplicateProduct: "sendProductsDuplicateProduct",
+  templateButtonOpenMiniAppUnsupported: "templateButtonOpenMiniAppUnsupported",
 } as const
 
 export type FlowValidationCode =

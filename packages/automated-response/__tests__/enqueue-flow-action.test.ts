@@ -91,7 +91,9 @@ describe("enqueueFlowAction", () => {
   })
 
   test("debounces postback flow actions with env timing", async () => {
-    await enqueueFlowAction({ kind: "postback", data: postbackData })
+    await expect(
+      enqueueFlowAction({ kind: "postback", data: postbackData }),
+    ).resolves.toBe(true)
 
     expectDebouncedAdd({
       action: postbackData.action,
@@ -158,13 +160,13 @@ describe("enqueueFlowAction", () => {
     })
   })
 
-  test("logs enqueue failures without throwing", async () => {
+  test("logs enqueue failures without throwing and reports them", async () => {
     const queueError = new Error("queue unavailable")
     mockIntegrationQueueAdd.mockRejectedValue(queueError)
 
     await expect(
       enqueueFlowAction({ kind: "postback", data: postbackData }),
-    ).resolves.toBeUndefined()
+    ).resolves.toBe(false)
 
     expect(mockLoggerError).toHaveBeenCalledWith(
       queueError,

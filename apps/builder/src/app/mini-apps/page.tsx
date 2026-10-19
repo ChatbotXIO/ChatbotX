@@ -62,6 +62,7 @@ export default async function MiniAppPublicPage(props: MiniAppPageProps) {
         <PublicMiniApp
           definition={definition}
           miniAppId={miniApp.id}
+          resume={getParam(searchParams.resume)}
           token={token}
         />
       </div>

@@ -232,7 +232,7 @@ function SendWaTemplateMessageStepEditor(
               <ButtonStepEditor
                 editorConfig={{
                   lockLabel: true,
-                  hiddenButtonTypes: ["openWebsite"],
+                  hiddenButtonTypes: ["openWebsite", "openMiniApp"],
                   hideDelete: true,
                 }}
                 // biome-ignore lint/suspicious/noArrayIndexKey: stable seeded list

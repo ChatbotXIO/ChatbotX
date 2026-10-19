@@ -72,10 +72,12 @@ export function PublicMiniApp({
   miniAppId,
   definition: initialDefinition,
   token,
+  resume,
 }: {
   miniAppId: string
   definition: MiniAppDefinition
   token?: string
+  resume?: string
 }) {
   const t = useTranslations("miniApps.public")
   // Replaced after each screen is saved, so `{{variables}}` show new values.
@@ -95,6 +97,7 @@ export function PublicMiniApp({
           const result = await submitMiniAppAction({
             miniAppId,
             token,
+            resume,
             answers: toSubmittedAnswers(answers),
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           })

@@ -48,6 +48,10 @@ export const REFERENCE_FIELD_ENTITY_KIND: Record<string, string> = {
   inboxId: "inbox",
   personaId: "messengerPersona",
   spreadsheetId: "spreadsheet",
+  // Open Mini App button (steps/open-mini-app.ts). Warned about only: template
+  // install has no Mini App adapter, and the worker drops a button whose Mini
+  // App is not in the sending workspace.
+  miniAppId: "miniApp",
 }
 
 // `flowId` shows up both as a cross-flow jump target (steps/start-external-flow.ts,

@@ -37,6 +37,7 @@ export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
         {(data.buttonType === buttonTypes.enum.sendMessage ||
           data.buttonType === buttonTypes.enum.performAction ||
           data.buttonType === buttonTypes.enum.startAnotherNode ||
+          data.buttonType === buttonTypes.enum.openMiniApp ||
           data.buttonType === null) && (
           <BaseHandle
             className={cn("right-3!", !!data.buttonType && "bg-red-300")}

@@ -3,6 +3,7 @@ import { z } from "zod"
 import { countMessageCharacters } from "../channel-rules/characters"
 import { actionSteps } from "../shared"
 import { flowValidationCodes } from "../validation-codes"
+import { openMiniAppStepSchema } from "./open-mini-app"
 import { openWebsiteStepSchema } from "./open-website"
 import { startAnotherNodeStepSchema } from "./start-another-node"
 import { startExternalFlowStepSchema } from "./start-external-flow"
@@ -16,6 +17,7 @@ export const buttonTypes = z.enum([
   "startExternalNode",
   "startAnotherNode",
   "whatsappOptionList",
+  "openMiniApp",
 ])
 export type ButtonType = z.infer<typeof buttonTypes>
 
@@ -77,6 +79,11 @@ export const buttonStepSchema = z
         steps: z.array(z.union(actionSteps)),
       }),
       z.object({
+        buttonType: z.literal(buttonTypes.enum.openMiniApp),
+        beforeStep: openMiniAppStepSchema,
+        steps: z.array(z.union(actionSteps)),
+      }),
+      z.object({
         buttonType: z.literal(null),
         beforeStep: z.null(),
         steps: z.array(z.any()),
@@ -98,6 +105,37 @@ export const getButtonLinkUrl = (
   button.buttonType === buttonTypes.enum.openWebsite
     ? button.beforeStep.url
     : undefined
+
+/**
+ * Whether the contact sees this button as a link. `openMiniApp` has no URL
+ * until the worker turns it into an `openWebsite` link at send time, so rules
+ * checked at publish must count it as a link too — or publish and send would
+ * classify the same button differently.
+ */
+export const isLinkButton = (button: Pick<ButtonStepProps, "buttonType">) =>
+  button.buttonType === buttonTypes.enum.openWebsite ||
+  button.buttonType === buttonTypes.enum.openMiniApp
+
+/**
+ * Rejects Open Mini App on buttons of a channel template (WhatsApp / Messenger
+ * message templates). Those steps send their buttons as the template's own
+ * quick replies and never pass through the worker's Mini App link rewrite, so
+ * such a button would continue the flow on tap without opening anything.
+ */
+export const refineNoOpenMiniAppButtons = (
+  buttons: Pick<ButtonStepProps, "buttonType">[],
+  ctx: z.RefinementCtx,
+): void => {
+  for (const [index, button] of buttons.entries()) {
+    if (button.buttonType === buttonTypes.enum.openMiniApp) {
+      ctx.addIssue({
+        code: "custom",
+        message: flowValidationCodes.templateButtonOpenMiniAppUnsupported,
+        path: [index, "buttonType"],
+      })
+    }
+  }
+}
 
 export const buttonStepDefaultFn = (
   props?: Pick<ButtonStepProps, "label">,

@@ -1555,6 +1555,9 @@
     },
     "images": {
       "label": "圖片"
+    },
+    "miniApp": {
+      "label": "小程式"
     }
   },
   "messages": {
@@ -1691,6 +1694,7 @@
     "whatsappFlowIncomplete": "請開啟按鈕，選擇一個 WhatsApp Flow 及其起始畫面。",
     "whatsappCarouselButtonsMismatch": "在 WhatsApp 上，輪播需要在每張卡片上使用相同的按鈕：每張卡片上有一個連結按鈕，或每張卡片上有相同數量的回應按鈕",
     "whatsappCarouselLinkButtonNotAlone": "在 WhatsApp 中，帶有連結按鈕的輪播卡片不能同時包含其他按鈕。請移除此卡片上的其他按鈕，或將連結按鈕改成其他動作。",
+    "templateButtonOpenMiniAppUnsupported": "範本按鈕無法開啟小程式。請為此按鈕選擇其他動作。",
     "duplicateNodeError": "無法複製該區塊。請再試一次。",
     "deleteNodeError": "無法刪除該區塊。請再試一次。",
     "redoHistoryCleared": "重做歷史記錄已清除",
@@ -2937,6 +2941,7 @@
       "noFlowsAvailable": "無可用流量",
       "setCustomField": "設定自訂欄位",
       "startAnotherNode": "啟動另一個節點",
+      "openMiniApp": "開啟小程式",
       "startExternalFlow": "啟動外部流程",
       "startExternalNode": "啟動外部節點",
       "startFlow": "開始流程",

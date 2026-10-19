@@ -5,6 +5,7 @@ import {
   type ButtonStepProps,
   type ButtonType,
   buttonStepSchema,
+  buttonTypes,
   type FlowNode,
   resolveSendTextLengthLimits,
   stepTypes,
@@ -295,7 +296,12 @@ export function ButtonEditorDialog() {
       if (currentButtonId && targetNodeId) {
         refreshEdge(currentButtonId, activeNode.id, targetNodeId)
       }
-    } else if (currentButtonId) {
+    } else if (
+      currentButtonId &&
+      values.beforeStep?.stepType !== stepTypes.enum.openMiniApp
+    ) {
+      // An Open Mini App button keeps the edge the user drew: it says where
+      // the flow continues once the Mini App is submitted.
       // Any action besides a node jump (openWebsite, startExternalFlow,
       // startExternalNode, ...) fully handles its own routing on the worker
       // side. Clear a leftover edge from a previous startAnotherNode/
@@ -364,6 +370,16 @@ export function ButtonEditorDialog() {
 
       setValue("beforeStep", created.beforeStep)
 
+      // Switching to Open Mini App starts with no edge: one left over from a
+      // previous Send Message / Start Another Node config would otherwise
+      // become where the flow continues after the Mini App is submitted.
+      if (selectedButtonType === buttonTypes.enum.openMiniApp) {
+        const currentButtonId = getValues("id") as string
+        if (currentButtonId) {
+          removeEdge(currentButtonId)
+        }
+      }
+
       if (created.newNode) {
         const currentButtonId = getValues("id") as string
         if (currentButtonId && activeNode) {
@@ -372,7 +388,15 @@ export function ButtonEditorDialog() {
         onSave()
       }
     },
-    [activeNode, createButtonTarget, getValues, onSave, refreshEdge, setValue],
+    [
+      activeNode,
+      createButtonTarget,
+      getValues,
+      onSave,
+      refreshEdge,
+      removeEdge,
+      setValue,
+    ],
   )
 
   return buttonId ? (

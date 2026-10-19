@@ -2428,6 +2428,9 @@
     },
     "images": {
       "label": "Bilder"
+    },
+    "miniApp": {
+      "label": "Mini-App"
     }
   },
   "flows": {
@@ -2558,6 +2561,7 @@
       "noFlowsAvailable": "Keine Flows verfügbar",
       "setCustomField": "Benutzerdefiniertes Feld festlegen",
       "startAnotherNode": "Anderen Knoten starten",
+      "openMiniApp": "Mini-App öffnen",
       "startExternalFlow": "Externen Flow starten",
       "startExternalNode": "Externen Knoten starten",
       "startFlow": "Flow starten",
@@ -3753,6 +3757,7 @@
     "whatsappFlowIncomplete": "Öffne den Button und wähle einen WhatsApp Flow und dessen Startbildschirm.",
     "whatsappCarouselButtonsMismatch": "Bei WhatsApp benötigt ein Karussell auf jeder Karte dieselben Schaltflächen: entweder eine einzelne Link-Schaltfläche auf jeder Karte oder dieselbe Anzahl an Antwort-Schaltflächen auf jeder Karte",
     "whatsappCarouselLinkButtonNotAlone": "Bei WhatsApp darf eine Karussellkarte mit einer Link-Schaltfläche keine weiteren Schaltflächen haben. Entfernen Sie die anderen Schaltflächen auf dieser Karte oder ändern Sie die Link-Schaltfläche in eine andere Aktion.",
+    "templateButtonOpenMiniAppUnsupported": "Vorlagen-Schaltflächen können keine Mini-App öffnen. Wähle eine andere Aktion für diese Schaltfläche.",
     "duplicateNodeError": "Der Block konnte nicht dupliziert werden. Versuchen Sie es erneut.",
     "deleteNodeError": "Der Block konnte nicht gelöscht werden. Versuchen Sie es erneut.",
     "redoHistoryCleared": "Wiederholungsverlauf gelöscht",

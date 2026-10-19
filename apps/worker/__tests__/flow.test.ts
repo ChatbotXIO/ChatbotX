@@ -1097,6 +1097,29 @@ describe("runStepsAndQuickReplies — button action vs. leftover edge", () => {
 
   // --- preserved behavior: these buttons legitimately route by edge ---
 
+  test("an openMiniApp button advances along its edge once the Mini App is submitted", async () => {
+    await runStepsAndQuickReplies(
+      makeButtonProps({
+        id: "btn-1",
+        label: "Open form",
+        buttonType: "openMiniApp",
+        beforeStep: {
+          id: "before-1",
+          stepType: "openMiniApp",
+          miniAppId: "42",
+        },
+        steps: [],
+      } as unknown as ButtonStepProps),
+    )
+
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string } },
+    ]
+    expect(job.data.nodeId).toBe("node-2")
+  })
+
   test("a startAnotherNode button still advances to its connected node", async () => {
     await runStepsAndQuickReplies(
       makeButtonProps({

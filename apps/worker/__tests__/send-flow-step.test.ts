@@ -232,6 +232,11 @@ vi.mock("@chatbotx.io/encryption/open-link-token", () => ({
   verifyOpenLinkUrl: vi.fn(() => true),
 }))
 
+// No step here carries an Open Mini App button, so the Mini App lookup is
+// never reached; mocked only to keep its DB-backed module out of the import.
+vi.mock("@chatbotx.io/business/mini-app", () => ({
+  miniAppService: { findUnscoped: vi.fn() },
+}))
 vi.mock("@chatbotx.io/business/utils", () => ({
   getPublicFileUrl: vi.fn((path: string, base: string) => `${base}/${path}`),
 }))

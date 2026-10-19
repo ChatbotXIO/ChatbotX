@@ -2574,6 +2574,9 @@
     },
     "images": {
       "label": "Imágenes"
+    },
+    "miniApp": {
+      "label": "Mini App"
     }
   },
   "flows": {
@@ -2704,6 +2707,7 @@
       "noFlowsAvailable": "No flujos disponible",
       "setCustomField": "Establecer campo personalizado",
       "startAnotherNode": "Iniciar Another Node",
+      "openMiniApp": "Abrir Mini App",
       "startExternalFlow": "Iniciar External Flujo",
       "startExternalNode": "Iniciar External Node",
       "startFlow": "Iniciar Flujo",
@@ -3753,6 +3757,7 @@
     "whatsappFlowIncomplete": "Abre el botón y elige un WhatsApp Flow y su pantalla de inicio.",
     "whatsappCarouselButtonsMismatch": "En WhatsApp, un carrusel necesita los mismos botones en cada tarjeta: un único botón de enlace en cada tarjeta, o el mismo número de botones de respuesta en cada tarjeta",
     "whatsappCarouselLinkButtonNotAlone": "En WhatsApp, una tarjeta de carrusel con un botón de enlace no puede tener otros botones. Elimina los otros botones de esa tarjeta o cambia el botón de enlace a otra acción.",
+    "templateButtonOpenMiniAppUnsupported": "Los botones de plantilla no pueden abrir una Mini App. Elige otra acción para este botón.",
     "duplicateNodeError": "Could not duplicate el block. Por favor, try again.",
     "deleteNodeError": "Could not Eliminar el block. Por favor, try again.",
     "redoHistoryCleared": "Se borró el historial de rehacer",

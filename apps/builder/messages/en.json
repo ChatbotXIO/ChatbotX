@@ -2616,6 +2616,9 @@
     },
     "images": {
       "label": "Images"
+    },
+    "miniApp": {
+      "label": "Mini App"
     }
   },
   "metaConversions": {
@@ -3389,6 +3392,7 @@
       "noFlowsAvailable": "No flows available",
       "setCustomField": "Set Custom Field",
       "startAnotherNode": "Start Another Node",
+      "openMiniApp": "Open Mini App",
       "startExternalFlow": "Start External Flow",
       "startExternalNode": "Start External Node",
       "startFlow": "Start Flow",
@@ -4435,6 +4439,7 @@
     "whatsappFlowIncomplete": "Open the button and pick a WhatsApp Flow and its start screen.",
     "whatsappCarouselButtonsMismatch": "On WhatsApp, a carousel needs the same buttons on every card: either a single link button on each card, or the same number of reply buttons on each card",
     "whatsappCarouselLinkButtonNotAlone": "On WhatsApp, a carousel card with a link button cannot have any other buttons. Remove the other buttons on that card, or change the link button to another action.",
+    "templateButtonOpenMiniAppUnsupported": "Template buttons cannot open a Mini App. Choose another action for this button.",
     "duplicateNodeError": "Could not duplicate the block. Please try again.",
     "deleteNodeError": "Could not delete the block. Please try again.",
     "redoHistoryCleared": "Redo history cleared",

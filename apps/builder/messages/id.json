@@ -2428,6 +2428,9 @@
     },
     "images": {
       "label": "Gambar"
+    },
+    "miniApp": {
+      "label": "Mini App"
     }
   },
   "flows": {
@@ -2558,6 +2561,7 @@
       "noFlowsAvailable": "Tidak ada alur yang tersedia",
       "setCustomField": "Atur Kolom Kustom",
       "startAnotherNode": "Mulai Node Lain",
+      "openMiniApp": "Buka Mini App",
       "startExternalFlow": "Mulai Alur Eksternal",
       "startExternalNode": "Mulai Node Eksternal",
       "startFlow": "Mulai Alur",
@@ -3753,6 +3757,7 @@
     "whatsappFlowIncomplete": "Buka tombol lalu pilih WhatsApp Flow dan layar awalnya.",
     "whatsappCarouselButtonsMismatch": "Di WhatsApp, carousel memerlukan tombol yang sama di setiap kartu: satu tombol tautan di setiap kartu, atau jumlah tombol balasan yang sama di setiap kartu",
     "whatsappCarouselLinkButtonNotAlone": "Di WhatsApp, kartu carousel dengan tombol tautan tidak boleh memiliki tombol lain. Hapus tombol lain pada kartu tersebut, atau ubah tombol tautan menjadi tindakan lain.",
+    "templateButtonOpenMiniAppUnsupported": "Tombol template tidak dapat membuka Mini App. Pilih tindakan lain untuk tombol ini.",
     "duplicateNodeError": "Blok tidak dapat diduplikat. Silakan coba lagi.",
     "deleteNodeError": "Blok tidak dapat dihapus. Silakan coba lagi.",
     "redoHistoryCleared": "Riwayat pengulangan dihapus",

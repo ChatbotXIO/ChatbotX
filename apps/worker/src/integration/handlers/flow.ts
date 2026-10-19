@@ -441,9 +441,12 @@ export async function runStepsAndQuickReplies(
   // run before step
   // Skip startAnotherNode beforeStep for buttons/quickReplies: the edge-following below
   // already navigates to the same target node, so running beforeStep would execute it twice.
+  // An openMiniApp beforeStep only says which Mini App the link opened; by the
+  // time this runs (on submit) there is nothing left for it to do.
   const skipBeforeStep =
     (targetType === "button" || targetType === "quickReply") &&
-    details.beforeStep?.stepType === stepTypes.enum.startAnotherNode
+    (details.beforeStep?.stepType === stepTypes.enum.startAnotherNode ||
+      details.beforeStep?.stepType === stepTypes.enum.openMiniApp)
 
   // Tracks the comment anchor's state. A `private` anchor is claimed by the
   // first message-producing step and continues marked `spent`; a `public` one
@@ -582,12 +585,17 @@ export async function runStepsAndQuickReplies(
   // following it would fire a node the button no longer targets on top of the
   // action it actually has.
   //
+  // An `openMiniApp` button is the exception: it keeps its action when an
+  // edge is drawn from it, and only reaches this point once the contact has
+  // submitted the Mini App, so its edge is where the flow continues.
+  //
   // `targetType === "step"` keeps never following an edge, as before.
   const followsEdgeToNextNode =
     targetType === "node" ||
     ((targetType === "button" || targetType === "quickReply") &&
       (details.beforeStep == null ||
-        details.beforeStep.stepType === stepTypes.enum.startAnotherNode))
+        details.beforeStep.stepType === stepTypes.enum.startAnotherNode ||
+        details.beforeStep.stepType === stepTypes.enum.openMiniApp))
 
   let relatedEdge: EdgeSchema | null | undefined = null
   if (followsEdgeToNextNode) {

@@ -1,6 +1,6 @@
 import type { z } from "zod"
 import { flowValidationCodes } from "../validation-codes"
-import { type ButtonStepProps, buttonTypes } from "./button"
+import { type ButtonStepProps, buttonTypes, isLinkButton } from "./button"
 
 /** Meta: "Messages must include between 2 and 10 cards." */
 export const whatsappCarouselCardLimits = {
@@ -51,20 +51,19 @@ export const readCarouselCardUrlButton = (
 export const readStrandedCarouselLinkButton = (
   buttons: ButtonStepProps[],
 ): ButtonStepProps | undefined =>
-  buttons.length > 1
-    ? buttons.find(
-        (button) => button.buttonType === buttonTypes.enum.openWebsite,
-      )
-    : undefined
+  buttons.length > 1 ? buttons.find(isLinkButton) : undefined
 
 /**
  * Meta: "Button types and numbers must match across all cards (for example, if
  * you define a card with 2 quick-reply buttons, all cards must define exactly 2
  * quick-reply buttons)." A count alone cannot tell a link card from a card with
- * one reply, so the kind is part of the signature.
+ * one reply, so the kind is part of the signature. An Open Mini App button is
+ * a link here: it is sent as one (see `isLinkButton`).
  */
 const readCardButtonSignature = (buttons: ButtonStepProps[]): string =>
-  readCarouselCardUrlButton(buttons) ? "link" : `reply:${buttons.length}`
+  buttons.length === 1 && buttons[0] && isLinkButton(buttons[0])
+    ? "link"
+    : `reply:${buttons.length}`
 
 /** One mismatched card makes Meta reject the whole carousel. */
 const hasMatchingButtons = (
