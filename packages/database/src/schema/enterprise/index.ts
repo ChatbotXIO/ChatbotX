@@ -1,7 +1,6 @@
 export * from "./audit-log"
 export * from "./custom-domain"
 export * from "./platform-admin"
-export * from "./platform-admin-bootstrap"
 export * from "./tenant"
 export * from "./tenant-help-item"
 export * from "./user-quota"

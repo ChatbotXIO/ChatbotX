@@ -3,10 +3,9 @@
 This document is for developers touching workspace membership, auth gates, or
 the `/admin` console. A platform super admin has an uncached persisted
 `PlatformAdmin` row, so removal applies on the next authorization check.
-`PLATFORM_ADMIN_EMAIL` is a one-time provisioning input: application startup
-or matching root-tenant user creation atomically creates the first row, while a
-durable `PlatformAdminBootstrap` marker prevents a later restart from
-recreating a removed administrator.
+`PLATFORM_ADMIN_EMAIL` ensures the matching root-tenant user has that row at
+application startup or matching user creation. If the row is removed while the
+environment variable remains configured, the next bootstrap trigger restores it.
 
 Owner consent is required by default. A valid enterprise installation can set
 `SUPPORT_ACCESS_REQUIRE_CONSENT=false` to let every platform super admin open

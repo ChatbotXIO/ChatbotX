@@ -1,10 +1,6 @@
 import { type DatabaseClient, db, desc, eq, sql } from "../../client"
 import { ROOT_TENANT_ID } from "../../partials"
-import {
-  platformAdminBootstrapModel,
-  platformAdminModel,
-  userModel,
-} from "../../schema"
+import { platformAdminModel, userModel } from "../../schema"
 import type { PlatformAdminModel } from "../../types"
 import { getPaginationWithDefaults } from "../../utils"
 
@@ -41,30 +37,18 @@ class PlatformAdminRepository {
   }
 
   async bootstrapRootAdmin(props: { email: string }): Promise<boolean> {
-    return await db.transaction(async (tx) => {
-      const user = await this.findRootUserByEmail(props.email, tx)
-      if (!user) {
-        return false
-      }
+    const user = await this.findRootUserByEmail(props.email)
+    if (!user) {
+      return false
+    }
 
-      const [bootstrap] = await tx
-        .insert(platformAdminBootstrapModel)
-        .values({ email: props.email, userId: user.id })
-        .onConflictDoNothing({
-          target: platformAdminBootstrapModel.bootstrapKey,
-        })
-        .returning({ id: platformAdminBootstrapModel.id })
-      if (!bootstrap) {
-        return false
-      }
+    const [admin] = await db
+      .insert(platformAdminModel)
+      .values({ userId: user.id })
+      .onConflictDoNothing({ target: platformAdminModel.userId })
+      .returning({ id: platformAdminModel.id })
 
-      const admin = await this.insertIgnore({ userId: user.id, tx })
-      if (!admin) {
-        throw new Error("Platform bootstrap administrator was deleted")
-      }
-
-      return true
-    })
+    return Boolean(admin)
   }
 
   async listWithUser(input: ListPlatformAdminsInput): Promise<{
