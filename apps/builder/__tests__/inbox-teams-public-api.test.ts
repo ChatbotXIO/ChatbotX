@@ -104,8 +104,10 @@ describe("GET /v1/teams/{id}", () => {
 describe("POST /v1/teams", () => {
   const procedure = findProcedure("POST", "/v1/teams")
 
-  test("delegates to inboxTeamService.create", async () => {
-    inboxTeamService.create.mockResolvedValueOnce({ id: "1" })
+  test("delegates to inboxTeamService.create and returns its team", async () => {
+    inboxTeamService.create.mockResolvedValueOnce({
+      team: { id: "1" },
+    })
 
     const input = { name: "Support", userIds: ["user-1"] }
     const result = await procedure.handler?.({ context, input })
@@ -157,8 +159,10 @@ describe("DELETE /v1/teams/{id}", () => {
 describe("POST /v1/teams/{id}/members", () => {
   const procedure = findProcedure("POST", "/v1/teams/{id}/members")
 
-  test("delegates to inboxTeamService.addMembers and returns its result", async () => {
-    inboxTeamService.addMembers.mockResolvedValueOnce({ id: "1" })
+  test("delegates to inboxTeamService.addMembers and returns its team", async () => {
+    inboxTeamService.addMembers.mockResolvedValueOnce({
+      team: { id: "1" },
+    })
 
     const result = await procedure.handler?.({
       context,
@@ -177,15 +181,17 @@ describe("POST /v1/teams/{id}/members", () => {
 describe("DELETE /v1/teams/{id}/members", () => {
   const procedure = findProcedure("DELETE", "/v1/teams/{id}/members")
 
-  test("delegates to inboxTeamService.removeMembersByUserIds and returns its result", async () => {
-    inboxTeamService.removeMembersByUserIds.mockResolvedValueOnce({ id: "1" })
+  test("delegates to inboxTeamService.removeMembers and returns its team", async () => {
+    inboxTeamService.removeMembers.mockResolvedValueOnce({
+      team: { id: "1" },
+    })
 
     const result = await procedure.handler?.({
       context,
       input: { id: "1", userIds: ["user-1"] },
     })
 
-    expect(inboxTeamService.removeMembersByUserIds).toHaveBeenCalledWith(
+    expect(inboxTeamService.removeMembers).toHaveBeenCalledWith(
       { workspaceId: "ws-1", inboxTeamId: "1" },
       ["user-1"],
     )

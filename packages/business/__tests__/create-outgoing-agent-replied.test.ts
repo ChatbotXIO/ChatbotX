@@ -11,6 +11,7 @@ const mockFindForAgent = vi.fn()
 const mockWorkspaceFind = vi.fn()
 const mockEmit = vi.fn()
 const mockLoggerError = vi.fn()
+const mockQueueMessageCreatedEvent = vi.fn()
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   createMessageRepository: async () => ({
@@ -26,10 +27,6 @@ vi.mock("@chatbotx.io/filesystem", () => ({
   pathJoin: (...parts: string[]) => parts.join("/"),
   uploader: { copyObject: vi.fn(), getPresignedDownload: vi.fn() },
   uploadMultipleFiles: vi.fn(async () => []),
-}))
-
-vi.mock("@chatbotx.io/partysocket-config", () => ({
-  RealtimeEventType: { messageCreated: "messageCreated" },
 }))
 
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
@@ -85,6 +82,7 @@ vi.mock("../src/platform/settings", () => ({
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
   publishToWorkspaceParty: vi.fn(),
+  queueMessageCreatedEvent: mockQueueMessageCreatedEvent,
 }))
 
 vi.mock("../src/utils", () => ({

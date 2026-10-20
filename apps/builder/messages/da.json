@@ -3640,6 +3640,7 @@
       "months": "{count} md.",
       "years": "{count} år"
     },
+    "realtimeRevokeWarning": "Tilbagekaldelsen af adgangen kunne ikke bekræftes med det samme – den træder i kraft ved medlemmets næste genopkobling.",
     "moveFeature": "Flyt {feature}",
     "poweredBy": "Powered af {name}",
     "noGiphyApiKey": "Ingen GIPHY API-nøgle found. Venligst tilføj one i Platform Indstillinger.",

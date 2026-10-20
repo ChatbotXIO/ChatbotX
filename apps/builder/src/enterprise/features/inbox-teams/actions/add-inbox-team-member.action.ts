@@ -14,7 +14,7 @@ export const addInboxTeamMemberAction = workspaceActionClient
       parsedInput,
     } = props
 
-    return await inboxTeamService.addMembers(
+    await inboxTeamService.addMembers(
       { workspaceId, inboxTeamId },
       parsedInput.userIds,
     )

@@ -1,4 +1,5 @@
 import type { Readable } from "node:stream"
+import type { RealtimeGuestEventData } from "@chatbotx.io/realtime-protocol"
 import type { AuthValue } from "../auth"
 
 export type ContextUploader = {
@@ -49,17 +50,17 @@ export type Context<AO extends AuthValue, ID = Record<string, unknown>> = {
   integrationDetail?: ID
   platform: {
     appUrl: string
-    /**
-     * Internal server-to-server realtime broadcast base URL. Never expose this
-     * deployment-wide URL to clients.
-     */
-    internalRealtimeUrl: string
     publicRealtimeUrl: string
     storageUrl: string
-    getRealtimeBroadcastAuthHeaders: (target: {
-      kind: "guest" | "workspace" | "user"
-      id: string
-    }) => Promise<Record<string, string>>
+    /**
+     * Publishes a guest-scoped event through the platform's durable realtime
+     * transport. The integration never receives a deployment-internal URL or
+     * signing secret.
+     */
+    publishGuestRealtimeEvent: (
+      guestConversationId: string,
+      event: RealtimeGuestEventData,
+    ) => Promise<void>
   }
 }
 

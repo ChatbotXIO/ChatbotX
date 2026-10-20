@@ -50,7 +50,6 @@ export function CreateInboxTeamDialog({
                 feature: t("fields.inboxTeam.label"),
               }),
             )
-
             setOpen(false)
             resetFormAndAction()
             invalidateUsers()

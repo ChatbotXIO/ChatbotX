@@ -10,7 +10,8 @@ const mocks = vi.hoisted(() => ({
   findBySourceId: vi.fn(),
   updateContentBySourceId: vi.fn(),
   mergeContentAttributesBySourceId: vi.fn(),
-  broadcastToWorkspaceParty: vi.fn(),
+  publishWorkspaceRealtimeEvent: vi.fn(),
+  conversationFindBy: vi.fn().mockResolvedValue(null),
   contactInboxFindBy: vi.fn(),
   getRecordingSignedUrl: vi.fn(),
   uploadRecording: vi.fn(),
@@ -25,15 +26,30 @@ vi.mock("@chatbotx.io/business", () => ({
     attachRecording: mocks.attachRecording,
     releaseRecordingStamp: mocks.releaseRecordingStamp,
   },
-  broadcastToWorkspaceParty: mocks.broadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent: mocks.publishWorkspaceRealtimeEvent,
   contactInboxService: { findBy: mocks.contactInboxFindBy },
   callRecordingService: {
     getRecordingSignedUrl: mocks.getRecordingSignedUrl,
     uploadRecording: mocks.uploadRecording,
   },
+  conversationService: { findBy: mocks.conversationFindBy },
   isAllowedRecordingContentType: (value: string) =>
     ["audio/ogg", "audio/webm", "audio/mp4", "audio/mpeg"].includes(value),
   DEFAULT_RECORDING_CONTENT_TYPE: "audio/ogg",
+  messageService: {
+    findBySourceId: mocks.findBySourceId,
+    mergeContentAttributesBySourceId: (input: {
+      overlay: unknown
+      sourceId: string
+      workspaceId: string
+    }) =>
+      mocks.mergeContentAttributesBySourceId(
+        input.sourceId,
+        input.workspaceId,
+        input.overlay,
+      ),
+    updateContentBySourceId: mocks.updateContentBySourceId,
+  },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -198,7 +214,10 @@ describe("handleWhatsappCallNativeRecordingFetch", () => {
   test("downloads via the media-id path, stores the recording, and enriches the finalize activity message in place", async () => {
     await handleWhatsappCallNativeRecordingFetch(jobData)
 
-    expect(mocks.resolveVoipAuthByInboxId).toHaveBeenCalledWith("inbox-1")
+    expect(mocks.resolveVoipAuthByInboxId).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      workspaceId: "ws-1",
+    })
     expect(mocks.downloadCallMedia).toHaveBeenCalledWith(
       expect.objectContaining({
         mediaId: "media-1",

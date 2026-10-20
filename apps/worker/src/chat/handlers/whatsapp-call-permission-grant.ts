@@ -1,8 +1,11 @@
 import {
-  broadcastToWorkspaceParty,
+  publishWorkspaceRealtimeEvent,
   whatsappCallPermissionService,
 } from "@chatbotx.io/business"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import {
+  RealtimeEventType,
+  routeForConversation,
+} from "@chatbotx.io/realtime-protocol"
 import {
   ChannelError,
   getWhatsappCallPermissionRequest,
@@ -47,10 +50,18 @@ export async function reconcileCallPermissionAlreadyGranted(
     contactInboxId: context.contactInbox.id,
     grantedAt: new Date(),
   })
-  await broadcastToWorkspaceParty(context.conversation.workspaceId, {
-    eventType: RealtimeEventType.whatsappCallPermissionUpdated,
-    data: { conversationId: context.conversation.id },
-  })
+  try {
+    await publishWorkspaceRealtimeEvent(context.conversation.workspaceId, {
+      eventType: RealtimeEventType.whatsappCallPermissionUpdated,
+      data: { conversationId: context.conversation.id },
+      route: routeForConversation(context.conversation),
+    })
+  } catch (err) {
+    logger.warn(
+      { err, conversationId: context.conversation.id },
+      "WhatsApp call permission grant realtime publish failed",
+    )
+  }
   logger.info(
     { contactInboxId: context.contactInbox.id },
     "WhatsApp call permission already granted; recorded permanent grant",

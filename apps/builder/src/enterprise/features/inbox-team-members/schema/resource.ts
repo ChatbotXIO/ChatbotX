@@ -9,6 +9,7 @@ export const inboxTeamMemberResource = createSelectSchema(
   {
     id: z.string(),
     inboxTeamId: z.string(),
+    userId: z.string(),
   },
 )
 export type InboxTeamMemberResource = z.infer<typeof inboxTeamMemberResource>

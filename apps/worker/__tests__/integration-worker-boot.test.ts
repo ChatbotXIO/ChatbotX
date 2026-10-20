@@ -82,6 +82,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     whatsappCallEvent: "whatsappCallEvent",
     whatsappIdentityChange: "whatsappIdentityChange",
   },
+  PURGE_WORKSPACES_INTERVAL_MINUTES: 60,
   integrationQueue: { add: vi.fn() },
   queueNames: {
     enum: {

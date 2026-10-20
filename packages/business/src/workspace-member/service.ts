@@ -24,6 +24,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
+import { tryRevokeWorkspaceMemberRealtimeConnections } from "../platform/realtime-broadcast"
 import { workingHoursCacheTag } from "../working-hours/cache-tag"
 import { workingHoursService } from "../working-hours/service"
 import { workspaceUsageService } from "../workspace-usage/service"
@@ -71,7 +72,6 @@ export class WorkspaceMemberService extends BaseService {
   async create(props: {
     tx?: DatabaseClient
     data: typeof workspaceMemberModel.$inferInsert
-    /** Set to whether the live `teamMembers` counter took the +1, for a caller that may have to undo it after its `tx` rolls back. */
     teamMemberUsage?: { liveIncremented: boolean }
   }): Promise<WorkspaceMemberModel> {
     const { tx = db, data } = props
@@ -80,14 +80,6 @@ export class WorkspaceMemberService extends BaseService {
       .values(data)
       .returning()
 
-    // Same transaction as the member insert: `workspaceService.create` wraps
-    // its writes in one, and a global-db write here cannot see the new
-    // Workspace row (WorkspaceUsage FK). On a supplied tx the error must
-    // propagate — a failed statement leaves that Postgres transaction
-    // aborted, so swallowing it would only move the failure to the next
-    // statement or COMMIT while this call reports success; the owner rolls
-    // back and compensates. Without a tx (autocommit) the display-only
-    // counter stays best-effort and the nightly reconcile re-grounds it.
     if (props.tx) {
       const liveIncremented = await workspaceUsageService.increment(
         data.workspaceId,
@@ -116,17 +108,12 @@ export class WorkspaceMemberService extends BaseService {
     id: string
     workspaceId: string
     tx?: DatabaseClient
-  }): Promise<void> {
+  }): Promise<{ revokeWarning: boolean }> {
     const { id, workspaceId, tx = db } = props
-
     const member = await tx.query.workspaceMemberModel.findFirst({
       where: { id, workspaceId },
       with: { user: true },
     })
-
-    // A removed member must not stay on a working-hours schedule (that row has
-    // no FK to WorkspaceMember). Delete both in one transaction: the caller's
-    // when given, otherwise a fresh one.
     const removeMember = async (client: DatabaseClient) => {
       await client
         .delete(workspaceMemberModel)
@@ -146,15 +133,16 @@ export class WorkspaceMemberService extends BaseService {
     }
     if (props.tx) {
       await removeMember(props.tx)
-    } else {
-      await db.transaction(removeMember)
-      // Invalidate only after commit. With a caller-owned `tx` the caller must
-      // invalidate `workspaceMemberDeleteCacheTags(...)` after its own commit.
-      await this.invalidateCacheTags(
-        workspaceMemberDeleteCacheTags(workspaceId, member?.userId),
-      )
+      return { revokeWarning: false }
     }
 
+    await db.transaction(removeMember)
+    await this.invalidateCacheTags(
+      workspaceMemberDeleteCacheTags(workspaceId, member?.userId),
+    )
+    if (!member) {
+      return { revokeWarning: false }
+    }
     await workspaceUsageService
       .decrement(workspaceId, "teamMembers")
       .catch((err) => {
@@ -164,12 +152,17 @@ export class WorkspaceMemberService extends BaseService {
         )
       })
 
-    if (!props.tx && member) {
-      await this.audit(
-        "delete",
-        `removed ${member.user.name ?? member.user.email} from workspace`,
-      )
-    }
+    await this.audit(
+      "delete",
+      `removed ${member.user.name ?? member.user.email} from workspace`,
+    )
+    const revokeWarning = !(await tryRevokeWorkspaceMemberRealtimeConnections({
+      workspaceId,
+      userId: member.userId,
+      reason: "deleted",
+      errorMessage: "Failed to revoke removed member realtime connections",
+    }))
+    return { revokeWarning }
   }
 
   async listByUserIdUncached(props: {
@@ -411,11 +404,11 @@ export class WorkspaceMemberService extends BaseService {
   async update(input: {
     tx?: DatabaseClient
     id: string
+    revokeRealtime?: boolean
     workspaceId: string
     data: Partial<typeof workspaceMemberModel.$inferInsert>
-  }): Promise<{ id: string } | undefined> {
+  }): Promise<{ id: string; revokeWarning: boolean } | undefined> {
     const { tx = db, id, workspaceId, data } = input
-
     const updated = await tx
       .update(workspaceMemberModel)
       .set(data)
@@ -429,20 +422,30 @@ export class WorkspaceMemberService extends BaseService {
         id: workspaceMemberModel.id,
         userId: workspaceMemberModel.userId,
       })
-
     const [row] = updated
     if (!row) {
       return
     }
 
-    // The member's permissions/nav are served from the cached
-    // `listByUserId` result; bust it so the change takes effect immediately.
+    if (input.tx) {
+      return { id: row.id, revokeWarning: false }
+    }
+
     await this.invalidateCacheTags([
       workspaceMemberCacheTag(row.userId),
       workspaceRosterCacheTag(workspaceId),
     ])
+    if (!input.revokeRealtime) {
+      return { id: row.id, revokeWarning: false }
+    }
 
-    return { id: row.id }
+    const revokeWarning = !(await tryRevokeWorkspaceMemberRealtimeConnections({
+      workspaceId,
+      userId: row.userId,
+      reason: "reauth",
+      errorMessage: "Failed to revoke workspace member realtime connections",
+    }))
+    return { id: row.id, revokeWarning }
   }
 
   async listPaginated(

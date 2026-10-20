@@ -1,15 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
-  broadcastToWorkspaceParty,
-  execute,
   chatQueueAdd,
   conversationFindFirst,
   createMessageRepository,
+  emit,
+  emitConversationAssigned,
+  emitConversationUnassigned,
+  execute,
+  findByWorkspaceIdAndUserId,
   findLastByConversation,
+  inboxTeamExists,
   invalidateCacheByTags,
   invalidateTracking,
+  queueWorkspaceRealtimeEvent,
   returning,
+  selectForUpdate,
   selectWhere,
   set,
   transaction,
@@ -21,23 +27,43 @@ const {
   const where = vi.fn(() => ({ returning }))
   const set = vi.fn(() => ({ where }))
   const update = vi.fn(() => ({ set }))
+  const selectForUpdate = vi.fn()
   return {
-    broadcastToWorkspaceParty: vi.fn().mockResolvedValue(undefined),
+    queueWorkspaceRealtimeEvent: vi.fn().mockResolvedValue(undefined),
     chatQueueAdd: vi.fn().mockResolvedValue(undefined),
     conversationFindFirst: vi.fn(),
     createMessageRepository: vi.fn(),
+    emit: vi.fn(),
+    emitConversationAssigned: vi.fn().mockResolvedValue(undefined),
+    emitConversationUnassigned: vi.fn().mockResolvedValue(undefined),
     execute: vi.fn().mockResolvedValue(undefined),
+    findByWorkspaceIdAndUserId: vi.fn(),
     findLastByConversation: vi.fn(),
+    inboxTeamExists: vi.fn(),
     invalidateCacheByTags: vi.fn().mockResolvedValue(undefined),
     invalidateTracking: vi.fn().mockResolvedValue(undefined),
     returning,
+    selectForUpdate,
     selectWhere: vi.fn(),
     set,
-    transaction: vi
-      .fn()
-      .mockImplementation((fn: (tx: { update: typeof update }) => unknown) =>
-        fn({ update }),
-      ),
+    transaction: vi.fn().mockImplementation(
+      (
+        fn: (tx: {
+          select: () => {
+            from: () => { where: () => { for: typeof selectForUpdate } }
+          }
+          update: typeof update
+        }) => unknown,
+      ) =>
+        fn({
+          select: () => ({
+            from: () => ({
+              where: () => ({ for: selectForUpdate }),
+            }),
+          }),
+          update,
+        }),
+    ),
     update,
     updateTracking: vi
       .fn()
@@ -80,7 +106,11 @@ vi.mock("@chatbotx.io/database/repositories", async (importOriginal) => {
 vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("@chatbotx.io/worker-config")>()
-  return { ...original, chatQueue: { add: chatQueueAdd } }
+  return {
+    ...original,
+    chatQueue: { add: chatQueueAdd },
+    notificationQueue: { addBulk: chatQueueAdd },
+  }
 })
 vi.mock("../src/response-sla/service", () => ({
   responseSlaService: {
@@ -106,8 +136,26 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 vi.mock("../src/platform/realtime-broadcast", () => ({
-  broadcastToWorkspaceParty,
-  publishToWorkspaceParty: broadcastToWorkspaceParty,
+  queueWorkspaceRealtimeEvent,
+}))
+
+vi.mock("@chatbotx.io/event-bus", () => ({ emit }))
+
+vi.mock("@chatbotx.io/events", () => ({
+  emitConversationArchived: vi.fn(),
+  emitConversationAssigned,
+  emitConversationFollowUp: vi.fn(),
+  emitConversationTransferredToBot: vi.fn(),
+  emitConversationTransferredToHuman: vi.fn(),
+  emitConversationUnassigned,
+}))
+
+vi.mock("../src/enterprise/inbox-team/service", () => ({
+  inboxTeamService: { exists: inboxTeamExists },
+}))
+
+vi.mock("../src/workspace-member/service", () => ({
+  workspaceMemberService: { findByWorkspaceIdAndUserId },
 }))
 
 // `conversationService` now imports `contactService` (for the location write
@@ -433,8 +481,11 @@ describe("conversationService.updateReadStatus", () => {
     vi.clearAllMocks()
   })
 
-  test("broadcasts the updated agent read timestamp", async () => {
+  test("routes the updated read timestamp to the assigned user and team", async () => {
     const agentLastReadAt = new Date("2026-09-23T12:00:00.000Z")
+    returning.mockResolvedValueOnce([
+      { assignedInboxTeamId: "team-1", assignedUserId: "user-1" },
+    ])
 
     await conversationService.updateReadStatus({
       workspaceId: "ws-1",
@@ -442,13 +493,37 @@ describe("conversationService.updateReadStatus", () => {
       agentLastReadAt,
     })
 
-    expect(broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "conversationUpdated",
       data: {
         conversationIds: ["conv-1"],
         changes: { agentLastReadAt: agentLastReadAt.toISOString() },
       },
+      route: { assignedTeamIds: ["team-1"], assignedUserIds: ["user-1"] },
     })
+  })
+
+  test("defers cache invalidation and realtime publication until the transaction commits", async () => {
+    const agentLastReadAt = new Date("2026-09-23T12:00:00.000Z")
+    returning.mockResolvedValueOnce([
+      { assignedInboxTeamId: "team-1", assignedUserId: "user-1" },
+    ])
+    let afterCommit: (() => Promise<void>) | undefined
+
+    await conversationService.updateReadStatus({
+      workspaceId: "ws-1",
+      id: "conv-1",
+      agentLastReadAt,
+      tx: { update } as never,
+      afterCommit: (callback) => {
+        afterCommit = callback
+      },
+    })
+
+    expect(afterCommit).toBeDefined()
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+    await afterCommit?.()
+    expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -459,9 +534,15 @@ describe("conversationService.markReadByOutbound", () => {
     createMessageRepository.mockResolvedValue({ findLastByConversation })
   })
 
-  test("advances an older read timestamp, invalidates, and broadcasts a realtime update", async () => {
+  test("advances an older read timestamp, invalidates, and routes the realtime update to the assignee", async () => {
     const readAt = new Date("2026-09-23T12:00:00.000Z")
-    returning.mockResolvedValueOnce([{ id: "conv-1" }])
+    returning.mockResolvedValueOnce([
+      {
+        assignedInboxTeamId: "team-1",
+        assignedUserId: "user-1",
+        id: "conv-1",
+      },
+    ])
 
     await expect(
       conversationService.markReadByOutbound({
@@ -474,6 +555,8 @@ describe("conversationService.markReadByOutbound", () => {
 
     expect(set).toHaveBeenCalledWith({ agentLastReadAt: readAt })
     expect(returning).toHaveBeenCalledWith({
+      assignedInboxTeamId: expect.anything(),
+      assignedUserId: expect.anything(),
       id: expect.anything(),
     })
 
@@ -497,12 +580,13 @@ describe("conversationService.markReadByOutbound", () => {
       "conversations:ws-1",
       "conversations:conv-1",
     ])
-    expect(broadcastToWorkspaceParty).toHaveBeenCalledWith("ws-1", {
+    expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
       eventType: "conversationUpdated",
       data: {
         conversationIds: ["conv-1"],
         changes: { agentLastReadAt: readAt.toISOString() },
       },
+      route: { assignedTeamIds: ["team-1"], assignedUserIds: ["user-1"] },
     })
   })
 
@@ -522,7 +606,7 @@ describe("conversationService.markReadByOutbound", () => {
 
     expect(set).toHaveBeenCalledWith({ agentLastReadAt: readAt })
     expect(invalidateCacheByTags).toHaveBeenCalled()
-    expect(broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("leaves a newer read timestamp alone without invalidating or broadcasting", async () => {
@@ -541,7 +625,7 @@ describe("conversationService.markReadByOutbound", () => {
     expect(collectSqlValues(whereExpression)).toContain(readAt)
     expect(collectSqlText(whereExpression)).toContain(" < ")
     expect(invalidateCacheByTags).not.toHaveBeenCalled()
-    expect(broadcastToWorkspaceParty).not.toHaveBeenCalled()
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
   })
 
   test("a delivery confirmed after a manual mark-unread re-reads up to the reply", async () => {
@@ -908,5 +992,106 @@ describe("conversationService window transitions on existing UPDATEs", () => {
 
     expect(lastSet().contactLastReadAt).toBe(at)
     expect(lastSet()).toHaveProperty("awaitingHumanReplySince")
+  })
+})
+describe("conversationService.updateAssignment", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    returning.mockResolvedValue([{ contactId: "contact-1", id: "conv-1" }])
+    selectForUpdate.mockResolvedValue([
+      {
+        assignedInboxTeamId: "team-before",
+        assignedUserId: "user-before",
+        id: "conv-1",
+      },
+    ])
+  })
+
+  test("passes silent through the worker assignment wrapper", async () => {
+    findByWorkspaceIdAndUserId.mockResolvedValue({ id: "user-after" })
+
+    await conversationService.assignOneOrSkip({
+      workspaceId: "ws-1",
+      conversation: {
+        contactId: "contact-1",
+        id: "conv-1",
+      },
+      assignedId: "u_user-after",
+      silent: true,
+      triggerContext: { triggerType: "flow_action" },
+    })
+
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+  })
+
+  test("invalidates and queues the assignment notification when silent", async () => {
+    await conversationService.updateAssignment({
+      workspaceId: "ws-1",
+      conversations: [{ contactId: "contact-1", id: "conv-1" }],
+      assignedInboxTeamId: "team-after",
+      assignedUserId: "user-after",
+      silent: true,
+      triggerContext: { triggerType: "flow_action" },
+    })
+
+    expect(invalidateCacheByTags).toHaveBeenCalledWith([
+      "conversations",
+      "conversations:ws-1",
+      "conversations:conv-1",
+    ])
+    expect(chatQueueAdd).toHaveBeenCalledTimes(1)
+    expect(queueWorkspaceRealtimeEvent).not.toHaveBeenCalled()
+  })
+
+  test("defers assignment effects until the transaction commits", async () => {
+    let afterCommit: (() => Promise<void>) | undefined
+    const tx = {
+      select: () => ({
+        from: () => ({
+          where: () => ({ for: selectForUpdate }),
+        }),
+      }),
+      update,
+    }
+
+    await conversationService.updateAssignment({
+      workspaceId: "ws-1",
+      conversations: [{ contactId: "contact-1", id: "conv-1" }],
+      assignedInboxTeamId: "team-after",
+      assignedUserId: "user-after",
+      triggerContext: { triggerType: "flow_action" },
+      tx: tx as never,
+      afterCommit: (callback) => {
+        afterCommit = callback
+      },
+    })
+
+    expect(afterCommit).toBeDefined()
+    expect(invalidateCacheByTags).not.toHaveBeenCalled()
+    await afterCommit?.()
+    expect(invalidateCacheByTags).toHaveBeenCalled()
+  })
+
+  test("routes an unassignment to the prior assignee and team from the locked database row", async () => {
+    await conversationService.updateAssignment({
+      workspaceId: "ws-1",
+      conversations: [{ contactId: "contact-1", id: "conv-1" }],
+      assignedInboxTeamId: null,
+      assignedUserId: null,
+      triggerContext: { triggerType: "flow_action" },
+    })
+
+    expect(queueWorkspaceRealtimeEvent).toHaveBeenCalledWith("ws-1", {
+      eventType: "conversationAssigned",
+      data: {
+        assignedInboxTeamId: null,
+        assignedUserId: null,
+        conversationIds: ["conv-1"],
+      },
+      route: {
+        assignedTeamIds: ["team-before"],
+        assignedUserIds: ["user-before"],
+      },
+    })
   })
 })

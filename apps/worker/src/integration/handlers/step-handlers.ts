@@ -19,6 +19,7 @@ import {
   type DisableBotStepSchema,
   type EnableBotStepSchema,
   type FollowConversationStepSchema,
+  isBulkOutboundMetadata,
   isProactiveOutboundMetadata,
   type MarkConversationAsReadStepSchema,
   type MarkConversationAsUnreadStepSchema,
@@ -114,12 +115,15 @@ export async function stepUnarchiveConversation({
 
 export async function stepAssignConversation({
   conversation,
+  isBulkBroadcast,
+  metadata,
   step,
 }: ExecuteStepProps<AssignConversationStepSchema>) {
   await conversationService.assignOneOrSkip({
     workspaceId: conversation.workspaceId,
     conversation,
     assignedId: step.assignedId,
+    silent: isBulkOutboundMetadata(metadata, isBulkBroadcast),
     triggerContext: {
       triggerSource: "worker",
       triggerHandler: "stepAssignConversation",
@@ -311,12 +315,15 @@ export async function stepAutoAssignConversation({
 
 export async function stepUnassignConversation({
   conversation,
+  isBulkBroadcast,
+  metadata,
 }: ExecuteStepProps<UnassignConversationStepSchema>) {
   await conversationService.updateAssignment({
     workspaceId: conversation.workspaceId,
     conversations: [conversation],
     assignedUserId: null,
     assignedInboxTeamId: null,
+    silent: isBulkOutboundMetadata(metadata, isBulkBroadcast),
     triggerContext: {
       triggerSource: "worker",
       triggerHandler: "stepUnassignConversation",
@@ -327,10 +334,13 @@ export async function stepUnassignConversation({
 
 export async function stepMarkConversationAsUnread({
   conversation,
+  isBulkBroadcast,
+  metadata,
 }: ExecuteStepProps<MarkConversationAsUnreadStepSchema>) {
   await conversationService.markUnread({
     workspaceId: conversation.workspaceId,
     id: conversation.id,
+    silent: isBulkOutboundMetadata(metadata, isBulkBroadcast),
   })
 }
 

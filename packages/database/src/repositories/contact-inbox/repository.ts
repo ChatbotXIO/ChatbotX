@@ -55,6 +55,8 @@ import type {
  * would be an N+1.
  */
 export type BulkAiContactInboxRow = ContactInboxModel & {
+  assignedInboxTeamId: string | null
+  assignedUserId: string | null
   conversationId: string
 }
 
@@ -517,6 +519,15 @@ export const contactInboxRepository = {
       .limit(1)
 
     return row ?? null
+  },
+
+  async findFullByIdForWorkspace(
+    input: { id: string; workspaceId: string },
+    tx: DatabaseClient = db,
+  ): Promise<ContactInboxModel | undefined> {
+    return await tx.query.contactInboxModel.findFirst({
+      where: { id: input.id, inbox: { workspaceId: input.workspaceId } },
+    })
   },
 
   /**
@@ -1252,6 +1263,8 @@ export const contactInboxRepository = {
     return await tx
       .select({
         ...getTableColumns(contactInboxModel),
+        assignedInboxTeamId: conversationModel.assignedInboxTeamId,
+        assignedUserId: conversationModel.assignedUserId,
         conversationId: conversationModel.id,
       })
       .from(contactInboxModel)

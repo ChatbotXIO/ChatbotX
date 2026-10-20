@@ -17,7 +17,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
   replyByOutboundAutomatedResponse: vi.fn(),
 }))
 vi.mock("@chatbotx.io/business", () => ({
-  broadcastToWorkspaceParty: vi.fn(),
+  flushAllPendingWorkspaceRealtimeEvents: vi.fn(),
 }))
 vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@chatbotx.io/sdk")>()
@@ -40,10 +40,10 @@ vi.mock("@chatbotx.io/worker-config", async (importOriginal) => {
       sendMessengerTemplateMessage: "sendMessengerTemplateMessage",
       sendTyping: "sendTyping",
       notifyExportResult: "notifyExportResult",
-      broadcastEvent: "broadcastEvent",
       deleteChannelMessage: "deleteChannelMessage",
       editChannelMessage: "editChannelMessage",
       changeChannelMessageState: "changeChannelMessageState",
+      checkOutboundAutomatedResponse: "checkOutboundAutomatedResponse",
     },
     defaultWorkerOptions: {},
     getRedisConnection: vi.fn(),

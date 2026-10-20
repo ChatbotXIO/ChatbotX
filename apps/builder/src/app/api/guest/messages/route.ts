@@ -6,10 +6,7 @@ import {
 } from "@chatbotx.io/business"
 import { type NextRequest, NextResponse } from "next/server"
 import { getTranslations } from "next-intl/server"
-import {
-  isEmbedOriginAllowed,
-  isFirstPartyOrigin,
-} from "@/features/integration-webchat/lib/authorized-domain"
+import { isAllowedGuestOrigin } from "@/features/integration-webchat/lib/authorized-domain"
 import { verifyWebchatAccessToken } from "@/features/integration-webchat/lib/webchat-access-token"
 import { findIntegrationWebchat } from "@/features/integration-webchat/queries"
 import { handleCreateWebchatMessage } from "@/features/messages/actions/create-webchat-message.action"
@@ -36,13 +33,6 @@ const corsHeaders = (origin: string | null, authorized: boolean) => {
   }
   return headers
 }
-
-const isAllowedGuestOrigin = async (
-  parentOrigin: string | undefined,
-  authorizedDomains: string[],
-) =>
-  isEmbedOriginAllowed(parentOrigin, authorizedDomains) ||
-  isFirstPartyOrigin(parentOrigin, await getDomainFromHeader())
 
 const BEARER_TOKEN_SEPARATOR = /\s+/
 
@@ -132,7 +122,11 @@ export async function GET(req: NextRequest) {
     })
     const authorized =
       tokenAuthorized &&
-      (await isAllowedGuestOrigin(data.parentOrigin, webchat.authorizedDomains))
+      isAllowedGuestOrigin(
+        data.parentOrigin,
+        webchat.authorizedDomains,
+        await getDomainFromHeader(),
+      )
     const headers = corsHeaders(requestOrigin, authorized)
     if (!authorized) {
       return await forbiddenResponse(headers)
@@ -193,10 +187,11 @@ export async function POST(req: NextRequest) {
     })
     const authorized =
       tokenAuthorized &&
-      (await isAllowedGuestOrigin(
+      isAllowedGuestOrigin(
         parsedInput.parentOrigin,
         webchat.authorizedDomains,
-      ))
+        await getDomainFromHeader(),
+      )
     const headers = corsHeaders(requestOrigin, authorized)
     if (!authorized) {
       return await forbiddenResponse(headers)

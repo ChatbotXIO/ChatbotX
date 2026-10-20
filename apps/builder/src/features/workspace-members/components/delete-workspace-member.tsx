@@ -40,9 +40,12 @@ export function DeleteWorkspaceMemberDialog({
       workspaceMember?.id ?? "",
     ),
     {
-      onSuccess: () => {
+      onSuccess: ({ data }) => {
         invalidateUsers()
         onOpenChange(false)
+        if (data?.revokeWarning) {
+          toast.warning(t("messages.realtimeRevokeWarning"))
+        }
         if (workspaceMember?.userId === session?.user?.id) {
           router.push("/")
         } else {

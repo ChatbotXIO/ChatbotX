@@ -3640,6 +3640,7 @@
       "months": "{count} mes",
       "years": "{count} a"
     },
+    "realtimeRevokeWarning": "No se pudo confirmar la revocación de acceso de inmediato; se aplicará en la próxima reconexión del miembro.",
     "moveFeature": "Mover {feature}",
     "poweredBy": "Con tecnología de {name}",
     "noGiphyApiKey": "No GIPHY API clave found. Por favor, Añadir one en Platform Ajustes.",

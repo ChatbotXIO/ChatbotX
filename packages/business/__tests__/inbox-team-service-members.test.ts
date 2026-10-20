@@ -1,12 +1,20 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  delete: vi.fn(),
+  deleteReturning: vi.fn(),
+  deleteWhere: vi.fn(),
   listExistingUserIds: vi.fn(),
   insertValues: vi.fn(),
   teamFindFirst: vi.fn(),
+  teamFindMany: vi.fn(),
   teamMemberFindMany: vi.fn(),
   userFindMany: vi.fn(),
   listUserIdsByTeamId: vi.fn(),
+  listUserIdsByTeamIds: vi.fn(),
+  invalidateCacheByTags: vi.fn(),
+  dispatchAuditRecord: vi.fn().mockResolvedValue(undefined),
+  enqueueWorkspaceMemberRealtimeConnectionRevocationRetry: vi.fn(),
 }))
 
 const WORKSPACE_ID = "ws-1"
@@ -29,15 +37,21 @@ const makeTx = () => ({
     },
   }),
   query: {
+    inboxTeamModel: { findMany: mocks.teamFindMany },
     inboxTeamMemberModel: { findMany: mocks.teamMemberFindMany },
     userModel: { findMany: mocks.userFindMany },
   },
+  delete: mocks.delete,
 })
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
+    delete: mocks.delete,
     query: {
-      inboxTeamModel: { findFirst: mocks.teamFindFirst },
+      inboxTeamModel: {
+        findFirst: mocks.teamFindFirst,
+        findMany: mocks.teamFindMany,
+      },
       inboxTeamMemberModel: { findMany: mocks.teamMemberFindMany },
     },
     transaction: (fn: (tx: unknown) => unknown) => fn(makeTx()),
@@ -56,12 +70,13 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/redis", () => ({
   withCache: vi.fn(),
-  invalidateCacheByTags: vi.fn(),
+  invalidateCacheByTags: mocks.invalidateCacheByTags,
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   inboxTeamMemberRepository: {
     listUserIdsByTeamId: mocks.listUserIdsByTeamId,
+    listUserIdsByTeamIds: mocks.listUserIdsByTeamIds,
   },
 }))
 
@@ -70,7 +85,12 @@ vi.mock("../src/workspace-member/service", () => ({
 }))
 
 vi.mock("../src/audit/dispatcher", () => ({
-  dispatchAuditRecord: vi.fn(),
+  dispatchAuditRecord: mocks.dispatchAuditRecord,
+}))
+
+vi.mock("../src/platform/realtime-broadcast", () => ({
+  enqueueWorkspaceMemberRealtimeConnectionRevocationRetry:
+    mocks.enqueueWorkspaceMemberRealtimeConnectionRevocationRetry,
 }))
 
 const { inboxTeamService } = await import(
@@ -86,6 +106,12 @@ beforeEach(() => {
   })
   mocks.teamMemberFindMany.mockResolvedValue([])
   mocks.userFindMany.mockResolvedValue([])
+  mocks.delete.mockReturnValue({ where: mocks.deleteWhere })
+  mocks.deleteWhere.mockReturnValue({ returning: mocks.deleteReturning })
+  mocks.deleteReturning.mockResolvedValue([{ id: "member-row-1" }])
+  mocks.teamFindMany.mockResolvedValue([{ id: TEAM_ID }])
+  mocks.listUserIdsByTeamId.mockResolvedValue(["member-1"])
+  mocks.listUserIdsByTeamIds.mockResolvedValue(["member-1"])
 })
 
 describe("InboxTeamService member validation against duplicate membership rows", () => {
@@ -125,6 +151,34 @@ describe("InboxTeamService member validation against duplicate membership rows",
         data: { name: "Support", userIds: ["member-1", "member-2"] },
       }),
     ).resolves.toBeDefined()
+    expect(
+      mocks.enqueueWorkspaceMemberRealtimeConnectionRevocationRetry,
+    ).toHaveBeenCalledTimes(2)
+    expect(
+      mocks.enqueueWorkspaceMemberRealtimeConnectionRevocationRetry,
+    ).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "member-1",
+      reason: "reauth",
+    })
+  })
+
+  test("queues realtime revocation after invalidating the team cache", async () => {
+    mocks.listExistingUserIds.mockResolvedValue([{ userId: "member-1" }])
+
+    await inboxTeamService.create({
+      workspaceId: WORKSPACE_ID,
+      data: { name: "Support", userIds: ["member-1"] },
+    })
+
+    expect(mocks.invalidateCacheByTags).toHaveBeenCalled()
+    expect(
+      mocks.enqueueWorkspaceMemberRealtimeConnectionRevocationRetry,
+    ).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "member-1",
+      reason: "reauth",
+    })
   })
 
   test("addMembers rejects a non-member even when a duplicate row pads the count", async () => {
@@ -215,5 +269,43 @@ describe("InboxTeamService.listUserIdsByTeamId", () => {
     })
     expect(mocks.listUserIdsByTeamId).toHaveBeenCalledTimes(1)
     expect(result).toBe(userIds)
+  })
+})
+
+describe("InboxTeamService membership mutation revocation", () => {
+  test("reads deleted-team members in the deletion transaction before queuing revocation", async () => {
+    await inboxTeamService.delete({ workspaceId: WORKSPACE_ID, ids: [TEAM_ID] })
+
+    expect(mocks.listUserIdsByTeamIds).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      inboxTeamIds: [TEAM_ID],
+      tx: expect.anything(),
+    })
+    expect(
+      mocks.enqueueWorkspaceMemberRealtimeConnectionRevocationRetry,
+    ).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE_ID,
+      userId: "member-1",
+      reason: "reauth",
+    })
+  })
+
+  test("queues a single realtime revocation for duplicate members", async () => {
+    mocks.teamMemberFindMany.mockResolvedValue([
+      {
+        id: "member-row-1",
+        userId: "member-1",
+        user: { email: "member@example.com", name: "Member" },
+      },
+    ])
+
+    await inboxTeamService.removeMembers(
+      { workspaceId: WORKSPACE_ID, inboxTeamId: TEAM_ID },
+      ["member-1", "member-1"],
+    )
+
+    expect(
+      mocks.enqueueWorkspaceMemberRealtimeConnectionRevocationRetry,
+    ).toHaveBeenCalledTimes(1)
   })
 })

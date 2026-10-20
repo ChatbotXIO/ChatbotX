@@ -3640,6 +3640,7 @@
       "months": "{count} mnd",
       "years": "{count} j"
     },
+    "realtimeRevokeWarning": "De toegangsintrekking kon niet direct worden bevestigd - deze wordt van kracht bij de volgende herverbinding van het lid.",
     "moveFeature": "{feature} verplaatsen",
     "poweredBy": "Mogelijk gemaakt door {name}",
     "noGiphyApiKey": "Geen GIPHY API-sleutel gevonden. Voeg er een toe in Platforminstellingen.",

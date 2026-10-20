@@ -2,13 +2,26 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => {
   const repo = {
+    createWithAttachments: vi.fn(),
+    bulkCreateAttachments: vi.fn(),
+    create: vi.fn(),
+    deleteAttachmentsByMessageId: vi.fn(),
+    deleteById: vi.fn(),
+    deleteBySourceId: vi.fn(),
     findById: vi.fn(),
     findLastByConversation: vi.fn(),
     hardDeleteAllByContactInbox: vi.fn(),
     listIncomingTextsByContactInbox: vi.fn(),
+    updateMessageText: vi.fn(),
+    updateSendError: vi.fn(),
+    updateSourceId: vi.fn(),
   }
   return {
-    db: { query: { messageModel: { findFirst: vi.fn(), findMany: vi.fn() } } },
+    db: {
+      query: { messageModel: { findFirst: vi.fn(), findMany: vi.fn() } },
+      transaction: async (callback: (tx: unknown) => Promise<unknown>) =>
+        await callback({}),
+    },
     repo,
     createMessageRepository: vi.fn().mockResolvedValue(repo),
     withCache: vi.fn(
@@ -38,7 +51,15 @@ vi.mock("@chatbotx.io/redis", () => ({
 // wired in as a class field (module-scope import), not because any test here
 // exercises it — this file only covers the pre-existing read/delete methods.
 vi.mock("@chatbotx.io/filesystem", () => ({}))
-vi.mock("@chatbotx.io/partysocket-config", () => ({}))
+vi.mock("@chatbotx.io/realtime-protocol", () => ({
+  RealtimeEventType: {
+    conversationAssigned: "conversationAssigned",
+    messageCreated: "messageCreated",
+    whatsappCallClaimedElsewhere: "whatsappCallClaimedElsewhere",
+    whatsappCallPermissionUpdated: "whatsappCallPermissionUpdated",
+    whatsappCallTransportEnded: "whatsappCallTransportEnded",
+  },
+}))
 vi.mock("@chatbotx.io/worker-config", () => ({}))
 vi.mock("../src/contact-inbox/service", () => ({ contactInboxService: {} }))
 vi.mock("../src/conversation/service", () => ({ conversationService: {} }))
@@ -189,5 +210,168 @@ describe("messageService", () => {
       workspaceId: "ws-1",
     })
     expect(result).toEqual({ attachmentPaths: ["origin.jpg", "thumb.jpg"] })
+  })
+
+  test("uses the supplied transaction and preserves delete-by-source semantics", async () => {
+    const tx = {} as never
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    mocks.repo.deleteBySourceId.mockResolvedValue([{ id: "message-1" }])
+
+    await expect(
+      messageService.delete({
+        id: "message-1",
+        sourceId: "provider-1",
+        workspaceId: "ws-1",
+        createdAt,
+        tx,
+      }),
+    ).resolves.toEqual([{ id: "message-1" }])
+
+    expect(mocks.createMessageRepository).toHaveBeenCalledWith(tx)
+    expect(mocks.repo.deleteBySourceId).toHaveBeenCalledWith(
+      "provider-1",
+      "ws-1",
+      createdAt,
+    )
+    expect(mocks.repo.deleteById).not.toHaveBeenCalled()
+  })
+
+  test("maps message write inputs to repository methods", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    mocks.repo.updateSourceId.mockResolvedValue({ id: "message-1" })
+    mocks.repo.updateSendError.mockResolvedValue({ id: "message-1" })
+
+    await messageService.updateSourceId({
+      id: "message-1",
+      sourceId: "provider-1",
+      workspaceId: "ws-1",
+      createdAt,
+    })
+    await messageService.updateSendError({
+      id: "message-1",
+      sendError: "provider unavailable",
+      workspaceId: "ws-1",
+      createdAt,
+    })
+
+    expect(mocks.repo.updateSourceId).toHaveBeenCalledWith(
+      "message-1",
+      "provider-1",
+      "ws-1",
+      createdAt,
+    )
+    expect(mocks.repo.updateSendError).toHaveBeenCalledWith(
+      "message-1",
+      "provider unavailable",
+      "ws-1",
+      createdAt,
+    )
+  })
+
+  test("preserves attachment replacement timestamps and skips an empty insert", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    await messageService.replaceAttachments({
+      attachments: [],
+      createdAt,
+      id: "message-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.repo.deleteAttachmentsByMessageId).toHaveBeenCalledWith(
+      "message-1",
+      "ws-1",
+      createdAt,
+    )
+    expect(mocks.repo.bulkCreateAttachments).not.toHaveBeenCalled()
+
+    await messageService.replaceAttachments({
+      attachments: [{ path: "file.png" }] as never,
+      createdAt,
+      id: "message-1",
+      workspaceId: "ws-1",
+    })
+    expect(mocks.repo.bulkCreateAttachments).toHaveBeenCalledWith([
+      expect.objectContaining({
+        messageCreatedAt: createdAt,
+        messageId: "message-1",
+        path: "file.png",
+      }),
+    ])
+  })
+
+  test("passes text update arguments in repository order", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    await messageService.updateText({
+      createdAt,
+      id: "message-1",
+      text: "updated",
+      workspaceId: "ws-1",
+    })
+
+    expect(mocks.repo.updateMessageText).toHaveBeenCalledWith(
+      "message-1",
+      "ws-1",
+      "updated",
+      createdAt,
+    )
+  })
+
+  test("updates text and replaces attachments in one transaction", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+    mocks.repo.updateMessageText.mockResolvedValue({
+      conversationId: "conversation-1",
+      id: "message-1",
+    })
+
+    await expect(
+      messageService.edit({
+        attachments: [{ path: "file.png" }] as never,
+        createdAt,
+        id: "message-1",
+        replaceAttachments: true,
+        text: "updated",
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toEqual({ conversationId: "conversation-1", id: "message-1" })
+
+    expect(mocks.repo.deleteAttachmentsByMessageId).toHaveBeenCalledWith(
+      "message-1",
+      "ws-1",
+      createdAt,
+    )
+    expect(mocks.repo.bulkCreateAttachments).toHaveBeenCalledTimes(1)
+  })
+
+  test("does not replace attachments when the text update finds no message", async () => {
+    mocks.repo.updateMessageText.mockResolvedValue(null)
+
+    await expect(
+      messageService.edit({
+        attachments: [{ path: "file.png" }] as never,
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+        id: "missing",
+        replaceAttachments: true,
+        text: "updated",
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("Message not found")
+
+    expect(mocks.repo.deleteAttachmentsByMessageId).not.toHaveBeenCalled()
+  })
+
+  test("passes messages and attachments unchanged to the combined repository write", async () => {
+    const message = { id: "message-1", workspaceId: "ws-1" }
+    const attachments = [{ path: "file.png" }]
+    mocks.repo.createWithAttachments.mockResolvedValue({ message, attachments })
+
+    await messageService.createWithAttachments({
+      attachments: attachments as never,
+      message: message as never,
+    })
+
+    expect(mocks.repo.createWithAttachments).toHaveBeenCalledWith(
+      message,
+      attachments,
+    )
   })
 })

@@ -64,16 +64,13 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
    still unanswered it `reject`/`terminate`s Meta and finalizes the DB row (never
    relying on TTL expiry alone).
 
-4. **Realtime targeted, room-bound delivery.** Builder mints a one-time token bound to a
-   verified `{ userId, workspaceId }` (member-only). The `workspaces` party rejects the
-   upgrade when `workspaceId !== room.id` (mirror the privileged room-claim check in
-   `apps/realtime/src/lib/realtime-auth.ts`), tags the connection by verified `userId`
-   (PartyKit `getConnectionTags`), and the server delivers the offer only via
-   `room.getConnections(userTag).send()` — never `broadcast`. Ring-all (#5) delivers
-   the SAME offer to every live rung agent this way — one targeted send per agent, in
-   parallel — never a single workspace-wide broadcast of the SDP. On membership
-   removal the user's tagged sockets are closed; the ≤60 s offer TTL bounds residual
-   exposure. Remove the two realtime token log leaks (`apps/realtime/src/lib/auth.ts`).
+4. **Realtime targeted, workspace-bound delivery.** Builder mints a short-lived
+   token bound to verified `{ userId, workspaceId }` member claims. The uWS
+   gateway verifies the path workspace against the token audience and dispatches
+   the offer only to the targeted member’s local sockets. Ring-all (#5) emits
+   one durable `member-send` record per eligible agent; it never broadcasts SDP
+   to the whole workspace. Member removal emits a revoke record and the
+   short-lived token further bounds stale reconnects.
 
 5. **Ring-all + fenced claim/accept.** Shipped as RING-ALL, not single-agent
    reservation: `whatsappVoipCallService.reserveIncomingCall` creates (or observes, on
@@ -82,9 +79,11 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
    `selectRingTargetsForCall` then resolves the ring tier (assignee → assigned team →
    every eligible agent with an online workspace tab —
    `workspacePresenceService.listOnlineMembers`) capped at `MAX_VOIP_RING_TARGETS`. The
-   worker's `handleConnect` delivers the SDP offer to every one of
-   those agents via `sendToWorkspaceMember` (never a broadcast). Call control lives in
-   Redis `voip:ctrl:<wacid>` = `{ reservedUserId, phase, deadlineAt, fenceToken }`,
+   worker's `handleConnect` sends each SDP offer through
+   `publishWorkspaceMemberRealtimeEvent`; the publisher appends the targeted
+   event to the durable realtime Redis stream, which the Realtime service delivers only to
+   that member's connections. Call control lives in Redis
+   `voip:ctrl:<wacid>` = `{ reservedUserId, phase, deadlineAt, fenceToken }`,
    `phase: "reserved" | "answering" | "accepted" | "terminated"`. Transitions are
    single atomic Redis **Lua CAS** ops:
    - `claimForAnswer` — `reserved (reservedUserId:"") → answering (reservedUserId:userId)`.
@@ -115,11 +114,11 @@ that row. The browser never chooses `phoneNumberId`, credentials, or the target 
    **Who receives which "ended" event:** `finalizeCallSideEffects`'s VoIP branch reads
    the control BEFORE tearing it down: if `reservedUserId` is set (someone claimed
    it), `whatsappCallTransportEnded` is sent ONLY to that agent via
-   `sendToWorkspaceMember` (offer-adjacent, targeted). If the call ends while still
+   `publishWorkspaceMemberRealtimeEvent` (offer-adjacent, targeted). If the call ends while still
    UNCLAIMED (`reservedUserId === ""` — the caller hung up mid-ring, or the offer/CAS
    never got claimed before expiry), there is no single agent to target — every rung
    agent's dialog is still ringing — so the SAME event is instead BROADCAST to the
-   whole workspace party via `broadcastToWorkspaceParty`; the client's `handleEnded`
+   whole workspace party via `publishWorkspaceRealtimeEvent`; the client's `handleEnded`
    already clears any dialog it doesn't recognize as its own, so agents who were never
    rung are unaffected. No control record at all means nobody was ever rung, so
    nothing is sent either way.
@@ -254,7 +253,7 @@ and that call). Transport-tagged `ended` realtime event closes the peer.
   changes for any other number are dropped before enqueue.
 
 ## Realtime event contract
-The transport-tagged payload lives in `packages/partysocket-config/src/schemas.ts`
+The transport-tagged payload lives in `packages/realtime-protocol/src/schemas.ts`
 (`transport: z.literal("voip")` — kept as a literal, not stripped, so existing
 clients keep parsing the payload unchanged; browser WebRTC is the only transport).
 Variants carry `whatsappCallId`/`wacid` and **no `rootUuid`**. `ChatRealtime` and
@@ -293,12 +292,13 @@ the shared finalizer emit the transport-tagged ended event.
   ONE member per user — not per browser tab) is the VoIP ring-set source
   (`workspacePresenceService.listOnlineMembers`) — a user counts as "online" while
   their entry is renewed within `PRESENCE_TTL_MS` (20 s). Renewal is no longer a
-  per-browser-tab client heartbeat: each `apps/realtime` `workspaces` room reports its
-  distinct connected user ids to the builder every 20 s (`WorkspaceParty`'s alarm loop
-  → `POST /api/workspace-presence/report` → `workspacePresenceService.heartbeatMany`,
-  one Redis round-trip for the whole batch), so request volume scales with active
-  workspaces, not agent count. Matches a widely used online-status-tracker model: there is
-  deliberately no explicit sign-off — a crashed/closed/backgrounded tab simply stops
+  per-browser-tab client heartbeat: `apps/realtime/src/lib/presence-report.ts`
+  reports each gateway room's distinct connected user ids to the builder every
+  10 s (`PRESENCE_REPORT_INTERVAL_MS` → `POST /api/workspace-presence/report`
+  → `workspacePresenceService.heartbeatMany`, one Redis round-trip for the whole
+  batch), so request volume scales with active workspaces, not agent count. Matches a
+  widely used online-status-tracker model: there is deliberately no explicit sign-off —
+  a crashed/closed/backgrounded tab simply stops
   being reported and drops out once the TTL lapses (see §9 of the parity plan for the
   record of both owner-directed simplifications), and `presenceStore.heartbeatMany`
   also prunes every already-expired member on each write (not only on a

@@ -3640,6 +3640,7 @@
       "months": "{count} mois",
       "years": "{count} an"
     },
+    "realtimeRevokeWarning": "La révocation de l'accès n'a pas pu être confirmée immédiatement : elle prendra effet à la prochaine reconnexion du membre.",
     "moveFeature": "Déplacer {feature}",
     "poweredBy": "Propulsé par {name}",
     "noGiphyApiKey": "Aucune clé API GIPHY trouvée. Ajoutez-en une dans les paramètres de la plateforme.",

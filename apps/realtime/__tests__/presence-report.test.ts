@@ -8,13 +8,6 @@ const { kyPostMock, loggerErrorMock } = vi.hoisted(() => ({
   loggerErrorMock: vi.fn(),
 }))
 
-vi.mock("../src/env", () => ({
-  env: {
-    REALTIME_BROADCAST_SECRET: SECRET,
-    NEXT_PUBLIC_BUILDER_URL: "https://builder.example.com",
-  },
-}))
-
 vi.mock("../src/logger", () => ({
   logger: { error: loggerErrorMock, warn: vi.fn(), info: vi.fn() },
 }))
@@ -25,7 +18,7 @@ vi.mock("ky", () => ({
 
 const { reportWorkspacePresence } = await import("../src/lib/presence-report")
 const { hashPresenceUserIds, MAX_PRESENCE_USER_IDS_PER_REPORT } = await import(
-  "@chatbotx.io/partysocket-config/presence"
+  "@chatbotx.io/realtime-protocol/presence"
 )
 
 const encodeSecret = () => new TextEncoder().encode(SECRET)
@@ -37,7 +30,12 @@ beforeEach(() => {
 
 describe("reportWorkspacePresence", () => {
   it("POSTs to the builder's presence-report route with the workspaceId as a query param and a workspace-audience, presence-report-purpose bearer token", async () => {
-    await reportWorkspacePresence("ws_1", ["u_1", "u_2"])
+    await reportWorkspacePresence(
+      "ws_1",
+      ["u_1", "u_2"],
+      "https://builder.example.com",
+      SECRET,
+    )
 
     expect(kyPostMock).toHaveBeenCalledTimes(1)
     const [url, options] = kyPostMock.mock.calls[0] as [
@@ -65,7 +63,12 @@ describe("reportWorkspacePresence", () => {
       (_, i) => `u_${i}`,
     )
 
-    await reportWorkspacePresence("ws_1", userIds)
+    await reportWorkspacePresence(
+      "ws_1",
+      userIds,
+      "https://builder.example.com",
+      SECRET,
+    )
 
     const [, options] = kyPostMock.mock.calls[0] as [
       string,
@@ -77,9 +80,13 @@ describe("reportWorkspacePresence", () => {
 
   it("logs and swallows a failed report — never throws (no retry, the next report supersedes it)", async () => {
     kyPostMock.mockRejectedValue(new Error("network error"))
-
     await expect(
-      reportWorkspacePresence("ws_1", ["u_1"]),
+      reportWorkspacePresence(
+        "ws_1",
+        ["u_1"],
+        "https://builder.example.com",
+        SECRET,
+      ),
     ).resolves.toBeUndefined()
 
     expect(loggerErrorMock).toHaveBeenCalledTimes(1)

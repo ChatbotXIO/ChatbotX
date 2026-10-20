@@ -16,5 +16,5 @@ export const deleteInboxTeamAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
     } = props
 
-    await inboxTeamService.delete({ workspaceId, ids: parsedInput.ids })
+    return await inboxTeamService.delete({ workspaceId, ids: parsedInput.ids })
   })

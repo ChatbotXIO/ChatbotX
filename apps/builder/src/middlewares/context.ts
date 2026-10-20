@@ -20,6 +20,7 @@ export type RequestApiToken = Pick<
 export type BaseContext = ResponseHeadersPluginContext & {
   headers: Headers
   url?: string
+  requestIssuedAtMs?: number
   session?: {
     ipAddress?: string | null
     userAgent?: string | null

@@ -94,7 +94,7 @@ export function DeleteInboxTeamMembersDialog({
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
-            onClick={() => execute({ ids: [teamMember?.id ?? ""] })}
+            onClick={() => execute({ userIds: [teamMember?.userId ?? ""] })}
             size="sm"
             variant="destructive"
           >

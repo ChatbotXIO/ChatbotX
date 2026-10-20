@@ -1,0 +1,551 @@
+import {
+  getRealtimeStreamKey,
+  getRealtimeStreamShard,
+  isRealtimeSeqAfter,
+  type RealtimeEventEnvelope,
+  type RealtimeStreamRecord,
+  realtimeStreamRecordSchema,
+  realtimeWorkspaceEventEnvelopeSchema,
+} from "@chatbotx.io/realtime-protocol"
+import type { Redis } from "@chatbotx.io/redis"
+import { z } from "zod"
+import type { StreamRecordEntry } from "./delivery"
+import { logger } from "./logger"
+
+const STREAM_READ_BLOCK_MS = 1000
+const STREAM_READ_COUNT = 200
+const RECENT_ENTRY_LIMIT = 512
+const DEACTIVATION_DELAY_MS = 30_000
+const IDLE_RETRY_MS = 250
+const ERROR_RETRY_MS = 1000
+
+type StreamFieldList = [string, string][] | string[]
+export type StreamEntry = [string, StreamFieldList]
+type StreamReadResult = [string, StreamEntry[]][]
+
+type ActiveShard = {
+  deactivateTimer: NodeJS.Timeout | null
+  lastEvictedId?: string
+  lastId: string
+  recentEntries: StreamRecordEntry[]
+  recentEntryCount: number
+  recentEntryStart: number
+  shard: number
+  socketCount: number
+  streamKey: string
+  /**
+   * The highest stream id this shard has seen that couldn't be fully
+   * parsed. A socket whose upgrade (activation + replay) completed before
+   * this id, but that only reaches `open` after it, has a gap no other
+   * mechanism catches: `onInvalidRecord`'s resync only reaches sockets
+   * already registered with `delivery` at the moment it fires, and a
+   * still-pending upgrade isn't registered yet. See PR #1349 round-5
+   * finding (pending-upgrade gap).
+   */
+  taintedUpToId?: string
+}
+
+export type StreamReader = {
+  activateWorkspace: (workspaceId: string) => Promise<string>
+  activeShardCount: () => number
+  close: () => Promise<void>
+  getRecentEntries: (
+    workspaceId: string,
+    afterId?: string,
+  ) => StreamRecordEntry[]
+  /**
+   * The shard's `taintedUpToId` (see `ActiveShard`), or `undefined` if
+   * nothing invalid has been seen since the shard activated.
+   */
+  getTaintedUpToId: (workspaceId: string) => string | undefined
+  releaseWorkspace: (workspaceId: string) => void
+  start: () => void
+  hasRecentEntriesGap: (workspaceId: string, afterId?: string) => boolean
+}
+
+const toFieldMap = (fields: StreamFieldList): Map<string, string> => {
+  if (fields.length === 0) {
+    return new Map()
+  }
+  if (Array.isArray(fields[0])) {
+    return new Map(fields as [string, string][])
+  }
+
+  const fieldMap = new Map<string, string>()
+  const flattenedFields = fields as string[]
+  for (let index = 0; index < flattenedFields.length; index += 2) {
+    const key = flattenedFields[index]
+    const value = flattenedFields[index + 1]
+    if (key !== undefined && value !== undefined) {
+      fieldMap.set(key, value)
+    }
+  }
+  return fieldMap
+}
+
+/** A loose, best-effort read of `kind`/`workspaceId` only — used to recover
+ * enough identity to log and signal a resync even when the full record
+ * schema below rejects the entry (e.g. a rolling deploy skew). */
+const looseStreamRecordShapeSchema = z.object({
+  events: z.unknown().optional(),
+  kind: z.string(),
+  workspaceId: z.string().min(1),
+})
+
+type ParsedStreamRecord =
+  | { droppedCount?: number; ok: true; record: RealtimeStreamRecord }
+  | { error: unknown; ok: false; workspaceId?: string }
+
+export const parseStreamRecord = (
+  fields: StreamFieldList,
+): ParsedStreamRecord => {
+  const serializedRecord = toFieldMap(fields).get("record")
+  if (!serializedRecord) {
+    return { error: new Error("Stream entry has no 'record' field"), ok: false }
+  }
+
+  let parsedJson: unknown
+  try {
+    parsedJson = JSON.parse(serializedRecord)
+  } catch (error) {
+    return { error, ok: false }
+  }
+
+  const looseShape = looseStreamRecordShapeSchema.safeParse(parsedJson)
+  const workspaceId = looseShape.success
+    ? looseShape.data.workspaceId
+    : undefined
+
+  // A rolling deploy can have the worker publish a newer event shape than
+  // this build's envelope schema knows. Validating `events` per item instead
+  // of rejecting the whole `.min(1)` array keeps every *other* valid event in
+  // the same coalesced batch deliverable instead of discarding the record.
+  if (looseShape.success && looseShape.data.kind === "workspace-events") {
+    const rawEvents = looseShape.data.events
+    if (Array.isArray(rawEvents)) {
+      const validEvents: RealtimeEventEnvelope[] = []
+      for (const rawEvent of rawEvents) {
+        const result = realtimeWorkspaceEventEnvelopeSchema.safeParse(rawEvent)
+        if (result.success) {
+          validEvents.push(result.data)
+        }
+      }
+      if (validEvents.length > 0) {
+        return {
+          droppedCount: rawEvents.length - validEvents.length,
+          ok: true,
+          record: {
+            events: validEvents,
+            kind: "workspace-events",
+            workspaceId: looseShape.data.workspaceId,
+          },
+        }
+      }
+      return {
+        error: new Error("workspace-events record has no valid events"),
+        ok: false,
+        workspaceId,
+      }
+    }
+  }
+
+  const result = realtimeStreamRecordSchema.safeParse(parsedJson)
+  if (result.success) {
+    return { ok: true, record: result.data }
+  }
+  return { error: result.error, ok: false, workspaceId }
+}
+
+const getLatestStreamId = async (
+  redis: Redis,
+  streamKey: string,
+): Promise<string> => {
+  const entries = (await redis.xrevrange(
+    streamKey,
+    "+",
+    "-",
+    "COUNT",
+    1,
+  )) as StreamEntry[]
+  return entries[0]?.[0] ?? "0-0"
+}
+export const createStreamReader = ({
+  onDispatchError,
+  onEntries,
+  onError,
+  onInvalidRecord,
+  onReady,
+  onRecovered,
+  onReconnect,
+  redis,
+}: {
+  onDispatchError?: (error: unknown, workspaceIds: string[]) => void
+  onEntries: (entries: StreamRecordEntry[]) => void
+  onError: (error: unknown) => void
+  onInvalidRecord: (info: {
+    id: string
+    shard: number
+    workspaceId?: string
+  }) => void
+  onReady: () => void
+  onRecovered: () => void
+  onReconnect?: () => void
+  redis: Redis
+}): StreamReader => {
+  const activeShards = new Map<number, ActiveShard>()
+  const activatingShards = new Map<number, Promise<ActiveShard>>()
+  let reader: Redis | null = null
+  let stopped = false
+  let loop: Promise<void> | null = null
+  let nextRunNeedsIdleProbe = false
+  let hasProbedOnce = false
+  const getActiveShards = (): ActiveShard[] => [...activeShards.values()]
+
+  const deactivateShard = (shard: number): void => {
+    const activeShard = activeShards.get(shard)
+    if (!activeShard || activeShard.socketCount > 0) {
+      return
+    }
+    if (activeShard.deactivateTimer) {
+      clearTimeout(activeShard.deactivateTimer)
+    }
+    activeShards.delete(shard)
+  }
+
+  const appendRecentEntry = (
+    activeShard: ActiveShard,
+    entry: StreamRecordEntry,
+  ): void => {
+    const { recentEntries } = activeShard
+    if (activeShard.recentEntryCount < RECENT_ENTRY_LIMIT) {
+      const index =
+        (activeShard.recentEntryStart + activeShard.recentEntryCount) %
+        RECENT_ENTRY_LIMIT
+      recentEntries[index] = entry
+      activeShard.recentEntryCount += 1
+      return
+    }
+    activeShard.lastEvictedId = recentEntries[activeShard.recentEntryStart]?.id
+    recentEntries[activeShard.recentEntryStart] = entry
+    activeShard.recentEntryStart =
+      (activeShard.recentEntryStart + 1) % RECENT_ENTRY_LIMIT
+  }
+
+  const activateWorkspace = async (workspaceId: string): Promise<string> => {
+    const shard = getRealtimeStreamShard(workspaceId)
+    const existingShard = activeShards.get(shard)
+    if (existingShard) {
+      existingShard.socketCount += 1
+      if (existingShard.deactivateTimer) {
+        clearTimeout(existingShard.deactivateTimer)
+        existingShard.deactivateTimer = null
+      }
+      return existingShard.lastId
+    }
+
+    const activatingShard = activatingShards.get(shard)
+    if (activatingShard) {
+      const activeShard = await activatingShard
+      activeShard.socketCount += 1
+      return activeShard.lastId
+    }
+
+    const streamKey = getRealtimeStreamKey(workspaceId)
+    const activation = (async (): Promise<ActiveShard> => {
+      const activeShard: ActiveShard = {
+        deactivateTimer: null,
+        lastId: await getLatestStreamId(redis, streamKey),
+        recentEntries: [],
+        recentEntryCount: 0,
+        recentEntryStart: 0,
+        shard,
+        socketCount: 1,
+        streamKey,
+      }
+      activeShards.set(shard, activeShard)
+      return activeShard
+    })()
+    activatingShards.set(shard, activation)
+    try {
+      return (await activation).lastId
+    } finally {
+      activatingShards.delete(shard)
+    }
+  }
+
+  const releaseWorkspace = (workspaceId: string): void => {
+    const shard = getRealtimeStreamShard(workspaceId)
+    const activeShard = activeShards.get(shard)
+    if (!activeShard || activeShard.socketCount === 0) {
+      return
+    }
+
+    activeShard.socketCount -= 1
+    if (activeShard.socketCount > 0 || activeShard.deactivateTimer) {
+      return
+    }
+    activeShard.deactivateTimer = setTimeout(
+      () => deactivateShard(shard),
+      DEACTIVATION_DELAY_MS,
+    )
+  }
+
+  const dispatchEntries = (
+    response: StreamReadResult,
+    activeShardsByStreamKey: Map<string, ActiveShard>,
+  ): {
+    entries: StreamRecordEntry[]
+    invalidRecords: {
+      id: string
+      shard: number
+      workspaceId?: string
+    }[]
+  } => {
+    const entries: StreamRecordEntry[] = []
+    const invalidRecords: {
+      id: string
+      shard: number
+      workspaceId?: string
+    }[] = []
+    for (const [streamKey, streamEntries] of response) {
+      const activeShard = activeShardsByStreamKey.get(streamKey)
+      if (!activeShard) {
+        continue
+      }
+      for (const [id, fields] of streamEntries) {
+        if (!isRealtimeSeqAfter(id, activeShard.lastId)) {
+          continue
+        }
+        activeShard.lastId = id
+        const parsed = parseStreamRecord(fields)
+        if (!parsed.ok) {
+          logger.error(
+            {
+              err: parsed.error,
+              id,
+              streamKey,
+              workspaceId: parsed.workspaceId,
+            },
+            "Ignoring malformed realtime stream entry",
+          )
+          activeShard.taintedUpToId = id
+          invalidRecords.push({
+            id,
+            shard: activeShard.shard,
+            workspaceId: parsed.workspaceId,
+          })
+          continue
+        }
+        if (parsed.droppedCount) {
+          logger.error(
+            {
+              droppedCount: parsed.droppedCount,
+              id,
+              streamKey,
+              workspaceId: parsed.record.workspaceId,
+            },
+            "Dropped invalid events from a coalesced realtime stream record",
+          )
+          activeShard.taintedUpToId = id
+          invalidRecords.push({
+            id,
+            shard: activeShard.shard,
+            workspaceId: parsed.record.workspaceId,
+          })
+        }
+        const entry = { id, record: parsed.record }
+        appendRecentEntry(activeShard, entry)
+        entries.push(entry)
+      }
+    }
+    return { entries, invalidRecords }
+  }
+
+  const delay = (ms: number): Promise<void> => {
+    const { promise, resolve } = Promise.withResolvers<void>()
+    setTimeout(resolve, ms)
+    return promise
+  }
+
+  const run = async (): Promise<void> => {
+    reader = redis.duplicate()
+    let recoveringFromError = nextRunNeedsIdleProbe
+    let idleProbeNeeded = nextRunNeedsIdleProbe || !hasProbedOnce
+    const markReady = (): void => {
+      hasProbedOnce = true
+      onReady()
+      if (!recoveringFromError) {
+        return
+      }
+      recoveringFromError = false
+      onRecovered()
+    }
+    reader.on?.("reconnecting", () => {
+      if (recoveringFromError) {
+        return
+      }
+      recoveringFromError = true
+      idleProbeNeeded = true
+      onReconnect?.()
+    })
+    try {
+      while (!stopped) {
+        const activeShardsSnapshot = getActiveShards()
+        if (activeShardsSnapshot.length === 0) {
+          if (!idleProbeNeeded) {
+            await delay(IDLE_RETRY_MS)
+            continue
+          }
+          try {
+            await reader.call("PING")
+            idleProbeNeeded = false
+            nextRunNeedsIdleProbe = false
+            markReady()
+          } catch (error) {
+            recoveringFromError = true
+            onError(error)
+            await delay(ERROR_RETRY_MS)
+          }
+          continue
+        }
+        const activeShardsByStreamKey = new Map(
+          activeShardsSnapshot.map((activeShard) => [
+            activeShard.streamKey,
+            activeShard,
+          ]),
+        )
+
+        let response: StreamReadResult | null
+        try {
+          response = (await reader.call(
+            "XREAD",
+            "BLOCK",
+            STREAM_READ_BLOCK_MS,
+            "COUNT",
+            STREAM_READ_COUNT,
+            "STREAMS",
+            ...activeShardsSnapshot.map((activeShard) => activeShard.streamKey),
+            ...activeShardsSnapshot.map((activeShard) => activeShard.lastId),
+          )) as StreamReadResult | null
+          markReady()
+        } catch (error) {
+          recoveringFromError = true
+          idleProbeNeeded = true
+          onError(error)
+          await delay(ERROR_RETRY_MS)
+          continue
+        }
+        if (!response) {
+          continue
+        }
+
+        const { entries, invalidRecords } = dispatchEntries(
+          response,
+          activeShardsByStreamKey,
+        )
+        try {
+          for (const invalidRecord of invalidRecords) {
+            onInvalidRecord(invalidRecord)
+          }
+          if (entries.length > 0) {
+            onEntries(entries)
+          }
+        } catch (error) {
+          const workspaceIds = [
+            ...new Set([
+              ...entries.map((entry) => entry.record.workspaceId),
+              ...invalidRecords.flatMap((record) =>
+                record.workspaceId ? [record.workspaceId] : [],
+              ),
+            ]),
+          ]
+          if (onDispatchError) {
+            onDispatchError(error, workspaceIds)
+            continue
+          }
+          logger.error(
+            { err: error, workspaceIds },
+            "Realtime stream dispatch failed",
+          )
+        }
+      }
+    } finally {
+      reader.disconnect()
+      reader = null
+    }
+  }
+
+  let restartTimer: NodeJS.Timeout | undefined
+  const start = (): void => {
+    if (loop || stopped) {
+      return
+    }
+    loop = run()
+      .catch((err) => {
+        if (!stopped) {
+          nextRunNeedsIdleProbe = true
+          onError(err)
+          logger.error({ err }, "Realtime stream reader stopped unexpectedly")
+        }
+      })
+      .finally(() => {
+        loop = null
+        if (stopped) {
+          return
+        }
+        restartTimer = setTimeout(() => {
+          restartTimer = undefined
+          start()
+        }, ERROR_RETRY_MS)
+      })
+  }
+  return {
+    activateWorkspace,
+    activeShardCount: () => activeShards.size,
+    close: async () => {
+      stopped = true
+      clearTimeout(restartTimer)
+      for (const [shard, activeShard] of activeShards) {
+        if (activeShard.deactivateTimer) {
+          clearTimeout(activeShard.deactivateTimer)
+        }
+        activeShards.delete(shard)
+      }
+      reader?.disconnect()
+      await loop
+    },
+    getRecentEntries: (workspaceId, afterId) => {
+      const activeShard = activeShards.get(getRealtimeStreamShard(workspaceId))
+      if (!activeShard) {
+        return []
+      }
+      const entries: StreamRecordEntry[] = []
+      for (let offset = 0; offset < activeShard.recentEntryCount; offset += 1) {
+        const index =
+          (activeShard.recentEntryStart + offset) % RECENT_ENTRY_LIMIT
+        const entry = activeShard.recentEntries[index]
+        if (
+          entry?.record.workspaceId === workspaceId &&
+          (!afterId || isRealtimeSeqAfter(entry.id, afterId))
+        ) {
+          entries.push(entry)
+        }
+      }
+      return entries
+    },
+    hasRecentEntriesGap: (workspaceId, afterId) => {
+      if (!afterId) {
+        return false
+      }
+      const activeShard = activeShards.get(getRealtimeStreamShard(workspaceId))
+      if (!activeShard?.lastEvictedId) {
+        return false
+      }
+      return isRealtimeSeqAfter(activeShard.lastEvictedId, afterId)
+    },
+    getTaintedUpToId: (workspaceId) =>
+      activeShards.get(getRealtimeStreamShard(workspaceId))?.taintedUpToId,
+    releaseWorkspace,
+    start,
+  }
+}

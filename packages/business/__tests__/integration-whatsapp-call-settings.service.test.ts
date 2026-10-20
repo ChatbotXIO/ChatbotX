@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const { repositoryMock } = vi.hoisted(() => ({
   repositoryMock: {
+    findAuthByInboxIdForWorkspace: vi.fn(),
     updateCallSettings: vi.fn(),
   },
 }))
@@ -11,6 +12,17 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   whatsappSignupSessionRepository: {},
   metaCapiEventRepository: {},
   LIVE_RUN_STATUSES: [],
+}))
+
+vi.mock("@chatbotx.io/database/client", () => ({
+  and: vi.fn(),
+  db: {
+    query: {
+      integrationWhatsappModel: {},
+    },
+  },
+  eq: vi.fn(),
+  inArray: vi.fn(),
 }))
 
 const {
@@ -96,5 +108,38 @@ describe("integrationWhatsappService.updateCallSettings", () => {
     })
 
     expect(repositoryMock.updateCallSettings).not.toHaveBeenCalled()
+  })
+})
+
+describe("integrationWhatsappService.findAuthByInboxIdForWorkspace", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("returns only the workspace-scoped raw auth value", async () => {
+    const auth = { tokens: { accessToken: "secret" } }
+    repositoryMock.findAuthByInboxIdForWorkspace.mockResolvedValue({ auth })
+
+    await expect(
+      integrationWhatsappService.findAuthByInboxIdForWorkspace({
+        inboxId: "inbox-1",
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBe(auth)
+    expect(repositoryMock.findAuthByInboxIdForWorkspace).toHaveBeenCalledWith({
+      inboxId: "inbox-1",
+      workspaceId: "workspace-1",
+    })
+  })
+
+  test("returns null when the workspace has no WhatsApp integration", async () => {
+    repositoryMock.findAuthByInboxIdForWorkspace.mockResolvedValue(null)
+
+    await expect(
+      integrationWhatsappService.findAuthByInboxIdForWorkspace({
+        inboxId: "inbox-1",
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBeNull()
   })
 })

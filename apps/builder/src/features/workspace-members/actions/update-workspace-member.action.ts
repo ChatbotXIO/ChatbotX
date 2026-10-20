@@ -70,18 +70,20 @@ export const updateWorkspaceMemberAction = workspaceActionClient
     // schema, it MUST be added to permissionsChanged/notificationsChanged (or
     // diffed separately) below, or it will silently never be persisted.
     if (!(permissionsChanged || notificationsChanged)) {
-      return
+      return { revokeWarning: false }
     }
 
     const updated = await workspaceMemberService.update({
       id: workspaceMember.id,
       workspaceId,
       data: updateInput,
+      revokeRealtime: permissionsChanged,
     })
 
     if (!updated) {
-      return
+      return { revokeWarning: false }
     }
+    const { revokeWarning } = updated
 
     // Only a real permissions/role change is in the audit-log spec for this
     // action — a save that only touches notification settings must not be
@@ -96,4 +98,6 @@ export const updateWorkspaceMemberAction = workspaceActionClient
         detail: `changed role of ${targetUser?.name ?? targetUser?.email ?? "a member"} to ${updateInput.permissions.superAdmin ? "admin" : "member"}`,
       })
     }
+
+    return { revokeWarning }
   })

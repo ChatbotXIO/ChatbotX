@@ -743,6 +743,17 @@ class ContactInboxService extends BaseService {
     )
   }
 
+  async findByIdForWorkspace(props: {
+    id: string
+    tx?: DatabaseClient
+    workspaceId: string
+  }) {
+    return await contactInboxRepository.findFullByIdForWorkspace(
+      props,
+      props.tx,
+    )
+  }
+
   async listByContactId(props: {
     tx?: DatabaseClient
     workspaceId: string

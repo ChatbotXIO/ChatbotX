@@ -16,7 +16,6 @@ import {
   uploadMultipleFiles,
 } from "@chatbotx.io/filesystem"
 import type { SendProductsContent } from "@chatbotx.io/flow-config"
-import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { createId } from "@chatbotx.io/utils"
 import { channelTypes } from "@chatbotx.io/utils/channel"
 import {
@@ -40,7 +39,7 @@ import {
   validationException,
 } from "../errors"
 import { logger } from "../logger"
-import { publishToWorkspaceParty } from "../platform/realtime-broadcast"
+import { queueMessageCreatedEvent } from "../platform/realtime-broadcast"
 import { resolveTenantSettings } from "../platform/settings"
 import { productMessageService } from "../product-message/service"
 import { getPublicFileUrl } from "../utils"
@@ -407,13 +406,14 @@ export const createOutgoing = async (props: {
     })),
   }
 
-  publishToWorkspaceParty(messageWithAttachments.workspaceId, {
-    eventType: RealtimeEventType.messageCreated,
-    data: {
+  await queueMessageCreatedEvent(
+    messageWithAttachments.workspaceId,
+    {
       ...messageWithAttachments,
       clientId: parsedInput.clientId,
     },
-  })
+    targetConversation,
+  )
 
   const jobs: {
     jobType: (typeof ChatJobAction)[keyof typeof ChatJobAction]
