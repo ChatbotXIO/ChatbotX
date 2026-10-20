@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 export const addPlatformAdminSchema = z.object({
-  email: z.email(),
+  email: z.email().trim().toLowerCase(),
 })
 
 export const removePlatformAdminSchema = z.object({

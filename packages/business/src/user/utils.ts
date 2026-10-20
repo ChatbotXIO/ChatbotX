@@ -4,7 +4,7 @@ import { isCloud } from "../keys"
 import { platformAdminService } from "../platform-admin/service"
 
 export const isPlatformAdmin = async (
-  user: Pick<UserModel, "id" | "email">,
+  user: Pick<UserModel, "id">,
 ): Promise<boolean> => {
   if (isCloud()) {
     const setting = await tenantService.findByOwner(user.id)
@@ -19,5 +19,5 @@ export const isPlatformAdmin = async (
  * root-tenant user at startup or matching root-user creation.
  */
 export const isSuperAdmin = async (
-  user: Pick<UserModel, "id" | "email">,
+  user: Pick<UserModel, "id">,
 ): Promise<boolean> => await platformAdminService.isAdmin(user.id)

@@ -1,5 +1,6 @@
 "use client"
 
+import type { PlatformAdminList } from "@chatbotx.io/business"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -18,12 +19,11 @@ import { useAction } from "next-safe-action/hooks"
 import { use, useState } from "react"
 import { toast } from "sonner"
 import { addPlatformAdminAction } from "./add-platform-admin.action"
-import type { PlatformAdminsList } from "./queries"
 import { removePlatformAdminAction } from "./remove-platform-admin.action"
 
 type PlatformAdminsTableProps = {
   page: number
-  promises: Promise<[PlatformAdminsList]>
+  promises: Promise<[PlatformAdminList]>
 }
 export function PlatformAdminsTable({
   page,

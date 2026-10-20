@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer"
-import { mailEnv } from "./keys"
+import { keys } from "./keys"
 
 export type SmtpTransportOptions = {
   host: string
@@ -17,5 +17,5 @@ export const createSmtpTransporter = (options?: SmtpTransportOptions) =>
           secure: options.port === 465,
           auth: { user: options.username, pass: options.password },
         }
-      : mailEnv.SMTP_SERVER,
+      : keys().SMTP_SERVER,
   )

@@ -4,23 +4,25 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 import { platformAdminRepository } from "../src/repositories/platform-admin/repository"
 
 const mocks = vi.hoisted(() => ({
-  findRootUser: vi.fn(),
+  findIdByEmail: vi.fn(),
   insert: vi.fn(),
 }))
 
 vi.mock("../src/client", () => ({
   db: {
     insert: mocks.insert,
-    query: { userModel: { findFirst: mocks.findRootUser } },
   },
   desc: vi.fn(),
   eq: vi.fn(),
   sql: vi.fn(),
 }))
 vi.mock("../src/partials", () => ({ ROOT_TENANT_ID: "1" }))
+vi.mock("../src/repositories/user", () => ({
+  userRepository: { findIdByEmail: mocks.findIdByEmail },
+}))
 vi.mock("../src/schema", () => ({
   platformAdminModel: { id: "id", userId: "userId" },
-  userModel: { email: "email", id: "id", tenantId: "tenantId" },
+  userModel: {},
 }))
 
 const createInsertChain = (createdRows: { id: string }[]) => {
@@ -37,7 +39,7 @@ describe("platformAdminRepository.bootstrapRootAdmin", () => {
   })
 
   test("creates the configured root administrator when no row exists", async () => {
-    mocks.findRootUser.mockResolvedValue({ id: "root-user" })
+    mocks.findIdByEmail.mockResolvedValue({ id: "root-user" })
     const chain = createInsertChain([{ id: "admin-1" }])
     mocks.insert.mockReturnValue(chain)
 
@@ -54,7 +56,7 @@ describe("platformAdminRepository.bootstrapRootAdmin", () => {
   })
 
   test("does not report provisioning when the administrator already exists", async () => {
-    mocks.findRootUser.mockResolvedValue({ id: "root-user" })
+    mocks.findIdByEmail.mockResolvedValue({ id: "root-user" })
     mocks.insert.mockReturnValue(createInsertChain([]))
 
     await expect(
@@ -65,7 +67,7 @@ describe("platformAdminRepository.bootstrapRootAdmin", () => {
   })
 
   test("does not insert when the configured email has no root-tenant user", async () => {
-    mocks.findRootUser.mockResolvedValue(undefined)
+    mocks.findIdByEmail.mockResolvedValue(undefined)
 
     await expect(
       platformAdminRepository.bootstrapRootAdmin({

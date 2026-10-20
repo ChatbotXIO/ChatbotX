@@ -44,4 +44,11 @@ describe("isSupportConsentRequired", () => {
 
     await expect(isSupportConsentRequired()).resolves.toBe(false)
   })
+
+  test("requires consent when validation is skipped and the value is unset", async () => {
+    mocks.hasEnterpriseFeatures.mockResolvedValue(true)
+    mocks.keys.mockReturnValue({ SUPPORT_ACCESS_REQUIRE_CONSENT: undefined })
+
+    await expect(isSupportConsentRequired()).resolves.toBe(true)
+  })
 })

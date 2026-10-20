@@ -3,14 +3,12 @@ import { platformAdminService } from "../src/platform-admin/service"
 
 const mocks = vi.hoisted(() => ({
   bootstrapRootAdmin: vi.fn(),
-  findRootUserByEmail: vi.fn(),
   keys: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   platformAdminRepository: {
     bootstrapRootAdmin: mocks.bootstrapRootAdmin,
-    findRootUserByEmail: mocks.findRootUserByEmail,
   },
 }))
 vi.mock("../src/keys", () => ({ keys: mocks.keys }))
@@ -18,16 +16,15 @@ vi.mock("../src/keys", () => ({ keys: mocks.keys }))
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.keys.mockReturnValue({ PLATFORM_ADMIN_EMAIL: undefined })
-  mocks.findRootUserByEmail.mockResolvedValue(undefined)
   mocks.bootstrapRootAdmin.mockResolvedValue(false)
 })
 
 describe("platformAdminService.provisionBootstrapAdmin", () => {
-  test("provisions the configured root-tenant user", async () => {
-    mocks.keys.mockReturnValue({ PLATFORM_ADMIN_EMAIL: "admin@example.com" })
+  test("normalizes configured and root-user email before provisioning", async () => {
+    mocks.keys.mockReturnValue({ PLATFORM_ADMIN_EMAIL: "Admin@Example.com" })
 
     await platformAdminService.provisionBootstrapAdmin({
-      email: "admin@example.com",
+      email: "ADMIN@example.COM",
       id: "user-1",
       tenantId: "1",
     })
@@ -49,7 +46,7 @@ describe("platformAdminService.provisionBootstrapAdmin", () => {
     expect(mocks.bootstrapRootAdmin).not.toHaveBeenCalled()
   })
 
-  test("delegates existing-user lookup to the atomic repository bootstrap", async () => {
+  test("delegates the lookup to the atomic repository bootstrap", async () => {
     mocks.keys.mockReturnValue({ PLATFORM_ADMIN_EMAIL: "admin@example.com" })
 
     await platformAdminService.provisionBootstrapAdmin()
@@ -57,13 +54,11 @@ describe("platformAdminService.provisionBootstrapAdmin", () => {
     expect(mocks.bootstrapRootAdmin).toHaveBeenCalledWith({
       email: "admin@example.com",
     })
-    expect(mocks.findRootUserByEmail).not.toHaveBeenCalled()
   })
 
-  test("does not query or provision without bootstrap configuration", async () => {
+  test("does not provision without bootstrap configuration", async () => {
     await platformAdminService.provisionBootstrapAdmin()
 
-    expect(mocks.findRootUserByEmail).not.toHaveBeenCalled()
     expect(mocks.bootstrapRootAdmin).not.toHaveBeenCalled()
   })
 })

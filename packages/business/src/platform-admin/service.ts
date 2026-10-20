@@ -2,20 +2,19 @@ import { ROOT_TENANT_ID } from "@chatbotx.io/database/partials"
 import {
   type PlatformAdminWithUser,
   platformAdminRepository,
+  userRepository,
 } from "@chatbotx.io/database/repositories"
 import {
   DEFAULT_ACCOUNT_CREDENTIALS_SUBJECT,
   sendAccountCredentials,
 } from "@chatbotx.io/mail"
 import { isPlaceholderEmail } from "@chatbotx.io/utils/placeholder-email"
-import { generateRandomString, hashPassword } from "better-auth/crypto"
 import { ChatbotXException } from "../errors"
 import { keys } from "../keys"
 import { logger } from "../logger"
 import { resolvePlatformSettings } from "../platform/settings"
+import { generateTemporaryPassword } from "../user/temporary-password"
 import { userQuotaService } from "../user-quota/service"
-
-const TEMP_PASSWORD_LENGTH = 16
 
 export type PlatformAdminList = {
   data: PlatformAdminWithUser[]
@@ -29,27 +28,17 @@ class PlatformAdminService {
     email: string
     tenantId?: string
   }): Promise<boolean> {
-    const { PLATFORM_ADMIN_EMAIL } = keys()
-    if (!PLATFORM_ADMIN_EMAIL) {
+    const email = keys().PLATFORM_ADMIN_EMAIL?.trim().toLowerCase()
+    if (
+      !email ||
+      (user &&
+        (user.email.trim().toLowerCase() !== email ||
+          (user.tenantId ?? ROOT_TENANT_ID) !== ROOT_TENANT_ID))
+    ) {
       return false
     }
 
-    if (user) {
-      if (
-        user.email !== PLATFORM_ADMIN_EMAIL ||
-        (user.tenantId ?? ROOT_TENANT_ID) !== ROOT_TENANT_ID
-      ) {
-        return false
-      }
-
-      return await platformAdminRepository.bootstrapRootAdmin({
-        email: PLATFORM_ADMIN_EMAIL,
-      })
-    }
-
-    return await platformAdminRepository.bootstrapRootAdmin({
-      email: PLATFORM_ADMIN_EMAIL,
-    })
+    return await platformAdminRepository.bootstrapRootAdmin({ email })
   }
 
   async list(input: {
@@ -59,7 +48,9 @@ class PlatformAdminService {
     return await platformAdminRepository.listWithUser(input)
   }
 
-  private async provisionRootUser(email: string): Promise<string> {
+  private async provisionRootUser(
+    email: string,
+  ): Promise<{ userId: string; created: boolean }> {
     if (isPlaceholderEmail(email)) {
       throw new ChatbotXException(
         "Email address is reserved and cannot be provisioned",
@@ -68,13 +59,8 @@ class PlatformAdminService {
       )
     }
 
-    const initialPassword = generateRandomString(
-      TEMP_PASSWORD_LENGTH,
-      "a-z",
-      "A-Z",
-      "0-9",
-    )
-    const hashedPassword = await hashPassword(initialPassword)
+    const { initialPassword, hashedPassword } =
+      await generateTemporaryPassword()
     const settings = await resolvePlatformSettings()
     const signInUrl = new URL("/auth/sign-in", settings.appUrl).toString()
 
@@ -90,32 +76,46 @@ class PlatformAdminService {
       signInUrl,
     })
 
-    const { userId } =
-      await platformAdminRepository.insertRootUserWithCredential({
-        email,
-        hashedPassword,
-      })
+    const provisioned = await userRepository.insertWithCredential({
+      email,
+      hashedPassword,
+      tenantId: ROOT_TENANT_ID,
+    })
     await userQuotaService.ensureBootstrapPlan({
-      userId,
+      userId: provisioned.userId,
       tenantId: ROOT_TENANT_ID,
     })
 
-    return userId
+    return provisioned
   }
 
   async add(props: { actorId: string; email: string }) {
-    const existing = await platformAdminRepository.findRootUserByEmail(
-      props.email,
-    )
-    const userId = existing?.id ?? (await this.provisionRootUser(props.email))
+    const email = props.email.trim().toLowerCase()
+    const existing = await userRepository.findIdByEmail({
+      email,
+      tenantId: ROOT_TENANT_ID,
+    })
+    const provisioned = existing
+      ? { userId: existing.id, created: false }
+      : await this.provisionRootUser(email)
 
-    const admin = await platformAdminRepository.insertIgnore({ userId })
+    const admin = await platformAdminRepository.insertIgnore({
+      userId: provisioned.userId,
+    })
     if (!admin) {
-      throw new Error(`Platform admin ${userId} was deleted during assignment`)
+      throw new ChatbotXException(
+        `Platform admin ${provisioned.userId} was deleted during assignment`,
+        "platformAdminAssignmentConflict",
+        409,
+      )
     }
 
     logger.info(
-      { actorId: props.actorId, userId, provisioned: !existing },
+      {
+        actorId: props.actorId,
+        userId: provisioned.userId,
+        provisioned: provisioned.created,
+      },
       "added platform admin",
     )
     return admin

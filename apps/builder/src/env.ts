@@ -12,7 +12,6 @@ const editionRule = z
 export const env = createEnv({
   extends: [partysocket(), database(), mail()],
   server: {
-    PLATFORM_ADMIN_EMAIL: z.email().optional(),
     BETTER_AUTH_SECRET: z
       .string()
       .min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),

@@ -4,7 +4,7 @@ import { tenantService } from "../enterprise/tenant/service"
 import { isCloud } from "../keys"
 import { isSuperAdmin } from "./utils"
 
-type AdminUser = Pick<UserModel, "id" | "email">
+type AdminUser = Pick<UserModel, "id">
 
 export async function resolveAdminTenantId(
   user: AdminUser,

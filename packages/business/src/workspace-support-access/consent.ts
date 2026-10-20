@@ -3,7 +3,8 @@ import { keys } from "../keys"
 import { hasEnterpriseFeatures } from "../user/entitlements"
 
 export const isSupportConsentRequired = async (): Promise<boolean> => {
-  if (parseEnvBool(keys().SUPPORT_ACCESS_REQUIRE_CONSENT)) {
+  const requireConsent = keys().SUPPORT_ACCESS_REQUIRE_CONSENT
+  if (requireConsent === undefined || parseEnvBool(requireConsent)) {
     return true
   }
 
