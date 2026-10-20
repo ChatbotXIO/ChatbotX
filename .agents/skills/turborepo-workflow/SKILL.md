@@ -111,6 +111,14 @@ Defined in `turbo.json`:
   `pnpm turbo run check-types`). CI enforces this in
   `.github/workflows/ci.yml`, and `release.yml`'s `check` job gates image
   publishing on the same command set.
+- Workspaces that import the `@chatbotx.io/business` root barrel need a raised heap to
+  type-check (`node --max-old-space-size=8192 node_modules/typescript/bin/tsc --noEmit` as the
+  `check-types` script) — the barrel re-exports the whole service layer (#1169). Use that script
+  form, not an inline `NODE_OPTIONS=` prefix (not portable to Windows). New consumers should
+  prefer a subpath import (e.g. `@chatbotx.io/business/referral`) instead of the barrel; a Biome
+  `noRestrictedImports` override in `biome.json` enforces this for `packages/**` and
+  `integrations/**` (apps are exempt — builder and worker legitimately use most of the service
+  layer).
 
 ## Environment
 

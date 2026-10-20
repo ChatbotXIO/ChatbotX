@@ -83,5 +83,31 @@
       "trailingCommas": "all"
     }
   },
-  "extends": ["ultracite/biome/core", "ultracite/biome/next"]
+  "extends": ["ultracite/biome/core", "ultracite/biome/next"],
+  "overrides": [
+    {
+      "includes": [
+        "packages/**",
+        "integrations/**",
+        "!packages/business/**",
+        "!packages/variables/**",
+        "!packages/automated-response/**",
+        "!packages/auth/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@chatbotx.io/business": "Import a subpath (e.g. @chatbotx.io/business/referral) — the root barrel OOMs tsc on 8 GB machines (#1169)."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

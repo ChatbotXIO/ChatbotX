@@ -1,4 +1,4 @@
-import { whatsappVoipSignalingService } from "@chatbotx.io/business"
+import { whatsappVoipSignalingService } from "@chatbotx.io/business/whatsapp-call"
 import {
   type HandleRequestProps,
   type ReceivedMessageProps,

@@ -1,4 +1,4 @@
-import { assertPublicUrl } from "@chatbotx.io/business"
+import { assertPublicUrl } from "@chatbotx.io/business/net/ssrf-guard"
 import ky from "ky"
 import { signApiPayload } from "./signature"
 
