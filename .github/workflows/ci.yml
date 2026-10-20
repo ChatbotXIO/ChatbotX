@@ -98,8 +98,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # `turbo run --affected` needs the PR base commit locally. The default
+      # one-commit checkout cannot reliably calculate that diff.
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6.1.0
@@ -116,6 +120,17 @@ jobs:
       - name: Set up Turbo cache
         uses: rharkor/caching-for-turbo@v2.5.1
 
+      # PRs run only suites whose workspace or dependency graph is affected.
+      # Explicit SHAs avoid Turbo choosing an ambiguous base ref. Pushes to
+      # main retain the complete suite, so cross-workspace regressions are
+      # still caught before a release.
+      - name: Test affected workspaces
+        if: github.event_name == 'pull_request'
+        env:
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
+          TURBO_SCM_HEAD: ${{ github.sha }}
+        run: pnpm turbo run test --affected --concurrency=2
+
       # Turbo does not parallelize *within* a suite, so wall clock is bounded
       # by the slowest single suite — builder (248 files), which is ~40% of
       # total test CPU and scales to 4 vitest workers (see the measurements in
@@ -129,5 +144,6 @@ jobs:
       # 170s, =2 123s, =4 101s (on a 12-core box, so CI compresses these) —
       # =1 serializes 55 small suites to help only builder, while =4 would
       # contend with builder's own workers on a 4-vCPU runner.
-      - name: Test
+      - name: Test all workspaces
+        if: github.event_name == 'push'
         run: pnpm turbo run test --concurrency=2
