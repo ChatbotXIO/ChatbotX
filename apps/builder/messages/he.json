@@ -1784,6 +1784,7 @@
         "buttonText": "טקסט הכפתור",
         "buttonType": "סוג כפתור",
         "visitWebsite": "ביקור באתר",
+        "openMiniApp": "פתיחת מיני אפליקציה",
         "callPhoneNumber": "חיוג למספר טלפון",
         "postback": "כפתור"
       },

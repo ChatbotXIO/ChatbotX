@@ -5,9 +5,10 @@ import type { ButtonStepProps } from "./button"
 import {
   buttonStepDefaultFn,
   buttonStepSchema,
+  buttonTypes,
   mergeTemplateButtonsWithExisting,
-  refineNoOpenMiniAppButtons,
 } from "./button"
+import { openMiniAppStepDefaultFn } from "./open-mini-app"
 import { stepTypes } from "./step-action"
 import type { ParameterInfo } from "./wa-template-utils"
 
@@ -118,10 +119,10 @@ export const sendMessengerTemplateMessageStepSchema = baseStepSchema.extend({
   // Messenger utility messages have no delivery-status webhook, so this step
   // behaves like a normal send (linear continuation) — no Delivered/Failed
   // branching. Optional buttons mirror other send steps (e.g. sendText).
-  buttons: z
-    .array(buttonStepSchema)
-    .superRefine(refineNoOpenMiniAppButtons)
-    .default([]),
+  // An `openMiniApp` button stands for one of the template's Mini App URL
+  // buttons (see `extractMessengerFlowButtons`): its edge is where the flow
+  // continues once the contact submits that Mini App.
+  buttons: z.array(buttonStepSchema).default([]),
 })
 
 export type SendMessengerTemplateMessageStepSchema = z.infer<
@@ -225,6 +226,43 @@ export function normalizeMessengerTokenUrl(
     url: url.replace(TRAILING_PLACEHOLDER_PATTERN, "{{1}}"),
     variable: match.variable,
   }
+}
+
+const MINI_APP_URL_PATTERN = tokenUrlPattern("mini-apps", "\\w+")
+const MINI_APP_ID_PATTERN = /[?&]id=(\d+)(?:&|$)/
+
+export type MessengerMiniAppButton = {
+  /** Position among the template's buttons, the same `index` its URL param has. */
+  index: number
+  label: string
+  miniAppId: string
+}
+
+/**
+ * The template's URL buttons that open a Mini App (its public link, saved with
+ * a `{{1}}` token suffix), in template order.
+ */
+export function readMessengerMiniAppButtons(
+  components: MessengerTemplateComponent[],
+): MessengerMiniAppButton[] {
+  const miniAppButtons: MessengerMiniAppButton[] = []
+  for (const component of components ?? []) {
+    if (component.type !== "BUTTONS" || !component.buttons) {
+      continue
+    }
+    for (const [index, button] of component.buttons.entries()) {
+      const url = button.url ?? ""
+      const miniAppId = url.match(MINI_APP_ID_PATTERN)?.[1]
+      if (
+        button.type.toUpperCase() === "URL" &&
+        miniAppId &&
+        MINI_APP_URL_PATTERN.test(url)
+      ) {
+        miniAppButtons.push({ index, label: button.text ?? "", miniAppId })
+      }
+    }
+  }
+  return miniAppButtons
 }
 
 /**
@@ -380,8 +418,16 @@ export function extractMessengerParameterInfos(
   return params
 }
 
+/**
+ * The template buttons a flow step routes, in template order: every dynamic
+ * POSTBACK / QUICK_REPLY button, and — with `includeMiniApp` — every Mini App
+ * URL button as an `openMiniApp` button, whose edge is followed once the
+ * contact submits that Mini App. Broadcasts leave `includeMiniApp` off: they
+ * have no edge to follow, and their buttons pick a flow per postback.
+ */
 export function extractMessengerFlowButtons(
   components: MessengerTemplateComponent[],
+  options: { includeMiniApp?: boolean } = {},
 ): ButtonStepProps[] {
   const buttons: ButtonStepProps[] = []
 
@@ -389,18 +435,36 @@ export function extractMessengerFlowButtons(
     return buttons
   }
 
+  const miniAppButtonsByIndex = new Map(
+    options.includeMiniApp
+      ? readMessengerMiniAppButtons(components).map((button) => [
+          button.index,
+          button,
+        ])
+      : [],
+  )
+
   for (const component of components) {
     if (component.type === "BUTTONS" && component.buttons) {
-      for (const button of component.buttons) {
+      for (const [index, button] of component.buttons.entries()) {
         const buttonType = button.type.toUpperCase()
+        const miniAppButton = miniAppButtonsByIndex.get(index)
 
-        if (
+        if (miniAppButton) {
+          buttons.push({
+            ...buttonStepDefaultFn({ label: miniAppButton.label }),
+            buttonType: buttonTypes.enum.openMiniApp,
+            beforeStep: openMiniAppStepDefaultFn({
+              miniAppId: miniAppButton.miniAppId,
+            }),
+          })
+        } else if (
           (buttonType === "POSTBACK" || buttonType === "QUICK_REPLY") &&
           button.payload?.includes("{{")
         ) {
           buttons.push(buttonStepDefaultFn({ label: button.text ?? "" }))
         }
-        // URL buttons and POSTBACK buttons without "{{" in payload are NOT included.
+        // Other URL buttons and POSTBACK buttons without "{{" in payload are NOT included.
       }
     }
   }
@@ -408,9 +472,44 @@ export function extractMessengerFlowButtons(
   return buttons
 }
 
+const isOpenMiniApp = (button: ButtonStepProps | undefined) =>
+  button?.buttonType === buttonTypes.enum.openMiniApp
+
+/**
+ * Pairs template buttons with the step's existing ones by position, keeping an
+ * existing button's id, action and edge. A slot that switched between a
+ * postback and a Mini App button takes the template's new button instead, and
+ * a Mini App button follows the template's Mini App.
+ */
 export function mergeMessengerFlowButtonsWithExisting(
   templateButtons: ButtonStepProps[],
   existingButtons: ButtonStepProps[] = [],
 ): ButtonStepProps[] {
-  return mergeTemplateButtonsWithExisting(templateButtons, existingButtons)
+  const merged = mergeTemplateButtonsWithExisting(
+    templateButtons,
+    existingButtons,
+  )
+  return merged.map((button, index) => {
+    const templateButton = templateButtons[index]
+    if (!templateButton || button === templateButton) {
+      return button
+    }
+    if (isOpenMiniApp(button) !== isOpenMiniApp(templateButton)) {
+      return templateButton
+    }
+    if (
+      button.buttonType === buttonTypes.enum.openMiniApp &&
+      templateButton.buttonType === buttonTypes.enum.openMiniApp &&
+      button.beforeStep.miniAppId !== templateButton.beforeStep.miniAppId
+    ) {
+      return {
+        ...button,
+        beforeStep: {
+          ...button.beforeStep,
+          miniAppId: templateButton.beforeStep.miniAppId,
+        },
+      }
+    }
+    return button
+  })
 }

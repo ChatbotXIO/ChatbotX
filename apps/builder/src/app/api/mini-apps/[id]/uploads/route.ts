@@ -104,6 +104,7 @@ export async function POST(
       contactId: await resolveVisitorContactId({
         token: form.token,
         workspaceId: miniApp.workspaceId,
+        miniAppId: miniApp.id,
       }),
       inputName: form.inputName,
       file: {

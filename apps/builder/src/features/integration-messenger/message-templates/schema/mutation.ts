@@ -2,6 +2,7 @@ import {
   findMessengerTokenVariable,
   normalizeMessengerTokenUrl,
 } from "@chatbotx.io/flow-config"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 const NUMERIC_PLACEHOLDER_PATTERN = /{{\d+}}/g
@@ -9,7 +10,7 @@ const ANY_PLACEHOLDER_PATTERN = /{{[^{}]*}}/g
 const NUMERIC_PLACEHOLDER = /^{{\d+}}$/
 // A Mini App or Minigame link ends in its token variable, which Meta does not
 // accept; it is saved with the positional `{{1}}` suffix and this example.
-const TOKEN_URL_SUFFIX_EXAMPLE = "example-token"
+export const TOKEN_URL_SUFFIX_EXAMPLE = "example-token"
 const SUPPORTED_PLACEHOLDER_PATTERN = /^{{([1-9]|1[0-5])}}$/
 
 const templateVariableSchema = z.object({
@@ -59,6 +60,17 @@ const templateButtonSchema = z.discriminatedUnion("type", [
       .max(1)
       .default([])
       .describe("Example value for the URL's `{{1}}`, if it has one."),
+  }),
+  z.object({
+    type: z
+      .literal("MINI_APP")
+      .describe(
+        "Button that opens a Mini App for the recipient. Saved on Meta as a URL button to the Mini App's public link, whose `{{1}}` suffix is filled with the recipient's token at send time. Sent from a flow step, submitting the Mini App continues the flow along the button's edge.",
+      ),
+    title: BUTTON_TITLE,
+    miniAppId: zodBigintAsString().describe(
+      "Mini App the button opens. Get Mini App ids from `miniApps.list`.",
+    ),
   }),
 ])
 
@@ -187,7 +199,7 @@ export const createMessengerMessageTemplateRequest = z
       .array(templateButtonSchema)
       .max(3)
       .default([])
-      .describe("Up to 3 POSTBACK, PHONE_NUMBER or URL buttons."),
+      .describe("Up to 3 POSTBACK, PHONE_NUMBER, URL or MINI_APP buttons."),
   })
   .superRefine((value, ctx) => {
     if (value.headerType !== "none" && value.headerText.trim().length === 0) {

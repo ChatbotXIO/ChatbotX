@@ -3940,6 +3940,7 @@
         "buttonText": "Buton Metni",
         "buttonType": "Buton Türü",
         "visitWebsite": "Web Sitesini Ziyaret Et",
+        "openMiniApp": "Mini Uygulamayı aç",
         "callPhoneNumber": "Telefon Numarasını Ara",
         "postback": "Buton"
       },

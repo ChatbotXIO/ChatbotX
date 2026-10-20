@@ -3940,6 +3940,7 @@
         "buttonText": "Knoptekst",
         "buttonType": "Knoptype",
         "visitWebsite": "Website bezoeken",
+        "openMiniApp": "Mini-app openen",
         "callPhoneNumber": "Telefoonnummer bellen",
         "postback": "Knop"
       },

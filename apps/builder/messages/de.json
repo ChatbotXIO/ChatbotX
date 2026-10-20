@@ -3940,6 +3940,7 @@
         "buttonText": "Schaltflächentext",
         "buttonType": "Schaltflächentyp",
         "visitWebsite": "Website besuchen",
+        "openMiniApp": "Mini-App öffnen",
         "callPhoneNumber": "Telefonnummer anrufen",
         "postback": "Schaltfläche"
       },

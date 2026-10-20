@@ -4954,7 +4954,8 @@
         "text": "文本",
         "textAndImage": "文本+图片",
         "trigger": "创建新范本",
-        "visitWebsite": "访问网站"
+        "visitWebsite": "访问网站",
+        "openMiniApp": "打开小程序"
       },
       "params": {
         "postbackPayload": "按钮负载",

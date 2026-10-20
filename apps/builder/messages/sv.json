@@ -4954,7 +4954,8 @@
         "text": "Text",
         "textAndImage": "Text + bild",
         "trigger": "Skapa ny mall",
-        "visitWebsite": "Besök webbplats"
+        "visitWebsite": "Besök webbplats",
+        "openMiniApp": "Öppna miniapp"
       },
       "params": {
         "postbackPayload": "Knappens nyttolast",

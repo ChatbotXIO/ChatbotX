@@ -3940,6 +3940,7 @@
         "buttonText": "Texte du bouton",
         "buttonType": "Type de bouton",
         "visitWebsite": "Visiter le site Web",
+        "openMiniApp": "Ouvrir la Mini App",
         "callPhoneNumber": "Appeler le numéro",
         "postback": "Bouton"
       },

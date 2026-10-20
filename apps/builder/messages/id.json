@@ -3940,6 +3940,7 @@
         "buttonText": "Teks Tombol",
         "buttonType": "Jenis Tombol",
         "visitWebsite": "Kunjungi Situs Web",
+        "openMiniApp": "Buka Mini App",
         "callPhoneNumber": "Hubungi Nomor Telepon",
         "postback": "Tombol"
       },

@@ -193,6 +193,11 @@ function buildButtonParameters(
   const commentAutomationId = extractMetadata("commentAutomationId", metadata)
 
   for (const button of flowContext?.flowButtons ?? []) {
+    // An Open Mini App button is one of the template's URL buttons, already
+    // placed above from its URL param; it takes no postback slot.
+    if (button.buttonType === buttonTypes.enum.openMiniApp) {
+      continue
+    }
     while (usedIndexes.has(nextPostbackIndex)) {
       nextPostbackIndex += 1
     }

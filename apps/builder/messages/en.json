@@ -4622,6 +4622,7 @@
         "buttonText": "Button Text",
         "buttonType": "Button Type",
         "visitWebsite": "Visit Website",
+        "openMiniApp": "Open Mini App",
         "callPhoneNumber": "Call Phone Number",
         "postback": "Button"
       },

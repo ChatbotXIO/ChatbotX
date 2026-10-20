@@ -1,4 +1,9 @@
-import type { CreateMessengerMessageTemplateRequest } from "../schema/mutation"
+import { normalizeMessengerTokenUrl } from "@chatbotx.io/flow-config"
+import { buildMiniAppPublicUrl } from "@/features/mini-apps/lib/public-url"
+import {
+  type CreateMessengerMessageTemplateRequest,
+  TOKEN_URL_SUFFIX_EXAMPLE,
+} from "../schema/mutation"
 
 type TemplateVariable = {
   key: string
@@ -80,7 +85,37 @@ function buildUrlSuffixExample(url: string, variables: string[]) {
   )
 }
 
+/**
+ * A Mini App button is a URL button to the Mini App's public link, saved the
+ * same way as a pasted one: its `{{mini_app_token}}` suffix becomes `{{1}}`,
+ * which the recipient's token fills at send time.
+ */
+function buildMiniAppButton(
+  button: Extract<TemplateButton, { type: "MINI_APP" }>,
+): MessengerTemplateButtonComponent {
+  const tokenUrl = normalizeMessengerTokenUrl(
+    buildMiniAppPublicUrl(button.miniAppId),
+  )
+  if (!tokenUrl) {
+    throw new Error("A Mini App link must end in its token variable")
+  }
+  return {
+    type: "URL",
+    text: button.title,
+    url: tokenUrl.url,
+    example: {
+      url_suffix_example: buildUrlSuffixExample(tokenUrl.url, [
+        TOKEN_URL_SUFFIX_EXAMPLE,
+      ]),
+    },
+  }
+}
+
 function buildButton(button: TemplateButton): MessengerTemplateButtonComponent {
+  if (button.type === "MINI_APP") {
+    return buildMiniAppButton(button)
+  }
+
   if (button.type === "URL") {
     return {
       type: "URL",
