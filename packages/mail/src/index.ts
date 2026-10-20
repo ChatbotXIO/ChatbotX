@@ -192,7 +192,7 @@ export const sendAccountCredentials = async (
   props: AccountCredentialsProps & {
     customTemplate?: EmailTemplate | null
   },
-  transport: SmtpTransportOptions & { fromEmail: string; fromName?: string },
+  transport?: SmtpTransportOptions & { fromEmail: string; fromName?: string },
 ) => {
   const { customTemplate, ...templateProps } = props
   await sendEmailWithTemplate(
@@ -209,9 +209,6 @@ export const sendAccountCredentials = async (
       brandLogoUrl: templateProps.brandLogoUrl,
       brandUrl: templateProps.brandUrl,
     },
-    {
-      from: formatFrom(transport),
-      transport,
-    },
+    transport ? { from: formatFrom(transport), transport } : undefined,
   )
 }

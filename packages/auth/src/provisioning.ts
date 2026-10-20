@@ -10,8 +10,8 @@ import {
   DEFAULT_ACCOUNT_CREDENTIALS_SUBJECT,
   sendAccountCredentials,
 } from "@chatbotx.io/mail"
+import { isPlaceholderEmail } from "@chatbotx.io/utils/placeholder-email"
 import { generateRandomString, hashPassword } from "better-auth/crypto"
-import { isPlaceholderEmail } from "./placeholder-email"
 
 const TEMP_PASSWORD_LENGTH = 16
 

@@ -1,6 +1,13 @@
-import { type DatabaseClient, db, desc, eq, sql } from "../../client"
+import {
+  type DatabaseClient,
+  db,
+  desc,
+  eq,
+  isUniqueViolationError,
+  sql,
+} from "../../client"
 import { ROOT_TENANT_ID } from "../../partials"
-import { platformAdminModel, userModel } from "../../schema"
+import { accountModel, platformAdminModel, userModel } from "../../schema"
 import type { PlatformAdminModel } from "../../types"
 import { getPaginationWithDefaults } from "../../utils"
 
@@ -34,6 +41,57 @@ class PlatformAdminRepository {
       where: { email, tenantId: ROOT_TENANT_ID },
       columns: { id: true },
     })
+  }
+
+  /**
+   * Create a root-tenant user with a credential account in one transaction.
+   * `emailVerified` is true because a super admin vouched for the address (and
+   * `requireEmailVerification` would otherwise block the first sign-in);
+   * `mustChangePassword` forces the generated password to be replaced.
+   * A concurrent create of the same email loses on `User_email_tenant_key`;
+   * translate that into `created: false` instead of surfacing a raw 23505.
+   */
+  async insertRootUserWithCredential(props: {
+    email: string
+    hashedPassword: string
+  }): Promise<{ userId: string; created: boolean }> {
+    try {
+      const userId = await db.transaction(async (tx) => {
+        const [createdUser] = await tx
+          .insert(userModel)
+          .values({
+            email: props.email,
+            emailVerified: true,
+            mustChangePassword: true,
+            tenantId: ROOT_TENANT_ID,
+          })
+          .returning({ id: userModel.id })
+
+        if (!createdUser) {
+          throw new Error("Failed to create root platform user")
+        }
+
+        await tx.insert(accountModel).values({
+          accountId: createdUser.id,
+          providerId: "credential",
+          password: props.hashedPassword,
+          userId: createdUser.id,
+          tenantId: ROOT_TENANT_ID,
+        })
+
+        return createdUser.id
+      })
+
+      return { userId, created: true }
+    } catch (error) {
+      if (isUniqueViolationError(error)) {
+        const raced = await this.findRootUserByEmail(props.email)
+        if (raced) {
+          return { userId: raced.id, created: false }
+        }
+      }
+      throw error
+    }
   }
 
   async bootstrapRootAdmin(props: { email: string }): Promise<boolean> {
