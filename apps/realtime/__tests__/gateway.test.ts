@@ -759,6 +759,29 @@ describe("createRealtimeGateway (live)", () => {
     second.close()
     await waitForClose(second)
   })
+  test("accepts a percent-encoded guest conversation id", async () => {
+    gateway = createRealtimeGateway(
+      testGatewayOptions({
+        maxConnections: 10,
+        redis: createFakeRedis() as never,
+        secret: SECRET,
+      }),
+    )
+    const port = await gateway.listen("127.0.0.1", 0)
+    const guestConversationId = "ws-1:guest-1"
+    const token = await signGuestConnectToken(
+      { guestConversationId, workspaceId: "ws-1" },
+      SECRET,
+    )
+    const socket = new WebSocket(
+      `ws://127.0.0.1:${port}/rt/guests/${encodeURIComponent(guestConversationId)}?token=${token}`,
+    )
+
+    await waitForOpen(socket)
+
+    socket.close()
+    await waitForClose(socket)
+  })
   test("releases a member pending-upgrade slot and stream reference when the request aborts during revoke recheck", async () => {
     const { promise: recheck, resolve: resolveRecheck } = Promise.withResolvers<
       string | null

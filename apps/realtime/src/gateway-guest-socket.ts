@@ -68,7 +68,15 @@ export const createGuestSocketBehavior = <WorkspaceSocketData extends object>({
     res.onAborted(() => {
       aborted = true
     })
-    const guestConversationId = req.getParameter("guestConversationId")
+    const encodedGuestConversationId = req.getParameter("guestConversationId")
+    let guestConversationId: string | null
+    try {
+      guestConversationId = encodedGuestConversationId
+        ? decodeURIComponent(encodedGuestConversationId)
+        : null
+    } catch {
+      guestConversationId = null
+    }
     const token = req.getQuery("token")
     const lastSeq = req.getQuery("lastSeq")
     const requestHeaders = readUpgradeRequest(req)

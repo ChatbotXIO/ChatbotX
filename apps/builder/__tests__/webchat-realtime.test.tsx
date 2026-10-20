@@ -109,3 +109,37 @@ test("reloads the guest session after an expired access token fails a reconnect"
     root.unmount()
   })
 })
+
+test("keeps guest conversation ids unescaped in the proxied realtime route", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(Response.json({ token: "realtime-token" })),
+  )
+
+  const container = document.createElement("div")
+  const root: Root = createRoot(container)
+  act(() => {
+    root.render(
+      <WebchatRealtime
+        accessToken="access-token-1"
+        guestConversationId="workspace-1:guest-1"
+        webchatId="webchat-1"
+        workspaceId="workspace-1"
+      />,
+    )
+  })
+
+  const options = capturedSocketOptions.current
+  expect(options).not.toBeNull()
+  if (!options) {
+    throw new Error("Realtime socket options were not captured")
+  }
+
+  const socketUrl = new URL(await options.getUrl())
+  expect(socketUrl.pathname).toBe("/ws/rt/guests/workspace-1:guest-1")
+  expect(socketUrl.searchParams.get("token")).toBe("realtime-token")
+
+  act(() => {
+    root.unmount()
+  })
+})

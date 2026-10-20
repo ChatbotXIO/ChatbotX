@@ -139,10 +139,7 @@ export function WebchatRealtime({
       throw new Error("Guest realtime token response is invalid")
     }
 
-    const url = new URL(
-      `rt/guests/${encodeURIComponent(guestConversationId)}`,
-      publicRealtimeUrl,
-    )
+    const url = new URL(`rt/guests/${guestConversationId}`, publicRealtimeUrl)
     url.searchParams.set("token", body.token)
     const lastSeq = frameReaderRef.current?.getLastSeq()
     if (lastSeq) {
