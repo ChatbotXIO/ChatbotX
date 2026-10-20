@@ -84,7 +84,9 @@ describe("enterprise license verification", () => {
 
   afterEach(() => {
     delete process.env.LICENSE_KEY
+    vi.useRealTimers()
     vi.resetModules()
+    vi.doUnmock("@chatbotx.io/database/repositories")
     vi.doUnmock("../src/enterprise/license/public-keys")
   })
 
@@ -285,7 +287,7 @@ describe("enterprise license verification", () => {
     expect(status.state).toBe("invalid")
   })
 
-  test("loads LICENSE_KEY once and exposes feature and limit accessors", async () => {
+  test("resolves LICENSE_KEY and exposes feature and limit accessors", async () => {
     process.env.LICENSE_KEY = await signLicense({
       exp: NOW_SECONDS + 400 * DAY_SECONDS,
     })
@@ -293,6 +295,12 @@ describe("enterprise license verification", () => {
     vi.doMock("../src/enterprise/license/public-keys", () => ({
       LICENSE_ISSUER,
       LICENSE_PUBLIC_KEYS: keyMap,
+    }))
+    vi.doMock("@chatbotx.io/database/repositories", () => ({
+      licenseRepository: {
+        findByLicenseId: vi.fn().mockResolvedValue(undefined),
+        upsert: vi.fn(),
+      },
     }))
     const { getLicenseStatus, getLimit, hasFeature } = await import(
       "../src/enterprise/license/service"
@@ -307,9 +315,79 @@ describe("enterprise license verification", () => {
     expect(await hasFeature("auditLog")).toBe(false)
   })
 
+  test("prefers a valid stored token over an expired LICENSE_KEY", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+    const envToken = await signLicense({
+      exp: NOW_SECONDS - 2 * DAY_SECONDS,
+    })
+    const storedToken = await signLicense({
+      exp: NOW_SECONDS + 31 * DAY_SECONDS,
+    })
+    process.env.LICENSE_KEY = envToken
+    vi.resetModules()
+    vi.doMock("../src/enterprise/license/public-keys", () => ({
+      LICENSE_ISSUER,
+      LICENSE_PUBLIC_KEYS: keyMap,
+    }))
+    vi.doMock("@chatbotx.io/database/repositories", () => ({
+      licenseRepository: {
+        findByLicenseId: vi.fn().mockResolvedValue({ token: storedToken }),
+        upsert: vi.fn(),
+      },
+    }))
+    const { getLicenseStatus } = await import(
+      "../src/enterprise/license/service"
+    )
+
+    await expect(getLicenseStatus()).resolves.toMatchObject({
+      state: "valid",
+      expiresAt: new Date(
+        (NOW_SECONDS + 31 * DAY_SECONDS) * 1000,
+      ).toISOString(),
+    })
+  })
+
+  test("ignores a stored token for a different license", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+    const envToken = await signLicense({
+      exp: NOW_SECONDS - 2 * DAY_SECONDS,
+    })
+    const storedToken = await signLicense({
+      claims: { licenseId: "lic_other" },
+      exp: NOW_SECONDS + 31 * DAY_SECONDS,
+    })
+    process.env.LICENSE_KEY = envToken
+    vi.resetModules()
+    vi.doMock("../src/enterprise/license/public-keys", () => ({
+      LICENSE_ISSUER,
+      LICENSE_PUBLIC_KEYS: keyMap,
+    }))
+    vi.doMock("@chatbotx.io/database/repositories", () => ({
+      licenseRepository: {
+        findByLicenseId: vi.fn().mockResolvedValue({ token: storedToken }),
+        upsert: vi.fn(),
+      },
+    }))
+    const { getLicenseStatus } = await import(
+      "../src/enterprise/license/service"
+    )
+
+    await expect(getLicenseStatus()).resolves.toMatchObject({
+      state: "expired",
+    })
+  })
+
   test("reports missing when LICENSE_KEY is unset", async () => {
     delete process.env.LICENSE_KEY
     vi.resetModules()
+    vi.doMock("@chatbotx.io/database/repositories", () => ({
+      licenseRepository: {
+        findByLicenseId: vi.fn().mockResolvedValue(undefined),
+        upsert: vi.fn(),
+      },
+    }))
     const { getLicenseStatus } = await import(
       "../src/enterprise/license/service"
     )

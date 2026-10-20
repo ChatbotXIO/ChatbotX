@@ -1,5 +1,7 @@
+import { licenseRepository } from "@chatbotx.io/database/repositories"
 import { decodeProtectedHeader, errors, importSPKI, jwtVerify } from "jose"
 import { isCloud, isEnterprise, keys } from "../../keys"
+import { logger } from "../../logger"
 import { LICENSE_ISSUER, LICENSE_PUBLIC_KEYS } from "./public-keys"
 import {
   type LicenseFeature,
@@ -36,7 +38,11 @@ export interface VerifyLicenseOptions {
   currentDate?: Date
 }
 
-let cachedLicense: Promise<LicenseStatus> | undefined
+/** How long a resolved status is reused before the DB is re-read. */
+const LICENSE_CACHE_TTL_MS = 60_000
+
+let cached: { status: LicenseStatus; readAt: number } | undefined
+let inFlight: Promise<LicenseStatus> | undefined
 
 const emptyLimits = (): LicenseLimits => ({
   maxWorkspaces: null,
@@ -193,7 +199,7 @@ export const verifyLicenseToken = async (
   }
 }
 
-const resolveAllowedTiers = ():
+export const resolveAllowedTiers = ():
   | readonly LicensePayload["tier"][]
   | undefined => {
   if (isCloud()) {
@@ -205,24 +211,80 @@ const resolveAllowedTiers = ():
   }
 }
 
-const resolveLicenseFromEnv = (): Promise<LicenseStatus> => {
-  const token = keys().LICENSE_KEY?.trim()
+const readStoredToken = async (
+  licenseId: string,
+): Promise<string | undefined> => {
+  try {
+    const row = await licenseRepository.findByLicenseId(licenseId)
 
-  if (!token) {
-    return Promise.resolve(missingStatus())
+    return row?.token
+  } catch (err) {
+    // A fresh deployment reaches this before migrations run, and the DB can be
+    // down at boot. Neither may take enterprise features offline.
+    logger.warn({ err }, "license: could not read the stored license token")
+    return
   }
-
-  return verifyLicenseToken(token, LICENSE_PUBLIC_KEYS, {
-    allowedTiers: resolveAllowedTiers(),
-  })
 }
 
-export const loadLicense = (): Promise<LicenseStatus> => {
-  if (!cachedLicense) {
-    cachedLicense = resolveLicenseFromEnv()
+const resolveLicense = async (): Promise<LicenseStatus> => {
+  const envToken = keys().LICENSE_KEY?.trim()
+  if (!envToken) {
+    return missingStatus()
   }
 
-  return cachedLicense
+  const allowedTiers = resolveAllowedTiers()
+  const envStatus = await verifyLicenseToken(envToken, LICENSE_PUBLIC_KEYS, {
+    allowedTiers,
+  })
+  if (!envStatus.licenseId) {
+    return envStatus
+  }
+
+  const storedToken = await readStoredToken(envStatus.licenseId)
+  if (!storedToken) {
+    return envStatus
+  }
+
+  const storedStatus = await verifyLicenseToken(
+    storedToken,
+    LICENSE_PUBLIC_KEYS,
+    { allowedTiers },
+  )
+  if (
+    storedStatus.licenseId !== envStatus.licenseId ||
+    !storedStatus.expiresAt ||
+    !envStatus.expiresAt
+  ) {
+    logger.warn(
+      { licenseId: envStatus.licenseId, state: storedStatus.state },
+      "license: ignoring the stored token because it does not match LICENSE_KEY",
+    )
+    return envStatus
+  }
+
+  return Date.parse(storedStatus.expiresAt) > Date.parse(envStatus.expiresAt)
+    ? storedStatus
+    : envStatus
+}
+
+export const loadLicense = async (): Promise<LicenseStatus> => {
+  if (cached && Date.now() - cached.readAt < LICENSE_CACHE_TTL_MS) {
+    return cached.status
+  }
+
+  inFlight ??= resolveLicense().finally(() => {
+    inFlight = undefined
+  })
+
+  const status = await inFlight
+  cached = { status, readAt: Date.now() }
+
+  return status
+}
+
+/** Drop the TTL cache so the next read re-resolves immediately. */
+export const invalidateLicenseCache = (): void => {
+  cached = undefined
 }
 
 export const getLicense = loadLicense

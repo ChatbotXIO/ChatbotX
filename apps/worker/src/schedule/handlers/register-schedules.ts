@@ -546,6 +546,26 @@ export const registerSchedules = async () => {
     },
   )
 
+  if (env.NEXT_PUBLIC_EDITION === "community") {
+    // upsertJobScheduler persists in Redis: a scheduler left by an earlier
+    // licensed boot keeps firing after a downgrade until it is removed.
+    await scheduleQueue.removeJobScheduler(ScheduleJobData.refreshLicense)
+  } else {
+    await scheduleQueue.upsertJobScheduler(
+      ScheduleJobData.refreshLicense,
+      {
+        pattern: "23 * * * *",
+      },
+      {
+        name: ScheduleJobData.refreshLicense,
+        data: {
+          type: ScheduleJobData.refreshLicense,
+          data: {},
+        },
+      },
+    )
+  }
+
   if (isCloud) {
     await scheduleQueue.upsertJobScheduler(
       ScheduleJobData.unsubscribeExpiredTrials,

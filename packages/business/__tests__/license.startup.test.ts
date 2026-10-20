@@ -53,7 +53,17 @@ const mockPublicKeys = () => {
   }))
 }
 
+const mockLicenseRepository = () => {
+  vi.doMock("@chatbotx.io/database/repositories", () => ({
+    licenseRepository: {
+      findByLicenseId: vi.fn().mockResolvedValue(undefined),
+      upsert: vi.fn(),
+    },
+  }))
+}
+
 const importAssertLicenseAtStartup = async () => {
+  mockLicenseRepository()
   const { assertLicenseAtStartup } = await import(
     "../src/enterprise/license/startup"
   )
@@ -75,6 +85,7 @@ describe("assertLicenseAtStartup", () => {
     delete process.env.LICENSE_KEY
     delete process.env.NEXT_PUBLIC_EDITION
     vi.resetModules()
+    vi.doUnmock("@chatbotx.io/database/repositories")
     vi.doUnmock("../src/enterprise/license/public-keys")
     vi.restoreAllMocks()
   })

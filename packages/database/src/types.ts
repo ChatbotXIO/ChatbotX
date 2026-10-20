@@ -138,6 +138,7 @@ export type DecisionConnectionModel =
 export type DecisionProfileModel =
   typeof schema.decisionProfileModel.$inferSelect
 export type TenantModel = typeof schema.tenantModel.$inferSelect
+export type LicenseModel = typeof schema.licenseModel.$inferSelect
 export type PlatformAdminModel = typeof schema.platformAdminModel.$inferSelect
 export type TenantHelpItemModel = typeof schema.tenantHelpItemModel.$inferSelect
 export type PlatformCredentialModel =
