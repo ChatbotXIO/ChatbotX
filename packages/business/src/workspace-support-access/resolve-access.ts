@@ -40,7 +40,11 @@ export async function resolveWorkspaceAccess<
     return
   }
 
-  const member = resolveWorkspaceMembership({ realMember, workspace, user })
+  const member = await resolveWorkspaceMembership({
+    realMember,
+    workspace,
+    user,
+  })
   if (!member) {
     return
   }

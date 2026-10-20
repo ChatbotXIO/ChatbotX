@@ -45,7 +45,7 @@ describe("listAdminWorkspaces", () => {
 
   test("throws notFound and never queries when the current user is not a super admin", async () => {
     mocks.getCurrentUser.mockResolvedValue({ id: "user-1" })
-    mocks.isSuperAdmin.mockReturnValue(false)
+    mocks.isSuperAdmin.mockResolvedValue(false)
 
     await expect(
       listAdminWorkspaces({ page: 1, perPage: 10, keyword: null }),
@@ -55,7 +55,7 @@ describe("listAdminWorkspaces", () => {
 
   test("calls listWorkspaces with keyword undefined when keyword is null", async () => {
     mocks.getCurrentUser.mockResolvedValue({ id: "admin-1" })
-    mocks.isSuperAdmin.mockReturnValue(true)
+    mocks.isSuperAdmin.mockResolvedValue(true)
     mocks.listWorkspaces.mockResolvedValue({ data: [], pageCount: 0 })
 
     await listAdminWorkspaces({ page: 1, perPage: 10, keyword: null })
@@ -69,7 +69,7 @@ describe("listAdminWorkspaces", () => {
 
   test("passes the keyword through unchanged when set", async () => {
     mocks.getCurrentUser.mockResolvedValue({ id: "admin-1" })
-    mocks.isSuperAdmin.mockReturnValue(true)
+    mocks.isSuperAdmin.mockResolvedValue(true)
     mocks.listWorkspaces.mockResolvedValue({ data: [], pageCount: 0 })
 
     await listAdminWorkspaces({ page: 2, perPage: 20, keyword: "acme" })

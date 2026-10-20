@@ -6,8 +6,7 @@ import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
 
 /**
- * Platform-operator console. Gated to the real platform admin
- * (PLATFORM_ADMIN_EMAIL) in every edition.
+ * Platform-operator console. Gated to the persisted platform admin row.
  */
 export default async function AdminLayout({
   children,
@@ -15,7 +14,7 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   const user = await getCurrentUser()
-  if (!(user && isSuperAdmin(user))) {
+  if (!(user && (await isSuperAdmin(user)))) {
     return notFound()
   }
 

@@ -3,6 +3,7 @@ import {
   integrationService,
   isPlatformAdmin,
   isSuperAdmin,
+  isSupportConsentRequired,
   isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
 } from "@chatbotx.io/business"
@@ -75,10 +76,13 @@ export default async function WorkspaceLayout({
   // community/enterprise installs use every feature freely — no quota gating.
   const cloud = isCloud()
 
-  const [{ storageUrl }, platformAdmin] = await Promise.all([
-    getTenantSettings(),
-    isPlatformAdmin(user),
-  ])
+  const [{ storageUrl }, platformAdmin, superAdmin, consentRequired] =
+    await Promise.all([
+      getTenantSettings(),
+      isPlatformAdmin(user),
+      isSuperAdmin(user),
+      isSupportConsentRequired(),
+    ])
 
   const [
     { blocked, blockReason, quota, trialEndsAt },
@@ -160,7 +164,7 @@ export default async function WorkspaceLayout({
         allWorkspaces={allWorkspaces}
         callHistoryNavVisible={realtimeGates.callHistoryNavVisible}
         isPlatformAdmin={platformAdmin}
-        isSuperAdmin={isSuperAdmin(user)}
+        isSuperAdmin={superAdmin}
         permissions={targetWorkspaceMember.permissions}
         quota={quotaSummary}
         scheduledForDeletion={scheduledForDeletion}
@@ -178,8 +182,9 @@ export default async function WorkspaceLayout({
             workspaceId={workspaceId}
           />
           <ScheduledDeletionBanner scheduled={scheduledForDeletion} />
-          {isSupportSession && targetWorkspace.supportAccessUntil && (
+          {isSupportSession && (
             <SupportAccessBanner
+              consentRequired={consentRequired}
               supportAccessUntil={targetWorkspace.supportAccessUntil}
             />
           )}

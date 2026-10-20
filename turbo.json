@@ -1,12 +1,16 @@
 {
-  "$schema": "https://v2-9-15.turborepo.dev/schema.json",
+  "$schema": "https://v2-11-9.turborepo.dev/schema.json",
   "ui": "tui",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
-      "passThroughEnv": ["BETTER_AUTH_SECRET", "BETTER_AUTH_URL"]
+      "passThroughEnv": [
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL",
+        "SUPPORT_ACCESS_REQUIRE_CONSENT"
+      ]
     },
     // No `dependsOn: ["^lint"]`: Biome lints every file independently, so the
     // fan-in conveyed no ordering. Worse, only builder defines a real `lint`

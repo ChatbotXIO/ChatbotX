@@ -77,7 +77,7 @@ async function buildApp() {
 
 async function handler(request: Request) {
   const user = await getCurrentUser()
-  if (!(user && isSuperAdmin(user))) {
+  if (!(user && (await isSuperAdmin(user)))) {
     return new Response("Not found", { status: 404 })
   }
 

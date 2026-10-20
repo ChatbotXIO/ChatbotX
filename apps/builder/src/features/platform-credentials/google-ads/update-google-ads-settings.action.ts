@@ -15,7 +15,7 @@ export const updateGoogleAdsSettingsAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .inputSchema(googleAdsCredentialUpdateSchema)
   .action(async ({ ctx, bindArgsParsedInputs: [scope], parsedInput }) => {
-    const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
+    const scopedUserId = await resolveCredentialScopedUserId(ctx.user, scope)
 
     // A blank secret or developer token keeps the stored one, so only then is
     // the existing credential read — `strict` so a transient read/decrypt failure aborts the

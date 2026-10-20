@@ -145,6 +145,15 @@ The edition+license gate (`hasEnterpriseFeatures()`) is live — e.g. the
 `/admin/(enterprise)` route group and platform `customCSS`/`customJS` in
 `packages/business/src/platform/settings.ts` are already behind it.
 
+Platform-admin authorization uses persisted `PlatformAdmin` rows in every
+edition. `PLATFORM_ADMIN_EMAIL` is only a one-time root-tenant provisioning
+input; startup or matching user creation records the first row, and deleting
+that row remains effective after restart. Managing additional platform
+administrators remains an enterprise/cloud capability.
+`SUPPORT_ACCESS_REQUIRE_CONSENT` defaults to `true`; its `false` value takes
+effect only after `hasEnterpriseFeatures()` validates the license, so it
+cannot weaken community installations.
+
 To gate an individual capability, add a server-side check at the read/creation
 point (all DB access stays in services — never in `apps/`):
 

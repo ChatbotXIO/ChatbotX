@@ -3616,6 +3616,7 @@
       "permissionRequired": "Sinun on oltava pääylläpitäjä muuttaaksesi alustan tukipääsyä.",
       "enabledToast": "Alustan tukipääsy otettu käyttöön.",
       "disabledToast": "Alustan tukipääsy poistettu käytöstä.",
+      "consentDisabled": "Platform support access is available to platform administrators without this setting.",
       "toggleError": "Jokin meni pieleen. Yritä uudelleen."
     }
   },
@@ -6163,7 +6164,24 @@
       "openAsSupport": "Avaa tukena",
       "supportEnabledUntil": "Käytössä {time} asti",
       "supportOff": "Pois",
-      "searchPlaceholder": "Hae nimen, omistajan sähköpostin tai tunnuksen perusteella"
+      "searchPlaceholder": "Hae nimen, omistajan sähköpostin tai tunnuksen perusteella",
+      "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
+      "supportAccessible": "Accessible"
+    },
+    "admins": {
+      "title": "Platform administrators",
+      "description": "Manage users who can access the platform administration console.",
+      "addTitle": "Add platform administrator",
+      "addDescription": "Grant platform administration access to a root-tenant user.",
+      "addButton": "Add administrator",
+      "role": "Role",
+      "bootstrap": "Environment bootstrap administrator",
+      "remove": "Remove administrator",
+      "empty": "No platform administrators are configured.",
+      "added": "Platform administrator added.",
+      "removed": "Platform administrator removed.",
+      "addError": "Could not add the platform administrator.",
+      "removeError": "Could not remove the platform administrator."
     }
   },
   "platformCredentials": {

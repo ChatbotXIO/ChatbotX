@@ -105,7 +105,7 @@ async function callProbeAction(client: ProbeClient, workspaceId: string) {
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.isPlatformAdmin.mockResolvedValue(false)
-  mocks.isSuperAdmin.mockReturnValue(false)
+  mocks.isSuperAdmin.mockResolvedValue(false)
   mocks.isWorkspaceScheduledForDeletion.mockReturnValue(false)
   mocks.isDatabaseError.mockReturnValue(false)
   mocks.getCurrentUserId.mockResolvedValue("user-1")

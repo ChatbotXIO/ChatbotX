@@ -14,6 +14,10 @@ export const userRelations = defineRelationsPart(schema, (r) => ({
       from: r.userModel.id,
       to: r.tenantModel.ownerId,
     }),
+    platformAdmins: r.many.platformAdminModel({
+      from: r.userModel.id,
+      to: r.platformAdminModel.userId,
+    }),
     accounts: r.many.accountModel({
       from: r.userModel.id,
       to: r.accountModel.userId,

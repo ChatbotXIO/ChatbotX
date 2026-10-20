@@ -16,7 +16,7 @@ export const updateTiktokSettingAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .inputSchema(tiktokCredentialUpdateSchema)
   .action(async ({ ctx, bindArgsParsedInputs: [scope], parsedInput }) => {
-    const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
+    const scopedUserId = await resolveCredentialScopedUserId(ctx.user, scope)
     const config: TiktokCredential = {
       clientId: parsedInput.clientId,
       clientSecret: parsedInput.clientSecret,

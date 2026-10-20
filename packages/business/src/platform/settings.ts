@@ -71,6 +71,15 @@ const getDefaultSettings = async (): Promise<TenantSettings> => {
 }
 
 /**
+ * Settings for the platform itself (root tenant), with no workspace, owner, or
+ * hostname in context. Platform-administration flows must use this rather than
+ * `resolveTenantSettingsByOwner`: a super admin may also own a reseller
+ * `Tenant`, and a platform email must never pick up that reseller's branding.
+ */
+export const resolvePlatformSettings = async (): Promise<TenantSettings> =>
+  await getDefaultSettings()
+
+/**
  * Re-anchor the URL-derived settings to a white-label custom domain.
  * The env defaults key every URL off `NEXT_PUBLIC_BUILDER_URL`; on a custom
  * domain those must instead point at the tenant's own host so that public

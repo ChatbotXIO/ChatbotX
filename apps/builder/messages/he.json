@@ -1490,6 +1490,7 @@
       "permissionRequired": "עליך להיות מנהל-על כדי לשנות את גישת התמיכה של הפלטפורמה.",
       "enabledToast": "גישת תמיכה של הפלטפורמה הופעלה.",
       "disabledToast": "גישת תמיכה של הפלטפורמה כובתה.",
+      "consentDisabled": "Platform support access is available to platform administrators without this setting.",
       "toggleError": "משהו השתבש. נסה שוב."
     }
   },
@@ -4037,7 +4038,24 @@
       "openAsSupport": "פתח כתמיכה",
       "supportEnabledUntil": "מופעל עד {time}",
       "supportOff": "כבוי",
-      "searchPlaceholder": "חפש לפי שם, אימייל של הבעלים או מזהה"
+      "searchPlaceholder": "חפש לפי שם, אימייל של הבעלים או מזהה",
+      "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
+      "supportAccessible": "Accessible"
+    },
+    "admins": {
+      "title": "Platform administrators",
+      "description": "Manage users who can access the platform administration console.",
+      "addTitle": "Add platform administrator",
+      "addDescription": "Grant platform administration access to a root-tenant user.",
+      "addButton": "Add administrator",
+      "role": "Role",
+      "bootstrap": "Environment bootstrap administrator",
+      "remove": "Remove administrator",
+      "empty": "No platform administrators are configured.",
+      "added": "Platform administrator added.",
+      "removed": "Platform administrator removed.",
+      "addError": "Could not add the platform administrator.",
+      "removeError": "Could not remove the platform administrator."
     }
   },
   "platformCredentials": {

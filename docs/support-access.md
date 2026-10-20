@@ -1,11 +1,16 @@
 # Platform support access
 
 This document is for developers touching workspace membership, auth gates, or
-the `/admin` console. Platform support access lets the platform super admin
-(`isSuperAdmin(user)`, `packages/business/src/user/utils.ts` — matched by
-`PLATFORM_ADMIN_EMAIL`, see `.env.example`) open a workspace — but **only**
-once the workspace owner has opted in. There is no admin-initiated,
-no-consent grant path.
+the `/admin` console. A platform super admin has an uncached persisted
+`PlatformAdmin` row, so removal applies on the next authorization check.
+`PLATFORM_ADMIN_EMAIL` ensures the matching root-tenant user has that row at
+application startup or matching user creation. If the row is removed while the
+environment variable remains configured, the next bootstrap trigger restores it.
+
+Owner consent is required by default. A valid enterprise installation can set
+`SUPPORT_ACCESS_REQUIRE_CONSENT=false` to let every platform super admin open
+every workspace without an owner opt-in; community installations always require
+consent even if that environment variable is false.
 
 ## Model
 
@@ -13,13 +18,20 @@ Consent lives on the workspace itself: `Workspace.supportAccessUntil`
 (`packages/database/src/schema/workspace.ts`). Any member with
 `permissions.superAdmin` (the codebase's "owner-controlled" convention — the
 owner always has it) can flip the "Allow platform support access" switch in
-Settings → General. There is nothing else to configure — no duration picker.
-Flipping it on sets `supportAccessUntil = now + 7 days`
+Settings → General. Flipping it on sets `supportAccessUntil = now + 7 days`
 (`SUPPORT_ACCESS_WINDOW_DAYS`,
 `packages/business/src/workspace-support-access/service.ts`, `enable()`); the
-window is fixed, not configurable. Flipping it off (`disable()`) simply clears
-the flag — that alone ends every in-progress support session immediately,
-because access is never backed by a stored row (see below).
+window is fixed. Flipping it off (`disable()`) clears the flag and immediately
+ends consent-based support sessions because access is never backed by a stored
+row.
+
+`isSupportConsentRequired()` (`packages/business/src/workspace-support-access/consent.ts`)
+is the policy gate: it is true unless the environment explicitly disables
+consent **and** `hasEnterpriseFeatures()` confirms a valid enterprise license.
+When false, the Settings → General card explains that platform administrators
+can access the workspace regardless of the switch and removes the owner
+toggle. Every resulting synthetic support session still renders the persistent
+in-workspace support banner without an expiry time.
 
 `isSupportAccessEnabled(workspace)`
 (`packages/business/src/workspace-member/predicates.ts`) is the read-time
@@ -46,16 +58,18 @@ delegates the membership decision to `resolveWorkspaceMembership`
 (`packages/business/src/workspace-member/synthetic.ts`):
 
 1. If a real `WorkspaceMember` row exists for `(workspaceId, userId)`, use it.
-2. Otherwise, if the caller `isSuperAdmin(user)` and
-   `isSupportAccessEnabled(workspace)`, synthesize a
+2. Otherwise, if `await isSuperAdmin(user)` and either
+   `isSupportAccessEnabled(workspace)` or
+   `!(await isSupportConsentRequired())`, synthesize a
    `WorkspaceMemberModel` in memory (`buildSupportMembership`) with
    `role: "agent"` and every `WorkspaceMemberPermissions` flag `true`
    (`FULL_WORKSPACE_MEMBER_PERMISSIONS`). **Full access only** — no read-only
    mode. A method-based read-only gate was ruled out because roughly a dozen
    session oRPC procedures are reads declared as POST (contacts list,
    conversations list, broadcast stats, most ads-campaign reads), so it would
-   break pages. The safeguards are the time-box, owner consent, and the
-   in-workspace banner — not a permissions restriction.
+   break pages. The safeguards are owner consent when required, the enterprise
+   license gate when it is not, and the in-workspace banner — not a permissions
+   restriction.
 3. Otherwise, the caller has no access.
 
 `resolveWorkspaceAccess` returns `{ workspace, member, isSupportSession }` (or

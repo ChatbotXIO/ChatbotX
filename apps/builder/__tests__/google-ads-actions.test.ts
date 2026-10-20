@@ -72,7 +72,7 @@ vi.mock("@chatbotx.io/business/errors", () => ({
 }))
 vi.mock("@chatbotx.io/business", () => ({
   isPlatformAdmin: vi.fn(async () => false),
-  isSuperAdmin: vi.fn(() => true),
+  isSuperAdmin: vi.fn(async () => true),
   isWorkspaceScheduledForDeletion: vi.fn(() => false),
   resolveWorkspaceAccess: vi.fn(({ realMember, workspaceId }) =>
     realMember

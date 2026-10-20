@@ -12,7 +12,7 @@ export const updateThreadsSettingAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .inputSchema(threadsCredentialUpdateSchema)
   .action(async ({ parsedInput, bindArgsParsedInputs: [scope], ctx }) => {
-    const scopedUserId = resolveCredentialScopedUserId(ctx.user, scope)
+    const scopedUserId = await resolveCredentialScopedUserId(ctx.user, scope)
     const config: ThreadsCredential = {
       clientId: parsedInput.clientId,
       version: parsedInput.version,

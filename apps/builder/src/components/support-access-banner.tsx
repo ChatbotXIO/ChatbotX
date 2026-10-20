@@ -8,25 +8,33 @@ import { ShieldCheckIcon } from "lucide-react"
 import { getLocale, getTranslations } from "next-intl/server"
 
 export async function SupportAccessBanner({
+  consentRequired,
   supportAccessUntil,
 }: {
-  supportAccessUntil: Date
+  consentRequired: boolean
+  supportAccessUntil: Date | null
 }) {
   const [t, locale] = await Promise.all([
     getTranslations("workspace.supportAccess"),
     getLocale(),
   ])
-  const time = formatDate(supportAccessUntil, {
-    hour: "numeric",
-    minute: "numeric",
-    locale,
-  })
+  const time = supportAccessUntil
+    ? formatDate(supportAccessUntil, {
+        hour: "numeric",
+        minute: "numeric",
+        locale,
+      })
+    : null
 
   return (
     <Alert variant="default">
       <ShieldCheckIcon />
       <AlertTitle>{t("bannerTitle")}</AlertTitle>
-      <AlertDescription>{t("bannerDescription", { time })}</AlertDescription>
+      <AlertDescription>
+        {consentRequired && time
+          ? t("bannerDescription", { time })
+          : t("consentDisabled")}
+      </AlertDescription>
     </Alert>
   )
 }

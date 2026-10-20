@@ -1,4 +1,5 @@
 import mjml2html from "mjml"
+import type { Transporter } from "nodemailer"
 import { esc } from "./emails/base-template"
 import {
   buildResetPasswordMjml,
@@ -59,8 +60,12 @@ async function compileMjml(mjmlString: string): Promise<string> {
   return html
 }
 
-const env = keys()
-const transporter = createSmtpTransporter()
+let transporter: Transporter | undefined
+
+const getDefaultTransporter = () => {
+  transporter ??= createSmtpTransporter()
+  return transporter
+}
 
 type SendMailOptions = {
   from?: string
@@ -93,9 +98,10 @@ async function sendMail(
   html: string,
   options?: SendMailOptions,
 ) {
+  const env = keys()
   const mailTransporter = options?.transport
     ? createSmtpTransporter(options.transport)
-    : transporter
+    : getDefaultTransporter()
 
   await mailTransporter.sendMail({
     from: options?.from ?? env.SMTP_FROM,
@@ -192,7 +198,7 @@ export const sendAccountCredentials = async (
   props: AccountCredentialsProps & {
     customTemplate?: EmailTemplate | null
   },
-  transport: SmtpTransportOptions & { fromEmail: string; fromName?: string },
+  transport?: SmtpTransportOptions & { fromEmail: string; fromName?: string },
 ) => {
   const { customTemplate, ...templateProps } = props
   await sendEmailWithTemplate(
@@ -209,9 +215,6 @@ export const sendAccountCredentials = async (
       brandLogoUrl: templateProps.brandLogoUrl,
       brandUrl: templateProps.brandUrl,
     },
-    {
-      from: formatFrom(transport),
-      transport,
-    },
+    transport ? { from: formatFrom(transport), transport } : undefined,
   )
 }

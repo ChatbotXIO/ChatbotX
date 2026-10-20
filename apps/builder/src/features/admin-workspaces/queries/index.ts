@@ -2,15 +2,14 @@
 
 import {
   isSuperAdmin,
+  type WorkspaceSupportAccessList,
   workspaceSupportAccessService,
 } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { getCurrentUser } from "@/lib/auth/utils"
 import type { ListAdminWorkspacesRequest } from "../schema/query"
 
-export type ListAdminWorkspacesResponse = Awaited<
-  ReturnType<typeof workspaceSupportAccessService.listWorkspaces>
->
+export type ListAdminWorkspacesResponse = WorkspaceSupportAccessList
 
 /**
  * The `/admin` layout already gates the whole console on `isSuperAdmin`, but
@@ -23,7 +22,7 @@ export async function listAdminWorkspaces(
   input: ListAdminWorkspacesRequest,
 ): Promise<ListAdminWorkspacesResponse> {
   const user = await getCurrentUser()
-  if (!(user && isSuperAdmin(user))) {
+  if (!(user && (await isSuperAdmin(user)))) {
     return notFound()
   }
 

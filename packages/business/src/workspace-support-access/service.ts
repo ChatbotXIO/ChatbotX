@@ -37,7 +37,7 @@ type ListWorkspacesInput = {
   keyword?: string
 }
 
-type ListWorkspacesRow = {
+export type WorkspaceSupportAccessList = PaginatedResult<{
   id: string
   name: string
   ownerId: string
@@ -47,7 +47,7 @@ type ListWorkspacesRow = {
   tenantName: string | null
   createdAt: Date
   supportAccessUntil: Date | null
-}
+}>
 
 export class WorkspaceSupportAccessService extends BaseService {
   private auditAndLog(props: {
@@ -150,7 +150,7 @@ export class WorkspaceSupportAccessService extends BaseService {
 
   async listWorkspaces(
     input: ListWorkspacesInput,
-  ): Promise<PaginatedResult<ListWorkspacesRow>> {
+  ): Promise<WorkspaceSupportAccessList> {
     const { keyword } = input
     const pagination = getPaginationWithDefaults(input)
 

@@ -1,24 +1,23 @@
 import type { UserModel } from "@chatbotx.io/database/types"
 import { tenantService } from "../enterprise/tenant/service"
-import { isCloud, keys } from "../keys"
+import { isCloud } from "../keys"
+import { platformAdminService } from "../platform-admin/service"
 
 export const isPlatformAdmin = async (
-  user: Pick<UserModel, "id" | "email">,
+  user: Pick<UserModel, "id">,
 ): Promise<boolean> => {
   if (isCloud()) {
     const setting = await tenantService.findByOwner(user.id)
     return Boolean(setting?.status === "active")
   }
-  return isSuperAdmin(user)
+  return await isSuperAdmin(user)
 }
 
 /**
- * The real SaaS operator (super admin), identified by PLATFORM_ADMIN_EMAIL in
- * every edition (cloud included). Distinct from `isPlatformAdmin`, which in
- * cloud means "white-label user". The super admin manages the platform-scoped
- * (NULL userId) default credentials that serve non-white-label customers.
+ * The real SaaS operator (super admin) is identified only by an uncached
+ * persisted PlatformAdmin row. PLATFORM_ADMIN_EMAIL provisions the matching
+ * root-tenant user at startup or matching root-user creation.
  */
-export const isSuperAdmin = (user: Pick<UserModel, "email">): boolean => {
-  const { PLATFORM_ADMIN_EMAIL } = keys()
-  return Boolean(PLATFORM_ADMIN_EMAIL && user.email === PLATFORM_ADMIN_EMAIL)
-}
+export const isSuperAdmin = async (
+  user: Pick<UserModel, "id">,
+): Promise<boolean> => await platformAdminService.isAdmin(user.id)

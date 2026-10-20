@@ -3616,6 +3616,7 @@
       "permissionRequired": "Anda harus menjadi super admin untuk mengubah akses dukungan platform.",
       "enabledToast": "Akses dukungan platform diaktifkan.",
       "disabledToast": "Akses dukungan platform dinonaktifkan.",
+      "consentDisabled": "Platform support access is available to platform administrators without this setting.",
       "toggleError": "Terjadi kesalahan. Silakan coba lagi."
     }
   },
@@ -6163,7 +6164,24 @@
       "openAsSupport": "Buka sebagai dukungan",
       "supportEnabledUntil": "Diaktifkan hingga {time}",
       "supportOff": "Nonaktif",
-      "searchPlaceholder": "Cari berdasarkan nama, email pemilik, atau ID"
+      "searchPlaceholder": "Cari berdasarkan nama, email pemilik, atau ID",
+      "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
+      "supportAccessible": "Accessible"
+    },
+    "admins": {
+      "title": "Platform administrators",
+      "description": "Manage users who can access the platform administration console.",
+      "addTitle": "Add platform administrator",
+      "addDescription": "Grant platform administration access to a root-tenant user.",
+      "addButton": "Add administrator",
+      "role": "Role",
+      "bootstrap": "Environment bootstrap administrator",
+      "remove": "Remove administrator",
+      "empty": "No platform administrators are configured.",
+      "added": "Platform administrator added.",
+      "removed": "Platform administrator removed.",
+      "addError": "Could not add the platform administrator.",
+      "removeError": "Could not remove the platform administrator."
     }
   },
   "platformCredentials": {

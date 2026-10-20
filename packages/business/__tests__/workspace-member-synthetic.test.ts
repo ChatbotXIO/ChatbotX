@@ -1,21 +1,26 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
+import {
+  buildSupportMembership,
+  resolveWorkspaceMembership,
+} from "../src/workspace-member/synthetic"
 
 const mocks = vi.hoisted(() => ({
   isSuperAdmin: vi.fn(),
+  isSupportConsentRequired: vi.fn(),
 }))
 
 vi.mock("../src/user/utils", () => ({
   isSuperAdmin: mocks.isSuperAdmin,
 }))
-
-const { buildSupportMembership, resolveWorkspaceMembership } = await import(
-  "../src/workspace-member/synthetic"
-)
+vi.mock("../src/workspace-support-access/consent", () => ({
+  isSupportConsentRequired: mocks.isSupportConsentRequired,
+}))
 
 const user = { id: "user-1", email: "admin@chatbotx.io" }
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.isSupportConsentRequired.mockResolvedValue(true)
 })
 
 describe("buildSupportMembership", () => {
@@ -54,14 +59,14 @@ describe("buildSupportMembership", () => {
 })
 
 describe("resolveWorkspaceMembership", () => {
-  test("returns the real member when one exists, without checking super admin", () => {
+  test("returns the real member when one exists, without checking super admin", async () => {
     const realMember = {
       userId: "user-1",
       role: "owner" as const,
       permissions: { superAdmin: true } as never,
     }
 
-    const result = resolveWorkspaceMembership({
+    const result = await resolveWorkspaceMembership({
       realMember,
       workspace: { id: "workspace-1", supportAccessUntil: null },
       user,
@@ -71,10 +76,10 @@ describe("resolveWorkspaceMembership", () => {
     expect(mocks.isSuperAdmin).not.toHaveBeenCalled()
   })
 
-  test("returns undefined when no real member and caller is not super admin", () => {
-    mocks.isSuperAdmin.mockReturnValue(false)
+  test("returns undefined when no real member and caller is not super admin", async () => {
+    mocks.isSuperAdmin.mockResolvedValue(false)
 
-    const result = resolveWorkspaceMembership({
+    const result = await resolveWorkspaceMembership({
       realMember: undefined,
       workspace: {
         id: "workspace-1",
@@ -86,10 +91,10 @@ describe("resolveWorkspaceMembership", () => {
     expect(result).toBeUndefined()
   })
 
-  test("returns undefined when caller is super admin but support access is not enabled", () => {
-    mocks.isSuperAdmin.mockReturnValue(true)
+  test("keeps consent required when enterprise policy requires it", async () => {
+    mocks.isSuperAdmin.mockResolvedValue(true)
 
-    const result = resolveWorkspaceMembership({
+    const result = await resolveWorkspaceMembership({
       realMember: undefined,
       workspace: { id: "workspace-1", supportAccessUntil: null },
       user,
@@ -98,10 +103,10 @@ describe("resolveWorkspaceMembership", () => {
     expect(result).toBeUndefined()
   })
 
-  test("returns undefined when supportAccessUntil is in the past", () => {
-    mocks.isSuperAdmin.mockReturnValue(true)
+  test("returns undefined when supportAccessUntil is in the past", async () => {
+    mocks.isSuperAdmin.mockResolvedValue(true)
 
-    const result = resolveWorkspaceMembership({
+    const result = await resolveWorkspaceMembership({
       realMember: undefined,
       workspace: {
         id: "workspace-1",
@@ -113,10 +118,10 @@ describe("resolveWorkspaceMembership", () => {
     expect(result).toBeUndefined()
   })
 
-  test("synthesizes a support membership when super admin and support access is enabled", () => {
-    mocks.isSuperAdmin.mockReturnValue(true)
+  test("synthesizes a support membership when super admin and support access is enabled", async () => {
+    mocks.isSuperAdmin.mockResolvedValue(true)
 
-    const result = resolveWorkspaceMembership({
+    const result = await resolveWorkspaceMembership({
       realMember: undefined,
       workspace: {
         id: "workspace-1",
@@ -129,5 +134,18 @@ describe("resolveWorkspaceMembership", () => {
     expect(result?.workspaceId).toBe("workspace-1")
     expect(result?.userId).toBe("user-1")
     expect(result?.permissions.superAdmin).toBe(true)
+  })
+
+  test("synthesizes a support membership without owner consent when enterprise policy disables consent", async () => {
+    mocks.isSuperAdmin.mockResolvedValue(true)
+    mocks.isSupportConsentRequired.mockResolvedValue(false)
+
+    const result = await resolveWorkspaceMembership({
+      realMember: undefined,
+      workspace: { id: "workspace-1", supportAccessUntil: null },
+      user,
+    })
+
+    expect(result?.workspaceId).toBe("workspace-1")
   })
 })

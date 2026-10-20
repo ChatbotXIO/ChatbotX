@@ -19,12 +19,14 @@ import { toggleSupportAccessAction } from "../actions/toggle-support-access.acti
 export function SupportAccessCard({
   workspace,
   canManage,
+  consentRequired,
 }: {
   workspace: {
     id: string
     supportAccessUntil: string | Date | null
   }
   canManage: boolean
+  consentRequired: boolean
 }) {
   const t = useTranslations()
   const locale = useLocale()
@@ -72,6 +74,23 @@ export function SupportAccessCard({
     />
   )
 
+  let supportAccessControl = <span aria-hidden="true" />
+  if (consentRequired) {
+    supportAccessControl = switchElement
+    if (!canManage) {
+      supportAccessControl = (
+        <Tooltip>
+          <TooltipTrigger
+            render={<span className="inline-flex">{switchElement}</span>}
+          />
+          <TooltipContent>
+            {t("workspace.supportAccess.permissionRequired")}
+          </TooltipContent>
+        </Tooltip>
+      )
+    }
+  }
+
   return (
     <Card>
       <CardContent>
@@ -79,23 +98,15 @@ export function SupportAccessCard({
           description={
             <>
               <p>{t("workspace.supportAccess.cardDescription")}</p>
+              {!consentRequired && (
+                <p>{t("workspace.supportAccess.consentDisabled")}</p>
+              )}
               {enabledUntilText && <p>{enabledUntilText}</p>}
             </>
           }
           label={t("workspace.supportAccess.cardTitle")}
         >
-          {canManage ? (
-            switchElement
-          ) : (
-            <Tooltip>
-              <TooltipTrigger
-                render={<span className="inline-flex">{switchElement}</span>}
-              />
-              <TooltipContent>
-                {t("workspace.supportAccess.permissionRequired")}
-              </TooltipContent>
-            </Tooltip>
-          )}
+          {supportAccessControl}
         </SettingRow>
       </CardContent>
     </Card>

@@ -9,7 +9,7 @@ export const deleteInstagramFacebookSettingsAction = authActionClient
   .bindArgsSchemas([credentialScopeSchema])
   .action(async ({ ctx, bindArgsParsedInputs: [scope] }) => {
     await platformCredentialService.remove({
-      userId: resolveCredentialScopedUserId(ctx.user, scope),
+      userId: await resolveCredentialScopedUserId(ctx.user, scope),
       type: "instagramFacebook",
     })
   })

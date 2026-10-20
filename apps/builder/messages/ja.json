@@ -3595,6 +3595,7 @@
       "permissionRequired": "プラットフォームサポートアクセスを変更するにはスーパー管理者である必要があります。",
       "enabledToast": "プラットフォームサポートアクセスを有効にしました。",
       "disabledToast": "プラットフォームサポートアクセスを無効にしました。",
+      "consentDisabled": "Platform support access is available to platform administrators without this setting.",
       "toggleError": "問題が発生しました。もう一度お試しください。"
     }
   },
@@ -6163,7 +6164,24 @@
       "openAsSupport": "サポートとして開く",
       "supportEnabledUntil": "{time} まで有効",
       "supportOff": "オフ",
-      "searchPlaceholder": "名前、オーナーのメール、IDで検索"
+      "searchPlaceholder": "名前、オーナーのメール、IDで検索",
+      "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
+      "supportAccessible": "Accessible"
+    },
+    "admins": {
+      "title": "Platform administrators",
+      "description": "Manage users who can access the platform administration console.",
+      "addTitle": "Add platform administrator",
+      "addDescription": "Grant platform administration access to a root-tenant user.",
+      "addButton": "Add administrator",
+      "role": "Role",
+      "bootstrap": "Environment bootstrap administrator",
+      "remove": "Remove administrator",
+      "empty": "No platform administrators are configured.",
+      "added": "Platform administrator added.",
+      "removed": "Platform administrator removed.",
+      "addError": "Could not add the platform administrator.",
+      "removeError": "Could not remove the platform administrator."
     }
   },
   "platformCredentials": {

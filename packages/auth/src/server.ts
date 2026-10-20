@@ -21,6 +21,10 @@ import {
 } from "@chatbotx.io/mail"
 import type { SmtpTransportOptions } from "@chatbotx.io/mail/transport"
 import { createId, getPublicOriginFromRequest } from "@chatbotx.io/utils"
+import {
+  isPlaceholderEmail,
+  mapFacebookProfileToUser,
+} from "@chatbotx.io/utils/placeholder-email"
 import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { createAuthMiddleware } from "better-auth/api"
@@ -30,10 +34,6 @@ import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
 import { env, getBrokerUrl } from "./keys"
 import { logger } from "./logger"
-import {
-  isPlaceholderEmail,
-  mapFacebookProfileToUser,
-} from "./placeholder-email"
 import { getTenantId, resolveTenantOwnerId } from "./tenant-context"
 
 const getTenantSettings = async (request: Request) => {
