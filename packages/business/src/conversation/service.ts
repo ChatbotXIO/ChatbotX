@@ -1365,15 +1365,27 @@ class ConversationService extends BaseService {
         updated,
       }
     }
-    const result = await responseSlaService.trackWindow(
-      {
-        workspaceId,
-        conversationIds: ids,
-        assigneeHints: [assignedUserId],
-        tx: props.tx,
-      },
-      updateInTransaction,
-    )
+    const result = props.tx
+      ? await responseSlaService.trackWindow(
+          {
+            workspaceId,
+            conversationIds: ids,
+            assigneeHints: [assignedUserId],
+            tx: props.tx,
+          },
+          updateInTransaction,
+        )
+      : await db.transaction((tx) =>
+          responseSlaService.trackWindow(
+            {
+              workspaceId,
+              conversationIds: ids,
+              assigneeHints: [assignedUserId],
+              tx,
+            },
+            updateInTransaction,
+          ),
+        )
     const publish = async () =>
       await this.publishAssignmentChanges({
         workspaceId,
