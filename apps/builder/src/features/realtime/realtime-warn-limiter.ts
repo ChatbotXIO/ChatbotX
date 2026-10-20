@@ -1,3 +1,5 @@
+import { logger } from "@/lib/log"
+
 /**
  * Rate-limits `logger.warn` for malformed realtime frames/schema failures,
  * keyed per `reason` (+ `eventType` when known) so one failure kind never
@@ -70,6 +72,34 @@ export function decideRealtimeWarnLogging(
     return { shouldLog: true, isSuppressionSummary: true }
   }
   return { shouldLog: false }
+}
+
+export const logRealtimeWarning = ({
+  error,
+  eventType,
+  message,
+  reason,
+  suppressionMessage,
+}: {
+  error: unknown
+  eventType?: string
+  message: string
+  reason: string
+  suppressionMessage: string
+}): void => {
+  const decision = decideRealtimeWarnLogging(reason, eventType)
+  if (!decision.shouldLog) {
+    return
+  }
+
+  logger.warn(
+    {
+      err: error,
+      ...(eventType ? { eventType } : {}),
+      suppressed: decision.isSuppressionSummary,
+    },
+    decision.isSuppressionSummary ? suppressionMessage : message,
+  )
 }
 
 /**

@@ -132,7 +132,7 @@ describe("loadReplay", () => {
   test("reports droppedCount for a partially-invalid coalesced record, while still returning its valid events", async () => {
     const workspaceEventsRecord = JSON.stringify({
       events: [
-        { data: { id: "ok" }, eventType: "messageCreated" },
+        { data: { id: "ok" }, eventType: "typing" },
         { data: {}, eventType: 123 },
       ],
       kind: "workspace-events",
@@ -157,7 +157,7 @@ describe("loadReplay", () => {
       {
         id: "2-0",
         record: {
-          events: [{ data: { id: "ok" }, eventType: "messageCreated" }],
+          events: [{ data: { id: "ok" }, eventType: "typing" }],
           kind: "workspace-events",
           workspaceId: "workspace-1",
         },
@@ -172,7 +172,7 @@ describe("loadReplay", () => {
     [
       "record",
       JSON.stringify({
-        events: [{ data: { id: String(n) }, eventType: "messageCreated" }],
+        events: [{ data: { id: String(n) }, eventType: "typing" }],
         kind: "workspace-events",
         workspaceId,
       }),

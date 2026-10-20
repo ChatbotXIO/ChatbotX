@@ -5,6 +5,7 @@ import {
   REALTIME_CLOSE_CODE,
   type RealtimeTargetedEventData as RealtimeEventData,
   RealtimeEventType,
+  RealtimeFatalError,
   type RealtimeFrameReader,
   realtimeMemberBatchEnvelopeSchema,
 } from "@chatbotx.io/realtime-protocol"
@@ -21,10 +22,9 @@ import {
 } from "react"
 import { useTenantSettings } from "@/features/tenant"
 import { useWorkspaceId } from "@/hooks/routing"
-import { logger } from "@/lib/log"
 import { client } from "@/lib/orpc/orpc"
 import { REALTIME_EVENT_SCHEMAS } from "./realtime-event-validation"
-import { decideRealtimeWarnLogging } from "./realtime-warn-limiter"
+import { logRealtimeWarning } from "./realtime-warn-limiter"
 import type {
   RealtimeEvent,
   RealtimeEventName,
@@ -52,32 +52,13 @@ const isKnownRealtimeEventName = (value: string): value is RealtimeEventName =>
 
 type ErasedRealtimeListener = (event: RealtimeEventData) => void
 
-const logRealtimeWarning = ({
-  error,
-  eventType,
-  message,
-  reason,
-  suppressionMessage,
-}: {
-  error: unknown
-  eventType?: RealtimeEventName
-  message: string
-  reason: string
-  suppressionMessage: string
-}): void => {
-  const decision = decideRealtimeWarnLogging(reason, eventType)
-  if (!decision.shouldLog) {
-    return
+const isRealtimeAuthorizationError = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") {
+    return false
   }
 
-  logger.warn(
-    {
-      err: error,
-      ...(eventType ? { eventType } : {}),
-      suppressed: decision.isSuppressionSummary,
-    },
-    decision.isSuppressionSummary ? suppressionMessage : message,
-  )
+  const { status } = error as { status?: unknown }
+  return status === 401 || status === 403
 }
 
 export type WorkspaceRealtimeSubscribe = <K extends RealtimeEventName>(
@@ -211,10 +192,19 @@ export function WorkspaceRealtimeProvider({
   }, [])
 
   const getSocketUrl = useCallback(async (): Promise<string> => {
-    const { token } =
-      await client.realtimeAPI.mintWorkspaceConnectTokenAuthenticatedAPI({
-        workspaceId,
-      })
+    let token: string
+    try {
+      ;({ token } =
+        await client.realtimeAPI.mintWorkspaceConnectTokenAuthenticatedAPI({
+          workspaceId,
+        }))
+    } catch (error) {
+      if (isRealtimeAuthorizationError(error)) {
+        throw new RealtimeFatalError("Workspace realtime authorization revoked")
+      }
+      throw error
+    }
+
     const url = new URL(
       `rt/workspaces/${encodeURIComponent(workspaceId)}`,
       publicRealtimeUrl,
@@ -227,9 +217,23 @@ export function WorkspaceRealtimeProvider({
     return url.toString()
   }, [publicRealtimeUrl, workspaceId])
 
+  const handleSocketError = useCallback((error: unknown): void => {
+    const revoked = error instanceof RealtimeFatalError
+    logRealtimeWarning({
+      error,
+      message: "Workspace realtime: socket connection failed",
+      reason: revoked ? "socket-revoked" : "socket-error",
+      suppressionMessage: revoked
+        ? "Workspace realtime: further revoked socket warnings suppressed for this window"
+        : "Workspace realtime: further socket connection warnings suppressed for this window",
+    })
+    setStatus(revoked ? "revoked" : "closed")
+  }, [])
+
   useRealtimeSocket({
     connectionKey: `${publicRealtimeUrl}:${workspaceId}`,
     getUrl: getSocketUrl,
+    onError: handleSocketError,
     onClose: (event) => {
       setStatus(
         event.code === REALTIME_CLOSE_CODE.revoked ? "revoked" : "closed",

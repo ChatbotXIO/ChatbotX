@@ -15,7 +15,9 @@ vi.mock("../src/logger", () => ({
 
 // Dynamic import so vi.mock("../src/logger") above is applied before the
 // module under test (and its static `import { logger }`) is evaluated.
-const { createStreamReader } = await import("../src/stream-reader")
+const { createStreamReader, parseStreamRecord } = await import(
+  "../src/stream-reader"
+)
 
 type RedisCall = (...arguments_: string[]) => Promise<unknown>
 
@@ -74,7 +76,7 @@ describe("stream reader", () => {
                 [
                   "record",
                   JSON.stringify({
-                    events: [{ data: {}, eventType: "messageCreated" }],
+                    events: [{ data: {}, eventType: "typing" }],
                     kind: "workspace-events",
                     workspaceId: `workspace-${index + 1}`,
                   }),
@@ -142,7 +144,7 @@ describe("stream reader", () => {
                 [
                   "record",
                   JSON.stringify({
-                    events: [{ data: {}, eventType: "messageCreated" }],
+                    events: [{ data: {}, eventType: "typing" }],
                     kind: "workspace-events",
                     workspaceId: "workspace-1",
                   }),
@@ -205,7 +207,7 @@ describe("stream reader", () => {
                   [
                     "record",
                     JSON.stringify({
-                      events: [{ data: {}, eventType: "messageCreated" }],
+                      events: [{ data: {}, eventType: "typing" }],
                       kind: "workspace-events",
                       workspaceId: "workspace-1",
                     }),
@@ -248,6 +250,34 @@ describe("stream reader", () => {
     expect(loggerErrorMock.mock.calls[0]?.[0]).toMatchObject({ id: "1-0" })
   })
 
+  test("drops routeless and targeted-only events while preserving valid workspace events", () => {
+    const parsed = parseStreamRecord([
+      "record",
+      JSON.stringify({
+        events: [
+          { data: { typing: true }, eventType: "typing" },
+          { data: { id: "missing-route" }, eventType: "messageCreated" },
+          {
+            data: { callId: "call-1" },
+            eventType: "whatsappCallTransportIncoming",
+          },
+        ],
+        kind: "workspace-events",
+        workspaceId: "workspace-1",
+      }),
+    ])
+
+    expect(parsed).toMatchObject({
+      droppedCount: 2,
+      ok: true,
+      record: {
+        events: [{ data: { typing: true }, eventType: "typing" }],
+        kind: "workspace-events",
+        workspaceId: "workspace-1",
+      },
+    })
+  })
+
   test("drops only the invalid envelope within a coalesced workspace-events record, keeping the valid ones", async () => {
     // Regression for PR #1349 finding #4: the old all-or-nothing array
     // schema rejected an entire coalesced batch if any one event envelope
@@ -281,7 +311,7 @@ describe("stream reader", () => {
                     "record",
                     JSON.stringify({
                       events: [
-                        { data: { id: "ok" }, eventType: "messageCreated" },
+                        { data: { id: "ok" }, eventType: "typing" },
                         { data: {}, eventType: 123 },
                       ],
                       kind: "workspace-events",
@@ -327,9 +357,7 @@ describe("stream reader", () => {
     await dispatchedRecords
     await streamReader.close()
 
-    expect(dispatched).toEqual([
-      { data: { id: "ok" }, eventType: "messageCreated" },
-    ])
+    expect(dispatched).toEqual([{ data: { id: "ok" }, eventType: "typing" }])
     // The valid event is still delivered (the point of per-event
     // tolerance), but the dropped invalid envelope is no longer silent: it's
     // reported through `onInvalidRecord` same as a fully-unparseable entry,
@@ -376,7 +404,7 @@ describe("stream reader", () => {
                   [
                     "record",
                     JSON.stringify({
-                      events: [{ data: {}, eventType: "messageCreated" }],
+                      events: [{ data: {}, eventType: "typing" }],
                       kind: "workspace-events",
                       workspaceId: "workspace-1",
                     }),
@@ -427,7 +455,7 @@ describe("stream reader", () => {
       [
         "record",
         JSON.stringify({
-          events: [{ data: {}, eventType: "messageCreated" }],
+          events: [{ data: {}, eventType: "typing" }],
           kind: "workspace-events",
           workspaceId,
         }),

@@ -9,6 +9,7 @@ import {
 } from "@chatbotx.io/realtime-protocol"
 import { useCallback, useRef } from "react"
 import type { MessageResource } from "../messages/schema/resource"
+import { logRealtimeWarning } from "../realtime/realtime-warn-limiter"
 import { useRealtimeSocket } from "../realtime/use-realtime-socket"
 import { useTenantSettings } from "../tenant"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
@@ -26,6 +27,23 @@ type WebchatRealtimeProps = {
   workspaceId: string
 }
 
+export const reloadGuestSessionAfterFatalRealtimeError = ({
+  error,
+  hasOpened,
+  reload,
+}: {
+  error: unknown
+  hasOpened: boolean
+  reload: () => void
+}): boolean => {
+  if (!(error instanceof RealtimeFatalError && hasOpened)) {
+    return false
+  }
+
+  reload()
+  return true
+}
+
 export function WebchatRealtime({
   accessToken,
   guestConversationId,
@@ -39,6 +57,7 @@ export function WebchatRealtime({
   )
   const frameReaderRef =
     useRef<RealtimeFrameReader<GuestRealtimeEnvelope> | null>(null)
+  const hasOpenedOnceRef = useRef(false)
 
   const handleRealtimeEvent = useCallback(
     ({ data, eventType }: GuestRealtimeEnvelope): void => {
@@ -70,7 +89,15 @@ export function WebchatRealtime({
 
   if (!frameReaderRef.current) {
     frameReaderRef.current = createRealtimeFrameReader({
-      onParseError: () => undefined,
+      onParseError: (error) => {
+        logRealtimeWarning({
+          error,
+          message: "Webchat realtime: invalid batch frame",
+          reason: "guest-invalid-batch",
+          suppressionMessage:
+            "Webchat realtime: further invalid-batch warnings suppressed for this window",
+        })
+      },
       onResyncNeeded: () => {
         frameReaderRef.current?.reset()
       },
@@ -134,6 +161,20 @@ export function WebchatRealtime({
   useRealtimeSocket({
     connectionKey: `${publicRealtimeUrl}:${guestConversationId}`,
     getUrl: getSocketUrl,
+    onError: (error) => {
+      logRealtimeWarning({
+        error,
+        message: "Webchat realtime: socket connection failed",
+        reason: "guest-socket-error",
+        suppressionMessage:
+          "Webchat realtime: further socket connection warnings suppressed for this window",
+      })
+      reloadGuestSessionAfterFatalRealtimeError({
+        error,
+        hasOpened: hasOpenedOnceRef.current,
+        reload: () => window.location.reload(),
+      })
+    },
     onMessage: (data) => {
       const frames = frameReaderRef.current?.readFrame(data)
       if (!frames) {
@@ -142,6 +183,9 @@ export function WebchatRealtime({
       for (const frame of frames) {
         handleRealtimeEvent(frame)
       }
+    },
+    onOpen: () => {
+      hasOpenedOnceRef.current = true
     },
     onResync: () => {
       frameReaderRef.current?.reset()

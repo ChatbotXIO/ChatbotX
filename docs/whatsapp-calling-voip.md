@@ -292,12 +292,13 @@ the shared finalizer emit the transport-tagged ended event.
   ONE member per user — not per browser tab) is the VoIP ring-set source
   (`workspacePresenceService.listOnlineMembers`) — a user counts as "online" while
   their entry is renewed within `PRESENCE_TTL_MS` (20 s). Renewal is no longer a
-  per-browser-tab client heartbeat: each `apps/realtime` `workspaces` room reports its
-  distinct connected user ids to the builder every 20 s (`WorkspaceParty`'s alarm loop
-  → `POST /api/workspace-presence/report` → `workspacePresenceService.heartbeatMany`,
-  one Redis round-trip for the whole batch), so request volume scales with active
-  workspaces, not agent count. Matches a widely used online-status-tracker model: there is
-  deliberately no explicit sign-off — a crashed/closed/backgrounded tab simply stops
+  per-browser-tab client heartbeat: `apps/realtime/src/lib/presence-report.ts`
+  reports each gateway room's distinct connected user ids to the builder every
+  10 s (`PRESENCE_REPORT_INTERVAL_MS` → `POST /api/workspace-presence/report`
+  → `workspacePresenceService.heartbeatMany`, one Redis round-trip for the whole
+  batch), so request volume scales with active workspaces, not agent count. Matches a
+  widely used online-status-tracker model: there is deliberately no explicit sign-off —
+  a crashed/closed/backgrounded tab simply stops
   being reported and drops out once the TTL lapses (see §9 of the parity plan for the
   record of both owner-directed simplifications), and `presenceStore.heartbeatMany`
   also prunes every already-expired member on each write (not only on a

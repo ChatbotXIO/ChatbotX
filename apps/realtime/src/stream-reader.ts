@@ -4,8 +4,8 @@ import {
   isRealtimeSeqAfter,
   type RealtimeEventEnvelope,
   type RealtimeStreamRecord,
-  realtimeEventEnvelopeSchema,
   realtimeStreamRecordSchema,
+  realtimeWorkspaceEventEnvelopeSchema,
 } from "@chatbotx.io/realtime-protocol"
 import type { Redis } from "@chatbotx.io/redis"
 import { z } from "zod"
@@ -125,7 +125,7 @@ export const parseStreamRecord = (
     if (Array.isArray(rawEvents)) {
       const validEvents: RealtimeEventEnvelope[] = []
       for (const rawEvent of rawEvents) {
-        const result = realtimeEventEnvelopeSchema.safeParse(rawEvent)
+        const result = realtimeWorkspaceEventEnvelopeSchema.safeParse(rawEvent)
         if (result.success) {
           validEvents.push(result.data)
         }

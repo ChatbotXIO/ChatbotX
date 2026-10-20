@@ -46,7 +46,6 @@ export type GuestSessionState = {
 export type GuestSessionActions = {
   setGuestUser: (user: UserResource) => void
   initGuestSession: (serverGuestConversationId: string) => void
-
   // messages
   appendMessage: (message: Partial<MessageResource>) => MessageResource
   loadMoreMessages: (

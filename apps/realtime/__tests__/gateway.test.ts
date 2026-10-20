@@ -958,7 +958,7 @@ describe("createRealtimeGateway (live)", () => {
       [
         "record",
         JSON.stringify({
-          events: [{ data: {}, eventType: "messageCreated" }],
+          events: [{ data: {}, eventType: "typing" }],
           kind: "workspace-events",
           workspaceId,
         }),
