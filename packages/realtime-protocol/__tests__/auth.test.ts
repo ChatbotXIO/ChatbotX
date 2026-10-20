@@ -87,7 +87,7 @@ describe("signPresenceReportToken / verifyPresenceReportToken (generic sign/veri
         workspaceId: "ws_1",
         userId: "u_1",
         chatScope: "all",
-        issuedAtMs: 1_700_000_000_000,
+        issuedAtMs: Date.now(),
       },
       SECRET,
     )
@@ -113,8 +113,7 @@ describe("signPresenceReportToken / verifyPresenceReportToken (generic sign/veri
 
 describe("signMemberConnectToken / verifyMemberConnectToken", () => {
   it("preserves the pre-membership-read millisecond issue time", async () => {
-    const issuedAtMs = 1_700_000_000_123
-    const dateNow = vi.spyOn(Date, "now").mockReturnValue(issuedAtMs + 500)
+    const issuedAtMs = Date.now() - 500
     const token = await signMemberConnectToken(
       {
         workspaceId: "ws_1",
@@ -125,7 +124,6 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
       SECRET,
     )
     const claims = await verifyMemberConnectToken(token, "ws_1", SECRET)
-    dateNow.mockRestore()
 
     expect(claims).toEqual({
       userId: "u_1",
@@ -163,7 +161,7 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
         userId: "u_1",
         chatScope: "assigned",
         teamIds: ["team_1", "team_2"],
-        issuedAtMs: 1_700_000_000_000,
+        issuedAtMs: Date.now(),
       },
       SECRET,
     )
@@ -185,7 +183,7 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
         workspaceId: "ws_1",
         userId: "u_1",
         chatScope: "all",
-        issuedAtMs: 1_700_000_000_000,
+        issuedAtMs: Date.now(),
       },
       SECRET,
     )
@@ -237,7 +235,7 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
         workspaceId: "ws_1",
         userId: "u_1",
         chatScope: "all",
-        issuedAtMs: 1_700_000_000_000,
+        issuedAtMs: Date.now(),
       },
       SECRET,
     )
@@ -266,7 +264,7 @@ describe("signMemberConnectToken / verifyMemberConnectToken", () => {
         workspaceId: "ws_1",
         userId: "u_1",
         chatScope: "all",
-        issuedAtMs: 1_700_000_000_000,
+        issuedAtMs: Date.now(),
       },
       SECRET,
     )
