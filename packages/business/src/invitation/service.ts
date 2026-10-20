@@ -20,6 +20,17 @@ class InvitationService extends BaseService {
     return invitation
   }
 
+  /** The invitation behind a code, or `null` when unknown, expired, or workspace-less. */
+  async findActiveByCode(code: string): Promise<InvitationModel | null> {
+    const invitation = await db.query.invitationModel.findFirst({
+      where: { code },
+    })
+    if (!invitation?.workspaceId || invitation.expiresAt < new Date()) {
+      return null
+    }
+    return invitation
+  }
+
   /** Issues a new shareable invite code for the workspace. */
   async create(props: {
     workspaceId: string

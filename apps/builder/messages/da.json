@@ -4131,6 +4131,7 @@
     "orContinueWith": "Eller fortsæt med",
     "continueWithFacebook": "Fortsæt med Facebook",
     "continueWithGoogle": "Fortsæt med Google",
+    "continueWithProvider": "Fortsæt med {name}",
     "continueWithEmail": "Fortsæt med e-mail",
     "continueWithMagicLink": "Fortsæt med magisk link",
     "dontHaveAnAccount": "Don't har an konto?",
@@ -4161,11 +4162,15 @@
     "changePasswordTitle": "Change din adgangskode",
     "changePasswordDescription": "Set a ny adgangskode før continuing.",
     "passwordChangeSuccess": "Adgangskode changed",
+    "signUpDisabledTitle": "Registrering er deaktiveret",
+    "signUpDisabledDescription": "Nye konti kan kun oprettes af en administrator eller via et invitationslink.",
     "oauthError": {
       "accountNotLinked": "Der findes allerede en konto med denne e-mailadresse, og den kunne ikke kobles. Log ind på samme måde som tidligere, eller kontakt support.",
       "unableToLinkAccount": "Vi kunne ikke koble dette login til den eksisterende konto. Log ind på samme måde som før, eller kontakt support.",
       "sessionExpired": "Loginforsøget er udløbet. Prøv igen.",
       "accessDenied": "Login blev annulleret.",
+      "signUpDisabled": "Denne konto findes ikke endnu, og registrering er deaktiveret. Bed en administrator om at oprette den for dig.",
+      "invalidInvitation": "Denne invitation er ugyldig eller udløbet.",
       "generic": "Login mislykkedes. Prøv igen."
     }
   },
@@ -4795,7 +4800,8 @@
     "chatbotInvitationDescription1": "Join {chatbotName}",
     "chatbotInvitationDescription2": "{userName} har invited du til join {chatbotName}.",
     "invalidInvitation": "Denne invitation er ugyldig eller har udløbet.",
-    "workspaceUnavailable": "Denne arbejdsområde er ingen longer tilgængelig."
+    "workspaceUnavailable": "Denne arbejdsområde er ingen longer tilgængelig.",
+    "signUpToJoin": "Opret en konto for at deltage"
   },
   "inboxes": {
     "markReadOnOutbound": {

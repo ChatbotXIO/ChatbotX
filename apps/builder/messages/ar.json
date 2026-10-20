@@ -4131,6 +4131,7 @@
     "orContinueWith": "أو المتابعة باستخدام",
     "continueWithFacebook": "المتابعة باستخدام Facebook",
     "continueWithGoogle": "المتابعة باستخدام Google",
+    "continueWithProvider": "المتابعة باستخدام {name}",
     "continueWithEmail": "المتابعة باستخدام البريد الإلكتروني",
     "continueWithMagicLink": "المتابعة باستخدام رابط سحري",
     "dontHaveAnAccount": "ليس لديك حساب؟",
@@ -4161,11 +4162,15 @@
     "changePasswordTitle": "تغيير كلمة المرور",
     "changePasswordDescription": "عيّن كلمة مرور جديدة قبل المتابعة.",
     "passwordChangeSuccess": "تم تغيير كلمة المرور",
+    "signUpDisabledTitle": "تم تعطيل إنشاء الحساب",
+    "signUpDisabledDescription": "لا يمكن إنشاء حسابات جديدة إلا بواسطة مسؤول أو عبر رابط دعوة.",
     "oauthError": {
       "accountNotLinked": "يوجد حساب بهذا البريد الإلكتروني بالفعل وتعذر ربطه. سجّل الدخول بالطريقة التي استخدمتها سابقًا، أو تواصل مع الدعم.",
       "unableToLinkAccount": "تعذر ربط عملية تسجيل الدخول هذه بالحساب الحالي. سجّل الدخول بالطريقة التي استخدمتها سابقًا، أو تواصل مع الدعم.",
       "sessionExpired": "انتهت صلاحية محاولة تسجيل الدخول. يرجى المحاولة مرة أخرى.",
       "accessDenied": "تم إلغاء تسجيل الدخول.",
+      "signUpDisabled": "هذا الحساب غير موجود بعد وتم تعطيل إنشاء الحساب. اطلب من المسؤول إنشاءه لك.",
+      "invalidInvitation": "هذه الدعوة غير صالحة أو انتهت صلاحيتها.",
       "generic": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى."
     }
   },
@@ -4795,7 +4800,8 @@
     "chatbotInvitationDescription1": "الانضمام إلى {chatbotName}",
     "chatbotInvitationDescription2": "دعاك {userName} للانضمام إلى {chatbotName}.",
     "invalidInvitation": "هذه الدعوة غير صالحة أو انتهت صلاحيتها.",
-    "workspaceUnavailable": "مساحة العمل هذه لم تعد متاحة."
+    "workspaceUnavailable": "مساحة العمل هذه لم تعد متاحة.",
+    "signUpToJoin": "أنشئ حسابًا للانضمام"
   },
   "inboxes": {
     "markReadOnOutbound": {

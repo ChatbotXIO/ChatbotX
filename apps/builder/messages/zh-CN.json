@@ -606,6 +606,7 @@
     "continueWithEmail": "继续使用电子邮件",
     "continueWithFacebook": "继续使用 Facebook",
     "continueWithGoogle": "继续使用 Google",
+    "continueWithProvider": "继续使用 {name}",
     "continueWithMagicLink": "继续使用 Magic Link",
     "didNotReceiveEmail": "没有收到电子邮件？请检查垃圾邮件文件夹。",
     "dontHaveAnAccount": "还没有帐号？",
@@ -630,11 +631,15 @@
     "signUpTitle": "注册 {name}",
     "termsOfService": "服务条款",
     "trySigningInAgain": "您也可以尝试改用其他电子邮件再次登录。",
+    "signUpDisabledTitle": "注册已禁用",
+    "signUpDisabledDescription": "新账户只能由管理员创建或通过邀请链接创建。",
     "oauthError": {
       "accountNotLinked": "使用此邮箱的账户已存在，无法关联。请使用之前的方式登录，或联系支持人员。",
       "unableToLinkAccount": "我们无法将此次登录关联到现有账户。请使用您之前的方式登录，或联系支持人员。",
       "sessionExpired": "登录尝试已过期。请重试。",
       "accessDenied": "登录已取消。",
+      "signUpDisabled": "此账户尚不存在，且注册已禁用。请让管理员为您创建账户。",
+      "invalidInvitation": "此邀请无效或已过期。",
       "generic": "登录失败。请重试。"
     }
   },
@@ -4365,7 +4370,8 @@
     "chatbotInvitationDescription1": "加入 {chatbotName}",
     "chatbotInvitationDescription2": "{userName} 邀请您加入 {chatbotName}。",
     "invalidInvitation": "此邀请无效或已过期。",
-    "workspaceUnavailable": "此工作区不再可用。"
+    "workspaceUnavailable": "此工作区不再可用。",
+    "signUpToJoin": "创建账户以加入"
   },
   "keywords": {
     "descriptions": {

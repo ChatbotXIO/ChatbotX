@@ -4131,6 +4131,7 @@
     "orContinueWith": "Of ga verder met",
     "continueWithFacebook": "Doorgaan met Facebook",
     "continueWithGoogle": "Doorgaan met Google",
+    "continueWithProvider": "Doorgaan met {name}",
     "continueWithEmail": "Doorgaan met e-mail",
     "continueWithMagicLink": "Doorgaan met magische link",
     "dontHaveAnAccount": "Heb je nog geen account?",
@@ -4161,11 +4162,15 @@
     "changePasswordTitle": "Je wachtwoord wijzigen",
     "changePasswordDescription": "Stel een nieuw wachtwoord in voordat je verdergaat.",
     "passwordChangeSuccess": "Wachtwoord gewijzigd",
+    "signUpDisabledTitle": "Aanmelden is uitgeschakeld",
+    "signUpDisabledDescription": "Nieuwe accounts kunnen alleen door een beheerder of via een uitnodigingslink worden aangemaakt.",
     "oauthError": {
       "accountNotLinked": "Er bestaat al een account met dit e-mailadres en het kon niet worden gekoppeld. Log in zoals je eerder deed of neem contact op met support.",
       "unableToLinkAccount": "We konden deze aanmelding niet aan het bestaande account koppelen. Meld je aan zoals je eerder deed, of neem contact op met support.",
       "sessionExpired": "De aanmeldpoging is verlopen. Probeer het opnieuw.",
       "accessDenied": "Aanmelden is geannuleerd.",
+      "signUpDisabled": "Dit account bestaat nog niet en aanmelden is uitgeschakeld. Vraag een beheerder om het voor je aan te maken.",
+      "invalidInvitation": "Deze uitnodiging is ongeldig of verlopen.",
       "generic": "Aanmelden mislukt. Probeer het opnieuw."
     }
   },
@@ -4795,7 +4800,8 @@
     "chatbotInvitationDescription1": "Word lid van {chatbotName}",
     "chatbotInvitationDescription2": "{userName} heeft je uitgenodigd om lid te worden van {chatbotName}.",
     "invalidInvitation": "Deze uitnodiging is ongeldig of verlopen.",
-    "workspaceUnavailable": "Deze workspace is niet meer beschikbaar."
+    "workspaceUnavailable": "Deze workspace is niet meer beschikbaar.",
+    "signUpToJoin": "Maak een account aan om deel te nemen"
   },
   "inboxes": {
     "markReadOnOutbound": {

@@ -4131,6 +4131,7 @@
     "orContinueWith": "Oppure continua con",
     "continueWithFacebook": "Continua con Facebook",
     "continueWithGoogle": "Continua con Google",
+    "continueWithProvider": "Continua con {name}",
     "continueWithEmail": "Continua con Email",
     "continueWithMagicLink": "Continua con Magic Link",
     "dontHaveAnAccount": "Non hai un account?",
@@ -4161,11 +4162,15 @@
     "changePasswordTitle": "Cambia la password",
     "changePasswordDescription": "Imposta una nuova password prima di continuare.",
     "passwordChangeSuccess": "Password modificata",
+    "signUpDisabledTitle": "La registrazione è disabilitata",
+    "signUpDisabledDescription": "I nuovi account possono essere creati solo da un amministratore o tramite un link di invito.",
     "oauthError": {
       "accountNotLinked": "Esiste già un account con questa email e non è stato possibile collegarlo. Accedi come hai fatto in precedenza oppure contatta il supporto.",
       "unableToLinkAccount": "Non è stato possibile collegare questo accesso all'account esistente. Accedi come hai fatto in precedenza oppure contatta il supporto.",
       "sessionExpired": "Il tentativo di accesso è scaduto. Riprova.",
       "accessDenied": "L'accesso è stato annullato.",
+      "signUpDisabled": "Questo account non esiste ancora e la registrazione è disabilitata. Chiedi a un amministratore di crearlo per te.",
+      "invalidInvitation": "Questo invito non è valido o è scaduto.",
       "generic": "Accesso non riuscito. Riprova."
     }
   },
@@ -4795,7 +4800,8 @@
     "chatbotInvitationDescription1": "Unisciti a {chatbotName}",
     "chatbotInvitationDescription2": "{userName} ti ha invitato a unirti a {chatbotName}.",
     "invalidInvitation": "Questo invito non è valido o è scaduto.",
-    "workspaceUnavailable": "Questa area di lavoro non è più disponibile."
+    "workspaceUnavailable": "Questa area di lavoro non è più disponibile.",
+    "signUpToJoin": "Crea un account per partecipare"
   },
   "inboxes": {
     "markReadOnOutbound": {

@@ -4131,6 +4131,7 @@
     "orContinueWith": "Atau lanjutkan dengan",
     "continueWithFacebook": "Lanjutkan dengan Facebook",
     "continueWithGoogle": "Lanjutkan dengan Google",
+    "continueWithProvider": "Lanjutkan dengan {name}",
     "continueWithEmail": "Lanjutkan dengan Email",
     "continueWithMagicLink": "Lanjutkan dengan Magic Link",
     "dontHaveAnAccount": "Belum memiliki akun?",
@@ -4161,11 +4162,15 @@
     "changePasswordTitle": "Ubah kata sandi Anda",
     "changePasswordDescription": "Tetapkan kata sandi baru sebelum melanjutkan.",
     "passwordChangeSuccess": "Kata sandi diubah",
+    "signUpDisabledTitle": "Pendaftaran dinonaktifkan",
+    "signUpDisabledDescription": "Akun baru hanya dapat dibuat oleh administrator atau melalui tautan undangan.",
     "oauthError": {
       "accountNotLinked": "Akun dengan email ini sudah ada dan tidak dapat ditautkan. Masuk dengan cara yang Anda gunakan sebelumnya, atau hubungi dukungan.",
       "unableToLinkAccount": "Kami tidak dapat menautkan login ini ke akun yang sudah ada. Masuklah dengan cara yang Anda gunakan sebelumnya, atau hubungi dukungan.",
       "sessionExpired": "Percobaan login telah kedaluwarsa. Silakan coba lagi.",
       "accessDenied": "Login dibatalkan.",
+      "signUpDisabled": "Akun ini belum ada dan pendaftaran dinonaktifkan. Minta administrator untuk membuatnya bagi Anda.",
+      "invalidInvitation": "Undangan ini tidak valid atau sudah kedaluwarsa.",
       "generic": "Login gagal. Silakan coba lagi."
     }
   },
@@ -4795,7 +4800,8 @@
     "chatbotInvitationDescription1": "Bergabung dengan {chatbotName}",
     "chatbotInvitationDescription2": "{userName} mengundang Anda untuk bergabung dengan {chatbotName}.",
     "invalidInvitation": "Undangan ini tidak valid atau telah kedaluwarsa.",
-    "workspaceUnavailable": "Ruang kerja ini tidak lagi tersedia."
+    "workspaceUnavailable": "Ruang kerja ini tidak lagi tersedia.",
+    "signUpToJoin": "Buat akun untuk bergabung"
   },
   "inboxes": {
     "markReadOnOutbound": {

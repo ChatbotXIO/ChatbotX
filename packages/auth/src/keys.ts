@@ -1,3 +1,4 @@
+import { parseEnvBool } from "@chatbotx.io/utils"
 import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 
@@ -12,6 +13,16 @@ export const keys = () =>
       // the originating domain. Optional: falls back to NEXT_PUBLIC_BUILDER_URL so
       // single-domain deploys keep working.
       NEXT_PUBLIC_BROKER_URL: z.url().optional(),
+      AUTH_DISABLE_SIGNUP: z.stringbool().default(false),
+      AUTH_OAUTH_ENABLED: z.stringbool().default(false),
+      AUTH_OAUTH_CLIENT_ID: z.string().optional(),
+      AUTH_OAUTH_CLIENT_SECRET: z.string().optional(),
+      AUTH_OAUTH_DISCOVERY_URL: z.url().optional(),
+      AUTH_OAUTH_AUTH_URL: z.url().optional(),
+      AUTH_OAUTH_TOKEN_URL: z.url().optional(),
+      AUTH_OAUTH_USERINFO_URL: z.url().optional(),
+      AUTH_OAUTH_SCOPES: z.string().optional().default("openid,email,profile"),
+      AUTH_OAUTH_TRUST_EMAIL: z.stringbool().default(false),
       BETTER_AUTH_SECRET: z.string(),
     },
     runtimeEnv: process.env,
@@ -28,3 +39,7 @@ export const env = keys()
  */
 export const getBrokerUrl = (): string =>
   env.NEXT_PUBLIC_BROKER_URL ?? env.NEXT_PUBLIC_BUILDER_URL
+
+/** Whether self-service account creation is disabled. */
+export const isSignUpDisabled = (): boolean =>
+  parseEnvBool(env.AUTH_DISABLE_SIGNUP)

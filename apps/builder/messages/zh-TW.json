@@ -4164,6 +4164,7 @@
     "orContinueWith": "或繼續使用",
     "continueWithFacebook": "繼續使用 Facebook",
     "continueWithGoogle": "繼續使用 Google",
+    "continueWithProvider": "繼續使用 {name}",
     "continueWithEmail": "繼續使用電子郵件",
     "continueWithMagicLink": "繼續使用 Magic Link",
     "dontHaveAnAccount": "還沒有帳號？",
@@ -4194,11 +4195,15 @@
     "changePasswordTitle": "更改密碼",
     "changePasswordDescription": "在繼續之前設定新密碼。",
     "passwordChangeSuccess": "密碼已更改",
+    "signUpDisabledTitle": "註冊已停用",
+    "signUpDisabledDescription": "新帳戶只能由管理員建立，或透過邀請連結建立。",
     "oauthError": {
       "accountNotLinked": "使用此電子郵件的帳戶已存在，無法連結。請使用之前的方式登入，或聯絡支援人員。",
       "unableToLinkAccount": "我們無法將此次登入連結到現有帳戶。請使用您之前的方式登入，或聯絡支援人員。",
       "sessionExpired": "登入嘗試已逾時。請重試。",
       "accessDenied": "登入已取消。",
+      "signUpDisabled": "此帳戶尚不存在，且註冊已停用。請要求管理員為您建立帳戶。",
+      "invalidInvitation": "此邀請無效或已過期。",
       "generic": "登入失敗。請重試。"
     }
   },
@@ -4828,7 +4833,8 @@
     "chatbotInvitationDescription1": "加入 {chatbotName}",
     "chatbotInvitationDescription2": "{userName} 邀請您加入 {chatbotName}。",
     "invalidInvitation": "此邀請無效或已過期。",
-    "workspaceUnavailable": "此工作區不再可用。"
+    "workspaceUnavailable": "此工作區不再可用。",
+    "signUpToJoin": "建立帳戶以加入"
   },
   "inboxes": {
     "markReadOnOutbound": {

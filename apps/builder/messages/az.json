@@ -4813,6 +4813,7 @@
     "orContinueWith": "Və ya bununla davam edin",
     "continueWithFacebook": "Facebook ilə davam et",
     "continueWithGoogle": "Google ilə davam et",
+    "continueWithProvider": "{name} ilə davam et",
     "continueWithEmail": "E-poçt ilə davam et",
     "continueWithMagicLink": "Sehrli keçid ilə davam et",
     "dontHaveAnAccount": "Hesabınız yoxdur?",
@@ -4843,11 +4844,15 @@
     "changePasswordTitle": "Parolunu dəyiş",
     "changePasswordDescription": "Davam etməzdən əvvəl yeni parol təyin edin.",
     "passwordChangeSuccess": "Parol dəyişdirildi",
+    "signUpDisabledTitle": "Qeydiyyat deaktiv edilib",
+    "signUpDisabledDescription": "Yeni hesablar yalnız administrator tərəfindən və ya dəvət linki ilə yaradıla bilər.",
     "oauthError": {
       "accountNotLinked": "Bu e-poçtla hesab artıq mövcuddur və əlaqələndirilə bilmədi. Əvvəl necə daxil olmusunuzsa, o üsulla daxil olun və ya dəstəklə əlaqə saxlayın.",
       "unableToLinkAccount": "Bu girişi mövcud hesabla əlaqələndirə bilmədik. Əvvəl necə daxil olmusunuzsa, eyni üsulla daxil olun və ya dəstəklə əlaqə saxlayın.",
       "sessionExpired": "Giriş cəhdinin vaxtı bitdi. Zəhmət olmasa yenidən cəhd edin.",
       "accessDenied": "Giriş ləğv edildi.",
+      "signUpDisabled": "Bu hesab hələ mövcud deyil və qeydiyyat deaktiv edilib. Administratorunuzdan onu sizin üçün yaratmasını istəyin.",
+      "invalidInvitation": "Bu dəvət etibarsızdır və ya müddəti bitib.",
       "generic": "Giriş uğursuz oldu. Zəhmət olmasa yenidən cəhd edin."
     }
   },
@@ -5477,7 +5482,8 @@
     "chatbotInvitationDescription1": "{chatbotName} botuna qoşul",
     "chatbotInvitationDescription2": "{userName} sizi {chatbotName} botuna qoşulmağa dəvət edib.",
     "invalidInvitation": "Bu dəvət etibarsızdır və ya müddəti bitib.",
-    "workspaceUnavailable": "Bu iş sahəsi artıq əlçatan deyil."
+    "workspaceUnavailable": "Bu iş sahəsi artıq əlçatan deyil.",
+    "signUpToJoin": "Qoşulmaq üçün hesab yaradın"
   },
   "inboxes": {
     "markReadOnOutbound": {

@@ -78,6 +78,9 @@ type EmailAttestation = (account: { idToken?: unknown }) => boolean
 const EMAIL_ATTESTATION_BY_PROVIDER: Record<string, EmailAttestation> = {
   google: (account) => isEmailAttestedByIdToken(account.idToken),
   facebook: () => true,
+  // better-auth permits this link only after the IdP attests email_verified or
+  // the operator explicitly enables AUTH_OAUTH_TRUST_EMAIL.
+  oidc: () => true,
 }
 
 /**

@@ -4131,6 +4131,7 @@
     "orContinueWith": "Tai jatka käyttäen",
     "continueWithFacebook": "Jatka Facebookilla",
     "continueWithGoogle": "Jatka Googlella",
+    "continueWithProvider": "Jatka palvelulla {name}",
     "continueWithEmail": "Jatka sähköpostilla",
     "continueWithMagicLink": "Jatka taikalinkillä",
     "dontHaveAnAccount": "Eikö sinulla ole tiliä?",
@@ -4161,11 +4162,15 @@
     "changePasswordTitle": "Vaihda salasanasi",
     "changePasswordDescription": "Aseta uusi salasana ennen jatkamista.",
     "passwordChangeSuccess": "Salasana vaihdettu",
+    "signUpDisabledTitle": "Rekisteröityminen on poistettu käytöstä",
+    "signUpDisabledDescription": "Uusia tilejä voi luoda vain järjestelmänvalvoja tai kutsulinkin kautta.",
     "oauthError": {
       "accountNotLinked": "Tällä sähköpostiosoitteella on jo tili, eikä sitä voitu yhdistää. Kirjaudu sisään samalla tavalla kuin aiemmin tai ota yhteyttä tukeen.",
       "unableToLinkAccount": "Tätä kirjautumista ei voitu yhdistää olemassa olevaan tiliin. Kirjaudu samalla tavalla kuin aiemmin tai ota yhteyttä tukeen.",
       "sessionExpired": "Kirjautumisyritys vanheni. Yritä uudelleen.",
       "accessDenied": "Kirjautuminen peruutettiin.",
+      "signUpDisabled": "Tätä tiliä ei vielä ole, ja rekisteröityminen on poistettu käytöstä. Pyydä järjestelmänvalvojaa luomaan se sinulle.",
+      "invalidInvitation": "Tämä kutsu on virheellinen tai vanhentunut.",
       "generic": "Kirjautuminen epäonnistui. Yritä uudelleen."
     }
   },
@@ -4795,7 +4800,8 @@
     "chatbotInvitationDescription1": "Liity kohteeseen {chatbotName}",
     "chatbotInvitationDescription2": "{userName} on kutsunut sinut liittymään kohteeseen {chatbotName}.",
     "invalidInvitation": "Tämä kutsu on virheellinen tai vanhentunut.",
-    "workspaceUnavailable": "Tämä työtila ei ole enää käytettävissä."
+    "workspaceUnavailable": "Tämä työtila ei ole enää käytettävissä.",
+    "signUpToJoin": "Luo tili liittyäksesi"
   },
   "inboxes": {
     "markReadOnOutbound": {

@@ -4131,6 +4131,7 @@
     "orContinueWith": "Veya şununla devam et",
     "continueWithFacebook": "Facebook ile devam et",
     "continueWithGoogle": "Google ile devam et",
+    "continueWithProvider": "{name} ile devam et",
     "continueWithEmail": "E-posta ile devam et",
     "continueWithMagicLink": "Sihirli Bağlantıyla devam et",
     "dontHaveAnAccount": "Hesabınız yok mu?",
@@ -4161,11 +4162,15 @@
     "changePasswordTitle": "Şifrenizi değiştirin",
     "changePasswordDescription": "Devam etmeden önce yeni bir şifre belirleyin.",
     "passwordChangeSuccess": "Şifre değiştirildi",
+    "signUpDisabledTitle": "Kayıt olma devre dışı",
+    "signUpDisabledDescription": "Yeni hesaplar yalnızca bir yönetici tarafından veya davet bağlantısı aracılığıyla oluşturulabilir.",
     "oauthError": {
       "accountNotLinked": "Bu e-postaya sahip bir hesap zaten var ve bağlanamadı. Daha önce kullandığınız yöntemle giriş yapın veya destekle iletişime geçin.",
       "unableToLinkAccount": "Bu girişi mevcut hesapla bağlayamadık. Daha önce kullandığınız yöntemle giriş yapın veya destekle iletişime geçin.",
       "sessionExpired": "Giriş denemesinin süresi doldu. Lütfen tekrar deneyin.",
       "accessDenied": "Giriş iptal edildi.",
+      "signUpDisabled": "Bu hesap henüz mevcut değil ve kayıt olma devre dışı. Bir yöneticiden sizin için oluşturmasını isteyin.",
+      "invalidInvitation": "Bu davet geçersiz veya süresi dolmuş.",
       "generic": "Giriş başarısız oldu. Lütfen tekrar deneyin."
     }
   },
@@ -4795,7 +4800,8 @@
     "chatbotInvitationDescription1": "{chatbotName}'a katılın",
     "chatbotInvitationDescription2": "{userName}, sizi {chatbotName}'a katılmaya davet etti.",
     "invalidInvitation": "Bu davet geçersiz veya süresi dolmuş.",
-    "workspaceUnavailable": "Bu çalışma alanı artık kullanılamıyor."
+    "workspaceUnavailable": "Bu çalışma alanı artık kullanılamıyor.",
+    "signUpToJoin": "Katılmak için hesap oluşturun"
   },
   "inboxes": {
     "markReadOnOutbound": {

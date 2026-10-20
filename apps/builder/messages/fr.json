@@ -4131,6 +4131,7 @@
     "orContinueWith": "Ou continuer avec",
     "continueWithFacebook": "Continuer avec Facebook",
     "continueWithGoogle": "Continuer avec Google",
+    "continueWithProvider": "Continuer avec {name}",
     "continueWithEmail": "Continuer avec l'e-mail",
     "continueWithMagicLink": "Continuer avec le lien magique",
     "dontHaveAnAccount": "Vous n’avez pas de compte ?",
@@ -4161,11 +4162,15 @@
     "changePasswordTitle": "Modifier votre mot de passe",
     "changePasswordDescription": "Définissez un nouveau mot de passe avant de continuer.",
     "passwordChangeSuccess": "Mot de passe modifié",
+    "signUpDisabledTitle": "L’inscription est désactivée",
+    "signUpDisabledDescription": "Les nouveaux comptes ne peuvent être créés que par un administrateur ou via un lien d’invitation.",
     "oauthError": {
       "accountNotLinked": "Un compte avec cette adresse e-mail existe déjà et n'a pas pu être associé. Connectez-vous comme auparavant ou contactez le support.",
       "unableToLinkAccount": "Nous n'avons pas pu associer cette connexion au compte existant. Connectez-vous de la manière dont vous l'avez fait auparavant, ou contactez le support.",
       "sessionExpired": "La tentative de connexion a expiré. Veuillez réessayer.",
       "accessDenied": "La connexion a été annulée.",
+      "signUpDisabled": "Ce compte n’existe pas encore et l’inscription est désactivée. Demandez à un administrateur de le créer pour vous.",
+      "invalidInvitation": "Cette invitation est invalide ou a expiré.",
       "generic": "Échec de la connexion. Veuillez réessayer."
     }
   },
@@ -4795,7 +4800,8 @@
     "chatbotInvitationDescription1": "Rejoignez {chatbotName}",
     "chatbotInvitationDescription2": "{userName} vous a invité à rejoindre {chatbotName}.",
     "invalidInvitation": "Cette invitation n’est pas valide ou a expiré.",
-    "workspaceUnavailable": "Cet espace de travail n’est plus disponible."
+    "workspaceUnavailable": "Cet espace de travail n’est plus disponible.",
+    "signUpToJoin": "Créez un compte pour rejoindre"
   },
   "inboxes": {
     "markReadOnOutbound": {

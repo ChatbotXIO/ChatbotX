@@ -11,8 +11,9 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@chatbotx.io/ui/components/ui/avatar"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
@@ -23,10 +24,12 @@ import { acceptInvitationAction } from "./actions/accept-invitation"
 
 export function InvitationCard({
   invitation,
+  isAuthenticated,
   workspace,
   user,
 }: {
   invitation: InvitationModel
+  isAuthenticated: boolean
   workspace: WorkspaceModel | null
   user: UserModel
 }) {
@@ -70,14 +73,23 @@ export function InvitationCard({
           >
             {t("actions.cancel")}
           </Button>
-          <Button
-            disabled={isPending || !canJoin}
-            onClick={() => execute({ code: invitation.code })}
-            type="button"
-            variant="default"
-          >
-            {t("actions.joinTheTeam")}
-          </Button>
+          {isAuthenticated ? (
+            <Button
+              disabled={isPending || !canJoin}
+              onClick={() => execute({ code: invitation.code })}
+              type="button"
+              variant="default"
+            >
+              {t("actions.joinTheTeam")}
+            </Button>
+          ) : (
+            <Link
+              className={buttonVariants()}
+              href={`/api/invitations/${invitation.code}/start`}
+            >
+              {t("invitation.signUpToJoin")}
+            </Link>
+          )}
         </div>
       </CardContent>
     </Card>

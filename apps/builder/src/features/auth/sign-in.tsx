@@ -13,7 +13,9 @@ import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { isCommunity } from "@/env"
+import { GenericOAuthSignIn } from "@/features/auth/generic-oauth-sign-in"
 import SSOSignIn from "@/features/auth/sso-sign-in"
+import type { GenericOAuthButton } from "@/lib/auth/generic-oauth"
 import { withCallbackUrlParam } from "@/lib/safe-callback-url"
 import { useTenantSettings } from "../tenant"
 import { EmailPasswordSignIn } from "./components/email-password-sign-in"
@@ -30,10 +32,14 @@ type SignInMethod = "email" | "magicLink"
 export type SignInFormProps = {
   /** Social providers configured for this tenant (own app or platform default). */
   enabledProviders?: SocialProvider[]
+  genericOAuth?: GenericOAuthButton | null
+  signUpEnabled?: boolean
 }
 
 export const SignInForm = ({
   enabledProviders = [],
+  genericOAuth = null,
+  signUpEnabled = true,
   ...props
 }: SignInFormProps) => {
   const t = useTranslations()
@@ -44,6 +50,7 @@ export const SignInForm = ({
     "/auth/sign-up",
     searchParams.get("callbackURL"),
   )
+  const hasSocialProviders = !isCommunity() && enabledProviders.length > 0
 
   return (
     <div className="flex flex-col gap-6" {...props}>
@@ -75,12 +82,16 @@ export const SignInForm = ({
               </>
             ) : (
               <>
-                {!isCommunity() && enabledProviders.length > 0 && (
-                  <>
-                    <SSOSignIn providers={enabledProviders} />
-                    <OrSeparator />
-                  </>
-                )}
+                {genericOAuth ? (
+                  <GenericOAuthSignIn
+                    displayName={genericOAuth.displayName}
+                    logoUrl={genericOAuth.logoUrl}
+                  />
+                ) : null}
+                {hasSocialProviders ? (
+                  <SSOSignIn providers={enabledProviders} />
+                ) : null}
+                {genericOAuth || hasSocialProviders ? <OrSeparator /> : null}
 
                 <div className="flex flex-col gap-3">
                   <Button
@@ -106,12 +117,14 @@ export const SignInForm = ({
               </>
             )}
 
-            <div className="text-center font-medium text-foreground/60 text-sm">
-              {t("auth.dontHaveAnAccount")}{" "}
-              <Link className="text-foreground underline" href={signUpHref}>
-                {t("auth.signUp")}
-              </Link>
-            </div>
+            {signUpEnabled ? (
+              <div className="text-center font-medium text-foreground/60 text-sm">
+                {t("auth.dontHaveAnAccount")}{" "}
+                <Link className="text-foreground underline" href={signUpHref}>
+                  {t("auth.signUp")}
+                </Link>
+              </div>
+            ) : null}
           </div>
         </CardContent>
       </Card>
