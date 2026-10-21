@@ -20,6 +20,13 @@ export const CREATE_CHANNEL_ERROR_MESSAGE_KEYS = {
   trialExpired: "channels.connectMany.sessionError.trialExpired",
   macLimitReached: "channels.connectMany.sessionError.macLimitReached",
   sessionExpired: "channels.connectMany.sessionError.sessionExpired",
+  noPages: "channels.connectMany.sessionError.noPages",
+  noInstagramAccounts: "channels.connectMany.sessionError.noInstagramAccounts",
+  exchangeFailed: "channels.connectMany.sessionError.exchangeFailed",
+  providerError: "channels.connectMany.sessionError.providerError",
+  notMember: "channels.connectMany.sessionError.notMember",
+  connectFailed: "channels.connectMany.sessionError.connectFailed",
+  tooManyAttempts: "channels.connectMany.sessionError.tooManyAttempts",
 } as const satisfies Record<string, MessageKey>
 
 export type CreateChannelErrorCode =
@@ -34,8 +41,30 @@ export function isCreateChannelErrorCode(
   )
 }
 
+/**
+ * The `/channels/create` URL. With a `workspaceId` the picker connects into
+ * that workspace; without one it is the "first/new workspace" flow, which
+ * creates a workspace. So a failure inside a workspace MUST keep its id, or
+ * the user's retry would try to create a workspace (and can hit the plan's
+ * workspace limit) instead of connecting where they were.
+ */
+export function createChannelPath(params: {
+  error?: CreateChannelErrorCode
+  workspaceId?: string | null
+}): string {
+  const query = new URLSearchParams()
+  if (params.workspaceId) {
+    query.set("workspaceId", params.workspaceId)
+  }
+  if (params.error) {
+    query.set(CREATE_CHANNEL_ERROR_PARAM, params.error)
+  }
+  const search = query.toString()
+  return search ? `/channels/create?${search}` : "/channels/create"
+}
+
 function createChannelErrorPath(code: CreateChannelErrorCode): string {
-  return `/channels/create?${CREATE_CHANNEL_ERROR_PARAM}=${code}`
+  return createChannelPath({ error: code })
 }
 
 /** The `/channels/create` path for a known plan-limit failure, or `null` when the error must keep propagating. */

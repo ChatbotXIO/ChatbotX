@@ -987,14 +987,22 @@
         "inProgress": "Connection already in progress.",
         "unknown": "Something went wrong.",
         "followUpFailed": "Setup incomplete — finish from the channel settings.",
-        "webhookSubscribeFailed": "Connected, but the webhook subscription failed — retry from the connection settings."
+        "webhookSubscribeFailed": "Connected, but the webhook subscription failed — retry from the connection settings.",
+        "providerUnavailable": "The provider is temporarily unavailable. Try again in a few minutes."
       },
       "sessionError": {
         "sessionExpired": "Your session expired. Please reconnect.",
         "notMember": "You are no longer a member of this workspace.",
         "trialExpired": "Your trial has expired.",
         "macLimitReached": "You've reached your account limit.",
-        "credentialMissing": "Missing credentials. Please reconnect."
+        "credentialMissing": "Missing credentials. Please reconnect.",
+        "noPages": "We couldn't find any Facebook Page to connect. Connect again and allow access to at least one Page you manage.",
+        "noInstagramAccounts": "We couldn't find any Instagram account to connect. Connect again and allow access to at least one account.",
+        "exchangeFailed": "The sign-in couldn't be completed. Please connect again.",
+        "providerError": "We couldn't load your accounts right now. Please try again in a few minutes.",
+        "connectFailed": "Something went wrong while connecting. Please try again.",
+        "tooManyAttempts": "There are too many unfinished connection attempts. Wait a few minutes, then try again.",
+        "notAllowed": "You can't connect channels here right now. Reload the page to see why."
       },
       "cancelRemaining": "Cancel remaining",
       "retryFailed": "Retry failed ({count})",
@@ -5454,7 +5462,9 @@
       "inboundLabel": "Accept incoming calls",
       "inboundHelper": "Let customers call in. Turn off to keep dialling out without the inbox ringing."
     },
-    "credentialSecretsRequired": "Enter the app secret and system user token. They aren't stored yet."
+    "credentialSecretsRequired": "Enter the app secret and system user token. They aren't stored yet.",
+    "embeddedSignupCancelled": "Signup was cancelled — you can close this tab.",
+    "embeddedSignupFailed": "Signup didn't finish — close this tab and try again."
   },
   "zalo": {
     "title": "Zalo OA",

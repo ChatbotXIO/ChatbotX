@@ -3550,14 +3550,22 @@
         "inProgress": "Koneksi sedang berlangsung.",
         "unknown": "Terjadi kesalahan.",
         "followUpFailed": "Penyiapan belum selesai — selesaikan dari pengaturan saluran.",
-        "webhookSubscribeFailed": "Terhubung, tetapi langganan webhook gagal — coba lagi dari pengaturan koneksi."
+        "webhookSubscribeFailed": "Terhubung, tetapi langganan webhook gagal — coba lagi dari pengaturan koneksi.",
+        "providerUnavailable": "Penyedia sedang tidak tersedia untuk sementara. Coba lagi dalam beberapa menit."
       },
       "sessionError": {
         "sessionExpired": "Sesi Anda telah berakhir. Silakan hubungkan kembali.",
         "notMember": "Anda tidak lagi menjadi anggota ruang kerja ini.",
         "trialExpired": "Masa uji coba Anda telah berakhir.",
         "macLimitReached": "Anda telah mencapai batas akun Anda.",
-        "credentialMissing": "Kredensial tidak ditemukan. Silakan hubungkan kembali."
+        "credentialMissing": "Kredensial tidak ditemukan. Silakan hubungkan kembali.",
+        "noPages": "Kami tidak menemukan Halaman Facebook untuk dihubungkan. Hubungkan lagi dan izinkan akses ke setidaknya satu Halaman yang Anda kelola.",
+        "noInstagramAccounts": "Kami tidak menemukan akun Instagram untuk dihubungkan. Hubungkan lagi dan izinkan akses ke setidaknya satu akun.",
+        "exchangeFailed": "Proses masuk tidak dapat diselesaikan. Silakan hubungkan lagi.",
+        "providerError": "Kami tidak dapat memuat akun Anda saat ini. Coba lagi dalam beberapa menit.",
+        "connectFailed": "Terjadi kesalahan saat menghubungkan. Silakan coba lagi.",
+        "tooManyAttempts": "Terlalu banyak percobaan koneksi yang belum selesai. Tunggu beberapa menit, lalu coba lagi.",
+        "notAllowed": "Anda tidak dapat menghubungkan saluran di sini saat ini. Muat ulang halaman untuk melihat alasannya."
       },
       "cancelRemaining": "Batalkan sisanya",
       "retryFailed": "Coba lagi ({count})",
@@ -4772,7 +4780,9 @@
         "callInformation": "Informasi panggilan"
       }
     },
-    "credentialSecretsRequired": "Masukkan app secret dan system user token. Keduanya belum tersimpan."
+    "credentialSecretsRequired": "Masukkan app secret dan system user token. Keduanya belum tersimpan.",
+    "embeddedSignupCancelled": "Pendaftaran dibatalkan — Anda dapat menutup tab ini.",
+    "embeddedSignupFailed": "Pendaftaran belum selesai — tutup tab ini dan coba lagi."
   },
   "zalo": {
     "title": "Zalo OA",

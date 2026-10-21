@@ -68,7 +68,10 @@ import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
 import { resolveOwnerForWorkspace } from "@/lib/platform-credential-owner"
 import { buildProviderCallbackUrl } from "@/lib/provider-origin"
 import { getGuestClientIp } from "@/lib/rate-limit/guest-rate-limit"
-import { createFirstWorkspace } from "@/lib/workspace/create-first-workspace"
+import {
+  createChannelPath,
+  createFirstWorkspace,
+} from "@/lib/workspace/create-first-workspace"
 import { completeMetaCapiConnect } from "./callback-meta-capi"
 import {
   messagingAdsIntegrationBelongsToWorkspace,
@@ -768,7 +771,12 @@ export const handleCallback = async (
         { workspaceId: workspace.id, integrationType },
         "legacy messenger OAuth callback state matched no known flow",
       )
-      return redirect("/channels/create?error=sessionExpired")
+      return redirect(
+        createChannelPath({
+          error: "sessionExpired",
+          workspaceId: stateParams.workspaceId,
+        }),
+      )
     }
 
     case "instagram": {
@@ -797,7 +805,12 @@ export const handleCallback = async (
           { workspaceId: workspace.id, integrationType },
           "legacy instagram OAuth callback state has no reconnectIntegrationId",
         )
-        return redirect("/channels/create?error=sessionExpired")
+        return redirect(
+          createChannelPath({
+            error: "sessionExpired",
+            workspaceId: stateParams.workspaceId,
+          }),
+        )
       }
 
       const { accessToken: userToken } = await exchangeInstagramCode(
@@ -872,7 +885,12 @@ export const handleCallback = async (
           { workspaceId: workspace.id, integrationType },
           "legacy instagramFacebook OAuth callback state has no reconnectIntegrationId",
         )
-        return redirect("/channels/create?error=sessionExpired")
+        return redirect(
+          createChannelPath({
+            error: "sessionExpired",
+            workspaceId: stateParams.workspaceId,
+          }),
+        )
       }
 
       const userToken = await exchangeInstagramFacebookCode(

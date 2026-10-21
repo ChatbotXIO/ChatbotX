@@ -61,3 +61,51 @@ export function resolveOAuthErrorKey(
     ? OAUTH_ERROR_KEYS_BY_CODE[code]
     : "generic"
 }
+
+/** Same-origin `callbackURL` with its `error` dropped, or `null` when it carries none. */
+const callbackWithoutError = (
+  callbackURL: string,
+  currentOrigin: string,
+): string | null => {
+  let url: URL
+  try {
+    url = new URL(callbackURL, currentOrigin)
+  } catch {
+    return null
+  }
+  if (url.origin !== currentOrigin || !url.searchParams.has("error")) {
+    return null
+  }
+  url.searchParams.delete("error")
+  const rest = `${url.pathname}${url.search}${url.hash}`
+  // Keep the shape the proxy used: relative in, relative out.
+  return callbackURL.startsWith("/") ? rest : `${url.origin}${rest}`
+}
+
+/**
+ * `path` (pathname + search + hash) with the OAuth error code removed, both a
+ * direct `?error=` and one nested in a same-origin `callbackURL`, which itself
+ * is kept so sign-in still lands where it should. `null` when there is nothing
+ * to remove. The sign-in alert uses it so a reload does not replay an old
+ * failure.
+ */
+export function withoutOAuthError(
+  path: string,
+  currentOrigin: string,
+): string | null {
+  const url = new URL(path, currentOrigin)
+  let changed = false
+  if (url.searchParams.has("error")) {
+    url.searchParams.delete("error")
+    changed = true
+  }
+  const callbackURL = url.searchParams.get("callbackURL")
+  const cleanedCallback = callbackURL
+    ? callbackWithoutError(callbackURL, currentOrigin)
+    : null
+  if (cleanedCallback !== null) {
+    url.searchParams.set("callbackURL", cleanedCallback)
+    changed = true
+  }
+  return changed ? `${url.pathname}${url.search}${url.hash}` : null
+}

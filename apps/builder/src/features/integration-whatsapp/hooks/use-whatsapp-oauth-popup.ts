@@ -79,6 +79,11 @@ export function useWhatsappOAuthPopup({
       }
 
       setIsWaiting(false)
+      // A cancelled dialog is the user's choice, not a failure: just
+      // release the launch button.
+      if (result.type === "cancelled") {
+        return
+      }
       handleRelayError()
     }
 

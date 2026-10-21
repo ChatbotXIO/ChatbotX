@@ -945,14 +945,22 @@
         "inProgress": "Bağlantı zaten devam ediyor.",
         "unknown": "Bir şeyler ters gitti.",
         "followUpFailed": "Kurulum tamamlanmadı — kanal ayarlarından tamamlayın.",
-        "webhookSubscribeFailed": "Bağlandı, ancak webhook aboneliği başarısız oldu — bağlantı ayarlarından tekrar deneyin."
+        "webhookSubscribeFailed": "Bağlandı, ancak webhook aboneliği başarısız oldu — bağlantı ayarlarından tekrar deneyin.",
+        "providerUnavailable": "Sağlayıcı geçici olarak kullanılamıyor. Birkaç dakika sonra tekrar deneyin."
       },
       "sessionError": {
         "sessionExpired": "Oturumunuzun süresi doldu. Lütfen yeniden bağlanın.",
         "notMember": "Artık bu çalışma alanının üyesi değilsiniz.",
         "trialExpired": "Deneme süreniz doldu.",
         "macLimitReached": "Hesap sınırınıza ulaştınız.",
-        "credentialMissing": "Kimlik bilgileri eksik. Lütfen yeniden bağlanın."
+        "credentialMissing": "Kimlik bilgileri eksik. Lütfen yeniden bağlanın.",
+        "noPages": "Bağlanacak bir Facebook Sayfası bulunamadı. Yeniden bağlanın ve yönettiğiniz en az bir Sayfaya erişim izni verin.",
+        "noInstagramAccounts": "Bağlanacak bir Instagram hesabı bulunamadı. Yeniden bağlanın ve en az bir hesaba erişim izni verin.",
+        "exchangeFailed": "Oturum açma tamamlanamadı. Lütfen yeniden bağlanın.",
+        "providerError": "Hesaplarınız şu anda yüklenemedi. Lütfen birkaç dakika sonra tekrar deneyin.",
+        "connectFailed": "Bağlanırken bir hata oluştu. Lütfen tekrar deneyin.",
+        "tooManyAttempts": "Tamamlanmamış çok fazla bağlantı denemesi var. Birkaç dakika bekleyip tekrar deneyin.",
+        "notAllowed": "Şu anda burada kanal bağlayamazsınız. Nedenini görmek için sayfayı yenileyin."
       },
       "cancelRemaining": "Kalanları iptal et",
       "retryFailed": "Yeniden dene ({count})",
@@ -4772,7 +4780,9 @@
         "callInformation": "Çağrı bilgisi"
       }
     },
-    "credentialSecretsRequired": "Uygulama sırrını ve sistem kullanıcısı jetonunu girin. Henüz kaydedilmediler."
+    "credentialSecretsRequired": "Uygulama sırrını ve sistem kullanıcısı jetonunu girin. Henüz kaydedilmediler.",
+    "embeddedSignupCancelled": "Kayıt iptal edildi — bu sekmeyi kapatabilirsiniz.",
+    "embeddedSignupFailed": "Kayıt tamamlanmadı — bu sekmeyi kapatıp tekrar deneyin."
   },
   "zalo": {
     "title": "Zalo OA",

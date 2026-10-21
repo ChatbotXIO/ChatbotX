@@ -79,9 +79,27 @@ function baseConnectItemFailure(error: unknown): ConnectFailureOutcome {
     )
   }
   if (error instanceof SdkException) {
-    return { status: "failed", reason: "providerRejected" }
+    return isTransientSdkFailure(error)
+      ? { status: "failed", reason: "providerUnavailable" }
+      : { status: "failed", reason: "providerRejected" }
   }
   return { status: "failed", reason: "unknown" }
+}
+
+/** HTTP statuses that mean the provider could not answer right now, not that it said no. */
+const TRANSIENT_HTTP_STATUSES: ReadonlySet<number> = new Set([408, 429])
+
+/**
+ * A provider call that failed for a reason worth retrying (timeout, rate
+ * limit, upstream 5xx, or a channel error classified as retryable) — shown
+ * as "temporarily unavailable" instead of "rejected this request".
+ */
+function isTransientSdkFailure(error: SdkException): boolean {
+  return (
+    error.isRetryable === true ||
+    error.httpStatusCode >= 500 ||
+    TRANSIENT_HTTP_STATUSES.has(error.httpStatusCode)
+  )
 }
 
 /**

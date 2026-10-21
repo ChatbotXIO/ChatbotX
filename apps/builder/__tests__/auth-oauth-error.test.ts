@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest"
 import {
   OAUTH_ERROR_MESSAGE_KEYS,
   resolveOAuthErrorKey,
+  withoutOAuthError,
 } from "@/features/auth/oauth-error"
 
 const TRANSLATION_KEY_PATTERN = /^auth\.oauthError\.[a-zA-Z]+$/
@@ -105,5 +106,53 @@ describe("resolveOAuthErrorKey", () => {
     for (const value of Object.values(OAUTH_ERROR_MESSAGE_KEYS)) {
       expect(value).toMatch(TRANSLATION_KEY_PATTERN)
     }
+  })
+})
+
+describe("withoutOAuthError", () => {
+  const page = "/auth/sign-in"
+
+  test("drops a direct ?error= and keeps every other param", () => {
+    expect(
+      withoutOAuthError(`${page}?error=state_mismatch&plan=pro`, origin),
+    ).toBe(`${page}?plan=pro`)
+  })
+
+  test("drops the error nested in callbackURL but keeps the callbackURL itself", () => {
+    const result = withoutOAuthError(
+      `${page}?${nested("https://app.example.test/space/1?error=state_mismatch&tab=a")}`,
+      origin,
+    )
+    expect(result).not.toBeNull()
+    const callbackURL = new URL(result as string, origin).searchParams.get(
+      "callbackURL",
+    )
+    expect(callbackURL).toBe("https://app.example.test/space/1?tab=a")
+  })
+
+  test("keeps a relative callbackURL relative", () => {
+    const result = withoutOAuthError(
+      `${page}?${nested("/space/1?error=state_mismatch")}`,
+      origin,
+    )
+    expect(
+      new URL(result as string, origin).searchParams.get("callbackURL"),
+    ).toBe("/space/1")
+  })
+
+  test("returns null when there is nothing to drop", () => {
+    expect(withoutOAuthError(`${page}?plan=pro`, origin)).toBeNull()
+    expect(
+      withoutOAuthError(`${page}?${nested("/space/1?tab=a")}`, origin),
+    ).toBeNull()
+  })
+
+  test("leaves a cross-origin callbackURL untouched", () => {
+    expect(
+      withoutOAuthError(
+        `${page}?${nested("https://evil.test/?error=state_mismatch")}`,
+        origin,
+      ),
+    ).toBeNull()
   })
 })

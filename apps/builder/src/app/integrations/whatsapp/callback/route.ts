@@ -3,8 +3,8 @@ import type { NextRequest } from "next/server"
 import { getTranslations } from "next-intl/server"
 import {
   decodeOAuthState,
-  WA_OAUTH_RESULT,
   type WhatsappOAuthRelayResult,
+  whatsappCallbackOutcome,
 } from "@/features/integration-whatsapp/libs/embedded-signup"
 import { defaultLocale, isLocale } from "@/i18n/config"
 import { logger } from "@/lib/log"
@@ -110,16 +110,13 @@ export async function GET(req: NextRequest): Promise<Response> {
   const locale = isLocale(requestedLocale) ? requestedLocale : defaultLocale
   const t = await getTranslations({ locale, namespace: "whatsapp" })
 
-  const result: WhatsappOAuthRelayResult =
-    code && !error
-      ? { type: WA_OAUTH_RESULT, status: "success", code }
-      : { type: WA_OAUTH_RESULT, status: "error" }
+  const { result, messageKey } = whatsappCallbackOutcome({ code, error })
 
   return new Response(
     relayHtml({
       result,
       targetOrigin,
-      message: t("embeddedSignupDone"),
+      message: t(messageKey),
     }),
     { headers: RELAY_RESPONSE_HEADERS },
   )

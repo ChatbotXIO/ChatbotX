@@ -3550,14 +3550,22 @@
         "inProgress": "Yhteys on jo käynnissä.",
         "unknown": "Jotain meni pieleen.",
         "followUpFailed": "Asetus on kesken – viimeistele kanavan asetuksista.",
-        "webhookSubscribeFailed": "Yhdistetty, mutta webhook-tilaus epäonnistui – yritä uudelleen yhteysasetuksista."
+        "webhookSubscribeFailed": "Yhdistetty, mutta webhook-tilaus epäonnistui – yritä uudelleen yhteysasetuksista.",
+        "providerUnavailable": "Palveluntarjoaja ei ole tilapäisesti käytettävissä. Yritä uudelleen muutaman minuutin kuluttua."
       },
       "sessionError": {
         "sessionExpired": "Istuntosi vanheni. Yhdistä uudelleen.",
         "notMember": "Et ole enää tämän työtilan jäsen.",
         "trialExpired": "Kokeilujaksosi on päättynyt.",
         "macLimitReached": "Olet saavuttanut tilisi rajan.",
-        "credentialMissing": "Tunnukset puuttuvat. Yhdistä uudelleen."
+        "credentialMissing": "Tunnukset puuttuvat. Yhdistä uudelleen.",
+        "noPages": "Yhdistettävää Facebook-sivua ei löytynyt. Yhdistä uudelleen ja anna käyttöoikeus vähintään yhteen hallinnoimaasi sivuun.",
+        "noInstagramAccounts": "Yhdistettävää Instagram-tiliä ei löytynyt. Yhdistä uudelleen ja anna käyttöoikeus vähintään yhteen tiliin.",
+        "exchangeFailed": "Kirjautumista ei voitu viedä loppuun. Yhdistä uudelleen.",
+        "providerError": "Tilejäsi ei voitu ladata juuri nyt. Yritä uudelleen muutaman minuutin kuluttua.",
+        "connectFailed": "Yhdistämisessä tapahtui virhe. Yritä uudelleen.",
+        "tooManyAttempts": "Keskeneräisiä yhdistämisyrityksiä on liikaa. Odota muutama minuutti ja yritä sitten uudelleen.",
+        "notAllowed": "Et voi yhdistää kanavia täällä juuri nyt. Lataa sivu uudelleen nähdäksesi syyn."
       },
       "cancelRemaining": "Peruuta loput",
       "retryFailed": "Yritä uudelleen ({count})",
@@ -4772,7 +4780,9 @@
         "callInformation": "Puhelun tiedot"
       }
     },
-    "credentialSecretsRequired": "Anna sovelluksen salaisuus ja järjestelmäkäyttäjän tunnus. Niitä ei ole vielä tallennettu."
+    "credentialSecretsRequired": "Anna sovelluksen salaisuus ja järjestelmäkäyttäjän tunnus. Niitä ei ole vielä tallennettu.",
+    "embeddedSignupCancelled": "Rekisteröityminen peruttiin – voit sulkea tämän välilehden.",
+    "embeddedSignupFailed": "Rekisteröityminen ei valmistunut – sulje tämä välilehti ja yritä uudelleen."
   },
   "zalo": {
     "title": "Zalo OA",

@@ -908,14 +908,22 @@
         "inProgress": "Anslutningen pågår redan.",
         "unknown": "Något gick fel.",
         "followUpFailed": "Konfigurationen är inte klar – slutför den i kanalinställningarna.",
-        "webhookSubscribeFailed": "Ansluten, men webhook-prenumerationen misslyckades – försök igen från anslutningsinställningarna."
+        "webhookSubscribeFailed": "Ansluten, men webhook-prenumerationen misslyckades – försök igen från anslutningsinställningarna.",
+        "providerUnavailable": "Leverantören är tillfälligt otillgänglig. Försök igen om några minuter."
       },
       "sessionError": {
         "sessionExpired": "Din session har gått ut. Anslut igen.",
         "notMember": "Du är inte längre medlem i den här arbetsytan.",
         "trialExpired": "Din provperiod har gått ut.",
         "macLimitReached": "Du har nått ditt kontos gräns.",
-        "credentialMissing": "Autentiseringsuppgifter saknas. Anslut igen."
+        "credentialMissing": "Autentiseringsuppgifter saknas. Anslut igen.",
+        "noPages": "Vi hittade ingen Facebook-sida att ansluta. Anslut igen och ge åtkomst till minst en sida som du hanterar.",
+        "noInstagramAccounts": "Vi hittade inget Instagram-konto att ansluta. Anslut igen och ge åtkomst till minst ett konto.",
+        "exchangeFailed": "Inloggningen kunde inte slutföras. Anslut igen.",
+        "providerError": "Vi kunde inte läsa in dina konton just nu. Försök igen om några minuter.",
+        "connectFailed": "Något gick fel vid anslutningen. Försök igen.",
+        "tooManyAttempts": "Det finns för många oavslutade anslutningsförsök. Vänta några minuter och försök sedan igen.",
+        "notAllowed": "Du kan inte ansluta kanaler här just nu. Läs in sidan igen för att se varför."
       },
       "cancelRemaining": "Avbryt återstående",
       "retryFailed": "Försök igen ({count})",
@@ -6676,7 +6684,9 @@
         "callInformation": "Samtalsinformation"
       }
     },
-    "credentialSecretsRequired": "Ange apphemligheten och systemanvändartoken. De är inte sparade än."
+    "credentialSecretsRequired": "Ange apphemligheten och systemanvändartoken. De är inte sparade än.",
+    "embeddedSignupCancelled": "Registreringen avbröts – du kan stänga den här fliken.",
+    "embeddedSignupFailed": "Registreringen slutfördes inte – stäng den här fliken och försök igen."
   },
   "workspace": {
     "deletion": {

@@ -214,8 +214,9 @@ describe.each([
     )
     const { GET } = await import(routePath)
 
+    // A connect that never started is a failed connect, not an expired one.
     await expect(GET(requestWithWorkspaceId(null))).rejects.toThrow(
-      "redirect:/channels/create?error=sessionExpired",
+      "redirect:/channels/create?error=connectFailed",
     )
 
     // `workspaceService.create` directly from this route. Previously the
@@ -267,17 +268,31 @@ describe.each([
 
   test("fails the session and redirects to an error page when startSession returns a non-open_url next action, instead of an unhandled throw", async () => {
     mockStartSession.mockResolvedValue({
-      session: { id: "session-1" },
+      session: { id: "session-1", workspaceId: "ws-1" },
       nextAction: { type: "show_qr", qr: "data:image/png;base64,..." },
     })
     const { GET } = await import(routePath)
 
+    // The workspace the user started in survives the failure, so retrying
+    // from the error page connects there instead of minting a new workspace.
     await expect(GET(requestWithWorkspaceId("ws-1"))).rejects.toThrow(
-      "redirect:/channels/create?error=sessionExpired",
+      "redirect:/channels/create?workspaceId=ws-1&error=connectFailed",
     )
     expect(mockFailSession).toHaveBeenCalledWith(
-      { id: "session-1" },
+      { id: "session-1", workspaceId: "ws-1" },
       "internal_error",
+    )
+  })
+
+  test("a first connect that fails after its session started keeps the workspace it just created", async () => {
+    mockStartSession.mockResolvedValue({
+      session: { id: "session-1", workspaceId: "ws-new" },
+      nextAction: { type: "show_qr", qr: "data:image/png;base64,..." },
+    })
+    const { GET } = await import(routePath)
+
+    await expect(GET(requestWithWorkspaceId(null))).rejects.toThrow(
+      "redirect:/channels/create?workspaceId=ws-new&error=connectFailed",
     )
   })
 

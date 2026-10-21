@@ -987,14 +987,22 @@
         "inProgress": "Qoşulma artıq davam edir.",
         "unknown": "Xəta baş verdi.",
         "followUpFailed": "Quraşdırma tamamlanmayıb. Kanal parametrlərində quraşdırmanı tamamlayın.",
-        "webhookSubscribeFailed": "Qoşuldu, lakin webhook abunəliyi uğursuz oldu — qoşulma parametrlərindən yenidən cəhd edin."
+        "webhookSubscribeFailed": "Qoşuldu, lakin webhook abunəliyi uğursuz oldu — qoşulma parametrlərindən yenidən cəhd edin.",
+        "providerUnavailable": "Provayder müvəqqəti əlçatan deyil. Bir neçə dəqiqədən sonra yenidən cəhd edin."
       },
       "sessionError": {
         "sessionExpired": "Sessiyanızın vaxtı bitib. Yenidən qoşulun.",
         "notMember": "Artıq bu iş sahəsinin üzvü deyilsiniz.",
         "trialExpired": "Sınaq müddətiniz bitib.",
         "macLimitReached": "Hesab həddinə çatmısınız.",
-        "credentialMissing": "Giriş məlumatları yoxdur. Yenidən qoşulun."
+        "credentialMissing": "Giriş məlumatları yoxdur. Yenidən qoşulun.",
+        "noPages": "Qoşmaq üçün heç bir Facebook Səhifəsi tapılmadı. Yenidən qoşulun və idarə etdiyiniz ən azı bir Səhifəyə giriş icazəsi verin.",
+        "noInstagramAccounts": "Qoşmaq üçün heç bir Instagram hesabı tapılmadı. Yenidən qoşulun və ən azı bir hesaba giriş icazəsi verin.",
+        "exchangeFailed": "Giriş tamamlana bilmədi. Zəhmət olmasa yenidən qoşulun.",
+        "providerError": "Hesablarınızı hazırda yükləmək mümkün olmadı. Bir neçə dəqiqədən sonra yenidən cəhd edin.",
+        "connectFailed": "Qoşulma zamanı xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.",
+        "tooManyAttempts": "Tamamlanmamış qoşulma cəhdləri çoxdur. Bir neçə dəqiqə gözləyin, sonra yenidən cəhd edin.",
+        "notAllowed": "Hazırda burada kanal qoşa bilməzsiniz. Səbəbi görmək üçün səhifəni yeniləyin."
       },
       "cancelRemaining": "Qalanlarını ləğv et",
       "retryFailed": "Uğursuz olanları qoşmağa yenidən cəhd et ({count})",
@@ -5454,7 +5462,9 @@
       "inboundLabel": "Daxil olan zəngləri qəbul et",
       "inboundHelper": "Müştərilərin zəng etməsinə icazə verin. Gələnlər qutusunda zəng çalmadan zəng etməyə davam etmək üçün bu seçimi söndürün."
     },
-    "credentialSecretsRequired": "Tətbiq sirrini və sistem istifadəçisi tokenini daxil edin. Hələ saxlanmayıb."
+    "credentialSecretsRequired": "Tətbiq sirrini və sistem istifadəçisi tokenini daxil edin. Hələ saxlanmayıb.",
+    "embeddedSignupCancelled": "Qeydiyyat ləğv edildi — bu tabı bağlaya bilərsiniz.",
+    "embeddedSignupFailed": "Qeydiyyat tamamlanmadı — bu tabı bağlayın və yenidən cəhd edin."
   },
   "zalo": {
     "title": "Zalo OA",

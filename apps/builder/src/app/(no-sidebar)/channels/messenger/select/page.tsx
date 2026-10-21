@@ -20,10 +20,14 @@ export const dynamic = "force-dynamic"
 export default async function MessengerSelectPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session?: string }>
+  searchParams: Promise<{ session?: string; connect_error?: string }>
 }) {
   const [{ sessionId, resolved }, t] = await Promise.all([
-    resolveSelectSession({ searchParams, expectedProvider: "messenger" }),
+    resolveSelectSession({
+      searchParams,
+      expectedProvider: "messenger",
+      noCandidatesError: "noPages",
+    }),
     getTranslations(),
   ])
 

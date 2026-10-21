@@ -945,14 +945,22 @@
         "inProgress": "La conexión ya está en curso.",
         "unknown": "Algo salió mal.",
         "followUpFailed": "Configuración incompleta: complétala desde los ajustes del canal.",
-        "webhookSubscribeFailed": "Conectado, pero falló la suscripción al webhook. Vuelve a intentarlo desde la configuración de la conexión."
+        "webhookSubscribeFailed": "Conectado, pero falló la suscripción al webhook. Vuelve a intentarlo desde la configuración de la conexión.",
+        "providerUnavailable": "El proveedor no está disponible temporalmente. Vuelve a intentarlo en unos minutos."
       },
       "sessionError": {
         "sessionExpired": "Tu sesión expiró. Vuelve a conectarte.",
         "notMember": "Ya no eres miembro de este espacio de trabajo.",
         "trialExpired": "Tu período de prueba ha finalizado.",
         "macLimitReached": "Has alcanzado el límite de tu cuenta.",
-        "credentialMissing": "Faltan credenciales. Vuelve a conectarte."
+        "credentialMissing": "Faltan credenciales. Vuelve a conectarte.",
+        "noPages": "No encontramos ninguna página de Facebook para conectar. Vuelve a conectar y da acceso a al menos una página que administres.",
+        "noInstagramAccounts": "No encontramos ninguna cuenta de Instagram para conectar. Vuelve a conectar y da acceso a al menos una cuenta.",
+        "exchangeFailed": "No se pudo completar el inicio de sesión. Vuelve a conectar.",
+        "providerError": "No pudimos cargar tus cuentas ahora. Inténtalo de nuevo en unos minutos.",
+        "connectFailed": "Algo salió mal al conectar. Inténtalo de nuevo.",
+        "tooManyAttempts": "Hay demasiados intentos de conexión sin terminar. Espera unos minutos y vuelve a intentarlo.",
+        "notAllowed": "Ahora no puedes conectar canales aquí. Recarga la página para ver el motivo."
       },
       "cancelRemaining": "Cancelar restantes",
       "retryFailed": "Reintentar ({count})",
@@ -4772,7 +4780,9 @@
         "callInformation": "Información de la llamada"
       }
     },
-    "credentialSecretsRequired": "Introduce el secreto de la app y el token de usuario del sistema. Aún no están guardados."
+    "credentialSecretsRequired": "Introduce el secreto de la app y el token de usuario del sistema. Aún no están guardados.",
+    "embeddedSignupCancelled": "Se canceló el registro: puedes cerrar esta pestaña.",
+    "embeddedSignupFailed": "El registro no se completó: cierra esta pestaña e inténtalo de nuevo."
   },
   "zalo": {
     "title": "Zalo OA",
