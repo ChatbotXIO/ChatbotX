@@ -1,5 +1,5 @@
 import mjml2html from "mjml"
-import type nodemailer from "nodemailer"
+import type { Transporter } from "nodemailer"
 import {
   buildMjmlTemplate,
   type DynamicEmailProps,
@@ -31,7 +31,7 @@ export async function renderDynamicEmailHtml(
 export const sendDynamicEmail = async (
   email: string,
   props: DynamicEmailProps,
-  options?: { from?: string; transporter?: nodemailer.Transporter },
+  options?: { from?: string; transporter?: Transporter },
 ) => {
   const env = keys()
   const html = await renderDynamicEmailHtml(props)
