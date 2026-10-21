@@ -11,6 +11,10 @@ export const facebookMarketingMessageRelations = defineRelationsPart(
         to: r.workspaceModel.id,
         optional: false,
       }),
+      audience: r.one.facebookMarketingMessageAudienceModel({
+        from: r.facebookMarketingMessageModel.audienceId,
+        to: r.facebookMarketingMessageAudienceModel.id,
+      }),
     },
   }),
 )

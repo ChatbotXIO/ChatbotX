@@ -99,7 +99,8 @@ export async function requireValidGrant(
   if (grant.state !== "valid") {
     const t = await getTranslations()
     throw new ChatbotXException(
-      t("facebookMarketingMessages.errors.notGranted"),
+      t("facebookMarketingMessages.errors.connectFirst"),
+      "mmGrantInvalid",
     )
   }
   return grant

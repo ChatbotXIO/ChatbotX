@@ -998,6 +998,7 @@ async function runFlowAction(
         contactInboxId: data.contactInboxId,
         flowId: parsedAction.flowId,
         flowVersionId: parsedAction.flowVersionId,
+        nodeId: parsedAction.nodeId,
       },
       { flowExecutionKey },
     )

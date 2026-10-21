@@ -123,6 +123,48 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.enqueueMarketingMessages,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.enqueueMarketingMessages,
+      data: {
+        type: ScheduleJobData.enqueueMarketingMessages,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.dispatchMarketingMessages,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.dispatchMarketingMessages,
+      data: {
+        type: ScheduleJobData.dispatchMarketingMessages,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.finalizeMarketingMessages,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.finalizeMarketingMessages,
+      data: {
+        type: ScheduleJobData.finalizeMarketingMessages,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.evaluateTriggers,
     {
       pattern: "* * * * *",

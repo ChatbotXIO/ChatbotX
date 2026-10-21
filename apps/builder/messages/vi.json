@@ -3061,7 +3061,7 @@
     "title": "Chung"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "Thao tác này chỉ xóa chiến dịch khỏi ChatbotX. Chiến dịch tin nhắn Meta vẫn chạy — hãy tạm dừng hoặc xóa trong Trình quản lý quảng cáo.",
+    "deleteWarning": "Thao tác này xóa chiến dịch tin nhắn Meta và gỡ chiến dịch khỏi ChatbotX. Nếu Meta từ chối việc xóa, chiến dịch sẽ được giữ lại.",
     "title": "Facebook Marketing Messages",
     "description": "Tăng tương tác và doanh số bằng tin nhắn quảng cáo được cá nhân hóa trên Messenger.",
     "create": "Tạo mới",
@@ -3086,13 +3086,197 @@
       "generic": "Chung",
       "greeting": "Lời chào",
       "quickReplies": "Trả lời nhanh",
-      "elements": "Thẻ"
+      "elements": "Thẻ",
+      "targetMessaging": "Đối tượng nhận tin",
+      "targetOptIn": "Opt-in",
+      "targetOptInDescription": "Khách hàng trên trang đã đồng ý nhận tin nhắn marketing",
+      "targetCustomAudience": "Đối tượng tùy chỉnh",
+      "targetCustomAudienceDescription": "Gửi tin nhắn đến các đối tượng được tải lên từ tệp",
+      "audience": "Đối tượng tùy chỉnh"
     },
+    "noReadyAudiences": "Không có đối tượng tùy chỉnh nào sẵn sàng cho Trang và tài khoản quảng cáo này.",
+    "manageAudiences": "Quản lý đối tượng",
     "errors": {
       "notConfigured": "Facebook Marketing Messages chưa được cấu hình. Hãy yêu cầu quản trị viên thiết lập ID cấu hình Marketing Messages.",
       "notGranted": "Vui lòng cấp quyền truy cập để sử dụng tính năng Marketing Messages.",
       "tosNotAccepted": "Để sử dụng tính năng này, vui lòng chấp nhận điều khoản đối tượng tùy chỉnh tại {url}",
-      "notFound": "Không tìm thấy tin nhắn marketing."
+      "notFound": "Không tìm thấy tin nhắn marketing.",
+      "audienceNotTargetable": "Đối tượng tùy chỉnh đã chọn chưa sẵn sàng hoặc không thuộc Trang và tài khoản quảng cáo này.",
+      "connectFirst": "Hãy kết nối Marketing Messages trong ứng dụng ChatbotX trước.",
+      "mmInvalidState": "Thao tác này không khả dụng ở trạng thái hiện tại của chiến dịch.",
+      "mmCampaignEnded": "Chiến dịch tin nhắn Meta đã kết thúc nên không thể gửi hoặc tiếp tục.",
+      "mmPageNotConnected": "Trang của chiến dịch này chưa được kết nối với không gian làm việc này.",
+      "mmContentLocked": "Không thể thay đổi nội dung sau khi tin nhắn đầu tiên đã được gửi.",
+      "metaDeleteFailed": "Meta không thể xóa chiến dịch này nên chiến dịch đã được giữ lại. {message}",
+      "statisticsUnknownAdAccount": "Không gian làm việc này không có chiến dịch Tin nhắn tiếp thị nào trên tài khoản quảng cáo đó.",
+      "statisticsInvalidRange": "Chọn ngày bắt đầu không muộn hơn ngày kết thúc, trong vòng 37 tháng gần nhất."
+    },
+    "tabs": {
+      "campaigns": "Chiến dịch",
+      "audiences": "Đối tượng",
+      "statistics": "Thống kê"
+    },
+    "audiences": {
+      "title": "Đối tượng tùy chỉnh",
+      "create": "Tạo mới",
+      "uploadMore": "Tải thêm hàng",
+      "empty": "Chưa có đối tượng tùy chỉnh nào.",
+      "deleteTitle": "Xóa đối tượng tùy chỉnh",
+      "deleteWarning": "Thao tác này sẽ xóa đối tượng tùy chỉnh \"{name}\" trên Meta và trong ChatbotX. Không thể hoàn tác.",
+      "deleted": "Đã xóa đối tượng tùy chỉnh.",
+      "pageDisconnected": "Trang đã ngắt kết nối",
+      "status": {
+        "ready": "Sẵn sàng",
+        "missing": "Đã bị xóa trên Meta"
+      },
+      "fields": {
+        "customAudienceId": "ID đối tượng tùy chỉnh",
+        "approximateCount": "Số lượng ước tính",
+        "status": "Trạng thái",
+        "file": "Tải tệp lên"
+      },
+      "wizard": {
+        "title": "Tạo đối tượng tùy chỉnh",
+        "uploadMoreTitle": "Tải thêm hàng",
+        "steps": {
+          "prepare": "Chuẩn bị danh sách",
+          "upload": "Tải lên",
+          "confirm": "Xác nhận"
+        },
+        "prepareDescription": "Danh sách người đăng ký là tệp CSV hoặc TXT chứa thông tin dùng để xây dựng đối tượng cho tin nhắn tiếp thị. Chúng tôi dùng số điện thoại để khớp người đăng ký của bạn với người dùng Facebook và Instagram. Trước khi thông tin được gửi đến chúng tôi, danh sách mã định danh của bạn sẽ được băm thành mã ngẫu nhiên.",
+        "aboutHashing": "Về băm dữ liệu",
+        "downloadTemplate": "Tải xuống tệp mẫu",
+        "mainIdentifiers": "Bao gồm ít nhất một mã định danh chính",
+        "moreIdentifiers": "Bao gồm thêm mã định danh",
+        "identifiers": {
+          "email": "Email",
+          "phone": "Số điện thoại",
+          "madid": "ID quảng cáo trên thiết bị di động",
+          "fn": "Tên",
+          "ln": "Họ",
+          "ct": "Thành phố",
+          "st": "Tỉnh/Bang",
+          "country": "Quốc gia",
+          "zip": "Mã ZIP/Mã bưu chính",
+          "dob": "Ngày sinh",
+          "doby": "Năm sinh",
+          "gen": "Giới tính"
+        },
+        "uploadNote": "Trước khi tải danh sách lên, hãy đảm bảo các mã định danh đầy đủ và đúng định dạng. Danh sách phải ở định dạng .csv, .txt hoặc .xlsx.",
+        "namePlaceholder": "Nhập tên đối tượng...",
+        "descriptionPlaceholder": "Mô tả ngắn (nếu có)",
+        "dropzone": "Nhấp để tải lên hoặc kéo và thả",
+        "maxFileSize": "Kích thước tệp tối đa: 20MB",
+        "fileRequired": "Chọn một tệp để tải lên.",
+        "fileTooLarge": "Tệp lớn hơn 20MB.",
+        "fileType": "Tệp phải có định dạng .csv, .txt hoặc .xlsx.",
+        "next": "Tiếp theo",
+        "back": "Quay lại",
+        "upload": "Tải lên",
+        "done": "Xong",
+        "successTitle": "Tải lên thành công",
+        "successRows": "Danh sách người đăng ký Messenger của bạn đã được tải lên {count, plural, one {# hàng} other {# hàng}}",
+        "skippedRows": "{count, plural, one {# hàng} other {# hàng}} đã bị bỏ qua (không có email hoặc số điện thoại hợp lệ).",
+        "invalidRows": "{count, plural, one {# hàng} other {# hàng}} đã bị Meta từ chối.",
+        "matchingNote": "Chúng tôi có thể cần vài phút để hoàn tất việc khớp người đăng ký của bạn với người dùng trên Facebook. Bạn có thể kiểm tra trạng thái trong danh sách Đối tượng."
+      },
+      "errors": {
+        "audienceInvalidFile": "Không thể đọc tệp. Hãy dùng tệp .csv, .txt hoặc .xlsx có hàng tiêu đề.",
+        "audienceTooManyRows": "Tệp có nhiều hơn {max, number} hàng.",
+        "audienceNoIdentifier": "Tệp cần có cột email hoặc số điện thoại.",
+        "audienceNoValidRows": "Không có hàng nào có email hoặc số điện thoại hợp lệ.",
+        "audiencePartialUpload": "Đối tượng đã được tạo, nhưng quá trình tải lên đã dừng sau {received, number} hàng. Hãy dùng \"Tải thêm hàng\" để thử lại.",
+        "audienceNotFound": "Không tìm thấy đối tượng tùy chỉnh.",
+        "audienceCreateRejected": "Meta đã từ chối đối tượng: {reason}",
+        "uploadUncertain": "Quá trình tải lên có thể chưa hoàn tất. Hãy đóng hộp thoại này và kiểm tra danh sách đối tượng; dùng \"Tải thêm hàng\" nếu đối tượng đã được tạo.",
+        "pageNotConnected": "Trang đã chọn chưa được kết nối với không gian làm việc này.",
+        "audienceInUse": "Đối tượng tùy chỉnh này đang được dùng bởi {count, plural, one {# tin nhắn marketing} other {# tin nhắn marketing}} nên không thể xóa."
+      }
+    },
+    "delivery": {
+      "title": "Gửi tin",
+      "contentLocked": "Nội dung bị khóa vì đã có tin nhắn được gửi đi.",
+      "topicsReturned": "Các chủ đề Meta trả về: {topics}",
+      "recipients": "{count} người nhận",
+      "startsAt": "Bắt đầu: {date}",
+      "completedAt": "Hoàn tất: {date}",
+      "errorBreakdown": "Lỗi gửi",
+      "retrying": "Meta hiện không nhận gửi tin; đang tự động thử lại.",
+      "counts": {
+        "sent": "Đã gửi",
+        "delivered": "Đã nhận",
+        "unconfirmed": "Chưa xác nhận"
+      },
+      "status": {
+        "notSent": "Chưa gửi",
+        "scheduled": "Đã lên lịch",
+        "sending": "Đang gửi",
+        "waitingNextDay": "Chờ sang ngày hôm sau",
+        "paused": "Tạm dừng",
+        "stopped": "Đã dừng"
+      },
+      "reason": {
+        "pageNotConnected": "Trang chưa được kết nối với không gian làm việc này.",
+        "quotaReached": "Tạm dừng: đã hết hạn mức tin nhắn.",
+        "workspaceBlocked": "Tạm dừng: không gian làm việc này đang bị chặn.",
+        "grantInvalid": "Tạm dừng: kết nối Facebook đã hết hạn. Hãy kết nối lại Marketing Messages.",
+        "metaBlocker": "Meta đang chặn chiến dịch này.",
+        "contentRejected": "Meta đã từ chối nội dung tin nhắn.",
+        "noTokens": "Không tìm thấy người nhận nào cho chiến dịch này.",
+        "noMatchingTopic": "Không có người nhận đã đồng ý nào khớp với chủ đề \"Updates and promotions\".",
+        "tokenFetchFailed": "Không thể lấy danh sách người nhận từ Meta.",
+        "campaignEnded": "Chiến dịch Meta đã kết thúc.",
+        "lifetimeBudgetReached": "Ngân sách trọn đời đã được dùng hết."
+      },
+      "errors": {
+        "grantInvalid": "Kết nối Facebook đã hết hạn.",
+        "campaignInactive": "Chiến dịch Meta không hoạt động.",
+        "budgetReached": "Đã hết ngân sách.",
+        "dailyBudgetReached": "Đã đạt ngân sách hằng ngày.",
+        "optedOut": "Người nhận đã từ chối nhận tin.",
+        "frequencyLimit": "Đã đạt giới hạn tần suất của người nhận.",
+        "contentRejected": "Meta đã từ chối nội dung tin nhắn.",
+        "deliveryFailed": "Gửi thất bại.",
+        "outcomeUnknown": "Không xác định được kết quả gửi."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "Tìm theo ID hoặc tên",
+      "adAccount": "Tài khoản quảng cáo",
+      "dateRange": "Khoảng thời gian",
+      "timezoneHint": "Ngày theo múi giờ {timezone}",
+      "presets": {
+        "last7": "7 ngày qua",
+        "last30": "30 ngày qua",
+        "last90": "90 ngày qua",
+        "thisMonth": "Tháng này",
+        "lastMonth": "Tháng trước"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Tên",
+        "page": "Trang Facebook",
+        "delivered": "Tin nhắn đã gửi đến",
+        "readRate": "Tỷ lệ đọc",
+        "linkClicks": "Lượt nhấp liên kết",
+        "linkClickRate": "Tỷ lệ nhấp liên kết",
+        "costPerClick": "Chi phí mỗi lượt nhấp",
+        "costPerDelivery": "Chi phí mỗi lượt gửi đến",
+        "spend": "Số tiền đã chi"
+      },
+      "notes": {
+        "delivery": "Meta không báo cáo chỉ số này cho người nhận ở châu Âu hoặc Nhật Bản; các chiến dịch đó hiển thị -.",
+        "clicks": "Meta không báo cáo chỉ số này cho người nhận ở châu Âu, Argentina, Thổ Nhĩ Kỳ, Hàn Quốc hoặc Nhật Bản; các chiến dịch đó hiển thị -."
+      },
+      "footer": {
+        "label": "Tổng: {count, plural, one {# chiến dịch} other {# chiến dịch}}",
+        "total": "Tổng",
+        "average": "Trung bình"
+      },
+      "totalsUnavailable": "Hiện chưa thể tải số liệu tổng. Vui lòng thử lại sau.",
+      "readOnly": "Kết nối lại Tin nhắn tiếp thị để xem thống kê.",
+      "empty": "Chưa có chiến dịch Tin nhắn tiếp thị nào. Hãy tạo trong tab Chiến dịch.",
+      "noResults": "Không có chiến dịch nào khớp với tìm kiếm."
     }
   },
   "facebookAds": {

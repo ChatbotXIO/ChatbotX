@@ -2864,7 +2864,7 @@
     "title": "Generelt"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "Dette fjerner kun kampagnen fra ChatbotX. Meta-beskedkampagnen kører videre — sæt den på pause eller slet den i Ads Manager.",
+    "deleteWarning": "Dette sletter Meta-beskedkampagnen og fjerner kampagnen fra ChatbotX. Hvis Meta afviser sletningen, beholdes kampagnen.",
     "title": "Facebook Marketing Messages",
     "description": "Øg engagement og salg med personlige kampagnebeskeder på Messenger.",
     "create": "Opret ny",
@@ -2889,13 +2889,197 @@
       "generic": "Generisk",
       "greeting": "Hilsen",
       "quickReplies": "Hurtige svar",
-      "elements": "Kort"
+      "elements": "Kort",
+      "targetMessaging": "Målretning af beskeder",
+      "targetOptIn": "Opt-in",
+      "targetOptInDescription": "Kunder på siden, der har accepteret at modtage marketingbeskeder",
+      "targetCustomAudience": "Brugerdefineret målgruppe",
+      "targetCustomAudienceDescription": "Send beskeder til målgrupper uploadet fra en fil",
+      "audience": "Brugerdefineret målgruppe"
     },
+    "noReadyAudiences": "Ingen klare brugerdefinerede målgrupper for denne side og annoncekonto.",
+    "manageAudiences": "Administrer målgrupper",
     "errors": {
       "notConfigured": "Facebook Marketing Messages er ikke konfigureret. Bed din administrator om at angive konfigurations-id'et for marketingbeskeder.",
       "notGranted": "Giv adgang for at bruge funktionen Marketingbeskeder.",
       "tosNotAccepted": "For at bruge denne funktion skal du acceptere vilkårene for tilpassede objekter på {url}",
-      "notFound": "Marketingbesked blev ikke fundet."
+      "notFound": "Marketingbesked blev ikke fundet.",
+      "audienceNotTargetable": "Den valgte brugerdefinerede målgruppe er ikke klar eller tilhører ikke denne side og annoncekonto.",
+      "connectFirst": "Tilslut først Marketing Messages i ChatbotX-appen.",
+      "mmInvalidState": "Denne handling er ikke tilgængelig i kampagnens nuværende tilstand.",
+      "mmCampaignEnded": "Meta-beskedkampagnen er slut, så den kan ikke sendes eller genoptages.",
+      "mmPageNotConnected": "Kampagnens side er ikke tilsluttet dette arbejdsområde.",
+      "mmContentLocked": "Indholdet kan ikke ændres, efter den første besked er sendt.",
+      "metaDeleteFailed": "Meta kunne ikke slette denne kampagne, så den blev beholdt. {message}",
+      "statisticsUnknownAdAccount": "Dette arbejdsområde har ingen Marketing Messages-kampagner på den annoncekonto.",
+      "statisticsInvalidRange": "Vælg en startdato på eller før slutdatoen inden for de seneste 37 måneder."
+    },
+    "tabs": {
+      "campaigns": "Kampagner",
+      "audiences": "Målgrupper",
+      "statistics": "Statistik"
+    },
+    "audiences": {
+      "title": "Brugerdefinerede målgrupper",
+      "create": "Opret ny",
+      "uploadMore": "Upload flere rækker",
+      "empty": "Ingen brugerdefinerede målgrupper endnu.",
+      "deleteTitle": "Slet brugerdefineret målgruppe",
+      "deleteWarning": "Dette sletter den brugerdefinerede målgruppe \"{name}\" på Meta og i ChatbotX. Det kan ikke fortrydes.",
+      "deleted": "Brugerdefineret målgruppe slettet.",
+      "pageDisconnected": "Side frakoblet",
+      "status": {
+        "ready": "Klar",
+        "missing": "Slettet på Meta"
+      },
+      "fields": {
+        "customAudienceId": "ID for brugerdefineret målgruppe",
+        "approximateCount": "Omtrentligt antal",
+        "status": "Status",
+        "file": "Upload fil"
+      },
+      "wizard": {
+        "title": "Opret brugerdefineret målgruppe",
+        "uploadMoreTitle": "Upload flere rækker",
+        "steps": {
+          "prepare": "Forbered liste",
+          "upload": "Upload",
+          "confirm": "Bekræft"
+        },
+        "prepareDescription": "En abonnentliste er en CSV- eller TXT-fil med oplysninger, der bruges til at opbygge din målgruppe til marketingbeskeder. Vi bruger telefonnummeret til at matche dine abonnenter med Facebook- og Instagram-brugere. Før oplysningerne sendes til os, bliver din liste over identifikatorer hashet til tilfældig kode.",
+        "aboutHashing": "Om hashing",
+        "downloadTemplate": "Download filskabelon",
+        "mainIdentifiers": "Medtag mindst én primær identifikator",
+        "moreIdentifiers": "Medtag flere identifikatorer",
+        "identifiers": {
+          "email": "E-mail",
+          "phone": "Telefonnummer",
+          "madid": "Mobilt annonce-ID",
+          "fn": "Fornavn",
+          "ln": "Efternavn",
+          "ct": "By",
+          "st": "Stat/provins",
+          "country": "Land",
+          "zip": "Postnummer",
+          "dob": "Fødselsdato",
+          "doby": "Fødselsår",
+          "gen": "Køn"
+        },
+        "uploadNote": "Før du uploader listen, skal du sikre dig, at identifikatorerne er fuldstændige og i det rigtige format. Listen skal være i formatet .csv, .txt eller .xlsx.",
+        "namePlaceholder": "Indtast målgruppens navn...",
+        "descriptionPlaceholder": "Kort beskrivelse (hvis relevant)",
+        "dropzone": "Klik for at uploade, eller træk og slip",
+        "maxFileSize": "Maksimal filstørrelse: 20 MB",
+        "fileRequired": "Vælg en fil, der skal uploades.",
+        "fileTooLarge": "Filen er større end 20 MB.",
+        "fileType": "Filen skal være .csv, .txt eller .xlsx.",
+        "next": "Næste",
+        "back": "Tilbage",
+        "upload": "Upload",
+        "done": "Færdig",
+        "successTitle": "Upload lykkedes",
+        "successRows": "Din Messenger-abonnentliste er uploadet: {count, plural, one {# række} other {# rækker}}",
+        "skippedRows": "{count, plural, one {# række blev} other {# rækker blev}} sprunget over (ingen gyldig e-mail eller telefon).",
+        "invalidRows": "{count, plural, one {# række blev} other {# rækker blev}} afvist af Meta.",
+        "matchingNote": "Det kan tage et par minutter at færdiggøre matchningen af dine abonnenter med personer på Facebook. Du kan se status på målgruppelisten."
+      },
+      "errors": {
+        "audienceInvalidFile": "Filen kunne ikke læses. Brug en .csv-, .txt- eller .xlsx-fil med en overskriftsrække.",
+        "audienceTooManyRows": "Filen har mere end {max, number} rækker.",
+        "audienceNoIdentifier": "Filen skal have en kolonne med e-mail eller telefon.",
+        "audienceNoValidRows": "Ingen rækker har en gyldig e-mail eller et gyldigt telefonnummer.",
+        "audiencePartialUpload": "Målgruppen blev oprettet, men uploaden stoppede efter {received, number} rækker. Brug \"Upload flere rækker\" for at prøve igen.",
+        "audienceNotFound": "Brugerdefineret målgruppe blev ikke fundet.",
+        "audienceCreateRejected": "Meta afviste målgruppen: {reason}",
+        "uploadUncertain": "Uploadet er muligvis ikke færdigt. Luk denne dialog, og tjek målgruppelisten; brug \"Upload flere rækker\", hvis målgruppen blev oprettet.",
+        "pageNotConnected": "Den valgte side er ikke forbundet til dette workspace.",
+        "audienceInUse": "Denne brugerdefinerede målgruppe bruges af {count, plural, one {# marketingbesked} other {# marketingbeskeder}} og kan ikke slettes."
+      }
+    },
+    "delivery": {
+      "title": "Levering",
+      "contentLocked": "Indholdet er låst, fordi der allerede er sendt beskeder.",
+      "topicsReturned": "Emner returneret af Meta: {topics}",
+      "recipients": "{count} modtagere",
+      "startsAt": "Start: {date}",
+      "completedAt": "Fuldført: {date}",
+      "errorBreakdown": "Fejl",
+      "retrying": "Meta modtager ikke afsendelser lige nu; prøver automatisk igen.",
+      "counts": {
+        "sent": "Sendt",
+        "delivered": "Leveret",
+        "unconfirmed": "Ubekræftet"
+      },
+      "status": {
+        "notSent": "Ikke sendt",
+        "scheduled": "Planlagt",
+        "sending": "Sender",
+        "waitingNextDay": "Venter til næste dag",
+        "paused": "Sat på pause",
+        "stopped": "Stoppet"
+      },
+      "reason": {
+        "pageNotConnected": "Siden er ikke forbundet til dette workspace.",
+        "quotaReached": "På pause: din beskedkvote er nået.",
+        "workspaceBlocked": "På pause: dette workspace er blokeret.",
+        "grantInvalid": "På pause: Facebook-forbindelsen er udløbet. Forbind Marketing Messages igen.",
+        "metaBlocker": "Meta blokerer denne kampagne.",
+        "contentRejected": "Meta afviste beskedens indhold.",
+        "noTokens": "Der blev ikke fundet nogen modtagere til denne kampagne.",
+        "noMatchingTopic": "Ingen modtagere med samtykke matcher emnet \"Updates and promotions\".",
+        "tokenFetchFailed": "Modtagere kunne ikke hentes fra Meta.",
+        "campaignEnded": "Meta-kampagnen er afsluttet.",
+        "lifetimeBudgetReached": "Livstidsbudgettet er brugt op."
+      },
+      "errors": {
+        "grantInvalid": "Facebook-forbindelsen er udløbet.",
+        "campaignInactive": "Meta-kampagnen er ikke aktiv.",
+        "budgetReached": "Budgettet er brugt op.",
+        "dailyBudgetReached": "Dagsbudgettet er nået.",
+        "optedOut": "Modtageren har afmeldt sig.",
+        "frequencyLimit": "Modtagerens frekvensgrænse er nået.",
+        "contentRejected": "Beskedens indhold blev afvist af Meta.",
+        "deliveryFailed": "Levering mislykkedes.",
+        "outcomeUnknown": "Leveringsresultatet er ukendt."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "Søg efter ID eller navn",
+      "adAccount": "Annoncekonto",
+      "dateRange": "Datointerval",
+      "timezoneHint": "Datoer i {timezone}",
+      "presets": {
+        "last7": "Seneste 7 dage",
+        "last30": "Seneste 30 dage",
+        "last90": "Seneste 90 dage",
+        "thisMonth": "Denne måned",
+        "lastMonth": "Sidste måned"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Navn",
+        "page": "Facebook-side",
+        "delivered": "Leverede beskeder",
+        "readRate": "Læserate",
+        "linkClicks": "Linkklik",
+        "linkClickRate": "Linkklikrate",
+        "costPerClick": "Pris pr. klik",
+        "costPerDelivery": "Pris pr. levering",
+        "spend": "Brugt beløb"
+      },
+      "notes": {
+        "delivery": "Meta rapporterer ikke dette for modtagere i Europa eller Japan; de kampagner viser -.",
+        "clicks": "Meta rapporterer ikke dette for modtagere i Europa, Argentina, Tyrkiet, Sydkorea eller Japan; de kampagner viser -."
+      },
+      "footer": {
+        "label": "I alt: {count, plural, one {# kampagne} other {# kampagner}}",
+        "total": "I alt",
+        "average": "Gennemsnit"
+      },
+      "totalsUnavailable": "Totaler er ikke tilgængelige lige nu. Prøv igen om lidt.",
+      "readOnly": "Forbind Marketing Messages igen for at se statistik.",
+      "empty": "Ingen Marketing Messages-kampagner endnu. Opret en under fanen Kampagner.",
+      "noResults": "Ingen kampagner matcher din søgning."
     }
   },
   "facebookAds": {

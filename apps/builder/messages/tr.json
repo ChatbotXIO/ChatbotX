@@ -3019,7 +3019,7 @@
     "title": "Genel"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "Bu, kampanyayı yalnızca ChatbotX'ten kaldırır. Meta mesaj kampanyası çalışmaya devam eder — Reklam Yöneticisi'nde duraklatın veya silin.",
+    "deleteWarning": "Bu işlem Meta mesaj kampanyasını siler ve kampanyayı ChatbotX'ten kaldırır. Meta silmeyi reddederse kampanya korunur.",
     "title": "Facebook Pazarlama Mesajları",
     "description": "Messenger'da kişiselleştirilmiş tanıtım mesajlarıyla etkileşimi ve satışları artırın.",
     "create": "Yeni Oluştur",
@@ -3044,13 +3044,197 @@
       "generic": "Genel",
       "greeting": "Karşılama",
       "quickReplies": "Hızlı yanıtlar",
-      "elements": "Kartlar"
+      "elements": "Kartlar",
+      "targetMessaging": "Mesaj hedefleme",
+      "targetOptIn": "Opt-in",
+      "targetOptInDescription": "Sayfada pazarlama mesajı almayı kabul eden müşteriler",
+      "targetCustomAudience": "Özel hedef kitle",
+      "targetCustomAudienceDescription": "Dosyadan yüklenen hedef kitlelere mesaj gönder",
+      "audience": "Özel hedef kitle"
     },
+    "noReadyAudiences": "Bu Sayfa ve reklam hesabı için hazır özel hedef kitle yok.",
+    "manageAudiences": "Hedef kitleleri yönet",
     "errors": {
       "notConfigured": "Facebook Pazarlama Mesajları yapılandırılmadı. Yöneticinizden Pazarlama Mesajları Yapılandırma Kimliği'ni ayarlamasını isteyin.",
       "notGranted": "Pazarlama Mesajları özelliğini kullanmak için lütfen erişim izni verin.",
       "tosNotAccepted": "Bu özelliği kullanmak için {url} adresinde özel nesne koşullarını kabul edin",
-      "notFound": "Pazarlama mesajı bulunamadı."
+      "notFound": "Pazarlama mesajı bulunamadı.",
+      "audienceNotTargetable": "Seçilen özel hedef kitle hazır değil veya bu Sayfa ve reklam hesabına ait değil.",
+      "connectFirst": "Önce ChatbotX uygulamasında Marketing Messages'ı bağlayın.",
+      "mmInvalidState": "Bu işlem kampanyanın mevcut durumunda kullanılamaz.",
+      "mmCampaignEnded": "Meta mesaj kampanyası sona erdi, bu nedenle gönderilemez veya devam ettirilemez.",
+      "mmPageNotConnected": "Bu kampanyanın Sayfası bu çalışma alanına bağlı değil.",
+      "mmContentLocked": "İlk mesaj gönderildikten sonra içerik değiştirilemez.",
+      "metaDeleteFailed": "Meta bu kampanyayı silemedi, bu nedenle kampanya korundu. {message}",
+      "statisticsUnknownAdAccount": "Bu çalışma alanının o reklam hesabında Pazarlama Mesajları kampanyası yok.",
+      "statisticsInvalidRange": "Son 37 ay içinde, bitiş tarihiyle aynı veya ondan önce bir başlangıç tarihi seçin."
+    },
+    "tabs": {
+      "campaigns": "Kampanyalar",
+      "audiences": "Hedef kitleler",
+      "statistics": "İstatistikler"
+    },
+    "audiences": {
+      "title": "Özel hedef kitleler",
+      "create": "Yeni oluştur",
+      "uploadMore": "Daha fazla satır yükle",
+      "empty": "Henüz özel hedef kitle yok.",
+      "deleteTitle": "Özel hedef kitleyi sil",
+      "deleteWarning": "Bu işlem \"{name}\" özel hedef kitlesini Meta'dan ve ChatbotX'ten siler. Geri alınamaz.",
+      "deleted": "Özel hedef kitle silindi.",
+      "pageDisconnected": "Sayfa bağlantısı kesildi",
+      "status": {
+        "ready": "Hazır",
+        "missing": "Meta'da silindi"
+      },
+      "fields": {
+        "customAudienceId": "Özel hedef kitle kimliği",
+        "approximateCount": "Yaklaşık sayı",
+        "status": "Durum",
+        "file": "Dosya yükle"
+      },
+      "wizard": {
+        "title": "Özel hedef kitle oluştur",
+        "uploadMoreTitle": "Daha fazla satır yükle",
+        "steps": {
+          "prepare": "Listeyi hazırla",
+          "upload": "Yükle",
+          "confirm": "Onayla"
+        },
+        "prepareDescription": "Abone listesi, pazarlama mesajları için hedef kitlenizi oluşturmakta kullanılan bilgileri içeren bir CSV veya TXT dosyasıdır. Abonelerinizi Facebook ve Instagram kullanıcılarıyla eşleştirmek için telefon numarasını kullanırız. Bilgiler bize gönderilmeden önce tanımlayıcı listeniz rastgele bir koda dönüştürülür (hash).",
+        "aboutHashing": "Hash'leme hakkında",
+        "downloadTemplate": "Dosya şablonunu indir",
+        "mainIdentifiers": "En az bir ana tanımlayıcı ekleyin",
+        "moreIdentifiers": "Daha fazla tanımlayıcı ekleyin",
+        "identifiers": {
+          "email": "E-posta",
+          "phone": "Telefon numarası",
+          "madid": "Mobil reklam kimliği",
+          "fn": "Ad",
+          "ln": "Soyad",
+          "ct": "Şehir",
+          "st": "Eyalet/İl",
+          "country": "Ülke",
+          "zip": "Posta kodu",
+          "dob": "Doğum tarihi",
+          "doby": "Doğum yılı",
+          "gen": "Cinsiyet"
+        },
+        "uploadNote": "Listeyi yüklemeden önce tanımlayıcıların eksiksiz ve doğru biçimde olduğundan emin olun. Liste .csv, .txt veya .xlsx biçiminde olmalıdır.",
+        "namePlaceholder": "Hedef kitle adını girin...",
+        "descriptionPlaceholder": "Kısa açıklama (varsa)",
+        "dropzone": "Yüklemek için tıklayın veya sürükleyip bırakın",
+        "maxFileSize": "Maksimum dosya boyutu: 20MB",
+        "fileRequired": "Yüklenecek bir dosya seçin.",
+        "fileTooLarge": "Dosya 20MB'tan büyük.",
+        "fileType": "Dosya .csv, .txt veya .xlsx olmalıdır.",
+        "next": "İleri",
+        "back": "Geri",
+        "upload": "Yükle",
+        "done": "Bitti",
+        "successTitle": "Yükleme başarılı",
+        "successRows": "Messenger abone listeniz yüklendi: {count, plural, one {# satır} other {# satır}}",
+        "skippedRows": "{count, plural, one {# satır atlandı} other {# satır atlandı}} (geçerli e-posta veya telefon yok).",
+        "invalidRows": "{count, plural, one {# satır Meta tarafından reddedildi} other {# satır Meta tarafından reddedildi}}.",
+        "matchingNote": "Abonelerinizin Facebook'taki kişilerle eşleştirilmesinin tamamlanması birkaç dakika sürebilir. Durumu Hedef kitle listesinden kontrol edebilirsiniz."
+      },
+      "errors": {
+        "audienceInvalidFile": "Dosya okunamadı. Başlık satırı olan bir .csv, .txt veya .xlsx dosyası kullanın.",
+        "audienceTooManyRows": "Dosyada {max, number} satırdan fazla var.",
+        "audienceNoIdentifier": "Dosyada bir e-posta veya telefon sütunu olmalıdır.",
+        "audienceNoValidRows": "Hiçbir satırda geçerli bir e-posta veya telefon numarası yok.",
+        "audiencePartialUpload": "Hedef kitle oluşturuldu ancak yükleme {received, number} satırdan sonra durdu. Yeniden denemek için \"Daha fazla satır yükle\" seçeneğini kullanın.",
+        "audienceNotFound": "Özel hedef kitle bulunamadı.",
+        "audienceCreateRejected": "Meta kitleyi reddetti: {reason}",
+        "uploadUncertain": "Yükleme tamamlanmamış olabilir. Bu pencereyi kapatın ve kitle listesini kontrol edin; kitle oluşturulduysa \"Daha fazla satır yükle\" seçeneğini kullanın.",
+        "pageNotConnected": "Seçilen Sayfa bu çalışma alanına bağlı değil.",
+        "audienceInUse": "Bu özel hedef kitle {count, plural, one {# pazarlama mesajı} other {# pazarlama mesajı}} tarafından kullanılıyor ve silinemez."
+      }
+    },
+    "delivery": {
+      "title": "Gönderim",
+      "contentLocked": "Mesajlar zaten gönderildiği için içerik kilitli.",
+      "topicsReturned": "Meta'nın döndürdüğü konular: {topics}",
+      "recipients": "{count} alıcı",
+      "startsAt": "Başlangıç: {date}",
+      "completedAt": "Tamamlandı: {date}",
+      "errorBreakdown": "Hatalar",
+      "retrying": "Meta şu anda gönderim kabul etmiyor; otomatik olarak yeniden deneniyor.",
+      "counts": {
+        "sent": "Gönderildi",
+        "delivered": "Teslim edildi",
+        "unconfirmed": "Onaylanmadı"
+      },
+      "status": {
+        "notSent": "Gönderilmedi",
+        "scheduled": "Zamanlandı",
+        "sending": "Gönderiliyor",
+        "waitingNextDay": "Ertesi günü bekliyor",
+        "paused": "Duraklatıldı",
+        "stopped": "Durduruldu"
+      },
+      "reason": {
+        "pageNotConnected": "Sayfa bu çalışma alanına bağlı değil.",
+        "quotaReached": "Duraklatıldı: mesaj kotanıza ulaşıldı.",
+        "workspaceBlocked": "Duraklatıldı: bu çalışma alanı engellendi.",
+        "grantInvalid": "Duraklatıldı: Facebook bağlantısının süresi doldu. Marketing Messages'ı yeniden bağlayın.",
+        "metaBlocker": "Meta bu kampanyayı engelliyor.",
+        "contentRejected": "Meta mesaj içeriğini reddetti.",
+        "noTokens": "Bu kampanya için alıcı bulunamadı.",
+        "noMatchingTopic": "İzin vermiş hiçbir alıcı \"Updates and promotions\" konusuyla eşleşmiyor.",
+        "tokenFetchFailed": "Alıcılar Meta'dan alınamadı.",
+        "campaignEnded": "Meta kampanyası sona erdi.",
+        "lifetimeBudgetReached": "Toplam bütçe tükendi."
+      },
+      "errors": {
+        "grantInvalid": "Facebook bağlantısının süresi doldu.",
+        "campaignInactive": "Meta kampanyası etkin değil.",
+        "budgetReached": "Bütçe tükendi.",
+        "dailyBudgetReached": "Günlük bütçeye ulaşıldı.",
+        "optedOut": "Alıcı abonelikten çıktı.",
+        "frequencyLimit": "Alıcının sıklık sınırına ulaşıldı.",
+        "contentRejected": "Mesaj içeriği Meta tarafından reddedildi.",
+        "deliveryFailed": "Teslimat başarısız oldu.",
+        "outcomeUnknown": "Teslimat sonucu bilinmiyor."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "ID veya ada göre ara",
+      "adAccount": "Reklam hesabı",
+      "dateRange": "Tarih aralığı",
+      "timezoneHint": "Tarihler {timezone} saat diliminde",
+      "presets": {
+        "last7": "Son 7 gün",
+        "last30": "Son 30 gün",
+        "last90": "Son 90 gün",
+        "thisMonth": "Bu ay",
+        "lastMonth": "Geçen ay"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Ad",
+        "page": "Facebook Sayfası",
+        "delivered": "Teslim edilen mesajlar",
+        "readRate": "Okunma oranı",
+        "linkClicks": "Bağlantı tıklamaları",
+        "linkClickRate": "Bağlantı tıklama oranı",
+        "costPerClick": "Tıklama başına maliyet",
+        "costPerDelivery": "Teslimat başına maliyet",
+        "spend": "Harcanan tutar"
+      },
+      "notes": {
+        "delivery": "Meta bunu Avrupa veya Japonya'daki alıcılar için raporlamaz; bu kampanyalar - gösterir.",
+        "clicks": "Meta bunu Avrupa, Arjantin, Türkiye, Güney Kore veya Japonya'daki alıcılar için raporlamaz; bu kampanyalar - gösterir."
+      },
+      "footer": {
+        "label": "Toplam: {count, plural, one {# kampanya} other {# kampanya}}",
+        "total": "Toplam",
+        "average": "Ortalama"
+      },
+      "totalsUnavailable": "Toplamlar şu anda kullanılamıyor. Birazdan tekrar deneyin.",
+      "readOnly": "İstatistikleri görmek için Pazarlama Mesajları'nı yeniden bağlayın.",
+      "empty": "Henüz Pazarlama Mesajları kampanyası yok. Kampanyalar sekmesinde bir tane oluşturun.",
+      "noResults": "Aramanızla eşleşen kampanya yok."
     }
   },
   "facebookAds": {

@@ -8,6 +8,19 @@ const MAX_COMPRESSED_XLSX_BYTES = 10 * 1024 * 1024
 const MAX_UNCOMPRESSED_XLSX_BYTES = 100 * 1024 * 1024
 const MAX_XLSX_ARCHIVE_ENTRIES = 10_000
 
+export type XlsxLimits = { maxRows?: number; maxCompressedBytes?: number }
+
+/** A configured XLSX cap was hit — lets callers map it to their own error. */
+export class XlsxLimitError extends Error {
+  readonly kind: "rows" | "bytes"
+
+  constructor(kind: "rows" | "bytes", message: string) {
+    super(message)
+    this.name = "XlsxLimitError"
+    this.kind = kind
+  }
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null
 
@@ -64,14 +77,20 @@ const cellToHeader = (value: CellValue): string => {
   return normalized === undefined ? "" : String(normalized).trim()
 }
 
-const readBoundedXlsxBuffer = async (stream: Readable): Promise<Buffer> => {
+const readBoundedXlsxBuffer = async (
+  stream: Readable,
+  maxCompressedBytes: number = MAX_COMPRESSED_XLSX_BYTES,
+): Promise<Buffer> => {
   const chunks: Buffer[] = []
   let totalBytes = 0
   for await (const chunk of stream) {
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
     totalBytes += buffer.length
-    if (totalBytes > MAX_COMPRESSED_XLSX_BYTES) {
-      throw new Error("XLSX file exceeds the 10MB compressed size limit")
+    if (totalBytes > maxCompressedBytes) {
+      throw new XlsxLimitError(
+        "bytes",
+        `XLSX file exceeds the ${Math.round(maxCompressedBytes / (1024 * 1024))}MB compressed size limit`,
+      )
     }
     chunks.push(buffer)
   }
@@ -105,8 +124,9 @@ export const assertXlsxArchiveWithinLimits = async (
 
 const collectFirstWorksheet = async (
   stream: Readable,
+  limits: XlsxLimits = {},
 ): Promise<CellValue[][]> => {
-  const buffer = await readBoundedXlsxBuffer(stream)
+  const buffer = await readBoundedXlsxBuffer(stream, limits.maxCompressedBytes)
   await assertXlsxArchiveWithinLimits(buffer)
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.load(Uint8Array.from(buffer).buffer)
@@ -114,11 +134,17 @@ const collectFirstWorksheet = async (
   if (!worksheet) {
     throw new Error("The workbook has no worksheets")
   }
+  // +1: the header row is buffered too.
+  const maxBufferedRows =
+    limits.maxRows === undefined ? MAX_BUFFERED_XLSX_ROWS : limits.maxRows + 1
   const rows: CellValue[][] = []
 
   worksheet.eachRow({ includeEmpty: false }, (row) => {
-    if (rows.length >= MAX_BUFFERED_XLSX_ROWS) {
-      throw new Error(`XLSX row limit exceeded (${MAX_BUFFERED_XLSX_ROWS - 1})`)
+    if (rows.length >= maxBufferedRows) {
+      throw new XlsxLimitError(
+        "rows",
+        `XLSX row limit exceeded (${maxBufferedRows - 1})`,
+      )
     }
     rows.push(Array.isArray(row.values) ? row.values.slice(1) : [])
   })
@@ -183,3 +209,25 @@ export const readXlsxHeaders = async (stream: Readable): Promise<string[]> => {
     throw new Error(`Invalid XLSX file: ${message}`, { cause: error })
   }
 }
+
+const cellToText = (value: CellValue): string => {
+  const normalized = toImportCellValue(value)
+  if (normalized instanceof Date) {
+    return normalized.toISOString().slice(0, 10)
+  }
+  return normalized === undefined ? "" : String(normalized).trim()
+}
+
+/**
+ * Raw first-worksheet rows as trimmed strings (header row included), with
+ * caller-chosen caps. Dates become `YYYY-MM-DD`. Does NOT wrap errors, so a
+ * caller can tell an `XlsxLimitError` from a corrupt workbook.
+ */
+export const readXlsxRows = async (
+  stream: Readable,
+  limits?: XlsxLimits,
+): Promise<string[][]> =>
+  (await collectFirstWorksheet(stream, limits)).map((values) =>
+    // Array.from (not .map) densifies the holes ExcelJS leaves for empty cells.
+    Array.from(values, (value) => cellToText(value ?? null)),
+  )

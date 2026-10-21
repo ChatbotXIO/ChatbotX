@@ -21,6 +21,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./apis/*": "./src/apis/*.ts",
+    "./customer-file": "./src/customer-file/index.ts",
     "./messaging-ads/*": "./src/messaging-ads/*.ts",
     "./schemas": "./src/schemas.ts"
   },

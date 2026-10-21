@@ -61,6 +61,7 @@ import { handleSendGoogleAdsConversion } from "./handlers/google-ads/send-conver
 import { resumeHeavyStep } from "./handlers/heavy-step-resume"
 import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
 import { processLeadgen } from "./handlers/lead-ads"
+import { processMarketingMessageWebhook } from "./handlers/marketing-message-webhook"
 import { handleMessageStatus } from "./handlers/message-status"
 import { handleSendMetaCapiEvent } from "./handlers/meta-conversions/send-meta-capi-event"
 import { runQuickReplyFollowUpResume } from "./handlers/quick-reply-resume"
@@ -543,6 +544,10 @@ async function startIntegrationWorker() {
             }
             case IntegrationJobAction.processLeadgen: {
               await processLeadgen(job.data.data, job)
+              return
+            }
+            case IntegrationJobAction.processMarketingMessageWebhook: {
+              await processMarketingMessageWebhook(job.data.data)
               return
             }
             case IntegrationJobAction.threadControlEvent: {

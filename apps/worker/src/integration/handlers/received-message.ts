@@ -1122,7 +1122,7 @@ type SaveMessageResult = {
   isNew: boolean
 }
 
-type SaveAndBroadcastMessageProps = {
+export type SaveAndBroadcastMessageProps = {
   inbox: InboxModel
   contactInbox: ContactInboxModel
   conversation: ConversationModel
@@ -1429,7 +1429,7 @@ const persistMessage = async (
 // updates contactInbox/conversation activity timestamps for new rows,
 // broadcasts the realtime event to the UI, and emits `message:received` to trigger flows.
 // Shared by `receiveMessage` and `receiveComment`.
-const saveAndBroadcastMessage = async (
+export const saveAndBroadcastMessage = async (
   props: SaveAndBroadcastMessageProps,
 ): Promise<SaveMessageResult> => {
   const lockKey = `ingress:conv:${props.conversation.id}`

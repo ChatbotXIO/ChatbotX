@@ -2864,7 +2864,7 @@
     "title": "Umum"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "Ini hanya menghapus kampanye dari ChatbotX. Kampanye pesan Meta tetap berjalan — jeda atau hapus di Ads Manager.",
+    "deleteWarning": "Ini menghapus kampanye pesan Meta dan menghapus kampanye dari ChatbotX. Jika Meta menolak penghapusan, kampanye tetap disimpan.",
     "title": "Facebook Marketing Messages",
     "description": "Tingkatkan interaksi dan penjualan dengan pesan promosi yang dipersonalisasi di Messenger.",
     "create": "Buat Baru",
@@ -2889,13 +2889,197 @@
       "generic": "Generik",
       "greeting": "Sapaan",
       "quickReplies": "Balasan cepat",
-      "elements": "Kartu"
+      "elements": "Kartu",
+      "targetMessaging": "Target pesan",
+      "targetOptIn": "Opt-in",
+      "targetOptInDescription": "Pelanggan di halaman yang telah setuju menerima pesan pemasaran",
+      "targetCustomAudience": "Audiens kustom",
+      "targetCustomAudienceDescription": "Kirim pesan ke audiens yang diunggah dari file",
+      "audience": "Audiens kustom"
     },
+    "noReadyAudiences": "Tidak ada audiens kustom yang siap untuk Halaman dan akun iklan ini.",
+    "manageAudiences": "Kelola audiens",
     "errors": {
       "notConfigured": "Facebook Marketing Messages belum dikonfigurasi. Minta administrator Anda untuk menyetel ID Konfigurasi Marketing Messages.",
       "notGranted": "Berikan akses untuk menggunakan fitur Marketing Messages.",
       "tosNotAccepted": "Untuk menggunakan fitur ini, setujui ketentuan objek khusus di {url}",
-      "notFound": "Pesan marketing tidak ditemukan."
+      "notFound": "Pesan marketing tidak ditemukan.",
+      "audienceNotTargetable": "Audiens kustom yang dipilih belum siap atau bukan milik Halaman dan akun iklan ini.",
+      "connectFirst": "Hubungkan Marketing Messages di aplikasi ChatbotX terlebih dahulu.",
+      "mmInvalidState": "Tindakan ini tidak tersedia pada status kampanye saat ini.",
+      "mmCampaignEnded": "Kampanye pesan Meta telah berakhir, sehingga tidak dapat dikirim atau dilanjutkan.",
+      "mmPageNotConnected": "Halaman untuk kampanye ini tidak terhubung ke workspace ini.",
+      "mmContentLocked": "Konten tidak dapat diubah setelah pesan pertama terkirim.",
+      "metaDeleteFailed": "Meta tidak dapat menghapus kampanye ini, jadi kampanye tetap disimpan. {message}",
+      "statisticsUnknownAdAccount": "Workspace ini tidak memiliki kampanye Marketing Messages di akun iklan tersebut.",
+      "statisticsInvalidRange": "Pilih tanggal mulai yang sama dengan atau sebelum tanggal akhir, dalam 37 bulan terakhir."
+    },
+    "tabs": {
+      "campaigns": "Kampanye",
+      "audiences": "Audiens",
+      "statistics": "Statistik"
+    },
+    "audiences": {
+      "title": "Audiens Kustom",
+      "create": "Buat Baru",
+      "uploadMore": "Unggah lebih banyak baris",
+      "empty": "Belum ada audiens kustom.",
+      "deleteTitle": "Hapus audiens kustom",
+      "deleteWarning": "Tindakan ini menghapus audiens kustom \"{name}\" di Meta dan di ChatbotX. Tindakan ini tidak dapat dibatalkan.",
+      "deleted": "Audiens kustom dihapus.",
+      "pageDisconnected": "Halaman terputus",
+      "status": {
+        "ready": "Siap",
+        "missing": "Dihapus di Meta"
+      },
+      "fields": {
+        "customAudienceId": "ID Audiens Kustom",
+        "approximateCount": "Perkiraan jumlah",
+        "status": "Status",
+        "file": "Unggah file"
+      },
+      "wizard": {
+        "title": "Buat audiens kustom",
+        "uploadMoreTitle": "Unggah lebih banyak baris",
+        "steps": {
+          "prepare": "Siapkan daftar",
+          "upload": "Unggah",
+          "confirm": "Konfirmasi"
+        },
+        "prepareDescription": "Daftar pelanggan adalah file CSV atau TXT yang berisi informasi untuk membangun audiens pesan pemasaran Anda. Kami menggunakan nomor telepon untuk mencocokkan pelanggan Anda dengan pengguna Facebook dan Instagram. Sebelum informasi dikirim kepada kami, daftar pengenal Anda di-hash menjadi kode acak.",
+        "aboutHashing": "Tentang hashing",
+        "downloadTemplate": "Unduh templat file",
+        "mainIdentifiers": "Sertakan setidaknya satu pengenal utama",
+        "moreIdentifiers": "Sertakan lebih banyak pengenal",
+        "identifiers": {
+          "email": "Email",
+          "phone": "Nomor telepon",
+          "madid": "ID iklan seluler",
+          "fn": "Nama depan",
+          "ln": "Nama belakang",
+          "ct": "Kota",
+          "st": "Negara bagian/Provinsi",
+          "country": "Negara",
+          "zip": "Kode pos",
+          "dob": "Tanggal lahir",
+          "doby": "Tahun lahir",
+          "gen": "Jenis kelamin"
+        },
+        "uploadNote": "Sebelum mengunggah daftar, pastikan pengenal lengkap dan dalam format yang benar. Daftar harus berformat .csv, .txt, atau .xlsx.",
+        "namePlaceholder": "Masukkan nama audiens...",
+        "descriptionPlaceholder": "Deskripsi singkat (jika ada)",
+        "dropzone": "Klik untuk mengunggah atau seret dan lepas",
+        "maxFileSize": "Ukuran file maksimum: 20MB",
+        "fileRequired": "Pilih file untuk diunggah.",
+        "fileTooLarge": "File lebih besar dari 20MB.",
+        "fileType": "File harus berformat .csv, .txt, atau .xlsx.",
+        "next": "Berikutnya",
+        "back": "Kembali",
+        "upload": "Unggah",
+        "done": "Selesai",
+        "successTitle": "Pengunggahan berhasil",
+        "successRows": "Daftar pelanggan Messenger Anda telah diunggah: {count, plural, one {# baris} other {# baris}}",
+        "skippedRows": "{count, plural, one {# baris} other {# baris}} dilewati (tidak ada email atau telepon yang valid).",
+        "invalidRows": "{count, plural, one {# baris} other {# baris}} ditolak oleh Meta.",
+        "matchingNote": "Kami mungkin memerlukan beberapa menit untuk menyelesaikan pencocokan pelanggan Anda dengan orang di Facebook. Anda dapat memeriksa statusnya di daftar Audiens."
+      },
+      "errors": {
+        "audienceInvalidFile": "File tidak dapat dibaca. Gunakan file .csv, .txt, atau .xlsx dengan baris header.",
+        "audienceTooManyRows": "File memiliki lebih dari {max, number} baris.",
+        "audienceNoIdentifier": "File memerlukan kolom email atau telepon.",
+        "audienceNoValidRows": "Tidak ada baris dengan email atau nomor telepon yang valid.",
+        "audiencePartialUpload": "Audiens telah dibuat, tetapi pengunggahan berhenti setelah {received, number} baris. Gunakan \"Unggah lebih banyak baris\" untuk mencoba lagi.",
+        "audienceNotFound": "Audiens kustom tidak ditemukan.",
+        "audienceCreateRejected": "Meta menolak audiens: {reason}",
+        "uploadUncertain": "Unggahan mungkin belum selesai. Tutup dialog ini dan periksa daftar audiens; gunakan \"Unggah lebih banyak baris\" jika audiens sudah dibuat.",
+        "pageNotConnected": "Halaman yang dipilih tidak terhubung ke ruang kerja ini.",
+        "audienceInUse": "Audiens kustom ini digunakan oleh {count, plural, one {# pesan pemasaran} other {# pesan pemasaran}} dan tidak dapat dihapus."
+      }
+    },
+    "delivery": {
+      "title": "Pengiriman",
+      "contentLocked": "Konten terkunci karena pesan sudah dikirim.",
+      "topicsReturned": "Topik yang dikembalikan Meta: {topics}",
+      "recipients": "{count} penerima",
+      "startsAt": "Mulai: {date}",
+      "completedAt": "Selesai: {date}",
+      "errorBreakdown": "Kegagalan",
+      "retrying": "Meta sedang tidak menerima pengiriman; mencoba ulang secara otomatis.",
+      "counts": {
+        "sent": "Terkirim",
+        "delivered": "Diterima",
+        "unconfirmed": "Belum dikonfirmasi"
+      },
+      "status": {
+        "notSent": "Belum dikirim",
+        "scheduled": "Terjadwal",
+        "sending": "Mengirim",
+        "waitingNextDay": "Menunggu hari berikutnya",
+        "paused": "Dijeda",
+        "stopped": "Dihentikan"
+      },
+      "reason": {
+        "pageNotConnected": "Halaman tidak terhubung ke workspace ini.",
+        "quotaReached": "Dijeda: kuota pesan Anda telah habis.",
+        "workspaceBlocked": "Dijeda: workspace ini diblokir.",
+        "grantInvalid": "Dijeda: koneksi Facebook telah kedaluwarsa. Hubungkan kembali Marketing Messages.",
+        "metaBlocker": "Meta memblokir kampanye ini.",
+        "contentRejected": "Meta menolak konten pesan.",
+        "noTokens": "Tidak ada penerima yang ditemukan untuk kampanye ini.",
+        "noMatchingTopic": "Tidak ada penerima yang memberi izin yang cocok dengan topik \"Updates and promotions\".",
+        "tokenFetchFailed": "Tidak dapat mengambil penerima dari Meta.",
+        "campaignEnded": "Kampanye Meta telah berakhir.",
+        "lifetimeBudgetReached": "Anggaran seumur hidup telah habis."
+      },
+      "errors": {
+        "grantInvalid": "Koneksi Facebook telah kedaluwarsa.",
+        "campaignInactive": "Kampanye Meta tidak aktif.",
+        "budgetReached": "Anggaran habis.",
+        "dailyBudgetReached": "Anggaran harian tercapai.",
+        "optedOut": "Penerima berhenti berlangganan.",
+        "frequencyLimit": "Batas frekuensi penerima tercapai.",
+        "contentRejected": "Konten pesan ditolak oleh Meta.",
+        "deliveryFailed": "Pengiriman gagal.",
+        "outcomeUnknown": "Hasil pengiriman tidak diketahui."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "Cari berdasarkan ID atau nama",
+      "adAccount": "Akun iklan",
+      "dateRange": "Rentang tanggal",
+      "timezoneHint": "Tanggal dalam {timezone}",
+      "presets": {
+        "last7": "7 hari terakhir",
+        "last30": "30 hari terakhir",
+        "last90": "90 hari terakhir",
+        "thisMonth": "Bulan ini",
+        "lastMonth": "Bulan lalu"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Nama",
+        "page": "Halaman Facebook",
+        "delivered": "Pesan terkirim",
+        "readRate": "Tingkat baca",
+        "linkClicks": "Klik tautan",
+        "linkClickRate": "Rasio klik tautan",
+        "costPerClick": "Biaya per klik",
+        "costPerDelivery": "Biaya per pengiriman",
+        "spend": "Jumlah yang dibelanjakan"
+      },
+      "notes": {
+        "delivery": "Meta tidak melaporkan ini untuk penerima di Eropa atau Jepang; kampanye tersebut menampilkan -.",
+        "clicks": "Meta tidak melaporkan ini untuk penerima di Eropa, Argentina, Turki, Korea Selatan, atau Jepang; kampanye tersebut menampilkan -."
+      },
+      "footer": {
+        "label": "Total: {count, plural, one {# kampanye} other {# kampanye}}",
+        "total": "Total",
+        "average": "Rata-rata"
+      },
+      "totalsUnavailable": "Total belum tersedia saat ini. Coba lagi sebentar lagi.",
+      "readOnly": "Hubungkan ulang Marketing Messages untuk melihat statistik.",
+      "empty": "Belum ada kampanye Marketing Messages. Buat di tab Kampanye.",
+      "noResults": "Tidak ada kampanye yang cocok dengan pencarian Anda."
     }
   },
   "facebookAds": {

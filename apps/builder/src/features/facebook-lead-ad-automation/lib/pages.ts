@@ -122,6 +122,7 @@ export async function enableLeadgenForWorkspacePages(
         accessToken: auth.tokens.accessToken,
         version: auth.metadata.version,
         subscribedFields: LEAD_ADS_PAGE_SUBSCRIBE_FIELDS.join(","),
+        includeMarketingMessages: true,
       })
     }),
   )
@@ -152,5 +153,6 @@ export async function subscribePageLeadgen(
     accessToken: auth.tokens.accessToken,
     version: auth.metadata.version,
     subscribedFields: LEAD_ADS_PAGE_SUBSCRIBE_FIELDS.join(","),
+    includeMarketingMessages: true,
   })
 }

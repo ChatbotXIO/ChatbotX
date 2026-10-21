@@ -734,7 +734,7 @@
     "title": "כללי"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "פעולה זו מסירה את הקמפיין מ-ChatbotX בלבד. קמפיין ההודעות של Meta ממשיך לפעול — השהה או מחק אותו במנהל המודעות.",
+    "deleteWarning": "פעולה זו מוחקת את קמפיין ההודעות ב-Meta ומסירה את הקמפיין מ-ChatbotX. אם Meta תסרב למחיקה, הקמפיין יישמר.",
     "title": "Facebook Marketing Messages",
     "description": "הגדל מעורבות ומכירות בעזרת הודעות קידום מותאמות אישית ב-Messenger.",
     "create": "צור חדש",
@@ -759,13 +759,197 @@
       "generic": "גנרי",
       "greeting": "ברכה",
       "quickReplies": "תשובות מהירות",
-      "elements": "כרטיסים"
+      "elements": "כרטיסים",
+      "targetMessaging": "טירגוט הודעות",
+      "targetOptIn": "הסכמה (Opt-in)",
+      "targetOptInDescription": "לקוחות בדף שהסכימו לקבל הודעות שיווקיות",
+      "targetCustomAudience": "קהל מותאם אישית",
+      "targetCustomAudienceDescription": "שליחת הודעות לקהלים שהועלו מקובץ",
+      "audience": "קהל מותאם אישית"
     },
+    "noReadyAudiences": "אין קהלים מותאמים אישית מוכנים לדף ולחשבון המודעות הזה.",
+    "manageAudiences": "ניהול קהלים",
     "errors": {
       "notConfigured": "‏Facebook Marketing Messages אינו מוגדר. בקש מהמנהל להגדיר את מזהה התצורה של הודעות שיווקיות.",
       "notGranted": "יש להעניק הרשאה כדי להשתמש בתכונת ההודעות השיווקיות.",
       "tosNotAccepted": "כדי להשתמש בתכונה זו, יש לאשר את תנאי האובייקט המותאם בכתובת {url}",
-      "notFound": "ההודעה השיווקית לא נמצאה."
+      "notFound": "ההודעה השיווקית לא נמצאה.",
+      "audienceNotTargetable": "הקהל המותאם אישית שנבחר אינו מוכן או אינו שייך לדף ולחשבון המודעות הזה.",
+      "connectFirst": "יש לחבר תחילה את Marketing Messages באפליקציית ChatbotX.",
+      "mmInvalidState": "פעולה זו אינה זמינה במצב הנוכחי של הקמפיין.",
+      "mmCampaignEnded": "קמפיין ההודעות ב-Meta הסתיים, ולכן לא ניתן לשלוח או לחדש אותו.",
+      "mmPageNotConnected": "הדף של קמפיין זה אינו מחובר לסביבת העבודה הזו.",
+      "mmContentLocked": "לא ניתן לשנות את התוכן לאחר שליחת ההודעה הראשונה.",
+      "metaDeleteFailed": "Meta לא הצליחה למחוק את הקמפיין הזה, ולכן הוא נשמר. {message}",
+      "statisticsUnknownAdAccount": "לסביבת עבודה זו אין קמפיינים של הודעות שיווקיות בחשבון המודעות הזה.",
+      "statisticsInvalidRange": "בחרו תאריך התחלה שאינו מאוחר מתאריך הסיום, בטווח 37 החודשים האחרונים."
+    },
+    "tabs": {
+      "campaigns": "קמפיינים",
+      "audiences": "קהלים",
+      "statistics": "סטטיסטיקות"
+    },
+    "audiences": {
+      "title": "קהלים מותאמים אישית",
+      "create": "יצירה חדשה",
+      "uploadMore": "העלאת שורות נוספות",
+      "empty": "עדיין אין קהלים מותאמים אישית.",
+      "deleteTitle": "מחיקת קהל מותאם אישית",
+      "deleteWarning": "פעולה זו מוחקת את הקהל המותאם אישית \"{name}\" ב-Meta וב-ChatbotX. לא ניתן לבטל אותה.",
+      "deleted": "הקהל המותאם אישית נמחק.",
+      "pageDisconnected": "הדף נותק",
+      "status": {
+        "ready": "מוכן",
+        "missing": "נמחק ב-Meta"
+      },
+      "fields": {
+        "customAudienceId": "מזהה קהל מותאם אישית",
+        "approximateCount": "כמות משוערת",
+        "status": "סטטוס",
+        "file": "העלאת קובץ"
+      },
+      "wizard": {
+        "title": "יצירת קהל מותאם אישית",
+        "uploadMoreTitle": "העלאת שורות נוספות",
+        "steps": {
+          "prepare": "הכנת הרשימה",
+          "upload": "העלאה",
+          "confirm": "אישור"
+        },
+        "prepareDescription": "רשימת מנויים היא קובץ CSV או TXT המכיל מידע המשמש ליצירת הקהל שלך להודעות שיווקיות. אנו משתמשים במספר הטלפון כדי להתאים בין המנויים שלך לבין משתמשי פייסבוק ואינסטגרם. לפני שהמידע נשלח אלינו, רשימת המזהים שלך עוברת גיבוב (hash) לקוד אקראי.",
+        "aboutHashing": "מידע על גיבוב",
+        "downloadTemplate": "הורדת תבנית קובץ",
+        "mainIdentifiers": "כלול לפחות מזהה ראשי אחד",
+        "moreIdentifiers": "כלול מזהים נוספים",
+        "identifiers": {
+          "email": "אימייל",
+          "phone": "מספר טלפון",
+          "madid": "מזהה מפרסם בנייד",
+          "fn": "שם פרטי",
+          "ln": "שם משפחה",
+          "ct": "עיר",
+          "st": "מדינה/מחוז",
+          "country": "מדינה",
+          "zip": "מיקוד",
+          "dob": "תאריך לידה",
+          "doby": "שנת לידה",
+          "gen": "מגדר"
+        },
+        "uploadNote": "לפני העלאת הרשימה, ודא שהמזהים שלמים ובפורמט הנכון. הרשימה חייבת להיות בפורמט .csv,‏ .txt או .xlsx.",
+        "namePlaceholder": "הזן שם קהל...",
+        "descriptionPlaceholder": "תיאור קצר (אם יש)",
+        "dropzone": "לחץ להעלאה או גרור ושחרר",
+        "maxFileSize": "גודל קובץ מרבי: 20MB",
+        "fileRequired": "בחר קובץ להעלאה.",
+        "fileTooLarge": "הקובץ גדול מ-20MB.",
+        "fileType": "הקובץ חייב להיות בפורמט .csv,‏ .txt או .xlsx.",
+        "next": "הבא",
+        "back": "חזרה",
+        "upload": "העלאה",
+        "done": "סיום",
+        "successTitle": "ההעלאה הצליחה",
+        "successRows": "רשימת המנויים שלך ב-Messenger הועלתה: {count, plural, one {שורה #} other {# שורות}}",
+        "skippedRows": "{count, plural, one {שורה # דולגה} other {# שורות דולגו}} (אין אימייל או טלפון תקינים).",
+        "invalidRows": "{count, plural, one {שורה # נדחתה} other {# שורות נדחו}} על ידי Meta.",
+        "matchingNote": "ייתכן שנזדקק לכמה דקות כדי להשלים את ההתאמה בין המנויים שלך לבין אנשים בפייסבוק. אפשר לבדוק את הסטטוס ברשימת הקהלים."
+      },
+      "errors": {
+        "audienceInvalidFile": "לא ניתן היה לקרוא את הקובץ. השתמש בקובץ .csv,‏ .txt או .xlsx עם שורת כותרת.",
+        "audienceTooManyRows": "בקובץ יש יותר מ-{max, number} שורות.",
+        "audienceNoIdentifier": "הקובץ חייב לכלול עמודת אימייל או טלפון.",
+        "audienceNoValidRows": "אין אף שורה עם אימייל או מספר טלפון תקינים.",
+        "audiencePartialUpload": "הקהל נוצר, אך ההעלאה נעצרה לאחר {received, number} שורות. השתמש ב\"העלאת שורות נוספות\" כדי לנסות שוב.",
+        "audienceNotFound": "הקהל המותאם אישית לא נמצא.",
+        "audienceCreateRejected": "Meta דחתה את הקהל: {reason}",
+        "uploadUncertain": "ייתכן שההעלאה לא הושלמה. סגרו את החלון ובדקו את רשימת הקהלים; השתמשו ב\"העלאת שורות נוספות\" אם הקהל נוצר.",
+        "pageNotConnected": "הדף שנבחר אינו מחובר למרחב עבודה זה.",
+        "audienceInUse": "הקהל המותאם אישית הזה נמצא בשימוש ב-{count, plural, one {# הודעה שיווקית} other {# הודעות שיווקיות}} ולא ניתן למחוק אותו."
+      }
+    },
+    "delivery": {
+      "title": "משלוח",
+      "contentLocked": "התוכן נעול מכיוון שהודעות כבר נשלחו.",
+      "topicsReturned": "הנושאים ש-Meta החזירה: {topics}",
+      "recipients": "{count} נמענים",
+      "startsAt": "התחלה: {date}",
+      "completedAt": "הושלם: {date}",
+      "errorBreakdown": "כשלונות",
+      "retrying": "Meta לא מקבלת שליחות כרגע; מתבצע ניסיון חוזר אוטומטי.",
+      "counts": {
+        "sent": "נשלחו",
+        "delivered": "נמסרו",
+        "unconfirmed": "לא אושרו"
+      },
+      "status": {
+        "notSent": "לא נשלח",
+        "scheduled": "מתוזמן",
+        "sending": "בשליחה",
+        "waitingNextDay": "ממתין ליום הבא",
+        "paused": "מושהה",
+        "stopped": "הופסק"
+      },
+      "reason": {
+        "pageNotConnected": "הדף אינו מחובר לסביבת עבודה זו.",
+        "quotaReached": "מושהה: מכסת ההודעות הושגה.",
+        "workspaceBlocked": "מושהה: סביבת עבודה זו חסומה.",
+        "grantInvalid": "מושהה: חיבור Facebook פג תוקף. חברו מחדש את Marketing Messages.",
+        "metaBlocker": "Meta חוסמת קמפיין זה.",
+        "contentRejected": "Meta דחתה את תוכן ההודעה.",
+        "noTokens": "לא נמצאו נמענים לקמפיין זה.",
+        "noMatchingTopic": "אף נמען שהביע הסכמה אינו תואם לנושא \"Updates and promotions\".",
+        "tokenFetchFailed": "לא ניתן היה להביא נמענים מ-Meta.",
+        "campaignEnded": "קמפיין Meta הסתיים.",
+        "lifetimeBudgetReached": "התקציב הכולל נוצל במלואו."
+      },
+      "errors": {
+        "grantInvalid": "חיבור Facebook פג תוקף.",
+        "campaignInactive": "קמפיין Meta אינו פעיל.",
+        "budgetReached": "התקציב נוצל במלואו.",
+        "dailyBudgetReached": "התקציב היומי הושג.",
+        "optedOut": "הנמען ביטל את המנוי.",
+        "frequencyLimit": "מגבלת התדירות של הנמען הושגה.",
+        "contentRejected": "תוכן ההודעה נדחה על ידי Meta.",
+        "deliveryFailed": "המשלוח נכשל.",
+        "outcomeUnknown": "תוצאת המשלוח אינה ידועה."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "חיפוש לפי מזהה או שם",
+      "adAccount": "חשבון מודעות",
+      "dateRange": "טווח תאריכים",
+      "timezoneHint": "תאריכים לפי {timezone}",
+      "presets": {
+        "last7": "7 הימים האחרונים",
+        "last30": "30 הימים האחרונים",
+        "last90": "90 הימים האחרונים",
+        "thisMonth": "החודש",
+        "lastMonth": "החודש שעבר"
+      },
+      "columns": {
+        "id": "מזהה",
+        "name": "שם",
+        "page": "דף פייסבוק",
+        "delivered": "הודעות שנמסרו",
+        "readRate": "שיעור קריאה",
+        "linkClicks": "קליקים על קישורים",
+        "linkClickRate": "שיעור קליקים על קישורים",
+        "costPerClick": "עלות לקליק",
+        "costPerDelivery": "עלות למסירה",
+        "spend": "סכום שהוצא"
+      },
+      "notes": {
+        "delivery": "Meta לא מדווחת על כך עבור נמענים באירופה או ביפן; קמפיינים אלה מציגים -.",
+        "clicks": "Meta לא מדווחת על כך עבור נמענים באירופה, ארגנטינה, טורקיה, דרום קוריאה או יפן; קמפיינים אלה מציגים -."
+      },
+      "footer": {
+        "label": "סה\"כ: {count, plural, one {# קמפיין} other {# קמפיינים}}",
+        "total": "סה\"כ",
+        "average": "ממוצע"
+      },
+      "totalsUnavailable": "הסכומים אינם זמינים כרגע. נסו שוב בעוד רגע.",
+      "readOnly": "חברו מחדש את ההודעות השיווקיות כדי לראות סטטיסטיקות.",
+      "empty": "עדיין אין קמפיינים של הודעות שיווקיות. צרו אחד בלשונית הקמפיינים.",
+      "noResults": "אין קמפיינים התואמים לחיפוש."
     }
   },
   "facebookAds": {

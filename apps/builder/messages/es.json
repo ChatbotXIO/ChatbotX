@@ -3019,7 +3019,7 @@
     "title": "General"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "Esto elimina la campaña solo de ChatbotX. La campaña de mensajes de Meta sigue activa: pausala o elimínala en el Administrador de anuncios.",
+    "deleteWarning": "Esto elimina la campaña de mensajes de Meta y quita la campaña de ChatbotX. Si Meta rechaza la eliminación, la campaña se conserva.",
     "title": "Facebook Marketing Messages",
     "description": "Impulsa la interacción y las ventas con mensajes promocionales personalizados en Messenger.",
     "create": "Crear nuevo",
@@ -3044,13 +3044,197 @@
       "generic": "Genérico",
       "greeting": "Saludo",
       "quickReplies": "Respuestas rápidas",
-      "elements": "Tarjetas"
+      "elements": "Tarjetas",
+      "targetMessaging": "Segmentación de mensajes",
+      "targetOptIn": "Opt-in",
+      "targetOptInDescription": "Clientes de la página que aceptaron recibir mensajes de marketing",
+      "targetCustomAudience": "Audiencia personalizada",
+      "targetCustomAudienceDescription": "Enviar mensajes a audiencias subidas desde un archivo",
+      "audience": "Audiencia personalizada"
     },
+    "noReadyAudiences": "No hay audiencias personalizadas listas para esta página y cuenta publicitaria.",
+    "manageAudiences": "Administrar audiencias",
     "errors": {
       "notConfigured": "Facebook Marketing Messages no está configurado. Pide a tu administrador que establezca el ID de configuración de Mensajes de marketing.",
       "notGranted": "Concede acceso para usar la función Mensajes de marketing.",
       "tosNotAccepted": "Para usar esta función, acepta los términos de objetos personalizados en {url}",
-      "notFound": "No se encontró el mensaje de marketing."
+      "notFound": "No se encontró el mensaje de marketing.",
+      "audienceNotTargetable": "La audiencia personalizada seleccionada no está lista o no pertenece a esta página y cuenta publicitaria.",
+      "connectFirst": "Conecta primero Marketing Messages en la app de ChatbotX.",
+      "mmInvalidState": "Esta acción no está disponible en el estado actual de la campaña.",
+      "mmCampaignEnded": "La campaña de mensajes de Meta ha finalizado, por lo que no se puede enviar ni reanudar.",
+      "mmPageNotConnected": "La página de esta campaña no está conectada a este espacio de trabajo.",
+      "mmContentLocked": "El contenido no se puede cambiar después de enviar el primer mensaje.",
+      "metaDeleteFailed": "Meta no pudo eliminar esta campaña, así que se ha conservado. {message}",
+      "statisticsUnknownAdAccount": "Este espacio de trabajo no tiene campañas de Marketing Messages en esa cuenta publicitaria.",
+      "statisticsInvalidRange": "Elige una fecha de inicio igual o anterior a la fecha de fin, dentro de los últimos 37 meses."
+    },
+    "tabs": {
+      "campaigns": "Campañas",
+      "audiences": "Audiencias",
+      "statistics": "Estadísticas"
+    },
+    "audiences": {
+      "title": "Audiencias personalizadas",
+      "create": "Crear nueva",
+      "uploadMore": "Subir más filas",
+      "empty": "Aún no hay audiencias personalizadas.",
+      "deleteTitle": "Eliminar audiencia personalizada",
+      "deleteWarning": "Esto elimina la audiencia personalizada \"{name}\" en Meta y en ChatbotX. No se puede deshacer.",
+      "deleted": "Audiencia personalizada eliminada.",
+      "pageDisconnected": "Página desconectada",
+      "status": {
+        "ready": "Lista",
+        "missing": "Eliminada en Meta"
+      },
+      "fields": {
+        "customAudienceId": "ID de audiencia personalizada",
+        "approximateCount": "Recuento aproximado",
+        "status": "Estado",
+        "file": "Subir archivo"
+      },
+      "wizard": {
+        "title": "Crear audiencia personalizada",
+        "uploadMoreTitle": "Subir más filas",
+        "steps": {
+          "prepare": "Preparar lista",
+          "upload": "Subir",
+          "confirm": "Confirmar"
+        },
+        "prepareDescription": "Una lista de suscriptores es un archivo CSV o TXT con información para crear tu audiencia de mensajes de marketing. Usamos el número de teléfono para relacionar a tus suscriptores con usuarios de Facebook e Instagram. Antes de que se nos envíe la información, tu lista de identificadores se convierte en un código aleatorio mediante hash.",
+        "aboutHashing": "Acerca del hash",
+        "downloadTemplate": "Descargar plantilla de archivo",
+        "mainIdentifiers": "Incluye al menos un identificador principal",
+        "moreIdentifiers": "Incluye más identificadores",
+        "identifiers": {
+          "email": "Correo electrónico",
+          "phone": "Número de teléfono",
+          "madid": "ID de publicidad móvil",
+          "fn": "Nombre",
+          "ln": "Apellido",
+          "ct": "Ciudad",
+          "st": "Estado/Provincia",
+          "country": "País",
+          "zip": "Código postal",
+          "dob": "Fecha de nacimiento",
+          "doby": "Año de nacimiento",
+          "gen": "Género"
+        },
+        "uploadNote": "Antes de subir la lista, asegúrate de que los identificadores estén completos y en el formato correcto. La lista debe estar en formato .csv, .txt o .xlsx.",
+        "namePlaceholder": "Introduce el nombre de la audiencia...",
+        "descriptionPlaceholder": "Breve descripción (si la hay)",
+        "dropzone": "Haz clic para subir o arrastra y suelta",
+        "maxFileSize": "Tamaño máximo del archivo: 20 MB",
+        "fileRequired": "Selecciona un archivo para subir.",
+        "fileTooLarge": "El archivo supera los 20 MB.",
+        "fileType": "El archivo debe ser .csv, .txt o .xlsx.",
+        "next": "Siguiente",
+        "back": "Atrás",
+        "upload": "Subir",
+        "done": "Hecho",
+        "successTitle": "Subida correcta",
+        "successRows": "Tu lista de suscriptores de Messenger se ha subido: {count, plural, one {# fila} other {# filas}}",
+        "skippedRows": "{count, plural, one {Se omitió # fila} other {Se omitieron # filas}} (sin correo electrónico ni teléfono válidos).",
+        "invalidRows": "{count, plural, one {Meta rechazó # fila} other {Meta rechazó # filas}}.",
+        "matchingNote": "Es posible que necesitemos unos minutos para terminar de relacionar a tus suscriptores con personas en Facebook. Puedes consultar el estado en la lista de audiencias."
+      },
+      "errors": {
+        "audienceInvalidFile": "No se pudo leer el archivo. Usa un archivo .csv, .txt o .xlsx con una fila de encabezado.",
+        "audienceTooManyRows": "El archivo tiene más de {max, number} filas.",
+        "audienceNoIdentifier": "El archivo necesita una columna de correo electrónico o teléfono.",
+        "audienceNoValidRows": "Ninguna fila tiene un correo electrónico o número de teléfono válido.",
+        "audiencePartialUpload": "La audiencia se creó, pero la subida se detuvo después de {received, number} filas. Usa \"Subir más filas\" para reintentarlo.",
+        "audienceNotFound": "No se encontró la audiencia personalizada.",
+        "audienceCreateRejected": "Meta rechazó la audiencia: {reason}",
+        "uploadUncertain": "Es posible que la carga no haya terminado. Cierra este cuadro y revisa la lista de audiencias; usa \"Subir más filas\" si la audiencia se creó.",
+        "pageNotConnected": "La página seleccionada no está conectada a este espacio de trabajo.",
+        "audienceInUse": "Esta audiencia personalizada la usa {count, plural, one {# mensaje de marketing} other {# mensajes de marketing}} y no se puede eliminar."
+      }
+    },
+    "delivery": {
+      "title": "Envío",
+      "contentLocked": "El contenido está bloqueado porque ya se enviaron mensajes.",
+      "topicsReturned": "Temas devueltos por Meta: {topics}",
+      "recipients": "{count} destinatarios",
+      "startsAt": "Inicio: {date}",
+      "completedAt": "Finalizado: {date}",
+      "errorBreakdown": "Errores",
+      "retrying": "Meta no acepta envíos en este momento; se reintentará automáticamente.",
+      "counts": {
+        "sent": "Enviados",
+        "delivered": "Entregados",
+        "unconfirmed": "Sin confirmar"
+      },
+      "status": {
+        "notSent": "No enviado",
+        "scheduled": "Programado",
+        "sending": "Enviando",
+        "waitingNextDay": "Esperando al día siguiente",
+        "paused": "En pausa",
+        "stopped": "Detenido"
+      },
+      "reason": {
+        "pageNotConnected": "La página no está conectada a este espacio de trabajo.",
+        "quotaReached": "En pausa: se alcanzó tu cuota de mensajes.",
+        "workspaceBlocked": "En pausa: este espacio de trabajo está bloqueado.",
+        "grantInvalid": "En pausa: la conexión con Facebook ha caducado. Vuelve a conectar Marketing Messages.",
+        "metaBlocker": "Meta está bloqueando esta campaña.",
+        "contentRejected": "Meta rechazó el contenido del mensaje.",
+        "noTokens": "No se encontraron destinatarios para esta campaña.",
+        "noMatchingTopic": "Ningún destinatario suscrito coincide con el tema \"Updates and promotions\".",
+        "tokenFetchFailed": "No se pudieron obtener los destinatarios de Meta.",
+        "campaignEnded": "La campaña de Meta ha finalizado.",
+        "lifetimeBudgetReached": "Se agotó el presupuesto total."
+      },
+      "errors": {
+        "grantInvalid": "La conexión con Facebook ha caducado.",
+        "campaignInactive": "La campaña de Meta no está activa.",
+        "budgetReached": "Presupuesto agotado.",
+        "dailyBudgetReached": "Se alcanzó el presupuesto diario.",
+        "optedOut": "El destinatario canceló la suscripción.",
+        "frequencyLimit": "Se alcanzó el límite de frecuencia del destinatario.",
+        "contentRejected": "Meta rechazó el contenido del mensaje.",
+        "deliveryFailed": "Error de entrega.",
+        "outcomeUnknown": "Resultado de entrega desconocido."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "Buscar por ID o nombre",
+      "adAccount": "Cuenta publicitaria",
+      "dateRange": "Rango de fechas",
+      "timezoneHint": "Fechas en {timezone}",
+      "presets": {
+        "last7": "Últimos 7 días",
+        "last30": "Últimos 30 días",
+        "last90": "Últimos 90 días",
+        "thisMonth": "Este mes",
+        "lastMonth": "Mes pasado"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Nombre",
+        "page": "Página de Facebook",
+        "delivered": "Mensajes entregados",
+        "readRate": "Tasa de lectura",
+        "linkClicks": "Clics en enlaces",
+        "linkClickRate": "Tasa de clics en enlaces",
+        "costPerClick": "Costo por clic",
+        "costPerDelivery": "Costo por entrega",
+        "spend": "Importe gastado"
+      },
+      "notes": {
+        "delivery": "Meta no informa este dato para destinatarios en Europa o Japón; esas campañas muestran -.",
+        "clicks": "Meta no informa este dato para destinatarios en Europa, Argentina, Turquía, Corea del Sur o Japón; esas campañas muestran -."
+      },
+      "footer": {
+        "label": "Total: {count, plural, one {# campaña} other {# campañas}}",
+        "total": "Total",
+        "average": "Promedio"
+      },
+      "totalsUnavailable": "Los totales no están disponibles ahora. Inténtalo de nuevo en breve.",
+      "readOnly": "Vuelve a conectar Marketing Messages para ver las estadísticas.",
+      "empty": "Aún no hay campañas de Marketing Messages. Crea una en la pestaña Campañas.",
+      "noResults": "Ninguna campaña coincide con tu búsqueda."
     }
   },
   "facebookAds": {

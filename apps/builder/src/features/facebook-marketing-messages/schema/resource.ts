@@ -5,6 +5,9 @@ export const MM_NAME_MAX = 120
 
 const budgetTypeSchema = z.enum(["daily", "lifetime"])
 
+export const targetTypeSchema = z.enum(["optIn", "customAudience"])
+export type MarketingMessageTargetType = z.infer<typeof targetTypeSchema>
+
 /**
  * The fields both create and edit accept. Shared so a constraint change (e.g.
  * a tighter budget rule) cannot land on one path and drift on the other.
@@ -14,26 +17,38 @@ const budgetTypeSchema = z.enum(["daily", "lifetime"])
  * to minor units happens in `buildCampaignBudget`, which also records the
  * offset so the stored amount stays auditable.
  */
-const marketingMessageFieldsSchema = z.object({
+export const marketingMessageFieldsSchema = z.object({
   name: z.string().trim().min(1).max(MM_NAME_MAX),
   budgetType: budgetTypeSchema,
   budgetMajorUnits: z.coerce.number().positive(),
   content: mmContentSchema,
 })
 
-export const createMarketingMessageSchema = marketingMessageFieldsSchema.extend(
-  {
+/**
+ * `audienceId` is required only for `customAudience`. Whether it is the right
+ * audience (same ad account + Page, ready) is checked server-side in
+ * `createMarketingMessage` — this schema has no database access.
+ */
+export const createMarketingMessageSchema = marketingMessageFieldsSchema
+  .extend({
     pageId: z.string().trim().min(1),
     adAccountId: z.string().trim().min(1),
     currency: z.string().trim().min(1),
-  },
-)
+    targetType: targetTypeSchema,
+    audienceId: z.string().nullable(),
+  })
+  .refine(
+    (value) =>
+      value.targetType !== "customAudience" || Boolean(value.audienceId),
+    { path: ["audienceId"] },
+  )
 export type CreateMarketingMessageInput = z.infer<
   typeof createMarketingMessageSchema
 >
 
 /**
- * `adAccountId`, `pageId` and `currency` are frozen after creation — changing
+ * `adAccountId`, `pageId`, `currency` and the target (`targetType`,
+ * `audienceId`) are frozen after creation — changing
  * the account or Page means a different Meta campaign, not an edit of this
  * one — so they are absent here.
  *

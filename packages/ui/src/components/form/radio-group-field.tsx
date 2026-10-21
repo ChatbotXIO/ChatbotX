@@ -28,6 +28,7 @@ export function RadioGroupField<T extends FieldValues>({
   descriptionType = "inline",
   orientation = "vertical",
   options,
+  disabled,
 }: RadioGroupFieldProps<T>) {
   return (
     <FormFieldWrapper
@@ -44,8 +45,11 @@ export function RadioGroupField<T extends FieldValues>({
               ? "mt-2 flex flex-row flex-wrap gap-4"
               : "mt-2 flex flex-col"
           }
-          defaultValue={field.value}
+          disabled={disabled}
           onValueChange={field.onChange}
+          // Controlled by react-hook-form. `null` (not `undefined`) keeps the
+          // group controlled while nothing is selected.
+          value={field.value ?? null}
         >
           {options.map((option) => (
             <div className="flex items-start space-x-2" key={option.value}>
@@ -64,7 +68,7 @@ export function RadioGroupField<T extends FieldValues>({
                 <Label
                   className={cn(
                     "font-normal",
-                    option.disabled && "text-muted-foreground",
+                    (disabled || option.disabled) && "text-muted-foreground",
                   )}
                   htmlFor={name + option.value}
                 >

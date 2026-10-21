@@ -61,6 +61,13 @@ export * from "./error-log"
 export * from "./external-request"
 export * from "./external-webhook"
 export * from "./facebook-lead-ads-automation/service"
+// Not barrel-exported: the audience service hashes customer files with Node's
+// `crypto` (customer-file/build-payload) and parses uploads via
+// `@chatbotx.io/imports` (node:stream, csv-parse, exceljs). This barrel is
+// traced into the builder's Edge Runtime bundle, where a Node built-in is a
+// hard compile error — same pattern as `sequence`. Import from
+// `@chatbotx.io/business/facebook-marketing-message-audience` instead.
+export * from "./facebook-marketing-message-delivery"
 export * from "./facebook-marketing-messages"
 export * from "./file"
 export * from "./flow"

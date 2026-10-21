@@ -10,6 +10,32 @@ const update = vi.fn(() => {
   return Promise.resolve({ id: "row-1" })
 })
 const find = vi.fn()
+
+class ChatbotXException extends Error {
+  code: string
+  constructor(message: string, code = "systemError") {
+    super(message)
+    this.code = code
+  }
+}
+// Stand-in for the business service's lock (covered by its own unit test):
+// refuses any content change once `firstSentAt` is set.
+const assertContentEditable = vi.fn(
+  ({
+    row,
+    content,
+  }: {
+    row: { firstSentAt?: Date | null; content: unknown }
+    content: unknown
+  }) => {
+    if (
+      row.firstSentAt &&
+      JSON.stringify(row.content) !== JSON.stringify(content)
+    ) {
+      throw new ChatbotXException("mmContentLocked", "mmContentLocked")
+    }
+  },
+)
 const resolveContentAttachments = vi.fn(({ content }: { content: unknown }) =>
   Promise.resolve(content),
 )
@@ -18,8 +44,13 @@ vi.mock("@chatbotx.io/integration-facebook-ads", () => ({
   updateMessageCampaign,
 }))
 vi.mock("@chatbotx.io/business", () => ({
-  facebookMarketingMessagesService: { find, update },
+  facebookMarketingMessagesService: {
+    find,
+    update,
+    assertContentEditable,
+  },
 }))
+vi.mock("@chatbotx.io/business/errors", () => ({ ChatbotXException }))
 vi.mock("@/features/facebook-marketing-messages/lib/media-attachment", () => ({
   resolveContentAttachments,
 }))
@@ -48,7 +79,7 @@ vi.mock("next-intl/server", () => ({
 }))
 
 const { updateMarketingMessage } = await import(
-  "@/features/facebook-marketing-messages/actions/update.action"
+  "@/features/facebook-marketing-messages/lib/campaign-operations"
 )
 
 const workspace = { id: "w1" } as never
@@ -139,6 +170,46 @@ describe("updateMarketingMessage", () => {
     expect(resolveContentAttachments).toHaveBeenCalledWith(
       expect.objectContaining({ previous: existing.content }),
     )
+  })
+
+  test("campaigns.update rejects content change after firstSentAt with mmContentLocked", async () => {
+    find.mockResolvedValue({ ...existing, firstSentAt: new Date() })
+
+    await expect(
+      updateMarketingMessage({ workspace, id: "row-1", input }),
+    ).rejects.toMatchObject({ code: "mmContentLocked" })
+    // Refused before any side effect: no upload, no Meta call, no write.
+    expect(resolveContentAttachments).not.toHaveBeenCalled()
+    expect(updateMessageCampaign).not.toHaveBeenCalled()
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  test("campaigns.update allows a budget change after firstSentAt", async () => {
+    find.mockResolvedValue({ ...existing, firstSentAt: new Date() })
+
+    await updateMarketingMessage({
+      workspace,
+      id: "row-1",
+      input: { ...input, content: existing.content as never },
+    })
+
+    expect(updateMessageCampaign).toHaveBeenCalledWith(
+      expect.objectContaining({ budgetMinorUnits: 90_000 }),
+    )
+    expect(update).toHaveBeenCalled()
+  })
+
+  test("F3: a content edit that loses the race to the first send surfaces a translated mmContentLocked", async () => {
+    update.mockRejectedValueOnce(
+      new ChatbotXException("mmContentLocked", "mmContentLocked"),
+    )
+
+    await expect(
+      updateMarketingMessage({ workspace, id: "row-1", input }),
+    ).rejects.toMatchObject({
+      code: "mmContentLocked",
+      message: "facebookMarketingMessages.errors.mmContentLocked",
+    })
   })
 
   test("refuses a row from another workspace", async () => {

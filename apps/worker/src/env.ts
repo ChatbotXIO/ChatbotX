@@ -38,6 +38,14 @@ export const env = createEnv({
       .min(1)
       .max(100)
       .default(10),
+    // FB Marketing Messages campaign steps (token snapshot, day start, send
+    // batches). Each dispatch job is capped at ~45s of Meta calls.
+    MARKETING_MESSAGE_WORKER_CONCURRENCY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .default(10),
     AI_AGENT_WORKER_CONCURRENCY: z.coerce
       .number()
       .int()

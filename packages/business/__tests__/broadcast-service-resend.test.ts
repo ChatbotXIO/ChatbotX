@@ -133,6 +133,7 @@ vi.mock("@chatbotx.io/utils", async () => {
 })
 
 vi.mock("@chatbotx.io/flow-config", () => ({
+  BUTTON_LABEL_MAX: 20,
   findTemplateStartStep: vi.fn(),
   stepTypes: {
     enum: {

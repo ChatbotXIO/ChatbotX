@@ -63,6 +63,7 @@ vi.mock("@chatbotx.io/database/partials", async () =>
 )
 
 vi.mock("@chatbotx.io/flow-config", () => ({
+  BUTTON_LABEL_MAX: 20,
   BROADCAST_PAYLOAD_TYPE: "broadcast",
 }))
 

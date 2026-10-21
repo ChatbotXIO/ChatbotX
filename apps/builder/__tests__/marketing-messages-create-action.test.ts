@@ -39,8 +39,11 @@ vi.mock("@chatbotx.io/integration-facebook-ads", () => ({
   createMessageCampaign,
   getMarketingMessagesAdAccounts,
 }))
+const findTargetableAudience = vi.fn(
+  (): Promise<{ id: string } | null> => Promise.resolve({ id: "aud-row-1" }),
+)
 vi.mock("@chatbotx.io/business", () => ({
-  facebookMarketingMessagesService: { create },
+  facebookMarketingMessagesService: { create, findTargetableAudience },
 }))
 vi.mock("@/features/facebook-marketing-messages/lib/media-attachment", () => ({
   resolveContentAttachments,
@@ -75,7 +78,7 @@ vi.mock("next-intl/server", () => ({
 }))
 
 const { createMarketingMessage } = await import(
-  "@/features/facebook-marketing-messages/actions/create.action"
+  "@/features/facebook-marketing-messages/lib/campaign-operations"
 )
 
 const workspace = { id: "w1" } as never
@@ -86,6 +89,8 @@ const input = {
   currency: "USD",
   budgetType: "daily" as const,
   budgetMajorUnits: 30,
+  targetType: "optIn" as const,
+  audienceId: null,
   content: {
     templateType: "media" as const,
     mediaType: "image" as const,
@@ -172,5 +177,59 @@ describe("createMarketingMessage", () => {
 
     await expect(createMarketingMessage({ workspace, input })).rejects.toThrow()
     expect(createMessageCampaign).not.toHaveBeenCalled()
+  })
+
+  test("stores no audience for an opt-in campaign, even if one was sent", async () => {
+    await createMarketingMessage({
+      workspace,
+      input: { ...input, audienceId: "aud-row-1" },
+    })
+
+    expect(findTargetableAudience).not.toHaveBeenCalled()
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ targetType: "optIn", audienceId: null }),
+    )
+  })
+
+  test("stores a validated custom audience", async () => {
+    await createMarketingMessage({
+      workspace,
+      input: {
+        ...input,
+        targetType: "customAudience",
+        audienceId: "aud-row-1",
+      },
+    })
+
+    expect(findTargetableAudience).toHaveBeenCalledWith({
+      workspaceId: "w1",
+      audienceId: "aud-row-1",
+      adAccountId: "act_123",
+      pageId: "page-1",
+    })
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetType: "customAudience",
+        audienceId: "aud-row-1",
+      }),
+    )
+  })
+
+  test("refuses a custom audience that is not targetable, before any Meta call", async () => {
+    findTargetableAudience.mockResolvedValueOnce(null)
+
+    await expect(
+      createMarketingMessage({
+        workspace,
+        input: {
+          ...input,
+          targetType: "customAudience",
+          audienceId: "aud-other",
+        },
+      }),
+    ).rejects.toThrow("facebookMarketingMessages.errors.audienceNotTargetable")
+    expect(resolveContentAttachments).not.toHaveBeenCalled()
+    expect(createMessageCampaign).not.toHaveBeenCalled()
+    expect(create).not.toHaveBeenCalled()
   })
 })

@@ -40,8 +40,18 @@ export {
 } from "./csv"
 export { extractCsvHeaders, parseCsvLine } from "./headers"
 export {
+  detectDelimiter,
+  readTabularFile,
+  type TabularFile,
+  TabularFileError,
+  type TabularFormat,
+} from "./tabular"
+export {
   assertXlsxArchiveWithinLimits,
   createImportXlsxParser,
   readXlsxHeaders,
+  readXlsxRows,
   toImportCellValue,
+  XlsxLimitError,
+  type XlsxLimits,
 } from "./xlsx"

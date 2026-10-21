@@ -185,11 +185,21 @@ export const workspaceAccessDenialOrpcError = (
  */
 export const BROADCAST_STOP_TOKEN_PATH = "/v1/broadcasts/{id}/stop"
 
+/**
+ * Stopping a Marketing Messages campaign must stay possible on a trial-expired
+ * or over-limit workspace, like the builder's `stopMarketingMessageAction`
+ * (`workspaceActionClientAllowExpired`). It only stops work and never touches
+ * Meta. Gate-only allow-list: a `read_only` token still cannot call it.
+ */
+export const MARKETING_MESSAGE_STOP_TOKEN_PATH =
+  "/v1/marketing-messages/campaigns/{id}/stop"
+
 const READ_ONLY_POST_PATHS = new Set<string>([
   CONVERSATIONS_LIST_POST_PATH,
   FILTER_VALUE_LABELS_POST_PATH,
   FILTER_VALUE_LABELS_TOKEN_PATH,
   BROADCAST_STOP_TOKEN_PATH,
+  MARKETING_MESSAGE_STOP_TOKEN_PATH,
   BROADCAST_AUDIENCE_PREVIEW_TOKEN_PATH,
 ])
 

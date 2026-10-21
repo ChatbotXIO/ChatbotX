@@ -29,6 +29,7 @@ import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import {
   getPageSubscribedFields,
   LEAD_ADS_PAGE_SUBSCRIBE_FIELDS,
+  MARKETING_MESSAGE_PAGE_SUBSCRIBE_FIELDS,
   PAGE_SUBSCRIBE_SCOPES,
   ROUTING_PAGE_SUBSCRIBE_FIELDS,
   subscribePageToAppWebhook,
@@ -89,7 +90,13 @@ const resolveSubscribedFields = async (
       appId: integration.auth.clientId,
     })
     const base = current.length > 0 ? current : PAGE_SUBSCRIBE_SCOPES
-    return [...new Set([...base, ...ROUTING_PAGE_SUBSCRIBE_FIELDS])]
+    return [
+      ...new Set([
+        ...base,
+        ...ROUTING_PAGE_SUBSCRIBE_FIELDS,
+        ...MARKETING_MESSAGE_PAGE_SUBSCRIBE_FIELDS,
+      ]),
+    ]
   } catch (err) {
     logger.error(
       {
@@ -113,12 +120,23 @@ const subscribeRow = async (
       integration,
       deps.getSubscribedFields,
     )
-    await deps.subscribe({
-      pageId: integration.pageId,
-      accessToken: integration.auth.tokens.accessToken,
-      version: integration.auth.metadata.version,
-      subscribedFields: fields.join(","),
-    })
+    const send = (subscribedFields: string[]) =>
+      deps.subscribe({
+        pageId: integration.pageId,
+        accessToken: integration.auth.tokens.accessToken,
+        version: integration.auth.metadata.version,
+        subscribedFields: subscribedFields.join(","),
+      })
+    try {
+      await send(fields)
+    } catch (err) {
+      const marketing = new Set<string>(MARKETING_MESSAGE_PAGE_SUBSCRIBE_FIELDS)
+      logger.warn(
+        { err, pageId: integration.pageId },
+        "[resubscribeMessengerWebhookFields] subscribe with marketing message fields failed; retrying without them",
+      )
+      await send(fields.filter((f) => !marketing.has(f)))
+    }
     return true
   } catch (err) {
     logger.error(

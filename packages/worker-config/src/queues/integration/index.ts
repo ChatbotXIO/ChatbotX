@@ -76,6 +76,7 @@ export const IntegrationJobAction = {
   processCommentAutomation: "processCommentAutomation",
   commentAIReply: "commentAIReply",
   processLeadgen: "processLeadgen",
+  processMarketingMessageWebhook: "processMarketingMessageWebhook",
   processStoryReplyAutomation: "processStoryReplyAutomation",
   captureTemplateFlowResponse: "captureTemplateFlowResponse",
   replyToInboundCart: "replyToInboundCart",
@@ -1065,6 +1066,14 @@ export type IntegrationJobProcessLeadgen = {
 }
 
 /**
+ * A raw `marketing_message_*` Page webhook change. Parsed in the worker.
+ */
+export type IntegrationJobProcessMarketingMessageWebhook = {
+  type: typeof IntegrationJobAction.processMarketingMessageWebhook
+  data: { pageId: string; field: string; value: unknown }
+}
+
+/**
  * Runs one budgeted chunk of an Automatic Customer Scan run. Only carries
  * `runId`/`workspaceId` — channel, integration, and inbox are read off the
  * claimed run row instead of the payload, so a stale/forged job can't steer
@@ -1195,6 +1204,7 @@ export type IntegrationJobData =
   | IntegrationJobDeferredCommentPrivateReply
   | IntegrationJobCommentAIReply
   | IntegrationJobProcessLeadgen
+  | IntegrationJobProcessMarketingMessageWebhook
   | IntegrationJobProcessStoryReplyAutomation
   | IntegrationJobCaptureTemplateFlowResponse
   | IntegrationJobReplyToInboundCart

@@ -2864,7 +2864,7 @@
     "title": "Generale"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "Questo rimuove la campagna solo da ChatbotX. La campagna di messaggi Meta resta attiva: mettila in pausa o eliminala in Gestione inserzioni.",
+    "deleteWarning": "Questo elimina la campagna di messaggi Meta e rimuove la campagna da ChatbotX. Se Meta rifiuta l'eliminazione, la campagna viene mantenuta.",
     "title": "Facebook Marketing Messages",
     "description": "Aumenta il coinvolgimento e le vendite con messaggi promozionali personalizzati su Messenger.",
     "create": "Crea nuovo",
@@ -2889,13 +2889,197 @@
       "generic": "Generico",
       "greeting": "Saluto",
       "quickReplies": "Risposte rapide",
-      "elements": "Schede"
+      "elements": "Schede",
+      "targetMessaging": "Destinatari dei messaggi",
+      "targetOptIn": "Opt-in",
+      "targetOptInDescription": "Clienti della pagina che hanno accettato di ricevere messaggi di marketing",
+      "targetCustomAudience": "Pubblico personalizzato",
+      "targetCustomAudienceDescription": "Invia messaggi a pubblici caricati da un file",
+      "audience": "Pubblico personalizzato"
     },
+    "noReadyAudiences": "Nessun pubblico personalizzato pronto per questa Pagina e questo account pubblicitario.",
+    "manageAudiences": "Gestisci pubblici",
     "errors": {
       "notConfigured": "Facebook Marketing Messages non è configurato. Chiedi al tuo amministratore di impostare l'ID configurazione Messaggi di marketing.",
       "notGranted": "Concedi l'accesso per utilizzare la funzione Messaggi di marketing.",
       "tosNotAccepted": "Per utilizzare questa funzione, accetta i termini per gli oggetti personalizzati su {url}",
-      "notFound": "Messaggio di marketing non trovato."
+      "notFound": "Messaggio di marketing non trovato.",
+      "audienceNotTargetable": "Il pubblico personalizzato selezionato non è pronto o non appartiene a questa Pagina e a questo account pubblicitario.",
+      "connectFirst": "Collega prima Marketing Messages nell'app ChatbotX.",
+      "mmInvalidState": "Questa azione non è disponibile nello stato attuale della campagna.",
+      "mmCampaignEnded": "La campagna di messaggi Meta è terminata, quindi non può essere inviata né ripresa.",
+      "mmPageNotConnected": "La Pagina di questa campagna non è collegata a questo spazio di lavoro.",
+      "mmContentLocked": "Il contenuto non può essere modificato dopo l'invio del primo messaggio.",
+      "metaDeleteFailed": "Meta non è riuscita a eliminare questa campagna, quindi è stata mantenuta. {message}",
+      "statisticsUnknownAdAccount": "Questo workspace non ha campagne Marketing Messages su quell'account pubblicitario.",
+      "statisticsInvalidRange": "Scegli una data di inizio uguale o precedente alla data di fine, negli ultimi 37 mesi."
+    },
+    "tabs": {
+      "campaigns": "Campagne",
+      "audiences": "Pubblici",
+      "statistics": "Statistiche"
+    },
+    "audiences": {
+      "title": "Pubblici personalizzati",
+      "create": "Crea nuovo",
+      "uploadMore": "Carica altre righe",
+      "empty": "Nessun pubblico personalizzato.",
+      "deleteTitle": "Elimina pubblico personalizzato",
+      "deleteWarning": "Questa azione elimina il pubblico personalizzato \"{name}\" su Meta e in ChatbotX. Non può essere annullata.",
+      "deleted": "Pubblico personalizzato eliminato.",
+      "pageDisconnected": "Pagina disconnessa",
+      "status": {
+        "ready": "Pronto",
+        "missing": "Eliminato su Meta"
+      },
+      "fields": {
+        "customAudienceId": "ID pubblico personalizzato",
+        "approximateCount": "Conteggio approssimativo",
+        "status": "Stato",
+        "file": "Carica file"
+      },
+      "wizard": {
+        "title": "Crea pubblico personalizzato",
+        "uploadMoreTitle": "Carica altre righe",
+        "steps": {
+          "prepare": "Prepara elenco",
+          "upload": "Carica",
+          "confirm": "Conferma"
+        },
+        "prepareDescription": "Un elenco di iscritti è un file CSV o TXT contenente le informazioni usate per creare il tuo pubblico per i messaggi di marketing. Usiamo il numero di telefono per abbinare i tuoi iscritti agli utenti di Facebook e Instagram. Prima che le informazioni ci vengano inviate, il tuo elenco di identificatori viene convertito in un codice casuale tramite hash.",
+        "aboutHashing": "Informazioni sull'hashing",
+        "downloadTemplate": "Scarica il modello di file",
+        "mainIdentifiers": "Includi almeno un identificatore principale",
+        "moreIdentifiers": "Includi altri identificatori",
+        "identifiers": {
+          "email": "E-mail",
+          "phone": "Numero di telefono",
+          "madid": "ID pubblicitario mobile",
+          "fn": "Nome",
+          "ln": "Cognome",
+          "ct": "Città",
+          "st": "Stato/Provincia",
+          "country": "Paese",
+          "zip": "CAP",
+          "dob": "Data di nascita",
+          "doby": "Anno di nascita",
+          "gen": "Genere"
+        },
+        "uploadNote": "Prima di caricare l'elenco, assicurati che gli identificatori siano completi e nel formato corretto. L'elenco deve essere in formato .csv, .txt o .xlsx.",
+        "namePlaceholder": "Inserisci il nome del pubblico...",
+        "descriptionPlaceholder": "Breve descrizione (se presente)",
+        "dropzone": "Fai clic per caricare o trascina e rilascia",
+        "maxFileSize": "Dimensione massima del file: 20 MB",
+        "fileRequired": "Seleziona un file da caricare.",
+        "fileTooLarge": "Il file supera i 20 MB.",
+        "fileType": "Il file deve essere .csv, .txt o .xlsx.",
+        "next": "Avanti",
+        "back": "Indietro",
+        "upload": "Carica",
+        "done": "Fine",
+        "successTitle": "Caricamento riuscito",
+        "successRows": "Il tuo elenco di iscritti Messenger è stato caricato: {count, plural, one {# riga} other {# righe}}",
+        "skippedRows": "{count, plural, one {# riga è stata ignorata} other {# righe sono state ignorate}} (nessuna e-mail o telefono valido).",
+        "invalidRows": "{count, plural, one {# riga è stata rifiutata} other {# righe sono state rifiutate}} da Meta.",
+        "matchingNote": "Potrebbero essere necessari alcuni minuti per completare l'abbinamento dei tuoi iscritti alle persone su Facebook. Puoi controllare lo stato nell'elenco dei pubblici."
+      },
+      "errors": {
+        "audienceInvalidFile": "Impossibile leggere il file. Usa un file .csv, .txt o .xlsx con una riga di intestazione.",
+        "audienceTooManyRows": "Il file ha più di {max, number} righe.",
+        "audienceNoIdentifier": "Il file deve avere una colonna e-mail o telefono.",
+        "audienceNoValidRows": "Nessuna riga contiene un'e-mail o un numero di telefono validi.",
+        "audiencePartialUpload": "Il pubblico è stato creato, ma il caricamento si è interrotto dopo {received, number} righe. Usa \"Carica altre righe\" per riprovare.",
+        "audienceNotFound": "Pubblico personalizzato non trovato.",
+        "audienceCreateRejected": "Meta ha rifiutato il pubblico: {reason}",
+        "uploadUncertain": "Il caricamento potrebbe non essere terminato. Chiudi questa finestra e controlla l'elenco dei pubblici; usa \"Carica altre righe\" se il pubblico è stato creato.",
+        "pageNotConnected": "La Pagina selezionata non è collegata a questo workspace.",
+        "audienceInUse": "Questo pubblico personalizzato è usato da {count, plural, one {# messaggio di marketing} other {# messaggi di marketing}} e non può essere eliminato."
+      }
+    },
+    "delivery": {
+      "title": "Invio",
+      "contentLocked": "Il contenuto è bloccato perché sono già stati inviati messaggi.",
+      "topicsReturned": "Argomenti restituiti da Meta: {topics}",
+      "recipients": "{count} destinatari",
+      "startsAt": "Inizio: {date}",
+      "completedAt": "Completato: {date}",
+      "errorBreakdown": "Errori",
+      "retrying": "Meta al momento non accetta invii; nuovo tentativo automatico.",
+      "counts": {
+        "sent": "Inviati",
+        "delivered": "Consegnati",
+        "unconfirmed": "Non confermati"
+      },
+      "status": {
+        "notSent": "Non inviato",
+        "scheduled": "Pianificato",
+        "sending": "Invio in corso",
+        "waitingNextDay": "In attesa del giorno successivo",
+        "paused": "In pausa",
+        "stopped": "Interrotto"
+      },
+      "reason": {
+        "pageNotConnected": "La Pagina non è collegata a questo workspace.",
+        "quotaReached": "In pausa: hai raggiunto la quota di messaggi.",
+        "workspaceBlocked": "In pausa: questo workspace è bloccato.",
+        "grantInvalid": "In pausa: la connessione a Facebook è scaduta. Ricollega Marketing Messages.",
+        "metaBlocker": "Meta sta bloccando questa campagna.",
+        "contentRejected": "Meta ha rifiutato il contenuto del messaggio.",
+        "noTokens": "Nessun destinatario trovato per questa campagna.",
+        "noMatchingTopic": "Nessun destinatario iscritto corrisponde all'argomento \"Updates and promotions\".",
+        "tokenFetchFailed": "Impossibile recuperare i destinatari da Meta.",
+        "campaignEnded": "La campagna Meta è terminata.",
+        "lifetimeBudgetReached": "Il budget totale è esaurito."
+      },
+      "errors": {
+        "grantInvalid": "La connessione a Facebook è scaduta.",
+        "campaignInactive": "La campagna Meta non è attiva.",
+        "budgetReached": "Budget esaurito.",
+        "dailyBudgetReached": "Budget giornaliero raggiunto.",
+        "optedOut": "Il destinatario ha annullato l'iscrizione.",
+        "frequencyLimit": "Limite di frequenza del destinatario raggiunto.",
+        "contentRejected": "Contenuto del messaggio rifiutato da Meta.",
+        "deliveryFailed": "Consegna non riuscita.",
+        "outcomeUnknown": "Esito della consegna sconosciuto."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "Cerca per ID o nome",
+      "adAccount": "Account pubblicitario",
+      "dateRange": "Intervallo di date",
+      "timezoneHint": "Date in {timezone}",
+      "presets": {
+        "last7": "Ultimi 7 giorni",
+        "last30": "Ultimi 30 giorni",
+        "last90": "Ultimi 90 giorni",
+        "thisMonth": "Questo mese",
+        "lastMonth": "Mese scorso"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Nome",
+        "page": "Pagina Facebook",
+        "delivered": "Messaggi consegnati",
+        "readRate": "Tasso di lettura",
+        "linkClicks": "Clic sul link",
+        "linkClickRate": "Tasso di clic sul link",
+        "costPerClick": "Costo per clic",
+        "costPerDelivery": "Costo per consegna",
+        "spend": "Importo speso"
+      },
+      "notes": {
+        "delivery": "Meta non riporta questo dato per i destinatari in Europa o Giappone; quelle campagne mostrano -.",
+        "clicks": "Meta non riporta questo dato per i destinatari in Europa, Argentina, Turchia, Corea del Sud o Giappone; quelle campagne mostrano -."
+      },
+      "footer": {
+        "label": "Totale: {count, plural, one {# campagna} other {# campagne}}",
+        "total": "Totale",
+        "average": "Media"
+      },
+      "totalsUnavailable": "I totali non sono disponibili al momento. Riprova a breve.",
+      "readOnly": "Ricollega Marketing Messages per vedere le statistiche.",
+      "empty": "Nessuna campagna Marketing Messages. Creane una nella scheda Campagne.",
+      "noResults": "Nessuna campagna corrisponde alla ricerca."
     }
   },
   "facebookAds": {

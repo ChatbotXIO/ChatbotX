@@ -16,6 +16,9 @@ export const ScheduleJobData = {
   prepareBroadcast: "prepareBroadcast",
   sendBroadcast: "sendBroadcast",
   reconcileBroadcasts: "reconcileBroadcasts",
+  enqueueMarketingMessages: "enqueueMarketingMessages",
+  dispatchMarketingMessages: "dispatchMarketingMessages",
+  finalizeMarketingMessages: "finalizeMarketingMessages",
   finalizeBroadcasts: "finalizeBroadcasts",
   evaluateTriggers: "evaluateTriggers",
   cleanupTriggers: "cleanupTriggers",
@@ -362,7 +365,25 @@ export type ScheduleJobSweepStaleWhatsappCalls = {
   data: Record<string, never>
 }
 
+export type ScheduleJobEnqueueMarketingMessages = {
+  type: typeof ScheduleJobData.enqueueMarketingMessages
+  data: Record<string, never>
+}
+
+export type ScheduleJobDispatchMarketingMessages = {
+  type: typeof ScheduleJobData.dispatchMarketingMessages
+  data: Record<string, never>
+}
+
+export type ScheduleJobFinalizeMarketingMessages = {
+  type: typeof ScheduleJobData.finalizeMarketingMessages
+  data: Record<string, never>
+}
+
 export type ScheduleJobData =
+  | ScheduleJobEnqueueMarketingMessages
+  | ScheduleJobDispatchMarketingMessages
+  | ScheduleJobFinalizeMarketingMessages
   | ScheduleJobBroadcast
   | ScheduleJobEnqueueBroadcast
   | ScheduleJobEnqueueRecurringBroadcasts

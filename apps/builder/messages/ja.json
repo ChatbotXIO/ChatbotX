@@ -2864,7 +2864,7 @@
     "title": "一般"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "これはChatbotXからキャンペーンを削除するだけです。Metaのメッセージキャンペーンは実行され続けます — 広告マネージャで一時停止または削除してください。",
+    "deleteWarning": "Metaのメッセージキャンペーンを削除し、ChatbotXからもキャンペーンを削除します。Metaが削除を拒否した場合、キャンペーンは保持されます。",
     "title": "Facebookマーケティングメッセージ",
     "description": "Messengerでパーソナライズされたプロモーションメッセージを送り、エンゲージメントと売上を高めます。",
     "create": "新規作成",
@@ -2889,13 +2889,197 @@
       "generic": "汎用",
       "greeting": "あいさつ",
       "quickReplies": "クイック返信",
-      "elements": "カード"
+      "elements": "カード",
+      "targetMessaging": "メッセージの配信対象",
+      "targetOptIn": "オプトイン",
+      "targetOptInDescription": "マーケティングメッセージの受信に同意したページの顧客",
+      "targetCustomAudience": "カスタムオーディエンス",
+      "targetCustomAudienceDescription": "ファイルからアップロードしたオーディエンスにメッセージを送信",
+      "audience": "カスタムオーディエンス"
     },
+    "noReadyAudiences": "このページと広告アカウントで利用可能なカスタムオーディエンスがありません。",
+    "manageAudiences": "オーディエンスを管理",
     "errors": {
       "notConfigured": "Facebookマーケティングメッセージが構成されていません。管理者にマーケティングメッセージ構成IDの設定を依頼してください。",
       "notGranted": "マーケティングメッセージ機能を使用するにはアクセスを許可してください。",
       "tosNotAccepted": "この機能を使用するには、{url} でカスタムオブジェクトの規約に同意してください",
-      "notFound": "マーケティングメッセージが見つかりません。"
+      "notFound": "マーケティングメッセージが見つかりません。",
+      "audienceNotTargetable": "選択したカスタムオーディエンスは準備ができていないか、このページと広告アカウントに属していません。",
+      "connectFirst": "まずChatbotXアプリでマーケティングメッセージを接続してください。",
+      "mmInvalidState": "この操作はキャンペーンの現在の状態では利用できません。",
+      "mmCampaignEnded": "Metaのメッセージキャンペーンは終了しているため、送信も再開もできません。",
+      "mmPageNotConnected": "このキャンペーンのページはこのワークスペースに接続されていません。",
+      "mmContentLocked": "最初のメッセージを送信した後は、内容を変更できません。",
+      "metaDeleteFailed": "Meta がこのキャンペーンを削除できなかったため、保持されました。{message}",
+      "statisticsUnknownAdAccount": "このワークスペースには、その広告アカウントのマーケティングメッセージキャンペーンがありません。",
+      "statisticsInvalidRange": "過去37か月以内で、終了日以前の開始日を選択してください。"
+    },
+    "tabs": {
+      "campaigns": "キャンペーン",
+      "audiences": "オーディエンス",
+      "statistics": "統計"
+    },
+    "audiences": {
+      "title": "カスタムオーディエンス",
+      "create": "新規作成",
+      "uploadMore": "行を追加アップロード",
+      "empty": "カスタムオーディエンスはまだありません。",
+      "deleteTitle": "カスタムオーディエンスを削除",
+      "deleteWarning": "この操作により、カスタムオーディエンス「{name}」がMetaとChatbotXの両方から削除されます。元に戻すことはできません。",
+      "deleted": "カスタムオーディエンスを削除しました。",
+      "pageDisconnected": "ページの接続が解除されました",
+      "status": {
+        "ready": "準備完了",
+        "missing": "Metaで削除済み"
+      },
+      "fields": {
+        "customAudienceId": "カスタムオーディエンスID",
+        "approximateCount": "おおよその人数",
+        "status": "ステータス",
+        "file": "ファイルをアップロード"
+      },
+      "wizard": {
+        "title": "カスタムオーディエンスを作成",
+        "uploadMoreTitle": "行を追加アップロード",
+        "steps": {
+          "prepare": "リストを準備",
+          "upload": "アップロード",
+          "confirm": "確認"
+        },
+        "prepareDescription": "購読者リストは、マーケティングメッセージ用のオーディエンスを作成するための情報を含むCSVまたはTXTファイルです。購読者をFacebookおよびInstagramのユーザーと照合するために電話番号を使用します。情報が送信される前に、識別子のリストはランダムなコードにハッシュ化されます。",
+        "aboutHashing": "ハッシュ化について",
+        "downloadTemplate": "ファイルテンプレートをダウンロード",
+        "mainIdentifiers": "主な識別子を少なくとも1つ含めてください",
+        "moreIdentifiers": "その他の識別子を含める",
+        "identifiers": {
+          "email": "メールアドレス",
+          "phone": "電話番号",
+          "madid": "モバイル広告ID",
+          "fn": "名",
+          "ln": "姓",
+          "ct": "市区町村",
+          "st": "都道府県/州",
+          "country": "国",
+          "zip": "郵便番号",
+          "dob": "生年月日",
+          "doby": "生年",
+          "gen": "性別"
+        },
+        "uploadNote": "リストをアップロードする前に、識別子が揃っていて正しい形式であることを確認してください。リストは.csv、.txt、または.xlsx形式である必要があります。",
+        "namePlaceholder": "オーディエンス名を入力...",
+        "descriptionPlaceholder": "簡単な説明（任意）",
+        "dropzone": "クリックしてアップロード、またはドラッグ＆ドロップ",
+        "maxFileSize": "最大ファイルサイズ：20MB",
+        "fileRequired": "アップロードするファイルを選択してください。",
+        "fileTooLarge": "ファイルが20MBを超えています。",
+        "fileType": "ファイルは.csv、.txt、または.xlsxである必要があります。",
+        "next": "次へ",
+        "back": "戻る",
+        "upload": "アップロード",
+        "done": "完了",
+        "successTitle": "アップロードが完了しました",
+        "successRows": "Messenger購読者リストをアップロードしました：{count, plural, one {#行} other {#行}}",
+        "skippedRows": "{count, plural, one {#行} other {#行}}をスキップしました（有効なメールアドレスまたは電話番号がありません）。",
+        "invalidRows": "{count, plural, one {#行} other {#行}}がMetaに拒否されました。",
+        "matchingNote": "購読者とFacebook上のユーザーとの照合が完了するまで数分かかる場合があります。ステータスはオーディエンスリストで確認できます。"
+      },
+      "errors": {
+        "audienceInvalidFile": "ファイルを読み取れませんでした。ヘッダー行のある.csv、.txt、または.xlsxファイルを使用してください。",
+        "audienceTooManyRows": "ファイルの行数が{max, number}行を超えています。",
+        "audienceNoIdentifier": "ファイルにはメールまたは電話の列が必要です。",
+        "audienceNoValidRows": "有効なメールアドレスまたは電話番号を持つ行がありません。",
+        "audiencePartialUpload": "オーディエンスは作成されましたが、{received, number}行でアップロードが停止しました。「行を追加アップロード」で再試行してください。",
+        "audienceNotFound": "カスタムオーディエンスが見つかりません。",
+        "audienceCreateRejected": "Metaがオーディエンスを拒否しました：{reason}",
+        "uploadUncertain": "アップロードが完了していない可能性があります。このダイアログを閉じてオーディエンス一覧を確認し、オーディエンスが作成されている場合は「さらに行をアップロード」を使用してください。",
+        "pageNotConnected": "選択したページはこのワークスペースに接続されていません。",
+        "audienceInUse": "このカスタムオーディエンスは{count, plural, one {#件のマーケティングメッセージ} other {#件のマーケティングメッセージ}}で使用されているため削除できません。"
+      }
+    },
+    "delivery": {
+      "title": "配信",
+      "contentLocked": "メッセージがすでに送信されているため、コンテンツはロックされています。",
+      "topicsReturned": "Metaが返したトピック: {topics}",
+      "recipients": "{count}人の受信者",
+      "startsAt": "開始: {date}",
+      "completedAt": "完了: {date}",
+      "errorBreakdown": "失敗",
+      "retrying": "Meta は現在送信を受け付けていません。自動で再試行しています。",
+      "counts": {
+        "sent": "送信済み",
+        "delivered": "配信済み",
+        "unconfirmed": "未確認"
+      },
+      "status": {
+        "notSent": "未送信",
+        "scheduled": "予約済み",
+        "sending": "送信中",
+        "waitingNextDay": "翌日待ち",
+        "paused": "一時停止中",
+        "stopped": "停止済み"
+      },
+      "reason": {
+        "pageNotConnected": "このページはこのワークスペースに接続されていません。",
+        "quotaReached": "一時停止: メッセージ上限に達しました。",
+        "workspaceBlocked": "一時停止: このワークスペースはブロックされています。",
+        "grantInvalid": "一時停止: Facebook接続の有効期限が切れました。Marketing Messagesを再接続してください。",
+        "metaBlocker": "Metaがこのキャンペーンをブロックしています。",
+        "contentRejected": "Metaがメッセージ内容を拒否しました。",
+        "noTokens": "このキャンペーンの受信者が見つかりませんでした。",
+        "noMatchingTopic": "「Updates and promotions」トピックに一致するオプトイン済みの受信者がいません。",
+        "tokenFetchFailed": "Metaから受信者を取得できませんでした。",
+        "campaignEnded": "Metaキャンペーンは終了しました。",
+        "lifetimeBudgetReached": "通算予算を使い切りました。"
+      },
+      "errors": {
+        "grantInvalid": "Facebook接続の有効期限が切れました。",
+        "campaignInactive": "Metaキャンペーンは有効ではありません。",
+        "budgetReached": "予算を使い切りました。",
+        "dailyBudgetReached": "1日の予算に達しました。",
+        "optedOut": "受信者が配信を停止しました。",
+        "frequencyLimit": "受信者の配信頻度の上限に達しました。",
+        "contentRejected": "メッセージ内容がMetaに拒否されました。",
+        "deliveryFailed": "配信に失敗しました。",
+        "outcomeUnknown": "配信結果が不明です。"
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "ID または名前で検索",
+      "adAccount": "広告アカウント",
+      "dateRange": "期間",
+      "timezoneHint": "日付は {timezone} 基準",
+      "presets": {
+        "last7": "過去7日間",
+        "last30": "過去30日間",
+        "last90": "過去90日間",
+        "thisMonth": "今月",
+        "lastMonth": "先月"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "名前",
+        "page": "Facebookページ",
+        "delivered": "配信済みメッセージ",
+        "readRate": "既読率",
+        "linkClicks": "リンクのクリック",
+        "linkClickRate": "リンククリック率",
+        "costPerClick": "クリック単価",
+        "costPerDelivery": "配信単価",
+        "spend": "消化金額"
+      },
+      "notes": {
+        "delivery": "Meta はヨーロッパまたは日本の受信者についてこの指標を報告しません。該当するキャンペーンは - と表示されます。",
+        "clicks": "Meta はヨーロッパ、アルゼンチン、トルコ、韓国、日本の受信者についてこの指標を報告しません。該当するキャンペーンは - と表示されます。"
+      },
+      "footer": {
+        "label": "合計: {count, plural, one {# 件のキャンペーン} other {# 件のキャンペーン}}",
+        "total": "合計",
+        "average": "平均"
+      },
+      "totalsUnavailable": "現在、合計を取得できません。しばらくしてからもう一度お試しください。",
+      "readOnly": "統計を表示するには、マーケティングメッセージを再接続してください。",
+      "empty": "マーケティングメッセージのキャンペーンはまだありません。キャンペーンタブで作成してください。",
+      "noResults": "検索に一致するキャンペーンはありません。"
     }
   },
   "facebookAds": {
