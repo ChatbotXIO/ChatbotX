@@ -2091,6 +2091,10 @@
       "label": "Alamat Pengirim",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "Nama Pengirim",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "Templat Pesan"
     },
@@ -5314,7 +5318,8 @@
       "userPlaceholder": "ID Pengguna",
       "keyword": "Kata kunci",
       "keywordPlaceholder": "Tindakan atau detail",
-      "allAdmins": "Semua Admin"
+      "allAdmins": "Semua Admin",
+      "allWorkspaces": "Semua ruang kerja"
     }
   },
   "customFields": {
@@ -6193,6 +6198,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Log audit platform",
+      "description": "Aktivitas audit di semua ruang kerja pada platform ini."
+    },
+    "smtp": {
+      "title": "Pengaturan SMTP",
+      "description": "Transport email platform. Biarkan kosong untuk tetap menggunakan variabel lingkungan SMTP_SERVER dan SMTP_FROM.",
+      "usingEnv": "Tidak ada pengaturan SMTP yang disimpan — email platform menggunakan variabel lingkungan SMTP_SERVER.",
+      "remove": "Hapus pengaturan SMTP",
+      "errors": {
+        "passwordRequired": "Masukkan kata sandi SMTP."
+      }
     }
   },
   "platformCredentials": {
@@ -6271,6 +6289,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Komunitas",
+    "enterpriseGroup": "Enterprise",
     "platformGroup": "Platform",
     "toolsGroup": "Alat",
     "saasGroup": "SaaS",

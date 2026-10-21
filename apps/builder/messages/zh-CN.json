@@ -593,7 +593,8 @@
       "userPlaceholder": "用户 ID",
       "keyword": "关键词",
       "keywordPlaceholder": "操作或详情",
-      "allAdmins": "所有管理员"
+      "allAdmins": "所有管理员",
+      "allWorkspaces": "所有工作区"
     }
   },
   "auth": {
@@ -2252,6 +2253,10 @@
     "fromAddress": {
       "label": "寄件者地址",
       "placeholder": "noreply@example.com"
+    },
+    "fromName": {
+      "label": "发件人姓名",
+      "placeholder": "ChatbotX"
     },
     "fullName": {
       "label": "全名"
@@ -4683,6 +4688,8 @@
     "title": "Make.com"
   },
   "manageSidebar": {
+    "communityGroup": "社区",
+    "enterpriseGroup": "企业版",
     "platformGroup": "平台",
     "portalCustomDomain": "自订网域",
     "portalPaymentProcessor": "支付处理器",
@@ -5292,6 +5299,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "平台审计日志",
+      "description": "本平台所有工作区的审计活动。"
+    },
+    "smtp": {
+      "title": "SMTP 设置",
+      "description": "平台邮件传输方式。留空则继续使用 SMTP_SERVER 和 SMTP_FROM 环境变量。",
+      "usingEnv": "未保存 SMTP 设置 — 平台邮件使用 SMTP_SERVER 环境变量。",
+      "remove": "移除 SMTP 设置",
+      "errors": {
+        "passwordRequired": "请输入 SMTP 密码。"
+      }
     }
   },
   "platformBranding": {

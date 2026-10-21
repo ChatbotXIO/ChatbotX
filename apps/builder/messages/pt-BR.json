@@ -2091,6 +2091,10 @@
       "label": "Endereço do remetente",
       "placeholder": "naoresponda@exemplo.com"
     },
+    "fromName": {
+      "label": "Nome do remetente",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "Modelo de mensagem"
     },
@@ -4949,7 +4953,8 @@
       "userPlaceholder": "ID do usuário",
       "keyword": "Palavra-chave",
       "keywordPlaceholder": "Ação ou detalhe",
-      "allAdmins": "Todos os admins"
+      "allAdmins": "Todos os admins",
+      "allWorkspaces": "Todos os espaços de trabalho"
     }
   },
   "customFields": {
@@ -6193,6 +6198,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Logs de auditoria da plataforma",
+      "description": "Atividade de auditoria em todos os espaços de trabalho desta plataforma."
+    },
+    "smtp": {
+      "title": "Configurações de SMTP",
+      "description": "Transporte de e-mail da plataforma. Deixe em branco para continuar usando as variáveis de ambiente SMTP_SERVER e SMTP_FROM.",
+      "usingEnv": "Nenhuma configuração de SMTP salva — o e-mail da plataforma usa a variável de ambiente SMTP_SERVER.",
+      "remove": "Remover configurações de SMTP",
+      "errors": {
+        "passwordRequired": "Digite a senha do SMTP."
+      }
     }
   },
   "platformCredentials": {
@@ -6271,6 +6289,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Comunidade",
+    "enterpriseGroup": "Empresarial",
     "platformGroup": "Plataforma",
     "toolsGroup": "Ferramentas",
     "saasGroup": "SaaS",

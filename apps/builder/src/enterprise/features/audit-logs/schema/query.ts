@@ -34,7 +34,7 @@ export function getDefaultAuditLogsRange(now = new Date()) {
 
 const defaultRange = getDefaultAuditLogsRange()
 
-export const listAuditLogsSearchParamsCache = createSearchParamsCache({
+export const auditLogsBaseSearchParams = {
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
   from: parseAsString.withDefault(defaultRange.from),
@@ -43,6 +43,10 @@ export const listAuditLogsSearchParamsCache = createSearchParamsCache({
   sort: getSortingStateParser<AuditLogModel>().withDefault([
     { id: "createdAt", desc: true },
   ]),
+}
+
+export const listAuditLogsSearchParamsCache = createSearchParamsCache({
+  ...auditLogsBaseSearchParams,
   userId: parseAsString.withDefault(""),
 })
 

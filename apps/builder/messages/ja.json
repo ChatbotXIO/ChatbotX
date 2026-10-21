@@ -2091,6 +2091,10 @@
       "label": "送信元アドレス",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "送信者名",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "メッセージテンプレート"
     },
@@ -5293,7 +5297,8 @@
       "userPlaceholder": "ユーザーID",
       "keyword": "キーワード",
       "keywordPlaceholder": "アクションまたは詳細",
-      "allAdmins": "すべての管理者"
+      "allAdmins": "すべての管理者",
+      "allWorkspaces": "すべてのワークスペース"
     }
   },
   "customFields": {
@@ -6193,6 +6198,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "プラットフォーム監査ログ",
+      "description": "このプラットフォーム上のすべてのワークスペースにわたる監査アクティビティ。"
+    },
+    "smtp": {
+      "title": "SMTP設定",
+      "description": "プラットフォームのメール送信方式です。SMTP_SERVERおよびSMTP_FROM環境変数を引き続き使用する場合は空のままにしてください。",
+      "usingEnv": "SMTP設定は保存されていません。プラットフォームのメールはSMTP_SERVER環境変数を使用します。",
+      "remove": "SMTP設定を削除",
+      "errors": {
+        "passwordRequired": "SMTPパスワードを入力してください。"
+      }
     }
   },
   "platformCredentials": {
@@ -6271,6 +6289,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "コミュニティ",
+    "enterpriseGroup": "エンタープライズ",
     "platformGroup": "プラットフォーム",
     "toolsGroup": "ツール",
     "saasGroup": "SaaS",

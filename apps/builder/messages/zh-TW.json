@@ -1211,6 +1211,10 @@
       "label": "寄件者地址",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "寄件人姓名",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "訊息範本"
     },
@@ -5347,7 +5351,8 @@
       "userPlaceholder": "使用者 ID",
       "keyword": "關鍵字",
       "keywordPlaceholder": "操作或詳情",
-      "allAdmins": "所有管理員"
+      "allAdmins": "所有管理員",
+      "allWorkspaces": "所有工作區"
     }
   },
   "customFields": {
@@ -6226,6 +6231,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "平台稽核紀錄",
+      "description": "此平台所有工作區的稽核活動。"
+    },
+    "smtp": {
+      "title": "SMTP 設定",
+      "description": "平台郵件傳輸方式。留空則繼續使用 SMTP_SERVER 與 SMTP_FROM 環境變數。",
+      "usingEnv": "尚未儲存 SMTP 設定 — 平台郵件使用 SMTP_SERVER 環境變數。",
+      "remove": "移除 SMTP 設定",
+      "errors": {
+        "passwordRequired": "請輸入 SMTP 密碼。"
+      }
     }
   },
   "platformCredentials": {
@@ -6304,6 +6322,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "社群",
+    "enterpriseGroup": "企業版",
     "platformGroup": "平台",
     "toolsGroup": "工具",
     "saasGroup": "SaaS",
