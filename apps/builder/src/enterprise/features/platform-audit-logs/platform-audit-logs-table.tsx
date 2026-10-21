@@ -1,13 +1,11 @@
 "use client"
 
-import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
-import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
-import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
+import { AuditLogsDataTable } from "@/enterprise/features/audit-logs/audit-logs-data-table"
+import { AuditLogsFilterToolbar } from "@/enterprise/features/audit-logs/audit-logs-filter-toolbar"
 import type { PaginatedResponse } from "@/features/common/schema/pagination"
 import { getPlatformAuditColumns } from "./platform-audit-logs-table-columns"
-import { PlatformAuditLogsToolbar } from "./platform-audit-logs-toolbar"
 import type {
   PlatformAuditLogResource,
   PlatformAuditWorkspaceOption,
@@ -36,25 +34,31 @@ export function PlatformAuditLogsTable({
 
   const columns = useMemo(() => getPlatformAuditColumns(t), [t])
 
-  const { table } = useDataTable({
-    data,
-    columns,
-    pageCount,
-    initialState: {
-      sorting: [{ id: "createdAt", desc: true }],
-    },
-    getRowId: (originalRow) => originalRow.id,
-    shallow: false,
-    clearOnDefault: true,
-  })
-
   return (
     <div className="space-y-4">
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <PlatformAuditLogsToolbar {...search} workspaces={workspaces} />
-        </DataTableToolbar>
-      </DataTable>
+      <AuditLogsDataTable
+        columns={columns}
+        data={data}
+        pageCount={pageCount}
+        toolbar={
+          <AuditLogsFilterToolbar
+            from={search.from}
+            keyword={search.keyword}
+            select={{
+              paramKey: "workspaceId",
+              value: search.workspaceId,
+              label: t("fields.workspace.label"),
+              allLabel: t("auditLogs.filters.allWorkspaces"),
+              idPrefix: "platform-audit-log-workspace",
+              options: workspaces.map((workspace) => ({
+                id: workspace.id,
+                label: workspace.label,
+              })),
+            }}
+            to={search.to}
+          />
+        }
+      />
     </div>
   )
 }

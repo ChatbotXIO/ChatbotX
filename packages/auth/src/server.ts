@@ -1,8 +1,10 @@
 import {
   customDomainService,
+  type PlatformSmtpTransport,
   platformCredentialService,
   resolvePlatformSmtpTransport,
   resolveTenantSettingsByDomain,
+  toSmtpTransport,
 } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
@@ -20,7 +22,6 @@ import {
   sendResetPassword,
   sendSignUpVerification,
 } from "@chatbotx.io/mail"
-import type { SmtpTransportOptions } from "@chatbotx.io/mail/transport"
 import { createId, getPublicOriginFromRequest } from "@chatbotx.io/utils"
 import {
   isPlaceholderEmail,
@@ -46,10 +47,7 @@ type SmtpResolution =
   | { kind: "default" }
   | {
       kind: "transport"
-      transport: SmtpTransportOptions & {
-        fromEmail: string
-        fromName?: string
-      }
+      transport: PlatformSmtpTransport
     }
   | { kind: "blocked" }
 
@@ -77,14 +75,7 @@ const resolveSmtpForTenant = async (): Promise<SmtpResolution> => {
 
   return {
     kind: "transport",
-    transport: {
-      host: smtp.config.host,
-      port: smtp.config.port,
-      username: smtp.config.username,
-      password: smtp.config.password,
-      fromEmail: smtp.config.fromEmail,
-      fromName: smtp.config.fromName,
-    },
+    transport: toSmtpTransport(smtp.config),
   }
 }
 

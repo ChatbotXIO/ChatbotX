@@ -5,17 +5,6 @@ import {
   smtpCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@chatbotx.io/ui/components/ui/alert-dialog"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -24,75 +13,13 @@ import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
+import { DeleteCredentialDialog } from "@/features/platform-credentials/delete-credential-dialog"
 import { deletePlatformSmtpAction } from "./delete-platform-smtp.action"
 import { updatePlatformSmtpAction } from "./update-platform-smtp.action"
 
 type PlatformSmtpFormProps = {
   settings: SmtpCredentialPublic | null
-}
-
-function RemovePlatformSmtpDialog({
-  isDeleting,
-  disabled,
-  onConfirm,
-}: {
-  isDeleting: boolean
-  disabled?: boolean
-  onConfirm: () => void
-}) {
-  const t = useTranslations()
-  const [open, setOpen] = useState(false)
-  const wasDeleting = useRef(false)
-
-  useEffect(() => {
-    if (wasDeleting.current && !isDeleting) {
-      setOpen(false)
-    }
-    wasDeleting.current = isDeleting
-  }, [isDeleting])
-
-  return (
-    <AlertDialog onOpenChange={setOpen} open={open}>
-      <AlertDialogTrigger
-        render={
-          <Button
-            disabled={isDeleting || disabled}
-            type="button"
-            variant="destructive"
-          >
-            {t("platformAdmin.smtp.remove")}
-          </Button>
-        }
-      />
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            {t("messages.deleteFeature", { feature: "SMTP" })}
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            {t("messages.deleteConfirmation", { feature: "SMTP" })}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>
-            {t("actions.cancel")}
-          </AlertDialogCancel>
-          <AlertDialogAction
-            disabled={isDeleting}
-            onClick={(event) => {
-              event.preventDefault()
-              onConfirm()
-            }}
-          >
-            {isDeleting && <Loader2Icon className="me-2 size-4 animate-spin" />}
-            {t("actions.confirm")}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
 }
 
 export function PlatformSmtpForm({ settings }: PlatformSmtpFormProps) {
@@ -179,10 +106,12 @@ export function PlatformSmtpForm({ settings }: PlatformSmtpFormProps) {
 
         <div className="flex items-center justify-between gap-2">
           {settings && (
-            <RemovePlatformSmtpDialog
+            <DeleteCredentialDialog
               disabled={form.formState.isSubmitting}
+              feature="SMTP"
               isDeleting={isDeleting}
               onConfirm={() => executeDelete()}
+              triggerLabel={t("platformAdmin.smtp.remove")}
             />
           )}
           <div className="ms-auto flex gap-2">

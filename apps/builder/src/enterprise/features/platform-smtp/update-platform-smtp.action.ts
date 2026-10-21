@@ -4,14 +4,13 @@ import {
   assertEnterpriseFeatures,
   platformCredentialService,
 } from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   type SmtpCredential,
   smtpCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
-import { createSmtpTransporter } from "@chatbotx.io/mail/transport"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
+import { verifySmtpTransport } from "@/features/integration-smtp/lib/verify-connection"
 import { superAdminActionClient } from "@/lib/safe-action"
 
 export const updatePlatformSmtpAction = superAdminActionClient
@@ -35,19 +34,7 @@ export const updatePlatformSmtpAction = superAdminActionClient
 
     const { host, port, username, fromEmail, fromName } = parsedInput
 
-    const transporter = createSmtpTransporter({
-      host,
-      port,
-      username,
-      password,
-    })
-    try {
-      await transporter.verify()
-    } catch {
-      throw new ChatbotXException(t("smtp.errors.connectionFailed"))
-    } finally {
-      transporter.close()
-    }
+    await verifySmtpTransport({ host, port, username, password })
 
     const config: SmtpCredential = {
       host,

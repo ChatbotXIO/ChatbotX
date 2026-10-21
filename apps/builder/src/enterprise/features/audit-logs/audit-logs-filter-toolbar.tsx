@@ -13,17 +13,29 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type FormEvent, useMemo, useState } from "react"
-import type { AuditLogAdminOption } from "./queries"
-import type { ListAuditLogsRequest } from "./schema/query"
 
-type AuditLogsToolbarProps = Pick<
-  ListAuditLogsRequest,
-  "from" | "to" | "keyword" | "userId"
-> & {
-  admins: AuditLogAdminOption[]
+export type AuditLogsFilterSelectOption = {
+  id: string
+  label: string
 }
 
-const ALL_ADMINS_VALUE = "__all_admins"
+export type AuditLogsFilterToolbarSelectConfig = {
+  paramKey: string
+  value: string
+  label: string
+  allLabel: string
+  options: AuditLogsFilterSelectOption[]
+  idPrefix: string
+}
+
+type AuditLogsFilterToolbarProps = {
+  from: string
+  to: string
+  keyword: string
+  select: AuditLogsFilterToolbarSelectConfig
+}
+
+const ALL_VALUE = "__all"
 const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/
 
 const dateKeyToDate = (value: string) => {
@@ -43,24 +55,32 @@ const dateToDateKey = (date: Date) => {
   return `${year}-${month}-${day}`
 }
 
-export function AuditLogsToolbar({
+export function AuditLogsFilterToolbar({
   from,
   to,
   keyword,
-  userId,
-  admins,
-}: AuditLogsToolbarProps) {
+  select,
+}: AuditLogsFilterToolbarProps) {
   const t = useTranslations()
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [draft, setDraft] = useState({ from, to, keyword, userId })
-  const adminOptions = useMemo(
+  const [draft, setDraft] = useState({
+    from,
+    to,
+    keyword,
+    select: select.value,
+  })
+
+  const selectOptions = useMemo(
     () => [
-      { label: t("auditLogs.filters.allAdmins"), value: ALL_ADMINS_VALUE },
-      ...admins.map((admin) => ({ label: admin.label, value: admin.id })),
+      { label: select.allLabel, value: ALL_VALUE },
+      ...select.options.map((option) => ({
+        label: option.label,
+        value: option.id,
+      })),
     ],
-    [admins, t],
+    [select.allLabel, select.options],
   )
 
   const applyFilters = (event: FormEvent<HTMLFormElement>) => {
@@ -69,10 +89,16 @@ export function AuditLogsToolbar({
     const params = new URLSearchParams(searchParams)
     params.set("page", "1")
 
-    for (const key of ["from", "to", "keyword", "userId"] as const) {
-      const value = draft[key].trim()
-      if (value) {
-        params.set(key, value)
+    const values: Record<string, string> = {
+      from: draft.from,
+      to: draft.to,
+      keyword: draft.keyword,
+      [select.paramKey]: draft.select,
+    }
+    for (const [key, value] of Object.entries(values)) {
+      const trimmed = value.trim()
+      if (trimmed) {
+        params.set(key, trimmed)
       } else {
         params.delete(key)
       }
@@ -83,7 +109,7 @@ export function AuditLogsToolbar({
 
   const resetFilters = () => {
     const params = new URLSearchParams(searchParams)
-    for (const key of ["from", "to", "keyword", "userId", "page"] as const) {
+    for (const key of ["from", "to", "keyword", select.paramKey, "page"]) {
       params.delete(key)
     }
     router.push(`${pathname}?${params.toString()}`)
@@ -125,29 +151,29 @@ export function AuditLogsToolbar({
         />
       </div>
       <div className="flex flex-col gap-1 text-muted-foreground text-xs">
-        <span id="audit-log-user-label">{t("auditLogs.filters.user")}</span>
+        <span id={`${select.idPrefix}-label`}>{select.label}</span>
         <Select
-          items={adminOptions}
+          items={selectOptions}
           onValueChange={(value) => {
-            const nextUserId = String(value)
+            const next = String(value)
             setDraft((current) => ({
               ...current,
-              userId: nextUserId === ALL_ADMINS_VALUE ? "" : nextUserId,
+              select: next === ALL_VALUE ? "" : next,
             }))
           }}
-          value={draft.userId || ALL_ADMINS_VALUE}
+          value={draft.select || ALL_VALUE}
         >
           <SelectTrigger
-            aria-labelledby="audit-log-user-label"
+            aria-labelledby={`${select.idPrefix}-label`}
             className="h-8 w-44"
-            id="audit-log-user"
+            id={select.idPrefix}
           >
-            <SelectValue placeholder={t("auditLogs.filters.allAdmins")} />
+            <SelectValue placeholder={select.allLabel} />
           </SelectTrigger>
           <SelectContent>
-            {adminOptions.map((admin) => (
-              <SelectItem key={admin.value} value={admin.value}>
-                {admin.label}
+            {selectOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -155,12 +181,12 @@ export function AuditLogsToolbar({
       </div>
       <label
         className="flex flex-col gap-1 text-muted-foreground text-xs"
-        htmlFor="audit-log-keyword"
+        htmlFor={`${select.idPrefix}-keyword`}
       >
         {t("auditLogs.filters.keyword")}
         <Input
           className="h-8 w-44"
-          id="audit-log-keyword"
+          id={`${select.idPrefix}-keyword`}
           onChange={(event) =>
             setDraft((current) => ({ ...current, keyword: event.target.value }))
           }

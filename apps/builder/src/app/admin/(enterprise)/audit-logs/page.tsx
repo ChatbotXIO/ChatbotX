@@ -33,7 +33,7 @@ export default async function PlatformAuditLogsPage({
         <PlatformAuditLogsTable
           promises={Promise.all([
             listPlatformAuditLogs(search),
-            listPlatformAuditWorkspaces(),
+            listPlatformAuditWorkspaces(search.workspaceId || undefined),
           ])}
           search={search}
         />

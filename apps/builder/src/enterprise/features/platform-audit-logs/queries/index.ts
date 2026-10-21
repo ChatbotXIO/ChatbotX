@@ -1,20 +1,17 @@
 import {
   assertEnterpriseFeatures,
-  isSuperAdmin,
+  workspaceService,
   workspaceSupportAccessService,
 } from "@chatbotx.io/business"
 import { listPlatformAuditLogs as listPlatformAuditLogsService } from "@chatbotx.io/business/audit"
-import { notFound } from "next/navigation"
+import { parseAuditLogsDateRange } from "@/enterprise/features/audit-logs/schema/query"
 import type { PaginatedResponse } from "@/features/common/schema/pagination"
-import { getCurrentUser } from "@/lib/auth/utils"
+import { assertPlatformSuperAdmin } from "@/lib/auth/assert-platform-super-admin"
 import type {
   PlatformAuditLogResource,
   PlatformAuditWorkspaceOption,
 } from "../schema"
-import {
-  type ListPlatformAuditLogsRequest,
-  parseAuditLogsDateRange,
-} from "../schema/query"
+import type { ListPlatformAuditLogsRequest } from "../schema/query"
 
 const PLATFORM_AUDIT_WORKSPACE_OPTION_LIMIT = 200
 
@@ -24,10 +21,7 @@ export async function listPlatformAuditLogs(
   // Defense in depth behind the (enterprise) route-group layout: the layout
   // only blocks page rendering, not direct invocations of this query.
   await assertEnterpriseFeatures()
-  const user = await getCurrentUser()
-  if (!(user && (await isSuperAdmin(user)))) {
-    return notFound()
-  }
+  await assertPlatformSuperAdmin()
 
   const dateRange = parseAuditLogsDateRange(input)
 
@@ -41,19 +35,31 @@ export async function listPlatformAuditLogs(
   })
 }
 
-export async function listPlatformAuditWorkspaces(): Promise<
-  PlatformAuditWorkspaceOption[]
-> {
+export async function listPlatformAuditWorkspaces(
+  selectedId?: string,
+): Promise<PlatformAuditWorkspaceOption[]> {
   await assertEnterpriseFeatures()
-  const user = await getCurrentUser()
-  if (!(user && (await isSuperAdmin(user)))) {
-    return notFound()
-  }
+  await assertPlatformSuperAdmin()
 
   const { data } = await workspaceSupportAccessService.listWorkspaces({
     page: 1,
     perPage: PLATFORM_AUDIT_WORKSPACE_OPTION_LIMIT,
   })
 
-  return data.map((workspace) => ({ id: workspace.id, label: workspace.name }))
+  const options = data.map((workspace) => ({
+    id: workspace.id,
+    label: workspace.name,
+  }))
+
+  // The list is capped at PLATFORM_AUDIT_WORKSPACE_OPTION_LIMIT, so a
+  // deep-linked `?workspaceId=` outside the first page would otherwise
+  // render a Select whose value isn't among its own items.
+  if (selectedId && !options.some((option) => option.id === selectedId)) {
+    const selected = await workspaceService.find({ where: { id: selectedId } })
+    if (selected) {
+      options.unshift({ id: selected.id, label: selected.name })
+    }
+  }
+
+  return options
 }

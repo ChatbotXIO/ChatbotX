@@ -1,9 +1,18 @@
+import type { SmtpCredential } from "@chatbotx.io/database/partials"
 import type { SmtpTransportOptions } from "@chatbotx.io/mail/transport"
 import { platformCredentialService } from "../platform-credential/service"
 
 export type PlatformSmtpTransport = SmtpTransportOptions & {
   fromEmail: string
   fromName?: string
+}
+
+/** Maps a decrypted SMTP credential config onto the transport shape every caller sends mail with. */
+export const toSmtpTransport = (
+  config: SmtpCredential,
+): PlatformSmtpTransport => {
+  const { host, port, username, password, fromEmail, fromName } = config
+  return { host, port, username, password, fromEmail, fromName }
 }
 
 /**
@@ -22,7 +31,5 @@ export const resolvePlatformSmtpTransport = async (): Promise<
   if (!credential) {
     return
   }
-  const { host, port, username, password, fromEmail, fromName } =
-    credential.config
-  return { host, port, username, password, fromEmail, fromName }
+  return toSmtpTransport(credential.config)
 }

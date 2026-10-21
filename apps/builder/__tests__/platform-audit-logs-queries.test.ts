@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   isSuperAdmin: vi.fn(),
   assertEnterpriseFeatures: vi.fn(),
   listWorkspaces: vi.fn(),
+  findWorkspace: vi.fn(),
   listPlatformAuditLogsService: vi.fn(),
 }))
 
@@ -25,6 +26,7 @@ vi.mock("@chatbotx.io/business", () => ({
   assertEnterpriseFeatures: mocks.assertEnterpriseFeatures,
   isSuperAdmin: mocks.isSuperAdmin,
   workspaceSupportAccessService: { listWorkspaces: mocks.listWorkspaces },
+  workspaceService: { find: mocks.findWorkspace },
 }))
 vi.mock("@chatbotx.io/business/audit", () => ({
   listPlatformAuditLogs: mocks.listPlatformAuditLogsService,
@@ -139,5 +141,51 @@ describe("listPlatformAuditWorkspaces", () => {
       page: 1,
       perPage: 200,
     })
+  })
+
+  test("includes the selected workspace when missing from the paginated list", async () => {
+    mocks.getCurrentUser.mockResolvedValue({ id: "admin-1" })
+    mocks.isSuperAdmin.mockResolvedValue(true)
+    mocks.listWorkspaces.mockResolvedValue({
+      data: [{ id: "w1", name: "Workspace One" }],
+      pageCount: 1,
+    })
+    mocks.findWorkspace.mockResolvedValue({ id: "w201", name: "Workspace 201" })
+
+    await expect(listPlatformAuditWorkspaces("w201")).resolves.toEqual([
+      { id: "w201", label: "Workspace 201" },
+      { id: "w1", label: "Workspace One" },
+    ])
+    expect(mocks.findWorkspace).toHaveBeenCalledWith({
+      where: { id: "w201" },
+    })
+  })
+
+  test("does not look up a selected workspace already in the paginated list", async () => {
+    mocks.getCurrentUser.mockResolvedValue({ id: "admin-1" })
+    mocks.isSuperAdmin.mockResolvedValue(true)
+    mocks.listWorkspaces.mockResolvedValue({
+      data: [{ id: "w1", name: "Workspace One" }],
+      pageCount: 1,
+    })
+
+    await expect(listPlatformAuditWorkspaces("w1")).resolves.toEqual([
+      { id: "w1", label: "Workspace One" },
+    ])
+    expect(mocks.findWorkspace).not.toHaveBeenCalled()
+  })
+
+  test("ignores a selected workspace that no longer exists", async () => {
+    mocks.getCurrentUser.mockResolvedValue({ id: "admin-1" })
+    mocks.isSuperAdmin.mockResolvedValue(true)
+    mocks.listWorkspaces.mockResolvedValue({
+      data: [{ id: "w1", name: "Workspace One" }],
+      pageCount: 1,
+    })
+    mocks.findWorkspace.mockResolvedValue(undefined)
+
+    await expect(listPlatformAuditWorkspaces("deleted-ws")).resolves.toEqual([
+      { id: "w1", label: "Workspace One" },
+    ])
   })
 })
