@@ -5,6 +5,7 @@ import {
   type LicenseKeyMap,
   verifyLicenseToken,
 } from "../src/enterprise/license/service"
+import { mockLicenseRepository } from "./helpers/license"
 
 const KID = "test-license-key"
 const NOW = new Date("2026-01-01T00:00:00.000Z")
@@ -296,12 +297,7 @@ describe("enterprise license verification", () => {
       LICENSE_ISSUER,
       LICENSE_PUBLIC_KEYS: keyMap,
     }))
-    vi.doMock("@chatbotx.io/database/repositories", () => ({
-      licenseRepository: {
-        findByLicenseId: vi.fn().mockResolvedValue(undefined),
-        upsert: vi.fn(),
-      },
-    }))
+    mockLicenseRepository()
     const { getLicenseStatus, getLimit, hasFeature } = await import(
       "../src/enterprise/license/service"
     )
@@ -320,9 +316,11 @@ describe("enterprise license verification", () => {
     vi.setSystemTime(NOW)
     const envToken = await signLicense({
       exp: NOW_SECONDS - 2 * DAY_SECONDS,
+      iat: NOW_SECONDS - 30,
     })
     const storedToken = await signLicense({
       exp: NOW_SECONDS + 31 * DAY_SECONDS,
+      iat: NOW_SECONDS - 60,
     })
     process.env.LICENSE_KEY = envToken
     vi.resetModules()
@@ -330,12 +328,7 @@ describe("enterprise license verification", () => {
       LICENSE_ISSUER,
       LICENSE_PUBLIC_KEYS: keyMap,
     }))
-    vi.doMock("@chatbotx.io/database/repositories", () => ({
-      licenseRepository: {
-        findByLicenseId: vi.fn().mockResolvedValue({ token: storedToken }),
-        upsert: vi.fn(),
-      },
-    }))
+    mockLicenseRepository(storedToken)
     const { getLicenseStatus } = await import(
       "../src/enterprise/license/service"
     )
@@ -364,12 +357,7 @@ describe("enterprise license verification", () => {
       LICENSE_ISSUER,
       LICENSE_PUBLIC_KEYS: keyMap,
     }))
-    vi.doMock("@chatbotx.io/database/repositories", () => ({
-      licenseRepository: {
-        findByLicenseId: vi.fn().mockResolvedValue({ token: storedToken }),
-        upsert: vi.fn(),
-      },
-    }))
+    mockLicenseRepository(storedToken)
     const { getLicenseStatus } = await import(
       "../src/enterprise/license/service"
     )
@@ -379,15 +367,69 @@ describe("enterprise license verification", () => {
     })
   })
 
+  test("reuses a resolved license status within the cache TTL", async () => {
+    vi.useFakeTimers({ now: NOW })
+    process.env.LICENSE_KEY = await signLicense()
+    vi.resetModules()
+    vi.doMock("../src/enterprise/license/public-keys", () => ({
+      LICENSE_ISSUER,
+      LICENSE_PUBLIC_KEYS: keyMap,
+    }))
+    const repository = mockLicenseRepository()
+    const { getLicenseStatus } = await import(
+      "../src/enterprise/license/service"
+    )
+
+    await getLicenseStatus()
+    await getLicenseStatus()
+    vi.advanceTimersByTime(59_999)
+    await getLicenseStatus()
+
+    expect(repository.findTokenByLicenseId).toHaveBeenCalledTimes(1)
+  })
+
+  test("does not cache a stale in-flight read after invalidation", async () => {
+    vi.useFakeTimers({ now: NOW })
+    process.env.LICENSE_KEY = await signLicense()
+    vi.resetModules()
+    vi.doMock("../src/enterprise/license/public-keys", () => ({
+      LICENSE_ISSUER,
+      LICENSE_PUBLIC_KEYS: keyMap,
+    }))
+    const repository = mockLicenseRepository()
+    let resolveFirstRead: ((token: string | undefined) => void) | undefined
+    let signalFirstRead: (() => void) | undefined
+    const firstReadStarted = new Promise<void>((resolve) => {
+      signalFirstRead = resolve
+    })
+    repository.findTokenByLicenseId.mockImplementationOnce(
+      () =>
+        new Promise<string | undefined>((resolve) => {
+          resolveFirstRead = resolve
+          signalFirstRead?.()
+        }),
+    )
+    const { getLicenseStatus, invalidateLicenseCache } = await import(
+      "../src/enterprise/license/service"
+    )
+
+    const firstRead = getLicenseStatus()
+    await firstReadStarted
+    invalidateLicenseCache()
+    if (!resolveFirstRead) {
+      throw new Error("The first license read did not start")
+    }
+    resolveFirstRead(undefined)
+    await firstRead
+    await getLicenseStatus()
+
+    expect(repository.findTokenByLicenseId).toHaveBeenCalledTimes(2)
+  })
+
   test("reports missing when LICENSE_KEY is unset", async () => {
     delete process.env.LICENSE_KEY
     vi.resetModules()
-    vi.doMock("@chatbotx.io/database/repositories", () => ({
-      licenseRepository: {
-        findByLicenseId: vi.fn().mockResolvedValue(undefined),
-        upsert: vi.fn(),
-      },
-    }))
+    mockLicenseRepository()
     const { getLicenseStatus } = await import(
       "../src/enterprise/license/service"
     )

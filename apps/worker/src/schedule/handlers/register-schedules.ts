@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   PURGE_BROADCASTS_INTERVAL_MINUTES,
@@ -18,6 +19,8 @@ const CLOUD_ONLY_SCHEDULERS = [
   ScheduleJobData.reconcileTenants,
   ScheduleJobData.unsubscribeExpiredTrials,
 ] as const
+
+const LICENSE_REFRESH_MINUTE = randomInt(60)
 
 export const registerSchedules = async () => {
   if (!(scheduleQueue instanceof Queue)) {
@@ -554,7 +557,7 @@ export const registerSchedules = async () => {
     await scheduleQueue.upsertJobScheduler(
       ScheduleJobData.refreshLicense,
       {
-        pattern: "23 * * * *",
+        pattern: `${LICENSE_REFRESH_MINUTE} * * * *`,
       },
       {
         name: ScheduleJobData.refreshLicense,

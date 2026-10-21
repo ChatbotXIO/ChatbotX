@@ -43,6 +43,7 @@ const LICENSE_CACHE_TTL_MS = 60_000
 
 let cached: { status: LicenseStatus; readAt: number } | undefined
 let inFlight: Promise<LicenseStatus> | undefined
+let generation = 0
 
 const emptyLimits = (): LicenseLimits => ({
   maxWorkspaces: null,
@@ -211,13 +212,34 @@ export const resolveAllowedTiers = ():
   }
 }
 
+export const isNewerLicense = (
+  candidate: LicenseStatus,
+  current: LicenseStatus,
+): boolean => {
+  if (candidate.state === "valid" && current.state === "expired") {
+    return true
+  }
+
+  if (candidate.state === "expired" && current.state === "valid") {
+    return false
+  }
+
+  const candidateIssuedAt = Date.parse(candidate.issuedAt ?? "")
+  const currentIssuedAt = Date.parse(current.issuedAt ?? "")
+  if (candidateIssuedAt !== currentIssuedAt) {
+    return candidateIssuedAt > currentIssuedAt
+  }
+
+  return (
+    Date.parse(candidate.expiresAt ?? "") > Date.parse(current.expiresAt ?? "")
+  )
+}
+
 const readStoredToken = async (
   licenseId: string,
 ): Promise<string | undefined> => {
   try {
-    const row = await licenseRepository.findByLicenseId(licenseId)
-
-    return row?.token
+    return await licenseRepository.findTokenByLicenseId(licenseId)
   } catch (err) {
     // A fresh deployment reaches this before migrations run, and the DB can be
     // down at boot. Neither may take enterprise features offline.
@@ -251,40 +273,56 @@ const resolveLicense = async (): Promise<LicenseStatus> => {
     { allowedTiers },
   )
   if (
-    storedStatus.licenseId !== envStatus.licenseId ||
-    !storedStatus.expiresAt ||
-    !envStatus.expiresAt
+    storedStatus.state === "invalid" ||
+    storedStatus.licenseId !== envStatus.licenseId
   ) {
     logger.warn(
-      { licenseId: envStatus.licenseId, state: storedStatus.state },
-      "license: ignoring the stored token because it does not match LICENSE_KEY",
+      {
+        err: storedStatus.error,
+        licenseId: envStatus.licenseId,
+        state: storedStatus.state,
+      },
+      "license: ignoring an unusable stored license token",
     )
     return envStatus
   }
 
-  return Date.parse(storedStatus.expiresAt) > Date.parse(envStatus.expiresAt)
-    ? storedStatus
-    : envStatus
+  return isNewerLicense(storedStatus, envStatus) ? storedStatus : envStatus
 }
 
-export const loadLicense = async (): Promise<LicenseStatus> => {
+export const loadLicense = (): Promise<LicenseStatus> => {
   if (cached && Date.now() - cached.readAt < LICENSE_CACHE_TTL_MS) {
-    return cached.status
+    return Promise.resolve(cached.status)
   }
 
-  inFlight ??= resolveLicense().finally(() => {
-    inFlight = undefined
-  })
+  if (inFlight) {
+    return inFlight
+  }
 
-  const status = await inFlight
-  cached = { status, readAt: Date.now() }
+  const cacheGeneration = generation
+  let pending: Promise<LicenseStatus>
+  pending = resolveLicense()
+    .then((status) => {
+      if (generation === cacheGeneration) {
+        cached = { status, readAt: Date.now() }
+      }
+      return status
+    })
+    .finally(() => {
+      if (inFlight === pending) {
+        inFlight = undefined
+      }
+    })
+  inFlight = pending
 
-  return status
+  return pending
 }
 
 /** Drop the TTL cache so the next read re-resolves immediately. */
 export const invalidateLicenseCache = (): void => {
+  generation += 1
   cached = undefined
+  inFlight = undefined
 }
 
 export const getLicense = loadLicense

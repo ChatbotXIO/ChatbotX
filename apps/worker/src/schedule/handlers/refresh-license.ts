@@ -17,10 +17,7 @@ export async function refreshLicense(): Promise<void> {
       timeoutInSeconds: LOCK_TTL_SECONDS,
       retryTimeoutInSeconds: 0,
       fn: async () => {
-        const outcome = await refreshLicenseToken()
-        if (outcome.status === "failed") {
-          log.warn({ reason: outcome.reason }, "refreshLicense: no new token")
-        }
+        await refreshLicenseToken()
       },
     })
   } catch (err) {

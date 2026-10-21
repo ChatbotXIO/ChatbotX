@@ -1,16 +1,15 @@
 import { db, eq } from "../../client"
 import { licenseModel } from "../../schema"
-import type { LicenseModel } from "../../types"
 
 class LicenseRepository {
-  async findByLicenseId(licenseId: string): Promise<LicenseModel | undefined> {
+  async findTokenByLicenseId(licenseId: string): Promise<string | undefined> {
     const [row] = await db
-      .select()
+      .select({ token: licenseModel.token })
       .from(licenseModel)
       .where(eq(licenseModel.licenseId, licenseId))
       .limit(1)
 
-    return row
+    return row?.token
   }
 
   async upsert(props: {

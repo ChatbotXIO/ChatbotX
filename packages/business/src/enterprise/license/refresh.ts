@@ -3,9 +3,11 @@ import { z } from "zod"
 import { isCloud, isEnterprise, keys } from "../../keys"
 import { logger } from "../../logger"
 import { LICENSE_PUBLIC_KEYS } from "./public-keys"
+import type { LicenseState } from "./service"
 import {
   getLicenseStatus,
   invalidateLicenseCache,
+  isNewerLicense,
   resolveAllowedTiers,
   verifyLicenseToken,
 } from "./service"
@@ -15,11 +17,19 @@ const REFRESH_TIMEOUT_MS = 10_000
 
 const refreshResponseSchema = z.object({ token: z.string().min(1) })
 
-export type LicenseRefreshOutcome = {
-  status: "skipped" | "refreshed" | "unchanged" | "failed"
-  reason?: string
-  expiresAt?: string | null
-}
+export type LicenseRefreshOutcome =
+  | {
+      status: "skipped"
+      reason: "community" | "disabled" | LicenseState
+    }
+  | {
+      status: "failed"
+      reason: "requestFailed" | `http_${number}` | "badBody" | "rejectedToken"
+    }
+  | {
+      status: "refreshed" | "unchanged"
+      expiresAt: string
+    }
 
 export const refreshLicense = async (): Promise<LicenseRefreshOutcome> => {
   if (!(isEnterprise() || isCloud())) {
@@ -41,8 +51,6 @@ export const refreshLicense = async (): Promise<LicenseRefreshOutcome> => {
     return { status: "skipped", reason: current.state }
   }
 
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS)
   let response: Response
   try {
     response = await fetch(LICENSE_REFRESH_URL, {
@@ -53,7 +61,7 @@ export const refreshLicense = async (): Promise<LicenseRefreshOutcome> => {
         licenseId: current.licenseId,
         edition: NEXT_PUBLIC_EDITION,
       }),
-      signal: controller.signal,
+      signal: AbortSignal.timeout(REFRESH_TIMEOUT_MS),
     })
   } catch (err) {
     logger.error(
@@ -61,8 +69,6 @@ export const refreshLicense = async (): Promise<LicenseRefreshOutcome> => {
       "license: refresh request failed",
     )
     return { status: "failed", reason: "requestFailed" }
-  } finally {
-    clearTimeout(timeout)
   }
 
   if (!response.ok) {
@@ -70,19 +76,20 @@ export const refreshLicense = async (): Promise<LicenseRefreshOutcome> => {
       { licenseId: current.licenseId, status: response.status },
       "license: refresh returned a non-OK status",
     )
+    try {
+      await response.body?.cancel()
+    } catch (err) {
+      logger.warn(
+        { err, licenseId: current.licenseId, status: response.status },
+        "license: could not cancel the refresh response body",
+      )
+    }
     return { status: "failed", reason: `http_${response.status}` }
   }
 
-  let parsed: z.ZodSafeParseResult<{ token: string }>
-  try {
-    parsed = refreshResponseSchema.safeParse(await response.json())
-  } catch (err) {
-    logger.error(
-      { err, licenseId: current.licenseId },
-      "license: refresh returned an unreadable body",
-    )
-    return { status: "failed", reason: "badBody" }
-  }
+  const parsed = refreshResponseSchema.safeParse(
+    await response.json().catch(() => null),
+  )
   if (!parsed.success) {
     logger.error(
       { licenseId: current.licenseId },
@@ -108,11 +115,11 @@ export const refreshLicense = async (): Promise<LicenseRefreshOutcome> => {
     return { status: "failed", reason: "rejectedToken" }
   }
 
-  if (
-    current.expiresAt &&
-    Date.parse(next.expiresAt) <= Date.parse(current.expiresAt)
-  ) {
-    return { status: "unchanged", expiresAt: current.expiresAt }
+  if (!isNewerLicense(next, current)) {
+    return {
+      status: "unchanged",
+      expiresAt: current.expiresAt ?? next.expiresAt,
+    }
   }
 
   await licenseRepository.upsert({

@@ -2,6 +2,7 @@ import { exportSPKI, generateKeyPair, SignJWT } from "jose"
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest"
 import { LICENSE_ISSUER } from "../src/enterprise/license/public-keys"
 import type { LicenseKeyMap } from "../src/enterprise/license/service"
+import { mockLicenseRepository } from "./helpers/license"
 
 const KID = "test-license-key"
 const NOW = new Date("2026-01-01T00:00:00.000Z")
@@ -50,15 +51,6 @@ const mockPublicKeys = () => {
   vi.doMock("../src/enterprise/license/public-keys", () => ({
     LICENSE_ISSUER,
     LICENSE_PUBLIC_KEYS: keyMap,
-  }))
-}
-
-const mockLicenseRepository = () => {
-  vi.doMock("@chatbotx.io/database/repositories", () => ({
-    licenseRepository: {
-      findByLicenseId: vi.fn().mockResolvedValue(undefined),
-      upsert: vi.fn(),
-    },
   }))
 }
 
