@@ -4143,6 +4143,7 @@
     "orContinueWith": "Oder fortfahren mit",
     "continueWithFacebook": "Mit Facebook fortfahren",
     "continueWithGoogle": "Mit Google fortfahren",
+    "continueWithProvider": "Mit {name} fortfahren",
     "continueWithEmail": "Mit E-Mail fortfahren",
     "continueWithMagicLink": "Mit Magic Link fortfahren",
     "dontHaveAnAccount": "Noch kein Konto?",
@@ -4173,11 +4174,15 @@
     "changePasswordTitle": "Passwort ändern",
     "changePasswordDescription": "Legen Sie ein neues Passwort fest, bevor Sie fortfahren.",
     "passwordChangeSuccess": "Passwort geändert",
+    "signUpDisabledTitle": "Registrierung ist deaktiviert",
+    "signUpDisabledDescription": "Neue Konten können nur von einem Administrator oder über einen Einladungslink erstellt werden.",
     "oauthError": {
       "accountNotLinked": "Ein Konto mit dieser E-Mail-Adresse existiert bereits und konnte nicht verknüpft werden. Melde dich wie zuvor an oder kontaktiere den Support.",
       "unableToLinkAccount": "Wir konnten diese Anmeldung nicht mit dem bestehenden Konto verknüpfen. Melde dich auf dem Weg an, den du zuvor genutzt hast, oder kontaktiere den Support.",
       "sessionExpired": "Der Anmeldeversuch ist abgelaufen. Bitte versuche es erneut.",
       "accessDenied": "Die Anmeldung wurde abgebrochen.",
+      "signUpDisabled": "Dieses Konto existiert noch nicht und die Registrierung ist deaktiviert. Bitte einen Administrator, es für dich zu erstellen.",
+      "invalidInvitation": "Diese Einladung ist ungültig oder abgelaufen.",
       "generic": "Anmeldung fehlgeschlagen. Bitte versuche es erneut."
     }
   },
@@ -4809,7 +4814,8 @@
     "chatbotInvitationDescription1": "{chatbotName} beitreten",
     "chatbotInvitationDescription2": "{userName} hat Sie eingeladen, {chatbotName} beizutreten.",
     "invalidInvitation": "Diese Einladung ist ungültig oder abgelaufen.",
-    "workspaceUnavailable": "Dieser Arbeitsbereich ist nicht mehr verfügbar."
+    "workspaceUnavailable": "Dieser Arbeitsbereich ist nicht mehr verfügbar.",
+    "signUpToJoin": "Erstelle ein Konto, um beizutreten"
   },
   "inboxes": {
     "markReadOnOutbound": {

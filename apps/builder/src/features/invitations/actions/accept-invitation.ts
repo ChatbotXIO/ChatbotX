@@ -1,5 +1,7 @@
 "use server"
 
+import { INVITATION_COOKIE_NAME } from "@chatbotx.io/auth/server"
+import { resolveTenantByDomain } from "@chatbotx.io/auth/tenant"
 import {
   invitationService,
   isWorkspaceScheduledForDeletion,
@@ -10,10 +12,12 @@ import {
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
+import { cookies } from "next/headers"
 import { getTranslations } from "next-intl/server"
 import { z } from "zod"
 import { isCommunity } from "@/env"
 import { getSuperAdminPermissions } from "@/features/workspace-members/helpers"
+import { getDomainFromHeader } from "@/lib/domain"
 import { authActionClient } from "@/lib/safe-action"
 
 export const acceptInvitationAction = authActionClient
@@ -25,15 +29,11 @@ export const acceptInvitationAction = authActionClient
   .action(async ({ ctx, parsedInput }) => {
     const { code } = parsedInput
 
-    const invitation = await invitationService.findByCodeOrFail(code)
-
-    if (invitation.expiresAt < new Date()) {
-      throw new ChatbotXException("Invitation expired")
-    }
-
-    if (!invitation.workspaceId) {
-      throw new ChatbotXException("Invalid invitation: no workspace associated")
-    }
+    const tenantId = await resolveTenantByDomain(await getDomainFromHeader())
+    const invitation = await invitationService.findActiveByCodeOrFail(
+      code,
+      tenantId,
+    )
 
     const existingMember =
       await workspaceMemberService.findByWorkspaceIdAndUserId({
@@ -103,4 +103,9 @@ export const acceptInvitationAction = authActionClient
       `users:${ctx.user.id}:workspace-members`,
       `workspaces:${invitation.workspaceId}:workspace-members`,
     ])
+
+    // The code is single-use once accepted: clear it so the same browser
+    // can't replay it against a different account or workspace.
+    const cookieStore = await cookies()
+    cookieStore.delete(INVITATION_COOKIE_NAME)
   })

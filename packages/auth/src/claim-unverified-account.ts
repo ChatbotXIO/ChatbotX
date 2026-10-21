@@ -1,5 +1,7 @@
 import type { BetterAuthOptions } from "better-auth"
+import { env } from "./keys"
 import { logger } from "./logger"
+import { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
 
 type AccountCreateBeforeHook = NonNullable<
   NonNullable<
@@ -74,10 +76,15 @@ type EmailAttestation = (account: { idToken?: unknown }) => boolean
  *   claim from the JWT), so such users are marked unverified. This strategy
  *   relies on the accepted policy that Facebook only exposes an email the
  *   account has confirmed, whichever path supplied it.
+ * - oidc: the id_token carries `email_verified`, unless the operator explicitly
+ *   enables AUTH_OAUTH_TRUST_EMAIL for an IdP that attests email ownership
+ *   outside that claim.
  */
 const EMAIL_ATTESTATION_BY_PROVIDER: Record<string, EmailAttestation> = {
   google: (account) => isEmailAttestedByIdToken(account.idToken),
   facebook: () => true,
+  [GENERIC_OAUTH_PROVIDER_ID]: (account) =>
+    env.AUTH_OAUTH_TRUST_EMAIL || isEmailAttestedByIdToken(account.idToken),
 }
 
 /**

@@ -4143,6 +4143,7 @@
     "orContinueWith": "Ou continue com",
     "continueWithFacebook": "Continuar com o Facebook",
     "continueWithGoogle": "Continuar com o Google",
+    "continueWithProvider": "Continuar com {name}",
     "continueWithEmail": "Continuar com o e-mail",
     "continueWithMagicLink": "Continuar com a ligação mágica",
     "dontHaveAnAccount": "Não tem uma conta?",
@@ -4173,11 +4174,15 @@
     "changePasswordTitle": "Alterar a palavra-passe",
     "changePasswordDescription": "Defina uma nova palavra-passe antes de continuar.",
     "passwordChangeSuccess": "Palavra-passe alterada",
+    "signUpDisabledTitle": "O registo está desativado",
+    "signUpDisabledDescription": "As novas contas só podem ser criadas por um administrador ou através de uma ligação de convite.",
     "oauthError": {
       "accountNotLinked": "Já existe uma conta com este e-mail e não foi possível associá-la. Inicie sessão da mesma forma que antes ou contacte o suporte.",
       "unableToLinkAccount": "Não foi possível associar este início de sessão à conta existente. Inicie sessão da mesma forma que antes ou contacte o suporte.",
       "sessionExpired": "A tentativa de início de sessão expirou. Tente novamente.",
       "accessDenied": "O início de sessão foi cancelado.",
+      "signUpDisabled": "Esta conta ainda não existe e o registo está desativado. Peça a um administrador para a criar.",
+      "invalidInvitation": "Este convite é inválido ou expirou.",
       "generic": "Falha ao iniciar sessão. Tente novamente."
     }
   },
@@ -4809,7 +4814,8 @@
     "chatbotInvitationDescription1": "Junte-se a {chatbotName}",
     "chatbotInvitationDescription2": "{userName} convidou-o a juntar-se a {chatbotName}.",
     "invalidInvitation": "Este convite é inválido ou expirou.",
-    "workspaceUnavailable": "Este espaço de trabalho já não está disponível."
+    "workspaceUnavailable": "Este espaço de trabalho já não está disponível.",
+    "signUpToJoin": "Crie uma conta para aderir"
   },
   "inboxes": {
     "markReadOnOutbound": {

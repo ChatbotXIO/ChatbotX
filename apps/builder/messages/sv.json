@@ -418,6 +418,7 @@
     "checkYourEmail": "Kontrollera din e-post",
     "continueWithFacebook": "Fortsätt med Facebook",
     "continueWithGoogle": "Fortsätt med Google",
+    "continueWithProvider": "Fortsätt med {name}",
     "continueWithEmail": "Fortsätt med e-post",
     "continueWithMagicLink": "Fortsätt med magisk länk",
     "didNotReceiveEmail": "Fick du inget e-postmeddelande? Kontrollera skräppostmappen.",
@@ -443,11 +444,15 @@
     "signUpTitle": "Registrera dig på {name}",
     "termsOfService": "Användarvillkor",
     "trySigningInAgain": "Du kan också försöka logga in igen med en annan e-postadress.",
+    "signUpDisabledTitle": "Registrering är inaktiverad",
+    "signUpDisabledDescription": "Nya konton kan endast skapas av en administratör eller via en inbjudningslänk.",
     "oauthError": {
       "accountNotLinked": "Det finns redan ett konto med den här e-postadressen och det kunde inte kopplas. Logga in på samma sätt som tidigare eller kontakta supporten.",
       "unableToLinkAccount": "Vi kunde inte koppla den här inloggningen till det befintliga kontot. Logga in på samma sätt som tidigare eller kontakta supporten.",
       "sessionExpired": "Inloggningsförsöket har gått ut. Försök igen.",
       "accessDenied": "Inloggningen avbröts.",
+      "signUpDisabled": "Det här kontot finns inte ännu och registrering är inaktiverad. Be en administratör att skapa det åt dig.",
+      "invalidInvitation": "Den här inbjudan är ogiltig eller har löpt ut.",
       "generic": "Inloggningen misslyckades. Försök igen."
     }
   },
@@ -4378,7 +4383,8 @@
     "chatbotInvitationDescription1": "Gå med i {chatbotName}",
     "chatbotInvitationDescription2": "{userName} har bjudit in dig att gå med i {chatbotName}.",
     "invalidInvitation": "Den här inbjudan är ogiltig eller har löpt ut.",
-    "workspaceUnavailable": "Den här arbetsytan är inte längre tillgänglig."
+    "workspaceUnavailable": "Den här arbetsytan är inte längre tillgänglig.",
+    "signUpToJoin": "Skapa ett konto för att gå med"
   },
   "keywords": {
     "title": "Nyckelord",

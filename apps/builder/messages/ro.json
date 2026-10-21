@@ -4143,6 +4143,7 @@
     "orContinueWith": "Sau continuă cu",
     "continueWithFacebook": "Continuă cu Facebook",
     "continueWithGoogle": "Continuă cu Google",
+    "continueWithProvider": "Continuă cu {name}",
     "continueWithEmail": "Continuă cu e-mail",
     "continueWithMagicLink": "Continuă cu link magic",
     "dontHaveAnAccount": "Nu ai un cont?",
@@ -4173,11 +4174,15 @@
     "changePasswordTitle": "Schimbă-ți parola",
     "changePasswordDescription": "Setează o parolă nouă înainte de a continua.",
     "passwordChangeSuccess": "Parolă schimbată",
+    "signUpDisabledTitle": "Înregistrarea este dezactivată",
+    "signUpDisabledDescription": "Conturile noi pot fi create doar de un administrator sau printr-un link de invitație.",
     "oauthError": {
       "accountNotLinked": "Există deja un cont cu acest e-mail și nu a putut fi asociat. Autentifică-te la fel ca înainte sau contactează asistența.",
       "unableToLinkAccount": "Nu am putut asocia această autentificare cu contul existent. Autentifică-te în modul în care ai făcut-o înainte sau contactează asistența.",
       "sessionExpired": "Încercarea de autentificare a expirat. Încearcă din nou.",
       "accessDenied": "Autentificarea a fost anulată.",
+      "signUpDisabled": "Acest cont nu există încă, iar înregistrarea este dezactivată. Cere unui administrator să îl creeze pentru tine.",
+      "invalidInvitation": "Această invitație este invalidă sau a expirat.",
       "generic": "Autentificarea a eșuat. Încearcă din nou."
     }
   },
@@ -4809,7 +4814,8 @@
     "chatbotInvitationDescription1": "Alătură-te lui {chatbotName}",
     "chatbotInvitationDescription2": "{userName} te-a invitat să te alături lui {chatbotName}.",
     "invalidInvitation": "Această invitație este invalidă sau a expirat.",
-    "workspaceUnavailable": "Acest spațiu de lucru nu mai este disponibil."
+    "workspaceUnavailable": "Acest spațiu de lucru nu mai este disponibil.",
+    "signUpToJoin": "Creează un cont pentru a te alătura"
   },
   "inboxes": {
     "markReadOnOutbound": {

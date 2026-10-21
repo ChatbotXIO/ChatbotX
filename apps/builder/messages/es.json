@@ -4143,6 +4143,7 @@
     "orContinueWith": "O continuar con",
     "continueWithFacebook": "Continue con Facebook",
     "continueWithGoogle": "Continuar con Google",
+    "continueWithProvider": "Continuar con {name}",
     "continueWithEmail": "Continuar con correo electrónico",
     "continueWithMagicLink": "Continuar con enlace mágico",
     "dontHaveAnAccount": "Don't tiene un cuenta?",
@@ -4173,11 +4174,15 @@
     "changePasswordTitle": "Change tu password",
     "changePasswordDescription": "Establecer un nuevo password antes continuing.",
     "passwordChangeSuccess": "Contraseña cambiada",
+    "signUpDisabledTitle": "El registro está desactivado",
+    "signUpDisabledDescription": "Las cuentas nuevas solo pueden crearse por un administrador o mediante un enlace de invitación.",
     "oauthError": {
       "accountNotLinked": "Ya existe una cuenta con este correo electrónico y no se pudo vincular. Inicia sesión como lo hacías antes o contacta con soporte.",
       "unableToLinkAccount": "No pudimos vincular este inicio de sesión a la cuenta existente. Inicia sesión como lo hacías antes o contacta con soporte.",
       "sessionExpired": "El intento de inicio de sesión ha caducado. Inténtalo de nuevo.",
       "accessDenied": "Se canceló el inicio de sesión.",
+      "signUpDisabled": "Esta cuenta aún no existe y el registro está desactivado. Pide a un administrador que la cree por ti.",
+      "invalidInvitation": "Esta invitación no es válida o ha caducado.",
       "generic": "Error al iniciar sesión. Inténtalo de nuevo."
     }
   },
@@ -4809,7 +4814,8 @@
     "chatbotInvitationDescription1": "Únete a {chatbotName}",
     "chatbotInvitationDescription2": "{userName} tiene invited tú un join {chatbotName}.",
     "invalidInvitation": "This invitación es no válido o tiene caducado.",
-    "workspaceUnavailable": "This espacio de trabajo es no longer disponible."
+    "workspaceUnavailable": "This espacio de trabajo es no longer disponible.",
+    "signUpToJoin": "Crea una cuenta para unirte"
   },
   "inboxes": {
     "markReadOnOutbound": {

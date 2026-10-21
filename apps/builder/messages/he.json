@@ -2013,6 +2013,7 @@
     "orContinueWith": "או המשך באמצעות",
     "continueWithFacebook": "המשך באמצעות Facebook",
     "continueWithGoogle": "המשך באמצעות Google",
+    "continueWithProvider": "המשך באמצעות {name}",
     "continueWithEmail": "המשך באמצעות אימייל",
     "continueWithMagicLink": "המשך באמצעות קישור קסם",
     "dontHaveAnAccount": "אין לכם חשבון?",
@@ -2043,11 +2044,15 @@
     "changePasswordTitle": "שינוי הסיסמה",
     "changePasswordDescription": "הגדירו סיסמה חדשה לפני שתמשיכו.",
     "passwordChangeSuccess": "הסיסמה שונתה",
+    "signUpDisabledTitle": "ההרשמה מושבתת",
+    "signUpDisabledDescription": "ניתן ליצור חשבונות חדשים רק על ידי מנהל מערכת או באמצעות קישור הזמנה.",
     "oauthError": {
       "accountNotLinked": "כבר קיים חשבון עם כתובת האימייל הזו ולא ניתן היה לקשר אותו. התחבר באותה דרך שבה התחברת קודם, או פנה לתמיכה.",
       "unableToLinkAccount": "לא הצלחנו לקשר את ההתחברות הזו לחשבון הקיים. התחבר באותה דרך שבה התחברת קודם, או פנה לתמיכה.",
       "sessionExpired": "ניסיון ההתחברות פג תוקף. נסה שוב.",
       "accessDenied": "ההתחברות בוטלה.",
+      "signUpDisabled": "חשבון זה עדיין לא קיים וההרשמה מושבתת. בקש ממנהל מערכת ליצור אותו עבורך.",
+      "invalidInvitation": "הזמנה זו אינה תקפה או שפג תוקפה.",
       "generic": "ההתחברות נכשלה. נסה שוב."
     }
   },
@@ -2679,7 +2684,8 @@
     "chatbotInvitationDescription1": "הצטרפות אל {chatbotName}",
     "chatbotInvitationDescription2": "{userName} הזמין אתכם להצטרף אל {chatbotName}.",
     "invalidInvitation": "הזמנה זו אינה תקינה או שפג תוקפה.",
-    "workspaceUnavailable": "סביבת עבודה זו אינה זמינה עוד."
+    "workspaceUnavailable": "סביבת עבודה זו אינה זמינה עוד.",
+    "signUpToJoin": "צור חשבון כדי להצטרף"
   },
   "inboxes": {
     "markReadOnOutbound": {

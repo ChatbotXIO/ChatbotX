@@ -4825,6 +4825,7 @@
     "orContinueWith": "Or continue with",
     "continueWithFacebook": "Continue with Facebook",
     "continueWithGoogle": "Continue with Google",
+    "continueWithProvider": "Continue with {name}",
     "continueWithEmail": "Continue with Email",
     "continueWithMagicLink": "Continue with Magic Link",
     "dontHaveAnAccount": "Don't have an account?",
@@ -4855,11 +4856,15 @@
     "changePasswordTitle": "Change your password",
     "changePasswordDescription": "Set a new password before continuing.",
     "passwordChangeSuccess": "Password changed",
+    "signUpDisabledTitle": "Sign-up is disabled",
+    "signUpDisabledDescription": "New accounts can only be created by an administrator or through an invitation link.",
     "oauthError": {
       "accountNotLinked": "An account with this email already exists and could not be linked. Sign in the way you did before, or contact support.",
       "unableToLinkAccount": "We could not link this sign-in to the existing account. Sign in the way you did before, or contact support.",
       "sessionExpired": "The sign-in attempt expired. Please try again.",
       "accessDenied": "Sign-in was cancelled.",
+      "signUpDisabled": "This account does not exist yet and sign-up is disabled. Ask an administrator to create it for you.",
+      "invalidInvitation": "This invitation is invalid or has expired.",
       "generic": "Sign-in failed. Please try again."
     }
   },
@@ -5491,7 +5496,8 @@
     "chatbotInvitationDescription1": "Join {chatbotName}",
     "chatbotInvitationDescription2": "{userName} has invited you to join {chatbotName}.",
     "invalidInvitation": "This invitation is invalid or has expired.",
-    "workspaceUnavailable": "This workspace is no longer available."
+    "workspaceUnavailable": "This workspace is no longer available.",
+    "signUpToJoin": "Create an account to join"
   },
   "inboxes": {
     "markReadOnOutbound": {

@@ -4122,6 +4122,7 @@
     "orContinueWith": "または次の方法で続行",
     "continueWithFacebook": "Facebookで続行",
     "continueWithGoogle": "Googleで続行",
+    "continueWithProvider": "{name}で続行",
     "continueWithEmail": "メールで続行",
     "continueWithMagicLink": "マジックリンクで続行",
     "dontHaveAnAccount": "アカウントをお持ちでないですか？",
@@ -4152,11 +4153,15 @@
     "changePasswordTitle": "パスワードを変更",
     "changePasswordDescription": "続行する前に新しいパスワードを設定してください。",
     "passwordChangeSuccess": "パスワードを変更しました",
+    "signUpDisabledTitle": "新規登録は無効です",
+    "signUpDisabledDescription": "新しいアカウントは管理者または招待リンクからのみ作成できます。",
     "oauthError": {
       "accountNotLinked": "このメールアドレスのアカウントは既に存在し、連携できませんでした。以前と同じ方法でログインするか、サポートにお問い合わせください。",
       "unableToLinkAccount": "このログインを既存のアカウントに連携できませんでした。以前と同じ方法でログインするか、サポートにお問い合わせください。",
       "sessionExpired": "ログインの試行の有効期限が切れました。もう一度お試しください。",
       "accessDenied": "ログインがキャンセルされました。",
+      "signUpDisabled": "このアカウントはまだ存在せず、新規登録は無効です。管理者に作成を依頼してください。",
+      "invalidInvitation": "この招待は無効か、有効期限が切れています。",
       "generic": "ログインに失敗しました。もう一度お試しください。"
     }
   },
@@ -4788,7 +4793,8 @@
     "chatbotInvitationDescription1": "{chatbotName}に参加",
     "chatbotInvitationDescription2": "{userName}さんから{chatbotName}への招待が届いています。",
     "invalidInvitation": "この招待は無効か、有効期限が切れています。",
-    "workspaceUnavailable": "このワークスペースは利用できなくなりました。"
+    "workspaceUnavailable": "このワークスペースは利用できなくなりました。",
+    "signUpToJoin": "参加するにはアカウントを作成"
   },
   "inboxes": {
     "markReadOnOutbound": {

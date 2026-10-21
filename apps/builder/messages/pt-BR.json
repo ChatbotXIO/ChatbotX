@@ -4122,6 +4122,7 @@
     "orContinueWith": "Ou continue com",
     "continueWithFacebook": "Continuar com o Facebook",
     "continueWithGoogle": "Continuar com o Google",
+    "continueWithProvider": "Continuar com {name}",
     "continueWithEmail": "Continuar com o e-mail",
     "continueWithMagicLink": "Continuar com o link mágico",
     "dontHaveAnAccount": "Não tem uma conta?",
@@ -4152,11 +4153,15 @@
     "changePasswordTitle": "Altere sua senha",
     "changePasswordDescription": "Defina uma nova senha antes de continuar.",
     "passwordChangeSuccess": "Senha alterada",
+    "signUpDisabledTitle": "O cadastro está desativado",
+    "signUpDisabledDescription": "Novas contas só podem ser criadas por um administrador ou por um link de convite.",
     "oauthError": {
       "accountNotLinked": "Já existe uma conta com este e-mail e ela não pôde ser vinculada. Entre da mesma forma que antes ou fale com o suporte.",
       "unableToLinkAccount": "Não foi possível vincular este login à conta existente. Entre da mesma forma que antes ou fale com o suporte.",
       "sessionExpired": "A tentativa de login expirou. Tente novamente.",
       "accessDenied": "O login foi cancelado.",
+      "signUpDisabled": "Esta conta ainda não existe e o cadastro está desativado. Peça a um administrador para criá-la para você.",
+      "invalidInvitation": "Este convite é inválido ou expirou.",
       "generic": "Falha no login. Tente novamente."
     }
   },
@@ -4788,7 +4793,8 @@
     "chatbotInvitationDescription1": "Participe de {chatbotName}",
     "chatbotInvitationDescription2": "{userName} convidou você para participar de {chatbotName}.",
     "invalidInvitation": "Este convite é inválido ou expirou.",
-    "workspaceUnavailable": "Este espaço de trabalho não está mais disponível."
+    "workspaceUnavailable": "Este espaço de trabalho não está mais disponível.",
+    "signUpToJoin": "Crie uma conta para participar"
   },
   "trigger": {
     "when": "Quando isto acontecer",

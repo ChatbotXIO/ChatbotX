@@ -26,6 +26,7 @@ export type ApiRateLimitScope =
   | "inbound-webhook-preauth-rate-limit"
   | "inbound-webhook-rate-limit"
   | "guest-realtime-mint-workspace-rate-limit"
+  | "invitation-start-rate-limit"
 
 type ApiRateLimitInput = {
   scope: ApiRateLimitScope
