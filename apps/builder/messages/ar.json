@@ -3940,6 +3940,7 @@
         "buttonText": "نص الزر",
         "buttonType": "نوع الزر",
         "visitWebsite": "زيارة موقع ويب",
+        "openMiniApp": "فتح التطبيق المصغر",
         "callPhoneNumber": "الاتصال برقم هاتف",
         "postback": "زر"
       },

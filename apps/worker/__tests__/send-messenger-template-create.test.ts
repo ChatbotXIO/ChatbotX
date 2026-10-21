@@ -90,6 +90,11 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   conversationModel: { id: "id", lastActivityAt: "lastActivityAt" },
 }))
 
+// No template here has a Mini App button, so the Mini App lookup is never
+// reached; mocked only to keep its DB-backed module out of the import.
+vi.mock("@chatbotx.io/business/mini-app", () => ({
+  miniAppService: { findUnscoped: vi.fn() },
+}))
 vi.mock("@chatbotx.io/business", () => ({
   publishWorkspaceRealtimeEvent: mockBroadcast,
   queueWorkspaceRealtimeEvent: mockBroadcast,

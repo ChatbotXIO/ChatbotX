@@ -3940,6 +3940,7 @@
         "buttonText": "Knap Tekst",
         "buttonType": "Knap Type",
         "visitWebsite": "Visit Website",
+        "openMiniApp": "Åbn Mini App",
         "callPhoneNumber": "Call Telefon Nummer",
         "postback": "Knap"
       },

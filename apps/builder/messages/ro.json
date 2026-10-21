@@ -3940,6 +3940,7 @@
         "buttonText": "Text buton",
         "buttonType": "Tip buton",
         "visitWebsite": "Vizitează site-ul web",
+        "openMiniApp": "Deschide Mini App",
         "callPhoneNumber": "Apelează numărul de telefon",
         "postback": "Buton"
       },

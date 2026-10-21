@@ -3973,6 +3973,7 @@
         "buttonText": "按鈕文字",
         "buttonType": "按鈕類型",
         "visitWebsite": "訪問網站",
+        "openMiniApp": "開啟小程式",
         "callPhoneNumber": "撥打電話號碼",
         "postback": "按鈕"
       },

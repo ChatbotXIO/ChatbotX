@@ -439,6 +439,43 @@ describe("buildMessengerTemplateComponents", () => {
   })
 })
 
+describe("an Open Mini App flow button", () => {
+  test("takes no postback slot: its template URL button keeps its own", () => {
+    const miniAppButton = {
+      id: "9003",
+      label: "Form",
+      buttonType: "openMiniApp",
+      beforeStep: { id: "9004", stepType: "openMiniApp", miniAppId: "12" },
+      steps: [],
+    } as ButtonStepProps
+    const postbackButton: ButtonStepProps = {
+      id: "9005",
+      label: "Yes",
+      buttonType: null,
+    }
+
+    const components = buildMessengerTemplateComponents(
+      { button: [{ sub_type: "url", index: 0, text: "resume-token" }] },
+      "POSITIONAL",
+      {
+        flowId: "777",
+        flowVersionId: "888",
+        flowButtons: [miniAppButton, postbackButton],
+      },
+    )
+
+    expect(components[0].parameters).toEqual([
+      { type: "URL", url: "resume-token" },
+      expect.objectContaining({ type: "POSTBACK" }),
+    ])
+    expect(
+      decodeButtonPayload(
+        (components[0].parameters[1] as { payload: string }).payload,
+      ),
+    ).toMatchObject({ buttonId: "9005" })
+  })
+})
+
 // ─── buildMessengerTemplateSendRequest ───────────────────────────────────────
 
 describe("buildMessengerTemplateSendRequest", () => {

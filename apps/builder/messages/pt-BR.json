@@ -3919,6 +3919,7 @@
         "buttonText": "Texto do botão",
         "buttonType": "Tipo de botão",
         "visitWebsite": "Visitar site",
+        "openMiniApp": "Abrir Mini App",
         "callPhoneNumber": "Ligar para número de telefone",
         "postback": "Botão"
       },

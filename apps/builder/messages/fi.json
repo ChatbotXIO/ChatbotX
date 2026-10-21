@@ -3940,6 +3940,7 @@
         "buttonText": "Painikkeen teksti",
         "buttonType": "Painikkeen tyyppi",
         "visitWebsite": "Avaa verkkosivusto",
+        "openMiniApp": "Avaa minisovellus",
         "callPhoneNumber": "Soita puhelinnumeroon",
         "postback": "Painike"
       },
