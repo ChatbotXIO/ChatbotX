@@ -614,10 +614,8 @@ describe("processMessengerTemplate — header variable guard", () => {
     test("keeps the token variable, not the resume token, on the message", async () => {
       await sendFromFlow()
 
-      const insertedValues = (db.insert as unknown as MockInstance).mock
-        .results[0].value.values as MockInstance
       expect(
-        insertedValues.mock.calls[0][0].contentAttributes.template.params
+        mockMessageCreate.mock.calls[0][0].contentAttributes.template.params
           .button,
       ).toEqual([{ sub_type: "url", index: 0, text: "{{mini_app_token}}" }])
     })
