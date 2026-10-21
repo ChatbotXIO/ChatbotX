@@ -1,6 +1,7 @@
 import {
   customDomainService,
   platformCredentialService,
+  resolvePlatformSmtpTransport,
   resolveTenantSettingsByDomain,
 } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
@@ -56,7 +57,10 @@ const resolveSmtpForTenant = async (): Promise<SmtpResolution> => {
   const tenantId = getTenantId()
   const ownerId = await resolveTenantOwnerId(tenantId)
   if (!ownerId) {
-    return { kind: "default" }
+    const platformTransport = await resolvePlatformSmtpTransport()
+    return platformTransport
+      ? { kind: "transport", transport: platformTransport }
+      : { kind: "default" }
   }
 
   const smtp = await platformCredentialService.findDecryptedForUser({

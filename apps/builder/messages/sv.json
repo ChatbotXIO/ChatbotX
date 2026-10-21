@@ -405,7 +405,8 @@
       "userPlaceholder": "Användar-ID",
       "keyword": "Nyckelord",
       "keywordPlaceholder": "Åtgärd eller detalj",
-      "allAdmins": "Alla administratörer"
+      "allAdmins": "Alla administratörer",
+      "allWorkspaces": "Alla arbetsytor"
     }
   },
   "auth": {
@@ -2241,6 +2242,10 @@
     "fromAddress": {
       "label": "Från-adress",
       "placeholder": "noreply@example.com"
+    },
+    "fromName": {
+      "label": "Avsändarnamn",
+      "placeholder": "ChatbotX"
     },
     "fullName": {
       "label": "Fullständigt namn"
@@ -4675,6 +4680,8 @@
     "title": "Make"
   },
   "manageSidebar": {
+    "communityGroup": "Gemenskap",
+    "enterpriseGroup": "Enterprise",
     "platformGroup": "Plattform",
     "portalCustomDomain": "Anpassad domän",
     "portalPaymentProcessor": "Betalningsleverantör",
@@ -5284,6 +5291,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Plattformens granskningsloggar",
+      "description": "Granskningsaktivitet i alla arbetsytor på den här plattformen."
+    },
+    "smtp": {
+      "title": "SMTP-inställningar",
+      "description": "Plattformens e-posttransport. Lämna detta tomt för att fortsätta använda miljövariablerna SMTP_SERVER och SMTP_FROM.",
+      "usingEnv": "Inga SMTP-inställningar sparade — plattformens e-post använder miljövariabeln SMTP_SERVER.",
+      "remove": "Ta bort SMTP-inställningar",
+      "errors": {
+        "passwordRequired": "Ange SMTP-lösenordet."
+      }
     }
   },
   "platformBranding": {

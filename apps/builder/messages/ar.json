@@ -2238,6 +2238,10 @@
       "label": "عنوان المرسل",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "اسم المرسل",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "قالب الرسالة"
     },
@@ -5304,7 +5308,8 @@
       "userPlaceholder": "معرف المستخدم",
       "keyword": "الكلمة المفتاحية",
       "keywordPlaceholder": "الإجراء أو التفاصيل",
-      "allAdmins": "كل المسؤولين"
+      "allAdmins": "كل المسؤولين",
+      "allWorkspaces": "جميع مساحات العمل"
     }
   },
   "customFields": {
@@ -5794,6 +5799,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "سجلات تدقيق المنصة",
+      "description": "نشاط التدقيق عبر جميع مساحات العمل على هذه المنصة."
+    },
+    "smtp": {
+      "title": "إعدادات SMTP",
+      "description": "ناقل البريد الإلكتروني للمنصة. اترك هذا فارغًا للاستمرار في استخدام متغيرات البيئة SMTP_SERVER وSMTP_FROM.",
+      "usingEnv": "لم يتم حفظ إعدادات SMTP — يستخدم بريد المنصة متغير البيئة SMTP_SERVER.",
+      "remove": "إزالة إعدادات SMTP",
+      "errors": {
+        "passwordRequired": "أدخل كلمة مرور SMTP."
+      }
     }
   },
   "platformCredentials": {
@@ -5872,6 +5890,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "المجتمع",
+    "enterpriseGroup": "المؤسسات",
     "platformGroup": "المنصة",
     "toolsGroup": "الأدوات",
     "saasGroup": "البرمجيات كخدمة",

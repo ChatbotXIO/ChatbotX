@@ -2253,6 +2253,10 @@
       "label": "Địa chỉ gửi",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "Tên người gửi",
+      "placeholder": "ChatbotX"
+    },
     "limitContacts": {
       "label": "Maximum of Contacts"
     },
@@ -5013,7 +5017,8 @@
       "userPlaceholder": "ID người dùng",
       "keyword": "Từ khóa",
       "keywordPlaceholder": "Hành động, chi tiết hoặc địa chỉ IP",
-      "allAdmins": "Tất cả admin"
+      "allAdmins": "Tất cả admin",
+      "allWorkspaces": "Tất cả không gian làm việc"
     }
   },
   "customFields": {
@@ -6412,6 +6417,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Nhật ký kiểm tra nền tảng",
+      "description": "Hoạt động kiểm tra trên mọi không gian làm việc của nền tảng này."
+    },
+    "smtp": {
+      "title": "Cài đặt SMTP",
+      "description": "Phương thức gửi email của nền tảng. Để trống để tiếp tục sử dụng các biến môi trường SMTP_SERVER và SMTP_FROM.",
+      "usingEnv": "Chưa lưu cài đặt SMTP nào — email nền tảng sử dụng biến môi trường SMTP_SERVER.",
+      "remove": "Xóa cài đặt SMTP",
+      "errors": {
+        "passwordRequired": "Nhập mật khẩu SMTP."
+      }
     }
   },
   "platformCredentials": {
@@ -6490,6 +6508,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Cộng đồng",
+    "enterpriseGroup": "Doanh nghiệp",
     "platformGroup": "Nền tảng",
     "toolsGroup": "Công cụ",
     "saasGroup": "SaaS",

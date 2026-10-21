@@ -2091,6 +2091,10 @@
       "label": "Lähettäjän osoite",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "Lähettäjän nimi",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "Viestimalli"
     },
@@ -5304,7 +5308,8 @@
       "userPlaceholder": "Käyttäjätunnus",
       "keyword": "Avainsana",
       "keywordPlaceholder": "Toiminto tai tiedot",
-      "allAdmins": "Kaikki ylläpitäjät"
+      "allAdmins": "Kaikki ylläpitäjät",
+      "allWorkspaces": "Kaikki työtilat"
     }
   },
   "customFields": {
@@ -6183,6 +6188,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Alustan tarkastuslokit",
+      "description": "Tarkastustoiminta kaikissa tämän alustan työtiloissa."
+    },
+    "smtp": {
+      "title": "SMTP-asetukset",
+      "description": "Alustan sähköpostin siirtotapa. Jätä tämä tyhjäksi, jos haluat jatkaa SMTP_SERVER- ja SMTP_FROM-ympäristömuuttujien käyttöä.",
+      "usingEnv": "SMTP-asetuksia ei ole tallennettu — alustan sähköposti käyttää SMTP_SERVER-ympäristömuuttujaa.",
+      "remove": "Poista SMTP-asetukset",
+      "errors": {
+        "passwordRequired": "Anna SMTP-salasana."
+      }
     }
   },
   "platformCredentials": {
@@ -6261,6 +6279,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Yhteisö",
+    "enterpriseGroup": "Yritys",
     "platformGroup": "Alusta",
     "toolsGroup": "Työkalut",
     "saasGroup": "SaaS",

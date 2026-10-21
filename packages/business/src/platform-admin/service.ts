@@ -13,6 +13,7 @@ import { ChatbotXException } from "../errors"
 import { keys } from "../keys"
 import { logger } from "../logger"
 import { resolvePlatformSettings } from "../platform/settings"
+import { resolvePlatformSmtpTransport } from "../platform/smtp"
 import { generateTemporaryPassword } from "../user/temporary-password"
 import { userQuotaService } from "../user-quota/service"
 
@@ -64,17 +65,22 @@ class PlatformAdminService {
     const settings = await resolvePlatformSettings()
     const signInUrl = new URL("/auth/sign-in", settings.appUrl).toString()
 
-    await sendAccountCredentials(email, {
-      brandName: settings.name,
-      brandLogoUrl: settings.logoLightUrl,
-      brandUrl: settings.appUrl,
-      subject: DEFAULT_ACCOUNT_CREDENTIALS_SUBJECT,
-      customTemplate: settings.accountCredentialsEmailTemplate,
-      userName: email,
-      loginEmail: email,
-      initialPassword,
-      signInUrl,
-    })
+    const transport = await resolvePlatformSmtpTransport()
+    await sendAccountCredentials(
+      email,
+      {
+        brandName: settings.name,
+        brandLogoUrl: settings.logoLightUrl,
+        brandUrl: settings.appUrl,
+        subject: DEFAULT_ACCOUNT_CREDENTIALS_SUBJECT,
+        customTemplate: settings.accountCredentialsEmailTemplate,
+        userName: email,
+        loginEmail: email,
+        initialPassword,
+        signInUrl,
+      },
+      transport,
+    )
 
     const provisioned = await userRepository.insertWithCredential({
       email,

@@ -14,6 +14,8 @@ import {
   MailIcon,
   PaletteIcon,
   RadioTowerIcon,
+  ScrollTextIcon,
+  SendIcon,
   ShieldCheckIcon,
 } from "lucide-react"
 import Link from "next/link"
@@ -43,7 +45,7 @@ export function AdminSidebar({
     avatar: session?.user.image ?? "",
   }
 
-  const platformItems = [
+  const communityItems = [
     {
       title: t("platformAdmin.platformCredentials.title"),
       url: "/admin/platform-credentials",
@@ -59,17 +61,27 @@ export function AdminSidebar({
       url: "/admin/platform-channels",
       icon: RadioTowerIcon,
     },
-    ...(showEnterpriseItems
-      ? [
+  ]
+
+  const enterpriseItems = [
+    {
+      title: t("platformAdmin.admins.title"),
+      url: "/admin/admins",
+      icon: ShieldCheckIcon,
+    },
+    {
+      title: t("platformAdmin.auditLogs.title"),
+      url: "/admin/audit-logs",
+      icon: ScrollTextIcon,
+    },
+    ...(isCloud()
+      ? []
+      : [
           {
-            title: t("platformAdmin.admins.title"),
-            url: "/admin/admins",
-            icon: ShieldCheckIcon,
+            title: t("platformAdmin.smtp.title"),
+            url: "/admin/smtp",
+            icon: SendIcon,
           },
-        ]
-      : []),
-    ...(showEnterpriseItems && !isCloud()
-      ? [
           {
             title: t("platformBranding.title"),
             url: "/admin/branding",
@@ -80,17 +92,12 @@ export function AdminSidebar({
             url: "/admin/email-templates",
             icon: MailIcon,
           },
-        ]
-      : []),
-    ...(showEnterpriseItems
-      ? [
-          {
-            title: t("platformAdmin.helpItems.title"),
-            url: "/admin/help-items",
-            icon: CircleHelpIcon,
-          },
-        ]
-      : []),
+        ]),
+    {
+      title: t("platformAdmin.helpItems.title"),
+      url: "/admin/help-items",
+      icon: CircleHelpIcon,
+    },
   ]
 
   const toolsItems = [
@@ -113,7 +120,10 @@ export function AdminSidebar({
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={platformItems} label={tManage("platformGroup")} />
+        <NavMain items={communityItems} label={tManage("communityGroup")} />
+        {showEnterpriseItems && (
+          <NavMain items={enterpriseItems} label={tManage("enterpriseGroup")} />
+        )}
         <NavMain items={toolsItems} label={tManage("toolsGroup")} />
       </SidebarContent>
       <SidebarFooter>

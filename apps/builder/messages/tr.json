@@ -2238,6 +2238,10 @@
       "label": "Gönderen Adresi",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "Gönderen adı",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "Mesaj Şablonu"
     },
@@ -5304,7 +5308,8 @@
       "userPlaceholder": "Kullanıcı Kimliği",
       "keyword": "Anahtar kelime",
       "keywordPlaceholder": "İşlem veya detay",
-      "allAdmins": "Tüm Adminler"
+      "allAdmins": "Tüm Adminler",
+      "allWorkspaces": "Tüm çalışma alanları"
     }
   },
   "customFields": {
@@ -6183,6 +6188,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Platform denetim günlükleri",
+      "description": "Bu platformdaki tüm çalışma alanlarındaki denetim etkinliği."
+    },
+    "smtp": {
+      "title": "SMTP ayarları",
+      "description": "Platform e-posta aktarımı. SMTP_SERVER ve SMTP_FROM ortam değişkenlerini kullanmaya devam etmek için bunu boş bırakın.",
+      "usingEnv": "Kaydedilmiş SMTP ayarı yok — platform e-postası SMTP_SERVER ortam değişkenini kullanır.",
+      "remove": "SMTP ayarlarını kaldır",
+      "errors": {
+        "passwordRequired": "SMTP şifresini girin."
+      }
     }
   },
   "platformCredentials": {
@@ -6261,6 +6279,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Topluluk",
+    "enterpriseGroup": "Kurumsal",
     "platformGroup": "Platform",
     "toolsGroup": "Araçlar",
     "saasGroup": "SaaS",

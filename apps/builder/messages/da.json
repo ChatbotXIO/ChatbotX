@@ -2091,6 +2091,10 @@
       "label": "Fra Adresse",
       "placeholder": "noreply@eksempel.com"
     },
+    "fromName": {
+      "label": "Afsendernavn",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "Besked Skabelon"
     },
@@ -5304,7 +5308,8 @@
       "userPlaceholder": "Bruger-id",
       "keyword": "Nøgleord",
       "keywordPlaceholder": "Handling eller detalje",
-      "allAdmins": "Alle administratorer"
+      "allAdmins": "Alle administratorer",
+      "allWorkspaces": "Alle arbejdsområder"
     }
   },
   "customFields": {
@@ -6183,6 +6188,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Platformens revisionslogge",
+      "description": "Revisionsaktivitet på tværs af alle arbejdsområder på denne platform."
+    },
+    "smtp": {
+      "title": "SMTP-indstillinger",
+      "description": "Platformens e-mailtransport. Lad dette felt stå tomt for fortsat at bruge miljøvariablerne SMTP_SERVER og SMTP_FROM.",
+      "usingEnv": "Ingen SMTP-indstillinger gemt — platformens e-mail bruger miljøvariablen SMTP_SERVER.",
+      "remove": "Fjern SMTP-indstillinger",
+      "errors": {
+        "passwordRequired": "Indtast SMTP-adgangskoden."
+      }
     }
   },
   "platformCredentials": {
@@ -6261,6 +6279,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Fællesskab",
+    "enterpriseGroup": "Enterprise",
     "platformGroup": "Platform",
     "toolsGroup": "Værktøjer",
     "saasGroup": "SaaS",

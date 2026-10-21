@@ -3178,7 +3178,8 @@
       "userPlaceholder": "מזהה משתמש",
       "keyword": "מילת מפתח",
       "keywordPlaceholder": "פעולה או פרטים",
-      "allAdmins": "כל המנהלים"
+      "allAdmins": "כל המנהלים",
+      "allWorkspaces": "כל סביבות העבודה"
     }
   },
   "customFields": {
@@ -4057,6 +4058,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "יומני ביקורת של הפלטפורמה",
+      "description": "פעילות ביקורת בכל סביבות העבודה בפלטפורמה זו."
+    },
+    "smtp": {
+      "title": "הגדרות SMTP",
+      "description": "שירות שליחת הדוא\"ל של הפלטפורמה. השאר ריק כדי להמשיך להשתמש במשתני הסביבה SMTP_SERVER ו-SMTP_FROM.",
+      "usingEnv": "לא נשמרו הגדרות SMTP — דוא\"ל הפלטפורמה משתמש במשתנה הסביבה SMTP_SERVER.",
+      "remove": "הסר הגדרות SMTP",
+      "errors": {
+        "passwordRequired": "הזן את סיסמת ה-SMTP."
+      }
     }
   },
   "platformCredentials": {
@@ -4135,6 +4149,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "קהילה",
+    "enterpriseGroup": "ארגוני",
     "platformGroup": "פלטפורמה",
     "toolsGroup": "כלים",
     "saasGroup": "SaaS",
@@ -5847,6 +5863,10 @@
     "fromAddress": {
       "label": "כתובת שולח",
       "placeholder": "noreply@example.com"
+    },
+    "fromName": {
+      "label": "שם השולח",
+      "placeholder": "ChatbotX"
     },
     "messageTemplate": {
       "label": "תבנית הודעה"

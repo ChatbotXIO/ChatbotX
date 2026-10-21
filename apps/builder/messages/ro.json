@@ -3135,6 +3135,10 @@
       "label": "Adresa expeditorului",
       "placeholder": "noreply@exemplu.ro"
     },
+    "fromName": {
+      "label": "Nume expeditor",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "Șablon de mesaj"
     },
@@ -5304,7 +5308,8 @@
       "userPlaceholder": "ID utilizator",
       "keyword": "Cuvânt cheie",
       "keywordPlaceholder": "Acțiune sau detaliu",
-      "allAdmins": "Toți administratorii"
+      "allAdmins": "Toți administratorii",
+      "allWorkspaces": "Toate spațiile de lucru"
     }
   },
   "customFields": {
@@ -6195,6 +6200,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Comunitate",
+    "enterpriseGroup": "Enterprise",
     "platformGroup": "Platformă",
     "portalCustomDomain": "Domeniu personalizat",
     "portalPaymentProcessor": "Procesator de plăți",
@@ -6369,6 +6376,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Jurnale de audit ale platformei",
+      "description": "Activitate de audit în toate spațiile de lucru de pe această platformă."
+    },
+    "smtp": {
+      "title": "Setări SMTP",
+      "description": "Transportul de e-mail al platformei. Lăsați necompletat pentru a continua să utilizați variabilele de mediu SMTP_SERVER și SMTP_FROM.",
+      "usingEnv": "Nu există setări SMTP salvate — e-mailul platformei folosește variabila de mediu SMTP_SERVER.",
+      "remove": "Elimină setările SMTP",
+      "errors": {
+        "passwordRequired": "Introduceți parola SMTP."
+      }
     }
   },
   "platformBranding": {
