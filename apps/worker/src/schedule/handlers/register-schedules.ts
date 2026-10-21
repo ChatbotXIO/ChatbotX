@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   PURGE_BROADCASTS_INTERVAL_MINUTES,
@@ -18,6 +19,8 @@ const CLOUD_ONLY_SCHEDULERS = [
   ScheduleJobData.reconcileTenants,
   ScheduleJobData.unsubscribeExpiredTrials,
 ] as const
+
+const LICENSE_REFRESH_MINUTE = randomInt(60)
 
 export const registerSchedules = async () => {
   if (!(scheduleQueue instanceof Queue)) {
@@ -545,6 +548,26 @@ export const registerSchedules = async () => {
       },
     },
   )
+
+  if (env.NEXT_PUBLIC_EDITION === "community") {
+    // upsertJobScheduler persists in Redis: a scheduler left by an earlier
+    // licensed boot keeps firing after a downgrade until it is removed.
+    await scheduleQueue.removeJobScheduler(ScheduleJobData.refreshLicense)
+  } else {
+    await scheduleQueue.upsertJobScheduler(
+      ScheduleJobData.refreshLicense,
+      {
+        pattern: `${LICENSE_REFRESH_MINUTE} * * * *`,
+      },
+      {
+        name: ScheduleJobData.refreshLicense,
+        data: {
+          type: ScheduleJobData.refreshLicense,
+          data: {},
+        },
+      },
+    )
+  }
 
   if (isCloud) {
     await scheduleQueue.upsertJobScheduler(

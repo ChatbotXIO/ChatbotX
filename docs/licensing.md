@@ -2,9 +2,9 @@
 
 How the **enterprise** edition of ChatbotX is unlocked and verified.
 
-- **Model:** offline, GitLab-EE style. The license is a signed token verified
-  fully offline against a public key baked into the app — **no phone-home, no
-  API call**, works air-gapped.
+- **Model:** license verification is fully offline against a public key baked
+  into the app. Connected deployments can optionally fetch a renewed token;
+  air-gapped installations disable that refresh and remain fully offline.
 - **Audience:** operators self-hosting the enterprise edition.
 - **License creation (signing) lives in the private `../aha.chat-enterprise`
   repo** and is never shipped here.
@@ -26,10 +26,11 @@ open-source (MIT) codebase. The answer is an **Ed25519-signed JWS token**:
   offline with [`jose`](https://github.com/panva/jose). A public key can only
   *verify* — it can never sign or forge a license — so committing it is safe.
 - **Upgrades need no redeploy** — the vendor re-issues a token with a new
-  payload; the customer swaps `LICENSE_KEY` and restarts.
+  payload. Connected deployments fetch and persist it hourly; air-gapped
+  operators replace `LICENSE_KEY` and restart.
 
-This mirrors GitLab EE: the public key is in the open-source code, verification
-is entirely offline, and the private signing key stays in internal systems.
+This keeps verification offline and the private signing key in internal
+systems.
 
 ## The model: edition sets the ceiling, license unlocks within it
 
@@ -57,11 +58,13 @@ feature set** — it never crashes and never destroys data.
 > security boundary — a client can neither read `LICENSE_KEY` nor run the crypto
 > check. Real enforcement is always the server-side seam above.
 
-## The customer sets only LICENSE_KEY
+## License configuration
 
-| Env var (server-only) | Holds                                                    |
-| --------------------- | -------------------------------------------------------- |
-| `LICENSE_KEY`         | The signed compact JWS token issued by the vendor.       |
+| Env var (server-only) | Holds |
+| --------------------- | ----- |
+| `LICENSE_KEY` | The signed compact JWS token issued by the vendor. It anchors the deployment identity. |
+| `LICENSE_REFRESH_URL` | Vendor renewal endpoint. Defaults to `https://chatbotx.io/api/licenses/refresh`. |
+| `LICENSE_REFRESH_ENABLED` | Enables the hourly renewal request. Set to `false` for air-gapped installations. |
 
 The public verification key is **baked into the source**
 (`packages/business/src/enterprise/license/public-keys.ts`) — the customer does
@@ -73,6 +76,10 @@ the client.
 for **key rotation** — each license's JWS header carries a `kid` that selects
 which public key verifies it. Old licenses keep working under their original
 `kid` while new ones are signed with a fresh key.
+
+The database `License` table stores the latest vendor-issued token and its
+`expiresAt`. It is written only by the hourly `refreshLicense` cron;
+`LICENSE_KEY` remains the deployment identity anchor.
 
 ## Token shape
 
@@ -106,11 +113,22 @@ never verifies a license, so this rule doesn't apply there.
 > `LICENSE_ISSUER` in `public-keys.ts` must exactly match the `iss` claim set by
 > the signer in `../aha.chat-enterprise`, or every token fails verification.
 
-## Verifying is memoized per boot
+## Resolution cache and renewals
 
-`loadLicense()` reads `LICENSE_KEY` **once** and memoizes the resulting
-`Promise<LicenseStatus>` at module scope. A restart re-reads env — this is why
-swapping `LICENSE_KEY` requires a restart, not just a reload.
+`loadLicense()` caches a resolved status for 60 seconds. On each refresh after
+the TTL, it verifies `LICENSE_KEY`, reads the stored token for the same
+`licenseId`, and selects the newer usable token:
+
+1. a valid token beats an expired token;
+2. otherwise, later `iat` wins;
+3. a later `exp` breaks an `iat` tie.
+
+The hourly `refreshLicense` schedule POSTs the configured `LICENSE_KEY`,
+license id, and edition to `LICENSE_REFRESH_URL`. It verifies the returned
+token before storing it, and accepts plan changes that retain the same expiry
+when their issuance time is newer. Failed refreshes keep the last usable token.
+Set `LICENSE_REFRESH_ENABLED=false` to disable this request in air-gapped
+installations.
 
 Accessors:
 
@@ -132,11 +150,18 @@ When the private repo generates its keypair, its **public** key must be added to
 
 ## Installing a license (customer)
 
-Set two env vars and restart — no redeploy:
+Set the bootstrap license and restart:
 
 ```dotenv
 NEXT_PUBLIC_EDITION=enterprise
 LICENSE_KEY=eyJhbGciOiJFZERTQS1...
+```
+
+Connected deployments then receive verified renewals without another restart.
+For an air-gapped installation, also set:
+
+```dotenv
+LICENSE_REFRESH_ENABLED=false
 ```
 
 ## Enforcing features and limits

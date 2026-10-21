@@ -51,6 +51,7 @@ import { reconcileMetaCatalogSyncs } from "./handlers/reconcile-meta-catalog-syn
 import { reconcileTenants } from "./handlers/reconcile-tenants"
 import { redispatchInboundWebhookRequests } from "./handlers/redispatch-inbound-webhook-requests"
 import { refreshChannelTokens } from "./handlers/refresh-channel-tokens"
+import { refreshLicense } from "./handlers/refresh-license"
 import { registerSchedules } from "./handlers/register-schedules"
 import { scanAiHandoverBulkRuns } from "./handlers/scan-ai-handover-bulk-runs"
 import { scanAppointmentReminders } from "./handlers/scan-appointment-reminders"
@@ -250,6 +251,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.refreshChannelTokens:
               await refreshChannelTokens(job.data.data.channels)
+              return
+
+            case ScheduleJobData.refreshLicense:
+              await refreshLicense()
               return
 
             case ScheduleJobData.unsubscribeExpiredTrials:

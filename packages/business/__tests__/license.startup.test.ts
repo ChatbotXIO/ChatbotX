@@ -2,6 +2,7 @@ import { exportSPKI, generateKeyPair, SignJWT } from "jose"
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest"
 import { LICENSE_ISSUER } from "../src/enterprise/license/public-keys"
 import type { LicenseKeyMap } from "../src/enterprise/license/service"
+import { mockLicenseRepository } from "./helpers/license"
 
 const KID = "test-license-key"
 const NOW = new Date("2026-01-01T00:00:00.000Z")
@@ -54,6 +55,7 @@ const mockPublicKeys = () => {
 }
 
 const importAssertLicenseAtStartup = async () => {
+  mockLicenseRepository()
   const { assertLicenseAtStartup } = await import(
     "../src/enterprise/license/startup"
   )
@@ -75,6 +77,7 @@ describe("assertLicenseAtStartup", () => {
     delete process.env.LICENSE_KEY
     delete process.env.NEXT_PUBLIC_EDITION
     vi.resetModules()
+    vi.doUnmock("@chatbotx.io/database/repositories")
     vi.doUnmock("../src/enterprise/license/public-keys")
     vi.restoreAllMocks()
   })

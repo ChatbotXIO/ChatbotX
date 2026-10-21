@@ -48,6 +48,7 @@ export const ScheduleJobData = {
   purgeInboundWebhookRequests: "purgeInboundWebhookRequests",
   purgeCommentAutomationEvents: "purgeCommentAutomationEvents",
   refreshChannelTokens: "refreshChannelTokens",
+  refreshLicense: "refreshLicense",
   unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
   teardownExpiredTrial: "teardownExpiredTrial",
   // WhatsApp calling.
@@ -328,6 +329,11 @@ export type ScheduleJobRefreshChannelTokens = {
   data: { channels?: ChannelType[] }
 }
 
+export type ScheduleJobRefreshLicense = {
+  type: typeof ScheduleJobData.refreshLicense
+  data: Record<string, never>
+}
+
 export type ScheduleJobUnsubscribeExpiredTrials = {
   type: typeof ScheduleJobData.unsubscribeExpiredTrials
   data: { cursor?: string }
@@ -390,6 +396,7 @@ export type ScheduleJobData =
   | ScheduleJobPurgeInboundWebhookRequests
   | ScheduleJobPurgeCommentAutomationEvents
   | ScheduleJobRefreshChannelTokens
+  | ScheduleJobRefreshLicense
   | ScheduleJobUnsubscribeExpiredTrials
   | ScheduleJobTeardownExpiredTrial
   | ScheduleJobPurgeExpiredCallRecordings

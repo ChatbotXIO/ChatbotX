@@ -59,6 +59,7 @@ import { dynamicImageRelations } from "./dynamic-image"
 import { emailTopicRelations } from "./email-topic"
 import { auditLogRelations } from "./enterprise/audit-log"
 import { customDomainRelations } from "./enterprise/custom-domain"
+import { licenseRelations } from "./enterprise/license"
 import { platformAdminRelations } from "./enterprise/platform-admin"
 import { tenantRelations } from "./enterprise/tenant"
 import { tenantHelpItemRelations } from "./enterprise/tenant-help-item"
@@ -203,6 +204,7 @@ export const relations = {
   ...messengerWelcomeMessageFlowRelations,
   ...automatedResponseRelations,
   ...customDomainRelations,
+  ...licenseRelations,
   ...platformAdminRelations,
   ...tenantRelations,
   ...tenantHelpItemRelations,

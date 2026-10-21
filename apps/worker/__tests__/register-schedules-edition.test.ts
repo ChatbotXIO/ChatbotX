@@ -45,6 +45,7 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     purgeBroadcasts: "purgeBroadcasts",
     purgeAutomationThrottle: "purgeAutomationThrottle",
     refreshChannelTokens: "refreshChannelTokens",
+    refreshLicense: "refreshLicense",
     unsubscribeExpiredTrials: "unsubscribeExpiredTrials",
     googleAdsHousekeeping: "googleAdsHousekeeping",
     googleAdsSyncSetups: "googleAdsSyncSetups",
@@ -63,6 +64,8 @@ const CLOUD_ONLY = [
   "reconcileTenants",
   "unsubscribeExpiredTrials",
 ]
+
+const HOURLY_CRON_PATTERN = /^\d{1,2} \* \* \* \*$/
 
 const upsertedNames = () =>
   mockUpsertJobScheduler.mock.calls.map((call) => call[0] as string)
@@ -87,24 +90,42 @@ describe("registerSchedules — edition gating", () => {
       expect(names).toContain(name)
     }
     expect(mockRemoveJobScheduler).not.toHaveBeenCalled()
+    expect(names).toContain("refreshLicense")
+    expect(upsertedRepeatOptionsFor("refreshLicense")?.pattern).toMatch(
+      HOURLY_CRON_PATTERN,
+    )
   })
 
-  test.each([
-    "community",
-    "enterprise",
-  ])("%s skips the cloud-only schedulers and removes persisted ones", async (edition) => {
-    envState.NEXT_PUBLIC_EDITION = edition
+  test("community removes all persisted cloud and license schedulers", async () => {
+    envState.NEXT_PUBLIC_EDITION = "community"
 
     await registerSchedules()
 
     const names = upsertedNames()
     for (const name of CLOUD_ONLY) {
       expect(names).not.toContain(name)
-    }
-    expect(mockRemoveJobScheduler).toHaveBeenCalledTimes(CLOUD_ONLY.length)
-    for (const name of CLOUD_ONLY) {
       expect(mockRemoveJobScheduler).toHaveBeenCalledWith(name)
     }
+    expect(names).not.toContain("refreshLicense")
+    expect(mockRemoveJobScheduler).toHaveBeenCalledWith("refreshLicense")
+    expect(mockRemoveJobScheduler).toHaveBeenCalledTimes(CLOUD_ONLY.length + 1)
+  })
+
+  test("enterprise registers the license scheduler and removes cloud-only schedulers", async () => {
+    envState.NEXT_PUBLIC_EDITION = "enterprise"
+
+    await registerSchedules()
+
+    const names = upsertedNames()
+    for (const name of CLOUD_ONLY) {
+      expect(names).not.toContain(name)
+      expect(mockRemoveJobScheduler).toHaveBeenCalledWith(name)
+    }
+    expect(names).toContain("refreshLicense")
+    expect(upsertedRepeatOptionsFor("refreshLicense")?.pattern).toMatch(
+      HOURLY_CRON_PATTERN,
+    )
+    expect(mockRemoveJobScheduler).toHaveBeenCalledTimes(CLOUD_ONLY.length)
   })
 
   test("all-edition schedulers register regardless of edition", async () => {

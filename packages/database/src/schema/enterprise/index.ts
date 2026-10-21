@@ -1,5 +1,6 @@
 export * from "./audit-log"
 export * from "./custom-domain"
+export * from "./license-model"
 export * from "./platform-admin"
 export * from "./tenant"
 export * from "./tenant-help-item"
