@@ -17,6 +17,8 @@ export const PUBLIC_ROUTES = [
   "/leaderboards",
   // Public Mini App runner; submissions are attributed only via a signed token.
   "/mini-apps",
+  // Invitation codes are enrollment capabilities; accepting still requires a session.
+  "/invitations",
   "/auth",
   "/api",
   // Like "/api": the RPC handler runs the full router, where every procedure

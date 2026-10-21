@@ -25,15 +25,7 @@ export const acceptInvitationAction = authActionClient
   .action(async ({ ctx, parsedInput }) => {
     const { code } = parsedInput
 
-    const invitation = await invitationService.findByCodeOrFail(code)
-
-    if (invitation.expiresAt < new Date()) {
-      throw new ChatbotXException("Invitation expired")
-    }
-
-    if (!invitation.workspaceId) {
-      throw new ChatbotXException("Invalid invitation: no workspace associated")
-    }
+    const invitation = await invitationService.findActiveByCodeOrFail(code)
 
     const existingMember =
       await workspaceMemberService.findByWorkspaceIdAndUserId({

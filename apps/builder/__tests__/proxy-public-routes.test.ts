@@ -44,6 +44,11 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/space/1/mini-apps")).toBe(false)
   })
 
+  test("/invitations is public because its code is the enrollment capability", () => {
+    expect(isPublicRoute("/invitations/invite-code")).toBe(true)
+    expect(isPublicRoute("/invitationsx/invite-code")).toBe(false)
+  })
+
   test("an authenticated app path is not public", () => {
     expect(isPublicRoute("/space/1/inbox")).toBe(false)
     expect(isPublicRoute("/channels/create")).toBe(false)

@@ -15,7 +15,7 @@ import { useState } from "react"
 import { isCommunity } from "@/env"
 import { GenericOAuthSignIn } from "@/features/auth/generic-oauth-sign-in"
 import SSOSignIn from "@/features/auth/sso-sign-in"
-import type { GenericOAuthButton } from "@/lib/auth/generic-oauth"
+import type { GenericOAuthButton } from "@/lib/auth/auth-page-options"
 import { withCallbackUrlParam } from "@/lib/safe-callback-url"
 import { useTenantSettings } from "../tenant"
 import { EmailPasswordSignIn } from "./components/email-password-sign-in"
@@ -33,13 +33,13 @@ export type SignInFormProps = {
   /** Social providers configured for this tenant (own app or platform default). */
   enabledProviders?: SocialProvider[]
   genericOAuth?: GenericOAuthButton | null
-  signUpEnabled?: boolean
+  signUpAllowed?: boolean
 }
 
 export const SignInForm = ({
   enabledProviders = [],
   genericOAuth = null,
-  signUpEnabled = true,
+  signUpAllowed = true,
   ...props
 }: SignInFormProps) => {
   const t = useTranslations()
@@ -117,7 +117,7 @@ export const SignInForm = ({
               </>
             )}
 
-            {signUpEnabled ? (
+            {signUpAllowed ? (
               <div className="text-center font-medium text-foreground/60 text-sm">
                 {t("auth.dontHaveAnAccount")}{" "}
                 <Link className="text-foreground underline" href={signUpHref}>

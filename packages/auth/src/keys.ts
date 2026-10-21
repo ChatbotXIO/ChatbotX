@@ -1,4 +1,3 @@
-import { parseEnvBool } from "@chatbotx.io/utils"
 import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 
@@ -21,7 +20,7 @@ export const keys = () =>
       AUTH_OAUTH_AUTH_URL: z.url().optional(),
       AUTH_OAUTH_TOKEN_URL: z.url().optional(),
       AUTH_OAUTH_USERINFO_URL: z.url().optional(),
-      AUTH_OAUTH_SCOPES: z.string().optional().default("openid,email,profile"),
+      AUTH_OAUTH_SCOPES: z.string().default("openid,email,profile"),
       AUTH_OAUTH_TRUST_EMAIL: z.stringbool().default(false),
       BETTER_AUTH_SECRET: z.string(),
     },
@@ -30,7 +29,23 @@ export const keys = () =>
     skipValidation: process.env.SKIP_ENV_CHECK === "true",
   })
 
-export const env = keys()
+const rawEnv = keys()
+
+const normalizeBoolean = (value: unknown): boolean =>
+  value === true || value === "true"
+
+const normalizeScopeList = (value: unknown): string =>
+  typeof value === "string" && value.length > 0 ? value : "openid,email,profile"
+
+// `SKIP_ENV_CHECK` bypasses Zod during build, so normalize the fields that
+// production code reads directly to preserve their declared defaults.
+export const env = {
+  ...rawEnv,
+  AUTH_DISABLE_SIGNUP: normalizeBoolean(rawEnv.AUTH_DISABLE_SIGNUP),
+  AUTH_OAUTH_ENABLED: normalizeBoolean(rawEnv.AUTH_OAUTH_ENABLED),
+  AUTH_OAUTH_SCOPES: normalizeScopeList(rawEnv.AUTH_OAUTH_SCOPES),
+  AUTH_OAUTH_TRUST_EMAIL: normalizeBoolean(rawEnv.AUTH_OAUTH_TRUST_EMAIL),
+}
 
 /**
  * The OAuth broker origin — the single host registered with every provider as
@@ -41,5 +56,4 @@ export const getBrokerUrl = (): string =>
   env.NEXT_PUBLIC_BROKER_URL ?? env.NEXT_PUBLIC_BUILDER_URL
 
 /** Whether self-service account creation is disabled. */
-export const isSignUpDisabled = (): boolean =>
-  parseEnvBool(env.AUTH_DISABLE_SIGNUP)
+export const isSignUpDisabled = (): boolean => env.AUTH_DISABLE_SIGNUP

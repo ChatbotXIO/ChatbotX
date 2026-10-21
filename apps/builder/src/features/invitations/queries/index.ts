@@ -1,42 +1,7 @@
 "use server"
 
-import { workspaceService } from "@chatbotx.io/business"
-import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { findOrFail } from "@chatbotx.io/database/client"
-import { invitationModel, userModel } from "@chatbotx.io/database/schema"
-import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import { invitationService } from "@chatbotx.io/business"
 
 export async function findInvitation({ code }: { code: string }) {
-  const invitation = await findOrFail({
-    table: invitationModel,
-    where: {
-      code,
-    },
-    message: "Invitation not found",
-  })
-  if (invitation.expiresAt < new Date()) {
-    throw new ChatbotXException("Invitation expired")
-  }
-
-  const user = await findOrFail({
-    table: userModel,
-    where: {
-      id: invitation.invitedBy,
-    },
-    message: "User not found",
-  })
-
-  let workspace: WorkspaceModel | null = null
-  if (invitation.workspaceId) {
-    workspace =
-      (await workspaceService.find({
-        where: { id: invitation.workspaceId },
-      })) ?? null
-  }
-
-  return {
-    invitation,
-    user,
-    workspace,
-  }
+  return await invitationService.getInvitationDetails(code)
 }

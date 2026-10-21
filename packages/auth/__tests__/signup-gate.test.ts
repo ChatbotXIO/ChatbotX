@@ -47,6 +47,11 @@ vi.mock("@chatbotx.io/business", () => ({
   resolveTenantSettingsByDomain: vi.fn(),
 }))
 
+vi.mock("../src/tenant-context", () => ({
+  getTenantId: () => "tenant-a",
+  resolveTenantOwnerId: vi.fn(),
+}))
+
 vi.mock("@chatbotx.io/utils", () => ({
   createId: () => "test-id",
   getPublicOriginFromRequest: vi.fn(),
@@ -103,8 +108,7 @@ describe("signup lockdown", () => {
   afterEach(() => {
     vi.unstubAllEnvs()
   })
-
-  test("allows normal user creation when the skipped-validation flag is false", async () => {
+  test("allows normal user creation when signup lockdown is disabled", async () => {
     vi.stubEnv("AUTH_DISABLE_SIGNUP", "false")
     const { userCreateBefore } = await getHooks()
 
@@ -137,11 +141,26 @@ describe("signup lockdown", () => {
 
     findActiveByCodeMock.mockResolvedValue({ id: "invite" })
     await expect(userCreateBefore({}, context)).resolves.toBeUndefined()
-    expect(findActiveByCodeMock).toHaveBeenLastCalledWith("invite-code")
+    expect(findActiveByCodeMock).toHaveBeenLastCalledWith("invite-code", {
+      tenantId: "tenant-a",
+    })
 
     findActiveByCodeMock.mockResolvedValue(null)
     await expect(userCreateBefore({}, context)).rejects.toMatchObject({
       message: "signup_disabled",
+    })
+  })
+
+  test("rejects a cookie whose invitation belongs to a different tenant", async () => {
+    vi.stubEnv("AUTH_DISABLE_SIGNUP", "true")
+    findActiveByCodeMock.mockResolvedValue(null)
+    const { userCreateBefore } = await getHooks()
+
+    await expect(
+      userCreateBefore({}, { getCookie: () => "other-tenant-invite" }),
+    ).rejects.toMatchObject({ message: "signup_disabled" })
+    expect(findActiveByCodeMock).toHaveBeenCalledWith("other-tenant-invite", {
+      tenantId: "tenant-a",
     })
   })
 

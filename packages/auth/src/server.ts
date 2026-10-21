@@ -20,11 +20,7 @@ import {
   sendSignUpVerification,
 } from "@chatbotx.io/mail"
 import type { SmtpTransportOptions } from "@chatbotx.io/mail/transport"
-import {
-  createId,
-  getPublicOriginFromRequest,
-  parseEnvBool,
-} from "@chatbotx.io/utils"
+import { createId, getPublicOriginFromRequest } from "@chatbotx.io/utils"
 import {
   isPlaceholderEmail,
   mapFacebookProfileToUser,
@@ -42,12 +38,10 @@ import {
 } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { claimUnverifiedAccountBeforeLink } from "./claim-unverified-account"
-import {
-  GENERIC_OAUTH_PROVIDER_ID,
-  resolveGenericOAuthConfig,
-} from "./generic-oauth"
+import { resolveGenericOAuthConfig } from "./generic-oauth"
 import { env, getBrokerUrl } from "./keys"
 import { logger } from "./logger"
+import { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
 import {
   isSignUpAllowed,
   SIGNUP_DISABLED_CODE,
@@ -611,9 +605,7 @@ export function createAuth(config: AuthConfig) {
         // below for how an unverified local placeholder is handled.
         trustedProviders: [
           ...SOCIAL_PROVIDERS,
-          ...(parseEnvBool(env.AUTH_OAUTH_TRUST_EMAIL)
-            ? [GENERIC_OAUTH_PROVIDER_ID]
-            : []),
+          ...(env.AUTH_OAUTH_TRUST_EMAIL ? [GENERIC_OAUTH_PROVIDER_ID] : []),
         ],
         // The local side may be an email/password sign-up that never clicked
         // its verification link, or a Facebook-first user (Facebook never
@@ -904,11 +896,9 @@ export function createAuth(config: AuthConfig) {
 
 export type Auth = ReturnType<typeof createAuth>
 
-export {
-  GENERIC_OAUTH_PROVIDER_ID,
-  isGenericOAuthPath,
-} from "./generic-oauth"
+export { isGenericOAuthPath, resolveGenericOAuthConfig } from "./generic-oauth"
 export { isSignUpDisabled } from "./keys"
+export { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
 export {
   INVITATION_COOKIE_MAX_AGE_SECONDS,
   INVITATION_COOKIE_NAME,

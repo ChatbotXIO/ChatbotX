@@ -67,6 +67,7 @@ vi.mock("@chatbotx.io/mail", () => ({
 type GenericOAuthPlugin = {
   id: string
   config: Array<{
+    discoveryUrl?: string
     pkce: boolean
     redirectURI: string
     scopes: string[]
@@ -108,7 +109,7 @@ describe("generic OAuth configuration", () => {
     vi.unstubAllEnvs()
   })
 
-  test("does not register the plugin when the skipped-validation flag is false", async () => {
+  test("does not register the plugin when OAuth is disabled", async () => {
     vi.stubEnv("AUTH_OAUTH_ENABLED", "false")
 
     expect(getGenericOAuthPlugin(await getAuthConfig())).toBeUndefined()
@@ -131,7 +132,25 @@ describe("generic OAuth configuration", () => {
     })
   })
 
-  test("uses default scopes when validation is skipped and scopes are omitted", async () => {
+  test("registers an enabled provider configured with OIDC discovery", async () => {
+    vi.stubEnv("AUTH_OAUTH_ENABLED", "true")
+    vi.stubEnv("AUTH_OAUTH_CLIENT_ID", "test-client")
+    vi.stubEnv("AUTH_OAUTH_CLIENT_SECRET", "test-secret")
+    vi.stubEnv(
+      "AUTH_OAUTH_DISCOVERY_URL",
+      "https://idp.example.com/.well-known/openid-configuration",
+    )
+
+    expect(
+      getGenericOAuthPlugin(await getAuthConfig())?.config[0],
+    ).toMatchObject({
+      discoveryUrl: "https://idp.example.com/.well-known/openid-configuration",
+      pkce: true,
+      redirectURI: "https://broker.example.com/api/auth/oauth2/callback/oidc",
+    })
+  })
+
+  test("uses default scopes when scopes are omitted", async () => {
     vi.stubEnv("AUTH_OAUTH_ENABLED", "true")
     vi.stubEnv("AUTH_OAUTH_CLIENT_ID", "test-client")
     vi.stubEnv("AUTH_OAUTH_CLIENT_SECRET", "test-secret")
@@ -166,7 +185,7 @@ describe("generic OAuth configuration", () => {
     ).not.toContain("oidc")
   })
 
-  test("does not trust the provider email when the skipped-validation flag is false", async () => {
+  test("does not trust the provider email when email trust is disabled", async () => {
     vi.stubEnv("AUTH_OAUTH_TRUST_EMAIL", "false")
 
     expect(

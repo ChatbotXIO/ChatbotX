@@ -1,9 +1,6 @@
-import { parseEnvBool } from "@chatbotx.io/utils"
 import { env } from "./keys"
 import { logger } from "./logger"
 import { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
-
-export { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
 
 export type GenericOAuthResolution = {
   providerId: typeof GENERIC_OAUTH_PROVIDER_ID
@@ -20,7 +17,7 @@ let hasLoggedIncompleteConfig = false
 
 /** The configured provider, or `null` when disabled or incompletely configured. */
 export const resolveGenericOAuthConfig = (): GenericOAuthResolution | null => {
-  if (!parseEnvBool(env.AUTH_OAUTH_ENABLED)) {
+  if (!env.AUTH_OAUTH_ENABLED) {
     return null
   }
 
@@ -65,8 +62,7 @@ export const resolveGenericOAuthConfig = (): GenericOAuthResolution | null => {
     ...(env.AUTH_OAUTH_USERINFO_URL && {
       userInfoUrl: env.AUTH_OAUTH_USERINFO_URL,
     }),
-    scopes: (env.AUTH_OAUTH_SCOPES ?? "openid,email,profile")
-      .split(",")
+    scopes: env.AUTH_OAUTH_SCOPES.split(",")
       .map((scope) => scope.trim())
       .filter(Boolean),
   }

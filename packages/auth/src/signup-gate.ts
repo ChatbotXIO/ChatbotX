@@ -1,6 +1,7 @@
 import { invitationService } from "@chatbotx.io/business"
 import type { BetterAuthOptions } from "better-auth"
 import { isSignUpDisabled } from "./keys"
+import { getTenantId } from "./tenant-context"
 
 type UserCreateBeforeHook = NonNullable<
   NonNullable<
@@ -32,5 +33,7 @@ export const isSignUpAllowed = async (
     return false
   }
 
-  return Boolean(await invitationService.findActiveByCode(code))
+  return Boolean(
+    await invitationService.findActiveByCode(code, { tenantId: getTenantId() }),
+  )
 }

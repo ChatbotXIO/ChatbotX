@@ -99,7 +99,9 @@ describe("resolveOAuthErrorKey", () => {
       "accessDenied",
       "accountNotLinked",
       "generic",
+      "invalidInvitation",
       "sessionExpired",
+      "signUpDisabled",
       "unableToLinkAccount",
     ])
     for (const value of Object.values(OAUTH_ERROR_MESSAGE_KEYS)) {
