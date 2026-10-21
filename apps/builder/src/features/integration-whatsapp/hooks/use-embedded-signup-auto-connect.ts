@@ -76,6 +76,12 @@ export function useEmbeddedSignupAutoConnect({
         return
       }
 
+      // The user backed out of the Meta dialog on purpose: nothing failed,
+      // so no error toast. The launch button is still there to try again.
+      if (relayed.status === "cancelled") {
+        return
+      }
+
       handleRelayError()
     }
 

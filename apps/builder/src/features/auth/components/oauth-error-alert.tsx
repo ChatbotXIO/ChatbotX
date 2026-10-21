@@ -8,6 +8,7 @@ import {
   OAUTH_ERROR_MESSAGE_KEYS,
   type OAuthErrorKey,
   resolveOAuthErrorKey,
+  withoutOAuthError,
 } from "../oauth-error"
 
 /** Explains why an OAuth sign-in bounced back here instead of a blank form. */
@@ -18,7 +19,23 @@ export const OAuthErrorAlert = () => {
   // the nested-callbackURL case needs the live origin to stay same-site.
   const [key, setKey] = useState<OAuthErrorKey | null>(null)
   useEffect(() => {
-    setKey(resolveOAuthErrorKey(searchParams, window.location.origin))
+    const resolved = resolveOAuthErrorKey(searchParams, window.location.origin)
+    if (!resolved) {
+      // Never cleared back to null: dropping the code from the URL below
+      // re-runs this effect with clean params, and the alert must survive it.
+      return
+    }
+    setKey(resolved)
+    // One-shot: drop the code so a reload shows a clean form instead of the
+    // old failure. `null` state lets Next sync `useSearchParams` (see
+    // `inbox-select-card.tsx`).
+    const cleaned = withoutOAuthError(
+      `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      window.location.origin,
+    )
+    if (cleaned) {
+      window.history.replaceState(null, "", cleaned)
+    }
   }, [searchParams])
 
   if (!key) {

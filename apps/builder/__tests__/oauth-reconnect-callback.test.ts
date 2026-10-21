@@ -535,8 +535,9 @@ describe("handleCallback OAuth reconnect", () => {
     )
 
     expect(mockReconnectMessengerHandler).not.toHaveBeenCalled()
+    // Keeps the workspace so a retry connects there, not into a new one.
     expect(mockRedirect).toHaveBeenCalledWith(
-      "/channels/create?error=sessionExpired",
+      "/channels/create?workspaceId=1&error=sessionExpired",
     )
   })
 
@@ -551,8 +552,9 @@ describe("handleCallback OAuth reconnect", () => {
 
     expect(mockExchangeInstagramCode).not.toHaveBeenCalled()
     expect(mockReconnectInstagramHandler).not.toHaveBeenCalled()
+    // Keeps the workspace so a retry connects there, not into a new one.
     expect(mockRedirect).toHaveBeenCalledWith(
-      "/channels/create?error=sessionExpired",
+      "/channels/create?workspaceId=1&error=sessionExpired",
     )
   })
 
@@ -567,8 +569,9 @@ describe("handleCallback OAuth reconnect", () => {
 
     expect(mockExchangeInstagramFacebookCode).not.toHaveBeenCalled()
     expect(mockReconnectInstagramFacebookHandler).not.toHaveBeenCalled()
+    // Keeps the workspace so a retry connects there, not into a new one.
     expect(mockRedirect).toHaveBeenCalledWith(
-      "/channels/create?error=sessionExpired",
+      "/channels/create?workspaceId=1&error=sessionExpired",
     )
   })
 

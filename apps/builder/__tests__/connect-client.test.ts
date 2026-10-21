@@ -26,7 +26,7 @@ vi.mock("@/lib/orpc/orpc", () => ({
   },
 }))
 
-const { connectViaApi, isSessionExpiredError } = await import(
+const { connectViaApi, isForbiddenError, isSessionExpiredError } = await import(
   "@/features/channel-connect/lib/connect-client"
 )
 const { CONNECT_CHANNEL_REGISTRY, INSTAGRAM_DIRECT_CONNECT_ROUTE } =
@@ -80,19 +80,23 @@ function connectMessenger() {
  * Channel-agnostic on purpose — it classifies the transport error alone.
  */
 describe("isSessionExpiredError", () => {
-  test.each([
-    "UNAUTHORIZED",
-    "FORBIDDEN",
-  ] as const)("an ORPCError with code %s is the session case", (code) => {
-    expect(isSessionExpiredError(new ORPCError(code))).toBe(true)
+  test("an ORPCError UNAUTHORIZED is the session case", () => {
+    expect(isSessionExpiredError(new ORPCError("UNAUTHORIZED"))).toBe(true)
   })
 
-  test.each([
-    401, 403,
-  ])("an ORPCError carrying status %s is the session case whatever its code", (status) => {
+  test("an ORPCError carrying status 401 is the session case whatever its code", () => {
     expect(
-      isSessionExpiredError(new ORPCError("BAD_REQUEST", { status })),
+      isSessionExpiredError(new ORPCError("BAD_REQUEST", { status: 401 })),
     ).toBe(true)
+  })
+
+  test("FORBIDDEN is a denial, not an expired session", () => {
+    expect(isSessionExpiredError(new ORPCError("FORBIDDEN"))).toBe(false)
+    expect(isForbiddenError(new ORPCError("FORBIDDEN"))).toBe(true)
+    expect(
+      isForbiddenError(new ORPCError("BAD_REQUEST", { status: 403 })),
+    ).toBe(true)
+    expect(isForbiddenError(new ORPCError("UNAUTHORIZED"))).toBe(false)
   })
 
   test.each([
@@ -158,14 +162,16 @@ describe("connectViaApi", () => {
   })
 
   test.each([
-    "UNAUTHORIZED",
-    "FORBIDDEN",
-  ] as const)("an ORPCError %s stops the batch as a session error instead of offering N pointless retries", async (code) => {
+    ["UNAUTHORIZED", "sessionExpired"],
+    // e.g. "Password change required" or "Workspace deletion scheduled":
+    // reconnecting cannot fix these, so they must not read as an expiry.
+    ["FORBIDDEN", "notAllowed"],
+  ] as const)("an ORPCError %s stops the batch as session error %s instead of offering N pointless retries", async (code, expected) => {
     connectMessengerPageAPI.mockRejectedValue(new ORPCError(code))
 
     await expect(connectMessenger()).resolves.toEqual({
       kind: "sessionError",
-      code: "sessionExpired",
+      code: expected,
     })
   })
 

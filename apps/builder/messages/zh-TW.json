@@ -2741,14 +2741,22 @@
         "inProgress": "連線正在進行中。",
         "unknown": "發生錯誤。",
         "followUpFailed": "設定尚未完成——請在渠道設定中完成。",
-        "webhookSubscribeFailed": "已連接，但 webhook 訂閱失敗——請在連線設定中重試。"
+        "webhookSubscribeFailed": "已連接，但 webhook 訂閱失敗——請在連線設定中重試。",
+        "providerUnavailable": "服務提供者暫時無法使用。請幾分鐘後再試一次。"
       },
       "sessionError": {
         "sessionExpired": "您的工作階段已過期，請重新連接。",
         "notMember": "您已不再是該工作區的成員。",
         "trialExpired": "您的試用期已結束。",
         "macLimitReached": "您已達到帳戶上限。",
-        "credentialMissing": "憑證缺失，請重新連接。"
+        "credentialMissing": "憑證缺失，請重新連接。",
+        "noPages": "找不到可連結的 Facebook 粉絲專頁。請重新連結，並至少授權一個你管理的粉絲專頁。",
+        "noInstagramAccounts": "找不到可連結的 Instagram 帳號。請重新連結，並至少授權一個帳號。",
+        "exchangeFailed": "無法完成登入。請重新連結。",
+        "providerError": "目前無法載入你的帳號。請幾分鐘後再試一次。",
+        "connectFailed": "連結時發生錯誤。請再試一次。",
+        "tooManyAttempts": "未完成的連結嘗試過多。請稍候幾分鐘再試一次。",
+        "notAllowed": "你目前無法在此連結頻道。請重新整理頁面查看原因。"
       },
       "cancelRemaining": "取消其餘項",
       "retryFailed": "重試（{count}）",
@@ -4805,7 +4813,9 @@
         "callInformation": "通話資訊"
       }
     },
-    "credentialSecretsRequired": "請輸入應用程式密鑰和系統使用者權杖。它們尚未儲存。"
+    "credentialSecretsRequired": "請輸入應用程式密鑰和系統使用者權杖。它們尚未儲存。",
+    "embeddedSignupCancelled": "註冊已取消——你可以關閉此分頁。",
+    "embeddedSignupFailed": "註冊未完成——請關閉此分頁並再試一次。"
   },
   "zalo": {
     "title": "ZaloOA",

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { resolveSelectSession } from "@/features/channel-connect/lib/select-page"
 import { SelectAccount } from "@/features/integration-instagram/components/select-accounts"
+import { createChannelPath } from "@/lib/workspace/create-first-workspace"
 
 export const dynamic = "force-dynamic"
 
@@ -12,16 +13,17 @@ export const dynamic = "force-dynamic"
 export default async function InstagramSelectPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session?: string }>
+  searchParams: Promise<{ session?: string; connect_error?: string }>
 }) {
   const { sessionId, resolved } = await resolveSelectSession({
     searchParams,
     expectedProvider: "instagram",
+    noCandidatesError: "noInstagramAccounts",
   })
 
   const target = resolved.session.targets[0]
   if (!target) {
-    redirect("/channels/create")
+    redirect(createChannelPath({ workspaceId: resolved.workspace.id }))
   }
 
   return (

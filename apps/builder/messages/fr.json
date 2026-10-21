@@ -3550,14 +3550,22 @@
         "inProgress": "Une connexion est déjà en cours.",
         "unknown": "Une erreur s'est produite.",
         "followUpFailed": "Configuration incomplète — terminez-la depuis les paramètres du canal.",
-        "webhookSubscribeFailed": "Connecté, mais l'abonnement au webhook a échoué — réessayez depuis les paramètres de connexion."
+        "webhookSubscribeFailed": "Connecté, mais l'abonnement au webhook a échoué — réessayez depuis les paramètres de connexion.",
+        "providerUnavailable": "Le fournisseur est temporairement indisponible. Réessayez dans quelques minutes."
       },
       "sessionError": {
         "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
         "notMember": "Vous n'êtes plus membre de cet espace de travail.",
         "trialExpired": "Votre période d'essai a expiré.",
         "macLimitReached": "Vous avez atteint la limite de votre compte.",
-        "credentialMissing": "Identifiants manquants. Veuillez vous reconnecter."
+        "credentialMissing": "Identifiants manquants. Veuillez vous reconnecter.",
+        "noPages": "Nous n'avons trouvé aucune Page Facebook à connecter. Reconnectez-vous et autorisez l'accès à au moins une Page que vous gérez.",
+        "noInstagramAccounts": "Nous n'avons trouvé aucun compte Instagram à connecter. Reconnectez-vous et autorisez l'accès à au moins un compte.",
+        "exchangeFailed": "La connexion n'a pas pu aboutir. Veuillez vous reconnecter.",
+        "providerError": "Impossible de charger vos comptes pour le moment. Réessayez dans quelques minutes.",
+        "connectFailed": "Une erreur s'est produite lors de la connexion. Veuillez réessayer.",
+        "tooManyAttempts": "Il y a trop de tentatives de connexion inachevées. Attendez quelques minutes, puis réessayez.",
+        "notAllowed": "Vous ne pouvez pas connecter de canaux ici pour le moment. Rechargez la page pour en voir la raison."
       },
       "cancelRemaining": "Annuler le reste",
       "retryFailed": "Réessayer ({count})",
@@ -4772,7 +4780,9 @@
         "callInformation": "Informations sur l'appel"
       }
     },
-    "credentialSecretsRequired": "Saisissez le secret de l'application et le jeton d'utilisateur système. Ils ne sont pas encore enregistrés."
+    "credentialSecretsRequired": "Saisissez le secret de l'application et le jeton d'utilisateur système. Ils ne sont pas encore enregistrés.",
+    "embeddedSignupCancelled": "L'inscription a été annulée — vous pouvez fermer cet onglet.",
+    "embeddedSignupFailed": "L'inscription n'a pas abouti — fermez cet onglet et réessayez."
   },
   "zalo": {
     "title": "Zalo OA",

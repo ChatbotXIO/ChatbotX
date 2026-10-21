@@ -375,6 +375,79 @@ describe("resolveConnectSessionForSelect", () => {
     checkWorkspaceOwnerAccessMock.mockResolvedValue(null)
   })
 
+  test.each([
+    "no_candidates",
+    "exchange_failed",
+    "provider_error",
+    "internal_error",
+  ] as const)("tells the owner why their own session failed (%s) via data.failureCode, not a bare expiry", async (errorCode) => {
+    findByIdMock.mockResolvedValue({ ...session, status: "failed", errorCode })
+
+    await expect(
+      resolveConnectSessionForSelect({
+        userId: "user-1",
+        sessionId: "session-1",
+        expectedProvider: "messenger",
+      }),
+    ).rejects.toMatchObject({
+      code: "connectSessionExpired",
+      data: { failureCode: errorCode, workspaceId: "ws-1" },
+    })
+  })
+
+  test("keeps a failed session's reason out of the exception when it is not actionable", async () => {
+    findByIdMock.mockResolvedValue({
+      ...session,
+      status: "failed",
+      errorCode: "expired",
+    })
+
+    const failure = await resolveConnectSessionForSelect({
+      userId: "user-1",
+      sessionId: "session-1",
+      expectedProvider: "messenger",
+    }).catch((error: unknown) => error)
+
+    expect(failure).toMatchObject({ code: "connectSessionExpired" })
+    // The owner still gets their workspace back; only the reason is withheld.
+    expect((failure as ChatbotXException).data).toEqual({
+      workspaceId: "ws-1",
+    })
+  })
+
+  test.each([
+    "trialExpired",
+    "macLimitReached",
+  ] as const)("a member blocked by the owner's plan (%s) keeps the workspace for the error page", async (reason) => {
+    checkWorkspaceOwnerAccessMock.mockResolvedValue(reason)
+
+    await expect(
+      resolveConnectSessionForSelect({
+        userId: "user-1",
+        sessionId: "session-1",
+        expectedProvider: "messenger",
+      }),
+    ).rejects.toMatchObject({ code: reason, data: { workspaceId: "ws-1" } })
+  })
+
+  test("never reveals why another user's session failed", async () => {
+    findByIdMock.mockResolvedValue({
+      ...session,
+      actorUserId: "someone-else",
+      status: "failed",
+      errorCode: "no_candidates",
+    })
+
+    const failure = await resolveConnectSessionForSelect({
+      userId: "user-1",
+      sessionId: "session-1",
+      expectedProvider: "messenger",
+    }).catch((error: unknown) => error)
+
+    expect(failure).toMatchObject({ code: "connectSessionExpired" })
+    expect((failure as ChatbotXException).data).toBeUndefined()
+  })
+
   test("resolves session + workspace without touching the credential or branding lookups", async () => {
     const result = await resolveConnectSessionForSelect({
       userId: "user-1",

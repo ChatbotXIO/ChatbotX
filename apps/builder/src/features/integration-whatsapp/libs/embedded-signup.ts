@@ -53,8 +53,46 @@ export const WA_OAUTH_RESULT = "WA_OAUTH_RESULT" as const
 
 export type WhatsappOAuthRelayResult = {
   type: typeof WA_OAUTH_RESULT
-  status: "success" | "error"
+  /** `cancelled` = the user closed or declined the Meta dialog: not a failure. */
+  status: "success" | "cancelled" | "error"
   code?: string
+}
+
+/** What the callback tab relays and says about itself, under `whatsapp.*`. */
+export type WhatsappCallbackOutcome = {
+  result: WhatsappOAuthRelayResult
+  messageKey:
+    | "embeddedSignupDone"
+    | "embeddedSignupCancelled"
+    | "embeddedSignupFailed"
+}
+
+/**
+ * Turns Meta's `code`/`error` query into the relay payload and the text the
+ * callback tab shows. Only `access_denied` is a user cancellation; any other
+ * `error` (or no code at all) is a failure, and the tab must never claim
+ * "Signup complete" for either.
+ */
+export function whatsappCallbackOutcome(params: {
+  code: string | null
+  error: string | null
+}): WhatsappCallbackOutcome {
+  if (params.error === "access_denied") {
+    return {
+      result: { type: WA_OAUTH_RESULT, status: "cancelled" },
+      messageKey: "embeddedSignupCancelled",
+    }
+  }
+  if (params.code && !params.error) {
+    return {
+      result: { type: WA_OAUTH_RESULT, status: "success", code: params.code },
+      messageKey: "embeddedSignupDone",
+    }
+  }
+  return {
+    result: { type: WA_OAUTH_RESULT, status: "error" },
+    messageKey: "embeddedSignupFailed",
+  }
 }
 
 /** State round-tripped through Facebook so the broker knows where to relay back. */

@@ -3550,14 +3550,22 @@
         "inProgress": "A ligação já está em curso.",
         "unknown": "Algo correu mal.",
         "followUpFailed": "Configuração incompleta — conclua nas definições do canal.",
-        "webhookSubscribeFailed": "Ligado, mas a subscrição do webhook falhou — tente novamente nas definições da ligação."
+        "webhookSubscribeFailed": "Ligado, mas a subscrição do webhook falhou — tente novamente nas definições da ligação.",
+        "providerUnavailable": "O fornecedor está temporariamente indisponível. Tente novamente dentro de alguns minutos."
       },
       "sessionError": {
         "sessionExpired": "A sua sessão expirou. Volte a ligar-se.",
         "notMember": "Já não é membro deste espaço de trabalho.",
         "trialExpired": "O seu período de teste expirou.",
         "macLimitReached": "Atingiu o limite da sua conta.",
-        "credentialMissing": "Credenciais em falta. Volte a ligar-se."
+        "credentialMissing": "Credenciais em falta. Volte a ligar-se.",
+        "noPages": "Não encontrámos nenhuma Página do Facebook para ligar. Volte a ligar e permita o acesso a pelo menos uma Página que gere.",
+        "noInstagramAccounts": "Não encontrámos nenhuma conta do Instagram para ligar. Volte a ligar e permita o acesso a pelo menos uma conta.",
+        "exchangeFailed": "Não foi possível concluir o início de sessão. Volte a ligar.",
+        "providerError": "Não foi possível carregar as suas contas agora. Tente novamente dentro de alguns minutos.",
+        "connectFailed": "Ocorreu um erro ao ligar. Tente novamente.",
+        "tooManyAttempts": "Existem demasiadas tentativas de ligação por concluir. Aguarde alguns minutos e tente novamente.",
+        "notAllowed": "De momento, não pode ligar canais aqui. Recarregue a página para ver o motivo."
       },
       "cancelRemaining": "Cancelar restantes",
       "retryFailed": "Tentar novamente ({count})",
@@ -4772,7 +4780,9 @@
         "callInformation": "Informações da chamada"
       }
     },
-    "credentialSecretsRequired": "Introduza o segredo da aplicação e o token de utilizador do sistema. Ainda não estão guardados."
+    "credentialSecretsRequired": "Introduza o segredo da aplicação e o token de utilizador do sistema. Ainda não estão guardados.",
+    "embeddedSignupCancelled": "O registo foi cancelado — pode fechar este separador.",
+    "embeddedSignupFailed": "O registo não foi concluído — feche este separador e tente novamente."
   },
   "zalo": {
     "title": "Zalo OA",

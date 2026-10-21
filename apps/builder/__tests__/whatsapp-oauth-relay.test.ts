@@ -63,6 +63,16 @@ describe("parseOAuthRelayResult", () => {
     ).toEqual({ type: "error" })
   })
 
+  test("keeps a user cancellation apart from a failure", () => {
+    expect(
+      parseOAuthRelayResult({
+        origin: expectedOrigin,
+        expectedOrigin,
+        data: { type: WA_OAUTH_RESULT, status: "cancelled" },
+      }),
+    ).toEqual({ type: "cancelled" })
+  })
+
   test("trusts a tenant's own custom domain as the expected origin, not just the broker", () => {
     const tenantOrigin = "https://reseller.example.com"
     expect(

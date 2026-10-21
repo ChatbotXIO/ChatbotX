@@ -227,6 +227,16 @@ describe("useEmbeddedSignupAutoConnect", () => {
     expect(isConnecting()).toBe("false")
   })
 
+  test("stays quiet when the user cancelled the Meta dialog", () => {
+    render()
+
+    relay({ type: WA_OAUTH_RESULT, status: "cancelled" })
+
+    expect(onRelayError).not.toHaveBeenCalled()
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(isConnecting()).toBe("false")
+  })
+
   test("treats a success payload with no code as a failure", () => {
     render()
 

@@ -189,6 +189,16 @@ describe("MessengerSelectPage", () => {
     )
   })
 
+  test("keeps the workspace the connect started in, so a retry never tries to create a new workspace", async () => {
+    const error = new ChatbotXException("expired", "connectSessionExpired")
+    error.data = { workspaceId: "ws-9", failureCode: "no_candidates" }
+    mockResolveConnectSessionForSelect.mockRejectedValue(error)
+
+    await expect(MessengerSelectPage(pageArgs)).rejects.toThrow(
+      "redirect:/channels/create?workspaceId=ws-9&error=noPages",
+    )
+  })
+
   test("rethrows an unexpected (non-session) error instead of redirecting", async () => {
     mockResolveConnectSessionForSelect.mockRejectedValue(new Error("db blip"))
 

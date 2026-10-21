@@ -1096,14 +1096,22 @@
         "inProgress": "连接正在进行中。",
         "unknown": "出现问题。",
         "followUpFailed": "设置未完成——请在渠道设置中完成。",
-        "webhookSubscribeFailed": "已连接，但 webhook 订阅失败——请在连接设置中重试。"
+        "webhookSubscribeFailed": "已连接，但 webhook 订阅失败——请在连接设置中重试。",
+        "providerUnavailable": "服务提供方暂时不可用。请几分钟后重试。"
       },
       "sessionError": {
         "sessionExpired": "您的会话已过期，请重新连接。",
         "notMember": "您已不再是该工作区的成员。",
         "trialExpired": "您的试用期已结束。",
         "macLimitReached": "您已达到账户上限。",
-        "credentialMissing": "凭据缺失，请重新连接。"
+        "credentialMissing": "凭据缺失，请重新连接。",
+        "noPages": "未找到可连接的 Facebook 主页。请重新连接，并至少授权一个你管理的主页。",
+        "noInstagramAccounts": "未找到可连接的 Instagram 账号。请重新连接，并至少授权一个账号。",
+        "exchangeFailed": "无法完成登录。请重新连接。",
+        "providerError": "暂时无法加载你的账号。请几分钟后重试。",
+        "connectFailed": "连接时出错。请重试。",
+        "tooManyAttempts": "未完成的连接尝试过多。请等待几分钟后再试。",
+        "notAllowed": "你目前无法在此连接渠道。请刷新页面查看原因。"
       },
       "cancelRemaining": "取消其余项",
       "retryFailed": "重试（{count}）",
@@ -6676,7 +6684,9 @@
         "callInformation": "通话信息"
       }
     },
-    "credentialSecretsRequired": "请输入应用密钥和系统用户令牌。它们尚未保存。"
+    "credentialSecretsRequired": "请输入应用密钥和系统用户令牌。它们尚未保存。",
+    "embeddedSignupCancelled": "注册已取消——你可以关闭此标签页。",
+    "embeddedSignupFailed": "注册未完成——请关闭此标签页并重试。"
   },
   "workspace": {
     "deletion": {

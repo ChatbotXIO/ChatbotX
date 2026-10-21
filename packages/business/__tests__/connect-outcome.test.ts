@@ -52,6 +52,23 @@ describe("toConnectItemFailure", () => {
     })
   })
 
+  test.each([
+    500, 502, 503, 408, 429,
+  ])("maps a transient SdkException (HTTP %i) to providerUnavailable, not a rejection", (status) => {
+    expect(
+      toConnectItemFailure(new SdkException("upstream hiccup", "x", status)),
+    ).toEqual({ status: "failed", reason: "providerUnavailable" })
+  })
+
+  test("maps an SdkException flagged isRetryable to providerUnavailable", () => {
+    const error = new SdkException("timed out", "x", 400)
+    error.isRetryable = true
+    expect(toConnectItemFailure(error)).toEqual({
+      status: "failed",
+      reason: "providerUnavailable",
+    })
+  })
+
   test("maps a bare SdkException (no provider body) to providerRejected with no detail", () => {
     expect(
       toConnectItemFailure(new SdkException("Meta rejected the request")),

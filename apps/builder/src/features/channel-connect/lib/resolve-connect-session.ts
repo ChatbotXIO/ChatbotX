@@ -31,6 +31,7 @@ import {
   checkWorkspaceOwnerAccess,
   workspaceAccessDenialException,
 } from "@/lib/workspace/authorize-workspace-access"
+import { isActionableConnectFailure } from "./connect-error-code"
 
 // Not exported — only used internally to build `ResolvedConnectSession` below.
 type ConnectBrandingMenuEntry = {
@@ -132,9 +133,23 @@ async function resolveConnectSessionCore(props: {
       },
       "resolveConnectSession: session not in a resolvable state",
     )
-    throw connectSessionExpiredException(
+    const expired = connectSessionExpiredException(
       "Your connect session expired. Please start again.",
     )
+    // Ownership is already proven above, so the caller may learn which
+    // workspace their OWN session belonged to (so the error page keeps it and
+    // a retry connects there instead of creating a workspace) and why it
+    // failed — "no Pages were shared" is actionable, "expired" is not. Same
+    // exception code, so every other caller is unaffected.
+    expired.data = { workspaceId: session.workspaceId }
+    if (
+      session.status === "failed" &&
+      session.errorCode &&
+      isActionableConnectFailure(session.errorCode)
+    ) {
+      expired.data.failureCode = session.errorCode
+    }
+    throw expired
   }
 
   // `find` (not `findById`) — a vanished workspace must read the same as
@@ -160,7 +175,11 @@ async function resolveConnectSessionCore(props: {
     ownerId: workspace.ownerId,
   })
   if (denialReason) {
-    throw workspaceAccessDenialException(denialReason)
+    // Membership is proven, so the error page may keep this workspace: a
+    // retry from there must not fall into the first-workspace flow.
+    const denial = workspaceAccessDenialException(denialReason)
+    denial.data = { ...denial.data, workspaceId: workspace.id }
+    throw denial
   }
 
   return { session, workspace }

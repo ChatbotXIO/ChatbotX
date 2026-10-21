@@ -3550,14 +3550,22 @@
         "inProgress": "Forbindelse er allerede i gang.",
         "unknown": "Noget gik galt.",
         "followUpFailed": "Opsætning ufuldstændig – afslut den fra kanalindstillingerne.",
-        "webhookSubscribeFailed": "Forbundet, men webhook-abonnementet mislykkedes — prøv igen fra forbindelsesindstillingerne."
+        "webhookSubscribeFailed": "Forbundet, men webhook-abonnementet mislykkedes — prøv igen fra forbindelsesindstillingerne.",
+        "providerUnavailable": "Udbyderen er midlertidigt utilgængelig. Prøv igen om et par minutter."
       },
       "sessionError": {
         "sessionExpired": "Din session udløb. Opret forbindelse igen.",
         "notMember": "Du er ikke længere medlem af dette workspace.",
         "trialExpired": "Din prøveperiode er udløbet.",
         "macLimitReached": "Du har nået din kontogrænse.",
-        "credentialMissing": "Manglende legitimationsoplysninger. Opret forbindelse igen."
+        "credentialMissing": "Manglende legitimationsoplysninger. Opret forbindelse igen.",
+        "noPages": "Vi kunne ikke finde nogen Facebook-side at forbinde. Forbind igen, og giv adgang til mindst én side, du administrerer.",
+        "noInstagramAccounts": "Vi kunne ikke finde nogen Instagram-konto at forbinde. Forbind igen, og giv adgang til mindst én konto.",
+        "exchangeFailed": "Login kunne ikke gennemføres. Forbind venligst igen.",
+        "providerError": "Vi kunne ikke indlæse dine konti lige nu. Prøv igen om et par minutter.",
+        "connectFailed": "Der opstod en fejl under forbindelsen. Prøv igen.",
+        "tooManyAttempts": "Der er for mange uafsluttede forbindelsesforsøg. Vent et par minutter, og prøv igen.",
+        "notAllowed": "Du kan ikke forbinde kanaler her lige nu. Genindlæs siden for at se hvorfor."
       },
       "cancelRemaining": "Annuller resterende",
       "retryFailed": "Prøv igen ({count})",
@@ -4772,7 +4780,9 @@
         "callInformation": "Opkaldsoplysninger"
       }
     },
-    "credentialSecretsRequired": "Indtast app-hemmeligheden og systembruger-tokenet. De er ikke gemt endnu."
+    "credentialSecretsRequired": "Indtast app-hemmeligheden og systembruger-tokenet. De er ikke gemt endnu.",
+    "embeddedSignupCancelled": "Tilmeldingen blev annulleret — du kan lukke denne fane.",
+    "embeddedSignupFailed": "Tilmeldingen blev ikke gennemført — luk denne fane, og prøv igen."
   },
   "zalo": {
     "title": "Zalo OA",

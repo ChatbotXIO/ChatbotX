@@ -16,9 +16,42 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { memo, useCallback } from "react"
+import { memo, useCallback, useEffect } from "react"
 import type { MessageKey } from "@/features/channel-connect/lib/message-key"
 import { InboxIcon } from "./inbox-icon"
+
+/** Query param a failed connect redirects back with (see `createFirstWorkspace`). */
+const ERROR_PARAM = "error"
+
+/**
+ * Treats `?error=` as a one-shot flash: the server already turned it into
+ * `errorMessageKey` for this render, so it is dropped from the address bar
+ * right away. A reload then shows the clean picker instead of replaying an
+ * old failure. `history.replaceState` (not `router.replace`) keeps the
+ * current render, so the alert stays visible until the user moves on.
+ *
+ * The state argument must be `null`: Next's `replaceState` wrapper skips its
+ * router sync when the state already carries its internal `__NA` marker, so
+ * passing `window.history.state` would leave `useSearchParams` stale. With
+ * `null`, Next copies its own history state over and syncs the URL.
+ */
+function useDropErrorParam(searchParams: URLSearchParams) {
+  // Keyed on `searchParams`, not mount: a soft navigation to this same page
+  // keeps the component mounted and can bring a new `?error=`. Once our own
+  // replaceState lands, Next syncs `searchParams` and this re-run no-ops.
+  useEffect(() => {
+    if (!searchParams.has(ERROR_PARAM)) {
+      return
+    }
+    const url = new URL(window.location.href)
+    url.searchParams.delete(ERROR_PARAM)
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    )
+  }, [searchParams])
+}
 
 type InboxSelectCardProps = {
   configuredChannels: ChannelType[]
@@ -41,6 +74,7 @@ function InboxSelectCard({
   const t = useTranslations()
   const router = useRouter()
   const searchParams = useSearchParams()
+  useDropErrorParam(searchParams)
 
   const handleInboxSelect = useCallback(
     (channel: ChannelType) => {
@@ -48,7 +82,7 @@ function InboxSelectCard({
       // The reason for a stumble does not travel to the next channel:
       // explaining a Messenger failure on the Telegram screen describes
       // something that did not happen there.
-      params.delete("error")
+      params.delete(ERROR_PARAM)
       // `set`, not append: concatenating `&channel=` onto a query string that
       // may already carry one yields two, which Next parses into an array
       // while `CreateChannelPageProps` declares `channel?: string | null`.

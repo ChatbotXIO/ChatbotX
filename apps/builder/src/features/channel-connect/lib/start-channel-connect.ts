@@ -22,7 +22,11 @@ import { requireWorkspacePermission } from "@/lib/auth/require-workspace-permiss
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { logger } from "@/lib/log"
 import { resolvePlatformOwnerId } from "@/lib/platform-credential-owner"
-import { createFirstWorkspace } from "@/lib/workspace/create-first-workspace"
+import {
+  createChannelPath,
+  createFirstWorkspace,
+} from "@/lib/workspace/create-first-workspace"
+import { startFailureErrorCode } from "./connect-error-code"
 
 /** What a `beforeStart` hook decides once the credential/workspace are resolved. */
 export type BeforeStartResult =
@@ -57,7 +61,18 @@ export type StartChannelConnectOptions = {
   beforeStart?: (ctx: BeforeStartContext) => Promise<BeforeStartResult>
 }
 
-const START_FAILURE_REDIRECT = "/channels/create?error=sessionExpired"
+/**
+ * Where a connect that could not start lands; see `startFailureErrorCode`.
+ * Keeps the workspace so a retry connects into it instead of the
+ * first-workspace flow (which would try to create one): the request's own
+ * `workspaceId` before a session exists, `session.workspaceId` after (a
+ * first connect has just created that workspace).
+ */
+const startFailureRedirect = (
+  workspaceId: string | undefined,
+  err?: unknown,
+): string =>
+  createChannelPath({ error: startFailureErrorCode(err), workspaceId })
 
 /**
  * Shared GET-route body behind the three `channels/<channel>[/create]/
@@ -175,14 +190,14 @@ export async function startChannelConnect(
     // `redirect()` throws a `NEXT_REDIRECT` control-flow error, which
     // reaches this `catch` same as a real failure. `unstable_rethrow` lets
     // it keep propagating instead of being logged and replaced with the
-    // generic `START_FAILURE_REDIRECT` here, which would otherwise mask the
+    // generic `startFailureRedirect` here, which would otherwise mask the
     // specific plan-limit message with a misleading "session expired" one.
     unstable_rethrow(err)
     logger.error(
       { err, provider: options.provider, workspaceId },
       "Failed to start a channel connect session",
     )
-    redirect(START_FAILURE_REDIRECT)
+    redirect(startFailureRedirect(workspaceId, err))
   }
 
   // Set in a follow-up call, not passed into `startSession` itself — the
@@ -201,7 +216,7 @@ export async function startChannelConnect(
       "Failed to set the connect session return URL",
     )
     await failSession(session, "internal_error")
-    redirect(START_FAILURE_REDIRECT)
+    redirect(startFailureRedirect(session.workspaceId))
   }
 
   if (nextAction.type !== "open_url") {
@@ -210,7 +225,7 @@ export async function startChannelConnect(
       `Unexpected connect next action for ${options.provider}`,
     )
     await failSession(session, "internal_error")
-    redirect(START_FAILURE_REDIRECT)
+    redirect(startFailureRedirect(session.workspaceId))
   }
 
   redirect(nextAction.url)

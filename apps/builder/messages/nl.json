@@ -3550,14 +3550,22 @@
         "inProgress": "Verbinding is al bezig.",
         "unknown": "Er is iets misgegaan.",
         "followUpFailed": "Instellen niet voltooid — rond dit af via de kanaalinstellingen.",
-        "webhookSubscribeFailed": "Verbonden, maar het webhook-abonnement is mislukt — probeer het opnieuw via de verbindingsinstellingen."
+        "webhookSubscribeFailed": "Verbonden, maar het webhook-abonnement is mislukt — probeer het opnieuw via de verbindingsinstellingen.",
+        "providerUnavailable": "De provider is tijdelijk niet beschikbaar. Probeer het over een paar minuten opnieuw."
       },
       "sessionError": {
         "sessionExpired": "Je sessie is verlopen. Maak opnieuw verbinding.",
         "notMember": "Je bent geen lid meer van deze werkruimte.",
         "trialExpired": "Je proefperiode is verlopen.",
         "macLimitReached": "Je hebt je accountlimiet bereikt.",
-        "credentialMissing": "Ontbrekende inloggegevens. Maak opnieuw verbinding."
+        "credentialMissing": "Ontbrekende inloggegevens. Maak opnieuw verbinding.",
+        "noPages": "We hebben geen Facebook-pagina gevonden om te koppelen. Koppel opnieuw en geef toegang tot minstens één pagina die je beheert.",
+        "noInstagramAccounts": "We hebben geen Instagram-account gevonden om te koppelen. Koppel opnieuw en geef toegang tot minstens één account.",
+        "exchangeFailed": "Het inloggen kon niet worden voltooid. Koppel opnieuw.",
+        "providerError": "We konden je accounts nu niet laden. Probeer het over een paar minuten opnieuw.",
+        "connectFailed": "Er ging iets mis bij het koppelen. Probeer het opnieuw.",
+        "tooManyAttempts": "Er zijn te veel onvoltooide koppelpogingen. Wacht een paar minuten en probeer het dan opnieuw.",
+        "notAllowed": "Je kunt hier nu geen kanalen koppelen. Laad de pagina opnieuw om te zien waarom."
       },
       "cancelRemaining": "Resterende annuleren",
       "retryFailed": "Opnieuw proberen ({count})",
@@ -4772,7 +4780,9 @@
         "callInformation": "Oproepinformatie"
       }
     },
-    "credentialSecretsRequired": "Voer het app-geheim en het systeemgebruikerstoken in. Ze zijn nog niet opgeslagen."
+    "credentialSecretsRequired": "Voer het app-geheim en het systeemgebruikerstoken in. Ze zijn nog niet opgeslagen.",
+    "embeddedSignupCancelled": "De registratie is geannuleerd — je kunt dit tabblad sluiten.",
+    "embeddedSignupFailed": "De registratie is niet voltooid — sluit dit tabblad en probeer het opnieuw."
   },
   "zalo": {
     "title": "Zalo OA",

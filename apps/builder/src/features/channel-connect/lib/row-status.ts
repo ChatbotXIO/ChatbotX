@@ -212,6 +212,7 @@ export const REASON_MESSAGE_KEYS: Partial<
   channelLimit: "channels.connectMany.reason.channelLimit",
   workspaceLimit: "channels.connectMany.reason.workspaceLimit",
   providerRejected: "channels.connectMany.reason.providerRejected",
+  providerUnavailable: "channels.connectMany.reason.providerUnavailable",
   internalError: "channels.connectMany.reason.unknown",
   inProgress: "channels.connectMany.reason.inProgress",
   unknown: "channels.connectMany.reason.unknown",
@@ -296,6 +297,7 @@ export const SESSION_ERROR_MESSAGE_KEYS: Record<
   trialExpired: "channels.connectMany.sessionError.trialExpired",
   macLimitReached: "channels.connectMany.sessionError.macLimitReached",
   credentialMissing: "channels.connectMany.sessionError.credentialMissing",
+  notAllowed: "channels.connectMany.sessionError.notAllowed",
 }
 
 /**
@@ -308,4 +310,4 @@ export const SESSION_ERROR_MESSAGE_KEYS: Record<
  * still lead into one.
  */
 export const SESSION_ERRORS_SKIPPING_EXTRA_STEPS: readonly ConnectSessionErrorCode[] =
-  ["notMember", "trialExpired", "macLimitReached"]
+  ["notMember", "trialExpired", "macLimitReached", "notAllowed"]

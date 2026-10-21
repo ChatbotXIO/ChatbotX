@@ -3529,14 +3529,22 @@
         "inProgress": "A conexão já está em andamento.",
         "unknown": "Algo deu errado.",
         "followUpFailed": "Configuração incompleta — conclua nas configurações do canal.",
-        "webhookSubscribeFailed": "Conectado, mas a assinatura do webhook falhou — tente novamente nas configurações da conexão."
+        "webhookSubscribeFailed": "Conectado, mas a assinatura do webhook falhou — tente novamente nas configurações da conexão.",
+        "providerUnavailable": "O provedor está temporariamente indisponível. Tente novamente em alguns minutos."
       },
       "sessionError": {
         "sessionExpired": "Sua sessão expirou. Reconecte-se.",
         "notMember": "Você não é mais membro deste workspace.",
         "trialExpired": "Seu período de teste expirou.",
         "macLimitReached": "Você atingiu o limite da sua conta.",
-        "credentialMissing": "Credenciais ausentes. Reconecte-se."
+        "credentialMissing": "Credenciais ausentes. Reconecte-se.",
+        "noPages": "Não encontramos nenhuma Página do Facebook para conectar. Conecte novamente e permita acesso a pelo menos uma Página que você gerencia.",
+        "noInstagramAccounts": "Não encontramos nenhuma conta do Instagram para conectar. Conecte novamente e permita acesso a pelo menos uma conta.",
+        "exchangeFailed": "Não foi possível concluir o login. Conecte novamente.",
+        "providerError": "Não conseguimos carregar suas contas agora. Tente novamente em alguns minutos.",
+        "connectFailed": "Algo deu errado ao conectar. Tente novamente.",
+        "tooManyAttempts": "Há muitas tentativas de conexão não concluídas. Aguarde alguns minutos e tente novamente.",
+        "notAllowed": "No momento, você não pode conectar canais aqui. Recarregue a página para ver o motivo."
       },
       "cancelRemaining": "Cancelar restantes",
       "retryFailed": "Tentar novamente ({count})",
@@ -4751,7 +4759,9 @@
         "callInformation": "Informações da chamada"
       }
     },
-    "credentialSecretsRequired": "Informe o segredo do app e o token de usuário do sistema. Eles ainda não foram salvos."
+    "credentialSecretsRequired": "Informe o segredo do app e o token de usuário do sistema. Eles ainda não foram salvos.",
+    "embeddedSignupCancelled": "O cadastro foi cancelado — você pode fechar esta aba.",
+    "embeddedSignupFailed": "O cadastro não foi concluído — feche esta aba e tente novamente."
   },
   "zalo": {
     "title": "Zalo OA",

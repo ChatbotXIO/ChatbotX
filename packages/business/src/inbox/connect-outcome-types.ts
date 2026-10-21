@@ -35,6 +35,8 @@ export const CONNECT_FAILURE_REASONS = {
   workspaceLimit: "workspaceLimit",
   // SdkException from Meta.
   providerRejected: "providerRejected",
+  // Transient SdkException (5xx, 408, 429, or flagged retryable): try again.
+  providerUnavailable: "providerUnavailable",
   // Internal persistence, crypto, or implementation failure.
   internalError: "internalError",
   // A concurrent request owns the target's unexpired connect lease.
@@ -69,6 +71,9 @@ export const CONNECT_SESSION_ERROR_CODES = {
   trialExpired: "trialExpired",
   macLimitReached: "macLimitReached",
   credentialMissing: "credentialMissing",
+  // Signed in but denied (HTTP 403): password change required, workspace
+  // scheduled for deletion. Reconnecting cannot fix it.
+  notAllowed: "notAllowed",
 } as const
 export type ConnectSessionErrorCode =
   (typeof CONNECT_SESSION_ERROR_CODES)[keyof typeof CONNECT_SESSION_ERROR_CODES]

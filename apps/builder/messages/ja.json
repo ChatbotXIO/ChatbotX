@@ -3529,14 +3529,22 @@
         "inProgress": "接続は既に進行中です。",
         "unknown": "問題が発生しました。",
         "followUpFailed": "設定が未完了です。チャネル設定から完了してください。",
-        "webhookSubscribeFailed": "接続しましたが、Webhookの登録に失敗しました。接続設定から再試行してください。"
+        "webhookSubscribeFailed": "接続しましたが、Webhookの登録に失敗しました。接続設定から再試行してください。",
+        "providerUnavailable": "プロバイダーが一時的に利用できません。数分後にもう一度お試しください。"
       },
       "sessionError": {
         "sessionExpired": "セッションの有効期限が切れました。再接続してください。",
         "notMember": "このワークスペースのメンバーではなくなりました。",
         "trialExpired": "トライアル期間が終了しました。",
         "macLimitReached": "アカウントの上限に達しました。",
-        "credentialMissing": "認証情報がありません。再接続してください。"
+        "credentialMissing": "認証情報がありません。再接続してください。",
+        "noPages": "接続できるFacebookページが見つかりませんでした。もう一度接続し、管理しているページを少なくとも1つ許可してください。",
+        "noInstagramAccounts": "接続できるInstagramアカウントが見つかりませんでした。もう一度接続し、少なくとも1つのアカウントへのアクセスを許可してください。",
+        "exchangeFailed": "サインインを完了できませんでした。もう一度接続してください。",
+        "providerError": "現在アカウントを読み込めません。数分後にもう一度お試しください。",
+        "connectFailed": "接続中にエラーが発生しました。もう一度お試しください。",
+        "tooManyAttempts": "完了していない接続の試行が多すぎます。数分待ってから、もう一度お試しください。",
+        "notAllowed": "現在ここではチャネルを接続できません。理由を確認するにはページを再読み込みしてください。"
       },
       "cancelRemaining": "残りをキャンセル",
       "retryFailed": "再試行 ({count})",
@@ -4751,7 +4759,9 @@
         "callInformation": "通話情報"
       }
     },
-    "credentialSecretsRequired": "アプリシークレットとシステムユーザートークンを入力してください。まだ保存されていません。"
+    "credentialSecretsRequired": "アプリシークレットとシステムユーザートークンを入力してください。まだ保存されていません。",
+    "embeddedSignupCancelled": "登録はキャンセルされました。このタブを閉じてください。",
+    "embeddedSignupFailed": "登録が完了しませんでした。このタブを閉じて、もう一度お試しください。"
   },
   "zalo": {
     "title": "Zalo OA",

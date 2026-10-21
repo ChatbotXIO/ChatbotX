@@ -987,14 +987,22 @@
         "inProgress": "Kết nối đang được thực hiện.",
         "unknown": "Đã xảy ra lỗi.",
         "followUpFailed": "Thiết lập chưa hoàn tất — hãy hoàn tất trong cài đặt kênh.",
-        "webhookSubscribeFailed": "Đã kết nối, nhưng đăng ký webhook không thành công — hãy thử lại trong cài đặt kết nối."
+        "webhookSubscribeFailed": "Đã kết nối, nhưng đăng ký webhook không thành công — hãy thử lại trong cài đặt kết nối.",
+        "providerUnavailable": "Nhà cung cấp tạm thời không phản hồi. Hãy thử lại sau vài phút."
       },
       "sessionError": {
         "sessionExpired": "Phiên của bạn đã hết hạn. Vui lòng kết nối lại.",
         "notMember": "Bạn không còn là thành viên của không gian làm việc này.",
         "trialExpired": "Thời gian dùng thử của bạn đã hết hạn.",
         "macLimitReached": "Bạn đã đạt giới hạn tài khoản.",
-        "credentialMissing": "Thiếu thông tin xác thực. Vui lòng kết nối lại."
+        "credentialMissing": "Thiếu thông tin xác thực. Vui lòng kết nối lại.",
+        "noPages": "Không tìm thấy Facebook Page nào để kết nối. Hãy kết nối lại và cấp quyền cho ít nhất một Page bạn quản lý.",
+        "noInstagramAccounts": "Không tìm thấy tài khoản Instagram nào để kết nối. Hãy kết nối lại và cấp quyền cho ít nhất một tài khoản.",
+        "exchangeFailed": "Không hoàn tất được bước đăng nhập. Vui lòng kết nối lại.",
+        "providerError": "Hiện chưa tải được danh sách tài khoản của bạn. Vui lòng thử lại sau vài phút.",
+        "connectFailed": "Đã xảy ra lỗi khi kết nối. Vui lòng thử lại.",
+        "tooManyAttempts": "Có quá nhiều lần kết nối chưa hoàn tất. Hãy chờ vài phút rồi thử lại.",
+        "notAllowed": "Hiện bạn không thể kết nối kênh ở đây. Hãy tải lại trang để xem lý do."
       },
       "cancelRemaining": "Hủy phần còn lại",
       "retryFailed": "Thử lại ({count})",
@@ -4814,7 +4822,9 @@
         "callInformation": "Thông tin cuộc gọi"
       }
     },
-    "credentialSecretsRequired": "Nhập App Secret và System User Token. Hiện chưa được lưu."
+    "credentialSecretsRequired": "Nhập App Secret và System User Token. Hiện chưa được lưu.",
+    "embeddedSignupCancelled": "Đã huỷ đăng ký — bạn có thể đóng tab này.",
+    "embeddedSignupFailed": "Đăng ký chưa hoàn tất — hãy đóng tab này và thử lại."
   },
   "zalo": {
     "title": "Zalo OA",

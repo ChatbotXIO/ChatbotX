@@ -12,14 +12,18 @@ import { logger } from "@/lib/log"
 import { sanitizeReferer } from "@/lib/oauth-referer"
 import {
   type CreateChannelErrorCode,
-  isCreateChannelErrorCode,
+  createChannelPath,
 } from "@/lib/workspace/create-first-workspace"
+import { selectPageErrorCode } from "./connect-error-code"
 import type { ConnectPickerItem } from "./picker-items"
 import type { ResolvedConnectSessionBinding } from "./resolve-connect-session"
 import { resolveConnectSessionForSelect } from "./resolve-connect-session"
 
-/** Every other session-level failure (expired, not-member, a session that already failed/cancelled/completed) reads as the generic "start again" code — only the plan-limit codes get their own copy. */
-const FALLBACK_ERROR_CODE: CreateChannelErrorCode = "sessionExpired"
+/** The workspace an owner-verified session belonged to (`resolveConnectSessionCore`), if any. */
+function workspaceIdOf(err: ChatbotXException): string | undefined {
+  const workspaceId = err.data?.workspaceId
+  return typeof workspaceId === "string" ? workspaceId : undefined
+}
 
 /**
  * Shared boilerplate the three `channels/<channel>/select/page.tsx` Server
@@ -35,10 +39,14 @@ const FALLBACK_ERROR_CODE: CreateChannelErrorCode = "sessionExpired"
  * assignment type-checks without an extra `else` branch.
  */
 export async function resolveSelectSession(input: {
-  searchParams: Promise<{ session?: string }>
+  /** `connect_error` is set by the OAuth callback when the connect it just ran did not finish. */
+  searchParams: Promise<{ session?: string; connect_error?: string }>
   expectedProvider: IntegrationType
+  /** This channel's copy for "the provider returned nothing to pick". */
+  noCandidatesError: CreateChannelErrorCode
 }): Promise<{ sessionId: string; resolved: ResolvedConnectSessionBinding }> {
-  const { session: sessionId } = await input.searchParams
+  const { session: sessionId, connect_error: connectError } =
+    await input.searchParams
   if (!sessionId) {
     redirect("/channels/create")
   }
@@ -79,14 +87,23 @@ export async function resolveSelectSession(input: {
         )
         redirect(target)
       }
-      const code = isCreateChannelErrorCode(err.code)
-        ? err.code
-        : FALLBACK_ERROR_CODE
+      // A session the user owns that failed for a known reason (no Pages
+      // shared, token exchange rejected, provider error) gets that reason;
+      // everything else keeps the generic "start again" copy.
+      const code = selectPageErrorCode(err, {
+        noCandidatesError: input.noCandidatesError,
+        connectError,
+      })
       logger.warn(
         { err, sessionId, code },
         "resolveConnectSession rejected the select page",
       )
-      redirect(`/channels/create?error=${code}`)
+      redirect(
+        createChannelPath({
+          error: code,
+          workspaceId: workspaceIdOf(err),
+        }),
+      )
     }
     logger.error(
       { err, sessionId },

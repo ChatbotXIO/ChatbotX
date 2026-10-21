@@ -3550,14 +3550,22 @@
         "inProgress": "Conexiunea este deja în curs.",
         "unknown": "Ceva nu a funcționat corect.",
         "followUpFailed": "Configurare incompletă — finalizeaz-o din setările canalului.",
-        "webhookSubscribeFailed": "Conectat, dar abonarea la webhook a eșuat — încearcă din nou din setările conexiunii."
+        "webhookSubscribeFailed": "Conectat, dar abonarea la webhook a eșuat — încearcă din nou din setările conexiunii.",
+        "providerUnavailable": "Furnizorul este temporar indisponibil. Încearcă din nou în câteva minute."
       },
       "sessionError": {
         "sessionExpired": "Sesiunea ta a expirat. Te rugăm să te reconectezi.",
         "notMember": "Nu mai ești membru al acestui spațiu de lucru.",
         "trialExpired": "Perioada de probă a expirat.",
         "macLimitReached": "Ai atins limita contului tău.",
-        "credentialMissing": "Lipsesc datele de autentificare. Te rugăm să te reconectezi."
+        "credentialMissing": "Lipsesc datele de autentificare. Te rugăm să te reconectezi.",
+        "noPages": "Nu am găsit nicio Pagină de Facebook de conectat. Conectează-te din nou și permite accesul la cel puțin o Pagină pe care o administrezi.",
+        "noInstagramAccounts": "Nu am găsit niciun cont de Instagram de conectat. Conectează-te din nou și permite accesul la cel puțin un cont.",
+        "exchangeFailed": "Autentificarea nu a putut fi finalizată. Te rugăm să te conectezi din nou.",
+        "providerError": "Nu am putut încărca acum conturile tale. Încearcă din nou în câteva minute.",
+        "connectFailed": "A apărut o eroare la conectare. Încearcă din nou.",
+        "tooManyAttempts": "Sunt prea multe încercări de conectare nefinalizate. Așteaptă câteva minute, apoi încearcă din nou.",
+        "notAllowed": "Momentan nu poți conecta canale aici. Reîncarcă pagina pentru a vedea motivul."
       },
       "cancelRemaining": "Anulează restul",
       "retryFailed": "Reîncearcă ({count})",
@@ -4772,7 +4780,9 @@
         "callInformation": "Informații despre apel"
       }
     },
-    "credentialSecretsRequired": "Introdu secretul aplicației și tokenul utilizatorului de sistem. Nu sunt încă salvate."
+    "credentialSecretsRequired": "Introdu secretul aplicației și tokenul utilizatorului de sistem. Nu sunt încă salvate.",
+    "embeddedSignupCancelled": "Înregistrarea a fost anulată — poți închide această filă.",
+    "embeddedSignupFailed": "Înregistrarea nu s-a finalizat — închide această filă și încearcă din nou."
   },
   "zalo": {
     "title": "Zalo OA",

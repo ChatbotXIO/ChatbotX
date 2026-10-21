@@ -3550,14 +3550,22 @@
         "inProgress": "Verbindung wird bereits hergestellt.",
         "unknown": "Etwas ist schiefgelaufen.",
         "followUpFailed": "Einrichtung unvollständig – bitte in den Kanaleinstellungen abschließen.",
-        "webhookSubscribeFailed": "Verbunden, aber das Webhook-Abonnement ist fehlgeschlagen – versuchen Sie es erneut in den Verbindungseinstellungen."
+        "webhookSubscribeFailed": "Verbunden, aber das Webhook-Abonnement ist fehlgeschlagen – versuchen Sie es erneut in den Verbindungseinstellungen.",
+        "providerUnavailable": "Der Anbieter ist vorübergehend nicht erreichbar. Versuche es in ein paar Minuten erneut."
       },
       "sessionError": {
         "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte erneut verbinden.",
         "notMember": "Sie sind kein Mitglied dieses Workspace mehr.",
         "trialExpired": "Ihre Testphase ist abgelaufen.",
         "macLimitReached": "Sie haben Ihr Kontolimit erreicht.",
-        "credentialMissing": "Anmeldedaten fehlen. Bitte erneut verbinden."
+        "credentialMissing": "Anmeldedaten fehlen. Bitte erneut verbinden.",
+        "noPages": "Wir konnten keine Facebook-Seite zum Verbinden finden. Verbinde dich erneut und gewähre Zugriff auf mindestens eine Seite, die du verwaltest.",
+        "noInstagramAccounts": "Wir konnten kein Instagram-Konto zum Verbinden finden. Verbinde dich erneut und gewähre Zugriff auf mindestens ein Konto.",
+        "exchangeFailed": "Die Anmeldung konnte nicht abgeschlossen werden. Bitte verbinde dich erneut.",
+        "providerError": "Deine Konten konnten gerade nicht geladen werden. Bitte versuche es in ein paar Minuten erneut.",
+        "connectFailed": "Beim Verbinden ist ein Fehler aufgetreten. Bitte versuche es erneut.",
+        "tooManyAttempts": "Es gibt zu viele unvollständige Verbindungsversuche. Warte ein paar Minuten und versuche es dann erneut.",
+        "notAllowed": "Du kannst hier gerade keine Kanäle verbinden. Lade die Seite neu, um den Grund zu sehen."
       },
       "cancelRemaining": "Verbleibende abbrechen",
       "retryFailed": "Erneut versuchen ({count})",
@@ -4772,7 +4780,9 @@
         "callInformation": "Anrufinformationen"
       }
     },
-    "credentialSecretsRequired": "Gib das App-Geheimnis und das Systembenutzer-Token ein. Sie sind noch nicht gespeichert."
+    "credentialSecretsRequired": "Gib das App-Geheimnis und das Systembenutzer-Token ein. Sie sind noch nicht gespeichert.",
+    "embeddedSignupCancelled": "Die Registrierung wurde abgebrochen – du kannst diesen Tab schließen.",
+    "embeddedSignupFailed": "Die Registrierung wurde nicht abgeschlossen – schließe diesen Tab und versuche es erneut."
   },
   "zalo": {
     "title": "Zalo OA",

@@ -6,7 +6,7 @@ import {
 
 const whatsappOAuthRelayResultSchema = z.object({
   type: z.literal(WA_OAUTH_RESULT),
-  status: z.enum(["success", "error"]),
+  status: z.enum(["success", "cancelled", "error"]),
   code: z.string().optional(),
 }) satisfies z.ZodType<WhatsappOAuthRelayResult>
 
@@ -18,6 +18,7 @@ export function parseOAuthRelayResult(params: {
 }):
   | { type: "ignored" }
   | { type: "success"; code: string }
+  | { type: "cancelled" }
   | { type: "error" } {
   if (params.origin !== params.expectedOrigin) {
     return { type: "ignored" }
@@ -32,6 +33,10 @@ export function parseOAuthRelayResult(params: {
     return parsed.data.code
       ? { type: "success", code: parsed.data.code }
       : { type: "error" }
+  }
+
+  if (parsed.data.status === "cancelled") {
+    return { type: "cancelled" }
   }
 
   return { type: "error" }
