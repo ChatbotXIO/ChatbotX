@@ -1,6 +1,7 @@
 import type { BetterAuthOptions } from "better-auth"
 import { env } from "./keys"
 import { logger } from "./logger"
+import { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
 
 type AccountCreateBeforeHook = NonNullable<
   NonNullable<
@@ -82,7 +83,7 @@ type EmailAttestation = (account: { idToken?: unknown }) => boolean
 const EMAIL_ATTESTATION_BY_PROVIDER: Record<string, EmailAttestation> = {
   google: (account) => isEmailAttestedByIdToken(account.idToken),
   facebook: () => true,
-  oidc: (account) =>
+  [GENERIC_OAUTH_PROVIDER_ID]: (account) =>
     env.AUTH_OAUTH_TRUST_EMAIL || isEmailAttestedByIdToken(account.idToken),
 }
 

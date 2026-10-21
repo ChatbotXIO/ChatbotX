@@ -27,12 +27,50 @@ export const keys = () =>
     runtimeEnv: process.env,
     emptyStringAsUndefined: true,
     skipValidation: process.env.SKIP_ENV_CHECK === "true",
+    // Cross-field: a half-configured provider must fail the deploy loudly
+    // instead of silently disabling SSO at request time (see
+    // `resolveGenericOAuthConfig`'s fallback, kept only for `SKIP_ENV_CHECK`
+    // builds where this validation never runs).
+    createFinalSchema: (shape) =>
+      z.object(shape).superRefine((parsedEnv, ctx) => {
+        if (!parsedEnv.AUTH_OAUTH_ENABLED) {
+          return
+        }
+        if (
+          !(
+            parsedEnv.AUTH_OAUTH_CLIENT_ID && parsedEnv.AUTH_OAUTH_CLIENT_SECRET
+          )
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["AUTH_OAUTH_CLIENT_ID"],
+            message:
+              "AUTH_OAUTH_CLIENT_ID and AUTH_OAUTH_CLIENT_SECRET are required when AUTH_OAUTH_ENABLED is true",
+          })
+        }
+        const hasDiscovery = Boolean(parsedEnv.AUTH_OAUTH_DISCOVERY_URL)
+        const hasAuthorizationPair = Boolean(
+          parsedEnv.AUTH_OAUTH_AUTH_URL && parsedEnv.AUTH_OAUTH_TOKEN_URL,
+        )
+        if (!(hasDiscovery || hasAuthorizationPair)) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["AUTH_OAUTH_DISCOVERY_URL"],
+            message:
+              "AUTH_OAUTH_ENABLED requires AUTH_OAUTH_DISCOVERY_URL, or both AUTH_OAUTH_AUTH_URL and AUTH_OAUTH_TOKEN_URL",
+          })
+        }
+      }),
   })
 
 const rawEnv = keys()
 
+// `z.stringbool()` already parses the field when validation runs; this only
+// has work to do when `SKIP_ENV_CHECK` bypassed that and left a raw string.
+// Reuses the same accepted-values set (`"1"`/`"yes"`/`"true"`, case-insensitive)
+// instead of a narrower hand-rolled check.
 const normalizeBoolean = (value: unknown): boolean =>
-  value === true || value === "true"
+  typeof value === "boolean" ? value : z.stringbool().catch(false).parse(value)
 
 const normalizeScopeList = (value: unknown): string =>
   typeof value === "string" && value.length > 0 ? value : "openid,email,profile"

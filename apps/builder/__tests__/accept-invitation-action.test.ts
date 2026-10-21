@@ -1,6 +1,20 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+vi.mock("@chatbotx.io/auth/server", () => ({
+  INVITATION_COOKIE_NAME: "chatbotx_invitation",
+}))
+
+const resolveTenantByDomain = vi.fn()
+vi.mock("@chatbotx.io/auth/tenant", () => ({ resolveTenantByDomain }))
+
+const getDomainFromHeader = vi.fn()
+vi.mock("@/lib/domain", () => ({ getDomainFromHeader }))
+
+const cookieDelete = vi.fn()
+const cookiesFn = vi.fn(() => ({ delete: cookieDelete }))
+vi.mock("next/headers", () => ({ cookies: () => cookiesFn() }))
+
 vi.mock("@/lib/safe-action", () => ({
   authActionClient: {
     inputSchema: () => ({
@@ -93,10 +107,6 @@ function futureDate() {
   return new Date(Date.now() + 24 * 60 * 60 * 1000)
 }
 
-function _pastDate() {
-  return new Date(Date.now() - 24 * 60 * 60 * 1000)
-}
-
 function invoke(code = "abc123", userId = "user-1") {
   return runAcceptInvitation({
     ctx: { user: { id: userId } },
@@ -110,6 +120,8 @@ describe("acceptInvitationAction", () => {
     createId.mockReturnValue("member-id")
     isCommunity.mockReturnValue(false)
     getSuperAdminPermissions.mockReturnValue({ superAdmin: true })
+    getDomainFromHeader.mockResolvedValue("chat.acme.com")
+    resolveTenantByDomain.mockResolvedValue("tenant-acme")
     workspaceMemberFindFirst.mockResolvedValue(undefined)
     workspaceServiceFind.mockResolvedValue({ id: "ws-1", ownerId: "owner-1" })
     hasReachedLimit.mockResolvedValue(false)
@@ -119,6 +131,13 @@ describe("acceptInvitationAction", () => {
       expiresAt: futureDate(),
       permissions: { superAdmin: false },
     })
+  })
+
+  test("resolves the invitation against the tenant bound to the request domain", async () => {
+    await invoke()
+
+    expect(resolveTenantByDomain).toHaveBeenCalledWith("chat.acme.com")
+    expect(findActiveByCodeOrFail).toHaveBeenCalledWith("abc123", "tenant-acme")
   })
 
   test("inserts the new member and invalidates both the user's and workspace's member-list caches", async () => {
@@ -137,6 +156,12 @@ describe("acceptInvitationAction", () => {
       "users:user-1:workspace-members",
       "workspaces:ws-1:workspace-members",
     ])
+  })
+
+  test("clears the invitation cookie after a successful join, so it can't be replayed", async () => {
+    await invoke()
+
+    expect(cookieDelete).toHaveBeenCalledWith("chatbotx_invitation")
   })
 
   test("uses the invitation's stored permissions on non-community editions", async () => {
@@ -166,14 +191,7 @@ describe("acceptInvitationAction", () => {
     )
   })
 
-  test("throws and does not insert or invalidate cache when invitation has expired", async () => {
-    findActiveByCodeOrFail.mockRejectedValue(new Error("Invitation expired"))
-    await expect(invoke()).rejects.toThrow("Invitation expired")
-    expect(workspaceMemberServiceCreate).not.toHaveBeenCalled()
-    expect(invalidateCacheByTags).not.toHaveBeenCalled()
-  })
-
-  test("throws and does not insert or invalidate cache when user is already a member", async () => {
+  test("throws and does not insert, invalidate cache, or clear the cookie when user is already a member", async () => {
     workspaceMemberFindFirst.mockResolvedValue({ id: "existing-member" })
 
     await expect(invoke()).rejects.toThrow(
@@ -181,6 +199,7 @@ describe("acceptInvitationAction", () => {
     )
     expect(workspaceMemberServiceCreate).not.toHaveBeenCalled()
     expect(invalidateCacheByTags).not.toHaveBeenCalled()
+    expect(cookieDelete).not.toHaveBeenCalled()
   })
 
   test("throws and does not insert or invalidate cache when team member quota is exceeded", async () => {

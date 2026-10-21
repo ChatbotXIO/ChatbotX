@@ -521,9 +521,14 @@ function buildDatabaseHooks({
 }
 
 /**
- * The Facebook placeholder domain is reserved for phone-only Facebook users
- * (see `placeholder-email.ts`); nobody may register it by hand, or they could
- * pre-create the row a Facebook sign-in later resolves to by email.
+ * Gates `/sign-up/email` on two independent rules, both enforced before
+ * better-auth creates the row:
+ * - the Facebook placeholder domain is reserved for phone-only Facebook users
+ *   (see `placeholder-email.ts`); nobody may register it by hand, or they
+ *   could pre-create the row a Facebook sign-in later resolves to by email.
+ * - signup lockdown (`AUTH_DISABLE_SIGNUP`): rejected unless the request
+ *   carries a live invitation cookie (`isSignUpAllowed`). Existing email
+ *   sign-*in* is untouched — only this one path is matched.
  */
 const guardEmailSignUp = createAuthMiddleware(async (ctx) => {
   if (
@@ -896,7 +901,11 @@ export function createAuth(config: AuthConfig) {
 
 export type Auth = ReturnType<typeof createAuth>
 
-export { isGenericOAuthPath, resolveGenericOAuthConfig } from "./generic-oauth"
+export {
+  isGenericOAuthPath,
+  resolveGenericOAuthConfig,
+  warnIfGenericOAuthUnlicensed,
+} from "./generic-oauth"
 export { isSignUpDisabled } from "./keys"
 export { GENERIC_OAUTH_PROVIDER_ID } from "./oauth-constants"
 export {

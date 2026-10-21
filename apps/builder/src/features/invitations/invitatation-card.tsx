@@ -1,11 +1,7 @@
 "use client"
 
+import type { InvitationSummary } from "@chatbotx.io/business"
 import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
-import type {
-  InvitationModel,
-  UserModel,
-  WorkspaceModel,
-} from "@chatbotx.io/database/types"
 import {
   Avatar,
   AvatarFallback,
@@ -25,19 +21,15 @@ import { acceptInvitationAction } from "./actions/accept-invitation"
 export function InvitationCard({
   invitation,
   isAuthenticated,
-  workspace,
-  user,
 }: {
-  invitation: InvitationModel
+  invitation: InvitationSummary | null
   isAuthenticated: boolean
-  workspace: WorkspaceModel | null
-  user: UserModel
 }) {
   const router = useRouter()
   const t = useTranslations()
   const invalidateUsers = useInvalidateUsers()
-  const canJoin = workspace
-    ? !isWorkspaceScheduledForDeletion(workspace)
+  const canJoin = invitation?.workspace
+    ? !isWorkspaceScheduledForDeletion(invitation.workspace)
     : false
 
   const { execute, isPending } = useAction(acceptInvitationAction, {
@@ -55,11 +47,15 @@ export function InvitationCard({
   return (
     <Card className="max-w-lg">
       <CardContent className="flex flex-col gap-4">
-        {canJoin && workspace ? (
-          <WorkspaceInvitationCard user={user} workspace={workspace} />
+        {canJoin && invitation?.workspace ? (
+          <WorkspaceInvitationCard
+            inviter={invitation.inviter}
+            workspace={invitation.workspace}
+          />
         ) : (
           <p className="text-muted-foreground">
-            {workspace && isWorkspaceScheduledForDeletion(workspace)
+            {invitation?.workspace &&
+            isWorkspaceScheduledForDeletion(invitation.workspace)
               ? t("invitation.workspaceUnavailable")
               : t("invitation.invalidInvitation")}
           </p>
@@ -73,7 +69,7 @@ export function InvitationCard({
           >
             {t("actions.cancel")}
           </Button>
-          {isAuthenticated ? (
+          {invitation && isAuthenticated ? (
             <Button
               disabled={isPending || !canJoin}
               onClick={() => execute({ code: invitation.code })}
@@ -82,14 +78,15 @@ export function InvitationCard({
             >
               {t("actions.joinTheTeam")}
             </Button>
-          ) : (
+          ) : null}
+          {invitation && !isAuthenticated ? (
             <Link
               className={buttonVariants()}
               href={`/api/invitations/${invitation.code}/start`}
             >
               {t("invitation.signUpToJoin")}
             </Link>
-          )}
+          ) : null}
         </div>
       </CardContent>
     </Card>
@@ -98,10 +95,10 @@ export function InvitationCard({
 
 export function WorkspaceInvitationCard({
   workspace,
-  user,
+  inviter,
 }: {
-  workspace: WorkspaceModel
-  user: UserModel
+  workspace: { name: string; logo: string | null }
+  inviter: { name: string | null }
 }) {
   const t = useTranslations()
   const logoUrl = useWorkspaceLogoUrl(workspace)
@@ -128,7 +125,7 @@ export function WorkspaceInvitationCard({
 
       <p>
         {t("invitation.chatbotInvitationDescription2", {
-          userName: user.name ?? "",
+          userName: inviter.name ?? "",
           chatbotName: workspace.name,
         })}
       </p>

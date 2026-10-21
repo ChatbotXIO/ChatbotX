@@ -2,6 +2,7 @@ import {
   isGenericOAuthPath,
   SOCIAL_PROVIDERS,
   type SocialProvider,
+  warnIfGenericOAuthUnlicensed,
 } from "@chatbotx.io/auth/server"
 import {
   resolveOAuthStateCallbackURL,
@@ -94,8 +95,12 @@ const handle = async (request: Request): Promise<Response> => {
   const url = getPublicUrlFromRequest(request)
   // genericOAuth is registered from environment at module initialization, while
   // enterprise entitlement is request-scoped and must guard all plugin routes.
-  if (isGenericOAuthPath(url.pathname) && !(await hasEnterpriseFeatures())) {
-    return new Response(null, { status: 404 })
+  if (isGenericOAuthPath(url.pathname)) {
+    const isLicensed = await hasEnterpriseFeatures()
+    warnIfGenericOAuthUnlicensed(isLicensed)
+    if (!isLicensed) {
+      return new Response(null, { status: 404 })
+    }
   }
 
   const isCallback = url.pathname.includes("/callback/")

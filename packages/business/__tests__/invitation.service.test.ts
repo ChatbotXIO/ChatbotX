@@ -28,7 +28,6 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/utils", () => ({
   createId: () => "invitation-1",
-  SymbolicSnowflakeIDs: { generate: () => "invite-code" },
 }))
 
 vi.mock("../src/user/service", () => ({
@@ -40,6 +39,11 @@ vi.mock("../src/workspace/service", () => ({
 }))
 
 const { invitationService } = await import("../src/invitation/service")
+
+const TENANT_A = "tenant-a"
+const TENANT_B = "tenant-b"
+// 16 random bytes, base64url, no padding.
+const BASE64URL_16_BYTES = /^[A-Za-z0-9_-]{22}$/
 
 const activeInvitation = {
   code: "invite-code",
@@ -56,25 +60,39 @@ describe("invitationService", () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2026-10-08T00:00:00.000Z"))
     mocks.returning.mockResolvedValue([{ id: "invitation-1" }])
+    mocks.findWorkspace.mockResolvedValue({ tenantId: TENANT_A })
   })
 
   afterEach(() => {
     vi.useRealTimers()
   })
 
-  test("inserts a one-day invite code and returns the row", async () => {
+  test("inserts a one-day invite code generated from a CSPRNG, not a sequential id", async () => {
     const permissions = { superAdmin: true } as never
 
-    const invitation = await invitationService.create({
-      workspaceId: "ws-1",
-      invitedBy: "user-1",
-      permissions,
-    })
+    const [first, second] = await Promise.all([
+      invitationService.create({
+        workspaceId: "ws-1",
+        invitedBy: "user-1",
+        permissions,
+      }),
+      invitationService.create({
+        workspaceId: "ws-1",
+        invitedBy: "user-1",
+        permissions,
+      }),
+    ])
 
-    expect(invitation).toEqual({ id: "invitation-1" })
-    expect(mocks.values).toHaveBeenCalledWith({
+    expect(first).toEqual({ id: "invitation-1" })
+    expect(second).toEqual({ id: "invitation-1" })
+    const [firstCall, secondCall] = mocks.values.mock.calls
+    const firstCode = firstCall?.[0].code as string
+    const secondCode = secondCall?.[0].code as string
+    expect(firstCode).toMatch(BASE64URL_16_BYTES)
+    expect(secondCode).toMatch(BASE64URL_16_BYTES)
+    expect(firstCode).not.toBe(secondCode)
+    expect(firstCall?.[0]).toMatchObject({
       id: "invitation-1",
-      code: "invite-code",
       permissions,
       expiresAt: new Date("2026-10-09T00:00:00.000Z"),
       workspaceId: "ws-1",
@@ -82,11 +100,13 @@ describe("invitationService", () => {
     })
   })
 
-  test("returns an active invitation", async () => {
+  test("returns an active invitation in its own tenant", async () => {
     mocks.findByCode.mockResolvedValue(activeInvitation)
 
     await expect(
-      invitationService.findActiveByCode(activeInvitation.code),
+      invitationService.findActiveByCode(activeInvitation.code, {
+        tenantId: TENANT_A,
+      }),
     ).resolves.toBe(activeInvitation)
   })
 
@@ -97,7 +117,9 @@ describe("invitationService", () => {
     })
 
     await expect(
-      invitationService.findActiveByCode(activeInvitation.code),
+      invitationService.findActiveByCode(activeInvitation.code, {
+        tenantId: TENANT_A,
+      }),
     ).resolves.toBeNull()
   })
 
@@ -108,8 +130,24 @@ describe("invitationService", () => {
     })
 
     await expect(
-      invitationService.findActiveByCode(activeInvitation.code),
+      invitationService.findActiveByCode(activeInvitation.code, {
+        tenantId: TENANT_A,
+      }),
     ).resolves.toBeNull()
+  })
+
+  test("rejects an invitation from another tenant", async () => {
+    mocks.findByCode.mockResolvedValue(activeInvitation)
+    mocks.findWorkspace.mockResolvedValue({ tenantId: TENANT_B })
+
+    await expect(
+      invitationService.findActiveByCode(activeInvitation.code, {
+        tenantId: TENANT_A,
+      }),
+    ).resolves.toBeNull()
+    expect(mocks.findWorkspace).toHaveBeenCalledWith({
+      where: { id: activeInvitation.workspaceId },
+    })
   })
 
   test("preserves the expired invitation error for acceptance", async () => {
@@ -119,7 +157,7 @@ describe("invitationService", () => {
     })
 
     await expect(
-      invitationService.findActiveByCodeOrFail(activeInvitation.code),
+      invitationService.findActiveByCodeOrFail(activeInvitation.code, TENANT_A),
     ).rejects.toThrow("Invitation expired")
   })
 
@@ -130,37 +168,61 @@ describe("invitationService", () => {
     })
 
     await expect(
-      invitationService.findActiveByCodeOrFail(activeInvitation.code),
+      invitationService.findActiveByCodeOrFail(activeInvitation.code, TENANT_A),
     ).rejects.toThrow("Invalid invitation: no workspace associated")
   })
 
-  test("rejects an invitation from another tenant", async () => {
+  test("rejects acceptance of a cross-tenant code the same as an unknown one", async () => {
     mocks.findByCode.mockResolvedValue(activeInvitation)
-    mocks.findWorkspace.mockResolvedValue({ tenantId: "tenant-b" })
+    mocks.findWorkspace.mockResolvedValue({ tenantId: TENANT_B })
 
     await expect(
-      invitationService.findActiveByCode(activeInvitation.code, {
-        tenantId: "tenant-a",
-      }),
-    ).resolves.toBeNull()
-    expect(mocks.findWorkspace).toHaveBeenCalledWith({
-      where: { id: activeInvitation.workspaceId },
-    })
+      invitationService.findActiveByCodeOrFail(activeInvitation.code, TENANT_A),
+    ).rejects.toThrow("Invitation not found")
   })
 
-  test("loads the invitation, inviter, and workspace details", async () => {
+  test("loads a trimmed summary with no workspace token or inviter email", async () => {
     mocks.findByCode.mockResolvedValue(activeInvitation)
     mocks.findUserByIdOrFail.mockResolvedValue({
       id: activeInvitation.invitedBy,
+      name: "Ada",
+      image: "ada.png",
+      email: "ada@example.com",
     })
-    mocks.findWorkspace.mockResolvedValue({ id: activeInvitation.workspaceId })
+    mocks.findWorkspace.mockResolvedValue({
+      id: activeInvitation.workspaceId,
+      tenantId: TENANT_A,
+      name: "Acme",
+      logo: "acme-logo.png",
+      scheduledDeletionAt: null,
+      token: "legacy-plaintext-api-key",
+    })
 
     await expect(
-      invitationService.getInvitationDetails(activeInvitation.code),
+      invitationService.getInvitationDetails(activeInvitation.code, {
+        tenantId: TENANT_A,
+      }),
     ).resolves.toEqual({
-      invitation: activeInvitation,
-      user: { id: activeInvitation.invitedBy },
-      workspace: { id: activeInvitation.workspaceId },
+      code: activeInvitation.code,
+      expiresAt: activeInvitation.expiresAt,
+      workspace: {
+        name: "Acme",
+        logo: "acme-logo.png",
+        scheduledDeletionAt: null,
+      },
+      inviter: { name: "Ada", image: "ada.png" },
     })
+  })
+
+  test("returns null for a cross-tenant code instead of throwing", async () => {
+    mocks.findByCode.mockResolvedValue(activeInvitation)
+    mocks.findWorkspace.mockResolvedValue({ tenantId: TENANT_B })
+
+    await expect(
+      invitationService.getInvitationDetails(activeInvitation.code, {
+        tenantId: TENANT_A,
+      }),
+    ).resolves.toBeNull()
+    expect(mocks.findUserByIdOrFail).not.toHaveBeenCalled()
   })
 })

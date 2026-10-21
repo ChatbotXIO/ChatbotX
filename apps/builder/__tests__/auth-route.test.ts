@@ -15,6 +15,7 @@ const {
   mockResolveTenantByDomain,
   mockResolveTenantFromOAuthState,
   socialHandler,
+  warnIfGenericOAuthUnlicensed,
 } = vi.hoisted(() => ({
   defaultHandler: vi.fn(() => new Response("default")),
   hasEnterpriseFeatures: vi.fn(),
@@ -24,20 +25,28 @@ const {
   mockResolveTenantByDomain: vi.fn(),
   mockResolveTenantFromOAuthState: vi.fn(),
   socialHandler: vi.fn(() => new Response("social")),
+  warnIfGenericOAuthUnlicensed: vi.fn(),
 }))
 
+// `isGenericOAuthPath`'s real logic is covered directly in
+// `packages/auth/__tests__/generic-oauth-path.test.ts` (importing from the
+// package avoids pulling the heavy `@chatbotx.io/auth/server` module graph —
+// better-auth, drizzle, business — into this route test). This mock mirrors
+// that real implementation's three suffix/substring checks; a drift between
+// the two is caught by that dedicated test.
 vi.mock("@chatbotx.io/auth/server", () => ({
   isGenericOAuthPath: (pathname: string) =>
     pathname.endsWith("/sign-in/oauth2") ||
     pathname.endsWith("/oauth2/link") ||
     pathname.includes("/oauth2/callback/"),
   SOCIAL_PROVIDERS: ["google", "facebook"] as const,
+  warnIfGenericOAuthUnlicensed,
 }))
 
 vi.mock("@chatbotx.io/auth/tenant", () => ({
+  resolveOAuthStateCallbackURL: mockResolveOAuthStateCallbackURL,
   resolveTenantByDomain: mockResolveTenantByDomain,
   resolveTenantFromOAuthState: mockResolveTenantFromOAuthState,
-  resolveOAuthStateCallbackURL: mockResolveOAuthStateCallbackURL,
   // Run the body immediately — tenant binding is exercised elsewhere.
   withTenant: (_tenantId: string, fn: () => unknown) => fn(),
 }))
@@ -73,6 +82,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   hasEnterpriseFeatures.mockResolvedValue(true)
   mockGetSocialAuthForTenant.mockResolvedValue({ handler: socialHandler })
+  mockResolveTenantByDomain.mockResolvedValue("1")
 })
 
 describe("auth route — white-label relay", () => {
@@ -93,19 +103,6 @@ describe("auth route — white-label relay", () => {
     expect(response.status).toBe(302)
     expect(response.headers.get("location")).toBe(relayTarget)
     expect(socialHandler).not.toHaveBeenCalled()
-    expect(defaultHandler).not.toHaveBeenCalled()
-  })
-
-  test("returns 404 for generic OAuth when enterprise features are unavailable", async () => {
-    hasEnterpriseFeatures.mockResolvedValue(false)
-
-    const response = await GET(
-      new Request(
-        `https://${PLATFORM_HOST}/api/auth/sign-in/oauth2?providerId=oidc`,
-      ),
-    )
-
-    expect(response.status).toBe(404)
     expect(defaultHandler).not.toHaveBeenCalled()
   })
 
@@ -142,5 +139,47 @@ describe("auth route — white-label relay", () => {
     expect(mockGetSocialAuthForTenant).not.toHaveBeenCalled()
     expect(defaultHandler).toHaveBeenCalledTimes(1)
     expect(await response.text()).toBe("default")
+  })
+})
+
+describe("auth route — generic OAuth enterprise gate (real isGenericOAuthPath matcher)", () => {
+  const genericOAuthPaths = [
+    "/api/auth/sign-in/oauth2",
+    "/api/auth/oauth2/link",
+    "/api/auth/oauth2/callback/oidc",
+  ]
+
+  for (const path of genericOAuthPaths) {
+    test(`returns 404 for ${path} when enterprise features are unavailable`, async () => {
+      hasEnterpriseFeatures.mockResolvedValue(false)
+
+      const response = await GET(new Request(`https://${PLATFORM_HOST}${path}`))
+
+      expect(response.status).toBe(404)
+      expect(defaultHandler).not.toHaveBeenCalled()
+      expect(warnIfGenericOAuthUnlicensed).toHaveBeenCalledWith(false)
+    })
+
+    test(`reaches the default handler for ${path} when enterprise features are available`, async () => {
+      hasEnterpriseFeatures.mockResolvedValue(true)
+
+      const response = await GET(new Request(`https://${PLATFORM_HOST}${path}`))
+
+      expect(response.status).not.toBe(404)
+      expect(defaultHandler).toHaveBeenCalledTimes(1)
+      expect(warnIfGenericOAuthUnlicensed).toHaveBeenCalledWith(true)
+      expect(await response.text()).toBe("default")
+    })
+  }
+
+  test("a path containing but not matching the generic OAuth segments is never gated", async () => {
+    hasEnterpriseFeatures.mockResolvedValue(false)
+
+    const response = await GET(
+      new Request(`https://${PLATFORM_HOST}/api/auth/get-session`),
+    )
+
+    expect(response.status).not.toBe(404)
+    expect(defaultHandler).toHaveBeenCalledTimes(1)
   })
 })

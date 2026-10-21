@@ -3,6 +3,7 @@ import {
   isSignUpDisabled,
   resolveGenericOAuthConfig,
   SOCIAL_PROVIDERS,
+  warnIfGenericOAuthUnlicensed,
 } from "@chatbotx.io/auth/server"
 import { resolveTenantByDomain } from "@chatbotx.io/auth/tenant"
 import { hasEnterpriseFeatures } from "@chatbotx.io/business"
@@ -19,7 +20,9 @@ export type GenericOAuthButton = {
 /** The IdP button to render, or `null` when unconfigured or unlicensed. */
 export const resolveGenericOAuthButton =
   async (): Promise<GenericOAuthButton | null> => {
-    if (!(resolveGenericOAuthConfig() && (await hasEnterpriseFeatures()))) {
+    const isLicensed = await hasEnterpriseFeatures()
+    warnIfGenericOAuthUnlicensed(isLicensed)
+    if (!(resolveGenericOAuthConfig() && isLicensed)) {
       return null
     }
 

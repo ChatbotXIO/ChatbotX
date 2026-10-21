@@ -76,6 +76,7 @@ type BeforeHook = (context: {
   path: string
   body?: { email?: string }
   getCookie: (name: string) => string | undefined
+  headers?: Headers
 }) => Promise<unknown>
 
 const getHooks = async (): Promise<{
@@ -178,5 +179,28 @@ describe("signup lockdown", () => {
     await expect(
       emailRequestBefore({ ...context, path: "/sign-in/email" }),
     ).resolves.toBeUndefined()
+  })
+
+  test("allows /sign-up/email through the middleware hook when the request carries a live invitation cookie", async () => {
+    // The middleware's real `ctx` (better-call's internal endpoint context)
+    // always derives `getCookie` from the request's `Cookie` header itself —
+    // it ignores any `getCookie` passed in, unlike the db-hook context used
+    // above. A fake `getCookie` here would pass without proving the real
+    // middleware context can read the cookie at all.
+    vi.stubEnv("AUTH_DISABLE_SIGNUP", "true")
+    findActiveByCodeMock.mockResolvedValue({ id: "invite" })
+    const { emailRequestBefore } = await getHooks()
+
+    await expect(
+      emailRequestBefore({
+        path: "/sign-up/email",
+        body: { email: "new@example.com" },
+        getCookie: () => undefined,
+        headers: new Headers({ cookie: "chatbotx_invitation=invite-code" }),
+      }),
+    ).resolves.toBeUndefined()
+    expect(findActiveByCodeMock).toHaveBeenLastCalledWith("invite-code", {
+      tenantId: "tenant-a",
+    })
   })
 })
