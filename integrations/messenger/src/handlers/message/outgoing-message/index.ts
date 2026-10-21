@@ -139,6 +139,7 @@ export const handledFlowStepTypes = [
   stepTypes.enum.sendQuickReply,
   stepTypes.enum.sendCard,
   stepTypes.enum.sendCarousel,
+  stepTypes.enum.sendCollection,
   stepTypes.enum.sendMessengerTemplateMessage,
 ] as const satisfies readonly StepType[]
 
@@ -630,6 +631,25 @@ async function* convertFlowStep(
         props as SendFlowStepProps<MessengerAuthValue, SendCarouselStepSchema>,
       ) as Generator<FacebookMessage>
       break
+    // The sender resolved the collection to its product cards; one that
+    // resolved to none was never sent.
+    case stepTypes.enum.sendCollection: {
+      const cards = "cards" in step ? step.cards : []
+      if (cards.length === 0) {
+        break
+      }
+      const carouselStep: SendCarouselStepSchema = {
+        cards,
+        id: step.id,
+        layout: cardLayouts.enum.horizontal,
+        stepType: stepTypes.enum.sendCarousel,
+      }
+      yield* convertFlowStepCarousel({
+        ...props,
+        data: { ...props.data, step: carouselStep },
+      }) as Generator<FacebookMessage>
+      break
+    }
     default:
       throw new Error(`Unsupported Messenger flow step: ${step.stepType}`)
   }

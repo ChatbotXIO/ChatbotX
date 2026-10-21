@@ -1076,13 +1076,92 @@ chatbotx minigames players list <id>                    # Contacts who played, w
 
 ---
 
+### `orders`
+
+```bash
+chatbotx orders list                                    # [--status --source --contactId --from --to --keyword --page --perPage]
+chatbotx orders get <id>                                # Lines, totals and status history
+chatbotx orders create --items <json>                   # COD order from product ids [--contact --customerName --customerPhone --shippingAddress --note]
+chatbotx orders accept <id>                             # pending → accepted [--message, sent to the customer]
+chatbotx orders ship <id>                               # accepted → shipped [--message]
+chatbotx orders conclude <id>                           # → completed; COD becomes paid [--message]
+chatbotx orders cancel <id>                             # [--message as the reason] puts stock back
+chatbotx orders delete <id>                             # Puts stock back unless completed/cancelled
+```
+
+---
+
+### `open-hours`
+
+```bash
+chatbotx open-hours list                                # Named schedules for the store and vendors
+chatbotx open-hours create --name <name> --ranges <json>  # [{"day":1,"from":"09:00","to":"17:00"}]
+chatbotx open-hours update <id>                         # [--name --ranges]
+chatbotx open-hours delete <id>                         # Users become always open
+```
+
+---
+
+### `ecommerce`
+
+```bash
+chatbotx ecommerce settings get                         # Store settings (general/payments/shipping/checkout)
+chatbotx ecommerce settings update                      # [--general <json> --payments <json> --shipping <json> --checkout <json>] partial per group
+chatbotx ecommerce analytics                            # Sales dashboard [--from YYYY-MM-DD --to YYYY-MM-DD], workspace timezone; today by default
+```
+
+---
+
+### `discount-codes`
+
+```bash
+chatbotx discount-codes list                            # Coupons, newest first [--code --page --perPage]
+chatbotx discount-codes get <id>                        # With usedCount
+chatbotx discount-codes generate-code                   # Suggests a free random code
+chatbotx discount-codes create --code <code> --discountType <percentage|fixedAmount|freeShipping>  # [--discountValue --appliesTo --categoryId --productIds --minimumType --minimumValue --usageLimit --oncePerCustomer --eligibility --customerFilter --startsAt --endsAt --autoApply --isActive]
+chatbotx discount-codes update <id>                     # Partial (PATCH), checked as a whole code
+chatbotx discount-codes active update <id> --isActive <isActive>
+chatbotx discount-codes delete <id>                     # Orders keep the code and amount
+chatbotx discount-codes validate --code <code> --items <json>  # What it takes off now [--contact --shippingType]; uses nothing up
+```
+
+---
+
+### `webshop`
+
+```bash
+chatbotx webshop link                                   # Shop link signed for a customer [--contact --page cart --vendorId --categoryId]; no --contact = preview link
+```
+
+---
+
+### `carts`
+
+```bash
+chatbotx carts get <identifier>                         # A customer's cart (id:123 / email:… / phone:…), priced like an order
+```
+
+---
+
 ### `product-categories`
 
 ```bash
-chatbotx product-categories list
-chatbotx product-categories create --name <name>       # [--parentId --rank]
-chatbotx product-categories update <id>                 # [--name --parentId]
+chatbotx product-categories list                        # [--parentId --name] whole tree by default
+chatbotx product-categories create --name <name>       # [--parentId --rank --imageUrl --isVisible]
+chatbotx product-categories update <id>                 # [--name --parentId --rank --imageUrl --isVisible]
+chatbotx product-categories visible update <id> --isVisible <isVisible>  # Show/hide without resending the name
 chatbotx product-categories delete <id>
+```
+
+---
+
+### `product-vendors`
+
+```bash
+chatbotx product-vendors list                           # With product counts [--name --page --perPage]
+chatbotx product-vendors create --name <name>           # [--shortDescription --phone --storeAddress --imageUrl --isActive --discountPercent --minimumOrderValue --openHoursId --categoryId --subcategoryId --rank]
+chatbotx product-vendors update <id>                    # Partial (PATCH)
+chatbotx product-vendors delete <id>                    # Products are kept, without a vendor
 ```
 
 ---

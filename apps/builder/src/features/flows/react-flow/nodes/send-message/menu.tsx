@@ -8,6 +8,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import {
   CreditCardIcon,
+  GalleryHorizontalIcon,
   ImageIcon,
   ImagePlayIcon,
   ImagesIcon,
@@ -114,6 +115,11 @@ const ALL_MENU_ITEMS = (
     icon: ShoppingCartIcon,
     stepType: stepTypes.enum.sendProducts,
   },
+  sendCollection: {
+    label: t("flows.actions.sendCollection"),
+    icon: GalleryHorizontalIcon,
+    stepType: stepTypes.enum.sendCollection,
+  },
   whatsappLocation: {
     label: t("flows.actions.whatsappLocation"),
     icon: MapPinIcon,
@@ -160,6 +166,7 @@ const BASE_MENU_ORDER = [
   "sendGif",
   "sendTemplateMessage",
   "sendProducts",
+  "sendCollection",
   "typing",
   "sendFile",
   "actions",

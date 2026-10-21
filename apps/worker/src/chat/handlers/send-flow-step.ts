@@ -13,6 +13,7 @@ import {
   productMessageService,
   publishGuestRealtimeEvent,
   queueMessageCreatedEvent,
+  resolveCollectionStep,
   resolveMediaUrl,
   resolveTenantSettings,
 } from "@chatbotx.io/business"
@@ -642,7 +643,7 @@ export async function sendFlowStep({
   // point — every string leaf is copy an author wrote for a contact to read.
   // Code- or data-carrying steps (external request, execute JavaScript) resolve
   // through their own handlers and deliberately leave it off.
-  const resolvedStep = await resolveContactVariablesDeep(
+  const authoredStep = await resolveContactVariablesDeep(
     conversation.contactId,
     step,
     {
@@ -652,6 +653,27 @@ export async function sendFlowStep({
     },
     { spintax: true },
   )
+
+  // A collection becomes its product cards for this contact only now, after
+  // the variable pass: product names are the store's data, not authored
+  // copy, so "{Sale|Hot}" in a name is sent as written. The card links are
+  // signed for the contact by the resolver itself.
+  const resolvedStep =
+    authoredStep.stepType === stepTypes.enum.sendCollection
+      ? await resolveCollectionStep({
+          workspaceId: conversation.workspaceId,
+          contactId: conversation.contactId,
+          contactInboxId: targetContactInbox.id,
+          step: authoredStep,
+        })
+      : authoredStep
+  if (!resolvedStep) {
+    logger.debug(
+      { conversationId, flowId, stepId: step.id },
+      "Skipping a product collection that matched no product",
+    )
+    return
+  }
 
   if (isBlankTextCarrierStep(resolvedStep as SendFlowStepData)) {
     logger.warn(

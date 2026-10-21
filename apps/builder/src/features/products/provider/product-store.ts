@@ -6,7 +6,7 @@ export type ProductStoreState = {
   isLoading: boolean
   workspaceId: string
   products: Array<{ id: string; name: string }>
-  vendors: string[]
+  vendors: Array<{ id: string; name: string }>
 }
 
 export type ProductStoreActions = {

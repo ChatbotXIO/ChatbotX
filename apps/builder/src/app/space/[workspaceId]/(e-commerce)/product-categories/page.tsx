@@ -1,18 +1,33 @@
 import { productCategoryService } from "@chatbotx.io/business"
-import { ManageCategories } from "@/features/product-categories/components/manage-categories"
+import { ProductCategoriesTable } from "@/features/product-categories/product-categories-table"
+import { listProductCategoriesSearchParams } from "@/features/product-categories/schema/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export default async function ProductCategoriesPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ workspaceId: string }>
+  searchParams: Promise<Record<string, string>>
 }) {
   const { workspaceId } = await params
+  const search = listProductCategoriesSearchParams.parse(await searchParams)
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
-  // The whole tree, both levels: the table expands in place, so there is no
-  // navigation left that a second fetch could serve.
-  const categories = await productCategoryService.list(workspaceId)
+  const { parent, ...categories } = await productCategoryService.listLevel({
+    workspaceId,
+    parentId: search.parentId,
+    name: search.name,
+    page: search.page,
+    perPage: search.perPage,
+  })
 
-  return <ManageCategories categories={categories} workspaceId={workspaceId} />
+  return (
+    <ProductCategoriesTable
+      categories={categories}
+      key={parent?.id ?? "root"}
+      parent={parent ? { id: parent.id, name: parent.name } : null}
+      workspaceId={workspaceId}
+    />
+  )
 }

@@ -2616,7 +2616,8 @@
       "sendGoogleAdsConversion": "Enviar conversão do Google Ads",
       "changeGamificationScore": "Alterar pontos de gamificação",
       "sendViewCatalog": "Ver catálogo",
-      "sendProducts": "Enviar produtos"
+      "sendProducts": "Enviar produtos",
+      "sendCollection": "Coleção"
     },
     "splitTraffic": {
       "balanceHint": "A soma total deve ser igual a 100%.",
@@ -2797,6 +2798,43 @@
       "productsSelected": "{count, plural, one {# produto} other {# produtos}}",
       "noneSelected": "Ainda sem produtos",
       "sendFailed": "Não foi possível enviar os produtos."
+    },
+    "sendCollection": {
+      "title": "Coleção",
+      "dataType": "Tipo de dados",
+      "dataTypes": {
+        "products": "Produtos"
+      },
+      "collectionType": "Tipo de coleção",
+      "collectionTypes": {
+        "automated": {
+          "label": "Automática",
+          "description": "Os artigos atuais e futuros que cumprem as condições são adicionados automaticamente."
+        },
+        "manual": {
+          "label": "Manual",
+          "description": "Adicione os artigos um a um."
+        }
+      },
+      "condition": "Condição",
+      "name": "Nome",
+      "optional": "(Opcional)",
+      "category": "Categoria",
+      "subcategory": "Subcategoria",
+      "vendor": "Fornecedor",
+      "all": "Todos",
+      "items": "Artigos",
+      "select": "Selecionar",
+      "selectPlaceholder": "Selecione 1 ou mais artigos",
+      "selectAll": "Selecionar tudo",
+      "deselectAll": "Desmarcar tudo",
+      "maxProducts": "Até {count} produtos; um produto que a loja já não mostra é ignorado.",
+      "automatedHint": "Envia até {count} produtos correspondentes como cartões que abrem cada produto na loja.",
+      "summaryAll": "Todos os produtos da loja",
+      "summaryAutomated": "Produtos: {filters}",
+      "summaryManual": "{count, plural, one {# produto} other {# produtos}}",
+      "cancel": "Cancelar",
+      "save": "Guardar"
     }
   },
   "folders": {
@@ -5200,7 +5238,8 @@
       "contactReferredExistingContact": "Contacto recomendou um contacto existente",
       "callRecorded": "Chamada gravada",
       "callTranscribed": "Chamada transcrita",
-      "anyProduct": "Qualquer produto"
+      "anyProduct": "Qualquer produto",
+      "anyCategory": "Qualquer categoria"
     },
     "actions": {
       "addTag": "Adicionar etiqueta",
@@ -6381,7 +6420,82 @@
     "unknown": "Desconhecido"
   },
   "orders": {
-    "title": "Encomendas"
+    "title": "Encomendas",
+    "empty": "Ainda não há encomendas.",
+    "searchPlaceholder": "Pesquisar por nome, telefone, e-mail ou número da encomenda",
+    "orderNumber": "Encomenda n.º {number}",
+    "print": "Imprimir",
+    "inbox": "Caixa de entrada",
+    "statusUpdated": "Estado da encomenda atualizado",
+    "statusUpdateError": "Não foi possível atualizar o estado da encomenda",
+    "updateStatusTitle": "Atualizar estado da encomenda",
+    "message": "Mensagem",
+    "messagePlaceholder": "Opcional",
+    "messageDescription": "Enviada ao cliente na conversa dele.",
+    "cancel": "Cancelar",
+    "continue": "Continuar",
+    "delete": "Eliminar",
+    "deleted": "Encomenda eliminada",
+    "deleteError": "Não foi possível eliminar a encomenda",
+    "deleteTitle": "Eliminar a encomenda n.º {number}?",
+    "deleteDescription": "A encomenda, os seus artigos e o seu histórico são removidos. O stock que ainda retém é reposto.",
+    "columns": {
+      "name": "Nome",
+      "total": "Total",
+      "status": "Estado",
+      "date": "Data",
+      "rating": "Avaliação",
+      "quantity": "Quantidade",
+      "price": "Preço",
+      "vendor": "Fornecedor"
+    },
+    "fields": {
+      "name": "Nome",
+      "email": "E-mail",
+      "phone": "Telefone",
+      "country": "País",
+      "state": "Distrito",
+      "city": "Cidade",
+      "street": "Rua",
+      "zip": "Código postal",
+      "shippingType": "Envio",
+      "orderId": "ID da encomenda",
+      "date": "Data",
+      "subtotal": "Subtotal",
+      "discount": "Desconto",
+      "deliveryCost": "Custo de entrega",
+      "otherTaxes": "Outros impostos",
+      "total": "Total",
+      "paymentMethod": "Método de pagamento",
+      "status": "Estado",
+      "note": "Nota",
+      "cancelReason": "Motivo do cancelamento",
+      "rating": "Avaliação",
+      "ratingComment": "Comentário do cliente",
+      "coupon": "Cupão ({code})"
+    },
+    "statuses": {
+      "pending": "Não processada",
+      "accepted": "Aceite",
+      "shipped": "Enviada",
+      "concluded": "Concluída",
+      "cancelled": "Cancelada"
+    },
+    "transitions": {
+      "accepted": "Aceitar",
+      "shipped": "Enviar",
+      "concluded": "Concluir",
+      "cancelled": "Cancelar"
+    },
+    "paymentMethods": {
+      "cod": "Pagamento na entrega"
+    },
+    "shippingTypes": {
+      "delivery": "Entregar ao cliente",
+      "pickup": "Levantamento na loja"
+    },
+    "description": "Encomendas feitas pelos seus clientes.",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "Produtos",
@@ -6438,7 +6552,8 @@
         "label": "Permitir que os clientes comprem este produto quando estiver esgotado"
       },
       "vendor": {
-        "label": "Fornecedor"
+        "label": "Fornecedor",
+        "none": "Nenhum"
       },
       "rank": {
         "label": "Classificação"
@@ -6571,8 +6686,8 @@
     "loadError": "Não foi possível carregar as categorias de produtos.",
     "all": "Todos os produtos",
     "create": "Criar categoria",
-    "edit": "Mudar o nome da categoria",
-    "name": "Nome da categoria",
+    "edit": "Editar",
+    "name": "Nome",
     "namePlaceholder": "por ex., coleção de verão",
     "parent": "Categoria principal",
     "noParent": "Nenhuma (nível superior)",
@@ -6592,12 +6707,25 @@
     "columns": {
       "name": "Nome",
       "products": "Produtos",
-      "subcategories": "Subcategorias"
+      "subcategories": "Subcategorias",
+      "visible": "Visível"
     },
     "expand": "Mostrar subcategorias",
     "collapse": "Ocultar subcategorias",
     "productCount": "{count, plural, =0 {Sem produtos} one {# produto} other {# produtos}}",
-    "deleteChildrenWarning": "{count, plural, one {A sua # subcategoria também será eliminada.} other {As suas # subcategorias também serão eliminadas.}}"
+    "deleteChildrenWarning": "{count, plural, one {A sua # subcategoria também será eliminada.} other {As suas # subcategorias também serão eliminadas.}}",
+    "add": "Adicionar",
+    "dialogTitle": "Categoria",
+    "image": "Imagem",
+    "continue": "Continuar",
+    "subcategories": "Subcategorias",
+    "subcategoriesOf": "Subcategorias de {name}",
+    "emptySub": "Ainda não há subcategorias.",
+    "back": "Voltar às categorias",
+    "getId": "Obter ID",
+    "idCopied": "ID da categoria {id} copiado",
+    "idCopyError": "Não foi possível copiar o ID",
+    "description": "Agrupe os seus produtos em categorias e subcategorias."
   },
   "productImport": {
     "title": "Importar",
@@ -9076,6 +9204,493 @@
       "hours": "Horário",
       "closed": "Fechado"
     }
+  },
+  "productVendors": {
+    "title": "Fornecedores",
+    "add": "Adicionar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "actions": "Ações",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "moreOptions": "Mais opções",
+    "empty": "Ainda não há fornecedores.",
+    "created": "Fornecedor adicionado",
+    "updated": "Fornecedor atualizado",
+    "deleted": "Fornecedor eliminado",
+    "saveError": "Não foi possível guardar o fornecedor",
+    "deleteError": "Não foi possível eliminar o fornecedor",
+    "deleteTitle": "Eliminar {name}?",
+    "deleteDescription": "{count, plural, =0 {Nenhum produto usa este fornecedor.} one {# produto ficará sem fornecedor.} other {# produtos ficarão sem fornecedor.}}",
+    "fields": {
+      "name": "Nome",
+      "shortDescription": "Descrição curta",
+      "phone": "Telefone",
+      "storeAddress": "Morada da loja",
+      "image": "Imagem",
+      "optional": "Opcional",
+      "discountPercent": "Desconto (0-100%)",
+      "minimumOrderValue": "Valor mínimo da encomenda",
+      "openHours": "Horário de funcionamento",
+      "category": "Categoria",
+      "subcategory": "Subcategoria",
+      "none": "Nenhuma"
+    },
+    "columns": {
+      "name": "Nome",
+      "products": "Total de produtos",
+      "active": "Ativo"
+    },
+    "description": "Vendedores e marcas a que os seus produtos pertencem."
+  },
+  "ecommerceSettings": {
+    "save": "Guardar",
+    "saved": "Definições guardadas",
+    "saveError": "Não foi possível guardar as definições",
+    "rank": {
+      "label": "Posição",
+      "default": "Predefinida"
+    },
+    "tabs": {
+      "general": "Geral",
+      "payments": "Pagamentos",
+      "shipping": "Envio",
+      "checkout": "Checkout"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "Encomendas disponíveis",
+        "description": "Use este campo para impedir que os clientes façam encomendas sem alterar o seu horário de funcionamento. O horário de funcionamento também controla a sua disponibilidade."
+      },
+      "webshopProductView": {
+        "label": "Vista de produtos da loja online",
+        "description": "Controle a forma como os produtos são apresentados na sua loja online.",
+        "options": {
+          "list": "Lista",
+          "listWithoutImage": "Lista sem imagem",
+          "card": "Cartão",
+          "cardSquare": "Cartão com imagem quadrada",
+          "image": "Imagem",
+          "imageSquare": "Imagem (quadrada)"
+        }
+      },
+      "openHours": {
+        "label": "Horário de funcionamento",
+        "description": "Os intervalos de tempo em que os seus clientes podem fazer uma encomenda."
+      },
+      "searchProducts": {
+        "label": "Pesquisar produtos",
+        "description": "Permitir que os clientes enviem mensagens para encontrar produtos."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "Acompanhe as conversões com o Pixel do Facebook e meça os resultados dos seus anúncios. Os seguintes eventos são registados: ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "Mensagem de carrinho abandonado",
+        "description": "O tempo de espera antes de enviar uma mensagem de carrinho abandonado depois de o utilizador sair do seu bot com um artigo no carrinho.",
+        "disabled": "Desativada",
+        "afterMinutes": "Após {count} minutos",
+        "afterHours": "{count, plural, one {Após # hora} other {Após # horas}}"
+      },
+      "productButtons": {
+        "label": "Botões nos produtos",
+        "description": "Esta definição controla os botões mostrados nos produtos dentro do seu bot.",
+        "options": {
+          "addToCart": "Adicionar ao carrinho",
+          "share": "Partilhar",
+          "similar": "Semelhantes",
+          "save": "Guardar"
+        }
+      },
+      "productImageSize": {
+        "label": "Tamanho da imagem dos produtos",
+        "description": "Esta definição controla o tamanho da imagem dos produtos dentro do seu bot",
+        "options": {
+          "bigSquare": "Grande (quadrada)",
+          "mediumRectangle": "Média (retangular)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "Permitir avaliar encomendas",
+        "description": "Permita que os clientes avaliem uma encomenda e escrevam uma opinião se não estiverem satisfeitos. Apenas os administradores do bot podem ver as opiniões"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "Enviar notificação ao alterar o estado do carrinho",
+        "description": "O cliente receberá notificações sempre que alterar o estado da encomenda. Não é possível desativar a notificação de cancelamento e de conclusão da encomenda."
+      },
+      "abandonedCartFlow": {
+        "label": "Fluxo de carrinho abandonado",
+        "description": "O fluxo que o bot executa para o cliente quando o carrinho fica abandonado durante esse tempo. Use '{{shop_token}}' nos botões para abrir o carrinho. Os triggers também podem usar o evento \"Cart abandoned\".",
+        "none": "Sem fluxo (apenas evento de trigger)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {# produto tem preço} other {# produtos têm preço}} noutra moeda que não {currency}. As encomendas cobram o preço em {currency}.",
+      "paymentMethods": {
+        "label": "Métodos de pagamento",
+        "description": "Os métodos de pagamento ativados na página de checkout. O primeiro método da lista será o selecionado na página de checkout.",
+        "options": {
+          "cod": "Pagamento na entrega"
+        }
+      },
+      "currency": {
+        "label": "Moeda",
+        "description": "Esta é a moeda em que define os preços dos produtos. Os clientes serão cobrados nesta moeda."
+      },
+      "currencyPosition": {
+        "label": "Posição da moeda",
+        "description": "Esta opção permite controlar a posição da moeda.",
+        "options": {
+          "left": "Esquerda",
+          "leftSpace": "Esquerda com espaço",
+          "right": "Direita",
+          "rightSpace": "Direita com espaço"
+        }
+      },
+      "currencySymbol": {
+        "label": "Símbolo da moeda",
+        "description": "O símbolo da moeda é mostrado antes dos preços. Se quiser um espaço entre o símbolo e os preços, adicione um espaço no fim do símbolo."
+      },
+      "serviceFeePercent": {
+        "label": "Outras taxas / taxas de serviço (0 - 100%)",
+        "description": "Outras taxas relacionadas com a venda."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "Tipo de envio",
+        "description": "Esta opção permite controlar como o cliente recebe a sua encomenda.",
+        "options": {
+          "none": "Nenhum",
+          "delivery": "Entregar ao cliente",
+          "pickup": "Levantamento na loja",
+          "deliveryAndPickup": "Entregar ao cliente, Levantamento na loja"
+        }
+      },
+      "storeAddress": {
+        "label": "Morada da loja",
+        "description": "Esta morada é mostrada ao cliente na página de checkout se permitir o levantamento na loja."
+      },
+      "shippingCountries": {
+        "label": "Países de envio",
+        "description": "Os países para os quais envia encomendas."
+      },
+      "defaultShippingCountry": {
+        "label": "País de envio predefinido",
+        "description": "O país que será selecionado por predefinição na página de checkout.",
+        "none": "Nenhum"
+      },
+      "deliveryCost": {
+        "label": "Custo de entrega",
+        "description": "Uma taxa fixa para entregar a encomenda na morada do cliente."
+      }
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "Checkout",
+        "description": "Esta definição controla onde os seus clientes finalizam as encomendas. Se quiser que o utilizador conclua a encomenda fora do seu bot, como no seu site, na Amazon,.. não use a nossa página de checkout predefinida.",
+        "options": {
+          "default": "Página de checkout predefinida",
+          "externalLink": "Página de checkout externa personalizada",
+          "flow": "Fluxo",
+          "productPage": "Visitar a página externa do produto"
+        }
+      },
+      "checkoutLink": {
+        "label": "Ligação da página de checkout",
+        "description": "A página externa onde os clientes finalizam as encomendas."
+      },
+      "checkoutFlowId": {
+        "label": "Fluxo de checkout",
+        "description": "O fluxo executado quando um cliente faz o checkout.",
+        "placeholder": "Selecione um fluxo"
+      },
+      "minimumOrderValue": {
+        "label": "Valor mínimo da encomenda",
+        "description": "O valor mínimo da encomenda que um cliente pode fazer. Esta condição é verificada depois de aplicados todos os descontos."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "Exigir nome do comprador",
+          "description": "O nome do comprador será recolhido durante o checkout."
+        },
+        "requireEmail": {
+          "label": "Exigir endereço de e-mail",
+          "description": "O e-mail do comprador será recolhido durante o checkout."
+        },
+        "requirePhone": {
+          "label": "Exigir número de telefone",
+          "description": "O telefone do comprador será recolhido durante o checkout."
+        },
+        "requireState": {
+          "label": "Exigir distrito/região",
+          "description": "O distrito do comprador será recolhido durante o checkout."
+        },
+        "requireZip": {
+          "label": "Exigir código postal",
+          "description": "O código postal do comprador será recolhido durante o checkout."
+        }
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "Sempre aberto",
+    "addNew": "Adicionar novo",
+    "dialogTitle": "Horário de funcionamento",
+    "name": "Nome",
+    "namePlaceholder": "ex.: Dias úteis",
+    "day": "Dia",
+    "from": "Abre",
+    "to": "Fecha",
+    "add": "Adicionar horário",
+    "remove": "Remover",
+    "cancel": "Cancelar",
+    "continue": "Continuar",
+    "created": "Horário de funcionamento criado",
+    "saveError": "Não foi possível guardar o horário de funcionamento",
+    "days": {
+      "0": "Domingo",
+      "1": "Segunda-feira",
+      "2": "Terça-feira",
+      "3": "Quarta-feira",
+      "4": "Quinta-feira",
+      "5": "Sexta-feira",
+      "6": "Sábado"
+    }
+  },
+  "webshop": {
+    "metadataTitle": "Loja",
+    "metadataOrderTitle": "A sua encomenda",
+    "invalidLinkTitle": "Esta ligação não funciona",
+    "invalidLinkDescription": "Pode ter expirado. Peça uma nova ligação à loja no chat.",
+    "previewBanner": "Pré-visualização: é assim que os clientes veem. Não é possível encomendar a partir da pré-visualização.",
+    "closed": {
+      "orderingUnavailable": "A loja não está a aceitar encomendas neste momento.",
+      "outsideOpenHours": "A loja está fechada neste momento. Pode continuar a ver."
+    },
+    "searchPlaceholder": "Pesquisar produtos",
+    "categories": "Categorias",
+    "allCategories": "Todas as categorias",
+    "vendors": "Fornecedores",
+    "allVendors": "Todos os fornecedores",
+    "noProducts": "Nenhum produto encontrado.",
+    "productNotFound": "Este produto já não está disponível.",
+    "outOfStock": "Esgotado",
+    "addToCart": "Adicionar ao carrinho",
+    "added": "Adicionado ao carrinho",
+    "chooseOptions": "Escolher opções",
+    "chooseOption": "Escolha {name}",
+    "variantUnavailable": "Esta combinação não está disponível.",
+    "buy": "Comprar",
+    "share": "Partilhar",
+    "linkCopied": "Copiado",
+    "similar": "Semelhantes",
+    "save": "Guardar",
+    "saved": "Guardado",
+    "showImage": "Mostrar imagem {number}",
+    "increase": "Aumentar quantidade",
+    "decrease": "Diminuir quantidade",
+    "remove": "Remover",
+    "cart": "Carrinho",
+    "cartEmpty": "O seu carrinho está vazio.",
+    "continueShopping": "Continuar a comprar",
+    "unavailableItems": "{count, plural, one {# artigo não pode ser encomendado agora} other {# artigos não podem ser encomendados agora}}",
+    "unavailable": "Já não está disponível",
+    "unavailableHint": "Escolha as opções novamente",
+    "deletedProduct": "Produto eliminado",
+    "summary": {
+      "subtotal": "Subtotal",
+      "discount": "Desconto",
+      "delivery": "Entrega",
+      "otherFees": "Outras taxas",
+      "total": "Total",
+      "coupon": "Cupão ({code})"
+    },
+    "belowMinimum": "A encomenda mínima é de {amount}.",
+    "checkOut": "Finalizar compra",
+    "contactDetails": "Os seus dados",
+    "optional": "(opcional)",
+    "fields": {
+      "name": "Nome",
+      "email": "E-mail",
+      "phone": "Telefone",
+      "country": "País",
+      "state": "Distrito",
+      "city": "Cidade",
+      "address1": "Morada",
+      "address2": "Andar, edifício, etc.",
+      "zip": "Código postal",
+      "note": "Nota para a loja"
+    },
+    "shipping": {
+      "title": "Entrega",
+      "delivery": "Entregar na minha morada",
+      "pickup": "Levantar na loja",
+      "storeAddress": "Morada da loja: {address}"
+    },
+    "payment": {
+      "title": "Pagamento",
+      "cod": "Pagamento na entrega"
+    },
+    "placeOrder": "Fazer encomenda",
+    "orderPlaced": "Obrigado! A sua encomenda foi feita. Enviaremos novidades no chat.",
+    "orderTitle": "Encomenda n.º {number}",
+    "orderNotFound": "Encomenda não encontrada.",
+    "placedAt": "Feita a {date}",
+    "status": {
+      "pending": "Não processada",
+      "accepted": "Em processamento",
+      "shipped": "Enviada",
+      "concluded": "Concluída",
+      "cancelled": "Cancelada"
+    },
+    "rateTitle": "Avalie a sua encomenda",
+    "rateComment": "Diga à loja o que achou (opcional)",
+    "rateSubmit": "Enviar avaliação",
+    "rateThanks": "Obrigado pela avaliação!",
+    "yourRating": "A sua avaliação",
+    "ratingValue": "{rating} de 5 estrelas",
+    "previous": "Anterior",
+    "next": "Seguinte",
+    "pageOf": "Página {page} de {pageCount}",
+    "errors": {
+      "generic": "Algo correu mal. Tente novamente.",
+      "checkFields": "Verifique os campos.",
+      "fieldRequired": "{field} é obrigatório.",
+      "countryUnavailable": "A loja não entrega neste país.",
+      "invalidLink": "Esta ligação já não funciona. Peça uma nova à loja.",
+      "webshopPreviewOnly": "Esta é uma pré-visualização. Só é possível encomendar pela ligação de um cliente.",
+      "rateLimited": "Demasiadas tentativas. Aguarde um pouco e tente novamente.",
+      "orderingUnavailable": "A loja não está a aceitar encomendas neste momento.",
+      "orderBelowMinimum": "A encomenda mínima é de {minimum}.",
+      "orderBelowVendorMinimum": "Os artigos de {vendorName} têm de somar pelo menos {minimum}.",
+      "orderOutOfStock": "{productName} está esgotado.",
+      "orderProductUnavailable": "Alguns artigos já não podem ser encomendados. Verifique o carrinho.",
+      "orderEmpty": "O seu carrinho está vazio.",
+      "orderShippingTypeUnavailable": "Esta opção de entrega não está disponível.",
+      "webshopRatingNotAllowed": "Esta encomenda não pode ser avaliada.",
+      "notFound": "Este produto já não está disponível.",
+      "discountCodeNotFound": "Este código de desconto não existe.",
+      "discountCodeInactive": "Este código não está ativo.",
+      "discountCodeNotStarted": "Este código ainda não é válido.",
+      "discountCodeExpired": "Este código expirou.",
+      "discountCodeUsageLimitReached": "Este código esgotou.",
+      "discountCodeAlreadyUsed": "Já usou este código.",
+      "discountCodeNotEligible": "Este código não está disponível para si.",
+      "discountCodeNotApplicable": "Este código não se aplica ao seu carrinho.",
+      "discountCodeMinimumAmount": "Este código exige compra mínima de {minimum}. Adicione mais {missing}.",
+      "discountCodeMinimumQuantity": "Este código exige pelo menos {minimum} artigos. Adicione mais {missing}."
+    },
+    "discount": {
+      "label": "Código de desconto",
+      "placeholder": "Código de desconto",
+      "apply": "Aplicar",
+      "applied": "Código aplicado",
+      "automatic": "aplicado automaticamente",
+      "remove": "Remover código"
+    }
+  },
+  "webshopLinks": {
+    "preview": "Pré-visualizar",
+    "getLink": "Obter ligação",
+    "copied": "Ligação copiada. Coloque-a num botão do bot: cada contacto abre a sua própria loja.",
+    "error": "Não foi possível obter a ligação.",
+    "copyError": "Não foi possível copiar a ligação."
+  },
+  "discountCodes": {
+    "title": "Cupões",
+    "description": "Códigos de desconto que os clientes usam no checkout ou que se aplicam sozinhos.",
+    "add": "Adicionar",
+    "edit": "Editar cupão",
+    "automatic": "Automático",
+    "never": "Nunca",
+    "searchPlaceholder": "Pesquisar códigos…",
+    "saveError": "Não foi possível guardar o cupão.",
+    "created": "Cupão criado",
+    "updated": "Cupão guardado",
+    "deleted": "Cupão eliminado",
+    "deleteError": "Não foi possível eliminar o cupão.",
+    "deleteTitle": "Eliminar o cupão {code}?",
+    "deleteDescription": "Os clientes deixam de o poder usar. As encomendas que o usaram mantêm o desconto.",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "save": "Guardar",
+    "columns": {
+      "name": "Nome",
+      "discount": "Desconto",
+      "used": "Usado",
+      "end": "Fim",
+      "active": "Ativo"
+    },
+    "discountTypes": {
+      "percentage": "Percentagem",
+      "fixedAmount": "Valor fixo",
+      "freeShipping": "Portes grátis"
+    },
+    "appliesTo": {
+      "entireOrder": "Encomenda inteira",
+      "category": "Categoria específica",
+      "products": "Produtos específicos"
+    },
+    "minimumTypes": {
+      "none": "Nenhum",
+      "amount": "Valor mínimo de compra",
+      "quantity": "Quantidade mínima de artigos"
+    },
+    "eligibilities": {
+      "everyone": "Todos",
+      "specificCustomers": "Clientes específicos"
+    },
+    "form": {
+      "discountCode": "Código de desconto",
+      "code": "Código",
+      "generate": "Gerar",
+      "autoApply": "Aplicar este cupão automaticamente aos carrinhos",
+      "autoApplyHint": "Os carrinhos recebem-no sem o cliente o escrever. Com vários cupões automáticos, ganha o de maior desconto.",
+      "typedHint": "Os clientes vão introduzir este código no checkout.",
+      "options": "Opções",
+      "discountType": "Tipo de desconto",
+      "discountValuePercent": "Valor do desconto (%)",
+      "discountValueAmount": "Valor do desconto ({currency})",
+      "freeShippingHint": "Retira o custo de entrega das encomendas entregues ao cliente.",
+      "appliesTo": "Aplica-se a",
+      "category": "Categoria",
+      "products": "Produtos",
+      "productsPlaceholder": "Escolha produtos",
+      "minimumRequirement": "Requisito mínimo",
+      "minimumAmount": "Valor mínimo ({currency})",
+      "minimumQuantity": "Número mínimo de artigos",
+      "usageLimits": "Limites de utilização",
+      "limitTotal": "Limitar quantas vezes o desconto pode ser usado no total",
+      "usedSoFar": "{count, plural, one {Usado # vez até agora} other {Usado # vezes até agora}}",
+      "oncePerCustomer": "Uma utilização por cliente",
+      "customerEligibility": "Clientes elegíveis",
+      "specificCustomersHint": "Apenas contactos que correspondem ao filtro abaixo no momento da encomenda.",
+      "activeDates": "Período de validade",
+      "startDate": "Data de início",
+      "endDate": "Data de fim",
+      "isActive": "Ativo"
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "Análises",
+    "lifetime": "Desde o início",
+    "sales": "Vendas",
+    "orders": "Encomendas",
+    "products": "Produtos",
+    "salesByDate": "Vendas por data",
+    "ordersByDate": "Encomendas por data",
+    "topProducts": "Produtos mais vendidos",
+    "topVendors": "Fornecedores com mais vendas",
+    "columns": {
+      "name": "Nome",
+      "sales": "Vendas"
+    },
+    "noData": "Sem dados neste período",
+    "refresh": "Atualizar",
+    "change": "{value}%",
+    "noPrevious": "novo"
   },
   "responseSla": {
     "label": "SLA de resposta",

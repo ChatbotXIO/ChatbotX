@@ -1,5 +1,6 @@
 import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
 import {
+  type ProductImportInsert,
   productCategoryRepository,
   productRepository,
 } from "@chatbotx.io/database/repositories"
@@ -18,6 +19,7 @@ import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 import { assertDeletable } from "../template/installed-resource.service"
+import { vendorService } from "../vendor/service"
 
 export type ProductImageInput = {
   id?: string
@@ -39,6 +41,13 @@ export type ProductWriteData = {
   allowOutOfStockPurchase?: boolean
   images?: ProductImageInput[]
   tags?: string[]
+  /** Picks an existing vendor. Wins over `vendor` when both are given. */
+  vendorId?: string | null
+  /**
+   * Names the vendor instead of picking one; a name not seen before creates
+   * the vendor. Kept so the product API, imports and templates — which all
+   * carry a vendor name — keep working.
+   */
   vendor?: string | null
   rank?: number
   categoryId?: string | null
@@ -169,13 +178,52 @@ class ProductService extends BaseService {
     return current?.categoryId ?? null
   }
 
+  /**
+   * The `vendorId` column a write should set: `undefined` leaves it alone,
+   * `null` clears it. A vendor named by `vendor` is created when missing.
+   */
+  private async resolveVendorId(input: {
+    workspaceId: string
+    data: Pick<ProductWriteData, "vendor" | "vendorId">
+    tx: DatabaseClient
+  }): Promise<string | null | undefined> {
+    const { workspaceId, data, tx } = input
+    if (data.vendorId !== undefined) {
+      if (data.vendorId) {
+        await vendorService.assertBelongsToWorkspace({
+          workspaceId,
+          vendorId: data.vendorId,
+          tx,
+        })
+      }
+      return data.vendorId
+    }
+    if (data.vendor !== undefined) {
+      return await vendorService.resolveName({
+        workspaceId,
+        name: data.vendor,
+        tx,
+      })
+    }
+    return
+  }
+
   private async insert(
     data: ProductWriteData,
     tx: DatabaseClient,
   ): Promise<ProductModel> {
-    const { images = [], ...productData } = data
+    const { images = [], vendor, vendorId, ...productData } = data
+    const resolvedVendorId = await this.resolveVendorId({
+      workspaceId: data.workspaceId,
+      data: { vendor, vendorId },
+      tx,
+    })
     const product = await productRepository.create(
-      { ...productData, images: toImageRows(images) },
+      {
+        ...productData,
+        vendorId: resolvedVendorId ?? null,
+        images: toImageRows(images),
+      },
       tx,
     )
     if (!product) {
@@ -190,7 +238,12 @@ class ProductService extends BaseService {
     data: Partial<Omit<ProductWriteData, "workspaceId">>
     tx: DatabaseClient
   }): Promise<void> {
-    const { images, ...productData } = input.data
+    const { images, vendor, vendorId, ...productData } = input.data
+    const resolvedVendorId = await this.resolveVendorId({
+      workspaceId: input.workspaceId,
+      data: { vendor, vendorId },
+      tx: input.tx,
+    })
     const updated = await productRepository.update(
       {
         workspaceId: input.workspaceId,
@@ -198,6 +251,9 @@ class ProductService extends BaseService {
         // Absent images mean "leave them alone", not "clear them".
         values: {
           ...productData,
+          ...(resolvedVendorId === undefined
+            ? {}
+            : { vendorId: resolvedVendorId }),
           ...(images ? { images: toImageRows(images) } : {}),
         },
       },
@@ -354,13 +410,33 @@ class ProductService extends BaseService {
     return await productRepository.listFormOptions({ workspaceId })
   }
 
+  /** Rows from a file import. Vendors are named, and created when missing. */
   async createFromImport(input: {
     workspaceId: string
-    products: Parameters<
-      typeof productRepository.createFromImport
-    >[0]["products"]
+    products: Array<
+      Omit<ProductImportInsert, "vendorId"> & { vendor?: string | null }
+    >
   }) {
-    return await productRepository.createFromImport(input)
+    return await db.transaction(async (tx) => {
+      const vendorIds = await vendorService.resolveByNames({
+        workspaceId: input.workspaceId,
+        names: input.products.flatMap((product) => product.vendor ?? []),
+        createMissing: true,
+        tx,
+      })
+      return await productRepository.createFromImport(
+        {
+          workspaceId: input.workspaceId,
+          products: input.products.map(({ vendor, ...product }) => ({
+            ...product,
+            vendorId: vendor
+              ? (vendorIds.get(vendor.trim().toLowerCase()) ?? null)
+              : null,
+          })),
+        },
+        tx,
+      )
+    })
   }
 
   async listForCatalogSync(

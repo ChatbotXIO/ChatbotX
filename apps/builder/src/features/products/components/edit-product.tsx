@@ -8,6 +8,7 @@ import type { UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
 import { updateProductAction } from "../actions/update-product-action"
 import { ProductStoreProvider } from "../provider/product-store-context"
+import { useInvalidateProductFormOptions } from "../provider/use-invalidate-product-form-options"
 import { type ProductFormRequest, productFormRequest } from "../schema/action"
 import type { ProductDetailResource } from "../schema/resource"
 import { ProductForm } from "./product-form"
@@ -21,7 +22,8 @@ type EditProductProps = {
 
 function buildDefaultValues(product: ProductDetailResource) {
   const defaults = productFormRequest.parse({})
-  const { id, workspaceId, ...rest } = product
+  // The form picks a vendor by id; the name is only for the API.
+  const { id, workspaceId, vendor: _vendorName, ...rest } = product
   return { ...defaults, ...rest }
 }
 
@@ -32,6 +34,7 @@ export function EditProduct({
 }: EditProductProps) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateProductFormOptions = useInvalidateProductFormOptions()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     updateProductAction.bind(null, workspaceId, product.id),
@@ -45,6 +48,7 @@ export function EditProduct({
           toast.success(
             t("messages.updatedSuccess", { feature: t("products.title") }),
           )
+          invalidateProductFormOptions()
           router.push(`/space/${workspaceId}/products`)
         },
         onError: ({ error }) => {

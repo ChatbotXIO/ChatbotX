@@ -1027,3 +1027,136 @@ export const possibleErrorsOnCreatingInFolder = {
   ...possibleErrorsOnCreatingResource,
   notFound,
 } satisfies ErrorMap
+
+/**
+ * Vendor create/update enforce `Vendor_workspaceId_name_key`
+ * (`vendorService` in packages/business/src/vendor/service.ts).
+ */
+const productVendorErrors = {
+  productVendorDuplicated: {
+    message: "A vendor with this name already exists",
+    status: 400,
+  },
+  productVendorNameRequired: {
+    message: "Vendor name is required",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingProductVendor = {
+  ...possibleErrorsOnCreatingResource,
+  ...productVendorErrors,
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingProductVendor = {
+  ...possibleErrorsOnMutatingResource,
+  ...productVendorErrors,
+} satisfies ErrorMap
+
+/** `ecommerceSettingsService.update` refuses a Pro setting the plan lacks. */
+export const possibleErrorsOnUpdatingEcommerceSettings = {
+  ...possibleErrorsOnMutatingResource,
+  ecommerceProFeatureRequired: {
+    message: "This setting needs a Pro plan",
+    status: 403,
+  },
+} satisfies ErrorMap
+
+/**
+ * `orderService.place` (packages/business/src/order/service.ts) refuses an
+ * order with these codes; see `packages/business/src/order/errors.ts`.
+ */
+/** Why a discount code cannot be used on an order. */
+const discountCodeUseErrors = {
+  discountCodeNotFound: {
+    message: "This discount code does not exist",
+    status: 404,
+  },
+  discountCodeInactive: {
+    message: "This discount code is turned off",
+    status: 400,
+  },
+  discountCodeNotStarted: {
+    message: "This discount code is not valid yet",
+    status: 400,
+  },
+  discountCodeExpired: {
+    message: "This discount code has expired",
+    status: 400,
+  },
+  discountCodeUsageLimitReached: {
+    message: "This discount code has been used up",
+    status: 400,
+  },
+  discountCodeAlreadyUsed: {
+    message: "This discount code can be used once per customer",
+    status: 400,
+  },
+  discountCodeNotEligible: {
+    message: "This discount code is not available to this customer",
+    status: 400,
+  },
+  discountCodeMinimumNotMet: {
+    message: "The order does not meet the discount code's minimum",
+    status: 400,
+  },
+  discountCodeNotApplicable: {
+    message: "The discount code does not apply to anything in the order",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnCreatingDiscountCode = {
+  ...possibleErrorsOnCreatingResource,
+  discountCodeDuplicated: {
+    message: "A discount code with this name already exists",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnMutatingDiscountCode = {
+  ...possibleErrorsOnMutatingResource,
+  discountCodeDuplicated: {
+    message: "A discount code with this name already exists",
+    status: 409,
+  },
+} satisfies ErrorMap
+
+export const possibleErrorsOnPlacingOrder = {
+  ...possibleErrorsOnMutatingResource,
+  ...discountCodeUseErrors,
+  orderEmpty: { message: "An order needs at least one item", status: 400 },
+  orderingUnavailable: {
+    message: "The store is not taking orders right now",
+    status: 400,
+  },
+  orderProductUnavailable: {
+    message: "A product in the order is not available",
+    status: 400,
+  },
+  orderOutOfStock: {
+    message: "A product in the order is out of stock",
+    status: 400,
+  },
+  orderBelowMinimum: {
+    message: "The order is below the store minimum",
+    status: 400,
+  },
+  orderBelowVendorMinimum: {
+    message: "The items of a vendor are below its minimum order",
+    status: 400,
+  },
+  orderShippingTypeUnavailable: {
+    message: "The store does not offer this shipping type",
+    status: 400,
+  },
+} satisfies ErrorMap
+
+/** Accept/ship/conclude/cancel: a move the order's status does not allow. */
+export const possibleErrorsOnTransitioningOrder = {
+  ...possibleErrorsOnMutatingResource,
+  orderInvalidStatusTransition: {
+    message: "The order's current status does not allow this change",
+    status: 409,
+  },
+} satisfies ErrorMap

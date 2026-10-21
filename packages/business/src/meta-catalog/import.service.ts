@@ -7,6 +7,7 @@ import {
   getProductCategoryPathKey,
   productCategoryService,
 } from "../product-category"
+import { vendorService } from "../vendor/service"
 
 export type MetaCatalogImportProduct = {
   retailerId: string
@@ -29,12 +30,27 @@ export type MetaCatalogImportProduct = {
   isActive?: boolean
 }
 
+/** Lower-cased vendor name → vendor id, as `vendorService.resolveByNames` returns. */
+type VendorIds = Map<string, string>
+
+const toVendorValues = (
+  product: MetaCatalogImportProduct,
+  vendorIds: VendorIds,
+): { vendorId?: string | null } => {
+  if (product.vendor === undefined) {
+    return {}
+  }
+  const name = product.vendor?.trim()
+  return { vendorId: name ? (vendorIds.get(name.toLowerCase()) ?? null) : null }
+}
+
 const toProductValues = (
   product: MetaCatalogImportProduct,
   categoryPaths: Map<
     string,
     { categoryId: string; subcategoryId: string | null }
   >,
+  vendorIds: VendorIds,
   includeSku: boolean,
 ) => {
   let categoryPath:
@@ -67,7 +83,7 @@ const toProductValues = (
       : { longDescription: product.longDescription }),
     ...(categoryPath ?? {}),
     ...(product.tags === undefined ? {} : { tags: product.tags }),
-    ...(product.vendor === undefined ? {} : { vendor: product.vendor }),
+    ...toVendorValues(product, vendorIds),
     ...(product.inventoryQuantity === undefined
       ? {}
       : { inventoryQuantity: product.inventoryQuantity }),
@@ -197,12 +213,18 @@ class MetaCatalogImportService {
         createMissing: true,
         tx,
       })
+      const vendorIds = await vendorService.resolveByNames({
+        workspaceId: input.workspaceId,
+        names: uniqueProducts.flatMap((product) => product.vendor ?? []),
+        createMissing: true,
+        tx,
+      })
       for (const { product, productId } of existingProducts) {
         const updated = await productRepository.update(
           {
             workspaceId: input.workspaceId,
             productId,
-            values: toProductValues(product, categoryPaths, false),
+            values: toProductValues(product, categoryPaths, vendorIds, false),
           },
           tx,
         )
@@ -219,7 +241,7 @@ class MetaCatalogImportService {
               {
                 workspaceId: input.workspaceId,
                 products: missingProducts.map((product) =>
-                  toProductValues(product, categoryPaths, true),
+                  toProductValues(product, categoryPaths, vendorIds, true),
                 ),
               },
               tx,

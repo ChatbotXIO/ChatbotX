@@ -1,0 +1,811 @@
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import type {
+  CartLine,
+  EcommerceSettings,
+  OrderShippingAddress,
+  ShippingType,
+} from "@chatbotx.io/database/partials"
+import {
+  cartRepository,
+  ecommerceOpenHoursRepository,
+  orderRepository,
+  productRepository,
+} from "@chatbotx.io/database/repositories"
+import type { CartModel } from "@chatbotx.io/database/types"
+import { emitCartAbandoned, emitCartItemChanged } from "@chatbotx.io/events"
+import type { MessageInboundOrderEntity } from "@chatbotx.io/sdk"
+import {
+  IntegrationJobAction,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
+import { BaseService } from "../base.service"
+import { conversationService } from "../conversation/service"
+import { isWithinOpenHours } from "../ecommerce-open-hours/is-open"
+import { ecommerceSettingsService } from "../ecommerce-settings/service"
+import {
+  ChatbotXException,
+  notFoundException,
+  validationException,
+} from "../errors"
+import { logger } from "../logger"
+import { resolveContactMessageLanguage } from "../order/contact-language"
+import {
+  buildCartSummaryText,
+  checkoutButtonLabel,
+} from "../order/customer-messages"
+import { orderEmptyException } from "../order/errors"
+import { orderService } from "../order/service"
+import { resolveTenantSettings } from "../platform/settings"
+import { productService } from "../product/service"
+import { productCategoryService } from "../product-category/service"
+import { vendorService } from "../vendor/service"
+import { workspaceService } from "../workspace/service"
+import { resolveWorkspaceFreezeReasonById } from "../workspace-lifecycle/with-blocked-owner-guard"
+import {
+  type WebshopClosedReason,
+  webshopClosedException,
+  webshopRatingNotAllowedException,
+} from "./errors"
+import { buildWebshopButtonUrl } from "./link"
+
+/** The customer a shop link was signed for. */
+export type WebshopShopper = {
+  workspaceId: string
+  contactId: string
+  contactInboxId: string | null
+  conversationId: string | null
+}
+
+export type WebshopCheckoutForm = {
+  customerName?: string | null
+  customerEmail?: string | null
+  customerPhone?: string | null
+  shippingType?: ShippingType | null
+  shippingAddress?: OrderShippingAddress | null
+  note?: string | null
+}
+
+const REQUIRED_FIELDS = [
+  { setting: "requireName", field: "customerName" },
+  { setting: "requireEmail", field: "customerEmail" },
+  { setting: "requirePhone", field: "customerPhone" },
+] as const
+
+const isBlank = (value: string | null | undefined) => !value?.trim()
+
+/** The quantity of one product (variant) line in the cart, 0 when absent. */
+const lineQuantity = (
+  lines: CartLine[],
+  line: { productId: string; variantId: string | null },
+) =>
+  lines.find(
+    (candidate) =>
+      candidate.productId === line.productId &&
+      (candidate.variantId ?? null) === (line.variantId ?? null),
+  )?.quantity ?? 0
+
+/** Adds `quantity` to a line, or a new line; 0 or less removes it. */
+const changeLine = (
+  lines: CartLine[],
+  change: { productId: string; variantId: string | null; quantity: number },
+  mode: "add" | "set",
+): CartLine[] => {
+  const sameLine = (line: CartLine) =>
+    line.productId === change.productId &&
+    (line.variantId ?? null) === (change.variantId ?? null)
+  const current = lines.find(sameLine)
+  const quantity =
+    mode === "add"
+      ? (current?.quantity ?? 0) + change.quantity
+      : change.quantity
+  const others = lines.filter((line) => !sameLine(line))
+  return quantity > 0
+    ? [
+        ...others,
+        {
+          productId: change.productId,
+          variantId: change.variantId ?? null,
+          quantity: Math.min(quantity, 10_000),
+        },
+      ]
+    : others
+}
+
+/**
+ * Everything the customer side of the store does: browse what the store
+ * shows, keep a cart, check out, follow and rate their own orders. Prices
+ * and stock always come from `orderService`, never from the cart.
+ */
+class WebshopService extends BaseService {
+  /** The shop's front page: its settings, visible categories, active vendors. */
+  async getStorefront(workspaceId: string) {
+    const [settings, workspace, categories, vendors] = await Promise.all([
+      ecommerceSettingsService.get(workspaceId),
+      workspaceService.findById({ id: workspaceId }),
+      productCategoryService.list(workspaceId),
+      vendorService.list({ workspaceId }),
+    ])
+    const ordering = await this.orderingState(workspaceId, settings, [])
+    return {
+      storeName: workspace.name,
+      settings,
+      ordering,
+      categories: categories.filter((category) => category.isVisible),
+      vendors: vendors.data.filter((vendor) => vendor.isActive),
+    }
+  }
+
+  async listProducts(input: {
+    workspaceId: string
+    keyword?: string | null
+    categoryId?: string | null
+    vendorId?: string | null
+    page?: number
+    perPage?: number
+  }) {
+    return await productRepository.listForShop(input)
+  }
+
+  /** One product the shop shows, with its variants and options. */
+  async getProduct(input: { workspaceId: string; productId: string }) {
+    const { data } = await productRepository.listForShop({
+      workspaceId: input.workspaceId,
+      productIds: [input.productId],
+    })
+    if (data.length === 0) {
+      throw notFoundException("Product not found")
+    }
+    const detail = await productService.findById(
+      input.productId,
+      input.workspaceId,
+    )
+    return {
+      ...detail,
+      variants: detail.variants.filter((variant) => variant.isEnabled),
+    }
+  }
+
+  /** The cart, priced as an order would be right now. */
+  async getCart(input: {
+    workspaceId: string
+    contactId: string
+    shippingType?: ShippingType | null
+  }) {
+    const cart = await cartRepository.find(input)
+    const lines = cart?.items ?? []
+    const quote = await orderService.quote({
+      workspaceId: input.workspaceId,
+      items: lines,
+      shippingType: input.shippingType,
+      contactId: input.contactId,
+      discountCode: cart?.discountCode,
+      autoApplyDiscount: true,
+    })
+    return {
+      items: lines,
+      enteredDiscountCode: cart?.discountCode ?? null,
+      ...quote,
+    }
+  }
+
+  /**
+   * Keeps the code the customer typed on their cart and prices the cart with
+   * it. A code that cannot be used is not kept; the returned cart carries
+   * `discountError` saying why.
+   */
+  async applyDiscountCode(input: {
+    workspaceId: string
+    contactId: string
+    contactInboxId?: string | null
+    code: string
+    shippingType?: ShippingType | null
+  }) {
+    const code = input.code.trim()
+    const cart = await cartRepository.find(input)
+    const quote = await orderService.quote({
+      workspaceId: input.workspaceId,
+      items: cart?.items ?? [],
+      shippingType: input.shippingType,
+      contactId: input.contactId,
+      discountCode: code,
+      autoApplyDiscount: true,
+    })
+    if (!quote.discountError) {
+      await cartRepository.setDiscountCode({
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+        contactInboxId: input.contactInboxId ?? null,
+        discountCode: code,
+      })
+    }
+    return quote
+  }
+
+  async removeDiscountCode(input: { workspaceId: string; contactId: string }) {
+    await cartRepository.setDiscountCode({
+      ...input,
+      contactInboxId: null,
+      discountCode: null,
+    })
+  }
+
+  /** One batch of abandoned carts, each claimed once (see `cartRepository`). */
+  async claimAbandonedCarts(input: { limit: number; now?: Date }) {
+    return await cartRepository.claimAbandoned({
+      limit: input.limit,
+      now: input.now ?? new Date(),
+    })
+  }
+
+  /**
+   * The reminder for a claimed abandoned cart: the `cartAbandoned` trigger
+   * event, and the store's abandoned-cart flow run in the customer's
+   * conversation — on the channel the cart came from when it is still there.
+   * Nothing for a cart whose items can no longer be ordered, or once the
+   * store turned the reminder off.
+   */
+  async remindAbandonedCart(
+    cart: Pick<
+      CartModel,
+      "id" | "workspaceId" | "contactId" | "contactInboxId" | "lastActivityAt"
+    >,
+  ): Promise<"reminded" | "disabled" | "empty" | "stale"> {
+    const settings = await ecommerceSettingsService.get(cart.workspaceId)
+    if (settings.general.abandonedCartDelayMinutes === null) {
+      return "disabled"
+    }
+    // The customer changed the cart after the scan claimed it: it is no
+    // longer abandoned, and the change already re-armed its own reminder.
+    const latest = await cartRepository.find(cart)
+    if (latest?.lastActivityAt.getTime() !== cart.lastActivityAt.getTime()) {
+      return "stale"
+    }
+    const priced = await this.getCart({
+      workspaceId: cart.workspaceId,
+      contactId: cart.contactId,
+    })
+    if (priced.lines.length === 0) {
+      return "empty"
+    }
+    const target = await this.resolveReminderTarget(cart)
+    await emitCartAbandoned(
+      cart.workspaceId,
+      cart.contactId,
+      {
+        channel: target?.channel ?? null,
+        conversationId: target?.conversationId ?? null,
+        itemCount: priced.lines.reduce((sum, line) => sum + line.quantity, 0),
+        total: priced.totals.total,
+        currency: priced.currency,
+        items: priced.lines.map((line) => ({
+          productId: line.productId ?? null,
+          variantId: line.variantId ?? null,
+          name: line.name,
+          categoryIds: line.categoryId ? [line.categoryId] : [],
+          quantity: line.quantity,
+        })),
+      },
+      target?.contactInboxId,
+    )
+    const flowId = settings.general.abandonedCartFlowId
+    if (flowId && target) {
+      await integrationQueue.add(
+        IntegrationJobAction.sendFlow,
+        {
+          type: IntegrationJobAction.sendFlow,
+          data: {
+            conversationId: target.conversationId,
+            contactInboxId: target.contactInboxId,
+            flowId,
+          },
+        },
+        // Once per abandonment: a cart changed and left again is a new one.
+        {
+          jobId: `abandoned-cart-flow-${cart.id}-${cart.lastActivityAt.getTime()}`,
+        },
+      )
+    }
+    return "reminded"
+  }
+
+  /** The conversation and channel a reminder goes to, if the contact has one. */
+  private async resolveReminderTarget(
+    cart: Pick<CartModel, "workspaceId" | "contactId" | "contactInboxId">,
+  ) {
+    try {
+      const { conversation, contactInbox } =
+        await conversationService.resolveContactInboxForSend({
+          workspaceId: cart.workspaceId,
+          contactId: cart.contactId,
+        })
+      const cartInbox =
+        conversation.contactInboxes.find(
+          (candidate) => candidate.id === cart.contactInboxId,
+        ) ?? contactInbox
+      return {
+        conversationId: conversation.id,
+        contactInboxId: cartInbox.id,
+        channel: cartInbox.channel,
+      }
+    } catch (error) {
+      if (error instanceof ChatbotXException && error.code === "notFound") {
+        return null
+      }
+      throw error
+    }
+  }
+
+  /** How many items are in the cart, for the cart badge. */
+  async countCartItems(input: { workspaceId: string; contactId: string }) {
+    const cart = await cartRepository.find(input)
+    return (cart?.items ?? []).reduce((sum, line) => sum + line.quantity, 0)
+  }
+
+  async addToCart(input: CartChangeInput) {
+    return await this.changeCart(input, "add")
+  }
+
+  async setCartQuantity(input: CartChangeInput) {
+    return await this.changeCart(input, "set")
+  }
+
+  /**
+   * A cart sent through WhatsApp's own catalog becomes the customer's shop
+   * cart, so the CHECK OUT link opens it. Items not linked to a product here
+   * cannot be ordered and are left out; how many is returned.
+   */
+  async replaceFromInboundCart(input: {
+    workspaceId: string
+    contactId: string
+    contactInboxId: string | null
+    cart: MessageInboundOrderEntity
+  }) {
+    let lines: CartLine[] = []
+    let skipped = 0
+    for (const item of input.cart.items) {
+      if (!item.product) {
+        skipped += 1
+        continue
+      }
+      lines = changeLine(
+        lines,
+        {
+          productId: item.product.productId,
+          variantId: null,
+          quantity: item.quantity,
+        },
+        "add",
+      )
+    }
+    await cartRepository.upsert({
+      workspaceId: input.workspaceId,
+      contactId: input.contactId,
+      contactInboxId: input.contactInboxId,
+      items: lines,
+    })
+    const cart = await this.getCart(input)
+    return { ...cart, skipped }
+  }
+
+  /**
+   * The bot's answer to a cart sent from the WhatsApp catalog (spec image
+   * 33): the cart becomes the contact's shop cart, and the reply sums it up
+   * above a CHECK OUT button that opens it — or the store's own checkout
+   * page when it uses one. `null` when there is nothing to answer: the store
+   * takes no orders, or none of the items is sold here.
+   */
+  async buildInboundCartReply(input: {
+    workspaceId: string
+    contactId: string
+    contactInboxId: string | null
+    cart: MessageInboundOrderEntity
+  }): Promise<{ text: string; buttonLabel: string; buttonUrl: string } | null> {
+    const settings = await ecommerceSettingsService.get(input.workspaceId)
+    if (!settings.general.orderingAvailable) {
+      return null
+    }
+    const cart = await this.replaceFromInboundCart(input)
+    if (cart.lines.length === 0) {
+      return null
+    }
+    const [language, { appUrl }] = await Promise.all([
+      resolveContactMessageLanguage(input),
+      resolveTenantSettings({ workspaceId: input.workspaceId }),
+    ])
+    const externalCheckout =
+      settings.checkout.checkoutMode === "externalLink"
+        ? settings.checkout.checkoutLink
+        : null
+    return {
+      text: buildCartSummaryText(
+        {
+          ...cart.totals,
+          discount: cart.discount,
+          currency: cart.currency,
+          itemCount: cart.lines.reduce((sum, line) => sum + line.quantity, 0),
+          skipped: cart.skipped + cart.unavailable.length,
+        },
+        { language, payments: settings.payments },
+      ),
+      buttonLabel: checkoutButtonLabel(language),
+      buttonUrl:
+        externalCheckout ??
+        buildWebshopButtonUrl({
+          appUrl,
+          workspaceId: input.workspaceId,
+          page: "cart",
+        }),
+    }
+  }
+
+  /**
+   * Whether the store takes an order now: ordering is on and it is inside the
+   * store's open hours and those of every vendor in `vendorOpenHoursIds`.
+   */
+  async orderingState(
+    workspaceId: string,
+    settings: EcommerceSettings,
+    vendors: Array<{ name: string; openHoursId: string | null }>,
+  ): Promise<
+    | { open: true }
+    | { open: false; reason: WebshopClosedReason; vendorName?: string }
+  > {
+    if (!settings.general.orderingAvailable) {
+      return { open: false, reason: "orderingUnavailable" }
+    }
+    // A frozen workspace (trial expired, deletion pending) is read-only:
+    // its shop still shows, but takes no orders.
+    const { freezeReason } = await resolveWorkspaceFreezeReasonById(workspaceId)
+    if (freezeReason) {
+      return { open: false, reason: "orderingUnavailable" }
+    }
+    const scheduleIds = [
+      settings.general.openHoursId,
+      ...vendors.map((vendor) => vendor.openHoursId),
+    ].filter((id): id is string => Boolean(id))
+    if (scheduleIds.length === 0) {
+      return { open: true }
+    }
+    const [schedules, workspace] = await Promise.all([
+      ecommerceOpenHoursRepository.findByIds({ workspaceId, ids: scheduleIds }),
+      workspaceService.findById({ id: workspaceId }),
+    ])
+    const isOpen = (scheduleId: string | null) => {
+      const schedule = schedules.find((row) => row.id === scheduleId)
+      // A schedule that was deleted leaves its users always open.
+      return !schedule || isWithinOpenHours(schedule.ranges, workspace.timezone)
+    }
+    if (!isOpen(settings.general.openHoursId)) {
+      return { open: false, reason: "outsideOpenHours" }
+    }
+    const closedVendor = vendors.find((vendor) => !isOpen(vendor.openHoursId))
+    if (closedVendor) {
+      return {
+        open: false,
+        reason: "outsideOpenHours",
+        vendorName: closedVendor.name,
+      }
+    }
+    return { open: true }
+  }
+
+  /**
+   * Places the cart as a cash-on-delivery order for the shopper. The store's
+   * rules are checked first (open, required fields, country); prices, stock
+   * and minimums are `orderService.place`'s. The cart is emptied in the same
+   * transaction, so a refused order keeps it.
+   */
+  async checkout(input: {
+    shopper: WebshopShopper
+    form: WebshopCheckoutForm
+  }) {
+    const { shopper, form } = input
+    const settings = await ecommerceSettingsService.getFresh(
+      shopper.workspaceId,
+    )
+    // A store that checks out on its own external page (to take payment
+    // there) takes no order through the built-in checkout. `productPage`
+    // only changes the product's Buy button, so a cart filled another way
+    // (a WhatsApp cart) still checks out here.
+    if (settings.checkout.checkoutMode === "externalLink") {
+      throw webshopClosedException("orderingUnavailable")
+    }
+    const cart = await cartRepository.find(shopper)
+    const lines = cart?.items ?? []
+
+    const products = await productRepository.findForOrder({
+      workspaceId: shopper.workspaceId,
+      productIds: lines.map((line) => line.productId),
+    })
+    const vendors = products.flatMap((product) =>
+      product.vendor
+        ? [
+            {
+              name: product.vendor.name,
+              openHoursId: product.vendor.openHoursId,
+            },
+          ]
+        : [],
+    )
+    const ordering = await this.orderingState(
+      shopper.workspaceId,
+      settings,
+      vendors,
+    )
+    if (!ordering.open) {
+      throw webshopClosedException(ordering.reason, ordering.vendorName)
+    }
+
+    this.assertCheckoutForm(settings, form)
+
+    const order = await orderService.place({
+      workspaceId: shopper.workspaceId,
+      source: "webshop",
+      actor: { type: "contact" },
+      contact: {
+        contactId: shopper.contactId,
+        contactInboxId: shopper.contactInboxId,
+        conversationId: shopper.conversationId,
+      },
+      items: lines,
+      customerName: form.customerName?.trim() || null,
+      customerEmail: form.customerEmail?.trim() || null,
+      customerPhone: form.customerPhone?.trim() || null,
+      shippingType: form.shippingType,
+      shippingAddress: form.shippingAddress,
+      note: form.note?.trim() || null,
+      discountCode: cart?.discountCode,
+      autoApplyDiscount: true,
+      onPlaced: async (_order, tx) => {
+        // A double-submitted checkout read the same cart: the lock makes the
+        // second wait for the first, find the cart emptied, and roll back
+        // instead of placing the order twice.
+        const locked = await cartRepository.findForUpdate(shopper, tx)
+        if (!locked || locked.items.length === 0) {
+          throw orderEmptyException()
+        }
+        await this.emptyCart(shopper, tx)
+      },
+    })
+    await this.startCheckoutFlow(settings, order)
+    return order
+  }
+
+  /**
+   * "Start a flow" checkout: once the order is placed, the chosen flow runs
+   * in the customer's conversation. A customer without one (the link was
+   * opened outside a chat) just gets the order.
+   */
+  private async startCheckoutFlow(
+    settings: EcommerceSettings,
+    order: {
+      id: string
+      conversationId: string | null
+      contactInboxId: string | null
+    },
+  ) {
+    const flowId = settings.checkout.checkoutFlowId
+    if (
+      settings.checkout.checkoutMode !== "flow" ||
+      !flowId ||
+      !order.conversationId ||
+      !order.contactInboxId
+    ) {
+      return
+    }
+    await integrationQueue
+      .add(
+        IntegrationJobAction.sendFlow,
+        {
+          type: IntegrationJobAction.sendFlow,
+          data: {
+            conversationId: order.conversationId,
+            contactInboxId: order.contactInboxId,
+            flowId,
+          },
+        },
+        { jobId: `webshop-checkout-flow-${order.id}` },
+      )
+      .catch((err: unknown) =>
+        logger.warn(
+          { err, orderId: order.id },
+          "[webshop] could not start the checkout flow",
+        ),
+      )
+  }
+
+  /** One of the shopper's own orders — another customer's is a 404. */
+  async getCustomerOrder(input: {
+    workspaceId: string
+    contactId: string
+    orderId: string
+  }) {
+    const order = await orderService.getDetail(input)
+    if (order.contactId !== input.contactId) {
+      throw notFoundException("Order does not exist.")
+    }
+    return order
+  }
+
+  /** A customer rates their completed order, when the store allows it. */
+  async rateOrder(input: {
+    workspaceId: string
+    contactId: string
+    orderId: string
+    rating: number
+    comment?: string | null
+  }) {
+    const [order, settings] = await Promise.all([
+      this.getCustomerOrder(input),
+      ecommerceSettingsService.get(input.workspaceId),
+    ])
+    if (!settings.general.allowRateOrders || order.status !== "concluded") {
+      throw webshopRatingNotAllowedException()
+    }
+    await orderRepository.setRating({
+      workspaceId: input.workspaceId,
+      orderId: input.orderId,
+      rating: input.rating,
+      ratingComment: input.comment?.trim() || null,
+    })
+    await this.invalidateCacheTags(`orders:${input.workspaceId}`)
+    return await orderService.getDetail(input)
+  }
+
+  private async changeCart(input: CartChangeInput, mode: "add" | "set") {
+    const current = await cartRepository.find(input)
+    const before = current?.items ?? []
+    if (
+      lineQuantity(changeLine(before, input, mode), input) >
+      lineQuantity(before, input)
+    ) {
+      // Only what the shop shows can go in the cart (or grow in it), in
+      // either mode; lowering a line is always allowed.
+      await this.getProduct({
+        workspaceId: input.workspaceId,
+        productId: input.productId,
+      })
+    }
+    // Under the cart's lock: two quick taps apply one after the other, and
+    // each event reports the change it actually made.
+    const change = await db.transaction(async (tx) => {
+      const cart = await cartRepository.lockOrCreate(
+        {
+          workspaceId: input.workspaceId,
+          contactId: input.contactId,
+          contactInboxId: input.contactInboxId ?? null,
+        },
+        tx,
+      )
+      const lockedBefore = cart?.items ?? []
+      const after = changeLine(lockedBefore, input, mode)
+      await cartRepository.upsert(
+        {
+          workspaceId: input.workspaceId,
+          contactId: input.contactId,
+          contactInboxId: input.contactInboxId ?? null,
+          items: after,
+        },
+        tx,
+      )
+      return { before: lockedBefore, after }
+    })
+    await this.announceCartChange(input, change.before, change.after)
+    return await this.getCart(input)
+  }
+
+  /**
+   * `productAddedToCart` (with `categoryAddedToCart`) or
+   * `productRemovedFromCart` for a change of the line's quantity. Best
+   * effort: the cart is already saved.
+   */
+  private async announceCartChange(
+    input: CartChangeInput,
+    before: CartLine[],
+    after: CartLine[],
+  ) {
+    const quantity = lineQuantity(after, input)
+    const change = quantity - lineQuantity(before, input)
+    if (change === 0) {
+      return
+    }
+    try {
+      const [product] = await productRepository.findForOrder({
+        workspaceId: input.workspaceId,
+        productIds: [input.productId],
+      })
+      await emitCartItemChanged(
+        input.workspaceId,
+        input.contactId,
+        {
+          channel: "webshop",
+          product: {
+            productId: input.productId,
+            variantId: input.variantId ?? null,
+            name: product?.name ?? "",
+            categoryIds: [product?.categoryId, product?.subcategoryId].filter(
+              (id): id is string => Boolean(id),
+            ),
+          },
+          quantity,
+          change,
+        },
+        input.contactInboxId ?? undefined,
+      )
+    } catch (err) {
+      logger.warn(
+        { err, productId: input.productId },
+        "[webshop] could not announce the cart change",
+      )
+    }
+  }
+
+  private async emptyCart(shopper: WebshopShopper, tx: DatabaseClient) {
+    await cartRepository.upsert(
+      {
+        workspaceId: shopper.workspaceId,
+        contactId: shopper.contactId,
+        contactInboxId: shopper.contactInboxId,
+        items: [],
+      },
+      tx,
+    )
+    await cartRepository.setDiscountCode(
+      {
+        workspaceId: shopper.workspaceId,
+        contactId: shopper.contactId,
+        contactInboxId: shopper.contactInboxId,
+        discountCode: null,
+      },
+      tx,
+    )
+  }
+
+  /** The buyer fields the store requires, and a country it ships to. */
+  private assertCheckoutForm(
+    settings: EcommerceSettings,
+    form: WebshopCheckoutForm,
+  ) {
+    for (const { setting, field } of REQUIRED_FIELDS) {
+      if (settings.checkout[setting] && isBlank(form[field])) {
+        throw validationException(field, `${field} is required.`)
+      }
+    }
+    const delivering =
+      (form.shippingType ?? "delivery") === "delivery" &&
+      settings.shipping.shippingType !== "none" &&
+      settings.shipping.shippingType !== "pickup"
+    if (!delivering) {
+      return
+    }
+    const address = form.shippingAddress
+    if (isBlank(address?.line1)) {
+      throw validationException("shippingAddress.line1", "Address is required.")
+    }
+    if (settings.checkout.requireState && isBlank(address?.state)) {
+      throw validationException("shippingAddress.state", "State is required.")
+    }
+    if (settings.checkout.requireZip && isBlank(address?.zip)) {
+      throw validationException("shippingAddress.zip", "ZIP code is required.")
+    }
+    const countries = settings.shipping.shippingCountries
+    const country = address?.country?.toUpperCase()
+    if (countries.length > 0 && !(country && countries.includes(country))) {
+      throw validationException(
+        "shippingAddress.country",
+        "The store does not ship to this country.",
+      )
+    }
+  }
+}
+
+type CartChangeInput = {
+  workspaceId: string
+  contactId: string
+  contactInboxId?: string | null
+  productId: string
+  variantId: string | null
+  quantity: number
+}
+
+export const webshopService = new WebshopService()

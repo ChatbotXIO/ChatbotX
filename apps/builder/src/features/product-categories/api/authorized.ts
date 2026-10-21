@@ -11,6 +11,8 @@ const category = z.object({
   // this flat list, so dropping the field here would silently flatten it.
   parentId: z.string().nullable(),
   name: z.string(),
+  imageUrl: z.string().nullable(),
+  isVisible: z.boolean(),
   rank: z.number(),
   productCount: z.number(),
 })

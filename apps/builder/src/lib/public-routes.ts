@@ -33,6 +33,8 @@ export const PUBLIC_ROUTES = [
   "/email-topic",
   "/extensions",
   "/booking",
+  // Web shop; the cart and orders are attributed only via a signed shop token.
+  "/shop",
   "/portal/redeem",
   "/webchat",
   // Bot simulator preview: frames a website with the webchat widget for demos.

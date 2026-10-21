@@ -22,8 +22,71 @@ const getCategoryChildKey = (parentId: string | null, name: string): string =>
   `${parentId}\u0000${normalizeCategoryName(name).toLowerCase()}`
 
 class ProductCategoryService extends BaseService {
-  async list(workspaceId: string) {
-    return await productCategoryRepository.listWithProductCount(workspaceId)
+  /**
+   * The whole two-level tree, or — with `parentId` — only that category's
+   * sub-categories; `name` keeps rows whose name contains it, ignoring case.
+   */
+  async list(
+    workspaceId: string,
+    filter: { parentId?: string | null; name?: string | null } = {},
+  ) {
+    const all =
+      await productCategoryRepository.listWithProductCount(workspaceId)
+    const keyword = filter.name?.trim().toLowerCase()
+    return all.filter(
+      (category) =>
+        (!filter.parentId || category.parentId === filter.parentId) &&
+        (!keyword || category.name.toLowerCase().includes(keyword)),
+    )
+  }
+
+  /**
+   * One page of one level of the tree: the top-level categories, or the
+   * children of `parentId`, optionally filtered by name. Each row carries how
+   * many sub-categories it has. The tree is small, so it is read whole and cut
+   * here rather than paged in SQL.
+   */
+  async listLevel(input: {
+    workspaceId: string
+    parentId?: string | null
+    name?: string | null
+    page?: number
+    perPage?: number
+  }) {
+    const all = await productCategoryRepository.listWithProductCount(
+      input.workspaceId,
+    )
+    const keyword = input.name?.trim().toLowerCase()
+    const level = all.filter(
+      (category) =>
+        (category.parentId ?? null) === (input.parentId ?? null) &&
+        (!keyword || category.name.toLowerCase().includes(keyword)),
+    )
+    const childCounts = new Map<string, number>()
+    for (const category of all) {
+      if (category.parentId) {
+        childCounts.set(
+          category.parentId,
+          (childCounts.get(category.parentId) ?? 0) + 1,
+        )
+      }
+    }
+    const perPage = input.perPage ?? level.length
+    const page = input.page ?? 1
+    const start = (page - 1) * perPage
+    return {
+      data: level
+        .slice(start, perPage > 0 ? start + perPage : undefined)
+        .map((category) => ({
+          ...category,
+          childCount: childCounts.get(category.id) ?? 0,
+        })),
+      pageCount:
+        perPage > 0 ? Math.max(1, Math.ceil(level.length / perPage)) : 1,
+      parent: input.parentId
+        ? (all.find((category) => category.id === input.parentId) ?? null)
+        : null,
+    }
   }
 
   async listOptions(workspaceId: string) {
@@ -35,6 +98,8 @@ class ProductCategoryService extends BaseService {
     name: string
     rank?: number
     parentId?: string | null
+    imageUrl?: string | null
+    isVisible?: boolean
   }) {
     const name = normalizeCategoryName(input.name)
     if (!name) {
@@ -59,14 +124,19 @@ class ProductCategoryService extends BaseService {
     }
   }
 
+  /** Changes the fields given; `undefined` leaves a field as it is. */
   async update(input: {
     workspaceId: string
     categoryId: string
-    name: string
+    name?: string
     parentId?: string | null
+    imageUrl?: string | null
+    isVisible?: boolean
+    rank?: number
   }) {
-    const name = normalizeCategoryName(input.name)
-    if (!name) {
+    const name =
+      input.name === undefined ? undefined : normalizeCategoryName(input.name)
+    if (name === "") {
       throw new ChatbotXException(
         "Product category name is required",
         "productCategoryNameRequired",

@@ -595,7 +595,7 @@ export function buildLastCommentWhere(
   return contactInboxExists(commentPredicate, shouldNegate)
 }
 
-function buildDatetimeAggregateComparison(
+export function buildDatetimeAggregateComparison(
   operator: string,
   value: unknown,
   latestValue: SQL,
@@ -613,7 +613,7 @@ function buildDatetimeAggregateComparison(
   return resolveTimestamptzComparison(operator, value, timezone)?.(latestValue)
 }
 
-function buildNumberAggregateComparison(
+export function buildNumberAggregateComparison(
   operator: string,
   value: unknown,
   latestValue: SQL,

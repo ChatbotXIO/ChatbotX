@@ -32,6 +32,8 @@ export const productCategoryRepository = {
         id: productCategoryModel.id,
         parentId: productCategoryModel.parentId,
         name: productCategoryModel.name,
+        imageUrl: productCategoryModel.imageUrl,
+        isVisible: productCategoryModel.isVisible,
         rank: productCategoryModel.rank,
         productCount: count(productModel.id),
       })
@@ -83,6 +85,8 @@ export const productCategoryRepository = {
       name: string
       rank?: number
       parentId?: string | null
+      imageUrl?: string | null
+      isVisible?: boolean
     },
     tx: DatabaseClient = db,
   ) {
@@ -94,6 +98,8 @@ export const productCategoryRepository = {
         name: input.name,
         rank: input.rank ?? 10,
         parentId: input.parentId ?? null,
+        imageUrl: input.imageUrl ?? null,
+        isVisible: input.isVisible ?? true,
       })
       .returning()
     return row
@@ -103,15 +109,24 @@ export const productCategoryRepository = {
     input: {
       workspaceId: string
       categoryId: string
-      name: string
+      name?: string
       parentId?: string | null
+      imageUrl?: string | null
+      isVisible?: boolean
+      rank?: number
     },
     tx: DatabaseClient = db,
   ) {
     const [row] = await tx
       .update(productCategoryModel)
       .set({
-        name: input.name,
+        // `undefined` leaves a column as it is.
+        ...(input.name === undefined ? {} : { name: input.name }),
+        ...(input.imageUrl === undefined ? {} : { imageUrl: input.imageUrl }),
+        ...(input.isVisible === undefined
+          ? {}
+          : { isVisible: input.isVisible }),
+        ...(input.rank === undefined ? {} : { rank: input.rank }),
         // `undefined` leaves the row where it is; an explicit `null` promotes a
         // sub-category back to the top level.
         ...(input.parentId === undefined ? {} : { parentId: input.parentId }),

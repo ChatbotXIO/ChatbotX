@@ -8,6 +8,7 @@ import type { UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
 import { createProductAction } from "../actions/create-product-action"
 import { ProductStoreProvider } from "../provider/product-store-context"
+import { useInvalidateProductFormOptions } from "../provider/use-invalidate-product-form-options"
 import { type ProductFormRequest, productFormRequest } from "../schema/action"
 import { ProductForm } from "./product-form"
 
@@ -18,6 +19,7 @@ type CreateProductProps = {
 export function CreateProduct({ workspaceId }: CreateProductProps) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateProductFormOptions = useInvalidateProductFormOptions()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     createProductAction.bind(null, workspaceId),
@@ -31,6 +33,7 @@ export function CreateProduct({ workspaceId }: CreateProductProps) {
           toast.success(
             t("messages.createdSuccess", { feature: t("products.title") }),
           )
+          invalidateProductFormOptions()
           router.push(`/space/${workspaceId}/products`)
         },
         onError: ({ error }) => {

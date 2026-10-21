@@ -119,6 +119,7 @@ const METHOD_VERBED_SINGLETON_PATHS = new Set([
   "workspace/settings",
   "messenger/templates/{id}",
   "products/meta-catalog",
+  "ecommerce/settings",
 ])
 // Collections under a resource that take both a list (GET) and a create (POST)
 // on the same path, which the generic naming would collapse into one command.
@@ -208,6 +209,11 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "GET /v1/mini-apps/{id}/whatsapp-preview": "mini-apps:whatsapp-preview",
   "GET /v1/conversations/{conversationId}/messages/{messageId}/flow-response":
     "conversations:flow-response:get",
+  // Order status moves are verbs on the order, not sub-resources to "add".
+  "POST /v1/orders/{id}/accept": "orders:accept",
+  "POST /v1/orders/{id}/ship": "orders:ship",
+  "POST /v1/orders/{id}/conclude": "orders:conclude",
+  "POST /v1/orders/{id}/cancel": "orders:cancel",
 }
 
 export function pathAndMethodToCommandName(

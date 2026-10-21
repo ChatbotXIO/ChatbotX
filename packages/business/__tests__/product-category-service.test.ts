@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   isUniqueViolationError: vi.fn(),
   listChildren: vi.fn(),
   list: vi.fn(),
+  listWithProductCount: vi.fn(),
   update: vi.fn(),
 }))
 
@@ -32,6 +33,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findByNames: (...args: unknown[]) => mocks.findByNames(...args),
     listChildren: (...args: unknown[]) => mocks.listChildren(...args),
     list: (...args: unknown[]) => mocks.list(...args),
+    listWithProductCount: (...args: unknown[]) =>
+      mocks.listWithProductCount(...args),
     update: (...args: unknown[]) => mocks.update(...args),
   },
 }))
@@ -437,5 +440,56 @@ describe("productCategoryService resolvePaths", () => {
       categoryId: "category-1",
       subcategoryId: "subcategory-1",
     })
+  })
+})
+
+describe("productCategoryService listing", () => {
+  const tree = [
+    { id: "men", parentId: null, name: "Men", productCount: 3 },
+    { id: "women", parentId: null, name: "Women", productCount: 1 },
+    { id: "men-shirts", parentId: "men", name: "Shirts", productCount: 2 },
+    { id: "men-shoes", parentId: "men", name: "Shoes", productCount: 0 },
+    { id: "women-shirts", parentId: "women", name: "Shirts", productCount: 1 },
+  ]
+
+  beforeEach(() => {
+    mocks.listWithProductCount.mockResolvedValue(tree)
+  })
+
+  test("list returns the whole tree without a filter", async () => {
+    await expect(productCategoryService.list(workspaceId)).resolves.toEqual(
+      tree,
+    )
+  })
+
+  test("list keeps one category's children and matches names ignoring case", async () => {
+    await expect(
+      productCategoryService.list(workspaceId, {
+        parentId: "men",
+        name: "SHI",
+      }),
+    ).resolves.toEqual([tree[2]])
+  })
+
+  test("listLevel pages the top level and counts each row's children", async () => {
+    const level = await productCategoryService.listLevel({
+      workspaceId,
+      page: 1,
+      perPage: 1,
+    })
+    expect(level).toEqual({
+      data: [{ ...tree[0], childCount: 2 }],
+      pageCount: 2,
+      parent: null,
+    })
+  })
+
+  test("listLevel lists a parent's children with the parent itself", async () => {
+    const level = await productCategoryService.listLevel({
+      workspaceId,
+      parentId: "women",
+    })
+    expect(level.data).toEqual([{ ...tree[4], childCount: 0 }])
+    expect(level.parent).toEqual(tree[1])
   })
 })

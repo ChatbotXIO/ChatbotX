@@ -106,7 +106,24 @@ describe("GET /v1/product-categories", () => {
       ],
     })
 
-    expect(productCategoryService.list).toHaveBeenCalledWith("workspace-1")
+    expect(productCategoryService.list).toHaveBeenCalledWith(
+      "workspace-1",
+      undefined,
+    )
+  })
+
+  test("passes the parent and name filters to the service", async () => {
+    productCategoryService.list.mockResolvedValueOnce([])
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { parentId: "c-parent", name: "shirt" },
+    })
+
+    expect(productCategoryService.list).toHaveBeenCalledWith("workspace-1", {
+      parentId: "c-parent",
+      name: "shirt",
+    })
   })
 })
 
@@ -126,6 +143,29 @@ describe("POST /v1/product-categories", () => {
       name: "Electronics",
       rank: undefined,
       parentId: null,
+    })
+  })
+
+  test("passes the image and visibility through", async () => {
+    productCategoryService.create.mockResolvedValueOnce({ id: "c-1" })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        name: "Accessories",
+        rank: 3,
+        imageUrl: "https://cdn.example.com/a.png",
+        isVisible: false,
+      },
+    })
+
+    expect(productCategoryService.create).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      name: "Accessories",
+      rank: 3,
+      parentId: null,
+      imageUrl: "https://cdn.example.com/a.png",
+      isVisible: false,
     })
   })
 })
@@ -183,6 +223,58 @@ describe("PUT /v1/product-categories/{id}", () => {
       name: "Phones",
       parentId: "c-parent",
     })
+  })
+})
+
+describe("PUT /v1/product-categories/{id} — image, rank, visibility", () => {
+  const procedure = findProcedure("PUT", "/v1/product-categories/{id}")
+
+  test("updates the image, rank and visibility it is given", async () => {
+    productCategoryService.update.mockResolvedValueOnce({ id: "c-1" })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: {
+        id: "c-1",
+        name: "Accessories",
+        rank: 2,
+        imageUrl: null,
+        isVisible: true,
+      },
+    })
+
+    expect(productCategoryService.update).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      categoryId: "c-1",
+      name: "Accessories",
+      rank: 2,
+      imageUrl: null,
+      isVisible: true,
+    })
+  })
+})
+
+describe("PATCH /v1/product-categories/{id}/visible", () => {
+  const procedure = findProcedure(
+    "PATCH",
+    "/v1/product-categories/{id}/visible",
+  )
+
+  test("changes only the visibility", async () => {
+    productCategoryService.update.mockResolvedValueOnce({ id: "c-1" })
+
+    await procedure.handler?.({
+      context: { workspace: { id: "workspace-1" } },
+      input: { id: "c-1", isVisible: false },
+    })
+
+    expect(productCategoryService.update).toHaveBeenCalledWith({
+      workspaceId: "workspace-1",
+      categoryId: "c-1",
+      isVisible: false,
+    })
+    const [call] = productCategoryService.update.mock.calls
+    expect(call?.[0]).not.toHaveProperty("name")
   })
 })
 

@@ -2616,7 +2616,8 @@
       "sendGoogleAdsConversion": "Google Ads-conversie verzenden",
       "changeGamificationScore": "Gamificationpunten wijzigen",
       "sendViewCatalog": "Catalogus bekijken",
-      "sendProducts": "Producten verzenden"
+      "sendProducts": "Producten verzenden",
+      "sendCollection": "Collectie"
     },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
@@ -2797,6 +2798,43 @@
       "productsSelected": "{count, plural, one {# product} other {# producten}}",
       "noneSelected": "Nog geen producten",
       "sendFailed": "De producten konden niet worden verzonden."
+    },
+    "sendCollection": {
+      "title": "Collectie",
+      "dataType": "Gegevenstype",
+      "dataTypes": {
+        "products": "Producten"
+      },
+      "collectionType": "Type collectie",
+      "collectionTypes": {
+        "automated": {
+          "label": "Automatisch",
+          "description": "Bestaande en toekomstige artikelen die aan de voorwaarden voldoen, worden automatisch toegevoegd."
+        },
+        "manual": {
+          "label": "Handmatig",
+          "description": "Voeg artikelen één voor één toe."
+        }
+      },
+      "condition": "Voorwaarde",
+      "name": "Naam",
+      "optional": "(Optioneel)",
+      "category": "Categorie",
+      "subcategory": "Subcategorie",
+      "vendor": "Leverancier",
+      "all": "Alle",
+      "items": "Artikelen",
+      "select": "Selecteren",
+      "selectPlaceholder": "Selecteer 1 of meer artikelen",
+      "selectAll": "Alles selecteren",
+      "deselectAll": "Alles deselecteren",
+      "maxProducts": "Tot {count} producten; een product dat de winkel niet meer toont, wordt overgeslagen.",
+      "automatedHint": "Stuurt tot {count} passende producten als kaarten die het product in de webwinkel openen.",
+      "summaryAll": "Alle producten van de winkel",
+      "summaryAutomated": "Producten: {filters}",
+      "summaryManual": "{count, plural, one {# product} other {# producten}}",
+      "cancel": "Annuleren",
+      "save": "Opslaan"
     }
   },
   "folders": {
@@ -5204,7 +5242,8 @@
       "contactReferredExistingContact": "Contact heeft een bestaand contact doorverwezen",
       "callRecorded": "Oproep opgenomen",
       "callTranscribed": "Oproep getranscribeerd",
-      "anyProduct": "Elk product"
+      "anyProduct": "Elk product",
+      "anyCategory": "Elke categorie"
     },
     "actions": {
       "addTag": "Tag toevoegen",
@@ -6381,7 +6420,82 @@
     "unknown": "Onbekend"
   },
   "orders": {
-    "title": "Bestellingen"
+    "title": "Bestellingen",
+    "empty": "Nog geen bestellingen.",
+    "searchPlaceholder": "Zoek op naam, telefoon, e-mail of bestelnummer",
+    "orderNumber": "Bestelling #{number}",
+    "print": "Afdrukken",
+    "inbox": "Inbox",
+    "statusUpdated": "Bestelstatus bijgewerkt",
+    "statusUpdateError": "Kan de bestelstatus niet bijwerken",
+    "updateStatusTitle": "Bestelstatus bijwerken",
+    "message": "Bericht",
+    "messagePlaceholder": "Optioneel",
+    "messageDescription": "Wordt naar de klant gestuurd in hun gesprek.",
+    "cancel": "Annuleren",
+    "continue": "Doorgaan",
+    "delete": "Verwijderen",
+    "deleted": "Bestelling verwijderd",
+    "deleteError": "Kan de bestelling niet verwijderen",
+    "deleteTitle": "Bestelling #{number} verwijderen?",
+    "deleteDescription": "De bestelling, de bijbehorende artikelen en de geschiedenis worden verwijderd. Voorraad die nog is gereserveerd, wordt teruggezet.",
+    "columns": {
+      "name": "Naam",
+      "total": "Totaal",
+      "status": "Status",
+      "date": "Datum",
+      "rating": "Beoordeling",
+      "quantity": "Aantal",
+      "price": "Prijs",
+      "vendor": "Leverancier"
+    },
+    "fields": {
+      "name": "Naam",
+      "email": "E-mail",
+      "phone": "Telefoon",
+      "country": "Land",
+      "state": "Provincie",
+      "city": "Plaats",
+      "street": "Straat",
+      "zip": "Postcode",
+      "shippingType": "Verzending",
+      "orderId": "Bestel-ID",
+      "date": "Datum",
+      "subtotal": "Subtotaal",
+      "discount": "Korting",
+      "deliveryCost": "Bezorgkosten",
+      "otherTaxes": "Overige belastingen",
+      "total": "Totaal",
+      "paymentMethod": "Betaalmethode",
+      "status": "Status",
+      "note": "Opmerking",
+      "cancelReason": "Reden van annulering",
+      "rating": "Beoordeling",
+      "ratingComment": "Opmerking van de klant",
+      "coupon": "Kortingscode ({code})"
+    },
+    "statuses": {
+      "pending": "Niet verwerkt",
+      "accepted": "Geaccepteerd",
+      "shipped": "Verzonden",
+      "concluded": "Voltooid",
+      "cancelled": "Geannuleerd"
+    },
+    "transitions": {
+      "accepted": "Accepteren",
+      "shipped": "Verzenden",
+      "concluded": "Voltooien",
+      "cancelled": "Annuleren"
+    },
+    "paymentMethods": {
+      "cod": "Rembours"
+    },
+    "shippingTypes": {
+      "delivery": "Bezorgen bij de klant",
+      "pickup": "Afhalen in de winkel"
+    },
+    "description": "Bestellingen geplaatst door je klanten.",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "Producten",
@@ -6438,7 +6552,8 @@
         "label": "Klanten toestaan dit product te kopen wanneer het niet op voorraad is"
       },
       "vendor": {
-        "label": "Leverancier"
+        "label": "Leverancier",
+        "none": "Geen"
       },
       "rank": {
         "label": "Rang"
@@ -6571,8 +6686,8 @@
     "loadError": "Productcategorieën kunnen niet worden geladen.",
     "all": "Alle producten",
     "create": "Categorie maken",
-    "edit": "Categorie hernoemen",
-    "name": "Categorienaam",
+    "edit": "Bewerken",
+    "name": "Naam",
     "namePlaceholder": "bijv. Zomercollectie",
     "parent": "Bovenliggende categorie",
     "noParent": "Geen (hoogste niveau)",
@@ -6592,12 +6707,25 @@
     "columns": {
       "name": "Naam",
       "products": "Producten",
-      "subcategories": "Subcategorieën"
+      "subcategories": "Subcategorieën",
+      "visible": "Zichtbaar"
     },
     "expand": "Subcategorieën weergeven",
     "collapse": "Subcategorieën verbergen",
     "productCount": "{count, plural, =0 {Geen producten} one {# product} other {# producten}}",
-    "deleteChildrenWarning": "{count, plural, one {De # subcategorie wordt ook verwijderd.} other {De # subcategorieën worden ook verwijderd.}}"
+    "deleteChildrenWarning": "{count, plural, one {De # subcategorie wordt ook verwijderd.} other {De # subcategorieën worden ook verwijderd.}}",
+    "add": "Toevoegen",
+    "dialogTitle": "Categorie",
+    "image": "Afbeelding",
+    "continue": "Doorgaan",
+    "subcategories": "Subcategorieën",
+    "subcategoriesOf": "Subcategorieën van {name}",
+    "emptySub": "Nog geen subcategorieën.",
+    "back": "Terug naar categorieën",
+    "getId": "ID ophalen",
+    "idCopied": "Categorie-ID {id} gekopieerd",
+    "idCopyError": "Kan het ID niet kopiëren",
+    "description": "Groepeer je producten in categorieën en subcategorieën."
   },
   "productImport": {
     "title": "Importeren",
@@ -9076,6 +9204,493 @@
       "hours": "Uren",
       "closed": "Gesloten"
     }
+  },
+  "productVendors": {
+    "title": "Leveranciers",
+    "add": "Toevoegen",
+    "edit": "Bewerken",
+    "delete": "Verwijderen",
+    "actions": "Acties",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "moreOptions": "Meer opties",
+    "empty": "Nog geen leveranciers.",
+    "created": "Leverancier toegevoegd",
+    "updated": "Leverancier bijgewerkt",
+    "deleted": "Leverancier verwijderd",
+    "saveError": "Kan de leverancier niet opslaan",
+    "deleteError": "Kan de leverancier niet verwijderen",
+    "deleteTitle": "{name} verwijderen?",
+    "deleteDescription": "{count, plural, =0 {Geen product gebruikt deze leverancier.} one {# product blijft zonder leverancier achter.} other {# producten blijven zonder leverancier achter.}}",
+    "fields": {
+      "name": "Naam",
+      "shortDescription": "Korte beschrijving",
+      "phone": "Telefoon",
+      "storeAddress": "Winkeladres",
+      "image": "Afbeelding",
+      "optional": "Optioneel",
+      "discountPercent": "Korting (0-100%)",
+      "minimumOrderValue": "Minimaal bestelbedrag",
+      "openHours": "Openingstijden",
+      "category": "Categorie",
+      "subcategory": "Subcategorie",
+      "none": "Geen"
+    },
+    "columns": {
+      "name": "Naam",
+      "products": "Totaal aantal producten",
+      "active": "Actief"
+    },
+    "description": "Verkopers en merken waartoe je producten behoren."
+  },
+  "ecommerceSettings": {
+    "save": "Opslaan",
+    "saved": "Instellingen opgeslagen",
+    "saveError": "Kan de instellingen niet opslaan",
+    "rank": {
+      "label": "Rang",
+      "default": "Standaard"
+    },
+    "tabs": {
+      "general": "Algemeen",
+      "payments": "Betalingen",
+      "shipping": "Verzending",
+      "checkout": "Afrekenen"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "Bestellen is beschikbaar",
+        "description": "Gebruik dit veld om te voorkomen dat klanten bestellingen plaatsen zonder je openingstijden te wijzigen. Openingstijden bepalen ook je beschikbaarheid."
+      },
+      "webshopProductView": {
+        "label": "Productweergave in de webshop",
+        "description": "Bepaalt hoe producten in je webshop worden weergegeven.",
+        "options": {
+          "list": "Lijst",
+          "listWithoutImage": "Lijst zonder afbeelding",
+          "card": "Kaart",
+          "cardSquare": "Kaart met vierkante afbeelding",
+          "image": "Afbeelding",
+          "imageSquare": "Afbeelding (vierkant)"
+        }
+      },
+      "openHours": {
+        "label": "Openingstijden",
+        "description": "De tijdsintervallen waarin je klanten een bestelling kunnen plaatsen."
+      },
+      "searchProducts": {
+        "label": "Producten zoeken",
+        "description": "Sta klanten toe berichten te sturen om producten te vinden."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "Volg conversies met de Facebook Pixel en meet de resultaten van je advertenties. De volgende events worden bijgehouden: ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "Bericht bij verlaten winkelwagen",
+        "description": "De wachttijd voordat een bericht over een verlaten winkelwagen wordt verstuurd, nadat de gebruiker je bot verlaat met een artikel in de winkelwagen.",
+        "disabled": "Uitgeschakeld",
+        "afterMinutes": "Na {count} minuten",
+        "afterHours": "{count, plural, one {Na # uur} other {Na # uur}}"
+      },
+      "productButtons": {
+        "label": "Knoppen bij producten",
+        "description": "Deze instelling bepaalt welke knoppen bij producten in je bot worden getoond.",
+        "options": {
+          "addToCart": "In winkelwagen",
+          "share": "Delen",
+          "similar": "Vergelijkbaar",
+          "save": "Opslaan"
+        }
+      },
+      "productImageSize": {
+        "label": "Afbeeldingsgrootte van producten",
+        "description": "Deze instelling bepaalt de grootte van de afbeelding van producten in je bot",
+        "options": {
+          "bigSquare": "Groot (vierkant)",
+          "mediumRectangle": "Middel (rechthoek)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "Bestellingen laten beoordelen",
+        "description": "Sta klanten toe een bestelling te beoordelen en een review te schrijven als ze niet tevreden zijn. Alleen beheerders van de bot kunnen de reviews zien"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "Melding sturen bij wijziging van winkelwagenstatus",
+        "description": "De klant ontvangt een melding wanneer je de bestelstatus wijzigt. Je kunt de melding bij annulering en voltooiing van een bestelling niet uitschakelen."
+      },
+      "abandonedCartFlow": {
+        "label": "Flow voor verlaten winkelwagen",
+        "description": "De flow die de bot voor de klant start als de winkelwagen zo lang blijft liggen. Gebruik '{{shop_token}}' in de knoppen om de winkelwagen te openen. Triggers kunnen ook de gebeurtenis \"Cart abandoned\" gebruiken.",
+        "none": "Geen flow (alleen trigger-gebeurtenis)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {# product heeft} other {# producten hebben}} een prijs in een andere valuta dan {currency}. Bestellingen rekenen hun prijs af in {currency}.",
+      "paymentMethods": {
+        "label": "Betaalmethoden",
+        "description": "De betaalmethoden die op de afrekenpagina zijn ingeschakeld. De eerste betaalmethode in de lijst is de geselecteerde betaalmethode op de afrekenpagina.",
+        "options": {
+          "cod": "Rembours"
+        }
+      },
+      "currency": {
+        "label": "Valuta",
+        "description": "Dit is de valuta waarin je de productprijzen instelt. Klanten betalen in deze valuta."
+      },
+      "currencyPosition": {
+        "label": "Positie van de valuta",
+        "description": "Met deze optie bepaal je de positie van de valuta.",
+        "options": {
+          "left": "Links",
+          "leftSpace": "Links met spatie",
+          "right": "Rechts",
+          "rightSpace": "Rechts met spatie"
+        }
+      },
+      "currencySymbol": {
+        "label": "Valutasymbool",
+        "description": "Het valutasymbool wordt voor de prijzen getoond. Wil je een spatie tussen het symbool en de prijzen, voeg dan een spatie toe aan het einde van het symbool."
+      },
+      "serviceFeePercent": {
+        "label": "Overige kosten / Servicekosten (0 - 100%)",
+        "description": "Overige kosten die met de verkoop te maken hebben."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "Verzendtype",
+        "description": "Met deze optie bepaal je hoe de klant zijn bestelling ontvangt.",
+        "options": {
+          "none": "Geen",
+          "delivery": "Bezorgen bij de klant",
+          "pickup": "Afhalen in de winkel",
+          "deliveryAndPickup": "Bezorgen bij de klant, Afhalen in de winkel"
+        }
+      },
+      "storeAddress": {
+        "label": "Winkeladres",
+        "description": "Dit adres wordt aan de klant getoond op de afrekenpagina als je afhalen in de winkel toestaat."
+      },
+      "shippingCountries": {
+        "label": "Verzendlanden",
+        "description": "De landen waarnaar je bestellingen verzendt."
+      },
+      "defaultShippingCountry": {
+        "label": "Standaard verzendland",
+        "description": "Het land dat standaard wordt geselecteerd op de afrekenpagina.",
+        "none": "Geen"
+      },
+      "deliveryCost": {
+        "label": "Bezorgkosten",
+        "description": "Een vast tarief om de bestelling op het adres van de klant te bezorgen."
+      }
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "Afrekenen",
+        "description": "Deze instelling bepaalt waar je klanten hun bestelling afronden. Wil je dat de gebruiker de bestelling buiten je bot afrondt, zoals op je website, Amazon, enz., gebruik dan niet onze standaard afrekenpagina.",
+        "options": {
+          "default": "Standaard afrekenpagina",
+          "externalLink": "Aangepaste externe afrekenpagina",
+          "flow": "Flow",
+          "productPage": "Externe productpagina bezoeken"
+        }
+      },
+      "checkoutLink": {
+        "label": "Link naar afrekenpagina",
+        "description": "De externe pagina waar klanten hun bestelling afronden."
+      },
+      "checkoutFlowId": {
+        "label": "Checkout-flow",
+        "description": "De flow die wordt uitgevoerd wanneer een klant afrekent.",
+        "placeholder": "Selecteer een flow"
+      },
+      "minimumOrderValue": {
+        "label": "Minimaal bestelbedrag",
+        "description": "Het minimale bedrag van de bestelling die een klant kan plaatsen. Deze voorwaarde wordt gecontroleerd nadat alle kortingen zijn toegepast."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "Naam van koper verplicht",
+          "description": "De naam van de koper wordt tijdens het afrekenen opgevraagd."
+        },
+        "requireEmail": {
+          "label": "E-mailadres verplicht",
+          "description": "Het e-mailadres van de koper wordt tijdens het afrekenen opgevraagd."
+        },
+        "requirePhone": {
+          "label": "Telefoonnummer verplicht",
+          "description": "Het telefoonnummer van de koper wordt tijdens het afrekenen opgevraagd."
+        },
+        "requireState": {
+          "label": "Provincie/staat verplicht",
+          "description": "De provincie of staat van de koper wordt tijdens het afrekenen opgevraagd."
+        },
+        "requireZip": {
+          "label": "Postcode verplicht",
+          "description": "De postcode van de koper wordt tijdens het afrekenen opgevraagd."
+        }
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "Altijd open",
+    "addNew": "Nieuw toevoegen",
+    "dialogTitle": "Openingstijden",
+    "name": "Naam",
+    "namePlaceholder": "bijv. Werkdagen",
+    "day": "Dag",
+    "from": "Opent",
+    "to": "Sluit",
+    "add": "Tijden toevoegen",
+    "remove": "Verwijderen",
+    "cancel": "Annuleren",
+    "continue": "Doorgaan",
+    "created": "Openingstijden aangemaakt",
+    "saveError": "Kan de openingstijden niet opslaan",
+    "days": {
+      "0": "Zondag",
+      "1": "Maandag",
+      "2": "Dinsdag",
+      "3": "Woensdag",
+      "4": "Donderdag",
+      "5": "Vrijdag",
+      "6": "Zaterdag"
+    }
+  },
+  "webshop": {
+    "metadataTitle": "Winkel",
+    "metadataOrderTitle": "Je bestelling",
+    "invalidLinkTitle": "Deze link werkt niet",
+    "invalidLinkDescription": "Hij is misschien verlopen. Vraag de winkel in de chat om een nieuwe link.",
+    "previewBanner": "Voorbeeld: zo zien klanten het. Vanuit een voorbeeld kun je niet bestellen.",
+    "closed": {
+      "orderingUnavailable": "De winkel neemt nu geen bestellingen aan.",
+      "outsideOpenHours": "De winkel is nu gesloten. Je kunt nog wel rondkijken."
+    },
+    "searchPlaceholder": "Producten zoeken",
+    "categories": "Categorieën",
+    "allCategories": "Alle categorieën",
+    "vendors": "Leveranciers",
+    "allVendors": "Alle leveranciers",
+    "noProducts": "Geen producten gevonden.",
+    "productNotFound": "Dit product is niet meer beschikbaar.",
+    "outOfStock": "Uitverkocht",
+    "addToCart": "In winkelwagen",
+    "added": "Toegevoegd aan winkelwagen",
+    "chooseOptions": "Opties kiezen",
+    "chooseOption": "Kies {name}",
+    "variantUnavailable": "Deze combinatie is niet beschikbaar.",
+    "buy": "Kopen",
+    "share": "Delen",
+    "linkCopied": "Gekopieerd",
+    "similar": "Vergelijkbaar",
+    "save": "Bewaren",
+    "saved": "Bewaard",
+    "showImage": "Afbeelding {number} tonen",
+    "increase": "Aantal verhogen",
+    "decrease": "Aantal verlagen",
+    "remove": "Verwijderen",
+    "cart": "Winkelwagen",
+    "cartEmpty": "Je winkelwagen is leeg.",
+    "continueShopping": "Verder winkelen",
+    "unavailableItems": "{count, plural, one {# artikel kan nu niet besteld worden} other {# artikelen kunnen nu niet besteld worden}}",
+    "unavailable": "Niet meer beschikbaar",
+    "unavailableHint": "Kies de opties opnieuw",
+    "deletedProduct": "Verwijderd product",
+    "summary": {
+      "subtotal": "Subtotaal",
+      "discount": "Korting",
+      "delivery": "Bezorging",
+      "otherFees": "Overige kosten",
+      "total": "Totaal",
+      "coupon": "Kortingscode ({code})"
+    },
+    "belowMinimum": "De minimale bestelling is {amount}.",
+    "checkOut": "Afrekenen",
+    "contactDetails": "Je gegevens",
+    "optional": "(optioneel)",
+    "fields": {
+      "name": "Naam",
+      "email": "E-mail",
+      "phone": "Telefoon",
+      "country": "Land",
+      "state": "Provincie",
+      "city": "Plaats",
+      "address1": "Adres",
+      "address2": "Appartement, gebouw, enz.",
+      "zip": "Postcode",
+      "note": "Opmerking voor de winkel"
+    },
+    "shipping": {
+      "title": "Bezorging",
+      "delivery": "Bezorgen op mijn adres",
+      "pickup": "Afhalen in de winkel",
+      "storeAddress": "Adres van de winkel: {address}"
+    },
+    "payment": {
+      "title": "Betaling",
+      "cod": "Betalen bij levering"
+    },
+    "placeOrder": "Bestelling plaatsen",
+    "orderPlaced": "Bedankt! Je bestelling is geplaatst. We houden je op de hoogte in de chat.",
+    "orderTitle": "Bestelling #{number}",
+    "orderNotFound": "Deze bestelling is niet gevonden.",
+    "placedAt": "Geplaatst op {date}",
+    "status": {
+      "pending": "Niet verwerkt",
+      "accepted": "In behandeling",
+      "shipped": "Verzonden",
+      "concluded": "Voltooid",
+      "cancelled": "Geannuleerd"
+    },
+    "rateTitle": "Beoordeel je bestelling",
+    "rateComment": "Vertel de winkel wat je ervan vindt (optioneel)",
+    "rateSubmit": "Beoordeling versturen",
+    "rateThanks": "Bedankt voor je beoordeling!",
+    "yourRating": "Jouw beoordeling",
+    "ratingValue": "{rating} van de 5 sterren",
+    "previous": "Vorige",
+    "next": "Volgende",
+    "pageOf": "Pagina {page} van {pageCount}",
+    "errors": {
+      "generic": "Er ging iets mis. Probeer het opnieuw.",
+      "checkFields": "Controleer de velden.",
+      "fieldRequired": "{field} is verplicht.",
+      "countryUnavailable": "De winkel bezorgt niet in dit land.",
+      "invalidLink": "Deze link werkt niet meer. Vraag de winkel om een nieuwe.",
+      "webshopPreviewOnly": "Dit is een voorbeeld. Bestellen kan alleen via de link van een klant.",
+      "rateLimited": "Te veel pogingen. Wacht even en probeer het opnieuw.",
+      "orderingUnavailable": "De winkel neemt nu geen bestellingen aan.",
+      "orderBelowMinimum": "De minimale bestelling is {minimum}.",
+      "orderBelowVendorMinimum": "Artikelen van {vendorName} moeten samen minstens {minimum} zijn.",
+      "orderOutOfStock": "{productName} is uitverkocht.",
+      "orderProductUnavailable": "Sommige artikelen kunnen niet meer besteld worden. Controleer je winkelwagen.",
+      "orderEmpty": "Je winkelwagen is leeg.",
+      "orderShippingTypeUnavailable": "Deze bezorgoptie is niet beschikbaar.",
+      "webshopRatingNotAllowed": "Deze bestelling kan niet beoordeeld worden.",
+      "notFound": "Dit product is niet meer beschikbaar.",
+      "discountCodeNotFound": "Deze kortingscode bestaat niet.",
+      "discountCodeInactive": "Deze kortingscode is niet actief.",
+      "discountCodeNotStarted": "Deze kortingscode geldt nog niet.",
+      "discountCodeExpired": "Deze kortingscode is verlopen.",
+      "discountCodeUsageLimitReached": "Deze kortingscode is op.",
+      "discountCodeAlreadyUsed": "Je hebt deze kortingscode al gebruikt.",
+      "discountCodeNotEligible": "Deze kortingscode is niet voor jou.",
+      "discountCodeNotApplicable": "Deze kortingscode geldt niet voor je winkelwagen.",
+      "discountCodeMinimumAmount": "Deze code vraagt een aankoop van minstens {minimum}. Nog {missing}.",
+      "discountCodeMinimumQuantity": "Deze code vraagt minstens {minimum} artikelen. Nog {missing}."
+    },
+    "discount": {
+      "label": "Kortingscode",
+      "placeholder": "Kortingscode",
+      "apply": "Toepassen",
+      "applied": "Kortingscode toegepast",
+      "automatic": "automatisch toegepast",
+      "remove": "Kortingscode verwijderen"
+    }
+  },
+  "webshopLinks": {
+    "preview": "Voorbeeld",
+    "getLink": "Link ophalen",
+    "copied": "Link gekopieerd. Zet hem op een botknop: elk contact opent zijn eigen winkel.",
+    "error": "De link kon niet worden opgehaald.",
+    "copyError": "De link kon niet worden gekopieerd."
+  },
+  "discountCodes": {
+    "title": "Kortingscodes",
+    "description": "Kortingscodes die klanten bij het afrekenen gebruiken of die vanzelf gelden.",
+    "add": "Toevoegen",
+    "edit": "Kortingscode bewerken",
+    "automatic": "Automatisch",
+    "never": "Nooit",
+    "searchPlaceholder": "Codes zoeken…",
+    "saveError": "De kortingscode kon niet worden opgeslagen.",
+    "created": "Kortingscode aangemaakt",
+    "updated": "Kortingscode opgeslagen",
+    "deleted": "Kortingscode verwijderd",
+    "deleteError": "De kortingscode kon niet worden verwijderd.",
+    "deleteTitle": "Kortingscode {code} verwijderen?",
+    "deleteDescription": "Klanten kunnen hem niet meer gebruiken. Bestellingen die hem gebruikten houden hun korting.",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "save": "Opslaan",
+    "columns": {
+      "name": "Naam",
+      "discount": "Korting",
+      "used": "Gebruikt",
+      "end": "Einde",
+      "active": "Actief"
+    },
+    "discountTypes": {
+      "percentage": "Percentage",
+      "fixedAmount": "Vast bedrag",
+      "freeShipping": "Gratis verzending"
+    },
+    "appliesTo": {
+      "entireOrder": "Hele bestelling",
+      "category": "Specifieke categorie",
+      "products": "Specifieke producten"
+    },
+    "minimumTypes": {
+      "none": "Geen",
+      "amount": "Minimaal aankoopbedrag",
+      "quantity": "Minimaal aantal artikelen"
+    },
+    "eligibilities": {
+      "everyone": "Iedereen",
+      "specificCustomers": "Specifieke klanten"
+    },
+    "form": {
+      "discountCode": "Kortingscode",
+      "code": "Code",
+      "generate": "Genereren",
+      "autoApply": "Deze kortingscode automatisch op winkelwagens toepassen",
+      "autoApplyHint": "Winkelwagens krijgen hem zonder dat de klant hem typt. Bij meerdere automatische codes wint de grootste korting.",
+      "typedHint": "Klanten voeren deze code in bij het afrekenen.",
+      "options": "Opties",
+      "discountType": "Soort korting",
+      "discountValuePercent": "Kortingswaarde (%)",
+      "discountValueAmount": "Kortingswaarde ({currency})",
+      "freeShippingHint": "Haalt de bezorgkosten van bezorgde bestellingen af.",
+      "appliesTo": "Geldt voor",
+      "category": "Categorie",
+      "products": "Producten",
+      "productsPlaceholder": "Kies producten",
+      "minimumRequirement": "Minimale voorwaarde",
+      "minimumAmount": "Minimumbedrag ({currency})",
+      "minimumQuantity": "Minimaal aantal artikelen",
+      "usageLimits": "Gebruikslimieten",
+      "limitTotal": "Beperk hoe vaak deze korting in totaal gebruikt kan worden",
+      "usedSoFar": "{count, plural, one {Tot nu toe # keer gebruikt} other {Tot nu toe # keer gebruikt}}",
+      "oncePerCustomer": "Eén keer per klant",
+      "customerEligibility": "Welke klanten",
+      "specificCustomersHint": "Alleen contacten die bij het bestellen aan het filter hieronder voldoen.",
+      "activeDates": "Geldigheidsperiode",
+      "startDate": "Startdatum",
+      "endDate": "Einddatum",
+      "isActive": "Actief"
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "Analyse",
+    "lifetime": "Totaal",
+    "sales": "Omzet",
+    "orders": "Bestellingen",
+    "products": "Producten",
+    "salesByDate": "Omzet per datum",
+    "ordersByDate": "Bestellingen per datum",
+    "topProducts": "Topproducten",
+    "topVendors": "Topleveranciers",
+    "columns": {
+      "name": "Naam",
+      "sales": "Omzet"
+    },
+    "noData": "Geen gegevens in deze periode",
+    "refresh": "Vernieuwen",
+    "change": "{value}%",
+    "noPrevious": "nieuw"
   },
   "responseSla": {
     "label": "Reactie-SLA",
