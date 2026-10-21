@@ -636,6 +636,28 @@ class UserQuotaService extends BaseService {
     return limit !== null && realCount >= limit
   }
 
+  /**
+   * Read-only check for whether `additionalCount` more team members (e.g. an
+   * owner plus N members created together) still fit under the `teamMembers`
+   * limit — generalizes `isTeamMemberLimitReached`, which can only express a
+   * single pending insert, to a batch where the count moves by more than 1.
+   */
+  async hasRoomForTeamMembers(
+    scope: { ownerId: string } | { tenantId: string },
+    limitUserId: string,
+    additionalCount: number,
+  ): Promise<boolean> {
+    const [quota, realCount] = await Promise.all([
+      this.getForUser(limitUserId),
+      this.countDistinctTeamMembers(scope),
+    ])
+    if (!quota) {
+      return true
+    }
+    const { limit } = this.readMetricValues(quota, "teamMembers")
+    return limit === null || realCount + additionalCount <= limit
+  }
+
   async getRemainingSlots(
     userId: string,
     metric: QuotaMetric,

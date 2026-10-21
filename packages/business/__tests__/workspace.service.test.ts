@@ -56,7 +56,7 @@ vi.mock("@chatbotx.io/database/partials", async (importOriginal) => {
     await importOriginal<typeof import("@chatbotx.io/database/partials")>()
   return {
     ...actual,
-    workspaceMemberRoles: { enum: { owner: "owner" } },
+    workspaceMemberRoles: { enum: { owner: "owner", agent: "agent" } },
   }
 })
 const invalidateCacheByTags = vi.fn(async () => undefined)
@@ -310,10 +310,10 @@ describe("WorkspaceService.create — workspace seat compensation", () => {
   const memberIncrementLanded = () =>
     workspaceMemberService.create.mockImplementationOnce((props: unknown) => {
       const { teamMemberUsage } = props as {
-        teamMemberUsage?: { liveIncremented: boolean }
+        teamMemberUsage?: { liveIncrementedCount: number }
       }
       if (teamMemberUsage) {
-        teamMemberUsage.liveIncremented = true
+        teamMemberUsage.liveIncrementedCount += 1
       }
       return Promise.resolve(undefined)
     })
@@ -354,6 +354,7 @@ describe("WorkspaceService.create — workspace seat compensation", () => {
     expect(workspaceUsageService.rollbackLiveIncrement).toHaveBeenCalledWith(
       "ws-1",
       "teamMembers",
+      1,
     )
   })
 
@@ -427,7 +428,7 @@ describe("WorkspaceService.create — workspace seat compensation", () => {
       consumed: true,
       userId: "user-1",
       workspaceId: "ws-1",
-      teamMembersLiveIncremented: false,
+      teamMembersLiveIncrementedCount: 0,
     })
   })
 
@@ -474,7 +475,7 @@ describe("WorkspaceService.create — workspace seat compensation", () => {
       consumed: true as const,
       userId: "user-1",
       workspaceId: "ws-1",
-      teamMembersLiveIncremented: true,
+      teamMembersLiveIncrementedCount: 1,
     }
 
     await compensateWorkspaceQuotaConsumption(quotaConsumption)
@@ -493,6 +494,7 @@ describe("WorkspaceService.create — workspace seat compensation", () => {
     expect(workspaceUsageService.rollbackLiveIncrement).toHaveBeenCalledWith(
       "ws-1",
       "teamMembers",
+      1,
     )
     expect(quotaConsumption).toEqual({ consumed: false })
   })
@@ -501,6 +503,78 @@ describe("WorkspaceService.create — workspace seat compensation", () => {
     await compensateWorkspaceQuotaConsumption({ consumed: false })
 
     expect(quotaEnforcementService.release).not.toHaveBeenCalled()
+  })
+})
+
+describe("WorkspaceService.create — additional members", () => {
+  test("inserts an agent-role member for each entry in `members`, alongside the owner", async () => {
+    const permissions = { superAdmin: false, analytics: true } as never
+
+    await workspaceService.create({
+      ...createInput(),
+      members: [
+        { userId: "member-1", permissions },
+        { userId: "member-2", permissions },
+      ],
+    })
+
+    expect(workspaceMemberService.create).toHaveBeenCalledTimes(3)
+    const [, memberOneArg, memberTwoArg] =
+      workspaceMemberService.create.mock.calls.map((call) => call[0])
+    expect(memberOneArg.data).toMatchObject({
+      userId: "member-1",
+      workspaceId: "ws-1",
+      role: "agent",
+      permissions,
+    })
+    expect(memberTwoArg.data).toMatchObject({
+      userId: "member-2",
+      workspaceId: "ws-1",
+      role: "agent",
+      permissions,
+    })
+  })
+
+  test("rolls back the live team-member counter by the number of inserts that actually landed", async () => {
+    workspaceMemberService.create
+      .mockImplementationOnce((props: unknown) => {
+        const { teamMemberUsage } = props as {
+          teamMemberUsage?: { liveIncrementedCount: number }
+        }
+        if (teamMemberUsage) {
+          teamMemberUsage.liveIncrementedCount += 1
+        }
+        return Promise.resolve(undefined)
+      })
+      .mockImplementationOnce((props: unknown) => {
+        const { teamMemberUsage } = props as {
+          teamMemberUsage?: { liveIncrementedCount: number }
+        }
+        if (teamMemberUsage) {
+          teamMemberUsage.liveIncrementedCount += 1
+        }
+        return Promise.resolve(undefined)
+      })
+    transaction.mockImplementationOnce(async (fn) => {
+      await fn(db)
+      throw new Error("commit failed")
+    })
+
+    await expect(
+      workspaceService.create({
+        ...createInput(),
+        members: [
+          { userId: "member-1", permissions: {} as never },
+          { userId: "member-2", permissions: {} as never },
+        ],
+      }),
+    ).rejects.toThrow("commit failed")
+
+    expect(workspaceUsageService.rollbackLiveIncrement).toHaveBeenCalledWith(
+      "ws-1",
+      "teamMembers",
+      2,
+    )
   })
 })
 

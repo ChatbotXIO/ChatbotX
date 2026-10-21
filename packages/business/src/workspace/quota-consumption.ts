@@ -15,14 +15,14 @@ export type WorkspaceQuotaConsumption =
       consumed: false
       userId?: undefined
       workspaceId?: undefined
-      teamMembersLiveIncremented?: undefined
+      teamMembersLiveIncrementedCount?: undefined
     }
   | {
       consumed: true
       userId: string
       workspaceId: string
-      /** Whether Redis took the owner-member `teamMembers` +1 (see `rollbackLiveIncrement`). */
-      teamMembersLiveIncremented: boolean
+      /** How many of the `teamMembers` inserts on this tx took the live Redis +1 (see `rollbackLiveIncrement`). */
+      teamMembersLiveIncrementedCount: number
     }
 
 /**
@@ -57,21 +57,23 @@ export async function compensateWorkspaceQuotaConsumption(
   if (!quotaConsumption.consumed) {
     return
   }
-  const { userId, workspaceId, teamMembersLiveIncremented } = quotaConsumption
+  const { userId, workspaceId, teamMembersLiveIncrementedCount } =
+    quotaConsumption
   Object.assign(quotaConsumption, {
     consumed: false,
     userId: undefined,
     workspaceId: undefined,
-    teamMembersLiveIncremented: undefined,
+    teamMembersLiveIncrementedCount: undefined,
   })
   await releaseWorkspaceSeat(userId)
-  if (!teamMembersLiveIncremented) {
+  if (!teamMembersLiveIncrementedCount) {
     return
   }
   try {
     await workspaceUsageService.rollbackLiveIncrement(
       workspaceId,
       "teamMembers",
+      teamMembersLiveIncrementedCount,
     )
   } catch (err) {
     logger.warn(

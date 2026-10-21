@@ -9,7 +9,10 @@ import {
   isNull,
   sql,
 } from "@chatbotx.io/database/client"
-import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
+import {
+  type WorkspaceMemberPermissions,
+  workspaceMemberRoles,
+} from "@chatbotx.io/database/partials"
 import {
   ROOT_TENANT_ID,
   workspaceMemberModel,
@@ -52,7 +55,7 @@ type WorkspaceWhere = Partial<{ id: string; ownerId: string }>
 /** What `writeWorkspace` has already done, for `insertWorkspace`'s rollback. */
 type WriteProgress = {
   workspaceId?: string
-  teamMemberUsage: { liveIncremented: boolean }
+  teamMemberUsage: { liveIncrementedCount: number }
 }
 type DueWorkspace = Pick<WorkspaceModel, "id" | "ownerId" | "tenantId">
 
@@ -669,6 +672,8 @@ class WorkspaceService extends BaseService {
     createdBy: string
     tx?: DatabaseClient
     quotaConsumption?: WorkspaceQuotaConsumption
+    /** Additional members (role `agent`) inserted alongside the owner, in the same transaction. Used by the admin console's "create workspace for an owner" flow. */
+    members?: Array<{ userId: string; permissions: WorkspaceMemberPermissions }>
   }): Promise<WorkspaceModel> {
     if (isCommunity()) {
       // Community edition allows exactly one workspace per owner. Serialize
@@ -699,6 +704,7 @@ class WorkspaceService extends BaseService {
     createdBy: string
     tx?: DatabaseClient
     quotaConsumption?: WorkspaceQuotaConsumption
+    members?: Array<{ userId: string; permissions: WorkspaceMemberPermissions }>
   }): Promise<WorkspaceModel> {
     // This consume runs against `db`, not `tx`: if a caller wraps `create` in
     // its own transaction that later rolls back (e.g. a channel connect action),
@@ -716,7 +722,7 @@ class WorkspaceService extends BaseService {
     // Filled by `writeWorkspace` as it goes, so the catch below knows which
     // live counters actually moved.
     const progress: WriteProgress = {
-      teamMemberUsage: { liveIncremented: false },
+      teamMemberUsage: { liveIncrementedCount: 0 },
     }
     let newWorkspace: WorkspaceModel
     try {
@@ -738,8 +744,8 @@ class WorkspaceService extends BaseService {
             consumed: true,
             userId: props.createdBy,
             workspaceId: progress.workspaceId,
-            teamMembersLiveIncremented:
-              progress.teamMemberUsage.liveIncremented,
+            teamMembersLiveIncrementedCount:
+              progress.teamMemberUsage.liveIncrementedCount,
           })
         : releaseWorkspaceSeat(props.createdBy))
       throw err
@@ -753,7 +759,8 @@ class WorkspaceService extends BaseService {
         consumed: true,
         userId: props.createdBy,
         workspaceId: newWorkspace.id,
-        teamMembersLiveIncremented: progress.teamMemberUsage.liveIncremented,
+        teamMembersLiveIncrementedCount:
+          progress.teamMemberUsage.liveIncrementedCount,
       })
     }
 
@@ -785,6 +792,7 @@ class WorkspaceService extends BaseService {
     createdBy: string
     tx: DatabaseClient
     progress: WriteProgress
+    members?: Array<{ userId: string; permissions: WorkspaceMemberPermissions }>
   }): Promise<WorkspaceModel> {
     const { data, tx } = props
 
@@ -798,6 +806,20 @@ class WorkspaceService extends BaseService {
       })
       .returning()
     props.progress.workspaceId = newWorkspace.id
+
+    // Every new membership (owner and additional members alike) starts with
+    // the same defaults — mirrors `acceptInvitationAction`'s member insert.
+    const defaultNotificationTypes = {
+      notifyAdmin: true,
+      newMessageToHuman: true,
+      newOrder: true,
+    }
+    const defaultNotificationChannels = {
+      messenger: true,
+      email: true,
+      telegram: true,
+      browser: true,
+    }
 
     await workspaceMemberService.create({
       tx,
@@ -816,19 +838,29 @@ class WorkspaceService extends BaseService {
           broadcast: true,
           ecommerce: true,
         },
-        notificationTypes: {
-          notifyAdmin: true,
-          newMessageToHuman: true,
-          newOrder: true,
-        },
-        notificationChannels: {
-          messenger: true,
-          email: true,
-          telegram: true,
-          browser: true,
-        },
+        notificationTypes: defaultNotificationTypes,
+        notificationChannels: defaultNotificationChannels,
       },
     })
+
+    // Admin-console "create workspace for an owner" flow attaches members in
+    // the same transaction as the owner above, so a later failure (quota,
+    // cache) rolls every member back with the workspace instead of leaving a
+    // partially staffed workspace behind.
+    for (const member of props.members ?? []) {
+      await workspaceMemberService.create({
+        tx,
+        teamMemberUsage: props.progress.teamMemberUsage,
+        data: {
+          userId: member.userId,
+          workspaceId: newWorkspace.id,
+          role: workspaceMemberRoles.enum.agent,
+          permissions: member.permissions,
+          notificationTypes: defaultNotificationTypes,
+          notificationChannels: defaultNotificationChannels,
+        },
+      })
+    }
 
     await this.ensureMacRollup({
       workspaceId: newWorkspace.id,

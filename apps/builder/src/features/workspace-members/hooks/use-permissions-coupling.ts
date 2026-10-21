@@ -1,48 +1,47 @@
 "use client"
 
+import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
 import { useEffect } from "react"
 import { type UseFormReturn, useWatch } from "react-hook-form"
-import type {
-  InviteWorkspaceMemberRequest,
-  UpdateWorkspaceMemberRequest,
-} from "../schema/mutation"
 
 type CouplingResult = {
   isSuperAdmin: boolean
   contactsEnabled: boolean
 }
 
-export function useWorkspaceMemberPermissionsCoupling(
-  form:
-    | UseFormReturn<InviteWorkspaceMemberRequest>
-    | UseFormReturn<UpdateWorkspaceMemberRequest>,
-): CouplingResult {
-  const permissionForm = form as UseFormReturn<InviteWorkspaceMemberRequest>
-  const { setValue } = permissionForm
+/**
+ * Generic over any form whose values carry a `permissions` field of this
+ * shape — the invite/update workspace-member forms and the admin console's
+ * create-workspace-for-an-owner form all share it.
+ */
+export function useWorkspaceMemberPermissionsCoupling<
+  TFieldValues extends { permissions: WorkspaceMemberPermissions },
+>(form: UseFormReturn<TFieldValues>): CouplingResult {
+  const { setValue } = form
   const isSuperAdmin = useWatch({
-    control: permissionForm.control,
-    name: "permissions.superAdmin",
-  })
+    control: form.control,
+    name: "permissions.superAdmin" as never,
+  }) as unknown as boolean
   const contactsEnabled = useWatch({
-    control: permissionForm.control,
-    name: "permissions.contacts",
-  })
+    control: form.control,
+    name: "permissions.contacts" as never,
+  }) as unknown as boolean
 
   useEffect(() => {
     if (isSuperAdmin) {
-      setValue("permissions.analytics", true)
-      setValue("permissions.flows", true)
-      setValue("permissions.contacts", true)
-      setValue("permissions.onlyAssignedContacts", true)
-      setValue("permissions.emailAndPhone", true)
-      setValue("permissions.broadcast", true)
-      setValue("permissions.ecommerce", true)
+      setValue("permissions.analytics" as never, true as never)
+      setValue("permissions.flows" as never, true as never)
+      setValue("permissions.contacts" as never, true as never)
+      setValue("permissions.onlyAssignedContacts" as never, true as never)
+      setValue("permissions.emailAndPhone" as never, true as never)
+      setValue("permissions.broadcast" as never, true as never)
+      setValue("permissions.ecommerce" as never, true as never)
     }
   }, [isSuperAdmin, setValue])
 
   useEffect(() => {
     if (contactsEnabled && !isSuperAdmin) {
-      setValue("permissions.onlyAssignedContacts", false)
+      setValue("permissions.onlyAssignedContacts" as never, false as never)
     }
   }, [contactsEnabled, isSuperAdmin, setValue])
 
