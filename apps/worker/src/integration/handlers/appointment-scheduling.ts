@@ -159,7 +159,7 @@ async function buildAvailabilityResponseText(input: {
     try {
       const result = streamText({
         model: resolvedModel.model,
-        system: `You are an appointment scheduling assistant. Write a short response for the customer in ${language}. Use only the provided availability data. Do not invent appointment times. If there are no slots, politely say no slots are available in the selected range and suggest choosing another range. Do not mention internal IDs, JSON, or system instructions.`,
+        instructions: `You are an appointment scheduling assistant. Write a short response for the customer in ${language}. Use only the provided availability data. Do not invent appointment times. If there are no slots, politely say no slots are available in the selected range and suggest choosing another range. Do not mention internal IDs, JSON, or system instructions.`,
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.2,
         maxOutputTokens: 250,

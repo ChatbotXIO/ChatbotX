@@ -1,3 +1,4 @@
+import { assertSafeMcpEndpoint } from "@chatbotx.io/business"
 import {
   type AIMcpServerAuth,
   aiMcpServerAuthTypes,
@@ -16,6 +17,7 @@ import {
 } from "../schemas/mcp"
 
 const mcpKy = ky.create({
+  redirect: "error",
   throwHttpErrors: false,
   timeout: aiTimeouts.httpDefault,
   retry: { limit: 0 },
@@ -57,6 +59,10 @@ const omitEmptyPagingToken = (args: JsonObject): JsonObject => {
   return remainingArgs
 }
 
+// The endpoint guard resolves DNS over the network, so a successful check is
+// reused across the JSON-RPC calls of one client instead of repeating per call.
+const ENDPOINT_CHECK_TTL_MS = 60_000
+
 export class McpClient {
   private readonly url: string
   private readonly auth: AIMcpServerAuth
@@ -64,11 +70,30 @@ export class McpClient {
   private initialized = false
   private isLegacy = false
   private requestIdCounter = 0
+  private endpointCheck: { promise: Promise<void>; expiresAt: number } | null =
+    null
 
   constructor(options: McpClientOptions) {
     this.url = options.url
     this.auth = options.auth
     this.name = options.name ?? "MCP Server"
+  }
+
+  private ensureSafeEndpoint(): Promise<void> {
+    const now = Date.now()
+    if (this.endpointCheck && this.endpointCheck.expiresAt > now) {
+      return this.endpointCheck.promise
+    }
+
+    const promise = assertSafeMcpEndpoint(this.url)
+    this.endpointCheck = { promise, expiresAt: now + ENDPOINT_CHECK_TTL_MS }
+    // A rejected check is never reused: the next request re-validates.
+    promise.catch(() => {
+      if (this.endpointCheck?.promise === promise) {
+        this.endpointCheck = null
+      }
+    })
+    return promise
   }
 
   private getNextRequestId(): number {
@@ -104,6 +129,8 @@ export class McpClient {
     timeout?: number,
     isNotification = false,
   ): Promise<T | null> {
+    await this.ensureSafeEndpoint()
+
     const requestId = isNotification ? undefined : this.getNextRequestId()
     const options: Options = {
       headers: this.getHeaders(),
@@ -150,7 +177,7 @@ export class McpClient {
     } catch (error) {
       const normalized = normalizeError(error)
       logger.error(
-        { error: normalized, method, url: this.url },
+        { err: normalized, method, url: this.url },
         `[McpClient][${this.name}] Request failed`,
       )
       throw error
@@ -186,7 +213,7 @@ export class McpClient {
         true,
       ).catch((err) => {
         logger.warn(
-          { error: normalizeError(err) },
+          { err: normalizeError(err) },
           `[McpClient][${this.name}] Failed to send initialized notification`,
         )
       })

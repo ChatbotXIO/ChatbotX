@@ -1,3 +1,4 @@
+import { assertSafeMcpEndpoint } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
   type AIMcpServerAuth,
@@ -87,6 +88,8 @@ export async function getMCPServerTools(
 
     const results = await Promise.allSettled(
       mcpServers.map(async (mcpServer) => {
+        await assertSafeMcpEndpoint(mcpServer.url)
+
         let auth = aiMcpServerAuth.parse(mcpServer.auth)
         if (auth.type === "token" && resolveToken) {
           const resolution = await resolveToken(auth.token)
@@ -157,7 +160,7 @@ export async function getMCPServerTools(
       } else {
         const normalized = normalizeError(result.reason)
         logger.error(
-          { error: normalized, workspaceId },
+          { err: normalized, workspaceId },
           "[ai-package] Failed to load MCP server tools",
         )
       }
@@ -167,7 +170,7 @@ export async function getMCPServerTools(
   } catch (error) {
     const normalized = normalizeError(error)
     logger.error(
-      { error: normalized, workspaceId },
+      { err: normalized, workspaceId },
       "[ai-package] getMCPServerTools failed",
     )
     return { tools: {}, clients: [] }

@@ -30,9 +30,13 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { contactVariableService } from "@chatbotx.io/variables"
-import { type ModelMessage, stepCountIs, streamText, type ToolSet } from "ai"
+import { isStepCount, type ModelMessage, streamText, type ToolSet } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
+import {
+  type AgentToolStats,
+  createAgentToolStatsCollector,
+} from "./agent-tool-stats"
 import { logProviderAttempt } from "./provider-attempt-logger"
 import { createMcpTokenResolver } from "./resolve-mcp-token"
 
@@ -52,18 +56,7 @@ export type ReplyByAIExecutionResult = {
   modelId: string
   usedFallbackText: boolean
   fullText: string
-  toolStats: {
-    steps: number
-    toolCallsCount: number
-    toolResultsCount: number
-    toolErrorsCount: number
-    toolNames: string[]
-    finishReasons: Array<{
-      stepNumber: number
-      finishReason: string
-      rawFinishReason?: string
-    }>
-  }
+  toolStats: AgentToolStats
 }
 
 export async function runAIAgentRunner(
@@ -185,84 +178,32 @@ async function runAIReplyInternal(
       tools,
     )
 
-    const toolNamesSet = new Set<string>()
-    const finishReasons: Array<{
-      stepNumber: number
-      finishReason: string
-      rawFinishReason?: string
-    }> = []
-    let stepCount = 0
-    let toolCallsCount = 0
-    let toolResultsCount = 0
-    let toolErrorsCount = 0
+    const toolStats = createAgentToolStatsCollector({
+      conversationId: conversation.id,
+      logPrefix: "ai-agent-runner",
+      modelId: selectedModelId,
+      provider,
+      workspaceId: conversation.workspaceId,
+    })
 
     const hasTools = Object.keys(tools).length > 0
     const result = await streamText({
       model,
-      system: systemPrompt,
+      instructions: systemPrompt,
       messages,
       maxOutputTokens: aiAgent.maxOutputTokens,
       temperature: aiAgent.temperature,
       tools,
       toolChoice: hasTools ? "auto" : "none",
-      stopWhen: stepCountIs(5),
+      stopWhen: isStepCount(5),
       timeout: {
         totalMs: aiTimeouts.aiTotal,
         stepMs: aiTimeouts.aiStep,
+        firstChunkMs: aiTimeouts.aiFirstChunk,
         chunkMs: aiTimeouts.aiChunk,
       },
-      onStepFinish: ({
-        stepNumber,
-        finishReason,
-        rawFinishReason,
-        toolCalls,
-        toolResults,
-      }) => {
-        stepCount = Math.max(stepCount, stepNumber + 1)
-        finishReasons.push({
-          stepNumber,
-          finishReason,
-          rawFinishReason,
-        })
-
-        toolCallsCount += toolCalls.length
-        for (const call of toolCalls) {
-          if (call?.toolName) {
-            toolNamesSet.add(call.toolName)
-          }
-        }
-
-        toolResultsCount += toolResults.length
-        for (const tr of toolResults) {
-          if (hasToolResultError(tr)) {
-            toolErrorsCount += 1
-          }
-        }
-      },
-      experimental_onToolCallFinish: ({
-        toolCall,
-        durationMs,
-        success,
-        error,
-      }) => {
-        if (!success) {
-          const normalizedError = normalizeError(error)
-          logger.warn(
-            {
-              provider,
-              modelId: selectedModelId,
-              conversationId: conversation.id,
-              workspaceId: conversation.workspaceId,
-              toolName: toolCall?.toolName,
-              toolCallId: toolCall?.toolCallId,
-              durationMs,
-              error: normalizedError,
-              errorMessage: normalizedError.message,
-            },
-            "[ai-agent-runner] tool execution failed",
-          )
-        }
-      },
+      onStepEnd: toolStats.onStepEnd,
+      onToolExecutionEnd: toolStats.onToolExecutionEnd,
       abortSignal,
     })
 
@@ -306,32 +247,18 @@ async function runAIReplyInternal(
         modelId: selectedModelId,
         usedFallbackText: false,
         fullText,
-        toolStats: {
-          steps: stepCount,
-          toolCallsCount,
-          toolResultsCount,
-          toolErrorsCount,
-          toolNames: Array.from(toolNamesSet).slice(0, 10),
-          finishReasons: finishReasons.slice(0, 10),
-        },
+        toolStats: toolStats.toToolStats(),
       }
     }
 
-    if (toolCallsCount > 0 || toolResultsCount > 0) {
+    if (toolStats.hasToolActivity()) {
       return {
         responded: true,
         provider,
         modelId: selectedModelId,
         usedFallbackText: true,
         fullText: helpTexts.fallbackLookup,
-        toolStats: {
-          steps: stepCount,
-          toolCallsCount,
-          toolResultsCount,
-          toolErrorsCount,
-          toolNames: Array.from(toolNamesSet).slice(0, 10),
-          finishReasons: finishReasons.slice(0, 10),
-        },
+        toolStats: toolStats.toToolStats(),
       }
     }
 
@@ -408,16 +335,4 @@ function getProviderName(providerInfo: AIAgentModelConfig) {
   return isOpenaiCompatibleProviderModel(providerInfo)
     ? "openaiCompatible"
     : providerInfo.provider
-}
-
-function hasToolResultError(value: unknown): boolean {
-  if (!value || typeof value !== "object") {
-    return false
-  }
-
-  if (!("isError" in value)) {
-    return false
-  }
-
-  return Boolean(value.isError)
 }

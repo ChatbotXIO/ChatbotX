@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@chatbotx.io/decision-config": "workspace:*",
-    "@ai-sdk/mcp": "^2.0.32",
+    "@ai-sdk/mcp": "^2.0.78",
     "@base-ui/react": "^1.6.0",
     "@bull-board/api": "^9.10.1",
     "@bull-board/hono": "^9.10.1",

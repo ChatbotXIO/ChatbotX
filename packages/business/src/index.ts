@@ -101,6 +101,10 @@ export * from "./integration-webchat"
 export * from "./integration-whatsapp"
 export * from "./integration-zalo"
 export * from "./invitation"
+// Only the edition predicate: callers outside this package (e.g. the MCP
+// endpoint policy in `@chatbotx.io/ai`) branch on it, but `keys()` itself
+// stays private.
+export { isCloud } from "./keys"
 export * from "./magic-link"
 export * from "./media"
 export * from "./media-library"

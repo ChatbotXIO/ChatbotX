@@ -1,7 +1,7 @@
 import { aiTimeouts } from "@chatbotx.io/ai"
 import { aiIntegrationService, getAIModel } from "@chatbotx.io/ai/server"
 import type { AISpeechToTextSchema } from "@chatbotx.io/flow-config"
-import { experimental_transcribe as transcribe } from "ai"
+import { transcribe } from "ai"
 import { z } from "zod"
 import { env } from "../../env"
 import type { HeavyStepComputeProps } from "../../integration/handlers/flow-utils"

@@ -61,6 +61,10 @@ CLAUDE.md
 .pnpm-store/
 .plans/
 
+# Local PartyKit dev state (Durable Object sqlite/wal files). The realtime
+# gateway no longer uses PartyKit; these linger from older checkouts.
+.partykit/
+
 # MCP business-evaluation harness output (episodes, manifests, server
 # snapshots) — regenerated per run via `pnpm --filter chatbotx-mcp eval:business`.
 apps/mcp-server/evals/out/
