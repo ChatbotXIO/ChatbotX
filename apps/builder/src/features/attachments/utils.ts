@@ -2,21 +2,30 @@ import { useState } from "react"
 import { useTenantSettings } from "@/features/tenant"
 import type { AttachmentResource } from "./schema/resource"
 
-export function useAttachmentUrl(
-  attachment?: AttachmentResource | null,
+// Same grammar as the server's pending/failed originPath markers
+// (`@chatbotx.io/business` media/resolve-media-url). Repeated here because the
+// server module is not importable from client code.
+const UNSERVED_ORIGIN_PATH = /^(https?:\/\/|wa-media:|failed:)/i
+
+/**
+ * The URL a browser may load for an attachment. A server-resolved `url` wins
+ * (`null` is terminal). Without one, only a stored key is joined onto the
+ * storage URL: a pending provider URL expires and must go through the signed
+ * proxy URL, and a failed/`wa-media:` reference is not loadable at all.
+ */
+export function toAttachmentUrl(
+  attachment: Pick<AttachmentResource, "originPath" | "url">,
+  storageUrl: string,
 ): string | undefined {
-  const { storageUrl } = useTenantSettings()
-
-  if (!attachment) {
-    return
-  }
-
-  // A server-resolved null is terminal; only legacy undefined shapes fall back.
   if (attachment.url !== undefined) {
     return attachment.url ?? undefined
   }
 
   if (attachment.originPath === null) {
+    return
+  }
+
+  if (UNSERVED_ORIGIN_PATH.test(attachment.originPath)) {
     return
   }
 
@@ -26,6 +35,18 @@ export function useAttachmentUrl(
     console.error("Error getting attachment URL", error)
     return
   }
+}
+
+export function useAttachmentUrl(
+  attachment?: AttachmentResource | null,
+): string | undefined {
+  const { storageUrl } = useTenantSettings()
+
+  if (!attachment) {
+    return
+  }
+
+  return toAttachmentUrl(attachment, storageUrl)
 }
 
 // Mirrors the media proxy's retry flag (`app/media/attachment/[token]/route.ts`).

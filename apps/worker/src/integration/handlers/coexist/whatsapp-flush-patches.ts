@@ -7,7 +7,7 @@ import type {
   PendingCoexistAttachment,
   PendingCoexistPatch,
 } from "@chatbotx.io/database/schema"
-import type { IncomingAttachment } from "@chatbotx.io/sdk"
+import { type IncomingAttachment, toKeepOriginal } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../../lib/logger"
 
@@ -80,6 +80,7 @@ const toPendingAttachment = (
   width: attachment.width,
   height: attachment.height,
   name: attachment.name,
+  isPhotoMessage: attachment.isPhotoMessage,
 })
 
 const fromPendingAttachment = (
@@ -94,6 +95,7 @@ const fromPendingAttachment = (
   width: attachment.width,
   height: attachment.height,
   name: attachment.name,
+  isPhotoMessage: attachment.isPhotoMessage,
 })
 
 /** Expands patches carried on the run back into the per-batch working shape. */
@@ -362,6 +364,7 @@ const toAttachmentRow = (
   width: candidate.attachment.width ?? undefined,
   height: candidate.attachment.height ?? undefined,
   name: candidate.attachment.name,
+  keepOriginal: toKeepOriginal(candidate.attachment),
 })
 
 /** The contentAttributes overlay an edit/revoke applies; null for media. */

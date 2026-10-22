@@ -35,6 +35,12 @@ RUN apt update && \
 COPY apps/worker/docker/rootfs/ /
 
 COPY --from=deps /app/apps/worker/dist /app/apps/worker/dist
+# The bundle leaves the native `sharp` addon external (tsdown `neverBundle`);
+# install it where `dist/*.mjs` resolves it. Keep the version in step with
+# `@chatbotx.io/utils`.
+RUN npm install --prefix /app/apps/worker --omit=dev --no-audit --no-fund \
+  sharp@0.35.5 && \
+  npm cache clean --force
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["tini", "--", "/usr/local/bin/docker-entrypoint.sh"]

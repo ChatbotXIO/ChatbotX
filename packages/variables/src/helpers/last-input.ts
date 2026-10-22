@@ -1,7 +1,13 @@
-import { messageService } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  messageService,
+  resolveMediaUrl,
+} from "@chatbotx.io/business"
+import { ensureAttachmentStored } from "@chatbotx.io/channel-registry/media-hydration"
 import { contentTypes } from "@chatbotx.io/database/partials"
 import type { MessageWithAttachments } from "@chatbotx.io/database/repositories"
 import type { ConversationModel } from "@chatbotx.io/database/types"
+import { logger } from "../logger"
 import { resolveContactMessageWindow } from "./message-window"
 import { toPublicStorageUrl } from "./storage-url"
 
@@ -33,6 +39,69 @@ const findLatestInputMessage = async (
   return { conversation, message }
 }
 
+// The media proxy URL of an attachment that could not be stored in time: it
+// shows the provider's copy and finishes storing it, so a flow step still gets
+// a working link instead of an empty value.
+const toProxyAttachmentUrl = async (
+  attachment: MessageWithAttachments["attachments"][number],
+  message: MessageWithAttachments,
+  workspaceId: string,
+): Promise<string | null> => {
+  const contactInbox = await contactInboxService.findBy({
+    where: { id: message.contactInboxId },
+  })
+  if (!contactInbox) {
+    return null
+  }
+  return await resolveMediaUrl(
+    {
+      kind: "attachment",
+      attachmentId: attachment.id,
+      workspaceId,
+      originPath: attachment.originPath,
+      channel: contactInbox.channel,
+      messageCreatedAt: attachment.messageCreatedAt,
+    },
+    (key) => toPublicStorageUrl(key, workspaceId),
+  )
+}
+
+// A lazily-ingested attachment is still a provider URL that expires: store it
+// first so every flow step gets a durable URL. Variables never throw: an
+// attachment that is gone resolves to null, one that is not stored in time to
+// its media proxy URL.
+const toStoredAttachmentUrl = async (
+  attachment: MessageWithAttachments["attachments"][number],
+  message: MessageWithAttachments,
+  workspaceId: string,
+): Promise<string | null> => {
+  try {
+    const stored = await ensureAttachmentStored({
+      attachmentId: attachment.id,
+      workspaceId,
+      messageCreatedAt: attachment.messageCreatedAt,
+      originPath: attachment.originPath,
+    })
+    return stored
+      ? await toPublicStorageUrl(stored.originPath, workspaceId)
+      : null
+  } catch (err) {
+    logger.warn(
+      { err, attachmentId: attachment.id, workspaceId },
+      "last_input: attachment not stored in time; using its media proxy URL",
+    )
+  }
+  try {
+    return await toProxyAttachmentUrl(attachment, message, workspaceId)
+  } catch (err) {
+    logger.warn(
+      { err, attachmentId: attachment.id, workspaceId },
+      "last_input: attachment media proxy URL could not be built",
+    )
+    return null
+  }
+}
+
 export const getContactLastInput = async (
   contactId: string,
 ): Promise<string | null> => {
@@ -44,8 +113,9 @@ export const getContactLastInput = async (
   const { conversation, message } = latestInput
   const attachment = message.attachments[0]
   if (attachment) {
-    return await toPublicStorageUrl(
-      attachment.originPath,
+    return await toStoredAttachmentUrl(
+      attachment,
+      message,
       conversation.workspaceId,
     )
   }

@@ -31,6 +31,9 @@ export const markUnresolvableOnFinalAttempt = async (
   await markAttachmentUnresolvable({
     attachmentId: data.attachmentId,
     workspaceId: data.workspaceId,
+    ...(data.messageCreatedAt === undefined
+      ? {}
+      : { messageCreatedAt: new Date(data.messageCreatedAt) }),
   })
 }
 
@@ -75,6 +78,9 @@ export const coexistAttachmentDownload = async (
     await ensureAttachmentMirrored({
       attachmentId: data.attachmentId,
       workspaceId: data.workspaceId,
+      ...(data.messageCreatedAt === undefined
+        ? {}
+        : { messageCreatedAt: new Date(data.messageCreatedAt) }),
     })
   } catch (err) {
     if (err instanceof TerminalMediaError) {

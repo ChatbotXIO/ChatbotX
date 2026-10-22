@@ -16,6 +16,7 @@ import { BaseService } from "../base.service"
 import { contactCustomFieldService } from "../contact-custom-field/service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
+import { type EnsureAvatarMirrored, resolveContactAvatarUrl } from "../media"
 import { isSsrfUnsafeUrl } from "../net/ssrf-guard"
 import { resolveTenantSettings } from "../platform/settings"
 import { toPublicStorageUrl } from "../utils"
@@ -106,6 +107,10 @@ type UpsertInput = {
   customFieldId?: string | null
   data: DynamicImageDocument
 }
+
+type AvatarContactInbox = NonNullable<
+  Parameters<typeof resolveContactAvatarUrl>[0]["contactInbox"]
+>
 
 class DynamicImageService extends BaseService {
   async list(input: ListInput) {
@@ -389,6 +394,11 @@ class DynamicImageService extends BaseService {
   async resolveDynamicElements(input: {
     workspaceId: string
     contactId: string
+    // The inbox the picture is asked from when the contact has none stored
+    // yet, and the callback that fetches it (injected: business never imports
+    // the channel layer). Without them only a stored picture can be used.
+    contactInbox?: AvatarContactInbox | null
+    ensureAvatarMirrored?: EnsureAvatarMirrored
     document: DynamicImageDocument
   }): Promise<DynamicImageDocument> {
     const elements = await Promise.all(
@@ -400,6 +410,8 @@ class DynamicImageService extends BaseService {
           const url = await this.findContactAvatarUrl({
             workspaceId: input.workspaceId,
             contactId: input.contactId,
+            contactInbox: input.contactInbox,
+            ensureAvatarMirrored: input.ensureAvatarMirrored,
           })
           return url ? { ...element, url } : element
         }
@@ -502,18 +514,32 @@ class DynamicImageService extends BaseService {
   private async findContactAvatarUrl(input: {
     workspaceId: string
     contactId: string
+    contactInbox?: AvatarContactInbox | null
+    ensureAvatarMirrored?: EnsureAvatarMirrored
   }): Promise<string | null> {
     const contact = await db.query.contactModel.findFirst({
       where: { id: input.contactId, workspaceId: input.workspaceId },
       columns: { avatar: true },
     })
-    if (!contact?.avatar) {
+    if (!contact) {
       return null
     }
     const settings = await resolveTenantSettings({
       workspaceId: input.workspaceId,
     })
-    return toPublicStorageUrl(contact.avatar, settings.storageUrl)
+    // A contact created on a lazy-avatar channel has no stored picture until
+    // something asks for it: resolve through the shared avatar resolver (which
+    // fetches it on demand and keeps a no-avatar sentinel out of the layer)
+    // instead of reading the raw column.
+    return await resolveContactAvatarUrl(
+      {
+        workspaceId: input.workspaceId,
+        contact,
+        contactInbox: input.contactInbox,
+      },
+      (key) => toPublicStorageUrl(key, settings.storageUrl),
+      input.ensureAvatarMirrored,
+    )
   }
 }
 

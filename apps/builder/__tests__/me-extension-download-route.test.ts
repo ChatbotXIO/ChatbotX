@@ -3,6 +3,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const buildMeExport = vi.fn()
 const loadServableWorkspace = vi.fn()
+const ensureContactAvatarMirrored = vi.fn()
+
+vi.mock("@chatbotx.io/channel-registry/media-hydration", () => ({
+  ensureContactAvatarMirrored,
+}))
 
 vi.mock("@chatbotx.io/business/system-field", () => ({
   systemFieldService: {
@@ -66,13 +71,18 @@ describe("me extension download route", () => {
       messages: ["newest", "older"],
       generated: "2026-07-09 02:00:00 (UTC)",
     })
-    expect(buildMeExport).toHaveBeenCalledWith({
-      workspaceId: "workspace-1",
-      sourceId: "source/1",
-      integrationId: "integration-1",
-      formId: "form-1",
-      hash: "hash-1",
-    })
+    expect(buildMeExport).toHaveBeenCalledWith(
+      {
+        workspaceId: "workspace-1",
+        sourceId: "source/1",
+        integrationId: "integration-1",
+        formId: "form-1",
+        hash: "hash-1",
+      },
+      // A picture that was never downloaded is stored now, so the export
+      // carries its final URL.
+      { ensureAvatarMirrored: ensureContactAvatarMirrored },
+    )
   })
 
   test("returns 404 when required params are missing or invalid", async () => {

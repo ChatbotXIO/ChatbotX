@@ -1,5 +1,6 @@
 import { createId } from "@chatbotx.io/utils"
 import {
+  boolean,
   index,
   integer,
   pgTable,
@@ -32,6 +33,8 @@ export const attachmentModel = pgTable(
     thumbnailPath: text(),
     originPath: text().notNull(),
     name: text(),
+    // Mirrors src/schema/attachment.ts and scripts/init-message-shard.sql.
+    keepOriginal: boolean(),
   },
   (table) => [
     primaryKey({ columns: [table.id, table.createdAt] }),

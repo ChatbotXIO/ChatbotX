@@ -89,6 +89,8 @@ export const enqueueAttachmentMirror = (input: {
   channel?: string
   integrationId?: string
   messageId: string
+  // Parent message time: routes the job's sharded lookup straight to its window.
+  messageCreatedAt?: Date
   workspaceId: string
 }): void => {
   if (input.channel && input.integrationId) {
@@ -106,6 +108,7 @@ export const enqueueAttachmentMirror = (input: {
   resolveIntegrationForAttachment({
     attachmentId: input.attachmentId,
     workspaceId: input.workspaceId,
+    messageCreatedAt: input.messageCreatedAt,
   })
     .then(async (resolved) => {
       if (!(resolved && isAttachmentChannel(resolved.channel))) {
@@ -160,6 +163,7 @@ function enqueueResolvedAttachmentMirror(input: {
   channel: AttachmentChannel
   integrationId: string
   messageId: string
+  messageCreatedAt?: Date
   workspaceId: string
 }): void {
   addAttachmentJob(
@@ -168,6 +172,9 @@ function enqueueResolvedAttachmentMirror(input: {
       workspaceId: input.workspaceId,
       channel: input.channel,
       integrationId: input.integrationId,
+      ...(input.messageCreatedAt
+        ? { messageCreatedAt: input.messageCreatedAt.getTime() }
+        : {}),
     },
     {
       jobId: `media-message-${input.messageId}`,

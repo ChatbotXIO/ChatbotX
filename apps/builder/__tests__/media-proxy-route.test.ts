@@ -206,6 +206,76 @@ describe("attachment media proxy", () => {
     expect(mocks.lowQueueAdd).not.toHaveBeenCalled()
   })
 
+  test("hands the parent message time to the mirror job so a sharded lookup finds the row", async () => {
+    const messageCreatedAt = Date.parse("2026-09-18T00:00:00.000Z")
+    mocks.verifyMediaToken.mockResolvedValue({
+      workspaceId: "workspace-1",
+      kind: "attachment",
+      refId: "attachment-1",
+      messageCreatedAt,
+      expiresAt: Date.now() + 60_000,
+    })
+    mocks.findAttachmentById.mockResolvedValue(attachment())
+    mocks.resolveFreshMediaUrl.mockResolvedValue({
+      channel: "messenger",
+      integrationId: "integration-1",
+      url: "https://cdn.example/fresh.jpg",
+      mimeType: "image/jpeg",
+    })
+
+    await getAttachment(
+      new Request("http://localhost/media/attachment/signed-token") as never,
+      tokenContext(),
+    )
+
+    expect(mocks.lowQueueAdd).toHaveBeenCalledWith(
+      "coexistAttachmentDownload",
+      {
+        type: "coexistAttachmentDownload",
+        data: expect.objectContaining({
+          attachmentId: "attachment-1",
+          messageCreatedAt,
+        }),
+      },
+      expect.objectContaining({ jobId: "media-message-message-1" }),
+    )
+  })
+
+  test("retry on a pending attachment asks the provider instead of the stored webhook URL", async () => {
+    // The client retries after the first URL (the webhook's, maybe expired)
+    // failed to load: it must get a provider-fresh URL, not the same one.
+    mocks.verifyMediaToken.mockResolvedValue({
+      workspaceId: "workspace-1",
+      kind: "attachment",
+      refId: "attachment-1",
+      expiresAt: Date.now() + 60_000,
+    })
+    mocks.findAttachmentById.mockResolvedValue(attachment())
+    mocks.resolveFreshMediaUrl.mockResolvedValue({
+      channel: "messenger",
+      integrationId: "integration-1",
+      url: "https://cdn.example/fresh.jpg",
+      mimeType: "image/jpeg",
+    })
+
+    const response = await getAttachment(
+      new Request(
+        "http://localhost/media/attachment/signed-token?retry=1",
+      ) as never,
+      tokenContext(),
+    )
+
+    expect(mocks.resolveFreshMediaUrl).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attachmentId: "attachment-1",
+        skipStoredUrl: true,
+      }),
+    )
+    expect(response.headers.get("location")).toBe(
+      "https://cdn.example/fresh.jpg",
+    )
+  })
+
   test("retry on mirrored media redirects to fresh media and enqueues a restore job", async () => {
     const messageCreatedAt = Date.parse("2026-09-18T00:00:00.000Z")
     mocks.verifyMediaToken.mockResolvedValue({

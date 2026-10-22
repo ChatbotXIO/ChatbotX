@@ -61,6 +61,23 @@ describe("resolveAttachmentFallbackUrl", () => {
       "messenger",
     ],
     ["a pending WhatsApp media id", "wa-media:media-1", "whatsapp"],
+  ])("returns a proxy fallback for %s, so a failed first load can recover", async (_label, originPath, channel) => {
+    // A pending row's first URL can fail (an expired provider URL); the
+    // fallback lets the client ask again once the copy is stored, and its
+    // retry form asks the provider for a fresh URL.
+    const result = await resolveAttachmentFallbackUrl({
+      workspaceId: "workspace-1",
+      attachmentId: "attachment-1",
+      originPath,
+      channel,
+    })
+
+    expect(result).toBe(
+      "https://builder.example.com/media/attachment/signed-media-token",
+    )
+  })
+
+  test.each([
     ["a permanently failed attachment", "failed:unresolvable", "instagram"],
     ["a channel without media hydration", "ws-1/files/a.png", "telegram"],
   ])("returns null for %s", async (_label, originPath, channel) => {

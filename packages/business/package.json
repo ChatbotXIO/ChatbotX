@@ -42,6 +42,7 @@
     "./integration-whatsapp/auth-schema": "./src/integration-whatsapp/auth-schema.ts",
     "./license-startup": "./src/enterprise/license/startup.ts",
     "./javascript-execution": "./src/javascript-execution/index.ts",
+    "./media/optimize-stored-image": "./src/media/optimize-stored-image.ts",
     "./mini-app": "./src/mini-app/index.ts",
     "./meta-conversions/capi-scope-policy": "./src/meta-conversions/capi-scope-policy.ts",
     "./meta-conversions/connection-state": "./src/meta-conversions/connection-state.ts",

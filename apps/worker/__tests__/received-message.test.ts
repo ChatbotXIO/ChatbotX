@@ -272,10 +272,20 @@ const mockReserveLiveCommentWindow = vi.hoisted(() => vi.fn())
 const mockResolveInboundProducts = vi.hoisted(() => vi.fn())
 const mockEmitShoppingCartSent = vi.hoisted(() => vi.fn())
 const mockEmitUserAskedAboutProduct = vi.hoisted(() => vi.fn())
+const mockEnqueueStoredImageOptimizations = vi.hoisted(() =>
+  vi.fn(async () => undefined),
+)
+// Pass-through unless a test sets a resolver: the real one signs proxy URLs.
+const mockWithResolvedAttachmentUrls = vi.hoisted(() =>
+  vi.fn(async (message: unknown) => message),
+)
 
 vi.mock("@chatbotx.io/business", () => ({
   productMessageService: {
     resolveInboundProducts: mockResolveInboundProducts,
+  },
+  messageService: {
+    withResolvedAttachmentUrls: mockWithResolvedAttachmentUrls,
   },
   commentAutomationService: {
     reserveLiveCommentWindow: mockReserveLiveCommentWindow,
@@ -423,6 +433,11 @@ vi.mock("@chatbotx.io/sdk", () => ({
   isStoryMention: (contentAttributes: unknown) =>
     (contentAttributes as { type?: unknown } | null)?.type === "story_mention",
   // Mirror of the real pure helper — the module is fully mocked here.
+  toKeepOriginal: (attachment: {
+    fileType: string
+    isPhotoMessage?: boolean
+  }) => (attachment.fileType === "image" ? !attachment.isPhotoMessage : null),
+  // Mirror of the real pure helper — the module is fully mocked here.
   resolveSourceScopedIdentityMatch: async <T>(
     identity: {
       sourceId: string
@@ -520,6 +535,7 @@ vi.mock("@chatbotx.io/encryption", () => ({
 vi.mock("@chatbotx.io/worker-config", () => ({
   // `logProviderError` short-circuits on this, as `defaultQueue` does.
   isNoRedisEnv: () => true,
+  enqueueStoredImageOptimizations: mockEnqueueStoredImageOptimizations,
   ChatJobAction: {
     sendChatMessage: "sendChatMessage",
     checkOutboundAutomatedResponse: "checkOutboundAutomatedResponse",
@@ -1001,6 +1017,213 @@ describe("receiveMessage — message repository branch", () => {
 
     expect(mockCreateOrUpdateWithAttachments).toHaveBeenCalledTimes(1)
     expect(mockCreateOrUpdate).not.toHaveBeenCalled()
+  })
+
+  test("publishes the realtime message with resolved attachment URLs, never the raw provider URL", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        attachments: [
+          {
+            fileType: "image",
+            mimeType: "image/jpeg",
+            originPath: "https://scontent.example/photo.jpg",
+            size: 0,
+          },
+        ],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdateWithAttachments.mockResolvedValue({
+      result: {
+        ...fakeCreatedMessage,
+        attachments: [
+          { id: "att-1", originPath: "https://scontent.example/photo.jpg" },
+        ],
+      },
+      isNew: true,
+    })
+    mockWithResolvedAttachmentUrls.mockImplementationOnce(
+      async (message: { attachments: object[] }) => ({
+        ...message,
+        attachments: [
+          {
+            ...message.attachments[0],
+            url: "https://app.example.com/media/attachment/token",
+          },
+        ],
+      }),
+    )
+
+    await receiveMessage(baseProps)
+
+    expect(mockWithResolvedAttachmentUrls).toHaveBeenCalledWith(
+      expect.objectContaining({ id: fakeCreatedMessage.id }),
+      { channel: expect.any(String), workspaceId: "ws-1" },
+    )
+    expect(mockBroadcast).toHaveBeenCalledWith(
+      "ws-1",
+      expect.objectContaining({
+        eventType: "messageCreated",
+        data: expect.objectContaining({
+          attachments: [
+            expect.objectContaining({
+              url: "https://app.example.com/media/attachment/token",
+            }),
+          ],
+        }),
+      }),
+    )
+  })
+
+  test("stores a lazily-ingested photo as a pending row with no provider id", async () => {
+    const pendingUrl = "https://scontent.xx.fbcdn.net/v/t1/photo.jpg?sig=abc"
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        attachments: [
+          {
+            sourceId: null,
+            fileType: "image",
+            mimeType: "image/jpeg",
+            originPath: pendingUrl,
+            size: 0,
+            isPhotoMessage: true,
+          },
+        ],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdateWithAttachments.mockResolvedValue({
+      result: {
+        ...fakeCreatedMessage,
+        attachments: [
+          {
+            id: "att-1",
+            originPath: pendingUrl,
+            createdAt: new Date(),
+            messageCreatedAt: new Date(),
+          },
+        ],
+      },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    const [, attachmentInputs] = mockCreateOrUpdateWithAttachments.mock
+      .calls[0] as [unknown, Record<string, unknown>[]]
+    expect(attachmentInputs[0]).toMatchObject({
+      sourceId: null,
+      originPath: pendingUrl,
+      keepOriginal: false,
+    })
+  })
+
+  test("persists keepOriginal from the channel's isPhotoMessage flag", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        attachments: [
+          {
+            fileType: "image",
+            mimeType: "image/jpeg",
+            originPath: "uploads/photo",
+            size: 10,
+            isPhotoMessage: true,
+          },
+          {
+            fileType: "image",
+            mimeType: "image/png",
+            originPath: "uploads/scan",
+            size: 10,
+            isPhotoMessage: false,
+          },
+          {
+            fileType: "video",
+            mimeType: "video/mp4",
+            originPath: "uploads/clip",
+            size: 10,
+          },
+        ],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    const [, attachmentInputs] = mockCreateOrUpdateWithAttachments.mock
+      .calls[0] as [unknown, Record<string, unknown>[]]
+    expect(attachmentInputs.map((input) => input.keepOriginal)).toEqual([
+      false,
+      true,
+      null,
+    ])
+    expect(attachmentInputs[0]).not.toHaveProperty("isPhotoMessage")
+  })
+
+  test("queues the background re-encode only for photos the channel did not already encode", async () => {
+    const savedAttachment = (originPath: string) => ({
+      id: `att-${originPath}`,
+      originPath,
+      createdAt: new Date("2026-10-14T00:00:00.000Z"),
+      messageCreatedAt: new Date("2026-10-14T00:00:00.000Z"),
+    })
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        attachments: [
+          {
+            fileType: "image",
+            mimeType: "image/jpeg",
+            originPath: "uploads/encoded",
+            size: 10,
+            isPhotoMessage: true,
+            optimized: true,
+          },
+          {
+            fileType: "image",
+            mimeType: "image/jpeg",
+            originPath: "uploads/raw",
+            size: 10,
+            isPhotoMessage: true,
+          },
+        ],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdateWithAttachments.mockResolvedValue({
+      result: {
+        ...fakeCreatedMessage,
+        attachments: [
+          savedAttachment("uploads/encoded"),
+          savedAttachment("uploads/raw"),
+        ],
+      },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    const [, attachmentInputs] = mockCreateOrUpdateWithAttachments.mock
+      .calls[0] as [unknown, Record<string, unknown>[]]
+    expect(attachmentInputs[0]).not.toHaveProperty("optimized")
+    expect(mockEnqueueStoredImageOptimizations).toHaveBeenCalledTimes(1)
+    expect(mockEnqueueStoredImageOptimizations).toHaveBeenCalledWith([
+      expect.objectContaining({ objectKey: "uploads/raw" }),
+    ])
   })
 
   test("records activity without marking read when an inbound message is new", async () => {
@@ -2955,6 +3178,10 @@ describe("receiveMessage — new contact MAC gate", () => {
 })
 
 describe("receiveMessage — referral-only events", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
 
@@ -3844,7 +4071,13 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
     expect(mockContactProfileRefresh).toHaveBeenCalledTimes(3)
   })
 
-  test("instagram: a referral-only event still fetches getProfile at creation time via hasOnDemandProfileApi (replaces canGetUserProfileIfNeeded)", async () => {
+  test.each([
+    ["by default the picture is left for later", undefined, false],
+    ["with the flag emptied the picture is fetched at creation", "", true],
+  ])("instagram: a referral-only event still fetches getProfile at creation time via hasOnDemandProfileApi (replaces canGetUserProfileIfNeeded) — %s", async (_label, avatarFlag, includeAvatar) => {
+    if (avatarFlag !== undefined) {
+      vi.stubEnv("LIVE_AVATAR_LAZY_CHANNELS", avatarFlag)
+    }
     const instagramInbox = { ...fakeInbox, channel: "instagram" }
     vi.mocked(
       integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
@@ -3898,7 +4131,11 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
       "contact",
       "getProfile",
       expect.objectContaining({
-        data: { includeProfileSnapshot: true, sourceId: "ig-psid-1" },
+        data: {
+          includeAvatar,
+          includeProfileSnapshot: true,
+          sourceId: "ig-psid-1",
+        },
       }),
     )
   })
@@ -4071,7 +4308,11 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
       "contact",
       "getProfile",
       expect.objectContaining({
-        data: { includeProfileSnapshot: false, sourceId: "zalo-psid-1" },
+        data: {
+          includeAvatar: true,
+          includeProfileSnapshot: false,
+          sourceId: "zalo-psid-1",
+        },
       }),
     )
   })
@@ -4132,7 +4373,11 @@ describe("receiveMessage — existing contact profile refresh (post-save)", () =
       "contact",
       "getProfile",
       expect.objectContaining({
-        data: { includeProfileSnapshot: false, sourceId: "telegram-chat-1" },
+        data: {
+          includeAvatar: true,
+          includeProfileSnapshot: false,
+          sourceId: "telegram-chat-1",
+        },
       }),
     )
   })
@@ -5118,7 +5363,7 @@ describe("contact source taxonomy", () => {
     expect(mockUploaderPutObject).toHaveBeenCalledWith(
       expect.stringMatching(AVATAR_STORAGE_PATH_PATTERN),
       expect.anything(),
-      { ACL: "public-read", ContentType: "image/jpeg" },
+      { ACL: "public-read", ContentLength: 3, ContentType: "image/jpeg" },
     )
     expect(mockSetAvatarIfEmptyOrSentinel).toHaveBeenCalledWith(
       expect.objectContaining({
