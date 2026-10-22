@@ -205,5 +205,13 @@ describe("adminWorkspaceService.createWithMembers — team-member quota", () => 
       additionalCount: 2,
     })
     expect(mocks.create).not.toHaveBeenCalled()
+
+    // The quota check runs before any member is resolved, so an over-limit
+    // request never provisions or mails a member.
+    expect(mocks.findOrProvisionRootUser).toHaveBeenCalledTimes(1)
+    expect(mocks.findOrProvisionRootUser).toHaveBeenCalledWith(
+      "owner@example.com",
+    )
+    expect(mocks.findIdByEmail).not.toHaveBeenCalled()
   })
 })

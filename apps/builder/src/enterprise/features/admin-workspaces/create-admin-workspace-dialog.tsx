@@ -23,7 +23,10 @@ import { toast } from "sonner"
 import { WorkspaceMemberPermissionFields } from "@/features/workspace-members/components/workspace-member-permission-fields"
 import { getSuperAdminPermissions } from "@/features/workspace-members/helpers"
 import { createAdminWorkspaceAction } from "./create-admin-workspace.action"
-import { createAdminWorkspaceSchema } from "./schema"
+import {
+  createAdminWorkspaceSchema,
+  MAX_ADMIN_WORKSPACE_MEMBERS,
+} from "./schema"
 
 export function CreateAdminWorkspaceDialog() {
   const t = useTranslations()
@@ -102,7 +105,7 @@ export function CreateAdminWorkspaceDialog() {
               addAnotherPlaceholder={t("actions.addAnother")}
               description={t("platformAdmin.workspaces.membersHint")}
               label={t("platformAdmin.workspaces.memberEmails")}
-              maxTags={20}
+              maxTags={MAX_ADMIN_WORKSPACE_MEMBERS}
               name="memberEmails"
               transformTag={(tag) => tag.trim().toLowerCase()}
             />

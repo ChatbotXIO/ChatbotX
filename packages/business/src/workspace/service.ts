@@ -66,6 +66,20 @@ const PURGE_WORKSPACE_TEARDOWN_CONCURRENCY = 5
 const COMMUNITY_MAX_WORKSPACES = 1
 const WORKSPACE_LIMIT_LOCK_TIMEOUT_SECONDS = 30
 
+// Every new membership (owner and additional members alike) starts with the
+// same defaults — mirrors `acceptInvitationAction`'s member insert.
+const DEFAULT_MEMBER_NOTIFICATION_TYPES = {
+  notifyAdmin: true,
+  newMessageToHuman: true,
+  newOrder: true,
+}
+const DEFAULT_MEMBER_NOTIFICATION_CHANNELS = {
+  messenger: true,
+  email: true,
+  telegram: true,
+  browser: true,
+}
+
 const WORKSPACE_SETTINGS_KEYS = [
   "defaultReply",
   "defaultReplyFrequency",
@@ -807,20 +821,6 @@ class WorkspaceService extends BaseService {
       .returning()
     props.progress.workspaceId = newWorkspace.id
 
-    // Every new membership (owner and additional members alike) starts with
-    // the same defaults — mirrors `acceptInvitationAction`'s member insert.
-    const defaultNotificationTypes = {
-      notifyAdmin: true,
-      newMessageToHuman: true,
-      newOrder: true,
-    }
-    const defaultNotificationChannels = {
-      messenger: true,
-      email: true,
-      telegram: true,
-      browser: true,
-    }
-
     await workspaceMemberService.create({
       tx,
       teamMemberUsage: props.progress.teamMemberUsage,
@@ -838,8 +838,8 @@ class WorkspaceService extends BaseService {
           broadcast: true,
           ecommerce: true,
         },
-        notificationTypes: defaultNotificationTypes,
-        notificationChannels: defaultNotificationChannels,
+        notificationTypes: DEFAULT_MEMBER_NOTIFICATION_TYPES,
+        notificationChannels: DEFAULT_MEMBER_NOTIFICATION_CHANNELS,
       },
     })
 
@@ -856,8 +856,8 @@ class WorkspaceService extends BaseService {
           workspaceId: newWorkspace.id,
           role: workspaceMemberRoles.enum.agent,
           permissions: member.permissions,
-          notificationTypes: defaultNotificationTypes,
-          notificationChannels: defaultNotificationChannels,
+          notificationTypes: DEFAULT_MEMBER_NOTIFICATION_TYPES,
+          notificationChannels: DEFAULT_MEMBER_NOTIFICATION_CHANNELS,
         },
       })
     }

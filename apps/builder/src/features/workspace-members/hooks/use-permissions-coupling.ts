@@ -17,31 +17,38 @@ type CouplingResult = {
 export function useWorkspaceMemberPermissionsCoupling<
   TFieldValues extends { permissions: WorkspaceMemberPermissions },
 >(form: UseFormReturn<TFieldValues>): CouplingResult {
-  const { setValue } = form
+  // One cast at the boundary instead of ten `as never`s below: the generic
+  // public signature stays open to any `TFieldValues` that extends the
+  // `permissions` shape, while this internal view restores typed
+  // `setValue`/`useWatch` field names.
+  const permissionForm = form as unknown as UseFormReturn<{
+    permissions: WorkspaceMemberPermissions
+  }>
+  const { setValue } = permissionForm
   const isSuperAdmin = useWatch({
-    control: form.control,
-    name: "permissions.superAdmin" as never,
-  }) as unknown as boolean
+    control: permissionForm.control,
+    name: "permissions.superAdmin",
+  })
   const contactsEnabled = useWatch({
-    control: form.control,
-    name: "permissions.contacts" as never,
-  }) as unknown as boolean
+    control: permissionForm.control,
+    name: "permissions.contacts",
+  })
 
   useEffect(() => {
     if (isSuperAdmin) {
-      setValue("permissions.analytics" as never, true as never)
-      setValue("permissions.flows" as never, true as never)
-      setValue("permissions.contacts" as never, true as never)
-      setValue("permissions.onlyAssignedContacts" as never, true as never)
-      setValue("permissions.emailAndPhone" as never, true as never)
-      setValue("permissions.broadcast" as never, true as never)
-      setValue("permissions.ecommerce" as never, true as never)
+      setValue("permissions.analytics", true)
+      setValue("permissions.flows", true)
+      setValue("permissions.contacts", true)
+      setValue("permissions.onlyAssignedContacts", true)
+      setValue("permissions.emailAndPhone", true)
+      setValue("permissions.broadcast", true)
+      setValue("permissions.ecommerce", true)
     }
   }, [isSuperAdmin, setValue])
 
   useEffect(() => {
     if (contactsEnabled && !isSuperAdmin) {
-      setValue("permissions.onlyAssignedContacts" as never, false as never)
+      setValue("permissions.onlyAssignedContacts", false)
     }
   }, [contactsEnabled, isSuperAdmin, setValue])
 

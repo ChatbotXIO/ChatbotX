@@ -620,10 +620,13 @@ class UserQuotaService extends BaseService {
   /**
    * Live at-limit check for `teamMembers`; the quota row still supplies the
    * plan limit while the distinct member count comes directly from the DB.
+   * `additionalCount` generalizes a single pending insert (the default) to a
+   * batch — e.g. an owner plus N members created together.
    */
   async isTeamMemberLimitReached(
     scope: { ownerId: string } | { tenantId: string },
     limitUserId: string,
+    additionalCount = 1,
   ): Promise<boolean> {
     const [quota, realCount] = await Promise.all([
       this.getForUser(limitUserId),
@@ -633,29 +636,7 @@ class UserQuotaService extends BaseService {
       return false
     }
     const { limit } = this.readMetricValues(quota, "teamMembers")
-    return limit !== null && realCount >= limit
-  }
-
-  /**
-   * Read-only check for whether `additionalCount` more team members (e.g. an
-   * owner plus N members created together) still fit under the `teamMembers`
-   * limit — generalizes `isTeamMemberLimitReached`, which can only express a
-   * single pending insert, to a batch where the count moves by more than 1.
-   */
-  async hasRoomForTeamMembers(
-    scope: { ownerId: string } | { tenantId: string },
-    limitUserId: string,
-    additionalCount: number,
-  ): Promise<boolean> {
-    const [quota, realCount] = await Promise.all([
-      this.getForUser(limitUserId),
-      this.countDistinctTeamMembers(scope),
-    ])
-    if (!quota) {
-      return true
-    }
-    const { limit } = this.readMetricValues(quota, "teamMembers")
-    return limit === null || realCount + additionalCount <= limit
+    return limit !== null && realCount + additionalCount > limit
   }
 
   async getRemainingSlots(

@@ -816,6 +816,72 @@ describe("quotaEnforcementService.hasReachedLimit", () => {
   })
 })
 
+describe("quotaEnforcementService.hasRoomForTeamMembers", () => {
+  test("non-pooled: room is governed by the user's own row alone", async () => {
+    asRootUser()
+    userQuotaService.isTeamMemberLimitReached.mockResolvedValue(false)
+
+    await expect(
+      quotaEnforcementService.hasRoomForTeamMembers({
+        userId: ROOT_USER,
+        additionalCount: 3,
+      }),
+    ).resolves.toBe(true)
+
+    expect(userQuotaService.isTeamMemberLimitReached).toHaveBeenCalledWith(
+      { ownerId: ROOT_USER },
+      ROOT_USER,
+      3,
+    )
+  })
+
+  test("pooled sub-account with room of its own is still blocked by a full pool", async () => {
+    asCustomer()
+    userQuotaService.isTeamMemberLimitReached.mockImplementation(
+      async (_scope: unknown, limitUserId: string) => limitUserId === RESELLER,
+    )
+
+    await expect(
+      quotaEnforcementService.hasRoomForTeamMembers({
+        userId: CUSTOMER,
+        additionalCount: 1,
+      }),
+    ).resolves.toBe(false)
+
+    expect(userQuotaService.isTeamMemberLimitReached).toHaveBeenNthCalledWith(
+      1,
+      { ownerId: CUSTOMER },
+      CUSTOMER,
+      1,
+    )
+    expect(userQuotaService.isTeamMemberLimitReached).toHaveBeenNthCalledWith(
+      2,
+      { tenantId: TENANT },
+      RESELLER,
+      1,
+    )
+  })
+
+  test("reseller acting directly: only the pool row governs", async () => {
+    asReseller()
+    userQuotaService.isTeamMemberLimitReached.mockResolvedValue(false)
+
+    await expect(
+      quotaEnforcementService.hasRoomForTeamMembers({
+        userId: RESELLER,
+        additionalCount: 5,
+      }),
+    ).resolves.toBe(true)
+
+    expect(userQuotaService.isTeamMemberLimitReached).toHaveBeenCalledTimes(1)
+    expect(userQuotaService.isTeamMemberLimitReached).toHaveBeenCalledWith(
+      { tenantId: TENANT },
+      RESELLER,
+      5,
+    )
+  })
+})
+
 describe("quotaEnforcementService.getAtLimitMap", () => {
   test("includes both lifetime and monthly bot message metrics", async () => {
     asRootUser()

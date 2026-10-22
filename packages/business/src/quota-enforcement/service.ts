@@ -621,55 +621,55 @@ class QuotaEnforcementService {
    * Read-only check for whether `additionalCount` more team members (e.g. an
    * owner plus N members created together by the admin console's "create
    * workspace for an owner" flow) still fit under the `teamMembers` limit —
-   * mirrors `atLimitForMetric`'s pool/user resolution, generalized from a
-   * single reached/not-reached unit to a batch of more than one pending
-   * insert. Read-only; does not touch any counter.
+   * shares `atLimitForMetric`'s pool/user resolution via `anyLevelAtLimit`,
+   * generalized from a single reached/not-reached unit to a batch of more
+   * than one pending insert. Read-only; does not touch any counter.
    */
   async hasRoomForTeamMembers(args: {
     userId: string
     additionalCount: number
   }): Promise<boolean> {
     const ctx = await this.resolveContext(args.userId)
-    const pooled = this.isPooled(ctx)
-    const hasRoom = (
-      limitUserId: string,
-      scope: { ownerId: string } | { tenantId: string },
-    ) =>
-      userQuotaService.hasRoomForTeamMembers(
-        scope,
-        limitUserId,
-        args.additionalCount,
-      )
-
-    if (pooled && args.userId === ctx.ownerId) {
-      // Reseller acting directly: only the pool (owner row) governs.
-      return hasRoom(ctx.ownerId, { tenantId: ctx.tenantId })
-    }
-
-    const userHasRoom = await hasRoom(args.userId, { ownerId: args.userId })
-    if (!pooled) {
-      return userHasRoom
-    }
-    if (!userHasRoom) {
-      return false
-    }
-    return hasRoom(ctx.ownerId as string, { tenantId: ctx.tenantId })
+    return !(await this.anyLevelAtLimit(
+      ctx,
+      args.userId,
+      (limitUserId, scope) =>
+        userQuotaService.isTeamMemberLimitReached(
+          scope,
+          limitUserId,
+          args.additionalCount,
+        ),
+    ))
   }
 
-  private async atLimitForMetric(
+  private atLimitForMetric(
     ctx: QuotaContext,
     userId: string,
     metric: QuotaMetric,
   ): Promise<boolean> {
-    const pooled = this.isPooled(ctx)
-    const atLimit = (
-      limitUserId: string,
-      scope: { ownerId: string } | { tenantId: string },
-    ) =>
+    return this.anyLevelAtLimit(ctx, userId, (limitUserId, scope) =>
       metric === "teamMembers"
         ? userQuotaService.isTeamMemberLimitReached(scope, limitUserId)
-        : userQuotaService.isLimitReached(limitUserId, metric)
+        : userQuotaService.isLimitReached(limitUserId, metric),
+    )
+  }
 
+  /**
+   * Pool/user branching shared by `atLimitForMetric` and
+   * `hasRoomForTeamMembers`: a reseller acting directly is governed only by
+   * their own pool row; everyone else is governed by their own user row,
+   * and — if pooled — also by the tenant pool row once the user row passes.
+   * `atLimit(limitUserId, scope)` resolves one level to reached/not-reached.
+   */
+  private async anyLevelAtLimit(
+    ctx: QuotaContext,
+    userId: string,
+    atLimit: (
+      limitUserId: string,
+      scope: { ownerId: string } | { tenantId: string },
+    ) => Promise<boolean>,
+  ): Promise<boolean> {
+    const pooled = this.isPooled(ctx)
     if (pooled && userId === ctx.ownerId) {
       // Reseller acting directly: only the pool (owner row) governs.
       return atLimit(ctx.ownerId, { tenantId: ctx.tenantId })

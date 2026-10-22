@@ -1,5 +1,4 @@
 export * from "./entitlements"
-export * from "./provision-root-user"
 export * from "./resolve-admin-tenant"
 export * from "./service"
 export * from "./temporary-password"

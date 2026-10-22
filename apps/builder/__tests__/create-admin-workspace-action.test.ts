@@ -7,7 +7,6 @@ const mocks = vi.hoisted(() => ({
   isSuperAdmin: vi.fn(),
   assertEnterpriseFeatures: vi.fn(),
   createWithMembers: vi.fn(),
-  isCommunity: vi.fn().mockReturnValue(false),
   findOrFail: vi.fn(),
   isDatabaseError: vi.fn().mockReturnValue(false),
   getCurrentUserId: vi.fn().mockResolvedValue("admin-1"),
@@ -33,10 +32,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   userModel: {},
-}))
-
-vi.mock("@/env", () => ({
-  isCommunity: mocks.isCommunity,
 }))
 
 vi.mock("@/features/workspace-members/queries", () => ({
@@ -99,7 +94,6 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.isSuperAdmin.mockResolvedValue(true)
   mocks.assertEnterpriseFeatures.mockResolvedValue(undefined)
-  mocks.isCommunity.mockReturnValue(false)
   mocks.findOrFail.mockResolvedValue({
     id: "admin-1",
     mustChangePassword: false,
@@ -149,17 +143,5 @@ describe("createAdminWorkspaceAction", () => {
       memberEmails: ["member@example.com"],
       permissions: validInput.permissions,
     })
-  })
-
-  test("forces full permissions on community even though the enterprise gate already blocks this path", async () => {
-    mocks.isCommunity.mockReturnValue(true)
-
-    await callAction(validInput)
-
-    expect(mocks.createWithMembers).toHaveBeenCalledWith(
-      expect.objectContaining({
-        permissions: expect.objectContaining({ superAdmin: true }),
-      }),
-    )
   })
 })

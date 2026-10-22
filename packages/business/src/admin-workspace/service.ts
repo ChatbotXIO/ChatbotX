@@ -32,18 +32,25 @@ const normalizeEmail = (email: string): string => email.trim().toLowerCase()
 class AdminWorkspaceService {
   /**
    * Admin console "create workspace for an owner" flow: resolves the owner
-   * (and every member) by email — provisioning a fresh root-tenant user and
-   * mailing temporary credentials where needed, exactly like `Admins` does —
-   * then creates the workspace with every member attached in the single
-   * transaction `workspaceService.create` already opens. This is the one
-   * service both the `/admin/workspaces` action and a future server-to-server
-   * platform API call into (data-access rule: public path and private path
-   * share one service method).
+   * by email — provisioning a fresh root-tenant user and mailing a temporary
+   * password where needed, exactly like `Admins` does — checks team-member
+   * room for the owner plus every member up front, then resolves each
+   * member by email (provisioning/mailing as needed) and creates the
+   * workspace with every member attached in the single transaction
+   * `workspaceService.create` already opens. This is the one service both
+   * the `/admin/workspaces` action and a future server-to-server platform
+   * API call into (data-access rule: public path and private path share one
+   * service method).
    *
-   * Accepted risk: a member/owner provisioned here before step 3 or 5 throws
-   * stays in the DB with a mailed password but no workspace membership. A
-   * retry is idempotent — the existing user is found by email instead of
-   * provisioned again, so no second mail goes out — matching `Admins.add`.
+   * Accepted risk: the owner is provisioned before the quota check, so an
+   * over-limit request can leave only that account orphaned with a mailed
+   * password and no workspace membership. After the check passes, member
+   * provisioning occurs outside the workspace transaction, so a later member
+   * resolution or workspace-creation failure can also orphan any newly
+   * provisioned members. Retries are idempotent — existing users are found by
+   * email instead of provisioned again, so no second mail goes out — matching
+   * `Admins.add`. The quota ordering still guarantees an over-limit request
+   * never provisions or mails a member.
    */
   async createWithMembers(props: {
     actorId: string
@@ -77,17 +84,18 @@ class AdminWorkspaceService {
     }
 
     const tenantId = await workspaceService.resolveTenantForOwner(owner.userId)
-    const members = await Promise.all(
-      memberEmails.map((email) => this.resolveMember({ email, tenantId })),
-    )
 
     const hasRoom = await quotaEnforcementService.hasRoomForTeamMembers({
       userId: owner.userId,
-      additionalCount: 1 + members.length,
+      additionalCount: 1 + memberEmails.length,
     })
     if (!hasRoom) {
       throw teamMembersLimitReachedException()
     }
+
+    const members = await Promise.all(
+      memberEmails.map((email) => this.resolveMember({ email, tenantId })),
+    )
 
     const workspace = await workspaceService.create({
       data: { name: props.name, ownerId: owner.userId, tenantId },
@@ -116,11 +124,13 @@ class AdminWorkspaceService {
   }
 
   /**
-   * Members are resolved in the owner's own tenant (invariant 10): a
-   * root-tenant owner's members auto-provision like the owner does, but a
-   * reseller sub-account owner's members must already exist in that tenant —
-   * auto-provisioning there would silently create an unrelated root-tenant
-   * account for the same address instead of reusing the tenant member.
+   * Members are resolved in the owner's own tenant (invariant 10). The owner
+   * always comes from `findOrProvisionRootUser` (root tenant), so a non-root
+   * `tenantId` here only happens when the owner *owns* a reseller tenant
+   * (`resolveTenantForOwner`, `workspace/service.ts:650`) — in that case
+   * members must already exist in that tenant; auto-provisioning would
+   * silently create an unrelated root-tenant account for the same address
+   * instead of reusing the tenant member.
    */
   private async resolveMember(props: {
     email: string
