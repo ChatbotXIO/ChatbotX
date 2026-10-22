@@ -1,14 +1,12 @@
-import {
-  coexistService,
-  instagramIntegrationService,
-  messengerIntegrationService,
-} from "@chatbotx.io/business"
+import { coexistService } from "@chatbotx.io/business/coexist"
 import {
   type ConnectionAdapter,
   type ConnectionTeardownResult,
   connectionStateService,
 } from "@chatbotx.io/business/connection"
 import { toPublicErrorMessage } from "@chatbotx.io/business/errors"
+import { instagramIntegrationService } from "@chatbotx.io/business/integration-instagram"
+import { messengerIntegrationService } from "@chatbotx.io/business/integration-messenger"
 import { db } from "@chatbotx.io/database/client"
 import { metaCapiEventRepository } from "@chatbotx.io/database/repositories"
 import {

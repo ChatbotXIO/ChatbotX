@@ -33,7 +33,16 @@ const hexToBytes = (hex: string): Uint8Array | null => {
   return bytes
 }
 
-const importHmacKey = (signingSecret: string): Promise<CryptoKey> =>
+/**
+ * `crypto.subtle.importKey`'s resolved key type. Named explicitly instead of
+ * referencing the ambient `CryptoKey` type: this workspace has no `DOM` lib,
+ * and whether `CryptoKey` is globally visible depends on which other
+ * packages happen to be in the same tsc program (it's pulled in
+ * transitively by some dependency graphs and not others).
+ */
+type HmacCryptoKey = Awaited<ReturnType<typeof crypto.subtle.importKey>>
+
+const importHmacKey = (signingSecret: string): Promise<HmacCryptoKey> =>
   crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(signingSecret),

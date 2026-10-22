@@ -1,10 +1,4 @@
 import {
-  apiConnectConfigSchema,
-  integrationApiService,
-  integrationWebchatService,
-  webchatConnectConfigSchema,
-} from "@chatbotx.io/business"
-import {
   CONNECTION_STORE_BINDINGS,
   type ConnectionAdapter,
   type ConnectionRegistry,
@@ -15,6 +9,14 @@ import {
   openaiConnectionProvider,
   openrouterConnectionProvider,
 } from "@chatbotx.io/business/connection"
+import {
+  apiConnectConfigSchema,
+  integrationApiService,
+} from "@chatbotx.io/business/integration-api"
+import {
+  integrationWebchatService,
+  webchatConnectConfigSchema,
+} from "@chatbotx.io/business/integration-webchat"
 import { integration as integrationActiveCampaign } from "@chatbotx.io/integration-active-campaign"
 import { integration as integrationApi } from "@chatbotx.io/integration-api"
 import { integration as integrationChatbotx } from "@chatbotx.io/integration-chatbotx"

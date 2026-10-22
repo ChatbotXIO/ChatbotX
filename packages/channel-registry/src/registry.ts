@@ -1,10 +1,10 @@
+import { inboxService } from "@chatbotx.io/business/inbox"
 import {
   buildContext,
   type IntegrationContext,
-  inboxService,
-  integrationThreadsService,
-  workspaceService,
-} from "@chatbotx.io/business"
+} from "@chatbotx.io/business/integration-context"
+import { integrationThreadsService } from "@chatbotx.io/business/integration-threads"
+import { workspaceService } from "@chatbotx.io/business/workspace"
 import { findOrFail } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { integrationLookupRepository } from "@chatbotx.io/database/repositories"

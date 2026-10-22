@@ -1,9 +1,9 @@
-import { workspaceService } from "@chatbotx.io/business"
 import type {
   SelfServeConnectActor,
   SelfServeSecret,
 } from "@chatbotx.io/business/connection"
 import { connectionWrongStrategyException } from "@chatbotx.io/business/errors"
+import { workspaceService } from "@chatbotx.io/business/workspace"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import type { ConnectionModel } from "@chatbotx.io/database/types"
 import { resolveAdapter } from "./internal"

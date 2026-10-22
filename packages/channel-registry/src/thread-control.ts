@@ -1,13 +1,13 @@
+import { contactInboxService } from "@chatbotx.io/business/contact-inbox"
+import { notFoundException } from "@chatbotx.io/business/errors"
 import {
-  contactInboxService,
   type RequestThreadControlActionInput,
   type SyncThreadOwnerInput,
   type ThreadControlChannelResult,
   type ThreadControlSnapshot,
   ThreadControlUnsupportedError,
   threadControlService,
-} from "@chatbotx.io/business"
-import { notFoundException } from "@chatbotx.io/business/errors"
+} from "@chatbotx.io/business/thread-control"
 import type { ThreadControlAction } from "@chatbotx.io/database/partials"
 import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import type {

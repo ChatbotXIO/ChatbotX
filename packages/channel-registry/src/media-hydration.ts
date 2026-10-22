@@ -1,16 +1,16 @@
 import { extname } from "node:path"
 
+import { contactService } from "@chatbotx.io/business/contact"
+import { contactInboxService } from "@chatbotx.io/business/contact-inbox"
 import {
   buildNoAvatarSentinel,
-  contactInboxService,
-  contactService,
   FAILED_PREFIX,
   isFailedOriginPath,
   isNoAvatarSentinelFresh,
   isPendingOriginPath,
   parseNoAvatarSentinel,
   WA_MEDIA_PREFIX,
-} from "@chatbotx.io/business"
+} from "@chatbotx.io/business/media"
 import { db } from "@chatbotx.io/database/client"
 import {
   type AttachmentLookupRow,

@@ -1,4 +1,3 @@
-import { inboxService } from "@chatbotx.io/business"
 import { dispatchAuditRecordSafely } from "@chatbotx.io/business/audit"
 import {
   type ConnectionAdapter,
@@ -13,6 +12,7 @@ import {
   notFoundException,
   validationException,
 } from "@chatbotx.io/business/errors"
+import { inboxService } from "@chatbotx.io/business/inbox"
 import { db } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { connectionRepository } from "@chatbotx.io/database/repositories"

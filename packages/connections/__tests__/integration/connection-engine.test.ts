@@ -32,13 +32,13 @@
  * `pnpm --filter @chatbotx.io/connections test:db`.
  */
 
-import { inboxService } from "@chatbotx.io/business"
 import { connectSessionService } from "@chatbotx.io/business/connect-session"
 import {
   connectionStateService,
   toChannelType,
   upsertConnectionRow,
 } from "@chatbotx.io/business/connection"
+import { inboxService } from "@chatbotx.io/business/inbox"
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
