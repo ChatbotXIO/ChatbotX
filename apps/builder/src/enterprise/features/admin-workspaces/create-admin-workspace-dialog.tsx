@@ -1,5 +1,6 @@
 "use client"
 
+import { MAX_ADMIN_WORKSPACE_MEMBERS } from "@chatbotx.io/business"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -23,10 +24,7 @@ import { toast } from "sonner"
 import { WorkspaceMemberPermissionFields } from "@/features/workspace-members/components/workspace-member-permission-fields"
 import { getSuperAdminPermissions } from "@/features/workspace-members/helpers"
 import { createAdminWorkspaceAction } from "./create-admin-workspace.action"
-import {
-  createAdminWorkspaceSchema,
-  MAX_ADMIN_WORKSPACE_MEMBERS,
-} from "./schema"
+import { createAdminWorkspaceSchema } from "./schema"
 
 export function CreateAdminWorkspaceDialog() {
   const t = useTranslations()

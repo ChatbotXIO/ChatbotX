@@ -13,7 +13,7 @@ import { quotaEnforcementService } from "../quota-enforcement/service"
 import { findOrProvisionRootUser } from "../user/provision-root-user"
 import { workspaceService } from "../workspace/service"
 
-const MAX_ADMIN_WORKSPACE_MEMBERS = 20
+export const MAX_ADMIN_WORKSPACE_MEMBERS = 20
 
 export type AdminWorkspaceProvisionedMember = {
   email: string
@@ -73,22 +73,19 @@ class AdminWorkspaceService {
 
     const owner = await findOrProvisionRootUser(ownerEmail)
 
-    // One owner, one owned workspace (invariant checked here rather than
-    // relying on `workspaceService.create`'s community-edition lock, which
-    // only applies to that edition).
-    const existingWorkspace = await workspaceService.findActiveByOwner({
-      ownerId: owner.userId,
-    })
+    // These reads are independent, but the guards below intentionally keep
+    // the existing-workspace error ahead of the team-member quota error.
+    const [existingWorkspace, tenantId, hasRoom] = await Promise.all([
+      workspaceService.findActiveByOwner({ ownerId: owner.userId }),
+      workspaceService.resolveTenantForOwner(owner.userId),
+      quotaEnforcementService.hasRoomForTeamMembers({
+        userId: owner.userId,
+        additionalCount: 1 + memberEmails.length,
+      }),
+    ])
     if (existingWorkspace) {
       throw ownerAlreadyHasWorkspaceException()
     }
-
-    const tenantId = await workspaceService.resolveTenantForOwner(owner.userId)
-
-    const hasRoom = await quotaEnforcementService.hasRoomForTeamMembers({
-      userId: owner.userId,
-      additionalCount: 1 + memberEmails.length,
-    })
     if (!hasRoom) {
       throw teamMembersLimitReachedException()
     }

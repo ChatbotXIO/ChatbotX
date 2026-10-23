@@ -1,7 +1,6 @@
+import { MAX_ADMIN_WORKSPACE_MEMBERS } from "@chatbotx.io/business"
 import { z } from "zod"
 import { workspaceMemberPermissionsRequest } from "@/features/workspace-members/schema/mutation"
-
-export const MAX_ADMIN_WORKSPACE_MEMBERS = 20
 
 export const createAdminWorkspaceSchema = z.object({
   name: z.string().trim().min(1).max(255),

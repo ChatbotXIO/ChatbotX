@@ -43,6 +43,7 @@ import {
 import {
   workspaceMemberCacheTag,
   workspaceMemberService,
+  workspaceRosterCacheTag,
 } from "../workspace-member/service"
 import { nextScheduledDeletionAt } from "./deletion-schedule"
 import {
@@ -781,7 +782,13 @@ class WorkspaceService extends BaseService {
     // After the owned transaction commits: busting earlier would let a
     // concurrent read re-cache the owner's membership list without the new
     // workspace until the TTL.
-    await this.invalidateCacheTags([workspaceMemberCacheTag(props.createdBy)])
+    await this.invalidateCacheTags([
+      workspaceMemberCacheTag(props.createdBy),
+      ...(props.members ?? []).map((member) =>
+        workspaceMemberCacheTag(member.userId),
+      ),
+      workspaceRosterCacheTag(newWorkspace.id),
+    ])
 
     // Sanctioned exception: no workspaceId exists in the ALS actor yet at
     // this point, so this bypasses this.audit() with an explicit override.

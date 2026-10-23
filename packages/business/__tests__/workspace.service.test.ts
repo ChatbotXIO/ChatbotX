@@ -103,6 +103,8 @@ vi.mock("../src/workspace-member/service", () => ({
   workspaceMemberService,
   workspaceMemberCacheTag: (userId: string) =>
     `users:${userId}:workspace-members`,
+  workspaceRosterCacheTag: (workspaceId: string) =>
+    `workspaces:${workspaceId}:workspace-members`,
 }))
 
 const macRepository = {
@@ -533,6 +535,12 @@ describe("WorkspaceService.create — additional members", () => {
       role: "agent",
       permissions,
     })
+    expect(invalidateCacheByTags).toHaveBeenCalledWith([
+      "users:user-1:workspace-members",
+      "users:member-1:workspace-members",
+      "users:member-2:workspace-members",
+      "workspaces:ws-1:workspace-members",
+    ])
   })
 
   test("rolls back the live team-member counter by the number of inserts that actually landed", async () => {

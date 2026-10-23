@@ -144,6 +144,7 @@ describe("adminWorkspaceService.createWithMembers — owner/member provisioning"
 describe("adminWorkspaceService.createWithMembers — owner already has a workspace", () => {
   test("throws ownerAlreadyHasWorkspace (409) without creating anything", async () => {
     mocks.findActiveByOwner.mockResolvedValue({ id: "ws-existing" })
+    mocks.hasRoomForTeamMembers.mockResolvedValue(false)
 
     await expect(
       adminWorkspaceService.createWithMembers(createInput()),
@@ -153,6 +154,11 @@ describe("adminWorkspaceService.createWithMembers — owner already has a worksp
     })
 
     expect(mocks.create).not.toHaveBeenCalled()
+    expect(mocks.resolveTenantForOwner).toHaveBeenCalledWith("owner-1")
+    expect(mocks.hasRoomForTeamMembers).toHaveBeenCalledWith({
+      userId: "owner-1",
+      additionalCount: 1,
+    })
   })
 })
 
