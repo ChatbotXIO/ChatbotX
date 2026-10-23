@@ -3008,6 +3008,11 @@
       "sendViewCatalog": "查看商品目錄",
       "sendProducts": "傳送商品"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "無法測試外部請求。請檢查請求設定後再試一次。"
+      }
+    },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
       "addVariation": "新變體"

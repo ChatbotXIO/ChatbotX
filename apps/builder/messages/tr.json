@@ -2773,6 +2773,11 @@
       "sendViewCatalog": "Kataloğu görüntüle",
       "sendProducts": "Ürün gönder"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Harici istek test edilemedi. İstek yapılandırmasını doğrulayın ve yeniden deneyin."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "Toplam %100 olmalıdır.",
       "addVariation": "Yeni Varyasyon"

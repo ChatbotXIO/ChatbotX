@@ -2773,6 +2773,11 @@
       "sendViewCatalog": "Ver catálogo",
       "sendProducts": "Enviar productos"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "No se pudo probar la solicitud externa. Verifica la configuración de la solicitud e inténtalo de nuevo."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "La suma total debe ser igual al 100 %.",
       "addVariation": "Nuevo Variation"

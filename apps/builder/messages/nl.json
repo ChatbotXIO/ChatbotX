@@ -2618,6 +2618,11 @@
       "sendViewCatalog": "Catalogus bekijken",
       "sendProducts": "Producten verzenden"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "De externe aanvraag kan niet worden getest. Controleer de aanvraagconfiguratie en probeer het opnieuw."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "De totale som moet gelijk zijn aan 100%.",
       "addVariation": "Nieuwe variant"

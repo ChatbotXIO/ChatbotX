@@ -3455,6 +3455,11 @@
       "sendViewCatalog": "Kataloqa bax",
       "sendProducts": "Məhsul göndər"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Xarici sorğunu sınaqdan keçirmək mümkün olmadı. Sorğu konfiqurasiyasını yoxlayın və yenidən cəhd edin."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "Ümumi cəm 100% olmalıdır.",
       "addVariation": "Yeni variant"

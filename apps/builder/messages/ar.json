@@ -2773,6 +2773,11 @@
       "sendViewCatalog": "عرض الكتالوج",
       "sendProducts": "إرسال المنتجات"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "تعذر اختبار الطلب الخارجي. تحقق من إعدادات الطلب وحاول مرة أخرى."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "يجب أن يساوي مجموع النسب 100%.",
       "addVariation": "نسخة جديدة"

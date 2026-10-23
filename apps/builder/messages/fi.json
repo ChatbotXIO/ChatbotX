@@ -2618,6 +2618,11 @@
       "sendViewCatalog": "Näytä tuotekatalogi",
       "sendProducts": "Lähetä tuotteita"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Ulkoista pyyntöä ei voitu testata. Tarkista pyyntömääritys ja yritä uudelleen."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "Kokonaissumman on oltava 100 %.",
       "addVariation": "Uusi muunnelma"

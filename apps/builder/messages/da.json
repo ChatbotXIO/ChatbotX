@@ -2618,6 +2618,11 @@
       "sendViewCatalog": "Se katalog",
       "sendProducts": "Send produkter"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Kunne ikke teste den eksterne anmodning. Kontrollér anmodningskonfigurationen, og prøv igen."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
       "addVariation": "Ny Variation"

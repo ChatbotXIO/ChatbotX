@@ -99,8 +99,14 @@ describe("externalRequestService.execute", () => {
   test("switches a POST 302 redirect to GET without body headers or mutating the prior request", async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(
-        Response.redirect("https://api.example.com/final", 302),
+      .mockImplementationOnce(
+        (_url: string | URL | Request, init?: RequestInit) => {
+          const patchedInit = init as RequestInit & {
+            _ogBody?: BodyInit | null
+          }
+          patchedInit._ogBody = patchedInit.body
+          return Response.redirect("https://api.example.com/final", 302)
+        },
       )
       .mockResolvedValueOnce(new Response("OK", { status: 200 }))
     vi.stubGlobal("fetch", fetchMock)
@@ -128,6 +134,7 @@ describe("externalRequestService.execute", () => {
     expect(redirectedInit).not.toBe(initialInit)
     expect(redirectedInit.method).toBe("GET")
     expect(redirectedInit.body).toBeUndefined()
+    expect(redirectedInit).not.toHaveProperty("_ogBody")
     expect(redirectedHeaders.get("authorization")).toBe("Bearer secret")
     expect(redirectedHeaders.get("content-type")).toBeNull()
     expect(redirectedHeaders.get("content-language")).toBeNull()

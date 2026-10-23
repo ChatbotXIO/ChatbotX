@@ -488,6 +488,11 @@
       "sendViewCatalog": "הצגת קטלוג",
       "sendProducts": "שליחת מוצרים"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "לא ניתן לבדוק את הבקשה החיצונית. בדקו את הגדרת הבקשה ונסו שוב."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "הסכום הכולל חייב להיות 100%.",
       "addVariation": "וריאציה חדשה"

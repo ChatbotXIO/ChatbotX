@@ -39,10 +39,13 @@ const nextHopInit = (
     headers.delete("Authorization")
   }
 
+  // Do not spread init: Next's patched fetch adds _ogBody and would resurrect the body on a GET hop.
   return {
-    ...init,
+    method: dropBody ? "GET" : init.method,
     headers,
-    ...(dropBody ? { method: "GET", body: undefined } : {}),
+    body: dropBody ? undefined : init.body,
+    redirect: init.redirect,
+    signal: init.signal,
   }
 }
 
