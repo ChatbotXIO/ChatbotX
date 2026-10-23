@@ -55,8 +55,7 @@ and active revoke markers.
 
 The gateway logs the Redis host, port and database it uses at startup (never
 the credentials). If sockets connect but no event arrives, compare that line
-with the Redis Builder and Worker publish to: a different instance or database
-index splits the stream silently.
+with the Redis Builder and Worker publish to.
 
 Start Redis and Builder with Docker, then run `pnpm --filter realtime dev`.
 Use `REALTIME_HOST`, not `HOSTNAME`: Docker owns `HOSTNAME`.
