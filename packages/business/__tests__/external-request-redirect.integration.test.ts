@@ -1,14 +1,8 @@
 import { createServer, type Server } from "node:http"
 import type { AddressInfo } from "node:net"
-import {
-  http,
-  server as mswServer,
-  passthrough,
-} from "@chatbotx.io/vitest-config/msw"
+import { server as mswServer } from "@chatbotx.io/vitest-config/msw"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { externalRequestService } from "../src/external-request/service"
-
-const LOOPBACK_REQUEST_URL = /http:\/\/127\.0\.0\.1:\d+\/.*/
 
 const mocks = vi.hoisted(() => ({
   checkSsrfSafety: vi.fn(async () => ({
@@ -43,11 +37,12 @@ describe("externalRequestService redirect integration", () => {
   let server: Server
   beforeEach(() => {
     vi.clearAllMocks()
-    mswServer.use(http.all(LOOPBACK_REQUEST_URL, () => passthrough()))
+    mswServer.close()
   })
 
   afterEach(async () => {
     await closeServer(server)
+    mswServer.listen({ onUnhandledRequest: "error" })
   })
 
   test("follows an Apps Script-style POST redirect with a GET", async () => {

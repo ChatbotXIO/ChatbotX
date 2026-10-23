@@ -481,6 +481,14 @@ export async function externalRequest({
           conversation,
         })
 
+  const logFailure = (error: unknown, httpCode: string | null) =>
+    logStepProviderError(
+      "external-request",
+      { conversation, contactInbox },
+      error,
+      httpCode,
+    )
+
   try {
     const result = await externalRequestService.executeAndMap({
       workspaceId: conversation.workspaceId,
@@ -495,29 +503,22 @@ export async function externalRequest({
     })
 
     if (result.statusCode >= 400) {
-      const error = Object.assign(
-        new Error(`Request failed with status ${result.statusCode}`),
-        { statusCode: result.statusCode },
-      )
-      await logStepProviderError(
-        "external-request",
-        { conversation, contactInbox },
-        error,
-      )
+      const errorMessage = `Request failed with status ${result.statusCode}`
+      await logFailure(errorMessage, String(result.statusCode))
       return {
         status: "error",
-        errorMessage: error.message,
+        errorMessage,
         result: null,
       }
     }
 
     return { status: "success", result: null }
   } catch (error) {
-    await logStepProviderError(
-      "external-request",
-      { conversation, contactInbox },
-      error,
+    logger.error(
+      { err: error, workspaceId: conversation.workspaceId },
+      "[externalRequest] failed",
     )
+    await logFailure(error, null)
     return {
       status: "error",
       errorMessage:

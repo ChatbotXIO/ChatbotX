@@ -1,3 +1,4 @@
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { externalRequestStepDefaultFn } from "@chatbotx.io/flow-config"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
@@ -140,10 +141,8 @@ describe("externalRequest step handler", () => {
         contactInbox: expect.objectContaining({ id: "contact-inbox-1" }),
         conversation: expect.objectContaining({ id: "conversation-1" }),
       }),
-      expect.objectContaining({
-        message: "Request failed with status 500",
-        statusCode: 500,
-      }),
+      "Request failed with status 500",
+      "500",
     )
   })
 
@@ -161,6 +160,30 @@ describe("externalRequest step handler", () => {
       "external-request",
       expect.any(Object),
       expect.objectContaining({ message: "network failure" }),
+      null,
+    )
+  })
+
+  test("logs an SSRF rejection without an endpoint HTTP status", async () => {
+    const error = new ChatbotXException(
+      "This URL is not allowed for external requests",
+      "ssrfBlocked",
+      400,
+    )
+    mocks.executeAndMap.mockRejectedValue(error)
+
+    const result = await externalRequest(createProps())
+
+    expect(result).toEqual({
+      status: "error",
+      errorMessage: "This URL is not allowed for external requests",
+      result: null,
+    })
+    expect(mocks.logStepProviderError).toHaveBeenCalledWith(
+      "external-request",
+      expect.any(Object),
+      error,
+      null,
     )
   })
 

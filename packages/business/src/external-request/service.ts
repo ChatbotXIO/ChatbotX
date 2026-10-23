@@ -8,7 +8,7 @@ import { checkSsrfSafety } from "../net/ssrf-guard"
 const REQUEST_TIMEOUT_MS = 15_000
 const MAX_REDIRECTS = 5
 
-const requestBodyHeaders = [
+const REQUEST_BODY_HEADERS = [
   "Content-Type",
   "Content-Length",
   "Content-Encoding",
@@ -16,6 +16,7 @@ const requestBodyHeaders = [
   "Content-Location",
 ]
 
+// Mirrors Fetch's HTTP-redirect-fetch step, which redirect: "manual" disables.
 const nextHopInit = (
   status: number,
   init: RequestInit,
@@ -29,7 +30,7 @@ const nextHopInit = (
   const headers = new Headers(init.headers)
 
   if (dropBody) {
-    for (const header of requestBodyHeaders) {
+    for (const header of REQUEST_BODY_HEADERS) {
       headers.delete(header)
     }
   }
@@ -162,6 +163,8 @@ class ExternalRequestService extends BaseService {
     if (response.status < 300 || response.status >= 400) {
       return response
     }
+
+    await response.body?.cancel()
 
     if (redirectsLeft <= 0) {
       throw new ChatbotXException(

@@ -77,6 +77,25 @@ describe("externalRequestService.execute", () => {
     expect(fetchMock.mock.calls[1]?.[0]).toBe("https://api.example.com/final")
   })
 
+  test("cancels a redirect response body before following it", async () => {
+    const redirectResponse = new Response("ignored", {
+      status: 302,
+      headers: { location: "https://api.example.com/final" },
+    })
+    const cancel = vi.spyOn(redirectResponse.body as ReadableStream, "cancel")
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(redirectResponse)
+      .mockResolvedValueOnce(new Response("{}", { status: 200 }))
+    vi.stubGlobal("fetch", fetchMock)
+
+    await externalRequestService.execute(
+      { method: "GET", url: "https://api.example.com/data", headers: [] },
+      { workspaceId: "workspace-1" },
+    )
+
+    expect(cancel).toHaveBeenCalledOnce()
+  })
   test("switches a POST 302 redirect to GET without body headers or mutating the prior request", async () => {
     const fetchMock = vi
       .fn()
