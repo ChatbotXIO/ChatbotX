@@ -42,6 +42,7 @@ import { formatInTimeZone } from "date-fns-tz"
 import { getProperty } from "dot-prop"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
+import { logStepProviderError } from "./flow-utils"
 import type { ExecuteStepResult } from "./step"
 
 // ---------------------------------------------------------------------------
@@ -494,15 +495,29 @@ export async function externalRequest({
     })
 
     if (result.statusCode >= 400) {
+      const error = Object.assign(
+        new Error(`Request failed with status ${result.statusCode}`),
+        { statusCode: result.statusCode },
+      )
+      await logStepProviderError(
+        "external-request",
+        { conversation, contactInbox },
+        error,
+      )
       return {
         status: "error",
-        errorMessage: `Request failed with status ${result.statusCode}`,
+        errorMessage: error.message,
         result: null,
       }
     }
 
     return { status: "success", result: null }
   } catch (error) {
+    await logStepProviderError(
+      "external-request",
+      { conversation, contactInbox },
+      error,
+    )
     return {
       status: "error",
       errorMessage:
