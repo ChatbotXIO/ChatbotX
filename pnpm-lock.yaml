@@ -692,8 +692,8 @@ importers:
   apps/worker:
     dependencies:
       '@ai-sdk/anthropic':
-        specifier: ^3.0.72
-        version: 3.0.81(zod@4.6.5)
+        specifier: ^4.0.82
+        version: 4.0.82(zod@4.6.5)
       '@ai-sdk/deepseek':
         specifier: ^2.0.30
         version: 2.0.35(zod@4.6.5)
@@ -1977,8 +1977,8 @@ importers:
   packages/ai:
     dependencies:
       '@ai-sdk/anthropic':
-        specifier: ^3.0.72
-        version: 3.0.81(zod@4.6.5)
+        specifier: ^4.0.82
+        version: 4.0.82(zod@4.6.5)
       '@ai-sdk/deepseek':
         specifier: ^2.0.30
         version: 2.0.35(zod@4.6.5)
@@ -3597,9 +3597,9 @@ importers:
 
 packages:
 
-  '@ai-sdk/anthropic@3.0.81':
-    resolution: {integrity: sha512-B1JDd9Ugq9R5AgIaW3674lhGCMMYJcPUxnrZh8fzbGojgg4QvHFRv6eZahGQAUsmGHbcf74G9bdSBDLWQGY2GA==}
-    engines: {node: '>=18'}
+  '@ai-sdk/anthropic@4.0.82':
+    resolution: {integrity: sha512-1HvCBHdBsfG/OTDOmo3R+rwKtVofnPCWKyMKqOa75yieQEC8V7leB40EaG6uQ1wKnqeXdc31s7tNyq+OnKV/mg==}
+    engines: {node: '>=22'}
     peerDependencies:
       zod: ^4.3.6
 
@@ -3657,6 +3657,12 @@ packages:
     peerDependencies:
       zod: ^4.3.6
 
+  '@ai-sdk/provider-utils@5.0.62':
+    resolution: {integrity: sha512-//6sHa6QNQdM2KHOg5pxp1UMFQB4U8cqdw/kSm9BMr0DLeaFgG3TXZfxhpwRZmxgBpOrzMVZ/gwLXH309+Ortw==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      zod: ^4.3.6
+
   '@ai-sdk/provider@3.0.10':
     resolution: {integrity: sha512-Q3BZ27qfpYqnCYGvE3vt+Qi6LGOF9R5Nmzn+9JoM1lCRsD9mYaIhfJLkSunN48nfGXJ6n+XNV0J/XVpqGQl7Dw==}
     engines: {node: '>=18'}
@@ -3664,6 +3670,10 @@ packages:
   '@ai-sdk/provider@3.0.13':
     resolution: {integrity: sha512-ZPtVYt5QIJzOta1kdUiDuCx4HhFkvNPv/rvmZ2b1iXwybYjJsCnNYR4PAw4kW7rgVfDARvHXcU64efWuqNp6bw==}
     engines: {node: '>=18'}
+
+  '@ai-sdk/provider@4.0.29':
+    resolution: {integrity: sha512-nV7UpLADtKn9f0xfnxVZAeFEKuNkScJv5rOpHL7qeWe2EwEEBa3pd6P0QVK6D6coCJ0E8FyCgoM50AffTYrzDQ==}
+    engines: {node: '>=22'}
 
   '@ai-sdk/provider@4.0.8':
     resolution: {integrity: sha512-aWO7iwhFUGf347tCwNGggggfmZigaSu7TF739IZSrWWABUp7zkb4Cr3fMqvBe5EIS7ABJJu3Cadn0g/zs1G0QQ==}
@@ -11064,12 +11074,16 @@ packages:
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
 
-  undici@6.26.0:
-    resolution: {integrity: sha512-4yqz8a3n5HmGTlsbADNtr/dJlhkh/55Rq798G6ibiULcXbDtaLpTl1pvdqcbFfeoj3iSi52lePFM7h9H21cw/A==}
+  undici@6.29.1:
+    resolution: {integrity: sha512-EvRlUt/QqAEvXdQeRMYUfwOQsfzpDztykrG2owGEE/rBOBoYv9uF39ZzsNDh4lTFHhTr2XOZjKkYgueD12ZmGA==}
     engines: {node: '>=18.17'}
 
   undici@7.29.0:
     resolution: {integrity: sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw==}
+    engines: {node: '>=20.18.1'}
+
+  undici@7.30.1:
+    resolution: {integrity: sha512-03KrMbjIFDWQR5RNPrSw3bd1r12JpyFQl9/yxjUbJtqkjmllqC5lFjZh6ujeuJCKr8EOQvRW872Oy/az+nLYxg==}
     engines: {node: '>=20.18.1'}
 
   undici@8.11.2:
@@ -11522,10 +11536,10 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/anthropic@3.0.81(zod@4.6.5)':
+  '@ai-sdk/anthropic@4.0.82(zod@4.6.5)':
     dependencies:
-      '@ai-sdk/provider': 3.0.10
-      '@ai-sdk/provider-utils': 4.0.27(zod@4.6.5)
+      '@ai-sdk/provider': 4.0.29
+      '@ai-sdk/provider-utils': 5.0.62(zod@4.6.5)
       zod: 4.6.5
 
   '@ai-sdk/deepseek@2.0.35(zod@4.6.5)':
@@ -11610,11 +11624,24 @@ snapshots:
       undici: 7.29.0
       zod: 4.6.5
 
+  '@ai-sdk/provider-utils@5.0.62(zod@4.6.5)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.29
+      '@standard-schema/spec': 1.1.0
+      '@workflow/serde': 4.1.0
+      eventsource-parser: 3.1.1
+      undici: 7.30.1
+      zod: 4.6.5
+
   '@ai-sdk/provider@3.0.10':
     dependencies:
       json-schema: 0.4.0
 
   '@ai-sdk/provider@3.0.13':
+    dependencies:
+      json-schema: 0.4.0
+
+  '@ai-sdk/provider@4.0.29':
     dependencies:
       json-schema: 0.4.0
 
@@ -15024,7 +15051,7 @@ snapshots:
       parse5: 7.3.0
       parse5-htmlparser2-tree-adapter: 7.1.0
       parse5-parser-stream: 7.1.2
-      undici: 6.26.0
+      undici: 6.29.1
       whatwg-mimetype: 4.0.0
 
   chokidar@4.0.3:
@@ -19042,9 +19069,11 @@ snapshots:
 
   undici-types@7.18.2: {}
 
-  undici@6.26.0: {}
+  undici@6.29.1: {}
 
   undici@7.29.0: {}
+
+  undici@7.30.1: {}
 
   undici@8.11.2: {}
 
