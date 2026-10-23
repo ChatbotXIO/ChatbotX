@@ -4,7 +4,12 @@ import type {
   CheckoutMode,
   ProductButtonType,
 } from "@chatbotx.io/database/partials"
-import { createContext, type ReactNode, useContext } from "react"
+import {
+  type CSSProperties,
+  createContext,
+  type ReactNode,
+  useContext,
+} from "react"
 import { shopHref } from "../lib/shop-href"
 import type { ShopMoneyFormat } from "../lib/shop-money"
 
@@ -18,6 +23,8 @@ export type ShopContextValue = {
   open: boolean
   checkoutMode: CheckoutMode
   productButtons: readonly ProductButtonType[]
+  /** The brand color variables, for parts drawn outside the shop's wrapper. */
+  brandColorStyle: CSSProperties
 }
 
 const ShopContext = createContext<ShopContextValue | null>(null)

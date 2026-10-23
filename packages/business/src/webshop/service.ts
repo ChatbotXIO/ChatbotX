@@ -28,13 +28,21 @@ import {
   validationException,
 } from "../errors"
 import { logger } from "../logger"
-import { resolveContactMessageLanguage } from "../order/contact-language"
 import {
   buildCartSummaryText,
   checkoutButtonLabel,
 } from "../order/customer-messages"
-import { orderEmptyException } from "../order/errors"
-import { orderService } from "../order/service"
+import {
+  orderEmptyException,
+  orderProductUnavailableException,
+} from "../order/errors"
+import { resolveCustomerMessageLanguage } from "../order/message-language"
+import {
+  findProductsForOrder,
+  orderService,
+  productCategoryIds,
+  splitOrderableItems,
+} from "../order/service"
 import { resolveTenantSettings } from "../platform/settings"
 import { productService } from "../product/service"
 import { productCategoryService } from "../product-category/service"
@@ -43,6 +51,7 @@ import { workspaceService } from "../workspace/service"
 import { resolveWorkspaceFreezeReasonById } from "../workspace-lifecycle/with-blocked-owner-guard"
 import {
   type WebshopClosedReason,
+  webshopCartFullException,
   webshopClosedException,
   webshopRatingNotAllowedException,
 } from "./errors"
@@ -63,6 +72,36 @@ export type WebshopCheckoutForm = {
   shippingType?: ShippingType | null
   shippingAddress?: OrderShippingAddress | null
   note?: string | null
+}
+
+/** Most distinct lines (product and variant pairs) one cart may hold. */
+export const MAX_CART_LINES = 100
+
+/**
+ * A line may only name a variant the product has and offers: required when
+ * the product has enabled variants, absent when it has none.
+ */
+const assertCartVariant = (
+  product: {
+    name: string
+    variants: Array<{ id: string; isEnabled: boolean }>
+  },
+  variantId: string | null,
+) => {
+  const enabled = product.variants.filter((variant) => variant.isEnabled)
+  if (!variantId) {
+    if (enabled.length > 0) {
+      throw orderProductUnavailableException(
+        `Choose a variant of "${product.name}".`,
+      )
+    }
+    return
+  }
+  if (!enabled.some((variant) => variant.id === variantId)) {
+    throw orderProductUnavailableException(
+      `The chosen variant of "${product.name}" is not available.`,
+    )
+  }
 }
 
 const REQUIRED_FIELDS = [
@@ -112,10 +151,46 @@ const changeLine = (
 }
 
 /**
+ * The cart left once `ordered` is taken out of it: each ordered line's
+ * quantity comes off its cart line, and lines added meanwhile stay. `null`
+ * when the cart no longer holds all of `ordered` — a second submit of the
+ * same checkout, after the first already took it.
+ */
+export const subtractOrderedLines = (
+  cart: CartLine[],
+  ordered: Array<{
+    productId: string
+    variantId?: string | null
+    quantity: number
+  }>,
+): CartLine[] | null => {
+  let left = cart
+  for (const line of ordered) {
+    const sameLine = (candidate: CartLine) =>
+      candidate.productId === line.productId &&
+      (candidate.variantId ?? null) === (line.variantId ?? null)
+    const remaining = (left.find(sameLine)?.quantity ?? 0) - line.quantity
+    if (remaining < 0) {
+      return null
+    }
+    left = left.flatMap((candidate) => {
+      if (!sameLine(candidate)) {
+        return [candidate]
+      }
+      return remaining > 0 ? [{ ...candidate, quantity: remaining }] : []
+    })
+  }
+  return left
+}
+
+/**
  * Everything the customer side of the store does: browse what the store
  * shows, keep a cart, check out, follow and rate their own orders. Prices
  * and stock always come from `orderService`, never from the cart.
  */
+/** A row of "You may also like": enough to browse, not a second catalog. */
+const RELATED_PRODUCTS_LIMIT = 10
+
 class WebshopService extends BaseService {
   /** The shop's front page: its settings, visible categories, active vendors. */
   async getStorefront(workspaceId: string) {
@@ -128,6 +203,8 @@ class WebshopService extends BaseService {
     const ordering = await this.orderingState(workspaceId, settings, [])
     return {
       storeName: workspace.name,
+      brandColor: workspace.brandColor,
+      language: workspace.language,
       settings,
       ordering,
       categories: categories.filter((category) => category.isVisible),
@@ -140,10 +217,32 @@ class WebshopService extends BaseService {
     keyword?: string | null
     categoryId?: string | null
     vendorId?: string | null
+    productIds?: string[] | null
     page?: number
     perPage?: number
   }) {
     return await productRepository.listForShop(input)
+  }
+
+  /**
+   * "You may also like" under a product: other products the shop shows in its
+   * category or sub-category, or sharing a tag with it — the closest first.
+   */
+  async listRelatedProducts(input: {
+    workspaceId: string
+    product: {
+      id: string
+      categoryId: string | null
+      subcategoryId: string | null
+      tags: string[]
+    }
+    limit?: number
+  }) {
+    return await productRepository.listRelatedForShop({
+      workspaceId: input.workspaceId,
+      product: input.product,
+      limit: input.limit ?? RELATED_PRODUCTS_LIMIT,
+    })
   }
 
   /** One product the shop shows, with its variants and options. */
@@ -161,6 +260,7 @@ class WebshopService extends BaseService {
     )
     return {
       ...detail,
+      vendorDiscountPercent: data[0]?.vendorDiscountPercent ?? 0,
       variants: detail.variants.filter((variant) => variant.isEnabled),
     }
   }
@@ -170,6 +270,11 @@ class WebshopService extends BaseService {
     workspaceId: string
     contactId: string
     shippingType?: ShippingType | null
+    /**
+     * Also price the codes the cart can offer — on by default for the cart
+     * page; off for callers that only need the totals.
+     */
+    listAvailableDiscounts?: boolean
   }) {
     const cart = await cartRepository.find(input)
     const lines = cart?.items ?? []
@@ -180,6 +285,7 @@ class WebshopService extends BaseService {
       contactId: input.contactId,
       discountCode: cart?.discountCode,
       autoApplyDiscount: true,
+      listAvailableDiscounts: input.listAvailableDiscounts ?? true,
     })
     return {
       items: lines,
@@ -219,6 +325,71 @@ class WebshopService extends BaseService {
       })
     }
     return quote
+  }
+
+  /**
+   * A preview link's cart: priced exactly as a customer's would be, but for
+   * no contact — the caller keeps its lines, and a preview never orders.
+   */
+  async getPreviewCart(input: {
+    workspaceId: string
+    items: CartLine[]
+    discountCode?: string | null
+    shippingType?: ShippingType | null
+  }) {
+    const quote = await orderService.quote({
+      workspaceId: input.workspaceId,
+      items: input.items,
+      shippingType: input.shippingType,
+      contactId: null,
+      discountCode: input.discountCode,
+      autoApplyDiscount: true,
+      listAvailableDiscounts: true,
+    })
+    return {
+      items: input.items,
+      enteredDiscountCode: input.discountCode ?? null,
+      ...quote,
+    }
+  }
+
+  /**
+   * The preview cart's lines after one change, checked like a customer's
+   * (`changeCart`) but saved nowhere and announced to nobody.
+   */
+  async changePreviewCart(
+    input: Omit<CartChangeInput, "contactId" | "contactInboxId"> & {
+      items: CartLine[]
+      mode: "add" | "set"
+      maxLines: number
+    },
+  ): Promise<CartLine[]> {
+    await this.assertCartLineCanGrow(input, input.items, input.mode)
+    const after = changeLine(input.items, input, input.mode)
+    if (after.length > Math.max(input.items.length, input.maxLines)) {
+      throw webshopCartFullException(input.maxLines)
+    }
+    return after
+  }
+
+  /**
+   * Prices the preview cart with the typed code; `discountError` says why a
+   * code cannot be used, and then the caller does not keep it.
+   */
+  async quotePreviewDiscountCode(input: {
+    workspaceId: string
+    items: CartLine[]
+    code: string
+    shippingType?: ShippingType | null
+  }) {
+    return await orderService.quote({
+      workspaceId: input.workspaceId,
+      items: input.items,
+      shippingType: input.shippingType,
+      contactId: null,
+      discountCode: input.code.trim(),
+      autoApplyDiscount: true,
+    })
   }
 
   async removeDiscountCode(input: { workspaceId: string; contactId: string }) {
@@ -263,10 +434,21 @@ class WebshopService extends BaseService {
     const priced = await this.getCart({
       workspaceId: cart.workspaceId,
       contactId: cart.contactId,
+      listAvailableDiscounts: false,
     })
     if (priced.lines.length === 0) {
       return "empty"
     }
+    const products = new Map(
+      (
+        await productRepository.findByIds({
+          workspaceId: cart.workspaceId,
+          productIds: priced.lines.flatMap((line) =>
+            line.productId ? [line.productId] : [],
+          ),
+        })
+      ).map((product) => [product.id, product]),
+    )
     const target = await this.resolveReminderTarget(cart)
     await emitCartAbandoned(
       cart.workspaceId,
@@ -281,7 +463,9 @@ class WebshopService extends BaseService {
           productId: line.productId ?? null,
           variantId: line.variantId ?? null,
           name: line.name,
-          categoryIds: line.categoryId ? [line.categoryId] : [],
+          categoryIds: productCategoryIds(
+            line.productId ? products.get(line.productId) : undefined,
+          ),
           quantity: line.quantity,
         })),
       },
@@ -409,7 +593,7 @@ class WebshopService extends BaseService {
       return null
     }
     const [language, { appUrl }] = await Promise.all([
-      resolveContactMessageLanguage(input),
+      resolveCustomerMessageLanguage(input),
       resolveTenantSettings({ workspaceId: input.workspaceId }),
     ])
     const externalCheckout =
@@ -511,14 +695,26 @@ class WebshopService extends BaseService {
       throw webshopClosedException("orderingUnavailable")
     }
     const cart = await cartRepository.find(shopper)
-    const lines = cart?.items ?? []
-
-    const products = await productRepository.findForOrder({
+    const products = await findProductsForOrder({
       workspaceId: shopper.workspaceId,
-      productIds: lines.map((line) => line.productId),
+      productIds: (cart?.items ?? []).map((line) => line.productId),
     })
-    const vendors = products.flatMap((product) =>
-      product.vendor
+    // Ordered as the cart shows it: an item no longer sold is left out (the
+    // cart lists it as unavailable) and stays in the cart.
+    const { orderable: lines, unavailable } = splitOrderableItems(
+      products,
+      cart?.items ?? [],
+    )
+    if (lines.length === 0) {
+      throw unavailable.length > 0
+        ? orderProductUnavailableException(
+            "None of the items in the cart can be ordered.",
+          )
+        : orderEmptyException()
+    }
+    const orderedProductIds = new Set(lines.map((line) => line.productId))
+    const vendors = [...products.values()].flatMap((product) =>
+      orderedProductIds.has(product.id) && product.vendor
         ? [
             {
               name: product.vendor.name,
@@ -557,14 +753,16 @@ class WebshopService extends BaseService {
       discountCode: cart?.discountCode,
       autoApplyDiscount: true,
       onPlaced: async (_order, tx) => {
-        // A double-submitted checkout read the same cart: the lock makes the
-        // second wait for the first, find the cart emptied, and roll back
-        // instead of placing the order twice.
+        // Only what was ordered leaves the cart: an item added in another
+        // tab while this order was placed stays. A double-submitted checkout
+        // read the same cart: the lock makes the second wait for the first,
+        // find its items gone, and roll back instead of ordering twice.
         const locked = await cartRepository.findForUpdate(shopper, tx)
-        if (!locked || locked.items.length === 0) {
+        const left = subtractOrderedLines(locked?.items ?? [], lines)
+        if (!left) {
           throw orderEmptyException()
         }
-        await this.emptyCart(shopper, tx)
+        await this.keepCartLines(shopper, left, tx)
       },
     })
     await this.startCheckoutFlow(settings, order)
@@ -652,20 +850,36 @@ class WebshopService extends BaseService {
     return await orderService.getDetail(input)
   }
 
+  /**
+   * Only what the shop shows can go in the cart (or grow in it), in either
+   * mode; lowering a line is always allowed.
+   */
+  private async assertCartLineCanGrow(
+    change: {
+      workspaceId: string
+      productId: string
+      variantId: string | null
+      quantity: number
+    },
+    before: CartLine[],
+    mode: "add" | "set",
+  ) {
+    if (
+      lineQuantity(changeLine(before, change, mode), change) <=
+      lineQuantity(before, change)
+    ) {
+      return
+    }
+    const product = await this.getProduct({
+      workspaceId: change.workspaceId,
+      productId: change.productId,
+    })
+    assertCartVariant(product, change.variantId ?? null)
+  }
+
   private async changeCart(input: CartChangeInput, mode: "add" | "set") {
     const current = await cartRepository.find(input)
-    const before = current?.items ?? []
-    if (
-      lineQuantity(changeLine(before, input, mode), input) >
-      lineQuantity(before, input)
-    ) {
-      // Only what the shop shows can go in the cart (or grow in it), in
-      // either mode; lowering a line is always allowed.
-      await this.getProduct({
-        workspaceId: input.workspaceId,
-        productId: input.productId,
-      })
-    }
+    await this.assertCartLineCanGrow(input, current?.items ?? [], mode)
     // Under the cart's lock: two quick taps apply one after the other, and
     // each event reports the change it actually made.
     const change = await db.transaction(async (tx) => {
@@ -679,6 +893,9 @@ class WebshopService extends BaseService {
       )
       const lockedBefore = cart?.items ?? []
       const after = changeLine(lockedBefore, input, mode)
+      if (after.length > Math.max(lockedBefore.length, MAX_CART_LINES)) {
+        throw webshopCartFullException(MAX_CART_LINES)
+      }
       await cartRepository.upsert(
         {
           workspaceId: input.workspaceId,
@@ -691,7 +908,9 @@ class WebshopService extends BaseService {
       return { before: lockedBefore, after }
     })
     await this.announceCartChange(input, change.before, change.after)
-    return await this.getCart(input)
+    // Just the lines: pricing the whole cart (and its offered codes) on every
+    // tap is left to the cart page, which reads it with `getCart`.
+    return { items: change.after }
   }
 
   /**
@@ -723,9 +942,7 @@ class WebshopService extends BaseService {
             productId: input.productId,
             variantId: input.variantId ?? null,
             name: product?.name ?? "",
-            categoryIds: [product?.categoryId, product?.subcategoryId].filter(
-              (id): id is string => Boolean(id),
-            ),
+            categoryIds: productCategoryIds(product),
           },
           quantity,
           change,
@@ -740,13 +957,18 @@ class WebshopService extends BaseService {
     }
   }
 
-  private async emptyCart(shopper: WebshopShopper, tx: DatabaseClient) {
+  /** After an order: the lines left in the cart, and the used code gone. */
+  private async keepCartLines(
+    shopper: WebshopShopper,
+    items: CartLine[],
+    tx: DatabaseClient,
+  ) {
     await cartRepository.upsert(
       {
         workspaceId: shopper.workspaceId,
         contactId: shopper.contactId,
         contactInboxId: shopper.contactInboxId,
-        items: [],
+        items,
       },
       tx,
     )

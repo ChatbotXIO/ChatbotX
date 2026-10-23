@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   findSchedules: vi.fn(),
   setRating: vi.fn(),
   listForShop: vi.fn(),
+  findProductDetail: vi.fn(),
   findForOrder: vi.fn(),
   getSettings: vi.fn(),
   getFreshSettings: vi.fn(),
@@ -75,6 +76,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   productRepository: {
     listForShop: (...args: unknown[]) => mocks.listForShop(...args),
     findForOrder: (...args: unknown[]) => mocks.findForOrder(...args),
+    findByIds: (...args: unknown[]) => mocks.findForOrder(...args),
   },
 }))
 
@@ -85,12 +87,40 @@ vi.mock("../../ecommerce-settings/service", () => ({
   },
 }))
 
+type MockProduct = {
+  id: string
+  isActive?: boolean
+  name?: string
+  categoryId?: string | null
+  subcategoryId?: string | null
+}
 vi.mock("../../order/service", () => ({
   orderService: {
     quote: (...args: unknown[]) => mocks.quote(...args),
     place: (...args: unknown[]) => mocks.place(...args),
     getDetail: (...args: unknown[]) => mocks.getDetail(...args),
   },
+  findProductsForOrder: async (...args: unknown[]) =>
+    new Map(
+      ((await mocks.findForOrder(...args)) as MockProduct[]).map((row) => [
+        row.id,
+        row,
+      ]),
+    ),
+  // A product that is gone or turned off cannot be ordered.
+  splitOrderableItems: (
+    products: Map<string, MockProduct>,
+    items: Array<{ productId: string }>,
+  ) => ({
+    orderable: items.filter(
+      (item) => products.get(item.productId)?.isActive !== false,
+    ),
+    unavailable: items.filter(
+      (item) => products.get(item.productId)?.isActive === false,
+    ),
+  }),
+  productCategoryIds: (product?: MockProduct) =>
+    [product?.categoryId, product?.subcategoryId].filter(Boolean),
 }))
 
 vi.mock("../../workspace/service", () => ({
@@ -101,7 +131,7 @@ vi.mock("../../workspace/service", () => ({
 
 vi.mock("../../product/service", () => ({
   productService: {
-    findById: async (id: string) => ({ id, variants: [] }),
+    findById: (...args: unknown[]) => mocks.findProductDetail(...args),
   },
 }))
 vi.mock("../../product-category/service", () => ({
@@ -111,8 +141,8 @@ vi.mock("../../vendor/service", () => ({ vendorService: {} }))
 vi.mock("../../platform/settings", () => ({
   resolveTenantSettings: async () => ({ appUrl: "https://app.example" }),
 }))
-vi.mock("../../order/contact-language", () => ({
-  resolveContactMessageLanguage: async () => "en",
+vi.mock("../../order/message-language", () => ({
+  resolveCustomerMessageLanguage: async () => "en",
 }))
 
 const { webshopService } = await import("../service")
@@ -177,6 +207,11 @@ beforeEach(() => {
   mocks.queueAdd.mockResolvedValue(undefined)
   mocks.quote.mockResolvedValue({ lines: [], totals: {} })
   mocks.listForShop.mockResolvedValue({ data: [{ id: "p1" }], pageCount: 1 })
+  mocks.findProductDetail.mockImplementation(async (id: string) => ({
+    id,
+    name: "Shirt",
+    variants: [],
+  }))
 })
 
 describe("webshopService.checkout", () => {
@@ -203,6 +238,60 @@ describe("webshopService.checkout", () => {
     await input.onPlaced({ id: "o1" }, tx)
     expect(mocks.upsertCart).toHaveBeenCalledWith(
       expect.objectContaining({ contactId: "c1", items: [] }),
+      tx,
+    )
+  })
+
+  test("orders only what can be ordered; an item no longer sold stays in the cart", async () => {
+    const off = { productId: "p2", variantId: null, quantity: 1 }
+    mocks.findCart.mockResolvedValue({
+      items: [{ productId: "p1", variantId: null, quantity: 2 }, off],
+    })
+    mocks.findForOrder.mockResolvedValue([
+      { id: "p1", vendor: null },
+      { id: "p2", vendor: null, isActive: false },
+    ])
+    await webshopService.checkout({ shopper, form: {} })
+    const [input] = mocks.place.mock.calls[0] as [
+      {
+        items: unknown[]
+        onPlaced: (order: object, tx: object) => Promise<void>
+      },
+    ]
+    expect(input.items).toEqual([
+      { productId: "p1", variantId: null, quantity: 2 },
+    ])
+    const tx = { name: "tx" }
+    await input.onPlaced({ id: "o1" }, tx)
+    expect(mocks.upsertCart).toHaveBeenCalledWith(
+      expect.objectContaining({ items: [off] }),
+      tx,
+    )
+  })
+
+  test("refuses a cart whose items are all no longer sold", async () => {
+    mocks.findForOrder.mockResolvedValue([
+      { id: "p1", vendor: null, isActive: false },
+    ])
+    await expect(
+      webshopService.checkout({ shopper, form: {} }),
+    ).rejects.toMatchObject({ code: "orderProductUnavailable" })
+    expect(mocks.place).not.toHaveBeenCalled()
+  })
+
+  test("an item added in another tab while the order was placed stays in the cart", async () => {
+    await webshopService.checkout({ shopper, form: {} })
+    const [input] = mocks.place.mock.calls[0] as [
+      { onPlaced: (order: object, tx: object) => Promise<void> },
+    ]
+    const added = { productId: "p3", variantId: null, quantity: 1 }
+    mocks.findCartForUpdate.mockResolvedValue({
+      items: [{ productId: "p1", variantId: null, quantity: 2 }, added],
+    })
+    const tx = { name: "tx" }
+    await input.onPlaced({ id: "o1" }, tx)
+    expect(mocks.upsertCart).toHaveBeenCalledWith(
+      expect.objectContaining({ items: [added] }),
       tx,
     )
   })
@@ -361,13 +450,19 @@ describe("webshopService cart", () => {
   }
 
   test("adds to the quantity already in the cart", async () => {
-    await webshopService.addToCart({ ...change, quantity: 3 })
+    await expect(
+      webshopService.addToCart({ ...change, quantity: 3 }),
+    ).resolves.toEqual({
+      items: [{ productId: "p1", variantId: null, quantity: 5 }],
+    })
     expect(mocks.upsertCart).toHaveBeenCalledWith(
       expect.objectContaining({
         items: [{ productId: "p1", variantId: null, quantity: 5 }],
       }),
       { name: "cart-tx" },
     )
+    // A tap does not price the whole cart.
+    expect(mocks.quote).not.toHaveBeenCalled()
   })
 
   test("announces the product added, with its categories", async () => {
@@ -431,6 +526,140 @@ describe("webshopService cart", () => {
     mocks.listForShop.mockResolvedValue({ data: [], pageCount: 0 })
     await webshopService.setCartQuantity({ ...change, quantity: 1 })
     expect(mocks.upsertCart).toHaveBeenCalled()
+  })
+
+  describe("variant validation", () => {
+    const withVariants = () =>
+      mocks.findProductDetail.mockResolvedValue({
+        id: "p1",
+        name: "Shirt",
+        variants: [
+          { id: "v1", isEnabled: true },
+          { id: "v2", isEnabled: false },
+        ],
+      })
+
+    test("a product with variants needs one", async () => {
+      withVariants()
+      await expect(
+        webshopService.addToCart({ ...change, quantity: 1 }),
+      ).rejects.toMatchObject({ code: "orderProductUnavailable" })
+      expect(mocks.upsertCart).not.toHaveBeenCalled()
+    })
+
+    test("refuses a disabled or unknown variant", async () => {
+      withVariants()
+      for (const variantId of ["v2", "other-product-variant"]) {
+        await expect(
+          webshopService.addToCart({ ...change, variantId, quantity: 1 }),
+        ).rejects.toMatchObject({ code: "orderProductUnavailable" })
+      }
+      expect(mocks.upsertCart).not.toHaveBeenCalled()
+    })
+
+    test("accepts an enabled variant of the product", async () => {
+      withVariants()
+      await webshopService.addToCart({
+        ...change,
+        variantId: "v1",
+        quantity: 1,
+      })
+      expect(mocks.upsertCart).toHaveBeenCalled()
+    })
+
+    test("a product without variants refuses a variant id", async () => {
+      await expect(
+        webshopService.addToCart({ ...change, variantId: "v1", quantity: 1 }),
+      ).rejects.toMatchObject({ code: "orderProductUnavailable" })
+      expect(mocks.upsertCart).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("line cap", () => {
+    const fullCart = Array.from({ length: 100 }, (_, index) => ({
+      productId: `full${index}`,
+      variantId: null,
+      quantity: 1,
+    }))
+
+    test("refuses a new line past the cap", async () => {
+      mocks.findCart.mockResolvedValue({ items: fullCart })
+      await expect(
+        webshopService.addToCart({ ...change, quantity: 1 }),
+      ).rejects.toMatchObject({ code: "webshopCartFull" })
+      expect(mocks.upsertCart).not.toHaveBeenCalled()
+    })
+
+    test("still grows a line already in a full cart", async () => {
+      mocks.findCart.mockResolvedValue({
+        items: [
+          ...fullCart.slice(1),
+          { productId: "p1", variantId: null, quantity: 1 },
+        ],
+      })
+      await webshopService.addToCart({ ...change, quantity: 1 })
+      expect(mocks.upsertCart).toHaveBeenCalled()
+    })
+  })
+
+  describe("preview cart", () => {
+    const previewChange = {
+      workspaceId: "ws1",
+      productId: "p1",
+      variantId: null,
+      quantity: 2,
+      mode: "add" as const,
+      maxLines: 30,
+    }
+
+    test("returns the changed lines without saving or announcing them", async () => {
+      const items = await webshopService.changePreviewCart({
+        ...previewChange,
+        items: [{ productId: "p2", variantId: null, quantity: 1 }],
+      })
+      expect(items).toEqual([
+        { productId: "p2", variantId: null, quantity: 1 },
+        { productId: "p1", variantId: null, quantity: 2 },
+      ])
+      expect(mocks.upsertCart).not.toHaveBeenCalled()
+    })
+
+    test("refuses what the shop does not show, like a customer's cart", async () => {
+      mocks.listForShop.mockResolvedValue({ data: [], pageCount: 0 })
+      await expect(
+        webshopService.changePreviewCart({ ...previewChange, items: [] }),
+      ).rejects.toMatchObject({ code: "notFound" })
+    })
+
+    test("refuses a new line past its own cap", async () => {
+      const full = Array.from({ length: 30 }, (_, index) => ({
+        productId: `full${index}`,
+        variantId: null,
+        quantity: 1,
+      }))
+      await expect(
+        webshopService.changePreviewCart({ ...previewChange, items: full }),
+      ).rejects.toMatchObject({ code: "webshopCartFull" })
+    })
+
+    test("is priced like a customer's cart, for no contact", async () => {
+      const items = [{ productId: "p1", variantId: null, quantity: 1 }]
+      const cart = await webshopService.getPreviewCart({
+        workspaceId: "ws1",
+        items,
+        discountCode: "SAVE10",
+        shippingType: "delivery",
+      })
+      expect(mocks.quote).toHaveBeenCalledWith(
+        expect.objectContaining({
+          items,
+          contactId: null,
+          discountCode: "SAVE10",
+          listAvailableDiscounts: true,
+        }),
+      )
+      expect(cart.enteredDiscountCode).toBe("SAVE10")
+    })
   })
 
   test("a WhatsApp cart keeps only the items linked to a product", async () => {
@@ -627,8 +856,15 @@ describe("webshopService.remindAbandonedCart", () => {
   })
 
   test("emits cartAbandoned and runs the store's flow on the cart's channel", async () => {
+    mocks.findForOrder.mockResolvedValue([
+      { id: "p1", categoryId: "cat1", subcategoryId: "sub1" },
+    ])
     await expect(webshopService.remindAbandonedCart(cart)).resolves.toBe(
       "reminded",
+    )
+    // Priced for its totals only: the codes a cart page offers are skipped.
+    expect(mocks.quote).toHaveBeenCalledWith(
+      expect.objectContaining({ listAvailableDiscounts: false }),
     )
     expect(mocks.emitCartAbandoned).toHaveBeenCalledWith(
       "ws1",
@@ -639,7 +875,10 @@ describe("webshopService.remindAbandonedCart", () => {
         itemCount: 2,
         total: 20,
         items: [
-          expect.objectContaining({ productId: "p1", categoryIds: ["cat1"] }),
+          expect.objectContaining({
+            productId: "p1",
+            categoryIds: ["cat1", "sub1"],
+          }),
         ],
       }),
       "ci-wa",

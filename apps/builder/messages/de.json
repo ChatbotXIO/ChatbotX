@@ -4254,6 +4254,25 @@
       "unknownFieldTarget": "Ein zugeordnetes Kontaktfeld existiert nicht mehr.",
       "actionReferenceNotFound": "Eine Aktion verweist auf einen Flow, ein Tag oder ein Feld, das nicht mehr existiert.",
       "fieldMappingRequired": "Fügen Sie mindestens eine Feldzuordnung hinzu."
+    },
+    "form": {
+      "required": "Dieses Feld ist erforderlich.",
+      "minLength": "Gib mindestens {minimum} Zeichen ein.",
+      "maxLength": "Gib höchstens {maximum} Zeichen ein.",
+      "minNumber": "Gib eine Zahl von mindestens {minimum} ein.",
+      "moreThan": "Gib eine Zahl größer als {minimum} ein.",
+      "maxNumber": "Gib eine Zahl von höchstens {maximum} ein.",
+      "lessThan": "Gib eine Zahl kleiner als {maximum} ein.",
+      "number": "Gib eine Zahl ein.",
+      "wholeNumber": "Gib eine ganze Zahl ein.",
+      "minItems": "Wähle mindestens {minimum}.",
+      "maxItems": "Wähle höchstens {maximum}.",
+      "email": "Gib eine gültige E-Mail-Adresse ein.",
+      "url": "Gib einen gültigen Link ein, der mit https:// beginnt.",
+      "format": "Dieser Wert hat nicht das richtige Format.",
+      "option": "Wähle eine der Optionen.",
+      "invalid": "Dieser Wert ist ungültig.",
+      "checkFields": "Einige Felder müssen korrigiert werden. Prüfe die rot markierten."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "Lieferkosten",
         "description": "Eine Pauschale für die Lieferung der Bestellung an die Adresse des Kunden."
-      }
+      },
+      "defaultCountryNotShipped": "Wähle eines der Versandländer."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "Postleitzahl verlangen",
           "description": "Die Postleitzahl des Käufers wird beim Bezahlen erfasst."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "Bestellbestätigung",
+        "description": "Was der Kunde im Chat erhält, wenn seine Bestellung aufgegeben ist. Die Standardnachricht listet die Bestelldetails in der Sprache des Arbeitsbereichs auf.",
+        "options": {
+          "default": "Standardnachricht",
+          "flow": "Einen Flow ausführen",
+          "none": "Nichts senden"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Flow für die Bestellbestätigung",
+        "description": "Der Flow, der dem Kunden statt der Standardnachricht gesendet wird, wenn seine Bestellung aufgegeben ist."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "Donnerstag",
       "5": "Freitag",
       "6": "Samstag"
-    }
+    },
+    "sameTimes": "Öffnungs- und Schließzeit müssen sich unterscheiden."
   },
   "webshop": {
     "metadataTitle": "Shop",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "Dieser Link funktioniert nicht",
     "invalidLinkDescription": "Er ist möglicherweise abgelaufen. Bitte den Shop im Chat um einen neuen Link.",
     "previewBanner": "Vorschau: So sehen Kunden die Seite. Aus der Vorschau kann nicht bestellt werden.",
+    "previewOrderingOff": "Vorschau: Bestellen ist deaktiviert",
     "closed": {
       "orderingUnavailable": "Der Shop nimmt gerade keine Bestellungen an.",
       "outsideOpenHours": "Der Shop ist gerade geschlossen. Du kannst dich trotzdem umsehen."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "Dein Warenkorb ist leer.",
     "continueShopping": "Weiter einkaufen",
     "unavailableItems": "{count, plural, one {# Artikel kann gerade nicht bestellt werden} other {# Artikel können gerade nicht bestellt werden}}",
+    "unavailableNotOrdered": "Sie werden nicht mitbestellt und bleiben im Warenkorb.",
     "unavailable": "Nicht mehr verfügbar",
     "unavailableHint": "Optionen erneut wählen",
     "deletedProduct": "Gelöschtes Produkt",
@@ -9505,7 +9541,9 @@
       "delivery": "Lieferung",
       "otherFees": "Weitere Gebühren",
       "total": "Gesamt",
-      "coupon": "Gutschein ({code})"
+      "coupon": "Gutschein ({code})",
+      "title": "Bestellübersicht",
+      "saved": "Du sparst {amount}"
     },
     "belowMinimum": "Der Mindestbestellwert beträgt {amount}.",
     "checkOut": "Zur Kasse",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "Dein Warenkorb ist leer.",
       "orderShippingTypeUnavailable": "Diese Lieferart ist nicht verfügbar.",
       "webshopRatingNotAllowed": "Diese Bestellung kann nicht bewertet werden.",
+      "webshopCartFull": "Dein Warenkorb kann höchstens {maximum} verschiedene Artikel enthalten.",
       "notFound": "Dieses Produkt ist nicht mehr verfügbar.",
       "discountCodeNotFound": "Diesen Rabattcode gibt es nicht.",
       "discountCodeInactive": "Dieser Rabattcode ist nicht aktiv.",
@@ -9588,15 +9627,38 @@
       "apply": "Anwenden",
       "applied": "Rabattcode angewendet",
       "automatic": "automatisch angewendet",
-      "remove": "Rabattcode entfernen"
-    }
+      "remove": "Rabattcode entfernen",
+      "available": "Codes, die du nutzen kannst",
+      "freeShipping": "Kostenloser Versand",
+      "bestChoice": "Beste Wahl",
+      "expiresOn": "Gültig bis {date}",
+      "noExpiry": "Unbegrenzt gültig",
+      "inUse": "In Verwendung",
+      "saves": "Spart {amount}",
+      "showMore": "{count, plural, one {# weiteren Code anzeigen} other {# weitere Codes anzeigen}}",
+      "showLess": "Weniger anzeigen",
+      "removeShort": "Entfernen",
+      "expired": "Abgelaufen",
+      "usedUp": "Aufgebraucht",
+      "notEligible": "Noch nicht berechtigt"
+    },
+    "itemCount": "{count, plural, one {# Artikel} other {# Artikel}}",
+    "relatedProducts": "Das könnte dir auch gefallen"
   },
   "webshopLinks": {
     "preview": "Vorschau",
     "getLink": "Link abrufen",
     "copied": "Link kopiert. Leg ihn auf einen Bot-Button: Jeder Kontakt öffnet seinen eigenen Shop.",
     "error": "Der Link konnte nicht abgerufen werden.",
-    "copyError": "Der Link konnte nicht kopiert werden."
+    "copyError": "Der Link konnte nicht kopiert werden.",
+    "shopLink": {
+      "label": "Shop-Link",
+      "hint": "Füge diesen Link in eine Schaltfläche in einem Flow, Broadcast oder einer Sequenz ein. Jeder Kontakt, der ihn erhält, öffnet seinen eigenen Shop und kann bestellen."
+    },
+    "productLink": {
+      "label": "Öffentliche URL",
+      "hint": "Kopiere die URL und füge sie in deinen Flow, Broadcast oder deine Sequenz ein. Jeder Kontakt, der sie erhält, öffnet dieses Produkt und kann bestellen."
+    }
   },
   "discountCodes": {
     "title": "Gutscheine",
@@ -9671,6 +9733,12 @@
       "startDate": "Startdatum",
       "endDate": "Enddatum",
       "isActive": "Aktiv"
+    },
+    "rules": {
+      "codeCharacters": "Verwende nur Buchstaben ohne Akzente, Ziffern, - und _.",
+      "usageBelowUsed": "Dieser Code wurde bereits {count}-mal verwendet; das Limit kann nicht niedriger sein.",
+      "customerConditionRequired": "Füge mindestens eine Bedingung hinzu.",
+      "endAfterStart": "Das Enddatum muss nach dem Startdatum liegen."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "Keine Daten in diesem Zeitraum",
     "refresh": "Aktualisieren",
     "change": "{value} %",
-    "noPrevious": "neu"
+    "noPrevious": "neu",
+    "otherCurrencyOrders": "{count} Bestellungen in anderen Währungen sind in diesen Zahlen nicht enthalten"
   },
   "responseSla": {
     "label": "Antwort-SLA",

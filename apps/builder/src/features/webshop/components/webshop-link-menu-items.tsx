@@ -8,8 +8,8 @@ import { toast } from "sonner"
 import { getWebshopLinksAction } from "../actions/get-webshop-links.action"
 
 /**
- * "Preview" opens the shop page of a vendor or category as customers see it;
- * "Get Link" copies the link to put on a bot button, which carries
+ * "Preview" opens the shop page of a product, vendor or category as customers
+ * see it; "Get Link" copies the link to put on a bot button, which carries
  * `{{shop_token}}` so each contact shops as themselves.
  */
 export function WebshopLinkMenuItems({
@@ -17,7 +17,7 @@ export function WebshopLinkMenuItems({
   target,
 }: {
   workspaceId: string
-  target: { vendorId: string } | { categoryId: string }
+  target: { productId: string } | { vendorId: string } | { categoryId: string }
 }) {
   const t = useTranslations("webshopLinks")
   const { executeAsync, isPending } = useAction(

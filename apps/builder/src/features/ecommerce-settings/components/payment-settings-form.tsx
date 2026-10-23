@@ -15,8 +15,10 @@ import { useLocale, useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { PERCENT_INPUT_PROPS } from "@/features/products/constants"
+import { useInvalidFormToast } from "@/lib/validation/use-request-resolver"
 import type { EcommerceSettingsPublicResource } from "../schema/public"
 import { SettingRow, SettingsSaveBar } from "./setting-row"
+import { useSettingsResolver } from "./use-settings-resolver"
 import { useSettingsSave } from "./use-settings-save"
 
 type PaymentFormValues = Omit<EcommercePaymentSettings, "currencySymbol"> & {
@@ -35,6 +37,15 @@ const useCurrencyOptions = (current: string) => {
   }, [current, locale])
 }
 
+const toRequest = (values: PaymentFormValues) => ({
+  payments: {
+    ...values,
+    currencySymbol: values.currencySymbol || null,
+    // An emptied number field means no fee.
+    serviceFeePercent: Number(values.serviceFeePercent) || 0,
+  },
+})
+
 export function PaymentSettingsForm({
   workspaceId,
   settings,
@@ -45,24 +56,21 @@ export function PaymentSettingsForm({
   const t = useTranslations("ecommerceSettings.payments")
   const { execute, isPending } = useSettingsSave(workspaceId)
   const currencyOptions = useCurrencyOptions(settings.payments.currency)
+  const showInvalidToast = useInvalidFormToast()
+  const resolver = useSettingsResolver(toRequest)
 
   const form = useForm<PaymentFormValues>({
+    resolver,
     defaultValues: {
       ...settings.payments,
       currencySymbol: settings.payments.currencySymbol ?? "",
     },
   })
 
-  const onSubmit = form.handleSubmit((values) => {
-    execute({
-      payments: {
-        ...values,
-        currencySymbol: values.currencySymbol || null,
-        // An emptied number field means no fee.
-        serviceFeePercent: Number(values.serviceFeePercent) || 0,
-      },
-    })
-  })
+  const onSubmit = form.handleSubmit(
+    (values) => execute(toRequest(values)),
+    showInvalidToast,
+  )
 
   return (
     <Form {...form}>

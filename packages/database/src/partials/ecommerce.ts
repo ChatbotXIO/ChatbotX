@@ -73,6 +73,13 @@ export const checkoutModes = z.enum([
 ])
 export type CheckoutMode = z.infer<typeof checkoutModes>
 
+/**
+ * What the customer gets when their order is placed: the built-in message
+ * (in the workspace language), a flow of the store's own, or nothing.
+ */
+export const orderConfirmationModes = z.enum(["default", "flow", "none"])
+export type OrderConfirmationMode = z.infer<typeof orderConfirmationModes>
+
 export const webshopProductViews = z.enum([
   "list",
   "listWithoutImage",
@@ -358,6 +365,16 @@ export const ecommerceCheckoutSettingsSchema = z.object({
     .number()
     .min(0)
     .describe("Smallest subtotal that can be ordered; 0 for none."),
+  orderConfirmationMode: orderConfirmationModes.describe(
+    "What the customer gets when their order is placed: `default` the built-in confirmation (order details, in the workspace language), `flow` run `orderConfirmationFlowId` instead, `none` nothing. The `newOrder` trigger event fires either way.",
+  ),
+  orderConfirmationFlowId: z
+    .string()
+    .regex(/^\d+$/)
+    .nullable()
+    .describe(
+      "Flow run in the customer's conversation when their order is placed, required when `orderConfirmationMode` is `flow`. Get it from `flows.list`.",
+    ),
   requireName: z.boolean().describe("Buyer name is required."),
   requireEmail: z.boolean().describe("Email is required."),
   requirePhone: z.boolean().describe("Phone number is required."),
@@ -410,6 +427,8 @@ export const ECOMMERCE_SETTINGS_DEFAULTS: EcommerceSettings = {
     checkoutLink: null,
     checkoutFlowId: null,
     minimumOrderValue: 0,
+    orderConfirmationMode: "default",
+    orderConfirmationFlowId: null,
     requireName: true,
     requireEmail: false,
     requirePhone: true,

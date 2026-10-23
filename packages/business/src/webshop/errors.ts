@@ -29,3 +29,12 @@ export const webshopRatingNotAllowedException = () =>
     "This order cannot be rated.",
     "webshopRatingNotAllowed",
   )
+
+export const webshopCartFullException = (maximum: number) => {
+  const error = new ChatbotXException(
+    `A cart holds at most ${maximum} different items.`,
+    "webshopCartFull",
+  )
+  error.data = { maximum }
+  return error
+}

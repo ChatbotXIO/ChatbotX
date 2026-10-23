@@ -39,8 +39,13 @@ import {
 } from "@/features/products/constants"
 import { useInvalidateProductFormOptions } from "@/features/products/provider/use-invalidate-product-form-options"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
+import {
+  useInvalidFormToast,
+  useRequestResolver,
+} from "@/lib/validation/use-request-resolver"
 import { createProductVendorAction } from "../actions/create-product-vendor.action"
 import { updateProductVendorAction } from "../actions/update-product-vendor.action"
+import { productVendorFormSchema } from "../schema/action"
 import type { ProductVendorResource } from "../schema/public"
 
 /** "None" in the category pickers. */
@@ -79,6 +84,24 @@ const toFormValues = (
 const orNull = (value: string, empty: string) =>
   value === empty || value === "" ? null : value
 
+/** The form as the create and update actions take it. */
+const toRequest = (values: VendorFormValues) => {
+  const category = orNull(values.categoryId, NO_CATEGORY)
+  return {
+    name: values.name,
+    shortDescription: values.shortDescription,
+    phone: values.phone,
+    storeAddress: values.storeAddress,
+    imageUrl: values.imageUrl,
+    discountPercent: Number(values.discountPercent) || 0,
+    minimumOrderValue: Number(values.minimumOrderValue) || 0,
+    openHoursId: orNull(values.openHoursId, ALWAYS_OPEN),
+    rank: Number(values.rank),
+    categoryId: category,
+    subcategoryId: category ? orNull(values.subcategoryId, NO_CATEGORY) : null,
+  }
+}
+
 type VendorFormDialogProps = {
   workspaceId: string
   vendor?: ProductVendorResource
@@ -105,8 +128,14 @@ export function VendorFormDialog({
   const open = controlledOpen ?? internalOpen
   const setOpen = onOpenChange ?? setInternalOpen
 
+  const showInvalidToast = useInvalidFormToast()
+  const resolver = useRequestResolver<VendorFormValues>({
+    schema: productVendorFormSchema,
+    toRequest,
+  })
   const form = useForm<VendorFormValues>({
     defaultValues: toFormValues(vendor),
+    resolver,
   })
   const categoryId = form.watch("categoryId")
   const categoryOptions = [
@@ -141,24 +170,10 @@ export function VendorFormDialog({
     onError: toastActionError(t("saveError")),
   })
 
-  const onSubmit = form.handleSubmit((values) => {
-    const category = orNull(values.categoryId, NO_CATEGORY)
-    execute({
-      name: values.name,
-      shortDescription: values.shortDescription,
-      phone: values.phone,
-      storeAddress: values.storeAddress,
-      imageUrl: values.imageUrl,
-      discountPercent: Number(values.discountPercent) || 0,
-      minimumOrderValue: Number(values.minimumOrderValue) || 0,
-      openHoursId: orNull(values.openHoursId, ALWAYS_OPEN),
-      rank: Number(values.rank),
-      categoryId: category,
-      subcategoryId: category
-        ? orNull(values.subcategoryId, NO_CATEGORY)
-        : null,
-    })
-  })
+  const onSubmit = form.handleSubmit(
+    (values) => execute(toRequest(values)),
+    showInvalidToast,
+  )
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>

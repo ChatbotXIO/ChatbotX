@@ -198,6 +198,13 @@ export const orderItemModel = pgTable(
     vendorName: text(),
     unitPrice: money().notNull(),
     quantity: integer().notNull(),
+    /**
+     * Units actually taken from the product's stock when the order was placed
+     * (less than `quantity` when stock ran out or the product was untracked).
+     * Cancelling or deleting gives back exactly this, whatever the product's
+     * inventory policy is by then.
+     */
+    stockTaken: integer().notNull().default(0),
     discountPercent: money().notNull(),
     taxPercent: money().notNull(),
     discountTotal: money().notNull(),

@@ -19,7 +19,17 @@ import {
   SelectValue,
 } from "@chatbotx.io/ui/components/ui/select"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
-import { BanknoteIcon, Loader2Icon } from "lucide-react"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import {
+  BanknoteIcon,
+  CircleCheckIcon,
+  Loader2Icon,
+  type LucideIcon,
+  StoreIcon,
+  TruckIcon,
+  UserRoundIcon,
+  WalletIcon,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
@@ -30,6 +40,7 @@ import { checkoutAction } from "../actions/webshop.action"
 import type { ShopView } from "../lib/load-shop"
 import type { ShopActionError } from "../lib/shop-action-types"
 import type { CartData } from "./cart-types"
+import { CheckoutBar } from "./checkout-bar"
 import { closeMessengerWebview, isMessengerWebview } from "./close-webview"
 import { trackPixel } from "./facebook-pixel"
 import { useShop } from "./shop-provider"
@@ -62,6 +73,37 @@ function Field({
     </div>
   )
 }
+
+/** A titled card of the checkout form. */
+function FormSection({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: LucideIcon
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <section className="space-y-4 rounded-2xl border bg-card p-5 shadow-xs">
+      <h2 className="flex items-center gap-2.5 font-semibold">
+        <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Icon className="size-4" />
+        </span>
+        {title}
+      </h2>
+      {children}
+    </section>
+  )
+}
+
+const SHIPPING_ICON: Record<ShippingType, LucideIcon> = {
+  delivery: TruckIcon,
+  pickup: StoreIcon,
+}
+
+/** Taller, rounder fields, easier to tap in a phone's in-app browser. */
+const INPUT_CLASS = "h-11 rounded-xl bg-background"
 
 type FormValues = {
   customerName: string
@@ -126,6 +168,10 @@ export function CheckoutForm({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+    // A preview walks through the whole checkout; only placing is off.
+    if (context.preview) {
+      return
+    }
     const result = await executeAsync({
       workspaceId: context.workspaceId,
       token: context.token,
@@ -174,11 +220,11 @@ export function CheckoutForm({
 
   const required = shop.checkout
   const field = (name: keyof FormValues) => `${id}-${name}`
+  const formId = `${id}-form`
 
   return (
-    <form className="space-y-4" onSubmit={submit}>
-      <section className="space-y-3 rounded-lg border bg-card p-4">
-        <h2 className="font-semibold">{t("contactDetails")}</h2>
+    <form className="space-y-4" id={formId} onSubmit={submit}>
+      <FormSection icon={UserRoundIcon} title={t("contactDetails")}>
         <Field
           htmlFor={field("customerName")}
           label={t("fields.name")}
@@ -186,6 +232,7 @@ export function CheckoutForm({
         >
           <Input
             autoComplete="name"
+            className={INPUT_CLASS}
             id={field("customerName")}
             maxLength={255}
             onChange={(event) => set("customerName")(event.target.value)}
@@ -200,6 +247,7 @@ export function CheckoutForm({
         >
           <Input
             autoComplete="tel"
+            className={INPUT_CLASS}
             id={field("customerPhone")}
             maxLength={64}
             onChange={(event) => set("customerPhone")(event.target.value)}
@@ -215,6 +263,7 @@ export function CheckoutForm({
         >
           <Input
             autoComplete="email"
+            className={INPUT_CLASS}
             id={field("customerEmail")}
             maxLength={255}
             onChange={(event) => set("customerEmail")(event.target.value)}
@@ -223,31 +272,49 @@ export function CheckoutForm({
             value={values.customerEmail}
           />
         </Field>
-      </section>
+      </FormSection>
 
       {shippingTypes.length > 0 ? (
-        <section className="space-y-3 rounded-lg border bg-card p-4">
-          <h2 className="font-semibold">{t("shipping.title")}</h2>
+        <FormSection icon={TruckIcon} title={t("shipping.title")}>
           {shippingTypes.length > 1 ? (
             <RadioGroup
               className="gap-2"
               onValueChange={(value) => changeShippingType(String(value))}
               value={shippingType ?? undefined}
             >
-              {shippingTypes.map((type) => (
-                <Label
-                  className="flex cursor-pointer items-center gap-3 rounded-md border p-3 font-normal"
-                  htmlFor={`${id}-shipping-${type}`}
-                  key={type}
-                >
-                  <RadioGroupItem id={`${id}-shipping-${type}`} value={type} />
-                  {t(`shipping.${type}`)}
-                </Label>
-              ))}
+              {shippingTypes.map((type) => {
+                const Icon = SHIPPING_ICON[type]
+                return (
+                  <Label
+                    className={cn(
+                      "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 font-normal transition-colors hover:bg-muted/50",
+                      shippingType === type &&
+                        "border-primary bg-primary/5 hover:bg-primary/5",
+                    )}
+                    htmlFor={`${id}-shipping-${type}`}
+                    key={type}
+                  >
+                    <RadioGroupItem
+                      id={`${id}-shipping-${type}`}
+                      value={type}
+                    />
+                    <Icon
+                      className={cn(
+                        "size-5",
+                        shippingType === type
+                          ? "text-primary"
+                          : "text-muted-foreground",
+                      )}
+                    />
+                    {t(`shipping.${type}`)}
+                  </Label>
+                )
+              })}
             </RadioGroup>
           ) : null}
           {shippingType === "pickup" && shop.shipping.storeAddress ? (
-            <p className="text-muted-foreground text-sm">
+            <p className="flex items-start gap-2 rounded-xl bg-muted/60 p-3 text-muted-foreground text-sm">
+              <StoreIcon className="mt-0.5 size-4 shrink-0" />
               {t("shipping.storeAddress", {
                 address: shop.shipping.storeAddress,
               })}
@@ -261,10 +328,14 @@ export function CheckoutForm({
                 required
               >
                 <Select
+                  items={countries}
                   onValueChange={(value) => set("country")(String(value ?? ""))}
                   value={values.country}
                 >
-                  <SelectTrigger className="w-full" id={field("country")}>
+                  <SelectTrigger
+                    className="h-11 w-full rounded-xl bg-background"
+                    id={field("country")}
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -283,6 +354,7 @@ export function CheckoutForm({
               >
                 <Input
                   autoComplete="address-line1"
+                  className={INPUT_CLASS}
                   id={field("line1")}
                   maxLength={500}
                   onChange={(event) => set("line1")(event.target.value)}
@@ -297,6 +369,7 @@ export function CheckoutForm({
               >
                 <Input
                   autoComplete="address-line2"
+                  className={INPUT_CLASS}
                   id={field("line2")}
                   maxLength={500}
                   onChange={(event) => set("line2")(event.target.value)}
@@ -311,6 +384,7 @@ export function CheckoutForm({
                 >
                   <Input
                     autoComplete="address-level2"
+                    className={INPUT_CLASS}
                     id={field("city")}
                     maxLength={255}
                     onChange={(event) => set("city")(event.target.value)}
@@ -324,6 +398,7 @@ export function CheckoutForm({
                 >
                   <Input
                     autoComplete="address-level1"
+                    className={INPUT_CLASS}
                     id={field("state")}
                     maxLength={255}
                     onChange={(event) => set("state")(event.target.value)}
@@ -338,6 +413,7 @@ export function CheckoutForm({
                 >
                   <Input
                     autoComplete="postal-code"
+                    className={INPUT_CLASS}
                     id={field("zip")}
                     maxLength={32}
                     onChange={(event) => set("zip")(event.target.value)}
@@ -348,14 +424,14 @@ export function CheckoutForm({
               </div>
             </div>
           ) : null}
-        </section>
+        </FormSection>
       ) : null}
 
-      <section className="space-y-3 rounded-lg border bg-card p-4">
-        <h2 className="font-semibold">{t("payment.title")}</h2>
-        <div className="flex items-center gap-3 rounded-md border p-3 text-sm">
-          <BanknoteIcon className="size-5 text-muted-foreground" />
-          {t("payment.cod")}
+      <FormSection icon={WalletIcon} title={t("payment.title")}>
+        <div className="flex items-center gap-3 rounded-xl border border-primary bg-primary/5 p-3.5 text-sm">
+          <BanknoteIcon className="size-5 text-primary" />
+          <span className="flex-1">{t("payment.cod")}</span>
+          <CircleCheckIcon className="size-5 text-primary" />
         </div>
         <Field
           htmlFor={field("note")}
@@ -363,6 +439,7 @@ export function CheckoutForm({
           required={false}
         >
           <Textarea
+            className="rounded-xl bg-background"
             id={field("note")}
             maxLength={2000}
             onChange={(event) => set("note")(event.target.value)}
@@ -370,12 +447,24 @@ export function CheckoutForm({
             value={values.note}
           />
         </Field>
-      </section>
+      </FormSection>
 
-      <Button className="w-full" disabled={isPending} size="lg" type="submit">
-        {isPending ? <Loader2Icon className="animate-spin" /> : null}
-        {t("placeOrder")}
-      </Button>
+      {/* Drawn on <body>, so `form` keeps it this form's submit. */}
+      <CheckoutBar
+        cart={cart}
+        hint={context.preview ? t("previewOrderingOff") : null}
+      >
+        <Button
+          className="h-12 min-w-36 rounded-full px-6 shadow-md active:scale-95"
+          disabled={isPending || context.preview}
+          form={formId}
+          size="lg"
+          type="submit"
+        >
+          {isPending ? <Loader2Icon className="animate-spin" /> : null}
+          {t("placeOrder")}
+        </Button>
+      </CheckoutBar>
     </form>
   )
 }

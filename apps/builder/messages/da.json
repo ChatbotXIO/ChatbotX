@@ -4254,6 +4254,25 @@
       "unknownFieldTarget": "Et tilknyttet kontaktfelt findes ikke længere.",
       "actionReferenceNotFound": "En handling henviser til et flow, tag eller felt, der ikke længere findes.",
       "fieldMappingRequired": "Tilføj mindst en feltmapping."
+    },
+    "form": {
+      "required": "Dette felt er påkrævet.",
+      "minLength": "Indtast mindst {minimum} tegn.",
+      "maxLength": "Indtast højst {maximum} tegn.",
+      "minNumber": "Indtast et tal på mindst {minimum}.",
+      "moreThan": "Indtast et tal større end {minimum}.",
+      "maxNumber": "Indtast et tal på højst {maximum}.",
+      "lessThan": "Indtast et tal mindre end {maximum}.",
+      "number": "Indtast et tal.",
+      "wholeNumber": "Indtast et helt tal.",
+      "minItems": "Vælg mindst {minimum}.",
+      "maxItems": "Vælg højst {maximum}.",
+      "email": "Indtast en gyldig e-mailadresse.",
+      "url": "Indtast et gyldigt link, der starter med https://.",
+      "format": "Værdien har ikke det rigtige format.",
+      "option": "Vælg en af mulighederne.",
+      "invalid": "Værdien er ikke gyldig.",
+      "checkFields": "Nogle felter skal rettes. Se dem, der er markeret med rødt."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "Leveringsomkostninger",
         "description": "En fast pris for at levere ordren til kundens adresse."
-      }
+      },
+      "defaultCountryNotShipped": "Vælg et af leveringslandene."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "Kræv postnummer",
           "description": "Købers postnummer indsamles under betalingen."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "Ordrebekræftelse",
+        "description": "Hvad kunden får i chatten, når ordren er afgivet. Standardbeskeden viser ordredetaljerne på arbejdsområdets sprog.",
+        "options": {
+          "default": "Standardbesked",
+          "flow": "Kør et flow",
+          "none": "Send intet"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Flow til ordrebekræftelse",
+        "description": "Flowet, der sendes til kunden i stedet for standardbeskeden, når ordren er afgivet."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "Torsdag",
       "5": "Fredag",
       "6": "Lørdag"
-    }
+    },
+    "sameTimes": "Åbnings- og lukketid skal være forskellige."
   },
   "webshop": {
     "metadataTitle": "Butik",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "Linket virker ikke",
     "invalidLinkDescription": "Det er måske udløbet. Bed butikken om et nyt link i chatten.",
     "previewBanner": "Forhåndsvisning: sådan ser kunderne siden. Der kan ikke bestilles fra en forhåndsvisning.",
+    "previewOrderingOff": "Forhåndsvisning: bestilling er slået fra",
     "closed": {
       "orderingUnavailable": "Butikken tager ikke imod bestillinger lige nu.",
       "outsideOpenHours": "Butikken har lukket lige nu. Du kan stadig kigge."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "Din kurv er tom.",
     "continueShopping": "Shop videre",
     "unavailableItems": "{count, plural, one {# vare kan ikke bestilles lige nu} other {# varer kan ikke bestilles lige nu}}",
+    "unavailableNotOrdered": "De kommer ikke med i ordren og bliver i kurven.",
     "unavailable": "Ikke længere tilgængelig",
     "unavailableHint": "Vælg varianterne igen",
     "deletedProduct": "Slettet produkt",
@@ -9505,7 +9541,9 @@
       "delivery": "Levering",
       "otherFees": "Andre gebyrer",
       "total": "I alt",
-      "coupon": "Rabatkode ({code})"
+      "coupon": "Rabatkode ({code})",
+      "title": "Ordreoversigt",
+      "saved": "Du sparer {amount}"
     },
     "belowMinimum": "Minimumsordren er {amount}.",
     "checkOut": "Gå til kassen",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "Din kurv er tom.",
       "orderShippingTypeUnavailable": "Denne leveringsmåde er ikke tilgængelig.",
       "webshopRatingNotAllowed": "Denne ordre kan ikke bedømmes.",
+      "webshopCartFull": "Din kurv kan højst indeholde {maximum} forskellige varer.",
       "notFound": "Produktet er ikke længere tilgængeligt.",
       "discountCodeNotFound": "Rabatkoden findes ikke.",
       "discountCodeInactive": "Rabatkoden er ikke aktiv.",
@@ -9588,15 +9627,38 @@
       "apply": "Anvend",
       "applied": "Rabatkoden er anvendt",
       "automatic": "anvendt automatisk",
-      "remove": "Fjern rabatkode"
-    }
+      "remove": "Fjern rabatkode",
+      "available": "Koder du kan bruge",
+      "freeShipping": "Gratis levering",
+      "bestChoice": "Bedste valg",
+      "expiresOn": "Udløber {date}",
+      "noExpiry": "Udløber ikke",
+      "inUse": "I brug",
+      "saves": "Sparer {amount}",
+      "showMore": "{count, plural, one {Vis # kode mere} other {Vis # koder mere}}",
+      "showLess": "Vis mindre",
+      "removeShort": "Fjern",
+      "expired": "Udløbet",
+      "usedUp": "Opbrugt",
+      "notEligible": "Ikke kvalificeret endnu"
+    },
+    "itemCount": "{count, plural, one {# vare} other {# varer}}",
+    "relatedProducts": "Du kan også lide"
   },
   "webshopLinks": {
     "preview": "Forhåndsvis",
     "getLink": "Hent link",
     "copied": "Link kopieret. Sæt det på en bot-knap: hver kontakt åbner sin egen butik.",
     "error": "Linket kunne ikke hentes.",
-    "copyError": "Linket kunne ikke kopieres."
+    "copyError": "Linket kunne ikke kopieres.",
+    "shopLink": {
+      "label": "Butikslink",
+      "hint": "Indsæt dette link i en knap i et flow, en broadcast eller en sekvens. Hver kontakt, der får det, åbner sin egen butik og kan bestille."
+    },
+    "productLink": {
+      "label": "Offentlig URL",
+      "hint": "Kopiér og indsæt linket i dit flow, din broadcast eller sekvens. Hver kontakt, der får det, åbner dette produkt og kan bestille."
+    }
   },
   "discountCodes": {
     "title": "Rabatkoder",
@@ -9671,6 +9733,12 @@
       "startDate": "Startdato",
       "endDate": "Slutdato",
       "isActive": "Aktiv"
+    },
+    "rules": {
+      "codeCharacters": "Brug kun bogstaver uden accenter, tal, - og _.",
+      "usageBelowUsed": "Koden er allerede brugt {count} gange; grænsen kan ikke være lavere.",
+      "customerConditionRequired": "Tilføj mindst én betingelse.",
+      "endAfterStart": "Slutdatoen skal ligge efter startdatoen."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "Ingen data i perioden",
     "refresh": "Opdater",
     "change": "{value} %",
-    "noPrevious": "ny"
+    "noPrevious": "ny",
+    "otherCurrencyOrders": "{count} ordrer i andre valutaer er ikke medregnet i disse tal"
   },
   "responseSla": {
     "label": "Svar-SLA",

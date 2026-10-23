@@ -70,7 +70,7 @@ export function RateOrderForm({ orderId }: { orderId: string }) {
   }
 
   return (
-    <section className="space-y-3 rounded-lg border bg-card p-4">
+    <section className="space-y-3 rounded-2xl border bg-card p-5 shadow-xs">
       <h2 className="font-semibold">{t("rateTitle")}</h2>
       <fieldset className="flex gap-1">
         <legend className="sr-only">{t("rateTitle")}</legend>

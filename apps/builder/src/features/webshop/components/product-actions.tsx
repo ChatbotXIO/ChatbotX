@@ -62,11 +62,14 @@ export function ProductActions({
   product,
   compact = false,
   showPrimary = true,
+  showSimilar = true,
 }: {
   product: ShopProduct
   compact?: boolean
   /** The product page draws its own Add to Cart, with quantity. */
   showPrimary?: boolean
+  /** Product cards leave "Similar" to the product's own page. */
+  showSimilar?: boolean
 }) {
   const t = useTranslations("webshop")
   const shop = useShop()
@@ -75,6 +78,13 @@ export function ProductActions({
   const buttons = new Set(shop.productButtons)
   const detailHref = shop.href(`/products/${product.id}`)
   const saveLabel = saved ? t("saved") : t("save")
+  // On a card the row never wraps, so every card lines up: the main button
+  // takes what is left and cuts a long label short.
+  const primaryClass = cn(
+    "rounded-full active:scale-95",
+    compact && "min-w-0 flex-1",
+  )
+  const secondaryClass = "shrink-0 rounded-full active:scale-95"
 
   const share = async () => {
     const data = {
@@ -101,34 +111,42 @@ export function ProductActions({
     if (shop.checkoutMode === "productPage") {
       return product.productUrl ? (
         <a
-          className={buttonVariants({ size: "sm" })}
+          className={cn(
+            buttonVariants({ size: "sm", className: primaryClass }),
+          )}
           href={product.productUrl}
           rel="noopener noreferrer"
           target="_blank"
         >
           <ExternalLinkIcon />
-          {t("buy")}
+          <span className="truncate">{t("buy")}</span>
         </a>
       ) : null
     }
     if (!product.inStock) {
       return (
-        <Button disabled size="sm" variant="secondary">
-          {t("outOfStock")}
+        <Button className={primaryClass} disabled size="sm" variant="secondary">
+          <span className="truncate">{t("outOfStock")}</span>
         </Button>
       )
     }
     if (product.hasVariants) {
       return (
-        <Link className={buttonVariants({ size: "sm" })} href={detailHref}>
+        <Link
+          className={cn(
+            buttonVariants({ size: "sm", className: primaryClass }),
+          )}
+          href={detailHref}
+        >
           <ShoppingCartIcon />
-          {t("chooseOptions")}
+          <span className="truncate">{t("chooseOptions")}</span>
         </Link>
       )
     }
     return (
       <Button
-        disabled={isPending || shop.preview}
+        className={primaryClass}
+        disabled={isPending}
         onClick={() =>
           change({
             mode: "add",
@@ -145,19 +163,39 @@ export function ProductActions({
         ) : (
           <ShoppingCartIcon />
         )}
-        {t("addToCart")}
+        <span className="truncate">{t("addToCart")}</span>
       </Button>
     )
   })()
 
   return (
     <div
-      className={cn("flex flex-wrap items-center gap-2", compact && "gap-1")}
+      className={cn(
+        "flex items-center",
+        compact ? "flex-nowrap gap-1" : "flex-wrap gap-2",
+      )}
     >
       {primary}
+      {showSimilar && buttons.has("similar") && product.categoryId ? (
+        <Link
+          aria-label={t("similar")}
+          className={cn(
+            buttonVariants({
+              size: compact ? "icon" : "sm",
+              variant: "outline",
+              className: secondaryClass,
+            }),
+          )}
+          href={shop.href("", { category: product.categoryId })}
+        >
+          <LayersIcon />
+          {compact ? null : t("similar")}
+        </Link>
+      ) : null}
       {buttons.has("share") ? (
         <Button
           aria-label={t("share")}
+          className={secondaryClass}
           onClick={share}
           size={compact ? "icon" : "sm"}
           variant="outline"
@@ -166,28 +204,24 @@ export function ProductActions({
           {compact ? null : t("share")}
         </Button>
       ) : null}
-      {buttons.has("similar") && product.categoryId ? (
-        <Link
-          aria-label={t("similar")}
-          className={buttonVariants({
-            size: compact ? "icon" : "sm",
-            variant: "outline",
-          })}
-          href={shop.href("", { category: product.categoryId })}
-        >
-          <LayersIcon />
-          {compact ? null : t("similar")}
-        </Link>
-      ) : null}
       {buttons.has("save") ? (
         <Button
           aria-label={saveLabel}
           aria-pressed={saved}
+          className={secondaryClass}
           onClick={toggle}
           size={compact ? "icon" : "sm"}
           variant="outline"
         >
-          <HeartIcon className={cn(saved && "fill-current text-red-500")} />
+          <HeartIcon
+            className={cn(
+              "transition-colors",
+              saved &&
+                "zoom-in-50 animate-in fill-current text-red-500 duration-300",
+            )}
+            // Saving pops the heart in again.
+            key={String(saved)}
+          />
           {compact ? null : saveLabel}
         </Button>
       ) : null}

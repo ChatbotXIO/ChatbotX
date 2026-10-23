@@ -21,6 +21,8 @@ const findByUserIds = vi.fn()
 const deleteByTokens = vi.fn()
 
 vi.mock("@chatbotx.io/business", () => ({
+  hasWorkspacePermission: (permissions: Record<string, unknown>, key: string) =>
+    permissions.superAdmin === true || permissions[key] === true,
   orderService: { getDetail },
   ecommerceSettingsService: {
     get: async () => ({
@@ -60,18 +62,38 @@ beforeEach(() => {
     customerName: "An",
   })
   listByWorkspaceId.mockResolvedValue([
-    { userId: "u-wants", notificationTypes: { newOrder: true } },
-    { userId: "u-muted", notificationTypes: { newOrder: false } },
-    { userId: "u-unset", notificationTypes: null },
+    {
+      userId: "u-wants",
+      notificationTypes: { newOrder: true },
+      permissions: { ecommerce: true },
+    },
+    {
+      userId: "u-admin",
+      notificationTypes: { newOrder: true },
+      permissions: { superAdmin: true },
+    },
+    {
+      userId: "u-no-permission",
+      notificationTypes: { newOrder: true },
+      permissions: { ecommerce: false },
+    },
+    {
+      userId: "u-muted",
+      notificationTypes: { newOrder: false },
+      permissions: { ecommerce: true },
+    },
+    { userId: "u-unset", notificationTypes: null, permissions: {} },
   ])
   findByUserIds.mockResolvedValue([{ token: "Expo[a]" }])
   sendPushNotificationsAsync.mockResolvedValue([{ status: "ok" }])
 })
 
 describe("notifyNewOrder", () => {
-  test("pushes only to the members who turned on new orders", async () => {
+  test("pushes only to members who turned on new orders and may see orders", async () => {
     await notifyNewOrder(job)
-    expect(findByUserIds).toHaveBeenCalledWith({ userIds: ["u-wants"] })
+    expect(findByUserIds).toHaveBeenCalledWith({
+      userIds: ["u-wants", "u-admin"],
+    })
   })
 
   test("titles the push with the order number in the workspace language", async () => {

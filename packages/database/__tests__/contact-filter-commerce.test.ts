@@ -38,9 +38,20 @@ describe("purchase conditions", () => {
     expect(query?.sql).toContain("COUNT(*)")
   })
 
-  test("orders in another currency than the store's are not counted", () => {
+  test("total spent only sums orders in the store currency", () => {
     const query = render({ field: "totalSpent", operator: "gt", value: "0" })
     expect(query?.sql).toContain('"EcommerceSettings"."currency"')
+  })
+
+  test("counts, last purchase and bought items ignore the currency", () => {
+    for (const field of ["numberOfOrders", "bought", "boughtItems"]) {
+      const query = render({
+        field,
+        operator: field === "bought" ? "gte" : "eq",
+        value: field === "bought" ? "2026-10-01" : "1",
+      })
+      expect(query?.sql).not.toContain('"EcommerceSettings"')
+    }
   })
 
   test("a non-numeric amount gives no predicate", () => {

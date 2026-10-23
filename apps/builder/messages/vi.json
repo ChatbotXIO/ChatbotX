@@ -4296,6 +4296,25 @@
       "unknownFieldTarget": "Một trường liên hệ đã ánh xạ không còn tồn tại.",
       "actionReferenceNotFound": "Một hành động tham chiếu đến luồng, thẻ hoặc trường không còn tồn tại.",
       "fieldMappingRequired": "Hãy thêm ít nhất một ánh xạ trường."
+    },
+    "form": {
+      "required": "Ô này là bắt buộc.",
+      "minLength": "Nhập ít nhất {minimum} ký tự.",
+      "maxLength": "Nhập tối đa {maximum} ký tự.",
+      "minNumber": "Nhập số từ {minimum} trở lên.",
+      "moreThan": "Nhập số lớn hơn {minimum}.",
+      "maxNumber": "Nhập số tối đa {maximum}.",
+      "lessThan": "Nhập số nhỏ hơn {maximum}.",
+      "number": "Hãy nhập một số.",
+      "wholeNumber": "Hãy nhập số nguyên.",
+      "minItems": "Chọn ít nhất {minimum}.",
+      "maxItems": "Chọn tối đa {maximum}.",
+      "email": "Nhập địa chỉ email hợp lệ.",
+      "url": "Nhập đường link hợp lệ, bắt đầu bằng https://.",
+      "format": "Giá trị này chưa đúng định dạng.",
+      "option": "Hãy chọn một trong các lựa chọn.",
+      "invalid": "Giá trị này không hợp lệ.",
+      "checkFields": "Có ô cần sửa. Hãy xem các ô được tô đỏ."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "Phí giao hàng",
         "description": "Phí cố định để giao đơn tới địa chỉ của khách."
-      }
+      },
+      "defaultCountryNotShipped": "Hãy chọn một trong các quốc gia giao hàng."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "Bắt buộc mã bưu chính",
           "description": "Mã bưu chính của người mua sẽ được hỏi khi đặt hàng."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "Tin nhắn xác nhận đơn hàng",
+        "description": "Khách nhận được gì trong cuộc trò chuyện khi vừa đặt hàng. Tin mặc định liệt kê chi tiết đơn theo ngôn ngữ của workspace.",
+        "options": {
+          "default": "Tin nhắn mặc định",
+          "flow": "Chạy một flow",
+          "none": "Không gửi gì"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Flow xác nhận đơn hàng",
+        "description": "Flow gửi cho khách thay cho tin mặc định khi khách vừa đặt hàng."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "Thứ năm",
       "5": "Thứ sáu",
       "6": "Thứ bảy"
-    }
+    },
+    "sameTimes": "Giờ mở cửa và giờ đóng cửa phải khác nhau."
   },
   "webshop": {
     "metadataTitle": "Cửa hàng",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "Liên kết này không dùng được",
     "invalidLinkDescription": "Có thể liên kết đã hết hạn. Hãy nhắn cho cửa hàng để xin liên kết mới.",
     "previewBanner": "Xem trước: khách sẽ thấy trang như thế này. Không đặt hàng được từ trang xem trước.",
+    "previewOrderingOff": "Xem trước: không thể đặt hàng",
     "closed": {
       "orderingUnavailable": "Cửa hàng hiện chưa nhận đơn.",
       "outsideOpenHours": "Cửa hàng đang ngoài giờ mở cửa. Bạn vẫn xem hàng được."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "Giỏ hàng đang trống.",
     "continueShopping": "Tiếp tục mua sắm",
     "unavailableItems": "{count, plural, one {# món hiện không đặt được} other {# món hiện không đặt được}}",
+    "unavailableNotOrdered": "Các món này sẽ không được đặt và vẫn nằm trong giỏ.",
     "unavailable": "Không còn bán",
     "unavailableHint": "Chọn lại loại cho món này",
     "deletedProduct": "Sản phẩm đã bị xóa",
@@ -9505,7 +9541,9 @@
       "delivery": "Phí giao hàng",
       "otherFees": "Phí khác",
       "total": "Tổng cộng",
-      "coupon": "Mã giảm giá ({code})"
+      "coupon": "Mã giảm giá ({code})",
+      "title": "Tóm tắt đơn hàng",
+      "saved": "Bạn tiết kiệm được {amount}"
     },
     "belowMinimum": "Đơn tối thiểu là {amount}.",
     "checkOut": "Đặt hàng",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "Giỏ hàng đang trống.",
       "orderShippingTypeUnavailable": "Cách nhận hàng này hiện không có.",
       "webshopRatingNotAllowed": "Không đánh giá được đơn hàng này.",
+      "webshopCartFull": "Giỏ hàng chỉ chứa tối đa {maximum} sản phẩm khác nhau.",
       "notFound": "Sản phẩm này không còn bán.",
       "discountCodeNotFound": "Mã giảm giá không tồn tại.",
       "discountCodeInactive": "Mã giảm giá đang tắt.",
@@ -9588,15 +9627,38 @@
       "apply": "Áp dụng",
       "applied": "Đã áp mã giảm giá",
       "automatic": "tự động áp dụng",
-      "remove": "Bỏ mã giảm giá"
-    }
+      "remove": "Bỏ mã giảm giá",
+      "available": "Mã bạn có thể dùng",
+      "freeShipping": "Miễn phí giao hàng",
+      "bestChoice": "Lựa chọn tốt nhất",
+      "expiresOn": "HSD: {date}",
+      "noExpiry": "Không giới hạn thời gian",
+      "inUse": "Đang dùng",
+      "saves": "Giảm {amount}",
+      "showMore": "{count, plural, one {Xem thêm # mã} other {Xem thêm # mã}}",
+      "showLess": "Thu gọn",
+      "removeShort": "Bỏ",
+      "expired": "Hết hạn",
+      "usedUp": "Hết lượt",
+      "notEligible": "Chưa đủ điều kiện"
+    },
+    "itemCount": "{count, plural, one {# món} other {# món}}",
+    "relatedProducts": "Có thể bạn cũng thích"
   },
   "webshopLinks": {
     "preview": "Xem trước",
     "getLink": "Lấy liên kết",
     "copied": "Đã sao chép liên kết. Gắn vào nút của bot: mỗi khách sẽ mở cửa hàng của chính họ.",
     "error": "Không lấy được liên kết.",
-    "copyError": "Không sao chép được liên kết."
+    "copyError": "Không sao chép được liên kết.",
+    "shopLink": {
+      "label": "Link cửa hàng",
+      "hint": "Dán link này vào nút trong flow, broadcast hoặc sequence. Mỗi khách nhận được sẽ mở cửa hàng của riêng họ và đặt hàng được."
+    },
+    "productLink": {
+      "label": "URL công khai",
+      "hint": "Chép và dán link vào flow, broadcast hoặc sequence. Mỗi khách nhận được sẽ mở sản phẩm này và đặt hàng được."
+    }
   },
   "discountCodes": {
     "title": "Mã giảm giá",
@@ -9671,6 +9733,12 @@
       "startDate": "Ngày bắt đầu",
       "endDate": "Ngày kết thúc",
       "isActive": "Đang bật"
+    },
+    "rules": {
+      "codeCharacters": "Chỉ dùng chữ không dấu, số, - và _.",
+      "usageBelowUsed": "Mã này đã được dùng {count} lần; giới hạn không được thấp hơn.",
+      "customerConditionRequired": "Thêm ít nhất một điều kiện.",
+      "endAfterStart": "Ngày kết thúc phải sau ngày bắt đầu."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "Chưa có dữ liệu trong khoảng này",
     "refresh": "Làm mới",
     "change": "{value}%",
-    "noPrevious": "mới"
+    "noPrevious": "mới",
+    "otherCurrencyOrders": "{count} đơn hàng bằng đơn vị tiền tệ khác không được tính trong các số liệu này"
   },
   "responseSla": {
     "label": "SLA phản hồi",

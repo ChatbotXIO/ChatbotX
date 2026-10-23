@@ -3,6 +3,7 @@
 import { INVITATION_COOKIE_NAME } from "@chatbotx.io/auth/server"
 import { resolveTenantByDomain } from "@chatbotx.io/auth/tenant"
 import {
+  hasWorkspacePermission,
   invitationService,
   isWorkspaceScheduledForDeletion,
   quotaEnforcementService,
@@ -84,7 +85,7 @@ export const acceptInvitationAction = authActionClient
         notificationTypes: {
           notifyAdmin: true,
           newMessageToHuman: true,
-          newOrder: true,
+          newOrder: hasWorkspacePermission(permissions, "ecommerce"),
         },
         notificationChannels: {
           messenger: true,

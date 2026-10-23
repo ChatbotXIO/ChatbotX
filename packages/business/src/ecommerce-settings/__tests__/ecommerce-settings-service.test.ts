@@ -3,11 +3,19 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   find: vi.fn(),
+  findForUpdate: vi.fn(),
+  insertIfMissing: vi.fn(),
   upsert: vi.fn(),
   flowExists: vi.fn(),
   openHoursExists: vi.fn(),
   invalidate: vi.fn(),
   audit: vi.fn(),
+}))
+
+vi.mock("@chatbotx.io/database/client", () => ({
+  db: {
+    transaction: (run: (tx: unknown) => unknown) => run({ name: "tx" }),
+  },
 }))
 
 vi.mock("@chatbotx.io/redis", () => ({
@@ -18,6 +26,8 @@ vi.mock("@chatbotx.io/redis", () => ({
 vi.mock("@chatbotx.io/database/repositories", () => ({
   ecommerceSettingsRepository: {
     find: (...args: unknown[]) => mocks.find(...args),
+    findForUpdate: (...args: unknown[]) => mocks.findForUpdate(...args),
+    insertIfMissing: (...args: unknown[]) => mocks.insertIfMissing(...args),
     upsert: (...args: unknown[]) => mocks.upsert(...args),
   },
 }))
@@ -42,8 +52,18 @@ const { ecommerceSettingsService } = await import("../service")
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.find.mockResolvedValue(undefined)
+  mocks.findForUpdate.mockResolvedValue(undefined)
   mocks.upsert.mockResolvedValue({})
   mocks.flowExists.mockResolvedValue(true)
+})
+
+const flattenSettings = (
+  settings: typeof ECOMMERCE_SETTINGS_DEFAULTS,
+): Record<string, unknown> => ({
+  ...settings.general,
+  ...settings.payments,
+  ...settings.shipping,
+  ...settings.checkout,
 })
 
 describe("ecommerceSettingsService", () => {
@@ -96,6 +116,35 @@ describe("ecommerceSettingsService", () => {
         patch: { checkout: { checkoutMode: "flow", checkoutFlowId: "99" } },
       }),
     ).rejects.toMatchObject({ field: "checkoutFlowId" })
+    expect(mocks.flowExists).toHaveBeenCalledWith("ws1", "99")
+  })
+
+  test("needs a flow for the flow order confirmation", async () => {
+    await expect(
+      ecommerceSettingsService.update({
+        workspaceId: "ws1",
+        patch: { checkout: { orderConfirmationMode: "flow" } },
+      }),
+    ).rejects.toMatchObject({
+      code: "validation",
+      field: "orderConfirmationFlowId",
+    })
+    expect(mocks.upsert).not.toHaveBeenCalled()
+  })
+
+  test("needs a flow of this workspace for the order confirmation", async () => {
+    mocks.flowExists.mockResolvedValue(false)
+    await expect(
+      ecommerceSettingsService.update({
+        workspaceId: "ws1",
+        patch: {
+          checkout: {
+            orderConfirmationMode: "flow",
+            orderConfirmationFlowId: "99",
+          },
+        },
+      }),
+    ).rejects.toMatchObject({ field: "orderConfirmationFlowId" })
     expect(mocks.flowExists).toHaveBeenCalledWith("ws1", "99")
   })
 
@@ -166,5 +215,51 @@ describe("ecommerceSettingsService", () => {
         patch: { shipping: { shippingType: "pickup" } },
       }),
     ).rejects.toMatchObject({ field: "storeAddress" })
+  })
+
+  test("saves another group when the stored checkout flow was deleted", async () => {
+    mocks.findForUpdate.mockResolvedValue({
+      ...flattenSettings(ECOMMERCE_SETTINGS_DEFAULTS),
+      checkoutMode: "flow",
+      checkoutFlowId: null,
+      orderConfirmationMode: "flow",
+      orderConfirmationFlowId: null,
+    })
+    const saved = await ecommerceSettingsService.update({
+      workspaceId: "ws1",
+      patch: { payments: { currency: "usd" } },
+    })
+    expect(saved.payments.currency).toBe("USD")
+    expect(mocks.upsert).toHaveBeenCalled()
+    expect(mocks.flowExists).not.toHaveBeenCalled()
+  })
+
+  test("still refuses a flow mode patch that leaves the flow empty", async () => {
+    mocks.findForUpdate.mockResolvedValue({
+      ...flattenSettings(ECOMMERCE_SETTINGS_DEFAULTS),
+      checkoutMode: "flow",
+      checkoutFlowId: null,
+    })
+    await expect(
+      ecommerceSettingsService.update({
+        workspaceId: "ws1",
+        patch: { checkout: { checkoutMode: "flow" } },
+      }),
+    ).rejects.toMatchObject({ field: "checkoutFlowId" })
+  })
+
+  test("creates and locks the row before merging, in one transaction", async () => {
+    await ecommerceSettingsService.update({
+      workspaceId: "ws1",
+      patch: { payments: { currency: "usd" } },
+    })
+    expect(mocks.insertIfMissing).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws1" }),
+      { name: "tx" },
+    )
+    expect(mocks.findForUpdate).toHaveBeenCalledWith("ws1", { name: "tx" })
+    expect(mocks.upsert).toHaveBeenCalledWith(expect.anything(), {
+      name: "tx",
+    })
   })
 })

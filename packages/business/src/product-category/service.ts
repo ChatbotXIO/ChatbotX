@@ -3,7 +3,10 @@ import {
   db,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
-import { productCategoryRepository } from "@chatbotx.io/database/repositories"
+import {
+  discountCodeRepository,
+  productCategoryRepository,
+} from "@chatbotx.io/database/repositories"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
 
@@ -147,7 +150,26 @@ class ProductCategoryService extends BaseService {
       await this.assertHasNoChildren(input)
     }
     try {
-      const row = await productCategoryRepository.update({ ...input, name })
+      const row = await db.transaction(async (tx) => {
+        const before =
+          input.parentId === undefined
+            ? undefined
+            : await productCategoryRepository.find(input, tx)
+        const updated = await productCategoryRepository.update(
+          { ...input, name },
+          tx,
+        )
+        if (updated && before && input.parentId !== undefined) {
+          await this.refileReferences({
+            workspaceId: input.workspaceId,
+            categoryId: input.categoryId,
+            previousParentId: before.parentId ?? null,
+            parentId: input.parentId,
+            tx,
+          })
+        }
+        return updated
+      })
       if (!row) {
         throw notFoundException("Product category not found")
       }
@@ -165,11 +187,57 @@ class ProductCategoryService extends BaseService {
   }
 
   async delete(input: { workspaceId: string; categoryId: string }) {
-    const row = await productCategoryRepository.delete(input)
+    const row = await db.transaction(async (tx) => {
+      const children = await productCategoryRepository.listChildren(
+        { workspaceId: input.workspaceId, parentId: input.categoryId },
+        tx,
+      )
+      // Deactivate first: deleting clears each code's category, after which
+      // they could no longer be told apart from codes that never had one.
+      await discountCodeRepository.deactivateByCategoryIds(
+        {
+          workspaceId: input.workspaceId,
+          categoryIds: [input.categoryId, ...children.map(({ id }) => id)],
+        },
+        tx,
+      )
+      return await productCategoryRepository.delete(input, tx)
+    })
     if (!row) {
       throw notFoundException("Product category not found")
     }
     await this.invalidateCacheTags(this.cacheTag(input.workspaceId))
+  }
+
+  /**
+   * A category that changes level leaves products and vendors pointing at it
+   * through the wrong column; file them where the tree now says they belong.
+   */
+  private async refileReferences(input: {
+    workspaceId: string
+    categoryId: string
+    previousParentId: string | null
+    parentId: string | null
+    tx: DatabaseClient
+  }) {
+    if (input.parentId === input.previousParentId) {
+      return
+    }
+    if (input.parentId) {
+      await productCategoryRepository.fileUnderParent(
+        {
+          workspaceId: input.workspaceId,
+          categoryId: input.categoryId,
+          parentId: input.parentId,
+        },
+        input.tx,
+      )
+      return
+    }
+    await productCategoryRepository.fileAsTopLevel(
+      { workspaceId: input.workspaceId, categoryId: input.categoryId },
+      input.tx,
+    )
   }
 
   async countProducts(input: { workspaceId: string; categoryId: string }) {

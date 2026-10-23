@@ -281,6 +281,14 @@ export function AnalyticsDashboard({
         />
       </div>
 
+      {data.otherCurrencyOrders > 0 ? (
+        <p className="text-muted-foreground text-sm">
+          {t("otherCurrencyOrders", {
+            count: count(data.otherCurrencyOrders),
+          })}
+        </p>
+      ) : null}
+
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard format={money} label={t("lifetime")} stat={data.lifetime} />
         <StatCard format={money} label={t("sales")} stat={data.sales} />

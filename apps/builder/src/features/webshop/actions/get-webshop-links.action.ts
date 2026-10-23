@@ -6,13 +6,15 @@ import { z } from "zod"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 /**
- * The merchant's Preview / Get Link for a vendor's or a category's shop page
- * — the same links `webshop.getLink` returns without a contact.
+ * The merchant's Preview / Get Link for a product's, a vendor's or a
+ * category's shop page — the same links `webshop.getLink` returns without a
+ * contact.
  */
 export const getWebshopLinksAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString()])
   .inputSchema(
     z.object({
+      productId: zodBigintAsString().optional(),
       vendorId: zodBigintAsString().optional(),
       categoryId: zodBigintAsString().optional(),
     }),

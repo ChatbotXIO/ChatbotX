@@ -4,12 +4,15 @@ const mocks = vi.hoisted(() => ({
   findByCode: vi.fn(),
   lock: vi.fn(),
   listAutoApply: vi.fn(),
+  listOffered: vi.fn(),
   countRedemptions: vi.fn(),
   incrementUsed: vi.fn(),
   insertRedemption: vi.fn(),
   deleteRedemptionByOrder: vi.fn(),
   decrementUsed: vi.fn(),
   create: vi.fn(),
+  find: vi.fn(),
+  update: vi.fn(),
   findCategory: vi.fn(),
   findProducts: vi.fn(),
   matchesContactFilter: vi.fn(),
@@ -31,6 +34,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findByCode: (...args: unknown[]) => mocks.findByCode(...args),
     lock: (...args: unknown[]) => mocks.lock(...args),
     listAutoApply: (...args: unknown[]) => mocks.listAutoApply(...args),
+    listOffered: (...args: unknown[]) => mocks.listOffered(...args),
     countRedemptions: (...args: unknown[]) => mocks.countRedemptions(...args),
     incrementUsed: (...args: unknown[]) => mocks.incrementUsed(...args),
     insertRedemption: (...args: unknown[]) => mocks.insertRedemption(...args),
@@ -38,6 +42,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
       mocks.deleteRedemptionByOrder(...args),
     decrementUsed: (...args: unknown[]) => mocks.decrementUsed(...args),
     create: (...args: unknown[]) => mocks.create(...args),
+    find: (...args: unknown[]) => mocks.find(...args),
+    update: (...args: unknown[]) => mocks.update(...args),
   },
   productCategoryRepository: {
     find: (...args: unknown[]) => mocks.findCategory(...args),
@@ -96,6 +102,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.countRedemptions.mockResolvedValue(0)
   mocks.listAutoApply.mockResolvedValue([])
+  mocks.listOffered.mockResolvedValue([])
 })
 
 describe("discountCodeService.resolve", () => {
@@ -202,6 +209,141 @@ describe("discountCodeService.resolve", () => {
     await expect(
       discountCodeService.resolve({ ...order, code: "CODE20" }),
     ).rejects.toMatchObject({ code: "discountCodeAlreadyUsed" })
+  })
+})
+
+describe("discountCodeService.listAvailable", () => {
+  test("offers the codes this order can use, most taken off first, then soonest to end", async () => {
+    mocks.listOffered.mockResolvedValue([
+      code({ id: "small", code: "SMALL", discountValue: 10 }),
+      code({
+        id: "ship",
+        code: "SHIP",
+        discountType: "freeShipping",
+        discountValue: 0,
+        // Ties with SMALL; ending sooner puts it first.
+        endsAt: new Date("2026-02-01T00:00:00Z"),
+      }),
+      code({
+        id: "fixed",
+        code: "FIXED",
+        discountType: "fixedAmount",
+        discountValue: 15,
+      }),
+    ])
+    await expect(
+      discountCodeService.listAvailable({
+        ...order,
+        now: new Date("2026-01-15T00:00:00Z"),
+      }),
+    ).resolves.toEqual([
+      {
+        code: "FIXED",
+        discountType: "fixedAmount",
+        discountValue: 15,
+        amount: 15,
+        endsAt: null,
+        status: "available",
+      },
+      {
+        code: "SHIP",
+        discountType: "freeShipping",
+        discountValue: 0,
+        amount: 5,
+        endsAt: new Date("2026-02-01T00:00:00Z"),
+        status: "available",
+      },
+      {
+        code: "SMALL",
+        discountType: "percentage",
+        discountValue: 10,
+        amount: 5,
+        endsAt: null,
+        status: "available",
+      },
+    ])
+    expect(mocks.listOffered).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws1", limit: 20 }),
+    )
+  })
+
+  test("leaves out a code that does not fit the order or takes nothing off", async () => {
+    mocks.listOffered.mockResolvedValue([
+      code({
+        id: "minimum",
+        code: "MIN",
+        minimumType: "amount",
+        minimumValue: 500,
+      }),
+      code({
+        id: "pickup",
+        code: "SHIP",
+        discountType: "freeShipping",
+        discountValue: 0,
+      }),
+    ])
+    await expect(
+      discountCodeService.listAvailable({
+        ...order,
+        shippingType: "pickup",
+        shippingTotal: 0,
+      }),
+    ).resolves.toEqual([])
+  })
+
+  test("keeps ended and used-up codes, greyed out after the usable ones", async () => {
+    mocks.listOffered.mockResolvedValue([
+      code({
+        id: "ended",
+        code: "ENDED",
+        endsAt: new Date("2026-01-10T00:00:00Z"),
+      }),
+      code({ id: "full", code: "FULL", usageLimit: 5, usedCount: 5 }),
+      code({ id: "mine", code: "MINE", oncePerCustomer: true }),
+      code({ id: "ok", code: "OK", discountValue: 10 }),
+    ])
+    mocks.countRedemptions.mockResolvedValue(1)
+    const listed = await discountCodeService.listAvailable({
+      ...order,
+      now: new Date("2026-01-15T00:00:00Z"),
+    })
+    expect(
+      listed.map(({ code, status, amount }) => [code, status, amount]),
+    ).toEqual([
+      ["OK", "available", 5],
+      ["FULL", "usedUp", 0],
+      ["MINE", "usedUp", 0],
+      ["ENDED", "expired", 0],
+    ])
+  })
+})
+
+describe("discountCodeService.listAvailable — customer filter", () => {
+  const filtered = code({
+    id: "vip",
+    code: "VIP",
+    eligibility: "specificCustomers",
+    customerFilter: { operator: "and", conditions: [{ field: "tag" }] },
+  })
+
+  test("a code for other customers stays, marked not eligible", async () => {
+    mocks.listOffered.mockResolvedValue([filtered])
+    mocks.matchesContactFilter.mockResolvedValue(false)
+    await expect(discountCodeService.listAvailable(order)).resolves.toEqual([
+      expect.objectContaining({
+        code: "VIP",
+        status: "notEligible",
+        amount: 0,
+      }),
+    ])
+  })
+
+  test("a code whose filter the customer matches can be used", async () => {
+    mocks.listOffered.mockResolvedValue([filtered])
+    mocks.matchesContactFilter.mockResolvedValue(true)
+    await expect(discountCodeService.listAvailable(order)).resolves.toEqual([
+      expect.objectContaining({ code: "VIP", status: "available", amount: 10 }),
+    ])
   })
 })
 
@@ -335,6 +477,91 @@ describe("discountCodeService.create", () => {
     await expect(discountCodeService.create(input)).rejects.toMatchObject({
       code: "discountCodeDuplicated",
     })
+  })
+})
+
+describe("discountCodeService.update after deletions", () => {
+  test("drops deleted products when the patch sends no product list", async () => {
+    mocks.find.mockResolvedValue(
+      code({ appliesTo: "products", productIds: ["p1", "gone"] }),
+    )
+    mocks.findProducts.mockResolvedValue([{ id: "p1" }])
+    mocks.update.mockResolvedValue({ id: "dc1" })
+
+    await discountCodeService.update({
+      workspaceId: "ws1",
+      discountCodeId: "dc1",
+      data: { usageLimit: 5 },
+    })
+
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: expect.objectContaining({ productIds: ["p1"] }),
+      }),
+    )
+  })
+
+  test("still asks for products when none are left", async () => {
+    mocks.find.mockResolvedValue(
+      code({ appliesTo: "products", productIds: ["gone"], isActive: false }),
+    )
+    mocks.findProducts.mockResolvedValue([])
+
+    await expect(
+      discountCodeService.update({
+        workspaceId: "ws1",
+        discountCodeId: "dc1",
+        data: { usageLimit: 5 },
+      }),
+    ).rejects.toMatchObject({ field: "productIds" })
+  })
+
+  test("saves a category code again once a new category is chosen", async () => {
+    mocks.find.mockResolvedValue(
+      code({ appliesTo: "category", categoryId: null, isActive: false }),
+    )
+    mocks.findCategory.mockResolvedValue({ id: "cat2" })
+    mocks.update.mockResolvedValue({ id: "dc1" })
+
+    await discountCodeService.update({
+      workspaceId: "ws1",
+      discountCodeId: "dc1",
+      data: { categoryId: "cat2", isActive: true },
+    })
+
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: expect.objectContaining({ categoryId: "cat2", isActive: true }),
+      }),
+    )
+  })
+
+  test("refuses to switch on a category code whose category was deleted", async () => {
+    mocks.find.mockResolvedValue(
+      code({ appliesTo: "category", categoryId: null, isActive: false }),
+    )
+
+    await expect(
+      discountCodeService.setActive({
+        workspaceId: "ws1",
+        discountCodeId: "dc1",
+        isActive: true,
+      }),
+    ).rejects.toMatchObject({ field: "categoryId" })
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
+  test("switches a code off without checking what it applies to", async () => {
+    mocks.update.mockResolvedValue({ id: "dc1" })
+
+    await discountCodeService.setActive({
+      workspaceId: "ws1",
+      discountCodeId: "dc1",
+      isActive: false,
+    })
+
+    expect(mocks.find).not.toHaveBeenCalled()
+    expect(mocks.update).toHaveBeenCalled()
   })
 })
 

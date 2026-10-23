@@ -82,6 +82,7 @@ function ConditionSelect({
       <Label htmlFor={id}>{label}</Label>
       <Select
         disabled={disabled}
+        items={[{ value: ALL, label: t("all") }, ...options]}
         onValueChange={(next) =>
           onChange(next === ALL || next === null ? null : String(next))
         }
@@ -152,7 +153,11 @@ export function CollectionDialog({
 
         <div className="space-y-4">
           <Section title={t("dataType")}>
-            <Select disabled value="products">
+            <Select
+              disabled
+              items={[{ value: "products", label: t("dataTypes.products") }]}
+              value="products"
+            >
               <SelectTrigger aria-label={t("dataType")} className="w-full">
                 <SelectValue />
               </SelectTrigger>

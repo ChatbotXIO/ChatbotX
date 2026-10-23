@@ -1,5 +1,6 @@
 import {
   ecommerceSettingsService,
+  hasWorkspacePermission,
   orderService,
   workspaceMemberService,
   workspaceService,
@@ -11,13 +12,21 @@ import { deliverPushToUsers } from "../lib/deliver-push"
 import { getExpoClient } from "../lib/expo"
 import { t } from "../lib/strings"
 
-/** The members who turned on "New order" in their notification settings. */
+/**
+ * The members who turned on "New order" in their notification settings AND
+ * may see orders: the push carries the customer name and total, so a member
+ * without the ecommerce permission (super admins have every permission) gets none.
+ */
 const resolveOrderRecipientUserIds = async (workspaceId: string) => {
   const members = await workspaceMemberService.listByWorkspaceId({
     workspaceId,
   })
   return members
-    .filter((member) => member.notificationTypes?.newOrder)
+    .filter(
+      (member) =>
+        member.notificationTypes?.newOrder &&
+        hasWorkspacePermission(member.permissions ?? {}, "ecommerce"),
+    )
     .map((member) => member.userId)
 }
 

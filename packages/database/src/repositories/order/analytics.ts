@@ -28,11 +28,15 @@ export type SalesScope = {
   until?: Date
 }
 
-const countedOrders = (scope: SalesScope): SQL | undefined =>
+const countedOrders = (
+  scope: SalesScope,
+  currencyPredicate: (currency: string) => SQL = (currency) =>
+    eq(orderModel.currency, currency),
+): SQL | undefined =>
   and(
     eq(orderModel.workspaceId, scope.workspaceId),
     ne(orderModel.status, "cancelled"),
-    eq(orderModel.currency, scope.currency),
+    currencyPredicate(scope.currency),
     scope.since ? gte(orderModel.createdAt, scope.since) : undefined,
     scope.until ? lte(orderModel.createdAt, scope.until) : undefined,
   )
@@ -41,6 +45,21 @@ const countedOrders = (scope: SalesScope): SQL | undefined =>
 const toNumber = (value: unknown) => Number(value ?? 0)
 
 export const orderAnalyticsRepository = {
+  /**
+   * Non-cancelled orders in the scope placed in a currency other than the
+   * scope's. Their money is left out of every sum; this count lets the
+   * dashboard say so.
+   */
+  async countOtherCurrencyOrders(scope: SalesScope, tx: DatabaseClient = db) {
+    const [row] = await tx
+      .select({ orders: sql<number>`count(*)::int` })
+      .from(orderModel)
+      .where(
+        countedOrders(scope, (currency) => ne(orderModel.currency, currency)),
+      )
+    return toNumber(row?.orders)
+  },
+
   /** Sales (order totals), order count and items sold in the scope. */
   async summary(scope: SalesScope, tx: DatabaseClient = db) {
     const where = countedOrders(scope)

@@ -1,18 +1,22 @@
 import { webshopService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { Metadata } from "next"
-import { getTranslations } from "next-intl/server"
 import { ProductDetail } from "@/features/webshop/components/product-detail"
+import { RelatedProducts } from "@/features/webshop/components/related-products"
 import {
   ShopInvalidLink,
   ShopLayout,
 } from "@/features/webshop/components/shop-layout"
 import {
   asId,
+  getShopTranslations,
   loadShopPage,
   type ShopPageProps,
 } from "@/features/webshop/lib/shop-page"
-import { toShopProductDetail } from "@/features/webshop/lib/shop-product"
+import {
+  toShopProduct,
+  toShopProductDetail,
+} from "@/features/webshop/lib/shop-product"
 
 export const dynamic = "force-dynamic"
 
@@ -35,7 +39,7 @@ async function findProduct(workspaceId: string, productId: string | null) {
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const page = await loadShopPage(props)
-  const t = await getTranslations("webshop")
+  const t = await getShopTranslations(page?.shop)
   const product = page
     ? await findProduct(page.params.workspaceId, asId(page.params.productId))
     : null
@@ -50,9 +54,15 @@ export default async function ShopProductPage(props: Props) {
   if (!page) {
     return <ShopInvalidLink />
   }
-  const t = await getTranslations("webshop")
+  const t = await getShopTranslations(page.shop)
   const { shop, session, params, cartCount } = page
   const product = await findProduct(params.workspaceId, asId(params.productId))
+  const related = product
+    ? await webshopService.listRelatedProducts({
+        workspaceId: params.workspaceId,
+        product,
+      })
+    : []
 
   return (
     <ShopLayout
@@ -65,9 +75,14 @@ export default async function ShopProductPage(props: Props) {
         <ProductDetail
           imageSize={shop.productImageSize}
           product={toShopProductDetail(product)}
-        />
+        >
+          <RelatedProducts
+            products={related.map(toShopProduct)}
+            view={shop.productView}
+          />
+        </ProductDetail>
       ) : (
-        <p className="py-16 text-center text-muted-foreground">
+        <p className="fade-in animate-in py-20 text-center text-muted-foreground duration-500">
           {t("productNotFound")}
         </p>
       )}

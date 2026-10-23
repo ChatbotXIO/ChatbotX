@@ -1,6 +1,5 @@
 import { webshopService } from "@chatbotx.io/business"
 import type { Metadata } from "next"
-import { getTranslations } from "next-intl/server"
 import { ProductFilters } from "@/features/webshop/components/product-filters"
 import { ProductList } from "@/features/webshop/components/product-list"
 import {
@@ -10,7 +9,9 @@ import {
 import { ShopPagination } from "@/features/webshop/components/shop-pagination"
 import {
   asId,
+  asIdList,
   getParam,
+  getShopTranslations,
   loadShopPage,
   type ShopPageProps,
 } from "@/features/webshop/lib/shop-page"
@@ -26,7 +27,7 @@ type Props = ShopPageProps<Record<string, never>>
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const page = await loadShopPage(props)
-  const t = await getTranslations("webshop")
+  const t = await getShopTranslations(page?.shop)
   return {
     title: page?.shop.storeName ?? t("metadataTitle"),
     robots: { index: false },
@@ -41,6 +42,7 @@ export default async function ShopPage(props: Props) {
   }
   const { shop, session, params, searchParams, cartCount } = page
   const keyword = getParam(searchParams.q)?.trim().slice(0, 255) ?? ""
+  const productIds = asIdList(getParam(searchParams.products))
   const categoryId = asId(getParam(searchParams.category))
   const vendorId = asId(getParam(searchParams.vendor))
   const pageNumber = Math.min(
@@ -53,6 +55,7 @@ export default async function ShopPage(props: Props) {
     keyword,
     categoryId,
     vendorId,
+    productIds,
     page: pageNumber,
     perPage: PER_PAGE,
   })
@@ -71,21 +74,23 @@ export default async function ShopPage(props: Props) {
       shop={shop}
       workspaceId={params.workspaceId}
     >
-      <div className="space-y-4">
+      <div className="space-y-5">
         {heading ? (
-          <div className="flex items-center gap-3 rounded-lg border bg-card p-4">
+          <div className="flex items-center gap-4 rounded-2xl border bg-gradient-to-br from-primary/10 via-card to-card p-5 shadow-xs">
             {heading.imageUrl ? (
               // biome-ignore lint/performance/noImgElement: merchant images come from any host
               <img
                 alt=""
-                className="size-14 shrink-0 rounded-md object-cover"
-                height={56}
+                className="size-16 shrink-0 rounded-xl object-cover shadow-sm ring-2 ring-background"
+                height={64}
                 src={heading.imageUrl}
-                width={56}
+                width={64}
               />
             ) : null}
-            <div className="min-w-0">
-              <h1 className="truncate font-semibold text-lg">{heading.name}</h1>
+            <div className="min-w-0 space-y-1">
+              <h1 className="truncate font-bold text-xl tracking-tight">
+                {heading.name}
+              </h1>
               {vendor?.shortDescription ? (
                 <p className="line-clamp-2 text-muted-foreground text-sm">
                   {vendor.shortDescription}

@@ -1130,7 +1130,7 @@ chatbotx discount-codes validate --code <code> --items <json>  # What it takes o
 ### `webshop`
 
 ```bash
-chatbotx webshop link                                   # Shop link signed for a customer [--contact --page cart --vendorId --categoryId]; no --contact = preview link
+chatbotx webshop link                                   # Shop link signed for a customer [--contact --page cart --productId --vendorId --categoryId]; no --contact = preview link
 ```
 
 ---

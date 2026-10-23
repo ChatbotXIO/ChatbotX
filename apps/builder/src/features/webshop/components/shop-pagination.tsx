@@ -22,10 +22,16 @@ export function ShopPagination({
     return null
   }
   const hrefFor = (target: number) => shop.href("", { ...params, page: target })
-  const linkClass = buttonVariants({ size: "sm", variant: "outline" })
+  const linkClass = cn(
+    buttonVariants({
+      size: "sm",
+      variant: "outline",
+      className: "rounded-full bg-background shadow-xs active:scale-95",
+    }),
+  )
   const disabledClass = cn(linkClass, "pointer-events-none opacity-50")
   return (
-    <nav className="flex items-center justify-between gap-2 pt-4">
+    <nav className="flex items-center justify-between gap-2 pt-6">
       {page > 1 ? (
         <Link className={linkClass} href={hrefFor(page - 1)}>
           <ChevronLeftIcon />
@@ -37,7 +43,7 @@ export function ShopPagination({
           {t("previous")}
         </span>
       )}
-      <span className="text-muted-foreground text-sm">
+      <span className="text-muted-foreground text-sm tabular-nums">
         {t("pageOf", { page, pageCount })}
       </span>
       {page < pageCount ? (

@@ -4300,6 +4300,25 @@
       "unknownFieldTarget": "已對應的聯絡人欄位已不存在。",
       "actionReferenceNotFound": "某個動作參照了已不存在的流程、標籤或欄位。",
       "fieldMappingRequired": "請至少新增一個欄位對應。"
+    },
+    "form": {
+      "required": "此欄位為必填。",
+      "minLength": "請至少輸入 {minimum} 個字元。",
+      "maxLength": "最多輸入 {maximum} 個字元。",
+      "minNumber": "請輸入不小於 {minimum} 的數字。",
+      "moreThan": "請輸入大於 {minimum} 的數字。",
+      "maxNumber": "請輸入不大於 {maximum} 的數字。",
+      "lessThan": "請輸入小於 {maximum} 的數字。",
+      "number": "請輸入數字。",
+      "wholeNumber": "請輸入整數。",
+      "minItems": "請至少選擇 {minimum} 項。",
+      "maxItems": "最多選擇 {maximum} 項。",
+      "email": "請輸入有效的電子郵件地址。",
+      "url": "請輸入以 https:// 開頭的有效連結。",
+      "format": "此值格式不正確。",
+      "option": "請選擇其中一個選項。",
+      "invalid": "此值無效。",
+      "checkFields": "有欄位需要修正，請查看標紅的欄位。"
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "運費",
         "description": "將訂單送到客戶地址的固定費用。"
-      }
+      },
+      "defaultCountryNotShipped": "請選擇一個配送國家。"
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "要求郵遞區號",
           "description": "結帳時將收集買家郵遞區號。"
         }
+      },
+      "orderConfirmationMode": {
+        "label": "訂單確認訊息",
+        "description": "客戶下單後在聊天中收到的內容。預設訊息會以工作區語言列出訂單明細。",
+        "options": {
+          "default": "預設訊息",
+          "flow": "執行流程",
+          "none": "不傳送任何內容"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "訂單確認流程",
+        "description": "客戶下單後，取代預設訊息傳送給客戶的流程。"
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "星期四",
       "5": "星期五",
       "6": "星期六"
-    }
+    },
+    "sameTimes": "營業時間和打烊時間不能相同。"
   },
   "webshop": {
     "metadataTitle": "商店",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "此連結無效",
     "invalidLinkDescription": "連結可能已過期。請在聊天中向商店索取新連結。",
     "previewBanner": "預覽：顧客看到的就是這樣。預覽中無法下單。",
+    "previewOrderingOff": "預覽：無法下單",
     "closed": {
       "orderingUnavailable": "商店暫不接單。",
       "outsideOpenHours": "商店現在不營業，但您仍可瀏覽。"
@@ -9496,6 +9531,7 @@
     "cartEmpty": "購物車是空的。",
     "continueShopping": "繼續購物",
     "unavailableItems": "{count, plural, one {# 件商品暫時無法下單} other {# 件商品暫時無法下單}}",
+    "unavailableNotOrdered": "這些商品不會下單，並會保留在購物車中。",
     "unavailable": "已不再供應",
     "unavailableHint": "請重新選擇規格",
     "deletedProduct": "已刪除的商品",
@@ -9505,7 +9541,9 @@
       "delivery": "運費",
       "otherFees": "其他費用",
       "total": "合計",
-      "coupon": "優惠券（{code}）"
+      "coupon": "優惠券（{code}）",
+      "title": "訂單摘要",
+      "saved": "為你省下 {amount}"
     },
     "belowMinimum": "最低訂單金額為 {amount}。",
     "checkOut": "去結帳",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "購物車是空的。",
       "orderShippingTypeUnavailable": "該配送方式不可用。",
       "webshopRatingNotAllowed": "該訂單無法評價。",
+      "webshopCartFull": "購物車最多可放 {maximum} 種不同的商品。",
       "notFound": "該商品已下架。",
       "discountCodeNotFound": "該折扣碼不存在。",
       "discountCodeInactive": "該折扣碼未啟用。",
@@ -9588,15 +9627,38 @@
       "apply": "套用",
       "applied": "折扣碼已套用",
       "automatic": "已自動套用",
-      "remove": "移除折扣碼"
-    }
+      "remove": "移除折扣碼",
+      "available": "可用的優惠碼",
+      "freeShipping": "免運費",
+      "bestChoice": "最佳選擇",
+      "expiresOn": "有效期限至 {date}",
+      "noExpiry": "長期有效",
+      "inUse": "使用中",
+      "saves": "省 {amount}",
+      "showMore": "{count, plural, one {再顯示 # 個優惠碼} other {再顯示 # 個優惠碼}}",
+      "showLess": "收合",
+      "removeShort": "移除",
+      "expired": "已過期",
+      "usedUp": "已領完",
+      "notEligible": "暫不符合條件"
+    },
+    "itemCount": "{count, plural, one {# 件} other {# 件}}",
+    "relatedProducts": "你可能也會喜歡"
   },
   "webshopLinks": {
     "preview": "預覽",
     "getLink": "取得連結",
     "copied": "連結已複製。放到機器人按鈕上，每位聯絡人都會開啟自己的商店。",
     "error": "無法取得連結。",
-    "copyError": "無法複製連結。"
+    "copyError": "無法複製連結。",
+    "shopLink": {
+      "label": "商店連結",
+      "hint": "將此連結貼到流程、群發或序列中的按鈕裡。收到連結的每位聯絡人都會開啟自己的商店並可以下單。"
+    },
+    "productLink": {
+      "label": "公開連結",
+      "hint": "複製該連結並貼到流程、群發或序列中。收到連結的每位聯絡人都會開啟此商品並可以下單。"
+    }
   },
   "discountCodes": {
     "title": "優惠券",
@@ -9671,6 +9733,12 @@
       "startDate": "開始日期",
       "endDate": "結束日期",
       "isActive": "啟用"
+    },
+    "rules": {
+      "codeCharacters": "只能使用不帶重音的字母、數字、- 和 _。",
+      "usageBelowUsed": "此優惠碼已使用 {count} 次，限制不能低於此數。",
+      "customerConditionRequired": "請至少新增一個條件。",
+      "endAfterStart": "結束日期必須晚於開始日期。"
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "此期間無資料",
     "refresh": "重新整理",
     "change": "{value}%",
-    "noPrevious": "新增"
+    "noPrevious": "新增",
+    "otherCurrencyOrders": "其他幣別的 {count} 筆訂單未計入這些數據"
   },
   "responseSla": {
     "label": "回應 SLA",

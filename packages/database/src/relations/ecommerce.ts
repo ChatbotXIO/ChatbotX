@@ -86,6 +86,10 @@ export const ecommerceRelations = defineRelationsPart(schema, (r) => ({
       from: r.ecommerceSettingsModel.abandonedCartFlowId,
       to: r.flowModel.id,
     }),
+    orderConfirmationFlow: r.one.flowModel({
+      from: r.ecommerceSettingsModel.orderConfirmationFlowId,
+      to: r.flowModel.id,
+    }),
     openHours: r.one.ecommerceOpenHoursModel({
       from: r.ecommerceSettingsModel.openHoursId,
       to: r.ecommerceOpenHoursModel.id,

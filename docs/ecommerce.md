@@ -68,15 +68,22 @@ page all read it.
   the customer.
 - Every side effect of a placed or moved order hangs off
   `orderService.afterStatusChange` (order triggers are added there later):
-  - **Placed:** a confirmation to the customer (number, buyer details,
-    address or "pickup in the store" + store address, date in the workspace
-    timezone, cash on delivery, totals, items), and a `notifyNewOrder` push
+  - **Placed:** what `checkout.orderConfirmationMode` says — `default` the
+    built-in confirmation (number, buyer details, address or "pickup in the
+    store" + store address, date in the workspace timezone, cash on delivery,
+    totals, items; spec image 34), `flow` the store's
+    `orderConfirmationFlowId` run in the order's conversation instead
+    (`sendFlow`, job id `order-confirmation-flow-<orderId>`), `none` nothing
+    — and a `notifyNewOrder` push
     job (job id `new-order-<orderId>`, so a retried placement pushes once).
   - **Moved:** "The status of your order has been updated. Status: …" when
     the store turned on `notifyOnCartStatusChange`, always for a cancel or a
     completion, and whenever the member typed a message.
-  - Customer texts are in the contact's language when it is Vietnamese,
-    English otherwise (`order/customer-messages.ts`), and go to the order's
+  - Customer texts (the confirmation, status notes, the WhatsApp cart
+    summary and CHECK OUT, collection card buttons, the product search
+    reply) are in the **workspace language** — every builder language is
+    written in `order/customer-message-strings.ts`; anything else reads as
+    English — whatever the contact's own locale, and go to the order's
     conversation. A send that fails (e.g. outside WhatsApp's 24-hour window)
     is logged; the order still stands.
 - The `notifyNewOrder` push goes to the members who turned on **New order**
@@ -145,6 +152,25 @@ limits, the customers it is for, and active dates.
 - `orderService.quote` reports a typed code that cannot be used as
   `discountError` and prices the cart without it, so the cart page can say
   why; `place` throws.
+- **Codes offered on the cart:** the web shop cart (and `webshop.getCart`'s
+  `availableDiscounts`) lists up to 20 typed codes: not automatic, turned on
+  and started, for everyone or for a customer filter
+  (`discountCodeRepository.listOffered`; a code turned off is never
+  listed). Each is priced against the cart by
+  `discountCodeService.listAvailable` and carries a `status`:
+  - `available` — the customer can tap it to apply it. The list starts with
+    these, most taken off first (the cart marks the top one "Best choice"
+    when there are two or more), then soonest to end.
+  - `expired` (its end date passed), `usedUp` (no uses left, or this
+    customer's once-per-customer use spent) or `notEligible` (a
+    `specificCustomers` code whose filter this customer does not match —
+    "Not eligible yet") — listed after, latest ended first, greyed out and
+    refused. The query sorts usable codes first, so
+    these never push a usable one past the 20.
+  A code that does not fit this cart otherwise (minimum not met, nothing it
+  applies to, free shipping on a pickup order) is left out. Every listed code
+  — a `specificCustomers` one included — is visible to anyone with a shop
+  link; only being turned off keeps a code off the cart.
 
 All the pricing is in `packages/business/src/discount-code/pricing.ts`
 (pure) and `discountCodeService.resolve`; `orderService.priceDraft` is the
@@ -212,36 +238,63 @@ appointment tokens, AAD `shop-token`):
   A flow or bot button gets one with the system field `{{shop_token}}`,
   signed for whoever the message is sent to. The cart and orders belong to
   that contact, never to an id in the URL.
-- **preview** — `workspaceId` only, valid 1 day: browses, never orders.
+- **preview** — `workspaceId` only, valid 1 day: shows every page a customer
+  sees — cart, discount codes, delivery choice, checkout form — but never
+  orders: only **Place order** is off. With no contact, its cart lives in an
+  httpOnly cookie (`features/webshop/lib/preview-cart.ts`, at most 30 lines,
+  1 day), priced by the same `orderService.quote` for no contact
+  (`webshopService.getPreviewCart` / `changePreviewCart`); nothing is saved
+  in `Cart`, no cart event fires, and the Facebook Pixel does not load.
 
 A token for another workspace, a forged or expired one, or an unresolved
 `{{shop_token}}` shows "This link does not work".
 
 | Page | What it does |
 |------|--------------|
-| `/shop/<ws>` | Products (`&q=`, `&category=`, `&vendor=`, `&page=`), drawn in the store's "Web shop product view" (6 views). Shows active products that are not add-on only, whose category/sub-category is visible and vendor active; search only finds searchable products. |
+| `/shop/<ws>` | Products (`&q=`, `&category=`, `&vendor=`, `&products=<id>,<id>` (at most 20), `&page=`), drawn in the store's "Web shop product view" (6 views). Shows active products that are not add-on only, whose category/sub-category is visible and vendor active; search only finds searchable products. |
 | `/shop/<ws>/products/<id>` | Images, variant options, quantity, the store's product buttons (Add to Cart / Share / Similar / Save). With checkout `productPage`, Buy opens the product's `productUrl` instead. |
 | `/shop/<ws>/cart` | The cart priced by `orderService.quote` (same pricing as an order), items that cannot be ordered now (with their name), delivery or pickup (`&shipping=`), then the checkout form — or a link to `checkoutLink` with checkout `externalLink`. |
 | `/shop/<ws>/orders/<id>` | The customer's own order (another contact's is not found), status, totals, and 1–5 stars + comment once concluded when `allowRateOrders` is on. |
 
 Checkout (`webshopService.checkout`) checks, before `orderService.place`:
 ordering on and open hours (store and vendors), the buyer fields the store
-requires, an address and a country in `shippingCountries` for delivery. The
-cart is emptied in the order's transaction (`onPlaced`), so a refused order
-keeps it. With checkout `flow`, the chosen flow then runs in the customer's
+requires, an address and a country in `shippingCountries` for delivery. Only
+the items that can be ordered now are placed — the ones the cart lists as
+unavailable stay in it. In the order's transaction (`onPlaced`) the placed
+quantities are taken out of the locked cart, so a refused order keeps it, an
+item added in another tab meanwhile stays, and a double submit (the items
+already gone) rolls back. An order keeps the channel the shop link was signed
+for, not the contact's most recent one. With checkout `flow`, the chosen flow then runs in the customer's
 conversation. The order page closes Messenger's in-app browser when it runs
 there.
 
 The page actions (`features/webshop/actions/webshop.action.ts`) take the
-token, refuse a preview (`webshopPreviewOnly`), are rate limited per contact
+token, change a preview's cookie cart instead of a contact's (placing or
+rating an order from a preview is refused, `webshopPreviewOnly`), are rate
+limited per contact
 (`checkGuestRateLimit`), and return refusals as codes the page translates
 rather than the server's English message. A Facebook Pixel id loads the Pixel
 and reports `ViewContent`, `AddToCart`, `InitiateCheckout` and `Purchase`.
 
-**Preview / Get Link** on vendors and categories: Preview opens a preview
-link; Get Link copies the shop URL with `?token={{shop_token}}` (and
-`&vendor=`/`&category=`) to put on a bot button. `webshop.getLink` returns
-both.
+Every shop page is in the **workspace language** (`Workspace.language`), not
+the viewer's `NEXT_LOCALE` cookie, so a customer who never opened the builder
+reads the merchant's language: server strings go through
+`getShopTranslations(shop)` and `ShopLayout` wraps the client parts in their
+own `NextIntlClientProvider`. Only the invalid-link page, which has no
+verified workspace, falls back to the viewer's language.
+
+**Shop link (how a merchant gets the URL for a flow).** Like a Mini App's
+Public URL, a bar pinned to the bottom of every Ecommerce page (it stays in
+view while the page scrolls) shows the whole shop's link — `https://<app>/shop/<workspaceId>?token={{shop_token}}` — with
+Copy and Preview. Pasted into a button of a flow, broadcast or sequence, the
+`{{shop_token}}` is signed for each contact who receives it, so they order as
+themselves. A product's edit page pins its own Public URL (its
+`/products/<id>` page) to the bottom, beside Save. **Preview / Get Link** in the row menu of a product, vendor or
+category do the same for that page: Preview opens a preview link (browses,
+never orders); Get Link copies the URL with `?token={{shop_token}}` — a
+product opens `/products/<id>`, a vendor or category adds `&vendor=` /
+`&category=`. `webshop.getLink` returns both (`productId`, `vendorId`,
+`categoryId`).
 
 ## Trigger and webhook events
 
@@ -304,8 +357,9 @@ ignoring case, accents and `đ`, against the names of searchable products the
 shop shows (the first 2,000, cached 60 seconds): a message naming a product,
 or a message that is part of a product's name; 3 characters at least, 10
 products at most, the exact name first. Messenger gets a product collection;
-other channels the names and a button opening the shop on that search
-(`?q=`). A failed search falls through to the usual reply.
+other channels the names and a button opening the products found — the
+product's page for one, the shop listing them (`?products=`) for more, never a
+search for the whole message. A failed search falls through to the usual reply.
 
 ## Sales analytics
 
@@ -337,6 +391,8 @@ Grouped as the settings page shows them (`general`, `payments`, `shipping`,
 
 - `checkoutMode: externalLink` needs `checkoutLink`;
 - `checkoutMode: flow` needs a `checkoutFlowId` of this workspace;
+- `orderConfirmationMode: flow` needs an `orderConfirmationFlowId` of this
+  workspace;
 - `shippingType` is `none`, `delivery`, `pickup` or `deliveryAndPickup`;
   offering pickup needs `storeAddress`. An order's own `shippingType` must be
   one the store offers (`orderShippingTypeUnavailable`);
@@ -354,11 +410,15 @@ that method is the one place a plan check goes.
 | `orders.list` / `get` / `create` / `delete` | `GET /v1/orders`, `GET`/`DELETE /v1/orders/{id}`, `POST /v1/orders` (optional `discountCode`) |
 | `orders.accept` / `ship` / `conclude` / `cancel` | `POST /v1/orders/{id}/<verb>` (optional `message`) |
 | `openHours.list` / `create` / `update` / `delete` | `/v1/open-hours[/{id}]` (`update` is `PATCH`) |
-| `productVendors.list` | `GET /v1/product-vendors` (`name`, `page`, `perPage`; all vendors when omitted) |
-| `productCategories.list` / `setVisible` | `GET /v1/product-categories` (`parentId`, `name`), `PATCH /v1/product-categories/{id}/visible` |
-| `productVendors.list` / `create` / `update` / `delete` | `/v1/product-vendors[/{id}]` (`update` is `PATCH`) |
+| `products.list` / `listSendable` / `get` / `create` / `update` / `delete` | `/v1/products[/{id}]` (`update` is `PUT`), `GET /v1/products/sendable` |
+| `products.setActive` / `deleteMany` | `PATCH /v1/products/{id}/active`, `POST /v1/products/bulk-delete` |
+| `products.getImportTemplate` / `createImportUpload` / `peekImportHeaders` / `startImport` / `listImports` / `getImport` | `/v1/products/import-template`, `/v1/products/imports[/{id}]`, `/v1/products/imports/upload-url`, `/v1/products/imports/files/{fileId}/headers` |
+| `products.getMetaCatalog` / `listMetaCatalogBusinesses` / `createMetaCatalog` / `selectMetaCatalog` / `syncMetaCatalog` / `searchMetaCatalogItems` / `disconnectMetaCatalog` | `/v1/products/meta-catalog[/businesses\|/select\|/sync\|/items]` |
+| `productCategories.list` / `create` / `update` / `delete` | `/v1/product-categories[/{id}]` (`list` takes `parentId`, `name`; `update` is `PUT`) |
+| `productCategories.setVisible` | `PATCH /v1/product-categories/{id}/visible` |
+| `productVendors.list` / `create` / `update` / `delete` | `/v1/product-vendors[/{id}]` (`list` takes `name`, `page`, `perPage`, all vendors when omitted; `update` is `PATCH`) |
 | `ecommerceSettings.get` / `update` | `GET` / `PATCH /v1/ecommerce/settings` |
-| `webshop.getLink` | `GET /v1/webshop/link` (`contact`, `page=cart`, `vendorId`, `categoryId`): `url` signed for the contact (a preview without one) and `buttonUrl` with `{{shop_token}}` for bot buttons |
+| `webshop.getLink` | `GET /v1/webshop/link` (`contact`, `page=cart`, `productId`, `vendorId`, `categoryId`): `url` signed for the contact (a preview without one) and `buttonUrl` with `{{shop_token}}` for bot buttons |
 | `ecommerceAnalytics.get` | `GET /v1/ecommerce/analytics` (`from`, `to`, days of the workspace timezone; today by default) |
 | `discountCodes.list` / `get` / `create` / `update` / `delete` | `/v1/discount-codes[/{id}]` (`update` is `PATCH`) |
 | `discountCodes.setActive` | `PATCH /v1/discount-codes/{id}/active` |

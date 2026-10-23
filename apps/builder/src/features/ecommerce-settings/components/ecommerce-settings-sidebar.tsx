@@ -22,7 +22,7 @@ export function EcommerceSettingsSidebar({
 }) {
   const t = useTranslations()
   return (
-    <aside className="w-64 shrink-0 border-e bg-card p-3">
+    <aside className="mt-4 w-64 shrink-0 self-start rounded-xl border bg-card p-3 text-card-foreground shadow-sm">
       <div className="mb-2 px-2">
         <h2 className="font-semibold text-sm">{t("settings.title")}</h2>
       </div>

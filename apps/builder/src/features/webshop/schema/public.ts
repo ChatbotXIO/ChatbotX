@@ -13,6 +13,11 @@ export const getWebshopLinkPublicRequest = z.object({
     .enum(["cart"])
     .optional()
     .describe("`cart` opens the customer's cart, ready to check out."),
+  productId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Open this product's own page (instead of `page`). Get it from `products.list`.",
+    ),
   vendorId: zodBigintAsString()
     .optional()
     .describe(
@@ -128,6 +133,32 @@ export const getCartPublicResponse = z.object({
     })
     .nullable()
     .describe("Why the typed code is not applied, e.g. `discountCodeExpired`."),
+  availableDiscounts: z
+    .array(
+      z.object({
+        code: z.string().describe("Apply it with the cart's discount code."),
+        discountType: z.string(),
+        discountValue: z
+          .number()
+          .describe(
+            "Percent or amount, as set on the code; 0 for free shipping.",
+          ),
+        amount: z
+          .number()
+          .describe(
+            "What it would take off this cart now; 0 unless `available`.",
+          ),
+        endsAt: z.date().nullable().describe("When it ends; null never ends."),
+        status: z
+          .enum(["available", "expired", "usedUp", "notEligible"])
+          .describe(
+            "`available` can be applied; `expired` (its end date passed), `usedUp` (no uses left, or this customer's one use spent) and `notEligible` (for customers matching a filter this one does not) are listed but refused.",
+          ),
+      }),
+    )
+    .describe(
+      "Typed codes that are turned on and started, up to 20 — for every customer or for a customer filter: the ones this cart can use (`status: available`) first, most taken off first, then soonest to end; then ended, used-up or not-for-this-customer ones (`expired` / `usedUp` / `notEligible`), which cannot be applied. A code that does not fit the cart otherwise (minimum, products) is left out.",
+    ),
   belowMinimum: z
     .number()
     .nullable()

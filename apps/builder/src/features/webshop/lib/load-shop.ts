@@ -2,6 +2,7 @@ import "server-only"
 
 import { webshopService } from "@chatbotx.io/business"
 import { cache } from "react"
+import { resolveLocale } from "@/i18n/config"
 import { toSafeWebUrl } from "./safe-url"
 import type { ShopMoneyFormat } from "./shop-money"
 import { resolveShopSession, type ShopSession } from "./shop-session"
@@ -20,6 +21,9 @@ const toShopView = (storefront: Storefront) => {
   }
   return {
     storeName: storefront.storeName,
+    brandColor: storefront.brandColor,
+    // The shop speaks the workspace language, whoever opens the link.
+    locale: resolveLocale(storefront.language),
     ordering: storefront.ordering,
     money,
     productView: settings.general.webshopProductView,

@@ -10,9 +10,11 @@ import {
   TableHeader,
   TableRow,
 } from "@chatbotx.io/ui/components/ui/table"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import Link from "next/link"
 import { useFormatter, useTranslations } from "next-intl"
-import type { ReactNode } from "react"
+import { type ReactNode, useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { formatOrderMoney, type StoreCurrencyFormat } from "../lib/order-money"
 import type { OrderDetailResource } from "../schema/public"
 import { OrderStatusActions } from "./order-status-actions"
@@ -28,7 +30,7 @@ function Field({ label, value }: { label: string; value: ReactNode }) {
     return null
   }
   return (
-    <p className="text-sm">
+    <p>
       <span className="text-muted-foreground">{label}: </span>
       {value}
     </p>
@@ -38,20 +40,94 @@ function Field({ label, value }: { label: string; value: ReactNode }) {
 /** The order page as the spec draws it: customer, order, lines, actions. */
 export function OrderDetail({ workspaceId, order, store }: OrderDetailProps) {
   const t = useTranslations("orders")
-  const formatter = useFormatter()
-  const money = (amount: number) =>
-    formatOrderMoney(amount, order.currency, store)
-  const address = order.shippingAddress
-  const street = [address?.line1, address?.line2].filter(Boolean).join(", ")
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  useBlankPrintTitle()
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
-      <div className="flex justify-end print:hidden">
+      <div className="flex justify-end">
         <Button onClick={() => window.print()} variant="link">
           {t("print")}
         </Button>
       </div>
 
+      <div className="space-y-4 text-sm">
+        <OrderSummary order={order} store={store} workspaceId={workspaceId} />
+      </div>
+
+      <OrderStatusActions
+        orderId={order.id}
+        status={order.status}
+        workspaceId={workspaceId}
+      />
+
+      {/* Printed on its own, outside the app shell: only the order details. */}
+      {mounted
+        ? createPortal(
+            <div
+              className="hidden space-y-4 p-6 text-4xl print:block"
+              data-print-root=""
+            >
+              <OrderSummary order={order} printing store={store} />
+            </div>,
+            document.body,
+          )
+        : null}
+    </div>
+  )
+}
+
+/**
+ * The browser prints the page title in the paper's header, so it is blanked
+ * while printing and put back afterwards. A non-breaking space, because an
+ * empty title makes the browser print the URL there instead.
+ */
+function useBlankPrintTitle() {
+  useEffect(() => {
+    let savedTitle = document.title
+    const blankTitle = () => {
+      savedTitle = document.title
+      document.title = " "
+    }
+    const restoreTitle = () => {
+      document.title = savedTitle
+    }
+    window.addEventListener("beforeprint", blankTitle)
+    window.addEventListener("afterprint", restoreTitle)
+    return () => {
+      window.removeEventListener("beforeprint", blankTitle)
+      window.removeEventListener("afterprint", restoreTitle)
+    }
+  }, [])
+}
+
+type OrderSummaryProps = {
+  order: OrderDetailResource
+  store: StoreCurrencyFormat
+  /** Set for the screen copy only: the printed one has no inbox link. */
+  workspaceId?: string
+  printing?: boolean
+}
+
+function OrderSummary({
+  order,
+  store,
+  workspaceId,
+  printing = false,
+}: OrderSummaryProps) {
+  const t = useTranslations("orders")
+  const formatter = useFormatter()
+  const money = (amount: number) =>
+    formatOrderMoney(amount, order.currency, store)
+  const address = order.shippingAddress
+  const street = [address?.line1, address?.line2].filter(Boolean).join(", ")
+  // The printed copy takes its large text from the print root and wraps long
+  // names instead of running off the paper.
+  const printCell = printing ? "whitespace-normal" : undefined
+
+  return (
+    <>
       <Card>
         <CardContent className="space-y-3 pt-6">
           <Field label={t("fields.name")} value={order.customerName} />
@@ -68,9 +144,9 @@ export function OrderDetail({ workspaceId, order, store }: OrderDetailProps) {
               value={t(`shippingTypes.${order.shippingType}`)}
             />
           ) : null}
-          {order.conversationId ? (
+          {workspaceId && order.conversationId ? (
             <Link
-              className="text-primary text-sm hover:underline print:hidden"
+              className="text-primary text-sm hover:underline"
               href={`/space/${workspaceId}/inbox?conversationId=${order.conversationId}`}
             >
               {t("inbox")}
@@ -145,11 +221,11 @@ export function OrderDetail({ workspaceId, order, store }: OrderDetailProps) {
 
       <Card>
         <CardContent className="pt-6">
-          <Table>
+          <Table className={printing ? "text-[length:inherit]" : undefined}>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-20" />
-                <TableHead>{t("columns.name")}</TableHead>
+                {printing ? null : <TableHead className="w-20" />}
+                <TableHead className={printCell}>{t("columns.name")}</TableHead>
                 <TableHead className="w-28 text-center">
                   {t("columns.quantity")}
                 </TableHead>
@@ -164,23 +240,31 @@ export function OrderDetail({ workspaceId, order, store }: OrderDetailProps) {
             <TableBody>
               {order.items.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>
-                    {item.imageUrl ? (
-                      // biome-ignore lint/performance/noImgElement: product image may be any external URL
-                      <img
-                        alt=""
-                        className="size-14 rounded object-cover"
-                        height={56}
-                        src={item.imageUrl}
-                        width={56}
-                      />
-                    ) : null}
-                  </TableCell>
-                  <TableCell>
+                  {printing ? null : (
+                    <TableCell>
+                      {item.imageUrl ? (
+                        // biome-ignore lint/performance/noImgElement: product image may be any external URL
+                        <img
+                          alt=""
+                          className="size-14 rounded object-cover"
+                          height={56}
+                          src={item.imageUrl}
+                          width={56}
+                        />
+                      ) : null}
+                    </TableCell>
+                  )}
+                  <TableCell className={printCell}>
                     <div className="flex flex-col">
                       <span>{item.name}</span>
                       {item.variantLabel ? (
-                        <span className="text-muted-foreground text-xs">
+                        <span
+                          className={
+                            printing
+                              ? "text-[0.75em] text-muted-foreground"
+                              : "text-muted-foreground text-xs"
+                          }
+                        >
                           {item.variantLabel}
                         </span>
                       ) : null}
@@ -192,7 +276,7 @@ export function OrderDetail({ workspaceId, order, store }: OrderDetailProps) {
                   <TableCell className="text-center tabular-nums">
                     {money(item.unitPrice)}
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className={cn("text-center", printCell)}>
                     {item.vendorName}
                   </TableCell>
                 </TableRow>
@@ -201,12 +285,6 @@ export function OrderDetail({ workspaceId, order, store }: OrderDetailProps) {
           </Table>
         </CardContent>
       </Card>
-
-      <OrderStatusActions
-        orderId={order.id}
-        status={order.status}
-        workspaceId={workspaceId}
-      />
-    </div>
+    </>
   )
 }

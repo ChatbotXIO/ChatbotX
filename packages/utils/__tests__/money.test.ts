@@ -108,4 +108,51 @@ describe("formatMoney", () => {
   it("falls back to the currency code without a symbol", () => {
     expect(formatMoney(5, { currency: "eur" })).toBe("EUR5.00")
   })
+
+  it("puts the minus sign before the whole amount, in every position", () => {
+    expect(
+      formatMoney(-6.9, { currency: "USD", symbol: "$", position: "left" }),
+    ).toBe("-$6.90")
+    expect(
+      formatMoney(-6.9, {
+        currency: "USD",
+        symbol: "$",
+        position: "leftSpace",
+      }),
+    ).toBe("-$ 6.90")
+    expect(
+      formatMoney(-125_000, {
+        currency: "VND",
+        symbol: "₫",
+        position: "right",
+      }),
+    ).toBe("-125,000₫")
+    expect(
+      formatMoney(-125_000, {
+        currency: "VND",
+        symbol: "₫",
+        position: "rightSpace",
+      }),
+    ).toBe("-125,000 ₫")
+    expect(formatMoney(-1234.5, { currency: "eur" })).toBe("-EUR1,234.50")
+    expect(
+      formatMoney(-1500, { currency: "JPY", symbol: "¥", position: "left" }),
+    ).toBe("-¥1,500")
+    expect(
+      formatMoney(-12.345, {
+        currency: "KWD",
+        symbol: "KD",
+        position: "leftSpace",
+      }),
+    ).toBe("-KD 12.345")
+  })
+
+  it("shows no sign for an amount that rounds to zero", () => {
+    expect(
+      formatMoney(-0.001, { currency: "USD", symbol: "$", position: "left" }),
+    ).toBe("$0.00")
+    expect(
+      formatMoney(-0.4, { currency: "VND", symbol: "₫", position: "right" }),
+    ).toBe("0₫")
+  })
 })

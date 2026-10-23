@@ -51,8 +51,9 @@ export const rangeBucketKeys = (input: {
  * The store's sales dashboard (spec image 27): lifetime sales, the period's
  * sales, orders and items sold against the period just before it, sales and
  * orders by hour (one day) or day, and the top products and vendors.
- * Cancelled orders never count; amounts are in the store currency, days in
- * the workspace timezone.
+ * Cancelled orders never count; amounts are in the store currency (orders in
+ * another currency are left out and reported as `otherCurrencyOrders`), days
+ * in the workspace timezone.
  */
 class EcommerceAnalyticsService extends BaseService {
   /** `from`/`to` are `YYYY-MM-DD` days of the workspace timezone; both default to today. */
@@ -94,6 +95,7 @@ class EcommerceAnalyticsService extends BaseService {
       series,
       topProducts,
       topVendors,
+      otherCurrencyOrders,
     ] = await Promise.all([
       orderAnalyticsRepository.summary({
         workspaceId: input.workspaceId,
@@ -117,12 +119,14 @@ class EcommerceAnalyticsService extends BaseService {
       }),
       orderAnalyticsRepository.topProducts({ ...scope, limit: TOP_LIMIT }),
       orderAnalyticsRepository.topVendors({ ...scope, limit: TOP_LIMIT }),
+      orderAnalyticsRepository.countOtherCurrencyOrders(scope),
     ])
 
     const byKey = new Map(series.map((point) => [point.key, point]))
     const money = (amount: number) => roundMoney(amount, currency)
     return {
       currency,
+      otherCurrencyOrders,
       from: range.from,
       to: range.to,
       timezone: range.timezone,

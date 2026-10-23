@@ -2124,6 +2124,25 @@
       "unknownFieldTarget": "שדה איש קשר ממופה כבר אינו קיים.",
       "actionReferenceNotFound": "פעולה מפנה לתהליך, תגית או שדה שכבר אינם קיימים.",
       "fieldMappingRequired": "הוסיפו לפחות מיפוי שדה אחד."
+    },
+    "form": {
+      "required": "שדה זה הוא חובה.",
+      "minLength": "הזינו לפחות {minimum} תווים.",
+      "maxLength": "הזינו לכל היותר {maximum} תווים.",
+      "minNumber": "הזינו מספר של {minimum} לפחות.",
+      "moreThan": "הזינו מספר גדול מ-{minimum}.",
+      "maxNumber": "הזינו מספר של {maximum} לכל היותר.",
+      "lessThan": "הזינו מספר קטן מ-{maximum}.",
+      "number": "הזינו מספר.",
+      "wholeNumber": "הזינו מספר שלם.",
+      "minItems": "בחרו לפחות {minimum}.",
+      "maxItems": "בחרו לכל היותר {maximum}.",
+      "email": "הזינו כתובת אימייל תקינה.",
+      "url": "הזינו קישור תקין שמתחיל ב-https://.",
+      "format": "הערך אינו בפורמט הנכון.",
+      "option": "בחרו אחת מהאפשרויות.",
+      "invalid": "הערך אינו תקין.",
+      "checkFields": "יש שדות שצריך לתקן. בדקו את השדות המסומנים באדום."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "עלות משלוח",
         "description": "תעריף קבוע למשלוח ההזמנה לכתובת הלקוח."
-      }
+      },
+      "defaultCountryNotShipped": "בחרו אחת ממדינות המשלוח."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "חובה למלא מיקוד",
           "description": "המיקוד של הקונה ייאסף במהלך התשלום."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "הודעת אישור הזמנה",
+        "description": "מה הלקוח מקבל בשיחה כשההזמנה מתבצעת. הודעת ברירת המחדל מציגה את פרטי ההזמנה בשפת סביבת העבודה.",
+        "options": {
+          "default": "הודעת ברירת מחדל",
+          "flow": "הפעלת תהליך",
+          "none": "לא לשלוח כלום"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "תהליך אישור הזמנה",
+        "description": "התהליך שנשלח ללקוח במקום הודעת ברירת המחדל כשההזמנה מתבצעת."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "חמישי",
       "5": "שישי",
       "6": "שבת"
-    }
+    },
+    "sameTimes": "שעת הפתיחה ושעת הסגירה חייבות להיות שונות."
   },
   "webshop": {
     "metadataTitle": "חנות",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "הקישור הזה לא עובד",
     "invalidLinkDescription": "ייתכן שתוקפו פג. בקשו מהחנות קישור חדש בצ'אט.",
     "previewBanner": "תצוגה מקדימה: כך הלקוחות רואים את הדף. לא ניתן להזמין מתצוגה מקדימה.",
+    "previewOrderingOff": "תצוגה מקדימה: לא ניתן להזמין",
     "closed": {
       "orderingUnavailable": "החנות לא מקבלת הזמנות כרגע.",
       "outsideOpenHours": "החנות סגורה כרגע. אפשר עדיין להסתכל."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "העגלה שלך ריקה.",
     "continueShopping": "המשך קנייה",
     "unavailableItems": "{count, plural, one {לא ניתן להזמין כרגע # פריט} other {לא ניתן להזמין כרגע # פריטים}}",
+    "unavailableNotOrdered": "הם לא ייכללו בהזמנה ויישארו בעגלה.",
     "unavailable": "כבר לא זמין",
     "unavailableHint": "בחרו שוב את האפשרויות",
     "deletedProduct": "מוצר שנמחק",
@@ -9505,7 +9541,9 @@
       "delivery": "משלוח",
       "otherFees": "עמלות אחרות",
       "total": "סה\"כ",
-      "coupon": "קופון ({code})"
+      "coupon": "קופון ({code})",
+      "title": "סיכום הזמנה",
+      "saved": "חסכתם {amount}"
     },
     "belowMinimum": "ההזמנה המינימלית היא {amount}.",
     "checkOut": "לתשלום",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "העגלה שלך ריקה.",
       "orderShippingTypeUnavailable": "אפשרות המשלוח הזו לא זמינה.",
       "webshopRatingNotAllowed": "לא ניתן לדרג את ההזמנה הזו.",
+      "webshopCartFull": "העגלה שלך יכולה להכיל עד {maximum} פריטים שונים.",
       "notFound": "המוצר הזה כבר לא זמין.",
       "discountCodeNotFound": "קוד ההנחה לא קיים.",
       "discountCodeInactive": "קוד ההנחה לא פעיל.",
@@ -9588,15 +9627,38 @@
       "apply": "החלה",
       "applied": "קוד ההנחה הוחל",
       "automatic": "הוחל אוטומטית",
-      "remove": "הסרת קוד ההנחה"
-    }
+      "remove": "הסרת קוד ההנחה",
+      "available": "קודים שאפשר להשתמש בהם",
+      "freeShipping": "משלוח חינם",
+      "bestChoice": "הבחירה הטובה ביותר",
+      "expiresOn": "בתוקף עד {date}",
+      "noExpiry": "ללא תפוגה",
+      "inUse": "בשימוש",
+      "saves": "חיסכון של {amount}",
+      "showMore": "{count, plural, one {הצגת # קוד נוסף} other {הצגת # קודים נוספים}}",
+      "showLess": "הצגת פחות",
+      "removeShort": "הסרה",
+      "expired": "פג תוקף",
+      "usedUp": "נוצל",
+      "notEligible": "עדיין לא זכאי"
+    },
+    "itemCount": "{count, plural, one {# פריט} other {# פריטים}}",
+    "relatedProducts": "אולי תאהבו גם"
   },
   "webshopLinks": {
     "preview": "תצוגה מקדימה",
     "getLink": "קבלת קישור",
     "copied": "הקישור הועתק. שימו אותו על כפתור בבוט: כל איש קשר יפתח את החנות שלו.",
     "error": "לא ניתן לקבל את הקישור.",
-    "copyError": "לא ניתן להעתיק את הקישור."
+    "copyError": "לא ניתן להעתיק את הקישור.",
+    "shopLink": {
+      "label": "קישור לחנות",
+      "hint": "הדביקו את הקישור הזה בכפתור בזרימה, בשידור או ברצף. כל איש קשר שמקבל אותו פותח חנות משלו ויכול להזמין."
+    },
+    "productLink": {
+      "label": "קישור ציבורי",
+      "hint": "העתיקו והדביקו את הכתובת בזרימה, בשידור או ברצף. כל איש קשר שמקבל אותה פותח את המוצר הזה ויכול להזמין."
+    }
   },
   "discountCodes": {
     "title": "קופונים",
@@ -9671,6 +9733,12 @@
       "startDate": "תאריך התחלה",
       "endDate": "תאריך סיום",
       "isActive": "פעיל"
+    },
+    "rules": {
+      "codeCharacters": "השתמשו רק באותיות לטיניות ללא סימנים, ספרות, - ו-_.",
+      "usageBelowUsed": "הקוד כבר נוצל {count} פעמים; המגבלה לא יכולה להיות נמוכה יותר.",
+      "customerConditionRequired": "הוסיפו לפחות תנאי אחד.",
+      "endAfterStart": "תאריך הסיום חייב להיות אחרי תאריך ההתחלה."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "אין נתונים בתקופה זו",
     "refresh": "רענון",
     "change": "{value}%",
-    "noPrevious": "חדש"
+    "noPrevious": "חדש",
+    "otherCurrencyOrders": "{count} הזמנות במטבעות אחרים לא נכללות בנתונים אלה"
   },
   "responseSla": {
     "label": "SLA תגובה",

@@ -10,22 +10,21 @@ import {
   uploadModes,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
-import { formatMoney } from "@chatbotx.io/utils/money"
+import {
+  computeLinePrice,
+  formatMoney,
+  stackDiscountPercents,
+} from "@chatbotx.io/utils/money"
 import { ecommerceSettingsService } from "../ecommerce-settings/service"
-import { resolveContactMessageLanguage } from "../order/contact-language"
-import type { CustomerMessageLanguage } from "../order/customer-messages"
+import {
+  type CustomerMessageLanguage,
+  customerMessageStrings,
+} from "../order/customer-messages"
+import { resolveCustomerMessageLanguage } from "../order/message-language"
 import { resolveTenantSettings } from "../platform/settings"
 import { buildWebshopUrl } from "./link"
 
 const CARD_TEXT_MAX = 80
-
-const BUTTON_LABELS: Record<
-  CustomerMessageLanguage,
-  { view: string; buy: string; similar: string }
-> = {
-  en: { view: "View", buy: "Buy", similar: "Similar" },
-  vi: { view: "Xem", buy: "Mua", similar: "Tương tự" },
-}
 
 const truncate = (text: string, max = CARD_TEXT_MAX) =>
   text.length <= max ? text : `${text.slice(0, max - 1)}…`
@@ -82,12 +81,18 @@ const linkButton = (label: string, url: string) => ({
   steps: [],
 })
 
+/** The price the cart charges for one: the product's and vendor's discounts stacked. */
 const priceText = (product: ShopProductRow, settings: EcommerceSettings) => {
-  const price =
-    product.discount > 0
-      ? product.price * (1 - product.discount / 100)
-      : product.price
-  return formatMoney(price, {
+  const { gross, discountTotal } = computeLinePrice({
+    unitPrice: product.price,
+    quantity: 1,
+    discountPercent: stackDiscountPercents(
+      product.discount,
+      product.vendorDiscountPercent,
+    ),
+    currency: settings.payments.currency,
+  })
+  return formatMoney(gross - discountTotal, {
     currency: settings.payments.currency,
     symbol: settings.payments.currencySymbol,
     position: settings.payments.currencyPosition,
@@ -115,7 +120,7 @@ export async function buildCollectionCards(input: {
     listCollectionProducts(input),
     ecommerceSettingsService.get(input.workspaceId),
   ])
-  const labels = BUTTON_LABELS[input.language]
+  const labels = customerMessageStrings(input.language).collection
   const buttons = new Set(settings.general.productButtons)
   const externalPage = settings.checkout.checkoutMode === "productPage"
 
@@ -192,7 +197,7 @@ export async function resolveCollectionStep<
 }): Promise<(Step & { cards: SendCardStepSchema[] }) | null> {
   const [{ appUrl }, language, shopToken] = await Promise.all([
     resolveTenantSettings({ workspaceId: input.workspaceId }),
-    resolveContactMessageLanguage(input),
+    resolveCustomerMessageLanguage(input),
     signShopToken({
       workspaceId: input.workspaceId,
       contactId: input.contactId,

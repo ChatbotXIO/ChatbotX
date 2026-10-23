@@ -6269,6 +6269,25 @@
       "unknownFieldTarget": "Ett mappat kontaktfält finns inte längre.",
       "actionReferenceNotFound": "En åtgärd refererar till ett flöde, en tagg eller ett fält som inte längre finns.",
       "fieldMappingRequired": "Lägg till minst en fältmappning."
+    },
+    "form": {
+      "required": "Det här fältet är obligatoriskt.",
+      "minLength": "Ange minst {minimum} tecken.",
+      "maxLength": "Ange högst {maximum} tecken.",
+      "minNumber": "Ange ett tal på minst {minimum}.",
+      "moreThan": "Ange ett tal större än {minimum}.",
+      "maxNumber": "Ange ett tal på högst {maximum}.",
+      "lessThan": "Ange ett tal mindre än {maximum}.",
+      "number": "Ange ett tal.",
+      "wholeNumber": "Ange ett heltal.",
+      "minItems": "Välj minst {minimum}.",
+      "maxItems": "Välj högst {maximum}.",
+      "email": "Ange en giltig e-postadress.",
+      "url": "Ange en giltig länk som börjar med https://.",
+      "format": "Värdet har inte rätt format.",
+      "option": "Välj ett av alternativen.",
+      "invalid": "Värdet är ogiltigt.",
+      "checkFields": "Några fält behöver rättas. Se de som är rödmarkerade."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "Leveranskostnad",
         "description": "En fast avgift för att leverera beställningen till kundens adress."
-      }
+      },
+      "defaultCountryNotShipped": "Välj ett av leveransländerna."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "Kräv postnummer",
           "description": "Köparens postnummer samlas in i kassan."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "Orderbekräftelse",
+        "description": "Det kunden får i chatten när beställningen är lagd. Standardmeddelandet visar orderuppgifterna på arbetsytans språk.",
+        "options": {
+          "default": "Standardmeddelande",
+          "flow": "Kör ett flöde",
+          "none": "Skicka ingenting"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Flöde för orderbekräftelse",
+        "description": "Flödet som skickas till kunden i stället för standardmeddelandet när beställningen är lagd."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "Torsdag",
       "5": "Fredag",
       "6": "Lördag"
-    }
+    },
+    "sameTimes": "Öppnings- och stängningstid måste skilja sig åt."
   },
   "webshop": {
     "metadataTitle": "Butik",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "Länken fungerar inte",
     "invalidLinkDescription": "Den kan ha gått ut. Be butiken om en ny länk i chatten.",
     "previewBanner": "Förhandsvisning: så ser kunderna sidan. Det går inte att beställa från en förhandsvisning.",
+    "previewOrderingOff": "Förhandsvisning: beställning är avstängd",
     "closed": {
       "orderingUnavailable": "Butiken tar inte emot beställningar just nu.",
       "outsideOpenHours": "Butiken är stängd just nu. Du kan fortfarande titta."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "Din varukorg är tom.",
     "continueShopping": "Fortsätt handla",
     "unavailableItems": "{count, plural, one {# vara kan inte beställas just nu} other {# varor kan inte beställas just nu}}",
+    "unavailableNotOrdered": "De ingår inte i beställningen och ligger kvar i varukorgen.",
     "unavailable": "Finns inte längre",
     "unavailableHint": "Välj alternativen igen",
     "deletedProduct": "Borttagen produkt",
@@ -9505,7 +9541,9 @@
       "delivery": "Leverans",
       "otherFees": "Övriga avgifter",
       "total": "Totalt",
-      "coupon": "Rabattkod ({code})"
+      "coupon": "Rabattkod ({code})",
+      "title": "Ordersammanfattning",
+      "saved": "Du sparar {amount}"
     },
     "belowMinimum": "Minsta beställning är {amount}.",
     "checkOut": "Till kassan",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "Din varukorg är tom.",
       "orderShippingTypeUnavailable": "Det här leveranssättet är inte tillgängligt.",
       "webshopRatingNotAllowed": "Den här beställningen kan inte betygsättas.",
+      "webshopCartFull": "Din varukorg kan innehålla högst {maximum} olika artiklar.",
       "notFound": "Produkten finns inte längre.",
       "discountCodeNotFound": "Rabattkoden finns inte.",
       "discountCodeInactive": "Rabattkoden är inte aktiv.",
@@ -9588,15 +9627,38 @@
       "apply": "Använd",
       "applied": "Rabattkoden används",
       "automatic": "används automatiskt",
-      "remove": "Ta bort rabattkod"
-    }
+      "remove": "Ta bort rabattkod",
+      "available": "Koder du kan använda",
+      "freeShipping": "Fri frakt",
+      "bestChoice": "Bästa valet",
+      "expiresOn": "Gäller till {date}",
+      "noExpiry": "Utan slutdatum",
+      "inUse": "Används",
+      "saves": "Sparar {amount}",
+      "showMore": "{count, plural, one {Visa # kod till} other {Visa # koder till}}",
+      "showLess": "Visa färre",
+      "removeShort": "Ta bort",
+      "expired": "Utgången",
+      "usedUp": "Slut",
+      "notEligible": "Inte behörig än"
+    },
+    "itemCount": "{count, plural, one {# vara} other {# varor}}",
+    "relatedProducts": "Du kanske också gillar"
   },
   "webshopLinks": {
     "preview": "Förhandsgranska",
     "getLink": "Hämta länk",
     "copied": "Länken har kopierats. Lägg den på en botknapp: varje kontakt öppnar sin egen butik.",
     "error": "Det gick inte att hämta länken.",
-    "copyError": "Det gick inte att kopiera länken."
+    "copyError": "Det gick inte att kopiera länken.",
+    "shopLink": {
+      "label": "Butikslänk",
+      "hint": "Klistra in den här länken i en knapp i ett flöde, ett utskick eller en sekvens. Varje kontakt som får den öppnar sin egen butik och kan beställa."
+    },
+    "productLink": {
+      "label": "Offentlig URL",
+      "hint": "Kopiera och klistra in URL:en i ditt flöde, utskick eller din sekvens. Varje kontakt som får den öppnar den här produkten och kan beställa."
+    }
   },
   "discountCodes": {
     "title": "Rabattkoder",
@@ -9671,6 +9733,12 @@
       "startDate": "Startdatum",
       "endDate": "Slutdatum",
       "isActive": "Aktiv"
+    },
+    "rules": {
+      "codeCharacters": "Använd bara bokstäver utan accenter, siffror, - och _.",
+      "usageBelowUsed": "Koden har redan använts {count} gånger; gränsen kan inte vara lägre.",
+      "customerConditionRequired": "Lägg till minst ett villkor.",
+      "endAfterStart": "Slutdatumet måste vara efter startdatumet."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "Inga data under perioden",
     "refresh": "Uppdatera",
     "change": "{value} %",
-    "noPrevious": "ny"
+    "noPrevious": "ny",
+    "otherCurrencyOrders": "{count} beställningar i andra valutor ingår inte i dessa siffror"
   },
   "responseSla": {
     "label": "Svars-SLA",

@@ -18,8 +18,10 @@ import {
   ALWAYS_OPEN,
   OpenHoursSelectField,
 } from "@/features/ecommerce-open-hours/components/open-hours-select-field"
+import { useInvalidFormToast } from "@/lib/validation/use-request-resolver"
 import type { EcommerceSettingsPublicResource } from "../schema/public"
 import { SettingRow, SettingsSaveBar } from "./setting-row"
+import { useSettingsResolver } from "./use-settings-resolver"
 import { useSettingsSave } from "./use-settings-save"
 
 /** "Disabled" in the abandoned-cart select. */
@@ -46,6 +48,23 @@ type GeneralFormValues = Omit<
 const buttonSetKey = (buttons: readonly ProductButtonType[]) =>
   buttons.join("+")
 
+const toRequest = (values: GeneralFormValues) => ({
+  general: {
+    ...values,
+    openHoursId: values.openHoursId === ALWAYS_OPEN ? null : values.openHoursId,
+    facebookPixelId: values.facebookPixelId.trim() || null,
+    abandonedCartDelayMinutes:
+      values.abandonedCartDelayMinutes === DISABLED
+        ? null
+        : Number(values.abandonedCartDelayMinutes),
+    abandonedCartFlowId:
+      values.abandonedCartFlowId === NO_FLOW
+        ? null
+        : values.abandonedCartFlowId,
+    productButtons: values.productButtons.split("+") as ProductButtonType[],
+  },
+})
+
 export function GeneralSettingsForm({
   workspaceId,
   settings,
@@ -60,10 +79,13 @@ export function GeneralSettingsForm({
   const t = useTranslations("ecommerceSettings.general")
   const tButton = useTranslations("ecommerceSettings.general.productButtons")
   const { execute, isPending } = useSettingsSave(workspaceId)
+  const showInvalidToast = useInvalidFormToast()
+  const resolver = useSettingsResolver(toRequest)
   const pro = settings.proFeatures
   const { general } = settings
 
   const form = useForm<GeneralFormValues>({
+    resolver,
     defaultValues: {
       ...general,
       openHoursId: general.openHoursId ?? ALWAYS_OPEN,
@@ -77,25 +99,10 @@ export function GeneralSettingsForm({
     },
   })
 
-  const onSubmit = form.handleSubmit((values) => {
-    execute({
-      general: {
-        ...values,
-        openHoursId:
-          values.openHoursId === ALWAYS_OPEN ? null : values.openHoursId,
-        facebookPixelId: values.facebookPixelId.trim() || null,
-        abandonedCartDelayMinutes:
-          values.abandonedCartDelayMinutes === DISABLED
-            ? null
-            : Number(values.abandonedCartDelayMinutes),
-        abandonedCartFlowId:
-          values.abandonedCartFlowId === NO_FLOW
-            ? null
-            : values.abandonedCartFlowId,
-        productButtons: values.productButtons.split("+") as ProductButtonType[],
-      },
-    })
-  })
+  const onSubmit = form.handleSubmit(
+    (values) => execute(toRequest(values)),
+    showInvalidToast,
+  )
 
   const delayLabel = (minutes: number) =>
     minutes < 60

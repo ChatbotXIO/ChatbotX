@@ -4,61 +4,68 @@ import {
   type ShippingType,
 } from "@chatbotx.io/database/partials"
 import type { Metadata } from "next"
-import { getTranslations } from "next-intl/server"
 import { CartView } from "@/features/webshop/components/cart-view"
 import {
   ShopInvalidLink,
   ShopLayout,
 } from "@/features/webshop/components/shop-layout"
+import { readPreviewCart } from "@/features/webshop/lib/preview-cart"
 import {
   getParam,
+  getShopPageTranslations,
   loadShopPage,
   type ShopPageProps,
 } from "@/features/webshop/lib/shop-page"
+import type { ShopSession } from "@/features/webshop/lib/shop-session"
 
 export const dynamic = "force-dynamic"
 
 type Props = ShopPageProps<Record<string, never>>
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("webshop")
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const t = await getShopPageTranslations(props)
   return { title: t("cart"), robots: { index: false } }
 }
 
-/** The cart and its checkout; prices follow the delivery choice in the URL. */
+/** The customer's cart, or a preview link's cookie cart, priced the same way. */
+async function loadCart(
+  session: ShopSession,
+  workspaceId: string,
+  shippingType: ShippingType | null,
+) {
+  if (session.mode === "customer") {
+    return await webshopService.getCart({
+      workspaceId,
+      contactId: session.shopper.contactId,
+      shippingType,
+    })
+  }
+  const previewCart = await readPreviewCart(workspaceId)
+  return await webshopService.getPreviewCart({
+    workspaceId,
+    items: previewCart.items,
+    discountCode: previewCart.discountCode,
+    shippingType,
+  })
+}
+
+/**
+ * The cart and its checkout; prices follow the delivery choice in the URL.
+ * A preview shows all of it too — only placing the order is off.
+ */
 export default async function ShopCartPage(props: Props) {
   const page = await loadShopPage(props)
   if (!page) {
     return <ShopInvalidLink />
   }
-  const t = await getTranslations("webshop")
   const { shop, session, params, searchParams, cartCount } = page
-
-  if (session.mode === "preview") {
-    return (
-      <ShopLayout
-        cartCount={0}
-        session={session}
-        shop={shop}
-        workspaceId={params.workspaceId}
-      >
-        <p className="py-16 text-center text-muted-foreground">
-          {t("errors.webshopPreviewOnly")}
-        </p>
-      </ShopLayout>
-    )
-  }
 
   const offered: readonly ShippingType[] =
     SHIPPING_TYPES_BY_MODE[shop.shipping.mode]
   const requested = getParam(searchParams.shipping)
   const shippingType =
     offered.find((type) => type === requested) ?? offered[0] ?? null
-  const cart = await webshopService.getCart({
-    workspaceId: params.workspaceId,
-    contactId: session.shopper.contactId,
-    shippingType,
-  })
+  const cart = await loadCart(session, params.workspaceId, shippingType)
 
   return (
     <ShopLayout
@@ -75,6 +82,7 @@ export default async function ShopCartPage(props: Props) {
           enteredDiscountCode: cart.enteredDiscountCode,
           discount: cart.discount,
           discountError: cart.discountError,
+          availableDiscounts: cart.availableDiscounts,
           belowMinimum: cart.belowMinimum,
           shippingType: cart.shippingType,
         }}

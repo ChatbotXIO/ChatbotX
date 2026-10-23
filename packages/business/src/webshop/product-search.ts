@@ -10,8 +10,8 @@ import {
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { ecommerceSettingsService } from "../ecommerce-settings/service"
-import { resolveContactMessageLanguage } from "../order/contact-language"
-import type { CustomerMessageLanguage } from "../order/customer-messages"
+import { customerMessageStrings } from "../order/customer-messages"
+import { resolveCustomerMessageLanguage } from "../order/message-language"
 import { resolveTenantSettings } from "../platform/settings"
 import { buildWebshopButtonUrl } from "./link"
 
@@ -159,14 +159,6 @@ export async function searchProductsByMessage(input: {
   )
 }
 
-const SEARCH_REPLY_STRINGS: Record<
-  CustomerMessageLanguage,
-  { found: string; view: string }
-> = {
-  en: { found: "Here is what we found:", view: "View products" },
-  vi: { found: "Đây là các sản phẩm phù hợp:", view: "Xem sản phẩm" },
-}
-
 /**
  * The bot's answer to a message naming products: a product carousel where the
  * channel shows one (the collection step, resolved when sent), else their
@@ -203,10 +195,10 @@ export async function buildProductSearchReply(input: {
     }
   }
   const [language, { appUrl }] = await Promise.all([
-    resolveContactMessageLanguage(input),
+    resolveCustomerMessageLanguage(input),
     resolveTenantSettings({ workspaceId: input.workspaceId }),
   ])
-  const strings = SEARCH_REPLY_STRINGS[language]
+  const strings = customerMessageStrings(language).productSearch
   return {
     id: createId(),
     stepType: stepTypes.enum.sendText,
@@ -222,10 +214,14 @@ export async function buildProductSearchReply(input: {
         beforeStep: {
           id: createId(),
           stepType: stepTypes.enum.openWebsite,
+          // The products found, not the message: the shop's search needs the
+          // name inside the product's, and a sentence around it never is.
           url: buildWebshopButtonUrl({
             appUrl,
             workspaceId: input.workspaceId,
-            keyword: input.text.trim().slice(0, 100),
+            ...(products.length === 1
+              ? { productId: products[0]?.id }
+              : { productIds: products.map((product) => product.id) }),
           }),
           browserSize: 100,
         },

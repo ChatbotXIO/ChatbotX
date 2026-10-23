@@ -79,12 +79,26 @@ class VendorService extends BaseService {
     if (name === "") {
       throw vendorNameRequired()
     }
-    await this.assertReferences(input.workspaceId, input.data)
+    const touchesCategory =
+      input.data.categoryId !== undefined ||
+      input.data.subcategoryId !== undefined
+    const stored = touchesCategory
+      ? await vendorRepository.find({
+          workspaceId: input.workspaceId,
+          vendorId: input.vendorId,
+        })
+      : undefined
+    const data = await this.dropStaleSubcategory({
+      workspaceId: input.workspaceId,
+      data: input.data,
+      stored,
+    })
+    await this.assertReferences(input.workspaceId, data, stored?.categoryId)
     try {
       const row = await vendorRepository.update({
         workspaceId: input.workspaceId,
         vendorId: input.vendorId,
-        values: { ...input.data, ...(name === undefined ? {} : { name }) },
+        values: { ...data, ...(name === undefined ? {} : { name }) },
       })
       if (!row) {
         throw notFoundException("Vendor not found")
@@ -176,10 +190,46 @@ class VendorService extends BaseService {
     return ids.get(name.toLowerCase()) ?? null
   }
 
-  /** The schedule and categories a vendor points at live in its workspace. */
+  /**
+   * Changing the category without naming a sub-category would keep the stored
+   * sub-category under the old category. Clear it unless it already sits under
+   * the new category.
+   */
+  private async dropStaleSubcategory(input: {
+    workspaceId: string
+    data: Partial<VendorWriteData>
+    stored?: { categoryId: string | null; subcategoryId: string | null }
+  }): Promise<Partial<VendorWriteData>> {
+    const { data, stored } = input
+    if (
+      data.categoryId === undefined ||
+      data.subcategoryId !== undefined ||
+      !stored?.subcategoryId ||
+      stored.categoryId === data.categoryId
+    ) {
+      return data
+    }
+    if (data.categoryId) {
+      const subcategory = await productCategoryRepository.find({
+        workspaceId: input.workspaceId,
+        categoryId: stored.subcategoryId,
+      })
+      if (subcategory?.parentId === data.categoryId) {
+        return data
+      }
+    }
+    return { ...data, subcategoryId: null }
+  }
+
+  /**
+   * The schedule and categories a vendor points at live in its workspace.
+   * `storedCategoryId` stands in for a category the patch leaves out, so a
+   * sub-category sent alone is checked against the category the vendor has.
+   */
   private async assertReferences(
     workspaceId: string,
     data: Partial<VendorWriteData>,
+    storedCategoryId?: string | null,
   ) {
     if (data.openHoursId) {
       await ecommerceOpenHoursService.assertBelongsToWorkspace({
@@ -199,12 +249,14 @@ class VendorService extends BaseService {
         throw notFoundException("Product category does not exist.")
       }
     }
-    if (data.subcategoryId && data.categoryId) {
+    if (data.subcategoryId) {
+      const effectiveCategoryId =
+        data.categoryId === undefined ? storedCategoryId : data.categoryId
       const subcategory = await productCategoryRepository.find({
         workspaceId,
         categoryId: data.subcategoryId,
       })
-      if (subcategory?.parentId !== data.categoryId) {
+      if (subcategory?.parentId !== effectiveCategoryId) {
         throw notFoundException(
           "Product sub-category does not belong to the selected category.",
         )

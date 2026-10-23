@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   findByNames: vi.fn(),
   create: vi.fn(),
   find: vi.fn(),
+  update: vi.fn(),
   findCategory: vi.fn(),
   openHoursExists: vi.fn(),
   invalidate: vi.fn(),
@@ -26,6 +27,7 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findByNames: (...args: unknown[]) => mocks.findByNames(...args),
     create: (...args: unknown[]) => mocks.create(...args),
     find: (...args: unknown[]) => mocks.find(...args),
+    update: (...args: unknown[]) => mocks.update(...args),
   },
   productCategoryRepository: {
     find: (...args: unknown[]) => mocks.findCategory(...args),
@@ -145,5 +147,65 @@ describe("vendorService references", () => {
       workspaceId: "ws1",
       openHoursId: "5",
     })
+  })
+})
+
+describe("vendorService.update category consistency", () => {
+  beforeEach(() => {
+    mocks.update.mockResolvedValue({ id: "v1" })
+  })
+
+  test("clears a stale sub-category when the category changes alone", async () => {
+    mocks.find.mockResolvedValue({ categoryId: "old", subcategoryId: "child" })
+    mocks.findCategory.mockResolvedValue({ id: "x", parentId: "old" })
+
+    await vendorService.update({
+      workspaceId: "ws1",
+      vendorId: "v1",
+      data: { categoryId: "new" },
+    })
+
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: { categoryId: "new", subcategoryId: null },
+      }),
+    )
+  })
+
+  test("keeps the sub-category when it sits under the new category", async () => {
+    mocks.find.mockResolvedValue({ categoryId: "old", subcategoryId: "child" })
+    mocks.findCategory.mockResolvedValue({ id: "child", parentId: "new" })
+
+    await vendorService.update({
+      workspaceId: "ws1",
+      vendorId: "v1",
+      data: { categoryId: "new" },
+    })
+
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ values: { categoryId: "new" } }),
+    )
+  })
+
+  test("checks a sub-category sent alone against the stored category", async () => {
+    mocks.find.mockResolvedValue({ categoryId: "cat", subcategoryId: null })
+    mocks.findCategory.mockResolvedValue({ id: "sub", parentId: "other" })
+
+    await expect(
+      vendorService.update({
+        workspaceId: "ws1",
+        vendorId: "v1",
+        data: { subcategoryId: "sub" },
+      }),
+    ).rejects.toThrow("does not belong")
+
+    mocks.findCategory.mockResolvedValue({ id: "sub", parentId: "cat" })
+    await expect(
+      vendorService.update({
+        workspaceId: "ws1",
+        vendorId: "v1",
+        data: { subcategoryId: "sub" },
+      }),
+    ).resolves.toBeDefined()
   })
 })

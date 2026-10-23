@@ -4254,6 +4254,25 @@
       "unknownFieldTarget": "Een gekoppeld contactveld bestaat niet meer.",
       "actionReferenceNotFound": "Een actie verwijst naar een flow, tag of veld dat niet meer bestaat.",
       "fieldMappingRequired": "Voeg minstens één veldkoppeling toe."
+    },
+    "form": {
+      "required": "Dit veld is verplicht.",
+      "minLength": "Vul minstens {minimum} tekens in.",
+      "maxLength": "Vul hoogstens {maximum} tekens in.",
+      "minNumber": "Vul een getal van minstens {minimum} in.",
+      "moreThan": "Vul een getal groter dan {minimum} in.",
+      "maxNumber": "Vul een getal van hoogstens {maximum} in.",
+      "lessThan": "Vul een getal kleiner dan {maximum} in.",
+      "number": "Vul een getal in.",
+      "wholeNumber": "Vul een heel getal in.",
+      "minItems": "Kies minstens {minimum}.",
+      "maxItems": "Kies hoogstens {maximum}.",
+      "email": "Vul een geldig e-mailadres in.",
+      "url": "Vul een geldige link in die begint met https://.",
+      "format": "Deze waarde heeft niet het juiste formaat.",
+      "option": "Kies een van de opties.",
+      "invalid": "Deze waarde is ongeldig.",
+      "checkFields": "Sommige velden moeten worden verbeterd. Bekijk de rood gemarkeerde."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "Bezorgkosten",
         "description": "Een vast tarief om de bestelling op het adres van de klant te bezorgen."
-      }
+      },
+      "defaultCountryNotShipped": "Kies een van de verzendlanden."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "Postcode verplicht",
           "description": "De postcode van de koper wordt tijdens het afrekenen opgevraagd."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "Orderbevestiging",
+        "description": "Wat de klant in de chat krijgt zodra de bestelling is geplaatst. Het standaardbericht toont de bestelgegevens in de taal van de werkruimte.",
+        "options": {
+          "default": "Standaardbericht",
+          "flow": "Een flow uitvoeren",
+          "none": "Niets versturen"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Flow voor orderbevestiging",
+        "description": "De flow die de klant krijgt in plaats van het standaardbericht zodra de bestelling is geplaatst."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "Donderdag",
       "5": "Vrijdag",
       "6": "Zaterdag"
-    }
+    },
+    "sameTimes": "Openings- en sluitingstijd moeten verschillen."
   },
   "webshop": {
     "metadataTitle": "Winkel",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "Deze link werkt niet",
     "invalidLinkDescription": "Hij is misschien verlopen. Vraag de winkel in de chat om een nieuwe link.",
     "previewBanner": "Voorbeeld: zo zien klanten het. Vanuit een voorbeeld kun je niet bestellen.",
+    "previewOrderingOff": "Voorbeeld: bestellen staat uit",
     "closed": {
       "orderingUnavailable": "De winkel neemt nu geen bestellingen aan.",
       "outsideOpenHours": "De winkel is nu gesloten. Je kunt nog wel rondkijken."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "Je winkelwagen is leeg.",
     "continueShopping": "Verder winkelen",
     "unavailableItems": "{count, plural, one {# artikel kan nu niet besteld worden} other {# artikelen kunnen nu niet besteld worden}}",
+    "unavailableNotOrdered": "Ze worden niet meebesteld en blijven in je winkelwagen.",
     "unavailable": "Niet meer beschikbaar",
     "unavailableHint": "Kies de opties opnieuw",
     "deletedProduct": "Verwijderd product",
@@ -9505,7 +9541,9 @@
       "delivery": "Bezorging",
       "otherFees": "Overige kosten",
       "total": "Totaal",
-      "coupon": "Kortingscode ({code})"
+      "coupon": "Kortingscode ({code})",
+      "title": "Besteloverzicht",
+      "saved": "Je bespaart {amount}"
     },
     "belowMinimum": "De minimale bestelling is {amount}.",
     "checkOut": "Afrekenen",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "Je winkelwagen is leeg.",
       "orderShippingTypeUnavailable": "Deze bezorgoptie is niet beschikbaar.",
       "webshopRatingNotAllowed": "Deze bestelling kan niet beoordeeld worden.",
+      "webshopCartFull": "Je winkelwagen kan maximaal {maximum} verschillende artikelen bevatten.",
       "notFound": "Dit product is niet meer beschikbaar.",
       "discountCodeNotFound": "Deze kortingscode bestaat niet.",
       "discountCodeInactive": "Deze kortingscode is niet actief.",
@@ -9588,15 +9627,38 @@
       "apply": "Toepassen",
       "applied": "Kortingscode toegepast",
       "automatic": "automatisch toegepast",
-      "remove": "Kortingscode verwijderen"
-    }
+      "remove": "Kortingscode verwijderen",
+      "available": "Codes die je kunt gebruiken",
+      "freeShipping": "Gratis verzending",
+      "bestChoice": "Beste keuze",
+      "expiresOn": "Geldig tot {date}",
+      "noExpiry": "Verloopt niet",
+      "inUse": "In gebruik",
+      "saves": "Bespaart {amount}",
+      "showMore": "{count, plural, one {Nog # code tonen} other {Nog # codes tonen}}",
+      "showLess": "Minder tonen",
+      "removeShort": "Verwijderen",
+      "expired": "Verlopen",
+      "usedUp": "Opgebruikt",
+      "notEligible": "Nog niet in aanmerking"
+    },
+    "itemCount": "{count, plural, one {# artikel} other {# artikelen}}",
+    "relatedProducts": "Misschien vind je dit ook leuk"
   },
   "webshopLinks": {
     "preview": "Voorbeeld",
     "getLink": "Link ophalen",
     "copied": "Link gekopieerd. Zet hem op een botknop: elk contact opent zijn eigen winkel.",
     "error": "De link kon niet worden opgehaald.",
-    "copyError": "De link kon niet worden gekopieerd."
+    "copyError": "De link kon niet worden gekopieerd.",
+    "shopLink": {
+      "label": "Winkellink",
+      "hint": "Plak deze link in een knop in een flow, broadcast of reeks. Elk contact dat hem ontvangt, opent zijn eigen winkel en kan bestellen."
+    },
+    "productLink": {
+      "label": "Openbare URL",
+      "hint": "Kopieer en plak de URL in je flow, broadcast of reeks. Elk contact dat hem ontvangt, opent dit product en kan bestellen."
+    }
   },
   "discountCodes": {
     "title": "Kortingscodes",
@@ -9671,6 +9733,12 @@
       "startDate": "Startdatum",
       "endDate": "Einddatum",
       "isActive": "Actief"
+    },
+    "rules": {
+      "codeCharacters": "Gebruik alleen letters zonder accenten, cijfers, - en _.",
+      "usageBelowUsed": "Deze code is al {count} keer gebruikt; de limiet kan niet lager zijn.",
+      "customerConditionRequired": "Voeg minstens één voorwaarde toe.",
+      "endAfterStart": "De einddatum moet na de startdatum liggen."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "Geen gegevens in deze periode",
     "refresh": "Vernieuwen",
     "change": "{value}%",
-    "noPrevious": "nieuw"
+    "noPrevious": "nieuw",
+    "otherCurrencyOrders": "{count} bestellingen in andere valuta's zijn niet opgenomen in deze cijfers"
   },
   "responseSla": {
     "label": "Reactie-SLA",

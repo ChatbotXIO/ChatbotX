@@ -4254,6 +4254,25 @@
       "unknownFieldTarget": "Yhdistettyä yhteystiedon kenttää ei ole enää olemassa.",
       "actionReferenceNotFound": "Toiminto viittaa flow'hun, tunnisteeseen tai kenttään, jota ei ole enää olemassa.",
       "fieldMappingRequired": "Lisää vähintään yksi kenttäyhdistäminen."
+    },
+    "form": {
+      "required": "Tämä kenttä on pakollinen.",
+      "minLength": "Kirjoita vähintään {minimum} merkkiä.",
+      "maxLength": "Kirjoita enintään {maximum} merkkiä.",
+      "minNumber": "Anna luku, joka on vähintään {minimum}.",
+      "moreThan": "Anna lukua {minimum} suurempi luku.",
+      "maxNumber": "Anna luku, joka on enintään {maximum}.",
+      "lessThan": "Anna lukua {maximum} pienempi luku.",
+      "number": "Anna luku.",
+      "wholeNumber": "Anna kokonaisluku.",
+      "minItems": "Valitse vähintään {minimum}.",
+      "maxItems": "Valitse enintään {maximum}.",
+      "email": "Anna kelvollinen sähköpostiosoite.",
+      "url": "Anna kelvollinen linkki, joka alkaa https://.",
+      "format": "Arvo ei ole oikeassa muodossa.",
+      "option": "Valitse jokin vaihtoehdoista.",
+      "invalid": "Arvo ei kelpaa.",
+      "checkFields": "Joitakin kenttiä pitää korjata. Tarkista punaisella merkityt."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "Toimituskulut",
         "description": "Kiinteä hinta tilauksen toimittamisesta asiakkaan osoitteeseen."
-      }
+      },
+      "defaultCountryNotShipped": "Valitse jokin toimitusmaista."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "Vaadi postinumero",
           "description": "Ostajan postinumero kerätään kassalla."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "Tilausvahvistusviesti",
+        "description": "Mitä asiakas saa keskusteluun, kun tilaus on tehty. Oletusviesti näyttää tilauksen tiedot työtilan kielellä.",
+        "options": {
+          "default": "Oletusviesti",
+          "flow": "Suorita flow",
+          "none": "Älä lähetä mitään"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Tilausvahvistuksen flow",
+        "description": "Flow, joka lähetetään asiakkaalle oletusviestin sijaan, kun tilaus on tehty."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "Torstai",
       "5": "Perjantai",
       "6": "Lauantai"
-    }
+    },
+    "sameTimes": "Avaamis- ja sulkemisajan on oltava eri."
   },
   "webshop": {
     "metadataTitle": "Kauppa",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "Linkki ei toimi",
     "invalidLinkDescription": "Se on ehkä vanhentunut. Pyydä kaupalta uusi linkki keskustelussa.",
     "previewBanner": "Esikatselu: näin asiakkaat näkevät sivun. Esikatselusta ei voi tilata.",
+    "previewOrderingOff": "Esikatselu: tilaaminen ei ole käytössä",
     "closed": {
       "orderingUnavailable": "Kauppa ei ota tilauksia vastaan juuri nyt.",
       "outsideOpenHours": "Kauppa on nyt suljettu. Voit silti selata."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "Ostoskorisi on tyhjä.",
     "continueShopping": "Jatka ostoksia",
     "unavailableItems": "{count, plural, one {# tuotetta ei voi tilata juuri nyt} other {# tuotetta ei voi tilata juuri nyt}}",
+    "unavailableNotOrdered": "Niitä ei tilata, ja ne jäävät ostoskoriin.",
     "unavailable": "Ei enää saatavilla",
     "unavailableHint": "Valitse vaihtoehdot uudelleen",
     "deletedProduct": "Poistettu tuote",
@@ -9505,7 +9541,9 @@
       "delivery": "Toimitus",
       "otherFees": "Muut maksut",
       "total": "Yhteensä",
-      "coupon": "Kuponki ({code})"
+      "coupon": "Kuponki ({code})",
+      "title": "Tilauksen yhteenveto",
+      "saved": "Säästät {amount}"
     },
     "belowMinimum": "Vähimmäistilaus on {amount}.",
     "checkOut": "Kassalle",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "Ostoskorisi on tyhjä.",
       "orderShippingTypeUnavailable": "Tämä toimitustapa ei ole käytettävissä.",
       "webshopRatingNotAllowed": "Tätä tilausta ei voi arvioida.",
+      "webshopCartFull": "Ostoskorissa voi olla enintään {maximum} eri tuotetta.",
       "notFound": "Tuote ei ole enää saatavilla.",
       "discountCodeNotFound": "Alennuskoodia ei ole.",
       "discountCodeInactive": "Alennuskoodi ei ole käytössä.",
@@ -9588,15 +9627,38 @@
       "apply": "Käytä",
       "applied": "Alennuskoodi käytössä",
       "automatic": "käytetty automaattisesti",
-      "remove": "Poista alennuskoodi"
-    }
+      "remove": "Poista alennuskoodi",
+      "available": "Koodit, joita voit käyttää",
+      "freeShipping": "Ilmainen toimitus",
+      "bestChoice": "Paras valinta",
+      "expiresOn": "Voimassa {date} asti",
+      "noExpiry": "Ei vanhene",
+      "inUse": "Käytössä",
+      "saves": "Säästä {amount}",
+      "showMore": "{count, plural, one {Näytä # koodi lisää} other {Näytä # koodia lisää}}",
+      "showLess": "Näytä vähemmän",
+      "removeShort": "Poista",
+      "expired": "Vanhentunut",
+      "usedUp": "Käytetty loppuun",
+      "notEligible": "Et ole vielä oikeutettu"
+    },
+    "itemCount": "{count, plural, one {# tuote} other {# tuotetta}}",
+    "relatedProducts": "Saatat pitää myös näistä"
   },
   "webshopLinks": {
     "preview": "Esikatselu",
     "getLink": "Hae linkki",
     "copied": "Linkki kopioitu. Lisää se botin painikkeeseen: jokainen kontakti avaa oman kauppansa.",
     "error": "Linkkiä ei voitu hakea.",
-    "copyError": "Linkkiä ei voitu kopioida."
+    "copyError": "Linkkiä ei voitu kopioida.",
+    "shopLink": {
+      "label": "Kaupan linkki",
+      "hint": "Liitä tämä linkki painikkeeseen kulussa, lähetyksessä tai sekvenssissä. Jokainen sen saava kontakti avaa oman kauppansa ja voi tilata."
+    },
+    "productLink": {
+      "label": "Julkinen URL",
+      "hint": "Kopioi ja liitä URL-osoite kulkuun, lähetykseen tai sekvenssiin. Jokainen sen saava kontakti avaa tämän tuotteen ja voi tilata."
+    }
   },
   "discountCodes": {
     "title": "Kupongit",
@@ -9671,6 +9733,12 @@
       "startDate": "Alkamispäivä",
       "endDate": "Päättymispäivä",
       "isActive": "Aktiivinen"
+    },
+    "rules": {
+      "codeCharacters": "Käytä vain aksentittomia kirjaimia, numeroita, - ja _.",
+      "usageBelowUsed": "Koodia on jo käytetty {count} kertaa; raja ei voi olla pienempi.",
+      "customerConditionRequired": "Lisää vähintään yksi ehto.",
+      "endAfterStart": "Päättymispäivän on oltava alkamispäivän jälkeen."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "Ei tietoja tällä jaksolla",
     "refresh": "Päivitä",
     "change": "{value} %",
-    "noPrevious": "uusi"
+    "noPrevious": "uusi",
+    "otherCurrencyOrders": "{count} muussa valuutassa tehtyä tilausta ei ole mukana näissä luvuissa"
   },
   "responseSla": {
     "label": "Vastaus-SLA",

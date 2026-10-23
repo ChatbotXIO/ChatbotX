@@ -3,6 +3,7 @@
 import type { OrderStatus, ShippingType } from "@chatbotx.io/database/partials"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { buttonVariants } from "@chatbotx.io/ui/components/ui/button"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { CircleCheckIcon } from "lucide-react"
 import Link from "next/link"
 import { useFormatter, useTranslations } from "next-intl"
@@ -64,17 +65,19 @@ export function OrderView({
   const otherFees = order.serviceFeeTotal + order.taxTotal
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-2xl space-y-4">
       {placed ? (
-        <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-900 dark:border-green-900 dark:bg-green-950 dark:text-green-100">
-          <CircleCheckIcon className="mt-0.5 size-5 shrink-0" />
-          <p>{t("orderPlaced")}</p>
+        <div className="fade-in zoom-in-95 flex animate-in flex-col items-center gap-3 rounded-2xl border border-green-200 bg-green-50 p-6 text-center text-green-900 duration-500 dark:border-green-900 dark:bg-green-950 dark:text-green-100">
+          <span className="zoom-in-50 flex size-14 animate-in items-center justify-center rounded-full bg-green-500 fill-mode-both text-white shadow-md delay-150 duration-500 motion-reduce:animate-none">
+            <CircleCheckIcon className="size-8" />
+          </span>
+          <p className="font-medium">{t("orderPlaced")}</p>
         </div>
       ) : null}
 
-      <section className="space-y-3 rounded-lg border bg-card p-4">
+      <section className="space-y-3 rounded-2xl border bg-card p-5 shadow-xs">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="font-semibold text-xl">
+          <h1 className="font-bold text-2xl tracking-tight">
             {t("orderTitle", { number: order.number })}
           </h1>
           <Badge variant={STATUS_VARIANT[order.status]}>
@@ -153,7 +156,7 @@ export function OrderView({
               </span>
             </div>
           ) : null}
-          <div className="flex justify-between font-semibold text-base">
+          <div className="flex justify-between pt-1 font-bold text-lg">
             <span>{t("summary.total")}</span>
             <span className="tabular-nums">{money(order.total)}</span>
           </div>
@@ -162,7 +165,7 @@ export function OrderView({
       </section>
 
       {order.rating ? (
-        <section className="space-y-2 rounded-lg border bg-card p-4">
+        <section className="space-y-2 rounded-2xl border bg-card p-5 shadow-xs">
           <h2 className="font-semibold">{t("yourRating")}</h2>
           <StarRating value={order.rating} />
           {order.ratingComment ? (
@@ -173,7 +176,12 @@ export function OrderView({
       {!order.rating && canRate ? <RateOrderForm orderId={order.id} /> : null}
 
       <Link
-        className={buttonVariants({ variant: "outline", className: "w-full" })}
+        className={cn(
+          buttonVariants({
+            variant: "outline",
+            className: "w-full rounded-full bg-background active:scale-[0.98]",
+          }),
+        )}
         href={shop.href()}
       >
         {t("continueShopping")}

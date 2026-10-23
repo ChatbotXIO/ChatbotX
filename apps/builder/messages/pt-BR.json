@@ -4233,6 +4233,25 @@
       "unknownFieldTarget": "Um campo de contato mapeado não existe mais.",
       "actionReferenceNotFound": "Uma ação faz referência a um fluxo, tag ou campo que não existe mais.",
       "fieldMappingRequired": "Adicione pelo menos um mapeamento de campo."
+    },
+    "form": {
+      "required": "Este campo é obrigatório.",
+      "minLength": "Digite pelo menos {minimum} caracteres.",
+      "maxLength": "Digite no máximo {maximum} caracteres.",
+      "minNumber": "Digite um número de pelo menos {minimum}.",
+      "moreThan": "Digite um número maior que {minimum}.",
+      "maxNumber": "Digite um número de no máximo {maximum}.",
+      "lessThan": "Digite um número menor que {maximum}.",
+      "number": "Digite um número.",
+      "wholeNumber": "Digite um número inteiro.",
+      "minItems": "Escolha pelo menos {minimum}.",
+      "maxItems": "Escolha no máximo {maximum}.",
+      "email": "Digite um e-mail válido.",
+      "url": "Digite um link válido começando com https://.",
+      "format": "Este valor não está no formato correto.",
+      "option": "Escolha uma das opções.",
+      "invalid": "Este valor não é válido.",
+      "checkFields": "Alguns campos precisam ser corrigidos. Veja os marcados em vermelho."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "Custo de entrega",
         "description": "Uma taxa fixa para entregar o pedido no endereço do cliente."
-      }
+      },
+      "defaultCountryNotShipped": "Escolha um dos países de entrega."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "Exigir CEP",
           "description": "O CEP do comprador será coletado durante o checkout."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "Mensagem de confirmação do pedido",
+        "description": "O que o cliente recebe no chat quando faz o pedido. A mensagem padrão mostra os detalhes do pedido no idioma do workspace.",
+        "options": {
+          "default": "Mensagem padrão",
+          "flow": "Executar um fluxo",
+          "none": "Não enviar nada"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Fluxo de confirmação do pedido",
+        "description": "O fluxo enviado ao cliente no lugar da mensagem padrão quando ele faz o pedido."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "Quinta-feira",
       "5": "Sexta-feira",
       "6": "Sábado"
-    }
+    },
+    "sameTimes": "Os horários de abertura e fechamento devem ser diferentes."
   },
   "webshop": {
     "metadataTitle": "Loja",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "Este link não funciona",
     "invalidLinkDescription": "Ele pode ter expirado. Peça um novo link à loja no chat.",
     "previewBanner": "Prévia: é assim que os clientes veem. Não é possível fazer pedidos pela prévia.",
+    "previewOrderingOff": "Prévia: não é possível fazer pedidos",
     "closed": {
       "orderingUnavailable": "A loja não está aceitando pedidos agora.",
       "outsideOpenHours": "A loja está fechada agora. Você ainda pode olhar."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "Seu carrinho está vazio.",
     "continueShopping": "Continuar comprando",
     "unavailableItems": "{count, plural, one {# item não pode ser pedido agora} other {# itens não podem ser pedidos agora}}",
+    "unavailableNotOrdered": "Eles não entram no pedido e continuam no carrinho.",
     "unavailable": "Não está mais disponível",
     "unavailableHint": "Escolha as opções novamente",
     "deletedProduct": "Produto excluído",
@@ -9505,7 +9541,9 @@
       "delivery": "Entrega",
       "otherFees": "Outras taxas",
       "total": "Total",
-      "coupon": "Cupom ({code})"
+      "coupon": "Cupom ({code})",
+      "title": "Resumo do pedido",
+      "saved": "Você economiza {amount}"
     },
     "belowMinimum": "O pedido mínimo é de {amount}.",
     "checkOut": "Finalizar compra",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "Seu carrinho está vazio.",
       "orderShippingTypeUnavailable": "Esta opção de entrega não está disponível.",
       "webshopRatingNotAllowed": "Este pedido não pode ser avaliado.",
+      "webshopCartFull": "Seu carrinho pode conter no máximo {maximum} itens diferentes.",
       "notFound": "Este produto não está mais disponível.",
       "discountCodeNotFound": "Este código de desconto não existe.",
       "discountCodeInactive": "Este código não está ativo.",
@@ -9588,15 +9627,38 @@
       "apply": "Aplicar",
       "applied": "Código aplicado",
       "automatic": "aplicado automaticamente",
-      "remove": "Remover código"
-    }
+      "remove": "Remover código",
+      "available": "Cupons que você pode usar",
+      "freeShipping": "Frete grátis",
+      "bestChoice": "Melhor escolha",
+      "expiresOn": "Válido até {date}",
+      "noExpiry": "Sem validade",
+      "inUse": "Em uso",
+      "saves": "Economize {amount}",
+      "showMore": "{count, plural, one {Ver mais # cupom} other {Ver mais # cupons}}",
+      "showLess": "Ver menos",
+      "removeShort": "Remover",
+      "expired": "Expirado",
+      "usedUp": "Esgotado",
+      "notEligible": "Ainda não elegível"
+    },
+    "itemCount": "{count, plural, one {# item} other {# itens}}",
+    "relatedProducts": "Você também pode gostar"
   },
   "webshopLinks": {
     "preview": "Pré-visualizar",
     "getLink": "Obter link",
     "copied": "Link copiado. Coloque-o em um botão do bot: cada contato abre a própria loja.",
     "error": "Não foi possível obter o link.",
-    "copyError": "Não foi possível copiar o link."
+    "copyError": "Não foi possível copiar o link.",
+    "shopLink": {
+      "label": "Link da loja",
+      "hint": "Cole este link em um botão de um fluxo, transmissão ou sequência. Cada contato que o receber abre a própria loja e pode fazer pedidos."
+    },
+    "productLink": {
+      "label": "URL Pública",
+      "hint": "Copie e cole a URL no seu fluxo, transmissão ou sequência. Cada contato que a receber abre este produto e pode fazer o pedido."
+    }
   },
   "discountCodes": {
     "title": "Cupons",
@@ -9671,6 +9733,12 @@
       "startDate": "Data de início",
       "endDate": "Data de término",
       "isActive": "Ativo"
+    },
+    "rules": {
+      "codeCharacters": "Use apenas letras sem acento, números, - e _.",
+      "usageBelowUsed": "Este código já foi usado {count} vezes; o limite não pode ser menor.",
+      "customerConditionRequired": "Adicione pelo menos uma condição.",
+      "endAfterStart": "A data de término deve ser depois da data de início."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "Sem dados neste período",
     "refresh": "Atualizar",
     "change": "{value}%",
-    "noPrevious": "novo"
+    "noPrevious": "novo",
+    "otherCurrencyOrders": "{count} pedidos em outras moedas não estão incluídos nestes números"
   },
   "responseSla": {
     "label": "SLA de resposta",

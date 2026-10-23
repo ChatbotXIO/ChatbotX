@@ -6269,6 +6269,25 @@
       "unknownFieldTarget": "已映射的联系人字段已不存在。",
       "actionReferenceNotFound": "某个操作引用了已不存在的流程、标签或字段。",
       "fieldMappingRequired": "请至少添加一个字段映射。"
+    },
+    "form": {
+      "required": "此项为必填项。",
+      "minLength": "请至少输入 {minimum} 个字符。",
+      "maxLength": "最多输入 {maximum} 个字符。",
+      "minNumber": "请输入不小于 {minimum} 的数字。",
+      "moreThan": "请输入大于 {minimum} 的数字。",
+      "maxNumber": "请输入不大于 {maximum} 的数字。",
+      "lessThan": "请输入小于 {maximum} 的数字。",
+      "number": "请输入数字。",
+      "wholeNumber": "请输入整数。",
+      "minItems": "请至少选择 {minimum} 项。",
+      "maxItems": "最多选择 {maximum} 项。",
+      "email": "请输入有效的邮箱地址。",
+      "url": "请输入以 https:// 开头的有效链接。",
+      "format": "该值格式不正确。",
+      "option": "请选择其中一个选项。",
+      "invalid": "该值无效。",
+      "checkFields": "有字段需要修改，请查看标红的字段。"
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "配送费",
         "description": "将订单送到客户地址的固定费用。"
-      }
+      },
+      "defaultCountryNotShipped": "请选择一个配送国家。"
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "要求邮政编码",
           "description": "结账时将收集买家邮政编码。"
         }
+      },
+      "orderConfirmationMode": {
+        "label": "订单确认消息",
+        "description": "客户下单后在聊天中收到的内容。默认消息会以工作区语言列出订单详情。",
+        "options": {
+          "default": "默认消息",
+          "flow": "运行流程",
+          "none": "不发送任何内容"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "订单确认流程",
+        "description": "客户下单后，代替默认消息发送给客户的流程。"
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "星期四",
       "5": "星期五",
       "6": "星期六"
-    }
+    },
+    "sameTimes": "营业时间和打烊时间不能相同。"
   },
   "webshop": {
     "metadataTitle": "商店",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "此链接无效",
     "invalidLinkDescription": "链接可能已过期。请在聊天中向商店索取新链接。",
     "previewBanner": "预览：顾客看到的就是这样。预览中无法下单。",
+    "previewOrderingOff": "预览：无法下单",
     "closed": {
       "orderingUnavailable": "商店暂不接单。",
       "outsideOpenHours": "商店现在不营业，但您仍可浏览。"
@@ -9496,6 +9531,7 @@
     "cartEmpty": "购物车是空的。",
     "continueShopping": "继续购物",
     "unavailableItems": "{count, plural, one {# 件商品暂时无法下单} other {# 件商品暂时无法下单}}",
+    "unavailableNotOrdered": "这些商品不会下单，并会保留在购物车中。",
     "unavailable": "已不再供应",
     "unavailableHint": "请重新选择规格",
     "deletedProduct": "已删除的商品",
@@ -9505,7 +9541,9 @@
       "delivery": "配送费",
       "otherFees": "其他费用",
       "total": "合计",
-      "coupon": "优惠券（{code}）"
+      "coupon": "优惠券（{code}）",
+      "title": "订单摘要",
+      "saved": "为你节省 {amount}"
     },
     "belowMinimum": "最低订单金额为 {amount}。",
     "checkOut": "去结算",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "购物车是空的。",
       "orderShippingTypeUnavailable": "该配送方式不可用。",
       "webshopRatingNotAllowed": "该订单无法评价。",
+      "webshopCartFull": "购物车最多可放 {maximum} 种不同的商品。",
       "notFound": "该商品已下架。",
       "discountCodeNotFound": "该折扣码不存在。",
       "discountCodeInactive": "该折扣码未启用。",
@@ -9588,15 +9627,38 @@
       "apply": "使用",
       "applied": "折扣码已使用",
       "automatic": "已自动使用",
-      "remove": "移除折扣码"
-    }
+      "remove": "移除折扣码",
+      "available": "可用的优惠码",
+      "freeShipping": "免运费",
+      "bestChoice": "最优选择",
+      "expiresOn": "有效期至 {date}",
+      "noExpiry": "长期有效",
+      "inUse": "使用中",
+      "saves": "省 {amount}",
+      "showMore": "{count, plural, one {再显示 # 个优惠码} other {再显示 # 个优惠码}}",
+      "showLess": "收起",
+      "removeShort": "移除",
+      "expired": "已过期",
+      "usedUp": "已领完",
+      "notEligible": "暂不符合条件"
+    },
+    "itemCount": "{count, plural, one {# 件} other {# 件}}",
+    "relatedProducts": "猜你喜欢"
   },
   "webshopLinks": {
     "preview": "预览",
     "getLink": "获取链接",
     "copied": "链接已复制。放到机器人按钮上，每位联系人都会打开自己的商店。",
     "error": "无法获取链接。",
-    "copyError": "无法复制链接。"
+    "copyError": "无法复制链接。",
+    "shopLink": {
+      "label": "商店链接",
+      "hint": "将此链接粘贴到流程、群发或序列中的按钮里。收到链接的每位联系人都会打开自己的商店并可以下单。"
+    },
+    "productLink": {
+      "label": "公开链接",
+      "hint": "复制该链接并粘贴到流程、群发或序列中。收到链接的每位联系人都会打开此商品并可以下单。"
+    }
   },
   "discountCodes": {
     "title": "优惠券",
@@ -9671,6 +9733,12 @@
       "startDate": "开始日期",
       "endDate": "结束日期",
       "isActive": "启用"
+    },
+    "rules": {
+      "codeCharacters": "只能使用不带重音的字母、数字、- 和 _。",
+      "usageBelowUsed": "该优惠码已使用 {count} 次，限制不能低于此数。",
+      "customerConditionRequired": "请至少添加一个条件。",
+      "endAfterStart": "结束日期必须晚于开始日期。"
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "此期间无数据",
     "refresh": "刷新",
     "change": "{value}%",
-    "noPrevious": "新增"
+    "noPrevious": "新增",
+    "otherCurrencyOrders": "其他币种的 {count} 笔订单未计入这些数据"
   },
   "responseSla": {
     "label": "响应 SLA",

@@ -1,4 +1,7 @@
-import { productCategoryRepository } from "@chatbotx.io/database/repositories"
+import {
+  productCategoryRepository,
+  productRepository,
+} from "@chatbotx.io/database/repositories"
 import {
   SHOP_PREVIEW_TOKEN_TTL_MS,
   SHOP_TOKEN_TTL_MS,
@@ -19,6 +22,8 @@ export type WebshopLinkTarget = {
   productId?: string | null
   /** Opens the shop searching for this. */
   keyword?: string | null
+  /** Opens the shop listing just these products (a message's search hits). */
+  productIds?: string[] | null
   vendorId?: string | null
   categoryId?: string | null
 }
@@ -53,6 +58,9 @@ export const buildWebshopUrl = (
       ? [`category=${encodeURIComponent(input.categoryId)}`]
       : []),
     ...(input.keyword ? [`q=${encodeURIComponent(input.keyword)}`] : []),
+    ...(input.productIds?.length
+      ? [`products=${input.productIds.map(encodeURIComponent).join(",")}`]
+      : []),
   ].join("&")
   return `${base}${path}?${query}`
 }
@@ -90,6 +98,15 @@ export const createWebshopLink = async (
     }))
   ) {
     throw notFoundException("Product category does not exist.")
+  }
+  if (
+    input.productId &&
+    !(await productRepository.find({
+      workspaceId: input.workspaceId,
+      productId: input.productId,
+    }))
+  ) {
+    throw notFoundException("Product does not exist.")
   }
   const { appUrl } = await resolveTenantSettings({
     workspaceId: input.workspaceId,

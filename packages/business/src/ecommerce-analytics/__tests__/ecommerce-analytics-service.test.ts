@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   series: vi.fn(),
   topProducts: vi.fn(),
   topVendors: vi.fn(),
+  countOtherCurrencyOrders: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -14,6 +15,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     series: (...args: unknown[]) => mocks.series(...args),
     topProducts: (...args: unknown[]) => mocks.topProducts(...args),
     topVendors: (...args: unknown[]) => mocks.topVendors(...args),
+    countOtherCurrencyOrders: (...args: unknown[]) =>
+      mocks.countOtherCurrencyOrders(...args),
   },
 }))
 
@@ -45,6 +48,7 @@ beforeEach(() => {
   mocks.series.mockResolvedValue([])
   mocks.topProducts.mockResolvedValue([])
   mocks.topVendors.mockResolvedValue([])
+  mocks.countOtherCurrencyOrders.mockResolvedValue(0)
 })
 
 describe("percentChange", () => {
@@ -119,6 +123,20 @@ describe("ecommerceAnalyticsService.getDashboard", () => {
       products: { value: 6, change: 0 },
     })
     expect(dashboard.series).toHaveLength(7)
+  })
+
+  test("reports the period's orders in other currencies, outside every sum", async () => {
+    mocks.summary.mockResolvedValue({ sales: 0, orders: 0, products: 0 })
+    mocks.countOtherCurrencyOrders.mockResolvedValue(3)
+    const dashboard = await ecommerceAnalyticsService.getDashboard({
+      workspaceId: "ws1",
+      from: "2026-10-15",
+      to: "2026-10-21",
+    })
+    expect(dashboard.otherCurrencyOrders).toBe(3)
+    const [[scope]] = mocks.countOtherCurrencyOrders.mock.calls
+    expect(scope).toMatchObject({ workspaceId: "ws1", currency: "USD" })
+    expect(scope.since.toISOString()).toBe("2026-10-14T17:00:00.000Z")
   })
 
   test("one day is charted by hour, the empty hours filled with 0", async () => {

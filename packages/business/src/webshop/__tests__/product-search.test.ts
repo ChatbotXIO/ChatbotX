@@ -23,8 +23,8 @@ vi.mock("../../ecommerce-settings/service", () => ({
 vi.mock("../../platform/settings", () => ({
   resolveTenantSettings: async () => ({ appUrl: "https://app.example" }),
 }))
-vi.mock("../../order/contact-language", () => ({
-  resolveContactMessageLanguage: async () => "vi",
+vi.mock("../../order/message-language", () => ({
+  resolveCustomerMessageLanguage: async () => "vi",
 }))
 
 const { buildProductSearchReply, matchProductNames, normalizeForSearch } =
@@ -100,12 +100,12 @@ describe("buildProductSearchReply", () => {
     })
   })
 
-  test("other channels get the names and a button opening the search", async () => {
+  test("other channels get the names and a button opening the one product found", async () => {
     const step = await buildProductSearchReply({
       workspaceId: "ws1",
       contactId: "c1",
       channel: "whatsapp",
-      text: "quần jean",
+      text: "cho mình xem quần jean nhé",
     })
     expect(step).toMatchObject({
       stepType: "sendText",
@@ -114,7 +114,25 @@ describe("buildProductSearchReply", () => {
         expect.objectContaining({
           label: "Xem sản phẩm",
           beforeStep: expect.objectContaining({
-            url: "https://app.example/shop/ws1?token={{shop_token}}&q=qu%E1%BA%A7n%20jean",
+            url: "https://app.example/shop/ws1/products/p3?token={{shop_token}}",
+          }),
+        }),
+      ],
+    })
+  })
+
+  test("the button lists the products found, never the message", async () => {
+    const step = await buildProductSearchReply({
+      workspaceId: "ws1",
+      contactId: "c1",
+      channel: "whatsapp",
+      text: "áo thun",
+    })
+    expect(step).toMatchObject({
+      buttons: [
+        expect.objectContaining({
+          beforeStep: expect.objectContaining({
+            url: "https://app.example/shop/ws1?token={{shop_token}}&products=p1,p2",
           }),
         }),
       ],

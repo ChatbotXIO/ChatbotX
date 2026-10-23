@@ -4,6 +4,7 @@ CREATE TYPE "discountMinimumType" AS ENUM('none', 'amount', 'quantity');--> stat
 CREATE TYPE "discountType" AS ENUM('percentage', 'fixedAmount', 'freeShipping');--> statement-breakpoint
 CREATE TYPE "checkoutMode" AS ENUM('default', 'externalLink', 'flow', 'productPage');--> statement-breakpoint
 CREATE TYPE "currencyPosition" AS ENUM('left', 'leftSpace', 'right', 'rightSpace');--> statement-breakpoint
+CREATE TYPE "orderConfirmationMode" AS ENUM('default', 'flow', 'none');--> statement-breakpoint
 CREATE TYPE "productImageSize" AS ENUM('bigSquare', 'mediumRectangle');--> statement-breakpoint
 CREATE TYPE "shippingMode" AS ENUM('none', 'delivery', 'pickup', 'deliveryAndPickup');--> statement-breakpoint
 CREATE TYPE "webshopProductView" AS ENUM('list', 'listWithoutImage', 'card', 'cardSquare', 'image', 'imageSquare');--> statement-breakpoint
@@ -95,6 +96,8 @@ CREATE TABLE "EcommerceSettings" (
 	"checkoutLink" text,
 	"checkoutFlowId" bigint,
 	"minimumOrderValue" numeric(19,4) NOT NULL,
+	"orderConfirmationMode" "orderConfirmationMode" DEFAULT 'default'::"orderConfirmationMode" NOT NULL,
+	"orderConfirmationFlowId" bigint,
 	"requireName" boolean NOT NULL,
 	"requireEmail" boolean NOT NULL,
 	"requirePhone" boolean NOT NULL,
@@ -133,6 +136,7 @@ CREATE TABLE "OrderItem" (
 	"vendorName" text,
 	"unitPrice" numeric(19,4) NOT NULL,
 	"quantity" integer NOT NULL,
+	"stockTaken" integer DEFAULT 0 NOT NULL,
 	"discountPercent" numeric(19,4) NOT NULL,
 	"taxPercent" numeric(19,4) NOT NULL,
 	"discountTotal" numeric(19,4) NOT NULL,
@@ -227,6 +231,7 @@ CREATE UNIQUE INDEX "EcommerceSettings_workspaceId_key" ON "EcommerceSettings" (
 CREATE INDEX "EcommerceSettings_openHoursId_idx" ON "EcommerceSettings" ("openHoursId");--> statement-breakpoint
 CREATE INDEX "EcommerceSettings_abandonedCartFlowId_idx" ON "EcommerceSettings" ("abandonedCartFlowId");--> statement-breakpoint
 CREATE INDEX "EcommerceSettings_checkoutFlowId_idx" ON "EcommerceSettings" ("checkoutFlowId");--> statement-breakpoint
+CREATE INDEX "EcommerceSettings_orderConfirmationFlowId_idx" ON "EcommerceSettings" ("orderConfirmationFlowId");--> statement-breakpoint
 CREATE UNIQUE INDEX "DiscountCodeRedemption_orderId_key" ON "DiscountCodeRedemption" ("orderId");--> statement-breakpoint
 CREATE INDEX "DiscountCodeRedemption_discountCodeId_contactId_idx" ON "DiscountCodeRedemption" ("discountCodeId","contactId");--> statement-breakpoint
 CREATE INDEX "DiscountCodeRedemption_contactId_idx" ON "DiscountCodeRedemption" ("contactId");--> statement-breakpoint
@@ -263,6 +268,7 @@ ALTER TABLE "EcommerceSettings" ADD CONSTRAINT "EcommerceSettings_workspaceId_Wo
 ALTER TABLE "EcommerceSettings" ADD CONSTRAINT "EcommerceSettings_openHoursId_EcommerceOpenHours_id_fkey" FOREIGN KEY ("openHoursId") REFERENCES "EcommerceOpenHours"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "EcommerceSettings" ADD CONSTRAINT "EcommerceSettings_abandonedCartFlowId_Flow_id_fkey" FOREIGN KEY ("abandonedCartFlowId") REFERENCES "Flow"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "EcommerceSettings" ADD CONSTRAINT "EcommerceSettings_checkoutFlowId_Flow_id_fkey" FOREIGN KEY ("checkoutFlowId") REFERENCES "Flow"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
+ALTER TABLE "EcommerceSettings" ADD CONSTRAINT "EcommerceSettings_orderConfirmationFlowId_Flow_id_fkey" FOREIGN KEY ("orderConfirmationFlowId") REFERENCES "Flow"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "DiscountCodeRedemption" ADD CONSTRAINT "DiscountCodeRedemption_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "DiscountCodeRedemption" ADD CONSTRAINT "DiscountCodeRedemption_discountCodeId_DiscountCode_id_fkey" FOREIGN KEY ("discountCodeId") REFERENCES "DiscountCode"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "DiscountCodeRedemption" ADD CONSTRAINT "DiscountCodeRedemption_orderId_Order_id_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint

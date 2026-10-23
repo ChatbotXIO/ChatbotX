@@ -1,4 +1,4 @@
-import type { ShippingType } from "@chatbotx.io/database/partials"
+import type { DiscountType, ShippingType } from "@chatbotx.io/database/partials"
 
 export type CartLineView = {
   productId?: string | null
@@ -30,7 +30,22 @@ export type CartData = {
     total: number
   }
   enteredDiscountCode: string | null
-  discount: { code: string; amount: number; automatic: boolean } | null
+  discount: {
+    code: string
+    amount: number
+    discountType: DiscountType
+    automatic: boolean
+  } | null
+  /** Typed codes this cart could use, to pick from. */
+  availableDiscounts: Array<{
+    code: string
+    discountType: DiscountType
+    discountValue: number
+    amount: number
+    endsAt: Date | null
+    /** Anything but `available` is shown greyed out and cannot be picked. */
+    status: "available" | "expired" | "usedUp" | "notEligible"
+  }>
   discountError: { code: string; data?: Record<string, string | number> } | null
   belowMinimum: number | null
   shippingType: ShippingType | null

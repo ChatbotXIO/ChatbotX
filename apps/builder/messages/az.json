@@ -4936,6 +4936,25 @@
       "unknownFieldTarget": "Uyğunlaşdırılmış kontakt sahəsi artıq mövcud deyil.",
       "actionReferenceNotFound": "Əməliyyat artıq mövcud olmayan axına, etiketə və ya sahəyə istinad edir.",
       "fieldMappingRequired": "Ən azı bir sahə uyğunlaşdırması əlavə edin."
+    },
+    "form": {
+      "required": "Bu sahə tələb olunur.",
+      "minLength": "Ən azı {minimum} simvol daxil edin.",
+      "maxLength": "Ən çox {maximum} simvol daxil edin.",
+      "minNumber": "Ən azı {minimum} olan rəqəm daxil edin.",
+      "moreThan": "{minimum}-dən böyük rəqəm daxil edin.",
+      "maxNumber": "Ən çox {maximum} olan rəqəm daxil edin.",
+      "lessThan": "{maximum}-dən kiçik rəqəm daxil edin.",
+      "number": "Rəqəm daxil edin.",
+      "wholeNumber": "Tam ədəd daxil edin.",
+      "minItems": "Ən azı {minimum} seçin.",
+      "maxItems": "Ən çox {maximum} seçin.",
+      "email": "Etibarlı e-poçt ünvanı daxil edin.",
+      "url": "https:// ilə başlayan etibarlı keçid daxil edin.",
+      "format": "Bu dəyər düzgün formatda deyil.",
+      "option": "Seçimlərdən birini seçin.",
+      "invalid": "Bu dəyər etibarlı deyil.",
+      "checkFields": "Bəzi sahələr düzəldilməlidir. Qırmızı ilə işarələnənlərə baxın."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "Çatdırılma xərci",
         "description": "Sifarişi müştərinin ünvanına çatdırmaq üçün sabit qiymət."
-      }
+      },
+      "defaultCountryNotShipped": "Çatdırılma ölkələrindən birini seçin."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "Poçt indeksini tələb et",
           "description": "Alıcının poçt indeksi ödəniş zamanı toplanacaq."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "Sifariş təsdiqi mesajı",
+        "description": "Sifariş veriləndə müştərinin söhbətdə aldığı. Standart mesaj sifariş təfərrüatlarını iş sahəsinin dilində göstərir.",
+        "options": {
+          "default": "Standart mesaj",
+          "flow": "Axın işə sal",
+          "none": "Heç nə göndərmə"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Sifariş təsdiqi axını",
+        "description": "Sifariş veriləndə standart mesajın əvəzinə müştəriyə göndərilən axın."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "Cümə axşamı",
       "5": "Cümə",
       "6": "Şənbə"
-    }
+    },
+    "sameTimes": "Açılış və bağlanış vaxtı fərqli olmalıdır."
   },
   "webshop": {
     "metadataTitle": "Mağaza",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "Bu keçid işləmir",
     "invalidLinkDescription": "Vaxtı bitmiş ola bilər. Söhbətdə mağazadan yeni keçid istəyin.",
     "previewBanner": "Önizləmə: müştərilər bunu görür. Önizləmədən sifariş vermək olmur.",
+    "previewOrderingOff": "Önizləmə: sifariş bağlıdır",
     "closed": {
       "orderingUnavailable": "Mağaza hazırda sifariş qəbul etmir.",
       "outsideOpenHours": "Mağaza hazırda bağlıdır. Yenə də baxa bilərsiniz."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "Səbətiniz boşdur.",
     "continueShopping": "Alış-verişə davam et",
     "unavailableItems": "{count, plural, one {# məhsulu indi sifariş etmək olmur} other {# məhsulu indi sifariş etmək olmur}}",
+    "unavailableNotOrdered": "Onlar sifarişə daxil edilməyəcək və səbətdə qalacaq.",
     "unavailable": "Artıq mövcud deyil",
     "unavailableHint": "Seçimləri yenidən edin",
     "deletedProduct": "Silinmiş məhsul",
@@ -9505,7 +9541,9 @@
       "delivery": "Çatdırılma",
       "otherFees": "Digər ödənişlər",
       "total": "Cəmi",
-      "coupon": "Kupon ({code})"
+      "coupon": "Kupon ({code})",
+      "title": "Sifarişin xülasəsi",
+      "saved": "{amount} qənaət edirsiniz"
     },
     "belowMinimum": "Minimum sifariş {amount} təşkil edir.",
     "checkOut": "Sifarişi rəsmiləşdir",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "Səbətiniz boşdur.",
       "orderShippingTypeUnavailable": "Bu çatdırılma üsulu mövcud deyil.",
       "webshopRatingNotAllowed": "Bu sifarişi qiymətləndirmək olmur.",
+      "webshopCartFull": "Səbətinizdə ən çox {maximum} fərqli məhsul ola bilər.",
       "notFound": "Bu məhsul artıq mövcud deyil.",
       "discountCodeNotFound": "Bu endirim kodu yoxdur.",
       "discountCodeInactive": "Bu endirim kodu aktiv deyil.",
@@ -9588,15 +9627,38 @@
       "apply": "Tətbiq et",
       "applied": "Endirim kodu tətbiq olundu",
       "automatic": "avtomatik tətbiq olunub",
-      "remove": "Endirim kodunu sil"
-    }
+      "remove": "Endirim kodunu sil",
+      "available": "İstifadə edə biləcəyiniz kodlar",
+      "freeShipping": "Pulsuz çatdırılma",
+      "bestChoice": "Ən yaxşı seçim",
+      "expiresOn": "Bitmə tarixi: {date}",
+      "noExpiry": "Müddətsiz",
+      "inUse": "İstifadədədir",
+      "saves": "{amount} endirim",
+      "showMore": "{count, plural, one {Daha # kod göstər} other {Daha # kod göstər}}",
+      "showLess": "Daha az göstər",
+      "removeShort": "Sil",
+      "expired": "Müddəti bitib",
+      "usedUp": "Tükənib",
+      "notEligible": "Hələ uyğun deyil"
+    },
+    "itemCount": "{count, plural, one {# məhsul} other {# məhsul}}",
+    "relatedProducts": "Bunlar da xoşunuza gələ bilər"
   },
   "webshopLinks": {
     "preview": "Önizləmə",
     "getLink": "Keçidi al",
     "copied": "Keçid kopyalandı. Onu bot düyməsinə qoyun: hər kontakt öz mağazasını açacaq.",
     "error": "Keçidi almaq mümkün olmadı.",
-    "copyError": "Keçidi kopyalamaq mümkün olmadı."
+    "copyError": "Keçidi kopyalamaq mümkün olmadı.",
+    "shopLink": {
+      "label": "Mağaza linki",
+      "hint": "Bu linki axın, yayım və ya ardıcıllıqdakı düyməyə yapışdırın. Onu alan hər kontakt öz mağazasını açır və sifariş verə bilir."
+    },
+    "productLink": {
+      "label": "İctimai URL",
+      "hint": "Linki kopyalayıb axına, yayıma və ya ardıcıllığa yapışdırın. Onu alan hər kontakt bu məhsulu açır və sifariş verə bilir."
+    }
   },
   "discountCodes": {
     "title": "Kuponlar",
@@ -9671,6 +9733,12 @@
       "startDate": "Başlama tarixi",
       "endDate": "Bitmə tarixi",
       "isActive": "Aktiv"
+    },
+    "rules": {
+      "codeCharacters": "Yalnız işarəsiz hərflər, rəqəmlər, - və _ istifadə edin.",
+      "usageBelowUsed": "Bu kod artıq {count} dəfə istifadə olunub; limit daha az ola bilməz.",
+      "customerConditionRequired": "Ən azı bir şərt əlavə edin.",
+      "endAfterStart": "Bitmə tarixi başlama tarixindən sonra olmalıdır."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "Bu dövrdə məlumat yoxdur",
     "refresh": "Yenilə",
     "change": "{value}%",
-    "noPrevious": "yeni"
+    "noPrevious": "yeni",
+    "otherCurrencyOrders": "Digər valyutalarda olan {count} sifariş bu göstəricilərə daxil edilməyib"
   },
   "responseSla": {
     "label": "Cavab SLA",

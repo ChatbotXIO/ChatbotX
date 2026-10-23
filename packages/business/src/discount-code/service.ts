@@ -73,6 +73,62 @@ export type AppliedDiscount = {
   amount: number
 }
 
+/**
+ * Whether a code the cart lists can be picked: `expired` (its end date
+ * passed), `usedUp` (no uses left, or this customer's one use spent) and
+ * `notEligible` (for customers matching a filter this one does not) are
+ * shown greyed out.
+ */
+export type AvailableDiscountStatus =
+  | "available"
+  | "expired"
+  | "usedUp"
+  | "notEligible"
+
+/** A code the cart offers the customer, with what it would take off. */
+export type AvailableDiscount = {
+  code: string
+  discountType: DiscountType
+  discountValue: number
+  /** What it takes off this order; 0 unless `available`. */
+  amount: number
+  /** Null never ends. */
+  endsAt: Date | null
+  status: AvailableDiscountStatus
+}
+
+/** The refusals that keep a listed code on the cart, greyed out. */
+const UNAVAILABLE_STATUS_BY_ERROR: Partial<
+  Record<string, Exclude<AvailableDiscountStatus, "available">>
+> = {
+  discountCodeExpired: "expired",
+  discountCodeUsageLimitReached: "usedUp",
+  discountCodeAlreadyUsed: "usedUp",
+  discountCodeNotEligible: "notEligible",
+}
+
+/** Enough to choose from without crowding the cart. */
+const MAX_OFFERED_CODES = 20
+
+const endTime = (discount: AvailableDiscount) =>
+  discount.endsAt?.getTime() ?? Number.POSITIVE_INFINITY
+
+/**
+ * Usable codes first — most taken off, then soonest to end — and the
+ * greyed-out ones after, latest ended first.
+ */
+const compareListedDiscounts = (a: AvailableDiscount, b: AvailableDiscount) => {
+  const aUsable = a.status === "available"
+  const bUsable = b.status === "available"
+  if (aUsable !== bUsable) {
+    return aUsable ? -1 : 1
+  }
+  if (aUsable) {
+    return b.amount - a.amount || endTime(a) - endTime(b)
+  }
+  return endTime(b) - endTime(a)
+}
+
 const CODE_PATTERN = /^[A-Za-z0-9_-]{3,64}$/
 // No 0/O or 1/I/l, so a code read aloud or off a screen is typed right.
 const GENERATED_ALPHABET =
@@ -195,7 +251,22 @@ class DiscountCodeService extends BaseService {
     data: Partial<DiscountCodeInput>
   }) {
     const current = await this.get(input)
-    const values = normalize({ ...toInput(current), ...input.data })
+    const merged = { ...toInput(current), ...input.data }
+    // Products deleted since the last save are dropped quietly when the caller
+    // does not send a product list, so an unrelated edit is not refused.
+    if (
+      input.data.productIds === undefined &&
+      merged.appliesTo === "products" &&
+      merged.productIds.length > 0
+    ) {
+      const stillThere = await productRepository.findForOrder({
+        workspaceId: input.workspaceId,
+        productIds: merged.productIds,
+      })
+      const existingIds = new Set(stillThere.map((product) => product.id))
+      merged.productIds = merged.productIds.filter((id) => existingIds.has(id))
+    }
+    const values = normalize(merged)
     await this.assertValid(input.workspaceId, values, current.usedCount)
     try {
       const row = await discountCodeRepository.update({
@@ -220,6 +291,16 @@ class DiscountCodeService extends BaseService {
     discountCodeId: string
     isActive: boolean
   }) {
+    // A code switched off because its products or category were deleted
+    // applies to nothing — it is fixed through `update` before it can be on.
+    if (input.isActive) {
+      const current = await this.get(input)
+      await this.assertValid(
+        input.workspaceId,
+        normalize(toInput(current)),
+        current.usedCount,
+      )
+    }
     const row = await discountCodeRepository.update({
       workspaceId: input.workspaceId,
       discountCodeId: input.discountCodeId,
@@ -309,6 +390,47 @@ class DiscountCodeService extends BaseService {
       }
     }
     return null
+  }
+
+  /**
+   * The typed codes the cart lists (see `discountCodeRepository.listOffered`),
+   * each priced against this order. An ended, used-up or not-for-this-customer
+   * code stays, marked `expired` / `usedUp` / `notEligible`; one that would
+   * take nothing off or does not fit the order otherwise is left out. Usable codes first, most taken off first,
+   * then soonest to end; the greyed-out ones after, latest ended first.
+   */
+  async listAvailable(
+    order: DiscountOrderContext & { now?: Date },
+  ): Promise<AvailableDiscount[]> {
+    const now = order.now ?? new Date()
+    const candidates = await discountCodeRepository.listOffered({
+      workspaceId: order.workspaceId,
+      now,
+      limit: MAX_OFFERED_CODES,
+    })
+    const listed: AvailableDiscount[] = []
+    for (const candidate of candidates) {
+      const listing = {
+        code: candidate.code,
+        discountType: candidate.discountType,
+        discountValue: candidate.discountValue,
+        endsAt: candidate.endsAt,
+      }
+      const applied = await this.price(candidate, order, now).catch(
+        (error: unknown) => {
+          if (error instanceof ChatbotXException) {
+            return UNAVAILABLE_STATUS_BY_ERROR[error.code] ?? null
+          }
+          throw error
+        },
+      )
+      if (typeof applied === "string") {
+        listed.push({ ...listing, amount: 0, status: applied })
+      } else if (applied && applied.amount > 0) {
+        listed.push({ ...listing, amount: applied.amount, status: "available" })
+      }
+    }
+    return listed.sort(compareListedDiscounts)
   }
 
   /** Counts the use for the order; call after `resolve` in the same `tx`. */

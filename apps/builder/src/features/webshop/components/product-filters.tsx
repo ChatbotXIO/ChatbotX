@@ -8,10 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@chatbotx.io/ui/components/ui/select"
-import { SearchIcon } from "lucide-react"
+import { Loader2Icon, SearchIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { type FormEvent, useState } from "react"
+import { type FormEvent, useState, useTransition } from "react"
 import { useShop } from "./shop-provider"
 
 const ALL = "all"
@@ -36,19 +36,22 @@ export function ProductFilters({
   const shop = useShop()
   const router = useRouter()
   const [search, setSearch] = useState(keyword)
+  const [isPending, startTransition] = useTransition()
 
   const go = (next: {
     keyword?: string
     category?: string | null
     vendor?: string | null
   }) => {
-    router.push(
-      shop.href("", {
-        q: next.keyword ?? search,
-        category: next.category === undefined ? categoryId : next.category,
-        vendor: next.vendor === undefined ? vendorId : next.vendor,
-      }),
-    )
+    startTransition(() => {
+      router.push(
+        shop.href("", {
+          q: next.keyword ?? search,
+          category: next.category === undefined ? categoryId : next.category,
+          vendor: next.vendor === undefined ? vendorId : next.vendor,
+        }),
+      )
+    })
   }
 
   const submit = (event: FormEvent) => {
@@ -68,10 +71,14 @@ export function ProductFilters({
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
       <form className="relative flex-1" onSubmit={submit}>
-        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        {isPending ? (
+          <Loader2Icon className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 animate-spin text-primary" />
+        ) : (
+          <SearchIcon className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+        )}
         <Input
           aria-label={t("searchPlaceholder")}
-          className="pl-9"
+          className="h-10 rounded-full bg-background pl-10 shadow-xs transition-shadow focus-visible:shadow-md"
           onChange={(event) => setSearch(event.target.value)}
           placeholder={t("searchPlaceholder")}
           type="search"
@@ -80,12 +87,22 @@ export function ProductFilters({
       </form>
       {orderedCategories.length > 0 ? (
         <Select
+          items={[
+            { value: ALL, label: t("allCategories") },
+            ...orderedCategories.map((category) => ({
+              value: category.id,
+              label: category.name,
+            })),
+          ]}
           onValueChange={(value) =>
             go({ category: value === ALL ? null : String(value) })
           }
           value={categoryId ?? ALL}
         >
-          <SelectTrigger aria-label={t("categories")} className="sm:w-48">
+          <SelectTrigger
+            aria-label={t("categories")}
+            className="h-10 rounded-full bg-background shadow-xs sm:w-48"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -102,12 +119,22 @@ export function ProductFilters({
       ) : null}
       {vendors.length > 0 ? (
         <Select
+          items={[
+            { value: ALL, label: t("allVendors") },
+            ...vendors.map((vendor) => ({
+              value: vendor.id,
+              label: vendor.name,
+            })),
+          ]}
           onValueChange={(value) =>
             go({ vendor: value === ALL ? null : String(value) })
           }
           value={vendorId ?? ALL}
         >
-          <SelectTrigger aria-label={t("vendors")} className="sm:w-48">
+          <SelectTrigger
+            aria-label={t("vendors")}
+            className="h-10 rounded-full bg-background shadow-xs sm:w-48"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

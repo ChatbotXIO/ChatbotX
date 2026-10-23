@@ -85,18 +85,53 @@ describe("runShopAction", () => {
     )
   })
 
-  test("a preview link cannot act", async () => {
-    verifyShopToken.mockResolvedValue({
-      mode: "preview",
-      workspaceId: "11",
-      expiresAt: Date.now() + 60_000,
+  describe("a preview link", () => {
+    beforeEach(() => {
+      verifyShopToken.mockResolvedValue({
+        mode: "preview",
+        workspaceId: "11",
+        expiresAt: Date.now() + 60_000,
+      })
     })
-    const operation = vi.fn()
-    await expect(runShopAction(input, operation)).resolves.toEqual({
-      ok: false,
-      error: { code: "webshopPreviewOnly" },
+
+    test("cannot place or rate an order", async () => {
+      const operation = vi.fn()
+      await expect(runShopAction(input, operation)).resolves.toEqual({
+        ok: false,
+        error: { code: "webshopPreviewOnly" },
+      })
+      expect(operation).not.toHaveBeenCalled()
     })
-    expect(operation).not.toHaveBeenCalled()
+
+    test("runs its preview handler for the workspace, never the customer one", async () => {
+      const operation = vi.fn()
+      const onPreview = vi.fn().mockResolvedValue("previewed")
+      await expect(runShopAction(input, operation, onPreview)).resolves.toEqual(
+        { ok: true, data: "previewed" },
+      )
+      expect(onPreview).toHaveBeenCalledWith("11")
+      expect(operation).not.toHaveBeenCalled()
+    })
+
+    test("is rate limited too", async () => {
+      checkGuestRateLimit.mockResolvedValue({ limited: true, retryAfter: 30 })
+      const onPreview = vi.fn()
+      await expect(runShopAction(input, vi.fn(), onPreview)).resolves.toEqual({
+        ok: false,
+        error: { code: "rateLimited" },
+      })
+      expect(onPreview).not.toHaveBeenCalled()
+    })
+
+    test("a store refusal in preview comes back as its code", async () => {
+      const error = new ChatbotXException("full", "webshopCartFull")
+      await expect(
+        runShopAction(input, vi.fn(), () => Promise.reject(error)),
+      ).resolves.toMatchObject({
+        ok: false,
+        error: { code: "webshopCartFull" },
+      })
+    })
   })
 
   test("too many calls are refused", async () => {

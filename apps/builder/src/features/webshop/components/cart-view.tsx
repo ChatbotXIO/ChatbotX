@@ -3,44 +3,71 @@
 import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  BadgePercentIcon,
   ExternalLinkIcon,
-  ImageIcon,
+  type LucideIcon,
   MinusIcon,
   PlusIcon,
+  ReceiptTextIcon,
+  ShoppingBagIcon,
+  TagIcon,
+  TicketPercentIcon,
   Trash2Icon,
+  TriangleAlertIcon,
+  TruckIcon,
+  WalletIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { ShopView } from "../lib/load-shop"
 import { formatShopMoney } from "../lib/shop-money"
 import type { CartData, CartLineView } from "./cart-types"
+import { CheckoutBar, cartSavings } from "./checkout-bar"
 import { CheckoutForm } from "./checkout-form"
 import { DiscountCodeBox } from "./discount-code-box"
 import { trackPixel } from "./facebook-pixel"
+import { ShopImage } from "./shop-image"
 import { useShop } from "./shop-provider"
 import { useCartChange } from "./use-cart-change"
 
+/** One line of the order summary; a saving reads green. */
 function SummaryRow({
+  icon: Icon,
   label,
   value,
-  strong = false,
+  saving = false,
 }: {
+  icon: LucideIcon
   label: string
   value: string
-  strong?: boolean
+  saving?: boolean
 }) {
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between gap-4 text-sm",
-        strong && "font-semibold text-base",
-      )}
-    >
-      <span className={strong ? undefined : "text-muted-foreground"}>
-        {label}
+    <div className="flex items-center justify-between gap-4 text-sm">
+      <span className="flex min-w-0 items-center gap-2.5 text-muted-foreground">
+        <span
+          className={cn(
+            "flex size-7 shrink-0 items-center justify-center rounded-full",
+            saving
+              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              : "bg-muted text-muted-foreground",
+          )}
+        >
+          <Icon className="size-3.5" />
+        </span>
+        <span className="truncate">{label}</span>
       </span>
-      <span className="tabular-nums">{value}</span>
+      <span
+        className={cn(
+          "shrink-0 font-medium tabular-nums",
+          saving && "text-emerald-600 dark:text-emerald-400",
+        )}
+      >
+        {value}
+      </span>
     </div>
   )
 }
@@ -61,29 +88,46 @@ function CartLine({ line }: { line: CartLineView }) {
     }
   }
   return (
-    <li className="flex gap-3 py-3">
-      <div className="size-16 shrink-0 overflow-hidden rounded-md bg-muted">
-        {line.imageUrl ? (
-          // biome-ignore lint/performance/noImgElement: merchant images come from any host
-          <img
+    <li
+      aria-busy={isPending}
+      className={cn(
+        "fade-in flex animate-in gap-3 py-4 transition-opacity duration-200 motion-reduce:animate-none",
+        isPending && "opacity-60",
+      )}
+    >
+      {productId ? (
+        // The same page as the name; hidden from screen readers, which
+        // already reach it through the name.
+        <Link
+          aria-hidden
+          className="group size-20 shrink-0 overflow-hidden rounded-xl"
+          href={shop.href(`/products/${productId}`)}
+          tabIndex={-1}
+        >
+          <ShopImage
             alt=""
-            className="h-full w-full object-cover"
-            height={64}
-            src={line.imageUrl}
-            width={64}
+            className="transition-transform duration-300 group-hover:scale-105"
+            iconClassName="size-6"
+            size={80}
+            src={line.imageUrl ?? null}
           />
-        ) : (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            <ImageIcon className="size-6" />
-          </div>
-        )}
-      </div>
+        </Link>
+      ) : (
+        <div className="size-20 shrink-0 overflow-hidden rounded-xl">
+          <ShopImage
+            alt=""
+            iconClassName="size-6"
+            size={80}
+            src={line.imageUrl ?? null}
+          />
+        </div>
+      )}
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex justify-between gap-2">
           <div className="min-w-0">
             {productId ? (
               <Link
-                className="line-clamp-2 font-medium"
+                className="line-clamp-2 font-medium transition-colors hover:text-primary"
                 href={shop.href(`/products/${productId}`)}
               >
                 {line.name}
@@ -96,15 +140,19 @@ function CartLine({ line }: { line: CartLineView }) {
                 {line.variantLabel}
               </p>
             ) : null}
+            <p className="text-muted-foreground text-xs tabular-nums">
+              {formatShopMoney(line.unitPrice, shop.money)} × {line.quantity}
+            </p>
           </div>
-          <span className="shrink-0 font-medium tabular-nums">
+          <span className="shrink-0 font-semibold tabular-nums">
             {formatShopMoney(line.lineTotal, shop.money)}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <div className="flex items-center rounded-md border">
+          <div className="flex items-center rounded-full border bg-background">
             <Button
               aria-label={t("decrease")}
+              className="size-8 rounded-full"
               disabled={isPending || line.quantity <= 1}
               onClick={() => setQuantity(line.quantity - 1)}
               size="icon"
@@ -117,6 +165,7 @@ function CartLine({ line }: { line: CartLineView }) {
             </span>
             <Button
               aria-label={t("increase")}
+              className="size-8 rounded-full"
               disabled={isPending}
               onClick={() => setQuantity(line.quantity + 1)}
               size="icon"
@@ -127,6 +176,7 @@ function CartLine({ line }: { line: CartLineView }) {
           </div>
           <Button
             aria-label={t("remove")}
+            className="rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             disabled={isPending}
             onClick={() => setQuantity(0)}
             size="icon"
@@ -194,10 +244,13 @@ export function CartView({ cart, shop }: { cart: CartData; shop: ShopView }) {
 
   if (empty) {
     return (
-      <div className="space-y-4 py-16 text-center">
+      <div className="fade-in zoom-in-95 flex animate-in flex-col items-center gap-4 py-20 text-center duration-500">
+        <span className="flex size-20 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <ShoppingBagIcon className="size-9" />
+        </span>
         <p className="text-muted-foreground">{t("cartEmpty")}</p>
         <Link
-          className={buttonVariants({ variant: "outline" })}
+          className={cn(buttonVariants({ className: "rounded-full" }))}
           href={context.href()}
         >
           {t("continueShopping")}
@@ -207,6 +260,8 @@ export function CartView({ cart, shop }: { cart: CartData; shop: ShopView }) {
   }
 
   const otherFees = cart.totals.serviceFeeTotal + cart.totals.taxTotal
+  const savings = cartSavings(cart)
+  const itemCount = cart.lines.reduce((sum, line) => sum + line.quantity, 0)
   const canCheckOut =
     context.open && cart.lines.length > 0 && cart.belowMinimum === null
 
@@ -214,16 +269,33 @@ export function CartView({ cart, shop }: { cart: CartData; shop: ShopView }) {
     trackPixel("InitiateCheckout", {
       currency: shop.money.currency,
       value: cart.totals.total,
-      num_items: cart.lines.reduce((sum, line) => sum + line.quantity, 0),
+      num_items: itemCount,
     })
     setCheckingOut(true)
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="font-semibold text-xl">{t("cart")}</h1>
+    // Room under the content for the pinned checkout bar.
+    <div className="mx-auto max-w-2xl space-y-4 pb-32">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="flex items-center gap-2 font-bold text-2xl tracking-tight">
+          {t("cart")}
+          {itemCount > 0 ? (
+            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-semibold text-primary text-sm">
+              {t("itemCount", { count: itemCount })}
+            </span>
+          ) : null}
+        </h1>
+        <Link
+          className="flex shrink-0 items-center gap-1 text-muted-foreground text-sm transition-colors hover:text-primary"
+          href={context.href()}
+        >
+          <ArrowLeftIcon className="size-4" />
+          {t("continueShopping")}
+        </Link>
+      </div>
       {cart.lines.length > 0 ? (
-        <ul className="divide-y rounded-lg border bg-card px-4">
+        <ul className="divide-y rounded-2xl border bg-card px-4 shadow-xs">
           {cart.lines.map((line) => (
             <CartLine
               key={`${line.productId}-${line.variantId ?? ""}`}
@@ -233,10 +305,16 @@ export function CartView({ cart, shop }: { cart: CartData; shop: ShopView }) {
         </ul>
       ) : null}
       {cart.unavailable.length > 0 ? (
-        <div className="rounded-lg border border-dashed bg-card px-4 py-2">
-          <p className="py-1 font-medium text-sm">
+        <div className="rounded-2xl border border-amber-300 border-dashed bg-amber-50/60 px-4 py-2 dark:border-amber-800 dark:bg-amber-950/30">
+          <p className="flex items-center gap-2 py-1 font-medium text-amber-900 text-sm dark:text-amber-100">
+            <TriangleAlertIcon className="size-4 shrink-0" />
             {t("unavailableItems", { count: cart.unavailable.length })}
           </p>
+          {cart.lines.length > 0 ? (
+            <p className="pb-1 text-amber-900/80 text-xs dark:text-amber-100/80">
+              {t("unavailableNotOrdered")}
+            </p>
+          ) : null}
           <ul className="divide-y">
             {cart.unavailable.map((item) => (
               <UnavailableLine
@@ -250,43 +328,65 @@ export function CartView({ cart, shop }: { cart: CartData; shop: ShopView }) {
 
       {cart.lines.length > 0 ? <DiscountCodeBox cart={cart} /> : null}
 
-      <div className="space-y-2 rounded-lg border bg-card p-4">
+      <section className="space-y-3 rounded-2xl border bg-card p-5 shadow-xs">
+        <h2 className="flex items-center gap-2 font-semibold">
+          <ReceiptTextIcon className="size-5 text-primary" />
+          {t("summary.title")}
+        </h2>
         <SummaryRow
+          icon={ShoppingBagIcon}
           label={t("summary.subtotal")}
           value={money(cart.totals.subtotal)}
         />
         {cart.totals.discountTotal > 0 ? (
           <SummaryRow
+            icon={TagIcon}
             label={t("summary.discount")}
+            saving
             value={money(-cart.totals.discountTotal)}
+          />
+        ) : null}
+        {cart.discount ? (
+          <SummaryRow
+            icon={TicketPercentIcon}
+            label={t("summary.coupon", { code: cart.discount.code })}
+            saving
+            value={money(-cart.discount.amount)}
           />
         ) : null}
         {cart.shippingType === "delivery" ? (
           <SummaryRow
+            icon={TruckIcon}
             label={t("summary.delivery")}
             value={money(cart.totals.shippingTotal)}
           />
         ) : null}
         {otherFees > 0 ? (
-          <SummaryRow label={t("summary.otherFees")} value={money(otherFees)} />
-        ) : null}
-        {cart.discount ? (
           <SummaryRow
-            label={t("summary.coupon", { code: cart.discount.code })}
-            value={money(-cart.discount.amount)}
+            icon={WalletIcon}
+            label={t("summary.otherFees")}
+            value={money(otherFees)}
           />
         ) : null}
-        <SummaryRow
-          label={t("summary.total")}
-          strong
-          value={money(cart.totals.total)}
-        />
+        <div className="flex items-end justify-between gap-4 border-t border-dashed pt-3">
+          <span className="font-semibold">{t("summary.total")}</span>
+          <span className="font-bold text-2xl text-primary tabular-nums">
+            {money(cart.totals.total)}
+          </span>
+        </div>
+        {savings > 0 ? (
+          <p className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500/10 py-2 font-medium text-emerald-700 text-sm dark:text-emerald-300">
+            <BadgePercentIcon className="size-4" />
+            {t("summary.saved", { amount: money(savings) })}
+          </p>
+        ) : null}
         {cart.belowMinimum === null ? null : (
-          <p className="text-destructive text-sm">
+          <p className="flex items-center gap-2 rounded-xl bg-destructive/10 px-3 py-2 text-destructive text-sm">
+            <TriangleAlertIcon className="size-4 shrink-0" />
             {t("belowMinimum", { amount: money(cart.belowMinimum) })}
           </p>
         )}
-      </div>
+      </section>
 
       <CheckoutControl
         canCheckOut={canCheckOut}
@@ -317,6 +417,23 @@ function CheckoutControl({
   onStart: () => void
 }) {
   const t = useTranslations("webshop")
+  const formRef = useRef<HTMLDivElement>(null)
+  const hint =
+    cart.belowMinimum === null
+      ? null
+      : t("belowMinimum", {
+          amount: formatShopMoney(cart.belowMinimum, shop.money),
+        })
+  const buttonClass =
+    "h-12 min-w-36 rounded-full px-6 shadow-md active:scale-95"
+
+  // Starting the checkout brings its form into view.
+  useEffect(() => {
+    if (checkingOut) {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }, [checkingOut])
+
   if (shop.checkout.mode === "externalLink") {
     // The store checks out on its own page; without a usable link there is
     // nowhere to send the customer (the server refuses our checkout too).
@@ -324,40 +441,54 @@ function CheckoutControl({
       return null
     }
     return (
-      <a
-        aria-disabled={!canCheckOut}
-        className={buttonVariants({
-          size: "lg",
-          className: cn(
-            "w-full",
-            !canCheckOut && "pointer-events-none opacity-50",
-          ),
-        })}
-        href={shop.checkout.externalLink}
-        onClick={() =>
-          trackPixel("InitiateCheckout", {
-            currency: shop.money.currency,
-            value: cart.totals.total,
-          })
-        }
-        rel="noopener noreferrer"
-      >
-        <ExternalLinkIcon />
-        {t("checkOut")}
-      </a>
+      <CheckoutBar cart={cart} hint={hint}>
+        <a
+          aria-disabled={!canCheckOut}
+          className={cn(
+            buttonVariants({
+              size: "lg",
+              className: cn(
+                buttonClass,
+                !canCheckOut && "pointer-events-none opacity-50",
+              ),
+            }),
+          )}
+          href={shop.checkout.externalLink}
+          onClick={() =>
+            trackPixel("InitiateCheckout", {
+              currency: shop.money.currency,
+              value: cart.totals.total,
+            })
+          }
+          rel="noopener noreferrer"
+        >
+          {t("checkOut")}
+          <ExternalLinkIcon />
+        </a>
+      </CheckoutBar>
     )
   }
   if (checkingOut) {
-    return <CheckoutForm cart={cart} shop={shop} />
+    return (
+      <div
+        className="fade-in slide-in-from-bottom-2 animate-in scroll-mt-20 duration-300 motion-reduce:animate-none"
+        ref={formRef}
+      >
+        <CheckoutForm cart={cart} shop={shop} />
+      </div>
+    )
   }
   return (
-    <Button
-      className="w-full"
-      disabled={!canCheckOut}
-      onClick={onStart}
-      size="lg"
-    >
-      {t("checkOut")}
-    </Button>
+    <CheckoutBar cart={cart} hint={hint}>
+      <Button
+        className={buttonClass}
+        disabled={!canCheckOut}
+        onClick={onStart}
+        size="lg"
+      >
+        {t("checkOut")}
+        <ArrowRightIcon />
+      </Button>
+    </CheckoutBar>
   )
 }

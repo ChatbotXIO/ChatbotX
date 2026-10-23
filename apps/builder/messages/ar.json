@@ -4254,6 +4254,25 @@
       "unknownFieldTarget": "حقل جهة الاتصال المرتبط لم يعد موجودًا.",
       "actionReferenceNotFound": "يشير أحد الإجراءات إلى مسار أو وسم أو حقل لم يعد موجودًا.",
       "fieldMappingRequired": "أضف ربط حقل واحدًا على الأقل."
+    },
+    "form": {
+      "required": "هذا الحقل مطلوب.",
+      "minLength": "أدخل {minimum} أحرف على الأقل.",
+      "maxLength": "أدخل {maximum} حرفًا كحد أقصى.",
+      "minNumber": "أدخل رقمًا لا يقل عن {minimum}.",
+      "moreThan": "أدخل رقمًا أكبر من {minimum}.",
+      "maxNumber": "أدخل رقمًا لا يزيد عن {maximum}.",
+      "lessThan": "أدخل رقمًا أقل من {maximum}.",
+      "number": "أدخل رقمًا.",
+      "wholeNumber": "أدخل رقمًا صحيحًا.",
+      "minItems": "اختر {minimum} على الأقل.",
+      "maxItems": "اختر {maximum} كحد أقصى.",
+      "email": "أدخل بريدًا إلكترونيًا صالحًا.",
+      "url": "أدخل رابطًا صالحًا يبدأ بـ https://.",
+      "format": "هذه القيمة ليست بالتنسيق الصحيح.",
+      "option": "اختر أحد الخيارات.",
+      "invalid": "هذه القيمة غير صالحة.",
+      "checkFields": "بعض الحقول تحتاج إلى تصحيح. راجع الحقول المميزة باللون الأحمر."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "تكلفة التوصيل",
         "description": "تكلفة ثابتة لتوصيل الطلب إلى عنوان العميل."
-      }
+      },
+      "defaultCountryNotShipped": "اختر إحدى دول الشحن."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "طلب الرمز البريدي",
           "description": "سيتم جمع الرمز البريدي للمشتري أثناء إتمام الشراء."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "رسالة تأكيد الطلب",
+        "description": "ما يتلقاه العميل في المحادثة عند تقديم طلبه. تعرض الرسالة الافتراضية تفاصيل الطلب بلغة مساحة العمل.",
+        "options": {
+          "default": "الرسالة الافتراضية",
+          "flow": "تشغيل تدفق",
+          "none": "عدم إرسال أي شيء"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "تدفق تأكيد الطلب",
+        "description": "التدفق الذي يُرسل إلى العميل بدلًا من الرسالة الافتراضية عند تقديم طلبه."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "الخميس",
       "5": "الجمعة",
       "6": "السبت"
-    }
+    },
+    "sameTimes": "يجب أن يختلف وقت الفتح عن وقت الإغلاق."
   },
   "webshop": {
     "metadataTitle": "المتجر",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "هذا الرابط لا يعمل",
     "invalidLinkDescription": "ربما انتهت صلاحيته. اطلب من المتجر رابطًا جديدًا في المحادثة.",
     "previewBanner": "معاينة: هذا ما يراه العملاء. لا يمكن تقديم الطلبات من المعاينة.",
+    "previewOrderingOff": "معاينة: الطلب غير متاح",
     "closed": {
       "orderingUnavailable": "المتجر لا يستقبل طلبات الآن.",
       "outsideOpenHours": "المتجر مغلق الآن. لا يزال بإمكانك التصفح."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "سلتك فارغة.",
     "continueShopping": "متابعة التسوق",
     "unavailableItems": "{count, plural, one {لا يمكن طلب # منتج الآن} other {لا يمكن طلب # منتجات الآن}}",
+    "unavailableNotOrdered": "لن تُضاف إلى طلبك وستبقى في السلة.",
     "unavailable": "لم يعد متاحًا",
     "unavailableHint": "اختر خياراته من جديد",
     "deletedProduct": "منتج محذوف",
@@ -9505,7 +9541,9 @@
       "delivery": "التوصيل",
       "otherFees": "رسوم أخرى",
       "total": "الإجمالي",
-      "coupon": "القسيمة ({code})"
+      "coupon": "القسيمة ({code})",
+      "title": "ملخص الطلب",
+      "saved": "وفّرت {amount}"
     },
     "belowMinimum": "الحد الأدنى للطلب هو {amount}.",
     "checkOut": "إتمام الشراء",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "سلتك فارغة.",
       "orderShippingTypeUnavailable": "خيار التوصيل هذا غير متاح.",
       "webshopRatingNotAllowed": "لا يمكن تقييم هذا الطلب.",
+      "webshopCartFull": "يمكن أن تحتوي سلتك على {maximum} عنصرًا مختلفًا كحد أقصى.",
       "notFound": "هذا المنتج لم يعد متاحًا.",
       "discountCodeNotFound": "رمز الخصم هذا غير موجود.",
       "discountCodeInactive": "رمز الخصم هذا غير نشط.",
@@ -9588,15 +9627,38 @@
       "apply": "تطبيق",
       "applied": "تم تطبيق رمز الخصم",
       "automatic": "مطبّق تلقائيًا",
-      "remove": "إزالة رمز الخصم"
-    }
+      "remove": "إزالة رمز الخصم",
+      "available": "رموز يمكنك استخدامها",
+      "freeShipping": "شحن مجاني",
+      "bestChoice": "الخيار الأفضل",
+      "expiresOn": "ينتهي في {date}",
+      "noExpiry": "بلا تاريخ انتهاء",
+      "inUse": "قيد الاستخدام",
+      "saves": "توفير {amount}",
+      "showMore": "{count, plural, one {عرض # رمز آخر} other {عرض # رموز أخرى}}",
+      "showLess": "عرض أقل",
+      "removeShort": "إزالة",
+      "expired": "منتهية",
+      "usedUp": "نفدت",
+      "notEligible": "غير مؤهل بعد"
+    },
+    "itemCount": "{count, plural, one {# منتج} other {# منتجات}}",
+    "relatedProducts": "قد يعجبك أيضًا"
   },
   "webshopLinks": {
     "preview": "معاينة",
     "getLink": "الحصول على الرابط",
     "copied": "تم نسخ الرابط. ضعه على زر في البوت: يفتح كل جهة اتصال متجرها الخاص.",
     "error": "تعذر الحصول على الرابط.",
-    "copyError": "تعذر نسخ الرابط."
+    "copyError": "تعذر نسخ الرابط.",
+    "shopLink": {
+      "label": "رابط المتجر",
+      "hint": "الصق هذا الرابط في زر داخل تدفق أو بث أو تسلسل. كل جهة اتصال تتلقاه تفتح متجرها الخاص ويمكنها الطلب."
+    },
+    "productLink": {
+      "label": "الرابط العام",
+      "hint": "انسخ الرابط والصقه في التدفق أو البث أو التسلسل. كل جهة اتصال تتلقاه تفتح هذا المنتج ويمكنها الطلب."
+    }
   },
   "discountCodes": {
     "title": "القسائم",
@@ -9671,6 +9733,12 @@
       "startDate": "تاريخ البدء",
       "endDate": "تاريخ الانتهاء",
       "isActive": "نشط"
+    },
+    "rules": {
+      "codeCharacters": "استخدم الأحرف اللاتينية بدون علامات والأرقام و - و _ فقط.",
+      "usageBelowUsed": "استُخدم هذا الرمز {count} مرة بالفعل؛ لا يمكن أن يكون الحد أقل.",
+      "customerConditionRequired": "أضف شرطًا واحدًا على الأقل.",
+      "endAfterStart": "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "لا توجد بيانات في هذه الفترة",
     "refresh": "تحديث",
     "change": "{value}%",
-    "noPrevious": "جديد"
+    "noPrevious": "جديد",
+    "otherCurrencyOrders": "لا تشمل هذه الأرقام {count} من الطلبات بعملات أخرى"
   },
   "responseSla": {
     "label": "اتفاقية مستوى الخدمة للرد",

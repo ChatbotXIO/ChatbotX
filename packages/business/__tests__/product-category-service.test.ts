@@ -13,15 +13,25 @@ const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   listWithProductCount: vi.fn(),
   update: vi.fn(),
+  deactivateCodes: vi.fn(),
+  fileUnderParent: vi.fn(),
+  fileAsTopLevel: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: { name: "default-db" },
+  // `transaction` is not enumerable so `{ name: "default-db" }` still equals it.
+  db: Object.defineProperty({ name: "default-db" }, "transaction", {
+    value: (run: (tx: unknown) => unknown) => run({ name: "tx" }),
+  }),
   isUniqueViolationError: (...args: unknown[]) =>
     mocks.isUniqueViolationError(...args),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  discountCodeRepository: {
+    deactivateByCategoryIds: (...args: unknown[]) =>
+      mocks.deactivateCodes(...args),
+  },
   productCategoryRepository: {
     create: (...args: unknown[]) => mocks.create(...args),
     createMissingByName: (...args: unknown[]) =>
@@ -36,6 +46,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     listWithProductCount: (...args: unknown[]) =>
       mocks.listWithProductCount(...args),
     update: (...args: unknown[]) => mocks.update(...args),
+    fileUnderParent: (...args: unknown[]) => mocks.fileUnderParent(...args),
+    fileAsTopLevel: (...args: unknown[]) => mocks.fileAsTopLevel(...args),
   },
 }))
 
@@ -176,6 +188,7 @@ describe("productCategoryService depth limit", () => {
     expect(mocks.listChildren).not.toHaveBeenCalled()
     expect(mocks.update).toHaveBeenCalledWith(
       expect.objectContaining({ categoryId: "category-1", name: "Renamed" }),
+      expect.anything(),
     )
   })
 
@@ -189,6 +202,67 @@ describe("productCategoryService depth limit", () => {
 
     expect(mocks.update).toHaveBeenCalledWith(
       expect.objectContaining({ parentId: null }),
+      expect.anything(),
+    )
+  })
+})
+
+describe("productCategoryService re-filing on a level change", () => {
+  test("files products and vendors of a category moved under a parent", async () => {
+    mocks.find.mockResolvedValue({ id: "parent-1", parentId: null })
+    await productCategoryService.update({
+      workspaceId,
+      categoryId: "category-1",
+      parentId: "parent-1",
+    })
+
+    expect(mocks.fileUnderParent).toHaveBeenCalledWith(
+      { workspaceId, categoryId: "category-1", parentId: "parent-1" },
+      { name: "tx" },
+    )
+  })
+
+  test("files them back to the top level on promotion", async () => {
+    mocks.find.mockResolvedValue({ id: "category-1", parentId: "parent-1" })
+    await productCategoryService.update({
+      workspaceId,
+      categoryId: "category-1",
+      parentId: null,
+    })
+
+    expect(mocks.fileAsTopLevel).toHaveBeenCalledWith(
+      { workspaceId, categoryId: "category-1" },
+      { name: "tx" },
+    )
+    expect(mocks.fileUnderParent).not.toHaveBeenCalled()
+  })
+
+  test("leaves references alone when the parent did not change", async () => {
+    mocks.find
+      .mockResolvedValueOnce({ id: "parent-1", parentId: null })
+      .mockResolvedValueOnce({ id: "category-1", parentId: "parent-1" })
+    await productCategoryService.update({
+      workspaceId,
+      categoryId: "category-1",
+      parentId: "parent-1",
+    })
+
+    expect(mocks.fileUnderParent).not.toHaveBeenCalled()
+    expect(mocks.fileAsTopLevel).not.toHaveBeenCalled()
+  })
+})
+
+describe("productCategoryService delete and discount codes", () => {
+  test("deactivates category codes of the category and its children before deleting", async () => {
+    mocks.listChildren.mockResolvedValue([{ id: "child-1" }])
+    await productCategoryService.delete({ workspaceId, categoryId: "cat-1" })
+
+    expect(mocks.deactivateCodes).toHaveBeenCalledWith(
+      { workspaceId, categoryIds: ["cat-1", "child-1"] },
+      { name: "tx" },
+    )
+    expect(mocks.deactivateCodes.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.deleteRow.mock.invocationCallOrder[0] ?? 0,
     )
   })
 })

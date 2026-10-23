@@ -1,4 +1,4 @@
-import type { DatabaseClient } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import {
   ECOMMERCE_SETTINGS_DEFAULTS,
   type EcommerceCheckoutSettings,
@@ -63,6 +63,8 @@ const toSettings = (row: EcommerceSettingsModel): EcommerceSettings => ({
     checkoutLink: row.checkoutLink,
     checkoutFlowId: row.checkoutFlowId,
     minimumOrderValue: row.minimumOrderValue,
+    orderConfirmationMode: row.orderConfirmationMode,
+    orderConfirmationFlowId: row.orderConfirmationFlowId,
     requireName: row.requireName,
     requireEmail: row.requireEmail,
     requirePhone: row.requirePhone,
@@ -157,22 +159,35 @@ class EcommerceSettingsService extends BaseService {
     patch: EcommerceSettingsPatch
   }): Promise<EcommerceSettings> {
     const { workspaceId, patch } = input
-    const current = await this.getFresh(workspaceId)
-    // A key sent as `undefined` keeps the saved value rather than erasing it.
-    const merged = ecommerceSettingsSchema.parse({
-      general: { ...current.general, ...definedOnly(patch.general) },
-      payments: { ...current.payments, ...definedOnly(patch.payments) },
-      shipping: { ...current.shipping, ...definedOnly(patch.shipping) },
-      checkout: { ...current.checkout, ...definedOnly(patch.checkout) },
-    })
-
     await this.assertProFeaturesAllowed(workspaceId, patch)
-    await this.assertCoherent(workspaceId, merged)
 
-    await ecommerceSettingsRepository.upsert({
-      workspaceId,
-      values: toValues(merged),
+    const merged = await db.transaction(async (tx) => {
+      // Create the row if missing, then lock it so two saves of different
+      // groups queue up instead of overwriting each other's merge.
+      await ecommerceSettingsRepository.insertIfMissing(
+        { workspaceId, values: toValues(ECOMMERCE_SETTINGS_DEFAULTS) },
+        tx,
+      )
+      const row = await ecommerceSettingsRepository.findForUpdate(
+        workspaceId,
+        tx,
+      )
+      const current = row ? toSettings(row) : ECOMMERCE_SETTINGS_DEFAULTS
+      // A key sent as `undefined` keeps the saved value rather than erasing it.
+      const next = ecommerceSettingsSchema.parse({
+        general: { ...current.general, ...definedOnly(patch.general) },
+        payments: { ...current.payments, ...definedOnly(patch.payments) },
+        shipping: { ...current.shipping, ...definedOnly(patch.shipping) },
+        checkout: { ...current.checkout, ...definedOnly(patch.checkout) },
+      })
+      await this.assertCoherent(workspaceId, next, patch)
+      await ecommerceSettingsRepository.upsert(
+        { workspaceId, values: toValues(next) },
+        tx,
+      )
+      return next
     })
+
     await this.invalidateCacheTags(this.cacheTag(workspaceId))
     await this.audit("update", "updated ecommerce settings")
     return merged
@@ -200,21 +215,41 @@ class EcommerceSettingsService extends BaseService {
   private async assertCoherent(
     workspaceId: string,
     settings: EcommerceSettings,
+    patch: EcommerceSettingsPatch,
   ) {
     const { checkout, shipping, general } = settings
-    if (general.openHoursId) {
+    // A field the caller did not send stays as stored, so a flow deleted since
+    // the last save must not block saving an unrelated group.
+    const sent = {
+      general: definedOnly(patch.general),
+      shipping: definedOnly(patch.shipping),
+      checkout: definedOnly(patch.checkout),
+    }
+    const touchesCheckoutTarget =
+      "checkoutMode" in sent.checkout ||
+      "checkoutLink" in sent.checkout ||
+      "checkoutFlowId" in sent.checkout
+    const touchesConfirmation =
+      "orderConfirmationMode" in sent.checkout ||
+      "orderConfirmationFlowId" in sent.checkout
+    const touchesShipping = Object.keys(sent.shipping).length > 0
+    if ("openHoursId" in sent.general && general.openHoursId) {
       await ecommerceOpenHoursService.assertBelongsToWorkspace({
         workspaceId,
         openHoursId: general.openHoursId,
       })
     }
-    if (checkout.checkoutMode === "externalLink" && !checkout.checkoutLink) {
+    if (
+      touchesCheckoutTarget &&
+      checkout.checkoutMode === "externalLink" &&
+      !checkout.checkoutLink
+    ) {
       throw validationException(
         "checkoutLink",
         "A checkout link is required for the external link mode.",
       )
     }
-    if (checkout.checkoutMode === "flow") {
+    if (touchesCheckoutTarget && checkout.checkoutMode === "flow") {
       if (!checkout.checkoutFlowId) {
         throw validationException(
           "checkoutFlowId",
@@ -232,7 +267,27 @@ class EcommerceSettingsService extends BaseService {
         )
       }
     }
+    if (touchesConfirmation && checkout.orderConfirmationMode === "flow") {
+      if (!checkout.orderConfirmationFlowId) {
+        throw validationException(
+          "orderConfirmationFlowId",
+          "An order confirmation flow is required for the flow mode.",
+        )
+      }
+      if (
+        !(await flowService.exists(
+          workspaceId,
+          checkout.orderConfirmationFlowId,
+        ))
+      ) {
+        throw validationException(
+          "orderConfirmationFlowId",
+          "The order confirmation flow does not exist.",
+        )
+      }
+    }
     if (
+      "abandonedCartFlowId" in sent.general &&
       general.abandonedCartFlowId &&
       !(await flowService.exists(workspaceId, general.abandonedCartFlowId))
     ) {
@@ -242,6 +297,7 @@ class EcommerceSettingsService extends BaseService {
       )
     }
     if (
+      touchesShipping &&
       shipping.defaultShippingCountry &&
       shipping.shippingCountries.length > 0 &&
       !shipping.shippingCountries.includes(shipping.defaultShippingCountry)
@@ -254,7 +310,7 @@ class EcommerceSettingsService extends BaseService {
     const offersPickup =
       shipping.shippingType === "pickup" ||
       shipping.shippingType === "deliveryAndPickup"
-    if (offersPickup && !shipping.storeAddress) {
+    if (touchesShipping && offersPickup && !shipping.storeAddress) {
       throw validationException(
         "storeAddress",
         "A store address is required for pickup.",

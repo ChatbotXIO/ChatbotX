@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import type { UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
+import { useValidationErrorMap } from "@/lib/validation/use-validation-error-map"
 import { createProductAction } from "../actions/create-product-action"
 import { ProductStoreProvider } from "../provider/product-store-context"
 import { useInvalidateProductFormOptions } from "../provider/use-invalidate-product-form-options"
@@ -18,12 +19,13 @@ type CreateProductProps = {
 
 export function CreateProduct({ workspaceId }: CreateProductProps) {
   const t = useTranslations()
+  const errorMap = useValidationErrorMap()
   const router = useRouter()
   const invalidateProductFormOptions = useInvalidateProductFormOptions()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     createProductAction.bind(null, workspaceId),
-    zodResolver(productFormRequest),
+    zodResolver(productFormRequest, { error: errorMap }),
     {
       formProps: {
         defaultValues: productFormRequest.parse({}),

@@ -5,8 +5,10 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   getFresh: vi.fn(),
   findForOrder: vi.fn(),
+  findProductsByIds: vi.fn(),
   lockForStock: vi.fn(),
-  adjustInventory: vi.fn(),
+  takeInventory: vi.fn(),
+  restoreInventory: vi.fn(),
   nextOrderNumber: vi.fn(),
   findSettings: vi.fn(),
   insertOrder: vi.fn(),
@@ -25,6 +27,7 @@ const mocks = vi.hoisted(() => ({
   queueAdd: vi.fn(),
   findContact: vi.fn(),
   findWorkspace: vi.fn(),
+  integrationQueueAdd: vi.fn(),
   resolveDiscount: vi.fn(),
   redeemDiscount: vi.fn(),
   releaseDiscount: vi.fn(),
@@ -74,8 +77,10 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   },
   productRepository: {
     findForOrder: (...args: unknown[]) => mocks.findForOrder(...args),
+    findByIds: (...args: unknown[]) => mocks.findProductsByIds(...args),
     lockForStock: (...args: unknown[]) => mocks.lockForStock(...args),
-    adjustInventory: (...args: unknown[]) => mocks.adjustInventory(...args),
+    takeInventory: (...args: unknown[]) => mocks.takeInventory(...args),
+    restoreInventory: (...args: unknown[]) => mocks.restoreInventory(...args),
   },
 }))
 
@@ -90,6 +95,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   NotificationJobAction: { notifyNewOrder: "notifyNewOrder" },
   getNewOrderNotificationJobId: (orderId: string) => `new-order-${orderId}`,
   notificationQueue: { add: (...args: unknown[]) => mocks.queueAdd(...args) },
+  IntegrationJobAction: { sendFlow: "sendFlow" },
+  integrationQueue: {
+    add: (...args: unknown[]) => mocks.integrationQueueAdd(...args),
+  },
 }))
 
 vi.mock("../../contact/service", () => ({
@@ -156,6 +165,27 @@ const settings = (overrides: {
   checkout: { ...ECOMMERCE_SETTINGS_DEFAULTS.checkout, ...overrides.checkout },
 })
 
+/** A placed order as `getDetail` reads it back. */
+const confirmedDetail = {
+  id: "o1",
+  number: 7,
+  status: "pending",
+  currency: "USD",
+  subtotal: 30,
+  discountTotal: 0,
+  shippingTotal: 0,
+  serviceFeeTotal: 0,
+  taxTotal: 0,
+  total: 30,
+  customerName: "An",
+  customerEmail: null,
+  customerPhone: null,
+  shippingType: null,
+  shippingAddress: null,
+  createdAt: new Date("2026-10-20T08:00:00Z"),
+  items: [{ name: "Shirt", variantLabel: null, quantity: 3 }],
+}
+
 const placeInput = (overrides: Record<string, unknown> = {}) => ({
   workspaceId: "ws1",
   source: "api" as const,
@@ -171,6 +201,7 @@ beforeEach(() => {
   )
   mocks.getFresh.mockResolvedValue(settings({}))
   mocks.findForOrder.mockResolvedValue([product()])
+  mocks.findProductsByIds.mockResolvedValue([])
   mocks.lockForStock.mockResolvedValue([
     {
       id: "p1",
@@ -288,7 +319,7 @@ describe("orderService.place", () => {
           expect.objectContaining({
             variantId: "var1",
             unitPrice: 12,
-            variantLabel: "L / Red",
+            variantLabel: "Size: L, Color: Red",
           }),
         ],
       }),
@@ -336,7 +367,7 @@ describe("orderService.place", () => {
     await expect(orderService.place(placeInput())).rejects.toMatchObject({
       code: "orderOutOfStock",
     })
-    expect(mocks.adjustInventory).not.toHaveBeenCalled()
+    expect(mocks.takeInventory).not.toHaveBeenCalled()
     expect(mocks.insertOrder).not.toHaveBeenCalled()
   })
 
@@ -349,11 +380,52 @@ describe("orderService.place", () => {
         allowOutOfStockPurchase: false,
       },
     ])
+    mocks.takeInventory.mockResolvedValue(3)
     await orderService.place(placeInput())
-    expect(mocks.adjustInventory).toHaveBeenCalledWith(
-      { workspaceId: "ws1", productId: "p1", delta: -3 },
+    expect(mocks.takeInventory).toHaveBeenCalledWith(
+      { workspaceId: "ws1", productId: "p1", quantity: 3 },
       tx,
     )
+    const [{ items }] = mocks.insertItems.mock.calls[0] as [
+      { items: Array<{ stockTaken: number }> },
+    ]
+    expect(items[0]?.stockTaken).toBe(3)
+  })
+
+  test("records only the units an oversold order really took", async () => {
+    mocks.lockForStock.mockResolvedValue([
+      {
+        id: "p1",
+        inventoryPolicy: "track",
+        inventoryQuantity: 2,
+        allowOutOfStockPurchase: true,
+      },
+    ])
+    mocks.takeInventory.mockResolvedValue(2)
+    await orderService.place(placeInput())
+    const [{ items }] = mocks.insertItems.mock.calls[0] as [
+      { items: Array<{ quantity: number; stockTaken: number }> },
+    ]
+    // Ordered 3 of 2 in stock: the line records the 2 that were taken.
+    expect(items[0]?.quantity).toBe(3)
+    expect(items[0]?.stockTaken).toBe(2)
+  })
+
+  test("records nothing taken for a product that is not tracked", async () => {
+    mocks.lockForStock.mockResolvedValue([
+      {
+        id: "p1",
+        inventoryPolicy: "dont_track",
+        inventoryQuantity: 0,
+        allowOutOfStockPurchase: false,
+      },
+    ])
+    await orderService.place(placeInput())
+    expect(mocks.takeInventory).not.toHaveBeenCalled()
+    const [{ items }] = mocks.insertItems.mock.calls[0] as [
+      { items: Array<{ stockTaken: number }> },
+    ]
+    expect(items[0]?.stockTaken).toBe(0)
   })
 
   test("refuses a web shop order while ordering is turned off", async () => {
@@ -431,9 +503,9 @@ describe("orderService.transition", () => {
     mocks.findOrder.mockResolvedValue(current({ status: "pending" }))
     mocks.transitionStatus.mockResolvedValue(current({ status: "cancelled" }))
     mocks.listItems.mockResolvedValue([
-      { productId: "p1", quantity: 2 },
-      { productId: "p1", quantity: 1 },
-      { productId: null, quantity: 5 },
+      { productId: "p1", quantity: 5, stockTaken: 2 },
+      { productId: "p1", quantity: 1, stockTaken: 1 },
+      { productId: null, quantity: 5, stockTaken: 0 },
     ])
     mocks.lockForStock.mockResolvedValue([{ id: "p1" }])
 
@@ -452,8 +524,48 @@ describe("orderService.transition", () => {
       }),
       tx,
     )
-    expect(mocks.adjustInventory).toHaveBeenCalledWith(
-      { workspaceId: "ws1", productId: "p1", delta: 3 },
+    // Ordered 6 but only 3 were taken: only 3 come back.
+    expect(mocks.restoreInventory).toHaveBeenCalledWith(
+      { workspaceId: "ws1", productId: "p1", quantity: 3 },
+      tx,
+    )
+  })
+
+  test("an order placed while untracked restores nothing on cancel", async () => {
+    mocks.findOrder.mockResolvedValue(current({ status: "pending" }))
+    mocks.transitionStatus.mockResolvedValue(current({ status: "cancelled" }))
+    // Taken 0 when placed, even though the product is tracked now.
+    mocks.listItems.mockResolvedValue([
+      { productId: "p1", quantity: 4, stockTaken: 0 },
+    ])
+    mocks.lockForStock.mockResolvedValue([{ id: "p1" }])
+    await orderService.cancel({
+      workspaceId: "ws1",
+      orderId: "o1",
+      actor: { type: "user", userId: "u1" },
+    })
+    expect(mocks.restoreInventory).toHaveBeenCalledWith(
+      { workspaceId: "ws1", productId: "p1", quantity: 0 },
+      tx,
+    )
+  })
+
+  test("restores taken units even when the product is untracked now", async () => {
+    mocks.findOrder.mockResolvedValue(current({ status: "pending" }))
+    mocks.transitionStatus.mockResolvedValue(current({ status: "cancelled" }))
+    mocks.listItems.mockResolvedValue([
+      { productId: "p1", quantity: 4, stockTaken: 4 },
+    ])
+    mocks.lockForStock.mockResolvedValue([
+      { id: "p1", inventoryPolicy: "dont_track" },
+    ])
+    await orderService.cancel({
+      workspaceId: "ws1",
+      orderId: "o1",
+      actor: { type: "user", userId: "u1" },
+    })
+    expect(mocks.restoreInventory).toHaveBeenCalledWith(
+      { workspaceId: "ws1", productId: "p1", quantity: 4 },
       tx,
     )
   })
@@ -635,10 +747,15 @@ describe("orderService — customer message and delete", () => {
     expect(mocks.warn).toHaveBeenCalled()
   })
 
-  test("sends the status in the contact's language", async () => {
+  test("sends the status in the workspace language, whatever the contact's", async () => {
     mocks.findOrder.mockResolvedValue(order)
     mocks.transitionStatus.mockResolvedValue({ ...order, status: "concluded" })
-    mocks.findContact.mockResolvedValue({ id: "c1", locale: "vi_VN" })
+    mocks.findContact.mockResolvedValue({ id: "c1", locale: "en_US" })
+    mocks.findWorkspace.mockResolvedValue({
+      id: "ws1",
+      timezone: "UTC",
+      language: "vi",
+    })
     mocks.resolveContactInboxForSend.mockResolvedValue({
       conversation: { id: "conv1" },
       contactInbox: { id: "ci1" },
@@ -688,13 +805,15 @@ describe("orderService — customer message and delete", () => {
 
   test("puts stock back when deleting an order that still holds it", async () => {
     mocks.findOrder.mockResolvedValue(order)
-    mocks.listItems.mockResolvedValue([{ productId: "p1", quantity: 2 }])
+    mocks.listItems.mockResolvedValue([
+      { productId: "p1", quantity: 2, stockTaken: 2 },
+    ])
     mocks.lockForStock.mockResolvedValue([{ id: "p1" }])
 
     await orderService.delete({ workspaceId: "ws1", orderId: "o1" })
 
-    expect(mocks.adjustInventory).toHaveBeenCalledWith(
-      { workspaceId: "ws1", productId: "p1", delta: 2 },
+    expect(mocks.restoreInventory).toHaveBeenCalledWith(
+      { workspaceId: "ws1", productId: "p1", quantity: 2 },
       tx,
     )
     expect(mocks.deleteOrder).toHaveBeenCalledWith(
@@ -725,6 +844,32 @@ describe("orderService.place — contact conversation", () => {
         inboxId: "in1",
         conversationId: "conv1",
         channel: "webchat",
+      }),
+      tx,
+    )
+  })
+
+  test("a shop order stays on the channel its link was sent on", async () => {
+    // Sent on Messenger (ci-msg), but the contact wrote on WhatsApp last.
+    mocks.resolveContactInboxForSend.mockResolvedValue({
+      conversation: {
+        id: "conv1",
+        contactInboxes: [
+          { id: "ci-wa", inboxId: "in-wa", channel: "whatsapp" },
+          { id: "ci-msg", inboxId: "in-msg", channel: "messenger" },
+        ],
+      },
+      contactInbox: { id: "ci-wa", inboxId: "in-wa", channel: "whatsapp" },
+    })
+    await orderService.place(
+      placeInput({ contact: { contactId: "c1", contactInboxId: "ci-msg" } }),
+    )
+    expect(mocks.insertOrder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactInboxId: "ci-msg",
+        inboxId: "in-msg",
+        conversationId: "conv1",
+        channel: "messenger",
       }),
       tx,
     )
@@ -761,25 +906,7 @@ describe("orderService.place — after it is placed", () => {
       conversation: { id: "conv1" },
       contactInbox: { id: "ci1", inboxId: "in1", channel: "webchat" },
     })
-    mocks.findDetail.mockResolvedValue({
-      id: "o1",
-      number: 7,
-      status: "pending",
-      currency: "USD",
-      subtotal: 30,
-      discountTotal: 0,
-      shippingTotal: 0,
-      serviceFeeTotal: 0,
-      taxTotal: 0,
-      total: 30,
-      customerName: "An",
-      customerEmail: null,
-      customerPhone: null,
-      shippingType: null,
-      shippingAddress: null,
-      createdAt: new Date("2026-10-20T08:00:00Z"),
-      items: [{ name: "Shirt", variantLabel: null, quantity: 3 }],
-    })
+    mocks.findDetail.mockResolvedValue(confirmedDetail)
     await orderService.place(placeInput({ contact: { contactId: "c1" } }))
     const [{ input }] = mocks.createOutgoing.mock.calls[0] as [
       { input: { text: string } },
@@ -787,6 +914,64 @@ describe("orderService.place — after it is placed", () => {
     expect(input.text).toContain("An, thank you for placing your order")
     expect(input.text).toContain("--- #7 ---")
     expect(input.text).toContain("3 X Shirt")
+  })
+
+  test("confirms in the workspace language, whatever the contact's", async () => {
+    mocks.findContact.mockResolvedValue({ id: "c1", locale: "en_US" })
+    mocks.findWorkspace.mockResolvedValue({
+      id: "ws1",
+      timezone: "UTC",
+      language: "vi",
+    })
+    mocks.resolveContactInboxForSend.mockResolvedValue({
+      conversation: { id: "conv1" },
+      contactInbox: { id: "ci1", inboxId: "in1", channel: "webchat" },
+    })
+    mocks.findDetail.mockResolvedValue(confirmedDetail)
+    await orderService.place(placeInput({ contact: { contactId: "c1" } }))
+    const [{ input }] = mocks.createOutgoing.mock.calls[0] as [
+      { input: { text: string } },
+    ]
+    expect(input.text).toContain("An, cảm ơn bạn đã đặt hàng")
+    expect(input.text).toContain("3 X Shirt")
+  })
+
+  test("runs the store's flow instead when it chose one", async () => {
+    mocks.getSettings.mockResolvedValue(
+      settings({
+        checkout: {
+          orderConfirmationMode: "flow",
+          orderConfirmationFlowId: "f9",
+        },
+      }),
+    )
+    mocks.resolveContactInboxForSend.mockResolvedValue({
+      conversation: { id: "conv1" },
+      contactInbox: { id: "ci1", inboxId: "in1", channel: "webchat" },
+    })
+    await orderService.place(placeInput({ contact: { contactId: "c1" } }))
+    expect(mocks.integrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      {
+        type: "sendFlow",
+        data: { conversationId: "conv1", contactInboxId: "ci1", flowId: "f9" },
+      },
+      { jobId: "order-confirmation-flow-o1" },
+    )
+    expect(mocks.createOutgoing).not.toHaveBeenCalled()
+  })
+
+  test("sends nothing when the store turned the confirmation off", async () => {
+    mocks.getSettings.mockResolvedValue(
+      settings({ checkout: { orderConfirmationMode: "none" } }),
+    )
+    mocks.resolveContactInboxForSend.mockResolvedValue({
+      conversation: { id: "conv1" },
+      contactInbox: { id: "ci1", inboxId: "in1", channel: "webchat" },
+    })
+    await orderService.place(placeInput({ contact: { contactId: "c1" } }))
+    expect(mocks.createOutgoing).not.toHaveBeenCalled()
+    expect(mocks.integrationQueueAdd).not.toHaveBeenCalled()
   })
 
   test("a failed push does not fail the order", async () => {
@@ -878,6 +1063,26 @@ describe("orderService — discount codes", () => {
     )
   })
 
+  test("accepts an order exactly at the minimum after rounding", async () => {
+    mocks.getFresh.mockResolvedValue(
+      settings({ checkout: { minimumOrderValue: 3.85 } }),
+    )
+    mocks.resolveDiscount.mockResolvedValue({
+      discountCode: code(),
+      amount: 6.15,
+    })
+    mocks.findForOrder.mockResolvedValue([product({ price: 10 })])
+    // 10 - 6.15 is 3.8499999999999996 in floating point.
+    await expect(
+      orderService.place(
+        placeInput({
+          items: [{ productId: "p1", quantity: 1 }],
+          discountCode: "CODE",
+        }),
+      ),
+    ).resolves.toEqual({ id: "o1" })
+  })
+
   test("the store minimum is read after the discount code", async () => {
     mocks.getFresh.mockResolvedValue(
       settings({ checkout: { minimumOrderValue: 25 } }),
@@ -933,6 +1138,9 @@ describe("orderService — discount codes", () => {
       data: undefined,
     })
     expect(quote.discount).toBeNull()
+    // Products and settings are read once, even when it prices twice.
+    expect(mocks.findForOrder).toHaveBeenCalledTimes(1)
+    expect(mocks.getFresh).toHaveBeenCalledTimes(1)
   })
 
   test("cancelling gives the use back", async () => {
@@ -963,7 +1171,9 @@ describe("orderService — discount codes", () => {
       paymentMethod: "cod",
     })
     mocks.transitionStatus.mockResolvedValue({ id: "o1", status: "cancelled" })
-    mocks.listItems.mockResolvedValue([{ productId: "p1", quantity: 1 }])
+    mocks.listItems.mockResolvedValue([
+      { productId: "p1", quantity: 1, stockTaken: 1 },
+    ])
     mocks.lockForStock.mockResolvedValue([{ id: "p1" }])
     await orderService.cancel({
       workspaceId: "ws1",
@@ -1005,12 +1215,19 @@ describe("orderService — trigger events", () => {
       contactInbox: { id: "ci1", inboxId: "in1", channel: "webchat" },
     })
     mocks.findDetail.mockResolvedValue(detail)
+    mocks.findProductsByIds.mockResolvedValue([
+      { id: "p1", categoryId: "cat1", subcategoryId: "sub1" },
+    ])
     await orderService.place(placeInput({ contact: { contactId: "c1" } }))
+    // The sub-category too, as the cart events list it.
     const metadata = expect.objectContaining({
       orderId: "o1",
       orderNumber: 7,
       products: [
-        expect.objectContaining({ productId: "p1", categoryIds: ["cat1"] }),
+        expect.objectContaining({
+          productId: "p1",
+          categoryIds: ["cat1", "sub1"],
+        }),
       ],
     })
     expect(mocks.emitOrderStatus).toHaveBeenCalledWith(

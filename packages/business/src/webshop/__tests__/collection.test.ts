@@ -23,8 +23,8 @@ vi.mock("@chatbotx.io/encryption/shop-token", () => ({
   signShopToken: async (input: { contactId: string }) =>
     `signed-${input.contactId}`,
 }))
-vi.mock("../../order/contact-language", () => ({
-  resolveContactMessageLanguage: async () => "vi",
+vi.mock("../../order/message-language", () => ({
+  resolveCustomerMessageLanguage: async () => "vi",
 }))
 
 const { buildCollectionCards, listCollectionProducts, resolveCollectionStep } =
@@ -52,6 +52,7 @@ const product = (id: string, overrides: Record<string, unknown> = {}) => ({
   name: `Product ${id}`,
   price: 20,
   discount: 0,
+  vendorDiscountPercent: 0,
   images: [{ url: `https://img/${id}.jpg`, type: "link" }],
   categoryId: "cat1",
   productUrl: `https://brand.example/${id}`,
@@ -107,6 +108,24 @@ describe("listCollectionProducts", () => {
 })
 
 describe("buildCollectionCards", () => {
+  test("the price stacks the vendor's discount on the product's, as the cart does", async () => {
+    // 100, 10% off, vendor 20% off: 72 — never 90.
+    mocks.listForShop.mockResolvedValue({
+      data: [
+        product("p1", { price: 100, discount: 10, vendorDiscountPercent: 20 }),
+      ],
+      pageCount: 1,
+    })
+    const [card] = await buildCollectionCards({
+      workspaceId: "ws1",
+      step: automated,
+      appUrl: "https://app.example",
+      shopToken: "TOKEN",
+      language: "en",
+    })
+    expect(card?.subtitle).toBe("$72.00 · Acme")
+  })
+
   test("a card per product, opening its shop page signed per contact", async () => {
     mocks.getSettings.mockResolvedValue(
       settings({ general: { productButtons: ["addToCart"] } }),

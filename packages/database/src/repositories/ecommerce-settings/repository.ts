@@ -26,6 +26,31 @@ export const ecommerceSettingsRepository = {
     })
   },
 
+  /** Creates the row from the given values when the workspace has none. */
+  async insertIfMissing(
+    input: { workspaceId: string; values: EcommerceSettingsValues },
+    tx: DatabaseClient = db,
+  ) {
+    await tx
+      .insert(ecommerceSettingsModel)
+      .values({
+        id: createId(),
+        workspaceId: input.workspaceId,
+        ...input.values,
+      })
+      .onConflictDoNothing({ target: ecommerceSettingsModel.workspaceId })
+  },
+
+  /** Reads the row and holds its lock until the transaction ends. */
+  async findForUpdate(workspaceId: string, tx: DatabaseClient) {
+    const [row] = await tx
+      .select()
+      .from(ecommerceSettingsModel)
+      .where(eq(ecommerceSettingsModel.workspaceId, workspaceId))
+      .for("update")
+    return row
+  },
+
   async upsert(
     input: { workspaceId: string; values: EcommerceSettingsValues },
     tx: DatabaseClient = db,

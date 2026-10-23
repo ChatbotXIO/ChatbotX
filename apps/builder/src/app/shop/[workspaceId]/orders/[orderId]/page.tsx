@@ -1,7 +1,6 @@
 import { webshopService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { Metadata } from "next"
-import { getTranslations } from "next-intl/server"
 import { OrderView } from "@/features/webshop/components/order-view"
 import {
   ShopInvalidLink,
@@ -10,6 +9,8 @@ import {
 import {
   asId,
   getParam,
+  getShopPageTranslations,
+  getShopTranslations,
   loadShopPage,
   type ShopPageProps,
 } from "@/features/webshop/lib/shop-page"
@@ -38,8 +39,8 @@ async function findOrder(session: ShopSession, orderId: string | null) {
   }
 }
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("webshop")
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const t = await getShopPageTranslations(props)
   return { title: t("metadataOrderTitle"), robots: { index: false } }
 }
 
@@ -48,7 +49,7 @@ export default async function ShopOrderPage(props: Props) {
   if (!page) {
     return <ShopInvalidLink />
   }
-  const t = await getTranslations("webshop")
+  const t = await getShopTranslations(page.shop)
   const { shop, session, params, searchParams, cartCount } = page
   const order = await findOrder(session, asId(params.orderId))
 
@@ -90,7 +91,7 @@ export default async function ShopOrderPage(props: Props) {
           placed={getParam(searchParams.placed) === "1"}
         />
       ) : (
-        <p className="py-16 text-center text-muted-foreground">
+        <p className="fade-in animate-in py-20 text-center text-muted-foreground duration-500">
           {t("orderNotFound")}
         </p>
       )}

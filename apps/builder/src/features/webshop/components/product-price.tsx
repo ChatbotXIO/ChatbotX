@@ -19,9 +19,11 @@ export function ProductPrice({
   const final = discountedPrice({ discount }, price)
   return (
     <span className={cn("flex flex-wrap items-baseline gap-2", className)}>
-      <span className="font-semibold">{formatShopMoney(final, money)}</span>
+      <span className={cn("font-semibold text-primary tabular-nums")}>
+        {formatShopMoney(final, money)}
+      </span>
       {discount > 0 ? (
-        <span className="text-muted-foreground text-sm line-through">
+        <span className="text-muted-foreground text-sm tabular-nums line-through">
           {formatShopMoney(price, money)}
         </span>
       ) : null}

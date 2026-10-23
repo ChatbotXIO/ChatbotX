@@ -4254,6 +4254,25 @@
       "unknownFieldTarget": "Un campo de contacto asignado ya no existe.",
       "actionReferenceNotFound": "Una acción hace referencia a un flujo, etiqueta o campo que ya no existe.",
       "fieldMappingRequired": "Añade al menos una asignación de campo."
+    },
+    "form": {
+      "required": "Este campo es obligatorio.",
+      "minLength": "Escribe al menos {minimum} caracteres.",
+      "maxLength": "Escribe como máximo {maximum} caracteres.",
+      "minNumber": "Escribe un número de al menos {minimum}.",
+      "moreThan": "Escribe un número mayor que {minimum}.",
+      "maxNumber": "Escribe un número de como máximo {maximum}.",
+      "lessThan": "Escribe un número menor que {maximum}.",
+      "number": "Escribe un número.",
+      "wholeNumber": "Escribe un número entero.",
+      "minItems": "Elige al menos {minimum}.",
+      "maxItems": "Elige como máximo {maximum}.",
+      "email": "Escribe un correo electrónico válido.",
+      "url": "Escribe un enlace válido que empiece por https://.",
+      "format": "Este valor no tiene el formato correcto.",
+      "option": "Elige una de las opciones.",
+      "invalid": "Este valor no es válido.",
+      "checkFields": "Hay campos que corregir. Revisa los marcados en rojo."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "Coste de entrega",
         "description": "Una tarifa fija por entregar el pedido en la dirección del cliente."
-      }
+      },
+      "defaultCountryNotShipped": "Elige uno de los países de envío."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "Exigir código postal",
           "description": "El código postal del comprador se recogerá durante el pago."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "Mensaje de confirmación del pedido",
+        "description": "Lo que recibe el cliente en el chat al realizar su pedido. El mensaje predeterminado muestra los detalles del pedido en el idioma del espacio de trabajo.",
+        "options": {
+          "default": "Mensaje predeterminado",
+          "flow": "Ejecutar un flujo",
+          "none": "No enviar nada"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Flujo de confirmación del pedido",
+        "description": "El flujo que se envía al cliente en lugar del mensaje predeterminado al realizar su pedido."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "Jueves",
       "5": "Viernes",
       "6": "Sábado"
-    }
+    },
+    "sameTimes": "La hora de apertura y la de cierre deben ser distintas."
   },
   "webshop": {
     "metadataTitle": "Tienda",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "Este enlace no funciona",
     "invalidLinkDescription": "Puede que haya caducado. Pide un enlace nuevo a la tienda en el chat.",
     "previewBanner": "Vista previa: así lo ven los clientes. No se pueden hacer pedidos desde una vista previa.",
+    "previewOrderingOff": "Vista previa: no se pueden hacer pedidos",
     "closed": {
       "orderingUnavailable": "La tienda no acepta pedidos ahora mismo.",
       "outsideOpenHours": "La tienda está cerrada ahora. Aún puedes mirar."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "Tu carrito está vacío.",
     "continueShopping": "Seguir comprando",
     "unavailableItems": "{count, plural, one {# artículo no se puede pedir ahora} other {# artículos no se pueden pedir ahora}}",
+    "unavailableNotOrdered": "No se incluirán en tu pedido y se quedarán en el carrito.",
     "unavailable": "Ya no está disponible",
     "unavailableHint": "Vuelve a elegir sus opciones",
     "deletedProduct": "Producto eliminado",
@@ -9505,7 +9541,9 @@
       "delivery": "Envío",
       "otherFees": "Otros cargos",
       "total": "Total",
-      "coupon": "Cupón ({code})"
+      "coupon": "Cupón ({code})",
+      "title": "Resumen del pedido",
+      "saved": "Ahorras {amount}"
     },
     "belowMinimum": "El pedido mínimo es de {amount}.",
     "checkOut": "Finalizar compra",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "Tu carrito está vacío.",
       "orderShippingTypeUnavailable": "Esta opción de entrega no está disponible.",
       "webshopRatingNotAllowed": "Este pedido no se puede valorar.",
+      "webshopCartFull": "Tu carrito puede contener como máximo {maximum} artículos distintos.",
       "notFound": "Este producto ya no está disponible.",
       "discountCodeNotFound": "Este código de descuento no existe.",
       "discountCodeInactive": "Este código no está activo.",
@@ -9588,15 +9627,38 @@
       "apply": "Aplicar",
       "applied": "Código aplicado",
       "automatic": "aplicado automáticamente",
-      "remove": "Quitar código"
-    }
+      "remove": "Quitar código",
+      "available": "Códigos que puedes usar",
+      "freeShipping": "Envío gratis",
+      "bestChoice": "Mejor opción",
+      "expiresOn": "Vence el {date}",
+      "noExpiry": "Sin vencimiento",
+      "inUse": "En uso",
+      "saves": "Ahorra {amount}",
+      "showMore": "{count, plural, one {Ver # código más} other {Ver # códigos más}}",
+      "showLess": "Ver menos",
+      "removeShort": "Quitar",
+      "expired": "Caducado",
+      "usedUp": "Agotado",
+      "notEligible": "Aún no cumples los requisitos"
+    },
+    "itemCount": "{count, plural, one {# artículo} other {# artículos}}",
+    "relatedProducts": "También te puede gustar"
   },
   "webshopLinks": {
     "preview": "Vista previa",
     "getLink": "Obtener enlace",
     "copied": "Enlace copiado. Ponlo en un botón del bot: cada contacto abre su propia tienda.",
     "error": "No se pudo obtener el enlace.",
-    "copyError": "No se pudo copiar el enlace."
+    "copyError": "No se pudo copiar el enlace.",
+    "shopLink": {
+      "label": "Enlace de la tienda",
+      "hint": "Pega este enlace en un botón de un flujo, difusión o secuencia. Cada contacto que lo reciba abrirá su propia tienda y podrá hacer pedidos."
+    },
+    "productLink": {
+      "label": "URL pública",
+      "hint": "Copia y pega la URL en tu flujo, difusión o secuencia. Cada contacto que la reciba abrirá este producto y podrá hacer el pedido."
+    }
   },
   "discountCodes": {
     "title": "Cupones",
@@ -9671,6 +9733,12 @@
       "startDate": "Fecha de inicio",
       "endDate": "Fecha de fin",
       "isActive": "Activo"
+    },
+    "rules": {
+      "codeCharacters": "Usa solo letras sin tildes, números, - y _.",
+      "usageBelowUsed": "Este código ya se usó {count} veces; el límite no puede ser menor.",
+      "customerConditionRequired": "Añade al menos una condición.",
+      "endAfterStart": "La fecha de fin debe ser posterior a la de inicio."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "Sin datos en este periodo",
     "refresh": "Actualizar",
     "change": "{value} %",
-    "noPrevious": "nuevo"
+    "noPrevious": "nuevo",
+    "otherCurrencyOrders": "{count} pedidos en otras monedas no están incluidos en estas cifras"
   },
   "responseSla": {
     "label": "SLA de respuesta",

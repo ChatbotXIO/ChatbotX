@@ -26,6 +26,7 @@ import {
 import { SingleImageField } from "@/features/ecommerce-settings/components/single-image-field"
 import { useInvalidateProductFormOptions } from "@/features/products/provider/use-invalidate-product-form-options"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
+import { useValidationErrorMap } from "@/lib/validation/use-validation-error-map"
 import { createProductCategoryAction } from "../actions/create-product-category.action"
 import { updateProductCategoryAction } from "../actions/update-product-category.action"
 import { productCategoryFormSchema } from "../schema/action"
@@ -58,6 +59,7 @@ export function CategoryFormDialog({
   onOpenChange,
 }: CategoryFormDialogProps) {
   const t = useTranslations("productCategories")
+  const errorMap = useValidationErrorMap()
   const router = useRouter()
   const invalidateProductFormOptions = useInvalidateProductFormOptions()
   const [internalOpen, setInternalOpen] = useState(false)
@@ -68,7 +70,7 @@ export function CategoryFormDialog({
     : createProductCategoryAction.bind(null, workspaceId)
   const { form, handleSubmitWithAction } = useHookFormAction(
     action,
-    zodResolver(productCategoryFormSchema),
+    zodResolver(productCategoryFormSchema, { error: errorMap }),
     {
       formProps: {
         defaultValues: {

@@ -4254,6 +4254,25 @@
       "unknownFieldTarget": "Un câmp de contact mapat nu mai există.",
       "actionReferenceNotFound": "O acțiune face referire la un flux, o etichetă sau un câmp care nu mai există.",
       "fieldMappingRequired": "Adaugă cel puțin o mapare de câmp."
+    },
+    "form": {
+      "required": "Acest câmp este obligatoriu.",
+      "minLength": "Introdu cel puțin {minimum} caractere.",
+      "maxLength": "Introdu cel mult {maximum} caractere.",
+      "minNumber": "Introdu un număr de cel puțin {minimum}.",
+      "moreThan": "Introdu un număr mai mare decât {minimum}.",
+      "maxNumber": "Introdu un număr de cel mult {maximum}.",
+      "lessThan": "Introdu un număr mai mic decât {maximum}.",
+      "number": "Introdu un număr.",
+      "wholeNumber": "Introdu un număr întreg.",
+      "minItems": "Alege cel puțin {minimum}.",
+      "maxItems": "Alege cel mult {maximum}.",
+      "email": "Introdu o adresă de e-mail validă.",
+      "url": "Introdu un link valid care începe cu https://.",
+      "format": "Această valoare nu are formatul corect.",
+      "option": "Alege una dintre opțiuni.",
+      "invalid": "Această valoare nu este validă.",
+      "checkFields": "Unele câmpuri trebuie corectate. Verifică-le pe cele marcate cu roșu."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "Cost livrare",
         "description": "Un cost fix pentru livrarea comenzii la adresa clientului."
-      }
+      },
+      "defaultCountryNotShipped": "Alege una dintre țările de livrare."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "Solicită codul poștal",
           "description": "Codul poștal al cumpărătorului va fi colectat la finalizarea comenzii."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "Mesaj de confirmare a comenzii",
+        "description": "Ce primește clientul în conversație când plasează comanda. Mesajul implicit afișează detaliile comenzii în limba spațiului de lucru.",
+        "options": {
+          "default": "Mesaj implicit",
+          "flow": "Rulează un flux",
+          "none": "Nu trimite nimic"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Flux de confirmare a comenzii",
+        "description": "Fluxul trimis clientului în locul mesajului implicit când plasează comanda."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "Joi",
       "5": "Vineri",
       "6": "Sâmbătă"
-    }
+    },
+    "sameTimes": "Ora de deschidere și cea de închidere trebuie să difere."
   },
   "webshop": {
     "metadataTitle": "Magazin",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "Acest link nu funcționează",
     "invalidLinkDescription": "Poate a expirat. Cere magazinului un link nou în chat.",
     "previewBanner": "Previzualizare: așa văd clienții. Nu se pot plasa comenzi din previzualizare.",
+    "previewOrderingOff": "Previzualizare: comenzile sunt dezactivate",
     "closed": {
       "orderingUnavailable": "Magazinul nu primește comenzi acum.",
       "outsideOpenHours": "Magazinul este închis acum. Poți totuși să te uiți."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "Coșul tău este gol.",
     "continueShopping": "Continuă cumpărăturile",
     "unavailableItems": "{count, plural, one {# produs nu poate fi comandat acum} other {# produse nu pot fi comandate acum}}",
+    "unavailableNotOrdered": "Nu vor fi incluse în comandă și rămân în coș.",
     "unavailable": "Nu mai este disponibil",
     "unavailableHint": "Alege din nou opțiunile",
     "deletedProduct": "Produs șters",
@@ -9505,7 +9541,9 @@
       "delivery": "Livrare",
       "otherFees": "Alte taxe",
       "total": "Total",
-      "coupon": "Cupon ({code})"
+      "coupon": "Cupon ({code})",
+      "title": "Sumarul comenzii",
+      "saved": "Economisești {amount}"
     },
     "belowMinimum": "Comanda minimă este {amount}.",
     "checkOut": "Finalizează comanda",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "Coșul tău este gol.",
       "orderShippingTypeUnavailable": "Această opțiune de livrare nu este disponibilă.",
       "webshopRatingNotAllowed": "Această comandă nu poate fi evaluată.",
+      "webshopCartFull": "Coșul tău poate conține cel mult {maximum} articole diferite.",
       "notFound": "Acest produs nu mai este disponibil.",
       "discountCodeNotFound": "Acest cod de reducere nu există.",
       "discountCodeInactive": "Acest cod nu este activ.",
@@ -9588,15 +9627,38 @@
       "apply": "Aplică",
       "applied": "Cod de reducere aplicat",
       "automatic": "aplicat automat",
-      "remove": "Elimină codul"
-    }
+      "remove": "Elimină codul",
+      "available": "Coduri pe care le poți folosi",
+      "freeShipping": "Livrare gratuită",
+      "bestChoice": "Cea mai bună alegere",
+      "expiresOn": "Expiră pe {date}",
+      "noExpiry": "Fără expirare",
+      "inUse": "Folosit",
+      "saves": "Economisești {amount}",
+      "showMore": "{count, plural, one {Arată încă # cod} other {Arată încă # de coduri}}",
+      "showLess": "Arată mai puțin",
+      "removeShort": "Elimină",
+      "expired": "Expirat",
+      "usedUp": "Epuizat",
+      "notEligible": "Încă nu ești eligibil"
+    },
+    "itemCount": "{count, plural, one {# produs} other {# de produse}}",
+    "relatedProducts": "S-ar putea să-ți placă și"
   },
   "webshopLinks": {
     "preview": "Previzualizare",
     "getLink": "Obține linkul",
     "copied": "Link copiat. Pune-l pe un buton al botului: fiecare contact își deschide propriul magazin.",
     "error": "Linkul nu a putut fi obținut.",
-    "copyError": "Linkul nu a putut fi copiat."
+    "copyError": "Linkul nu a putut fi copiat.",
+    "shopLink": {
+      "label": "Linkul magazinului",
+      "hint": "Lipește acest link într-un buton dintr-un flux, o difuzare sau o secvență. Fiecare contact care îl primește își deschide propriul magazin și poate comanda."
+    },
+    "productLink": {
+      "label": "URL public",
+      "hint": "Copiază și lipește URL-ul în fluxul, difuzarea sau secvența ta. Fiecare contact care îl primește deschide acest produs și poate comanda."
+    }
   },
   "discountCodes": {
     "title": "Cupoane",
@@ -9671,6 +9733,12 @@
       "startDate": "Data de început",
       "endDate": "Data de sfârșit",
       "isActive": "Activ"
+    },
+    "rules": {
+      "codeCharacters": "Folosește doar litere fără diacritice, cifre, - și _.",
+      "usageBelowUsed": "Acest cod a fost deja folosit de {count} ori; limita nu poate fi mai mică.",
+      "customerConditionRequired": "Adaugă cel puțin o condiție.",
+      "endAfterStart": "Data de sfârșit trebuie să fie după data de început."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "Nu există date în această perioadă",
     "refresh": "Reîmprospătează",
     "change": "{value}%",
-    "noPrevious": "nou"
+    "noPrevious": "nou",
+    "otherCurrencyOrders": "{count} comenzi în alte monede nu sunt incluse în aceste cifre"
   },
   "responseSla": {
     "label": "SLA de răspuns",

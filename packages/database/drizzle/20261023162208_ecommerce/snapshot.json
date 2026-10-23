@@ -1,8 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "0f7fdc5c-25fc-49da-bc4f-25dc3f42cbb4",
+  "id": "edf6de11-00e6-44b1-8ce9-4a886d9a7a65",
   "prevIds": [
+    "15353b77-f187-4c27-94d7-11a69acb3a39",
     "4b3a5851-1efd-4345-b420-c0de0e154401"
   ],
   "ddl": [
@@ -669,6 +670,16 @@
         "rightSpace"
       ],
       "name": "currencyPosition",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "default",
+        "flow",
+        "none"
+      ],
+      "name": "orderConfirmationMode",
       "entityType": "enums",
       "schema": "public"
     },
@@ -7690,6 +7701,19 @@
       "generated": null,
       "identity": null,
       "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Attachment"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "keepOriginal",
       "entityType": "columns",
       "schema": "public",
       "table": "Attachment"
@@ -15470,6 +15494,32 @@
       "generated": null,
       "identity": null,
       "name": "minimumOrderValue",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommerceSettings"
+    },
+    {
+      "type": "orderConfirmationMode",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'default'",
+      "generated": null,
+      "identity": null,
+      "name": "orderConfirmationMode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EcommerceSettings"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "orderConfirmationFlowId",
       "entityType": "columns",
       "schema": "public",
       "table": "EcommerceSettings"
@@ -29177,6 +29227,19 @@
       "table": "OrderItem"
     },
     {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "stockTaken",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrderItem"
+    },
+    {
       "type": "numeric(19,4)",
       "typeSchema": null,
       "notNull": true,
@@ -42716,6 +42779,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "orderConfirmationFlowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "EcommerceSettings_orderConfirmationFlowId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "EcommerceSettings"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -53771,6 +53855,23 @@
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "EcommerceSettings_checkoutFlowId_Flow_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "EcommerceSettings"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "orderConfirmationFlowId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Flow",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "EcommerceSettings_orderConfirmationFlowId_Flow_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "EcommerceSettings"

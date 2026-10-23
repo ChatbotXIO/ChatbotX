@@ -4,86 +4,35 @@ import type {
   OrderStatus,
 } from "@chatbotx.io/database/partials"
 import { formatMoney } from "@chatbotx.io/utils/money"
+import {
+  CUSTOMER_MESSAGE_LANGUAGES,
+  CUSTOMER_MESSAGE_STRINGS,
+  type CustomerMessageLanguage,
+} from "./customer-message-strings"
 
 /**
  * The texts the bot sends a customer about their order, as the spec shows
  * them: a confirmation when it is placed, and a note each time its status
- * changes. English, or Vietnamese for a Vietnamese contact.
+ * changes — in the workspace language (`customer-message-strings.ts`).
  */
-const STRINGS = {
-  en: {
-    thanks: (name: string) =>
-      `${name}, thank you for placing your order 😀\nI will send you notifications about the status of your order.`,
-    name: "Name",
-    email: "Email",
-    phone: "Phone",
-    address: "Address",
-    pickup: "Pickup in the store",
-    date: "Date",
-    payment: "Payment",
-    cod: "Cash on delivery",
-    total: "Total",
-    subtotal: "Subtotal",
-    discount: "Discount",
-    coupon: (code: string) => `Coupon (${code})`,
-    delivery: "Delivery",
-    otherFees: "Other fees",
-    items: "Items",
-    numberOfItems: "Number of items",
-    checkOut: "CHECK OUT",
-    skippedItems: (count: number) =>
-      count === 1
-        ? "1 item is not sold in this store and was left out."
-        : `${count} items are not sold in this store and were left out.`,
-    statusUpdated: "The status of your order has been updated.",
-    status: "Status",
-    statuses: {
-      pending: "Not processed",
-      accepted: "Processing",
-      shipped: "Shipped",
-      concluded: "Completed",
-      cancelled: "Cancelled",
-    },
-  },
-  vi: {
-    thanks: (name: string) =>
-      `${name}, cảm ơn bạn đã đặt hàng 😀\nMình sẽ báo bạn mỗi khi đơn hàng đổi trạng thái.`,
-    name: "Tên",
-    email: "Email",
-    phone: "Điện thoại",
-    address: "Địa chỉ",
-    pickup: "Nhận tại cửa hàng",
-    date: "Ngày",
-    payment: "Thanh toán",
-    cod: "Thanh toán khi nhận hàng",
-    total: "Tổng cộng",
-    subtotal: "Tạm tính",
-    discount: "Giảm giá",
-    coupon: (code: string) => `Mã giảm giá (${code})`,
-    delivery: "Phí giao hàng",
-    otherFees: "Phí khác",
-    items: "Sản phẩm",
-    numberOfItems: "Số món",
-    checkOut: "ĐẶT HÀNG",
-    skippedItems: (count: number) =>
-      `${count} món không bán ở cửa hàng này nên đã được bỏ ra.`,
-    statusUpdated: "Trạng thái đơn hàng của bạn đã được cập nhật.",
-    status: "Trạng thái",
-    statuses: {
-      pending: "Chưa xử lý",
-      accepted: "Đang xử lý",
-      shipped: "Đang giao",
-      concluded: "Hoàn thành",
-      cancelled: "Đã hủy",
-    },
-  },
-} as const
+const STRINGS = CUSTOMER_MESSAGE_STRINGS
 
-export type CustomerMessageLanguage = keyof typeof STRINGS
+export type { CustomerMessageLanguage } from "./customer-message-strings"
 
+const isCustomerMessageLanguage = (
+  language: string,
+): language is CustomerMessageLanguage =>
+  (CUSTOMER_MESSAGE_LANGUAGES as readonly string[]).includes(language)
+
+/** A workspace language the messages are not written in reads as English. */
 export const customerMessageLanguage = (
   language: string | null | undefined,
-): CustomerMessageLanguage => (language === "vi" ? "vi" : "en")
+): CustomerMessageLanguage =>
+  language && isCustomerMessageLanguage(language) ? language : "en"
+
+/** Every store text in one language, e.g. a collection card's buttons. */
+export const customerMessageStrings = (language: CustomerMessageLanguage) =>
+  STRINGS[language]
 
 export type CustomerOrderSummary = {
   number: number
@@ -148,8 +97,9 @@ const formatAddress = (
 }
 
 const formatDate = (date: Date, context: MessageContext): string => {
+  // English reads day-first, as the spec shows ("21 April 26 09:48").
   const formatted = new Intl.DateTimeFormat(
-    context.language === "vi" ? "vi-VN" : "en-GB",
+    context.language === "en" ? "en-GB" : context.language,
     {
       timeZone: context.timeZone,
       day: "numeric",

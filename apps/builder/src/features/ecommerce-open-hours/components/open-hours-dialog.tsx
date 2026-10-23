@@ -1,5 +1,6 @@
 "use client"
 
+import { openHoursScheduleSchema } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -16,10 +17,35 @@ import { useAction } from "next-safe-action/hooks"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
+import {
+  type FieldRule,
+  useInvalidFormToast,
+  useRequestResolver,
+} from "@/lib/validation/use-request-resolver"
 import { createOpenHoursAction } from "../actions/save-open-hours.action"
 import { OpenHoursEditor, type OpenHoursFormRow } from "./open-hours-editor"
 
 type OpenHoursFormValues = { name: string; openHours: OpenHoursFormRow[] }
+
+/** The form as the create action takes it. */
+const toRequest = (values: OpenHoursFormValues) => ({
+  name: values.name,
+  ranges: values.openHours.map((range) => ({
+    ...range,
+    day: Number(range.day),
+  })),
+})
+
+/** `ranges.2.from` is the form's `openHours.2.from`; a whole range, its `to`. */
+const fieldFor = (path: string) => {
+  const [key, index, part] = path.split(".")
+  if (key !== "ranges") {
+    return key
+  }
+  return index === undefined
+    ? "openHours"
+    : `openHours.${index}.${part ?? "to"}`
+}
 
 /** Creates a named open-hours schedule and hands its id back. */
 export function OpenHoursDialog({
@@ -34,7 +60,26 @@ export function OpenHoursDialog({
   onCreated: (openHoursId: string) => void
 }) {
   const t = useTranslations("openHours")
+  const showInvalidToast = useInvalidFormToast()
+  /** The schema's own rule, with its sentence translated. */
+  const rules = (
+    values: OpenHoursFormValues,
+  ): Array<FieldRule<OpenHoursFormValues> | false> =>
+    values.openHours.map(
+      (range, index) =>
+        range.from === range.to && {
+          field: `openHours.${index}.to`,
+          message: t("sameTimes"),
+        },
+    )
+  const resolver = useRequestResolver<OpenHoursFormValues>({
+    schema: openHoursScheduleSchema,
+    toRequest,
+    fieldFor,
+    rules,
+  })
   const form = useForm<OpenHoursFormValues>({
+    resolver,
     defaultValues: {
       name: "",
       openHours: [{ day: "1", from: "09:00", to: "17:00" }],
@@ -55,14 +100,9 @@ export function OpenHoursDialog({
     },
   )
 
-  const onSubmit = form.handleSubmit((values) =>
-    execute({
-      name: values.name,
-      ranges: values.openHours.map((range) => ({
-        ...range,
-        day: Number(range.day),
-      })),
-    }),
+  const onSubmit = form.handleSubmit(
+    (values) => execute(toRequest(values)),
+    showInvalidToast,
   )
 
   return (

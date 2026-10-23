@@ -31,6 +31,11 @@ export const ecommerceAnalyticsResource = z.object({
   currency: z
     .string()
     .describe("Store currency; orders in another currency are not counted."),
+  otherCurrencyOrders: z
+    .number()
+    .describe(
+      "Non-cancelled orders placed in the period in a currency other than the store currency; their amounts are not in any figure here.",
+    ),
   from: z.string(),
   to: z.string(),
   timezone: z.string().describe("The workspace timezone the days are in."),

@@ -18,6 +18,7 @@ const KNOWN_CODES = new Set([
   "orderEmpty",
   "orderShippingTypeUnavailable",
   "webshopRatingNotAllowed",
+  "webshopCartFull",
   "notFound",
   "discountCodeNotFound",
   "discountCodeInactive",
@@ -80,6 +81,7 @@ export function useShopErrorMessage(money: ShopMoneyFormat) {
       }
       return t(`errors.${error.code}`, {
         minimum: amount(data.minimum),
+        maximum: Number(data.maximum ?? 0),
         vendorName: String(data.vendorName ?? ""),
         productName: String(data.productName ?? ""),
       })

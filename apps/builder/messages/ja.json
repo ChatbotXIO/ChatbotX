@@ -4233,6 +4233,25 @@
       "unknownFieldTarget": "マッピングされた連絡先フィールドは存在しなくなりました。",
       "actionReferenceNotFound": "アクションが、存在しなくなったフロー、タグ、またはフィールドを参照しています。",
       "fieldMappingRequired": "フィールドマッピングを少なくとも1つ追加してください。"
+    },
+    "form": {
+      "required": "この項目は必須です。",
+      "minLength": "{minimum}文字以上で入力してください。",
+      "maxLength": "{maximum}文字以内で入力してください。",
+      "minNumber": "{minimum}以上の数値を入力してください。",
+      "moreThan": "{minimum}より大きい数値を入力してください。",
+      "maxNumber": "{maximum}以下の数値を入力してください。",
+      "lessThan": "{maximum}未満の数値を入力してください。",
+      "number": "数値を入力してください。",
+      "wholeNumber": "整数を入力してください。",
+      "minItems": "{minimum}件以上選択してください。",
+      "maxItems": "{maximum}件以内で選択してください。",
+      "email": "有効なメールアドレスを入力してください。",
+      "url": "https:// で始まる有効なリンクを入力してください。",
+      "format": "この値の形式が正しくありません。",
+      "option": "選択肢から1つ選んでください。",
+      "invalid": "この値は無効です。",
+      "checkFields": "修正が必要な項目があります。赤く表示された項目を確認してください。"
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "配送料",
         "description": "お客様の住所へ配送する際の定額料金です。"
-      }
+      },
+      "defaultCountryNotShipped": "配送先の国から1つ選んでください。"
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "郵便番号を必須にする",
           "description": "チェックアウト時に購入者の郵便番号を収集します。"
         }
+      },
+      "orderConfirmationMode": {
+        "label": "注文確認メッセージ",
+        "description": "注文が確定したときにお客様がチャットで受け取る内容です。既定のメッセージはワークスペースの言語で注文内容を表示します。",
+        "options": {
+          "default": "既定のメッセージ",
+          "flow": "フローを実行",
+          "none": "何も送信しない"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "注文確認フロー",
+        "description": "注文が確定したときに、既定のメッセージの代わりにお客様へ送るフローです。"
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "木曜日",
       "5": "金曜日",
       "6": "土曜日"
-    }
+    },
+    "sameTimes": "開店時刻と閉店時刻は異なる必要があります。"
   },
   "webshop": {
     "metadataTitle": "ショップ",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "このリンクは使用できません",
     "invalidLinkDescription": "有効期限が切れている可能性があります。チャットでショップに新しいリンクを依頼してください。",
     "previewBanner": "プレビュー: お客様にはこのように表示されます。プレビューからは注文できません。",
+    "previewOrderingOff": "プレビュー：注文できません",
     "closed": {
       "orderingUnavailable": "現在、ショップは注文を受け付けていません。",
       "outsideOpenHours": "現在は営業時間外です。商品の閲覧はできます。"
@@ -9496,6 +9531,7 @@
     "cartEmpty": "カートは空です。",
     "continueShopping": "買い物を続ける",
     "unavailableItems": "{count, plural, one {# 点の商品は現在注文できません} other {# 点の商品は現在注文できません}}",
+    "unavailableNotOrdered": "これらは注文に含まれず、カートに残ります。",
     "unavailable": "現在取り扱いなし",
     "unavailableHint": "オプションを選び直してください",
     "deletedProduct": "削除された商品",
@@ -9505,7 +9541,9 @@
       "delivery": "配送料",
       "otherFees": "その他の手数料",
       "total": "合計",
-      "coupon": "クーポン（{code}）"
+      "coupon": "クーポン（{code}）",
+      "title": "注文内容",
+      "saved": "{amount}お得"
     },
     "belowMinimum": "最低注文金額は{amount}です。",
     "checkOut": "購入手続きへ",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "カートは空です。",
       "orderShippingTypeUnavailable": "この受け取り方法はご利用いただけません。",
       "webshopRatingNotAllowed": "この注文は評価できません。",
+      "webshopCartFull": "カートに入れられる商品は最大 {maximum} 種類までです。",
       "notFound": "この商品は現在取り扱っていません。",
       "discountCodeNotFound": "この割引コードは存在しません。",
       "discountCodeInactive": "この割引コードは無効です。",
@@ -9588,15 +9627,38 @@
       "apply": "適用",
       "applied": "割引コードを適用しました",
       "automatic": "自動適用",
-      "remove": "割引コードを外す"
-    }
+      "remove": "割引コードを外す",
+      "available": "使えるクーポン",
+      "freeShipping": "送料無料",
+      "bestChoice": "いちばんお得",
+      "expiresOn": "有効期限: {date}",
+      "noExpiry": "期限なし",
+      "inUse": "使用中",
+      "saves": "{amount}割引",
+      "showMore": "{count, plural, one {あと#件を表示} other {あと#件を表示}}",
+      "showLess": "閉じる",
+      "removeShort": "外す",
+      "expired": "期限切れ",
+      "usedUp": "上限に達しました",
+      "notEligible": "対象外"
+    },
+    "itemCount": "{count, plural, one {#点} other {#点}}",
+    "relatedProducts": "こちらもおすすめ"
   },
   "webshopLinks": {
     "preview": "プレビュー",
     "getLink": "リンクを取得",
     "copied": "リンクをコピーしました。ボットのボタンに設定すると、連絡先ごとに専用のショップが開きます。",
     "error": "リンクを取得できませんでした。",
-    "copyError": "リンクをコピーできませんでした。"
+    "copyError": "リンクをコピーできませんでした。",
+    "shopLink": {
+      "label": "ショップリンク",
+      "hint": "このリンクをフロー、ブロードキャスト、シーケンスのボタンに貼り付けてください。受け取った各連絡先が自分専用のショップを開いて注文できます。"
+    },
+    "productLink": {
+      "label": "公開URL",
+      "hint": "URLをコピーして、フロー、ブロードキャスト、シーケンスに貼り付けてください。受け取った各連絡先がこの商品を開いて注文できます。"
+    }
   },
   "discountCodes": {
     "title": "クーポン",
@@ -9671,6 +9733,12 @@
       "startDate": "開始日",
       "endDate": "終了日",
       "isActive": "有効"
+    },
+    "rules": {
+      "codeCharacters": "アクセントのない英字、数字、- と _ のみ使用できます。",
+      "usageBelowUsed": "このコードはすでに{count}回使用されています。上限をそれより低くはできません。",
+      "customerConditionRequired": "条件を1つ以上追加してください。",
+      "endAfterStart": "終了日は開始日より後にしてください。"
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "この期間のデータはありません",
     "refresh": "更新",
     "change": "{value}%",
-    "noPrevious": "新規"
+    "noPrevious": "新規",
+    "otherCurrencyOrders": "他の通貨の注文 {count} 件はこの数値に含まれていません"
   },
   "responseSla": {
     "label": "応答SLA",

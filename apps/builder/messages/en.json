@@ -4936,6 +4936,25 @@
       "unknownFieldTarget": "A mapped contact field no longer exists.",
       "actionReferenceNotFound": "An action refers to a flow, tag or field that no longer exists.",
       "fieldMappingRequired": "Add at least one field mapping."
+    },
+    "form": {
+      "required": "This field is required.",
+      "minLength": "Enter at least {minimum} characters.",
+      "maxLength": "Enter at most {maximum} characters.",
+      "minNumber": "Enter a number of at least {minimum}.",
+      "moreThan": "Enter a number greater than {minimum}.",
+      "maxNumber": "Enter a number of at most {maximum}.",
+      "lessThan": "Enter a number less than {maximum}.",
+      "number": "Enter a number.",
+      "wholeNumber": "Enter a whole number.",
+      "minItems": "Choose at least {minimum}.",
+      "maxItems": "Choose at most {maximum}.",
+      "email": "Enter a valid email address.",
+      "url": "Enter a valid link, starting with https://.",
+      "format": "This value is not in the right format.",
+      "option": "Choose one of the options.",
+      "invalid": "This value is not valid.",
+      "checkFields": "Some fields need fixing. Check the ones marked in red."
     }
   },
   "webchat": {
@@ -9384,7 +9403,8 @@
       "deliveryCost": {
         "label": "Delivery cost",
         "description": "A flat rate cost to deliver the order to the customer address."
-      }
+      },
+      "defaultCountryNotShipped": "Choose one of the shipping countries."
     },
     "checkout": {
       "checkoutMode": {
@@ -9431,6 +9451,19 @@
           "label": "Require zip code",
           "description": "The buyer ZIP Code will be collected during the checkout."
         }
+      },
+      "orderConfirmationMode": {
+        "label": "Order confirmation message",
+        "description": "What the customer gets in the chat when their order is placed. The default message lists the order details in the workspace language.",
+        "options": {
+          "default": "Default message",
+          "flow": "Run a flow",
+          "none": "Don't send anything"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Order confirmation flow",
+        "description": "The flow sent to the customer instead of the default message when their order is placed."
       }
     }
   },
@@ -9457,7 +9490,8 @@
       "4": "Thursday",
       "5": "Friday",
       "6": "Saturday"
-    }
+    },
+    "sameTimes": "Opening and closing time must differ."
   },
   "webshop": {
     "metadataTitle": "Shop",
@@ -9465,6 +9499,7 @@
     "invalidLinkTitle": "This link does not work",
     "invalidLinkDescription": "It may have expired. Ask the store in the chat for a new link.",
     "previewBanner": "Preview: this is what customers see. Orders cannot be placed from a preview.",
+    "previewOrderingOff": "Preview: ordering is off",
     "closed": {
       "orderingUnavailable": "The store is not taking orders right now.",
       "outsideOpenHours": "The store is closed right now. You can still look around."
@@ -9496,6 +9531,7 @@
     "cartEmpty": "Your cart is empty.",
     "continueShopping": "Continue shopping",
     "unavailableItems": "{count, plural, one {# item can't be ordered right now} other {# items can't be ordered right now}}",
+    "unavailableNotOrdered": "They won't be included in your order and will stay in your cart.",
     "unavailable": "No longer available",
     "unavailableHint": "Choose its options again",
     "deletedProduct": "Deleted product",
@@ -9505,7 +9541,9 @@
       "delivery": "Delivery",
       "otherFees": "Other fees",
       "total": "Total",
-      "coupon": "Coupon ({code})"
+      "coupon": "Coupon ({code})",
+      "title": "Order summary",
+      "saved": "You save {amount}"
     },
     "belowMinimum": "The minimum order is {amount}.",
     "checkOut": "Check out",
@@ -9570,6 +9608,7 @@
       "orderEmpty": "Your cart is empty.",
       "orderShippingTypeUnavailable": "This delivery option is not available.",
       "webshopRatingNotAllowed": "This order cannot be rated.",
+      "webshopCartFull": "Your cart can hold at most {maximum} different items.",
       "notFound": "This product is no longer available.",
       "discountCodeNotFound": "This discount code does not exist.",
       "discountCodeInactive": "This discount code is not active.",
@@ -9588,15 +9627,38 @@
       "apply": "Apply",
       "applied": "Discount code applied",
       "automatic": "applied automatically",
-      "remove": "Remove discount code"
-    }
+      "remove": "Remove discount code",
+      "available": "Codes you can use",
+      "freeShipping": "Free shipping",
+      "bestChoice": "Best choice",
+      "expiresOn": "Expires {date}",
+      "noExpiry": "No expiry",
+      "inUse": "In use",
+      "saves": "Saves {amount}",
+      "showMore": "{count, plural, one {Show # more code} other {Show # more codes}}",
+      "showLess": "Show less",
+      "removeShort": "Remove",
+      "expired": "Expired",
+      "usedUp": "Used up",
+      "notEligible": "Not eligible yet"
+    },
+    "itemCount": "{count, plural, one {# item} other {# items}}",
+    "relatedProducts": "You may also like"
   },
   "webshopLinks": {
     "preview": "Preview",
     "getLink": "Get link",
     "copied": "Link copied. Put it on a bot button: each contact opens their own shop.",
     "error": "Could not get the link.",
-    "copyError": "Could not copy the link."
+    "copyError": "Could not copy the link.",
+    "shopLink": {
+      "label": "Shop link",
+      "hint": "Paste this link into a button in a flow, broadcast or sequence. Each contact who gets it opens their own shop and can order."
+    },
+    "productLink": {
+      "label": "Public URL",
+      "hint": "Copy and paste the URL into your flow, broadcast, or sequence. Each contact who gets it opens this product and can order."
+    }
   },
   "discountCodes": {
     "title": "Coupons",
@@ -9671,6 +9733,12 @@
       "startDate": "Start date",
       "endDate": "End date",
       "isActive": "Active"
+    },
+    "rules": {
+      "codeCharacters": "Use only letters without accents, digits, - and _.",
+      "usageBelowUsed": "This code was already used {count} times; the limit can't be lower.",
+      "customerConditionRequired": "Add at least one condition.",
+      "endAfterStart": "The end date must be after the start date."
     }
   },
   "ecommerceAnalytics": {
@@ -9690,7 +9758,8 @@
     "noData": "No data in this period",
     "refresh": "Refresh",
     "change": "{value}%",
-    "noPrevious": "new"
+    "noPrevious": "new",
+    "otherCurrencyOrders": "{count} orders in other currencies are not included in these figures"
   },
   "responseSla": {
     "label": "Response SLA",

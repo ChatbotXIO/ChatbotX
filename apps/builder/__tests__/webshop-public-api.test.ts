@@ -54,7 +54,14 @@ const handlerOf = (method: string, path: string) => {
   return found.handler
 }
 
-const context = { workspace: { id: "ws-1" } }
+const context = {
+  workspace: { id: "ws-1" },
+  apiToken: { permission: "write" },
+}
+const readOnlyContext = {
+  workspace: { id: "ws-1" },
+  apiToken: { permission: "read_only" },
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -95,9 +102,20 @@ describe("webshop.getLink", () => {
       workspaceId: "ws-1",
       contactId: "c-1",
       page: "cart",
+      productId: undefined,
       vendorId: "9",
       categoryId: undefined,
     })
+  })
+
+  test("opens on one product's page", async () => {
+    await handlerOf(
+      "GET",
+      "/v1/webshop/link",
+    )({ context, input: { productId: "42" } })
+    expect(createWebshopLink).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "ws-1", productId: "42" }),
+    )
   })
 
   test("without a contact asks for a preview link", async () => {
@@ -105,6 +123,28 @@ describe("webshop.getLink", () => {
     expect(contactService.resolveIdByIdentifier).not.toHaveBeenCalled()
     expect(createWebshopLink).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: "ws-1", contactId: null }),
+    )
+  })
+})
+
+describe("webshop.getLink with a read-only token", () => {
+  test("refuses a link signed for a contact", async () => {
+    await expect(
+      handlerOf(
+        "GET",
+        "/v1/webshop/link",
+      )({ context: readOnlyContext, input: { contact: "email:a@b.co" } }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" })
+    expect(createWebshopLink).not.toHaveBeenCalled()
+  })
+
+  test("still allows a preview link", async () => {
+    await handlerOf(
+      "GET",
+      "/v1/webshop/link",
+    )({ context: readOnlyContext, input: {} })
+    expect(createWebshopLink).toHaveBeenCalledWith(
+      expect.objectContaining({ contactId: null }),
     )
   })
 })

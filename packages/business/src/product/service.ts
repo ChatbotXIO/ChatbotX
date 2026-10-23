@@ -1,5 +1,6 @@
 import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
 import {
+  discountCodeRepository,
   type ProductImportInsert,
   productCategoryRepository,
   productRepository,
@@ -154,6 +155,45 @@ class ProductService extends BaseService {
     if (addonProducts.length !== addonProductIds.length) {
       throw notFoundException("One or more addon products do not exist.")
     }
+  }
+
+  /**
+   * Changing the category without naming a sub-category would leave the stored
+   * sub-category under the old category. Drop it unless it already sits under
+   * the new category.
+   */
+  private async withConsistentSubcategory<
+    Data extends { categoryId?: string | null; subcategoryId?: string | null },
+  >(input: {
+    productId: string
+    workspaceId: string
+    data: Data
+    tx: DatabaseClient
+  }): Promise<Data> {
+    const { data } = input
+    if (data.categoryId === undefined || data.subcategoryId !== undefined) {
+      return data
+    }
+    const current = await productRepository.find(
+      { workspaceId: input.workspaceId, productId: input.productId },
+      input.tx,
+    )
+    if (!current?.subcategoryId || current.categoryId === data.categoryId) {
+      return data
+    }
+    if (data.categoryId) {
+      const subcategory = await productCategoryRepository.find(
+        {
+          workspaceId: input.workspaceId,
+          categoryId: current.subcategoryId,
+        },
+        input.tx,
+      )
+      if (subcategory?.parentId === data.categoryId) {
+        return data
+      }
+    }
+    return { ...data, subcategoryId: null }
   }
 
   /**
@@ -318,7 +358,13 @@ class ProductService extends BaseService {
     data: Partial<Omit<ProductWriteData, "workspaceId">>
     tx?: DatabaseClient
   }): Promise<void> {
-    const { productId, workspaceId, data, tx = db } = props
+    const { productId, workspaceId, tx = db } = props
+    const data = await this.withConsistentSubcategory({
+      productId,
+      workspaceId,
+      data: props.data,
+      tx,
+    })
     await this.assertReferencesBelongToWorkspace({
       workspaceId,
       categoryId: data.categoryId,
@@ -346,9 +392,15 @@ class ProductService extends BaseService {
       variantOptions,
       variants,
       addons,
-      ...data
+      ...patch
     } = input
     await db.transaction(async (tx) => {
+      const data = await this.withConsistentSubcategory({
+        productId,
+        workspaceId,
+        data: patch,
+        tx,
+      })
       await this.assertReferencesBelongToWorkspace({
         workspaceId,
         categoryId: data.categoryId,
@@ -385,13 +437,27 @@ class ProductService extends BaseService {
     workspaceId: string
     tx?: DatabaseClient
   }): Promise<void> {
-    const { ids, workspaceId, tx = db } = input
+    const { ids, workspaceId } = input
     await assertDeletable({
       workspaceId,
       resourceKind: "product",
       resourceIds: ids,
     })
-    await productRepository.deleteByIds({ workspaceId, productIds: ids }, tx)
+    const deleteWith = async (tx: DatabaseClient) => {
+      // Discount codes keep product ids in a JSON list with no foreign key, so
+      // the deleted ids have to be taken out here or the code can never be
+      // edited again.
+      await discountCodeRepository.removeProductIds(
+        { workspaceId, productIds: ids },
+        tx,
+      )
+      await productRepository.deleteByIds({ workspaceId, productIds: ids }, tx)
+    }
+    if (input.tx) {
+      await deleteWith(input.tx)
+      return
+    }
+    await db.transaction(deleteWith)
   }
 
   async list(input: Parameters<typeof productRepository.list>[0]) {

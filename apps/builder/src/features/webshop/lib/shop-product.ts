@@ -1,4 +1,5 @@
 import type { ProductModel } from "@chatbotx.io/database/types"
+import { stackDiscountPercents } from "@chatbotx.io/utils/money"
 import { toSafeWebUrl } from "./safe-url"
 
 /** A product as the shop shows it — nothing a customer should not see. */
@@ -7,8 +8,11 @@ export type ShopProduct = {
   name: string
   shortDescription: string | null
   price: number
+  /** Percent off as the cart charges it: the product's and its vendor's, stacked. */
   discount: number
   imageUrl: string | null
+  /** Every image, first one first, for the card's carousel. */
+  images: string[]
   vendorName: string | null
   categoryId: string | null
   productUrl: string | null
@@ -19,7 +23,6 @@ export type ShopProduct = {
 
 export type ShopProductDetail = ShopProduct & {
   longDescription: string | null
-  images: string[]
   variantOptions: Array<{ name: string; values: string[] }>
   variants: Array<{
     id: string
@@ -41,7 +44,12 @@ type ProductRow = Pick<
   | "inventoryPolicy"
   | "inventoryQuantity"
   | "allowOutOfStockPurchase"
-> & { vendor: string | null; hasVariants?: boolean }
+> & {
+  vendor: string | null
+  /** The active vendor's own percent off, stacked on the product's. */
+  vendorDiscountPercent?: number
+  hasVariants?: boolean
+}
 
 const isInStock = (product: ProductRow) =>
   product.inventoryPolicy !== "track" ||
@@ -53,8 +61,12 @@ export const toShopProduct = (product: ProductRow): ShopProduct => ({
   name: product.name,
   shortDescription: product.shortDescription,
   price: product.price,
-  discount: product.discount,
+  discount: stackDiscountPercents(
+    product.discount,
+    product.vendorDiscountPercent ?? 0,
+  ),
   imageUrl: product.images[0]?.url ?? null,
+  images: product.images.map((image) => image.url),
   vendorName: product.vendor,
   categoryId: product.categoryId,
   productUrl: toSafeWebUrl(product.productUrl),
@@ -76,7 +88,6 @@ export const toShopProductDetail = (
   ...toShopProduct(product),
   hasVariants: product.variants.length > 0,
   longDescription: product.longDescription,
-  images: product.images.map((image) => image.url),
   variantOptions: [...product.variantOptions]
     .sort((a, b) => a.position - b.position)
     .map(({ name, values }) => ({ name, values })),
@@ -87,7 +98,7 @@ export const toShopProductDetail = (
   })),
 })
 
-/** The price after the product's own discount, as the cart will charge it. */
+/** The price after the effective discount (`ShopProduct.discount`), as the cart will charge it. */
 export const discountedPrice = (
   product: Pick<ShopProduct, "discount">,
   price: number,

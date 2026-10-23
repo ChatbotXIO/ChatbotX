@@ -7,6 +7,7 @@ import {
   eq,
   gt,
   ilike,
+  inArray,
   isNull,
   lte,
   or,
@@ -39,6 +40,62 @@ const sameCode = (code: string) =>
   sql`lower(${discountCodeModel.code}) = lower(${code.trim()})`
 
 export const discountCodeRepository = {
+  /**
+   * Takes deleted products out of every "specific products" code that lists
+   * them. A code left with no product would silently apply to nothing, so it
+   * is switched off for the merchant to fix.
+   */
+  async removeProductIds(
+    input: { workspaceId: string; productIds: string[] },
+    tx: DatabaseClient = db,
+  ) {
+    if (input.productIds.length === 0) {
+      return
+    }
+    const removed = sql.join(
+      input.productIds.map((id) => sql`${id}`),
+      sql`, `,
+    )
+    const listsRemoved = sql`exists (select 1 from jsonb_array_elements_text(${discountCodeModel.productIds}) as listed(id) where listed.id in (${removed}))`
+    await tx
+      .update(discountCodeModel)
+      .set({
+        productIds: sql`coalesce((select jsonb_agg(to_jsonb(listed.id)) from jsonb_array_elements_text(${discountCodeModel.productIds}) as listed(id) where listed.id not in (${removed})), '[]'::jsonb)`,
+        isActive: sql`case when exists (select 1 from jsonb_array_elements_text(${discountCodeModel.productIds}) as listed(id) where listed.id not in (${removed})) then ${discountCodeModel.isActive} else false end`,
+      })
+      .where(
+        and(
+          eq(discountCodeModel.workspaceId, input.workspaceId),
+          eq(discountCodeModel.appliesTo, "products"),
+          listsRemoved,
+        ),
+      )
+  },
+
+  /**
+   * Switches off the "category" codes pointing at these categories. Run before
+   * the category rows go: the foreign key then clears `categoryId`, and a code
+   * that still says "category" with none chosen applies to nothing.
+   */
+  async deactivateByCategoryIds(
+    input: { workspaceId: string; categoryIds: string[] },
+    tx: DatabaseClient = db,
+  ) {
+    if (input.categoryIds.length === 0) {
+      return
+    }
+    await tx
+      .update(discountCodeModel)
+      .set({ isActive: false })
+      .where(
+        and(
+          eq(discountCodeModel.workspaceId, input.workspaceId),
+          eq(discountCodeModel.appliesTo, "category"),
+          inArray(discountCodeModel.categoryId, input.categoryIds),
+        ),
+      )
+  },
+
   async list(input: DiscountCodeListInput, tx: DatabaseClient = db) {
     const pagination = parsePagination(input)
     const where = and(
@@ -136,6 +193,47 @@ export const discountCodeRepository = {
         ),
       )
       .orderBy(asc(discountCodeModel.createdAt), asc(discountCodeModel.id))
+  },
+
+  /**
+   * Codes a customer may be shown on the cart: typed (not automatic), turned
+   * on and started — for everyone or for customers matching a filter (the
+   * cart says when this customer does not match). Ended or used-up ones are listed too —
+   * the cart shows them greyed out — but after the ones still running with
+   * uses left, so they never crowd those out of `limit`. Newest first within
+   * each.
+   */
+  async listOffered(
+    input: { workspaceId: string; now: Date; limit: number },
+    tx: DatabaseClient = db,
+  ) {
+    const usable = and(
+      or(
+        isNull(discountCodeModel.endsAt),
+        gt(discountCodeModel.endsAt, input.now),
+      ),
+      or(
+        isNull(discountCodeModel.usageLimit),
+        sql`${discountCodeModel.usedCount} < ${discountCodeModel.usageLimit}`,
+      ),
+    )
+    return await tx
+      .select()
+      .from(discountCodeModel)
+      .where(
+        and(
+          eq(discountCodeModel.workspaceId, input.workspaceId),
+          eq(discountCodeModel.autoApply, false),
+          eq(discountCodeModel.isActive, true),
+          lte(discountCodeModel.startsAt, input.now),
+        ),
+      )
+      .orderBy(
+        sql`case when ${usable} then 0 else 1 end`,
+        desc(discountCodeModel.createdAt),
+        desc(discountCodeModel.id),
+      )
+      .limit(input.limit)
   },
 
   async create(

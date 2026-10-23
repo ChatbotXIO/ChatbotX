@@ -24,9 +24,17 @@ import {
   type OrderEventMetadata,
   type OrderStatusEventType,
 } from "@chatbotx.io/events"
-import { computeLinePrice, percentOf, sumMoney } from "@chatbotx.io/utils/money"
+import {
+  computeLinePrice,
+  percentOf,
+  roundMoney,
+  stackDiscountPercents,
+  sumMoney,
+} from "@chatbotx.io/utils/money"
 import {
   getNewOrderNotificationJobId,
+  IntegrationJobAction,
+  integrationQueue,
   NotificationJobAction,
   notificationQueue,
 } from "@chatbotx.io/worker-config"
@@ -35,6 +43,8 @@ import { conversationService } from "../conversation/service"
 import type { CouponLine } from "../discount-code/pricing"
 import {
   type AppliedDiscount,
+  type AvailableDiscount,
+  type DiscountOrderContext,
   discountCodeService,
 } from "../discount-code/service"
 import { ecommerceSettingsService } from "../ecommerce-settings/service"
@@ -42,7 +52,6 @@ import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { messageService } from "../message/service"
 import { workspaceService } from "../workspace/service"
-import { resolveContactMessageLanguage } from "./contact-language"
 import {
   buildOrderConfirmationText,
   buildOrderStatusText,
@@ -57,6 +66,7 @@ import {
   orderProductUnavailableException,
   orderShippingTypeUnavailableException,
 } from "./errors"
+import { resolveCustomerMessageLanguage } from "./message-language"
 
 /** Who placed or moved an order, for its timeline. */
 export type OrderActor = {
@@ -154,15 +164,11 @@ const STOCK_HOLDING_STATUSES: readonly OrderStatus[] = [
   "shipped",
 ]
 
+/** "Size: L, Color: Red" — each option named, as the cart and order show it. */
 const variantLabel = (combination: Record<string, string>): string =>
-  Object.values(combination).join(" / ")
-
-/**
- * The product's own discount and its vendor's, stacked: 10% then 20% is 28%
- * off, never more than 100%.
- */
-const stackDiscounts = (productPercent: number, vendorPercent: number) =>
-  100 - ((100 - productPercent) * (100 - vendorPercent)) / 100
+  Object.entries(combination)
+    .map(([option, value]) => `${option}: ${value}`)
+    .join(", ")
 
 /** Same product and variant on two lines become one line. */
 const mergeItems = (items: PlaceOrderItem[]): PlaceOrderItem[] => {
@@ -190,6 +196,22 @@ const assertOrderable = (product: ProductForOrder | undefined, id: string) => {
   return product
 }
 
+/**
+ * A product's category and sub-category, as the `category_ids` of cart,
+ * order and discount events — the same list everywhere.
+ */
+export const productCategoryIds = (
+  product:
+    | {
+        categoryId: string | null
+        subcategoryId: string | null
+      }
+    | undefined,
+): string[] =>
+  [product?.categoryId, product?.subcategoryId].filter((id): id is string =>
+    Boolean(id),
+  )
+
 const priceLine = (input: {
   product: ProductForOrder
   item: PlaceOrderItem
@@ -215,7 +237,7 @@ const priceLine = (input: {
   }
 
   const unitPrice = variant?.price ?? product.price
-  const discountPercent = stackDiscounts(
+  const discountPercent = stackDiscountPercents(
     product.discount,
     product.vendor?.discountPercent ?? 0,
   )
@@ -249,6 +271,47 @@ const priceLine = (input: {
     stockProductId: product.id,
   }
 }
+
+/**
+ * The items that can be ordered right now, and the ones that cannot
+ * (inactive, vendor off, variant gone) — named when the product still
+ * exists, so the customer knows which one.
+ */
+export const splitOrderableItems = (
+  products: Map<string, ProductForOrder>,
+  items: PlaceOrderItem[],
+) => {
+  const orderable: PlaceOrderItem[] = []
+  const unavailable: Array<PlaceOrderItem & { name: string | null }> = []
+  for (const item of items) {
+    try {
+      const product = assertOrderable(
+        products.get(item.productId),
+        item.productId,
+      )
+      priceLine({ product, item, currency: "USD" })
+      orderable.push(item)
+    } catch {
+      unavailable.push({
+        ...item,
+        name: products.get(item.productId)?.name ?? null,
+      })
+    }
+  }
+  return { orderable, unavailable }
+}
+
+/** Order products by id, as `priceDraft` and `splitOrderableItems` take them. */
+export const findProductsForOrder = async (
+  input: { workspaceId: string; productIds: string[] },
+  tx?: DatabaseClient,
+): Promise<Map<string, ProductForOrder>> =>
+  new Map(
+    (await productRepository.findForOrder(input, tx)).map((row) => [
+      row.id,
+      row,
+    ]),
+  )
 
 /** Each vendor's lines, after discounts, against that vendor's minimum. */
 const assertVendorMinimums = (
@@ -299,14 +362,13 @@ const resolveShippingType = (
 const toCouponLine = (
   line: PricedLine,
   products: Map<string, ProductForOrder>,
+  currency: string,
 ): CouponLine => {
   const product = products.get(line.stockProductId)
   return {
     productId: line.productId ?? null,
-    categoryIds: [product?.categoryId, product?.subcategoryId].filter(
-      (id): id is string => Boolean(id),
-    ),
-    amount: line.gross - (line.discountTotal ?? 0),
+    categoryIds: productCategoryIds(product),
+    amount: roundMoney(line.gross - (line.discountTotal ?? 0), currency),
     quantity: line.quantity,
   }
 }
@@ -339,7 +401,7 @@ const computeTotals = (input: {
   const couponDiscount = input.coupon?.amount ?? 0
   const goodsCoupon = input.coupon?.freeShipping ? 0 : couponDiscount
   const serviceFeeTotal = percentOf(
-    subtotal - discountTotal - goodsCoupon,
+    sumMoney([subtotal, -discountTotal, -goodsCoupon], currency),
     input.serviceFeePercent,
     currency,
   )
@@ -348,7 +410,7 @@ const computeTotals = (input: {
     discountTotal,
     taxTotal,
     serviceFeeTotal,
-    shippingTotal: input.shippingTotal,
+    shippingTotal: roundMoney(input.shippingTotal, currency),
     couponDiscount,
     total: sumMoney(
       [
@@ -356,7 +418,7 @@ const computeTotals = (input: {
         -discountTotal,
         taxTotal,
         serviceFeeTotal,
-        input.shippingTotal,
+        roundMoney(input.shippingTotal, currency),
         -couponDiscount,
       ],
       currency,
@@ -372,12 +434,18 @@ const computeTotals = (input: {
 const goodsAfterDiscounts = (
   totals: OrderTotals,
   discount: AppliedDiscount | null,
+  currency: string,
 ) =>
-  totals.subtotal -
-  totals.discountTotal -
-  (discount?.discountCode.discountType === "freeShipping"
-    ? 0
-    : totals.couponDiscount)
+  sumMoney(
+    [
+      totals.subtotal,
+      -totals.discountTotal,
+      -(discount?.discountCode.discountType === "freeShipping"
+        ? 0
+        : totals.couponDiscount),
+    ],
+    currency,
+  )
 
 /** Stock each product loses, summed over its lines. */
 const quantitiesByProduct = (
@@ -393,6 +461,27 @@ const quantitiesByProduct = (
     }
   }
   return quantities
+}
+
+/**
+ * Spreads what each product really lost over the lines that asked for it, in
+ * order, so every line records the units it got (a line never records more
+ * than it ordered, and the lines of a product add up to what it lost).
+ */
+const allocateStockTaken = (
+  lines: Array<{ stockProductId: string | null; quantity: number }>,
+  takenByProduct: Map<string, number>,
+): number[] => {
+  const remaining = new Map(takenByProduct)
+  return lines.map((line) => {
+    if (!line.stockProductId) {
+      return 0
+    }
+    const available = remaining.get(line.stockProductId) ?? 0
+    const taken = Math.min(line.quantity, available)
+    remaining.set(line.stockProductId, available - taken)
+    return taken
+  })
 }
 
 class OrderService extends BaseService {
@@ -446,18 +535,22 @@ class OrderService extends BaseService {
       }
       if (input.source !== "manual") {
         const minimum = settings.checkout.minimumOrderValue
-        if (minimum > 0 && goodsAfterDiscounts(totals, discount) < minimum) {
+        if (
+          minimum > 0 &&
+          goodsAfterDiscounts(totals, discount, currency) < minimum
+        ) {
           throw orderBelowMinimumException(minimum)
         }
         assertVendorMinimums(lines, products, currency)
       }
 
-      await this.takeStock({
+      const stockTakenByProduct = await this.takeStock({
         workspaceId: input.workspaceId,
         lines,
         products,
         tx,
       })
+      const stockTakenByLine = allocateStockTaken(lines, stockTakenByProduct)
 
       const number = await ecommerceSettingsRepository.nextOrderNumber(
         input.workspaceId,
@@ -508,7 +601,10 @@ class OrderService extends BaseService {
           workspaceId: input.workspaceId,
           orderId: created.id,
           items: lines.map(
-            ({ gross: _gross, stockProductId: _stock, ...line }) => line,
+            ({ gross: _gross, stockProductId: _stock, ...line }, index) => ({
+              ...line,
+              stockTaken: stockTakenByLine[index] ?? 0,
+            }),
           ),
         },
         tx,
@@ -550,34 +646,20 @@ class OrderService extends BaseService {
     /** The code the customer typed; one that cannot be used is reported. */
     discountCode?: string | null
     autoApplyDiscount?: boolean
+    /** Also price the typed codes the cart can offer (`availableDiscounts`). */
+    listAvailableDiscounts?: boolean
   }) {
     const items = mergeItems(input.items)
-    const products = new Map(
-      (
-        await productRepository.findForOrder({
-          workspaceId: input.workspaceId,
-          productIds: items.map((item) => item.productId),
-        })
-      ).map((row) => [row.id, row]),
-    )
-    const orderable: PlaceOrderItem[] = []
-    // Named when the product still exists, so the customer knows which one.
-    const unavailable: Array<PlaceOrderItem & { name: string | null }> = []
-    for (const item of items) {
-      try {
-        const product = assertOrderable(
-          products.get(item.productId),
-          item.productId,
-        )
-        priceLine({ product, item, currency: "USD" })
-        orderable.push(item)
-      } catch {
-        unavailable.push({
-          ...item,
-          name: products.get(item.productId)?.name ?? null,
-        })
-      }
-    }
+    // Read once: the availability check and both pricing attempts below
+    // share them.
+    const [products, settings] = await Promise.all([
+      findProductsForOrder({
+        workspaceId: input.workspaceId,
+        productIds: items.map((item) => item.productId),
+      }),
+      ecommerceSettingsService.getFresh(input.workspaceId),
+    ])
+    const { orderable, unavailable } = splitOrderableItems(products, items)
     // A typed code that cannot be used does not fail the quote: the cart
     // shows why and is priced without it.
     let discountError: {
@@ -593,6 +675,8 @@ class OrderService extends BaseService {
         contactId: input.contactId ?? null,
         discountCode: input.discountCode,
         autoApplyDiscount: input.autoApplyDiscount,
+        listAvailableDiscounts: input.listAvailableDiscounts,
+        loaded: { products, settings },
       })
     } catch (error) {
       if (
@@ -611,6 +695,8 @@ class OrderService extends BaseService {
         shippingType: input.shippingType,
         contactId: input.contactId ?? null,
         autoApplyDiscount: input.autoApplyDiscount,
+        listAvailableDiscounts: input.listAvailableDiscounts,
+        loaded: { products, settings },
       })
     }
     const minimum = draft.settings.checkout.minimumOrderValue
@@ -630,10 +716,12 @@ class OrderService extends BaseService {
           }
         : null,
       discountError,
+      availableDiscounts: draft.availableDiscounts,
       unavailable,
       belowMinimum:
         minimum > 0 &&
-        goodsAfterDiscounts(draft.totals, draft.discount) < minimum
+        goodsAfterDiscounts(draft.totals, draft.discount, draft.currency) <
+          minimum
           ? minimum
           : null,
     }
@@ -647,26 +735,32 @@ class OrderService extends BaseService {
     contactId?: string | null
     discountCode?: string | null
     autoApplyDiscount?: boolean
+    listAvailableDiscounts?: boolean
     /** Inside an order's transaction: the code is locked to be redeemed. */
     tx?: DatabaseClient
+    /**
+     * Already read by a quote, which writes nothing; an order reads them
+     * again inside its transaction.
+     */
+    loaded?: {
+      products: Map<string, ProductForOrder>
+      settings: EcommerceSettings
+    }
   }) {
     const tx = input.tx ?? db
-    const settings = await ecommerceSettingsService.getFresh(
-      input.workspaceId,
-      tx,
-    )
+    const settings =
+      input.loaded?.settings ??
+      (await ecommerceSettingsService.getFresh(input.workspaceId, tx))
     const currency = settings.payments.currency
-    const products = new Map(
-      (
-        await productRepository.findForOrder(
-          {
-            workspaceId: input.workspaceId,
-            productIds: input.items.map((item) => item.productId),
-          },
-          tx,
-        )
-      ).map((row) => [row.id, row]),
-    )
+    const products =
+      input.loaded?.products ??
+      (await findProductsForOrder(
+        {
+          workspaceId: input.workspaceId,
+          productIds: input.items.map((item) => item.productId),
+        },
+        tx,
+      ))
     const lines = input.items.map((item) =>
       priceLine({
         product: assertOrderable(products.get(item.productId), item.productId),
@@ -676,21 +770,30 @@ class OrderService extends BaseService {
     )
     const shippingType = resolveShippingType(settings, input.shippingType)
     const shippingTotal =
-      shippingType === "delivery" ? settings.shipping.deliveryCost : 0
+      shippingType === "delivery"
+        ? roundMoney(settings.shipping.deliveryCost, currency)
+        : 0
+    const couponContext: DiscountOrderContext = {
+      workspaceId: input.workspaceId,
+      contactId: input.contactId ?? null,
+      lines: lines.map((line) => toCouponLine(line, products, currency)),
+      shippingType,
+      shippingTotal,
+      currency,
+    }
     const discount: AppliedDiscount | null =
       lines.length > 0
         ? await discountCodeService.resolve({
-            workspaceId: input.workspaceId,
-            contactId: input.contactId ?? null,
-            lines: lines.map((line) => toCouponLine(line, products)),
-            shippingType,
-            shippingTotal,
-            currency,
+            ...couponContext,
             code: input.discountCode,
             autoApply: input.autoApplyDiscount,
             tx: input.tx,
           })
         : null
+    const availableDiscounts: AvailableDiscount[] =
+      input.listAvailableDiscounts && lines.length > 0
+        ? await discountCodeService.listAvailable(couponContext)
+        : []
     const totals = computeTotals({
       lines,
       currency,
@@ -711,6 +814,7 @@ class OrderService extends BaseService {
       shippingType,
       totals,
       discount,
+      availableDiscounts,
     }
   }
 
@@ -869,23 +973,11 @@ class OrderService extends BaseService {
     await this.announceOrderEvents(order, input.from)
     try {
       const settings = await ecommerceSettingsService.get(order.workspaceId)
-      const language = await resolveContactMessageLanguage(order)
       if (input.from === null) {
-        const [detail, workspace] = await Promise.all([
-          this.getDetail({ workspaceId: order.workspaceId, orderId: order.id }),
-          workspaceService.findById({ id: order.workspaceId }),
-        ])
-        await this.messageCustomer(
-          order,
-          buildOrderConfirmationText(detail, {
-            language,
-            payments: settings.payments,
-            storeAddress: settings.shipping.storeAddress,
-            timeZone: workspace.timezone,
-          }),
-        )
+        await this.confirmToCustomer(order, settings)
         return
       }
+      const language = await resolveCustomerMessageLanguage(order)
       const alwaysNotified =
         order.status === "cancelled" || order.status === "concluded"
       if (
@@ -910,6 +1002,76 @@ class OrderService extends BaseService {
   }
 
   /**
+   * What the customer gets when their order is placed, as the store chose
+   * (`checkout.orderConfirmationMode`): the built-in confirmation in the
+   * workspace language, the store's own flow instead, or nothing.
+   */
+  private async confirmToCustomer(
+    order: OrderModel,
+    settings: EcommerceSettings,
+  ) {
+    const { orderConfirmationMode, orderConfirmationFlowId } = settings.checkout
+    if (orderConfirmationMode === "none") {
+      return
+    }
+    if (orderConfirmationMode === "flow") {
+      if (orderConfirmationFlowId) {
+        await this.runFlowForCustomer(order, orderConfirmationFlowId)
+      }
+      return
+    }
+    const [detail, workspace, language] = await Promise.all([
+      this.getDetail({ workspaceId: order.workspaceId, orderId: order.id }),
+      workspaceService.findById({ id: order.workspaceId }),
+      resolveCustomerMessageLanguage(order),
+    ])
+    await this.messageCustomer(
+      order,
+      buildOrderConfirmationText(detail, {
+        language,
+        payments: settings.payments,
+        storeAddress: settings.shipping.storeAddress,
+        timeZone: workspace.timezone,
+      }),
+    )
+  }
+
+  /**
+   * Runs a flow in the order's conversation (the inbox it came from). One
+   * job per order, so a retried placement runs it once.
+   */
+  private async runFlowForCustomer(order: OrderModel, flowId: string) {
+    if (!order.contactId) {
+      return
+    }
+    try {
+      const { conversation, contactInbox } =
+        await conversationService.resolveContactInboxForSend({
+          workspaceId: order.workspaceId,
+          contactId: order.contactId,
+          inboxId: order.inboxId ?? undefined,
+        })
+      await integrationQueue.add(
+        IntegrationJobAction.sendFlow,
+        {
+          type: IntegrationJobAction.sendFlow,
+          data: {
+            conversationId: conversation.id,
+            contactInboxId: contactInbox.id,
+            flowId,
+          },
+        },
+        { jobId: `order-confirmation-flow-${order.id}` },
+      )
+    } catch (err) {
+      logger.warn(
+        { err, orderId: order.id, workspaceId: order.workspaceId },
+        "[order] could not run the order confirmation flow",
+      )
+    }
+  }
+
+  /**
    * The trigger and webhook events of a placed or moved order: its status
    * event, and `productOrdered` once when it is placed. Best effort: the
    * order already stands.
@@ -926,6 +1088,18 @@ class OrderService extends BaseService {
         workspaceId: order.workspaceId,
         orderId: order.id,
       })
+      // The line keeps its category; the sub-category is read from the
+      // product, so `category_ids` lists both, as the cart events do.
+      const subcategories = new Map(
+        (
+          await productRepository.findByIds({
+            workspaceId: order.workspaceId,
+            productIds: detail.items.flatMap((item) =>
+              item.productId ? [item.productId] : [],
+            ),
+          })
+        ).map((product) => [product.id, product.subcategoryId]),
+      )
       const metadata: OrderEventMetadata = {
         orderId: detail.id,
         orderNumber: detail.number,
@@ -942,7 +1116,12 @@ class OrderService extends BaseService {
           productId: item.productId,
           variantId: item.variantId,
           name: item.name,
-          categoryIds: item.categoryId ? [item.categoryId] : [],
+          categoryIds: productCategoryIds({
+            categoryId: item.categoryId,
+            subcategoryId: item.productId
+              ? (subcategories.get(item.productId) ?? null)
+              : null,
+          }),
           quantity: item.quantity,
           lineTotal: item.lineTotal,
         })),
@@ -991,12 +1170,20 @@ class OrderService extends BaseService {
           contactId: contact.contactId,
           inboxId: contact.inboxId ?? undefined,
         })
+      // A shop link names the channel it was sent on: the order belongs
+      // there, not to whichever channel the contact used last.
+      const linked = contact.contactInboxId
+        ? conversation.contactInboxes.find(
+            (candidate) => candidate.id === contact.contactInboxId,
+          )
+        : undefined
+      const chosen = linked ?? contactInbox
       return {
         contactId: contact.contactId,
-        contactInboxId: contactInbox.id,
-        inboxId: contactInbox.inboxId,
+        contactInboxId: chosen.id,
+        inboxId: chosen.inboxId,
         conversationId: conversation.id,
-        channel: contactInbox.channel,
+        channel: chosen.channel,
       }
     } catch (err) {
       if (err instanceof ChatbotXException && err.code === "notFound") {
@@ -1043,8 +1230,9 @@ class OrderService extends BaseService {
     lines: PricedLine[]
     products: Map<string, ProductForOrder>
     tx: DatabaseClient
-  }): Promise<void> {
+  }): Promise<Map<string, number>> {
     const needed = quantitiesByProduct(input.lines)
+    const takenByProduct = new Map<string, number>()
     const locked = await productRepository.lockForStock(
       { workspaceId: input.workspaceId, productIds: [...needed.keys()] },
       input.tx,
@@ -1062,17 +1250,21 @@ class OrderService extends BaseService {
           input.products.get(product.id)?.name ?? product.id,
         )
       }
-      await productRepository.adjustInventory(
-        {
-          workspaceId: input.workspaceId,
-          productId: product.id,
-          delta: -quantity,
-        },
+      // Stock never goes below zero, so an oversold order takes only what
+      // was there — and only that comes back on a cancel.
+      const taken = await productRepository.takeInventory(
+        { workspaceId: input.workspaceId, productId: product.id, quantity },
         input.tx,
       )
+      takenByProduct.set(product.id, taken)
     }
+    return takenByProduct
   }
 
+  /**
+   * Gives back what each line recorded as taken, whatever the product's
+   * policy is now. Callers hold the order's row lock, so it runs once.
+   */
   private async returnStock(input: {
     workspaceId: string
     orderId: string
@@ -1085,7 +1277,7 @@ class OrderService extends BaseService {
     const quantities = quantitiesByProduct(
       items.map((item) => ({
         stockProductId: item.productId,
-        quantity: item.quantity,
+        quantity: item.stockTaken,
       })),
     )
     // Same lock order as taking stock, so a cancel and a new order on the
@@ -1095,11 +1287,11 @@ class OrderService extends BaseService {
       input.tx,
     )
     for (const product of locked) {
-      await productRepository.adjustInventory(
+      await productRepository.restoreInventory(
         {
           workspaceId: input.workspaceId,
           productId: product.id,
-          delta: quantities.get(product.id) ?? 0,
+          quantity: quantities.get(product.id) ?? 0,
         },
         input.tx,
       )

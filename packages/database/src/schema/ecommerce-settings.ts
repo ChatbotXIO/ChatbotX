@@ -16,6 +16,8 @@ import {
   type CurrencyPosition,
   checkoutModes,
   currencyPositions,
+  type OrderConfirmationMode,
+  orderConfirmationModes,
   type PaymentMethod,
   type ProductButtonType,
   type ProductImageSize,
@@ -49,6 +51,13 @@ export const shippingMode = pgEnum(
 export const checkoutMode = pgEnum(
   "checkoutMode",
   checkoutModes.options as [CheckoutMode, ...CheckoutMode[]],
+)
+export const orderConfirmationMode = pgEnum(
+  "orderConfirmationMode",
+  orderConfirmationModes.options as [
+    OrderConfirmationMode,
+    ...OrderConfirmationMode[],
+  ],
 )
 
 /**
@@ -114,6 +123,13 @@ export const ecommerceSettingsModel = pgTable(
       onUpdate: "cascade",
     }),
     minimumOrderValue: money().notNull(),
+    /** Existing rows keep today's built-in confirmation. */
+    orderConfirmationMode: orderConfirmationMode().notNull().default("default"),
+    /** Run when an order is placed, with `orderConfirmationMode: flow`. */
+    orderConfirmationFlowId: bigintAsString().references(() => flowModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
     requireName: boolean().notNull(),
     requireEmail: boolean().notNull(),
     requirePhone: boolean().notNull(),
@@ -127,6 +143,9 @@ export const ecommerceSettingsModel = pgTable(
       table.abandonedCartFlowId,
     ),
     index("EcommerceSettings_checkoutFlowId_idx").on(table.checkoutFlowId),
+    index("EcommerceSettings_orderConfirmationFlowId_idx").on(
+      table.orderConfirmationFlowId,
+    ),
     check(
       "EcommerceSettings_serviceFeePercent_check",
       sql`${table.serviceFeePercent} >= 0 AND ${table.serviceFeePercent} <= 100`,

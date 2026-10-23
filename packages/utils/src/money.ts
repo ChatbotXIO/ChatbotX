@@ -114,19 +114,33 @@ export const formatMoney = (
   options: FormatMoneyOptions,
 ): string => {
   const digits = getCurrencyFractionDigits(options.currency)
+  const rounded = roundMoney(amount, options.currency)
   const number = new Intl.NumberFormat("en", {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
-  }).format(roundMoney(amount, options.currency))
+  }).format(Math.abs(rounded))
   const symbol = options.symbol || options.currency.toUpperCase()
+  // The sign leads the whole amount — "-$6.90", never "$-6.90" — and an
+  // amount that rounds to zero has none.
+  const sign = rounded < 0 ? "-" : ""
   switch (options.position) {
     case "leftSpace":
-      return `${symbol} ${number}`
+      return `${sign}${symbol} ${number}`
     case "right":
-      return `${number}${symbol}`
+      return `${sign}${number}${symbol}`
     case "rightSpace":
-      return `${number} ${symbol}`
+      return `${sign}${number} ${symbol}`
     default:
-      return `${symbol}${number}`
+      return `${sign}${symbol}${number}`
   }
 }
+
+/**
+ * A product's own discount and its vendor's, stacked: 10% then 20% is 28%
+ * off, never more than 100%. The cart, the order and the web shop's displayed
+ * price all use this one formula so they cannot disagree.
+ */
+export const stackDiscountPercents = (
+  productPercent: number,
+  vendorPercent: number,
+) => 100 - ((100 - productPercent) * (100 - vendorPercent)) / 100

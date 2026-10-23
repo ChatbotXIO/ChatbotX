@@ -8,6 +8,7 @@ import {
   ilike,
   inArray,
   isNull,
+  ne,
   or,
   relationsFilterToSQL,
   sql,
@@ -368,6 +369,88 @@ export const productRepository = {
    * add-on only, whose category, sub-category and vendor (when set) are
    * visible / active. `keyword` searches only searchable products.
    */
+  /**
+   * Shop-visible products like `product`: in its category or sub-category,
+   * or sharing a tag with it — never the product itself. The closest first
+   * (same sub-category, then same category, then a tag only), then by rank.
+   */
+  async listRelatedForShop(
+    input: {
+      workspaceId: string
+      product: {
+        id: string
+        categoryId: string | null
+        subcategoryId: string | null
+        tags: string[]
+      }
+      limit: number
+    },
+    tx: DatabaseClient = db,
+  ) {
+    const { product } = input
+    const categoryIds = [product.categoryId, product.subcategoryId].filter(
+      (id): id is string => id !== null,
+    )
+    const tags = product.tags.filter((tag) => tag.trim() !== "")
+    if (categoryIds.length === 0 && tags.length === 0) {
+      return []
+    }
+    const category = alias(productCategoryModel, "category")
+    const subcategory = alias(productCategoryModel, "subcategory")
+    const sameSubcategory = product.subcategoryId
+      ? eq(productModel.subcategoryId, product.subcategoryId)
+      : undefined
+    const sameCategory = categoryIds.length
+      ? or(
+          inArray(productModel.categoryId, categoryIds),
+          inArray(productModel.subcategoryId, categoryIds),
+        )
+      : undefined
+    // `?|`: the product's tags hold any of these.
+    const sharesTag = tags.length
+      ? sql`${productModel.tags} ?| array[${sql.join(
+          tags.map((tag) => sql`${tag}`),
+          sql`, `,
+        )}]::text[]`
+      : undefined
+    const closeness = sql<number>`case
+      when ${sameSubcategory ?? sql`false`} then 0
+      when ${sameCategory ?? sql`false`} then 1
+      else 2 end`
+    const rows = await tx
+      .select({
+        product: productModel,
+        vendorName: vendorModel.name,
+        vendorDiscountPercent: vendorModel.discountPercent,
+        hasVariants: sql<boolean>`exists (select 1 from ${productVariantModel} where ${productVariantModel.productId} = ${productModel.id} and ${productVariantModel.isEnabled})`,
+      })
+      .from(productModel)
+      .leftJoin(category, eq(category.id, productModel.categoryId))
+      .leftJoin(subcategory, eq(subcategory.id, productModel.subcategoryId))
+      .leftJoin(vendorModel, eq(vendorModel.id, productModel.vendorId))
+      .where(
+        and(
+          shopVisibleWhere({
+            workspaceId: input.workspaceId,
+            category,
+            subcategory,
+          }),
+          ne(productModel.id, product.id),
+          or(sameCategory, sharesTag),
+        ),
+      )
+      .orderBy(closeness, asc(productModel.rank), asc(productModel.name))
+      .limit(input.limit)
+    return rows.map(
+      ({ product: row, vendorName, vendorDiscountPercent, hasVariants }) => ({
+        ...row,
+        vendor: vendorName,
+        vendorDiscountPercent: vendorDiscountPercent ?? 0,
+        hasVariants,
+      }),
+    )
+  },
+
   async listForShop(
     input: {
       workspaceId: string
@@ -411,6 +494,7 @@ export const productRepository = {
         .select({
           product: productModel,
           vendorName: vendorModel.name,
+          vendorDiscountPercent: vendorModel.discountPercent,
           // A product with variants is added from its own page, where the
           // customer picks one.
           hasVariants: sql<boolean>`exists (select 1 from ${productVariantModel} where ${productVariantModel.productId} = ${productModel.id} and ${productVariantModel.isEnabled})`,
@@ -436,11 +520,14 @@ export const productRepository = {
     ])
     const total = counted?.total ?? 0
     return {
-      data: rows.map(({ product, vendorName, hasVariants }) => ({
-        ...product,
-        vendor: vendorName,
-        hasVariants,
-      })),
+      data: rows.map(
+        ({ product, vendorName, vendorDiscountPercent, hasVariants }) => ({
+          ...product,
+          vendor: vendorName,
+          vendorDiscountPercent: vendorDiscountPercent ?? 0,
+          hasVariants,
+        }),
+      ),
       pageCount: pagination?.limit ? Math.ceil(total / pagination.limit) : 1,
     }
   },
@@ -538,23 +625,65 @@ export const productRepository = {
   },
 
   /**
-   * Adds `delta` (negative to take stock) to a tracked product, never below
-   * zero. Untracked products are left alone.
+   * Takes up to `quantity` from a tracked product, never below zero, and
+   * returns the units actually taken. Call it on a row locked with
+   * `lockForStock`. Untracked products are left alone (returns 0).
    */
-  async adjustInventory(
-    input: { workspaceId: string; productId: string; delta: number },
+  async takeInventory(
+    input: { workspaceId: string; productId: string; quantity: number },
     tx: DatabaseClient = db,
-  ) {
-    await tx
-      .update(productModel)
-      .set({
-        inventoryQuantity: sql`GREATEST(${productModel.inventoryQuantity} + ${input.delta}, 0)`,
-      })
+  ): Promise<number> {
+    const [row] = await tx
+      .select({ inventoryQuantity: productModel.inventoryQuantity })
+      .from(productModel)
       .where(
         and(
           eq(productModel.id, input.productId),
           eq(productModel.workspaceId, input.workspaceId),
           eq(productModel.inventoryPolicy, "track"),
+        ),
+      )
+    if (!row) {
+      return 0
+    }
+    const taken = Math.max(Math.min(input.quantity, row.inventoryQuantity), 0)
+    if (taken > 0) {
+      await tx
+        .update(productModel)
+        .set({
+          inventoryQuantity: sql`${productModel.inventoryQuantity} - ${taken}`,
+        })
+        .where(
+          and(
+            eq(productModel.id, input.productId),
+            eq(productModel.workspaceId, input.workspaceId),
+          ),
+        )
+    }
+    return taken
+  },
+
+  /**
+   * Gives back units a cancelled or deleted order took. Not filtered by
+   * inventory policy: the units left the stock when the order was placed, so
+   * they return even if the product has since stopped being tracked.
+   */
+  async restoreInventory(
+    input: { workspaceId: string; productId: string; quantity: number },
+    tx: DatabaseClient = db,
+  ) {
+    if (input.quantity <= 0) {
+      return
+    }
+    await tx
+      .update(productModel)
+      .set({
+        inventoryQuantity: sql`${productModel.inventoryQuantity} + ${input.quantity}`,
+      })
+      .where(
+        and(
+          eq(productModel.id, input.productId),
+          eq(productModel.workspaceId, input.workspaceId),
         ),
       )
   },

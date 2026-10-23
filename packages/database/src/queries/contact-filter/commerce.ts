@@ -17,14 +17,23 @@ import type { ContactWhere, RawTable, RelationExists } from "./types"
 
 /**
  * The orders the purchase conditions count: the contact's, in its workspace,
- * not cancelled, and in the store currency (a cart priced by Meta in another
- * currency is never summed with store-currency orders).
+ * not cancelled, in any currency (changing the store currency must not make
+ * old orders vanish from counts, last purchase or bought items).
  */
 const countedOrders = (
   table: RawTable,
 ): SQL => sql`${orderModel.contactId} = ${table.id}
   AND ${orderModel.workspaceId} = ${table.workspaceId}
-  AND ${orderModel.status} <> 'cancelled'
+  AND ${orderModel.status} <> 'cancelled'`
+
+/**
+ * Only the money sum is limited to the store currency: orders in another
+ * currency (e.g. a cart priced by Meta) are never summed with store-currency
+ * ones.
+ */
+const storeCurrencyOrders = (
+  table: RawTable,
+): SQL => sql`${countedOrders(table)}
   AND ${orderModel.currency} = COALESCE(
     (SELECT ${ecommerceSettingsModel.currency} FROM ${ecommerceSettingsModel}
       WHERE ${ecommerceSettingsModel.workspaceId} = ${table.workspaceId}),
@@ -40,8 +49,11 @@ export const boughtItemExists: RelationExists = (predicate, negate = false) =>
     negate,
   )
 
-const aggregateOfOrders = (table: RawTable, aggregate: SQL): SQL =>
-  sql`(SELECT ${aggregate} FROM ${orderModel} WHERE ${countedOrders(table)})`
+const aggregateOfOrders = (
+  table: RawTable,
+  aggregate: SQL,
+  where: SQL = countedOrders(table),
+): SQL => sql`(SELECT ${aggregate} FROM ${orderModel} WHERE ${where})`
 
 /**
  * Total spent / number of orders. A contact who never bought counts as 0, so
@@ -53,12 +65,15 @@ export function buildOrderNumberWhere(
   value: unknown,
 ): ContactWhere {
   const of = (table: RawTable) =>
-    sql`COALESCE(${aggregateOfOrders(
-      table,
+    sql`COALESCE(${
       aggregate === "totalSpent"
-        ? sql`SUM(${orderModel.total})`
-        : sql`COUNT(*)`,
-    )}, 0)`
+        ? aggregateOfOrders(
+            table,
+            sql`SUM(${orderModel.total})`,
+            storeCurrencyOrders(table),
+          )
+        : aggregateOfOrders(table, sql`COUNT(*)`)
+    }, 0)`
   // Probe whether the operator/value are usable before building per table.
   if (!buildNumberAggregateComparison(operator, value, sql`0`)) {
     return {}

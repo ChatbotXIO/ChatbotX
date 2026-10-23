@@ -31,17 +31,26 @@ import { Controller, type FieldPath, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { ContactFilter } from "@/features/contact-filter"
 import type { ContactFilterCriteria } from "@/features/contact-filter/schema"
+import { EcommerceFooterActions } from "@/features/products/components/ecommerce-footer"
 import {
   PERCENT_INPUT_PROPS,
   PRICE_INPUT_PROPS,
 } from "@/features/products/constants"
 import { toastActionError } from "@/lib/errors/safe-action-error-handler"
 import {
+  type FieldRule,
+  useInvalidFormToast,
+  useRequestResolver,
+} from "@/lib/validation/use-request-resolver"
+import {
   createDiscountCodeAction,
   generateDiscountCodeAction,
   updateDiscountCodeAction,
 } from "../actions/discount-code.action"
-import type { DiscountCodeResource } from "../schema/public"
+import {
+  type DiscountCodeResource,
+  discountCodeWriteRequest,
+} from "../schema/public"
 import { DeleteDiscountCodeDialog } from "./delete-discount-code-dialog"
 
 type FormValues = {
@@ -94,6 +103,43 @@ const toFormValues = (code: DiscountCodeResource | undefined): FormValues => {
       ? code.endsAt?.toISOString()
       : new Date(now.getTime() + 30 * DAY_MS).toISOString(),
     isActive: code?.isActive ?? true,
+  }
+}
+
+/** The service's code rule, split so each part gets its own sentence. */
+const CODE_MIN_LENGTH = 3
+const CODE_MAX_LENGTH = 64
+const CODE_CHARACTERS = /^[A-Za-z0-9_-]*$/
+const MAX_PERCENT = 100
+
+const minimumFieldOf = (
+  values: FormValues,
+): "minimumAmount" | "minimumQuantity" =>
+  values.minimumType === "quantity" ? "minimumQuantity" : "minimumAmount"
+
+/** The form as the create and update actions take it. */
+const toRequest = (values: FormValues) => {
+  const freeShipping = values.discountType === "freeShipping"
+  const minimumValue = Number(values[minimumFieldOf(values)])
+  return {
+    code: values.code,
+    autoApply: values.autoApply,
+    discountType: values.discountType,
+    discountValue: freeShipping ? 0 : Number(values.discountValue) || 0,
+    // Free shipping hides "Applies to"; a choice left over there must not block it.
+    appliesTo: freeShipping ? ("entireOrder" as const) : values.appliesTo,
+    categoryId: values.categoryId || null,
+    productIds: values.productIds,
+    minimumType: values.minimumType,
+    minimumValue: values.minimumType === "none" ? 0 : minimumValue || 0,
+    usageLimit: values.limitTotal ? Number(values.usageLimit) : null,
+    oncePerCustomer: values.oncePerCustomer,
+    eligibility: values.eligibility,
+    customerFilter:
+      values.eligibility === "specificCustomers" ? values.customerFilter : null,
+    startsAt: new Date(values.startsAt),
+    endsAt: values.endsAt ? new Date(values.endsAt) : null,
+    isActive: values.isActive,
   }
 }
 
@@ -154,9 +200,97 @@ export function DiscountCodeForm({
   const t = useTranslations("discountCodes")
   const router = useRouter()
   const listHref = `/space/${workspaceId}/discount-codes`
+  // The Save button sits in the pinned footer, outside the form.
+  const formId = useId()
   const [deleting, setDeleting] = useState(false)
+  const tValidation = useTranslations("validation.form")
+  const showInvalidToast = useInvalidFormToast()
+  /** The service's checks beyond the schema, so they show on their field. */
+  const rules = (values: FormValues): Array<FieldRule<FormValues> | false> => {
+    const code = values.code.trim()
+    const discountValue = Number(values.discountValue) || 0
+    const minimumField = minimumFieldOf(values)
+    const minimum = Number(values[minimumField]) || 0
+    const appliesTo = values.discountType !== "freeShipping" && values.appliesTo
+    return [
+      code.length < CODE_MIN_LENGTH && {
+        field: "code",
+        message: tValidation("minLength", { minimum: CODE_MIN_LENGTH }),
+      },
+      code.length > CODE_MAX_LENGTH && {
+        field: "code",
+        message: tValidation("maxLength", { maximum: CODE_MAX_LENGTH }),
+      },
+      !CODE_CHARACTERS.test(code) && {
+        field: "code",
+        message: t("rules.codeCharacters"),
+      },
+      values.discountType !== "freeShipping" &&
+        discountValue <= 0 && {
+          field: "discountValue",
+          message: tValidation("moreThan", { minimum: 0 }),
+        },
+      values.discountType === "percentage" &&
+        discountValue > MAX_PERCENT && {
+          field: "discountValue",
+          message: tValidation("maxNumber", { maximum: MAX_PERCENT }),
+        },
+      appliesTo === "category" &&
+        !values.categoryId && {
+          field: "categoryId",
+          message: tValidation("required"),
+        },
+      appliesTo === "products" &&
+        values.productIds.length === 0 && {
+          field: "productIds",
+          message: tValidation("minItems", { minimum: 1 }),
+        },
+      values.minimumType !== "none" &&
+        minimum <= 0 && {
+          field: minimumField,
+          message: tValidation("moreThan", { minimum: 0 }),
+        },
+      values.minimumType === "quantity" &&
+        !Number.isInteger(minimum) && {
+          field: minimumField,
+          message: tValidation("wholeNumber"),
+        },
+      values.limitTotal &&
+        discountCode !== undefined &&
+        Number(values.usageLimit) < discountCode.usedCount && {
+          field: "usageLimit",
+          message: t("rules.usageBelowUsed", {
+            count: discountCode.usedCount,
+          }),
+        },
+      values.eligibility === "specificCustomers" &&
+        values.customerFilter.conditions.length === 0 && {
+          field: "customerFilter",
+          message: t("rules.customerConditionRequired"),
+        },
+      !values.startsAt && {
+        field: "startsAt",
+        message: tValidation("required"),
+      },
+      Boolean(values.endsAt && values.startsAt) &&
+        new Date(values.endsAt ?? "") <= new Date(values.startsAt) && {
+          field: "endsAt",
+          message: t("rules.endAfterStart"),
+        },
+    ]
+  }
+  const resolver = useRequestResolver<FormValues>({
+    schema: discountCodeWriteRequest,
+    toRequest,
+    rules,
+    fieldFor: (path, values) => {
+      const [key] = path.split(".")
+      return key === "minimumValue" ? minimumFieldOf(values) : key
+    },
+  })
   const form = useForm<FormValues>({
     defaultValues: toFormValues(discountCode),
+    resolver,
   })
   const discountType = form.watch("discountType")
   const appliesTo = form.watch("appliesTo")
@@ -190,33 +324,10 @@ export function DiscountCodeForm({
     },
   )
 
-  const onSubmit = form.handleSubmit((values) => {
-    const minimumValue =
-      values.minimumType === "amount"
-        ? Number(values.minimumAmount)
-        : Number(values.minimumQuantity)
-    save.execute({
-      code: values.code,
-      autoApply: values.autoApply,
-      discountType: values.discountType,
-      discountValue: Number(values.discountValue) || 0,
-      appliesTo: values.appliesTo,
-      categoryId: values.categoryId || null,
-      productIds: values.productIds,
-      minimumType: values.minimumType,
-      minimumValue: values.minimumType === "none" ? 0 : minimumValue || 0,
-      usageLimit: values.limitTotal ? Number(values.usageLimit) : null,
-      oncePerCustomer: values.oncePerCustomer,
-      eligibility: values.eligibility,
-      customerFilter:
-        values.eligibility === "specificCustomers"
-          ? values.customerFilter
-          : null,
-      startsAt: new Date(values.startsAt),
-      endsAt: values.endsAt ? new Date(values.endsAt) : null,
-      isActive: values.isActive,
-    })
-  })
+  const onSubmit = form.handleSubmit(
+    (values) => save.execute(toRequest(values)),
+    showInvalidToast,
+  )
 
   const parentName = (parentId: string | null) =>
     categories.find((category) => category.id === parentId)?.name
@@ -233,7 +344,11 @@ export function DiscountCodeForm({
 
   return (
     <Form {...form}>
-      <form className="mx-auto max-w-3xl space-y-4" onSubmit={onSubmit}>
+      <form
+        className="mx-auto max-w-3xl space-y-4"
+        id={formId}
+        onSubmit={onSubmit}
+      >
         <h1 className="font-bold text-xl">
           {discountCode ? t("edit") : t("add")}
         </h1>
@@ -428,32 +543,36 @@ export function DiscountCodeForm({
           <CheckboxRow label={t("form.isActive")} name="isActive" />
         </Section>
 
-        <div className="flex items-center justify-between gap-2">
-          {discountCode ? (
-            <Button
-              onClick={() => setDeleting(true)}
-              type="button"
-              variant="ghost"
-            >
-              {t("delete")}
-            </Button>
-          ) : (
-            <span />
-          )}
-          <div className="flex gap-2">
-            <Button
-              onClick={() => router.push(listHref)}
-              type="button"
-              variant="outline"
-            >
-              {t("cancel")}
-            </Button>
-            <Button disabled={save.isPending} type="submit">
-              {save.isPending ? <Loader2Icon className="animate-spin" /> : null}
-              {t("save")}
-            </Button>
+        <EcommerceFooterActions>
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-2">
+            {discountCode ? (
+              <Button
+                onClick={() => setDeleting(true)}
+                type="button"
+                variant="ghost"
+              >
+                {t("delete")}
+              </Button>
+            ) : (
+              <span />
+            )}
+            <div className="flex gap-2">
+              <Button
+                onClick={() => router.push(listHref)}
+                type="button"
+                variant="outline"
+              >
+                {t("cancel")}
+              </Button>
+              <Button disabled={save.isPending} form={formId} type="submit">
+                {save.isPending ? (
+                  <Loader2Icon className="animate-spin" />
+                ) : null}
+                {t("save")}
+              </Button>
+            </div>
           </div>
-        </div>
+        </EcommerceFooterActions>
       </form>
       {discountCode && deleting ? (
         <DeleteDiscountCodeDialog
