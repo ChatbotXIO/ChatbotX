@@ -1,6 +1,6 @@
 "use client"
 
-import { MAX_ADMIN_WORKSPACE_MEMBERS } from "@chatbotx.io/business"
+import { MAX_ADMIN_WORKSPACE_MEMBERS } from "@chatbotx.io/business/admin-workspace/constants"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {

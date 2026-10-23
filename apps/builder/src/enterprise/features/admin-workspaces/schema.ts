@@ -1,4 +1,4 @@
-import { MAX_ADMIN_WORKSPACE_MEMBERS } from "@chatbotx.io/business"
+import { MAX_ADMIN_WORKSPACE_MEMBERS } from "@chatbotx.io/business/admin-workspace/constants"
 import { z } from "zod"
 import { workspaceMemberPermissionsRequest } from "@/features/workspace-members/schema/mutation"
 

@@ -12,8 +12,7 @@ import {
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { findOrProvisionRootUser } from "../user/provision-root-user"
 import { workspaceService } from "../workspace/service"
-
-export const MAX_ADMIN_WORKSPACE_MEMBERS = 20
+import { MAX_ADMIN_WORKSPACE_MEMBERS } from "./constants"
 
 export type AdminWorkspaceProvisionedMember = {
   email: string
