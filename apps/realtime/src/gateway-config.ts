@@ -88,3 +88,42 @@ export const resolveRealtimeGatewayConfig = (
     secret: environment.REALTIME_BROADCAST_SECRET,
   }
 }
+
+const DEFAULT_REDIS_PORT = "6379"
+const DEFAULT_REDIS_DATABASE = "0"
+const UNPARSEABLE_REDIS_ENDPOINT: RedisEndpointDescription = {
+  database: "unknown",
+  host: "unparseable",
+  port: "unknown",
+}
+
+type RedisEndpointDescription = {
+  database: string
+  host: string
+  port: string
+}
+
+/**
+ * Host, port and logical database of a Redis URL, with credentials dropped, so
+ * a startup log can show which Redis the gateway reads without leaking secrets.
+ * Publishers and the gateway must resolve to the same endpoint. Never throws
+ * and never echoes the raw URL, which may hold a password: a value `new URL`
+ * rejects (accepted only when `SKIP_ENV_CHECK` bypasses validation) yields
+ * placeholders.
+ */
+export const describeRedisEndpoint = (
+  redisUrl: string,
+): RedisEndpointDescription => {
+  try {
+    const { hostname, pathname, port, searchParams } = new URL(redisUrl)
+    return {
+      // ioredis reads the path first and falls back to the `db` parameter.
+      database:
+        pathname.slice(1) || searchParams.get("db") || DEFAULT_REDIS_DATABASE,
+      host: hostname,
+      port: port || DEFAULT_REDIS_PORT,
+    }
+  } catch {
+    return UNPARSEABLE_REDIS_ENDPOINT
+  }
+}

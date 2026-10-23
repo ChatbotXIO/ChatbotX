@@ -53,6 +53,11 @@ It falls back to `REDIS_URL`; setting it on only producers or only the gateway
 silently splits the stream. A cutover drops up to five minutes of replay history
 and active revoke markers.
 
+The gateway logs the Redis host, port and database it uses at startup (never
+the credentials). If sockets connect but no event arrives, compare that line
+with the Redis Builder and Worker publish to: a different instance or database
+index splits the stream silently.
+
 Start Redis and Builder with Docker, then run `pnpm --filter realtime dev`.
 Use `REALTIME_HOST`, not `HOSTNAME`: Docker owns `HOSTNAME`.
 
@@ -150,9 +155,17 @@ not tied to calling.
 
 **Server-reported presence:** Realtime maintains a `Set` of distinct connected
 member ids for each workspace. On a member’s first local socket it schedules a
-coalesced report; after the last closes it reports the empty set. While members
-remain connected, the gateway repeats reports at `PRESENCE_REPORT_INTERVAL_MS`.
-Several browser tabs for the same member produce one id in the report.
+coalesced report; after the last closes nothing more is reported and the lease
+simply expires after `PRESENCE_TTL_MS`. While members remain connected, the
+gateway repeats reports at `PRESENCE_REPORT_INTERVAL_MS`. Several browser tabs
+for the same member produce one id in the report.
+
+Reports are scheduled per workspace through a shared concurrency cap
+(`apps/realtime/src/lib/presence-reporter.ts`): a periodic sweep queues the
+connected workspaces whose lease was renewed longest ago first, a membership
+change jumps the queue, a workspace is never reported twice at once, and a
+report the builder did not accept does not count as renewed. One slow builder
+response therefore delays only its own workspace, never the rest.
 
 `reportWorkspacePresence` truncates the user-id list before hashing and
 sending. It POSTs to `/api/workspace-presence/report` with a bearer token

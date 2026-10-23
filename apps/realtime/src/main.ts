@@ -1,6 +1,9 @@
 import { createRedisConnection } from "@chatbotx.io/redis"
 import { createRealtimeGateway } from "./gateway"
-import { resolveRealtimeGatewayConfig } from "./gateway-config"
+import {
+  describeRedisEndpoint,
+  resolveRealtimeGatewayConfig,
+} from "./gateway-config"
 import { logger } from "./logger"
 import { createShutdownHandler } from "./shutdown"
 
@@ -34,6 +37,7 @@ const main = async (): Promise<void> => {
     {
       host,
       port,
+      redis: describeRedisEndpoint(redisUrl),
     },
     "Realtime gateway listening",
   )

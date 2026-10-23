@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
+const { RINGING_CANDIDATE_CAP } = vi.hoisted(() => ({
+  RINGING_CANDIDATE_CAP: 20,
+}))
+
 const mocks = vi.hoisted(() => ({
   setIfAbsent: vi.fn(),
   set: vi.fn(),
@@ -14,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   findRingingByWorkspace: vi.fn(),
   findActiveByContactInbox: vi.fn(),
   findByAttemptId: vi.fn(),
+  findByIdForWorkspace: vi.fn(),
   findByWacid: vi.fn(),
   touchLivenessIfStale: vi.fn(),
   recoverStrandedAccepted: vi.fn(),
@@ -46,11 +51,13 @@ vi.mock("../src/workspace-presence/service", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  FIND_RINGING_BY_WORKSPACE_LIMIT: RINGING_CANDIDATE_CAP,
   WHATSAPP_CALL_TERMINAL_STATUSES: ["rejected", "completed", "failed"],
   whatsappCallRepository: {
     findRingingByWorkspace: mocks.findRingingByWorkspace,
     findActiveByContactInbox: mocks.findActiveByContactInbox,
     findByAttemptId: mocks.findByAttemptId,
+    findByIdForWorkspace: mocks.findByIdForWorkspace,
     findByWacid: mocks.findByWacid,
     touchLivenessIfStale: mocks.touchLivenessIfStale,
     recoverStrandedAccepted: mocks.recoverStrandedAccepted,
@@ -2234,10 +2241,11 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
     })
     mocks.contactFindById.mockResolvedValue({ fullName: "Hung Phan" })
 
-    const result = await whatsappVoipCallService.listResumableIncoming({
-      workspaceId: "ws-1",
-      userId: "agent-1",
-    })
+    const { calls: result } =
+      await whatsappVoipCallService.listResumableIncoming({
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      })
 
     expect(mocks.findRingingByWorkspace).toHaveBeenCalledWith("ws-1")
     expect(result).toEqual([
@@ -2268,10 +2276,11 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
     })
     mocks.contactInboxFindBy.mockResolvedValue(null)
 
-    const result = await whatsappVoipCallService.listResumableIncoming({
-      workspaceId: "ws-1",
-      userId: "agent-1",
-    })
+    const { calls: result } =
+      await whatsappVoipCallService.listResumableIncoming({
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      })
 
     expect(result.map((entry) => entry.whatsappCallId)).toEqual([
       "call-1",
@@ -2302,10 +2311,11 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
       return Promise.resolve(offer)
     })
 
-    const result = await whatsappVoipCallService.listResumableIncoming({
-      workspaceId: "ws-1",
-      userId: "agent-1",
-    })
+    const { calls: result } =
+      await whatsappVoipCallService.listResumableIncoming({
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      })
 
     expect(result.map((entry) => entry.whatsappCallId)).toEqual([
       "call-1",
@@ -2330,10 +2340,11 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
       return Promise.resolve(offer)
     })
 
-    const result = await whatsappVoipCallService.listResumableIncoming({
-      workspaceId: "ws-1",
-      userId: "agent-1",
-    })
+    const { calls: result } =
+      await whatsappVoipCallService.listResumableIncoming({
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      })
 
     expect(result.map((entry) => entry.whatsappCallId)).toEqual([
       "call-1",
@@ -2358,10 +2369,11 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
       return Promise.resolve(offer)
     })
 
-    const result = await whatsappVoipCallService.listResumableIncoming({
-      workspaceId: "ws-1",
-      userId: "agent-1",
-    })
+    const { calls: result } =
+      await whatsappVoipCallService.listResumableIncoming({
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      })
 
     expect(result.map((entry) => entry.whatsappCallId)).toEqual([
       "call-1",
@@ -2386,10 +2398,11 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
       return Promise.resolve(offer)
     })
 
-    const result = await whatsappVoipCallService.listResumableIncoming({
-      workspaceId: "ws-1",
-      userId: "agent-1",
-    })
+    const { calls: result } =
+      await whatsappVoipCallService.listResumableIncoming({
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      })
 
     expect(result.map((entry) => entry.whatsappCallId)).toEqual([
       "call-1",
@@ -2401,10 +2414,11 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
     mocks.findRingingByWorkspace.mockResolvedValue([callRow()])
     mocks.getJson.mockResolvedValue(null)
 
-    const result = await whatsappVoipCallService.listResumableIncoming({
-      workspaceId: "ws-1",
-      userId: "agent-1",
-    })
+    const { calls: result } =
+      await whatsappVoipCallService.listResumableIncoming({
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      })
 
     expect(result).toEqual([])
   })
@@ -2412,10 +2426,11 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
   test("returns an empty array, not null, when the workspace has no ringing calls", async () => {
     mocks.findRingingByWorkspace.mockResolvedValue([])
 
-    const result = await whatsappVoipCallService.listResumableIncoming({
-      workspaceId: "ws-1",
-      userId: "agent-1",
-    })
+    const { calls: result } =
+      await whatsappVoipCallService.listResumableIncoming({
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      })
 
     expect(result).toEqual([])
   })
@@ -2495,10 +2510,11 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
         input.conversationId !== "conv-2",
     )
 
-    const result = await whatsappVoipCallService.listResumableIncoming({
-      workspaceId: "ws-1",
-      userId: "agent-1",
-    })
+    const { calls: result } =
+      await whatsappVoipCallService.listResumableIncoming({
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      })
 
     expect(result.map((entry) => entry.whatsappCallId)).toEqual([
       "call-1",
@@ -2515,10 +2531,11 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
     )
     mocks.canCallConversationForMember.mockResolvedValue(false)
 
-    const result = await whatsappVoipCallService.listResumableIncoming({
-      workspaceId: "ws-1",
-      userId: "agent-1",
-    })
+    const { calls: result } =
+      await whatsappVoipCallService.listResumableIncoming({
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      })
 
     expect(result).toEqual([])
     expect(mocks.getJson).not.toHaveBeenCalledWith(
@@ -2534,10 +2551,11 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
         : Promise.resolve(offer),
     )
 
-    const result = await whatsappVoipCallService.listResumableIncoming({
-      workspaceId: "ws-1",
-      userId: "agent-1",
-    })
+    const { calls: result } =
+      await whatsappVoipCallService.listResumableIncoming({
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      })
 
     expect(result).toEqual([])
     expect(mocks.canCallConversationForMember).not.toHaveBeenCalled()
@@ -2555,12 +2573,44 @@ describe("whatsappVoipCallService.listResumableIncoming", () => {
     )
     mocks.contactInboxFindBy.mockRejectedValue(new Error("db unreachable"))
 
-    const result = await whatsappVoipCallService.listResumableIncoming({
+    const { calls: result } =
+      await whatsappVoipCallService.listResumableIncoming({
+        workspaceId: "ws-1",
+        userId: "agent-1",
+      })
+
+    expect(result[0]?.contactName).toBeNull()
+  })
+  test("reports the list complete one row below the cap", async () => {
+    mocks.findRingingByWorkspace.mockResolvedValue(
+      Array.from({ length: RINGING_CANDIDATE_CAP - 1 }, (_, index) =>
+        callRow({ id: `call-${index}`, wacid: `wacid.${index}` }),
+      ),
+    )
+    mocks.getJson.mockResolvedValue(null)
+
+    const { isComplete } = await whatsappVoipCallService.listResumableIncoming({
       workspaceId: "ws-1",
       userId: "agent-1",
     })
 
-    expect(result[0]?.contactName).toBeNull()
+    expect(isComplete).toBe(true)
+  })
+
+  test("reports the list incomplete when the candidate query hit its cap, so absence proves nothing", async () => {
+    mocks.findRingingByWorkspace.mockResolvedValue(
+      Array.from({ length: RINGING_CANDIDATE_CAP }, (_, index) =>
+        callRow({ id: `call-${index}`, wacid: `wacid.${index}` }),
+      ),
+    )
+    mocks.getJson.mockResolvedValue(null)
+
+    const { isComplete } = await whatsappVoipCallService.listResumableIncoming({
+      workspaceId: "ws-1",
+      userId: "agent-1",
+    })
+
+    expect(isComplete).toBe(false)
   })
 })
 
@@ -2702,6 +2752,109 @@ describe("whatsappVoipCallService.resolveEndOutcomeWithoutControl", () => {
         status,
         direction: "businessInitiated",
       }),
+    ).toBeNull()
+  })
+})
+
+describe("whatsappVoipCallService.readOutboundAnswerForInitiator", () => {
+  const liveOutboundCall = {
+    answeredByUserId: "agent-1",
+    attemptId: "attempt-1",
+    direction: "businessInitiated",
+    id: "call-1",
+    status: "ringing",
+    workspaceId: "workspace-1",
+  }
+  const input = {
+    userId: "agent-1",
+    whatsappCallId: "call-1",
+    workspaceId: "workspace-1",
+  }
+
+  beforeEach(() => {
+    mocks.findByIdForWorkspace.mockResolvedValue(liveOutboundCall)
+    mocks.getJson.mockResolvedValue({ sdp: "v=0 answer" })
+  })
+
+  test("returns the stored answer to the agent who initiated a live outbound call, without consuming it", async () => {
+    const answer =
+      await whatsappVoipCallService.readOutboundAnswerForInitiator(input)
+
+    expect(answer).toEqual({ sdp: "v=0 answer" })
+    expect(mocks.findByIdForWorkspace).toHaveBeenCalledWith(
+      "call-1",
+      "workspace-1",
+    )
+    expect(mocks.getJson).toHaveBeenCalledWith(
+      expect.stringContaining("attempt-1"),
+    )
+    expect(mocks.del).not.toHaveBeenCalled()
+  })
+
+  test("returns null for a call that is not in the caller's workspace", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue(undefined)
+
+    expect(
+      await whatsappVoipCallService.readOutboundAnswerForInitiator(input),
+    ).toBeNull()
+    expect(mocks.getJson).not.toHaveBeenCalled()
+  })
+
+  test("returns null, and never reads the SDP, for an agent who did not initiate the call", async () => {
+    expect(
+      await whatsappVoipCallService.readOutboundAnswerForInitiator({
+        ...input,
+        userId: "agent-2",
+      }),
+    ).toBeNull()
+    expect(mocks.getJson).not.toHaveBeenCalled()
+  })
+
+  test("returns null for an inbound call", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue({
+      ...liveOutboundCall,
+      direction: "userInitiated",
+    })
+
+    expect(
+      await whatsappVoipCallService.readOutboundAnswerForInitiator(input),
+    ).toBeNull()
+    expect(mocks.getJson).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    "rejected",
+    "completed",
+    "failed",
+  ])("returns null once the call has ended (%s)", async (status) => {
+    mocks.findByIdForWorkspace.mockResolvedValue({
+      ...liveOutboundCall,
+      status,
+    })
+
+    expect(
+      await whatsappVoipCallService.readOutboundAnswerForInitiator(input),
+    ).toBeNull()
+    expect(mocks.getJson).not.toHaveBeenCalled()
+  })
+
+  test("returns null when the row has no attemptId to key the answer by", async () => {
+    mocks.findByIdForWorkspace.mockResolvedValue({
+      ...liveOutboundCall,
+      attemptId: null,
+    })
+
+    expect(
+      await whatsappVoipCallService.readOutboundAnswerForInitiator(input),
+    ).toBeNull()
+    expect(mocks.getJson).not.toHaveBeenCalled()
+  })
+
+  test("returns null when no answer is stored (not arrived yet, or expired)", async () => {
+    mocks.getJson.mockResolvedValue(null)
+
+    expect(
+      await whatsappVoipCallService.readOutboundAnswerForInitiator(input),
     ).toBeNull()
   })
 })

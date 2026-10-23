@@ -1,5 +1,6 @@
 import type { WhatsappCallTerminalStatusOutcomePair } from "@chatbotx.io/database/partials"
 import {
+  FIND_RINGING_BY_WORKSPACE_LIMIT,
   WHATSAPP_CALL_TERMINAL_STATUSES,
   whatsappCallRepository,
 } from "@chatbotx.io/database/repositories"
@@ -114,6 +115,17 @@ export type ResumableIncomingVoipCall = {
   deadlineAt: string
 }
 
+export type ResumableIncomingVoipCalls = {
+  /** Still-ringing, unclaimed calls this agent may answer, newest first. */
+  calls: ResumableIncomingVoipCall[]
+  /**
+   * Whether every `ringing` row was considered. The candidate query is capped,
+   * so when it hit its cap a call missing from `calls` may simply not have been
+   * looked at, and absence proves nothing about it.
+   */
+  isComplete: boolean
+}
+
 /**
  * The VoIP call-control state machine (Redis, fenced CAS) and the call row's
  * lifecycle writes. SDP storage and webhook entry points live in
@@ -152,7 +164,7 @@ class WhatsappVoipCallService {
   async listResumableIncoming(input: {
     workspaceId: string
     userId: string
-  }): Promise<ResumableIncomingVoipCall[]> {
+  }): Promise<ResumableIncomingVoipCalls> {
     // The caller's permissions are the same for every candidate — load them
     // once.
     const [candidates, member] = await Promise.all([
@@ -167,9 +179,12 @@ class WhatsappVoipCallService {
       candidates.map((call) => this.resolveResumableCandidate(call, member)),
     )
 
-    return resolved.filter(
-      (entry): entry is ResumableIncomingVoipCall => entry !== null,
-    )
+    return {
+      calls: resolved.filter(
+        (entry): entry is ResumableIncomingVoipCall => entry !== null,
+      ),
+      isComplete: candidates.length < FIND_RINGING_BY_WORKSPACE_LIMIT,
+    }
   }
 
   /**
@@ -393,6 +408,34 @@ class WhatsappVoipCallService {
       next,
       ACTIVE_CALL_CONTROL_TTL_MS,
     )
+  }
+
+  /**
+   * The customer's SDP answer for an outbound call, for the agent who started
+   * it, when the realtime push carrying it was missed (the gateway could not
+   * replay it after a reconnect). Read-only: the answer expires on its own
+   * short TTL and the browser applies it only while still waiting for it, so
+   * serving it more than once is harmless. `null` for anything but a live
+   * outbound call this agent initiated, so the SDP never reaches another agent
+   * or an ended call.
+   */
+  async readOutboundAnswerForInitiator(input: {
+    whatsappCallId: string
+    workspaceId: string
+    userId: string
+  }): Promise<{ sdp: string } | null> {
+    const call = await whatsappCallRepository.findByIdForWorkspace(
+      input.whatsappCallId,
+      input.workspaceId,
+    )
+    const isLiveOutboundCallOfAgent =
+      call?.direction === "businessInitiated" &&
+      call.answeredByUserId === input.userId &&
+      !this.isCallEnded(call)
+    if (!(isLiveOutboundCallOfAgent && call.attemptId)) {
+      return null
+    }
+    return await whatsappVoipSignalingService.readOutboundAnswer(call.attemptId)
   }
 
   /**

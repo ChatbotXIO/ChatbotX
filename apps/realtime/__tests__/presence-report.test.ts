@@ -78,6 +78,17 @@ describe("reportWorkspacePresence", () => {
     expect(sentUserIds).toHaveLength(MAX_PRESENCE_USER_IDS_PER_REPORT)
   })
 
+  it("reports success to the caller once the builder accepted it", async () => {
+    await expect(
+      reportWorkspacePresence(
+        "ws_1",
+        ["u_1"],
+        "https://builder.example.com",
+        SECRET,
+      ),
+    ).resolves.toBe(true)
+  })
+
   it("logs and swallows a failed report — never throws (no retry, the next report supersedes it)", async () => {
     kyPostMock.mockRejectedValue(new Error("network error"))
     await expect(
@@ -87,7 +98,7 @@ describe("reportWorkspacePresence", () => {
         "https://builder.example.com",
         SECRET,
       ),
-    ).resolves.toBeUndefined()
+    ).resolves.toBe(false)
 
     expect(loggerErrorMock).toHaveBeenCalledTimes(1)
     expect(loggerErrorMock.mock.calls[0]?.[0]).toMatchObject({

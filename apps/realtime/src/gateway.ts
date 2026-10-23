@@ -14,6 +14,7 @@ import {
 } from "./gateway-shared"
 import { createWorkspaceSocketBehavior } from "./gateway-workspace-socket"
 import { reportWorkspacePresence } from "./lib/presence-report"
+import { createPresenceReporter } from "./lib/presence-reporter"
 import {
   createRealtimeServerCounters,
   REALTIME_METRIC_WINDOW_MS,
@@ -55,6 +56,21 @@ export const createRealtimeGateway = ({
   const delivery = createRealtimeDelivery(app, counters)
   const connectedUsersByWorkspace = new Map<string, Set<string>>()
   const presenceTimers = new Map<string, NodeJS.Timeout>()
+  const presenceReporter = createPresenceReporter({
+    concurrency: PRESENCE_REPORT_CONCURRENCY,
+    getConnectedWorkspaceIds: () => connectedUsersByWorkspace.keys(),
+    getUserIds: (workspaceId) => [
+      ...(connectedUsersByWorkspace.get(workspaceId) ?? []),
+    ],
+    onError: (error, workspaceId) => {
+      logger.error(
+        { err: error, workspaceId },
+        "Failed to report workspace presence",
+      )
+    },
+    report: (workspaceId, userIds) =>
+      reportWorkspacePresence(workspaceId, userIds, builderUrl, secret),
+  })
   const state = createGatewayConnectionState<
     WorkspaceSocketData,
     GuestSocketData
@@ -72,7 +88,6 @@ export const createRealtimeGateway = ({
   let ready = false
   let stopped = false
   let windowStartedAt = Date.now()
-  let isPresenceReportRunning = false
 
   const waitForShutdownDrain = (): Promise<void> => {
     const { promise, resolve } = Promise.withResolvers<void>()
@@ -101,28 +116,6 @@ export const createRealtimeGateway = ({
     )
   }
 
-  const reportLocalPresence = async (workspaceIds: string[]): Promise<void> => {
-    for (
-      let index = 0;
-      index < workspaceIds.length;
-      index += PRESENCE_REPORT_CONCURRENCY
-    ) {
-      await Promise.all(
-        workspaceIds
-          .slice(index, index + PRESENCE_REPORT_CONCURRENCY)
-          .map(
-            async (workspaceId) =>
-              await reportWorkspacePresence(
-                workspaceId,
-                [...(connectedUsersByWorkspace.get(workspaceId) ?? [])],
-                builderUrl,
-                secret,
-              ),
-          ),
-      )
-    }
-  }
-
   const markPresenceDirty = (workspaceId: string): void => {
     if (stopped) {
       return
@@ -132,12 +125,7 @@ export const createRealtimeGateway = ({
       workspaceId,
       setTimeout(() => {
         presenceTimers.delete(workspaceId)
-        reportLocalPresence([workspaceId]).catch((error) => {
-          logger.error(
-            { err: error, workspaceId },
-            "Failed to report workspace presence",
-          )
-        })
+        presenceReporter.reportNow(workspaceId)
       }, presenceReportCoalesceMs),
     )
   }
@@ -325,6 +313,7 @@ export const createRealtimeGateway = ({
         clearTimeout(timer)
       }
       presenceTimers.clear()
+      presenceReporter.stop()
       await waitForShutdownDrain()
       delivery.closeAll(nextOverloadRetryAfterMs())
       app.close()
@@ -347,19 +336,10 @@ export const createRealtimeGateway = ({
       heartbeat = setInterval(() => {
         app.publish("hb", HEARTBEAT_FRAME)
       }, 25_000)
-      presenceHeartbeat = setInterval(() => {
-        if (isPresenceReportRunning) {
-          return
-        }
-        isPresenceReportRunning = true
-        reportLocalPresence([...connectedUsersByWorkspace.keys()])
-          .catch((error) => {
-            logger.error({ err: error }, "Failed to report workspace presence")
-          })
-          .finally(() => {
-            isPresenceReportRunning = false
-          })
-      }, presenceReportIntervalMs)
+      presenceHeartbeat = setInterval(
+        presenceReporter.sweep,
+        presenceReportIntervalMs,
+      )
       metricsTimer = setInterval(flushMetrics, REALTIME_METRIC_WINDOW_MS)
       streamReader.start()
       return boundPort
