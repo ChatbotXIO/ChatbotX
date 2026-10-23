@@ -13,6 +13,7 @@ vi.mock("../src/keys", () => ({
 
 vi.mock("../src/enterprise/license/service", () => ({
   getLicenseStatus: mocks.getLicenseStatus,
+  isLicenseEntitled: (state: string) => state === "valid" || state === "grace",
 }))
 
 describe("enterprise entitlements", () => {
@@ -62,6 +63,14 @@ describe("enterprise entitlements", () => {
     const { hasEnterpriseFeatures } = await import("../src/user/entitlements")
 
     await expect(hasEnterpriseFeatures()).resolves.toBe(false)
+  })
+
+  test("treats a grace-period license as enabled", async () => {
+    mocks.isEnterprise.mockReturnValue(true)
+    mocks.getLicenseStatus.mockResolvedValue({ state: "grace" })
+    const { hasEnterpriseFeatures } = await import("../src/user/entitlements")
+
+    await expect(hasEnterpriseFeatures()).resolves.toBe(true)
   })
 })
 
