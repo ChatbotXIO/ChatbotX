@@ -15,6 +15,35 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
   useQueryClient: () => ({ invalidateQueries: invalidateQueriesMock }),
 }))
 
+const {
+  getOutboundAnswerMock,
+  getPendingIncomingMock,
+  loggerErrorMock,
+  realtimeContext,
+} = vi.hoisted(() => ({
+  getOutboundAnswerMock: vi.fn(),
+  getPendingIncomingMock: vi.fn(),
+  loggerErrorMock: vi.fn(),
+  realtimeContext: { resyncCount: 0 },
+}))
+vi.mock("@/features/realtime/workspace-realtime-provider", () => ({
+  useWorkspaceRealtimeContext: () => ({
+    reconnectCount: 0,
+    resyncCount: realtimeContext.resyncCount,
+    status: "open",
+    subscribeHandlers: vi.fn(),
+  }),
+}))
+vi.mock(
+  "@/features/integration-whatsapp/calling/actions/get-pending-incoming-voip-call.action",
+  () => ({ getPendingIncomingVoipCallAction: getPendingIncomingMock }),
+)
+vi.mock(
+  "@/features/integration-whatsapp/calling/actions/get-outbound-voip-answer.action",
+  () => ({ getOutboundVoipAnswerAction: getOutboundAnswerMock }),
+)
+vi.mock("@/lib/log", () => ({ logger: { error: loggerErrorMock } }))
+
 const { authSessionMock } = vi.hoisted(() => ({
   authSessionMock: vi.fn(() => ({ data: { user: { id: "user-winner" } } })),
 }))
@@ -80,8 +109,14 @@ describe("WhatsappCallRealtime — call event parity (no ChatStoreProvider)", ()
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
     vi.clearAllMocks()
     authSessionMock.mockReturnValue({ data: { user: { id: "user-winner" } } })
+    realtimeContext.resyncCount = 0
+    getPendingIncomingMock.mockResolvedValue({
+      data: { calls: [], isComplete: true },
+    })
+    getOutboundAnswerMock.mockResolvedValue({ data: { sdp: null } })
     useWhatsappVoipCallStore.setState({
       call: null,
+      dismissedRingIds: [],
       ringingCalls: [],
       pendingOutboundAnswer: null,
     })
@@ -546,5 +581,348 @@ describe("WhatsappCallRealtime — call event parity (no ChatStoreProvider)", ()
         .getState()
         .ringingCalls.map((entry) => entry.whatsappCallId),
     ).toEqual(["call-1"])
+  })
+})
+
+describe("WhatsappCallRealtime — ring reload after a resync", () => {
+  let container: HTMLDivElement
+  let root: Root
+
+  const serverOffer = (id: string) => ({
+    whatsappCallId: id,
+    wacid: `wacid-${id}`,
+    conversationId: `conversation-${id}`,
+    contactInboxId: "contact-inbox-1",
+    contactName: "Ada Lovelace",
+    offer: { sdpType: "offer" as const, sdp: "v=0 offer" },
+    deadlineAt: new Date(Date.now() + 40_000).toISOString(),
+  })
+  const basketIds = () =>
+    useWhatsappVoipCallStore
+      .getState()
+      .ringingCalls.map((entry) => entry.whatsappCallId)
+  const settle = () => act(() => Promise.resolve())
+  const render = () =>
+    act(() => {
+      root.render(<WhatsappCallRealtime />)
+    })
+
+  beforeEach(() => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    vi.clearAllMocks()
+    realtimeContext.resyncCount = 0
+    getPendingIncomingMock.mockResolvedValue({
+      data: { calls: [], isComplete: true },
+    })
+    getOutboundAnswerMock.mockResolvedValue({ data: { sdp: null } })
+    useWhatsappVoipCallStore.setState({
+      call: null,
+      dismissedRingIds: [],
+      ringingCalls: [],
+      pendingOutboundAnswer: null,
+    })
+    container = document.createElement("div")
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+    capturedHandlers = null
+  })
+
+  test("does not ask the server before any resync has happened", async () => {
+    await render()
+    await settle()
+
+    expect(getPendingIncomingMock).not.toHaveBeenCalled()
+  })
+
+  test("adds a ring the gateway could not replay once resyncCount bumps", async () => {
+    await render()
+    getPendingIncomingMock.mockResolvedValue({
+      data: { calls: [serverOffer("missed")], isComplete: true },
+    })
+
+    realtimeContext.resyncCount = 1
+    await render()
+    await settle()
+
+    expect(getPendingIncomingMock).toHaveBeenCalledWith("workspace-1")
+    expect(basketIds()).toEqual(["missed"])
+  })
+
+  test("drops a ring the server says is no longer answerable", async () => {
+    await render()
+    emit("whatsappCallTransportIncoming", serverOffer("claimed-elsewhere"))
+    emit("whatsappCallTransportIncoming", serverOffer("still-ringing"))
+    getPendingIncomingMock.mockResolvedValue({
+      data: { calls: [serverOffer("still-ringing")], isComplete: true },
+    })
+
+    realtimeContext.resyncCount = 1
+    await render()
+    await settle()
+
+    expect(basketIds()).toEqual(["still-ringing"])
+  })
+
+  test("keeps a ring the server did not list when its candidate list was capped", async () => {
+    await render()
+    emit("whatsappCallTransportIncoming", serverOffer("older-than-the-cap"))
+    getPendingIncomingMock.mockResolvedValue({
+      data: { calls: [serverOffer("newer")], isComplete: false },
+    })
+
+    realtimeContext.resyncCount = 1
+    await render()
+    await settle()
+
+    expect(basketIds()).toEqual(["older-than-the-cap", "newer"])
+  })
+
+  test("keeps a ring that arrived over realtime while the server was being asked", async () => {
+    await render()
+    const { promise, resolve } = Promise.withResolvers<{
+      data: { calls: unknown[]; isComplete: boolean }
+    }>()
+    getPendingIncomingMock.mockReturnValue(promise)
+
+    realtimeContext.resyncCount = 1
+    await render()
+    emit("whatsappCallTransportIncoming", serverOffer("arrived-mid-fetch"))
+    resolve({ data: { calls: [], isComplete: true } })
+    await settle()
+
+    expect(basketIds()).toEqual(["arrived-mid-fetch"])
+  })
+
+  test("does not drop any ring when the server action fails", async () => {
+    await render()
+    emit("whatsappCallTransportIncoming", serverOffer("ringing"))
+    getPendingIncomingMock.mockResolvedValue({ serverError: "boom" })
+
+    realtimeContext.resyncCount = 1
+    await render()
+    await settle()
+
+    expect(basketIds()).toEqual(["ringing"])
+  })
+
+  test("logs and keeps the basket when the request rejects", async () => {
+    await render()
+    emit("whatsappCallTransportIncoming", serverOffer("ringing"))
+    const failure = new Error("network down")
+    getPendingIncomingMock.mockRejectedValue(failure)
+
+    realtimeContext.resyncCount = 1
+    await render()
+    await settle()
+
+    expect(basketIds()).toEqual(["ringing"])
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      { err: failure },
+      expect.any(String),
+    )
+  })
+
+  test("asks once per resync, not on every render", async () => {
+    realtimeContext.resyncCount = 1
+    await render()
+    await settle()
+    await render()
+    await settle()
+    expect(getPendingIncomingMock).toHaveBeenCalledTimes(1)
+
+    realtimeContext.resyncCount = 2
+    await render()
+    await settle()
+    expect(getPendingIncomingMock).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe("WhatsappCallRealtime — outbound answer recovery after a resync", () => {
+  let container: HTMLDivElement
+  let root: Root
+
+  const pendingAnswer = () =>
+    useWhatsappVoipCallStore.getState().pendingOutboundAnswer
+  const settle = () => act(() => Promise.resolve())
+  const render = () =>
+    act(() => {
+      root.render(<WhatsappCallRealtime />)
+    })
+  const resync = async () => {
+    realtimeContext.resyncCount += 1
+    await render()
+    await settle()
+  }
+
+  beforeEach(() => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
+    vi.clearAllMocks()
+    realtimeContext.resyncCount = 0
+    getPendingIncomingMock.mockResolvedValue({
+      data: { calls: [], isComplete: true },
+    })
+    getOutboundAnswerMock.mockResolvedValue({ data: { sdp: "v=0 answer" } })
+    useWhatsappVoipCallStore.setState({
+      call: null,
+      dismissedRingIds: [],
+      ringingCalls: [],
+      pendingOutboundAnswer: null,
+    })
+    container = document.createElement("div")
+    document.body.appendChild(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+    capturedHandlers = null
+  })
+
+  test.each([
+    "outboundDialing",
+    "outboundRinging",
+    "active",
+  ] as const)("re-fetches the missed answer for an outbound call in %s and hands it to the peer", async (phase) => {
+    useWhatsappVoipCallStore.setState({
+      call: { ...baseOutboundCall, phase },
+    })
+    await render()
+
+    await resync()
+
+    expect(getOutboundAnswerMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "out-call-1",
+    })
+    expect(pendingAnswer()).toEqual({
+      whatsappCallId: "out-call-1",
+      sdp: "v=0 answer",
+    })
+  })
+
+  test.each([
+    ["no call", null],
+    ["an inbound call", baseVoipCall],
+    ["a call still preparing", { ...baseOutboundCall, phase: "preparing" }],
+    ["a call that already ended", { ...baseOutboundCall, phase: "ended" }],
+  ])("does not ask for an answer when there is %s", async (_name, call) => {
+    useWhatsappVoipCallStore.setState({
+      call: call as typeof baseOutboundCall | null,
+    })
+    await render()
+
+    await resync()
+
+    expect(getOutboundAnswerMock).not.toHaveBeenCalled()
+  })
+
+  test("waits for a call that was still preparing at resync time, then fetches once it has its real id", async () => {
+    useWhatsappVoipCallStore.setState({
+      call: {
+        ...baseOutboundCall,
+        phase: "preparing",
+        whatsappCallId: "attempt-nonce",
+      },
+    })
+    await render()
+
+    await resync()
+    expect(getOutboundAnswerMock).not.toHaveBeenCalled()
+
+    // The initiate action returns: the slot now holds the real call id, and
+    // Meta's answer (sent right after initiation) may have been missed.
+    act(() => {
+      useWhatsappVoipCallStore.setState({ call: baseOutboundCall })
+    })
+    await settle()
+
+    expect(getOutboundAnswerMock).toHaveBeenCalledTimes(1)
+    expect(getOutboundAnswerMock).toHaveBeenCalledWith("workspace-1", {
+      whatsappCallId: "out-call-1",
+    })
+    expect(pendingAnswer()).toEqual({
+      whatsappCallId: "out-call-1",
+      sdp: "v=0 answer",
+    })
+  })
+
+  test("does not fetch for a call that starts after a resync that found nothing to recover", async () => {
+    await render()
+    await resync()
+
+    act(() => {
+      useWhatsappVoipCallStore.setState({ call: baseOutboundCall })
+    })
+    await settle()
+
+    expect(getOutboundAnswerMock).not.toHaveBeenCalled()
+  })
+
+  test("does not ask before any resync has happened", async () => {
+    useWhatsappVoipCallStore.setState({ call: baseOutboundCall })
+
+    await render()
+    await settle()
+
+    expect(getOutboundAnswerMock).not.toHaveBeenCalled()
+  })
+
+  test("leaves the handoff empty when the server has no answer to give", async () => {
+    getOutboundAnswerMock.mockResolvedValue({ data: { sdp: null } })
+    useWhatsappVoipCallStore.setState({ call: baseOutboundCall })
+    await render()
+
+    await resync()
+
+    expect(pendingAnswer()).toBeNull()
+  })
+
+  test("leaves the handoff empty when the action fails", async () => {
+    getOutboundAnswerMock.mockResolvedValue({ serverError: "boom" })
+    useWhatsappVoipCallStore.setState({ call: baseOutboundCall })
+    await render()
+
+    await resync()
+
+    expect(pendingAnswer()).toBeNull()
+  })
+
+  test("logs and leaves the handoff empty when the request rejects", async () => {
+    const failure = new Error("network down")
+    getOutboundAnswerMock.mockRejectedValue(failure)
+    useWhatsappVoipCallStore.setState({ call: baseOutboundCall })
+    await render()
+
+    await resync()
+
+    expect(pendingAnswer()).toBeNull()
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      { err: failure, whatsappCallId: "out-call-1" },
+      expect.any(String),
+    )
+  })
+
+  test("drops the answer when the call ended or was replaced while the request was in flight", async () => {
+    const { promise, resolve } = Promise.withResolvers<{
+      data: { sdp: string }
+    }>()
+    getOutboundAnswerMock.mockReturnValue(promise)
+    useWhatsappVoipCallStore.setState({ call: baseOutboundCall })
+    await render()
+
+    realtimeContext.resyncCount += 1
+    await render()
+    act(() => {
+      useWhatsappVoipCallStore.setState({ call: null })
+    })
+    resolve({ data: { sdp: "v=0 late answer" } })
+    await settle()
+
+    expect(pendingAnswer()).toBeNull()
   })
 })

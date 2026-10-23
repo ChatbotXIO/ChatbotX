@@ -173,8 +173,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   const workspaceId = useWorkspaceId()
   const call = useWhatsappVoipCallStore((state) => state.call)
   const ringingCalls = useWhatsappVoipCallStore((state) => state.ringingCalls)
-  const enqueueRinging = useWhatsappVoipCallStore(
-    (state) => state.enqueueRinging,
+  const reconcileRinging = useWhatsappVoipCallStore(
+    (state) => state.reconcileRinging,
   )
   const removeRinging = useWhatsappVoipCallStore((state) => state.removeRinging)
   // Read via `getState()` so every decision sees fresh state, not a render
@@ -226,6 +226,11 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   /** Serializes `answer()` — holds the id being answered, `null` otherwise. */
   const answeringIdRef = useRef<string | null>(null)
   /**
+   * Id of the outbound call whose SDP answer is being or has been applied, so a
+   * second copy of it is dropped instead of failing `setRemoteDescription`.
+   */
+  const appliedOutboundAnswerCallIdRef = useRef<string | null>(null)
+  /**
    * False after unmount. Checked after each await in `answerIncoming`: the
    * unmount teardown only sees resources that existed at that moment, so a
    * continuation that builds a peer or mic afterwards must clean up itself.
@@ -235,8 +240,8 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
   // Resume after refresh: a ring is delivered once over realtime, so an agent
   // who reloads mid-ring would lose it while it is still answerable. Runs once
   // per mount. Every outstanding offer goes into the basket even while the slot
-  // is busy — `enqueueRinging` ignores duplicates and each entry's timer drops
-  // it once expired.
+  // is busy — `reconcileRinging` skips duplicates and each entry's timer drops
+  // it once expired. Nothing is stale yet at mount, so it only adds.
   useEffect(() => {
     if (resumeFetchedRef.current || !workspaceId) {
       return
@@ -245,14 +250,16 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
 
     getPendingIncomingVoipCallAction(workspaceId)
       .then((result) => {
-        const pending = result?.data ?? []
-        // The server returns newest first; reverse so the basket keeps the same
-        // arrival order as live rings.
-        for (const pendingCall of [...pending].reverse()) {
-          // Moving the ringing conversation to the top is `ChatRealtime`'s job
-          // (it watches the basket), so this hook needs no `ChatStore`.
-          enqueueRinging(pendingCall)
+        if (!result?.data) {
+          return
         }
+        // Moving the ringing conversation to the top is `ChatRealtime`'s job
+        // (it watches the basket), so this hook needs no `ChatStore`.
+        reconcileRinging({
+          isServerListComplete: false,
+          serverCalls: result.data.calls,
+          staleCandidateIds: new Set(),
+        })
       })
       .catch((error: unknown) => {
         logger.error(
@@ -260,7 +267,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
           "WhatsApp VoIP resume-after-refresh lookup failed",
         )
       })
-  }, [workspaceId, enqueueRinging])
+  }, [workspaceId, reconcileRinging])
 
   // Expiry for basket entries (which own no timer). Keyed on an `id:deadlineAt`
   // fingerprint rather than the array, so unrelated enqueues do not tear down
@@ -457,7 +464,7 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
     }
   }, [])
 
-  // Applies the outbound SDP answer handed over by `chat-realtime.tsx`. Meta
+  // Applies the outbound SDP answer handed over by `WhatsappCallRealtime`. Meta
   // sends it right after initiation, so it can arrive before the call exists
   // locally (or while it still has its client nonce) — buffer until it matches.
   // Drop it if the peer is gone or a different call now holds the slot.
@@ -473,14 +480,23 @@ export function useWhatsappVoipCall(): UseWhatsappVoipCallResult {
       call.whatsappCallId === pendingOutboundAnswer.whatsappCallId
 
     if (matchesCurrentCall) {
-      if (!pc) {
+      // A pushed answer and a recovery re-fetch can both arrive. "stable" after
+      // the local offer was set means one is already applied; the ref covers the
+      // window while the async `setRemoteDescription` is still running.
+      const isAlreadyApplied =
+        pc?.signalingState === "stable" ||
+        appliedOutboundAnswerCallIdRef.current === call.whatsappCallId
+      if (!pc || isAlreadyApplied) {
         clearPendingOutboundAnswer()
         return
       }
+      appliedOutboundAnswerCallIdRef.current = call.whatsappCallId
       pc.setRemoteDescription({
         type: "answer",
         sdp: pendingOutboundAnswer.sdp,
       }).catch((error: unknown) => {
+        // Let a later copy of the answer try again.
+        appliedOutboundAnswerCallIdRef.current = null
         logger.error(
           { err: error, whatsappCallId: call.whatsappCallId },
           "WhatsApp outbound VoIP setRemoteDescription(answer) failed",

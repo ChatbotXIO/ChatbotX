@@ -57,7 +57,10 @@ describe("getPendingIncomingVoipCallAction", () => {
         deadlineAt: "2026-09-14T00:00:05.000Z",
       },
     ]
-    listResumableIncomingMock.mockResolvedValue(pending)
+    listResumableIncomingMock.mockResolvedValue({
+      calls: pending,
+      isComplete: true,
+    })
 
     const result = await action({
       bindArgsParsedInputs: ["workspace-1"],
@@ -69,12 +72,14 @@ describe("getPendingIncomingVoipCallAction", () => {
       workspaceId: "workspace-1",
       userId: "agent-1",
     })
-    expect(result).toEqual(pending)
-    expect(Array.isArray(result)).toBe(true)
+    expect(result).toEqual({ calls: pending, isComplete: true })
   })
 
-  test("returns an empty array when there is nothing to resume", async () => {
-    listResumableIncomingMock.mockResolvedValue([])
+  test("returns an empty, complete list when there is nothing to resume", async () => {
+    listResumableIncomingMock.mockResolvedValue({
+      calls: [],
+      isComplete: true,
+    })
 
     const result = await action({
       bindArgsParsedInputs: ["workspace-1"],
@@ -82,6 +87,21 @@ describe("getPendingIncomingVoipCallAction", () => {
       ctx,
     })
 
-    expect(result).toEqual([])
+    expect(result).toEqual({ calls: [], isComplete: true })
+  })
+
+  test("passes the incompleteness of a capped candidate list through to the client", async () => {
+    listResumableIncomingMock.mockResolvedValue({
+      calls: [],
+      isComplete: false,
+    })
+
+    const result = await action({
+      bindArgsParsedInputs: ["workspace-1"],
+      parsedInput: {},
+      ctx,
+    })
+
+    expect(result).toEqual({ calls: [], isComplete: false })
   })
 })

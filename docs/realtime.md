@@ -150,9 +150,10 @@ not tied to calling.
 
 **Server-reported presence:** Realtime maintains a `Set` of distinct connected
 member ids for each workspace. On a member’s first local socket it schedules a
-coalesced report; after the last closes it reports the empty set. While members
-remain connected, the gateway repeats reports at `PRESENCE_REPORT_INTERVAL_MS`.
-Several browser tabs for the same member produce one id in the report.
+coalesced report; after the last closes nothing more is reported and the lease
+simply expires after `PRESENCE_TTL_MS`. While members remain connected, the
+gateway repeats reports at `PRESENCE_REPORT_INTERVAL_MS`. Several browser tabs
+for the same member produce one id in the report.
 
 `reportWorkspacePresence` truncates the user-id list before hashing and
 sending. It POSTs to `/api/workspace-presence/report` with a bearer token

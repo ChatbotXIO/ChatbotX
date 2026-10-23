@@ -49,6 +49,7 @@ vi.mock("@/features/realtime/use-realtime-socket", () => ({
 const Probe = ({
   onConnection,
   onEvent,
+  onResyncCount,
   onStatus,
 }: {
   onConnection?: (connection: {
@@ -56,11 +57,13 @@ const Probe = ({
     status: string
   }) => void
   onEvent: (event: unknown) => void
+  onResyncCount?: (resyncCount: number) => void
   onStatus?: (status: string) => void
 }) => {
-  const { reconnectCount, status } = useWorkspaceRealtimeContext()
+  const { reconnectCount, resyncCount, status } = useWorkspaceRealtimeContext()
   useWorkspaceRealtimeEvents({ messageCreated: onEvent })
   onConnection?.({ reconnectCount, status })
+  onResyncCount?.(resyncCount)
   onStatus?.(status)
   return null
 }
@@ -287,6 +290,132 @@ test("drops invalid event data and requests a cache resync", () => {
     },
     "Workspace realtime: event failed schema validation",
   )
+
+  act(() => {
+    root.unmount()
+  })
+})
+
+const renderProvider = (onResyncCount: (resyncCount: number) => void) => {
+  const container = document.createElement("div")
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  const root: Root = createRoot(container)
+
+  act(() => {
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <WorkspaceRealtimeProvider>
+          <Probe onEvent={vi.fn()} onResyncCount={onResyncCount} />
+        </WorkspaceRealtimeProvider>
+      </QueryClientProvider>,
+    )
+  })
+
+  const options = capturedSocketOptions.current
+  if (!options) {
+    throw new Error("Realtime socket options were not captured")
+  }
+  return { options, queryClient, root }
+}
+
+test("bumps resyncCount only once the socket has reopened after a server resync close", () => {
+  const onResyncCount = vi.fn()
+  const { options, root } = renderProvider(onResyncCount)
+
+  act(() => {
+    options.onOpen()
+  })
+  expect(onResyncCount).toHaveBeenLastCalledWith(0)
+
+  act(() => {
+    options.onResync()
+  })
+  // The socket is still down: fetching now would miss events published before
+  // it reconnects, and the reset cursor means they will not be replayed.
+  expect(onResyncCount).toHaveBeenLastCalledWith(0)
+
+  act(() => {
+    options.onOpen()
+  })
+  expect(onResyncCount).toHaveBeenLastCalledWith(1)
+
+  act(() => {
+    root.unmount()
+  })
+})
+
+test("bumps resyncCount at once when a bad frame forces a resync, without waiting for cache refetches", () => {
+  const onResyncCount = vi.fn()
+  const { options, queryClient, root } = renderProvider(onResyncCount)
+  // A slow, unrelated query would otherwise hold back recovery of a missed
+  // ring or SDP answer until its short TTL ran out.
+  vi.spyOn(queryClient, "invalidateQueries").mockReturnValue(
+    new Promise<void>(() => undefined),
+  )
+
+  act(() => {
+    options.onOpen()
+    options.onMessage(
+      JSON.stringify({
+        batch: [{ data: {}, eventType: "whatsappCallTransportIncoming" }],
+        seq: "1-0",
+      }),
+    )
+  })
+
+  expect(onResyncCount).toHaveBeenLastCalledWith(1)
+  expect(queryClient.invalidateQueries).toHaveBeenCalled()
+
+  act(() => {
+    root.unmount()
+  })
+})
+
+test("bumps resyncCount when the socket reopens with no replay cursor left by an earlier frame resync", async () => {
+  const onResyncCount = vi.fn()
+  const { options, root } = renderProvider(onResyncCount)
+
+  await act(() => {
+    options.onOpen()
+    options.onMessage(
+      JSON.stringify({
+        batch: [{ data: {}, eventType: "whatsappCallTransportIncoming" }],
+        seq: "1-0",
+      }),
+    )
+    return Promise.resolve()
+  })
+  expect(onResyncCount).toHaveBeenLastCalledWith(1)
+
+  // The frame resync cleared the cursor and no event has re-armed it, so this
+  // reconnect asks for no replay and the gateway will not close it with a
+  // resync: events published while it was down are silently gone.
+  await act(async () => {
+    await expect(options.getUrl()).resolves.not.toContain("lastSeq")
+    options.onOpen()
+  })
+
+  expect(onResyncCount).toHaveBeenLastCalledWith(2)
+
+  act(() => {
+    root.unmount()
+  })
+})
+
+test("does not bump resyncCount for a plain reconnect that replays cleanly", () => {
+  const onResyncCount = vi.fn()
+  const { options, root } = renderProvider(onResyncCount)
+
+  act(() => {
+    options.onOpen()
+  })
+  act(() => {
+    options.onOpen()
+  })
+
+  expect(onResyncCount).toHaveBeenLastCalledWith(0)
 
   act(() => {
     root.unmount()
