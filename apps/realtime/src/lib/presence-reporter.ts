@@ -12,7 +12,7 @@
  * and map is drained as reports finish or pruned on the next sweep.
  */
 
-export type PresenceReporterOptions = {
+type PresenceReporterOptions = {
   concurrency: number
   getConnectedWorkspaceIds: () => Iterable<string>
   getUserIds: (workspaceId: string) => string[]
@@ -22,7 +22,7 @@ export type PresenceReporterOptions = {
   report: (workspaceId: string, userIds: string[]) => Promise<boolean>
 }
 
-export type PresenceReporter = {
+type PresenceReporter = {
   /** Queues a membership change ahead of any pending periodic reports. */
   reportNow: (workspaceId: string) => void
   stop: () => void

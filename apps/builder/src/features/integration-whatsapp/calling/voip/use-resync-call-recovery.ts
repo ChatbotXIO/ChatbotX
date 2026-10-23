@@ -33,8 +33,6 @@ const isOutboundAwaitingAnswer = (call: WhatsappVoipCall | null): boolean =>
  * Both the incoming ring and an outbound call's SDP answer are delivered once,
  * over realtime. When the gateway could not replay what this tab missed
  * (`resyncCount` bumps), the state they feed is reloaded from the server here.
- * Failures keep whatever the tab already has: an empty or failed response never
- * clears a live ring or call.
  */
 export function useResyncCallRecovery(): void {
   const workspaceId = useWorkspaceId()

@@ -115,7 +115,7 @@ export type ResumableIncomingVoipCall = {
   deadlineAt: string
 }
 
-export type ResumableIncomingVoipCalls = {
+type ResumableIncomingVoipCalls = {
   /** Still-ringing, unclaimed calls this agent may answer, newest first. */
   calls: ResumableIncomingVoipCall[]
   /**

@@ -155,13 +155,6 @@ simply expires after `PRESENCE_TTL_MS`. While members remain connected, the
 gateway repeats reports at `PRESENCE_REPORT_INTERVAL_MS`. Several browser tabs
 for the same member produce one id in the report.
 
-Reports are scheduled per workspace through a shared concurrency cap
-(`apps/realtime/src/lib/presence-reporter.ts`): a periodic sweep queues the
-connected workspaces whose lease was renewed longest ago first, a membership
-change jumps the queue, a workspace is never reported twice at once, and a
-report the builder did not accept does not count as renewed. One slow builder
-response therefore delays only its own workspace, never the rest.
-
 `reportWorkspacePresence` truncates the user-id list before hashing and
 sending. It POSTs to `/api/workspace-presence/report` with a bearer token
 signed by `REALTIME_BROADCAST_SECRET`, an explicit `presence-report` purpose,
