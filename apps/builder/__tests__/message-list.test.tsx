@@ -5,6 +5,15 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { MessageList } from "@/features/messages/message-list"
 
+const { virtuosoPropsRef } = vi.hoisted(() => ({
+  virtuosoPropsRef: {
+    current: null as {
+      firstItemIndex: number
+      startReached: () => void
+    } | null,
+  },
+}))
+
 const loadInitialMessagesMock = vi.fn()
 const loadMoreMessagesMock = vi.fn()
 
@@ -22,11 +31,13 @@ const chatStoreState = {
   ],
   hasNextMessagePage: false,
   isLoadMoreMessage: false,
+  lastPrependedCount: 0,
   loadInitialMessages: loadInitialMessagesMock,
   loadMoreMessages: loadMoreMessagesMock,
   markMessagesDeleted: vi.fn(),
   markMessagesRestored: vi.fn(),
-  messages: [],
+  messages: [] as { id: string; messageType: string }[],
+  prependSeq: 0,
   setReplyToMessage: vi.fn(),
   updateMessageAttributes: vi.fn(),
   updateMessageText: vi.fn(),
@@ -74,7 +85,18 @@ vi.mock("@/features/messages/lib/private-reply", () => ({
 }))
 
 vi.mock("react-virtuoso", () => ({
-  Virtuoso: () => <div data-testid="message-list" />,
+  Virtuoso: ({
+    firstItemIndex,
+    startReached,
+  }: {
+    firstItemIndex: number
+    startReached: () => void
+  }) => {
+    virtuosoPropsRef.current = { firstItemIndex, startReached }
+    return (
+      <div data-first-item-index={firstItemIndex} data-testid="message-list" />
+    )
+  },
 }))
 
 describe("MessageList", () => {
@@ -87,6 +109,12 @@ describe("MessageList", () => {
     document.body.append(container)
     root = createRoot(container)
     chatStoreState.activeConversationId = "conversation-1"
+    chatStoreState.hasNextMessagePage = false
+    chatStoreState.isLoadMoreMessage = false
+    chatStoreState.lastPrependedCount = 0
+    chatStoreState.messages = []
+    chatStoreState.prependSeq = 0
+    virtuosoPropsRef.current = null
     loadInitialMessagesMock.mockReset()
     loadMoreMessagesMock.mockReset()
   })
@@ -128,5 +156,42 @@ describe("MessageList", () => {
     })
     expect(loadInitialMessagesMock).toHaveBeenLastCalledWith("workspace-1", 20)
     expect(loadMoreMessagesMock).not.toHaveBeenCalled()
+  })
+
+  test("shifts the list index by only the prepended count when realtime also appends", () => {
+    const olderMessage = {
+      id: "message-0",
+      messageType: "incoming",
+    }
+    const existingMessage = {
+      id: "message-1",
+      messageType: "incoming",
+    }
+    const incomingMessage = {
+      id: "message-2",
+      messageType: "incoming",
+    }
+    chatStoreState.hasNextMessagePage = true
+    chatStoreState.messages = [existingMessage]
+
+    render()
+
+    const startReached = virtuosoPropsRef.current?.startReached
+    expect(startReached).toBeDefined()
+    act(() => {
+      startReached?.()
+    })
+    expect(loadMoreMessagesMock).toHaveBeenCalledWith("workspace-1", 20)
+
+    chatStoreState.lastPrependedCount = 1
+    chatStoreState.messages = [olderMessage, existingMessage, incomingMessage]
+    chatStoreState.prependSeq = 1
+    render()
+
+    expect(
+      container
+        .querySelector("[data-testid='message-list']")
+        ?.getAttribute("data-first-item-index"),
+    ).toBe("99999")
   })
 })
