@@ -175,6 +175,14 @@ describe("generic OAuth configuration", () => {
     expect(
       mapProfileToUser?.({ family_name: "Lovelace", given_name: "Ada" }),
     ).toEqual({ name: "Ada Lovelace" })
+    expect(
+      mapProfileToUser?.({
+        name: "  ",
+        preferred_username: "\t",
+        given_name: "",
+        family_name: " ",
+      }),
+    ).toEqual({ name: undefined })
   })
 
   test("uses default scopes when scopes are omitted", async () => {

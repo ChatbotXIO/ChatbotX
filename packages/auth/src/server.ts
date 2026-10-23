@@ -834,19 +834,25 @@ export function createAuth(config: AuthConfig) {
                     new URL(getBrokerUrl()).origin,
                   ).toString(),
                   mapProfileToUser: (profile) => {
+                    const profileString = (value: unknown) => {
+                      if (typeof value !== "string") {
+                        return
+                      }
+
+                      const trimmed = value.trim()
+                      return trimmed || undefined
+                    }
                     const fullName = [profile.given_name, profile.family_name]
-                      .filter(
-                        (part): part is string => typeof part === "string",
-                      )
+                      .map(profileString)
+                      .filter((part): part is string => part !== undefined)
                       .join(" ")
                     const name = [
                       profile.name,
                       profile.preferred_username,
                       fullName,
-                    ].find(
-                      (value): value is string =>
-                        typeof value === "string" && value.length > 0,
-                    )
+                    ]
+                      .map(profileString)
+                      .find((value): value is string => value !== undefined)
                     return { name }
                   },
                 },
