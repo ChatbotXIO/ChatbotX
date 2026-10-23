@@ -1,11 +1,15 @@
-import { getLicenseStatus } from "../enterprise/license/service"
+import {
+  getLicenseStatus,
+  isLicenseEntitled,
+} from "../enterprise/license/service"
 import { ChatbotXException } from "../errors"
 import { isCloud, isEnterprise } from "../keys"
 
 /**
  * Whether the current edition unlocks branding, email templates, and platform
  * help links. Both cloud and self-hosted enterprise must present a valid
- * offline license — setting NEXT_PUBLIC_EDITION alone never unlocks features.
+ * license — or one still inside its 7-day post-expiry grace window — setting
+ * NEXT_PUBLIC_EDITION alone never unlocks features.
  */
 export const hasEnterpriseFeatures = async (): Promise<boolean> => {
   if (!(isCloud() || isEnterprise())) {
@@ -13,7 +17,7 @@ export const hasEnterpriseFeatures = async (): Promise<boolean> => {
   }
 
   const license = await getLicenseStatus()
-  return license.state === "valid"
+  return isLicenseEntitled(license.state)
 }
 
 export const enterpriseFeatureRequiredException = () =>

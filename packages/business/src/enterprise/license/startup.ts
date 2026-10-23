@@ -1,6 +1,10 @@
 import { isCloud, isEnterprise, keys } from "../../keys"
 import { logger } from "../../logger"
-import { getLicenseStatus } from "./service"
+import {
+  getLicenseStatus,
+  LICENSE_GRACE_PERIOD_DAYS,
+  type LicenseStatus,
+} from "./service"
 
 const logLicenseError = (
   state: "invalid" | "missing",
@@ -12,22 +16,32 @@ const logLicenseError = (
   )
 }
 
-const logLicenseExpiredWarning = ({
+const logLicenseGraceWarning = ({
+  customerName,
+  expiresAt,
+  graceEndsAt,
+}: Pick<LicenseStatus, "customerName" | "expiresAt" | "graceEndsAt">): void => {
+  logger.warn(
+    { customerName, expiresAt, graceEndsAt },
+    `License has expired. Enterprise features keep working for ${LICENSE_GRACE_PERIOD_DAYS} days after expiry — renew before graceEndsAt or this deployment falls back to the community feature set.`,
+  )
+}
+
+const logLicenseLapsedWarning = ({
   customerName,
   expiresAt,
   daysRemaining,
-}: {
-  customerName: string | null
-  expiresAt: string | null
-  daysRemaining: number | null
-}): void => {
+}: Pick<
+  LicenseStatus,
+  "customerName" | "expiresAt" | "daysRemaining"
+>): void => {
   logger.warn(
     {
       customerName,
       expiresAt,
-      daysSinceExpiry: daysRemaining ? -daysRemaining : null,
+      daysSinceExpiry: daysRemaining === null ? null : -daysRemaining,
     },
-    "License has expired. Enterprise features are disabled until the license is renewed.",
+    "License expired more than the grace period ago. Enterprise features are disabled; running with the community feature set until the license is renewed.",
   )
 }
 
@@ -44,8 +58,13 @@ export const assertLicenseAtStartup = async (): Promise<void> => {
     return
   }
 
+  if (license.state === "grace") {
+    logLicenseGraceWarning(license)
+    return
+  }
+
   if (license.state === "expired") {
-    logLicenseExpiredWarning(license)
+    logLicenseLapsedWarning(license)
     return
   }
 

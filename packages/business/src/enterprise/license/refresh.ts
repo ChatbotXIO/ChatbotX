@@ -51,6 +51,22 @@ export const refreshLicense = async (): Promise<LicenseRefreshOutcome> => {
     return { status: "skipped", reason: current.state }
   }
 
+  if (current.state === "grace") {
+    logger.warn(
+      {
+        licenseId: current.licenseId,
+        expiresAt: current.expiresAt,
+        graceEndsAt: current.graceEndsAt,
+      },
+      "license: expired and running on its grace window; enterprise features stop at graceEndsAt unless a renewal arrives",
+    )
+  } else if (current.state === "expired") {
+    logger.warn(
+      { licenseId: current.licenseId, expiresAt: current.expiresAt },
+      "license: grace window elapsed; enterprise features are disabled until a renewal is issued",
+    )
+  }
+
   let response: Response
   try {
     response = await fetch(LICENSE_REFRESH_URL, {
