@@ -204,6 +204,11 @@ export type WebhookExecutionModel =
 export type ExternalWebhookModel =
   typeof schema.externalWebhookModel.$inferSelect
 export type ContactInboxModel = typeof schema.contactInboxModel.$inferSelect
+export type ContactActivityModel =
+  typeof schema.contactActivityModel.$inferSelect
+export type ContactKeywordMessageModel =
+  typeof schema.contactKeywordMessageModel.$inferSelect
+export type ContactStateModel = typeof schema.contactStateModel.$inferSelect
 export type ContactInboxPostModel =
   typeof schema.contactInboxPostModel.$inferSelect
 export type ChannelPostModel = typeof schema.channelPostModel.$inferSelect

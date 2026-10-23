@@ -782,6 +782,8 @@
       "title": "范本消息"
     },
     "receiversCount": "接收器：{count}",
+    "receiversCountCapped": "接收器：{count}+",
+    "receiversCountUnknown": "接收器：?",
     "receiversLoading": "接收器：正在加载...",
     "stats": {
       "clicked": "已点击",
@@ -1168,6 +1170,7 @@
   },
   "condition": {
     "unknownValue": "未知",
+    "deletedValue": "已删除 (#{id})",
     "ctwaRetarget": {
       "adPrefix": "广告",
       "allAds": "所有广告",
@@ -1360,7 +1363,9 @@
       "inboundWebhook": "入站 Webhook"
     },
     "valuePlaceholder": "...",
-    "yes": "是"
+    "yes": "是",
+    "noTopic": "无主题",
+    "trackingSince": "自 {date} 起记录。此前的活动不包含在内。"
   },
   "contacts": {
     "copyLink": "拷贝链接",

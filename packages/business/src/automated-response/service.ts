@@ -52,6 +52,53 @@ export type ListAutomatedResponsesRequest = {
 }
 
 class AutomatedResponseService extends BaseService {
+  /**
+   * Contact (inbound) keyword rules whose keywords contain `search`, newest
+   * first, for pickers. `keywords` is a text[] column, so the match runs on the
+   * joined keywords (the relational `ilike` filter does not support arrays).
+   */
+  async listKeywordOptions(input: {
+    workspaceId: string
+    search: string
+    limit: number
+  }): Promise<{ id: string; keywords: string[] }[]> {
+    return await db.query.automatedResponseModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        type: "inbound",
+        RAW: input.search
+          ? (table) =>
+              sql`array_to_string(${table.keywords}, ' ') ILIKE ${likeContains(input.search)}`
+          : undefined,
+      },
+      columns: { id: true, keywords: true },
+      orderBy: { createdAt: "desc" },
+      limit: input.limit,
+    })
+  }
+
+  /**
+   * Labels for contact (inbound) keyword rules, which have no name: the label
+   * is the rule's keywords. Existing rows only.
+   */
+  async listKeywordLabelsByIds(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<{ id: string; name: string }[]> {
+    if (input.ids.length === 0) {
+      return []
+    }
+    const rows = await db.query.automatedResponseModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+        id: { in: input.ids },
+        type: "inbound",
+      },
+      columns: { id: true, keywords: true },
+    })
+    return rows.map((row) => ({ id: row.id, name: row.keywords.join(", ") }))
+  }
+
   async findBy(
     input: FindAutomatedResponseRequest,
     tx?: DatabaseClient,

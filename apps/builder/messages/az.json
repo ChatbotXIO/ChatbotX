@@ -477,6 +477,8 @@
       "description": "Bütün kontaktlara axın göndərin."
     },
     "receiversCount": "Alıcılar: {count}",
+    "receiversCountCapped": "Alıcılar: {count}+",
+    "receiversCountUnknown": "Alıcılar: ?",
     "receiversLoading": "Alıcılar: yüklənir...",
     "whatsappTemplateMessage": {
       "title": "Şablon mesajı",
@@ -727,6 +729,7 @@
   },
   "condition": {
     "unknownValue": "Naməlum",
+    "deletedValue": "Silinib (#{id})",
     "yes": "Bəli",
     "no": "Xeyr",
     "valuePlaceholder": "...",
@@ -919,7 +922,9 @@
       },
       "adPrefix": "Reklam",
       "allAds": "Bütün reklamlar"
-    }
+    },
+    "noTopic": "Mövzusuz",
+    "trackingSince": "{date} tarixindən izlənir. Əvvəlki fəaliyyət daxil deyil."
   },
   "channels": {
     "title": "Kanallar",

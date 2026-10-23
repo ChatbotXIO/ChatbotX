@@ -1,3 +1,4 @@
+import { NO_TOPIC_FIXED_VALUE } from "@chatbotx.io/database/partials"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import {
   CONTACT_FILTER_FIELD_DEFINITIONS,
@@ -5,6 +6,7 @@ import {
 } from "../schema"
 import {
   isFilterValueId,
+  isFilterValueNodeReference,
   MAX_FILTER_VALUE_LABEL_IDS,
   type ResolveFilterValueLabelsResponse,
 } from "../schema/value-labels"
@@ -13,7 +15,12 @@ type FilterValueLabelType = keyof ResolveFilterValueLabelsResponse
 
 type FilterValueLabelSource = {
   /** Where the ids behind a condition value are looked up. */
-  lookups: { type: FilterValueLabelType; valuePrefix?: string }[]
+  lookups: {
+    type: FilterValueLabelType
+    valuePrefix?: string
+    /** Overrides the single-bigint-id check, for composite references. */
+    isValid?: (id: string) => boolean
+  }[]
   /** Values that are never ids; their label stays the one already in `options`. */
   fixedValues?: string[]
 }
@@ -31,6 +38,16 @@ const FILTER_VALUE_LABEL_SOURCES: Partial<
   broadcasts: { lookups: [{ type: "broadcasts" }] },
   reflinks: { lookups: [{ type: "reflinks" }] },
   inboxes: { lookups: [{ type: "inboxes" }] },
+  flows: { lookups: [{ type: "flows" }] },
+  flowNodes: {
+    lookups: [{ type: "flowNodes", isValid: isFilterValueNodeReference }],
+  },
+  keywords: { lookups: [{ type: "keywords" }] },
+  whatsappFlows: { lookups: [{ type: "whatsappFlows" }] },
+  emailTopics: {
+    lookups: [{ type: "emailTopics" }],
+    fixedValues: [NO_TOPIC_FIXED_VALUE],
+  },
   assignees: {
     lookups: [
       { type: "members", valuePrefix: "u_" },
@@ -84,13 +101,17 @@ export const collectFilterValueIds = (
       if (source.fixedValues?.includes(value)) {
         continue
       }
-      for (const { type, valuePrefix } of source.lookups) {
+      for (const {
+        type,
+        valuePrefix,
+        isValid = isFilterValueId,
+      } of source.lookups) {
         const id = valuePrefix
           ? value.startsWith(valuePrefix) && value.slice(valuePrefix.length)
           : value
         // A value that is not a valid id (e.g. `u_undefined`) can never match
         // a row, and sending it would fail the whole lookup.
-        if (id && isFilterValueId(id)) {
+        if (id && isValid(id)) {
           ids[type] = (ids[type] ?? new Set()).add(id)
         }
       }

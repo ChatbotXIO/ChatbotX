@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
   insertIfParentExists: vi.fn(),
   lockContactInboxIdsByContactIds: vi.fn(),
   lockContactsForDelete: vi.fn(),
-  lockWorkspaceForPostWrite: vi.fn(),
+  lockWorkspaceForChildWrite: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -23,7 +23,12 @@ vi.mock("@chatbotx.io/database/repositories/contact-inbox-post", () => ({
     insertIfParentExists: mocks.insertIfParentExists,
     lockContactInboxIdsByContactIds: mocks.lockContactInboxIdsByContactIds,
     lockContactsForDelete: mocks.lockContactsForDelete,
-    lockWorkspaceForPostWrite: mocks.lockWorkspaceForPostWrite,
+  },
+}))
+
+vi.mock("@chatbotx.io/database/repositories/workspace", () => ({
+  workspaceRepository: {
+    lockWorkspaceForChildWrite: mocks.lockWorkspaceForChildWrite,
   },
 }))
 
@@ -37,7 +42,7 @@ describe("contactInboxPostService", () => {
     mocks.dbTransaction.mockImplementation(async (callback) =>
       callback({ transaction: vi.fn() }),
     )
-    mocks.lockWorkspaceForPostWrite.mockResolvedValue(true)
+    mocks.lockWorkspaceForChildWrite.mockResolvedValue(true)
     mocks.insertIfParentExists.mockResolvedValue(true)
     mocks.lockContactsForDelete.mockResolvedValue([])
     mocks.lockContactInboxIdsByContactIds.mockResolvedValue([])
@@ -45,7 +50,7 @@ describe("contactInboxPostService", () => {
   })
 
   test("does not insert after the durable workspace purge fence is set", async () => {
-    mocks.lockWorkspaceForPostWrite.mockResolvedValue(false)
+    mocks.lockWorkspaceForChildWrite.mockResolvedValue(false)
 
     await expect(
       contactInboxPostService.recordComment({
@@ -107,7 +112,7 @@ describe("contactInboxPostService", () => {
     mocks.lockContactInboxIdsByContactIds.mockResolvedValue(contactInboxIds)
     mocks.deleteByContactInboxIds.mockResolvedValue(1)
     const calls: string[] = []
-    mocks.lockWorkspaceForPostWrite.mockImplementation(() => {
+    mocks.lockWorkspaceForChildWrite.mockImplementation(() => {
       calls.push("workspace")
       return Promise.resolve(true)
     })

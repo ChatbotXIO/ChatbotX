@@ -1533,6 +1533,11 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/flows",
   },
   {
+    "method": "GET",
+    "operationId": "flows.listNodes",
+    "path": "/v1/flows/{id}/nodes",
+  },
+  {
     "method": "POST",
     "operationId": "flows.publish",
     "path": "/v1/flows/{id}/publish",

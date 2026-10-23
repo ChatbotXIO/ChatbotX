@@ -3,6 +3,7 @@ import {
   DrizzleQueryError,
   type InferSelectModel,
   relationsFilterToSQL,
+  type SQLWrapper,
   sql,
 } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/node-postgres"
@@ -80,9 +81,35 @@ export const countWithRelationsFilter = <TTable extends PgTable>(props: {
   return filter ? client.$count(table, filter) : client.$count(table)
 }
 
-export const countWithRelationsFilterCapped = async <
-  TTable extends PgTable,
->(props: {
+/**
+ * Counts up to `cap` rows of `query` (a `SELECT … FROM …` without a limit) by
+ * scanning at most `cap + 1` of them, so the cost is bounded by `cap` however
+ * large the match set is. `total` never exceeds `cap`; `capped` says the real
+ * count is larger.
+ */
+export const countQueryCapped = async (props: {
+  cap: number
+  client?: DatabaseClient
+  query: SQLWrapper
+}): Promise<{ total: number; capped: boolean; cap: number }> => {
+  const { cap, client = db, query } = props
+  const result = await client.execute<{ count: number }>(sql`
+    SELECT COUNT(*)::int AS count
+    FROM (
+      (${query})
+      LIMIT ${cap + 1}
+    ) AS "cappedCount"
+  `)
+  const count = result.rows[0]?.count ?? 0
+
+  return {
+    total: Math.min(count, cap),
+    capped: count > cap,
+    cap,
+  }
+}
+
+export const countWithRelationsFilterCapped = <TTable extends PgTable>(props: {
   cap: number
   client?: DatabaseClient
   table: TTable
@@ -97,22 +124,12 @@ export const countWithRelationsFilterCapped = async <
     where,
   })
   const whereClause = filter ? sql`WHERE ${filter}` : sql``
-  const result = await client.execute<{ count: number }>(sql`
-    SELECT COUNT(*)::int AS count
-    FROM (
-      SELECT 1
-      FROM ${table}
-      ${whereClause}
-      LIMIT ${cap + 1}
-    ) AS "cappedCount"
-  `)
-  const count = result.rows[0]?.count ?? 0
 
-  return {
-    total: Math.min(count, cap),
-    capped: count > cap,
+  return countQueryCapped({
     cap,
-  }
+    client,
+    query: sql`SELECT 1 FROM ${table} ${whereClause}`,
+  })
 }
 
 const resolveRelationsFilter = <TTable extends PgTable>(props: {
@@ -242,6 +259,10 @@ export const isUniqueViolationError = (
   error: unknown,
   constraint?: string,
 ): boolean => isConstraintViolationError(error, "23505", constraint)
+
+/** Detects a statement cancelled by `statement_timeout` (SQLSTATE 57014). */
+export const isStatementTimeoutError = (error: unknown): boolean =>
+  isConstraintViolationError(error, "57014")
 
 /**
  * Detects a foreign-key violation (SQLSTATE 23503).

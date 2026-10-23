@@ -2,6 +2,7 @@ import { broadcastSendLimitIssues } from "@chatbotx.io/database/partials"
 import { describe, expect, test } from "vitest"
 import {
   describeBroadcastAudienceRange,
+  resolveReceiversCountLabelKey,
   resolveSendLimitIssueKey,
   resolveWindowedReceiversCount,
 } from "@/features/broadcasts/lib/broadcast-send-limit"
@@ -81,39 +82,89 @@ describe("resolveSendLimitIssueKey", () => {
 })
 
 describe("resolveWindowedReceiversCount", () => {
+  const noRange = { audienceRangeStart: null, audienceRangeEnd: null }
+  const exact = (total: number) => ({ total, capped: false })
+
   test("returns the total unclamped when neither bound is set", () => {
-    expect(
-      resolveWindowedReceiversCount(120, {
-        audienceRangeStart: null,
-        audienceRangeEnd: null,
-      }),
-    ).toBe(120)
+    expect(resolveWindowedReceiversCount(exact(120), noRange)).toEqual({
+      count: 120,
+      capped: false,
+    })
   })
 
   test("clamps to a window inside the total", () => {
     expect(
-      resolveWindowedReceiversCount(120, {
+      resolveWindowedReceiversCount(exact(120), {
         audienceRangeStart: 10,
         audienceRangeEnd: 20,
       }),
-    ).toBe(11)
+    ).toEqual({ count: 11, capped: false })
   })
 
   test("returns 0 when the start position is past the total", () => {
     expect(
-      resolveWindowedReceiversCount(10, {
+      resolveWindowedReceiversCount(exact(10), {
         audienceRangeStart: 50,
         audienceRangeEnd: null,
       }),
-    ).toBe(0)
+    ).toEqual({ count: 0, capped: false })
   })
 
   test("returns 0 when the end position is before the start position", () => {
     expect(
-      resolveWindowedReceiversCount(120, {
+      resolveWindowedReceiversCount(exact(120), {
         audienceRangeStart: 20,
         audienceRangeEnd: 10,
       }),
-    ).toBe(0)
+    ).toEqual({ count: 0, capped: false })
+  })
+
+  test("keeps a capped total a lower bound when there is no window", () => {
+    expect(
+      resolveWindowedReceiversCount({ total: 100_000, capped: true }, noRange),
+    ).toEqual({ count: 100_000, capped: true })
+  })
+
+  test("is exact when a capped total's window ends inside the counted rows", () => {
+    expect(
+      resolveWindowedReceiversCount(
+        { total: 100_000, capped: true },
+        { audienceRangeStart: 1, audienceRangeEnd: 500 },
+      ),
+    ).toEqual({ count: 500, capped: false })
+  })
+
+  test("stays capped when the window extends past the counted rows", () => {
+    expect(
+      resolveWindowedReceiversCount(
+        { total: 100_000, capped: true },
+        { audienceRangeStart: 99_001, audienceRangeEnd: 150_000 },
+      ),
+    ).toEqual({ count: 1000, capped: true })
+  })
+
+  test("never reports 0 for a capped window that starts past the counted rows", () => {
+    const result = resolveWindowedReceiversCount(
+      { total: 100_000, capped: true },
+      { audienceRangeStart: 200_000, audienceRangeEnd: null },
+    )
+    expect(result.capped).toBe(true)
+    expect(resolveReceiversCountLabelKey(result)).toBe(
+      "broadcasts.receiversCountUnknown",
+    )
+  })
+})
+
+describe("resolveReceiversCountLabelKey", () => {
+  test("picks the label for exact, capped and unknown counts", () => {
+    expect(resolveReceiversCountLabelKey({ count: 5, capped: false })).toBe(
+      "broadcasts.receiversCount",
+    )
+    expect(resolveReceiversCountLabelKey({ count: 5, capped: true })).toBe(
+      "broadcasts.receiversCountCapped",
+    )
+    expect(resolveReceiversCountLabelKey({ count: 0, capped: true })).toBe(
+      "broadcasts.receiversCountUnknown",
+    )
   })
 })

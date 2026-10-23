@@ -435,6 +435,8 @@
       "description": "Einen Flow an alle Kontakte senden."
     },
     "receiversCount": "Empfänger: {count}",
+    "receiversCountCapped": "Empfänger: {count}+",
+    "receiversCountUnknown": "Empfänger: ?",
     "receiversLoading": "Empfänger: Wird geladen...",
     "whatsappTemplateMessage": {
       "title": "Vorlagennachricht",
@@ -685,6 +687,7 @@
   },
   "condition": {
     "unknownValue": "Unbekannt",
+    "deletedValue": "Gelöscht (#{id})",
     "yes": "Ja",
     "no": "Nein",
     "valuePlaceholder": "...",
@@ -877,7 +880,9 @@
       },
       "adPrefix": "Anzeige",
       "allAds": "alle Anzeigen"
-    }
+    },
+    "noTopic": "Kein Thema",
+    "trackingSince": "Erfasst seit {date}. Frühere Aktivität ist nicht enthalten."
   },
   "fields": {
     "optionalHint": "(optional)",

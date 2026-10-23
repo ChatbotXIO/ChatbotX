@@ -16,6 +16,8 @@ const {
   mockRecordPermanentGrant,
   mockMarkReadByOutbound,
   mockFindConversation,
+  mockRecordDelivered,
+  mockAllIntegrations,
 } = vi.hoisted(() => {
   const updateChain = {
     set: vi.fn().mockReturnThis(),
@@ -47,6 +49,8 @@ const {
     mockRecordPermanentGrant: vi.fn().mockResolvedValue(undefined),
     mockMarkReadByOutbound: vi.fn().mockResolvedValue(true),
     mockFindConversation: vi.fn(),
+    mockRecordDelivered: vi.fn().mockResolvedValue(true),
+    mockAllIntegrations: {} as Record<string, { deliveryReceipts: boolean }>,
   }
 })
 
@@ -57,6 +61,7 @@ vi.mock("@chatbotx.io/analytics", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  contactActivityService: { recordDelivered: mockRecordDelivered },
   contactInboxService: {
     recordOutboundMessageSent: mockRecordOutboundMessageSent,
     recordSendFailure: mockRecordSendFailure,
@@ -145,7 +150,7 @@ vi.mock("../src/lib/logger", () => ({
 }))
 
 vi.mock("../src/services/integrations", () => ({
-  allIntegrations: {},
+  allIntegrations: mockAllIntegrations,
   resolveIntegrationContextFromContactInbox:
     mockResolveIntegrationContextFromContactInbox,
 }))
@@ -205,6 +210,132 @@ describe("chat send-message handlers", () => {
       },
     })
     mockFindConversation.mockResolvedValue(conversation)
+    mockRecordDelivered.mockResolvedValue(true)
+    for (const key of Object.keys(mockAllIntegrations)) {
+      delete mockAllIntegrations[key]
+    }
+  })
+
+  describe("last delivered", () => {
+    const textMessage = (overrides: Record<string, unknown> = {}) =>
+      ({
+        id: "msg-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "bot",
+        text: "hello",
+        ...overrides,
+      }) as never
+
+    test("records a successful send as delivered on a channel without receipts", async () => {
+      mockAllIntegrations.messenger = { deliveryReceipts: false }
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: textMessage(),
+      })
+
+      expect(mockRecordDelivered).toHaveBeenCalledWith({
+        records: [{ contactId: "contact-1", deliveredAt: expect.any(Date) }],
+        workspaceId: "ws-1",
+      })
+    })
+
+    test("records nothing when the channel accepted no message (sentCount 0)", async () => {
+      mockAllIntegrations.messenger = { deliveryReceipts: false }
+      mockRunChannelHandler.mockResolvedValueOnce({
+        messageIds: [],
+        sentCount: 0,
+      })
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: textMessage(),
+      })
+
+      expect(mockRecordDelivered).not.toHaveBeenCalled()
+    })
+
+    test("leaves a channel that reports receipts to the delivered listener", async () => {
+      mockAllIntegrations.messenger = { deliveryReceipts: true }
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: textMessage(),
+      })
+
+      expect(mockRecordDelivered).not.toHaveBeenCalled()
+    })
+
+    test("records nothing for a channel that is not registered", async () => {
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: textMessage(),
+      })
+
+      expect(mockRecordDelivered).not.toHaveBeenCalled()
+    })
+
+    test("does not record a public comment reply, but records a private reply", async () => {
+      mockAllIntegrations.messenger = { deliveryReceipts: false }
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: textMessage({
+          type: "comment",
+          contentAttributes: {},
+          createdAt: new Date(),
+        }),
+      })
+      expect(mockRecordDelivered).not.toHaveBeenCalled()
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: textMessage({
+          type: "comment",
+          contentAttributes: { isPrivateReply: true },
+          createdAt: new Date(),
+        }),
+      })
+      expect(mockRecordDelivered).toHaveBeenCalledTimes(1)
+    })
+
+    test("never fails or retries the send when recording fails", async () => {
+      mockAllIntegrations.messenger = { deliveryReceipts: false }
+      mockRecordDelivered.mockRejectedValue(new Error("db down"))
+
+      await expect(
+        sendMessageToChannel({
+          conversation: conversation as never,
+          contactInbox: contactInbox as never,
+          message: textMessage(),
+        }),
+      ).resolves.not.toThrow()
+      expect(mockRunChannelHandler).toHaveBeenCalledTimes(1)
+      expect(logger.warn).toHaveBeenCalled()
+    })
+
+    test("records nothing when the send fails", async () => {
+      mockAllIntegrations.messenger = { deliveryReceipts: false }
+      mockRunChannelHandler.mockRejectedValueOnce(new Error("boom"))
+
+      await sendMessageToChannel({
+        conversation: conversation as never,
+        contactInbox: contactInbox as never,
+        message: textMessage(),
+      }).catch(() => undefined)
+
+      expect(mockRecordDelivered).not.toHaveBeenCalled()
+    })
   })
 
   test("passes sendFrom to sendMessage channel handler", async () => {

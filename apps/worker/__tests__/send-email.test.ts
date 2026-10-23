@@ -2,12 +2,20 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ── analytics mock (the key subject of this test) ──────────────────────────
-const createRecipient = vi.fn().mockResolvedValue({ token: "test-token-xyz" })
-const markDelivered = vi.fn().mockResolvedValue(undefined)
 const markFailed = vi.fn().mockResolvedValue(undefined)
 
 vi.mock("@chatbotx.io/analytics", () => ({
-  emailTopicAnalyticsService: { createRecipient, markDelivered, markFailed },
+  emailTopicAnalyticsService: { markFailed },
+}))
+
+// ── tracking orchestration (the subject of this test) ──────────────────────
+const createRecipient = vi.fn().mockResolvedValue({ token: "test-token-xyz" })
+const recordTransitionOrEnqueueRepair = vi.fn().mockResolvedValue(undefined)
+const recordTransition = vi.fn().mockResolvedValue(undefined)
+const awardLeaderboardEmailEngagement = vi.fn().mockResolvedValue(undefined)
+
+vi.mock("@chatbotx.io/business/leaderboard", () => ({
+  awardLeaderboardEmailEngagement,
 }))
 
 // ── business services ───────────────────────────────────────────────────────
@@ -20,6 +28,11 @@ vi.mock("@chatbotx.io/business", () => ({
     .mockResolvedValue("https://app.test/unsubscribe?token=unsub"),
   contactService: {
     findBy: vi.fn().mockResolvedValue({ emailOptIn: true }),
+  },
+  emailTrackingService: {
+    createRecipient,
+    recordTransition,
+    recordTransitionOrEnqueueRepair,
   },
   inboxService: { find: vi.fn().mockResolvedValue(undefined) },
   integrationSmtpService: {
@@ -71,7 +84,9 @@ vi.mock("../../src/lib/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn() },
 }))
 
-const { sendEmail } = await import("../../src/integration/handlers/send-email")
+const { recordEmailTrackingTransition, sendEmail } = await import(
+  "../../src/integration/handlers/send-email"
+)
 
 // ── shared fixture ──────────────────────────────────────────────────────────
 function makeProps(overrides: Record<string, unknown> = {}) {
@@ -129,10 +144,14 @@ describe("with topicId", () => {
     expect(pixel?.url).toContain("/email-topic/open")
   })
 
-  test("calls markDelivered with token on send success", async () => {
+  test("records the delivered phase with repair on send success", async () => {
     await sendEmail(makeProps() as never)
-    expect(markDelivered).toHaveBeenCalledOnce()
-    expect(markDelivered).toHaveBeenCalledWith("test-token-xyz")
+    expect(recordTransitionOrEnqueueRepair).toHaveBeenCalledOnce()
+    expect(recordTransitionOrEnqueueRepair).toHaveBeenCalledWith({
+      phase: "delivered",
+      token: "test-token-xyz",
+      workspaceId: "ws-1",
+    })
     expect(markFailed).not.toHaveBeenCalled()
   })
 
@@ -141,20 +160,112 @@ describe("with topicId", () => {
     await sendEmail(makeProps() as never)
     expect(markFailed).toHaveBeenCalledOnce()
     expect(markFailed).toHaveBeenCalledWith("test-token-xyz")
-    expect(markDelivered).not.toHaveBeenCalled()
+    expect(recordTransitionOrEnqueueRepair).not.toHaveBeenCalled()
+  })
+
+  test("never marks the send failed when only the tracking step fails", async () => {
+    // The repair wrapper never throws, so SMTP success stays success.
+    recordTransitionOrEnqueueRepair.mockResolvedValueOnce(undefined)
+    await sendEmail(makeProps() as never)
+    expect(runAction).toHaveBeenCalledOnce()
+    expect(markFailed).not.toHaveBeenCalled()
+  })
+
+  test("does not send when the recipient cannot be created, so the job retries cleanly", async () => {
+    createRecipient.mockRejectedValueOnce(new Error("db down"))
+    await expect(sendEmail(makeProps() as never)).rejects.toThrow("db down")
+    expect(runAction).not.toHaveBeenCalled()
   })
 })
 
-describe("without topicId", () => {
-  test("does not call any analytics methods", async () => {
-    await sendEmail(makeProps({ topicId: undefined }) as never)
-    expect(createRecipient).not.toHaveBeenCalled()
-    expect(markDelivered).not.toHaveBeenCalled()
-    expect(markFailed).not.toHaveBeenCalled()
+describe("without a topic (No Topic)", () => {
+  test.each([
+    undefined,
+    "",
+  ])("still creates a tracked recipient for topicId %j", async (topicId) => {
+    await sendEmail(makeProps({ topicId }) as never)
+    expect(createRecipient).toHaveBeenCalledOnce()
+    expect(createRecipient.mock.calls[0]?.[0].topicId).toBeUndefined()
+    expect(recordTransitionOrEnqueueRepair).toHaveBeenCalledWith({
+      phase: "delivered",
+      token: "test-token-xyz",
+      workspaceId: "ws-1",
+    })
   })
 
   test("still sends the email", async () => {
     await sendEmail(makeProps({ topicId: undefined }) as never)
     expect(runAction).toHaveBeenCalledOnce()
+  })
+})
+
+describe("recordEmailTrackingTransition (repair job)", () => {
+  test("retries only the tracking transaction, never the SMTP send", async () => {
+    await recordEmailTrackingTransition({
+      phase: "opened",
+      token: "tok",
+      workspaceId: "ws-1",
+    })
+    expect(recordTransition).toHaveBeenCalledWith({
+      phase: "opened",
+      token: "tok",
+    })
+    expect(runAction).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    ["opened", "open"],
+    ["clicked", "click"],
+  ] as const)("awards the %s leaderboard event the failed route missed", async (phase, kind) => {
+    await recordEmailTrackingTransition({ phase, token: "tok" })
+    expect(awardLeaderboardEmailEngagement).toHaveBeenCalledWith({
+      kind,
+      link: undefined,
+      token: "tok",
+    })
+  })
+
+  test("awards a click under the same per-link key the route uses", async () => {
+    await recordEmailTrackingTransition({
+      phase: "clicked",
+      token: "tok",
+      link: "https://shop.test/a",
+    })
+    expect(awardLeaderboardEmailEngagement).toHaveBeenCalledWith({
+      kind: "click",
+      link: "https://shop.test/a",
+      token: "tok",
+    })
+  })
+
+  test("a failing leaderboard award does not fail the job, so the transition is not re-run", async () => {
+    awardLeaderboardEmailEngagement.mockRejectedValueOnce(
+      new Error("redis down"),
+    )
+
+    await expect(
+      recordEmailTrackingTransition({ phase: "opened", token: "tok" }),
+    ).resolves.toBeUndefined()
+    expect(recordTransition).toHaveBeenCalledTimes(1)
+  })
+
+  test("does not award the leaderboard for a delivered repair", async () => {
+    await recordEmailTrackingTransition({ phase: "delivered", token: "tok" })
+    expect(awardLeaderboardEmailEngagement).not.toHaveBeenCalled()
+  })
+
+  test("awards nothing while the transition itself still fails", async () => {
+    recordTransition.mockRejectedValueOnce(new Error("db down"))
+    await expect(
+      recordEmailTrackingTransition({ phase: "opened", token: "tok" }),
+    ).rejects.toThrow("db down")
+    expect(awardLeaderboardEmailEngagement).not.toHaveBeenCalled()
+  })
+
+  test("lets a failure surface so BullMQ retries the job", async () => {
+    recordTransition.mockRejectedValueOnce(new Error("db down"))
+    await expect(
+      recordEmailTrackingTransition({ phase: "clicked", token: "tok" }),
+    ).rejects.toThrow("db down")
   })
 })

@@ -515,6 +515,14 @@ export type IntegrationDefinition<
     [key: string]: IChannel<IAuth>
   }
   actions: IActions
+  /**
+   * Whether the provider reports per-message delivery receipts that this
+   * integration turns into `message:delivered` events. Declared explicitly
+   * because registering `handleMessageStatus` does not prove it (Messenger
+   * receives receipts and discards them). A channel without receipts has its
+   * successful send treated as the delivery moment.
+   */
+  deliveryReceipts?: boolean
   handleRequest: Handler<
     HandleRequestProps<IConfig>,
     Oauth2AuthValue | string | number
@@ -599,6 +607,10 @@ export class Integration<
   get channels() {
     // biome-ignore lint/suspicious/noExplicitAny: wip
     return this.props.channels || ({} as { [key: string]: IChannel<any> })
+  }
+
+  get deliveryReceipts(): boolean {
+    return this.props.deliveryReceipts === true
   }
 
   get disconnect(): T["disconnect"] {

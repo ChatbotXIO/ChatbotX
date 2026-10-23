@@ -477,6 +477,8 @@
       "description": "Send a flow to all contacts."
     },
     "receiversCount": "Receivers: {count}",
+    "receiversCountCapped": "Receivers: {count}+",
+    "receiversCountUnknown": "Receivers: ?",
     "receiversLoading": "Receivers: Loading...",
     "whatsappTemplateMessage": {
       "title": "Template Message",
@@ -727,6 +729,7 @@
   },
   "condition": {
     "unknownValue": "Unknown",
+    "deletedValue": "Deleted (#{id})",
     "yes": "Yes",
     "no": "No",
     "valuePlaceholder": "...",
@@ -919,7 +922,9 @@
       },
       "adPrefix": "ad",
       "allAds": "all ads"
-    }
+    },
+    "noTopic": "No Topic",
+    "trackingSince": "Tracked since {date}. Earlier activity is not included."
   },
   "channels": {
     "title": "Channels",

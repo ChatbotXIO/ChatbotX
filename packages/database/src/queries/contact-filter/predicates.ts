@@ -177,7 +177,7 @@ export function buildColumnWhere(
  * SQL expression), or `undefined` when the value/operator is unusable so the
  * caller can drop the condition instead of emitting a false predicate.
  */
-function resolveTimestamptzComparison(
+export function resolveTimestamptzComparison(
   operator: string,
   value: unknown,
   timezone: string,

@@ -9,6 +9,8 @@ import {
   isNull,
   sql,
 } from "../../client"
+import { buildContactFilterMatchSQL } from "../../queries"
+import type { ContactFilterCriteriaInput } from "../../queries/contact-filter/types"
 import { contactModel } from "../../schema"
 import { buildContactListWhere, resolveContactOrderBy } from "./list-where"
 
@@ -129,19 +131,55 @@ export const contactRepository = {
       },
     })
   },
-  count(input: { where: Record<string, unknown> }) {
+  count(input: { client?: DatabaseClient; where: Record<string, unknown> }) {
     return countWithRelationsFilter({
       ...input,
       table: contactModel,
       tsName: "contactModel",
     })
   },
-  countCapped(input: { where: Record<string, unknown>; cap: number }) {
+  countCapped(input: {
+    client?: DatabaseClient
+    where: Record<string, unknown>
+    cap: number
+  }) {
     return countWithRelationsFilterCapped({
       ...input,
       table: contactModel,
       tsName: "contactModel",
     })
+  },
+  /**
+   * The subset of `contactIds` (one scan page of at most a few thousand) that
+   * match the filter. A PK probe per id plus the filter's own EXISTS probes, so
+   * a broadcast audience scan costs O(audience) instead of re-running the
+   * whole filter for every chunk.
+   */
+  async findIdsMatchingFilter(
+    input: {
+      workspaceId: string
+      contactIds: string[]
+      contactFilter: ContactFilterCriteriaInput
+    },
+    tx: DatabaseClient = db,
+  ): Promise<string[]> {
+    if (input.contactIds.length === 0) {
+      return []
+    }
+    const rows = await tx
+      .select({ id: contactModel.id })
+      .from(contactModel)
+      .where(
+        and(
+          eq(contactModel.workspaceId, input.workspaceId),
+          inArray(contactModel.id, input.contactIds),
+          buildContactFilterMatchSQL({
+            workspaceId: input.workspaceId,
+            contactFilter: input.contactFilter,
+          }),
+        ),
+      )
+    return rows.map((row) => row.id)
   },
   async sumTotalContactsFromInboxStats(
     workspaceId: string,

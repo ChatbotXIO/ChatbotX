@@ -2,6 +2,7 @@ import type {
   CommentReply,
   ConversationQuickReplyChallenge,
   ConversationStepChallenge,
+  EmailTrackingPhase,
 } from "@chatbotx.io/database/partials"
 import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
 import type {
@@ -59,6 +60,7 @@ export const IntegrationJobAction = {
   assignConversation: "assignConversation",
   createMessage: "createMessage",
   sendEmail: "sendEmail",
+  recordEmailTrackingTransition: "recordEmailTrackingTransition",
   coexistWhatsappBuffer: "coexistWhatsappBuffer",
   coexistWhatsappFlush: "coexistWhatsappFlush",
   coexistMessengerSync: "coexistMessengerSync",
@@ -227,6 +229,26 @@ export type IntegrationJobMessageReaction = {
 export type IntegrationJobChannelAudienceEvent = {
   type: typeof IntegrationJobAction.channelAudienceEvent
   data: ChannelAudienceEventJobData
+}
+
+/**
+ * Retries only the post-send tracking transaction of an email recipient (never
+ * the SMTP send). One job per (token, phase): a phase is a first-time-only
+ * transition, so a single repair is enough.
+ */
+export type IntegrationJobRecordEmailTrackingTransition = {
+  type: typeof IntegrationJobAction.recordEmailTrackingTransition
+  data: {
+    phase: EmailTrackingPhase
+    token: string
+    /** Absent only when the token matched no recipient row. */
+    workspaceId?: string
+    /**
+     * The clicked destination, so the repair awards the leaderboard under the
+     * same per-link key the click route uses (no double score).
+     */
+    link?: string
+  }
 }
 
 export type IntegrationJobMessageStatus = {
@@ -1141,6 +1163,7 @@ export type IntegrationJobData =
   | IntegrationJobDeleteIncomingMessage
   | IntegrationJobMessageReaction
   | IntegrationJobMessageStatus
+  | IntegrationJobRecordEmailTrackingTransition
   | IntegrationJobRunFlowNode
   | IntegrationJobResumeHeavyStep
   | IntegrationJobSendFlowPostback
@@ -1237,6 +1260,10 @@ const jobOptionsByAction: Partial<
   [IntegrationJobAction.sendMetaCapiEvent]: adsConversionRetryOptions,
   [IntegrationJobAction.sendGoogleAdsConversion]: adsConversionRetryOptions,
   [IntegrationJobAction.syncRetargetAudience]: adsConversionRetryOptions,
+  // The repair re-runs a short DB transaction after the original attempt
+  // failed, typically because the database was briefly unavailable.
+  [IntegrationJobAction.recordEmailTrackingTransition]:
+    adsConversionRetryOptions,
   [IntegrationJobAction.whatsappCallNativeRecordingFetch]:
     NATIVE_CALL_CAPTURE_RETRY_OPTIONS,
   [IntegrationJobAction.whatsappCallNativeTranscriptFetch]:

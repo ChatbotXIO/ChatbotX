@@ -1479,6 +1479,8 @@
       "description": "Trimite un flux tuturor contactelor."
     },
     "receiversCount": "Destinatari: {count}",
+    "receiversCountCapped": "Destinatari: {count}+",
+    "receiversCountUnknown": "Destinatari: ?",
     "receiversLoading": "Destinatari: se încarcă...",
     "whatsappTemplateMessage": {
       "title": "Mesaj șablon",
@@ -1729,6 +1731,7 @@
   },
   "condition": {
     "unknownValue": "Necunoscut",
+    "deletedValue": "Șters (#{id})",
     "yes": "Da",
     "no": "Nu",
     "valuePlaceholder": "...",
@@ -1921,7 +1924,9 @@
       },
       "adPrefix": "anunț",
       "allAds": "toate anunțurile"
-    }
+    },
+    "noTopic": "Fără subiect",
+    "trackingSince": "Urmărit din {date}. Activitatea anterioară nu este inclusă."
   },
   "fields": {
     "optionalHint": "(opțional)",

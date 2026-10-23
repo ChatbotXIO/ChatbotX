@@ -15,6 +15,7 @@ import {
   broadcastSubactionAudienceRules,
   broadcastSubactions,
   clampAudienceCountToRange,
+  clampCappedAudienceCount,
   findBroadcastChannelCapability,
   isAudienceRangeOrdered,
   isBroadcastOutcomeGraceElapsed,
@@ -675,5 +676,58 @@ describe("recurring broadcast vocabulary", () => {
     expect(isRecurrenceRun({ occurrenceAt: new Date() })).toBe(true)
     expect(isRecurrenceRun({ occurrenceAt: null })).toBe(false)
     expect(isRecurrenceRun({})).toBe(false)
+  })
+})
+
+describe("clampCappedAudienceCount", () => {
+  const CAP = 100_000
+  const capped = { total: CAP, capped: true }
+
+  test("behaves like the exact clamp when the count was not capped", () => {
+    expect(
+      clampCappedAudienceCount(
+        { total: 100, capped: false },
+        { offset: 10, size: 20 },
+      ),
+    ).toEqual({ total: 20, capped: false })
+  })
+
+  test("stays a lower bound with no window", () => {
+    expect(clampCappedAudienceCount(capped, null)).toEqual({
+      total: CAP,
+      capped: true,
+    })
+  })
+
+  test("stays a lower bound for an open-ended window", () => {
+    expect(
+      clampCappedAudienceCount(capped, { offset: 10, size: null }),
+    ).toEqual({ total: CAP - 10, capped: true })
+  })
+
+  test("is exact when the window ends inside the counted rows", () => {
+    expect(clampCappedAudienceCount(capped, { offset: 0, size: 500 })).toEqual({
+      total: 500,
+      capped: false,
+    })
+  })
+
+  test("is exact when the window ends exactly at the cap", () => {
+    expect(clampCappedAudienceCount(capped, { offset: 0, size: CAP })).toEqual({
+      total: CAP,
+      capped: false,
+    })
+  })
+
+  test("stays capped when the window extends past the counted rows", () => {
+    expect(
+      clampCappedAudienceCount(capped, { offset: CAP - 1000, size: 5000 }),
+    ).toEqual({ total: 1000, capped: true })
+  })
+
+  test("reports 0 but capped for a window that starts past the counted rows", () => {
+    expect(
+      clampCappedAudienceCount(capped, { offset: CAP + 5, size: 10 }),
+    ).toEqual({ total: 0, capped: true })
   })
 })

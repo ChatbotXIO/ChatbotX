@@ -1,29 +1,50 @@
+import type { DatabaseClient } from "@chatbotx.io/database/client"
 import {
+  type CreatedEmailRecipient,
   type CreateEmailRecipientInput,
+  type EmailRecipientTransition,
+  type EmailTopicCounterIncrement,
   emailTopicStatsRepository,
 } from "../repositories/postgres/email-topic-stats.repository"
 
 export class EmailTopicAnalyticsService {
   createRecipient(
     input: CreateEmailRecipientInput,
-  ): Promise<{ token: string }> {
-    return emailTopicStatsRepository.createRecipient(input)
+    tx?: DatabaseClient,
+  ): Promise<CreatedEmailRecipient> {
+    return emailTopicStatsRepository.createRecipient(input, tx)
   }
 
-  markDelivered(token: string): Promise<void> {
-    return emailTopicStatsRepository.markDelivered(token)
+  markDelivered(
+    token: string,
+    tx?: DatabaseClient,
+  ): Promise<EmailRecipientTransition | null> {
+    return emailTopicStatsRepository.markDelivered(token, tx)
+  }
+
+  incrementTopicCounter(
+    increment: EmailTopicCounterIncrement,
+    tx?: DatabaseClient,
+  ): Promise<unknown> {
+    return emailTopicStatsRepository.incrementTopicCounter(increment, tx)
   }
 
   markFailed(token: string): Promise<void> {
     return emailTopicStatsRepository.markFailed(token).then(() => undefined)
   }
 
-  recordOpen(token: string): Promise<void> {
-    return emailTopicStatsRepository.recordOpen(token)
+  recordOpen(
+    token: string,
+    tx?: DatabaseClient,
+  ): Promise<EmailRecipientTransition | null> {
+    return emailTopicStatsRepository.recordOpen(token, tx)
   }
 
-  recordClick(token: string): Promise<void> {
-    return emailTopicStatsRepository.recordClick(token)
+  recordClick(
+    token: string,
+    tx?: DatabaseClient,
+  ): Promise<EmailRecipientTransition | null> {
+    return emailTopicStatsRepository.recordClick(token, tx)
   }
 }
 

@@ -435,6 +435,8 @@
       "description": "Lähetä flow kaikille yhteystiedoille."
     },
     "receiversCount": "Vastaanottajia: {count}",
+    "receiversCountCapped": "Vastaanottajia: {count}+",
+    "receiversCountUnknown": "Vastaanottajia: ?",
     "receiversLoading": "Vastaanottajat: ladataan...",
     "whatsappTemplateMessage": {
       "title": "Malliviesti",
@@ -685,6 +687,7 @@
   },
   "condition": {
     "unknownValue": "Tuntematon",
+    "deletedValue": "Poistettu (#{id})",
     "yes": "Kyllä",
     "no": "Ei",
     "valuePlaceholder": "...",
@@ -877,7 +880,9 @@
       },
       "adPrefix": "mainos",
       "allAds": "kaikki mainokset"
-    }
+    },
+    "noTopic": "Ei aihetta",
+    "trackingSince": "Seurattu {date} alkaen. Aiempi toiminta ei sisälly."
   },
   "fields": {
     "optionalHint": "(valinnainen)",

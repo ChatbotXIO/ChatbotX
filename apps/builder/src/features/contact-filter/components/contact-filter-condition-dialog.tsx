@@ -1,7 +1,11 @@
 "use client"
 
 import {
+  CONTACT_ACTIVITY_TRACKED_FIELDS,
+  CONTACT_ACTIVITY_TRACKING_STARTED_AT,
+  type ContactActivityValueSource,
   type FormFieldType,
+  isContactActivityValueSource,
   type PostTrackingChannel,
   supportsPostTracking,
 } from "@chatbotx.io/database/partials"
@@ -30,7 +34,7 @@ import {
   operatorTypes,
 } from "@chatbotx.io/utils/custom-field"
 import { SiInstagram, SiMessenger } from "@icons-pack/react-simple-icons"
-import { useTranslations } from "next-intl"
+import { useFormatter, useTranslations } from "next-intl"
 import { type ReactNode, useCallback, useMemo } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { PlainTextEditorField } from "@/components/tiptap/plain-text-editor-field"
@@ -39,6 +43,7 @@ import {
   type ContactFilterCondition,
   singleFlowConditionFilterConditionSchema,
 } from "../schema"
+import { ActivityReferenceValueField } from "./activity-reference-value-field"
 import {
   type ConditionOption,
   type ContactFilterConditionFormDraft,
@@ -245,6 +250,10 @@ type ContactFilterValueFieldsProps = {
   /** True when the active field is a custom field or bot field (not static). */
   isDynamicField?: boolean
   isChannelPost?: boolean
+  /** Set for fields whose values are searched on the server. */
+  activityValueSource?: ContactActivityValueSource
+  /** Names of the values already chosen (from `FieldConfig.valueLabels`). */
+  selectedValueOptions?: SelectOption[]
   enableVariables: boolean
 }
 
@@ -495,6 +504,8 @@ const ContactFilterValueFields = ({
   customFieldInput,
   isDynamicField,
   isChannelPost = false,
+  activityValueSource,
+  selectedValueOptions,
   enableVariables,
 }: ContactFilterValueFieldsProps) => {
   const kind = resolveValueInputKind(customFieldInput, valueType)
@@ -515,6 +526,16 @@ const ContactFilterValueFields = ({
 
   if (kind === "multiSelect" && isChannelPost) {
     return <ChannelPostValueField />
+  }
+
+  if (kind === "multiSelect" && activityValueSource) {
+    return (
+      <ActivityReferenceValueField
+        fixedOptions={valueOptions}
+        selectedOptions={selectedValueOptions}
+        source={activityValueSource}
+      />
+    )
   }
 
   return VALUE_INPUT_RENDERERS[kind]({ enableVariables, valueOptions })
@@ -600,7 +621,12 @@ export const ContactFilterConditionDialog = ({
   })
   const { control, setValue, getValues, handleSubmit } = form
 
+  const format = useFormatter()
   const watchField = useWatch({ control, name: "field" })
+  // No backfill: these filters only know activity since tracking began.
+  const isTrackedField = CONTACT_ACTIVITY_TRACKED_FIELDS.some(
+    (field) => field === watchField,
+  )
   const watchOperator = useWatch({ control, name: "operator" })
   const watchValue = useWatch({ control, name: "value" })
 
@@ -788,17 +814,34 @@ export const ContactFilterConditionDialog = ({
               />
               <div className="overflow-hidden truncate">
                 <ContactFilterValueFields
+                  activityValueSource={
+                    isContactActivityValueSource(activeConfig?.optionSource)
+                      ? activeConfig.optionSource
+                      : undefined
+                  }
                   customFieldInput={resolvedFieldInput}
                   enableVariables={enableVariables}
                   isChannelPost={activeConfig?.optionSource === "channelPosts"}
                   isDynamicField={Boolean(
                     activeConfig?.customFieldId || activeConfig?.botFieldId,
                   )}
+                  selectedValueOptions={activeConfig?.valueLabels}
                   valueOptions={valueOptions}
                   valueType={valueType}
                 />
               </div>
             </div>
+
+            {isTrackedField ? (
+              <p className="text-muted-foreground text-xs">
+                {t("condition.trackingSince", {
+                  date: format.dateTime(
+                    new Date(CONTACT_ACTIVITY_TRACKING_STARTED_AT),
+                    { dateStyle: "medium" },
+                  ),
+                })}
+              </p>
+            ) : null}
 
             <div className="flex justify-end gap-2">
               <Button

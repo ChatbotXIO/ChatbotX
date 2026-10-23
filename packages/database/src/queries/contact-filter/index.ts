@@ -1,4 +1,5 @@
 import { adsEligibleChannelTypes } from "@chatbotx.io/utils/channel"
+import { normalizeForMatch } from "@chatbotx.io/utils/normalize-for-match"
 import {
   type AnyColumn,
   inArray,
@@ -7,6 +8,7 @@ import {
   sql,
 } from "drizzle-orm"
 import { operatorTypes } from "../../partials"
+import { isContactActivityFilterField } from "../../partials/contact-activity"
 import {
   contactInboxModel,
   contactModel,
@@ -18,6 +20,11 @@ import {
 import { escapeLikePattern, likeContains } from "../../utils"
 import { buildBotFieldWhere } from "./bot-field-predicates"
 import { buildCommentedOnPostWhere } from "./commented-on-post"
+import {
+  buildContactActivityWhere,
+  buildLastDeliveredWhere,
+  buildSentMessageWhere,
+} from "./contact-activity"
 import { buildContinentWhere } from "./continent"
 import { parseConversationAssigneeValues } from "./conversation-assignee"
 import {
@@ -56,6 +63,7 @@ import type {
 } from "./types"
 import { buildIsWithinWorkingHoursWhere } from "./working-hours-predicates"
 
+export { isContactActivityFiltersEnabled } from "./contact-activity"
 export {
   parseConversationAssigneeValues,
   UNASSIGNED_ASSIGNEE_VALUE,
@@ -360,6 +368,44 @@ export function buildContactWhere(input: FilterWhereInput): ContactWhere {
   return where
 }
 
+/**
+ * The filter as a `Contact` predicate: `true` = matches every contact (no
+ * conditions), `false` = matches nobody (fail closed), otherwise the SQL.
+ */
+const resolveContactFilterPredicate = (
+  workspaceId: string,
+  contactFilter: FilterCriteriaInput,
+): SQL | boolean => {
+  if (contactFilter.conditions.length === 0) {
+    return true
+  }
+
+  if (!contactFilterHasPredicate(contactFilter, workspaceId)) {
+    return false
+  }
+
+  const contactWhere = buildContactWhere({
+    workspaceId,
+    contactFilter,
+  })
+  return relationsFilterToSQL(contactModel, contactWhere as never) ?? false
+}
+
+/** Boolean SQL for a `Contact` row matching the filter (`TRUE`/`FALSE` when constant). */
+export const buildContactFilterMatchSQL = ({
+  workspaceId,
+  contactFilter,
+}: {
+  workspaceId: string
+  contactFilter: FilterCriteriaInput
+}): SQL => {
+  const predicate = resolveContactFilterPredicate(workspaceId, contactFilter)
+  if (typeof predicate === "boolean") {
+    return predicate ? sql`TRUE` : sql`FALSE`
+  }
+  return predicate
+}
+
 export const buildContactInboxContactFilterSQL = ({
   contactIdColumn,
   workspaceId,
@@ -369,27 +415,12 @@ export const buildContactInboxContactFilterSQL = ({
   workspaceId: string
   contactFilter: FilterCriteriaInput
 }): SQL => {
-  if (contactFilter.conditions.length === 0) {
-    return sql`TRUE`
+  const predicate = resolveContactFilterPredicate(workspaceId, contactFilter)
+  if (typeof predicate === "boolean") {
+    return predicate ? sql`TRUE` : sql`FALSE`
   }
 
-  if (!contactFilterHasPredicate(contactFilter, workspaceId)) {
-    return sql`FALSE`
-  }
-
-  const contactWhere = buildContactWhere({
-    workspaceId,
-    contactFilter,
-  })
-  const contactWhereSQL = relationsFilterToSQL(
-    contactModel,
-    contactWhere as never,
-  )
-  if (!contactWhereSQL) {
-    return sql`FALSE`
-  }
-
-  return sql`${contactIdColumn} IN (SELECT ${contactModel.id} FROM ${contactModel} WHERE ${contactWhereSQL})`
+  return sql`${contactIdColumn} IN (SELECT ${contactModel.id} FROM ${contactModel} WHERE ${predicate})`
 }
 
 export function applyContactFilter(
@@ -547,6 +578,22 @@ function buildConditionWhere(
 
     case "commentedOnPost":
       return buildCommentedOnPostWhere(operator, value, context.workspaceId)
+
+    case "sentMessage":
+      return buildSentMessageWhere(
+        operator,
+        value,
+        context.workspaceId,
+        normalizeForMatch,
+      )
+
+    case "lastDelivered":
+      return buildLastDeliveredWhere(
+        operator,
+        value,
+        context.workspaceId,
+        timezone,
+      )
 
     case "emailWasVerified":
       return buildBooleanColumn("emailVerified", operator, value)
@@ -737,6 +784,8 @@ function buildConditionWhere(
       )
 
     default:
-      return {}
+      return isContactActivityFilterField(field)
+        ? buildContactActivityWhere(field, operator, value, context.workspaceId)
+        : {}
   }
 }

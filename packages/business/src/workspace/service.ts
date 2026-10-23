@@ -21,6 +21,7 @@ import { formatInTimeZone } from "date-fns-tz"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
 import { connectionStateService } from "../connection/state-service"
+import { contactActivityService } from "../contact-activity/service"
 import { contactInboxPostService } from "../contact-inbox-post/service"
 import { tenantService } from "../enterprise/tenant/service"
 import {
@@ -553,6 +554,16 @@ class WorkspaceService extends BaseService {
         throw new WorkspacePurgeIncompleteError(
           fencedWorkspace.id,
           "ContactInboxPost",
+        )
+      }
+
+      const activityPurge = await contactActivityService.purgeWorkspace({
+        workspaceId: fencedWorkspace.id,
+      })
+      if (!activityPurge.complete) {
+        throw new WorkspacePurgeIncompleteError(
+          fencedWorkspace.id,
+          activityPurge.table ?? "ContactActivity",
         )
       }
 

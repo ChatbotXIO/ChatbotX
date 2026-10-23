@@ -160,6 +160,7 @@ vi.mock("@/components/tiptap/plain-text-editor-field", () => ({
 }))
 
 vi.mock("next-intl", () => ({
+  useFormatter: () => ({ dateTime: (value: Date) => value.toISOString() }),
   useTranslations: () => (key: string) =>
     ({
       "actions.cancel": "Cancel",

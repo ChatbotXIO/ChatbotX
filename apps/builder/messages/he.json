@@ -6310,6 +6310,8 @@
       "description": "שליחת תהליך לכל אנשי הקשר."
     },
     "receiversCount": "נמענים: {count}",
+    "receiversCountCapped": "נמענים: {count}+",
+    "receiversCountUnknown": "נמענים: ?",
     "receiversLoading": "נמענים: בטעינה...",
     "whatsappTemplateMessage": {
       "title": "הודעת תבנית",
@@ -6560,6 +6562,7 @@
   },
   "condition": {
     "unknownValue": "לא ידוע",
+    "deletedValue": "נמחק (#{id})",
     "yes": "כן",
     "no": "לא",
     "valuePlaceholder": "...",
@@ -6752,7 +6755,9 @@
       },
       "adPrefix": "מודעה",
       "allAds": "כל המודעות"
-    }
+    },
+    "noTopic": "ללא נושא",
+    "trackingSince": "במעקב מאז {date}. פעילות קודמת אינה נכללת."
   },
   "bookingWebview": {
     "metadataTitle": "קביעת פגישה",

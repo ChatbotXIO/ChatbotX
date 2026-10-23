@@ -21,7 +21,12 @@ const detectFlowVersion = vi.fn()
 const findSendableBroadcast = vi.fn()
 const resetContactForResume = vi.fn()
 
+const recordContactActivity = vi.fn(async (..._args: unknown[]) => true)
+
 vi.mock("@chatbotx.io/business", () => ({
+  contactActivityService: {
+    record: (...args: unknown[]) => recordContactActivity(...args),
+  },
   broadcastService: {
     findSendableBroadcast: (...args: unknown[]) =>
       findSendableBroadcast(...args),
@@ -1039,6 +1044,115 @@ describe("runStepsAndQuickReplies — default edge enqueues a new job (Part 1)",
     expect(job.data.nodeId).toBe("node-2")
     expect(job.data.flowId).toBe("flow-1")
     expect(job.data.sendFrom).toBe("inbox")
+  })
+})
+
+describe("runStepsAndQuickReplies — contact activity recording", () => {
+  beforeEach(() => {
+    recordContactActivity.mockReset()
+    recordContactActivity.mockResolvedValue(true)
+    integrationQueueAdd.mockClear()
+  })
+
+  test("records the flow and the entered node on node entry", async () => {
+    const props = {
+      ...makeBaseProps(makeFlowVersion(), "node-1"),
+      details: { steps: [] },
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(recordContactActivity).toHaveBeenCalledTimes(1)
+    const [input] = recordContactActivity.mock.calls[0] as unknown as [
+      {
+        entries: Record<string, unknown>[]
+        workspaceId: string
+      },
+    ]
+    expect(input.workspaceId).toBe("ws-1")
+    expect(input.entries).toEqual([
+      expect.objectContaining({
+        activityType: "flowExecuted",
+        contactId: "contact-1",
+        referenceId: "flow-1",
+        referenceType: "flow",
+      }),
+      expect.objectContaining({
+        activityType: "flowNodeExecuted",
+        contactId: "contact-1",
+        parentReferenceId: "flow-1",
+        referenceId: "node-1",
+        referenceType: "flowNode",
+      }),
+    ])
+  })
+
+  test("does not record a mid-node re-dispatch", async () => {
+    await runStepsAndQuickReplies({
+      ...makeBaseProps(),
+      details: { steps: [makeStep()] },
+      startFromStepId: "step-1",
+    })
+
+    expect(recordContactActivity).not.toHaveBeenCalled()
+  })
+
+  test("records the owning node when a button target is entered", async () => {
+    await runStepsAndQuickReplies({
+      ...makeBaseProps(makeFlowVersion(), "node-9"),
+      details: { steps: [] },
+      targetType: "button",
+      targetId: "btn-1",
+    })
+
+    const [input] = recordContactActivity.mock.calls[0] as unknown as [
+      { entries: { referenceId: string; referenceType: string }[] },
+    ]
+    expect(input.entries.map((entry) => entry.referenceId)).toEqual([
+      "flow-1",
+      "node-9",
+    ])
+  })
+
+  test("fails before any step or next node runs when recording fails", async () => {
+    recordContactActivity.mockRejectedValue(new Error("db down"))
+    const nextNode: FlowNode = {
+      id: "node-2",
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: { name: "Next", isStartNode: false, details: { steps: [] } },
+    }
+    const flowVersion = makeFlowVersion(
+      [nextNode],
+      [
+        {
+          id: "e1",
+          source: "node-1",
+          sourceHandle: "node-1",
+          target: "node-2",
+          targetHandle: "input",
+        },
+      ],
+    )
+
+    await expect(
+      runStepsAndQuickReplies({
+        ...makeBaseProps(flowVersion),
+        details: { steps: [] },
+        triggerNextNode: true,
+      }),
+    ).rejects.toThrow("db down")
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("does not record a node stopped by the loop guard", async () => {
+    await runStepsAndQuickReplies({
+      ...makeBaseProps(),
+      details: { steps: [] },
+      nodeVisits: { "node-1": 1000 },
+    })
+
+    expect(recordContactActivity).not.toHaveBeenCalled()
   })
 })
 

@@ -21,12 +21,15 @@ export const analyticsEmailTopicModel = pgTable(
   "AnalyticsEmailTopic",
   {
     ...sharedColumns,
-    topicId: bigintAsString()
-      .notNull()
-      .references(() => emailTopicModel.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
+    // Nullable with SET NULL so deleting a topic keeps the tracking token and
+    // its history; `topicReferenceId` keeps the original topic for activity.
+    topicId: bigintAsString().references(() => emailTopicModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+    // Snapshot of the topic id at creation. No FK on purpose: it must survive
+    // the topic's deletion so opens/clicks still record under that topic.
+    topicReferenceId: bigintAsString(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

@@ -2,7 +2,13 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // Controls what transitionOnce's .returning() yields
 const transitionResult: {
-  current: { topicId: string; workspaceId: string }[]
+  current: {
+    contactId?: string | null
+    occurredAt?: Date | null
+    topicId: string | null
+    topicReferenceId?: string | null
+    workspaceId: string
+  }[]
 } = { current: [] }
 
 // Tracks which model was passed to db.update() / tx.update() on each call
@@ -62,6 +68,8 @@ const analyticsEmailTopicModelMock = {
   lastSeenAt: "lastSeenAt_col",
   lastClickedAt: "lastClickedAt_col",
   topicId: "topicId_col",
+  topicReferenceId: "topicReferenceId_col",
+  contactId: "contactId_col",
   workspaceId: "workspaceId_col",
 }
 
@@ -105,12 +113,18 @@ describe("recordOpen", () => {
     expect(db.update).toHaveBeenCalledWith(analyticsEmailTopicModelMock)
   })
 
-  test("first open: bumps seensTotal on EmailTopic", async () => {
+  test("first open: owes a seensTotal bump but leaves the topic row untouched", async () => {
     transitionResult.current = [{ topicId: "t1", workspaceId: "w1" }]
-    await emailTopicStatsRepository.recordOpen("tok")
-    // countRaw(recipient) + transitionOnce(recipient) + incrementCounter(topic)
-    expect(db.update).toHaveBeenCalledTimes(3)
-    expect(updateModelArgs[2]).toBe(emailTopicModelMock)
+    const transition = await emailTopicStatsRepository.recordOpen("tok")
+    // countRaw(recipient) + transitionOnce(recipient); the topic row is locked
+    // last, by the caller, via incrementTopicCounter.
+    expect(db.update).toHaveBeenCalledTimes(2)
+    expect(updateModelArgs).not.toContain(emailTopicModelMock)
+    expect(transition?.counterIncrement).toEqual({
+      counter: "seensTotal",
+      topicId: "t1",
+      workspaceId: "w1",
+    })
   })
 
   test("repeat open: no EmailTopic bump", async () => {
@@ -130,11 +144,12 @@ describe("recordClick", () => {
     expect(db.update).toHaveBeenCalledWith(analyticsEmailTopicModelMock)
   })
 
-  test("first click: bumps clicksTotal on EmailTopic", async () => {
+  test("first click: owes a clicksTotal bump but leaves the topic row untouched", async () => {
     transitionResult.current = [{ topicId: "t1", workspaceId: "w1" }]
-    await emailTopicStatsRepository.recordClick("tok")
-    expect(db.update).toHaveBeenCalledTimes(3)
-    expect(updateModelArgs[2]).toBe(emailTopicModelMock)
+    const transition = await emailTopicStatsRepository.recordClick("tok")
+    expect(transition?.counterIncrement?.counter).toBe("clicksTotal")
+    expect(updateModelArgs).not.toContain(emailTopicModelMock)
+    expect(db.update).toHaveBeenCalledTimes(2)
   })
 
   test("repeat click: no EmailTopic bump", async () => {
@@ -148,12 +163,12 @@ describe("recordClick", () => {
 })
 
 describe("markDelivered", () => {
-  test("first delivery: bumps deliveredsTotal on EmailTopic", async () => {
+  test("first delivery: owes a deliveredsTotal bump but leaves the topic row untouched", async () => {
     transitionResult.current = [{ topicId: "t1", workspaceId: "w1" }]
-    await emailTopicStatsRepository.markDelivered("tok")
-    // transitionOnce(recipient) + incrementCounter(topic)
-    expect(db.update).toHaveBeenCalledTimes(2)
-    expect(updateModelArgs[1]).toBe(emailTopicModelMock)
+    const transition = await emailTopicStatsRepository.markDelivered("tok")
+    expect(db.update).toHaveBeenCalledTimes(1)
+    expect(updateModelArgs).not.toContain(emailTopicModelMock)
+    expect(transition?.counterIncrement?.counter).toBe("deliveredsTotal")
   })
 
   test("already delivered (returning []): no EmailTopic bump", async () => {
@@ -201,12 +216,202 @@ describe("createRecipient", () => {
     )
   })
 
-  test("bumps sendsTotal inside the transaction", async () => {
-    await emailTopicStatsRepository.createRecipient({
+  test("owes a sendsTotal bump without touching the topic row itself", async () => {
+    const created = await emailTopicStatsRepository.createRecipient({
       topicId: "t1",
       workspaceId: "w1",
       email: "a@b.com",
     })
-    expect(updateModelArgs).toContain(emailTopicModelMock)
+    expect(updateModelArgs).not.toContain(emailTopicModelMock)
+    expect(created.counterIncrement).toEqual({
+      counter: "sendsTotal",
+      topicId: "t1",
+      workspaceId: "w1",
+    })
+  })
+})
+
+describe("incrementTopicCounter", () => {
+  test("bumps the owed counter on the EmailTopic row", async () => {
+    await emailTopicStatsRepository.incrementTopicCounter({
+      counter: "seensTotal",
+      topicId: "t1",
+      workspaceId: "w1",
+    })
+    expect(updateModelArgs).toEqual([emailTopicModelMock])
+  })
+
+  test("runs on the caller's transaction handle", async () => {
+    const txUpdate = vi.fn(() => {
+      const builder: Record<string, unknown> = {}
+      builder.set = vi.fn(() => builder)
+      builder.where = vi.fn(() => builder)
+      return builder
+    })
+
+    await emailTopicStatsRepository.incrementTopicCounter(
+      { counter: "clicksTotal", topicId: "t1", workspaceId: "w1" },
+      { update: txUpdate } as never,
+    )
+
+    expect(txUpdate).toHaveBeenCalledWith(emailTopicModelMock)
+    expect(db.update).not.toHaveBeenCalled()
+  })
+})
+
+describe("transitions report the first occurrence for contact activity", () => {
+  const occurredAt = new Date("2026-01-01T00:00:00Z")
+
+  test("returns the contact, time and snapshot topic on the first transition", async () => {
+    transitionResult.current = [
+      {
+        contactId: "c1",
+        occurredAt,
+        topicId: "t1",
+        topicReferenceId: "t1",
+        workspaceId: "w1",
+      },
+    ]
+
+    expect(await emailTopicStatsRepository.recordOpen("tok")).toEqual({
+      contactId: "c1",
+      counterIncrement: {
+        counter: "seensTotal",
+        topicId: "t1",
+        workspaceId: "w1",
+      },
+      occurredAt,
+      topicReferenceId: "t1",
+      workspaceId: "w1",
+    })
+  })
+
+  test("returns null for a repeat so no activity is written twice", async () => {
+    transitionResult.current = []
+
+    expect(await emailTopicStatsRepository.recordClick("tok")).toBeNull()
+    expect(await emailTopicStatsRepository.markDelivered("tok")).toBeNull()
+  })
+
+  test("keeps the original topic after the topic was deleted and skips the counter", async () => {
+    transitionResult.current = [
+      {
+        contactId: "c1",
+        occurredAt,
+        topicId: null,
+        topicReferenceId: "t-deleted",
+        workspaceId: "w1",
+      },
+    ]
+
+    const transition = await emailTopicStatsRepository.markDelivered("tok")
+
+    expect(transition?.topicReferenceId).toBe("t-deleted")
+    // Nothing is owed: there is no topic row left to count on.
+    expect(transition?.counterIncrement).toBeNull()
+  })
+
+  test("falls back to the live topic id for a row created before the snapshot column", async () => {
+    transitionResult.current = [
+      {
+        contactId: "c1",
+        occurredAt,
+        topicId: "t1",
+        topicReferenceId: null,
+        workspaceId: "w1",
+      },
+    ]
+
+    expect(
+      (await emailTopicStatsRepository.markDelivered("tok"))?.topicReferenceId,
+    ).toBe("t1")
+  })
+
+  test("reports no topic for an email sent without one", async () => {
+    transitionResult.current = [
+      {
+        contactId: "c1",
+        occurredAt,
+        topicId: null,
+        topicReferenceId: null,
+        workspaceId: "w1",
+      },
+    ]
+
+    expect(
+      (await emailTopicStatsRepository.recordOpen("tok"))?.topicReferenceId,
+    ).toBeNull()
+  })
+
+  test("uses the caller's transaction handle for every statement", async () => {
+    transitionResult.current = [
+      { contactId: "c1", occurredAt, topicId: "t1", workspaceId: "w1" },
+    ]
+    const txUpdate = vi.fn(() => {
+      const builder: Record<string, unknown> = {}
+      builder.set = vi.fn(() => builder)
+      builder.where = vi.fn(() => builder)
+      builder.returning = vi.fn(async () => transitionResult.current)
+      return builder
+    })
+
+    await emailTopicStatsRepository.recordOpen("tok", {
+      update: txUpdate,
+    } as never)
+
+    expect(txUpdate).toHaveBeenCalledTimes(2)
+    expect(db.update).not.toHaveBeenCalled()
+  })
+})
+
+describe("createRecipient without a topic", () => {
+  test("writes the recipient row but moves no topic counter", async () => {
+    const created = await emailTopicStatsRepository.createRecipient({
+      workspaceId: "w1",
+      email: "a@b.com",
+      contactId: "c1",
+    })
+
+    expect(capturedInsertValues[0]).toMatchObject({
+      topicId: null,
+      topicReferenceId: null,
+      workspaceId: "w1",
+    })
+    expect(updateModelArgs).not.toContain(emailTopicModelMock)
+    expect(created).toMatchObject({
+      contactId: "c1",
+      topicReferenceId: null,
+      workspaceId: "w1",
+    })
+  })
+
+  test("snapshots the topic id for an email with a topic", async () => {
+    const created = await emailTopicStatsRepository.createRecipient({
+      topicId: "t1",
+      workspaceId: "w1",
+      email: "a@b.com",
+    })
+
+    expect(capturedInsertValues[0]).toMatchObject({
+      topicId: "t1",
+      topicReferenceId: "t1",
+    })
+    expect(created.topicReferenceId).toBe("t1")
+  })
+
+  test("joins the caller's transaction instead of opening one", async () => {
+    const insert = vi.fn(() => ({
+      values: vi.fn((payload: unknown) => {
+        capturedInsertValues.push(payload)
+      }),
+    }))
+
+    await emailTopicStatsRepository.createRecipient(
+      { workspaceId: "w1", email: "a@b.com" },
+      { insert, update: vi.fn() } as never,
+    )
+
+    expect(db.transaction).not.toHaveBeenCalled()
+    expect(insert).toHaveBeenCalledTimes(1)
   })
 })

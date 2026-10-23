@@ -13,8 +13,9 @@ const shortHash = (value: string) =>
  * first-open/first-click time is set: that time is the event time, which keeps
  * repeat opens (and repeat clicks of the same link) idempotent.
  *
- * Only emails sent with an Email Topic have a tracking token, so untracked
- * emails never score. The recipient row does not record which SMTP
+ * Only emails sent with an Email Topic score: every email now has a tracking
+ * token (for contact activity), but a topic-less one never scored before and
+ * still does not. The recipient row does not record which SMTP
  * integration sent the email, so every SMTP inbox of the workspace that runs
  * a live email leaderboard is offered the event (the enqueue pre-check makes
  * this one cache read per SMTP inbox). Never throws.
@@ -34,9 +35,16 @@ export async function awardLeaderboardEmailEngagement(input: {
         contactId: true,
         firstSeenAt: true,
         firstClickedAt: true,
+        topicId: true,
+        topicReferenceId: true,
       },
     })
     if (!recipient?.contactId) {
+      return
+    }
+    // `topicReferenceId` survives the topic's deletion; rows created before
+    // that snapshot column only have the live `topicId`.
+    if (!(recipient.topicReferenceId ?? recipient.topicId)) {
       return
     }
     const eventAt =

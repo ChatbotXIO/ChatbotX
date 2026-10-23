@@ -435,6 +435,8 @@
       "description": "Kirim flow ke semua kontak."
     },
     "receiversCount": "Penerima: {count}",
+    "receiversCountCapped": "Penerima: {count}+",
+    "receiversCountUnknown": "Penerima: ?",
     "receiversLoading": "Penerima: Memuat...",
     "whatsappTemplateMessage": {
       "title": "Pesan Template",
@@ -685,6 +687,7 @@
   },
   "condition": {
     "unknownValue": "Tidak diketahui",
+    "deletedValue": "Dihapus (#{id})",
     "yes": "Ya",
     "no": "Tidak",
     "valuePlaceholder": "...",
@@ -877,7 +880,9 @@
       },
       "adPrefix": "iklan",
       "allAds": "semua iklan"
-    }
+    },
+    "noTopic": "Tanpa topik",
+    "trackingSince": "Dilacak sejak {date}. Aktivitas sebelumnya tidak disertakan."
   },
   "fields": {
     "optionalHint": "(opsional)",

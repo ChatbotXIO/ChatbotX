@@ -477,6 +477,8 @@
       "description": "Gửi luồng đến tất cả liên hệ."
     },
     "receiversCount": "Người nhận: {count}",
+    "receiversCountCapped": "Người nhận: {count}+",
+    "receiversCountUnknown": "Người nhận: ?",
     "receiversLoading": "Người nhận: Đang tải...",
     "whatsappTemplateMessage": {
       "title": "Tin nhắn mẫu WhatsApp",
@@ -727,6 +729,7 @@
   },
   "condition": {
     "unknownValue": "Không xác định",
+    "deletedValue": "Đã xóa (#{id})",
     "yes": "Có",
     "no": "Không",
     "valuePlaceholder": "...",
@@ -919,7 +922,9 @@
       },
       "adPrefix": "quảng cáo",
       "allAds": "tất cả quảng cáo"
-    }
+    },
+    "noTopic": "Không có chủ đề",
+    "trackingSince": "Được theo dõi từ {date}. Hoạt động trước đó không được tính."
   },
   "channels": {
     "title": "Kênh",

@@ -1,5 +1,6 @@
 import {
   type ChannelType,
+  type CountMode,
   requiresRecentInteractionWindow,
 } from "@chatbotx.io/database/partials"
 import type {
@@ -10,6 +11,7 @@ import { contactRepository } from "@chatbotx.io/database/repositories"
 import type { ContactModel } from "@chatbotx.io/database/types"
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import type { BroadcastSubaction } from "@chatbotx.io/utils/broadcast"
+import { type CountOutcome, countByMode } from "../count-mode"
 import { inboxService } from "../inbox/service"
 import { logger } from "../logger"
 import type { ContactAccessScope } from "./service"
@@ -299,7 +301,9 @@ export async function list(
   }
 }
 
-export async function count(input: CountInput): Promise<{ total: number }> {
+export async function count(
+  input: CountInput & { countMode?: CountMode },
+): Promise<CountOutcome> {
   const scope = resolveScope(input.scope)
   const inboxScope = await resolveInboxScope(input)
   if (
@@ -310,15 +314,23 @@ export async function count(input: CountInput): Promise<{ total: number }> {
       scope?.restrictToAssignedUserId
     )
   ) {
-    return getTotalContactsFromStats(input.workspaceId)
+    // The stats shortcut is an O(1) read, so it is exact in either mode.
+    return {
+      ...(await getTotalContactsFromStats(input.workspaceId)),
+      totalCountCapped: false,
+    }
   }
 
   const where = contactRepository.buildListWhere(
     toListWhereInput(input, scope, inboxScope),
   )
 
-  const total = await contactRepository.count({ where })
-  return { total }
+  return await countByMode({
+    mode: input.countMode,
+    exact: (client) => contactRepository.count({ client, where }),
+    bounded: (cap, client) =>
+      contactRepository.countCapped({ client, where, cap }),
+  })
 }
 
 // Back-compat for the deprecated `contacts.findByCustomField` alias — use

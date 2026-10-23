@@ -4,20 +4,6 @@ const asBigintArray = (ids: string[]) =>
   sql`ARRAY[${sql.join(ids, sql`, `)}]::bigint[]`
 
 export const contactInboxPostRepository = {
-  async lockWorkspaceForPostWrite(
-    input: { workspaceId: string },
-    tx: DatabaseClient,
-  ): Promise<boolean> {
-    const result = await tx.execute<{ purgeStartedAt: Date | null }>(sql`
-      SELECT "purgeStartedAt"
-      FROM "Workspace"
-      WHERE "id" = ${input.workspaceId}::bigint
-      FOR KEY SHARE
-    `)
-
-    return result.rows[0]?.purgeStartedAt === null
-  },
-
   async insertIfParentExists(
     input: {
       commentedAt: Date

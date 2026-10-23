@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
-import { broadcastService } from "@chatbotx.io/business"
+import { broadcastService, contactActivityService } from "@chatbotx.io/business"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { contactsOnBroadcastsModel } from "@chatbotx.io/database/schema"
@@ -429,6 +429,35 @@ export async function runStepsAndQuickReplies(
       return
     }
     nodeVisits = { ...props.nodeVisits, [props.targetNodeId]: count }
+  }
+
+  // A real node entry (not a mid-node re-dispatch) is the one point every entry
+  // path funnels through, so it records both "ran this flow" and "entered this
+  // node". Written before any step handler runs: a failure throws and the job
+  // retries before anything is sent, and the activity key makes the retry (or a
+  // second entry) a no-op.
+  if (!props.startFromStepId && props.targetNodeId) {
+    const occurredAt = new Date()
+    await contactActivityService.record({
+      entries: [
+        {
+          activityType: "flowExecuted",
+          contactId: props.conversation.contactId,
+          occurredAt,
+          referenceId: flowVersion.flowId,
+          referenceType: "flow",
+        },
+        {
+          activityType: "flowNodeExecuted",
+          contactId: props.conversation.contactId,
+          occurredAt,
+          parentReferenceId: flowVersion.flowId,
+          referenceId: props.targetNodeId,
+          referenceType: "flowNode",
+        },
+      ],
+      workspaceId: props.conversation.workspaceId,
+    })
   }
 
   if (targetType === "node" && !props.startFromStepId && props.targetNodeId) {

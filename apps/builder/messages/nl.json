@@ -435,6 +435,8 @@
       "description": "Stuur een flow naar alle contacten."
     },
     "receiversCount": "Ontvangers: {count}",
+    "receiversCountCapped": "Ontvangers: {count}+",
+    "receiversCountUnknown": "Ontvangers: ?",
     "receiversLoading": "Ontvangers: laden...",
     "whatsappTemplateMessage": {
       "title": "Sjabloonbericht",
@@ -2246,6 +2248,7 @@
   },
   "condition": {
     "unknownValue": "Onbekend",
+    "deletedValue": "Verwijderd (#{id})",
     "yes": "Ja",
     "no": "Nee",
     "valuePlaceholder": "...",
@@ -2438,7 +2441,9 @@
       },
       "adPrefix": "advertentie",
       "allAds": "alle advertenties"
-    }
+    },
+    "noTopic": "Geen onderwerp",
+    "trackingSince": "Bijgehouden sinds {date}. Eerdere activiteit is niet inbegrepen."
   },
   "flows": {
     "export": {

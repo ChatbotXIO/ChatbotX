@@ -49,3 +49,17 @@ export type UploadMode = z.infer<typeof uploadModes>
 
 export const cardLayouts = z.enum(["horizontal", "vertical"])
 export type CardLayout = z.infer<typeof cardLayouts>
+
+/**
+ * How a count over a possibly huge audience is computed. `exact` (the default,
+ * and the only behaviour before this existed) scans everything but is capped by
+ * a statement timeout; `bounded` stops at {@link BOUNDED_COUNT_CAP} and says so.
+ */
+export const countModes = z.enum(["exact", "bounded"])
+export type CountMode = z.infer<typeof countModes>
+
+/** Rows a `bounded` count looks at before reporting "at least this many". */
+export const BOUNDED_COUNT_CAP = 100_000
+
+/** Upper bound for an `exact` count, so a runaway scan cannot hold a connection. */
+export const EXACT_COUNT_STATEMENT_TIMEOUT = "30s"

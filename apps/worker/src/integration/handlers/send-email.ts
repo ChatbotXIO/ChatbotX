@@ -3,12 +3,14 @@ import {
   buildContext,
   buildUnsubscribeUrl,
   contactService,
+  emailTrackingService,
   inboxService,
   integrationSmtpService,
   resolveTenantSettings,
   signEmailClickUrl,
   workspaceService,
 } from "@chatbotx.io/business"
+import { awardLeaderboardEmailEngagement } from "@chatbotx.io/business/leaderboard"
 import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
 import type {
   EmailStepSchema,
@@ -25,6 +27,7 @@ import type {
 } from "@chatbotx.io/mail/dynamic"
 import { renderDynamicEmailHtml } from "@chatbotx.io/mail/dynamic"
 import { contactVariableService } from "@chatbotx.io/variables"
+import type { IntegrationJobRecordEmailTrackingTransition } from "@chatbotx.io/worker-config"
 import { resolveButtonUrl } from "../../lib/convert-button"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
@@ -183,19 +186,18 @@ export async function sendEmail({
     conversation.workspaceId,
   )
 
-  // Create per-recipient tracking row before building URLs so the token is available.
-  let token: string | undefined
-  if (step.topicId) {
-    const result = await emailTopicAnalyticsService.createRecipient({
-      topicId: step.topicId,
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      conversationId: conversation.id,
-      contactInboxId: contactInbox.id,
-      email: to,
-    })
-    token = result.token
-  }
+  // Create the per-recipient tracking row (and record "sent") before building
+  // URLs so the token is available. Every email gets one: a topic only groups
+  // statistics, while an email without a topic is the "No Topic" bucket.
+  const { token } = await emailTrackingService.createRecipient({
+    // The editor stores "no topic" as an empty string.
+    topicId: step.topicId || undefined,
+    workspaceId: conversation.workspaceId,
+    contactId: conversation.contactId,
+    conversationId: conversation.id,
+    contactInboxId: contactInbox.id,
+    email: to,
+  })
 
   const elements = await resolveElements({
     appUrl,
@@ -229,10 +231,6 @@ export async function sendEmail({
       subject,
       html: await renderDynamicEmailHtml(props),
     })
-
-    if (token) {
-      await emailTopicAnalyticsService.markDelivered(token)
-    }
   } catch {
     logger.error(
       {
@@ -241,9 +239,45 @@ export async function sendEmail({
       },
       "handleSendEmail: SMTP send failed",
     )
-    if (token) {
-      await emailTopicAnalyticsService.markFailed(token)
-    }
+    await emailTopicAnalyticsService.markFailed(token)
     return
+  }
+
+  // The mail is already accepted: a tracking failure must neither mark the
+  // send failed nor retry the SMTP call, so it is handed to the repair job.
+  await emailTrackingService.recordTransitionOrEnqueueRepair({
+    phase: "delivered",
+    token,
+    workspaceId: conversation.workspaceId,
+  })
+}
+
+/**
+ * Repair job: retries only the post-send tracking transaction, never SMTP. An
+ * open/click that failed in its route also missed the leaderboard award (it
+ * reads the first-event time the failed transaction never wrote), so it is
+ * awarded here once the transition has landed. The award is idempotent and
+ * best-effort: it must not throw, because a retry of this job would re-run the
+ * transition and count the hit's raw counters a second time.
+ */
+export async function recordEmailTrackingTransition(
+  data: IntegrationJobRecordEmailTrackingTransition["data"],
+): Promise<void> {
+  await emailTrackingService.recordTransition({
+    phase: data.phase,
+    token: data.token,
+  })
+
+  if (data.phase === "opened" || data.phase === "clicked") {
+    await awardLeaderboardEmailEngagement({
+      kind: data.phase === "opened" ? "open" : "click",
+      link: data.link,
+      token: data.token,
+    }).catch((err) =>
+      logger.error(
+        { err, phase: data.phase },
+        "email-tracking repair: leaderboard award failed",
+      ),
+    )
   }
 }

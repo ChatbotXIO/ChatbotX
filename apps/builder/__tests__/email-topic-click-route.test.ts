@@ -7,12 +7,9 @@ const findAnalyticsWorkspaceIdByToken = vi.fn()
 const loadServableWorkspace = vi.fn()
 const awardLeaderboardEmailEngagement = vi.fn().mockResolvedValue(undefined)
 
-vi.mock("@chatbotx.io/analytics", () => ({
-  emailTopicAnalyticsService: { recordClick },
-}))
-
 vi.mock("@chatbotx.io/business", () => ({
   emailTopicService: { findAnalyticsWorkspaceIdByToken },
+  emailTrackingService: { recordTransitionOrEnqueueRepair: recordClick },
   verifyEmailClickToken,
 }))
 
@@ -82,7 +79,12 @@ test("calls recordClick with the token from ?r param", async () => {
   )
   await GET(req)
   expect(recordClick).toHaveBeenCalledOnce()
-  expect(recordClick).toHaveBeenCalledWith("tok-123")
+  expect(recordClick).toHaveBeenCalledWith({
+    phase: "clicked",
+    token: "tok-123",
+    workspaceId: "workspace-1",
+    link: "https://example.com",
+  })
   expect(loadServableWorkspace).toHaveBeenCalledWith("workspace-1")
 })
 

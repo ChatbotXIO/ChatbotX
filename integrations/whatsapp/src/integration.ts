@@ -40,6 +40,7 @@ const config: IntegrationDefinition<
   WhatsappActions
 > = {
   name: "whatsapp",
+  deliveryReceipts: true,
   channels: {
     channel: {
       message: messageHandlers,

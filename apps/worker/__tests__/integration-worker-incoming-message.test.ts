@@ -243,6 +243,9 @@ vi.mock("../src/integration/handlers/lead-ads", () => ({
 vi.mock("../src/integration/handlers/message-status", () => ({
   handleMessageStatus: vi.fn(),
 }))
+vi.mock("../src/integration/handlers/send-email", () => ({
+  recordEmailTrackingTransition: vi.fn(),
+}))
 vi.mock(
   "../src/integration/handlers/meta-conversions/send-meta-capi-event",
   () => ({ handleSendMetaCapiEvent: vi.fn() }),

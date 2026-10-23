@@ -210,6 +210,17 @@ export const workspaceDeletionStartedException = () =>
     409,
   )
 
+/**
+ * A count ran past its statement timeout. The caller can narrow the filter or
+ * ask for `countMode: "bounded"`, which stops at a fixed cap.
+ */
+export const countTimeoutException = () =>
+  new ChatbotXException(
+    'Counting took too long. Narrow the filter, or use countMode "bounded" for a capped count.',
+    "countTimeout",
+    503,
+  )
+
 /** The request field a broadcast validation failure points at. */
 export type BroadcastValidationField =
   | "channel"

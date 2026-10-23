@@ -49,6 +49,8 @@ describe("awardLeaderboardEmailEngagement", () => {
       contactId: "contact-1",
       firstSeenAt,
       firstClickedAt,
+      topicId: "topic-1",
+      topicReferenceId: "topic-1",
     })
     findSmtpIntegrations.mockResolvedValue([
       { inboxId: "smtp-inbox-1" },
@@ -105,6 +107,52 @@ describe("awardLeaderboardEmailEngagement", () => {
     await awardLeaderboardEmailEngagement({ token: "tok", kind: "open" })
 
     expect(enqueueLeaderboardAward).not.toHaveBeenCalled()
+  })
+})
+
+describe("awardLeaderboardEmailEngagement topic gate", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    findSmtpIntegrations.mockResolvedValue([{ inboxId: "smtp-inbox-1" }])
+  })
+
+  const recipient = (overrides: Record<string, unknown>) => ({
+    id: "recipient-1",
+    workspaceId: "ws-1",
+    contactId: "contact-1",
+    firstSeenAt,
+    firstClickedAt,
+    ...overrides,
+  })
+
+  test("an email sent without a topic never scores", async () => {
+    findRecipient.mockResolvedValue(
+      recipient({ topicId: null, topicReferenceId: null }),
+    )
+
+    await awardLeaderboardEmailEngagement({ token: "tok", kind: "open" })
+
+    expect(enqueueLeaderboardAward).not.toHaveBeenCalled()
+  })
+
+  test("still scores after the topic was deleted", async () => {
+    findRecipient.mockResolvedValue(
+      recipient({ topicId: null, topicReferenceId: "topic-gone" }),
+    )
+
+    await awardLeaderboardEmailEngagement({ token: "tok", kind: "open" })
+
+    expect(enqueueLeaderboardAward).toHaveBeenCalledTimes(1)
+  })
+
+  test("still scores a row created before the snapshot column existed", async () => {
+    findRecipient.mockResolvedValue(
+      recipient({ topicId: "topic-1", topicReferenceId: null }),
+    )
+
+    await awardLeaderboardEmailEngagement({ token: "tok", kind: "open" })
+
+    expect(enqueueLeaderboardAward).toHaveBeenCalledTimes(1)
   })
 })
 

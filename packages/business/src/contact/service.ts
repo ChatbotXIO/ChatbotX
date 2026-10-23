@@ -40,6 +40,7 @@ import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { dispatchAuditRecord } from "../audit/dispatcher"
 import { BaseService } from "../base.service"
+import { contactActivityService } from "../contact-activity/service"
 import { getContactInboxSinceTime } from "../contact-inbox/service"
 import { contactInboxPostService } from "../contact-inbox-post/service"
 import { ChatbotXException, notFoundException } from "../errors"
@@ -802,6 +803,11 @@ class ContactService extends BaseService {
 
       await db.transaction(async (tx) => {
         await contactInboxPostService.deleteForContacts({
+          contactIds: chunk.map((contact) => contact.id),
+          tx,
+          workspaceId,
+        })
+        await contactActivityService.deleteForContacts({
           contactIds: chunk.map((contact) => contact.id),
           tx,
           workspaceId,

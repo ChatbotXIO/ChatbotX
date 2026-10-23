@@ -130,8 +130,8 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
     findWithContact: mockFindWithContact,
     updateIdentityGuarded: mockUpdateIdentityGuarded,
   },
-  contactInboxPostRepository: {
-    lockWorkspaceForPostWrite: vi.fn(),
+  workspaceRepository: {
+    lockWorkspaceForChildWrite: vi.fn(),
   },
 }))
 
@@ -664,12 +664,12 @@ describe("contactInboxService.completeProfileSnapshot", () => {
     mockDbTransaction.mockImplementation(async (callback) =>
       callback({ update: mockDbUpdate }),
     )
-    const { contactInboxPostRepository } = await import(
+    const { workspaceRepository } = await import(
       "@chatbotx.io/database/repositories"
     )
-    vi.mocked(
-      contactInboxPostRepository.lockWorkspaceForPostWrite,
-    ).mockResolvedValue(true)
+    vi.mocked(workspaceRepository.lockWorkspaceForChildWrite).mockResolvedValue(
+      true,
+    )
   })
 
   test("commits an all-null snapshot only for the current pending claim", async () => {
@@ -978,12 +978,12 @@ describe("contactInboxService Instagram snapshot recovery queries", () => {
 describe("contactInboxService Instagram snapshot claim and retry", () => {
   beforeEach(async () => {
     vi.clearAllMocks()
-    const { contactInboxPostRepository } = await import(
+    const { workspaceRepository } = await import(
       "@chatbotx.io/database/repositories"
     )
-    vi.mocked(
-      contactInboxPostRepository.lockWorkspaceForPostWrite,
-    ).mockResolvedValue(true)
+    vi.mocked(workspaceRepository.lockWorkspaceForChildWrite).mockResolvedValue(
+      true,
+    )
   })
 
   test("claims only a due pending row and fences the increment by its attempt", async () => {
@@ -1083,12 +1083,12 @@ describe("contactInboxService Instagram snapshot claim and retry", () => {
   })
 
   test("does not write a claim or retry when the workspace fence rejects it", async () => {
-    const { contactInboxPostRepository } = await import(
+    const { workspaceRepository } = await import(
       "@chatbotx.io/database/repositories"
     )
-    vi.mocked(
-      contactInboxPostRepository.lockWorkspaceForPostWrite,
-    ).mockResolvedValue(false)
+    vi.mocked(workspaceRepository.lockWorkspaceForChildWrite).mockResolvedValue(
+      false,
+    )
     mockDbTransaction.mockImplementation(async (callback) =>
       callback({ update: mockDbUpdate }),
     )

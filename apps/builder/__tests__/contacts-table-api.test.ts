@@ -57,6 +57,8 @@ vi.mock("@/features/contacts/schema/action", () => ({
   getExportFileResponse: {},
 }))
 vi.mock("@/features/contacts/schema/query", () => ({
+  countContactsRequest: {},
+  countContactsResponse: {},
   getContactRequest: {},
   getContactResponse: {},
   listContactInboxesAudiencePreviewRequest: {},

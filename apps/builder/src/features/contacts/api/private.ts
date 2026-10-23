@@ -1,5 +1,4 @@
 import { notFoundException } from "@chatbotx.io/business/errors"
-import z from "zod"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -17,6 +16,8 @@ import {
 import { countContacts, listContacts } from "../queries/list-contacts.queries"
 import { getExportFileRequest, getExportFileResponse } from "../schema/action"
 import {
+  countContactsRequest,
+  countContactsResponse,
   getContactRequest,
   getContactResponse,
   listContactInboxesAudiencePreviewRequest,
@@ -74,9 +75,9 @@ export const contactsAuthenticatedAPI = {
       summary: "Count contacts",
       tags: ["Contacts"],
     })
-    .input(listContactsRequest)
+    .input(countContactsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(z.object({ total: z.number() }))
+    .output(countContactsResponse)
     .handler(async ({ input, context }) => {
       const scope = requireContactPermissionScopeForMember({
         permissions: context.workspaceMember.permissions,
@@ -92,9 +93,9 @@ export const contactsAuthenticatedAPI = {
       summary: "Count contact inboxes",
       tags: ["Contacts"],
     })
-    .input(listContactsRequest)
+    .input(countContactsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(z.object({ total: z.number() }))
+    .output(countContactsResponse)
     .handler(async ({ input }) => {
       const accessScope = await requireContactPermissionScope(input.workspaceId)
       return await countContactInboxes(input, accessScope)

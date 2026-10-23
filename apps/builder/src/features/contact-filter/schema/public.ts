@@ -11,6 +11,34 @@ export const listContactFilterFieldsPublicRequest = z.object({
     ),
 })
 
+const contactFilterFieldValueSourcePublicResource = z.object({
+  operation: z
+    .string()
+    .optional()
+    .describe(
+      "Public operation that lists the selectable values (e.g. `flows.list`); absent for free-form fields. `Executed Step` takes `flowId:nodeId` — get node ids from `flows.listNodes`.",
+    ),
+  scope: z
+    .string()
+    .optional()
+    .describe("API token scope that `operation` requires."),
+  fixedValues: z
+    .array(z.string())
+    .describe(
+      "Values accepted without being listed by `operation`, e.g. `noTopic` for emails sent without a topic.",
+    ),
+  valueFormat: z
+    .enum(["id", "flowId:nodeId", "text", "datetime"])
+    .describe(
+      "Shape of a condition value: a bigint id, a `flowId:nodeId` pair, free text, or a date/time.",
+    ),
+  trackingStartedAt: z
+    .string()
+    .describe(
+      "ISO time activity recording began. There is no backfill, so negative and empty operators mean 'since tracking began'.",
+    ),
+})
+
 const contactFilterFieldPublicResource = z.object({
   field: z.string(),
   schemaKind: z.enum([
@@ -23,6 +51,11 @@ const contactFilterFieldPublicResource = z.object({
   ]),
   optionSource: z.string(),
   operators: z.array(z.string()),
+  valueSource: contactFilterFieldValueSourcePublicResource
+    .optional()
+    .describe(
+      "Where to get this field's values and how far back its data goes. Present on the activity-backed fields (Executed Flow/Step, Keywords Received, Sent message, Last Delivered, Completed WhatsApp Flows, Email Sent/Delivered/Opened/Clicked).",
+    ),
 })
 export type ContactFilterFieldPublicResource = z.infer<
   typeof contactFilterFieldPublicResource
