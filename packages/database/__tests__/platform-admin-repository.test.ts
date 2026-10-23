@@ -3,18 +3,47 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { platformAdminRepository } from "../src/repositories/platform-admin/repository"
 
-const mocks = vi.hoisted(() => ({
-  findIdByEmail: vi.fn(),
-  insert: vi.fn(),
-}))
+const mocks = vi.hoisted(() => {
+  const cache = new Map<string, unknown>()
+  return {
+    cache,
+    findFirst: vi.fn(),
+    findIdByEmail: vi.fn(),
+    insert: vi.fn(),
+    invalidateCacheByTags: vi.fn(),
+    withCache: vi.fn(
+      async (key: string, loader: () => Promise<unknown>): Promise<unknown> => {
+        const cached = cache.get(key)
+        if (cached !== undefined) {
+          return cached
+        }
+
+        const value = await loader()
+        if (value !== null && value !== undefined) {
+          cache.set(key, value)
+        }
+        return value
+      },
+    ),
+  }
+})
 
 vi.mock("../src/client", () => ({
   db: {
     insert: mocks.insert,
+    query: {
+      platformAdminModel: {
+        findFirst: mocks.findFirst,
+      },
+    },
   },
   desc: vi.fn(),
   eq: vi.fn(),
   sql: vi.fn(),
+}))
+vi.mock("@chatbotx.io/redis", () => ({
+  invalidateCacheByTags: mocks.invalidateCacheByTags,
+  withCache: mocks.withCache,
 }))
 vi.mock("../src/partials", () => ({ ROOT_TENANT_ID: "1" }))
 vi.mock("../src/repositories/user", () => ({
@@ -36,6 +65,7 @@ const createInsertChain = (createdRows: { id: string }[]) => {
 describe("platformAdminRepository.bootstrapRootAdmin", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.cache.clear()
   })
 
   test("creates the configured root administrator when no row exists", async () => {
@@ -53,6 +83,9 @@ describe("platformAdminRepository.bootstrapRootAdmin", () => {
     expect(chain.onConflictDoNothing).toHaveBeenCalledWith({
       target: "userId",
     })
+    expect(mocks.invalidateCacheByTags).toHaveBeenCalledWith([
+      "platform-admin:root-user",
+    ])
   })
 
   test("does not report provisioning when the administrator already exists", async () => {
@@ -76,5 +109,26 @@ describe("platformAdminRepository.bootstrapRootAdmin", () => {
     ).resolves.toBe(false)
 
     expect(mocks.insert).not.toHaveBeenCalled()
+  })
+})
+
+describe("platformAdminRepository.findByUserId", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.cache.clear()
+  })
+
+  test("reuses a cached administrator instead of querying the database", async () => {
+    const admin = { id: "admin-1", userId: "user-1" }
+    mocks.findFirst.mockResolvedValue(admin)
+
+    await expect(platformAdminRepository.findByUserId("user-1")).resolves.toBe(
+      admin,
+    )
+    await expect(platformAdminRepository.findByUserId("user-1")).resolves.toBe(
+      admin,
+    )
+
+    expect(mocks.findFirst).toHaveBeenCalledTimes(1)
   })
 })

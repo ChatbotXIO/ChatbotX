@@ -55,6 +55,8 @@ class PlatformAdminService {
       )
     }
 
+    await platformAdminRepository.invalidateByUserId(provisioned.userId)
+
     logger.info(
       {
         actorId: props.actorId,
@@ -76,6 +78,8 @@ class PlatformAdminService {
     }
 
     await platformAdminRepository.deleteByUserId(props.userId)
+
+    await platformAdminRepository.invalidateByUserId(props.userId)
     logger.info(
       { actorId: props.actorId, userId: props.userId },
       "removed platform admin",

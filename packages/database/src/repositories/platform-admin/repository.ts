@@ -1,3 +1,4 @@
+import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import { type DatabaseClient, db, desc, eq, sql } from "../../client"
 import { ROOT_TENANT_ID } from "../../partials"
 import { platformAdminModel, userModel } from "../../schema"
@@ -15,11 +16,40 @@ export type PlatformAdminWithUser = PlatformAdminModel & {
   userName: string | null
 }
 
+// Authorization cache entries are short-lived so a failed invalidation can
+// never preserve a revoked administrator role for long.
+const PLATFORM_ADMIN_CACHE_TTL_SECONDS = 60
+
+export const platformAdminCacheTag = (userId: string): string =>
+  `platform-admin:${userId}`
+
 class PlatformAdminRepository {
+  async findByUserId(
+    userId: string,
+  ): Promise<PlatformAdminModel | undefined> {
+    const cacheTag = platformAdminCacheTag(userId)
+    return await withCache(
+      cacheTag,
+      () => db.query.platformAdminModel.findFirst({ where: { userId } }),
+      {
+        ttl: PLATFORM_ADMIN_CACHE_TTL_SECONDS,
+        tags: [cacheTag],
+      },
+    )
+  }
+
+  async invalidateByUserId(userId: string): Promise<void> {
+    await invalidateCacheByTags([platformAdminCacheTag(userId)])
+  }
+
   async existsByUserId(
     userId: string,
     tx: DatabaseClient = db,
   ): Promise<boolean> {
+    if (tx === db) {
+      return Boolean(await this.findByUserId(userId))
+    }
+
     const admin = await tx.query.platformAdminModel.findFirst({
       where: { userId },
       columns: { userId: true },
@@ -42,6 +72,9 @@ class PlatformAdminRepository {
       .onConflictDoNothing({ target: platformAdminModel.userId })
       .returning({ id: platformAdminModel.id })
 
+    if (admin) {
+      await this.invalidateByUserId(user.id)
+    }
     return Boolean(admin)
   }
 
