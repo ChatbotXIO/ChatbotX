@@ -833,15 +833,22 @@ export function createAuth(config: AuthConfig) {
                     `/api/auth/oauth2/callback/${GENERIC_OAUTH_PROVIDER_ID}`,
                     new URL(getBrokerUrl()).origin,
                   ).toString(),
-                  mapProfileToUser: (profile) => ({
-                    name:
-                      profile.name ??
-                      profile.preferred_username ??
-                      ([profile.given_name, profile.family_name]
-                        .filter(Boolean)
-                        .join(" ") ||
-                        undefined),
-                  }),
+                  mapProfileToUser: (profile) => {
+                    const fullName = [profile.given_name, profile.family_name]
+                      .filter(
+                        (part): part is string => typeof part === "string",
+                      )
+                      .join(" ")
+                    const name = [
+                      profile.name,
+                      profile.preferred_username,
+                      fullName,
+                    ].find(
+                      (value): value is string =>
+                        typeof value === "string" && value.length > 0,
+                    )
+                    return { name }
+                  },
                 },
               ],
             }),
