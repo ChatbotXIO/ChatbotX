@@ -11,6 +11,7 @@ export const integrationContextEnv = () =>
       NEXT_PUBLIC_STORAGE_URL: z.url().optional(),
       FORCE_PUBLIC_HTTPS: z.stringbool().optional().default(false),
       REALTIME_BROADCAST_SECRET: z.string().min(32),
+      REDIS_REALTIME_URL: z.url().optional(),
       REDIS_URL: z.url(),
     },
     runtimeEnv: process.env,

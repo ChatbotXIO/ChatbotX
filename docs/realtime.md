@@ -47,6 +47,12 @@ REALTIME_HOST=0.0.0.0
 REDIS_URL=redis://localhost:6379
 ```
 
+To isolate realtime streams and member-revoke markers, set
+`REDIS_REALTIME_URL` identically on Builder, Worker, and the realtime gateway.
+It falls back to `REDIS_URL`; setting it on only producers or only the gateway
+silently splits the stream. A cutover drops up to five minutes of replay history
+and active revoke markers.
+
 Start Redis and Builder with Docker, then run `pnpm --filter realtime dev`.
 Use `REALTIME_HOST`, not `HOSTNAME`: Docker owns `HOSTNAME`.
 
