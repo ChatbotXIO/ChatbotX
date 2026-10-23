@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => {
     findFirst: vi.fn(),
     findIdByEmail: vi.fn(),
     insert: vi.fn(),
-    invalidateCacheByTags: vi.fn(),
+    invalidateCacheKeys: vi.fn(),
     withCache: vi.fn(
       async (key: string, loader: () => Promise<unknown>): Promise<unknown> => {
         const cached = cache.get(key)
@@ -42,7 +42,7 @@ vi.mock("../src/client", () => ({
   sql: vi.fn(),
 }))
 vi.mock("@chatbotx.io/redis", () => ({
-  invalidateCacheByTags: mocks.invalidateCacheByTags,
+  invalidateCacheKeys: mocks.invalidateCacheKeys,
   withCache: mocks.withCache,
 }))
 vi.mock("../src/partials", () => ({ ROOT_TENANT_ID: "1" }))
@@ -83,9 +83,9 @@ describe("platformAdminRepository.bootstrapRootAdmin", () => {
     expect(chain.onConflictDoNothing).toHaveBeenCalledWith({
       target: "userId",
     })
-    expect(mocks.invalidateCacheByTags).toHaveBeenCalledWith([
+    expect(mocks.invalidateCacheKeys).toHaveBeenCalledWith(
       "platform-admin:root-user",
-    ])
+    )
   })
 
   test("does not report provisioning when the administrator already exists", async () => {
