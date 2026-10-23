@@ -108,7 +108,7 @@ services:
       # Keep this the same instance and database index as their REDIS_URL (or
       # REDIS_REALTIME_URL, which wins when set); otherwise sockets connect and
       # presence looks healthy but no realtime event, including call rings,
-      # ever arrives. The startup log prints the endpoint the gateway uses.
+      # ever arrives.
       REDIS_URL: redis://redis:6379
       NEXT_PUBLIC_BUILDER_URL: http://builder:3000
       REALTIME_BUILDER_URL: http://builder:3000
