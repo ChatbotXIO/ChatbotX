@@ -127,9 +127,11 @@ describe("workspaceMemberService.create", () => {
   // leaves that transaction aborted; swallowing the error would let the next
   // statement (or COMMIT) fail while this call reports success. Let the
   // transaction owner see it, roll back and compensate.
-  test("reports on the caller's tracker whether the live team-member counter took the increment", async () => {
+  test("reports on the caller's tracker how many live team-member increments took, across repeated calls with the same tracker", async () => {
     const tx = makeClient()
-    const teamMemberUsage = { liveIncremented: false }
+    const teamMemberUsage = { liveIncrementedCount: 0 }
+    mocks.increment.mockResolvedValueOnce(true as never)
+    mocks.increment.mockResolvedValueOnce(false as never)
     mocks.increment.mockResolvedValueOnce(true as never)
 
     await workspaceMemberService.create({
@@ -137,8 +139,18 @@ describe("workspaceMemberService.create", () => {
       data: { userId: "user-1", workspaceId: "ws-1", role: "owner" } as never,
       teamMemberUsage,
     })
+    await workspaceMemberService.create({
+      tx: tx as never,
+      data: { userId: "user-2", workspaceId: "ws-1", role: "agent" } as never,
+      teamMemberUsage,
+    })
+    await workspaceMemberService.create({
+      tx: tx as never,
+      data: { userId: "user-3", workspaceId: "ws-1", role: "agent" } as never,
+      teamMemberUsage,
+    })
 
-    expect(teamMemberUsage).toEqual({ liveIncremented: true })
+    expect(teamMemberUsage).toEqual({ liveIncrementedCount: 2 })
   })
 
   test("propagates a usage-increment failure when writing on the caller's tx", async () => {

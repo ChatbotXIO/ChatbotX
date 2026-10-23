@@ -460,3 +460,39 @@ describe("userQuotaService.isTeamMemberLimitReached", () => {
     expect(eq).toHaveBeenCalledWith("workspace.tenantId", "tenant-1")
   })
 })
+
+describe("userQuotaService.isTeamMemberLimitReached — additionalCount", () => {
+  test("a batch that exactly fills the limit is not reached", async () => {
+    findFirstQuota.mockResolvedValue({
+      planStatus: "active",
+      teamMembersLimit: 5,
+      teamMembersUsed: 0,
+    })
+    reconcileCounts.push(3)
+
+    await expect(
+      userQuotaService.isTeamMemberLimitReached(
+        { ownerId: "owner-1" },
+        "owner-1",
+        2,
+      ),
+    ).resolves.toBe(false)
+  })
+
+  test("a batch that overshoots the limit by one is reached", async () => {
+    findFirstQuota.mockResolvedValue({
+      planStatus: "active",
+      teamMembersLimit: 5,
+      teamMembersUsed: 0,
+    })
+    reconcileCounts.push(3)
+
+    await expect(
+      userQuotaService.isTeamMemberLimitReached(
+        { ownerId: "owner-1" },
+        "owner-1",
+        3,
+      ),
+    ).resolves.toBe(true)
+  })
+})
