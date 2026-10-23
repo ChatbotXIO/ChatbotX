@@ -31,9 +31,11 @@ vi.mock("@chatbotx.io/business/utils", () => ({
     ABSOLUTE_URL_RE.test(path) ? path : new URL(path, baseUrl).toString(),
 }))
 
-const { getContactLastInput, getContactLastInputType } = await import(
-  "../src/helpers/last-input"
-)
+const {
+  getContactLastInput,
+  getContactLastInputType,
+  getContactLastTextInput,
+} = await import("../src/helpers/last-input")
 
 describe("last input helpers", () => {
   beforeEach(() => {
@@ -132,5 +134,55 @@ describe("last input helpers", () => {
     })
 
     await expect(getContactLastInputType("contact-1")).resolves.toBe("image")
+  })
+})
+
+describe("last_text_input helper", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFindLatestByContact.mockResolvedValue({
+      id: "conversation-1",
+      workspaceId: "workspace-1",
+      lastActivityAt: new Date(),
+      createdAt: new Date(),
+    })
+    mockResolveTenantSettings.mockResolvedValue({
+      storageUrl: "https://cdn.example/storage/",
+    })
+  })
+
+  test("returns the text of the latest incoming text message", async () => {
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue({
+      contentType: contentTypes.enum.text,
+      text: "typed by the contact",
+      attachments: [],
+    })
+
+    await expect(getContactLastTextInput("contact-1")).resolves.toBe(
+      "typed by the contact",
+    )
+  })
+
+  test("never returns a media URL: an attachment message has no text input", async () => {
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue({
+      contentType: contentTypes.enum.text,
+      text: null,
+      attachments: [
+        {
+          fileType: "image",
+          originPath: "public/space/workspace-1/messages/image.png",
+        },
+      ],
+    })
+
+    await expect(getContactLastTextInput("contact-1")).resolves.toBeNull()
+  })
+
+  test("returns null when there is no incoming message or no conversation", async () => {
+    mockFindLatestIncomingMessageWithAttachments.mockResolvedValue(null)
+    await expect(getContactLastTextInput("contact-1")).resolves.toBeNull()
+
+    mockFindLatestByContact.mockResolvedValue(null)
+    await expect(getContactLastTextInput("contact-1")).resolves.toBeNull()
   })
 })

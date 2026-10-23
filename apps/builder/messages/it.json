@@ -1558,6 +1558,45 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "adminName": {
+      "label": "Nome dell'admin mittente"
+    },
+    "adminTeamName": {
+      "label": "Team dell'admin mittente"
+    },
+    "bookingId": {
+      "label": "ID prenotazione"
+    },
+    "lastPoints": {
+      "label": "Ultimi punti del questionario"
+    },
+    "lastAdHeadline": {
+      "label": "Ultimo titolo dell'annuncio"
+    },
+    "lastAdBody": {
+      "label": "Ultimo testo dell'annuncio"
+    },
+    "lastStoryId": {
+      "label": "Ultimo ID storia"
+    },
+    "lastLeadId": {
+      "label": "Ultimo ID lead"
+    },
+    "lastFormId": {
+      "label": "Ultimo ID modulo"
+    },
+    "lastFormName": {
+      "label": "Ultimo nome modulo"
+    },
+    "lastAdgroupId": {
+      "label": "Ultimo ID gruppo di annunci"
+    },
+    "lastTextInput": {
+      "label": "Ultimo testo inserito"
+    },
+    "empty": {
+      "label": "Vuoto"
     }
   },
   "actions": {

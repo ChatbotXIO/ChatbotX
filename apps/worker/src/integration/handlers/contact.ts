@@ -31,6 +31,7 @@ export async function setContactCustomField({
   conversation,
   contactInbox,
   step,
+  sentByUserId,
 }: ExecuteStepProps<SetCustomFieldStepSchema>) {
   try {
     // The value can contain {{variable}} tokens inserted via the editor (contact
@@ -41,6 +42,7 @@ export async function setContactCustomField({
       contactId: conversation.contactId,
       contactInbox,
       conversation,
+      sentByUserId,
     })
     const resolvedValue = await contactVariableService.replaceAll({
       text: step.value,

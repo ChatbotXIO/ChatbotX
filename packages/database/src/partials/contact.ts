@@ -81,11 +81,14 @@ export const systemFieldTypes = z.enum([
   "me",
   "user_code",
   "last_btn_title",
+  "last_btt_title",
+  "empty",
   "last_interaction",
   "last_order",
   "last_seen",
   "last_input",
   "last_input_type",
+  "last_text_input",
   "consecutive_failed_reply",
   "last_ref",
   "user_channel",
@@ -116,14 +119,18 @@ export const systemFieldTypes = z.enum([
   "account_name",
   "account_image",
   "api_key",
+  "page_api_key",
 
   "last_ad",
   "last_ctwa",
   "last_ad_source_url",
   "last_ad_source_platform",
+  "last_ad_headline",
+  "last_ad_body",
   "last_fb_comment",
   "last_post_id",
   "last_comment_id",
+  "last_story_id",
   "total_new_tagged",
   "total_tagged",
   "last_latitude",
@@ -136,12 +143,20 @@ export const systemFieldTypes = z.enum([
 
   "last_step",
   "current_step",
+  "booking_id",
   "booking_calendar",
   "booking_date",
   "booking_link",
   "member_name",
   "team_name",
+  "admin_name",
+  "admin_team_name",
   "last_input_failure",
+  "last_points",
+  "last_lead_id",
+  "last_form_id",
+  "last_form_name",
+  "last_adgroup_id",
 
   "workspace_id",
   "workspace_name",
@@ -151,6 +166,25 @@ export const systemFieldTypes = z.enum([
   "wa_user_name",
 ])
 export type SystemFieldType = z.infer<typeof systemFieldTypes>
+
+/**
+ * System fields that cost a database lookup of their own to resolve. Code that
+ * resolves every system field up front (the Execute JavaScript step's `input`)
+ * skips them so a step does not pay one query per field on every run; they
+ * stay reachable through a `{{key}}` placeholder, which resolves on demand.
+ */
+export const onDemandSystemFieldTypes: readonly SystemFieldType[] = [
+  systemFieldTypes.enum.booking_id,
+  systemFieldTypes.enum.last_points,
+  systemFieldTypes.enum.last_lead_id,
+  systemFieldTypes.enum.last_form_id,
+  systemFieldTypes.enum.last_form_name,
+  systemFieldTypes.enum.last_adgroup_id,
+  systemFieldTypes.enum.admin_name,
+  systemFieldTypes.enum.admin_team_name,
+  systemFieldTypes.enum.last_text_input,
+  systemFieldTypes.enum.page_api_key,
+]
 
 export const reservedCustomFieldNames = z.enum([])
 export type ReservedCustomFieldName = z.infer<typeof reservedCustomFieldNames>

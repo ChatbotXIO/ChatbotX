@@ -67,6 +67,7 @@ const getWhatsappReferral = (
     type: asString(referral.source_type),
     adId: asString(referral.source_id),
     adTitle: asString(referral.headline),
+    adBody: asString(referral.body),
     sourceUrl: asString(referral.source_url),
     sourcePlatform: deriveAdSourcePlatform(asString(referral.source_url)),
     ctwaClid: asString(referral.ctwa_clid),

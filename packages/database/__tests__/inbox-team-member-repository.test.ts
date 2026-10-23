@@ -117,3 +117,52 @@ describe("inboxTeamMemberRepository workspace scoping", () => {
     )
   })
 })
+
+describe("inboxTeamMemberRepository.listTeamNamesByUserId", () => {
+  const createNamedSelectTx = (rows: { name: string }[]) => {
+    const orderBy = vi.fn().mockResolvedValue(rows)
+    const where = vi.fn(() => ({ orderBy }))
+    const innerJoin = vi.fn(() => ({ where }))
+    const from = vi.fn(() => ({ innerJoin }))
+    const select = vi.fn(() => ({ from }))
+    return {
+      tx: { select } as unknown as DatabaseClient,
+      innerJoin,
+      where,
+      orderBy,
+    }
+  }
+
+  test("returns the team names of the user, scoped to the workspace through the team join", async () => {
+    const { tx, innerJoin, where, orderBy } = createNamedSelectTx([
+      { name: "Sales" },
+      { name: "Support" },
+    ])
+
+    await expect(
+      inboxTeamMemberRepository.listTeamNamesByUserId({
+        workspaceId: "workspace-1",
+        userId: "user-1",
+        tx,
+      }),
+    ).resolves.toEqual(["Sales", "Support"])
+
+    expect(innerJoin).toHaveBeenCalledWith(inboxTeamModel, expect.anything())
+    expect(renderPredicate(where.mock.calls[0]?.[0])).toContain(
+      '"workspaceId" = workspace-1 and "userId" = user-1',
+    )
+    expect(orderBy).toHaveBeenCalledTimes(1)
+  })
+
+  test("returns an empty list for a user in no team", async () => {
+    const { tx } = createNamedSelectTx([])
+
+    await expect(
+      inboxTeamMemberRepository.listTeamNamesByUserId({
+        workspaceId: "workspace-1",
+        userId: "user-1",
+        tx,
+      }),
+    ).resolves.toEqual([])
+  })
+})

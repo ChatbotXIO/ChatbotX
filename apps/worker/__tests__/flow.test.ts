@@ -1045,6 +1045,43 @@ describe("runStepsAndQuickReplies — default edge enqueues a new job (Part 1)",
     expect(job.data.flowId).toBe("flow-1")
     expect(job.data.sendFrom).toBe("inbox")
   })
+
+  test("carries the inbox sender to the next node's job", async () => {
+    const nextNode = {
+      id: "node-2",
+      type: "flow",
+      data: {
+        id: "node-2",
+        label: "Next",
+        isStartNode: false,
+        details: { steps: [] },
+      },
+    }
+    const edges: EdgeSchema[] = [
+      {
+        id: "e1",
+        source: "node-1",
+        sourceHandle: "node-1",
+        target: "node-2",
+        targetHandle: "input",
+      },
+    ]
+    const props = {
+      ...makeBaseProps(makeFlowVersion([nextNode], edges)),
+      details: { steps: [] },
+      triggerNextNode: true,
+      sendFrom: "inbox" as const,
+      sentByUserId: "user-1",
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { sentByUserId?: string } },
+    ]
+    expect(job.data.sentByUserId).toBe("user-1")
+  })
 })
 
 describe("runStepsAndQuickReplies — contact activity recording", () => {
@@ -1843,6 +1880,27 @@ describe("runStepsAndQuickReplies — per-step re-dispatch", () => {
     expect(job.data.trackingContext).toBe(trackingContext)
     expect(job.data.nodeId).toBe("node-1")
     expect(job.data.sendFrom).toBe("inbox")
+  })
+
+  test("carries the inbox sender on the re-dispatched job for the remaining steps", async () => {
+    const step1 = { ...makeStep("sendText"), id: "step-1" }
+    const step2 = { ...makeStep("sendText"), id: "step-2" }
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step1, step2] },
+      triggerNextNode: false,
+      targetNodeId: "node-1",
+      sendFrom: "inbox" as const,
+      sentByUserId: "user-1",
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { sentByUserId?: string } },
+    ]
+    expect(job.data.sentByUserId).toBe("user-1")
   })
 
   test("logs a warning and returns early when startFromStepId is set but no matching step exists", async () => {

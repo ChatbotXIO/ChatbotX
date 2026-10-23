@@ -2244,6 +2244,45 @@
     },
     "miniApp": {
       "label": "Mini-app"
+    },
+    "adminName": {
+      "label": "Naam van verzendende admin"
+    },
+    "adminTeamName": {
+      "label": "Teams van verzendende admin"
+    },
+    "bookingId": {
+      "label": "Boekings-ID"
+    },
+    "lastPoints": {
+      "label": "Laatste vragenlijstpunten"
+    },
+    "lastAdHeadline": {
+      "label": "Laatste advertentiekop"
+    },
+    "lastAdBody": {
+      "label": "Laatste advertentietekst"
+    },
+    "lastStoryId": {
+      "label": "Laatste story-ID"
+    },
+    "lastLeadId": {
+      "label": "Laatste lead-ID"
+    },
+    "lastFormId": {
+      "label": "Laatste formulier-ID"
+    },
+    "lastFormName": {
+      "label": "Laatste formuliernaam"
+    },
+    "lastAdgroupId": {
+      "label": "Laatste advertentiegroep-ID"
+    },
+    "lastTextInput": {
+      "label": "Laatste tekstinvoer"
+    },
+    "empty": {
+      "label": "Leeg"
     }
   },
   "condition": {

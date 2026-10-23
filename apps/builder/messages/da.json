@@ -2443,6 +2443,45 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "adminName": {
+      "label": "Navn på afsendende admin"
+    },
+    "adminTeamName": {
+      "label": "Teams for afsendende admin"
+    },
+    "bookingId": {
+      "label": "Booking-ID"
+    },
+    "lastPoints": {
+      "label": "Seneste spørgeskemapoint"
+    },
+    "lastAdHeadline": {
+      "label": "Seneste annonceoverskrift"
+    },
+    "lastAdBody": {
+      "label": "Seneste annoncetekst"
+    },
+    "lastStoryId": {
+      "label": "Seneste story-ID"
+    },
+    "lastLeadId": {
+      "label": "Seneste lead-ID"
+    },
+    "lastFormId": {
+      "label": "Seneste formular-ID"
+    },
+    "lastFormName": {
+      "label": "Seneste formularnavn"
+    },
+    "lastAdgroupId": {
+      "label": "Seneste annoncegruppe-ID"
+    },
+    "lastTextInput": {
+      "label": "Seneste tekstinput"
+    },
+    "empty": {
+      "label": "Tom"
     }
   },
   "flows": {

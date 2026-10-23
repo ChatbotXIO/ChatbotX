@@ -101,6 +101,8 @@ export interface ProcessWhatsappTemplateParams {
   humanSender?: { adminId: string }
   isBulkBroadcast?: boolean
   metadata?: MetadataPayload
+  /** The inbox user who sent the running flow, for `{{admin_name}}` in the params. */
+  sentByUserId?: string
   step?: SendWaTemplateMessageStepSchema
   template: SendWaTemplateMessageStepSchema["template"]
   trackingContext?: BotResponseTrackingContext
@@ -194,6 +196,7 @@ export async function processWhatsappTemplate(
     isBulkBroadcast,
     willRetryOnThrow = false,
     humanSender,
+    sentByUserId,
   } = params
   const isBulkOutbound = isBulkOutboundMetadata(
     metadata,
@@ -243,6 +246,7 @@ export async function processWhatsappTemplate(
       contactId: conversation.contactId,
       contactInbox,
       conversation,
+      sentByUserId,
     })
     const replacedParams = await replaceWhatsappTemplateVariables({
       templateParams: template.params,

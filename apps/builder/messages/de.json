@@ -2443,6 +2443,45 @@
     },
     "miniApp": {
       "label": "Mini-App"
+    },
+    "adminName": {
+      "label": "Name des sendenden Admins"
+    },
+    "adminTeamName": {
+      "label": "Teams des sendenden Admins"
+    },
+    "bookingId": {
+      "label": "Buchungs-ID"
+    },
+    "lastPoints": {
+      "label": "Letzte Fragebogen-Punkte"
+    },
+    "lastAdHeadline": {
+      "label": "Letzte Anzeigenüberschrift"
+    },
+    "lastAdBody": {
+      "label": "Letzter Anzeigentext"
+    },
+    "lastStoryId": {
+      "label": "Letzte Story-ID"
+    },
+    "lastLeadId": {
+      "label": "Letzte Lead-ID"
+    },
+    "lastFormId": {
+      "label": "Letzte Formular-ID"
+    },
+    "lastFormName": {
+      "label": "Letzter Formularname"
+    },
+    "lastAdgroupId": {
+      "label": "Letzte Anzeigengruppen-ID"
+    },
+    "lastTextInput": {
+      "label": "Letzte Texteingabe"
+    },
+    "empty": {
+      "label": "Leer"
     }
   },
   "flows": {

@@ -525,6 +525,30 @@ describe("sendFlowStep", () => {
     )
   })
 
+  test("forwards sentByUserId when resolving contact variables", async () => {
+    await sendFlowStep({
+      ...baseParams,
+      sentByUserId: "user-1",
+    })
+
+    expect(mockResolveContactVariables).toHaveBeenCalledWith(
+      "contact-1",
+      sendTextStep,
+      expect.objectContaining({ sentByUserId: "user-1" }),
+      expect.anything(),
+    )
+  })
+
+  test("does not set sentByUserId when the flow was not sent by an inbox user", async () => {
+    await sendFlowStep(baseParams)
+
+    const source = mockResolveContactVariables.mock.calls[0]?.[2] as Record<
+      string,
+      unknown
+    >
+    expect(source).not.toHaveProperty("sentByUserId")
+  })
+
   // Only deliverable steps reach this resolve, so every string in them is
   // author copy — unlike the external-request/JavaScript handlers, which
   // resolve separately and must leave `{a|b}` alone.
@@ -1777,6 +1801,26 @@ describe("sendFlowStep", () => {
     expect(mockCreateMessageRepository).not.toHaveBeenCalled()
   })
 
+  test("hands the inbox sender to processWhatsappTemplate for a template step", async () => {
+    const waStep = {
+      id: "step-wa",
+      nodeId: "node-wa",
+      stepType: "sendWaTemplateMessage",
+      template: { id: "tmpl-1", name: "template", language: "en", params: {} },
+      buttons: [],
+    } as unknown as SendFlowStepData["step"]
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "whatsapp",
+    } as unknown as typeof fakeContactInbox)
+
+    await sendFlowStep({ ...baseParams, step: waStep, sentByUserId: "user-1" })
+
+    expect(mockProcessWhatsappTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ sentByUserId: "user-1" }),
+    )
+  })
+
   test("delegates to processMessengerTemplate for sendMessengerTemplateMessage step — does not call createMessageRepository directly", async () => {
     const msStep = {
       id: "step-ms",
@@ -1802,6 +1846,32 @@ describe("sendFlowStep", () => {
 
     expect(mockProcessMessengerTemplate).toHaveBeenCalled()
     expect(mockCreateMessageRepository).not.toHaveBeenCalled()
+  })
+
+  test("hands the inbox sender to processMessengerTemplate for a template step", async () => {
+    const msStep = {
+      id: "step-ms",
+      nodeId: "node-ms",
+      stepType: "sendMessengerTemplateMessage",
+      template: {
+        id: "tmpl-2",
+        name: "ms-template",
+        language: "en",
+        parameterFormat: "POSITIONAL",
+        params: {},
+      },
+      buttons: [],
+    } as unknown as SendFlowStepData["step"]
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      channel: "messenger",
+    } as unknown as typeof fakeContactInbox)
+
+    await sendFlowStep({ ...baseParams, step: msStep, sentByUserId: "user-1" })
+
+    expect(mockProcessMessengerTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({ sentByUserId: "user-1" }),
+    )
   })
 
   test("forwards a private commentAnchor to sendFlowStepToChannel when the resolved contactInbox is messenger", async () => {

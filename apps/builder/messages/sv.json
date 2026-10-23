@@ -3361,6 +3361,45 @@
     },
     "miniApp": {
       "label": "Miniapp"
+    },
+    "adminName": {
+      "label": "Skickande admins namn"
+    },
+    "adminTeamName": {
+      "label": "Skickande admins team"
+    },
+    "bookingId": {
+      "label": "Boknings-ID"
+    },
+    "lastPoints": {
+      "label": "Senaste enkätpoäng"
+    },
+    "lastAdHeadline": {
+      "label": "Senaste annonsrubrik"
+    },
+    "lastAdBody": {
+      "label": "Senaste annonstext"
+    },
+    "lastStoryId": {
+      "label": "Senaste story-ID"
+    },
+    "lastLeadId": {
+      "label": "Senaste lead-ID"
+    },
+    "lastFormId": {
+      "label": "Senaste formulär-ID"
+    },
+    "lastFormName": {
+      "label": "Senaste formulärnamn"
+    },
+    "lastAdgroupId": {
+      "label": "Senaste annonsgrupp-ID"
+    },
+    "lastTextInput": {
+      "label": "Senaste textinmatning"
+    },
+    "empty": {
+      "label": "Tom"
     }
   },
   "flowAnalytics": {

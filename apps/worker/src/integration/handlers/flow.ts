@@ -152,6 +152,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   metadata?: MetadataPayload
   isBulkBroadcast?: boolean
   sendFrom?: "inbox"
+  sentByUserId?: string
   nodeVisits?: NodeVisits
   triggerMessageId?: string
   triggerMessageCreatedAt?: Date
@@ -339,6 +340,7 @@ export const runFlowNode = async (
       nodeVisits: props.nodeVisits,
       commentAnchor,
       appointmentId: props.appointmentId,
+      sentByUserId: props.sentByUserId,
       flowExecutionKey,
     })
   } catch (error) {
@@ -579,6 +581,7 @@ export async function runStepsAndQuickReplies(
           appointmentId: props.appointmentId,
           trackingContext: props.trackingContext,
           sendFrom: props.sendFrom,
+          sentByUserId: props.sentByUserId,
           nodeVisits,
           triggerMessageId: props.triggerMessageId,
           triggerMessageCreatedAt: props.triggerMessageCreatedAt,
@@ -656,6 +659,7 @@ export async function runStepsAndQuickReplies(
         appointmentId: props.appointmentId,
         trackingContext: props.trackingContext,
         sendFrom: props.sendFrom,
+        sentByUserId: props.sentByUserId,
         nodeVisits,
         triggerMessageId: props.triggerMessageId,
         triggerMessageCreatedAt: props.triggerMessageCreatedAt,
@@ -785,6 +789,7 @@ async function* executeMultipleStepsGenerator(
               appointmentId: props.appointmentId,
               trackingContext: props.trackingContext,
               sendFrom: props.sendFrom,
+              sentByUserId: props.sentByUserId,
               nodeVisits: props.nodeVisits,
               triggerMessageId: props.triggerMessageId,
               triggerMessageCreatedAt: props.triggerMessageCreatedAt,

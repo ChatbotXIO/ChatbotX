@@ -174,4 +174,56 @@ describe("externalRequest step handler", () => {
       conversation: expect.objectContaining({ id: "conversation-1" }),
     })
   })
+
+  test("substitutes a system field that resolves to an empty string in the JSON body", async () => {
+    // `{{empty}}` always resolves to "". A blank value must replace the
+    // placeholder; leaving it makes the request send the literal `{{empty}}`.
+    const { getSystemFieldValue } = await import("@chatbotx.io/variables")
+    vi.mocked(getSystemFieldValue).mockResolvedValueOnce("")
+    mocks.executeAndMap.mockResolvedValue({
+      statusCode: 200,
+      durationMs: 10,
+      responseBody: "{}",
+      responseHeaders: {},
+    })
+
+    const props = createProps()
+    props.step = {
+      ...props.step,
+      method: "POST",
+      body: { bodyType: "json", jsonBody: '{"note":"{{empty}}"}' },
+    }
+
+    await externalRequest(props)
+
+    const call = mocks.executeAndMap.mock.calls[0]?.[0]
+    expect(call.input.body.jsonBody).toBe('{"note":""}')
+  })
+
+  test("carries the inbox sender into every variable resolution of the step", async () => {
+    mocks.executeAndMap.mockResolvedValue({
+      statusCode: 200,
+      durationMs: 10,
+      responseBody: "{}",
+      responseHeaders: {},
+    })
+
+    const props = { ...createProps(), sentByUserId: "user-1" }
+    props.step = {
+      ...props.step,
+      method: "POST",
+      body: { bodyType: "json", jsonBody: '{"by":"{{admin_name}}"}' },
+    }
+
+    await externalRequest(props)
+
+    expect(resolveContactVariablesDeep).toHaveBeenCalledWith(
+      "contact-1",
+      expect.anything(),
+      expect.objectContaining({ sentByUserId: "user-1" }),
+    )
+    expect(contactVariableService.getAll).toHaveBeenCalledWith(
+      expect.objectContaining({ sentByUserId: "user-1" }),
+    )
+  })
 })

@@ -43,8 +43,9 @@ const getInputValue = async (props: {
   step: AIExtractDataSchema
   conversation: ExecuteStepProps<AIExtractDataSchema>["conversation"]
   contactInbox: ExecuteStepProps<AIExtractDataSchema>["contactInbox"]
+  sentByUserId: ExecuteStepProps<AIExtractDataSchema>["sentByUserId"]
 }) => {
-  const { step, conversation, contactInbox } = props
+  const { step, conversation, contactInbox, sentByUserId } = props
 
   if (step.inputType === "text") {
     let inputText = step.inputFieldId.trim()
@@ -53,6 +54,7 @@ const getInputValue = async (props: {
       contactId: conversation.contactId,
       contactInbox,
       conversation,
+      sentByUserId,
     })
 
     inputText = await contactVariableService.replaceAll({
@@ -113,6 +115,7 @@ export async function handleAIExtractData({
   step,
   metadata,
   isBulkBroadcast,
+  sentByUserId,
 }: ExecuteStepProps<AIExtractDataSchema>): Promise<ExecuteStepResult> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
@@ -136,6 +139,7 @@ export async function handleAIExtractData({
       step,
       conversation,
       contactInbox,
+      sentByUserId,
     })
 
     if (!inputValue) {

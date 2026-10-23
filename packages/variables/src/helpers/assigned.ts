@@ -1,5 +1,6 @@
 import {
   conversationService,
+  inboxTeamService,
   workspaceMemberService,
 } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
@@ -54,4 +55,20 @@ export const getAssignedTeamName = async (
     where: { id: conversation.assignedInboxTeamId },
   })
   return team?.name ?? null
+}
+
+/** The inbox user who sent the running flow (not the conversation assignee). */
+export const resolveSenderName = async (props: {
+  workspaceId: string
+  userId: string
+}): Promise<string | null> =>
+  (await workspaceMemberService.findWithUserByWorkspaceIdAndUserId(props))?.user
+    .name ?? null
+
+export const listSenderTeamNames = async (props: {
+  workspaceId: string
+  userId: string
+}): Promise<string | null> => {
+  const names = await inboxTeamService.listTeamNamesByUserId(props)
+  return names.length > 0 ? names.join(", ") : null
 }

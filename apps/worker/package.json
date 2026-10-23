@@ -25,7 +25,8 @@
     "worker:sequence-producer": "dotenv -e ../../.env -- tsx --watch src/sequence-scheduler/worker-producer.ts",
     "worker:sequence-scheduler": "dotenv -e ../../.env -- tsx --watch src/sequence-scheduler/worker.ts",
     "worker:trigger": "dotenv -e ../../.env -- tsx --watch src/trigger/worker.ts",
-    "worker:webhook": "dotenv -e ../../.env -- tsx --watch src/webhook/worker.ts"
+    "worker:webhook": "dotenv -e ../../.env -- tsx --watch src/webhook/worker.ts",
+    "test:db": "dotenv -e ../../.env -- vitest run --config vitest.integration.config.ts --dir __tests__/integration"
   },
   "keywords": [],
   "license": "ISC",

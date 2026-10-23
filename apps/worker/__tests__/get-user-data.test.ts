@@ -831,6 +831,17 @@ describe("getUserData — first send (no challenge state)", () => {
     )
   })
 
+  test("carries the inbox sender into the first prompt job", async () => {
+    const props = makeProps(ReplyFormat.email)
+    props.ctx = { variables: { conversation: {} } }
+    props.sentByUserId = "user-1"
+
+    await getUserData(props)
+
+    const [, job] = chatQueueAdd.mock.calls[0]
+    expect(job.data.sentByUserId).toBe("user-1")
+  })
+
   test("still uses sendFlowMessage when there is no broadcast metadata", async () => {
     const props = makeProps(ReplyFormat.email)
     props.ctx = { variables: { conversation: {} } }

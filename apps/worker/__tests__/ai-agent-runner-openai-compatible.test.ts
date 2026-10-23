@@ -10,6 +10,7 @@ const state = {
 }
 
 const appendHistoryMock = vi.hoisted(() => vi.fn(async () => undefined))
+const getAllVariablesMock = vi.hoisted(() => vi.fn(async () => []))
 const createAIModelInstanceMock = vi.hoisted(() =>
   vi.fn(() => ({ type: "native-model" })),
 )
@@ -55,7 +56,7 @@ vi.mock("@chatbotx.io/business", () => ({
 
 vi.mock("@chatbotx.io/variables", () => ({
   contactVariableService: {
-    getAll: vi.fn(async () => []),
+    getAll: getAllVariablesMock,
     replaceAll: vi.fn(async ({ text }: { text: string }) => text),
   },
 }))
@@ -143,6 +144,27 @@ describe("AI agent runner OpenAI-compatible providers", () => {
       expect.objectContaining({
         model: { type: "openai-compatible-model" },
       }),
+    )
+  })
+
+  test("builds the prompt's variable context with the inbox sender of the running flow", async () => {
+    await runAIAgentRunner({
+      aiAgent: makeAIAgent({
+        models: [
+          {
+            kind: "openaiCompatible",
+            integrationId: "dynamic-1",
+            model: "local-model",
+          },
+        ] as AIAgentModel["models"],
+      }),
+      conversation: makeConversation(),
+      messages: [] as ModelMessage[],
+      sentByUserId: "user-1",
+    })
+
+    expect(getAllVariablesMock).toHaveBeenCalledWith(
+      expect.objectContaining({ sentByUserId: "user-1" }),
     )
   })
 

@@ -57,6 +57,30 @@ export const getContactLastInput = async (
   return null
 }
 
+/**
+ * The text of the contact's latest incoming message when that message is plain
+ * text, never a media URL (unlike `getContactLastInput`). Backs
+ * `{{last_text_input}}`.
+ */
+export const getContactLastTextInput = async (
+  contactId: string,
+): Promise<string | null> => {
+  const latestInput = await findLatestInputMessage(contactId)
+  if (!latestInput) {
+    return null
+  }
+
+  const { message } = latestInput
+  if (
+    message.contentType === contentTypes.enum.text &&
+    message.attachments.length === 0
+  ) {
+    return message.text
+  }
+
+  return null
+}
+
 export const getContactLastInputType = async (
   contactId: string,
 ): Promise<string | null> => {

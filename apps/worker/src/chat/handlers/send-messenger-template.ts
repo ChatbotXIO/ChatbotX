@@ -67,6 +67,8 @@ export interface ProcessMessengerTemplateParams {
   }
   isBulkBroadcast?: boolean
   metadata?: MetadataPayload
+  /** The inbox user who sent the running flow, for `{{admin_name}}` in the params. */
+  sentByUserId?: string
   step?: SendMessengerTemplateMessageStepSchema
   template: SendMessengerTemplateMessageStepSchema["template"]
   trackingContext?: BotResponseTrackingContext
@@ -200,6 +202,7 @@ export async function processMessengerTemplate(
     metadata,
     isBulkBroadcast,
     willRetryOnThrow = false,
+    sentByUserId,
   } = params
   const isBulkOutbound = isBulkOutboundMetadata(
     metadata,
@@ -256,6 +259,7 @@ export async function processMessengerTemplate(
       contactId: conversation.contactId,
       contactInbox,
       conversation,
+      sentByUserId,
     })
     const completeParams = mergeMessengerTemplateButtonParams(
       template.params,

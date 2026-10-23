@@ -3487,6 +3487,45 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "adminName": {
+      "label": "Numele adminului care trimite"
+    },
+    "adminTeamName": {
+      "label": "Echipele adminului care trimite"
+    },
+    "bookingId": {
+      "label": "ID rezervare"
+    },
+    "lastPoints": {
+      "label": "Ultimele puncte din chestionar"
+    },
+    "lastAdHeadline": {
+      "label": "Ultimul titlu al anunțului"
+    },
+    "lastAdBody": {
+      "label": "Ultimul text al anunțului"
+    },
+    "lastStoryId": {
+      "label": "Ultimul ID de story"
+    },
+    "lastLeadId": {
+      "label": "Ultimul ID de lead"
+    },
+    "lastFormId": {
+      "label": "Ultimul ID de formular"
+    },
+    "lastFormName": {
+      "label": "Ultimul nume de formular"
+    },
+    "lastAdgroupId": {
+      "label": "Ultimul ID de grup de anunțuri"
+    },
+    "lastTextInput": {
+      "label": "Ultimul text introdus"
+    },
+    "empty": {
+      "label": "Gol"
     }
   },
   "channels": {

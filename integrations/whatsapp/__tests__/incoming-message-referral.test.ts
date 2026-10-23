@@ -45,6 +45,30 @@ describe("WhatsApp receiveMessage referral", () => {
     })
   })
 
+  test("maps the ad headline and body onto the referral", async () => {
+    const result = await receiveMessage(
+      buildProps({
+        source_id: "ad-1",
+        source_type: "ad",
+        headline: "Summer sale",
+        body: "Up to 50% off this week",
+      }),
+    )
+
+    expect(result.referral).toMatchObject({
+      adTitle: "Summer sale",
+      adBody: "Up to 50% off this week",
+    })
+  })
+
+  test("leaves the ad body null when the referral carries none", async () => {
+    const result = await receiveMessage(
+      buildProps({ source_id: "ad-1", source_type: "ad", headline: "Sale" }),
+    )
+
+    expect(result.referral?.adBody).toBeNull()
+  })
+
   test("derives instagram platform from an instagram source url", async () => {
     const result = await receiveMessage(
       buildProps({

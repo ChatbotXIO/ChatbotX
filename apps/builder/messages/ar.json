@@ -2598,6 +2598,45 @@
     },
     "miniApp": {
       "label": "التطبيق المصغر"
+    },
+    "adminName": {
+      "label": "اسم المسؤول المرسل"
+    },
+    "adminTeamName": {
+      "label": "فرق المسؤول المرسل"
+    },
+    "bookingId": {
+      "label": "معرّف الحجز"
+    },
+    "lastPoints": {
+      "label": "آخر نقاط الاستبيان"
+    },
+    "lastAdHeadline": {
+      "label": "آخر عنوان إعلان"
+    },
+    "lastAdBody": {
+      "label": "آخر نص إعلان"
+    },
+    "lastStoryId": {
+      "label": "آخر معرّف ستوري"
+    },
+    "lastLeadId": {
+      "label": "آخر معرّف عميل محتمل"
+    },
+    "lastFormId": {
+      "label": "آخر معرّف نموذج"
+    },
+    "lastFormName": {
+      "label": "آخر اسم نموذج"
+    },
+    "lastAdgroupId": {
+      "label": "آخر معرّف مجموعة إعلانات"
+    },
+    "lastTextInput": {
+      "label": "آخر إدخال نصي"
+    },
+    "empty": {
+      "label": "فارغ"
     }
   },
   "flows": {
