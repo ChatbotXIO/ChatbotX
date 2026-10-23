@@ -323,6 +323,13 @@ export type IntegrationJobRunFlowNode = {
     appointmentId?: string
     sendFrom?: "inbox"
     /**
+     * The inbox user who sent the flow (`sendFrom: "inbox"`), for the
+     * `{{admin_name}}` / `{{admin_team_name}}` variables. Like `sendFrom` it is
+     * not persisted across a Wait or a wait-for-reply step, so it is absent
+     * after one.
+     */
+    sentByUserId?: string
+    /**
      * Positive identification of a flow run that reacts to a contact's inbound
      * message (keyword / default-reply / AI / router flows, button and quick
      * reply taps, challenge answers). Lets the Disable Bot step reopen the
@@ -1084,6 +1091,7 @@ export type IntegrationJobProcessLeadgen = {
     integrationIdentifier: string
     leadgenId: string
     formId: string
+    adgroupId?: string
   }
 }
 

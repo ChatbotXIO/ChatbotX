@@ -2645,6 +2645,45 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "adminName": {
+      "label": "Tên admin gửi"
+    },
+    "adminTeamName": {
+      "label": "Nhóm của admin gửi"
+    },
+    "bookingId": {
+      "label": "Mã đặt lịch"
+    },
+    "lastPoints": {
+      "label": "Điểm bảng câu hỏi gần nhất"
+    },
+    "lastAdHeadline": {
+      "label": "Tiêu đề quảng cáo cuối"
+    },
+    "lastAdBody": {
+      "label": "Nội dung quảng cáo cuối"
+    },
+    "lastStoryId": {
+      "label": "ID story cuối"
+    },
+    "lastLeadId": {
+      "label": "ID lead cuối"
+    },
+    "lastFormId": {
+      "label": "ID biểu mẫu cuối"
+    },
+    "lastFormName": {
+      "label": "Tên biểu mẫu cuối"
+    },
+    "lastAdgroupId": {
+      "label": "ID nhóm quảng cáo cuối"
+    },
+    "lastTextInput": {
+      "label": "Văn bản nhập cuối"
+    },
+    "empty": {
+      "label": "Trống"
     }
   },
   "flows": {

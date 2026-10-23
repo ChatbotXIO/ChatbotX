@@ -8,7 +8,9 @@ const mocks = vi.hoisted(() => ({
     customFieldsMap: new Map(),
     workspace: null,
   })),
-  getSystemFieldValue: vi.fn(async () => null as string | null),
+  getSystemFieldValue: vi.fn(
+    async (_context: unknown, _key: string) => null as string | null,
+  ),
   resolveJavascriptInput: vi.fn(
     async () => new Map<string, string | number | boolean | null>(),
   ),
@@ -149,6 +151,30 @@ describe("handleExecuteJavascript", () => {
       input: Record<string, unknown>
     }
     expect(call.input["coupon:123"]).toBe("SAVE10")
+  })
+
+  test("builds the variable context with the inbox sender of the running flow", async () => {
+    await handleExecuteJavascript({ ...createProps(), sentByUserId: "user-1" })
+
+    expect(mocks.getAll).toHaveBeenCalledWith(
+      expect.objectContaining({ sentByUserId: "user-1" }),
+    )
+  })
+
+  test("does not eagerly resolve system fields that need their own database lookup", async () => {
+    // Those stay reachable through a {{key}} placeholder (resolveJavascriptInput
+    // resolves referenced names on demand); resolving them for every run would
+    // add a query per field to every JS step.
+    await handleExecuteJavascript(createProps())
+
+    const resolvedKeys = mocks.getSystemFieldValue.mock.calls.map(
+      ([, key]) => key,
+    )
+    expect(resolvedKeys).toContain("first_name")
+    expect(resolvedKeys).not.toContain("booking_id")
+    expect(resolvedKeys).not.toContain("last_points")
+    expect(resolvedKeys).not.toContain("last_text_input")
+    expect(resolvedKeys).not.toContain("page_api_key")
   })
 
   test("returns a success result on successful execution", async () => {

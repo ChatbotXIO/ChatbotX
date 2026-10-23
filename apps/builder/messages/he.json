@@ -6597,6 +6597,45 @@
     },
     "miniApp": {
       "label": "מיני אפליקציה"
+    },
+    "adminName": {
+      "label": "שם המנהל השולח"
+    },
+    "adminTeamName": {
+      "label": "צוותי המנהל השולח"
+    },
+    "bookingId": {
+      "label": "מזהה הזמנה"
+    },
+    "lastPoints": {
+      "label": "נקודות השאלון האחרון"
+    },
+    "lastAdHeadline": {
+      "label": "כותרת המודעה האחרונה"
+    },
+    "lastAdBody": {
+      "label": "טקסט המודעה האחרון"
+    },
+    "lastStoryId": {
+      "label": "מזהה הסטורי האחרון"
+    },
+    "lastLeadId": {
+      "label": "מזהה הליד האחרון"
+    },
+    "lastFormId": {
+      "label": "מזהה הטופס האחרון"
+    },
+    "lastFormName": {
+      "label": "שם הטופס האחרון"
+    },
+    "lastAdgroupId": {
+      "label": "מזהה קבוצת המודעות האחרונה"
+    },
+    "lastTextInput": {
+      "label": "קלט הטקסט האחרון"
+    },
+    "empty": {
+      "label": "ריק"
     }
   },
   "billing": {

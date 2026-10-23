@@ -135,6 +135,31 @@ describe("heavyJobDataSchema", () => {
     ).toBe(true)
   })
 
+  test("keeps the inbox sender on a durable continuation instead of stripping it", () => {
+    const parsed = heavyJobDataSchema.parse({
+      type: HeavyJobAction.aiGenerateImage,
+      data: {
+        ...stepBaseData,
+        outcomeKey: "heavy-step-outcome-1",
+        continuation: {
+          flowExecutionKey: "flow-execution-1",
+          flowId: "flow-1",
+          sendFrom: "inbox",
+          sentByUserId: "user-1",
+        },
+        step: aiGenerateImageDefaultFn({
+          id: "2",
+          prompt: "A quiet workspace",
+          outputFieldId: "custom-field-output",
+        }),
+      },
+    })
+
+    expect(
+      "continuation" in parsed.data ? parsed.data.continuation : undefined,
+    ).toMatchObject({ sendFrom: "inbox", sentByUserId: "user-1" })
+  })
+
   test("validates full openai-compatible provider config for image analysis", () => {
     expect(
       heavyJobDataSchema.parse({

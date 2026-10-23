@@ -123,6 +123,7 @@ export async function sendEmail({
   step,
   contactInbox,
   metadata: _metadata,
+  sentByUserId,
 }: ExecuteStepProps<EmailStepSchema>) {
   const contact = await contactService.findBy({
     where: { id: conversation.contactId },
@@ -169,6 +170,7 @@ export async function sendEmail({
     contactInbox,
     conversation,
     workspace,
+    sentByUserId,
   })
   const { appUrl } = await resolveTenantSettings({
     workspaceId: conversation.workspaceId,

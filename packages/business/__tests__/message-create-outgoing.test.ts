@@ -261,6 +261,43 @@ describe("messageService.createOutgoing with a flow", () => {
     expect(mockIntegrationQueueAdd).toHaveBeenCalledOnce()
   })
 
+  test("records the inbox user who sent the flow on the job", async () => {
+    mockFlowExists.mockResolvedValue(true)
+
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      input: { flowId: "flow-1" } as never,
+      user: { id: "user-1" } as never,
+    })
+
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "sendFlow",
+      expect.objectContaining({
+        data: expect.objectContaining({
+          sendFrom: "inbox",
+          sentByUserId: "user-1",
+        }),
+      }),
+    )
+  })
+
+  test("leaves the sender off the job when no user is attached (token API)", async () => {
+    mockFlowExists.mockResolvedValue(true)
+
+    await createOutgoing({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      input: { flowId: "flow-1" } as never,
+    })
+
+    const [, job] = mockIntegrationQueueAdd.mock.calls[0] as [
+      string,
+      { data: Record<string, unknown> },
+    ]
+    expect(job.data.sentByUserId).toBeUndefined()
+  })
+
   test("rejects a flow of another workspace with 404 and queues nothing", async () => {
     mockFlowExists.mockResolvedValue(false)
 

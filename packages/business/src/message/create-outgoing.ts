@@ -250,6 +250,7 @@ export const createOutgoing = async (props: {
         flowId: parsedInput.flowId,
         nodeId: parsedInput.nodeId,
         sendFrom: "inbox",
+        sentByUserId: user?.id,
       },
     })
     // Claimed only after a successful enqueue so a failed send keeps the

@@ -10,6 +10,7 @@ export type MessageReferral = {
   type?: string | null
   adId?: string | null
   adTitle?: string | null
+  adBody?: string | null
   sourceUrl?: string | null
   sourcePlatform?: string | null
   ctwaClid?: string | null

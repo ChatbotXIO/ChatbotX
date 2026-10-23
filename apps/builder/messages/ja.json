@@ -2448,6 +2448,45 @@
     },
     "miniApp": {
       "label": "ミニアプリ"
+    },
+    "adminName": {
+      "label": "送信した管理者名"
+    },
+    "adminTeamName": {
+      "label": "送信した管理者のチーム"
+    },
+    "bookingId": {
+      "label": "予約ID"
+    },
+    "lastPoints": {
+      "label": "最後のアンケートポイント"
+    },
+    "lastAdHeadline": {
+      "label": "最後の広告見出し"
+    },
+    "lastAdBody": {
+      "label": "最後の広告本文"
+    },
+    "lastStoryId": {
+      "label": "最後のストーリーID"
+    },
+    "lastLeadId": {
+      "label": "最後のリードID"
+    },
+    "lastFormId": {
+      "label": "最後のフォームID"
+    },
+    "lastFormName": {
+      "label": "最後のフォーム名"
+    },
+    "lastAdgroupId": {
+      "label": "最後の広告グループID"
+    },
+    "lastTextInput": {
+      "label": "最後のテキスト入力"
+    },
+    "empty": {
+      "label": "空"
     }
   },
   "flows": {

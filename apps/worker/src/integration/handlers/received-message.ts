@@ -1554,6 +1554,11 @@ const getMessageActivityTracking = (props: {
 
   if (isInboundConversationMessage(incomingMessage)) {
     tracking.lastIncomingMessageAt = message.createdAt
+    // A blank id carries no story: it must not erase the one already stored.
+    const storyReply = getStoryReply(incomingMessage.contentAttributes)
+    if (storyReply?.id) {
+      tracking.lastStoryId = storyReply.id
+    }
     Object.assign(
       tracking,
       resolveLastUserInputTracking({

@@ -50,6 +50,7 @@ const mocks = vi.hoisted(() => {
     deleteBuilder,
     conversationUpdateBuilder,
     questionnaireFindMany: vi.fn(async () => []),
+    submissionFindFirst: vi.fn(),
     customFieldFindMany: vi.fn(async () => []),
     transaction: vi.fn(async (callback: (tx: typeof tx) => Promise<void>) =>
       callback(tx),
@@ -70,6 +71,9 @@ vi.mock("@chatbotx.io/database/client", async (importOriginal) => {
         },
         customFieldModel: {
           findMany: mocks.customFieldFindMany,
+        },
+        questionnaireSubmissionModel: {
+          findFirst: mocks.submissionFindFirst,
         },
       },
       transaction: mocks.transaction,
@@ -439,6 +443,42 @@ describe("questionnaireSubmissionService", () => {
       column: "createdAt",
       direction: "desc",
     })
+  })
+
+  test("findLatestCompletedForContact reads the newest scored completed submission of the contact", async () => {
+    mocks.submissionFindFirst.mockResolvedValue({
+      id: "submission-9",
+      totalPoints: 12,
+    })
+
+    const result =
+      await questionnaireSubmissionService.findLatestCompletedForContact({
+        workspaceId: "workspace-1",
+        contactId: "contact-1",
+      })
+
+    expect(result).toEqual({ id: "submission-9", totalPoints: 12 })
+    expect(mocks.submissionFindFirst).toHaveBeenCalledWith({
+      where: {
+        workspaceId: "workspace-1",
+        contactId: "contact-1",
+        status: "completed",
+        totalPoints: { isNotNull: true },
+      },
+      orderBy: { completedAt: "desc" },
+      columns: { id: true, totalPoints: true },
+    })
+  })
+
+  test("findLatestCompletedForContact returns undefined when the contact has none", async () => {
+    mocks.submissionFindFirst.mockResolvedValue(undefined)
+
+    await expect(
+      questionnaireSubmissionService.findLatestCompletedForContact({
+        workspaceId: "workspace-1",
+        contactId: "contact-1",
+      }),
+    ).resolves.toBeUndefined()
   })
 
   test("startOrResume skips when the contact already has a submission for the questionnaire", async () => {

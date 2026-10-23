@@ -366,6 +366,10 @@ const handleWebhookEvent = async (
               integrationIdentifier: entry.id,
               leadgenId: value.leadgen_id,
               formId: value.form_id,
+              // Meta's "ad group" is the ad itself (the Ad reference lives at
+              // `.../reference/adgroup`), so an absent `adgroup_id` falls back
+              // to `ad_id`.
+              adgroupId: value.adgroup_id ?? value.ad_id,
             },
           })
         }

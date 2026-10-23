@@ -11,6 +11,8 @@ const {
   mockClaim,
   mockRelease,
   mockSetContactId,
+  mockSetFormName,
+  mockGetLeadgenFormName,
   mockSetRichSystemFieldByKey,
   mockContactUpdate,
   mockSetValueByKey,
@@ -23,6 +25,8 @@ const {
   mockClaim: vi.fn(),
   mockRelease: vi.fn(),
   mockSetContactId: vi.fn(),
+  mockSetFormName: vi.fn(),
+  mockGetLeadgenFormName: vi.fn(),
   mockSetRichSystemFieldByKey: vi.fn(),
   mockContactUpdate: vi.fn(),
   mockSetValueByKey: vi.fn(),
@@ -54,11 +58,13 @@ vi.mock("@chatbotx.io/business", () => ({
     claim: mockClaim,
     release: mockRelease,
     setContactId: mockSetContactId,
+    setFormName: mockSetFormName,
   },
 }))
 
 vi.mock("@chatbotx.io/integration-messenger/apis/leadgen", () => ({
   getLead: mockGetLead,
+  getLeadgenFormName: mockGetLeadgenFormName,
 }))
 
 vi.mock("../src/services/integrations", () => ({
@@ -91,6 +97,7 @@ const JOB = {
   integrationIdentifier: "page-1",
   leadgenId: "lead-1",
   formId: "form-1",
+  adgroupId: "adgroup-1",
 }
 
 /**
@@ -323,6 +330,94 @@ describe("processLeadgen", () => {
       { workspaceId: "ws-1", id: "contact-1" },
       { gender: "male" },
     )
+    expect(mockIncrementLeadsHandled).toHaveBeenCalledWith("auto-1")
+  })
+
+  test("claims the lead with the form and adgroup ids and the automation's form name", async () => {
+    primeResolvers()
+    mockFindMatching.mockResolvedValue({
+      id: "auto-1",
+      formName: "Summer promo",
+      fieldMapping: [],
+    })
+    mockGetLead.mockResolvedValue(
+      leadWith([{ name: "inbox_url", values: [INBOX_URL] }]),
+    )
+
+    await processLeadgen(JOB, bullJob())
+
+    expect(mockClaim).toHaveBeenCalledWith({
+      automationId: "auto-1",
+      leadgenId: "lead-1",
+      formId: "form-1",
+      formName: "Summer promo",
+      adgroupId: "adgroup-1",
+    })
+    expect(mockGetLeadgenFormName).not.toHaveBeenCalled()
+    expect(mockSetFormName).not.toHaveBeenCalled()
+  })
+
+  test("all-forms automation: looks the form name up from the page's forms", async () => {
+    primeResolvers()
+    mockFindMatching.mockResolvedValue({
+      id: "auto-1",
+      formName: null,
+      fieldMapping: [],
+    })
+    mockGetLead.mockResolvedValue(
+      leadWith([{ name: "inbox_url", values: [INBOX_URL] }]),
+    )
+    mockGetLeadgenFormName.mockResolvedValue("Winter promo")
+
+    await processLeadgen(JOB, bullJob())
+
+    expect(mockGetLeadgenFormName).toHaveBeenCalledWith(
+      "page-1",
+      "form-1",
+      "page-token",
+      "v23.0",
+    )
+    expect(mockSetFormName).toHaveBeenCalledWith({
+      id: "claim-1",
+      formName: "Winter promo",
+    })
+    expect(mockIncrementLeadsHandled).toHaveBeenCalledWith("auto-1")
+  })
+
+  test("all-forms automation: a form the page does not list stores nothing", async () => {
+    primeResolvers()
+    mockFindMatching.mockResolvedValue({
+      id: "auto-1",
+      formName: null,
+      fieldMapping: [],
+    })
+    mockGetLead.mockResolvedValue(
+      leadWith([{ name: "inbox_url", values: [INBOX_URL] }]),
+    )
+    mockGetLeadgenFormName.mockResolvedValue(undefined)
+
+    await processLeadgen(JOB, bullJob())
+
+    expect(mockSetFormName).not.toHaveBeenCalled()
+    expect(mockIncrementLeadsHandled).toHaveBeenCalledWith("auto-1")
+  })
+
+  test("all-forms automation: a failing form lookup never fails the lead", async () => {
+    primeResolvers()
+    mockFindMatching.mockResolvedValue({
+      id: "auto-1",
+      formName: null,
+      fieldMapping: [],
+    })
+    mockGetLead.mockResolvedValue(
+      leadWith([{ name: "inbox_url", values: [INBOX_URL] }]),
+    )
+    mockGetLeadgenFormName.mockRejectedValue(new Error("graph #200"))
+
+    await expect(processLeadgen(JOB, bullJob())).resolves.toBeUndefined()
+
+    expect(mockSetFormName).not.toHaveBeenCalled()
+    expect(mockRelease).not.toHaveBeenCalled()
     expect(mockIncrementLeadsHandled).toHaveBeenCalledWith("auto-1")
   })
 })

@@ -2448,6 +2448,45 @@
     },
     "miniApp": {
       "label": "Minisovellus"
+    },
+    "adminName": {
+      "label": "Lähettävän adminin nimi"
+    },
+    "adminTeamName": {
+      "label": "Lähettävän adminin tiimit"
+    },
+    "bookingId": {
+      "label": "Varaustunnus"
+    },
+    "lastPoints": {
+      "label": "Viimeisimmät kyselypisteet"
+    },
+    "lastAdHeadline": {
+      "label": "Viimeisin mainoksen otsikko"
+    },
+    "lastAdBody": {
+      "label": "Viimeisin mainosteksti"
+    },
+    "lastStoryId": {
+      "label": "Viimeisin tarinatunnus"
+    },
+    "lastLeadId": {
+      "label": "Viimeisin liidin tunnus"
+    },
+    "lastFormId": {
+      "label": "Viimeisin lomaketunnus"
+    },
+    "lastFormName": {
+      "label": "Viimeisin lomakkeen nimi"
+    },
+    "lastAdgroupId": {
+      "label": "Viimeisin mainosryhmän tunnus"
+    },
+    "lastTextInput": {
+      "label": "Viimeisin tekstisyöte"
+    },
+    "empty": {
+      "label": "Tyhjä"
     }
   },
   "flows": {
