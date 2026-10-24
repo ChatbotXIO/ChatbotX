@@ -168,6 +168,7 @@ export async function reconnectMessengerHandler(props: {
       accessToken: pageToken,
       version: props.credentialConfig.version,
       subscribedFields: scopesToPageSubscribeFields(debug?.scopes).join(","),
+      includeMarketingMessages: true,
     })
 
     await ensureMessengerWhitelistedDomain({

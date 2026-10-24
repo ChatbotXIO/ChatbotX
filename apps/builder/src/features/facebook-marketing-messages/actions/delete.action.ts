@@ -1,32 +1,32 @@
 "use server"
 
-import { facebookMarketingMessagesService } from "@chatbotx.io/business"
+import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
-  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schema"
-import { workspaceActionClient } from "@/lib/safe-action"
+import { workspaceActionClientAllowExpired } from "@/lib/safe-action"
+import { deleteMarketingMessages } from "../lib/campaign-operations"
 
 /**
- * Local-only delete: the Meta message campaign is deliberately left running
- * (spec O6). The confirm dialog says so, so a user removing a row here knows
- * they still have to pause or delete the campaign in Ads Manager.
+ * Deletes the Meta message campaign first, then the row (spec D10). A Meta
+ * failure keeps the row so the user can retry. Allowed on a trial-expired
+ * workspace (invariant 14: read/delete-only, never locked out).
  */
-export const deleteMarketingMessagesAction = workspaceActionClient
+export const deleteMarketingMessagesAction = workspaceActionClientAllowExpired
   .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [workspaceId],
+      ctx,
       parsedInput,
     }: {
-      bindArgsParsedInputs: WorkspaceIdRequestParams
+      ctx: { workspace: WorkspaceModel }
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await facebookMarketingMessagesService.remove({
-        workspaceId,
+      await deleteMarketingMessages({
+        workspace: ctx.workspace,
         ids: parsedInput.ids,
       })
     },

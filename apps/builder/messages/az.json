@@ -3706,7 +3706,7 @@
     "title": "Ümumi"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "Bu, kampaniyanı yalnız ChatbotX-dən çıxarır. Meta mesaj kampaniyası işləməyə davam edir, ona Ads Manager-də fasilə verin və ya onu silin.",
+    "deleteWarning": "Bu, Meta mesaj kampaniyasını silir və kampaniyanı ChatbotX-dən çıxarır. Meta silinməni rədd etsə, kampaniya saxlanılır.",
     "title": "Facebook Marketing Messages",
     "description": "Messenger-də fərdiləşdirilmiş reklam mesajları ilə qarşılıqlı əlaqəni və satışları artırın.",
     "create": "Yenisini yarat",
@@ -3731,13 +3731,197 @@
       "generic": "Ümumi",
       "greeting": "Salamlama",
       "quickReplies": "Sürətli cavablar",
-      "elements": "Kartlar"
+      "elements": "Kartlar",
+      "targetMessaging": "Mesajların hədəflənməsi",
+      "targetOptIn": "Opt-in",
+      "targetOptInDescription": "Səhifədə marketinq mesajları almağa razılıq vermiş müştərilər",
+      "targetCustomAudience": "Fərdi auditoriya",
+      "targetCustomAudienceDescription": "Fayldan yüklənmiş auditoriyalara mesaj göndərin",
+      "audience": "Fərdi auditoriya"
     },
+    "noReadyAudiences": "Bu Səhifə və reklam hesabı üçün hazır fərdi auditoriya yoxdur.",
+    "manageAudiences": "Auditoriyaları idarə et",
     "errors": {
       "notConfigured": "Facebook Marketing Messages konfiqurasiya edilməyib. Administratorunuzdan Marketing Messages üçün konfiqurasiya ID-sini təyin etməsini xahiş edin.",
       "notGranted": "Marketing Messages funksiyasından istifadə etmək üçün giriş icazəsi verin.",
       "tosNotAccepted": "Bu funksiyadan istifadə etmək üçün {url} ünvanında fərdi obyekt şərtlərini qəbul edin",
-      "notFound": "Marketinq mesajı tapılmadı."
+      "notFound": "Marketinq mesajı tapılmadı.",
+      "audienceNotTargetable": "Seçilmiş fərdi auditoriya hazır deyil və ya bu Səhifəyə və reklam hesabına aid deyil.",
+      "connectFirst": "Əvvəlcə ChatbotX tətbiqində Marketinq Mesajlarını qoşun.",
+      "mmInvalidState": "Bu əməliyyat kampaniyanın cari vəziyyətində mövcud deyil.",
+      "mmCampaignEnded": "Meta mesaj kampaniyası başa çatıb, ona görə göndərmək və ya davam etdirmək olmaz.",
+      "mmPageNotConnected": "Bu kampaniyanın Səhifəsi bu iş sahəsinə qoşulmayıb.",
+      "mmContentLocked": "İlk mesaj göndərildikdən sonra məzmunu dəyişmək olmaz.",
+      "metaDeleteFailed": "Meta bu kampaniyanı silə bilmədi, ona görə də saxlanıldı. {message}",
+      "statisticsUnknownAdAccount": "Bu iş sahəsinin həmin reklam hesabında Marketinq Mesajları kampaniyası yoxdur.",
+      "statisticsInvalidRange": "Son 37 ay ərzində, bitmə tarixindən əvvəl və ya həmin gün olan başlanğıc tarixi seçin."
+    },
+    "tabs": {
+      "campaigns": "Kampaniyalar",
+      "audiences": "Auditoriyalar",
+      "statistics": "Statistika"
+    },
+    "audiences": {
+      "title": "Fərdi auditoriyalar",
+      "create": "Yenisini yarat",
+      "uploadMore": "Daha çox sətir yüklə",
+      "empty": "Hələ fərdi auditoriya yoxdur.",
+      "deleteTitle": "Fərdi auditoriyanı sil",
+      "deleteWarning": "Bu əməliyyat \"{name}\" fərdi auditoriyasını Meta-dan və ChatbotX-dən silir. Geri qaytarıla bilməz.",
+      "deleted": "Fərdi auditoriya silindi.",
+      "pageDisconnected": "Səhifənin bağlantısı kəsildi",
+      "status": {
+        "ready": "Hazır",
+        "missing": "Meta-da silinib"
+      },
+      "fields": {
+        "customAudienceId": "Fərdi auditoriya ID-si",
+        "approximateCount": "Təxmini say",
+        "status": "Status",
+        "file": "Fayl yüklə"
+      },
+      "wizard": {
+        "title": "Fərdi auditoriya yarat",
+        "uploadMoreTitle": "Daha çox sətir yüklə",
+        "steps": {
+          "prepare": "Siyahını hazırla",
+          "upload": "Yüklə",
+          "confirm": "Təsdiq et"
+        },
+        "prepareDescription": "Abunəçi siyahısı marketinq mesajları üçün auditoriyanızı yaratmaqda istifadə olunan məlumatları ehtiva edən CSV və ya TXT faylıdır. Abunəçilərinizi Facebook və Instagram istifadəçiləri ilə uyğunlaşdırmaq üçün telefon nömrəsindən istifadə edirik. Məlumatlar bizə göndərilməzdən əvvəl identifikator siyahınız təsadüfi koda hash edilir.",
+        "aboutHashing": "Hash haqqında",
+        "downloadTemplate": "Fayl şablonunu yüklə",
+        "mainIdentifiers": "Ən azı bir əsas identifikator daxil edin",
+        "moreIdentifiers": "Daha çox identifikator daxil edin",
+        "identifiers": {
+          "email": "E-poçt",
+          "phone": "Telefon nömrəsi",
+          "madid": "Mobil reklam ID-si",
+          "fn": "Ad",
+          "ln": "Soyad",
+          "ct": "Şəhər",
+          "st": "Ştat/Vilayət",
+          "country": "Ölkə",
+          "zip": "Poçt indeksi",
+          "dob": "Doğum tarixi",
+          "doby": "Doğum ili",
+          "gen": "Cins"
+        },
+        "uploadNote": "Siyahını yükləməzdən əvvəl identifikatorların tam və düzgün formatda olduğundan əmin olun. Siyahı .csv, .txt və ya .xlsx formatında olmalıdır.",
+        "namePlaceholder": "Auditoriyanın adını daxil edin...",
+        "descriptionPlaceholder": "Qısa təsvir (varsa)",
+        "dropzone": "Yükləmək üçün klikləyin və ya sürüşdürüb buraxın",
+        "maxFileSize": "Maksimum fayl ölçüsü: 20MB",
+        "fileRequired": "Yükləmək üçün fayl seçin.",
+        "fileTooLarge": "Fayl 20MB-dan böyükdür.",
+        "fileType": "Fayl .csv, .txt və ya .xlsx olmalıdır.",
+        "next": "Növbəti",
+        "back": "Geri",
+        "upload": "Yüklə",
+        "done": "Hazırdır",
+        "successTitle": "Yükləmə uğurlu oldu",
+        "successRows": "Messenger abunəçi siyahınız yükləndi: {count, plural, one {# sətir} other {# sətir}}",
+        "skippedRows": "{count, plural, one {# sətir} other {# sətir}} keçildi (etibarlı e-poçt və ya telefon yoxdur).",
+        "invalidRows": "{count, plural, one {# sətir} other {# sətir}} Meta tərəfindən rədd edildi.",
+        "matchingNote": "Abunəçilərinizin Facebook-dakı insanlarla uyğunlaşdırılmasının tamamlanması bir neçə dəqiqə çəkə bilər. Statusu Auditoriya siyahısında yoxlaya bilərsiniz."
+      },
+      "errors": {
+        "audienceInvalidFile": "Fayl oxuna bilmədi. Başlıq sətri olan .csv, .txt və ya .xlsx faylından istifadə edin.",
+        "audienceTooManyRows": "Faylda {max, number} sətirdən çox var.",
+        "audienceNoIdentifier": "Faylda e-poçt və ya telefon sütunu olmalıdır.",
+        "audienceNoValidRows": "Heç bir sətirdə etibarlı e-poçt və ya telefon nömrəsi yoxdur.",
+        "audiencePartialUpload": "Auditoriya yaradıldı, lakin yükləmə {received, number} sətirdən sonra dayandı. Yenidən cəhd etmək üçün \"Daha çox sətir yüklə\" seçimindən istifadə edin.",
+        "audienceNotFound": "Fərdi auditoriya tapılmadı.",
+        "audienceCreateRejected": "Meta auditoriyanı rədd etdi: {reason}",
+        "uploadUncertain": "Yükləmə tamamlanmamış ola bilər. Bu pəncərəni bağlayın və auditoriya siyahısına baxın; auditoriya yaradılıbsa \"Daha çox sətir yüklə\" seçin.",
+        "pageNotConnected": "Seçilmiş Səhifə bu iş sahəsinə qoşulmayıb.",
+        "audienceInUse": "Bu fərdi auditoriya {count, plural, one {# marketinq mesajı} other {# marketinq mesajı}} tərəfindən istifadə olunur və silinə bilməz."
+      }
+    },
+    "delivery": {
+      "title": "Çatdırılma",
+      "contentLocked": "Mesajlar artıq göndərildiyi üçün məzmun kilidlənib.",
+      "topicsReturned": "Meta-nın qaytardığı mövzular: {topics}",
+      "recipients": "{count} alıcı",
+      "startsAt": "Başlama: {date}",
+      "completedAt": "Tamamlandı: {date}",
+      "errorBreakdown": "Uğursuzluqlar",
+      "retrying": "Meta hazırda göndərişləri qəbul etmir; avtomatik yenidən cəhd edilir.",
+      "counts": {
+        "sent": "Göndərildi",
+        "delivered": "Çatdırıldı",
+        "unconfirmed": "Təsdiqlənməyib"
+      },
+      "status": {
+        "notSent": "Göndərilməyib",
+        "scheduled": "Planlaşdırılıb",
+        "sending": "Göndərilir",
+        "waitingNextDay": "Növbəti günü gözləyir",
+        "paused": "Fasilədədir",
+        "stopped": "Dayandırılıb"
+      },
+      "reason": {
+        "pageNotConnected": "Səhifə bu iş sahəsinə qoşulmayıb.",
+        "quotaReached": "Dayandırıldı: mesaj kvotası çatıb.",
+        "workspaceBlocked": "Dayandırıldı: bu iş sahəsi bloklanıb.",
+        "grantInvalid": "Dayandırıldı: Facebook bağlantısının müddəti bitib. Marketing Messages-i yenidən qoşun.",
+        "metaBlocker": "Meta bu kampaniyanı bloklayır.",
+        "contentRejected": "Meta mesaj məzmununu rədd etdi.",
+        "noTokens": "Bu kampaniya üçün alıcı tapılmadı.",
+        "noMatchingTopic": "İcazə vermiş heç bir alıcı \"Updates and promotions\" mövzusuna uyğun gəlmir.",
+        "tokenFetchFailed": "Alıcıları Meta-dan almaq mümkün olmadı.",
+        "campaignEnded": "Meta kampaniyası başa çatıb.",
+        "lifetimeBudgetReached": "Ümumi büdcə bitib."
+      },
+      "errors": {
+        "grantInvalid": "Facebook bağlantısının müddəti bitib.",
+        "campaignInactive": "Meta kampaniyası aktiv deyil.",
+        "budgetReached": "Büdcə bitib.",
+        "dailyBudgetReached": "Gündəlik büdcəyə çatıldı.",
+        "optedOut": "Alıcı abunəlikdən çıxıb.",
+        "frequencyLimit": "Alıcının tezlik limitinə çatıldı.",
+        "contentRejected": "Mesaj məzmunu Meta tərəfindən rədd edildi.",
+        "deliveryFailed": "Çatdırılma uğursuz oldu.",
+        "outcomeUnknown": "Çatdırılma nəticəsi məlum deyil."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "ID və ya ada görə axtar",
+      "adAccount": "Reklam hesabı",
+      "dateRange": "Tarix aralığı",
+      "timezoneHint": "Tarixlər {timezone} saat qurşağında",
+      "presets": {
+        "last7": "Son 7 gün",
+        "last30": "Son 30 gün",
+        "last90": "Son 90 gün",
+        "thisMonth": "Bu ay",
+        "lastMonth": "Keçən ay"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Ad",
+        "page": "Facebook Səhifəsi",
+        "delivered": "Çatdırılan mesajlar",
+        "readRate": "Oxunma dərəcəsi",
+        "linkClicks": "Link klikləri",
+        "linkClickRate": "Link klik dərəcəsi",
+        "costPerClick": "Klik başına xərc",
+        "costPerDelivery": "Çatdırılma başına xərc",
+        "spend": "Xərclənən məbləğ"
+      },
+      "notes": {
+        "delivery": "Meta bunu Avropa və ya Yaponiyadakı alıcılar üçün hesabat vermir; həmin kampaniyalar - göstərir.",
+        "clicks": "Meta bunu Avropa, Argentina, Türkiyə, Cənubi Koreya və ya Yaponiyadakı alıcılar üçün hesabat vermir; həmin kampaniyalar - göstərir."
+      },
+      "footer": {
+        "label": "Cəmi: {count, plural, one {# kampaniya} other {# kampaniya}}",
+        "total": "Cəmi",
+        "average": "Orta"
+      },
+      "totalsUnavailable": "Cəmlər hazırda əlçatan deyil. Bir azdan yenidən cəhd edin.",
+      "readOnly": "Statistikanı görmək üçün Marketinq Mesajlarını yenidən qoşun.",
+      "empty": "Hələ Marketinq Mesajları kampaniyası yoxdur. Kampaniyalar tabında yaradın.",
+      "noResults": "Axtarışınıza uyğun kampaniya yoxdur."
     }
   },
   "facebookAds": {

@@ -12,6 +12,7 @@ describe("toAdAccountOption", () => {
       accountId: "123",
       name: "Main",
       currency: "USD",
+      timezoneName: "UTC",
       tosAccepted: {},
     })
 
@@ -31,6 +32,7 @@ describe("toAdAccountOption", () => {
       id: "act_9",
       accountId: "9",
       currency: "JPY",
+      timezoneName: null,
       tosAccepted: { custom_audience_tos: 1 },
     })
 

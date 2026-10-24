@@ -71,6 +71,8 @@ import { externalWebhookRelations } from "./external-webhook"
 import { facebookLeadAdsAutomationRelations } from "./facebook-lead-ads-automation"
 import { facebookLeadAdsLeadRelations } from "./facebook-lead-ads-lead"
 import { facebookMarketingMessageRelations } from "./facebook-marketing-message"
+import { facebookMarketingMessageAudienceRelations } from "./facebook-marketing-message-audience"
+import { facebookMarketingMessageRecipientRelations } from "./facebook-marketing-message-recipient"
 import { facebookMarketingMessagesAuthRelations } from "./facebook-marketing-messages-auth"
 import { fileRelations } from "./file"
 import { flowRelations } from "./flow"
@@ -247,6 +249,8 @@ export const relations = {
   ...facebookLeadAdsAutomationRelations,
   ...facebookLeadAdsLeadRelations,
   ...facebookMarketingMessageRelations,
+  ...facebookMarketingMessageAudienceRelations,
+  ...facebookMarketingMessageRecipientRelations,
   ...facebookMarketingMessagesAuthRelations,
   ...commentAutomationRelations,
   ...commentAutomationEventRelations,

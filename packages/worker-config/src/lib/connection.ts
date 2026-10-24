@@ -45,6 +45,9 @@ export const queueGroupByName: Record<QueueName, QueueGroup> = {
   profileSnapshot: "bulk",
   // Leaderboard scoring: bursty (livestream comments) but never latency-critical.
   leaderboard: "bulk",
+  // FB Marketing Messages campaign steps: long-running Meta sends, isolated
+  // from the shared schedule queue so they never hold its slots.
+  marketingMessage: "bulk",
 }
 
 function resolveGroupUrl(group: QueueGroup): string {

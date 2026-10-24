@@ -16,7 +16,7 @@ type GraphPage<T> = {
 
 // `paging.next` is an absolute URL while the ky client is baseUrl-relative, so
 // follow `paging.cursors.after` instead (mirrors integration-messenger).
-async function fetchAllPages<T>(
+export async function fetchAllPages<T>(
   endpoint: string,
   searchParams: Record<string, string>,
 ): Promise<T[]> {
@@ -128,6 +128,8 @@ export type MarketingMessagesAdAccount = {
   accountId: string
   name?: string
   currency: string
+  /** IANA name; insights day boundaries are midnight in it. */
+  timezoneName: string | null
   tosAccepted: Record<string, number>
 }
 
@@ -136,6 +138,7 @@ type MarketingMessagesAdAccountResponse = {
   account_id: string
   name?: string
   currency: string
+  timezone_name?: string
   tos_accepted?: Record<string, number>
 }
 
@@ -149,7 +152,7 @@ export function getMarketingMessagesAdAccounts(
     const rows = await fetchAllPages<MarketingMessagesAdAccountResponse>(
       endpoint,
       {
-        fields: "name,account_id,currency,tos_accepted",
+        fields: "name,account_id,currency,timezone_name,tos_accepted",
         limit: String(ADS_PAGE_LIMIT),
         access_token: accessToken,
       },
@@ -159,6 +162,7 @@ export function getMarketingMessagesAdAccounts(
       accountId: row.account_id,
       name: row.name,
       currency: row.currency,
+      timezoneName: row.timezone_name ?? null,
       tosAccepted: row.tos_accepted ?? {},
     }))
   })

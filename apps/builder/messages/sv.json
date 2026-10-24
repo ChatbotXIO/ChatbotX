@@ -1422,7 +1422,7 @@
     "unknown": "Okänt"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "Detta tar bara bort kampanjen från ChatbotX. Meta-meddelandekampanjen fortsätter — pausa eller ta bort den i Annonshanteraren.",
+    "deleteWarning": "Detta tar bort Metas meddelandekampanj och tar bort kampanjen från ChatbotX. Om Meta nekar borttagningen behålls kampanjen.",
     "title": "Facebook Marketing Messages",
     "description": "Öka engagemang och försäljning med personliga kampanjmeddelanden på Messenger.",
     "create": "Skapa ny",
@@ -1447,13 +1447,197 @@
       "generic": "Generisk",
       "greeting": "Hälsning",
       "quickReplies": "Snabbsvar",
-      "elements": "Kort"
+      "elements": "Kort",
+      "targetMessaging": "Målgrupp för meddelanden",
+      "targetOptIn": "Opt-in",
+      "targetOptInDescription": "Kunder på sidan som har samtyckt till att ta emot marknadsföringsmeddelanden",
+      "targetCustomAudience": "Anpassad målgrupp",
+      "targetCustomAudienceDescription": "Skicka meddelanden till målgrupper som laddats upp från en fil",
+      "audience": "Anpassad målgrupp"
     },
+    "noReadyAudiences": "Inga redo anpassade målgrupper för den här sidan och annonskontot.",
+    "manageAudiences": "Hantera målgrupper",
     "errors": {
       "notConfigured": "Facebook Marketing Messages är inte konfigurerat. Be din administratör att ange konfigurations-ID:t för marknadsföringsmeddelanden.",
       "notGranted": "Ge åtkomst för att använda funktionen Marknadsföringsmeddelanden.",
       "tosNotAccepted": "För att använda den här funktionen behöver du godkänna villkoren för anpassade objekt på {url}",
-      "notFound": "Marknadsföringsmeddelandet hittades inte."
+      "notFound": "Marknadsföringsmeddelandet hittades inte.",
+      "audienceNotTargetable": "Den valda anpassade målgruppen är inte redo eller tillhör inte den här sidan och annonskontot.",
+      "connectFirst": "Anslut Marketing Messages i ChatbotX-appen först.",
+      "mmInvalidState": "Den här åtgärden är inte tillgänglig i kampanjens nuvarande tillstånd.",
+      "mmCampaignEnded": "Metas meddelandekampanj har avslutats och kan därför inte skickas eller återupptas.",
+      "mmPageNotConnected": "Kampanjens sida är inte ansluten till den här arbetsytan.",
+      "mmContentLocked": "Innehållet kan inte ändras efter att det första meddelandet har skickats.",
+      "metaDeleteFailed": "Meta kunde inte ta bort den här kampanjen, så den behölls. {message}",
+      "statisticsUnknownAdAccount": "Den här arbetsytan har inga Marketing Messages-kampanjer på det annonskontot.",
+      "statisticsInvalidRange": "Välj ett startdatum på eller före slutdatumet, inom de senaste 37 månaderna."
+    },
+    "tabs": {
+      "campaigns": "Kampanjer",
+      "audiences": "Målgrupper",
+      "statistics": "Statistik"
+    },
+    "audiences": {
+      "title": "Anpassade målgrupper",
+      "create": "Skapa ny",
+      "uploadMore": "Ladda upp fler rader",
+      "empty": "Inga anpassade målgrupper ännu.",
+      "deleteTitle": "Ta bort anpassad målgrupp",
+      "deleteWarning": "Detta tar bort den anpassade målgruppen \"{name}\" på Meta och i ChatbotX. Det går inte att ångra.",
+      "deleted": "Anpassad målgrupp borttagen.",
+      "pageDisconnected": "Sidan är frånkopplad",
+      "status": {
+        "ready": "Redo",
+        "missing": "Borttagen på Meta"
+      },
+      "fields": {
+        "customAudienceId": "ID för anpassad målgrupp",
+        "approximateCount": "Ungefärligt antal",
+        "status": "Status",
+        "file": "Ladda upp fil"
+      },
+      "wizard": {
+        "title": "Skapa anpassad målgrupp",
+        "uploadMoreTitle": "Ladda upp fler rader",
+        "steps": {
+          "prepare": "Förbered lista",
+          "upload": "Ladda upp",
+          "confirm": "Bekräfta"
+        },
+        "prepareDescription": "En prenumerantlista är en CSV- eller TXT-fil med information som används för att bygga din målgrupp för marknadsföringsmeddelanden. Vi använder telefonnumret för att matcha dina prenumeranter med Facebook- och Instagram-användare. Innan informationen skickas till oss omvandlas din lista med identifierare till slumpmässig kod (hashning).",
+        "aboutHashing": "Om hashning",
+        "downloadTemplate": "Ladda ned filmall",
+        "mainIdentifiers": "Ta med minst en huvudidentifierare",
+        "moreIdentifiers": "Ta med fler identifierare",
+        "identifiers": {
+          "email": "E-post",
+          "phone": "Telefonnummer",
+          "madid": "Mobilt annons-ID",
+          "fn": "Förnamn",
+          "ln": "Efternamn",
+          "ct": "Stad",
+          "st": "Delstat/provins",
+          "country": "Land",
+          "zip": "Postnummer",
+          "dob": "Födelsedatum",
+          "doby": "Födelseår",
+          "gen": "Kön"
+        },
+        "uploadNote": "Se till att identifierarna är kompletta och har rätt format innan du laddar upp listan. Listan måste vara i formatet .csv, .txt eller .xlsx.",
+        "namePlaceholder": "Ange målgruppens namn...",
+        "descriptionPlaceholder": "Kort beskrivning (om det finns någon)",
+        "dropzone": "Klicka för att ladda upp eller dra och släpp",
+        "maxFileSize": "Maximal filstorlek: 20 MB",
+        "fileRequired": "Välj en fil att ladda upp.",
+        "fileTooLarge": "Filen är större än 20 MB.",
+        "fileType": "Filen måste vara .csv, .txt eller .xlsx.",
+        "next": "Nästa",
+        "back": "Tillbaka",
+        "upload": "Ladda upp",
+        "done": "Klar",
+        "successTitle": "Uppladdningen lyckades",
+        "successRows": "Din Messenger-prenumerantlista har laddats upp: {count, plural, one {# rad} other {# rader}}",
+        "skippedRows": "{count, plural, one {# rad hoppades} other {# rader hoppades}} över (ingen giltig e-postadress eller telefon).",
+        "invalidRows": "{count, plural, one {# rad avvisades} other {# rader avvisades}} av Meta.",
+        "matchingNote": "Det kan ta några minuter att slutföra matchningen av dina prenumeranter med personer på Facebook. Du kan se status i målgruppslistan."
+      },
+      "errors": {
+        "audienceInvalidFile": "Filen kunde inte läsas. Använd en .csv-, .txt- eller .xlsx-fil med en rubrikrad.",
+        "audienceTooManyRows": "Filen har fler än {max, number} rader.",
+        "audienceNoIdentifier": "Filen måste ha en kolumn för e-post eller telefon.",
+        "audienceNoValidRows": "Ingen rad har en giltig e-postadress eller ett giltigt telefonnummer.",
+        "audiencePartialUpload": "Målgruppen skapades, men uppladdningen stoppades efter {received, number} rader. Använd \"Ladda upp fler rader\" för att försöka igen.",
+        "audienceNotFound": "Anpassad målgrupp hittades inte.",
+        "audienceCreateRejected": "Meta avvisade målgruppen: {reason}",
+        "uploadUncertain": "Uppladdningen kanske inte slutfördes. Stäng dialogrutan och kontrollera målgruppslistan; använd \"Ladda upp fler rader\" om målgruppen skapades.",
+        "pageNotConnected": "Den valda sidan är inte ansluten till den här arbetsytan.",
+        "audienceInUse": "Den här anpassade målgruppen används av {count, plural, one {# marknadsföringsmeddelande} other {# marknadsföringsmeddelanden}} och kan inte tas bort."
+      }
+    },
+    "delivery": {
+      "title": "Leverans",
+      "contentLocked": "Innehållet är låst eftersom meddelanden redan har skickats.",
+      "topicsReturned": "Ämnen som Meta returnerade: {topics}",
+      "recipients": "{count} mottagare",
+      "startsAt": "Start: {date}",
+      "completedAt": "Slutförd: {date}",
+      "errorBreakdown": "Fel",
+      "retrying": "Meta tar inte emot utskick just nu; försöker igen automatiskt.",
+      "counts": {
+        "sent": "Skickade",
+        "delivered": "Levererade",
+        "unconfirmed": "Obekräftade"
+      },
+      "status": {
+        "notSent": "Ej skickad",
+        "scheduled": "Schemalagd",
+        "sending": "Skickar",
+        "waitingNextDay": "Väntar till nästa dag",
+        "paused": "Pausad",
+        "stopped": "Stoppad"
+      },
+      "reason": {
+        "pageNotConnected": "Sidan är inte ansluten till den här arbetsytan.",
+        "quotaReached": "Pausad: din meddelandekvot är nådd.",
+        "workspaceBlocked": "Pausad: den här arbetsytan är blockerad.",
+        "grantInvalid": "Pausad: Facebook-anslutningen har gått ut. Anslut Marketing Messages igen.",
+        "metaBlocker": "Meta blockerar den här kampanjen.",
+        "contentRejected": "Meta avvisade meddelandets innehåll.",
+        "noTokens": "Inga mottagare hittades för den här kampanjen.",
+        "noMatchingTopic": "Ingen mottagare som har samtyckt matchar ämnet \"Updates and promotions\".",
+        "tokenFetchFailed": "Det gick inte att hämta mottagare från Meta.",
+        "campaignEnded": "Meta-kampanjen har avslutats.",
+        "lifetimeBudgetReached": "Livstidsbudgeten är slut."
+      },
+      "errors": {
+        "grantInvalid": "Facebook-anslutningen har gått ut.",
+        "campaignInactive": "Meta-kampanjen är inte aktiv.",
+        "budgetReached": "Budgeten är slut.",
+        "dailyBudgetReached": "Dagsbudgeten är nådd.",
+        "optedOut": "Mottagaren har avregistrerat sig.",
+        "frequencyLimit": "Mottagarens frekvensgräns är nådd.",
+        "contentRejected": "Meddelandeinnehållet avvisades av Meta.",
+        "deliveryFailed": "Leveransen misslyckades.",
+        "outcomeUnknown": "Leveransresultatet är okänt."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "Sök på ID eller namn",
+      "adAccount": "Annonskonto",
+      "dateRange": "Datumintervall",
+      "timezoneHint": "Datum i {timezone}",
+      "presets": {
+        "last7": "Senaste 7 dagarna",
+        "last30": "Senaste 30 dagarna",
+        "last90": "Senaste 90 dagarna",
+        "thisMonth": "Den här månaden",
+        "lastMonth": "Förra månaden"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Namn",
+        "page": "Facebooksida",
+        "delivered": "Levererade meddelanden",
+        "readRate": "Läsfrekvens",
+        "linkClicks": "Länkklick",
+        "linkClickRate": "Länkklickfrekvens",
+        "costPerClick": "Kostnad per klick",
+        "costPerDelivery": "Kostnad per leverans",
+        "spend": "Spenderat belopp"
+      },
+      "notes": {
+        "delivery": "Meta rapporterar inte detta för mottagare i Europa eller Japan; de kampanjerna visar -.",
+        "clicks": "Meta rapporterar inte detta för mottagare i Europa, Argentina, Turkiet, Sydkorea eller Japan; de kampanjerna visar -."
+      },
+      "footer": {
+        "label": "Totalt: {count, plural, one {# kampanj} other {# kampanjer}}",
+        "total": "Totalt",
+        "average": "Genomsnitt"
+      },
+      "totalsUnavailable": "Summor är inte tillgängliga just nu. Försök igen snart.",
+      "readOnly": "Anslut Marketing Messages igen för att se statistik.",
+      "empty": "Inga Marketing Messages-kampanjer ännu. Skapa en på fliken Kampanjer.",
+      "noResults": "Inga kampanjer matchar din sökning."
     }
   },
   "facebookAds": {

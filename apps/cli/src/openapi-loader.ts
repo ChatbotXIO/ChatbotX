@@ -214,6 +214,18 @@ const COMMAND_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   "POST /v1/orders/{id}/ship": "orders:ship",
   "POST /v1/orders/{id}/conclude": "orders:conclude",
   "POST /v1/orders/{id}/cancel": "orders:cancel",
+  "GET /v1/marketing-messages/campaigns": "marketing-messages:list-campaigns",
+  "POST /v1/marketing-messages/campaigns": "marketing-messages:create-campaign",
+  "GET /v1/marketing-messages/campaigns/{id}":
+    "marketing-messages:get-campaign",
+  "PUT /v1/marketing-messages/campaigns/{id}":
+    "marketing-messages:update-campaign",
+  "DELETE /v1/marketing-messages/campaigns/{id}":
+    "marketing-messages:delete-campaign",
+  "GET /v1/marketing-messages/audiences": "marketing-messages:list-audiences",
+  "POST /v1/marketing-messages/audiences": "marketing-messages:create-audience",
+  "DELETE /v1/marketing-messages/audiences/{id}":
+    "marketing-messages:delete-audience",
 }
 
 export function pathAndMethodToCommandName(

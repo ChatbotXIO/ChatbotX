@@ -22,7 +22,9 @@ describe("getMarketingMessagesAdAccounts", () => {
 
     await getMarketingMessagesAdAccounts(ACCESS_TOKEN)
 
-    expect(requestedFields).toBe("name,account_id,currency,tos_accepted")
+    expect(requestedFields).toBe(
+      "name,account_id,currency,timezone_name,tos_accepted",
+    )
   })
 
   test("maps the Graph response, keeping act_ id and bare account id apart", async () => {
@@ -35,6 +37,7 @@ describe("getMarketingMessagesAdAccounts", () => {
               account_id: "123",
               name: "Main",
               currency: "USD",
+              timezone_name: "Asia/Ho_Chi_Minh",
               tos_accepted: { custom_audience_tos: 1 },
             },
           ],
@@ -50,6 +53,7 @@ describe("getMarketingMessagesAdAccounts", () => {
         accountId: "123",
         name: "Main",
         currency: "USD",
+        timezoneName: "Asia/Ho_Chi_Minh",
         tosAccepted: { custom_audience_tos: 1 },
       },
     ])
@@ -68,6 +72,7 @@ describe("getMarketingMessagesAdAccounts", () => {
 
     expect(accounts[0]?.tosAccepted).toEqual({})
     expect(accounts[0]?.name).toBeUndefined()
+    expect(accounts[0]?.timezoneName).toBeNull()
   })
 
   test("follows paging cursors", async () => {

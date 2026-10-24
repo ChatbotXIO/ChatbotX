@@ -308,6 +308,45 @@ describe("flow action channel gating (bare flow ID)", () => {
     )
   })
 
+  test("bare payload with a nodeId starts that node, not the start node", async () => {
+    mockChannel("messenger")
+    const mk = (id: string, isStartNode: boolean): FlowNode => ({
+      id,
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: { name: id, isStartNode, details: { steps: [] } },
+    })
+    detectFlowVersion.mockResolvedValue({
+      flowVersion: makeFlowVersion(
+        [mk("100", true), mk("555", false), mk("666", false)],
+        [
+          {
+            id: "e1",
+            source: "555",
+            sourceHandle: "555",
+            target: "666",
+            targetHandle: "input",
+          },
+        ],
+      ),
+      useLatestFlowVersion: true,
+    })
+
+    await runFlowPostback({
+      conversationId: "conv-1",
+      contactInboxId: "ci-1",
+      action: encodeButtonPayload({ flowId: BARE_FLOW_ID, nodeId: "555" }),
+      ref: null,
+    } as never)
+
+    const [action, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string } },
+    ]
+    expect(action).toBe("sendFlow")
+    expect(job.data.nodeId).toBe("666")
+  })
+
   test("non-messenger bare flow ID postback is rejected, never reaching the flow", async () => {
     mockChannel("webchat")
     mockStartNodeFlow()

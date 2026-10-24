@@ -9,6 +9,8 @@ const validInput = {
   currency: "USD",
   budgetType: "daily" as const,
   budgetMajorUnits: 30,
+  targetType: "optIn" as const,
+  audienceId: null,
   content: { templateType: "text" as const, text: "Hi", quickReplies: [] },
 }
 

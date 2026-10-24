@@ -2869,7 +2869,7 @@
     "title": "Yleiset"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "Tämä poistaa kampanjan vain ChatbotX:stä. Metan viestikampanja jatkuu — keskeytä tai poista se Ads Managerissa.",
+    "deleteWarning": "Tämä poistaa Metan viestikampanjan ja poistaa kampanjan ChatbotX:stä. Jos Meta hylkää poiston, kampanja säilyy.",
     "title": "Facebook Marketing Messages",
     "description": "Kasvata sitoutumista ja myyntiä personoiduilla mainosviesteillä Messengerissä.",
     "create": "Luo uusi",
@@ -2894,13 +2894,197 @@
       "generic": "Yleinen",
       "greeting": "Tervehdys",
       "quickReplies": "Pikavastaukset",
-      "elements": "Kortit"
+      "elements": "Kortit",
+      "targetMessaging": "Viestien kohdistus",
+      "targetOptIn": "Opt-in",
+      "targetOptInDescription": "Sivun asiakkaat, jotka ovat suostuneet vastaanottamaan markkinointiviestejä",
+      "targetCustomAudience": "Mukautettu kohderyhmä",
+      "targetCustomAudienceDescription": "Lähetä viestejä tiedostosta ladatuille kohderyhmille",
+      "audience": "Mukautettu kohderyhmä"
     },
+    "noReadyAudiences": "Tälle sivulle ja mainostilille ei ole valmiita mukautettuja kohderyhmiä.",
+    "manageAudiences": "Hallitse kohderyhmiä",
     "errors": {
       "notConfigured": "Facebook Marketing Messages -toimintoa ei ole määritetty. Pyydä järjestelmänvalvojaa asettamaan markkinointiviestien määritystunnus.",
       "notGranted": "Myönnä käyttöoikeus, jotta voit käyttää markkinointiviestitoimintoa.",
       "tosNotAccepted": "Jos haluat käyttää tätä toimintoa, hyväksy mukautettujen objektien ehdot osoitteessa {url}",
-      "notFound": "Markkinointiviestiä ei löytynyt."
+      "notFound": "Markkinointiviestiä ei löytynyt.",
+      "audienceNotTargetable": "Valittu mukautettu kohderyhmä ei ole valmis tai ei kuulu tälle sivulle ja mainostilille.",
+      "connectFirst": "Yhdistä Marketing Messages ensin ChatbotX-sovelluksessa.",
+      "mmInvalidState": "Tämä toiminto ei ole käytettävissä kampanjan nykyisessä tilassa.",
+      "mmCampaignEnded": "Metan viestikampanja on päättynyt, joten sitä ei voi lähettää tai jatkaa.",
+      "mmPageNotConnected": "Tämän kampanjan sivua ei ole yhdistetty tähän työtilaan.",
+      "mmContentLocked": "Sisältöä ei voi muuttaa ensimmäisen viestin lähettämisen jälkeen.",
+      "metaDeleteFailed": "Meta ei voinut poistaa tätä kampanjaa, joten se säilytettiin. {message}",
+      "statisticsUnknownAdAccount": "Tällä työtilalla ei ole Marketing Messages -kampanjoita kyseisellä mainostilillä.",
+      "statisticsInvalidRange": "Valitse aloituspäivä, joka on sama tai ennen päättymispäivää, viimeisten 37 kuukauden ajalta."
+    },
+    "tabs": {
+      "campaigns": "Kampanjat",
+      "audiences": "Kohderyhmät",
+      "statistics": "Tilastot"
+    },
+    "audiences": {
+      "title": "Mukautetut kohderyhmät",
+      "create": "Luo uusi",
+      "uploadMore": "Lähetä lisää rivejä",
+      "empty": "Ei vielä mukautettuja kohderyhmiä.",
+      "deleteTitle": "Poista mukautettu kohderyhmä",
+      "deleteWarning": "Tämä poistaa mukautetun kohderyhmän \"{name}\" Metasta ja ChatbotX:stä. Toimintoa ei voi peruuttaa.",
+      "deleted": "Mukautettu kohderyhmä poistettu.",
+      "pageDisconnected": "Sivun yhteys katkaistu",
+      "status": {
+        "ready": "Valmis",
+        "missing": "Poistettu Metasta"
+      },
+      "fields": {
+        "customAudienceId": "Mukautetun kohderyhmän tunnus",
+        "approximateCount": "Likimääräinen määrä",
+        "status": "Tila",
+        "file": "Lähetä tiedosto"
+      },
+      "wizard": {
+        "title": "Luo mukautettu kohderyhmä",
+        "uploadMoreTitle": "Lähetä lisää rivejä",
+        "steps": {
+          "prepare": "Valmistele luettelo",
+          "upload": "Lähetä",
+          "confirm": "Vahvista"
+        },
+        "prepareDescription": "Tilaajaluettelo on CSV- tai TXT-tiedosto, joka sisältää tietoja markkinointiviestien kohderyhmän luomiseen. Käytämme puhelinnumeroa tilaajiesi yhdistämiseen Facebookin ja Instagramin käyttäjiin. Ennen kuin tiedot lähetetään meille, tunnisteluettelosi muunnetaan satunnaiseksi koodiksi (hajautus).",
+        "aboutHashing": "Tietoa hajautuksesta",
+        "downloadTemplate": "Lataa tiedostomalli",
+        "mainIdentifiers": "Sisällytä vähintään yksi pääasiallinen tunniste",
+        "moreIdentifiers": "Sisällytä lisää tunnisteita",
+        "identifiers": {
+          "email": "Sähköposti",
+          "phone": "Puhelinnumero",
+          "madid": "Mobiilimainostunnus",
+          "fn": "Etunimi",
+          "ln": "Sukunimi",
+          "ct": "Kaupunki",
+          "st": "Osavaltio/maakunta",
+          "country": "Maa",
+          "zip": "Postinumero",
+          "dob": "Syntymäaika",
+          "doby": "Syntymävuosi",
+          "gen": "Sukupuoli"
+        },
+        "uploadNote": "Varmista ennen luettelon lähettämistä, että tunnisteet ovat täydellisiä ja oikeassa muodossa. Luettelon on oltava .csv-, .txt- tai .xlsx-muodossa.",
+        "namePlaceholder": "Anna kohderyhmän nimi...",
+        "descriptionPlaceholder": "Lyhyt kuvaus (jos on)",
+        "dropzone": "Lähetä napsauttamalla tai vedä ja pudota",
+        "maxFileSize": "Tiedoston enimmäiskoko: 20 Mt",
+        "fileRequired": "Valitse lähetettävä tiedosto.",
+        "fileTooLarge": "Tiedosto on suurempi kuin 20 Mt.",
+        "fileType": "Tiedoston on oltava .csv-, .txt- tai .xlsx-muodossa.",
+        "next": "Seuraava",
+        "back": "Takaisin",
+        "upload": "Lähetä",
+        "done": "Valmis",
+        "successTitle": "Lähetys onnistui",
+        "successRows": "Messenger-tilaajaluettelosi on lähetetty: {count, plural, one {# rivi} other {# riviä}}",
+        "skippedRows": "{count, plural, one {# rivi ohitettiin} other {# riviä ohitettiin}} (ei kelvollista sähköpostiosoitetta tai puhelinnumeroa).",
+        "invalidRows": "Meta hylkäsi {count, plural, one {# rivin} other {# riviä}}.",
+        "matchingNote": "Tilaajiesi yhdistäminen Facebookin käyttäjiin voi kestää muutaman minuutin. Voit tarkistaa tilan kohderyhmäluettelosta."
+      },
+      "errors": {
+        "audienceInvalidFile": "Tiedostoa ei voitu lukea. Käytä .csv-, .txt- tai .xlsx-tiedostoa, jossa on otsikkorivi.",
+        "audienceTooManyRows": "Tiedostossa on yli {max, number} riviä.",
+        "audienceNoIdentifier": "Tiedostossa on oltava sähköposti- tai puhelinsarake.",
+        "audienceNoValidRows": "Yhdelläkään rivillä ei ole kelvollista sähköpostiosoitetta tai puhelinnumeroa.",
+        "audiencePartialUpload": "Kohderyhmä luotiin, mutta lähetys pysähtyi {received, number} rivin jälkeen. Yritä uudelleen valitsemalla \"Lähetä lisää rivejä\".",
+        "audienceNotFound": "Mukautettua kohderyhmää ei löytynyt.",
+        "audienceCreateRejected": "Meta hylkäsi yleisön: {reason}",
+        "uploadUncertain": "Lataus ei ehkä valmistunut. Sulje tämä ikkuna ja tarkista yleisölista; käytä \"Lataa lisää rivejä\", jos yleisö luotiin.",
+        "pageNotConnected": "Valittua sivua ei ole yhdistetty tähän työtilaan.",
+        "audienceInUse": "Tätä mukautettua kohderyhmää käyttää {count, plural, one {# markkinointiviesti} other {# markkinointiviestiä}}, joten sitä ei voi poistaa."
+      }
+    },
+    "delivery": {
+      "title": "Toimitus",
+      "contentLocked": "Sisältö on lukittu, koska viestejä on jo lähetetty.",
+      "topicsReturned": "Metan palauttamat aiheet: {topics}",
+      "recipients": "{count} vastaanottajaa",
+      "startsAt": "Alkaa: {date}",
+      "completedAt": "Valmistui: {date}",
+      "errorBreakdown": "Virheet",
+      "retrying": "Meta ei juuri nyt vastaanota lähetyksiä; yritetään automaattisesti uudelleen.",
+      "counts": {
+        "sent": "Lähetetty",
+        "delivered": "Toimitettu",
+        "unconfirmed": "Vahvistamaton"
+      },
+      "status": {
+        "notSent": "Ei lähetetty",
+        "scheduled": "Ajoitettu",
+        "sending": "Lähetetään",
+        "waitingNextDay": "Odottaa seuraavaa päivää",
+        "paused": "Keskeytetty",
+        "stopped": "Pysäytetty"
+      },
+      "reason": {
+        "pageNotConnected": "Sivua ei ole yhdistetty tähän työtilaan.",
+        "quotaReached": "Keskeytetty: viestikiintiö on täynnä.",
+        "workspaceBlocked": "Keskeytetty: tämä työtila on estetty.",
+        "grantInvalid": "Keskeytetty: Facebook-yhteys on vanhentunut. Yhdistä Marketing Messages uudelleen.",
+        "metaBlocker": "Meta estää tämän kampanjan.",
+        "contentRejected": "Meta hylkäsi viestin sisällön.",
+        "noTokens": "Tälle kampanjalle ei löytynyt vastaanottajia.",
+        "noMatchingTopic": "Mikään suostumuksen antanut vastaanottaja ei vastaa aihetta \"Updates and promotions\".",
+        "tokenFetchFailed": "Vastaanottajia ei voitu hakea Metalta.",
+        "campaignEnded": "Meta-kampanja on päättynyt.",
+        "lifetimeBudgetReached": "Koko kampanjan budjetti on käytetty."
+      },
+      "errors": {
+        "grantInvalid": "Facebook-yhteys on vanhentunut.",
+        "campaignInactive": "Meta-kampanja ei ole aktiivinen.",
+        "budgetReached": "Budjetti on käytetty.",
+        "dailyBudgetReached": "Päiväbudjetti on täynnä.",
+        "optedOut": "Vastaanottaja on perunut tilauksen.",
+        "frequencyLimit": "Vastaanottajan esiintymiskertaraja on saavutettu.",
+        "contentRejected": "Meta hylkäsi viestin sisällön.",
+        "deliveryFailed": "Toimitus epäonnistui.",
+        "outcomeUnknown": "Toimituksen lopputulos on tuntematon."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "Hae ID:llä tai nimellä",
+      "adAccount": "Mainostili",
+      "dateRange": "Aikaväli",
+      "timezoneHint": "Päivät aikavyöhykkeellä {timezone}",
+      "presets": {
+        "last7": "Viimeiset 7 päivää",
+        "last30": "Viimeiset 30 päivää",
+        "last90": "Viimeiset 90 päivää",
+        "thisMonth": "Tämä kuukausi",
+        "lastMonth": "Edellinen kuukausi"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Nimi",
+        "page": "Facebook-sivu",
+        "delivered": "Toimitetut viestit",
+        "readRate": "Lukuprosentti",
+        "linkClicks": "Linkin klikkaukset",
+        "linkClickRate": "Linkin klikkausprosentti",
+        "costPerClick": "Hinta per klikkaus",
+        "costPerDelivery": "Hinta per toimitus",
+        "spend": "Käytetty summa"
+      },
+      "notes": {
+        "delivery": "Meta ei raportoi tätä vastaanottajille Euroopassa tai Japanissa; näissä kampanjoissa näkyy -.",
+        "clicks": "Meta ei raportoi tätä vastaanottajille Euroopassa, Argentiinassa, Turkissa, Etelä-Koreassa tai Japanissa; näissä kampanjoissa näkyy -."
+      },
+      "footer": {
+        "label": "Yhteensä: {count, plural, one {# kampanja} other {# kampanjaa}}",
+        "total": "Yhteensä",
+        "average": "Keskiarvo"
+      },
+      "totalsUnavailable": "Yhteissummat eivät ole juuri nyt saatavilla. Yritä hetken päästä uudelleen.",
+      "readOnly": "Yhdistä Marketing Messages uudelleen nähdäksesi tilastot.",
+      "empty": "Ei vielä Marketing Messages -kampanjoita. Luo sellainen Kampanjat-välilehdellä.",
+      "noResults": "Hakuasi vastaavia kampanjoita ei löytynyt."
     }
   },
   "facebookAds": {

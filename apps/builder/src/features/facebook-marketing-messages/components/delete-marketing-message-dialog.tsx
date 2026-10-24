@@ -17,10 +17,11 @@ import { useTranslations } from "next-intl"
 import { useTransition } from "react"
 import { toast } from "sonner"
 import { deleteMarketingMessagesAction } from "../actions/delete.action"
+import { useInvalidateMarketingMessagesStatistics } from "../hooks/use-statistics"
 
 /**
- * Deleting is local-only (spec O6) — the description says so explicitly so a
- * user does not assume the Meta campaign stopped spending.
+ * Deleting also deletes the Meta campaign first (spec D10) and is refused if
+ * Meta refuses — the description says so.
  */
 export function DeleteMarketingMessageDialog({
   workspaceId,
@@ -36,6 +37,7 @@ export function DeleteMarketingMessageDialog({
   const t = useTranslations()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const invalidateStatistics = useInvalidateMarketingMessagesStatistics()
 
   const handleDelete = () => {
     if (!row) {
@@ -55,6 +57,7 @@ export function DeleteMarketingMessageDialog({
           feature: t("facebookMarketingMessages.title"),
         }),
       )
+      await invalidateStatistics()
       onOpenChange(false)
       router.refresh()
     })

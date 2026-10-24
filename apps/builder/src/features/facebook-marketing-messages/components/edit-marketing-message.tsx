@@ -33,7 +33,10 @@ export function EditMarketingMessage({
           row.currencyOffset,
         ),
         content: row.content as MmContent,
+        targetType: row.targetType,
+        audienceId: row.audienceId,
       }}
+      lockContent={row.firstSentAt !== null}
       lockTarget
       submitLabel={t("actions.save")}
       workspaceId={workspaceId}

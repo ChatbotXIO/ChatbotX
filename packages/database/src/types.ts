@@ -165,6 +165,12 @@ export type FacebookLeadAdsLeadModel =
   typeof schema.facebookLeadAdsLeadModel.$inferSelect
 export type FacebookMarketingMessageModel =
   typeof schema.facebookMarketingMessageModel.$inferSelect
+export type FacebookMarketingMessageAudienceModel =
+  typeof schema.facebookMarketingMessageAudienceModel.$inferSelect
+export type FacebookMarketingMessageRecipientModel =
+  typeof schema.facebookMarketingMessageRecipientModel.$inferSelect
+export type NewFacebookMarketingMessageRecipient =
+  typeof schema.facebookMarketingMessageRecipientModel.$inferInsert
 export type FacebookMarketingMessagesAuthModel =
   typeof schema.facebookMarketingMessagesAuthModel.$inferSelect
 export type CommentAutomationModel =

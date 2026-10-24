@@ -277,6 +277,7 @@ describe("reconnectMessengerHandler", () => {
       accessToken: "long-page-token",
       version: "v23.0",
       subscribedFields: "messages,messaging_postbacks",
+      includeMarketingMessages: true,
     })
     expect(mockEnsureMessengerWhitelistedDomain).toHaveBeenCalledWith(
       expect.objectContaining({

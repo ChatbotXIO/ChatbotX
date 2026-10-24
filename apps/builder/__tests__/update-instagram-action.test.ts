@@ -43,6 +43,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 vi.mock("@chatbotx.io/flow-config", () => ({
+  BUTTON_LABEL_MAX: 20,
   encodeButtonPayload: vi.fn(),
 }))
 

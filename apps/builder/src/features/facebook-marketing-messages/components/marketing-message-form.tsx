@@ -2,6 +2,7 @@
 
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
+import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Alert, AlertDescription } from "@chatbotx.io/ui/components/ui/alert"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -16,12 +17,14 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useQuery } from "@tanstack/react-query"
 import { Loader2Icon, RefreshCwIcon } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { orpc } from "@/lib/orpc/query"
+import { useInvalidateMarketingMessagesStatistics } from "../hooks/use-statistics"
 import { minBudgetMajorUnits } from "../lib/currency"
 import {
   type CreateMarketingMessageInput,
@@ -40,8 +43,10 @@ export function MarketingMessageForm({
   action,
   defaultValues,
   submitLabel,
-  /** Edit freezes the page, ad account, currency and budget type — see `updateMarketingMessageSchema`. */
+  /** Edit freezes the page, ad account, currency, budget type and target — see `updateMarketingMessageSchema`. */
   lockTarget = false,
+  /** Content is frozen once the first message went out (server enforces too). */
+  lockContent = false,
 }: {
   workspaceId: string
   // biome-ignore lint/suspicious/noExplicitAny: the bound next-safe-action shape varies by route
@@ -49,9 +54,11 @@ export function MarketingMessageForm({
   defaultValues: CreateMarketingMessageInput
   submitLabel: string
   lockTarget?: boolean
+  lockContent?: boolean
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const invalidateStatistics = useInvalidateMarketingMessagesStatistics()
 
   const pages = useQuery(
     orpc.facebookMarketingMessagesAPI.listMarketingMessagesPagesAPI.queryOptions(
@@ -69,7 +76,8 @@ export function MarketingMessageForm({
     zodResolver(createMarketingMessageSchema),
     {
       actionProps: {
-        onSuccess: () => {
+        onSuccess: async () => {
+          await invalidateStatistics()
           router.push(`/space/${workspaceId}/fb-marketing-messages`)
           router.refresh()
         },
@@ -106,6 +114,38 @@ export function MarketingMessageForm({
 
   const tosBlocked = Boolean(selectedAccount && !selectedAccount.tosAccepted)
 
+  const [selectedPageId, targetType] = useWatch({
+    control: form.control,
+    name: ["pageId", "targetType"],
+  })
+  const audiences = useQuery(
+    orpc.facebookMarketingMessagesAPI.listMarketingMessagesAudiencesAPI.queryOptions(
+      {
+        input: {
+          workspaceId,
+          adAccountId: selectedAccountId,
+          pageId: selectedPageId,
+          readyOnly: true,
+        },
+        enabled: Boolean(
+          targetType === "customAudience" &&
+            selectedAccountId &&
+            selectedPageId,
+        ),
+        select: (res) => res.audiences,
+      },
+    ),
+  )
+  const noReadyAudiences = audiences.isSuccess && audiences.data.length === 0
+
+  // An audience belongs to one ad account + Page: changing either makes the
+  // current pick invalid, so drop it rather than submit a mismatch.
+  const resetAudience = () => {
+    if (form.getValues("audienceId")) {
+      form.setValue("audienceId", null, { shouldValidate: true })
+    }
+  }
+
   return (
     <Form {...form}>
       <form className="flex flex-col gap-4" onSubmit={handleSubmitWithAction}>
@@ -131,6 +171,7 @@ export function MarketingMessageForm({
               }))}
               placeholder={t("actions.pleaseSelect")}
               required
+              triggerValueChange={resetAudience}
             />
 
             <div className="flex items-end gap-2">
@@ -145,6 +186,7 @@ export function MarketingMessageForm({
                   }))}
                   placeholder={t("actions.pleaseSelect")}
                   required
+                  triggerValueChange={resetAudience}
                 />
               </div>
               <Button
@@ -199,12 +241,80 @@ export function MarketingMessageForm({
               required
               suffix={currency}
             />
+
+            {/* Frozen on edit, like the Page and ad account it depends on. */}
+            <RadioGroupField
+              disabled={lockTarget}
+              label={t("facebookMarketingMessages.fields.targetMessaging")}
+              name="targetType"
+              options={[
+                {
+                  value: "optIn",
+                  label: t("facebookMarketingMessages.fields.targetOptIn"),
+                  description: t(
+                    "facebookMarketingMessages.fields.targetOptInDescription",
+                  ),
+                },
+                {
+                  value: "customAudience",
+                  label: t(
+                    "facebookMarketingMessages.fields.targetCustomAudience",
+                  ),
+                  description: t(
+                    "facebookMarketingMessages.fields.targetCustomAudienceDescription",
+                  ),
+                },
+              ]}
+              required
+            />
+
+            {targetType === "customAudience" && (
+              <div className="flex flex-col gap-2">
+                <SelectField
+                  disabled={lockTarget}
+                  label={t("facebookMarketingMessages.fields.audience")}
+                  name="audienceId"
+                  options={(audiences.data ?? []).map((audience) => ({
+                    value: audience.id,
+                    label: audience.name,
+                  }))}
+                  placeholder={t("actions.pleaseSelect")}
+                  required
+                />
+                {noReadyAudiences && !lockTarget && (
+                  <p className="text-muted-foreground text-sm">
+                    {t("facebookMarketingMessages.noReadyAudiences")}{" "}
+                    <Link
+                      className="text-primary underline"
+                      href={`/space/${workspaceId}/fb-marketing-messages?tab=audiences`}
+                      rel="noopener"
+                      target="_blank"
+                    >
+                      {t("facebookMarketingMessages.manageAudiences")}
+                    </Link>
+                  </p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="pt-6">
-            <ContentEditor name="content" />
+            {lockContent && (
+              <Alert className="mb-4">
+                <AlertDescription>
+                  {t("facebookMarketingMessages.delivery.contentLocked")}
+                </AlertDescription>
+              </Alert>
+            )}
+            <fieldset
+              className={lockContent ? "opacity-60" : ""}
+              disabled={lockContent}
+              inert={lockContent}
+            >
+              <ContentEditor name="content" />
+            </fieldset>
           </CardContent>
         </Card>
 

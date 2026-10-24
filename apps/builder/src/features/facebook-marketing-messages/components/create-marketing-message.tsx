@@ -24,6 +24,8 @@ export function CreateMarketingMessage({
         currency: "",
         budgetType: "daily",
         budgetMajorUnits: 1,
+        targetType: "optIn",
+        audienceId: null,
         content: mmContentDefaultFn("text"),
       }}
       submitLabel={t("actions.create")}

@@ -3024,7 +3024,7 @@
     "title": "عام"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "يؤدي هذا إلى إزالة الحملة من ChatbotX فقط. تستمر حملة رسائل ميتا في العمل — أوقفها مؤقتًا أو احذفها من مدير الإعلانات.",
+    "deleteWarning": "يؤدي هذا إلى حذف حملة الرسائل على Meta وإزالة الحملة من ChatbotX. إذا رفضت Meta الحذف، فسيتم الاحتفاظ بالحملة.",
     "title": "الرسائل التسويقية على فيسبوك",
     "description": "عزّز التفاعل والمبيعات برسائل ترويجية مخصصة على ماسنجر.",
     "create": "إنشاء جديد",
@@ -3049,13 +3049,197 @@
       "generic": "عام",
       "greeting": "تحية",
       "quickReplies": "ردود سريعة",
-      "elements": "بطاقات"
+      "elements": "بطاقات",
+      "targetMessaging": "استهداف الرسائل",
+      "targetOptIn": "الاشتراك",
+      "targetOptInDescription": "عملاء الصفحة الذين وافقوا على تلقي رسائل تسويقية",
+      "targetCustomAudience": "جمهور مخصص",
+      "targetCustomAudienceDescription": "إرسال رسائل إلى جماهير تم رفعها من ملف",
+      "audience": "جمهور مخصص"
     },
+    "noReadyAudiences": "لا توجد جماهير مخصصة جاهزة لهذه الصفحة وحساب الإعلانات.",
+    "manageAudiences": "إدارة الجماهير",
     "errors": {
       "notConfigured": "لم يتم تكوين الرسائل التسويقية على فيسبوك. اطلب من المسؤول تعيين معرّف تكوين الرسائل التسويقية.",
       "notGranted": "يُرجى منح حق الوصول لاستخدام ميزة الرسائل التسويقية.",
       "tosNotAccepted": "لاستخدام هذه الميزة، يُرجى قبول شروط الكائن المخصص على {url}",
-      "notFound": "لم يتم العثور على الرسالة التسويقية."
+      "notFound": "لم يتم العثور على الرسالة التسويقية.",
+      "audienceNotTargetable": "الجمهور المخصص المحدد غير جاهز أو لا ينتمي إلى هذه الصفحة وحساب الإعلانات.",
+      "connectFirst": "قم بربط رسائل التسويق في تطبيق ChatbotX أولاً.",
+      "mmInvalidState": "هذا الإجراء غير متاح في الحالة الحالية للحملة.",
+      "mmCampaignEnded": "انتهت حملة الرسائل على Meta، لذا لا يمكن إرسالها أو استئنافها.",
+      "mmPageNotConnected": "صفحة هذه الحملة غير متصلة بمساحة العمل هذه.",
+      "mmContentLocked": "لا يمكن تغيير المحتوى بعد إرسال أول رسالة.",
+      "metaDeleteFailed": "تعذّر على Meta حذف هذه الحملة، لذا تم الاحتفاظ بها. {message}",
+      "statisticsUnknownAdAccount": "لا تحتوي مساحة العمل هذه على حملات رسائل تسويقية في حساب الإعلانات هذا.",
+      "statisticsInvalidRange": "اختر تاريخ بدء يسبق تاريخ الانتهاء أو يساويه، خلال آخر 37 شهرًا."
+    },
+    "tabs": {
+      "campaigns": "الحملات",
+      "audiences": "الجماهير",
+      "statistics": "الإحصائيات"
+    },
+    "audiences": {
+      "title": "الجماهير المخصصة",
+      "create": "إنشاء جديد",
+      "uploadMore": "تحميل المزيد من الصفوف",
+      "empty": "لا توجد جماهير مخصصة بعد.",
+      "deleteTitle": "حذف الجمهور المخصص",
+      "deleteWarning": "سيؤدي هذا إلى حذف الجمهور المخصص \"{name}\" على Meta وفي ChatbotX. لا يمكن التراجع عن هذا الإجراء.",
+      "deleted": "تم حذف الجمهور المخصص.",
+      "pageDisconnected": "تم فصل الصفحة",
+      "status": {
+        "ready": "جاهز",
+        "missing": "محذوف على Meta"
+      },
+      "fields": {
+        "customAudienceId": "معرّف الجمهور المخصص",
+        "approximateCount": "العدد التقريبي",
+        "status": "الحالة",
+        "file": "تحميل ملف"
+      },
+      "wizard": {
+        "title": "إنشاء جمهور مخصص",
+        "uploadMoreTitle": "تحميل المزيد من الصفوف",
+        "steps": {
+          "prepare": "تجهيز القائمة",
+          "upload": "تحميل",
+          "confirm": "تأكيد"
+        },
+        "prepareDescription": "قائمة المشتركين هي ملف CSV أو TXT يحتوي على معلومات تُستخدم لإنشاء جمهورك للرسائل التسويقية. نستخدم رقم الهاتف لمطابقة مشتركيك مع مستخدمي فيسبوك وإنستغرام. قبل إرسال المعلومات إلينا، يتم تحويل قائمة المعرّفات لديك إلى رمز عشوائي باستخدام التجزئة (hashing).",
+        "aboutHashing": "حول التجزئة",
+        "downloadTemplate": "تنزيل قالب الملف",
+        "mainIdentifiers": "أدرج معرّفًا رئيسيًا واحدًا على الأقل",
+        "moreIdentifiers": "أدرج المزيد من المعرّفات",
+        "identifiers": {
+          "email": "البريد الإلكتروني",
+          "phone": "رقم الهاتف",
+          "madid": "معرّف المعلن على الجوال",
+          "fn": "الاسم الأول",
+          "ln": "اسم العائلة",
+          "ct": "المدينة",
+          "st": "الولاية/المقاطعة",
+          "country": "الدولة",
+          "zip": "الرمز البريدي",
+          "dob": "تاريخ الميلاد",
+          "doby": "سنة الميلاد",
+          "gen": "الجنس"
+        },
+        "uploadNote": "قبل تحميل القائمة، تأكد من أن المعرّفات كاملة وبالتنسيق الصحيح. يجب أن تكون القائمة بتنسيق .csv أو .txt أو .xlsx.",
+        "namePlaceholder": "أدخل اسم الجمهور...",
+        "descriptionPlaceholder": "وصف موجز (إن وجد)",
+        "dropzone": "انقر للتحميل أو اسحب وأفلت",
+        "maxFileSize": "الحد الأقصى لحجم الملف: 20MB",
+        "fileRequired": "حدد ملفًا لتحميله.",
+        "fileTooLarge": "حجم الملف أكبر من 20MB.",
+        "fileType": "يجب أن يكون الملف بتنسيق .csv أو .txt أو .xlsx.",
+        "next": "التالي",
+        "back": "رجوع",
+        "upload": "تحميل",
+        "done": "تم",
+        "successTitle": "تم التحميل بنجاح",
+        "successRows": "تم تحميل قائمة مشتركي Messenger الخاصة بك: {count, plural, one {# صف} other {# صف}}",
+        "skippedRows": "{count, plural, one {تم تخطي # صف} other {تم تخطي # صف}} (لا يوجد بريد إلكتروني أو هاتف صالح).",
+        "invalidRows": "{count, plural, one {رفضت Meta # صف} other {رفضت Meta # صف}}.",
+        "matchingNote": "قد نحتاج إلى بضع دقائق لإكمال مطابقة مشتركيك مع الأشخاص على فيسبوك. يمكنك التحقق من الحالة في قائمة الجماهير."
+      },
+      "errors": {
+        "audienceInvalidFile": "تعذرت قراءة الملف. استخدم ملف .csv أو .txt أو .xlsx يحتوي على صف رأس.",
+        "audienceTooManyRows": "يحتوي الملف على أكثر من {max, number} صف.",
+        "audienceNoIdentifier": "يحتاج الملف إلى عمود للبريد الإلكتروني أو الهاتف.",
+        "audienceNoValidRows": "لا يوجد أي صف يحتوي على بريد إلكتروني أو رقم هاتف صالح.",
+        "audiencePartialUpload": "تم إنشاء الجمهور، لكن التحميل توقف بعد {received, number} صف. استخدم \"تحميل المزيد من الصفوف\" لإعادة المحاولة.",
+        "audienceNotFound": "لم يتم العثور على الجمهور المخصص.",
+        "audienceCreateRejected": "رفضت Meta الجمهور: {reason}",
+        "uploadUncertain": "ربما لم يكتمل التحميل. أغلق هذا الحوار وتحقق من قائمة الجماهير؛ استخدم \"تحميل المزيد من الصفوف\" إذا تم إنشاء الجمهور.",
+        "pageNotConnected": "الصفحة المحددة غير متصلة بمساحة العمل هذه.",
+        "audienceInUse": "هذا الجمهور المخصص مستخدم في {count, plural, one {# رسالة تسويقية} other {# رسائل تسويقية}} ولا يمكن حذفه."
+      }
+    },
+    "delivery": {
+      "title": "التسليم",
+      "contentLocked": "المحتوى مقفل لأنه تم إرسال رسائل بالفعل.",
+      "topicsReturned": "المواضيع التي أعادتها Meta: {topics}",
+      "recipients": "{count} مستلم",
+      "startsAt": "البدء: {date}",
+      "completedAt": "اكتملت: {date}",
+      "errorBreakdown": "الإخفاقات",
+      "retrying": "لا تقبل Meta الإرسال حاليًا؛ تتم إعادة المحاولة تلقائيًا.",
+      "counts": {
+        "sent": "تم الإرسال",
+        "delivered": "تم التسليم",
+        "unconfirmed": "غير مؤكدة"
+      },
+      "status": {
+        "notSent": "لم تُرسل",
+        "scheduled": "مجدولة",
+        "sending": "جارٍ الإرسال",
+        "waitingNextDay": "في انتظار اليوم التالي",
+        "paused": "متوقفة مؤقتًا",
+        "stopped": "متوقفة"
+      },
+      "reason": {
+        "pageNotConnected": "الصفحة غير متصلة بمساحة العمل هذه.",
+        "quotaReached": "متوقفة مؤقتًا: تم بلوغ حصة الرسائل.",
+        "workspaceBlocked": "متوقفة مؤقتًا: مساحة العمل هذه محظورة.",
+        "grantInvalid": "متوقفة مؤقتًا: انتهت صلاحية اتصال Facebook. أعد ربط Marketing Messages.",
+        "metaBlocker": "تحظر Meta هذه الحملة.",
+        "contentRejected": "رفضت Meta محتوى الرسالة.",
+        "noTokens": "لم يتم العثور على مستلمين لهذه الحملة.",
+        "noMatchingTopic": "لا يوجد مستلمون موافقون يطابقون موضوع \"Updates and promotions\".",
+        "tokenFetchFailed": "تعذر جلب المستلمين من Meta.",
+        "campaignEnded": "انتهت حملة Meta.",
+        "lifetimeBudgetReached": "تم استهلاك الميزانية الإجمالية."
+      },
+      "errors": {
+        "grantInvalid": "انتهت صلاحية اتصال Facebook.",
+        "campaignInactive": "حملة Meta غير نشطة.",
+        "budgetReached": "نفدت الميزانية.",
+        "dailyBudgetReached": "تم بلوغ الميزانية اليومية.",
+        "optedOut": "ألغى المستلم الاشتراك.",
+        "frequencyLimit": "تم بلوغ حد التكرار للمستلم.",
+        "contentRejected": "رفضت Meta محتوى الرسالة.",
+        "deliveryFailed": "فشل التسليم.",
+        "outcomeUnknown": "نتيجة التسليم غير معروفة."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "البحث حسب المعرّف أو الاسم",
+      "adAccount": "حساب الإعلانات",
+      "dateRange": "النطاق الزمني",
+      "timezoneHint": "التواريخ حسب {timezone}",
+      "presets": {
+        "last7": "آخر 7 أيام",
+        "last30": "آخر 30 يومًا",
+        "last90": "آخر 90 يومًا",
+        "thisMonth": "هذا الشهر",
+        "lastMonth": "الشهر الماضي"
+      },
+      "columns": {
+        "id": "المعرّف",
+        "name": "الاسم",
+        "page": "صفحة فيسبوك",
+        "delivered": "الرسائل التي تم تسليمها",
+        "readRate": "معدل القراءة",
+        "linkClicks": "النقرات على الرابط",
+        "linkClickRate": "معدل النقر على الرابط",
+        "costPerClick": "التكلفة لكل نقرة",
+        "costPerDelivery": "التكلفة لكل تسليم",
+        "spend": "المبلغ المنفق"
+      },
+      "notes": {
+        "delivery": "لا تُبلغ Meta عن هذا للمستلمين في أوروبا أو اليابان؛ تعرض تلك الحملات -.",
+        "clicks": "لا تُبلغ Meta عن هذا للمستلمين في أوروبا أو الأرجنتين أو تركيا أو كوريا الجنوبية أو اليابان؛ تعرض تلك الحملات -."
+      },
+      "footer": {
+        "label": "الإجمالي: {count, plural, one {# حملة} other {# حملات}}",
+        "total": "الإجمالي",
+        "average": "المتوسط"
+      },
+      "totalsUnavailable": "الإجماليات غير متاحة الآن. حاول مرة أخرى بعد قليل.",
+      "readOnly": "أعد ربط الرسائل التسويقية لعرض الإحصائيات.",
+      "empty": "لا توجد حملات رسائل تسويقية بعد. أنشئ حملة من علامة التبويب الحملات.",
+      "noResults": "لا توجد حملات تطابق بحثك."
     }
   },
   "facebookAds": {

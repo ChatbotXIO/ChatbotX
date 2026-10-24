@@ -110,27 +110,62 @@ export const getAccountPictureUrl = async (props: {
   }
 }
 
-export const subscribePageToAppWebhook = (props: {
+/** Marketing Messages webhook fields every connected Page must carry. */
+export const MARKETING_MESSAGE_PAGE_SUBSCRIBE_FIELDS = [
+  "marketing_message_echoes",
+  "marketing_message_deliveries",
+  "marketing_message_delivery_failed",
+] as const
+
+/**
+ * Subscribes the Page to the app webhook. `subscribed_fields` REPLACES the
+ * app's list, so `subscribedFields` must be the complete base set.
+ *
+ * Marketing Messages fields are best-effort: when `includeMarketingMessages`
+ * is set (default when `subscribedFields` is omitted) the first attempt is
+ * `base ∪ marketing`; if Meta rejects it, we warn and retry once with the base
+ * fields only so a Page connect never fails because of the extra fields.
+ */
+export const subscribePageToAppWebhook = async (props: {
   pageId: string
   accessToken: string
   version?: string
   subscribedFields?: string
+  includeMarketingMessages?: boolean
 }): Promise<void> => {
   const { version = DEFAULT_API_VERSION } = props
   const endpoint = `${version}/me/subscribed_apps`
-  const subscribedFields =
-    props.subscribedFields ?? PAGE_SUBSCRIBE_SCOPES.join(",")
+  const baseFields = props.subscribedFields ?? PAGE_SUBSCRIBE_SCOPES.join(",")
+  const includeMarketing =
+    props.includeMarketingMessages ?? props.subscribedFields === undefined
 
-  return rescue(endpoint, () =>
-    facebookGraphClient.post(endpoint, {
-      headers: {
-        Authorization: `Bearer ${props.accessToken}`,
-      },
-      json: {
-        subscribed_fields: subscribedFields,
-      },
-    }),
-  )
+  const post = (fields: string) =>
+    rescue(endpoint, () =>
+      facebookGraphClient.post(endpoint, {
+        headers: { Authorization: `Bearer ${props.accessToken}` },
+        json: { subscribed_fields: fields },
+      }),
+    )
+
+  if (!includeMarketing) {
+    await post(baseFields)
+    return
+  }
+  const withMarketing = [
+    ...new Set([
+      ...baseFields.split(",").filter(Boolean),
+      ...MARKETING_MESSAGE_PAGE_SUBSCRIBE_FIELDS,
+    ]),
+  ].join(",")
+  try {
+    await post(withMarketing)
+  } catch (err) {
+    logger.warn(
+      { err, pageId: props.pageId },
+      "Page subscription with marketing message fields failed; retrying with base fields",
+    )
+    await post(baseFields)
+  }
 }
 
 /**

@@ -12,7 +12,6 @@ import {
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
-import { useQuery } from "@tanstack/react-query"
 import type { ColumnDef } from "@tanstack/react-table"
 import { PencilIcon, PlusIcon, RefreshCwIcon, Trash2Icon } from "lucide-react"
 import Link from "next/link"
@@ -20,10 +19,20 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
-import { orpc } from "@/lib/orpc/query"
+import { useIntervalRouterRefresh } from "@/hooks/use-interval-router-refresh"
 import { connectMarketingMessagesAction } from "../actions/connect.action"
+import { useMarketingMessagesNameLookups } from "../hooks/use-marketing-messages-name-lookups"
+import { isActiveStatus } from "../lib/campaign-status"
 import { toMajorUnits } from "../lib/currency"
+import type { CampaignCounts } from "../queries"
+import { CampaignStatusBadge } from "./campaign-status-badge"
 import { DeleteMarketingMessageDialog } from "./delete-marketing-message-dialog"
+
+const countLabelKey = {
+  sent: "facebookMarketingMessages.delivery.counts.sent",
+  delivered: "facebookMarketingMessages.delivery.counts.delivered",
+  failed: "fields.status.failed",
+} as const
 
 /**
  * `currencyOffset` is the snapshot taken when the campaign was created, so a
@@ -46,13 +55,19 @@ function formatBudget(row: FacebookMarketingMessageModel): string {
 export function MarketingMessagesTable({
   workspaceId,
   rows,
+  counts,
   readOnly = false,
 }: {
   workspaceId: string
+  counts: Record<string, CampaignCounts>
   rows: FacebookMarketingMessageModel[]
   readOnly?: boolean
 }) {
   const t = useTranslations()
+  useIntervalRouterRefresh({
+    enabled: rows.some((row) => isActiveStatus(row.status)),
+    intervalMs: 30_000,
+  })
   const [pendingDelete, setPendingDelete] =
     useState<FacebookMarketingMessageModel | null>(null)
 
@@ -64,37 +79,9 @@ export function MarketingMessagesTable({
     },
   )
 
-  // The row only stores `pageId`; the name lives on the Messenger integration.
-  const pages = useQuery(
-    orpc.facebookMarketingMessagesAPI.listMarketingMessagesPagesAPI.queryOptions(
-      { input: { workspaceId } },
-    ),
-  )
-  const pageNameById = useMemo(
-    () =>
-      new Map(
-        (pages.data?.pages ?? []).map((page) => [page.pageId, page.name]),
-      ),
-    [pages.data],
-  )
-
-  // Ad account names come from Meta, so this one needs a live grant — skip the
-  // call entirely while the grant is expired (`readOnly`) instead of firing a
-  // request that can only fail.
-  const adAccounts = useQuery(
-    orpc.facebookMarketingMessagesAPI.listMarketingMessagesAdAccountsAPI.queryOptions(
-      { input: { workspaceId }, enabled: !readOnly },
-    ),
-  )
-  const adAccountNameById = useMemo(
-    () =>
-      new Map(
-        (adAccounts.data?.accounts ?? []).map((account) => [
-          account.id,
-          account.name,
-        ]),
-      ),
-    [adAccounts.data],
+  const { pageNameById, adAccountNameById } = useMarketingMessagesNameLookups(
+    workspaceId,
+    readOnly,
   )
 
   const columns = useMemo<ColumnDef<FacebookMarketingMessageModel>[]>(() => {
@@ -173,6 +160,29 @@ export function MarketingMessagesTable({
             : t("facebookMarketingMessages.fields.lifetime"),
       },
       {
+        accessorKey: "status",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.status.label")}
+          />
+        ),
+        cell: ({ row }) => <CampaignStatusBadge status={row.original.status} />,
+      },
+      ...(["sent", "delivered", "failed"] as const).map(
+        (key): ColumnDef<FacebookMarketingMessageModel> => ({
+          id: key,
+          header: ({ column }) => (
+            <DataTableColumnHeader
+              column={column}
+              title={t(countLabelKey[key])}
+            />
+          ),
+          cell: ({ row }) => counts[row.original.id]?.[key] ?? "-",
+          enableSorting: false,
+        }),
+      ),
+      {
         accessorKey: "createdAt",
         header: ({ column }) => (
           <DataTableColumnHeader
@@ -226,7 +236,7 @@ export function MarketingMessagesTable({
         enableHiding: false,
       },
     ]
-  }, [t, workspaceId, readOnly, pageNameById, adAccountNameById])
+  }, [t, workspaceId, readOnly, pageNameById, adAccountNameById, counts])
 
   const { table } = useDataTable({
     data: rows,

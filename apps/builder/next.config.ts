@@ -36,9 +36,16 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   experimental: {
+    // Audience uploads allow a 20 MB file (AUDIENCE_MAX_FILE_BYTES); multipart
+    // framing adds overhead, so both body caps sit at 21mb or a 20 MB file
+    // would be rejected before validation runs. `proxyClientMaxBodySize`
+    // (Next 16, default 10MB) applies because src/proxy.ts matches every
+    // non-static path, server-action POSTs included, so the proxy buffers
+    // those bodies.
     serverActions: {
-      bodySizeLimit: "20mb",
+      bodySizeLimit: "21mb",
     },
+    proxyClientMaxBodySize: "21mb",
     // Additive to Next's built-in default list, which already covers
     // lucide-react. `@chatbotx.io/ui` doesn't belong here: it's imported via
     // per-file subpaths and its root export is not a re-export barrel, so

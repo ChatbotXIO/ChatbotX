@@ -2869,7 +2869,7 @@
     "title": "Algemeen"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "Hiermee verwijder je de campagne alleen uit ChatbotX. De Meta-berichtcampagne blijft lopen — pauzeer of verwijder deze in Advertentiebeheer.",
+    "deleteWarning": "Hiermee verwijder je de Meta-berichtencampagne en haal je de campagne uit ChatbotX. Als Meta het verwijderen weigert, blijft de campagne behouden.",
     "title": "Facebook Marketing Messages",
     "description": "Verhoog betrokkenheid en verkoop met gepersonaliseerde promotieberichten op Messenger.",
     "create": "Nieuw maken",
@@ -2894,13 +2894,197 @@
       "generic": "Generiek",
       "greeting": "Begroeting",
       "quickReplies": "Snelle antwoorden",
-      "elements": "Kaarten"
+      "elements": "Kaarten",
+      "targetMessaging": "Doelgroep voor berichten",
+      "targetOptIn": "Opt-in",
+      "targetOptInDescription": "Klanten op de pagina die hebben ingestemd met het ontvangen van marketingberichten",
+      "targetCustomAudience": "Aangepaste doelgroep",
+      "targetCustomAudienceDescription": "Berichten sturen naar doelgroepen die uit een bestand zijn geüpload",
+      "audience": "Aangepaste doelgroep"
     },
+    "noReadyAudiences": "Geen gereede aangepaste doelgroepen voor deze pagina en dit advertentieaccount.",
+    "manageAudiences": "Doelgroepen beheren",
     "errors": {
       "notConfigured": "Facebook Marketing Messages is niet geconfigureerd. Vraag je beheerder om de configuratie-ID voor marketingberichten in te stellen.",
       "notGranted": "Geef toegang om de functie Marketingberichten te gebruiken.",
       "tosNotAccepted": "Accepteer de voorwaarden voor aangepaste objecten op {url} om deze functie te gebruiken",
-      "notFound": "Marketingbericht niet gevonden."
+      "notFound": "Marketingbericht niet gevonden.",
+      "audienceNotTargetable": "De geselecteerde aangepaste doelgroep is niet gereed of hoort niet bij deze pagina en dit advertentieaccount.",
+      "connectFirst": "Verbind Marketing Messages eerst in de ChatbotX-app.",
+      "mmInvalidState": "Deze actie is niet beschikbaar in de huidige status van de campagne.",
+      "mmCampaignEnded": "De Meta-berichtencampagne is afgelopen en kan daarom niet worden verzonden of hervat.",
+      "mmPageNotConnected": "De pagina van deze campagne is niet verbonden met deze werkruimte.",
+      "mmContentLocked": "De inhoud kan niet meer worden gewijzigd nadat het eerste bericht is verzonden.",
+      "metaDeleteFailed": "Meta kon deze campagne niet verwijderen, dus deze is behouden. {message}",
+      "statisticsUnknownAdAccount": "Deze werkruimte heeft geen Marketing Messages-campagnes op dat advertentieaccount.",
+      "statisticsInvalidRange": "Kies een startdatum op of vóór de einddatum, binnen de afgelopen 37 maanden."
+    },
+    "tabs": {
+      "campaigns": "Campagnes",
+      "audiences": "Doelgroepen",
+      "statistics": "Statistieken"
+    },
+    "audiences": {
+      "title": "Aangepaste doelgroepen",
+      "create": "Nieuw maken",
+      "uploadMore": "Meer rijen uploaden",
+      "empty": "Nog geen aangepaste doelgroepen.",
+      "deleteTitle": "Aangepaste doelgroep verwijderen",
+      "deleteWarning": "Hiermee wordt de aangepaste doelgroep \"{name}\" op Meta en in ChatbotX verwijderd. Dit kan niet ongedaan worden gemaakt.",
+      "deleted": "Aangepaste doelgroep verwijderd.",
+      "pageDisconnected": "Pagina losgekoppeld",
+      "status": {
+        "ready": "Gereed",
+        "missing": "Verwijderd op Meta"
+      },
+      "fields": {
+        "customAudienceId": "ID van aangepaste doelgroep",
+        "approximateCount": "Geschat aantal",
+        "status": "Status",
+        "file": "Bestand uploaden"
+      },
+      "wizard": {
+        "title": "Aangepaste doelgroep maken",
+        "uploadMoreTitle": "Meer rijen uploaden",
+        "steps": {
+          "prepare": "Lijst voorbereiden",
+          "upload": "Uploaden",
+          "confirm": "Bevestigen"
+        },
+        "prepareDescription": "Een abonneelijst is een CSV- of TXT-bestand met informatie waarmee je je doelgroep voor marketingberichten opbouwt. We gebruiken het telefoonnummer om je abonnees te koppelen aan Facebook- en Instagram-gebruikers. Voordat de informatie naar ons wordt verzonden, wordt je lijst met identificatoren gehasht tot willekeurige code.",
+        "aboutHashing": "Over hashing",
+        "downloadTemplate": "Bestandssjabloon downloaden",
+        "mainIdentifiers": "Voeg ten minste één hoofdidentificator toe",
+        "moreIdentifiers": "Voeg meer identificatoren toe",
+        "identifiers": {
+          "email": "E-mail",
+          "phone": "Telefoonnummer",
+          "madid": "Mobiel advertentie-ID",
+          "fn": "Voornaam",
+          "ln": "Achternaam",
+          "ct": "Plaats",
+          "st": "Staat/provincie",
+          "country": "Land",
+          "zip": "Postcode",
+          "dob": "Geboortedatum",
+          "doby": "Geboortejaar",
+          "gen": "Geslacht"
+        },
+        "uploadNote": "Zorg er voor het uploaden van de lijst voor dat de identificatoren compleet zijn en de juiste notatie hebben. De lijst moet de indeling .csv, .txt of .xlsx hebben.",
+        "namePlaceholder": "Voer de naam van de doelgroep in...",
+        "descriptionPlaceholder": "Korte beschrijving (indien van toepassing)",
+        "dropzone": "Klik om te uploaden of sleep en zet neer",
+        "maxFileSize": "Maximale bestandsgrootte: 20 MB",
+        "fileRequired": "Selecteer een bestand om te uploaden.",
+        "fileTooLarge": "Het bestand is groter dan 20 MB.",
+        "fileType": "Het bestand moet .csv, .txt of .xlsx zijn.",
+        "next": "Volgende",
+        "back": "Terug",
+        "upload": "Uploaden",
+        "done": "Klaar",
+        "successTitle": "Upload geslaagd",
+        "successRows": "Je Messenger-abonneelijst is geüpload: {count, plural, one {# rij} other {# rijen}}",
+        "skippedRows": "{count, plural, one {# rij is} other {# rijen zijn}} overgeslagen (geen geldig e-mailadres of telefoonnummer).",
+        "invalidRows": "{count, plural, one {# rij is} other {# rijen zijn}} geweigerd door Meta.",
+        "matchingNote": "Het kan enkele minuten duren voordat je abonnees zijn gekoppeld aan mensen op Facebook. Je kunt de status bekijken in de doelgroeplijst."
+      },
+      "errors": {
+        "audienceInvalidFile": "Het bestand kan niet worden gelezen. Gebruik een .csv-, .txt- of .xlsx-bestand met een koprij.",
+        "audienceTooManyRows": "Het bestand heeft meer dan {max, number} rijen.",
+        "audienceNoIdentifier": "Het bestand heeft een e-mail- of telefoonkolom nodig.",
+        "audienceNoValidRows": "Geen enkele rij heeft een geldig e-mailadres of telefoonnummer.",
+        "audiencePartialUpload": "De doelgroep is gemaakt, maar de upload is gestopt na {received, number} rijen. Gebruik \"Meer rijen uploaden\" om het opnieuw te proberen.",
+        "audienceNotFound": "Aangepaste doelgroep niet gevonden.",
+        "audienceCreateRejected": "Meta heeft de doelgroep afgewezen: {reason}",
+        "uploadUncertain": "De upload is mogelijk niet voltooid. Sluit dit venster en controleer de doelgroeplijst; gebruik \"Meer rijen uploaden\" als de doelgroep is aangemaakt.",
+        "pageNotConnected": "De geselecteerde Pagina is niet verbonden met deze workspace.",
+        "audienceInUse": "Deze aangepaste doelgroep wordt gebruikt door {count, plural, one {# marketingbericht} other {# marketingberichten}} en kan niet worden verwijderd."
+      }
+    },
+    "delivery": {
+      "title": "Bezorging",
+      "contentLocked": "De inhoud is vergrendeld omdat er al berichten zijn verzonden.",
+      "topicsReturned": "Door Meta teruggegeven onderwerpen: {topics}",
+      "recipients": "{count} ontvangers",
+      "startsAt": "Start: {date}",
+      "completedAt": "Voltooid: {date}",
+      "errorBreakdown": "Fouten",
+      "retrying": "Meta accepteert momenteel geen verzendingen; er wordt automatisch opnieuw geprobeerd.",
+      "counts": {
+        "sent": "Verzonden",
+        "delivered": "Bezorgd",
+        "unconfirmed": "Onbevestigd"
+      },
+      "status": {
+        "notSent": "Niet verzonden",
+        "scheduled": "Gepland",
+        "sending": "Wordt verzonden",
+        "waitingNextDay": "Wacht op de volgende dag",
+        "paused": "Gepauzeerd",
+        "stopped": "Gestopt"
+      },
+      "reason": {
+        "pageNotConnected": "De Pagina is niet verbonden met deze workspace.",
+        "quotaReached": "Gepauzeerd: je berichtenquotum is bereikt.",
+        "workspaceBlocked": "Gepauzeerd: deze workspace is geblokkeerd.",
+        "grantInvalid": "Gepauzeerd: de Facebook-verbinding is verlopen. Verbind Marketing Messages opnieuw.",
+        "metaBlocker": "Meta blokkeert deze campagne.",
+        "contentRejected": "Meta heeft de berichtinhoud afgewezen.",
+        "noTokens": "Er zijn geen ontvangers gevonden voor deze campagne.",
+        "noMatchingTopic": "Geen ontvanger met toestemming komt overeen met het onderwerp \"Updates and promotions\".",
+        "tokenFetchFailed": "Ontvangers konden niet bij Meta worden opgehaald.",
+        "campaignEnded": "De Meta-campagne is afgelopen.",
+        "lifetimeBudgetReached": "Het totale budget is op."
+      },
+      "errors": {
+        "grantInvalid": "De Facebook-verbinding is verlopen.",
+        "campaignInactive": "De Meta-campagne is niet actief.",
+        "budgetReached": "Budget op.",
+        "dailyBudgetReached": "Dagbudget bereikt.",
+        "optedOut": "De ontvanger heeft zich afgemeld.",
+        "frequencyLimit": "Frequentielimiet van de ontvanger bereikt.",
+        "contentRejected": "Berichtinhoud afgewezen door Meta.",
+        "deliveryFailed": "Bezorging mislukt.",
+        "outcomeUnknown": "Bezorgresultaat onbekend."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "Zoeken op ID of naam",
+      "adAccount": "Advertentieaccount",
+      "dateRange": "Periode",
+      "timezoneHint": "Datums in {timezone}",
+      "presets": {
+        "last7": "Afgelopen 7 dagen",
+        "last30": "Afgelopen 30 dagen",
+        "last90": "Afgelopen 90 dagen",
+        "thisMonth": "Deze maand",
+        "lastMonth": "Vorige maand"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Naam",
+        "page": "Facebook-pagina",
+        "delivered": "Afgeleverde berichten",
+        "readRate": "Leespercentage",
+        "linkClicks": "Linkklikken",
+        "linkClickRate": "Linkklikpercentage",
+        "costPerClick": "Kosten per klik",
+        "costPerDelivery": "Kosten per aflevering",
+        "spend": "Uitgegeven bedrag"
+      },
+      "notes": {
+        "delivery": "Meta rapporteert dit niet voor ontvangers in Europa of Japan; die campagnes tonen -.",
+        "clicks": "Meta rapporteert dit niet voor ontvangers in Europa, Argentinië, Turkije, Zuid-Korea of Japan; die campagnes tonen -."
+      },
+      "footer": {
+        "label": "Totaal: {count, plural, one {# campagne} other {# campagnes}}",
+        "total": "Totaal",
+        "average": "Gemiddelde"
+      },
+      "totalsUnavailable": "Totalen zijn nu niet beschikbaar. Probeer het zo opnieuw.",
+      "readOnly": "Maak opnieuw verbinding met Marketing Messages om statistieken te zien.",
+      "empty": "Nog geen Marketing Messages-campagnes. Maak er een aan op het tabblad Campagnes.",
+      "noResults": "Geen campagnes gevonden voor je zoekopdracht."
     }
   },
   "facebookAds": {

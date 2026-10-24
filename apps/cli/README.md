@@ -814,6 +814,31 @@ chatbotx facebook-lead-ads forms --pageId <pageId>    # List a page's lead forms
 
 ---
 
+### `marketing-messages`
+
+```bash
+chatbotx marketing-messages pages                     # List connected Messenger Pages
+chatbotx marketing-messages ad-accounts               # List ad accounts (needs Marketing Messages connected in the web app)
+chatbotx marketing-messages list-campaigns
+chatbotx marketing-messages get-campaign <id>         # Status plus delivery counts and errors
+chatbotx marketing-messages create-campaign --pageId <pageId> --adAccountId <act_id> --name <name> --budgetType <daily|lifetime> --budgetMajorUnits <n> --targetType <optIn|customAudience> --content <json>
+chatbotx marketing-messages update-campaign <id>      # Content is locked after the first message is sent
+chatbotx marketing-messages delete-campaign <id>      # Deletes the Meta campaign first
+chatbotx marketing-messages campaigns-stop <id>
+chatbotx marketing-messages campaigns-resume <id>
+chatbotx marketing-messages campaigns-send <id>       # Only for campaigns in status notSent
+chatbotx marketing-messages list-audiences [--adAccountId] [--pageId] [--readyOnly]
+chatbotx marketing-messages audiences-live            # Live size and readiness
+chatbotx marketing-messages create-audience --adAccountId <act_id> --pageId <pageId> --name <name> --headers <json> --rows <json>
+chatbotx marketing-messages audiences-rows <id> --headers <json> --rows <json>
+chatbotx marketing-messages delete-audience <id>
+chatbotx marketing-messages statistics [--adAccountId] [--since] [--until] [--search] [--page] [--perPage] [--sort] [--order]  # Meta insights per campaign + page totals (default: last 30 days)
+```
+
+These operations are not in the MCP default tool set; reach them through `search_tools` / `call_tool`.
+
+---
+
 ### `fb-comments`
 
 ```bash

@@ -1616,7 +1616,7 @@
     "unknown": "未知"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "这只会从 ChatbotX 中移除该广告系列。Meta 消息广告系列仍在投放——请在广告管理工具中暂停或删除。",
+    "deleteWarning": "这会删除 Meta 消息广告系列，并从 ChatbotX 中移除该广告系列。如果 Meta 拒绝删除，则会保留该广告系列。",
     "title": "Facebook 营销消息",
     "description": "通过 Messenger 上的个性化推广消息提升互动与销售。",
     "create": "新建",
@@ -1641,13 +1641,197 @@
       "generic": "通用",
       "greeting": "问候语",
       "quickReplies": "快速回复",
-      "elements": "卡片"
+      "elements": "卡片",
+      "targetMessaging": "消息目标",
+      "targetOptIn": "选择加入",
+      "targetOptInDescription": "已同意接收营销消息的主页客户",
+      "targetCustomAudience": "自定义受众",
+      "targetCustomAudienceDescription": "向从文件上传的受众发送消息",
+      "audience": "自定义受众"
     },
+    "noReadyAudiences": "此主页和广告账户没有可用的自定义受众。",
+    "manageAudiences": "管理受众",
     "errors": {
       "notConfigured": "尚未配置 Facebook 营销消息。请让管理员设置营销消息配置 ID。",
       "notGranted": "请授予访问权限以使用营销消息功能。",
       "tosNotAccepted": "要使用此功能，请在 {url} 接受自定义对象条款",
-      "notFound": "未找到营销消息。"
+      "notFound": "未找到营销消息。",
+      "audienceNotTargetable": "所选自定义受众尚未就绪，或不属于此主页和广告账户。",
+      "connectFirst": "请先在 ChatbotX 应用中连接营销消息。",
+      "mmInvalidState": "当前活动状态下无法执行此操作。",
+      "mmCampaignEnded": "Meta 消息广告系列已结束，因此无法发送或恢复。",
+      "mmPageNotConnected": "此广告系列的主页未连接到该工作区。",
+      "mmContentLocked": "首条消息发送后，内容无法再更改。",
+      "metaDeleteFailed": "Meta 无法删除此广告系列，因此已保留。{message}",
+      "statisticsUnknownAdAccount": "此工作区在该广告账户中没有营销消息活动。",
+      "statisticsInvalidRange": "请选择不晚于结束日期、且在最近 37 个月内的开始日期。"
+    },
+    "tabs": {
+      "campaigns": "营销活动",
+      "audiences": "受众",
+      "statistics": "统计"
+    },
+    "audiences": {
+      "title": "自定义受众",
+      "create": "新建",
+      "uploadMore": "上传更多行",
+      "empty": "暂无自定义受众。",
+      "deleteTitle": "删除自定义受众",
+      "deleteWarning": "此操作将在 Meta 和 ChatbotX 中删除自定义受众“{name}”，且无法撤销。",
+      "deleted": "自定义受众已删除。",
+      "pageDisconnected": "主页已断开连接",
+      "status": {
+        "ready": "就绪",
+        "missing": "已在 Meta 上删除"
+      },
+      "fields": {
+        "customAudienceId": "自定义受众 ID",
+        "approximateCount": "大致数量",
+        "status": "状态",
+        "file": "上传文件"
+      },
+      "wizard": {
+        "title": "创建自定义受众",
+        "uploadMoreTitle": "上传更多行",
+        "steps": {
+          "prepare": "准备列表",
+          "upload": "上传",
+          "confirm": "确认"
+        },
+        "prepareDescription": "订阅者列表是一个 CSV 或 TXT 文件，包含用于创建营销消息受众的信息。我们使用电话号码将您的订阅者与 Facebook 和 Instagram 用户进行匹配。在信息发送给我们之前，您的标识符列表会被哈希处理为随机代码。",
+        "aboutHashing": "关于哈希处理",
+        "downloadTemplate": "下载文件模板",
+        "mainIdentifiers": "至少包含一个主要标识符",
+        "moreIdentifiers": "包含更多标识符",
+        "identifiers": {
+          "email": "电子邮件",
+          "phone": "电话号码",
+          "madid": "移动广告 ID",
+          "fn": "名",
+          "ln": "姓",
+          "ct": "城市",
+          "st": "州/省",
+          "country": "国家/地区",
+          "zip": "邮政编码",
+          "dob": "出生日期",
+          "doby": "出生年份",
+          "gen": "性别"
+        },
+        "uploadNote": "上传列表之前，请确保标识符完整且格式正确。列表必须为 .csv、.txt 或 .xlsx 格式。",
+        "namePlaceholder": "输入受众名称...",
+        "descriptionPlaceholder": "简短说明（如有）",
+        "dropzone": "点击上传或拖放文件",
+        "maxFileSize": "文件大小上限：20MB",
+        "fileRequired": "请选择要上传的文件。",
+        "fileTooLarge": "文件大于 20MB。",
+        "fileType": "文件必须为 .csv、.txt 或 .xlsx 格式。",
+        "next": "下一步",
+        "back": "返回",
+        "upload": "上传",
+        "done": "完成",
+        "successTitle": "上传成功",
+        "successRows": "您的 Messenger 订阅者列表已上传 {count, plural, one {# 行} other {# 行}}",
+        "skippedRows": "已跳过 {count, plural, one {# 行} other {# 行}}（没有有效的电子邮件或电话）。",
+        "invalidRows": "Meta 拒绝了 {count, plural, one {# 行} other {# 行}}。",
+        "matchingNote": "我们可能需要几分钟才能完成订阅者与 Facebook 用户的匹配。您可以在受众列表中查看状态。"
+      },
+      "errors": {
+        "audienceInvalidFile": "无法读取该文件。请使用带有标题行的 .csv、.txt 或 .xlsx 文件。",
+        "audienceTooManyRows": "文件超过 {max, number} 行。",
+        "audienceNoIdentifier": "文件需要包含电子邮件或电话列。",
+        "audienceNoValidRows": "没有任何一行包含有效的电子邮件或电话号码。",
+        "audiencePartialUpload": "受众已创建，但上传在 {received, number} 行后停止。请使用“上传更多行”重试。",
+        "audienceNotFound": "未找到自定义受众。",
+        "audienceCreateRejected": "Meta 拒绝了该受众：{reason}",
+        "uploadUncertain": "上传可能尚未完成。请关闭此对话框并查看受众列表；如果受众已创建，请使用“上传更多行”。",
+        "pageNotConnected": "所选主页未连接到此工作区。",
+        "audienceInUse": "此自定义受众正被 {count, plural, one {# 条营销消息} other {# 条营销消息}} 使用，无法删除。"
+      }
+    },
+    "delivery": {
+      "title": "投递",
+      "contentLocked": "由于已发送过消息，内容已被锁定。",
+      "topicsReturned": "Meta 返回的主题：{topics}",
+      "recipients": "{count} 位收件人",
+      "startsAt": "开始：{date}",
+      "completedAt": "完成：{date}",
+      "errorBreakdown": "失败",
+      "retrying": "Meta 当前不接受发送；正在自动重试。",
+      "counts": {
+        "sent": "已发送",
+        "delivered": "已送达",
+        "unconfirmed": "未确认"
+      },
+      "status": {
+        "notSent": "未发送",
+        "scheduled": "已计划",
+        "sending": "发送中",
+        "waitingNextDay": "等待次日",
+        "paused": "已暂停",
+        "stopped": "已停止"
+      },
+      "reason": {
+        "pageNotConnected": "该主页未连接到此工作区。",
+        "quotaReached": "已暂停：消息配额已用完。",
+        "workspaceBlocked": "已暂停：此工作区已被封锁。",
+        "grantInvalid": "已暂停：Facebook 连接已过期。请重新连接 Marketing Messages。",
+        "metaBlocker": "Meta 正在阻止此活动。",
+        "contentRejected": "Meta 拒绝了消息内容。",
+        "noTokens": "未找到此活动的收件人。",
+        "noMatchingTopic": "没有已选择接收的收件人匹配“Updates and promotions”主题。",
+        "tokenFetchFailed": "无法从 Meta 获取收件人。",
+        "campaignEnded": "Meta 活动已结束。",
+        "lifetimeBudgetReached": "总预算已用完。"
+      },
+      "errors": {
+        "grantInvalid": "Facebook 连接已过期。",
+        "campaignInactive": "Meta 活动未启用。",
+        "budgetReached": "预算已用完。",
+        "dailyBudgetReached": "已达到每日预算。",
+        "optedOut": "收件人已退订。",
+        "frequencyLimit": "已达到收件人的频次上限。",
+        "contentRejected": "消息内容被 Meta 拒绝。",
+        "deliveryFailed": "投递失败。",
+        "outcomeUnknown": "投递结果未知。"
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "按 ID 或名称搜索",
+      "adAccount": "广告账户",
+      "dateRange": "日期范围",
+      "timezoneHint": "日期按 {timezone} 时区",
+      "presets": {
+        "last7": "过去 7 天",
+        "last30": "过去 30 天",
+        "last90": "过去 90 天",
+        "thisMonth": "本月",
+        "lastMonth": "上月"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "名称",
+        "page": "Facebook 主页",
+        "delivered": "已送达消息",
+        "readRate": "阅读率",
+        "linkClicks": "链接点击量",
+        "linkClickRate": "链接点击率",
+        "costPerClick": "单次点击费用",
+        "costPerDelivery": "单次送达费用",
+        "spend": "花费金额"
+      },
+      "notes": {
+        "delivery": "Meta 不报告欧洲或日本收件人的此项数据；这些活动显示为 -。",
+        "clicks": "Meta 不报告欧洲、阿根廷、土耳其、韩国或日本收件人的此项数据；这些活动显示为 -。"
+      },
+      "footer": {
+        "label": "合计：{count, plural, one {# 个活动} other {# 个活动}}",
+        "total": "合计",
+        "average": "平均"
+      },
+      "totalsUnavailable": "暂时无法获取合计数据，请稍后重试。",
+      "readOnly": "重新连接营销消息以查看统计数据。",
+      "empty": "还没有营销消息活动。请在“活动”标签页中创建。",
+      "noResults": "没有符合搜索条件的活动。"
     }
   },
   "facebookAds": {

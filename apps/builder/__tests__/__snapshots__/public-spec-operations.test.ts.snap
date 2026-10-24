@@ -1528,6 +1528,86 @@ exports[`public API spec — operation naming guard > operation list (operationI
     "path": "/v1/facebook-lead-ads/{id}",
   },
   {
+    "method": "GET",
+    "operationId": "facebookMarketingMessages.adAccounts.list",
+    "path": "/v1/marketing-messages/ad-accounts",
+  },
+  {
+    "method": "POST",
+    "operationId": "facebookMarketingMessages.audiences.create",
+    "path": "/v1/marketing-messages/audiences",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "facebookMarketingMessages.audiences.delete",
+    "path": "/v1/marketing-messages/audiences/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "facebookMarketingMessages.audiences.list",
+    "path": "/v1/marketing-messages/audiences",
+  },
+  {
+    "method": "GET",
+    "operationId": "facebookMarketingMessages.audiences.liveStatus",
+    "path": "/v1/marketing-messages/audiences/live",
+  },
+  {
+    "method": "POST",
+    "operationId": "facebookMarketingMessages.audiences.uploadMore",
+    "path": "/v1/marketing-messages/audiences/{id}/rows",
+  },
+  {
+    "method": "POST",
+    "operationId": "facebookMarketingMessages.campaigns.create",
+    "path": "/v1/marketing-messages/campaigns",
+  },
+  {
+    "method": "DELETE",
+    "operationId": "facebookMarketingMessages.campaigns.delete",
+    "path": "/v1/marketing-messages/campaigns/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "facebookMarketingMessages.campaigns.get",
+    "path": "/v1/marketing-messages/campaigns/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "facebookMarketingMessages.campaigns.list",
+    "path": "/v1/marketing-messages/campaigns",
+  },
+  {
+    "method": "POST",
+    "operationId": "facebookMarketingMessages.campaigns.resume",
+    "path": "/v1/marketing-messages/campaigns/{id}/resume",
+  },
+  {
+    "method": "POST",
+    "operationId": "facebookMarketingMessages.campaigns.send",
+    "path": "/v1/marketing-messages/campaigns/{id}/send",
+  },
+  {
+    "method": "POST",
+    "operationId": "facebookMarketingMessages.campaigns.stop",
+    "path": "/v1/marketing-messages/campaigns/{id}/stop",
+  },
+  {
+    "method": "PUT",
+    "operationId": "facebookMarketingMessages.campaigns.update",
+    "path": "/v1/marketing-messages/campaigns/{id}",
+  },
+  {
+    "method": "GET",
+    "operationId": "facebookMarketingMessages.pages.list",
+    "path": "/v1/marketing-messages/pages",
+  },
+  {
+    "method": "GET",
+    "operationId": "facebookMarketingMessages.statistics.get",
+    "path": "/v1/marketing-messages/statistics",
+  },
+  {
     "method": "POST",
     "operationId": "fbComments.create",
     "path": "/v1/fb-comments",

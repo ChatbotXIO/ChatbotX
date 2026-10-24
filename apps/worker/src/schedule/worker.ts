@@ -10,6 +10,7 @@ import { type Job, Queue, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { runJobWithAuditContext } from "../lib/run-job-with-audit-context"
+import { startMarketingMessageWorker } from "../marketing-message/consumer"
 import {
   cleanupTriggerExecutions,
   scanDateTimeTriggers,
@@ -19,10 +20,13 @@ import {
   scanDateTimeWebhooks,
 } from "../webhook/datetime-webhook-scanner"
 import { clearExpiredSupportAccess } from "./handlers/clear-expired-support-access"
+import { dispatchMarketingMessages } from "./handlers/dispatch-marketing-messages"
 import { dispatchProfileSnapshots } from "./handlers/dispatch-profile-snapshots"
 import { enqueueBroadcast } from "./handlers/enqueue-broadcast"
+import { enqueueMarketingMessages } from "./handlers/enqueue-marketing-messages"
 import { enqueueRecurringBroadcasts } from "./handlers/enqueue-recurring-broadcasts"
 import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
+import { finalizeMarketingMessages } from "./handlers/finalize-marketing-messages"
 import {
   googleAdsHousekeeping,
   googleAdsSyncSetups,
@@ -83,6 +87,10 @@ async function startScheduleWorker() {
       })
   }
 
+  // Hosted in the schedule process (its crons are the only producers) but on
+  // its own queue and concurrency, so Meta sends never starve schedule jobs.
+  const marketingMessageWorker = startMarketingMessageWorker()
+
   const worker = new Worker(
     queueNames.enum.schedule,
     async (job: Job<ScheduleJobData>) =>
@@ -116,6 +124,18 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.reconcileBroadcasts:
               await reconcileBroadcasts()
+              return
+
+            case ScheduleJobData.enqueueMarketingMessages:
+              await enqueueMarketingMessages()
+              return
+
+            case ScheduleJobData.dispatchMarketingMessages:
+              await dispatchMarketingMessages()
+              return
+
+            case ScheduleJobData.finalizeMarketingMessages:
+              await finalizeMarketingMessages()
               return
 
             case ScheduleJobData.evaluateTriggers:
@@ -294,7 +314,7 @@ async function startScheduleWorker() {
     }
     isShuttingDown = true
     try {
-      await worker.close()
+      await Promise.all([worker.close(), marketingMessageWorker.close()])
       await flushAllPendingWorkspaceRealtimeEvents()
       process.exit(0)
     } catch (err) {

@@ -419,7 +419,7 @@
     "title": "General"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "Aceasta elimină campania doar din ChatbotX. Campania de mesaje Meta continuă — pune-o pe pauză sau șterge-o în Ads Manager.",
+    "deleteWarning": "Aceasta șterge campania de mesaje Meta și elimină campania din ChatbotX. Dacă Meta refuză ștergerea, campania este păstrată.",
     "title": "Facebook Marketing Messages",
     "description": "Crește implicarea și vânzările cu mesaje promoționale personalizate pe Messenger.",
     "create": "Creează",
@@ -444,13 +444,197 @@
       "generic": "Generic",
       "greeting": "Salut",
       "quickReplies": "Răspunsuri rapide",
-      "elements": "Carduri"
+      "elements": "Carduri",
+      "targetMessaging": "Țintirea mesajelor",
+      "targetOptIn": "Opt-in",
+      "targetOptInDescription": "Clienții paginii care au acceptat să primească mesaje de marketing",
+      "targetCustomAudience": "Audiență personalizată",
+      "targetCustomAudienceDescription": "Trimite mesaje către audiențele încărcate dintr-un fișier",
+      "audience": "Audiență personalizată"
     },
+    "noReadyAudiences": "Nu există audiențe personalizate pregătite pentru această Pagină și acest cont de publicitate.",
+    "manageAudiences": "Gestionează audiențele",
     "errors": {
       "notConfigured": "Facebook Marketing Messages nu este configurat. Cere administratorului să seteze ID-ul de configurare pentru Mesaje de marketing.",
       "notGranted": "Acordă accesul pentru a folosi funcția Mesaje de marketing.",
       "tosNotAccepted": "Pentru a folosi această funcție, acceptă termenii pentru obiecte personalizate la {url}",
-      "notFound": "Mesajul de marketing nu a fost găsit."
+      "notFound": "Mesajul de marketing nu a fost găsit.",
+      "audienceNotTargetable": "Audiența personalizată selectată nu este pregătită sau nu aparține acestei Pagini și acestui cont de publicitate.",
+      "connectFirst": "Conectează mai întâi Marketing Messages în aplicația ChatbotX.",
+      "mmInvalidState": "Această acțiune nu este disponibilă în starea curentă a campaniei.",
+      "mmCampaignEnded": "Campania de mesaje Meta s-a încheiat, deci nu poate fi trimisă sau reluată.",
+      "mmPageNotConnected": "Pagina acestei campanii nu este conectată la acest spațiu de lucru.",
+      "mmContentLocked": "Conținutul nu mai poate fi modificat după trimiterea primului mesaj.",
+      "metaDeleteFailed": "Meta nu a putut șterge această campanie, așa că a fost păstrată. {message}",
+      "statisticsUnknownAdAccount": "Acest spațiu de lucru nu are campanii Marketing Messages în acel cont de publicitate.",
+      "statisticsInvalidRange": "Alege o dată de început egală cu sau înaintea datei de sfârșit, în ultimele 37 de luni."
+    },
+    "tabs": {
+      "campaigns": "Campanii",
+      "audiences": "Audiențe",
+      "statistics": "Statistici"
+    },
+    "audiences": {
+      "title": "Audiențe personalizate",
+      "create": "Creează nou",
+      "uploadMore": "Încarcă mai multe rânduri",
+      "empty": "Nu există încă audiențe personalizate.",
+      "deleteTitle": "Șterge audiența personalizată",
+      "deleteWarning": "Această acțiune șterge audiența personalizată \"{name}\" de pe Meta și din ChatbotX. Nu poate fi anulată.",
+      "deleted": "Audiență personalizată ștearsă.",
+      "pageDisconnected": "Pagină deconectată",
+      "status": {
+        "ready": "Gata",
+        "missing": "Ștearsă pe Meta"
+      },
+      "fields": {
+        "customAudienceId": "ID audiență personalizată",
+        "approximateCount": "Număr aproximativ",
+        "status": "Stare",
+        "file": "Încarcă fișier"
+      },
+      "wizard": {
+        "title": "Creează audiență personalizată",
+        "uploadMoreTitle": "Încarcă mai multe rânduri",
+        "steps": {
+          "prepare": "Pregătește lista",
+          "upload": "Încarcă",
+          "confirm": "Confirmă"
+        },
+        "prepareDescription": "O listă de abonați este un fișier CSV sau TXT care conține informații folosite pentru a-ți construi audiența pentru mesaje de marketing. Folosim numărul de telefon pentru a potrivi abonații tăi cu utilizatorii Facebook și Instagram. Înainte ca informațiile să ne fie trimise, lista ta de identificatori este transformată prin hashing într-un cod aleatoriu.",
+        "aboutHashing": "Despre hashing",
+        "downloadTemplate": "Descarcă șablonul de fișier",
+        "mainIdentifiers": "Include cel puțin un identificator principal",
+        "moreIdentifiers": "Include mai mulți identificatori",
+        "identifiers": {
+          "email": "E-mail",
+          "phone": "Număr de telefon",
+          "madid": "ID de publicitate mobil",
+          "fn": "Prenume",
+          "ln": "Nume de familie",
+          "ct": "Oraș",
+          "st": "Stat/Provincie",
+          "country": "Țară",
+          "zip": "Cod poștal",
+          "dob": "Data nașterii",
+          "doby": "Anul nașterii",
+          "gen": "Gen"
+        },
+        "uploadNote": "Înainte de a încărca lista, asigură-te că identificatorii sunt completi și în formatul corect. Lista trebuie să fie în format .csv, .txt sau .xlsx.",
+        "namePlaceholder": "Introdu numele audienței...",
+        "descriptionPlaceholder": "Scurtă descriere (dacă există)",
+        "dropzone": "Fă clic pentru a încărca sau trage și plasează",
+        "maxFileSize": "Dimensiunea maximă a fișierului: 20 MB",
+        "fileRequired": "Selectează un fișier de încărcat.",
+        "fileTooLarge": "Fișierul este mai mare de 20 MB.",
+        "fileType": "Fișierul trebuie să fie .csv, .txt sau .xlsx.",
+        "next": "Înainte",
+        "back": "Înapoi",
+        "upload": "Încarcă",
+        "done": "Gata",
+        "successTitle": "Încărcare reușită",
+        "successRows": "Lista ta de abonați Messenger a fost încărcată: {count, plural, one {# rând} other {# de rânduri}}",
+        "skippedRows": "{count, plural, one {# rând a fost omis} other {# de rânduri au fost omise}} (fără e-mail sau telefon valid).",
+        "invalidRows": "{count, plural, one {# rând a fost respins} other {# de rânduri au fost respinse}} de Meta.",
+        "matchingNote": "Ar putea dura câteva minute pentru a finaliza potrivirea abonaților tăi cu persoane de pe Facebook. Poți verifica starea în lista de audiențe."
+      },
+      "errors": {
+        "audienceInvalidFile": "Fișierul nu a putut fi citit. Folosește un fișier .csv, .txt sau .xlsx cu rând de antet.",
+        "audienceTooManyRows": "Fișierul are mai mult de {max, number} rânduri.",
+        "audienceNoIdentifier": "Fișierul are nevoie de o coloană de e-mail sau telefon.",
+        "audienceNoValidRows": "Niciun rând nu are un e-mail sau un număr de telefon valid.",
+        "audiencePartialUpload": "Audiența a fost creată, dar încărcarea s-a oprit după {received, number} rânduri. Folosește \"Încarcă mai multe rânduri\" pentru a reîncerca.",
+        "audienceNotFound": "Audiența personalizată nu a fost găsită.",
+        "audienceCreateRejected": "Meta a respins audiența: {reason}",
+        "uploadUncertain": "Încărcarea poate să nu fi fost finalizată. Închide această fereastră și verifică lista de audiențe; folosește „Încarcă mai multe rânduri” dacă audiența a fost creată.",
+        "pageNotConnected": "Pagina selectată nu este conectată la acest spațiu de lucru.",
+        "audienceInUse": "Această audiență personalizată este folosită de {count, plural, one {# mesaj de marketing} other {# mesaje de marketing}} și nu poate fi ștearsă."
+      }
+    },
+    "delivery": {
+      "title": "Livrare",
+      "contentLocked": "Conținutul este blocat deoarece au fost deja trimise mesaje.",
+      "topicsReturned": "Subiecte returnate de Meta: {topics}",
+      "recipients": "{count} destinatari",
+      "startsAt": "Început: {date}",
+      "completedAt": "Finalizat: {date}",
+      "errorBreakdown": "Erori",
+      "retrying": "Meta nu acceptă trimiteri momentan; se reîncearcă automat.",
+      "counts": {
+        "sent": "Trimise",
+        "delivered": "Livrate",
+        "unconfirmed": "Neconfirmate"
+      },
+      "status": {
+        "notSent": "Netrimis",
+        "scheduled": "Programat",
+        "sending": "Se trimite",
+        "waitingNextDay": "Așteaptă ziua următoare",
+        "paused": "În pauză",
+        "stopped": "Oprit"
+      },
+      "reason": {
+        "pageNotConnected": "Pagina nu este conectată la acest spațiu de lucru.",
+        "quotaReached": "În pauză: cota de mesaje a fost atinsă.",
+        "workspaceBlocked": "În pauză: acest spațiu de lucru este blocat.",
+        "grantInvalid": "În pauză: conexiunea Facebook a expirat. Reconectați Marketing Messages.",
+        "metaBlocker": "Meta blochează această campanie.",
+        "contentRejected": "Meta a respins conținutul mesajului.",
+        "noTokens": "Nu au fost găsiți destinatari pentru această campanie.",
+        "noMatchingTopic": "Niciun destinatar cu consimțământ nu corespunde subiectului \"Updates and promotions\".",
+        "tokenFetchFailed": "Nu s-au putut obține destinatarii de la Meta.",
+        "campaignEnded": "Campania Meta s-a încheiat.",
+        "lifetimeBudgetReached": "Bugetul total a fost epuizat."
+      },
+      "errors": {
+        "grantInvalid": "Conexiunea Facebook a expirat.",
+        "campaignInactive": "Campania Meta nu este activă.",
+        "budgetReached": "Buget epuizat.",
+        "dailyBudgetReached": "Bugetul zilnic a fost atins.",
+        "optedOut": "Destinatarul s-a dezabonat.",
+        "frequencyLimit": "Limita de frecvență a destinatarului a fost atinsă.",
+        "contentRejected": "Conținutul mesajului a fost respins de Meta.",
+        "deliveryFailed": "Livrarea a eșuat.",
+        "outcomeUnknown": "Rezultatul livrării este necunoscut."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "Caută după ID sau nume",
+      "adAccount": "Cont de publicitate",
+      "dateRange": "Interval de date",
+      "timezoneHint": "Date în {timezone}",
+      "presets": {
+        "last7": "Ultimele 7 zile",
+        "last30": "Ultimele 30 de zile",
+        "last90": "Ultimele 90 de zile",
+        "thisMonth": "Luna aceasta",
+        "lastMonth": "Luna trecută"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Nume",
+        "page": "Pagină Facebook",
+        "delivered": "Mesaje livrate",
+        "readRate": "Rată de citire",
+        "linkClicks": "Clicuri pe link",
+        "linkClickRate": "Rată de clic pe link",
+        "costPerClick": "Cost per clic",
+        "costPerDelivery": "Cost per livrare",
+        "spend": "Sumă cheltuită"
+      },
+      "notes": {
+        "delivery": "Meta nu raportează acest indicator pentru destinatarii din Europa sau Japonia; acele campanii afișează -.",
+        "clicks": "Meta nu raportează acest indicator pentru destinatarii din Europa, Argentina, Turcia, Coreea de Sud sau Japonia; acele campanii afișează -."
+      },
+      "footer": {
+        "label": "Total: {count, plural, one {# campanie} other {# campanii}}",
+        "total": "Total",
+        "average": "Medie"
+      },
+      "totalsUnavailable": "Totalurile nu sunt disponibile acum. Încearcă din nou în curând.",
+      "readOnly": "Reconectează Marketing Messages pentru a vedea statisticile.",
+      "empty": "Nu există încă campanii Marketing Messages. Creează una în fila Campanii.",
+      "noResults": "Nicio campanie nu corespunde căutării."
     }
   },
   "facebookAds": {

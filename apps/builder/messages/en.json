@@ -3706,7 +3706,7 @@
     "title": "General"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "This removes the campaign from ChatbotX only. The Meta message campaign keeps running — pause or delete it in Ads Manager.",
+    "deleteWarning": "This deletes the Meta message campaign and removes the campaign from ChatbotX. If Meta refuses the deletion, the campaign is kept.",
     "title": "Facebook Marketing Messages",
     "description": "Drive engagement and sales with personalized promotional messages on Messenger.",
     "create": "Create New",
@@ -3731,13 +3731,197 @@
       "generic": "Generic",
       "greeting": "Greeting",
       "quickReplies": "Quick replies",
-      "elements": "Cards"
+      "elements": "Cards",
+      "targetMessaging": "Target messaging",
+      "targetOptIn": "Opt-in",
+      "targetOptInDescription": "Customers on page who have agreed to receive marketing messages",
+      "targetCustomAudience": "Custom Audience",
+      "targetCustomAudienceDescription": "Send messages to audiences uploaded from a file",
+      "audience": "Custom audience"
     },
+    "noReadyAudiences": "No ready custom audiences for this Page and ad account.",
+    "manageAudiences": "Manage audiences",
     "errors": {
       "notConfigured": "Facebook Marketing Messages is not configured. Ask your administrator to set the Marketing Messages Config ID.",
       "notGranted": "Please grant access to use the Marketing Messages feature.",
       "tosNotAccepted": "To use this feature, please accept the custom object terms at {url}",
-      "notFound": "Marketing message not found."
+      "notFound": "Marketing message not found.",
+      "audienceNotTargetable": "The selected custom audience is not ready or does not belong to this Page and ad account.",
+      "connectFirst": "Connect Marketing Messages in the ChatbotX app first.",
+      "mmInvalidState": "This action is not available in the campaign's current state.",
+      "mmCampaignEnded": "The Meta message campaign has ended, so it cannot be sent or resumed.",
+      "mmPageNotConnected": "The Page for this campaign is not connected to this workspace.",
+      "mmContentLocked": "The content cannot be changed after the first message has been sent.",
+      "metaDeleteFailed": "Meta could not delete this campaign, so it was kept. {message}",
+      "statisticsUnknownAdAccount": "This workspace has no Marketing Messages campaigns on that ad account.",
+      "statisticsInvalidRange": "Choose a start date on or before the end date, within the last 37 months."
+    },
+    "tabs": {
+      "campaigns": "Campaigns",
+      "audiences": "Audiences",
+      "statistics": "Statistics"
+    },
+    "audiences": {
+      "title": "Custom Audiences",
+      "create": "Create New",
+      "uploadMore": "Upload more rows",
+      "empty": "No custom audiences yet.",
+      "deleteTitle": "Delete custom audience",
+      "deleteWarning": "This deletes the custom audience \"{name}\" on Meta and in ChatbotX. This cannot be undone.",
+      "deleted": "Custom audience deleted.",
+      "pageDisconnected": "Page disconnected",
+      "status": {
+        "ready": "Ready",
+        "missing": "Deleted on Meta"
+      },
+      "fields": {
+        "customAudienceId": "Custom Audience ID",
+        "approximateCount": "Approximate count",
+        "status": "Status",
+        "file": "Upload file"
+      },
+      "wizard": {
+        "title": "Create custom audience",
+        "uploadMoreTitle": "Upload more rows",
+        "steps": {
+          "prepare": "Prepare list",
+          "upload": "Upload",
+          "confirm": "Confirm"
+        },
+        "prepareDescription": "A subscriber list is a CSV or TXT file containing information used to build your audience for marketing messages. We use the phone number to match your subscribers to Facebook and Instagram users. Before the information is sent to us, your list of identifiers gets hashed into random code.",
+        "aboutHashing": "About hashing",
+        "downloadTemplate": "Download file template",
+        "mainIdentifiers": "Include at least one main identifier",
+        "moreIdentifiers": "Include more identifiers",
+        "identifiers": {
+          "email": "Email",
+          "phone": "Phone Number",
+          "madid": "Mobile advertiser ID",
+          "fn": "First name",
+          "ln": "Last name",
+          "ct": "City",
+          "st": "State/Province",
+          "country": "Country",
+          "zip": "ZIP/Postal Code",
+          "dob": "Date of birth",
+          "doby": "Year of birth",
+          "gen": "Gender"
+        },
+        "uploadNote": "Before uploading the list, make sure the identifiers are complete and in the correct format. The list must be in .csv, .txt or .xlsx format.",
+        "namePlaceholder": "Enter audience name...",
+        "descriptionPlaceholder": "Brief description (if any)",
+        "dropzone": "Click to upload or drag and drop",
+        "maxFileSize": "Maximum file size: 20MB",
+        "fileRequired": "Select a file to upload.",
+        "fileTooLarge": "The file is larger than 20MB.",
+        "fileType": "The file must be .csv, .txt or .xlsx.",
+        "next": "Next",
+        "back": "Back",
+        "upload": "Upload",
+        "done": "Done",
+        "successTitle": "Upload successful",
+        "successRows": "Your Messenger subscriber list has been uploaded {count, plural, one {# row} other {# rows}}",
+        "skippedRows": "{count, plural, one {# row was} other {# rows were}} skipped (no valid email or phone).",
+        "invalidRows": "{count, plural, one {# row was} other {# rows were}} rejected by Meta.",
+        "matchingNote": "We may need a few minutes to finish matching your subscribers with people on Facebook. You can check the status in the Audience list."
+      },
+      "errors": {
+        "audienceInvalidFile": "The file could not be read. Use a .csv, .txt or .xlsx file with a header row.",
+        "audienceTooManyRows": "The file has more than {max, number} rows.",
+        "audienceNoIdentifier": "The file needs an email or phone column.",
+        "audienceNoValidRows": "No row has a valid email or phone number.",
+        "audiencePartialUpload": "The audience was created, but the upload stopped after {received, number} rows. Use \"Upload more rows\" to retry.",
+        "audienceNotFound": "Custom audience not found.",
+        "audienceCreateRejected": "Meta rejected the audience: {reason}",
+        "uploadUncertain": "The upload may not have finished. Close this dialog and check the audience list; use \"Upload more rows\" if the audience was created.",
+        "pageNotConnected": "The selected Page is not connected to this workspace.",
+        "audienceInUse": "This custom audience is used by {count, plural, one {# marketing message} other {# marketing messages}} and cannot be deleted."
+      }
+    },
+    "delivery": {
+      "title": "Delivery",
+      "contentLocked": "The content is locked because messages have already been sent.",
+      "topicsReturned": "Topics Meta returned: {topics}",
+      "recipients": "{count} recipients",
+      "startsAt": "Starts: {date}",
+      "completedAt": "Completed: {date}",
+      "errorBreakdown": "Failures",
+      "retrying": "Meta is not accepting sends right now; retrying automatically.",
+      "counts": {
+        "sent": "Sent",
+        "delivered": "Delivered",
+        "unconfirmed": "Unconfirmed"
+      },
+      "status": {
+        "notSent": "Not sent",
+        "scheduled": "Scheduled",
+        "sending": "Sending",
+        "waitingNextDay": "Waiting for next day",
+        "paused": "Paused",
+        "stopped": "Stopped"
+      },
+      "reason": {
+        "pageNotConnected": "The Page is not connected to this workspace.",
+        "quotaReached": "Paused: your message quota is reached.",
+        "workspaceBlocked": "Paused: this workspace is blocked.",
+        "grantInvalid": "Paused: the Facebook connection has expired. Reconnect Marketing Messages.",
+        "metaBlocker": "Meta is blocking this campaign.",
+        "contentRejected": "Meta rejected the message content.",
+        "noTokens": "No recipients were found for this campaign.",
+        "noMatchingTopic": "No opted-in recipients match the \"Updates and promotions\" topic.",
+        "tokenFetchFailed": "Could not fetch recipients from Meta.",
+        "campaignEnded": "The Meta campaign has ended.",
+        "lifetimeBudgetReached": "The lifetime budget is used up."
+      },
+      "errors": {
+        "grantInvalid": "The Facebook connection has expired.",
+        "campaignInactive": "The Meta campaign is not active.",
+        "budgetReached": "Budget exhausted.",
+        "dailyBudgetReached": "Daily budget reached.",
+        "optedOut": "The recipient opted out.",
+        "frequencyLimit": "Recipient frequency limit reached.",
+        "contentRejected": "Message content rejected by Meta.",
+        "deliveryFailed": "Delivery failed.",
+        "outcomeUnknown": "Delivery outcome unknown."
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "Search by ID or name",
+      "adAccount": "Ad account",
+      "dateRange": "Date range",
+      "timezoneHint": "Dates in {timezone}",
+      "presets": {
+        "last7": "Last 7 days",
+        "last30": "Last 30 days",
+        "last90": "Last 90 days",
+        "thisMonth": "This month",
+        "lastMonth": "Last month"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "Name",
+        "page": "Facebook Page",
+        "delivered": "Messages delivered",
+        "readRate": "Read rate",
+        "linkClicks": "Link clicks",
+        "linkClickRate": "Link click rate",
+        "costPerClick": "Cost per click",
+        "costPerDelivery": "Cost per delivery",
+        "spend": "Amount spent"
+      },
+      "notes": {
+        "delivery": "Meta does not report this for recipients in Europe or Japan; those campaigns show -.",
+        "clicks": "Meta does not report this for recipients in Europe, Argentina, Turkey, South Korea or Japan; those campaigns show -."
+      },
+      "footer": {
+        "label": "Total: {count, plural, one {# campaign} other {# campaigns}}",
+        "total": "Total",
+        "average": "Average"
+      },
+      "totalsUnavailable": "Totals are unavailable right now. Try again shortly.",
+      "readOnly": "Reconnect Marketing Messages to see statistics.",
+      "empty": "No Marketing Messages campaigns yet. Create one in the Campaigns tab.",
+      "noResults": "No campaigns match your search."
     }
   },
   "facebookAds": {

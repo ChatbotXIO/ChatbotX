@@ -46,6 +46,7 @@ import { errorLogsPublicRouter } from "@/features/error-logs/api/public"
 import { appointmentExternalCalendarsPublicRouter } from "@/features/external-calendars/api/public"
 import { externalWebhooksPublicRouter } from "@/features/external-webhooks/api/public"
 import { facebookLeadAdsPublicRouter } from "@/features/facebook-lead-ad-automation/api/public"
+import { facebookMarketingMessagesPublicRouter } from "@/features/facebook-marketing-messages/api/public"
 import { fbCommentsPublicRouter } from "@/features/fb-comments/api/public"
 import { flowsPublicRouter } from "@/features/flows/api/public"
 import { foldersPublicRouter } from "@/features/folders/api/public"
@@ -146,6 +147,7 @@ export const publicRouter = {
   errorLogs: errorLogsPublicRouter,
   externalWebhooks: externalWebhooksPublicRouter,
   facebookLeadAds: facebookLeadAdsPublicRouter,
+  facebookMarketingMessages: facebookMarketingMessagesPublicRouter,
   fbComments: fbCommentsPublicRouter,
   flows: flowsPublicRouter,
   folders: foldersPublicRouter,

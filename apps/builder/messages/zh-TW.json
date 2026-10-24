@@ -3272,7 +3272,7 @@
     "title": "常規"
   },
   "facebookMarketingMessages": {
-    "deleteWarning": "這只會從 ChatbotX 移除該廣告活動。Meta 訊息廣告活動仍在投放——請於廣告管理員中暫停或刪除。",
+    "deleteWarning": "這會刪除 Meta 訊息廣告活動，並從 ChatbotX 移除該廣告活動。如果 Meta 拒絕刪除，則會保留該廣告活動。",
     "title": "Facebook 行銷訊息",
     "description": "透過 Messenger 上的個人化推廣訊息提升互動與銷售。",
     "create": "新增",
@@ -3297,13 +3297,197 @@
       "generic": "通用",
       "greeting": "問候語",
       "quickReplies": "快速回覆",
-      "elements": "卡片"
+      "elements": "卡片",
+      "targetMessaging": "訊息目標",
+      "targetOptIn": "選擇加入",
+      "targetOptInDescription": "已同意接收行銷訊息的粉絲專頁客戶",
+      "targetCustomAudience": "自訂目標受眾",
+      "targetCustomAudienceDescription": "傳送訊息給從檔案上傳的目標受眾",
+      "audience": "自訂目標受眾"
     },
+    "noReadyAudiences": "此粉絲專頁和廣告帳號沒有可用的自訂目標受眾。",
+    "manageAudiences": "管理目標受眾",
     "errors": {
       "notConfigured": "尚未設定 Facebook 行銷訊息。請請管理員設定行銷訊息設定 ID。",
       "notGranted": "請授予存取權限以使用行銷訊息功能。",
       "tosNotAccepted": "若要使用此功能，請於 {url} 接受自訂物件條款",
-      "notFound": "找不到行銷訊息。"
+      "notFound": "找不到行銷訊息。",
+      "audienceNotTargetable": "所選自訂目標受眾尚未就緒，或不屬於此粉絲專頁和廣告帳號。",
+      "connectFirst": "請先在 ChatbotX 應用程式中連接行銷訊息。",
+      "mmInvalidState": "目前的活動狀態下無法執行此操作。",
+      "mmCampaignEnded": "Meta 訊息廣告活動已結束，因此無法傳送或恢復。",
+      "mmPageNotConnected": "此廣告活動的粉絲專頁未連接到此工作區。",
+      "mmContentLocked": "第一則訊息傳送後，內容便無法再變更。",
+      "metaDeleteFailed": "Meta 無法刪除此行銷活動，因此已保留。{message}",
+      "statisticsUnknownAdAccount": "此工作區在該廣告帳戶中沒有行銷訊息活動。",
+      "statisticsInvalidRange": "請選擇不晚於結束日期、且在最近 37 個月內的開始日期。"
+    },
+    "tabs": {
+      "campaigns": "行銷活動",
+      "audiences": "目標受眾",
+      "statistics": "統計"
+    },
+    "audiences": {
+      "title": "自訂目標受眾",
+      "create": "新增",
+      "uploadMore": "上傳更多列",
+      "empty": "尚無自訂目標受眾。",
+      "deleteTitle": "刪除自訂目標受眾",
+      "deleteWarning": "此操作會在 Meta 和 ChatbotX 中刪除自訂目標受眾「{name}」，且無法復原。",
+      "deleted": "自訂目標受眾已刪除。",
+      "pageDisconnected": "粉絲專頁已中斷連結",
+      "status": {
+        "ready": "就緒",
+        "missing": "已在 Meta 上刪除"
+      },
+      "fields": {
+        "customAudienceId": "自訂目標受眾 ID",
+        "approximateCount": "大約數量",
+        "status": "狀態",
+        "file": "上傳檔案"
+      },
+      "wizard": {
+        "title": "建立自訂目標受眾",
+        "uploadMoreTitle": "上傳更多列",
+        "steps": {
+          "prepare": "準備名單",
+          "upload": "上傳",
+          "confirm": "確認"
+        },
+        "prepareDescription": "訂閱者名單是包含用於建立行銷訊息目標受眾之資訊的 CSV 或 TXT 檔案。我們會使用電話號碼，將您的訂閱者與 Facebook 和 Instagram 使用者進行比對。在資訊傳送給我們之前，您的識別碼名單會經過雜湊處理成隨機代碼。",
+        "aboutHashing": "關於雜湊處理",
+        "downloadTemplate": "下載檔案範本",
+        "mainIdentifiers": "至少包含一個主要識別碼",
+        "moreIdentifiers": "包含更多識別碼",
+        "identifiers": {
+          "email": "電子郵件",
+          "phone": "電話號碼",
+          "madid": "行動廣告 ID",
+          "fn": "名字",
+          "ln": "姓氏",
+          "ct": "城市",
+          "st": "州/省",
+          "country": "國家/地區",
+          "zip": "郵遞區號",
+          "dob": "出生日期",
+          "doby": "出生年份",
+          "gen": "性別"
+        },
+        "uploadNote": "上傳名單之前，請確認識別碼完整且格式正確。名單必須為 .csv、.txt 或 .xlsx 格式。",
+        "namePlaceholder": "輸入目標受眾名稱...",
+        "descriptionPlaceholder": "簡短說明（如有）",
+        "dropzone": "按一下以上傳，或拖放檔案",
+        "maxFileSize": "檔案大小上限：20MB",
+        "fileRequired": "請選擇要上傳的檔案。",
+        "fileTooLarge": "檔案大於 20MB。",
+        "fileType": "檔案必須為 .csv、.txt 或 .xlsx 格式。",
+        "next": "下一步",
+        "back": "返回",
+        "upload": "上傳",
+        "done": "完成",
+        "successTitle": "上傳成功",
+        "successRows": "您的 Messenger 訂閱者名單已上傳 {count, plural, one {# 列} other {# 列}}",
+        "skippedRows": "已略過 {count, plural, one {# 列} other {# 列}}（沒有有效的電子郵件或電話）。",
+        "invalidRows": "Meta 拒絕了 {count, plural, one {# 列} other {# 列}}。",
+        "matchingNote": "我們可能需要幾分鐘才能完成訂閱者與 Facebook 使用者的比對。您可以在目標受眾名單中查看狀態。"
+      },
+      "errors": {
+        "audienceInvalidFile": "無法讀取該檔案。請使用含標題列的 .csv、.txt 或 .xlsx 檔案。",
+        "audienceTooManyRows": "檔案超過 {max, number} 列。",
+        "audienceNoIdentifier": "檔案需要包含電子郵件或電話欄位。",
+        "audienceNoValidRows": "沒有任何一列包含有效的電子郵件或電話號碼。",
+        "audiencePartialUpload": "目標受眾已建立，但上傳在 {received, number} 列後停止。請使用「上傳更多列」重試。",
+        "audienceNotFound": "找不到自訂目標受眾。",
+        "audienceCreateRejected": "Meta 拒絕了該受眾：{reason}",
+        "uploadUncertain": "上傳可能尚未完成。請關閉此對話方塊並查看受眾清單；如果受眾已建立，請使用「上傳更多列」。",
+        "pageNotConnected": "所選粉絲專頁未連結到此工作區。",
+        "audienceInUse": "此自訂目標受眾正被 {count, plural, one {# 則行銷訊息} other {# 則行銷訊息}} 使用，無法刪除。"
+      }
+    },
+    "delivery": {
+      "title": "投遞",
+      "contentLocked": "由於已傳送過訊息，內容已鎖定。",
+      "topicsReturned": "Meta 回傳的主題：{topics}",
+      "recipients": "{count} 位收件者",
+      "startsAt": "開始：{date}",
+      "completedAt": "完成：{date}",
+      "errorBreakdown": "失敗",
+      "retrying": "Meta 目前不接受傳送；正在自動重試。",
+      "counts": {
+        "sent": "已傳送",
+        "delivered": "已送達",
+        "unconfirmed": "未確認"
+      },
+      "status": {
+        "notSent": "未傳送",
+        "scheduled": "已排程",
+        "sending": "傳送中",
+        "waitingNextDay": "等待隔天",
+        "paused": "已暫停",
+        "stopped": "已停止"
+      },
+      "reason": {
+        "pageNotConnected": "此粉絲專頁未連結到此工作區。",
+        "quotaReached": "已暫停：訊息配額已用完。",
+        "workspaceBlocked": "已暫停：此工作區已被封鎖。",
+        "grantInvalid": "已暫停：Facebook 連線已過期。請重新連結 Marketing Messages。",
+        "metaBlocker": "Meta 正在封鎖此活動。",
+        "contentRejected": "Meta 拒絕了訊息內容。",
+        "noTokens": "找不到此活動的收件者。",
+        "noMatchingTopic": "沒有已選擇接收的收件者符合「Updates and promotions」主題。",
+        "tokenFetchFailed": "無法從 Meta 取得收件者。",
+        "campaignEnded": "Meta 活動已結束。",
+        "lifetimeBudgetReached": "總預算已用完。"
+      },
+      "errors": {
+        "grantInvalid": "Facebook 連線已過期。",
+        "campaignInactive": "Meta 活動未啟用。",
+        "budgetReached": "預算已用完。",
+        "dailyBudgetReached": "已達每日預算。",
+        "optedOut": "收件者已取消訂閱。",
+        "frequencyLimit": "已達收件者的頻率上限。",
+        "contentRejected": "訊息內容遭 Meta 拒絕。",
+        "deliveryFailed": "投遞失敗。",
+        "outcomeUnknown": "投遞結果未知。"
+      }
+    },
+    "statistics": {
+      "searchPlaceholder": "依 ID 或名稱搜尋",
+      "adAccount": "廣告帳戶",
+      "dateRange": "日期範圍",
+      "timezoneHint": "日期依 {timezone} 時區",
+      "presets": {
+        "last7": "過去 7 天",
+        "last30": "過去 30 天",
+        "last90": "過去 90 天",
+        "thisMonth": "本月",
+        "lastMonth": "上月"
+      },
+      "columns": {
+        "id": "ID",
+        "name": "名稱",
+        "page": "Facebook 粉絲專頁",
+        "delivered": "已送達訊息",
+        "readRate": "閱讀率",
+        "linkClicks": "連結點擊次數",
+        "linkClickRate": "連結點擊率",
+        "costPerClick": "單次點擊成本",
+        "costPerDelivery": "單次送達成本",
+        "spend": "花費金額"
+      },
+      "notes": {
+        "delivery": "Meta 不會回報歐洲或日本收件人的此項數據；這些活動會顯示 -。",
+        "clicks": "Meta 不會回報歐洲、阿根廷、土耳其、南韓或日本收件人的此項數據；這些活動會顯示 -。"
+      },
+      "footer": {
+        "label": "總計：{count, plural, one {# 個活動} other {# 個活動}}",
+        "total": "總計",
+        "average": "平均"
+      },
+      "totalsUnavailable": "目前無法取得總計數據，請稍後再試。",
+      "readOnly": "重新連結行銷訊息以查看統計數據。",
+      "empty": "尚無行銷訊息活動。請在「活動」分頁中建立。",
+      "noResults": "沒有符合搜尋條件的活動。"
     }
   },
   "facebookAds": {

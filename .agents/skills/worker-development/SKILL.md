@@ -30,7 +30,10 @@ Workers run as separate Node processes in `apps/worker/`. They consume jobs from
 
 `queueNames` (`packages/worker-config/src/lib/types.ts:3`) also declares `broadcast` and
 `quota`, which have queues but no dedicated worker entry — their jobs are consumed by the
-workers above. Check `apps/worker/tsdown.config.ts` for the authoritative entry list.
+workers above. Some queues get their own `Worker` (own concurrency) hosted inside an existing
+process: `profileSnapshot` and `leaderboard` in `src/low/worker.ts`, and `marketingMessage`
+(FB Marketing Messages campaign steps, enqueued by the schedule crons) in
+`src/schedule/worker.ts` via `src/marketing-message/consumer.ts`. Check `apps/worker/tsdown.config.ts` for the authoritative entry list.
 
 The `heavy` queue/worker is a **workload-class** queue, not a domain queue:
 use it for bounded but RAM/CPU/I/O/model-heavy jobs that should not occupy

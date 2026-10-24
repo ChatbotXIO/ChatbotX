@@ -19,6 +19,11 @@ vi.mock("@chatbotx.io/integration-messenger/apis/page", () => ({
     "leadgen",
   ],
   ROUTING_PAGE_SUBSCRIBE_FIELDS: ["messaging_handovers", "standby"],
+  MARKETING_MESSAGE_PAGE_SUBSCRIBE_FIELDS: [
+    "marketing_message_echoes",
+    "marketing_message_deliveries",
+    "marketing_message_delivery_failed",
+  ],
 }))
 vi.mock("../src/lib/logger", () => ({
   logger: {
@@ -77,6 +82,35 @@ describe("resubscribeMessengerWebhookFields", () => {
     }
   }
 
+  it("resubscribe adds marketing_message fields to existing subscriptions", async () => {
+    getSubscribedFields.mockResolvedValue(["messages", "leadgen"])
+    await run([row(1)]).result
+    const fields = (
+      subscribe.mock.calls[0]?.[0].subscribedFields as string
+    ).split(",")
+    expect(fields).toEqual(
+      expect.arrayContaining([
+        "messages",
+        "leadgen",
+        "marketing_message_echoes",
+        "marketing_message_deliveries",
+        "marketing_message_delivery_failed",
+      ]),
+    )
+  })
+
+  it("falls back to fields without marketing ones when the first subscribe fails", async () => {
+    getSubscribedFields.mockResolvedValue(["messages", "leadgen"])
+    subscribe
+      .mockRejectedValueOnce(new Error("graph"))
+      .mockResolvedValue(undefined)
+    const summary = await run([row(1)]).result
+    expect(summary).toMatchObject({ subscribed: 1, failed: 0 })
+    expect(subscribe.mock.calls[1]?.[0].subscribedFields).toBe(
+      "messages,leadgen,messaging_handovers,standby",
+    )
+  })
+
   it("re-subscribes every connected Page with its own token and version", async () => {
     const { result } = run([row(1), row(2)])
 
@@ -113,7 +147,8 @@ describe("resubscribeMessengerWebhookFields", () => {
 
     expect(subscribe).toHaveBeenCalledWith(
       expect.objectContaining({
-        subscribedFields: "messages,leadgen,messaging_handovers,standby",
+        subscribedFields:
+          "messages,leadgen,messaging_handovers,standby,marketing_message_echoes,marketing_message_deliveries,marketing_message_delivery_failed",
       }),
     )
   })
@@ -125,7 +160,8 @@ describe("resubscribeMessengerWebhookFields", () => {
 
     expect(subscribe).toHaveBeenCalledWith(
       expect.objectContaining({
-        subscribedFields: "standby,leadgen,messaging_handovers",
+        subscribedFields:
+          "standby,leadgen,messaging_handovers,marketing_message_echoes,marketing_message_deliveries,marketing_message_delivery_failed",
       }),
     )
   })
@@ -137,7 +173,8 @@ describe("resubscribeMessengerWebhookFields", () => {
 
     expect(subscribe).toHaveBeenCalledWith(
       expect.objectContaining({
-        subscribedFields: "messages,standby,messaging_handovers",
+        subscribedFields:
+          "messages,standby,messaging_handovers,marketing_message_echoes,marketing_message_deliveries,marketing_message_delivery_failed",
       }),
     )
   })
@@ -175,7 +212,8 @@ describe("resubscribeMessengerWebhookFields", () => {
       subscribed: 2,
       failed: 1,
     })
-    expect(subscribe).toHaveBeenCalledTimes(3)
+    // page-2 is retried once without the marketing fields, then fails.
+    expect(subscribe).toHaveBeenCalledTimes(4)
     expect(mocks.loggerError).toHaveBeenCalledWith(
       expect.objectContaining({ err: boom, pageId: "page-2" }),
       expect.any(String),

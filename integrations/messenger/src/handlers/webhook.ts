@@ -30,6 +30,30 @@ export type ConversationRoutingPayload = ThreadControlJobPayload & {
   dedupeKey: string | null
 }
 
+/**
+ * Meta sends the marketing-message campaign id and subscription token as bare
+ * JSON numbers in some webhooks (e.g. `"message_id":120254191797760180`), which
+ * exceed `Number.MAX_SAFE_INTEGER` and would be rounded by `JSON.parse`. Quote
+ * them first so the exact digits survive. The signature is verified on the raw
+ * body before this runs.
+ */
+export const quoteUnsafeMessageIds = (body: string): string =>
+  body.replace(
+    /("(?:message_id|messenger_subscription_token)"\s*:\s*)(\d{16,})(?=\s*[,}\]])/g,
+    '$1"$2"',
+  )
+
+/** The `marketing_message_*` field of a `messaging[]` item, else null. */
+const marketingMessageItemField = (item: unknown): string | null => {
+  if (typeof item !== "object" || item === null || !("field" in item)) {
+    return null
+  }
+  const { field } = item
+  return typeof field === "string" && field.startsWith("marketing_message_")
+    ? field
+    : null
+}
+
 const toBullMqSafeIdSegment = (value: string): string =>
   value.replace(/[^a-zA-Z0-9._-]/g, "_")
 
@@ -196,7 +220,9 @@ const handleWebhookEvent = async (
       throw new MessengerWebhookException("Invalid webhook signature")
     }
 
-    const parsedWebhook = incomingWebhookEventSchema.safeParse(JSON.parse(body))
+    const parsedWebhook = incomingWebhookEventSchema.safeParse(
+      JSON.parse(quoteUnsafeMessageIds(body)),
+    )
     if (!parsedWebhook.success) {
       logger.warn(
         {
@@ -353,6 +379,22 @@ const handleWebhookEvent = async (
       for (const rawMessagingEvent of entry.messaging) {
         // Handover / request / app_roles items were enqueued above.
         if (classifyMessagingRoutingItem(rawMessagingEvent)) {
+          continue
+        }
+        // `marketing_message_*` events arrive as `messaging[]` items with a
+        // `field` and no `sender`; the item itself is the value. Parsing
+        // happens in the worker so an unrecognised shape is logged there
+        // instead of being dropped at the edge.
+        const marketingField = marketingMessageItemField(rawMessagingEvent)
+        if (marketingField) {
+          await queue?.add("processMarketingMessageWebhook", {
+            type: "processMarketingMessageWebhook",
+            data: {
+              pageId: entry.id,
+              field: marketingField,
+              value: rawMessagingEvent,
+            },
+          })
           continue
         }
         const parsedEvent =

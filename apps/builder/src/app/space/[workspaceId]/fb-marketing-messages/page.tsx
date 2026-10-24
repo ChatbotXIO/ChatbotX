@@ -5,13 +5,19 @@ import { Suspense } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { MarketingMessagesView } from "@/features/facebook-marketing-messages/components/marketing-messages-view"
 import { resolveMarketingMessagesGrant } from "@/features/facebook-marketing-messages/lib/grant"
-import { listMarketingMessages } from "@/features/facebook-marketing-messages/queries"
+import { parseMarketingMessagesTab } from "@/features/facebook-marketing-messages/lib/tab"
+import {
+  getMarketingMessageCounts,
+  listMarketingMessages,
+} from "@/features/facebook-marketing-messages/queries"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 export default async function FacebookMarketingMessagesPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ workspaceId: string }>
+  searchParams: Promise<{ tab?: string | string[] }>
 }) {
   const workspaceId = getIdFromParams(await params, "workspaceId")
   if (!workspaceId) {
@@ -25,11 +31,14 @@ export default async function FacebookMarketingMessagesPage({
     return notFound()
   }
 
+  const tab = parseMarketingMessagesTab((await searchParams).tab)
   const t = await getTranslations()
   const [grant, rows] = await Promise.all([
     resolveMarketingMessagesGrant(access.targetWorkspace),
     listMarketingMessages(workspaceId),
   ])
+
+  const counts = await getMarketingMessageCounts(workspaceId, rows)
 
   return (
     <div className="flex flex-col gap-4">
@@ -41,8 +50,10 @@ export default async function FacebookMarketingMessagesPage({
       />
       <Suspense>
         <MarketingMessagesView
+          counts={counts}
           grantState={grant.state}
           rows={rows}
+          tab={tab}
           workspaceId={workspaceId}
         />
       </Suspense>

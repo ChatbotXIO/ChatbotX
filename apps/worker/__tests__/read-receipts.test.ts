@@ -72,6 +72,7 @@ vi.mock("@chatbotx.io/sdk", () => ({
 }))
 
 vi.mock("@chatbotx.io/flow-config", () => ({
+  BUTTON_LABEL_MAX: 20,
   messageEventTypeSchema: {
     enum: {
       "message:delivered": "message:delivered",

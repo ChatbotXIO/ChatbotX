@@ -157,3 +157,31 @@ describe("commentAutomationId in the button payload", () => {
     expect(decodeButtonPayload("123:456:789:::abc")).toBeNull()
   })
 })
+
+describe("button payload nodeId slot", () => {
+  test("existing payload with ca round-trips byte-identically", () => {
+    const props = {
+      flowId: "111",
+      flowVersionId: "222",
+      buttonId: "333",
+      commentAutomationId: "444",
+    }
+    const encoded = encodeButtonPayload(props)
+    expect(encoded).toBe("111:222:333::::444")
+    expect(decodeButtonPayload(encoded)).toEqual(props)
+  })
+
+  test("{ flowId, nodeId } round-trips", () => {
+    const encoded = encodeButtonPayload({ flowId: "111", nodeId: "555" })
+    expect(encoded).toBe("111:::::::555")
+    expect(decodeButtonPayload(encoded)).toEqual({
+      flowId: "111",
+      nodeId: "555",
+    })
+  })
+
+  test("{ flowId } alone stays bare and rejects a non-numeric nodeId", () => {
+    expect(encodeButtonPayload({ flowId: "111" })).toBe("111:")
+    expect(decodeButtonPayload("111:::::::abc")).toBeNull()
+  })
+})
