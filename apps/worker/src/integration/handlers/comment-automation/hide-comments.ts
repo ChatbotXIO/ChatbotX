@@ -3,8 +3,8 @@ import type {
   ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
+import { normalizeForMatch } from "@chatbotx.io/utils/normalize-for-match"
 import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
-import { normalizeForMatch } from "./automation-matching"
 import type { CommentAutomationChannelType } from "./channel-type"
 import { withReplayPriority } from "./replay-priority"
 

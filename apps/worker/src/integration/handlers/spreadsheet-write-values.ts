@@ -95,6 +95,7 @@ const resolveFromVariableTemplates: WriteValueResolver = async (props) => {
     contactId: props.conversation.contactId,
     contactInbox: props.contactInbox,
     conversation: props.conversation,
+    sentByUserId: props.sentByUserId,
   })
 
   return await Promise.all(

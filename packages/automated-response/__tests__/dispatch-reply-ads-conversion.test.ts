@@ -12,6 +12,9 @@ vi.mock("@chatbotx.io/business/leaderboard", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
+  contactActivityService: {
+    recordKeywordMatch: vi.fn().mockResolvedValue(true),
+  },
   adsConversionService: {
     enqueueKeywordMatchedEvaluation: mockEnqueueKeywordMatchedEvaluation,
     isEligibleChannel: (channel: unknown) => channel === "whatsapp",

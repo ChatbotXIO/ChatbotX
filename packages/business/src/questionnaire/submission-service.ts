@@ -208,6 +208,27 @@ class QuestionnaireSubmissionService extends BaseService {
     }
   }
 
+  /**
+   * The contact's newest completed submission that carries a score, across all
+   * questionnaires. Backs the `{{last_points}}` variable, so it is a single
+   * indexed `LIMIT 1` read (QuestionnaireSubmission_workspaceId_contactId_completedAt_idx).
+   */
+  async findLatestCompletedForContact(input: {
+    workspaceId: string
+    contactId: string
+  }) {
+    return await db.query.questionnaireSubmissionModel.findFirst({
+      where: {
+        workspaceId: input.workspaceId,
+        contactId: input.contactId,
+        status: "completed",
+        totalPoints: { isNotNull: true },
+      },
+      orderBy: { completedAt: "desc" },
+      columns: { id: true, totalPoints: true },
+    })
+  }
+
   async startOrResume(input: {
     workspaceId: string
     questionnaireId: string

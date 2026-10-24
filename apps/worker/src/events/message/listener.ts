@@ -13,6 +13,7 @@ import {
 import {
   type AdsEligibleChannel,
   adsConversionService,
+  contactActivityService,
   contactInboxService,
   workspaceUsageService,
 } from "@chatbotx.io/business"
@@ -24,6 +25,7 @@ import {
 import type { AdsConversionChannel } from "@chatbotx.io/database/schema"
 import type {
   EventBusMessageMetadata,
+  MessageDeliveredPayload,
   MessageEvenTypeMap,
   MessageFailedPayload,
   MessagePayload,
@@ -253,6 +255,57 @@ async function recordContactInboxSendFailure(payloads: MessagePayload[]) {
   }
 }
 
+type DeliveredPayloadWithMetadata = MessageDeliveredPayload &
+  EventBusMessageMetadata
+
+/**
+ * A receipt can carry the provider's delivery time; fall back to when it was
+ * processed. Payloads cross the Redis stream as JSON, so the dates arrive as
+ * strings. A provider clock ahead of ours is clamped, because `lastDeliveredAt`
+ * only moves forward and a future value would pin it there.
+ */
+const deliveredAt = (payload: DeliveredPayloadWithMetadata): Date => {
+  const raw = new Date(payload.providerOccurredAt ?? payload.occurredAt)
+  const now = new Date()
+  return Number.isNaN(raw.getTime()) || raw > now ? now : raw
+}
+
+/**
+ * "Last Delivered" contact state. One fenced transaction per workspace group,
+ * with each contact collapsed to its latest delivery by the service.
+ *
+ * Best-effort: `messageEventBus` runs without `enableSelectiveRetry`, so the
+ * whole batch is acked whatever this returns or throws and a failed group is
+ * never redelivered. It is logged at error level instead; the value is
+ * monotonic, so the contact's next delivery corrects it.
+ */
+async function recordLastDelivered(payloads: MessagePayload[]): Promise<void> {
+  const recordsByWorkspace = new Map<
+    string,
+    { contactId: string; deliveredAt: Date }[]
+  >()
+
+  for (const payload of payloads as DeliveredPayloadWithMetadata[]) {
+    const records = recordsByWorkspace.get(payload.context.workspaceId) ?? []
+    records.push({
+      contactId: payload.context.contactId,
+      deliveredAt: deliveredAt(payload),
+    })
+    recordsByWorkspace.set(payload.context.workspaceId, records)
+  }
+
+  for (const [workspaceId, records] of recordsByWorkspace) {
+    try {
+      await contactActivityService.recordDelivered({ records, workspaceId })
+    } catch (err) {
+      logger.error(
+        { err, workspaceId, count: records.length },
+        "last-delivered: failed to record a delivery receipt batch",
+      )
+    }
+  }
+}
+
 export const messageListeners: Partial<MessageEvenTypeMap> = {
   [messageEventTypeSchema.enum["message:sent"]]: [
     {
@@ -328,6 +381,10 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
       name: "flow-ops",
       handler:
         flowAnalyticsService.onMessageDelivered.bind(flowAnalyticsService),
+    },
+    {
+      name: "last-delivered",
+      handler: recordLastDelivered,
     },
   ],
   [messageEventTypeSchema.enum["message:seen"]]: [

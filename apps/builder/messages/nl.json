@@ -435,6 +435,8 @@
       "description": "Stuur een flow naar alle contacten."
     },
     "receiversCount": "Ontvangers: {count}",
+    "receiversCountCapped": "Ontvangers: {count}+",
+    "receiversCountUnknown": "Ontvangers: ?",
     "receiversLoading": "Ontvangers: laden...",
     "whatsappTemplateMessage": {
       "title": "Sjabloonbericht",
@@ -2246,10 +2248,50 @@
     },
     "miniApp": {
       "label": "Mini-app"
+    },
+    "adminName": {
+      "label": "Naam van verzendende admin"
+    },
+    "adminTeamName": {
+      "label": "Teams van verzendende admin"
+    },
+    "bookingId": {
+      "label": "Boekings-ID"
+    },
+    "lastPoints": {
+      "label": "Laatste vragenlijstpunten"
+    },
+    "lastAdHeadline": {
+      "label": "Laatste advertentiekop"
+    },
+    "lastAdBody": {
+      "label": "Laatste advertentietekst"
+    },
+    "lastStoryId": {
+      "label": "Laatste story-ID"
+    },
+    "lastLeadId": {
+      "label": "Laatste lead-ID"
+    },
+    "lastFormId": {
+      "label": "Laatste formulier-ID"
+    },
+    "lastFormName": {
+      "label": "Laatste formuliernaam"
+    },
+    "lastAdgroupId": {
+      "label": "Laatste advertentiegroep-ID"
+    },
+    "lastTextInput": {
+      "label": "Laatste tekstinvoer"
+    },
+    "empty": {
+      "label": "Leeg"
     }
   },
   "condition": {
     "unknownValue": "Onbekend",
+    "deletedValue": "Verwijderd (#{id})",
     "yes": "Ja",
     "no": "Nee",
     "valuePlaceholder": "...",
@@ -2442,7 +2484,9 @@
       },
       "adPrefix": "advertentie",
       "allAds": "alle advertenties"
-    }
+    },
+    "noTopic": "Geen onderwerp",
+    "trackingSince": "Bijgehouden sinds {date}. Eerdere activiteit is niet inbegrepen."
   },
   "flows": {
     "export": {

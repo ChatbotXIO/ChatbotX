@@ -48,6 +48,8 @@ export type ReplyByAIProps = {
   summary?: string
   preferredProvider?: AIAgentProvider
   preferredModel?: AIAgentModelConfig
+  /** The inbox user who sent the running flow, for `{{admin_name}}` in the prompt. */
+  sentByUserId?: string
 }
 
 export type ReplyByAIExecutionResult = {
@@ -162,6 +164,7 @@ async function runAIReplyInternal(
       contactId: conversation.contactId,
       contactInbox: props.contactInbox,
       conversation,
+      sentByUserId: props.sentByUserId,
     })
     const promptBase = aiAgent.prompt
       ? await contactVariableService.replaceAll({

@@ -10,11 +10,13 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Loader2Icon, UsersIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { resolveReceiversCountLabelKey } from "../lib/broadcast-send-limit"
 
 export function BroadcastConfirmDialog({
   open,
   onOpenChange,
   count,
+  countCapped = false,
   isValid,
   isSubmitting,
   isReceiversCountLoading,
@@ -23,6 +25,8 @@ export function BroadcastConfirmDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
   count: number
+  /** The count is a lower bound (a bounded count hit its cap). */
+  countCapped?: boolean
   /** Mirrors the form's validity so an async revalidation after the dialog
    * opened can't leave this submit enabled on an invalid form. */
   isValid: boolean
@@ -42,7 +46,7 @@ export function BroadcastConfirmDialog({
         <div className="py-2">
           <Button
             className="h-auto px-0 text-muted-foreground text-sm"
-            disabled={isReceiversCountLoading || !count}
+            disabled={isReceiversCountLoading || !(count || countCapped)}
             onClick={onPreviewReceivers}
             type="button"
             variant="link"
@@ -55,9 +59,13 @@ export function BroadcastConfirmDialog({
             ) : (
               <>
                 <UsersIcon className="size-4" />
-                {t("broadcasts.receiversCount", {
-                  count: count || 0,
-                })}
+                {t(
+                  resolveReceiversCountLabelKey({
+                    count,
+                    capped: countCapped,
+                  }),
+                  { count: count || 0 },
+                )}
               </>
             )}
           </Button>

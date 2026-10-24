@@ -1,18 +1,33 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { findIntegrationWhatsapp, incrementCompletedCount, setValues } =
-  vi.hoisted(() => ({
-    findIntegrationWhatsapp: vi.fn(),
-    incrementCompletedCount: vi.fn(async () => undefined),
-    setValues: vi.fn(async () => undefined),
-  }))
+const {
+  findIntegrationWhatsapp,
+  incrementCompletedCount,
+  recordActivity,
+  setValues,
+  tx,
+} = vi.hoisted(() => ({
+  findIntegrationWhatsapp: vi.fn(),
+  incrementCompletedCount: vi.fn(
+    async () => "flow-internal-1" as string | null,
+  ),
+  recordActivity: vi.fn(async () => true),
+  setValues: vi.fn(async () => undefined),
+  tx: { tag: "tx" },
+}))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {
       integrationWhatsappModel: { findFirst: findIntegrationWhatsapp },
     },
+    transaction: async (callback: (client: unknown) => Promise<unknown>) =>
+      callback(tx),
   },
+}))
+
+vi.mock("../src/contact-activity/service", () => ({
+  contactActivityService: { record: recordActivity },
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -66,10 +81,10 @@ describe("whatsappFlowResponseService.applyResponse", () => {
       flowResponse: { name: "Alice", count: 3 },
     })
 
-    expect(incrementCompletedCount).toHaveBeenCalledWith({
-      integrationWhatsappId: "wa-1",
-      sourceId: "meta-flow-1",
-    })
+    expect(incrementCompletedCount).toHaveBeenCalledWith(
+      { integrationWhatsappId: "wa-1", sourceId: "meta-flow-1" },
+      tx,
+    )
     expect(setValues).toHaveBeenCalledWith({
       workspaceId: "ws-1",
       contactId: "contact-1",
@@ -91,10 +106,65 @@ describe("whatsappFlowResponseService.applyResponse", () => {
     })
 
     expect(findIntegrationWhatsapp).not.toHaveBeenCalled()
-    expect(incrementCompletedCount).toHaveBeenCalledWith({
-      integrationWhatsappId: "wa-direct",
-      sourceId: "meta-flow-1",
-    })
+    expect(incrementCompletedCount).toHaveBeenCalledWith(
+      { integrationWhatsappId: "wa-direct", sourceId: "meta-flow-1" },
+      tx,
+    )
     expect(setValues).not.toHaveBeenCalled()
+  })
+
+  const completionInput = {
+    workspaceId: "ws-1",
+    contactId: "contact-1",
+    integrationWhatsappId: "wa-1",
+    flowSourceId: "meta-flow-1",
+    fieldMappings: [],
+    flowResponse: {},
+  }
+
+  test("records the completion under the flow's internal id in the same transaction", async () => {
+    await whatsappFlowResponseService.applyResponse(completionInput)
+
+    expect(recordActivity).toHaveBeenCalledWith({
+      entries: [
+        expect.objectContaining({
+          activityType: "formCompleted",
+          contactId: "contact-1",
+          referenceId: "flow-internal-1",
+          referenceType: "whatsappFlow",
+        }),
+      ],
+      tx,
+      workspaceId: "ws-1",
+    })
+  })
+
+  test("records nothing when the flow row no longer exists", async () => {
+    incrementCompletedCount.mockResolvedValueOnce(null)
+
+    await whatsappFlowResponseService.applyResponse(completionInput)
+
+    expect(recordActivity).not.toHaveBeenCalled()
+  })
+
+  test("fails the response (so it retries) when recording fails", async () => {
+    recordActivity.mockRejectedValueOnce(new Error("db down"))
+
+    await expect(
+      whatsappFlowResponseService.applyResponse(completionInput),
+    ).rejects.toThrow("db down")
+  })
+
+  test("records nothing when the integration cannot be resolved", async () => {
+    findIntegrationWhatsapp.mockResolvedValue(null)
+
+    await whatsappFlowResponseService.applyResponse({
+      ...completionInput,
+      integrationWhatsappId: null,
+      contactInbox: { inboxId: "inbox-1" } as never,
+    })
+
+    expect(recordActivity).not.toHaveBeenCalled()
+    expect(incrementCompletedCount).not.toHaveBeenCalled()
   })
 })

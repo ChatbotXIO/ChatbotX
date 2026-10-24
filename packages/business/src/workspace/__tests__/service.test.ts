@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   invalidateCacheByTags: vi.fn(),
   dbTransaction: vi.fn(),
   purgeWorkspaceHeavyData: vi.fn(),
+  purgeWorkspaceActivity: vi.fn(),
   purgeWorkspacePosts: vi.fn(),
   dispatchAuditRecord: vi.fn(),
 }))
@@ -145,6 +146,12 @@ vi.mock("../../connection/state-service", () => ({
   },
 }))
 
+vi.mock("../../contact-activity/service", () => ({
+  contactActivityService: {
+    purgeWorkspace: mocks.purgeWorkspaceActivity,
+  },
+}))
+
 vi.mock("../../contact-inbox-post/service", () => ({
   contactInboxPostService: {
     purgeWorkspace: mocks.purgeWorkspacePosts,
@@ -199,6 +206,8 @@ beforeEach(() => {
   mocks.purgeWorkspaceHeavyData.mockResolvedValue(0)
   mocks.purgeWorkspacePosts.mockReset()
   mocks.purgeWorkspacePosts.mockResolvedValue({ complete: true, deleted: 0 })
+  mocks.purgeWorkspaceActivity.mockReset()
+  mocks.purgeWorkspaceActivity.mockResolvedValue({ complete: true, deleted: 0 })
   mocks.dispatchAuditRecord.mockReset()
 
   mocks.workspaceInsert.mockReturnValue({
@@ -456,6 +465,26 @@ describe("WorkspaceService.purgeDueScheduled", () => {
       workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
     ).resolves.toBe(0)
 
+    expect(mocks.workspaceDelete).not.toHaveBeenCalled()
+    expect(mocks.workspaceQuotaRelease).not.toHaveBeenCalled()
+  })
+
+  test("defers a fenced workspace when its contact activity drain is incomplete", async () => {
+    const claimedRows = [{ id: "w1", ownerId: "o1", tenantId: "t1" }]
+    setupPurgeTransactions(claimedRows)
+    mocks.purgeWorkspaceActivity.mockResolvedValue({
+      complete: false,
+      deleted: 1,
+      table: "ContactState",
+    })
+
+    await expect(
+      workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
+    ).resolves.toBe(0)
+
+    expect(mocks.purgeWorkspaceActivity).toHaveBeenCalledWith({
+      workspaceId: "w1",
+    })
     expect(mocks.workspaceDelete).not.toHaveBeenCalled()
     expect(mocks.workspaceQuotaRelease).not.toHaveBeenCalled()
   })

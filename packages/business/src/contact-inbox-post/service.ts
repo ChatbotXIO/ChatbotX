@@ -1,5 +1,6 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { contactInboxPostRepository } from "@chatbotx.io/database/repositories/contact-inbox-post"
+import { workspaceRepository } from "@chatbotx.io/database/repositories/workspace"
 import { workspaceDeletionStartedException } from "../errors"
 
 export const CONTACT_INBOX_POST_DELETE_CHUNK_SIZE = 500
@@ -20,11 +21,10 @@ class ContactInboxPostService {
     workspaceId: string
   }): Promise<boolean> {
     return await db.transaction(async (tx) => {
-      const canWrite =
-        await contactInboxPostRepository.lockWorkspaceForPostWrite(
-          { workspaceId: input.workspaceId },
-          tx,
-        )
+      const canWrite = await workspaceRepository.lockWorkspaceForChildWrite(
+        { workspaceId: input.workspaceId },
+        tx,
+      )
       if (!canWrite) {
         return false
       }
@@ -47,11 +47,10 @@ class ContactInboxPostService {
     tx: DatabaseClient
     workspaceId: string
   }): Promise<number> {
-    const canDelete =
-      await contactInboxPostRepository.lockWorkspaceForPostWrite(
-        { workspaceId: input.workspaceId },
-        input.tx,
-      )
+    const canDelete = await workspaceRepository.lockWorkspaceForChildWrite(
+      { workspaceId: input.workspaceId },
+      input.tx,
+    )
     if (!canDelete) {
       throw workspaceDeletionStartedException()
     }

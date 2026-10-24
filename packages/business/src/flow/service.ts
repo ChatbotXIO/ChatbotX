@@ -39,6 +39,7 @@ import { notFoundException } from "../errors"
 import { assertFlowGraphPublishable, flowVersionService } from "../flow-version"
 import { folderService } from "../folder/service"
 import { messengerWelcomeMessageFlowService } from "../messenger-welcome-message-flow/service"
+import { type IdLabel, selectLabelsByIds } from "../select-labels-by-ids"
 import { assertDeletable } from "../template/installed-resource.service"
 import {
   type FlowWithNodeVersions,
@@ -103,6 +104,24 @@ const defaultDraftGraph = (): {
     edges: [],
     startNodeId: defaultNode.id,
   }
+}
+
+export type FlowNodeSummary = {
+  flowId: string
+  nodeId: string
+  label: string
+  nodeType: string | null
+}
+
+const readNodeLabel = (node: { id: string; data?: unknown }): string => {
+  const data = node.data
+  if (data && typeof data === "object" && "name" in data) {
+    const name = data.name
+    if (typeof name === "string" && name.trim() !== "") {
+      return name
+    }
+  }
+  return node.id
 }
 
 class FlowService extends BaseService {
@@ -206,6 +225,71 @@ class FlowService extends BaseService {
         integrationWhatsappId: input.integrationWhatsappId,
       })
     return filterFlowsByTemplateIds(byStep, templateIds)
+  }
+
+  /**
+   * The nodes of a flow's published version, for pickers and agents that need
+   * a node id (the "Executed Step" filter). A flow that was never published
+   * has none.
+   */
+  async listNodes(input: {
+    workspaceId: string
+    flowId: string
+  }): Promise<FlowNodeSummary[]> {
+    const nodes = await flowRepository.findCurrentVersionNodes(input)
+    if (!nodes) {
+      throw notFoundException("Flow does not exists.")
+    }
+
+    return nodes.map((node) => ({
+      flowId: input.flowId,
+      nodeId: node.id,
+      label: readNodeLabel(node),
+      nodeType: typeof node.type === "string" ? node.type : null,
+    }))
+  }
+
+  /** Existing rows only — `id`s absent from the result no longer exist. */
+  async listLabelsByIds(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<IdLabel[]> {
+    return await selectLabelsByIds(flowModel, input)
+  }
+
+  /**
+   * Labels for `{flowId}:{nodeId}` references ("Executed Step"), as
+   * `Flow name · Node name`. A reference whose flow or node is gone from the
+   * published version is absent, so callers can show it as deleted.
+   */
+  async listNodeLabelsByIds(input: {
+    workspaceId: string
+    ids: string[]
+  }): Promise<IdLabel[]> {
+    const references = input.ids.flatMap((id) => {
+      const [flowId, nodeId] = id.split(":")
+      return flowId && nodeId ? [{ flowId, id, nodeId }] : []
+    })
+    const flows = await flowRepository.listCurrentVersionNodesByFlowIds({
+      workspaceId: input.workspaceId,
+      flowIds: [...new Set(references.map((reference) => reference.flowId))],
+    })
+    const flowById = new Map(flows.map((flow) => [flow.flowId, flow]))
+
+    return references.flatMap((reference) => {
+      const flow = flowById.get(reference.flowId)
+      const node = flow?.nodes.find(
+        (candidate) => candidate.id === reference.nodeId,
+      )
+      return flow && node
+        ? [
+            {
+              id: reference.id,
+              name: `${flow.flowName} · ${readNodeLabel(node)}`,
+            },
+          ]
+        : []
+    })
   }
 
   /** Unguarded flow detail with all versions — callers enforce access. */

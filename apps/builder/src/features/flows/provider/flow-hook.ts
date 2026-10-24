@@ -82,6 +82,29 @@ export const useFlowNodesSelectOptions = (options?: {
   )
 }
 
+/**
+ * One option per node of every flow's latest version, labelled `Flow · Node`
+ * with the `flowId:nodeId` value the "Executed Step" filter stores (a node id
+ * alone is not unique: duplicating or importing a flow reuses them).
+ */
+export const useFlowNodeReferenceOptions = (options?: {
+  enabled?: boolean
+}) => {
+  const workspaceId = useWorkspaceId()
+  const { data: flows = [] } = useFlows(workspaceId, options)
+
+  return useMemo(
+    () =>
+      flows.flatMap((flow) =>
+        getFlowNodesOptions(flow.flowVersions).map((node) => ({
+          label: `${flow.name} · ${node.label}`,
+          value: `${flow.id}:${node.value}`,
+        })),
+      ),
+    [flows],
+  )
+}
+
 /** Steps of a flow node, used to keep only nodes that run a given step type. */
 type NodeWithSteps = { details?: { steps?: Array<{ stepType?: string }> } }
 const nodeHasStepType = (node: FlowNode, stepType: string): boolean => {

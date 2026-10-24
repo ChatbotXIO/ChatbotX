@@ -1804,6 +1804,113 @@ describe("receiveMessage — message repository branch", () => {
     )
   })
 
+  test("an inbound story reply records the story id on the contact inbox", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        contentAttributes: {
+          type: "story_reply",
+          story: { id: "story-1", url: "https://example.com/story-1" },
+        },
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockRecordInboundActivity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tracking: expect.objectContaining({ lastStoryId: "story-1" }),
+      }),
+    )
+  })
+
+  test("an inbound story reply with a blank story id leaves the stored story id alone", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        contentAttributes: {
+          type: "story_reply",
+          story: { id: "", url: "https://example.com/story-1" },
+        },
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    const [{ tracking }] = mockRecordInboundActivity.mock.calls[0] as [
+      { tracking: Record<string, unknown> },
+    ]
+    expect(tracking).not.toHaveProperty("lastStoryId")
+  })
+
+  test("an agent's outgoing story-reply echo does not overwrite the story id", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        contentAttributes: {
+          type: "story_reply",
+          story: { id: "story-1", url: "https://example.com/story-1" },
+        },
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    const [{ tracking }] = mockRecordInboundActivity.mock.calls[0] as [
+      { tracking: Record<string, unknown> },
+    ]
+    expect(tracking).not.toHaveProperty("lastStoryId")
+  })
+
+  test("a plain inbound message leaves the story id untouched", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    const [{ tracking }] = mockRecordInboundActivity.mock.calls[0] as [
+      { tracking: Record<string, unknown> },
+    ]
+    expect(tracking).not.toHaveProperty("lastStoryId")
+  })
+
   test("a contact comment also stamps contactRepliedAt on its comment-thread conversation", async () => {
     mockRunChannelHandler.mockResolvedValue({
       message: { ...baseIncomingMessage, type: "comment", attachments: [] },

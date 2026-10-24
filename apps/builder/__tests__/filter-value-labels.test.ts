@@ -20,6 +20,11 @@ const resolved = (
   inboxes: [],
   members: [],
   inboxTeams: [],
+  flows: [],
+  flowNodes: [],
+  keywords: [],
+  whatsappFlows: [],
+  emailTopics: [],
   ...overrides,
 })
 
@@ -160,5 +165,88 @@ describe("buildFilterValueLabels", () => {
 
   test("returns undefined for option sources that are not looked up by id", () => {
     expect(buildFilterValueLabels("gender", resolved(), [])).toBeUndefined()
+  })
+})
+
+describe("collectFilterValueIds for activity-backed fields", () => {
+  test("groups flows, nodes, keywords, WhatsApp flows and email topics by lookup type", () => {
+    expect(
+      collectFilterValueIds([
+        { field: "executedFlow", value: ["7", "8"] },
+        { field: "executedStep", value: ["7:9"] },
+        { field: "keywordsReceived", value: ["4"] },
+        { field: "completedWhatsAppFlows", value: ["5"] },
+        { field: "emailOpened", value: ["12"] },
+      ]),
+    ).toEqual({
+      flows: ["7", "8"],
+      flowNodes: ["7:9"],
+      keywords: ["4"],
+      whatsappFlows: ["5"],
+      emailTopics: ["12"],
+    })
+  })
+
+  test("never looks up the fixed No Topic value or a malformed node reference", () => {
+    expect(
+      collectFilterValueIds([
+        { field: "emailSent", value: ["noTopic", "12"] },
+        { field: "executedStep", value: ["9", "7:9:1", "7:x"] },
+      ]),
+    ).toEqual({ emailTopics: ["12"] })
+  })
+})
+
+describe("buildFilterValueLabels for activity-backed fields", () => {
+  test("names looked-up topics and keeps the fixed No Topic label", () => {
+    const noTopic = { label: "No Topic", value: "noTopic" }
+    expect(
+      buildFilterValueLabels(
+        "emailTopics",
+        resolved({ emailTopics: [{ id: "12", name: "Newsletter" }] }),
+        [noTopic],
+      ),
+    ).toEqual([{ label: "Newsletter", value: "12" }, noTopic])
+  })
+
+  test("names a node by its flow:node reference", () => {
+    expect(
+      buildFilterValueLabels(
+        "flowNodes",
+        resolved({ flowNodes: [{ id: "7:9", name: "Flow A · Welcome" }] }),
+        undefined,
+      ),
+    ).toEqual([{ label: "Flow A · Welcome", value: "7:9" }])
+  })
+})
+
+describe("resolveFilterValueLabelsRequest for activity-backed fields", () => {
+  const base = { workspaceId: "1" }
+
+  test("accepts flow:node references and plain ids", () => {
+    expect(
+      resolveFilterValueLabelsRequest.safeParse({
+        ...base,
+        flowNodes: ["7:9"],
+        keywords: ["4"],
+        emailTopics: ["12"],
+      }).success,
+    ).toBe(true)
+  })
+
+  test("rejects a bare node id or an oversized list", () => {
+    expect(
+      resolveFilterValueLabelsRequest.safeParse({ ...base, flowNodes: ["9"] })
+        .success,
+    ).toBe(false)
+    expect(
+      resolveFilterValueLabelsRequest.safeParse({
+        ...base,
+        keywords: Array.from(
+          { length: MAX_FILTER_VALUE_LABEL_IDS + 1 },
+          (_, index) => String(index + 1),
+        ),
+      }).success,
+    ).toBe(false)
   })
 })

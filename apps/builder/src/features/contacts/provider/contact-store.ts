@@ -16,7 +16,11 @@ export type ContactState = {
 
   workspaceId: string
   count: number | null
+  /** True when `count` stopped at the server's cap (a lower bound). */
+  countCapped: boolean
   contactInboxesCount: number | null
+  /** True when `contactInboxesCount` stopped at the server's cap. */
+  contactInboxesCountCapped: boolean
 }
 
 export type ContactActions = {
@@ -44,7 +48,9 @@ export const createContactStore = (props: Partial<ContactState>) =>
 
     workspaceId: "",
     count: null,
+    countCapped: false,
     contactInboxesCount: null,
+    contactInboxesCountCapped: false,
     ...props,
 
     initialize: async () => {
@@ -68,13 +74,18 @@ export const createContactStore = (props: Partial<ContactState>) =>
       set({ loadingCounts: true, error: null })
 
       try {
-        const { total } =
+        const { total, totalCountCapped } =
           await client.contactsAPIs.countContactsAuthenticatedAPI({
             workspaceId,
             sort: [],
+            countMode: "bounded",
           })
 
-        set({ count: total, loadingCounts: false })
+        set({
+          count: total,
+          countCapped: totalCountCapped ?? false,
+          loadingCounts: false,
+        })
       } catch (error: unknown) {
         set({
           error: getClientErrorMessage(error, "Failed to fetch contacts count"),
@@ -99,7 +110,7 @@ export const createContactStore = (props: Partial<ContactState>) =>
       })
 
       try {
-        const { total } =
+        const { total, totalCountCapped } =
           await client.contactsAPIs.countContactInboxesAuthenticatedAPI({
             workspaceId,
             sort: [],
@@ -109,13 +120,18 @@ export const createContactStore = (props: Partial<ContactState>) =>
             integrationMessengerId: params?.integrationMessengerId,
             contactFilter: params?.contactFilter,
             subaction: params?.subaction,
+            countMode: "bounded",
           })
 
         if (get().inboxesCountReqId !== reqId) {
           return
         }
 
-        set({ contactInboxesCount: total, loadingInboxesCount: false })
+        set({
+          contactInboxesCount: total,
+          contactInboxesCountCapped: totalCountCapped ?? false,
+          loadingInboxesCount: false,
+        })
       } catch (error: unknown) {
         if (get().inboxesCountReqId !== reqId) {
           return

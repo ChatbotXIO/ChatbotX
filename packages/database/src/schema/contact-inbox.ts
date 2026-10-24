@@ -33,6 +33,7 @@ export type ContactInboxReferral = {
   type?: string | null
   adId?: string | null
   adTitle?: string | null
+  adBody?: string | null
   sourceUrl?: string | null
   sourcePlatform?: string | null
   ctwaClid?: string | null
@@ -139,6 +140,8 @@ export const contactInboxModel = pgTable(
     referral: jsonb().$type<ContactInboxReferral>(),
     lastCommentMessageId: text(),
     lastCommentMessageAt: timestamp(timestampConfig),
+    // Instagram story the contact last replied to (`{{last_story_id}}`).
+    lastStoryId: text(),
     consecutiveFailedReply: integer().default(0).notNull(),
     lastInputFailure: text(),
     lastErrorLog: text(),

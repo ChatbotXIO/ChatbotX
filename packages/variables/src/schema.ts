@@ -23,6 +23,11 @@ export type ContactVariableContext = {
   contactInbox: ContactInboxModel | null
   conversation?: ConversationModel | null
   appointmentId?: string
+  /**
+   * The inbox user who sent the running flow. Only set on a flow an inbox user
+   * started; backs `{{admin_name}}` / `{{admin_team_name}}`.
+   */
+  sentByUserId?: string
   workspace: WorkspaceModel | null
 }
 

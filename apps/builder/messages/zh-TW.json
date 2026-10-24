@@ -1562,6 +1562,45 @@
     },
     "miniApp": {
       "label": "小程式"
+    },
+    "adminName": {
+      "label": "傳送管理員名稱"
+    },
+    "adminTeamName": {
+      "label": "傳送管理員所屬團隊"
+    },
+    "bookingId": {
+      "label": "預約ID"
+    },
+    "lastPoints": {
+      "label": "最近問卷分數"
+    },
+    "lastAdHeadline": {
+      "label": "最近廣告標題"
+    },
+    "lastAdBody": {
+      "label": "最近廣告內文"
+    },
+    "lastStoryId": {
+      "label": "最近限時動態ID"
+    },
+    "lastLeadId": {
+      "label": "最近名單ID"
+    },
+    "lastFormId": {
+      "label": "最近表單ID"
+    },
+    "lastFormName": {
+      "label": "最近表單名稱"
+    },
+    "lastAdgroupId": {
+      "label": "最近廣告群組ID"
+    },
+    "lastTextInput": {
+      "label": "最近文字輸入"
+    },
+    "empty": {
+      "label": "空白"
     }
   },
   "messages": {
@@ -2248,6 +2287,8 @@
       "description": "向所有聯絡人傳送流。"
     },
     "receiversCount": "接收器：{count}",
+    "receiversCountCapped": "接收器：{count}+",
+    "receiversCountUnknown": "接收器：?",
     "receiversLoading": "接收器：正在載入...",
     "whatsappTemplateMessage": {
       "title": "範本訊息",
@@ -2498,6 +2539,7 @@
   },
   "condition": {
     "unknownValue": "未知",
+    "deletedValue": "已刪除 (#{id})",
     "yes": "是",
     "no": "否",
     "valuePlaceholder": "...",
@@ -2690,7 +2732,9 @@
       },
       "adPrefix": "廣告",
       "allAds": "所有廣告"
-    }
+    },
+    "noTopic": "無主題",
+    "trackingSince": "自 {date} 起記錄。先前的活動不包含在內。"
   },
   "channels": {
     "title": "頻道",

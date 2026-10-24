@@ -43,7 +43,11 @@ vi.mock("@chatbotx.io/ui/components/ui/button", () => ({
 let container: HTMLDivElement | null = null
 let root: Root | null = null
 
-const render = (props: { isValid: boolean }) => {
+const render = (props: {
+  isValid: boolean
+  countCapped?: boolean
+  count?: number
+}) => {
   container = document.createElement("div")
   document.body.appendChild(container)
   root = createRoot(container)
@@ -82,5 +86,24 @@ describe("BroadcastConfirmDialog submit gating", () => {
 
   test("enables submit when the form is valid and receivers are known", () => {
     expect(submitButton(render({ isValid: true })).disabled).toBe(false)
+  })
+
+  test("labels a capped count as a lower bound and keeps preview enabled", () => {
+    const el = render({ isValid: true, count: 100_000, countCapped: true })
+    const preview = el.querySelector(
+      'button[type="button"]',
+    ) as HTMLButtonElement
+    expect(preview.textContent).toContain("broadcasts.receiversCountCapped")
+    expect(preview.disabled).toBe(false)
+  })
+
+  test("never shows 0 for a capped window with no lower bound", () => {
+    const el = render({ isValid: true, count: 0, countCapped: true })
+    const preview = el.querySelector(
+      'button[type="button"]',
+    ) as HTMLButtonElement
+    expect(preview.textContent).toContain("broadcasts.receiversCountUnknown")
+    expect(preview.disabled).toBe(false)
+    expect(submitButton(el).disabled).toBe(false)
   })
 })

@@ -94,6 +94,8 @@ type StatsContactsDialogProps = {
    * clicked.
    */
   contactTotal?: number
+  /** Replaces the formatted `total` in the title, e.g. "100,000+" for a lower bound. */
+  totalLabel?: string
   i18nNamespace: "broadcasts" | "sequences" | "commentAutomation"
   showErrors?: boolean
   /**
@@ -143,6 +145,7 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
   title,
   total,
   contactTotal,
+  totalLabel,
   i18nNamespace,
   showErrors = false,
   showComments = false,
@@ -272,7 +275,7 @@ const StatsContactsDialogInner = memo(function StatsContactsDialogInner({
       <DialogContent className="flex max-h-screen flex-col sm:max-w-2xl">
         <DialogHeader className="mb-2">
           <DialogTitle>
-            {title} ({formatter.number(total)})
+            {title} ({totalLabel ?? formatter.number(total)})
           </DialogTitle>
         </DialogHeader>
 

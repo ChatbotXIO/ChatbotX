@@ -4,6 +4,7 @@ import {
   contactTimezoneOptions,
 } from "@chatbotx.io/business/contact-locale"
 import {
+  CONTACT_ACTIVITY_TRACKED_FIELDS,
   type ContactFilterField,
   type ContactInfoFilterValue,
   type ContactInfoType,
@@ -13,7 +14,9 @@ import {
   contactSources,
   type FormFieldType,
   formFieldTypes,
+  isContactActivityFilterField,
   lastUserInputTypes,
+  NO_TOPIC_FIXED_VALUE,
   type OperatorType,
   operatorTypes,
 } from "@chatbotx.io/database/partials"
@@ -36,6 +39,9 @@ import {
   isFieldOnSurface,
 } from "../schema"
 import type { ResolveFilterValueLabelsResponse } from "../schema/value-labels"
+
+const isContactActivityTrackedField = (field: string): boolean =>
+  CONTACT_ACTIVITY_TRACKED_FIELDS.some((tracked) => tracked === field)
 
 export type ConditionOption = {
   value: OperatorType
@@ -232,6 +238,7 @@ const resolveContactFilterOptions = (
     assigneeOptions: SelectOption[]
     channelPostOptions: SelectOption[]
     workingHourOptions: SelectOption[]
+    flowNodeOptions: SelectOption[]
     productOptions: SelectOption[]
   },
 ): SelectOption[] | undefined => {
@@ -269,6 +276,17 @@ const resolveContactFilterOptions = (
       return ctx.tagOptions
     case "flows":
       return ctx.flowVersionOptions
+    case "flowNodes":
+      return ctx.flowNodeOptions
+    // Searched on the server by the value field, not listed up front. Email
+    // topics carry the one fixed choice that is not a topic row.
+    case "keywords":
+    case "whatsappFlows":
+      return
+    case "emailTopics":
+      return [
+        { label: ctx.t("condition.noTopic"), value: NO_TOPIC_FIXED_VALUE },
+      ]
     case "broadcasts":
       return ctx.broadcastOptions
     case "sequences":
@@ -433,6 +451,8 @@ export const getFieldConfigs = ({
   reflinkOptions = [],
   assigneeOptions = [],
   channelPostOptions = [],
+  flowNodeOptions = [],
+  activityFiltersEnabled = true,
   workingHourOptions = [],
   couponTopicOptions = [],
   leaderboardOptions = [],
@@ -452,6 +472,10 @@ export const getFieldConfigs = ({
   reflinkOptions?: SelectOption[]
   assigneeOptions?: SelectOption[]
   channelPostOptions?: SelectOption[]
+  /** `Flow · Node` choices (value `flowId:nodeId`) for the "Executed Step" filter. */
+  flowNodeOptions?: SelectOption[]
+  /** False when the activity-backed filters are switched off server-side. */
+  activityFiltersEnabled?: boolean
   /** Schedules (+ the assigned-agent choice) for the flow-only working-hours field. */
   workingHourOptions?: SelectOption[]
   couponTopicOptions?: SelectOption[]
@@ -494,7 +518,9 @@ export const getFieldConfigs = ({
   }
 
   const staticConfigs: FieldConfig[] = CONTACT_FILTER_FIELD_DEFINITIONS.filter(
-    (def) => isFieldOnSurface(def, surface),
+    (def) =>
+      isFieldOnSurface(def, surface) &&
+      (activityFiltersEnabled || !isContactActivityTrackedField(def.field)),
   ).map((def: ContactFilterFieldDefinition) => {
     const formField = schemaKindToFormField(def.schemaKind)
     const options =
@@ -510,6 +536,7 @@ export const getFieldConfigs = ({
         assigneeOptions,
         channelPostOptions,
         workingHourOptions,
+        flowNodeOptions,
         productOptions,
       }) ?? booleanOptionsFor(formField)
     return {
@@ -730,7 +757,7 @@ const findOptionLabel = (
 export const formatConditionValueDisplay = (
   value: string | string[] | undefined,
   options?: SelectOption[],
-  unknownLabel?: string,
+  unknownLabel?: string | ((value: string) => string),
 ): string => {
   if (value === undefined) {
     return ""
@@ -741,8 +768,12 @@ export const formatConditionValueDisplay = (
     return Array.isArray(value) ? value.join(", ") : value
   }
 
+  const resolveUnknown = (optionValue: string) =>
+    typeof unknownLabel === "function"
+      ? unknownLabel(optionValue)
+      : (unknownLabel ?? optionValue)
   const getLabel = (optionValue: string) =>
-    findOptionLabel(options, optionValue) ?? unknownLabel ?? optionValue
+    findOptionLabel(options, optionValue) ?? resolveUnknown(optionValue)
 
   if (Array.isArray(value)) {
     return value.map(getLabel).join(", ")
@@ -753,18 +784,25 @@ export const formatConditionValueDisplay = (
 
 /**
  * Value text for a condition row. Uses the looked-up `valueLabels` when the
- * field has them (a value missing there reads "Unknown"); until they load, or
- * for fields that are not id-backed, falls back to the picker `options`.
+ * field has them (a value missing there reads "Unknown", or "Deleted (#id)" for
+ * activity fields, whose history outlives the flow/keyword/topic it points at);
+ * until they load, or for fields that are not id-backed, falls back to the
+ * picker `options`.
  */
 export const formatFilterConditionValue = (
   value: string | string[] | undefined,
   fieldConfig: FieldConfig | undefined,
-  t: (key: string) => string,
-): string =>
-  fieldConfig?.valueLabels
-    ? formatConditionValueDisplay(
-        value,
-        fieldConfig.valueLabels,
-        t("condition.unknownValue"),
-      )
-    : formatConditionValueDisplay(value, fieldConfig?.options)
+  t: (key: string, params?: Record<string, string>) => string,
+): string => {
+  if (!fieldConfig?.valueLabels) {
+    return formatConditionValueDisplay(value, fieldConfig?.options)
+  }
+  const unknownLabel = isContactActivityFilterField(fieldConfig.name)
+    ? (id: string) => t("condition.deletedValue", { id })
+    : t("condition.unknownValue")
+  return formatConditionValueDisplay(
+    value,
+    fieldConfig.valueLabels,
+    unknownLabel,
+  )
+}

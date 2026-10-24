@@ -102,6 +102,78 @@ export const flowRepository = {
     })
   },
 
+  /**
+   * The nodes of the flow's published (current) version: `undefined` when the
+   * flow does not exist in the workspace, `[]` when it has no published
+   * version yet.
+   */
+  async findCurrentVersionNodes(
+    input: { workspaceId: string; flowId: string },
+    tx: DatabaseClient = db,
+  ) {
+    const flow = await tx.query.flowModel.findFirst({
+      where: { workspaceId: input.workspaceId, id: input.flowId },
+      columns: { currentVersionId: true },
+    })
+    if (!flow) {
+      return
+    }
+    if (!flow.currentVersionId) {
+      return []
+    }
+
+    const version = await tx.query.flowVersionModel.findFirst({
+      where: {
+        id: flow.currentVersionId,
+        flowId: input.flowId,
+        workspaceId: input.workspaceId,
+      },
+      columns: { nodes: true },
+    })
+    return version?.nodes ?? []
+  },
+
+  /**
+   * Name and published-version nodes of the given flows (a flow without a
+   * published version has no nodes). Flows that do not exist in the workspace
+   * are absent. Two primary-key lookups, so it costs the number of flows asked
+   * for, not the number in the workspace.
+   */
+  async listCurrentVersionNodesByFlowIds(
+    input: { workspaceId: string; flowIds: string[] },
+    tx: DatabaseClient = db,
+  ) {
+    if (input.flowIds.length === 0) {
+      return []
+    }
+
+    const flows = await tx.query.flowModel.findMany({
+      where: { workspaceId: input.workspaceId, id: { in: input.flowIds } },
+      columns: { id: true, name: true, currentVersionId: true },
+    })
+    const versionIds = flows.flatMap((flow) =>
+      flow.currentVersionId ? [flow.currentVersionId] : [],
+    )
+    const versions =
+      versionIds.length === 0
+        ? []
+        : await tx.query.flowVersionModel.findMany({
+            where: { workspaceId: input.workspaceId, id: { in: versionIds } },
+            columns: { id: true, nodes: true },
+          })
+    const nodesByVersionId = new Map(
+      versions.map((version) => [version.id, version.nodes]),
+    )
+
+    return flows.map((flow) => ({
+      flowId: flow.id,
+      flowName: flow.name,
+      nodes: flow.currentVersionId
+        ? (nodesByVersionId.get(flow.currentVersionId) ?? [])
+        : [],
+    }))
+  },
+
   /** Existence check for a set of flow ids, scoped to the workspace. */
   async listIdsByIds(
     input: { workspaceId: string; ids: string[] },

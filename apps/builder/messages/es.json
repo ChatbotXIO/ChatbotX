@@ -435,6 +435,8 @@
       "description": "Envía un flujo a todos los contactos."
     },
     "receiversCount": "Receivers: {count}",
+    "receiversCountCapped": "Receivers: {count}+",
+    "receiversCountUnknown": "Receivers: ?",
     "receiversLoading": "Receivers: Cargando...",
     "whatsappTemplateMessage": {
       "title": "Plantilla Mensaje",
@@ -685,6 +687,7 @@
   },
   "condition": {
     "unknownValue": "Desconocido",
+    "deletedValue": "Eliminado (#{id})",
     "yes": "Sí",
     "no": "No",
     "valuePlaceholder": "...",
@@ -877,7 +880,9 @@
       },
       "adPrefix": "anuncio",
       "allAds": "todos los anuncios"
-    }
+    },
+    "noTopic": "Sin tema",
+    "trackingSince": "Registrado desde {date}. No incluye la actividad anterior."
   },
   "channels": {
     "title": "Canales",
@@ -2597,6 +2602,45 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "adminName": {
+      "label": "Nombre del admin que envía"
+    },
+    "adminTeamName": {
+      "label": "Equipos del admin que envía"
+    },
+    "bookingId": {
+      "label": "ID de reserva"
+    },
+    "lastPoints": {
+      "label": "Últimos puntos del cuestionario"
+    },
+    "lastAdHeadline": {
+      "label": "Último titular del anuncio"
+    },
+    "lastAdBody": {
+      "label": "Último texto del anuncio"
+    },
+    "lastStoryId": {
+      "label": "Último ID de historia"
+    },
+    "lastLeadId": {
+      "label": "Último ID de lead"
+    },
+    "lastFormId": {
+      "label": "Último ID de formulario"
+    },
+    "lastFormName": {
+      "label": "Último nombre de formulario"
+    },
+    "lastAdgroupId": {
+      "label": "Último ID de grupo de anuncios"
+    },
+    "lastTextInput": {
+      "label": "Última entrada de texto"
+    },
+    "empty": {
+      "label": "Vacío"
     }
   },
   "flows": {

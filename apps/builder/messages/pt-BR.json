@@ -435,6 +435,8 @@
       "description": "Envie um fluxo para todos os contatos."
     },
     "receiversCount": "Destinatários: {count}",
+    "receiversCountCapped": "Destinatários: {count}+",
+    "receiversCountUnknown": "Destinatários: ?",
     "receiversLoading": "Destinatários: carregando...",
     "whatsappTemplateMessage": {
       "title": "Mensagem de modelo",
@@ -685,6 +687,7 @@
   },
   "condition": {
     "unknownValue": "Desconhecido",
+    "deletedValue": "Excluído (#{id})",
     "yes": "Sim",
     "no": "Não",
     "valuePlaceholder": "...",
@@ -877,7 +880,9 @@
       },
       "adPrefix": "anúncio",
       "allAds": "todos os anúncios"
-    }
+    },
+    "noTopic": "Sem tópico",
+    "trackingSince": "Registrado desde {date}. A atividade anterior não está incluída."
   },
   "fields": {
     "optionalHint": "(opcional)",
@@ -2442,6 +2447,45 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "adminName": {
+      "label": "Nome do admin remetente"
+    },
+    "adminTeamName": {
+      "label": "Equipes do admin remetente"
+    },
+    "bookingId": {
+      "label": "ID da reserva"
+    },
+    "lastPoints": {
+      "label": "Últimos pontos do questionário"
+    },
+    "lastAdHeadline": {
+      "label": "Último título do anúncio"
+    },
+    "lastAdBody": {
+      "label": "Último texto do anúncio"
+    },
+    "lastStoryId": {
+      "label": "Último ID do story"
+    },
+    "lastLeadId": {
+      "label": "Último ID do lead"
+    },
+    "lastFormId": {
+      "label": "Último ID do formulário"
+    },
+    "lastFormName": {
+      "label": "Último nome do formulário"
+    },
+    "lastAdgroupId": {
+      "label": "Último ID do grupo de anúncios"
+    },
+    "lastTextInput": {
+      "label": "Última entrada de texto"
+    },
+    "empty": {
+      "label": "Vazio"
     }
   },
   "flows": {

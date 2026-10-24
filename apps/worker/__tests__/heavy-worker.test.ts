@@ -289,6 +289,32 @@ describe("heavy worker", () => {
     )
   })
 
+  test("resumes the flow with the inbox sender of the heavy step's continuation", async () => {
+    mocks.generateImageOutput.mockResolvedValue("https://cdn.example.com/a.png")
+    const job = buildGenerateImageJob()
+    job.data.data.outcomeKey = "heavy-step-outcome-1"
+    job.data.data.continuation = {
+      flowExecutionKey: "flow-execution-1",
+      flowId: "flow-1",
+      sendFrom: "inbox",
+      sentByUserId: "user-1",
+    }
+
+    await mocks.processJob?.(job)
+
+    expect(mocks.integrationQueueAdd).toHaveBeenCalledWith(
+      "resumeHeavyStep",
+      {
+        type: "resumeHeavyStep",
+        data: expect.objectContaining({
+          sendFrom: "inbox",
+          sentByUserId: "user-1",
+        }),
+      },
+      expect.anything(),
+    )
+  })
+
   test("returns error data for expected media failures", async () => {
     const error = new ExpectedHeavyStepError("AI integration not found")
     mocks.generateImageOutput.mockRejectedValueOnce(error)

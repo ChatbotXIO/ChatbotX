@@ -1,5 +1,4 @@
-import { emailTopicAnalyticsService } from "@chatbotx.io/analytics"
-import { emailTopicService } from "@chatbotx.io/business"
+import { emailTopicService, emailTrackingService } from "@chatbotx.io/business"
 import { awardLeaderboardEmailEngagement } from "@chatbotx.io/business/leaderboard"
 import { NextResponse } from "next/server"
 import { loadServableWorkspace } from "@/lib/workspace/load-servable-workspace"
@@ -21,11 +20,18 @@ export async function GET(request: Request) {
     if (workspaceId) {
       const { servable } = await loadServableWorkspace(workspaceId)
       if (servable) {
-        await emailTopicAnalyticsService.recordOpen(token)
+        await emailTrackingService.recordTransitionOrEnqueueRepair({
+          phase: "opened",
+          token,
+          workspaceId,
+        })
         await awardLeaderboardEmailEngagement({ token, kind: "open" })
       }
     } else {
-      await emailTopicAnalyticsService.recordOpen(token)
+      await emailTrackingService.recordTransitionOrEnqueueRepair({
+        phase: "opened",
+        token,
+      })
     }
   }
 

@@ -22,9 +22,9 @@ import {
   type ContactInboxIdentityFields,
   type ContactInboxIdentityGuard,
   contactInboxOperationalColumns,
-  contactInboxPostRepository,
   contactInboxRepository,
   type GoogleClickInboxRow,
+  workspaceRepository,
 } from "@chatbotx.io/database/repositories"
 import type {
   ContactInboxIdentityChangeReason,
@@ -111,6 +111,7 @@ export type ContactInboxTrackingData = Partial<
     | "lastOutboundMessageAt"
     | "lastCommentMessageId"
     | "lastCommentMessageAt"
+    | "lastStoryId"
     | "contactLastReadAt"
     | "consecutiveFailedReply"
     | "lastInputFailure"
@@ -199,15 +200,27 @@ const GOOGLE_CLICK_KEYS: ReadonlySet<string> = new Set(
   GOOGLE_CLICK_REFERRAL_KEYS,
 )
 
+/**
+ * The ad's own copy. A referral that names a NEW ad replaces it as a whole, so
+ * a headline or body the new ad does not carry must clear the previous ad's
+ * value instead of letting the jsonb merge keep it.
+ */
+const AD_COPY_KEYS: ReadonlySet<string> = new Set(["adTitle", "adBody"])
+
 const compactReferral = (
   referral: ContactInboxReferral,
 ): Partial<ContactInboxReferral> => {
   const nextReferral: Partial<ContactInboxReferral> = {}
+  const startsNewAd = typeof referral.adId === "string" && referral.adId !== ""
 
   for (const [key, value] of Object.entries(referral)) {
     // A newer Google click carries an explicit `null` for the click id it does
-    // not use (gbraid clears gclid and vice-versa); every other null is noise.
-    if (value === null && GOOGLE_CLICK_KEYS.has(key)) {
+    // not use (gbraid clears gclid and vice-versa), and a newer ad clears the
+    // copy it does not carry; every other null is noise.
+    if (
+      value === null &&
+      (GOOGLE_CLICK_KEYS.has(key) || (startsNewAd && AD_COPY_KEYS.has(key)))
+    ) {
       Object.assign(nextReferral, { [key]: null })
       continue
     }
@@ -379,11 +392,10 @@ class ContactInboxService extends BaseService {
     )
 
     return await db.transaction(async (tx) => {
-      const canWrite =
-        await contactInboxPostRepository.lockWorkspaceForPostWrite(
-          { workspaceId: props.workspaceId },
-          tx,
-        )
+      const canWrite = await workspaceRepository.lockWorkspaceForChildWrite(
+        { workspaceId: props.workspaceId },
+        tx,
+      )
       if (!canWrite) {
         return
       }
@@ -454,11 +466,10 @@ class ContactInboxService extends BaseService {
       PROFILE_SNAPSHOT_MAX_RETRY_MS,
     )
     const updated = await db.transaction(async (tx) => {
-      const canWrite =
-        await contactInboxPostRepository.lockWorkspaceForPostWrite(
-          { workspaceId: props.workspaceId },
-          tx,
-        )
+      const canWrite = await workspaceRepository.lockWorkspaceForChildWrite(
+        { workspaceId: props.workspaceId },
+        tx,
+      )
       if (!canWrite) {
         return
       }
@@ -1172,11 +1183,10 @@ class ContactInboxService extends BaseService {
   }): Promise<boolean> {
     const now = new Date()
     const contactId = await db.transaction(async (tx) => {
-      const canWrite =
-        await contactInboxPostRepository.lockWorkspaceForPostWrite(
-          { workspaceId: props.workspaceId },
-          tx,
-        )
+      const canWrite = await workspaceRepository.lockWorkspaceForChildWrite(
+        { workspaceId: props.workspaceId },
+        tx,
+      )
       if (!canWrite) {
         return
       }

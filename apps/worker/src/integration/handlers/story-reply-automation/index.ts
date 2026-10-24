@@ -18,6 +18,7 @@ import type {
   IgStoryAutomationModel,
 } from "@chatbotx.io/database/types"
 import { webhookChannelOrigin } from "@chatbotx.io/events/context"
+import { normalizeForMatch } from "@chatbotx.io/utils/normalize-for-match"
 import { applySpintax } from "@chatbotx.io/utils/spintax"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
@@ -30,7 +31,6 @@ import {
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../../lib/logger"
 import { generateAIReplyText } from "../automated-response/replies"
-import { normalizeForMatch } from "../comment-automation/automation-matching"
 
 function matchStory(story: IgStoryTarget, storyId: string): boolean {
   if (story.type !== "storyIds") {

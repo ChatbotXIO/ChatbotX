@@ -435,6 +435,8 @@
       "description": "Tüm kişilere bir akış gönderin."
     },
     "receiversCount": "Alıcılar: {count}",
+    "receiversCountCapped": "Alıcılar: {count}+",
+    "receiversCountUnknown": "Alıcılar: ?",
     "receiversLoading": "Alıcılar: Yükleniyor...",
     "whatsappTemplateMessage": {
       "title": "Şablon Mesajı",
@@ -685,6 +687,7 @@
   },
   "condition": {
     "unknownValue": "Bilinmiyor",
+    "deletedValue": "Silindi (#{id})",
     "yes": "Evet",
     "no": "Hayır",
     "valuePlaceholder": "...",
@@ -877,7 +880,9 @@
       },
       "adPrefix": "reklam",
       "allAds": "tüm reklamlar"
-    }
+    },
+    "noTopic": "Konusuz",
+    "trackingSince": "{date} tarihinden beri izleniyor. Önceki etkinlik dahil değildir."
   },
   "channels": {
     "title": "Kanallar",
@@ -2597,6 +2602,45 @@
     },
     "miniApp": {
       "label": "Mini Uygulama"
+    },
+    "adminName": {
+      "label": "Gönderen yönetici adı"
+    },
+    "adminTeamName": {
+      "label": "Gönderen yöneticinin ekipleri"
+    },
+    "bookingId": {
+      "label": "Rezervasyon kimliği"
+    },
+    "lastPoints": {
+      "label": "Son anket puanı"
+    },
+    "lastAdHeadline": {
+      "label": "Son reklam başlığı"
+    },
+    "lastAdBody": {
+      "label": "Son reklam metni"
+    },
+    "lastStoryId": {
+      "label": "Son hikaye kimliği"
+    },
+    "lastLeadId": {
+      "label": "Son potansiyel müşteri kimliği"
+    },
+    "lastFormId": {
+      "label": "Son form kimliği"
+    },
+    "lastFormName": {
+      "label": "Son form adı"
+    },
+    "lastAdgroupId": {
+      "label": "Son reklam grubu kimliği"
+    },
+    "lastTextInput": {
+      "label": "Son metin girişi"
+    },
+    "empty": {
+      "label": "Boş"
     }
   },
   "flows": {

@@ -92,6 +92,7 @@ async function resumeHeavyFlow(input: {
         nodeVisits: input.continuation.nodeVisits,
         outcomeKey: input.outcomeKey,
         sendFrom: input.continuation.sendFrom,
+        sentByUserId: input.continuation.sentByUserId,
         startFromStepId: input.stepId,
         targetId: input.continuation.targetId,
         targetType: input.continuation.targetType,

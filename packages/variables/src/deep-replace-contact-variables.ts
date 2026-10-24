@@ -102,6 +102,7 @@ export const resolveContactVariablesDeep = async <T>(
     conversation?: ConversationModel | null
     workspace?: WorkspaceModel
     appointmentId?: string
+    sentByUserId?: string
   },
   options: ResolveContactVariablesDeepOptions = {},
 ): Promise<T> => {

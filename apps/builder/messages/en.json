@@ -477,6 +477,8 @@
       "description": "Send a flow to all contacts."
     },
     "receiversCount": "Receivers: {count}",
+    "receiversCountCapped": "Receivers: {count}+",
+    "receiversCountUnknown": "Receivers: ?",
     "receiversLoading": "Receivers: Loading...",
     "whatsappTemplateMessage": {
       "title": "Template Message",
@@ -727,6 +729,7 @@
   },
   "condition": {
     "unknownValue": "Unknown",
+    "deletedValue": "Deleted (#{id})",
     "yes": "Yes",
     "no": "No",
     "valuePlaceholder": "...",
@@ -919,7 +922,9 @@
       },
       "adPrefix": "ad",
       "allAds": "all ads"
-    }
+    },
+    "noTopic": "No Topic",
+    "trackingSince": "Tracked since {date}. Earlier activity is not included."
   },
   "channels": {
     "title": "Channels",
@@ -2639,6 +2644,45 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "adminName": {
+      "label": "Sending Admin Name"
+    },
+    "adminTeamName": {
+      "label": "Sending Admin Teams"
+    },
+    "bookingId": {
+      "label": "Booking ID"
+    },
+    "lastPoints": {
+      "label": "Last Questionnaire Points"
+    },
+    "lastAdHeadline": {
+      "label": "Last Ad Headline"
+    },
+    "lastAdBody": {
+      "label": "Last Ad Body"
+    },
+    "lastStoryId": {
+      "label": "Last Story ID"
+    },
+    "lastLeadId": {
+      "label": "Last Lead ID"
+    },
+    "lastFormId": {
+      "label": "Last Form ID"
+    },
+    "lastFormName": {
+      "label": "Last Form Name"
+    },
+    "lastAdgroupId": {
+      "label": "Last Ad Group ID"
+    },
+    "lastTextInput": {
+      "label": "Last Text Input"
+    },
+    "empty": {
+      "label": "Empty"
     }
   },
   "metaConversions": {

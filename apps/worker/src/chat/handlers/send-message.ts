@@ -1,4 +1,5 @@
 import {
+  contactActivityService,
   contactInboxService,
   contactService,
   conversationService,
@@ -138,6 +139,38 @@ const assertThreadOpenForServiceMessage = (
     ChannelErrorCategory.PERMISSION_DENIED,
     { code: THREAD_NOT_OWNED_ERROR_CODE },
   )
+}
+
+/**
+ * "Last Delivered" for a channel that reports no delivery receipts: the
+ * provider accepting the send is the delivery moment, as on webchat. A channel
+ * that declares receipts is recorded by the `message:delivered` listener
+ * instead, so this never double-counts it. The send already happened, so a
+ * bookkeeping failure is logged, never rethrown (a retry would send twice).
+ */
+export const recordDeliveredWhenNoReceipts = async (props: {
+  contactInbox: Pick<ContactInboxModel, "channel" | "contactId">
+  /** Messages the provider accepted; a send that dispatched none delivered nothing. */
+  sentCount: number
+  workspaceId: string
+}): Promise<void> => {
+  const integration = allIntegrations[props.contactInbox.channel]
+  if (!integration || integration.deliveryReceipts || props.sentCount <= 0) {
+    return
+  }
+  try {
+    await contactActivityService.recordDelivered({
+      records: [
+        { contactId: props.contactInbox.contactId, deliveredAt: new Date() },
+      ],
+      workspaceId: props.workspaceId,
+    })
+  } catch (err) {
+    logger.warn(
+      { err, workspaceId: props.workspaceId },
+      "last-delivered: failed to record a successful send",
+    )
+  }
 }
 
 /**
@@ -395,6 +428,15 @@ export async function sendMessageToChannel(
       workspaceId: conversation.workspaceId,
       at: message.createdAt ?? new Date(),
     })
+
+    // A public comment reply reaches no one's inbox; a private reply does.
+    if (!isComment || isPrivateReply) {
+      await recordDeliveredWhenNoReceipts({
+        contactInbox,
+        sentCount: result.sentCount,
+        workspaceId: conversation.workspaceId,
+      })
+    }
 
     if (!isComment) {
       await recordServiceSent({
@@ -1117,6 +1159,12 @@ export async function sendFlowStepToChannel({
     contactId: contactInbox.contactId,
     workspaceId: conversation.workspaceId,
     at: new Date(),
+  })
+
+  await recordDeliveredWhenNoReceipts({
+    contactInbox,
+    sentCount: result.sentCount,
+    workspaceId: conversation.workspaceId,
   })
 
   await recordServiceSent({

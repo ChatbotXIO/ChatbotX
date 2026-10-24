@@ -1,6 +1,7 @@
-import { contactService } from "@chatbotx.io/business"
+import { type CountOutcome, contactService } from "@chatbotx.io/business"
 import type { ContactPermissionScope } from "../permissions"
 import type {
+  CountContactsRequest,
   ListContactsRequest,
   ListContactsTableResponse,
 } from "../schema/query"
@@ -23,8 +24,8 @@ export async function listContacts(
 }
 
 export async function countContacts(
-  input: ListContactsRequest,
+  input: CountContactsRequest,
   scope: ContactPermissionScope,
-): Promise<{ total: number }> {
+): Promise<CountOutcome> {
   return await contactService.count({ ...input, scope })
 }

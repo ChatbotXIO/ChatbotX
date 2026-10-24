@@ -24,6 +24,7 @@ import { applyContactFilter } from "../../src/queries/contact-filter"
 import { relations } from "../../src/relations"
 import { channelPostRepository } from "../../src/repositories/channel-post/repository"
 import { contactInboxPostRepository } from "../../src/repositories/contact-inbox-post/repository"
+import { workspaceRepository } from "../../src/repositories/workspace/repository"
 // biome-ignore lint/performance/noNamespaceImport: mirrors the database client schema registration
 import * as schema from "../../src/schema"
 import { realDatabaseUrl } from "./database-url"
@@ -927,7 +928,7 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
       await writerClient.query("BEGIN")
       try {
         expect(
-          await contactInboxPostRepository.lockWorkspaceForPostWrite(
+          await workspaceRepository.lockWorkspaceForChildWrite(
             { workspaceId: fixture.workspaceId },
             writerDb,
           ),
@@ -1094,7 +1095,7 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
       .where(eq(schema.workspaceModel.id, fixture.workspaceId))
 
     await expect(
-      contactInboxPostRepository.lockWorkspaceForPostWrite(
+      workspaceRepository.lockWorkspaceForChildWrite(
         { workspaceId: fixture.workspaceId },
         db,
       ),
@@ -1150,7 +1151,7 @@ describe.skipIf(!databaseUrl)("ContactInboxPost partition catalog", () => {
     }
 
     await expect(
-      contactInboxPostRepository.lockWorkspaceForPostWrite(
+      workspaceRepository.lockWorkspaceForChildWrite(
         { workspaceId: fixture.workspaceId },
         createDatabase(client),
       ),

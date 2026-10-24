@@ -4,13 +4,51 @@ import {
   tagService,
 } from "@chatbotx.io/business"
 import {
+  CONTACT_ACTIVITY_FILTERS,
+  CONTACT_ACTIVITY_TRACKED_FIELDS,
+  CONTACT_ACTIVITY_TRACKING_STARTED_AT,
+  isContactActivityFilterField,
+} from "@chatbotx.io/database/partials"
+import { isContactActivityFiltersEnabled } from "@chatbotx.io/database/queries/contact-filter"
+import {
   CONTACT_FILTER_FIELD_DEFINITIONS,
   type ContactFilterSurface,
   convertCustomFieldTypeToConditionType,
   isFieldOnSurface,
 } from "@/features/contact-filter/schema"
-import type { ListContactFilterFieldsPublicResponse } from "@/features/contact-filter/schema/public"
+import type {
+  ContactFilterFieldPublicResource,
+  ListContactFilterFieldsPublicResponse,
+} from "@/features/contact-filter/schema/public"
 import { enabledOperatorsForStaticField } from "@/features/contact-filter/schema/static-field-filter"
+
+const TRACKED_FIELDS: ReadonlySet<string> = new Set(
+  CONTACT_ACTIVITY_TRACKED_FIELDS,
+)
+
+/** Where an activity-backed field's values come from, and how far back they go. */
+const valueSourceForField = (
+  field: string,
+): ContactFilterFieldPublicResource["valueSource"] => {
+  if (!TRACKED_FIELDS.has(field)) {
+    return
+  }
+  if (isContactActivityFilterField(field)) {
+    const config = CONTACT_ACTIVITY_FILTERS[field]
+    return {
+      operation: config.valueSourceOperation,
+      scope: config.valueSourceScope,
+      fixedValues: [...config.fixedValues],
+      valueFormat: config.valueFormat,
+      trackingStartedAt: CONTACT_ACTIVITY_TRACKING_STARTED_AT,
+    }
+  }
+  return {
+    fixedValues: [],
+    valueFormat: field === "lastDelivered" ? "datetime" : "text",
+    trackingStartedAt: CONTACT_ACTIVITY_TRACKING_STARTED_AT,
+  }
+}
 
 /**
  * Discovery endpoint backing — enumerates every field an agent can use in a
@@ -44,14 +82,20 @@ export async function listContactFilterFieldsForAPI(props: {
     valueType: convertCustomFieldTypeToConditionType(field.type),
   })
 
+  // With the kill switch off a tracked field would silently match nobody, so
+  // it is not offered at all (saved conditions still validate).
+  const trackedFieldsEnabled = isContactActivityFiltersEnabled()
   const staticFields = CONTACT_FILTER_FIELD_DEFINITIONS.filter(
     (def): def is typeof def & { hidden?: false } =>
-      !("hidden" in def && def.hidden) && isFieldOnSurface(def, surface),
+      !("hidden" in def && def.hidden) &&
+      isFieldOnSurface(def, surface) &&
+      (trackedFieldsEnabled || !TRACKED_FIELDS.has(def.field)),
   ).map((def) => ({
     field: def.field as string,
     schemaKind: def.schemaKind,
     optionSource: def.optionSource as string,
     operators: enabledOperatorsForStaticField(def.field) as string[],
+    valueSource: valueSourceForField(def.field),
   }))
 
   return {

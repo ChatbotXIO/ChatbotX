@@ -4,6 +4,7 @@ import {
   and,
   asc,
   count,
+  countQueryCapped,
   type DatabaseClient,
   db,
   desc,
@@ -30,7 +31,9 @@ import {
   broadcastSendsTemplate,
   broadcastStatuses,
   type ChannelType,
+  type CountMode,
   clampAudienceCountToRange,
+  clampCappedAudienceCount,
   contactFilterFields,
   findBroadcastChannelCapability,
   hasDuplicateBroadcastTarget,
@@ -60,6 +63,7 @@ import {
   type BroadcastListInput,
   broadcastRecurrenceRepository,
   broadcastRepository,
+  contactRepository,
 } from "@chatbotx.io/database/repositories"
 import {
   broadcastModel,
@@ -105,6 +109,7 @@ import {
   type StatsContactRow,
 } from "../contact-inbox/map-stats-contact-row"
 import { contactInboxService } from "../contact-inbox/service"
+import { type CountOutcome, countByMode } from "../count-mode"
 import {
   BroadcastValidationException,
   type BroadcastValidationField,
@@ -130,6 +135,8 @@ const DEFAULT_BROADCAST_NAME = "Broadcast"
 /** Next runs shown on a repeating broadcast's detail. */
 const UPCOMING_RUNS_IN_DETAIL = 3
 const DEFAULT_CHUNK_SIZE = 1000
+/** `ContactInbox` rows read per scan page when the audience has a contact filter. */
+const AUDIENCE_SCAN_PAGE_SIZE = 5000
 const OPTION_LIST_LIMIT = 500
 const CALENDAR_LIST_LIMIT = 500
 const DEFAULT_PREVIEW_PER_PAGE = 20
@@ -2589,14 +2596,31 @@ class BroadcastService extends BaseService {
     })
   }
 
+  private pruneAudienceContactFilter(input: BroadcastAudienceInput) {
+    return pruneEmailPhoneFilterConditions(
+      input.contactFilter,
+      input.canViewEmailAndPhone !== false,
+    )
+  }
+
+  /** Inbox and 24h-window scope, without the contact filter. */
+  private buildAudienceScopeWhere(
+    inboxIds: string[],
+    input: BroadcastAudienceInput,
+  ): SQL | undefined {
+    return and(
+      inArray(contactInboxModel.inboxId, inboxIds),
+      requiresRecentInteractionWindow(input.subaction)
+        ? contactInboxInteractedWithin24hSQL()
+        : undefined,
+    )
+  }
+
   private buildAudienceWhere(
     inboxIds: string[],
     input: BroadcastAudienceInput,
   ): SQL | undefined {
-    const contactFilter = pruneEmailPhoneFilterConditions(
-      input.contactFilter,
-      input.canViewEmailAndPhone !== false,
-    )
+    const contactFilter = this.pruneAudienceContactFilter(input)
 
     return and(
       inArray(contactInboxModel.inboxId, inboxIds),
@@ -2645,34 +2669,68 @@ class BroadcastService extends BaseService {
       : undefined
   }
 
-  async countAudience(input: BroadcastAudienceInput): Promise<number> {
+  async countAudience(
+    input: BroadcastAudienceInput & { countMode?: CountMode },
+  ): Promise<CountOutcome> {
     const inboxIds = await this.resolveInboxIds(input)
     if (inboxIds.length === 0) {
-      return 0
+      return { total: 0, totalCountCapped: false }
     }
 
     const range = input.audienceRange ?? null
+    const audienceWhere = this.buildAudienceWhere(inboxIds, input)
+    const restricted = input.restrictToAssignedUserId
+      ? and(audienceWhere, this.buildAssignedConversationWhere(input))
+      : undefined
 
-    if (input.restrictToAssignedUserId) {
-      const [result] = await db
-        .select({ count: count() })
-        .from(contactInboxModel)
-        .innerJoin(conversationModel, this.buildDmConversationJoin())
-        .where(
-          and(
-            this.buildAudienceWhere(inboxIds, input),
-            this.buildAssignedConversationWhere(input),
-          ),
-        )
+    const buildScopedSelect = (client: DatabaseClient) =>
+      restricted
+        ? client
+            .select({ one: sql`1` })
+            .from(contactInboxModel)
+            .innerJoin(conversationModel, this.buildDmConversationJoin())
+            .where(restricted)
+        : client
+            .select({ one: sql`1` })
+            .from(contactInboxModel)
+            .where(audienceWhere)
 
-      return clampAudienceCountToRange(result?.count ?? 0, range)
+    const outcome = await countByMode({
+      mode: input.countMode,
+      exact: async (client) => {
+        if (restricted) {
+          const [result] = await client
+            .select({ count: count() })
+            .from(contactInboxModel)
+            .innerJoin(conversationModel, this.buildDmConversationJoin())
+            .where(restricted)
+          return result?.count ?? 0
+        }
+        return await client.$count(contactInboxModel, audienceWhere)
+      },
+      bounded: async (cap, client) =>
+        await countQueryCapped({
+          cap,
+          client,
+          query: buildScopedSelect(client),
+        }),
+    })
+
+    if (!outcome.totalCountCapped) {
+      return {
+        ...outcome,
+        total: clampAudienceCountToRange(outcome.total, range),
+      }
     }
-
-    const total = await db.$count(
-      contactInboxModel,
-      this.buildAudienceWhere(inboxIds, input),
+    const clamped = clampCappedAudienceCount(
+      { total: outcome.total, capped: true },
+      range,
     )
-    return clampAudienceCountToRange(total, range)
+    return {
+      ...outcome,
+      total: clamped.total,
+      totalCountCapped: clamped.capped,
+    }
   }
 
   async listAudiencePreview(
@@ -2952,9 +3010,25 @@ class BroadcastService extends BaseService {
       return
     }
 
-    const where = this.buildAudienceWhere(inboxIds, input)
     const chunkSize = input.chunkSize ?? DEFAULT_CHUNK_SIZE
     const range = input.audienceRange ?? null
+
+    const contactFilter = this.pruneAudienceContactFilter(input)
+    if (contactFilter && contactFilter.conditions.length > 0) {
+      await this.forEachFilteredAudienceChunk(
+        {
+          workspaceId: input.workspaceId,
+          scopeWhere: this.buildAudienceScopeWhere(inboxIds, input),
+          contactFilter,
+          chunkSize,
+          range,
+        },
+        onChunk,
+      )
+      return
+    }
+
+    const where = this.buildAudienceWhere(inboxIds, input)
     // Rows still to take inside the window; null = unbounded (no `end`, or
     // no range at all) — the limit is then always `chunkSize`, so the
     // null-range query is byte-identical to before this feature.
@@ -2994,6 +3068,97 @@ class BroadcastService extends BaseService {
           : onChunk,
       },
     )
+  }
+
+  /**
+   * Walks a contact-filtered audience in O(audience) instead of re-running the
+   * whole filter for every chunk: keyset-scan `ContactInbox` by scope only, ask
+   * the contact repository which contacts of each scan page match, and apply
+   * the audience window over the matching rows in `ContactInbox.id` order.
+   * Matching rows are re-chunked to `chunkSize`, so `onChunk` sees the same
+   * contract as the unfiltered walk.
+   */
+  private async forEachFilteredAudienceChunk(
+    scan: {
+      workspaceId: string
+      scopeWhere: SQL | undefined
+      contactFilter: ContactFilterCriteriaInput
+      chunkSize: number
+      range: BroadcastAudienceInput["audienceRange"] | null
+    },
+    onChunk: (rows: ContactInboxRow[]) => Promise<boolean | undefined>,
+  ): Promise<void> {
+    const { range, chunkSize } = scan
+    let toSkip = range?.offset ?? 0
+    let remaining = range?.size ?? null
+    if (remaining != null && remaining <= 0) {
+      return
+    }
+    let buffer: ContactInboxRow[] = []
+    let stopped = false
+
+    const flush = async () => {
+      if (buffer.length === 0) {
+        return
+      }
+      const rows = buffer
+      buffer = []
+      if ((await onChunk(rows)) === false) {
+        stopped = true
+      }
+    }
+
+    await chunkById<ContactInboxRow>(
+      (lastId) =>
+        db
+          .select()
+          .from(contactInboxModel)
+          .where(
+            and(
+              scan.scopeWhere,
+              lastId ? gt(contactInboxModel.id, lastId) : undefined,
+            ),
+          )
+          .orderBy(asc(contactInboxModel.id))
+          .limit(AUDIENCE_SCAN_PAGE_SIZE),
+      {
+        chunkSize: AUDIENCE_SCAN_PAGE_SIZE,
+        callback: async (page) => {
+          const matchingIds = new Set(
+            await contactRepository.findIdsMatchingFilter({
+              workspaceId: scan.workspaceId,
+              contactIds: Array.from(new Set(page.map((row) => row.contactId))),
+              contactFilter: scan.contactFilter,
+            }),
+          )
+
+          for (const row of page) {
+            if (!matchingIds.has(row.contactId)) {
+              continue
+            }
+            if (toSkip > 0) {
+              toSkip -= 1
+              continue
+            }
+
+            buffer.push(row)
+            if (remaining != null) {
+              remaining -= 1
+            }
+            const windowDone = remaining != null && remaining <= 0
+            if (buffer.length >= chunkSize || windowDone) {
+              await flush()
+            }
+            if (stopped || windowDone) {
+              return false
+            }
+          }
+          return true
+        },
+      },
+    )
+
+    await flush()
   }
 
   /**

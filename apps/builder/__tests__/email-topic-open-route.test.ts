@@ -6,12 +6,9 @@ const findAnalyticsWorkspaceIdByToken = vi.fn()
 const loadServableWorkspace = vi.fn()
 const awardLeaderboardEmailEngagement = vi.fn().mockResolvedValue(undefined)
 
-vi.mock("@chatbotx.io/analytics", () => ({
-  emailTopicAnalyticsService: { recordOpen },
-}))
-
 vi.mock("@chatbotx.io/business", () => ({
   emailTopicService: { findAnalyticsWorkspaceIdByToken },
+  emailTrackingService: { recordTransitionOrEnqueueRepair: recordOpen },
 }))
 
 vi.mock("@chatbotx.io/business/leaderboard", () => ({
@@ -42,7 +39,11 @@ test("calls recordOpen with the token from ?r param", async () => {
   const req = new Request("http://localhost/email-topic/open?r=test-token-abc")
   await GET(req)
   expect(recordOpen).toHaveBeenCalledOnce()
-  expect(recordOpen).toHaveBeenCalledWith("test-token-abc")
+  expect(recordOpen).toHaveBeenCalledWith({
+    phase: "opened",
+    token: "test-token-abc",
+    workspaceId: "workspace-1",
+  })
   expect(loadServableWorkspace).toHaveBeenCalledWith("workspace-1")
 })
 

@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 vi.mock("next-intl", () => ({
+  useFormatter: () => ({ number: (value: number) => String(value) }),
   useTranslations: () => (key: string) => key,
 }))
 
@@ -21,13 +22,15 @@ vi.mock("@/lib/orpc/orpc", () => ({
 vi.mock("@/features/common/components/stats-contacts-dialog", () => ({
   StatsContactsDialog: ({
     fetchPage,
+    totalLabel,
   }: {
     fetchPage: (page: number, perPage: number) => Promise<unknown>
+    totalLabel?: string
   }) => {
     // Simulate the dialog requesting the first page, like the real
     // component does once it mounts open.
     fetchPage(1, 20).catch(() => undefined)
-    return <div data-testid="stats-contacts-dialog" />
+    return <div data-label={totalLabel} data-testid="stats-contacts-dialog" />
   },
 }))
 
@@ -56,6 +59,8 @@ describe("BroadcastAudiencePreviewDialog send limit forwarding", () => {
     props: Partial<{
       audienceRangeStart: number | null
       audienceRangeEnd: number | null
+      total: number
+      totalCapped: boolean
     }>,
   ) =>
     act(async () => {
@@ -90,5 +95,25 @@ describe("BroadcastAudiencePreviewDialog send limit forwarding", () => {
     const call = mockListPreview.mock.calls[0]?.[0] as Record<string, unknown>
     expect(call.audienceRangeStart).toBeUndefined()
     expect(call.audienceRangeEnd).toBeUndefined()
+  })
+
+  const dialogLabel = () =>
+    container
+      .querySelector('[data-testid="stats-contacts-dialog"]')
+      ?.getAttribute("data-label")
+
+  test("keeps the plain total for an exact count", async () => {
+    await render({ total: 10 })
+    expect(dialogLabel()).toBeNull()
+  })
+
+  test("labels a capped total as a lower bound", async () => {
+    await render({ total: 100_000, totalCapped: true })
+    expect(dialogLabel()).toBe("100000+")
+  })
+
+  test("never shows 0 for a capped window with no lower bound", async () => {
+    await render({ total: 0, totalCapped: true })
+    expect(dialogLabel()).toBe("?")
   })
 })

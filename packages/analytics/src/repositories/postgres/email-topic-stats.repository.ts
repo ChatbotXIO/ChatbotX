@@ -7,7 +7,8 @@ import {
 import { createId } from "@chatbotx.io/utils"
 
 export type CreateEmailRecipientInput = {
-  topicId: string
+  /** Omit for an email sent without a topic ("No Topic"). */
+  topicId?: string | null
   workspaceId: string
   email: string
   contactId?: string | null
@@ -16,7 +17,7 @@ export type CreateEmailRecipientInput = {
 }
 
 // Denormalized columns on EmailTopic — each holds a UNIQUE (deduped) count.
-type EmailTopicCounter =
+export type EmailTopicCounter =
   | "sendsTotal"
   | "deliveredsTotal"
   | "seensTotal"
@@ -25,30 +26,82 @@ type EmailTopicCounter =
 // First-time-only timestamps on a recipient row.
 type FirstEventColumn = "deliveredAt" | "firstSeenAt" | "firstClickedAt"
 
+/**
+ * A topic counter bump a write is owed. Returned instead of applied so the
+ * caller can run it as the LAST statement of its transaction: the counter is
+ * one hot row per topic, shared by every recipient of a campaign, and a topic
+ * delete locks that row first, so holding it for the whole transaction would
+ * serialize sends and invite a lock-order deadlock.
+ */
+export type EmailTopicCounterIncrement = {
+  counter: EmailTopicCounter
+  topicId: string
+  workspaceId: string
+}
+
+/** The first time a recipient reached a phase; later repeats return null. */
+export type EmailRecipientTransition = {
+  /** Null once the topic was deleted: there is no counter left to bump. */
+  counterIncrement: EmailTopicCounterIncrement | null
+  contactId: string | null
+  occurredAt: Date
+  /**
+   * The topic the email was sent under, kept after the topic is deleted
+   * (`topicId` is then NULL). Null for an email sent without a topic.
+   * Rows created before the snapshot column fall back to the live topic id.
+   */
+  topicReferenceId: string | null
+  workspaceId: string
+}
+
+export type CreatedEmailRecipient = {
+  /** Null for an email sent without a topic. */
+  counterIncrement: EmailTopicCounterIncrement | null
+  contactId: string | null
+  token: string
+  topicReferenceId: string | null
+  workspaceId: string
+}
+
 export class EmailTopicStatsRepository {
+  /**
+   * Always writes the recipient row (its token drives open/click tracking).
+   * The topic's `sendsTotal` is owed only when the email has a topic; the
+   * caller applies it via `incrementTopicCounter`.
+   */
   async createRecipient(
     input: CreateEmailRecipientInput,
-  ): Promise<{ token: string }> {
+    client?: DatabaseClient,
+  ): Promise<CreatedEmailRecipient> {
     const token = crypto.randomUUID()
-    await db.transaction(async (tx) => {
+    const topicId = input.topicId ?? null
+    const write = async (tx: DatabaseClient) => {
       await tx.insert(analyticsEmailTopicModel).values({
         id: createId(),
         token,
-        topicId: input.topicId,
+        topicId,
+        topicReferenceId: topicId,
         workspaceId: input.workspaceId,
         email: input.email,
         contactId: input.contactId ?? null,
         conversationId: input.conversationId ?? null,
         contactInboxId: input.contactInboxId ?? null,
       })
-      await this.incrementCounter(
-        input.topicId,
-        input.workspaceId,
-        "sendsTotal",
-        tx,
-      )
-    })
-    return { token }
+    }
+    await (client ? write(client) : db.transaction(write))
+    return {
+      counterIncrement: topicId
+        ? {
+            counter: "sendsTotal",
+            topicId,
+            workspaceId: input.workspaceId,
+          }
+        : null,
+      contactId: input.contactId ?? null,
+      token,
+      topicReferenceId: topicId,
+      workspaceId: input.workspaceId,
+    }
   }
 
   markFailed(token: string): Promise<unknown> {
@@ -59,18 +112,32 @@ export class EmailTopicStatsRepository {
   }
 
   // Delivery is itself a first-time-only transition → bumps deliveredsTotal once.
-  markDelivered(token: string): Promise<void> {
-    return this.transitionOnce(token, "deliveredAt", "deliveredsTotal")
+  markDelivered(
+    token: string,
+    client: DatabaseClient = db,
+  ): Promise<EmailRecipientTransition | null> {
+    return this.transitionOnce(token, "deliveredAt", "deliveredsTotal", client)
   }
 
-  async recordOpen(token: string): Promise<void> {
-    await this.countRaw(token, "seenCount", "lastSeenAt")
-    await this.transitionOnce(token, "firstSeenAt", "seensTotal")
+  async recordOpen(
+    token: string,
+    client: DatabaseClient = db,
+  ): Promise<EmailRecipientTransition | null> {
+    await this.countRaw(token, "seenCount", "lastSeenAt", client)
+    return await this.transitionOnce(token, "firstSeenAt", "seensTotal", client)
   }
 
-  async recordClick(token: string): Promise<void> {
-    await this.countRaw(token, "clickCount", "lastClickedAt")
-    await this.transitionOnce(token, "firstClickedAt", "clicksTotal")
+  async recordClick(
+    token: string,
+    client: DatabaseClient = db,
+  ): Promise<EmailRecipientTransition | null> {
+    await this.countRaw(token, "clickCount", "lastClickedAt", client)
+    return await this.transitionOnce(
+      token,
+      "firstClickedAt",
+      "clicksTotal",
+      client,
+    )
   }
 
   /** Always: increment the raw repeat counter and refresh its "last" timestamp. */
@@ -78,8 +145,9 @@ export class EmailTopicStatsRepository {
     token: string,
     countColumn: "seenCount" | "clickCount",
     lastColumn: "lastSeenAt" | "lastClickedAt",
+    client: DatabaseClient,
   ): Promise<unknown> {
-    return db
+    return client
       .update(analyticsEmailTopicModel)
       .set({
         [countColumn]: sql`${analyticsEmailTopicModel[countColumn]} + 1`,
@@ -97,8 +165,9 @@ export class EmailTopicStatsRepository {
     token: string,
     firstColumn: FirstEventColumn,
     counter: EmailTopicCounter,
-  ): Promise<void> {
-    const [row] = await db
+    client: DatabaseClient,
+  ): Promise<EmailRecipientTransition | null> {
+    const [row] = await client
       .update(analyticsEmailTopicModel)
       .set({ [firstColumn]: sql`now()` })
       .where(
@@ -108,27 +177,43 @@ export class EmailTopicStatsRepository {
         ),
       )
       .returning({
+        contactId: analyticsEmailTopicModel.contactId,
+        occurredAt: analyticsEmailTopicModel[firstColumn],
         topicId: analyticsEmailTopicModel.topicId,
+        topicReferenceId: analyticsEmailTopicModel.topicReferenceId,
         workspaceId: analyticsEmailTopicModel.workspaceId,
       })
-    if (row) {
-      await this.incrementCounter(row.topicId, row.workspaceId, counter)
+    if (!row) {
+      return null
+    }
+
+    return {
+      // topicId is NULL once the topic was deleted: the transition is still
+      // recorded, but there is no topic counter left to increment.
+      counterIncrement: row.topicId
+        ? { counter, topicId: row.topicId, workspaceId: row.workspaceId }
+        : null,
+      contactId: row.contactId,
+      occurredAt: row.occurredAt ?? new Date(),
+      topicReferenceId: row.topicReferenceId ?? row.topicId,
+      workspaceId: row.workspaceId,
     }
   }
 
-  private incrementCounter(
-    topicId: string,
-    workspaceId: string,
-    counter: EmailTopicCounter,
-    tx: DatabaseClient = db,
+  /** Applies an owed counter bump; call it last in the transaction. */
+  incrementTopicCounter(
+    increment: EmailTopicCounterIncrement,
+    client: DatabaseClient = db,
   ): Promise<unknown> {
-    return tx
+    return client
       .update(emailTopicModel)
-      .set({ [counter]: sql`${emailTopicModel[counter]} + 1` })
+      .set({
+        [increment.counter]: sql`${emailTopicModel[increment.counter]} + 1`,
+      })
       .where(
         and(
-          eq(emailTopicModel.id, topicId),
-          eq(emailTopicModel.workspaceId, workspaceId),
+          eq(emailTopicModel.id, increment.topicId),
+          eq(emailTopicModel.workspaceId, increment.workspaceId),
         ),
       )
   }

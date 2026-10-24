@@ -534,6 +534,25 @@ export const clampAudienceCountToRange = (
   return range.size == null ? remaining : Math.min(remaining, range.size)
 }
 
+/**
+ * Clamps a (possibly capped) audience count to the range. A capped `total` is
+ * only a lower bound, so the clamped value is exact only when the window ends
+ * inside the counted rows; otherwise `capped` stays true and the caller must
+ * show "at least" (never treat a 0 as "empty window").
+ */
+export const clampCappedAudienceCount = (
+  counted: { total: number; capped: boolean },
+  range: BroadcastAudienceRange | null,
+): { total: number; capped: boolean } => {
+  const total = clampAudienceCountToRange(counted.total, range)
+  if (!counted.capped) {
+    return { total, capped: false }
+  }
+  const windowEnd =
+    range && range.size != null ? range.offset + range.size : null
+  return { total, capped: windowEnd == null || windowEnd > counted.total }
+}
+
 /** Page window inside the range for the preview dialog; null when the page lies past the range. */
 export const resolveAudiencePageWindow = (input: {
   page: number

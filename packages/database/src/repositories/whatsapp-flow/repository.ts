@@ -7,11 +7,12 @@ type WhatsappFlowSourceRef = {
 }
 
 class WhatsappFlowRepository {
+  /** Returns the flow's internal id, or null when no such flow row exists. */
   async incrementCompletedCount(
     input: WhatsappFlowSourceRef,
     tx: DatabaseClient = db,
-  ): Promise<void> {
-    await tx
+  ): Promise<string | null> {
+    const [row] = await tx
       .update(whatsappFlowModel)
       .set({
         completedCount: sql`${whatsappFlowModel.completedCount} + 1`,
@@ -25,6 +26,9 @@ class WhatsappFlowRepository {
           eq(whatsappFlowModel.sourceId, input.sourceId),
         ),
       )
+      .returning({ id: whatsappFlowModel.id })
+
+    return row?.id ?? null
   }
 }
 

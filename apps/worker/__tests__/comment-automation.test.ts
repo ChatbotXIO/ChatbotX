@@ -199,8 +199,11 @@ vi.mock("@chatbotx.io/worker-config", () => ({
   MISSED_COMMENT_REPLAY_PRIORITY: 10,
 }))
 
+const mockRecordDeliveredWhenNoReceipts = vi.hoisted(() => vi.fn())
+
 vi.mock("../src/chat/handlers/send-message", () => ({
   emitBotMessageSentEvents: mockEmitBotMessageSentEvents,
+  recordDeliveredWhenNoReceipts: mockRecordDeliveredWhenNoReceipts,
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -3436,6 +3439,18 @@ describe("processCommentAutomation private text reply in the inbox", () => {
     )
   })
 
+  test("records the DM as delivered for Last Delivered, on a channel with no receipts", async () => {
+    mockFindActiveAutomations.mockResolvedValue([privateTextAutomation()])
+
+    await processCommentAutomation(buildJobData() as any)
+
+    expect(mockRecordDeliveredWhenNoReceipts).toHaveBeenCalledWith({
+      contactInbox: expect.objectContaining({ id: "contact-inbox-1" }),
+      sentCount: 1,
+      workspaceId: "workspace-1",
+    })
+  })
+
   test("records the DM only after the dedup row is written", async () => {
     mockFindActiveAutomations.mockResolvedValue([privateTextAutomation()])
 
@@ -3454,6 +3469,8 @@ describe("processCommentAutomation private text reply in the inbox", () => {
     await processCommentAutomation(buildJobData() as any)
 
     expect(mockEmitBotMessageSentEvents).not.toHaveBeenCalled()
+    // The DM was sent, so Last Delivered is still recorded.
+    expect(mockRecordDeliveredWhenNoReceipts).toHaveBeenCalledTimes(1)
     expect(mockRecordEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         replyChannel: "private",

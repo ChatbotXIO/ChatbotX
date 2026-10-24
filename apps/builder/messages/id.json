@@ -435,6 +435,8 @@
       "description": "Kirim flow ke semua kontak."
     },
     "receiversCount": "Penerima: {count}",
+    "receiversCountCapped": "Penerima: {count}+",
+    "receiversCountUnknown": "Penerima: ?",
     "receiversLoading": "Penerima: Memuat...",
     "whatsappTemplateMessage": {
       "title": "Pesan Template",
@@ -685,6 +687,7 @@
   },
   "condition": {
     "unknownValue": "Tidak diketahui",
+    "deletedValue": "Dihapus (#{id})",
     "yes": "Ya",
     "no": "Tidak",
     "valuePlaceholder": "...",
@@ -877,7 +880,9 @@
       },
       "adPrefix": "iklan",
       "allAds": "semua iklan"
-    }
+    },
+    "noTopic": "Tanpa topik",
+    "trackingSince": "Dilacak sejak {date}. Aktivitas sebelumnya tidak disertakan."
   },
   "fields": {
     "optionalHint": "(opsional)",
@@ -2442,6 +2447,45 @@
     },
     "miniApp": {
       "label": "Mini App"
+    },
+    "adminName": {
+      "label": "Nama admin pengirim"
+    },
+    "adminTeamName": {
+      "label": "Tim admin pengirim"
+    },
+    "bookingId": {
+      "label": "ID pemesanan"
+    },
+    "lastPoints": {
+      "label": "Poin kuesioner terakhir"
+    },
+    "lastAdHeadline": {
+      "label": "Judul iklan terakhir"
+    },
+    "lastAdBody": {
+      "label": "Isi iklan terakhir"
+    },
+    "lastStoryId": {
+      "label": "ID story terakhir"
+    },
+    "lastLeadId": {
+      "label": "ID lead terakhir"
+    },
+    "lastFormId": {
+      "label": "ID formulir terakhir"
+    },
+    "lastFormName": {
+      "label": "Nama formulir terakhir"
+    },
+    "lastAdgroupId": {
+      "label": "ID grup iklan terakhir"
+    },
+    "lastTextInput": {
+      "label": "Input teks terakhir"
+    },
+    "empty": {
+      "label": "Kosong"
     }
   },
   "flows": {

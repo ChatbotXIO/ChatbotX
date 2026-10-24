@@ -127,7 +127,15 @@ export const failedPayloadSchema = baseMessagePayloadSchema.extend({
    */
   willRetry: z.boolean().optional(),
 })
-export const deliveredPayloadSchema = baseMessagePayloadSchema.extend({})
+export const deliveredPayloadSchema = baseMessagePayloadSchema.extend({
+  /**
+   * When the provider says the message was delivered, as opposed to
+   * `occurredAt` (when we processed the receipt). Additive and optional: every
+   * existing delivered listener keeps reading `occurredAt` unchanged, and a
+   * receipt without a usable timestamp leaves it unset.
+   */
+  providerOccurredAt: z.date().optional(),
+})
 export const seenPayloadSchema = baseMessagePayloadSchema.extend({})
 
 export const receivedPayloadSchema = z.object({

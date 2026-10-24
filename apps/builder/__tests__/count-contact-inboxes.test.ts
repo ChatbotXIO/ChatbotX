@@ -25,7 +25,10 @@ const { countContactInboxes, listAudienceInboxesPreview } = await import(
 beforeEach(() => {
   mocks.assertCurrentUserCanAccessChatbot.mockResolvedValue(undefined)
   mocks.countAudience.mockReset()
-  mocks.countAudience.mockResolvedValue(12)
+  mocks.countAudience.mockResolvedValue({
+    total: 12,
+    totalCountCapped: false,
+  })
   mocks.listAudiencePreview.mockReset()
   mocks.listAudiencePreview.mockResolvedValue([])
 })
@@ -53,7 +56,7 @@ describe("countContactInboxes", () => {
       subaction: "messengerActiveContacts",
     })
 
-    expect(result).toEqual({ total: 12 })
+    expect(result).toEqual({ total: 12, totalCountCapped: false })
     expect(mocks.assertCurrentUserCanAccessChatbot).toHaveBeenCalledWith("ws-1")
     expect(mocks.countAudience).toHaveBeenCalledWith({
       workspaceId: "ws-1",
@@ -65,7 +68,30 @@ describe("countContactInboxes", () => {
       canViewEmailAndPhone: undefined,
       subaction: "messengerActiveContacts",
       restrictToAssignedUserId: undefined,
+      countMode: undefined,
     })
+  })
+
+  test("forwards the bounded count mode and returns the capped outcome", async () => {
+    mocks.countAudience.mockResolvedValue({
+      total: 100_000,
+      totalCountCapped: true,
+      countCap: 100_000,
+    })
+
+    const result = await countContactInboxes({
+      workspaceId: "ws-1",
+      countMode: "bounded",
+    })
+
+    expect(result).toEqual({
+      total: 100_000,
+      totalCountCapped: true,
+      countCap: 100_000,
+    })
+    expect(mocks.countAudience).toHaveBeenCalledWith(
+      expect.objectContaining({ countMode: "bounded" }),
+    )
   })
 
   test("forwards assigned-contact scope to broadcast audience counting", async () => {

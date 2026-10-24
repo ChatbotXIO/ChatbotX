@@ -96,8 +96,10 @@ describe("contact store getContactInboxesCount", () => {
       integrationMessengerId: "messenger-1",
       contactFilter,
       subaction: broadcastSubactions.enum.whatsappWithin24Hours,
+      countMode: "bounded",
     })
     expect(store.getState().contactInboxesCount).toBe(3)
+    expect(store.getState().contactInboxesCountCapped).toBe(false)
   })
 
   test("fails closed by forwarding an empty channel list when channel is missing", async () => {
@@ -115,8 +117,46 @@ describe("contact store getContactInboxesCount", () => {
       integrationMessengerId: undefined,
       contactFilter: undefined,
       subaction: undefined,
+      countMode: "bounded",
     })
     expect(store.getState().contactInboxesCount).toBe(0)
+  })
+
+  test("keeps a capped count as a lower bound", async () => {
+    mocks.countContactInboxesAuthenticatedAPI.mockResolvedValue({
+      total: 100_000,
+      totalCountCapped: true,
+      countCap: 100_000,
+    })
+
+    const store = createContactStore({ workspaceId: "ws-1" })
+    await store.getState().getContactInboxesCount({
+      channel: channelTypes.enum.whatsapp,
+    })
+
+    expect(store.getState().contactInboxesCount).toBe(100_000)
+    expect(store.getState().contactInboxesCountCapped).toBe(true)
+  })
+})
+
+describe("contact store getContactsCount", () => {
+  test("asks for a bounded count and records whether it was capped", async () => {
+    mocks.countContactsAuthenticatedAPI.mockResolvedValue({
+      total: 100_000,
+      totalCountCapped: true,
+      countCap: 100_000,
+    })
+
+    const store = createContactStore({ workspaceId: "ws-1" })
+    await store.getState().getContactsCount()
+
+    expect(mocks.countContactsAuthenticatedAPI).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      sort: [],
+      countMode: "bounded",
+    })
+    expect(store.getState().count).toBe(100_000)
+    expect(store.getState().countCapped).toBe(true)
   })
 })
 

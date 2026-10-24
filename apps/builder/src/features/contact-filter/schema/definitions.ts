@@ -32,6 +32,10 @@ export type ContactFilterOptionSource =
   | "inboxes"
   | "tags"
   | "flows"
+  | "flowNodes"
+  | "keywords"
+  | "whatsappFlows"
+  | "emailTopics"
   | "broadcasts"
   | "sequences"
   | "reflinks"
@@ -215,6 +219,11 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     optionSource: "none",
   },
   {
+    field: contactFilterFields.enum.lastDelivered,
+    schemaKind: "datetime",
+    optionSource: "none",
+  },
+  {
     field: contactFilterFields.enum.lastSeen,
     schemaKind: "datetime",
     optionSource: "none",
@@ -263,6 +272,31 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.entryPointsLinks,
     schemaKind: "multiSelect",
     optionSource: "reflinks",
+  },
+  {
+    field: contactFilterFields.enum.completedWhatsAppFlows,
+    schemaKind: "multiSelect",
+    optionSource: "whatsappFlows",
+  },
+  {
+    field: contactFilterFields.enum.sentMessage,
+    schemaKind: "text",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.keywordsReceived,
+    schemaKind: "multiSelect",
+    optionSource: "keywords",
+  },
+  {
+    field: contactFilterFields.enum.executedFlow,
+    schemaKind: "multiSelect",
+    optionSource: "flows",
+  },
+  {
+    field: contactFilterFields.enum.executedStep,
+    schemaKind: "multiSelect",
+    optionSource: "flowNodes",
   },
   {
     field: contactFilterFields.enum.consecutiveAiFailures,
@@ -342,6 +376,26 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.optedInForEmail,
     schemaKind: "boolean",
     optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.emailSent,
+    schemaKind: "multiSelect",
+    optionSource: "emailTopics",
+  },
+  {
+    field: contactFilterFields.enum.emailDelivered,
+    schemaKind: "multiSelect",
+    optionSource: "emailTopics",
+  },
+  {
+    field: contactFilterFields.enum.emailOpened,
+    schemaKind: "multiSelect",
+    optionSource: "emailTopics",
+  },
+  {
+    field: contactFilterFields.enum.emailClicked,
+    schemaKind: "multiSelect",
+    optionSource: "emailTopics",
   },
   // --- Ads (CTWA / Google) ---
   {

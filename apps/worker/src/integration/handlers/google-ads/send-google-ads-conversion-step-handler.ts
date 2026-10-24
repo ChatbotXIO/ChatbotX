@@ -34,7 +34,7 @@ const errorResult = (
 export async function handleSendGoogleAdsConversionStep(
   props: ExecuteStepProps<SendGoogleAdsConversionSchema>,
 ): Promise<ExecuteStepResult> {
-  const { contactInbox, conversation, step } = props
+  const { contactInbox, conversation, step, sentByUserId } = props
 
   const report = (message: string) =>
     reportGoogleAdsInputFailure({
@@ -59,7 +59,7 @@ export async function handleSendGoogleAdsConversionStep(
         customerType: step.customerType,
         customerValueBucket: step.customerValueBucket,
       },
-      source: { contactInbox, conversation },
+      source: { contactInbox, conversation, sentByUserId },
     })
     if (!resolved.ok) {
       await report(

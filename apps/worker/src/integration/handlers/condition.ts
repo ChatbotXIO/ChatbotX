@@ -19,6 +19,7 @@ export async function handleCondition(
     step,
     useLatestFlowVersion,
     sendFrom,
+    sentByUserId,
     nodeVisits,
     metadata,
     trackingContext,
@@ -36,6 +37,7 @@ export async function handleCondition(
           contactInbox,
           conversation,
           ...(appointmentId ? { appointmentId } : {}),
+          ...(sentByUserId ? { sentByUserId } : {}),
         },
       )
 
@@ -87,6 +89,7 @@ export async function handleCondition(
       appointmentId,
       trackingContext,
       sendFrom,
+      sentByUserId,
       startedByContactMessage,
       nodeVisits,
       commentAnchor,
