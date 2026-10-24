@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process"
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { dirname, join } from "node:path"
+import { dirname, join, sep } from "node:path"
 import { fileURLToPath } from "node:url"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
@@ -27,6 +27,12 @@ const STANDARD_WORKERS = [
 ]
 
 let distDir: string
+
+// The shell script joins with "/" even on Windows, while `join` uses "\\":
+// compare both sides with the same separator, never a different expectation.
+function posix(path: string): string {
+  return path.split(sep).join("/")
+}
 
 function touch(path: string): void {
   mkdirSync(dirname(path), { recursive: true })
@@ -69,22 +75,24 @@ describe("docker-entrypoint worker discovery", () => {
   test("resolves a standard worker to its dist bundle", () => {
     const { stdout, status } = run("worker", "chat")
     expect(status).toBe(0)
-    expect(stdout.trim()).toBe(join(distDir, "chat", "worker.mjs"))
+    expect(posix(stdout.trim())).toBe(
+      posix(join(distDir, "chat", "worker.mjs")),
+    )
   })
 
   test("aliases sequence variants to their historical CLI names", () => {
-    expect(run("worker", "sequence-producer").stdout.trim()).toBe(
-      join(distDir, "sequence-scheduler", "worker-producer.mjs"),
+    expect(posix(run("worker", "sequence-producer").stdout.trim())).toBe(
+      posix(join(distDir, "sequence-scheduler", "worker-producer.mjs")),
     )
-    expect(run("worker", "sequence-consumer").stdout.trim()).toBe(
-      join(distDir, "sequence-scheduler", "worker-consumer.mjs"),
+    expect(posix(run("worker", "sequence-consumer").stdout.trim())).toBe(
+      posix(join(distDir, "sequence-scheduler", "worker-consumer.mjs")),
     )
   })
 
   test("auto-discovers a new worker with no script edit", () => {
     const { stdout, status } = run("worker", "foo")
     expect(status).toBe(0)
-    expect(stdout.trim()).toBe(join(distDir, "foo", "worker.mjs"))
+    expect(posix(stdout.trim())).toBe(posix(join(distDir, "foo", "worker.mjs")))
   })
 
   test("rejects a worker that was not built (e.g. removed analytics)", () => {
