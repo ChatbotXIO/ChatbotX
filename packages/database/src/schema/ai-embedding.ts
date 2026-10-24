@@ -34,5 +34,9 @@ export const aiEmbeddingModel = pgTable(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
+    index("AIEmbedding_aiFileId_idx").using(
+      "btree",
+      table.aiFileId.asc().nullsLast(),
+    ),
   ],
 )

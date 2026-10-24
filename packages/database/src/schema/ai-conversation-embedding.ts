@@ -64,5 +64,12 @@ export const aiConversationEmbeddingModel = pgTable(
       "btree",
       table.conversationId.asc().nullsLast(),
     ),
+    index("AIConversationEmbedding_lookup_idx").using(
+      "btree",
+      table.workspaceId.asc().nullsLast(),
+      table.conversationId.asc().nullsLast(),
+      table.sourceId.asc().nullsLast(),
+      table.status.asc().nullsLast(),
+    ),
   ],
 )

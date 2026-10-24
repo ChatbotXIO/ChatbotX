@@ -6,10 +6,8 @@ import {
   inArray,
 } from "@chatbotx.io/database/client"
 import { broadcastStatuses } from "@chatbotx.io/database/partials"
-import {
-  broadcastModel,
-  contactsOnSequenceModel,
-} from "@chatbotx.io/database/schema"
+import { sequenceRepository } from "@chatbotx.io/database/repositories/sequence"
+import { broadcastModel } from "@chatbotx.io/database/schema"
 import { disarmAllSeriesForWorkspace } from "../broadcast/recurrence-ledger"
 
 export async function cancelInFlightBroadcastsForWorkspace(props: {
@@ -48,28 +46,17 @@ export async function cancelInFlightBroadcastsForWorkspace(props: {
   return cancelledBroadcasts.length
 }
 
-export async function completeActiveSequenceEnrollmentsForWorkspace(props: {
-  tx?: DatabaseClient
+export const SEQUENCE_ENROLLMENT_CANCEL_BATCH_SIZE = 500
+
+export async function completeActiveSequenceEnrollmentBatch(props: {
+  tx: DatabaseClient
   workspaceId: string
 }): Promise<number> {
-  const { tx = db, workspaceId } = props
-
-  const completedEnrollments = await tx
-    .update(contactsOnSequenceModel)
-    .set({
-      status: "completed",
-      completedAt: new Date(),
-      nextRunAt: null,
-      nextStepId: null,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(contactsOnSequenceModel.workspaceId, workspaceId),
-        eq(contactsOnSequenceModel.status, "active"),
-      ),
-    )
-    .returning({ id: contactsOnSequenceModel.id })
-
-  return completedEnrollments.length
+  return await sequenceRepository.completeActiveEnrollmentBatch(
+    {
+      limit: SEQUENCE_ENROLLMENT_CANCEL_BATCH_SIZE,
+      workspaceId: props.workspaceId,
+    },
+    props.tx,
+  )
 }

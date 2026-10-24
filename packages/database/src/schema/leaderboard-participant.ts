@@ -87,5 +87,12 @@ export const leaderboardParticipantModel = pgTable(
       "btree",
       table.contactId.asc().nullsLast(),
     ),
+    index("LeaderboardParticipant_workspaceId_idx").using(
+      "btree",
+      table.workspaceId.asc().nullsLast(),
+    ),
+    index("LeaderboardParticipant_referrerContactId_idx")
+      .using("btree", table.referrerContactId.asc().nullsLast())
+      .where(sql`${table.referrerContactId} IS NOT NULL`),
   ],
 )

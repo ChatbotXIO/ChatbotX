@@ -218,6 +218,8 @@ quota, and tenancy lifecycle jobs are excluded from this gate.
 ### Adding a schedule handler
 
 Use this four-edit flow, shown by the `purgeWorkspaces` handler:
+When changing `purgeWorkspaces`, also read `workspace-purge` so the schedule remains bounded below its lock TTL.
+
 
 1. Add the `ScheduleJobData` key, payload type, and union member in
    `packages/worker-config/src/queues/schedule/index.ts`.

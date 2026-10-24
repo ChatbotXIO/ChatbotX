@@ -4,17 +4,24 @@ const updateReturningMock = vi.fn()
 const updateWhereMock = vi.fn()
 const updateSetMock = vi.fn()
 const updateMock = vi.fn()
+const executeMock = vi.fn()
+const completeActiveEnrollmentBatchMock = vi.fn()
 
 vi.mock("@chatbotx.io/database/client", () => ({
   and: (...conditions: unknown[]) => ({ __and: conditions }),
   db: {
-    update: (...args: unknown[]) => updateMock(...args),
+    execute: (...args: unknown[]) => executeMock(...args),
     transaction: async (run: (tx: unknown) => Promise<unknown>) =>
       await run({ update: (...args: unknown[]) => updateMock(...args) }),
+    update: (...args: unknown[]) => updateMock(...args),
   },
   eq: (column: unknown, value: unknown) => ({ __eq: [column, value] }),
   inArray: (column: unknown, value: unknown) => ({
     __inArray: [column, value],
+  }),
+  sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
+    strings,
+    values,
   }),
 }))
 
@@ -41,10 +48,11 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     status: { __column: "broadcast.status" },
     workspaceId: { __column: "broadcast.workspaceId" },
   },
-  contactsOnSequenceModel: {
-    id: { __column: "contactsOnSequence.id" },
-    status: { __column: "contactsOnSequence.status" },
-    workspaceId: { __column: "contactsOnSequence.workspaceId" },
+}))
+
+vi.mock("@chatbotx.io/database/repositories/sequence", () => ({
+  sequenceRepository: {
+    completeActiveEnrollmentBatch: completeActiveEnrollmentBatchMock,
   },
 }))
 
@@ -54,6 +62,8 @@ beforeEach(() => {
   updateWhereMock.mockReturnValue({ returning: updateReturningMock })
   updateSetMock.mockReturnValue({ where: updateWhereMock })
   updateMock.mockReturnValue({ set: updateSetMock })
+  executeMock.mockResolvedValue({ rowCount: 1 })
+  completeActiveEnrollmentBatchMock.mockResolvedValue(1)
 })
 
 test("cancelInFlightBroadcastsForWorkspace cancels scheduled, sending and recurring broadcasts only, stopping their series first", async () => {
@@ -100,42 +110,21 @@ test("cancelInFlightBroadcastsForWorkspace cancels scheduled, sending and recurr
   )
 })
 
-test("completeActiveSequenceEnrollmentsForWorkspace marks active enrollments completed", async () => {
-  const { completeActiveSequenceEnrollmentsForWorkspace } = await import(
+test("completeActiveSequenceEnrollmentBatch delegates one bounded batch to the repository", async () => {
+  const { completeActiveSequenceEnrollmentBatch } = await import(
     "../src/workspace-lifecycle/campaign-cleanup"
   )
+  const tx = {} as never
 
-  const completedCount = await completeActiveSequenceEnrollmentsForWorkspace({
-    workspaceId: "workspace-1",
-  })
+  await expect(
+    completeActiveSequenceEnrollmentBatch({
+      tx,
+      workspaceId: "workspace-1",
+    }),
+  ).resolves.toBe(1)
 
-  expect(completedCount).toBe(1)
-  expect(updateMock).toHaveBeenCalledOnce()
-  expect(updateSetMock).toHaveBeenCalledWith(
-    expect.objectContaining({
-      status: "completed",
-      nextRunAt: null,
-      nextStepId: null,
-    }),
-  )
-  expect(updateWhereMock).toHaveBeenCalledWith(
-    expect.objectContaining({
-      __and: expect.arrayContaining([
-        expect.objectContaining({
-          __eq: [
-            expect.objectContaining({
-              __column: "contactsOnSequence.workspaceId",
-            }),
-            "workspace-1",
-          ],
-        }),
-        expect.objectContaining({
-          __eq: [
-            expect.objectContaining({ __column: "contactsOnSequence.status" }),
-            "active",
-          ],
-        }),
-      ]),
-    }),
+  expect(completeActiveEnrollmentBatchMock).toHaveBeenCalledWith(
+    { limit: 500, workspaceId: "workspace-1" },
+    tx,
   )
 })

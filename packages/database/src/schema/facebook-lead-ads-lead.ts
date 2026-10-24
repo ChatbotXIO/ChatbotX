@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import { index, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { contactModel } from "./contact"
@@ -28,5 +29,8 @@ export const facebookLeadAdsLeadModel = pgTable(
       table.leadgenId.asc().nullsLast(),
     ),
     index("FacebookLeadAdsLead_leadgenId_idx").on(table.leadgenId),
+    index("FacebookLeadAdsLead_contactId_idx")
+      .on(table.contactId)
+      .where(sql`${table.contactId} IS NOT NULL`),
   ],
 )

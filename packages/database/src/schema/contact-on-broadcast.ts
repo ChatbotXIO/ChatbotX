@@ -57,6 +57,9 @@ export const contactsOnBroadcastsModel = pgTable(
       name: "ContactsOnBroadcast_pkey",
     }),
     index("idx_contact_on_broadcast_contact_id").on(table.contactId),
+    // Covers the `Conversation -> ContactOnBroadcast` ON DELETE CASCADE check.
+    // Built per partition + ATTACH (64 HASH partitions).
+    index("ContactOnBroadcast_conversationId_idx").on(table.conversationId),
     // Covers the `ContactInbox -> ContactOnBroadcast` ON DELETE CASCADE check.
     // Without it every ContactInbox delete (workspace purge, contact delete)
     // seq-scans all 64 partitions. Built per partition + ATTACH, see

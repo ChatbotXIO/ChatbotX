@@ -324,17 +324,22 @@ Every `consume` and `incrementBy` call on `UserQuotaService` is write-through: i
    - **Reseller owner with active tenant** → calls `userQuotaService.reconcileOwnerPoolUsage(ownerId, tenantId)`: runs five parallel `COUNT(*)`/`SUM` queries scoped to `workspaceModel.tenantId` and writes the authoritative current counts to both the `UserQuota` row and the Redis live hash.
    - **Everyone else** → runs per-owner self-count queries scoped to `workspaceModel.ownerId` and writes the same columns.
 
-Counts are written directly (not `GREATEST`), so a reconcile tick always self-heals any drift.
+Capacity counts are written directly (not `GREATEST`), so a reconcile tick self-heals drift and resource deletion frees capacity.
 
-Reconcile is a **backstop**, not the only place counts shrink. `contacts`/`mac` release synchronously
-when `contactService.delete()` removes a contact, and `channels` releases synchronously when
+### MAC billing ledger
+
+MAC is different: `WorkspaceMac` is an owner-keyed, period-scoped billing ledger. MAC is incremented with the monthly-contact presence insert and retained after a workspace is deleted; reconciliation sums that retained rollup and raises `UserQuota.macUsed` with `GREATEST`. Deleting contacts or a workspace therefore never reduces billed MAC during a period. Only the private `quota-worker` resets MAC when it advances the billing period.
+
+Workspace deletion records retain the workspace name, owner/requester email, membership and channel summaries, and billing rollups for billing-dispute and legal-claims evidence. They are retained outside Workspace cascades and are not exposed through workspace API tokens.
+
+Reconcile remains a **backstop** for capacity counters. `contacts` release synchronously
+when `contactService.delete()` removes a contact, and `channels` release synchronously when
 `inboxService.disconnect()` disconnects a channel — both call the existing
 `quotaEnforcementService.release`/`releaseBy` (pool-aware, floor-at-zero) right at the delete/disconnect
 call site, best-effort (`.catch()` + log, never blocking the delete). A workspace hard-delete
-(`workspaceService.purgeDueScheduled`) instead calls `userQuotaService.reconcileOwnerPoolUsage` for the
-affected owner immediately after the batch delete — a full absolute recount, since a workspace teardown
-cascades away its contacts/channels/MAC too. The scheduled reconcile above remains the authority for
-races, failures in the synchronous release, and any other drift.
+(`workspaceService.purgeDueScheduled`) reconciles capacity for the affected owner immediately after the
+batch delete. The scheduled reconcile remains the authority for races, failures in the synchronous
+release, and other drift.
 
 The private `quota-worker` remains the authority for plan limits and period resets; this repository
 also owns the runtime trial-expiry lifecycle: an expired cloud trial enters a blocked, read/delete-only
