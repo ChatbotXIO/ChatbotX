@@ -371,6 +371,7 @@ export const logStepProviderError = (
     contactInbox: Pick<ContactInboxModel, "sourceId">
   },
   error: unknown,
+  httpCode?: string | null,
 ): Promise<void> =>
   logProviderError({
     provider,
@@ -378,4 +379,5 @@ export const logStepProviderError = (
     contactId: props.conversation.contactId,
     sourceId: props.contactInbox.sourceId,
     error,
+    httpCode,
   })

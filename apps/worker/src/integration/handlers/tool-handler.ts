@@ -42,6 +42,7 @@ import { formatInTimeZone } from "date-fns-tz"
 import { getProperty } from "dot-prop"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
+import { logStepProviderError } from "./flow-utils"
 import type { ExecuteStepResult } from "./step"
 
 // ---------------------------------------------------------------------------
@@ -480,6 +481,14 @@ export async function externalRequest({
           conversation,
         })
 
+  const logFailure = (error: unknown, httpCode: string | null) =>
+    logStepProviderError(
+      "external-request",
+      { conversation, contactInbox },
+      error,
+      httpCode,
+    )
+
   try {
     const result = await externalRequestService.executeAndMap({
       workspaceId: conversation.workspaceId,
@@ -494,15 +503,22 @@ export async function externalRequest({
     })
 
     if (result.statusCode >= 400) {
+      const errorMessage = `Request failed with status ${result.statusCode}`
+      await logFailure(errorMessage, String(result.statusCode))
       return {
         status: "error",
-        errorMessage: `Request failed with status ${result.statusCode}`,
+        errorMessage,
         result: null,
       }
     }
 
     return { status: "success", result: null }
   } catch (error) {
+    logger.error(
+      { err: error, workspaceId: conversation.workspaceId },
+      "[externalRequest] failed",
+    )
+    await logFailure(error, null)
     return {
       status: "error",
       errorMessage:

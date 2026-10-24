@@ -3507,6 +3507,11 @@
       "sendViewCatalog": "Visa katalog",
       "sendProducts": "Skicka produkter"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Det gick inte att testa den externa begäran. Kontrollera begärandekonfigurationen och försök igen."
+      }
+    },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
       "removeSlide": "Ta bort kort",

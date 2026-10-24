@@ -2618,6 +2618,11 @@
       "sendViewCatalog": "Katalog ansehen",
       "sendProducts": "Produkte senden"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Die externe Anfrage konnte nicht getestet werden. Überprüfe die Anfragekonfiguration und versuche es erneut."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "Die Gesamtsumme muss 100 % ergeben.",
       "addVariation": "Neue Variante"

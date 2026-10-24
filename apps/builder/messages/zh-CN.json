@@ -3510,6 +3510,11 @@
       "sendViewCatalog": "查看商品目录",
       "sendProducts": "发送商品"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "无法测试外部请求。请检查请求配置后重试。"
+      }
+    },
     "additionalSteps": "附加步骤",
     "aiAnalyzeImage": {
       "label": "{name}：分析影像"

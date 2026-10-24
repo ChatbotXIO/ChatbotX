@@ -173,6 +173,11 @@
       "sendViewCatalog": "Vezi catalogul",
       "sendProducts": "Trimite produse"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Nu s-a putut testa cererea externă. Verifică configurația cererii și încearcă din nou."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "Suma totală trebuie să fie egală cu 100%.",
       "addVariation": "Variație nouă"

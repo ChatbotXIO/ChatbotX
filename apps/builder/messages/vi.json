@@ -2815,6 +2815,11 @@
       "sendViewCatalog": "Xem danh mục",
       "sendProducts": "Gửi sản phẩm"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Không thể kiểm tra yêu cầu bên ngoài. Hãy kiểm tra cấu hình yêu cầu và thử lại."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
       "addVariation": "Biến thể mới"

@@ -2618,6 +2618,11 @@
       "sendViewCatalog": "Voir le catalogue",
       "sendProducts": "Envoyer des produits"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Impossible de tester la requête externe. Vérifiez la configuration de la requête et réessayez."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "La somme totale doit être égale à 100 %.",
       "addVariation": "Nouvelle variante"

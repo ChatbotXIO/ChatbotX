@@ -2618,6 +2618,11 @@
       "sendViewCatalog": "カタログを見る",
       "sendProducts": "商品を送信"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "外部リクエストをテストできませんでした。リクエストの設定を確認して、もう一度お試しください。"
+      }
+    },
     "splitTraffic": {
       "balanceHint": "合計は100%になる必要があります。",
       "addVariation": "新しいバリエーション"

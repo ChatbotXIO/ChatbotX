@@ -2618,6 +2618,11 @@
       "sendViewCatalog": "Lihat katalog",
       "sendProducts": "Kirim produk"
     },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Tidak dapat menguji permintaan eksternal. Periksa konfigurasi permintaan lalu coba lagi."
+      }
+    },
     "splitTraffic": {
       "balanceHint": "Jumlah total harus sama dengan 100%.",
       "addVariation": "Variasi Baru"
