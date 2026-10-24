@@ -7138,6 +7138,10 @@
       "addButton": "Add administrator",
       "role": "Role",
       "bootstrap": "Environment bootstrap administrator",
+      "roles": {
+        "superAdmin": "Super admin",
+        "support": "Support"
+      },
       "remove": "Remove administrator",
       "empty": "No platform administrators are configured.",
       "added": "Platform administrator added.",

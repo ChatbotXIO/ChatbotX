@@ -1,4 +1,7 @@
-import { ROOT_TENANT_ID } from "@chatbotx.io/database/partials"
+import {
+  type PlatformAdminRole,
+  ROOT_TENANT_ID,
+} from "@chatbotx.io/database/partials"
 import {
   type PlatformAdminWithUser,
   platformAdminRepository,
@@ -14,7 +17,7 @@ export type PlatformAdminList = {
 }
 class PlatformAdminService {
   async isAdmin(userId: string): Promise<boolean> {
-    return await platformAdminRepository.existsByUserId(userId)
+    return Boolean(await platformAdminRepository.findForAuth(userId))
   }
   async provisionBootstrapAdmin(user?: {
     email: string
@@ -40,11 +43,23 @@ class PlatformAdminService {
     return await platformAdminRepository.listWithUser(input)
   }
 
-  async add(props: { actorId: string; email: string }) {
+  async add(props: {
+    actorId: string
+    email: string
+    role: PlatformAdminRole
+  }) {
+    await this.assertCanManageAdmins(props.actorId)
     const email = props.email.trim().toLowerCase()
     const provisioned = await findOrProvisionRootUser(email)
-
-    const admin = await platformAdminRepository.insertIgnore({
+    if (props.actorId === provisioned.userId && props.role !== "super-admin") {
+      throw new ChatbotXException(
+        "You cannot lower your own platform administrator role",
+        "cannotRemoveSelf",
+        400,
+      )
+    }
+    const admin = await platformAdminRepository.upsertRole({
+      role: props.role,
       userId: provisioned.userId,
     })
     if (!admin) {
@@ -67,6 +82,7 @@ class PlatformAdminService {
   }
 
   async remove(props: { actorId: string; userId: string }): Promise<void> {
+    await this.assertCanManageAdmins(props.actorId)
     if (props.actorId === props.userId) {
       throw new ChatbotXException(
         "You cannot remove yourself as a platform admin",
@@ -74,12 +90,23 @@ class PlatformAdminService {
         400,
       )
     }
-
     await platformAdminRepository.deleteByUserId(props.userId)
+
     logger.info(
       { actorId: props.actorId, userId: props.userId },
       "removed platform admin",
     )
+  }
+
+  private async assertCanManageAdmins(actorId: string): Promise<void> {
+    const actor = await platformAdminRepository.findForAuth(actorId)
+    if (actor?.role !== "super-admin") {
+      throw new ChatbotXException(
+        "Only super-admins can manage platform administrators",
+        "forbidden",
+        403,
+      )
+    }
   }
 }
 

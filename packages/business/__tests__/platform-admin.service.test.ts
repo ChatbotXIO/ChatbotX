@@ -5,12 +5,12 @@ import { platformAdminService } from "../src/platform-admin/service"
 const mocks = vi.hoisted(() => ({
   deleteByUserId: vi.fn(),
   ensureBootstrapPlan: vi.fn(),
+  findForAuth: vi.fn(),
   findIdByEmail: vi.fn(),
   generateTemporaryPassword: vi.fn(async () => ({
     hashedPassword: "hashed",
     initialPassword: "temp-pass-123456",
   })),
-  insertIgnore: vi.fn(),
   insertWithCredential: vi.fn(),
   loggerInfo: vi.fn(),
   resolvePlatformSettings: vi.fn(async () => ({
@@ -21,12 +21,14 @@ const mocks = vi.hoisted(() => ({
   })),
   resolvePlatformSmtpTransport: vi.fn(),
   sendAccountCredentials: vi.fn(),
+  upsertRole: vi.fn(),
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   platformAdminRepository: {
     deleteByUserId: mocks.deleteByUserId,
-    insertIgnore: mocks.insertIgnore,
+    findForAuth: mocks.findForAuth,
+    upsertRole: mocks.upsertRole,
   },
   userRepository: {
     findIdByEmail: mocks.findIdByEmail,
@@ -55,20 +57,22 @@ vi.mock("../src/user/temporary-password", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.findForAuth.mockResolvedValue({ role: "super-admin" })
   mocks.resolvePlatformSmtpTransport.mockResolvedValue(undefined)
   mocks.sendAccountCredentials.mockResolvedValue(undefined)
 })
 
 describe("platformAdminService.add", () => {
-  test("normalizes an existing root user's email before granting admin", async () => {
-    const admin = { id: "admin-1", userId: "user-1", role: "super-admin" }
+  test("normalizes an existing root user's email before granting the requested role", async () => {
+    const admin = { id: "admin-1", userId: "user-1", role: "support" }
     mocks.findIdByEmail.mockResolvedValue({ id: "user-1" })
-    mocks.insertIgnore.mockResolvedValue(admin)
+    mocks.upsertRole.mockResolvedValue(admin)
 
     await expect(
       platformAdminService.add({
         actorId: "actor-1",
         email: " Admin@Example.COM ",
+        role: "support",
       }),
     ).resolves.toBe(admin)
 
@@ -78,22 +82,26 @@ describe("platformAdminService.add", () => {
     })
     expect(mocks.sendAccountCredentials).not.toHaveBeenCalled()
     expect(mocks.insertWithCredential).not.toHaveBeenCalled()
-    expect(mocks.insertIgnore).toHaveBeenCalledWith({ userId: "user-1" })
+    expect(mocks.upsertRole).toHaveBeenCalledWith({
+      role: "support",
+      userId: "user-1",
+    })
   })
 
   test("creates the user, mails credentials, then grants admin", async () => {
-    const admin = { id: "admin-2", userId: "user-2", role: "super-admin" }
+    const admin = { id: "admin-2", userId: "user-2", role: "support" }
     mocks.findIdByEmail.mockResolvedValue(undefined)
     mocks.insertWithCredential.mockResolvedValue({
       created: true,
       userId: "user-2",
     })
-    mocks.insertIgnore.mockResolvedValue(admin)
+    mocks.upsertRole.mockResolvedValue(admin)
 
     await expect(
       platformAdminService.add({
         actorId: "actor-1",
         email: "new@example.com",
+        role: "support",
       }),
     ).resolves.toBe(admin)
 
@@ -116,7 +124,10 @@ describe("platformAdminService.add", () => {
       tenantId: "1",
       userId: "user-2",
     })
-    expect(mocks.insertIgnore).toHaveBeenCalledWith({ userId: "user-2" })
+    expect(mocks.upsertRole).toHaveBeenCalledWith({
+      role: "support",
+      userId: "user-2",
+    })
   })
 
   test("does not create a user when the credentials email fails", async () => {
@@ -129,26 +140,44 @@ describe("platformAdminService.add", () => {
       platformAdminService.add({
         actorId: "actor-1",
         email: "failed@example.com",
+        role: "support",
       }),
     ).rejects.toThrow("SMTP unavailable")
 
     expect(mocks.insertWithCredential).not.toHaveBeenCalled()
-    expect(mocks.insertIgnore).not.toHaveBeenCalled()
+    expect(mocks.upsertRole).not.toHaveBeenCalled()
+  })
+
+  test("raises a typed conflict when the assigned admin disappears", async () => {
+    mocks.findIdByEmail.mockResolvedValue({ id: "user-1" })
+    mocks.upsertRole.mockResolvedValue(undefined)
+
+    await expect(
+      platformAdminService.add({
+        actorId: "actor-1",
+        email: "admin@example.com",
+        role: "support",
+      }),
+    ).rejects.toMatchObject<Partial<ChatbotXException>>({
+      code: "platformAdminAssignmentConflict",
+      httpStatusCode: 409,
+    })
   })
 
   test("does not claim provisioning when a concurrent insert wins", async () => {
-    const admin = { id: "admin-3", userId: "user-3", role: "super-admin" }
+    const admin = { id: "admin-3", userId: "user-3", role: "support" }
     mocks.findIdByEmail.mockResolvedValue(undefined)
     mocks.insertWithCredential.mockResolvedValue({
       created: false,
       userId: "user-3",
     })
-    mocks.insertIgnore.mockResolvedValue(admin)
+    mocks.upsertRole.mockResolvedValue(admin)
 
     await expect(
       platformAdminService.add({
         actorId: "actor-1",
         email: "raced@example.com",
+        role: "support",
       }),
     ).resolves.toBe(admin)
 
@@ -163,6 +192,7 @@ describe("platformAdminService.add", () => {
       platformAdminService.add({
         actorId: "actor-1",
         email: "fb-9@facebook.placeholder.invalid",
+        role: "support",
       }),
     ).rejects.toMatchObject<Partial<ChatbotXException>>({
       code: "invalidEmail",
@@ -172,22 +202,39 @@ describe("platformAdminService.add", () => {
     expect(mocks.sendAccountCredentials).not.toHaveBeenCalled()
   })
 
-  test("raises a typed conflict when the assigned admin disappears", async () => {
-    mocks.findIdByEmail.mockResolvedValue({ id: "user-1" })
-    mocks.insertIgnore.mockResolvedValue(undefined)
+  test("refuses support administrators from adding administrators", async () => {
+    mocks.findForAuth.mockResolvedValue({ role: "support" })
 
     await expect(
       platformAdminService.add({
         actorId: "actor-1",
         email: "admin@example.com",
+        role: "support",
       }),
     ).rejects.toMatchObject<Partial<ChatbotXException>>({
-      code: "platformAdminAssignmentConflict",
-      httpStatusCode: 409,
+      httpStatusCode: 403,
     })
+
+    expect(mocks.findIdByEmail).not.toHaveBeenCalled()
+  })
+
+  test("refuses an administrator from lowering their own role", async () => {
+    mocks.findIdByEmail.mockResolvedValue({ id: "actor-1" })
+
+    await expect(
+      platformAdminService.add({
+        actorId: "actor-1",
+        email: "admin@example.com",
+        role: "support",
+      }),
+    ).rejects.toMatchObject<Partial<ChatbotXException>>({
+      code: "cannotRemoveSelf",
+      httpStatusCode: 400,
+    })
+
+    expect(mocks.upsertRole).not.toHaveBeenCalled()
   })
 })
-
 describe("platformAdminService.remove", () => {
   test("refuses self-removal", async () => {
     await expect(
@@ -197,5 +244,29 @@ describe("platformAdminService.remove", () => {
       httpStatusCode: 400,
     })
     expect(mocks.deleteByUserId).not.toHaveBeenCalled()
+  })
+
+  test("refuses support administrators from removing administrators", async () => {
+    mocks.findForAuth.mockResolvedValue({ role: "support" })
+
+    await expect(
+      platformAdminService.remove({
+        actorId: "actor-1",
+        userId: "user-1",
+      }),
+    ).rejects.toMatchObject<Partial<ChatbotXException>>({
+      httpStatusCode: 403,
+    })
+
+    expect(mocks.deleteByUserId).not.toHaveBeenCalled()
+  })
+
+  test("removes an administrator", async () => {
+    await platformAdminService.remove({
+      actorId: "actor-1",
+      userId: "user-1",
+    })
+
+    expect(mocks.deleteByUserId).toHaveBeenCalledWith("user-1")
   })
 })
