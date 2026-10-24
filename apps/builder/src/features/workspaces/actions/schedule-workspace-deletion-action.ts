@@ -2,6 +2,7 @@
 
 import { workspaceService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { getTranslations } from "next-intl/server"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -18,23 +19,21 @@ export const scheduleWorkspaceDeletionAction = workspaceActionClientAllowExpired
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
+      const t = await getTranslations()
       const currentUserAndTargetWorkspace =
         await getCurrentUserAndTargetWorkspace(workspaceId)
       if (!currentUserAndTargetWorkspace) {
-        throw new ChatbotXException(
-          "You are not authorized to delete this workspace",
-        )
+        throw new ChatbotXException(t("errors.superAdminRequired"))
       }
 
       const { permissions } =
         currentUserAndTargetWorkspace.targetWorkspaceMember
       if (!hasWorkspacePermission(permissions, "superAdmin")) {
-        throw new ChatbotXException(
-          "You need to be a super admin to delete this workspace",
-        )
+        throw new ChatbotXException(t("errors.superAdminRequired"))
       }
 
       await workspaceService.scheduleDeletion({
+        actorId: currentUserAndTargetWorkspace.user.id,
         id: workspaceId,
       })
     },

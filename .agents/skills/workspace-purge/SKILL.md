@@ -28,6 +28,7 @@ The scheduled worker may retry this path. Every step must be idempotent and leav
 4. **Keep every purge/freeze statement bounded.** Use a `LIMIT` plus keyset or `FOR UPDATE SKIP LOCKED`, one short transaction per batch, and no `IN` built from every matching id. Never call HTTP while holding a database transaction. Use `withPurgeTimeouts`; stop before the cron deadline so its run stays below the distributed-lock TTL.
 5. **Make teardown idempotent.** It runs again on each tick. Convert temporary lock/timeout failures into `WorkspacePurgeIncompleteError` so the next tick resumes safely.
 6. **Reconcile the correct quota scope.** Call `userQuotaService.reconcileOwnerAfterTeardown(ownerId)`; never count all root-tenant resources as a reseller pool.
+7. **Retain billing ledgers.** Owner-keyed billing consumption rollups such as `WorkspaceMac` are evidence of period usage and must be registered as `retainedBilling`, never deleted with their workspace.
 
 ## Before merge
 - Run `pnpm --filter @chatbotx.io/database test` and inspect the purge FK index tests.

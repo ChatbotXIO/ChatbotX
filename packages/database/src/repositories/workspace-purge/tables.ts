@@ -62,6 +62,18 @@ export const NO_FK_WORKSPACE_TABLES = [
     table: "CoexistSyncRun",
   },
   {
+    stage: "contactActivity",
+    table: "ContactActivity",
+  },
+  {
+    stage: "contactActivity",
+    table: "ContactKeywordMessage",
+  },
+  {
+    stage: "contactActivity",
+    table: "ContactState",
+  },
+  {
     stage: "ctid",
     table: "FlowAnalyticsSession",
   },
@@ -84,6 +96,15 @@ export const NO_FK_WORKSPACE_TABLES = [
   },
   { stage: "hypertable", table: "Message" },
   { stage: "hypertable", table: "Attachment" },
+  { stage: "retainedBilling", table: "WorkspaceMac" },
+  {
+    stage: "retainedBilling",
+    table: "WorkspaceBotMessageUsage",
+  },
+  {
+    stage: "retainedBilling",
+    table: "WorkspaceDeletionRecord",
+  },
 ] as const
 
 export type HeavyWorkspaceTable = (typeof HEAVY_WORKSPACE_TABLES)[number]

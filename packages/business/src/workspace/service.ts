@@ -13,6 +13,7 @@ import {
   type WorkspaceMemberPermissions,
   workspaceMemberRoles,
 } from "@chatbotx.io/database/partials"
+import { workspaceDeletionRecordRepository } from "@chatbotx.io/database/repositories/workspace-deletion-record"
 import {
   ROOT_TENANT_ID,
   workspaceMemberModel,
@@ -286,9 +287,15 @@ class WorkspaceService extends BaseService {
     // here while nested in an open db.transaction(...) would enqueue an audit
     // row for a write that might still roll back.
     const changedKeys = Object.keys(data)
-    const onlyScheduledDeletionChanged =
-      changedKeys.length === 1 && changedKeys[0] === "scheduledDeletionAt"
-    if (!props.tx && changedKeys.length > 0 && !onlyScheduledDeletionChanged) {
+    const deletionMetadataKeys = new Set([
+      "deletionRequestedAt",
+      "deletionRequestedById",
+      "scheduledDeletionAt",
+    ])
+    const onlyDeletionMetadataChanged =
+      changedKeys.length > 0 &&
+      changedKeys.every((key) => deletionMetadataKeys.has(key))
+    if (!props.tx && changedKeys.length > 0 && !onlyDeletionMetadataChanged) {
       const nameChanged = data.name !== undefined && data.name !== previousName
       await this.audit(
         "update",
@@ -357,6 +364,7 @@ class WorkspaceService extends BaseService {
   }
 
   async scheduleDeletion(props: {
+    actorId: string
     id: string
     tx?: DatabaseClient
   }): Promise<WorkspaceModel> {
@@ -365,6 +373,8 @@ class WorkspaceService extends BaseService {
       id: props.id,
       tx,
       data: {
+        deletionRequestedAt: new Date(),
+        deletionRequestedById: props.actorId,
         scheduledDeletionAt: nextScheduledDeletionAt(),
       },
     })
@@ -386,6 +396,8 @@ class WorkspaceService extends BaseService {
       id: props.id,
       tx,
       data: {
+        deletionRequestedAt: null,
+        deletionRequestedById: null,
         scheduledDeletionAt: null,
       },
     })
@@ -525,7 +537,7 @@ class WorkspaceService extends BaseService {
     await Promise.allSettled(
       [...reconciles.values()].map(async ({ ownerId, tenantId }) => {
         try {
-          await userQuotaService.reconcileOwnerAfterTeardown(ownerId)
+          await userQuotaService.reconcileOwnerAfterTeardown(ownerId, tenantId)
         } catch (err) {
           logger.error(
             { err, ownerId, tenantId },
@@ -536,6 +548,24 @@ class WorkspaceService extends BaseService {
     )
 
     return totalDeleted
+  }
+
+  private async writeDeletionRecord(workspace: DueWorkspace): Promise<void> {
+    const record = await workspaceDeletionRecordRepository.createForWorkspace({
+      ownerId: workspace.ownerId,
+      tenantId: workspace.tenantId,
+      workspaceId: workspace.id,
+    })
+    if (record?.created) {
+      logger.info(
+        {
+          ownerId: workspace.ownerId,
+          usageSnapshot: record.usageSnapshot,
+          workspaceId: workspace.id,
+        },
+        "workspace-purge: deletion record written",
+      )
+    }
   }
 
   private async teardownDueWorkspace(
@@ -581,6 +611,7 @@ class WorkspaceService extends BaseService {
       for (const pendingRelease of pendingReleases) {
         await connectionStateService.releasePendingQuota(pendingRelease)
       }
+      await this.writeDeletionRecord(fencedWorkspace)
 
       // Drain high-volume child tables in small self-committing batches before
       // the FK cascade, so no single statement deletes millions of rows under lock.
@@ -619,11 +650,19 @@ class WorkspaceService extends BaseService {
       const deletedWorkspace = await withPurgeTimeouts({
         table: "Workspace",
         workspaceId: fencedWorkspace.id,
-        fn: async (tx) =>
-          await tx
+        fn: async (tx) => {
+          const deleted = await tx
             .delete(workspaceModel)
             .where(eq(workspaceModel.id, fencedWorkspace.id))
-            .returning({ id: workspaceModel.id }),
+            .returning({ id: workspaceModel.id })
+          if (deleted[0]) {
+            await workspaceDeletionRecordRepository.markPurged(
+              fencedWorkspace.id,
+              tx,
+            )
+          }
+          return deleted
+        },
       })
       if (!deletedWorkspace[0]) {
         throw new WorkspacePurgeIncompleteError(fencedWorkspace.id, "Workspace")

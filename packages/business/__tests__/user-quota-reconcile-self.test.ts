@@ -166,12 +166,16 @@ describe("reconcileOwnerAfterTeardown", () => {
     const ownerPool = vi
       .spyOn(userQuotaService, "reconcileOwnerPoolUsage")
       .mockResolvedValue(undefined)
-    findFirstTenant.mockResolvedValueOnce({ id: "tenant-1", status: "active" })
+    findFirstTenant.mockResolvedValueOnce({
+      id: "tenant-1",
+      ownerId: "owner-1",
+      status: "active",
+    })
 
     await userQuotaService.reconcileOwnerAfterTeardown("owner-1")
 
     expect(ownerPool).toHaveBeenCalledWith("owner-1", "tenant-1")
-    expect(selfUsage).not.toHaveBeenCalled()
+    expect(selfUsage).toHaveBeenCalledWith("owner-1")
   })
 })
 
@@ -309,21 +313,28 @@ describe("reconcileUserSelfUsage", () => {
   })
 })
 
-describe("persistMacUsed", () => {
-  test("upserts macUsed to the given absolute value via onConflictDoUpdate", async () => {
-    await userQuotaService.persistMacUsed("user-1", 42)
+describe("raiseMacUsed", () => {
+  test("upserts a period-pinned monotonic MAC value", async () => {
+    const periodStart = new Date("2026-01-01T00:00:00Z")
+    await userQuotaService.raiseMacUsed({
+      userId: "user-1",
+      value: 42,
+      periodStart,
+    })
 
     const call = dbInsert.mock.results.at(-1)?.value as {
       values: ReturnType<typeof vi.fn>
       onConflictDoUpdate: ReturnType<typeof vi.fn>
     }
     expect(call.values).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: "user-1", macUsed: 42 }),
+      expect.objectContaining({
+        macUsed: 42,
+        periodStart,
+        userId: "user-1",
+      }),
     )
     expect(call.onConflictDoUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        set: expect.objectContaining({ macUsed: 42 }),
-      }),
+      expect.objectContaining({ setWhere: expect.anything() }),
     )
   })
 })

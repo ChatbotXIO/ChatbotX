@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
+  incrementBotUsage: vi.fn(),
   incrementBy: vi.fn(),
   incrementUsage: vi.fn(),
   recordEvents: vi.fn(),
@@ -12,6 +13,7 @@ vi.mock("@chatbotx.io/analytics", () => ({
 }))
 vi.mock("@chatbotx.io/business", () => ({
   quotaEnforcementService: { incrementBy: mocks.incrementBy },
+  workspaceBotMessageUsageService: { increment: mocks.incrementBotUsage },
   workspaceService: { findById: mocks.findById },
   workspaceUsageService: { increment: mocks.incrementUsage },
 }))
@@ -33,6 +35,7 @@ describe("handleBotMessageSent quota accounting", () => {
     vi.clearAllMocks()
     mocks.recordEvents.mockResolvedValue(undefined)
     mocks.incrementBy.mockResolvedValue(undefined)
+    mocks.incrementBotUsage.mockResolvedValue(undefined)
     mocks.incrementUsage.mockResolvedValue(undefined)
     mocks.findById.mockImplementation(({ id }: { id: string }) =>
       Promise.resolve({ ownerId: `owner-${id}` }),
@@ -67,6 +70,14 @@ describe("handleBotMessageSent quota accounting", () => {
       metric: "monthlyBotMessages",
       count: 1,
     })
+    expect(mocks.incrementBotUsage).toHaveBeenCalledWith({
+      count: 2,
+      workspaceId: "workspace-1",
+    })
+    expect(mocks.incrementBotUsage).toHaveBeenCalledWith({
+      count: 1,
+      workspaceId: "workspace-2",
+    })
     expect(mocks.incrementUsage).toHaveBeenCalledTimes(2)
     expect(mocks.incrementUsage).toHaveBeenCalledWith(
       "workspace-1",
@@ -87,6 +98,10 @@ describe("handleBotMessageSent quota accounting", () => {
       undefined,
     )
     expect(mocks.recordEvents).toHaveBeenCalledOnce()
+    expect(mocks.incrementBotUsage).toHaveBeenCalledWith({
+      count: 1,
+      workspaceId: "workspace-1",
+    })
   })
 
   it("isolates a failing workspace so others still get incremented", async () => {

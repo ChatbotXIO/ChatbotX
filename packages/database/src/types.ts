@@ -331,6 +331,10 @@ export type QuestionnaireSubmissionModel =
 export type QuestionnaireAnswerModel =
   typeof schema.questionnaireAnswerModel.$inferSelect
 export type WorkspaceMacModel = typeof schema.workspaceMacModel.$inferSelect
+export type WorkspaceBotMessageUsageModel =
+  typeof schema.workspaceBotMessageUsageModel.$inferSelect
+export type WorkspaceDeletionRecordModel =
+  typeof schema.workspaceDeletionRecordModel.$inferSelect
 export type ContactActiveHourlyModel =
   typeof schema.contactActiveHourlyModel.$inferSelect
 export type AutomationThrottleModel =

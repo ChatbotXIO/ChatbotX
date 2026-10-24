@@ -246,34 +246,27 @@ const reconcileMac = async (
 
   const rolledOver = livePeriod !== null && livePeriod !== dbPeriodIso
 
-  // Resetting plan settled in its current period → the `ContactActiveMonthly`
-  // ledger is the durable source of truth (every MAC increment writes a
-  // presence row in the same transaction as the live-counter bump). Re-ground
-  // both the live counter and `macUsed` on the ledger count so a lost Redis
-  // increment self-heals. Excluded — handled by the stamp logic below:
-  //  - period-less owners (no anchor, not MAC-tracked);
-  //  - lifetime plans (accumulate across months, never reset);
-  //  - a just-detected cycle rollover (defer to the private quota-worker's
-  //    reset, then ledger-reconcile on the next run once stamped).
-  if (dbPeriodIso && !isLifetime && !rolledOver) {
-    const ledgerMac = await macRepository.countActiveContactsForOwner({
+  // The retained owner-keyed rollup is durable billing evidence. Its value may
+  // repair a lost increment, but never lowers usage in an active period.
+  if (dbPeriodIso && !rolledOver) {
+    const ledgerMac = await macRepository.sumBillingMacForOwner({
       ownerId: userId,
       billingPeriodStart: new Date(dbPeriodIso),
-      cumulative: false,
+      cumulative: isLifetime,
     })
+    const liveMac = parseLiveCount(liveMacRaw) ?? 0
 
-    if (liveMacRaw !== String(ledgerMac) || livePeriod !== dbPeriodIso) {
-      await client.hset(
-        liveKey,
-        MAC_FIELD,
-        String(ledgerMac),
-        MAC_PERIOD_FIELD,
-        dbPeriodIso,
-      )
+    if (ledgerMac > liveMac) {
+      await client.hset(liveKey, MAC_FIELD, String(ledgerMac))
     }
-    if (ledgerMac !== dbMacUsed) {
-      await userQuotaService.persistMacUsed(userId, ledgerMac)
+    if (livePeriod !== dbPeriodIso) {
+      await client.hset(liveKey, MAC_PERIOD_FIELD, dbPeriodIso)
     }
+    await userQuotaService.raiseMacUsed({
+      userId,
+      value: ledgerMac,
+      periodStart: new Date(dbPeriodIso),
+    })
     return
   }
 
@@ -296,8 +289,12 @@ const reconcileMac = async (
     await client.hset(liveKey, MAC_PERIOD_FIELD, dbPeriodIso)
   }
 
-  if (action.persistMacUsed !== null) {
-    await userQuotaService.persistMacUsed(userId, action.persistMacUsed)
+  if (action.persistMacUsed !== null && dbPeriodIso) {
+    await userQuotaService.raiseMacUsed({
+      userId,
+      value: action.persistMacUsed,
+      periodStart: new Date(dbPeriodIso),
+    })
   }
 }
 

@@ -372,8 +372,23 @@ class WorkspaceLifecycleService extends BaseService {
     }
 
     for (const entry of NO_FK_WORKSPACE_TABLES) {
-      if (entry.stage !== "ctid") {
-        continue
+      switch (entry.stage) {
+        case "retainedBilling":
+          // Billing evidence and deletion records intentionally outlive Workspace.
+          continue
+        case "contactActivity":
+        case "partitioned":
+        case "contactInboxPost":
+        case "leaderboard":
+        case "hypertable":
+          // These stages are drained by their specialized purge handlers.
+          continue
+        case "ctid":
+          break
+        default: {
+          const exhaustive: never = entry
+          return exhaustive
+        }
       }
       const { table } = entry
       totalDeleted += await drainInBatches({

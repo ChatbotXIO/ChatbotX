@@ -173,6 +173,18 @@ describe("workspace purge coverage", () => {
     ).toEqual([])
   })
 
+  test("retains billing and deletion records outside workspace cascades", () => {
+    const retained = NO_FK_WORKSPACE_TABLES.filter(
+      ({ stage }) => stage === "retainedBilling",
+    ).map(({ table }) => table)
+
+    expect(retained).toEqual([
+      "WorkspaceMac",
+      "WorkspaceBotMessageUsage",
+      "WorkspaceDeletionRecord",
+    ])
+  })
+
   test("does not add an unindexed foreign key or retain a fixed baseline entry", () => {
     const support = [
       ...entriesByType("indexes"),

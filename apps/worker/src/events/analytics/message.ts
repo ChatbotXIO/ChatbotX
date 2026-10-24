@@ -1,6 +1,7 @@
 import { messageAnalyticsService } from "@chatbotx.io/analytics"
 import {
   quotaEnforcementService,
+  workspaceBotMessageUsageService,
   workspaceService,
   workspaceUsageService,
 } from "@chatbotx.io/business"
@@ -37,6 +38,7 @@ export async function handleBotMessageSent(
   await Promise.all(
     [...countsByWorkspace].map(async ([workspaceId, count]) => {
       try {
+        await workspaceBotMessageUsageService.increment({ count, workspaceId })
         const workspace = await workspaceService.findById({ id: workspaceId })
         await quotaEnforcementService.incrementBy({
           userId: workspace.ownerId,

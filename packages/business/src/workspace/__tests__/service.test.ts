@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   workspaceInsert: vi.fn(),
   workspaceInsertValues: vi.fn(),
   workspaceDelete: vi.fn(),
+  workspaceUpdate: vi.fn(),
   workspaceQuotaRelease: vi.fn(),
   tryConsume: vi.fn(),
   createMember: vi.fn(),
@@ -32,9 +33,19 @@ vi.mock("../../workspace-usage/service", () => ({
   },
 }))
 
+vi.mock("@chatbotx.io/database/repositories/workspace-deletion-record", () => ({
+  workspaceDeletionRecordRepository: {
+    createForWorkspace: vi.fn(async () => undefined),
+    markPurged: vi.fn(async () => undefined),
+  },
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
-    query: { userModel: { findFirst: vi.fn(async () => undefined) } },
+    query: {
+      userModel: { findFirst: vi.fn(async () => undefined) },
+      workspaceModel: { findFirst: vi.fn(async () => undefined) },
+    },
     insert: mocks.workspaceInsert,
     delete: mocks.workspaceDelete,
     transaction: mocks.dbTransaction,
@@ -81,6 +92,7 @@ vi.mock("@chatbotx.io/database/partials", async (importOriginal) => {
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   ROOT_TENANT_ID: "1",
+  workspaceDeletionRecordModel: { workspaceId: {} },
   workspaceMemberModel: {},
   workspaceModel: {},
 }))
@@ -145,8 +157,15 @@ vi.mock("../../workspace-lifecycle/purge-batch", () => ({
     async ({
       fn,
     }: {
-      fn: (tx: { delete: typeof mocks.workspaceDelete }) => Promise<unknown>
-    }) => await fn({ delete: mocks.workspaceDelete }),
+      fn: (tx: {
+        delete: typeof mocks.workspaceDelete
+        update: typeof mocks.workspaceUpdate
+      }) => Promise<unknown>
+    }) =>
+      await fn({
+        delete: mocks.workspaceDelete,
+        update: mocks.workspaceUpdate,
+      }),
   ),
 }))
 
@@ -229,6 +248,9 @@ beforeEach(() => {
     where: vi.fn(() => ({
       returning: vi.fn().mockResolvedValue([{ id: "workspace-1" }]),
     })),
+  })
+  mocks.workspaceUpdate.mockReturnValue({
+    set: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
   })
 })
 

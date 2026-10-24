@@ -54,9 +54,3 @@ export const macMessageInPayloadSchema = z.object({
   sourceId: z.string().nullish(),
 })
 export type MacMessageInPayload = z.infer<typeof macMessageInPayloadSchema>
-
-export const reconcilePeriodInputSchema = z.object({
-  workspaceId: z.string(),
-  periodStart: z.string(),
-})
-export type ReconcilePeriodInput = z.infer<typeof reconcilePeriodInputSchema>

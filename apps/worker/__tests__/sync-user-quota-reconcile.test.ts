@@ -81,7 +81,7 @@ vi.mock("@chatbotx.io/business", () => ({
             | undefined) ?? null,
       })
     }),
-    persistMacUsed: vi.fn((_userId: string, value: number) => {
+    raiseMacUsed: vi.fn(({ value }: { value: number }) => {
       state.persistedMac.push(value)
       return Promise.resolve()
     }),
@@ -127,9 +127,9 @@ vi.mock("@chatbotx.io/redis", () => ({
   distributedStore: { delete: vi.fn(async () => undefined) },
 }))
 
-const countActiveContactsForOwner = vi.fn(async () => state.ledgerMac)
+const sumBillingMacForOwner = vi.fn(async () => state.ledgerMac)
 vi.mock("@chatbotx.io/analytics", () => ({
-  macRepository: { countActiveContactsForOwner },
+  macRepository: { sumBillingMacForOwner },
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -151,7 +151,7 @@ const { tenantService, userQuotaService } = (await import(
   userQuotaService: {
     reconcileOwnerPoolUsage: ReturnType<typeof vi.fn>
     reconcileUserSelfUsage: ReturnType<typeof vi.fn>
-    persistMacUsed: ReturnType<typeof vi.fn>
+    raiseMacUsed: ReturnType<typeof vi.fn>
     clearLiveCounters: ReturnType<typeof vi.fn>
   }
 }
@@ -169,7 +169,7 @@ describe("reconcileUser — the non-reseller path delegates the self-count", () 
     state.hmgetResult = [null, null]
     state.ledgerMac = 0
     redisClient.hset.mockClear()
-    countActiveContactsForOwner.mockClear()
+    sumBillingMacForOwner.mockClear()
   })
 
   // The authoritative COUNT(*) reads, the direct-assignment (never GREATEST)
@@ -203,7 +203,7 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
     state.selfReconciledUsers = []
     state.hsetCalls = []
     redisClient.hset.mockClear()
-    countActiveContactsForOwner.mockClear()
+    sumBillingMacForOwner.mockClear()
     state.ledgerMac = 0
   })
 
@@ -220,18 +220,14 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
 
     await reconcileUser("user-1")
 
-    expect(countActiveContactsForOwner).toHaveBeenCalledWith(
+    expect(sumBillingMacForOwner).toHaveBeenCalledWith(
       expect.objectContaining({ ownerId: "user-1", cumulative: false }),
     )
-    // The live counter is re-grounded on the ledger truth.
     expect(state.hsetCalls).toContainEqual([
       "user-quota-live:user-1",
       "mac",
       "7",
-      "macPeriodStart",
-      PERIOD,
     ])
-    // macUsed is persisted to the ledger count (self-heals the drift).
     expect(state.persistedMac).toContain(7)
   })
 
@@ -247,9 +243,12 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
 
     await reconcileUser("user-1")
 
-    expect(countActiveContactsForOwner).not.toHaveBeenCalled()
-    // No mac drift to persist (live === DB within the stable lifetime period).
-    expect(state.persistedMac).toHaveLength(0)
+    expect(sumBillingMacForOwner).toHaveBeenCalledWith(
+      expect.objectContaining({ cumulative: true }),
+    )
+    // The service applies GREATEST, so this lower ledger observation cannot
+    // reduce the durable lifetime total.
+    expect(state.persistedMac).toEqual([4])
   })
 })
 

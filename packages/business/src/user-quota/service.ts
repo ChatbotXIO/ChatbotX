@@ -4,23 +4,20 @@ import {
   countDistinct,
   db,
   eq,
-  gt,
   inArray,
-  lte,
   type SQL,
   sql,
-  sum,
 } from "@chatbotx.io/database/client"
 import {
   ACTIVE_CONNECTION_STATUSES,
   planStatuses,
 } from "@chatbotx.io/database/partials"
+import { workspaceMacRepository } from "@chatbotx.io/database/repositories/workspace-mac"
 import {
   connectionModel,
   contactModel,
   ROOT_TENANT_ID,
   userQuotaModel,
-  workspaceMacModel,
   workspaceMemberModel,
   workspaceModel,
 } from "@chatbotx.io/database/schema"
@@ -841,30 +838,12 @@ class UserQuotaService extends BaseService {
     const [
       { contactsUsed, workspacesUsed, channelsUsed },
       teamMembersUsed,
-      [macResult],
+      macUsed,
     ] = await Promise.all([
       this.countWorkspaceScopedUsage(eq(workspaceModel.tenantId, tenantId)),
-
       this.countDistinctTeamMembers({ tenantId }),
-
-      db
-        .select({ total: sum(workspaceMacModel.macCount) })
-        .from(workspaceMacModel)
-        .innerJoin(
-          workspaceModel,
-          eq(workspaceMacModel.workspaceId, workspaceModel.id),
-        )
-        .where(
-          and(
-            eq(workspaceModel.tenantId, tenantId),
-            lte(workspaceMacModel.periodStart, sql`now()`),
-            gt(workspaceMacModel.periodEnd, sql`now()`),
-          ),
-        ),
+      workspaceMacRepository.sumBillingMacForTenant(tenantId),
     ])
-
-    // `sum()` returns a numeric string (or null when no rows match).
-    const macUsed = Number(macResult?.total ?? 0)
 
     await db
       .insert(userQuotaModel)
@@ -880,27 +859,23 @@ class UserQuotaService extends BaseService {
       .onConflictDoUpdate({
         target: userQuotaModel.userId,
         set: {
-          // Authoritative current counts — assigned directly, NOT GREATEST — so
-          // deletions across the pool free quota. Only `*Used` is touched; the
-          // owner's limits / plan identity are written by the billing layer.
+          // Capacity metrics are authoritative current counts. Billing MAC is
+          // monotonic for the current quota row and resets only at rollover.
           contactsUsed,
           teamMembersUsed,
           workspacesUsed,
           channelsUsed,
-          macUsed,
+          macUsed: sql`GREATEST(${userQuotaModel.macUsed}, ${macUsed})`,
           syncedAt: new Date(),
           updatedAt: sql`CURRENT_TIMESTAMP`,
         },
       })
 
-    // Mirror the live counters to the same authoritative current counts.
-    // `macPeriodStart` is intentionally not written here: the DB query already
-    // filters for the current billing period (`periodStart ≤ now() < periodEnd`),
-    // so `macUsed` is period-correct without the stamp. Period resets are owned
-    // by the private quota-worker, which advances `periodStart` and zeroes
-    // `macUsed`; the next reconcile will pick up the new value from DB.
+    // Capacity metrics are current counts. MAC is billing consumption and must
+    // never be lowered by a same-period reconcile.
+    const liveKey = this.store.liveKey(ownerId)
     await client.hset(
-      this.store.liveKey(ownerId),
+      liveKey,
       "contacts",
       String(contactsUsed),
       "teamMembers",
@@ -909,9 +884,11 @@ class UserQuotaService extends BaseService {
       String(workspacesUsed),
       "channels",
       String(channelsUsed),
-      "mac",
-      String(macUsed),
     )
+    const liveMac = Number(await client.hget(liveKey, "mac"))
+    if (!Number.isFinite(liveMac) || macUsed > liveMac) {
+      await client.hset(liveKey, "mac", String(macUsed))
+    }
 
     await this.store.invalidate(ownerId)
   }
@@ -920,15 +897,25 @@ class UserQuotaService extends BaseService {
    * tenants pool usage on their owner; platform users reconcile only their own
    * workspaces.
    */
-  async reconcileOwnerAfterTeardown(ownerId: string): Promise<void> {
-    const tenant = await db.query.tenantModel.findFirst({
-      where: { ownerId },
-    })
-    if (tenant?.status === "active") {
-      await this.reconcileOwnerPoolUsage(ownerId, tenant.id)
-      return
-    }
+  async reconcileOwnerAfterTeardown(
+    ownerId: string,
+    tenantId?: string,
+  ): Promise<void> {
     await this.reconcileUserSelfUsage(ownerId)
+
+    const tenant =
+      tenantId && tenantId !== ROOT_TENANT_ID
+        ? await db.query.tenantModel.findFirst({
+            where: { id: tenantId },
+            columns: { id: true, ownerId: true, status: true },
+          })
+        : await db.query.tenantModel.findFirst({
+            where: { ownerId },
+            columns: { id: true, ownerId: true, status: true },
+          })
+    if (tenant?.status === "active" && tenant.ownerId) {
+      await this.reconcileOwnerPoolUsage(tenant.ownerId, tenantId ?? tenant.id)
+    }
   }
 
   /**
@@ -1060,15 +1047,28 @@ class UserQuotaService extends BaseService {
     }
   }
 
-  /** `sync-user-quota.ts` persistMacUsed: upsert `UserQuota.macUsed` to an absolute value. */
-  async persistMacUsed(userId: string, value: number): Promise<void> {
+  /**
+   * Raises `macUsed` without ever overwriting a concurrent billing rollover.
+   * The conflict predicate pins the update to the caller's billing period.
+   */
+  async raiseMacUsed(input: {
+    userId: string
+    value: number
+    periodStart: Date
+  }): Promise<void> {
     await db
       .insert(userQuotaModel)
-      .values({ userId, macUsed: value, syncedAt: new Date() })
+      .values({
+        userId: input.userId,
+        macUsed: input.value,
+        periodStart: input.periodStart,
+        syncedAt: new Date(),
+      })
       .onConflictDoUpdate({
         target: userQuotaModel.userId,
+        setWhere: sql`${userQuotaModel.periodStart} IS NOT DISTINCT FROM ${input.periodStart}`,
         set: {
-          macUsed: value,
+          macUsed: sql`GREATEST(${userQuotaModel.macUsed}, ${input.value})`,
           updatedAt: sql`CURRENT_TIMESTAMP`,
         },
       })

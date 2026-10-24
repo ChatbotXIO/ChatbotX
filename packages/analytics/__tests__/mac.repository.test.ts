@@ -9,6 +9,7 @@ import type {
 const sql = (strings: TemplateStringsArray, ...values: unknown[]) => ({
   strings,
   values,
+  as: (alias: string) => ({ alias, strings, values }),
 })
 
 const resultQueue: unknown[][] = []
@@ -21,6 +22,7 @@ function nextResult(): unknown[] {
 
 const CHAIN_METHODS = [
   "values",
+  "select",
   "onConflictDoUpdate",
   "onConflictDoNothing",
   "returning",
@@ -60,6 +62,9 @@ const gte = vi.fn((...args: unknown[]) => ({ op: "gte", args }))
 const gt = vi.fn((...args: unknown[]) => ({ op: "gt", args }))
 const inArray = vi.fn((...args: unknown[]) => ({ op: "inArray", args }))
 const lte = vi.fn((...args: unknown[]) => ({ op: "lte", args }))
+const isNull = vi.fn((column: unknown) => ({ op: "isNull", args: [column] }))
+const or = vi.fn((...args: unknown[]) => args)
+const sum = vi.fn((column: unknown) => ({ __sum: true, column }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -68,7 +73,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
     update: dbUpdate,
     select: dbSelect,
   },
-  sql,
   and,
   count: () => ({ __count: true }),
   countDistinct,
@@ -77,15 +81,22 @@ vi.mock("@chatbotx.io/database/client", () => ({
   gt,
   gte,
   inArray,
+  isNull,
   lt: (...args: unknown[]) => args,
   lte,
+  or,
+  sql,
+  sum,
 }))
-
 vi.mock("@chatbotx.io/database/schema", () => ({
   workspaceMacModel: {
     id: "wm.id",
+    macCount: "wm.macCount",
+    ownerId: "wm.ownerId",
     periodEnd: "wm.periodEnd",
     periodStart: "wm.periodStart",
+    tenantId: "wm.tenantId",
+    workspaceId: "wm.workspaceId",
   },
   contactActiveMonthlyModel: {
     contactId: "cam.contactId",
@@ -109,9 +120,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     channel: "inbox.channel",
     workspaceId: "inbox.workspaceId",
   },
-  workspaceModel: { id: "ws.id", ownerId: "ws.ownerId" },
+  workspaceModel: {
+    id: "ws.id",
+    ownerId: "ws.ownerId",
+    tenantId: "ws.tenantId",
+  },
 }))
-
 const { MacRepository } = await import(
   "../src/repositories/postgres/mac.repository"
 )
@@ -119,10 +133,10 @@ const { MacRepository } = await import(
 function makeClient(): DatabaseClient {
   return {
     insert: vi.fn(makeChain),
+    select: vi.fn(makeChain),
     update: vi.fn(makeChain),
   } as unknown as DatabaseClient
 }
-
 function incrementCounts(builder: ReturnType<typeof vi.fn>): unknown[] {
   return builder.mock.results.flatMap((result) => {
     const chain = result.value as QueryChain
@@ -168,7 +182,10 @@ beforeEach(() => {
   gte.mockClear()
   gt.mockClear()
   inArray.mockClear()
+  isNull.mockClear()
   lte.mockClear()
+  or.mockClear()
+  sum.mockClear()
 })
 
 describe("MacRepository — empty-input guards", () => {
@@ -208,6 +225,20 @@ describe("MacRepository — ensureWorkspaceMac", () => {
     const key = `ws-1|${periodStart.toISOString()}|${periodEnd.toISOString()}`
     expect(map.get(key)).toBe("wm-99")
     expect(map.size).toBe(1)
+  })
+
+  test("stamps ownership from the workspace row", async () => {
+    const client = makeClient()
+    queueResult([{ id: "wm-99", workspaceId: "ws-1", periodStart, periodEnd }])
+
+    await repo.ensureWorkspaceMac(
+      [{ workspaceId: "ws-1", periodStart, periodEnd }],
+      client,
+    )
+
+    const chain = (client.insert as ReturnType<typeof vi.fn>).mock.results[0]
+      ?.value as QueryChain
+    expect(chain.select).toHaveBeenCalledTimes(1)
   })
 
   test("distinct entries issue one insert each and map every key", async () => {
@@ -416,19 +447,6 @@ describe("MacRepository — addWorkspaceMacCount", () => {
   })
 })
 
-describe("MacRepository — reconcilePeriod", () => {
-  test("rebuilds WorkspaceMac count from ContactActiveMonthly", async () => {
-    queueResult([])
-
-    await repo.reconcilePeriod({
-      workspaceId: "ws-1",
-      periodStart: "2026-05-01T00:00:00.000Z",
-    })
-
-    expect(dbUpdate).toHaveBeenCalledTimes(1)
-  })
-})
-
 describe("MacRepository — getActiveContactCountByWorkspaceId", () => {
   test("returns macCount and ISO period bounds from the row", async () => {
     queueResult([
@@ -461,12 +479,12 @@ describe("MacRepository — getActiveContactCountByWorkspaceId", () => {
   })
 })
 
-describe("countActiveContactsForOwner", () => {
-  test("counts only the current anchored period for a resetting plan", async () => {
-    queueResult([{ value: 7 }])
+describe("sumBillingMacForOwner", () => {
+  test("sums only the current anchored period for a resetting plan", async () => {
+    queueResult([{ total: 7 }])
     const repo = new MacRepository()
 
-    const result = await repo.countActiveContactsForOwner({
+    const result = await repo.sumBillingMacForOwner({
       ownerId: "owner-1",
       billingPeriodStart: new Date("2026-06-01T00:00:00.000Z"),
       cumulative: false,
@@ -478,7 +496,7 @@ describe("countActiveContactsForOwner", () => {
   test("returns 0 for a period-less owner without querying", async () => {
     const repo = new MacRepository()
 
-    const result = await repo.countActiveContactsForOwner({
+    const result = await repo.sumBillingMacForOwner({
       ownerId: "owner-1",
       billingPeriodStart: null,
       cumulative: false,
@@ -487,11 +505,11 @@ describe("countActiveContactsForOwner", () => {
     expect(result).toBe(0)
   })
 
-  test("counts every period for a lifetime (cumulative) plan", async () => {
-    queueResult([{ value: 25 }])
+  test("sums every period for a lifetime (cumulative) plan", async () => {
+    queueResult([{ total: 25 }])
     const repo = new MacRepository()
 
-    const result = await repo.countActiveContactsForOwner({
+    const result = await repo.sumBillingMacForOwner({
       ownerId: "owner-1",
       billingPeriodStart: new Date("2026-06-01T00:00:00.000Z"),
       cumulative: true,
