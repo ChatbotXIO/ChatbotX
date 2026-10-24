@@ -48,6 +48,7 @@ type TestMessage = {
   conversationId: string
   createdAt: Date
   messageType: string
+  clientId?: string | null
   senderType?: string
   senderId?: string | null
 }
@@ -61,9 +62,13 @@ const makeConversation = (id: string, lastActivityAt: Date) =>
     lastActivityAt,
   }) as TestConversation
 
-const makeMessage = (conversationId: string, createdAt: Date) =>
+const makeMessage = (
+  conversationId: string,
+  createdAt: Date,
+  id = `msg-${conversationId}`,
+) =>
   ({
-    id: `msg-${conversationId}`,
+    id,
     workspaceId: "ws-1",
     conversationId,
     createdAt,
@@ -1042,6 +1047,74 @@ describe("chat store conversation updates", () => {
     expect(mockFindConversationAuthenticatedAPI).not.toHaveBeenCalled()
   })
 
+  test("keeps distinct server messages when rapid sends share an optimistic client id", () => {
+    const store = createChatStore()
+    const conversation = makeConversation(
+      "conv-1",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const optimistic = {
+      ...makeMessage("conv-1", new Date("2026-01-02T00:00:00Z"), "optimistic"),
+      clientId: "client-a",
+      contactInboxId: "",
+    }
+    const serverMessages = ["message-1", "message-2", "message-3"].map(
+      (id, index) => ({
+        ...makeMessage("conv-1", new Date(`2026-01-02T00:00:0${index}Z`), id),
+        clientId: "client-a",
+        contactInboxId: "inbox-1",
+      }),
+    )
+    store.setState({
+      conversations: [conversation] as never,
+      activeConversationId: "conv-1",
+      messages: [optimistic] as never,
+    })
+
+    store.getState().handleNewMessages(serverMessages as never)
+
+    expect(store.getState().messages.map((message) => message.id)).toEqual([
+      "message-1",
+      "message-2",
+      "message-3",
+    ])
+  })
+
+  test("keeps distinct server messages when repeated client ids arrive in separate batches", () => {
+    const store = createChatStore()
+    const conversation = makeConversation(
+      "conv-1",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const optimistic = {
+      ...makeMessage("conv-1", new Date("2026-01-02T00:00:00Z"), "optimistic"),
+      clientId: "client-a",
+      contactInboxId: "",
+    }
+    const serverMessages = ["message-1", "message-2", "message-3"].map(
+      (id, index) => ({
+        ...makeMessage("conv-1", new Date(`2026-01-02T00:00:0${index}Z`), id),
+        clientId: "client-a",
+        contactInboxId: "inbox-1",
+      }),
+    )
+    store.setState({
+      conversations: [conversation] as never,
+      activeConversationId: "conv-1",
+      messages: [optimistic] as never,
+    })
+
+    for (const message of serverMessages) {
+      store.getState().handleNewMessages([message] as never)
+    }
+
+    expect(store.getState().messages.map((message) => message.id)).toEqual([
+      "message-1",
+      "message-2",
+      "message-3",
+    ])
+  })
+
   test("updates an active thread before its conversation reaches the sidebar", () => {
     const store = createChatStore()
     const message = makeMessage(
@@ -1549,8 +1622,16 @@ describe("chat store loadMoreMessages", () => {
       messages: [existing] as never,
       nextCursorMessage: "cursor-1",
     })
-    const older = makeMessage("conv-1", new Date("2026-01-01T01:00:00Z"))
-    const oldest = makeMessage("conv-1", new Date("2026-01-01T00:00:00Z"))
+    const older = makeMessage(
+      "conv-1",
+      new Date("2026-01-01T01:00:00Z"),
+      "message-older",
+    )
+    const oldest = makeMessage(
+      "conv-1",
+      new Date("2026-01-01T00:00:00Z"),
+      "message-oldest",
+    )
     // The API returns newest-first; the store reverses into display order.
     mockListMessagesAuthenticatedAPI.mockResolvedValue({
       data: [older, oldest],
@@ -1568,7 +1649,183 @@ describe("chat store loadMoreMessages", () => {
     expect(store.getState().messages).toEqual([oldest, older, existing])
     expect(store.getState().hasNextMessagePage).toBe(false)
     expect(store.getState().isLoadMoreMessage).toBe(false)
+    expect(store.getState().lastPrependedCount).toBe(2)
+    expect(store.getState().prependSeq).toBe(1)
     expect(store.getState().messagesConversationId).toBe("conv-1")
+  })
+
+  test("retains realtime messages that arrive while the older page loads", async () => {
+    const store = createChatStore()
+    const first = makeMessage(
+      "conv-1",
+      new Date("2026-01-01T01:00:00Z"),
+      "message-1",
+    )
+    const second = makeMessage(
+      "conv-1",
+      new Date("2026-01-01T02:00:00Z"),
+      "message-2",
+    )
+    const third = makeMessage(
+      "conv-1",
+      new Date("2026-01-01T03:00:00Z"),
+      "message-3",
+    )
+    const fourth = makeMessage(
+      "conv-1",
+      new Date("2026-01-01T04:00:00Z"),
+      "message-4",
+    )
+    const fifth = makeMessage(
+      "conv-1",
+      new Date("2026-01-01T05:00:00Z"),
+      "message-5",
+    )
+    const oldest = makeMessage(
+      "conv-1",
+      new Date("2026-01-01T00:00:00Z"),
+      "message-0",
+    )
+    const { promise: page, resolve: resolvePage } = Promise.withResolvers<{
+      data: TestMessage[]
+      nextCursor: string | null
+    }>()
+
+    store.setState({
+      activeConversationId: "conv-1",
+      messages: [first, second, third] as never,
+    })
+    mockListMessagesAuthenticatedAPI.mockReturnValueOnce(page)
+
+    const loadMore = store.getState().loadMoreMessages("ws-1", 20)
+    store.getState().handleNewMessages([fourth] as never)
+    store.getState().handleNewMessages([fifth] as never)
+    resolvePage({ data: [oldest], nextCursor: null })
+
+    await loadMore
+
+    expect(store.getState().messages).toEqual([
+      oldest,
+      first,
+      second,
+      third,
+      fourth,
+      fifth,
+    ])
+  })
+
+  test("deduplicates a page that overlaps messages already delivered by realtime", async () => {
+    const store = createChatStore()
+    const existing = makeMessage(
+      "conv-1",
+      new Date("2026-01-01T01:00:00Z"),
+      "message-1",
+    )
+    const realtime = makeMessage(
+      "conv-1",
+      new Date("2026-01-01T02:00:00Z"),
+      "message-2",
+    )
+    const oldest = makeMessage(
+      "conv-1",
+      new Date("2026-01-01T00:00:00Z"),
+      "message-0",
+    )
+
+    store.setState({
+      activeConversationId: "conv-1",
+      messages: [existing] as never,
+    })
+    mockListMessagesAuthenticatedAPI.mockResolvedValueOnce({
+      data: [realtime, existing, oldest],
+      nextCursor: null,
+    })
+
+    const loadMore = store.getState().loadMoreMessages("ws-1", 20)
+    store.getState().handleNewMessages([realtime] as never)
+    await loadMore
+
+    expect(store.getState().messages).toEqual([oldest, existing, realtime])
+  })
+
+  test("drops a page when the active conversation changes before it resolves", async () => {
+    const store = createChatStore()
+    const original = makeMessage(
+      "conv-1",
+      new Date("2026-01-01T01:00:00Z"),
+      "message-1",
+    )
+    const current = makeMessage(
+      "conv-2",
+      new Date("2026-01-01T02:00:00Z"),
+      "message-2",
+    )
+    const { promise: page, resolve: resolvePage } = Promise.withResolvers<{
+      data: TestMessage[]
+      nextCursor: string | null
+    }>()
+
+    store.setState({
+      activeConversationId: "conv-1",
+      messages: [original] as never,
+    })
+    mockListMessagesAuthenticatedAPI.mockReturnValueOnce(page)
+
+    const loadMore = store.getState().loadMoreMessages("ws-1", 20)
+    store.setState({
+      activeConversationId: "conv-2",
+      messages: [current] as never,
+    })
+    resolvePage({ data: [original], nextCursor: null })
+
+    await loadMore
+
+    expect(store.getState().messages).toEqual([current])
+    expect(store.getState().isLoadMoreMessage).toBe(false)
+  })
+
+  test("keeps the latest load-more request active when an older conversation request settles", async () => {
+    const store = createChatStore()
+    const firstRequest = Promise.withResolvers<{
+      data: TestMessage[]
+      nextCursor: string | null
+    }>()
+    const secondRequest = Promise.withResolvers<{
+      data: TestMessage[]
+      nextCursor: string | null
+    }>()
+    const secondConversationMessage = makeMessage(
+      "conv-2",
+      new Date("2026-01-01T02:00:00Z"),
+      "message-2",
+    )
+
+    store.setState({
+      activeConversationId: "conv-1",
+      nextCursorMessage: "cursor-1",
+    })
+    mockListMessagesAuthenticatedAPI
+      .mockReturnValueOnce(firstRequest.promise)
+      .mockReturnValueOnce(secondRequest.promise)
+
+    const firstLoad = store.getState().loadMoreMessages("ws-1", 20)
+    store.getState().setActiveConversationId("conv-2")
+    const secondLoad = store.getState().loadMoreMessages("ws-1", 20)
+
+    firstRequest.resolve({ data: [], nextCursor: "stale-cursor" })
+    await firstLoad
+
+    expect(store.getState().isLoadMoreMessage).toBe(true)
+    expect(store.getState().nextCursorMessage).toBeNull()
+
+    secondRequest.resolve({
+      data: [secondConversationMessage],
+      nextCursor: null,
+    })
+    await secondLoad
+
+    expect(store.getState().isLoadMoreMessage).toBe(false)
+    expect(store.getState().messages).toEqual([secondConversationMessage])
   })
 
   test("resets the in-flight flag when the request fails so a retry is possible", async () => {
