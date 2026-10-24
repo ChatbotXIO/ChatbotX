@@ -37,9 +37,9 @@ import { isCommunity } from "../keys"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { userQuotaService } from "../user-quota/service"
+import { withPurgeTimeouts } from "../workspace-lifecycle/purge-batch"
 import {
   type WorkspaceTeardownIntegrations,
-  withPurgeTimeouts,
   workspaceLifecycleService,
 } from "../workspace-lifecycle/service"
 import {

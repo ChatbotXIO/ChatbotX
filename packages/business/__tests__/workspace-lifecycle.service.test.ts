@@ -3,8 +3,8 @@ import { beforeEach, expect, test, vi } from "vitest"
 const order: string[] = []
 const transactionMock = vi.fn()
 const cancelInFlightBroadcastsForWorkspaceMock = vi.fn()
-const completeActiveSequenceEnrollmentsForWorkspaceMock = vi.fn()
-const cancelPendingDispatchesForWorkspaceMock = vi.fn()
+const completeActiveSequenceEnrollmentBatchMock = vi.fn()
+const cancelPendingDispatchBatchMock = vi.fn()
 const removeDispatchesFromScheduleMock = vi.fn()
 const cancelSmartDelaysForWorkspaceMock = vi.fn()
 const loggerWarnMock = vi.fn()
@@ -24,17 +24,20 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/sequence-scheduler/dispatch-cancel", () => ({
-  cancelPendingDispatchBatch: cancelPendingDispatchesForWorkspaceMock,
-  cancelPendingDispatchesForWorkspace: cancelPendingDispatchesForWorkspaceMock,
-  MAX_WORKSPACE_DISPATCH_CANCEL_BATCHES: 400,
+  cancelPendingDispatchBatch: cancelPendingDispatchBatchMock,
   removeDispatchesFromSchedule: removeDispatchesFromScheduleMock,
   WORKSPACE_DISPATCH_CANCEL_BATCH_SIZE: 500,
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   connectionRepository: { findByInboxId: findByInboxIdMock },
+  HEAVY_WORKSPACE_TABLES: [],
   LIVE_RUN_STATUSES: [],
+  NO_FK_WORKSPACE_TABLES: [],
+  PARTITIONED_WORKSPACE_TABLES: [],
   PULL_CLAIMABLE_STATUSES: [],
+  WORKSPACE_ANALYTICS_HYPERTABLES: [],
+  workspacePurgeRepository: {},
 }))
 
 vi.mock("../src/connection/state-service", () => ({
@@ -48,9 +51,8 @@ vi.mock("../src/base.service", () => ({
 vi.mock("../src/workspace-lifecycle/campaign-cleanup", () => ({
   cancelInFlightBroadcastsForWorkspace:
     cancelInFlightBroadcastsForWorkspaceMock,
-  completeActiveSequenceEnrollmentsForWorkspace:
-    completeActiveSequenceEnrollmentsForWorkspaceMock,
-  MAX_SEQUENCE_ENROLLMENT_CANCEL_BATCHES: 400,
+  completeActiveSequenceEnrollmentBatch:
+    completeActiveSequenceEnrollmentBatchMock,
   SEQUENCE_ENROLLMENT_CANCEL_BATCH_SIZE: 500,
 }))
 
@@ -95,11 +97,11 @@ beforeEach(() => {
     order.push("broadcast")
     return Promise.resolve(2)
   })
-  completeActiveSequenceEnrollmentsForWorkspaceMock.mockImplementation(() => {
+  completeActiveSequenceEnrollmentBatchMock.mockImplementation(() => {
     order.push("enrollments")
     return Promise.resolve(3)
   })
-  cancelPendingDispatchesForWorkspaceMock.mockImplementation(() => {
+  cancelPendingDispatchBatchMock.mockImplementation(() => {
     order.push("dispatches")
     return Promise.resolve([{ bucket: 1, id: "dispatch-1" }])
   })
@@ -129,7 +131,10 @@ test("freezeWorkspaceRuntime keeps the transaction to broadcasts and drains inde
     "../src/workspace-lifecycle/service"
   )
 
-  await workspaceLifecycleService.freezeWorkspaceRuntime("workspace-1")
+  await workspaceLifecycleService.freezeWorkspaceRuntime(
+    "workspace-1",
+    Date.now() + 60_000,
+  )
 
   expect(transactionMock).toHaveBeenCalledTimes(3)
   expect(cancelInFlightBroadcastsForWorkspaceMock).toHaveBeenCalledWith(
@@ -137,14 +142,12 @@ test("freezeWorkspaceRuntime keeps the transaction to broadcasts and drains inde
       workspaceId: "workspace-1",
     }),
   )
-  expect(
-    completeActiveSequenceEnrollmentsForWorkspaceMock,
-  ).toHaveBeenCalledWith(
+  expect(completeActiveSequenceEnrollmentBatchMock).toHaveBeenCalledWith(
     expect.objectContaining({
       workspaceId: "workspace-1",
     }),
   )
-  expect(cancelPendingDispatchesForWorkspaceMock).toHaveBeenCalledWith(
+  expect(cancelPendingDispatchBatchMock).toHaveBeenCalledWith(
     expect.objectContaining({
       workspaceId: "workspace-1",
     }),
@@ -152,9 +155,9 @@ test("freezeWorkspaceRuntime keeps the transaction to broadcasts and drains inde
   expect(removeDispatchesFromScheduleMock).toHaveBeenCalledWith([
     { bucket: 1, id: "dispatch-1" },
   ])
-  expect(cancelSmartDelaysForWorkspaceMock).toHaveBeenCalledWith({
-    workspaceId: "workspace-1",
-  })
+  expect(cancelSmartDelaysForWorkspaceMock).toHaveBeenCalledWith(
+    expect.objectContaining({ workspaceId: "workspace-1" }),
+  )
   expect(order).toEqual([
     "broadcast",
     "tx-done",
@@ -168,9 +171,7 @@ test("freezeWorkspaceRuntime keeps the transaction to broadcasts and drains inde
 })
 
 test("freezeWorkspaceRuntime still cancels smart delays when dispatch cleanup fails", async () => {
-  // Broadcasts/sequences and wait steps are independent runtime sources: a
-  // Redis failure on one must not leave the other armed.
-  cancelPendingDispatchesForWorkspaceMock.mockRejectedValueOnce(
+  removeDispatchesFromScheduleMock.mockRejectedValueOnce(
     new Error("redis down"),
   )
 
@@ -178,27 +179,31 @@ test("freezeWorkspaceRuntime still cancels smart delays when dispatch cleanup fa
     "../src/workspace-lifecycle/service"
   )
 
-  await workspaceLifecycleService.freezeWorkspaceRuntime("workspace-1")
+  await workspaceLifecycleService.freezeWorkspaceRuntime(
+    "workspace-1",
+    Date.now() + 60_000,
+  )
 
   expect(loggerWarnMock).toHaveBeenCalledOnce()
-  expect(cancelSmartDelaysForWorkspaceMock).toHaveBeenCalledWith({
-    workspaceId: "workspace-1",
-  })
+  expect(cancelSmartDelaysForWorkspaceMock).toHaveBeenCalledWith(
+    expect.objectContaining({ workspaceId: "workspace-1" }),
+  )
 })
 
-test("freezeWorkspaceRuntime does not throw when smart-delay cancellation fails", async () => {
-  cancelSmartDelaysForWorkspaceMock.mockRejectedValueOnce(
-    new Error("redis down"),
-  )
+test("freezeWorkspaceRuntime defers when smart-delay cancellation fails", async () => {
+  const error = new Error("redis down")
+  cancelSmartDelaysForWorkspaceMock.mockRejectedValueOnce(error)
 
   const { workspaceLifecycleService } = await import(
     "../src/workspace-lifecycle/service"
   )
 
   await expect(
-    workspaceLifecycleService.freezeWorkspaceRuntime("workspace-1"),
-  ).resolves.toBeUndefined()
-  expect(loggerWarnMock).toHaveBeenCalledOnce()
+    workspaceLifecycleService.freezeWorkspaceRuntime(
+      "workspace-1",
+      Date.now() + 60_000,
+    ),
+  ).rejects.toBe(error)
 })
 
 test("disconnectWorkspaceChannels tears down active native Instagram coexist runs", async () => {

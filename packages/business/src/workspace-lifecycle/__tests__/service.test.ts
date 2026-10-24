@@ -2,77 +2,75 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 import { WorkspacePurgeIncompleteError } from "../../errors"
 
 const {
-  mockDbExecute,
-  mockSelectDistinctLimit,
-  mockTransaction,
-  mockTxDelete,
-  mockDeleteWhere,
-  mockLiftDecompressionLimit,
+  mockConnectionTransition,
+  mockFindByInboxId,
+  mockHasPartitionedWorkspaceRows,
+  mockHasWorkspaceRows,
+  mockListMessageConversationPage,
   mockListWithIntegrationsByWorkspace,
   mockInboxDisconnect,
-  mockFindByInboxId,
-  mockConnectionTransition,
-  mockSql,
+  mockDeleteMessagesAndAttachments,
+  mockDeletePartitionedBatch,
+  mockDeleteWorkspaceRowsBatch,
+  mockTransaction,
 } = vi.hoisted(() => {
-  const sql = Object.assign(
-    vi.fn(() => ({})),
-    {
-      raw: vi.fn((value: string) => value),
-    },
-  )
-
-  const deleteWhere = vi.fn()
-  const txDelete = vi.fn(() => ({ where: deleteWhere }))
-  const selectDistinctLimit = vi.fn()
-
+  const execute = vi.fn()
   return {
-    mockDbExecute: vi.fn(),
-    mockSelectDistinctLimit: selectDistinctLimit,
-    mockTransaction: vi.fn((callback: (tx: unknown) => unknown) =>
-      callback({ delete: txDelete, execute: mockDbExecute }),
-    ),
-    mockTxDelete: txDelete,
-    mockDeleteWhere: deleteWhere,
-    mockLiftDecompressionLimit: vi.fn().mockResolvedValue(undefined),
-    mockListWithIntegrationsByWorkspace: vi.fn(),
-    mockInboxDisconnect: vi.fn().mockResolvedValue(undefined),
-    mockFindByInboxId: vi.fn().mockResolvedValue(undefined),
     mockConnectionTransition: vi.fn(),
-    mockSql: sql,
+    mockDeleteMessagesAndAttachments: vi.fn(),
+    mockDeletePartitionedBatch: vi.fn(),
+    mockDeleteWorkspaceRowsBatch: vi.fn(),
+    mockFindByInboxId: vi.fn(),
+    mockHasPartitionedWorkspaceRows: vi.fn(),
+    mockHasWorkspaceRows: vi.fn(),
+    mockInboxDisconnect: vi.fn().mockResolvedValue(undefined),
+    mockListMessageConversationPage: vi.fn(),
+    mockListWithIntegrationsByWorkspace: vi.fn(),
+    mockTransaction: vi.fn((callback: (tx: unknown) => unknown) =>
+      callback({ execute }),
+    ),
   }
 })
 
-const selectDistinctChain = {
-  from: () => selectDistinctChain,
-  where: () => selectDistinctChain,
-  orderBy: () => selectDistinctChain,
-  limit: mockSelectDistinctLimit,
-}
-
 vi.mock("../../leaderboard/purge", () => ({
-  purgeLeaderboardDataForWorkspace: vi.fn(async () => ({
-    deleted: 0,
-    complete: true,
-  })),
+  purgeLeaderboardDataForWorkspace: vi.fn().mockResolvedValue(0),
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: {
-    execute: mockDbExecute,
-    selectDistinct: () => selectDistinctChain,
-    transaction: mockTransaction,
-  },
-  sql: mockSql,
+  db: { transaction: mockTransaction },
+  sql: Object.assign(
+    vi.fn(() => ({})),
+    { raw: vi.fn(() => "") },
+  ),
   and: vi.fn(),
   eq: vi.fn(),
   inArray: vi.fn(),
-  liftDecompressionLimit: mockLiftDecompressionLimit,
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
   connectionRepository: { findByInboxId: mockFindByInboxId },
+  HEAVY_WORKSPACE_TABLES: ["ErrorLog"],
   LIVE_RUN_STATUSES: [],
+  NO_FK_WORKSPACE_TABLES: [],
+  PARTITIONED_WORKSPACE_TABLES: [
+    {
+      primaryKey: ["broadcastId", "contactId"],
+      selector: "broadcastWorkspace",
+      table: "ContactOnBroadcast",
+    },
+  ],
   PULL_CLAIMABLE_STATUSES: [],
+  WORKSPACE_ANALYTICS_HYPERTABLES: ["AnalyticsContactEvent"],
+  workspacePurgeRepository: {
+    deleteAnalyticsSlice: vi.fn(),
+    deleteMessagesAndAttachments: mockDeleteMessagesAndAttachments,
+    deletePartitionedBatch: mockDeletePartitionedBatch,
+    deleteWorkspaceRowsBatch: mockDeleteWorkspaceRowsBatch,
+    findNextAnalyticsRowAt: vi.fn().mockResolvedValue(null),
+    hasPartitionedWorkspaceRows: mockHasPartitionedWorkspaceRows,
+    hasWorkspaceRows: mockHasWorkspaceRows,
+    listMessageConversationPage: mockListMessageConversationPage,
+  },
 }))
 
 vi.mock("../../connection/state-service", () => ({
@@ -88,96 +86,66 @@ vi.mock("../../inbox/service", () => ({
 
 const { workspaceLifecycleService } = await import("../service")
 
-// Direct workspace tables drain before the final cascade; partitioned tables
-// have their own primary-key batching path.
-const HEAVY_TABLE_COUNT = 21
-const MAX_BATCHES_PER_TABLE = 2000
+const deadlineAt = () => Date.now() + 60_000
 
 describe("workspaceLifecycleService", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockInboxDisconnect.mockResolvedValue(undefined)
-    mockFindByInboxId.mockResolvedValue(undefined)
     mockConnectionTransition.mockResolvedValue(undefined)
-    // Default: no hypertable rows, so purgeWorkspaceHeavyData exercises only the
-    // ctid loop unless a test opts in.
-    mockSelectDistinctLimit.mockResolvedValue([])
-    mockDeleteWhere.mockResolvedValue({ rowCount: 0 })
-    mockLiftDecompressionLimit.mockResolvedValue(undefined)
-    mockDbExecute.mockResolvedValue({ rowCount: 0, rows: [] })
+    mockDeleteMessagesAndAttachments.mockResolvedValue(0)
+    mockDeletePartitionedBatch.mockResolvedValue(0)
+    mockDeleteWorkspaceRowsBatch.mockResolvedValue(0)
+    mockFindByInboxId.mockResolvedValue(undefined)
+    mockHasPartitionedWorkspaceRows.mockResolvedValue(false)
+    mockHasWorkspaceRows.mockResolvedValue(false)
+    mockInboxDisconnect.mockResolvedValue(undefined)
+    mockListMessageConversationPage.mockResolvedValue([])
+    mockListWithIntegrationsByWorkspace.mockResolvedValue([])
   })
 
-  test("purgeWorkspaceHeavyData drains bounded batches before the final cascade", async () => {
-    mockDbExecute.mockResolvedValue({ rowCount: 1, rows: [] })
-
-    const result = await workspaceLifecycleService.purgeWorkspaceHeavyData({
-      workspaceId: "workspace-1",
-      batchSize: 2,
-    })
-
-    expect(result).toBeGreaterThan(0)
-    expect(mockTransaction).toHaveBeenCalled()
-  })
-
-  test("purgeWorkspaceHeavyData caps every table's batch loop", async () => {
-    vi.spyOn(globalThis, "setTimeout").mockImplementation((callback) => {
-      callback()
-      return 0 as unknown as ReturnType<typeof setTimeout>
-    })
-    mockDbExecute.mockResolvedValue({ rowCount: 1, rows: [] })
-
-    const result = await workspaceLifecycleService.purgeWorkspaceHeavyData({
-      workspaceId: "workspace-1",
-      batchSize: 1,
-    })
-
-    expect(result).toBeGreaterThanOrEqual(
-      HEAVY_TABLE_COUNT * MAX_BATCHES_PER_TABLE,
-    )
-    vi.restoreAllMocks()
-  })
-
-  test("signals an incomplete drain when a capped table still has rows", async () => {
-    vi.spyOn(globalThis, "setTimeout").mockImplementation((callback) => {
-      callback()
-      return 0 as unknown as ReturnType<typeof setTimeout>
-    })
-    mockDbExecute.mockResolvedValue({ rowCount: 1, rows: [{}] })
+  test("drains each registered direct workspace table once when batches are short", async () => {
+    mockDeleteWorkspaceRowsBatch.mockResolvedValue(1)
 
     await expect(
       workspaceLifecycleService.purgeWorkspaceHeavyData({
+        batchSize: 2,
+        deadlineAt: deadlineAt(),
         workspaceId: "workspace-1",
-        batchSize: 1,
+      }),
+    ).resolves.toBe(1)
+
+    expect(mockDeletePartitionedBatch).toHaveBeenCalledOnce()
+    expect(mockDeleteWorkspaceRowsBatch).toHaveBeenCalledOnce()
+  })
+
+  test("defers a partitioned table when a SKIP LOCKED drain leaves rows behind", async () => {
+    mockHasPartitionedWorkspaceRows.mockResolvedValue(true)
+
+    await expect(
+      workspaceLifecycleService.purgeWorkspaceHeavyData({
+        batchSize: 2,
+        deadlineAt: deadlineAt(),
+        workspaceId: "workspace-1",
       }),
     ).rejects.toBeInstanceOf(WorkspacePurgeIncompleteError)
-
-    vi.restoreAllMocks()
   })
 
-  test("purgeWorkspaceHeavyData lifts the decompression limit for hypertable pages", async () => {
-    vi.spyOn(globalThis, "setTimeout").mockImplementation((callback) => {
-      callback()
-      return 0 as unknown as ReturnType<typeof setTimeout>
-    })
-    mockDbExecute.mockResolvedValue({ rowCount: 0, rows: [] })
-    mockSelectDistinctLimit
-      .mockResolvedValueOnce([
-        { conversationId: "conv-1" },
-        { conversationId: "conv-2" },
-      ])
+  test("counts rows deleted from a message hypertable page", async () => {
+    mockListMessageConversationPage
+      .mockResolvedValueOnce(["conversation-1"])
       .mockResolvedValue([])
-    mockDeleteWhere.mockResolvedValue({ rowCount: 3 })
+    mockDeleteMessagesAndAttachments.mockResolvedValue(3)
 
-    await workspaceLifecycleService.purgeWorkspaceHeavyData({
-      workspaceId: "workspace-1",
-      batchSize: 5000,
-    })
+    await expect(
+      workspaceLifecycleService.purgeWorkspaceHeavyData({
+        batchSize: 2,
+        deadlineAt: deadlineAt(),
+        workspaceId: "workspace-1",
+      }),
+    ).resolves.toBe(3)
 
-    expect(mockLiftDecompressionLimit).toHaveBeenCalled()
-    expect(mockTxDelete).toHaveBeenCalledTimes(2)
-    vi.restoreAllMocks()
+    expect(mockDeleteMessagesAndAttachments).toHaveBeenCalledOnce()
   })
-
   test("disconnectWorkspaceChannels disconnects provider auth and marks the inbox disconnected", async () => {
     const disconnect = vi.fn().mockResolvedValue(undefined)
     mockListWithIntegrationsByWorkspace.mockResolvedValue([

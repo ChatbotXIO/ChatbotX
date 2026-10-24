@@ -4,6 +4,7 @@ import {
 } from "@chatbotx.io/database/repositories"
 import { leaderboardStore } from "@chatbotx.io/redis"
 import { logger } from "../logger"
+import { drainInBatches } from "../workspace-lifecycle/purge-batch"
 
 /**
  * Workspace hard-delete: participants/audit rows cascade with the Leaderboard
@@ -17,12 +18,10 @@ export async function purgeLeaderboardDataForWorkspace(
   options: {
     batchSize?: number
     deadlineAt?: number
-    deleteBatch?: () => Promise<number>
     maxBatches?: number
   } = {},
-): Promise<{ deleted: number; complete: boolean }> {
+): Promise<number> {
   const batchSize = options.batchSize ?? 5000
-  const maxBatches = options.maxBatches ?? 2000
   const live = await leaderboardRepository.findLiveForWorkspace(workspaceId)
   for (const leaderboard of live) {
     await leaderboardStore.drop(leaderboard.id).catch((err) => {
@@ -32,23 +31,20 @@ export async function purgeLeaderboardDataForWorkspace(
       )
     })
   }
-  let deleted = 0
-  for (let batch = 0; batch < maxBatches; batch++) {
-    if (options.deadlineAt && Date.now() >= options.deadlineAt) {
-      return { deleted, complete: false }
-    }
-    const count = await (
-      options.deleteBatch ??
-      (async () =>
-        await leaderboardScoreEventRepository.deleteBatchByWorkspace({
-          workspaceId,
-          limit: batchSize,
-        }))
-    )()
-    deleted += count
-    if (count < batchSize) {
-      return { deleted, complete: true }
-    }
-  }
-  return { deleted, complete: false }
+
+  return await drainInBatches({
+    batchSize,
+    deadlineAt: options.deadlineAt ?? Number.MAX_SAFE_INTEGER,
+    maxBatches: options.maxBatches ?? 2000,
+    runBatch: async (tx) => {
+      const count =
+        await leaderboardScoreEventRepository.deleteBatchByWorkspace(
+          { limit: batchSize, workspaceId },
+          tx,
+        )
+      return { count, value: undefined }
+    },
+    table: "LeaderboardScoreEvent",
+    workspaceId,
+  })
 }

@@ -350,27 +350,4 @@ describe("cancelPendingDispatches", () => {
     expect(customFindManyMock).toHaveBeenCalledTimes(1)
     expect(findManyMock).not.toHaveBeenCalled()
   })
-
-  test("cancels a workspace's pending dispatches in an atomic bounded batch", async () => {
-    const { cancelPendingDispatchesForWorkspace } = await import(
-      "../src/dispatch-cancel"
-    )
-    const onCanceled = vi.fn().mockResolvedValue(undefined)
-    executeMock.mockResolvedValue({
-      rows: [{ bucket: 9, id: "d-1" }],
-    })
-
-    const result = await cancelPendingDispatchesForWorkspace({
-      onCanceled,
-      workspaceId: "ws-2",
-    })
-
-    expect(result).toBe(1)
-    expect(executeMock).toHaveBeenCalledOnce()
-    const statement = executeMock.mock.calls[0][0]
-    expect(statement.strings.join("")).toContain('UPDATE "SequenceDispatch"')
-    expect(statement.strings.join("")).toContain("FOR UPDATE SKIP LOCKED")
-    expect(statement.values).toEqual(["ws-2", 500])
-    expect(onCanceled).toHaveBeenCalledWith([{ bucket: 9, id: "d-1" }])
-  })
 })

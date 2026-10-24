@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   index,
   integer,
@@ -73,5 +74,14 @@ export const analyticsEmailTopicModel = pgTable(
       table.workspaceId.asc().nullsLast(),
       table.topicId.asc().nullsLast(),
     ),
+    index("AnalyticsEmailTopic_contactId_idx")
+      .on(table.contactId)
+      .where(sql`${table.contactId} IS NOT NULL`),
+    index("AnalyticsEmailTopic_conversationId_idx")
+      .on(table.conversationId)
+      .where(sql`${table.conversationId} IS NOT NULL`),
+    index("AnalyticsEmailTopic_contactInboxId_idx")
+      .on(table.contactInboxId)
+      .where(sql`${table.contactInboxId} IS NOT NULL`),
   ],
 )

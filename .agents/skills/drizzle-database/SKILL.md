@@ -55,7 +55,7 @@ export const myModel = pgTable(
 - `bigintAsString()` custom type: stores `bigint` in DB, exposes as `string` in app
 - FK pattern: `.references(() => otherModel.id, { onDelete, onUpdate })`
 - Index naming: `TableName_columnName_idx` or `TableName_column_key` for unique
-- Every FK column must lead an index so RI cascade lookups do not scan child tables.
+- Every FK column must lead an index so RI cascade lookups do not scan child tables. `pnpm --filter @chatbotx.io/database test` runs `workspace-purge-coverage.test.ts`, which rejects any newly unindexed FK.
 - A new table with `workspaceId` requires the `workspace-purge` skill. Partitioned-table indexes use the per-partition recipe in `20260924105732_add_contact_inbox_fk_indexes`.
 
 ### Enums

@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm"
 import {
   boolean,
   doublePrecision,
+  index,
   integer,
   jsonb,
   pgTable,
@@ -10,24 +11,28 @@ import {
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { workspaceModel } from "./workspace"
 
-export const aiAgentModel = pgTable("AIAgent", {
-  ...sharedColumns,
-  workspaceId: bigintAsString()
-    .notNull()
-    .references(() => workspaceModel.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
-  name: text().notNull(),
-  prompt: text(),
-  actionPrompt: text(),
-  actionRules: jsonb().array().notNull().default(sql`ARRAY[]::jsonb[]`),
-  messages: jsonb().array().notNull().default(sql`[]`),
-  isDefault: boolean().default(false).notNull(),
-  isRichResponse: boolean().default(false).notNull(),
-  tools: text().array().notNull().default(sql`[]`),
-  webSearchAuthorizedDomains: text().array().notNull().default(sql`[]`),
-  models: jsonb().array().notNull().default(sql`[]`),
-  temperature: doublePrecision().notNull(),
-  maxOutputTokens: integer().notNull(),
-})
+export const aiAgentModel = pgTable(
+  "AIAgent",
+  {
+    ...sharedColumns,
+    workspaceId: bigintAsString()
+      .notNull()
+      .references(() => workspaceModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    name: text().notNull(),
+    prompt: text(),
+    actionPrompt: text(),
+    actionRules: jsonb().array().notNull().default(sql`ARRAY[]::jsonb[]`),
+    messages: jsonb().array().notNull().default(sql`[]`),
+    isDefault: boolean().default(false).notNull(),
+    isRichResponse: boolean().default(false).notNull(),
+    tools: text().array().notNull().default(sql`[]`),
+    webSearchAuthorizedDomains: text().array().notNull().default(sql`[]`),
+    models: jsonb().array().notNull().default(sql`[]`),
+    temperature: doublePrecision().notNull(),
+    maxOutputTokens: integer().notNull(),
+  },
+  (table) => [index("AIAgent_workspaceId_idx").on(table.workspaceId)],
+)

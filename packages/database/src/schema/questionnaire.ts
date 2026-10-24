@@ -197,6 +197,13 @@ export const questionnaireSubmissionModel = pgTable(
       table.questionnaireId.asc().nullsLast(),
       table.contactId.asc().nullsLast(),
     ),
+    index("QuestionnaireSubmission_contactId_idx").on(table.contactId),
+    index("QuestionnaireSubmission_conversationId_idx")
+      .on(table.conversationId)
+      .where(sql`${table.conversationId} IS NOT NULL`),
+    index("QuestionnaireSubmission_currentQuestionId_idx")
+      .on(table.currentQuestionId)
+      .where(sql`${table.currentQuestionId} IS NOT NULL`),
     uniqueIndex("QuestionnaireSubmission_workspaceId_contactId_active_key")
       .on(table.workspaceId, table.contactId)
       .where(sql`${table.status} = 'inProgress'`),

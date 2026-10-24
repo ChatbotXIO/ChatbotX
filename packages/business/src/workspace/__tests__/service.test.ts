@@ -67,7 +67,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   inArray: vi.fn(),
   and: vi.fn(),
   isNull: vi.fn(),
-  sql: vi.fn(),
+  sql: Object.assign(vi.fn(), { raw: vi.fn(() => "") }),
 }))
 
 vi.mock("@chatbotx.io/database/partials", async (importOriginal) => {
@@ -129,13 +129,6 @@ vi.mock("../../user-quota/service", () => ({
 }))
 
 vi.mock("../../workspace-lifecycle/service", () => ({
-  withPurgeTimeouts: vi.fn(
-    async ({
-      fn,
-    }: {
-      fn: (tx: { delete: typeof mocks.workspaceDelete }) => Promise<unknown>
-    }) => await fn({ delete: mocks.workspaceDelete }),
-  ),
   workspaceLifecycleService: {
     freezeWorkspaceRuntime: vi.fn(async () => undefined),
     disconnectWorkspaceIntegrations: vi.fn(async () => undefined),
@@ -145,6 +138,16 @@ vi.mock("../../workspace-lifecycle/service", () => ({
     })),
     purgeWorkspaceHeavyData: mocks.purgeWorkspaceHeavyData,
   },
+}))
+
+vi.mock("../../workspace-lifecycle/purge-batch", () => ({
+  withPurgeTimeouts: vi.fn(
+    async ({
+      fn,
+    }: {
+      fn: (tx: { delete: typeof mocks.workspaceDelete }) => Promise<unknown>
+    }) => await fn({ delete: mocks.workspaceDelete }),
+  ),
 }))
 
 vi.mock("../../connection/state-service", () => ({

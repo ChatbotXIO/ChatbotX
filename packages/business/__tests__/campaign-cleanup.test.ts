@@ -5,6 +5,7 @@ const updateWhereMock = vi.fn()
 const updateSetMock = vi.fn()
 const updateMock = vi.fn()
 const executeMock = vi.fn()
+const completeActiveEnrollmentBatchMock = vi.fn()
 
 vi.mock("@chatbotx.io/database/client", () => ({
   and: (...conditions: unknown[]) => ({ __and: conditions }),
@@ -49,6 +50,12 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   },
 }))
 
+vi.mock("@chatbotx.io/database/repositories/sequence", () => ({
+  sequenceRepository: {
+    completeActiveEnrollmentBatch: completeActiveEnrollmentBatchMock,
+  },
+}))
+
 beforeEach(() => {
   vi.clearAllMocks()
   updateReturningMock.mockResolvedValue([{ id: "row-1" }])
@@ -56,6 +63,7 @@ beforeEach(() => {
   updateSetMock.mockReturnValue({ where: updateWhereMock })
   updateMock.mockReturnValue({ set: updateSetMock })
   executeMock.mockResolvedValue({ rowCount: 1 })
+  completeActiveEnrollmentBatchMock.mockResolvedValue(1)
 })
 
 test("cancelInFlightBroadcastsForWorkspace cancels scheduled, sending and recurring broadcasts only, stopping their series first", async () => {
@@ -102,20 +110,21 @@ test("cancelInFlightBroadcastsForWorkspace cancels scheduled, sending and recurr
   )
 })
 
-test("completeActiveSequenceEnrollmentsForWorkspace atomically claims one bounded active batch", async () => {
-  const { completeActiveSequenceEnrollmentsForWorkspace } = await import(
+test("completeActiveSequenceEnrollmentBatch delegates one bounded batch to the repository", async () => {
+  const { completeActiveSequenceEnrollmentBatch } = await import(
     "../src/workspace-lifecycle/campaign-cleanup"
   )
+  const tx = {} as never
 
-  const completedCount = await completeActiveSequenceEnrollmentsForWorkspace({
-    workspaceId: "workspace-1",
-  })
+  await expect(
+    completeActiveSequenceEnrollmentBatch({
+      tx,
+      workspaceId: "workspace-1",
+    }),
+  ).resolves.toBe(1)
 
-  expect(completedCount).toBe(1)
-  expect(executeMock).toHaveBeenCalledOnce()
-  const statement = executeMock.mock.calls[0][0]
-  expect(statement.strings.join("")).toContain('UPDATE "ContactOnSequence"')
-  expect(statement.strings.join("")).toContain("FOR UPDATE SKIP LOCKED")
-  expect(statement.strings.join("")).toContain("LIMIT ")
-  expect(statement.values).toEqual(["workspace-1", 500])
+  expect(completeActiveEnrollmentBatchMock).toHaveBeenCalledWith(
+    { limit: 500, workspaceId: "workspace-1" },
+    tx,
+  )
 })
