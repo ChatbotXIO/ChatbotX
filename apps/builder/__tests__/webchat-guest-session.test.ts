@@ -31,6 +31,9 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   return { ...actual, createId: vi.fn(() => "generated-id") }
 })
 
+const { kyGet } = vi.hoisted(() => ({ kyGet: vi.fn() }))
+vi.mock("ky", () => ({ default: { get: kyGet } }))
+
 const createLocalStorageMock = (initial: Record<string, string> = {}) => {
   const items = new Map(Object.entries(initial))
 
@@ -52,6 +55,17 @@ const createWebchatConfig = (
     persistentMenus: [],
     ...overrides,
   }) as IntegrationWebchatModel
+
+const makeWebchatMessage = (id: string, clientId = "client-a") =>
+  ({
+    id,
+    clientId,
+    conversationId: "conversation-1",
+    workspaceId: "workspace-1",
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    updatedAt: new Date("2026-01-01T00:00:00Z"),
+    text: "message",
+  }) as never
 
 const GUEST_ID_UUID_PATTERN =
   /^workspace-1:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -188,6 +202,62 @@ describe("webchat guest session store", () => {
         buildGuestStorageKey("workspace-1", "webchat-2"),
       ),
     ).toBe(true)
+  })
+
+  test("reconciles an optimistic message with its server echo by client id", () => {
+    const store = createGuestSessionStore(createWebchatConfig())
+
+    store.getState().sendMessage("hi", "client-a")
+    store.getState().handleNewMessage(makeWebchatMessage("message-1"))
+
+    expect(store.getState().messages.map((message) => message.id)).toEqual([
+      "message-1",
+    ])
+  })
+
+  test("keeps distinct server echoes that share a client id", () => {
+    const store = createGuestSessionStore(createWebchatConfig())
+
+    store.getState().sendMessage("hi", "client-a")
+    store.getState().handleNewMessage(makeWebchatMessage("message-1"))
+    store.getState().handleNewMessage(makeWebchatMessage("message-2"))
+
+    expect(store.getState().messages.map((message) => message.id)).toEqual([
+      "message-1",
+      "message-2",
+    ])
+  })
+
+  test("ignores duplicate realtime message ids", () => {
+    const store = createGuestSessionStore(createWebchatConfig())
+
+    store.getState().handleNewMessage(makeWebchatMessage("message-1"))
+    store.getState().handleNewMessage(makeWebchatMessage("message-1"))
+
+    expect(store.getState().messages.map((message) => message.id)).toEqual([
+      "message-1",
+    ])
+  })
+
+  test("preserves realtime messages received while loading earlier messages", async () => {
+    const store = createGuestSessionStore(createWebchatConfig())
+    const deferredPage = Promise.withResolvers<{
+      data: never[]
+      nextCursor: null
+    }>()
+    kyGet.mockReturnValueOnce({ json: () => deferredPage.promise })
+    const olderMessage = makeWebchatMessage("message-older")
+    const realtimeMessage = makeWebchatMessage("message-realtime")
+
+    const loadMore = store.getState().loadMoreMessages("guest-1", 20)
+    store.getState().handleNewMessage(realtimeMessage)
+    deferredPage.resolve({ data: [olderMessage], nextCursor: null })
+    await loadMore
+
+    expect(store.getState().messages.map((message) => message.id)).toEqual([
+      "message-older",
+      "message-realtime",
+    ])
   })
 })
 

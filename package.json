@@ -9,6 +9,7 @@
     "sync:agent-instructions": "node scripts/sync-agent-instructions.mjs --write",
     "check:agent-instructions": "node scripts/sync-agent-instructions.mjs --check && node scripts/check-skills.mjs",
     "test": "turbo run test",
+    "test:affected": "turbo run test --affected",
     "test:watch": "vitest",
     "test:coverage": "turbo run test -- --coverage",
     "clean": "pnpm store prune && pnpm dlx rimraf --glob '**/{node_modules,.next,.turbo}'",

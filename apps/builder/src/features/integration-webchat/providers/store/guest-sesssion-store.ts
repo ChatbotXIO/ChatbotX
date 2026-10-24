@@ -53,7 +53,7 @@ export type GuestSessionActions = {
     perPage: number,
   ) => Promise<void>
   handleNewMessage: (message: MessageResource) => void
-  sendMessage: (content: string) => void
+  sendMessage: (content: string, clientId: string) => void
   sendPostback: (button: MessageButtonTemplate) => Promise<void>
   setIsTyping: (isTyping: boolean) => void
 
@@ -120,7 +120,6 @@ export const createGuestSessionStore = (
         isLoadMoreMessage,
         hasNextMessagePage,
         nextCursorMessage,
-        messages,
         config,
         accessToken,
       } = get()
@@ -155,11 +154,20 @@ export const createGuestSessionStore = (
           )
           .json()
 
-        set({
-          messages: [...data.reverse(), ...messages],
-          nextCursorMessage: nextCursor,
-          hasNextMessagePage: Boolean(nextCursor),
-          isLoadMoreMessage: false,
+        set((state) => {
+          const existingMessageIds = new Set(
+            state.messages.map((message) => message.id),
+          )
+          const olderMessages = [...data]
+            .reverse()
+            .filter((message) => !existingMessageIds.has(message.id))
+
+          return {
+            hasNextMessagePage: Boolean(nextCursor),
+            isLoadMoreMessage: false,
+            messages: [...olderMessages, ...state.messages],
+            nextCursorMessage: nextCursor,
+          }
         })
       } catch (error) {
         set({ isLoadMoreMessage: false })
@@ -169,33 +177,36 @@ export const createGuestSessionStore = (
     },
 
     handleNewMessage: (message: MessageResource) => {
-      const { messages, appendMessage } = get()
-
-      // If the message contains the clientId, it can be sent from this tab itself.
-      if (message.clientId) {
-        const messageIndex = messages.findIndex(
-          (m) => m.clientId === message.clientId,
-        )
-
-        if (messageIndex > -1) {
-          // Replace the existing message with the updated one
-          set({
-            messages: messages.map((m, idx) =>
-              idx === messageIndex ? { ...m, ...message } : m,
-            ),
-          })
-          return
+      set((state) => {
+        if (state.messages.some((current) => current.id === message.id)) {
+          return state
         }
-      }
 
-      // Append the message to the end of messages list
-      appendMessage(message)
+        const optimisticMessageIndex = message.clientId
+          ? state.messages.findIndex(
+              (current) =>
+                current.clientId === message.clientId &&
+                current.conversationId === "",
+            )
+          : -1
+        if (optimisticMessageIndex === -1) {
+          return { messages: [...state.messages, message] }
+        }
+
+        return {
+          messages: state.messages.map((current, index) =>
+            index === optimisticMessageIndex
+              ? { ...current, ...message }
+              : current,
+          ),
+        }
+      })
     },
 
-    sendMessage: (text: string) => {
+    sendMessage: (text: string, clientId: string) => {
       const { appendMessage } = get()
 
-      appendMessage({ text })
+      appendMessage({ clientId, text })
     },
 
     sendPostback: async (button: MessageButtonTemplate) => {

@@ -1459,7 +1459,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
               messageIndexByClientId = new Map()
               for (const [index, currentMessage] of messages.entries()) {
                 messageIndexById.set(currentMessage.id, index)
-                if (currentMessage.clientId) {
+                if (
+                  currentMessage.clientId &&
+                  currentMessage.contactInboxId === ""
+                ) {
                   messageIndexByClientId.set(currentMessage.clientId, index)
                 }
               }
@@ -1477,6 +1480,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
               }
               messageIndexById.delete(currentMessage.id)
               messageIndexById.set(message.id, matchingClientMessageIndex)
+              messageIndexByClientId.delete(message.clientId ?? "")
               continue
             }
             if (messageIndexById.has(message.id)) {
@@ -1494,7 +1498,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             for (let index = targetIndex; index < messages.length; index += 1) {
               const currentMessage = messages[index]
               messageIndexById.set(currentMessage.id, index)
-              if (currentMessage.clientId) {
+              if (
+                currentMessage.clientId &&
+                currentMessage.contactInboxId === ""
+              ) {
                 messageIndexByClientId.set(currentMessage.clientId, index)
               }
             }

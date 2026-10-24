@@ -39,7 +39,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const defaultValues = useMemo(
     () => ({
-      content: "",
+      text: "",
       files: [],
       workspaceId,
       webchatId,
@@ -61,35 +61,12 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
 
   const {
     form,
-    handleSubmitWithAction,
-    resetFormAndAction,
+    action,
     form: { control, setValue, reset },
   } = useHookFormAction(
     createWebchatMessageAction,
     zodResolver(createWebchatMessageRequest),
     {
-      actionProps: {
-        onExecute: ({ input }) => {
-          // try to push raw message to store
-          if ("text" in input && input.text) {
-            sendMessage(input.text)
-          }
-
-          setValue("text", "")
-          textareaRef.current?.focus()
-        },
-        onSuccess: ({ data }) => {
-          if (data?.attachments?.length) {
-            appendMessage(data)
-          }
-
-          textareaRef.current?.focus()
-          resetFormAndAction()
-
-          reset(defaultValues)
-          setValue("clientId", createId())
-        },
-      },
       formProps: {
         defaultValues: {
           ...defaultValues,
@@ -141,6 +118,29 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
     }
   }
 
+  const submitMessage = async () => {
+    const values = {
+      ...form.getValues(),
+      clientId: createId(),
+    }
+    const parsed = createWebchatMessageRequest.safeParse(values)
+    if (!parsed.success) {
+      await form.trigger()
+      return
+    }
+
+    if ("text" in parsed.data && parsed.data.text) {
+      sendMessage(parsed.data.text, parsed.data.clientId ?? createId())
+    }
+    reset(defaultValues)
+    textareaRef.current?.focus()
+
+    const result = await action.executeAsync(parsed.data)
+    if (result?.data?.attachments?.length) {
+      appendMessage(result.data)
+    }
+  }
+
   const onKeyDown = async (e: KeyboardEvent) => {
     if (files.length > 0 || e.nativeEvent.isComposing || e.key === "Process") {
       return
@@ -148,8 +148,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
 
     if (e.key === "Enter" && e.shiftKey === false) {
       e.preventDefault()
-
-      await handleSubmitWithAction()
+      await submitMessage()
     }
   }
 
@@ -158,7 +157,10 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
       <Form {...form}>
         <form
           className="flex w-full flex-col"
-          onSubmit={handleSubmitWithAction}
+          onSubmit={async (event) => {
+            event.preventDefault()
+            await submitMessage()
+          }}
         >
           {files.length === 0 && (
             <div className="mb-1 w-full px-2.5 py-1">

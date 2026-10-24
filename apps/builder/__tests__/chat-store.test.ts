@@ -1047,6 +1047,74 @@ describe("chat store conversation updates", () => {
     expect(mockFindConversationAuthenticatedAPI).not.toHaveBeenCalled()
   })
 
+  test("keeps distinct server messages when rapid sends share an optimistic client id", () => {
+    const store = createChatStore()
+    const conversation = makeConversation(
+      "conv-1",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const optimistic = {
+      ...makeMessage("conv-1", new Date("2026-01-02T00:00:00Z"), "optimistic"),
+      clientId: "client-a",
+      contactInboxId: "",
+    }
+    const serverMessages = ["message-1", "message-2", "message-3"].map(
+      (id, index) => ({
+        ...makeMessage("conv-1", new Date(`2026-01-02T00:00:0${index}Z`), id),
+        clientId: "client-a",
+        contactInboxId: "inbox-1",
+      }),
+    )
+    store.setState({
+      conversations: [conversation] as never,
+      activeConversationId: "conv-1",
+      messages: [optimistic] as never,
+    })
+
+    store.getState().handleNewMessages(serverMessages as never)
+
+    expect(store.getState().messages.map((message) => message.id)).toEqual([
+      "message-1",
+      "message-2",
+      "message-3",
+    ])
+  })
+
+  test("keeps distinct server messages when repeated client ids arrive in separate batches", () => {
+    const store = createChatStore()
+    const conversation = makeConversation(
+      "conv-1",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const optimistic = {
+      ...makeMessage("conv-1", new Date("2026-01-02T00:00:00Z"), "optimistic"),
+      clientId: "client-a",
+      contactInboxId: "",
+    }
+    const serverMessages = ["message-1", "message-2", "message-3"].map(
+      (id, index) => ({
+        ...makeMessage("conv-1", new Date(`2026-01-02T00:00:0${index}Z`), id),
+        clientId: "client-a",
+        contactInboxId: "inbox-1",
+      }),
+    )
+    store.setState({
+      conversations: [conversation] as never,
+      activeConversationId: "conv-1",
+      messages: [optimistic] as never,
+    })
+
+    for (const message of serverMessages) {
+      store.getState().handleNewMessages([message] as never)
+    }
+
+    expect(store.getState().messages.map((message) => message.id)).toEqual([
+      "message-1",
+      "message-2",
+      "message-3",
+    ])
+  })
+
   test("updates an active thread before its conversation reaches the sidebar", () => {
     const store = createChatStore()
     const message = makeMessage(
