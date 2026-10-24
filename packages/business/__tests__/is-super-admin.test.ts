@@ -34,12 +34,7 @@ describe("isSuperAdmin", () => {
     ).resolves.toBe(true)
   })
 
-  test.each([
-    "read-only",
-    undefined,
-  ])("rejects the persisted %s administrator role", async (role) => {
-    mocks.findForAuth.mockResolvedValue(role ? { role } : undefined)
-
+  test("rejects users without a persisted administrator role", async () => {
     await expect(
       isSuperAdmin({ id: "user-1", email: "admin@example.com" }),
     ).resolves.toBe(false)

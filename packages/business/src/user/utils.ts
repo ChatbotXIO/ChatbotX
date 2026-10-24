@@ -14,7 +14,7 @@ export const isPlatformAdmin = async (
 }
 
 /**
- * The real SaaS operator (super admin) is identified by a persisted
+ * The real SaaS operator (super admin) is identified by an uncached persisted
  * PlatformAdmin row. PLATFORM_ADMIN_EMAIL provisions the matching root-tenant
  * user at startup or matching root-user creation.
  */

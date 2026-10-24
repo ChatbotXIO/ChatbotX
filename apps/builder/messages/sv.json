@@ -5309,8 +5309,7 @@
       "bootstrap": "Environment bootstrap administrator",
       "roles": {
         "superAdmin": "Super admin",
-        "support": "Support",
-        "readOnly": "Read only"
+        "support": "Support"
       },
       "remove": "Remove administrator",
       "empty": "No platform administrators are configured.",

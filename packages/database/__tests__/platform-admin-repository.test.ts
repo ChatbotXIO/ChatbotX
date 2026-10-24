@@ -3,53 +3,28 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { platformAdminRepository } from "../src/repositories/platform-admin/repository"
 
-const mocks = vi.hoisted(() => {
-  const cache = new Map<string, unknown>()
-  return {
-    cache,
-    delete: vi.fn(),
-    eq: vi.fn(),
-    findFirst: vi.fn(),
-    findIdByEmail: vi.fn(),
-    insert: vi.fn(),
-    invalidateCacheKeys: vi.fn(),
-    update: vi.fn(),
-    withCache: vi.fn(
-      async (key: string, loader: () => Promise<unknown>): Promise<unknown> => {
-        const cached = cache.get(key)
-        if (cached !== undefined) {
-          return cached
-        }
-
-        const value = await loader()
-        if (value !== null && value !== undefined) {
-          cache.set(key, value)
-        }
-        return value
-      },
-    ),
-  }
-})
+const mocks = vi.hoisted(() => ({
+  delete: vi.fn(),
+  eq: vi.fn(),
+  findFirst: vi.fn(),
+  findIdByEmail: vi.fn(),
+  insert: vi.fn(),
+  ne: vi.fn((...args: unknown[]) => ({ ne: args })),
+}))
 
 vi.mock("../src/client", () => ({
   db: {
     delete: mocks.delete,
     insert: mocks.insert,
-    update: mocks.update,
     query: {
       platformAdminModel: {
         findFirst: mocks.findFirst,
       },
     },
   },
-  and: vi.fn(),
   desc: vi.fn(),
   eq: mocks.eq,
-  ne: vi.fn(),
-}))
-vi.mock("@chatbotx.io/redis", () => ({
-  invalidateCacheKeys: mocks.invalidateCacheKeys,
-  withCache: mocks.withCache,
+  ne: mocks.ne,
 }))
 vi.mock("../src/partials", () => ({ ROOT_TENANT_ID: "1" }))
 vi.mock("../src/repositories/user", () => ({
@@ -60,40 +35,22 @@ vi.mock("../src/schema", () => ({
   userModel: {},
 }))
 
-const createInsertChain = (createdRows: { id: string }[]) => {
-  const returning = vi.fn().mockResolvedValue(createdRows)
-  const onConflictDoNothing = vi.fn().mockReturnValue({ returning })
-  const values = vi.fn().mockReturnValue({ onConflictDoNothing })
-
-  return { onConflictDoNothing, values }
-}
-
-const createUpsertChain = (createdRows: { id: string }[]) => {
-  const returning = vi.fn().mockResolvedValue(createdRows)
+const createUpsertChain = (returnedRows: { id: string }[]) => {
+  const returning = vi.fn().mockResolvedValue(returnedRows)
   const onConflictDoUpdate = vi.fn().mockReturnValue({ returning })
   const values = vi.fn().mockReturnValue({ onConflictDoUpdate })
 
   return { onConflictDoUpdate, values }
 }
 
-const createUpdateChain = (updatedRows: { id: string }[]) => {
-  const returning = vi.fn().mockResolvedValue(updatedRows)
-  const where = vi.fn().mockReturnValue({ returning })
-  const set = vi.fn().mockReturnValue({ where })
-
-  return { set, where }
-}
-
 describe("platformAdminRepository.bootstrapRootAdmin", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.cache.clear()
-    mocks.update.mockReturnValue(createUpdateChain([]))
   })
 
-  test("creates the configured root administrator when no row exists", async () => {
+  test("returns true when it creates the configured root administrator", async () => {
     mocks.findIdByEmail.mockResolvedValue({ id: "root-user" })
-    const chain = createInsertChain([{ id: "admin-1" }])
+    const chain = createUpsertChain([{ id: "admin-1" }])
     mocks.insert.mockReturnValue(chain)
 
     await expect(
@@ -106,41 +63,33 @@ describe("platformAdminRepository.bootstrapRootAdmin", () => {
       role: "super-admin",
       userId: "root-user",
     })
-    expect(chain.onConflictDoNothing).toHaveBeenCalledWith({
+    expect(chain.onConflictDoUpdate).toHaveBeenCalledWith({
+      set: { role: "super-admin" },
+      setWhere: { ne: ["role", "super-admin"] },
       target: "userId",
     })
-    expect(mocks.invalidateCacheKeys).toHaveBeenCalledWith(
-      "platform-admin:root-user",
-    )
   })
 
-  test("does not report provisioning when the administrator already exists", async () => {
+  test("returns true when the conflict update promotes an administrator", async () => {
     mocks.findIdByEmail.mockResolvedValue({ id: "root-user" })
-    mocks.insert.mockReturnValue(createInsertChain([]))
-
-    await expect(
-      platformAdminRepository.bootstrapRootAdmin({
-        email: "admin@example.com",
-      }),
-    ).resolves.toBe(false)
-  })
-
-  test("promotes an existing administrator to super-admin", async () => {
-    mocks.findIdByEmail.mockResolvedValue({ id: "root-user" })
-    mocks.insert.mockReturnValue(createInsertChain([]))
-    const chain = createUpdateChain([{ id: "admin-1" }])
-    mocks.update.mockReturnValue(chain)
+    mocks.insert.mockReturnValue(createUpsertChain([{ id: "admin-1" }]))
 
     await expect(
       platformAdminRepository.bootstrapRootAdmin({
         email: "admin@example.com",
       }),
     ).resolves.toBe(true)
+  })
 
-    expect(chain.set).toHaveBeenCalledWith({ role: "super-admin" })
-    expect(mocks.invalidateCacheKeys).toHaveBeenCalledWith(
-      "platform-admin:root-user",
-    )
+  test("returns false when the administrator is already super-admin", async () => {
+    mocks.findIdByEmail.mockResolvedValue({ id: "root-user" })
+    mocks.insert.mockReturnValue(createUpsertChain([]))
+
+    await expect(
+      platformAdminRepository.bootstrapRootAdmin({
+        email: "admin@example.com",
+      }),
+    ).resolves.toBe(false)
   })
 
   test("does not insert when the configured email has no root-tenant user", async () => {
@@ -191,26 +140,7 @@ describe("platformAdminRepository.deleteByUserId", () => {
   })
 })
 
-describe("platformAdminRepository.findByUserId", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mocks.cache.clear()
-  })
-
-  test("reuses a cached administrator instead of querying the database", async () => {
-    const admin = { id: "admin-1", userId: "user-1" }
-    mocks.findFirst.mockResolvedValue(admin)
-
-    await expect(platformAdminRepository.findByUserId("user-1")).resolves.toBe(
-      admin,
-    )
-    await expect(platformAdminRepository.findByUserId("user-1")).resolves.toBe(
-      admin,
-    )
-
-    expect(mocks.findFirst).toHaveBeenCalledTimes(1)
-  })
-
+describe("platformAdminRepository.findForAuth", () => {
   test("reads administrator roles fresh for authorization", async () => {
     mocks.findFirst.mockResolvedValue({
       id: "admin-1",

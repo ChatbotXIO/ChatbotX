@@ -35,7 +35,6 @@ import { removePlatformAdminAction } from "./remove-platform-admin.action"
 const platformAdminRoleTranslationKeys = {
   "super-admin": "platformAdmin.admins.roles.superAdmin",
   support: "platformAdmin.admins.roles.support",
-  "read-only": "platformAdmin.admins.roles.readOnly",
 } as const satisfies Record<PlatformAdminRole, string>
 type PlatformAdminsTableProps = {
   page: number

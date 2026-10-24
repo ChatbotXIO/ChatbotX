@@ -2,12 +2,11 @@
 
 This document is for developers touching workspace membership, auth gates, or
 the `/admin` console. A builder platform super admin has an uncached persisted
-`PlatformAdmin` row with `role` of `super-admin` or `support`; `read-only`
-administrators can access the enterprise admin portal but do not get workspace
-support access. `PLATFORM_ADMIN_EMAIL` ensures the matching root-tenant user
-has a `super-admin` row at application startup or matching user creation. If
-the row is removed while the environment variable remains configured, the next
-bootstrap trigger restores it.
+`PlatformAdmin` row with `role` of `super-admin` or `support`. Only
+`super-admin` can add or remove administrators. `PLATFORM_ADMIN_EMAIL` ensures
+the matching root-tenant user has a `super-admin` row at application startup or
+matching user creation. If the row is removed while the environment variable
+remains configured, the next bootstrap trigger restores it.
 
 Owner consent is required by default. A valid enterprise installation can set
 `SUPPORT_ACCESS_REQUIRE_CONSENT=false` to let every platform super admin open

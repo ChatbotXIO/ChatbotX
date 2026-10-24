@@ -12,7 +12,6 @@ const mocks = vi.hoisted(() => ({
     initialPassword: "temp-pass-123456",
   })),
   insertWithCredential: vi.fn(),
-  invalidateByUserId: vi.fn(),
   loggerInfo: vi.fn(),
   resolvePlatformSettings: vi.fn(async () => ({
     accountCredentialsEmailTemplate: null,
@@ -29,7 +28,6 @@ vi.mock("@chatbotx.io/database/repositories", () => ({
   platformAdminRepository: {
     deleteByUserId: mocks.deleteByUserId,
     findForAuth: mocks.findForAuth,
-    invalidateByUserId: mocks.invalidateByUserId,
     upsertRole: mocks.upsertRole,
   },
   userRepository: {
@@ -88,7 +86,6 @@ describe("platformAdminService.add", () => {
       role: "support",
       userId: "user-1",
     })
-    expect(mocks.invalidateByUserId).toHaveBeenCalledWith("user-1")
   })
 
   test("creates the user, mails credentials, then grants admin", async () => {
@@ -264,13 +261,12 @@ describe("platformAdminService.remove", () => {
     expect(mocks.deleteByUserId).not.toHaveBeenCalled()
   })
 
-  test("evicts authorization data after removing an administrator", async () => {
+  test("removes an administrator", async () => {
     await platformAdminService.remove({
       actorId: "actor-1",
       userId: "user-1",
     })
 
     expect(mocks.deleteByUserId).toHaveBeenCalledWith("user-1")
-    expect(mocks.invalidateByUserId).toHaveBeenCalledWith("user-1")
   })
 })

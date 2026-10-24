@@ -1,5 +1,4 @@
 import {
-  isBuilderAdminRole,
   type PlatformAdminRole,
   ROOT_TENANT_ID,
 } from "@chatbotx.io/database/partials"
@@ -18,8 +17,7 @@ export type PlatformAdminList = {
 }
 class PlatformAdminService {
   async isAdmin(userId: string): Promise<boolean> {
-    const admin = await platformAdminRepository.findForAuth(userId)
-    return isBuilderAdminRole(admin?.role)
+    return Boolean(await platformAdminRepository.findForAuth(userId))
   }
   async provisionBootstrapAdmin(user?: {
     email: string
@@ -72,8 +70,6 @@ class PlatformAdminService {
       )
     }
 
-    await platformAdminRepository.invalidateByUserId(provisioned.userId)
-
     logger.info(
       {
         actorId: props.actorId,
@@ -96,7 +92,6 @@ class PlatformAdminService {
     }
     await platformAdminRepository.deleteByUserId(props.userId)
 
-    await platformAdminRepository.invalidateByUserId(props.userId)
     logger.info(
       { actorId: props.actorId, userId: props.userId },
       "removed platform admin",

@@ -1,5 +1,4 @@
-import { invalidateCacheKeys, withCache } from "@chatbotx.io/redis"
-import { and, type DatabaseClient, db, desc, eq, ne, sql } from "../../client"
+import { type DatabaseClient, db, desc, eq, ne, sql } from "../../client"
 import { type PlatformAdminRole, ROOT_TENANT_ID } from "../../partials"
 import { platformAdminModel, userModel } from "../../schema"
 import type { PlatformAdminModel } from "../../types"
@@ -16,29 +15,12 @@ export type PlatformAdminWithUser = PlatformAdminModel & {
   userName: string | null
 }
 
-// Authorization cache entries are short-lived so a failed invalidation can
-// never preserve a revoked administrator role for long.
-const PLATFORM_ADMIN_CACHE_TTL_SECONDS = 60
-
-export const platformAdminCacheKey = (userId: string): string =>
-  `platform-admin:${userId}`
-
 class PlatformAdminRepository {
-  async findByUserId(userId: string): Promise<PlatformAdminModel | undefined> {
-    const cacheKey = platformAdminCacheKey(userId)
-    return await withCache(
-      cacheKey,
-      () => db.query.platformAdminModel.findFirst({ where: { userId } }),
-      { ttl: PLATFORM_ADMIN_CACHE_TTL_SECONDS },
-    )
-  }
-
-  async invalidateByUserId(userId: string): Promise<void> {
-    await invalidateCacheKeys(platformAdminCacheKey(userId))
-  }
-
-  async findForAuth(userId: string): Promise<PlatformAdminModel | undefined> {
-    return await db.query.platformAdminModel.findFirst({ where: { userId } })
+  async findForAuth(
+    userId: string,
+    tx: DatabaseClient = db,
+  ): Promise<PlatformAdminModel | undefined> {
+    return await tx.query.platformAdminModel.findFirst({ where: { userId } })
   }
 
   async bootstrapRootAdmin(props: { email: string }): Promise<boolean> {
@@ -50,30 +32,17 @@ class PlatformAdminRepository {
       return false
     }
 
-    const [created] = await db
+    const [admin] = await db
       .insert(platformAdminModel)
       .values({ role: "super-admin", userId: user.id })
-      .onConflictDoNothing({ target: platformAdminModel.userId })
+      .onConflictDoUpdate({
+        target: platformAdminModel.userId,
+        set: { role: "super-admin" },
+        setWhere: ne(platformAdminModel.role, "super-admin"),
+      })
       .returning({ id: platformAdminModel.id })
-    const [promoted] = created
-      ? []
-      : await db
-          .update(platformAdminModel)
-          .set({ role: "super-admin" })
-          .where(
-            and(
-              eq(platformAdminModel.userId, user.id),
-              ne(platformAdminModel.role, "super-admin"),
-            ),
-          )
-          .returning({ id: platformAdminModel.id })
 
-    if (!(created ?? promoted)) {
-      return false
-    }
-
-    await this.invalidateByUserId(user.id)
-    return true
+    return Boolean(admin)
   }
 
   async listWithUser(input: ListPlatformAdminsInput): Promise<{
