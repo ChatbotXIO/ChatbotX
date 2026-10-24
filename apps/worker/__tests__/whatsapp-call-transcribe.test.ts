@@ -73,7 +73,7 @@ vi.mock("@chatbotx.io/ai/server", () => ({
 }))
 
 vi.mock("ai", () => ({
-  experimental_transcribe: mocks.transcribe,
+  transcribe: mocks.transcribe,
 }))
 
 vi.mock("ky", () => ({

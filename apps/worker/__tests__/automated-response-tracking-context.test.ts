@@ -10,7 +10,7 @@ import { replyByAI } from "../src/integration/handlers/automated-response/replie
 // ---------------------------------------------------------------------------
 // Regression coverage for the shared `trackingContextRef` "send once" guard:
 // the `sendMessage` system tool can be invoked more than once by the model in
-// a single multi-step run (stopWhen: stepCountIs(5)) — tracking must attach
+// a single multi-step run (stopWhen: isStepCount(5)) — tracking must attach
 // to at most one of those sends, not one per invocation.
 // ---------------------------------------------------------------------------
 
@@ -31,7 +31,12 @@ const capturedContext = vi.hoisted(() => ({
 
 vi.mock("@chatbotx.io/ai", () => ({
   aiProviders: { openai: "openai" },
-  aiTimeouts: { aiTotal: 30_000, aiStep: 10_000, aiChunk: 5000 },
+  aiTimeouts: {
+    aiTotal: 30_000,
+    aiStep: 10_000,
+    aiFirstChunk: 5000,
+    aiChunk: 5000,
+  },
   helpTexts: {
     richResponseFormat: "",
     unavailable: "Sorry, I cannot help right now.",
@@ -93,7 +98,7 @@ vi.mock("ai", () => ({
     textStream: emptyAsyncIterable(),
     usage: Promise.resolve({ totalTokens: 0 }),
   })),
-  stepCountIs: vi.fn(() => () => false),
+  isStepCount: vi.fn(() => () => false),
 }))
 
 vi.mock(

@@ -13,7 +13,7 @@ import { basename, isAbsolute, join, resolve } from "node:path"
 import { createOpenAI } from "@ai-sdk/openai"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
-import { generateText, jsonSchema, stepCountIs, type ToolSet, tool } from "ai"
+import { generateText, isStepCount, jsonSchema, type ToolSet, tool } from "ai"
 import { toSnakeCase } from "../src/openapi-loader"
 import {
   corpusHash,
@@ -94,7 +94,10 @@ type Episode = {
   searchRank: number | null
   stepExhausted: boolean
   unknownToolCount: number
+  // Final-step usage, kept for comparability with v6 baselines.
   usage?: unknown
+  // Usage summed across every step (AI SDK v7 `result.usage`).
+  aggregateUsage?: unknown
 }
 
 type Manifest = EvalManifest
@@ -386,6 +389,13 @@ const unknownToolCount = (calls: ModelToolCall[]): number =>
       call.result.startsWith("Unknown tool"),
   ).length
 
+export const getFinalStepUsage = async (result: {
+  finalStep: { usage: unknown } | PromiseLike<{ usage: unknown }>
+}): Promise<unknown> => (await result.finalStep).usage
+
+export const getAggregateUsage = (result: { usage: unknown }): unknown =>
+  result.usage
+
 const evaluateCase = async (props: {
   evalCase: EvalCase
   modelId: string
@@ -407,6 +417,7 @@ const evaluateCase = async (props: {
   let providerError: string | undefined
   let stepExhausted = false
   let usage: unknown
+  let aggregateUsage: unknown
   let instructionsHash: string | null = null
   try {
     clientHandle = await startMcpClient(props.serverSource, sandbox.baseUrl)
@@ -426,13 +437,14 @@ const evaluateCase = async (props: {
       model: openai(props.modelId),
       prompt: props.evalCase.prompt,
       providerOptions: { openai: { parallelToolCalls: false } },
-      stopWhen: stepCountIs(maxSteps),
-      system: `${instructions}\nCurrent time: ${props.evalCase.now}. Timezone: ${props.evalCase.timezone}.`,
+      stopWhen: isStepCount(maxSteps),
+      instructions: `${instructions}\nCurrent time: ${props.evalCase.now}. Timezone: ${props.evalCase.timezone}.`,
       tools,
     })
     final = result.text
     stepExhausted = result.steps.length >= maxSteps && final.trim().length === 0
-    usage = result.usage
+    usage = await getFinalStepUsage(result)
+    aggregateUsage = getAggregateUsage(result)
   } catch (error) {
     providerError = error instanceof Error ? error.message : String(error)
   } finally {
@@ -466,6 +478,7 @@ const evaluateCase = async (props: {
     stepExhausted,
     unknownToolCount: unknownToolCount(calls),
     usage,
+    aggregateUsage,
   }
 }
 

@@ -385,4 +385,118 @@ describe("aiContextService.appendHistory", () => {
     // Stuck-detection warn should still fire independently of the hard cap.
     expect(mocks.loggerWarn).toHaveBeenCalled()
   })
+
+  test("canonicalizes new file parts and preserves their MIME type", () => {
+    const message = aiContextService.normalizeMessageForContext({
+      role: "user",
+      content: [
+        { type: "text", text: "describe this" },
+        {
+          type: "file",
+          data: "https://example.com/photo.jpeg",
+          mediaType: "image/jpeg",
+        },
+      ],
+    })
+
+    expect(message?.content).toEqual([
+      { type: "text", text: "describe this" },
+      {
+        type: "file",
+        data: "https://example.com/photo.jpeg",
+        mediaType: "image/jpeg",
+      },
+    ])
+    expect(message).not.toBeNull()
+    if (!message) {
+      throw new Error("Expected the file message to be normalized")
+    }
+    expect(aiContextService.mapContextToModelMessages([message])).toEqual([
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "describe this" },
+          {
+            type: "file",
+            data: "https://example.com/photo.jpeg",
+            mediaType: "image/jpeg",
+          },
+        ],
+      },
+    ])
+  })
+
+  test("drops system and tool turns instead of emitting empty model messages", () => {
+    expect(
+      aiContextService.mapContextToModelMessages([
+        { role: "system", content: "legacy instruction" },
+        { role: "user", content: "hi" },
+        { role: "tool", content: "tool output" },
+        { role: "assistant", content: "hello" },
+      ]),
+    ).toEqual([
+      { role: "user", content: "hi" },
+      { role: "assistant", content: "hello" },
+    ])
+  })
+
+  test("canonicalizes legacy image parts to file parts with their MIME type", () => {
+    expect(
+      aiContextService.mapContextToModelMessages([
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              image: "https://example.com/a.webp",
+              mimeType: "image/webp",
+            },
+            { type: "image", image: "data:image/gif;base64,AAAA" },
+          ],
+        },
+      ]),
+    ).toEqual([
+      {
+        role: "user",
+        content: [
+          {
+            type: "file",
+            data: "https://example.com/a.webp",
+            mediaType: "image/webp",
+          },
+          {
+            type: "file",
+            data: "data:image/gif;base64,AAAA",
+            mediaType: "image/gif",
+          },
+        ],
+      },
+    ])
+  })
+
+  test("rebuilds a legacy cache containing a system message instead of forwarding it", async () => {
+    const findAIContextMessages = vi.fn().mockResolvedValue([])
+    mocks.createMessageRepository.mockResolvedValue({ findAIContextMessages })
+    mocks.findConversationAIContextState.mockResolvedValue({
+      aiContextLastMessageId: null,
+      lastActivityAt: new Date("2026-06-01T00:00:00.000Z"),
+    })
+    mocks.get.mockResolvedValue({
+      markerMessageId: null,
+      summary: "legacy",
+      history: [{ role: "system", content: "legacy system instruction" }],
+      nextSeq: 1,
+      summarizing: false,
+      needsResummarize: false,
+      updatedAt: Date.now(),
+    })
+
+    const context = await aiContextService.getOrInitContext({
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+    })
+
+    expect(mocks.delete).toHaveBeenCalledWith("conv-1")
+    expect(context?.history).toEqual([])
+  })
 })

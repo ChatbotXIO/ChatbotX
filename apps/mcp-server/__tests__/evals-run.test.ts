@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 import { type EvalCase, materializeCases } from "../evals/cases"
+import { getAggregateUsage, getFinalStepUsage } from "../evals/run"
 import {
   assertComparableManifests,
   type EvalManifest,
@@ -55,6 +56,39 @@ const evalCase: EvalCase = {
 }
 
 describe("evaluation runner contracts", () => {
+  test("records final-step rather than aggregate multi-step usage", async () => {
+    const finalStepUsage = { inputTokens: 30, outputTokens: 7, totalTokens: 37 }
+    const aggregateUsage = {
+      inputTokens: 60,
+      outputTokens: 15,
+      totalTokens: 75,
+    }
+
+    const multiStepResult = {
+      finalStep: { usage: finalStepUsage },
+      usage: aggregateUsage,
+    }
+
+    await expect(getFinalStepUsage(multiStepResult)).resolves.toEqual(
+      finalStepUsage,
+    )
+  })
+
+  test("exposes aggregate multi-step usage alongside final-step usage", () => {
+    const aggregateUsage = {
+      inputTokens: 60,
+      outputTokens: 15,
+      totalTokens: 75,
+    }
+
+    expect(
+      getAggregateUsage({
+        finalStep: { usage: { totalTokens: 37 } },
+        usage: aggregateUsage,
+      }),
+    ).toEqual(aggregateUsage)
+  })
+
   test("permits source and instructions snapshots to differ", () => {
     const baseline = manifest()
     const candidate = {

@@ -91,7 +91,7 @@ export async function handleAIGenerateText({
 
     const result = streamText({
       model: resolvedModel.model,
-      system: step.system,
+      instructions: step.system,
       messages,
       tools,
       toolChoice: Object.keys(tools).length > 0 ? "auto" : undefined,

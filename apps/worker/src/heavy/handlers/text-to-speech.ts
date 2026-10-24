@@ -1,10 +1,7 @@
 import { aiTimeouts } from "@chatbotx.io/ai"
 import { aiIntegrationService, getAIModel } from "@chatbotx.io/ai/server"
 import type { AITextToSpeechSchema } from "@chatbotx.io/flow-config"
-import {
-  experimental_generateSpeech as generateSpeech,
-  NoSpeechGeneratedError,
-} from "ai"
+import { generateSpeech, NoSpeechGeneratedError } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import type { HeavyStepComputeProps } from "../../integration/handlers/flow-utils"
 import { textToSpeechStorageService } from "../../integration/handlers/text-to-speech/storage"

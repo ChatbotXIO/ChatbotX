@@ -22,6 +22,11 @@ export const aiMessageSchema = z.object({
           image: z.string(),
           mimeType: z.string().optional(),
         }),
+        z.object({
+          type: z.literal("file"),
+          data: z.string(),
+          mediaType: z.string(),
+        }),
       ]),
     ),
   ]),

@@ -17,7 +17,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@ai-sdk/google", () => ({
-  createGoogleGenerativeAI: () => ({ embedding: mocks.geminiEmbedding }),
+  createGoogle: () => ({ embedding: mocks.geminiEmbedding }),
 }))
 
 vi.mock("@ai-sdk/openai", () => ({

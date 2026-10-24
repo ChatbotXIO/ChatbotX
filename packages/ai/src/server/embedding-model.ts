@@ -1,4 +1,4 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google"
+import { createGoogle } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { db } from "@chatbotx.io/database/client"
 import { secretTextAuthSchema } from "@chatbotx.io/sdk"
@@ -44,7 +44,7 @@ export async function resolveEmbeddingModel(
     }
 
     return {
-      model: createGoogleGenerativeAI({
+      model: createGoogle({
         apiKey: authParsed.data.secretText,
       }).embedding(geminiEmbeddingModels.enum["gemini-embedding-001"]),
       provider: "gemini",
