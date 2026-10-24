@@ -7,10 +7,13 @@ const mocks = vi.hoisted(() => {
   const cache = new Map<string, unknown>()
   return {
     cache,
+    delete: vi.fn(),
+    eq: vi.fn(),
     findFirst: vi.fn(),
     findIdByEmail: vi.fn(),
     insert: vi.fn(),
     invalidateCacheKeys: vi.fn(),
+    update: vi.fn(),
     withCache: vi.fn(
       async (key: string, loader: () => Promise<unknown>): Promise<unknown> => {
         const cached = cache.get(key)
@@ -30,16 +33,19 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("../src/client", () => ({
   db: {
+    delete: mocks.delete,
     insert: mocks.insert,
+    update: mocks.update,
     query: {
       platformAdminModel: {
         findFirst: mocks.findFirst,
       },
     },
   },
+  and: vi.fn(),
   desc: vi.fn(),
-  eq: vi.fn(),
-  sql: vi.fn(),
+  eq: mocks.eq,
+  ne: vi.fn(),
 }))
 vi.mock("@chatbotx.io/redis", () => ({
   invalidateCacheKeys: mocks.invalidateCacheKeys,
@@ -50,7 +56,7 @@ vi.mock("../src/repositories/user", () => ({
   userRepository: { findIdByEmail: mocks.findIdByEmail },
 }))
 vi.mock("../src/schema", () => ({
-  platformAdminModel: { id: "id", userId: "userId" },
+  platformAdminModel: { id: "id", role: "role", userId: "userId" },
   userModel: {},
 }))
 
@@ -62,10 +68,27 @@ const createInsertChain = (createdRows: { id: string }[]) => {
   return { onConflictDoNothing, values }
 }
 
+const createUpsertChain = (createdRows: { id: string }[]) => {
+  const returning = vi.fn().mockResolvedValue(createdRows)
+  const onConflictDoUpdate = vi.fn().mockReturnValue({ returning })
+  const values = vi.fn().mockReturnValue({ onConflictDoUpdate })
+
+  return { onConflictDoUpdate, values }
+}
+
+const createUpdateChain = (updatedRows: { id: string }[]) => {
+  const returning = vi.fn().mockResolvedValue(updatedRows)
+  const where = vi.fn().mockReturnValue({ returning })
+  const set = vi.fn().mockReturnValue({ where })
+
+  return { set, where }
+}
+
 describe("platformAdminRepository.bootstrapRootAdmin", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.cache.clear()
+    mocks.update.mockReturnValue(createUpdateChain([]))
   })
 
   test("creates the configured root administrator when no row exists", async () => {
@@ -79,7 +102,10 @@ describe("platformAdminRepository.bootstrapRootAdmin", () => {
       }),
     ).resolves.toBe(true)
 
-    expect(chain.values).toHaveBeenCalledWith({ userId: "root-user" })
+    expect(chain.values).toHaveBeenCalledWith({
+      role: "super-admin",
+      userId: "root-user",
+    })
     expect(chain.onConflictDoNothing).toHaveBeenCalledWith({
       target: "userId",
     })
@@ -99,6 +125,24 @@ describe("platformAdminRepository.bootstrapRootAdmin", () => {
     ).resolves.toBe(false)
   })
 
+  test("promotes an existing administrator to super-admin", async () => {
+    mocks.findIdByEmail.mockResolvedValue({ id: "root-user" })
+    mocks.insert.mockReturnValue(createInsertChain([]))
+    const chain = createUpdateChain([{ id: "admin-1" }])
+    mocks.update.mockReturnValue(chain)
+
+    await expect(
+      platformAdminRepository.bootstrapRootAdmin({
+        email: "admin@example.com",
+      }),
+    ).resolves.toBe(true)
+
+    expect(chain.set).toHaveBeenCalledWith({ role: "super-admin" })
+    expect(mocks.invalidateCacheKeys).toHaveBeenCalledWith(
+      "platform-admin:root-user",
+    )
+  })
+
   test("does not insert when the configured email has no root-tenant user", async () => {
     mocks.findIdByEmail.mockResolvedValue(undefined)
 
@@ -109,6 +153,41 @@ describe("platformAdminRepository.bootstrapRootAdmin", () => {
     ).resolves.toBe(false)
 
     expect(mocks.insert).not.toHaveBeenCalled()
+  })
+})
+
+describe("platformAdminRepository.upsertRole", () => {
+  test("inserts or updates the requested role", async () => {
+    const chain = createUpsertChain([{ id: "admin-1" }])
+    mocks.insert.mockReturnValue(chain)
+
+    await platformAdminRepository.upsertRole({
+      role: "support",
+      userId: "user-1",
+    })
+
+    expect(chain.values).toHaveBeenCalledWith({
+      role: "support",
+      userId: "user-1",
+    })
+    expect(chain.onConflictDoUpdate).toHaveBeenCalledWith({
+      set: { role: "support" },
+      target: "userId",
+    })
+  })
+})
+
+describe("platformAdminRepository.deleteByUserId", () => {
+  test("deletes the administrator row", async () => {
+    const where = vi.fn().mockResolvedValue(undefined)
+    mocks.delete.mockReturnValue({ where })
+
+    await platformAdminRepository.deleteByUserId("user-1")
+
+    expect(mocks.delete).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "userId" }),
+    )
+    expect(mocks.eq).toHaveBeenCalledWith("userId", "user-1")
   })
 })
 
@@ -130,5 +209,18 @@ describe("platformAdminRepository.findByUserId", () => {
     )
 
     expect(mocks.findFirst).toHaveBeenCalledTimes(1)
+  })
+
+  test("reads administrator roles fresh for authorization", async () => {
+    mocks.findFirst.mockResolvedValue({
+      id: "admin-1",
+      role: "super-admin",
+      userId: "user-1",
+    })
+
+    await platformAdminRepository.findForAuth("user-1")
+    await platformAdminRepository.findForAuth("user-1")
+
+    expect(mocks.findFirst).toHaveBeenCalledTimes(2)
   })
 })

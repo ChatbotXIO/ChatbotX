@@ -1,6 +1,6 @@
 import { invalidateCacheKeys, withCache } from "@chatbotx.io/redis"
-import { type DatabaseClient, db, desc, eq, sql } from "../../client"
-import { ROOT_TENANT_ID } from "../../partials"
+import { and, type DatabaseClient, db, desc, eq, ne, sql } from "../../client"
+import { type PlatformAdminRole, ROOT_TENANT_ID } from "../../partials"
 import { platformAdminModel, userModel } from "../../schema"
 import type { PlatformAdminModel } from "../../types"
 import { getPaginationWithDefaults } from "../../utils"
@@ -24,9 +24,7 @@ export const platformAdminCacheKey = (userId: string): string =>
   `platform-admin:${userId}`
 
 class PlatformAdminRepository {
-  async findByUserId(
-    userId: string,
-  ): Promise<PlatformAdminModel | undefined> {
+  async findByUserId(userId: string): Promise<PlatformAdminModel | undefined> {
     const cacheKey = platformAdminCacheKey(userId)
     return await withCache(
       cacheKey,
@@ -39,19 +37,8 @@ class PlatformAdminRepository {
     await invalidateCacheKeys(platformAdminCacheKey(userId))
   }
 
-  async existsByUserId(
-    userId: string,
-    tx: DatabaseClient = db,
-  ): Promise<boolean> {
-    if (tx === db) {
-      return Boolean(await this.findByUserId(userId))
-    }
-
-    const admin = await tx.query.platformAdminModel.findFirst({
-      where: { userId },
-      columns: { userId: true },
-    })
-    return Boolean(admin)
+  async findForAuth(userId: string): Promise<PlatformAdminModel | undefined> {
+    return await db.query.platformAdminModel.findFirst({ where: { userId } })
   }
 
   async bootstrapRootAdmin(props: { email: string }): Promise<boolean> {
@@ -63,16 +50,30 @@ class PlatformAdminRepository {
       return false
     }
 
-    const [admin] = await db
+    const [created] = await db
       .insert(platformAdminModel)
-      .values({ userId: user.id })
+      .values({ role: "super-admin", userId: user.id })
       .onConflictDoNothing({ target: platformAdminModel.userId })
       .returning({ id: platformAdminModel.id })
+    const [promoted] = created
+      ? []
+      : await db
+          .update(platformAdminModel)
+          .set({ role: "super-admin" })
+          .where(
+            and(
+              eq(platformAdminModel.userId, user.id),
+              ne(platformAdminModel.role, "super-admin"),
+            ),
+          )
+          .returning({ id: platformAdminModel.id })
 
-    if (admin) {
-      await this.invalidateByUserId(user.id)
+    if (!(created ?? promoted)) {
+      return false
     }
-    return Boolean(admin)
+
+    await this.invalidateByUserId(user.id)
+    return true
   }
 
   async listWithUser(input: ListPlatformAdminsInput): Promise<{
@@ -105,21 +106,21 @@ class PlatformAdminRepository {
     }
   }
 
-  async insertIgnore(props: {
+  async upsertRole(props: {
+    role: PlatformAdminRole
     userId: string
     tx?: DatabaseClient
   }): Promise<PlatformAdminModel | undefined> {
-    const { userId, tx = db } = props
-    const [created] = await tx
+    const { role, userId, tx = db } = props
+    const [admin] = await tx
       .insert(platformAdminModel)
-      .values({ userId })
-      .onConflictDoNothing({ target: platformAdminModel.userId })
+      .values({ role, userId })
+      .onConflictDoUpdate({
+        target: platformAdminModel.userId,
+        set: { role },
+      })
       .returning()
-    if (created) {
-      return created
-    }
-
-    return await tx.query.platformAdminModel.findFirst({ where: { userId } })
+    return admin
   }
 
   async deleteByUserId(userId: string, tx: DatabaseClient = db): Promise<void> {

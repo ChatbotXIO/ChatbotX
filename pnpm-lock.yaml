@@ -1230,6 +1230,9 @@ importers:
       universal-error-normalizer:
         specifier: ^1.0.0
         version: 1.0.0
+      zod:
+        specifier: ^4.3.6
+        version: 4.6.7
     devDependencies:
       '@chatbotx.io/typescript-config':
         specifier: workspace:*
@@ -2822,6 +2825,9 @@ importers:
       lru-cache:
         specifier: ^11.3.5
         version: 11.5.1
+      zod:
+        specifier: ^4.3.6
+        version: 4.6.7
     devDependencies:
       '@chatbotx.io/typescript-config':
         specifier: workspace:*
@@ -12056,7 +12062,7 @@ snapshots:
       jose: 6.2.8
       kysely: 0.28.17
       nanostores: 1.4.2
-      zod: 4.6.5
+      zod: 4.6.7
     optionalDependencies:
       '@cloudflare/workers-types': 4.20240718.0
       '@opentelemetry/api': 1.9.1

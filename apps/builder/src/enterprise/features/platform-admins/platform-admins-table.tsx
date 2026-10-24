@@ -1,6 +1,10 @@
 "use client"
 
 import type { PlatformAdminList } from "@chatbotx.io/business"
+import {
+  type PlatformAdminRole,
+  platformAdminRoles,
+} from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -11,6 +15,13 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@chatbotx.io/ui/components/ui/select"
 import { Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -21,6 +32,11 @@ import { toast } from "sonner"
 import { addPlatformAdminAction } from "./add-platform-admin.action"
 import { removePlatformAdminAction } from "./remove-platform-admin.action"
 
+const platformAdminRoleTranslationKeys = {
+  "super-admin": "platformAdmin.admins.roles.superAdmin",
+  support: "platformAdmin.admins.roles.support",
+  "read-only": "platformAdmin.admins.roles.readOnly",
+} as const satisfies Record<PlatformAdminRole, string>
 type PlatformAdminsTableProps = {
   page: number
   promises: Promise<[PlatformAdminList]>
@@ -33,6 +49,7 @@ export function PlatformAdminsTable({
   const router = useRouter()
   const t = useTranslations()
   const [email, setEmail] = useState("")
+  const [role, setRole] = useState<PlatformAdminRole>("support")
   const [addDialogOpen, setAddDialogOpen] = useState(false)
 
   const addAdmin = useAction(addPlatformAdminAction, {
@@ -42,6 +59,7 @@ export function PlatformAdminsTable({
     onSuccess: () => {
       setAddDialogOpen(false)
       setEmail("")
+      setRole("support")
       toast.success(t("platformAdmin.admins.added"))
       router.refresh()
     },
@@ -60,13 +78,19 @@ export function PlatformAdminsTable({
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    addAdmin.execute({ email })
+    addAdmin.execute({ email, role })
   }
 
   return (
     <>
       <div className="flex justify-end">
-        <Button onClick={() => setAddDialogOpen(true)} size="sm">
+        <Button
+          onClick={() => {
+            setRole("support")
+            setAddDialogOpen(true)
+          }}
+          size="sm"
+        >
           <PlusIcon aria-hidden="true" />
           {t("platformAdmin.admins.addButton")}
         </Button>
@@ -90,7 +114,7 @@ export function PlatformAdminsTable({
               <tr className="border-t" key={admin.id}>
                 <td className="px-4 py-3">{admin.userEmail}</td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {t("fields.permissions.superAdmin")}
+                  {t(platformAdminRoleTranslationKeys[admin.role])}
                 </td>
                 <td className="px-4 py-3 text-end">
                   <Button
@@ -174,6 +198,32 @@ export function PlatformAdminsTable({
                 type="email"
                 value={email}
               />
+            </div>
+            <div className="space-y-2">
+              <label
+                className="font-medium text-sm"
+                htmlFor="platform-admin-role"
+              >
+                {t("platformAdmin.admins.role")}
+              </label>
+              <Select
+                onValueChange={(value) => setRole(value as PlatformAdminRole)}
+                value={role}
+              >
+                <SelectTrigger id="platform-admin-role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {platformAdminRoles.map((platformAdminRole) => (
+                    <SelectItem
+                      key={platformAdminRole}
+                      value={platformAdminRole}
+                    >
+                      {t(platformAdminRoleTranslationKeys[platformAdminRole])}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <DialogFooter>
               <Button

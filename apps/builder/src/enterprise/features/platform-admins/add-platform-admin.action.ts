@@ -14,5 +14,6 @@ export const addPlatformAdminAction = superAdminActionClient
     return await platformAdminService.add({
       actorId: ctx.user.id,
       email: parsedInput.email,
+      role: parsedInput.role,
     })
   })
