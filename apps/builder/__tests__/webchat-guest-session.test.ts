@@ -215,6 +215,15 @@ describe("webchat guest session store", () => {
     ])
   })
 
+  test("marks an optimistic message failed by client id", () => {
+    const store = createGuestSessionStore(createWebchatConfig())
+
+    store.getState().sendMessage("hi", "client-a")
+    store.getState().markMessageFailed("client-a", "Network offline")
+
+    expect(store.getState().messages[0]?.sendError).toBe("Network offline")
+  })
+
   test("keeps distinct server echoes that share a client id", () => {
     const store = createGuestSessionStore(createWebchatConfig())
 

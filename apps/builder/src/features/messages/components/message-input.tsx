@@ -50,6 +50,7 @@ import type { SavedReplyResource } from "@/features/saved-replies/schema/resourc
 import { authClient } from "@/lib/auth/auth-client"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
+import { flattenValidationErrors } from "../lib/validation-errors"
 import { createMessageWithRoutingBypassRequest } from "../schema/mutation"
 import type { MessageResource } from "../schema/resource"
 import { FileUploadPreview } from "./file-upload"
@@ -101,8 +102,20 @@ export const MessageInput = () => {
     replyToMessage,
     setReplyToMessage,
     isPrivateReply,
+    markMessageFailed,
     messages,
   } = useChatStore((state) => state)
+
+  const replyToMessageRef = useRef(replyToMessage)
+  const selectedMediaFilesRef = useRef(selectedMediaFiles)
+
+  useEffect(() => {
+    replyToMessageRef.current = replyToMessage
+  }, [replyToMessage])
+
+  useEffect(() => {
+    selectedMediaFilesRef.current = selectedMediaFiles
+  }, [selectedMediaFiles])
 
   const lastContactComment = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -197,7 +210,6 @@ export const MessageInput = () => {
       text: "",
       files: [],
       mediaFileIds: undefined,
-      clientId: createId(),
       replyToMessageId: undefined,
       replyToMessageCreatedAt: undefined,
       isPrivateReply: undefined,
@@ -337,7 +349,7 @@ export const MessageInput = () => {
       clientId?: string | undefined
       isPrivateReply?: boolean | undefined
       text?: string | undefined
-    }) => {
+    }): string | undefined => {
       if (!(input.text && input.clientId) || input.isPrivateReply) {
         return
       }
@@ -365,6 +377,7 @@ export const MessageInput = () => {
       }
       appendMessage(optimisticMessage)
       updateConversationViaMessage(optimisticMessage)
+      return optimisticMessage.id
     },
     [
       appendMessage,
@@ -396,6 +409,7 @@ export const MessageInput = () => {
       }
     }
 
+    const submittedFiles = form.getValues("files")
     const replyTarget = replyToMessage ?? lastContactComment
     const values = {
       ...form.getValues(),
@@ -411,19 +425,64 @@ export const MessageInput = () => {
       return
     }
 
-    appendOptimistic(parsed.data)
-    form.reset(defaultValues)
-    setSelectedMediaFiles([])
-    setReplyToMessage(null)
+    const optimisticMessageId = appendOptimistic(parsed.data)
+    form.setValue("text", "")
     textareaRef.current?.focus()
 
-    const result = await action.executeAsync(parsed.data)
-    if (result?.serverError) {
-      toast.error(result.serverError)
-      return
-    }
-    if (result?.data && conversation && isConversationActive(conversation)) {
-      disableBot({ ids: [conversation.id] })
+    try {
+      const result = await action.executeAsync(parsed.data)
+      if (result?.serverError) {
+        markMessageFailed(
+          optimisticMessageId ?? "",
+          parsed.data.clientId,
+          result.serverError,
+        )
+        toast.error(result.serverError)
+        return
+      }
+
+      if (result?.validationErrors) {
+        const validationErrors = flattenValidationErrors(
+          result.validationErrors,
+        )
+        for (const validationError of validationErrors) {
+          form.setError(validationError.path as never, {
+            message: validationError.message,
+          })
+        }
+        const errorMessage =
+          validationErrors[0]?.message ?? t("messages.unknownError")
+        markMessageFailed(
+          optimisticMessageId ?? "",
+          parsed.data.clientId,
+          errorMessage,
+        )
+        toast.error(errorMessage)
+        return
+      }
+
+      if (form.getValues("files") === submittedFiles) {
+        form.setValue("files", [])
+      }
+      if (selectedMediaFilesRef.current === selectedMediaFiles) {
+        form.setValue("mediaFileIds", [])
+        setSelectedMediaFiles([])
+      }
+      if (replyToMessageRef.current === replyToMessage) {
+        setReplyToMessage(null)
+      }
+      if (result?.data && conversation && isConversationActive(conversation)) {
+        disableBot({ ids: [conversation.id] })
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : t("messages.unknownError")
+      markMessageFailed(
+        optimisticMessageId ?? "",
+        parsed.data.clientId,
+        errorMessage,
+      )
+      toast.error(errorMessage)
     }
   }, [
     action,
@@ -431,16 +490,17 @@ export const MessageInput = () => {
     bypassThreadControlLock,
     channelType,
     conversation,
-    defaultValues,
     disableBot,
     form,
     imageLimitMessage,
     isPrivateReply,
     lastContactComment,
+    markMessageFailed,
     replyToMessage,
     replyKind,
     selectedMediaFiles,
     setReplyToMessage,
+    t,
   ])
 
   // Memoize keyboard handler

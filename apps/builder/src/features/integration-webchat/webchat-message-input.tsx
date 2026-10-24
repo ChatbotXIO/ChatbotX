@@ -7,11 +7,14 @@ import { createId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { PaperclipIcon, SendHorizonalIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { type KeyboardEvent, useEffect, useMemo, useRef } from "react"
 import { Controller, useWatch } from "react-hook-form"
+import { toast } from "sonner"
 import { createWebchatMessageAction } from "../messages/actions/create-webchat-message.action"
 import EmojiPicker from "../messages/components/emoji-picker"
 import { FileUploadPreview } from "../messages/components/file-upload"
+import { flattenValidationErrors } from "../messages/lib/validation-errors"
 import { createWebchatMessageRequest } from "../messages/schema/mutation"
 import { getWebchatProfileFields } from "./browser-profile-fields"
 import WebchatMessageMenu from "./components/webchat-message-menu"
@@ -33,8 +36,10 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
     parentOrigin,
     accessToken,
   } = props
-  const { sendMessage, guestConversationId, appendMessage } =
+  const { sendMessage, guestConversationId, appendMessage, markMessageFailed } =
     useGuestSessionStore((state) => state)
+
+  const t = useTranslations()
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const defaultValues = useMemo(
@@ -62,7 +67,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
   const {
     form,
     action,
-    form: { control, setValue, reset },
+    form: { control, setValue },
   } = useHookFormAction(
     createWebchatMessageAction,
     zodResolver(createWebchatMessageRequest),
@@ -119,9 +124,11 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
   }
 
   const submitMessage = async () => {
+    const clientId = createId()
+    const submittedFiles = form.getValues("files")
     const values = {
       ...form.getValues(),
-      clientId: createId(),
+      clientId,
     }
     const parsed = createWebchatMessageRequest.safeParse(values)
     if (!parsed.success) {
@@ -130,14 +137,46 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
     }
 
     if ("text" in parsed.data && parsed.data.text) {
-      sendMessage(parsed.data.text, parsed.data.clientId ?? createId())
+      sendMessage(parsed.data.text, clientId)
     }
-    reset(defaultValues)
+    setValue("text", "")
     textareaRef.current?.focus()
 
-    const result = await action.executeAsync(parsed.data)
-    if (result?.data?.attachments?.length) {
-      appendMessage(result.data)
+    try {
+      const result = await action.executeAsync(parsed.data)
+      if (result?.serverError) {
+        markMessageFailed(clientId, result.serverError)
+        toast.error(result.serverError)
+        return
+      }
+
+      if (result?.validationErrors) {
+        const validationErrors = flattenValidationErrors(
+          result.validationErrors,
+        )
+        for (const validationError of validationErrors) {
+          form.setError(validationError.path as never, {
+            message: validationError.message,
+          })
+        }
+        const errorMessage =
+          validationErrors[0]?.message ?? t("messages.unknownError")
+        markMessageFailed(clientId, errorMessage)
+        toast.error(errorMessage)
+        return
+      }
+
+      if (result?.data?.attachments?.length) {
+        appendMessage(result.data)
+      }
+      if (form.getValues("files") === submittedFiles) {
+        setValue("files", [])
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : t("messages.unknownError")
+      markMessageFailed(clientId, errorMessage)
+      toast.error(errorMessage)
     }
   }
 

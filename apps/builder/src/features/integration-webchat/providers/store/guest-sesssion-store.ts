@@ -53,6 +53,7 @@ export type GuestSessionActions = {
     perPage: number,
   ) => Promise<void>
   handleNewMessage: (message: MessageResource) => void
+  markMessageFailed: (clientId: string, error: string) => void
   sendMessage: (content: string, clientId: string) => void
   sendPostback: (button: MessageButtonTemplate) => Promise<void>
   setIsTyping: (isTyping: boolean) => void
@@ -200,6 +201,25 @@ export const createGuestSessionStore = (
               : current,
           ),
         }
+      })
+    },
+
+    markMessageFailed: (clientId: string, error: string) => {
+      set((state) => {
+        const optimisticMessageIndex = state.messages.findIndex(
+          (message) =>
+            message.clientId === clientId && message.conversationId === "",
+        )
+        if (optimisticMessageIndex === -1) {
+          return state
+        }
+
+        const messages = [...state.messages]
+        messages[optimisticMessageIndex] = {
+          ...messages[optimisticMessageIndex],
+          sendError: error,
+        }
+        return { messages }
       })
     },
 

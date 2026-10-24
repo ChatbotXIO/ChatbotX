@@ -1,4 +1,4 @@
-import { act, forwardRef } from "react"
+import { act, cloneElement, forwardRef } from "react"
 import { createRoot, type Root } from "react-dom/client"
 import { useForm } from "react-hook-form"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
@@ -6,13 +6,24 @@ import { WebchatMessageInput } from "@/features/integration-webchat/webchat-mess
 import { MessageInput } from "@/features/messages/components/message-input"
 
 const ids = vi.hoisted(() => ({ next: 1 }))
+const disableBotExecute = vi.hoisted(() => vi.fn())
+const toast = vi.hoisted(() => ({ error: vi.fn() }))
 const action = vi.hoisted(() => {
-  const resolveRequests: Array<(result: { data?: unknown }) => void> = []
+  const resolveRequests: Array<
+    (result: {
+      data?: unknown
+      serverError?: string
+      validationErrors?: unknown
+    }) => void
+  > = []
 
   return {
-    execute: vi.fn(),
     executeAsync: vi.fn((_: unknown) => {
-      const deferred = Promise.withResolvers<{ data?: unknown }>()
+      const deferred = Promise.withResolvers<{
+        data?: unknown
+        serverError?: string
+        validationErrors?: unknown
+      }>()
       resolveRequests.push(deferred.resolve)
       return deferred.promise
     }),
@@ -22,6 +33,7 @@ const action = vi.hoisted(() => {
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }))
+vi.mock("sonner", () => ({ toast }))
 vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   // The component's schema transitively imports other utility exports.
   const actual = (await importOriginal()) as Record<string, unknown>
@@ -31,7 +43,7 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => {
   }
 })
 vi.mock("next-safe-action/hooks", () => ({
-  useAction: () => ({ execute: vi.fn(), isExecuting: false }),
+  useAction: () => ({ execute: disableBotExecute, isExecuting: false }),
 }))
 vi.mock("@next-safe-action/adapter-react-hook-form/hooks", () => ({
   useHookFormAction: (
@@ -50,10 +62,6 @@ vi.mock("@next-safe-action/adapter-react-hook-form/hooks", () => ({
     return {
       action,
       form,
-      handleSubmitWithAction: form.handleSubmit((values) =>
-        action.execute(values),
-      ),
-      resetFormAndAction: vi.fn(),
     }
   },
 }))
@@ -81,7 +89,9 @@ vi.mock("@/features/messages/components/input-menu", () => ({
   InputMenu: () => null,
 }))
 vi.mock("@/features/messages/components/media-file-preview", () => ({
-  MediaFilePreview: () => null,
+  MediaFilePreview: ({ mediaFile }: { mediaFile: { id: string } }) => (
+    <span data-testid="media-file-preview">{mediaFile.id}</span>
+  ),
 }))
 vi.mock(
   "@/features/messages/components/thread-control-locked-composer",
@@ -90,8 +100,29 @@ vi.mock(
   }),
 )
 vi.mock("@/features/media-library/components/media-library-trigger", () => ({
-  MediaLibraryTrigger: ({ children }: { children: React.ReactNode }) =>
+  MediaLibraryTrigger: ({
     children,
+    onSelect,
+  }: {
+    children: React.ReactElement<{
+      onClick?: React.MouseEventHandler<HTMLElement>
+    }>
+    onSelect: (file: {
+      id: string
+      mimeType: string
+      name: string
+      url: string
+    }) => void
+  }) =>
+    cloneElement(children, {
+      onClick: () =>
+        onSelect({
+          id: "1",
+          mimeType: "image/png",
+          name: "image.png",
+          url: "https://example.com/image.png",
+        }),
+    }),
 }))
 vi.mock("@/features/saved-replies/quick-replies-popover", () => ({
   QuickRepliesPopover: ({ children }: { children: React.ReactNode }) =>
@@ -118,6 +149,7 @@ const inboxStore = {
   appendMessage: vi.fn(),
   conversations: [
     {
+      botEnabled: true,
       contactInboxes: [{ channel: "webchat" }],
       id: "conversation-1",
       sourceId: null,
@@ -125,6 +157,7 @@ const inboxStore = {
     },
   ],
   isPrivateReply: false,
+  markMessageFailed: vi.fn(),
   messages: [],
   replyToMessage: null,
   setReplyToMessage: vi.fn(),
@@ -139,6 +172,7 @@ vi.mock("@/features/chat/store/chat-store-provider", () => ({
 const guestStore = {
   appendMessage: vi.fn(),
   guestConversationId: "1:00000000-0000-0000-0000-000000000000",
+  markMessageFailed: vi.fn(),
   sendMessage: vi.fn(),
 }
 vi.mock(
@@ -248,11 +282,19 @@ describe("message composers", () => {
 
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-    action.execute.mockClear()
     action.executeAsync.mockClear()
     action.resolveRequests.length = 0
+    disableBotExecute.mockClear()
+    toast.error.mockClear()
     guestStore.appendMessage.mockClear()
+    guestStore.markMessageFailed.mockClear()
     guestStore.sendMessage.mockClear()
+    inboxStore.appendMessage.mockClear()
+    inboxStore.markMessageFailed.mockClear()
+    inboxStore.setReplyToMessage.mockClear()
+    inboxStore.updateConversationViaMessage.mockClear()
+    inboxStore.replyToMessage = null
+    inboxStore.isPrivateReply = false
     ids.next = 1
     container = document.createElement("div")
     document.body.appendChild(container)
@@ -276,5 +318,155 @@ describe("message composers", () => {
     )
 
     await expectRapidSubmissions()
+  })
+
+  test("marks an optimistic inbox message failed and keeps its reply target on a server error", async () => {
+    inboxStore.replyToMessage = {
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      id: "message-1",
+    } as never
+    action.executeAsync.mockResolvedValueOnce({ serverError: "Send failed" })
+    act(() => root.render(<MessageInput />))
+
+    await submitMessages(["hello"])
+
+    await vi.waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Send failed")
+    })
+    const submittedMessage = getSubmittedMessage(
+      action.executeAsync.mock.calls[0]?.[0],
+    )
+    expect(inboxStore.markMessageFailed).toHaveBeenCalledWith(
+      expect.any(String),
+      submittedMessage.clientId,
+      "Send failed",
+    )
+    expect(inboxStore.setReplyToMessage).not.toHaveBeenCalled()
+    expect(disableBotExecute).not.toHaveBeenCalled()
+  })
+
+  test("keeps selected media on an inbox server error", async () => {
+    action.executeAsync.mockResolvedValueOnce({ serverError: "Send failed" })
+    act(() => root.render(<MessageInput />))
+    const mediaLibraryButton = container.querySelector(
+      '[aria-label="mediaLibrary.openMediaLibrary"]',
+    )
+    const form = container.querySelector("form")
+    if (!(mediaLibraryButton && form)) {
+      throw new Error("Expected the message composer media controls")
+    }
+
+    act(() => {
+      mediaLibraryButton.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true }),
+      )
+    })
+    expect(
+      container.querySelector('[data-testid="media-file-preview"]'),
+    ).not.toBeNull()
+
+    await act(async () => {
+      form.dispatchEvent(
+        new Event("submit", { bubbles: true, cancelable: true }),
+      )
+      await Promise.resolve()
+    })
+
+    await vi.waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Send failed")
+    })
+    expect(
+      container.querySelector('[data-testid="media-file-preview"]'),
+    ).not.toBeNull()
+  })
+
+  test("catches a rejected inbox send and marks its optimistic message failed", async () => {
+    action.executeAsync.mockRejectedValueOnce(new Error("Network offline"))
+    act(() => root.render(<MessageInput />))
+
+    await submitMessages(["hello"])
+
+    await vi.waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Network offline")
+    })
+    expect(inboxStore.markMessageFailed).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      "Network offline",
+    )
+    expect(disableBotExecute).not.toHaveBeenCalled()
+  })
+
+  test("does not append an optimistic message for a private reply", async () => {
+    inboxStore.isPrivateReply = true
+    inboxStore.replyToMessage = {
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      id: "message-1",
+    } as never
+    action.executeAsync.mockResolvedValueOnce({ data: {} })
+    act(() => root.render(<MessageInput />))
+
+    await submitMessages(["hello"])
+
+    await vi.waitFor(() => {
+      expect(disableBotExecute).toHaveBeenCalledWith({
+        ids: ["conversation-1"],
+      })
+    })
+    expect(inboxStore.appendMessage).not.toHaveBeenCalled()
+    expect(inboxStore.updateConversationViaMessage).not.toHaveBeenCalled()
+  })
+
+  test("disables the bot after a successful inbox send", async () => {
+    action.executeAsync.mockResolvedValueOnce({ data: {} })
+    act(() => root.render(<MessageInput />))
+
+    await submitMessages(["hello"])
+
+    await vi.waitFor(() => {
+      expect(disableBotExecute).toHaveBeenCalledWith({
+        ids: ["conversation-1"],
+      })
+    })
+  })
+
+  test("shows a webchat server error after an optimistic send", async () => {
+    action.executeAsync.mockResolvedValueOnce({ serverError: "Send failed" })
+    act(() =>
+      root.render(<WebchatMessageInput webchatId="1" workspaceId="1" />),
+    )
+
+    await submitMessages(["hello"])
+
+    await vi.waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Send failed")
+    })
+    expect(guestStore.sendMessage).toHaveBeenCalledWith(
+      "hello",
+      expect.any(String),
+    )
+    expect(guestStore.markMessageFailed).toHaveBeenCalledWith(
+      expect.any(String),
+      "Send failed",
+    )
+  })
+
+  test("shows a root webchat validation error from the server", async () => {
+    action.executeAsync.mockResolvedValueOnce({
+      validationErrors: { _errors: ["Guest session expired"] },
+    })
+    act(() =>
+      root.render(<WebchatMessageInput webchatId="1" workspaceId="1" />),
+    )
+
+    await submitMessages(["hello"])
+
+    await vi.waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Guest session expired")
+    })
+    expect(guestStore.markMessageFailed).toHaveBeenCalledWith(
+      expect.any(String),
+      "Guest session expired",
+    )
   })
 })
