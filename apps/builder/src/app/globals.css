@@ -7,7 +7,21 @@
  *
  * if you ever need to explicitly add a source that's excluded by default,
  * you can always add it with the @source directive.
+ *
+ * Workspace packages must be registered by their `src` directory, never the
+ * package root: the root also holds the package's own `node_modules`, so
+ * Tailwind would scan every linked workspace package and all of their
+ * dependencies (~360k files, ~6 GB during compile). Guarded by
+ * `__tests__/tailwind-sources.test.ts`.
  */
-@source "../../node_modules/@chatbotx.io/ui";
-@source "../../node_modules/@chatbotx.io/analytics-nextjs";
-@source "../../node_modules/@chatbotx.io/minigame-ui";
+@source "../../node_modules/@chatbotx.io/ui/src";
+@source "../../node_modules/@chatbotx.io/analytics-nextjs/src";
+@source "../../node_modules/@chatbotx.io/minigame-ui/src";
+
+/* A page that portals a `data-print-root` element into <body> prints only
+   that element: the sidebar, tabs and pinned bars are left off the paper. */
+@media print {
+  body:has(> [data-print-root]) > :not([data-print-root]) {
+    display: none !important;
+  }
+}

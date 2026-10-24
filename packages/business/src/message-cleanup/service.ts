@@ -19,6 +19,7 @@ import type { MessageCleanupModel } from "@chatbotx.io/database/types"
 import { uploader } from "@chatbotx.io/filesystem"
 import { BaseService } from "../base.service"
 import { logger } from "../logger"
+import { isStoredObjectPath } from "../media"
 import { messageService } from "../message/service"
 
 export type MessageCleanupEntry = {
@@ -273,7 +274,9 @@ class MessageCleanupService extends BaseService {
     attachmentPaths.push(...shardResult.attachmentPaths)
 
     const deleteResults = await Promise.allSettled(
-      attachmentPaths.map((path) => uploader.deleteObject(path)),
+      attachmentPaths
+        .filter(isStoredObjectPath)
+        .map((path) => uploader.deleteObject(path)),
     )
     for (const result of deleteResults) {
       if (result.status === "rejected") {

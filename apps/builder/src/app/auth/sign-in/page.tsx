@@ -1,14 +1,10 @@
-import { SOCIAL_PROVIDERS } from "@chatbotx.io/auth/server"
 import { SignInForm } from "@/features/auth/sign-in"
-import { resolveEnabledProvidersForDomain } from "@/lib/auth/auth-instances"
-import { getDomainFromHeader } from "@/lib/domain"
+import { resolveAuthPageOptions } from "@/lib/auth/auth-page-options"
 
 export const dynamic = "force-dynamic"
 
 export default async function SignInPage() {
-  const enabledProviders = await resolveEnabledProvidersForDomain(
-    await getDomainFromHeader(),
-    SOCIAL_PROVIDERS,
-  )
-  return <SignInForm enabledProviders={enabledProviders} />
+  const options = await resolveAuthPageOptions()
+
+  return <SignInForm {...options} />
 }

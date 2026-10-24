@@ -41,7 +41,7 @@ vi.mock("@chatbotx.io/redis", () => ({
   },
 }))
 vi.mock("ai", () => ({
-  stepCountIs: () => () => true,
+  isStepCount: () => () => true,
   streamText: mocks.streamText,
   tool: (input: unknown) => input,
 }))
@@ -130,7 +130,7 @@ describe("processHandoffReentry", () => {
             },
           ],
         },
-        { experimental_context: undefined, messages: [], toolCallId: "tool-1" },
+        { context: undefined, messages: [], toolCallId: "tool-1" },
       )
       return { text: Promise.resolve("") }
     })
@@ -227,7 +227,7 @@ describe("processHandoffReentry", () => {
             },
           ],
         },
-        { experimental_context: undefined, messages: [], toolCallId: "tool-1" },
+        { context: undefined, messages: [], toolCallId: "tool-1" },
       )
       return { text: Promise.resolve("") }
     })
@@ -258,7 +258,7 @@ describe("processHandoffReentry", () => {
             },
           ],
         },
-        { experimental_context: undefined, messages: [], toolCallId: "tool-1" },
+        { context: undefined, messages: [], toolCallId: "tool-1" },
       )
       return { text: Promise.resolve("") }
     })

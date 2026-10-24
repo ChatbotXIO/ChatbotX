@@ -4,7 +4,7 @@ import {
   ChannelErrorCategory,
   SdkException,
 } from "@chatbotx.io/sdk"
-import { beforeEach, describe, expect, test, vi } from "vitest"
+import { beforeEach, describe, expect, onTestFinished, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   buildContext: vi.fn(),
@@ -15,6 +15,9 @@ const mocks = vi.hoisted(() => ({
   findContact: vi.fn(),
   findContactInbox: vi.fn(),
   loggerWarn: vi.fn(),
+  loggerInfo: vi.fn(),
+  optimizationEnabled: vi.fn(() => true),
+  optimizeImage: vi.fn(),
   putObject: vi.fn(),
   runExclusive: vi.fn(),
   retrieveMedia: vi.fn(),
@@ -39,6 +42,14 @@ vi.mock("@chatbotx.io/business", () => ({
   isFailedOriginPath: (originPath: string) => originPath.startsWith("failed:"),
   isNoAvatarSentinelFresh: (failedAtMs: number, now = Date.now()) =>
     now - failedAtMs < 10 * 60 * 1000,
+  updateAttachmentOrThrow: async (
+    repository: { updateAttachment: (params: { id: string }) => unknown },
+    params: { id: string },
+  ) => {
+    if ((await repository.updateAttachment(params)) === 0) {
+      throw new Error(`Attachment ${params.id} row was not updated`)
+    }
+  },
   isPendingOriginPath: (originPath: string) =>
     originPath.startsWith("http://") ||
     originPath.startsWith("https://") ||
@@ -58,6 +69,12 @@ vi.mock("@chatbotx.io/database/client", () => ({ db: {} }))
 
 // Mirrored keys are channel-first: workspace/<channel>/<workspace>/<integration>/<date>/<id>.
 vi.mock("@chatbotx.io/filesystem", () => ({
+  getChannelMediaPrefix: (location: {
+    channel: string
+    workspaceId: string
+    integrationId: string
+  }) =>
+    `public/${location.channel}/${location.workspaceId}/${location.integrationId}/2026/10/06`,
   getMirroredChannelMediaPrefix: (location: {
     channel: string
     workspaceId: string
@@ -77,7 +94,7 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 
 vi.mock("@chatbotx.io/logger", () => ({
-  getChildLogger: () => ({ warn: mocks.loggerWarn }),
+  getChildLogger: () => ({ warn: mocks.loggerWarn, info: mocks.loggerInfo }),
   toLogSafeError: (err: unknown) =>
     err instanceof Error
       ? { name: err.name, message: err.message }
@@ -102,9 +119,21 @@ vi.mock("@chatbotx.io/utils", async (importOriginal) => ({
   createId: mocks.createId,
 }))
 
-vi.mock("image-size", () => ({
-  default: vi.fn(() => ({ height: 20, width: 10 })),
+vi.mock("@chatbotx.io/utils/image-optimize", () => ({
+  optimizeImageForStorage: mocks.optimizeImage,
+  readImageDimensions: vi.fn(async () => ({ height: 20, width: 10 })),
 }))
+
+// Real settings and encode slots; only the on/off switch is driven by tests.
+vi.mock(
+  "@chatbotx.io/utils/image-optimize-settings",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("@chatbotx.io/utils/image-optimize-settings")
+    >()),
+    isStoredImageOptimizationEnabled: mocks.optimizationEnabled,
+  }),
+)
 
 vi.mock("../src/registry", () => ({
   integrationService: { getIntegrationFromContactInbox: vi.fn() },
@@ -116,7 +145,9 @@ const {
   downloadBearerUrlMedia,
   downloadWhatsappMedia,
   ensureAttachmentMirrored,
+  ensureAttachmentStored,
   ensureContactAvatarMirrored,
+  MediaNotReadyError,
   markAttachmentUnresolvable,
   MAX_ATTACHMENT_BYTES,
   readBodyWithCap,
@@ -138,9 +169,11 @@ type TestAttachment = {
   messageCreatedAt: Date
   sourceId: string | null
   originPath: string
+  fileType: "image" | "video" | "audio" | "file"
   mimeType: string
   size: number
   createdAt: Date
+  keepOriginal: boolean | null
 }
 
 const attachment = (
@@ -153,9 +186,11 @@ const attachment = (
   messageCreatedAt,
   sourceId,
   originPath,
+  fileType: "image",
   mimeType: "image/jpeg",
   size: 0,
   createdAt: attachmentCreatedAt,
+  keepOriginal: null,
 })
 
 const messageWith = (attachments: TestAttachment[]) => ({
@@ -209,11 +244,19 @@ describe("media hydration", () => {
       updateAttachment: mocks.updateAttachment,
     })
     mocks.putObject.mockResolvedValue(undefined)
+    // Pass-through by default: the source bytes are stored as-is.
+    mocks.optimizeImage.mockImplementation(
+      async ({ bytes, mimeType }: { bytes: Buffer; mimeType: string }) => ({
+        bytes,
+        mimeType,
+        optimized: false,
+      }),
+    )
     mocks.retrieveMedia.mockResolvedValue({
       url: "https://fresh.example/whatsapp",
       mime_type: "image/jpeg",
     })
-    mocks.updateAttachment.mockResolvedValue(undefined)
+    mocks.updateAttachment.mockResolvedValue(1)
     mocks.setAvatarIfEmptyOrSentinel.mockResolvedValue(undefined)
   })
 
@@ -226,12 +269,325 @@ describe("media hydration", () => {
         attachmentId: mirrored.id,
         workspaceId,
       }),
-    ).resolves.toEqual({ originPath: mirrored.originPath })
+    ).resolves.toMatchObject({ originPath: mirrored.originPath })
 
     expect(mocks.resolveIntegrationContext).not.toHaveBeenCalled()
     expect(mocks.findById).not.toHaveBeenCalled()
     expect(mocks.runExclusive).not.toHaveBeenCalled()
     expect(mocks.putObject).not.toHaveBeenCalled()
+  })
+
+  describe("ensureAttachmentStored", () => {
+    test("returns a stored key without any DB read when the caller already holds it", async () => {
+      await expect(
+        ensureAttachmentStored({
+          attachmentId: "101",
+          workspaceId,
+          originPath: "workspace/workspace-1/media/image.jpg",
+        }),
+      ).resolves.toMatchObject({
+        originPath: "workspace/workspace-1/media/image.jpg",
+      })
+
+      expect(mocks.findAttachmentById).not.toHaveBeenCalled()
+      expect(mocks.runExclusive).not.toHaveBeenCalled()
+    })
+
+    test.each([
+      "tiktok",
+      "api",
+    ])("returns a %s attachment's external URL as-is: it is the durable value, not a pending reference", async (channel) => {
+      const external = attachment("101", "https://cdn.example/clip.jpg", null)
+      arrangeAttachmentGraph([external])
+      mocks.findContactInbox.mockResolvedValue({
+        id: "contact-inbox-1",
+        contactId: "contact-1",
+        channel,
+        inboxId: "inbox-1",
+        sourceId: "src-1",
+      })
+
+      await expect(
+        ensureAttachmentStored({
+          attachmentId: "101",
+          workspaceId,
+          originPath: external.originPath,
+        }),
+      ).resolves.toMatchObject({ originPath: external.originPath })
+
+      // Recognised from the row, before any integration or provider call.
+      expect(mocks.resolveIntegrationContext).not.toHaveBeenCalled()
+      expect(mocks.updateAttachment).not.toHaveBeenCalled()
+    })
+
+    test("stores only the requested attachment, never waiting on its siblings", async () => {
+      // A caller waiting on one image (AI reader, flow) must not be held up
+      // by the other attachments of the message: those are stored by the
+      // background job.
+      arrangeAttachmentGraph([
+        attachment("101", "https://scontent.xx.fbcdn.net/a.jpg", null),
+        attachment("102", "https://scontent.xx.fbcdn.net/b.jpg", null),
+      ])
+      const fetchMock = vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      )
+      vi.stubGlobal("fetch", fetchMock)
+      mocks.runExclusive.mockImplementation(
+        async ({ fn }: { fn: () => Promise<unknown> }) => fn(),
+      )
+
+      await ensureAttachmentStored({
+        attachmentId: "102",
+        workspaceId,
+        originPath: "https://scontent.xx.fbcdn.net/b.jpg",
+      })
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://scontent.xx.fbcdn.net/b.jpg",
+        expect.anything(),
+      )
+      expect(mocks.updateAttachment).toHaveBeenCalledTimes(1)
+      expect(mocks.updateAttachment).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "102" }),
+      )
+    })
+
+    test("reports a transient lookup failure as not-ready instead of leaking the raw error", async () => {
+      mocks.findAttachmentById.mockRejectedValue(new Error("db down"))
+
+      await expect(
+        ensureAttachmentStored({
+          attachmentId: "101",
+          workspaceId,
+          originPath: "https://cdn.example/101",
+        }),
+      ).rejects.toBeInstanceOf(MediaNotReadyError)
+    })
+
+    test("a slow lookup that outlives the timeout ends in not-ready, never an unhandled rejection", async () => {
+      const unhandled: unknown[] = []
+      const record = (reason: unknown) => unhandled.push(reason)
+      process.on("unhandledRejection", record)
+      try {
+        mocks.findAttachmentById.mockImplementation(
+          () => new Promise((resolve) => setTimeout(() => resolve(null), 60)),
+        )
+
+        await ensureAttachmentStored({
+          attachmentId: "101",
+          workspaceId,
+          originPath: "https://cdn.example/101",
+          timeoutMs: 10,
+        }).catch(() => undefined)
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        expect(unhandled).toEqual([])
+      } finally {
+        process.off("unhandledRejection", record)
+      }
+    })
+
+    test("keeps the mirrored key when only the metadata re-read fails", async () => {
+      const pending = attachment("101", "https://cdn.example/101", "src-1")
+      arrangeAttachmentGraph([pending])
+      mocks.runExclusive.mockImplementation(async () => ({
+        originPath: "workspace/messenger/workspace-1/x/y.jpg",
+      }))
+      // Both pre-mirror reads succeed; the re-read after the mirror fails.
+      mocks.findAttachmentById
+        .mockResolvedValueOnce(pending)
+        .mockResolvedValueOnce(pending)
+        .mockRejectedValue(new Error("db blip"))
+
+      await expect(
+        ensureAttachmentStored({
+          attachmentId: "101",
+          workspaceId,
+          originPath: pending.originPath,
+        }),
+      ).resolves.toMatchObject({
+        originPath: "workspace/messenger/workspace-1/x/y.jpg",
+      })
+    })
+
+    test("gives up within its deadline even when the lookup before the mirror is slow", async () => {
+      // AI readers and flows wait on this: a slow database must not make
+      // them wait past the deadline they were promised.
+      mocks.findAttachmentById.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve(null), 300)),
+      )
+      const startedAt = Date.now()
+
+      await expect(
+        ensureAttachmentStored({
+          attachmentId: "101",
+          workspaceId,
+          originPath: "https://cdn.example/101",
+          timeoutMs: 20,
+        }),
+      ).rejects.toBeInstanceOf(MediaNotReadyError)
+      expect(Date.now() - startedAt).toBeLessThan(200)
+    })
+
+    test("returns the stored key within its deadline when the metadata re-read is slow", async () => {
+      const pending = attachment("101", "https://cdn.example/101", "src-1")
+      arrangeAttachmentGraph([pending])
+      mocks.runExclusive.mockImplementation(async () => ({
+        originPath: "workspace/messenger/workspace-1/x/y.jpg",
+      }))
+      mocks.findAttachmentById
+        .mockResolvedValueOnce(pending)
+        .mockResolvedValueOnce(pending)
+        .mockImplementation(
+          () =>
+            new Promise((resolve) => setTimeout(() => resolve(pending), 300)),
+        )
+      const startedAt = Date.now()
+
+      await expect(
+        ensureAttachmentStored({
+          attachmentId: "101",
+          workspaceId,
+          originPath: pending.originPath,
+          timeoutMs: 20,
+        }),
+      ).resolves.toMatchObject({
+        originPath: "workspace/messenger/workspace-1/x/y.jpg",
+      })
+      expect(Date.now() - startedAt).toBeLessThan(200)
+    })
+
+    test("clears its timeout timer once the mirror finishes", async () => {
+      vi.useFakeTimers()
+      try {
+        const pending = attachment("101", "https://cdn.example/101", "src-1")
+        arrangeAttachmentGraph([pending])
+        mocks.runExclusive.mockImplementation(async () => ({
+          originPath: "workspace/messenger/workspace-1/x/y.jpg",
+        }))
+
+        await ensureAttachmentStored({
+          attachmentId: "101",
+          workspaceId,
+          originPath: pending.originPath,
+        })
+
+        expect(vi.getTimerCount()).toBe(0)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    test("returns null for a permanently failed attachment without mirroring", async () => {
+      await expect(
+        ensureAttachmentStored({
+          attachmentId: "101",
+          workspaceId,
+          originPath: "failed:unresolvable",
+        }),
+      ).resolves.toBeNull()
+
+      expect(mocks.runExclusive).not.toHaveBeenCalled()
+    })
+
+    test("mirrors a pending attachment and returns the stored key with its final metadata", async () => {
+      // The mirror reports what it stored: no re-read of the row afterwards.
+      const pending = attachment("101", "https://cdn.example/101", null)
+      arrangeAttachmentGraph([pending])
+      mocks.runChannelHandler.mockResolvedValue([
+        {
+          sourceId: "g-1",
+          url: "https://fresh.example/101",
+          mimeType: "image/jpeg",
+        },
+      ])
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () =>
+          Promise.resolve(
+            new Response(new Uint8Array([1, 2, 3]), {
+              headers: { "content-type": "image/jpeg" },
+            }),
+          ),
+        ),
+      )
+
+      const stored = await ensureAttachmentStored({
+        attachmentId: "101",
+        workspaceId,
+        messageCreatedAt,
+        originPath: pending.originPath,
+      })
+
+      expect(stored).toEqual({
+        originPath:
+          "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+        mimeType: "image/jpeg",
+        size: 3,
+      })
+      expect(mocks.findAttachmentById).toHaveBeenCalledWith(
+        expect.objectContaining({ messageCreatedAt }),
+      )
+      // One lookup before the lock, one inside it: nothing after the mirror.
+      expect(mocks.findAttachmentById).toHaveBeenCalledTimes(2)
+    })
+
+    test("returns null when the mirror fails terminally", async () => {
+      const pending = attachment("101", "https://cdn.example/101", "src-1")
+      arrangeAttachmentGraph([pending])
+      mocks.runChannelHandler.mockResolvedValue([])
+
+      await expect(
+        ensureAttachmentStored({
+          attachmentId: "101",
+          workspaceId,
+          originPath: pending.originPath,
+        }),
+      ).resolves.toBeNull()
+    })
+
+    test("throws MediaNotReadyError when the mirror outlives the wait", async () => {
+      const pending = attachment("101", "https://cdn.example/101", "src-1")
+      arrangeAttachmentGraph([pending])
+      mocks.runExclusive.mockImplementation(
+        () => new Promise<never>(() => undefined),
+      )
+
+      await expect(
+        ensureAttachmentStored({
+          attachmentId: "101",
+          workspaceId,
+          originPath: pending.originPath,
+          timeoutMs: 20,
+        }),
+      ).rejects.toBeInstanceOf(MediaNotReadyError)
+    })
+
+    test("bounds the lock wait to the caller's timeout instead of the 5 minute default", async () => {
+      const pending = attachment("101", "https://cdn.example/101", "src-1")
+      arrangeAttachmentGraph([pending])
+      mocks.runExclusive.mockImplementation(
+        () => new Promise<never>(() => undefined),
+      )
+
+      await expect(
+        ensureAttachmentStored({
+          attachmentId: "101",
+          workspaceId,
+          originPath: pending.originPath,
+          timeoutMs: 20,
+        }),
+      ).rejects.toBeInstanceOf(MediaNotReadyError)
+
+      expect(mocks.runExclusive).toHaveBeenCalledWith(
+        expect.objectContaining({ retryTimeoutInSeconds: 1 }),
+      )
+    })
   })
 
   test("returns null for mirrored media without loading the attachment graph", async () => {
@@ -310,6 +666,118 @@ describe("media hydration", () => {
     ).resolves.toMatchObject({ url: "https://fresh.example/101" })
   })
 
+  test("does not hand the browser a different kind of file for a row without a provider id", async () => {
+    // First view of a live webhook row: the redirect must follow the same safe
+    // pairing as the mirror, or a photo could be shown as the sibling video.
+    const pending = attachment("101", "https://cdn.example/p.jpg", null)
+    arrangeAttachmentGraph([pending])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "graph-1",
+        url: "https://fresh.example/clip.mp4",
+        mimeType: "video/mp4",
+      },
+    ])
+
+    await expect(
+      resolveFreshMediaUrl({ attachmentId: "101", workspaceId }),
+    ).resolves.toBeNull()
+  })
+
+  test("serves a live webhook row from its own CDN URL without asking the provider", async () => {
+    // First view of a fresh photo: the webhook URL still works, so the browser
+    // gets it right away; Graph is only the recovery path for an expired URL.
+    const pending = attachment(
+      "101",
+      "https://scontent.xx.fbcdn.net/p.jpg",
+      null,
+    )
+    arrangeAttachmentGraph([pending])
+
+    await expect(
+      resolveFreshMediaUrl({ attachmentId: "101", workspaceId }),
+    ).resolves.toMatchObject({
+      url: "https://scontent.xx.fbcdn.net/p.jpg",
+      channel: "messenger",
+    })
+    expect(mocks.runChannelHandler).not.toHaveBeenCalled()
+  })
+
+  test("asks the provider for a fresh URL when told the stored webhook URL already failed", async () => {
+    const pending = attachment(
+      "101",
+      "https://scontent.xx.fbcdn.net/p.jpg",
+      null,
+    )
+    arrangeAttachmentGraph([pending])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "graph-1",
+        url: "https://fresh.example/p.jpg",
+        mimeType: "image/jpeg",
+      },
+    ])
+
+    await expect(
+      resolveFreshMediaUrl({
+        attachmentId: "101",
+        workspaceId,
+        skipStoredUrl: true,
+      }),
+    ).resolves.toMatchObject({ url: "https://fresh.example/p.jpg" })
+    expect(mocks.runChannelHandler).toHaveBeenCalledTimes(1)
+  })
+
+  test("does not pair a row without a provider id when the provider lists a different number of attachments", async () => {
+    const attachments = [
+      attachment("101", "https://cdn.example/a.jpg", null),
+      attachment("102", "https://cdn.example/b.jpg", null),
+    ]
+    arrangeAttachmentGraph(attachments)
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "graph-1",
+        url: "https://fresh.example/only.jpg",
+        mimeType: "image/jpeg",
+      },
+    ])
+
+    await expect(
+      resolveFreshMediaUrl({ attachmentId: "102", workspaceId }),
+    ).resolves.toBeNull()
+  })
+
+  test("does not pair a multi-attachment mirrored message by position", async () => {
+    // Equal counts do not prove equal order: Graph may list the photos of a
+    // two-photo message the other way round, and a positional restore would
+    // then write the sibling's bytes under this row's key.
+    const attachments = [
+      attachment("101", "public/ws/workspace-1/a", "internal-1"),
+      attachment("102", "public/ws/workspace-1/b", "internal-2"),
+    ]
+    arrangeAttachmentGraph(attachments)
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "graph-attachment-1",
+        url: "https://fresh.example/a",
+        mimeType: "image/jpeg",
+      },
+      {
+        sourceId: "graph-attachment-2",
+        url: "https://fresh.example/b",
+        mimeType: "image/jpeg",
+      },
+    ])
+
+    await expect(
+      resolveFreshMediaUrl({
+        attachmentId: "102",
+        workspaceId,
+        allowMirrored: true,
+      }),
+    ).resolves.toBeNull()
+  })
+
   test("does not pair a mirrored attachment by position when the counts differ", async () => {
     const attachments = [
       attachment("101", "public/ws/workspace-1/a", "internal-1"),
@@ -349,9 +817,168 @@ describe("media hydration", () => {
     ).resolves.toBeNull()
   })
 
-  test("restores a mirrored attachment into its existing storage key without touching the row", async () => {
-    const mirrored = attachment("101", "workspace/workspace-1/media/image.jpg")
+  test("a restore whose row update matched nothing is a failure, not a restore", async () => {
+    arrangeAttachmentGraph([
+      attachment(
+        "101",
+        "public/messenger/workspace-1/integration-1/2026/10/06/storage-9",
+      ),
+    ])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101",
+        mimeType: "image/jpeg",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3, 4]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      ),
+    )
+    mocks.updateAttachment.mockResolvedValue(0)
+
+    await expect(
+      restoreMirroredAttachment({ attachmentId: "101", workspaceId }),
+    ).rejects.toThrow("was not updated")
+  })
+
+  test("restores an evicted photo through the encoder and refreshes the row", async () => {
+    const mirrored = attachment(
+      "101",
+      "public/messenger/workspace-1/integration-1/2026/10/06/storage-9",
+    )
     arrangeAttachmentGraph([mirrored])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101",
+        mimeType: "image/jpeg",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3, 4]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      ),
+    )
+    const encoded = Buffer.from([7, 7])
+    mocks.optimizeImage.mockResolvedValue({
+      bytes: encoded,
+      mimeType: "image/jpeg",
+      optimized: true,
+      width: 1600,
+      height: 900,
+    })
+
+    await expect(
+      restoreMirroredAttachment({
+        attachmentId: mirrored.id,
+        workspaceId,
+        messageCreatedAt,
+      }),
+    ).resolves.toEqual({ restored: true })
+
+    expect(mocks.findAttachmentById).toHaveBeenCalledWith({
+      id: mirrored.id,
+      workspaceId,
+      messageCreatedAt,
+    })
+    // Same key: no new object name is minted.
+    expect(mocks.createId).not.toHaveBeenCalled()
+    expect(mocks.putObject).toHaveBeenCalledTimes(1)
+    expect(mocks.putObject).toHaveBeenCalledWith(
+      "public/messenger/workspace-1/integration-1/2026/10/06/storage-9",
+      encoded,
+      expect.objectContaining({
+        ACL: "public-read",
+        ContentType: "image/jpeg",
+        ContentLength: 2,
+      }),
+    )
+    expect(mocks.updateAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "101",
+        fields: expect.objectContaining({
+          originPath:
+            "public/messenger/workspace-1/integration-1/2026/10/06/storage-9",
+          mimeType: "image/jpeg",
+          size: 2,
+          width: 1600,
+          height: 900,
+        }),
+      }),
+    )
+  })
+
+  test("restore keeps the source bytes when the key's extension would not match the encoded format", async () => {
+    const mirrored = attachment(
+      "101",
+      "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-9.png",
+    )
+    arrangeAttachmentGraph([mirrored])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101.png",
+        mimeType: "image/png",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "image/png" },
+          }),
+        ),
+      ),
+    )
+    mocks.optimizeImage.mockResolvedValue({
+      bytes: Buffer.from([9]),
+      mimeType: "image/jpeg",
+      optimized: true,
+      width: 10,
+      height: 20,
+    })
+
+    await restoreMirroredAttachment({ attachmentId: "101", workspaceId })
+
+    expect(mocks.putObject).toHaveBeenCalledWith(
+      "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-9.png",
+      expect.any(Buffer),
+      expect.objectContaining({ ContentType: "image/png", ContentLength: 3 }),
+    )
+    expect(mocks.updateAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fields: expect.objectContaining({ mimeType: "image/png", size: 3 }),
+      }),
+    )
+  })
+
+  test("restore without re-encoding records the dimensions of the bytes it stored", async () => {
+    mocks.optimizationEnabled.mockReturnValue(false)
+    onTestFinished(() => {
+      mocks.optimizationEnabled.mockReturnValue(true)
+    })
+    const compressedEarlier = {
+      ...attachment(
+        "101",
+        "public/messenger/workspace-1/integration-1/2026/10/06/storage-9",
+      ),
+      width: 1600,
+      height: 1200,
+    }
+    arrangeAttachmentGraph([compressedEarlier])
     mocks.runChannelHandler.mockResolvedValue([
       {
         sourceId: "source-101",
@@ -370,27 +997,13 @@ describe("media hydration", () => {
       ),
     )
 
-    await expect(
-      restoreMirroredAttachment({
-        attachmentId: mirrored.id,
-        workspaceId,
-        messageCreatedAt,
-      }),
-    ).resolves.toEqual({ restored: true })
+    await restoreMirroredAttachment({ attachmentId: "101", workspaceId })
 
-    expect(mocks.findAttachmentById).toHaveBeenCalledWith({
-      id: mirrored.id,
-      workspaceId,
-      messageCreatedAt,
-    })
-    expect(mocks.putObject).toHaveBeenCalledTimes(1)
-    expect(mocks.putObject).toHaveBeenCalledWith(
-      "workspace/workspace-1/media/image.jpg",
-      expect.any(Buffer),
-      { ContentLength: 3, ContentType: "image/jpeg" },
+    expect(mocks.updateAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fields: expect.objectContaining({ width: 10, height: 20 }),
+      }),
     )
-    expect(mocks.createId).not.toHaveBeenCalled()
-    expect(mocks.updateAttachment).not.toHaveBeenCalled()
   })
 
   test("restores a publicly uploaded attachment with its public-read ACL", async () => {
@@ -652,9 +1265,9 @@ describe("media hydration", () => {
         attachmentId: "102",
         workspaceId,
       }),
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       originPath:
-        "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-2.png",
+        "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.png",
     })
 
     expect(mocks.runChannelHandler).toHaveBeenCalledTimes(1)
@@ -664,22 +1277,23 @@ describe("media hydration", () => {
       expect.objectContaining({ data: { graphMessageId: "graph-message-1" } }),
     )
     expect(mocks.putObject).toHaveBeenCalledTimes(3)
+    // The requested attachment is stored first; its siblings follow.
     expect(mocks.updateAttachment.mock.calls).toEqual([
-      [
-        expect.objectContaining({
-          id: "101",
-          fields: expect.objectContaining({
-            originPath:
-              "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
-          }),
-        }),
-      ],
       [
         expect.objectContaining({
           id: "102",
           fields: expect.objectContaining({
             originPath:
-              "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-2.png",
+              "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.png",
+          }),
+        }),
+      ],
+      [
+        expect.objectContaining({
+          id: "101",
+          fields: expect.objectContaining({
+            originPath:
+              "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-2.jpg",
           }),
         }),
       ],
@@ -693,6 +1307,299 @@ describe("media hydration", () => {
         }),
       ],
     ])
+  })
+
+  test("stores a mirrored photo over the background size ceiling as it is, without decoding it", async () => {
+    // Decoding a huge photo is what exhausts a worker's memory: like the
+    // background job, the mirror leaves sources over the ceiling untouched.
+    vi.stubEnv("STORED_IMAGE_JOB_MAX_SOURCE_MB", "1")
+    onTestFinished(() => {
+      vi.unstubAllEnvs()
+    })
+    arrangeAttachmentGraph([attachment("101")])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101.jpg",
+        mimeType: "image/jpeg",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array(2 * 1024 * 1024), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      ),
+    )
+
+    await ensureAttachmentMirrored({ attachmentId: "101", workspaceId })
+
+    expect(mocks.optimizeImage).not.toHaveBeenCalled()
+    expect(mocks.updateAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fields: expect.objectContaining({ size: 2 * 1024 * 1024 }),
+      }),
+    )
+  })
+
+  test("never encodes more mirrored photos at once than the per-process limit", async () => {
+    vi.stubEnv("STORED_IMAGE_INLINE_CONCURRENCY", "1")
+    onTestFinished(() => {
+      vi.unstubAllEnvs()
+    })
+    let running = 0
+    let peak = 0
+    mocks.optimizeImage.mockImplementation(async () => {
+      running += 1
+      peak = Math.max(peak, running)
+      await new Promise((resolve) => setTimeout(resolve, 10))
+      running -= 1
+      return {
+        bytes: Buffer.from([1]),
+        mimeType: "image/jpeg",
+        optimized: true,
+      }
+    })
+    const rows = [attachment("101"), attachment("102")]
+    mocks.findAttachmentById.mockImplementation(
+      async ({ id }: { id: string }) =>
+        rows.find((row) => row.id === id) ?? null,
+    )
+    arrangeAttachmentGraph(rows)
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101.jpg",
+        mimeType: "image/jpeg",
+      },
+      {
+        sourceId: "source-102",
+        url: "https://fresh.example/102.jpg",
+        mimeType: "image/jpeg",
+      },
+    ])
+    mocks.runExclusive.mockImplementation(
+      async ({ fn }: { fn: () => Promise<unknown> }) => fn(),
+    )
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      ),
+    )
+
+    await Promise.all([
+      ensureAttachmentMirrored({
+        attachmentId: "101",
+        workspaceId,
+        includeSiblings: false,
+      }),
+      ensureAttachmentMirrored({
+        attachmentId: "102",
+        workspaceId,
+        includeSiblings: false,
+      }),
+    ])
+
+    expect(mocks.optimizeImage).toHaveBeenCalledTimes(2)
+    expect(peak).toBe(1)
+  })
+
+  test("re-encodes a mirrored photo before storing it and records the encoded bytes", async () => {
+    const pending = attachment("101")
+    arrangeAttachmentGraph([pending])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101.png",
+        mimeType: "image/png",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3, 4]), {
+            headers: { "content-type": "image/png" },
+          }),
+        ),
+      ),
+    )
+    const encoded = Buffer.from([9, 9])
+    mocks.optimizeImage.mockResolvedValue({
+      bytes: encoded,
+      mimeType: "image/jpeg",
+      optimized: true,
+      width: 1600,
+      height: 800,
+    })
+
+    await expect(
+      ensureAttachmentMirrored({ attachmentId: "101", workspaceId }),
+    ).resolves.toMatchObject({
+      // The extension follows the stored bytes, not the source format.
+      originPath:
+        "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+    })
+
+    expect(mocks.optimizeImage).toHaveBeenCalledWith(
+      expect.objectContaining({ mimeType: "image/png", profile: "media" }),
+    )
+    expect(mocks.putObject).toHaveBeenCalledTimes(1)
+    expect(mocks.putObject).toHaveBeenCalledWith(
+      "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+      encoded,
+      expect.objectContaining({ ContentType: "image/jpeg", ContentLength: 2 }),
+    )
+    expect(mocks.updateAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "101",
+        fields: expect.objectContaining({
+          mimeType: "image/jpeg",
+          size: 2,
+          width: 1600,
+          height: 800,
+        }),
+      }),
+    )
+  })
+
+  test("mirrors an image sent as a file without re-encoding it", async () => {
+    const pending = { ...attachment("101"), keepOriginal: true }
+    arrangeAttachmentGraph([pending])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101.png",
+        mimeType: "image/png",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "image/png" },
+          }),
+        ),
+      ),
+    )
+
+    await ensureAttachmentMirrored({ attachmentId: "101", workspaceId })
+
+    expect(mocks.optimizeImage).not.toHaveBeenCalled()
+    expect(mocks.putObject).toHaveBeenCalledWith(
+      "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.png",
+      expect.any(Buffer),
+      expect.objectContaining({ ContentType: "image/png", ContentLength: 3 }),
+    )
+  })
+
+  test("restores an image sent as a file with its original bytes", async () => {
+    const mirrored = {
+      ...attachment(
+        "101",
+        "public/messenger/workspace-1/integration-1/2026/10/06/storage-9",
+      ),
+      keepOriginal: true,
+    }
+    arrangeAttachmentGraph([mirrored])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101",
+        mimeType: "image/jpeg",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3, 4]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      ),
+    )
+
+    await restoreMirroredAttachment({ attachmentId: "101", workspaceId })
+
+    expect(mocks.optimizeImage).not.toHaveBeenCalled()
+    expect(mocks.putObject).toHaveBeenCalledWith(
+      "public/messenger/workspace-1/integration-1/2026/10/06/storage-9",
+      expect.any(Buffer),
+      expect.objectContaining({ ContentLength: 4 }),
+    )
+  })
+
+  test("mirrors without re-encoding when the switch is off", async () => {
+    mocks.optimizationEnabled.mockReturnValue(false)
+    const pending = attachment("101")
+    arrangeAttachmentGraph([pending])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101",
+        mimeType: "image/jpeg",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      ),
+    )
+
+    await ensureAttachmentMirrored({ attachmentId: "101", workspaceId })
+
+    expect(mocks.optimizeImage).not.toHaveBeenCalled()
+    expect(mocks.putObject).toHaveBeenCalledWith(
+      "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+      expect.any(Buffer),
+      expect.objectContaining({ ContentType: "image/jpeg", ContentLength: 3 }),
+    )
+  })
+
+  test("stores a mirrored video without running the image optimizer", async () => {
+    const pending = attachment("101")
+    arrangeAttachmentGraph([pending])
+    mocks.runChannelHandler.mockResolvedValue([
+      {
+        sourceId: "source-101",
+        url: "https://fresh.example/101.mp4",
+        mimeType: "video/mp4",
+      },
+    ])
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "video/mp4" },
+          }),
+        ),
+      ),
+    )
+
+    await ensureAttachmentMirrored({ attachmentId: "101", workspaceId })
+
+    expect(mocks.optimizeImage).not.toHaveBeenCalled()
+    expect(mocks.putObject).toHaveBeenCalledWith(
+      "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.mp4",
+      expect.any(Buffer),
+      expect.objectContaining({ ContentType: "video/mp4", ContentLength: 3 }),
+    )
   })
 
   test("marks an oversized attachment failed and throws a terminal error", async () => {
@@ -774,7 +1681,7 @@ describe("media hydration", () => {
         attachmentId: pending.id,
         workspaceId,
       }),
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       originPath:
         "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-1.jpg",
     })
@@ -831,31 +1738,32 @@ describe("media hydration", () => {
         attachmentId: "102",
         workspaceId,
       }),
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       originPath:
-        "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-2.png",
+        "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-1.png",
     })
 
+    // The requested attachment is stored first; its sibling follows.
     expect(mocks.retrieveMedia.mock.calls).toEqual([
-      ["media-101"],
       ["media-102"],
+      ["media-101"],
     ])
     expect(mocks.updateAttachment.mock.calls).toEqual([
-      [
-        expect.objectContaining({
-          id: "101",
-          fields: expect.objectContaining({
-            originPath:
-              "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-1.jpg",
-          }),
-        }),
-      ],
       [
         expect.objectContaining({
           id: "102",
           fields: expect.objectContaining({
             originPath:
-              "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-2.png",
+              "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-1.png",
+          }),
+        }),
+      ],
+      [
+        expect.objectContaining({
+          id: "101",
+          fields: expect.objectContaining({
+            originPath:
+              "workspace/whatsapp/workspace-1/integration-1/2026/10/06/storage-2.jpg",
           }),
         }),
       ],
@@ -886,7 +1794,7 @@ describe("media hydration", () => {
 
     await expect(
       ensureAttachmentMirrored({ attachmentId: "101", workspaceId }),
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       originPath:
         "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
     })
@@ -920,24 +1828,498 @@ describe("media hydration", () => {
         mimeType: "image/png",
       },
     ])
+    // The stored provider URLs have expired (403): only Graph's fresh URLs work.
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) =>
-        Promise.resolve(
-          new Response(new Uint8Array([1, 2, 3]), {
-            headers: {
-              "content-type": url.endsWith("102") ? "image/png" : "image/jpeg",
-            },
-          }),
-        ),
+        url.startsWith("https://cdn.example")
+          ? Promise.resolve(new Response(null, { status: 403 }))
+          : Promise.resolve(
+              new Response(new Uint8Array([1, 2, 3]), {
+                headers: {
+                  "content-type": url.endsWith("102")
+                    ? "image/png"
+                    : "image/jpeg",
+                },
+              }),
+            ),
       ),
     )
 
     await expect(
       ensureAttachmentMirrored({ attachmentId: "102", workspaceId }),
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       originPath:
-        "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-2.png",
+        "workspace/messenger/workspace-1/integration-1/2026/10/06/storage-1.png",
+    })
+  })
+
+  describe("webhook rows without a provider attachment id", () => {
+    const expiredStoredUrlFetch = () =>
+      vi.fn(async (url: string) =>
+        url.startsWith("https://scontent.xx.fbcdn.net")
+          ? Promise.resolve(new Response(null, { status: 403 }))
+          : Promise.resolve(
+              new Response(new Uint8Array([1, 2, 3]), {
+                headers: { "content-type": "image/jpeg" },
+              }),
+            ),
+      )
+
+    test("fails, instead of reporting success, when the row was not updated", async () => {
+      // The object is written but no row points at it: reporting success here
+      // is how a webhook photo stayed a provider URL forever. Fail so the job
+      // retries and the failure is visible.
+      arrangeAttachmentGraph([
+        attachment("101", "https://scontent.xx.fbcdn.net/p.jpg", null),
+      ])
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () =>
+          Promise.resolve(
+            new Response(new Uint8Array([1, 2, 3]), {
+              headers: { "content-type": "image/jpeg" },
+            }),
+          ),
+        ),
+      )
+      mocks.updateAttachment.mockResolvedValue(0)
+
+      await expect(
+        ensureAttachmentMirrored({ attachmentId: "101", workspaceId }),
+      ).rejects.toThrow("was not updated")
+    })
+
+    test("mirrors the stored webhook URL directly without calling Graph", async () => {
+      const pending = attachment(
+        "101",
+        "https://scontent.xx.fbcdn.net/p.jpg",
+        null,
+      )
+      arrangeAttachmentGraph([pending])
+      const fetchMock = vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      )
+      vi.stubGlobal("fetch", fetchMock)
+
+      await expect(
+        ensureAttachmentMirrored({ attachmentId: "101", workspaceId }),
+      ).resolves.toMatchObject({
+        originPath:
+          "public/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+      })
+
+      expect(mocks.runChannelHandler).not.toHaveBeenCalled()
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://scontent.xx.fbcdn.net/p.jpg",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: "Bearer access-token",
+          }),
+        }),
+      )
+    })
+
+    test("stores a live webhook row's copy publicly, like an eagerly downloaded one", async () => {
+      // Flows hand this URL to other systems ({{last_input}}, custom fields),
+      // so it must stay reachable without signing, as eager media always was.
+      arrangeAttachmentGraph([
+        attachment("101", "https://scontent.xx.fbcdn.net/p.jpg", null),
+      ])
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () =>
+          Promise.resolve(
+            new Response(new Uint8Array([1, 2, 3]), {
+              headers: { "content-type": "image/jpeg" },
+            }),
+          ),
+        ),
+      )
+
+      await expect(
+        ensureAttachmentMirrored({ attachmentId: "101", workspaceId }),
+      ).resolves.toMatchObject({
+        originPath:
+          "public/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+      })
+      expect(mocks.putObject).toHaveBeenCalledWith(
+        "public/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+        expect.anything(),
+        expect.objectContaining({ ACL: "public-read" }),
+      )
+    })
+
+    test("falls back to Graph when the stored URL has expired and the message has one matching attachment", async () => {
+      const pending = attachment(
+        "101",
+        "https://scontent.xx.fbcdn.net/p.jpg",
+        null,
+      )
+      arrangeAttachmentGraph([pending])
+      mocks.runChannelHandler.mockResolvedValue([
+        {
+          sourceId: "graph-1",
+          url: "https://fresh.example/101",
+          mimeType: "image/jpeg",
+        },
+      ])
+      vi.stubGlobal("fetch", expiredStoredUrlFetch())
+
+      await expect(
+        ensureAttachmentMirrored({ attachmentId: "101", workspaceId }),
+      ).resolves.toMatchObject({
+        originPath:
+          "public/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+      })
+      expect(mocks.runChannelHandler).toHaveBeenCalledTimes(1)
+    })
+
+    test("marks the row unresolvable when the stored URL expired and Graph returns a different number of attachments", async () => {
+      const attachments = [
+        attachment("101", "https://scontent.xx.fbcdn.net/a.jpg", null),
+        attachment("102", "https://scontent.xx.fbcdn.net/b.jpg", null),
+      ]
+      arrangeAttachmentGraph(attachments)
+      mocks.runChannelHandler.mockResolvedValue([
+        {
+          sourceId: "graph-b",
+          url: "https://fresh.example/b",
+          mimeType: "image/jpeg",
+        },
+      ])
+      vi.stubGlobal("fetch", expiredStoredUrlFetch())
+
+      const result = ensureAttachmentMirrored({
+        attachmentId: "102",
+        workspaceId,
+      })
+
+      await expect(result).rejects.toMatchObject({ reason: "unresolvable" })
+      expect(mocks.updateAttachment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "102",
+          fields: expect.objectContaining({
+            originPath: "failed:unresolvable",
+          }),
+        }),
+      )
+    })
+
+    test("marks the row unresolvable when the Graph attachment at its position is a different kind of file", async () => {
+      const pending = attachment(
+        "101",
+        "https://scontent.xx.fbcdn.net/p.jpg",
+        null,
+      )
+      arrangeAttachmentGraph([pending])
+      mocks.runChannelHandler.mockResolvedValue([
+        {
+          sourceId: "graph-1",
+          url: "https://fresh.example/clip.mp4",
+          mimeType: "video/mp4",
+        },
+      ])
+      vi.stubGlobal("fetch", expiredStoredUrlFetch())
+
+      await expect(
+        ensureAttachmentMirrored({ attachmentId: "101", workspaceId }),
+      ).rejects.toMatchObject({ reason: "unresolvable" })
+      expect(mocks.putObject).not.toHaveBeenCalled()
+    })
+
+    test("keeps the row retryable when the stored URL fails with a server error", async () => {
+      const pending = attachment(
+        "101",
+        "https://scontent.xx.fbcdn.net/p.jpg",
+        null,
+      )
+      arrangeAttachmentGraph([pending])
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => Promise.resolve(new Response(null, { status: 503 }))),
+      )
+
+      const result = ensureAttachmentMirrored({
+        attachmentId: "101",
+        workspaceId,
+      })
+
+      await expect(result).rejects.toThrow("503")
+      await expect(result).rejects.not.toBeInstanceOf(TerminalMediaError)
+      expect(mocks.runChannelHandler).not.toHaveBeenCalled()
+      expect(mocks.updateAttachment).not.toHaveBeenCalled()
+    })
+
+    test("never sends the page token to a host outside the provider's CDN", async () => {
+      // A third-party URL (a shared link, a GIF host) must not receive the page
+      // token: such a row goes straight to Graph.
+      const pending = attachment("101", "https://tracker.example/p.jpg", null)
+      arrangeAttachmentGraph([pending])
+      mocks.runChannelHandler.mockResolvedValue([
+        {
+          sourceId: "graph-1",
+          url: "https://scontent.xx.fbcdn.net/fresh.jpg",
+          mimeType: "image/jpeg",
+        },
+      ])
+      const fetchMock = vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      )
+      vi.stubGlobal("fetch", fetchMock)
+
+      await ensureAttachmentMirrored({ attachmentId: "101", workspaceId })
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://scontent.xx.fbcdn.net/fresh.jpg",
+        expect.anything(),
+      )
+    })
+
+    test.each([
+      "http://scontent.xx.fbcdn.net/p.jpg",
+      "https://fbcdn.net.evil.example/p.jpg",
+      "https://evilfbcdn.net/p.jpg",
+    ])("does not treat %s as the provider's CDN", async (url) => {
+      const pending = attachment("101", url, null)
+      arrangeAttachmentGraph([pending])
+      mocks.runChannelHandler.mockResolvedValue([
+        {
+          sourceId: "graph-1",
+          url: "https://scontent.xx.fbcdn.net/fresh.jpg",
+          mimeType: "image/jpeg",
+        },
+      ])
+      const fetchMock = vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      )
+      vi.stubGlobal("fetch", fetchMock)
+
+      await ensureAttachmentMirrored({ attachmentId: "101", workspaceId })
+
+      expect(fetchMock).not.toHaveBeenCalledWith(url, expect.anything())
+    })
+
+    test.each([
+      408, 429,
+    ])("keeps the row retryable when the stored URL answers %s", async (status) => {
+      const pending = attachment(
+        "101",
+        "https://scontent.xx.fbcdn.net/p.jpg",
+        null,
+      )
+      arrangeAttachmentGraph([pending])
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => Promise.resolve(new Response(null, { status }))),
+      )
+
+      const result = ensureAttachmentMirrored({
+        attachmentId: "101",
+        workspaceId,
+      })
+
+      await expect(result).rejects.not.toBeInstanceOf(TerminalMediaError)
+      expect(mocks.runChannelHandler).not.toHaveBeenCalled()
+    })
+
+    test("treats an empty body from the stored URL as gone and asks Graph", async () => {
+      const pending = attachment(
+        "101",
+        "https://scontent.xx.fbcdn.net/p.jpg",
+        null,
+      )
+      arrangeAttachmentGraph([pending])
+      mocks.runChannelHandler.mockResolvedValue([
+        {
+          sourceId: "graph-1",
+          url: "https://fresh.example/101",
+          mimeType: "image/jpeg",
+        },
+      ])
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (url: string) =>
+          url.startsWith("https://scontent.xx.fbcdn.net")
+            ? Promise.resolve(new Response(new Uint8Array(0), { status: 200 }))
+            : Promise.resolve(
+                new Response(new Uint8Array([1, 2, 3]), {
+                  headers: { "content-type": "image/jpeg" },
+                }),
+              ),
+        ),
+      )
+
+      await expect(
+        ensureAttachmentMirrored({ attachmentId: "101", workspaceId }),
+      ).resolves.toMatchObject({
+        originPath:
+          "public/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+      })
+      expect(mocks.runChannelHandler).toHaveBeenCalledTimes(1)
+    })
+
+    test("skips a sibling whose URL is gone and cannot be paired, and still mirrors the requested row", async () => {
+      const attachments = [
+        attachment("101", "https://scontent.xx.fbcdn.net/a.jpg", null),
+        attachment("102", "https://scontent.xx.fbcdn.net/b.jpg", null),
+      ]
+      arrangeAttachmentGraph(attachments)
+      // Graph lists a different number of attachments: no pairing is possible.
+      mocks.runChannelHandler.mockResolvedValue([])
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (url: string) =>
+          url.endsWith("/a.jpg")
+            ? Promise.resolve(new Response(null, { status: 403 }))
+            : Promise.resolve(
+                new Response(new Uint8Array([1, 2, 3]), {
+                  headers: { "content-type": "image/jpeg" },
+                }),
+              ),
+        ),
+      )
+
+      await expect(
+        ensureAttachmentMirrored({ attachmentId: "102", workspaceId }),
+      ).resolves.toMatchObject({
+        originPath:
+          "public/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+      })
+      // The sibling is left pending, not marked failed.
+      expect(mocks.updateAttachment).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "101",
+          fields: expect.objectContaining({
+            originPath: "failed:unresolvable",
+          }),
+        }),
+      )
+    })
+
+    test("a sibling's temporary failure never blocks or fails the requested attachment", async () => {
+      // A then B; the job asks for B. A's CDN is down (503): B must still be
+      // stored, and A stays pending for its own retry, instead of the whole
+      // job failing until its last attempt marks B unresolvable.
+      arrangeAttachmentGraph([
+        attachment("101", "https://scontent.xx.fbcdn.net/a.jpg", null),
+        attachment("102", "https://scontent.xx.fbcdn.net/b.jpg", null),
+      ])
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (url: string) =>
+          url.endsWith("/a.jpg")
+            ? Promise.resolve(new Response(null, { status: 503 }))
+            : Promise.resolve(
+                new Response(new Uint8Array([1, 2, 3]), {
+                  headers: { "content-type": "image/jpeg" },
+                }),
+              ),
+        ),
+      )
+
+      await expect(
+        ensureAttachmentMirrored({ attachmentId: "102", workspaceId }),
+      ).resolves.toMatchObject({
+        originPath:
+          "public/messenger/workspace-1/integration-1/2026/10/06/storage-1.jpg",
+      })
+      expect(mocks.updateAttachment).toHaveBeenCalledTimes(1)
+      expect(mocks.updateAttachment).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "102" }),
+      )
+    })
+
+    test("the requested attachment's own temporary failure still fails the job for a retry", async () => {
+      arrangeAttachmentGraph([
+        attachment("101", "https://scontent.xx.fbcdn.net/a.jpg", null),
+      ])
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => Promise.resolve(new Response(null, { status: 503 }))),
+      )
+
+      await expect(
+        ensureAttachmentMirrored({ attachmentId: "101", workspaceId }),
+      ).rejects.toThrow()
+      expect(mocks.updateAttachment).not.toHaveBeenCalled()
+    })
+
+    test("logs where the bytes came from and what compression saved", async () => {
+      const pending = attachment(
+        "101",
+        "https://scontent.xx.fbcdn.net/p.jpg",
+        null,
+      )
+      arrangeAttachmentGraph([pending])
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () =>
+          Promise.resolve(
+            new Response(new Uint8Array([1, 2, 3]), {
+              headers: { "content-type": "image/jpeg" },
+            }),
+          ),
+        ),
+      )
+
+      await ensureAttachmentMirrored({ attachmentId: "101", workspaceId })
+
+      expect(mocks.loggerInfo).toHaveBeenCalledWith(
+        expect.objectContaining({
+          attachmentId: "101",
+          source: "stored-url",
+          optimized: false,
+          bytesBefore: 3,
+          bytesAfter: 3,
+        }),
+        expect.stringContaining("mirrored"),
+      )
+    })
+
+    test("still resolves a row that carries a provider id by identity, without trying its stored URL", async () => {
+      const pending = attachment(
+        "101",
+        "https://scontent.xx.fbcdn.net/p.jpg",
+        "graph-1",
+      )
+      arrangeAttachmentGraph([pending])
+      mocks.runChannelHandler.mockResolvedValue([
+        {
+          sourceId: "graph-1",
+          url: "https://fresh.example/101",
+          mimeType: "image/jpeg",
+        },
+      ])
+      const fetchMock = vi.fn(async () =>
+        Promise.resolve(
+          new Response(new Uint8Array([1, 2, 3]), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      )
+      vi.stubGlobal("fetch", fetchMock)
+
+      await ensureAttachmentMirrored({ attachmentId: "101", workspaceId })
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://fresh.example/101",
+        expect.anything(),
+      )
     })
   })
 
@@ -962,13 +2344,14 @@ describe("media hydration", () => {
     )
   })
 
-  test("keeps a legacy row pending on a positional miss", async () => {
+  test("marks a legacy row unresolvable when its stored URL expired and Graph cannot be paired", async () => {
     const attachments = [
       attachment("101", "https://cdn.example/101", null),
       attachment("102", "https://cdn.example/102", null),
     ]
     arrangeAttachmentGraph(attachments)
-    // Graph dropped one url-less entry, so index 1 has no media.
+    // Graph dropped one url-less entry, so the counts differ: no attachment can
+    // be paired safely, and retrying gets the same answer.
     mocks.runChannelHandler.mockResolvedValue([
       {
         sourceId: "graph-b",
@@ -978,12 +2361,14 @@ describe("media hydration", () => {
     ])
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
-        Promise.resolve(
-          new Response(new Uint8Array([1, 2, 3]), {
-            headers: { "content-type": "image/jpeg" },
-          }),
-        ),
+      vi.fn(async (url: string) =>
+        url.startsWith("https://cdn.example")
+          ? Promise.resolve(new Response(null, { status: 403 }))
+          : Promise.resolve(
+              new Response(new Uint8Array([1, 2, 3]), {
+                headers: { "content-type": "image/jpeg" },
+              }),
+            ),
       ),
     )
 
@@ -993,10 +2378,8 @@ describe("media hydration", () => {
     })
 
     await expect(result).rejects.toThrow(UNAVAILABLE_PATTERN)
-    await expect(result).rejects.not.toBeInstanceOf(TerminalMediaError)
-    expect(mocks.updateAttachment).not.toHaveBeenCalledWith(
-      expect.objectContaining({ id: "102" }),
-    )
+    await expect(result).rejects.toBeInstanceOf(TerminalMediaError)
+    expect(mocks.putObject).not.toHaveBeenCalled()
   })
 
   test("keeps a row pending when resolving Graph media fails", async () => {
@@ -1031,6 +2414,21 @@ describe("media hydration", () => {
     )
   })
 
+  test("looks the row up by its message time when marking it unresolvable", async () => {
+    const pending = attachment("101")
+    arrangeAttachmentGraph([pending])
+
+    await markAttachmentUnresolvable({
+      attachmentId: pending.id,
+      workspaceId,
+      messageCreatedAt,
+    })
+
+    expect(mocks.findAttachmentById).toHaveBeenCalledWith(
+      expect.objectContaining({ messageCreatedAt }),
+    )
+  })
+
   test("marks a missing message source id as permanently unresolvable", async () => {
     const pending = attachment("101")
     arrangeAttachmentGraph([pending])
@@ -1055,7 +2453,7 @@ describe("media hydration", () => {
     expect(mocks.runChannelHandler).not.toHaveBeenCalled()
   })
 
-  test("throws terminally without overwriting a no-strategy channel origin path", async () => {
+  test("returns a no-strategy channel's durable URL without overwriting it", async () => {
     const pending = attachment("101", "https://tiktok.example/video.mp4")
     arrangeAttachmentGraph([pending])
     mocks.findContactInbox.mockResolvedValue({
@@ -1066,12 +2464,13 @@ describe("media hydration", () => {
       sourceId: "tiktok-user-1",
     })
 
+    // Its stored URL is the channel's durable copy, returned as it is.
     await expect(
       ensureAttachmentMirrored({
         attachmentId: pending.id,
         workspaceId,
       }),
-    ).rejects.toMatchObject({ reason: "unresolvable" })
+    ).resolves.toMatchObject({ originPath: "https://tiktok.example/video.mp4" })
 
     expect(mocks.updateAttachment).not.toHaveBeenCalled()
     expect(pending.originPath).toBe("https://tiktok.example/video.mp4")
@@ -1147,7 +2546,7 @@ describe("media hydration", () => {
       ensureAttachmentMirrored(input),
     ])
 
-    expect(first).toEqual(second)
+    expect(first.originPath).toBe(second.originPath)
     expect(mocks.runChannelHandler).toHaveBeenCalledTimes(1)
     expect(mocks.putObject).toHaveBeenCalledTimes(1)
   })

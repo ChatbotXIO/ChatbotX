@@ -1,18 +1,15 @@
 "use client"
 
+import type { InvitationSummary } from "@chatbotx.io/business"
 import { isWorkspaceScheduledForDeletion } from "@chatbotx.io/business/workspace-lifecycle/predicates"
-import type {
-  InvitationModel,
-  UserModel,
-  WorkspaceModel,
-} from "@chatbotx.io/database/types"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@chatbotx.io/ui/components/ui/avatar"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
@@ -23,18 +20,16 @@ import { acceptInvitationAction } from "./actions/accept-invitation"
 
 export function InvitationCard({
   invitation,
-  workspace,
-  user,
+  isAuthenticated,
 }: {
-  invitation: InvitationModel
-  workspace: WorkspaceModel | null
-  user: UserModel
+  invitation: InvitationSummary | null
+  isAuthenticated: boolean
 }) {
   const router = useRouter()
   const t = useTranslations()
   const invalidateUsers = useInvalidateUsers()
-  const canJoin = workspace
-    ? !isWorkspaceScheduledForDeletion(workspace)
+  const canJoin = invitation?.workspace
+    ? !isWorkspaceScheduledForDeletion(invitation.workspace)
     : false
 
   const { execute, isPending } = useAction(acceptInvitationAction, {
@@ -52,11 +47,15 @@ export function InvitationCard({
   return (
     <Card className="max-w-lg">
       <CardContent className="flex flex-col gap-4">
-        {canJoin && workspace ? (
-          <WorkspaceInvitationCard user={user} workspace={workspace} />
+        {canJoin && invitation?.workspace ? (
+          <WorkspaceInvitationCard
+            inviter={invitation.inviter}
+            workspace={invitation.workspace}
+          />
         ) : (
           <p className="text-muted-foreground">
-            {workspace && isWorkspaceScheduledForDeletion(workspace)
+            {invitation?.workspace &&
+            isWorkspaceScheduledForDeletion(invitation.workspace)
               ? t("invitation.workspaceUnavailable")
               : t("invitation.invalidInvitation")}
           </p>
@@ -70,14 +69,24 @@ export function InvitationCard({
           >
             {t("actions.cancel")}
           </Button>
-          <Button
-            disabled={isPending || !canJoin}
-            onClick={() => execute({ code: invitation.code })}
-            type="button"
-            variant="default"
-          >
-            {t("actions.joinTheTeam")}
-          </Button>
+          {invitation && isAuthenticated ? (
+            <Button
+              disabled={isPending || !canJoin}
+              onClick={() => execute({ code: invitation.code })}
+              type="button"
+              variant="default"
+            >
+              {t("actions.joinTheTeam")}
+            </Button>
+          ) : null}
+          {invitation && !isAuthenticated ? (
+            <Link
+              className={buttonVariants()}
+              href={`/api/invitations/${invitation.code}/start`}
+            >
+              {t("invitation.signUpToJoin")}
+            </Link>
+          ) : null}
         </div>
       </CardContent>
     </Card>
@@ -86,10 +95,10 @@ export function InvitationCard({
 
 export function WorkspaceInvitationCard({
   workspace,
-  user,
+  inviter,
 }: {
-  workspace: WorkspaceModel
-  user: UserModel
+  workspace: { name: string; logo: string | null }
+  inviter: { name: string | null }
 }) {
   const t = useTranslations()
   const logoUrl = useWorkspaceLogoUrl(workspace)
@@ -116,7 +125,7 @@ export function WorkspaceInvitationCard({
 
       <p>
         {t("invitation.chatbotInvitationDescription2", {
-          userName: user.name ?? "",
+          userName: inviter.name ?? "",
           chatbotName: workspace.name,
         })}
       </p>

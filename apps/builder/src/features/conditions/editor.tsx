@@ -11,6 +11,7 @@ import { useFormContext } from "react-hook-form"
 import { getContactInfoTypeOptions } from "@/features/contact-filter/components/contact-filter-config"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
+import { CategoryReferenceCondition } from "./category-reference-condition"
 import { CustomFieldValueChanged } from "./custom-field-value-changed"
 import { DateTimeBasedTrigger } from "./date-time-based-trigger"
 import { ProductReferenceCondition } from "./product-reference-condition"
@@ -72,7 +73,12 @@ export const ConditionEditor = ({
       )
     case triggerEventTypes.enum.shoppingCartSent:
     case triggerEventTypes.enum.userAskedAboutProduct:
+    case triggerEventTypes.enum.productOrdered:
+    case triggerEventTypes.enum.productAddedToCart:
+    case triggerEventTypes.enum.productRemovedFromCart:
       return <ProductReferenceCondition parentName={parentName} />
+    case triggerEventTypes.enum.categoryAddedToCart:
+      return <CategoryReferenceCondition parentName={parentName} />
     case triggerEventTypes.enum.dateTimeBasedTrigger:
       return <DateTimeBasedTrigger parentName={parentName} />
     case triggerEventTypes.enum.customFieldValueChanged:

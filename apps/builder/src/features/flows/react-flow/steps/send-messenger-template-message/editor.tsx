@@ -2,6 +2,7 @@
 
 import {
   type ButtonStepProps,
+  buttonTypes,
   extractMessengerFlowButtons,
   extractMessengerParameterInfos,
   extractMessengerTemplateParams,
@@ -11,6 +12,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { AppWindowIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useFormContext } from "react-hook-form"
@@ -18,12 +20,41 @@ import { useMessengerInboxOptions } from "@/features/inboxes/provider/inbox-hook
 import { MessengerTemplateParamsForm } from "@/features/integration-messenger/message-templates/components/template-params-form"
 import { MessengerTemplatePreview } from "@/features/integration-messenger/message-templates/components/template-preview"
 import type { FlowMessengerTemplateResource } from "@/features/integration-messenger/message-templates/schema/resource"
+import { useMiniAppOptions } from "@/features/mini-apps/components/mini-app-select"
 import { useFlowTemplate } from "../../stores/flow-template-store-provider"
 import { BaseStepEditor } from "../base/editor"
 import { ButtonStepEditor } from "../button/editor"
 
 type SendMessengerTemplateMessageStepEditorProps = {
   parentName: string
+}
+
+/**
+ * A template's Mini App button, shown read-only: the template decides what it
+ * opens, and its edge (drawn on the canvas) is where the flow continues once
+ * the contact submits the Mini App.
+ */
+function MiniAppTemplateButton({ button }: { button: ButtonStepProps }) {
+  const miniAppOptions = useMiniAppOptions()
+  const miniAppId =
+    button.buttonType === buttonTypes.enum.openMiniApp
+      ? button.beforeStep.miniAppId
+      : undefined
+  const miniAppName = miniAppOptions.find(
+    (option) => option.value === miniAppId,
+  )?.label
+
+  return (
+    <div className="flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm">
+      <AppWindowIcon className="size-4 shrink-0 text-muted-foreground" />
+      <span className="truncate font-medium">{button.label}</span>
+      {miniAppName && (
+        <span className="ms-auto truncate text-muted-foreground text-xs">
+          {miniAppName}
+        </span>
+      )}
+    </div>
+  )
 }
 
 function SendMessengerTemplateMessageStepEditor(
@@ -48,7 +79,8 @@ function SendMessengerTemplateMessageStepEditor(
     (watch(`${parentName}.template.parameterFormat`) as
       | "POSITIONAL"
       | "NAMED") || "POSITIONAL"
-  const flowButtons = (watch(`${parentName}.buttons`) as unknown[]) || []
+  const flowButtons =
+    (watch(`${parentName}.buttons`) as ButtonStepProps[] | undefined) || []
   const resetTemplateParams = useCallback(
     (
       template: FlowMessengerTemplateResource,
@@ -70,6 +102,7 @@ function SendMessengerTemplateMessageStepEditor(
     (template: FlowMessengerTemplateResource) => {
       const templateButtons = extractMessengerFlowButtons(
         template.components as MessengerTemplateComponent[],
+        { includeMiniApp: true },
       )
       const existingButtons =
         (getValues(`${parentName}.buttons`) as ButtonStepProps[] | undefined) ??
@@ -80,6 +113,31 @@ function SendMessengerTemplateMessageStepEditor(
         mergeMessengerFlowButtonsWithExisting(templateButtons, existingButtons),
         { shouldDirty: true, shouldValidate: true },
       )
+    },
+    [getValues, parentName, setValue],
+  )
+
+  const syncFlowButtons = useCallback(
+    (template: FlowMessengerTemplateResource) => {
+      const existingButtons =
+        (getValues(`${parentName}.buttons`) as ButtonStepProps[] | undefined) ??
+        []
+      const merged = mergeMessengerFlowButtonsWithExisting(
+        extractMessengerFlowButtons(
+          template.components as MessengerTemplateComponent[],
+          { includeMiniApp: true },
+        ),
+        existingButtons,
+      )
+      const isUnchanged =
+        merged.length === existingButtons.length &&
+        merged.every((button, index) => button === existingButtons[index])
+      if (!isUnchanged) {
+        setValue(`${parentName}.buttons`, merged, {
+          shouldDirty: true,
+          shouldValidate: true,
+        })
+      }
     },
     [getValues, parentName, setValue],
   )
@@ -130,11 +188,10 @@ function SendMessengerTemplateMessageStepEditor(
         if (hasTemplateChanged) {
           resetFlowButtons(template)
         } else {
-          // Seed flow buttons only when not yet configured (preserve persisted buttons)
-          const existingButtons = watch(`${parentName}.buttons`)
-          if (!existingButtons || (existingButtons as unknown[]).length === 0) {
-            resetFlowButtons(template)
-          }
+          // Persisted buttons keep their config; only a slot the template
+          // added or changed (e.g. a Mini App button saved before steps
+          // routed them) is brought in line with the template.
+          syncFlowButtons(template)
         }
       }
     }
@@ -146,7 +203,7 @@ function SendMessengerTemplateMessageStepEditor(
     resetFlowButtons,
     resetTemplateParams,
     setValue,
-    watch,
+    syncFlowButtons,
   ])
 
   const filteredTemplates = useMemo(
@@ -239,18 +296,23 @@ function SendMessengerTemplateMessageStepEditor(
 
         {flowButtons.length > 0 && (
           <div className="flex flex-col gap-2">
-            {flowButtons.map((_btn, index) => (
-              <ButtonStepEditor
-                editorConfig={{
-                  lockLabel: true,
-                  hiddenButtonTypes: ["openWebsite", "openMiniApp"],
-                  hideDelete: true,
-                }}
+            {flowButtons.map((button, index) =>
+              button.buttonType === buttonTypes.enum.openMiniApp ? (
                 // biome-ignore lint/suspicious/noArrayIndexKey: stable seeded list
-                key={index}
-                parentName={`${parentName}.buttons.${index}`}
-              />
-            ))}
+                <MiniAppTemplateButton button={button} key={index} />
+              ) : (
+                <ButtonStepEditor
+                  editorConfig={{
+                    lockLabel: true,
+                    hiddenButtonTypes: ["openWebsite", "openMiniApp"],
+                    hideDelete: true,
+                  }}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: stable seeded list
+                  key={index}
+                  parentName={`${parentName}.buttons.${index}`}
+                />
+              ),
+            )}
           </div>
         )}
       </div>

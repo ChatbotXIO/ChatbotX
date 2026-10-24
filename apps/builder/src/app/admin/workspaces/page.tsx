@@ -1,4 +1,7 @@
-import { isSupportConsentRequired } from "@chatbotx.io/business"
+import {
+  hasEnterpriseFeatures,
+  isSupportConsentRequired,
+} from "@chatbotx.io/business"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
@@ -11,10 +14,11 @@ export default async function AdminWorkspacesPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
-  const [t, search, consentRequired] = await Promise.all([
+  const [t, search, consentRequired, canCreateWorkspace] = await Promise.all([
     getTranslations(),
     getAdminWorkspacesSearchParamsCache.parse(await searchParams),
     isSupportConsentRequired(),
+    hasEnterpriseFeatures(),
   ])
 
   const promises = Promise.all([listAdminWorkspaces(search)])
@@ -36,6 +40,7 @@ export default async function AdminWorkspacesPage({
 
       <Suspense>
         <AdminWorkspacesTable
+          canCreateWorkspace={canCreateWorkspace}
           consentRequired={consentRequired}
           promises={promises}
         />

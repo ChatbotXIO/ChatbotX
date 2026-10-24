@@ -110,6 +110,7 @@ export function DirectUploadOrInsertLink({
   fileType,
   uploadPath,
   onSuccess,
+  onSuccessMany,
   showVariablePicker = false,
   useMediaLibrary = false,
   includeBotFieldVariables = false,
@@ -118,6 +119,9 @@ export function DirectUploadOrInsertLink({
   fileType: FileType
   uploadPath: string
   onSuccess?: (url: string) => void
+  // Lets the customer pick several files at once (Media Library multi-select,
+  // or several files from the device); each chosen URL is handed back.
+  onSuccessMany?: (urls: string[]) => void
   // The variable picker fetches custom fields via TanStack Query when enabled.
   showVariablePicker?: boolean
   // Pick an existing workspace file from the Media Library instead of only
@@ -145,6 +149,11 @@ export function DirectUploadOrInsertLink({
 
   const chooseUploadFile = () => {
     triggerRef.current?.click()
+  }
+
+  const multiple = onSuccessMany !== undefined
+  const handleMediaLibrarySelectMany = (files: Array<{ url: string }>) => {
+    onSuccessMany?.(files.map((file) => file.url))
   }
 
   const handleMediaLibrarySelect = (file: { url: string }) => {
@@ -257,14 +266,16 @@ export function DirectUploadOrInsertLink({
               className="hidden"
               label={t("actions.uploadFile")}
               maxSize={10_485_760} // 10MB
-              multiple={false}
+              multiple={multiple}
               onUploadError={(error, file) => {
                 toast.error(`Failed to upload ${file.name}`, {
                   description: error.message,
                 })
               }}
               onUploadSuccess={(_filePath, _file, finalUrl) => {
-                if (onSuccess) {
+                if (onSuccessMany) {
+                  onSuccessMany([finalUrl])
+                } else if (onSuccess) {
                   onSuccess(finalUrl)
                 } else {
                   setValue(`${parentName}.url`, finalUrl, {
@@ -310,7 +321,9 @@ export function DirectUploadOrInsertLink({
               )
               return useMediaLibrary ? (
                 <MediaLibraryTrigger
+                  multiple={multiple}
                   onSelect={handleMediaLibrarySelect}
+                  onSelectMultiple={handleMediaLibrarySelectMany}
                   uploadPath={uploadPath}
                   workspaceId={workspaceId}
                 >
@@ -326,7 +339,9 @@ export function DirectUploadOrInsertLink({
               <div className="flex items-center justify-center gap-2">
                 {useMediaLibrary ? (
                   <MediaLibraryTrigger
+                    multiple={multiple}
                     onSelect={handleMediaLibrarySelect}
+                    onSelectMultiple={handleMediaLibrarySelectMany}
                     uploadPath={uploadPath}
                     workspaceId={workspaceId}
                   >

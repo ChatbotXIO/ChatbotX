@@ -82,6 +82,9 @@ const toIncomingAttachment = (
     width: dims?.width ?? null,
     height: dims?.height ?? null,
     name: raw.name,
+    // Graph sets `image_data` for a photo; an image sent as a file arrives
+    // with `file_url` only.
+    isPhotoMessage: Boolean(raw.image_data),
   }
 }
 

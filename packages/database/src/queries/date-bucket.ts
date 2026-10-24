@@ -62,3 +62,11 @@ export function zonedBucketKey(
 ): SQL<string> {
   return sql<string>`to_char(date_trunc(${DATE_TRUNC_UNIT[granularity]}, ${column} AT TIME ZONE ${resolvedTimezone(timezone)}), 'YYYY-MM-DD')`
 }
+
+/**
+ * `YYYY-MM-DDTHH` key of the local hour that holds `column`, in `timezone`
+ * via {@link resolvedTimezone} — for a one-day chart.
+ */
+export function zonedHourKey(column: PgColumn, timezone: string): SQL<string> {
+  return sql<string>`to_char(date_trunc('hour', ${column} AT TIME ZONE ${resolvedTimezone(timezone)}), 'YYYY-MM-DD"T"HH24')`
+}

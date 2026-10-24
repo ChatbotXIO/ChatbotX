@@ -239,6 +239,7 @@ const resolveContactFilterOptions = (
     channelPostOptions: SelectOption[]
     workingHourOptions: SelectOption[]
     flowNodeOptions: SelectOption[]
+    productOptions: SelectOption[]
   },
 ): SelectOption[] | undefined => {
   switch (optionSource) {
@@ -298,6 +299,8 @@ const resolveContactFilterOptions = (
       return ctx.channelPostOptions
     case "workingHours":
       return ctx.workingHourOptions
+    case "products":
+      return ctx.productOptions
     case "ctwaConversionTypes":
       return [
         {
@@ -453,6 +456,7 @@ export const getFieldConfigs = ({
   workingHourOptions = [],
   couponTopicOptions = [],
   leaderboardOptions = [],
+  productOptions = [],
   botFields = [],
   includeBotFields = false,
   surface = "contacts",
@@ -477,6 +481,8 @@ export const getFieldConfigs = ({
   couponTopicOptions?: SelectOption[]
   /** Workspace leaderboards, each offered as a "Gamification scores" field. */
   leaderboardOptions?: SelectOption[]
+  /** Workspace products, for the purchase and cart fields. */
+  productOptions?: SelectOption[]
   /** Workspace bot (account) fields — only read when `includeBotFields` is true. */
   botFields?: CustomFieldFilterOption[]
   /**
@@ -531,6 +537,7 @@ export const getFieldConfigs = ({
         channelPostOptions,
         workingHourOptions,
         flowNodeOptions,
+        productOptions,
       }) ?? booleanOptionsFor(formField)
     return {
       name: def.field,

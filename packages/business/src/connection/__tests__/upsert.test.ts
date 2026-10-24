@@ -260,7 +260,7 @@ describe("withQuotaCompensation — workspace seat", () => {
       consumed: true as const,
       userId: "user-1",
       workspaceId: "ws-new",
-      teamMembersLiveIncremented: true,
+      teamMembersLiveIncrementedCount: 1,
     }
 
     await expect(
@@ -294,7 +294,7 @@ describe("withQuotaCompensation — workspace seat", () => {
           consumed: true,
           userId: "user-1",
           workspaceId: "ws-new",
-          teamMembersLiveIncremented: true,
+          teamMembersLiveIncrementedCount: 1,
         },
         context: { provider: "telegram" },
       },

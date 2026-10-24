@@ -12,9 +12,11 @@ import { format } from "date-fns"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
+import { CreateAdminWorkspaceDialog } from "@/enterprise/features/admin-workspaces/create-admin-workspace-dialog"
 import type { ListAdminWorkspacesResponse } from "./queries"
 
 type AdminWorkspacesTableProps = {
+  canCreateWorkspace: boolean
   consentRequired: boolean
   promises: Promise<[ListAdminWorkspacesResponse]>
 }
@@ -42,6 +44,7 @@ function OwnerCell({
 }
 
 export function AdminWorkspacesTable({
+  canCreateWorkspace,
   consentRequired,
   promises,
 }: AdminWorkspacesTableProps) {
@@ -178,7 +181,9 @@ export function AdminWorkspacesTable({
 
   return (
     <DataTable table={table}>
-      <DataTableToolbar table={table} />
+      <DataTableToolbar table={table}>
+        {canCreateWorkspace && <CreateAdminWorkspaceDialog />}
+      </DataTableToolbar>
     </DataTable>
   )
 }

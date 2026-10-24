@@ -1,5 +1,5 @@
 import type { ContentType } from "@chatbotx.io/database/partials"
-import type { NotificationJobData } from "@chatbotx.io/worker-config"
+import type { NotificationJobConversation } from "@chatbotx.io/worker-config"
 import { t } from "./strings"
 
 const resolveIncomingMessageBody = (
@@ -29,7 +29,7 @@ const resolveIncomingMessageBody = (
 }
 
 export const buildNotificationContent = (props: {
-  job: NotificationJobData
+  job: NotificationJobConversation
   contactFullName: string | null | undefined
   workspaceLanguage: string | undefined
 }): { title: string; body: string } => {

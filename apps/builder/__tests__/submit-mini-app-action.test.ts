@@ -96,6 +96,8 @@ const miniApp = {
 beforeEach(() => {
   vi.clearAllMocks()
   resumedKeys.clear()
+  // Like the real verifier: anything not signed as a resume token is rejected.
+  verifyMiniAppResumeToken.mockRejectedValue(new Error("not a resume token"))
   findUnscoped.mockResolvedValue(miniApp)
   loadServableWorkspace.mockResolvedValue({ servable: true })
   checkGuestRateLimit.mockResolvedValue({ limited: false })
@@ -263,6 +265,69 @@ describe("submitMiniAppAction — continuing the flow", () => {
     await expect(
       submit({ miniAppId: "10", token: "tok", resume: "bad", answers: {} }),
     ).resolves.toEqual({ success: true })
+    expect(enqueueFlowAction).not.toHaveBeenCalled()
+  })
+})
+
+describe("submitMiniAppAction — a Messenger template's resume token as `token`", () => {
+  const resumePayload = {
+    workspaceId: "ws-1",
+    contactId: "c-1",
+    miniAppId: "10",
+    conversationId: "conv-1",
+    contactInboxId: "ci-1",
+    buttonPayload: "flow-1:fv-1:btn-1::::",
+  }
+
+  beforeEach(() => {
+    verifyMiniAppToken.mockRejectedValue(new Error("not a contact token"))
+    isActiveNow.mockReturnValue(true)
+    enqueueFlowAction.mockResolvedValue(true)
+  })
+
+  test("attributes the answers to its contact and continues the flow once", async () => {
+    verifyMiniAppResumeToken.mockResolvedValue(resumePayload)
+    const input = { miniAppId: "10", token: "resume-as-token", answers: {} }
+
+    await submit(input)
+    await submit(input)
+
+    expect(createSubmission).toHaveBeenCalledWith(
+      expect.objectContaining({ contactId: "c-1" }),
+    )
+    expect(enqueueFlowAction).toHaveBeenCalledOnce()
+    expect(enqueueFlowAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: "flow-1:fv-1:btn-1::::" }),
+      }),
+    )
+  })
+
+  test("is not accepted for another Mini App", async () => {
+    verifyMiniAppResumeToken.mockResolvedValue({
+      ...resumePayload,
+      miniAppId: "11",
+    })
+
+    await submit({ miniAppId: "10", token: "resume-as-token", answers: {} })
+
+    expect(createSubmission).toHaveBeenCalledWith(
+      expect.objectContaining({ contactId: null }),
+    )
+    expect(enqueueFlowAction).not.toHaveBeenCalled()
+  })
+
+  test("a contact token as `token` never continues a flow", async () => {
+    verifyMiniAppToken.mockResolvedValue({
+      workspaceId: "ws-1",
+      contactId: "c-1",
+    })
+
+    await submit({ miniAppId: "10", token: "contact-token", answers: {} })
+
+    expect(createSubmission).toHaveBeenCalledWith(
+      expect.objectContaining({ contactId: "c-1" }),
+    )
     expect(enqueueFlowAction).not.toHaveBeenCalled()
   })
 })

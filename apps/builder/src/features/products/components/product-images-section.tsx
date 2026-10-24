@@ -89,6 +89,9 @@ export function ProductImagesSection({ workspaceId }: Props) {
               fileType="image"
               key="image"
               onSuccess={(url) => append({ url, mode: "file" })}
+              onSuccessMany={(urls) =>
+                append(urls.map((url) => ({ url, mode: "file" as const })))
+              }
               parentName="image"
               uploadPath={`public/space/${workspaceId}/products/images`}
               useMediaLibrary

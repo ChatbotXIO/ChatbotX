@@ -156,7 +156,12 @@ export const productsAdapter: ResourceAdapter = {
       }
       const rows = await db.query.productModel.findMany({
         where: { workspaceId, id: { in: [...ids] } },
-        with: { variantOptions: true, variants: true, addons: true },
+        with: {
+          variantOptions: true,
+          variants: true,
+          addons: true,
+          vendor: { columns: { name: true } },
+        },
       })
 
       const entries = rows.map((row) => ({
@@ -175,7 +180,7 @@ export const productsAdapter: ResourceAdapter = {
         allowOutOfStockPurchase: row.allowOutOfStockPurchase,
         images: row.images,
         tags: row.tags,
-        vendor: row.vendor,
+        vendor: row.vendor?.name ?? null,
         rank: row.rank,
         categoryId: row.categoryId,
         subcategoryId: row.subcategoryId,

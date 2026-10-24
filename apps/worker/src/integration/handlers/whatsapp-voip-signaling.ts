@@ -328,6 +328,11 @@ const publishToMembers = async (input: {
 /**
  * Delivers the incoming offer to every selected agent. A failed stream append
  * is logged per target without preventing other offers from being published.
+ * When it reaches none of them it throws, so the job is retried while the
+ * reservation is still answerable and finalized once retries run out;
+ * completing would leave the customer hearing ringing that nobody can answer.
+ * A retry is safe: the reservation is reused, no row is created, and the
+ * browser ignores an offer it already holds.
  */
 const ringAgents = async (input: {
   workspaceId: string
@@ -344,6 +349,9 @@ const ringAgents = async (input: {
   if (failureCount === input.targets.length && input.targets.length > 0) {
     logger.error(
       { targetCount: input.targets.length, wacid: input.event.data.wacid },
+      "Whatsapp VoIP: unable to publish the offer realtime event to any target",
+    )
+    throw new Error(
       "Whatsapp VoIP: unable to publish the offer realtime event to any target",
     )
   }
@@ -565,8 +573,12 @@ const handleExpire = async (data: ExpireIfUnansweredData): Promise<void> => {
 }
 
 /**
- * Forwards the customer's SDP answer to the initiating agent only. Read once,
- * never logged, then deleted so a redelivery is a no-op.
+ * Forwards the customer's SDP answer to the initiating agent only. Never
+ * logged. It is deliberately not deleted after publishing: if that agent's tab
+ * missed the push and the gateway could not replay it, the tab re-fetches the
+ * answer through `readOutboundAnswerForInitiator` until the short Redis TTL
+ * expires it. A redelivery therefore re-sends the same answer, which the
+ * browser ignores once it has applied one.
  */
 const handleOutboundAnswer = async (
   data: HandleOutboundAnswerData,
@@ -579,7 +591,7 @@ const handleOutboundAnswer = async (
   if (!answer) {
     logger.warn(
       { attemptId, whatsappCallId: call.id },
-      "Whatsapp VoIP outbound answer: no stored answer found (already consumed)",
+      "Whatsapp VoIP outbound answer: no stored answer found (expired or never stored)",
     )
     return
   }
@@ -615,8 +627,6 @@ const handleOutboundAnswer = async (
     )
     throw err
   }
-
-  await whatsappVoipSignalingService.deleteOutboundAnswer(attemptId)
 }
 
 /**

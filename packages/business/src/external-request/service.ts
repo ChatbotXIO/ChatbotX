@@ -8,6 +8,47 @@ import { checkSsrfSafety } from "../net/ssrf-guard"
 const REQUEST_TIMEOUT_MS = 15_000
 const MAX_REDIRECTS = 5
 
+const REQUEST_BODY_HEADERS = [
+  "Content-Type",
+  "Content-Length",
+  "Content-Encoding",
+  "Content-Language",
+  "Content-Location",
+]
+
+// Mirrors Fetch's HTTP-redirect-fetch step, which redirect: "manual" disables.
+const nextHopInit = (
+  status: number,
+  init: RequestInit,
+  fromUrl: string,
+  toUrl: string,
+): RequestInit => {
+  const method = init.method?.toUpperCase() ?? "GET"
+  const dropBody =
+    (status === 303 && method !== "GET" && method !== "HEAD") ||
+    ((status === 301 || status === 302) && method === "POST")
+  const headers = new Headers(init.headers)
+
+  if (dropBody) {
+    for (const header of REQUEST_BODY_HEADERS) {
+      headers.delete(header)
+    }
+  }
+
+  if (new URL(fromUrl).origin !== new URL(toUrl).origin) {
+    headers.delete("Authorization")
+  }
+
+  // Do not spread init: Next's patched fetch adds _ogBody and would resurrect the body on a GET hop.
+  return {
+    method: dropBody ? "GET" : init.method,
+    headers,
+    body: dropBody ? undefined : init.body,
+    redirect: init.redirect,
+    signal: init.signal,
+  }
+}
+
 export type ExternalRequestHeader = { key: string; value: string }
 
 export type ExternalRequestBody =
@@ -126,6 +167,8 @@ class ExternalRequestService extends BaseService {
       return response
     }
 
+    await response.body?.cancel()
+
     if (redirectsLeft <= 0) {
       throw new ChatbotXException(
         "Too many redirects for this external request",
@@ -155,7 +198,7 @@ class ExternalRequestService extends BaseService {
 
     return this.fetchFollowingSafeRedirects(
       redirectUrl,
-      init,
+      nextHopInit(response.status, init, url, redirectUrl),
       redirectsLeft - 1,
     )
   }

@@ -36,3 +36,10 @@ export const PRICE_INPUT_PROPS = {
   allowedDecimalSeparators: PRICE_DECIMAL_SEPARATORS,
   decimalScale: PRICE_DECIMAL_SCALE,
 }
+
+/** A 0–100 percent that may be fractional (7.5 %), as the API accepts. */
+export const PERCENT_INPUT_PROPS = {
+  ...PRICE_INPUT_PROPS,
+  min: 0,
+  max: 100,
+}

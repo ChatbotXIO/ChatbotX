@@ -12,6 +12,10 @@ export const productRelations = defineRelationsPart(schema, (r) => ({
       from: r.productModel.subcategoryId,
       to: r.productCategoryModel.id,
     }),
+    vendor: r.one.vendorModel({
+      from: r.productModel.vendorId,
+      to: r.vendorModel.id,
+    }),
     variantOptions: r.many.productVariantOptionModel({
       from: r.productModel.id,
       to: r.productVariantOptionModel.productId,

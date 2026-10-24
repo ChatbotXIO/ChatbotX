@@ -33,6 +33,7 @@ vi.mock("better-auth/next-js", () => ({
 vi.mock("better-auth/plugins", () => ({
   anonymous: () => ({ id: "anonymous" }),
   bearer: () => ({ id: "bearer" }),
+  genericOAuth: () => ({ id: "generic-oauth" }),
   magicLink: () => ({ id: "magic-link" }),
   oneTimeToken: () => ({ id: "one-time-token" }),
 }))
@@ -55,6 +56,7 @@ vi.mock("@chatbotx.io/business", () => ({
     findPlatform: vi.fn(),
   },
   resolveTenantSettingsByDomain: vi.fn(),
+  invitationService: { findActiveByCode: vi.fn().mockResolvedValue(null) },
 }))
 
 // @chatbotx.io/utils sets up a process-global Snowflake ID generator at
@@ -63,6 +65,7 @@ vi.mock("@chatbotx.io/business", () => ({
 vi.mock("@chatbotx.io/utils", () => ({
   createId: () => "test-id",
   getPublicOriginFromRequest: vi.fn(),
+  parseEnvBool: (value: unknown) => value === true || value === "true",
 }))
 
 vi.mock("@chatbotx.io/mail", () => ({

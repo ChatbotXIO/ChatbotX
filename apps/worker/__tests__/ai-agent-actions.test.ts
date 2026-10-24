@@ -148,7 +148,7 @@ describe("AI agent actions native tool", () => {
 
     await actionTool.execute(
       { matches: [{ ruleId: "second" }, { ruleId: "first" }] },
-      { experimental_context: undefined, messages: [], toolCallId: "tool-1" },
+      { context: undefined, messages: [], toolCallId: "tool-1" },
     )
 
     expect(
@@ -194,12 +194,12 @@ describe("AI agent actions native tool", () => {
 
     const firstCall = actionTool.execute(
       { matches: [{ ruleId: "rule-1" }] },
-      { experimental_context: undefined, messages: [], toolCallId: "tool-1" },
+      { context: undefined, messages: [], toolCallId: "tool-1" },
     )
     await vi.waitFor(() => expect(actionExecutorMock).toHaveBeenCalledOnce())
     const secondCall = actionTool.execute(
       { matches: [{ ruleId: "rule-1" }] },
-      { experimental_context: undefined, messages: [], toolCallId: "tool-2" },
+      { context: undefined, messages: [], toolCallId: "tool-2" },
     )
 
     await expect(secondCall).resolves.toMatchObject({
@@ -240,7 +240,7 @@ describe("AI agent actions native tool", () => {
           { ruleId: "rule-1", values: [{ actionId: "archive", value: "x" }] },
         ],
       },
-      { experimental_context: undefined, messages: [], toolCallId: "tool-1" },
+      { context: undefined, messages: [], toolCallId: "tool-1" },
     )
 
     expect(result).toMatchObject({

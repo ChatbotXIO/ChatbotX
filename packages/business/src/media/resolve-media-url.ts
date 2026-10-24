@@ -71,6 +71,14 @@ export const isPendingOriginPath = (originPath: string): boolean =>
 export const isFailedOriginPath = (originPath: string): boolean =>
   originPath.startsWith(FAILED_PREFIX)
 
+/**
+ * True for a key that names an object in our storage. A pending reference (a
+ * provider URL or `wa-media:` id) or a failed marker names nothing there, so
+ * deleting it would only issue a request that cannot succeed.
+ */
+export const isStoredObjectPath = (originPath: string): boolean =>
+  !(isPendingOriginPath(originPath) || isFailedOriginPath(originPath))
+
 // A fallback URL is only used after its attachment's presigned storage URL
 // (1 hour) fails, so it must outlive it — otherwise an inbox left open past the
 // hour has an expired fallback exactly when it needs one.
@@ -142,11 +150,11 @@ const resolveAttachmentUrl = async (
 }
 
 /**
- * Proxy URL the client falls back to when a mirrored attachment's storage URL
- * fails to load (expired presign, or the object was evicted from storage). The
- * proxy re-signs the stored key first and, on `?retry=1`, re-derives the media
- * from the channel. Only hydration channels have that second path, so every
- * other attachment — and any row that already resolves through the proxy —
+ * Proxy URL the client falls back to when an attachment's first URL fails to
+ * load: an expired presign or an object evicted from storage for a mirrored
+ * row, an expired provider URL for a pending one. The proxy serves the stored
+ * copy when there is one and, on `?retry=1`, re-derives the media from the
+ * channel. Only hydration channels have that path, so every other attachment
  * gets no fallback.
  */
 export const resolveAttachmentFallbackUrl = async (
@@ -154,8 +162,7 @@ export const resolveAttachmentFallbackUrl = async (
 ): Promise<string | null> => {
   if (
     !HYDRATION_CHANNELS.has(ref.channel) ||
-    isFailedOriginPath(ref.originPath) ||
-    isPendingOriginPath(ref.originPath)
+    isFailedOriginPath(ref.originPath)
   ) {
     return null
   }

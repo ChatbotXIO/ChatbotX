@@ -19,6 +19,7 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteProductAction } from "./actions/delete-product-action"
+import { useInvalidateProductFormOptions } from "./provider/use-invalidate-product-form-options"
 
 type DeleteProductsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   workspaceId: string
@@ -37,6 +38,7 @@ export function DeleteProductsDialog({
   ...props
 }: DeleteProductsDialogProps) {
   const t = useTranslations()
+  const invalidateProductFormOptions = useInvalidateProductFormOptions()
 
   const { execute, isPending } = useAction(
     deleteProductAction.bind(null, workspaceId),
@@ -48,6 +50,7 @@ export function DeleteProductsDialog({
           }),
         )
         onOpenChange(false)
+        invalidateProductFormOptions()
         onSuccess?.()
       },
       onError: ({ error }) => {

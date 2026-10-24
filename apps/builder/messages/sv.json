@@ -405,7 +405,8 @@
       "userPlaceholder": "Användar-ID",
       "keyword": "Nyckelord",
       "keywordPlaceholder": "Åtgärd eller detalj",
-      "allAdmins": "Alla administratörer"
+      "allAdmins": "Alla administratörer",
+      "allWorkspaces": "Alla arbetsytor"
     }
   },
   "auth": {
@@ -417,6 +418,7 @@
     "checkYourEmail": "Kontrollera din e-post",
     "continueWithFacebook": "Fortsätt med Facebook",
     "continueWithGoogle": "Fortsätt med Google",
+    "continueWithProvider": "Fortsätt med {name}",
     "continueWithEmail": "Fortsätt med e-post",
     "continueWithMagicLink": "Fortsätt med magisk länk",
     "didNotReceiveEmail": "Fick du inget e-postmeddelande? Kontrollera skräppostmappen.",
@@ -442,11 +444,15 @@
     "signUpTitle": "Registrera dig på {name}",
     "termsOfService": "Användarvillkor",
     "trySigningInAgain": "Du kan också försöka logga in igen med en annan e-postadress.",
+    "signUpDisabledTitle": "Registrering är inaktiverad",
+    "signUpDisabledDescription": "Nya konton kan endast skapas av en administratör eller via en inbjudningslänk.",
     "oauthError": {
       "accountNotLinked": "Det finns redan ett konto med den här e-postadressen och det kunde inte kopplas. Logga in på samma sätt som tidigare eller kontakta supporten.",
       "unableToLinkAccount": "Vi kunde inte koppla den här inloggningen till det befintliga kontot. Logga in på samma sätt som tidigare eller kontakta supporten.",
       "sessionExpired": "Inloggningsförsöket har gått ut. Försök igen.",
       "accessDenied": "Inloggningen avbröts.",
+      "signUpDisabled": "Det här kontot finns inte ännu och registrering är inaktiverad. Be en administratör att skapa det åt dig.",
+      "invalidInvitation": "Den här inbjudan är ogiltig eller har löpt ut.",
       "generic": "Inloggningen misslyckades. Försök igen."
     }
   },
@@ -2255,6 +2261,10 @@
       "label": "Från-adress",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "Avsändarnamn",
+      "placeholder": "ChatbotX"
+    },
     "fullName": {
       "label": "Fullständigt namn"
     },
@@ -3500,7 +3510,13 @@
       "sendGoogleAdsConversion": "Skicka Google Ads-konvertering",
       "changeGamificationScore": "Ändra gamificationpoäng",
       "sendViewCatalog": "Visa katalog",
-      "sendProducts": "Skicka produkter"
+      "sendProducts": "Skicka produkter",
+      "sendCollection": "Kollektion"
+    },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Det gick inte att testa den externa begäran. Kontrollera begärandekonfigurationen och försök igen."
+      }
     },
     "sendCarousel": {
       "addSlide": "Lägg till kort",
@@ -3729,6 +3745,43 @@
       "productsSelected": "{count, plural, one {# produkt} other {# produkter}}",
       "noneSelected": "Inga produkter ännu",
       "sendFailed": "Produkterna kunde inte skickas."
+    },
+    "sendCollection": {
+      "title": "Kollektion",
+      "dataType": "Datatyp",
+      "dataTypes": {
+        "products": "Produkter"
+      },
+      "collectionType": "Kollektionstyp",
+      "collectionTypes": {
+        "automated": {
+          "label": "Automatisk",
+          "description": "Nuvarande och framtida varor som matchar villkoren läggs till automatiskt."
+        },
+        "manual": {
+          "label": "Manuell",
+          "description": "Lägg till varor en i taget."
+        }
+      },
+      "condition": "Villkor",
+      "name": "Namn",
+      "optional": "(Valfritt)",
+      "category": "Kategori",
+      "subcategory": "Underkategori",
+      "vendor": "Leverantör",
+      "all": "Alla",
+      "items": "Varor",
+      "select": "Välj",
+      "selectPlaceholder": "Välj 1 eller flera varor",
+      "selectAll": "Välj alla",
+      "deselectAll": "Avmarkera alla",
+      "maxProducts": "Upp till {count} produkter; en produkt som butiken inte längre visar hoppas över.",
+      "automatedHint": "Skickar upp till {count} matchande produkter som kort som öppnar produkten i webbutiken.",
+      "summaryAll": "Alla produkter i butiken",
+      "summaryAutomated": "Produkter: {filters}",
+      "summaryManual": "{count, plural, one {# produkt} other {# produkter}}",
+      "cancel": "Avbryt",
+      "save": "Spara"
     }
   },
   "folders": {
@@ -4378,7 +4431,8 @@
     "chatbotInvitationDescription1": "Gå med i {chatbotName}",
     "chatbotInvitationDescription2": "{userName} har bjudit in dig att gå med i {chatbotName}.",
     "invalidInvitation": "Den här inbjudan är ogiltig eller har löpt ut.",
-    "workspaceUnavailable": "Den här arbetsytan är inte längre tillgänglig."
+    "workspaceUnavailable": "Den här arbetsytan är inte längre tillgänglig.",
+    "signUpToJoin": "Skapa ett konto för att gå med"
   },
   "keywords": {
     "title": "Nyckelord",
@@ -4688,6 +4742,8 @@
     "title": "Make"
   },
   "manageSidebar": {
+    "communityGroup": "Gemenskap",
+    "enterpriseGroup": "Enterprise",
     "platformGroup": "Plattform",
     "portalCustomDomain": "Anpassad domän",
     "portalPaymentProcessor": "Betalningsleverantör",
@@ -4946,7 +5002,8 @@
         "text": "Text",
         "textAndImage": "Text + bild",
         "trigger": "Skapa ny mall",
-        "visitWebsite": "Besök webbplats"
+        "visitWebsite": "Besök webbplats",
+        "openMiniApp": "Öppna miniapp"
       },
       "params": {
         "postbackPayload": "Knappens nyttolast",
@@ -5252,7 +5309,82 @@
     "title": "OpenRouter"
   },
   "orders": {
-    "title": "Beställningar"
+    "title": "Beställningar",
+    "empty": "Inga beställningar ännu.",
+    "searchPlaceholder": "Sök på namn, telefon, e-post eller beställningsnummer",
+    "orderNumber": "Beställning #{number}",
+    "print": "Skriv ut",
+    "inbox": "Inkorg",
+    "statusUpdated": "Beställningens status uppdaterad",
+    "statusUpdateError": "Kunde inte uppdatera beställningens status",
+    "updateStatusTitle": "Uppdatera beställningsstatus",
+    "message": "Meddelande",
+    "messagePlaceholder": "Valfritt",
+    "messageDescription": "Skickas till kunden i dennes konversation.",
+    "cancel": "Avbryt",
+    "continue": "Fortsätt",
+    "delete": "Ta bort",
+    "deleted": "Beställning borttagen",
+    "deleteError": "Kunde inte ta bort beställningen",
+    "deleteTitle": "Ta bort beställning #{number}?",
+    "deleteDescription": "Beställningen, dess artiklar och dess historik tas bort. Lagersaldo som den fortfarande håller återförs.",
+    "columns": {
+      "name": "Namn",
+      "total": "Totalt",
+      "status": "Status",
+      "date": "Datum",
+      "rating": "Betyg",
+      "quantity": "Antal",
+      "price": "Pris",
+      "vendor": "Leverantör"
+    },
+    "fields": {
+      "name": "Namn",
+      "email": "E-post",
+      "phone": "Telefon",
+      "country": "Land",
+      "state": "Län",
+      "city": "Stad",
+      "street": "Gata",
+      "zip": "Postnummer",
+      "shippingType": "Frakt",
+      "orderId": "Beställnings-ID",
+      "date": "Datum",
+      "subtotal": "Delsumma",
+      "discount": "Rabatt",
+      "deliveryCost": "Leveranskostnad",
+      "otherTaxes": "Övriga skatter",
+      "total": "Totalt",
+      "paymentMethod": "Betalningsmetod",
+      "status": "Status",
+      "note": "Anteckning",
+      "cancelReason": "Orsak till avbokning",
+      "rating": "Betyg",
+      "ratingComment": "Kundens kommentar",
+      "coupon": "Rabattkod ({code})"
+    },
+    "statuses": {
+      "pending": "Ej behandlad",
+      "accepted": "Godkänd",
+      "shipped": "Skickad",
+      "concluded": "Slutförd",
+      "cancelled": "Avbruten"
+    },
+    "transitions": {
+      "accepted": "Godkänn",
+      "shipped": "Skicka",
+      "concluded": "Slutför",
+      "cancelled": "Avbryt"
+    },
+    "paymentMethods": {
+      "cod": "Postförskott"
+    },
+    "shippingTypes": {
+      "delivery": "Leverans till kunden",
+      "pickup": "Avhämtning i butiken"
+    },
+    "description": "Beställningar från dina kunder.",
+    "ratingValue": "{rating}/5 ★"
   },
   "placesNearMe": {
     "description": "Hitta platser nära dina kontakter.",
@@ -5281,7 +5413,14 @@
       "supportOff": "Av",
       "searchPlaceholder": "Sök efter namn, ägarens e-post eller ID",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
-      "supportAccessible": "Accessible"
+      "supportAccessible": "Accessible",
+      "createButton": "Create workspace",
+      "createTitle": "Create workspace for an owner",
+      "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",
+      "ownerEmail": "Owner email",
+      "memberEmails": "Member emails",
+      "membersHint": "Every member gets the permissions selected below. New emails get a mailed temporary password.",
+      "createdSummary": "Workspace created for {ownerEmail} — {memberCount} member(s) added, {newAccountCount} new account(s) emailed a temporary password."
     },
     "admins": {
       "title": "Platform administrators",
@@ -5297,6 +5436,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Plattformens granskningsloggar",
+      "description": "Granskningsaktivitet i alla arbetsytor på den här plattformen."
+    },
+    "smtp": {
+      "title": "SMTP-inställningar",
+      "description": "Plattformens e-posttransport. Lämna detta tomt för att fortsätta använda miljövariablerna SMTP_SERVER och SMTP_FROM.",
+      "usingEnv": "Inga SMTP-inställningar sparade — plattformens e-post använder miljövariabeln SMTP_SERVER.",
+      "remove": "Ta bort SMTP-inställningar",
+      "errors": {
+        "passwordRequired": "Ange SMTP-lösenordet."
+      }
     }
   },
   "platformBranding": {
@@ -5393,7 +5545,8 @@
     "columns": {
       "name": "Namn",
       "products": "Produkter",
-      "subcategories": "Underkategorier"
+      "subcategories": "Underkategorier",
+      "visible": "Synlig"
     },
     "create": "Skapa kategori",
     "createSub": "Skapa underkategori",
@@ -5404,11 +5557,11 @@
     "deleteError": "Det går inte att ta bort denna kategori.",
     "deleteTitle": "Ta bort “{name}”?",
     "deleted": "Kategori borttagen.",
-    "edit": "Byt namn på kategori",
+    "edit": "Redigera",
     "empty": "Inga kategorier ännu. Skapa en för att gruppera dina produkter.",
     "expand": "Visa underkategorier",
     "loadError": "Det går inte att läsa in produktkategorier.",
-    "name": "Kategorinamn",
+    "name": "Namn",
     "namePlaceholder": "t.ex. Sommarkollektion",
     "noParent": "Ingen (toppnivå)",
     "parent": "Överordnad kategori",
@@ -5416,7 +5569,19 @@
     "save": "Spara",
     "saveError": "Det går inte att spara denna kategori.",
     "title": "Kategorier",
-    "updated": "Kategori uppdaterad."
+    "updated": "Kategori uppdaterad.",
+    "add": "Lägg till",
+    "dialogTitle": "Kategori",
+    "image": "Bild",
+    "continue": "Fortsätt",
+    "subcategories": "Underkategorier",
+    "subcategoriesOf": "Underkategorier till {name}",
+    "emptySub": "Inga underkategorier ännu.",
+    "back": "Tillbaka till kategorier",
+    "getId": "Hämta ID",
+    "idCopied": "Kategori-ID {id} kopierat",
+    "idCopyError": "Kunde inte kopiera ID:t",
+    "description": "Gruppera dina produkter i kategorier och underkategorier."
   },
   "productImport": {
     "confirm": "Starta import",
@@ -5563,7 +5728,8 @@
       },
       "variantsDescription": "Lägg till varianter om produkten finns i flera versioner, till exempel olika storlekar eller färger",
       "vendor": {
-        "label": "Leverantör"
+        "label": "Leverantör",
+        "none": "Ingen"
       }
     },
     "inventoryPolicy": {
@@ -6044,7 +6210,8 @@
       "userAskedAboutProduct": "Kontakt frågade om en produkt",
       "callRecorded": "Samtal inspelat",
       "callTranscribed": "Samtal transkriberat",
-      "anyProduct": "Valfri produkt"
+      "anyProduct": "Valfri produkt",
+      "anyCategory": "Valfri kategori"
     },
     "day": "Dag",
     "hour": "Timme",
@@ -6112,6 +6279,25 @@
       "unknownFieldTarget": "Ett mappat kontaktfält finns inte längre.",
       "actionReferenceNotFound": "En åtgärd refererar till ett flöde, en tagg eller ett fält som inte längre finns.",
       "fieldMappingRequired": "Lägg till minst en fältmappning."
+    },
+    "form": {
+      "required": "Det här fältet är obligatoriskt.",
+      "minLength": "Ange minst {minimum} tecken.",
+      "maxLength": "Ange högst {maximum} tecken.",
+      "minNumber": "Ange ett tal på minst {minimum}.",
+      "moreThan": "Ange ett tal större än {minimum}.",
+      "maxNumber": "Ange ett tal på högst {maximum}.",
+      "lessThan": "Ange ett tal mindre än {maximum}.",
+      "number": "Ange ett tal.",
+      "wholeNumber": "Ange ett heltal.",
+      "minItems": "Välj minst {minimum}.",
+      "maxItems": "Välj högst {maximum}.",
+      "email": "Ange en giltig e-postadress.",
+      "url": "Ange en giltig länk som börjar med https://.",
+      "format": "Värdet har inte rätt format.",
+      "option": "Välj ett av alternativen.",
+      "invalid": "Värdet är ogiltigt.",
+      "checkFields": "Några fält behöver rättas. Se de som är rödmarkerade."
     }
   },
   "webchat": {
@@ -9047,6 +9233,543 @@
       "hours": "Tider",
       "closed": "Stängt"
     }
+  },
+  "productVendors": {
+    "title": "Leverantörer",
+    "add": "Lägg till",
+    "edit": "Redigera",
+    "delete": "Ta bort",
+    "actions": "Åtgärder",
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "moreOptions": "Fler alternativ",
+    "empty": "Inga leverantörer ännu.",
+    "created": "Leverantör tillagd",
+    "updated": "Leverantör uppdaterad",
+    "deleted": "Leverantör borttagen",
+    "saveError": "Kunde inte spara leverantören",
+    "deleteError": "Kunde inte ta bort leverantören",
+    "deleteTitle": "Ta bort {name}?",
+    "deleteDescription": "{count, plural, =0 {Ingen produkt använder denna leverantör.} one {# produkt blir utan leverantör.} other {# produkter blir utan leverantör.}}",
+    "fields": {
+      "name": "Namn",
+      "shortDescription": "Kort beskrivning",
+      "phone": "Telefon",
+      "storeAddress": "Butiksadress",
+      "image": "Bild",
+      "optional": "Valfritt",
+      "discountPercent": "Rabatt (0-100%)",
+      "minimumOrderValue": "Minsta ordervärde",
+      "openHours": "Öppettider",
+      "category": "Kategori",
+      "subcategory": "Underkategori",
+      "none": "Ingen"
+    },
+    "columns": {
+      "name": "Namn",
+      "products": "Totalt antal produkter",
+      "active": "Aktiv"
+    },
+    "description": "Säljare och varumärken som dina produkter tillhör."
+  },
+  "ecommerceSettings": {
+    "save": "Spara",
+    "saved": "Inställningar sparade",
+    "saveError": "Kunde inte spara inställningarna",
+    "rank": {
+      "label": "Rang",
+      "default": "Standard"
+    },
+    "tabs": {
+      "general": "Allmänt",
+      "payments": "Betalningar",
+      "shipping": "Frakt",
+      "checkout": "Kassa"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "Beställning är tillgänglig",
+        "description": "Använd det här fältet för att hindra kunder från att lägga beställningar utan att ändra dina öppettider. Öppettiderna styr också din tillgänglighet."
+      },
+      "webshopProductView": {
+        "label": "Produktvy i webbutiken",
+        "description": "Styr hur produkter visas i din webbutik.",
+        "options": {
+          "list": "Lista",
+          "listWithoutImage": "Lista utan bild",
+          "card": "Kort",
+          "cardSquare": "Kort med kvadratisk bild",
+          "image": "Bild",
+          "imageSquare": "Bild (kvadratisk)"
+        }
+      },
+      "openHours": {
+        "label": "Öppettider",
+        "description": "De tidsintervall då dina kunder kan lägga en beställning."
+      },
+      "searchProducts": {
+        "label": "Sök produkter",
+        "description": "Låt kunder skicka meddelanden för att hitta produkter."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "Spåra konverteringar med Facebook Pixel och mät resultaten av dina annonser. Följande händelser spåras: ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "Meddelande om övergiven varukorg",
+        "description": "Hur länge man ska vänta innan ett meddelande om övergiven varukorg skickas, efter att användaren lämnat din bot med en artikel i varukorgen.",
+        "disabled": "Inaktiverad",
+        "afterMinutes": "Efter {count} minuter",
+        "afterHours": "{count, plural, one {Efter # timme} other {Efter # timmar}}"
+      },
+      "productButtons": {
+        "label": "Knappar på produkter",
+        "description": "Den här inställningen styr vilka knappar som visas för produkter i din bot.",
+        "options": {
+          "addToCart": "Lägg i varukorg",
+          "share": "Dela",
+          "similar": "Liknande",
+          "save": "Spara"
+        }
+      },
+      "productImageSize": {
+        "label": "Bildstorlek för produkter",
+        "description": "Den här inställningen styr storleken på produktbilder i din bot",
+        "options": {
+          "bigSquare": "Stor (kvadratisk)",
+          "mediumRectangle": "Medel (rektangulär)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "Tillåt betygsättning av beställningar",
+        "description": "Låt kunder betygsätta en beställning och skriva ett omdöme om de inte är nöjda. Endast botens administratörer kan se omdömena"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "Skicka avisering när varukorgens status ändras",
+        "description": "Kunden får aviseringar varje gång du ändrar beställningens status. Du kan inte inaktivera aviseringen för avbeställning och slutförd beställning."
+      },
+      "abandonedCartFlow": {
+        "label": "Flöde för övergiven varukorg",
+        "description": "Flödet som boten kör för kunden när varukorgen lämnats så länge. Använd '{{shop_token}}' i knapparna för att öppna varukorgen. Triggers kan också använda händelsen \"Cart abandoned\".",
+        "none": "Inget flöde (endast trigger-händelse)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {# produkt är prissatt} other {# produkter är prissatta}} i en annan valuta än {currency}. Beställningar debiteras priset i {currency}.",
+      "paymentMethods": {
+        "label": "Betalningsmetoder",
+        "description": "Betalningsmetoderna som är aktiverade på kassasidan. Den första metoden i listan blir förvald på kassasidan.",
+        "options": {
+          "cod": "Postförskott"
+        }
+      },
+      "currency": {
+        "label": "Valuta",
+        "description": "Det här är valutan du anger produktpriser i. Kunderna debiteras i denna valuta."
+      },
+      "currencyPosition": {
+        "label": "Valutans placering",
+        "description": "Med det här alternativet styr du valutans placering.",
+        "options": {
+          "left": "Vänster",
+          "leftSpace": "Vänster med mellanrum",
+          "right": "Höger",
+          "rightSpace": "Höger med mellanrum"
+        }
+      },
+      "currencySymbol": {
+        "label": "Valutasymbol",
+        "description": "Valutasymbolen visas före priserna. Vill du ha ett mellanrum mellan symbolen och priserna, lägg till ett mellanslag efter symbolen."
+      },
+      "serviceFeePercent": {
+        "label": "Övriga avgifter / serviceavgifter (0 - 100%)",
+        "description": "Övriga avgifter som hör till försäljningen."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "Fraktsätt",
+        "description": "Med det här alternativet styr du hur kunden får sin beställning.",
+        "options": {
+          "none": "Ingen",
+          "delivery": "Leverans till kunden",
+          "pickup": "Avhämtning i butiken",
+          "deliveryAndPickup": "Leverans till kunden, Avhämtning i butiken"
+        }
+      },
+      "storeAddress": {
+        "label": "Butiksadress",
+        "description": "Den här adressen visas för kunden på kassasidan om du tillåter avhämtning i butiken."
+      },
+      "shippingCountries": {
+        "label": "Fraktländer",
+        "description": "De länder dit du skickar beställningar."
+      },
+      "defaultShippingCountry": {
+        "label": "Standardland för frakt",
+        "description": "Landet som väljs som standard på kassasidan.",
+        "none": "Ingen"
+      },
+      "deliveryCost": {
+        "label": "Leveranskostnad",
+        "description": "En fast avgift för att leverera beställningen till kundens adress."
+      },
+      "defaultCountryNotShipped": "Välj ett av leveransländerna."
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "Kassa",
+        "description": "Den här inställningen styr var dina kunder slutför sina beställningar. Om du vill att användaren ska slutföra beställningen utanför din bot, till exempel på din webbplats eller Amazon,.. använd inte vår standardkassa.",
+        "options": {
+          "default": "Standardkassa",
+          "externalLink": "Egen extern kassasida",
+          "flow": "Flöde",
+          "productPage": "Besök den externa produktsidan"
+        }
+      },
+      "checkoutLink": {
+        "label": "Länk till kassasidan",
+        "description": "Den externa sidan där kunder slutför sina beställningar."
+      },
+      "checkoutFlowId": {
+        "label": "Kassaflöde",
+        "description": "Flödet som körs när en kund går till kassan.",
+        "placeholder": "Välj ett flöde"
+      },
+      "minimumOrderValue": {
+        "label": "Minsta ordervärde",
+        "description": "Det lägsta värde en kund kan beställa för. Villkoret kontrolleras när alla rabatter har tillämpats."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "Kräv köparens namn",
+          "description": "Köparens namn samlas in i kassan."
+        },
+        "requireEmail": {
+          "label": "Kräv e-postadress",
+          "description": "Köparens e-post samlas in i kassan."
+        },
+        "requirePhone": {
+          "label": "Kräv telefonnummer",
+          "description": "Köparens telefon samlas in i kassan."
+        },
+        "requireState": {
+          "label": "Kräv län/region",
+          "description": "Köparens län samlas in i kassan."
+        },
+        "requireZip": {
+          "label": "Kräv postnummer",
+          "description": "Köparens postnummer samlas in i kassan."
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "Orderbekräftelse",
+        "description": "Det kunden får i chatten när beställningen är lagd. Standardmeddelandet visar orderuppgifterna på arbetsytans språk.",
+        "options": {
+          "default": "Standardmeddelande",
+          "flow": "Kör ett flöde",
+          "none": "Skicka ingenting"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Flöde för orderbekräftelse",
+        "description": "Flödet som skickas till kunden i stället för standardmeddelandet när beställningen är lagd."
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "Alltid öppet",
+    "addNew": "Lägg till ny",
+    "dialogTitle": "Öppettider",
+    "name": "Namn",
+    "namePlaceholder": "t.ex. Vardagar",
+    "day": "Dag",
+    "from": "Öppnar",
+    "to": "Stänger",
+    "add": "Lägg till tider",
+    "remove": "Ta bort",
+    "cancel": "Avbryt",
+    "continue": "Fortsätt",
+    "created": "Öppettider skapade",
+    "saveError": "Kunde inte spara öppettiderna",
+    "days": {
+      "0": "Söndag",
+      "1": "Måndag",
+      "2": "Tisdag",
+      "3": "Onsdag",
+      "4": "Torsdag",
+      "5": "Fredag",
+      "6": "Lördag"
+    },
+    "sameTimes": "Öppnings- och stängningstid måste skilja sig åt."
+  },
+  "webshop": {
+    "metadataTitle": "Butik",
+    "metadataOrderTitle": "Din beställning",
+    "invalidLinkTitle": "Länken fungerar inte",
+    "invalidLinkDescription": "Den kan ha gått ut. Be butiken om en ny länk i chatten.",
+    "previewBanner": "Förhandsvisning: så ser kunderna sidan. Det går inte att beställa från en förhandsvisning.",
+    "previewOrderingOff": "Förhandsvisning: beställning är avstängd",
+    "closed": {
+      "orderingUnavailable": "Butiken tar inte emot beställningar just nu.",
+      "outsideOpenHours": "Butiken är stängd just nu. Du kan fortfarande titta."
+    },
+    "searchPlaceholder": "Sök produkter",
+    "categories": "Kategorier",
+    "allCategories": "Alla kategorier",
+    "vendors": "Leverantörer",
+    "allVendors": "Alla leverantörer",
+    "noProducts": "Inga produkter hittades.",
+    "productNotFound": "Produkten finns inte längre.",
+    "outOfStock": "Slut i lager",
+    "addToCart": "Lägg i varukorgen",
+    "added": "Tillagd i varukorgen",
+    "chooseOptions": "Välj alternativ",
+    "chooseOption": "Välj {name}",
+    "variantUnavailable": "Den här kombinationen finns inte.",
+    "buy": "Köp",
+    "share": "Dela",
+    "linkCopied": "Kopierat",
+    "similar": "Liknande",
+    "save": "Spara",
+    "saved": "Sparad",
+    "showImage": "Visa bild {number}",
+    "increase": "Öka antal",
+    "decrease": "Minska antal",
+    "remove": "Ta bort",
+    "cart": "Varukorg",
+    "cartEmpty": "Din varukorg är tom.",
+    "continueShopping": "Fortsätt handla",
+    "unavailableItems": "{count, plural, one {# vara kan inte beställas just nu} other {# varor kan inte beställas just nu}}",
+    "unavailableNotOrdered": "De ingår inte i beställningen och ligger kvar i varukorgen.",
+    "unavailable": "Finns inte längre",
+    "unavailableHint": "Välj alternativen igen",
+    "deletedProduct": "Borttagen produkt",
+    "summary": {
+      "subtotal": "Delsumma",
+      "discount": "Rabatt",
+      "delivery": "Leverans",
+      "otherFees": "Övriga avgifter",
+      "total": "Totalt",
+      "coupon": "Rabattkod ({code})",
+      "title": "Ordersammanfattning",
+      "saved": "Du sparar {amount}"
+    },
+    "belowMinimum": "Minsta beställning är {amount}.",
+    "checkOut": "Till kassan",
+    "contactDetails": "Dina uppgifter",
+    "optional": "(valfritt)",
+    "fields": {
+      "name": "Namn",
+      "email": "E-post",
+      "phone": "Telefon",
+      "country": "Land",
+      "state": "Län",
+      "city": "Stad",
+      "address1": "Adress",
+      "address2": "Lägenhet, byggnad osv.",
+      "zip": "Postnummer",
+      "note": "Meddelande till butiken"
+    },
+    "shipping": {
+      "title": "Leverans",
+      "delivery": "Leverera till min adress",
+      "pickup": "Hämta i butiken",
+      "storeAddress": "Butikens adress: {address}"
+    },
+    "payment": {
+      "title": "Betalning",
+      "cod": "Betala vid leverans"
+    },
+    "placeOrder": "Lägg beställning",
+    "orderPlaced": "Tack! Din beställning är lagd. Vi skickar uppdateringar i chatten.",
+    "orderTitle": "Beställning #{number}",
+    "orderNotFound": "Beställningen hittades inte.",
+    "placedAt": "Lagd {date}",
+    "status": {
+      "pending": "Ej behandlad",
+      "accepted": "Behandlas",
+      "shipped": "Skickad",
+      "concluded": "Slutförd",
+      "cancelled": "Avbruten"
+    },
+    "rateTitle": "Betygsätt din beställning",
+    "rateComment": "Berätta för butiken vad du tycker (valfritt)",
+    "rateSubmit": "Skicka betyg",
+    "rateThanks": "Tack för ditt betyg!",
+    "yourRating": "Ditt betyg",
+    "ratingValue": "{rating} av 5 stjärnor",
+    "previous": "Föregående",
+    "next": "Nästa",
+    "pageOf": "Sida {page} av {pageCount}",
+    "errors": {
+      "generic": "Något gick fel. Försök igen.",
+      "checkFields": "Kontrollera fälten.",
+      "fieldRequired": "{field} måste fyllas i.",
+      "countryUnavailable": "Butiken levererar inte till det här landet.",
+      "invalidLink": "Länken fungerar inte längre. Be butiken om en ny.",
+      "webshopPreviewOnly": "Det här är en förhandsvisning. Beställningar kan bara göras från en kunds länk.",
+      "rateLimited": "För många försök. Vänta en stund och försök igen.",
+      "orderingUnavailable": "Butiken tar inte emot beställningar just nu.",
+      "orderBelowMinimum": "Minsta beställning är {minimum}.",
+      "orderBelowVendorMinimum": "Varor från {vendorName} måste sammanlagt bli minst {minimum}.",
+      "orderOutOfStock": "{productName} är slut i lager.",
+      "orderProductUnavailable": "Vissa varor kan inte längre beställas. Kontrollera varukorgen.",
+      "orderEmpty": "Din varukorg är tom.",
+      "orderShippingTypeUnavailable": "Det här leveranssättet är inte tillgängligt.",
+      "webshopRatingNotAllowed": "Den här beställningen kan inte betygsättas.",
+      "webshopCartFull": "Din varukorg kan innehålla högst {maximum} olika artiklar.",
+      "notFound": "Produkten finns inte längre.",
+      "discountCodeNotFound": "Rabattkoden finns inte.",
+      "discountCodeInactive": "Rabattkoden är inte aktiv.",
+      "discountCodeNotStarted": "Rabattkoden gäller inte än.",
+      "discountCodeExpired": "Rabattkoden har gått ut.",
+      "discountCodeUsageLimitReached": "Rabattkoden är förbrukad.",
+      "discountCodeAlreadyUsed": "Du har redan använt rabattkoden.",
+      "discountCodeNotEligible": "Rabattkoden gäller inte för dig.",
+      "discountCodeNotApplicable": "Rabattkoden gäller inte för varukorgen.",
+      "discountCodeMinimumAmount": "Koden kräver köp för minst {minimum}. Lägg till {missing} till.",
+      "discountCodeMinimumQuantity": "Koden kräver minst {minimum} varor. Lägg till {missing} till."
+    },
+    "discount": {
+      "label": "Rabattkod",
+      "placeholder": "Rabattkod",
+      "apply": "Använd",
+      "applied": "Rabattkoden används",
+      "automatic": "används automatiskt",
+      "remove": "Ta bort rabattkod",
+      "available": "Koder du kan använda",
+      "freeShipping": "Fri frakt",
+      "bestChoice": "Bästa valet",
+      "expiresOn": "Gäller till {date}",
+      "noExpiry": "Utan slutdatum",
+      "inUse": "Används",
+      "saves": "Sparar {amount}",
+      "showMore": "{count, plural, one {Visa # kod till} other {Visa # koder till}}",
+      "showLess": "Visa färre",
+      "removeShort": "Ta bort",
+      "expired": "Utgången",
+      "usedUp": "Slut",
+      "notEligible": "Inte behörig än"
+    },
+    "itemCount": "{count, plural, one {# vara} other {# varor}}",
+    "relatedProducts": "Du kanske också gillar"
+  },
+  "webshopLinks": {
+    "preview": "Förhandsgranska",
+    "getLink": "Hämta länk",
+    "copied": "Länken har kopierats. Lägg den på en botknapp: varje kontakt öppnar sin egen butik.",
+    "error": "Det gick inte att hämta länken.",
+    "copyError": "Det gick inte att kopiera länken.",
+    "shopLink": {
+      "label": "Butikslänk",
+      "hint": "Klistra in den här länken i en knapp i ett flöde, ett utskick eller en sekvens. Varje kontakt som får den öppnar sin egen butik och kan beställa."
+    },
+    "productLink": {
+      "label": "Offentlig URL",
+      "hint": "Kopiera och klistra in URL:en i ditt flöde, utskick eller din sekvens. Varje kontakt som får den öppnar den här produkten och kan beställa."
+    }
+  },
+  "discountCodes": {
+    "title": "Rabattkoder",
+    "description": "Rabattkoder som kunderna använder i kassan eller som gäller av sig själva.",
+    "add": "Lägg till",
+    "edit": "Redigera rabattkod",
+    "automatic": "Automatisk",
+    "never": "Aldrig",
+    "searchPlaceholder": "Sök koder…",
+    "saveError": "Rabattkoden kunde inte sparas.",
+    "created": "Rabattkod skapad",
+    "updated": "Rabattkod sparad",
+    "deleted": "Rabattkod borttagen",
+    "deleteError": "Rabattkoden kunde inte tas bort.",
+    "deleteTitle": "Ta bort rabattkoden {code}?",
+    "deleteDescription": "Kunderna kan inte längre använda den. Beställningar som använde den behåller rabatten.",
+    "cancel": "Avbryt",
+    "delete": "Ta bort",
+    "save": "Spara",
+    "columns": {
+      "name": "Namn",
+      "discount": "Rabatt",
+      "used": "Använd",
+      "end": "Slutar",
+      "active": "Aktiv"
+    },
+    "discountTypes": {
+      "percentage": "Procent",
+      "fixedAmount": "Fast belopp",
+      "freeShipping": "Fri frakt"
+    },
+    "appliesTo": {
+      "entireOrder": "Hela beställningen",
+      "category": "Viss kategori",
+      "products": "Vissa produkter"
+    },
+    "minimumTypes": {
+      "none": "Inget",
+      "amount": "Minsta köpbelopp",
+      "quantity": "Minsta antal varor"
+    },
+    "eligibilities": {
+      "everyone": "Alla",
+      "specificCustomers": "Vissa kunder"
+    },
+    "form": {
+      "discountCode": "Rabattkod",
+      "code": "Kod",
+      "generate": "Generera",
+      "autoApply": "Använd rabattkoden automatiskt i varukorgar",
+      "autoApplyHint": "Varukorgar får den utan att kunden skriver den. Vid flera automatiska koder vinner den med störst rabatt.",
+      "typedHint": "Kunderna anger rabattkoden i kassan.",
+      "options": "Alternativ",
+      "discountType": "Rabattyp",
+      "discountValuePercent": "Rabattvärde (%)",
+      "discountValueAmount": "Rabattvärde ({currency})",
+      "freeShippingHint": "Tar bort leveranskostnaden för beställningar som levereras.",
+      "appliesTo": "Gäller för",
+      "category": "Kategori",
+      "products": "Produkter",
+      "productsPlaceholder": "Välj produkter",
+      "minimumRequirement": "Minimikrav",
+      "minimumAmount": "Minsta belopp ({currency})",
+      "minimumQuantity": "Minsta antal varor",
+      "usageLimits": "Användningsgränser",
+      "limitTotal": "Begränsa hur många gånger rabatten kan användas totalt",
+      "usedSoFar": "{count, plural, one {Använd # gång hittills} other {Använd # gånger hittills}}",
+      "oncePerCustomer": "En gång per kund",
+      "customerEligibility": "Vilka kunder",
+      "specificCustomersHint": "Endast kontakter som matchar filtret nedan när de beställer.",
+      "activeDates": "Giltighetsperiod",
+      "startDate": "Startdatum",
+      "endDate": "Slutdatum",
+      "isActive": "Aktiv"
+    },
+    "rules": {
+      "codeCharacters": "Använd bara bokstäver utan accenter, siffror, - och _.",
+      "usageBelowUsed": "Koden har redan använts {count} gånger; gränsen kan inte vara lägre.",
+      "customerConditionRequired": "Lägg till minst ett villkor.",
+      "endAfterStart": "Slutdatumet måste vara efter startdatumet."
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "Analys",
+    "lifetime": "Totalt",
+    "sales": "Försäljning",
+    "orders": "Beställningar",
+    "products": "Produkter",
+    "salesByDate": "Försäljning per datum",
+    "ordersByDate": "Beställningar per datum",
+    "topProducts": "Toppprodukter",
+    "topVendors": "Toppleverantörer",
+    "columns": {
+      "name": "Namn",
+      "sales": "Försäljning"
+    },
+    "noData": "Inga data under perioden",
+    "refresh": "Uppdatera",
+    "change": "{value} %",
+    "noPrevious": "ny",
+    "otherCurrencyOrders": "{count} beställningar i andra valutor ingår inte i dessa siffror"
   },
   "responseSla": {
     "label": "Svars-SLA",

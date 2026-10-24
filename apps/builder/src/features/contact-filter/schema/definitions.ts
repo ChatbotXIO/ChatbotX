@@ -43,6 +43,7 @@ export type ContactFilterOptionSource =
   | "ctwaConversionTypes"
   | "channelPosts"
   | "workingHours"
+  | "products"
 
 /**
  * Where a contact-filter field may be used. `contacts` is every list/audience
@@ -411,6 +412,47 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.ctwaConversion,
     schemaKind: "multiSelect",
     optionSource: "ctwaConversionTypes",
+  },
+  // --- Ecommerce: orders (not cancelled, store currency) and the web shop cart ---
+  {
+    field: contactFilterFields.enum.totalSpent,
+    schemaKind: "number",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.numberOfOrders,
+    schemaKind: "number",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.bought,
+    schemaKind: "datetime",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.boughtItems,
+    schemaKind: "select",
+    optionSource: "products",
+  },
+  {
+    field: contactFilterFields.enum.shoppingCartIsEmpty,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.shoppingCartContainsItems,
+    schemaKind: "select",
+    optionSource: "products",
+  },
+  {
+    field: contactFilterFields.enum.shoppingCartSubtotal,
+    schemaKind: "number",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.shoppingCartTotal,
+    schemaKind: "number",
+    optionSource: "none",
   },
   // --- System fields ---
   {

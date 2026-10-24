@@ -103,6 +103,20 @@ describe("MessageItem outgoing send-error affordance", () => {
 
     expect(el.querySelector(".text-destructive")).toBeNull()
   })
+
+  test("an incoming guest message with sendError renders the destructive error icon", () => {
+    const el = renderComponent(
+      <MessageItem
+        guestDisplay={true}
+        message={makeMessage({
+          messageType: "incoming",
+          sendError: "Timed out",
+        })}
+      />,
+    )
+
+    expect(el.querySelector(".text-destructive")).not.toBeNull()
+  })
 })
 
 describe("MessageItem call-failure affordance", () => {

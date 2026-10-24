@@ -1,6 +1,10 @@
 // Main unified emitters
 
 export type {
+  CartAbandonedMetadata,
+  CartItemEventMetadata,
+  CommerceEventProduct,
+  OrderEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "./base-emitter"

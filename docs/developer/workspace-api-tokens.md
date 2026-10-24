@@ -213,12 +213,12 @@ The full endpoint-to-scope mapping is generated, not hand-maintained here —
 see `/api/spec.json` (built from `apps/builder/src/routers/public.ts`) for
 the authoritative, current list, and
 `apps/builder/__tests__/*-public-scope.test.ts` for the tests that enforce
-each feature's scope assignment at compile/test time. The 18
+each feature's scope assignment at compile/test time. The 19
 `*-public-scope.test.ts` files are: `ads`, `analytics`, `appointments`,
 `automation`, `broadcasts`, `channels-and-integrations`, `channels`,
-`contacts`, `conversations`, `coupons`, `email-topics`, `error-logs`,
-`integrations`, `media`, `minigames`, `product-categories`, `products` and
-`sequences`.
+`contacts`, `conversations`, `coupons`, `ecommerce` (orders, product vendors,
+store settings), `email-topics`, `error-logs`, `integrations`, `media`,
+`minigames`, `product-categories`, `products` and `sequences`.
 
 What follows are the scope-assignment decisions and gotchas that aren't
 derivable from the code or those tests — read before adding or reassigning

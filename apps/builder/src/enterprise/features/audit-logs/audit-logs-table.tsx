@@ -1,17 +1,14 @@
 "use client"
 
-import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
-import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
-import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
+import { AuditLogsDataTable } from "./audit-logs-data-table"
+import { AuditLogsFilterToolbar } from "./audit-logs-filter-toolbar"
 import { getAuditColumns } from "./audit-logs-table-columns"
-import { AuditLogsToolbar } from "./audit-logs-toolbar"
 import type { listAuditLogAdmins, listAuditLogs } from "./queries"
 import type { ListAuditLogsRequest } from "./schema/query"
 
 type AuditLogsTableProps = {
-  workspaceId: string
   search: Pick<ListAuditLogsRequest, "from" | "to" | "keyword" | "userId">
   promises: Promise<
     [
@@ -27,27 +24,33 @@ export function AuditLogsTable({ promises, search }: AuditLogsTableProps) {
 
   const columns = useMemo(() => getAuditColumns(t), [t])
 
-  const { table } = useDataTable({
-    data,
-    columns,
-    pageCount,
-    initialState: {
-      sorting: [{ id: "createdAt", desc: true }],
-    },
-    getRowId: (originalRow) => originalRow.id,
-    shallow: false,
-    clearOnDefault: true,
-  })
-
   return (
     <div className="space-y-4">
       <h3 className="font-bold text-xl">{t("auditLogs.title")}</h3>
 
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <AuditLogsToolbar {...search} admins={admins} />
-        </DataTableToolbar>
-      </DataTable>
+      <AuditLogsDataTable
+        columns={columns}
+        data={data}
+        pageCount={pageCount}
+        toolbar={
+          <AuditLogsFilterToolbar
+            from={search.from}
+            keyword={search.keyword}
+            select={{
+              paramKey: "userId",
+              value: search.userId,
+              label: t("auditLogs.filters.user"),
+              allLabel: t("auditLogs.filters.allAdmins"),
+              idPrefix: "audit-log-user",
+              options: admins.map((admin) => ({
+                id: admin.id,
+                label: admin.label,
+              })),
+            }}
+            to={search.to}
+          />
+        }
+      />
     </div>
   )
 }

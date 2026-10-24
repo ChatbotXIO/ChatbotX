@@ -127,6 +127,11 @@ vi.mock(
   () => ({ useActivityFiltersEnabled: () => true }),
 )
 
+vi.mock(
+  "@/features/contact-filter/components/use-product-filter-options",
+  () => ({ useProductFilterOptions: () => [] }),
+)
+
 vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-id",
 }))

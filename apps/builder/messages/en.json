@@ -2302,6 +2302,10 @@
       "label": "From Address",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "From Name",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "Message Template"
     },
@@ -3454,7 +3458,13 @@
       "sendGoogleAdsConversion": "Send Google Ads Conversion",
       "changeGamificationScore": "Change gamification scores",
       "sendViewCatalog": "View catalog",
-      "sendProducts": "Send Products"
+      "sendProducts": "Send Products",
+      "sendCollection": "Collection"
+    },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Unable to test the external request. Verify the request configuration and try again."
+      }
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
@@ -3635,6 +3645,43 @@
       "productsSelected": "{count, plural, one {# product} other {# products}}",
       "noneSelected": "No products yet",
       "sendFailed": "Couldn't send the products."
+    },
+    "sendCollection": {
+      "title": "Collection",
+      "dataType": "Data type",
+      "dataTypes": {
+        "products": "Products"
+      },
+      "collectionType": "Collection type",
+      "collectionTypes": {
+        "automated": {
+          "label": "Automated",
+          "description": "Existing and future items that match the conditions you set will automatically be added to this collection."
+        },
+        "manual": {
+          "label": "Manual",
+          "description": "Add items to this collection one by one."
+        }
+      },
+      "condition": "Condition",
+      "name": "Name",
+      "optional": "(Optional)",
+      "category": "Category",
+      "subcategory": "Subcategory",
+      "vendor": "Vendor",
+      "all": "All",
+      "items": "Items",
+      "select": "Select",
+      "selectPlaceholder": "Select 1 or more items",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "maxProducts": "Up to {count} products; a product the shop no longer shows is skipped.",
+      "automatedHint": "Sends up to {count} matching products the shop shows, as cards opening each product in the web shop.",
+      "summaryAll": "All products the shop shows",
+      "summaryAutomated": "Products: {filters}",
+      "summaryManual": "{count, plural, one {# product} other {# products}}",
+      "cancel": "Cancel",
+      "save": "Save"
     }
   },
   "folders": {
@@ -4623,6 +4670,7 @@
         "buttonText": "Button Text",
         "buttonType": "Button Type",
         "visitWebsite": "Visit Website",
+        "openMiniApp": "Open Mini App",
         "callPhoneNumber": "Call Phone Number",
         "postback": "Button"
       },
@@ -4826,6 +4874,7 @@
     "orContinueWith": "Or continue with",
     "continueWithFacebook": "Continue with Facebook",
     "continueWithGoogle": "Continue with Google",
+    "continueWithProvider": "Continue with {name}",
     "continueWithEmail": "Continue with Email",
     "continueWithMagicLink": "Continue with Magic Link",
     "dontHaveAnAccount": "Don't have an account?",
@@ -4856,11 +4905,15 @@
     "changePasswordTitle": "Change your password",
     "changePasswordDescription": "Set a new password before continuing.",
     "passwordChangeSuccess": "Password changed",
+    "signUpDisabledTitle": "Sign-up is disabled",
+    "signUpDisabledDescription": "New accounts can only be created by an administrator or through an invitation link.",
     "oauthError": {
       "accountNotLinked": "An account with this email already exists and could not be linked. Sign in the way you did before, or contact support.",
       "unableToLinkAccount": "We could not link this sign-in to the existing account. Sign in the way you did before, or contact support.",
       "sessionExpired": "The sign-in attempt expired. Please try again.",
       "accessDenied": "Sign-in was cancelled.",
+      "signUpDisabled": "This account does not exist yet and sign-up is disabled. Ask an administrator to create it for you.",
+      "invalidInvitation": "This invitation is invalid or has expired.",
       "generic": "Sign-in failed. Please try again."
     }
   },
@@ -4893,6 +4946,25 @@
       "unknownFieldTarget": "A mapped contact field no longer exists.",
       "actionReferenceNotFound": "An action refers to a flow, tag or field that no longer exists.",
       "fieldMappingRequired": "Add at least one field mapping."
+    },
+    "form": {
+      "required": "This field is required.",
+      "minLength": "Enter at least {minimum} characters.",
+      "maxLength": "Enter at most {maximum} characters.",
+      "minNumber": "Enter a number of at least {minimum}.",
+      "moreThan": "Enter a number greater than {minimum}.",
+      "maxNumber": "Enter a number of at most {maximum}.",
+      "lessThan": "Enter a number less than {maximum}.",
+      "number": "Enter a number.",
+      "wholeNumber": "Enter a whole number.",
+      "minItems": "Choose at least {minimum}.",
+      "maxItems": "Choose at most {maximum}.",
+      "email": "Enter a valid email address.",
+      "url": "Enter a valid link, starting with https://.",
+      "format": "This value is not in the right format.",
+      "option": "Choose one of the options.",
+      "invalid": "This value is not valid.",
+      "checkFields": "Some fields need fixing. Check the ones marked in red."
     }
   },
   "webchat": {
@@ -5492,7 +5564,8 @@
     "chatbotInvitationDescription1": "Join {chatbotName}",
     "chatbotInvitationDescription2": "{userName} has invited you to join {chatbotName}.",
     "invalidInvitation": "This invitation is invalid or has expired.",
-    "workspaceUnavailable": "This workspace is no longer available."
+    "workspaceUnavailable": "This workspace is no longer available.",
+    "signUpToJoin": "Create an account to join"
   },
   "inboxes": {
     "markReadOnOutbound": {
@@ -5880,7 +5953,8 @@
       "contactReferredExistingContact": "Contact Referred Existing Contact",
       "callRecorded": "Call Recorded",
       "callTranscribed": "Call Transcribed",
-      "anyProduct": "Any product"
+      "anyProduct": "Any product",
+      "anyCategory": "Any category"
     },
     "actions": {
       "addTag": "Add Tag",
@@ -6001,7 +6075,8 @@
       "userPlaceholder": "User ID",
       "keyword": "Keyword",
       "keywordPlaceholder": "Action, detail, or IP address",
-      "allAdmins": "All Admin"
+      "allAdmins": "All Admin",
+      "allWorkspaces": "All workspaces"
     }
   },
   "customFields": {
@@ -7051,7 +7126,14 @@
       "supportOff": "Off",
       "searchPlaceholder": "Search by name, owner email or ID",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
-      "supportAccessible": "Accessible"
+      "supportAccessible": "Accessible",
+      "createButton": "Create workspace",
+      "createTitle": "Create workspace for an owner",
+      "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",
+      "ownerEmail": "Owner email",
+      "memberEmails": "Member emails",
+      "membersHint": "Every member gets the permissions selected below. New emails get a mailed temporary password.",
+      "createdSummary": "Workspace created for {ownerEmail} — {memberCount} member(s) added, {newAccountCount} new account(s) emailed a temporary password."
     },
     "admins": {
       "title": "Platform administrators",
@@ -7067,6 +7149,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Platform audit logs",
+      "description": "Audit activity across every workspace on this platform."
+    },
+    "smtp": {
+      "title": "SMTP settings",
+      "description": "Platform email transport. Leave this empty to keep using the SMTP_SERVER and SMTP_FROM environment variables.",
+      "usingEnv": "No SMTP settings saved — platform email uses the SMTP_SERVER environment variable.",
+      "remove": "Remove SMTP settings",
+      "errors": {
+        "passwordRequired": "Enter the SMTP password."
+      }
     }
   },
   "platformCredentials": {
@@ -7145,6 +7240,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Community",
+    "enterpriseGroup": "Enterprise",
     "platformGroup": "Platform",
     "toolsGroup": "Tools",
     "saasGroup": "SaaS",
@@ -7321,7 +7418,82 @@
     "unknown": "Unknown"
   },
   "orders": {
-    "title": "Orders"
+    "title": "Orders",
+    "empty": "No orders yet.",
+    "searchPlaceholder": "Search by name, phone, email or order number",
+    "orderNumber": "Order #{number}",
+    "print": "Print",
+    "inbox": "Inbox",
+    "statusUpdated": "Order status updated",
+    "statusUpdateError": "Could not update the order status",
+    "updateStatusTitle": "Update Order Status",
+    "message": "Message",
+    "messagePlaceholder": "Optional",
+    "messageDescription": "Sent to the customer in their conversation.",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "delete": "Delete",
+    "deleted": "Order deleted",
+    "deleteError": "Could not delete the order",
+    "deleteTitle": "Delete order #{number}?",
+    "deleteDescription": "The order, its items and its history are removed. Stock it still holds is put back.",
+    "columns": {
+      "name": "Name",
+      "total": "Total",
+      "status": "Status",
+      "date": "Date",
+      "rating": "Rating",
+      "quantity": "Quantity",
+      "price": "Price",
+      "vendor": "Vendor"
+    },
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "country": "Country",
+      "state": "State",
+      "city": "City",
+      "street": "Street",
+      "zip": "ZIP Code",
+      "shippingType": "Shipping",
+      "orderId": "Order ID",
+      "date": "Date",
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "deliveryCost": "Delivery cost",
+      "otherTaxes": "Other taxes",
+      "total": "Total",
+      "paymentMethod": "Payment method",
+      "status": "Status",
+      "note": "Note",
+      "cancelReason": "Cancel reason",
+      "rating": "Rating",
+      "ratingComment": "Customer comment",
+      "coupon": "Coupon ({code})"
+    },
+    "statuses": {
+      "pending": "Not processed",
+      "accepted": "Accepted",
+      "shipped": "Shipped",
+      "concluded": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "transitions": {
+      "accepted": "Accept",
+      "shipped": "Ship",
+      "concluded": "Complete",
+      "cancelled": "Cancel"
+    },
+    "paymentMethods": {
+      "cod": "Cash on Delivery"
+    },
+    "shippingTypes": {
+      "delivery": "Deliver to the customer",
+      "pickup": "Pickup in the Store"
+    },
+    "description": "Orders placed by your customers.",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "Products",
@@ -7378,7 +7550,8 @@
         "label": "Allow customers to purchase this product when it's out of stock"
       },
       "vendor": {
-        "label": "Vendor"
+        "label": "Vendor",
+        "none": "None"
       },
       "rank": {
         "label": "Rank"
@@ -7511,8 +7684,8 @@
     "loadError": "Unable to load product categories.",
     "all": "All products",
     "create": "Create category",
-    "edit": "Rename category",
-    "name": "Category name",
+    "edit": "Edit",
+    "name": "Name",
     "namePlaceholder": "e.g. Summer collection",
     "parent": "Parent category",
     "noParent": "None (top level)",
@@ -7532,12 +7705,25 @@
     "columns": {
       "name": "Name",
       "products": "Products",
-      "subcategories": "Subcategories"
+      "subcategories": "Subcategories",
+      "visible": "Visible"
     },
     "expand": "Show subcategories",
     "collapse": "Hide subcategories",
     "productCount": "{count, plural, =0 {No products} one {# product} other {# products}}",
-    "deleteChildrenWarning": "{count, plural, one {Its # subcategory will be deleted too.} other {Its # subcategories will be deleted too.}}"
+    "deleteChildrenWarning": "{count, plural, one {Its # subcategory will be deleted too.} other {Its # subcategories will be deleted too.}}",
+    "add": "Add",
+    "dialogTitle": "Category",
+    "image": "Image",
+    "continue": "Continue",
+    "subcategories": "Subcategories",
+    "subcategoriesOf": "Subcategories of {name}",
+    "emptySub": "No subcategories yet.",
+    "back": "Back to categories",
+    "getId": "Get ID",
+    "idCopied": "Category ID {id} copied",
+    "idCopyError": "Could not copy the ID",
+    "description": "Group your products into categories and subcategories."
   },
   "productImport": {
     "title": "Import",
@@ -9047,6 +9233,543 @@
       "hours": "Hours",
       "closed": "Closed"
     }
+  },
+  "productVendors": {
+    "title": "Vendors",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "actions": "Actions",
+    "save": "Save",
+    "cancel": "Cancel",
+    "moreOptions": "More Options",
+    "empty": "No vendors yet.",
+    "created": "Vendor added",
+    "updated": "Vendor updated",
+    "deleted": "Vendor deleted",
+    "saveError": "Could not save the vendor",
+    "deleteError": "Could not delete the vendor",
+    "deleteTitle": "Delete {name}?",
+    "deleteDescription": "{count, plural, =0 {No product uses this vendor.} one {# product will be left without a vendor.} other {# products will be left without a vendor.}}",
+    "fields": {
+      "name": "Name",
+      "shortDescription": "Short Description",
+      "phone": "Phone",
+      "storeAddress": "Store address",
+      "image": "Image",
+      "optional": "Optional",
+      "discountPercent": "Discount (0-100%)",
+      "minimumOrderValue": "Minimum order value",
+      "openHours": "Open hours",
+      "category": "Category",
+      "subcategory": "Subcategory",
+      "none": "None"
+    },
+    "columns": {
+      "name": "Name",
+      "products": "Total Products",
+      "active": "Active"
+    },
+    "description": "Sellers and brands your products belong to."
+  },
+  "ecommerceSettings": {
+    "save": "Save",
+    "saved": "Settings saved",
+    "saveError": "Could not save the settings",
+    "rank": {
+      "label": "Rank",
+      "default": "Default"
+    },
+    "tabs": {
+      "general": "General",
+      "payments": "Payments",
+      "shipping": "Shipping",
+      "checkout": "Checkout"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "Ordering is Available",
+        "description": "Use this field to not allow clients to place orders without changing your Opening hours. Opening hours also control your availability."
+      },
+      "webshopProductView": {
+        "label": "Web shop product view",
+        "description": "Control the way products are displayed on your web shop.",
+        "options": {
+          "list": "List",
+          "listWithoutImage": "List Without Image",
+          "card": "Card",
+          "cardSquare": "Card with square image",
+          "image": "Image",
+          "imageSquare": "Image (square)"
+        }
+      },
+      "openHours": {
+        "label": "Open hours",
+        "description": "The time intervals that your customers can place an order."
+      },
+      "searchProducts": {
+        "label": "Search Products",
+        "description": "Allow customers to send messages to find products."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "Track conversion with FB pixel and measure the results of your ads. The following events are tracked ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "Abandoned cart message",
+        "description": "The amount of time to wait before to send an abandoned cart message after the user leaves your bot with an item in cart.",
+        "disabled": "Disabled",
+        "afterMinutes": "After {count} minutes",
+        "afterHours": "{count, plural, one {After # hour} other {After # hours}}"
+      },
+      "productButtons": {
+        "label": "Buttons in Products",
+        "description": "This setting controls what buttons are shown for products inside your bot.",
+        "options": {
+          "addToCart": "Add to Cart",
+          "share": "Share",
+          "similar": "Similar",
+          "save": "Save"
+        }
+      },
+      "productImageSize": {
+        "label": "Image size of Products",
+        "description": "This setting controls the size of the image of products inside your bot",
+        "options": {
+          "bigSquare": "Big (Square)",
+          "mediumRectangle": "Medium (Rectangle)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "Allow to rate orders",
+        "description": "Allow customers to rate an order and write a review if they are not satisfied with the order. Only bot admins can see the reviews"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "Send notification when change cart status",
+        "description": "The customer will receive notifications whenever you change the order status. You can't disable notification for order cancelation and for order conclusion."
+      },
+      "abandonedCartFlow": {
+        "label": "Abandoned cart flow",
+        "description": "The flow the bot runs for the customer when the cart is left this long. Use '{{shop_token}}' in its buttons to open the cart. Triggers can also use the \"Cart abandoned\" event.",
+        "none": "No flow (trigger event only)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {# product is} other {# products are}} priced in another currency than {currency}. Orders charge their price in {currency}.",
+      "paymentMethods": {
+        "label": "Payment methods",
+        "description": "The payment methods that are enabled in the checkout page. The first payment method in the list will be the selected payment method in the checkout page.",
+        "options": {
+          "cod": "Cash on Delivery"
+        }
+      },
+      "currency": {
+        "label": "Currency",
+        "description": "This is the currency that you set the prices for products. The customers will be charged in this currency."
+      },
+      "currencyPosition": {
+        "label": "Currency position",
+        "description": "This option allows you to control the currency position.",
+        "options": {
+          "left": "Left",
+          "leftSpace": "Left with space",
+          "right": "Right",
+          "rightSpace": "Right with space"
+        }
+      },
+      "currencySymbol": {
+        "label": "Symbol of money",
+        "description": "The symbol of money is shown ahead of prices. If you want a space between the symbol and prices, add a space at the end of the symbol."
+      },
+      "serviceFeePercent": {
+        "label": "Other Fees / Services Fees (0 - 100%)",
+        "description": "Other fees related to the sale."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "Shipping type",
+        "description": "This option allows you to control how the customer will get their order.",
+        "options": {
+          "none": "None",
+          "delivery": "Deliver to the customer",
+          "pickup": "Pickup in the Store",
+          "deliveryAndPickup": "Deliver to the customer, Pickup in the Store"
+        }
+      },
+      "storeAddress": {
+        "label": "Store address",
+        "description": "This address is shown to the customer in the checkout page if you allow pick up in the store."
+      },
+      "shippingCountries": {
+        "label": "Shipping countries",
+        "description": "The countries that you ship an order."
+      },
+      "defaultShippingCountry": {
+        "label": "Default Shipping country",
+        "description": "The country that will be selected by default in the checkout page.",
+        "none": "None"
+      },
+      "deliveryCost": {
+        "label": "Delivery cost",
+        "description": "A flat rate cost to deliver the order to the customer address."
+      },
+      "defaultCountryNotShipped": "Choose one of the shipping countries."
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "Checkout",
+        "description": "This setting control where your customers will finish their orders. If you want the user to complete the order outside of your bot like on your website, Amazon,.. don't use our default checkout page.",
+        "options": {
+          "default": "Default checkout page",
+          "externalLink": "Custom External checkout page",
+          "flow": "Flow",
+          "productPage": "Visit the external product page"
+        }
+      },
+      "checkoutLink": {
+        "label": "Checkout Page Link",
+        "description": "The external page where customers finish their orders."
+      },
+      "checkoutFlowId": {
+        "label": "Checkout Flow",
+        "description": "The flow that runs when a customer checks out.",
+        "placeholder": "Select a flow"
+      },
+      "minimumOrderValue": {
+        "label": "Minimum order value",
+        "description": "The minimum value of the order that a customer can place. This condition is checked when all discounts are applied."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "Require buyer name",
+          "description": "The buyer Name will be collected during the checkout."
+        },
+        "requireEmail": {
+          "label": "Require email address",
+          "description": "The buyer Email will be collected during the checkout."
+        },
+        "requirePhone": {
+          "label": "Require phone number",
+          "description": "The buyer Phone will be collected during the checkout."
+        },
+        "requireState": {
+          "label": "Require state/province",
+          "description": "The buyer State will be collected during the checkout."
+        },
+        "requireZip": {
+          "label": "Require zip code",
+          "description": "The buyer ZIP Code will be collected during the checkout."
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "Order confirmation message",
+        "description": "What the customer gets in the chat when their order is placed. The default message lists the order details in the workspace language.",
+        "options": {
+          "default": "Default message",
+          "flow": "Run a flow",
+          "none": "Don't send anything"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Order confirmation flow",
+        "description": "The flow sent to the customer instead of the default message when their order is placed."
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "Always open",
+    "addNew": "Add New",
+    "dialogTitle": "Open hours",
+    "name": "Name",
+    "namePlaceholder": "e.g. Weekdays",
+    "day": "Day",
+    "from": "Opens",
+    "to": "Closes",
+    "add": "Add hours",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "created": "Open hours created",
+    "saveError": "Could not save the open hours",
+    "days": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    },
+    "sameTimes": "Opening and closing time must differ."
+  },
+  "webshop": {
+    "metadataTitle": "Shop",
+    "metadataOrderTitle": "Your order",
+    "invalidLinkTitle": "This link does not work",
+    "invalidLinkDescription": "It may have expired. Ask the store in the chat for a new link.",
+    "previewBanner": "Preview: this is what customers see. Orders cannot be placed from a preview.",
+    "previewOrderingOff": "Preview: ordering is off",
+    "closed": {
+      "orderingUnavailable": "The store is not taking orders right now.",
+      "outsideOpenHours": "The store is closed right now. You can still look around."
+    },
+    "searchPlaceholder": "Search products",
+    "categories": "Categories",
+    "allCategories": "All categories",
+    "vendors": "Vendors",
+    "allVendors": "All vendors",
+    "noProducts": "No products found.",
+    "productNotFound": "This product is no longer available.",
+    "outOfStock": "Out of stock",
+    "addToCart": "Add to cart",
+    "added": "Added to cart",
+    "chooseOptions": "Choose options",
+    "chooseOption": "Choose {name}",
+    "variantUnavailable": "This combination is not available.",
+    "buy": "Buy",
+    "share": "Share",
+    "linkCopied": "Copied",
+    "similar": "Similar",
+    "save": "Save",
+    "saved": "Saved",
+    "showImage": "Show image {number}",
+    "increase": "Increase quantity",
+    "decrease": "Decrease quantity",
+    "remove": "Remove",
+    "cart": "Cart",
+    "cartEmpty": "Your cart is empty.",
+    "continueShopping": "Continue shopping",
+    "unavailableItems": "{count, plural, one {# item can't be ordered right now} other {# items can't be ordered right now}}",
+    "unavailableNotOrdered": "They won't be included in your order and will stay in your cart.",
+    "unavailable": "No longer available",
+    "unavailableHint": "Choose its options again",
+    "deletedProduct": "Deleted product",
+    "summary": {
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "delivery": "Delivery",
+      "otherFees": "Other fees",
+      "total": "Total",
+      "coupon": "Coupon ({code})",
+      "title": "Order summary",
+      "saved": "You save {amount}"
+    },
+    "belowMinimum": "The minimum order is {amount}.",
+    "checkOut": "Check out",
+    "contactDetails": "Your details",
+    "optional": "(optional)",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "country": "Country",
+      "state": "State / province",
+      "city": "City",
+      "address1": "Address",
+      "address2": "Apartment, building, etc.",
+      "zip": "ZIP / postal code",
+      "note": "Note for the store"
+    },
+    "shipping": {
+      "title": "Delivery",
+      "delivery": "Deliver to my address",
+      "pickup": "Pick up in the store",
+      "storeAddress": "Store address: {address}"
+    },
+    "payment": {
+      "title": "Payment",
+      "cod": "Cash on delivery"
+    },
+    "placeOrder": "Place order",
+    "orderPlaced": "Thank you! Your order has been placed. We will send you updates in the chat.",
+    "orderTitle": "Order #{number}",
+    "orderNotFound": "This order was not found.",
+    "placedAt": "Placed on {date}",
+    "status": {
+      "pending": "Not processed",
+      "accepted": "Processing",
+      "shipped": "Shipped",
+      "concluded": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "rateTitle": "Rate your order",
+    "rateComment": "Tell the store what you think (optional)",
+    "rateSubmit": "Send rating",
+    "rateThanks": "Thank you for your rating!",
+    "yourRating": "Your rating",
+    "ratingValue": "{rating} out of 5 stars",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {pageCount}",
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "checkFields": "Please check the highlighted fields.",
+      "fieldRequired": "{field} is required.",
+      "countryUnavailable": "The store does not deliver to this country.",
+      "invalidLink": "This link does not work any more. Ask the store for a new one.",
+      "webshopPreviewOnly": "This is a preview. Orders can only be placed from a customer's link.",
+      "rateLimited": "Too many tries. Please wait a moment and try again.",
+      "orderingUnavailable": "The store is not taking orders right now.",
+      "orderBelowMinimum": "The minimum order is {minimum}.",
+      "orderBelowVendorMinimum": "Items from {vendorName} must add up to at least {minimum}.",
+      "orderOutOfStock": "{productName} is out of stock.",
+      "orderProductUnavailable": "Some items can no longer be ordered. Check your cart.",
+      "orderEmpty": "Your cart is empty.",
+      "orderShippingTypeUnavailable": "This delivery option is not available.",
+      "webshopRatingNotAllowed": "This order cannot be rated.",
+      "webshopCartFull": "Your cart can hold at most {maximum} different items.",
+      "notFound": "This product is no longer available.",
+      "discountCodeNotFound": "This discount code does not exist.",
+      "discountCodeInactive": "This discount code is not active.",
+      "discountCodeNotStarted": "This discount code is not valid yet.",
+      "discountCodeExpired": "This discount code has expired.",
+      "discountCodeUsageLimitReached": "This discount code has been used up.",
+      "discountCodeAlreadyUsed": "You have already used this discount code.",
+      "discountCodeNotEligible": "This discount code is not available for you.",
+      "discountCodeNotApplicable": "This discount code does not apply to what is in your cart.",
+      "discountCodeMinimumAmount": "This discount code needs a purchase of at least {minimum}. Add {missing} more.",
+      "discountCodeMinimumQuantity": "This discount code needs at least {minimum} items. Add {missing} more."
+    },
+    "discount": {
+      "label": "Discount code",
+      "placeholder": "Discount code",
+      "apply": "Apply",
+      "applied": "Discount code applied",
+      "automatic": "applied automatically",
+      "remove": "Remove discount code",
+      "available": "Codes you can use",
+      "freeShipping": "Free shipping",
+      "bestChoice": "Best choice",
+      "expiresOn": "Expires {date}",
+      "noExpiry": "No expiry",
+      "inUse": "In use",
+      "saves": "Saves {amount}",
+      "showMore": "{count, plural, one {Show # more code} other {Show # more codes}}",
+      "showLess": "Show less",
+      "removeShort": "Remove",
+      "expired": "Expired",
+      "usedUp": "Used up",
+      "notEligible": "Not eligible yet"
+    },
+    "itemCount": "{count, plural, one {# item} other {# items}}",
+    "relatedProducts": "You may also like"
+  },
+  "webshopLinks": {
+    "preview": "Preview",
+    "getLink": "Get link",
+    "copied": "Link copied. Put it on a bot button: each contact opens their own shop.",
+    "error": "Could not get the link.",
+    "copyError": "Could not copy the link.",
+    "shopLink": {
+      "label": "Shop link",
+      "hint": "Paste this link into a button in a flow, broadcast or sequence. Each contact who gets it opens their own shop and can order."
+    },
+    "productLink": {
+      "label": "Public URL",
+      "hint": "Copy and paste the URL into your flow, broadcast, or sequence. Each contact who gets it opens this product and can order."
+    }
+  },
+  "discountCodes": {
+    "title": "Coupons",
+    "description": "Discount codes customers use at checkout, or that apply by themselves.",
+    "add": "Add",
+    "edit": "Edit coupon",
+    "automatic": "Automatic",
+    "never": "Never",
+    "searchPlaceholder": "Search codes…",
+    "saveError": "Could not save the coupon.",
+    "created": "Coupon created",
+    "updated": "Coupon saved",
+    "deleted": "Coupon deleted",
+    "deleteError": "Could not delete the coupon.",
+    "deleteTitle": "Delete coupon {code}?",
+    "deleteDescription": "Customers can no longer use it. Orders that used it keep their discount.",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "save": "Save",
+    "columns": {
+      "name": "Name",
+      "discount": "Discount",
+      "used": "Used",
+      "end": "End",
+      "active": "Active"
+    },
+    "discountTypes": {
+      "percentage": "Percentage",
+      "fixedAmount": "Fixed amount",
+      "freeShipping": "Free shipping"
+    },
+    "appliesTo": {
+      "entireOrder": "Entire order",
+      "category": "Specific category",
+      "products": "Specific products"
+    },
+    "minimumTypes": {
+      "none": "None",
+      "amount": "Minimum purchase amount",
+      "quantity": "Minimum quantity of items"
+    },
+    "eligibilities": {
+      "everyone": "Everyone",
+      "specificCustomers": "Specific customers"
+    },
+    "form": {
+      "discountCode": "Discount code",
+      "code": "Code",
+      "generate": "Generate",
+      "autoApply": "Automatically apply this coupon to carts",
+      "autoApplyHint": "Carts get it without the customer typing it. With several automatic coupons, the one taking off the most wins.",
+      "typedHint": "Customers will enter this discount code at checkout.",
+      "options": "Options",
+      "discountType": "Discount type",
+      "discountValuePercent": "Discount value (%)",
+      "discountValueAmount": "Discount value ({currency})",
+      "freeShippingHint": "Takes the delivery cost off orders delivered to the customer.",
+      "appliesTo": "Applies to",
+      "category": "Category",
+      "products": "Products",
+      "productsPlaceholder": "Choose products",
+      "minimumRequirement": "Minimum requirement",
+      "minimumAmount": "Minimum amount ({currency})",
+      "minimumQuantity": "Minimum number of items",
+      "usageLimits": "Usage limits",
+      "limitTotal": "Limit number of times this discount can be used in total",
+      "usedSoFar": "{count, plural, one {Used # time so far} other {Used # times so far}}",
+      "oncePerCustomer": "Limit to one use per customer",
+      "customerEligibility": "Customer eligibility",
+      "specificCustomersHint": "Only contacts matching the filter below, when they order.",
+      "activeDates": "Active dates",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "isActive": "Active"
+    },
+    "rules": {
+      "codeCharacters": "Use only letters without accents, digits, - and _.",
+      "usageBelowUsed": "This code was already used {count} times; the limit can't be lower.",
+      "customerConditionRequired": "Add at least one condition.",
+      "endAfterStart": "The end date must be after the start date."
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "Analytics",
+    "lifetime": "Lifetime",
+    "sales": "Sales",
+    "orders": "Orders",
+    "products": "Products",
+    "salesByDate": "Sales by date",
+    "ordersByDate": "Orders by date",
+    "topProducts": "Top products",
+    "topVendors": "Top vendors",
+    "columns": {
+      "name": "Name",
+      "sales": "Sales"
+    },
+    "noData": "No data in this period",
+    "refresh": "Refresh",
+    "change": "{value}%",
+    "noPrevious": "new",
+    "otherCurrencyOrders": "{count} orders in other currencies are not included in these figures"
   },
   "responseSla": {
     "label": "Response SLA",

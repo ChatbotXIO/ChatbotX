@@ -204,7 +204,7 @@ export const staticFieldRules: Record<string, StaticFieldRule> = {
   optedInForSms: booleanRule,
   emailWasVerified: nonNullableBooleanRule,
   optedInForEmail: nonNullableBooleanRule,
-  shoppingCartIsEmpty: booleanRule,
+  shoppingCartIsEmpty: nonNullableBooleanRule,
   lastSentMessageFailed: booleanRule,
   fromCtwaAd: booleanRule,
   fromGoogleAd: booleanRule,

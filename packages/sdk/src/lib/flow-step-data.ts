@@ -2,6 +2,8 @@ import type {
   SendAudioStepSchema,
   SendCardStepSchema,
   SendCarouselStepSchema,
+  SendCollectionResolvedStep,
+  SendCollectionStepSchema,
   SendFileStepSchema,
   SendGifStepSchema,
   SendImageStepSchema,
@@ -35,6 +37,9 @@ export type SendFlowStepData =
   | WhatsappCallButtonStepSchema
   | WhatsappFlowStepSchema
   | SendProductsStepSchema
+  // Authored, then resolved to its product cards when sent.
+  | SendCollectionStepSchema
+  | SendCollectionResolvedStep
   | WhatsappLocationStepSchema
   | SendMessengerTemplateMessageStepSchema
   | SendViewCatalogStepSchema

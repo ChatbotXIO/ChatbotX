@@ -117,10 +117,12 @@ export const isLinkButton = (button: Pick<ButtonStepProps, "buttonType">) =>
   button.buttonType === buttonTypes.enum.openMiniApp
 
 /**
- * Rejects Open Mini App on buttons of a channel template (WhatsApp / Messenger
- * message templates). Those steps send their buttons as the template's own
- * quick replies and never pass through the worker's Mini App link rewrite, so
- * such a button would continue the flow on tap without opening anything.
+ * Rejects Open Mini App on buttons of a WhatsApp message template step. That
+ * step sends its buttons as the template's own quick replies and never passes
+ * through the worker's Mini App link rewrite, so such a button would continue
+ * the flow on tap without opening anything. (A Messenger template step allows
+ * it: there an `openMiniApp` button stands for one of the template's Mini App
+ * URL buttons.)
  */
 export const refineNoOpenMiniAppButtons = (
   buttons: Pick<ButtonStepProps, "buttonType">[],

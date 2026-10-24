@@ -168,6 +168,9 @@ vi.mock("../../workspace-member/service", () => ({
     create: mocks.createMember,
     listUserIdsByWorkspaceId: vi.fn(async () => []),
   },
+  workspaceRosterCacheTag: vi.fn(
+    (workspaceId: string) => `workspace-members:${workspaceId}`,
+  ),
 }))
 
 const { workspaceService } = await import("../service")

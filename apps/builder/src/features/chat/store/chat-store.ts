@@ -166,6 +166,10 @@ export type ChatState = {
   nextCursorMessage: string | null
   isLoadMoreMessage: boolean
   hasNextMessagePage: boolean
+  // Exact row count added by the latest accepted older-page response.
+  lastPrependedCount: number
+  // Bumped with lastPrependedCount so equal-sized prepends remain observable.
+  prependSeq: number
   // Which conversation the loaded message page belongs to, so loadInitialMessages can skip a server-seeded page.
   messagesConversationId: string | null
   // The initially active conversation's server-resolved contact, used as initialData to skip a client fetch.
@@ -397,6 +401,45 @@ const replaceMessageById = (
   return { messages: nextMessages }
 }
 
+const prependOlderMessages = (
+  currentMessages: MessageResourceWithRelations[],
+  olderPage: MessageResourceWithRelations[],
+): {
+  messages: MessageResourceWithRelations[]
+  prependedCount: number
+} => {
+  const messageIds = new Set<string>()
+  const clientIds = new Set<string>()
+  for (const message of currentMessages) {
+    messageIds.add(message.id)
+    if (message.clientId) {
+      clientIds.add(message.clientId)
+    }
+  }
+  const prependedMessages: MessageResourceWithRelations[] = []
+
+  for (const message of olderPage) {
+    if (
+      messageIds.has(message.id) ||
+      (message.clientId !== null &&
+        message.clientId !== undefined &&
+        clientIds.has(message.clientId))
+    ) {
+      continue
+    }
+    prependedMessages.push(message)
+    messageIds.add(message.id)
+    if (message.clientId) {
+      clientIds.add(message.clientId)
+    }
+  }
+
+  return {
+    messages: [...prependedMessages, ...currentMessages],
+    prependedCount: prependedMessages.length,
+  }
+}
+
 /**
  * Shared core of initActiveConversationFromUrl and openConversation: selects
  * conversationId if already loaded, otherwise fetches and prepends it. Callers
@@ -475,6 +518,8 @@ type MessageThreadState = Pick<
   | "nextCursorMessage"
   | "isLoadMoreMessage"
   | "hasNextMessagePage"
+  | "lastPrependedCount"
+  | "prependSeq"
   | "messagesConversationId"
   | "seededContact"
   | "replyToMessage"
@@ -491,6 +536,8 @@ const messageThreadDefaults = (): MessageThreadState => ({
   nextCursorMessage: null,
   isLoadMoreMessage: false,
   hasNextMessagePage: true,
+  lastPrependedCount: 0,
+  prependSeq: 0,
   messagesConversationId: null,
   seededContact: null,
   replyToMessage: null,
@@ -532,6 +579,9 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
   // a call that just finished waiting tell whether a newer call superseded it.
   // A closure variable rather than store state since it's only read/written
   // inside openConversation and never rendered.
+  // A request can outlive a conversation switch. Only the most recently
+  // started one may commit its result or release the shared loading guard.
+  let latestLoadMoreRequestId = 0
   let pendingOpenConversationId: string | null = null
   let lastConversationHeadRefreshAt = Number.NEGATIVE_INFINITY
   let conversationHeadRefreshInFlight: Promise<void> | null = null
@@ -1150,6 +1200,8 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
                     height: attachmentUpdate.newAttachmentHeight ?? null,
                     sourceId: null,
                     thumbnailPath: null,
+                    // An agent-edited attachment is a photo for storage purposes.
+                    keepOriginal: null,
                     createdAt: new Date(),
                     updatedAt: new Date(),
                   },
@@ -1165,7 +1217,12 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
           return
         }
 
-        const { nextCursorMessage, messages, activeConversationId } = get()
+        const {
+          nextCursorMessage,
+          activeConversationId: requestedConversationId,
+        } = get()
+        const requestId = latestLoadMoreRequestId + 1
+        latestLoadMoreRequestId = requestId
         set({ isLoadMoreMessage: true })
 
         try {
@@ -1174,23 +1231,40 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
               workspaceId,
               perPage,
               cursor: nextCursorMessage ?? "",
-              conversationId: activeConversationId ?? undefined,
+              conversationId: requestedConversationId ?? undefined,
             })
-          set({
-            messages: [...data.reverse(), ...messages],
-            nextCursorMessage: nextCursor,
-            hasNextMessagePage: nextCursor !== null,
-            isLoadMoreMessage: false,
-            messagesConversationId: activeConversationId,
+          const olderPage = [...data].reverse()
+          set((state) => {
+            if (requestId !== latestLoadMoreRequestId) {
+              return state
+            }
+            if (state.activeConversationId !== requestedConversationId) {
+              return { isLoadMoreMessage: false }
+            }
+
+            const { messages, prependedCount } = prependOlderMessages(
+              state.messages,
+              olderPage,
+            )
+            return {
+              messages,
+              nextCursorMessage: nextCursor,
+              hasNextMessagePage: nextCursor !== null,
+              isLoadMoreMessage: false,
+              lastPrependedCount: prependedCount,
+              prependSeq: state.prependSeq + 1,
+              messagesConversationId: requestedConversationId,
+            }
           })
         } catch (error) {
-          // Reset the in-flight flag or the `isLoadMoreMessage` guard above
-          // would block every later scroll-up load for this store instance.
-          set({ isLoadMoreMessage: false })
+          // A request superseded by another conversation's load cannot release
+          // that request's loading guard.
+          if (requestId === latestLoadMoreRequestId) {
+            set({ isLoadMoreMessage: false })
+          }
           throw error
         }
       },
-
       loadInitialMessages: async (workspaceId: string, perPage: number) => {
         const {
           activeConversationId,
@@ -1385,7 +1459,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
               messageIndexByClientId = new Map()
               for (const [index, currentMessage] of messages.entries()) {
                 messageIndexById.set(currentMessage.id, index)
-                if (currentMessage.clientId) {
+                if (
+                  currentMessage.clientId &&
+                  currentMessage.contactInboxId === ""
+                ) {
                   messageIndexByClientId.set(currentMessage.clientId, index)
                 }
               }
@@ -1403,6 +1480,7 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
               }
               messageIndexById.delete(currentMessage.id)
               messageIndexById.set(message.id, matchingClientMessageIndex)
+              messageIndexByClientId.delete(message.clientId ?? "")
               continue
             }
             if (messageIndexById.has(message.id)) {
@@ -1420,7 +1498,10 @@ export const createChatStore = (initialState: ChatStoreInitialState = {}) => {
             for (let index = targetIndex; index < messages.length; index += 1) {
               const currentMessage = messages[index]
               messageIndexById.set(currentMessage.id, index)
-              if (currentMessage.clientId) {
+              if (
+                currentMessage.clientId &&
+                currentMessage.contactInboxId === ""
+              ) {
                 messageIndexByClientId.set(currentMessage.clientId, index)
               }
             }

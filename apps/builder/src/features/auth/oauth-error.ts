@@ -10,6 +10,8 @@ export type OAuthErrorKey =
   | "unableToLinkAccount"
   | "sessionExpired"
   | "accessDenied"
+  | "signUpDisabled"
+  | "invalidInvitation"
   | "generic"
 
 /** better-auth codes that deserve a specific message; anything else is generic. */
@@ -21,6 +23,8 @@ const OAUTH_ERROR_KEYS_BY_CODE: Record<string, OAuthErrorKey> = {
   state_not_found: "sessionExpired",
   state_invalid: "sessionExpired",
   access_denied: "accessDenied",
+  signup_disabled: "signUpDisabled",
+  invalid_invitation: "invalidInvitation",
 }
 
 /** Exhaustive literal map so `t()` never receives a template string. */
@@ -29,6 +33,8 @@ export const OAUTH_ERROR_MESSAGE_KEYS: Record<OAuthErrorKey, string> = {
   unableToLinkAccount: "auth.oauthError.unableToLinkAccount",
   sessionExpired: "auth.oauthError.sessionExpired",
   accessDenied: "auth.oauthError.accessDenied",
+  signUpDisabled: "auth.oauthError.signUpDisabled",
+  invalidInvitation: "auth.oauthError.invalidInvitation",
   generic: "auth.oauthError.generic",
 }
 

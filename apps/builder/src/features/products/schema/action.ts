@@ -40,7 +40,7 @@ export const productFormRequest = z.object({
     .default(DEFAULT_PRODUCT_CURRENCY)
     .describe("ISO 4217 currency code."),
   productUrl: z
-    .union([z.url(), z.literal("")])
+    .union([z.url({ protocol: /^https?$/ }), z.literal("")])
     .nullish()
     .default("")
     .describe("External product page URL, if any."),
@@ -155,7 +155,19 @@ export const productFormRequest = z.object({
     .array(z.string())
     .default([])
     .describe("Freeform labels for filtering/search."),
-  vendor: z.string().nullish().describe("Vendor or brand name."),
+  vendorId: z
+    .string()
+    .regex(/^\d+$/)
+    .nullish()
+    .describe(
+      "Vendor id. Get it from `productVendors.list`. Wins over `vendor` when both are sent.",
+    ),
+  vendor: z
+    .string()
+    .nullish()
+    .describe(
+      "Vendor or brand name, instead of `vendorId`; a name not seen before creates the vendor.",
+    ),
   rank: z.coerce
     .number()
     .int()

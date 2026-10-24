@@ -65,8 +65,8 @@ export async function analyzeImage(data: HeavyJobAnalyzeImage["data"]) {
             text: data.prompt,
           },
           {
-            type: "image",
-            image,
+            type: "file",
+            data: image,
             mediaType: data.mimeType,
           },
         ],

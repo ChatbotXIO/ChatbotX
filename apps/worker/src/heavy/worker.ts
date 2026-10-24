@@ -1,5 +1,5 @@
 import { flushAllPendingWorkspaceRealtimeEvents } from "@chatbotx.io/business"
-
+import { optimizeStoredImage } from "@chatbotx.io/business/media/optimize-stored-image"
 import {
   defaultWorkerOptions,
   getQueueConnection,
@@ -265,6 +265,23 @@ async function startHeavyWorker() {
               return await extractFallbackTextSnippets(jobData.data)
             case HeavyJobAction.analyzeImage:
               return await analyzeImage(jobData.data)
+            case HeavyJobAction.optimizeStoredImage: {
+              // One info line per job: outcome plus bytes before/after, so
+              // storage savings and skip reasons can be read off the logs.
+              const startedAt = Date.now()
+              const result = await optimizeStoredImage(jobData.data)
+              logger.info(
+                {
+                  jobId: job.id,
+                  kind: jobData.data.kind,
+                  workspaceId: jobData.data.workspaceId,
+                  ...result,
+                  durationMs: Date.now() - startedAt,
+                },
+                "Stored image optimization finished",
+              )
+              return
+            }
             default: {
               const _exhaustive: never = jobData
               logger.warn(

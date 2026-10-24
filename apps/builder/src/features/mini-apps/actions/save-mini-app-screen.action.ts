@@ -25,6 +25,7 @@ export const saveMiniAppScreenAction = actionClient
     const contactId = await resolveVisitorContactId({
       token: parsedInput.token,
       workspaceId: miniApp.workspaceId,
+      miniAppId: miniApp.id,
     })
     if (!contactId) {
       return { definition: null }

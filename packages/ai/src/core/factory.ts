@@ -1,6 +1,6 @@
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createDeepSeek } from "@ai-sdk/deepseek"
-import { createGoogleGenerativeAI } from "@ai-sdk/google"
+import { createGoogle } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import { type AIProvider, aiProviders } from "../schemas"
@@ -11,7 +11,7 @@ import { type AIProvider, aiProviders } from "../schemas"
  */
 export const providerSdkFactories = {
   [aiProviders.enum.openai]: createOpenAI,
-  [aiProviders.enum.gemini]: createGoogleGenerativeAI,
+  [aiProviders.enum.gemini]: createGoogle,
   [aiProviders.enum.claude]: createAnthropic,
   [aiProviders.enum.deepseek]: createDeepSeek,
   [aiProviders.enum.openrouter]: createOpenRouter,

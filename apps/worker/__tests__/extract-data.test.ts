@@ -4,7 +4,11 @@ const mocks = vi.hoisted(() => ({
   aiFindBy: vi.fn(),
   logProviderError: vi.fn(async () => undefined),
   createAIModelInstance: vi.fn(),
-  generateObject: vi.fn(),
+  generateText: vi.fn(),
+  outputObject: vi.fn((options: { schema: unknown }) => ({
+    kind: "object",
+    ...options,
+  })),
   loggerError: vi.fn(),
   sendMessageWithRender: vi.fn(),
   waitForChatJobCompletion: vi.fn(async () => undefined),
@@ -37,7 +41,8 @@ vi.mock("@chatbotx.io/variables", () => ({
 }))
 vi.mock("ai", () => ({
   APICallError: { isInstance: vi.fn(() => false) },
-  generateObject: mocks.generateObject,
+  generateText: mocks.generateText,
+  Output: { object: mocks.outputObject },
 }))
 vi.mock("../src/lib/logger", () => ({
   logger: { error: mocks.loggerError },
@@ -54,7 +59,9 @@ const { handleAIExtractData } = await import(
   "../src/integration/handlers/extract-data/index"
 )
 
-const makeProps = (provider = "openai") =>
+const makeProps = (
+  provider = "openai",
+): Parameters<typeof handleAIExtractData>[0] =>
   ({
     conversation: {
       id: "conv-1",
@@ -88,7 +95,7 @@ describe("handleAIExtractData", () => {
     vi.clearAllMocks()
     mocks.aiFindBy.mockResolvedValue({ id: "ai-1" })
     mocks.createAIModelInstance.mockReturnValue("model")
-    mocks.generateObject.mockRejectedValue(new Error("ai failed"))
+    mocks.generateText.mockRejectedValue(new Error("ai failed"))
     mocks.sendMessageWithRender.mockResolvedValue({
       waitUntilFinished: vi.fn(),
     })
@@ -156,6 +163,57 @@ describe("handleAIExtractData", () => {
         workspaceId: "ws-1",
         contactId: "contact-1",
       }),
+    )
+  })
+
+  test("sends image input as a v7 file part", async () => {
+    mocks.generateText.mockResolvedValue({ output: { email: "a@b.test" } })
+    const props = makeProps()
+
+    await expect(
+      handleAIExtractData({
+        ...props,
+        step: { ...props.step, inputType: "image" },
+      }),
+    ).resolves.toMatchObject({
+      result: { email: "a@b.test" },
+      status: "success",
+    })
+
+    expect(mocks.generateText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          expect.objectContaining({
+            content: expect.arrayContaining([
+              expect.objectContaining({
+                data: "field value",
+                mediaType: "image/*",
+                type: "file",
+              }),
+            ]),
+          }),
+        ],
+      }),
+    )
+  })
+
+  test("attributes a schema mismatch to the provider and returns an error", async () => {
+    mocks.generateText.mockResolvedValue({
+      get output() {
+        throw new Error("No output generated")
+      },
+    })
+
+    await expect(
+      handleAIExtractData(makeProps("claude")),
+    ).resolves.toMatchObject({ status: "error", result: null })
+    expect(mocks.generateText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        output: expect.objectContaining({ kind: "object" }),
+      }),
+    )
+    expect(mocks.logProviderError).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: "claude", workspaceId: "ws-1" }),
     )
   })
 })

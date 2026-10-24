@@ -53,6 +53,7 @@ import { redispatchInboundWebhookRequests } from "./handlers/redispatch-inbound-
 import { refreshChannelTokens } from "./handlers/refresh-channel-tokens"
 import { refreshLicense } from "./handlers/refresh-license"
 import { registerSchedules } from "./handlers/register-schedules"
+import { scanAbandonedCarts } from "./handlers/scan-abandoned-carts"
 import { scanAiHandoverBulkRuns } from "./handlers/scan-ai-handover-bulk-runs"
 import { scanAppointmentReminders } from "./handlers/scan-appointment-reminders"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
@@ -139,6 +140,10 @@ async function startScheduleWorker() {
 
             case ScheduleJobData.scanAppointmentReminders:
               await scanAppointmentReminders(job.data.data)
+              return
+
+            case ScheduleJobData.scanAbandonedCarts:
+              await scanAbandonedCarts()
               return
 
             case ScheduleJobData.syncUserQuota:

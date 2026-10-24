@@ -220,26 +220,38 @@ export function AddCondition({
         ],
       },
 
-      // The other ecommerce events (cart abandoned, product added to cart, order
-      // accepted/shipped/…) are not implemented: only a submitted order and a
-      // product-page message have a documented WhatsApp webhook.
+      // Store events: chat catalog interactions, the web shop cart and orders.
       {
         label: t("fields.ecommerce.label"),
         children: [
-          {
-            label: t("trigger.conditions.shoppingCartSent"),
-            value: triggerEventTypes.enum.shoppingCartSent,
-            defaultFn: createDefaultFnWithOptionalSourceId(
+          ...(
+            [
               triggerEventTypes.enum.shoppingCartSent,
-            ),
-          },
-          {
-            label: t("trigger.conditions.userAskedAboutProduct"),
-            value: triggerEventTypes.enum.userAskedAboutProduct,
-            defaultFn: createDefaultFnWithOptionalSourceId(
               triggerEventTypes.enum.userAskedAboutProduct,
-            ),
-          },
+              triggerEventTypes.enum.productAddedToCart,
+              triggerEventTypes.enum.productRemovedFromCart,
+              triggerEventTypes.enum.categoryAddedToCart,
+              triggerEventTypes.enum.productOrdered,
+            ] as const
+          ).map((type) => ({
+            label: t(`trigger.conditions.${type}`),
+            value: type,
+            defaultFn: createDefaultFnWithOptionalSourceId(type),
+          })),
+          ...(
+            [
+              triggerEventTypes.enum.cartAbandoned,
+              triggerEventTypes.enum.newOrder,
+              triggerEventTypes.enum.orderAccepted,
+              triggerEventTypes.enum.orderShipped,
+              triggerEventTypes.enum.orderConcluded,
+              triggerEventTypes.enum.orderCancelled,
+            ] as const
+          ).map((type) => ({
+            label: t(`trigger.conditions.${type}`),
+            value: type,
+            defaultFn: createDefaultFn(type),
+          })),
         ],
       },
 

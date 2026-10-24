@@ -14,6 +14,7 @@ import {
 } from "../partials/product"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { productCategoryModel } from "./product-category"
+import { vendorModel } from "./vendor"
 import { workspaceModel } from "./workspace"
 
 export const inventoryPolicy = pgEnum(
@@ -47,7 +48,10 @@ export const productModel = pgTable(
       .default([])
       .notNull(),
     tags: jsonb().$type<string[]>().default([]).notNull(),
-    vendor: text(),
+    vendorId: bigintAsString().references(() => vendorModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
     rank: integer().default(10).notNull(),
     categoryId: bigintAsString().references(() => productCategoryModel.id, {
       onDelete: "set null",
@@ -85,5 +89,6 @@ export const productModel = pgTable(
     // goes away, since Postgres does not index foreign keys on its own.
     index("Product_categoryId_idx").on(table.categoryId),
     index("Product_subcategoryId_idx").on(table.subcategoryId),
+    index("Product_vendorId_idx").on(table.vendorId),
   ],
 )

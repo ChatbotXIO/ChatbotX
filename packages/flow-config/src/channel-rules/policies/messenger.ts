@@ -19,6 +19,7 @@ export const messengerFlowPolicy = defineChannelFlowPolicy({
     stepTypes.enum.sendQuickReply,
     stepTypes.enum.sendCard,
     stepTypes.enum.sendCarousel,
+    stepTypes.enum.sendCollection,
     stepTypes.enum.sendMessengerTemplateMessage,
   ],
   noButtons: [stepTypes.enum.sendAudio, stepTypes.enum.sendFile],

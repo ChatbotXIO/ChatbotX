@@ -38,20 +38,21 @@ systems.
 | ------------ | -------------------------------------------------------------------- |
 | `cloud`      | Always (billing-driven; license ignored).                            |
 | `community`  | Never.                                                               |
-| `enterprise` | **Only with a valid, non-expired, signature-verified license.** Individual features additionally require their flag in the token's `features[]`. |
+| `enterprise` | **Only with a valid, signature-verified license.** A license still unlocks everything for 7 days after `exp` (a "grace" state); past that it degrades to community. Individual features additionally require their flag in the token's `features[]`. |
 
 The server-side seam is `packages/business/src/user/entitlements.ts`:
 
 ```ts
 export const hasEnterpriseFeatures = async (): Promise<boolean> => {
-  if (isCloud()) return true
-  if (!isEnterprise()) return false
-  return (await getLicenseStatus()).state === "valid"
+  if (!(isCloud() || isEnterprise())) return false
+  const license = await getLicenseStatus()
+  return isLicenseEntitled(license.state) // state is "valid" or "grace"
 }
 ```
 
-On a missing, invalid, or expired key the app **degrades to the community
-feature set** — it never crashes and never destroys data.
+On a missing, invalid, or lapsed (past the grace window) license the app
+**degrades to the community feature set** — it never crashes and never
+destroys data.
 
 > The client-side `hasEnterpriseFeatures` in `apps/builder/src/env.ts` is an
 > **edition-only, cosmetic** check (it hides sidebar items). It is *not* a
@@ -101,7 +102,8 @@ Compact JWS, header `{ alg: "EdDSA", kid, typ: "JWT" }`. Payload
 Verification (`service.ts`) rejects non-`EdDSA` algorithms *before* verifying
 (algorithm-confusion guard), rejects unknown `kid`s, enforces `iss`/`exp`/`nbf`
 via `jose`, and validates the payload shape with zod. An **expired** token still
-surfaces its claims (state `"expired"`) so operators can see what lapsed.
+surfaces its claims — state `"grace"` for the first 7 days past `exp`, then
+`"expired"` — so operators can see what lapsed.
 
 **Tier must match the running edition.** `NEXT_PUBLIC_EDITION=cloud` deployments
 only accept `tier: "cloud"` licenses; `NEXT_PUBLIC_EDITION=enterprise` deployments
@@ -119,7 +121,7 @@ never verifies a license, so this rule doesn't apply there.
 the TTL, it verifies `LICENSE_KEY`, reads the stored token for the same
 `licenseId`, and selects the newer usable token:
 
-1. a valid token beats an expired token;
+1. a higher-ranked state wins (`valid` > `grace` > `expired` > `invalid`/`missing`);
 2. otherwise, later `iat` wins;
 3. a later `exp` breaks an `iat` tie.
 
@@ -133,9 +135,10 @@ installations.
 Accessors:
 
 - `getLicenseStatus()` / `getLicense()` — the full `LicenseStatus`.
-- `hasFeature(flag)` — `true` only when the license is valid **and** lists the
-  flag.
-- `getLimit(key)` — the numeric limit (`null` = unlimited) when valid.
+- `hasFeature(flag)` — `true` when the license is `"valid"` or `"grace"` **and**
+  lists the flag.
+- `getLimit(key)` — the numeric limit (`null` = unlimited) when `"valid"` or
+  `"grace"`.
 
 ## Issuing a license (vendor)
 
@@ -201,10 +204,17 @@ if (max !== null && currentCount >= max) {
   roll it back. Acceptable for an explicitly offline/air-gapped model — the
   signature makes `features`/`limits`/`exp` unforgeable, so only date
   manipulation is possible (low value). `nbf` guards pre-dating.
-- **Hard expiry.** Offline enterprise-license `exp` remains a hard cutoff with
-  clear messaging. The cloud trial path now has a degraded grace window instead:
-  an expired workspace is read/delete-only with a persistent banner, and its
-  channels are torn down at trial+7d.
+- **7-day grace, not a hard cutoff.** An expired enterprise license keeps full
+  entitlement for `LICENSE_GRACE_PERIOD_DAYS` (7) past its `exp` (state
+  `"grace"`); only after that window does the deployment degrade to the
+  community feature set. The window is a source constant, not an env var —
+  an operator-tunable grace length would be an unbounded free-enterprise
+  switch in an MIT codebase — and is anchored to the signed `exp` claim, not
+  to "time since last successful refresh", so an unreachable vendor endpoint
+  never disables a license that is still paid for. The cloud trial path has
+  its own, separate degraded grace window: an expired trial workspace is
+  read/delete-only with a persistent banner, and its channels are torn down
+  at trial+7d.
 - **No revocation.** Pure offline verification cannot revoke an issued token
   before its `exp`. If online revocation is ever needed, it would be added in
   `../aha.chat-enterprise` as an optional online check layered on top — the

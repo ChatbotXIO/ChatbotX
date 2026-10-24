@@ -14,12 +14,21 @@ import {
   contactModel,
   conversationModel,
   couponModel,
+  orderItemModel,
   questionnaireModel,
   questionnaireSubmissionModel,
 } from "../../schema"
 import { escapeLikePattern, likeContains } from "../../utils"
 import { buildBotFieldWhere } from "./bot-field-predicates"
 import { buildCommentedOnPostWhere } from "./commented-on-post"
+import {
+  boughtItemExists,
+  buildCartContainsWhere,
+  buildCartIsEmptyWhere,
+  buildCartValueWhere,
+  buildLastPurchaseWhere,
+  buildOrderNumberWhere,
+} from "./commerce"
 import {
   buildContactActivityWhere,
   buildLastDeliveredWhere,
@@ -783,9 +792,70 @@ function buildConditionWhere(
         value,
       )
 
+    // Purchases (web shop and API orders, not cancelled) and the web shop cart.
+    case "totalSpent":
+    case "numberOfOrders":
+      return buildOrderNumberWhere(field, operator, value)
+
+    case "bought":
+      return buildLastPurchaseWhere(operator, value, timezone)
+
+    case "boughtItems":
+      return buildBoughtItemsWhere(operator, value)
+
+    case "shoppingCartContainsItems":
+      return buildCartContainsWhere(operator, value)
+
+    case "shoppingCartIsEmpty":
+      return buildCartIsEmptyWhere(operator, value)
+
+    case "shoppingCartTotal":
+      return buildCartValueWhere("total", operator, value)
+
+    case "shoppingCartSubtotal":
+      return buildCartValueWhere("subtotal", operator, value)
+
     default:
       return isContactActivityFilterField(field)
         ? buildContactActivityWhere(field, operator, value, context.workspaceId)
         : {}
   }
 }
+
+/**
+ * Bought a product: `eq` that one, `ne` never that one (contacts who never
+ * bought included), `isEmpty` never bought anything.
+ */
+function buildBoughtItemsWhere(operator: string, value: unknown): ContactWhere {
+  if (operator === operatorTypes.enum.isEmpty) {
+    return boughtItemExists(undefined, true)
+  }
+  const values = (Array.isArray(value) ? value : [value]).filter(
+    (item): item is string => typeof item === "string" && item !== "",
+  )
+  if (values.length === 0) {
+    return {}
+  }
+  const positive =
+    operator === operatorTypes.enum.eq || operator === operatorTypes.enum.in
+  const negative =
+    operator === operatorTypes.enum.ne || operator === operatorTypes.enum.notIn
+  if (!(positive || negative)) {
+    return {}
+  }
+  // Only ids that cast to a bigint: one malformed value must not fail the
+  // whole contact query. With none left, nobody bought "it".
+  const productIds = values.filter((id) => PRODUCT_ID_PATTERN.test(id))
+  return boughtItemExists(
+    productIds.length > 0
+      ? sql`${orderItemModel.productId} IN (${sql.join(
+          productIds.map((id) => sql`${id}::bigint`),
+          sql`, `,
+        )})`
+      : sql`false`,
+    negative,
+  )
+}
+
+/** A product id as stored: a positive bigint, safely within its range. */
+const PRODUCT_ID_PATTERN = /^\d{1,18}$/

@@ -72,7 +72,14 @@ export class WorkspaceMemberService extends BaseService {
   async create(props: {
     tx?: DatabaseClient
     data: typeof workspaceMemberModel.$inferInsert
-    teamMemberUsage?: { liveIncremented: boolean }
+    /**
+     * Count of `create` calls on this `tx` whose live `teamMembers` increment
+     * actually landed — a caller inserting more than one member on the same
+     * transaction (owner + N invited members) passes the same tracker object
+     * to every call so `compensateWorkspaceQuotaConsumption` can roll back
+     * the live counter by the right number if the transaction later fails.
+     */
+    teamMemberUsage?: { liveIncrementedCount: number }
   }): Promise<WorkspaceMemberModel> {
     const { tx = db, data } = props
     const [workspaceMember] = await tx
@@ -87,8 +94,8 @@ export class WorkspaceMemberService extends BaseService {
         1,
         props.tx,
       )
-      if (props.teamMemberUsage) {
-        props.teamMemberUsage.liveIncremented = liveIncremented
+      if (props.teamMemberUsage && liveIncremented) {
+        props.teamMemberUsage.liveIncrementedCount += 1
       }
     } else {
       await workspaceUsageService

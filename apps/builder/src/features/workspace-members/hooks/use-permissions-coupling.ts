@@ -1,23 +1,29 @@
 "use client"
 
+import type { WorkspaceMemberPermissions } from "@chatbotx.io/database/partials"
 import { useEffect } from "react"
 import { type UseFormReturn, useWatch } from "react-hook-form"
-import type {
-  InviteWorkspaceMemberRequest,
-  UpdateWorkspaceMemberRequest,
-} from "../schema/mutation"
 
 type CouplingResult = {
   isSuperAdmin: boolean
   contactsEnabled: boolean
 }
 
-export function useWorkspaceMemberPermissionsCoupling(
-  form:
-    | UseFormReturn<InviteWorkspaceMemberRequest>
-    | UseFormReturn<UpdateWorkspaceMemberRequest>,
-): CouplingResult {
-  const permissionForm = form as UseFormReturn<InviteWorkspaceMemberRequest>
+/**
+ * Generic over any form whose values carry a `permissions` field of this
+ * shape — the invite/update workspace-member forms and the admin console's
+ * create-workspace-for-an-owner form all share it.
+ */
+export function useWorkspaceMemberPermissionsCoupling<
+  TFieldValues extends { permissions: WorkspaceMemberPermissions },
+>(form: UseFormReturn<TFieldValues>): CouplingResult {
+  // One cast at the boundary instead of ten `as never`s below: the generic
+  // public signature stays open to any `TFieldValues` that extends the
+  // `permissions` shape, while this internal view restores typed
+  // `setValue`/`useWatch` field names.
+  const permissionForm = form as unknown as UseFormReturn<{
+    permissions: WorkspaceMemberPermissions
+  }>
   const { setValue } = permissionForm
   const isSuperAdmin = useWatch({
     control: permissionForm.control,

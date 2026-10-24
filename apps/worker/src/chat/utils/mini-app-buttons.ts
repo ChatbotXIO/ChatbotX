@@ -16,7 +16,8 @@ import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 import { mapStepButtons, readStepButtons } from "./step-buttons"
 
-type MiniAppLinkContext = {
+/** Where a Mini App submit continues: the flow send it was opened from. */
+export type MiniAppResumeContext = {
   workspaceId: string
   contactId: string
   conversationId: string
@@ -24,8 +25,9 @@ type MiniAppLinkContext = {
   flowId: string
   flowVersionId?: string
   metadata?: MetadataPayload
-  appUrl: string
 }
+
+type MiniAppLinkContext = MiniAppResumeContext & { appUrl: string }
 
 type OpenMiniAppButton = Extract<ButtonStepProps, { buttonType: "openMiniApp" }>
 
@@ -39,7 +41,7 @@ const isOpenMiniAppButton = (
  * workspace and enabled. A flow copied from another workspace keeps that
  * workspace's ids, which must not be linked to.
  */
-const findSendableMiniAppIds = async (
+export const findSendableMiniAppIds = async (
   workspaceId: string,
   miniAppIds: string[],
 ): Promise<Set<string>> => {
@@ -56,6 +58,36 @@ const findSendableMiniAppIds = async (
 }
 
 /**
+ * Signs the `resume` token for a Mini App opened from flow button `buttonId`:
+ * submitting the Mini App replays that button as a tap. The payload inside is
+ * built exactly like the one `convertButtonsToTemplate` puts on a tapped
+ * button. The token also names the contact, so it can stand in for the
+ * contact token where a link has room for only one (a Messenger template).
+ */
+export const signMiniAppResume = async (
+  props: MiniAppResumeContext & { buttonId: string; miniAppId: string },
+): Promise<string> =>
+  await signMiniAppResumeToken({
+    workspaceId: props.workspaceId,
+    contactId: props.contactId,
+    miniAppId: props.miniAppId,
+    conversationId: props.conversationId,
+    contactInboxId: props.contactInboxId,
+    buttonPayload: encodeButtonPayload({
+      flowId: props.flowId,
+      flowVersionId: props.flowVersionId,
+      buttonId: props.buttonId,
+      broadcastId: extractMetadata("broadcastId", props.metadata),
+      sequenceStepId: extractMetadata("sequenceStepId", props.metadata),
+      contactInboxId: props.contactInboxId,
+      commentAutomationId: extractMetadata(
+        "commentAutomationId",
+        props.metadata,
+      ),
+    }),
+  })
+
+/**
  * Turns an "Open Mini App" button into a plain `openWebsite` button whose link
  * opens the Mini App for this contact. Every channel encoder already knows how
  * to send a link button, so none of them needs a Mini App case.
@@ -63,8 +95,7 @@ const findSendableMiniAppIds = async (
  * The link carries two signed tokens: `token` names the contact (the same
  * `{{mini_app_token}}` a pasted Mini App link resolves to), and `resume` names
  * the button and conversation, so a submission can continue the flow along the
- * button's edge. The payload inside `resume` is built exactly like the one
- * `convertButtonsToTemplate` puts on a tapped button.
+ * button's edge (see {@link signMiniAppResume}).
  */
 const toMiniAppLinkButton = async (
   props: MiniAppLinkContext & {
@@ -73,22 +104,10 @@ const toMiniAppLinkButton = async (
   },
 ): Promise<ButtonStepProps> => {
   const { button } = props
-  const buttonPayload = encodeButtonPayload({
-    flowId: props.flowId,
-    flowVersionId: props.flowVersionId,
+  const resumeToken = await signMiniAppResume({
+    ...props,
     buttonId: button.id,
-    broadcastId: extractMetadata("broadcastId", props.metadata),
-    sequenceStepId: extractMetadata("sequenceStepId", props.metadata),
-    contactInboxId: props.contactInboxId,
-    commentAutomationId: extractMetadata("commentAutomationId", props.metadata),
-  })
-  const resumeToken = await signMiniAppResumeToken({
-    workspaceId: props.workspaceId,
-    contactId: props.contactId,
     miniAppId: button.beforeStep.miniAppId,
-    conversationId: props.conversationId,
-    contactInboxId: props.contactInboxId,
-    buttonPayload,
   })
 
   const url = new URL("/mini-apps", props.appUrl)

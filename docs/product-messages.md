@@ -192,14 +192,12 @@ worker received-message ──► productMessageService.resolveInboundProducts
   `message_id`, `catalog_id`, then `note` and `products[{ product_id, retailer_id, name,
   quantity, item_price, currency }]` for a cart, or `product{ product_id, retailer_id,
   name }` for a question. An unmatched product has `product_id` and `name` of `null`.
-- **Not offered.** The other ecommerce stubs in the trigger enum (cart abandoned,
-  product or category added to a cart, product removed from a cart, new order, order
-  accepted, shipped, concluded or canceled, product ordered) are not implemented. Meta's
-  WhatsApp documentation describes a webhook for a submitted order and for a message
-  sent from a product page, which are the two above. It documents carts as local to a
-  device and describes no webhook for cart edits. `order_status` is a message the
-  business sends in the India and Brazil payment flows. These stubs would need their own
-  signal, which the documentation reviewed here does not provide.
+- **Store events are separate.** The order and web shop cart events (new order, order
+  accepted, shipped, concluded or cancelled, product ordered, product or category added
+  to the cart, product removed from it, cart abandoned) come from the store itself, not
+  from a channel — see `docs/ecommerce.md` "Trigger and webhook events". Meta documents
+  WhatsApp carts as local to a device and describes no webhook for cart edits, so a
+  WhatsApp catalog cart only ever fires `shoppingCartSent`.
 
 ## Known limitations
 

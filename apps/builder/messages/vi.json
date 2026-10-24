@@ -2266,6 +2266,10 @@
       "label": "Địa chỉ gửi",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "Tên người gửi",
+      "placeholder": "ChatbotX"
+    },
     "limitContacts": {
       "label": "Maximum of Contacts"
     },
@@ -2814,7 +2818,13 @@
       "sendGoogleAdsConversion": "Gửi chuyển đổi Google Ads",
       "changeGamificationScore": "Thay đổi điểm xếp hạng",
       "sendViewCatalog": "Xem danh mục",
-      "sendProducts": "Gửi sản phẩm"
+      "sendProducts": "Gửi sản phẩm",
+      "sendCollection": "Bộ sưu tập sản phẩm"
+    },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Không thể kiểm tra yêu cầu bên ngoài. Hãy kiểm tra cấu hình yêu cầu và thử lại."
+      }
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -2995,6 +3005,43 @@
       "productsSelected": "{count, plural, one {# sản phẩm} other {# sản phẩm}}",
       "noneSelected": "Chưa có sản phẩm",
       "sendFailed": "Không thể gửi sản phẩm."
+    },
+    "sendCollection": {
+      "title": "Bộ sưu tập sản phẩm",
+      "dataType": "Loại dữ liệu",
+      "dataTypes": {
+        "products": "Sản phẩm"
+      },
+      "collectionType": "Cách chọn sản phẩm",
+      "collectionTypes": {
+        "automated": {
+          "label": "Tự động",
+          "description": "Sản phẩm hiện có và sản phẩm thêm sau này khớp điều kiện sẽ tự động vào bộ sưu tập."
+        },
+        "manual": {
+          "label": "Chọn tay",
+          "description": "Chọn từng sản phẩm cho bộ sưu tập."
+        }
+      },
+      "condition": "Điều kiện",
+      "name": "Tên",
+      "optional": "(Không bắt buộc)",
+      "category": "Danh mục",
+      "subcategory": "Danh mục con",
+      "vendor": "Nhà cung cấp",
+      "all": "Tất cả",
+      "items": "Sản phẩm",
+      "select": "Chọn",
+      "selectPlaceholder": "Chọn 1 hoặc nhiều sản phẩm",
+      "selectAll": "Chọn tất cả",
+      "deselectAll": "Bỏ chọn tất cả",
+      "maxProducts": "Tối đa {count} sản phẩm; sản phẩm cửa hàng không còn hiện sẽ bị bỏ qua.",
+      "automatedHint": "Gửi tối đa {count} sản phẩm khớp mà cửa hàng đang bán, dạng thẻ mở sản phẩm trên cửa hàng.",
+      "summaryAll": "Mọi sản phẩm cửa hàng đang bán",
+      "summaryAutomated": "Sản phẩm: {filters}",
+      "summaryManual": "{count, plural, one {# sản phẩm} other {# sản phẩm}}",
+      "cancel": "Hủy",
+      "save": "Lưu"
     }
   },
   "folders": {
@@ -3983,6 +4030,7 @@
         "buttonText": "Văn bản nút",
         "buttonType": "Loại nút",
         "visitWebsite": "Mở website",
+        "openMiniApp": "Mở Mini App",
         "callPhoneNumber": "Gọi điện thoại",
         "postback": "Nút"
       },
@@ -4186,6 +4234,7 @@
     "orContinueWith": "Hoặc tiếp tục với",
     "continueWithFacebook": "Tiếp tục với Facebook",
     "continueWithGoogle": "Tiếp tục với Google",
+    "continueWithProvider": "Tiếp tục với {name}",
     "continueWithEmail": "Tiếp tục với Email",
     "continueWithMagicLink": "Tiếp tục với Magic Link",
     "dontHaveAnAccount": "Chưa có tài khoản?",
@@ -4216,11 +4265,15 @@
     "changePasswordTitle": "Đổi mật khẩu",
     "changePasswordDescription": "Đặt mật khẩu mới trước khi tiếp tục.",
     "passwordChangeSuccess": "Đã đổi mật khẩu",
+    "signUpDisabledTitle": "Đăng ký đã bị vô hiệu hóa",
+    "signUpDisabledDescription": "Tài khoản mới chỉ có thể được tạo bởi quản trị viên hoặc qua liên kết mời.",
     "oauthError": {
       "accountNotLinked": "Đã có tài khoản dùng email này và không thể liên kết. Hãy đăng nhập theo cách bạn đã dùng trước đây, hoặc liên hệ hỗ trợ.",
       "unableToLinkAccount": "Không thể liên kết lần đăng nhập này với tài khoản hiện có. Hãy đăng nhập theo cách bạn đã dùng trước đây, hoặc liên hệ hỗ trợ.",
       "sessionExpired": "Phiên đăng nhập đã hết hạn. Vui lòng thử lại.",
       "accessDenied": "Bạn đã huỷ đăng nhập.",
+      "signUpDisabled": "Tài khoản này chưa tồn tại và đăng ký đã bị vô hiệu hóa. Hãy yêu cầu quản trị viên tạo tài khoản cho bạn.",
+      "invalidInvitation": "Lời mời này không hợp lệ hoặc đã hết hạn.",
       "generic": "Đăng nhập thất bại. Vui lòng thử lại."
     }
   },
@@ -4253,6 +4306,25 @@
       "unknownFieldTarget": "Một trường liên hệ đã ánh xạ không còn tồn tại.",
       "actionReferenceNotFound": "Một hành động tham chiếu đến luồng, thẻ hoặc trường không còn tồn tại.",
       "fieldMappingRequired": "Hãy thêm ít nhất một ánh xạ trường."
+    },
+    "form": {
+      "required": "Ô này là bắt buộc.",
+      "minLength": "Nhập ít nhất {minimum} ký tự.",
+      "maxLength": "Nhập tối đa {maximum} ký tự.",
+      "minNumber": "Nhập số từ {minimum} trở lên.",
+      "moreThan": "Nhập số lớn hơn {minimum}.",
+      "maxNumber": "Nhập số tối đa {maximum}.",
+      "lessThan": "Nhập số nhỏ hơn {maximum}.",
+      "number": "Hãy nhập một số.",
+      "wholeNumber": "Hãy nhập số nguyên.",
+      "minItems": "Chọn ít nhất {minimum}.",
+      "maxItems": "Chọn tối đa {maximum}.",
+      "email": "Nhập địa chỉ email hợp lệ.",
+      "url": "Nhập đường link hợp lệ, bắt đầu bằng https://.",
+      "format": "Giá trị này chưa đúng định dạng.",
+      "option": "Hãy chọn một trong các lựa chọn.",
+      "invalid": "Giá trị này không hợp lệ.",
+      "checkFields": "Có ô cần sửa. Hãy xem các ô được tô đỏ."
     }
   },
   "webchat": {
@@ -4852,7 +4924,8 @@
     "chatbotInvitationDescription1": "Tham gia {chatbotName}",
     "chatbotInvitationDescription2": "{userName} đã mời bạn tham gia {chatbotName}.",
     "invalidInvitation": "Lời mời này không hợp lệ hoặc đã hết hạn.",
-    "workspaceUnavailable": "Không gian làm việc này không còn khả dụng."
+    "workspaceUnavailable": "Không gian làm việc này không còn khả dụng.",
+    "signUpToJoin": "Tạo tài khoản để tham gia"
   },
   "inboxes": {
     "markReadOnOutbound": {
@@ -4907,7 +4980,8 @@
       "contactReferredExistingContact": "Liên hệ giới thiệu liên hệ hiện có",
       "callRecorded": "Cuộc gọi đã ghi âm",
       "callTranscribed": "Cuộc gọi đã chuyển văn bản",
-      "anyProduct": "Bất kỳ sản phẩm nào"
+      "anyProduct": "Bất kỳ sản phẩm nào",
+      "anyCategory": "Mọi danh mục"
     },
     "actions": {
       "addTag": "Thêm thẻ",
@@ -5028,7 +5102,8 @@
       "userPlaceholder": "ID người dùng",
       "keyword": "Từ khóa",
       "keywordPlaceholder": "Hành động, chi tiết hoặc địa chỉ IP",
-      "allAdmins": "Tất cả admin"
+      "allAdmins": "Tất cả admin",
+      "allWorkspaces": "Tất cả không gian làm việc"
     }
   },
   "customFields": {
@@ -6411,7 +6486,14 @@
       "supportOff": "Tắt",
       "searchPlaceholder": "Tìm kiếm theo tên, email chủ sở hữu hoặc ID",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
-      "supportAccessible": "Accessible"
+      "supportAccessible": "Accessible",
+      "createButton": "Create workspace",
+      "createTitle": "Create workspace for an owner",
+      "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",
+      "ownerEmail": "Owner email",
+      "memberEmails": "Member emails",
+      "membersHint": "Every member gets the permissions selected below. New emails get a mailed temporary password.",
+      "createdSummary": "Workspace created for {ownerEmail} — {memberCount} member(s) added, {newAccountCount} new account(s) emailed a temporary password."
     },
     "admins": {
       "title": "Platform administrators",
@@ -6427,6 +6509,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Nhật ký kiểm tra nền tảng",
+      "description": "Hoạt động kiểm tra trên mọi không gian làm việc của nền tảng này."
+    },
+    "smtp": {
+      "title": "Cài đặt SMTP",
+      "description": "Phương thức gửi email của nền tảng. Để trống để tiếp tục sử dụng các biến môi trường SMTP_SERVER và SMTP_FROM.",
+      "usingEnv": "Chưa lưu cài đặt SMTP nào — email nền tảng sử dụng biến môi trường SMTP_SERVER.",
+      "remove": "Xóa cài đặt SMTP",
+      "errors": {
+        "passwordRequired": "Nhập mật khẩu SMTP."
+      }
     }
   },
   "platformCredentials": {
@@ -6505,6 +6600,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Cộng đồng",
+    "enterpriseGroup": "Doanh nghiệp",
     "platformGroup": "Nền tảng",
     "toolsGroup": "Công cụ",
     "saasGroup": "SaaS",
@@ -6681,7 +6778,82 @@
     "unknown": "Không xác định"
   },
   "orders": {
-    "title": "Đơn hàng"
+    "title": "Đơn hàng",
+    "empty": "Chưa có đơn hàng nào.",
+    "searchPlaceholder": "Tìm theo tên, số điện thoại, email hoặc số đơn",
+    "orderNumber": "Đơn #{number}",
+    "print": "In",
+    "inbox": "Hộp thư",
+    "statusUpdated": "Đã cập nhật trạng thái đơn",
+    "statusUpdateError": "Không cập nhật được trạng thái đơn",
+    "updateStatusTitle": "Cập nhật trạng thái đơn",
+    "message": "Tin nhắn",
+    "messagePlaceholder": "Không bắt buộc",
+    "messageDescription": "Gửi cho khách trong hội thoại của họ.",
+    "cancel": "Hủy",
+    "continue": "Tiếp tục",
+    "delete": "Xóa",
+    "deleted": "Đã xóa đơn hàng",
+    "deleteError": "Không xóa được đơn hàng",
+    "deleteTitle": "Xóa đơn #{number}?",
+    "deleteDescription": "Đơn, các món và lịch sử của đơn sẽ bị xóa. Số hàng đơn còn giữ sẽ được trả lại kho.",
+    "columns": {
+      "name": "Tên",
+      "total": "Tổng tiền",
+      "status": "Trạng thái",
+      "date": "Ngày",
+      "rating": "Đánh giá",
+      "quantity": "Số lượng",
+      "price": "Giá",
+      "vendor": "Nhà cung cấp"
+    },
+    "fields": {
+      "name": "Tên",
+      "email": "Email",
+      "phone": "Số điện thoại",
+      "country": "Quốc gia",
+      "state": "Tỉnh/Thành",
+      "city": "Thành phố",
+      "street": "Đường",
+      "zip": "Mã bưu chính",
+      "shippingType": "Giao hàng",
+      "orderId": "Mã đơn",
+      "date": "Ngày",
+      "subtotal": "Tạm tính",
+      "discount": "Giảm giá",
+      "deliveryCost": "Phí giao hàng",
+      "otherTaxes": "Thuế và phí khác",
+      "total": "Tổng cộng",
+      "paymentMethod": "Phương thức thanh toán",
+      "status": "Trạng thái",
+      "note": "Ghi chú",
+      "cancelReason": "Lý do hủy",
+      "rating": "Đánh giá",
+      "ratingComment": "Nhận xét của khách",
+      "coupon": "Mã giảm giá ({code})"
+    },
+    "statuses": {
+      "pending": "Chưa xử lý",
+      "accepted": "Đã nhận đơn",
+      "shipped": "Đang giao",
+      "concluded": "Hoàn thành",
+      "cancelled": "Đã hủy"
+    },
+    "transitions": {
+      "accepted": "Nhận đơn",
+      "shipped": "Giao hàng",
+      "concluded": "Hoàn thành",
+      "cancelled": "Hủy đơn"
+    },
+    "paymentMethods": {
+      "cod": "Thanh toán khi nhận hàng"
+    },
+    "shippingTypes": {
+      "delivery": "Giao tận nơi",
+      "pickup": "Nhận tại cửa hàng"
+    },
+    "description": "Đơn hàng khách đã đặt.",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "Sản phẩm",
@@ -6738,7 +6910,8 @@
         "label": "Cho phép khách hàng mua sản phẩm này khi hết hàng"
       },
       "vendor": {
-        "label": "Nhà cung cấp"
+        "label": "Nhà cung cấp",
+        "none": "Không có"
       },
       "rank": {
         "label": "Xếp hạng"
@@ -6871,8 +7044,8 @@
     "loadError": "Không thể tải danh mục sản phẩm.",
     "all": "Tất cả sản phẩm",
     "create": "Tạo danh mục",
-    "edit": "Đổi tên danh mục",
-    "name": "Tên danh mục",
+    "edit": "Sửa",
+    "name": "Tên",
     "namePlaceholder": "vd. Bộ sưu tập mùa hè",
     "parent": "Danh mục cha",
     "noParent": "Không có (cấp gốc)",
@@ -6892,12 +7065,25 @@
     "columns": {
       "name": "Tên",
       "products": "Sản phẩm",
-      "subcategories": "Danh mục con"
+      "subcategories": "Danh mục con",
+      "visible": "Hiển thị"
     },
     "expand": "Hiện danh mục con",
     "collapse": "Ẩn danh mục con",
     "productCount": "{count, plural, =0 {Không có sản phẩm} one {# sản phẩm} other {# sản phẩm}}",
-    "deleteChildrenWarning": "{count, plural, one {# danh mục con cũng sẽ bị xóa.} other {# danh mục con cũng sẽ bị xóa.}}"
+    "deleteChildrenWarning": "{count, plural, one {# danh mục con cũng sẽ bị xóa.} other {# danh mục con cũng sẽ bị xóa.}}",
+    "add": "Thêm",
+    "dialogTitle": "Danh mục",
+    "image": "Ảnh",
+    "continue": "Tiếp tục",
+    "subcategories": "Danh mục con",
+    "subcategoriesOf": "Danh mục con của {name}",
+    "emptySub": "Chưa có danh mục con nào.",
+    "back": "Quay lại danh mục",
+    "getId": "Lấy ID",
+    "idCopied": "Đã sao chép ID danh mục {id}",
+    "idCopyError": "Không sao chép được ID",
+    "description": "Nhóm sản phẩm vào danh mục và danh mục con."
   },
   "productImport": {
     "title": "Import",
@@ -9047,6 +9233,543 @@
       "hours": "Giờ làm",
       "closed": "Nghỉ"
     }
+  },
+  "productVendors": {
+    "title": "Nhà cung cấp",
+    "add": "Thêm",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "actions": "Thao tác",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "moreOptions": "Tùy chọn khác",
+    "empty": "Chưa có nhà cung cấp nào.",
+    "created": "Đã thêm nhà cung cấp",
+    "updated": "Đã cập nhật nhà cung cấp",
+    "deleted": "Đã xóa nhà cung cấp",
+    "saveError": "Không lưu được nhà cung cấp",
+    "deleteError": "Không xóa được nhà cung cấp",
+    "deleteTitle": "Xóa {name}?",
+    "deleteDescription": "{count, plural, =0 {Chưa có sản phẩm nào thuộc nhà cung cấp này.} one {# sản phẩm sẽ không còn nhà cung cấp.} other {# sản phẩm sẽ không còn nhà cung cấp.}}",
+    "fields": {
+      "name": "Tên",
+      "shortDescription": "Mô tả ngắn",
+      "phone": "Số điện thoại",
+      "storeAddress": "Địa chỉ cửa hàng",
+      "image": "Ảnh",
+      "optional": "Không bắt buộc",
+      "discountPercent": "Giảm giá (0-100%)",
+      "minimumOrderValue": "Giá trị đơn tối thiểu",
+      "openHours": "Giờ mở cửa",
+      "category": "Danh mục",
+      "subcategory": "Danh mục con",
+      "none": "Không có"
+    },
+    "columns": {
+      "name": "Tên",
+      "products": "Tổng sản phẩm",
+      "active": "Hoạt động"
+    },
+    "description": "Người bán và thương hiệu của sản phẩm."
+  },
+  "ecommerceSettings": {
+    "save": "Lưu",
+    "saved": "Đã lưu cài đặt",
+    "saveError": "Không lưu được cài đặt",
+    "rank": {
+      "label": "Thứ hạng",
+      "default": "Mặc định"
+    },
+    "tabs": {
+      "general": "Chung",
+      "payments": "Thanh toán",
+      "shipping": "Giao hàng",
+      "checkout": "Đặt hàng"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "Cho phép đặt hàng",
+        "description": "Dùng mục này để tạm không cho khách đặt hàng mà không cần sửa giờ mở cửa. Giờ mở cửa cũng quyết định lúc nào khách đặt được."
+      },
+      "webshopProductView": {
+        "label": "Cách hiện sản phẩm trên web shop",
+        "description": "Chọn cách sản phẩm được hiển thị trên web shop của bạn.",
+        "options": {
+          "list": "Danh sách",
+          "listWithoutImage": "Danh sách không ảnh",
+          "card": "Thẻ",
+          "cardSquare": "Thẻ với ảnh vuông",
+          "image": "Ảnh",
+          "imageSquare": "Ảnh (vuông)"
+        }
+      },
+      "openHours": {
+        "label": "Giờ mở cửa",
+        "description": "Các khung giờ khách được phép đặt hàng."
+      },
+      "searchProducts": {
+        "label": "Tìm sản phẩm",
+        "description": "Cho khách nhắn tin để tìm sản phẩm."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "Theo dõi chuyển đổi bằng FB Pixel và đo hiệu quả quảng cáo. Các sự kiện được theo dõi: ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "Tin nhắn nhắc giỏ hàng bị bỏ quên",
+        "description": "Thời gian chờ trước khi gửi tin nhắn nhắc giỏ hàng, kể từ lúc khách rời bot mà trong giỏ vẫn còn hàng.",
+        "disabled": "Tắt",
+        "afterMinutes": "Sau {count} phút",
+        "afterHours": "{count, plural, one {Sau # giờ} other {Sau # giờ}}"
+      },
+      "productButtons": {
+        "label": "Nút trên sản phẩm",
+        "description": "Chọn các nút hiện trên sản phẩm trong bot.",
+        "options": {
+          "addToCart": "Thêm vào giỏ",
+          "share": "Chia sẻ",
+          "similar": "Tương tự",
+          "save": "Lưu"
+        }
+      },
+      "productImageSize": {
+        "label": "Kích thước ảnh sản phẩm",
+        "description": "Chọn kích thước ảnh sản phẩm hiển thị trong bot",
+        "options": {
+          "bigSquare": "Lớn (Vuông)",
+          "mediumRectangle": "Vừa (Chữ nhật)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "Cho phép đánh giá đơn hàng",
+        "description": "Cho khách đánh giá đơn và viết nhận xét nếu chưa hài lòng. Chỉ quản trị viên bot xem được các đánh giá"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "Gửi thông báo khi đổi trạng thái đơn",
+        "description": "Khách sẽ nhận thông báo mỗi khi bạn đổi trạng thái đơn. Không thể tắt thông báo khi hủy đơn và khi hoàn thành đơn."
+      },
+      "abandonedCartFlow": {
+        "label": "Flow nhắc giỏ hàng",
+        "description": "Flow bot sẽ chạy cho khách khi giỏ hàng bị bỏ quên đủ lâu. Dùng '{{shop_token}}' trong nút để mở giỏ. Trigger cũng dùng được sự kiện \"Cart abandoned\".",
+        "none": "Không chạy flow (chỉ phát sự kiện Trigger)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "Có {count, plural, one {# sản phẩm} other {# sản phẩm}} đang đặt giá theo tiền khác {currency}. Đơn hàng vẫn tính giá đó theo {currency}.",
+      "paymentMethods": {
+        "label": "Phương thức thanh toán",
+        "description": "Các phương thức thanh toán bật trên trang đặt hàng. Phương thức đầu tiên trong danh sách sẽ được chọn sẵn ở trang đặt hàng.",
+        "options": {
+          "cod": "Thanh toán khi nhận hàng"
+        }
+      },
+      "currency": {
+        "label": "Đơn vị tiền",
+        "description": "Đơn vị tiền dùng để đặt giá sản phẩm. Khách sẽ được tính tiền theo đơn vị này."
+      },
+      "currencyPosition": {
+        "label": "Vị trí ký hiệu tiền",
+        "description": "Chọn vị trí hiển thị ký hiệu tiền.",
+        "options": {
+          "left": "Bên trái",
+          "leftSpace": "Bên trái, có khoảng trắng",
+          "right": "Bên phải",
+          "rightSpace": "Bên phải, có khoảng trắng"
+        }
+      },
+      "currencySymbol": {
+        "label": "Ký hiệu tiền",
+        "description": "Ký hiệu tiền hiện cạnh giá. Muốn có khoảng trắng giữa ký hiệu và giá thì thêm một khoảng trắng ở cuối ký hiệu."
+      },
+      "serviceFeePercent": {
+        "label": "Phí khác / Phí dịch vụ (0 - 100%)",
+        "description": "Các khoản phí khác liên quan đến đơn hàng."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "Hình thức giao hàng",
+        "description": "Chọn cách khách nhận đơn hàng của họ.",
+        "options": {
+          "none": "Không có",
+          "delivery": "Giao tận nơi",
+          "pickup": "Nhận tại cửa hàng",
+          "deliveryAndPickup": "Giao tận nơi, Nhận tại cửa hàng"
+        }
+      },
+      "storeAddress": {
+        "label": "Địa chỉ cửa hàng",
+        "description": "Địa chỉ này hiện cho khách ở trang đặt hàng nếu bạn cho phép nhận tại cửa hàng."
+      },
+      "shippingCountries": {
+        "label": "Quốc gia giao hàng",
+        "description": "Các quốc gia bạn giao hàng tới."
+      },
+      "defaultShippingCountry": {
+        "label": "Quốc gia giao hàng mặc định",
+        "description": "Quốc gia được chọn sẵn ở trang đặt hàng.",
+        "none": "Không có"
+      },
+      "deliveryCost": {
+        "label": "Phí giao hàng",
+        "description": "Phí cố định để giao đơn tới địa chỉ của khách."
+      },
+      "defaultCountryNotShipped": "Hãy chọn một trong các quốc gia giao hàng."
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "Đặt hàng",
+        "description": "Chọn nơi khách hoàn tất đơn hàng. Nếu muốn khách đặt hàng ngoài bot, như trên website của bạn, Amazon,.. thì đừng dùng trang đặt hàng mặc định.",
+        "options": {
+          "default": "Trang đặt hàng mặc định",
+          "externalLink": "Trang đặt hàng bên ngoài",
+          "flow": "Flow",
+          "productPage": "Mở trang sản phẩm bên ngoài"
+        }
+      },
+      "checkoutLink": {
+        "label": "Link trang đặt hàng",
+        "description": "Trang bên ngoài nơi khách hoàn tất đơn hàng."
+      },
+      "checkoutFlowId": {
+        "label": "Flow đặt hàng",
+        "description": "Flow chạy khi khách bấm đặt hàng.",
+        "placeholder": "Chọn flow"
+      },
+      "minimumOrderValue": {
+        "label": "Giá trị đơn tối thiểu",
+        "description": "Giá trị đơn nhỏ nhất khách được đặt. Điều kiện này được kiểm tra sau khi đã áp mọi khoản giảm giá."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "Bắt buộc tên người mua",
+          "description": "Tên người mua sẽ được hỏi khi đặt hàng."
+        },
+        "requireEmail": {
+          "label": "Bắt buộc email",
+          "description": "Email người mua sẽ được hỏi khi đặt hàng."
+        },
+        "requirePhone": {
+          "label": "Bắt buộc số điện thoại",
+          "description": "Số điện thoại người mua sẽ được hỏi khi đặt hàng."
+        },
+        "requireState": {
+          "label": "Bắt buộc tỉnh/thành",
+          "description": "Tỉnh/thành của người mua sẽ được hỏi khi đặt hàng."
+        },
+        "requireZip": {
+          "label": "Bắt buộc mã bưu chính",
+          "description": "Mã bưu chính của người mua sẽ được hỏi khi đặt hàng."
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "Tin nhắn xác nhận đơn hàng",
+        "description": "Khách nhận được gì trong cuộc trò chuyện khi vừa đặt hàng. Tin mặc định liệt kê chi tiết đơn theo ngôn ngữ của workspace.",
+        "options": {
+          "default": "Tin nhắn mặc định",
+          "flow": "Chạy một flow",
+          "none": "Không gửi gì"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Flow xác nhận đơn hàng",
+        "description": "Flow gửi cho khách thay cho tin mặc định khi khách vừa đặt hàng."
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "Luôn mở cửa",
+    "addNew": "Thêm mới",
+    "dialogTitle": "Giờ mở cửa",
+    "name": "Tên",
+    "namePlaceholder": "VD: Ngày thường",
+    "day": "Ngày",
+    "from": "Mở cửa",
+    "to": "Đóng cửa",
+    "add": "Thêm khung giờ",
+    "remove": "Xóa",
+    "cancel": "Hủy",
+    "continue": "Tiếp tục",
+    "created": "Đã tạo giờ mở cửa",
+    "saveError": "Không lưu được giờ mở cửa",
+    "days": {
+      "0": "Chủ nhật",
+      "1": "Thứ hai",
+      "2": "Thứ ba",
+      "3": "Thứ tư",
+      "4": "Thứ năm",
+      "5": "Thứ sáu",
+      "6": "Thứ bảy"
+    },
+    "sameTimes": "Giờ mở cửa và giờ đóng cửa phải khác nhau."
+  },
+  "webshop": {
+    "metadataTitle": "Cửa hàng",
+    "metadataOrderTitle": "Đơn hàng của bạn",
+    "invalidLinkTitle": "Liên kết này không dùng được",
+    "invalidLinkDescription": "Có thể liên kết đã hết hạn. Hãy nhắn cho cửa hàng để xin liên kết mới.",
+    "previewBanner": "Xem trước: khách sẽ thấy trang như thế này. Không đặt hàng được từ trang xem trước.",
+    "previewOrderingOff": "Xem trước: không thể đặt hàng",
+    "closed": {
+      "orderingUnavailable": "Cửa hàng hiện chưa nhận đơn.",
+      "outsideOpenHours": "Cửa hàng đang ngoài giờ mở cửa. Bạn vẫn xem hàng được."
+    },
+    "searchPlaceholder": "Tìm sản phẩm",
+    "categories": "Danh mục",
+    "allCategories": "Tất cả danh mục",
+    "vendors": "Nhà cung cấp",
+    "allVendors": "Tất cả nhà cung cấp",
+    "noProducts": "Không có sản phẩm nào.",
+    "productNotFound": "Sản phẩm này không còn bán.",
+    "outOfStock": "Hết hàng",
+    "addToCart": "Thêm vào giỏ",
+    "added": "Đã thêm vào giỏ",
+    "chooseOptions": "Chọn loại",
+    "chooseOption": "Chọn {name}",
+    "variantUnavailable": "Loại này hiện không có.",
+    "buy": "Mua",
+    "share": "Chia sẻ",
+    "linkCopied": "Đã sao chép",
+    "similar": "Tương tự",
+    "save": "Lưu",
+    "saved": "Đã lưu",
+    "showImage": "Xem ảnh {number}",
+    "increase": "Tăng số lượng",
+    "decrease": "Giảm số lượng",
+    "remove": "Bỏ ra",
+    "cart": "Giỏ hàng",
+    "cartEmpty": "Giỏ hàng đang trống.",
+    "continueShopping": "Tiếp tục mua sắm",
+    "unavailableItems": "{count, plural, one {# món hiện không đặt được} other {# món hiện không đặt được}}",
+    "unavailableNotOrdered": "Các món này sẽ không được đặt và vẫn nằm trong giỏ.",
+    "unavailable": "Không còn bán",
+    "unavailableHint": "Chọn lại loại cho món này",
+    "deletedProduct": "Sản phẩm đã bị xóa",
+    "summary": {
+      "subtotal": "Tạm tính",
+      "discount": "Giảm giá",
+      "delivery": "Phí giao hàng",
+      "otherFees": "Phí khác",
+      "total": "Tổng cộng",
+      "coupon": "Mã giảm giá ({code})",
+      "title": "Tóm tắt đơn hàng",
+      "saved": "Bạn tiết kiệm được {amount}"
+    },
+    "belowMinimum": "Đơn tối thiểu là {amount}.",
+    "checkOut": "Đặt hàng",
+    "contactDetails": "Thông tin của bạn",
+    "optional": "(không bắt buộc)",
+    "fields": {
+      "name": "Họ tên",
+      "email": "Email",
+      "phone": "Số điện thoại",
+      "country": "Quốc gia",
+      "state": "Tỉnh / thành",
+      "city": "Quận / huyện / thành phố",
+      "address1": "Địa chỉ",
+      "address2": "Số nhà, tòa nhà…",
+      "zip": "Mã bưu chính",
+      "note": "Ghi chú cho cửa hàng"
+    },
+    "shipping": {
+      "title": "Giao hàng",
+      "delivery": "Giao tận nơi",
+      "pickup": "Nhận tại cửa hàng",
+      "storeAddress": "Địa chỉ cửa hàng: {address}"
+    },
+    "payment": {
+      "title": "Thanh toán",
+      "cod": "Thanh toán khi nhận hàng"
+    },
+    "placeOrder": "Đặt hàng",
+    "orderPlaced": "Cảm ơn bạn! Đơn hàng đã được đặt. Cửa hàng sẽ báo tình trạng đơn qua tin nhắn.",
+    "orderTitle": "Đơn hàng #{number}",
+    "orderNotFound": "Không tìm thấy đơn hàng này.",
+    "placedAt": "Đặt lúc {date}",
+    "status": {
+      "pending": "Chưa xử lý",
+      "accepted": "Đang xử lý",
+      "shipped": "Đang giao",
+      "concluded": "Hoàn thành",
+      "cancelled": "Đã hủy"
+    },
+    "rateTitle": "Đánh giá đơn hàng",
+    "rateComment": "Góp ý cho cửa hàng (không bắt buộc)",
+    "rateSubmit": "Gửi đánh giá",
+    "rateThanks": "Cảm ơn bạn đã đánh giá!",
+    "yourRating": "Đánh giá của bạn",
+    "ratingValue": "{rating} trên 5 sao",
+    "previous": "Trước",
+    "next": "Sau",
+    "pageOf": "Trang {page}/{pageCount}",
+    "errors": {
+      "generic": "Có lỗi xảy ra. Bạn thử lại nhé.",
+      "checkFields": "Bạn kiểm tra lại các ô đã nhập nhé.",
+      "fieldRequired": "Bạn cần nhập {field}.",
+      "countryUnavailable": "Cửa hàng không giao tới quốc gia này.",
+      "invalidLink": "Liên kết này không còn dùng được. Hãy xin cửa hàng liên kết mới.",
+      "webshopPreviewOnly": "Đây là trang xem trước. Chỉ đặt hàng được từ liên kết gửi cho khách.",
+      "rateLimited": "Bạn thao tác hơi nhanh. Đợi một chút rồi thử lại nhé.",
+      "orderingUnavailable": "Cửa hàng hiện chưa nhận đơn.",
+      "orderBelowMinimum": "Đơn tối thiểu là {minimum}.",
+      "orderBelowVendorMinimum": "Các món của {vendorName} phải đạt tối thiểu {minimum}.",
+      "orderOutOfStock": "{productName} đã hết hàng.",
+      "orderProductUnavailable": "Có món không còn đặt được. Bạn xem lại giỏ hàng nhé.",
+      "orderEmpty": "Giỏ hàng đang trống.",
+      "orderShippingTypeUnavailable": "Cách nhận hàng này hiện không có.",
+      "webshopRatingNotAllowed": "Không đánh giá được đơn hàng này.",
+      "webshopCartFull": "Giỏ hàng chỉ chứa tối đa {maximum} sản phẩm khác nhau.",
+      "notFound": "Sản phẩm này không còn bán.",
+      "discountCodeNotFound": "Mã giảm giá không tồn tại.",
+      "discountCodeInactive": "Mã giảm giá đang tắt.",
+      "discountCodeNotStarted": "Mã giảm giá chưa tới ngày dùng.",
+      "discountCodeExpired": "Mã giảm giá đã hết hạn.",
+      "discountCodeUsageLimitReached": "Mã giảm giá đã hết lượt dùng.",
+      "discountCodeAlreadyUsed": "Bạn đã dùng mã này rồi.",
+      "discountCodeNotEligible": "Mã này không dành cho bạn.",
+      "discountCodeNotApplicable": "Mã này không áp dụng cho món trong giỏ.",
+      "discountCodeMinimumAmount": "Mã này cần mua tối thiểu {minimum}. Mua thêm {missing} nữa nhé.",
+      "discountCodeMinimumQuantity": "Mã này cần tối thiểu {minimum} món. Thêm {missing} món nữa nhé."
+    },
+    "discount": {
+      "label": "Mã giảm giá",
+      "placeholder": "Nhập mã giảm giá",
+      "apply": "Áp dụng",
+      "applied": "Đã áp mã giảm giá",
+      "automatic": "tự động áp dụng",
+      "remove": "Bỏ mã giảm giá",
+      "available": "Mã bạn có thể dùng",
+      "freeShipping": "Miễn phí giao hàng",
+      "bestChoice": "Lựa chọn tốt nhất",
+      "expiresOn": "HSD: {date}",
+      "noExpiry": "Không giới hạn thời gian",
+      "inUse": "Đang dùng",
+      "saves": "Giảm {amount}",
+      "showMore": "{count, plural, one {Xem thêm # mã} other {Xem thêm # mã}}",
+      "showLess": "Thu gọn",
+      "removeShort": "Bỏ",
+      "expired": "Hết hạn",
+      "usedUp": "Hết lượt",
+      "notEligible": "Chưa đủ điều kiện"
+    },
+    "itemCount": "{count, plural, one {# món} other {# món}}",
+    "relatedProducts": "Có thể bạn cũng thích"
+  },
+  "webshopLinks": {
+    "preview": "Xem trước",
+    "getLink": "Lấy liên kết",
+    "copied": "Đã sao chép liên kết. Gắn vào nút của bot: mỗi khách sẽ mở cửa hàng của chính họ.",
+    "error": "Không lấy được liên kết.",
+    "copyError": "Không sao chép được liên kết.",
+    "shopLink": {
+      "label": "Link cửa hàng",
+      "hint": "Dán link này vào nút trong flow, broadcast hoặc sequence. Mỗi khách nhận được sẽ mở cửa hàng của riêng họ và đặt hàng được."
+    },
+    "productLink": {
+      "label": "URL công khai",
+      "hint": "Chép và dán link vào flow, broadcast hoặc sequence. Mỗi khách nhận được sẽ mở sản phẩm này và đặt hàng được."
+    }
+  },
+  "discountCodes": {
+    "title": "Mã giảm giá",
+    "description": "Mã khách nhập khi đặt hàng để được giảm giá, hoặc mã tự áp vào giỏ.",
+    "add": "Thêm",
+    "edit": "Sửa mã giảm giá",
+    "automatic": "Tự áp",
+    "never": "Không hết hạn",
+    "searchPlaceholder": "Tìm mã…",
+    "saveError": "Không lưu được mã giảm giá.",
+    "created": "Đã tạo mã giảm giá",
+    "updated": "Đã lưu mã giảm giá",
+    "deleted": "Đã xóa mã giảm giá",
+    "deleteError": "Không xóa được mã giảm giá.",
+    "deleteTitle": "Xóa mã {code}?",
+    "deleteDescription": "Khách sẽ không dùng được mã này nữa. Các đơn đã dùng vẫn giữ mức giảm.",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "save": "Lưu",
+    "columns": {
+      "name": "Mã",
+      "discount": "Giảm",
+      "used": "Đã dùng",
+      "end": "Hết hạn",
+      "active": "Bật"
+    },
+    "discountTypes": {
+      "percentage": "Phần trăm",
+      "fixedAmount": "Số tiền cố định",
+      "freeShipping": "Miễn phí giao hàng"
+    },
+    "appliesTo": {
+      "entireOrder": "Cả đơn hàng",
+      "category": "Một danh mục",
+      "products": "Một số sản phẩm"
+    },
+    "minimumTypes": {
+      "none": "Không",
+      "amount": "Số tiền mua tối thiểu",
+      "quantity": "Số món tối thiểu"
+    },
+    "eligibilities": {
+      "everyone": "Tất cả khách",
+      "specificCustomers": "Một số khách"
+    },
+    "form": {
+      "discountCode": "Mã giảm giá",
+      "code": "Mã",
+      "generate": "Tạo ngẫu nhiên",
+      "autoApply": "Tự áp mã này vào giỏ hàng",
+      "autoApplyHint": "Giỏ hàng tự được giảm, khách không cần nhập. Có nhiều mã tự áp thì dùng mã giảm nhiều nhất.",
+      "typedHint": "Khách sẽ nhập mã này khi đặt hàng.",
+      "options": "Tùy chọn",
+      "discountType": "Loại giảm giá",
+      "discountValuePercent": "Mức giảm (%)",
+      "discountValueAmount": "Số tiền giảm ({currency})",
+      "freeShippingHint": "Bỏ phí giao hàng cho đơn giao tận nơi.",
+      "appliesTo": "Áp dụng cho",
+      "category": "Danh mục",
+      "products": "Sản phẩm",
+      "productsPlaceholder": "Chọn sản phẩm",
+      "minimumRequirement": "Điều kiện tối thiểu",
+      "minimumAmount": "Số tiền tối thiểu ({currency})",
+      "minimumQuantity": "Số món tối thiểu",
+      "usageLimits": "Giới hạn lượt dùng",
+      "limitTotal": "Giới hạn tổng số lần mã này được dùng",
+      "usedSoFar": "{count, plural, one {Đã dùng # lần} other {Đã dùng # lần}}",
+      "oncePerCustomer": "Mỗi khách chỉ dùng một lần",
+      "customerEligibility": "Khách được dùng",
+      "specificCustomersHint": "Chỉ khách khớp bộ lọc bên dưới (xét lúc đặt hàng).",
+      "activeDates": "Thời gian hiệu lực",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc",
+      "isActive": "Đang bật"
+    },
+    "rules": {
+      "codeCharacters": "Chỉ dùng chữ không dấu, số, - và _.",
+      "usageBelowUsed": "Mã này đã được dùng {count} lần; giới hạn không được thấp hơn.",
+      "customerConditionRequired": "Thêm ít nhất một điều kiện.",
+      "endAfterStart": "Ngày kết thúc phải sau ngày bắt đầu."
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "Thống kê",
+    "lifetime": "Từ trước tới nay",
+    "sales": "Doanh thu",
+    "orders": "Đơn hàng",
+    "products": "Sản phẩm đã bán",
+    "salesByDate": "Doanh thu theo thời gian",
+    "ordersByDate": "Đơn hàng theo thời gian",
+    "topProducts": "Sản phẩm bán chạy",
+    "topVendors": "Nhà cung cấp bán chạy",
+    "columns": {
+      "name": "Tên",
+      "sales": "Doanh thu"
+    },
+    "noData": "Chưa có dữ liệu trong khoảng này",
+    "refresh": "Làm mới",
+    "change": "{value}%",
+    "noPrevious": "mới",
+    "otherCurrencyOrders": "{count} đơn hàng bằng đơn vị tiền tệ khác không được tính trong các số liệu này"
   },
   "responseSla": {
     "label": "SLA phản hồi",

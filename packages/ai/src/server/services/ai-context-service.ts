@@ -41,6 +41,8 @@ type ContextInputMessage = {
   createdAt?: number
 }
 
+const dataUrlMediaTypePattern = /^data:([^;,]+)[;,]/
+
 function normalizeTimestamp(value?: number | Date): number | undefined {
   if (value instanceof Date) {
     return value.getTime()
@@ -55,6 +57,49 @@ function normalizeTimestamp(value?: number | Date): number | undefined {
 
 function serializeMessageContent(content: AIMessage["content"]): string {
   return typeof content === "string" ? content : JSON.stringify(content)
+}
+
+function toJsonSafeFileData(data: unknown, mediaType: string): string | null {
+  if (typeof data === "string") {
+    return data
+  }
+  if (data instanceof URL) {
+    return data.toString()
+  }
+  if (data instanceof Buffer) {
+    return `data:${mediaType};base64,${data.toString("base64")}`
+  }
+  if (data instanceof Uint8Array) {
+    return `data:${mediaType};base64,${Buffer.from(data).toString("base64")}`
+  }
+  if (data instanceof ArrayBuffer) {
+    return `data:${mediaType};base64,${Buffer.from(data).toString("base64")}`
+  }
+  return null
+}
+
+function mediaTypeFromData(data: string, fallback = "image/png"): string {
+  const match = dataUrlMediaTypePattern.exec(data)
+  return match?.[1] ?? fallback
+}
+
+type AIContentPart = Exclude<AIMessage["content"], string>[number]
+
+// Cache entries written under v6 carry `image` parts; canonicalize them to the
+// v7 `file` part while leaving text/file parts untouched.
+function toModelUserPart(part: AIContentPart) {
+  if (part.type === "image") {
+    return {
+      type: "file" as const,
+      data: part.image,
+      mediaType: part.mimeType ?? mediaTypeFromData(part.image),
+    }
+  }
+  return part
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
 }
 
 function fallbackMessageId(props: {
@@ -104,6 +149,12 @@ export const aiContextService = {
     const createdAt = normalizeTimestamp(metadata?.createdAt)
     const messageId = metadata?.messageId
 
+    if (message.role === "system") {
+      // AI SDK v7 rejects system messages in `messages`. Instructions are
+      // always passed at the top level, so never write new system entries.
+      return null
+    }
+
     if (typeof message.content === "string") {
       const normalizedContent = message.content
       return {
@@ -124,38 +175,50 @@ export const aiContextService = {
       return null
     }
 
-    const normalizedParts: Array<
-      { type: "text"; text: string } | { type: "image"; image: string }
-    > = []
+    const normalizedParts: Exclude<AIMessage["content"], string> = []
 
-    for (const part of message.content) {
-      if (part.type === "text") {
+    const messageParts: unknown[] = message.content
+    for (const part of messageParts) {
+      if (!isRecord(part) || typeof part.type !== "string") {
+        continue
+      }
+
+      if (part.type === "text" && typeof part.text === "string") {
         normalizedParts.push({ type: "text", text: part.text })
         continue
       }
 
-      if (part.type !== "image") {
+      if (message.role !== "user") {
         continue
       }
 
-      const raw = part.image
-      let imageStr: string
-
-      if (typeof raw === "string") {
-        imageStr = raw
-      } else if (raw instanceof URL) {
-        imageStr = raw.toString()
-      } else if (raw instanceof Buffer) {
-        imageStr = `data:image/png;base64,${raw.toString("base64")}`
-      } else if (raw instanceof Uint8Array) {
-        imageStr = `data:image/png;base64,${Buffer.from(raw).toString("base64")}`
-      } else if (raw instanceof ArrayBuffer) {
-        imageStr = `data:image/png;base64,${Buffer.from(raw).toString("base64")}`
-      } else {
+      if (part.type === "file" && typeof part.mediaType === "string") {
+        const data = toJsonSafeFileData(part.data, part.mediaType)
+        if (data) {
+          normalizedParts.push({
+            type: "file",
+            data,
+            mediaType: part.mediaType,
+          })
+        }
         continue
       }
 
-      normalizedParts.push({ type: "image", image: imageStr })
+      // Redis entries written by v6 used `image`; preserve read compatibility
+      // but canonicalize every new write to a v7 file part.
+      if (part.type === "image") {
+        const image = toJsonSafeFileData(part.image, "image/png")
+        if (image) {
+          normalizedParts.push({
+            type: "file",
+            data: image,
+            mediaType:
+              typeof part.mimeType === "string"
+                ? part.mimeType
+                : mediaTypeFromData(image),
+          })
+        }
+      }
     }
 
     if (normalizedParts.length === 0) {
@@ -216,18 +279,36 @@ export const aiContextService = {
    * Map AIMessage (context format) to ModelMessage (AI SDK format)
    */
   mapContextToModelMessages(history: AIMessage[]): ModelMessage[] {
-    return history
-      .filter((msg) => msg.role !== "tool")
-      .map((msg) => {
-        const content = serializeMessageContent(msg.content)
-        if (msg.role === "user") {
-          return { role: "user", content }
+    return history.flatMap((msg): ModelMessage[] => {
+      switch (msg.role) {
+        case "user":
+          return [
+            {
+              role: "user",
+              content:
+                typeof msg.content === "string"
+                  ? msg.content
+                  : msg.content.map(toModelUserPart),
+            },
+          ]
+        case "assistant":
+          return [
+            {
+              role: "assistant",
+              content: serializeMessageContent(msg.content),
+            },
+          ]
+        // Instructions go through the top-level `instructions` option and
+        // tool turns are not replayed from the cached context.
+        case "system":
+        case "tool":
+          return []
+        default: {
+          const _exhaustive: never = msg.role
+          return _exhaustive
         }
-        if (msg.role === "assistant") {
-          return { role: "assistant", content }
-        }
-        return { role: "system", content }
-      })
+      }
+    })
   },
 
   /**
@@ -254,7 +335,8 @@ export const aiContextService = {
 
         if (
           context &&
-          context.markerMessageId !== conversation.aiContextLastMessageId
+          (context.markerMessageId !== conversation.aiContextLastMessageId ||
+            context.history.some((message) => message.role === "system"))
         ) {
           await aiContextStore.delete(conversationId)
           context = null

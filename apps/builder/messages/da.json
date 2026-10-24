@@ -2096,6 +2096,10 @@
       "label": "Fra Adresse",
       "placeholder": "noreply@eksempel.com"
     },
+    "fromName": {
+      "label": "Afsendernavn",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "Besked Skabelon"
     },
@@ -2617,7 +2621,13 @@
       "sendGoogleAdsConversion": "Send Google Ads-konvertering",
       "changeGamificationScore": "Skift gamification-point",
       "sendViewCatalog": "Se katalog",
-      "sendProducts": "Send produkter"
+      "sendProducts": "Send produkter",
+      "sendCollection": "Kollektion"
+    },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "Kunne ikke teste den eksterne anmodning. Kontrollér anmodningskonfigurationen, og prøv igen."
+      }
     },
     "splitTraffic": {
       "balanceHint": "Den i alt sum must equal 100%.",
@@ -2798,6 +2808,43 @@
       "productsSelected": "{count, plural, one {# produkt} other {# produkter}}",
       "noneSelected": "Ingen produkter endnu",
       "sendFailed": "Produkterne kunne ikke sendes."
+    },
+    "sendCollection": {
+      "title": "Kollektion",
+      "dataType": "Datatype",
+      "dataTypes": {
+        "products": "Produkter"
+      },
+      "collectionType": "Kollektionstype",
+      "collectionTypes": {
+        "automated": {
+          "label": "Automatisk",
+          "description": "Nuværende og fremtidige varer, der matcher betingelserne, tilføjes automatisk."
+        },
+        "manual": {
+          "label": "Manuel",
+          "description": "Tilføj varer én ad gangen."
+        }
+      },
+      "condition": "Betingelse",
+      "name": "Navn",
+      "optional": "(Valgfrit)",
+      "category": "Kategori",
+      "subcategory": "Underkategori",
+      "vendor": "Leverandør",
+      "all": "Alle",
+      "items": "Varer",
+      "select": "Vælg",
+      "selectPlaceholder": "Vælg 1 eller flere varer",
+      "selectAll": "Vælg alle",
+      "deselectAll": "Fravælg alle",
+      "maxProducts": "Op til {count} produkter; et produkt, butikken ikke længere viser, springes over.",
+      "automatedHint": "Sender op til {count} matchende produkter som kort, der åbner produktet i webshoppen.",
+      "summaryAll": "Alle produkter, butikken viser",
+      "summaryAutomated": "Produkter: {filters}",
+      "summaryManual": "{count, plural, one {# produkt} other {# produkter}}",
+      "cancel": "Annuller",
+      "save": "Gem"
     }
   },
   "folders": {
@@ -3941,6 +3988,7 @@
         "buttonText": "Knap Tekst",
         "buttonType": "Knap Type",
         "visitWebsite": "Visit Website",
+        "openMiniApp": "Åbn Mini App",
         "callPhoneNumber": "Call Telefon Nummer",
         "postback": "Knap"
       },
@@ -4144,6 +4192,7 @@
     "orContinueWith": "Eller fortsæt med",
     "continueWithFacebook": "Fortsæt med Facebook",
     "continueWithGoogle": "Fortsæt med Google",
+    "continueWithProvider": "Fortsæt med {name}",
     "continueWithEmail": "Fortsæt med e-mail",
     "continueWithMagicLink": "Fortsæt med magisk link",
     "dontHaveAnAccount": "Don't har an konto?",
@@ -4174,11 +4223,15 @@
     "changePasswordTitle": "Change din adgangskode",
     "changePasswordDescription": "Set a ny adgangskode før continuing.",
     "passwordChangeSuccess": "Adgangskode changed",
+    "signUpDisabledTitle": "Registrering er deaktiveret",
+    "signUpDisabledDescription": "Nye konti kan kun oprettes af en administrator eller via et invitationslink.",
     "oauthError": {
       "accountNotLinked": "Der findes allerede en konto med denne e-mailadresse, og den kunne ikke kobles. Log ind på samme måde som tidligere, eller kontakt support.",
       "unableToLinkAccount": "Vi kunne ikke koble dette login til den eksisterende konto. Log ind på samme måde som før, eller kontakt support.",
       "sessionExpired": "Loginforsøget er udløbet. Prøv igen.",
       "accessDenied": "Login blev annulleret.",
+      "signUpDisabled": "Denne konto findes ikke endnu, og registrering er deaktiveret. Bed en administrator om at oprette den for dig.",
+      "invalidInvitation": "Denne invitation er ugyldig eller udløbet.",
       "generic": "Login mislykkedes. Prøv igen."
     }
   },
@@ -4211,6 +4264,25 @@
       "unknownFieldTarget": "Et tilknyttet kontaktfelt findes ikke længere.",
       "actionReferenceNotFound": "En handling henviser til et flow, tag eller felt, der ikke længere findes.",
       "fieldMappingRequired": "Tilføj mindst en feltmapping."
+    },
+    "form": {
+      "required": "Dette felt er påkrævet.",
+      "minLength": "Indtast mindst {minimum} tegn.",
+      "maxLength": "Indtast højst {maximum} tegn.",
+      "minNumber": "Indtast et tal på mindst {minimum}.",
+      "moreThan": "Indtast et tal større end {minimum}.",
+      "maxNumber": "Indtast et tal på højst {maximum}.",
+      "lessThan": "Indtast et tal mindre end {maximum}.",
+      "number": "Indtast et tal.",
+      "wholeNumber": "Indtast et helt tal.",
+      "minItems": "Vælg mindst {minimum}.",
+      "maxItems": "Vælg højst {maximum}.",
+      "email": "Indtast en gyldig e-mailadresse.",
+      "url": "Indtast et gyldigt link, der starter med https://.",
+      "format": "Værdien har ikke det rigtige format.",
+      "option": "Vælg en af mulighederne.",
+      "invalid": "Værdien er ikke gyldig.",
+      "checkFields": "Nogle felter skal rettes. Se dem, der er markeret med rødt."
     }
   },
   "webchat": {
@@ -4810,7 +4882,8 @@
     "chatbotInvitationDescription1": "Join {chatbotName}",
     "chatbotInvitationDescription2": "{userName} har invited du til join {chatbotName}.",
     "invalidInvitation": "Denne invitation er ugyldig eller har udløbet.",
-    "workspaceUnavailable": "Denne arbejdsområde er ingen longer tilgængelig."
+    "workspaceUnavailable": "Denne arbejdsområde er ingen longer tilgængelig.",
+    "signUpToJoin": "Opret en konto for at deltage"
   },
   "inboxes": {
     "markReadOnOutbound": {
@@ -5198,7 +5271,8 @@
       "contactReferredExistingContact": "Kontakt Referred Existing Kontakt",
       "callRecorded": "Opkald optaget",
       "callTranscribed": "Opkald transskriberet",
-      "anyProduct": "Alle produkter"
+      "anyProduct": "Alle produkter",
+      "anyCategory": "Enhver kategori"
     },
     "actions": {
       "addTag": "Tilføj tag",
@@ -5319,7 +5393,8 @@
       "userPlaceholder": "Bruger-id",
       "keyword": "Nøgleord",
       "keywordPlaceholder": "Handling eller detalje",
-      "allAdmins": "Alle administratorer"
+      "allAdmins": "Alle administratorer",
+      "allWorkspaces": "Alle arbejdsområder"
     }
   },
   "customFields": {
@@ -6182,7 +6257,14 @@
       "supportOff": "Fra",
       "searchPlaceholder": "Søg efter navn, ejerens e-mail eller id",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
-      "supportAccessible": "Accessible"
+      "supportAccessible": "Accessible",
+      "createButton": "Create workspace",
+      "createTitle": "Create workspace for an owner",
+      "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",
+      "ownerEmail": "Owner email",
+      "memberEmails": "Member emails",
+      "membersHint": "Every member gets the permissions selected below. New emails get a mailed temporary password.",
+      "createdSummary": "Workspace created for {ownerEmail} — {memberCount} member(s) added, {newAccountCount} new account(s) emailed a temporary password."
     },
     "admins": {
       "title": "Platform administrators",
@@ -6198,6 +6280,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "Platformens revisionslogge",
+      "description": "Revisionsaktivitet på tværs af alle arbejdsområder på denne platform."
+    },
+    "smtp": {
+      "title": "SMTP-indstillinger",
+      "description": "Platformens e-mailtransport. Lad dette felt stå tomt for fortsat at bruge miljøvariablerne SMTP_SERVER og SMTP_FROM.",
+      "usingEnv": "Ingen SMTP-indstillinger gemt — platformens e-mail bruger miljøvariablen SMTP_SERVER.",
+      "remove": "Fjern SMTP-indstillinger",
+      "errors": {
+        "passwordRequired": "Indtast SMTP-adgangskoden."
+      }
     }
   },
   "platformCredentials": {
@@ -6276,6 +6371,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "Fællesskab",
+    "enterpriseGroup": "Enterprise",
     "platformGroup": "Platform",
     "toolsGroup": "Værktøjer",
     "saasGroup": "SaaS",
@@ -6352,7 +6449,82 @@
     "unknown": "Ukendt"
   },
   "orders": {
-    "title": "Ordrer"
+    "title": "Ordrer",
+    "empty": "Ingen ordrer endnu.",
+    "searchPlaceholder": "Søg efter navn, telefon, e-mail eller ordrenummer",
+    "orderNumber": "Ordre #{number}",
+    "print": "Udskriv",
+    "inbox": "Indbakke",
+    "statusUpdated": "Ordrestatus opdateret",
+    "statusUpdateError": "Ordrestatussen kunne ikke opdateres",
+    "updateStatusTitle": "Opdater ordrestatus",
+    "message": "Besked",
+    "messagePlaceholder": "Valgfri",
+    "messageDescription": "Sendes til kunden i deres samtale.",
+    "cancel": "Annuller",
+    "continue": "Fortsæt",
+    "delete": "Slet",
+    "deleted": "Ordre slettet",
+    "deleteError": "Ordren kunne ikke slettes",
+    "deleteTitle": "Slet ordre #{number}?",
+    "deleteDescription": "Ordren, dens varer og dens historik fjernes. Lager, den stadig holder, lægges tilbage.",
+    "columns": {
+      "name": "Navn",
+      "total": "Total",
+      "status": "Status",
+      "date": "Dato",
+      "rating": "Vurdering",
+      "quantity": "Antal",
+      "price": "Pris",
+      "vendor": "Leverandør"
+    },
+    "fields": {
+      "name": "Navn",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "country": "Land",
+      "state": "Region",
+      "city": "By",
+      "street": "Vej",
+      "zip": "Postnummer",
+      "shippingType": "Levering",
+      "orderId": "Ordre-ID",
+      "date": "Dato",
+      "subtotal": "Subtotal",
+      "discount": "Rabat",
+      "deliveryCost": "Leveringsomkostninger",
+      "otherTaxes": "Andre afgifter",
+      "total": "Total",
+      "paymentMethod": "Betalingsmetode",
+      "status": "Status",
+      "note": "Note",
+      "cancelReason": "Årsag til annullering",
+      "rating": "Bedømmelse",
+      "ratingComment": "Kundens kommentar",
+      "coupon": "Rabatkode ({code})"
+    },
+    "statuses": {
+      "pending": "Ikke behandlet",
+      "accepted": "Accepteret",
+      "shipped": "Afsendt",
+      "concluded": "Gennemført",
+      "cancelled": "Annulleret"
+    },
+    "transitions": {
+      "accepted": "Accepter",
+      "shipped": "Send",
+      "concluded": "Gennemfør",
+      "cancelled": "Annuller"
+    },
+    "paymentMethods": {
+      "cod": "Efterkrav"
+    },
+    "shippingTypes": {
+      "delivery": "Levering til kunden",
+      "pickup": "Afhentning i butikken"
+    },
+    "description": "Ordrer afgivet af dine kunder.",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "Produkter",
@@ -6409,7 +6581,8 @@
         "label": "Allow customers til purchase denne produkt når it's out af lager"
       },
       "vendor": {
-        "label": "Vendor"
+        "label": "Vendor",
+        "none": "Ingen"
       },
       "rank": {
         "label": "Rank"
@@ -6542,8 +6715,8 @@
     "loadError": "Unable til load produkt kategorier.",
     "all": "Alle produkter",
     "create": "Opret kategori",
-    "edit": "Omdøb kategori",
-    "name": "Kategori navn",
+    "edit": "Rediger",
+    "name": "Navn",
     "namePlaceholder": "e.g. Summer samling",
     "parent": "Parent kategori",
     "noParent": "Ingen (top level)",
@@ -6563,12 +6736,25 @@
     "columns": {
       "name": "Navn",
       "products": "Produkter",
-      "subcategories": "Subcategories"
+      "subcategories": "Subcategories",
+      "visible": "Synlig"
     },
     "expand": "Show subcategories",
     "collapse": "Hide subcategories",
     "productCount": "{count, plural, =0 {Ingen produkter} one {# produkt} other {# produkter}}",
-    "deleteChildrenWarning": "{count, plural, one {Dens # underkategori slettes også.} other {Dens # underkategorier slettes også.}}"
+    "deleteChildrenWarning": "{count, plural, one {Dens # underkategori slettes også.} other {Dens # underkategorier slettes også.}}",
+    "add": "Tilføj",
+    "dialogTitle": "Kategori",
+    "image": "Billede",
+    "continue": "Fortsæt",
+    "subcategories": "Underkategorier",
+    "subcategoriesOf": "Underkategorier til {name}",
+    "emptySub": "Ingen underkategorier endnu.",
+    "back": "Tilbage til kategorier",
+    "getId": "Hent ID",
+    "idCopied": "Kategori-ID {id} kopieret",
+    "idCopyError": "ID'et kunne ikke kopieres",
+    "description": "Gruppér dine produkter i kategorier og underkategorier."
   },
   "productImport": {
     "title": "Importér",
@@ -9047,6 +9233,543 @@
       "hours": "Timer",
       "closed": "Lukket"
     }
+  },
+  "productVendors": {
+    "title": "Leverandører",
+    "add": "Tilføj",
+    "edit": "Rediger",
+    "delete": "Slet",
+    "actions": "Handlinger",
+    "save": "Gem",
+    "cancel": "Annuller",
+    "moreOptions": "Flere valgmuligheder",
+    "empty": "Ingen leverandører endnu.",
+    "created": "Leverandør tilføjet",
+    "updated": "Leverandør opdateret",
+    "deleted": "Leverandør slettet",
+    "saveError": "Leverandøren kunne ikke gemmes",
+    "deleteError": "Leverandøren kunne ikke slettes",
+    "deleteTitle": "Slet {name}?",
+    "deleteDescription": "{count, plural, =0 {Ingen produkter bruger denne leverandør.} one {# produkt står uden leverandør.} other {# produkter står uden leverandør.}}",
+    "fields": {
+      "name": "Navn",
+      "shortDescription": "Kort beskrivelse",
+      "phone": "Telefon",
+      "storeAddress": "Butikkens adresse",
+      "image": "Billede",
+      "optional": "Valgfri",
+      "discountPercent": "Rabat (0-100 %)",
+      "minimumOrderValue": "Minimumsordreværdi",
+      "openHours": "Åbningstider",
+      "category": "Kategori",
+      "subcategory": "Underkategori",
+      "none": "Ingen"
+    },
+    "columns": {
+      "name": "Navn",
+      "products": "Produkter i alt",
+      "active": "Aktiv"
+    },
+    "description": "Sælgere og brands, som dine produkter hører til."
+  },
+  "ecommerceSettings": {
+    "save": "Gem",
+    "saved": "Indstillinger gemt",
+    "saveError": "Indstillingerne kunne ikke gemmes",
+    "rank": {
+      "label": "Rang",
+      "default": "Standard"
+    },
+    "tabs": {
+      "general": "Generelt",
+      "payments": "Betalinger",
+      "shipping": "Levering",
+      "checkout": "Kasse"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "Bestilling er mulig",
+        "description": "Brug dette felt til at forhindre kunder i at afgive ordrer uden at ændre dine åbningstider. Åbningstiderne styrer også din tilgængelighed."
+      },
+      "webshopProductView": {
+        "label": "Produktvisning i webshop",
+        "description": "Styrer, hvordan produkter vises i din webshop.",
+        "options": {
+          "list": "Liste",
+          "listWithoutImage": "Liste uden billede",
+          "card": "Kort",
+          "cardSquare": "Kort med kvadratisk billede",
+          "image": "Billede",
+          "imageSquare": "Billede (kvadratisk)"
+        }
+      },
+      "openHours": {
+        "label": "Åbningstider",
+        "description": "De tidsrum, hvor dine kunder kan afgive en ordre."
+      },
+      "searchProducts": {
+        "label": "Søg efter produkter",
+        "description": "Lad kunder sende beskeder for at finde produkter."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "Spor konverteringer med FB-pixel og mål resultaterne af dine annoncer. Følgende hændelser spores: ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "Besked om forladt kurv",
+        "description": "Ventetiden, før der sendes en besked om forladt kurv, efter at brugeren har forladt din bot med en vare i kurven.",
+        "disabled": "Deaktiveret",
+        "afterMinutes": "Efter {count} minutter",
+        "afterHours": "{count, plural, one {Efter # time} other {Efter # timer}}"
+      },
+      "productButtons": {
+        "label": "Knapper ved produkter",
+        "description": "Denne indstilling styrer, hvilke knapper der vises ved produkter i din bot.",
+        "options": {
+          "addToCart": "Læg i kurv",
+          "share": "Del",
+          "similar": "Lignende",
+          "save": "Gem"
+        }
+      },
+      "productImageSize": {
+        "label": "Billedstørrelse for produkter",
+        "description": "Denne indstilling styrer størrelsen på produktbilleder i din bot",
+        "options": {
+          "bigSquare": "Stor (kvadratisk)",
+          "mediumRectangle": "Mellem (rektangel)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "Tillad vurdering af ordrer",
+        "description": "Lad kunder vurdere en ordre og skrive en anmeldelse, hvis de ikke er tilfredse. Kun bot-administratorer kan se anmeldelserne"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "Send notifikation, når kurvens status ændres",
+        "description": "Kunden modtager en notifikation, hver gang du ændrer ordrestatussen. Du kan ikke deaktivere notifikation ved annullering og afslutning af en ordre."
+      },
+      "abandonedCartFlow": {
+        "label": "Flow for forladt kurv",
+        "description": "Det flow, botten kører for kunden, når kurven har ligget så længe. Brug '{{shop_token}}' i knapperne for at åbne kurven. Triggere kan også bruge hændelsen \"Cart abandoned\".",
+        "none": "Intet flow (kun trigger-hændelse)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {# produkt har} other {# produkter har}} pris i en anden valuta end {currency}. Ordrer opkræver deres pris i {currency}.",
+      "paymentMethods": {
+        "label": "Betalingsmetoder",
+        "description": "De betalingsmetoder, der er aktiveret på betalingssiden. Den første betalingsmetode på listen er valgt på betalingssiden.",
+        "options": {
+          "cod": "Efterkrav"
+        }
+      },
+      "currency": {
+        "label": "Valuta",
+        "description": "Det er den valuta, du angiver produktpriser i. Kunderne opkræves i denne valuta."
+      },
+      "currencyPosition": {
+        "label": "Valutaens placering",
+        "description": "Denne indstilling lader dig styre valutaens placering.",
+        "options": {
+          "left": "Venstre",
+          "leftSpace": "Venstre med mellemrum",
+          "right": "Højre",
+          "rightSpace": "Højre med mellemrum"
+        }
+      },
+      "currencySymbol": {
+        "label": "Valutasymbol",
+        "description": "Valutasymbolet vises foran priserne. Vil du have mellemrum mellem symbol og pris, så tilføj et mellemrum i slutningen af symbolet."
+      },
+      "serviceFeePercent": {
+        "label": "Andre gebyrer / Servicegebyrer (0 - 100 %)",
+        "description": "Andre gebyrer i forbindelse med salget."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "Leveringstype",
+        "description": "Denne indstilling lader dig styre, hvordan kunden får sin ordre.",
+        "options": {
+          "none": "Ingen",
+          "delivery": "Levering til kunden",
+          "pickup": "Afhentning i butikken",
+          "deliveryAndPickup": "Levering til kunden, afhentning i butikken"
+        }
+      },
+      "storeAddress": {
+        "label": "Butikkens adresse",
+        "description": "Denne adresse vises for kunden på betalingssiden, hvis du tillader afhentning i butikken."
+      },
+      "shippingCountries": {
+        "label": "Leveringslande",
+        "description": "De lande, du sender ordrer til."
+      },
+      "defaultShippingCountry": {
+        "label": "Standardleveringsland",
+        "description": "Det land, der vælges som standard på betalingssiden.",
+        "none": "Ingen"
+      },
+      "deliveryCost": {
+        "label": "Leveringsomkostninger",
+        "description": "En fast pris for at levere ordren til kundens adresse."
+      },
+      "defaultCountryNotShipped": "Vælg et af leveringslandene."
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "Kasse",
+        "description": "Denne indstilling styrer, hvor dine kunder gennemfører deres ordrer. Hvis brugeren skal gennemføre ordren uden for din bot, fx på din hjemmeside, Amazon osv., så brug ikke vores standardbetalingsside.",
+        "options": {
+          "default": "Standardbetalingsside",
+          "externalLink": "Brugerdefineret ekstern betalingsside",
+          "flow": "Flow",
+          "productPage": "Besøg den eksterne produktside"
+        }
+      },
+      "checkoutLink": {
+        "label": "Link til betalingsside",
+        "description": "Den eksterne side, hvor kunder gennemfører deres ordrer."
+      },
+      "checkoutFlowId": {
+        "label": "Betalingsflow",
+        "description": "Det flow, der kører, når en kunde går til kassen.",
+        "placeholder": "Vælg et flow"
+      },
+      "minimumOrderValue": {
+        "label": "Minimumsordreværdi",
+        "description": "Den mindste værdi på en ordre, en kunde kan afgive. Betingelsen kontrolleres, når alle rabatter er anvendt."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "Kræv køberens navn",
+          "description": "Købers navn indsamles under betalingen."
+        },
+        "requireEmail": {
+          "label": "Kræv e-mailadresse",
+          "description": "Købers e-mail indsamles under betalingen."
+        },
+        "requirePhone": {
+          "label": "Kræv telefonnummer",
+          "description": "Købers telefon indsamles under betalingen."
+        },
+        "requireState": {
+          "label": "Kræv region/provins",
+          "description": "Købers region indsamles under betalingen."
+        },
+        "requireZip": {
+          "label": "Kræv postnummer",
+          "description": "Købers postnummer indsamles under betalingen."
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "Ordrebekræftelse",
+        "description": "Hvad kunden får i chatten, når ordren er afgivet. Standardbeskeden viser ordredetaljerne på arbejdsområdets sprog.",
+        "options": {
+          "default": "Standardbesked",
+          "flow": "Kør et flow",
+          "none": "Send intet"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Flow til ordrebekræftelse",
+        "description": "Flowet, der sendes til kunden i stedet for standardbeskeden, når ordren er afgivet."
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "Altid åben",
+    "addNew": "Tilføj ny",
+    "dialogTitle": "Åbningstider",
+    "name": "Navn",
+    "namePlaceholder": "fx Hverdage",
+    "day": "Dag",
+    "from": "Åbner",
+    "to": "Lukker",
+    "add": "Tilføj tider",
+    "remove": "Fjern",
+    "cancel": "Annuller",
+    "continue": "Fortsæt",
+    "created": "Åbningstider oprettet",
+    "saveError": "Åbningstiderne kunne ikke gemmes",
+    "days": {
+      "0": "Søndag",
+      "1": "Mandag",
+      "2": "Tirsdag",
+      "3": "Onsdag",
+      "4": "Torsdag",
+      "5": "Fredag",
+      "6": "Lørdag"
+    },
+    "sameTimes": "Åbnings- og lukketid skal være forskellige."
+  },
+  "webshop": {
+    "metadataTitle": "Butik",
+    "metadataOrderTitle": "Din ordre",
+    "invalidLinkTitle": "Linket virker ikke",
+    "invalidLinkDescription": "Det er måske udløbet. Bed butikken om et nyt link i chatten.",
+    "previewBanner": "Forhåndsvisning: sådan ser kunderne siden. Der kan ikke bestilles fra en forhåndsvisning.",
+    "previewOrderingOff": "Forhåndsvisning: bestilling er slået fra",
+    "closed": {
+      "orderingUnavailable": "Butikken tager ikke imod bestillinger lige nu.",
+      "outsideOpenHours": "Butikken har lukket lige nu. Du kan stadig kigge."
+    },
+    "searchPlaceholder": "Søg efter produkter",
+    "categories": "Kategorier",
+    "allCategories": "Alle kategorier",
+    "vendors": "Leverandører",
+    "allVendors": "Alle leverandører",
+    "noProducts": "Ingen produkter fundet.",
+    "productNotFound": "Produktet er ikke længere tilgængeligt.",
+    "outOfStock": "Udsolgt",
+    "addToCart": "Læg i kurv",
+    "added": "Lagt i kurven",
+    "chooseOptions": "Vælg varianter",
+    "chooseOption": "Vælg {name}",
+    "variantUnavailable": "Denne kombination findes ikke.",
+    "buy": "Køb",
+    "share": "Del",
+    "linkCopied": "Kopieret",
+    "similar": "Lignende",
+    "save": "Gem",
+    "saved": "Gemt",
+    "showImage": "Vis billede {number}",
+    "increase": "Øg antal",
+    "decrease": "Reducer antal",
+    "remove": "Fjern",
+    "cart": "Kurv",
+    "cartEmpty": "Din kurv er tom.",
+    "continueShopping": "Shop videre",
+    "unavailableItems": "{count, plural, one {# vare kan ikke bestilles lige nu} other {# varer kan ikke bestilles lige nu}}",
+    "unavailableNotOrdered": "De kommer ikke med i ordren og bliver i kurven.",
+    "unavailable": "Ikke længere tilgængelig",
+    "unavailableHint": "Vælg varianterne igen",
+    "deletedProduct": "Slettet produkt",
+    "summary": {
+      "subtotal": "Subtotal",
+      "discount": "Rabat",
+      "delivery": "Levering",
+      "otherFees": "Andre gebyrer",
+      "total": "I alt",
+      "coupon": "Rabatkode ({code})",
+      "title": "Ordreoversigt",
+      "saved": "Du sparer {amount}"
+    },
+    "belowMinimum": "Minimumsordren er {amount}.",
+    "checkOut": "Gå til kassen",
+    "contactDetails": "Dine oplysninger",
+    "optional": "(valgfrit)",
+    "fields": {
+      "name": "Navn",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "country": "Land",
+      "state": "Region",
+      "city": "By",
+      "address1": "Adresse",
+      "address2": "Lejlighed, bygning osv.",
+      "zip": "Postnummer",
+      "note": "Besked til butikken"
+    },
+    "shipping": {
+      "title": "Levering",
+      "delivery": "Lever til min adresse",
+      "pickup": "Afhent i butikken",
+      "storeAddress": "Butikkens adresse: {address}"
+    },
+    "payment": {
+      "title": "Betaling",
+      "cod": "Betaling ved levering"
+    },
+    "placeOrder": "Afgiv bestilling",
+    "orderPlaced": "Tak! Din bestilling er afgivet. Vi sender dig opdateringer i chatten.",
+    "orderTitle": "Ordre #{number}",
+    "orderNotFound": "Ordren blev ikke fundet.",
+    "placedAt": "Afgivet {date}",
+    "status": {
+      "pending": "Ikke behandlet",
+      "accepted": "Behandles",
+      "shipped": "Afsendt",
+      "concluded": "Gennemført",
+      "cancelled": "Annulleret"
+    },
+    "rateTitle": "Bedøm din ordre",
+    "rateComment": "Fortæl butikken, hvad du synes (valgfrit)",
+    "rateSubmit": "Send bedømmelse",
+    "rateThanks": "Tak for din bedømmelse!",
+    "yourRating": "Din bedømmelse",
+    "ratingValue": "{rating} ud af 5 stjerner",
+    "previous": "Forrige",
+    "next": "Næste",
+    "pageOf": "Side {page} af {pageCount}",
+    "errors": {
+      "generic": "Noget gik galt. Prøv igen.",
+      "checkFields": "Tjek venligst felterne.",
+      "fieldRequired": "{field} skal udfyldes.",
+      "countryUnavailable": "Butikken leverer ikke til dette land.",
+      "invalidLink": "Linket virker ikke længere. Bed butikken om et nyt.",
+      "webshopPreviewOnly": "Dette er en forhåndsvisning. Der kan kun bestilles fra en kundes link.",
+      "rateLimited": "For mange forsøg. Vent lidt, og prøv igen.",
+      "orderingUnavailable": "Butikken tager ikke imod bestillinger lige nu.",
+      "orderBelowMinimum": "Minimumsordren er {minimum}.",
+      "orderBelowVendorMinimum": "Varer fra {vendorName} skal samlet være mindst {minimum}.",
+      "orderOutOfStock": "{productName} er udsolgt.",
+      "orderProductUnavailable": "Nogle varer kan ikke længere bestilles. Tjek din kurv.",
+      "orderEmpty": "Din kurv er tom.",
+      "orderShippingTypeUnavailable": "Denne leveringsmåde er ikke tilgængelig.",
+      "webshopRatingNotAllowed": "Denne ordre kan ikke bedømmes.",
+      "webshopCartFull": "Din kurv kan højst indeholde {maximum} forskellige varer.",
+      "notFound": "Produktet er ikke længere tilgængeligt.",
+      "discountCodeNotFound": "Rabatkoden findes ikke.",
+      "discountCodeInactive": "Rabatkoden er ikke aktiv.",
+      "discountCodeNotStarted": "Rabatkoden gælder ikke endnu.",
+      "discountCodeExpired": "Rabatkoden er udløbet.",
+      "discountCodeUsageLimitReached": "Rabatkoden er brugt op.",
+      "discountCodeAlreadyUsed": "Du har allerede brugt rabatkoden.",
+      "discountCodeNotEligible": "Rabatkoden gælder ikke for dig.",
+      "discountCodeNotApplicable": "Rabatkoden gælder ikke for indholdet af din kurv.",
+      "discountCodeMinimumAmount": "Rabatkoden kræver køb for mindst {minimum}. Tilføj {missing} mere.",
+      "discountCodeMinimumQuantity": "Rabatkoden kræver mindst {minimum} varer. Tilføj {missing} mere."
+    },
+    "discount": {
+      "label": "Rabatkode",
+      "placeholder": "Rabatkode",
+      "apply": "Anvend",
+      "applied": "Rabatkoden er anvendt",
+      "automatic": "anvendt automatisk",
+      "remove": "Fjern rabatkode",
+      "available": "Koder du kan bruge",
+      "freeShipping": "Gratis levering",
+      "bestChoice": "Bedste valg",
+      "expiresOn": "Udløber {date}",
+      "noExpiry": "Udløber ikke",
+      "inUse": "I brug",
+      "saves": "Sparer {amount}",
+      "showMore": "{count, plural, one {Vis # kode mere} other {Vis # koder mere}}",
+      "showLess": "Vis mindre",
+      "removeShort": "Fjern",
+      "expired": "Udløbet",
+      "usedUp": "Opbrugt",
+      "notEligible": "Ikke kvalificeret endnu"
+    },
+    "itemCount": "{count, plural, one {# vare} other {# varer}}",
+    "relatedProducts": "Du kan også lide"
+  },
+  "webshopLinks": {
+    "preview": "Forhåndsvis",
+    "getLink": "Hent link",
+    "copied": "Link kopieret. Sæt det på en bot-knap: hver kontakt åbner sin egen butik.",
+    "error": "Linket kunne ikke hentes.",
+    "copyError": "Linket kunne ikke kopieres.",
+    "shopLink": {
+      "label": "Butikslink",
+      "hint": "Indsæt dette link i en knap i et flow, en broadcast eller en sekvens. Hver kontakt, der får det, åbner sin egen butik og kan bestille."
+    },
+    "productLink": {
+      "label": "Offentlig URL",
+      "hint": "Kopiér og indsæt linket i dit flow, din broadcast eller sekvens. Hver kontakt, der får det, åbner dette produkt og kan bestille."
+    }
+  },
+  "discountCodes": {
+    "title": "Rabatkoder",
+    "description": "Rabatkoder, kunderne bruger ved kassen, eller som gælder af sig selv.",
+    "add": "Tilføj",
+    "edit": "Rediger rabatkode",
+    "automatic": "Automatisk",
+    "never": "Aldrig",
+    "searchPlaceholder": "Søg koder…",
+    "saveError": "Rabatkoden kunne ikke gemmes.",
+    "created": "Rabatkode oprettet",
+    "updated": "Rabatkode gemt",
+    "deleted": "Rabatkode slettet",
+    "deleteError": "Rabatkoden kunne ikke slettes.",
+    "deleteTitle": "Slet rabatkoden {code}?",
+    "deleteDescription": "Kunderne kan ikke længere bruge den. Ordrer, der brugte den, beholder rabatten.",
+    "cancel": "Annuller",
+    "delete": "Slet",
+    "save": "Gem",
+    "columns": {
+      "name": "Navn",
+      "discount": "Rabat",
+      "used": "Brugt",
+      "end": "Slutter",
+      "active": "Aktiv"
+    },
+    "discountTypes": {
+      "percentage": "Procent",
+      "fixedAmount": "Fast beløb",
+      "freeShipping": "Gratis levering"
+    },
+    "appliesTo": {
+      "entireOrder": "Hele ordren",
+      "category": "Bestemt kategori",
+      "products": "Bestemte produkter"
+    },
+    "minimumTypes": {
+      "none": "Ingen",
+      "amount": "Minimumsbeløb for køb",
+      "quantity": "Minimum antal varer"
+    },
+    "eligibilities": {
+      "everyone": "Alle",
+      "specificCustomers": "Bestemte kunder"
+    },
+    "form": {
+      "discountCode": "Rabatkode",
+      "code": "Kode",
+      "generate": "Generér",
+      "autoApply": "Anvend automatisk denne rabatkode på kurve",
+      "autoApplyHint": "Kurve får den, uden at kunden skriver den. Ved flere automatiske koder vinder den med størst rabat.",
+      "typedHint": "Kunderne indtaster denne rabatkode ved kassen.",
+      "options": "Indstillinger",
+      "discountType": "Rabattype",
+      "discountValuePercent": "Rabatværdi (%)",
+      "discountValueAmount": "Rabatværdi ({currency})",
+      "freeShippingHint": "Fjerner leveringsprisen på ordrer, der leveres til kunden.",
+      "appliesTo": "Gælder for",
+      "category": "Kategori",
+      "products": "Produkter",
+      "productsPlaceholder": "Vælg produkter",
+      "minimumRequirement": "Minimumskrav",
+      "minimumAmount": "Minimumsbeløb ({currency})",
+      "minimumQuantity": "Minimum antal varer",
+      "usageLimits": "Brugsgrænser",
+      "limitTotal": "Begræns hvor mange gange rabatten kan bruges i alt",
+      "usedSoFar": "{count, plural, one {Brugt # gang indtil nu} other {Brugt # gange indtil nu}}",
+      "oncePerCustomer": "Én gang pr. kunde",
+      "customerEligibility": "Kunder, der kan bruge den",
+      "specificCustomersHint": "Kun kontakter, der matcher filteret nedenfor, når de bestiller.",
+      "activeDates": "Gyldighedsperiode",
+      "startDate": "Startdato",
+      "endDate": "Slutdato",
+      "isActive": "Aktiv"
+    },
+    "rules": {
+      "codeCharacters": "Brug kun bogstaver uden accenter, tal, - og _.",
+      "usageBelowUsed": "Koden er allerede brugt {count} gange; grænsen kan ikke være lavere.",
+      "customerConditionRequired": "Tilføj mindst én betingelse.",
+      "endAfterStart": "Slutdatoen skal ligge efter startdatoen."
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "Analyse",
+    "lifetime": "Samlet",
+    "sales": "Salg",
+    "orders": "Ordrer",
+    "products": "Produkter",
+    "salesByDate": "Salg pr. dato",
+    "ordersByDate": "Ordrer pr. dato",
+    "topProducts": "Topprodukter",
+    "topVendors": "Topleverandører",
+    "columns": {
+      "name": "Navn",
+      "sales": "Salg"
+    },
+    "noData": "Ingen data i perioden",
+    "refresh": "Opdater",
+    "change": "{value} %",
+    "noPrevious": "ny",
+    "otherCurrencyOrders": "{count} ordrer i andre valutaer er ikke medregnet i disse tal"
   },
   "responseSla": {
     "label": "Svar-SLA",

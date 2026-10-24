@@ -35,6 +35,7 @@ import {
   syncToMetaCatalogAction,
 } from "../actions/meta-catalog.action"
 import { META_BLUE_SURFACE, META_BLUE_TEXT } from "../lib/meta-catalog-brand"
+import { useInvalidateProductFormOptions } from "../provider/use-invalidate-product-form-options"
 import { MetaCatalogCallout } from "./meta-catalog-callout"
 import { MetaCatalogConnectionInfo } from "./meta-catalog-connection-info"
 import { MetaCatalogCreatePanel } from "./meta-catalog-create-panel"
@@ -106,6 +107,7 @@ export function MetaCatalogDialog({
   const t = useTranslations("metaCatalog")
   const tActions = useTranslations("actions")
   const router = useRouter()
+  const invalidateProductFormOptions = useInvalidateProductFormOptions()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const isSetupFlow = searchParams.get("metaCatalog") === "setup"
@@ -221,10 +223,11 @@ export function MetaCatalogDialog({
     const wasImporting = ACTIVE_SYNC_STATUSES.has(previousImportStatus.current)
     const isImporting = ACTIVE_SYNC_STATUSES.has(currentStatus)
     if (wasImporting && !isImporting) {
+      invalidateProductFormOptions()
       router.refresh()
     }
     previousImportStatus.current = currentStatus
-  }, [router, state.connection?.importStatus])
+  }, [router, invalidateProductFormOptions, state.connection?.importStatus])
 
   const hasActiveSync =
     ACTIVE_SYNC_STATUSES.has(state.connection?.importStatus ?? "") ||

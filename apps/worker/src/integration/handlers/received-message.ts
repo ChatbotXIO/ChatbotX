@@ -15,6 +15,7 @@ import {
   hasRealAvatar,
   isUnpromotedStandbyCopy,
   messageCleanupService,
+  messageService,
   queueMessageCreatedEvent,
   queueWorkspaceRealtimeEvent,
   quotaEnforcementService,
@@ -90,6 +91,7 @@ import {
   contentTypes,
   type EchoOrigin,
   echoOrigins,
+  getInboundOrder,
   getStoryReply,
   getWhatsappFlowResponse,
   type IncomingContact,
@@ -103,12 +105,17 @@ import {
   SdkException,
   type SourceScopedIdentityMatch,
   type SourceScopedIdentityMatchedBy,
+  toKeepOriginal,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { hasGoogleClick } from "@chatbotx.io/utils/google-click"
+import { isLazyAvatarChannel } from "@chatbotx.io/utils/live-media"
+import { storeIncomingImage } from "@chatbotx.io/utils/store-incoming-image"
 import {
   ChatJobAction,
   chatQueue,
+  enqueueStoredImageOptimizations,
+  getInboundCartReplyJobId,
   IntegrationJobAction,
   type IntegrationJobDeleteIncomingComment,
   type IntegrationJobDeleteIncomingMessage,
@@ -759,6 +766,29 @@ export const receiveMessage = async (
         )
       }
 
+      // The same stored cart is the contact's shop cart: the bot answers it
+      // with a summary and a CHECK OUT button, once per message.
+      if (canAutomate && parsedMessage.commerce?.kind === "cartSent") {
+        const cart = getInboundOrder(createdMessage.contentAttributes)
+        if (cart) {
+          await integrationQueue.add(
+            IntegrationJobAction.replyToInboundCart,
+            {
+              type: IntegrationJobAction.replyToInboundCart,
+              data: {
+                workspaceId: inbox.workspaceId,
+                conversationId: conversation.id,
+                contactId: contactInbox.contactId,
+                contactInboxId: contactInbox.id,
+                messageId: createdMessage.id,
+                cart,
+              },
+            },
+            { jobId: getInboundCartReplyJobId(createdMessage.id) },
+          )
+        }
+      }
+
       // Message echoes (agent replying from the channel's own native UI,
       // e.g. Meta Business Suite, rather than the ChatbotX inbox) never go
       // through `create-message.action.ts`, so "Page" keyword automation
@@ -1153,11 +1183,56 @@ const buildAttachmentInputs = ({
   workspaceId: string
   conversationId: string
 }): AttachmentInputs =>
-  incomingMessage.attachments?.map((attachment: IncomingAttachment) => ({
-    ...attachment,
-    workspaceId,
-    conversationId,
-  })) ?? []
+  incomingMessage.attachments?.map(
+    ({ isPhotoMessage, optimized, ...attachment }: IncomingAttachment) => ({
+      ...attachment,
+      workspaceId,
+      conversationId,
+      keepOriginal: toKeepOriginal({
+        fileType: attachment.fileType,
+        isPhotoMessage,
+      }),
+    }),
+  ) ?? []
+
+/**
+ * Queues the background re-encode of a new message's photos (heavy queue, low
+ * priority). Images sent as documents/files are never flagged by the channel,
+ * so they keep the sender's original bytes; photos the channel already encoded
+ * before their first write need no second pass.
+ */
+const enqueuePhotoOptimizations = async ({
+  incomingMessage,
+  message,
+  workspaceId,
+}: {
+  incomingMessage: IncomingMessage
+  message: SavedMessage
+  workspaceId: string
+}): Promise<void> => {
+  const photoPaths = new Set(
+    incomingMessage.attachments
+      ?.filter(
+        (attachment) => attachment.isPhotoMessage && !attachment.optimized,
+      )
+      .map((attachment) => attachment.originPath),
+  )
+  if (photoPaths.size === 0) {
+    return
+  }
+  await enqueueStoredImageOptimizations(
+    message.attachments
+      .filter((attachment) => photoPaths.has(attachment.originPath))
+      .map((attachment) => ({
+        kind: "attachment" as const,
+        workspaceId,
+        objectKey: attachment.originPath,
+        attachmentId: attachment.id,
+        attachmentCreatedAt: attachment.createdAt.toISOString(),
+        messageCreatedAt: attachment.messageCreatedAt.toISOString(),
+      })),
+  )
+}
 
 const upsertMessage = async ({
   repository,
@@ -1261,6 +1336,13 @@ const persistMessage = async (
     messageInput,
     attachmentInputs,
   })
+  if (isNew) {
+    await enqueuePhotoOptimizations({
+      incomingMessage,
+      message,
+      workspaceId: inbox.workspaceId,
+    })
+  }
 
   let isOwnSendEcho = false
   let canMarkReadByEcho = true
@@ -1309,7 +1391,17 @@ const persistMessage = async (
   }
 
   if (isNew && !isOwnSendEcho) {
-    queueMessageCreatedEvent(inbox.workspaceId, message, conversation)
+    // The client renders `attachment.url` as-is, so resolve it here: a
+    // lazily-ingested attachment is a provider URL that must go through the
+    // media proxy (which also stores it), never be hotlinked from `originPath`.
+    queueMessageCreatedEvent(
+      inbox.workspaceId,
+      await messageService.withResolvedAttachmentUrls(message, {
+        channel: contactInbox.channel,
+        workspaceId: inbox.workspaceId,
+      }),
+      conversation,
+    )
   }
 
   if (isNew && inbound) {
@@ -1487,16 +1579,16 @@ async function downloadCommenterAvatar(props: {
     return
   }
 
-  const originPath = `public/space/${props.workspaceId}/avatars/${createId()}`
-  const bytes = await response.arrayBuffer()
-  const mimeType = response.headers.get("content-type") ?? "image/jpeg"
-
-  await uploader.putObject(originPath, Buffer.from(bytes), {
-    ACL: "public-read",
-    ContentType: mimeType,
+  const stored = await storeIncomingImage({
+    uploader,
+    key: `public/space/${props.workspaceId}/avatars/${createId()}`,
+    bytes: await response.arrayBuffer(),
+    mimeType: response.headers.get("content-type") ?? "image/jpeg",
+    profile: "avatar",
+    acl: "public-read",
   })
 
-  return originPath
+  return stored.originPath
 }
 
 /**
@@ -2418,6 +2510,9 @@ const createNewContactAndContactInbox = async (props: {
             data: {
               sourceId: incomingContact.sourceId,
               includeProfileSnapshot: supportsProfileSnapshot(inbox.channel),
+              // A lazy-avatar channel creates the contact without its picture:
+              // it is fetched the first time the inbox or a system field asks.
+              includeAvatar: !isLazyAvatarChannel(inbox.channel),
             },
           },
         )
@@ -2590,6 +2685,19 @@ const createNewContactAndContactInbox = async (props: {
   }
 
   const { newContact, contactInbox, conversation } = result.value
+
+  if (newContact.avatar) {
+    // Inserted directly above (not via contactService), so schedule the
+    // background avatar re-encode here.
+    await enqueueStoredImageOptimizations([
+      {
+        kind: "avatar",
+        workspaceId: inbox.workspaceId,
+        contactId: newContact.id,
+        objectKey: newContact.avatar,
+      },
+    ])
+  }
 
   await emitContactCreated(
     newContact.workspaceId,

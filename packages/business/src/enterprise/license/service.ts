@@ -15,7 +15,20 @@ const LICENSE_ALGORITHM = "EdDSA"
 const LICENSE_TOKEN_TYPE = "JWT"
 const DAY_IN_MS = 24 * 60 * 60 * 1000
 
-export type LicenseState = "valid" | "expired" | "invalid" | "missing"
+/**
+ * Days an expired license keeps its entitlements before the deployment falls
+ * back to the community feature set. Deliberately a source constant and not an
+ * env var: this is an MIT codebase, so an operator-tunable grace length would
+ * be an unbounded free-enterprise switch.
+ */
+export const LICENSE_GRACE_PERIOD_DAYS = 7
+const LICENSE_GRACE_PERIOD_MS = LICENSE_GRACE_PERIOD_DAYS * DAY_IN_MS
+
+export type LicenseState = "valid" | "grace" | "expired" | "invalid" | "missing"
+
+/** Whether a resolved state still unlocks enterprise features. */
+export const isLicenseEntitled = (state: LicenseState): boolean =>
+  state === "valid" || state === "grace"
 
 export interface LicenseStatus {
   customerName: string | null
@@ -23,6 +36,8 @@ export interface LicenseStatus {
   error: string | null
   expiresAt: string | null
   features: LicenseFeature[]
+  /** `exp` + the grace period; `null` when no signed claims were readable. */
+  graceEndsAt: string | null
   issuedAt: string | null
   keyId: string | null
   licenseId: string | null
@@ -79,6 +94,7 @@ const missingStatus = (): LicenseStatus => ({
   issuedAt: null,
   expiresAt: null,
   daysRemaining: null,
+  graceEndsAt: null,
   keyId: null,
   error: "LICENSE_KEY is not configured",
 })
@@ -96,6 +112,7 @@ const invalidStatus = (
   issuedAt: null,
   expiresAt: null,
   daysRemaining: null,
+  graceEndsAt: null,
   keyId,
   error: errorMessage(error),
 })
@@ -124,8 +141,11 @@ const statusFromPayload = ({
     )
   }
 
+  const graceEndsAtMs = parsed.exp * 1000 + LICENSE_GRACE_PERIOD_MS
+  const inGrace = state === "expired" && currentDate.getTime() < graceEndsAtMs
+
   return {
-    state,
+    state: inGrace ? "grace" : state,
     licenseId: parsed.licenseId,
     customerName: parsed.customerName,
     tier: parsed.tier,
@@ -134,6 +154,7 @@ const statusFromPayload = ({
     issuedAt: toIsoDate(parsed.iat),
     expiresAt: toIsoDate(parsed.exp),
     daysRemaining: calculateDaysRemaining(parsed.exp, currentDate),
+    graceEndsAt: new Date(graceEndsAtMs).toISOString(),
     keyId,
     error,
   }
@@ -212,16 +233,22 @@ export const resolveAllowedTiers = ():
   }
 }
 
+const LICENSE_STATE_RANK: Record<LicenseState, number> = {
+  valid: 3,
+  grace: 2,
+  expired: 1,
+  invalid: 0,
+  missing: 0,
+}
+
 export const isNewerLicense = (
   candidate: LicenseStatus,
   current: LicenseStatus,
 ): boolean => {
-  if (candidate.state === "valid" && current.state === "expired") {
-    return true
-  }
-
-  if (candidate.state === "expired" && current.state === "valid") {
-    return false
+  const candidateRank = LICENSE_STATE_RANK[candidate.state]
+  const currentRank = LICENSE_STATE_RANK[current.state]
+  if (candidateRank !== currentRank) {
+    return candidateRank > currentRank
   }
 
   const candidateIssuedAt = Date.parse(candidate.issuedAt ?? "")
@@ -332,7 +359,7 @@ export const getLicenseStatus = loadLicense
 export const hasFeature = async (feature: LicenseFeature): Promise<boolean> => {
   const license = await getLicense()
 
-  return license.state === "valid" && license.features.includes(feature)
+  return isLicenseEntitled(license.state) && license.features.includes(feature)
 }
 
 export const getLimit = async (
@@ -340,7 +367,7 @@ export const getLimit = async (
 ): Promise<LicenseLimits[LicenseLimitKey] | undefined> => {
   const license = await getLicense()
 
-  if (license.state !== "valid") {
+  if (!isLicenseEntitled(license.state)) {
     return
   }
 

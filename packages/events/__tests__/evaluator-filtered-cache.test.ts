@@ -59,6 +59,10 @@ describe.each(
     ["shoppingCartSent", "a specific product only", "product-1"],
     ["userAskedAboutProduct", "any product", null],
     ["userAskedAboutProduct", "a specific product only", "product-1"],
+    ["productOrdered", "a specific product only", "product-1"],
+    ["productAddedToCart", "a specific product only", "product-1"],
+    ["productRemovedFromCart", "a specific product only", "product-1"],
+    ["categoryAddedToCart", "a specific category only", "category-1"],
   ] as const)("admits %s with a condition for %s, without an event sourceId", async (type, _label, sourceId) => {
     findMany.mockResolvedValue(withConditions([{ type, sourceId }]))
 

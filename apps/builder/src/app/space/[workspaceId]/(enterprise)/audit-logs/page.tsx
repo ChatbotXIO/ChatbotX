@@ -31,11 +31,7 @@ export default async function AuditLogsPage(props: {
 
   return (
     <Suspense>
-      <AuditLogsTable
-        promises={promises}
-        search={search}
-        workspaceId={workspaceId}
-      />
+      <AuditLogsTable promises={promises} search={search} />
     </Suspense>
   )
 }

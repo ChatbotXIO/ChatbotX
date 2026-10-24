@@ -16,7 +16,7 @@ import {
 import { emit } from "@chatbotx.io/event-bus"
 import { distributedLock } from "@chatbotx.io/redis"
 import type { AIJobProcessHandoffReentry } from "@chatbotx.io/worker-config"
-import { stepCountIs, streamText } from "ai"
+import { isStepCount, streamText } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { createReplyModel, getProviderName } from "../../../lib/ai/reply-model"
 import { detectConversationAndContactInbox } from "../../../lib/db"
@@ -277,7 +277,7 @@ export async function processHandoffReentry(
         try {
           const result = await streamText({
             model: modelConfig.model,
-            system: buildHandoffReentryClassifierPrompt({
+            instructions: buildHandoffReentryClassifierPrompt({
               actionPrompt: aiAgent.actionPrompt,
             }),
             messages: [{ role: "user", content: triggerMessageText }],
@@ -288,10 +288,11 @@ export async function processHandoffReentry(
               type: "tool",
               toolName: "select_handoff_reentry_rule",
             },
-            stopWhen: stepCountIs(1),
+            stopWhen: isStepCount(1),
             timeout: {
               totalMs: aiTimeouts.aiTotal,
               stepMs: aiTimeouts.aiStep,
+              firstChunkMs: aiTimeouts.aiFirstChunk,
               chunkMs: aiTimeouts.aiChunk,
             },
           })
@@ -348,7 +349,7 @@ export async function processHandoffReentry(
           await actionTool.execute(
             { matches: [{ ruleId: selectedRule.id }] },
             {
-              experimental_context: undefined,
+              context: undefined,
               messages: [],
               toolCallId: props.messageId,
             },

@@ -44,6 +44,17 @@ describe("isPublicRoute", () => {
     expect(isPublicRoute("/space/1/mini-apps")).toBe(false)
   })
 
+  test("/invitations is public because its code is the enrollment capability", () => {
+    expect(isPublicRoute("/invitations/invite-code")).toBe(true)
+    expect(isPublicRoute("/invitationsx/invite-code")).toBe(false)
+  })
+
+  test("/shop is public so a customer's shop link opens without a session", () => {
+    expect(isPublicRoute("/shop/ws-1")).toBe(true)
+    expect(isPublicRoute("/shop/ws-1/cart")).toBe(true)
+    expect(isPublicRoute("/shopping")).toBe(false)
+  })
+
   test("an authenticated app path is not public", () => {
     expect(isPublicRoute("/space/1/inbox")).toBe(false)
     expect(isPublicRoute("/channels/create")).toBe(false)

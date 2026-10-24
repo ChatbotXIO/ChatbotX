@@ -1,6 +1,7 @@
 import type { Context, IncomingContact } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { fetchMediaWithLimits } from "@chatbotx.io/utils/media-download"
+import { storeIncomingImage } from "@chatbotx.io/utils/store-incoming-image"
 import { rescue } from "../exception"
 import { instagramBusinessClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
@@ -27,9 +28,11 @@ const fetchUserProfile = async ({
 export const getUserProfile = ({
   ctx,
   psid,
+  includeAvatar = true,
 }: {
   ctx: Context<InstagramAuthValue>
   psid: string
+  includeAvatar?: boolean
 }): Promise<IncomingContact> => {
   const endpoint = `${ctx.auth.metadata.version}/${psid}`
 
@@ -44,7 +47,7 @@ export const getUserProfile = ({
       sourceUsername: response.username,
     }
 
-    if (response.profile_pic) {
+    if (includeAvatar && response.profile_pic) {
       try {
         result.avatar = await getUserProfilePicture({
           ctx,
@@ -89,11 +92,14 @@ export const getUserProfilePicture = async ({
   if (!media) {
     return
   }
-  const originPath = `${ctx.storagePrefix}/avatars/${createId()}`
-  await ctx.uploader?.putObject(originPath, Buffer.from(media.bytes), {
-    ACL: "public-read",
-    ContentType: media.mimeType,
+  const stored = await storeIncomingImage({
+    uploader: ctx.uploader,
+    key: `${ctx.storagePrefix}/avatars/${createId()}`,
+    bytes: Buffer.from(media.bytes),
+    mimeType: media.mimeType,
+    profile: "avatar",
+    acl: "public-read",
   })
 
-  return originPath
+  return stored.originPath
 }

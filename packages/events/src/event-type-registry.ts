@@ -27,7 +27,46 @@ export const EMITTED_EVENT_TYPES = [
   triggerEventTypes.enum.callTranscribed,
   triggerEventTypes.enum.shoppingCartSent,
   triggerEventTypes.enum.userAskedAboutProduct,
+  triggerEventTypes.enum.newOrder,
+  triggerEventTypes.enum.orderAccepted,
+  triggerEventTypes.enum.orderShipped,
+  triggerEventTypes.enum.orderConcluded,
+  triggerEventTypes.enum.orderCancelled,
+  triggerEventTypes.enum.productOrdered,
+  triggerEventTypes.enum.productAddedToCart,
+  triggerEventTypes.enum.productRemovedFromCart,
+  triggerEventTypes.enum.categoryAddedToCart,
+  triggerEventTypes.enum.cartAbandoned,
 ] as const
+
+/** An order's status events, one per status it reaches. */
+export const ORDER_STATUS_EVENT_TYPES = [
+  triggerEventTypes.enum.newOrder,
+  triggerEventTypes.enum.orderAccepted,
+  triggerEventTypes.enum.orderShipped,
+  triggerEventTypes.enum.orderConcluded,
+  triggerEventTypes.enum.orderCancelled,
+] as const
+export type OrderStatusEventType = (typeof ORDER_STATUS_EVENT_TYPES)[number]
+
+/**
+ * Store events. A web shop order, a member accepting it in the app or an
+ * order placed through the API are no less the customer's order than a
+ * cart sent in chat, so they reach outbound webhooks without the
+ * channel-originated context other events need.
+ */
+export const COMMERCE_EVENT_TYPES = [
+  ...ORDER_STATUS_EVENT_TYPES,
+  triggerEventTypes.enum.productOrdered,
+  triggerEventTypes.enum.productAddedToCart,
+  triggerEventTypes.enum.productRemovedFromCart,
+  triggerEventTypes.enum.categoryAddedToCart,
+  triggerEventTypes.enum.cartAbandoned,
+] as const
+
+export const COMMERCE_EVENT_TYPE_SET: ReadonlySet<TriggerEventType> = new Set(
+  COMMERCE_EVENT_TYPES,
+)
 
 /**
  * Events whose conditions are narrowed by the evaluator, not by the event's
@@ -39,6 +78,10 @@ export const EMITTED_EVENT_TYPES = [
 export const EVALUATOR_FILTERED_EVENT_TYPES = [
   triggerEventTypes.enum.shoppingCartSent,
   triggerEventTypes.enum.userAskedAboutProduct,
+  triggerEventTypes.enum.productOrdered,
+  triggerEventTypes.enum.productAddedToCart,
+  triggerEventTypes.enum.productRemovedFromCart,
+  triggerEventTypes.enum.categoryAddedToCart,
 ] as const
 
 export const SCANNER_VERIFIED_EVENT_TYPES = [

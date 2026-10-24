@@ -92,4 +92,19 @@ describe("listAuditLogs", () => {
     const where = mocks.findMany.mock.calls[0]?.[0]?.where
     expect(where.OR).toBeUndefined()
   })
+
+  test("never falls through to a cross-workspace query when workspaceId is empty", async () => {
+    await listAuditLogs({
+      workspaceId: "",
+      page: 1,
+      perPage: 10,
+      dateRange: {
+        start: new Date("2026-05-19T00:00:00.000Z"),
+        end: new Date("2026-08-16T23:59:59.999Z"),
+      },
+    })
+
+    const where = mocks.findMany.mock.calls[0]?.[0]?.where
+    expect(where).toHaveProperty("workspaceId", "")
+  })
 })

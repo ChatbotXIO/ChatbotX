@@ -1,6 +1,5 @@
 "use client"
 
-import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -26,13 +25,13 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
-import { isCloud, isCommunity } from "@/env"
+import { isCloud } from "@/env"
 import { useInvalidateUsers } from "@/features/users/provider/user-hook"
 import { useWorkspaceId } from "@/hooks/routing"
 import { inviteWorkspaceMemberAction } from "../actions/invite-workspace-member.action"
 import { getSuperAdminPermissions } from "../helpers"
-import { useWorkspaceMemberPermissionsCoupling } from "../hooks/use-permissions-coupling"
 import { inviteWorkspaceMemberRequest } from "../schema/mutation"
+import { WorkspaceMemberPermissionFields } from "./workspace-member-permission-fields"
 export function InviteWorkspaceMemberDialog({
   atLimit = false,
 }: {
@@ -187,69 +186,12 @@ export function AddWorkspaceMemberForm({
       },
     )
 
-  const { isSuperAdmin, contactsEnabled } =
-    useWorkspaceMemberPermissionsCoupling(form)
-
   return (
     <Form {...form}>
       <form className="flex-1 space-y-6" onSubmit={handleSubmitWithAction}>
         <Label>{t("fields.permissions.label")}</Label>
         <div className="flex flex-col gap-4">
-          <SwitchField
-            disabled={isCommunity()}
-            formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-            label={t("fields.permissions.superAdmin")}
-            name="permissions.superAdmin"
-            required
-          />
-          {!isSuperAdmin && (
-            <>
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.analytics")}
-                name="permissions.analytics"
-                required
-              />
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.flows")}
-                name="permissions.flows"
-                required
-              />
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.contacts")}
-                name="permissions.contacts"
-                required
-              />
-              {!contactsEnabled && (
-                <SwitchField
-                  formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                  label={t("fields.permissions.onlyAssignedContacts")}
-                  name="permissions.onlyAssignedContacts"
-                  required
-                />
-              )}
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.emailAndPhone")}
-                name="permissions.emailAndPhone"
-                required
-              />
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.broadcast")}
-                name="permissions.broadcast"
-                required
-              />
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.ecommerce")}
-                name="permissions.ecommerce"
-                required
-              />
-            </>
-          )}
+          <WorkspaceMemberPermissionFields form={form} />
           <div className="flex items-center justify-end gap-2">
             <Button
               onClick={() => cancelHandler?.()}

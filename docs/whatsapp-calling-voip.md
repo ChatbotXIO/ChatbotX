@@ -283,8 +283,22 @@ the shared finalizer emit the transport-tagged ended event.
   (still unclaimed) with an offer still in Redis, returning EVERY match (bounded by the
   repository's limit) shaped identically to the realtime
   `whatsappCallTransportIncoming` payload so the dock can render them the same way.
+  It returns `{ calls, isComplete }`: `isComplete` is `false` when the candidate query
+  hit its cap, in which case a call missing from `calls` has not been ruled out.
   `get-pending-incoming-voip-call.action.ts` calls this on dock mount and enqueues each
-  entry into the basket. See M6 above for who is allowed to call it.
+  entry into the basket, and again after a realtime resync (`use-resync-call-recovery.ts`),
+  where a complete list also drops basket entries the server no longer lists while a capped
+  one only adds. See M6 above for who is allowed to call it.
+- **Outbound answer recovery.** The customer's SDP answer is pushed once to the
+  initiating agent over realtime and is no longer deleted after publishing; it
+  expires with its 55s Redis TTL. If the tab missed the push and the gateway could not
+  replay it, the tab re-fetches it after a resync with `getOutboundVoipAnswerAction`
+  (`use-resync-call-recovery.ts`), served by `readOutboundAnswerForInitiator` only to
+  the agent who started a live outbound call. The browser ignores an answer it has
+  already applied.
+- **Ring publish failures.** `ringAgents` throws when the offer reaches none of the
+  selected agents, so the job is retried while the reservation is still answerable and
+  `finalizeExhaustedHandleConnect` rejects the call once the retries run out.
 - **Presence report.** Presence moved from a WhatsApp-only, inbox-only heartbeat to
   the workspace-wide presence described in `docs/realtime.md`:
   `workspacePresenceService` (Redis

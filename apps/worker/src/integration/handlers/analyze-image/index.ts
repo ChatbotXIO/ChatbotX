@@ -75,7 +75,7 @@ export async function handleAIAnalyzeImage({
           role: "user",
           content: [
             { type: "text", text: step.prompt },
-            { type: "image", image: imageUrl },
+            { type: "file", data: imageUrl, mediaType: "image/*" },
           ],
         },
       ],

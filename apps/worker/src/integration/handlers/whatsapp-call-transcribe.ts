@@ -16,7 +16,7 @@ import {
 } from "@chatbotx.io/events"
 import { transcribesCalls } from "@chatbotx.io/utils/whatsapp-call"
 import type { CallTranscriptionJobTranscribeCall } from "@chatbotx.io/worker-config"
-import { experimental_transcribe as transcribe } from "ai"
+import { transcribe } from "ai"
 import ky from "ky"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"

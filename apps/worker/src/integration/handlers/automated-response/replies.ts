@@ -39,9 +39,9 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import {
+  isStepCount,
   type LanguageModel,
   type ModelMessage,
-  stepCountIs,
   streamText,
   type ToolSet,
 } from "ai"
@@ -56,6 +56,10 @@ import { handoffExecutorService } from "../../../trigger/services/handoff-execut
 import { sendMessageAndWait, sendMessageWithRender } from "../../utils/message"
 import { buildAIAgentActionsPrompt } from "../ai-agent-actions/prompt"
 import { createAIAgentActionsTool } from "../ai-agent-actions/tool-executor"
+import {
+  type AgentToolStats,
+  createAgentToolStatsCollector,
+} from "../shared/agent-tool-stats"
 import { logProviderAttempt } from "../shared/provider-attempt-logger"
 import { createMcpTokenResolver } from "../shared/resolve-mcp-token"
 import { triggerDefaultReplyFlow } from "./default-reply"
@@ -97,19 +101,9 @@ export type ReplyByAIExecutionResult = {
   provider: ReplyAIProvider
   modelId: string
   usedFallbackText: boolean
-  toolStats: {
+  toolStats: AgentToolStats & {
     actionToolAvailable: boolean
     actionToolCalled: boolean
-    steps: number
-    toolCallsCount: number
-    toolResultsCount: number
-    toolErrorsCount: number
-    toolNames: string[]
-    finishReasons: Array<{
-      stepNumber: number
-      finishReason: string
-      rawFinishReason?: string
-    }>
   }
 }
 
@@ -279,16 +273,17 @@ export async function generateAIReplyText(
 
       const result = await streamText({
         model: modelConfig.model,
-        system: guardedSystemPrompt,
+        instructions: guardedSystemPrompt,
         messages,
         maxOutputTokens: aiAgent.maxOutputTokens,
         temperature: aiAgent.temperature,
         tools: {},
         toolChoice: "none",
-        stopWhen: stepCountIs(1),
+        stopWhen: isStepCount(1),
         timeout: {
           totalMs: aiTimeouts.aiTotal,
           stepMs: aiTimeouts.aiStep,
+          firstChunkMs: aiTimeouts.aiFirstChunk,
           chunkMs: aiTimeouts.aiChunk,
         },
         abortSignal: controller.signal,
@@ -839,100 +834,42 @@ async function runAIReply(
       ? appendRichResponseFormat(guardedPrompt)
       : guardedPrompt
 
-    const toolNamesSet = new Set<string>()
-    const finishReasons: Array<{
-      stepNumber: number
-      finishReason: string
-      rawFinishReason?: string
-    }> = []
-    let stepCount = 0
-    let toolCallsCount = 0
-    let toolResultsCount = 0
-    let toolErrorsCount = 0
+    const toolStatsCollector = createAgentToolStatsCollector({
+      conversationId: conversation.id,
+      logPrefix: "automated-response",
+      modelId: selectedModelId,
+      provider,
+      workspaceId: conversation.workspaceId,
+    })
 
     const hasTools = Object.keys(tools).length > 0
     const result = await streamText({
       model: modelConfig.model,
-      system: systemPrompt,
+      instructions: systemPrompt,
       messages,
       maxOutputTokens: aiAgent.maxOutputTokens,
       temperature: aiAgent.temperature,
       tools,
       toolChoice: hasTools ? "auto" : "none",
-      stopWhen: stepCountIs(5),
+      stopWhen: isStepCount(5),
       timeout: {
         totalMs: aiTimeouts.aiTotal,
         stepMs: aiTimeouts.aiStep,
+        firstChunkMs: aiTimeouts.aiFirstChunk,
         chunkMs: aiTimeouts.aiChunk,
       },
-      onStepFinish: ({
-        stepNumber,
-        finishReason,
-        rawFinishReason,
-        toolCalls,
-        toolResults,
-      }) => {
-        stepCount = Math.max(stepCount, stepNumber + 1)
-        finishReasons.push({
-          stepNumber,
-          finishReason,
-          rawFinishReason,
-        })
-
-        toolCallsCount += toolCalls.length
-        for (const call of toolCalls) {
-          if (call?.toolName) {
-            toolNamesSet.add(call.toolName)
-          }
-        }
-
-        toolResultsCount += toolResults.length
-        for (const toolResult of toolResults) {
-          if (isToolResultError(toolResult)) {
-            toolErrorsCount += 1
-          }
-        }
-      },
-      experimental_onToolCallFinish: ({
-        toolCall,
-        durationMs,
-        success,
-        error,
-      }) => {
-        if (!success) {
-          const normalizedError = normalizeError(error)
-          logger.warn(
-            {
-              provider,
-              modelId: selectedModelId,
-              conversationId: conversation.id,
-              workspaceId: conversation.workspaceId,
-              toolName: toolCall?.toolName,
-              toolCallId: toolCall?.toolCallId,
-              durationMs,
-              err: normalizedError,
-              errorMessage: normalizedError.message,
-            },
-            "[automated-response] tool execution failed",
-          )
-        }
-      },
+      onStepEnd: toolStatsCollector.onStepEnd,
+      onToolExecutionEnd: toolStatsCollector.onToolExecutionEnd,
       abortSignal,
     })
 
-    const buildToolStats = () => {
-      const toolNames = Array.from(toolNamesSet).slice(0, 10)
-      return {
-        actionToolAvailable: Boolean(actionRules?.length),
-        actionToolCalled: toolNamesSet.has("apply_ai_agent_actions"),
-        steps: stepCount,
-        toolCallsCount,
-        toolResultsCount,
-        toolErrorsCount,
-        toolNames,
-        finishReasons: finishReasons.slice(0, 10),
-      }
-    }
+    const buildToolStats = () => ({
+      actionToolAvailable: Boolean(actionRules?.length),
+      actionToolCalled: toolStatsCollector.hasToolName(
+        "apply_ai_agent_actions",
+      ),
+      ...toolStatsCollector.toToolStats(),
+    })
 
     const logActionToolSelection = () => {
       const toolStats = buildToolStats()
@@ -1047,7 +984,7 @@ async function runAIReply(
     // Last-resort fallback: loop finished but no assistant text was produced.
     // Do NOT leak raw tool outputs; prefer the workspace's configured default
     // reply flow, and only fall back to a clarifying question if none is set.
-    if (toolCallsCount > 0 || toolResultsCount > 0) {
+    if (toolStatsCollector.hasToolActivity()) {
       const defaultReplyResult = await triggerDefaultReplyFlow({
         workspaceId: conversation.workspaceId,
         defaultReplyFlowId: props.defaultReplyFlowId,
@@ -1159,12 +1096,4 @@ function appendUnavailableWebSearchPolicy(
 
 function appendRichResponseFormat(systemPrompt: string): string {
   return `${systemPrompt}\n\n${helpTexts.richResponseFormat}`.trim()
-}
-
-function isToolResultError(value: unknown): boolean {
-  if (!value || typeof value !== "object" || !("isError" in value)) {
-    return false
-  }
-
-  return value.isError === true
 }

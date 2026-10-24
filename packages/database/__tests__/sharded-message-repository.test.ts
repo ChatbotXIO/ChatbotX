@@ -1,4 +1,5 @@
 import { endOfHour, startOfHour } from "date-fns"
+import { PgDialect } from "drizzle-orm/pg-core"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 import { MessageShardUnavailableError } from "../src/errors"
 import type {
@@ -94,6 +95,37 @@ describe("ShardedMessageRepository.bulkCreate", () => {
     expect(callArg.target).toContain(messageModel.contactInboxId)
     expect(callArg.target).toContain(messageModel.sourceId)
     expect(callArg.target).toContain(messageModel.createdAt)
+  })
+
+  test("bulkCreate stamps a missing createdAt itself instead of leaving it to the database", async () => {
+    // A database-stamped createdAt carries microseconds a JS Date cannot hold,
+    // so every later lookup or update by (id, createdAt) would miss the row.
+    chain.returning.mockResolvedValue([])
+
+    await repo.bulkCreate([makeMessage({ createdAt: undefined })])
+
+    const [values] = chain.values.mock.calls[0] as [Record<string, unknown>[]]
+    expect(values[0].createdAt).toBeInstanceOf(Date)
+  })
+
+  test("create stamps a missing createdAt itself, and keeps it on a primary-key retry", async () => {
+    const collision = Object.assign(new Error("duplicate key"), {
+      code: "23505",
+      constraint: "Message_pkey",
+    })
+    chain.returning
+      .mockRejectedValueOnce(collision)
+      .mockResolvedValueOnce([{ id: "msg-2" }])
+
+    await repo.create(makeMessage({ createdAt: undefined })).catch(() => null)
+
+    const stamped = chain.values.mock.calls.map(
+      ([value]) => (value as { createdAt?: Date }).createdAt,
+    )
+    expect(stamped[0]).toBeInstanceOf(Date)
+    for (const createdAt of stamped) {
+      expect(createdAt).toEqual(stamped[0])
+    }
   })
 
   test("returns empty array when no messages provided", async () => {
@@ -223,6 +255,32 @@ describe("ShardedMessageRepository.bulkCreate", () => {
     expect(result).toEqual([{ id: "att-1" }])
   })
 
+  test("bulkCreateAttachments stamps createdAt itself, at the precision it will later match on", async () => {
+    // Left to the database, createdAt gets microseconds that a JS Date cannot
+    // carry back, and every later update by (id, createdAt) would miss.
+    chain.returning.mockResolvedValue([{ id: "att-1" }])
+    const given = new Date("2026-01-02T03:04:05.678Z")
+    const base: BulkCreateAttachmentInput = {
+      id: "att-1",
+      workspaceId: "ws-1",
+      conversationId: "conv-1",
+      messageId: "msg-1",
+      messageCreatedAt: new Date("2026-01-01"),
+      fileType: "image",
+      mimeType: "image/png",
+      originPath: "/uploads/img.png",
+    }
+
+    await repo.bulkCreateAttachments([
+      base,
+      { ...base, id: "att-2", createdAt: given },
+    ])
+
+    const values: Record<string, unknown>[] = chain.values.mock.calls[0][0]
+    expect(values[0].createdAt).toBeInstanceOf(Date)
+    expect(values[1].createdAt).toEqual(given)
+  })
+
   test("bulkCreateAttachments returns empty array for empty input without calling insert", async () => {
     const result = await repo.bulkCreateAttachments([])
 
@@ -262,7 +320,8 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
   function makeUpdateClient() {
     const updateChain = {
       set: vi.fn().mockReturnThis(),
-      where: vi.fn().mockResolvedValue(undefined),
+      where: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockResolvedValue([]),
     }
     const tx = {
       update: vi.fn().mockReturnValue(updateChain),
@@ -399,7 +458,9 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
       sourceId: "source-attachment-1",
       originPath: "wa-media:123",
       mimeType: "image/png",
+      size: 0,
       createdAt: new Date("2026-01-03T00:00:00Z"),
+      keepOriginal: null,
     }
     const writeClient = makeSelectClient([])
     const rangeClient = makeSelectClient([attachment])
@@ -428,7 +489,9 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
       sourceId: attachmentModel.sourceId,
       originPath: attachmentModel.originPath,
       mimeType: attachmentModel.mimeType,
+      size: attachmentModel.size,
       createdAt: attachmentModel.createdAt,
+      keepOriginal: attachmentModel.keepOriginal,
     })
     expect(shardManager.getShardForWrite).toHaveBeenCalledWith("ws-1")
     expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(1)
@@ -699,6 +762,70 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
     expect(rangeClient.updateChain.where).toHaveBeenCalled()
   })
 
+  test("updateAttachment reports how many rows it updated, 0 when none matched", async () => {
+    // Callers must be able to tell a write that landed from one that matched
+    // nothing: a silent no-op leaves a stored object nothing points at.
+    const createdAt = new Date("2026-01-03T00:00:00Z")
+    const rangeClient = makeUpdateClient()
+    const writeClient = makeUpdateClient()
+    rangeClient.updateChain.returning.mockResolvedValue([{ id: "att-1" }])
+    const clients = new Map([
+      ["range", rangeClient],
+      ["write", writeClient],
+    ])
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      getShardClient: vi.fn((shard: { id: string }) =>
+        Promise.resolve(clients.get(shard.id)),
+      ),
+      withShardClientForRead: vi.fn(),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+    const params = {
+      id: "att-1",
+      workspaceId: "ws-1",
+      createdAt,
+      fields: { originPath: "public/a.jpg", mimeType: "image/jpeg", size: 1 },
+    }
+
+    await expect(repo.updateAttachment(params)).resolves.toBe(1)
+
+    rangeClient.updateChain.returning.mockResolvedValue([])
+    await expect(repo.updateAttachment(params)).resolves.toBe(0)
+  })
+
+  test("updateAttachment matches a row whose createdAt has sub-millisecond precision", async () => {
+    // Postgres keeps microseconds (`defaultNow()`), a JS Date only
+    // milliseconds: an exact `createdAt =` would update nothing for a row the
+    // database stamped itself, so the match covers the whole millisecond.
+    const createdAt = new Date("2026-10-21T07:47:05.177Z")
+    const client = makeUpdateClient()
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(rangeShard),
+      getShardClient: vi.fn(() => Promise.resolve(client)),
+      withShardClientForRead: vi.fn(),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await repo.updateAttachment({
+      id: "att-1",
+      workspaceId: "ws-1",
+      createdAt,
+      fields: { originPath: "public/a.jpg", mimeType: "image/jpeg", size: 1 },
+    })
+
+    const { sql, params } = new PgDialect().sqlToQuery(
+      client.updateChain.where.mock.calls[0][0],
+    )
+    expect(sql).toContain('"createdAt" >= $')
+    expect(sql).toContain('"createdAt" < $')
+    expect(sql).not.toContain('"createdAt" = $')
+    expect(params).toContain(createdAt.toISOString())
+    expect(params).toContain(new Date(createdAt.getTime() + 1).toISOString())
+  })
+
   test("findRichResponseByButton falls back to button lookup when inbound message id has no rich response", async () => {
     const richResponse = {
       executionId: "exec-1",
@@ -942,6 +1069,27 @@ describe("ShardedMessageRepository.updateSourceId", () => {
       sourceId: "prov-abc",
     })
     expect(result).toEqual({ id: "msg-1" })
+  })
+
+  test("still finds a message whose stored createdAt has microseconds", async () => {
+    // Rows stamped by Postgres keep microseconds; the key read back into JS
+    // keeps only milliseconds, so the update must match the whole millisecond.
+    const client = makeUpdateClient([{ id: "msg-1" }])
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(rangeShard),
+      getShardClient: vi.fn(() => Promise.resolve(client)),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await repo.updateSourceId("msg-1", "prov-abc", "ws-1", createdAt)
+
+    const { sql, params } = new PgDialect().sqlToQuery(
+      client.chain.where.mock.calls[0][0],
+    )
+    expect(sql).toContain('"createdAt" >= $')
+    expect(sql).toContain('"createdAt" < $')
+    expect(params).toContain(new Date(createdAt.getTime() + 1).toISOString())
   })
 
   test("swallows a shard-level failure instead of throwing", async () => {
@@ -1323,6 +1471,37 @@ describe("ShardedMessageRepository.hardDeleteAllByContactInbox", () => {
       messageDeleteChain,
     }
   }
+
+  test("deletes the attachments of a message whose createdAt has microseconds", async () => {
+    // The attachment keeps its message's createdAt as read back into JS
+    // (milliseconds), while a database-stamped message row keeps
+    // microseconds: an exact join would leave those attachments behind.
+    const shardClient = makeHardDeleteShardClient()
+    const shardManager = {
+      getShardsForTimeRange: vi
+        .fn()
+        .mockResolvedValue([makeShardInfo("tr:s1", "s1")]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      getShardClient: vi.fn().mockResolvedValue(shardClient),
+    }
+    const localRepo = new ShardedMessageRepository(shardManager as never)
+
+    await localRepo.hardDeleteAllByContactInbox({
+      contactInboxId: "ci-1",
+      workspaceId: "ws-1",
+      sinceTime: new Date("2026-06-01T00:00:00Z"),
+    })
+
+    const { sql } = new PgDialect().sqlToQuery(
+      shardClient.attachmentSelectChain.where.mock.calls[0][0],
+    )
+    expect(sql).toContain(
+      '"Message"."createdAt" >= "Attachment"."messageCreatedAt"',
+    )
+    expect(sql).toContain(
+      '"Message"."createdAt" < "Attachment"."messageCreatedAt" + interval \'1 millisecond\'',
+    )
+  })
 
   test("scopes hard delete by contact inbox", async () => {
     const shardClient = makeHardDeleteShardClient()
@@ -1772,6 +1951,53 @@ describe("ShardedMessageRepository.createOrUpdate — idempotent echo save", () 
     expect(result.isNew).toBe(false)
     expect(result.message).toEqual(priorRow)
     expect(shardDb.insert).not.toHaveBeenCalled()
+  })
+})
+
+describe("ShardedMessageRepository.createWithAttachments — attachment timestamps", () => {
+  test("stamps each attachment's createdAt itself instead of leaving it to the database", async () => {
+    const created = { ...existingRow, id: "msg-new" }
+    const messageChain = {
+      values: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockResolvedValue([created]),
+    }
+    const attachmentChain = {
+      values: vi.fn().mockReturnThis(),
+      returning: vi.fn().mockResolvedValue([]),
+    }
+    const tx = {
+      insert: vi
+        .fn()
+        .mockReturnValueOnce(messageChain)
+        .mockReturnValueOnce(attachmentChain),
+    }
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue({
+        transaction: vi.fn(async (fn: (t: unknown) => Promise<unknown>) =>
+          fn(tx),
+        ),
+      }),
+    }
+    const repo = new ShardedMessageRepository(
+      shardManager as never,
+      passthroughLock as never,
+    )
+
+    await repo.createWithAttachments(makeMessage(), [
+      {
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        fileType: "image",
+        mimeType: "image/jpeg",
+        originPath: "https://scontent.xx.fbcdn.net/a.jpg",
+      },
+    ])
+
+    const [values] = attachmentChain.values.mock.calls[0] as [
+      Record<string, unknown>[],
+    ]
+    expect(values[0].createdAt).toBeInstanceOf(Date)
+    expect(values[0].messageCreatedAt).toEqual(created.createdAt)
   })
 })
 

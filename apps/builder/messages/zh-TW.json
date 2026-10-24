@@ -1211,6 +1211,10 @@
       "label": "寄件者地址",
       "placeholder": "noreply@example.com"
     },
+    "fromName": {
+      "label": "寄件人姓名",
+      "placeholder": "ChatbotX"
+    },
     "messageTemplate": {
       "label": "訊息範本"
     },
@@ -1770,8 +1774,8 @@
     "loadError": "無法載入產品類別。",
     "all": "所有產品",
     "create": "建立類別",
-    "edit": "重新命名類別",
-    "name": "分類名稱",
+    "edit": "編輯",
+    "name": "名稱",
     "namePlaceholder": "例如夏季系列",
     "parent": "父類別",
     "noParent": "無（頂層）",
@@ -1790,10 +1794,23 @@
     "columns": {
       "name": "名稱",
       "products": "產品",
-      "subcategories": "子類別"
+      "subcategories": "子類別",
+      "visible": "顯示"
     },
     "expand": "顯示子類別",
-    "collapse": "隱藏子類別"
+    "collapse": "隱藏子類別",
+    "add": "新增",
+    "dialogTitle": "分類",
+    "image": "圖片",
+    "continue": "繼續",
+    "subcategories": "子分類",
+    "subcategoriesOf": "{name} 的子分類",
+    "emptySub": "尚無子分類。",
+    "back": "返回分類",
+    "getId": "取得 ID",
+    "idCopied": "已複製分類 ID {id}",
+    "idCopyError": "無法複製 ID",
+    "description": "將商品分組到分類與子分類中。"
   },
   "actions": {
     "scrollToBottom": "捲動到底部",
@@ -3007,7 +3024,13 @@
       "sendGoogleAdsConversion": "傳送 Google Ads 轉換",
       "changeGamificationScore": "變更積分",
       "sendViewCatalog": "查看商品目錄",
-      "sendProducts": "傳送商品"
+      "sendProducts": "傳送商品",
+      "sendCollection": "商品集合"
+    },
+    "externalRequest": {
+      "errors": {
+        "requestFailed": "無法測試外部請求。請檢查請求設定後再試一次。"
+      }
     },
     "splitTraffic": {
       "balanceHint": "總和必須等於 100%。",
@@ -3188,6 +3211,43 @@
       "productsSelected": "{count, plural, one {# 件商品} other {# 件商品}}",
       "noneSelected": "尚無商品",
       "sendFailed": "無法傳送商品。"
+    },
+    "sendCollection": {
+      "title": "商品集合",
+      "dataType": "資料類型",
+      "dataTypes": {
+        "products": "商品"
+      },
+      "collectionType": "集合類型",
+      "collectionTypes": {
+        "automated": {
+          "label": "自動",
+          "description": "符合條件的現有及日後新增商品會自動加入此集合。"
+        },
+        "manual": {
+          "label": "手動",
+          "description": "逐一新增商品。"
+        }
+      },
+      "condition": "條件",
+      "name": "名稱",
+      "optional": "（選填）",
+      "category": "分類",
+      "subcategory": "子分類",
+      "vendor": "供應商",
+      "all": "全部",
+      "items": "商品",
+      "select": "選擇",
+      "selectPlaceholder": "選擇 1 個或多個商品",
+      "selectAll": "全選",
+      "deselectAll": "取消全選",
+      "maxProducts": "最多 {count} 個商品；商店不再顯示的商品會被略過。",
+      "automatedHint": "以卡片形式傳送最多 {count} 個符合條件的商品，點選即在網店開啟。",
+      "summaryAll": "商店展示的所有商品",
+      "summaryAutomated": "商品：{filters}",
+      "summaryManual": "{count, plural, one {# 個商品} other {# 個商品}}",
+      "cancel": "取消",
+      "save": "儲存"
     }
   },
   "folders": {
@@ -3974,6 +4034,7 @@
         "buttonText": "按鈕文字",
         "buttonType": "按鈕類型",
         "visitWebsite": "訪問網站",
+        "openMiniApp": "開啟小程式",
         "callPhoneNumber": "撥打電話號碼",
         "postback": "按鈕"
       },
@@ -4177,6 +4238,7 @@
     "orContinueWith": "或繼續使用",
     "continueWithFacebook": "繼續使用 Facebook",
     "continueWithGoogle": "繼續使用 Google",
+    "continueWithProvider": "繼續使用 {name}",
     "continueWithEmail": "繼續使用電子郵件",
     "continueWithMagicLink": "繼續使用 Magic Link",
     "dontHaveAnAccount": "還沒有帳號？",
@@ -4207,11 +4269,15 @@
     "changePasswordTitle": "更改密碼",
     "changePasswordDescription": "在繼續之前設定新密碼。",
     "passwordChangeSuccess": "密碼已更改",
+    "signUpDisabledTitle": "註冊已停用",
+    "signUpDisabledDescription": "新帳戶只能由管理員建立，或透過邀請連結建立。",
     "oauthError": {
       "accountNotLinked": "使用此電子郵件的帳戶已存在，無法連結。請使用之前的方式登入，或聯絡支援人員。",
       "unableToLinkAccount": "我們無法將此次登入連結到現有帳戶。請使用您之前的方式登入，或聯絡支援人員。",
       "sessionExpired": "登入嘗試已逾時。請重試。",
       "accessDenied": "登入已取消。",
+      "signUpDisabled": "此帳戶尚不存在，且註冊已停用。請要求管理員為您建立帳戶。",
+      "invalidInvitation": "此邀請無效或已過期。",
       "generic": "登入失敗。請重試。"
     }
   },
@@ -4244,6 +4310,25 @@
       "unknownFieldTarget": "已對應的聯絡人欄位已不存在。",
       "actionReferenceNotFound": "某個動作參照了已不存在的流程、標籤或欄位。",
       "fieldMappingRequired": "請至少新增一個欄位對應。"
+    },
+    "form": {
+      "required": "此欄位為必填。",
+      "minLength": "請至少輸入 {minimum} 個字元。",
+      "maxLength": "最多輸入 {maximum} 個字元。",
+      "minNumber": "請輸入不小於 {minimum} 的數字。",
+      "moreThan": "請輸入大於 {minimum} 的數字。",
+      "maxNumber": "請輸入不大於 {maximum} 的數字。",
+      "lessThan": "請輸入小於 {maximum} 的數字。",
+      "number": "請輸入數字。",
+      "wholeNumber": "請輸入整數。",
+      "minItems": "請至少選擇 {minimum} 項。",
+      "maxItems": "最多選擇 {maximum} 項。",
+      "email": "請輸入有效的電子郵件地址。",
+      "url": "請輸入以 https:// 開頭的有效連結。",
+      "format": "此值格式不正確。",
+      "option": "請選擇其中一個選項。",
+      "invalid": "此值無效。",
+      "checkFields": "有欄位需要修正，請查看標紅的欄位。"
     }
   },
   "webchat": {
@@ -4843,7 +4928,8 @@
     "chatbotInvitationDescription1": "加入 {chatbotName}",
     "chatbotInvitationDescription2": "{userName} 邀請您加入 {chatbotName}。",
     "invalidInvitation": "此邀請無效或已過期。",
-    "workspaceUnavailable": "此工作區不再可用。"
+    "workspaceUnavailable": "此工作區不再可用。",
+    "signUpToJoin": "建立帳戶以加入"
   },
   "inboxes": {
     "markReadOnOutbound": {
@@ -5231,7 +5317,8 @@
       "contactReferredExistingContact": "聯絡人引用現有聯絡人",
       "callRecorded": "通話已錄音",
       "callTranscribed": "通話已轉寫",
-      "anyProduct": "任何商品"
+      "anyProduct": "任何商品",
+      "anyCategory": "任意分類"
     },
     "actions": {
       "addTag": "新增標籤",
@@ -5352,7 +5439,8 @@
       "userPlaceholder": "使用者 ID",
       "keyword": "關鍵字",
       "keywordPlaceholder": "操作或詳情",
-      "allAdmins": "所有管理員"
+      "allAdmins": "所有管理員",
+      "allWorkspaces": "所有工作區"
     }
   },
   "customFields": {
@@ -6215,7 +6303,14 @@
       "supportOff": "已關閉",
       "searchPlaceholder": "依名稱、擁有者電子郵件或 ID 搜尋",
       "descriptionConsentDisabled": "All workspaces can be opened by platform administrators.",
-      "supportAccessible": "Accessible"
+      "supportAccessible": "Accessible",
+      "createButton": "Create workspace",
+      "createTitle": "Create workspace for an owner",
+      "createDescription": "Creates a workspace for the owner's email, adding any member emails you list. A new email gets a mailed temporary password.",
+      "ownerEmail": "Owner email",
+      "memberEmails": "Member emails",
+      "membersHint": "Every member gets the permissions selected below. New emails get a mailed temporary password.",
+      "createdSummary": "Workspace created for {ownerEmail} — {memberCount} member(s) added, {newAccountCount} new account(s) emailed a temporary password."
     },
     "admins": {
       "title": "Platform administrators",
@@ -6231,6 +6326,19 @@
       "removed": "Platform administrator removed.",
       "addError": "Could not add the platform administrator.",
       "removeError": "Could not remove the platform administrator."
+    },
+    "auditLogs": {
+      "title": "平台稽核紀錄",
+      "description": "此平台所有工作區的稽核活動。"
+    },
+    "smtp": {
+      "title": "SMTP 設定",
+      "description": "平台郵件傳輸方式。留空則繼續使用 SMTP_SERVER 與 SMTP_FROM 環境變數。",
+      "usingEnv": "尚未儲存 SMTP 設定 — 平台郵件使用 SMTP_SERVER 環境變數。",
+      "remove": "移除 SMTP 設定",
+      "errors": {
+        "passwordRequired": "請輸入 SMTP 密碼。"
+      }
     }
   },
   "platformCredentials": {
@@ -6309,6 +6417,8 @@
     }
   },
   "manageSidebar": {
+    "communityGroup": "社群",
+    "enterpriseGroup": "企業版",
     "platformGroup": "平台",
     "toolsGroup": "工具",
     "saasGroup": "SaaS",
@@ -6385,7 +6495,82 @@
     "unknown": "未知"
   },
   "orders": {
-    "title": "訂單"
+    "title": "訂單",
+    "empty": "尚無訂單。",
+    "searchPlaceholder": "依姓名、電話、電子郵件或訂單編號搜尋",
+    "orderNumber": "訂單 #{number}",
+    "print": "列印",
+    "inbox": "收件匣",
+    "statusUpdated": "訂單狀態已更新",
+    "statusUpdateError": "無法更新訂單狀態",
+    "updateStatusTitle": "更新訂單狀態",
+    "message": "訊息",
+    "messagePlaceholder": "選填",
+    "messageDescription": "將在客戶的對話中傳送給客戶。",
+    "cancel": "取消",
+    "continue": "繼續",
+    "delete": "刪除",
+    "deleted": "訂單已刪除",
+    "deleteError": "無法刪除訂單",
+    "deleteTitle": "刪除訂單 #{number}？",
+    "deleteDescription": "訂單、其商品及歷史記錄將被移除。其仍占用的庫存會退回。",
+    "columns": {
+      "name": "名稱",
+      "total": "總計",
+      "status": "狀態",
+      "date": "日期",
+      "rating": "評分",
+      "quantity": "數量",
+      "price": "價格",
+      "vendor": "供應商"
+    },
+    "fields": {
+      "name": "姓名",
+      "email": "電子郵件",
+      "phone": "電話",
+      "country": "國家/地區",
+      "state": "州/省",
+      "city": "城市",
+      "street": "街道",
+      "zip": "郵遞區號",
+      "shippingType": "配送",
+      "orderId": "訂單 ID",
+      "date": "日期",
+      "subtotal": "小計",
+      "discount": "折扣",
+      "deliveryCost": "運費",
+      "otherTaxes": "其他稅費",
+      "total": "總計",
+      "paymentMethod": "付款方式",
+      "status": "狀態",
+      "note": "備註",
+      "cancelReason": "取消原因",
+      "rating": "評分",
+      "ratingComment": "顧客評論",
+      "coupon": "優惠券（{code}）"
+    },
+    "statuses": {
+      "pending": "未處理",
+      "accepted": "已接受",
+      "shipped": "已出貨",
+      "concluded": "已完成",
+      "cancelled": "已取消"
+    },
+    "transitions": {
+      "accepted": "接受",
+      "shipped": "出貨",
+      "concluded": "完成",
+      "cancelled": "取消"
+    },
+    "paymentMethods": {
+      "cod": "貨到付款"
+    },
+    "shippingTypes": {
+      "delivery": "送貨到府",
+      "pickup": "到店自取"
+    },
+    "description": "客戶下的訂單。",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "產品",
@@ -6442,7 +6627,8 @@
         "label": "允許顧客在缺貨時購買該產品"
       },
       "vendor": {
-        "label": "供應商"
+        "label": "供應商",
+        "none": "無"
       },
       "rank": {
         "label": "排名"
@@ -9047,6 +9233,543 @@
       "hours": "時間",
       "closed": "休息"
     }
+  },
+  "productVendors": {
+    "title": "供應商",
+    "add": "新增",
+    "edit": "編輯",
+    "delete": "刪除",
+    "actions": "操作",
+    "save": "儲存",
+    "cancel": "取消",
+    "moreOptions": "更多選項",
+    "empty": "尚無供應商。",
+    "created": "供應商已新增",
+    "updated": "供應商已更新",
+    "deleted": "供應商已刪除",
+    "saveError": "無法儲存供應商",
+    "deleteError": "無法刪除供應商",
+    "deleteTitle": "刪除 {name}？",
+    "deleteDescription": "{count, plural, =0 {沒有商品使用此供應商。} one {有 # 個商品將失去供應商。} other {有 # 個商品將失去供應商。}}",
+    "fields": {
+      "name": "名稱",
+      "shortDescription": "簡短說明",
+      "phone": "電話",
+      "storeAddress": "店面地址",
+      "image": "圖片",
+      "optional": "選填",
+      "discountPercent": "折扣（0-100%）",
+      "minimumOrderValue": "最低訂單金額",
+      "openHours": "營業時間",
+      "category": "分類",
+      "subcategory": "子分類",
+      "none": "無"
+    },
+    "columns": {
+      "name": "名稱",
+      "products": "商品總數",
+      "active": "啟用"
+    },
+    "description": "商品所屬的賣家與品牌。"
+  },
+  "ecommerceSettings": {
+    "save": "儲存",
+    "saved": "設定已儲存",
+    "saveError": "無法儲存設定",
+    "rank": {
+      "label": "排序",
+      "default": "預設"
+    },
+    "tabs": {
+      "general": "一般",
+      "payments": "付款",
+      "shipping": "配送",
+      "checkout": "結帳"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "可下單",
+        "description": "使用此欄位可在不變更營業時間的情況下禁止客戶下單。營業時間同樣會控制您的可用狀態。"
+      },
+      "webshopProductView": {
+        "label": "網路商店商品檢視",
+        "description": "控制商品在網路商店中的顯示方式。",
+        "options": {
+          "list": "清單",
+          "listWithoutImage": "無圖清單",
+          "card": "卡片",
+          "cardSquare": "方形圖片卡片",
+          "image": "圖片",
+          "imageSquare": "圖片（方形）"
+        }
+      },
+      "openHours": {
+        "label": "營業時間",
+        "description": "客戶可以下單的時段。"
+      },
+      "searchProducts": {
+        "label": "搜尋商品",
+        "description": "允許客戶傳送訊息來尋找商品。"
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "使用 Facebook Pixel 追蹤轉換並衡量廣告成效。將追蹤以下事件：ADD_TO_CART、INITIATE_CHECKOUT、PURCHASE、VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "購物車遺棄提醒訊息",
+        "description": "使用者帶著購物車中的商品離開機器人後，等待多久再傳送購物車遺棄提醒訊息。",
+        "disabled": "已停用",
+        "afterMinutes": "{count} 分鐘後",
+        "afterHours": "{count, plural, one {# 小時後} other {# 小時後}}"
+      },
+      "productButtons": {
+        "label": "商品按鈕",
+        "description": "此設定控制機器人內商品顯示哪些按鈕。",
+        "options": {
+          "addToCart": "加入購物車",
+          "share": "分享",
+          "similar": "相似商品",
+          "save": "儲存"
+        }
+      },
+      "productImageSize": {
+        "label": "商品圖片尺寸",
+        "description": "此設定控制機器人內商品圖片的尺寸",
+        "options": {
+          "bigSquare": "大（方形）",
+          "mediumRectangle": "中（矩形）"
+        }
+      },
+      "allowRateOrders": {
+        "label": "允許訂單評分",
+        "description": "允許客戶在對訂單不滿意時為訂單評分並撰寫評論。只有機器人管理員可以查看評論"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "購物車狀態變更時傳送通知",
+        "description": "每當您變更訂單狀態，客戶都會收到通知。訂單取消和訂單完成的通知無法關閉。"
+      },
+      "abandonedCartFlow": {
+        "label": "棄購流程",
+        "description": "購物車被擱置這麼久後，機器人為顧客執行的流程。在按鈕中使用 '{{shop_token}}' 可開啟購物車。觸發器也可使用「Cart abandoned」事件。",
+        "none": "不執行流程（僅觸發器事件）"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {有 # 個商品} other {有 # 個商品}}的定價幣別不是 {currency}。訂單將以 {currency} 收取其價格。",
+      "paymentMethods": {
+        "label": "付款方式",
+        "description": "結帳頁面啟用的付款方式。清單中的第一個付款方式將在結帳頁面預設選取。",
+        "options": {
+          "cod": "貨到付款"
+        }
+      },
+      "currency": {
+        "label": "幣別",
+        "description": "這是您設定商品價格所用的幣別。客戶將以此幣別付款。"
+      },
+      "currencyPosition": {
+        "label": "貨幣符號位置",
+        "description": "此選項可控制貨幣符號的位置。",
+        "options": {
+          "left": "左側",
+          "leftSpace": "左側加空格",
+          "right": "右側",
+          "rightSpace": "右側加空格"
+        }
+      },
+      "currencySymbol": {
+        "label": "貨幣符號",
+        "description": "貨幣符號會顯示在價格前面。如果希望符號與價格之間有空格，請在符號結尾加上一個空格。"
+      },
+      "serviceFeePercent": {
+        "label": "其他費用 / 服務費（0 - 100%）",
+        "description": "與銷售相關的其他費用。"
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "配送類型",
+        "description": "此選項可控制客戶如何收到訂單。",
+        "options": {
+          "none": "無",
+          "delivery": "送貨到府",
+          "pickup": "到店自取",
+          "deliveryAndPickup": "送貨到府、到店自取"
+        }
+      },
+      "storeAddress": {
+        "label": "店面地址",
+        "description": "若允許到店自取，此地址會在結帳頁面顯示給客戶。"
+      },
+      "shippingCountries": {
+        "label": "配送國家/地區",
+        "description": "您可出貨的國家/地區。"
+      },
+      "defaultShippingCountry": {
+        "label": "預設配送國家/地區",
+        "description": "結帳頁面預設選取的國家/地區。",
+        "none": "無"
+      },
+      "deliveryCost": {
+        "label": "運費",
+        "description": "將訂單送到客戶地址的固定費用。"
+      },
+      "defaultCountryNotShipped": "請選擇一個配送國家。"
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "結帳",
+        "description": "此設定控制客戶在哪裡完成訂單。如果希望使用者在機器人之外（例如您的網站、Amazon 等）完成訂單，請不要使用我們的預設結帳頁面。",
+        "options": {
+          "default": "預設結帳頁面",
+          "externalLink": "自訂外部結帳頁面",
+          "flow": "流程",
+          "productPage": "前往外部商品頁面"
+        }
+      },
+      "checkoutLink": {
+        "label": "結帳頁面連結",
+        "description": "客戶完成訂單的外部頁面。"
+      },
+      "checkoutFlowId": {
+        "label": "結帳流程",
+        "description": "客戶結帳時執行的流程。",
+        "placeholder": "選擇流程"
+      },
+      "minimumOrderValue": {
+        "label": "最低訂單金額",
+        "description": "客戶可下單的最低金額。此條件會在套用所有折扣後檢查。"
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "要求買家姓名",
+          "description": "結帳時將收集買家姓名。"
+        },
+        "requireEmail": {
+          "label": "要求電子郵件地址",
+          "description": "結帳時將收集買家電子郵件。"
+        },
+        "requirePhone": {
+          "label": "要求電話號碼",
+          "description": "結帳時將收集買家電話。"
+        },
+        "requireState": {
+          "label": "要求州/省",
+          "description": "結帳時將收集買家所在州/省。"
+        },
+        "requireZip": {
+          "label": "要求郵遞區號",
+          "description": "結帳時將收集買家郵遞區號。"
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "訂單確認訊息",
+        "description": "客戶下單後在聊天中收到的內容。預設訊息會以工作區語言列出訂單明細。",
+        "options": {
+          "default": "預設訊息",
+          "flow": "執行流程",
+          "none": "不傳送任何內容"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "訂單確認流程",
+        "description": "客戶下單後，取代預設訊息傳送給客戶的流程。"
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "全天營業",
+    "addNew": "新增",
+    "dialogTitle": "營業時間",
+    "name": "名稱",
+    "namePlaceholder": "例如：平日",
+    "day": "星期",
+    "from": "開門",
+    "to": "打烊",
+    "add": "新增時段",
+    "remove": "移除",
+    "cancel": "取消",
+    "continue": "繼續",
+    "created": "營業時間已建立",
+    "saveError": "無法儲存營業時間",
+    "days": {
+      "0": "星期日",
+      "1": "星期一",
+      "2": "星期二",
+      "3": "星期三",
+      "4": "星期四",
+      "5": "星期五",
+      "6": "星期六"
+    },
+    "sameTimes": "營業時間和打烊時間不能相同。"
+  },
+  "webshop": {
+    "metadataTitle": "商店",
+    "metadataOrderTitle": "您的訂單",
+    "invalidLinkTitle": "此連結無效",
+    "invalidLinkDescription": "連結可能已過期。請在聊天中向商店索取新連結。",
+    "previewBanner": "預覽：顧客看到的就是這樣。預覽中無法下單。",
+    "previewOrderingOff": "預覽：無法下單",
+    "closed": {
+      "orderingUnavailable": "商店暫不接單。",
+      "outsideOpenHours": "商店現在不營業，但您仍可瀏覽。"
+    },
+    "searchPlaceholder": "搜尋商品",
+    "categories": "分類",
+    "allCategories": "全部分類",
+    "vendors": "供應商",
+    "allVendors": "全部供應商",
+    "noProducts": "沒有找到商品。",
+    "productNotFound": "該商品已下架。",
+    "outOfStock": "缺貨",
+    "addToCart": "加入購物車",
+    "added": "已加入購物車",
+    "chooseOptions": "選擇規格",
+    "chooseOption": "選擇{name}",
+    "variantUnavailable": "該組合暫不可選。",
+    "buy": "購買",
+    "share": "分享",
+    "linkCopied": "已複製",
+    "similar": "相似商品",
+    "save": "收藏",
+    "saved": "已收藏",
+    "showImage": "查看第{number}張圖片",
+    "increase": "增加數量",
+    "decrease": "減少數量",
+    "remove": "移除",
+    "cart": "購物車",
+    "cartEmpty": "購物車是空的。",
+    "continueShopping": "繼續購物",
+    "unavailableItems": "{count, plural, one {# 件商品暫時無法下單} other {# 件商品暫時無法下單}}",
+    "unavailableNotOrdered": "這些商品不會下單，並會保留在購物車中。",
+    "unavailable": "已不再供應",
+    "unavailableHint": "請重新選擇規格",
+    "deletedProduct": "已刪除的商品",
+    "summary": {
+      "subtotal": "小計",
+      "discount": "折扣",
+      "delivery": "運費",
+      "otherFees": "其他費用",
+      "total": "合計",
+      "coupon": "優惠券（{code}）",
+      "title": "訂單摘要",
+      "saved": "為你省下 {amount}"
+    },
+    "belowMinimum": "最低訂單金額為 {amount}。",
+    "checkOut": "去結帳",
+    "contactDetails": "您的資料",
+    "optional": "（選填）",
+    "fields": {
+      "name": "姓名",
+      "email": "電子郵件",
+      "phone": "電話",
+      "country": "國家/地區",
+      "state": "省/州",
+      "city": "城市",
+      "address1": "地址",
+      "address2": "公寓、樓棟等",
+      "zip": "郵遞區號",
+      "note": "給商店的備註"
+    },
+    "shipping": {
+      "title": "配送方式",
+      "delivery": "宅配到府",
+      "pickup": "到店自取",
+      "storeAddress": "門市地址：{address}"
+    },
+    "payment": {
+      "title": "付款方式",
+      "cod": "貨到付款"
+    },
+    "placeOrder": "送出訂單",
+    "orderPlaced": "謝謝！訂單已送出，我們會在聊天中通知您進度。",
+    "orderTitle": "訂單 #{number}",
+    "orderNotFound": "找不到該訂單。",
+    "placedAt": "下單時間：{date}",
+    "status": {
+      "pending": "未處理",
+      "accepted": "處理中",
+      "shipped": "已出貨",
+      "concluded": "已完成",
+      "cancelled": "已取消"
+    },
+    "rateTitle": "評價您的訂單",
+    "rateComment": "告訴商店您的想法（選填）",
+    "rateSubmit": "送出評價",
+    "rateThanks": "感謝您的評價！",
+    "yourRating": "您的評價",
+    "ratingValue": "{rating} 星（滿分 5 星）",
+    "previous": "上一頁",
+    "next": "下一頁",
+    "pageOf": "第 {page}/{pageCount} 頁",
+    "errors": {
+      "generic": "發生錯誤，請重試。",
+      "checkFields": "請檢查填寫的內容。",
+      "fieldRequired": "請填寫{field}。",
+      "countryUnavailable": "商店不配送到該國家/地區。",
+      "invalidLink": "此連結已失效，請向商店索取新連結。",
+      "webshopPreviewOnly": "這是預覽，只能透過傳給顧客的連結下單。",
+      "rateLimited": "操作太頻繁，請稍後再試。",
+      "orderingUnavailable": "商店暫不接單。",
+      "orderBelowMinimum": "最低訂單金額為 {minimum}。",
+      "orderBelowVendorMinimum": "{vendorName} 的商品合計需至少 {minimum}。",
+      "orderOutOfStock": "{productName} 已缺貨。",
+      "orderProductUnavailable": "部分商品已無法下單，請檢查購物車。",
+      "orderEmpty": "購物車是空的。",
+      "orderShippingTypeUnavailable": "該配送方式不可用。",
+      "webshopRatingNotAllowed": "該訂單無法評價。",
+      "webshopCartFull": "購物車最多可放 {maximum} 種不同的商品。",
+      "notFound": "該商品已下架。",
+      "discountCodeNotFound": "該折扣碼不存在。",
+      "discountCodeInactive": "該折扣碼未啟用。",
+      "discountCodeNotStarted": "該折扣碼尚未生效。",
+      "discountCodeExpired": "該折扣碼已過期。",
+      "discountCodeUsageLimitReached": "該折扣碼已用完。",
+      "discountCodeAlreadyUsed": "您已使用過該折扣碼。",
+      "discountCodeNotEligible": "該折扣碼不適用於您。",
+      "discountCodeNotApplicable": "該折扣碼不適用於購物車中的商品。",
+      "discountCodeMinimumAmount": "該折扣碼需消費滿 {minimum}，還差 {missing}。",
+      "discountCodeMinimumQuantity": "該折扣碼需至少 {minimum} 件，還差 {missing} 件。"
+    },
+    "discount": {
+      "label": "折扣碼",
+      "placeholder": "輸入折扣碼",
+      "apply": "套用",
+      "applied": "折扣碼已套用",
+      "automatic": "已自動套用",
+      "remove": "移除折扣碼",
+      "available": "可用的優惠碼",
+      "freeShipping": "免運費",
+      "bestChoice": "最佳選擇",
+      "expiresOn": "有效期限至 {date}",
+      "noExpiry": "長期有效",
+      "inUse": "使用中",
+      "saves": "省 {amount}",
+      "showMore": "{count, plural, one {再顯示 # 個優惠碼} other {再顯示 # 個優惠碼}}",
+      "showLess": "收合",
+      "removeShort": "移除",
+      "expired": "已過期",
+      "usedUp": "已領完",
+      "notEligible": "暫不符合條件"
+    },
+    "itemCount": "{count, plural, one {# 件} other {# 件}}",
+    "relatedProducts": "你可能也會喜歡"
+  },
+  "webshopLinks": {
+    "preview": "預覽",
+    "getLink": "取得連結",
+    "copied": "連結已複製。放到機器人按鈕上，每位聯絡人都會開啟自己的商店。",
+    "error": "無法取得連結。",
+    "copyError": "無法複製連結。",
+    "shopLink": {
+      "label": "商店連結",
+      "hint": "將此連結貼到流程、群發或序列中的按鈕裡。收到連結的每位聯絡人都會開啟自己的商店並可以下單。"
+    },
+    "productLink": {
+      "label": "公開連結",
+      "hint": "複製該連結並貼到流程、群發或序列中。收到連結的每位聯絡人都會開啟此商品並可以下單。"
+    }
+  },
+  "discountCodes": {
+    "title": "優惠券",
+    "description": "顧客結帳時使用或自動生效的折扣碼。",
+    "add": "新增",
+    "edit": "編輯優惠券",
+    "automatic": "自動",
+    "never": "永不",
+    "searchPlaceholder": "搜尋代碼…",
+    "saveError": "無法儲存優惠券。",
+    "created": "優惠券已建立",
+    "updated": "優惠券已儲存",
+    "deleted": "優惠券已刪除",
+    "deleteError": "無法刪除優惠券。",
+    "deleteTitle": "刪除優惠券 {code}？",
+    "deleteDescription": "顧客將無法再使用。已使用該券的訂單保留折扣。",
+    "cancel": "取消",
+    "delete": "刪除",
+    "save": "儲存",
+    "columns": {
+      "name": "名稱",
+      "discount": "折扣",
+      "used": "已使用",
+      "end": "結束",
+      "active": "啟用"
+    },
+    "discountTypes": {
+      "percentage": "百分比",
+      "fixedAmount": "固定金額",
+      "freeShipping": "免運費"
+    },
+    "appliesTo": {
+      "entireOrder": "整筆訂單",
+      "category": "指定分類",
+      "products": "指定商品"
+    },
+    "minimumTypes": {
+      "none": "無",
+      "amount": "最低消費金額",
+      "quantity": "最少商品件數"
+    },
+    "eligibilities": {
+      "everyone": "所有人",
+      "specificCustomers": "指定顧客"
+    },
+    "form": {
+      "discountCode": "折扣碼",
+      "code": "代碼",
+      "generate": "產生",
+      "autoApply": "自動將此優惠券套用至購物車",
+      "autoApplyHint": "購物車無需顧客輸入即可套用。有多張自動優惠券時，取折扣最大的一張。",
+      "typedHint": "顧客將在結帳時輸入此折扣碼。",
+      "options": "選項",
+      "discountType": "折扣類型",
+      "discountValuePercent": "折扣值（%）",
+      "discountValueAmount": "折扣金額（{currency}）",
+      "freeShippingHint": "免除宅配訂單的運費。",
+      "appliesTo": "適用於",
+      "category": "分類",
+      "products": "商品",
+      "productsPlaceholder": "選擇商品",
+      "minimumRequirement": "最低要求",
+      "minimumAmount": "最低金額（{currency}）",
+      "minimumQuantity": "最少件數",
+      "usageLimits": "使用限制",
+      "limitTotal": "限制此折扣的總使用次數",
+      "usedSoFar": "{count, plural, one {已使用 # 次} other {已使用 # 次}}",
+      "oncePerCustomer": "每位顧客限用一次",
+      "customerEligibility": "適用顧客",
+      "specificCustomersHint": "僅限下單時符合下方篩選條件的聯絡人。",
+      "activeDates": "有效期間",
+      "startDate": "開始日期",
+      "endDate": "結束日期",
+      "isActive": "啟用"
+    },
+    "rules": {
+      "codeCharacters": "只能使用不帶重音的字母、數字、- 和 _。",
+      "usageBelowUsed": "此優惠碼已使用 {count} 次，限制不能低於此數。",
+      "customerConditionRequired": "請至少新增一個條件。",
+      "endAfterStart": "結束日期必須晚於開始日期。"
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "分析",
+    "lifetime": "累計",
+    "sales": "銷售額",
+    "orders": "訂單",
+    "products": "商品",
+    "salesByDate": "依日期的銷售額",
+    "ordersByDate": "依日期的訂單",
+    "topProducts": "熱銷商品",
+    "topVendors": "熱銷供應商",
+    "columns": {
+      "name": "名稱",
+      "sales": "銷售額"
+    },
+    "noData": "此期間無資料",
+    "refresh": "重新整理",
+    "change": "{value}%",
+    "noPrevious": "新增",
+    "otherCurrencyOrders": "其他幣別的 {count} 筆訂單未計入這些數據"
   },
   "responseSla": {
     "label": "回應 SLA",

@@ -121,6 +121,7 @@ const OFFER_SDP = mockSdp("offer", true)
 const createdPeerConnections: Array<{
   iceGatheringState: string
   connectionState: string
+  signalingState?: RTCSignalingState
   localDescription: RTCSessionDescriptionInit | null
   addTrack: ReturnType<typeof vi.fn>
   addTransceiver: ReturnType<typeof vi.fn>
@@ -139,6 +140,8 @@ const createdPeerConnections: Array<{
 class MockRTCPeerConnection {
   iceGatheringState = "complete"
   connectionState = "new"
+  /** Unset unless a test wants to model an already-answered peer. */
+  signalingState: RTCSignalingState | undefined = undefined
   localDescription: RTCSessionDescriptionInit | null = null
   ontrack: ((event: unknown) => void) | null = null
   onconnectionstatechange: (() => void) | null = null
@@ -256,6 +259,13 @@ const seedRingingSlot = (data: WhatsappVoipIncomingData) => {
 }
 
 let hookResult: UseWhatsappVoipCallResult | null = null
+
+// Tests reuse call ids. The store remembers dismissed offers so a late
+// `Incoming` cannot ring again; clear that memory so one test's ended or
+// answered call cannot silence the next test's ring.
+beforeEach(() => {
+  useWhatsappVoipCallStore.setState({ dismissedRingIds: [] })
+})
 
 describe("useWhatsappVoipCall", () => {
   let container: HTMLDivElement
@@ -660,7 +670,9 @@ describe("useWhatsappVoipCall", () => {
   })
 
   test("resumes a still-ringing call fetched on mount into the basket, not the slot", async () => {
-    pendingIncomingActionMock.mockResolvedValue({ data: [incomingData] })
+    pendingIncomingActionMock.mockResolvedValue({
+      data: { calls: [incomingData], isComplete: true },
+    })
 
     await render()
     await act(async () => {
@@ -682,7 +694,9 @@ describe("useWhatsappVoipCall", () => {
     // both paths producing the same basket order.
     const callA = { ...incomingData, whatsappCallId: "call-a" }
     const callB = { ...incomingData, whatsappCallId: "call-b" }
-    pendingIncomingActionMock.mockResolvedValue({ data: [callB, callA] })
+    pendingIncomingActionMock.mockResolvedValue({
+      data: { calls: [callB, callA], isComplete: true },
+    })
 
     await render()
     await act(async () => {
@@ -697,7 +711,9 @@ describe("useWhatsappVoipCall", () => {
   })
 
   test("resumes into the basket even while the slot already holds a different call — ring-all means both stay live", async () => {
-    pendingIncomingActionMock.mockResolvedValue({ data: [incomingData] })
+    pendingIncomingActionMock.mockResolvedValue({
+      data: { calls: [incomingData], isComplete: true },
+    })
     seedRingingSlot({
       ...incomingData,
       whatsappCallId: "already-engaged",
@@ -899,7 +915,9 @@ describe("useWhatsappVoipCall", () => {
   })
 
   test("does not fetch the resume lookup again on a re-render (mount-only)", async () => {
-    pendingIncomingActionMock.mockResolvedValue({ data: [] })
+    pendingIncomingActionMock.mockResolvedValue({
+      data: { calls: [], isComplete: true },
+    })
 
     await render()
     await act(async () => {
@@ -1432,7 +1450,9 @@ describe("useWhatsappVoipCall — basket / multi-ring", () => {
         turnConfigured: true,
       },
     })
-    pendingIncomingActionMock.mockResolvedValue({ data: [] })
+    pendingIncomingActionMock.mockResolvedValue({
+      data: { calls: [], isComplete: true },
+    })
     startCallRecorderMock.mockReturnValue({ stop: vi.fn() })
     hangupActionMock.mockResolvedValue({ data: { hungUp: true } })
     vi.stubGlobal("RTCPeerConnection", MockRTCPeerConnection)
@@ -2083,6 +2103,93 @@ describe("useWhatsappVoipCall — startOutbound", () => {
       createdPeerConnections[0]?.setRemoteDescription,
     ).toHaveBeenCalledWith({ type: "answer", sdp: "v=0 answer-from-meta" })
     expect(useWhatsappVoipCallStore.getState().pendingOutboundAnswer).toBeNull()
+  })
+
+  test("ignores a re-delivered outbound answer once the peer has already applied one", async () => {
+    initiateOutboundActionMock.mockResolvedValue({
+      data: outboundDialingResult,
+    })
+    await render()
+    await act(async () => {
+      await hookResult?.startOutbound({ conversationId: "conversation-1" })
+    })
+    const peer = createdPeerConnections[0]
+    if (!peer) {
+      throw new Error("expected the outbound call to create a peer")
+    }
+    // After a first answer the peer is "stable"; a worker redelivery or a
+    // recovery fetch must not run setRemoteDescription a second time.
+    peer.signalingState = "stable"
+
+    act(() => {
+      useWhatsappVoipCallStore.getState().setPendingOutboundAnswer({
+        whatsappCallId: "out-call-1",
+        sdp: "v=0 answer-from-meta",
+      })
+    })
+
+    expect(peer.setRemoteDescription).not.toHaveBeenCalled()
+    expect(useWhatsappVoipCallStore.getState().pendingOutboundAnswer).toBeNull()
+  })
+
+  test("applies the answer once when a pushed and a re-fetched copy arrive back to back", async () => {
+    initiateOutboundActionMock.mockResolvedValue({
+      data: outboundDialingResult,
+    })
+    await render()
+    await act(async () => {
+      await hookResult?.startOutbound({ conversationId: "conversation-1" })
+    })
+    const peer = createdPeerConnections[0]
+    if (!peer) {
+      throw new Error("expected the outbound call to create a peer")
+    }
+    // `setRemoteDescription` is async, so the peer is still `have-local-offer`
+    // when the second copy lands and the signaling-state guard cannot see it.
+    const pending = {
+      whatsappCallId: "out-call-1",
+      sdp: "v=0 answer-from-meta",
+    }
+
+    act(() => {
+      useWhatsappVoipCallStore.getState().setPendingOutboundAnswer(pending)
+    })
+    act(() => {
+      useWhatsappVoipCallStore.getState().setPendingOutboundAnswer(pending)
+    })
+
+    expect(peer.setRemoteDescription).toHaveBeenCalledTimes(1)
+    expect(useWhatsappVoipCallStore.getState().pendingOutboundAnswer).toBeNull()
+  })
+
+  test("lets a later copy of the answer apply after the first attempt failed", async () => {
+    initiateOutboundActionMock.mockResolvedValue({
+      data: outboundDialingResult,
+    })
+    await render()
+    await act(async () => {
+      await hookResult?.startOutbound({ conversationId: "conversation-1" })
+    })
+    const peer = createdPeerConnections[0]
+    if (!peer) {
+      throw new Error("expected the outbound call to create a peer")
+    }
+    peer.setRemoteDescription.mockRejectedValueOnce(new Error("bad sdp"))
+    const pending = {
+      whatsappCallId: "out-call-1",
+      sdp: "v=0 answer-from-meta",
+    }
+
+    await act(() => {
+      useWhatsappVoipCallStore.getState().setPendingOutboundAnswer(pending)
+      // Lets the rejected apply settle so its retry guard is released.
+      return Promise.resolve()
+    })
+    act(() => {
+      useWhatsappVoipCallStore.getState().setPendingOutboundAnswer(pending)
+    })
+
+    expect(peer.setRemoteDescription).toHaveBeenCalledTimes(2)
   })
 
   test("buffers a pending outbound answer that arrives before addOutbound, then applies it once the matching call appears", async () => {

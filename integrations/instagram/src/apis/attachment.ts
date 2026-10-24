@@ -6,11 +6,13 @@ import {
   type IncomingAttachment,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import {
+  storeIncomingImage,
+  toStoredMediaFields,
+} from "@chatbotx.io/utils/store-incoming-image"
 import fetch from "cross-fetch"
-import imageSize from "image-size"
 import { rescue } from "../exception"
 import { instagramBusinessClient } from "../lib/http-client"
-import { logger } from "../lib/logger"
 import type {
   InstagramAttachment,
   InstagramAuthValue,
@@ -68,37 +70,22 @@ export const getMessageAttachmentEntity = async ({
     )
   }
 
-  const originPath = `${getMediaStoragePrefix(ctx)}/${createId()}`
-  const bytes = await response.arrayBuffer()
   const mimeType = response.headers.get("content-type") ?? "image/png"
   const fileType = guessFileTypeFromMimeType(mimeType)
-
-  await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
-    ACL: "public-read",
-    ContentType: mimeType,
+  const isPhotoMessage = attachment.type === "image"
+  const stored = await storeIncomingImage({
+    uploader: ctx.uploader,
+    key: `${getMediaStoragePrefix(ctx)}/${createId()}`,
+    bytes: await response.arrayBuffer(),
+    mimeType,
+    profile: isPhotoMessage ? "media" : "original",
+    acl: "public-read",
   })
-
-  const imageProperties: {
-    width?: number
-    height?: number
-  } = {}
-  if (mimeType.startsWith("image/")) {
-    try {
-      const arrayBytes = new Uint8Array(bytes)
-      const dimensions = imageSize(arrayBytes)
-      imageProperties.width = dimensions.width
-      imageProperties.height = dimensions.height
-    } catch (error) {
-      logger.warn(error, "Failed to read attachment image dimensions")
-    }
-  }
 
   return {
     sourceId: createId(),
-    originPath,
+    isPhotoMessage,
     fileType,
-    mimeType,
-    size: Number.parseInt(response.headers.get("content-length") ?? "0", 10),
-    ...imageProperties,
+    ...toStoredMediaFields(stored),
   }
 }

@@ -10,6 +10,7 @@ import {
 import {
   productCategoryModel,
   productModel,
+  vendorModel,
 } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 
@@ -32,6 +33,8 @@ export const productCategoryRepository = {
         id: productCategoryModel.id,
         parentId: productCategoryModel.parentId,
         name: productCategoryModel.name,
+        imageUrl: productCategoryModel.imageUrl,
+        isVisible: productCategoryModel.isVisible,
         rank: productCategoryModel.rank,
         productCount: count(productModel.id),
       })
@@ -83,6 +86,8 @@ export const productCategoryRepository = {
       name: string
       rank?: number
       parentId?: string | null
+      imageUrl?: string | null
+      isVisible?: boolean
     },
     tx: DatabaseClient = db,
   ) {
@@ -94,6 +99,8 @@ export const productCategoryRepository = {
         name: input.name,
         rank: input.rank ?? 10,
         parentId: input.parentId ?? null,
+        imageUrl: input.imageUrl ?? null,
+        isVisible: input.isVisible ?? true,
       })
       .returning()
     return row
@@ -103,15 +110,24 @@ export const productCategoryRepository = {
     input: {
       workspaceId: string
       categoryId: string
-      name: string
+      name?: string
       parentId?: string | null
+      imageUrl?: string | null
+      isVisible?: boolean
+      rank?: number
     },
     tx: DatabaseClient = db,
   ) {
     const [row] = await tx
       .update(productCategoryModel)
       .set({
-        name: input.name,
+        // `undefined` leaves a column as it is.
+        ...(input.name === undefined ? {} : { name: input.name }),
+        ...(input.imageUrl === undefined ? {} : { imageUrl: input.imageUrl }),
+        ...(input.isVisible === undefined
+          ? {}
+          : { isVisible: input.isVisible }),
+        ...(input.rank === undefined ? {} : { rank: input.rank }),
         // `undefined` leaves the row where it is; an explicit `null` promotes a
         // sub-category back to the top level.
         ...(input.parentId === undefined ? {} : { parentId: input.parentId }),
@@ -124,6 +140,74 @@ export const productCategoryRepository = {
       )
       .returning()
     return row
+  },
+
+  /**
+   * Re-files every product and vendor that points at `categoryId` after the
+   * category moved under `parentId`, so the category column keeps naming a
+   * top-level category and the sub-category column names the moved one.
+   */
+  async fileUnderParent(
+    input: { workspaceId: string; categoryId: string; parentId: string },
+    tx: DatabaseClient = db,
+  ) {
+    const values = {
+      categoryId: input.parentId,
+      subcategoryId: input.categoryId,
+    }
+    await tx
+      .update(productModel)
+      .set(values)
+      .where(
+        and(
+          eq(productModel.workspaceId, input.workspaceId),
+          or(
+            eq(productModel.categoryId, input.categoryId),
+            eq(productModel.subcategoryId, input.categoryId),
+          ),
+        ),
+      )
+    await tx
+      .update(vendorModel)
+      .set(values)
+      .where(
+        and(
+          eq(vendorModel.workspaceId, input.workspaceId),
+          or(
+            eq(vendorModel.categoryId, input.categoryId),
+            eq(vendorModel.subcategoryId, input.categoryId),
+          ),
+        ),
+      )
+  },
+
+  /**
+   * Mirror of `fileUnderParent` for a sub-category promoted to the top level:
+   * what was filed under it is filed directly under it as a category.
+   */
+  async fileAsTopLevel(
+    input: { workspaceId: string; categoryId: string },
+    tx: DatabaseClient = db,
+  ) {
+    const values = { categoryId: input.categoryId, subcategoryId: null }
+    await tx
+      .update(productModel)
+      .set(values)
+      .where(
+        and(
+          eq(productModel.workspaceId, input.workspaceId),
+          eq(productModel.subcategoryId, input.categoryId),
+        ),
+      )
+    await tx
+      .update(vendorModel)
+      .set(values)
+      .where(
+        and(
+          eq(vendorModel.workspaceId, input.workspaceId),
+          eq(vendorModel.subcategoryId, input.categoryId),
+        ),
+      )
   },
 
   async delete(
