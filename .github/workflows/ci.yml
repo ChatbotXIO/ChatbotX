@@ -124,12 +124,19 @@ jobs:
       # Explicit SHAs avoid Turbo choosing an ambiguous base ref. Pushes to
       # main retain the complete suite, so cross-workspace regressions are
       # still caught before a release.
+      #
+      # The checkout is the PR merge commit, built on the *current* main tip.
+      # `pull_request.base.sha` is not: it stays at the main commit the branch
+      # was last synced with, so diffing against it pulls in every main commit
+      # merged since — root package.json/lockfile/turbo.json included — and
+      # turbo marks every workspace affected. The merge commit's first parent
+      # is exactly the main tip the PR was merged onto.
       - name: Test affected workspaces
         if: github.event_name == 'pull_request'
-        env:
-          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
-          TURBO_SCM_HEAD: ${{ github.sha }}
-        run: pnpm turbo run test --affected --concurrency=2
+        run: |
+          export TURBO_SCM_BASE="$(git rev-parse HEAD^1)"
+          export TURBO_SCM_HEAD="$(git rev-parse HEAD)"
+          pnpm turbo run test --affected --concurrency=2
 
       # Turbo does not parallelize *within* a suite, so wall clock is bounded
       # by the slowest single suite — builder (248 files), which is ~40% of
