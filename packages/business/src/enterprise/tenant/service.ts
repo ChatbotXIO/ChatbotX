@@ -37,8 +37,9 @@ type TenantBrandingData = {
   theme?: string | null
 }
 
-/** Tag shared by `findByOwner`'s cache entry and every write that must bust it. */
+const tenantCacheTag = (tenantId: string) => `tenant:${tenantId}`
 const ownerCacheTag = (ownerId: string) => `tenant:owner:${ownerId}`
+const TENANT_CACHE_TTL_SECONDS = 30
 
 /**
  * Read/write access to the `Tenant` row (identity + lifecycle + branding). A
@@ -49,12 +50,12 @@ const ownerCacheTag = (ownerId: string) => `tenant:owner:${ownerId}`
 export const tenantService = {
   findById(tenantId: string) {
     return withCache(
-      `tenant:${tenantId}`,
+      tenantCacheTag(tenantId),
       () =>
         db.query.tenantModel.findFirst({
           where: { id: tenantId },
         }),
-      { tags: [`tenant:${tenantId}`] },
+      { tags: [tenantCacheTag(tenantId)], ttl: TENANT_CACHE_TTL_SECONDS },
     )
   },
 
@@ -90,15 +91,32 @@ export const tenantService = {
     )
   },
 
-  findByOwner(ownerId: string) {
-    return withCache(
+  /**
+   * The tenant owned by `ownerId`, or `undefined` if `ownerId` owns no
+   * tenant. The "no tenant" result is cached too (wrapped in an object,
+   * since `withCache` never persists a bare `null`/`undefined`) — this is
+   * the common case for a plain platform user, so it's worth caching.
+   * `upsertById`/`upsertByOwner`/`setStatusByOwner` bust this entry via
+   * `dynamicTags` pointing at the tenant's own tag; `provisionForOwner` busts
+   * it directly through `ownerCacheTag` since no tenant (and so no tenant
+   * tag) exists yet at that point.
+   */
+  async findByOwner(ownerId: string) {
+    const { tenant } = await withCache(
       ownerCacheTag(ownerId),
-      () =>
-        db.query.tenantModel.findFirst({
-          where: { ownerId },
-        }),
-      { tags: [ownerCacheTag(ownerId)] },
+      async () => ({
+        tenant:
+          (await db.query.tenantModel.findFirst({ where: { ownerId } })) ??
+          null,
+      }),
+      {
+        ttl: TENANT_CACHE_TTL_SECONDS,
+        tags: [ownerCacheTag(ownerId)],
+        dynamicTags: (r) =>
+          r.tenant ? [tenantCacheTag(r.tenant.id)] : undefined,
+      },
     )
+    return tenant ?? undefined
   },
 
   /**
@@ -124,8 +142,8 @@ export const tenantService = {
       .values({ ownerId })
       .onConflictDoNothing({ target: tenantModel.ownerId })
       .returning({ id: tenantModel.id })
-    await invalidateCacheByTags([ownerCacheTag(ownerId)])
     if (created) {
+      await invalidateCacheByTags([ownerCacheTag(ownerId)])
       return created.id
     }
 
@@ -194,10 +212,7 @@ export const tenantService = {
       .where(eq(tenantModel.ownerId, ownerId))
       .returning({ id: tenantModel.id })
     if (updated) {
-      await invalidateCacheByTags([
-        `tenant:${updated.id}`,
-        ownerCacheTag(ownerId),
-      ])
+      await invalidateCacheByTags([tenantCacheTag(updated.id)])
     }
   },
 
@@ -209,7 +224,7 @@ export const tenantService = {
       .where(eq(tenantModel.id, tenantId))
       .returning({ id: tenantModel.id })
     if (updated) {
-      await invalidateCacheByTags([`tenant:${updated.id}`])
+      await invalidateCacheByTags([tenantCacheTag(updated.id)])
     }
   },
 
@@ -221,10 +236,7 @@ export const tenantService = {
       .where(eq(tenantModel.ownerId, ownerId))
       .returning({ id: tenantModel.id })
     if (updated) {
-      await invalidateCacheByTags([
-        `tenant:${updated.id}`,
-        ownerCacheTag(ownerId),
-      ])
+      await invalidateCacheByTags([tenantCacheTag(updated.id)])
     }
   },
 
