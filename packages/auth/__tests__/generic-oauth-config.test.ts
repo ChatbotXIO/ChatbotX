@@ -68,6 +68,12 @@ type GenericOAuthPlugin = {
   id: string
   config: Array<{
     discoveryUrl?: string
+    mapProfileToUser?: (profile: {
+      family_name?: unknown
+      given_name?: unknown
+      name?: unknown
+      preferred_username?: unknown
+    }) => { name?: string }
     pkce: boolean
     redirectURI: string
     scopes: string[]
@@ -148,6 +154,35 @@ describe("generic OAuth configuration", () => {
       pkce: true,
       redirectURI: "https://broker.example.com/api/auth/oauth2/callback/oidc",
     })
+  })
+
+  test("uses only string generic OAuth profile claims for display names", async () => {
+    vi.stubEnv("AUTH_OAUTH_ENABLED", "true")
+    vi.stubEnv("AUTH_OAUTH_CLIENT_ID", "test-client")
+    vi.stubEnv("AUTH_OAUTH_CLIENT_SECRET", "test-secret")
+    vi.stubEnv("AUTH_OAUTH_AUTH_URL", "https://idp.example.com/authorize")
+    vi.stubEnv("AUTH_OAUTH_TOKEN_URL", "https://idp.example.com/token")
+
+    const mapProfileToUser = getGenericOAuthPlugin(await getAuthConfig())
+      ?.config[0].mapProfileToUser
+
+    expect(
+      mapProfileToUser?.({
+        name: { unexpected: "object" },
+        preferred_username: "acme-admin",
+      }),
+    ).toEqual({ name: "acme-admin" })
+    expect(
+      mapProfileToUser?.({ family_name: "Lovelace", given_name: "Ada" }),
+    ).toEqual({ name: "Ada Lovelace" })
+    expect(
+      mapProfileToUser?.({
+        name: "  ",
+        preferred_username: "\t",
+        given_name: "",
+        family_name: " ",
+      }),
+    ).toEqual({ name: undefined })
   })
 
   test("uses default scopes when scopes are omitted", async () => {
