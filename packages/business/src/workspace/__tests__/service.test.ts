@@ -124,11 +124,18 @@ vi.mock("../../quota-enforcement/service", () => ({
 vi.mock("../../user-quota/service", () => ({
   userQuotaService: {
     getForUser: mocks.getForUser,
-    reconcileOwnerPoolUsage: vi.fn(async () => undefined),
+    reconcileOwnerAfterTeardown: vi.fn(async () => undefined),
   },
 }))
 
 vi.mock("../../workspace-lifecycle/service", () => ({
+  withPurgeTimeouts: vi.fn(
+    async ({
+      fn,
+    }: {
+      fn: (tx: { delete: typeof mocks.workspaceDelete }) => Promise<unknown>
+    }) => await fn({ delete: mocks.workspaceDelete }),
+  ),
   workspaceLifecycleService: {
     freezeWorkspaceRuntime: vi.fn(async () => undefined),
     disconnectWorkspaceIntegrations: vi.fn(async () => undefined),
@@ -216,7 +223,9 @@ beforeEach(() => {
     }),
   })
   mocks.workspaceDelete.mockReturnValue({
-    where: vi.fn().mockResolvedValue(undefined),
+    where: vi.fn(() => ({
+      returning: vi.fn().mockResolvedValue([{ id: "workspace-1" }]),
+    })),
   })
 })
 
@@ -390,9 +399,9 @@ describe("WorkspaceService.purgeDueScheduled", () => {
       workspaceService.purgeDueScheduled({ chunkSize: 1, maxChunks: 1 }),
     ).resolves.toBe(1)
 
-    expect(mocks.purgeWorkspaceHeavyData).toHaveBeenCalledWith({
-      workspaceId: "w1",
-    })
+    expect(mocks.purgeWorkspaceHeavyData).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId: "w1" }),
+    )
     expect(tx.update).not.toHaveBeenCalled()
   })
 
@@ -433,7 +442,9 @@ describe("WorkspaceService.purgeDueScheduled", () => {
     })
     const deleteError = new Error("Failed query", { cause: pgCause })
     mocks.workspaceDelete.mockReturnValueOnce({
-      where: vi.fn().mockRejectedValue(deleteError),
+      where: vi.fn(() => ({
+        returning: vi.fn().mockRejectedValue(deleteError),
+      })),
     })
 
     await expect(

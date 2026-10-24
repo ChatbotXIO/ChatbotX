@@ -37,6 +37,12 @@ Delete-then-insert (e.g. embedding `replaceForSource`) must be:
 
 - Multiple agents editing the same working tree corrupt each other's git index. For parallel work use separate git worktrees.
 - Stage specific files only — never `git add -A`/`.` (`.agents/rules/git.md`).
+## 6. Bulk deletes and updates
+
+- Bound every statement with a `LIMIT` and keyset or `FOR UPDATE SKIP LOCKED`.
+- Commit each batch before starting the next; never build `IN` from every matching id.
+- Set `lock_timeout` and `statement_timeout`, and keep the total run below its distributed-lock TTL.
+
 
 ## Stop condition
 

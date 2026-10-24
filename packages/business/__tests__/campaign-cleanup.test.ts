@@ -4,17 +4,23 @@ const updateReturningMock = vi.fn()
 const updateWhereMock = vi.fn()
 const updateSetMock = vi.fn()
 const updateMock = vi.fn()
+const executeMock = vi.fn()
 
 vi.mock("@chatbotx.io/database/client", () => ({
   and: (...conditions: unknown[]) => ({ __and: conditions }),
   db: {
-    update: (...args: unknown[]) => updateMock(...args),
+    execute: (...args: unknown[]) => executeMock(...args),
     transaction: async (run: (tx: unknown) => Promise<unknown>) =>
       await run({ update: (...args: unknown[]) => updateMock(...args) }),
+    update: (...args: unknown[]) => updateMock(...args),
   },
   eq: (column: unknown, value: unknown) => ({ __eq: [column, value] }),
   inArray: (column: unknown, value: unknown) => ({
     __inArray: [column, value],
+  }),
+  sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
+    strings,
+    values,
   }),
 }))
 
@@ -41,11 +47,6 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     status: { __column: "broadcast.status" },
     workspaceId: { __column: "broadcast.workspaceId" },
   },
-  contactsOnSequenceModel: {
-    id: { __column: "contactsOnSequence.id" },
-    status: { __column: "contactsOnSequence.status" },
-    workspaceId: { __column: "contactsOnSequence.workspaceId" },
-  },
 }))
 
 beforeEach(() => {
@@ -54,6 +55,7 @@ beforeEach(() => {
   updateWhereMock.mockReturnValue({ returning: updateReturningMock })
   updateSetMock.mockReturnValue({ where: updateWhereMock })
   updateMock.mockReturnValue({ set: updateSetMock })
+  executeMock.mockResolvedValue({ rowCount: 1 })
 })
 
 test("cancelInFlightBroadcastsForWorkspace cancels scheduled, sending and recurring broadcasts only, stopping their series first", async () => {
@@ -100,7 +102,7 @@ test("cancelInFlightBroadcastsForWorkspace cancels scheduled, sending and recurr
   )
 })
 
-test("completeActiveSequenceEnrollmentsForWorkspace marks active enrollments completed", async () => {
+test("completeActiveSequenceEnrollmentsForWorkspace atomically claims one bounded active batch", async () => {
   const { completeActiveSequenceEnrollmentsForWorkspace } = await import(
     "../src/workspace-lifecycle/campaign-cleanup"
   )
@@ -110,32 +112,10 @@ test("completeActiveSequenceEnrollmentsForWorkspace marks active enrollments com
   })
 
   expect(completedCount).toBe(1)
-  expect(updateMock).toHaveBeenCalledOnce()
-  expect(updateSetMock).toHaveBeenCalledWith(
-    expect.objectContaining({
-      status: "completed",
-      nextRunAt: null,
-      nextStepId: null,
-    }),
-  )
-  expect(updateWhereMock).toHaveBeenCalledWith(
-    expect.objectContaining({
-      __and: expect.arrayContaining([
-        expect.objectContaining({
-          __eq: [
-            expect.objectContaining({
-              __column: "contactsOnSequence.workspaceId",
-            }),
-            "workspace-1",
-          ],
-        }),
-        expect.objectContaining({
-          __eq: [
-            expect.objectContaining({ __column: "contactsOnSequence.status" }),
-            "active",
-          ],
-        }),
-      ]),
-    }),
-  )
+  expect(executeMock).toHaveBeenCalledOnce()
+  const statement = executeMock.mock.calls[0][0]
+  expect(statement.strings.join("")).toContain('UPDATE "ContactOnSequence"')
+  expect(statement.strings.join("")).toContain("FOR UPDATE SKIP LOCKED")
+  expect(statement.strings.join("")).toContain("LIMIT ")
+  expect(statement.values).toEqual(["workspace-1", 500])
 })

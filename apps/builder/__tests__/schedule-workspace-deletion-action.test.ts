@@ -5,7 +5,6 @@ import { beforeEach, expect, test, vi } from "vitest"
 const mockGetCurrentUserAndTargetWorkspace = vi.fn()
 const mockHasWorkspacePermission = vi.fn()
 const mockScheduleDeletion = vi.fn()
-const mockFreezeWorkspaceRuntime = vi.fn()
 
 vi.mock("@/lib/safe-action", () => {
   const chain: Record<string, unknown> = {}
@@ -25,9 +24,6 @@ vi.mock("@/lib/auth/permission-routes", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  workspaceLifecycleService: {
-    freezeWorkspaceRuntime: mockFreezeWorkspaceRuntime,
-  },
   workspaceService: {
     scheduleDeletion: mockScheduleDeletion,
   },
@@ -46,10 +42,9 @@ beforeEach(() => {
   })
   mockHasWorkspacePermission.mockReturnValue(true)
   mockScheduleDeletion.mockResolvedValue(undefined)
-  mockFreezeWorkspaceRuntime.mockResolvedValue(undefined)
 })
 
-test("schedules deletion then freezes the workspace runtime", async () => {
+test("schedules a reversible workspace deletion grace period", async () => {
   await (
     scheduleWorkspaceDeletionAction as (props: unknown) => Promise<unknown>
   )({
@@ -57,5 +52,4 @@ test("schedules deletion then freezes the workspace runtime", async () => {
   })
 
   expect(mockScheduleDeletion).toHaveBeenCalledWith({ id: "workspace-1" })
-  expect(mockFreezeWorkspaceRuntime).toHaveBeenCalledWith("workspace-1")
 })

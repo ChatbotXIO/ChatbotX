@@ -15,14 +15,20 @@ const connectionTransitionMock = vi.fn()
 
 vi.mock("@chatbotx.io/database/client", () => ({
   eq: vi.fn((column: unknown, value: unknown) => ({ eq: [column, value] })),
+  sql: Object.assign((strings: TemplateStringsArray) => ({ strings }), {
+    raw: vi.fn((value: string) => value),
+  }),
   db: {
     transaction: transactionMock,
   },
 }))
 
 vi.mock("@chatbotx.io/sequence-scheduler/dispatch-cancel", () => ({
+  cancelPendingDispatchBatch: cancelPendingDispatchesForWorkspaceMock,
   cancelPendingDispatchesForWorkspace: cancelPendingDispatchesForWorkspaceMock,
+  MAX_WORKSPACE_DISPATCH_CANCEL_BATCHES: 400,
   removeDispatchesFromSchedule: removeDispatchesFromScheduleMock,
+  WORKSPACE_DISPATCH_CANCEL_BATCH_SIZE: 500,
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
@@ -44,6 +50,8 @@ vi.mock("../src/workspace-lifecycle/campaign-cleanup", () => ({
     cancelInFlightBroadcastsForWorkspaceMock,
   completeActiveSequenceEnrollmentsForWorkspace:
     completeActiveSequenceEnrollmentsForWorkspaceMock,
+  MAX_SEQUENCE_ENROLLMENT_CANCEL_BATCHES: 400,
+  SEQUENCE_ENROLLMENT_CANCEL_BATCH_SIZE: 500,
 }))
 
 vi.mock("../src/workspace-lifecycle/smart-delay-cleanup", () => ({
@@ -76,7 +84,9 @@ beforeEach(() => {
   order.length = 0
   transactionMock.mockImplementation(
     async (callback: (tx: unknown) => Promise<unknown>) => {
-      const result = await callback({})
+      const result = await callback({
+        execute: vi.fn().mockResolvedValue({ rowCount: 0 }),
+      })
       order.push("tx-done")
       return result
     },
@@ -91,7 +101,7 @@ beforeEach(() => {
   })
   cancelPendingDispatchesForWorkspaceMock.mockImplementation(() => {
     order.push("dispatches")
-    return Promise.resolve([{ id: "dispatch-1", bucket: 1 }])
+    return Promise.resolve([{ bucket: 1, id: "dispatch-1" }])
   })
   removeDispatchesFromScheduleMock.mockImplementation(() => {
     order.push("remove")
@@ -107,7 +117,7 @@ beforeEach(() => {
   connectionTransitionMock.mockResolvedValue(undefined)
 })
 
-test("freezeWorkspaceRuntime runs cleanup in one transaction and removes Redis entries after commit", {
+test("freezeWorkspaceRuntime keeps the transaction to broadcasts and drains independent runtime sources after commit", {
   timeout: 60_000,
 }, async () => {
   // service.ts pulls in a dozen+ unmocked integration services (Klaviyo,
@@ -121,31 +131,35 @@ test("freezeWorkspaceRuntime runs cleanup in one transaction and removes Redis e
 
   await workspaceLifecycleService.freezeWorkspaceRuntime("workspace-1")
 
-  expect(transactionMock).toHaveBeenCalledOnce()
-  expect(cancelInFlightBroadcastsForWorkspaceMock).toHaveBeenCalledWith({
-    tx: {},
-    workspaceId: "workspace-1",
-  })
+  expect(transactionMock).toHaveBeenCalledTimes(3)
+  expect(cancelInFlightBroadcastsForWorkspaceMock).toHaveBeenCalledWith(
+    expect.objectContaining({
+      workspaceId: "workspace-1",
+    }),
+  )
   expect(
     completeActiveSequenceEnrollmentsForWorkspaceMock,
-  ).toHaveBeenCalledWith({
-    tx: {},
-    workspaceId: "workspace-1",
-  })
-  expect(cancelPendingDispatchesForWorkspaceMock).toHaveBeenCalledWith({
-    client: {},
-    removeFromSchedule: false,
-    workspaceId: "workspace-1",
-  })
+  ).toHaveBeenCalledWith(
+    expect.objectContaining({
+      workspaceId: "workspace-1",
+    }),
+  )
+  expect(cancelPendingDispatchesForWorkspaceMock).toHaveBeenCalledWith(
+    expect.objectContaining({
+      workspaceId: "workspace-1",
+    }),
+  )
   expect(removeDispatchesFromScheduleMock).toHaveBeenCalledWith([
-    { id: "dispatch-1", bucket: 1 },
+    { bucket: 1, id: "dispatch-1" },
   ])
   expect(cancelSmartDelaysForWorkspaceMock).toHaveBeenCalledWith({
     workspaceId: "workspace-1",
   })
   expect(order).toEqual([
     "broadcast",
+    "tx-done",
     "enrollments",
+    "tx-done",
     "dispatches",
     "tx-done",
     "remove",
@@ -156,7 +170,7 @@ test("freezeWorkspaceRuntime runs cleanup in one transaction and removes Redis e
 test("freezeWorkspaceRuntime still cancels smart delays when dispatch cleanup fails", async () => {
   // Broadcasts/sequences and wait steps are independent runtime sources: a
   // Redis failure on one must not leave the other armed.
-  removeDispatchesFromScheduleMock.mockRejectedValueOnce(
+  cancelPendingDispatchesForWorkspaceMock.mockRejectedValueOnce(
     new Error("redis down"),
   )
 

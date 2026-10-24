@@ -22,6 +22,7 @@
 | After any public API change (every one surfaces in the CLI/MCP), or CLI/MCP docs/skill drift | `cli-mcp-docs` |
 | Business logic, new service method, any DB read/write from app code | `business-data-access` |
 | New DB table or migration | `drizzle-database` |
+| New table / FK / workspace-scoped data, or any change to workspace deletion/purge/freeze | `workspace-purge` |
 | New background job or queue | `worker-development` |
 | New channel integration | `integration-channel` |
 | Contact filter field/operator, filter SQL, or contact-based audience | `contact-filter` |

@@ -4,12 +4,10 @@ import {
   db,
   eq,
   inArray,
+  sql,
 } from "@chatbotx.io/database/client"
 import { broadcastStatuses } from "@chatbotx.io/database/partials"
-import {
-  broadcastModel,
-  contactsOnSequenceModel,
-} from "@chatbotx.io/database/schema"
+import { broadcastModel } from "@chatbotx.io/database/schema"
 import { disarmAllSeriesForWorkspace } from "../broadcast/recurrence-ledger"
 
 export async function cancelInFlightBroadcastsForWorkspace(props: {
@@ -48,28 +46,42 @@ export async function cancelInFlightBroadcastsForWorkspace(props: {
   return cancelledBroadcasts.length
 }
 
+export const SEQUENCE_ENROLLMENT_CANCEL_BATCH_SIZE = 500
+export const MAX_SEQUENCE_ENROLLMENT_CANCEL_BATCHES = 400
+
 export async function completeActiveSequenceEnrollmentsForWorkspace(props: {
   tx?: DatabaseClient
   workspaceId: string
 }): Promise<number> {
-  const { tx = db, workspaceId } = props
+  const client = props.tx ?? db
+  const maxBatches = props.tx ? 1 : MAX_SEQUENCE_ENROLLMENT_CANCEL_BATCHES
+  let completed = 0
 
-  const completedEnrollments = await tx
-    .update(contactsOnSequenceModel)
-    .set({
-      status: "completed",
-      completedAt: new Date(),
-      nextRunAt: null,
-      nextStepId: null,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(contactsOnSequenceModel.workspaceId, workspaceId),
-        eq(contactsOnSequenceModel.status, "active"),
-      ),
-    )
-    .returning({ id: contactsOnSequenceModel.id })
+  for (let batch = 0; batch < maxBatches; batch += 1) {
+    const rows = await client.execute<{ id: string }>(sql`
+      UPDATE "ContactOnSequence"
+      SET
+        "status" = 'completed',
+        "completedAt" = NOW(),
+        "nextRunAt" = NULL,
+        "nextStepId" = NULL,
+        "updatedAt" = NOW()
+      WHERE "id" IN (
+        SELECT "id"
+        FROM "ContactOnSequence"
+        WHERE "workspaceId" = ${props.workspaceId}
+          AND "status" = 'active'
+        LIMIT ${SEQUENCE_ENROLLMENT_CANCEL_BATCH_SIZE}
+        FOR UPDATE SKIP LOCKED
+      )
+      RETURNING "id"
+    `)
+    const count = rows.rowCount ?? 0
+    completed += count
+    if (count < SEQUENCE_ENROLLMENT_CANCEL_BATCH_SIZE) {
+      break
+    }
+  }
 
-  return completedEnrollments.length
+  return completed
 }

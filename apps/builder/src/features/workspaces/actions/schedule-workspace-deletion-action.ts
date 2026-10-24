@@ -1,9 +1,6 @@
 "use server"
 
-import {
-  workspaceLifecycleService,
-  workspaceService,
-} from "@chatbotx.io/business"
+import { workspaceService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   type WorkspaceIdRequestParams,
@@ -40,7 +37,5 @@ export const scheduleWorkspaceDeletionAction = workspaceActionClientAllowExpired
       await workspaceService.scheduleDeletion({
         id: workspaceId,
       })
-
-      await workspaceLifecycleService.freezeWorkspaceRuntime(workspaceId)
     },
   )

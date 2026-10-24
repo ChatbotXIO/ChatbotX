@@ -915,6 +915,21 @@ class UserQuotaService extends BaseService {
 
     await this.store.invalidate(ownerId)
   }
+  /**
+   * Reconciles the quota row that owns a workspace teardown. Active reseller
+   * tenants pool usage on their owner; platform users reconcile only their own
+   * workspaces.
+   */
+  async reconcileOwnerAfterTeardown(ownerId: string): Promise<void> {
+    const tenant = await db.query.tenantModel.findFirst({
+      where: { ownerId },
+    })
+    if (tenant?.status === "active") {
+      await this.reconcileOwnerPoolUsage(ownerId, tenant.id)
+      return
+    }
+    await this.reconcileUserSelfUsage(ownerId)
+  }
 
   /**
    * Pure read of a metric's configured limit + DB-synced used value from a

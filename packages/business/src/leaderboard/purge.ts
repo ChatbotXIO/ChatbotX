@@ -14,7 +14,12 @@ import { logger } from "../logger"
  */
 export async function purgeLeaderboardDataForWorkspace(
   workspaceId: string,
-  options: { batchSize?: number; maxBatches?: number } = {},
+  options: {
+    batchSize?: number
+    deadlineAt?: number
+    deleteBatch?: () => Promise<number>
+    maxBatches?: number
+  } = {},
 ): Promise<{ deleted: number; complete: boolean }> {
   const batchSize = options.batchSize ?? 5000
   const maxBatches = options.maxBatches ?? 2000
@@ -29,10 +34,17 @@ export async function purgeLeaderboardDataForWorkspace(
   }
   let deleted = 0
   for (let batch = 0; batch < maxBatches; batch++) {
-    const count = await leaderboardScoreEventRepository.deleteBatchByWorkspace({
-      workspaceId,
-      limit: batchSize,
-    })
+    if (options.deadlineAt && Date.now() >= options.deadlineAt) {
+      return { deleted, complete: false }
+    }
+    const count = await (
+      options.deleteBatch ??
+      (async () =>
+        await leaderboardScoreEventRepository.deleteBatchByWorkspace({
+          workspaceId,
+          limit: batchSize,
+        }))
+    )()
     deleted += count
     if (count < batchSize) {
       return { deleted, complete: true }

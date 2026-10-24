@@ -4,6 +4,7 @@ import {
   db,
   eq,
   inArray,
+  sql,
   type Transaction,
 } from "@chatbotx.io/database/client"
 import { sequenceDispatchModel } from "@chatbotx.io/database/schema"
@@ -18,7 +19,7 @@ import { SchedulerClient } from "@chatbotx.io/scheduler"
  */
 
 type DrizzleClient = typeof db | Transaction
-type ScheduledDispatch = { id: string; bucket: number }
+export type ScheduledDispatch = { id: string; bucket: number }
 type PendingDispatch = {
   bucket: number
   contactId: string
@@ -46,6 +47,8 @@ const pendingDispatchColumns = {
   contactId: true,
   stepId: true,
 } as const
+export const WORKSPACE_DISPATCH_CANCEL_BATCH_SIZE = 500
+export const MAX_WORKSPACE_DISPATCH_CANCEL_BATCHES = 400
 
 export interface CancelPendingDispatchesParams {
   client?: DatabaseClient | Transaction
@@ -111,19 +114,48 @@ export async function cancelPendingDispatches(
   })
 }
 
-export async function cancelPendingDispatchesForWorkspace(params: {
-  client?: DatabaseClient | Transaction
-  removeFromSchedule?: boolean
+export async function cancelPendingDispatchBatch(params: {
+  client?: DatabaseClient
   workspaceId: string
 }): Promise<ScheduledDispatch[]> {
-  return await cancelPendingDispatchesByWhere({
-    client: params.client,
-    removeFromSchedule: params.removeFromSchedule,
-    where: {
-      status: "pending",
-      workspaceId: params.workspaceId,
-    },
-  })
+  const result = await (params.client ?? db).execute<ScheduledDispatch>(sql`
+    UPDATE "SequenceDispatch"
+    SET "status" = 'canceled', "updatedAt" = NOW()
+    WHERE ("id", "workspaceId") IN (
+      SELECT "id", "workspaceId"
+      FROM "SequenceDispatch"
+      WHERE "workspaceId" = ${params.workspaceId}
+        AND "status" = 'pending'
+      LIMIT ${WORKSPACE_DISPATCH_CANCEL_BATCH_SIZE}
+      FOR UPDATE SKIP LOCKED
+    )
+    RETURNING "id", "bucket"
+  `)
+  return result.rows
+}
+
+export async function cancelPendingDispatchesForWorkspace(params: {
+  client?: DatabaseClient
+  onCanceled?: (dispatches: ScheduledDispatch[]) => Promise<void>
+  workspaceId: string
+}): Promise<number> {
+  const maxBatches = params.client ? 1 : MAX_WORKSPACE_DISPATCH_CANCEL_BATCHES
+  let canceled = 0
+
+  for (let batch = 0; batch < maxBatches; batch += 1) {
+    const dispatches = await cancelPendingDispatchBatch(params)
+    canceled += dispatches.length
+    if (dispatches.length === 0) {
+      break
+    }
+
+    await params.onCanceled?.(dispatches)
+    if (dispatches.length < WORKSPACE_DISPATCH_CANCEL_BATCH_SIZE) {
+      break
+    }
+  }
+
+  return canceled
 }
 
 export async function removeDispatchesFromSchedule(

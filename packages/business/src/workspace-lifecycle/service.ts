@@ -10,11 +10,11 @@ import {
 import {
   channelTypes,
   type InboxDisconnectReason,
-  ROOT_TENANT_ID,
 } from "@chatbotx.io/database/partials"
 import {
   connectionRepository,
   LIVE_RUN_STATUSES,
+  leaderboardScoreEventRepository,
   PULL_CLAIMABLE_STATUSES,
 } from "@chatbotx.io/database/repositories"
 import {
@@ -39,8 +39,10 @@ import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
 // Edge bundle (instrumentation → oRPC → workspace token auth → workspace
 // service), where a Node built-in is a hard compile error.
 import {
-  cancelPendingDispatchesForWorkspace,
+  cancelPendingDispatchBatch,
+  MAX_WORKSPACE_DISPATCH_CANCEL_BATCHES,
   removeDispatchesFromSchedule,
+  WORKSPACE_DISPATCH_CANCEL_BATCH_SIZE,
 } from "@chatbotx.io/sequence-scheduler/dispatch-cancel"
 import { BaseService } from "../base.service"
 import { coexistService } from "../coexist/service"
@@ -70,6 +72,8 @@ import { userQuotaService } from "../user-quota/service"
 import {
   cancelInFlightBroadcastsForWorkspace,
   completeActiveSequenceEnrollmentsForWorkspace,
+  MAX_SEQUENCE_ENROLLMENT_CANCEL_BATCHES,
+  SEQUENCE_ENROLLMENT_CANCEL_BATCH_SIZE,
 } from "./campaign-cleanup"
 import { cancelSmartDelaysForWorkspace } from "./smart-delay-cleanup"
 
@@ -82,9 +86,10 @@ type DisconnectService = {
   disconnect(workspaceId: string): Promise<void>
 }
 
-type DispatchToRemove = {
-  bucket: number
-  id: string
+type PurgePartitionedTable = {
+  primaryKey: readonly string[]
+  selector: "broadcastWorkspace" | "workspace"
+  table: "ContactOnBroadcast" | "SequenceDispatch"
 }
 
 export type WorkspaceTeardownIntegrations = Record<
@@ -131,32 +136,123 @@ export type WorkspaceChannelsTeardownResult = {
  * same technique as `messageCleanupService.purgeRow`.
  */
 const HEAVY_WORKSPACE_TABLES = [
+  "ErrorLog",
+  "AuditLog",
+  "InboundWebhookRequest",
+  "CommentAutomationEvent",
+  "CommentAutomationReply",
+  "TriggerStat",
+  "FlowNodeStat",
+  "MagicLinkStat",
+  "RefLinkStat",
+  "MetaCapiEvent",
+  "AdsConversionEvent",
+  "GoogleAdsConversionEvent",
+  "LeaderboardAuditLog",
   "LeaderboardParticipant",
   "AIConversationEmbedding",
   "AIEmbedding",
-  "Conversation",
   "TriggerExecution",
   "FlowRun",
+  "FlowVersion",
+  "ContactOnSmartDelay",
+  "Conversation",
   "Contact",
 ] as const
 
+const HEAVY_WORKSPACE_PARTITIONED_TABLES = [
+  {
+    primaryKey: ["broadcastId", "contactId"],
+    selector: "broadcastWorkspace",
+    table: "ContactOnBroadcast",
+  },
+  {
+    primaryKey: ["id", "workspaceId"],
+    selector: "workspace",
+    table: "SequenceDispatch",
+  },
+] as const satisfies readonly PurgePartitionedTable[]
+
 const HEAVY_PURGE_BATCH_SIZE = 5000
+const HEAVY_PURGE_BATCH_SIZES: Partial<
+  Record<(typeof HEAVY_WORKSPACE_TABLES)[number], number>
+> = {
+  Contact: 1000,
+  Conversation: 1000,
+}
 const INTER_CHUNK_DELAY_MS = 100
-// Conversation ids deleted per hypertable transaction. Deliberately small:
-// deleting a compressed chunk decompresses its rows first, so each batch's
-// decompression footprint (DB backend memory + WAL) is bounded to ~10
-// conversations' worth of >30-day history — keeping the spike well clear of a
-// high-ingest system running alongside the purge.
 const HYPERTABLE_CONVERSATION_BATCH_SIZE = 10
-// Backstop so a single workspace with a runaway row count cannot spin forever;
-// 5000 * 2000 = 10M rows per table per purge run. Anything beyond that drains
-// on the next scheduled tick.
 const HEAVY_PURGE_MAX_BATCHES_PER_TABLE = 2000
-// Backstop for the per-conversation hypertable passes. Bounds one workspace's
-// drain per run (~10k conversations per pass) so a single very large workspace
-// cannot hold the purge distributed lock for a large fraction of the cron
-// interval; the residue drains on the next scheduled tick.
 const HYPERTABLE_MAX_CONVERSATION_BATCHES = 1000
+const ANALYTICS_HYPERTABLE_MAX_CHUNKS = 100
+const PURGE_LOCK_TIMEOUT = "2s"
+const PURGE_STATEMENT_TIMEOUT = "30s"
+const WORKSPACE_ANALYTICS_HYPERTABLES = [
+  "AnalyticsAgentResponseEvent",
+  "AnalyticsBotMessageEvent",
+  "AnalyticsBroadcastEvent",
+  "AnalyticsContactEvent",
+  "AnalyticsConversationEvent",
+  "AnalyticsFlowNodeEvent",
+  "AnalyticsMessageEvent",
+  "AnalyticsSequenceEvent",
+] as const
+const pause = (ms: number): Promise<void> => {
+  const { promise, resolve } = Promise.withResolvers<void>()
+  setTimeout(resolve, ms)
+  return promise
+}
+
+const assertPurgeDeadline = (
+  deadlineAt: number | undefined,
+  workspaceId: string,
+  table: string,
+): void => {
+  if (deadlineAt !== undefined && Date.now() >= deadlineAt) {
+    throw new WorkspacePurgeIncompleteError(workspaceId, table)
+  }
+}
+
+const getPostgresErrorCode = (value: unknown): unknown => {
+  if (typeof value !== "object" || value === null || !("code" in value)) {
+    return
+  }
+  return value.code
+}
+
+const isPurgeTimeoutError = (err: unknown): boolean => {
+  const code =
+    getPostgresErrorCode(err) ??
+    getPostgresErrorCode(err instanceof Error ? err.cause : undefined)
+  return code === "55P03" || code === "57014"
+}
+
+export const withPurgeTimeouts = async <T>(props: {
+  fn: (tx: DatabaseClient) => Promise<T>
+  table: string
+  workspaceId: string
+}): Promise<T> => {
+  try {
+    return await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`SET LOCAL lock_timeout = ${sql.raw(`'${PURGE_LOCK_TIMEOUT}'`)}`,
+      )
+      await tx.execute(
+        sql`SET LOCAL statement_timeout = ${sql.raw(`'${PURGE_STATEMENT_TIMEOUT}'`)}`,
+      )
+      return await props.fn(tx)
+    })
+  } catch (err) {
+    if (!isPurgeTimeoutError(err)) {
+      throw err
+    }
+    logger.info(
+      { table: props.table, workspaceId: props.workspaceId },
+      "workspace-purge: timed out, deferring to next run",
+    )
+    throw new WorkspacePurgeIncompleteError(props.workspaceId, props.table)
+  }
+}
 
 class WorkspaceLifecycleService extends BaseService {
   async disconnectWorkspaceChannels(props: {
@@ -236,46 +332,115 @@ class WorkspaceLifecycleService extends BaseService {
    * broadcasts, active sequence enrollments and their queued dispatches, plus
    * pending/scheduled smart delays (wait steps and follow-ups).
    *
-   * Called when deletion is scheduled and when the owner's entitlement is torn
-   * down. The runtime guards (`withBlockedOwnerGuard`) would no-op these jobs
-   * anyway, but they would keep waking for the whole grace window — and the
-   * smart-delay scanner would churn them through claim → drop → reset every
-   * tick. Cancelling the rows is what makes the freeze quiet as well as safe.
+   * Called once deletion is due, and when the owner's entitlement is torn down.
+   * The runtime guards (`withBlockedOwnerGuard`) would no-op these jobs anyway,
+   * but they would keep waking for the whole teardown — and the smart-delay
+   * scanner would churn them through claim → drop → reset every tick. Cancelling
+   * the rows is what makes the terminal teardown quiet as well as safe.
    *
    * Each source is independent and best-effort: a Redis failure on one must not
    * leave the others armed.
    */
-  async freezeWorkspaceRuntime(workspaceId: string): Promise<void> {
-    const dispatchesToRemove: DispatchToRemove[] = await db.transaction(
-      async (tx) => {
-        await cancelInFlightBroadcastsForWorkspace({
-          tx,
-          workspaceId,
-        })
-
-        await completeActiveSequenceEnrollmentsForWorkspace({
-          tx,
-          workspaceId,
-        })
-
-        return await cancelPendingDispatchesForWorkspace({
-          client: tx,
-          removeFromSchedule: false,
-          workspaceId,
-        })
-      },
-    )
+  async freezeWorkspaceRuntime(
+    workspaceId: string,
+    deadlineAt?: number,
+  ): Promise<void> {
+    await withPurgeTimeouts({
+      fn: async (tx) =>
+        await cancelInFlightBroadcastsForWorkspace({ tx, workspaceId }),
+      table: "Broadcast",
+      workspaceId,
+    })
 
     try {
-      await removeDispatchesFromSchedule(dispatchesToRemove)
+      let completedEnrollments = 0
+      for (
+        let batch = 0;
+        batch < MAX_SEQUENCE_ENROLLMENT_CANCEL_BATCHES;
+        batch += 1
+      ) {
+        assertPurgeDeadline(deadlineAt, workspaceId, "ContactOnSequence")
+        const completed = await withPurgeTimeouts({
+          fn: async (tx) =>
+            await completeActiveSequenceEnrollmentsForWorkspace({
+              tx,
+              workspaceId,
+            }),
+          table: "ContactOnSequence",
+          workspaceId,
+        })
+        completedEnrollments += completed
+        if (completed < SEQUENCE_ENROLLMENT_CANCEL_BATCH_SIZE) {
+          break
+        }
+        if (batch === MAX_SEQUENCE_ENROLLMENT_CANCEL_BATCHES - 1) {
+          throw new WorkspacePurgeIncompleteError(
+            workspaceId,
+            "ContactOnSequence",
+          )
+        }
+      }
+      logger.info(
+        { completedEnrollments, workspaceId },
+        "workspace-freeze: completed sequence enrollments",
+      )
     } catch (err) {
+      if (deadlineAt || err instanceof WorkspacePurgeIncompleteError) {
+        throw err
+      }
       logger.warn(
-        { err, dispatchCount: dispatchesToRemove.length, workspaceId },
-        "workspace-teardown: failed to remove dispatches from schedule",
+        { err, workspaceId },
+        "workspace-freeze: failed to complete sequence enrollments",
+      )
+    }
+    try {
+      let canceledDispatches = 0
+      for (
+        let batch = 0;
+        batch < MAX_WORKSPACE_DISPATCH_CANCEL_BATCHES;
+        batch += 1
+      ) {
+        assertPurgeDeadline(deadlineAt, workspaceId, "SequenceDispatch")
+        const dispatches = await withPurgeTimeouts({
+          fn: async (tx) =>
+            await cancelPendingDispatchBatch({
+              client: tx,
+              workspaceId,
+            }),
+          table: "SequenceDispatch",
+          workspaceId,
+        })
+        canceledDispatches += dispatches.length
+        if (dispatches.length === 0) {
+          break
+        }
+        await removeDispatchesFromSchedule(dispatches)
+        if (dispatches.length < WORKSPACE_DISPATCH_CANCEL_BATCH_SIZE) {
+          break
+        }
+        if (batch === MAX_WORKSPACE_DISPATCH_CANCEL_BATCHES - 1) {
+          throw new WorkspacePurgeIncompleteError(
+            workspaceId,
+            "SequenceDispatch",
+          )
+        }
+      }
+      logger.info(
+        { canceledDispatches, workspaceId },
+        "workspace-freeze: canceled sequence dispatches",
+      )
+    } catch (err) {
+      if (deadlineAt || err instanceof WorkspacePurgeIncompleteError) {
+        throw err
+      }
+      logger.warn(
+        { err, workspaceId },
+        "workspace-freeze: failed to cancel sequence dispatches",
       )
     }
 
     try {
+      assertPurgeDeadline(deadlineAt, workspaceId, "ContactOnSmartDelay")
       const canceledSmartDelays = await cancelSmartDelaysForWorkspace({
         workspaceId,
       })
@@ -284,6 +449,9 @@ class WorkspaceLifecycleService extends BaseService {
         "workspace-freeze: canceled smart delays",
       )
     } catch (err) {
+      if (deadlineAt) {
+        throw err
+      }
       logger.warn(
         { err, workspaceId },
         "workspace-freeze: failed to cancel smart delays",
@@ -300,23 +468,51 @@ class WorkspaceLifecycleService extends BaseService {
    * partially-drained workspace simply continues on the next call.
    */
   async purgeWorkspaceHeavyData(props: {
-    workspaceId: string
     batchSize?: number
+    deadlineAt?: number
+    workspaceId: string
   }): Promise<number> {
-    const batchSize = props.batchSize ?? HEAVY_PURGE_BATCH_SIZE
+    const defaultBatchSize = props.batchSize ?? HEAVY_PURGE_BATCH_SIZE
     let totalDeleted = 0
 
-    // Drain the compressed hypertables (Message/Attachment) first, by
-    // conversationId, before the ctid loop deletes their parent Conversation
-    // rows. Uses the decompression-cap-lifted delete, not `ctid`.
-    totalDeleted += await this.deleteWorkspaceHypertableRows(props.workspaceId)
+    totalDeleted += await this.deleteWorkspaceAnalyticsRows(
+      props.workspaceId,
+      props.deadlineAt,
+    )
+    totalDeleted += await this.deleteWorkspaceHypertableRows(
+      props.workspaceId,
+      props.deadlineAt,
+    )
 
-    // The partitioned, FK-less leaderboard score history cannot go through the
-    // `ctid` loop below (ctid repeats across partitions); it drains by primary
-    // key and its Redis rankings are dropped.
+    for (const table of HEAVY_WORKSPACE_PARTITIONED_TABLES) {
+      assertPurgeDeadline(props.deadlineAt, props.workspaceId, table.table)
+      totalDeleted += await this.drainPartitionedHeavyTable(
+        table,
+        props.workspaceId,
+        defaultBatchSize,
+        props.deadlineAt,
+      )
+    }
+
     const leaderboardPurge = await purgeLeaderboardDataForWorkspace(
       props.workspaceId,
-      { batchSize },
+      {
+        batchSize: defaultBatchSize,
+        deadlineAt: props.deadlineAt,
+        deleteBatch: async () =>
+          await withPurgeTimeouts({
+            fn: async (tx) =>
+              await leaderboardScoreEventRepository.deleteBatchByWorkspace(
+                {
+                  limit: defaultBatchSize,
+                  workspaceId: props.workspaceId,
+                },
+                tx,
+              ),
+            table: "LeaderboardScoreEvent",
+            workspaceId: props.workspaceId,
+          }),
+      },
     )
     totalDeleted += leaderboardPurge.deleted
     if (!leaderboardPurge.complete) {
@@ -327,7 +523,10 @@ class WorkspaceLifecycleService extends BaseService {
     }
 
     for (const table of HEAVY_WORKSPACE_TABLES) {
+      assertPurgeDeadline(props.deadlineAt, props.workspaceId, table)
+      const batchSize = HEAVY_PURGE_BATCH_SIZES[table] ?? defaultBatchSize
       for (let batch = 0; batch < HEAVY_PURGE_MAX_BATCHES_PER_TABLE; batch++) {
+        assertPurgeDeadline(props.deadlineAt, props.workspaceId, table)
         const deleted = await this.deleteHeavyBatch(
           table,
           props.workspaceId,
@@ -337,10 +536,7 @@ class WorkspaceLifecycleService extends BaseService {
         if (deleted < batchSize) {
           break
         }
-
-        await new Promise((resolve) =>
-          setTimeout(resolve, INTER_CHUNK_DELAY_MS),
-        )
+        await pause(INTER_CHUNK_DELAY_MS)
       }
 
       if (await this.hasHeavyRows(table, props.workspaceId)) {
@@ -351,28 +547,185 @@ class WorkspaceLifecycleService extends BaseService {
     return totalDeleted
   }
 
+  private async drainPartitionedHeavyTable(
+    table: PurgePartitionedTable,
+    workspaceId: string,
+    batchSize: number,
+    deadlineAt?: number,
+  ): Promise<number> {
+    let deletedTotal = 0
+    for (let batch = 0; batch < HEAVY_PURGE_MAX_BATCHES_PER_TABLE; batch++) {
+      assertPurgeDeadline(deadlineAt, workspaceId, table.table)
+      const deleted = await this.deletePartitionedHeavyBatch(
+        table,
+        workspaceId,
+        batchSize,
+      )
+      deletedTotal += deleted
+      if (deleted < batchSize) {
+        break
+      }
+      await pause(INTER_CHUNK_DELAY_MS)
+    }
+    if (await this.hasPartitionedHeavyRows(table, workspaceId)) {
+      throw new WorkspacePurgeIncompleteError(workspaceId, table.table)
+    }
+    return deletedTotal
+  }
+
+  private async deletePartitionedHeavyBatch(
+    table: PurgePartitionedTable,
+    workspaceId: string,
+    batchSize: number,
+  ): Promise<number> {
+    return await withPurgeTimeouts({
+      table: table.table,
+      workspaceId,
+      fn: async (tx) => {
+        const result =
+          table.selector === "broadcastWorkspace"
+            ? await tx.execute(sql`
+                DELETE FROM "ContactOnBroadcast"
+                WHERE ("broadcastId", "contactId") IN (
+                  SELECT recipient."broadcastId", recipient."contactId"
+                  FROM "ContactOnBroadcast" AS recipient
+                  INNER JOIN "Broadcast" AS broadcast
+                    ON broadcast."id" = recipient."broadcastId"
+                  WHERE broadcast."workspaceId" = ${workspaceId}
+                  LIMIT ${batchSize}
+                )
+              `)
+            : await tx.execute(sql`
+                DELETE FROM "SequenceDispatch"
+                WHERE ("id", "workspaceId") IN (
+                  SELECT "id", "workspaceId"
+                  FROM "SequenceDispatch"
+                  WHERE "workspaceId" = ${workspaceId}
+                  LIMIT ${batchSize}
+                )
+              `)
+        return result.rowCount ?? 0
+      },
+    })
+  }
+
+  private async hasPartitionedHeavyRows(
+    table: PurgePartitionedTable,
+    workspaceId: string,
+  ): Promise<boolean> {
+    const result =
+      table.selector === "broadcastWorkspace"
+        ? await db.execute(sql`
+            SELECT 1
+            FROM "ContactOnBroadcast" AS recipient
+            INNER JOIN "Broadcast" AS broadcast
+              ON broadcast."id" = recipient."broadcastId"
+            WHERE broadcast."workspaceId" = ${workspaceId}
+            LIMIT 1
+          `)
+        : await db.execute(sql`
+            SELECT 1
+            FROM "SequenceDispatch"
+            WHERE "workspaceId" = ${workspaceId}
+            LIMIT 1
+          `)
+    return result.rows.length > 0
+  }
+
   private async deleteHeavyBatch(
     table: (typeof HEAVY_WORKSPACE_TABLES)[number],
     workspaceId: string,
     batchSize: number,
   ): Promise<number> {
-    // `ctid` self-join keeps the delete bounded to `batchSize` physical rows —
-    // Postgres has no `DELETE ... LIMIT`. The table name is a compile-time
-    // constant from HEAVY_WORKSPACE_TABLES, never caller input, so this raw
-    // identifier interpolation is not an injection surface.
-    const result = await db.execute(sql`
-      DELETE FROM ${sql.raw(`"${table}"`)}
-      WHERE "ctid" IN (
-        SELECT "ctid" FROM ${sql.raw(`"${table}"`)}
-        WHERE "workspaceId" = ${workspaceId}
-        LIMIT ${batchSize}
-      )
-    `)
-    return result.rowCount ?? 0
+    return await withPurgeTimeouts({
+      table,
+      workspaceId,
+      fn: async (tx) => {
+        const result = await tx.execute(sql`
+          DELETE FROM ${sql.raw(`"${table}"`)}
+          WHERE "ctid" IN (
+            SELECT "ctid" FROM ${sql.raw(`"${table}"`)}
+            WHERE "workspaceId" = ${workspaceId}
+            LIMIT ${batchSize}
+          )
+        `)
+        return result.rowCount ?? 0
+      },
+    })
   }
 
   private async hasHeavyRows(
     table: (typeof HEAVY_WORKSPACE_TABLES)[number],
+    workspaceId: string,
+  ): Promise<boolean> {
+    const result = await db.execute(sql`
+      SELECT 1
+      FROM ${sql.raw(`"${table}"`)}
+      WHERE "workspaceId" = ${workspaceId}
+      LIMIT 1
+    `)
+    return result.rows.length > 0
+  }
+  private async deleteWorkspaceAnalyticsRows(
+    workspaceId: string,
+    deadlineAt?: number,
+  ): Promise<number> {
+    let deleted = 0
+
+    for (const table of WORKSPACE_ANALYTICS_HYPERTABLES) {
+      for (let batch = 0; batch < ANALYTICS_HYPERTABLE_MAX_CHUNKS; batch++) {
+        assertPurgeDeadline(deadlineAt, workspaceId, table)
+        const chunks = await db.execute<{
+          range_end: Date
+          range_start: Date
+        }>(sql`
+          WITH next_workspace_row AS (
+            SELECT "occurredAt"
+            FROM ${sql.raw(`"${table}"`)}
+            WHERE "workspaceId" = ${workspaceId}
+            ORDER BY "occurredAt" ASC
+            LIMIT 1
+          )
+          SELECT chunks.range_start, chunks.range_end
+          FROM timescaledb_information.chunks AS chunks
+          INNER JOIN next_workspace_row AS next_row
+            ON next_row."occurredAt" >= chunks.range_start
+            AND next_row."occurredAt" < chunks.range_end
+          WHERE chunks.hypertable_schema = 'public'
+            AND chunks.hypertable_name = ${table}
+          LIMIT 1
+        `)
+        const chunk = chunks.rows[0]
+        if (!chunk) {
+          break
+        }
+
+        deleted += await withPurgeTimeouts({
+          table,
+          workspaceId,
+          fn: async (tx) => {
+            await liftDecompressionLimit(tx)
+            const result = await tx.execute(sql`
+              DELETE FROM ${sql.raw(`"${table}"`)}
+              WHERE "workspaceId" = ${workspaceId}
+                AND "occurredAt" >= ${chunk.range_start}
+                AND "occurredAt" < ${chunk.range_end}
+            `)
+            return result.rowCount ?? 0
+          },
+        })
+      }
+
+      if (await this.hasWorkspaceRows(table, workspaceId)) {
+        throw new WorkspacePurgeIncompleteError(workspaceId, table)
+      }
+    }
+
+    return deleted
+  }
+
+  private async hasWorkspaceRows(
+    table: (typeof WORKSPACE_ANALYTICS_HYPERTABLES)[number],
     workspaceId: string,
   ): Promise<boolean> {
     const result = await db.execute(sql`
@@ -401,27 +754,34 @@ class WorkspaceLifecycleService extends BaseService {
    */
   private async deleteWorkspaceHypertableRows(
     workspaceId: string,
+    deadlineAt?: number,
   ): Promise<number> {
-    const deletePage = (conversationIds: string[]) =>
-      db.transaction(async (tx) => {
-        await liftDecompressionLimit(tx)
-        const messageResult = await tx
-          .delete(messageModel)
-          .where(
-            and(
-              eq(messageModel.workspaceId, workspaceId),
-              inArray(messageModel.conversationId, conversationIds),
-            ),
+    const deletePage = async (conversationIds: string[]): Promise<number> =>
+      await withPurgeTimeouts({
+        table: "Message/Attachment",
+        workspaceId,
+        fn: async (tx) => {
+          await liftDecompressionLimit(tx)
+          const messageResult = await tx
+            .delete(messageModel)
+            .where(
+              and(
+                eq(messageModel.workspaceId, workspaceId),
+                inArray(messageModel.conversationId, conversationIds),
+              ),
+            )
+          const attachmentResult = await tx
+            .delete(attachmentModel)
+            .where(
+              and(
+                eq(attachmentModel.workspaceId, workspaceId),
+                inArray(attachmentModel.conversationId, conversationIds),
+              ),
+            )
+          return (
+            (messageResult.rowCount ?? 0) + (attachmentResult.rowCount ?? 0)
           )
-        const attachmentResult = await tx
-          .delete(attachmentModel)
-          .where(
-            and(
-              eq(attachmentModel.workspaceId, workspaceId),
-              inArray(attachmentModel.conversationId, conversationIds),
-            ),
-          )
-        return (messageResult.rowCount ?? 0) + (attachmentResult.rowCount ?? 0)
+        },
       })
 
     let deleted = 0
@@ -431,6 +791,7 @@ class WorkspaceLifecycleService extends BaseService {
     // walks forward until none remain. The batch cap bounds a single run; any
     // residue drains on the next scheduled tick.
     for (let batch = 0; batch < HYPERTABLE_MAX_CONVERSATION_BATCHES; batch++) {
+      assertPurgeDeadline(deadlineAt, workspaceId, "Message")
       const rows = await db
         .selectDistinct({ conversationId: messageModel.conversationId })
         .from(messageModel)
@@ -444,7 +805,7 @@ class WorkspaceLifecycleService extends BaseService {
         break
       }
       deleted += await deletePage(rows.map((row) => row.conversationId))
-      await new Promise((resolve) => setTimeout(resolve, INTER_CHUNK_DELAY_MS))
+      await pause(INTER_CHUNK_DELAY_MS)
     }
 
     if (await this.hasHypertableRows(messageModel, workspaceId)) {
@@ -454,6 +815,7 @@ class WorkspaceLifecycleService extends BaseService {
     // Pass 2: attachment-only conversations (attachments whose Message rows were
     // already gone) that pass 1 never enumerated.
     for (let batch = 0; batch < HYPERTABLE_MAX_CONVERSATION_BATCHES; batch++) {
+      assertPurgeDeadline(deadlineAt, workspaceId, "Attachment")
       const rows = await db
         .selectDistinct({ conversationId: attachmentModel.conversationId })
         .from(attachmentModel)
@@ -464,7 +826,7 @@ class WorkspaceLifecycleService extends BaseService {
         break
       }
       deleted += await deletePage(rows.map((row) => row.conversationId))
-      await new Promise((resolve) => setTimeout(resolve, INTER_CHUNK_DELAY_MS))
+      await pause(INTER_CHUNK_DELAY_MS)
     }
 
     if (await this.hasHypertableRows(attachmentModel, workspaceId)) {
@@ -523,10 +885,7 @@ class WorkspaceLifecycleService extends BaseService {
       }
     }
 
-    await userQuotaService.reconcileOwnerPoolUsage(
-      props.ownerId,
-      workspaces[0]?.tenantId ?? ROOT_TENANT_ID,
-    )
+    await userQuotaService.reconcileOwnerAfterTeardown(props.ownerId)
 
     return workspaces.map((workspace) => workspace.id)
   }

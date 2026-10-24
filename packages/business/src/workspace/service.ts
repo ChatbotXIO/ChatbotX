@@ -39,6 +39,7 @@ import { quotaEnforcementService } from "../quota-enforcement/service"
 import { userQuotaService } from "../user-quota/service"
 import {
   type WorkspaceTeardownIntegrations,
+  withPurgeTimeouts,
   workspaceLifecycleService,
 } from "../workspace-lifecycle/service"
 import {
@@ -65,6 +66,7 @@ const stableKey = (where: WorkspaceWhere) =>
   JSON.stringify(Object.fromEntries(Object.entries(where).sort()))
 
 const PURGE_WORKSPACE_TEARDOWN_CONCURRENCY = 5
+const PURGE_WORKSPACE_MAX_DURATION_MS = 45 * 60 * 1000
 const COMMUNITY_MAX_WORKSPACES = 1
 const WORKSPACE_LIMIT_LOCK_TIMEOUT_SECONDS = 30
 
@@ -410,10 +412,19 @@ class WorkspaceService extends BaseService {
   }): Promise<number> {
     const chunkSize = props?.chunkSize ?? 500
     const maxChunks = props?.maxChunks ?? 20
+    const deadlineAt = Date.now() + PURGE_WORKSPACE_MAX_DURATION_MS
     let totalDeleted = 0
     const reconciles = new Map<string, { ownerId: string; tenantId: string }>()
 
     for (let chunk = 0; chunk < maxChunks; chunk++) {
+      if (Date.now() >= deadlineAt) {
+        logger.info(
+          { durationMs: PURGE_WORKSPACE_MAX_DURATION_MS },
+          "workspace-purge: deadline reached, deferring remaining work",
+        )
+        break
+      }
+
       // Claim a chunk of due workspaces in a short transaction and immediately
       // release the FOR UPDATE locks. The heavy per-workspace teardown runs
       // outside any transaction so million-row deletes never hold a workspace
@@ -467,7 +478,11 @@ class WorkspaceService extends BaseService {
         claimed.rows,
         PURGE_WORKSPACE_TEARDOWN_CONCURRENCY,
         async (workspace) =>
-          await this.teardownDueWorkspace(workspace, props?.integrations),
+          await this.teardownDueWorkspace(
+            workspace,
+            props?.integrations,
+            deadlineAt,
+          ),
       )
       const deleted = teardownResults.filter(isNonNull)
 
@@ -510,11 +525,11 @@ class WorkspaceService extends BaseService {
     await Promise.allSettled(
       [...reconciles.values()].map(async ({ ownerId, tenantId }) => {
         try {
-          await userQuotaService.reconcileOwnerPoolUsage(ownerId, tenantId)
+          await userQuotaService.reconcileOwnerAfterTeardown(ownerId)
         } catch (err) {
           logger.error(
             { err, ownerId, tenantId },
-            "workspace-purge: failed to reconcile owner pool usage",
+            "workspace-purge: failed to reconcile owner quota",
           )
         }
       }),
@@ -525,15 +540,23 @@ class WorkspaceService extends BaseService {
 
   private async teardownDueWorkspace(
     workspace: DueWorkspace,
-    integrations?: WorkspaceTeardownIntegrations,
+    integrations: WorkspaceTeardownIntegrations | undefined,
+    deadlineAt: number,
   ): Promise<DueWorkspace | null> {
     try {
+      if (Date.now() >= deadlineAt) {
+        throw new WorkspacePurgeIncompleteError(workspace.id, "deadline")
+      }
+
       const fencedWorkspace = await this.acquirePurgeFence(workspace.id)
       if (!fencedWorkspace) {
         return null
       }
 
-      await workspaceLifecycleService.freezeWorkspaceRuntime(fencedWorkspace.id)
+      await workspaceLifecycleService.freezeWorkspaceRuntime(
+        fencedWorkspace.id,
+        deadlineAt,
+      )
 
       await workspaceLifecycleService
         .disconnectWorkspaceIntegrations(fencedWorkspace.id)
@@ -562,8 +585,12 @@ class WorkspaceService extends BaseService {
       // Drain high-volume child tables in small self-committing batches before
       // the FK cascade, so no single statement deletes millions of rows under lock.
       await workspaceLifecycleService.purgeWorkspaceHeavyData({
+        deadlineAt,
         workspaceId: fencedWorkspace.id,
       })
+      if (Date.now() >= deadlineAt) {
+        throw new WorkspacePurgeIncompleteError(fencedWorkspace.id, "deadline")
+      }
 
       const postPurge = await contactInboxPostService.purgeWorkspace({
         workspaceId: fencedWorkspace.id,
@@ -585,9 +612,25 @@ class WorkspaceService extends BaseService {
         )
       }
 
-      // Best-effort: never block/roll back the purge if release fails —
-      // `reconcileOwnerPoolUsage` below re-derives `workspaces` from source
-      // for every affected owner regardless.
+      if (Date.now() >= deadlineAt) {
+        throw new WorkspacePurgeIncompleteError(fencedWorkspace.id, "deadline")
+      }
+
+      const deletedWorkspace = await withPurgeTimeouts({
+        table: "Workspace",
+        workspaceId: fencedWorkspace.id,
+        fn: async (tx) =>
+          await tx
+            .delete(workspaceModel)
+            .where(eq(workspaceModel.id, fencedWorkspace.id))
+            .returning({ id: workspaceModel.id }),
+      })
+      if (!deletedWorkspace[0]) {
+        throw new WorkspacePurgeIncompleteError(fencedWorkspace.id, "Workspace")
+      }
+
+      // Best-effort: never roll back a completed purge if release fails —
+      // the post-loop reconciliation re-derives workspaces from source.
       await quotaEnforcementService
         .release({ userId: workspace.ownerId, metric: "workspaces" })
         .catch((err) => {
@@ -600,11 +643,6 @@ class WorkspaceService extends BaseService {
             "workspace-purge: workspace quota release failed",
           )
         })
-
-      await db
-        .delete(workspaceModel)
-        .where(eq(workspaceModel.id, fencedWorkspace.id))
-
       return fencedWorkspace
     } catch (err) {
       if (err instanceof WorkspacePurgeIncompleteError) {

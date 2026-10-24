@@ -13,6 +13,7 @@ const {
   dbInsert,
   dbSelect,
   countDistinctTeamMembersForOwner,
+  findFirstTenant,
   findFirstUserQuota,
   hset,
   userQuotaModel,
@@ -51,6 +52,7 @@ const {
     dbInsert: vi.fn(() => insertBuilder),
     dbSelect: vi.fn(() => selectBuilder),
     countDistinctTeamMembersForOwner: vi.fn(async () => 2),
+    findFirstTenant: vi.fn(async () => undefined),
     findFirstUserQuota: vi.fn(async () => ({
       macUsed: 10,
       periodStart: new Date("2026-01-01T00:00:00Z"),
@@ -67,7 +69,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     insert: dbInsert,
     select: dbSelect,
-    query: { userQuotaModel: { findFirst: findFirstUserQuota } },
+    query: {
+      tenantModel: { findFirst: findFirstTenant },
+      userQuotaModel: { findFirst: findFirstUserQuota },
+    },
   },
   and: (...args: unknown[]) => ({ and: args }),
   count: vi.fn(() => "count()"),
@@ -97,6 +102,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     status: "connection.status",
   },
   contactModel: { workspaceId: "contact.workspaceId" },
+  tenantModel: { ownerId: "tenant.ownerId" },
   userQuotaModel,
   workspaceMacModel: {},
   workspaceMemberModel: {},
@@ -134,6 +140,39 @@ beforeEach(() => {
     userQuotaService,
     "countDistinctTeamMembersForOwner",
   ).mockImplementation(countDistinctTeamMembersForOwner)
+})
+describe("reconcileOwnerAfterTeardown", () => {
+  test("reconciles a root owner against only the owner's self usage", async () => {
+    const selfUsage = vi
+      .spyOn(userQuotaService, "reconcileUserSelfUsage")
+      .mockResolvedValue({
+        channelsUsed: 0,
+        contactsUsed: 0,
+        macUsed: 0,
+        teamMembersUsed: 0,
+        workspacesUsed: 0,
+      })
+    const ownerPool = vi.spyOn(userQuotaService, "reconcileOwnerPoolUsage")
+    findFirstTenant.mockResolvedValueOnce(undefined)
+
+    await userQuotaService.reconcileOwnerAfterTeardown("owner-1")
+
+    expect(selfUsage).toHaveBeenCalledWith("owner-1")
+    expect(ownerPool).not.toHaveBeenCalled()
+  })
+
+  test("reconciles an active reseller owner against the tenant pool", async () => {
+    const selfUsage = vi.spyOn(userQuotaService, "reconcileUserSelfUsage")
+    const ownerPool = vi
+      .spyOn(userQuotaService, "reconcileOwnerPoolUsage")
+      .mockResolvedValue(undefined)
+    findFirstTenant.mockResolvedValueOnce({ id: "tenant-1", status: "active" })
+
+    await userQuotaService.reconcileOwnerAfterTeardown("owner-1")
+
+    expect(ownerPool).toHaveBeenCalledWith("owner-1", "tenant-1")
+    expect(selfUsage).not.toHaveBeenCalled()
+  })
 })
 
 describe("reconcileUserSelfUsage", () => {
