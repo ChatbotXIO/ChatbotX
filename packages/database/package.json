@@ -66,6 +66,7 @@
     "./repositories": "./src/repositories/index.ts",
     "./repositories/contact-activity": "./src/repositories/contact-activity/index.ts",
     "./repositories/contact-inbox-post": "./src/repositories/contact-inbox-post/index.ts",
+    "./repositories/tenant": "./src/repositories/tenant/index.ts",
     "./repositories/workspace": "./src/repositories/workspace/index.ts",
     "./repositories/workspace-mac": "./src/repositories/workspace-mac/index.ts",
     "./repositories/workspace-bot-message-usage": "./src/repositories/workspace-bot-message-usage/index.ts",

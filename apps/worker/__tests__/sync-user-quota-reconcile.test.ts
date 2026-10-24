@@ -17,6 +17,7 @@ const state = {
   stored: null as Record<string, unknown> | null,
   // Every macUsed value the handler persisted, in order.
   persistedMac: [] as number[],
+  liveMacRaises: [] as { periodIso: string; value: number }[],
   // Truthy once reconcileUserSelfUsage ran for a user (the self-count path).
   selfReconciledUsers: [] as string[],
   hsetCalls: [] as unknown[][],
@@ -85,6 +86,12 @@ vi.mock("@chatbotx.io/business", () => ({
       state.persistedMac.push(value)
       return Promise.resolve()
     }),
+    raiseLiveMac: vi.fn(
+      ({ periodIso, value }: { periodIso: string; value: number }) => {
+        state.liveMacRaises.push({ periodIso, value })
+        return Promise.resolve()
+      },
+    ),
     applyMonthlyBotMessagesReset: vi.fn(async () => undefined),
   },
   // The ghost-id existence filter lives on the service, not a raw `db.select`
@@ -127,9 +134,15 @@ vi.mock("@chatbotx.io/redis", () => ({
   distributedStore: { delete: vi.fn(async () => undefined) },
 }))
 
-const sumBillingMacForOwner = vi.fn(async () => state.ledgerMac)
 vi.mock("@chatbotx.io/analytics", () => ({
-  macRepository: { sumBillingMacForOwner },
+  anchoredPeriod: (_now: Date, periodStart: Date) => ({
+    start: periodStart,
+  }),
+}))
+
+const sumForOwner = vi.fn(async () => state.ledgerMac)
+vi.mock("@chatbotx.io/database/repositories/workspace-mac", () => ({
+  workspaceMacRepository: { sumForOwner },
 }))
 
 vi.mock("../src/lib/logger", () => ({
@@ -169,7 +182,7 @@ describe("reconcileUser — the non-reseller path delegates the self-count", () 
     state.hmgetResult = [null, null]
     state.ledgerMac = 0
     redisClient.hset.mockClear()
-    sumBillingMacForOwner.mockClear()
+    sumForOwner.mockClear()
   })
 
   // The authoritative COUNT(*) reads, the direct-assignment (never GREATEST)
@@ -200,10 +213,11 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
 
   beforeEach(() => {
     state.persistedMac = []
+    state.liveMacRaises = []
     state.selfReconciledUsers = []
     state.hsetCalls = []
     redisClient.hset.mockClear()
-    sumBillingMacForOwner.mockClear()
+    sumForOwner.mockClear()
     state.ledgerMac = 0
   })
 
@@ -220,15 +234,37 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
 
     await reconcileUser("user-1")
 
-    expect(sumBillingMacForOwner).toHaveBeenCalledWith(
-      expect.objectContaining({ ownerId: "user-1", cumulative: false }),
-    )
+    expect(sumForOwner).toHaveBeenCalledWith({
+      ownerId: "user-1",
+      periodStart: new Date(PERIOD),
+      cumulative: false,
+    })
+    expect(state.liveMacRaises).toContainEqual({
+      periodIso: PERIOD,
+      value: 7,
+    })
+    expect(state.persistedMac).toContain(7)
+  })
+
+  test("adopts an unstamped live counter before attempting ledger repair", async () => {
+    state.hmgetResult = ["12", null]
+    state.ledgerMac = 7
+    state.stored = {
+      macUsed: 5,
+      periodStart: new Date(PERIOD),
+      periodEnd: new Date("2026-07-01T00:00:00.000Z"),
+      monthlyBotMessagesPeriodStart: null,
+    }
+
+    await reconcileUser("user-1")
+
+    expect(sumForOwner).not.toHaveBeenCalled()
     expect(state.hsetCalls).toContainEqual([
       "user-quota-live:user-1",
-      "mac",
-      "7",
+      "macPeriodStart",
+      PERIOD,
     ])
-    expect(state.persistedMac).toContain(7)
+    expect(state.persistedMac).toContain(12)
   })
 
   test("lifetime plan (no periodEnd) keeps the accumulate path, not the ledger", async () => {
@@ -243,9 +279,11 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
 
     await reconcileUser("user-1")
 
-    expect(sumBillingMacForOwner).toHaveBeenCalledWith(
-      expect.objectContaining({ cumulative: true }),
-    )
+    expect(sumForOwner).toHaveBeenCalledWith({
+      ownerId: "user-1",
+      periodStart: null,
+      cumulative: true,
+    })
     // The service applies GREATEST, so this lower ledger observation cannot
     // reduce the durable lifetime total.
     expect(state.persistedMac).toEqual([4])

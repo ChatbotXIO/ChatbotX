@@ -1,7 +1,7 @@
 import { anchoredPeriod } from "@chatbotx.io/analytics"
-import { db } from "@chatbotx.io/database/client"
-import { upsertWorkspaceBotMessageUsage } from "@chatbotx.io/database/repositories/workspace-bot-message-usage"
+import { workspaceBotMessageUsageRepository } from "@chatbotx.io/database/repositories/workspace-bot-message-usage"
 import { BaseService } from "../base.service"
+import { userQuotaService } from "../user-quota/service"
 
 const calendarPeriod = (now: Date) => {
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
@@ -12,31 +12,22 @@ const calendarPeriod = (now: Date) => {
 class WorkspaceBotMessageUsageService extends BaseService {
   async increment(input: {
     count: number
+    ownerId: string
+    tenantId: string
     workspaceId: string
   }): Promise<void> {
-    const workspace = await db.query.workspaceModel.findFirst({
-      where: { id: input.workspaceId },
-      columns: { ownerId: true, tenantId: true },
-    })
-    if (!workspace) {
-      return
-    }
-
-    const quota = await db.query.userQuotaModel.findFirst({
-      where: { userId: workspace.ownerId },
-      columns: { periodStart: true },
-    })
+    const quota = await userQuotaService.getForUser(input.ownerId)
     const now = new Date()
     const period = quota?.periodStart
       ? anchoredPeriod(now, quota.periodStart)
       : calendarPeriod(now)
 
-    await upsertWorkspaceBotMessageUsage({
+    await workspaceBotMessageUsageRepository.increment({
       count: input.count,
-      ownerId: workspace.ownerId,
+      ownerId: input.ownerId,
       periodEnd: period.end,
       periodStart: period.start,
-      tenantId: workspace.tenantId,
+      tenantId: input.tenantId,
       workspaceId: input.workspaceId,
     })
   }

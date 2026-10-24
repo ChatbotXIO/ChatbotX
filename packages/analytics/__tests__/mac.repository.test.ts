@@ -479,46 +479,6 @@ describe("MacRepository — getActiveContactCountByWorkspaceId", () => {
   })
 })
 
-describe("sumBillingMacForOwner", () => {
-  test("sums only the current anchored period for a resetting plan", async () => {
-    queueResult([{ total: 7 }])
-    const repo = new MacRepository()
-
-    const result = await repo.sumBillingMacForOwner({
-      ownerId: "owner-1",
-      billingPeriodStart: new Date("2026-06-01T00:00:00.000Z"),
-      cumulative: false,
-    })
-
-    expect(result).toBe(7)
-  })
-
-  test("returns 0 for a period-less owner without querying", async () => {
-    const repo = new MacRepository()
-
-    const result = await repo.sumBillingMacForOwner({
-      ownerId: "owner-1",
-      billingPeriodStart: null,
-      cumulative: false,
-    })
-
-    expect(result).toBe(0)
-  })
-
-  test("sums every period for a lifetime (cumulative) plan", async () => {
-    queueResult([{ total: 25 }])
-    const repo = new MacRepository()
-
-    const result = await repo.sumBillingMacForOwner({
-      ownerId: "owner-1",
-      billingPeriodStart: new Date("2026-06-01T00:00:00.000Z"),
-      cumulative: true,
-    })
-
-    expect(result).toBe(25)
-  })
-})
-
 describe("MacRepository — countActiveContactsByWorkspace", () => {
   test("counts distinct hourly contacts in the requested range", async () => {
     const from = new Date("2026-05-10T00:00:00.000Z")

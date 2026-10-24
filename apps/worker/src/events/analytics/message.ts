@@ -38,23 +38,44 @@ export async function handleBotMessageSent(
   await Promise.all(
     [...countsByWorkspace].map(async ([workspaceId, count]) => {
       try {
-        await workspaceBotMessageUsageService.increment({ count, workspaceId })
         const workspace = await workspaceService.findById({ id: workspaceId })
-        await quotaEnforcementService.incrementBy({
-          userId: workspace.ownerId,
-          metric: "botMessages",
-          count,
-        })
-        await quotaEnforcementService.incrementBy({
-          userId: workspace.ownerId,
-          metric: "monthlyBotMessages",
-          count,
-        })
-        await workspaceUsageService.increment(workspaceId, "botMessages", count)
+        const [quotaResult, ledgerResult] = await Promise.allSettled([
+          Promise.all([
+            quotaEnforcementService.incrementBy({
+              userId: workspace.ownerId,
+              metric: "botMessages",
+              count,
+            }),
+            quotaEnforcementService.incrementBy({
+              userId: workspace.ownerId,
+              metric: "monthlyBotMessages",
+              count,
+            }),
+            workspaceUsageService.increment(workspaceId, "botMessages", count),
+          ]),
+          workspaceBotMessageUsageService.increment({
+            count,
+            ownerId: workspace.ownerId,
+            tenantId: workspace.tenantId,
+            workspaceId,
+          }),
+        ])
+        if (quotaResult.status === "rejected") {
+          logger.error(
+            { err: quotaResult.reason, workspaceId, count },
+            "[analytics] bot message quota increment failed",
+          )
+        }
+        if (ledgerResult.status === "rejected") {
+          logger.error(
+            { err: ledgerResult.reason, workspaceId, count },
+            "[analytics] bot message usage ledger write failed",
+          )
+        }
       } catch (err) {
         logger.error(
           { err, workspaceId, count },
-          "[analytics] bot message quota increment failed",
+          "[analytics] bot message workspace lookup failed",
         )
       }
     }),

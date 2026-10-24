@@ -33,10 +33,10 @@ vi.mock("../../workspace-usage/service", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/database/repositories/workspace-deletion-record", () => ({
-  workspaceDeletionRecordRepository: {
-    createForWorkspace: vi.fn(async () => undefined),
+vi.mock("../../workspace-deletion-record/service", () => ({
+  workspaceDeletionRecordService: {
     markPurged: vi.fn(async () => undefined),
+    recordForWorkspace: vi.fn(async () => undefined),
   },
 }))
 

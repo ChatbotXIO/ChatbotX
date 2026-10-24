@@ -13,7 +13,6 @@ import {
   type WorkspaceMemberPermissions,
   workspaceMemberRoles,
 } from "@chatbotx.io/database/partials"
-import { workspaceDeletionRecordRepository } from "@chatbotx.io/database/repositories/workspace-deletion-record"
 import {
   ROOT_TENANT_ID,
   workspaceMemberModel,
@@ -38,6 +37,7 @@ import { isCommunity } from "../keys"
 import { logger } from "../logger"
 import { quotaEnforcementService } from "../quota-enforcement/service"
 import { userQuotaService } from "../user-quota/service"
+import { workspaceDeletionRecordService } from "../workspace-deletion-record/service"
 import { withPurgeTimeouts } from "../workspace-lifecycle/purge-batch"
 import {
   type WorkspaceTeardownIntegrations,
@@ -551,10 +551,8 @@ class WorkspaceService extends BaseService {
   }
 
   private async writeDeletionRecord(workspace: DueWorkspace): Promise<void> {
-    const record = await workspaceDeletionRecordRepository.createForWorkspace({
-      ownerId: workspace.ownerId,
-      tenantId: workspace.tenantId,
-      workspaceId: workspace.id,
+    const record = await workspaceDeletionRecordService.recordForWorkspace({
+      workspace,
     })
     if (record?.created) {
       logger.info(
@@ -582,6 +580,7 @@ class WorkspaceService extends BaseService {
       if (!fencedWorkspace) {
         return null
       }
+      await this.writeDeletionRecord(fencedWorkspace)
 
       await workspaceLifecycleService.freezeWorkspaceRuntime(
         fencedWorkspace.id,
@@ -611,7 +610,6 @@ class WorkspaceService extends BaseService {
       for (const pendingRelease of pendingReleases) {
         await connectionStateService.releasePendingQuota(pendingRelease)
       }
-      await this.writeDeletionRecord(fencedWorkspace)
 
       // Drain high-volume child tables in small self-committing batches before
       // the FK cascade, so no single statement deletes millions of rows under lock.
@@ -656,10 +654,10 @@ class WorkspaceService extends BaseService {
             .where(eq(workspaceModel.id, fencedWorkspace.id))
             .returning({ id: workspaceModel.id })
           if (deleted[0]) {
-            await workspaceDeletionRecordRepository.markPurged(
-              fencedWorkspace.id,
+            await workspaceDeletionRecordService.markPurged({
+              workspaceId: fencedWorkspace.id,
               tx,
-            )
+            })
           }
           return deleted
         },

@@ -12,6 +12,7 @@ import {
   ACTIVE_CONNECTION_STATUSES,
   planStatuses,
 } from "@chatbotx.io/database/partials"
+import { tenantRepository } from "@chatbotx.io/database/repositories/tenant"
 import { workspaceMacRepository } from "@chatbotx.io/database/repositories/workspace-mac"
 import {
   connectionModel,
@@ -60,6 +61,22 @@ const BOOTSTRAP_TRIAL_FALLBACK = {
   botMessagesLimit: 0,
   monthlyBotMessagesLimit: 0,
 } as const
+
+const RAISE_LIVE_MAC_LUA = `
+local storedPeriod = redis.call("HGET", KEYS[1], ARGV[1])
+if storedPeriod ~= ARGV[2] then
+  return 0
+end
+
+local currentValue = tonumber(redis.call("HGET", KEYS[1], ARGV[3]))
+local nextValue = tonumber(ARGV[4])
+if not currentValue or nextValue > currentValue then
+  redis.call("HSET", KEYS[1], ARGV[3], ARGV[4])
+  return 1
+end
+
+return 0
+`
 
 interface DefaultPlanSnapshot {
   botMessagesLimit: number | null
@@ -834,6 +851,13 @@ class UserQuotaService extends BaseService {
     tenantId: string,
   ): Promise<void> {
     const client = await cacheConnections.useExisting()
+    // Read before calculating the ledger sum. The guarded upsert below then
+    // leaves a row the quota worker rolled over unchanged.
+    const ownerQuota = await db.query.userQuotaModel.findFirst({
+      where: { userId: ownerId },
+      columns: { periodStart: true },
+    })
+    const periodStart = ownerQuota?.periodStart ?? null
 
     const [
       { contactsUsed, workspacesUsed, channelsUsed },
@@ -842,7 +866,7 @@ class UserQuotaService extends BaseService {
     ] = await Promise.all([
       this.countWorkspaceScopedUsage(eq(workspaceModel.tenantId, tenantId)),
       this.countDistinctTeamMembers({ tenantId }),
-      workspaceMacRepository.sumBillingMacForTenant(tenantId),
+      workspaceMacRepository.sumForTenant(tenantId),
     ])
 
     await db
@@ -854,28 +878,28 @@ class UserQuotaService extends BaseService {
         workspacesUsed,
         channelsUsed,
         macUsed,
+        periodStart,
         syncedAt: new Date(),
       })
       .onConflictDoUpdate({
         target: userQuotaModel.userId,
         set: {
-          // Capacity metrics are authoritative current counts. Billing MAC is
-          // monotonic for the current quota row and resets only at rollover.
           contactsUsed,
           teamMembersUsed,
           workspacesUsed,
           channelsUsed,
-          macUsed: sql`GREATEST(${userQuotaModel.macUsed}, ${macUsed})`,
+          macUsed: sql`CASE
+            WHEN ${userQuotaModel.periodStart} IS NOT DISTINCT FROM ${periodStart}
+            THEN GREATEST(${userQuotaModel.macUsed}, ${macUsed})
+            ELSE ${userQuotaModel.macUsed}
+          END`,
           syncedAt: new Date(),
           updatedAt: sql`CURRENT_TIMESTAMP`,
         },
       })
 
-    // Capacity metrics are current counts. MAC is billing consumption and must
-    // never be lowered by a same-period reconcile.
-    const liveKey = this.store.liveKey(ownerId)
     await client.hset(
-      liveKey,
+      this.store.liveKey(ownerId),
       "contacts",
       String(contactsUsed),
       "teamMembers",
@@ -885,9 +909,12 @@ class UserQuotaService extends BaseService {
       "channels",
       String(channelsUsed),
     )
-    const liveMac = Number(await client.hget(liveKey, "mac"))
-    if (!Number.isFinite(liveMac) || macUsed > liveMac) {
-      await client.hset(liveKey, "mac", String(macUsed))
+    if (periodStart) {
+      await this.raiseLiveMac({
+        userId: ownerId,
+        value: macUsed,
+        periodIso: periodStart.toISOString(),
+      })
     }
 
     await this.store.invalidate(ownerId)
@@ -905,16 +932,10 @@ class UserQuotaService extends BaseService {
 
     const tenant =
       tenantId && tenantId !== ROOT_TENANT_ID
-        ? await db.query.tenantModel.findFirst({
-            where: { id: tenantId },
-            columns: { id: true, ownerId: true, status: true },
-          })
-        : await db.query.tenantModel.findFirst({
-            where: { ownerId },
-            columns: { id: true, ownerId: true, status: true },
-          })
+        ? await tenantRepository.findById(tenantId)
+        : await tenantRepository.findByOwner(ownerId)
     if (tenant?.status === "active" && tenant.ownerId) {
-      await this.reconcileOwnerPoolUsage(tenant.ownerId, tenantId ?? tenant.id)
+      await this.reconcileOwnerPoolUsage(tenant.ownerId, tenant.id)
     }
   }
 
@@ -970,7 +991,7 @@ class UserQuotaService extends BaseService {
    * shape, same "assigned directly, NOT GREATEST" semantics so deletions
    * free quota). Unlike the pool path, the live-counter `hset` here has NO
    * `mac` field — mac is reconciled separately by the caller via
-   * `persistMacUsed`/the ledger reconcile, using the markers this method
+   * `raiseMacUsed`/the ledger reconcile, using the markers this method
    * returns from one round-trip (`macUsed`, `periodStart`, `periodEnd`,
    * `monthlyBotMessagesPeriodStart`).
    */
@@ -1072,6 +1093,28 @@ class UserQuotaService extends BaseService {
           updatedAt: sql`CURRENT_TIMESTAMP`,
         },
       })
+  }
+
+  /**
+   * Raises the live MAC counter only when it still belongs to the quota period
+   * read by the caller. Lua keeps the period check and monotonic write atomic,
+   * so an increment cannot be lost between a separate HGET and HSET.
+   */
+  async raiseLiveMac(input: {
+    userId: string
+    value: number
+    periodIso: string
+  }): Promise<void> {
+    const client = await cacheConnections.useExisting()
+    await client.eval(
+      RAISE_LIVE_MAC_LUA,
+      1,
+      this.store.liveKey(input.userId),
+      "macPeriodStart",
+      input.periodIso,
+      "mac",
+      String(input.value),
+    )
   }
 
   /**

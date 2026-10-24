@@ -1,4 +1,15 @@
-import { type DatabaseClient, db, eq } from "../../client"
+import {
+  and,
+  count,
+  type DatabaseClient,
+  db,
+  desc,
+  eq,
+  ilike,
+  or,
+  type SQL,
+  sql,
+} from "../../client"
 import {
   contactModel,
   inboxModel,
@@ -8,24 +19,30 @@ import {
   workspaceMacModel,
   workspaceMemberModel,
 } from "../../schema"
-import {
-  type WorkspaceDeletionRecordDetails,
-  type WorkspaceDeletionRecordUsageSnapshot,
-  workspaceDeletionRecordDetailsSchema,
-  workspaceDeletionRecordUsageSnapshotSchema,
+import type {
+  WorkspaceDeletionRecordDetails,
+  WorkspaceDeletionRecordUsageSnapshot,
 } from "../../schema/workspace-deletion-record"
 
+type CreateInput = {
+  deletionRequestedAt: Date | null
+  deletionRequestedByEmail: string | null
+  deletionRequestedById: string | null
+  details: WorkspaceDeletionRecordDetails
+  ownerEmail: string | null
+  ownerId: string
+  scheduledDeletionAt: Date | null
+  tenantId: string
+  usageSnapshot: WorkspaceDeletionRecordUsageSnapshot
+  workspaceId: string
+  workspaceName: string
+}
+
 class WorkspaceDeletionRecordRepository {
-  async createForWorkspace(
-    input: { ownerId: string; tenantId: string; workspaceId: string },
+  async readSnapshotSources(
+    input: { ownerId: string; workspaceId: string },
     client: DatabaseClient = db,
-  ): Promise<
-    | {
-        created: boolean
-        usageSnapshot: WorkspaceDeletionRecordUsageSnapshot
-      }
-    | undefined
-  > {
+  ) {
     const workspace = await client.query.workspaceModel.findFirst({
       where: { id: input.workspaceId },
     })
@@ -41,7 +58,6 @@ class WorkspaceDeletionRecordRepository {
       mac,
       botMessages,
       contacts,
-      channels,
       quota,
     ] = await Promise.all([
       client.query.userModel.findFirst({
@@ -95,7 +111,6 @@ class WorkspaceDeletionRecordRepository {
         contactModel,
         eq(contactModel.workspaceId, input.workspaceId),
       ),
-      client.$count(inboxModel, eq(inboxModel.workspaceId, input.workspaceId)),
       client.query.userQuotaModel.findFirst({
         where: { userId: input.ownerId },
         columns: {
@@ -109,61 +124,30 @@ class WorkspaceDeletionRecordRepository {
         },
       }),
     ])
-    const usageSnapshot: WorkspaceDeletionRecordUsageSnapshot = {
+
+    return {
       botMessages,
-      channels,
       contacts,
+      inboxes,
       mac,
-      ownerQuota: quota ?? null,
-      teamMembers: members.length,
-    }
-    const details: WorkspaceDeletionRecordDetails = {
-      channels: inboxes,
       members,
-      owner: owner
-        ? { ...owner, id: input.ownerId }
-        : { email: null, id: input.ownerId, name: null, tenantId: null },
-      plan: quota
-        ? {
-            periodEnd: quota.periodEnd,
-            periodStart: quota.periodStart,
-            planName: quota.planName,
-            planStatus: quota.planStatus,
-          }
-        : null,
-      requestedBy: requestedBy
-        ? { ...requestedBy, id: workspace.deletionRequestedById, via: "ui" }
-        : null,
-      workspace: {
-        createdAt: workspace.createdAt,
-        id: workspace.id,
-        language: workspace.language,
-        logo: workspace.logo,
-        name: workspace.name,
-        timezone: workspace.timezone,
-      },
+      owner,
+      quota,
+      requestedBy,
+      workspace,
     }
-    const validatedUsageSnapshot =
-      workspaceDeletionRecordUsageSnapshotSchema.parse(usageSnapshot)
-    const validatedDetails = workspaceDeletionRecordDetailsSchema.parse(details)
+  }
+
+  async insertIfAbsent(
+    input: CreateInput,
+    client: DatabaseClient = db,
+  ): Promise<boolean> {
     const [record] = await client
       .insert(workspaceDeletionRecordModel)
-      .values({
-        deletionRequestedAt: workspace.deletionRequestedAt,
-        deletionRequestedByEmail: requestedBy?.email,
-        deletionRequestedById: workspace.deletionRequestedById,
-        details: validatedDetails,
-        ownerEmail: owner?.email,
-        ownerId: input.ownerId,
-        scheduledDeletionAt: workspace.scheduledDeletionAt,
-        tenantId: input.tenantId,
-        usageSnapshot: validatedUsageSnapshot,
-        workspaceId: input.workspaceId,
-        workspaceName: workspace.name,
-      })
+      .values(input)
       .onConflictDoNothing()
       .returning({ id: workspaceDeletionRecordModel.id })
-    return { created: Boolean(record), usageSnapshot: validatedUsageSnapshot }
+    return Boolean(record)
   }
 
   async markPurged(
@@ -174,6 +158,65 @@ class WorkspaceDeletionRecordRepository {
       .update(workspaceDeletionRecordModel)
       .set({ purgedAt: new Date() })
       .where(eq(workspaceDeletionRecordModel.workspaceId, workspaceId))
+  }
+
+  async listForOwner(input: {
+    ownerId: string
+    limit: number
+    offset: number
+  }) {
+    const where = eq(workspaceDeletionRecordModel.ownerId, input.ownerId)
+    const [data, total] = await Promise.all([
+      db
+        .select()
+        .from(workspaceDeletionRecordModel)
+        .where(where)
+        .orderBy(desc(workspaceDeletionRecordModel.createdAt))
+        .limit(input.limit)
+        .offset(input.offset),
+      db
+        .select({ value: count() })
+        .from(workspaceDeletionRecordModel)
+        .where(where),
+    ])
+    return { data, total: total[0]?.value ?? 0 }
+  }
+
+  async listForAdmin(input: {
+    limit: number
+    offset: number
+    search?: string
+    tenantId?: string
+  }) {
+    const conditions: SQL[] = [sql`TRUE`]
+    if (input.tenantId) {
+      conditions.push(eq(workspaceDeletionRecordModel.tenantId, input.tenantId))
+    }
+    if (input.search) {
+      const pattern = `%${input.search}%`
+      const searchCondition = or(
+        ilike(workspaceDeletionRecordModel.workspaceName, pattern),
+        ilike(workspaceDeletionRecordModel.ownerEmail, pattern),
+      )
+      if (searchCondition) {
+        conditions.push(searchCondition)
+      }
+    }
+    const where = and(...conditions)
+    const [data, total] = await Promise.all([
+      db
+        .select()
+        .from(workspaceDeletionRecordModel)
+        .where(where)
+        .orderBy(desc(workspaceDeletionRecordModel.createdAt))
+        .limit(input.limit)
+        .offset(input.offset),
+      db
+        .select({ value: count() })
+        .from(workspaceDeletionRecordModel)
+        .where(where),
+    ])
+    return { data, total: total[0]?.value ?? 0 }
   }
 }
 

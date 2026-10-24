@@ -13,17 +13,19 @@ import {
   timestampConfig,
 } from "../partials/shared"
 
+const timestampSchema = z.iso.datetime()
+
 const periodUsageSchema = z.object({
   count: z.number().int(),
-  periodEnd: z.date(),
-  periodStart: z.date(),
+  periodEnd: timestampSchema,
+  periodStart: timestampSchema,
 })
 const quotaSnapshotSchema = z.object({
   botMessagesUsed: z.number().int(),
   macUsed: z.number().int(),
   monthlyBotMessagesUsed: z.number().int(),
-  periodEnd: z.date().nullable(),
-  periodStart: z.date().nullable(),
+  periodEnd: timestampSchema.nullable(),
+  periodStart: timestampSchema.nullable(),
   planName: z.string().nullable(),
   planStatus: z.string().nullable(),
 })
@@ -65,8 +67,8 @@ export const workspaceDeletionRecordDetailsSchema = z.object({
   }),
   plan: z
     .object({
-      periodEnd: z.date().nullable(),
-      periodStart: z.date().nullable(),
+      periodEnd: timestampSchema.nullable(),
+      periodStart: timestampSchema.nullable(),
       planName: z.string().nullable(),
       planStatus: z.string().nullable(),
     })
@@ -80,7 +82,7 @@ export const workspaceDeletionRecordDetailsSchema = z.object({
     })
     .nullable(),
   workspace: z.object({
-    createdAt: z.date(),
+    createdAt: timestampSchema,
     id: z.string(),
     language: z.string(),
     logo: z.string().nullable(),

@@ -8,11 +8,8 @@ import {
   gt,
   gte,
   inArray,
-  isNull,
   lte,
-  or,
   sql,
-  sum,
 } from "@chatbotx.io/database/client"
 import type { MacEventType } from "@chatbotx.io/database/partials"
 import {
@@ -24,7 +21,6 @@ import {
   workspaceModel,
 } from "@chatbotx.io/database/schema"
 import { logger } from "../../lib/logger"
-import { anchoredPeriod } from "../../lib/mac-period"
 import {
   type AnalyticsFilter,
   normalizeAnalyticsFilters,
@@ -305,49 +301,6 @@ export class MacRepository {
       .orderBy(workspaceMacModel.workspaceId, desc(workspaceMacModel.id))
 
     return new Map(rows.map((row) => [row.workspaceId, Number(row.macCount)]))
-  }
-
-  /**
-   * Sums the owner's retained WorkspaceMac billing ledger. A transitional
-   * fallback reaches pre-backfill rows through their still-live workspace.
-   */
-  async sumBillingMacForOwner(
-    input: {
-      ownerId: string
-      billingPeriodStart: Date | null
-      cumulative: boolean
-    },
-    client: DatabaseClient = db,
-  ): Promise<number> {
-    if (!(input.cumulative || input.billingPeriodStart)) {
-      return 0
-    }
-
-    const ownedWorkspaces = client
-      .select({ id: workspaceModel.id })
-      .from(workspaceModel)
-      .where(eq(workspaceModel.ownerId, input.ownerId))
-    const conditions = [
-      or(
-        eq(workspaceMacModel.ownerId, input.ownerId),
-        and(
-          isNull(workspaceMacModel.ownerId),
-          inArray(workspaceMacModel.workspaceId, ownedWorkspaces),
-        ),
-      ),
-    ]
-
-    if (!input.cumulative && input.billingPeriodStart) {
-      const { start } = anchoredPeriod(new Date(), input.billingPeriodStart)
-      conditions.push(eq(workspaceMacModel.periodStart, start))
-    }
-
-    const [row] = await client
-      .select({ total: sum(workspaceMacModel.macCount) })
-      .from(workspaceMacModel)
-      .where(and(...conditions))
-
-    return Number(row?.total ?? 0)
   }
 
   async countActiveContactsByWorkspace(

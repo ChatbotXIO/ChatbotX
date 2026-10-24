@@ -38,7 +38,10 @@ describe("handleBotMessageSent quota accounting", () => {
     mocks.incrementBotUsage.mockResolvedValue(undefined)
     mocks.incrementUsage.mockResolvedValue(undefined)
     mocks.findById.mockImplementation(({ id }: { id: string }) =>
-      Promise.resolve({ ownerId: `owner-${id}` }),
+      Promise.resolve({
+        ownerId: `owner-${id}`,
+        tenantId: `tenant-${id}`,
+      }),
     )
   })
 
@@ -72,10 +75,14 @@ describe("handleBotMessageSent quota accounting", () => {
     })
     expect(mocks.incrementBotUsage).toHaveBeenCalledWith({
       count: 2,
+      ownerId: "owner-workspace-1",
+      tenantId: "tenant-workspace-1",
       workspaceId: "workspace-1",
     })
     expect(mocks.incrementBotUsage).toHaveBeenCalledWith({
       count: 1,
+      ownerId: "owner-workspace-2",
+      tenantId: "tenant-workspace-2",
       workspaceId: "workspace-2",
     })
     expect(mocks.incrementUsage).toHaveBeenCalledTimes(2)
@@ -91,17 +98,35 @@ describe("handleBotMessageSent quota accounting", () => {
     )
   })
 
-  it("swallows quota failures after recording analytics", async () => {
+  it("writes the ledger when quota accounting fails", async () => {
     mocks.incrementBy.mockRejectedValue(new Error("quota unavailable"))
 
     await expect(handleBotMessageSent([payload("workspace-1")])).resolves.toBe(
       undefined,
     )
+
     expect(mocks.recordEvents).toHaveBeenCalledOnce()
     expect(mocks.incrementBotUsage).toHaveBeenCalledWith({
       count: 1,
+      ownerId: "owner-workspace-1",
+      tenantId: "tenant-workspace-1",
       workspaceId: "workspace-1",
     })
+  })
+
+  it("increments quota when the ledger write fails", async () => {
+    mocks.incrementBotUsage.mockRejectedValue(new Error("ledger unavailable"))
+
+    await expect(handleBotMessageSent([payload("workspace-1")])).resolves.toBe(
+      undefined,
+    )
+
+    expect(mocks.incrementBy).toHaveBeenCalledTimes(2)
+    expect(mocks.incrementUsage).toHaveBeenCalledWith(
+      "workspace-1",
+      "botMessages",
+      1,
+    )
   })
 
   it("isolates a failing workspace so others still get incremented", async () => {
