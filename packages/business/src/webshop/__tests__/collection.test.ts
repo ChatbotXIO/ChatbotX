@@ -211,6 +211,49 @@ describe("buildCollectionCards", () => {
     })
     expect(card?.title).toHaveLength(80)
   })
+
+  test("a product link that is not a web URL falls back to the shop page", async () => {
+    mocks.getSettings.mockResolvedValue(
+      settings({ checkout: { checkoutMode: "productPage" } }),
+    )
+    for (const productUrl of ["www.brand.example/p1", "javascript:alert(1)"]) {
+      mocks.listForShop.mockResolvedValue({
+        data: [product("p1", { productUrl })],
+        pageCount: 1,
+      })
+      const [card] = await buildCollectionCards({
+        workspaceId: "ws1",
+        step: automated,
+        appUrl: "https://app.example",
+        shopToken: "TOKEN",
+        language: "en",
+      })
+      expect(card?.buttons[0]).toMatchObject({
+        label: "View",
+        beforeStep: {
+          url: "https://app.example/shop/ws1/products/p1?token=TOKEN",
+        },
+      })
+    }
+  })
+
+  test("an image that is not a web URL is left off the card", async () => {
+    mocks.listForShop.mockResolvedValue({
+      data: [
+        product("p1", { images: [{ url: "/local/p1.jpg", type: "file" }] }),
+      ],
+      pageCount: 1,
+    })
+    const [card] = await buildCollectionCards({
+      workspaceId: "ws1",
+      step: automated,
+      appUrl: "https://app.example",
+      shopToken: "TOKEN",
+      language: "en",
+    })
+    expect(card).not.toHaveProperty("image")
+    expect(card?.title).toBe("Product p1")
+  })
 })
 
 describe("resolveCollectionStep", () => {

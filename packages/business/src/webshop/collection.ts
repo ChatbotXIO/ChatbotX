@@ -15,6 +15,7 @@ import {
   formatMoney,
   stackDiscountPercents,
 } from "@chatbotx.io/utils/money"
+import { toSafeWebUrl } from "@chatbotx.io/utils/web-url"
 import { ecommerceSettingsService } from "../ecommerce-settings/service"
 import {
   type CustomerMessageLanguage,
@@ -125,17 +126,20 @@ export async function buildCollectionCards(input: {
   const externalPage = settings.checkout.checkoutMode === "productPage"
 
   return products.map((product) => {
+    // Meta refuses the whole carousel over one bad URL, so a product link or
+    // image that is not a web URL is dropped: Buy then opens the product's
+    // shop page, and the card goes without its image.
+    const externalUrl = externalPage ? toSafeWebUrl(product.productUrl) : null
     const productUrl =
-      externalPage && product.productUrl
-        ? product.productUrl
-        : buildWebshopUrl({
-            appUrl: input.appUrl,
-            workspaceId: input.workspaceId,
-            token: input.shopToken,
-            productId: product.id,
-          })
+      externalUrl ??
+      buildWebshopUrl({
+        appUrl: input.appUrl,
+        workspaceId: input.workspaceId,
+        token: input.shopToken,
+        productId: product.id,
+      })
     const cardButtons = [
-      linkButton(externalPage ? labels.buy : labels.view, productUrl),
+      linkButton(externalUrl ? labels.buy : labels.view, productUrl),
       ...(buttons.has("similar") && product.categoryId
         ? [
             linkButton(
@@ -150,11 +154,11 @@ export async function buildCollectionCards(input: {
           ]
         : []),
     ]
-    const imageUrl = product.images[0]?.url
+    const imageUrl = toSafeWebUrl(product.images[0]?.url)
     return {
       id: createId(),
       stepType: stepTypes.enum.sendCard,
-      title: truncate(product.name),
+      title: truncate(product.name.trim()),
       subtitle: truncate(
         [priceText(product, settings), product.vendor]
           .filter(Boolean)
