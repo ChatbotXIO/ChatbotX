@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs"
-import { join, sep } from "node:path"
+import { join, relative, sep } from "node:path"
 import { describe, expect, it } from "vitest"
 
 const SRC = join(import.meta.dirname, "..", "src")
@@ -49,10 +49,7 @@ const emitPayloads = (source: string): string[] => {
 
 const emitSites = walk(SRC)
   .map((path) => ({
-    relative: path
-      .slice(SRC.length + 1)
-      .split(sep)
-      .join("/"),
+    relative: relative(SRC, path).split(sep).join("/"),
     payloads: emitPayloads(readFileSync(path, "utf8")),
   }))
   .filter(({ payloads }) => payloads.length > 0)
