@@ -445,13 +445,14 @@ export const productsPublicRouter = {
     .input(createProductPublicRequest)
     .output(publicProductResource)
     .errors(possibleErrorsOnCreatingResource)
-    .handler(
-      async ({ context, input }) =>
-        await productService.createFull({
-          workspaceId: context.workspace.id,
-          ...input,
-        }),
-    ),
+    .handler(async ({ context, input }) => {
+      const product = await productService.createFull({
+        workspaceId: context.workspace.id,
+        ...input,
+      })
+      // Read back so the response carries the vendor's name, not just its id.
+      return await productService.findById(product.id, context.workspace.id)
+    }),
 
   update: workspaceTokenAuthAPI
     .route({

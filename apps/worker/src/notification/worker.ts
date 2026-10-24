@@ -12,6 +12,7 @@ import { type Job, Worker } from "bullmq"
 import { env } from "../env"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { notifyNewOrder } from "./handlers/notify-new-order"
 import { sendPushForNotificationJob } from "./handlers/send-push"
 
 async function startNotificationWorker() {
@@ -27,6 +28,10 @@ async function startNotificationWorker() {
     queueNames.enum.notification,
     async (job: Job<NotificationJobData>) => {
       await withBlockedOwnerGuard(job.data.data.workspaceId, async () => {
+        if (job.data.type === "notifyNewOrder") {
+          await notifyNewOrder(job.data)
+          return
+        }
         await sendPushForNotificationJob(job.data)
       })
     },

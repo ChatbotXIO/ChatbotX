@@ -54,7 +54,7 @@ export function CategorySidebar({
   }
 
   return (
-    <aside className="w-64 shrink-0 border-e bg-card p-3">
+    <aside className="mt-4 w-64 shrink-0 self-start rounded-xl border bg-card p-3 text-card-foreground shadow-sm">
       {/* No create button: categories are organised on their own tab, where the
           parent/child structure is actually visible. */}
       <div className="mb-2 px-2">

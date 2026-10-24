@@ -548,7 +548,10 @@ vi.mock("@chatbotx.io/worker-config", () => ({
     runFlowQuickReply: "runFlowQuickReply",
     runRef: "runRef",
     processCommentAutomation: "processCommentAutomation",
+    replyToInboundCart: "replyToInboundCart",
   },
+  getInboundCartReplyJobId: (messageId: string) =>
+    `inbound-cart-reply-${messageId}`,
   integrationQueue: {
     add: mockIntegrationQueueAdd,
     getJob: vi.fn().mockResolvedValue(undefined),
@@ -7034,6 +7037,22 @@ describe("receiveMessage — inbound commerce events", () => {
       "ci-1",
     )
     expect(mockEmitUserAskedAboutProduct).not.toHaveBeenCalled()
+    // The stored cart is also answered with a CHECK OUT button, once.
+    expect(mockIntegrationQueueAdd).toHaveBeenCalledWith(
+      "replyToInboundCart",
+      {
+        type: "replyToInboundCart",
+        data: {
+          workspaceId: "ws-1",
+          conversationId: "conv-1",
+          contactId: fakeContactInbox.contactId,
+          contactInboxId: "ci-1",
+          messageId: "msg-created",
+          cart: { note: "after 5pm", items },
+        },
+      },
+      { jobId: "inbound-cart-reply-msg-created" },
+    )
   })
 
   test("a product question is stored as the referred product and announced once", async () => {

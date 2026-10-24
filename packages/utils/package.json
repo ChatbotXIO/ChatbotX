@@ -40,6 +40,7 @@
     "./live-media": "./src/live-media.ts",
     "./media-download": "./src/media-download.ts",
     "./meta-capi": "./src/meta-capi.ts",
+    "./money": "./src/money.ts",
     "./no-avatar-sentinel": "./src/no-avatar-sentinel.ts",
     "./placeholder-email": "./src/placeholder-email.ts",
     "./recurrence": "./src/recurrence.ts",
@@ -49,6 +50,7 @@
     "./temporal-input": "./src/temporal-input/index.ts",
     "./timezone": "./src/timezone.ts",
     "./variables": "./src/variables.ts",
+    "./web-url": "./src/web-url.ts",
     "./whatsapp-call": "./src/whatsapp-call.ts",
     "./whatsapp-call-hours": "./src/whatsapp-call-hours.ts",
     "./zod": "./src/zod.ts"

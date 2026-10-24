@@ -1,14 +1,19 @@
 import type { ContactInfoType } from "@chatbotx.io/database/partials"
+import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import type {
   BaseEventEmitter,
   CallEndedMetadata,
   CallRecordedMetadata,
   CallTranscribedMetadata,
+  CartAbandonedMetadata,
+  CartItemEventMetadata,
   IncomingCallMetadata,
+  OrderEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "./base-emitter"
 import type { DecisionFlowOrigin } from "./decision-flow-lineage"
+import type { OrderStatusEventType } from "./event-type-registry"
 import { logger } from "./logger"
 import { TriggerEventEmitter } from "./trigger/emitter"
 import { WebhookEventEmitter } from "./webhook/emitter"
@@ -323,6 +328,94 @@ export const emitUserAskedAboutProduct = async (
 ) =>
   await emitToAllEmitters(
     "userAskedAboutProduct",
+    workspaceId,
+    contactId,
+    metadata,
+    contactInboxId,
+  )
+
+// Store events
+/** One of an order's status events (`newOrder` when it is placed). */
+export const emitOrderStatus = async (
+  eventType: OrderStatusEventType,
+  workspaceId: string,
+  contactId: string,
+  metadata: OrderEventMetadata,
+  contactInboxId?: string,
+) =>
+  await emitToAllEmitters(
+    "orderStatus",
+    eventType,
+    workspaceId,
+    contactId,
+    metadata,
+    contactInboxId,
+  )
+
+/** Once per placed order; a product condition matches any of its products. */
+export const emitProductOrdered = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: OrderEventMetadata,
+  contactInboxId?: string,
+) =>
+  await emitToAllEmitters(
+    "productOrdered",
+    workspaceId,
+    contactId,
+    metadata,
+    contactInboxId,
+  )
+
+/**
+ * A cart change: `productAddedToCart` (with `categoryAddedToCart` when the
+ * product has a category) or `productRemovedFromCart`.
+ */
+export const emitCartItemChanged = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: CartItemEventMetadata,
+  contactInboxId?: string,
+) => {
+  if (metadata.change < 0) {
+    await emitToAllEmitters(
+      "cartItemChanged",
+      triggerEventTypes.enum.productRemovedFromCart,
+      workspaceId,
+      contactId,
+      metadata,
+      contactInboxId,
+    )
+    return
+  }
+  await emitToAllEmitters(
+    "cartItemChanged",
+    triggerEventTypes.enum.productAddedToCart,
+    workspaceId,
+    contactId,
+    metadata,
+    contactInboxId,
+  )
+  if (metadata.product.categoryIds.length > 0) {
+    await emitToAllEmitters(
+      "cartItemChanged",
+      triggerEventTypes.enum.categoryAddedToCart,
+      workspaceId,
+      contactId,
+      metadata,
+      contactInboxId,
+    )
+  }
+}
+
+export const emitCartAbandoned = async (
+  workspaceId: string,
+  contactId: string,
+  metadata: CartAbandonedMetadata,
+  contactInboxId?: string,
+) =>
+  await emitToAllEmitters(
+    "cartAbandoned",
     workspaceId,
     contactId,
     metadata,

@@ -121,6 +121,11 @@ vi.mock("@/features/contact-filter/components/use-filter-value-labels", () => ({
   useFilterValueLabels: () => undefined,
 }))
 
+vi.mock(
+  "@/features/contact-filter/components/use-product-filter-options",
+  () => ({ useProductFilterOptions: () => [] }),
+)
+
 vi.mock("@/hooks/routing", () => ({
   useWorkspaceId: () => "workspace-id",
 }))

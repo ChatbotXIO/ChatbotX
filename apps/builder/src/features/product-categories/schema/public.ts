@@ -8,6 +8,8 @@ export const publicProductCategoryResource = z.object({
   id: z.string(),
   parentId: z.string().nullable(),
   name: z.string(),
+  imageUrl: z.string().nullable(),
+  isVisible: z.boolean(),
   rank: z.number(),
   productCount: z.number(),
 })
@@ -22,6 +24,8 @@ export const publicProductCategoryWriteResource = z.object({
   id: z.string(),
   parentId: z.string().nullable(),
   name: z.string(),
+  imageUrl: z.string().nullable(),
+  isVisible: z.boolean(),
   rank: z.number(),
 })
 
@@ -35,6 +39,17 @@ export const createProductCategoryPublicRequest = z.object({
     .int()
     .optional()
     .describe("Sort order among sibling categories."),
+  imageUrl: z
+    .string()
+    .trim()
+    .url()
+    .max(2048)
+    .nullish()
+    .describe("Category image URL."),
+  isVisible: z
+    .boolean()
+    .optional()
+    .describe("Off hides the category and its products from customers."),
 })
 
 export const updateProductCategoryPublicRequest =
@@ -43,3 +58,26 @@ export const updateProductCategoryPublicRequest =
       "Product category id. Get it from `productCategories.list`.",
     ),
   })
+
+export const listProductCategoriesPublicRequest = z.object({
+  parentId: zodBigintAsString()
+    .optional()
+    .describe(
+      "Only this category's sub-categories. Omit for the whole tree (top-level categories have a null `parentId`).",
+    ),
+  name: z
+    .string()
+    .trim()
+    .max(255)
+    .optional()
+    .describe("Only categories whose name contains this, ignoring case."),
+})
+
+export const setProductCategoryVisiblePublicRequest = z.object({
+  id: zodBigintAsString().describe(
+    "Product category id. Get it from `productCategories.list`.",
+  ),
+  isVisible: z
+    .boolean()
+    .describe("False hides the category and its products from customers."),
+})

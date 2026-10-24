@@ -92,6 +92,7 @@ export const systemFieldTypes = z.enum([
   "user_hash",
   "minigame_play_token",
   "mini_app_token",
+  "shop_token",
   "leaderboard_view_token",
   "referral_name",
   "user_tags",

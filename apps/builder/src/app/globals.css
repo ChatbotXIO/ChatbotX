@@ -17,3 +17,11 @@
 @source "../../node_modules/@chatbotx.io/ui/src";
 @source "../../node_modules/@chatbotx.io/analytics-nextjs/src";
 @source "../../node_modules/@chatbotx.io/minigame-ui/src";
+
+/* A page that portals a `data-print-root` element into <body> prints only
+   that element: the sidebar, tabs and pinned bars are left off the paper. */
+@media print {
+  body:has(> [data-print-root]) > :not([data-print-root]) {
+    display: none !important;
+  }
+}

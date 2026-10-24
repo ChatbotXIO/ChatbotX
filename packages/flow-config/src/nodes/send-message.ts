@@ -15,6 +15,7 @@ import {
 import { sendAudioStepSchema } from "../steps/send-audio"
 import { sendCardStepSchema } from "../steps/send-card"
 import { sendCarouselStepSchema } from "../steps/send-carousel"
+import { sendCollectionStepSchema } from "../steps/send-collection"
 import { sendFileStepSchema } from "../steps/send-file"
 import { sendGifStepSchema } from "../steps/send-gif"
 import { sendImageStepSchema } from "../steps/send-image"
@@ -69,6 +70,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
             whatsappCallButtonStepSchema,
             whatsappFlowStepSchema,
             sendProductsStepSchema,
+            sendCollectionStepSchema,
             whatsappLocationStepSchema,
             ...actionSteps,
           ]),

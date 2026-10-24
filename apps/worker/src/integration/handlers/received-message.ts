@@ -91,6 +91,7 @@ import {
   contentTypes,
   type EchoOrigin,
   echoOrigins,
+  getInboundOrder,
   getStoryReply,
   getWhatsappFlowResponse,
   type IncomingContact,
@@ -114,6 +115,7 @@ import {
   ChatJobAction,
   chatQueue,
   enqueueStoredImageOptimizations,
+  getInboundCartReplyJobId,
   IntegrationJobAction,
   type IntegrationJobDeleteIncomingComment,
   type IntegrationJobDeleteIncomingMessage,
@@ -762,6 +764,29 @@ export const receiveMessage = async (
             messageId: createdMessage.id,
           },
         )
+      }
+
+      // The same stored cart is the contact's shop cart: the bot answers it
+      // with a summary and a CHECK OUT button, once per message.
+      if (canAutomate && parsedMessage.commerce?.kind === "cartSent") {
+        const cart = getInboundOrder(createdMessage.contentAttributes)
+        if (cart) {
+          await integrationQueue.add(
+            IntegrationJobAction.replyToInboundCart,
+            {
+              type: IntegrationJobAction.replyToInboundCart,
+              data: {
+                workspaceId: inbox.workspaceId,
+                conversationId: conversation.id,
+                contactId: contactInbox.contactId,
+                contactInboxId: contactInbox.id,
+                messageId: createdMessage.id,
+                cart,
+              },
+            },
+            { jobId: getInboundCartReplyJobId(createdMessage.id) },
+          )
+        }
       }
 
       // Message echoes (agent replying from the channel's own native UI,

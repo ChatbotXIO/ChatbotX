@@ -9,5 +9,14 @@ export const productCategoryFormSchema = z.object({
    * caller that only sends a name silently un-parent a sub-category.
    */
   parentId: z.string().regex(/^\d+$/).nullable().optional(),
+  /** An emptied image comes back as `""`; the row stores null. */
+  imageUrl: z.preprocess(
+    (value) => (value === "" ? null : value),
+    z.string().url().max(2048).nullable().optional(),
+  ),
+  rank: z.coerce.number().int().optional(),
 })
-export type ProductCategoryForm = z.infer<typeof productCategoryFormSchema>
+export type ProductCategoryForm = z.input<typeof productCategoryFormSchema>
+
+/** The Visible switch in the category list. */
+export const productCategoryVisibleSchema = z.object({ isVisible: z.boolean() })

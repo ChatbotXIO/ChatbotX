@@ -2771,7 +2771,8 @@
       "sendGoogleAdsConversion": "إرسال تحويل Google Ads",
       "changeGamificationScore": "تغيير نقاط التحدي",
       "sendViewCatalog": "عرض الكتالوج",
-      "sendProducts": "إرسال المنتجات"
+      "sendProducts": "إرسال المنتجات",
+      "sendCollection": "مجموعة"
     },
     "externalRequest": {
       "errors": {
@@ -2957,6 +2958,43 @@
       "productsSelected": "{count, plural, one {# منتج} other {# منتجات}}",
       "noneSelected": "لا توجد منتجات بعد",
       "sendFailed": "تعذّر إرسال المنتجات."
+    },
+    "sendCollection": {
+      "title": "مجموعة",
+      "dataType": "نوع البيانات",
+      "dataTypes": {
+        "products": "المنتجات"
+      },
+      "collectionType": "نوع المجموعة",
+      "collectionTypes": {
+        "automated": {
+          "label": "تلقائي",
+          "description": "تُضاف تلقائيًا إلى هذه المجموعة العناصر الحالية والمستقبلية المطابقة للشروط."
+        },
+        "manual": {
+          "label": "يدوي",
+          "description": "أضف العناصر إلى هذه المجموعة واحدًا تلو الآخر."
+        }
+      },
+      "condition": "الشرط",
+      "name": "الاسم",
+      "optional": "(اختياري)",
+      "category": "الفئة",
+      "subcategory": "الفئة الفرعية",
+      "vendor": "البائع",
+      "all": "الكل",
+      "items": "العناصر",
+      "select": "اختيار",
+      "selectPlaceholder": "اختر عنصرًا واحدًا أو أكثر",
+      "selectAll": "تحديد الكل",
+      "deselectAll": "إلغاء تحديد الكل",
+      "maxProducts": "حتى {count} منتجات؛ يُتخطى المنتج الذي لم يعد المتجر يعرضه.",
+      "automatedHint": "يرسل حتى {count} منتجات مطابقة يعرضها المتجر كبطاقات تفتح كل منتج في المتجر.",
+      "summaryAll": "كل المنتجات التي يعرضها المتجر",
+      "summaryAutomated": "المنتجات: {filters}",
+      "summaryManual": "{count, plural, one {# منتج} other {# منتجات}}",
+      "cancel": "إلغاء",
+      "save": "حفظ"
     }
   },
   "folders": {
@@ -4221,6 +4259,25 @@
       "unknownFieldTarget": "حقل جهة الاتصال المرتبط لم يعد موجودًا.",
       "actionReferenceNotFound": "يشير أحد الإجراءات إلى مسار أو وسم أو حقل لم يعد موجودًا.",
       "fieldMappingRequired": "أضف ربط حقل واحدًا على الأقل."
+    },
+    "form": {
+      "required": "هذا الحقل مطلوب.",
+      "minLength": "أدخل {minimum} أحرف على الأقل.",
+      "maxLength": "أدخل {maximum} حرفًا كحد أقصى.",
+      "minNumber": "أدخل رقمًا لا يقل عن {minimum}.",
+      "moreThan": "أدخل رقمًا أكبر من {minimum}.",
+      "maxNumber": "أدخل رقمًا لا يزيد عن {maximum}.",
+      "lessThan": "أدخل رقمًا أقل من {maximum}.",
+      "number": "أدخل رقمًا.",
+      "wholeNumber": "أدخل رقمًا صحيحًا.",
+      "minItems": "اختر {minimum} على الأقل.",
+      "maxItems": "اختر {maximum} كحد أقصى.",
+      "email": "أدخل بريدًا إلكترونيًا صالحًا.",
+      "url": "أدخل رابطًا صالحًا يبدأ بـ https://.",
+      "format": "هذه القيمة ليست بالتنسيق الصحيح.",
+      "option": "اختر أحد الخيارات.",
+      "invalid": "هذه القيمة غير صالحة.",
+      "checkFields": "بعض الحقول تحتاج إلى تصحيح. راجع الحقول المميزة باللون الأحمر."
     }
   },
   "webchat": {
@@ -5209,7 +5266,8 @@
       "contactReferredExistingContact": "أحالت جهة الاتصال جهة اتصال موجودة",
       "callRecorded": "تم تسجيل المكالمة",
       "callTranscribed": "تم تفريغ المكالمة",
-      "anyProduct": "أي منتج"
+      "anyProduct": "أي منتج",
+      "anyCategory": "أي فئة"
     },
     "actions": {
       "addTag": "إضافة وسم",
@@ -5997,7 +6055,82 @@
     "unknown": "غير معروف"
   },
   "orders": {
-    "title": "الطلبات"
+    "title": "الطلبات",
+    "empty": "لا توجد طلبات بعد.",
+    "searchPlaceholder": "ابحث بالاسم أو الهاتف أو البريد الإلكتروني أو رقم الطلب",
+    "orderNumber": "الطلب #{number}",
+    "print": "طباعة",
+    "inbox": "صندوق الوارد",
+    "statusUpdated": "تم تحديث حالة الطلب",
+    "statusUpdateError": "تعذر تحديث حالة الطلب",
+    "updateStatusTitle": "تحديث حالة الطلب",
+    "message": "الرسالة",
+    "messagePlaceholder": "اختياري",
+    "messageDescription": "تُرسل إلى العميل في محادثته.",
+    "cancel": "إلغاء",
+    "continue": "متابعة",
+    "delete": "حذف",
+    "deleted": "تم حذف الطلب",
+    "deleteError": "تعذر حذف الطلب",
+    "deleteTitle": "حذف الطلب #{number}؟",
+    "deleteDescription": "سيتم حذف الطلب وعناصره وسجله. وسيُعاد المخزون المحجوز إلى المخزن.",
+    "columns": {
+      "name": "الاسم",
+      "total": "الإجمالي",
+      "status": "الحالة",
+      "date": "التاريخ",
+      "rating": "التقييم",
+      "quantity": "الكمية",
+      "price": "السعر",
+      "vendor": "المورّد"
+    },
+    "fields": {
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "country": "الدولة",
+      "state": "الولاية/المحافظة",
+      "city": "المدينة",
+      "street": "الشارع",
+      "zip": "الرمز البريدي",
+      "shippingType": "الشحن",
+      "orderId": "رقم الطلب",
+      "date": "التاريخ",
+      "subtotal": "المجموع الفرعي",
+      "discount": "الخصم",
+      "deliveryCost": "تكلفة التوصيل",
+      "otherTaxes": "ضرائب أخرى",
+      "total": "الإجمالي",
+      "paymentMethod": "طريقة الدفع",
+      "status": "الحالة",
+      "note": "ملاحظة",
+      "cancelReason": "سبب الإلغاء",
+      "rating": "التقييم",
+      "ratingComment": "تعليق العميل",
+      "coupon": "القسيمة ({code})"
+    },
+    "statuses": {
+      "pending": "لم تتم المعالجة",
+      "accepted": "مقبول",
+      "shipped": "تم الشحن",
+      "concluded": "مكتمل",
+      "cancelled": "ملغى"
+    },
+    "transitions": {
+      "accepted": "قبول",
+      "shipped": "شحن",
+      "concluded": "إكمال",
+      "cancelled": "إلغاء"
+    },
+    "paymentMethods": {
+      "cod": "الدفع عند الاستلام"
+    },
+    "shippingTypes": {
+      "delivery": "التوصيل إلى العميل",
+      "pickup": "الاستلام من المتجر"
+    },
+    "description": "الطلبات التي قدّمها عملاؤك.",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "المنتجات",
@@ -6046,7 +6179,8 @@
         "label": "السماح للعملاء بشراء هذا المنتج عند نفاد المخزون"
       },
       "vendor": {
-        "label": "المورّد"
+        "label": "المورّد",
+        "none": "بدون"
       },
       "rank": {
         "label": "الترتيب"
@@ -6597,8 +6731,8 @@
     "loadError": "تعذّر تحميل فئات المنتجات.",
     "all": "جميع المنتجات",
     "create": "إنشاء فئة",
-    "edit": "إعادة تسمية الفئة",
-    "name": "اسم الفئة",
+    "edit": "تعديل",
+    "name": "الاسم",
     "namePlaceholder": "مثال: تشكيلة الصيف",
     "parent": "الفئة الأصل",
     "noParent": "بدون (المستوى الأعلى)",
@@ -6618,12 +6752,25 @@
     "columns": {
       "name": "الاسم",
       "products": "المنتجات",
-      "subcategories": "الفئات الفرعية"
+      "subcategories": "الفئات الفرعية",
+      "visible": "ظاهر"
     },
     "expand": "إظهار الفئات الفرعية",
     "collapse": "إخفاء الفئات الفرعية",
     "productCount": "{count, plural, =0 {لا توجد منتجات} one {# منتج} other {# منتجات}}",
-    "deleteChildrenWarning": "{count, plural, one {سيتم حذف # فئة فرعية أيضًا.} other {سيتم حذف # فئات فرعية أيضًا.}}"
+    "deleteChildrenWarning": "{count, plural, one {سيتم حذف # فئة فرعية أيضًا.} other {سيتم حذف # فئات فرعية أيضًا.}}",
+    "add": "إضافة",
+    "dialogTitle": "الفئة",
+    "image": "الصورة",
+    "continue": "متابعة",
+    "subcategories": "الفئات الفرعية",
+    "subcategoriesOf": "الفئات الفرعية لـ {name}",
+    "emptySub": "لا توجد فئات فرعية بعد.",
+    "back": "العودة إلى الفئات",
+    "getId": "الحصول على المعرّف",
+    "idCopied": "تم نسخ معرّف الفئة {id}",
+    "idCopyError": "تعذر نسخ المعرّف",
+    "description": "نظّم منتجاتك في فئات وفئات فرعية."
   },
   "productImport": {
     "title": "استيراد",
@@ -9081,6 +9228,543 @@
       "hours": "الساعات",
       "closed": "مغلق"
     }
+  },
+  "productVendors": {
+    "title": "المورّدون",
+    "add": "إضافة",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "actions": "الإجراءات",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "moreOptions": "خيارات إضافية",
+    "empty": "لا يوجد مورّدون بعد.",
+    "created": "تمت إضافة المورّد",
+    "updated": "تم تحديث المورّد",
+    "deleted": "تم حذف المورّد",
+    "saveError": "تعذر حفظ المورّد",
+    "deleteError": "تعذر حذف المورّد",
+    "deleteTitle": "حذف {name}؟",
+    "deleteDescription": "{count, plural, =0 {لا يوجد منتج يستخدم هذا المورّد.} one {سيبقى # منتج بلا مورّد.} other {ستبقى # منتجات بلا مورّد.}}",
+    "fields": {
+      "name": "الاسم",
+      "shortDescription": "وصف مختصر",
+      "phone": "الهاتف",
+      "storeAddress": "عنوان المتجر",
+      "image": "الصورة",
+      "optional": "اختياري",
+      "discountPercent": "الخصم (0-100%)",
+      "minimumOrderValue": "الحد الأدنى لقيمة الطلب",
+      "openHours": "ساعات العمل",
+      "category": "الفئة",
+      "subcategory": "الفئة الفرعية",
+      "none": "بدون"
+    },
+    "columns": {
+      "name": "الاسم",
+      "products": "إجمالي المنتجات",
+      "active": "نشط"
+    },
+    "description": "البائعون والعلامات التجارية التي تنتمي إليها منتجاتك."
+  },
+  "ecommerceSettings": {
+    "save": "حفظ",
+    "saved": "تم حفظ الإعدادات",
+    "saveError": "تعذر حفظ الإعدادات",
+    "rank": {
+      "label": "الترتيب",
+      "default": "افتراضي"
+    },
+    "tabs": {
+      "general": "عام",
+      "payments": "المدفوعات",
+      "shipping": "الشحن",
+      "checkout": "إتمام الشراء"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "الطلب متاح",
+        "description": "استخدم هذا الحقل لمنع العملاء من تقديم الطلبات دون تغيير ساعات العمل. كما تتحكم ساعات العمل في توفرك."
+      },
+      "webshopProductView": {
+        "label": "عرض المنتجات في المتجر الإلكتروني",
+        "description": "تحكم في طريقة عرض المنتجات في متجرك الإلكتروني.",
+        "options": {
+          "list": "قائمة",
+          "listWithoutImage": "قائمة بدون صورة",
+          "card": "بطاقة",
+          "cardSquare": "بطاقة بصورة مربعة",
+          "image": "صورة",
+          "imageSquare": "صورة (مربعة)"
+        }
+      },
+      "openHours": {
+        "label": "ساعات العمل",
+        "description": "الفترات الزمنية التي يمكن لعملائك فيها تقديم الطلبات."
+      },
+      "searchProducts": {
+        "label": "البحث عن المنتجات",
+        "description": "السماح للعملاء بإرسال رسائل للعثور على المنتجات."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "تتبّع التحويلات باستخدام بكسل FB وقِس نتائج إعلاناتك. يتم تتبع الأحداث التالية: ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "رسالة السلة المتروكة",
+        "description": "مدة الانتظار قبل إرسال رسالة السلة المتروكة بعد مغادرة المستخدم البوت وفي سلته منتج.",
+        "disabled": "معطّل",
+        "afterMinutes": "بعد {count} دقيقة",
+        "afterHours": "{count, plural, one {بعد # ساعة} other {بعد # ساعات}}"
+      },
+      "productButtons": {
+        "label": "الأزرار في المنتجات",
+        "description": "يتحكم هذا الإعداد في الأزرار التي تظهر للمنتجات داخل البوت.",
+        "options": {
+          "addToCart": "أضف إلى السلة",
+          "share": "مشاركة",
+          "similar": "مشابه",
+          "save": "حفظ"
+        }
+      },
+      "productImageSize": {
+        "label": "حجم صورة المنتجات",
+        "description": "يتحكم هذا الإعداد في حجم صورة المنتجات داخل البوت",
+        "options": {
+          "bigSquare": "كبير (مربع)",
+          "mediumRectangle": "متوسط (مستطيل)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "السماح بتقييم الطلبات",
+        "description": "اسمح للعملاء بتقييم الطلب وكتابة مراجعة إذا لم يكونوا راضين عنه. يمكن لمشرفي البوت فقط رؤية المراجعات"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "إرسال إشعار عند تغيير حالة السلة",
+        "description": "سيتلقى العميل إشعارًا كلما غيّرت حالة الطلب. لا يمكنك تعطيل الإشعار عند إلغاء الطلب أو إكماله."
+      },
+      "abandonedCartFlow": {
+        "label": "تدفق السلة المتروكة",
+        "description": "التدفق الذي يشغّله البوت للعميل عند ترك السلة هذه المدة. استخدم '{{shop_token}}' في الأزرار لفتح السلة. يمكن للمشغّلات أيضًا استخدام حدث \"Cart abandoned\".",
+        "none": "بدون تدفق (حدث المشغّل فقط)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {سعر # منتج بعملة} other {سعر # منتجات بعملة}} غير {currency}. تُحتسب الطلبات بسعرها بعملة {currency}.",
+      "paymentMethods": {
+        "label": "طرق الدفع",
+        "description": "طرق الدفع المفعّلة في صفحة إتمام الشراء. ستكون أول طريقة في القائمة هي المحددة في صفحة إتمام الشراء.",
+        "options": {
+          "cod": "الدفع عند الاستلام"
+        }
+      },
+      "currency": {
+        "label": "العملة",
+        "description": "هي العملة التي تحدد بها أسعار المنتجات. سيتم محاسبة العملاء بهذه العملة."
+      },
+      "currencyPosition": {
+        "label": "موضع العملة",
+        "description": "يتيح لك هذا الخيار التحكم في موضع العملة.",
+        "options": {
+          "left": "يسار",
+          "leftSpace": "يسار مع مسافة",
+          "right": "يمين",
+          "rightSpace": "يمين مع مسافة"
+        }
+      },
+      "currencySymbol": {
+        "label": "رمز العملة",
+        "description": "يظهر رمز العملة قبل الأسعار. إذا أردت مسافة بين الرمز والأسعار، أضف مسافة في نهاية الرمز."
+      },
+      "serviceFeePercent": {
+        "label": "رسوم أخرى / رسوم الخدمة (0 - 100%)",
+        "description": "رسوم أخرى متعلقة بالبيع."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "نوع الشحن",
+        "description": "يتيح لك هذا الخيار التحكم في كيفية استلام العميل لطلبه.",
+        "options": {
+          "none": "بدون",
+          "delivery": "التوصيل إلى العميل",
+          "pickup": "الاستلام من المتجر",
+          "deliveryAndPickup": "التوصيل إلى العميل، الاستلام من المتجر"
+        }
+      },
+      "storeAddress": {
+        "label": "عنوان المتجر",
+        "description": "يظهر هذا العنوان للعميل في صفحة إتمام الشراء إذا سمحت بالاستلام من المتجر."
+      },
+      "shippingCountries": {
+        "label": "دول الشحن",
+        "description": "الدول التي تشحن إليها الطلبات."
+      },
+      "defaultShippingCountry": {
+        "label": "دولة الشحن الافتراضية",
+        "description": "الدولة التي ستكون محددة افتراضيًا في صفحة إتمام الشراء.",
+        "none": "بدون"
+      },
+      "deliveryCost": {
+        "label": "تكلفة التوصيل",
+        "description": "تكلفة ثابتة لتوصيل الطلب إلى عنوان العميل."
+      },
+      "defaultCountryNotShipped": "اختر إحدى دول الشحن."
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "إتمام الشراء",
+        "description": "يتحكم هذا الإعداد في المكان الذي يُنهي فيه عملاؤك طلباتهم. إذا أردت أن يُكمل المستخدم الطلب خارج البوت، مثل موقعك الإلكتروني أو Amazon وغيرها، فلا تستخدم صفحة إتمام الشراء الافتراضية لدينا.",
+        "options": {
+          "default": "صفحة إتمام الشراء الافتراضية",
+          "externalLink": "صفحة إتمام شراء خارجية مخصصة",
+          "flow": "Flow",
+          "productPage": "زيارة صفحة المنتج الخارجية"
+        }
+      },
+      "checkoutLink": {
+        "label": "رابط صفحة إتمام الشراء",
+        "description": "الصفحة الخارجية التي يُنهي فيها العملاء طلباتهم."
+      },
+      "checkoutFlowId": {
+        "label": "Flow إتمام الشراء",
+        "description": "الـ Flow الذي يعمل عندما يتجه العميل إلى إتمام الشراء.",
+        "placeholder": "اختر Flow"
+      },
+      "minimumOrderValue": {
+        "label": "الحد الأدنى لقيمة الطلب",
+        "description": "الحد الأدنى لقيمة الطلب الذي يمكن للعميل تقديمه. يُتحقق من هذا الشرط بعد تطبيق جميع الخصومات."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "طلب اسم المشتري",
+          "description": "سيتم جمع اسم المشتري أثناء إتمام الشراء."
+        },
+        "requireEmail": {
+          "label": "طلب البريد الإلكتروني",
+          "description": "سيتم جمع البريد الإلكتروني للمشتري أثناء إتمام الشراء."
+        },
+        "requirePhone": {
+          "label": "طلب رقم الهاتف",
+          "description": "سيتم جمع هاتف المشتري أثناء إتمام الشراء."
+        },
+        "requireState": {
+          "label": "طلب الولاية/المحافظة",
+          "description": "ستُجمع ولاية المشتري أثناء إتمام الشراء."
+        },
+        "requireZip": {
+          "label": "طلب الرمز البريدي",
+          "description": "سيتم جمع الرمز البريدي للمشتري أثناء إتمام الشراء."
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "رسالة تأكيد الطلب",
+        "description": "ما يتلقاه العميل في المحادثة عند تقديم طلبه. تعرض الرسالة الافتراضية تفاصيل الطلب بلغة مساحة العمل.",
+        "options": {
+          "default": "الرسالة الافتراضية",
+          "flow": "تشغيل تدفق",
+          "none": "عدم إرسال أي شيء"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "تدفق تأكيد الطلب",
+        "description": "التدفق الذي يُرسل إلى العميل بدلًا من الرسالة الافتراضية عند تقديم طلبه."
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "مفتوح دائمًا",
+    "addNew": "إضافة جديد",
+    "dialogTitle": "ساعات العمل",
+    "name": "الاسم",
+    "namePlaceholder": "مثال: أيام الأسبوع",
+    "day": "اليوم",
+    "from": "يفتح",
+    "to": "يغلق",
+    "add": "إضافة ساعات",
+    "remove": "إزالة",
+    "cancel": "إلغاء",
+    "continue": "متابعة",
+    "created": "تم إنشاء ساعات العمل",
+    "saveError": "تعذر حفظ ساعات العمل",
+    "days": {
+      "0": "الأحد",
+      "1": "الإثنين",
+      "2": "الثلاثاء",
+      "3": "الأربعاء",
+      "4": "الخميس",
+      "5": "الجمعة",
+      "6": "السبت"
+    },
+    "sameTimes": "يجب أن يختلف وقت الفتح عن وقت الإغلاق."
+  },
+  "webshop": {
+    "metadataTitle": "المتجر",
+    "metadataOrderTitle": "طلبك",
+    "invalidLinkTitle": "هذا الرابط لا يعمل",
+    "invalidLinkDescription": "ربما انتهت صلاحيته. اطلب من المتجر رابطًا جديدًا في المحادثة.",
+    "previewBanner": "معاينة: هذا ما يراه العملاء. لا يمكن تقديم الطلبات من المعاينة.",
+    "previewOrderingOff": "معاينة: الطلب غير متاح",
+    "closed": {
+      "orderingUnavailable": "المتجر لا يستقبل طلبات الآن.",
+      "outsideOpenHours": "المتجر مغلق الآن. لا يزال بإمكانك التصفح."
+    },
+    "searchPlaceholder": "ابحث عن المنتجات",
+    "categories": "الفئات",
+    "allCategories": "كل الفئات",
+    "vendors": "البائعون",
+    "allVendors": "كل البائعين",
+    "noProducts": "لم يتم العثور على منتجات.",
+    "productNotFound": "هذا المنتج لم يعد متاحًا.",
+    "outOfStock": "نفد من المخزون",
+    "addToCart": "أضف إلى السلة",
+    "added": "تمت الإضافة إلى السلة",
+    "chooseOptions": "اختر الخيارات",
+    "chooseOption": "اختر {name}",
+    "variantUnavailable": "هذه التركيبة غير متاحة.",
+    "buy": "شراء",
+    "share": "مشاركة",
+    "linkCopied": "تم النسخ",
+    "similar": "مشابه",
+    "save": "حفظ",
+    "saved": "محفوظ",
+    "showImage": "عرض الصورة {number}",
+    "increase": "زيادة الكمية",
+    "decrease": "تقليل الكمية",
+    "remove": "إزالة",
+    "cart": "السلة",
+    "cartEmpty": "سلتك فارغة.",
+    "continueShopping": "متابعة التسوق",
+    "unavailableItems": "{count, plural, one {لا يمكن طلب # منتج الآن} other {لا يمكن طلب # منتجات الآن}}",
+    "unavailableNotOrdered": "لن تُضاف إلى طلبك وستبقى في السلة.",
+    "unavailable": "لم يعد متاحًا",
+    "unavailableHint": "اختر خياراته من جديد",
+    "deletedProduct": "منتج محذوف",
+    "summary": {
+      "subtotal": "المجموع الفرعي",
+      "discount": "الخصم",
+      "delivery": "التوصيل",
+      "otherFees": "رسوم أخرى",
+      "total": "الإجمالي",
+      "coupon": "القسيمة ({code})",
+      "title": "ملخص الطلب",
+      "saved": "وفّرت {amount}"
+    },
+    "belowMinimum": "الحد الأدنى للطلب هو {amount}.",
+    "checkOut": "إتمام الشراء",
+    "contactDetails": "بياناتك",
+    "optional": "(اختياري)",
+    "fields": {
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "country": "الدولة",
+      "state": "الولاية / المحافظة",
+      "city": "المدينة",
+      "address1": "العنوان",
+      "address2": "الشقة، المبنى، إلخ.",
+      "zip": "الرمز البريدي",
+      "note": "ملاحظة للمتجر"
+    },
+    "shipping": {
+      "title": "التوصيل",
+      "delivery": "التوصيل إلى عنواني",
+      "pickup": "الاستلام من المتجر",
+      "storeAddress": "عنوان المتجر: {address}"
+    },
+    "payment": {
+      "title": "الدفع",
+      "cod": "الدفع عند الاستلام"
+    },
+    "placeOrder": "تأكيد الطلب",
+    "orderPlaced": "شكرًا لك! تم تقديم طلبك. سنرسل لك التحديثات في المحادثة.",
+    "orderTitle": "الطلب #{number}",
+    "orderNotFound": "لم يتم العثور على هذا الطلب.",
+    "placedAt": "تم الطلب في {date}",
+    "status": {
+      "pending": "لم تتم معالجته",
+      "accepted": "قيد المعالجة",
+      "shipped": "تم الشحن",
+      "concluded": "مكتمل",
+      "cancelled": "ملغى"
+    },
+    "rateTitle": "قيّم طلبك",
+    "rateComment": "أخبر المتجر برأيك (اختياري)",
+    "rateSubmit": "إرسال التقييم",
+    "rateThanks": "شكرًا على تقييمك!",
+    "yourRating": "تقييمك",
+    "ratingValue": "{rating} من 5 نجوم",
+    "previous": "السابق",
+    "next": "التالي",
+    "pageOf": "الصفحة {page} من {pageCount}",
+    "errors": {
+      "generic": "حدث خطأ ما. حاول مرة أخرى.",
+      "checkFields": "يرجى التحقق من الحقول.",
+      "fieldRequired": "حقل {field} مطلوب.",
+      "countryUnavailable": "المتجر لا يوصّل إلى هذه الدولة.",
+      "invalidLink": "هذا الرابط لم يعد يعمل. اطلب رابطًا جديدًا من المتجر.",
+      "webshopPreviewOnly": "هذه معاينة. لا يمكن الطلب إلا من رابط العميل.",
+      "rateLimited": "محاولات كثيرة جدًا. انتظر قليلًا ثم حاول مجددًا.",
+      "orderingUnavailable": "المتجر لا يستقبل طلبات الآن.",
+      "orderBelowMinimum": "الحد الأدنى للطلب هو {minimum}.",
+      "orderBelowVendorMinimum": "يجب ألا يقل مجموع منتجات {vendorName} عن {minimum}.",
+      "orderOutOfStock": "{productName} غير متوفر في المخزون.",
+      "orderProductUnavailable": "بعض المنتجات لم يعد بالإمكان طلبها. تحقق من سلتك.",
+      "orderEmpty": "سلتك فارغة.",
+      "orderShippingTypeUnavailable": "خيار التوصيل هذا غير متاح.",
+      "webshopRatingNotAllowed": "لا يمكن تقييم هذا الطلب.",
+      "webshopCartFull": "يمكن أن تحتوي سلتك على {maximum} عنصرًا مختلفًا كحد أقصى.",
+      "notFound": "هذا المنتج لم يعد متاحًا.",
+      "discountCodeNotFound": "رمز الخصم هذا غير موجود.",
+      "discountCodeInactive": "رمز الخصم هذا غير نشط.",
+      "discountCodeNotStarted": "رمز الخصم هذا غير صالح بعد.",
+      "discountCodeExpired": "انتهت صلاحية رمز الخصم هذا.",
+      "discountCodeUsageLimitReached": "نفدت استخدامات رمز الخصم هذا.",
+      "discountCodeAlreadyUsed": "لقد استخدمت رمز الخصم هذا من قبل.",
+      "discountCodeNotEligible": "رمز الخصم هذا غير متاح لك.",
+      "discountCodeNotApplicable": "رمز الخصم هذا لا ينطبق على محتويات سلتك.",
+      "discountCodeMinimumAmount": "يتطلب رمز الخصم هذا شراءً بقيمة {minimum} على الأقل. أضف {missing}.",
+      "discountCodeMinimumQuantity": "يتطلب رمز الخصم هذا {minimum} منتجات على الأقل. أضف {missing}."
+    },
+    "discount": {
+      "label": "رمز الخصم",
+      "placeholder": "رمز الخصم",
+      "apply": "تطبيق",
+      "applied": "تم تطبيق رمز الخصم",
+      "automatic": "مطبّق تلقائيًا",
+      "remove": "إزالة رمز الخصم",
+      "available": "رموز يمكنك استخدامها",
+      "freeShipping": "شحن مجاني",
+      "bestChoice": "الخيار الأفضل",
+      "expiresOn": "ينتهي في {date}",
+      "noExpiry": "بلا تاريخ انتهاء",
+      "inUse": "قيد الاستخدام",
+      "saves": "توفير {amount}",
+      "showMore": "{count, plural, one {عرض # رمز آخر} other {عرض # رموز أخرى}}",
+      "showLess": "عرض أقل",
+      "removeShort": "إزالة",
+      "expired": "منتهية",
+      "usedUp": "نفدت",
+      "notEligible": "غير مؤهل بعد"
+    },
+    "itemCount": "{count, plural, one {# منتج} other {# منتجات}}",
+    "relatedProducts": "قد يعجبك أيضًا"
+  },
+  "webshopLinks": {
+    "preview": "معاينة",
+    "getLink": "الحصول على الرابط",
+    "copied": "تم نسخ الرابط. ضعه على زر في البوت: يفتح كل جهة اتصال متجرها الخاص.",
+    "error": "تعذر الحصول على الرابط.",
+    "copyError": "تعذر نسخ الرابط.",
+    "shopLink": {
+      "label": "رابط المتجر",
+      "hint": "الصق هذا الرابط في زر داخل تدفق أو بث أو تسلسل. كل جهة اتصال تتلقاه تفتح متجرها الخاص ويمكنها الطلب."
+    },
+    "productLink": {
+      "label": "الرابط العام",
+      "hint": "انسخ الرابط والصقه في التدفق أو البث أو التسلسل. كل جهة اتصال تتلقاه تفتح هذا المنتج ويمكنها الطلب."
+    }
+  },
+  "discountCodes": {
+    "title": "القسائم",
+    "description": "رموز خصم يستخدمها العملاء عند الدفع، أو تُطبَّق تلقائيًا.",
+    "add": "إضافة",
+    "edit": "تعديل القسيمة",
+    "automatic": "تلقائي",
+    "never": "أبدًا",
+    "searchPlaceholder": "ابحث عن الرموز…",
+    "saveError": "تعذر حفظ القسيمة.",
+    "created": "تم إنشاء القسيمة",
+    "updated": "تم حفظ القسيمة",
+    "deleted": "تم حذف القسيمة",
+    "deleteError": "تعذر حذف القسيمة.",
+    "deleteTitle": "حذف القسيمة {code}؟",
+    "deleteDescription": "لن يتمكن العملاء من استخدامها. الطلبات التي استخدمتها تحتفظ بخصمها.",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "save": "حفظ",
+    "columns": {
+      "name": "الاسم",
+      "discount": "الخصم",
+      "used": "مستخدم",
+      "end": "الانتهاء",
+      "active": "نشط"
+    },
+    "discountTypes": {
+      "percentage": "نسبة مئوية",
+      "fixedAmount": "مبلغ ثابت",
+      "freeShipping": "شحن مجاني"
+    },
+    "appliesTo": {
+      "entireOrder": "الطلب بالكامل",
+      "category": "فئة محددة",
+      "products": "منتجات محددة"
+    },
+    "minimumTypes": {
+      "none": "لا شيء",
+      "amount": "الحد الأدنى لمبلغ الشراء",
+      "quantity": "الحد الأدنى لعدد المنتجات"
+    },
+    "eligibilities": {
+      "everyone": "الجميع",
+      "specificCustomers": "عملاء محددون"
+    },
+    "form": {
+      "discountCode": "رمز الخصم",
+      "code": "الرمز",
+      "generate": "إنشاء",
+      "autoApply": "تطبيق هذه القسيمة تلقائيًا على السلال",
+      "autoApplyHint": "تحصل عليها السلال دون أن يكتبها العميل. مع عدة قسائم تلقائية تُطبَّق الأكبر خصمًا.",
+      "typedHint": "سيدخل العملاء رمز الخصم هذا عند الدفع.",
+      "options": "الخيارات",
+      "discountType": "نوع الخصم",
+      "discountValuePercent": "قيمة الخصم (%)",
+      "discountValueAmount": "قيمة الخصم ({currency})",
+      "freeShippingHint": "يلغي تكلفة التوصيل عن الطلبات المرسلة إلى العميل.",
+      "appliesTo": "يُطبَّق على",
+      "category": "الفئة",
+      "products": "المنتجات",
+      "productsPlaceholder": "اختر المنتجات",
+      "minimumRequirement": "الحد الأدنى المطلوب",
+      "minimumAmount": "الحد الأدنى للمبلغ ({currency})",
+      "minimumQuantity": "الحد الأدنى لعدد المنتجات",
+      "usageLimits": "حدود الاستخدام",
+      "limitTotal": "تحديد عدد مرات استخدام هذا الخصم إجمالًا",
+      "usedSoFar": "{count, plural, one {استُخدم # مرة حتى الآن} other {استُخدم # مرات حتى الآن}}",
+      "oncePerCustomer": "استخدام واحد لكل عميل",
+      "customerEligibility": "أهلية العملاء",
+      "specificCustomersHint": "فقط جهات الاتصال المطابقة للمرشح أدناه عند الطلب.",
+      "activeDates": "تواريخ السريان",
+      "startDate": "تاريخ البدء",
+      "endDate": "تاريخ الانتهاء",
+      "isActive": "نشط"
+    },
+    "rules": {
+      "codeCharacters": "استخدم الأحرف اللاتينية بدون علامات والأرقام و - و _ فقط.",
+      "usageBelowUsed": "استُخدم هذا الرمز {count} مرة بالفعل؛ لا يمكن أن يكون الحد أقل.",
+      "customerConditionRequired": "أضف شرطًا واحدًا على الأقل.",
+      "endAfterStart": "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء."
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "التحليلات",
+    "lifetime": "الإجمالي",
+    "sales": "المبيعات",
+    "orders": "الطلبات",
+    "products": "المنتجات",
+    "salesByDate": "المبيعات حسب التاريخ",
+    "ordersByDate": "الطلبات حسب التاريخ",
+    "topProducts": "أفضل المنتجات",
+    "topVendors": "أفضل البائعين",
+    "columns": {
+      "name": "الاسم",
+      "sales": "المبيعات"
+    },
+    "noData": "لا توجد بيانات في هذه الفترة",
+    "refresh": "تحديث",
+    "change": "{value}%",
+    "noPrevious": "جديد",
+    "otherCurrencyOrders": "لا تشمل هذه الأرقام {count} من الطلبات بعملات أخرى"
   },
   "responseSla": {
     "label": "اتفاقية مستوى الخدمة للرد",

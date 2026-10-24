@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   categoryFind: vi.fn(),
+  removeProductIds: vi.fn(),
   productCreate: vi.fn(),
   productDeleteByIds: vi.fn(),
   productFind: vi.fn(),
@@ -32,6 +33,9 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/repositories", () => ({
+  discountCodeRepository: {
+    removeProductIds: (...args: unknown[]) => mocks.removeProductIds(...args),
+  },
   productCategoryRepository: {
     find: (...args: unknown[]) => mocks.categoryFind(...args),
   },
@@ -134,6 +138,87 @@ describe("productService workspace boundaries", () => {
       { workspaceId: "workspace-1", productIds: ["product-1", "product-2"] },
       expect.anything(),
     )
+  })
+
+  test("removes deleted products from discount codes in the same transaction", async () => {
+    await productService.delete({
+      ids: ["product-1"],
+      workspaceId: "workspace-1",
+    })
+
+    expect(mocks.transaction).toHaveBeenCalledOnce()
+    expect(mocks.removeProductIds).toHaveBeenCalledWith(
+      { workspaceId: "workspace-1", productIds: ["product-1"] },
+      tx,
+    )
+  })
+})
+
+describe("productService category change", () => {
+  test("clears a stored sub-category that belongs to the old category", async () => {
+    mocks.productFind.mockResolvedValue({
+      id: "product-1",
+      categoryId: "old",
+      subcategoryId: "old-child",
+    })
+    mocks.categoryFind.mockResolvedValue({ id: "old-child", parentId: "old" })
+
+    await productService.update({
+      workspaceId: "workspace-1",
+      productId: "product-1",
+      data: { categoryId: "new" },
+    })
+
+    expect(mocks.productUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: expect.objectContaining({
+          categoryId: "new",
+          subcategoryId: null,
+        }),
+      }),
+      expect.anything(),
+    )
+  })
+
+  test("clears the sub-category when the category is set to null", async () => {
+    mocks.productFind.mockResolvedValue({
+      id: "product-1",
+      categoryId: "old",
+      subcategoryId: "old-child",
+    })
+
+    await productService.update({
+      workspaceId: "workspace-1",
+      productId: "product-1",
+      data: { categoryId: null },
+    })
+
+    expect(mocks.productUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        values: expect.objectContaining({ subcategoryId: null }),
+      }),
+      expect.anything(),
+    )
+  })
+
+  test("keeps the sub-category when it already sits under the new category", async () => {
+    mocks.productFind.mockResolvedValue({
+      id: "product-1",
+      categoryId: "old",
+      subcategoryId: "child",
+    })
+    mocks.categoryFind.mockResolvedValue({ id: "child", parentId: "new" })
+
+    await productService.update({
+      workspaceId: "workspace-1",
+      productId: "product-1",
+      data: { categoryId: "new" },
+    })
+
+    const [{ values }] = mocks.productUpdate.mock.calls[0] as [
+      { values: Record<string, unknown> },
+    ]
+    expect(values).not.toHaveProperty("subcategoryId")
   })
 })
 

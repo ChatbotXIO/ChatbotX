@@ -56,6 +56,7 @@ import { platformCredentialRelations } from "./credential"
 import { customFieldRelations } from "./custom-field"
 import { decisionRelations } from "./decision"
 import { dynamicImageRelations } from "./dynamic-image"
+import { ecommerceRelations } from "./ecommerce"
 import { emailTopicRelations } from "./email-topic"
 import { auditLogRelations } from "./enterprise/audit-log"
 import { customDomainRelations } from "./enterprise/custom-domain"
@@ -325,6 +326,7 @@ export const relations = {
   ...analyticsSequenceEventRelations,
   ...analyticsFlowNodeEventRelations,
   ...productRelations,
+  ...ecommerceRelations,
   ...productCategoryRelations,
   ...metaCatalogRelations,
   ...questionnaireRelations,

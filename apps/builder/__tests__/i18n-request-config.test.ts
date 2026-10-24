@@ -15,15 +15,28 @@ vi.mock("@/lib/timezone", () => ({
 
 const { default: requestConfig } = await import("../src/i18n/request")
 
-type RequestConfigFactory = () => Promise<{
+type RequestConfigFactory = (params: {
+  locale?: string
+  requestLocale: Promise<string | undefined>
+}) => Promise<{
   locale: string
   timeZone?: string
 }>
 
 describe("i18n request config", () => {
   test("passes the user's cookie timezone to next-intl so client formatting never inherits the server zone", async () => {
-    const config = await (requestConfig as unknown as RequestConfigFactory)()
+    const config = await (requestConfig as unknown as RequestConfigFactory)({
+      requestLocale: Promise.resolve(undefined),
+    })
     expect(config.timeZone).toBe("Asia/Ho_Chi_Minh")
     expect(config.locale).toBe("vi")
+  })
+
+  test("an explicit locale wins over the cookie, so the web shop can speak the workspace language", async () => {
+    const config = await (requestConfig as unknown as RequestConfigFactory)({
+      locale: "ja",
+      requestLocale: Promise.resolve(undefined),
+    })
+    expect(config.locale).toBe("ja")
   })
 })

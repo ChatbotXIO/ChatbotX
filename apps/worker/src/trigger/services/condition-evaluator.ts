@@ -9,6 +9,8 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import type {
+  CartItemEventMetadata,
+  OrderEventMetadata,
   ShoppingCartSentMetadata,
   UserAskedAboutProductMetadata,
 } from "@chatbotx.io/events"
@@ -32,6 +34,23 @@ const referencedProductIdsByEventType: Partial<
     const { product } = eventData as Partial<UserAskedAboutProductMetadata>
     return toProductIds(product ? [product] : [])
   },
+  [triggerEventTypes.enum.productOrdered]: (eventData) => {
+    const { products } = eventData as Partial<OrderEventMetadata>
+    return (products ?? []).flatMap((product) =>
+      product.productId ? [product.productId] : [],
+    )
+  },
+  [triggerEventTypes.enum.productAddedToCart]: cartProductIds,
+  [triggerEventTypes.enum.productRemovedFromCart]: cartProductIds,
+  [triggerEventTypes.enum.categoryAddedToCart]: (eventData) => {
+    const { product } = eventData as Partial<CartItemEventMetadata>
+    return product?.categoryIds ?? []
+  },
+}
+
+function cartProductIds(eventData: Record<string, unknown>): string[] {
+  const { product } = eventData as Partial<CartItemEventMetadata>
+  return product?.productId ? [product.productId] : []
 }
 
 function toProductIds(
@@ -91,10 +110,23 @@ export class ConditionEvaluator {
       case triggerEventTypes.enum.callEnded:
       case triggerEventTypes.enum.callRecorded:
       case triggerEventTypes.enum.callTranscribed:
+      // Order and abandoned-cart events: the event happening is the condition.
+      case triggerEventTypes.enum.newOrder:
+      case triggerEventTypes.enum.orderAccepted:
+      case triggerEventTypes.enum.orderShipped:
+      case triggerEventTypes.enum.orderConcluded:
+      case triggerEventTypes.enum.orderCancelled:
+      case triggerEventTypes.enum.cartAbandoned:
         return true
 
       case triggerEventTypes.enum.shoppingCartSent:
       case triggerEventTypes.enum.userAskedAboutProduct:
+      case triggerEventTypes.enum.productOrdered:
+      case triggerEventTypes.enum.productAddedToCart:
+      case triggerEventTypes.enum.productRemovedFromCart:
+      // The category's id is pinned in `sourceId` and matched against the
+      // product's category and sub-category.
+      case triggerEventTypes.enum.categoryAddedToCart:
         return this.evaluateReferencedProduct(
           type,
           sourceId,

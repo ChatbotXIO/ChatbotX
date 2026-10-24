@@ -30,6 +30,8 @@ const hasReachedLimit = vi.fn()
 const workspaceServiceFind = vi.fn()
 const workspaceMemberServiceCreate = vi.fn()
 vi.mock("@chatbotx.io/business", () => ({
+  hasWorkspacePermission: (permissions: Record<string, unknown>, key: string) =>
+    permissions.superAdmin === true || permissions[key] === true,
   invitationService: {
     findActiveByCodeOrFail: (...args: unknown[]) =>
       findActiveByCodeOrFail(...args),

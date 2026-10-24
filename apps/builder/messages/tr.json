@@ -2771,7 +2771,8 @@
       "sendGoogleAdsConversion": "Google Ads dönüşümü gönder",
       "changeGamificationScore": "Oyunlaştırma puanlarını değiştir",
       "sendViewCatalog": "Kataloğu görüntüle",
-      "sendProducts": "Ürün gönder"
+      "sendProducts": "Ürün gönder",
+      "sendCollection": "Koleksiyon"
     },
     "externalRequest": {
       "errors": {
@@ -2957,6 +2958,43 @@
       "productsSelected": "{count, plural, one {# ürün} other {# ürün}}",
       "noneSelected": "Henüz ürün yok",
       "sendFailed": "Ürünler gönderilemedi."
+    },
+    "sendCollection": {
+      "title": "Koleksiyon",
+      "dataType": "Veri türü",
+      "dataTypes": {
+        "products": "Ürünler"
+      },
+      "collectionType": "Koleksiyon türü",
+      "collectionTypes": {
+        "automated": {
+          "label": "Otomatik",
+          "description": "Koşullara uyan mevcut ve gelecekteki ürünler otomatik eklenir."
+        },
+        "manual": {
+          "label": "Manuel",
+          "description": "Ürünleri tek tek ekleyin."
+        }
+      },
+      "condition": "Koşul",
+      "name": "Ad",
+      "optional": "(İsteğe bağlı)",
+      "category": "Kategori",
+      "subcategory": "Alt kategori",
+      "vendor": "Satıcı",
+      "all": "Tümü",
+      "items": "Ürünler",
+      "select": "Seç",
+      "selectPlaceholder": "1 veya daha fazla ürün seçin",
+      "selectAll": "Tümünü seç",
+      "deselectAll": "Tümünün seçimini kaldır",
+      "maxProducts": "En fazla {count} ürün; mağazanın artık göstermediği ürün atlanır.",
+      "automatedHint": "Eşleşen en fazla {count} ürünü, ürünü mağazada açan kartlar olarak gönderir.",
+      "summaryAll": "Mağazanın tüm ürünleri",
+      "summaryAutomated": "Ürünler: {filters}",
+      "summaryManual": "{count, plural, one {# ürün} other {# ürün}}",
+      "cancel": "İptal",
+      "save": "Kaydet"
     }
   },
   "folders": {
@@ -4221,6 +4259,25 @@
       "unknownFieldTarget": "Eşlenen bir kişi alanı artık mevcut değil.",
       "actionReferenceNotFound": "Bir eylem, artık mevcut olmayan bir akışa, etikete veya alana başvuruyor.",
       "fieldMappingRequired": "En az bir alan eşlemesi ekleyin."
+    },
+    "form": {
+      "required": "Bu alan zorunludur.",
+      "minLength": "En az {minimum} karakter girin.",
+      "maxLength": "En fazla {maximum} karakter girin.",
+      "minNumber": "En az {minimum} olan bir sayı girin.",
+      "moreThan": "{minimum} değerinden büyük bir sayı girin.",
+      "maxNumber": "En fazla {maximum} olan bir sayı girin.",
+      "lessThan": "{maximum} değerinden küçük bir sayı girin.",
+      "number": "Bir sayı girin.",
+      "wholeNumber": "Tam sayı girin.",
+      "minItems": "En az {minimum} seçin.",
+      "maxItems": "En fazla {maximum} seçin.",
+      "email": "Geçerli bir e-posta adresi girin.",
+      "url": "https:// ile başlayan geçerli bir bağlantı girin.",
+      "format": "Bu değer doğru biçimde değil.",
+      "option": "Seçeneklerden birini seçin.",
+      "invalid": "Bu değer geçerli değil.",
+      "checkFields": "Düzeltilmesi gereken alanlar var. Kırmızı işaretlileri kontrol edin."
     }
   },
   "webchat": {
@@ -5209,7 +5266,8 @@
       "contactReferredExistingContact": "Kişi Mevcut Bir Kişiyi Yönlendirdi",
       "callRecorded": "Arama kaydedildi",
       "callTranscribed": "Arama yazıya döküldü",
-      "anyProduct": "Herhangi bir ürün"
+      "anyProduct": "Herhangi bir ürün",
+      "anyCategory": "Herhangi bir kategori"
     },
     "actions": {
       "addTag": "Etiket Ekle",
@@ -6386,7 +6444,82 @@
     "unknown": "Bilinmiyor"
   },
   "orders": {
-    "title": "Siparişler"
+    "title": "Siparişler",
+    "empty": "Henüz sipariş yok.",
+    "searchPlaceholder": "Ad, telefon, e-posta veya sipariş numarasına göre ara",
+    "orderNumber": "Sipariş #{number}",
+    "print": "Yazdır",
+    "inbox": "Gelen kutusu",
+    "statusUpdated": "Sipariş durumu güncellendi",
+    "statusUpdateError": "Sipariş durumu güncellenemedi",
+    "updateStatusTitle": "Sipariş durumunu güncelle",
+    "message": "Mesaj",
+    "messagePlaceholder": "İsteğe bağlı",
+    "messageDescription": "Müşteriye kendi konuşmasında gönderilir.",
+    "cancel": "İptal",
+    "continue": "Devam",
+    "delete": "Sil",
+    "deleted": "Sipariş silindi",
+    "deleteError": "Sipariş silinemedi",
+    "deleteTitle": "#{number} numaralı sipariş silinsin mi?",
+    "deleteDescription": "Sipariş, ürünleri ve geçmişi kaldırılır. Hâlâ tuttuğu stok geri eklenir.",
+    "columns": {
+      "name": "Ad",
+      "total": "Toplam",
+      "status": "Durum",
+      "date": "Tarih",
+      "rating": "Puan",
+      "quantity": "Adet",
+      "price": "Fiyat",
+      "vendor": "Satıcı"
+    },
+    "fields": {
+      "name": "Ad",
+      "email": "E-posta",
+      "phone": "Telefon",
+      "country": "Ülke",
+      "state": "İl",
+      "city": "Şehir",
+      "street": "Sokak",
+      "zip": "Posta kodu",
+      "shippingType": "Gönderim",
+      "orderId": "Sipariş ID",
+      "date": "Tarih",
+      "subtotal": "Ara toplam",
+      "discount": "İndirim",
+      "deliveryCost": "Teslimat ücreti",
+      "otherTaxes": "Diğer vergiler",
+      "total": "Toplam",
+      "paymentMethod": "Ödeme yöntemi",
+      "status": "Durum",
+      "note": "Not",
+      "cancelReason": "İptal nedeni",
+      "rating": "Değerlendirme",
+      "ratingComment": "Müşteri yorumu",
+      "coupon": "Kupon ({code})"
+    },
+    "statuses": {
+      "pending": "İşlenmedi",
+      "accepted": "Kabul edildi",
+      "shipped": "Kargoya verildi",
+      "concluded": "Tamamlandı",
+      "cancelled": "İptal edildi"
+    },
+    "transitions": {
+      "accepted": "Kabul et",
+      "shipped": "Kargola",
+      "concluded": "Tamamla",
+      "cancelled": "İptal et"
+    },
+    "paymentMethods": {
+      "cod": "Kapıda ödeme"
+    },
+    "shippingTypes": {
+      "delivery": "Müşteriye teslim et",
+      "pickup": "Mağazadan teslim alma"
+    },
+    "description": "Müşterilerinizin verdiği siparişler.",
+    "ratingValue": "{rating}/5 ★"
   },
   "products": {
     "title": "Ürünler",
@@ -6443,7 +6576,8 @@
         "label": "Stokta yokken müşterilerin bu ürünü satın almasına izin ver"
       },
       "vendor": {
-        "label": "Tedarikçi"
+        "label": "Tedarikçi",
+        "none": "Yok"
       },
       "rank": {
         "label": "Sıralama"
@@ -6576,8 +6710,8 @@
     "loadError": "Ürün kategorileri yüklenemedi.",
     "all": "Tüm ürünler",
     "create": "Kategori oluştur",
-    "edit": "Kategoriyi yeniden adlandır",
-    "name": "Kategori adı",
+    "edit": "Düzenle",
+    "name": "Ad",
     "namePlaceholder": "örn. Yaz koleksiyonu",
     "parent": "Üst kategori",
     "noParent": "Yok (üst düzey)",
@@ -6597,12 +6731,25 @@
     "columns": {
       "name": "Ad",
       "products": "Ürünler",
-      "subcategories": "Alt kategoriler"
+      "subcategories": "Alt kategoriler",
+      "visible": "Görünür"
     },
     "expand": "Alt kategorileri göster",
     "collapse": "Alt kategorileri gizle",
     "productCount": "{count, plural, =0 {Ürün yok} one {# ürün} other {# ürün}}",
-    "deleteChildrenWarning": "{count, plural, one {# alt kategorisi de silinecek.} other {# alt kategorisi de silinecek.}}"
+    "deleteChildrenWarning": "{count, plural, one {# alt kategorisi de silinecek.} other {# alt kategorisi de silinecek.}}",
+    "add": "Ekle",
+    "dialogTitle": "Kategori",
+    "image": "Görsel",
+    "continue": "Devam",
+    "subcategories": "Alt kategoriler",
+    "subcategoriesOf": "{name} alt kategorileri",
+    "emptySub": "Henüz alt kategori yok.",
+    "back": "Kategorilere dön",
+    "getId": "ID al",
+    "idCopied": "{id} kategori ID'si kopyalandı",
+    "idCopyError": "ID kopyalanamadı",
+    "description": "Ürünlerinizi kategori ve alt kategorilere ayırın."
   },
   "productImport": {
     "title": "İçe Aktar",
@@ -9081,6 +9228,543 @@
       "hours": "Saatler",
       "closed": "Kapalı"
     }
+  },
+  "productVendors": {
+    "title": "Satıcılar",
+    "add": "Ekle",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "actions": "İşlemler",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "moreOptions": "Diğer seçenekler",
+    "empty": "Henüz satıcı yok.",
+    "created": "Satıcı eklendi",
+    "updated": "Satıcı güncellendi",
+    "deleted": "Satıcı silindi",
+    "saveError": "Satıcı kaydedilemedi",
+    "deleteError": "Satıcı silinemedi",
+    "deleteTitle": "{name} silinsin mi?",
+    "deleteDescription": "{count, plural, =0 {Hiçbir ürün bu satıcıyı kullanmıyor.} one {# ürün satıcısız kalacak.} other {# ürün satıcısız kalacak.}}",
+    "fields": {
+      "name": "Ad",
+      "shortDescription": "Kısa açıklama",
+      "phone": "Telefon",
+      "storeAddress": "Mağaza adresi",
+      "image": "Görsel",
+      "optional": "İsteğe bağlı",
+      "discountPercent": "İndirim (0-100%)",
+      "minimumOrderValue": "Minimum sipariş tutarı",
+      "openHours": "Çalışma saatleri",
+      "category": "Kategori",
+      "subcategory": "Alt kategori",
+      "none": "Yok"
+    },
+    "columns": {
+      "name": "Ad",
+      "products": "Toplam ürün",
+      "active": "Aktif"
+    },
+    "description": "Ürünlerinizin ait olduğu satıcılar ve markalar."
+  },
+  "ecommerceSettings": {
+    "save": "Kaydet",
+    "saved": "Ayarlar kaydedildi",
+    "saveError": "Ayarlar kaydedilemedi",
+    "rank": {
+      "label": "Sıra",
+      "default": "Varsayılan"
+    },
+    "tabs": {
+      "general": "Genel",
+      "payments": "Ödemeler",
+      "shipping": "Gönderim",
+      "checkout": "Ödeme sayfası"
+    },
+    "general": {
+      "orderingAvailable": {
+        "label": "Sipariş verilebilir",
+        "description": "Çalışma saatlerinizi değiştirmeden müşterilerin sipariş vermesini engellemek için bu alanı kullanın. Çalışma saatleri de uygunluğunuzu belirler."
+      },
+      "webshopProductView": {
+        "label": "Web mağazası ürün görünümü",
+        "description": "Ürünlerin web mağazanızda nasıl gösterileceğini belirleyin.",
+        "options": {
+          "list": "Liste",
+          "listWithoutImage": "Görselsiz liste",
+          "card": "Kart",
+          "cardSquare": "Kare görselli kart",
+          "image": "Görsel",
+          "imageSquare": "Görsel (kare)"
+        }
+      },
+      "openHours": {
+        "label": "Çalışma saatleri",
+        "description": "Müşterilerinizin sipariş verebileceği zaman aralıkları."
+      },
+      "searchProducts": {
+        "label": "Ürün ara",
+        "description": "Müşterilerin ürün bulmak için mesaj göndermesine izin verin."
+      },
+      "facebookPixelId": {
+        "label": "Facebook Pixel",
+        "description": "Facebook Pixel ile dönüşümleri izleyin ve reklamlarınızın sonuçlarını ölçün. Şu olaylar izlenir: ADD_TO_CART, INITIATE_CHECKOUT, PURCHASE, VIEW_CONTENT"
+      },
+      "abandonedCart": {
+        "label": "Terk edilen sepet mesajı",
+        "description": "Kullanıcı sepetinde ürün varken botunuzdan ayrıldıktan sonra terk edilen sepet mesajı göndermeden önce beklenecek süre.",
+        "disabled": "Kapalı",
+        "afterMinutes": "{count} dakika sonra",
+        "afterHours": "{count, plural, one {# saat sonra} other {# saat sonra}}"
+      },
+      "productButtons": {
+        "label": "Ürünlerdeki düğmeler",
+        "description": "Bu ayar, botunuzdaki ürünlerde hangi düğmelerin gösterileceğini belirler.",
+        "options": {
+          "addToCart": "Sepete ekle",
+          "share": "Paylaş",
+          "similar": "Benzer",
+          "save": "Kaydet"
+        }
+      },
+      "productImageSize": {
+        "label": "Ürün görseli boyutu",
+        "description": "Bu ayar, botunuzdaki ürün görsellerinin boyutunu belirler",
+        "options": {
+          "bigSquare": "Büyük (kare)",
+          "mediumRectangle": "Orta (dikdörtgen)"
+        }
+      },
+      "allowRateOrders": {
+        "label": "Siparişi puanlamaya izin ver",
+        "description": "Memnun kalmayan müşterilerin siparişi puanlamasına ve yorum yazmasına izin verin. Yorumları yalnızca bot yöneticileri görebilir"
+      },
+      "notifyOnCartStatusChange": {
+        "label": "Sepet durumu değişince bildirim gönder",
+        "description": "Sipariş durumunu her değiştirdiğinizde müşteri bildirim alır. Sipariş iptali ve tamamlanma bildirimlerini kapatamazsınız."
+      },
+      "abandonedCartFlow": {
+        "label": "Terk edilmiş sepet akışı",
+        "description": "Sepet bu kadar süre terk edildiğinde botun müşteri için çalıştırdığı akış. Sepeti açmak için butonlarda '{{shop_token}}' kullanın. Tetikleyiciler \"Cart abandoned\" olayını da kullanabilir.",
+        "none": "Akış yok (yalnızca tetikleyici olayı)"
+      }
+    },
+    "payments": {
+      "currencyMismatch": "{count, plural, one {# ürünün fiyatı} other {# ürünün fiyatı}} {currency} dışında başka bir para biriminde. Siparişlerde fiyat {currency} olarak tahsil edilir.",
+      "paymentMethods": {
+        "label": "Ödeme yöntemleri",
+        "description": "Ödeme sayfasında etkin olan ödeme yöntemleri. Listedeki ilk yöntem ödeme sayfasında seçili olur.",
+        "options": {
+          "cod": "Kapıda ödeme"
+        }
+      },
+      "currency": {
+        "label": "Para birimi",
+        "description": "Ürün fiyatlarını belirlediğiniz para birimi. Müşterilerden bu para biriminde tahsilat yapılır."
+      },
+      "currencyPosition": {
+        "label": "Para birimi konumu",
+        "description": "Bu seçenek para biriminin konumunu belirlemenizi sağlar.",
+        "options": {
+          "left": "Sol",
+          "leftSpace": "Solda boşluklu",
+          "right": "Sağ",
+          "rightSpace": "Sağda boşluklu"
+        }
+      },
+      "currencySymbol": {
+        "label": "Para sembolü",
+        "description": "Para sembolü fiyatların önünde gösterilir. Sembol ile fiyat arasında boşluk istiyorsanız sembolün sonuna bir boşluk ekleyin."
+      },
+      "serviceFeePercent": {
+        "label": "Diğer ücretler / hizmet ücretleri (0 - 100%)",
+        "description": "Satışla ilgili diğer ücretler."
+      }
+    },
+    "shipping": {
+      "shippingType": {
+        "label": "Gönderim türü",
+        "description": "Bu seçenek, müşterinin siparişini nasıl alacağını belirlemenizi sağlar.",
+        "options": {
+          "none": "Yok",
+          "delivery": "Müşteriye teslim et",
+          "pickup": "Mağazadan teslim alma",
+          "deliveryAndPickup": "Müşteriye teslim et, Mağazadan teslim alma"
+        }
+      },
+      "storeAddress": {
+        "label": "Mağaza adresi",
+        "description": "Mağazadan teslim almaya izin verirseniz bu adres ödeme sayfasında müşteriye gösterilir."
+      },
+      "shippingCountries": {
+        "label": "Gönderim ülkeleri",
+        "description": "Sipariş gönderdiğiniz ülkeler."
+      },
+      "defaultShippingCountry": {
+        "label": "Varsayılan gönderim ülkesi",
+        "description": "Ödeme sayfasında varsayılan olarak seçilecek ülke.",
+        "none": "Yok"
+      },
+      "deliveryCost": {
+        "label": "Teslimat ücreti",
+        "description": "Siparişi müşterinin adresine teslim etmek için sabit ücret."
+      },
+      "defaultCountryNotShipped": "Gönderim ülkelerinden birini seçin."
+    },
+    "checkout": {
+      "checkoutMode": {
+        "label": "Ödeme sayfası",
+        "description": "Bu ayar, müşterilerinizin siparişlerini nerede tamamlayacağını belirler. Kullanıcının siparişi botunuzun dışında, örneğin web siteniz veya Amazon üzerinde tamamlamasını istiyorsanız varsayılan ödeme sayfamızı kullanmayın.",
+        "options": {
+          "default": "Varsayılan ödeme sayfası",
+          "externalLink": "Özel harici ödeme sayfası",
+          "flow": "Akış",
+          "productPage": "Harici ürün sayfasını ziyaret et"
+        }
+      },
+      "checkoutLink": {
+        "label": "Ödeme sayfası bağlantısı",
+        "description": "Müşterilerin siparişlerini tamamladığı harici sayfa."
+      },
+      "checkoutFlowId": {
+        "label": "Ödeme akışı",
+        "description": "Müşteri ödemeye geçtiğinde çalışan akış.",
+        "placeholder": "Bir akış seçin"
+      },
+      "minimumOrderValue": {
+        "label": "Minimum sipariş tutarı",
+        "description": "Müşterinin verebileceği en düşük sipariş tutarı. Bu koşul tüm indirimler uygulandıktan sonra kontrol edilir."
+      },
+      "requiredFields": {
+        "requireName": {
+          "label": "Alıcı adını zorunlu tut",
+          "description": "Alıcı adı ödeme sırasında toplanır."
+        },
+        "requireEmail": {
+          "label": "E-posta adresini zorunlu tut",
+          "description": "Alıcı e-postası ödeme sırasında toplanır."
+        },
+        "requirePhone": {
+          "label": "Telefon numarasını zorunlu tut",
+          "description": "Alıcı telefonu ödeme sırasında toplanır."
+        },
+        "requireState": {
+          "label": "İl/eyaleti zorunlu tut",
+          "description": "Alıcının ili ödeme sırasında toplanır."
+        },
+        "requireZip": {
+          "label": "Posta kodunu zorunlu tut",
+          "description": "Alıcının posta kodu ödeme sırasında toplanır."
+        }
+      },
+      "orderConfirmationMode": {
+        "label": "Sipariş onay mesajı",
+        "description": "Sipariş verildiğinde müşterinin sohbette aldığı mesaj. Varsayılan mesaj sipariş ayrıntılarını çalışma alanının dilinde gösterir.",
+        "options": {
+          "default": "Varsayılan mesaj",
+          "flow": "Bir akış çalıştır",
+          "none": "Hiçbir şey gönderme"
+        }
+      },
+      "orderConfirmationFlowId": {
+        "label": "Sipariş onay akışı",
+        "description": "Sipariş verildiğinde varsayılan mesaj yerine müşteriye gönderilen akış."
+      }
+    }
+  },
+  "openHours": {
+    "alwaysOpen": "Her zaman açık",
+    "addNew": "Yeni ekle",
+    "dialogTitle": "Çalışma saatleri",
+    "name": "Ad",
+    "namePlaceholder": "ör. Hafta içi",
+    "day": "Gün",
+    "from": "Açılış",
+    "to": "Kapanış",
+    "add": "Saat ekle",
+    "remove": "Kaldır",
+    "cancel": "İptal",
+    "continue": "Devam",
+    "created": "Çalışma saatleri oluşturuldu",
+    "saveError": "Çalışma saatleri kaydedilemedi",
+    "days": {
+      "0": "Pazar",
+      "1": "Pazartesi",
+      "2": "Salı",
+      "3": "Çarşamba",
+      "4": "Perşembe",
+      "5": "Cuma",
+      "6": "Cumartesi"
+    },
+    "sameTimes": "Açılış ve kapanış saati farklı olmalıdır."
+  },
+  "webshop": {
+    "metadataTitle": "Mağaza",
+    "metadataOrderTitle": "Siparişiniz",
+    "invalidLinkTitle": "Bu bağlantı çalışmıyor",
+    "invalidLinkDescription": "Süresi dolmuş olabilir. Sohbette mağazadan yeni bir bağlantı isteyin.",
+    "previewBanner": "Önizleme: müşteriler bunu görür. Önizlemeden sipariş verilemez.",
+    "previewOrderingOff": "Önizleme: sipariş verilemez",
+    "closed": {
+      "orderingUnavailable": "Mağaza şu anda sipariş almıyor.",
+      "outsideOpenHours": "Mağaza şu anda kapalı. Yine de göz atabilirsiniz."
+    },
+    "searchPlaceholder": "Ürün ara",
+    "categories": "Kategoriler",
+    "allCategories": "Tüm kategoriler",
+    "vendors": "Satıcılar",
+    "allVendors": "Tüm satıcılar",
+    "noProducts": "Ürün bulunamadı.",
+    "productNotFound": "Bu ürün artık mevcut değil.",
+    "outOfStock": "Stokta yok",
+    "addToCart": "Sepete ekle",
+    "added": "Sepete eklendi",
+    "chooseOptions": "Seçenekleri seç",
+    "chooseOption": "{name} seçin",
+    "variantUnavailable": "Bu kombinasyon mevcut değil.",
+    "buy": "Satın al",
+    "share": "Paylaş",
+    "linkCopied": "Kopyalandı",
+    "similar": "Benzer",
+    "save": "Kaydet",
+    "saved": "Kaydedildi",
+    "showImage": "{number}. görseli göster",
+    "increase": "Miktarı artır",
+    "decrease": "Miktarı azalt",
+    "remove": "Kaldır",
+    "cart": "Sepet",
+    "cartEmpty": "Sepetiniz boş.",
+    "continueShopping": "Alışverişe devam et",
+    "unavailableItems": "{count, plural, one {# ürün şu anda sipariş edilemiyor} other {# ürün şu anda sipariş edilemiyor}}",
+    "unavailableNotOrdered": "Bunlar siparişe eklenmez ve sepette kalır.",
+    "unavailable": "Artık mevcut değil",
+    "unavailableHint": "Seçenekleri yeniden seçin",
+    "deletedProduct": "Silinmiş ürün",
+    "summary": {
+      "subtotal": "Ara toplam",
+      "discount": "İndirim",
+      "delivery": "Teslimat",
+      "otherFees": "Diğer ücretler",
+      "total": "Toplam",
+      "coupon": "Kupon ({code})",
+      "title": "Sipariş özeti",
+      "saved": "{amount} tasarruf ediyorsunuz"
+    },
+    "belowMinimum": "Minimum sipariş tutarı {amount}.",
+    "checkOut": "Ödemeye geç",
+    "contactDetails": "Bilgileriniz",
+    "optional": "(isteğe bağlı)",
+    "fields": {
+      "name": "Ad",
+      "email": "E-posta",
+      "phone": "Telefon",
+      "country": "Ülke",
+      "state": "İl",
+      "city": "Şehir",
+      "address1": "Adres",
+      "address2": "Daire, bina vb.",
+      "zip": "Posta kodu",
+      "note": "Mağaza için not"
+    },
+    "shipping": {
+      "title": "Teslimat",
+      "delivery": "Adresime teslim",
+      "pickup": "Mağazadan teslim al",
+      "storeAddress": "Mağaza adresi: {address}"
+    },
+    "payment": {
+      "title": "Ödeme",
+      "cod": "Kapıda ödeme"
+    },
+    "placeOrder": "Siparişi ver",
+    "orderPlaced": "Teşekkürler! Siparişiniz alındı. Güncellemeleri sohbetten göndereceğiz.",
+    "orderTitle": "Sipariş #{number}",
+    "orderNotFound": "Bu sipariş bulunamadı.",
+    "placedAt": "{date} tarihinde verildi",
+    "status": {
+      "pending": "İşlenmedi",
+      "accepted": "Hazırlanıyor",
+      "shipped": "Kargoya verildi",
+      "concluded": "Tamamlandı",
+      "cancelled": "İptal edildi"
+    },
+    "rateTitle": "Siparişinizi değerlendirin",
+    "rateComment": "Mağazaya düşüncelerinizi yazın (isteğe bağlı)",
+    "rateSubmit": "Değerlendirmeyi gönder",
+    "rateThanks": "Değerlendirmeniz için teşekkürler!",
+    "yourRating": "Değerlendirmeniz",
+    "ratingValue": "5 üzerinden {rating} yıldız",
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "pageOf": "Sayfa {page}/{pageCount}",
+    "errors": {
+      "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+      "checkFields": "Lütfen alanları kontrol edin.",
+      "fieldRequired": "{field} zorunludur.",
+      "countryUnavailable": "Mağaza bu ülkeye teslimat yapmıyor.",
+      "invalidLink": "Bu bağlantı artık çalışmıyor. Mağazadan yenisini isteyin.",
+      "webshopPreviewOnly": "Bu bir önizleme. Sipariş yalnızca müşteri bağlantısından verilebilir.",
+      "rateLimited": "Çok fazla deneme. Biraz bekleyip tekrar deneyin.",
+      "orderingUnavailable": "Mağaza şu anda sipariş almıyor.",
+      "orderBelowMinimum": "Minimum sipariş tutarı {minimum}.",
+      "orderBelowVendorMinimum": "{vendorName} ürünlerinin toplamı en az {minimum} olmalıdır.",
+      "orderOutOfStock": "{productName} stokta kalmadı.",
+      "orderProductUnavailable": "Bazı ürünler artık sipariş edilemiyor. Sepetinizi kontrol edin.",
+      "orderEmpty": "Sepetiniz boş.",
+      "orderShippingTypeUnavailable": "Bu teslimat seçeneği mevcut değil.",
+      "webshopRatingNotAllowed": "Bu sipariş değerlendirilemez.",
+      "webshopCartFull": "Sepetiniz en fazla {maximum} farklı ürün içerebilir.",
+      "notFound": "Bu ürün artık mevcut değil.",
+      "discountCodeNotFound": "Bu indirim kodu yok.",
+      "discountCodeInactive": "Bu indirim kodu aktif değil.",
+      "discountCodeNotStarted": "Bu indirim kodu henüz geçerli değil.",
+      "discountCodeExpired": "Bu indirim kodunun süresi doldu.",
+      "discountCodeUsageLimitReached": "Bu indirim kodunun kullanım hakkı doldu.",
+      "discountCodeAlreadyUsed": "Bu indirim kodunu zaten kullandınız.",
+      "discountCodeNotEligible": "Bu indirim kodu sizin için geçerli değil.",
+      "discountCodeNotApplicable": "Bu indirim kodu sepetinizdekilere uygulanmıyor.",
+      "discountCodeMinimumAmount": "Bu kod en az {minimum} alışveriş gerektirir. {missing} daha ekleyin.",
+      "discountCodeMinimumQuantity": "Bu kod en az {minimum} ürün gerektirir. {missing} daha ekleyin."
+    },
+    "discount": {
+      "label": "İndirim kodu",
+      "placeholder": "İndirim kodu",
+      "apply": "Uygula",
+      "applied": "İndirim kodu uygulandı",
+      "automatic": "otomatik uygulandı",
+      "remove": "İndirim kodunu kaldır",
+      "available": "Kullanabileceğiniz kodlar",
+      "freeShipping": "Ücretsiz kargo",
+      "bestChoice": "En iyi seçim",
+      "expiresOn": "Son kullanma: {date}",
+      "noExpiry": "Süresiz",
+      "inUse": "Kullanımda",
+      "saves": "{amount} indirim",
+      "showMore": "{count, plural, one {# kod daha göster} other {# kod daha göster}}",
+      "showLess": "Daha az göster",
+      "removeShort": "Kaldır",
+      "expired": "Süresi doldu",
+      "usedUp": "Tükendi",
+      "notEligible": "Henüz uygun değil"
+    },
+    "itemCount": "{count, plural, one {# ürün} other {# ürün}}",
+    "relatedProducts": "Bunları da beğenebilirsiniz"
+  },
+  "webshopLinks": {
+    "preview": "Önizle",
+    "getLink": "Bağlantıyı al",
+    "copied": "Bağlantı kopyalandı. Bir bot düğmesine ekleyin: her kişi kendi mağazasını açar.",
+    "error": "Bağlantı alınamadı.",
+    "copyError": "Bağlantı kopyalanamadı.",
+    "shopLink": {
+      "label": "Mağaza bağlantısı",
+      "hint": "Bu bağlantıyı bir akış, yayın veya dizideki bir düğmeye yapıştırın. Bağlantıyı alan her kişi kendi mağazasını açar ve sipariş verebilir."
+    },
+    "productLink": {
+      "label": "Genel URL",
+      "hint": "URL'yi kopyalayıp akışınıza, yayınınıza veya dizinize yapıştırın. Bağlantıyı alan her kişi bu ürünü açar ve sipariş verebilir."
+    }
+  },
+  "discountCodes": {
+    "title": "Kuponlar",
+    "description": "Müşterilerin ödemede kullandığı veya kendiliğinden uygulanan indirim kodları.",
+    "add": "Ekle",
+    "edit": "Kuponu düzenle",
+    "automatic": "Otomatik",
+    "never": "Hiçbir zaman",
+    "searchPlaceholder": "Kod ara…",
+    "saveError": "Kupon kaydedilemedi.",
+    "created": "Kupon oluşturuldu",
+    "updated": "Kupon kaydedildi",
+    "deleted": "Kupon silindi",
+    "deleteError": "Kupon silinemedi.",
+    "deleteTitle": "{code} kuponu silinsin mi?",
+    "deleteDescription": "Müşteriler artık kullanamaz. Onu kullanan siparişler indirimini korur.",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "save": "Kaydet",
+    "columns": {
+      "name": "Ad",
+      "discount": "İndirim",
+      "used": "Kullanılan",
+      "end": "Bitiş",
+      "active": "Aktif"
+    },
+    "discountTypes": {
+      "percentage": "Yüzde",
+      "fixedAmount": "Sabit tutar",
+      "freeShipping": "Ücretsiz kargo"
+    },
+    "appliesTo": {
+      "entireOrder": "Tüm sipariş",
+      "category": "Belirli kategori",
+      "products": "Belirli ürünler"
+    },
+    "minimumTypes": {
+      "none": "Yok",
+      "amount": "Minimum alışveriş tutarı",
+      "quantity": "Minimum ürün adedi"
+    },
+    "eligibilities": {
+      "everyone": "Herkes",
+      "specificCustomers": "Belirli müşteriler"
+    },
+    "form": {
+      "discountCode": "İndirim kodu",
+      "code": "Kod",
+      "generate": "Oluştur",
+      "autoApply": "Bu kuponu sepetlere otomatik uygula",
+      "autoApplyHint": "Sepetler müşteri yazmadan alır. Birden çok otomatik kupon varsa en çok indirim yapan uygulanır.",
+      "typedHint": "Müşteriler bu indirim kodunu ödemede girecek.",
+      "options": "Seçenekler",
+      "discountType": "İndirim türü",
+      "discountValuePercent": "İndirim değeri (%)",
+      "discountValueAmount": "İndirim değeri ({currency})",
+      "freeShippingHint": "Teslim edilen siparişlerin kargo ücretini kaldırır.",
+      "appliesTo": "Uygulandığı yer",
+      "category": "Kategori",
+      "products": "Ürünler",
+      "productsPlaceholder": "Ürün seçin",
+      "minimumRequirement": "Minimum şart",
+      "minimumAmount": "Minimum tutar ({currency})",
+      "minimumQuantity": "Minimum ürün sayısı",
+      "usageLimits": "Kullanım sınırları",
+      "limitTotal": "Bu indirimin toplam kullanım sayısını sınırla",
+      "usedSoFar": "{count, plural, one {Şimdiye kadar # kez kullanıldı} other {Şimdiye kadar # kez kullanıldı}}",
+      "oncePerCustomer": "Müşteri başına bir kullanım",
+      "customerEligibility": "Uygun müşteriler",
+      "specificCustomersHint": "Yalnızca sipariş anında aşağıdaki filtreye uyan kişiler.",
+      "activeDates": "Geçerlilik tarihleri",
+      "startDate": "Başlangıç tarihi",
+      "endDate": "Bitiş tarihi",
+      "isActive": "Aktif"
+    },
+    "rules": {
+      "codeCharacters": "Yalnızca aksansız harfler, rakamlar, - ve _ kullanın.",
+      "usageBelowUsed": "Bu kod zaten {count} kez kullanıldı; sınır daha düşük olamaz.",
+      "customerConditionRequired": "En az bir koşul ekleyin.",
+      "endAfterStart": "Bitiş tarihi başlangıç tarihinden sonra olmalıdır."
+    }
+  },
+  "ecommerceAnalytics": {
+    "title": "Analitik",
+    "lifetime": "Tüm zamanlar",
+    "sales": "Satışlar",
+    "orders": "Siparişler",
+    "products": "Ürünler",
+    "salesByDate": "Tarihe göre satışlar",
+    "ordersByDate": "Tarihe göre siparişler",
+    "topProducts": "En çok satan ürünler",
+    "topVendors": "En iyi satıcılar",
+    "columns": {
+      "name": "Ad",
+      "sales": "Satışlar"
+    },
+    "noData": "Bu dönemde veri yok",
+    "refresh": "Yenile",
+    "change": "%{value}",
+    "noPrevious": "yeni",
+    "otherCurrencyOrders": "Diğer para birimlerindeki {count} sipariş bu rakamlara dahil değildir"
   },
   "responseSla": {
     "label": "Yanıt SLA'sı",
